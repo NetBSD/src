@@ -1,6 +1,6 @@
 /* Native-dependent code for BSD Unix running on ARM's, for GDB.
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,8 +22,6 @@
 #include "inferior.h"
 #include "regcache.h"
 #include "target.h"
-
-#include <string.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>

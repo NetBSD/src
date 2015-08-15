@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc64.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,54 +30,55 @@
    traced process is 32-bit or 64-bit.  */
 
 static void
-sparc64nbsd_supply_gregset (const struct sparc_gregset *gregset,
+sparc64nbsd_supply_gregset (const struct sparc_gregmap *gregmap,
 			    struct regcache *regcache,
 			    int regnum, const void *gregs)
 {
   int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
 
   if (sparc32)
-    sparc32_supply_gregset (&sparc32nbsd_gregset, regcache, regnum, gregs);
+    sparc32_supply_gregset (&sparc32nbsd_gregmap, regcache, regnum, gregs);
   else
-    sparc64_supply_gregset (&sparc64nbsd_gregset, regcache, regnum, gregs);
+    sparc64_supply_gregset (&sparc64nbsd_gregmap, regcache, regnum, gregs);
 }
 
 static void
-sparc64nbsd_collect_gregset (const struct sparc_gregset *gregset,
+sparc64nbsd_collect_gregset (const struct sparc_gregmap *gregmap,
 			     const struct regcache *regcache,
 			     int regnum, void *gregs)
 {
   int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
 
   if (sparc32)
-    sparc32_collect_gregset (&sparc32nbsd_gregset, regcache, regnum, gregs);
+    sparc32_collect_gregset (&sparc32nbsd_gregmap, regcache, regnum, gregs);
   else
-    sparc64_collect_gregset (&sparc64nbsd_gregset, regcache, regnum, gregs);
+    sparc64_collect_gregset (&sparc64nbsd_gregmap, regcache, regnum, gregs);
 }
 
 static void
-sparc64nbsd_supply_fpregset (const struct sparc_fpregset *fpregset,
+sparc64nbsd_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 			     struct regcache *regcache,
 			     int regnum, const void *fpregs)
 {
   int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
 
   if (sparc32)
-    sparc32_supply_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
+    sparc32_supply_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
   else
-    sparc64_supply_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
+    sparc64_supply_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
 static void
-sparc64nbsd_collect_fpregset (const struct regcache *regcache,
+sparc64nbsd_collect_fpregset (const struct sparc_fpregmap *fpregmap,
+			      const struct regcache *regcache,
 			      int regnum, void *fpregs)
 {
   int sparc32 = (gdbarch_ptr_bit (get_regcache_arch (regcache)) == 32);
 
   if (sparc32)
-    sparc32_collect_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
+    sparc32_collect_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
   else
-    sparc64_collect_fpregset (&sparc64_bsd_fpregset, regcache, regnum, fpregs);
+    sparc64_collect_fpregset (&sparc64_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
 /* Determine whether `gregset_t' contains register REGNUM.  */

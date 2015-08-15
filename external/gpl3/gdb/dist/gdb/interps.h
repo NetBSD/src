@@ -1,6 +1,6 @@
 /* Manages interpreters for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    Written by Jim Ingham <jingham@apple.com> of Apple Computer, Inc.
 
@@ -22,14 +22,11 @@
 #ifndef INTERPS_H
 #define INTERPS_H
 
-#include "exceptions.h"
-
 struct ui_out;
 struct interp;
 
 extern int interp_resume (struct interp *interp);
 extern int interp_suspend (struct interp *interp);
-extern int interp_prompt_p (struct interp *interp);
 extern struct gdb_exception interp_exec (struct interp *interp,
 					 const char *command);
 extern int interp_quiet_p (struct interp *interp);
@@ -37,7 +34,6 @@ extern int interp_quiet_p (struct interp *interp);
 typedef void *(interp_init_ftype) (struct interp *self, int top_level);
 typedef int (interp_resume_ftype) (void *data);
 typedef int (interp_suspend_ftype) (void *data);
-typedef int (interp_prompt_p_ftype) (void *data);
 typedef struct gdb_exception (interp_exec_ftype) (void *data,
 						  const char *command);
 typedef void (interp_command_loop_ftype) (void *data);
@@ -53,7 +49,6 @@ struct interp_procs
   interp_resume_ftype *resume_proc;
   interp_suspend_ftype *suspend_proc;
   interp_exec_ftype *exec_proc;
-  interp_prompt_p_ftype *prompt_proc_p;
 
   /* Returns the ui_out currently used to collect results for this
      interpreter.  It can be a formatter for stdout, as is the case
@@ -79,7 +74,7 @@ extern const char *interp_name (struct interp *interp);
 extern struct interp *interp_set_temp (const char *name);
 
 extern int current_interp_named_p (const char *name);
-extern int current_interp_display_prompt_p (void);
+
 extern void current_interp_command_loop (void);
 
 /* Call this function to give the current interpreter an opportunity
@@ -95,6 +90,8 @@ extern int current_interp_set_logging (int start_log, struct ui_file *out,
 /* Returns opaque data associated with the top-level interpreter.  */
 extern void *top_level_interpreter_data (void);
 extern struct interp *top_level_interpreter (void);
+
+extern struct interp *command_interp (void);
 
 /* True if the current interpreter is in async mode, false if in sync
    mode.  If in sync mode, running a synchronous execution command

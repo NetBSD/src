@@ -1,6 +1,6 @@
 /* Test program for AVX registers.
 
-   Copyright 2010-2014 Free Software Foundation, Inc.
+   Copyright 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <stdio.h>
-#include "i386-cpuid.h"
+#include "nat/x86-cpuid.h"
 
 typedef struct {
   float f[8];
@@ -53,7 +53,7 @@ have_avx (void)
 {
   unsigned int eax, ebx, ecx, edx;
 
-  if (!i386_cpuid (1, &eax, &ebx, &ecx, &edx))
+  if (!x86_cpuid (1, &eax, &ebx, &ecx, &edx))
     return 0;
 
   if ((ecx & (bit_AVX | bit_OSXSAVE)) == (bit_AVX | bit_OSXSAVE))

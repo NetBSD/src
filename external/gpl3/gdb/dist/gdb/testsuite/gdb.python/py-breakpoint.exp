@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -133,7 +133,7 @@ proc test_bkpt_deletion { } {
 	gdb_test "python print (len(del_list))" \
 	    "3" "Number of breakpoints before delete"
 	gdb_continue_to_breakpoint "Break at multiply." \
-	    ".*/$srcfile:$deltst_location.*"
+	    ".*$srcfile:$deltst_location.*"
 	gdb_py_test_silent_cmd  "python dp1.delete()" \
 	    "Delete Breakpoint" 0
 	gdb_test "python print (dp1.number)" \
@@ -144,7 +144,7 @@ proc test_bkpt_deletion { } {
 	gdb_test "python print (len(del_list))" \
 	    "2" "Number of breakpoints after delete"
 	gdb_continue_to_breakpoint "Break at end." \
-	    ".*/$srcfile:$end_location.*"
+	    ".*$srcfile:$end_location.*"
     }
 }
 
@@ -356,7 +356,7 @@ proc test_bkpt_eval_funcs { } {
 	gdb_py_test_silent_cmd "python never_eval_bp1 = bp_also_eval(\"$end_location\")" \
 	    "Set breakpoint" 0
 	gdb_continue_to_breakpoint "Break at multiply, i==3" \
-	    ".*/$srcfile:$bp_location2.*"
+	    ".*$srcfile:$bp_location2.*"
 	gdb_test "print i" \
 	    "3" "Check inferior value matches python accounting"
 	gdb_test "python print (eval_bp1.inf_i)" \
@@ -372,7 +372,7 @@ proc test_bkpt_eval_funcs { } {
 	    "Set breakpoint" 0
 	set test_cond {cond $bpnum}
 	gdb_test "$test_cond \"foo==3\"" \
-	    "Cannot set a condition where a Python.*" \
+	    "Only one stop condition allowed.  There is currently a Python.*" \
 	    "Check you cannot add a CLI condition to a Python breakpoint that has defined stop"
 	gdb_py_test_silent_cmd "python eval_bp2 = basic(\"$cond_bp\")" \
 	    "Set breakpoint" 0
@@ -385,7 +385,7 @@ proc test_bkpt_eval_funcs { } {
 	    "end" ""
 
 	gdb_test "python eval_bp2.stop = stop_func"  \
-	    "RuntimeError: Cannot set 'stop' method.*" \
+	    "RuntimeError: Only one stop condition allowed.  There is currently a GDB.*" \
 	    "Assign stop function to a breakpoint that has a condition"
 
 	delete_breakpoints
@@ -395,7 +395,7 @@ proc test_bkpt_eval_funcs { } {
 	gdb_test "python print (check_eval.count)" "0" \
 	    "Test that evaluate function has not been yet executed (ie count = 0)"
 	gdb_continue_to_breakpoint "Break at multiply, count==1" \
-	    ".*/$srcfile:$bp_location2.*"
+	    ".*$srcfile:$bp_location2.*"
 	gdb_test "python print (check_eval.count)" "1" \
 	    "Test that evaluate function is run when location also has normal bp"
 
@@ -452,7 +452,7 @@ proc test_bkpt_temporary { } {
 	gdb_test "python print (ibp.temporary)" "True" \
 	    "Check breakpoint temporary status"
 	gdb_continue_to_breakpoint "Break at multiply." \
-	    ".*/$srcfile:$ibp_location.*"
+	    ".*$srcfile:$ibp_location.*"
 	gdb_test "python print (ibp.count)" "1" \
 	    "Check temporary stop callback executed before deletion."
 	gdb_test "python print (ibp.temporary)" "RuntimeError: Breakpoint 2 is invalid.*" \

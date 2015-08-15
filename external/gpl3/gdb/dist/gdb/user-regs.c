@@ -1,6 +1,6 @@
 /* User visible, per-frame registers, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -22,9 +22,10 @@
 #include "defs.h"
 #include "user-regs.h"
 #include "gdbtypes.h"
-#include <string.h>
-#include "gdb_assert.h"
 #include "frame.h"
+#include "arch-utils.h"
+#include "command.h"
+#include "cli/cli-cmds.h"
 
 /* A table of user registers.
 
@@ -85,7 +86,7 @@ user_reg_add_builtin (const char *name, user_reg_read_ftype *read,
 		      const void *baton)
 {
   append_user_reg (&builtin_user_regs, name, read, baton,
-		   XMALLOC (struct user_reg));
+		   XNEW (struct user_reg));
 }
 
 /* Per-architecture user registers.  Start with the builtin user
@@ -217,10 +218,31 @@ value_of_user_reg (int regnum, struct frame_info *frame)
   return reg->read (frame, reg->baton);
 }
 
+static void
+maintenance_print_user_registers (char *args, int from_tty)
+{
+  struct gdbarch *gdbarch = get_current_arch ();
+  struct gdb_user_regs *regs;
+  struct user_reg *reg;
+  int regnum;
+
+  regs = gdbarch_data (gdbarch, user_regs_data);
+  regnum = gdbarch_num_regs (gdbarch) + gdbarch_num_pseudo_regs (gdbarch);
+
+  fprintf_unfiltered (gdb_stdout, " %-11s %3s\n", "Name", "Nr");
+  for (reg = regs->first; reg != NULL; reg = reg->next, ++regnum)
+    fprintf_unfiltered (gdb_stdout, " %-11s %3d\n", reg->name, regnum);
+}
+
 extern initialize_file_ftype _initialize_user_regs; /* -Wmissing-prototypes */
 
 void
 _initialize_user_regs (void)
 {
   user_regs_data = gdbarch_data_register_post_init (user_regs_init);
+
+  add_cmd ("user-registers", class_maintenance,
+	   maintenance_print_user_registers,
+	   _("List the names of the current user registers.\n"),
+	   &maintenanceprintlist);
 }

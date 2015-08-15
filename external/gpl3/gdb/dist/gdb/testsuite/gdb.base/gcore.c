@@ -1,4 +1,4 @@
-/* Copyright 2002-2014 Free Software Foundation, Inc.
+/* Copyright 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,12 +49,7 @@ array_func ()
   terminal_func ();
 }
 
-#ifdef PROTOTYPES
 int factorial_func (int value)
-#else
-int factorial_func (value)
-     int value;
-#endif
 {
   if (value > 1) {
     value *= factorial_func (value - 1);
@@ -63,6 +58,7 @@ int factorial_func (value)
   return (value);
 }
 
+int
 main()
 {
   factorial_func (6);

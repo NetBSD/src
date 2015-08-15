@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 struct objfile;
 struct symbol;
 struct addrmap;
+struct compunit_symtab;
 
 /* This module provides definitions used for creating and adding to
    the symbol table.  These routines are called from various symbol-
@@ -56,17 +57,18 @@ EXTERN CORE_ADDR last_source_start_addr;
    and associated info, but they all share one blockvector.  */
 
 struct subfile
-  {
-    struct subfile *next;
-    char *name;
-    char *dirname;
-    struct linetable *line_vector;
-    int line_vector_length;
-    enum language language;
-    const char *producer;
-    const char *debugformat;
-    struct symtab *symtab;
-  };
+{
+  struct subfile *next;
+  /* Space for this is malloc'd.  */
+  char *name;
+  /* Space for this is malloc'd.  */
+  struct linetable *line_vector;
+  int line_vector_length;
+  /* The "containing" compunit.  */
+  struct buildsym_compunit *buildsym_compunit;
+  enum language language;
+  struct symtab *symtab;
+};
 
 EXTERN struct subfile *current_subfile;
 
@@ -171,6 +173,10 @@ EXTERN int context_stack_size;
 
 EXTERN int within_function;
 
+/* The type of the record_line function.  */
+typedef void (record_line_ftype) (struct subfile *subfile, int line,
+				  CORE_ADDR pc);
+
 
 
 #define next_symbol_text(objfile) (*next_symbol_text_func)(objfile)
@@ -188,15 +194,14 @@ extern struct symbol *find_symbol_in_list (struct pending *list,
 extern struct block *finish_block (struct symbol *symbol,
                                    struct pending **listhead,
                                    struct pending_block *old_blocks,
-                                   CORE_ADDR start, CORE_ADDR end,
-                                   struct objfile *objfile);
+                                   CORE_ADDR start, CORE_ADDR end);
 
 extern void record_block_range (struct block *,
                                 CORE_ADDR start, CORE_ADDR end_inclusive);
 
 extern void really_free_pendings (void *dummy);
 
-extern void start_subfile (const char *name, const char *dirname);
+extern void start_subfile (const char *name);
 
 extern void patch_subfile_names (struct subfile *subfile, char *name);
 
@@ -205,24 +210,19 @@ extern void push_subfile (void);
 extern char *pop_subfile (void);
 
 extern struct block *end_symtab_get_static_block (CORE_ADDR end_addr,
-						  struct objfile *objfile,
 						  int expandable,
 						  int required);
 
-extern struct symtab *end_symtab_from_static_block (struct block *static_block,
-						    struct objfile *objfile,
-						    int section,
-						    int expandable);
+extern struct compunit_symtab *
+  end_symtab_from_static_block (struct block *static_block,
+				int section, int expandable);
 
-extern struct symtab *end_symtab (CORE_ADDR end_addr,
-				  struct objfile *objfile, int section);
+extern struct compunit_symtab *end_symtab (CORE_ADDR end_addr, int section);
 
-extern struct symtab *end_expandable_symtab (CORE_ADDR end_addr,
-					     struct objfile *objfile,
-					     int section);
+extern struct compunit_symtab *end_expandable_symtab (CORE_ADDR end_addr,
+						      int section);
 
-extern void augment_type_symtab (struct objfile *objfile,
-				 struct symtab *primary_symtab);
+extern void augment_type_symtab (void);
 
 /* Defined in stabsread.c.  */
 
@@ -236,12 +236,15 @@ extern struct context_stack *push_context (int desc, CORE_ADDR valu);
 
 extern struct context_stack *pop_context (void);
 
-extern void record_line (struct subfile *subfile, int line, CORE_ADDR pc);
+extern record_line_ftype record_line;
 
-extern void start_symtab (const char *name, const char *dirname,
-			  CORE_ADDR start_addr);
+extern struct compunit_symtab *start_symtab (struct objfile *objfile,
+					     const char *name,
+					     const char *comp_dir,
+					     CORE_ADDR start_addr);
 
-extern void restart_symtab (CORE_ADDR start_addr);
+extern void restart_symtab (struct compunit_symtab *cust,
+			    const char *name, CORE_ADDR start_addr);
 
 extern int hashname (const char *name);
 
@@ -271,10 +274,18 @@ extern void set_last_source_file (const char *name);
 
 extern const char *get_last_source_file (void);
 
-/* Return the macro table.  */
+/* Return the compunit symtab object.
+   It is only valid to call this between calls to start_symtab and the
+   end_symtab* functions.  */
 
-extern struct macro_table *get_macro_table (struct objfile *objfile,
-					    const char *comp_dir);
+extern struct compunit_symtab *buildsym_compunit_symtab (void);
+
+/* Return the macro table.
+   Initialize it if this is the first use.
+   It is only valid to call this between calls to start_symtab and the
+   end_symtab* functions.  */
+
+extern struct macro_table *get_macro_table (void);
 
 #undef EXTERN
 

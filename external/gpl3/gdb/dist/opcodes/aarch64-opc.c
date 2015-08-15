@@ -1,5 +1,5 @@
 /* aarch64-opc.c -- AArch64 opcode support.
-   Copyright 2009, 2010, 2011, 2012, 2013  Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -192,6 +192,7 @@ const aarch64_field fields[] =
     { 11,  1 },	/* index: in ld/st inst deciding the pre/post-index.  */
     { 24,  1 },	/* index2: in ld/st pair inst deciding the pre/post-index.  */
     { 31,  1 },	/* sf: in integer data processing instructions.  */
+    { 30,  1 },	/* lse_size: in LSE extension atomic instructions.  */
     { 11,  1 },	/* H: in advsimd scalar x indexed element instructions.  */
     { 21,  1 },	/* L: in advsimd scalar x indexed element instructions.  */
     { 20,  1 },	/* M: in advsimd scalar x indexed element instructions.  */
@@ -1254,6 +1255,25 @@ operand_general_constraint_met_p (const aarch64_opnd_info *opnds, int idx,
   switch (aarch64_operands[type].op_class)
     {
     case AARCH64_OPND_CLASS_INT_REG:
+      /* Check pair reg constraints for cas* instructions.  */
+      if (type == AARCH64_OPND_PAIRREG)
+	{
+	  assert (idx == 1 || idx == 3);
+	  if (opnds[idx - 1].reg.regno % 2 != 0)
+	    {
+	      set_syntax_error (mismatch_detail, idx - 1,
+				_("reg pair must start from even reg"));
+	      return 0;
+	    }
+	  if (opnds[idx].reg.regno != opnds[idx - 1].reg.regno + 1)
+	    {
+	      set_syntax_error (mismatch_detail, idx,
+				_("reg pair must be contiguous"));
+	      return 0;
+	    }
+	  break;
+	}
+
       /* <Xt> may be optional in some IC and TLBI instructions.  */
       if (type == AARCH64_OPND_Rt_SYS)
 	{
@@ -2282,9 +2302,12 @@ print_register_offset_address (char *buf, size_t size,
   else
     tb[0] = '\0';
 
-  snprintf (buf, size, "[%s,%c%d%s]",
+  snprintf (buf, size, "[%s,%s%s]",
 	    get_64bit_int_reg_name (opnd->addr.base_regno, 1),
-	    wm_p ? 'w' : 'x', opnd->addr.offset.regno, tb);
+	    get_int_reg_name (opnd->addr.offset.regno,
+			      wm_p ? AARCH64_OPND_QLF_W : AARCH64_OPND_QLF_X,
+			      0 /* sp_reg_p */),
+	    tb);
 }
 
 /* Generate the string representation of the operand OPNDS[IDX] for OPCODE
@@ -2324,6 +2347,7 @@ aarch64_print_operand (char *buf, size_t size, bfd_vma pc,
     case AARCH64_OPND_Rs:
     case AARCH64_OPND_Ra:
     case AARCH64_OPND_Rt_SYS:
+    case AARCH64_OPND_PAIRREG:
       /* The optional-ness of <Xt> in e.g. IC <ic_op>{, <Xt>} is determined by
 	 the <ic_op>, therefore we we use opnd->present to override the
 	 generic optional-ness information.  */

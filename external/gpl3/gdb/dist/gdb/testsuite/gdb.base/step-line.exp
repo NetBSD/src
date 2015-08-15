@@ -1,4 +1,4 @@
-# Copyright 2001-2014 Free Software Foundation, Inc.
+# Copyright 2001-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,7 +81,5 @@ gdb_test "next" \
 gdb_test "next" \
          ".*RETURN \\(j\\);.*" \
 	 "next over dummy 10"
-
-remote_file host delete ${remote_linefile}
 
 return 0

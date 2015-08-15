@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -24,8 +24,6 @@
 #include "regset.h"
 #include "value.h"
 #include "osabi.h"
-
-#include <string.h>
 
 #include "sh-tdep.h"
 #include "solib-svr4.h"
@@ -66,6 +64,7 @@ shnbsd_init_abi (struct gdbarch_info info,
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   tdep->core_gregmap = (struct sh_corefile_regmap *)regmap;
+  tdep->sizeof_gregset = 84;
 
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);

@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,8 +26,6 @@
 #include "regcache.h"
 #include "symtab.h"
 #include "trad-frame.h"
-
-#include "gdb_assert.h"
 
 #include "obsd-tdep.h"
 #include "sparc-tdep.h"

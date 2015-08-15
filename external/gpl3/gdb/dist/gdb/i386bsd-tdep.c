@@ -1,6 +1,6 @@
 /* Target-dependent code for i386 BSD's.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,8 +23,6 @@
 #include "gdbcore.h"
 #include "regcache.h"
 #include "osabi.h"
-
-#include <string.h>
 
 #include "i386-tdep.h"
 

@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -30,8 +30,6 @@
 #include "gdbcore.h"
 #include "inferior.h"
 #include "regcache.h"
-
-#include "gdb_assert.h"
 
 #include "ppc-tdep.h"
 #include "ppcnbsd-tdep.h"

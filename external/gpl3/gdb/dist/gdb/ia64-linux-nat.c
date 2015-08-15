@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "inferior.h"
 #include "target.h"
 #include "gdbcore.h"
@@ -542,7 +541,8 @@ is_power_of_2 (int val)
 }
 
 static int
-ia64_linux_insert_watchpoint (CORE_ADDR addr, int len, int rw,
+ia64_linux_insert_watchpoint (struct target_ops *self,
+			      CORE_ADDR addr, int len, int rw,
 			      struct expression *cond)
 {
   struct lwp_info *lp;
@@ -596,7 +596,8 @@ ia64_linux_insert_watchpoint (CORE_ADDR addr, int len, int rw,
 }
 
 static int
-ia64_linux_remove_watchpoint (CORE_ADDR addr, int len, int type,
+ia64_linux_remove_watchpoint (struct target_ops *self,
+			      CORE_ADDR addr, int len, int type,
 			      struct expression *cond)
 {
   int idx;
@@ -669,14 +670,15 @@ ia64_linux_stopped_data_address (struct target_ops *ops, CORE_ADDR *addr_p)
 }
 
 static int
-ia64_linux_stopped_by_watchpoint (void)
+ia64_linux_stopped_by_watchpoint (struct target_ops *ops)
 {
   CORE_ADDR addr;
-  return ia64_linux_stopped_data_address (&current_target, &addr);
+  return ia64_linux_stopped_data_address (ops, &addr);
 }
 
 static int
-ia64_linux_can_use_hw_breakpoint (int type, int cnt, int othertype)
+ia64_linux_can_use_hw_breakpoint (struct target_ops *self,
+				  int type, int cnt, int othertype)
 {
   return 1;
 }
@@ -835,18 +837,47 @@ ia64_linux_store_registers (struct target_ops *ops,
 
 static target_xfer_partial_ftype *super_xfer_partial;
 
-static LONGEST 
+/* Implement the to_xfer_partial target_ops method.  */
+
+static enum target_xfer_status
 ia64_linux_xfer_partial (struct target_ops *ops,
 			 enum target_object object,
 			 const char *annex,
 			 gdb_byte *readbuf, const gdb_byte *writebuf,
-			 ULONGEST offset, LONGEST len)
+			 ULONGEST offset, ULONGEST len,
+			 ULONGEST *xfered_len)
 {
-  if (object == TARGET_OBJECT_UNWIND_TABLE && writebuf == NULL && offset == 0)
-    return syscall (__NR_getunwind, readbuf, len);
+  if (object == TARGET_OBJECT_UNWIND_TABLE && readbuf != NULL)
+    {
+      static long gate_table_size;
+      gdb_byte *tmp_buf;
+      long res;
+
+      /* Probe for the table size once.  */
+      if (gate_table_size == 0)
+        gate_table_size = syscall (__NR_getunwind, NULL, 0);
+      if (gate_table_size < 0)
+	return TARGET_XFER_E_IO;
+
+      if (offset >= gate_table_size)
+	return TARGET_XFER_EOF;
+
+      tmp_buf = alloca (gate_table_size);
+      res = syscall (__NR_getunwind, tmp_buf, gate_table_size);
+      if (res < 0)
+	return TARGET_XFER_E_IO;
+      gdb_assert (res == gate_table_size);
+
+      if (offset + len > gate_table_size)
+	len = gate_table_size - offset;
+
+      memcpy (readbuf, tmp_buf + offset, len);
+      *xfered_len = len;
+      return TARGET_XFER_OK;
+    }
 
   return super_xfer_partial (ops, object, annex, readbuf, writebuf,
-			     offset, len);
+			     offset, len, xfered_len);
 }
 
 /* For break.b instruction ia64 CPU forgets the immediate value and generates

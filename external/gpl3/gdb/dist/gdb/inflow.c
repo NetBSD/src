@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,8 +25,6 @@
 #include "target.h"
 #include "gdbthread.h"
 #include "observer.h"
-
-#include <string.h>
 #include <signal.h>
 #include <fcntl.h>
 #include "gdb_select.h"
@@ -46,7 +44,7 @@ extern void _initialize_inflow (void);
 
 static void pass_signal (int);
 
-static void terminal_ours_1 (int);
+static void child_terminal_ours_1 (int);
 
 /* Record terminal status separately for debugger and inferior.  */
 
@@ -80,6 +78,10 @@ struct terminal_info
    settings of flags which readline saves and restores and
    unimportant.  */
 static struct terminal_info our_terminal_info;
+
+/* Snapshot of our own tty state taken during initialization of GDB.
+   This is used as the initial tty state given to each new inferior.  */
+static serial_ttystate initial_gdb_ttystate;
 
 static struct terminal_info *get_inflow_inferior_data (struct inferior *);
 
@@ -158,6 +160,14 @@ show_interactive_mode (struct ui_file *file, int from_tty,
     fprintf_filtered (file, "Debugger's interactive mode is %s.\n", value);
 }
 
+/* Set the initial tty state that is to be inherited by new inferiors.  */
+
+void
+set_initial_gdb_ttystate (void)
+{
+  initial_gdb_ttystate = serial_get_tty_state (stdin_serial);
+}
+
 /* Does GDB have a terminal (on stdin)?  */
 int
 gdb_has_a_terminal (void)
@@ -209,13 +219,11 @@ gdb_has_a_terminal (void)
     fprintf_unfiltered(gdb_stderr, "[%s failed in terminal_inferior: %s]\n", \
 	    what, safe_strerror (errno))
 
-static void terminal_ours_1 (int);
-
 /* Initialize the terminal settings we record for the inferior,
    before we actually run the inferior.  */
 
 void
-terminal_init_inferior_with_pgrp (int pgrp)
+child_terminal_init_with_pgrp (int pgrp)
 {
   struct inferior *inf = current_inferior ();
   struct terminal_info *tinfo = get_inflow_inferior_data (inf);
@@ -231,7 +239,7 @@ terminal_init_inferior_with_pgrp (int pgrp)
     {
       xfree (tinfo->ttystate);
       tinfo->ttystate = serial_copy_tty_state (stdin_serial,
-					       our_terminal_info.ttystate);
+					       initial_gdb_ttystate);
 
       /* Make sure that next time we call terminal_inferior (which will be
          before the program runs, as it needs to be), we install the new
@@ -245,7 +253,7 @@ terminal_init_inferior_with_pgrp (int pgrp)
    and gdb must be able to restore it correctly.  */
 
 void
-terminal_save_ours (void)
+gdb_save_tty_state (void)
 {
   if (gdb_has_a_terminal ())
     {
@@ -255,24 +263,28 @@ terminal_save_ours (void)
 }
 
 void
-terminal_init_inferior (void)
+child_terminal_init (struct target_ops *self)
 {
 #ifdef PROCESS_GROUP_TYPE
-  /* This is for Lynx, and should be cleaned up by having Lynx be a separate
-     debugging target with a version of target_terminal_init_inferior which
-     passes in the process group to a generic routine which does all the work
-     (and the non-threaded child_terminal_init_inferior can just pass in
-     inferior_ptid to the same routine).  */
+  /* This is for Lynx, and should be cleaned up by having Lynx be a
+     separate debugging target with a version of target_terminal_init
+     which passes in the process group to a generic routine which does
+     all the work (and the non-threaded child_terminal_init can just
+     pass in inferior_ptid to the same routine).  */
   /* We assume INFERIOR_PID is also the child's process group.  */
-  terminal_init_inferior_with_pgrp (ptid_get_pid (inferior_ptid));
+  child_terminal_init_with_pgrp (ptid_get_pid (inferior_ptid));
 #endif /* PROCESS_GROUP_TYPE */
 }
 
 /* Put the inferior's terminal settings into effect.
-   This is preparation for starting or resuming the inferior.  */
+   This is preparation for starting or resuming the inferior.
+
+   N.B. Targets that want to use this with async support must build that
+   support on top of this (e.g., the caller still needs to remove stdin
+   from the event loop).  E.g., see linux_nat_terminal_inferior.  */
 
 void
-terminal_inferior (void)
+child_terminal_inferior (struct target_ops *self)
 {
   struct inferior *inf;
   struct terminal_info *tinfo;
@@ -350,22 +362,29 @@ terminal_inferior (void)
    so that no input is discarded.
 
    After doing this, either terminal_ours or terminal_inferior
-   should be called to get back to a normal state of affairs.  */
+   should be called to get back to a normal state of affairs.
+
+   N.B. The implementation is (currently) no different than
+   child_terminal_ours.  See child_terminal_ours_1.  */
 
 void
-terminal_ours_for_output (void)
+child_terminal_ours_for_output (struct target_ops *self)
 {
-  terminal_ours_1 (1);
+  child_terminal_ours_1 (1);
 }
 
 /* Put our terminal settings into effect.
    First record the inferior's terminal settings
-   so they can be restored properly later.  */
+   so they can be restored properly later.
+
+   N.B. Targets that want to use this with async support must build that
+   support on top of this (e.g., the caller still needs to add stdin to the
+   event loop).  E.g., see linux_nat_terminal_ours.  */
 
 void
-terminal_ours (void)
+child_terminal_ours (struct target_ops *self)
 {
-  terminal_ours_1 (0);
+  child_terminal_ours_1 (0);
 }
 
 /* output_only is not used, and should not be used unless we introduce
@@ -373,7 +392,7 @@ terminal_ours (void)
    flags.  */
 
 static void
-terminal_ours_1 (int output_only)
+child_terminal_ours_1 (int output_only)
 {
   struct inferior *inf;
   struct terminal_info *tinfo;
@@ -446,7 +465,7 @@ terminal_ours_1 (int output_only)
 	     such situations as well.  */
 	  if (result == -1)
 	    fprintf_unfiltered (gdb_stderr,
-				"[tcsetpgrp failed in terminal_ours: %s]\n",
+				"[tcsetpgrp failed in child_terminal_ours: %s]\n",
 				safe_strerror (errno));
 #endif
 #endif /* termios */
@@ -505,7 +524,7 @@ get_inflow_inferior_data (struct inferior *inf)
   info = inferior_data (inf, inflow_inferior_data);
   if (info == NULL)
     {
-      info = XZALLOC (struct terminal_info);
+      info = XCNEW (struct terminal_info);
       set_inferior_data (inf, inflow_inferior_data, info);
     }
 
@@ -562,7 +581,7 @@ term_info (char *arg, int from_tty)
 }
 
 void
-child_terminal_info (const char *args, int from_tty)
+child_terminal_info (struct target_ops *self, const char *args, int from_tty)
 {
   struct inferior *inf;
   struct terminal_info *tinfo;

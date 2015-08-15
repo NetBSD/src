@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/mips64.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,6 +28,7 @@
 
 #include "mips-tdep.h"
 #include "inf-ptrace.h"
+#include "obsd-nat.h"
 
 /* Shorthand for some register numbers used below.  */
 #define MIPS_PC_REGNUM	MIPS_EMBED_PC_REGNUM
@@ -121,5 +122,5 @@ _initialize_mips64obsd_nat (void)
   t = inf_ptrace_target ();
   t->to_fetch_registers = mips64obsd_fetch_inferior_registers;
   t->to_store_registers = mips64obsd_store_inferior_registers;
-  add_target (t);
+  obsd_add_target (t);
 }

@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,15 +32,86 @@ if ![runto_main] then {
     return 0
 }
 
+set python_error_text "Error while executing Python code\\."
+
 gdb_py_test_silent_cmd "python sym = gdb.lookup_symbol(\"some_var\")" \
     "Find a symbol in objfile" 1
 gdb_py_test_silent_cmd "python objfile = sym\[0\].symtab.objfile" \
     "Get backing object file" 1
 
-gdb_test "python print (objfile.filename)" ".*py-objfile.*" \
-  "Get objfile validity"
+gdb_test "python print (objfile.filename)" "${testfile}" \
+  "Get objfile file name"
+
+gdb_test "python print (gdb.lookup_objfile (\"${testfile}\").filename)" \
+    "${testfile}"
+gdb_test "python print (gdb.lookup_objfile (\"junk\"))" \
+    "Objfile not found\\.\r\n${python_error_text}"
+
+set binfile_build_id [get_build_id $binfile]
+if [string compare $binfile_build_id ""] {
+    verbose -log "binfile_build_id = $binfile_build_id"
+    gdb_test "python print (objfile.build_id)" "$binfile_build_id" \
+    "Get objfile build id"
+    gdb_test "python print (gdb.lookup_objfile (\"$binfile_build_id\", by_build_id=True).filename)" \
+	"${testfile}"
+} else {
+    unsupported "build-id is not supported by the compiler"
+}
+
+# Other lookup_objfile_by_build_id tests we can do, even if compiler doesn't
+# support them.
+gdb_test "python print (gdb.lookup_objfile (\"foo\", by_build_id=True))" \
+    "Not a valid build id\\.\r\n${python_error_text}"
+gdb_test "python print (gdb.lookup_objfile (\"1234abcdef\", by_build_id=True))" \
+    "Objfile not found\\.\r\n${python_error_text}"
+
+gdb_test "python print (objfile.progspace)" "<gdb\.Progspace object at .*>" \
+  "Get objfile program space"
 gdb_test "python print (objfile.is_valid())" "True" \
   "Get objfile validity"
 gdb_unload
 gdb_test "python print (objfile.is_valid())" "False" \
   "Get objfile validity after unload"
+
+gdb_py_test_silent_cmd "python objfile.random_attribute = 42" \
+    "Set random attribute in objfile" 1
+gdb_test "python print (objfile.random_attribute)" "42" \
+    "Verify set of random attribute in objfile"
+
+# Now build another copy of the testcase, this time without debug info.
+
+if { [prepare_for_testing ${testfile}.exp ${testfile}2 ${srcfile} {nodebug ldflags=-Wl,--strip-debug}] } {
+    return -1
+}
+
+if ![runto_main] {
+    fail "Can't run to main"
+    return 0
+}
+
+gdb_py_test_silent_cmd "python objfile = gdb.objfiles()\[0\]" \
+    "Get no-debug objfile file" 1
+
+gdb_test "python print (objfile.owner)" "None" \
+    "Test owner of real objfile."
+
+gdb_test "p main" "= {<text variable, no debug info>} $hex <main>" \
+    "print main without debug info"
+
+gdb_py_test_silent_cmd "python objfile.add_separate_debug_file(\"${binfile}\")" \
+    "Add separate debug file file" 1
+
+gdb_py_test_silent_cmd "python sep_objfile = gdb.objfiles()\[0\]" \
+    "Get separate debug info objfile" 1
+
+gdb_test "python print (sep_objfile.owner.filename)" "${testfile}2" \
+    "Test owner of separate debug file"
+
+gdb_test "p main" "= {int \\(\\)} $hex <main>" \
+    "print main with debug info"
+
+# Separate debug files are not findable.
+if { [get_python_valueof "sep_objfile.build_id" "None"] != "None" } {
+    gdb_test "python print (gdb.lookup_objfile (sep_objfile.build_id, by_build_id=True))" \
+	"Objfile not found\\.\r\n${python_error_text}"
+}

@@ -1,6 +1,6 @@
 /* Support routines for manipulating internal types for GDB.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -20,7 +20,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "bfd.h"
 #include "symtab.h"
 #include "symfile.h"
@@ -34,12 +33,11 @@
 #include "complaints.h"
 #include "gdbcmd.h"
 #include "cp-abi.h"
-#include "gdb_assert.h"
 #include "hashtab.h"
-#include "exceptions.h"
 #include "cp-support.h"
 #include "bcache.h"
 #include "dwarf2loc.h"
+#include "gdbcore.h"
 
 /* Initialize BADNESS constants.  */
 
@@ -201,8 +199,8 @@ alloc_type_arch (struct gdbarch *gdbarch)
 
   /* Alloc the structure and start off with all fields zeroed.  */
 
-  type = XZALLOC (struct type);
-  TYPE_MAIN_TYPE (type) = XZALLOC (struct main_type);
+  type = XCNEW (struct type);
+  TYPE_MAIN_TYPE (type) = XCNEW (struct main_type);
 
   TYPE_OBJFILE_OWNED (type) = 0;
   TYPE_OWNER (type).gdbarch = gdbarch;
@@ -268,7 +266,7 @@ alloc_type_instance (struct type *oldtype)
   /* Allocate the structure.  */
 
   if (! TYPE_OBJFILE_OWNED (oldtype))
-    type = XZALLOC (struct type);
+    type = XCNEW (struct type);
   else
     type = OBSTACK_ZALLOC (&TYPE_OBJFILE (oldtype)->objfile_obstack,
 			   struct type);
@@ -705,6 +703,19 @@ make_restrict_type (struct type *type)
 			      NULL);
 }
 
+/* Make a type without const, volatile, or restrict.  */
+
+struct type *
+make_unqualified_type (struct type *type)
+{
+  return make_qualified_type (type,
+			      (TYPE_INSTANCE_FLAGS (type)
+			       & ~(TYPE_INSTANCE_FLAG_CONST
+				   | TYPE_INSTANCE_FLAG_VOLATILE
+				   | TYPE_INSTANCE_FLAG_RESTRICT)),
+			      NULL);
+}
+
 /* Replace the contents of ntype with the type *type.  This changes the
    contents, rather than the pointer for TYPE_MAIN_TYPE (ntype); thus
    the changes are propogated to all types in the TYPE_CHAIN.
@@ -798,6 +809,41 @@ allocate_stub_method (struct type *type)
   return mtype;
 }
 
+/* Create a range type with a dynamic range from LOW_BOUND to
+   HIGH_BOUND, inclusive.  See create_range_type for further details. */
+
+struct type *
+create_range_type (struct type *result_type, struct type *index_type,
+		   const struct dynamic_prop *low_bound,
+		   const struct dynamic_prop *high_bound)
+{
+  if (result_type == NULL)
+    result_type = alloc_type_copy (index_type);
+  TYPE_CODE (result_type) = TYPE_CODE_RANGE;
+  TYPE_TARGET_TYPE (result_type) = index_type;
+  if (TYPE_STUB (index_type))
+    TYPE_TARGET_STUB (result_type) = 1;
+  else
+    TYPE_LENGTH (result_type) = TYPE_LENGTH (check_typedef (index_type));
+
+  TYPE_RANGE_DATA (result_type) = (struct range_bounds *)
+    TYPE_ZALLOC (result_type, sizeof (struct range_bounds));
+  TYPE_RANGE_DATA (result_type)->low = *low_bound;
+  TYPE_RANGE_DATA (result_type)->high = *high_bound;
+
+  if (low_bound->kind == PROP_CONST && low_bound->data.const_val >= 0)
+    TYPE_UNSIGNED (result_type) = 1;
+
+  /* Ada allows the declaration of range types whose upper bound is
+     less than the lower bound, so checking the lower bound is not
+     enough.  Make sure we do not mark a range type whose upper bound
+     is negative as unsigned.  */
+  if (high_bound->kind == PROP_CONST && high_bound->data.const_val < 0)
+    TYPE_UNSIGNED (result_type) = 0;
+
+  return result_type;
+}
+
 /* Create a range type using either a blank type supplied in
    RESULT_TYPE, or creating a new type, inheriting the objfile from
    INDEX_TYPE.
@@ -809,27 +855,32 @@ allocate_stub_method (struct type *type)
    sure it is TYPE_CODE_UNDEF before we bash it into a range type?  */
 
 struct type *
-create_range_type (struct type *result_type, struct type *index_type,
-		   LONGEST low_bound, LONGEST high_bound)
+create_static_range_type (struct type *result_type, struct type *index_type,
+			  LONGEST low_bound, LONGEST high_bound)
 {
-  if (result_type == NULL)
-    result_type = alloc_type_copy (index_type);
-  TYPE_CODE (result_type) = TYPE_CODE_RANGE;
-  TYPE_TARGET_TYPE (result_type) = index_type;
-  if (TYPE_STUB (index_type))
-    TYPE_TARGET_STUB (result_type) = 1;
-  else
-    TYPE_LENGTH (result_type) = TYPE_LENGTH (check_typedef (index_type));
-  TYPE_RANGE_DATA (result_type) = (struct range_bounds *)
-    TYPE_ZALLOC (result_type, sizeof (struct range_bounds));
-  TYPE_LOW_BOUND (result_type) = low_bound;
-  TYPE_HIGH_BOUND (result_type) = high_bound;
+  struct dynamic_prop low, high;
 
-  if (low_bound >= 0)
-    TYPE_UNSIGNED (result_type) = 1;
+  low.kind = PROP_CONST;
+  low.data.const_val = low_bound;
+
+  high.kind = PROP_CONST;
+  high.data.const_val = high_bound;
+
+  result_type = create_range_type (result_type, index_type, &low, &high);
 
   return result_type;
 }
+
+/* Predicate tests whether BOUNDS are static.  Returns 1 if all bounds values
+   are static, otherwise returns 0.  */
+
+static int
+has_static_range (const struct range_bounds *bounds)
+{
+  return (bounds->low.kind == PROP_CONST
+	  && bounds->high.kind == PROP_CONST);
+}
+
 
 /* Set *LOWP and *HIGHP to the lower and upper bounds of discrete type
    TYPE.  Return 1 if type is a range type, 0 if it is discrete (and
@@ -951,44 +1002,79 @@ get_array_bounds (struct type *type, LONGEST *low_bound, LONGEST *high_bound)
    Elements will be of type ELEMENT_TYPE, the indices will be of type
    RANGE_TYPE.
 
+   If BIT_STRIDE is not zero, build a packed array type whose element
+   size is BIT_STRIDE.  Otherwise, ignore this parameter.
+
    FIXME: Maybe we should check the TYPE_CODE of RESULT_TYPE to make
    sure it is TYPE_CODE_UNDEF before we bash it into an array
    type?  */
 
 struct type *
-create_array_type (struct type *result_type, 
-		   struct type *element_type,
-		   struct type *range_type)
+create_array_type_with_stride (struct type *result_type,
+			       struct type *element_type,
+			       struct type *range_type,
+			       unsigned int bit_stride)
 {
-  LONGEST low_bound, high_bound;
-
   if (result_type == NULL)
     result_type = alloc_type_copy (range_type);
 
   TYPE_CODE (result_type) = TYPE_CODE_ARRAY;
   TYPE_TARGET_TYPE (result_type) = element_type;
-  if (get_discrete_bounds (range_type, &low_bound, &high_bound) < 0)
-    low_bound = high_bound = 0;
-  CHECK_TYPEDEF (element_type);
-  /* Be careful when setting the array length.  Ada arrays can be
-     empty arrays with the high_bound being smaller than the low_bound.
-     In such cases, the array length should be zero.  */
-  if (high_bound < low_bound)
-    TYPE_LENGTH (result_type) = 0;
+  if (has_static_range (TYPE_RANGE_DATA (range_type)))
+    {
+      LONGEST low_bound, high_bound;
+
+      if (get_discrete_bounds (range_type, &low_bound, &high_bound) < 0)
+	low_bound = high_bound = 0;
+      CHECK_TYPEDEF (element_type);
+      /* Be careful when setting the array length.  Ada arrays can be
+	 empty arrays with the high_bound being smaller than the low_bound.
+	 In such cases, the array length should be zero.  */
+      if (high_bound < low_bound)
+	TYPE_LENGTH (result_type) = 0;
+      else if (bit_stride > 0)
+	TYPE_LENGTH (result_type) =
+	  (bit_stride * (high_bound - low_bound + 1) + 7) / 8;
+      else
+	TYPE_LENGTH (result_type) =
+	  TYPE_LENGTH (element_type) * (high_bound - low_bound + 1);
+    }
   else
-    TYPE_LENGTH (result_type) =
-      TYPE_LENGTH (element_type) * (high_bound - low_bound + 1);
+    {
+      /* This type is dynamic and its length needs to be computed
+         on demand.  In the meantime, avoid leaving the TYPE_LENGTH
+         undefined by setting it to zero.  Although we are not expected
+         to trust TYPE_LENGTH in this case, setting the size to zero
+         allows us to avoid allocating objects of random sizes in case
+         we accidently do.  */
+      TYPE_LENGTH (result_type) = 0;
+    }
+
   TYPE_NFIELDS (result_type) = 1;
   TYPE_FIELDS (result_type) =
     (struct field *) TYPE_ZALLOC (result_type, sizeof (struct field));
   TYPE_INDEX_TYPE (result_type) = range_type;
   TYPE_VPTR_FIELDNO (result_type) = -1;
+  if (bit_stride > 0)
+    TYPE_FIELD_BITSIZE (result_type, 0) = bit_stride;
 
   /* TYPE_FLAG_TARGET_STUB will take care of zero length arrays.  */
   if (TYPE_LENGTH (result_type) == 0)
     TYPE_TARGET_STUB (result_type) = 1;
 
   return result_type;
+}
+
+/* Same as create_array_type_with_stride but with no bit_stride
+   (BIT_STRIDE = 0), thus building an unpacked array.  */
+
+struct type *
+create_array_type (struct type *result_type,
+		   struct type *element_type,
+		   struct type *range_type)
+{
+  return create_array_type_with_stride (result_type, element_type,
+					range_type, 0);
 }
 
 struct type *
@@ -998,7 +1084,7 @@ lookup_array_range_type (struct type *element_type,
   struct gdbarch *gdbarch = get_type_arch (element_type);
   struct type *index_type = builtin_type (gdbarch)->builtin_int;
   struct type *range_type
-    = create_range_type (NULL, index_type, low_bound, high_bound);
+    = create_static_range_type (NULL, index_type, low_bound, high_bound);
 
   return create_array_type (NULL, element_type, range_type);
 }
@@ -1220,13 +1306,10 @@ lookup_typename (const struct language_defn *language,
   struct symbol *sym;
   struct type *type;
 
-  sym = lookup_symbol (name, block, VAR_DOMAIN, 0);
+  sym = lookup_symbol_in_language (name, block, VAR_DOMAIN,
+				   language->la_language, NULL);
   if (sym != NULL && SYMBOL_CLASS (sym) == LOC_TYPEDEF)
     return SYMBOL_TYPE (sym);
-
-  type = language_lookup_primitive_type_by_name (language, gdbarch, name);
-  if (type)
-    return type;
 
   if (noerr)
     return NULL;
@@ -1446,6 +1529,40 @@ lookup_struct_elt_type (struct type *type, const char *name, int noerr)
   error (_("Type %s has no component named %s."), typename, name);
 }
 
+/* Store in *MAX the largest number representable by unsigned integer type
+   TYPE.  */
+
+void
+get_unsigned_type_max (struct type *type, ULONGEST *max)
+{
+  unsigned int n;
+
+  CHECK_TYPEDEF (type);
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_INT && TYPE_UNSIGNED (type));
+  gdb_assert (TYPE_LENGTH (type) <= sizeof (ULONGEST));
+
+  /* Written this way to avoid overflow.  */
+  n = TYPE_LENGTH (type) * TARGET_CHAR_BIT;
+  *max = ((((ULONGEST) 1 << (n - 1)) - 1) << 1) | 1;
+}
+
+/* Store in *MIN, *MAX the smallest and largest numbers representable by
+   signed integer type TYPE.  */
+
+void
+get_signed_type_minmax (struct type *type, LONGEST *min, LONGEST *max)
+{
+  unsigned int n;
+
+  CHECK_TYPEDEF (type);
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_INT && !TYPE_UNSIGNED (type));
+  gdb_assert (TYPE_LENGTH (type) <= sizeof (LONGEST));
+
+  n = TYPE_LENGTH (type) * TARGET_CHAR_BIT;
+  *min = -((ULONGEST) 1 << (n - 1));
+  *max = ((ULONGEST) 1 << (n - 1)) - 1;
+}
+
 /* Lookup the vptr basetype/fieldno values for TYPE.
    If found store vptr_basetype in *BASETYPEP if non-NULL, and return
    vptr_fieldno.  Also, if found and basetype is from the same objfile,
@@ -1506,6 +1623,330 @@ static void
 stub_noname_complaint (void)
 {
   complaint (&symfile_complaints, _("stub type has NULL name"));
+}
+
+/* Worker for is_dynamic_type.  */
+
+static int
+is_dynamic_type_internal (struct type *type, int top_level)
+{
+  type = check_typedef (type);
+
+  /* We only want to recognize references at the outermost level.  */
+  if (top_level && TYPE_CODE (type) == TYPE_CODE_REF)
+    type = check_typedef (TYPE_TARGET_TYPE (type));
+
+  /* Types that have a dynamic TYPE_DATA_LOCATION are considered
+     dynamic, even if the type itself is statically defined.
+     From a user's point of view, this may appear counter-intuitive;
+     but it makes sense in this context, because the point is to determine
+     whether any part of the type needs to be resolved before it can
+     be exploited.  */
+  if (TYPE_DATA_LOCATION (type) != NULL
+      && (TYPE_DATA_LOCATION_KIND (type) == PROP_LOCEXPR
+	  || TYPE_DATA_LOCATION_KIND (type) == PROP_LOCLIST))
+    return 1;
+
+  switch (TYPE_CODE (type))
+    {
+    case TYPE_CODE_RANGE:
+      return !has_static_range (TYPE_RANGE_DATA (type));
+
+    case TYPE_CODE_ARRAY:
+      {
+	gdb_assert (TYPE_NFIELDS (type) == 1);
+
+	/* The array is dynamic if either the bounds are dynamic,
+	   or the elements it contains have a dynamic contents.  */
+	if (is_dynamic_type_internal (TYPE_INDEX_TYPE (type), 0))
+	  return 1;
+	return is_dynamic_type_internal (TYPE_TARGET_TYPE (type), 0);
+      }
+
+    case TYPE_CODE_STRUCT:
+    case TYPE_CODE_UNION:
+      {
+	int i;
+
+	for (i = 0; i < TYPE_NFIELDS (type); ++i)
+	  if (!field_is_static (&TYPE_FIELD (type, i))
+	      && is_dynamic_type_internal (TYPE_FIELD_TYPE (type, i), 0))
+	    return 1;
+      }
+      break;
+    }
+
+  return 0;
+}
+
+/* See gdbtypes.h.  */
+
+int
+is_dynamic_type (struct type *type)
+{
+  return is_dynamic_type_internal (type, 1);
+}
+
+static struct type *resolve_dynamic_type_internal (struct type *type,
+						   CORE_ADDR addr,
+						   int top_level);
+
+/* Given a dynamic range type (dyn_range_type) and address,
+   return a static version of that type.  */
+
+static struct type *
+resolve_dynamic_range (struct type *dyn_range_type, CORE_ADDR addr)
+{
+  CORE_ADDR value;
+  struct type *static_range_type;
+  const struct dynamic_prop *prop;
+  const struct dwarf2_locexpr_baton *baton;
+  struct dynamic_prop low_bound, high_bound;
+
+  gdb_assert (TYPE_CODE (dyn_range_type) == TYPE_CODE_RANGE);
+
+  prop = &TYPE_RANGE_DATA (dyn_range_type)->low;
+  if (dwarf2_evaluate_property (prop, addr, &value))
+    {
+      low_bound.kind = PROP_CONST;
+      low_bound.data.const_val = value;
+    }
+  else
+    {
+      low_bound.kind = PROP_UNDEFINED;
+      low_bound.data.const_val = 0;
+    }
+
+  prop = &TYPE_RANGE_DATA (dyn_range_type)->high;
+  if (dwarf2_evaluate_property (prop, addr, &value))
+    {
+      high_bound.kind = PROP_CONST;
+      high_bound.data.const_val = value;
+
+      if (TYPE_RANGE_DATA (dyn_range_type)->flag_upper_bound_is_count)
+	high_bound.data.const_val
+	  = low_bound.data.const_val + high_bound.data.const_val - 1;
+    }
+  else
+    {
+      high_bound.kind = PROP_UNDEFINED;
+      high_bound.data.const_val = 0;
+    }
+
+  static_range_type = create_range_type (copy_type (dyn_range_type),
+					 TYPE_TARGET_TYPE (dyn_range_type),
+					 &low_bound, &high_bound);
+  TYPE_RANGE_DATA (static_range_type)->flag_bound_evaluated = 1;
+  return static_range_type;
+}
+
+/* Resolves dynamic bound values of an array type TYPE to static ones.
+   ADDRESS might be needed to resolve the subrange bounds, it is the location
+   of the associated array.  */
+
+static struct type *
+resolve_dynamic_array (struct type *type, CORE_ADDR addr)
+{
+  CORE_ADDR value;
+  struct type *elt_type;
+  struct type *range_type;
+  struct type *ary_dim;
+
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_ARRAY);
+
+  elt_type = type;
+  range_type = check_typedef (TYPE_INDEX_TYPE (elt_type));
+  range_type = resolve_dynamic_range (range_type, addr);
+
+  ary_dim = check_typedef (TYPE_TARGET_TYPE (elt_type));
+
+  if (ary_dim != NULL && TYPE_CODE (ary_dim) == TYPE_CODE_ARRAY)
+    elt_type = resolve_dynamic_array (TYPE_TARGET_TYPE (type), addr);
+  else
+    elt_type = TYPE_TARGET_TYPE (type);
+
+  return create_array_type (copy_type (type),
+			    elt_type,
+			    range_type);
+}
+
+/* Resolve dynamic bounds of members of the union TYPE to static
+   bounds.  */
+
+static struct type *
+resolve_dynamic_union (struct type *type, CORE_ADDR addr)
+{
+  struct type *resolved_type;
+  int i;
+  unsigned int max_len = 0;
+
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_UNION);
+
+  resolved_type = copy_type (type);
+  TYPE_FIELDS (resolved_type)
+    = TYPE_ALLOC (resolved_type,
+		  TYPE_NFIELDS (resolved_type) * sizeof (struct field));
+  memcpy (TYPE_FIELDS (resolved_type),
+	  TYPE_FIELDS (type),
+	  TYPE_NFIELDS (resolved_type) * sizeof (struct field));
+  for (i = 0; i < TYPE_NFIELDS (resolved_type); ++i)
+    {
+      struct type *t;
+
+      if (field_is_static (&TYPE_FIELD (type, i)))
+	continue;
+
+      t = resolve_dynamic_type_internal (TYPE_FIELD_TYPE (resolved_type, i),
+					 addr, 0);
+      TYPE_FIELD_TYPE (resolved_type, i) = t;
+      if (TYPE_LENGTH (t) > max_len)
+	max_len = TYPE_LENGTH (t);
+    }
+
+  TYPE_LENGTH (resolved_type) = max_len;
+  return resolved_type;
+}
+
+/* Resolve dynamic bounds of members of the struct TYPE to static
+   bounds.  */
+
+static struct type *
+resolve_dynamic_struct (struct type *type, CORE_ADDR addr)
+{
+  struct type *resolved_type;
+  int i;
+  unsigned resolved_type_bit_length = 0;
+
+  gdb_assert (TYPE_CODE (type) == TYPE_CODE_STRUCT);
+  gdb_assert (TYPE_NFIELDS (type) > 0);
+
+  resolved_type = copy_type (type);
+  TYPE_FIELDS (resolved_type)
+    = TYPE_ALLOC (resolved_type,
+		  TYPE_NFIELDS (resolved_type) * sizeof (struct field));
+  memcpy (TYPE_FIELDS (resolved_type),
+	  TYPE_FIELDS (type),
+	  TYPE_NFIELDS (resolved_type) * sizeof (struct field));
+  for (i = 0; i < TYPE_NFIELDS (resolved_type); ++i)
+    {
+      unsigned new_bit_length;
+
+      if (field_is_static (&TYPE_FIELD (type, i)))
+	continue;
+
+      TYPE_FIELD_TYPE (resolved_type, i)
+	= resolve_dynamic_type_internal (TYPE_FIELD_TYPE (resolved_type, i),
+					 addr, 0);
+
+      /* As we know this field is not a static field, the field's
+	 field_loc_kind should be FIELD_LOC_KIND_BITPOS.  Verify
+	 this is the case, but only trigger a simple error rather
+	 than an internal error if that fails.  While failing
+	 that verification indicates a bug in our code, the error
+	 is not severe enough to suggest to the user he stops
+	 his debugging session because of it.  */
+      if (TYPE_FIELD_LOC_KIND (resolved_type, i) != FIELD_LOC_KIND_BITPOS)
+	error (_("Cannot determine struct field location"
+		 " (invalid location kind)"));
+      new_bit_length = TYPE_FIELD_BITPOS (resolved_type, i);
+      if (TYPE_FIELD_BITSIZE (resolved_type, i) != 0)
+	new_bit_length += TYPE_FIELD_BITSIZE (resolved_type, i);
+      else
+	new_bit_length += (TYPE_LENGTH (TYPE_FIELD_TYPE (resolved_type, i))
+			   * TARGET_CHAR_BIT);
+
+      /* Normally, we would use the position and size of the last field
+	 to determine the size of the enclosing structure.  But GCC seems
+	 to be encoding the position of some fields incorrectly when
+	 the struct contains a dynamic field that is not placed last.
+	 So we compute the struct size based on the field that has
+	 the highest position + size - probably the best we can do.  */
+      if (new_bit_length > resolved_type_bit_length)
+	resolved_type_bit_length = new_bit_length;
+    }
+
+  TYPE_LENGTH (resolved_type)
+    = (resolved_type_bit_length + TARGET_CHAR_BIT - 1) / TARGET_CHAR_BIT;
+
+  return resolved_type;
+}
+
+/* Worker for resolved_dynamic_type.  */
+
+static struct type *
+resolve_dynamic_type_internal (struct type *type, CORE_ADDR addr,
+			       int top_level)
+{
+  struct type *real_type = check_typedef (type);
+  struct type *resolved_type = type;
+  const struct dynamic_prop *prop;
+  CORE_ADDR value;
+
+  if (!is_dynamic_type_internal (real_type, top_level))
+    return type;
+
+  if (TYPE_CODE (type) == TYPE_CODE_TYPEDEF)
+    {
+      resolved_type = copy_type (type);
+      TYPE_TARGET_TYPE (resolved_type)
+	= resolve_dynamic_type_internal (TYPE_TARGET_TYPE (type), addr,
+					 top_level);
+    }
+  else 
+    {
+      /* Before trying to resolve TYPE, make sure it is not a stub.  */
+      type = real_type;
+
+      switch (TYPE_CODE (type))
+	{
+	case TYPE_CODE_REF:
+	  {
+	    CORE_ADDR target_addr = read_memory_typed_address (addr, type);
+
+	    resolved_type = copy_type (type);
+	    TYPE_TARGET_TYPE (resolved_type)
+	      = resolve_dynamic_type_internal (TYPE_TARGET_TYPE (type),
+					       target_addr, top_level);
+	    break;
+	  }
+
+	case TYPE_CODE_ARRAY:
+	  resolved_type = resolve_dynamic_array (type, addr);
+	  break;
+
+	case TYPE_CODE_RANGE:
+	  resolved_type = resolve_dynamic_range (type, addr);
+	  break;
+
+	case TYPE_CODE_UNION:
+	  resolved_type = resolve_dynamic_union (type, addr);
+	  break;
+
+	case TYPE_CODE_STRUCT:
+	  resolved_type = resolve_dynamic_struct (type, addr);
+	  break;
+	}
+    }
+
+  /* Resolve data_location attribute.  */
+  prop = TYPE_DATA_LOCATION (resolved_type);
+  if (dwarf2_evaluate_property (prop, addr, &value))
+    {
+      TYPE_DATA_LOCATION_ADDR (resolved_type) = value;
+      TYPE_DATA_LOCATION_KIND (resolved_type) = PROP_CONST;
+    }
+  else
+    TYPE_DATA_LOCATION (resolved_type) = NULL;
+
+  return resolved_type;
+}
+
+/* See gdbtypes.h  */
+
+struct type *
+resolve_dynamic_type (struct type *type, CORE_ADDR addr)
+{
+  return resolve_dynamic_type_internal (type, addr, 1);
 }
 
 /* Find the real type of TYPE.  This function returns the real type,
@@ -1682,45 +2123,6 @@ check_typedef (struct type *type)
       if (TYPE_STUB (target_type) || TYPE_TARGET_STUB (target_type))
 	{
 	  /* Nothing we can do.  */
-	}
-      else if (TYPE_CODE (type) == TYPE_CODE_ARRAY
-	       && TYPE_NFIELDS (type) == 1
-	       && (TYPE_CODE (range_type = TYPE_INDEX_TYPE (type))
-		   == TYPE_CODE_RANGE))
-	{
-	  /* Now recompute the length of the array type, based on its
-	     number of elements and the target type's length.
-	     Watch out for Ada null Ada arrays where the high bound
-	     is smaller than the low bound.  */
-	  const LONGEST low_bound = TYPE_LOW_BOUND (range_type);
-	  const LONGEST high_bound = TYPE_HIGH_BOUND (range_type);
-	  ULONGEST len;
-
-	  if (high_bound < low_bound)
-	    len = 0;
-	  else
-	    {
-	      /* For now, we conservatively take the array length to be 0
-		 if its length exceeds UINT_MAX.  The code below assumes
-		 that for x < 0, (ULONGEST) x == -x + ULONGEST_MAX + 1,
-		 which is technically not guaranteed by C, but is usually true
-		 (because it would be true if x were unsigned with its
-		 high-order bit on).  It uses the fact that
-		 high_bound-low_bound is always representable in
-		 ULONGEST and that if high_bound-low_bound+1 overflows,
-		 it overflows to 0.  We must change these tests if we 
-		 decide to increase the representation of TYPE_LENGTH
-		 from unsigned int to ULONGEST.  */
-	      ULONGEST ulow = low_bound, uhigh = high_bound;
-	      ULONGEST tlen = TYPE_LENGTH (target_type);
-
-	      len = tlen * (uhigh - ulow + 1);
-	      if (tlen == 0 || (len / tlen - 1 + ulow) != uhigh 
-		  || len > UINT_MAX)
-		len = 0;
-	    }
-	  TYPE_LENGTH (type) = len;
-	  TYPE_TARGET_STUB (type) = 0;
 	}
       else if (TYPE_CODE (type) == TYPE_CODE_RANGE)
 	{
@@ -2122,6 +2524,15 @@ is_scalar_type_recursive (struct type *t)
   return 0;
 }
 
+/* Return true is T is a class or a union.  False otherwise.  */
+
+int
+class_or_union_p (const struct type *t)
+{
+  return (TYPE_CODE (t) == TYPE_CODE_STRUCT
+          || TYPE_CODE (t) == TYPE_CODE_UNION);
+}
+
 /* A helper function which returns true if types A and B represent the
    "same" class type.  This is true if the types have the same main
    type, or the same name.  */
@@ -2367,7 +2778,7 @@ rank_function (struct type **parms, int nparms,
 
   bv = xmalloc (sizeof (struct badness_vector));
   bv->length = nargs + 1;	/* add 1 for the length-match rank.  */
-  bv->rank = xmalloc ((nargs + 1) * sizeof (int));
+  bv->rank = XNEWVEC (struct rank, nargs + 1);
 
   /* First compare the lengths of the supplied lists.
      If there is a mismatch, set it to a high value.  */
@@ -2892,6 +3303,8 @@ rank_one_type (struct type *parm, struct type *arg, struct value *value)
 	case TYPE_CODE_CHAR:
 	case TYPE_CODE_RANGE:
 	case TYPE_CODE_BOOL:
+	  if (TYPE_DECLARED_CLASS (arg))
+	    return INCOMPATIBLE_TYPE_BADNESS;
 	  return INTEGER_PROMOTION_BADNESS;
 	case TYPE_CODE_FLT:
 	  return INT_FLOAT_CONVERSION_BADNESS;
@@ -2909,6 +3322,8 @@ rank_one_type (struct type *parm, struct type *arg, struct value *value)
 	case TYPE_CODE_RANGE:
 	case TYPE_CODE_BOOL:
 	case TYPE_CODE_ENUM:
+	  if (TYPE_DECLARED_CLASS (parm) || TYPE_DECLARED_CLASS (arg))
+	    return INCOMPATIBLE_TYPE_BADNESS;
 	  return INTEGER_CONVERSION_BADNESS;
 	case TYPE_CODE_FLT:
 	  return INT_FLOAT_CONVERSION_BADNESS;
@@ -2922,6 +3337,8 @@ rank_one_type (struct type *parm, struct type *arg, struct value *value)
 	case TYPE_CODE_RANGE:
 	case TYPE_CODE_BOOL:
 	case TYPE_CODE_ENUM:
+	  if (TYPE_DECLARED_CLASS (arg))
+	    return INCOMPATIBLE_TYPE_BADNESS;
 	  return INTEGER_CONVERSION_BADNESS;
 	case TYPE_CODE_FLT:
 	  return INT_FLOAT_CONVERSION_BADNESS;
@@ -3029,7 +3446,6 @@ rank_one_type (struct type *parm, struct type *arg, struct value *value)
 	}
       break;
     case TYPE_CODE_STRUCT:
-      /* currently same as TYPE_CODE_CLASS.  */
       switch (TYPE_CODE (arg))
 	{
 	case TYPE_CODE_STRUCT:
@@ -3118,14 +3534,18 @@ print_bit_vector (B_TYPE *bits, int nbits)
    situation.  */
 
 static void
-print_arg_types (struct field *args, int nargs, int spaces)
+print_args (struct field *args, int nargs, int spaces)
 {
   if (args != NULL)
     {
       int i;
 
       for (i = 0; i < nargs; i++)
-	recursive_dump_type (args[i].type, spaces + 2);
+	{
+	  printfi_filtered (spaces, "[%d] name '%s'\n", i,
+			    args[i].name != NULL ? args[i].name : "<NULL>");
+	  recursive_dump_type (args[i].type, spaces + 2);
+	}
     }
 }
 
@@ -3183,11 +3603,9 @@ dump_fn_fieldlists (struct type *type, int spaces)
 	  gdb_print_host_address (TYPE_FN_FIELD_ARGS (f, overload_idx), 
 				  gdb_stdout);
 	  printf_filtered ("\n");
-
-	  print_arg_types (TYPE_FN_FIELD_ARGS (f, overload_idx),
-			   TYPE_NFIELDS (TYPE_FN_FIELD_TYPE (f, 
-							     overload_idx)),
-			   spaces);
+	  print_args (TYPE_FN_FIELD_ARGS (f, overload_idx),
+		      TYPE_NFIELDS (TYPE_FN_FIELD_TYPE (f, overload_idx)),
+		      spaces + 8 + 2);
 	  printfi_filtered (spaces + 8, "fcontext ");
 	  gdb_print_host_address (TYPE_FN_FIELD_FCONTEXT (f, overload_idx),
 				  gdb_stdout);
@@ -3700,7 +4118,7 @@ copy_type_recursive (struct objfile *objfile,
       int i, nfields;
 
       nfields = TYPE_NFIELDS (type);
-      TYPE_FIELDS (new_type) = XCALLOC (nfields, struct field);
+      TYPE_FIELDS (new_type) = XCNEWVEC (struct field, nfields);
       for (i = 0; i < nfields; i++)
 	{
 	  TYPE_FIELD_ARTIFICIAL (new_type, i) = 
@@ -3745,6 +4163,15 @@ copy_type_recursive (struct objfile *objfile,
     {
       TYPE_RANGE_DATA (new_type) = xmalloc (sizeof (struct range_bounds));
       *TYPE_RANGE_DATA (new_type) = *TYPE_RANGE_DATA (type);
+    }
+
+  /* Copy the data location information.  */
+  if (TYPE_DATA_LOCATION (type) != NULL)
+    {
+      TYPE_DATA_LOCATION (new_type)
+	= TYPE_ALLOC (new_type, sizeof (struct dynamic_prop));
+      memcpy (TYPE_DATA_LOCATION (new_type), TYPE_DATA_LOCATION (type),
+	      sizeof (struct dynamic_prop));
     }
 
   /* Copy pointers to other types.  */
@@ -3792,6 +4219,13 @@ copy_type (const struct type *type)
   TYPE_LENGTH (new_type) = TYPE_LENGTH (type);
   memcpy (TYPE_MAIN_TYPE (new_type), TYPE_MAIN_TYPE (type),
 	  sizeof (struct main_type));
+  if (TYPE_DATA_LOCATION (type) != NULL)
+    {
+      TYPE_DATA_LOCATION (new_type)
+	= TYPE_ALLOC (new_type, sizeof (struct dynamic_prop));
+      memcpy (TYPE_DATA_LOCATION (new_type), TYPE_DATA_LOCATION (type),
+	      sizeof (struct dynamic_prop));
+    }
 
   return new_type;
 }
@@ -4165,6 +4599,10 @@ gdbtypes_post_init (struct gdbarch *gdbarch)
   builtin_type->internal_fn
     = arch_type (gdbarch, TYPE_CODE_INTERNAL_FUNCTION, 0,
 		 "<internal function>");
+
+  /* This type represents an xmethod.  */
+  builtin_type->xmethod
+    = arch_type (gdbarch, TYPE_CODE_XMETHOD, 0, "<xmethod>");
 
   return builtin_type;
 }

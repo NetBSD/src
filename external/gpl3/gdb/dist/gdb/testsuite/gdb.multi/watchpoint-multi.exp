@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ if { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executa
 
 clean_restart $executable
 
-# Simulate non-stop+target-async which also uses breakpoint always-inserted.
+# Simulate non-stop which also uses breakpoint always-inserted.
 gdb_test_no_output "set breakpoint always-inserted on"
 # displaced-stepping is also needed as other GDB sometimes still removes the
 # breakpoints, even with always-inserted on.

@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/powerpc.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,15 +20,13 @@
 #ifndef PPCNBSD_TDEP_H
 #define PPCNBSD_TDEP_H
 
-#include <stddef.h>
-
 struct regset;
 
 /* Register offsets for NetBSD/powerpc.  */
 extern struct ppc_reg_offsets ppcnbsd_reg_offsets;
 
 /* Register sets for NetBSD/powerpc.  */
-extern struct regset ppcnbsd_gregset;
-extern struct regset ppcnbsd_fpregset;
+extern const struct regset ppcnbsd_gregset;
+extern const struct regset ppcnbsd_fpregset;
 
 #endif /* ppcnbsd-tdep.h */

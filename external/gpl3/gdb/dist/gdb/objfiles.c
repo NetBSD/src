@@ -1,6 +1,6 @@
 /* GDB routines for manipulating objfiles.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -33,12 +33,10 @@
 #include "expression.h"
 #include "parser-defs.h"
 
-#include "gdb_assert.h"
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "gdb_obstack.h"
-#include <string.h>
 #include "hashtab.h"
 
 #include "breakpoint.h"
@@ -102,7 +100,7 @@ get_objfile_pspace_data (struct program_space *pspace)
   info = program_space_data (pspace, objfiles_pspace_data);
   if (info == NULL)
     {
-      info = XZALLOC (struct objfile_pspace_info);
+      info = XCNEW (struct objfile_pspace_info);
       set_program_space_data (pspace, objfiles_pspace_data, info);
     }
 
@@ -152,6 +150,7 @@ get_objfile_bfd_data (struct objfile *objfile, struct bfd *abfd)
       obstack_init (&storage->storage_obstack);
       storage->filename_cache = bcache_xmalloc (NULL, NULL);
       storage->macro_cache = bcache_xmalloc (NULL, NULL);
+      storage->language_of_main = language_unknown;
     }
 
   return storage;
@@ -184,6 +183,20 @@ void
 set_objfile_per_bfd (struct objfile *objfile)
 {
   objfile->per_bfd = get_objfile_bfd_data (objfile, objfile->obfd);
+}
+
+/* Set the objfile's per-BFD notion of the "main" name and
+   language.  */
+
+void
+set_objfile_main_name (struct objfile *objfile,
+		       const char *name, enum language lang)
+{
+  if (objfile->per_bfd->name_of_main == NULL
+      || strcmp (objfile->per_bfd->name_of_main, name) != 0)
+    objfile->per_bfd->name_of_main
+      = obstack_copy0 (&objfile->per_bfd->storage_obstack, name, strlen (name));
+  objfile->per_bfd->language_of_main = lang;
 }
 
 
@@ -279,7 +292,6 @@ allocate_objfile (bfd *abfd, const char *name, int flags)
   /* We could use obstack_specify_allocation here instead, but
      gdb_obstack.h specifies the alloc/dealloc functions.  */
   obstack_init (&objfile->objfile_obstack);
-  terminate_minimal_symbol_table (objfile);
 
   objfile_alloc_data (objfile);
 
@@ -302,10 +314,6 @@ allocate_objfile (bfd *abfd, const char *name, int flags)
      that any data that is reference is saved in the per-objfile data
      region.  */
 
-  /* Update the per-objfile information that comes from the bfd, ensuring
-     that any data that is reference is saved in the per-objfile data
-     region.  */
-
   objfile->obfd = abfd;
   gdb_bfd_ref (abfd);
   if (abfd != NULL)
@@ -318,6 +326,8 @@ allocate_objfile (bfd *abfd, const char *name, int flags)
 
   objfile->per_bfd = get_objfile_bfd_data (objfile, abfd);
   objfile->pspace = current_program_space;
+
+  terminate_minimal_symbol_table (objfile);
 
   /* Initialize the section indexes for this objfile, so that we can
      later detect if they are used w/o being properly assigned to.  */
@@ -352,8 +362,9 @@ allocate_objfile (bfd *abfd, const char *name, int flags)
 }
 
 /* Retrieve the gdbarch associated with OBJFILE.  */
+
 struct gdbarch *
-get_objfile_arch (struct objfile *objfile)
+get_objfile_arch (const struct objfile *objfile)
 {
   return objfile->per_bfd->gdbarch;
 }
@@ -364,10 +375,12 @@ get_objfile_arch (struct objfile *objfile)
 int
 entry_point_address_query (CORE_ADDR *entry_p)
 {
-  if (symfile_objfile == NULL || !symfile_objfile->ei.entry_point_p)
+  if (symfile_objfile == NULL || !symfile_objfile->per_bfd->ei.entry_point_p)
     return 0;
 
-  *entry_p = symfile_objfile->ei.entry_point;
+  *entry_p = (symfile_objfile->per_bfd->ei.entry_point
+	      + ANOFFSET (symfile_objfile->section_offsets,
+			  symfile_objfile->per_bfd->ei.the_bfd_section_index));
 
   return 1;
 }
@@ -624,7 +637,7 @@ free_objfile (struct objfile *objfile)
   {
     struct symtab_and_line cursal = get_current_source_symtab_and_line ();
 
-    if (cursal.symtab && cursal.symtab->objfile == objfile)
+    if (cursal.symtab && SYMTAB_OBJFILE (cursal.symtab) == objfile)
       clear_current_source_symtab_and_line ();
   }
 
@@ -723,30 +736,33 @@ objfile_relocate1 (struct objfile *objfile,
 
   /* OK, get all the symtabs.  */
   {
+    struct compunit_symtab *cust;
     struct symtab *s;
 
-    ALL_OBJFILE_SYMTABS (objfile, s)
+    ALL_OBJFILE_FILETABS (objfile, cust, s)
     {
       struct linetable *l;
-      struct blockvector *bv;
       int i;
 
       /* First the line table.  */
-      l = LINETABLE (s);
+      l = SYMTAB_LINETABLE (s);
       if (l)
 	{
 	  for (i = 0; i < l->nitems; ++i)
-	    l->item[i].pc += ANOFFSET (delta, s->block_line_section);
+	    l->item[i].pc += ANOFFSET (delta,
+				       COMPUNIT_BLOCK_LINE_SECTION
+					 (cust));
 	}
+    }
 
-      /* Don't relocate a shared blockvector more than once.  */
-      if (!s->primary)
-	continue;
+    ALL_OBJFILE_COMPUNITS (objfile, cust)
+    {
+      const struct blockvector *bv = COMPUNIT_BLOCKVECTOR (cust);
+      int block_line_section = COMPUNIT_BLOCK_LINE_SECTION (cust);
 
-      bv = BLOCKVECTOR (s);
       if (BLOCKVECTOR_MAP (bv))
 	addrmap_relocate (BLOCKVECTOR_MAP (bv),
-			  ANOFFSET (delta, s->block_line_section));
+			  ANOFFSET (delta, block_line_section));
 
       for (i = 0; i < BLOCKVECTOR_NBLOCKS (bv); ++i)
 	{
@@ -755,8 +771,8 @@ objfile_relocate1 (struct objfile *objfile,
 	  struct dict_iterator iter;
 
 	  b = BLOCKVECTOR_BLOCK (bv, i);
-	  BLOCK_START (b) += ANOFFSET (delta, s->block_line_section);
-	  BLOCK_END (b) += ANOFFSET (delta, s->block_line_section);
+	  BLOCK_START (b) += ANOFFSET (delta, block_line_section);
+	  BLOCK_END (b) += ANOFFSET (delta, block_line_section);
 
 	  /* We only want to iterate over the local symbols, not any
 	     symbols in included symtabs.  */
@@ -784,33 +800,6 @@ objfile_relocate1 (struct objfile *objfile,
     objfile->sf->qf->relocate (objfile, new_offsets, delta);
 
   {
-    struct minimal_symbol *msym;
-
-    ALL_OBJFILE_MSYMBOLS (objfile, msym)
-      if (SYMBOL_SECTION (msym) >= 0)
-      SYMBOL_VALUE_ADDRESS (msym) += ANOFFSET (delta, SYMBOL_SECTION (msym));
-  }
-  /* Relocating different sections by different amounts may cause the symbols
-     to be out of order.  */
-  msymbols_sort (objfile);
-
-  if (objfile->ei.entry_point_p)
-    {
-      /* Relocate ei.entry_point with its section offset, use SECT_OFF_TEXT
-	 only as a fallback.  */
-      struct obj_section *s;
-      s = find_pc_section (objfile->ei.entry_point);
-      if (s)
-	{
-	  int idx = gdb_bfd_section_index (objfile->obfd, s->the_bfd_section);
-
-	  objfile->ei.entry_point += ANOFFSET (delta, idx);
-	}
-      else
-        objfile->ei.entry_point += ANOFFSET (delta, SECT_OFF_TEXT (objfile));
-    }
-
-  {
     int i;
 
     for (i = 0; i < objfile->num_sections; ++i)
@@ -828,11 +817,6 @@ objfile_relocate1 (struct objfile *objfile,
       exec_set_section_address (bfd_get_filename (objfile->obfd), idx,
 				obj_section_addr (s));
     }
-
-  /* Relocating probes.  */
-  if (objfile->sf && objfile->sf->sym_probe_fns)
-    objfile->sf->sym_probe_fns->sym_relocate_probe (objfile,
-						    new_offsets, delta);
 
   /* Data changed.  */
   return 1;
@@ -954,7 +938,7 @@ objfile_has_partial_symbols (struct objfile *objfile)
 int
 objfile_has_full_symbols (struct objfile *objfile)
 {
-  return objfile->symtabs != NULL;
+  return objfile->compunit_symtabs != NULL;
 }
 
 /* Return non-zero if OBJFILE has full or partial symbols, either directly
@@ -1039,7 +1023,7 @@ have_minimal_symbols (void)
 
   ALL_OBJFILES (ofp)
   {
-    if (ofp->minimal_symbol_count > 0)
+    if (ofp->per_bfd->minimal_symbol_count > 0)
       {
 	return 1;
       }
@@ -1467,6 +1451,22 @@ is_addr_in_objfile (CORE_ADDR addr, const struct objfile *objfile)
   return 0;
 }
 
+int
+shared_objfile_contains_address_p (struct program_space *pspace,
+				   CORE_ADDR address)
+{
+  struct objfile *objfile;
+
+  ALL_PSPACE_OBJFILES (pspace, objfile)
+    {
+      if ((objfile->flags & OBJF_SHARED) != 0
+	  && is_addr_in_objfile (address, objfile))
+	return 1;
+    }
+
+  return 0;
+}
+
 /* The default implementation for the "iterate_over_objfiles_in_search_order"
    gdbarch method.  It is equivalent to use the ALL_OBJFILES macro,
    searching the objfiles in the order they are stored internally,
@@ -1501,6 +1501,14 @@ objfile_name (const struct objfile *objfile)
     return bfd_get_filename (objfile->obfd);
 
   return objfile->original_name;
+}
+
+/* See objfiles.h.  */
+
+const char *
+objfile_debug_name (const struct objfile *objfile)
+{
+  return lbasename (objfile->original_name);
 }
 
 /* Provide a prototype to silence -Wmissing-prototypes.  */

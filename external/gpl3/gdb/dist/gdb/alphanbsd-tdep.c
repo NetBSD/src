@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -26,9 +26,6 @@
 #include "regcache.h"
 #include "regset.h"
 #include "value.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "alpha-tdep.h"
 #include "alphabsd-tdep.h"
@@ -76,30 +73,6 @@ alphanbsd_supply_fpregset (const struct regset *regset,
    REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
 
 static void
-alphanbsd_supply_gregset (const struct regset *regset,
-			  struct regcache *regcache,
-			  int regnum, const void *gregs, size_t len)
-{
-  const gdb_byte *regs = gregs;
-  int i;
-
-  gdb_assert (len >= ALPHANBSD_SIZEOF_GREGS);
-
-  for (i = 0; i < ALPHA_ZERO_REGNUM; i++)
-    {
-      if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + i * 8);
-    }
-
-  if (regnum == ALPHA_PC_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
-}
-
-/* Supply register REGNUM from the buffer specified by GREGS and LEN
-   in the general-purpose register set REGSET to register cache
-   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
-
-static void
 alphanbsd_aout_supply_gregset (const struct regset *regset,
 			       struct regcache *regcache,
 			       int regnum, const void *gregs, size_t len)
@@ -139,45 +112,58 @@ alphanbsd_aout_supply_gregset (const struct regset *regset,
     }
 }
 
+/* Supply register REGNUM from the buffer specified by GREGS and LEN
+   in the general-purpose register set REGSET to register cache
+   REGCACHE.  If REGNUM is -1, do this for all registers in REGSET.  */
+
+static void
+alphanbsd_supply_gregset (const struct regset *regset,
+			  struct regcache *regcache,
+			  int regnum, const void *gregs, size_t len)
+{
+  const gdb_byte *regs = gregs;
+  int i;
+
+  if (len >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)
+    {
+      alphanbsd_aout_supply_gregset (regset, regcache, regnum, gregs, len);
+      return;
+    }
+
+  for (i = 0; i < ALPHA_ZERO_REGNUM; i++)
+    {
+      if (regnum == i || regnum == -1)
+	regcache_raw_supply (regcache, i, regs + i * 8);
+    }
+
+  if (regnum == ALPHA_PC_REGNUM || regnum == -1)
+    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
+}
+
 /* NetBSD/alpha register sets.  */
 
-static struct regset alphanbsd_gregset =
+static const struct regset alphanbsd_gregset =
 {
   NULL,
   alphanbsd_supply_gregset
 };
 
-static struct regset alphanbsd_fpregset =
+static const struct regset alphanbsd_fpregset =
 {
   NULL,
   alphanbsd_supply_fpregset
 };
 
-static struct regset alphanbsd_aout_gregset =
+/* Iterate over supported core file register note sections. */
+
+void
+alphanbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					iterate_over_regset_sections_cb *cb,
+					void *cb_data,
+					const struct regcache *regcache)
 {
-  NULL,
-  alphanbsd_aout_supply_gregset
-};
-
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
-
-const struct regset *
-alphanbsd_regset_from_core_section (struct gdbarch *gdbarch,
-				    const char *sect_name, size_t sect_size)
-{
-  if (strcmp (sect_name, ".reg") == 0 && sect_size >= ALPHANBSD_SIZEOF_GREGS)
-    {
-      if (sect_size >= ALPHANBSD_SIZEOF_GREGS + ALPHANBSD_SIZEOF_FPREGS)
-	return &alphanbsd_aout_gregset;
-      else
-	return &alphanbsd_gregset;
-    }
-
-  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= ALPHANBSD_SIZEOF_FPREGS)
-    return &alphanbsd_fpregset;
-
-  return NULL;
+  cb (".reg", ALPHANBSD_SIZEOF_GREGS, &alphanbsd_gregset, NULL, cb_data);
+  cb (".reg2", ALPHANBSD_SIZEOF_FPREGS, &alphanbsd_fpregset, NULL, cb_data);
 }
 
 
@@ -286,8 +272,8 @@ alphanbsd_init_abi (struct gdbarch_info info,
   tdep->jb_pc = 2;
   tdep->jb_elt_size = 8;
 
-  set_gdbarch_regset_from_core_section
-    (gdbarch, alphanbsd_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, alphanbsd_iterate_over_regset_sections);
 }
 
 

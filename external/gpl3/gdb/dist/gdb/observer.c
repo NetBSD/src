@@ -1,6 +1,6 @@
 /* GDB Notifications to Observers.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -89,9 +89,9 @@ struct observer_list
 static struct observer_list *
 xalloc_observer_list_node (void)
 {
-  struct observer_list *node = XMALLOC (struct observer_list);
+  struct observer_list *node = XNEW (struct observer_list);
 
-  node->observer = XMALLOC (struct observer);
+  node->observer = XNEW (struct observer);
   return node;
 }
 

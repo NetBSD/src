@@ -1,4 +1,4 @@
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -228,6 +228,30 @@ gdb_test "ptype vagary" "type = const volatile char \\* const volatile.*"
 
 local_compiler_xfail_check
 gdb_test "ptype vendor" "type = const volatile unsigned char \\* const volatile.*"
+
+# volatile arrays
+local_compiler_xfail_check
+gdb_test "ptype violent" "type = volatile char \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype violet" "type = volatile unsigned char \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype vips" "type = volatile short( int)? \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype virgen" "type = volatile (unsigned short|short unsigned)( int)? \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype vulgar" "type = volatile long( int)? \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype vulture" "type = volatile (unsigned long|long unsigned)( int)? \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype vilify" "type = volatile float \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype villar" "type = volatile double \\\[2\\\]"
+
+# const volatile arrays
+local_compiler_xfail_check
+gdb_test "ptype vindictive" "type = const volatile char \\\[2\\\]"
+local_compiler_xfail_check
+gdb_test "ptype vegetation" "type = const volatile unsigned char \\\[2\\\]"
 
 # test function parameters
 local_compiler_xfail_check
