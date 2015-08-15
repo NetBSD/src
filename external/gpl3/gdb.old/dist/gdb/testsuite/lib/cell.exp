@@ -1,0 +1,181 @@
+# Copyright 2009-2014 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Contributed by Markus Deuling <deuling@de.ibm.com>.
+#
+# Support library for testing the combined debugger for Linux
+# on the Cell Broadband Engine.
+
+# Compile SPU objects.
+proc gdb_compile_cell_spu {source dest type options} {
+  global board
+
+  # Save and unset multilib flags; these are not appropriate
+  # for the SPU compiler.
+  set board [target_info name]
+  set save_multilib_flag [board_info $board multilib_flags]
+  unset_board_info "multilib_flags"
+
+  set options_spu [concat $options [list compiler=spu-gcc]]
+  set ccout [gdb_compile $source $dest $type $options_spu]
+
+  set_board_info multilib_flags $save_multilib_flag
+  return $ccout
+}
+
+# Compile PPU objects.  This is just like gdb_compile_pthreads, except that we
+# always add the libspe2 library for compiling Cell/B.E. programs.
+proc gdb_compile_cell_ppu {source dest type options} {
+    # We do not need to try multiple names for the pthread library
+    # -lpthread works on all Cell/B.E. systems
+    set lib "-lspe2 -lpthread"
+    set options_ppu [concat $options [list libs=$lib]]
+    return [gdb_compile $source $dest $type $options_ppu]
+}
+
+# Embed SPU executable into a PPU object.
+proc gdb_cell_embedspu {source dest options} {
+    global CC_FOR_TARGET
+
+    if [info exists CC_FOR_TARGET] {
+        set compiler $CC_FOR_TARGET
+    } else {
+	set compiler [board_info [target_info name] compiler]
+    }
+
+    # We assume the PPU compiler is called gcc or ppu-gcc,
+    # and find the appropriate embedspu based on that.
+    regsub gcc "$compiler" embedspu embedspu
+
+    # Determine default embedded symbol name from source filename.
+    set path [split "$source" /]
+    set filename [lindex $path [expr [llength $path] - 1]]
+    regsub -all -- "\[-\.\]" "$filename" "_" symbol
+
+    set options_embed [concat $options [list compiler=$embedspu]]
+    return [gdb_compile "$symbol $source $dest" "" none $options_embed]
+}
+
+# Run a test on the target to see if it supports Cell/B.E. hardware.
+# Return 0 if so, 1 if it does not.
+gdb_caching_proc skip_cell_tests {
+    global srcdir subdir gdb_prompt inferior_exited_re
+
+    set me "skip_cell_tests"
+
+    # Set up, compile, and execute a combined Cell/B.E. test program.
+    # Include the current process ID in the file names to prevent conflicts
+    # with invocations for multiple testsuites.
+    set src [standard_temp_file cell[pid].c]
+    set exe [standard_temp_file cell[pid].x]
+    set src_spu [standard_temp_file cell[pid]-spu.c]
+    set exe_spu [standard_temp_file cell[pid]-spu.x]
+
+    set f [open $src "w"]
+    puts $f "#include <libspe2.h>"
+    puts $f "extern spe_program_handle_t cell[pid]_spu_x;"
+    puts $f "int main (void) {"
+    puts $f "unsigned int entry = SPE_DEFAULT_ENTRY;"
+    puts $f "spe_context_ptr_t ctx = spe_context_create (0, NULL);"
+    puts $f "spe_program_load (ctx, &cell[pid]_spu_x);"
+    puts $f "return spe_context_run (ctx, &entry, 0, NULL, NULL, NULL); }"
+    close $f
+
+    set f [open $src_spu "w"]
+    puts $f "int main (void) { return 0; }"
+    close $f
+
+    verbose "$me:  compiling testfile $src" 2
+    set compile_flags {debug nowarnings quiet}
+
+    set skip 0
+    if { [gdb_compile_cell_spu $src_spu $exe_spu executable $compile_flags] != "" } {
+        verbose "$me:  compiling spu binary failed, returning 1" 2
+	set skip 1
+    }
+    if { ! $skip && [gdb_cell_embedspu $exe_spu $exe_spu-embed.o $compile_flags]  != "" } {
+        verbose "$me:  embedding spu binary failed, returning 1" 2
+	set skip 1
+    }
+    if { ! $skip && [gdb_compile_cell_ppu [list $src $exe_spu-embed.o] $exe executable $compile_flags] != "" } {
+        verbose "$me:  compiling ppu binary failed, returning 1" 2
+	set skip 1
+    }
+    file delete $src
+    file delete $src_spu
+    file delete $exe_spu
+    file delete $exe_spu-embed.o
+
+    if { $skip } {
+        return 1
+    }
+
+    # Compilation succeeded so now run it via gdb.
+
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load "$exe"
+    gdb_run_cmd
+    gdb_expect {
+        -re ".*$inferior_exited_re normally.*${gdb_prompt} $" {
+            verbose -log "\n$me: Cell/B.E. hardware detected"
+            set result 0
+        }
+        -re ".*$inferior_exited_re with code.*${gdb_prompt} $" {
+            verbose -log "\n$me: Cell/B.E. hardware not detected"
+            set result 1
+        }
+        default {
+            verbose -log "\n$me Cell/B.E. hardware not detected (default case)"
+            set result 1
+        }
+    }
+    gdb_exit
+    remote_file build delete $exe
+
+    verbose "$me:  returning $result" 2
+    return $result
+}
+
+# Delete all breakpoints and stop on the next new SPU thread
+proc cont_spu_main { } {
+  delete_breakpoints
+  gdb_test "set spu stop-on-load on"
+  gdb_test "continue" \
+           "Continuing.*Temporary breakpoint .*main .*" \
+           "continue to SPU main"
+}
+
+# Continue to MARKER
+proc c_to { marker srcfile } {
+  set line [gdb_get_line_number $marker $srcfile]
+  gdb_test "break $line" \
+	   "Breakpoint.*at.*file.*$srcfile.*line $line.*" \
+	   "break $line"
+  gdb_test "continue" \
+	   "Continuing.*Breakpoint.*at.*$srcfile.*$line.*" \
+	   "continue to $line"
+}
+
+# Check if the current thread has SPU architecture
+proc check_spu_arch { msg } {
+  if { $msg == "" } {
+    set msg "spu architecture is spu256K"
+  }
+  gdb_test "show architecture" \
+	   "The target architecture is set automatically.*currently spu:256K.*" \
+	   $msg
+}
