@@ -210,7 +210,7 @@ _rl_nsearch_init (dir, pchar)
   rl_end = rl_point = 0;
 
   p = _rl_make_prompt_for_search (pchar ? pchar : ':');
-  rl_message ("%s", p, 0);
+  rl_message ("%s", p);
   xfree (p);
 
   RL_SETSTATE(RL_STATE_NSEARCH);

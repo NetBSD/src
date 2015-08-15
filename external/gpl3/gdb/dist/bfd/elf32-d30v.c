@@ -1,6 +1,5 @@
 /* D30V-specific support for 32-bit ELF
-   Copyright 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -517,7 +516,11 @@ d30v_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_D30V_max);
+  if (r_type >= (unsigned int) R_D30V_max)
+    {
+      _bfd_error_handler (_("%A: invalid D30V reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &elf_d30v_howto_table[r_type];
 }
 
@@ -531,7 +534,11 @@ d30v_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_D30V_max);
+  if (r_type >= (unsigned int) R_D30V_max)
+    {
+      _bfd_error_handler (_("%A: invalid D30V reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &elf_d30v_howto_table[r_type];
 }
 
@@ -540,7 +547,7 @@ d30v_info_to_howto_rela (bfd *abfd ATTRIBUTE_UNUSED,
 #define ELF_MACHINE_ALT1	EM_CYGNUS_D30V
 #define ELF_MAXPAGESIZE		0x1000
 
-#define TARGET_BIG_SYM          bfd_elf32_d30v_vec
+#define TARGET_BIG_SYM          d30v_elf32_vec
 #define TARGET_BIG_NAME		"elf32-d30v"
 
 #define elf_info_to_howto	d30v_info_to_howto_rela

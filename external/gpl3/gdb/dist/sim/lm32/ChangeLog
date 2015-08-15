@@ -1,3 +1,12 @@
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
 2013-12-07  Mike Frysinger  <vapier@gentoo.org>
 
 	* ChangeLog: Remove +x file mode.

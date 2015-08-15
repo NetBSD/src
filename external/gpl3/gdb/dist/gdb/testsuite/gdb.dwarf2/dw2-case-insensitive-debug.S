@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2014 Free Software Foundation, Inc.
+   Copyright 2011-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#if PTRBITS == 64
+# define PTRBYTE .8byte
+#elif PTRBITS == 32
+# define PTRBYTE .4byte
+#else
+# error "Unsupported pointer size"
+#endif
+
 	.section .debug_info
 .Lcu1_begin:
 	/* CU header */
@@ -22,21 +30,21 @@
 .Lcu1_start:
 	.2byte	2				/* DWARF Version */
 	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
-	.byte	4				/* Pointer size */
+	.byte	PTRBITS / 8			/* Pointer size */
 
 	/* CU die */
 	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
 	.ascii	"file1.txt\0"			/* DW_AT_name */
 	.ascii	"GNU C 3.3.3\0"			/* DW_AT_producer */
 	.byte	8				/* DW_AT_language (DW_LANG_Fortran90) */
-	.4byte		cu_text_start		/* DW_AT_low_pc */
-	.4byte		cu_text_end		/* DW_AT_high_pc */
+	PTRBYTE		cu_text_start		/* DW_AT_low_pc */
+	PTRBYTE		cu_text_end		/* DW_AT_high_pc */
 
 	.uleb128	3			/* Abbrev: DW_TAG_subprogram */
 	.byte		1			/* DW_AT_external */
 	.ascii		"FUNC_lang\0"		/* DW_AT_name */
-	.4byte		FUNC_lang_start		/* DW_AT_low_pc */
-	.4byte		FUNC_lang_end		/* DW_AT_high_pc */
+	PTRBYTE		FUNC_lang_start		/* DW_AT_low_pc */
+	PTRBYTE		FUNC_lang_end		/* DW_AT_high_pc */
 	.byte		1			/* DW_AT_prototyped */
 	.4byte		.Ltype - .Lcu1_begin	/* DW_AT_type */
 

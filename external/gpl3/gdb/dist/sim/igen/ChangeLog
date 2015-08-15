@@ -1,3 +1,11 @@
+2014-11-23  Joel Sherrill  <joel.sherrill@oarcorp.com>
+
+	* igen/ld-cache.h, igen/table.h: Change immediatly to immediately.
+
+2014-03-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* configure: Regenerate.
+
 2013-11-25  Steve Ellcey  <sellcey@mips.com>
 
 	* igen/Makefile.in (igen): Use BUILD_CFLAGS in link.

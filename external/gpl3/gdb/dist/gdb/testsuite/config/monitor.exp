@@ -1,5 +1,5 @@
 # Test Framework Driver for GDB driving a ROM monitor (via monitor.c).
-#   Copyright 1995-2014 Free Software Foundation, Inc.
+#   Copyright 1995-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -86,7 +86,7 @@ proc gdb_target_monitor { exec_file } {
 	return -1
     }
     if [target_info exists baud] {
-	gdb_test "set remotebaud [target_info baud]" "" ""
+	gdb_test "set serial baud [target_info baud]" "" ""
     }
     if [target_info exists binarydownload] {
 	gdb_test "set remotebinarydownload [target_info binarydownload]" "" ""

@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from arm-with-neon.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: arm-with-neon.xml
 name:arm_with_neon
 xmltarget:arm-with-neon.xml
 expedite:r11,sp,pc

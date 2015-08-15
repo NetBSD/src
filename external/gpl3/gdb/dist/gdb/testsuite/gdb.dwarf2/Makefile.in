@@ -1,5 +1,5 @@
 # Makefile for regression testing the GNU debugger.
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -21,7 +21,12 @@ VPATH = @srcdir@
 srcdir = @srcdir@
 
 EXECUTABLES = *.x pr10770 dw2-cp-infcall-ref-static dw2-inline-param \
-	dw2-noloc dw2-ranges dw2-ref-missing-frame dw2-unresolved gdb-index
+	dw2-noloc dw2-ranges dw2-ref-missing-frame dw2-unresolved gdb-index \
+	dwp-symlink
+
+MISCELLANEOUS = \
+	dwp-symlink.dwp dwp-symlink-thelink dwp-symlink-thelink.dwp \
+	dwp-dir1 dwp-dir2 dwp-dir3
 
 all info install-info dvi install uninstall installcheck check:
 	@echo "Nothing to be done for $@..."
@@ -31,6 +36,7 @@ clean mostlyclean:
 	-rm -f core core.coremaker coremaker.core corefile
 	-rm -f *.dwo *.dwp
 	-rm -f $(EXECUTABLES)
+	-rm -rf $(MISCELLANEOUS)
 	-rm -f *.gdb-index *.with-index
 
 distclean maintainer-clean realclean: clean

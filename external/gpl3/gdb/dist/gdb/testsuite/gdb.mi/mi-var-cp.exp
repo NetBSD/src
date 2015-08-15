@@ -1,4 +1,4 @@
-# Copyright 2006-2014 Free Software Foundation, Inc.
+# Copyright 2006-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,9 +45,10 @@ mi_run_inline_test reference_to_struct
 mi_run_inline_test path_expression
 
 set lineno [gdb_get_line_number "/* anonymous_structs_and_unions */"]
-mi_create_breakpoint \
-    "$srcfile:$lineno" {[0-9]+} keep {anonymous_structs_and_unions\(\)} \
-    ".*mi-var-cp.cc" $lineno $hex "break in anonymous_structs_and_unions"
+mi_create_breakpoint "$srcfile:$lineno" \
+    "break in anonymous_structs_and_unions" \
+    -func {anonymous_structs_and_unions\(\)} -file ".*mi-var-cp.cc" \
+    -line $lineno
 mi_execute_to "exec-continue" "breakpoint-hit" \
     "anonymous_structs_and_unions" "" ".*" ".*" {"" "disp=\"keep\""} \
     "continue to anonymous_structs breakpoint"

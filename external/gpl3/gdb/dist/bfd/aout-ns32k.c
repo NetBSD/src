@@ -1,6 +1,5 @@
 /* BFD back-end for ns32k a.out-ish binaries.
-   Copyright 1990, 1991, 1992, 1994, 1995, 1996, 1998, 1999, 2000, 2001,
-   2002, 2003, 2005, 2006, 2007, 2010, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Contributed by Ian Dall (idall@eleceng.adelaide.edu.au).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -28,7 +27,7 @@
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate
    the tokens.  */
-#define MYNS(OP) CONCAT2 (ns32kaout_,OP)
+#define MYNS(OP) CONCAT2 (ns32k_aout_,OP)
 
 reloc_howto_type * MYNS (bfd_reloc_type_lookup) (bfd *, bfd_reloc_code_real_type);
 reloc_howto_type * MYNS (bfd_reloc_name_lookup) (bfd *, const char *);

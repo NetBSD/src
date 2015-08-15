@@ -1,4 +1,4 @@
-# Copyright 1999-2014 Free Software Foundation, Inc.
+# Copyright 1999-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,6 +49,12 @@ mi_gdb_load ${binfile}
 # Desc:  Create global variable
 
 mi_create_varobj "global_simple" "global_simple" "create global variable"
+
+# PR mi/15863
+# Attempt to update the varobj before running the inferior.
+mi_gdb_test "-var-update *" \
+	"\\^done,changelist=\\\[\\\]" \
+	"update varobj before running inferior"
 
 # Test: c_variable-1.2
 # Desc: Create non-existent variable

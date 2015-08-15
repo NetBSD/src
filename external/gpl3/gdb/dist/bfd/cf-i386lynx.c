@@ -1,6 +1,5 @@
 /* BFD back-end for Intel 386 COFF LynxOS files.
-   Copyright 1993, 1994, 1995, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -23,7 +22,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SYM	i386lynx_coff_vec
+#define TARGET_SYM	i386_coff_lynx_vec
 #define TARGET_NAME	"coff-i386-lynx"
 
 #define LYNXOS

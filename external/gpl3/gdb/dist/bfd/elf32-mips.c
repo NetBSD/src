@@ -1,6 +1,5 @@
 /* MIPS-specific support for 32-bit ELF
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2006, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -83,8 +82,8 @@ static bfd_boolean elf32_mips_grok_psinfo
 static irix_compat_t elf32_mips_irix_compat
   (bfd *);
 
-extern const bfd_target bfd_elf32_bigmips_vec;
-extern const bfd_target bfd_elf32_littlemips_vec;
+extern const bfd_target mips_elf32_be_vec;
+extern const bfd_target mips_elf32_le_vec;
 
 /* Nonzero if ABFD is using the N32 ABI.  */
 #define ABI_N32_P(abfd) \
@@ -717,6 +716,99 @@ static reloc_howto_type elf_mips_howto_table_rel[] =
 	 0x0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 FALSE),		/* pcrel_offset */
+
+  EMPTY_HOWTO (52),
+  EMPTY_HOWTO (53),
+  EMPTY_HOWTO (54),
+  EMPTY_HOWTO (55),
+  EMPTY_HOWTO (56),
+  EMPTY_HOWTO (57),
+  EMPTY_HOWTO (58),
+  EMPTY_HOWTO (59),
+
+  HOWTO (R_MIPS_PC21_S2,	/* type */
+	 2,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 21,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 _bfd_mips_elf_generic_reloc, /* special_function */
+	 "R_MIPS_PC21_S2",	/* name */
+	 TRUE,			/* partial_inplace */
+	 0x001fffff,		/* src_mask */
+	 0x001fffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
+
+  HOWTO (R_MIPS_PC26_S2,	/* type */
+	 2,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 26,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 _bfd_mips_elf_generic_reloc, /* special_function */
+	 "R_MIPS_PC26_S2",	/* name */
+	 TRUE,			/* partial_inplace */
+	 0x03ffffff,		/* src_mask */
+	 0x03ffffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
+
+  HOWTO (R_MIPS_PC18_S3,	/* type */
+	 3,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 18,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 _bfd_mips_elf_generic_reloc,   /* special_function */
+	 "R_MIPS_PC18_S3",	/* name */
+	 TRUE,			/* partial_inplace */
+	 0x0003ffff,		/* src_mask */
+	 0x0003ffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
+
+  HOWTO (R_MIPS_PC19_S2,	/* type */
+	 2,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 19,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 _bfd_mips_elf_generic_reloc,   /* special_function */
+	 "R_MIPS_PC19_S2",	/* name */
+	 TRUE,			/* partial_inplace */
+	 0x0007ffff,		/* src_mask */
+	 0x0007ffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
+
+  HOWTO (R_MIPS_PCHI16,		/* type */
+	 16,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_signed, /* complain_on_overflow */
+	 _bfd_mips_elf_generic_reloc,   /* special_function */
+	 "R_MIPS_PCHI16",	/* name */
+	 TRUE,			/* partial_inplace */
+	 0x0000ffff,		/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
+
+  HOWTO (R_MIPS_PCLO16,		/* type */
+	 0,			/* rightshift */
+	 2,			/* size (0 = byte, 1 = short, 2 = long) */
+	 16,			/* bitsize */
+	 TRUE,			/* pc_relative */
+	 0,			/* bitpos */
+	 complain_overflow_dont, /* complain_on_overflow */
+	 _bfd_mips_elf_generic_reloc,   /* special_function */
+	 "R_MIPS_PCLO16",	/* name */
+	 TRUE,			/* partial_inplace */
+	 0x0000ffff,		/* src_mask */
+	 0x0000ffff,		/* dst_mask */
+	 TRUE),			/* pcrel_offset */
 };
 
 /* The reloc used for BFD_RELOC_CTOR when doing a 64 bit link.  This
@@ -1906,7 +1998,13 @@ static const struct elf_reloc_map mips_reloc_map[] =
   { BFD_RELOC_MIPS_TLS_TPREL32, R_MIPS_TLS_TPREL32 },
   { BFD_RELOC_MIPS_TLS_TPREL64, R_MIPS_TLS_TPREL64 },
   { BFD_RELOC_MIPS_TLS_TPREL_HI16, R_MIPS_TLS_TPREL_HI16 },
-  { BFD_RELOC_MIPS_TLS_TPREL_LO16, R_MIPS_TLS_TPREL_LO16 }
+  { BFD_RELOC_MIPS_TLS_TPREL_LO16, R_MIPS_TLS_TPREL_LO16 },
+  { BFD_RELOC_MIPS_21_PCREL_S2, R_MIPS_PC21_S2 },
+  { BFD_RELOC_MIPS_26_PCREL_S2, R_MIPS_PC26_S2 },
+  { BFD_RELOC_MIPS_18_PCREL_S3, R_MIPS_PC18_S3 },
+  { BFD_RELOC_MIPS_19_PCREL_S2, R_MIPS_PC19_S2 },
+  { BFD_RELOC_HI16_S_PCREL, R_MIPS_PCHI16 },
+  { BFD_RELOC_LO16_PCREL, R_MIPS_PCLO16 }
 };
 
 static const struct elf_reloc_map mips16_reloc_map[] =
@@ -2260,8 +2358,8 @@ elf32_mips_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 static irix_compat_t
 elf32_mips_irix_compat (bfd *abfd)
 {
-  if ((abfd->xvec == &bfd_elf32_bigmips_vec)
-      || (abfd->xvec == &bfd_elf32_littlemips_vec))
+  if ((abfd->xvec == &mips_elf32_be_vec)
+      || (abfd->xvec == &mips_elf32_le_vec))
     return ict_irix5;
   else
     return ict_none;
@@ -2316,6 +2414,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_collect		TRUE
 #define elf_backend_type_change_ok	TRUE
 #define elf_backend_can_gc_sections	TRUE
+#define elf_backend_gc_mark_extra_sections \
+					_bfd_mips_elf_gc_mark_extra_sections
 #define elf_info_to_howto		mips_info_to_howto_rela
 #define elf_info_to_howto_rel		mips_info_to_howto_rel
 #define elf_backend_sym_is_global	mips_elf_sym_is_global
@@ -2373,6 +2473,8 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define elf_backend_write_section	_bfd_mips_elf_write_section
 #define elf_backend_mips_irix_compat	elf32_mips_irix_compat
 #define elf_backend_mips_rtype_to_howto	mips_elf32_rtype_to_howto
+#define elf_backend_sort_relocs_p	_bfd_mips_elf_sort_relocs_p
+
 #define bfd_elf32_bfd_is_local_label_name \
 					mips_elf_is_local_label_name
 #define bfd_elf32_bfd_is_target_special_symbol \
@@ -2396,9 +2498,9 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #define bfd_elf32_mkobject		_bfd_mips_elf_mkobject
 
 /* Support for SGI-ish mips targets.  */
-#define TARGET_LITTLE_SYM		bfd_elf32_littlemips_vec
+#define TARGET_LITTLE_SYM		mips_elf32_le_vec
 #define TARGET_LITTLE_NAME		"elf32-littlemips"
-#define TARGET_BIG_SYM			bfd_elf32_bigmips_vec
+#define TARGET_BIG_SYM			mips_elf32_be_vec
 #define TARGET_BIG_NAME			"elf32-bigmips"
 
 /* The SVR4 MIPS ABI says that this should be 0x10000, but Irix 5 uses
@@ -2417,9 +2519,9 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #undef ELF_MAXPAGESIZE
 #undef ELF_COMMONPAGESIZE
 
-#define TARGET_LITTLE_SYM               bfd_elf32_tradlittlemips_vec
+#define TARGET_LITTLE_SYM               mips_elf32_trad_le_vec
 #define TARGET_LITTLE_NAME              "elf32-tradlittlemips"
-#define TARGET_BIG_SYM                  bfd_elf32_tradbigmips_vec
+#define TARGET_BIG_SYM                  mips_elf32_trad_be_vec
 #define TARGET_BIG_NAME                 "elf32-tradbigmips"
 
 /* The MIPS ABI says at Page 5-1:
@@ -2441,9 +2543,9 @@ static const struct ecoff_debug_swap mips_elf32_ecoff_debug_swap = {
 #undef TARGET_BIG_SYM
 #undef TARGET_BIG_NAME
 
-#define	TARGET_LITTLE_SYM		bfd_elf32_tradlittlemips_freebsd_vec
+#define	TARGET_LITTLE_SYM		mips_elf32_tradfbsd_le_vec
 #define	TARGET_LITTLE_NAME		"elf32-tradlittlemips-freebsd"
-#define	TARGET_BIG_SYM			bfd_elf32_tradbigmips_freebsd_vec
+#define	TARGET_BIG_SYM			mips_elf32_tradfbsd_be_vec
 #define	TARGET_BIG_NAME			"elf32-tradbigmips-freebsd"
 
 #undef	ELF_OSABI
@@ -2470,9 +2572,9 @@ mips_vxworks_final_write_processing (bfd *abfd, bfd_boolean linker)
 #undef ELF_MAXPAGESIZE
 #undef ELF_COMMONPAGESIZE
 
-#define TARGET_LITTLE_SYM               bfd_elf32_littlemips_vxworks_vec
+#define TARGET_LITTLE_SYM               mips_elf32_vxworks_le_vec
 #define TARGET_LITTLE_NAME              "elf32-littlemips-vxworks"
-#define TARGET_BIG_SYM                  bfd_elf32_bigmips_vxworks_vec
+#define TARGET_BIG_SYM                  mips_elf32_vxworks_be_vec
 #define TARGET_BIG_NAME                 "elf32-bigmips-vxworks"
 #undef	ELF_OSABI
 

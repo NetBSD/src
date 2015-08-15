@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from s390-linux32v2.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: s390-linux32v2.xml
 name:s390_linux32v2
 xmltarget:s390-linux32v2.xml
 expedite:r14,r15,pswa

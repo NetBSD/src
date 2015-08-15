@@ -1,6 +1,5 @@
 /* Target definitions for 32/64-bit NLM (NetWare Loadable Module)
-   Copyright 1993, 1994, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2005, 2007, 2009, 2011 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,10 +25,12 @@
 #define nlm_make_empty_symbol                   nlmNAME (make_empty_symbol)
 #define nlm_print_symbol                        nlmNAME (print_symbol)
 #define nlm_get_symbol_info                     nlmNAME (get_symbol_info)
+#define nlm_get_symbol_version_string		_bfd_nosymbols_get_symbol_version_string
 #define nlm_bfd_is_local_label_name             bfd_generic_is_local_label_name
 #define nlm_bfd_is_target_special_symbol ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define nlm_get_lineno                          _bfd_nosymbols_get_lineno
 #define nlm_find_nearest_line                   _bfd_nosymbols_find_nearest_line
+#define nlm_find_line                           _bfd_nosymbols_find_line
 #define nlm_find_inliner_info                   _bfd_nosymbols_find_inliner_info
 #define nlm_bfd_make_debug_symbol               _bfd_nosymbols_bfd_make_debug_symbol
 #define nlm_read_minisymbols                    _bfd_generic_read_minisymbols
@@ -52,7 +53,6 @@
 #define nlm_section_already_linked              _bfd_generic_section_already_linked
 #define nlm_bfd_define_common_symbol            bfd_generic_define_common_symbol
 #define nlm_bfd_link_hash_table_create          _bfd_generic_link_hash_table_create
-#define nlm_bfd_link_hash_table_free            _bfd_generic_link_hash_table_free
 #define nlm_bfd_link_add_symbols                _bfd_generic_link_add_symbols
 #define nlm_bfd_link_just_syms                  _bfd_generic_link_just_syms
 #define nlm_bfd_copy_link_hash_symbol_type \

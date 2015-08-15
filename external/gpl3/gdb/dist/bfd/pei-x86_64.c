@@ -1,5 +1,5 @@
 /* BFD back-end for Intel 386 PE IMAGE COFF files.
-   Copyright 2006, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -23,7 +23,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SYM 		x86_64pei_vec
+#define TARGET_SYM 		x86_64_pei_vec
 #define TARGET_NAME 		"pei-x86-64"
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE
@@ -115,6 +115,7 @@ pex64_get_unwind_info (bfd *abfd, struct pex64_unwind_info *ui, void *data)
   ui->sizeofUnwindCodes = PEX64_UWI_SIZEOF_UWCODE_ARRAY (ui->CountOfCodes);
   ui->SizeOfBlock = ui->sizeofUnwindCodes + 4;
   ui->rawUnwindCodes = &ex_dta[4];
+
   ex_dta += ui->SizeOfBlock;
   switch (ui->Flags)
     {
@@ -276,8 +277,9 @@ pex64_xdata_print_uwd_codes (FILE *file, bfd *abfd,
 	    fprintf (file, ", unknown(%u))", info);
 	  break;
 	default:
-	  /* Already caught by the previous scan.  */
-	  abort ();
+	  /* PR 17512: file: 2245-7442-0.004.  */
+	  fprintf (file, _("Unknown: %x"), PEX64_UNWCODE_CODE (dta[1]));
+	  break;
       }
       if (unexpected)
 	fprintf (file, " [Unexpected!]");
@@ -317,20 +319,34 @@ pex64_dump_xdata (FILE *file, bfd *abfd,
   bfd_vma vaddr;
   bfd_vma end_addr;
   bfd_vma addr = rf->rva_UnwindData;
+  bfd_size_type sec_size = xdata_section->rawsize > 0 ? xdata_section->rawsize : xdata_section->size;
   struct pex64_unwind_info ui;
 
   vaddr = xdata_section->vma - pe_data (abfd)->pe_opthdr.ImageBase;
   addr -= vaddr;
 
-  if (endx)
-    end_addr = endx[0] - vaddr;
-  else
-    end_addr = (xdata_section->rawsize != 0 ?
-		xdata_section->rawsize : xdata_section->size);
+  /* PR 17512: file: 2245-7442-0.004.  */
+  if (addr >= sec_size)
+    {
+      fprintf (file, _("warning: xdata section corrupt\n"));
+      return;
+    }
 
+  if (endx)
+    {
+      end_addr = endx[0] - vaddr;
+      /* PR 17512: file: 2245-7442-0.004.  */
+      if (end_addr > sec_size)
+	{
+	  fprintf (file, _("warning: xdata section corrupt"));
+	  end_addr = sec_size;
+	}
+    }
+  else
+    end_addr = sec_size;
 
   pex64_get_unwind_info (abfd, &ui, &xdata[addr]);
-
+  
   if (ui.Version != 1 && ui.Version != 2)
     {
       unsigned int i;
@@ -380,7 +396,11 @@ pex64_dump_xdata (FILE *file, bfd *abfd,
 	   ui.FrameRegister == 0 ? "none"
 	   : pex_regs[(unsigned int) ui.FrameRegister]);
 
-  pex64_xdata_print_uwd_codes (file, abfd, &ui, rf);
+  /* PR 17512: file: 2245-7442-0.004.  */
+  if (ui.CountOfCodes * 2 + ui.rawUnwindCodes > xdata + xdata_section->size)
+    fprintf (file, _("Too many unwind codes (%ld)\n"), (long) ui.CountOfCodes);
+  else
+    pex64_xdata_print_uwd_codes (file, abfd, &ui, rf);
 
   switch (ui.Flags)
     {
@@ -439,23 +459,24 @@ sort_xdata_arr (const void *l, const void *r)
 /* Display unwind tables for x86-64.  */
 
 static bfd_boolean
-pex64_bfd_print_pdata (bfd *abfd, void *vfile)
+pex64_bfd_print_pdata_section (bfd *abfd, void *vfile, asection *pdata_section)
 {
   FILE *file = (FILE *) vfile;
   bfd_byte *pdata = NULL;
   bfd_byte *xdata = NULL;
-  asection *pdata_section = bfd_get_section_by_name (abfd, ".pdata");
-  asection *xdata_section;
+  asection *xdata_section = NULL;
   bfd_vma xdata_base;
   bfd_size_type i;
+  bfd_size_type datasize;
   bfd_size_type stop;
-  bfd_vma prev_beginaddress = 0;
-  bfd_vma prev_unwinddata_rva = 0;
+  bfd_vma prev_beginaddress = (bfd_vma) -1;
+  bfd_vma prev_unwinddata_rva = (bfd_vma) -1;
   bfd_vma imagebase;
   int onaline = PDATA_ROW_SIZE;
   int seen_error = 0;
   bfd_vma *xdata_arr = NULL;
   int xdata_arr_cnt;
+  bfd_boolean virt_size_is_zero = FALSE;
 
   /* Sanity checks.  */
   if (pdata_section == NULL
@@ -466,12 +487,38 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
   stop = pei_section_data (abfd, pdata_section)->virt_size;
   if ((stop % onaline) != 0)
     fprintf (file,
-	     _("warning: .pdata section size (%ld) is not a multiple of %d\n"),
-	     (long) stop, onaline);
+	     _("Warning: %s section size (%ld) is not a multiple of %d\n"),
+	     pdata_section->name, (long) stop, onaline);
+
+  datasize = pdata_section->size;
+  if (datasize == 0)
+    {
+      if (stop)
+	fprintf (file, _("Warning: %s section size is zero\n"),
+		 pdata_section->name);
+      return TRUE;
+    }
+
+  /* virt_size might be zero for objects.  */
+  if (stop == 0 && strcmp (abfd->xvec->name, "pe-x86-64") == 0)
+    {
+      stop = (datasize / onaline) * onaline;
+      virt_size_is_zero = TRUE;
+    }
+  else if (datasize < stop)
+      {
+	fprintf (file,
+		 _("Warning: %s section size (%ld) is smaller than virtual size (%ld)\n"),
+		 pdata_section->name, (unsigned long) datasize,
+		 (unsigned long) stop);
+	/* Be sure not to read passed datasize.  */
+	stop = datasize / onaline;
+      }
 
   /* Display functions table.  */
   fprintf (file,
-	   _("\nThe Function Table (interpreted .pdata section contents)\n"));
+	   _("\nThe Function Table (interpreted %s section contents)\n"),
+	   pdata_section->name);
 
   fprintf (file, _("vma:\t\t\tBeginAddress\t EndAddress\t  UnwindData\n"));
 
@@ -482,7 +529,10 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
   xdata_arr = (bfd_vma *) xmalloc (sizeof (bfd_vma) * ((stop / onaline) + 1));
   xdata_arr_cnt = 0;
 
-  imagebase = pe_data (abfd)->pe_opthdr.ImageBase;
+  if (strcmp (abfd->xvec->name, "pei-x86-64") == 0)
+    imagebase = pe_data (abfd)->pe_opthdr.ImageBase;
+  else
+    imagebase = 0;
 
   for (i = 0; i < stop; i += onaline)
     {
@@ -490,6 +540,7 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
 
       if (i + PDATA_ROW_SIZE > stop)
 	break;
+
       pex64_get_runtime_function (abfd, &rf, &pdata[i]);
 
       if (rf.rva_BeginAddress == 0 && rf.rva_EndAddress == 0
@@ -528,8 +579,9 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
 	  seen_error = 1;
 	  fprintf (file, "  has negative unwind address\n");
 	}
-      if (rf.rva_UnwindData && !PEX64_IS_RUNTIME_FUNCTION_CHAINED (&rf))
-        xdata_arr[xdata_arr_cnt++] = rf.rva_UnwindData;
+      else if ((rf.rva_UnwindData && !PEX64_IS_RUNTIME_FUNCTION_CHAINED (&rf))
+		|| virt_size_is_zero)
+	xdata_arr[xdata_arr_cnt++] = rf.rva_UnwindData;
     }
 
   if (seen_error)
@@ -545,19 +597,41 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
 
   /* Find the section containing the unwind data (.xdata).  */
   xdata_base = xdata_arr[0];
-  xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".rdata");
+  /* For sections with long names, first look for the same
+     section name, replacing .pdata by .xdata prefix.  */
+  if (strcmp (pdata_section->name, ".pdata") != 0)
+    {
+      size_t len = strlen (pdata_section->name);
+      char *xdata_name = alloca (len + 1);
 
-  if (!xdata_section)
-    xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".data");
+      xdata_name = memcpy (xdata_name, pdata_section->name, len + 1);
+      /* Transform .pdata prefix into .xdata prefix.  */
+      if (len > 1)
+	xdata_name [1] = 'x';
+      xdata_section = pex64_get_section_by_rva (abfd, xdata_base,
+						xdata_name);
+    }
+  /* Second, try the .xdata section itself.  */
   if (!xdata_section)
     xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".xdata");
-  if (!xdata_section)
+  /* Otherwise, if xdata_base is non zero, search also inside
+     other standard sections.  */
+  if (!xdata_section && xdata_base)
+    xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".rdata");
+  if (!xdata_section && xdata_base)
+    xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".data");
+  if (!xdata_section && xdata_base)
     xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".pdata");
-  if (!xdata_section)
+  if (!xdata_section && xdata_base)
     xdata_section = pex64_get_section_by_rva (abfd, xdata_base, ".text");
+  /* Transfer xdata section into xdata array.  */
   if (!xdata_section
       || !bfd_malloc_and_get_section (abfd, xdata_section, &xdata))
     goto done;
+
+  /* Avoid "also used "... ouput for single unwind info
+     in object file.  */
+  prev_unwinddata_rva = (bfd_vma) -1;
 
   /* Do dump of pdata related xdata.  */
   for (i = 0; i < stop; i += onaline)
@@ -566,6 +640,7 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
 
       if (i + PDATA_ROW_SIZE > stop)
 	break;
+
       pex64_get_runtime_function (abfd, &rf, &pdata[i]);
 
       if (rf.rva_BeginAddress == 0 && rf.rva_EndAddress == 0
@@ -573,7 +648,7 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
 	/* We are probably into the padding of the section now.  */
 	break;
       if (i == 0)
-        fprintf (file, "\nDump of .xdata\n");
+        fprintf (file, _("\nDump of %s\n"), xdata_section->name);
 
       fputc (' ', file);
       fprintf_vma (file, rf.rva_UnwindData + imagebase);
@@ -596,7 +671,7 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
       fprintf_vma (file, rf.rva_EndAddress + imagebase);
       fputc ('\n', file);
 
-      if (rf.rva_UnwindData != 0)
+      if (rf.rva_UnwindData != 0 || virt_size_is_zero)
 	{
 	  if (PEX64_IS_RUNTIME_FUNCTION_CHAINED (&rf))
 	    {
@@ -635,6 +710,7 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
 		 identical pointers in the array; advance past all of them.  */
 	      while (p[0] <= rf.rva_UnwindData)
 		++p;
+
 	      if (p[0] == ~((bfd_vma) 0))
 		p = NULL;
 
@@ -651,6 +727,37 @@ pex64_bfd_print_pdata (bfd *abfd, void *vfile)
   return TRUE;
 }
 
+/* Static counter of number of found pdata sections.  */
+static bfd_boolean pdata_count;
+
+/* Functionn prototype.  */
+bfd_boolean pex64_bfd_print_pdata (bfd *, void *);
+
+/* Helper function for bfd_map_over_section.  */
+static void
+pex64_print_all_pdata_sections (bfd *abfd, asection *pdata, void *obj)
+{
+  if (CONST_STRNEQ (pdata->name, ".pdata"))
+    {
+      if (pex64_bfd_print_pdata_section (abfd, obj, pdata))
+	pdata_count++;
+    }
+}
+
+bfd_boolean
+pex64_bfd_print_pdata (bfd *abfd, void *vfile)
+{
+  asection *pdata_section = bfd_get_section_by_name (abfd, ".pdata");
+
+  if (pdata_section)
+    return pex64_bfd_print_pdata_section (abfd, vfile, pdata_section);
+
+  pdata_count = 0;
+  bfd_map_over_sections (abfd, pex64_print_all_pdata_sections, vfile);
+  return (pdata_count > 0);
+}
+
 #define bfd_pe_print_pdata   pex64_bfd_print_pdata
+#define bfd_coff_std_swap_table bfd_coff_pei_swap_table
 
 #include "coff-x86_64.c"

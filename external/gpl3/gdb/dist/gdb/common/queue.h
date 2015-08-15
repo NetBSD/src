@@ -1,6 +1,6 @@
 /* General queue data structure for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,9 +19,6 @@
 
 #ifndef QUEUE_H
 #define QUEUE_H
-
-#include "libiberty.h" /* xmalloc */
-#include "gdb_assert.h"
 
 /* These macros implement functions and structs for a general queue.
    Macro 'DEFINE_QUEUE_P(TYPEDEF)' is to define the new queue type for

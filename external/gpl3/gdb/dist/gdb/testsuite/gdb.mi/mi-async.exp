@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if { !([isnative] && [istarget *-linux*]) } then {
 
 # The plan is for async mode to become the default but toggle for now.
 set saved_gdbflags $GDBFLAGS
-set GDBFLAGS [concat $GDBFLAGS " -ex \"set target-async on\""]
+set GDBFLAGS [concat $GDBFLAGS " -ex \"set mi-async on\""]
 
 load_lib mi-support.exp
 

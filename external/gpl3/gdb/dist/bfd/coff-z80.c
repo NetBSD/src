@@ -1,5 +1,5 @@
 /* BFD back-end for Zilog Z80 COFF binaries.
-   Copyright 2005, 2006, 2007, 2008  Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -81,7 +81,7 @@ rtype2howto (arelent *internal, struct internal_reloc *dst)
   switch (dst->r_type)
     {
     default:
-      abort ();
+      internal->howto = NULL;
       break;
     case R_IMM8:
       internal->howto = &r_imm8;
@@ -283,7 +283,7 @@ extra_case (bfd *in_abfd,
 #undef  coff_bfd_relax_section
 #define coff_bfd_relax_section bfd_coff_reloc16_relax_section
 
-CREATE_LITTLE_COFF_TARGET_VEC (z80coff_vec, "coff-z80", 0,
+CREATE_LITTLE_COFF_TARGET_VEC (z80_coff_vec, "coff-z80", 0,
 			       SEC_CODE | SEC_DATA, '\0', NULL,
 			       COFF_SWAP_TABLE)
 

@@ -1,13 +1,1703 @@
-2014-01-22  Baruch Siach  <baruch@tkos.co.il>
+2015-01-10  Joel Brobecker  <brobecker@adacore.com>
+
+	* i387-fp.c (i387_cache_to_xsave): In look over
+	num_avx512_zmmh_high_registers, replace use of struct i387_xsave
+	zmmh_low_space field by use of zmmh_high_space.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (step_over_bkpt): Move higher up in the file.
+	(handle_extended_wait): Don't store the stop_pc here.
+	(get_stop_pc): Adjust comments and rename to ...
+	(check_stopped_by_breakpoint): ... this.  Record whether the LWP
+	stopped for a software breakpoint or hardware breakpoint.
+	(thread_still_has_status_pending_p): New function.
+	(status_pending_p_callback): Use
+	thread_still_has_status_pending_p.  If the event is no longer
+	interesting, resume the LWP.
+	(handle_tracepoints): Add assert.
+	(maybe_move_out_of_jump_pad): Remove cancel_breakpoints call.
+	(wstatus_maybe_breakpoint): New function.
+	(cancel_breakpoint): Delete function.
+	(check_stopped_by_watchpoint): New function, factored out from
+	linux_low_filter_event.
+	(lp_status_maybe_breakpoint): Delete function.
+	(linux_low_filter_event): Remove filter_ptid argument.
+	Leave thread group exits pending here.	Store the LWP's stop PC.
+	Always leave events pending.
+	(linux_wait_for_event_filtered): Pull all events out of the
+	kernel, and leave them all pending.
+	(count_events_callback, select_event_lwp_callback): Consider all
+	events.
+	(cancel_breakpoints_callback, linux_cancel_breakpoints): Delete.
+	(select_event_lwp): Only give preference to the stepping LWP in
+	all-stop mode.	Adjust comments.
+	(ignore_event): New function.
+	(linux_wait_1): Delete 'retry' label.  Use ignore_event.  Remove
+	references to cancel_breakpoints.  Adjust to renames.  Also give
+	equal priority to all LWPs that have had events in non-stop mode.
+	If reporting a software breakpoint event, unadjust the LWP's PC.
+	(linux_wait): If linux_wait_1 returned an ignored event, retry.
+	(stuck_in_jump_pad_callback, move_out_of_jump_pad_callback):
+	Adjust.
+	(linux_resume_one_lwp): Store the LWP's PC.  Adjust.
+	(resume_status_pending_p): Use thread_still_has_status_pending_p.
+	(linux_stopped_by_watchpoint): Adjust.
+	(linux_target_ops): Remove reference to linux_cancel_breakpoints.
+	* linux-low.h (enum lwp_stop_reason): New.
+	(struct lwp_info) <stop_pc>: Adjust comment.
+	<stopped_by_watchpoint>: Delete field.
+	<stop_reason>: New field.
+	* linux-x86-low.c (x86_linux_prepare_to_resume): Adjust.
+	* mem-break.c (software_breakpoint_inserted_here)
+	(hardware_breakpoint_inserted_here): New function.
+	* mem-break.h (software_breakpoint_inserted_here)
+	(hardware_breakpoint_inserted_here): Declare.
+	* target.h (struct target_ops) <cancel_breakpoints>: Remove field.
+	(cancel_breakpoints): Delete.
+	* tracepoint.c (clear_installed_tracepoints, stop_tracing)
+	(upload_fast_traceframes): Remove references to
+	cancel_breakpoints.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* thread-db.c (find_new_threads_callback): Ignore thread if the
+	kernel thread ID is -1.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_attach_fail_reason_string): Move to
+	nat/linux-ptrace.c, and rename.
+	(linux_attach_lwp): Update comment.
+	(attach_proc_task_lwp_callback): New function.
+	(linux_attach): Adjust to rename and use
+	linux_proc_attach_tgid_threads.
+	(linux_attach_fail_reason_string): Delete declaration.
+
+2015-01-01  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdbreplay.c (gdbreplay_version): Update copyright year to 2015.
+	* server.c (gdbserver_version): Likewise.
+
+2014-12-29  Sergio Durigan Junior  <sergiodj@redhat.com>
+
+	* remote-utils.c: Include ctype.h.
+	(input_interrupt): Explicitly handle the case when the char
+	received is the NUL byte.  Improve the printing of non-ASCII
+	characters.
+
+2014-12-16  Joel Brobecker  <brobecker@adacore.com>
+
+	* linux-low.c (linux_low_filter_event): Update call to
+	linux_enable_event_reporting following the addition of
+	a new parameter to that function.
+
+2014-12-16  Catalin Udma  <catalin.udma@freescale.com>
+
+	PR server/17457
+	* linux-aarch64-low.c (AARCH64_FPSR_REGNO): New define.
+	(AARCH64_FPCR_REGNO): Likewise.
+	(AARCH64_NUM_REGS): Update to include fpsr/fpcr registers.
+	(aarch64_fill_fpregset): Add missing fpsr/fpcr registers.
+	(aarch64_store_fpregset): Likewise.
+
+2014-12-15  Joel Brobecker  <brobecker@adacore.com>
+
+	* lynx-low.c (lynx_resume): Use PTRACE_SINGLESTEP_ONE if N == 1.
+	Remove FIXME comment about assumption about N.
+
+2014-12-13  Joel Brobecker  <brobecker@adacore.com>
+
+	* configure.ac: If large-file support is disabled in GDBserver,
+	pass --disable-largefile to ACX_CONFIGURE_DIR call for "gnulib".
+	* configure: Regenerate.
+
+2014-12-12  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-low.c (regsets_fetch_inferior_registers): Suppress the
+	warning upon ENODATA from ptrace.
+	* linux-s390-low.c (s390_store_tdb): New.
+	(s390_regsets): Add regset for NT_S390_TDB.
+
+2014-12-12  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-low.c (regsets_store_inferior_registers): Skip regsets
+	without a fill_function.
+	* linux-s390-low.c (s390_fill_last_break): Remove.
+	(s390_regsets): Set fill_function to NULL for NT_S390_LAST_BREAK.
+	(s390_arch_setup): Use regset's size instead of fill_function for
+	loop end condition.
+
+2014-12-12  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-low.c (regsets_fetch_inferior_registers): Do not invoke
+	the regset's store function when ptrace returned an error.
+	* regcache.c (get_thread_regcache): Invalidate register cache
+	before fetching inferior's registers.
+
+2014-12-12  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* linux-low.c (regsets_fetch_inferior_registers): Rephrase
+	while-loop as for-loop.
+	(regsets_store_inferior_registers): Likewise.
+
+2014-11-28  Yao Qi  <yao@codesourcery.com>
+
+	* configure.ac(AC_CHECK_FUNCS): Remove readlink.
+	* config.in, configure: Re-generate.
+	* hostio.c (handle_unlink): Remove code checking HAVE_READLINK
+	is defined.
+
+2014-11-21  Yao Qi  <yao@codesourcery.com>
+
+	* configure.ac: Don't invoke AC_FUNC_ALLOCA.
+	(AC_CHECK_HEADERS): Remove malloc.h.
+	* configure: Re-generated.
+	* config.in: Re-generated.
+	* server.h: Don't include alloca.h and malloc.h.
+	* gdbreplay.c: Don't check HAVE_ALLOCA_H is defined.
+	Don't include malloc.h.
+
+2014-11-17  Joel Brobecker  <brobecker@adacore.com>
+
+	* lynx-low.c (lynx_write_memory): Put lynx_read_memory and
+	corresponding ERRNO check in same block.
+
+2014-11-12  Pedro Alves  <palves@redhat.com>
+
+	* server.c (cont_thread): Update comment.
+	(start_inferior, attach_inferior): No longer clear cont_thread.
+	(handle_v_cont): No longer set cont_thread.
+	(captured_main): Clear cont_thread each time a GDB connects.
+
+2014-11-12  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_wait_1): Don't force a wait for the Hc
+	thread, and don't resume all threads if the Hc thread has exited.
+
+2014-11-12  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_request_interrupt): Always send a SIGINT to
+	the process group instead of to a specific LWP.
+
+2014-10-15  Pedro Alves  <palves@redhat.com>
+
+	PR server/17487
+	* win32-arm-low.c (arm_set_thread_context): Remove current_event
+	parameter.
+	(arm_set_thread_context): Delete.
+	(the_low_target): Adjust.
+	* win32-i386-low.c (debug_registers_changed)
+	(debug_registers_used): Delete.
+	(update_debug_registers_callback): New function.
+	(x86_dr_low_set_addr, x86_dr_low_set_control): Mark all threads as
+	needing to update their debug registers.
+	(win32_get_current_dr): New function.
+	(x86_dr_low_get_addr, x86_dr_low_get_control)
+	(x86_dr_low_get_status): Fetch the debug register from the thread
+	record's context.
+	(i386_initial_stuff): Adjust.
+	(i386_get_thread_context): Remove current_event parameter.  Don't
+	clear debug_registers_changed nor copy DR values to
+	debug_reg_state.
+	(i386_set_thread_context): Delete.
+	(i386_prepare_to_resume): New function.
+	(i386_thread_added): Mark the thread as needing to update irs
+	debug registers.
+	(the_low_target): Remove i386_set_thread_context and install
+	i386_prepare_to_resume.
+	* win32-low.c (win32_get_thread_context): Adjust.
+	(win32_set_thread_context): Use SetThreadContext
+	directly.
+	(win32_prepare_to_resume): New function.
+	(win32_require_context): New function, factored out from ...
+	(thread_rec): ... this.
+	(continue_one_thread): Call win32_prepare_to_resume on each thread
+	we're about to continue.
+	(win32_resume): Call win32_prepare_to_resume on the event thread.
+	* win32-low.h (struct win32_thread_info)
+	<debug_registers_changed>: New field.
+	(struct win32_target_ops): Change prototype of set_thread_context,
+	delete set_thread_context and add prepare_to_resume.
+	(win32_require_context): New declaration.
+
+2014-10-08  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include common-exceptions.h.
+
+2014-10-08  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include cleanups.h.
+
+2014-09-30  James Hogan  <james.hogan@imgtec.com>
+
+	* Makefile.in (clean): Add rm -f commands for mips-dsp-linux.c and
+	mips64-dsp-linux.c.
+
+2014-09-23  Yao Qi  <yao@codesourcery.com>
+
+	* linux-low.c (lp_status_maybe_breakpoint): New function.
+	(linux_low_filter_event): Call lp_status_maybe_breakpoint.
+	(count_events_callback): Likewise.
+	(select_event_lwp_callback): Likewise.
+	(cancel_breakpoints_callback): Likewise.
+
+2014-09-19  Don Breazeal  <donb@codesourcery.com>
+
+	* linux-low.c (handle_extended_wait): Call
+	linux_ptrace_get_extended_event.
+	(get_stop_pc, get_detach_signal, linux_low_filter_event): Call
+	linux_is_extended_waitstatus.
+
+2014-09-16  Joel Brobecker  <brobecker@adacore.com>
+
+	* Makefile.in (CPPFLAGS): Define.
+	(INTERNAL_CFLAGS_BASE): Add ${CPPFLAGS}.
+	(IPAGENT_CFLAGS): Remove ${CPPFLAGS}.
+
+2014-09-16  Gary Benson  <gbenson@redhat.com>
+
+	* inferiors.h (current_inferior): Renamed as...
+	(current_thread): New variable.  All uses updated.
+	* linux-low.c (get_pc): Renamed saved_inferior as saved_thread.
+	(maybe_move_out_of_jump_pad): Likewise.
+	(cancel_breakpoint): Likewise.
+	(linux_low_filter_event): Likewise.
+	(wait_for_sigstop): Likewise.
+	(linux_resume_one_lwp): Likewise.
+	(need_step_over_p): Likewise.
+	(start_step_over): Likewise.
+	(linux_stabilize_threads): Renamed save_inferior as saved_thread.
+	* linux-x86-low.c (x86_linux_update_xmltarget): Likewise.
+	* proc-service.c (ps_lgetregs): Renamed reg_inferior as reg_thread
+	and save_inferior as saved_thread.
+	* regcache.c (get_thread_regcache): Renamed saved_inferior as
+	saved_thread.
+	(regcache_invalidate_thread): Likewise.
+	* remote-utils.c (prepare_resume_reply): Likewise.
+	* thread-db.c (thread_db_get_tls_address): Likewise.
+	(disable_thread_event_reporting): Likewise.
+	(remove_thread_event_breakpoints): Likewise.
+	* tracepoint.c (gdb_agent_about_to_close): Renamed save_inferior
+	as saved_thread.
+	* target.h (set_desired_inferior): Renamed as...
+	(set_desired_thread): New declaration.  All uses updated.
+	* server.c (myresume): Updated comment to reference thread instead
+	of inferior.
+	(handle_serial_event): Likewise.
+	(handle_target_event): Likewise.
+
+2014-09-12  Tom Tromey  <tromey@redhat.com>
+	    Gary Benson  <gbenson@redhat.com>
+
+	* regcache.h: Include common-regcache.h.
+	(regcache_read_pc): Don't declare.
+	* regcache.c (get_thread_regcache_for_ptid): New function.
+
+2014-09-11  Tom Tromey  <tromey@redhat.com>
+	    Gary Benson  <gbenson@redhat.com>
+
+	* symbol.c: New file.
+	* Makefile.in (SFILES): Add symbol.c.
+	(OBS): Add symbol.o.
+
+2014-09-11  Gary Benson  <gbenson@redhat.com>
+
+	* target.c (target_stop_ptid, target_continue_ptid): New
+	functions.
+
+2014-09-11  Tom Tromey  <tromey@redhat.com>
+	    Gary Benson  <gbenson@redhat.com>
+
+	* target.h: Include target/target.h.
+	* target.c (target_read_memory, target_read_uint32)
+	(target_write_memory): New functions.
+
+2014-09-11  Gary Benson  <gbenson@redhat.com>
+
+	* server.h (debug_hw_points): Don't declare.
+	* server.c (debug_hw_points): Don't define.  Replace all uses
+	with show_debug_regs.
+	* linux-aarch64-low.c (debug_hw_points): Don't define.  Replace
+	all uses with show_debug_regs.
+
+2014-09-08  Edjunior Barbosa Machado  <emachado@linux.vnet.ibm.com>
+
+	* linux-ppc-low.c (ppc_collect_ptrace_register): Adjust routine to take
+	endianness into account.
+	(ppc_supply_ptrace_register): Likewise.
+
+2014-09-03  James Hogan  <james.hogan@imgtec.com>
+
+	* linux-mips-low.c (mips_read_description): Reset errno to 0 prior
+	to reading DSP_CONTROL with PTRACE_PEEKUSER ptrace call.
+
+2014-09-03  Gary Benson  <gbenson@redhat.com>
+
+	* linux-x86-low.c (x86_linux_prepare_to_resume): Use
+	ALL_DEBUG_ADDRESS_REGISTERS.
+
+2014-09-02  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.h: Renamed as...
+	* x86-low.h: New file.  All type, function and variable name
+	prefixes changed from "i386_" to "x86_".  All references updated.
+	* i386-low.c: Renamed as...
+	* x86-low.c: New file.  All type, function and variable name
+	prefixes changed from "i386_" to "x86_".  All references updated.
+
+2014-09-02  Gary Benson  <gbenson@redhat.com>
+
+	* linux-x86-low.c (x86_linux_new_process): Use XCNEW.
+	(x86_linux_new_thread): Likewise.
+
+2014-08-29  Gary Benson  <gbenson@redhat.com>
+
+	* server.h (setjmp.h): Do not include.
+	(toplevel): Do not declare.
+	(common-exceptions.h): Include.
+	(cleanups.h): Likewise.
+	* server.c (toplevel): Do not define.
+	(exit_code): New static global.
+	(detach_or_kill_for_exit_cleanup): New function.
+	(main): New function.  Original main renamed to...
+	(captured_main): New function.
+	* utils.c (verror) [!IN_PROCESS_AGENT]: Use throw_verror.
+
+2014-08-29  Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.in (SFILES): Add common/common-exceptions.c.
+	(OBS): Add common-exceptions.o.
+	(common-exceptions.o): New rule.
+	* utils.c (prepare_to_throw_exception): New function.
+
+2014-08-29  Gary Benson  <gbenson@redhat.com>
+
+	* config.in: Regenerate.
+	* configure: Likewise.
+
+2014-08-29  Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.in (SFILES): Add common/cleanups.c.
+	(OBS): cleanups.o.
+	(cleanups.o): New rule.
+
+2014-08-29  Gary Benson  <gbenson@redhat.com>
+
+	* utils.c (internal_vwarning): New function.
+
+2014-08-28  Gary Benson  <gbenson@redhat.com>
+
+	* utils.h (fatal): Remove declaration.
+	* utils.c (fatal): Remove function.
+
+2014-08-28  Gary Benson  <gbenson@redhat.com>
+
+	* tracepoint.c (gdb_agent_init): Replace fatal with
+	perror_with_name.
+	(initialize_tracepoint): Likewise.
+
+2014-08-28  Gary Benson  <gbenson@redhat.com>
+
+	* remote-utils.c (remote_prepare): Replace fatal with error.
+
+2014-08-28  Gary Benson  <gbenson@redhat.com>
+
+	* linux-low.c (linux_async): Replace fatal with warning.
+	Tidy up and return.
+	(linux_start_non_stop): Return -1 if linux_async failed.
+
+2014-08-28  Gary Benson  <gbenson@redhat.com>
+
+	* linux-x86-low.c (i386_dr_low_set_addr): Replace check with
+	gdb_assert.
+	(i386_dr_low_get_addr): Remove vague comment.
+	* win32-i386-low.c (i386_dr_low_set_addr): Replace check with
+	gdb_assert.
+
+2014-08-28  Gary Benson  <gbenson@redhat.com>
+
+	* inferiors.c (get_thread_process): Replace check with gdb_assert.
+	* linux-low.c (linux_wait_for_event_filtered): Replace fatal with
+	internal_error.
+	(linux_resume_one_lwp): Likewise.
+	* linux-x86-low.c (x86_siginfo_fixup): Replace checks with
+	gdb_assert.
+	* mem-break.c (raw_bkpt_type_to_target_hw_bp_type): Replace fatal
+	with internal_error.
+	* regcache.c (get_thread_regcache): Replace check with gdb_assert.
+	(init_register_cache): Replace fatal with gdb_assert_not_reached.
+	(find_register_by_name): Replace fatal with internal_error.
+	(find_regno): Likewise.
+	* tdesc.c (init_target_desc): Replace check with gdb_assert.
+	* thread-db.c (thread_db_create_event): Likewise.
+	(thread_db_load_search): Likewise.
+	(try_thread_db_load_1): Likewise.
+	* tracepoint.c (get_jump_space_head): Replace fatal with
+	internal_error.
+	(claim_trampoline_space): Likewise.
+	(have_fast_tracepoint_trampoline_buffer): Likewise.
+	(cmd_qtstart): Likewise.
+	(stop_tracing): Likewise.
+	(fast_tracepoint_collecting): Likewise.
+	(target_malloc): Likewise.
+	(download_tracepoint): Likewise.
+	(download_trace_state_variables): Replace check with gdb_assert.
+	(upload_fast_traceframes): Replace fatal with internal_error.
+
+2014-08-19  Tom Tromey  <tromey@redhat.com>
+	    Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.in (SFILES): Add common/common-debug.c.
+	(OBS): Add common-debug.o.
+	(common-debug.o): New rule.
+	* debug.h (debug_printf): Don't declare.
+	* debug.c (debug_printf): Renamed and rewritten as...
+	(debug_vprintf): New function.
+
+2014-08-19  Gary Benson  <gbenson@redhat.com>
+
+	* utils.h: Do not include print-utils.h.
+
+2014-08-19  Tom Tromey  <tromey@redhat.com>
+	    Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Add static assertion.
+	(gdb_byte, CORE_ADDR, LONGEST, ULONGEST): Remove.
+
+2014-08-19  Tom Tromey  <tromey@redhat.com>
+	    Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.in (SFILES): Add common/errors.c.
+	(OBS): Add errors.o.
+	(IPA_OBS): Add errors-ipa.o.
+	(errors.o): New rule.
+	(errors-ipa.o): Likewise.
+	* utils.h (perror_with_name, error, warning): Don't declare.
+	* utils.c (warning): Renamed and rewritten as...
+	(vwarning): New function.
+	(error): Renamed and rewritten as...
+	(verror): New function.
+	(internal_error): Renamed and rewritten as...
+	(internal_verror): New function.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* configure.ac (AC_CHECK_HEADERS): Remove errno.h.
+	* configure: Regenerate.
+	* config.in: Likewise.
+	* server.h: Do not include errno.h.
+	* event-loop.c: Likewise.
+	* hostio-errno.c: Likewise.
+	* linux-low.c: Likewise.
+	* remote-utils.c: Likewise.
+	* spu-low.c: Likewise.
+	* utils.c: Likewise.
+	* gdbreplay.c: Unconditionally include errno.h.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include string.h.
+	* event-loop.c: Likewise.
+	* linux-low.c: Likewise.
+	* regcache.c: Likewise.
+	* remote-utils.c: Likewise.
+	* spu-low.c: Likewise.
+	* utils.c: Likewise.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include gdb_assert.h.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include common-utils.h.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include ptid.h.
+	* notif.h: Likewise.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include gdb_locale.h.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include gdb/signals.h.
+	* win32-low.c: Likewise.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include pathmax.h.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include libiberty.h.
+	* linux-bfin-low.c: Likewise.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include ansidecl.h.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* linux-x86-low.c: Do not include stddef.h.
+	* lynx-ppc-low.c: Likewise.
+	* tracepoint.c: Likewise.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include stdarg.h.
+	* nto-low.c: Likewise.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include stdlib.h.
+	* inferiors.c: Likewise.
+	* linux-low.c: Likewise.
+	* regcache.c: Likewise.
+	* spu-low.c: Likewise.
+	* tracepoint.c: Likewise.
+	* utils.c: Likewise.
+
+2014-08-07  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Do not include stdio.h.
+	* linux-low.c: Likewise.
+	* remote-utils.c: Likewise.
+	* spu-low.c: Likewise.
+	* utils.c: Likewise.
+	* wincecompat.c: Likewise.
+
+2014-08-06  Gary Benson  <gbenson@redhat.com>
+
+	* regcache.c (init_register_cache): Move conditionals inside if.
+
+2014-08-06  Gary Benson  <gbenson@redhat.com>
+
+	* linux-low.c (linux_supports_non_stop): Use target_is_async_p.
+
+2014-07-31  Gary Benson  <gbenson@redhat.com>
+
+	* ax.h: Do not include server.h.
+	* gdbthread.h: Likewise.
+	* lynx-low.h: Likewise.
+	* notif.h: Likewise.
+
+2014-07-30  Gary Benson  <gbenson@redhat.com>
+
+	* server.h: Include common-defs.h.
+	Do not include config.h or build-gnulib-gdbserver/config.h.
+
+2014-07-30  Gary Benson  <gbenson@redhat.com>
+
+	* hostio-errno.c: Move server.h to top of includes list.
+	* inferiors.c: Likewise.
+	* linux-x86-low.c: Likewise.
+	* notif.c: Include server.h.
+
+2014-07-24  Tom Tromey  <tromey@redhat.com>
+	    Gary Benson  <gbenson@redhat.com>
+
+	* server.h (CORE_ADDR): Now unsigned.
+
+2014-07-16  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_kill_one_lwp): Use kill_lwp, not kill.
+
+2014-07-15  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_kill_one_lwp): Save errno and work with saved
+	copy.
+
+2014-07-11  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (kill_wait_lwp): New function, based on
+	kill_one_lwp_callback, but use my_waitpid directly.
+	(kill_one_lwp_callback, linux_kill): Use it.
+
+2014-06-23  Pedro Alves  <palves@redhat.com>
+
+	* linux-x86-low.c (x86_linux_prepare_to_resume): Clear DR_CONTROL
+	before setting DR0..DR3.
+
+2014-06-20  Gary Benson  <gbenson@redhat.com>
+
+	* configure.ac (AC_REPLACE_FUNCS) <vasprintf, vsnprintf>: Removed.
+	* configure: Regenerated.
+	* config.in: Likewise.
+
+2014-06-20  Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.in (SFILES): Update locations for files moved
+	from common to nat.
+	(object file files): Reordered.
+
+2014-06-20  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.h (i386_dr_low_can_set_addr): Removed.
+	(i386_dr_low_set_addr): Likewise.
+	(i386_dr_low_get_addr): Likewise.
+	(i386_dr_low_can_set_control): Likewise.
+	(i386_dr_low_set_control): Likewise.
+	(i386_dr_low_get_control): Likewise.
+	(i386_dr_low_get_status): Likewise.
+	(i386_get_debug_register_length): Likewise.
+	* linux-x86-low.c (i386_dr_low_set_addr):
+	Changed signature.  Made static.
+	(i386_dr_low_get_addr): Likewise.
+	(i386_dr_low_set_control): Likewise.
+	(i386_dr_low_get_control): Likewise.
+	(i386_dr_low_get_status): Likewise.
+	(i386_dr_low): New global variable.
+	* win32-i386-low.c (i386_dr_low_set_addr):
+	Changed signature.  Made static.
+	(i386_dr_low_get_addr): Likewise.
+	(i386_dr_low_set_control): Likewise.
+	(i386_dr_low_get_control): Likewise.
+	(i386_dr_low_get_status): Likewise.
+	(i386_dr_low): New global variable.
+
+2014-06-20  Marcus Shawcroft  <marcus.shawcroft@arm.com>
+
+	* configure.ac: Invoke. AC_CHECK_TOOL(AR, ar).
+	* Makefile.in (AR, AR_FLAGS): Define.
+	* configure: Regenerate.
+
+2014-06-19  Gary Benson  <gbenson@redhat.com>
+
+	* Makefile.in (i386-dregs.o): New rule.
+	* configure.srv: Add i386-dregs.o to all targets using i386-low.o.
+	* i386-low.c (target.h): Remove include.
+	(TARGET_HAS_DR_LEN_8): Now in i386-dregs.c.
+	(DR_CONTROL_SHIFT): Likewise.
+	(DR_CONTROL_SIZE): Likewise.
+	(DR_RW_EXECUTE): Likewise.
+	(DR_RW_WRITE): Likewise.
+	(DR_RW_READ): Likewise.
+	(DR_RW_IORW): Likewise.
+	(DR_LEN_1): Likewise.
+	(DR_LEN_2): Likewise.
+	(DR_LEN_4): Likewise.
+	(DR_LEN_8): Likewise.
+	(DR_LOCAL_ENABLE_SHIFT): Likewise.
+	(DR_GLOBAL_ENABLE_SHIFT): Likewise.
+	(DR_ENABLE_SIZE): Likewise.
+	(DR_LOCAL_SLOWDOWN): Likewise.
+	(DR_GLOBAL_SLOWDOWN): Likewise.
+	(DR_CONTROL_RESERVED): Likewise.
+	(I386_DR_CONTROL_MASK): Likewise.
+	(I386_DR_VACANT): Likewise.
+	(I386_DR_LOCAL_ENABLE): Likewise.
+	(I386_DR_GLOBAL_ENABLE): Likewise.
+	(I386_DR_DISABLE): Likewise.
+	(I386_DR_SET_RW_LEN): Likewise.
+	(I386_DR_GET_RW_LEN): Likewise.
+	(I386_DR_WATCH_HIT): Likewise.
+	(i386_wp_op_t): Likewise.
+	(i386_show_dr): Likewise.
+	(i386_length_and_rw_bits): Likewise.
+	(i386_insert_aligned_watchpoint): Likewise.
+	(i386_remove_aligned_watchpoint): Likewise.
+	(i386_handle_nonaligned_watchpoint): Likewise.
+	i386_update_inferior_debug_regs(): Likewise.
+	(i386_dr_insert_watchpoint): Likewise.
+	(i386_dr_remove_watchpoint): Likewise.
+	(i386_dr_region_ok_for_watchpoint): Likewise.
+	(i386_dr_stopped_data_address): Likewise.
+	(i386_dr_stopped_by_watchpoint): Likewise.
+
+2014-06-19  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.c (i386_dr_show): Renamed to
+	i386_show_dr and made static.  All uses updated.
+	(i386_dr_length_and_rw_bits): Renamed to
+	i386_length_and_rw_bits and made static.
+	All uses updated.
+	(i386_dr_insert_aligned_watchpoint): Renamed to
+	i386_insert_aligned_watchpoint and made static.
+	All uses updated.
+	(i386_dr_remove_aligned_watchpoint): Renamed to
+	i386_remove_aligned_watchpoint and made static.
+	All uses updated.
+	(i386_dr_update_inferior_debug_regs): Renamed to
+	i386_update_inferior_debug_regs and made static.
+	All uses updated.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.h (i386_dr_low_can_set_addr): New macro.
+	(i386_dr_low_can_set_control): Likewise.
+	(i386_get_debug_register_length): Likewise.
+	* i386-low.c (i386_dr_low_can_set_addr): Now in i386-low.h.
+	(i386_dr_low_can_set_control): Likewise.
+	(i386_get_debug_register_length): Likewise.
+
+2014-06-17  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.h (i386-dregs.h): New include.
+	(DR_FIRSTADDR): Now in i386-dregs.h.
+	(DR_LASTADDR): Likewise.
+	(DR_NADDR): Likewise.
+	(DR_STATUS): Likewise.
+	(DR_CONTROL): Likewise.
+	(i386_debug_reg_state): Likewise.
+	(i386_dr_insert_watchpoint): Likewise.
+	(i386_dr_remove_watchpoint): Likewise.
+	(i386_dr_region_ok_for_watchpoint): Likewise.
+	(i386_dr_stopped_data_address): Likewise.
+	(i386_dr_stopped_by_watchpoint): Likewise.
+	* i386-low.c (ALL_DEBUG_REGISTERS): Likewise.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.h (i386_low_insert_watchpoint): Renamed to
+	i386_dr_insert_watchpoint.
+	(i386_low_remove_watchpoint): Renamed to
+	i386_dr_remove_watchpoint.
+	(i386_low_region_ok_for_watchpoint): Renamed to
+	i386_dr_region_ok_for_watchpoint.
+	(i386_low_stopped_data_address): Renamed to
+	i386_dr_stopped_data_address.
+	(i386_low_stopped_by_watchpoint): Renamed to
+	i386_dr_stopped_by_watchpoint.
+	* i386-low.c (i386_show_dr): Renamed to
+	i386_dr_show and made nonstatic.  All uses updated.
+	(i386_length_and_rw_bits): Renamed to
+	i386_dr_length_and_rw_bits and made nonstatic.
+	All uses updated.
+	(i386_insert_aligned_watchpoint): Renamed to
+	i386_dr_insert_aligned_watchpoint and made nonstatic.
+	All uses updated.
+	(i386_remove_aligned_watchpoint): Renamed to
+	i386_dr_remove_aligned_watchpoint and made nonstatic.
+	All uses updated.
+	(i386_update_inferior_debug_regs): Renamed to
+	i386_dr_update_inferior_debug_regs and made nonstatic.
+	All uses updated.
+	(i386_low_insert_watchpoint): Renamed to
+	i386_dr_insert_watchpoint.  All uses updated.
+	(i386_low_remove_watchpoint): Renamed to
+	i386_dr_remove_watchpoint.  All uses updated.
+	(i386_low_region_ok_for_watchpoint): Renamed to
+	i386_dr_region_ok_for_watchpoint.  All uses updated.
+	(i386_low_stopped_data_address): Renamed to
+	i386_dr_stopped_data_address.  All uses updated.
+	(i386_low_stopped_by_watchpoint): Renamed to
+	i386_dr_stopped_by_watchpoint.  All uses updated.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.c (i386_dr_low_can_set_addr): New macro.
+	(i386_dr_low_can_set_control): Likewise.
+	(i386_insert_aligned_watchpoint): New check.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.c (i386_update_inferior_debug_regs) <inf_state>:
+	Renamed to state.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.c (i386_length_and_rw_bits): Use internal_error
+	instead of fatal and error.
+	(i386_handle_nonaligned_watchpoint): Likewise.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.c (i386_get_debug_register_length): New macro.
+	(TARGET_HAS_DR_LEN_8): Remove conditional.  Use above macro.
+	(i386_show_dr): Use debug_printf instead of fprintf.  Use
+	phex to format values.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.h: Comment changes.
+	* i386-low.c: Likewise.
+
+2014-06-18  Gary Benson  <gbenson@redhat.com>
+
+	* i386-low.c: Whitespace changes.
+
+2014-06-12  Tom Tromey  <tromey@redhat.com>
+
+	* utils.c (freeargv): Remove.
+
+2014-06-12  Tom Tromey  <tromey@redhat.com>
+
+	* debug.c (debug_printf): Remove HAVE_GETTIMEOFDAY checks.
+	* server.c (monitor_show_help): Remove HAVE_GETTIMEOFDAY check.
+	(parse_debug_format_options): Likewise.
+	(gdbserver_usage): Likewise.
+	* Makefile.in (LIBIBERTY_BUILDDIR, LIBIBERTY): New variables.
+	(SUBDIRS, REQUIRED_SUBDIRS): Add libiberty.
+	(gdbserver$(EXEEXT), gdbreplay$(EXEEXT)): Depend on and link
+	against libiberty.
+	($(LIBGNU)): Depend on libiberty.
+	(all-lib): Recurse into all subdirs.
+	(install-only): Invoke "install" target in subdirs.
+	(vasprintf.o, vsnprintf.o, safe-ctype.o, lbasename.o): Remove
+	targets.
+	* configure: Rebuild.
+	* configure.ac: Add ACX_CONFIGURE_DIR for libiberty.  Don't check
+	for vasprintf, vsnprintf, or gettimeofday.
+	* configure.srv: Don't add safe-ctype.o or lbasename.o to
+	srv_tgtobj.
+
+2014-06-05  Joel Brobecker  <brobecker@adacore.com>
+
+	* development.sh: Delete.
+	* Makefile.in (config.status): Adjust dependency on development.sh.
+	* configure.ac: Adjust development.sh source call.
+	* configure: Regenerate.
+
+2014-06-02  Pedro Alves  <palves@redhat.com>
+
+	* ax.c (gdb_free_agent_expr): New function.
+	* ax.h (gdb_free_agent_expr): New declaration.
+	* mem-break.c (delete_gdb_breakpoint_1): Also clear the commands
+	list.
+	(clear_breakpoint_conditions, clear_breakpoint_commands): Make
+	static.
+	(clear_breakpoint_conditions_and_commands): New function.
+	* mem-break.h (clear_breakpoint_conditions): Delete declaration.
+	(clear_breakpoint_conditions_and_commands): New declaration.
+
+2014-05-23  Ramana Radhakrishnan  <ramana.radhakrishnan@arm.com>
+
+	* linux-aarch64-low.c (asm/ptrace.h): Include.
+
+2014-05-21  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix TLS access for -static -pthread.
+	* gdbserver/thread-db.c (struct thread_db): Add td_thr_tlsbase_p.
+	(thread_db_get_tls_address): Call it if LOAD_MODULE is zero.
+	(thread_db_load_search, try_thread_db_load_1): Initialize it.
+
+2014-05-20  Pedro Alves  <palves@redhat.com>
+
+	* linux-aarch64-low.c (aarch64_insert_point)
+	(aarch64_remove_point): No longer check whether the type is
+	supported here.  Adjust to new interface.
+	(the_low_target): Install aarch64_supports_z_point_type as
+	supports_z_point_type method.
+	* linux-arm-low.c (raw_bkpt_type_to_arm_hwbp_type): New function.
+	(arm_linux_hw_point_initialize): Take an enum raw_bkpt_type
+	instead of a Z packet char.  Adjust.
+	(arm_supports_z_point_type): New function.
+	(arm_insert_point, arm_remove_point): Adjust to new interface.
+	(the_low_target): Install arm_supports_z_point_type.
+	* linux-crisv32-low.c (cris_supports_z_point_type): New function.
+	(cris_insert_point, cris_remove_point): Adjust to new interface.
+	Don't check whether the type is supported here.
+	(the_low_target): Install cris_supports_z_point_type.
+	* linux-low.c (linux_supports_z_point_type): New function.
+	(linux_insert_point, linux_remove_point): Adjust to new interface.
+	* linux-low.h (struct linux_target_ops) <insert_point,
+	remove_point>: Take an enum raw_bkpt_type instead of a char.  Add
+	raw_breakpoint pointer parameter.
+	<supports_z_point_type>: New method.
+	* linux-mips-low.c (mips_supports_z_point_type): New function.
+	(mips_insert_point, mips_remove_point): Adjust to new interface.
+	Use mips_supports_z_point_type.
+	(the_low_target): Install mips_supports_z_point_type.
+	* linux-ppc-low.c (the_low_target): Install NULL as
+	supports_z_point_type method.
+	* linux-s390-low.c (the_low_target): Install NULL as
+	supports_z_point_type method.
+	* linux-sparc-low.c (the_low_target): Install NULL as
+	supports_z_point_type method.
+	* linux-x86-low.c (x86_supports_z_point_type): New function.
+	(x86_insert_point): Adjust to new insert_point interface.  Use
+	insert_memory_breakpoint.  Adjust to new
+	i386_low_insert_watchpoint interface.
+	(x86_remove_point): Adjust to remove_point interface.  Use
+	remove_memory_breakpoint.  Adjust to new
+	i386_low_remove_watchpoint interface.
+	(the_low_target): Install x86_supports_z_point_type.
+	* lynx-low.c (lynx_target_ops): Install NULL as
+	supports_z_point_type callback.
+	* nto-low.c (nto_supports_z_point_type): New.
+	(nto_insert_point, nto_remove_point): Adjust to new interface.
+	(nto_target_ops): Install nto_supports_z_point_type.
+	* mem-break.c: Adjust intro comment.
+	(struct raw_breakpoint) <raw_type, size>: New fields.
+	<inserted>: Update comment.
+	<shlib_disabled>: Delete field.
+	(enum bkpt_type) <gdb_breakpoint>: Delete value.
+	<gdb_breakpoint_Z0, gdb_breakpoint_Z1, gdb_breakpoint_Z2,
+	gdb_breakpoint_Z3, gdb_breakpoint_Z4>: New values.
+	(raw_bkpt_type_to_target_hw_bp_type): New function.
+	(find_enabled_raw_code_breakpoint_at): New function.
+	(find_raw_breakpoint_at): New type and size parameters.  Use them.
+	(insert_memory_breakpoint): New function, based off
+	set_raw_breakpoint_at.
+	(remove_memory_breakpoint): New function.
+	(set_raw_breakpoint_at): Reimplement.
+	(set_breakpoint): New, based on set_breakpoint_at.
+	(set_breakpoint_at): Reimplement.
+	(delete_raw_breakpoint): Go through the_target->remove_point
+	instead of assuming memory breakpoints.
+	(find_gdb_breakpoint_at): Delete.
+	(Z_packet_to_bkpt_type, Z_packet_to_raw_bkpt_type): New functions.
+	(find_gdb_breakpoint): New function.
+	(set_gdb_breakpoint_at): Delete.
+	(z_type_supported): New function.
+	(set_gdb_breakpoint_1): New function, loosely based off
+	set_gdb_breakpoint_at.
+	(check_gdb_bp_preconditions, set_gdb_breakpoint): New functions.
+	(delete_gdb_breakpoint_at): Delete.
+	(delete_gdb_breakpoint_1): New function, loosely based off
+	delete_gdb_breakpoint_at.
+	(delete_gdb_breakpoint): New function.
+	(clear_gdb_breakpoint_conditions): Rename to ...
+	(clear_breakpoint_conditions): ... this.  Don't handle a NULL
+	breakpoint.
+	(add_condition_to_breakpoint): Make static.
+	(add_breakpoint_condition): Take a struct breakpoint pointer
+	instead of an address.  Adjust.
+	(gdb_condition_true_at_breakpoint): Rename to ...
+	(gdb_condition_true_at_breakpoint_z_type): ... this, and add
+	z_type parameter.
+	(gdb_condition_true_at_breakpoint): Reimplement.
+	(add_breakpoint_commands): Take a struct breakpoint pointer
+	instead of an address.  Adjust.
+	(gdb_no_commands_at_breakpoint): Rename to ...
+	(gdb_no_commands_at_breakpoint_z_type): ... this.  Add z_type
+	parameter.  Return true if no breakpoint was found.  Change debug
+	output.
+	(gdb_no_commands_at_breakpoint): Reimplement.
+	(run_breakpoint_commands): Rename to ...
+	(run_breakpoint_commands_z_type): ... this.  Add z_type parameter,
+	and change return type to boolean.
+	(run_breakpoint_commands): New function.
+	(gdb_breakpoint_here): Also check for Z1 breakpoints.
+	(uninsert_raw_breakpoint): Don't try to reinsert a disabled
+	breakpoint.  Go through the_target->remove_point instead of
+	assuming memory breakpoint.
+	(uninsert_breakpoints_at, uninsert_all_breakpoints): Uninsert
+	software and hardware breakpoints.
+	(reinsert_raw_breakpoint): Go through the_target->insert_point
+	instead of assuming memory breakpoint.
+	(reinsert_breakpoints_at, reinsert_all_breakpoints): Reinsert
+	software and hardware breakpoints.
+	(check_breakpoints, breakpoint_here, breakpoint_inserted_here):
+	Check both software and hardware breakpoints.
+	(validate_inserted_breakpoint): Assert the breakpoint is a
+	software breakpoint.  Set the inserted flag to -1 instead of
+	setting shlib_disabled.
+	(delete_disabled_breakpoints): Adjust.
+	(validate_breakpoints): Only validate software breakpoints.
+	Adjust to inserted flag change.
+	(check_mem_read, check_mem_write): Skip breakpoint types other
+	than software breakpoints.  Adjust to inserted flag change.
+	* mem-break.h (enum raw_bkpt_type): New enum.
+	(raw_breakpoint, struct process_info): Forward declare.
+	(Z_packet_to_target_hw_bp_type): Delete declaration.
+	(raw_bkpt_type_to_target_hw_bp_type, Z_packet_to_raw_bkpt_type)
+	(set_gdb_breakpoint, delete_gdb_breakpoint)
+	(clear_breakpoint_conditions): New declarations.
+	(set_gdb_breakpoint_at, clear_gdb_breakpoint_conditions): Delete.
+	(breakpoint_inserted_here): Update comment.
+	(add_breakpoint_condition, add_breakpoint_commands): Replace
+	address parameter with a breakpoint pointer parameter.
+	(gdb_breakpoint_here): Update comment.
+	(delete_gdb_breakpoint_at): Delete.
+	(insert_memory_breakpoint, remove_memory_breakpoint): Declare.
+	* server.c (process_point_options): Take a struct breakpoint
+	pointer instead of an address.  Adjust.
+	(process_serial_event) <Z/z packets>: Use set_gdb_breakpoint and
+	delete_gdb_breakpoint.
+	* spu-low.c (spu_target_ops): Install NULL as
+	supports_z_point_type method.
+	* target.h: Include mem-break.h.
+	(struct target_ops) <prepare_to_access_memory>: Update comment.
+	<supports_z_point_type>: New field.
+	<insert_point, remove_point>: Take an enum raw_bkpt_type argument
+	instead of a char.  Also take a raw breakpoint pointer.
+	* win32-arm-low.c (the_low_target): Install NULL as
+	supports_z_point_type.
+	* win32-i386-low.c (i386_supports_z_point_type): New function.
+	(i386_insert_point, i386_remove_point): Adjust to new interface.
+	(the_low_target): Install i386_supports_z_point_type.
+	* win32-low.c (win32_supports_z_point_type): New function.
+	(win32_insert_point, win32_remove_point): Adjust to new interface.
+	(win32_target_ops): Install win32_supports_z_point_type.
+	* win32-low.h (struct win32_target_ops):
+	<supports_z_point_type>: New method.
+	<insert_point, remove_point>: Take an enum raw_bkpt_type argument
+	instead of a char.  Also take a raw breakpoint pointer.
+
+2014-05-20  Pedro Alves  <palves@redhat.com>
+
+	* mem-break.h: Include break-common.h.
+	(Z_PACKET_SW_BP, Z_PACKET_HW_BP, Z_PACKET_WRITE_WP)
+	(Z_PACKET_READ_WP, Z_PACKET_ACCESS_WP): New defines.
+	(Z_packet_to_target_hw_bp_type): New declaration.
+	* mem-break.c (Z_packet_to_target_hw_bp_type): New function.
+	* i386-low.c (Z_PACKET_HW_BP, Z_PACKET_WRITE_WP, Z_PACKET_READ_WP)
+	(Z_PACKET_ACCESS_WP): Delete macros.
+	(Z_packet_to_hw_type): Delete function.
+	* i386-low.h: Don't include break-common.h here.
+	(Z_packet_to_hw_type): Delete declaration.
+	* linux-x86-low.c (x86_insert_point, x86_insert_point): Call
+	Z_packet_to_target_hw_bp_type instead of Z_packet_to_hw_type.
+	* win32-i386-low.c (i386_insert_point, i386_remove_point): Call
+	Z_packet_to_target_hw_bp_type instead of Z_packet_to_hw_type.
+	* linux-aarch64-low.c: Don't include break-common.h here.
+	(Z_PACKET_SW_BP, Z_PACKET_HW_BP, Z_PACKET_WRITE_WP)
+	(Z_PACKET_READ_WP, Z_PACKET_ACCESS_WP): Delete macros.
+	(Z_packet_to_target_hw_bp_type): Delete function.
+	* linux-mips-low.c (rsp_bp_type_to_target_hw_bp_type): Delete
+	function.
+	(mips_insert_point, mips_remove_point): Use
+	Z_packet_to_target_hw_bp_type.
+
+2014-05-20  Pedro Alves  <palves@redhat.com>
+
+	* linux-aarch64-low.c: Include break-common.h.
+	(enum target_point_type): Delete.
+	(Z_packet_to_point_type): Rename to ...
+	(Z_packet_to_target_hw_bp_type): ... this, and return a
+	target_hw_bp_type instead.
+	(aarch64_show_debug_reg_state): Take an enum target_hw_bp_type
+	instead of an enum target_point_type.
+	(aarch64_point_encode_ctrl_reg): Likewise.  Compute type mask from
+	breakpoint type.
+	(aarch64_dr_state_insert_one_point)
+	(aarch64_dr_state_remove_one_point, aarch64_handle_breakpoint)
+	(aarch64_handle_aligned_watchpoint)
+	(aarch64_handle_unaligned_watchpoint, aarch64_handle_watchpoint):
+	Take an enum target_hw_bp_type instead of an enum
+	target_point_type.
+	(aarch64_supports_z_point_type): New function.
+	(aarch64_insert_point, aarch64_remove_point): Use it.  Adjust to
+	use Z_packet_to_target_hw_bp_type.
+
+2014-05-20  Joel Brobecker  <brobecker@adacore.com>
+
+	* configure.ac: Only use -Werror by default when DEVELOPMENT
+	is true.
+	* configure: Regenerate.
+
+2014-05-19  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix gdbserver qGetTLSAddr for x86_64 -m32.
+	* linux-x86-low.c (X86_64_USER_REGS): New.
+	(x86_fill_gregset): Call memset for BUF first in x86_64 -m32 case.
+
+2014-04-28  Yao Qi  <yao@codesourcery.com>
+
+	* Makefile.in (i386-avx512.c): Fix the typo of generated file
+	name.
+
+2014-04-25  Pedro Alves  <palves@redhat.com>
+
+	PR server/16255
+	* linux-low.c (linux_attach_fail_reason_string): New function.
+	(linux_attach_lwp): Delete.
+	(linux_attach_lwp_1): Rename to ...
+	(linux_attach_lwp): ... this.  Take a ptid instead of a pid as
+	argument.  Remove "initial" parameter.  Return int instead of
+	void.  Don't error or warn here.
+	(linux_attach): Adjust to call linux_attach_lwp.  Call error on
+	failure to attach to the tgid.  Call warning when failing to
+	attach to an lwp.
+	* linux-low.h (linux_attach_lwp): Take a ptid instead of a pid as
+	argument.  Remove "initial" parameter.  Return int instead of
+	void.  Don't error or warn here.
+	(linux_attach_fail_reason_string): New declaration.
+	* thread-db.c (attach_thread): Adjust to linux_attach_lwp's
+	interface change.  Use linux_attach_fail_reason_string.
+
+2014-04-24  Michael Sturm  <michael.sturm@mintel.com>
+	    Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* Makefile.in: Added rules to handle new files
+	i386-avx512.c i386-avx512-linux.c amd64-avx512.c
+	amd64-avx512-linux.c x32-avx512.c x32-avx512-linux.c.
+	* configure.srv (srv_i386_regobj): Add i386-avx512.o.
+	(srv_i386_linux_regobj): Add i386-avx512-linux.o.
+	(srv_amd64_regobj): Add amd64-avx512.o and x32-avx512.o.
+	(srv_amd64_linux_regobj): Add amd64-avx512-linux.o and
+	x32-avx512-linux.o.
+	(srv_i386_32bit_xmlfiles): Add i386/32bit-avx512.xml.
+	(srv_i386_64bit_xmlfiles): Add i386/64bit-avx512.xml.
+	(srv_amd64_xmlfiles): Add i386/amd64-avx512.xml and
+	i386/x32-avx512.xml.
+	(srv_i386_linux_xmlfiles): Add i386/i386-avx512-linux.xml.
+	(srv_amd64_linux_xmlfiles): Add i386/amd64-avx512-linux.xml and
+	i386/x32-avx512-linux.xml.
+	* i387-fp.c (num_avx512_k_registers): New constant for number
+	of K registers.
+	(num_avx512_zmmh_low_registers): New constant for number of
+	lower ZMM registers (0-15).
+	(num_avx512_zmmh_high_registers): New constant for number of
+	higher ZMM registers (16-31).
+	(num_avx512_ymmh_registers): New contant for number of higher
+	YMM registers (ymm16-31 added by avx521 on x86_64).
+	(num_avx512_xmm_registers): New constant for number of higher
+	XMM registers (xmm16-31 added by AVX512 on x86_64).
+	(struct i387_xsave): Add space for AVX512 registers.
+	(i387_cache_to_xsave): Change raw buffer size to 64 characters.
+	Add code to handle AVX512 registers.
+	(i387_xsave_to_cache): Add code to handle AVX512 registers.
+	* linux-x86-low.c (init_registers_amd64_avx512_linux): New
+	prototypei from generated file.
+	(tdesc_amd64_avx512_linux): Likewise.
+	(init_registers_x32_avx512_linux): Likewise.
+	(tdesc_x32_avx512_linux): Likewise.
+	(init_registers_i386_avx512_linux): Likewise.
+	(tdesc_i386_avx512_linux): Likewise.
+	(x86_64_regmap): Add AVX512 registers.
+	(x86_linux_read_description): Add code to handle AVX512 XSTATE
+	mask.
+	(initialize_low_arch): Add code to initialize AVX512 registers.
+
+2014-04-23  Pedro Alves  <palves@redhat.com>
+
+	* mem-break.c (find_gdb_breakpoint_at): Make static.
+	* mem-break.h (find_gdb_breakpoint_at): Delete declaration.
+
+2014-04-23  Pedro Alves  <palves@redhat.com>
+
+	* i386-low.c: Don't include break-common.h here.
+	(i386_low_insert_watchpoint, i386_low_remove_watchpoint): Change
+	prototype to take target_hw_bp_type as argument instead of a Z
+	packet char.
+	* i386-low.h: Include break-common.h here.
+	(Z_packet_to_hw_type): Declare.
+	(i386_low_insert_watchpoint, i386_low_remove_watchpoint): Change
+	prototypes.
+	* linux-x86-low.c (x86_insert_point): Convert the packet number to
+	a target_hw_bp_type before calling i386_low_insert_watchpoint.
+	(x86_remove_point): Convert the packet number to a
+	target_hw_bp_type before calling i386_low_remove_watchpoint.
+	* win32-i386-low.c (i386_insert_point): Convert the packet number
+	to a target_hw_bp_type before calling i386_low_insert_watchpoint.
+	(i386_remove_point): Convert the packet number to a
+	target_hw_bp_type before calling i386_low_remove_watchpoint.
+
+2014-04-23  Pedro Alves  <palves@redhat.com>
+
+	* utils.h (perror_with_name): Add ATTRIBUTE_NORETURN.
+
+2014-04-10  Pedro Alves  <palves@redhat.com>
+
+	* mem-break.c (add_breakpoint_condition, add_breakpoint_commands):
+	Check if the condition or command is NULL before checking if the
+	breakpoint is known.  On success, return true.
+	* mem-break.h (add_breakpoint_condition): Document return.
+	(add_breakpoint_commands): Add describing comment.
+	* server.c (skip_to_semicolon): New function.
+	(process_point_options): Use it.
+
+2014-04-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-low.c (linux_read_loadmap): Pass current_inferior directly
+	to lwpid_of.
+
+2014-02-27  Pedro Alves  <palves@redhat.com>
+
+	PR 12702
+	* inferiors.h (A_I_NEXT, ALL_INFERIORS_TYPE, ALL_PROCESSES): New
+	macros.
+	* linux-low.c (delete_lwp, handle_extended_wait): Add debug
+	output.
+	(last_thread_of_process_p): Take a PID argument instead of a
+	thread pointer.
+	(linux_wait_for_lwp): Delete.
+	(num_lwps, check_zombie_leaders, not_stopped_callback): New
+	functions.
+	(linux_low_filter_event): New function, party factored out from
+	linux_wait_for_event.
+	(linux_wait_for_event): Rename to ...
+	(linux_wait_for_event_filtered): ... this.  Add new filter ptid
+	argument.  Partly rewrite.  Always use waitpid(-1, WNOHANG) and
+	sigsuspend.  Check for zombie leaders.
+	(linux_wait_for_event): Reimplement as wrapper around
+	linux_wait_for_event_filtered.
+	(linux_wait_1): Handle TARGET_WAITKIND_NO_RESUMED.  Assume that if
+	a normal or signal exit is seen, it's the whole process exiting.
+	(wait_for_sigstop): No longer a for_each_inferior callback.
+	Rewrite on top of linux_wait_for_event_filtered.
+	(stop_all_lwps): Call wait_for_sigstop directly.
+	* server.c (resume, handle_target_event): Handle
+	TARGET_WAITKIND_NO_RESUMED.
+
+2014-02-26  Joel Brobecker  <brobecker@adacore.com>
+
+	* win32-low.c (psapi_get_dll_name,
+	* win32_CreateToolhelp32Snapshot): Delete.
+	(win32_CreateToolhelp32Snapshot, win32_Module32First)
+	(win32_Module32Next, load_toolhelp, toolhelp_get_dll_name):
+	Delete.
+	(handle_load_dll): Add function description.
+	Remove code using psapi_get_dll_name and toolhelp_get_dll_name.
+
+2014-02-26  Joel Brobecker  <brobecker@adacore.com>
+
+	* win32-low.c (win32_add_one_solib): Add 0x1000 to load_addr.
+	Add comment.
+	(win32_add_all_dlls): Remove 0x1000 offset applied to DLL
+	base address when calling win32_add_one_solib.
+	(handle_load_dll): Delete local variable load_addr.
+	Remove 0x1000 offset applied to DLL base address when calling
+	win32_add_one_solib.
+	(handle_unload_dll): Add comment.
+
+2014-02-26  Joel Brobecker  <brobecker@adacore.com>
+
+	* win32-low.c (win32_add_all_dlls): Renames
+	win32_ensure_ntdll_loaded.  Rewrite function documentation.
+	Adjust implementation to always load all DLLs.
+	Add 0x1000 offset to DLL base address when calling
+	win32_add_one_solib.
+	(child_initialization_done): New static global.
+	(do_initial_child_stuff): Set child_initialization_done to
+	zero during child initialization, and 1 after.  Replace call
+	to win32_ensure_ntdll_loaded by call to win32_add_all_dlls.
+	Add comment.
+	(match_dll_by_basename, dll_is_loaded_by_basename): Delete.
+	(handle_unload_dll): Add function documentation.
+	(get_child_debug_event): Ignore load and unload DLL events
+	during child initialization.
+
+2014-02-20  Doug Evans  <dje@google.com>
+
+	Remove global all_lwps.
+	* inferiors.h (ptid_of): Move here from linux-low.h.
+	(pid_of, lwpid_of): Ditto.
+	* linux-aarch64-low.c (debug_reg_change_callback): Update, "entry"
+	parameter is a struct thread_info * now.
+	(aarch64_notify_debug_reg_change): Fetch pid from current_inferior
+	directly.  Pass &all_threads to find_inferior instead of &all_lwps.
+	(aarch64_stopped_data_address): Fetch lwpid from current_inferior
+	directly.
+	(aarch64_linux_prepare_to_resume): Fetch ptid from thread.
+	(aarch64_arch_setup): Fetch lwpid from current_inferior directly.
+	* linux-arm-low.c (update_registers_callback): Update, "entry"
+	parameter is a struct thread_info * now.
+	Fetch lwpid from current_inferior directly.
+	(arm_insert_point): Pass &all_threads to find_inferior instead of
+	&all_lwps.
+	(arm_remove_point): Ditto.
+	(arm_stopped_by_watchpoint): Fetch lwp from current_inferior.
+	(arm_prepare_to_resume): Fetch pid from thread.
+	(arm_read_description): Fetch lwpid from current_inferior directly.
+	* linux-low.c (all_lwps): Delete.
+	(delete_lwp): Delete call to remove_inferior.
+	(handle_extended_wait): Fetch lwpid from thread.
+	(add_lwp): Don't set lwp->entry.id.  Remove call to
+	add_inferior_to_list.
+	(linux_attach_lwp_1): Fetch pid from current_inferior directly.
+	(linux_kill_one_lwp): Fetch ptid,lwpid from thread.
+	(kill_one_lwp_callback): Ditto.
+	(linux_kill): Don't dereference NULL pointer.
+	Fetch ptid,lwpid from thread.
+	(get_detach_signal): Fetch ptid from thread.
+	(linux_detach_one_lwp): Fetch ptid,lwpid from thread.
+	Simplify call to regcache_invalidate_thread.
+	(delete_lwp_callback): Update, "entry" parameter is a
+	struct thread_info * now.  Fetch pid from thread.
+	(linux_mourn): Pass &all_threads to find_inferior instead of &all_lwps.
+	(status_pending_p_callback): Update, "entry" parameter is a
+	struct thread_info * now.  Fetch ptid from thread.
+	(find_lwp_pid): Update, "entry" parameter is a
+	struct thread_info * now.
+	(linux_wait_for_lwp): Fetch pid from thread.
+	(linux_fast_tracepoint_collecting): Fetch lwpid from thread.
+	(maybe_move_out_of_jump_pad): Fetch lwpid from current_inferior.
+	(enqueue_one_deferred_signal): Fetch lwpid from thread.
+	(dequeue_one_deferred_signal): Ditto.
+	(cancel_breakpoint): Fetch ptid from current_inferior.
+	(linux_wait_for_event): Pass &all_threads to find_inferior,
+	not &all_lwps.  Fetch ptid, lwpid from thread.
+	(count_events_callback): Update, "entry" parameter is a
+	struct thread_info * now.
+	(select_singlestep_lwp_callback): Ditto.
+	(select_event_lwp_callback): Ditto.
+	(cancel_breakpoints_callback): Ditto.
+	(linux_cancel_breakpoints): Pass &all_threads to find_inferior,
+	not &all_lwps.
+	(select_event_lwp): Ditto.  Fetch ptid from event_thread.
+	(unsuspend_one_lwp): Update, "entry" parameter is a
+	struct thread_info * now.
+	(unsuspend_all_lwps): Pass &all_threads to find_inferior,
+	not &all_lwps.
+	(linux_stabilize_threads): Ditto.  And for for_each_inferior.
+	Fetch lwpid from thread, not lwp.
+	(linux_wait_1): Fetch ptid, lwpid from current_inferior.
+	Pass &all_threads to find_inferior, not &all_lwps.
+	(send_sigstop): Fetch lwpid from thread, not lwp.
+	(send_sigstop_callback): Update, "entry" parameter is a
+	struct thread_info * now.
+	(suspend_and_send_sigstop_callback): Ditto.
+	(wait_for_sigstop): Ditto.  Fetch ptid, lwpid from thread, lwp.
+	(stuck_in_jump_pad_callback): Update, "entry" parameter is a
+	struct thread_info * now.
+	(move_out_of_jump_pad_callback): Ditto.  Fetch ptid, lwpid
+	from thread, lwp.
+	(lwp_running): Update, "entry" parameter is a
+	struct thread_info * now.
+	(stop_all_lwps): Fetch ptid from thread.
+	Pass &all_threads to find_inferior, for_each_inferior, not &all_lwps.
+	(linux_resume_one_lwp): Fetch lwpid from thread.
+	(linux_set_resume_request): Update, "entry" parameter is a
+	struct thread_info * now.  Fetch pid, lwpid from thread.
+	(resume_status_pending_p): Update, "entry" parameter is a
+	struct thread_info * now.
+	(need_step_over_p): Ditto.  Fetch lwpid from thread.
+	(start_step_over): Fetch lwpid from thread.
+	(linux_resume_one_thread): Update, "entry" parameter is a
+	struct thread_info * now.  Fetch lwpid from thread.
+	(linux_resume): Pass &all_threads to find_inferior, not &all_lwps.
+	(proceed_one_lwp): Update, "entry" parameter is a
+	struct thread_info * now.  Fetch lwpid from thread.
+	(unsuspend_and_proceed_one_lwp): Update, "entry" parameter is a
+	struct thread_info * now.
+	(proceed_all_lwps): Pass &all_threads to find_inferior, not &all_lwps.
+	(unstop_all_lwps): Ditto.  Fetch lwpid from thread.
+	(regsets_fetch_inferior_registers): Fetch lwpid from current_inferior
+	directly.
+	(regsets_store_inferior_registers): Ditto.
+	(fetch_register, store_register): Ditto.
+	(linux_read_memory, linux_write_memory): Ditto.
+	(linux_request_interrupt): Ditto.
+	(linux_read_auxv): Ditto.
+	(linux_xfer_siginfo): Ditto.
+	(linux_qxfer_spu): Ditto.
+	(linux_qxfer_libraries_svr4): Ditto.
+	* linux-low.h (ptid_of, pid_of, lwpid_of): Delete,
+	moved to inferiors.h.
+	(get_lwp): Delete.
+	(get_thread_lwp): Update.
+	(struct lwp_info): Delete member "entry".  Simplify comment for
+	member "thread".
+	(all_lwps): Delete.
+	* linux-mips-low.c (mips_read_description): Fetch lwpid from
+	current_inferior directly.
+	(update_watch_registers_callback): Update, "entry" parameter is a
+	struct thread_info * now.  Fetch pid from thread.
+	(mips_linux_prepare_to_resume): Fetch ptid from thread.
+	(mips_insert_point): Fetch lwpid from current_inferior.
+	Pass &all_threads to find_inferior, not &all_lwps.
+	(mips_remove_point): Pass &all_threads to find_inferior, not &all_lwps.
+	(mips_stopped_by_watchpoint): Fetch lwpid from current_inferior
+	directly.
+	(mips_stopped_data_address): Ditto.
+	* linux-s390-low.c (s390_arch_setup): Fetch pid from current_inferior
+	directly.
+	* linux-tile-low.c (tile_arch_setup): Ditto.
+	* linux-x86-low.c (x86_get_thread_area): Fetch lwpid from thread.
+	(update_debug_registers_callback): Update, "entry" parameter is a
+	struct thread_info * now.  Fetch pid from thread.
+	(i386_dr_low_set_addr): Fetch pid from current_inferior directly.
+	Pass &all_threads to find_inferior, not &all_lwps.
+	(i386_dr_low_get_addr): Fetch ptid from current_inferior directly.
+	(i386_dr_low_set_control): Fetch pid from current_inferior directly.
+	Pass &all_threads to find_inferior, not &all_lwps.
+	(i386_dr_low_get_control): Fetch ptid from current_inferior directly.
+	(i386_dr_low_get_status): Ditto.
+	(x86_linux_prepare_to_resume): Fetch ptid from thread.
+	(x86_siginfo_fixup): Fetch lwpid from current_inferior directly.
+	(x86_linux_read_description): Ditto.
+	* proc-service.c (ps_getpid): Fetch pid from current_inferior directly.
+
+2014-02-20  Doug Evans  <dje@google.com>
+
+	* inferiors.c (get_first_inferior): Fix buglet.
+
+2014-02-19  Doug Evans  <dje@google.com>
+
+	* gdbthread.h (add_thread): Change result type to struct thread_info *.
+	* inferiors.c (add_thread): Change result type to struct thread_info *.
+	All callers updated.
+	(add_lwp): Call add_thread here instead of in callers.
+	All callers updated.
+	* linux-low.h (get_lwp_thread): Rewrite.
+	(struct lwp_info): New member "thread".
+
+2014-02-19  Doug Evans  <dje@google.com>
+
+	* linux-low.c (add_lwp): Change result to struct lwp_info *.
+	All callers updated.
+
+2014-02-19  Doug Evans  <dje@google.com>
+
+	* inferiors.c (add_thread): Fix whitespace.
+
+2014-02-19  Doug Evans  <dje@google.com>
+
+	* dll.c (clear_dlls): Replace accessing list implemention details
+	with API function.
+	* gdbthread.h (get_first_thread): Declare.
+	* inferiors.c (for_each_inferior_with_data): New function.
+	(get_first_thread): New function.
+	(find_thread_ptid): Simplify.
+	(get_first_inferior): New function.
+	(clear_list): Delete.
+	(one_inferior_p): New function.
+	(clear_inferior_list): New function.
+	(clear_inferiors): Update.
+	* inferiors.h (for_each_inferior_with_data): Declare.
+	(clear_inferior_list): Declare.
+	(one_inferior_p): Declare.
+	(get_first_inferior): Declare.
+	* linux-low.c (linux_wait_for_event): Replace accessing list
+	implemention details with API function.
+	* server.c (target_running): Ditto.
+	(accumulate_file_name_length): New function.
+	(emit_dll_description): New function.
+	(handle_qxfer_libraries): Replace accessing list implemention
+	details with API function.
+	(handle_qxfer_threads_worker): New function.
+	(handle_qxfer_threads_proper): Replace accessing list implemention
+	details with API function.
+	(handle_query): Ditto.
+	(visit_actioned_threads_callback_ftype): New typedef.
+	(visit_actioned_threads_data): New struct.
+	(visit_actioned_threads): Rewrite to be find_inferior callback.
+	(resume): Call find_inferior.
+	(handle_status): Replace accessing list implemention
+	details with API function.
+	(process_serial_event): Replace accessing list implemention details
+	with API function.
+	* target.c (set_desired_inferior): Replace accessing list implemention
+	details with API function.
+	* tracepoint.c (same_process_p): New function.
+	(gdb_agent_about_to_close): Replace accessing list implemention
+	details with API function.
+	* win32-low.c (child_delete_thread): Replace accessing list
+	implemention details with API function.
+	(match_dll_by_basename): New function.
+	(dll_is_loaded_by_basename): New function.
+	(win32_ensure_ntdll_loaded): Replace accessing list implemention
+	details call to dll_is_loaded_by_basename.
+
+2014-02-19  Doug Evans  <dje@google.com>
+
+	* dll.h (struct dll_info): Add comment.
+	* gdbthread.h (struct thread_info): Add comment.
+	(current_ptid): Simplify.
+	* inferiors.c (add_process): Update.
+	(remove_process): Update.
+	* inferiors.h (struct process_info): Rename member "head" to "entry".
+	* linux-low.c (delete_lwp): Update.
+	(add_lwp): Update.
+	(last_thread_of_process_p): Update.
+	(kill_one_lwp_callback, linux_kill): Update.
+	(status_pending_p_callback): Update.
+	(wait_for_sigstop): Update.  Simplify read of ptid.
+	(start_step_over): Update.
+	* linux-low.h (ptid_of, pid_of, lwpid_of): Update.
+	(get_lwp_thread): Update.
+	(struct lwp_info): Rename member "head" to "entry".
+	* regcache.h (inferior_list_entry): Delete.
+	* server.c (kill_inferior_callback): Update.
+	(detach_or_kill_inferior_callback): Update.
+	(print_started_pid): Update.
+	(print_attached_pid): Update.
+	(process_serial_event): Simplify read of ptid.
+	* thread-db.c (thread_db_create_event): Update.
+	(thread_db_get_tls_address): Update.
+	* win32-low.c (current_inferior_ptid): Simplify.
+
+2014-02-19  Tom Tromey  <tromey@redhat.com>
+
+	* target.h (struct target_ops) <supports_btrace>: Add target_ops
+	argument.
+	(target_supports_btrace): Update.
+
+2014-02-14  Yao Qi  <yao@codesourcery.com>
+
+	* Makefile.in (IPA_OBJS): Append rsp-low-ipa.o.
+	(rsp-low-ipa.o): New target.
+
+2014-02-12  Tom Tromey  <tromey@redhat.com>
+
+	* ax.c (gdb_parse_agent_expr): Use hex2bin, not
+	convert_ascii_to_int.
+	* regcache.c (registers_to_string): Likewise.
+	* remote-utils.c (decode_M_packet): Likewise.
+	* server.c (process_serial_event): Likewise.
+
+2014-02-12  Tom Tromey  <tromey@redhat.com>
+
+	* server.c (handle_query, handle_v_run): Use hex2bin, not
+	unhexify.
+	* tracepoint.c (cmd_qtdpsrc, cmd_qtdv, cmd_qtnotes): Likewise.
+
+2014-02-12  Tom Tromey  <tromey@redhat.com>
+
+	* ax.c (gdb_unparse_agent_expr): Use bin2hex, not
+	convert_int_to_ascii.
+	* regcache.c (registers_to_string, collect_register_as_string):
+	Likewise.
+	* remote-utils.c (look_up_one_symbol, relocate_instruction):
+	Likewise.
+	* server.c (process_serial_event): Likewise.
+	* tracepoint.c (cmd_qtstatus, response_source, response_tsv)
+	(cmd_qtbuffer, cstr_to_hexstr): Likewise.
+
+2014-02-12  Tom Tromey  <tromey@redhat.com>
+
+	* remote-utils.c (look_up_one_symbol, monitor_output): Use
+	bin2hex, not hexify.
+	* tracepoint.c (cmd_qtstatus): Likewise.
+
+2014-02-12  Tom Tromey  <tromey@redhat.com>
+
+	* remote-utils.c (monitor_output): Pass explicit length to
+	hexify.
+
+2014-02-12  Tom Tromey  <tromey@redhat.com>
+
+	* tracepoint.c: Include rsp-low.h.
+	* server.c: Include rsp-low.h.
+	* remote-utils.h (convert_ascii_to_int, convert_int_to_ascii)
+	(unhexify, hexify, remote_escape_output, unpack_varlen_hex): Don't
+	declare.
+	* remote-utils.c: Include rsp-low.h.
+	(fromhex, hexchars, ishex, unhexify, tohex, hexify)
+	(remote_escape_output, remote_unescape_input, unpack_varlen_hex)
+	(convert_int_to_ascii, convert_ascii_to_int): Move to
+	common/rsp-low.c.
+	* regcache.c: Include rsp-low.h.
+	* ax.c: Include rsp-low.h.
+	* Makefile.in (SFILES): Add common/rsp-low.c.
+	(OBS): Add rsp-low.o.
+	(rsp-low.o): New target.
+
+2014-02-12  Tom Tromey  <tromey@redhat.com>
+
+	* utils.h (pulongest, plongest, phex_nz): Don't declare.
+	Include print-utils.h.
+	* utils.c (NUMCELLS, CELLSIZE, get_cell, decimal2str, pulongest)
+	(plongest, thirty_two, phex_nz): Remove.
+	* Makefile.in (SFILES): Add common/print-utils.c.
+	(OBS): Add print-utils.o.
+	(print-utils-ipa.o): New target.
+	(print-utils.o): New target.
+	(IPA_OBJS): Add print-utils-ipa.o.
+
+2014-02-06  Tom Tromey  <tromey@redhat.com>
+
+	* Makefile.in (SFILES): Fix indentation.
+
+2014-02-05  Doug Evans  <dje@google.com>
+
+	* linux-low.c (linux_wait_for_event): Improve comment.
+	(linux_wait_1): Keep current_inferior in sync with event_child.
+
+2014-01-22  Doug Evans  <dje@google.com>
+
+	* gdbthread.h (gdb_id_to_thread): Delete, unused.
+
+2014-01-22  Doug Evans  <dje@google.com>
+
+	* configure.ac (AC_CHECK_FUNCS): Add test for gettimeofday.
+	* configure: Regenerate.
+	* config.in: Regenerate.
+	* Makefile.in (SFILES): Add debug.c.
+	(OBS): Add debug.o.
+	* debug.c: New file.
+	* debug.h: New file.
+	* linux-aarch64-low.c (*): Update all debugging printfs to use
+	debug_printf instead of fprintf.
+	* linux-arm-low.c (*): Ditto.
+	* linux-cris-low.c (*): Ditto.
+	* linux-crisv32-low.c (*): Ditto.
+	* linux-m32r-low.c (*): Ditto.
+	* linux-sparc-low.c (*): Ditto.
+	* linux-x86.c (*): Ditto.
+	* linux-low.c (*): Ditto.
+	(linux_wait_1): Add calls to debug_enter, debug_exit.
+	(linux_wait): Remove redundant debugging printf.
+	(stop_all_lwps): Add calls to debug_enter, debug_exit.
+	(linux_resume, unstop_all_lwps): Ditto.
+	* mem-break.c (*): Update all debugging printfs to use
+	debug_printf instead of fprintf.
+	* remote-utils.c (*): Ditto.
+	* thread-db.c (*): Ditto.
+	* server.c #include <ctype.h>, "gdb_vecs.h".
+	(debug_threads): Moved to debug.c.
+	(*): Update all debugging printfs to use debug_printf instead of
+	fprintf.
+	(start_inferior): Replace call to fflush with call to debug_flush.
+	(monitor_show_help): Mention set debug-format.
+	(parse_debug_format_options): New function.
+	(handle_monitor_command): Handle "monitor set debug-format".
+	(gdbserver_usage): Mention --debug-format.
+	(main): Parse --debug-format.
+	* server.h (debug_threads): Declaration moved to debug.h.
+	#include "debug.h".
+	* tracepoint.c (trace_debug_1) [!IN_PROCESS_AGENT]: Add version of
+	trace_debug_1 that uses debug_printf.
+	(tracepoint_look_up_symbols): Update all debugging printfs to use
+	debug_printf instead of fprintf.
+
+2014-01-20  Baruch Siach  <baruch@tkos.co.il>
 
 	* linux-xtensa-low.c: Include asm/ptrace.h instead of
 	sys/ptrace.h.
+
+2014-01-17  Pedro Alves  <palves@redhat.com>
+
+	PR build/16445
+	* linux-x86-low.c: Don't include elf/common.h if ELFMAG0 is
+	defined after including gdb_proc_service.h.
+
+2014-01-16  Doug Evans  <dje@google.com>
+
+	* dll.c (UNSPECIFIED_CORE_ADDR): New macro.
+	(match_dll): Use it.
+
+2014-01-16  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* target.h (target_ops) <read_btrace>: Change parameters and
+	return type to allow error reporting.
+	* server.c (handle_qxfer_btrace): Support delta reads.  Pass
+	trace reading errors on.
+	* linux-low.c (linux_low_read_btrace): Pass trace reading
+	errors on.
+	(linux_low_disable_btrace): New.
+
+2014-01-15  Doug Evans  <dje@google.com>
+
+	* inferiors.c (thread_id_to_gdb_id): Delete.
+	* inferiors.h (thread_id_to_gdb_id): Delete.
 
 2014-01-13  Eli Zaretskii  <eliz@gnu.org>
 
 	* Makefile.in (INCLUDE_CFLAGS): Remove trailing slash from
 	"-I$(srcdir)/../".  Fixes MinGW compilation errors with old GCC
 	versions.
+
+2014-01-08  Pedro Alves  <palves@redhat.com>
+
+	* server.c (handle_status): Don't discard previous queued stop
+	replies or thread's pending status here.
+	(main) <disconnection>: Do it here instead.
+
+2014-01-08  Pedro Alves  <palves@redhat.com>
+
+	* gdbthread.h (struct thread_info) <status_pending_p>: New field.
+	* server.c (visit_actioned_threads, handle_pending_status): New
+	function.
+	(handle_v_cont): Factor out parts to ...
+	(resume): ... this new function.  If in all-stop, and a thread
+	being resumed has a pending status, report it without actually
+	resuming.
+	(myresume): Adjust to use the new 'resume' function.
+	(clear_pending_status_callback, set_pending_status_callback)
+	(find_status_pending_thread_callback): New functions.
+	(handle_status): Handle the case of multiple threads having
+	interesting statuses to report.  Report threads' real last signal
+	instead of always reporting GDB_SIGNAL_TRAP.  Look for a thread
+	with an interesting thread to report the status for, instead of
+	always reporting the status of the first thread.
 
 2014-01-01  Joel Brobecker  <brobecker@adacore.com>
 

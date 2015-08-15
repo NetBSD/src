@@ -884,6 +884,12 @@ Relocation against a MIPS literal section.
 @deffnx {} BFD_RELOC_MICROMIPS_16_PCREL_S1
 microMIPS PC-relative relocations.
 @end deffn
+@deffn {} BFD_RELOC_MIPS_21_PCREL_S2
+@deffnx {} BFD_RELOC_MIPS_26_PCREL_S2
+@deffnx {} BFD_RELOC_MIPS_18_PCREL_S3
+@deffnx {} BFD_RELOC_MIPS_19_PCREL_S2
+MIPS PC-relative relocations.
+@end deffn
 @deffn {} BFD_RELOC_MICROMIPS_GPREL16
 @deffnx {} BFD_RELOC_MICROMIPS_HI16
 @deffnx {} BFD_RELOC_MICROMIPS_HI16_S
@@ -1207,6 +1213,7 @@ Picojava relocs.  Not all of these appear in object files.
 @deffnx {} BFD_RELOC_PPC64_PLTGOT16_LO_DS
 @deffnx {} BFD_RELOC_PPC64_ADDR16_HIGH
 @deffnx {} BFD_RELOC_PPC64_ADDR16_HIGHA
+@deffnx {} BFD_RELOC_PPC64_ADDR64_LOCAL
 Power(rs6000) and PowerPC relocations.
 @end deffn
 @deffn {} BFD_RELOC_PPC_TLS
@@ -1882,6 +1889,13 @@ for PIC
 @deffnx {} BFD_RELOC_NDS32_15_FIXED
 @deffnx {} BFD_RELOC_NDS32_17_FIXED
 @deffnx {} BFD_RELOC_NDS32_25_FIXED
+@deffnx {} BFD_RELOC_NDS32_LONGCALL4
+@deffnx {} BFD_RELOC_NDS32_LONGCALL5
+@deffnx {} BFD_RELOC_NDS32_LONGCALL6
+@deffnx {} BFD_RELOC_NDS32_LONGJUMP4
+@deffnx {} BFD_RELOC_NDS32_LONGJUMP5
+@deffnx {} BFD_RELOC_NDS32_LONGJUMP6
+@deffnx {} BFD_RELOC_NDS32_LONGJUMP7
 for relax
 @end deffn
 @deffn {} BFD_RELOC_NDS32_PLTREL_HI20
@@ -1942,12 +1956,32 @@ If fp were omitted, fp can used as another gp.
 @deffnx {} BFD_RELOC_NDS32_DIFF16
 @deffnx {} BFD_RELOC_NDS32_DIFF32
 @deffnx {} BFD_RELOC_NDS32_DIFF_ULEB128
-@deffnx {} BFD_RELOC_NDS32_25_ABS
-@deffnx {} BFD_RELOC_NDS32_DATA
+@deffnx {} BFD_RELOC_NDS32_EMPTY
+relaxation relative relocation types
+@end deffn
+@deffn {} BFD_RELOC_NDS32_25_ABS
+This is a 25 bit absolute address.
+@end deffn
+@deffn {} BFD_RELOC_NDS32_DATA
 @deffnx {} BFD_RELOC_NDS32_TRAN
 @deffnx {} BFD_RELOC_NDS32_17IFC_PCREL
 @deffnx {} BFD_RELOC_NDS32_10IFCU_PCREL
-relaxation relative relocation types
+For ex9 and ifc using.
+@end deffn
+@deffn {} BFD_RELOC_NDS32_TPOFF
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_HI20
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_LO12
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_ADD
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_LS
+@deffnx {} BFD_RELOC_NDS32_GOTTPOFF
+@deffnx {} BFD_RELOC_NDS32_TLS_IE_HI20
+@deffnx {} BFD_RELOC_NDS32_TLS_IE_LO12S2
+@deffnx {} BFD_RELOC_NDS32_TLS_TPOFF
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_20
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_15S0
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_15S1
+@deffnx {} BFD_RELOC_NDS32_TLS_LE_15S2
+For TLS.
 @end deffn
 @deffn {} BFD_RELOC_V850_9_PCREL
 This is a 9-bit reloc
@@ -2404,6 +2438,28 @@ in .byte hi8(symbol)
 @deffn {} BFD_RELOC_AVR_8_HLO
 This is a 8 bit reloc for the AVR that stores bits 16..23 of a symbol
 in .byte hlo8(symbol)
+@end deffn
+@deffn {} BFD_RELOC_AVR_DIFF8
+@deffnx {} BFD_RELOC_AVR_DIFF16
+@deffnx {} BFD_RELOC_AVR_DIFF32
+AVR relocations to mark the difference of two local symbols.
+These are only needed to support linker relaxation and can be ignored
+when not relaxing.  The field is set to the value of the difference
+assuming no relaxation.  The relocation encodes the position of the
+second symbol so the linker can determine whether to adjust the field
+value.
+@end deffn
+@deffn {} BFD_RELOC_AVR_LDS_STS_16
+This is a 7 bit reloc for the AVR that stores SRAM address for 16bit
+lds and sts instructions supported only tiny core.
+@end deffn
+@deffn {} BFD_RELOC_AVR_PORT6
+This is a 6 bit reloc for the AVR that stores an I/O register
+number for the IN and OUT instructions
+@end deffn
+@deffn {} BFD_RELOC_AVR_PORT5
+This is a 5 bit reloc for the AVR that stores an I/O register
+number for the SBIC, SBIS, SBI and CBI instructions
 @end deffn
 @deffn {} BFD_RELOC_RL78_NEG8
 @deffnx {} BFD_RELOC_RL78_NEG16
@@ -3068,9 +3124,31 @@ Relocs used in TLS code for CRIS.
 @deffnx {} BFD_RELOC_860_HIGOTOFF
 Intel i860 Relocations.
 @end deffn
-@deffn {} BFD_RELOC_OPENRISC_ABS_26
-@deffnx {} BFD_RELOC_OPENRISC_REL_26
-OpenRISC Relocations.
+@deffn {} BFD_RELOC_OR1K_REL_26
+@deffnx {} BFD_RELOC_OR1K_GOTPC_HI16
+@deffnx {} BFD_RELOC_OR1K_GOTPC_LO16
+@deffnx {} BFD_RELOC_OR1K_GOT16
+@deffnx {} BFD_RELOC_OR1K_PLT26
+@deffnx {} BFD_RELOC_OR1K_GOTOFF_HI16
+@deffnx {} BFD_RELOC_OR1K_GOTOFF_LO16
+@deffnx {} BFD_RELOC_OR1K_COPY
+@deffnx {} BFD_RELOC_OR1K_GLOB_DAT
+@deffnx {} BFD_RELOC_OR1K_JMP_SLOT
+@deffnx {} BFD_RELOC_OR1K_RELATIVE
+@deffnx {} BFD_RELOC_OR1K_TLS_GD_HI16
+@deffnx {} BFD_RELOC_OR1K_TLS_GD_LO16
+@deffnx {} BFD_RELOC_OR1K_TLS_LDM_HI16
+@deffnx {} BFD_RELOC_OR1K_TLS_LDM_LO16
+@deffnx {} BFD_RELOC_OR1K_TLS_LDO_HI16
+@deffnx {} BFD_RELOC_OR1K_TLS_LDO_LO16
+@deffnx {} BFD_RELOC_OR1K_TLS_IE_HI16
+@deffnx {} BFD_RELOC_OR1K_TLS_IE_LO16
+@deffnx {} BFD_RELOC_OR1K_TLS_LE_HI16
+@deffnx {} BFD_RELOC_OR1K_TLS_LE_LO16
+@deffnx {} BFD_RELOC_OR1K_TLS_TPOFF
+@deffnx {} BFD_RELOC_OR1K_TLS_DTPOFF
+@deffnx {} BFD_RELOC_OR1K_TLS_DTPMOD
+OpenRISC 1000 Relocations.
 @end deffn
 @deffn {} BFD_RELOC_H8_DIR16A8
 @deffnx {} BFD_RELOC_H8_DIR16R8
@@ -3176,6 +3254,11 @@ msp430 specific relocation codes
 @deffnx {} BFD_RELOC_NIOS2_JUMP_SLOT
 @deffnx {} BFD_RELOC_NIOS2_RELATIVE
 @deffnx {} BFD_RELOC_NIOS2_GOTOFF
+@deffnx {} BFD_RELOC_NIOS2_CALL26_NOAT
+@deffnx {} BFD_RELOC_NIOS2_GOT_LO
+@deffnx {} BFD_RELOC_NIOS2_GOT_HA
+@deffnx {} BFD_RELOC_NIOS2_CALL_LO
+@deffnx {} BFD_RELOC_NIOS2_CALL_HA
 Relocations used by the Altera Nios II core.
 @end deffn
 @deffn {} BFD_RELOC_IQ2000_OFFSET_16
@@ -3915,6 +3998,15 @@ Adapteva EPIPHANY - 11 bit sign-magnitude number (ld/st displacement)
 @end deffn
 @deffn {} BFD_RELOC_EPIPHANY_IMM8
 Adapteva EPIPHANY - 8 bit immediate for 16 bit mov instruction.
+@end deffn
+@deffn {} BFD_RELOC_VISIUM_HI16
+@deffnx {} BFD_RELOC_VISIUM_LO16
+@deffnx {} BFD_RELOC_VISIUM_IM16
+@deffnx {} BFD_RELOC_VISIUM_REL16
+@deffnx {} BFD_RELOC_VISIUM_HI16_PCREL
+@deffnx {} BFD_RELOC_VISIUM_LO16_PCREL
+@deffnx {} BFD_RELOC_VISIUM_IM16_PCREL
+Visium Relocations.
 @end deffn
 
 @example

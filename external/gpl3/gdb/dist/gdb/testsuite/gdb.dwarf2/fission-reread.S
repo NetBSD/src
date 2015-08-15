@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Free Software Foundation, Inc.
+/* Copyright 2012-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -134,7 +134,7 @@ main:
 	.4byte	0	/* Offset to Type DIE */
 	.uleb128 0x2	/* (DIE (0) DW_TAG_type_unit) */
 	.ascii "/tmp/src/gdb/testsuite\0"	/* DW_AT_comp_dir */
-	.ascii "gdb.dwarf2/fission-reread.dwo\0" /* DW_AT_GNU_dwo_name */
+	.ascii "fission-reread.dwo\0" /* DW_AT_GNU_dwo_name */
 	.4byte	.Ldebug_pubnames0	/* DW_AT_GNU_pubnames */
 	.4byte	.Ldebug_pubtypes0	/* DW_AT_GNU_pubtypes */
 	.4byte	.Ldebug_addr0	/* DW_AT_GNU_addr_base */
@@ -205,7 +205,7 @@ main:
 	.4byte	.Letext0-.Ltext0	/* DW_AT_high_pc */
 	.4byte	.Ldebug_line0	/* DW_AT_stmt_list */
 	.ascii "/tmp/src/gdb/testsuite\0"	/* DW_AT_comp_dir */
-	.ascii "gdb.dwarf2/fission-reread.dwo\0" /* DW_AT_GNU_dwo_name */
+	.ascii "fission-reread.dwo\0" /* DW_AT_GNU_dwo_name */
 	.4byte	.Ldebug_pubnames0	/* DW_AT_GNU_pubnames */
 	.4byte	.Ldebug_pubtypes0	/* DW_AT_GNU_pubtypes */
 	.4byte	.Ldebug_addr0	/* DW_AT_GNU_addr_base */

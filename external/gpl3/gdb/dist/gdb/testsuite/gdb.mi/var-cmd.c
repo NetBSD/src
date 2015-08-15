@@ -1,4 +1,4 @@
-/* Copyright 1999-2014 Free Software Foundation, Inc.
+/* Copyright 1999-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -182,6 +182,20 @@ nothing ()
 {
 }
 
+struct _struct_decl
+nothing1 (int a, char *b, long c)
+{
+  struct _struct_decl foo;
+
+  return foo;
+}
+
+struct _struct_decl *
+nothing2 (int a, char *b, long c)
+{
+  return (struct _struct_decl *) 0;
+}
+
 void
 subroutine1 (int i, long *l)
 {
@@ -253,6 +267,8 @@ do_children_tests (void)
   struct_declarations.long_array[9] = 1234;
 
   weird->func_ptr = nothing;
+  weird->func_ptr_struct = nothing1;
+  weird->func_ptr_ptr = nothing2;
 
   /* Struct/pointer/array tests */
   a0[0] = '0';
@@ -552,6 +568,73 @@ do_anonymous_type_tests (void)
   return; /* anonymous type tests breakpoint */
 }
 
+void
+do_nested_struct_union_tests (void)
+{
+  struct s_a
+  {
+    int a;
+  };
+  struct s_b
+  {
+    int b;
+  };
+  union u_ab
+  {
+    struct s_a a;
+    struct s_b b;
+  };
+  struct ss
+  {
+    struct s_a a1;
+    struct s_b b1;
+    union u_ab u1;
+
+    /* Anonymous union.  */
+    union
+    {
+      struct s_a a2;
+      struct s_b b2;
+    };
+
+    union
+    {
+      struct s_a a3;
+      struct s_b b3;
+    } u2;
+  };
+
+  typedef struct
+  {
+    int a;
+  } td_s_a;
+
+  typedef struct
+  {
+    int b;
+  } td_s_b;
+
+  typedef union
+  {
+    td_s_a a;
+    td_s_b b;
+  } td_u_ab;
+
+  struct ss var;
+  struct
+  {
+    td_u_ab ab;
+  } var2;
+
+  struct ss *ss_ptr;
+
+  memset (&var, 0, sizeof (var));
+  memset (&var2, 0, sizeof (var2));
+  ss_ptr = &var;
+
+  return; /* nested struct union tests breakpoint */
+}
+
 int
 main (int argc, char *argv [])
 {
@@ -563,6 +646,7 @@ main (int argc, char *argv [])
   do_at_tests ();
   do_bitfield_tests ();
   do_anonymous_type_tests ();
+  do_nested_struct_union_tests ();
   exit (0);
 }
 

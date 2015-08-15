@@ -1,6 +1,6 @@
 /* CLI Definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,23 +23,100 @@
 #include "ui-out.h"
 #include "cli-out.h"
 #include "top.h"		/* for "execute_command" */
-#include <string.h>
-#include "exceptions.h"
-
-struct ui_out *cli_uiout;
+#include "infrun.h"
+#include "observer.h"
 
 /* These are the ui_out and the interpreter for the console
    interpreter.  */
+struct ui_out *cli_uiout;
+static struct interp *cli_interp;
 
 /* Longjmp-safe wrapper for "execute_command".  */
 static struct gdb_exception safe_execute_command (struct ui_out *uiout,
 						  char *command, 
 						  int from_tty);
+
+/* Observers for several run control events.  If the interpreter is
+   quiet (i.e., another interpreter is being run with
+   interpreter-exec), print nothing.  */
+
+/* Observer for the signal_received notification.  */
+
+static void
+cli_on_signal_received (enum gdb_signal siggnal)
+{
+  if (!interp_quiet_p (cli_interp))
+    print_signal_received_reason (cli_uiout, siggnal);
+}
+
+/* Observer for the end_stepping_range notification.  */
+
+static void
+cli_on_end_stepping_range (void)
+{
+  if (!interp_quiet_p (cli_interp))
+    print_end_stepping_range_reason (cli_uiout);
+}
+
+/* Observer for the signalled notification.  */
+
+static void
+cli_on_signal_exited (enum gdb_signal siggnal)
+{
+  if (!interp_quiet_p (cli_interp))
+    print_signal_exited_reason (cli_uiout, siggnal);
+}
+
+/* Observer for the exited notification.  */
+
+static void
+cli_on_exited (int exitstatus)
+{
+  if (!interp_quiet_p (cli_interp))
+    print_exited_reason (cli_uiout, exitstatus);
+}
+
+/* Observer for the no_history notification.  */
+
+static void
+cli_on_no_history (void)
+{
+  if (!interp_quiet_p (cli_interp))
+    print_no_history_reason (cli_uiout);
+}
+
+/* Observer for the sync_execution_done notification.  */
+
+static void
+cli_on_sync_execution_done (void)
+{
+  if (!interp_quiet_p (cli_interp))
+    display_gdb_prompt (NULL);
+}
+
+/* Observer for the command_error notification.  */
+
+static void
+cli_on_command_error (void)
+{
+  if (!interp_quiet_p (cli_interp))
+    display_gdb_prompt (NULL);
+}
+
 /* These implement the cli out interpreter: */
 
 static void *
 cli_interpreter_init (struct interp *self, int top_level)
 {
+  /* If changing this, remember to update tui-interp.c as well.  */
+  observer_attach_end_stepping_range (cli_on_end_stepping_range);
+  observer_attach_signal_received (cli_on_signal_received);
+  observer_attach_signal_exited (cli_on_signal_exited);
+  observer_attach_exited (cli_on_exited);
+  observer_attach_no_history (cli_on_no_history);
+  observer_attach_sync_execution_done (cli_on_sync_execution_done);
+  observer_attach_command_error (cli_on_command_error);
+
   return NULL;
 }
 
@@ -74,16 +151,6 @@ cli_interpreter_suspend (void *data)
 {
   gdb_disable_readline ();
   return 1;
-}
-
-/* Don't display the prompt if we are set quiet.  */
-static int
-cli_interpreter_display_prompt_p (void *data)
-{
-  if (interp_quiet_p (NULL))
-    return 0;
-  else
-    return 1;
 }
 
 static struct gdb_exception
@@ -150,12 +217,10 @@ _initialize_cli_interp (void)
     cli_interpreter_resume,	/* resume_proc */
     cli_interpreter_suspend,	/* suspend_proc */
     cli_interpreter_exec,	/* exec_proc */
-    cli_interpreter_display_prompt_p,	/* prompt_proc_p */
     cli_ui_out,			/* ui_out_proc */
     NULL,                       /* set_logging_proc */
     cli_command_loop            /* command_loop_proc */
   };
-  struct interp *cli_interp;
 
   /* Create a default uiout builder for the CLI.  */
   cli_uiout = cli_out_new (gdb_stdout);

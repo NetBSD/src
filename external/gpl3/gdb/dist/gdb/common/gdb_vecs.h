@@ -1,6 +1,6 @@
 /* Some commonly-used VEC types.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,9 @@ extern void free_char_ptr_vec (VEC (char_ptr) *char_ptr_vec);
 
 extern struct cleanup *
   make_cleanup_free_char_ptr_vec (VEC (char_ptr) *char_ptr_vec);
+
+extern VEC (char_ptr) *delim_string_to_char_ptr_vec (const char *str,
+						     char delimiter);
 
 extern void dirnames_to_char_ptr_vec_append (VEC (char_ptr) **vecp,
 					     const char *dirnames);

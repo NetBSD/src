@@ -1,5 +1,5 @@
 /* MI Command Set - MI Option Parser.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -19,8 +19,6 @@
 
 #include "defs.h"
 #include "mi-getopt.h"
-#include <string.h>
-
 /* See comments about mi_getopt and mi_getopt_silent in mi-getopt.h.
    When there is an unknown option, if ERROR_ON_UNKNOWN is true,
    throw an error, otherwise return -1.  */

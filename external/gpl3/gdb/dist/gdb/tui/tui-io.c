@@ -1,6 +1,6 @@
 /* TUI support I/O functions.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -36,7 +36,6 @@
 #include "cli-out.h"
 #include <fcntl.h>
 #include <signal.h>
-#include <stdio.h>
 #include "filestuff.h"
 
 #include "gdb_curses.h"
@@ -129,10 +128,10 @@ static struct ui_file *tui_old_stderr;
 struct ui_out *tui_old_uiout;
 
 /* Readline previous hooks.  */
-static Function *tui_old_rl_getc_function;
-static VFunction *tui_old_rl_redisplay_function;
-static VFunction *tui_old_rl_prep_terminal;
-static VFunction *tui_old_rl_deprep_terminal;
+static rl_getc_func_t *tui_old_rl_getc_function;
+static rl_voidfunc_t *tui_old_rl_redisplay_function;
+static rl_vintfunc_t *tui_old_rl_prep_terminal;
+static rl_voidfunc_t *tui_old_rl_deprep_terminal;
 static int tui_old_rl_echoing_p;
 
 /* Readline output stream.
@@ -159,7 +158,10 @@ tui_putc (char c)
   tui_puts (buf);
 }
 
-/* Print the string in the curses command window.  */
+/* Print the string in the curses command window.
+   The output is buffered.  It is up to the caller to refresh the screen
+   if necessary.  */
+
 void
 tui_puts (const char *string)
 {
@@ -179,7 +181,20 @@ tui_puts (const char *string)
       else if (tui_skip_line != 1)
         {
           tui_skip_line = -1;
-          waddch (w, c);
+	  /* Expand TABs, since ncurses on MS-Windows doesn't.  */
+	  if (c == '\t')
+	    {
+	      int line, col;
+
+	      getyx (w, line, col);
+	      do
+		{
+		  waddch (w, ' ');
+		  col++;
+		} while ((col % 8) != 0);
+	    }
+	  else
+	    waddch (w, c);
         }
       else if (c == '\n')
         tui_skip_line = -1;
@@ -188,10 +203,6 @@ tui_puts (const char *string)
          TUI_CMD_WIN->detail.command_info.curch);
   TUI_CMD_WIN->detail.command_info.start_line
     = TUI_CMD_WIN->detail.command_info.cur_line;
-
-  /* We could defer the following.  */
-  wrefresh (w);
-  fflush (stdout);
 }
 
 /* Readline callback.
@@ -235,24 +246,37 @@ tui_redisplay_readline (void)
     {
       waddch (w, prompt[in]);
       getyx (w, line, col);
-      if (col < prev_col)
+      if (col <= prev_col)
         height++;
       prev_col = col;
     }
-  for (in = 0; in < rl_end; in++)
+  for (in = 0; in <= rl_end; in++)
     {
       unsigned char c;
       
-      c = (unsigned char) rl_line_buffer[in];
       if (in == rl_point)
 	{
           getyx (w, c_line, c_pos);
 	}
 
+      if (in == rl_end)
+        break;
+
+      c = (unsigned char) rl_line_buffer[in];
       if (CTRL_CHAR (c) || c == RUBOUT)
 	{
           waddch (w, '^');
           waddch (w, CTRL_CHAR (c) ? UNCTRL (c) : '?');
+	}
+      else if (c == '\t')
+	{
+	  /* Expand TABs, since ncurses on MS-Windows doesn't.  */
+	  getyx (w, line, col);
+	  do
+	    {
+	      waddch (w, ' ');
+	      col++;
+	    } while ((col % 8) != 0);
 	}
       else
 	{
@@ -293,7 +317,7 @@ tui_prep_terminal (int notused1)
      (we can't use gdb_prompt() due to secondary prompts and can't use
      rl_prompt because it points to an alloca buffer).  */
   xfree (tui_rl_saved_prompt);
-  tui_rl_saved_prompt = xstrdup (rl_prompt);
+  tui_rl_saved_prompt = rl_prompt != NULL ? xstrdup (rl_prompt) : NULL;
 }
 
 /* Readline callback to restore the terminal.  It is called once each
@@ -317,6 +341,7 @@ tui_readline_output (int error, gdb_client_data data)
     {
       buf[size] = 0;
       tui_puts (buf);
+      tui_refresh_cmd_win ();
     }
 }
 #endif
@@ -368,6 +393,7 @@ print_filename (const char *to_print, const char *full_pathname)
     {
       PUTX (*s);
     }
+  tui_refresh_cmd_win ();
   return printed_len;
 }
 
@@ -423,9 +449,11 @@ tui_rl_display_match_list (char **matches, int len, int max)
       xsnprintf (msg, sizeof (msg),
 		 "\nDisplay all %d possibilities? (y or n)", len);
       tui_puts (msg);
+      tui_refresh_cmd_win ();
       if (get_y_or_n () == 0)
 	{
 	  tui_puts ("\n");
+	  tui_refresh_cmd_win ();
 	  return;
 	}
     }
@@ -497,6 +525,7 @@ tui_rl_display_match_list (char **matches, int len, int max)
 	}
       tui_putc ('\n');
     }
+  tui_refresh_cmd_win ();
 }
 
 /* Setup the IO for curses or non-curses mode.
@@ -617,16 +646,12 @@ tui_initialize_io (void)
      readline output in a pipe, read that pipe and output the content
      in the curses command window.  */
   if (gdb_pipe_cloexec (tui_readline_pipe) != 0)
-    {
-      fprintf_unfiltered (gdb_stderr, "Cannot create pipe for readline");
-      exit (1);
-    }
+    error (_("Cannot create pipe for readline"));
+
   tui_rl_outstream = fdopen (tui_readline_pipe[1], "w");
   if (tui_rl_outstream == 0)
-    {
-      fprintf_unfiltered (gdb_stderr, "Cannot redirect readline output");
-      exit (1);
-    }
+    error (_("Cannot redirect readline output"));
+
   setvbuf (tui_rl_outstream, (char*) NULL, _IOLBF, 0);
 
 #ifdef O_NONBLOCK
@@ -696,10 +721,89 @@ tui_getc (FILE *fp)
     TUI_CMD_WIN->detail.command_info.curch = 0;
   if (ch == KEY_BACKSPACE)
     return '\b';
-  
+
+  if (async_command_editing_p && key_is_start_sequence (ch))
+    {
+      int ch_pending;
+
+      nodelay (w, TRUE);
+      ch_pending = wgetch (w);
+      nodelay (w, FALSE);
+
+      /* If we have pending input following a start sequence, call the stdin
+	 event handler again because ncurses may have already read and stored
+	 the input into its internal buffer, meaning that we won't get an stdin
+	 event for it.  If we don't compensate for this missed stdin event, key
+	 sequences as Alt_F (^[f) will not behave promptly.
+
+	 (We only compensates for the missed 2nd byte of a key sequence because
+	 2-byte sequences are by far the most commonly used. ncurses may have
+	 buffered a larger, 3+-byte key sequence though it remains to be seen
+	 whether it is useful to compensate for all the bytes of such
+	 sequences.)  */
+      if (ch_pending != ERR)
+	{
+	  ungetch (ch_pending);
+	  call_stdin_event_handler_again_p = 1;
+	}
+    }
+
   return ch;
 }
 
+/* Utility function to expand TABs in a STRING into spaces.  STRING
+   will be displayed starting at column COL, and is assumed to include
+   no newlines.  The returned expanded string is malloc'ed.  */
+
+char *
+tui_expand_tabs (const char *string, int col)
+{
+  int n_adjust, ncol;
+  const char *s;
+  char *ret, *q;
+
+  /* 1. How many additional characters do we need?  */
+  for (ncol = col, n_adjust = 0, s = string; s; )
+    {
+      s = strpbrk (s, "\t");
+      if (s)
+	{
+	  ncol += (s - string) + n_adjust;
+	  /* Adjustment for the next tab stop, minus one for the TAB
+	     we replace with spaces.  */
+	  n_adjust += 8 - (ncol % 8) - 1;
+	  s++;
+	}
+    }
+
+  /* Allocate the copy.  */
+  ret = q = xmalloc (strlen (string) + n_adjust + 1);
+
+  /* 2. Copy the original string while replacing TABs with spaces.  */
+  for (ncol = col, s = string; s; )
+    {
+      char *s1 = strpbrk (s, "\t");
+      if (s1)
+	{
+	  if (s1 > s)
+	    {
+	      strncpy (q, s, s1 - s);
+	      q += s1 - s;
+	      ncol += s1 - s;
+	    }
+	  do {
+	    *q++ = ' ';
+	    ncol++;
+	  } while ((ncol % 8) != 0);
+	  s1++;
+	}
+      else
+	strcpy (q, s);
+      s = s1;
+    }
+
+  return ret;
+}
 
 /* Cleanup when a resize has occured.
    Returns the character that must be processed.  */

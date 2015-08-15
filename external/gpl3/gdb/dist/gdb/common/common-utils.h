@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,14 +20,23 @@
 #ifndef COMMON_UTILS_H
 #define COMMON_UTILS_H
 
-#include "config.h"
-#include "ansidecl.h"
-#include <stddef.h>
-#include <stdarg.h>
+/* If possible, define FUNCTION_NAME, a macro containing the name of
+   the function being defined.  Since this macro may not always be
+   defined, all uses must be protected by appropriate macro definition
+   checks (Eg: "#ifdef FUNCTION_NAME").
 
-extern void malloc_failure (long size) ATTRIBUTE_NORETURN;
-extern void internal_error (const char *file, int line, const char *, ...)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (3, 4);
+   Version 2.4 and later of GCC define a magical variable `__PRETTY_FUNCTION__'
+   which contains the name of the function currently being defined.
+   This is broken in G++ before version 2.6.
+   C9x has a similar variable called __func__, but prefer the GCC one since
+   it demangles C++ function names.  */
+#if (GCC_VERSION >= 2004)
+#define FUNCTION_NAME		__PRETTY_FUNCTION__
+#else
+#if defined __STDC_VERSION__ && __STDC_VERSION__ >= 199901L
+#define FUNCTION_NAME		__func__  /* ARI: func */
+#endif
+#endif
 
 /* xmalloc(), xrealloc() and xcalloc() have already been declared in
    "libiberty.h". */

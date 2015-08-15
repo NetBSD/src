@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,36 +50,12 @@ gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_single_
 
 # (2) struct_param_single_reg_loc
 gdb_continue_to_breakpoint "Stop in breakpt for struct_param_single_reg_loc"
-set test "Backtrace for test struct_param_single_reg_loc"
-gdb_test_multiple "bt" "$test" {
-    -re "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_single_reg_loc \\(operand0={a = 0xdeadbe00deadbe01, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe04deadbe05}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)\r\n$gdb_prompt $" {
-	xpass $test
-    }
-    -re "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_single_reg_loc \\(operand0=<optimized out>, operand1=<optimized out>, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)\r\n$gdb_prompt $" {
-	kfail "symtab/14604" $test
-    }
-}
+gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_single_reg_loc \\(operand0={a = 0xdeadbe00deadbe01, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe04deadbe05}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "Backtrace for test struct_param_single_reg_loc"
 
 # (3) struct_param_two_reg_pieces
 gdb_continue_to_breakpoint "Stop in breakpt for struct_param_two_reg_pieces"
-set test "Backtrace for test struct_param_two_reg_pieces"
-gdb_test_multiple "bt" "$test" {
-    -re "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_two_reg_pieces \\(operand0={a = 0xdeadbe04deadbe05, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe00deadbe01}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)\r\n$gdb_prompt $" {
-	xpass $test
-    }
-    -re "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_two_reg_pieces \\(operand0=.*, operand1=.*, operand2=.*\\)\r\n#2  ($hex in )?main \\(\\)\r\n$gdb_prompt $" {
-	kfail "symtab/14605" $test
-    }
-}
+gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?struct_param_two_reg_pieces \\(operand0={a = 0xdeadbe04deadbe05, b = <optimized out>}, operand1={a = <optimized out>, b = 0xdeadbe00deadbe01}, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "Backtrace for test struct_param_two_reg_pieces"
 
 # (4) int_param_two_reg_pieces
 gdb_continue_to_breakpoint "Stop in breakpt for int_param_two_reg_pieces"
-set test "Backtrace for test int_param_two_reg_pieces"
-gdb_test_multiple "bt" "$test" {
-    -re "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_two_reg_pieces \\(operand0=<optimized out>, operand1=<optimized out>, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)\r\n$gdb_prompt $" {
-	xpass $test
-    }
-    -re "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_two_reg_pieces \\(operand0=.*, operand1=.*, operand2=.*\\)\r\n#2  ($hex in )?main \\(\\)\r\n$gdb_prompt $" {
-	kfail "symtab/14605" $test
-    }
-}
+gdb_test "bt" "#0  ($hex in )?breakpt \\(\\)\r\n#1  ($hex in )?int_param_two_reg_pieces \\(operand0=<optimized out>, operand1=<optimized out>, operand2=<optimized out>\\)\r\n#2  ($hex in )?main \\(\\)" "Backtrace for test int_param_two_reg_pieces"

@@ -1,5 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright 1990-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -46,9 +46,6 @@ CODE_FRAGMENT
 .
 .struct bfd
 .{
-.  {* A unique identifier of the BFD  *}
-.  unsigned int id;
-.
 .  {* The filename the application opened the BFD with.  *}
 .  const char *filename;
 .
@@ -71,17 +68,17 @@ CODE_FRAGMENT
 .  {* File modified time, if mtime_set is TRUE.  *}
 .  long mtime;
 .
-.  {* Reserved for an unimplemented file locking extension.  *}
-.  int ifd;
+.  {* A unique identifier of the BFD  *}
+.  unsigned int id;
 .
 .  {* The format which belongs to the BFD. (object, core, etc.)  *}
-.  bfd_format format;
+.  ENUM_BITFIELD (bfd_format) format : 3;
 .
 .  {* The direction with which the BFD was opened.  *}
-.  enum bfd_direction direction;
+.  ENUM_BITFIELD (bfd_direction) direction : 2;
 .
 .  {* Format_specific flags.  *}
-.  flagword flags;
+.  flagword flags : 17;
 .
 .  {* Values that may appear in the flags field of a BFD.  These also
 .     appear in the object_flags field of the bfd_target structure, where
@@ -140,26 +137,23 @@ CODE_FRAGMENT
 .     struct.  *}
 .#define BFD_IN_MEMORY 0x800
 .
-.  {* The sections in this BFD specify a memory page.  *}
-.#define HAS_LOAD_PAGE 0x1000
-.
 .  {* This BFD has been created by the linker and doesn't correspond
 .     to any input file.  *}
-.#define BFD_LINKER_CREATED 0x2000
+.#define BFD_LINKER_CREATED 0x1000
 .
 .  {* This may be set before writing out a BFD to request that it
 .     be written using values for UIDs, GIDs, timestamps, etc. that
 .     will be consistent from run to run.  *}
-.#define BFD_DETERMINISTIC_OUTPUT 0x4000
+.#define BFD_DETERMINISTIC_OUTPUT 0x2000
 .
 .  {* Compress sections in this BFD.  *}
-.#define BFD_COMPRESS 0x8000
+.#define BFD_COMPRESS 0x4000
 .
 .  {* Decompress sections in this BFD.  *}
-.#define BFD_DECOMPRESS 0x10000
+.#define BFD_DECOMPRESS 0x8000
 .
 .  {* BFD is a dummy, for plugins.  *}
-.#define BFD_PLUGIN 0x20000
+.#define BFD_PLUGIN 0x10000
 .
 .  {* Flags bits to be saved in bfd_preserve_save.  *}
 .#define BFD_FLAGS_SAVED \
@@ -169,6 +163,42 @@ CODE_FRAGMENT
 .#define BFD_FLAGS_FOR_BFD_USE_MASK \
 .  (BFD_IN_MEMORY | BFD_COMPRESS | BFD_DECOMPRESS | BFD_LINKER_CREATED \
 .   | BFD_PLUGIN | BFD_TRADITIONAL_FORMAT | BFD_DETERMINISTIC_OUTPUT)
+.
+.  {* Is the file descriptor being cached?  That is, can it be closed as
+.     needed, and re-opened when accessed later?  *}
+.  unsigned int cacheable : 1;
+.
+.  {* Marks whether there was a default target specified when the
+.     BFD was opened. This is used to select which matching algorithm
+.     to use to choose the back end.  *}
+.  unsigned int target_defaulted : 1;
+.
+.  {* ... and here: (``once'' means at least once).  *}
+.  unsigned int opened_once : 1;
+.
+.  {* Set if we have a locally maintained mtime value, rather than
+.     getting it from the file each time.  *}
+.  unsigned int mtime_set : 1;
+.
+.  {* Flag set if symbols from this BFD should not be exported.  *}
+.  unsigned int no_export : 1;
+.
+.  {* Remember when output has begun, to stop strange things
+.     from happening.  *}
+.  unsigned int output_has_begun : 1;
+.
+.  {* Have archive map.  *}
+.  unsigned int has_armap : 1;
+.
+.  {* Set if this is a thin archive.  *}
+.  unsigned int is_thin_archive : 1;
+.
+.  {* Set if only required symbols should be added in the link hash table for
+.     this object.  Used by VMS linkers.  *}
+.  unsigned int selective_search : 1;
+.
+.  {* Set if this is the linker output BFD.  *}
+.  unsigned int is_linker_output : 1;
 .
 .  {* Currently my_archive is tested before adding origin to
 .     anything. I believe that this can become always an add of
@@ -194,16 +224,20 @@ CODE_FRAGMENT
 .  {* The number of sections.  *}
 .  unsigned int section_count;
 .
+.  {* A field used by _bfd_generic_link_add_archive_symbols.  This will
+.     be used only for archive elements.  *}
+.  int archive_pass;
+.
 .  {* Stuff only useful for object files:
 .     The start address.  *}
 .  bfd_vma start_address;
 .
-.  {* Used for input and output.  *}
-.  unsigned int symcount;
-.
 .  {* Symbol table for output BFD (with symcount entries).
 .     Also used by the linker to cache input BFD symbols.  *}
 .  struct bfd_symbol  **outsymbols;
+.
+.  {* Used for input and output.  *}
+.  unsigned int symcount;
 .
 .  {* Used for slurped dynamic symbol tables.  *}
 .  unsigned int dynsymcount;
@@ -219,12 +253,12 @@ CODE_FRAGMENT
 .  struct bfd *nested_archives; {* List of nested archive in a flattened
 .                                  thin archive.  *}
 .
-.  {* A chain of BFD structures involved in a link.  *}
-.  struct bfd *link_next;
-.
-.  {* A field used by _bfd_generic_link_add_archive_symbols.  This will
-.     be used only for archive elements.  *}
-.  int archive_pass;
+.  union {
+.    {* For input BFDs, a chain of BFDs involved in a link.  *}
+.    struct bfd *next;
+.    {* For output BFD, the linker hash table.  *}
+.    struct bfd_link_hash_table *hash;
+.  } link;
 .
 .  {* Used by the back end to hold private data.  *}
 .  union
@@ -276,39 +310,6 @@ CODE_FRAGMENT
 .     struct objalloc *, but we use void * to avoid requiring the inclusion
 .     of objalloc.h.  *}
 .  void *memory;
-.
-.  {* Is the file descriptor being cached?  That is, can it be closed as
-.     needed, and re-opened when accessed later?  *}
-.  unsigned int cacheable : 1;
-.
-.  {* Marks whether there was a default target specified when the
-.     BFD was opened. This is used to select which matching algorithm
-.     to use to choose the back end.  *}
-.  unsigned int target_defaulted : 1;
-.
-.  {* ... and here: (``once'' means at least once).  *}
-.  unsigned int opened_once : 1;
-.
-.  {* Set if we have a locally maintained mtime value, rather than
-.     getting it from the file each time.  *}
-.  unsigned int mtime_set : 1;
-.
-.  {* Flag set if symbols from this BFD should not be exported.  *}
-.  unsigned int no_export : 1;
-.
-.  {* Remember when output has begun, to stop strange things
-.     from happening.  *}
-.  unsigned int output_has_begun : 1;
-.
-.  {* Have archive map.  *}
-.  unsigned int has_armap : 1;
-.
-.  {* Set if this is a thin archive.  *}
-.  unsigned int is_thin_archive : 1;
-.
-.  {* Set if only required symbols should be added in the link hash table for
-.     this object.  Used by VMS linkers.  *}
-.  unsigned int selective_search : 1;
 .};
 .
 .{* See note beside bfd_set_section_userdata.  *}
@@ -1073,9 +1074,11 @@ SYNOPSIS
  	int bfd_get_arch_size (bfd *abfd);
 
 DESCRIPTION
-	Returns the architecture address size, in bits, as determined
-	by the object file's format.  For ELF, this information is
-	included in the header.
+	Returns the normalized architecture address size, in bits, as
+	determined by the object file's format.  By normalized, we mean
+	either 32 or 64.  For ELF, this information is included in the
+	header.  Use bfd_arch_bits_per_address for number of bits in
+	the architecture address.
 
 RETURNS
 	Returns the arch size in bits if known, <<-1>> otherwise.
@@ -1087,7 +1090,7 @@ bfd_get_arch_size (bfd *abfd)
   if (abfd->xvec->flavour == bfd_target_elf_flavour)
     return get_elf_backend_data (abfd)->s->arch_size;
 
-  return -1;
+  return bfd_arch_bits_per_address (abfd) > 32 ? 64 : 32;
 }
 
 /*
@@ -1441,12 +1444,12 @@ DESCRIPTION
 .
 .#define bfd_find_nearest_line(abfd, sec, syms, off, file, func, line) \
 .       BFD_SEND (abfd, _bfd_find_nearest_line, \
-.                 (abfd, sec, syms, off, file, func, line))
+.                 (abfd, syms, sec, off, file, func, line, NULL))
 .
 .#define bfd_find_nearest_line_discriminator(abfd, sec, syms, off, file, func, \
 .                                            line, disc) \
-.       BFD_SEND (abfd, _bfd_find_nearest_line_discriminator, \
-.                 (abfd, sec, syms, off, file, func, line, disc))
+.       BFD_SEND (abfd, _bfd_find_nearest_line, \
+.                 (abfd, syms, sec, off, file, func, line, disc))
 .
 .#define bfd_find_line(abfd, syms, sym, file, line) \
 .       BFD_SEND (abfd, _bfd_find_line, \
@@ -1494,9 +1497,6 @@ DESCRIPTION
 .
 .#define bfd_link_hash_table_create(abfd) \
 .	BFD_SEND (abfd, _bfd_link_hash_table_create, (abfd))
-.
-.#define bfd_link_hash_table_free(abfd, hash) \
-.	BFD_SEND (abfd, _bfd_link_hash_table_free, (hash))
 .
 .#define bfd_link_add_symbols(abfd, info) \
 .	BFD_SEND (abfd, _bfd_link_add_symbols, (abfd, info))

@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from rs6000/powerpc-altivec32l.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: rs6000/powerpc-altivec32l.xml
 name:powerpc_altivec32l
 xmltarget:powerpc-altivec32l.xml
 expedite:r1,pc

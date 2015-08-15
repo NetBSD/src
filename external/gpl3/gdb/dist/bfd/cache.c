@@ -1,7 +1,6 @@
 /* BFD library -- caching of file descriptors.
 
-   Copyright 1990, 1991, 1992, 1993, 1994, 1996, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    Hacked by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
@@ -311,7 +310,7 @@ cache_bread_1 (struct bfd *abfd, void *buf, file_ptr nbytes)
   if (nread == (file_ptr)-1)
     {
       bfd_set_error (bfd_error_system_call);
-      return -1;
+      return nread;
     }
 #else
   nread = fread (buf, 1, nbytes, f);
@@ -321,7 +320,7 @@ cache_bread_1 (struct bfd *abfd, void *buf, file_ptr nbytes)
   if (nread < nbytes && ferror (f))
     {
       bfd_set_error (bfd_error_system_call);
-      return -1;
+      return nread;
     }
 #endif
   if (nread < nbytes)

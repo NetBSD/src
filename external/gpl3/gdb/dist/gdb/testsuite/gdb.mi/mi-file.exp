@@ -1,4 +1,4 @@
-# Copyright 1999-2014 Free Software Foundation, Inc.
+# Copyright 1999-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,11 @@ proc test_file_list_exec_source_file {} {
     global srcdir
     global subdir
     global fullname_syntax
-    set srcfilepath [string_to_regexp ${srcdir}/${subdir}/${srcfile}]
+    if { [is_remote host] } {
+	set srcfilepath ".*${srcfile}"
+    } else {
+	set srcfilepath [string_to_regexp ${srcdir}/${subdir}/${srcfile}]
+    }
 
     # get the path and absolute path to the current executable
     #
@@ -64,7 +68,7 @@ proc test_file_list_exec_source_files {} {
 
     # get the path and absolute path to the current executable
     mi_gdb_test "222-file-list-exec-source-files" \
-	    "222\\\^done,files=\\\[\{file=\".*/${srcfile}\",fullname=\"$fullname_syntax${srcfile}\"\}.*]" \
+	    "222\\\^done,files=\\\[\{file=\".*${srcfile}\",fullname=\"$fullname_syntax${srcfile}\"\}.*]" \
               "Getting a list of source files."
 }
 

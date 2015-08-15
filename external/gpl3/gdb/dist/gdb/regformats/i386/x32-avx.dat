@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from i386/x32-avx.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: i386/x32-avx.xml
 name:x32_avx
 xmltarget:x32-avx.xml
 expedite:rbp,rsp,rip

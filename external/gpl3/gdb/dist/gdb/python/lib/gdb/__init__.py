@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,6 +67,8 @@ pretty_printers = []
 
 # Initial type printers.
 type_printers = []
+# Initial xmethod matchers.
+xmethods = []
 # Initial frame filters.
 frame_filters = {}
 
@@ -79,7 +81,8 @@ PYTHONDIR = os.path.dirname(os.path.dirname(__file__))
 
 packages = [
     'function',
-    'command'
+    'command',
+    'printer'
 ]
 
 # pkgutil.iter_modules is not available prior to Python 2.6.  Instead,

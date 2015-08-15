@@ -1,5 +1,5 @@
 /* MI Command Set - varobj commands.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -27,7 +27,6 @@
 #include "language.h"
 #include "value.h"
 #include <ctype.h>
-#include <string.h>
 #include "mi-getopt.h"
 #include "gdbthread.h"
 #include "mi-parse.h"
@@ -88,7 +87,7 @@ print_varobj (struct varobj *var, enum print_values print_values,
       xfree (display_hint);
     }
 
-  if (varobj_pretty_printed_p (var))
+  if (varobj_is_dynamic_p (var))
     ui_out_field_int (uiout, "dynamic", 1);
 }
 
@@ -352,7 +351,7 @@ mi_print_value_p (struct varobj *var, enum print_values print_values)
   if (print_values == PRINT_ALL_VALUES)
     return 1;
 
-  if (varobj_pretty_printed_p (var))
+  if (varobj_is_dynamic_p (var))
     return 1;
 
   type = varobj_get_gdb_type (var);
@@ -642,7 +641,9 @@ mi_cmd_var_update_iter (struct varobj *var, void *data_pointer)
 
   thread_id = varobj_get_thread_id (var);
 
-  if (thread_id == -1 && is_stopped (inferior_ptid))
+  if (thread_id == -1
+      && (ptid_equal (inferior_ptid, null_ptid)
+	  || is_stopped (inferior_ptid)))
     thread_stopped = 1;
   else
     {
@@ -777,7 +778,7 @@ varobj_update_one (struct varobj *var, enum print_values print_values,
 	  xfree (display_hint);
 	}
 
-      if (varobj_pretty_printed_p (r->varobj))
+      if (varobj_is_dynamic_p (r->varobj))
 	ui_out_field_int (uiout, "dynamic", 1);
 
       varobj_get_child_range (r->varobj, &from, &to);

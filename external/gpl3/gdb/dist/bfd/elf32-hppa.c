@@ -1,5 +1,5 @@
 /* BFD back-end for HP PA-RISC ELF files.
-   Copyright 1990-2013 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    Original code by
 	Center for Software Science
@@ -407,6 +407,18 @@ hppa_link_hash_newfunc (struct bfd_hash_entry *entry,
   return entry;
 }
 
+/* Free the derived linker hash table.  */
+
+static void
+elf32_hppa_link_hash_table_free (bfd *obfd)
+{
+  struct elf32_hppa_link_hash_table *htab
+    = (struct elf32_hppa_link_hash_table *) obfd->link.hash;
+
+  bfd_hash_table_free (&htab->bstab);
+  _bfd_elf_link_hash_table_free (obfd);
+}
+
 /* Create the derived linker hash table.  The PA ELF port uses the derived
    hash table to keep information specific to the PA ELF linker (without
    using static variables).  */
@@ -432,23 +444,15 @@ elf32_hppa_link_hash_table_create (bfd *abfd)
   /* Init the stub hash table too.  */
   if (!bfd_hash_table_init (&htab->bstab, stub_hash_newfunc,
 			    sizeof (struct elf32_hppa_stub_hash_entry)))
-    return NULL;
+    {
+      _bfd_elf_link_hash_table_free (abfd);
+      return NULL;
+    }
+  htab->etab.root.hash_table_free = elf32_hppa_link_hash_table_free;
 
   htab->text_segment_base = (bfd_vma) -1;
   htab->data_segment_base = (bfd_vma) -1;
   return &htab->etab.root;
-}
-
-/* Free the derived linker hash table.  */
-
-static void
-elf32_hppa_link_hash_table_free (struct bfd_link_hash_table *btab)
-{
-  struct elf32_hppa_link_hash_table *htab
-    = (struct elf32_hppa_link_hash_table *) btab;
-
-  bfd_hash_table_free (&htab->bstab);
-  _bfd_elf_link_hash_table_free (btab);
 }
 
 /* Build a name for an entry in the stub hash table.  */
@@ -1911,7 +1915,7 @@ elf32_hppa_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   sec = htab->sdynbss;
 
-  return _bfd_elf_adjust_dynamic_copy (eh, sec);
+  return _bfd_elf_adjust_dynamic_copy (info, eh, sec);
 }
 
 /* Allocate space in the .plt for entries that won't have relocations.
@@ -2228,7 +2232,7 @@ elf32_hppa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   /* Set up .got and .plt offsets for local syms, and space for local
      dynamic relocs.  */
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;
@@ -2503,7 +2507,7 @@ elf32_hppa_setup_section_lists (bfd *output_bfd, struct bfd_link_info *info)
   /* Count the number of input BFDs and find the top input section id.  */
   for (input_bfd = info->input_bfds, bfd_count = 0, top_id = 0;
        input_bfd != NULL;
-       input_bfd = input_bfd->link_next)
+       input_bfd = input_bfd->link.next)
     {
       bfd_count += 1;
       for (section = input_bfd->sections;
@@ -2694,7 +2698,7 @@ get_local_syms (bfd *output_bfd, bfd *input_bfd, struct bfd_link_info *info)
      export stubs.  */
   for (bfd_indx = 0;
        input_bfd != NULL;
-       input_bfd = input_bfd->link_next, bfd_indx++)
+       input_bfd = input_bfd->link.next, bfd_indx++)
     {
       Elf_Internal_Shdr *symtab_hdr;
 
@@ -2868,7 +2872,7 @@ elf32_hppa_size_stubs
 
       for (input_bfd = info->input_bfds, bfd_indx = 0;
 	   input_bfd != NULL;
-	   input_bfd = input_bfd->link_next, bfd_indx++)
+	   input_bfd = input_bfd->link.next, bfd_indx++)
 	{
 	  Elf_Internal_Shdr *symtab_hdr;
 	  asection *section;
@@ -4625,7 +4629,6 @@ elf32_hppa_elf_get_symbol_type (Elf_Internal_Sym *elf_sym, int type)
 /* Stuff for the BFD linker.  */
 #define bfd_elf32_bfd_final_link	     elf32_hppa_final_link
 #define bfd_elf32_bfd_link_hash_table_create elf32_hppa_link_hash_table_create
-#define bfd_elf32_bfd_link_hash_table_free   elf32_hppa_link_hash_table_free
 #define elf_backend_adjust_dynamic_symbol    elf32_hppa_adjust_dynamic_symbol
 #define elf_backend_copy_indirect_symbol     elf32_hppa_copy_indirect_symbol
 #define elf_backend_check_relocs	     elf32_hppa_check_relocs
@@ -4656,7 +4659,7 @@ elf32_hppa_elf_get_symbol_type (Elf_Internal_Sym *elf_sym, int type)
 #define elf_backend_got_header_size	     8
 #define elf_backend_rela_normal		     1
 
-#define TARGET_BIG_SYM		bfd_elf32_hppa_vec
+#define TARGET_BIG_SYM		hppa_elf32_vec
 #define TARGET_BIG_NAME		"elf32-hppa"
 #define ELF_ARCH		bfd_arch_hppa
 #define ELF_TARGET_ID		HPPA32_ELF_DATA
@@ -4668,7 +4671,7 @@ elf32_hppa_elf_get_symbol_type (Elf_Internal_Sym *elf_sym, int type)
 #include "elf32-target.h"
 
 #undef TARGET_BIG_SYM
-#define TARGET_BIG_SYM		bfd_elf32_hppa_linux_vec
+#define TARGET_BIG_SYM		hppa_elf32_linux_vec
 #undef TARGET_BIG_NAME
 #define TARGET_BIG_NAME		"elf32-hppa-linux"
 #undef ELF_OSABI
@@ -4679,7 +4682,7 @@ elf32_hppa_elf_get_symbol_type (Elf_Internal_Sym *elf_sym, int type)
 #include "elf32-target.h"
 
 #undef TARGET_BIG_SYM
-#define TARGET_BIG_SYM		bfd_elf32_hppa_nbsd_vec
+#define TARGET_BIG_SYM		hppa_elf32_nbsd_vec
 #undef TARGET_BIG_NAME
 #define TARGET_BIG_NAME		"elf32-hppa-netbsd"
 #undef ELF_OSABI

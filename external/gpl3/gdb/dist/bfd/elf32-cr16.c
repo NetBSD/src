@@ -1,5 +1,5 @@
 /* BFD back-end for National Semiconductor's CR16 ELF
-   Copyright 2007, 2008, 2009, 2010, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
    Written by M R Swami Reddy.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -2437,7 +2437,7 @@ _bfd_cr16_elf_adjust_dynamic_symbol (struct bfd_link_info * info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Set the sizes of the dynamic sections.  */
@@ -2935,7 +2935,7 @@ _bfd_cr16_elf_reloc_type_class (const struct bfd_link_info *info ATTRIBUTE_UNUSE
 }
 
 /* Definitions for setting CR16 target vector.  */
-#define TARGET_LITTLE_SYM                 bfd_elf32_cr16_vec
+#define TARGET_LITTLE_SYM                 cr16_elf32_vec
 #define TARGET_LITTLE_NAME                "elf32-cr16"
 #define ELF_ARCH                          bfd_arch_cr16
 #define ELF_MACHINE_CODE                  EM_CR16

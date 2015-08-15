@@ -1,5 +1,5 @@
 /* Test program for non-stop debugging.
-   Copyright 1996-2014 Free Software Foundation, Inc.
+   Copyright 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +20,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 
-/* Under OSF 2.0 & 3.0 and HPUX 10, the second arg of pthread_create
+/* Under HPUX 10, the second arg of pthread_create
    is prototyped to be just a "pthread_attr_t", while under Solaris it
    is a "pthread_attr_t *".  Arg! */
 
-#if defined (__osf__) || defined (__hpux__)
+#if defined (__hpux__)
 #define PTHREAD_CREATE_ARG2(arg) arg
 #define PTHREAD_CREATE_NULL_ARG2 null_attr
 static pthread_attr_t null_attr;
@@ -56,7 +56,7 @@ worker (void *arg)
 	unslept = sleep (unslept);
 
       if (exit_first_thread && id == 0)
-	return;
+	return NULL;
 
       break_at_me (id, i);
     }

@@ -1,6 +1,6 @@
 /* GNU/Linux/PowerPC specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -202,25 +202,52 @@ ppc_cannot_fetch_register (int regno)
 static void
 ppc_collect_ptrace_register (struct regcache *regcache, int regno, char *buf)
 {
-  int size = register_size (regcache->tdesc, regno);
-
   memset (buf, 0, sizeof (long));
 
-  if (size < sizeof (long))
-    collect_register (regcache, regno, buf + sizeof (long) - size);
+  if (__BYTE_ORDER == __LITTLE_ENDIAN)
+    {
+      /* Little-endian values always sit at the left end of the buffer.  */
+      collect_register (regcache, regno, buf);
+    }
+  else if (__BYTE_ORDER == __BIG_ENDIAN)
+    {
+      /* Big-endian values sit at the right end of the buffer.  In case of
+         registers whose sizes are smaller than sizeof (long), we must use a
+         padding to access them correctly.  */
+      int size = register_size (regcache->tdesc, regno);
+
+      if (size < sizeof (long))
+	collect_register (regcache, regno, buf + sizeof (long) - size);
+      else
+	collect_register (regcache, regno, buf);
+    }
   else
-    collect_register (regcache, regno, buf);
+    perror_with_name ("Unexpected byte order");
 }
 
 static void
 ppc_supply_ptrace_register (struct regcache *regcache,
 			    int regno, const char *buf)
 {
-  int size = register_size (regcache->tdesc, regno);
-  if (size < sizeof (long))
-    supply_register (regcache, regno, buf + sizeof (long) - size);
+  if (__BYTE_ORDER == __LITTLE_ENDIAN)
+    {
+      /* Little-endian values always sit at the left end of the buffer.  */
+      supply_register (regcache, regno, buf);
+    }
+  else if (__BYTE_ORDER == __BIG_ENDIAN)
+    {
+      /* Big-endian values sit at the right end of the buffer.  In case of
+         registers whose sizes are smaller than sizeof (long), we must use a
+         padding to access them correctly.  */
+      int size = register_size (regcache->tdesc, regno);
+
+      if (size < sizeof (long))
+	supply_register (regcache, regno, buf + sizeof (long) - size);
+      else
+	supply_register (regcache, regno, buf);
+    }
   else
-    supply_register (regcache, regno, buf);
+    perror_with_name ("Unexpected byte order");
 }
 
 
@@ -693,6 +720,7 @@ struct linux_target_ops the_low_target = {
   NULL,
   0,
   ppc_breakpoint_at,
+  NULL, /* supports_z_point_type */
   NULL,
   NULL,
   NULL,

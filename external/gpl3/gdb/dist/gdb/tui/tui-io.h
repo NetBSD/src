@@ -1,6 +1,6 @@
 /* TUI support I/O functions.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -40,6 +40,9 @@ extern int tui_getc (FILE *);
    Redisplay the command line with its prompt after readline has
    changed the edited text.  */
 extern void tui_redisplay_readline (void);
+
+/* Expand TABs into spaces.  */
+extern char *tui_expand_tabs (const char *, int);
 
 extern struct ui_out *tui_out;
 extern struct ui_out *tui_old_uiout;
