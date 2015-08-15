@@ -1,3 +1,114 @@
+2015-01-07  Joel Brobecker  <brobecker@adacore.com>
+
+	* aclocal.m4, configure: Regenerate using automake 1.11.1.
+
+2014-12-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* sim-io.c (sim_io_stat, sim_io_fstat): Adjust calls to "stat"
+	and "fstat" callbacks by calls to "to_stat" and "to_fstat" (resp)
+	callbacks following renaming in callback.h.
+	* syscall.c (cb_syscall): Likewise.  Adjust calls to "lstat"
+	callback by call to "to_lstat" callback
+
+2014-08-28  Gary Benson  <gbenson@redhat.com>
+
+	* sim-trace.h (debug_printf): New define.
+
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-command.c (sim_do_command): Add const to cmd.
+	* sim-options.c (sim_args_command): Add const to cmd.
+	* sim-options.h (sim_args_command): Add const to cmd.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* sim-hload.c (sim_load): Add const to prog.
+	* sim-load.c (sim_load_file): Likewise.
+	* sim-utils.c (sim_analyze_program): Likewise.
+	* sim-utils.h (sim_analyze_program): Likewise.
+	(sim_load_file): Likewise.
+
+2014-03-04  Mike Frysinger  <vapier@gentoo.org>
+
+	* acinclude.m4 (build_warnings): Copy from gdb/configure.ac.
+	* callback.c (system): Delete unused prototype.
+	(os_init): Likewise.
+	(os_shutdown): Likewise.
+	(os_unlink): Likewise.
+	(os_time): Likewise.
+	(os_system): Likewise.
+	(os_rename): Likewise.
+	(os_write_stdout): Likewise.
+	(os_flush_stdout): Likewise.
+	(os_write_stderr): Likewise.
+	(os_flush_stderr): Likewise.
+	(os_write): Likewise.
+	(os_read_stdin): Likewise.
+	(os_read): Likewise.
+	(os_open): Likewise.
+	(os_lseek): Likewise.
+	(os_isatty): Likewise.
+	(os_get_errno): Likewise.
+	(os_close): Likewise.
+	(os_vprintf_filtered): Likewise.
+	(os_evprintf_filtered): Likewise.
+	(os_error): Likewise.
+	(fdmap): Likewise.
+	(fdbad): Likewise.
+	(wrap): Likewise.
+	(wrap): Change to new style prototype.
+	(fdbad): Likewise.
+	(fdmap): Likewise.
+	(os_close): Likewise.
+	(os_poll_quit): Likewise.
+	(os_get_errno): Likewise.
+	(os_isatty): Likewise.
+	(os_lseek): Likewise.
+	(os_open): Likewise.
+	(os_read): Likewise.
+	(os_read_stdin): Likewise.
+	(os_write): Likewise.
+	(os_write_stdout): Likewise.
+	(os_flush_stdout): Likewise.
+	(os_write_stderr): Likewise.
+	(os_flush_stderr): Likewise.
+	(os_rename): Likewise.
+	(os_system): Likewise.
+	(os_time): Likewise.
+	(os_unlink): Likewise.
+	(os_stat): Likewise.
+	(os_fstat): Likewise.
+	(os_lstat): Likewise.
+	(os_ftruncate): Likewise.
+	(os_truncate): Likewise.
+	(os_pipe): Likewise.
+	(os_pipe_empty): Likewise.
+	(os_pipe_nonempty): Likewise.
+	(os_shutdown): Likewise.
+	(os_init): Likewise.
+	(cb_read_target_syscall_maps): Likewise.
+	(cb_target_to_host_syscall): Likewise.
+	(cb_host_to_target_errno): Likewise.
+	(cb_target_to_host_open): Likewise.
+	(cb_store_target_endian): Likewise.
+	(cb_host_to_target_stat): Likewise.
+	* sim-hload.c (sim_load): Change to new style prototype.
+	* sim-load.c (sim_load_file): Change to new style prototype.
+	(report_transfer_performance): Likewise.
+	(xprintf_bfd_vma): Likewise.
+	* syscall.c (cb_get_string): Change to new style prototype.
+	(get_path): Likewise.
+	(cb_syscall): Likewise.
+
 2013-10-15  Hans-Peter Nilsson  <hp@axis.com>
 
 	* create-version.sh: Align parameters to match those of
