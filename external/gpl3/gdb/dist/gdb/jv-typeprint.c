@@ -1,5 +1,5 @@
 /* Support for printing Java types for GDB, the GNU debugger.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,12 +24,10 @@
 #include "demangle.h"
 #include "gdb-demangle.h"
 #include "jv-lang.h"
-#include <string.h>
 #include "typeprint.h"
 #include "c-lang.h"
 #include "cp-abi.h"
 #include "cp-support.h"
-#include "gdb_assert.h"
 
 /* Local functions */
 

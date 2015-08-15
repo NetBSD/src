@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,5 +72,3 @@ gdb_test "b [gdb_get_line_number {break to inspect} ${testfile}.c ]" \
 gdb_test "continue" ".*Breakpoint.*"
 
 gdb_test "print ss" " = a=<1> b=<2>"
-
-remote_file host delete ${remote_python_file}

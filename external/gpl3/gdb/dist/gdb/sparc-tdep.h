@@ -1,6 +1,6 @@
 /* Target-dependent code for SPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,7 +28,7 @@ struct trad_frame_saved_reg;
 
 /* Register offsets for the general-purpose register set.  */
 
-struct sparc_gregset
+struct sparc_gregmap
 {
   int r_psr_offset;
   int r_pc_offset;
@@ -41,7 +41,7 @@ struct sparc_gregset
   int r_y_size;
 };
 
-struct sparc_fpregset
+struct sparc_fpregmap
 {
   int r_f0_offset;
   int r_fsr_offset;
@@ -58,9 +58,9 @@ struct gdbarch_tdep
   int npc_regnum;
 
   /* Register sets.  */
-  struct regset *gregset;
+  const struct regset *gregset;
   size_t sizeof_gregset;
-  struct regset *fpregset;
+  const struct regset *fpregset;
   size_t sizeof_fpregset;
 
   /* Offset of saved PC in jmp_buf.  */
@@ -193,6 +193,9 @@ extern struct sparc_frame_cache *
 extern struct sparc_frame_cache *
   sparc32_frame_cache (struct frame_info *this_frame, void **this_cache);
 
+extern int
+  sparc_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc);
+
 
 
 extern int sparc_software_single_step (struct frame_info *frame);
@@ -203,20 +206,20 @@ extern void sparc_collect_rwindow (const struct regcache *regcache,
 				   CORE_ADDR sp, int regnum);
 
 /* Register offsets for SunOS 4.  */
-extern const struct sparc_gregset sparc32_sunos4_gregset;
-extern const struct sparc_fpregset sparc32_sunos4_fpregset;
-extern const struct sparc_fpregset sparc32_bsd_fpregset;
+extern const struct sparc_gregmap sparc32_sunos4_gregmap;
+extern const struct sparc_fpregmap sparc32_sunos4_fpregmap;
+extern const struct sparc_fpregmap sparc32_bsd_fpregmap;
 
-extern void sparc32_supply_gregset (const struct sparc_gregset *gregset,
+extern void sparc32_supply_gregset (const struct sparc_gregmap *gregmap,
 				    struct regcache *regcache,
 				    int regnum, const void *gregs);
-extern void sparc32_collect_gregset (const struct sparc_gregset *gregset,
+extern void sparc32_collect_gregset (const struct sparc_gregmap *gregmap,
 				     const struct regcache *regcache,
 				     int regnum, void *gregs);
-extern void sparc32_supply_fpregset (const struct sparc_fpregset *fpregset,
+extern void sparc32_supply_fpregset (const struct sparc_fpregmap *fpregmap,
 				     struct regcache *regcache,
 				     int regnum, const void *fpregs);
-extern void sparc32_collect_fpregset (const struct sparc_fpregset *fpregset,
+extern void sparc32_collect_fpregset (const struct sparc_fpregmap *fpregmap,
 				      const struct regcache *regcache,
 				      int regnum, void *fpregs);
 
@@ -225,8 +228,8 @@ extern int sparc_is_annulled_branch_insn (CORE_ADDR pc);
 /* Functions and variables exported from sparc-sol2-tdep.c.  */
 
 /* Register offsets for Solaris 2.  */
-extern const struct sparc_gregset sparc32_sol2_gregset;
-extern const struct sparc_fpregset sparc32_sol2_fpregset;
+extern const struct sparc_gregmap sparc32_sol2_gregmap;
+extern const struct sparc_fpregmap sparc32_sol2_fpregmap;
 
 extern int sparc_sol2_pc_in_sigtramp (CORE_ADDR pc, const char *name);
 
@@ -238,7 +241,7 @@ extern void sparc32_sol2_init_abi (struct gdbarch_info info,
 /* Functions and variables exported from sparcnbsd-tdep.c.  */
 
 /* Register offsets for NetBSD.  */
-extern const struct sparc_gregset sparc32nbsd_gregset;
+extern const struct sparc_gregmap sparc32nbsd_gregmap;
 
 /* Return the address of a system call's alternative return
    address.  */

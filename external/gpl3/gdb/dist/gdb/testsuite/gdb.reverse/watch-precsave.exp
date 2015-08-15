@@ -1,4 +1,4 @@
-# Copyright 2009-2014 Free Software Foundation, Inc.
+# Copyright 2009-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ if [supports_process_record] {
 
 set end_location  [gdb_get_line_number "end of main"  ]
 gdb_test "break $end_location" \
-    "Breakpoint $decimal at .*/$srcfile, line $end_location\." \
+    "Breakpoint $decimal at .*$srcfile, line $end_location\." \
     "BP at end of main"
 
 gdb_test "continue" "Breakpoint .* end of main .*" "run to end of main"
@@ -51,7 +51,7 @@ gdb_test "kill" "" "Kill process, prepare to debug log file" \
     "Kill the program being debugged\\? \\(y or n\\) " "y"
 
 gdb_test "record restore $precsave" \
-    "Program terminated with signal .*" \
+    "Restored records from core file .*" \
     "reload core file"
 
 # Only software watchpoints can be used in reverse
@@ -65,7 +65,7 @@ gdb_test "break marker2" \
     "Breakpoint $decimal at $hex: file .*$srcfile, line $decimal.*" \
     "set breakpoint at marker2"
 
-gdb_continue_to_breakpoint "marker1" ".*/$srcfile:.*"
+gdb_continue_to_breakpoint "marker1" ".*$srcfile:.*"
 
 gdb_test "watch ival3" \
     ".*\[Ww\]atchpoint $decimal: ival3.*" \
@@ -102,7 +102,7 @@ gdb_test "continue" \
 # Continue until we hit the finishing marker function.
 # Make sure we hit no more watchpoints.
 
-gdb_continue_to_breakpoint "marker2" ".*/$srcfile:.*"
+gdb_continue_to_breakpoint "marker2" ".*$srcfile:.*"
 
 ###
 ###

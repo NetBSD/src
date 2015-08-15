@@ -1,5 +1,5 @@
 /* Assemble Matsushita MN10200 instructions.
-   Copyright 1996, 1997, 2000, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 

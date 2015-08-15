@@ -1,4 +1,4 @@
-/* Copyright 2010-2014 Free Software Foundation, Inc.
+/* Copyright 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-extern callme (void);
+extern void callme (void);
 
 void
 c_function (void)

@@ -1,6 +1,6 @@
 /* Builtin frame register, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -24,9 +24,6 @@
 #include "frame.h"
 #include "gdbtypes.h"
 #include "value.h"
-#include <string.h>
-
-
 static struct value *
 value_of_builtin_frame_fp_reg (struct frame_info *frame, const void *baton)
 {

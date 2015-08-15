@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 1993-2014 Free Software Foundation, Inc.
+   Copyright 1993-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -216,7 +216,7 @@ char  *t_structs_a (struct struct1 tstruct)
 #ifdef TEST_COMPLEX
 float _Complex t_structs_fc (struct struct1 tstruct) { return tstruct.fc;}
 double _Complex t_structs_dc (struct struct1 tstruct) { return tstruct.dc;}
-long double _Complex t_structs_fc (struct struct1 tstruct) { return tstruct.ldc;}
+long double _Complex t_structs_ldc (struct struct1 tstruct) { return tstruct.ldc;}
 #endif
 #else
 char   t_structs_c (tstruct) struct struct1 tstruct; { return (tstruct.c); }
@@ -371,9 +371,7 @@ float
 #ifdef NO_PROTOTYPES
 t_float_many_args (f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13,
 		   f14, f15)
-     float f1, float f2, float f3, float f4, float f5, float f6, float f7,
-     float f8, float f9, float f10, float f11, float f12, float f13, float f14,
-     float f15;
+     float f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15;
 #else
 t_float_many_args (float f1, float f2, float f3, float f4, float f5, float f6,
 		   float f7, float f8, float f9, float f10, float f11,
@@ -417,9 +415,7 @@ double
 #ifdef NO_PROTOTYPES
 t_double_many_args (f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13,
 		   f14, f15)
-     double f1, double f2, double f3, double f4, double f5, double f6,
-     double f7, double f8, double f9, double f10, double f11, double f12,
-     double f13, double f14, double f15;
+     double f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13, f14, f15;
 #else
 t_double_many_args (double f1, double f2, double f3, double f4, double f5,
 		    double f6, double f7, double f8, double f9, double f10,
@@ -450,12 +446,8 @@ t_double_many_args (double f1, double f2, double f3, double f4, double f5,
 #define DEF_FUNC_MANY_ARGS_1(TYPE, NAME)			\
 t_##NAME##_complex_many_args (f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, \
 			      f12, f13, f14, f15, f16)			\
-     TYPE _Complex f1, TYPE _Complex f2, TYPE _Complex f3, \
-     TYPE _Complex f4, TYPE _Complex f5, TYPE _Complex f6, \
-     TYPE _Complex f7, TYPE _Complex f8, TYPE _Complex f9, \
-     TYPE _Complex f10, TYPE _Complex f11, TYPE _Complex f12, \
-     TYPE _Complex f13, TYPE _Complex f14, TYPE _Complex f15, \
-     TYPE _Complex f16;
+     TYPE _Complex f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, \
+     f13, f14, f15, f16;
 
 #define DEF_FUNC_MANY_ARGS_2(TYPE, NAME)		  \
 t_##NAME##_complex_many_args (TYPE _Complex f1, TYPE _Complex f2, \
@@ -504,7 +496,7 @@ DEF_FUNC_MANY_ARGS_2(long double, long_double)
 DEF_FUNC_MANY_ARGS_3(long double, creall, cimagl)
 
 #define DEF_FUNC_VALUES_1(TYPE, NAME)			\
-  t_##NAME##_complex_values (f1, f2) TYPE _Complex f1, TYPE _Complex f2;
+  t_##NAME##_complex_values (f1, f2) TYPE _Complex f1, f2;
 
 #define DEF_FUNC_VALUES_2(TYPE, NAME) \
   t_##NAME##_complex_values (TYPE _Complex f1, TYPE _Complex f2)

@@ -1,6 +1,6 @@
 /* Frame unwinder for ia64 frames using the libunwind library.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    Written by Jeff Johnston, contributed by Red Hat Inc.
 
@@ -32,9 +32,6 @@
 #include "regcache.h"
 
 #include <dlfcn.h>
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "ia64-libunwind-tdep.h"
 

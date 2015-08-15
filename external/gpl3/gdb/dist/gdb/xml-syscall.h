@@ -1,7 +1,7 @@
 /* Functions that provide the mechanism to parse a syscall XML file
    and get its values.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,22 +29,25 @@
    GDB won't be able to find the correct XML file to open and get
    the syscalls definitions.  */
 
-void set_xml_syscall_file_name (const char *name);
+void set_xml_syscall_file_name (struct gdbarch *gdbarch,
+				const char *name);
 
 /* Function that retrieves the syscall name corresponding to the given
    number.  It puts the requested information inside 'struct syscall'.  */
 
-void get_syscall_by_number (int syscall_number, struct syscall *s);
+void get_syscall_by_number (struct gdbarch *gdbarch,
+			    int syscall_number, struct syscall *s);
 
 /* Function that retrieves the syscall number corresponding to the given
    name.  It puts the requested information inside 'struct syscall'.  */
 
-void get_syscall_by_name (const char *syscall_name, struct syscall *s);
+void get_syscall_by_name (struct gdbarch *gdbarch,
+			  const char *syscall_name, struct syscall *s);
 
 /* Function used to retrieve the list of syscalls in the system.  This list
    is returned as an array of strings.  Returns the list of syscalls in the
    system, or NULL otherwise.  */
 
-const char **get_syscall_names (void);
+const char **get_syscall_names (struct gdbarch *gdbarch);
 
 #endif /* XML_SYSCALL_H */

@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
    Namespace support contributed by David Carlton.
@@ -179,7 +179,7 @@ extern struct type *cp_lookup_rtti_type (const char *name,
 
 /* Functions/variables from cp-namespace.c.  */
 
-extern int cp_is_anonymous (const char *namespace);
+extern int cp_is_in_anonymous (const char *symbol_name);
 
 extern void cp_add_using_directive (const char *dest,
                                     const char *src,
@@ -192,21 +192,16 @@ extern void cp_add_using_directive (const char *dest,
 extern void cp_scan_for_anonymous_namespaces (const struct symbol *symbol,
 					      struct objfile *objfile);
 
-extern struct symbol *cp_lookup_symbol_nonlocal (const char *name,
-						 const struct block *block,
-						 const domain_enum domain);
+extern struct symbol *cp_lookup_symbol_nonlocal
+     (const struct language_defn *langdef,
+      const char *name,
+      const struct block *block,
+      const domain_enum domain);
 
 extern struct symbol *cp_lookup_symbol_namespace (const char *namespace,
 						  const char *name,
 						  const struct block *block,
 						  const domain_enum domain);
-
-extern struct symbol *cp_lookup_symbol_imports (const char *scope,
-                                                const char *name,
-                                                const struct block *block,
-                                                const domain_enum domain,
-                                                const int declaration_only,
-                                                const int search_parents);
 
 extern struct symbol *cp_lookup_symbol_imports_or_template
      (const char *scope,
@@ -222,8 +217,8 @@ struct type *cp_lookup_transparent_type (const char *name);
 
 /* See description in cp-namespace.c.  */
 
-struct type *find_type_baseclass_by_name (struct type *parent_type,
-					  const char *name);
+struct type *cp_find_type_baseclass_by_name (struct type *parent_type,
+					     const char *name);
 
 /* Functions from cp-name-parser.y.  */
 

@@ -1,5 +1,5 @@
 /* Functions for manipulating expressions designed to be executed on the agent
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,8 +25,6 @@
 #include "ax.h"
 
 #include "value.h"
-#include <string.h>
-
 #include "user-regs.h"
 
 static void grow_expr (struct agent_expr *x, int n);

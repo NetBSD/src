@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/i386.
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,9 +30,7 @@
 #include "target.h"
 #include "trad-frame.h"
 
-#include "gdb_assert.h"
-#include <string.h>
-
+#include "obsd-tdep.h"
 #include "i386-tdep.h"
 #include "i387-tdep.h"
 #include "solib-svr4.h"
@@ -141,7 +139,8 @@ i386obsd_aout_supply_regset (const struct regset *regset,
 			     struct regcache *regcache, int regnum,
 			     const void *regs, size_t len)
 {
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   const gdb_byte *gregs = regs;
 
   gdb_assert (len >= tdep->sizeof_gregset + I387_SIZEOF_FSAVE);
@@ -150,26 +149,24 @@ i386obsd_aout_supply_regset (const struct regset *regset,
   i387_supply_fsave (regcache, regnum, gregs + tdep->sizeof_gregset);
 }
 
-static const struct regset *
-i386obsd_aout_regset_from_core_section (struct gdbarch *gdbarch,
-					const char *sect_name,
-					size_t sect_size)
+static const struct regset i386obsd_aout_gregset =
+  {
+    NULL, i386obsd_aout_supply_regset, NULL
+  };
+
+static void
+i386obsd_aout_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					    iterate_over_regset_sections_cb *cb,
+					    void *cb_data,
+					    const struct regcache *regcache)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   /* OpenBSD a.out core dumps don't use seperate register sets for the
      general-purpose and floating-point registers.  */
 
-  if (strcmp (sect_name, ".reg") == 0
-      && sect_size >= tdep->sizeof_gregset + I387_SIZEOF_FSAVE)
-    {
-      if (tdep->gregset == NULL)
-        tdep->gregset =
-	  regset_alloc (gdbarch, i386obsd_aout_supply_regset, NULL);
-      return tdep->gregset;
-    }
-
-  return NULL;
+  cb (".reg", tdep->sizeof_gregset + I387_SIZEOF_FSAVE,
+      &i386obsd_aout_gregset, NULL, cb_data);
 }
 
 
@@ -447,6 +444,7 @@ i386obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Obviously OpenBSD is BSD-based.  */
   i386bsd_init_abi (info, gdbarch);
+  obsd_init_abi (info, gdbarch);
 
   /* OpenBSD has a different `struct reg'.  */
   tdep->gregset_reg_offset = i386obsd_r_reg_offset;
@@ -482,8 +480,8 @@ i386obsd_aout_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   i386obsd_init_abi (info, gdbarch);
 
   /* OpenBSD a.out has a single register set.  */
-  set_gdbarch_regset_from_core_section
-    (gdbarch, i386obsd_aout_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, i386obsd_aout_iterate_over_regset_sections);
 }
 
 /* OpenBSD ELF.  */
