@@ -1,6 +1,5 @@
 /* ARC-specific support for 32-bit ELF
-   Copyright 1994, 1995, 1997, 1999, 2001, 2002, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Contributed by Doug Evans (dje@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -173,7 +172,11 @@ arc_info_to_howto_rel (bfd *abfd ATTRIBUTE_UNUSED,
   unsigned int r_type;
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  BFD_ASSERT (r_type < (unsigned int) R_ARC_max);
+  if (r_type >= (unsigned int) R_ARC_max)
+    {
+      _bfd_error_handler (_("%A: invalid ARC reloc number: %d"), abfd, r_type);
+      r_type = 0;
+    }
   cache_ptr->howto = &elf_arc_howto_table[r_type];
 }
 
@@ -237,9 +240,9 @@ arc_elf_final_write_processing (bfd *abfd,
   elf_elfheader (abfd)->e_flags |= val;
 }
 
-#define TARGET_LITTLE_SYM   bfd_elf32_littlearc_vec
+#define TARGET_LITTLE_SYM   arc_elf32_le_vec
 #define TARGET_LITTLE_NAME  "elf32-littlearc"
-#define TARGET_BIG_SYM      bfd_elf32_bigarc_vec
+#define TARGET_BIG_SYM      arc_elf32_be_vec
 #define TARGET_BIG_NAME	    "elf32-bigarc"
 #define ELF_ARCH            bfd_arch_arc
 #define ELF_MACHINE_CODE    EM_ARC

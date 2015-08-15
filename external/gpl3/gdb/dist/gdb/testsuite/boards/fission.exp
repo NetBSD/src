@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,9 @@ set_board_info compiler "[find_gcc]"
 
 # This requires a relatively recent version of gcc (>4.7) and gold
 # for the linker.
-set_board_info debug_flags "-gdwarf-4 -gsplit-dwarf -fdebug-types-section -Wl,--gdb-index"
+# Note: -ggnu-pubnames is required for Gold to build .gdb_index, and while
+# -gsplit-dwarf implies -ggnu-pubnames for gcc, it doesn't for clang.
+set_board_info debug_flags "-gdwarf-4 -gsplit-dwarf -ggnu-pubnames -fdebug-types-section -Wl,--gdb-index"
 
 # This is needed otherwise dejagnu tries to rsh to host "fission".  Blech.
 # Double blech: set_board_info only sets the value if not already set.

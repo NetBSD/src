@@ -1,4 +1,4 @@
-# Copyright 1999-2014 Free Software Foundation, Inc.
+# Copyright 1999-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -89,7 +89,8 @@ mi_gdb_test "220-exec-next" \
 	    "Testing console output" \
 	    $output
 
-mi_expect_stop "end-stepping-range" "main" "" ".*mi-console.c" "14" "" \
+set line [gdb_get_line_number "after-hello"]
+mi_expect_stop "end-stepping-range" "main" "" ".*mi-console.c" $line "" \
     "finished step over hello"
     
 mi_gdb_exit

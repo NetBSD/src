@@ -1,5 +1,6 @@
 # Host: Intel 386 running the GNU Hurd
-NATDEPFILES= i386gnu-nat.o gnu-nat.o core-regset.o fork-child.o \
+NATDEPFILES= i386gnu-nat.o gnu-nat.o \
+	     x86-nat.o x86-dregs.o fork-child.o \
 	     notify_S.o process_reply_S.o msg_reply_S.o \
 	     msg_U.o exc_request_U.o exc_request_S.o
 HAVE_NATIVE_GCORE_HOST = 1

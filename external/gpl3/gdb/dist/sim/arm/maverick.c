@@ -1,5 +1,5 @@
 /*  maverick.c -- Cirrus/DSP co-processor interface.
-    Copyright (C) 2003-2014 Free Software Foundation, Inc.
+    Copyright (C) 2003-2015 Free Software Foundation, Inc.
     Contributed by Aldy Hernandez (aldyh@redhat.com).
  
     This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
 #include "ansidecl.h"
 #include "armemu.h"
 
-/*#define CIRRUS_DEBUG 1	/**/
+/*#define CIRRUS_DEBUG 1	*/
 #if CIRRUS_DEBUG
 #  define printfdbg printf
 #else
@@ -95,13 +95,6 @@ cirrus_not_implemented (char * insn)
   fprintf (stderr, "aborting!\n");
   
   exit (1);
-}
-
-static unsigned
-DSPInit (ARMul_State * state)
-{
-  ARMul_ConsolePrint (state, ", DSP present");
-  return TRUE;
 }
 
 unsigned
@@ -270,8 +263,9 @@ DSPMRC5 (ARMul_State * state ATTRIBUTE_UNUSED,
 	v = SubOverflow (DSPregs[SRC1_REG].lower.i, DSPregs[SRC2_REG].lower.i,
 			 res);
 	/* carry */
-	c = (NEG (a) && POS (b) ||
-	     (NEG (a) && POS (res)) || (POS (b) && POS (res)));
+	c = (NEG (a) && POS (b))
+	  || (NEG (a) && POS (res))
+	  || (POS (b) && POS (res));
 
 	*value = (n << 31) | (z << 30) | (c << 29) | (v << 28);
 	break;
@@ -301,8 +295,9 @@ DSPMRC5 (ARMul_State * state ATTRIBUTE_UNUSED,
 	v = ((NEG64 (a) && POS64 (b) && POS64 (res))
 	     || (POS64 (a) && NEG64 (b) && NEG64 (res)));
 	/* carry */
-	c = (NEG64 (a) && POS64 (b) ||
-	     (NEG64 (a) && POS64 (res)) || (POS64 (b) && POS64 (res)));
+	c =    (NEG64 (a) && POS64 (b))
+	    || (NEG64 (a) && POS64 (res))
+	    || (POS64 (b) && POS64 (res));
 
 	*value = (n << 31) | (z << 30) | (c << 29) | (v << 28);
 	break;
@@ -1167,10 +1162,6 @@ DSPCDP6 (ARMul_State * state,
 	 unsigned      type,
 	 ARMword       instr)
 {
-   int opcode2;
-
-   opcode2 = BITS (5,7);
-
    switch (BITS (20,21))
      {
      case 0:

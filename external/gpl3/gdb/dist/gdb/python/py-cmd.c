@@ -1,6 +1,6 @@
 /* gdb commands implemented in Python
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,6 @@
 #include "defs.h"
 #include "arch-utils.h"
 #include "value.h"
-#include "exceptions.h"
 #include "python-internal.h"
 #include "charset.h"
 #include "gdbcmd.h"
@@ -32,13 +31,15 @@
 /* Struct representing built-in completion types.  */
 struct cmdpy_completer
 {
-  /* Python symbol name.  */
+  /* Python symbol name.
+     This isn't a const char * for Python 2.4's sake.
+     PyModule_AddIntConstant only takes a char *, sigh.  */
   char *name;
   /* Completion function.  */
   completer_ftype *completer;
 };
 
-static struct cmdpy_completer completers[] =
+static const struct cmdpy_completer completers[] =
 {
   { "COMPLETE_NONE", noop_completer },
   { "COMPLETE_FILENAME", filename_completer },
@@ -106,8 +107,8 @@ cmdpy_destroyer (struct cmd_list_element *self, void *context)
   /* We allocated the name, doc string, and perhaps the prefix
      name.  */
   xfree ((char *) self->name);
-  xfree (self->doc);
-  xfree (self->prefixname);
+  xfree ((char *) self->doc);
+  xfree ((char *) self->prefixname);
 
   do_cleanups (cleanup);
 }
@@ -206,45 +207,163 @@ cmdpy_function (struct cmd_list_element *command, char *args, int from_tty)
   do_cleanups (cleanup);
 }
 
+/* Helper function for the Python command completers (both "pure"
+   completer and brkchar handler).  This function takes COMMAND, TEXT
+   and WORD and tries to call the Python method for completion with
+   these arguments.  It also takes HANDLE_BRKCHARS_P, an argument to
+   identify whether it is being called from the brkchar handler or
+   from the "pure" completer.  In the first case, it effectively calls
+   the Python method for completion, and records the PyObject in a
+   static variable (used as a "cache").  In the second case, it just
+   returns that variable, without actually calling the Python method
+   again.  This saves us one Python method call.
+
+   The reason for this two step dance is that we need to know the set
+   of "brkchars" to use early on, before we actually try to perform
+   the completion.  But if a Python command supplies a "complete"
+   method then we have to call that method first: it may return as its
+   result the kind of completion to perform and that will in turn
+   specify which brkchars to use.  IOW, we need the result of the
+   "complete" method before we actually perform the completion.
+
+   It is important to mention that this function is built on the
+   assumption that the calls to cmdpy_completer_handle_brkchars and
+   cmdpy_completer will be subsequent with nothing intervening.  This
+   is true for our completer mechanism.
+
+   This function returns the PyObject representing the Python method
+   call.  */
+
+static PyObject *
+cmdpy_completer_helper (struct cmd_list_element *command,
+			const char *text, const char *word,
+			int handle_brkchars_p)
+{
+  cmdpy_object *obj = (cmdpy_object *) get_cmd_context (command);
+  PyObject *textobj, *wordobj;
+  /* This static variable will server as a "cache" for us, in order to
+     store the PyObject that results from calling the Python
+     function.  */
+  static PyObject *resultobj = NULL;
+
+  if (handle_brkchars_p)
+    {
+      /* If we were called to handle brkchars, it means this is the
+	 first function call of two that will happen in a row.
+	 Therefore, we need to call the completer ourselves, and cache
+	 the return value in the static variable RESULTOBJ.  Then, in
+	 the second call, we can just use the value of RESULTOBJ to do
+	 our job.  */
+      if (resultobj != NULL)
+	Py_DECREF (resultobj);
+
+      resultobj = NULL;
+      if (obj == NULL)
+	error (_("Invalid invocation of Python command object."));
+      if (!PyObject_HasAttr ((PyObject *) obj, complete_cst))
+	{
+	  /* If there is no complete method, don't error.  */
+	  return NULL;
+	}
+
+      textobj = PyUnicode_Decode (text, strlen (text), host_charset (), NULL);
+      if (textobj == NULL)
+	error (_("Could not convert argument to Python string."));
+      wordobj = PyUnicode_Decode (word, sizeof (word), host_charset (), NULL);
+      if (wordobj == NULL)
+	{
+	  Py_DECREF (textobj);
+	  error (_("Could not convert argument to Python string."));
+	}
+
+      resultobj = PyObject_CallMethodObjArgs ((PyObject *) obj, complete_cst,
+					      textobj, wordobj, NULL);
+      Py_DECREF (textobj);
+      Py_DECREF (wordobj);
+      if (!resultobj)
+	{
+	  /* Just swallow errors here.  */
+	  PyErr_Clear ();
+	}
+
+      Py_XINCREF (resultobj);
+    }
+
+  return resultobj;
+}
+
+/* Python function called to determine the break characters of a
+   certain completer.  We are only interested in knowing if the
+   completer registered by the user will return one of the integer
+   codes (see COMPLETER_* symbols).  */
+
+static void
+cmdpy_completer_handle_brkchars (struct cmd_list_element *command,
+				 const char *text, const char *word)
+{
+  PyObject *resultobj = NULL;
+  struct cleanup *cleanup;
+
+  cleanup = ensure_python_env (get_current_arch (), current_language);
+
+  /* Calling our helper to obtain the PyObject of the Python
+     function.  */
+  resultobj = cmdpy_completer_helper (command, text, word, 1);
+
+  /* Check if there was an error.  */
+  if (resultobj == NULL)
+    goto done;
+
+  if (PyInt_Check (resultobj))
+    {
+      /* User code may also return one of the completion constants,
+	 thus requesting that sort of completion.  We are only
+	 interested in this kind of return.  */
+      long value;
+
+      if (!gdb_py_int_as_long (resultobj, &value))
+	{
+	  /* Ignore.  */
+	  PyErr_Clear ();
+	}
+      else if (value >= 0 && value < (long) N_COMPLETERS)
+	{
+	  /* This is the core of this function.  Depending on which
+	     completer type the Python function returns, we have to
+	     adjust the break characters accordingly.  */
+	  set_gdb_completion_word_break_characters
+	    (completers[value].completer);
+	}
+    }
+
+ done:
+
+  /* We do not call Py_XDECREF here because RESULTOBJ will be used in
+     the subsequent call to cmdpy_completer function.  */
+  do_cleanups (cleanup);
+}
+
 /* Called by gdb for command completion.  */
 
 static VEC (char_ptr) *
 cmdpy_completer (struct cmd_list_element *command,
 		 const char *text, const char *word)
 {
-  cmdpy_object *obj = (cmdpy_object *) get_cmd_context (command);
-  PyObject *textobj, *wordobj, *resultobj = NULL;
+  PyObject *resultobj = NULL;
   VEC (char_ptr) *result = NULL;
   struct cleanup *cleanup;
 
   cleanup = ensure_python_env (get_current_arch (), current_language);
 
-  if (! obj)
-    error (_("Invalid invocation of Python command object."));
-  if (! PyObject_HasAttr ((PyObject *) obj, complete_cst))
-    {
-      /* If there is no complete method, don't error -- instead, just
-	 say that there are no completions.  */
-      goto done;
-    }
+  /* Calling our helper to obtain the PyObject of the Python
+     function.  */
+  resultobj = cmdpy_completer_helper (command, text, word, 0);
 
-  textobj = PyUnicode_Decode (text, strlen (text), host_charset (), NULL);
-  if (! textobj)
-    error (_("Could not convert argument to Python string."));
-  wordobj = PyUnicode_Decode (word, strlen (word), host_charset (), NULL);
-  if (! wordobj)
-    error (_("Could not convert argument to Python string."));
-
-  resultobj = PyObject_CallMethodObjArgs ((PyObject *) obj, complete_cst,
-					  textobj, wordobj, NULL);
-  Py_DECREF (textobj);
-  Py_DECREF (wordobj);
-  if (! resultobj)
-    {
-      /* Just swallow errors here.  */
-      PyErr_Clear ();
-      goto done;
-    }
+  /* If the result object of calling the Python function is NULL, it
+     means that there was an error.  In this case, just give up and
+     return NULL.  */
+  if (resultobj == NULL)
+    goto done;
 
   result = NULL;
   if (PyInt_Check (resultobj))
@@ -300,7 +419,6 @@ cmdpy_completer (struct cmd_list_element *command,
 
  done:
 
-  Py_XDECREF (resultobj);
   do_cleanups (cleanup);
 
   return result;
@@ -368,7 +486,7 @@ gdbpy_parse_command_name (const char *name,
 
   prefix_text2 = prefix_text;
   elt = lookup_cmd_1 (&prefix_text2, *start_list, NULL, 1);
-  if (!elt || elt == (struct cmd_list_element *) -1)
+  if (elt == NULL || elt == CMD_LIST_AMBIGUOUS)
     {
       PyErr_Format (PyExc_RuntimeError, _("Could not find command prefix %s."),
 		    prefix_text);
@@ -546,6 +664,9 @@ cmdpy_init (PyObject *self, PyObject *args, PyObject *kw)
       set_cmd_context (cmd, self);
       set_cmd_completer (cmd, ((completetype == -1) ? cmdpy_completer
 			       : completers[completetype].completer));
+      if (completetype == -1)
+	set_cmd_completer_handle_brkchars (cmd,
+					   cmdpy_completer_handle_brkchars);
     }
   if (except.reason < 0)
     {

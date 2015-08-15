@@ -1,5 +1,5 @@
 /* Internal interfaces for the Win32 specific target code for gdbserver.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -47,6 +47,10 @@ typedef struct win32_thread_info
 
   /* The context of the thread, including any manipulations.  */
   CONTEXT context;
+
+  /* Whether debug registers changed since we last set CONTEXT back to
+     the thread.  */
+  int debug_registers_changed;
 } win32_thread_info;
 
 struct win32_target_ops
@@ -61,12 +65,10 @@ struct win32_target_ops
   void (*initial_stuff) (void);
 
   /* Fetch the context from the inferior.  */
-  void (*get_thread_context) (win32_thread_info *th,
-			      DEBUG_EVENT *current_event);
+  void (*get_thread_context) (win32_thread_info *th);
 
-  /* Flush the context back to the inferior.  */
-  void (*set_thread_context) (win32_thread_info *th,
-			      DEBUG_EVENT *current_event);
+  /* Called just before resuming the thread.  */
+  void (*prepare_to_resume) (win32_thread_info *th);
 
   /* Called when a thread was added.  */
   void (*thread_added) (win32_thread_info *th);
@@ -85,13 +87,19 @@ struct win32_target_ops
   int breakpoint_len;
 
   /* Breakpoint/Watchpoint related functions.  See target.h for comments.  */
-  int (*insert_point) (char type, CORE_ADDR addr, int len);
-  int (*remove_point) (char type, CORE_ADDR addr, int len);
+  int (*supports_z_point_type) (char z_type);
+  int (*insert_point) (enum raw_bkpt_type type, CORE_ADDR addr,
+		       int size, struct raw_breakpoint *bp);
+  int (*remove_point) (enum raw_bkpt_type type, CORE_ADDR addr,
+		       int size, struct raw_breakpoint *bp);
   int (*stopped_by_watchpoint) (void);
   CORE_ADDR (*stopped_data_address) (void);
 };
 
 extern struct win32_target_ops the_low_target;
+
+/* Retrieve the context for this thread, if not already retrieved.  */
+extern void win32_require_context (win32_thread_info *th);
 
 /* Map the Windows error number in ERROR to a locale-dependent error
    message string and return a pointer to it.  Typically, the values

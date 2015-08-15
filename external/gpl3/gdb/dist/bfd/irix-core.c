@@ -1,6 +1,5 @@
 /* BFD back-end for Irix core files.
-   Copyright 1993, 1994, 1996, 1999, 2001, 2002, 2004, 2005, 2006, 2007,
-   2010, 2011, 2012  Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
@@ -280,7 +279,7 @@ swap_abort(void)
 #define	NO_PUT64 ((void (*) (bfd_uint64_t, void *)) swap_abort)
 #define	NO_GETS64 ((bfd_int64_t (*) (const void *)) swap_abort)
 
-const bfd_target irix_core_vec =
+const bfd_target core_irix_vec =
   {
     "irix-core",
     bfd_target_unknown_flavour,

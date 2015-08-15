@@ -1,5 +1,5 @@
 /* Low level interface to Windows debugging, for gdbserver.
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    Contributed by Leo Zayas.  Based on "win32-nat.c" from GDB.
 
@@ -20,7 +20,6 @@
 
 #include "server.h"
 #include "regcache.h"
-#include "gdb/signals.h"
 #include "gdb/fileio.h"
 #include "mem-break.h"
 #include "win32-low.h"
@@ -106,15 +105,15 @@ static ptid_t win32_wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 			  int options);
 static void win32_resume (struct thread_resume *resume_info, size_t n);
 #ifndef _WIN32_WCE
-static void win32_ensure_ntdll_loaded (void);
+static void win32_add_all_dlls (void);
 #endif
 
 /* Get the thread ID from the current selected inferior (the current
    thread).  */
 static ptid_t
-current_inferior_ptid (void)
+current_thread_ptid (void)
 {
-  return ((struct inferior_list_entry*) current_inferior)->id;
+  return current_ptid;
 }
 
 /* The current debug event from WaitForDebugEvent.  */
@@ -130,7 +129,7 @@ static void
 win32_get_thread_context (win32_thread_info *th)
 {
   memset (&th->context, 0, sizeof (CONTEXT));
-  (*the_low_target.get_thread_context) (th, &current_event);
+  (*the_low_target.get_thread_context) (th);
 #ifdef _WIN32_WCE
   memcpy (&th->base_context, &th->context, sizeof (CONTEXT));
 #endif
@@ -154,23 +153,24 @@ win32_set_thread_context (win32_thread_info *th)
      it between stopping and resuming.  */
   if (memcmp (&th->context, &th->base_context, sizeof (CONTEXT)) != 0)
 #endif
-    (*the_low_target.set_thread_context) (th, &current_event);
+    SetThreadContext (th->h, &th->context);
 }
 
-/* Find a thread record given a thread id.  If GET_CONTEXT is set then
-   also retrieve the context for this thread.  */
-static win32_thread_info *
-thread_rec (ptid_t ptid, int get_context)
+/* Set the thread context of the thread associated with TH.  */
+
+static void
+win32_prepare_to_resume (win32_thread_info *th)
 {
-  struct thread_info *thread;
-  win32_thread_info *th;
+  if (the_low_target.prepare_to_resume != NULL)
+    (*the_low_target.prepare_to_resume) (th);
+}
 
-  thread = (struct thread_info *) find_inferior_id (&all_threads, ptid);
-  if (thread == NULL)
-    return NULL;
+/* See win32-low.h.  */
 
-  th = inferior_target_data (thread);
-  if (get_context && th->context.ContextFlags == 0)
+void
+win32_require_context (win32_thread_info *th)
+{
+  if (th->context.ContextFlags == 0)
     {
       if (!th->suspended)
 	{
@@ -186,7 +186,23 @@ thread_rec (ptid_t ptid, int get_context)
 
       win32_get_thread_context (th);
     }
+}
 
+/* Find a thread record given a thread id.  If GET_CONTEXT is set then
+   also retrieve the context for this thread.  */
+static win32_thread_info *
+thread_rec (ptid_t ptid, int get_context)
+{
+  struct thread_info *thread;
+  win32_thread_info *th;
+
+  thread = (struct thread_info *) find_inferior_id (&all_threads, ptid);
+  if (thread == NULL)
+    return NULL;
+
+  th = inferior_target_data (thread);
+  if (get_context)
+    win32_require_context (th);
   return th;
 }
 
@@ -232,7 +248,7 @@ child_delete_thread (DWORD pid, DWORD tid)
   ptid_t ptid;
 
   /* If the last thread is exiting, just return.  */
-  if (all_threads.head == all_threads.tail)
+  if (one_inferior_p (&all_threads))
     return;
 
   ptid = ptid_build (pid, tid, 0);
@@ -247,20 +263,29 @@ child_delete_thread (DWORD pid, DWORD tid)
    if the low target has registered a corresponding function.  */
 
 static int
-win32_insert_point (char type, CORE_ADDR addr, int len)
+win32_supports_z_point_type (char z_type)
+{
+  return (the_low_target.supports_z_point_type != NULL
+	  && the_low_target.supports_z_point_type (z_type));
+}
+
+static int
+win32_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
+		    int size, struct raw_breakpoint *bp)
 {
   if (the_low_target.insert_point != NULL)
-    return the_low_target.insert_point (type, addr, len);
+    return the_low_target.insert_point (type, addr, size, bp);
   else
     /* Unsupported (see target.h).  */
     return 1;
 }
 
 static int
-win32_remove_point (char type, CORE_ADDR addr, int len)
+win32_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
+		    int size, struct raw_breakpoint *bp)
 {
   if (the_low_target.remove_point != NULL)
-    return the_low_target.remove_point (type, addr, len);
+    return the_low_target.remove_point (type, addr, size, bp);
   else
     /* Unsupported (see target.h).  */
     return 1;
@@ -324,6 +349,10 @@ child_init_thread_list (void)
   for_each_inferior (&all_threads, delete_thread_info);
 }
 
+/* Zero during the child initialization phase, and nonzero otherwise.  */
+
+static int child_initialization_done = 0;
+
 static void
 do_initial_child_stuff (HANDLE proch, DWORD pid, int attached)
 {
@@ -343,6 +372,7 @@ do_initial_child_stuff (HANDLE proch, DWORD pid, int attached)
   proc = add_process (pid, attached);
   proc->tdesc = win32_tdesc;
   child_init_thread_list ();
+  child_initialization_done = 0;
 
   if (the_low_target.initial_stuff != NULL)
     (*the_low_target.initial_stuff) ();
@@ -376,8 +406,25 @@ do_initial_child_stuff (HANDLE proch, DWORD pid, int attached)
     }
 
 #ifndef _WIN32_WCE
-  win32_ensure_ntdll_loaded ();
+  /* Now that the inferior has been started and all DLLs have been mapped,
+     we can iterate over all DLLs and load them in.
+
+     We avoid doing it any earlier because, on certain versions of Windows,
+     LOAD_DLL_DEBUG_EVENTs are sometimes not complete.  In particular,
+     we have seen on Windows 8.1 that the ntdll.dll load event does not
+     include the DLL name, preventing us from creating an associated SO.
+     A possible explanation is that ntdll.dll might be mapped before
+     the SO info gets created by the Windows system -- ntdll.dll is
+     the first DLL to be reported via LOAD_DLL_DEBUG_EVENT and other DLLs
+     do not seem to suffer from that problem.
+
+     Rather than try to work around this sort of issue, it is much
+     simpler to just ignore DLL load/unload events during the startup
+     phase, and then process them all in one batch now.  */
+  win32_add_all_dlls ();
 #endif
+
+  child_initialization_done = 1;
 }
 
 /* Resume all artificially suspended threads if we are continuing
@@ -389,22 +436,26 @@ continue_one_thread (struct inferior_list_entry *this_thread, void *id_ptr)
   int thread_id = * (int *) id_ptr;
   win32_thread_info *th = inferior_target_data (thread);
 
-  if ((thread_id == -1 || thread_id == th->tid)
-      && th->suspended)
+  if (thread_id == -1 || thread_id == th->tid)
     {
-      if (th->context.ContextFlags)
-	{
-	  win32_set_thread_context (th);
-	  th->context.ContextFlags = 0;
-	}
+      win32_prepare_to_resume (th);
 
-      if (ResumeThread (th->h) == (DWORD) -1)
+      if (th->suspended)
 	{
-	  DWORD err = GetLastError ();
-	  OUTMSG (("warning: ResumeThread failed in continue_one_thread, "
-		   "(error %d): %s\n", (int) err, strwinerror (err)));
+	  if (th->context.ContextFlags)
+	    {
+	      win32_set_thread_context (th);
+	      th->context.ContextFlags = 0;
+	    }
+
+	  if (ResumeThread (th->h) == (DWORD) -1)
+	    {
+	      DWORD err = GetLastError ();
+	      OUTMSG (("warning: ResumeThread failed in continue_one_thread, "
+		       "(error %d): %s\n", (int) err, strwinerror (err)));
+	    }
+	  th->suspended = 0;
 	}
-      th->suspended = 0;
     }
 
   return 0;
@@ -431,7 +482,7 @@ static void
 child_fetch_inferior_registers (struct regcache *regcache, int r)
 {
   int regno;
-  win32_thread_info *th = thread_rec (current_inferior_ptid (), TRUE);
+  win32_thread_info *th = thread_rec (current_thread_ptid (), TRUE);
   if (r == -1 || r > NUM_REGS)
     child_fetch_inferior_registers (regcache, NUM_REGS);
   else
@@ -445,7 +496,7 @@ static void
 child_store_inferior_registers (struct regcache *regcache, int r)
 {
   int regno;
-  win32_thread_info *th = thread_rec (current_inferior_ptid (), TRUE);
+  win32_thread_info *th = thread_rec (current_thread_ptid (), TRUE);
   if (r == -1 || r == 0 || r > NUM_REGS)
     child_store_inferior_registers (regcache, NUM_REGS);
   else
@@ -907,6 +958,8 @@ win32_resume (struct thread_resume *resume_info, size_t n)
   th = thread_rec (ptid, FALSE);
   if (th)
     {
+      win32_prepare_to_resume (th);
+
       if (th->context.ContextFlags)
 	{
 	  /* Move register values from the inferior into the thread
@@ -948,6 +1001,11 @@ win32_add_one_solib (const char *name, CORE_ADDR load_addr)
   WIN32_FIND_DATAA w32_fd;
   HANDLE h = FindFirstFileA (name, &w32_fd);
 #endif
+
+  /* The symbols in a dll are offset by 0x1000, which is the
+     offset from 0 of the first byte in an image - because
+     of the file header and the section alignment. */
+  load_addr += 0x1000;
 
   if (h == INVALID_HANDLE_VALUE)
     strcpy (buf, name);
@@ -1074,104 +1132,19 @@ load_psapi (void)
 	  && win32_GetModuleFileNameExA != NULL);
 }
 
-static int
-psapi_get_dll_name (LPVOID BaseAddress, char *dll_name_ret)
-{
-  DWORD len;
-  MODULEINFO mi;
-  size_t i;
-  HMODULE dh_buf[1];
-  HMODULE *DllHandle = dh_buf;
-  DWORD cbNeeded;
-  BOOL ok;
-
-  if (!load_psapi ())
-    goto failed;
-
-  cbNeeded = 0;
-  ok = (*win32_EnumProcessModules) (current_process_handle,
-				    DllHandle,
-				    sizeof (HMODULE),
-				    &cbNeeded);
-
-  if (!ok || !cbNeeded)
-    goto failed;
-
-  DllHandle = (HMODULE *) alloca (cbNeeded);
-  if (!DllHandle)
-    goto failed;
-
-  ok = (*win32_EnumProcessModules) (current_process_handle,
-				    DllHandle,
-				    cbNeeded,
-				    &cbNeeded);
-  if (!ok)
-    goto failed;
-
-  for (i = 0; i < ((size_t) cbNeeded / sizeof (HMODULE)); i++)
-    {
-      if (!(*win32_GetModuleInformation) (current_process_handle,
-					  DllHandle[i],
-					  &mi,
-					  sizeof (mi)))
-	{
-	  DWORD err = GetLastError ();
-	  error ("Can't get module info: (error %d): %s\n",
-		 (int) err, strwinerror (err));
-	}
-
-      if (mi.lpBaseOfDll == BaseAddress)
-	{
-	  len = (*win32_GetModuleFileNameExA) (current_process_handle,
-					       DllHandle[i],
-					       dll_name_ret,
-					       MAX_PATH);
-	  if (len == 0)
-	    {
-	      DWORD err = GetLastError ();
-	      error ("Error getting dll name: (error %d): %s\n",
-		     (int) err, strwinerror (err));
-	    }
-	  return 1;
-	}
-    }
-
-failed:
-  dll_name_ret[0] = '\0';
-  return 0;
-}
-
 #ifndef _WIN32_WCE
-/* On certain versions of Windows, the information about ntdll.dll
-   is not available yet at the time we get the LOAD_DLL_DEBUG_EVENT,
-   thus preventing us from reporting this DLL as an SO. This has been
-   witnessed on Windows 8.1, for instance.  A possible explanation
-   is that ntdll.dll might be mapped before the SO info gets created
-   by the Windows system -- ntdll.dll is the first DLL to be reported
-   via LOAD_DLL_DEBUG_EVENT and other DLLs do not seem to suffer from
-   that problem.
 
-   If we indeed are missing ntdll.dll, this function tries to recover
-   from this issue, after the fact.  Do nothing if we encounter any
-   issue trying to locate that DLL.  */
+/* Iterate over all DLLs currently mapped by our inferior, and
+   add them to our list of solibs.  */
 
 static void
-win32_ensure_ntdll_loaded (void)
+win32_add_all_dlls (void)
 {
-  struct inferior_list_entry *dll_e;
   size_t i;
   HMODULE dh_buf[1];
   HMODULE *DllHandle = dh_buf;
   DWORD cbNeeded;
   BOOL ok;
-
-  for (dll_e = all_dlls.head; dll_e != NULL; dll_e = dll_e->next)
-    {
-      struct dll_info *dll = (struct dll_info *) dll_e;
-
-      if (strcasecmp (lbasename (dll->name), "ntdll.dll") == 0)
-	return;
-    }
 
   if (!load_psapi ())
     return;
@@ -1196,7 +1169,7 @@ win32_ensure_ntdll_loaded (void)
   if (!ok)
     return;
 
-  for (i = 0; i < ((size_t) cbNeeded / sizeof (HMODULE)); i++)
+  for (i = 1; i < ((size_t) cbNeeded / sizeof (HMODULE)); i++)
     {
       MODULEINFO mi;
       char dll_name[MAX_PATH];
@@ -1211,12 +1184,7 @@ win32_ensure_ntdll_loaded (void)
 					 dll_name,
 					 MAX_PATH) == 0)
 	continue;
-      if (strcasecmp (lbasename (dll_name), "ntdll.dll") == 0)
-	{
-	  win32_add_one_solib (dll_name,
-			       (CORE_ADDR) (uintptr_t) mi.lpBaseOfDll);
-	  return;
-	}
+      win32_add_one_solib (dll_name, (CORE_ADDR) (uintptr_t) mi.lpBaseOfDll);
     }
 }
 #endif
@@ -1225,131 +1193,43 @@ typedef HANDLE (WINAPI *winapi_CreateToolhelp32Snapshot) (DWORD, DWORD);
 typedef BOOL (WINAPI *winapi_Module32First) (HANDLE, LPMODULEENTRY32);
 typedef BOOL (WINAPI *winapi_Module32Next) (HANDLE, LPMODULEENTRY32);
 
-static winapi_CreateToolhelp32Snapshot win32_CreateToolhelp32Snapshot;
-static winapi_Module32First win32_Module32First;
-static winapi_Module32Next win32_Module32Next;
-#ifdef _WIN32_WCE
-typedef BOOL (WINAPI *winapi_CloseToolhelp32Snapshot) (HANDLE);
-static winapi_CloseToolhelp32Snapshot win32_CloseToolhelp32Snapshot;
-#endif
+/* Handle a DLL load event.
 
-static BOOL
-load_toolhelp (void)
-{
-  static int toolhelp_loaded = 0;
-  static HMODULE dll = NULL;
-
-  if (!toolhelp_loaded)
-    {
-      toolhelp_loaded = 1;
-#ifndef _WIN32_WCE
-      dll = GetModuleHandle (_T("KERNEL32.DLL"));
-#else
-      dll = LoadLibrary (L"TOOLHELP.DLL");
-#endif
-      if (!dll)
-	return FALSE;
-
-      win32_CreateToolhelp32Snapshot =
-	GETPROCADDRESS (dll, CreateToolhelp32Snapshot);
-      win32_Module32First = GETPROCADDRESS (dll, Module32First);
-      win32_Module32Next = GETPROCADDRESS (dll, Module32Next);
-#ifdef _WIN32_WCE
-      win32_CloseToolhelp32Snapshot =
-	GETPROCADDRESS (dll, CloseToolhelp32Snapshot);
-#endif
-    }
-
-  return (win32_CreateToolhelp32Snapshot != NULL
-	  && win32_Module32First != NULL
-	  && win32_Module32Next != NULL
-#ifdef _WIN32_WCE
-	  && win32_CloseToolhelp32Snapshot != NULL
-#endif
-	  );
-}
-
-static int
-toolhelp_get_dll_name (LPVOID BaseAddress, char *dll_name_ret)
-{
-  HANDLE snapshot_module;
-  MODULEENTRY32 modEntry = { sizeof (MODULEENTRY32) };
-  int found = 0;
-
-  if (!load_toolhelp ())
-    return 0;
-
-  snapshot_module = win32_CreateToolhelp32Snapshot (TH32CS_SNAPMODULE,
-						    current_event.dwProcessId);
-  if (snapshot_module == INVALID_HANDLE_VALUE)
-    return 0;
-
-  /* Ignore the first module, which is the exe.  */
-  if (win32_Module32First (snapshot_module, &modEntry))
-    while (win32_Module32Next (snapshot_module, &modEntry))
-      if (modEntry.modBaseAddr == BaseAddress)
-	{
-#ifdef UNICODE
-	  wcstombs (dll_name_ret, modEntry.szExePath, MAX_PATH + 1);
-#else
-	  strcpy (dll_name_ret, modEntry.szExePath);
-#endif
-	  found = 1;
-	  break;
-	}
-
-#ifdef _WIN32_WCE
-  win32_CloseToolhelp32Snapshot (snapshot_module);
-#else
-  CloseHandle (snapshot_module);
-#endif
-  return found;
-}
+   This function assumes that this event did not occur during inferior
+   initialization, where their event info may be incomplete (see
+   do_initial_child_stuff and win32_add_all_dlls for more info on
+   how we handle DLL loading during that phase).  */
 
 static void
 handle_load_dll (void)
 {
   LOAD_DLL_DEBUG_INFO *event = &current_event.u.LoadDll;
-  char dll_buf[MAX_PATH + 1];
-  char *dll_name = NULL;
-  CORE_ADDR load_addr;
+  char *dll_name;
 
-  dll_buf[0] = dll_buf[sizeof (dll_buf) - 1] = '\0';
-
-  /* Windows does not report the image name of the dlls in the debug
-     event on attaches.  We resort to iterating over the list of
-     loaded dlls looking for a match by image base.  */
-  if (!psapi_get_dll_name (event->lpBaseOfDll, dll_buf))
-    {
-      if (!server_waiting)
-	/* On some versions of Windows and Windows CE, we can't create
-	   toolhelp snapshots while the inferior is stopped in a
-	   LOAD_DLL_DEBUG_EVENT due to a dll load, but we can while
-	   Windows is reporting the already loaded dlls.  */
-	toolhelp_get_dll_name (event->lpBaseOfDll, dll_buf);
-    }
-
-  dll_name = dll_buf;
-
-  if (*dll_name == '\0')
-    dll_name = get_image_name (current_process_handle,
-			       event->lpImageName, event->fUnicode);
+  dll_name = get_image_name (current_process_handle,
+			     event->lpImageName, event->fUnicode);
   if (!dll_name)
     return;
 
-  /* The symbols in a dll are offset by 0x1000, which is the
-     offset from 0 of the first byte in an image - because
-     of the file header and the section alignment. */
-
-  load_addr = (CORE_ADDR) (uintptr_t) event->lpBaseOfDll + 0x1000;
-  win32_add_one_solib (dll_name, load_addr);
+  win32_add_one_solib (dll_name, (CORE_ADDR) (uintptr_t) event->lpBaseOfDll);
 }
+
+/* Handle a DLL unload event.
+
+   This function assumes that this event did not occur during inferior
+   initialization, where their event info may be incomplete (see
+   do_initial_child_stuff and win32_add_one_solib for more info
+   on how we handle DLL loading during that phase).  */
 
 static void
 handle_unload_dll (void)
 {
   CORE_ADDR load_addr =
 	  (CORE_ADDR) (uintptr_t) current_event.u.UnloadDll.lpBaseOfDll;
+
+  /* The symbols in a dll are offset by 0x1000, which is the
+     offset from 0 of the first byte in an image - because
+     of the file header and the section alignment. */
   load_addr += 0x1000;
   unloaded_dll (NULL, load_addr);
 }
@@ -1604,7 +1484,7 @@ get_child_debug_event (struct target_waitstatus *ourstatus)
       child_delete_thread (current_event.dwProcessId,
 			   current_event.dwThreadId);
 
-      current_inferior = (struct thread_info *) all_threads.head;
+      current_thread = (struct thread_info *) all_threads.head;
       return 1;
 
     case CREATE_PROCESS_DEBUG_EVENT:
@@ -1659,6 +1539,8 @@ get_child_debug_event (struct target_waitstatus *ourstatus)
 		(unsigned) current_event.dwProcessId,
 		(unsigned) current_event.dwThreadId));
       CloseHandle (current_event.u.LoadDll.hFile);
+      if (! child_initialization_done)
+	break;
       handle_load_dll ();
 
       ourstatus->kind = TARGET_WAITKIND_LOADED;
@@ -1670,6 +1552,8 @@ get_child_debug_event (struct target_waitstatus *ourstatus)
 		"for pid=%u tid=%x\n",
 		(unsigned) current_event.dwProcessId,
 		(unsigned) current_event.dwThreadId));
+      if (! child_initialization_done)
+	break;
       handle_unload_dll ();
       ourstatus->kind = TARGET_WAITKIND_LOADED;
       ourstatus->value.sig = GDB_SIGNAL_TRAP;
@@ -1702,7 +1586,7 @@ get_child_debug_event (struct target_waitstatus *ourstatus)
     }
 
   ptid = debug_event_ptid (&current_event);
-  current_inferior =
+  current_thread =
     (struct thread_info *) find_inferior_id (&all_threads, ptid);
   return 1;
 }
@@ -1743,7 +1627,7 @@ win32_wait (ptid_t ptid, struct target_waitstatus *ourstatus, int options)
 	  OUTMSG2 (("Child Stopped with signal = %d \n",
 		    ourstatus->value.sig));
 
-	  regcache = get_thread_regcache (current_inferior, 1);
+	  regcache = get_thread_regcache (current_thread, 1);
 	  child_fetch_inferior_registers (regcache, -1);
 	  return debug_event_ptid (&current_event);
 	default:
@@ -1920,6 +1804,7 @@ static struct target_ops win32_target_ops = {
   NULL, /* lookup_symbols */
   win32_request_interrupt,
   NULL, /* read_auxv */
+  win32_supports_z_point_type,
   win32_insert_point,
   win32_remove_point,
   win32_stopped_by_watchpoint,
