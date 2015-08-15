@@ -1482,7 +1482,7 @@ sim_store_register (sd, rn, memory, length)
 void
 sim_do_command (sd, cmd)
      SIM_DESC sd;
-     char *cmd;
+     const char *cmd;
 { 
   (*d10v_callback->printf_filtered) (d10v_callback, "sim_do_command: %s\n",cmd);
 }
@@ -1490,7 +1490,7 @@ sim_do_command (sd, cmd)
 SIM_RC
 sim_load (sd, prog, abfd, from_tty)
      SIM_DESC sd;
-     char *prog;
+     const char *prog;
      bfd *abfd;
      int from_tty;
 {
