@@ -1,0 +1,87 @@
+# Copyright 2009-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the gdb testsuite.
+
+# A helper procedure to test location completions restricted by
+# class.
+proc test_class_complete {class expr name matches} {
+    global gdb_prompt
+
+    set matches [lsort $matches]
+    set cmd "complete break ${class}::$expr"
+    set seen {}
+    gdb_test_multiple $cmd $name {
+	"break ${class}::main" { fail "$name (saw global symbol)" }
+	$cmd { exp_continue }
+	-re "break ${class}::\[A-Za-z0-9_~\]+" {
+	    set str $expect_out(0,string)
+	    scan $str "break ${class}::%\[^(\]" method
+	    lappend seen $method
+	    exp_continue
+	}
+	-re "$gdb_prompt $" {
+	    set failed ""
+	    foreach got [lsort $seen] have $matches {
+		if {![string equal $got $have]} {
+		    set failed $have
+		    break
+		}
+	    }
+	    if {[string length $failed] != 0} {
+		fail "$name ($failed not found)"
+	    } else {
+		pass $name
+	    }
+	}
+    }
+}
+
+if { [skip_cplus_tests] } { continue }
+
+standard_testfile pr9594.cc
+
+if {[prepare_for_testing $testfile.exp $testfile $srcfile {debug c++}]} {
+    return -1
+}
+
+# Test that completion is restricted by class name (all methods)
+test_class_complete Foo "" "complete class methods" \
+    [list Foo Foofoo get_foo set_foo ~Foo]
+
+test_class_complete Foo F "complete class methods beginning with F" \
+    [list Foo Foofoo]
+
+# The tests below depend on the current code scope.
+
+set bp_location [gdb_get_line_number "Set breakpoint here" ${srcfile}]
+
+if {![runto "${srcfile}:$bp_location"]} {
+    perror "test suppressed"
+    return
+}
+
+# This also tests inheritance -- completion should only see a single
+# "get_foo".
+gdb_test "complete p foo1.g" "p foo1\\.get_foo"
+
+# Test inheritance without overriding.
+gdb_test "complete p foo1.base" "p foo1\\.base_function_only"
+
+# Test non-completion of constructor names.
+gdb_test "complete p foo1.Fo" "p foo1\\.Foofoo"
+
+# Test completion with an anonymous struct.
+gdb_test "complete p a.g" "p a\\.get"

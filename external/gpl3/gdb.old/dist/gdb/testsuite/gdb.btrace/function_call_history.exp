@@ -1,0 +1,219 @@
+# This testcase is part of GDB, the GNU debugger.
+#
+# Copyright 2013-2014 Free Software Foundation, Inc.
+#
+# Contributed by Intel Corp. <christian.himpel@intel.com>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# check for btrace support
+if { [skip_btrace_tests] } { return -1 }
+
+# start inferior
+standard_testfile
+if [prepare_for_testing function_call_history.exp $testfile {} {debug}] {
+    return -1
+}
+if ![runto_main] {
+    return -1
+}
+
+# start btrace
+gdb_test_no_output "record btrace"
+
+# set bp after increment loop and continue
+set bp_location [gdb_get_line_number "bp.1" $testfile.c]
+gdb_breakpoint $bp_location
+gdb_continue_to_breakpoint "cont to $bp_location" ".*$testfile.c:$bp_location.*"
+
+# show function call history with unlimited size, we expect to see all 21 entries
+gdb_test_no_output "set record function-call-history-size 0"
+gdb_test "record function-call-history" "
+0\tmain\r
+1\tinc\r
+2\tmain\r
+3\tinc\r
+4\tmain\r
+5\tinc\r
+6\tmain\r
+7\tinc\r
+8\tmain\r
+9\tinc\r
+10\tmain\r
+11\tinc\r
+12\tmain\r
+13\tinc\r
+14\tmain\r
+15\tinc\r
+16\tmain\r
+17\tinc\r
+18\tmain\r
+19\tinc\r
+20\tmain\r" "record function-call-history - with size unlimited"
+
+# show function call history with size of 21, we expect to see all 21 entries
+gdb_test_no_output "set record function-call-history-size 21"
+# show function call history
+gdb_test "record function-call-history 0" "
+0\tmain\r
+1\tinc\r
+2\tmain\r
+3\tinc\r
+4\tmain\r
+5\tinc\r
+6\tmain\r
+7\tinc\r
+8\tmain\r
+9\tinc\r
+10\tmain\r
+11\tinc\r
+12\tmain\r
+13\tinc\r
+14\tmain\r
+15\tinc\r
+16\tmain\r
+17\tinc\r
+18\tmain\r
+19\tinc\r
+20\tmain\r" "record function-call-history - show all 21 entries"
+
+# show first 15 entries
+gdb_test_no_output "set record function-call-history-size 15"
+gdb_test "record function-call-history 0" "
+0\tmain\r
+1\tinc\r
+2\tmain\r
+3\tinc\r
+4\tmain\r
+5\tinc\r
+6\tmain\r
+7\tinc\r
+8\tmain\r
+9\tinc\r
+10\tmain\r
+11\tinc\r
+12\tmain\r
+13\tinc\r
+14\tmain\r" "record function-call-history - show first 15 entries"
+
+# show last 6 entries
+gdb_test "record function-call-history +" "
+15\tinc\r
+16\tmain\r
+17\tinc\r
+18\tmain\r
+19\tinc\r
+20\tmain\r" "record function-call-history - show last 6 entries"
+
+# moving further should not work
+gdb_test "record function-call-history +" "At the end of the branch trace record\\." "record function-call-history - at the end (1)"
+
+# make sure we cannot move any further a second time
+gdb_test "record function-call-history +" "At the end of the branch trace record\\." "record function-call-history - at the end (2)"
+
+# moving back showing the latest 15 function calls
+gdb_test "record function-call-history -" "
+6\tmain\r
+7\tinc\r
+8\tmain\r
+9\tinc\r
+10\tmain\r
+11\tinc\r
+12\tmain\r
+13\tinc\r
+14\tmain\r
+15\tinc\r
+16\tmain\r
+17\tinc\r
+18\tmain\r
+19\tinc\r
+20\tmain\r" "record function-call-history - show last 15 entries"
+
+# moving further back shows the 6 first function calls
+gdb_test "record function-call-history -" "
+0\tmain\r
+1\tinc\r
+2\tmain\r
+3\tinc\r
+4\tmain\r
+5\tinc\r" "record function-call-history - show first 6 entries"
+
+# moving further back shouldn't work
+gdb_test "record function-call-history -" "At the start of the branch trace record\\." "record function-call-history - at the start (1)"
+
+# make sure we cannot move any further back
+gdb_test "record function-call-history -" "At the start of the branch trace record\\." "record function-call-history - at the start (2)"
+
+# moving forward again, but this time with file and line number, expected to see the first 15 entries
+gdb_test "record function-call-history /l +" "
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r" "record function-call-history /l - show first 15 entries"
+
+# moving forward and expect to see the latest 6 entries
+gdb_test "record function-call-history /l +" "
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-41\tmain\r
+.*$srcfile:22-24\tinc\r
+.*$srcfile:40-43\tmain\r" "record function-call-history /l - show last 6 entries"
+
+# moving further forward shouldn't work
+gdb_test "record function-call-history /l +" "At the end of the branch trace record\\." "record function-call-history /l - at the end (1)"
+gdb_test "record function-call-history /l" "At the end of the branch trace record\\." "record function-call-history /l - at the end (2)"
+
+set expected_range "3\tinc\r
+4\tmain\r
+5\tinc\r
+6\tmain\r
+7\tinc\r
+8\tmain\r
+9\tinc\r"
+
+# show functions in instruction range
+gdb_test "record function-call-history 3,10" $expected_range "absolute instruction range"
+gdb_test "record function-call-history 3,+7" $expected_range "relative positive instruction range"
+gdb_test "record function-call-history 10,-7" $expected_range "relative negative instruction range"
+
+# set bp after fib recursion and continue
+set bp_location [gdb_get_line_number "bp.2" $testfile.c]
+gdb_breakpoint $bp_location
+gdb_continue_to_breakpoint "cont to $bp_location" ".*$testfile.c:$bp_location.*"
+
+# at this point we expect to have main, fib, ..., fib, main, where fib occurs 8 times,
+# so we limit the output to only show the latest 10 function calls
+gdb_test_no_output "set record function-call-history-size 10"
+set message "show recursive function call history"
+gdb_test_multiple "record function-call-history" $message {
+    -re "13\tmain\r\n14\tfib\r\n15\tfib\r\n16\tfib\r\n17\tfib\r\n18\tfib\r\n19\tfib\r\n20\tfib\r\n21\tfib\r\n22	 main\r\n$gdb_prompt $" {
+        pass $message
+    }
+    -re "13\tinc\r\n14\tmain\r\n15\tinc\r\n16\tmain\r\n17\tinc\r\n18\tmain\r\n19\tinc\r\n20\tmain\r\n21\tfib\r\n22\tmain\r\n$gdb_prompt $" {
+        # recursive function calls appear only as 1 call
+        kfail "gdb/15240" $message
+    }
+}

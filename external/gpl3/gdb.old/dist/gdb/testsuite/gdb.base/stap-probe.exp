@@ -1,0 +1,179 @@
+# Copyright (C) 2012-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+standard_testfile
+
+# Run the tests.  We run the tests two different ways: once with a
+# plain probe, and once with a probe that has an associated semaphore.
+# This returns -1 on failure to compile or start, 0 otherwise.
+proc stap_test {exec_name {arg ""}} {
+    global testfile hex srcfile
+
+    if {[prepare_for_testing ${testfile}.exp ${exec_name} $srcfile \
+	   [concat $arg debug]]} {
+	return -1
+    }
+
+    if ![runto_main] {
+	return -1
+    }
+
+    gdb_test "print \$_probe_argc" "No SystemTap probe at PC $hex" \
+	"check argument not at probe point"
+
+    gdb_test "info probes stap" \
+	"test *user *$hex .*" \
+	"info probes stap"
+    
+    if {[runto "-pstap test:user"]} {
+	pass "run to -pstap test:user"
+    } else {
+	fail "run to -pstap test:user"
+    }
+
+    # Test probe arguments.
+    gdb_test "print \$_probe_argc" " = 1" \
+    "print \$_probe_argc for probe user"
+    gdb_test "print \$_probe_arg0 == x" " = 1" \
+    "check \$_probe_arg0 for probe user"
+    gdb_test "print \$_probe_arg1" \
+    	"Invalid probe argument 1 -- probe has 1 arguments available" \
+    	"check \$_probe_arg1 for probe user"
+
+    # Set a breakpoint with multiple probe locations.
+    gdb_test "break -pstap test:two" \
+	"Breakpoint \[0-9\]+ at $hex.*2 locations.*" \
+	"set multi-location probe breakpoint (probe two)"
+
+    # Reinit GDB, set a breakpoint on probe m4.
+    delete_breakpoints
+    if {[runto "-pstap test:m4"]} {
+      pass "run to -pstap test:m4"
+    } else {
+      fail "run to -pstap test:m4"
+    }
+
+    # Testing probe arguments.
+    gdb_test "print \$_probe_argc" " = 3" \
+    "print \$_probe_argc for probe m4"
+    gdb_test "print \$_probe_arg0" " = 42" \
+    "check \$_probe_arg0 for probe m4"
+    gdb_test "print (const char *) \$_probe_arg1" \
+    " = $hex .This is a test message.*" \
+    "check \$_probe_arg1 for probe m4"
+    gdb_test "print \$_probe_arg2 == v" " = 1" \
+    "check \$_probe_arg2 for probe m4"
+
+    # Reinit GDB, set a breakpoint on probe ps.
+    delete_breakpoints
+    if {[runto "-pstap test:ps"]} {
+      pass "run to -pstap test:m4"
+    } else {
+      fail "run to -pstap test:m4"
+    }
+
+    gdb_test "print \$_probe_argc" " = 3" \
+    "print \$_probe_argc for probe ps"
+    gdb_test "print (const char *) \$_probe_arg1" \
+    " = $hex .This is another test message.*" \
+    "print \$_probe_arg1 for probe ps"
+
+    return 0
+}
+
+proc stap_test_no_debuginfo {exec_name {arg ""}} {
+    global testfile hex
+
+    if {[prepare_for_testing ${testfile}.exp ${exec_name} ${testfile}.c \
+	   {$arg nodebug optimize=-O2}]} {
+	return -1
+    }
+
+    if {[runto "-pstap test:user"]} {
+	pass "run to -pstap test:user"
+    } else {
+	fail "run to -pstap test:user"
+    }
+
+    # Test probe arguments.
+    gdb_test "print \$_probe_argc" " = 1" \
+    "print \$_probe_argc for probe user"
+    gdb_test "print \$_probe_arg0 == 23" " = 1" \
+    "check \$_probe_arg0 for probe user"
+    gdb_test "print \$_probe_arg1" \
+    	"Invalid probe argument 1 -- probe has 1 arguments available" \
+    	"check \$_probe_arg1 for probe user"
+
+    # Set a breakpoint with multiple probe locations.
+    # In this scenario, we may expect more than 2 locations because of
+    # the optimizations (inlining, loop unrolling, etc).
+    gdb_test "break -pstap test:two" \
+	"Breakpoint .* at $hex.*\[0-9\]+ locations.*" \
+	"set multi-location probe breakpoint (probe two)"
+
+    # Reinit GDB, set a breakpoint on probe m4.
+    delete_breakpoints
+    if {[runto "-pstap test:m4"]} {
+      pass "run to -pstap test:m4"
+    } else {
+      fail "run to -pstap test:m4"
+    }
+
+    # Testing probe arguments.
+    gdb_test "print \$_probe_argc" " = 3" \
+    "print \$_probe_argc for probe m4"
+    gdb_test "print \$_probe_arg0" " = 42" \
+    "check \$_probe_arg0 for probe m4"
+    gdb_test "print (const char *) \$_probe_arg1" \
+    " = $hex .This is a test message.*" \
+    "check \$_probe_arg1 for probe m4"
+    gdb_test "print \$_probe_arg2 == 0" " = 1" \
+    "check \$_probe_arg2 for probe m4"
+
+    # Reinit GDB, set a breakpoint on probe ps.
+    delete_breakpoints
+    if {[runto "-pstap test:ps"]} {
+      pass "run to -pstap test:m4"
+    } else {
+      fail "run to -pstap test:m4"
+    }
+
+    gdb_test "print \$_probe_argc" " = 3" \
+    "print \$_probe_argc for probe ps"
+    gdb_test "print (const char *) \$_probe_arg1" \
+    " = $hex .This is another test message.*" \
+    "print \$_probe_arg1 for probe ps"
+
+    return 0
+}
+
+with_test_prefix "without semaphore, not optimized" {
+    if {[stap_test "stap-probe-nosem-noopt"] == -1} {
+	untested stap-probe.exp
+	  return -1
+    }
+}
+
+with_test_prefix "with semaphore, not optimized" {
+    stap_test "stap-probe-sem-noopt" "-DUSE_PROBES"
+}
+
+with_test_prefix "without semaphore, optimized" {
+    stap_test_no_debuginfo "stap-probe-nosem-opt"
+}
+
+with_test_prefix "with semaphore, optimized" {
+    stap_test_no_debuginfo "stap-probe-sem-opt" "-DUSE_PROBES"
+}
