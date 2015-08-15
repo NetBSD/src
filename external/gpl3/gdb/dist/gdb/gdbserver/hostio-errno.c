@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -21,7 +21,6 @@
 /* This file implements the hostio_last_error target callback
    on top of errno.  */
 
-#include <errno.h>
 #include "server.h"
 #include "gdb/fileio.h"
 

@@ -1,3 +1,29 @@
+2014-12-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* compile.c (sim_resume):  Adjust calls to "stat" and "fstat"
+	callbacks by calls to "to_stat" and "to_fstat" (resp) callbacks
+	following renaming in callback.h.
+
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* compile.c (sim_load): Add const to prog.
+
+2014-02-17  Mike Frysinger  <vapier@gentoo.org>
+
+	PR gdb/16450
+	* compile.c (control_c_sim_desc): Delete.
+	(control_c): Likewise.
+	(sim_resume): Delete signal(SIGINT) handling.
+
 2013-09-23  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

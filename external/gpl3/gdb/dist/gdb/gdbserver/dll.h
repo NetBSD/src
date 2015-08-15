@@ -1,4 +1,4 @@
-/* Copyright (C) 1993-2014 Free Software Foundation, Inc.
+/* Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,10 @@
 
 struct dll_info
 {
+  /* This must appear first.  See inferiors.h.
+     The list iterator functions assume it.  */
   struct inferior_list_entry entry;
+
   char *name;
   CORE_ADDR base_addr;
 };

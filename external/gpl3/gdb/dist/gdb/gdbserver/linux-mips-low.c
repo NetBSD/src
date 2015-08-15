@@ -1,5 +1,5 @@
 /* GNU/Linux/MIPS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,7 @@
 #include <sys/ptrace.h>
 #include <endian.h>
 
-#include "mips-linux-watch.h"
+#include "nat/mips-linux-watch.h"
 #include "gdb_proc_service.h"
 
 /* Defined in auto-generated file mips-linux.c.  */
@@ -126,8 +126,9 @@ mips_read_description (void)
 {
   if (have_dsp < 0)
     {
-      int pid = lwpid_of (get_thread_lwp (current_inferior));
+      int pid = lwpid_of (current_thread);
 
+      errno = 0;
       ptrace (PTRACE_PEEKUSER, pid, DSP_CONTROL, 0);
       switch (errno)
 	{
@@ -271,7 +272,7 @@ static const unsigned int mips_breakpoint = 0x0005000d;
 static CORE_ADDR
 mips_reinsert_addr (void)
 {
-  struct regcache *regcache = get_thread_regcache (current_inferior, 1);
+  struct regcache *regcache = get_thread_regcache (current_thread, 1);
   union mips_register ra;
   collect_register_by_name (regcache, "r31", ra.buf);
   return register_size (regcache->tdesc, 0) == 4 ? ra.reg32 : ra.reg64;
@@ -298,11 +299,12 @@ static int
 update_watch_registers_callback (struct inferior_list_entry *entry,
 				 void *pid_p)
 {
-  struct lwp_info *lwp = (struct lwp_info *) entry;
+  struct thread_info *thread = (struct thread_info *) entry;
+  struct lwp_info *lwp = get_thread_lwp (thread);
   int pid = *(int *) pid_p;
 
   /* Only update the threads of this process.  */
-  if (pid_of (lwp) == pid)
+  if (pid_of (thread) == pid)
     {
       /* The actual update is done later just before resuming the lwp,
 	 we just mark that the registers need updating.  */
@@ -349,7 +351,7 @@ mips_linux_new_thread (void)
 static void
 mips_linux_prepare_to_resume (struct lwp_info *lwp)
 {
-  ptid_t ptid = ptid_of (lwp);
+  ptid_t ptid = ptid_of (get_lwp_thread (lwp));
   struct process_info *proc = find_process_pid (ptid_get_pid (ptid));
   struct arch_process_info *private = proc->private->arch_private;
 
@@ -371,29 +373,26 @@ mips_linux_prepare_to_resume (struct lwp_info *lwp)
     }
 }
 
-/* Translate breakpoint type TYPE in rsp to 'enum target_hw_bp_type'.  */
-
-static enum target_hw_bp_type
-rsp_bp_type_to_target_hw_bp_type (char type)
+static int
+mips_supports_z_point_type (char z_type)
 {
-  switch (type)
+  switch (z_type)
     {
-    case '2':
-      return hw_write;
-    case '3':
-      return hw_read;
-    case '4':
-      return hw_access;
+    case Z_PACKET_WRITE_WP:
+    case Z_PACKET_READ_WP:
+    case Z_PACKET_ACCESS_WP:
+      return 1;
+    default:
+      return 0;
     }
-
-  gdb_assert_not_reached ("unhandled RSP breakpoint type");
 }
 
 /* This is the implementation of linux_target_ops method
    insert_point.  */
 
 static int
-mips_insert_point (char type, CORE_ADDR addr, int len)
+mips_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
+		   int len, struct raw_breakpoint *bp)
 {
   struct process_info *proc = current_process ();
   struct arch_process_info *private = proc->private->arch_private;
@@ -405,20 +404,7 @@ mips_insert_point (char type, CORE_ADDR addr, int len)
   enum target_hw_bp_type watch_type;
   uint32_t irw;
 
-  /* Breakpoint/watchpoint types:
-       '0' - software-breakpoint (not supported)
-       '1' - hardware-breakpoint (not supported)
-       '2' - write watchpoint (supported)
-       '3' - read watchpoint (supported)
-       '4' - access watchpoint (supported).  */
-
-  if (type < '2' || type > '4')
-    {
-      /* Unsupported.  */
-      return 1;
-    }
-
-  lwpid = lwpid_of (get_thread_lwp (current_inferior));
+  lwpid = lwpid_of (current_thread);
   if (!mips_linux_read_watch_registers (lwpid,
 					&private->watch_readback,
 					&private->watch_readback_valid,
@@ -433,7 +419,7 @@ mips_insert_point (char type, CORE_ADDR addr, int len)
   mips_linux_watch_populate_regs (private->current_watches, &regs);
 
   /* Now try to add the new watch.  */
-  watch_type = rsp_bp_type_to_target_hw_bp_type (type);
+  watch_type = raw_bkpt_type_to_target_hw_bp_type (type);
   irw = mips_linux_watch_type_to_irw (watch_type);
   if (!mips_linux_watch_try_one_watch (&regs, addr, len, irw))
     return -1;
@@ -454,7 +440,7 @@ mips_insert_point (char type, CORE_ADDR addr, int len)
 
   /* Only update the threads of this process.  */
   pid = pid_of (proc);
-  find_inferior (&all_lwps, update_watch_registers_callback, &pid);
+  find_inferior (&all_threads, update_watch_registers_callback, &pid);
 
   return 0;
 }
@@ -463,7 +449,8 @@ mips_insert_point (char type, CORE_ADDR addr, int len)
    remove_point.  */
 
 static int
-mips_remove_point (char type, CORE_ADDR addr, int len)
+mips_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
+		   int len, struct raw_breakpoint *bp)
 {
   struct process_info *proc = current_process ();
   struct arch_process_info *private = proc->private->arch_private;
@@ -475,21 +462,8 @@ mips_remove_point (char type, CORE_ADDR addr, int len)
   struct mips_watchpoint **pw;
   struct mips_watchpoint *w;
 
-  /* Breakpoint/watchpoint types:
-       '0' - software-breakpoint (not supported)
-       '1' - hardware-breakpoint (not supported)
-       '2' - write watchpoint (supported)
-       '3' - read watchpoint (supported)
-       '4' - access watchpoint (supported).  */
-
-  if (type < '2' || type > '4')
-    {
-      /* Unsupported.  */
-      return 1;
-    }
-
   /* Search for a known watch that matches.  Then unlink and free it.  */
-  watch_type = rsp_bp_type_to_target_hw_bp_type (type);
+  watch_type = raw_bkpt_type_to_target_hw_bp_type (type);
   deleted_one = 0;
   pw = &private->current_watches;
   while ((w = *pw))
@@ -517,7 +491,7 @@ mips_remove_point (char type, CORE_ADDR addr, int len)
 
   /* Only update the threads of this process.  */
   pid = pid_of (proc);
-  find_inferior (&all_lwps, update_watch_registers_callback, &pid);
+  find_inferior (&all_threads, update_watch_registers_callback, &pid);
   return 0;
 }
 
@@ -532,7 +506,7 @@ mips_stopped_by_watchpoint (void)
   struct arch_process_info *private = proc->private->arch_private;
   int n;
   int num_valid;
-  long lwpid = lwpid_of (get_thread_lwp (current_inferior));
+  long lwpid = lwpid_of (current_thread);
 
   if (!mips_linux_read_watch_registers (lwpid,
 					&private->watch_readback,
@@ -560,7 +534,7 @@ mips_stopped_data_address (void)
   struct arch_process_info *private = proc->private->arch_private;
   int n;
   int num_valid;
-  long lwpid = lwpid_of (get_thread_lwp (current_inferior));
+  long lwpid = lwpid_of (current_thread);
 
   /* On MIPS we don't know the low order 3 bits of the data address.
      GDB does not support remote targets that can't report the
@@ -861,6 +835,7 @@ struct linux_target_ops the_low_target = {
   mips_reinsert_addr,
   0,
   mips_breakpoint_at,
+  mips_supports_z_point_type,
   mips_insert_point,
   mips_remove_point,
   mips_stopped_by_watchpoint,

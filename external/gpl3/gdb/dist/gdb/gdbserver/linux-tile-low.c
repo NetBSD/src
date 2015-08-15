@@ -1,6 +1,6 @@
 /* GNU/Linux/TILE-Gx specific low level interface, GDBserver.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -158,7 +158,7 @@ tile_regs_info (void)
 static void
 tile_arch_setup (void)
 {
-  int pid = pid_of (get_thread_lwp (current_inferior));
+  int pid = pid_of (current_thread);
   unsigned int machine;
   int is_elf64 = linux_pid_exe_is_elf_64_file (pid, &machine);
 

@@ -1,7 +1,5 @@
 /* BFD back-end for Renesas H8/300 COFF binaries.
-   Copyright 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by Steve Chamberlain, <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -339,7 +337,7 @@ rtype2howto (arelent *internal, struct internal_reloc *dst)
       internal->howto = howto_table + 19;
       break;
     default:
-      abort ();
+      internal->howto = NULL;
       break;
     }
 }
@@ -1416,4 +1414,4 @@ h8300_bfd_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
   bfd_coff_reloc16_get_relocated_section_contents
 #define coff_bfd_relax_section bfd_coff_reloc16_relax_section
 
-CREATE_BIG_COFF_TARGET_VEC (h8300coff_vec, "coff-h8300", BFD_IS_RELAXABLE, 0, '_', NULL, COFF_SWAP_TABLE)
+CREATE_BIG_COFF_TARGET_VEC (h8300_coff_vec, "coff-h8300", BFD_IS_RELAXABLE, 0, '_', NULL, COFF_SWAP_TABLE)

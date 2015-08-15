@@ -1,6 +1,5 @@
 /* BFD back-end for SH PE IMAGE COFF files.
-   Copyright 1995, 2000, 2001, 2002, 2005, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,7 +21,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SHL_SYM shlpei_vec
+#define TARGET_SHL_SYM sh_pei_le_vec
 #define TARGET_SHL_NAME "pei-shl"
 #define IMAGE_BASE NT_IMAGE_BASE
 #define COFF_IMAGE_WITH_PE

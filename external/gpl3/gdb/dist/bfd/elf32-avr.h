@@ -1,5 +1,5 @@
 /* AVR-specific support for 32-bit ELF.
-   Copyright 2006, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    Written by Bjoern Haase <bjoern.m.haase@web.de>
 

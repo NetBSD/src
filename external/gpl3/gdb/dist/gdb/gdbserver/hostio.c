@@ -1,5 +1,5 @@
 /* Host file transfer support for gdbserver.
-   Copyright (C) 2007-2014 Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -478,7 +478,6 @@ handle_unlink (char *own_buf)
 static void
 handle_readlink (char *own_buf, int *new_packet_len)
 {
-#if defined (HAVE_READLINK)
   char filename[HOSTIO_PATH_MAX], linkname[HOSTIO_PATH_MAX];
   char *p;
   int ret, bytes_sent;
@@ -505,9 +504,6 @@ handle_readlink (char *own_buf, int *new_packet_len)
      to return a partial response, but simply fail.  */
   if (bytes_sent < ret)
     sprintf (own_buf, "F-1,%x", FILEIO_ENAMETOOLONG);
-#else /* ! HAVE_READLINK */
-    sprintf (own_buf, "F-1,%x", FILEIO_ENOSYS);
-#endif
 }
 
 /* Handle all the 'F' file transfer packets.  */
