@@ -1,5 +1,5 @@
 /* Low-level file-handling.
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,16 +16,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifdef GDBSERVER
-#include "server.h"
-#else
-#include "defs.h"
-#include <string.h>
-#endif
+#include "common-defs.h"
 #include "filestuff.h"
 #include "gdb_vecs.h"
-
-#include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>

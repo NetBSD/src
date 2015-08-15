@@ -29,6 +29,7 @@ coff-alpha.c
 coff-apollo.c
 coff-arm.c
 coff-aux.c
+coff-bfd.c
 coff-go32.c
 coff-h8300.c
 coff-h8500.c
@@ -38,7 +39,6 @@ coff-i960.c
 coff-m68k.c
 coff-m88k.c
 coff-mips.c
-coff-or32.c
 coff-rs6000.c
 coff-sh.c
 coff-sparc.c
@@ -109,10 +109,10 @@ cpu-mmix.c
 cpu-moxie.c
 cpu-msp430.c
 cpu-mt.c
+cpu-nds32.c
 cpu-nios2.c
 cpu-ns32k.c
-cpu-openrisc.c
-cpu-or32.c
+cpu-or1k.c
 cpu-pdp11.c
 cpu-pj.c
 cpu-plugin.c
@@ -135,6 +135,7 @@ cpu-tilepro.c
 cpu-v850.c
 cpu-v850_rh850.c
 cpu-vax.c
+cpu-visium.c
 cpu-w65.c
 cpu-we32k.c
 cpu-xc16x.c
@@ -202,9 +203,9 @@ elf32-mips.c
 elf32-moxie.c
 elf32-msp430.c
 elf32-mt.c
+elf32-nds32.c
 elf32-nios2.c
-elf32-openrisc.c
-elf32-or32.c
+elf32-or1k.c
 elf32-pj.c
 elf32-ppc.c
 elf32-rl78.c
@@ -223,6 +224,7 @@ elf32-tilegx.c
 elf32-tilepro.c
 elf32-v850.c
 elf32-vax.c
+elf32-visium.c
 elf32-xc16x.c
 elf32-xgate.c
 elf32-xstormy16.c

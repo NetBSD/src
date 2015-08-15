@@ -1,5 +1,5 @@
 /* genlink.h -- interface to the BFD generic linker
-   Copyright 1993, 1994, 1996, 2002, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.

@@ -1,3 +1,19 @@
+2014-08-23  Hans-Peter Nilsson  <hp@axis.com>
+
+	* configure.ac: Default simulator hardware to off again.  Remove
+	dead m32r_extra_objs substitution.
+	* configure: Regenerate.
+	* Makefile.in: Remove unused m32r_extra_objs.
+
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
 2013-09-23  Alan Modra  <amodra@gmail.com>
 
 	* configure: Regenerate.

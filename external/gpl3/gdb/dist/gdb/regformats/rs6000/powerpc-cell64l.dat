@@ -1,4 +1,5 @@
-# DO NOT EDIT: generated from rs6000/powerpc-cell64l.xml
+# THIS FILE IS GENERATED.  -*- buffer-read-only: t -*- vi :set ro:
+# Generated from: rs6000/powerpc-cell64l.xml
 name:powerpc_cell64l
 xmltarget:powerpc-cell64l.xml
 expedite:r1,pc,r0,orig_r3,r4

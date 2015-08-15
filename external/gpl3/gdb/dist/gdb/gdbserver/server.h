@@ -1,5 +1,5 @@
 /* Common definitions for remote server for GDB.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,38 +19,15 @@
 #ifndef SERVER_H
 #define SERVER_H
 
-#include "config.h"
-#include "build-gnulib-gdbserver/config.h"
+#include "common-defs.h"
+
+gdb_static_assert (sizeof (CORE_ADDR) >= sizeof (void *));
 
 #ifdef __MINGW32CE__
 #include "wincecompat.h"
 #endif
 
-#include "libiberty.h"
-#include "ansidecl.h"
 #include "version.h"
-
-#include <stdarg.h>
-#include <stdio.h>
-#include <stdlib.h>
-#ifdef HAVE_ERRNO_H
-#include <errno.h>
-#endif
-#include <setjmp.h>
-
-/* For gnulib's PATH_MAX.  */
-#include "pathmax.h"
-
-#include <string.h>
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-/* On some systems such as MinGW, alloca is declared in malloc.h
-   (there is no alloca.h).  */
-#if HAVE_MALLOC_H
-#include <malloc.h>
-#endif
 
 #if !HAVE_DECL_STRERROR
 #ifndef strerror
@@ -77,23 +54,9 @@ int vsnprintf(char *str, size_t size, const char *format, va_list ap);
 #  define PROG "gdbserver"
 #endif
 
-/* A type used for binary buffers.  */
-typedef unsigned char gdb_byte;
-
-#include "ptid.h"
 #include "buffer.h"
 #include "xml-utils.h"
-#include "gdb_locale.h"
-
-/* FIXME: This should probably be autoconf'd for.  It's an integer type at
-   least the size of a (void *).  */
-typedef long long CORE_ADDR;
-
-typedef long long LONGEST;
-typedef unsigned long long ULONGEST;
-
 #include "regcache.h"
-#include "gdb/signals.h"
 #include "gdb_signals.h"
 #include "target.h"
 #include "mem-break.h"
@@ -110,13 +73,9 @@ extern ptid_t cont_thread;
 extern ptid_t general_thread;
 
 extern int server_waiting;
-extern int debug_threads;
-extern int debug_hw_points;
 extern int pass_signals[];
 extern int program_signals[];
 extern int program_signals_p;
-
-extern jmp_buf toplevel;
 
 extern int disable_packet_vCont;
 extern int disable_packet_Tthread;
@@ -144,10 +103,8 @@ extern int handle_target_event (int err, gdb_client_data client_data);
 
 #include "remote-utils.h"
 
-#include "common-utils.h"
 #include "utils.h"
-
-#include "gdb_assert.h"
+#include "debug.h"
 
 /* Maximum number of bytes to read/write at once.  The value here
    is chosen to fill up a packet (the headers account for the 32).  */

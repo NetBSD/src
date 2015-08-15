@@ -1,3 +1,20 @@
+2014-08-19  Alan Modra  <amodra@gmail.com>
+
+	* configure: Regenerate.
+
+2014-08-15  Roland McGrath  <mcgrathr@google.com>
+
+	* configure: Regenerate.
+	* config.in: Regenerate.
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* interf.c (sim_do_command): Add const to cmd.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* interf.c (sim_load): Add const to prog.
+
 2013-10-09  Sergio Durigan Junior  <sergiodj@redhat.com>
 
 	PR sim/16018:

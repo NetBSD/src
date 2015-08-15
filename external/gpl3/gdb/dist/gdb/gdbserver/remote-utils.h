@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,8 +44,6 @@ void initialize_async_io (void);
 void enable_async_io (void);
 void disable_async_io (void);
 void check_remote_input_interrupt_request (void);
-void convert_ascii_to_int (const char *from, unsigned char *to, int n);
-void convert_int_to_ascii (const unsigned char *from, char *to, int n);
 void new_thread_notify (int id);
 void dead_thread_notify (int id);
 void prepare_resume_reply (char *buf, ptid_t ptid,
@@ -67,13 +65,6 @@ int decode_search_memory_packet (const char *buf, int packet_len,
 				 CORE_ADDR *search_space_lenp,
 				 gdb_byte *pattern,
 				 unsigned int *pattern_lenp);
-
-int unhexify (char *bin, const char *hex, int count);
-int hexify (char *hex, const char *bin, int count);
-int remote_escape_output (const gdb_byte *buffer, int len,
-			  gdb_byte *out_buf, int *out_len,
-			  int out_maxlen);
-char *unpack_varlen_hex (char *buff,  ULONGEST *result);
 
 void clear_symbol_cache (struct sym_cache **symcache_p);
 int look_up_one_symbol (const char *name, CORE_ADDR *addrp, int may_ask_gdb);

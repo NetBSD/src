@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,60 +29,28 @@ set_board_info gdb,do_reload_on_run 1
 # There's no support for argument-passing (yet).
 set_board_info noargs 1
 
-# Hack into sockethost to pass our peculiar remote connection string.
-set_board_info sockethost "stdio"
-set_board_info gdb,socketport ""
+# Hack the host,port to pass our peculiar remote connection string.
+set_board_info sockethost ""
+set_board_info gdb,socketport "stdio"
 set_board_info gdb,get_remote_address ${board}_get_remote_address
+set_board_info gdbserver,get_comm_port ${board}_get_comm_port
+
 set_board_info use_gdb_stub 1
 set_board_info exit_is_reliable 1
 
 # We will be using the standard GDB remote protocol.
 set_board_info gdb_protocol "remote"
 
-# The argument to pass to "target remote".
-# We build this once we know how the testsuite will start gdbserver.
-set stdio_gdbserver_template "| @GDBSERVER_PROG@ @ARGS@ stdio @PROG_AND_ARGS@"
-
 # Used to pass a value between ${board}_spawn and ${board}_get_remote_address.
 set stdio_gdbserver_command "--unset--"
 
 proc ${board}_get_remote_address { host port } {
     global stdio_gdbserver_command
-    return $stdio_gdbserver_command
+    return "| $stdio_gdbserver_command"
 }
 
-proc ${board}_build_remote_cmd { cmd } {
-    global stdio_gdbserver_template
-
-    # First parse $cmd, picking out the various pieces.
-    set gdbserver_prog [lindex $cmd 0]
-    set args ""
-    set len [llength $cmd]
-
-    for { set i 1 } { $i < $len } { incr i } {
-	set elm [lindex $cmd $i]
-	switch -- $elm {
-	    --multi {
-		set args "$args $elm"
-	    }
-	    --once {
-		set args "$args $elm"
-	    }
-	    default {
-		break
-	    }
-	}
-    }
-
-    set prog_and_args [lrange $cmd $i end]
-
-    set buf $stdio_gdbserver_template
-
-    regsub {@GDBSERVER_PROG@} $buf $gdbserver_prog buf
-    regsub {@ARGS@} $buf $args buf
-    regsub {@PROG_AND_ARGS@} $buf $prog_and_args buf
-
-    return $buf
+proc ${board}_get_comm_port { port } {
+    return $port
 }
 
 proc ${board}_spawn { board cmd } {
@@ -90,12 +58,10 @@ proc ${board}_spawn { board cmd } {
 
     verbose -log "${board}_spawn: $board $cmd"
 
-    # Convert the command to start gdbserver to something to pass to
-    # "target remote | ..." and save it for later retrieval by
+    # Save the command to start gdbserver for later retrieval by
     # ${board}_get_remote_address.
     global stdio_gdbserver_command
-    set stdio_gdbserver_command [${board}_build_remote_cmd $cmd]
-    verbose -log "gdbserver_command: $stdio_gdbserver_command"
+    set stdio_gdbserver_command $cmd
 
     set baseboard [lindex [split $board "/"] 0]
 

@@ -1,5 +1,5 @@
 /* TILEPro-specific support for 32-bit ELF.
-   Copyright 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -2189,7 +2189,7 @@ tilepro_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, htab->sdynbss);
+  return _bfd_elf_adjust_dynamic_copy (info, h, htab->sdynbss);
 }
 
 /* Allocate space in .plt, .got and associated reloc sections for
@@ -2472,7 +2472,7 @@ tilepro_elf_size_dynamic_sections (bfd *output_bfd,
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
-  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link_next)
+  for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
     {
       bfd_signed_vma *local_got;
       bfd_signed_vma *end_local_got;
@@ -4021,7 +4021,7 @@ tilepro_additional_program_headers (bfd *abfd,
 #define ELF_MAXPAGESIZE		0x10000
 #define ELF_COMMONPAGESIZE	0x10000
 
-#define TARGET_LITTLE_SYM	bfd_elf32_tilepro_vec
+#define TARGET_LITTLE_SYM	tilepro_elf32_vec
 #define TARGET_LITTLE_NAME	"elf32-tilepro"
 
 #define elf_backend_reloc_type_class	     tilepro_reloc_type_class

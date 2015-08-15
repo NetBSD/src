@@ -1,6 +1,5 @@
 /* BFD back-end for PowerPC PECOFF files.
-   Copyright 1995, 1996, 1999, 2001, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,10 +25,10 @@
 
 #define PPC_PE
 
-#define TARGET_LITTLE_SYM   bfd_powerpcle_pe_vec
+#define TARGET_LITTLE_SYM   powerpc_pe_le_vec
 #define TARGET_LITTLE_NAME "pe-powerpcle"
 
-#define TARGET_BIG_SYM      bfd_powerpc_pe_vec
+#define TARGET_BIG_SYM      powerpc_pe_vec
 #define TARGET_BIG_NAME    "pe-powerpc"
 
 #define COFF_WITH_PE

@@ -1,7 +1,5 @@
 /* BFD back-end for ALPHA Extended-Coff files.
-   Copyright 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-   2003, 2004, 2005, 2007, 2008, 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
    Modified from coff-mips.c by Steve Chamberlain <sac@cygnus.com> and
    Ian Lance Taylor <ian@cygnus.com>.
 
@@ -2243,7 +2241,7 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
     alpha_ecoff_swap_filehdr_out, alpha_ecoff_swap_aouthdr_out,
     alpha_ecoff_swap_scnhdr_out,
     FILHSZ, AOUTSZ, SCNHSZ, 0, 0, 0, 0, FILNMLEN, TRUE,
-    ECOFF_NO_LONG_SECTION_NAMES, 4, FALSE, 2,
+    ECOFF_NO_LONG_SECTION_NAMES, 4, FALSE, 2, 32768,
     alpha_ecoff_swap_filehdr_in, alpha_ecoff_swap_aouthdr_in,
     alpha_ecoff_swap_scnhdr_in, NULL,
     alpha_ecoff_bad_format_hook, _bfd_ecoff_set_arch_mach_hook,
@@ -2348,7 +2346,7 @@ static const struct ecoff_backend_data alpha_ecoff_backend_data =
   _bfd_coff_section_already_linked
 #define _bfd_ecoff_bfd_define_common_symbol bfd_generic_define_common_symbol
 
-const bfd_target ecoffalpha_little_vec =
+const bfd_target alpha_ecoff_le_vec =
 {
   "ecoff-littlealpha",		/* name */
   bfd_target_ecoff_flavour,

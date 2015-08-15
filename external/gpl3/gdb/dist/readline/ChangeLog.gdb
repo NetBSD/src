@@ -1,3 +1,15 @@
+2014-12-30  Eli Zaretskii  <eliz@gnu.org>
+
+	* complete.c (stat_char) [_WIN32]: Don't use 'access' and X_OK on
+	Windows, they don't work.  Instead, look at the file-name
+	extension to determine whether the file is executable.
+
+2014-09-22  Chen Gang  <gang.chen.5i5j@gmail.com>
+
+	Pushed by Joel Brobecker  <brobecker@adacore.com>
+	* search.c (_rl_nsearch_init): Remove useless parameter '0' for
+	rl_message().
+
 2013-09-24  Pierre Muller  <muller@sourceware.org>
 
 	* readline.c (bind_arrow_keys_internal):

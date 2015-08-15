@@ -1,5 +1,5 @@
 /* Agent expression code for remote server.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #include "ax.h"
 #include "format.h"
 #include "tracepoint.h"
+#include "rsp-low.h"
 
 static void ax_vdebug (const char *, ...) ATTRIBUTE_PRINTF (1, 2);
 
@@ -104,9 +105,19 @@ gdb_parse_agent_expr (char **actparm)
   aexpr = xmalloc (sizeof (struct agent_expr));
   aexpr->length = xlen;
   aexpr->bytes = xmalloc (xlen);
-  convert_ascii_to_int (act, aexpr->bytes, xlen);
+  hex2bin (act, aexpr->bytes, xlen);
   *actparm = act + (xlen * 2);
   return aexpr;
+}
+
+void
+gdb_free_agent_expr (struct agent_expr *aexpr)
+{
+  if (aexpr != NULL)
+    {
+      free (aexpr->bytes);
+      free (aexpr);
+    }
 }
 
 /* Convert the bytes of an agent expression back into hex digits, so
@@ -119,7 +130,7 @@ gdb_unparse_agent_expr (struct agent_expr *aexpr)
   char *rslt;
 
   rslt = xmalloc (2 * aexpr->length + 1);
-  convert_int_to_ascii (aexpr->bytes, rslt, aexpr->length);
+  bin2hex (aexpr->bytes, rslt, aexpr->length);
   return rslt;
 }
 
