@@ -1,5 +1,5 @@
 /* Simulator for Atmel's AVR core.
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
    Written by Tristan Gingold, AdaCore.
 
    This file is part of GDB, the GNU debugger.
@@ -1793,7 +1793,7 @@ sim_close (SIM_DESC sd, int quitting)
 }
 
 SIM_RC
-sim_load (SIM_DESC sd, char *prog, bfd *abfd, int from_tty)
+sim_load (SIM_DESC sd, const char *prog, bfd *abfd, int from_tty)
 {
   bfd *prog_bfd;
 
@@ -1831,7 +1831,7 @@ sim_kill (SIM_DESC sd)
 }
 
 void
-sim_do_command (SIM_DESC sd, char *cmd)
+sim_do_command (SIM_DESC sd, const char *cmd)
 {
   /* Nothing there yet; it's all an error.  */
   

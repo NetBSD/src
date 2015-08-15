@@ -505,7 +505,7 @@ Mon Dec  4 17:12:13 1995  Andrew Cagney  <cagney@highland.com.au>
 
 	* sim-endian.h,c (SIM_ENDIAN_INLINE) bits.h,c (BITS_INLINE):
         Change to use the updated inline definitions.  If enabled
-        immediatly include the corresponding c-code so that it will inline
+        immediately include the corresponding c-code so that it will inline
         for all modules.
 
 	* inline.h, inline.c (SIM_ENDIAN_INLINE, BITS_INLINE): Remove

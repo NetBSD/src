@@ -3355,7 +3355,7 @@ void::function::invalid_zero_divide_operation:cpu *processor, unsigned_word cia,
 	  spreg new_val = (spr_length(n) == 64
 			   ? *rS
 			   : MASKED(*rS, 32, 63));
-	  /* HACK - time base registers need to be updated immediatly */
+	  /* HACK - time base registers need to be updated immediately */
 	  if (WITH_TIME_BASE) {
 	    switch (n) {
 	    case spr_tbu:

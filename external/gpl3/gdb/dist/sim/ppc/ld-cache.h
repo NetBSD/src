@@ -24,7 +24,7 @@
 
    The table that follows determines how each field should be treated.
    Importantly it considers the case where the extracted field is to
-   be used immediatly or stored in an instruction cache.
+   be used immediately or stored in an instruction cache.
 
    <type>
 

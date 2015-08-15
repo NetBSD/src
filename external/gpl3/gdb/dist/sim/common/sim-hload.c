@@ -1,5 +1,5 @@
 /* Generic load for hardware simulator models.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -27,11 +27,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
    modeling a hardware platform. */
 
 SIM_RC
-sim_load (sd, prog_name, prog_bfd, from_tty)
-     SIM_DESC sd;
-     char *prog_name;
-     struct bfd *prog_bfd;
-     int from_tty;
+sim_load (SIM_DESC sd, const char *prog_name, struct bfd *prog_bfd, int from_tty)
 {
   bfd *result_bfd;
 

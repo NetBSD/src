@@ -855,15 +855,12 @@ if test "${ERROR_ON_WARNING}" = yes ; then
      true
 fi
 
-# The entries after -Wno-pointer-sign are disabled warnings which may
-# be enabled in the future, which can not currently be used to build
-# GDB.
-# NOTE: If you change this list, remember to update
-# gdb/doc/gdbint.texinfo.
 build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith \
--Wno-pointer-sign \
+-Wpointer-sign \
 -Wno-unused -Wunused-value -Wunused-function \
--Wno-switch -Wno-char-subscripts -Wmissing-prototypes"
+-Wno-switch -Wno-char-subscripts -Wmissing-prototypes
+-Wdeclaration-after-statement -Wempty-body -Wmissing-parameter-type \
+-Wold-style-declaration -Wold-style-definition"
 
 # Enable -Wno-format by default when using gcc on mingw since many
 # GCC versions complain about %I64.

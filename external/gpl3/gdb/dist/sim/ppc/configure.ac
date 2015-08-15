@@ -670,6 +670,9 @@ AC_ARG_PROGRAM
 # using the same condition.
 AM_ZLIB
 
+# BFD uses libdl when when plugins enabled.
+AC_PLUGINS
+
 . ${srcdir}/../../bfd/configure.host
 
 case ${host} in
