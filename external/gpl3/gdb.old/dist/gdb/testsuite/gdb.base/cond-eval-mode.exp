@@ -1,0 +1,44 @@
+#   Copyright 2012-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test 'set breakpoint condition-evaluation' settings
+
+if { [prepare_for_testing break.exp "break" {break.c break1.c}] } {
+    return -1
+}
+
+runto main
+
+set test_host "set breakpoint condition-evaluation host"
+set test_auto "set breakpoint condition-evaluation auto"
+set test_target "set breakpoint condition-evaluation target"
+
+gdb_test_no_output $test_host
+gdb_test_no_output $test_auto
+
+# If target-side condition evaluation is not supported, this warning will be
+# displayed.
+set warning "warning: Target does not support breakpoint condition evaluation.\r\nUsing host evaluation mode instead.\r\n"
+
+gdb_test_multiple $test_target $test_target {
+    -re "$warning$gdb_prompt $" {
+	unsupported $test_target
+	return -1
+    }
+
+    -re "^$test_target\r\n$gdb_prompt $" {
+	pass $test_target
+    }
+}
