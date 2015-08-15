@@ -1,5 +1,5 @@
 /* Freescale XGATE-specific support for 32-bit ELF
-   Copyright 2012 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    Contributed by Sean Keys (skeys@ipdatasys.com)
    (Heavily copied from the HC11 port by Stephane Carrez (stcarrez@nerim.fr))
@@ -100,7 +100,6 @@ struct xgate_elf_link_hash_table
 
 extern struct xgate_elf_link_hash_table* xgate_elf_hash_table_create
   (bfd *);
-extern void xgate_elf_bfd_link_hash_table_free (struct bfd_link_hash_table *);
 
 extern void xgate_elf_get_bank_parameters (struct bfd_link_info *);
 

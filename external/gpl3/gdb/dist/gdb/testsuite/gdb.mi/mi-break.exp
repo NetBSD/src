@@ -1,4 +1,4 @@
-# Copyright 1999-2014 Free Software Foundation, Inc.
+# Copyright 1999-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,15 +56,11 @@ set line_callme_body   [expr $line_callme_head + 2]
 set fullname "fullname=\"${fullname_syntax}${srcfile}\""
 
 proc test_tbreak_creation_and_listing {} {
-    global mi_gdb_prompt
     global srcfile
-    global hex
-    global line_callee4_head line_callee4_body
-    global line_callee3_head line_callee3_body
-    global line_callee2_head line_callee2_body
-    global line_callee1_head line_callee1_body
-    global line_main_head    line_main_body
-    global fullname
+    global line_callee4_head
+    global line_callee3_head
+    global line_callee2_body
+    global line_main_body
 
     # Insert some breakpoints and list them
     # Also, disable some so they do not interfere with other tests
@@ -75,22 +71,32 @@ proc test_tbreak_creation_and_listing {} {
     # -break-insert -t srcfile:$line_callee4_head
     # -break-list
 
-    mi_create_breakpoint "-t main" 1 del main ".*basics.c" $line_main_body $hex \
-             "break-insert -t operation"
+    set bps {}
+    lappend bps [mi_create_breakpoint "-t main" "break-insert -t operation" \
+		     -number 1 -disp del -func main -file ".*basics.c" \
+		     -line $line_main_body]
 
-    mi_create_breakpoint "-t basics.c:callee2" 2 del callee2 ".*basics.c" $line_callee2_body $hex \
-             "insert temp breakpoint at basics.c:callee2"
+    lappend bps [mi_create_breakpoint "-t basics.c:callee2" \
+		     "insert temp breakpoint at basics.c:callee2" \
+		     -number 2 -disp del -func callee2 -file ".*basics.c" \
+		     -line $line_callee2_body]
 
-    mi_create_breakpoint "-t basics.c:$line_callee3_head" 3 del callee3 ".*basics.c" $line_callee3_head $hex \
-             "insert temp breakpoint at basics.c:\$line_callee3_head"
+    lappend bps [mi_create_breakpoint "-t basics.c:$line_callee3_head" \
+		     "insert temp breakpoint at basics.c:\$line_callee3_head" \
+		     -number 3 -disp del -func callee3 -file ".*basics.c" \
+		     -line $line_callee3_head]
 
-    # Getting the quoting right is tricky.  That is "\"<file>\":$line_callee4_head"
-    mi_create_breakpoint "-t \"\\\"${srcfile}\\\":$line_callee4_head\"" 4 del callee4 ".*basics.c" $line_callee4_head $hex \
-             "insert temp breakpoint at \"<fullfilename>\":\$line_callee4_head"
+    # Getting the quoting right is tricky.
+    # That is "\"<file>\":$line_callee4_head"
+    lappend bps [mi_create_breakpoint \
+		     "-t \"\\\"${srcfile}\\\":$line_callee4_head\"" \
+		     "insert temp breakpoint at \"<fullfilename>\":\$line_callee4_head" \
+		     -number 4 -disp del -func callee4 -file ".*basics.c" \
+		     -line $line_callee4_head]
 
     mi_gdb_test "666-break-list" \
-     	    "666\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"del\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",${fullname},line=\"$line_main_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\".*\"\}.*\\\]\}" \
-                "list of breakpoints"
+	"666\\\^done,[mi_make_breakpoint_table $bps]" \
+	"list of breakpoints"
 
     mi_gdb_test "777-break-delete" \
 	    "777\\^done" \
@@ -98,14 +104,11 @@ proc test_tbreak_creation_and_listing {} {
 }
 
 proc test_rbreak_creation_and_listing {} {
-    global mi_gdb_prompt
-    global srcfile
-    global hex
-    global line_callee4_head line_callee4_body
-    global line_callee3_head line_callee3_body
-    global line_callee2_head line_callee2_body
-    global line_callee1_head line_callee1_body
-    global line_main_head    line_main_body
+    global line_callee4_body
+    global line_callee3_body
+    global line_callee2_body
+    global line_callee1_body
+    global line_main_body
 
     # Insert some breakpoints and list them
     # Also, disable some so they do not interfere with other tests
@@ -117,29 +120,52 @@ proc test_rbreak_creation_and_listing {} {
     # -break-list
 
     setup_kfail "*-*-*" mi/14270
+    set bps {}
+    lappend bps [mi_make_breakpoint -number 5 -file ".*basics.c" \
+		     -line $line_main_body]
     mi_gdb_test "122-break-insert -r main" \
-             "122\\^done,bkpt=\{number=\"5\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_main_body\"\}" \
-             "break-insert -r operation"
+	"122\\^done,[lindex $bps end]" \
+	"break-insert -r operation"
 
     setup_kfail "*-*-*" mi/14270
+    lappend bps [mi_make_breakpoint -number 6 -file ".*basics.c" \
+		     -line $line_callee2_body]
     mi_gdb_test "133-break-insert -r callee2" \
-             "133\\^done,bkpt=\{number=\"6\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee2_body\"\}" \
-             "insert breakpoint with regexp callee2"
+	"133\\^done,[lindex $bps end]" \
+	"insert breakpoint with regexp callee2"
 
     setup_kfail "*-*-*" mi/14270
+    set start [llength $bps]
+    lappend bps [mi_make_breakpoint -number 7 -file ".*basics.c" \
+		     -line $line_callee1_body]
+    lappend bps [mi_make_breakpoint -number 8 -file ".*basics.c" \
+		     -line $line_callee2_body]
+    lappend bps [mi_make_breakpoint -number 9 -file ".*basics.c" \
+		     -line $line_callee3_body]
+    lappend bps [mi_make_breakpoint -number 10 -file ".*basics.c" \
+		     -line $line_callee4_body]
     mi_gdb_test "144-break-insert -r callee" \
-	    "144\\^done,bkpt=\{number=\"7\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee1_body\"\},bkpt=\{number=\"8\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee2_body\"\},bkpt=\{number=\"9\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee3_body\"\},bkpt=\{number=\"10\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee4_body\"\}" \
-             "insert breakpoint with regexp callee"
+	"144\\^done,[join [lrange $bps $start end] ,]" \
+	"insert breakpoint with regexp callee"
 
     setup_kfail "*-*-*" mi/14270
+    set start [llength $bps]
+    lappend bps [mi_make_breakpoint -number 11 -file ".*basics.c" \
+		     -line $line_callee1_body]
+    lappend bps [mi_make_breakpoint -number 12 -file ".*basics.c" \
+		     -line $line_callee2_body]
+    lappend bps [mi_make_breakpoint -number 13 -file ".*basics.c" \
+		     -line $line_callee3_body]
+    lappend bps [mi_make_breakpoint -number 14 -file ".*basics.c" \
+		     -line $line_callee4_body]
     mi_gdb_test "155-break-insert -r \.\*llee" \
-	    "155\\^done,bkpt=\{number=\"11\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee1_body\"\},bkpt=\{number=\"12\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee2_body\"\},bkpt=\{number=\"13\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee3_body\"\},bkpt=\{number=\"14\",addr=\"$hex\",file=\".*basics.c\",line=\"$line_callee4_body\"\}" \
-             "insert breakpoint with regexp .*llee"
+	"155\\^done,[join [lrange $bps $start end] ,]" \
+	"insert breakpoint with regexp .*llee"
 
     setup_kfail "*-*-*" mi/14270
     mi_gdb_test "166-break-list" \
-	    "1\\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"5\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\"\},.*\}\\\]\}" \
-                "list of breakpoints"
+	"166\\^done,[mi_make_breakpoint_table $bps]" \
+	"list of breakpoints"
 
     mi_gdb_test "177-break-delete" \
 	    "177\\^done" \
@@ -153,7 +179,7 @@ proc test_abreak_creation {} {
 	"521\\^done,value=\"void\"" "eval tpnum before tracepoint"
 
     mi_gdb_test "522-break-insert -a main" \
-	"522\\^done,bkpt=\{number=\"10\",type=\"tracepoint\".*\"\}" \
+	"522\\^done,[mi_make_breakpoint -number 10 -type tracepoint]" \
 	"break-insert -a operation"
 
     mi_gdb_test "523-var-update tpnum" \
@@ -165,11 +191,10 @@ proc test_abreak_creation {} {
 }
 
 proc test_ignore_count {} {
-    global mi_gdb_prompt
     global line_callme_body
 
     mi_gdb_test "-break-insert -i 1 callme" \
-        "\\^done.*ignore=\"1\".*" \
+        "\\^done,[mi_make_breakpoint -ignore 1]" \
         "insert breakpoint with ignore count at callme"
 
     mi_run_cmd
@@ -179,8 +204,6 @@ proc test_ignore_count {} {
 }
 
 proc test_error {} {
-    global mi_gdb_prompt
-
     mi_gdb_test "-break-insert function_that_does_not_exist" \
         ".*\\^error,msg=\"Function \\\\\"function_that_does_not_exist\\\\\" not defined.\"" \
         "breakpoint at nonexistent function"
@@ -211,13 +234,14 @@ proc test_error {} {
 }
 
 proc test_disabled_creation {} {
-    global mi_gdb_prompt
-    global hex
     global line_callee2_body
 
+    set bp [mi_make_breakpoint -number 6 -type breakpoint -disp keep \
+		-enabled n -func callee2 -file ".*basics.c" \
+		-line $line_callee2_body]
     mi_gdb_test "-break-insert -d basics.c:callee2" \
-        "\\^done,bkpt=\{number=\"6\",type=\"breakpoint\",disp=\"keep\",enabled=\"n\",addr=\"$hex\",func=\"callee2\",file=\".*basics.c\",fullname=\".*\",line=\"$line_callee2_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\".*\"\}" \
-        "test disabled creation"
+        "\\^done,$bp" \
+	"test disabled creation"
 
     mi_gdb_test "-break-delete" \
 	    "\\^done" \
@@ -226,31 +250,41 @@ proc test_disabled_creation {} {
 
 proc test_breakpoint_commands {} {
     global line_callee2_body
-    global hex
-    global fullname
 
-    mi_create_breakpoint "basics.c:callee2" 7 keep callee2 ".*basics.c" $line_callee2_body $hex \
-             "breakpoint commands: insert breakpoint at basics.c:callee2"
+    set bp_no_script \
+	[mi_create_breakpoint "basics.c:callee2" \
+	     "breakpoint commands: insert breakpoint at basics.c:callee2" \
+	     -number 7 -disp keep -func callee2 -file ".*basics.c" \
+	     -line $line_callee2_body]
 
     mi_gdb_test "-break-commands 7 \"print 10\" \"continue\"" \
         "\\^done" \
         "breakpoint commands: set commands"
 
+    # Rebuild the breakpoint regexp instead of using the one returned
+    # by mi_create_breakpoint.  Only in -break-info is the actual script
+    # seen.
+    set bp_script [mi_make_breakpoint -number 7 -disp keep -func callee2 \
+		       -file ".*basics.c" -line $line_callee2_body \
+		       -script {\{"print 10","continue"\}}]
     mi_gdb_test "-break-info 7" \
-    	"\\^done,BreakpointTable=\{nr_rows=\".\",nr_cols=\".\",hdr=\\\[\{width=\".*\",alignment=\".*\",col_name=\"number\",colhdr=\"Num\"\}.*colhdr=\"Type\".*colhdr=\"Disp\".*colhdr=\"Enb\".*colhdr=\"Address\".*colhdr=\"What\".*\\\],body=\\\[bkpt=\{number=\"7\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"callee2\",file=\".*basics.c\",${fullname},line=\"$line_callee2_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\",script=\{\"print 10\",\"continue\"\},original-location=\".*\"\}.*\\\]\}" \
+	"\\^done,[mi_make_breakpoint_table [list $bp_script]]" \
         "breakpoint commands: check that commands are set"
 
     mi_gdb_test "-break-commands 7" \
         "\\^done" \
         "breakpoint commands: clear commands"
 
-    mi_list_breakpoints [list [list 7 "keep" "callee2" "basics.c" "$line_callee2_body" $hex]] \
+    mi_gdb_test "-break-info" \
+	"\\^done,[mi_make_breakpoint_table [list $bp_no_script]]" \
         "breakpoint commands: check that commands are cleared"
 
     mi_run_to_main
 
-    mi_create_breakpoint "basics.c:callee2" 9 keep callee2 ".*basics.c" $line_callee2_body $hex \
-             "breakpoint commands: insert breakpoint at basics.c:callee2, again"
+    mi_create_breakpoint "basics.c:callee2" \
+	"breakpoint commands: insert breakpoint at basics.c:callee2, again" \
+	-number 9 -disp keep -func callee2 -file ".*basics.c" \
+	-line $line_callee2_body
 
     mi_gdb_test "-break-commands 9 \"set \$i=0\" \"while \$i<10\" \"print \$i\" \"set \$i=\$i+1\" \"end\" \"continue\" " \
         "\\^done" \

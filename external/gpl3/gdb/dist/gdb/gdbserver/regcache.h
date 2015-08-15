@@ -1,5 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,8 @@
 #ifndef REGCACHE_H
 #define REGCACHE_H
 
-struct inferior_list_entry;
+#include "common-regcache.h"
+
 struct thread_info;
 struct target_desc;
 
@@ -92,7 +93,7 @@ void registers_to_string (struct regcache *regcache, char *buf);
 
 void registers_from_string (struct regcache *regcache, char *buf);
 
-CORE_ADDR regcache_read_pc (struct regcache *regcache);
+/* For regcache_read_pc see common/common-regcache.h.  */
 
 void regcache_write_pc (struct regcache *regcache, CORE_ADDR pc);
 

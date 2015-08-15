@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2014 Free Software Foundation, Inc.
+   Copyright 2011-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,6 +15,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#if PTRBITS == 64
+# define PTRBYTE .8byte
+#elif PTRBITS == 32
+# define PTRBYTE .4byte
+#else
+# error "Unsupported pointer size"
+#endif
+
 	.section .debug_info
 .Lcu1_begin:
 	/* CU header */
@@ -22,13 +30,13 @@
 .Lcu1_start:
 	.2byte	2				/* DWARF Version */
 	.4byte	.Labbrev1_begin			/* Offset into abbrev section */
-	.byte	4				/* Pointer size */
+	.byte	PTRBITS / 8			/* Pointer size */
 
 	/* CU die */
 	.uleb128 1				/* Abbrev: DW_TAG_compile_unit */
 	.4byte	.Lline1_begin			/* DW_AT_stmt_list */
-	.4byte	func_start			/* DW_AT_low_pc */
-	.4byte	func_end			/* DW_AT_high_pc */
+	PTRBYTE	func_start			/* DW_AT_low_pc */
+	PTRBYTE	func_end			/* DW_AT_high_pc */
 	.ascii	"main.c\0"			/* DW_AT_name */
 	.ascii	"GNU C 4.5.0\0"			/* DW_AT_producer must be >= 4.5  */
 	.byte	2				/* DW_AT_language (DW_LANG_C) */
@@ -37,8 +45,8 @@
 	.byte		1			/* DW_AT_external */
 	.ascii		"func\0"		/* DW_AT_name */
 	.4byte		.Ltype_int-.Lcu1_begin	/* DW_AT_type */
-	.4byte		func_start		/* DW_AT_low_pc */
-	.4byte		func_end		/* DW_AT_high_pc */
+	PTRBYTE		func_start		/* DW_AT_low_pc */
+	PTRBYTE		func_end		/* DW_AT_high_pc */
 
 /* GDB `has_loclist' detection of -O2 -g code needs to see a DW_AT_location
    location list.  There may exist -O2 -g CUs still not needing/using any such
@@ -51,16 +59,16 @@
 
 	.uleb128	4			/* Abbrev: DW_TAG_inlined_subroutine */
 	.ascii		"inlined\0"		/* DW_AT_name */
-	.4byte		func0			/* DW_AT_low_pc */
-	.4byte		func1			/* DW_AT_high_pc */
+	PTRBYTE		func0			/* DW_AT_low_pc */
+	PTRBYTE		func1			/* DW_AT_high_pc */
 	.byte		3			/* DW_AT_inline (DW_INL_declared_inlined) */
 	.byte		1			/* DW_AT_call_file */
 	.byte		8			/* DW_AT_call_line */
 
 	.uleb128	4			/* Abbrev: DW_TAG_inlined_subroutine */
 	.ascii		"inlined2\0"		/* DW_AT_name */
-	.4byte		func2			/* DW_AT_low_pc */
-	.4byte		func3			/* DW_AT_high_pc */
+	PTRBYTE		func2			/* DW_AT_low_pc */
+	PTRBYTE		func3			/* DW_AT_high_pc */
 	.byte		3			/* DW_AT_inline (DW_INL_declared_inlined) */
 	.byte		1			/* DW_AT_call_file */
 	.byte		11			/* DW_AT_call_line */
@@ -68,8 +76,8 @@
 #ifdef INLINED
 	.uleb128	4			/* Abbrev: DW_TAG_inlined_subroutine */
 	.ascii		"otherinline\0"		/* DW_AT_name */
-	.4byte		func3			/* DW_AT_low_pc */
-	.4byte		func_end		/* DW_AT_high_pc */
+	PTRBYTE		func3			/* DW_AT_low_pc */
+	PTRBYTE		func_end		/* DW_AT_high_pc */
 	.byte		3			/* DW_AT_inline (DW_INL_declared_inlined) */
 	.byte		1			/* DW_AT_call_file */
 	.byte		9			/* DW_AT_call_line */
@@ -77,8 +85,8 @@
 
 #ifdef LEXICAL
 	.uleb128	5			/* Abbrev: DW_TAG_lexical_block */
-	.4byte		func3			/* DW_AT_low_pc */
-	.4byte		func_end		/* DW_AT_high_pc */
+	PTRBYTE		func3			/* DW_AT_low_pc */
+	PTRBYTE		func_end		/* DW_AT_high_pc */
 
 	/* GDB would otherwise ignore the DW_TAG_lexical_block.  */
 	.uleb128	6			/* Abbrev: DW_TAG_variable */
@@ -97,8 +105,8 @@
 	.byte		1			/* DW_AT_external */
 	.ascii		"func\0"		/* DW_AT_name */
 	.4byte		.Ltype_int-.Lcu1_begin	/* DW_AT_type */
-	.4byte		fund_start		/* DW_AT_low_pc */
-	.4byte		fund_end		/* DW_AT_high_pc */
+	PTRBYTE		fund_start		/* DW_AT_low_pc */
+	PTRBYTE		fund_end		/* DW_AT_high_pc */
 
 	.byte		0			/* End of children of DW_TAG_subprogram */
 
@@ -117,7 +125,7 @@ loclist:
 	/* Reset the location list base address first.  */
 	.4byte		-1, 0
 
-	.4byte		func_start, func_end
+	PTRBYTE		func_start, func_end
 	.2byte		2f-1f
 1:	.byte		0x50	/* DW_OP_reg0 */
 2:
@@ -277,7 +285,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		func_start
+	PTRBYTE		func_start
 	.byte		3	/* DW_LNS_advance_line */
 	.sleb128	4	/* ... to 5 */
 	.byte		1	/* DW_LNS_copy */
@@ -285,7 +293,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		func0
+	PTRBYTE		func0
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	2
 	.byte		3	/* DW_LNS_advance_line */
@@ -295,7 +303,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		func1
+	PTRBYTE		func1
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	1
 	.byte		3	/* DW_LNS_advance_line */
@@ -305,7 +313,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		func2
+	PTRBYTE		func2
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	2
 	.byte		3	/* DW_LNS_advance_line */
@@ -315,7 +323,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		func3
+	PTRBYTE		func3
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	1
 	.byte		3	/* DW_LNS_advance_line */
@@ -325,14 +333,14 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		func_end
+	PTRBYTE		func_end
 
 /* Equivalent copy but renamed s/func/fund/.  */
 
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		fund_start
+	PTRBYTE		fund_start
 	.byte		3	/* DW_LNS_advance_line */
 	.sleb128	-4	/* ... to 5 */
 	.byte		1	/* DW_LNS_copy */
@@ -340,7 +348,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		fund0
+	PTRBYTE		fund0
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	2
 	.byte		3	/* DW_LNS_advance_line */
@@ -350,7 +358,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		fund1
+	PTRBYTE		fund1
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	1
 	.byte		3	/* DW_LNS_advance_line */
@@ -360,7 +368,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		fund2
+	PTRBYTE		fund2
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	2
 	.byte		3	/* DW_LNS_advance_line */
@@ -370,7 +378,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		fund3
+	PTRBYTE		fund3
 	.byte		4	/* DW_LNS_set_file */
 	.uleb128	1
 	.byte		3	/* DW_LNS_advance_line */
@@ -380,7 +388,7 @@ loclist:
 	.byte		0	/* DW_LNE_set_address */
 	.uleb128	5
 	.byte		2
-	.4byte		fund_end
+	PTRBYTE		fund_end
 
 /* Line numbering end.  */
 
