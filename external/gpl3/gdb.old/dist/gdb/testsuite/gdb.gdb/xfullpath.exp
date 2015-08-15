@@ -1,0 +1,60 @@
+# Copyright 2002-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Joel Brobecker. (brobecker@gnat.com), derived
+# from selftest.exp, written by Rob Savoye.
+
+load_lib selftest-support.exp
+
+proc test_with_self {} {
+    # A file which contains a directory prefix
+    gdb_test "print gdb_realpath (\"./xfullpath.exp\")" \
+             ".\[0-9\]+ =.*\".*/xfullpath.exp\"" \
+             "A filename with ./ as the directory prefix"
+
+    # A file which contains a directory prefix
+    gdb_test "print gdb_realpath (\"../../defs.h\")" \
+             ".\[0-9\]+ =.*\".*/defs.h\"" \
+             "A filename with ../ in the directory prefix"
+
+    # A one-character filename
+    gdb_test "print gdb_realpath (\"./a\")" \
+             ".\[0-9\]+ =.*\".*/a\"" \
+             "A one-char filename in the current directory"
+          
+    # A file in the root directory
+    gdb_test "print gdb_realpath (\"/root_file_which_should_exist\")" \
+             ".\[0-9\]+ =.*\"/root_file_which_should_exist\"" \
+             "A filename in the root directory"
+          
+    # A file which does not have a directory prefix
+    gdb_test "print gdb_realpath (\"xfullpath.exp\")" \
+             ".\[0-9\]+ =.*\"xfullpath.exp\"" \
+             "A filename without any directory prefix"
+
+    # A one-char filename without any directory prefix
+    gdb_test "print gdb_realpath (\"a\")" \
+             ".\[0-9\]+ =.*\"a\"" \
+             "A one-char filename without any directory prefix"
+
+    # An empty filename
+    gdb_test "print gdb_realpath (\"\")" \
+             ".\[0-9\]+ =.*\"\"" \
+             "An empty filename"
+
+    return 0
+}
+
+do_self_tests captured_main test_with_self

@@ -1,0 +1,3 @@
+# Host: ia64 running HP-UX
+NATDEPFILES= fork-child.o inf-ttrace.o ia64-hpux-nat.o \
+        solib-ia64-hpux.o
