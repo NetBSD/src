@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2014 Free Software Foundation, Inc.
+# Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 standard_testfile .c realname-expand-real.c
+
+if [is_remote host] {
+    unsupported "Compiling on a remote host does not support a filename with directory."
+    return 0
+}
 
 set srcdirabs [file join [pwd] $srcdir]
 set srcfilelink [standard_output_file realname-expand-link.c]

@@ -1,6 +1,6 @@
 /* Platform independent shared object routines for GDB.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,6 @@
 
 #ifndef GDB_DLFCN_H
 #define GDB_DLFCN_H
-
-#include "defs.h"
 
 /* Load the dynamic library file named FILENAME, and return a handle
    for that dynamic library.  Return NULL if the loading fails for any

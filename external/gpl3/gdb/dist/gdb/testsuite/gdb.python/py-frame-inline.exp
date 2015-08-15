@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,3 +37,17 @@ gdb_test "info frame" "inlined into frame 1\r\n.*"
 gdb_test "up" "#1  g .*"
 
 gdb_test "python print (gdb.selected_frame().read_var('l'))" "\r\n42"
+
+# A regression test for having a backtrace limit that forces unwinding
+# to stop after an inline frame.  GDB needs to compute the frame_id of
+# the inline frame, which requires unwinding past all the inline
+# frames to the real stack frame, even if that means bypassing the
+# user visible backtrace limit.  See PR backtrace/15558.
+#
+# Set the limit, and run to an inline function.  It's important that
+# the frame cache is flushed somehow after setting the limit, to force
+# frame id recomputation.
+gdb_test_no_output "set backtrace limit 1"
+gdb_continue_to_breakpoint "Block break here."
+
+gdb_test "python print (gdb.newest_frame())" ".*"

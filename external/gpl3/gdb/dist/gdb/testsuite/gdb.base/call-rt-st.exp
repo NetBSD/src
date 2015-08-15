@@ -1,4 +1,4 @@
-# Copyright 1998-2014 Free Software Foundation, Inc.
+# Copyright 1998-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,19 +64,20 @@ if ![runto_main] then {
 }
 
 
+set stop_line [gdb_get_line_number "-break1-"]
 gdb_test "break loop_count" \
-    "Breakpoint.* file .*call-rt-st.c, line 128\\." \
+    "Breakpoint.* file .*call-rt-st.c, line $stop_line\\." \
     "breakpoint loop_count"
 
 gdb_test "continue" \
-    "Continuing\\..*Breakpoint.*loop_count \\(\\) at.*call-rt-st.c:128\[ \t\r\n\]+128\[\t \]+for \\(index=0; index.4; index..\\);\[\r\n \]+" \
+    "Continuing\\..*Breakpoint.*loop_count \\(\\) at.*call-rt-st.c:$stop_line\[ \t\r\n\]+$stop_line\[\t \]+for \\(index=0; index.4; index..\\);.*\[\r\n \]+" \
     "continue to loop_count"
 
 gdb_test_multiple "finish" "finish out from loop count" {
-    -re "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:128\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:777\[ \t\r\n\]+777\[\t \]+return 0;.*$gdb_prompt $" {
-	pass "finish out from loop_count (line 777)"
+    -re "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:$stop_line\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:${decimal}\[ \t\r\n\]+${decimal}\[\t \]+return 0;.*-finish1-.*$gdb_prompt $" {
+	pass "finish out from loop_count (finish1)"
     }
-    -re  "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:128\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:775\[ \t\r\n\]+775\[\t \]+loop_count.*$gdb_prompt $" {
+    -re  "Run till exit from .0  loop_count \\(\\) at.*call-rt-st.c:$stop_line\[ \t\r\n\]+main \\(\\) at.*call-rt-st.c:${decimal}\[ \t\r\n\]+${decimal}\[\t \]+loop_count.*-finish2-.*$gdb_prompt $" {
 	pass "finish out from loop_count (line 775)"
     }
 }

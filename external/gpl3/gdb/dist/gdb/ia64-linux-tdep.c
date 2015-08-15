@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,7 @@
 #include "solib-svr4.h"
 #include "symtab.h"
 #include "linux-tdep.h"
+#include "regset.h"
 
 #include <ctype.h>
 
@@ -131,6 +132,85 @@ ia64_linux_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 	  || isdigit (*s));  /* Literal number.  */
 }
 
+/* Core file support. */
+
+static const struct regcache_map_entry ia64_linux_gregmap[] =
+  {
+    { 32, IA64_GR0_REGNUM, 8 },	/* r0 ... r31 */
+    { 1, REGCACHE_MAP_SKIP, 8 }, /* FIXME: NAT collection bits? */
+    { 1, IA64_PR_REGNUM, 8 },
+    { 8, IA64_BR0_REGNUM, 8 },	/* b0 ... b7 */
+    { 1, IA64_IP_REGNUM, 8 },
+    { 1, IA64_CFM_REGNUM, 8 },
+    { 1, IA64_PSR_REGNUM, 8 },
+    { 1, IA64_RSC_REGNUM, 8 },
+    { 1, IA64_BSP_REGNUM, 8 },
+    { 1, IA64_BSPSTORE_REGNUM, 8 },
+    { 1, IA64_RNAT_REGNUM, 8 },
+    { 1, IA64_CCV_REGNUM, 8 },
+    { 1, IA64_UNAT_REGNUM, 8 },
+    { 1, IA64_FPSR_REGNUM, 8 },
+    { 1, IA64_PFS_REGNUM, 8 },
+    { 1, IA64_LC_REGNUM, 8 },
+    { 1, IA64_EC_REGNUM, 8 },
+    { 0 }
+  };
+
+/* Size of 'gregset_t', as defined by the Linux kernel.  Note that
+   this is more than actually mapped in the regmap above.  */
+
+#define IA64_LINUX_GREGS_SIZE (128 * 8)
+
+static const struct regcache_map_entry ia64_linux_fpregmap[] =
+  {
+    { 128, IA64_FR0_REGNUM, 16 }, /* f0 ... f127 */
+    { 0 }
+  };
+
+#define IA64_LINUX_FPREGS_SIZE (128 * 16)
+
+static void
+ia64_linux_supply_fpregset (const struct regset *regset,
+			    struct regcache *regcache,
+			    int regnum, const void *regs, size_t len)
+{
+  const gdb_byte f_zero[16] = { 0 };
+  const gdb_byte f_one[16] =
+    { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
+
+  regcache_supply_regset (regset, regcache, regnum, regs, len);
+
+  /* Kernel generated cores have fr1==0 instead of 1.0.  Older GDBs
+     did the same.  So ignore whatever might be recorded in fpregset_t
+     for fr0/fr1 and always supply their expected values.  */
+  if (regnum == -1 || regnum == IA64_FR0_REGNUM)
+    regcache_raw_supply (regcache, IA64_FR0_REGNUM, f_zero);
+  if (regnum == -1 || regnum == IA64_FR1_REGNUM)
+    regcache_raw_supply (regcache, IA64_FR1_REGNUM, f_one);
+}
+
+static const struct regset ia64_linux_gregset =
+  {
+    ia64_linux_gregmap,
+    regcache_supply_regset, regcache_collect_regset
+  };
+
+static const struct regset ia64_linux_fpregset =
+  {
+    ia64_linux_fpregmap,
+    ia64_linux_supply_fpregset, regcache_collect_regset
+  };
+
+static void
+ia64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					 iterate_over_regset_sections_cb *cb,
+					 void *cb_data,
+					 const struct regcache *regcache)
+{
+  cb (".reg", IA64_LINUX_GREGS_SIZE, &ia64_linux_gregset, NULL, cb_data);
+  cb (".reg2", IA64_LINUX_FPREGS_SIZE, &ia64_linux_fpregset, NULL, cb_data);
+}
+
 static void
 ia64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -160,6 +240,10 @@ ia64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
                                              svr4_fetch_objfile_link_map);
+
+  /* Core file support. */
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, ia64_linux_iterate_over_regset_sections);
 
   /* SystemTap related.  */
   set_gdbarch_stap_register_prefixes (gdbarch, stap_register_prefixes);

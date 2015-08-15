@@ -1,5 +1,5 @@
 /* Disassemble support for GDB.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,14 +19,22 @@
 #ifndef DISASM_H
 #define DISASM_H
 
+#include "dis-asm.h"
+
 #define DISASSEMBLY_SOURCE	(0x1 << 0)
 #define DISASSEMBLY_RAW_INSN	(0x1 << 1)
 #define DISASSEMBLY_OMIT_FNAME	(0x1 << 2)
 #define DISASSEMBLY_FILENAME	(0x1 << 3)
 #define DISASSEMBLY_OMIT_PC	(0x1 << 4)
 
+struct gdbarch;
 struct ui_out;
 struct ui_file;
+
+/* Return a filled in disassemble_info object for use by gdb.  */
+
+extern struct disassemble_info gdb_disassemble_info (struct gdbarch *gdbarch,
+						     struct ui_file *file);
 
 extern void gdb_disassembly (struct gdbarch *gdbarch, struct ui_out *uiout,
 			     char *file_string, int flags, int how_many,

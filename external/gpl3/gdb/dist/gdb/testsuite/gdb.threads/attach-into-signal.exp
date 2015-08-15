@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -101,15 +101,6 @@ proc corefunc { threadtype executable } {
 			# pending on the second thread.  Check for
 			# that by peeking at the thread's siginfo.
 			# SIGALRM is 14, SIGSTOP is 19.
-
-			# With remote targets, we need to pull the
-			# thread list explicitly before GDB even knows
-			# about thread 2.
-			set test2 "pull thread list"
-			gdb_test_multiple "info threads" $test2 {
-			    -re "\r\n$gdb_prompt $" {
-			    }
-			}
 
 			set test2 "thread apply 2 print \$_siginfo.si_signo"
 			gdb_test_multiple $test2 $test2 {

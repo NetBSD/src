@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,9 @@
 
 # ending-run.exp -- Expect script to test ending a test run in gdb
 
-if { [prepare_for_testing ending-run.exp ending-run] } {
+standard_testfile
+
+if { [prepare_for_testing ${testfile}.exp $testfile] } {
     return -1
 }
 remote_exec build "rm -f core"
@@ -35,26 +37,28 @@ remote_exec build "rm -f core"
 gdb_test "b ending-run.c:1" ".*Breakpoint.*ending-run.c, line 1.*" \
 	"bpt at line before routine"
 
-gdb_test "b ending-run.c:14" \
-	".*Note.*also.*Breakpoint 2.*ending-run.c, line 14.*" \
-	"b ending-run.c:14, one"
+set break1_line [gdb_get_line_number "-break1-"]
+gdb_test "b ending-run.c:$break1_line" \
+	".*Note.*also.*Breakpoint 2.*ending-run.c, line $break1_line.*" \
+	"b ending-run.c:$break1_line, one"
 
 # Set up to go to the next-to-last line of the program
 #
-gdb_test "b ending-run.c:31" ".*Breakpoint 3.*ending-run.c, line 31.*"
+set break2_line [gdb_get_line_number "-break2-"]
+gdb_test "b ending-run.c:$break2_line" ".*Breakpoint 3.*ending-run.c, line $break2_line.*"
 
 # Expect to hit the bp at line "1", but symbolize this
 # as line "13".  Then try to clear it--this should work.
 #
 gdb_run_cmd
-gdb_test "" ".*Breakpoint.*1.*callee.*14.*" "run"
+gdb_test "" ".*Breakpoint.*1.*callee.*$break1_line.*" "run"
 
 gdb_test "cle" ".*Deleted breakpoints 1 2.*" "clear worked"
 gdb_test_multiple "i b" "cleared bp at line before routine" {
     -re ".* breakpoint .* breakpoint .*$gdb_prompt $" { 
 	fail "cleared bp at line before routine" 
     }
-    -re ".*3.*main.*31.*$gdb_prompt $" { 
+    -re ".*3.*main.*$break2_line.*$gdb_prompt $" {
 	pass "cleared bp at line before routine" 
     }
 }
@@ -62,15 +66,15 @@ gdb_test_multiple "i b" "cleared bp at line before routine" {
 # Test some other "clear" combinations
 #
 gdb_test "b ending-run.c:1" ".*Breakpoint.*4.*"
-gdb_test "b ending-run.c:14" ".*Note.*also.*Breakpoint.*5.*" "b ending-run.c:14, two"
-gdb_test "cle ending-run.c:14" \
+gdb_test "b ending-run.c:$break1_line" ".*Note.*also.*Breakpoint.*5.*" "b ending-run.c:$break1_line, two"
+gdb_test "cle ending-run.c:$break1_line" \
 	".*Deleted breakpoint 5.*" "Cleared 2 by line"
 
-gdb_test_multiple "info line ending-run.c:14" "" {
+gdb_test_multiple "info line ending-run.c:$break1_line" "" {
     -re ".*address (0x\[0-9a-fA-F]*).*$gdb_prompt $" {
         set line_nine $expect_out(1,string)
-        gdb_test "b ending-run.c:14" ".*Breakpoint 6.*ending-run.c, line 14.*"
-        gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 7.*" "Breakpoint 7 at *ending-run.c:14"
+        gdb_test "b ending-run.c:$break1_line" ".*Breakpoint 6.*ending-run.c, line $break1_line.*"
+        gdb_test "b *$line_nine" ".*Note.*also.*Breakpoint 7.*" "Breakpoint 7 at *ending-run.c:$break1_line"
         gdb_test "cle" ".*Deleted breakpoints 4 6 7.*" "Clear 2 by default"
     }
     -re ".*$gdb_prompt $" {
@@ -82,7 +86,7 @@ gdb_test_multiple "i b" "all set to continue" {
     -re ".* breakpoint .* breakpoint .*$gdb_prompt $" {
         fail "all set to continue (didn't clear bps)" 
     }
-    -re ".*3.*main.*31.*$gdb_prompt $" {
+    -re ".*3.*main.*$break2_line.*$gdb_prompt $" {
         pass "all set to continue"
     }
     -re ".*$gdb_prompt $" {
@@ -95,13 +99,13 @@ gdb_test_multiple "i b" "all set to continue" {
 # is output from the program.
 #
 if ![gdb_skip_stdio_test "cont"] {
-    gdb_test "cont" ".*1 2 7 14 23 34 47 62 79.*Breakpoint.*31.*"
+    gdb_test "cont" ".*1 2 7 14 23 34 47 62 79.*Breakpoint.*$break2_line.*"
 } else {
-    gdb_test "cont" ".*Breakpoint.*31.*"
+    gdb_test "cont" ".*Breakpoint.*$break2_line.*"
 }
 
 if ![gdb_skip_stdio_test "Step to return"] {
-    gdb_test "next" ".*Goodbye!.*32.*" \
+    gdb_test "next" ".*Goodbye!.*[expr {$break2_line + 1}].*" \
 	    "Step to return"
 } else {
     gdb_test "next" ".*" ""
@@ -113,7 +117,7 @@ set program_exited 0
 set nexted 0
 
 gdb_test_multiple "next" "step out of main" {
-    -re "33\[ \t\]+\}.*$gdb_prompt $" {
+    -re "[expr {$break2_line + 2}]\[ \t\]+\}.*$gdb_prompt $" {
 	# sometimes we stop at the closing brace, if so, do another next
 	if { $nexted } {
 	    fail "step out of main"

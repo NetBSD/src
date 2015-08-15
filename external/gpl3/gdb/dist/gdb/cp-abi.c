@@ -1,6 +1,6 @@
 /* Generic code for supporting multiple C++ ABI's
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,12 +21,8 @@
 #include "value.h"
 #include "cp-abi.h"
 #include "command.h"
-#include "exceptions.h"
 #include "gdbcmd.h"
 #include "ui-out.h"
-#include "gdb_assert.h"
-#include <string.h>
-
 static struct cp_abi_ops *find_cp_abi (const char *short_name);
 
 static struct cp_abi_ops current_cp_abi = { "", NULL };

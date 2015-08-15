@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux SPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -198,7 +198,7 @@ sparc32_linux_step_trap (struct frame_info *frame, unsigned long insn)
 }
 
 
-const struct sparc_gregset sparc32_linux_core_gregset =
+const struct sparc_gregmap sparc32_linux_core_gregmap =
 {
   32 * 4,			/* %psr */
   33 * 4,			/* %pc */
@@ -217,7 +217,7 @@ sparc32_linux_supply_core_gregset (const struct regset *regset,
 				   struct regcache *regcache,
 				   int regnum, const void *gregs, size_t len)
 {
-  sparc32_supply_gregset (&sparc32_linux_core_gregset,
+  sparc32_supply_gregset (&sparc32_linux_core_gregmap,
 			  regcache, regnum, gregs);
 }
 
@@ -226,7 +226,7 @@ sparc32_linux_collect_core_gregset (const struct regset *regset,
 				    const struct regcache *regcache,
 				    int regnum, void *gregs, size_t len)
 {
-  sparc32_collect_gregset (&sparc32_linux_core_gregset,
+  sparc32_collect_gregset (&sparc32_linux_core_gregmap,
 			   regcache, regnum, gregs);
 }
 
@@ -235,7 +235,7 @@ sparc32_linux_supply_core_fpregset (const struct regset *regset,
 				    struct regcache *regcache,
 				    int regnum, const void *fpregs, size_t len)
 {
-  sparc32_supply_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
+  sparc32_supply_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
 static void
@@ -243,7 +243,7 @@ sparc32_linux_collect_core_fpregset (const struct regset *regset,
 				     const struct regcache *regcache,
 				     int regnum, void *fpregs, size_t len)
 {
-  sparc32_collect_fpregset (&sparc32_bsd_fpregset, regcache, regnum, fpregs);
+  sparc32_collect_fpregset (&sparc32_bsd_fpregmap, regcache, regnum, fpregs);
 }
 
 /* Set the program counter for process PTID to PC.  */
@@ -403,6 +403,20 @@ sparc32_linux_gdb_signal_to_target (struct gdbarch *gdbarch,
 
 
 
+static const struct regset sparc32_linux_gregset =
+  {
+    NULL,
+    sparc32_linux_supply_core_gregset,
+    sparc32_linux_collect_core_gregset
+  };
+
+static const struct regset sparc32_linux_fpregset =
+  {
+    NULL,
+    sparc32_linux_supply_core_fpregset,
+    sparc32_linux_collect_core_fpregset
+  };
+
 static void
 sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -410,12 +424,10 @@ sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   linux_init_abi (info, gdbarch);
 
-  tdep->gregset = regset_alloc (gdbarch, sparc32_linux_supply_core_gregset,
-				sparc32_linux_collect_core_gregset);
+  tdep->gregset = &sparc32_linux_gregset;
   tdep->sizeof_gregset = 152;
 
-  tdep->fpregset = regset_alloc (gdbarch, sparc32_linux_supply_core_fpregset,
-				 sparc32_linux_collect_core_fpregset);
+  tdep->fpregset = &sparc32_linux_fpregset;
   tdep->sizeof_fpregset = 396;
 
   tramp_frame_prepend_unwinder (gdbarch, &sparc32_linux_sigframe);
@@ -443,7 +455,7 @@ sparc32_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_write_pc (gdbarch, sparc_linux_write_pc);
 
   /* Functions for 'catch syscall'.  */
-  set_xml_syscall_file_name (XML_SYSCALL_FILENAME_SPARC32);
+  set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_SPARC32);
   set_gdbarch_get_syscall_number (gdbarch,
                                   sparc32_linux_get_syscall_number);
 

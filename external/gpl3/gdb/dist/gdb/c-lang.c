@@ -1,6 +1,6 @@
 /* C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,15 +27,12 @@
 #include "c-lang.h"
 #include "valprint.h"
 #include "macroscope.h"
-#include "gdb_assert.h"
 #include "charset.h"
-#include <string.h>
 #include "demangle.h"
 #include "cp-abi.h"
 #include "cp-support.h"
 #include "gdb_obstack.h"
 #include <ctype.h>
-#include "exceptions.h"
 #include "gdbcore.h"
 
 extern void _initialize_c_language (void);
@@ -868,6 +865,8 @@ const struct language_defn c_language_defn =
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &c_varobj_ops,
+  c_get_compile_context,
+  c_compute_program,
   LANG_MAGIC
 };
 
@@ -993,6 +992,8 @@ const struct language_defn cplus_language_defn =
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &cplus_varobj_ops,
+  NULL,
+  NULL,
   LANG_MAGIC
 };
 
@@ -1036,6 +1037,8 @@ const struct language_defn asm_language_defn =
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &default_varobj_ops,
+  NULL,
+  NULL,
   LANG_MAGIC
 };
 
@@ -1084,6 +1087,8 @@ const struct language_defn minimal_language_defn =
   NULL,				/* la_get_symbol_name_cmp */
   iterate_over_symbols,
   &default_varobj_ops,
+  NULL,
+  NULL,
   LANG_MAGIC
 };
 

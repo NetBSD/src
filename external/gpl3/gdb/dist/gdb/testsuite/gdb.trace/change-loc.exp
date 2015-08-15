@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -282,8 +282,71 @@ proc tracepoint_change_loc_2 { trace_type } {
     }
 }
 
+# Test that setting a tracepoint while the trace experiment is ongoing
+# doesn't work when we force-disable the InstallInTrace RSP feature.
+
+proc tracepoint_install_in_trace_disabled { trace_type } {
+    with_test_prefix "InstallInTrace disabled: $trace_type" {
+	global testfile
+	global srcfile
+	global pcreg
+	global gdb_prompt
+
+	clean_restart ${testfile}
+	if ![runto_main] {
+	    fail "Can't run to main"
+	    return -1
+	}
+
+	# This test only makes sense with the remote target.
+	if ![gdb_is_target_remote] {
+	    return
+	}
+
+	gdb_test_no_output "delete break 1"
+
+	# Set a tracepoint we'll never meet.  Just to avoid the
+	# complain after `tstart' later.
+	gdb_test "next" ".*"
+	gdb_test "trace main" \
+	    "Tracepoint \[0-9\] at.* file .*$srcfile, line.*" \
+	    "set tracepoint on main"
+
+	gdb_test "break marker" "Breakpoint.*at.* file .*$srcfile, line.*" \
+	    "breakpoint on marker"
+
+	gdb_test_no_output "tstart"
+
+	# Force-disable the InstallInTrace RSP feature.
+	gdb_test_no_output "set remote install-in-trace-packet off"
+
+	# Set a tracepoint while a trace experiment is ongoing.
+	gdb_test "${trace_type} set_tracepoint" \
+	    "racepoint .* at .* set_tracepoint.*" \
+	    "set tracepoint on set_tracepoint"
+
+	gdb_trace_setactions "set action for tracepoint" "" \
+	    "collect \$$pcreg" "^$"
+
+	# Make sure the tracepoint is _not_ installed on the target.
+	gdb_test "info trace" \
+	    "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
+\[0-9\]+\[\t \]+\(|fast \)tracepoint\[ \]+keep y.*installed on target.*\<MULTIPLE\>.*4\.1.* in func4.*not installed on target.*4\.2.* in func4.*not installed on target.*" \
+	    "tracepoint is not installed"
+
+	gdb_test "continue" ".*Breakpoint.*marker.*at.*$srcfile.*" \
+	    "continue to marker"
+
+	gdb_test_no_output "tstop"
+
+	# Nothing should have been collected.
+	gdb_test "tfind" "Target failed to find requested trace frame\\..*"
+    }
+}
+
 tracepoint_change_loc_1 "trace"
 tracepoint_change_loc_2 "trace"
+tracepoint_install_in_trace_disabled "trace"
 
 # Re-compile test case with IPA.
 set libipa [get_in_proc_agent]
@@ -297,3 +360,4 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable \
 
 tracepoint_change_loc_1 "ftrace"
 tracepoint_change_loc_2 "ftrace"
+tracepoint_install_in_trace_disabled "ftrace"
