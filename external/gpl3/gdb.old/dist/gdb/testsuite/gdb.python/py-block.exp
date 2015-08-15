@@ -1,0 +1,87 @@
+# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests the mechanism
+# exposing values to Python.
+
+load_lib gdb-python.exp
+
+standard_testfile
+
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
+    return -1
+}
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+
+if ![runto_main] then {
+    fail "Can't run to main"
+    return 0
+}
+
+global hex decimal
+gdb_breakpoint [gdb_get_line_number "Block break here."]
+gdb_continue_to_breakpoint "Block break here."
+
+# Test initial innermost block.
+gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0
+gdb_py_test_silent_cmd "python block = frame.block()" "Get block" 0
+gdb_test "python print (block)" "<gdb.Block object at $hex>" "Check block not None"
+gdb_test "python print (block.function)" "None" "First anonymous block"
+gdb_test "python print (block.start)" "${decimal}" "Check start not None"
+gdb_test "python print (block.end)" "${decimal}" "Check end not None"
+
+# Test global/static blocks
+gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0
+gdb_py_test_silent_cmd "python block = frame.block()" "Get block" 0
+gdb_test "python print (block.is_global)" "False" "Not a global block"
+gdb_test "python print (block.is_static)" "False" "Not a static block"
+gdb_py_test_silent_cmd "python gblock = block.global_block" "Get block" 1
+gdb_py_test_silent_cmd "python sblock = block.static_block" "Get block" 1
+gdb_test "python print (gblock.is_global)" "True" "Is the global block"
+gdb_test "python print (sblock.is_static)" "True" "Is the static block"
+
+# Move up superblock(s) until we reach function block_func.
+gdb_test_no_output "python block = block.superblock" "Get superblock"
+gdb_test "python print (block.function)" "None" "Second anonymous block"
+gdb_test_no_output "python block = block.superblock" "Get superblock 2"
+gdb_test "python print (block.function)" "block_func" \
+         "Print superblock 2 function"
+
+# Switch frames, then test for main block.
+gdb_test "up" ".*"
+gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame 2" 0
+gdb_py_test_silent_cmd "python block = frame.block()" "Get Frame 2's block" 0
+gdb_test "python print (block)" "<gdb.Block object at $hex>" \
+         "Check Frame 2's block not None"
+gdb_test "python print (block.function)" "main" "main block"
+
+
+# Test Block is_valid.  This must always be the last test in this
+# testcase as it unloads the object file.
+delete_breakpoints
+gdb_py_test_silent_cmd "python frame = gdb.selected_frame()" "Get Frame" 0
+gdb_py_test_silent_cmd "python block = frame.block()" "Get Frame block" 0
+gdb_py_test_silent_cmd "python block_iter = iter (block)" "Get Frame block" 0
+gdb_test "python print (block.is_valid())" "True" \
+         "Check block validity"
+gdb_test "python print (block_iter.is_valid())" "True" \
+         "Check block validity"
+gdb_unload
+gdb_test "python print (block.is_valid())" "False" \
+         "Check block validity"
+gdb_test "python print (block_iter.is_valid())" "False" \
+         "Check block validity"

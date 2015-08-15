@@ -1,0 +1,183 @@
+# Copyright 2008-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test was created by modifying attach-stopped.exp.
+# This file was created by Jan Kratochvil <jan.kratochvil@redhat.com>.
+
+# This test only works on Linux
+if { ![isnative] || [is_remote host] || [target_info exists use_gdb_stub]
+     || ![istarget *-linux*] } {
+    continue
+}
+
+standard_testfile
+set executable_nothr ${testfile}-nothr
+set executable_thr ${testfile}-thr
+
+proc corefunc { threadtype executable } {
+    global srcfile
+    global srcdir
+    global subdir
+    global gdb_prompt
+
+    with_test_prefix "$threadtype" {
+	clean_restart ${executable}
+
+	set binfile [standard_output_file $executable]
+	set escapedbinfile [string_to_regexp ${binfile}]
+
+	if [get_compiler_info] {
+	    return -1
+	}
+
+	gdb_test "handle SIGALRM stop print pass" "Yes.*Yes.*Yes.*"
+
+	# Start the program running and then wait for a bit, to be sure
+	# that it can be attached to.
+	# Statistically there is a better chance without giving process a nice.
+
+	set testpid [eval exec $binfile &]
+	exec sleep 2
+
+	# Run 2 passes of the test.
+	# The C file inferior stops pending its signals if a single one is lost,
+	# we test successful redelivery of the caught signal by the 2nd pass.
+
+	# linux-2.6.20.4.x86_64 had maximal attempt # 20 in 4 test runs.
+	set attempts 100
+	set attempt 1
+	set passes 1
+	while { $passes < 3 && $attempt <= $attempts } {
+	    set stoppedtry 0
+	    while { $stoppedtry < 10 } {
+		if [catch {open /proc/${testpid}/status r} fileid] {
+		    set stoppedtry 10
+		    break
+		}
+		gets $fileid line1
+		gets $fileid line2
+		close $fileid
+
+		if {![string match "*(stopped)*" $line2]} {
+		    # No PASS message as we may be looping in multiple
+		    # attempts.
+		    break
+		}
+		sleep 1
+		set stoppedtry [expr $stoppedtry + 1]
+	    }
+	    if { $stoppedtry >= 10 } {
+		verbose -log $line2
+		set test "process is still running on the attempt # $attempt of $attempts"
+		break
+	    }
+
+	    # Main test:
+	    set test "attach (pass $passes), pending signal catch"
+	    if {[gdb_test_multiple "attach $testpid" $test {
+		-re "Attaching to program.*`?$escapedbinfile'?, process $testpid.*Program received signal SIGALRM.*$gdb_prompt $" {
+		    # nonthreaded:
+		    pass $test
+		    verbose -log "$test succeeded on the attempt # $attempt of $attempts"
+		    set passes [expr $passes + 1]
+		}
+		-re "Attaching to program.*`?$escapedbinfile'?, process $testpid.*$gdb_prompt $" {
+		    set ok 0
+
+		    if { $threadtype == "threaded" } {
+			# In the threaded case, the signal is left
+			# pending on the second thread.  Check for
+			# that by peeking at the thread's siginfo.
+			# SIGALRM is 14, SIGSTOP is 19.
+
+			# With remote targets, we need to pull the
+			# thread list explicitly before GDB even knows
+			# about thread 2.
+			set test2 "pull thread list"
+			gdb_test_multiple "info threads" $test2 {
+			    -re "\r\n$gdb_prompt $" {
+			    }
+			}
+
+			set test2 "thread apply 2 print \$_siginfo.si_signo"
+			gdb_test_multiple $test2 $test2 {
+			    -re " = 14\r\n$gdb_prompt $" {
+				set ok 1
+			    }
+			    -re " = 19\r\n$gdb_prompt $" {
+			    }
+			}
+		    } else {
+			# In the nonthreaded case, GDB should tell the
+			# user about having seen a signal.
+		    }
+
+		    if { $ok == 0} {
+			# We just lack the luck, we should try it again.
+			set attempt [expr $attempt + 1]
+		    } else {
+			pass $test
+			verbose -log "$test succeeded on the attempt # $attempt of $attempts"
+			set passes [expr $passes + 1]
+		    }
+		}
+	    }] != 0 } {
+		break
+	    }
+
+	    gdb_test "detach" "Detaching from.*" ""
+	}
+	if {$passes < 3} {
+	    if {$attempt > $attempts} {
+		unresolved $test
+	    } else {
+		fail $test
+	    }
+	}
+
+	# Exit and detach the process.
+       
+	gdb_exit
+
+	# Make sure we don't leave a process around to confuse the
+	# next test run (and prevent the compile by keeping the text
+	# file busy), in case the "set should_exit" didn't work.
+
+	# Continue the program - some Linux kernels need it before -9 if the
+	# process is stopped.
+	remote_exec build "kill -s CONT ${testpid}"
+       
+	remote_exec build "kill -9 ${testpid}"
+
+    }
+}
+
+# build the test case first without threads
+#
+if {[build_executable $testfile $executable_nothr $srcfile] == -1} {
+    untested "attach-into-signal.exp (nonthreaded)"
+    return -1
+}
+
+corefunc nonthreaded ${executable_nothr}
+
+# build the test case also with threads
+#
+if  { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" [standard_output_file ${executable_thr}] executable {debug additional_flags=-DUSE_THREADS}] != "" } {
+    untested "attach-into-signal.exp (threaded)"
+    return -1
+}
+
+corefunc threaded ${executable_thr}
