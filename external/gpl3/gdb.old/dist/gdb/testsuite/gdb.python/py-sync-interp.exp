@@ -1,0 +1,59 @@
+# Copyright (C) 2013-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.
+
+# This test case is copied from PR12929.
+# http://sourceware.org/bugzilla/show_bug.cgi?id=12929
+
+standard_testfile
+
+# We need to use TCL's exec to get the pid.
+if [is_remote target] then {
+    return 0
+}
+
+load_lib gdb-python.exp
+
+# Start with a fresh gdb.
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+gdb_exit
+
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile}] } {
+    return -1
+}
+
+# Start the program running and then wait for a bit, to be sure
+# that it can be attached to.
+set testpid [eval exec $binfile &]
+exec sleep 2
+if { [istarget "*-*-cygwin*"] } {
+    # testpid is the Cygwin PID, GDB uses the Windows PID, which might be
+    # different due to the way fork/exec works.
+    set testpid [ exec ps -e | gawk "{ if (\$1 == $testpid) print \$4; }" ]
+}
+
+# Test command 'where' is executed when command 'attach' is done, otherwise
+# function 'sleep' may not show up in backtrace.
+
+gdb_test "python gdb.execute(\"attach $testpid\"); gdb.execute(\"where\")" \
+    "in .*sleep \\(.*\\) .* in foo1 \\(\\) at .* in foo2 \\(\\) at .*" \
+    "attach and where"

@@ -1,0 +1,96 @@
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+
+# This file is part of the gdb testsuite.
+
+# Test stepping over permanent breakpoints on i386.
+
+if { ![is_x86_like_target] } then {
+    verbose "Skipping skip over permanent breakpoint on i386 tests."
+    return
+}
+
+set testfile "i386-bp_permanent"
+set srcfile i386-prologue.c
+set binfile ${objdir}/${subdir}/${testfile}
+
+# some targets have leading underscores on assembly symbols.
+set additional_flags [gdb_target_symbol_prefix_flags]
+
+# Don't use "debug", so that we don't have line information for the assembly
+# fragments.
+if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list $additional_flags]] != "" } {
+    untested ${testfile}.exp
+    return -1
+}
+
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+#
+# Run to `main' where we begin our tests.
+#
+
+if ![runto_main] then {
+  return -1
+}
+
+set function standard
+
+set retcode [gdb_test_multiple "disassemble $function" "Disassemble function '$function'" {
+    -re ".*($hex) <\\+0>.*($hex) <\\+4>.*($hex) <\\+5>.*($hex) <\\+6>.*$gdb_prompt $" {
+      set function_start $expect_out(1,string)
+      set address $expect_out(2,string)
+      set address1 $expect_out(3,string)
+      set address2 $expect_out(4,string)
+    }
+}]
+
+if {$retcode != 0} {
+  fail "Disassemble failed, skipping entire test."
+  return -1
+}
+
+gdb_breakpoint "*$function_start"
+
+gdb_breakpoint "*$address"
+
+gdb_test "continue" "Breakpoint .*, $function_start in $function.*" \
+	 "Stop at the '$function' start breakpoint (fetching esp)."
+
+# We want to fetch esp at the start of '$function' function to make sure
+# skip_permanent_breakpoint implementation really skips only the perm. 
+# breakpoint. If, for whatever reason, 'leave' instruction doesn't get
+# executed, esp will not have this value.
+set start_esp 0
+gdb_test_multiple "print \$esp" "Fetch esp value." {
+    -re "\\\$1.*($hex).*$gdb_prompt $" {
+      set start_esp $expect_out(1,string)
+    }
+}
+
+gdb_test "continue" "Breakpoint .*, $address in $function.*" \
+	 "Stop at permanent breakpoint."
+
+gdb_test "stepi" "$address1|$address2 in $function.*" \
+	 "Single stepping past permanent breakpoint."
+
+gdb_test "print \$esp" ".*$start_esp.*" \
+	 "ESP value does not match - step_permanent_breakpoint wrong."
+
