@@ -1,0 +1,266 @@
+# Copyright (C) 2009-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests the mechanism
+# of exposing types to Python.
+
+load_lib gdb-python.exp
+
+standard_testfile
+
+if [get_compiler_info c++] {
+    return -1
+}
+
+# Build inferior to language specification.
+proc build_inferior {exefile lang} {
+  global srcdir subdir srcfile testfile hex
+
+  if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${exefile}" executable "debug $lang"] != "" } {
+      untested "Couldn't compile ${srcfile} in $lang mode"
+      return -1
+  }
+}
+
+# Restart GDB.
+proc restart_gdb {exefile} { 
+  global srcdir subdir srcfile testfile hex
+
+  gdb_exit
+  gdb_start
+  gdb_reinitialize_dir $srcdir/$subdir
+  gdb_load ${exefile}
+
+  if ![runto_main ] then {
+      perror "couldn't run to breakpoint"
+      return
+  }
+}
+
+# Set breakpoint and run to that breakpoint.
+proc runto_bp {bp} {
+  gdb_breakpoint [gdb_get_line_number $bp]
+  gdb_continue_to_breakpoint $bp
+}
+
+proc test_fields {lang} {
+  with_test_prefix "test_fields" {
+    global gdb_prompt
+
+    # .fields() of a typedef should still return the underlying field list
+    gdb_test "python print (len(gdb.parse_and_eval('ts').type.fields()))" "2" \
+        "$lang typedef field list"
+
+    if {$lang == "c++"} {
+      # Test usage with a class
+      gdb_py_test_silent_cmd "print (c)" "print value (c)" 1
+      gdb_py_test_silent_cmd "python c = gdb.history (0)" "get value (c) from history" 1
+      gdb_py_test_silent_cmd "python fields = c.type.fields()" "get fields from c.type" 1
+      gdb_test "python print (len(fields))" "2" "Check number of fields (c)"
+      gdb_test "python print (fields\[0\].name)" "c" "Check class field c name"
+      gdb_test "python print (fields\[1\].name)" "d" "Check class field d name"
+
+      gdb_test "python print (c.type == gdb.parse_and_eval('d').type)" "False"
+      gdb_test "python print (c.type == gdb.parse_and_eval('d').type.fields()\[0\].type)" \
+	  "True"
+    }
+
+    # Test normal fields usage in structs.
+    gdb_py_test_silent_cmd "print (st)" "print value (st)" 1
+    gdb_py_test_silent_cmd "python st = gdb.history (0)" "get value (st) from history" 1
+    gdb_py_test_silent_cmd "python fields = st.type.fields()" "get fields from st.type" 1
+    gdb_test "python print (len(fields))" "2" "Check number of fields (st)"
+    gdb_test "python print (fields\[0\].name)" "a" "Check structure field a name"
+    gdb_test "python print (fields\[1\].name)" "b" "Check structure field b name"
+
+    # Test that unamed fields have 'None' for name.
+    gdb_py_test_silent_cmd "python ss = gdb.parse_and_eval('ss')" "init ss" 1
+    gdb_py_test_silent_cmd "python ss_fields = ss.type.fields()" \
+      "get fields from ss.type" 1
+    gdb_test "python print len(ss_fields)" "2" "Check length of ss_fields"
+    gdb_test "python print ss_fields\[0\].name is None" "True" \
+      "Check ss_fields\[0\].name"
+    gdb_test "python print ss_fields\[1\].name is None" "True" \
+      "Check ss_fields\[1\].name"
+    # Regression test for
+    # http://sourceware.org/bugzilla/show_bug.cgi?id=12070.
+    gdb_test "python print ('type' in dir(fields\[0\]))" "True" \
+      "Check that dir includes name"
+
+    # Test Python mapping behavior of gdb.Type for structs/classes
+    gdb_test "python print (len(st.type))" "2" "Check number of fields (st.type)"
+    gdb_test "python print (st.type\['a'\].name)" "a" "Check fields lookup by name"
+    gdb_test "python print (\[v.bitpos for v in st.type.itervalues()\])" {\[0L?, 32L?\]} "Check fields iteration over values"
+    gdb_test "python print (\[(n, v.bitpos) for (n, v) in st.type.items()\])" {\[\('a', 0L?\), \('b', 32L?\)\]} "Check fields items list"
+    gdb_test "python print ('a' in st.type)" "True" "Check field name exists test"
+    gdb_test "python print ('nosuch' in st.type)" "False" "Check field name nonexists test"
+    gdb_test "python print (not not st.type)" "True" "Check conversion to bool"
+
+    # Test rejection of mapping operations on scalar types
+    gdb_test "python print (len (st.type\['a'\].type))" "TypeError: Type is not a structure, union, or enum type.*"
+    gdb_test "python print (st.type\['a'\].type.has_key ('x'))" "TypeError: Type is not a structure, union, or enum type.*"
+    gdb_test "python print (st.type\['a'\].type.keys ())" "TypeError: Type is not a structure, union, or enum type.*"
+    gdb_test "python print (st.type\['a'\].type\['x'\])" "TypeError: Type is not a structure, union, or enum type.*"
+
+    # Test conversion to bool on scalar types
+    gdb_test "python print (not not st.type\['a'\].type)" "True"
+  
+    # Test regression PR python/10805
+    gdb_py_test_silent_cmd "print (ar)" "print value (ar)" 1
+    gdb_py_test_silent_cmd "python ar = gdb.history (0)" "get value (ar) from history" 1
+    gdb_test "python fields = ar.type.fields()"
+    gdb_test "python print (len(fields))" "1" "Check the number of fields"
+    gdb_test "python print (fields\[0\].type)" "<range type>" "Check array field type"
+
+    # Test gdb.Type.array.
+    gdb_test "python print (ar\[0\].cast(ar\[0\].type.array(1)))" \
+        ".1, 2." "cast to array with one argument"
+    gdb_test "python print (ar\[0\].cast(ar\[0\].type.array(0, 1)))" \
+        ".1, 2." "cast to array with two arguments"
+
+    gdb_test "python print (ar\[0\].type == ar\[0\].type)" "True"
+
+    # Test gdb.Type.vector.
+    # Note: vectors cast differently than arrays.  Here ar[0] is replicated
+    # for the size of the vector.
+    gdb_py_test_silent_cmd "print (vec_data_1)" "print value (vec_data_1)" 1
+    gdb_py_test_silent_cmd "python vec_data_1 = gdb.history (0)" "get value (vec_data_1) from history" 1
+
+    gdb_py_test_silent_cmd "print (vec_data_2)" "print value (vec_data_2)" 1
+    gdb_py_test_silent_cmd "python vec_data_2 = gdb.history (0)" "get value (vec_data_2) from history" 1
+
+    gdb_py_test_silent_cmd "python vec1 = vec_data_1.cast(ar\[0\].type.vector(1))" "set vec1" 1
+    gdb_test "python print (vec1)" ".1, 1." "cast to vector with one argument"
+    gdb_py_test_silent_cmd "python vec2 = vec_data_1.cast(ar\[0\].type.vector(0, 1))" "set vec2" 1
+    gdb_test "python print (vec2)" ".1, 1." "cast to vector with two arguments"
+    gdb_test "python print (vec1 == vec2)" "True"
+    gdb_py_test_silent_cmd "python vec3 = vec_data_2.cast(ar\[0\].type.vector(1))" "set vec3" 1
+    gdb_test "python print (vec1 == vec3)" "False"
+  }
+}
+
+proc test_enums {} {
+  with_test_prefix "test_enum" {
+    gdb_py_test_silent_cmd "print (e)" "print value (e)" 1
+    gdb_py_test_silent_cmd "python (e) = gdb.history (0)" "get value (e) from history" 1
+    gdb_py_test_silent_cmd "python fields = e.type.fields()" "extract type fields from e" 1
+    gdb_test "python print (len(fields))" "3" "Check the number of enum fields"
+    gdb_test "python print (fields\[0\].name)" "v1" "Check enum field\[0\] name"
+    gdb_test "python print (fields\[1\].name)" "v2" "Check enum field\[1\]name"
+
+    # Ditto but by mapping operations
+    gdb_test "python print (len(e.type))" "3" "Check the number of type fields"
+    gdb_test "python print (e.type\['v1'\].name)" "v1" "Check enum field lookup by name (v1)"
+    gdb_test "python print (e.type\['v3'\].name)" "v3" "Check enum field lookup by name (v3)"
+    gdb_test "python print (\[v.enumval for v in e.type.itervalues()\])" {\[0L?, 1L?, 2L?\]} "Check num fields iteration over values"
+    gdb_test "python print (\[(n, v.enumval) for (n, v) in e.type.items()\])" {\[\('v1', 0L?\), \('v2', 1L?\), \('v3', 2L?\)\]} "Check enum fields items list"
+  }
+}
+
+proc test_base_class {} {
+  with_test_prefix "test_base_class" {
+    gdb_py_test_silent_cmd "print (d)" "print value (d)" 1
+    gdb_py_test_silent_cmd "python d = gdb.history (0)" "get value (d) from history" 1
+    gdb_py_test_silent_cmd "python fields = d.type.fields()" "extract type fields from d" 1
+    gdb_test "python print (len(fields))" "3" "Check the number of fields"
+    gdb_test "python print (fields\[0\].is_base_class)" "True" "Check base class (fields\[0\])"
+    gdb_test "python print (fields\[1\].is_base_class)" "False" "Check base class (fields\[1\])"
+  }
+}
+
+proc test_range {} {
+  with_test_prefix "test_range" {
+    with_test_prefix "on ranged value" {
+      # Test a valid range request.
+      gdb_py_test_silent_cmd "print (ar)" "print value (ar)" 1
+      gdb_py_test_silent_cmd "python ar = gdb.history (0)" "get value (ar) from history" 1
+      gdb_test "python print (len(ar.type.range()))" "2" "Check correct tuple length"
+      gdb_test "python print (ar.type.range()\[0\])" "0" "Check range low bound"
+      gdb_test "python print (ar.type.range()\[1\])" "1" "Check range high bound"
+    }
+
+    with_test_prefix "on ranged type" {
+      # Test a range request on a ranged type.
+      gdb_py_test_silent_cmd "print (ar)" "print value (ar)" 1
+      gdb_py_test_silent_cmd "python ar = gdb.history (0)" "get value (ar) from history" 1
+      gdb_py_test_silent_cmd "python fields = ar.type.fields()" "get fields" 1
+      gdb_test "python print (fields\[0\].type.range()\[0\])" "0" "Check range low bound"
+      gdb_test "python print (fields\[0\].type.range()\[1\])" "1" "Check range high bound"
+    }
+
+    with_test_prefix "on unranged value" {
+      # Test where a range does not exist.
+      gdb_py_test_silent_cmd "print (st)" "print value (st)" 1
+      gdb_py_test_silent_cmd "python st = gdb.history (0)" "get value (st) from history" 1
+      gdb_test "python print (st.type.range())" "RuntimeError: This type does not have a range.*" "Check range for non ranged type."
+    }
+  }
+}
+
+# Some tests of template arguments.
+proc test_template {} {
+    gdb_py_test_silent_cmd \
+	"python ttype = gdb.parse_and_eval('temvar').type" \
+	"get type of temvar" \
+	1
+
+    gdb_test "python print (ttype.template_argument(0))" "D"
+    gdb_test "python print (isinstance(ttype.template_argument(0), gdb.Type))" \
+	"True"
+
+    # The next two tests require a GCC that emits DW_TAG_template_*.
+    # GCC 4.4 does not emit it, 4.5 and 6 do emit it.
+    set have_older_gcc 0
+    if {[test_compiler_info {gcc-[0-3]-*}]
+	|| [test_compiler_info {gcc-4-[0-4]-*}]} {
+	set have_older_gcc 1
+    }
+    if $have_older_gcc { setup_xfail *-*-* }
+    gdb_test "python print (ttype.template_argument(1))" "23"
+    if $have_older_gcc { setup_xfail *-*-* }
+    gdb_test "python print (isinstance(ttype.template_argument(1), gdb.Value))" \
+	"True"
+
+    if {[test_compiler_info {gcc-[0-3]-*}]
+	|| [test_compiler_info {gcc-4-[0-5]-*}]} {
+	setup_xfail "gcc/46955" *-*-*
+    }
+    gdb_test "python print (ttype.template_argument(2))" "&C::c"
+}
+
+# Perform C Tests.
+build_inferior "${binfile}" "c"
+restart_gdb "${binfile}"
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+
+with_test_prefix "lang_c" {
+    runto_bp "break to inspect struct and array."
+    test_fields "c"
+    test_enums
+}
+
+# Perform C++ Tests.
+build_inferior "${binfile}-cxx" "c++"
+restart_gdb "${binfile}-cxx"
+with_test_prefix "lang_cpp" {
+    runto_bp "break to inspect struct and array."
+    test_fields "c++"
+    test_base_class
+    test_range
+    test_template
+    test_enums
+}

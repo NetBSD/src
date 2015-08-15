@@ -1,0 +1,774 @@
+; OpenRISC family.  -*- Scheme -*-
+; Copyright 2000, 2001, 2011 Free Software Foundation, Inc.
+; Contributed by Johan Rydberg, jrydberg@opencores.org
+;
+; This program is free software; you can redistribute it and/or modify
+; it under the terms of the GNU General Public License as published by
+; the Free Software Foundation; either version 2 of the License, or
+; (at your option) any later version.
+;
+; This program is distributed in the hope that it will be useful,
+; but WITHOUT ANY WARRANTY; without even the implied warranty of
+; MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+; GNU General Public License for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with this program; if not, write to the Free Software
+; Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
+
+(include "simplify.inc")
+
+; OpenRISC 1000 is an architecture of a family of open source, 
+; synthesizeable RISC microprocessor cores. It is a 32-bit load 
+; and  store RISC architecture designed  with emphasis on speed,
+; compact instruction set and scalability. OpenRISC 1000 targets
+; wide range of embedded environments. 
+
+(define-arch
+  (name openrisc)
+  (comment "OpenRISC 1000")
+  (insn-lsb0? #t)
+  (machs openrisc or1300)
+  (isas or32)
+)
+
+
+; Attributes
+
+; An attribute to describe if a model has insn and/or data caches.
+(define-attr
+  (for model)
+  (type enum)
+  (name HAS-CACHE)
+  (comment "if this model has caches")
+  (values DATA-CACHE INSN-CACHE)
+)
+
+; An attribute to describe if an insn can be in the delay slot or not.
+(define-attr
+  (for insn)
+  (type boolean)
+  (name NOT-IN-DELAY-SLOT)
+  (comment "insn can't go in delay slot")
+)
+
+; IDOC attribute for instruction documentation.
+
+(define-attr
+  (for insn)
+  (type enum)
+  (name IDOC)
+  (comment "insn kind for documentation")
+  (attrs META)
+  (values
+   (MEM - () "Memory")
+   (ALU - () "ALU")
+   (FPU - () "FPU")
+   (BR - () "Branch")
+   (PRIV - () "Priviledged")
+   (MISC - () "Miscellaneous")
+  )
+)
+
+; Enum for exception vectors.
+(define-enum
+  (name e-exception)
+  (comment "exception vectors")
+  (attrs)
+  (prefix E_)
+  (values (("RESET") ("BUSERR" -) ("DPF" -) ("IPF" -) ("EXTINT" -) ("ALIGN" -) 
+          ("ILLEGAL" -) ("PEINT" -) ("DTLBMISS" -) ("ITLBMISS" -) ("RRANGE" -) 
+          ("SYSCALL" -) ("BREAK" -) ("RESERVED" -)))
+)
+
+
+; Instruction set parameters.
+ 
+(define-isa
+  ; Name of the ISA.
+  (name or32)
+
+  ; Base insturction length.  The insns is always 32 bits wide.
+  (base-insn-bitsize 32)
+
+  ; Address of insn in delay slot
+  (setup-semantics (set-quiet (reg h-delay-insn) (add pc 4)))
+)
+
+
+; CPU family definitions.
+  
+(define-cpu
+  ; CPU names must be distinct from the architecture name and machine names.
+  ; The "b" suffix stands for "base" and is the convention.
+  ; The "f" suffix stands for "family" and is the convention.
+  (name openriscbf)
+  (comment "OpenRISC base family")
+  (endian big)
+  (word-bitsize 32)
+)
+
+; Generic machine
+(define-mach
+  (name openrisc)
+  (comment "Generic OpenRISC cpu")
+  (cpu openriscbf)
+  (bfd-name "openrisc")
+)
+
+; OpenRISC 1300 machine
+(define-mach
+  (name or1300)
+  (comment "OpenRISC 1300")
+  (cpu openriscbf)
+  (bfd-name "openrisc:1300")
+)
+
+
+; Model descriptions
+
+; Generic OpenRISC model 
+(define-model
+  (name openrisc-1) (comment "OpenRISC generic model")  (attrs)
+  (mach openrisc)
+
+  ; Nothing special about this.
+  (unit u-exec "Execution Unit" () 1 1 () () () ())
+)
+
+; OpenRISC 1320 
+(define-model
+  (name or1320-1) (comment "OpenRISC 1320 model") 
+
+  ; This model has both instruction and data cache
+  (attrs (HAS-CACHE INSN-CACHE,DATA-CACHE))
+  (mach or1300)
+
+  ; Nothing special about this.
+  (unit u-exec "Execution Unit" () 1 1 () () () ())
+)
+
+
+; Instruction fields.
+
+; Attributes:
+;  . PCREL-ADDR  pc relative value (for reloc and disassembly purposes)
+;  . ABS-ADDR    absolute address (for reloc and disassembly purposes?)
+;  . RESERVED    bits are not used to decode insn, must be all 0
+
+; Instruction classes.
+(dnf f-class     "insn class"          () 31 2)
+(dnf f-sub       "sub class"           () 29 4)
+
+; Register fields.
+(dnf f-r1        "r1"                  () 25 5)
+(dnf f-r2        "r2"                  () 20 5)
+(dnf f-r3        "r3"                  () 15 5)
+
+; Immediates.
+(df  f-simm16    "signed imm (16)"     () 15 16 INT #f #f)
+(dnf f-uimm16    "unsigned imm (16)"   () 15 16)
+(dnf f-uimm5     "unsigned imm (5)"    () 4  5)
+(df  f-hi16      "high 16"             () 15 16 INT #f #f)
+(df  f-lo16      "low 16"              () 15 16 INT #f #f)
+
+; Sub fields
+(dnf f-op1       "op1"                 () 31 2)
+(dnf f-op2       "op2"                 () 29 4)
+(dnf f-op3       "op3"                 () 25 2)
+(dnf f-op4       "op4"                 () 23 3)
+(dnf f-op5       "op3"                 () 25 5)
+(dnf f-op6       "op4"                 () 7  3)
+(dnf f-op7       "op5"                 () 3  4)
+
+(dnf f-i16-1     "uimm16-1"            () 10 11)
+(dnf f-i16-2     "uimm16-2"            () 25  5)
+
+; PC relative, 26-bit (2 shifted to right)
+(df f-disp26     "disp26"              (PCREL-ADDR) 25 26 INT
+    ((value pc) (sra WI (sub WI value pc) (const 2)))
+    ((value pc) (add WI (sll WI value (const 2)) pc)))
+
+; absolute, 26-bit (2 shifted to right)
+(df f-abs26      "abs26"               (ABS-ADDR) 25 26 INT
+    ((value pc) (sra WI pc     (const 2)))
+    ((value pc) (sll WI value  (const 2))))
+
+(define-multi-ifield
+  (name f-i16nc)
+  (comment "16 bit signed")
+  (attrs SIGN-OPT)
+  (mode HI)
+  (subfields f-i16-1 f-i16-2)
+  (insert (sequence ()
+                    (set (ifield f-i16-2) (and (sra (ifield f-i16nc) 
+                                                    (const 11)) 
+                                               (const #x1f)))
+                    (set (ifield f-i16-1) (and (ifield f-i16nc) 
+                                               (const #x7ff)))))
+  (extract (sequence ()
+                     (set (ifield f-i16nc) (c-raw-call SI "@arch@_sign_extend_16bit" 
+                                           (or (sll (ifield f-i16-2) 
+                                                    (const 11))
+                                               (ifield f-i16-1))))))
+)
+
+
+; Enums.
+
+; insn-class: bits 31-30
+(define-normal-insn-enum insn-class "FIXME" () OP1_ f-class
+  (.map .str (.iota 4))
+)
+
+(define-normal-insn-enum insn-sub "FIXME" () OP2_ f-sub
+  (.map .str (.iota 16))
+)
+
+(define-normal-insn-enum insn-op3 "FIXME" () OP3_ f-op3
+  (.map .str (.iota 4))
+)
+
+(define-normal-insn-enum insn-op4 "FIXME" () OP4_ f-op4
+  (.map .str (.iota 8))
+)
+
+(define-normal-insn-enum insn-op5  "FIXME" () OP5_ f-op5
+  (.map .str (.iota 32))
+)
+
+(define-normal-insn-enum insn-op6  "FIXME" () OP6_ f-op6
+  (.map .str (.iota 8))
+)
+
+(define-normal-insn-enum insn-op7  "FIXME" () OP7_ f-op7
+  (.map .str (.iota 16))
+)
+
+
+
+; Hardware pieces.
+; These entries list the elements of the raw hardware.
+; They're also used to provide tables and other elements of the assembly
+; language.
+
+(dnh h-pc "program counter" (PC PROFILE) (pc) () () ())
+
+(define-hardware
+  (name h-gr) (comment "general registers") (attrs PROFILE)
+  (type register WI (32))
+  (indices keyword ""
+           ((r0 0) (r1 1) (r2 2) (r3 3) (r4 4) (r5 5) (r6 6) (r7 7)
+            (r8 8) (r9 9) (r10 10) (r11 11) (r12 12) (r13 13) (r14 14) 
+            (r15 15) (r16 16) (r17 17) (r18 18) (r19 19) (r20 20) 
+            (r21 21) (r22 22) (r23 23) (r24 24) (r25 25) (r26 26) 
+            (r27 27) (r28 28) (r29 29) (r30 30) (r31 31) (lr 11) 
+            (sp 1)  (fp 2)))
+)
+
+(define-hardware
+  (name h-sr) (comment "special registers")
+  (type register WI (#x20000))    
+  (get (index) (c-call SI "@arch@_h_sr_get_handler" index))
+  (set (index newval) (c-call VOID "@arch@_h_sr_set_handler" index newval))
+)
+
+(dnh h-hi16 "high 16 bits" () (immediate (INT 16)) () () ())
+(dnh h-lo16 "low 16 bits"  () (immediate (INT 16)) () () ())
+
+(dsh h-cbit "condition bit" () (register BI))
+(dsh h-delay-insn "delay insn addr" () (register SI))
+
+
+; Instruction operands.
+
+(dnop sr      "special register"           (SEM-ONLY)  h-sr   f-nil)
+(dnop cbit    "condition bit"              (SEM-ONLY)  h-cbit f-nil)
+(dnop simm-16 "16 bit signed immediate"    ()          h-sint f-simm16)
+(dnop uimm-16 "16 bit unsigned immediate"  ()          h-uint f-uimm16)
+(dnop disp-26 "pc-rel 26 bit"              ()          h-iaddr f-disp26)
+(dnop abs-26  "abs 26 bit"                 ()          h-iaddr f-abs26)
+(dnop uimm-5  "imm5"                       ()          h-uint f-uimm5)
+
+(dnop rD      "destination register"       ()          h-gr   f-r1)
+(dnop rA      "source register A"          ()          h-gr   f-r2)
+(dnop rB      "source register B"          ()          h-gr   f-r3)
+
+(dnop op-f-23 "f-op23"                     ()          h-uint f-op4)
+(dnop op-f-3  "f-op3"                      ()          h-uint f-op5)
+
+; For hi(foo).
+(define-operand
+  (name hi16) (comment "high 16 bit immediate, sign optional") 
+  (attrs SIGN-OPT)
+  (type h-hi16)
+  (index f-simm16)
+  (handlers (parse "hi16"))
+)
+
+; For lo(foo)
+(define-operand
+  (name lo16) (comment "low 16 bit immediate, sign optional")
+  (attrs SIGN-OPT)
+  (type h-lo16)
+  (index f-lo16)
+  (handlers (parse "lo16"))
+)
+
+(define-operand
+  (name ui16nc)
+  (comment "16 bit immediate, sign optional")
+  (attrs)
+  (type h-lo16)
+  (index f-i16nc)
+  (handlers (parse "lo16"))
+)
+
+
+; Instructions.
+
+; Branch releated instructions 
+
+(dni l-j "jump (absolute iaddr)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT) 
+
+     "l.j ${abs-26}"
+     (+ OP1_0 OP2_0 abs-26)
+
+     ; We execute the delay slot before doin' the real branch
+     (delay 1 (set pc abs-26))
+     ()
+)
+
+(dni l-jal "jump and link (absolute iaddr)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.jal ${abs-26}"
+     (+ OP1_0 OP2_1 abs-26)
+
+     ; We execute the delay slot before doin' the real branch
+     ; Set LR to (delay insn addr + 4)
+     (sequence ()
+               (set (reg h-gr 11) (add (reg h-delay-insn) 4))
+               (delay 1 (set pc abs-26)))
+     ()
+)
+
+(dni l-jr "jump register (absolute iaddr)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.jr $rA"
+     (+ OP1_0 OP2_5 OP3_0 OP4_0 rA uimm-16)
+
+     ; We execute the delay slot before doin' the real branch
+     (delay 1 (set pc rA))
+     ()
+)
+
+(dni l-jalr "jump register and link (absolute iaddr)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.jalr $rA"
+     (+ OP1_0 OP2_5 OP3_0 OP4_1 rA uimm-16)
+
+     ; We save the value of rA in a temporary slot before setting
+     ; the link register.  This because "l.jalr r11" would cause
+     ; a forever-and-ever loop otherwise.
+     ;
+     ; We execute the delay slot before doin' the real branch
+     (sequence ((WI tmp-slot))
+               (set tmp-slot rA)
+               (set (reg h-gr 11) (add (reg h-delay-insn) 4))
+               (delay 1 (set pc tmp-slot)))
+     ()
+)
+
+(dni l-bal "branch and link (pc relative iaddr)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.bal ${disp-26}"
+     (+ OP1_0 OP2_2 disp-26)
+
+     ; We execute the delay slot before doin' the real branch
+     ; Set LR to (delay insn addr + 4)
+     (sequence ()
+               (set (reg h-gr 11) (add (reg h-delay-insn) 4))
+               (delay 1 (set pc disp-26)))
+     ()
+)
+
+(dni l-bnf "branch if condition bit not set (pc relative iaddr)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.bnf ${disp-26}"
+     (+ OP1_0 OP2_3 disp-26)
+
+     ; We execute the delay slot before doin' the real branch
+     (if (eq cbit 0)
+         (sequence ()
+                   (delay 1 (set pc disp-26))))
+     ()
+)
+
+(dni l-bf "branch if condition bit is set (pc relative iaddr)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.bf ${disp-26}"
+     (+ OP1_0 OP2_4 disp-26)
+
+     ; We execute the delay slot before doin' the real branch
+     (if (eq cbit 1)
+         (sequence ()
+                   (delay 1 (set pc disp-26))))
+     ()
+)
+
+(dni l-brk "break (exception)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.brk ${uimm-16}"
+     (+ OP1_0 OP2_5 OP3_3 OP4_0 rA uimm-16)
+
+     ; FIXME should we do it like this ??
+     (c-call VOID "@cpu@_cpu_brk" uimm-16)
+     ()
+)
+
+(dni l-rfe "return from exception"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.rfe $rA"
+     (+ OP1_0 OP2_5 OP3_0 OP4_2 rA uimm-16)
+     (sequence ()
+               (delay 1 (set pc (c-call SI "@cpu@_cpu_rfe" rA))))
+     ()
+)
+
+(dni l-sys "syscall (exception)"
+     ; This function may not be in delay slot
+     (NOT-IN-DELAY-SLOT)
+
+     "l.sys ${uimm-16}"
+     (+ OP1_0 OP2_5 OP3_2 OP4_0 rA uimm-16)
+     (sequence()
+              (delay 1 (set pc (c-call SI "@cpu@_except" pc 
+                                       #xc00 uimm-16))))
+     ()
+)
+
+
+; Misc instructions
+
+(dni l-nop "nop"
+     ()
+     "l.nop"
+     (+ OP1_0 OP2_5 OP3_1 OP4_0 rA uimm-16)
+     (nop)
+     ()
+)
+
+(dnmi l-ret "ret" ()
+      "l.ret"
+      (emit l-jr (rA 11) (uimm-16 0))
+)
+
+(dni l-movhi "movhi"
+     (DELAY-SLOT)
+     "l.movhi $rD,$hi16"
+     (+ OP1_0 OP2_6 hi16 rD rA)
+     (set rD (sll WI hi16 (const 16)))
+     ()
+)
+
+
+; System releated instructions
+
+(dni l-mfsr "mfsr"
+     (DELAY-SLOT)
+     "l.mfsr $rD,$rA"
+     (+ OP1_0 OP2_7 rD rA uimm-16)
+     (set rD (c-call SI "@cpu@_cpu_mfsr" rA))
+     ()
+)
+
+(dni l-mtsr "mtsr"
+     (DELAY-SLOT)
+     "l.mtsr $rA,$rB"
+     (+ OP1_1 OP2_0 rA rB rD (f-i16-1 0))
+     (c-call VOID "@cpu@_cpu_mtsr" rA rB)
+     ()
+)
+
+
+
+; Load instructions
+
+(dni l-lw "load word"
+     (DELAY-SLOT)
+     "l.lw $rD,${simm-16}($rA)"
+     (+ OP1_2 OP2_0 rD rA simm-16)
+     (set rD (mem SI (add rA simm-16)))
+     ()
+)
+
+(dni l-lbz "load byte (zero extend)"
+     (DELAY-SLOT)
+     "l.lbz $rD,${simm-16}($rA)"
+     (+ OP1_2 OP2_1 rD rA simm-16)
+     (set rD (zext SI (mem QI (add rA simm-16))))
+     ()
+)
+
+(dni l-lbs "load byte (sign extend)"
+     (DELAY-SLOT)
+     "l.lbs $rD,${simm-16}($rA)"
+     (+ OP1_2 OP2_2 rD rA simm-16)
+     (set rD (ext SI (mem QI (add rA simm-16))))
+     ()
+)
+
+(dni l-lhz "load halfword (zero extend)"
+     (DELAY-SLOT)
+     "l.lhz $rD,${simm-16}($rA)"
+     (+ OP1_2 OP2_3 rD simm-16 rA)
+     (set rD (zext SI (mem HI (add rA simm-16))))
+     ()
+)
+
+(dni l-lhs "load halfword (sign extend)"
+     (DELAY-SLOT)
+     "l.lhs $rD,${simm-16}($rA)"
+     (+ OP1_2 OP2_4 rD rA simm-16)
+     (set rD (ext SI (mem HI (add rA simm-16))))
+     ()
+)
+
+
+; Store instructions
+;
+; We have to use a multi field since the integer is splited over 2 fields
+
+(define-pmacro (store-insn mnemonic op2-op mode-op)
+  (begin
+     (dni (.sym l- mnemonic)
+          (.str "l." mnemonic " imm(reg)/reg")
+          (DELAY-SLOT)
+          (.str "l." mnemonic " ${ui16nc}($rA),$rB")
+          (+ OP1_3 op2-op rB rD ui16nc)
+          (set (mem mode-op (add rA ui16nc)) rB)
+          ()
+     )
+   )
+)
+
+(store-insn sw OP2_5 SI)
+(store-insn sb OP2_6 QI)
+(store-insn sh OP2_7 HI)
+
+
+
+; Shift and rotate instructions
+
+; Reserved fields.
+(dnf f-f-15-8 "nop" (RESERVED) 15 8)
+(dnf f-f-10-3 "nop" (RESERVED) 10 3)
+(dnf f-f-4-1  "nop" (RESERVED) 4  1)
+(dnf f-f-7-3  "nop" (RESERVED) 7  3)
+
+(define-pmacro (shift-insn mnemonic op4-op)
+  (begin
+     (dni (.sym l- mnemonic)
+          (.str "l." mnemonic " reg/reg/reg")
+          ()
+          (.str "l." mnemonic " $rD,$rA,$rB")
+          (+ OP1_3 OP2_8 rD rA rB (f-f-10-3 0) op4-op (f-f-4-1 0) OP7_8)
+          (set rD (mnemonic rA rB))
+          ()
+     )
+     (dni (.sym l- mnemonic "i")
+          (.str "l." mnemonic " reg/reg/imm")
+          ()
+          (.str "l." mnemonic "i $rD,$rA,${uimm-5}")
+          (+ OP1_2 OP2_13 rD rA (f-f-15-8 0) op4-op uimm-5)
+          (set rD (mnemonic rA uimm-5))
+          ()
+     )
+   )
+)
+
+(shift-insn sll OP6_0)
+(shift-insn srl OP6_1)
+(shift-insn sra OP6_2)
+(shift-insn ror OP6_4)
+
+
+; Arethmetic insns
+
+; Reserved fields.
+(dnf f-f-10-7 "nop" (RESERVED) 10 7)
+
+(define-pmacro (ar-insn-u mnemonic op2-op op5-op)
+  (begin
+     (dni (.sym l- mnemonic)
+          (.str "l." mnemonic " reg/reg/reg")
+          ()
+          (.str "l." mnemonic " $rD,$rA,$rB")
+          (+ OP1_3 OP2_8 rD rA rB (f-f-10-7 0) op5-op)
+          (set rD (mnemonic rA rB))
+          ()
+     )
+     (dni (.sym l- mnemonic "i")
+          (.str "l." mnemonic " reg/reg/lo16")
+          ()
+          (.str "l." mnemonic "i $rD,$rA,$lo16")
+          (+ OP1_2 op2-op rD rA lo16)
+          (set rD (mnemonic rA (and lo16 #xffff)))
+          ()
+     )
+   )
+)
+
+(define-pmacro (ar-insn-s mnemonic op2-op op5-op)
+  (begin
+     (dni (.sym l- mnemonic)
+          (.str "l." mnemonic " reg/reg/reg")
+          ()
+          (.str "l." mnemonic " $rD,$rA,$rB")
+          (+ OP1_3 OP2_8 rD rA rB (f-f-10-7 0) op5-op)
+          (set rD (mnemonic rA rB))
+          ()
+     )
+     (dni (.sym l- mnemonic "i")
+          (.str "l." mnemonic " reg/reg/lo16")
+          ()
+          (.str "l." mnemonic "i $rD,$rA,$lo16")
+          (+ OP1_2 op2-op rD rA lo16)
+          (set rD (mnemonic rA lo16))
+          ()
+     )
+   )
+)
+
+(ar-insn-s add OP2_5  OP7_0)
+;;(ar-op-s addc OP2_5  OP7_0)
+(ar-insn-s sub OP2_7  OP7_2)
+(ar-insn-u and OP2_8  OP7_3)
+(ar-insn-u or  OP2_9  OP7_4)
+(ar-insn-u xor OP2_10 OP7_5)
+(ar-insn-u mul OP2_11 OP7_6)
+;;(ar-op-u mac OP2_12 OP7_7)
+
+
+(dni l-div "divide (signed)"
+     (DELAY-SLOT)
+     "l.div $rD,$rA,$rB"
+     (+ OP1_3 OP2_8 rD rA rB (f-f-10-7 0) OP7_9)
+     (if VOID (eq rB (const 0))
+         (c-call VOID "@arch@_cpu_trap" pc (enum SI E_ILLEGAL))
+         (set rD (div rA rB)))
+     ()
+)
+
+(dni l-divu "divide (unsigned)"
+     (DELAY-SLOT)
+     "l.divu $rD,$rA,$rB"
+     (+ OP1_3 OP2_8 rD rA rB (f-f-10-7 0) OP7_10)
+     (if VOID (eq rB (const 0))
+         (c-call VOID "@arch@_cpu_trap" pc (enum SI E_ILLEGAL))
+         (set rD (udiv rA rB))) 
+     ()
+)
+
+
+; Compare instructions
+
+; Reserved fields.
+(dnf f-f-10-11 "nop" (RESERVED) 10 11)
+
+; Register compare (both signed and unsigned)
+(define-pmacro (sf-insn-r op1-op op2-op op3-op op3-op-2 sem-op)
+  (begin
+     (dni (.sym l- "sf" (.sym sem-op "s"))
+          (.str "l." mnemonic " reg/reg")
+          (DELAY-SLOT)
+          (.str "l.sf" (.str sem-op) "s $rA,$rB")
+          (+ op1-op op2-op op3-op-2 rA rB (f-f-10-11 0))
+          (set cbit (sem-op rA rB))
+          ()
+     )
+     (dni (.sym l- "sf" (.sym sem-op "u"))
+          (.str "l." mnemonic " reg/reg")
+          (DELAY-SLOT)
+          (.str "l.sf" (.str sem-op) "u $rA,$rB")
+          (+ op1-op op2-op op3-op rA rB (f-f-10-11 0))
+          (set cbit (sem-op rA rB))
+          ()
+     )
+   )
+)
+
+; Immediate compare (both signed and unsigned)
+(define-pmacro (sf-insn-i op1-op op2-op op3-op op3-op-2 sem-op)
+  (begin
+     (dni (.sym l- "sf" (.sym sem-op "si"))
+          (.str "l." mnemonic "si reg/imm")
+          (DELAY-SLOT)
+          (.str "l.sf" (.str sem-op) "si $rA,${simm-16}")
+          (+ op1-op op2-op op3-op-2 rA simm-16)
+          (set cbit (sem-op rA simm-16))
+          ()
+     )
+     (dni (.sym l- "sf" (.sym sem-op "ui"))
+          (.str "l." mnemonic "ui reg/imm")
+          (DELAY-SLOT)
+          (.str "l.sf" (.str sem-op) "ui $rA,${uimm-16}")
+          (+ op1-op op2-op op3-op rA uimm-16)
+          (set cbit (sem-op rA uimm-16))
+          ()
+     )
+   )
+)
+
+(define-pmacro (sf-insn op5-op sem-op)
+  (begin
+     (dni (.sym l- "sf" sem-op)
+          (.str "l." mnemonic " reg/reg")
+          (DELAY-SLOT)
+          (.str "l.sf" (.str sem-op) " $rA,$rB")
+          (+ OP1_3 OP2_9 op5-op rA rB (f-f-10-11 0))
+          (set cbit (sem-op rA rB))
+          ()
+     )
+     (dni (.sym l- "sf" (.sym sem-op "i"))
+          (.str "l." mnemonic "i reg/imm")
+          (DELAY-SLOT)
+          (.str "l.sf" (.str sem-op) "i $rA,${simm-16}")
+          (+ OP1_2 OP2_14 op5-op rA simm-16)
+          (set cbit (sem-op rA simm-16))
+          ()
+     )
+   )
+)
+
+
+(sf-insn-r OP1_3 OP2_9 OP5_2 OP5_6 gt)
+(sf-insn-r OP1_3 OP2_9 OP5_3 OP5_7 ge)
+(sf-insn-r OP1_3 OP2_9 OP5_4 OP5_8 lt)
+(sf-insn-r OP1_3 OP2_9 OP5_5 OP5_9 le)
+
+(sf-insn-i OP1_2 OP2_14 OP5_2 OP5_6 gt)
+(sf-insn-i OP1_2 OP2_14 OP5_3 OP5_7 ge)
+(sf-insn-i OP1_2 OP2_14 OP5_4 OP5_8 lt)
+(sf-insn-i OP1_2 OP2_14 OP5_5 OP5_9 le)
+
+(sf-insn   OP5_0 eq)
+(sf-insn   OP5_1 ne)

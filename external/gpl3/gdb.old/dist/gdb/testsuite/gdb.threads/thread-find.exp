@@ -1,0 +1,434 @@
+# Copyright 2011-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Please email any bugs, comments, and/or additions to this file to:
+# bug-gdb@gnu.org
+
+standard_testfile linux-dp.c
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug}] != ""} {
+    return -1
+}
+
+clean_restart ${binfile}
+gdb_test_no_output "set print sevenbit-strings"
+runto_main
+
+# Run until there are some threads.
+gdb_breakpoint [gdb_get_line_number "linuxthreads.exp: info threads 2"]
+gdb_continue_to_breakpoint "main thread's sleep"
+
+# Make sure thread list is up-to-date (in case remote targets have not yet
+# reported thread creation events)
+gdb_test "info threads"
+
+# Create thread names.
+gdb_test "thread apply 1 thread name threadname_1" \
+    "Thread 1 .*" \
+    "name thread 1"
+
+gdb_test "thread apply 2 thread name threadname_2" \
+    "Thread 2 .*" \
+    "name thread 2"
+
+gdb_test "thread apply 3 thread name threadname_3" \
+    "Thread 3 .*" \
+    "name thread 3"
+
+gdb_test "thread apply 4 thread name threadname_4" \
+    "Thread 4 .*" \
+    "name thread 4"
+
+gdb_test "thread apply 5 thread name threadname_5" \
+    "Thread 5 .*" \
+    "name thread 5"
+
+gdb_test "thread apply 6 thread name threadname_6" \
+    "Thread 6 .*" \
+    "name thread 6"
+
+# Collect thread ids, if any.
+gdb_test_multiple "info threads" "collect thread id" {
+    -re ". 6 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_6\" \[^\r\n\]*" {
+	set thread6 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 5 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_5\" \[^\r\n\]*" {
+	set thread5 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 4 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_4\" \[^\r\n\]*" {
+	set thread4 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 3 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_3\" \[^\r\n\]*" {
+	set thread3 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 2 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_2\" \[^\r\n\]*" {
+	set thread2 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 1 .*\[Tt\]hread (\[0-9a-fA-Fx\]+).* \"threadname_1\" \[^\r\n\]*" {
+	set thread1 $expect_out(1,string)
+	exp_continue
+    }
+    -re ".*$gdb_prompt $" {
+	pass "collect thread id"
+    }
+}
+
+if { [info exists thread6] } then {
+    gdb_test "echo $thread6\\n" "$thread6" "got thread ids"
+}
+
+# Collect process ids, if any.
+gdb_test_multiple "info threads" "collect thread id" {
+    -re ". 6 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_6\" \[^\r\n\]*" {
+	set process6 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 5 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_5\" \[^\r\n\]*" {
+	set process5 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 4 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_4\" \[^\r\n\]*" {
+	set process4 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 3 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_3\" \[^\r\n\]*" {
+	set process3 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 2 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_2\" \[^\r\n\]*" {
+	set process2 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 1 .*\[Pp\]rocess (\[0-9a-fA-Fx\]+).* \"threadname_1\" \[^\r\n\]*" {
+	set process1 $expect_out(1,string)
+	exp_continue
+    }
+    -re ".*$gdb_prompt $" {
+	pass "collect process id"
+    }
+}
+
+if { [info exists process6] } then {
+    gdb_test "echo $process6\\n" "$process6" "got process ids"
+}
+
+# Collect lwp ids, if any.
+gdb_test_multiple "info threads" "collect thread id" {
+    -re ". 6 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_6\" \[^\r\n\]*" {
+	set lwp6 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 5 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_5\" \[^\r\n\]*" {
+	set lwp5 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 4 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_4\" \[^\r\n\]*" {
+	set lwp4 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 3 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_3\" \[^\r\n\]*" {
+	set lwp3 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 2 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_2\" \[^\r\n\]*" {
+	set lwp2 $expect_out(1,string)
+	exp_continue
+    }
+    -re ". 1 .*LWP (\[0-9a-fA-Fx\]+).* \"threadname_1\" \[^\r\n\]*" {
+	set lwp1 $expect_out(1,string)
+	exp_continue
+    }
+    -re ".*$gdb_prompt $" {
+	pass "collect lwp id"
+    }
+}
+
+if { [info exists lwp6] } then {
+    gdb_test "echo $lwp6\\n" "$lwp6" "got lwp ids"
+}
+
+#
+# Now: test 'thread find' with names.
+#
+
+gdb_test "thread find threadname_6" \
+    "Thread 6 has name 'threadname_6'" "find thread name 6"
+gdb_test "thread find threadname_5" \
+    "Thread 5 has name 'threadname_5'" "find thread name 5"
+gdb_test "thread find threadname_4" \
+    "Thread 4 has name 'threadname_4'" "find thread name 4"
+gdb_test "thread find threadname_3" \
+    "Thread 3 has name 'threadname_3'" "find thread name 3"
+gdb_test "thread find threadname_2" \
+    "Thread 2 has name 'threadname_2'" "find thread name 2"
+gdb_test "thread find threadname_1" \
+    "Thread 1 has name 'threadname_1'" "find thread name 1"
+
+#
+# Test 'thread find' with thread ids, if any.
+#
+
+if { [info exists thread6] } then {
+    gdb_test "thread find $thread6" \
+	"Thread 6 has .*$thread6.*" "find thread id 6"
+    gdb_test "thread find $thread5" \
+	"Thread 5 has .*$thread5.*" "find thread id 5"
+    gdb_test "thread find $thread4" \
+	"Thread 4 has .*$thread4.*" "find thread id 4"
+    gdb_test "thread find $thread3" \
+	"Thread 3 has .*$thread3.*" "find thread id 3"
+    gdb_test "thread find $thread2" \
+	"Thread 2 has .*$thread2.*" "find thread id 2"
+    gdb_test "thread find $thread1" \
+	"Thread 1 has .*$thread1.*" "find thread id 1"
+}
+
+#
+# Test 'thread find' with process ids, if any.
+#
+
+if { [info exists process6] } then {
+    gdb_test "thread find $process6" \
+	"Thread 6 has .*$process6.*" "find process id 6"
+    gdb_test "thread find $process5" \
+	"Thread 5 has .*$process5.*" "find process id 5"
+    gdb_test "thread find $process4" \
+	"Thread 4 has .*$process4.*" "find process id 4"
+    gdb_test "thread find $process3" \
+	"Thread 3 has .*$process3.*" "find process id 3"
+    gdb_test "thread find $process2" \
+	"Thread 2 has .*$process2.*" "find process id 2"
+    gdb_test "thread find $process1" \
+	"Thread 1 has .*$process1.*" "find process id 1"
+}
+
+#
+# Test 'thread find' with lwp ids, if any.
+#
+
+if { [info exists lwp6] } then {
+    gdb_test "thread find $lwp6" \
+	"Thread 6 has .*$lwp6.*" "find lwp id 6"
+    gdb_test "thread find $lwp5" \
+	"Thread 5 has .*$lwp5.*" "find lwp id 5"
+    gdb_test "thread find $lwp4" \
+	"Thread 4 has .*$lwp4.*" "find lwp id 4"
+    gdb_test "thread find $lwp3" \
+	"Thread 3 has .*$lwp3.*" "find lwp id 3"
+    gdb_test "thread find $lwp2" \
+	"Thread 2 has .*$lwp2.*" "find lwp id 2"
+    gdb_test "thread find $lwp1" \
+	"Thread 1 has .*$lwp1.*" "find lwp id 1"
+}
+
+# Test no match.
+
+gdb_test "thread find foobarbaz" "No threads match .*" "no thread"
+
+#
+# Test regular expression
+#
+
+set see1 0
+set see2 0
+set see3 0
+set see4 0
+set see5 0
+set see6 0
+
+gdb_test_multiple "thread find threadname_\[345\]" "test regular exp" {
+    -re "Thread 6 has name \[^\r\n\]*" {
+	set see6 1
+	exp_continue
+    }
+    -re "Thread 5 has name \[^\r\n\]*" {
+	set see5 1
+	exp_continue
+    }
+    -re "Thread 4 has name \[^\r\n\]*" {
+	set see4 1
+	exp_continue
+    }
+    -re "Thread 3 has name \[^\r\n\]*" {
+	set see3 1
+	exp_continue
+    }
+    -re "Thread 2 has name \[^\r\n\]*" {
+	set see2 1
+	exp_continue
+    }
+    -re "Thread 1 has name \[^\r\n\]*" {
+	set see1 1
+	exp_continue
+    }
+    -re ".*$gdb_prompt $" {
+	if { $see3 && $see4 && $see5 && !$see1 && !$see2 && !$see6 } then {
+	    pass "test regular exp"
+	} else {
+	    fail "test regular exp"
+	}
+    }
+}
+
+#
+# Test info threads on a subset of threads
+#
+
+set see1 0
+set see2 0
+set see3 0
+set see4 0
+set see5 0
+set see6 0
+
+gdb_test_multiple "info threads 2 4 6" "info threads 2 4 6" {
+    -re ". 6 \[^\r\n\]*\"threadname_6\" \[^\r\n\]*" {
+	set see6 1
+	exp_continue
+    }
+    -re ". 5 \[^\r\n\]*\"threadname_5\" \[^\r\n\]*" {
+	set see5 1
+	exp_continue
+    }
+    -re ". 4 \[^\r\n\]*\"threadname_4\" \[^\r\n\]*" {
+	set see4 1
+	exp_continue
+    }
+    -re ". 3 \[^\r\n\]*\"threadname_3\" \[^\r\n\]*" {
+	set see3 1
+	exp_continue
+    }
+    -re ". 2 \[^\r\n\]*\"threadname_2\" \[^\r\n\]*" {
+	set see2 1
+	exp_continue
+    }
+    -re ". 1 \[^\r\n\]*\"threadname_1\" \[^\r\n\]*" {
+	set see1 1
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	if { $see2 && $see4 && $see6 && !$see1 && !$see3 && !$see5 } then {
+	    pass "info threads 2 4 6"
+	} else {
+	    fail "info threads 2 4 6"
+	}
+    }
+}
+
+#
+# Test info threads on a range
+#
+
+set see1 0
+set see2 0
+set see3 0
+set see4 0
+set see5 0
+set see6 0
+
+gdb_test_multiple "info threads 3-5" "info threads 3-5" {
+    -re ". 6 .*\"threadname_6\" \[^\r\n\]*" {
+	set see6 1
+	exp_continue
+    }
+    -re ". 5 .*\"threadname_5\" \[^\r\n\]*" {
+	set see5 1
+	exp_continue
+    }
+    -re ". 4 .*\"threadname_4\" \[^\r\n\]*" {
+	set see4 1
+	exp_continue
+    }
+    -re ". 3 .*\"threadname_3\" \[^\r\n\]*" {
+	set see3 1
+	exp_continue
+    }
+    -re ". 2 .*\"threadname_2\" \[^\r\n\]*" {
+	set see2 1
+	exp_continue
+    }
+    -re ". 1 .*\"threadname_1\" \[^\r\n\]*" {
+	set see1 1
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	if { $see3 && $see4 && $see5 && !$see1 && !$see2 && !$see6 } then {
+	    pass "info threads 3-5"
+	} else {
+	    fail "info threads 3-5"
+	}
+    }
+}
+
+# Test inverted range
+
+gdb_test "info threads 5-3" "inverted range" "test inverted range"
+
+# Test degenerate range
+
+set see1 0
+set see2 0
+set see3 0
+set see4 0
+set see5 0
+set see6 0
+
+gdb_test_multiple "info threads 3-3" "info threads 3-3" {
+    -re ". 6 .*\"threadname_6\" \[^\r\n\]*" {
+	set see6 1
+	exp_continue
+    }
+    -re ". 5 .*\"threadname_5\" \[^\r\n\]*" {
+	set see5 1
+	exp_continue
+    }
+    -re ". 4 .*\"threadname_4\" \[^\r\n\]*" {
+	set see4 1
+	exp_continue
+    }
+    -re ". 3 .*\"threadname_3\" \[^\r\n\]*" {
+	set see3 1
+	exp_continue
+    }
+    -re ". 2 .*\"threadname_2\" \[^\r\n\]*" {
+	set see2 1
+	exp_continue
+    }
+    -re ". 1 .*\"threadname_1\" \[^\r\n\]*" {
+	set see1 1
+	exp_continue
+    }
+    -re ".*$gdb_prompt $" {
+	if { $see3 && !$see1 && !$see2 && !$see4 && !$see5 && !$see6 } then {
+	    pass "info threads 3-3"
+	} else {
+	    fail "info threads 3-3"
+	}
+    }
+}
+
+# Test bad input
+
+gdb_test "info thread foo" \
+    "Args must be numbers or '.' variables." \
+    "info thread foo"
+
+gdb_test "info thread foo -1" \
+    "Args must be numbers or '.' variables." \
+    "info thread foo -1"

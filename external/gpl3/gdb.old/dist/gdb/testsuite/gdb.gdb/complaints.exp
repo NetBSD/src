@@ -1,0 +1,152 @@
+# Copyright 2002-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file was written by Andrew Cagney (cagney at redhat dot com),
+# derived from xfullpath.exp (written by Joel Brobecker), derived from
+# selftest.exp (written by Rob Savoye).
+
+load_lib selftest-support.exp
+
+if [target_info exists gdb,noinferiorio] {
+    verbose "Skipping because of no inferiorio capabilities."
+    return
+}
+
+proc test_initial_complaints { } {
+
+    global gdb_prompt
+
+    # Unsupress complaints
+    gdb_test "set stop_whining = 2"
+
+    # Prime the system
+    gdb_test "call complaint (&symfile_complaints, \"Register a complaint\")" \
+	    "During symbol reading, Register a complaint."
+
+    # Check that the complaint was inserted and where
+    gdb_test "print symfile_complaints->root->fmt" \
+	    ".\[0-9\]+ =.*\"Register a complaint\""
+
+    # Re-issue the first message #1
+    gdb_test "call complaint (&symfile_complaints, symfile_complaints->root->fmt)" \
+	    "During symbol reading, Register a complaint."
+
+    # Check that there is only one thing in the list
+    gdb_test "print symfile_complaints->root->next == &complaint_sentinel" \
+	    ".\[0-9\]+ = 1" "list has one entry"
+
+    # Add a second complaint, expect it
+    gdb_test "call complaint (&symfile_complaints, \"Testing! Testing! Testing!\")" \
+	    "During symbol reading, Testing. Testing. Testing.."
+
+    return 0
+}
+
+proc test_serial_complaints { } {
+
+    global gdb_prompt
+
+    gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 0)" "" "serial start"
+
+    # Prime the system
+    gdb_test_multiple "call complaint (&symfile_complaints, \"serial line  1\")" "serial line 1" {
+	-re "During symbol reading...serial line  1...$gdb_prompt $" {
+	    pass "serial line 1"
+	}
+    }
+
+    # Add a second complaint, expect it
+    gdb_test_multiple "call complaint (&symfile_complaints, \"serial line 2\")" "serial line 2" {
+	-re "serial line 2...$gdb_prompt " {
+	    pass "serial line 2"
+	}
+    }
+
+    gdb_test_multiple "call clear_complaints (&symfile_complaints, 1, 0)" "serial end" {
+	-re "\r\n\r\n$gdb_prompt " {
+	    pass "serial end"
+	}
+    }
+
+    return 0
+}
+
+# For short complaints, all are the same
+
+proc test_short_complaints { } {
+
+    global gdb_prompt
+
+    gdb_test_exact "call clear_complaints (&symfile_complaints, 1, 1)" "" "short start"
+
+    # Prime the system
+    gdb_test_multiple "call complaint (&symfile_complaints, \"short line 1\")" "short line 1" {
+	-re "short line 1...$gdb_prompt " {
+	    pass "short line 1"
+	}
+    }
+
+    # Add a second complaint, expect it
+    gdb_test_multiple "call complaint (&symfile_complaints, \"short line 2\")" "short line 2" {
+	-re "short line 2...$gdb_prompt " {
+	    pass "short line 2"
+	}
+    }
+
+    gdb_test_multiple "call clear_complaints (&symfile_complaints, 1, 0)" "short end" {
+	-re "\r\n\r\n$gdb_prompt " {
+	    pass "short end"
+	}
+    }
+
+    return 0
+}
+
+# Check that nothing comes out when there haven't been any real
+# complaints.  Note that each test is really checking the previous
+# command.
+
+proc test_empty_complaint { cmd msg } {
+    global gdb_prompt
+    gdb_test_multiple $cmd $msg {
+	-re "\r\n\r\n$gdb_prompt $" {
+	    fail $msg
+	}
+	"\r\n$gdb_prompt $" {
+	    pass $msg
+	}
+    }
+}
+
+proc test_empty_complaints { } {
+
+    test_empty_complaint "call clear_complaints(&symfile_complaints,0,0)" \
+	    "empty non-verbose non-noisy clear"
+    test_empty_complaint "call clear_complaints(&symfile_complaints,1,0)" \
+	    "empty verbose non-noisy clear"
+    test_empty_complaint "call clear_complaints(&symfile_complaints,1,1)" \
+	    "empty verbose noisy clear"
+    test_empty_complaint "call clear_complaints(&symfile_complaints,0,1)" \
+	    "empty non-verbose noisy clear"
+
+    return 0
+}
+
+do_self_tests captured_command_loop {
+    test_initial_complaints
+    test_serial_complaints
+    test_short_complaints
+    test_empty_complaints
+}

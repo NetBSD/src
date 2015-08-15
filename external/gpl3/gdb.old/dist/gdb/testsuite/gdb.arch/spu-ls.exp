@@ -1,0 +1,54 @@
+# Copyright 2010-2014 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# This file is part of the gdb testsuite.
+#
+# Contributed by Ulrich Weigand  <uweigand@de.ibm.com>.
+# Tests for SPU local-store access.
+
+if { ![istarget "spu-*-elf"] } then {
+  verbose "Skipping SPU-only testcase"
+  return
+}
+
+set testfile "spu-ls"
+set srcfile ${testfile}.c
+set binfile ${objdir}/${subdir}/${testfile}
+set sources ${srcdir}/${subdir}/${srcfile}
+
+if { [gdb_compile $sources ${binfile} executable { debug }] != "" } {
+  return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main] then {
+  fail "Can't run to main"
+  return 0
+}
+
+gdb_test "print ptr" " = 0x12345678 \".*\"" "print ptr"
+gdb_test_no_output "set ptr = array + \$lslr + 1" "set ptr = array + \$lslr + 1"
+gdb_test_no_output "set array\[0\] = 1" "set array\[0\] = 1"
+gdb_test "print *ptr" " = 1 '\\\\001'" "print *ptr"
+gdb_test_no_output "set *ptr = 2" "set *ptr = 2"
+gdb_test "print array\[0\]" " = 2 '\\\\002'" "print array\[0\]"
+
+gdb_exit
+
+return 0

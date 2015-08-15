@@ -1,0 +1,44 @@
+# Tests for anonymous union support.
+# Copyright 2011-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+standard_testfile .cc
+
+if { [prepare_for_testing ${testfile}.exp ${testfile} ${srcfile} {debug c++}] } {
+     return -1
+}
+
+if { [istarget arm*-*-*] } {
+    gdb_test "ptype t::t" "type = struct t {\r\n    C m;\r\n} \\*\\(t \\* const\\)" \
+	"print type of t::t"
+} else {
+    gdb_test "ptype t::t" "type = void \\(t \\* const\\)" \
+	"print type of t::t"
+}
+
+gdb_test "ptype X::t2" "type = struct X::t2 {\[\r\n \]*X::C2 m;\[\r\n \]*}" \
+    "print type of X::t2"
+
+if { [istarget arm*-*-*] } {
+    gdb_test "ptype X::t2::t2" "type = struct X::t2 {\r\n    X::C2 m;\r\n} \\*\\(X::t2 \\* const\\)" \
+	"print type of X::t2::t2"
+    gdb_test "ptype t3::~t3" "type = void \\*\\(t3 \\* const\\)" \
+	"print type of t3::~t3"
+} else {
+    gdb_test "ptype X::t2::t2" "type = void \\(X::t2 \\* const\\)" \
+	"print type of X::t2::t2"
+    gdb_test "ptype t3::~t3" "type = void \\(t3 \\* const\\)" \
+	"print type of t3::~t3"
+}

@@ -1,0 +1,156 @@
+# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests Python-based
+# pretty-printing for the CLI.
+
+load_lib gdb-python.exp
+
+standard_testfile
+
+# Start with a fresh gdb.
+gdb_exit
+gdb_start
+
+# Skip all tests if Python scripting is not enabled.
+if { [skip_python_tests] } { continue }
+
+proc run_lang_tests {exefile lang} {
+    global srcdir subdir srcfile testfile hex
+    if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${exefile}" executable "debug $lang"] != "" } {
+	untested "Couldn't compile ${srcfile} in $lang mode"
+	return -1
+    }
+
+    set nl "\[\r\n\]+"
+
+    # Start with a fresh gdb.
+    gdb_exit
+    gdb_start
+    gdb_reinitialize_dir $srcdir/$subdir
+    gdb_load ${exefile}
+
+    if ![runto_main ] then {
+	perror "couldn't run to breakpoint"
+	return
+    }
+
+    gdb_test_no_output "set print pretty on"
+
+    gdb_test "b [gdb_get_line_number {break to inspect} ${testfile}.c ]" \
+	".*Breakpoint.*"
+    gdb_test "continue" ".*Breakpoint.*"
+
+    set remote_python_file [gdb_remote_download host \
+				${srcdir}/${subdir}/${testfile}.py]
+
+    gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+	"python exec (open ('[file tail ${remote_python_file}]').read ())"
+    
+    gdb_test "print ss" " = a=< a=<1> b=<$hex>> b=< a=<2> b=<$hex>>"
+    gdb_test "print ssa\[1\]" " = a=< a=<5> b=<$hex>> b=< a=<6> b=<$hex>>"
+    gdb_test "print ssa" " = {a=< a=<3> b=<$hex>> b=< a=<4> b=<$hex>>, a=< a=<5> b=<$hex>> b=< a=<6> b=<$hex>>}"
+    
+    gdb_test "print arraystruct" " = {$nl *y = 7, *$nl *x = { a=<23> b=<$hex>,  a=<24> b=<$hex>} *$nl *}"
+
+    if {$lang == "c++"} {
+	gdb_test "print cps" "=  a=<8> b=<$hex>"
+	gdb_test "print cpss" " = {$nl *zss = 9, *$nl *s =  a=<10> b=<$hex>$nl}"
+	gdb_test "print cpssa\[0\]" " = {$nl *zss = 11, *$nl *s =  a=<12> b=<$hex>$nl}"
+	gdb_test "print cpssa\[1\]" " = {$nl *zss = 13, *$nl *s =  a=<14> b=<$hex>$nl}"
+	gdb_test "print cpssa" " = {{$nl *zss = 11, *$nl *s =  a=<12> b=<$hex>$nl *}, {$nl *zss = 13, *$nl *s =  a=<14> b=<$hex>$nl *}}"
+	gdb_test "print sss" "= a=<15> b=< a=<8> b=<$hex>>"
+	gdb_test "print ref" "= a=<15> b=< a=<8> b=<$hex>>"
+	gdb_test "print derived" \
+	    " = \{.*<Vbase1> = pp class name: Vbase1.*<Vbase2> = \{.*<VirtualTest> = pp value variable is: 1,.*members of Vbase2:.*_vptr.Vbase2 = $hex.*<Vbase3> = \{.*members of Vbase3.*members of Derived:.*value = 2.*"
+	gdb_test "print ns " "\"embedded\\\\000null\\\\000string\""
+	gdb_py_test_silent_cmd "set print elements 3" "" 1
+	gdb_test "print ns" "emb\.\.\.."
+	gdb_py_test_silent_cmd "set print elements 10" "" 1
+	gdb_test "print ns" "embedded\\\\000n\.\.\.."
+	gdb_py_test_silent_cmd "set print elements 200" "" 1
+    }
+
+    gdb_test "print ns2" ".error reading variable: Cannot access memory at address 0x0."
+
+    gdb_test "print x" " = \"this is x\""
+    gdb_test "print cstring" " = \"const string\""
+
+    gdb_test "print estring" " = \"embedded x\\\\201\\\\202\\\\203\\\\204\""
+
+    gdb_test_no_output "python pp_ls_encoding = 'UTF-8'"
+    gdb_test "print estring2" "\"embedded \", <incomplete sequence \\\\302>"
+
+    gdb_test_no_output "set python print-stack full"
+    gdb_test "print hint_error" "Exception: hint failed\r\nhint_error_val"
+
+    gdb_test "print c" " = container \"container\" with 2 elements = {$nl *.0. = 23,$nl *.1. = 72$nl}"
+
+    gdb_test "print nstype" " = {$nl *.0. = 7,$nl *.1. = 42$nl}"
+
+    gdb_test_no_output "set print pretty off"
+    gdb_test "print nstype" " = {.0. = 7, .1. = 42}" \
+	"print nstype on one line"
+
+    gdb_continue_to_end
+
+    remote_file host delete ${remote_python_file}
+}
+
+run_lang_tests "${binfile}" "c"
+run_lang_tests "${binfile}-cxx" "c++"
+
+# Run various other tests.
+
+# Start with a fresh gdb.
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${binfile}
+
+if ![runto_main ] then {
+    perror "couldn't run to breakpoint"
+    return
+}
+
+set remote_python_file [gdb_remote_download host \
+			    ${srcdir}/${subdir}/${testfile}.py]
+
+gdb_test_no_output "python exec (open ('${remote_python_file}').read ())" \
+    "python exec (open ('[file tail ${remote_python_file}]').read ())"
+
+gdb_breakpoint [gdb_get_line_number "eval-break"]
+gdb_continue_to_breakpoint "eval-break" ".* eval-break .*"
+
+gdb_test "info locals" "eval9 = eval=<123456789>"
+
+gdb_test "b [gdb_get_line_number {break to inspect} ${testfile}.c ]" \
+    ".*Breakpoint.*"
+gdb_test "continue" ".*Breakpoint.*"
+
+gdb_test "print ss" " = a=< a=<1> b=<$hex>> b=< a=<2> b=<$hex>>" \
+    "print ss enabled #1"
+
+gdb_test_no_output "python disable_lookup_function ()"
+
+gdb_test "print ss" " = {a = {a = 1, b = $hex}, b = {a = 2, b = $hex}}" \
+    "print ss disabled"
+
+gdb_test_no_output "python enable_lookup_function ()"
+
+gdb_test "print ss" " = a=< a=<1> b=<$hex>> b=< a=<2> b=<$hex>>" \
+    "print ss enabled #2"
+
+remote_file host delete ${remote_python_file}
