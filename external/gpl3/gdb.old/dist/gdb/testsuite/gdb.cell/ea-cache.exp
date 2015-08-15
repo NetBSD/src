@@ -1,0 +1,90 @@
+# Copyright 2009-2014 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Contributed by Markus Deuling <deuling@de.ibm.com>.
+#
+# Testsuite for Cell Broadband Engine combined debugger
+# Testcase for ea software managed cache.
+
+load_lib cell.exp
+
+set ppu_file "ea-cache"
+set ppu_src ${srcdir}/${subdir}/${ppu_file}.c
+set ppu_bin ${objdir}/${subdir}/${ppu_file}
+set spu_file "ea-cache-spu"
+set spu_src ${srcdir}/${subdir}/${spu_file}.c
+set spu_bin ${objdir}/${subdir}/${spu_file}
+
+if {[skip_cell_tests]} {
+    return 0
+}
+
+# Compile SPU binary.
+if { [gdb_compile_cell_spu $spu_src $spu_bin executable {debug}]  != "" } {
+  unsupported "Compiling spu binary failed."
+  return -1
+}
+# Compile PPU binary.
+if { [gdb_cell_embedspu $spu_bin $spu_bin-embed.o {debug}]  != "" } {
+  unsupported "Embedding spu binary failed."
+  return -1
+}
+if { [gdb_compile_cell_ppu [list $ppu_src $spu_bin-embed.o] $ppu_bin executable {debug}] != "" } {
+  unsupported "Compiling ppu binary failed."
+  return -1
+}
+
+if [get_compiler_info] {
+  return -1
+}
+
+gdb_exit
+gdb_start
+gdb_reinitialize_dir $srcdir/$subdir
+gdb_load ${ppu_bin}
+
+if ![runto_main] then {
+  fail "Can't run to main"
+  return 0
+}
+
+# Set breakpoint in SPU binary.
+cont_spu_main
+c_to "Marker SPUEA" $spu_file.c
+
+gdb_test "p *ppe_int_ptr" \
+	 ".*=.*23.*" \
+	 "p *ppe_int_ptr"
+
+gdb_test "set *ppe_int_ptr=42" "" ""
+
+gdb_test "p *ppe_int_ptr" \
+	 ".*=.*42.*" \
+	 "p *ppe_int_ptr"
+
+# Now switch to thread 1 (PPU) and look at int_var.  ppe_int_ptr points to
+# int_var and should now also contain 42 (ea cache has been flushed).
+gdb_test "t 1" \
+	 ".*Switching to thread 1.*" \
+	 "Switch to thread 1"
+
+gdb_test "p int_var" \
+	 ".*=.*42.*" \
+	 "p int_var on ppu"
+
+gdb_exit
+return 0
+
+

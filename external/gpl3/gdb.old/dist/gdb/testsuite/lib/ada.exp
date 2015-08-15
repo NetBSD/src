@@ -1,0 +1,62 @@
+# Copyright 2004-2014 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Compile some Ada code.
+
+proc gdb_compile_ada {source dest type options} {
+
+    set srcdir [file dirname $source]
+    set gprdir [file dirname $srcdir]
+    set objdir [file dirname $dest]
+
+    append options " ada"
+    append options " additional_flags=-P$gprdir/gnat_ada"
+    append options " additional_flags=-XSRC=[file tail $srcdir]"
+    append options " additional_flags=-XOBJ=$objdir"
+
+    set result [target_compile [file tail $source] $dest $type $options]
+
+    # The Ada build always produces some output, even when the build
+    # succeeds. Thus, we can not use the output the same way we do in
+    # gdb_compile to determine whether the build has succeeded or not.
+    # We therefore simply check whether the dest file has been created
+    # or not. Unless not present, the build has succeeded.
+    if [file exists $dest] { set result "" }
+    gdb_compile_test $source $result
+    return $result
+}
+
+# Like standard_testfile, but for Ada.  Historically the Ada tests
+# used a different naming convention from many of the other gdb tests,
+# and this difference was preserved during the conversion to
+# standard_testfile.  DIR defaults to the base name of the test case;
+# but can be overridden to find sources in a different subdirectory of
+# gdb.ada.
+
+proc standard_ada_testfile {base_file {dir ""}} {
+    global gdb_test_file_name srcdir subdir
+    global testdir testfile srcfile binfile
+
+    if {$dir == ""} {
+	set testdir $gdb_test_file_name
+    } else {
+	set testdir $dir
+    }
+    set testfile $testdir/$base_file
+    set srcfile $srcdir/$subdir/$testfile.adb
+    set binfile [standard_output_file $testfile]
+
+    file mkdir [standard_output_file $testdir]
+}
