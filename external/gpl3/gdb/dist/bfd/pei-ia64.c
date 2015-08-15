@@ -1,6 +1,5 @@
 /* BFD back-end for HP/Intel IA-64 PE IMAGE COFF files.
-   Copyright 1999, 2000, 2001, 2002, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
    Contributed by David Mosberger <davidm@hpl.hp.com>
 
    This implementation only supports objcopy to ouput IA-64 PE IMAGE COFF
@@ -26,7 +25,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SYM bfd_pei_ia64_vec
+#define TARGET_SYM ia64_pei_vec
 #define TARGET_NAME "pei-ia64"
 #define COFF_IMAGE_WITH_PE
 #define COFF_WITH_PE

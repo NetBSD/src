@@ -1,6 +1,5 @@
 /* BFD back-end for Intel 386 COFF files (DJGPP variant).
-   Copyright 1990, 1991, 1992, 1993, 1994, 1999, 2000, 2001, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
    Written by DJ Delorie.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -20,7 +19,7 @@
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
 
-#define TARGET_SYM		go32coff_vec
+#define TARGET_SYM		i386_coff_go32_vec
 #define TARGET_NAME		"coff-go32"
 #define TARGET_UNDERSCORE	'_'
 #define COFF_LONG_SECTION_NAMES

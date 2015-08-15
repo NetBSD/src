@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -45,8 +45,6 @@
 #include "tui/tui-win.h"
 
 #include "gdb_curses.h"
-
-#include <string.h>
 #include <ctype.h>
 #include "readline/readline.h"
 
@@ -333,7 +331,7 @@ tui_command (char *args, int from_tty)
 {
   printf_unfiltered (_("\"tui\" must be followed by the name of a "
                      "tui command.\n"));
-  help_list (tuilist, "tui ", -1, gdb_stdout);
+  help_list (tuilist, "tui ", all_commands, gdb_stdout);
 }
 
 struct cmd_list_element **
@@ -344,6 +342,15 @@ tui_get_cmd_list (void)
                     _("Text User Interface commands."),
                     &tuilist, "tui ", 0, &cmdlist);
   return &tuilist;
+}
+
+/* The set_func hook of "set tui ..." commands that affect the window
+   borders on the TUI display.  */
+void
+tui_set_var_cmd (char *null_args, int from_tty, struct cmd_list_element *c)
+{
+  if (tui_update_variables () && tui_active)
+    tui_rehighlight_all ();
 }
 
 /* Function to initialize gdb commands, for tui window
@@ -403,10 +410,10 @@ Usage: + [win] [n]\n"));
 Scroll window backward.\n\
 Usage: - [win] [n]\n"));
   add_com ("<", class_tui, tui_scroll_left_command, _("\
-Scroll window forward.\n\
+Scroll window text to the left.\n\
 Usage: < [win] [n]\n"));
   add_com (">", class_tui, tui_scroll_right_command, _("\
-Scroll window backward.\n\
+Scroll window text to the right.\n\
 Usage: > [win] [n]\n"));
   if (xdb_commands)
     add_com ("w", class_xdb, tui_xdb_set_win_height_command, _("\
@@ -422,7 +429,7 @@ This variable controls the border of TUI windows:\n\
 space           use a white space\n\
 ascii           use ascii characters + - | for the border\n\
 acs             use the Alternate Character Set"),
-			NULL,
+			tui_set_var_cmd,
 			show_tui_border_kind,
 			&tui_setlist, &tui_showlist);
 
@@ -438,7 +445,7 @@ half            use half bright\n\
 half-standout   use half bright and standout mode\n\
 bold            use extra bright or bold\n\
 bold-standout   use extra bright or bold with standout mode"),
-			NULL,
+			tui_set_var_cmd,
 			show_tui_border_mode,
 			&tui_setlist, &tui_showlist);
 
@@ -454,7 +461,7 @@ half            use half bright\n\
 half-standout   use half bright and standout mode\n\
 bold            use extra bright or bold\n\
 bold-standout   use extra bright or bold with standout mode"),
-			NULL,
+			tui_set_var_cmd,
 			show_tui_active_border_mode,
 			&tui_setlist, &tui_showlist);
 }
@@ -648,6 +655,14 @@ tui_refresh_all_win (void)
   tui_show_locator_content ();
 }
 
+void
+tui_rehighlight_all (void)
+{
+  enum tui_win_type type;
+
+  for (type = SRC_WIN; type < MAX_MAJOR_WINDOWS; type++)
+    tui_check_and_display_highlight_if_needed (tui_win_list[type]);
+}
 
 /* Resize all the windows based on the terminal size.  This function
    gets called from within the readline sinwinch handler.  */
@@ -836,6 +851,9 @@ tui_initialize_win (void)
 
   memset (&old_winch, 0, sizeof (old_winch));
   old_winch.sa_handler = &tui_sigwinch_handler;
+#ifdef SA_RESTART
+  old_winch.sa_flags = SA_RESTART;
+#endif
   sigaction (SIGWINCH, &old_winch, NULL);
 #else
   signal (SIGWINCH, &tui_sigwinch_handler);
@@ -1001,7 +1019,27 @@ tui_set_tab_width_command (char *arg, int from_tty)
 
       ts = atoi (arg);
       if (ts > 0)
-	tui_set_default_tab_len (ts);
+	{
+	  tui_set_default_tab_len (ts);
+	  /* We don't really change the height of any windows, but
+	     calling these 2 functions causes a complete regeneration
+	     and redisplay of the window's contents, which will take
+	     the new tab width into account.  */
+	  if (tui_win_list[SRC_WIN]
+	      && tui_win_list[SRC_WIN]->generic.is_visible)
+	    {
+	      make_invisible_and_set_new_height (TUI_SRC_WIN,
+						 TUI_SRC_WIN->generic.height);
+	      make_visible_with_new_height (TUI_SRC_WIN);
+	    }
+	  if (tui_win_list[DISASSEM_WIN]
+	      && tui_win_list[DISASSEM_WIN]->generic.is_visible)
+	    {
+	      make_invisible_and_set_new_height (TUI_DISASM_WIN,
+						 TUI_DISASM_WIN->generic.height);
+	      make_visible_with_new_height (TUI_DISASM_WIN);
+	    }
+	}
       else
 	warning (_("Tab widths greater than 0 must be specified."));
     }
@@ -1388,7 +1426,7 @@ make_visible_with_new_height (struct tui_win_info *win_info)
 	  struct frame_info *frame = deprecated_safe_get_selected_frame ();
 	  struct gdbarch *gdbarch = get_frame_arch (frame);
 
-	  s = find_pc_symtab (get_frame_pc (frame));
+	  s = find_pc_line_symtab (get_frame_pc (frame));
 	  if (win_info->generic.type == SRC_WIN)
 	    {
 	      line.loa = LOA_LINE;

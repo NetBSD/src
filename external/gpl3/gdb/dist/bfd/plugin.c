@@ -1,6 +1,5 @@
 /* Plugin support for BFD.
-   Copyright 2009, 2010, 2011, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -84,7 +83,9 @@ dlerror (void)
 #define bfd_plugin_bfd_is_target_special_symbol       ((bfd_boolean (*) (bfd *, asymbol *)) bfd_false)
 #define bfd_plugin_get_lineno                         _bfd_nosymbols_get_lineno
 #define bfd_plugin_find_nearest_line                  _bfd_nosymbols_find_nearest_line
+#define bfd_plugin_find_line                          _bfd_nosymbols_find_line
 #define bfd_plugin_find_inliner_info                  _bfd_nosymbols_find_inliner_info
+#define bfd_plugin_get_symbol_version_string	      _bfd_nosymbols_get_symbol_version_string
 #define bfd_plugin_bfd_make_debug_symbol              _bfd_nosymbols_bfd_make_debug_symbol
 #define bfd_plugin_read_minisymbols                   _bfd_generic_read_minisymbols
 #define bfd_plugin_minisymbol_to_symbol               _bfd_generic_minisymbol_to_symbol
@@ -93,7 +94,6 @@ dlerror (void)
 #define bfd_plugin_bfd_get_relocated_section_contents bfd_generic_get_relocated_section_contents
 #define bfd_plugin_bfd_relax_section                  bfd_generic_relax_section
 #define bfd_plugin_bfd_link_hash_table_create         _bfd_generic_link_hash_table_create
-#define bfd_plugin_bfd_link_hash_table_free           _bfd_generic_link_hash_table_free
 #define bfd_plugin_bfd_link_add_symbols               _bfd_generic_link_add_symbols
 #define bfd_plugin_bfd_link_just_syms                 _bfd_generic_link_just_syms
 #define bfd_plugin_bfd_final_link                     _bfd_generic_final_link
@@ -158,9 +158,54 @@ bfd_plugin_set_program_name (const char *program_name)
 }
 
 static int
-try_load_plugin (const char *pname)
+try_claim (bfd *abfd)
 {
-  static void *plugin_handle;
+  int claimed = 0;
+  struct ld_plugin_input_file file;
+  bfd *iobfd;
+
+  file.name = abfd->filename;
+
+  if (abfd->my_archive)
+    {
+      iobfd = abfd->my_archive;
+      file.offset = abfd->origin;
+      file.filesize = arelt_size (abfd);
+    }
+  else
+    {
+      iobfd = abfd;
+      file.offset = 0;
+      file.filesize = 0;
+    }
+
+  if (!iobfd->iostream && !bfd_open_file (iobfd))
+    return 0;
+
+  file.fd = fileno ((FILE *) iobfd->iostream);
+
+  if (!abfd->my_archive)
+    {
+      struct stat stat_buf;
+      if (fstat (file.fd, &stat_buf))
+        return 0;
+      file.filesize = stat_buf.st_size;
+    }
+
+  file.handle = abfd;
+  off_t cur_offset = lseek(file.fd, 0, SEEK_CUR);
+  claim_file (&file, &claimed);
+  lseek(file.fd, cur_offset, SEEK_SET);
+  if (!claimed)
+    return 0;
+
+  return 1;
+}
+
+static int
+try_load_plugin (const char *pname, bfd *abfd)
+{
+  void *plugin_handle;
   int tv_size = 4;
   struct ld_plugin_tv tv[tv_size];
   int i;
@@ -202,6 +247,9 @@ try_load_plugin (const char *pname)
   if (!claim_file)
     goto err;
 
+  if (!try_claim (abfd))
+    goto err;
+
   return 1;
 
  err:
@@ -218,7 +266,7 @@ bfd_plugin_set_plugin (const char *p)
 }
 
 static int
-load_plugin (void)
+load_plugin (bfd *abfd)
 {
   char *plugin_dir;
   char *p;
@@ -227,7 +275,7 @@ load_plugin (void)
   int found = 0;
 
   if (plugin_name)
-    return try_load_plugin (plugin_name);
+    return try_load_plugin (plugin_name, abfd);
 
   if (plugin_program_name == NULL)
     return 0;
@@ -250,7 +298,7 @@ load_plugin (void)
 
       full_name = concat (p, "/", ent->d_name, NULL);
       if (stat(full_name, &s) == 0 && S_ISREG (s.st_mode))
-	found = try_load_plugin (full_name);
+	found = try_load_plugin (full_name, abfd);
       free (full_name);
       if (found)
 	break;
@@ -268,53 +316,7 @@ load_plugin (void)
 static const bfd_target *
 bfd_plugin_object_p (bfd *abfd)
 {
-  int claimed = 0;
-  struct ld_plugin_input_file file;
-  bfd *iobfd;
-  static int have_loaded = 0;
-  static int have_plugin = 0;
-
-  if (!have_loaded)
-    {
-      have_loaded = 1;
-      have_plugin = load_plugin ();
-    }
-  if (!have_plugin)
-    return NULL;
-
-  file.name = abfd->filename;
-
-  if (abfd->my_archive)
-    {
-      iobfd = abfd->my_archive;
-      file.offset = abfd->origin;
-      file.filesize = arelt_size (abfd);
-    }
-  else
-    {
-      iobfd = abfd;
-      file.offset = 0;
-      file.filesize = 0;
-    }
-
-  if (!iobfd->iostream && !bfd_open_file (iobfd))
-    return NULL;
-
-  file.fd = fileno ((FILE *) iobfd->iostream);
-
-  if (!abfd->my_archive)
-    {
-      struct stat stat_buf;
-      if (fstat (file.fd, &stat_buf))
-        return NULL;
-      file.filesize = stat_buf.st_size;
-    }
-
-  file.handle = abfd;
-  off_t cur_offset = lseek(file.fd, 0, SEEK_CUR);
-  claim_file (&file, &claimed);
-  lseek(file.fd, cur_offset, SEEK_SET);
-  if (!claimed)
+  if (!load_plugin (abfd))
     return NULL;
 
   return abfd->xvec;

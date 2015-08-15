@@ -1,5 +1,5 @@
 /* Memory breakpoint interfaces for the remote server for GDB.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -21,38 +21,103 @@
 #ifndef MEM_BREAK_H
 #define MEM_BREAK_H
 
+#include "break-common.h"
+
 /* Breakpoints are opaque.  */
 struct breakpoint;
 struct fast_tracepoint_jump;
+struct raw_breakpoint;
+struct process_info;
 
-/* Locate a breakpoint placed at address WHERE and return a pointer
-   to its structure.  */
+#define Z_PACKET_SW_BP '0'
+#define Z_PACKET_HW_BP '1'
+#define Z_PACKET_WRITE_WP '2'
+#define Z_PACKET_READ_WP '3'
+#define Z_PACKET_ACCESS_WP '4'
 
-struct breakpoint *find_gdb_breakpoint_at (CORE_ADDR where);
+/* The low level breakpoint types.  */
 
-/* Create a new GDB breakpoint at WHERE.  Returns -1 if breakpoints
-   are not supported on this target, 0 otherwise.  */
+enum raw_bkpt_type
+  {
+    /* Software/memory breakpoint.  */
+    raw_bkpt_type_sw,
 
-int set_gdb_breakpoint_at (CORE_ADDR where);
+    /* Hardware-assisted breakpoint.  */
+    raw_bkpt_type_hw,
 
-/* Returns TRUE if there's any breakpoint at ADDR in our tables,
-   inserted, or not.  */
+    /* Hardware-assisted write watchpoint.  */
+    raw_bkpt_type_write_wp,
+
+    /* Hardware-assisted read watchpoint.  */
+    raw_bkpt_type_read_wp,
+
+    /* Hardware-assisted access watchpoint.  */
+    raw_bkpt_type_access_wp
+  };
+
+/* Map the protocol breakpoint/watchpoint type Z_TYPE to the internal
+   raw breakpoint type.  */
+
+enum raw_bkpt_type Z_packet_to_raw_bkpt_type (char z_type);
+
+/* Map a raw breakpoint type to an enum target_hw_bp_type.  */
+
+enum target_hw_bp_type raw_bkpt_type_to_target_hw_bp_type
+  (enum raw_bkpt_type raw_type);
+
+/* Create a new GDB breakpoint of type Z_TYPE at ADDR with size SIZE.
+   Returns a pointer to the newly created breakpoint on success.  On
+   failure returns NULL and sets *ERR to either -1 for error, or 1 if
+   Z_TYPE breakpoints are not supported on this target.  */
+
+struct breakpoint *set_gdb_breakpoint (char z_type, CORE_ADDR addr, int size,
+				       int *err);
+
+/* Delete a GDB breakpoint of type Z_TYPE and size SIZE previously
+   inserted at ADDR with set_gdb_breakpoint_at.  Returns 0 on success,
+   -1 on error, and 1 if Z_TYPE breakpoints are not supported on this
+   target.  */
+
+int delete_gdb_breakpoint (char z_type, CORE_ADDR addr, int size);
+
+/* Returns TRUE if there's a software or hardware (code) breakpoint at
+   ADDR in our tables, inserted, or not.  */
 
 int breakpoint_here (CORE_ADDR addr);
 
-/* Returns TRUE if there's any inserted breakpoint set at ADDR.  */
+/* Returns TRUE if there's any inserted software or hardware (code)
+   breakpoint set at ADDR.  */
 
 int breakpoint_inserted_here (CORE_ADDR addr);
 
-/* Clear all breakpoint conditions associated with this address.  */
+/* Returns TRUE if there's any inserted software breakpoint at
+   ADDR.  */
 
-void clear_gdb_breakpoint_conditions (CORE_ADDR addr);
+int software_breakpoint_inserted_here (CORE_ADDR addr);
 
-/* Set target-side condition CONDITION to the breakpoint at ADDR.  */
+/* Returns TRUE if there's any inserted hardware (code) breakpoint at
+   ADDR.  */
 
-int add_breakpoint_condition (CORE_ADDR addr, char **condition);
+int hardware_breakpoint_inserted_here (CORE_ADDR addr);
 
-int add_breakpoint_commands (CORE_ADDR addr, char **commands, int persist);
+/* Clear all breakpoint conditions and commands associated with a
+   breakpoint.  */
+
+void clear_breakpoint_conditions_and_commands (struct breakpoint *bp);
+
+/* Set target-side condition CONDITION to the breakpoint at ADDR.
+   Returns false on failure.  On success, advances CONDITION pointer
+   past the condition and returns true.  */
+
+int add_breakpoint_condition (struct breakpoint *bp, char **condition);
+
+/* Set target-side commands COMMANDS to the breakpoint at ADDR.
+   Returns false on failure.  On success, advances COMMANDS past the
+   commands and returns true.  If PERSIST, the commands should run
+   even while GDB is disconnected.  */
+
+int add_breakpoint_commands (struct breakpoint *bp, char **commands,
+			     int persist);
 
 int any_persistent_commands (void);
 
@@ -65,7 +130,8 @@ int gdb_no_commands_at_breakpoint (CORE_ADDR where);
 
 void run_breakpoint_commands (CORE_ADDR where);
 
-/* Returns TRUE if there's a GDB breakpoint set at ADDR.  */
+/* Returns TRUE if there's a GDB breakpoint (Z0 or Z1) set at
+   WHERE.  */
 
 int gdb_breakpoint_here (CORE_ADDR where);
 
@@ -75,11 +141,6 @@ int gdb_breakpoint_here (CORE_ADDR where);
 
 struct breakpoint *set_breakpoint_at (CORE_ADDR where,
 				      int (*handler) (CORE_ADDR));
-
-/* Delete a GDB breakpoint previously inserted at ADDR with
-   set_gdb_breakpoint_at.  */
-
-int delete_gdb_breakpoint_at (CORE_ADDR addr);
 
 /* Delete a breakpoint.  */
 
@@ -183,5 +244,13 @@ void uninsert_fast_tracepoint_jumps_at (CORE_ADDR pc);
    inserted).  */
 
 void reinsert_fast_tracepoint_jumps_at (CORE_ADDR where);
+
+/* Insert a memory breakpoint.  */
+
+int insert_memory_breakpoint (struct raw_breakpoint *bp);
+
+/* Remove a previously inserted memory breakpoint.  */
+
+int remove_memory_breakpoint (struct raw_breakpoint *bp);
 
 #endif /* MEM_BREAK_H */

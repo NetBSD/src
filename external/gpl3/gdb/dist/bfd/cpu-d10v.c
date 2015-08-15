@@ -1,6 +1,5 @@
 /* BFD support for the D10V processor
-   Copyright 1996, 1999, 2000, 2002, 2005, 2007, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
    Contributed by Martin Hunt (hunt@cygnus.com).
 
    This file is part of BFD, the Binary File Descriptor library.

@@ -1,5 +1,5 @@
 /* MI Command Set for GDB, the GNU debugger.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -21,7 +21,6 @@
 #include "defs.h"
 #include "top.h"
 #include "mi-cmds.h"
-#include <string.h>
 #include "mi-main.h"
 
 extern void _initialize_mi_cmds (void);
@@ -247,10 +246,8 @@ build_table (struct mi_cmd *commands)
   int nr_rehash = 0;
   int nr_entries = 0;
   struct mi_cmd *command;
-  int sizeof_table = sizeof (struct mi_cmd **) * MI_TABLE_SIZE;
 
-  mi_table = xmalloc (sizeof_table);
-  memset (mi_table, 0, sizeof_table);
+  mi_table = XCNEWVEC (struct mi_cmd *, MI_TABLE_SIZE);
   for (command = commands; command->name != 0; command++)
     {
       struct mi_cmd **entry = lookup_table (command->name);

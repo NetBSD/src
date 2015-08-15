@@ -1,5 +1,5 @@
 /* BFD back-end for MCore PECOFF files.
-   Copyright 1999, 2002, 2005, 2007, 2008  Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,9 +22,9 @@
 #include "bfd.h"
 
 #ifndef TARGET_BIG_SYM
-#define TARGET_BIG_SYM       mcore_pe_big_vec
+#define TARGET_BIG_SYM       mcore_pe_be_vec
 #define TARGET_BIG_NAME      "pe-mcore-big"
-#define TARGET_LITTLE_SYM    mcore_pe_little_vec
+#define TARGET_LITTLE_SYM    mcore_pe_le_vec
 #define TARGET_LITTLE_NAME   "pe-mcore-little"
 #endif
 
