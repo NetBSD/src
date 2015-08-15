@@ -1,6 +1,6 @@
 /* Support for complaint handling during symbol reading in GDB.
 
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 #include "defs.h"
 #include "complaints.h"
-#include "gdb_assert.h"
 #include "command.h"
 #include "gdbcmd.h"
 
@@ -112,7 +111,7 @@ get_complaints (struct complaints **c)
 {
   if ((*c) != NULL)
     return (*c);
-  (*c) = XMALLOC (struct complaints);
+  (*c) = XNEW (struct complaints);
   (*c)->root = &complaint_sentinel;
   (*c)->series = ISOLATED_MESSAGE;
   (*c)->explanation = NULL;
@@ -140,7 +139,7 @@ find_complaint (struct complaints *complaints, const char *file,
     }
 
   /* Oops not seen before, fill in a new complaint.  */
-  complaint = XMALLOC (struct complain);
+  complaint = XNEW (struct complain);
   complaint->fmt = fmt;
   complaint->file = file;
   complaint->line = line;

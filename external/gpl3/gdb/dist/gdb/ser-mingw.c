@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Windows systems
 
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,9 +28,6 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/types.h>
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "command.h"
 
@@ -788,7 +785,7 @@ struct pipe_state
 static struct pipe_state *
 make_pipe_state (void)
 {
-  struct pipe_state *ps = XMALLOC (struct pipe_state);
+  struct pipe_state *ps = XNEW (struct pipe_state);
 
   memset (ps, 0, sizeof (*ps));
   ps->wait.read_event = INVALID_HANDLE_VALUE;
@@ -1046,6 +1043,32 @@ struct net_windows_state
   HANDLE sock_event;
 };
 
+/* Check whether the socket has any pending data to be read.  If so,
+   set the select thread's read event.  On error, set the select
+   thread's except event.  If any event was set, return true,
+   otherwise return false.  */
+
+static int
+net_windows_socket_check_pending (struct serial *scb)
+{
+  struct net_windows_state *state = scb->state;
+  unsigned long available;
+
+  if (ioctlsocket (scb->fd, FIONREAD, &available) != 0)
+    {
+      /* The socket closed, or some other error.  */
+      SetEvent (state->base.except_event);
+      return 1;
+    }
+  else if (available > 0)
+    {
+      SetEvent (state->base.read_event);
+      return 1;
+    }
+
+  return 0;
+}
+
 static DWORD WINAPI
 net_windows_select_thread (void *arg)
 {
@@ -1065,33 +1088,54 @@ net_windows_select_thread (void *arg)
       wait_events[0] = state->base.stop_select;
       wait_events[1] = state->sock_event;
 
-      event_index = WaitForMultipleObjects (2, wait_events, FALSE, INFINITE);
-
-      if (event_index == WAIT_OBJECT_0
-	  || WaitForSingleObject (state->base.stop_select, 0) == WAIT_OBJECT_0)
-	/* We have been requested to stop.  */
-	;
-      else if (event_index != WAIT_OBJECT_0 + 1)
-	/* Some error has occured.  Assume that this is an error
-	   condition.  */
-	SetEvent (state->base.except_event);
-      else
+      /* Wait for something to happen on the socket.  */
+      while (1)
 	{
+	  event_index = WaitForMultipleObjects (2, wait_events, FALSE, INFINITE);
+
+	  if (event_index == WAIT_OBJECT_0
+	      || WaitForSingleObject (state->base.stop_select, 0) == WAIT_OBJECT_0)
+	    {
+	      /* We have been requested to stop.  */
+	      break;
+	    }
+
+	  if (event_index != WAIT_OBJECT_0 + 1)
+	    {
+	      /* Some error has occured.  Assume that this is an error
+		 condition.  */
+	      SetEvent (state->base.except_event);
+	      break;
+	    }
+
 	  /* Enumerate the internal network events, and reset the
 	     object that signalled us to catch the next event.  */
-	  WSAEnumNetworkEvents (scb->fd, state->sock_event, &events);
-	  
-	  gdb_assert (events.lNetworkEvents & (FD_READ | FD_CLOSE));
-	  
+	  if (WSAEnumNetworkEvents (scb->fd, state->sock_event, &events) != 0)
+	    {
+	      /* Something went wrong.  Maybe the socket is gone.  */
+	      SetEvent (state->base.except_event);
+	      break;
+	    }
+
 	  if (events.lNetworkEvents & FD_READ)
-	    SetEvent (state->base.read_event);
-	  
+	    {
+	      if (net_windows_socket_check_pending (scb))
+		break;
+
+	      /* Spurious wakeup.  That is, the socket's event was
+		 signalled before we last called recv.  */
+	    }
+
 	  if (events.lNetworkEvents & FD_CLOSE)
-	    SetEvent (state->base.except_event);
+	    {
+	      SetEvent (state->base.except_event);
+	      break;
+	    }
 	}
 
       SetEvent (state->base.have_stopped);
     }
+  return 0;
 }
 
 static void
@@ -1107,60 +1151,10 @@ net_windows_wait_handle (struct serial *scb, HANDLE *read, HANDLE *except)
   *read = state->base.read_event;
   *except = state->base.except_event;
 
-  /* Check any pending events.  This both avoids starting the thread
-     unnecessarily, and handles stray FD_READ events (see below).  */
-  if (WaitForSingleObject (state->sock_event, 0) == WAIT_OBJECT_0)
-    {
-      WSANETWORKEVENTS events;
-      int any = 0;
-
-      /* Enumerate the internal network events, and reset the object that
-	 signalled us to catch the next event.  */
-      WSAEnumNetworkEvents (scb->fd, state->sock_event, &events);
-
-      /* You'd think that FD_READ or FD_CLOSE would be set here.  But,
-	 sometimes, neither is.  I suspect that the FD_READ is set and
-	 the corresponding event signalled while recv is running, and
-	 the FD_READ is then lowered when recv consumes all the data,
-	 but there's no way to un-signal the event.  This isn't a
-	 problem for the call in net_select_thread, since any new
-	 events after this point will not have been drained by recv.
-	 It just means that we can't have the obvious assert here.  */
-
-      /* If there is a read event, it might be still valid, or it might
-	 not be - it may have been signalled before we last called
-	 recv.  Double-check that there is data.  */
-      if (events.lNetworkEvents & FD_READ)
-	{
-	  unsigned long available;
-
-	  if (ioctlsocket (scb->fd, FIONREAD, &available) == 0
-	      && available > 0)
-	    {
-	      SetEvent (state->base.read_event);
-	      any = 1;
-	    }
-	  else
-	    /* Oops, no data.  This call to recv will cause future
-	       data to retrigger the event, e.g. while we are
-	       in net_select_thread.  */
-	    recv (scb->fd, NULL, 0, 0);
-	}
-
-      /* If there's a close event, then record it - it is obviously
-	 still valid, and it will not be resignalled.  */
-      if (events.lNetworkEvents & FD_CLOSE)
-	{
-	  SetEvent (state->base.except_event);
-	  any = 1;
-	}
-
-      /* If we set either handle, there's no need to wake the thread.  */
-      if (any)
-	return;
-    }
-
-  start_select_thread (&state->base);
+  /* Check any pending events.  Otherwise, start the select
+     thread.  */
+  if (!net_windows_socket_check_pending (scb))
+    start_select_thread (&state->base);
 }
 
 static void

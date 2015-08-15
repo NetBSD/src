@@ -1,6 +1,6 @@
 /* varobj support for Ada.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -579,18 +579,12 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
 					struct type **child_type,
 					char **child_path_expr)
 {
-  struct type *index_desc_type;
   struct type *index_type;
   int real_index;
 
   gdb_assert (TYPE_CODE (parent_type) == TYPE_CODE_ARRAY);
 
-  index_desc_type = ada_find_parallel_type (parent_type, "___XA");
-  ada_fixup_array_indexes_type (index_desc_type);
-  if (index_desc_type)
-    index_type = TYPE_FIELD_TYPE (index_desc_type, 0);
-  else
-    index_type = TYPE_INDEX_TYPE (parent_type);
+  index_type = TYPE_INDEX_TYPE (parent_type);
   real_index = child_index + ada_discrete_type_low_bound (index_type);
 
   if (child_name)
@@ -1032,5 +1026,6 @@ const struct lang_varobj_ops ada_varobj_ops =
   ada_type_of_child,
   ada_value_of_variable,
   ada_value_is_changeable_p,
-  ada_value_has_mutated
+  ada_value_has_mutated,
+  varobj_default_is_path_expr_parent
 };

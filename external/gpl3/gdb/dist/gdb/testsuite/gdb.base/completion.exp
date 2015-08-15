@@ -1,4 +1,4 @@
-# Copyright 1998-2014 Free Software Foundation, Inc.
+# Copyright 1998-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -66,8 +66,111 @@ if ![runto_main] then {
         perror "tests suppressed"
 }
 
-set oldtimeout1 $timeout
 set timeout 30
+
+gdb_test_no_output "complete print values\[0\].x." \
+    "field completion with invalid field"
+
+# If there is a non-deprecated completion, it should be returned.
+gdb_test "complete sav" "save" "test non-deprecated completion"
+# If there is only a deprecated completion, then it should be returned.
+gdb_test "complete save-t" "save-tracepoints" "test deprecated completion"
+
+
+#
+# Tag name completion.
+#
+
+gdb_test "complete ptype struct some_" "ptype struct some_struct"
+gdb_test "complete ptype enum some_" "ptype enum some_enum"
+gdb_test "complete ptype union some_" "ptype union some_union"
+
+
+gdb_test "complete set gnutarget aut" "set gnutarget auto"
+
+
+gdb_test "complete set cp-abi aut" "set cp-abi auto"
+
+# Test that completion of commands 'target FOO' works well.
+set targets [list "core" "tfile" "exec"]
+
+# Test that completion of command 'target ctf' if GDB supports ctf
+# target.
+gdb_test_multiple "target ctf" "" {
+    -re "Undefined target command: \"ctf\"\.  Try \"help target\"\.\r\n$gdb_prompt $" {
+    }
+    -re "No CTF directory specified.*\r\n$gdb_prompt $" {
+	lappend targets "ctf"
+    }
+}
+
+# Test artifacts are put in different locations depending on test
+# is a parallel run or not.  Firstly check file exists, and then
+# do the test on file completion.
+
+foreach dir1 [ list "./gdb.base" "./outputs/gdb.base/completion" ] {
+    if { [remote_file host exists ${dir1}/completion]
+	 && [remote_file host exists ${dir1}/completion0.o]
+	 && [remote_file host exists ${dir1}/completion1.o] } {
+	foreach target_name ${targets} {
+	    gdb_test "complete target ${target_name} ${dir1}/completion" \
+		"target ${target_name} ${dir1}/completion.*${dir1}/completion0\\.o.*${dir1}/completion1\\.o.*" \
+		"complete target ${target_name}"
+	}
+	break
+    }
+}
+
+#
+# "set foo unlimited" completion.
+#
+
+# A var_uinteger command.
+gdb_test "complete set height " "set height unlimited"
+gdb_test "complete set height u" "set height unlimited"
+
+# A var_integer command.
+gdb_test "complete set listsize " "set listsize unlimited"
+gdb_test "complete set listsize unl" "set listsize unlimited"
+
+# A var_zuinteger_unlimited command.
+gdb_test "complete set trace-buffer-size " "set trace-buffer-size unlimited"
+gdb_test "complete set trace-buffer-size unl" "set trace-buffer-size unlimited"
+
+# Test "info registers" completion: First determine this
+# architecture's registers and reggroups...
+
+set regs_output [capture_command_output "mt print registers" \
+		     ".*Name.*Nr.*Rel.*Offset.*Size.*Type.\[^\n\]*\n"]
+append regs_output "\n"
+append regs_output [capture_command_output "mt print reggroups" \
+			".*Group.*Type\[^\n]*\n"]
+append regs_output "\n"
+append regs_output [capture_command_output "mt print user-registers" \
+		     ".*Name.*Nr\[^\n]*\n"]
+set all_regs {}
+foreach {- reg} [regexp -all -inline -line {^\s+(\w+)} $regs_output] {
+    lappend all_regs $reg
+}
+
+set all_regs [join [lsort -unique $all_regs]]
+
+# ... and then compare them to the completion of "info registers".
+
+set regs_output [capture_command_output "complete info registers " ""]
+set completed_regs {}
+foreach {-> reg} [regexp -all -inline -line {^info registers (\w+\S*)} $regs_output] {
+    lappend completed_regs $reg
+}
+set completed_regs [join [lsort $completed_regs]]
+gdb_assert {{$all_regs eq $completed_regs}} "complete 'info registers '"
+
+# Tests below are about tab-completion, which doesn't work if readline
+# library isn't used.  Check it first.
+
+if { ![readline_is_used] } {
+    return -1
+}
 
 set test "complete 'hfgfh'"
 send_gdb "hfgfh\t"
@@ -671,65 +774,5 @@ gdb_test_multiple "" "$test" {
 	}
     }
 }
-
-gdb_test_no_output "complete print values\[0\].x." \
-    "field completion with invalid field"
-
-# If there is a non-deprecated completion, it should be returned.
-gdb_test "complete sav" "save" "test non-deprecated completion"
-# If there is only a deprecated completion, then it should be returned.
-gdb_test "complete save-t" "save-tracepoints" "test deprecated completion"
-
-
-#
-# Tag name completion.
-#
-
-gdb_test "complete ptype struct some_" "ptype struct some_struct"
-gdb_test "complete ptype enum some_" "ptype enum some_enum"
-gdb_test "complete ptype union some_" "ptype union some_union"
-
-
-gdb_test "complete set gnutarget aut" "set gnutarget auto"
-
-
-gdb_test "complete set cp-abi aut" "set cp-abi auto"
-
-# Test that completion of commands 'target FOO' works well.
-set targets [list "core" "tfile" "exec"]
-
-# Test that completion of command 'target ctf' if GDB supports ctf
-# target.
-gdb_test_multiple "target ctf" "" {
-    -re "Undefined target command: \"ctf\"\.  Try \"help target\"\.\r\n$gdb_prompt $" {
-    }
-    -re "No CTF directory specified.*\r\n$gdb_prompt $" {
-	lappend targets "ctf"
-    }
-}
-
-foreach target_name ${targets} {
-    gdb_test "complete target ${target_name} ./gdb.base/completion" \
-	"target ${target_name} ./gdb.base/completion\\.exp.*"
-}
-
-#
-# "set foo unlimited" completion.
-#
-
-# A var_uinteger command.
-gdb_test "complete set height " "set height unlimited"
-gdb_test "complete set height u" "set height unlimited"
-
-# A var_integer command.
-gdb_test "complete set listsize " "set listsize unlimited"
-gdb_test "complete set listsize unl" "set listsize unlimited"
-
-# A var_zuinteger_unlimited command.
-gdb_test "complete set trace-buffer-size " "set trace-buffer-size unlimited"
-gdb_test "complete set trace-buffer-size unl" "set trace-buffer-size unlimited"
-
-# Restore globals modified in this test...
-set timeout $oldtimeout1
 
 return 0

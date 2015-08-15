@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2013-2014 Free Software Foundation, Inc.
+   Copyright 2013-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -132,7 +132,9 @@ int func5(int f, int d)
   return i;
 }
 
+int
 main()
 {
   func5(3,5);
+  return 0;
 }

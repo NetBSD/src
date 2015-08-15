@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2014 Free Software Foundation, Inc.
+# Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -326,4 +326,31 @@ proc get_in_proc_agent {} {
     } else {
 	return $objdir/../gdbserver/libinproctrace.so
     }
+}
+
+# Execute BINFILE on target to generate tracefile.  Return 1 if
+# tracefile is generated successfully, return 0 otherwise.
+
+proc generate_tracefile { binfile } {
+    set status [remote_exec target "$binfile"]
+
+    if { [lindex $status 0] != 0 } {
+	# Failed to execute $binfile, for example on bare metal targets.
+	# Alternatively, load the binary and run it.  If target doesn't
+	# have fileio capabilities, tracefile can't be generated.  Skip
+	# the test.
+	if [target_info exists gdb,nofileio] {
+	    return 0
+	}
+
+	clean_restart $binfile
+
+	if ![runto_main] then {
+	    return 0
+	}
+	gdb_continue_to_end "" continue 1
+	gdb_exit
+    }
+
+    return 1
 }

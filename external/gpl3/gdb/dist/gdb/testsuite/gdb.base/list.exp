@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -528,5 +528,100 @@ if [ set_listsize 10 ] then {
     test_forward_search
     test_only_end
 }
+
+# Follows tests that require execution.
+
+# Build source listing pattern based on a line range spec string.  The
+# range can be specificed as "START-END" indicating all lines in range
+# (inclusive); or just "LINE", indicating just that line.
+
+proc build_pattern { range_spec } {
+    global line_re
+
+    set range_list [split $range_spec -]
+    set range_list_len [llength $range_list]
+
+    set range_start [lindex $range_list 0]
+    if { $range_list_len > 2 || $range_list_len < 1} {
+	error "invalid range spec string: $range_spec"
+    } elseif { $range_list_len == 2 } {
+	set range_end [lindex $range_list 1]
+    } else {
+	set range_end $range_start
+    }
+
+    for {set i $range_start} {$i <= $range_end} {incr i} {
+	append pattern "\r\n$i\[ \t\]\[^\r\n\]*"
+    }
+
+    verbose -log "pattern $pattern"
+    return $pattern
+}
+
+# Test "list" command invocations right after stopping for an event.
+# COMMAND is the actual list command, including arguments.  LISTSIZE1
+# and LISTSIZE2 are the listsizes set just before and after running
+# the program to the stop point.  COMMAND is issued twice.  The first
+# time, the lines specificed by LINERANGE1 are expected; the second
+# time, the lines specified by LINERANGE2 are expected.
+
+proc test_list {command listsize1 listsize2 linerange1 linerange2} {
+    with_test_prefix "$command after stop: $listsize1, $listsize2" {
+	global binfile
+
+	clean_restart $binfile
+	if ![runto_main] then {
+	    fail "Can't run to main"
+	    return
+	}
+
+	# Test changing the listsize both before nexting, and after
+	# stopping, but before listing.  Only the second listsize
+	# change should affect which lines are listed.
+	gdb_test_no_output "set listsize $listsize1"
+	gdb_test "next" "foo \\(.*"
+	gdb_test_no_output "set listsize $listsize2"
+
+	set pattern1 [build_pattern $linerange1]
+	set pattern2 [build_pattern $linerange2]
+	gdb_test "$command" "${pattern1}" "$command #1"
+	gdb_test "$command" "${pattern2}" "$command #2"
+    }
+}
+
+
+# The first "list" should center the listing around line 8, the stop
+# line.
+test_list "list" 1 10 "3-12" "13-22"
+
+# Likewise.
+test_list "list" 10 10 "3-12" "13-22"
+
+# Likewise, but show only one line.  IOW, the first list should show
+# line 8.  Note how the listsize is 10 at the time of the stop, but
+# before any listing had been requested.  That should not affect the
+# line range that is first listed.
+test_list "list" 10 1 "8" "9"
+
+# Likewise, but show two lines.
+test_list "list" 10 2 "7-8" "9-10"
+
+# Three lines.
+test_list "list" 10 3 "7-9" "10-12"
+
+# Now test backwards.  Just like "list", the first "list -" should
+# center the listing around the stop line.
+test_list "list -" 10 10 "3-12" "2"
+
+# Likewise, but test showing 3 lines at a time.
+test_list "list -" 10 3 "7-9" "4-6"
+
+# 2 lines at a time.
+test_list "list -" 10 2 "7-8" "5-6"
+
+# Test listing one line only.  This case is a little special and
+# starts showing the previous line immediately instead of repeating
+# the current line.
+test_list "list -" 10 1 "7" "6"
 
 remote_exec build "rm -f list0.h"

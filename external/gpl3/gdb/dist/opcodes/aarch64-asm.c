@@ -1,5 +1,5 @@
 /* aarch64-asm.c -- AArch64 assembler support.
-   Copyright 2012-2013  Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of the GNU opcodes library.
@@ -855,6 +855,14 @@ do_special_encoding (struct aarch64_inst *inst)
       insert_field (FLD_sf, &inst->value, value, 0);
       if (inst->opcode->flags & F_N)
 	insert_field (FLD_N, &inst->value, value, inst->opcode->mask);
+    }
+  if (inst->opcode->flags & F_LSE_SZ)
+    {
+      idx = select_operand_for_sf_field_coding (inst->opcode);
+      value = (inst->operands[idx].qualifier == AARCH64_OPND_QLF_X
+	       || inst->operands[idx].qualifier == AARCH64_OPND_QLF_SP)
+	? 1 : 0;
+      insert_field (FLD_lse_sz, &inst->value, value, 0);
     }
   if (inst->opcode->flags & F_SIZEQ)
     encode_sizeq (inst);

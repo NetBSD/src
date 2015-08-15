@@ -1,5 +1,5 @@
 /* Target-dependent mdebug code for the ALPHA architecture.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,8 +23,6 @@
 #include "symtab.h"
 #include "gdbcore.h"
 #include "block.h"
-#include "gdb_assert.h"
-#include <string.h>
 #include "trad-frame.h"
 
 #include "alpha-tdep.h"
@@ -93,7 +91,7 @@
 static struct mdebug_extra_func_info *
 find_proc_desc (CORE_ADDR pc)
 {
-  struct block *b = block_for_pc (pc);
+  const struct block *b = block_for_pc (pc);
   struct mdebug_extra_func_info *proc_desc = NULL;
   struct symbol *sym = NULL;
   const char *sh_name = NULL;

@@ -1,6 +1,6 @@
 /* Target-dependent code for AMD64.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    Contributed by Jiri Smid, SuSE Labs.
 
@@ -29,6 +29,7 @@
 #include "frame-base.h"
 #include "frame-unwind.h"
 #include "inferior.h"
+#include "infrun.h"
 #include "gdbcmd.h"
 #include "gdbcore.h"
 #include "objfiles.h"
@@ -36,16 +37,17 @@
 #include "regset.h"
 #include "symfile.h"
 #include "disasm.h"
-#include "gdb_assert.h"
-#include "exceptions.h"
 #include "amd64-tdep.h"
 #include "i387-tdep.h"
 
 #include "features/i386/amd64.c"
 #include "features/i386/amd64-avx.c"
 #include "features/i386/amd64-mpx.c"
+#include "features/i386/amd64-avx512.c"
+
 #include "features/i386/x32.c"
 #include "features/i386/x32-avx.c"
+#include "features/i386/x32-avx512.c"
 
 #include "ax.h"
 #include "ax-gdb.h"
@@ -85,6 +87,14 @@ static const char *amd64_ymm_names[] =
   "ymm12", "ymm13", "ymm14", "ymm15"
 };
 
+static const char *amd64_ymm_avx512_names[] =
+{
+  "ymm16", "ymm17", "ymm18", "ymm19",
+  "ymm20", "ymm21", "ymm22", "ymm23",
+  "ymm24", "ymm25", "ymm26", "ymm27",
+  "ymm28", "ymm29", "ymm30", "ymm31"
+};
+
 static const char *amd64_ymmh_names[] = 
 {
   "ymm0h", "ymm1h", "ymm2h", "ymm3h",
@@ -93,9 +103,54 @@ static const char *amd64_ymmh_names[] =
   "ymm12h", "ymm13h", "ymm14h", "ymm15h"
 };
 
+static const char *amd64_ymmh_avx512_names[] =
+{
+  "ymm16h", "ymm17h", "ymm18h", "ymm19h",
+  "ymm20h", "ymm21h", "ymm22h", "ymm23h",
+  "ymm24h", "ymm25h", "ymm26h", "ymm27h",
+  "ymm28h", "ymm29h", "ymm30h", "ymm31h"
+};
+
 static const char *amd64_mpx_names[] =
 {
   "bnd0raw", "bnd1raw", "bnd2raw", "bnd3raw", "bndcfgu", "bndstatus"
+};
+
+static const char *amd64_k_names[] =
+{
+  "k0", "k1", "k2", "k3",
+  "k4", "k5", "k6", "k7"
+};
+
+static const char *amd64_zmmh_names[] =
+{
+  "zmm0h", "zmm1h", "zmm2h", "zmm3h",
+  "zmm4h", "zmm5h", "zmm6h", "zmm7h",
+  "zmm8h", "zmm9h", "zmm10h", "zmm11h",
+  "zmm12h", "zmm13h", "zmm14h", "zmm15h",
+  "zmm16h", "zmm17h", "zmm18h", "zmm19h",
+  "zmm20h", "zmm21h", "zmm22h", "zmm23h",
+  "zmm24h", "zmm25h", "zmm26h", "zmm27h",
+  "zmm28h", "zmm29h", "zmm30h", "zmm31h"
+};
+
+static const char *amd64_zmm_names[] =
+{
+  "zmm0", "zmm1", "zmm2", "zmm3",
+  "zmm4", "zmm5", "zmm6", "zmm7",
+  "zmm8", "zmm9", "zmm10", "zmm11",
+  "zmm12", "zmm13", "zmm14", "zmm15",
+  "zmm16", "zmm17", "zmm18", "zmm19",
+  "zmm20", "zmm21", "zmm22", "zmm23",
+  "zmm24", "zmm25", "zmm26", "zmm27",
+  "zmm28", "zmm29", "zmm30", "zmm31"
+};
+
+static const char *amd64_xmm_avx512_names[] = {
+    "xmm16",  "xmm17",  "xmm18",  "xmm19",
+    "xmm20",  "xmm21",  "xmm22",  "xmm23",
+    "xmm24",  "xmm25",  "xmm26",  "xmm27",
+    "xmm28",  "xmm29",  "xmm30",  "xmm31"
 };
 
 /* DWARF Register Number Mapping as defined in the System V psABI,
@@ -144,7 +199,13 @@ static int amd64_dwarf_regmap[] =
   AMD64_ST0_REGNUM + 2, AMD64_ST0_REGNUM + 3,
   AMD64_ST0_REGNUM + 4, AMD64_ST0_REGNUM + 5,
   AMD64_ST0_REGNUM + 6, AMD64_ST0_REGNUM + 7,
-  
+
+  /* MMX Registers 0 - 7.
+     We have to handle those registers specifically, as their register
+     number within GDB depends on the target (or they may even not be
+     available at all).  */
+  -1, -1, -1, -1, -1, -1, -1, -1,
+
   /* Control and Status Flags Register.  */
   AMD64_EFLAGS_REGNUM,
 
@@ -272,8 +333,12 @@ amd64_pseudo_register_name (struct gdbarch *gdbarch, int regnum)
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   if (i386_byte_regnum_p (gdbarch, regnum))
     return amd64_byte_names[regnum - tdep->al_regnum];
+  else if (i386_zmm_regnum_p (gdbarch, regnum))
+    return amd64_zmm_names[regnum - tdep->zmm0_regnum];
   else if (i386_ymm_regnum_p (gdbarch, regnum))
     return amd64_ymm_names[regnum - tdep->ymm0_regnum];
+  else if (i386_ymm_avx512_regnum_p (gdbarch, regnum))
+    return amd64_ymm_avx512_names[regnum - tdep->ymm16_regnum];
   else if (i386_word_regnum_p (gdbarch, regnum))
     return amd64_word_names[regnum - tdep->ax_regnum];
   else if (i386_dword_regnum_p (gdbarch, regnum))
@@ -610,7 +675,9 @@ amd64_classify (struct type *type, enum amd64_reg_class class[2])
      struct complexT {
        T real;
        T imag;
-     };  */
+     };
+
+  */
   else if (code == TYPE_CODE_COMPLEX && len == 8)
     class[0] = AMD64_SSE;
   else if (code == TYPE_CODE_COMPLEX && len == 16)
@@ -1345,6 +1412,24 @@ amd64_absolute_jmp_p (const struct amd64_insn *details)
   return 0;
 }
 
+/* Return non-zero if the instruction DETAILS is a jump, zero otherwise.  */
+
+static int
+amd64_jmp_p (const struct amd64_insn *details)
+{
+  const gdb_byte *insn = &details->raw_insn[details->opcode_offset];
+
+  /* jump short, relative.  */
+  if (insn[0] == 0xeb)
+    return 1;
+
+  /* jump near, relative.  */
+  if (insn[0] == 0xe9)
+    return 1;
+
+  return amd64_absolute_jmp_p (details);
+}
+
 static int
 amd64_absolute_call_p (const struct amd64_insn *details)
 {
@@ -1414,6 +1499,52 @@ amd64_syscall_p (const struct amd64_insn *details, int *lengthp)
     }
 
   return 0;
+}
+
+/* Classify the instruction at ADDR using PRED.
+   Throw an error if the memory can't be read.  */
+
+static int
+amd64_classify_insn_at (struct gdbarch *gdbarch, CORE_ADDR addr,
+			int (*pred) (const struct amd64_insn *))
+{
+  struct amd64_insn details;
+  gdb_byte *buf;
+  int len, classification;
+
+  len = gdbarch_max_insn_length (gdbarch);
+  buf = alloca (len);
+
+  read_code (addr, buf, len);
+  amd64_get_insn_details (buf, &details);
+
+  classification = pred (&details);
+
+  return classification;
+}
+
+/* The gdbarch insn_is_call method.  */
+
+static int
+amd64_insn_is_call (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+  return amd64_classify_insn_at (gdbarch, addr, amd64_call_p);
+}
+
+/* The gdbarch insn_is_ret method.  */
+
+static int
+amd64_insn_is_ret (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+  return amd64_classify_insn_at (gdbarch, addr, amd64_ret_p);
+}
+
+/* The gdbarch insn_is_jump method.  */
+
+static int
+amd64_insn_is_jump (struct gdbarch *gdbarch, CORE_ADDR addr)
+{
+  return amd64_classify_insn_at (gdbarch, addr, amd64_jmp_p);
 }
 
 /* Fix up the state of registers and memory after having single-stepped
@@ -2176,7 +2307,8 @@ amd64_skip_xmm_prologue (CORE_ADDR pc, CORE_ADDR start_pc)
 
   start_pc_sal = find_pc_sect_line (start_pc, NULL, 0);
   if (start_pc_sal.symtab == NULL
-      || producer_is_gcc_ge_4 (start_pc_sal.symtab->producer) < 6
+      || producer_is_gcc_ge_4 (COMPUNIT_PRODUCER
+	   (SYMTAB_COMPUNIT (start_pc_sal.symtab))) < 6
       || start_pc_sal.pc != start_pc || pc >= start_pc_sal.end)
     return pc;
 
@@ -2239,14 +2371,15 @@ amd64_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc)
     {
       CORE_ADDR post_prologue_pc
 	= skip_prologue_using_sal (gdbarch, func_addr);
-      struct symtab *s = find_pc_symtab (func_addr);
+      struct compunit_symtab *cust = find_pc_compunit_symtab (func_addr);
 
       /* Clang always emits a line note before the prologue and another
 	 one after.  We trust clang to emit usable line notes.  */
       if (post_prologue_pc
-	  && (s != NULL
-	      && s->producer != NULL
-	      && strncmp (s->producer, "clang ", sizeof ("clang ") - 1) == 0))
+	  && (cust != NULL
+	      && COMPUNIT_PRODUCER (cust) != NULL
+	      && strncmp (COMPUNIT_PRODUCER (cust), "clang ",
+			  sizeof ("clang ") - 1) == 0))
         return max (start_pc, post_prologue_pc);
     }
 
@@ -2588,10 +2721,10 @@ static int
 amd64_in_function_epilogue_p (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
   gdb_byte insn;
-  struct symtab *symtab;
+  struct compunit_symtab *cust;
 
-  symtab = find_pc_symtab (pc);
-  if (symtab && symtab->epilogue_unwind_valid)
+  cust = find_pc_compunit_symtab (pc);
+  if (cust != NULL && COMPUNIT_EPILOGUE_UNWIND_VALID (cust))
     return 0;
 
   if (target_read_memory (pc, &insn, 1))
@@ -2718,9 +2851,10 @@ static void
 amd64_supply_fpregset (const struct regset *regset, struct regcache *regcache,
 		       int regnum, const void *fpregs, size_t len)
 {
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  gdb_assert (len == tdep->sizeof_fpregset);
+  gdb_assert (len >= tdep->sizeof_fpregset);
   amd64_supply_fxsave (regcache, regnum, fpregs);
 }
 
@@ -2734,62 +2868,17 @@ amd64_collect_fpregset (const struct regset *regset,
 			const struct regcache *regcache,
 			int regnum, void *fpregs, size_t len)
 {
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
-  gdb_assert (len == tdep->sizeof_fpregset);
+  gdb_assert (len >= tdep->sizeof_fpregset);
   amd64_collect_fxsave (regcache, regnum, fpregs);
 }
 
-/* Similar to amd64_supply_fpregset, but use XSAVE extended state.  */
-
-static void
-amd64_supply_xstateregset (const struct regset *regset,
-			   struct regcache *regcache, int regnum,
-			   const void *xstateregs, size_t len)
-{
-  amd64_supply_xsave (regcache, regnum, xstateregs);
-}
-
-/* Similar to amd64_collect_fpregset, but use XSAVE extended state.  */
-
-static void
-amd64_collect_xstateregset (const struct regset *regset,
-			    const struct regcache *regcache,
-			    int regnum, void *xstateregs, size_t len)
-{
-  amd64_collect_xsave (regcache, regnum, xstateregs, 1);
-}
-
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
-
-static const struct regset *
-amd64_regset_from_core_section (struct gdbarch *gdbarch,
-				const char *sect_name, size_t sect_size)
-{
-  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
-
-  if (strcmp (sect_name, ".reg2") == 0 && sect_size == tdep->sizeof_fpregset)
-    {
-      if (tdep->fpregset == NULL)
-	tdep->fpregset = regset_alloc (gdbarch, amd64_supply_fpregset,
-				       amd64_collect_fpregset);
-
-      return tdep->fpregset;
-    }
-
-  if (strcmp (sect_name, ".reg-xstate") == 0)
-    {
-      if (tdep->xstateregset == NULL)
-	tdep->xstateregset = regset_alloc (gdbarch,
-					   amd64_supply_xstateregset,
-					   amd64_collect_xstateregset);
-
-      return tdep->xstateregset;
-    }
-
-  return i386_regset_from_core_section (gdbarch, sect_name, sect_size);
-}
+const struct regset amd64_fpregset =
+  {
+    NULL, amd64_supply_fpregset, amd64_collect_fpregset
+  };
 
 
 /* Figure out where the longjmp will land.  Slurp the jmp_buf out of
@@ -2848,6 +2937,7 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* AMD64 generally uses `fxsave' instead of `fsave' for saving its
      floating-point registers.  */
   tdep->sizeof_fpregset = I387_SIZEOF_FXSAVE;
+  tdep->fpregset = &amd64_fpregset;
 
   if (! tdesc_has_registers (tdesc))
     tdesc = tdesc_amd64;
@@ -2855,6 +2945,23 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tdep->num_core_regs = AMD64_NUM_GREGS + I387_NUM_REGS;
   tdep->register_names = amd64_register_names;
+
+  if (tdesc_find_feature (tdesc, "org.gnu.gdb.i386.avx512") != NULL)
+    {
+      tdep->zmmh_register_names = amd64_zmmh_names;
+      tdep->k_register_names = amd64_k_names;
+      tdep->xmm_avx512_register_names = amd64_xmm_avx512_names;
+      tdep->ymm16h_register_names = amd64_ymmh_avx512_names;
+
+      tdep->num_zmm_regs = 32;
+      tdep->num_xmm_avx512_regs = 16;
+      tdep->num_ymm_avx512_regs = 16;
+
+      tdep->zmm0h_regnum = AMD64_ZMM0H_REGNUM;
+      tdep->k0_regnum = AMD64_K0_REGNUM;
+      tdep->xmm16_regnum = AMD64_XMM16_REGNUM;
+      tdep->ymm16h_regnum = AMD64_YMM16H_REGNUM;
+    }
 
   if (tdesc_find_feature (tdesc, "org.gnu.gdb.i386.avx") != NULL)
     {
@@ -2944,11 +3051,6 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   frame_unwind_append_unwinder (gdbarch, &amd64_frame_unwind);
   frame_base_set_default (gdbarch, &amd64_frame_base);
 
-  /* If we have a register mapping, enable the generic core file support.  */
-  if (tdep->gregset_reg_offset)
-    set_gdbarch_regset_from_core_section (gdbarch,
-					  amd64_regset_from_core_section);
-
   set_gdbarch_get_longjmp_target (gdbarch, amd64_get_longjmp_target);
 
   set_gdbarch_relocate_instruction (gdbarch, amd64_relocate_instruction);
@@ -2966,6 +3068,9 @@ amd64_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				      i386_stap_is_single_operand);
   set_gdbarch_stap_parse_special_token (gdbarch,
 					i386_stap_parse_special_token);
+  set_gdbarch_insn_is_call (gdbarch, amd64_insn_is_call);
+  set_gdbarch_insn_is_ret (gdbarch, amd64_insn_is_ret);
+  set_gdbarch_insn_is_jump (gdbarch, amd64_insn_is_jump);
 }
 
 
@@ -3014,8 +3119,11 @@ _initialize_amd64_tdep (void)
   initialize_tdesc_amd64 ();
   initialize_tdesc_amd64_avx ();
   initialize_tdesc_amd64_mpx ();
+  initialize_tdesc_amd64_avx512 ();
+
   initialize_tdesc_x32 ();
   initialize_tdesc_x32_avx ();
+  initialize_tdesc_x32_avx512 ();
 }
 
 

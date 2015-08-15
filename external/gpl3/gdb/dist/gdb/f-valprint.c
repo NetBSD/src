@@ -1,6 +1,6 @@
 /* Support for printing Fortran values for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com), additionally worked over by Stan Shebs.
@@ -21,7 +21,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "defs.h"
-#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -34,8 +33,6 @@
 #include "command.h"
 #include "block.h"
 #include "dictionary.h"
-#include "gdb_assert.h"
-#include "exceptions.h"
 
 extern void _initialize_f_valprint (void);
 static void info_common_command (char *, int);
@@ -351,7 +348,7 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 	  opts.format = (options->format ? options->format
 			 : options->output_format);
 	  val_print_scalar_formatted (type, valaddr, embedded_offset,
-				      original_value, options, 0, stream);
+				      original_value, &opts, 0, stream);
 	}
       else
 	{
@@ -411,7 +408,7 @@ f_val_print (struct type *type, const gdb_byte *valaddr, int embedded_offset,
 }
 
 static void
-info_common_command_for_block (struct block *block, const char *comname,
+info_common_command_for_block (const struct block *block, const char *comname,
 			       int *any_printed)
 {
   struct block_iterator iter;
@@ -424,7 +421,7 @@ info_common_command_for_block (struct block *block, const char *comname,
   ALL_BLOCK_SYMBOLS (block, iter, sym)
     if (SYMBOL_DOMAIN (sym) == COMMON_BLOCK_DOMAIN)
       {
-	struct common_block *common = SYMBOL_VALUE_COMMON_BLOCK (sym);
+	const struct common_block *common = SYMBOL_VALUE_COMMON_BLOCK (sym);
 	size_t index;
 
 	gdb_assert (SYMBOL_CLASS (sym) == LOC_COMMON_BLOCK);
@@ -472,7 +469,7 @@ static void
 info_common_command (char *comname, int from_tty)
 {
   struct frame_info *fi;
-  struct block *block;
+  const struct block *block;
   int values_printed = 0;
 
   /* We have been told to display the contents of F77 COMMON 

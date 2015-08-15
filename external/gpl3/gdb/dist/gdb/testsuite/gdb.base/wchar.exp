@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,6 +37,20 @@ gdb_test "print simple\[2\]" "= 99 L'c'"
 gdb_test "print difficile\[2\]" "= 65261 L'\\\\xfeed'"
 
 set cent "\\\\242"
+
+set test "show host-charset"
+gdb_test_multiple $test $test {
+   -re "CP1252\".*\r\n$gdb_prompt $" {
+       # With Windows code page 1252 (Latin 1), the cent
+       # is printable.
+	set cent "\u00A2"
+	pass $test
+   }
+   -re "$gdb_prompt $" {
+	pass $test
+   }
+}
+
 gdb_test "print repeat" "= L\"A\", '$cent' <repeats 21 times>, \"B.*"
 
 global hex

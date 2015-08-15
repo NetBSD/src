@@ -44,14 +44,8 @@ void init0 ()
 
 /* This is to derail optimizer in localscopes.
    Return 1 + 2 + . . . + N.  */
-#ifdef PROTOTYPES
 int
 sum_upto (int n)
-#else
-int
-sum_upto (n)
-     int n;
-#endif
 {
   int i;
   int retval = 0;
@@ -61,13 +55,8 @@ sum_upto (n)
   return retval;
 }
 
-#ifdef PROTOTYPES
 int
 useit (int val)
-#else
-int
-useit (val) int val;
-#endif
 {
     static int usedval;
 
@@ -75,13 +64,8 @@ useit (val) int val;
     return val + sum_upto (0);
 }
 
-#ifdef PROTOTYPES
 int
 useitp (const int *val)
-#else
-int
-useitp (val) const int *val;
-#endif
 {
     static int usedval;
 
@@ -89,15 +73,8 @@ useitp (val) const int *val;
     return *val + sum_upto (0);
 }
 
-#ifdef PROTOTYPES
 int
 autovars (int bcd, int abc)
-#else
-int
-autovars (bcd, abc)
-     int bcd;
-     int abc;
-#endif
 {
     int  i0 =  useit (0),  i1 =  useit (1),  i2 =  useit (2);
     int  i3 =  useit (3),  i4 =  useit (4),  i5 =  useit (5);
@@ -172,14 +149,8 @@ autovars (bcd, abc)
       + i91 + i92 + i93 + i94 + i95 + i96 + i97 + i98 + i99 + abc + bcd;
 }
 
-#ifdef PROTOTYPES
 int
 localscopes (int x)
-#else
-int
-localscopes (x)
-     int x;
-#endif
 {
     int localval;
     int retval;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2010-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,6 @@
 #include "symfile.h"
 #include "objfiles.h"
 #include "elf-bfd.h"
-#include "exceptions.h"
 
 /* Need to define the following macro in order to get the complete
    load_module_desc struct definition in dlfcn.h  Otherwise, it doesn't
@@ -86,8 +85,8 @@ new_so_list (char *so_name, struct load_module_desc module_desc)
 {
   struct so_list *new_so;
 
-  new_so = (struct so_list *) XZALLOC (struct so_list);
-  new_so->lm_info = (struct lm_info *) XZALLOC (struct lm_info);
+  new_so = (struct so_list *) XCNEW (struct so_list);
+  new_so->lm_info = (struct lm_info *) XCNEW (struct lm_info);
   new_so->lm_info->module_desc = module_desc;
 
   strncpy (new_so->so_name, so_name, SO_NAME_MAX_PATH_SIZE - 1);
@@ -677,7 +676,7 @@ ia64_hpux_get_solib_linkage_addr (CORE_ADDR faddr)
 static struct target_so_ops *
 ia64_hpux_target_so_ops (void)
 {
-  struct target_so_ops *ops = XZALLOC (struct target_so_ops);
+  struct target_so_ops *ops = XCNEW (struct target_so_ops);
 
   ops->relocate_section_addresses = ia64_hpux_relocate_section_addresses;
   ops->free_so = ia64_hpux_free_so;

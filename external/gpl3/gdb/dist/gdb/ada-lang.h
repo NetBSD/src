@@ -1,6 +1,6 @@
 /* Ada language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,7 @@
 struct frame_info;
 struct inferior;
 struct type_print_options;
+struct parser_state;
 
 #include "value.h"
 #include "gdbtypes.h"
@@ -33,11 +34,7 @@ struct type_print_options;
    system and that might consider (confusing) debugging information.
    Each name (a basic regular expression string) is followed by a
    comma.  FIXME: Should be part of a configuration file.  */
-#if defined(__alpha__) && defined(__osf__)
-#define ADA_KNOWN_RUNTIME_FILE_NAME_PATTERNS \
-   "^[agis]-.*\\.ad[bs]$", \
-   "/usr/shlib/libpthread\\.so",
-#elif defined (__linux__)
+#if defined (__linux__)
 #define ADA_KNOWN_RUNTIME_FILE_NAME_PATTERNS \
    "^[agis]-.*\\.ad[bs]$", \
    "/lib.*/libpthread\\.so[.0-9]*$", "/lib.*/libpthread\\.a$", \
@@ -165,11 +162,13 @@ struct ada_task_info
 
 extern void *grow_vect (void *, size_t *, size_t, int);
 
+extern void ada_ensure_varsize_limit (const struct type *type);
+
 extern int ada_get_field_index (const struct type *type,
                                 const char *field_name,
                                 int maybe_missing);
 
-extern int ada_parse (void);    /* Defined in ada-exp.y */
+extern int ada_parse (struct parser_state *);    /* Defined in ada-exp.y */
 
 extern void ada_error (char *); /* Defined in ada-exp.y */
 
@@ -235,8 +234,6 @@ extern const char *ada_decode_symbol (const struct general_symbol_info *);
 extern const char *ada_decode (const char*);
 
 extern enum language ada_update_initial_language (enum language);
-
-extern void clear_ada_sym_cache (void);
 
 extern int ada_lookup_symbol_list (const char *, const struct block *,
                                    domain_enum, struct ada_symbol_info**);

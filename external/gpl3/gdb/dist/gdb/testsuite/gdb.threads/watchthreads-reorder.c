@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2014 Free Software Foundation, Inc.
+   Copyright 2009-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -43,6 +43,8 @@ static pthread_cond_t thread2_tid_cond = PTHREAD_COND_INITIALIZER;
 static pthread_mutex_t thread2_tid_mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
 
 static pthread_mutex_t terminate_mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
+
+static pthread_barrier_t threads_started_barrier;
 
 /* These variables must have lower in-memory addresses than thread1_rwatch and
    thread2_rwatch so that they take their watchpoint slots.  */
@@ -87,6 +89,8 @@ thread1_func (void *unused)
   int i;
   volatile int rwatch_store;
 
+  pthread_barrier_wait (&threads_started_barrier);
+
   timed_mutex_lock (&thread1_tid_mutex);
 
   /* THREAD1_TID_MUTEX must be already locked to avoid race.  */
@@ -112,6 +116,8 @@ thread2_func (void *unused)
 {
   int i;
   volatile int rwatch_store;
+
+  pthread_barrier_wait (&threads_started_barrier);
 
   timed_mutex_lock (&thread2_tid_mutex);
 
@@ -279,6 +285,8 @@ main (int argc, char **argv)
 
   timed_mutex_lock (&terminate_mutex);
 
+  pthread_barrier_init (&threads_started_barrier, NULL, 3);
+
   i = pthread_create (&thread1, NULL, thread1_func, NULL);
   assert (i == 0);
 
@@ -304,6 +312,11 @@ main (int argc, char **argv)
      otherwise.  */
 
   atexit (cleanup);
+
+  /* Wait until all threads are seen running.  On Linux (at least),
+     new threads start stopped, and the debugger must resume them.
+     Need to wait for that before stopping GDB.  */
+  pthread_barrier_wait (&threads_started_barrier);
 
   printf ("Stopping GDB PID %lu.\n", (unsigned long) tracer);
 

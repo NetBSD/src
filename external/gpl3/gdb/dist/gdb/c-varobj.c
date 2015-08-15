@@ -1,6 +1,6 @@
 /* varobj support for C and C++.
 
-   Copyright (C) 1999-2014 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -124,6 +124,56 @@ adjust_value_for_child_access (struct value **value,
           *value = value_cast (enclosing_type, *value);
         }
     }
+}
+
+/* Is VAR a path expression parent, i.e., can it be used to construct
+   a valid path expression?  */
+
+static int
+c_is_path_expr_parent (struct varobj *var)
+{
+  struct type *type;
+
+  /* "Fake" children are not path_expr parents.  */
+  if (CPLUS_FAKE_CHILD (var))
+    return 0;
+
+  type = varobj_get_gdb_type (var);
+
+  /* Anonymous unions and structs are also not path_expr parents.  */
+  if ((TYPE_CODE (type) == TYPE_CODE_STRUCT
+       || TYPE_CODE (type) == TYPE_CODE_UNION)
+      && TYPE_NAME (type) == NULL
+      && TYPE_TAG_NAME (type) == NULL)
+    {
+      struct varobj *parent = var->parent;
+
+      while (parent != NULL && CPLUS_FAKE_CHILD (parent))
+	parent = parent->parent;
+
+      if (parent != NULL)
+	{
+	  struct type *parent_type;
+	  int was_ptr;
+
+	  parent_type = varobj_get_value_type (parent);
+	  adjust_value_for_child_access (NULL, &parent_type, &was_ptr, 0);
+
+	  if (TYPE_CODE (parent_type) == TYPE_CODE_STRUCT
+	      || TYPE_CODE (parent_type) == TYPE_CODE_UNION)
+	    {
+	      const char *field_name;
+
+	      gdb_assert (var->index < TYPE_NFIELDS (parent_type));
+	      field_name = TYPE_FIELD_NAME (parent_type, var->index);
+	      return !(field_name == NULL || *field_name == '\0');
+	    }
+	}
+
+      return 0;
+    }
+
+  return 1;
 }
 
 /* C */
@@ -493,7 +543,8 @@ const struct lang_varobj_ops c_varobj_ops =
    c_type_of_child,
    c_value_of_variable,
    varobj_default_value_is_changeable_p,
-   NULL /* value_has_mutated */
+   NULL, /* value_has_mutated */
+   c_is_path_expr_parent  /* is_path_expr_parent */
 };
 
 /* A little convenience enum for dealing with C++/Java.  */
@@ -904,7 +955,8 @@ const struct lang_varobj_ops cplus_varobj_ops =
    cplus_type_of_child,
    cplus_value_of_variable,
    varobj_default_value_is_changeable_p,
-   NULL /* value_has_mutated */
+   NULL, /* value_has_mutated */
+   c_is_path_expr_parent  /* is_path_expr_parent */
 };
 
 

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2014 Free Software Foundation, Inc.
+# Copyright 2007-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,8 +26,7 @@ if { [skip_gdbserver_tests] } {
     return 0
 }
 
-# We need to use TCL's exec to get the pid.
-if [is_remote target] then {
+if {![can_spawn_for_attach]} {
     return 0
 }
 
@@ -44,15 +43,7 @@ gdbserver_start_extended
 
 gdb_test_no_output "set remote exec-file $target_exec" "set remote exec-file"
 
-# Start the program running and then wait for a bit, to be sure
-# that it can be attached to.
-set testpid [eval exec $binfile &]
-exec sleep 2
-if { [istarget "*-*-cygwin*"] } {
-    # testpid is the Cygwin PID, GDB uses the Windows PID, which might be
-    # different due to the way fork/exec works.
-    set testpid [ exec ps -e | gawk "{ if (\$1 == $testpid) print \$4; }" ]
-}
+set testpid [spawn_wait_for_attach $binfile]
 
 gdb_test "attach $testpid" \
     "Attaching to program: .*, process $testpid.*(in|at).*" \

@@ -1,6 +1,6 @@
 /* Test program for byte registers.
 
-   Copyright 2010-2014 Free Software Foundation, Inc.
+   Copyright 2010-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,11 @@ int data[] = {
 int
 main (int argc, char **argv)
 {
+  register int eax asm ("eax");
+  register int ebx asm ("ebx");
+  register int ecx asm ("ecx");
+  register int edx asm ("edx");
+
   asm ("mov 0(%0), %%eax\n\t"
        "mov 4(%0), %%ebx\n\t"
        "mov 8(%0), %%ecx\n\t"
@@ -36,15 +41,22 @@ main (int argc, char **argv)
        : /* no output operands */
        : "r" (data) 
        : "eax", "ebx", "ecx", "edx");
-  asm ("nop"); /* first breakpoint here */
+
+  asm ("nop" /* first breakpoint here */
+       /* i386-{byte,word}.exp write eax-edx here.
+	  Tell gcc/clang they're live.  */
+       : "=r" (eax), "=r" (ebx), "=r" (ecx), "=r" (edx)
+       : /* no inputs */);
 
   asm ("mov %%eax, 0(%0)\n\t"
        "mov %%ebx, 4(%0)\n\t"
        "mov %%ecx, 8(%0)\n\t"
        "mov %%edx, 12(%0)\n\t"
        : /* no output operands */
-       : "r" (data) 
-       : "eax", "ebx", "ecx", "edx");
+       : "r" (data),
+	 /* Mark these as inputs so that gcc/clang won't try to use them as
+	    a temp to build %0.  */
+	 "r" (eax), "r" (ebx), "r" (ecx), "r" (edx));
   puts ("Bye!"); /* second breakpoint here */
 
   return 0;

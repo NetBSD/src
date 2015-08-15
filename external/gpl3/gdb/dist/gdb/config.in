@@ -75,9 +75,6 @@
 /* Define to 1 if you have the `btowc' function. */
 #undef HAVE_BTOWC
 
-/* Define to 1 if you have the `canonicalize_file_name' function. */
-#undef HAVE_CANONICALIZE_FILE_NAME
-
 /* Define to 1 if you have the <cursesX.h> header file. */
 #undef HAVE_CURSESX_H
 
@@ -159,6 +156,9 @@
 /* Define if <sys/procfs.h> has gregset_t. */
 #undef HAVE_GREGSET_T
 
+/* Define if Guile interpreter is being linked in. */
+#undef HAVE_GUILE
+
 /* Define if you have the iconv() function. */
 #undef HAVE_ICONV
 
@@ -222,9 +222,6 @@
 /* Define to 1 if the compiler supports long double. */
 #undef HAVE_LONG_DOUBLE
 
-/* Define to 1 if you have the `lstat' function. */
-#undef HAVE_LSTAT
-
 /* Define if <sys/procfs.h> has lwpid_t. */
 #undef HAVE_LWPID_T
 
@@ -233,6 +230,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mkdtemp' function. */
+#undef HAVE_MKDTEMP
 
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
@@ -327,17 +327,14 @@
 /* Define if Python interpreter is being linked in. */
 #undef HAVE_PYTHON
 
-/* Define to 1 if you have the `readlink' function. */
-#undef HAVE_READLINK
-
-/* Define to 1 if you have the `realpath' function. */
-#undef HAVE_REALPATH
-
 /* Define to 1 if you have the `resize_term' function. */
 #undef HAVE_RESIZE_TERM
 
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
+
+/* Define to 1 if you have the `scm_new_smob' function. */
+#undef HAVE_SCM_NEW_SMOB
 
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
@@ -359,6 +356,9 @@
 
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
+
+/* Define to 1 if you have the `sigaltstack' function. */
+#undef HAVE_SIGALTSTACK
 
 /* Define to 1 if you have the <signal.h> header file. */
 #undef HAVE_SIGNAL_H
@@ -515,6 +515,9 @@
 
 /* Define to 1 if you have the `wborder' function. */
 #undef HAVE_WBORDER
+
+/* Define to 1 if you have the <windows.h> header file. */
+#undef HAVE_WINDOWS_H
 
 /* Define to 1 if `fork' works. */
 #undef HAVE_WORKING_FORK

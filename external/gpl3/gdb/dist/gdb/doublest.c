@@ -1,6 +1,6 @@
 /* Floating point routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,8 +26,6 @@
 #include "defs.h"
 #include "doublest.h"
 #include "floatformat.h"
-#include "gdb_assert.h"
-#include <string.h>
 #include "gdbtypes.h"
 #include <math.h>		/* ldexp */
 

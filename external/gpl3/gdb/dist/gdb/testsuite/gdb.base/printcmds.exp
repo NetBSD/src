@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -158,262 +158,267 @@ proc test_float_rejected {} {
 proc test_print_all_chars {} {
     global gdb_prompt
 
-    gdb_test "p ctable1\[0\]"   " = 0 '\\\\000'"
-    gdb_test "p ctable1\[1\]"   " = 1 '\\\\001'"
-    gdb_test "p ctable1\[2\]"   " = 2 '\\\\002'"
-    gdb_test "p ctable1\[3\]"   " = 3 '\\\\003'"
-    gdb_test "p ctable1\[4\]"   " = 4 '\\\\004'"
-    gdb_test "p ctable1\[5\]"   " = 5 '\\\\005'"
-    gdb_test "p ctable1\[6\]"   " = 6 '\\\\006'"
-    gdb_test "p ctable1\[7\]"   " = 7 '\\\\a'"
-    gdb_test "p ctable1\[8\]"   " = 8 '\\\\b'"
-    gdb_test "p ctable1\[9\]"   " = 9 '\\\\t'"
-    gdb_test "p ctable1\[10\]"  " = 10 '\\\\n'"
-    gdb_test "p ctable1\[11\]"  " = 11 '\\\\v'"
-    gdb_test "p ctable1\[12\]"  " = 12 '\\\\f'"
-    gdb_test "p ctable1\[13\]"  " = 13 '\\\\r'"
-    gdb_test "p ctable1\[14\]"  " = 14 '\\\\016'"
-    gdb_test "p ctable1\[15\]"  " = 15 '\\\\017'"
-    gdb_test "p ctable1\[16\]"  " = 16 '\\\\020'"
-    gdb_test "p ctable1\[17\]"  " = 17 '\\\\021'"
-    gdb_test "p ctable1\[18\]"  " = 18 '\\\\022'"
-    gdb_test "p ctable1\[19\]"  " = 19 '\\\\023'"
-    gdb_test "p ctable1\[20\]"  " = 20 '\\\\024'"
-    gdb_test "p ctable1\[21\]"  " = 21 '\\\\025'"
-    gdb_test "p ctable1\[22\]"  " = 22 '\\\\026'"
-    gdb_test "p ctable1\[23\]"  " = 23 '\\\\027'"
-    gdb_test "p ctable1\[24\]"  " = 24 '\\\\030'"
-    gdb_test "p ctable1\[25\]"  " = 25 '\\\\031'"
-    gdb_test "p ctable1\[26\]"  " = 26 '\\\\032'"
-    gdb_test "p ctable1\[27\]"  " = 27 '\\\\033'"
-    gdb_test "p ctable1\[28\]"  " = 28 '\\\\034'"
-    gdb_test "p ctable1\[29\]"  " = 29 '\\\\035'"
-    gdb_test "p ctable1\[30\]"  " = 30 '\\\\036'"
-    gdb_test "p ctable1\[31\]"  " = 31 '\\\\037'"
-    gdb_test "p ctable1\[32\]"  " = 32 ' '"
-    gdb_test "p ctable1\[33\]"  " = 33 '!'"
-    gdb_test "p ctable1\[34\]"  " = 34 '\"'"
-    gdb_test "p ctable1\[35\]"  " = 35 '#'"
-    gdb_test "p ctable1\[36\]"  " = 36 '\\\$'"
-    gdb_test "p ctable1\[37\]"  " = 37 '%'"
-    gdb_test "p ctable1\[38\]"  " = 38 '&'"
-    gdb_test "p ctable1\[39\]"  " = 39 '\\\\''"
-    gdb_test "p ctable1\[40\]"  " = 40 '\\('"
-    gdb_test "p ctable1\[41\]"  " = 41 '\\)'"
-    gdb_test "p ctable1\[42\]"  " = 42 '\\*'"
-    gdb_test "p ctable1\[43\]"  " = 43 '\\+'"
-    gdb_test "p ctable1\[44\]"  " = 44 ','"
-    gdb_test "p ctable1\[45\]"  " = 45 '-'"
-    gdb_test "p ctable1\[46\]"  " = 46 '.'"
-    gdb_test "p ctable1\[47\]"  " = 47 '/'"
-    gdb_test "p ctable1\[48\]"  " = 48 '0'"
-    gdb_test "p ctable1\[49\]"  " = 49 '1'"
-    gdb_test "p ctable1\[50\]"  " = 50 '2'"
-    gdb_test "p ctable1\[51\]"  " = 51 '3'"
-    gdb_test "p ctable1\[52\]"  " = 52 '4'"
-    gdb_test "p ctable1\[53\]"  " = 53 '5'"
-    gdb_test "p ctable1\[54\]"  " = 54 '6'"
-    gdb_test "p ctable1\[55\]"  " = 55 '7'"
-    gdb_test "p ctable1\[56\]"  " = 56 '8'"
-    gdb_test "p ctable1\[57\]"  " = 57 '9'"
-    gdb_test "p ctable1\[58\]"  " = 58 ':'"
-    gdb_test "p ctable1\[59\]"  " = 59 ';'"
-    gdb_test "p ctable1\[60\]"  " = 60 '<'"
-    gdb_test "p ctable1\[61\]"  " = 61 '='"
-    gdb_test "p ctable1\[62\]"  " = 62 '>'"
-    gdb_test "p ctable1\[63\]"  " = 63 '\\?'"
-    gdb_test "p ctable1\[64\]"  " = 64 '@'"
-    gdb_test "p ctable1\[65\]"  " = 65 'A'"
-    gdb_test "p ctable1\[66\]"  " = 66 'B'"
-    gdb_test "p ctable1\[67\]"  " = 67 'C'"
-    gdb_test "p ctable1\[68\]"  " = 68 'D'"
-    gdb_test "p ctable1\[69\]"  " = 69 'E'"
-    gdb_test "p ctable1\[70\]"  " = 70 'F'"
-    gdb_test "p ctable1\[71\]"  " = 71 'G'"
-    gdb_test "p ctable1\[72\]"  " = 72 'H'"
-    gdb_test "p ctable1\[73\]"  " = 73 'I'"
-    gdb_test "p ctable1\[74\]"  " = 74 'J'"
-    gdb_test "p ctable1\[75\]"  " = 75 'K'"
-    gdb_test "p ctable1\[76\]"  " = 76 'L'"
-    gdb_test "p ctable1\[77\]"  " = 77 'M'"
-    gdb_test "p ctable1\[78\]"  " = 78 'N'"
-    gdb_test "p ctable1\[79\]"  " = 79 'O'"
-    gdb_test "p ctable1\[80\]"  " = 80 'P'"
-    gdb_test "p ctable1\[81\]"  " = 81 'Q'"
-    gdb_test "p ctable1\[82\]"  " = 82 'R'"
-    gdb_test "p ctable1\[83\]"  " = 83 'S'"
-    gdb_test "p ctable1\[84\]"  " = 84 'T'"
-    gdb_test "p ctable1\[85\]"  " = 85 'U'"
-    gdb_test "p ctable1\[86\]"  " = 86 'V'"
-    gdb_test "p ctable1\[87\]"  " = 87 'W'"
-    gdb_test "p ctable1\[88\]"  " = 88 'X'"
-    gdb_test "p ctable1\[89\]"  " = 89 'Y'"
-    gdb_test "p ctable1\[90\]"  " = 90 'Z'"
-    gdb_test "p ctable1\[91\]"  " = 91 '\\\['"
-    gdb_test "p ctable1\[92\]"  " = 92 '\\\\\\\\'"
-    gdb_test "p ctable1\[93\]"  " = 93 '\\\]'"
-    gdb_test "p ctable1\[94\]"  " = 94 '\\^'"
-    gdb_test "p ctable1\[95\]"  " = 95 '_'"
-    gdb_test "p ctable1\[96\]"  " = 96 '`'"
-    gdb_test "p ctable1\[97\]"  " = 97 'a'"
-    gdb_test "p ctable1\[98\]"  " = 98 'b'"
-    gdb_test "p ctable1\[99\]"  " = 99 'c'"
-    gdb_test "p ctable1\[100\]" " = 100 'd'"
-    gdb_test "p ctable1\[101\]" " = 101 'e'"
-    gdb_test "p ctable1\[102\]" " = 102 'f'"
-    gdb_test "p ctable1\[103\]" " = 103 'g'"
-    gdb_test "p ctable1\[104\]" " = 104 'h'"
-    gdb_test "p ctable1\[105\]" " = 105 'i'"
-    gdb_test "p ctable1\[106\]" " = 106 'j'"
-    gdb_test "p ctable1\[107\]" " = 107 'k'"
-    gdb_test "p ctable1\[108\]" " = 108 'l'"
-    gdb_test "p ctable1\[109\]" " = 109 'm'"
-    gdb_test "p ctable1\[110\]" " = 110 'n'"
-    gdb_test "p ctable1\[111\]" " = 111 'o'"
-    gdb_test "p ctable1\[112\]" " = 112 'p'"
-    gdb_test "p ctable1\[113\]" " = 113 'q'"
-    gdb_test "p ctable1\[114\]" " = 114 'r'"
-    gdb_test "p ctable1\[115\]" " = 115 's'"
-    gdb_test "p ctable1\[116\]" " = 116 't'"
-    gdb_test "p ctable1\[117\]" " = 117 'u'"
-    gdb_test "p ctable1\[118\]" " = 118 'v'"
-    gdb_test "p ctable1\[119\]" " = 119 'w'"
-    gdb_test "p ctable1\[120\]" " = 120 'x'"
-    gdb_test "p ctable1\[121\]" " = 121 'y'"
-    gdb_test "p ctable1\[122\]" " = 122 'z'"
-    gdb_test "p ctable1\[123\]" " = 123 '\[{\]+'"
-    gdb_test "p ctable1\[124\]" " = 124 '\[|\]+'"
-    gdb_test "p ctable1\[125\]" " = 125 '\[}\]+'"
-    gdb_test "p ctable1\[126\]" " = 126 '\[~\]'"
-    gdb_test "p ctable1\[127\]" " = 127 '\\\\177'"
-    gdb_test "p ctable1\[128\]" " = 128 '\\\\200'"
-    gdb_test "p ctable1\[129\]" " = 129 '\\\\201'"
-    gdb_test "p ctable1\[130\]" " = 130 '\\\\202'"
-    gdb_test "p ctable1\[131\]" " = 131 '\\\\203'"
-    gdb_test "p ctable1\[132\]" " = 132 '\\\\204'"
-    gdb_test "p ctable1\[133\]" " = 133 '\\\\205'"
-    gdb_test "p ctable1\[134\]" " = 134 '\\\\206'"
-    gdb_test "p ctable1\[135\]" " = 135 '\\\\207'"
-    gdb_test "p ctable1\[136\]" " = 136 '\\\\210'"
-    gdb_test "p ctable1\[137\]" " = 137 '\\\\211'"
-    gdb_test "p ctable1\[138\]" " = 138 '\\\\212'"
-    gdb_test "p ctable1\[139\]" " = 139 '\\\\213'"
-    gdb_test "p ctable1\[140\]" " = 140 '\\\\214'"
-    gdb_test "p ctable1\[141\]" " = 141 '\\\\215'"
-    gdb_test "p ctable1\[142\]" " = 142 '\\\\216'"
-    gdb_test "p ctable1\[143\]" " = 143 '\\\\217'"
-    gdb_test "p ctable1\[144\]" " = 144 '\\\\220'"
-    gdb_test "p ctable1\[145\]" " = 145 '\\\\221'"
-    gdb_test "p ctable1\[146\]" " = 146 '\\\\222'"
-    gdb_test "p ctable1\[147\]" " = 147 '\\\\223'"
-    gdb_test "p ctable1\[148\]" " = 148 '\\\\224'"
-    gdb_test "p ctable1\[149\]" " = 149 '\\\\225'"
-    gdb_test "p ctable1\[150\]" " = 150 '\\\\226'"
-    gdb_test "p ctable1\[151\]" " = 151 '\\\\227'"
-    gdb_test "p ctable1\[152\]" " = 152 '\\\\230'"
-    gdb_test "p ctable1\[153\]" " = 153 '\\\\231'"
-    gdb_test "p ctable1\[154\]" " = 154 '\\\\232'"
-    gdb_test "p ctable1\[155\]" " = 155 '\\\\233'"
-    gdb_test "p ctable1\[156\]" " = 156 '\\\\234'"
-    gdb_test "p ctable1\[157\]" " = 157 '\\\\235'"
-    gdb_test "p ctable1\[158\]" " = 158 '\\\\236'"
-    gdb_test "p ctable1\[159\]" " = 159 '\\\\237'"
-    gdb_test "p ctable1\[160\]" " = 160 '\\\\240'"
-    gdb_test "p ctable1\[161\]" " = 161 '\\\\241'"
-    gdb_test "p ctable1\[162\]" " = 162 '\\\\242'"
-    gdb_test "p ctable1\[163\]" " = 163 '\\\\243'"
-    gdb_test "p ctable1\[164\]" " = 164 '\\\\244'"
-    gdb_test "p ctable1\[165\]" " = 165 '\\\\245'"
-    gdb_test "p ctable1\[166\]" " = 166 '\\\\246'"
-    gdb_test "p ctable1\[167\]" " = 167 '\\\\247'"
-    gdb_test "p ctable1\[168\]" " = 168 '\\\\250'"
-    gdb_test "p ctable1\[169\]" " = 169 '\\\\251'"
-    gdb_test "p ctable1\[170\]" " = 170 '\\\\252'"
-    gdb_test "p ctable1\[171\]" " = 171 '\\\\253'"
-    gdb_test "p ctable1\[172\]" " = 172 '\\\\254'"
-    gdb_test "p ctable1\[173\]" " = 173 '\\\\255'"
-    gdb_test "p ctable1\[174\]" " = 174 '\\\\256'"
-    gdb_test "p ctable1\[175\]" " = 175 '\\\\257'"
-    gdb_test "p ctable1\[176\]" " = 176 '\\\\260'"
-    gdb_test "p ctable1\[177\]" " = 177 '\\\\261'"
-    gdb_test "p ctable1\[178\]" " = 178 '\\\\262'"
-    gdb_test "p ctable1\[179\]" " = 179 '\\\\263'"
-    gdb_test "p ctable1\[180\]" " = 180 '\\\\264'"
-    gdb_test "p ctable1\[181\]" " = 181 '\\\\265'"
-    gdb_test "p ctable1\[182\]" " = 182 '\\\\266'"
-    gdb_test "p ctable1\[183\]" " = 183 '\\\\267'"
-    gdb_test "p ctable1\[184\]" " = 184 '\\\\270'"
-    gdb_test "p ctable1\[185\]" " = 185 '\\\\271'"
-    gdb_test "p ctable1\[186\]" " = 186 '\\\\272'"
-    gdb_test "p ctable1\[187\]" " = 187 '\\\\273'"
-    gdb_test "p ctable1\[188\]" " = 188 '\\\\274'"
-    gdb_test "p ctable1\[189\]" " = 189 '\\\\275'"
-    gdb_test "p ctable1\[190\]" " = 190 '\\\\276'"
-    gdb_test "p ctable1\[191\]" " = 191 '\\\\277'"
-    gdb_test "p ctable1\[192\]" " = 192 '\\\\300'"
-    gdb_test "p ctable1\[193\]" " = 193 '\\\\301'"
-    gdb_test "p ctable1\[194\]" " = 194 '\\\\302'"
-    gdb_test "p ctable1\[195\]" " = 195 '\\\\303'"
-    gdb_test "p ctable1\[196\]" " = 196 '\\\\304'"
-    gdb_test "p ctable1\[197\]" " = 197 '\\\\305'"
-    gdb_test "p ctable1\[198\]" " = 198 '\\\\306'"
-    gdb_test "p ctable1\[199\]" " = 199 '\\\\307'"
-    gdb_test "p ctable1\[200\]" " = 200 '\\\\310'"
-    gdb_test "p ctable1\[201\]" " = 201 '\\\\311'"
-    gdb_test "p ctable1\[202\]" " = 202 '\\\\312'"
-    gdb_test "p ctable1\[203\]" " = 203 '\\\\313'"
-    gdb_test "p ctable1\[204\]" " = 204 '\\\\314'"
-    gdb_test "p ctable1\[205\]" " = 205 '\\\\315'"
-    gdb_test "p ctable1\[206\]" " = 206 '\\\\316'"
-    gdb_test "p ctable1\[207\]" " = 207 '\\\\317'"
-    gdb_test "p ctable1\[208\]" " = 208 '\\\\320'"
-    gdb_test "p ctable1\[209\]" " = 209 '\\\\321'"
-    gdb_test "p ctable1\[210\]" " = 210 '\\\\322'"
-    gdb_test "p ctable1\[211\]" " = 211 '\\\\323'"
-    gdb_test "p ctable1\[212\]" " = 212 '\\\\324'"
-    gdb_test "p ctable1\[213\]" " = 213 '\\\\325'"
-    gdb_test "p ctable1\[214\]" " = 214 '\\\\326'"
-    gdb_test "p ctable1\[215\]" " = 215 '\\\\327'"
-    gdb_test "p ctable1\[216\]" " = 216 '\\\\330'"
-    gdb_test "p ctable1\[217\]" " = 217 '\\\\331'"
-    gdb_test "p ctable1\[218\]" " = 218 '\\\\332'"
-    gdb_test "p ctable1\[219\]" " = 219 '\\\\333'"
-    gdb_test "p ctable1\[220\]" " = 220 '\\\\334'"
-    gdb_test "p ctable1\[221\]" " = 221 '\\\\335'"
-    gdb_test "p ctable1\[222\]" " = 222 '\\\\336'"
-    gdb_test "p ctable1\[223\]" " = 223 '\\\\337'"
-    gdb_test "p ctable1\[224\]" " = 224 '\\\\340'"
-    gdb_test "p ctable1\[225\]" " = 225 '\\\\341'"
-    gdb_test "p ctable1\[226\]" " = 226 '\\\\342'"
-    gdb_test "p ctable1\[227\]" " = 227 '\\\\343'"
-    gdb_test "p ctable1\[228\]" " = 228 '\\\\344'"
-    gdb_test "p ctable1\[229\]" " = 229 '\\\\345'"
-    gdb_test "p ctable1\[230\]" " = 230 '\\\\346'"
-    gdb_test "p ctable1\[231\]" " = 231 '\\\\347'"
-    gdb_test "p ctable1\[232\]" " = 232 '\\\\350'"
-    gdb_test "p ctable1\[233\]" " = 233 '\\\\351'"
-    gdb_test "p ctable1\[234\]" " = 234 '\\\\352'"
-    gdb_test "p ctable1\[235\]" " = 235 '\\\\353'"
-    gdb_test "p ctable1\[236\]" " = 236 '\\\\354'"
-    gdb_test "p ctable1\[237\]" " = 237 '\\\\355'"
-    gdb_test "p ctable1\[238\]" " = 238 '\\\\356'"
-    gdb_test "p ctable1\[239\]" " = 239 '\\\\357'"
-    gdb_test "p ctable1\[240\]" " = 240 '\\\\360'"
-    gdb_test "p ctable1\[241\]" " = 241 '\\\\361'"
-    gdb_test "p ctable1\[242\]" " = 242 '\\\\362'"
-    gdb_test "p ctable1\[243\]" " = 243 '\\\\363'"
-    gdb_test "p ctable1\[244\]" " = 244 '\\\\364'"
-    gdb_test "p ctable1\[245\]" " = 245 '\\\\365'"
-    gdb_test "p ctable1\[246\]" " = 246 '\\\\366'"
-    gdb_test "p ctable1\[247\]" " = 247 '\\\\367'"
-    gdb_test "p ctable1\[248\]" " = 248 '\\\\370'"
-    gdb_test "p ctable1\[249\]" " = 249 '\\\\371'"
-    gdb_test "p ctable1\[250\]" " = 250 '\\\\372'"
-    gdb_test "p ctable1\[251\]" " = 251 '\\\\373'"
-    gdb_test "p ctable1\[252\]" " = 252 '\\\\374'"
-    gdb_test "p ctable1\[253\]" " = 253 '\\\\375'"
-    gdb_test "p ctable1\[254\]" " = 254 '\\\\376'"
-    gdb_test "p ctable1\[255\]" " = 255 '\\\\377'"
+    # Set the target-charset to ASCII, because the output varies from
+    # different charset.
+    with_target_charset "ASCII" {
+
+	gdb_test "p ctable1\[0\]"   " = 0 '\\\\000'"
+	gdb_test "p ctable1\[1\]"   " = 1 '\\\\001'"
+	gdb_test "p ctable1\[2\]"   " = 2 '\\\\002'"
+	gdb_test "p ctable1\[3\]"   " = 3 '\\\\003'"
+	gdb_test "p ctable1\[4\]"   " = 4 '\\\\004'"
+	gdb_test "p ctable1\[5\]"   " = 5 '\\\\005'"
+	gdb_test "p ctable1\[6\]"   " = 6 '\\\\006'"
+	gdb_test "p ctable1\[7\]"   " = 7 '\\\\a'"
+	gdb_test "p ctable1\[8\]"   " = 8 '\\\\b'"
+	gdb_test "p ctable1\[9\]"   " = 9 '\\\\t'"
+	gdb_test "p ctable1\[10\]"  " = 10 '\\\\n'"
+	gdb_test "p ctable1\[11\]"  " = 11 '\\\\v'"
+	gdb_test "p ctable1\[12\]"  " = 12 '\\\\f'"
+	gdb_test "p ctable1\[13\]"  " = 13 '\\\\r'"
+	gdb_test "p ctable1\[14\]"  " = 14 '\\\\016'"
+	gdb_test "p ctable1\[15\]"  " = 15 '\\\\017'"
+	gdb_test "p ctable1\[16\]"  " = 16 '\\\\020'"
+	gdb_test "p ctable1\[17\]"  " = 17 '\\\\021'"
+	gdb_test "p ctable1\[18\]"  " = 18 '\\\\022'"
+	gdb_test "p ctable1\[19\]"  " = 19 '\\\\023'"
+	gdb_test "p ctable1\[20\]"  " = 20 '\\\\024'"
+	gdb_test "p ctable1\[21\]"  " = 21 '\\\\025'"
+	gdb_test "p ctable1\[22\]"  " = 22 '\\\\026'"
+	gdb_test "p ctable1\[23\]"  " = 23 '\\\\027'"
+	gdb_test "p ctable1\[24\]"  " = 24 '\\\\030'"
+	gdb_test "p ctable1\[25\]"  " = 25 '\\\\031'"
+	gdb_test "p ctable1\[26\]"  " = 26 '\\\\032'"
+	gdb_test "p ctable1\[27\]"  " = 27 '\\\\033'"
+	gdb_test "p ctable1\[28\]"  " = 28 '\\\\034'"
+	gdb_test "p ctable1\[29\]"  " = 29 '\\\\035'"
+	gdb_test "p ctable1\[30\]"  " = 30 '\\\\036'"
+	gdb_test "p ctable1\[31\]"  " = 31 '\\\\037'"
+	gdb_test "p ctable1\[32\]"  " = 32 ' '"
+	gdb_test "p ctable1\[33\]"  " = 33 '!'"
+	gdb_test "p ctable1\[34\]"  " = 34 '\"'"
+	gdb_test "p ctable1\[35\]"  " = 35 '#'"
+	gdb_test "p ctable1\[36\]"  " = 36 '\\\$'"
+	gdb_test "p ctable1\[37\]"  " = 37 '%'"
+	gdb_test "p ctable1\[38\]"  " = 38 '&'"
+	gdb_test "p ctable1\[39\]"  " = 39 '\\\\''"
+	gdb_test "p ctable1\[40\]"  " = 40 '\\('"
+	gdb_test "p ctable1\[41\]"  " = 41 '\\)'"
+	gdb_test "p ctable1\[42\]"  " = 42 '\\*'"
+	gdb_test "p ctable1\[43\]"  " = 43 '\\+'"
+	gdb_test "p ctable1\[44\]"  " = 44 ','"
+	gdb_test "p ctable1\[45\]"  " = 45 '-'"
+	gdb_test "p ctable1\[46\]"  " = 46 '.'"
+	gdb_test "p ctable1\[47\]"  " = 47 '/'"
+	gdb_test "p ctable1\[48\]"  " = 48 '0'"
+	gdb_test "p ctable1\[49\]"  " = 49 '1'"
+	gdb_test "p ctable1\[50\]"  " = 50 '2'"
+	gdb_test "p ctable1\[51\]"  " = 51 '3'"
+	gdb_test "p ctable1\[52\]"  " = 52 '4'"
+	gdb_test "p ctable1\[53\]"  " = 53 '5'"
+	gdb_test "p ctable1\[54\]"  " = 54 '6'"
+	gdb_test "p ctable1\[55\]"  " = 55 '7'"
+	gdb_test "p ctable1\[56\]"  " = 56 '8'"
+	gdb_test "p ctable1\[57\]"  " = 57 '9'"
+	gdb_test "p ctable1\[58\]"  " = 58 ':'"
+	gdb_test "p ctable1\[59\]"  " = 59 ';'"
+	gdb_test "p ctable1\[60\]"  " = 60 '<'"
+	gdb_test "p ctable1\[61\]"  " = 61 '='"
+	gdb_test "p ctable1\[62\]"  " = 62 '>'"
+	gdb_test "p ctable1\[63\]"  " = 63 '\\?'"
+	gdb_test "p ctable1\[64\]"  " = 64 '@'"
+	gdb_test "p ctable1\[65\]"  " = 65 'A'"
+	gdb_test "p ctable1\[66\]"  " = 66 'B'"
+	gdb_test "p ctable1\[67\]"  " = 67 'C'"
+	gdb_test "p ctable1\[68\]"  " = 68 'D'"
+	gdb_test "p ctable1\[69\]"  " = 69 'E'"
+	gdb_test "p ctable1\[70\]"  " = 70 'F'"
+	gdb_test "p ctable1\[71\]"  " = 71 'G'"
+	gdb_test "p ctable1\[72\]"  " = 72 'H'"
+	gdb_test "p ctable1\[73\]"  " = 73 'I'"
+	gdb_test "p ctable1\[74\]"  " = 74 'J'"
+	gdb_test "p ctable1\[75\]"  " = 75 'K'"
+	gdb_test "p ctable1\[76\]"  " = 76 'L'"
+	gdb_test "p ctable1\[77\]"  " = 77 'M'"
+	gdb_test "p ctable1\[78\]"  " = 78 'N'"
+	gdb_test "p ctable1\[79\]"  " = 79 'O'"
+	gdb_test "p ctable1\[80\]"  " = 80 'P'"
+	gdb_test "p ctable1\[81\]"  " = 81 'Q'"
+	gdb_test "p ctable1\[82\]"  " = 82 'R'"
+	gdb_test "p ctable1\[83\]"  " = 83 'S'"
+	gdb_test "p ctable1\[84\]"  " = 84 'T'"
+	gdb_test "p ctable1\[85\]"  " = 85 'U'"
+	gdb_test "p ctable1\[86\]"  " = 86 'V'"
+	gdb_test "p ctable1\[87\]"  " = 87 'W'"
+	gdb_test "p ctable1\[88\]"  " = 88 'X'"
+	gdb_test "p ctable1\[89\]"  " = 89 'Y'"
+	gdb_test "p ctable1\[90\]"  " = 90 'Z'"
+	gdb_test "p ctable1\[91\]"  " = 91 '\\\['"
+	gdb_test "p ctable1\[92\]"  " = 92 '\\\\\\\\'"
+	gdb_test "p ctable1\[93\]"  " = 93 '\\\]'"
+	gdb_test "p ctable1\[94\]"  " = 94 '\\^'"
+	gdb_test "p ctable1\[95\]"  " = 95 '_'"
+	gdb_test "p ctable1\[96\]"  " = 96 '`'"
+	gdb_test "p ctable1\[97\]"  " = 97 'a'"
+	gdb_test "p ctable1\[98\]"  " = 98 'b'"
+	gdb_test "p ctable1\[99\]"  " = 99 'c'"
+	gdb_test "p ctable1\[100\]" " = 100 'd'"
+	gdb_test "p ctable1\[101\]" " = 101 'e'"
+	gdb_test "p ctable1\[102\]" " = 102 'f'"
+	gdb_test "p ctable1\[103\]" " = 103 'g'"
+	gdb_test "p ctable1\[104\]" " = 104 'h'"
+	gdb_test "p ctable1\[105\]" " = 105 'i'"
+	gdb_test "p ctable1\[106\]" " = 106 'j'"
+	gdb_test "p ctable1\[107\]" " = 107 'k'"
+	gdb_test "p ctable1\[108\]" " = 108 'l'"
+	gdb_test "p ctable1\[109\]" " = 109 'm'"
+	gdb_test "p ctable1\[110\]" " = 110 'n'"
+	gdb_test "p ctable1\[111\]" " = 111 'o'"
+	gdb_test "p ctable1\[112\]" " = 112 'p'"
+	gdb_test "p ctable1\[113\]" " = 113 'q'"
+	gdb_test "p ctable1\[114\]" " = 114 'r'"
+	gdb_test "p ctable1\[115\]" " = 115 's'"
+	gdb_test "p ctable1\[116\]" " = 116 't'"
+	gdb_test "p ctable1\[117\]" " = 117 'u'"
+	gdb_test "p ctable1\[118\]" " = 118 'v'"
+	gdb_test "p ctable1\[119\]" " = 119 'w'"
+	gdb_test "p ctable1\[120\]" " = 120 'x'"
+	gdb_test "p ctable1\[121\]" " = 121 'y'"
+	gdb_test "p ctable1\[122\]" " = 122 'z'"
+	gdb_test "p ctable1\[123\]" " = 123 '\[{\]+'"
+	gdb_test "p ctable1\[124\]" " = 124 '\[|\]+'"
+	gdb_test "p ctable1\[125\]" " = 125 '\[}\]+'"
+	gdb_test "p ctable1\[126\]" " = 126 '\[~\]'"
+	gdb_test "p ctable1\[127\]" " = 127 '\\\\177'"
+	gdb_test "p ctable1\[128\]" " = 128 '\\\\200'"
+	gdb_test "p ctable1\[129\]" " = 129 '\\\\201'"
+	gdb_test "p ctable1\[130\]" " = 130 '\\\\202'"
+	gdb_test "p ctable1\[131\]" " = 131 '\\\\203'"
+	gdb_test "p ctable1\[132\]" " = 132 '\\\\204'"
+	gdb_test "p ctable1\[133\]" " = 133 '\\\\205'"
+	gdb_test "p ctable1\[134\]" " = 134 '\\\\206'"
+	gdb_test "p ctable1\[135\]" " = 135 '\\\\207'"
+	gdb_test "p ctable1\[136\]" " = 136 '\\\\210'"
+	gdb_test "p ctable1\[137\]" " = 137 '\\\\211'"
+	gdb_test "p ctable1\[138\]" " = 138 '\\\\212'"
+	gdb_test "p ctable1\[139\]" " = 139 '\\\\213'"
+	gdb_test "p ctable1\[140\]" " = 140 '\\\\214'"
+	gdb_test "p ctable1\[141\]" " = 141 '\\\\215'"
+	gdb_test "p ctable1\[142\]" " = 142 '\\\\216'"
+	gdb_test "p ctable1\[143\]" " = 143 '\\\\217'"
+	gdb_test "p ctable1\[144\]" " = 144 '\\\\220'"
+	gdb_test "p ctable1\[145\]" " = 145 '\\\\221'"
+	gdb_test "p ctable1\[146\]" " = 146 '\\\\222'"
+	gdb_test "p ctable1\[147\]" " = 147 '\\\\223'"
+	gdb_test "p ctable1\[148\]" " = 148 '\\\\224'"
+	gdb_test "p ctable1\[149\]" " = 149 '\\\\225'"
+	gdb_test "p ctable1\[150\]" " = 150 '\\\\226'"
+	gdb_test "p ctable1\[151\]" " = 151 '\\\\227'"
+	gdb_test "p ctable1\[152\]" " = 152 '\\\\230'"
+	gdb_test "p ctable1\[153\]" " = 153 '\\\\231'"
+	gdb_test "p ctable1\[154\]" " = 154 '\\\\232'"
+	gdb_test "p ctable1\[155\]" " = 155 '\\\\233'"
+	gdb_test "p ctable1\[156\]" " = 156 '\\\\234'"
+	gdb_test "p ctable1\[157\]" " = 157 '\\\\235'"
+	gdb_test "p ctable1\[158\]" " = 158 '\\\\236'"
+	gdb_test "p ctable1\[159\]" " = 159 '\\\\237'"
+	gdb_test "p ctable1\[160\]" " = 160 '\\\\240'"
+	gdb_test "p ctable1\[161\]" " = 161 '\\\\241'"
+	gdb_test "p ctable1\[162\]" " = 162 '\\\\242'"
+	gdb_test "p ctable1\[163\]" " = 163 '\\\\243'"
+	gdb_test "p ctable1\[164\]" " = 164 '\\\\244'"
+	gdb_test "p ctable1\[165\]" " = 165 '\\\\245'"
+	gdb_test "p ctable1\[166\]" " = 166 '\\\\246'"
+	gdb_test "p ctable1\[167\]" " = 167 '\\\\247'"
+	gdb_test "p ctable1\[168\]" " = 168 '\\\\250'"
+	gdb_test "p ctable1\[169\]" " = 169 '\\\\251'"
+	gdb_test "p ctable1\[170\]" " = 170 '\\\\252'"
+	gdb_test "p ctable1\[171\]" " = 171 '\\\\253'"
+	gdb_test "p ctable1\[172\]" " = 172 '\\\\254'"
+	gdb_test "p ctable1\[173\]" " = 173 '\\\\255'"
+	gdb_test "p ctable1\[174\]" " = 174 '\\\\256'"
+	gdb_test "p ctable1\[175\]" " = 175 '\\\\257'"
+	gdb_test "p ctable1\[176\]" " = 176 '\\\\260'"
+	gdb_test "p ctable1\[177\]" " = 177 '\\\\261'"
+	gdb_test "p ctable1\[178\]" " = 178 '\\\\262'"
+	gdb_test "p ctable1\[179\]" " = 179 '\\\\263'"
+	gdb_test "p ctable1\[180\]" " = 180 '\\\\264'"
+	gdb_test "p ctable1\[181\]" " = 181 '\\\\265'"
+	gdb_test "p ctable1\[182\]" " = 182 '\\\\266'"
+	gdb_test "p ctable1\[183\]" " = 183 '\\\\267'"
+	gdb_test "p ctable1\[184\]" " = 184 '\\\\270'"
+	gdb_test "p ctable1\[185\]" " = 185 '\\\\271'"
+	gdb_test "p ctable1\[186\]" " = 186 '\\\\272'"
+	gdb_test "p ctable1\[187\]" " = 187 '\\\\273'"
+	gdb_test "p ctable1\[188\]" " = 188 '\\\\274'"
+	gdb_test "p ctable1\[189\]" " = 189 '\\\\275'"
+	gdb_test "p ctable1\[190\]" " = 190 '\\\\276'"
+	gdb_test "p ctable1\[191\]" " = 191 '\\\\277'"
+	gdb_test "p ctable1\[192\]" " = 192 '\\\\300'"
+	gdb_test "p ctable1\[193\]" " = 193 '\\\\301'"
+	gdb_test "p ctable1\[194\]" " = 194 '\\\\302'"
+	gdb_test "p ctable1\[195\]" " = 195 '\\\\303'"
+	gdb_test "p ctable1\[196\]" " = 196 '\\\\304'"
+	gdb_test "p ctable1\[197\]" " = 197 '\\\\305'"
+	gdb_test "p ctable1\[198\]" " = 198 '\\\\306'"
+	gdb_test "p ctable1\[199\]" " = 199 '\\\\307'"
+	gdb_test "p ctable1\[200\]" " = 200 '\\\\310'"
+	gdb_test "p ctable1\[201\]" " = 201 '\\\\311'"
+	gdb_test "p ctable1\[202\]" " = 202 '\\\\312'"
+	gdb_test "p ctable1\[203\]" " = 203 '\\\\313'"
+	gdb_test "p ctable1\[204\]" " = 204 '\\\\314'"
+	gdb_test "p ctable1\[205\]" " = 205 '\\\\315'"
+	gdb_test "p ctable1\[206\]" " = 206 '\\\\316'"
+	gdb_test "p ctable1\[207\]" " = 207 '\\\\317'"
+	gdb_test "p ctable1\[208\]" " = 208 '\\\\320'"
+	gdb_test "p ctable1\[209\]" " = 209 '\\\\321'"
+	gdb_test "p ctable1\[210\]" " = 210 '\\\\322'"
+	gdb_test "p ctable1\[211\]" " = 211 '\\\\323'"
+	gdb_test "p ctable1\[212\]" " = 212 '\\\\324'"
+	gdb_test "p ctable1\[213\]" " = 213 '\\\\325'"
+	gdb_test "p ctable1\[214\]" " = 214 '\\\\326'"
+	gdb_test "p ctable1\[215\]" " = 215 '\\\\327'"
+	gdb_test "p ctable1\[216\]" " = 216 '\\\\330'"
+	gdb_test "p ctable1\[217\]" " = 217 '\\\\331'"
+	gdb_test "p ctable1\[218\]" " = 218 '\\\\332'"
+	gdb_test "p ctable1\[219\]" " = 219 '\\\\333'"
+	gdb_test "p ctable1\[220\]" " = 220 '\\\\334'"
+	gdb_test "p ctable1\[221\]" " = 221 '\\\\335'"
+	gdb_test "p ctable1\[222\]" " = 222 '\\\\336'"
+	gdb_test "p ctable1\[223\]" " = 223 '\\\\337'"
+	gdb_test "p ctable1\[224\]" " = 224 '\\\\340'"
+	gdb_test "p ctable1\[225\]" " = 225 '\\\\341'"
+	gdb_test "p ctable1\[226\]" " = 226 '\\\\342'"
+	gdb_test "p ctable1\[227\]" " = 227 '\\\\343'"
+	gdb_test "p ctable1\[228\]" " = 228 '\\\\344'"
+	gdb_test "p ctable1\[229\]" " = 229 '\\\\345'"
+	gdb_test "p ctable1\[230\]" " = 230 '\\\\346'"
+	gdb_test "p ctable1\[231\]" " = 231 '\\\\347'"
+	gdb_test "p ctable1\[232\]" " = 232 '\\\\350'"
+	gdb_test "p ctable1\[233\]" " = 233 '\\\\351'"
+	gdb_test "p ctable1\[234\]" " = 234 '\\\\352'"
+	gdb_test "p ctable1\[235\]" " = 235 '\\\\353'"
+	gdb_test "p ctable1\[236\]" " = 236 '\\\\354'"
+	gdb_test "p ctable1\[237\]" " = 237 '\\\\355'"
+	gdb_test "p ctable1\[238\]" " = 238 '\\\\356'"
+	gdb_test "p ctable1\[239\]" " = 239 '\\\\357'"
+	gdb_test "p ctable1\[240\]" " = 240 '\\\\360'"
+	gdb_test "p ctable1\[241\]" " = 241 '\\\\361'"
+	gdb_test "p ctable1\[242\]" " = 242 '\\\\362'"
+	gdb_test "p ctable1\[243\]" " = 243 '\\\\363'"
+	gdb_test "p ctable1\[244\]" " = 244 '\\\\364'"
+	gdb_test "p ctable1\[245\]" " = 245 '\\\\365'"
+	gdb_test "p ctable1\[246\]" " = 246 '\\\\366'"
+	gdb_test "p ctable1\[247\]" " = 247 '\\\\367'"
+	gdb_test "p ctable1\[248\]" " = 248 '\\\\370'"
+	gdb_test "p ctable1\[249\]" " = 249 '\\\\371'"
+	gdb_test "p ctable1\[250\]" " = 250 '\\\\372'"
+	gdb_test "p ctable1\[251\]" " = 251 '\\\\373'"
+	gdb_test "p ctable1\[252\]" " = 252 '\\\\374'"
+	gdb_test "p ctable1\[253\]" " = 253 '\\\\375'"
+	gdb_test "p ctable1\[254\]" " = 254 '\\\\376'"
+	gdb_test "p ctable1\[255\]" " = 255 '\\\\377'"
+    }
 }
 
 # Test interaction of the number of print elements to print and the
@@ -506,72 +511,76 @@ proc test_print_strings {} {
 
     gdb_test_no_output "set print elements 8"
 
-    gdb_test "p &ctable1\[0\]" \
-	" = \\(unsigned char \\*\\) <ctable1> \"\""
-    gdb_test "p &ctable1\[1\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\001\\\\002\\\\003\\\\004\\\\005\\\\006\\\\a\\\\b\"..."
-    gdb_test "p &ctable1\[1*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\b\\\\t\\\\n\\\\v\\\\f\\\\r\\\\016\\\\017\"..."
-    gdb_test "p &ctable1\[2*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\020\\\\021\\\\022\\\\023\\\\024\\\\025\\\\026\\\\027\"..."
-    gdb_test "p &ctable1\[3*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\030\\\\031\\\\032\\\\033\\\\034\\\\035\\\\036\\\\037\"..."
-    gdb_test "p &ctable1\[4*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \" !\\\\\"#\\\$%&'\"..."
-    gdb_test "p &ctable1\[5*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\(\\)\\*\\+,-./\"..."
-    gdb_test "p &ctable1\[6*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"01234567\"..."
-    gdb_test "p &ctable1\[7*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"89:;<=>\\?\"..."
-    gdb_test "p &ctable1\[8*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"@ABCDEFG\"..."
-    gdb_test "p &ctable1\[9*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"HIJKLMNO\"..."
-    gdb_test "p &ctable1\[10*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"PQRSTUVW\"..."
-    gdb_test "p &ctable1\[11*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"XYZ\\\[\\\\\\\\\\\]\\^_\"..."
-    gdb_test "p &ctable1\[12*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"`abcdefg\"..."
-    gdb_test "p &ctable1\[13*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"hijklmno\"..."
-    gdb_test "p &ctable1\[14*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"pqrstuvw\"..."
-    gdb_test "p &ctable1\[15*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"xyz\[{|}\]+\\~\\\\177\"..."
-    gdb_test "p &ctable1\[16*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\200\\\\201\\\\202\\\\203\\\\204\\\\205\\\\206\\\\207\"..."
-    gdb_test "p &ctable1\[17*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\210\\\\211\\\\212\\\\213\\\\214\\\\215\\\\216\\\\217\"..."
-    gdb_test "p &ctable1\[18*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\220\\\\221\\\\222\\\\223\\\\224\\\\225\\\\226\\\\227\"..."
-    gdb_test "p &ctable1\[19*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\230\\\\231\\\\232\\\\233\\\\234\\\\235\\\\236\\\\237\"..."
-    gdb_test "p &ctable1\[20*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\240\\\\241\\\\242\\\\243\\\\244\\\\245\\\\246\\\\247\"..."
-    gdb_test "p &ctable1\[21*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\250\\\\251\\\\252\\\\253\\\\254\\\\255\\\\256\\\\257\"..."
-    gdb_test "p &ctable1\[22*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\260\\\\261\\\\262\\\\263\\\\264\\\\265\\\\266\\\\267\"..."
-    gdb_test "p &ctable1\[23*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\270\\\\271\\\\272\\\\273\\\\274\\\\275\\\\276\\\\277\"..."
-    gdb_test "p &ctable1\[24*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\300\\\\301\\\\302\\\\303\\\\304\\\\305\\\\306\\\\307\"..."
-    gdb_test "p &ctable1\[25*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\310\\\\311\\\\312\\\\313\\\\314\\\\315\\\\316\\\\317\"..."
-    gdb_test "p &ctable1\[26*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\320\\\\321\\\\322\\\\323\\\\324\\\\325\\\\326\\\\327\"..."
-    gdb_test "p &ctable1\[27*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\330\\\\331\\\\332\\\\333\\\\334\\\\335\\\\336\\\\337\"..."
-    gdb_test "p &ctable1\[28*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\340\\\\341\\\\342\\\\343\\\\344\\\\345\\\\346\\\\347\"..."
-    gdb_test "p &ctable1\[29*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\350\\\\351\\\\352\\\\353\\\\354\\\\355\\\\356\\\\357\"..."
-    gdb_test "p &ctable1\[30*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\360\\\\361\\\\362\\\\363\\\\364\\\\365\\\\366\\\\367\"..."
-    gdb_test "p &ctable1\[31*8\]" \
-	" = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\370\\\\371\\\\372\\\\373\\\\374\\\\375\\\\376\\\\377\"..."
+    # Set the target-charset to ASCII, because the output varies from
+    # different charset.
+    with_target_charset "ASCII" {
+	gdb_test "p &ctable1\[0\]" \
+	    " = \\(unsigned char \\*\\) <ctable1> \"\""
+	gdb_test "p &ctable1\[1\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\001\\\\002\\\\003\\\\004\\\\005\\\\006\\\\a\\\\b\"..."
+	gdb_test "p &ctable1\[1*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\b\\\\t\\\\n\\\\v\\\\f\\\\r\\\\016\\\\017\"..."
+	gdb_test "p &ctable1\[2*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\020\\\\021\\\\022\\\\023\\\\024\\\\025\\\\026\\\\027\"..."
+	gdb_test "p &ctable1\[3*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\030\\\\031\\\\032\\\\033\\\\034\\\\035\\\\036\\\\037\"..."
+	gdb_test "p &ctable1\[4*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \" !\\\\\"#\\\$%&'\"..."
+	gdb_test "p &ctable1\[5*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\(\\)\\*\\+,-./\"..."
+	gdb_test "p &ctable1\[6*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"01234567\"..."
+	gdb_test "p &ctable1\[7*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"89:;<=>\\?\"..."
+	gdb_test "p &ctable1\[8*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"@ABCDEFG\"..."
+	gdb_test "p &ctable1\[9*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"HIJKLMNO\"..."
+	gdb_test "p &ctable1\[10*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"PQRSTUVW\"..."
+	gdb_test "p &ctable1\[11*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"XYZ\\\[\\\\\\\\\\\]\\^_\"..."
+	gdb_test "p &ctable1\[12*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"`abcdefg\"..."
+	gdb_test "p &ctable1\[13*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"hijklmno\"..."
+	gdb_test "p &ctable1\[14*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"pqrstuvw\"..."
+	gdb_test "p &ctable1\[15*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"xyz\[{|}\]+\\~\\\\177\"..."
+	gdb_test "p &ctable1\[16*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\200\\\\201\\\\202\\\\203\\\\204\\\\205\\\\206\\\\207\"..."
+	gdb_test "p &ctable1\[17*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\210\\\\211\\\\212\\\\213\\\\214\\\\215\\\\216\\\\217\"..."
+	gdb_test "p &ctable1\[18*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\220\\\\221\\\\222\\\\223\\\\224\\\\225\\\\226\\\\227\"..."
+	gdb_test "p &ctable1\[19*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\230\\\\231\\\\232\\\\233\\\\234\\\\235\\\\236\\\\237\"..."
+	gdb_test "p &ctable1\[20*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\240\\\\241\\\\242\\\\243\\\\244\\\\245\\\\246\\\\247\"..."
+	gdb_test "p &ctable1\[21*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\250\\\\251\\\\252\\\\253\\\\254\\\\255\\\\256\\\\257\"..."
+	gdb_test "p &ctable1\[22*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\260\\\\261\\\\262\\\\263\\\\264\\\\265\\\\266\\\\267\"..."
+	gdb_test "p &ctable1\[23*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\270\\\\271\\\\272\\\\273\\\\274\\\\275\\\\276\\\\277\"..."
+	gdb_test "p &ctable1\[24*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\300\\\\301\\\\302\\\\303\\\\304\\\\305\\\\306\\\\307\"..."
+	gdb_test "p &ctable1\[25*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\310\\\\311\\\\312\\\\313\\\\314\\\\315\\\\316\\\\317\"..."
+	gdb_test "p &ctable1\[26*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\320\\\\321\\\\322\\\\323\\\\324\\\\325\\\\326\\\\327\"..."
+	gdb_test "p &ctable1\[27*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\330\\\\331\\\\332\\\\333\\\\334\\\\335\\\\336\\\\337\"..."
+	gdb_test "p &ctable1\[28*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\340\\\\341\\\\342\\\\343\\\\344\\\\345\\\\346\\\\347\"..."
+	gdb_test "p &ctable1\[29*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\350\\\\351\\\\352\\\\353\\\\354\\\\355\\\\356\\\\357\"..."
+	gdb_test "p &ctable1\[30*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\360\\\\361\\\\362\\\\363\\\\364\\\\365\\\\366\\\\367\"..."
+	gdb_test "p &ctable1\[31*8\]" \
+	    " = \\(unsigned char \\*\\) <ctable1\\+$decimal> \"\\\\370\\\\371\\\\372\\\\373\\\\374\\\\375\\\\376\\\\377\"..."
+    }
 }
 
 proc test_print_int_arrays {} {
@@ -622,8 +631,16 @@ proc test_print_typedef_arrays {} {
 
 proc test_artificial_arrays {} {
     # Send \026@ instead of just @ in case the kill character is @.
-    gdb_test_escape_braces "p int1dim\[0\]\026@2" " = {0, 1}" {p int1dim[0]@2}
-    gdb_test_escape_braces "p int1dim\[0\]\026@2\026@3" \
+    # \026 (ctrl-v) is to escape the next character (@), but it is
+    # not only unnecessary to do so on MingW hosts, but also harmful
+    # for the test because that character isn't recognized as an
+    # escape character.
+    set ctrlv "\026"
+    if [ishost *-*-mingw*] {
+	set ctrlv ""
+    }
+    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@2" " = {0, 1}" {p int1dim[0]@2}
+    gdb_test_escape_braces "p int1dim\[0\]${ctrlv}@2${ctrlv}@3" \
 	"({{0, 1}, {2, 3}, {4, 5}}|\[Cc\]annot.*)" \
 	{p int1dim[0]@2@3}
     gdb_test_escape_braces {p/x (short [])0x12345678} \
@@ -848,44 +865,48 @@ proc test_repeat_bytes {} {
     set fmt(SR) "\"%s\", %s"
     set fmt(SS) "\"%s%s\""
 
-    # Test the various permutations of invalid characters
-    foreach i [array names invalid] {
-	set I $i
+    # Set the target-charset to ASCII, because the output varies from
+    # different charset.
+    with_target_charset "ASCII" {
+	# Test the various permutations of invalid characters
+	foreach i [array names invalid] {
+	    set I $i
 
-	if {$i == "L"} {
-	    set i "S"
-	}
-
-	foreach s [array names start] {
-	    set S $s
-
-	    if {$s == "L"} {
-		set s "S"
+	    if {$i == "L"} {
+		set i "S"
 	    }
 
+	    foreach s [array names start] {
+		set S $s
 
-	    foreach e [array names end] {
-		set E $e
-
-		if {$e == "L"} {
-		    set e "S"
+		if {$s == "L"} {
+		    set s "S"
 		}
 
-		# Skip E*E.
-		if {$s == "E" && $e == "E"} { continue }
 
-		# Special cases...
-		if {$s == "E"} {
-		    set result [format $fmt($i$e) $invalid($I) $end($E)]
-		} elseif {$e == "E"} {
-		    set result [format $fmt($s$i) $start($S) $invalid($I)]
-		} else {
-		    set result [format $fmt($s$i$e) \
-				    $start($S) $invalid($I) $end($E)]
+		foreach e [array names end] {
+		    set E $e
+
+		    if {$e == "L"} {
+			set e "S"
+		    }
+
+		    # Skip E*E.
+		    if {$s == "E" && $e == "E"} { continue }
+
+		    # Special cases...
+		    if {$s == "E"} {
+			set result [format $fmt($i$e) $invalid($I) $end($E)]
+		    } elseif {$e == "E"} {
+			set result [format $fmt($s$i) $start($S) $invalid($I)]
+		    } else {
+			set result [format $fmt($s$i$e) \
+					$start($S) $invalid($I) $end($E)]
+		    }
+
+		    send_log "expecting: = $result\n"
+		    gdb_test "print invalid_$S$I$E" "= $result"
 		}
-
-		send_log "expecting: = $result\n"
-		gdb_test "print invalid_$S$I$E" "= $result"
 	    }
 	}
     }

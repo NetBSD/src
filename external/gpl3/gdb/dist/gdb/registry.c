@@ -1,6 +1,6 @@
 /* Support functions for general registry objects.
 
-   Copyright (C) 2011-2014 Free Software Foundation, Inc.
+   Copyright (C) 2011-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,9 +19,6 @@
 
 #include "defs.h"
 #include "registry.h"
-#include "gdb_assert.h"
-#include <string.h>
-
 const struct registry_data *
 register_data_with_cleanup (struct registry_data_registry *registry,
 			    registry_data_callback save,
@@ -35,9 +32,9 @@ register_data_with_cleanup (struct registry_data_registry *registry,
        curr = &(*curr)->next)
     ;
 
-  *curr = XMALLOC (struct registry_data_registration);
+  *curr = XNEW (struct registry_data_registration);
   (*curr)->next = NULL;
-  (*curr)->data = XMALLOC (struct registry_data);
+  (*curr)->data = XNEW (struct registry_data);
   (*curr)->data->index = registry->num_registrations++;
   (*curr)->data->save = save;
   (*curr)->data->free = free;
@@ -51,7 +48,7 @@ registry_alloc_data (struct registry_data_registry *registry,
 {
   gdb_assert (fields->data == NULL);
   fields->num_data = registry->num_registrations;
-  fields->data = XCALLOC (fields->num_data, void *);
+  fields->data = XCNEWVEC (void *, fields->num_data);
 }
 
 void

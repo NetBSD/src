@@ -1,6 +1,6 @@
 /* Definitions for reading symbol files into GDB.
 
-   Copyright (C) 1990-2014 Free Software Foundation, Inc.
+   Copyright (C) 1990-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -125,6 +125,18 @@ struct symfile_segment_data
 typedef void (symbol_filename_ftype) (const char *filename,
 				      const char *fullname, void *data);
 
+/* Callback for quick_symbol_functions->expand_symtabs_matching
+   to match a file name.  */
+
+typedef int (expand_symtabs_file_matcher_ftype) (const char *filename,
+						 void *data, int basenames);
+
+/* Callback for quick_symbol_functions->expand_symtabs_matching
+   to match a symbol name.  */
+
+typedef int (expand_symtabs_symbol_matcher_ftype) (const char *name,
+						   void *data);
+
 /* The "quick" symbol functions exist so that symbol readers can
    avoiding an initial read of all the symbols.  For example, symbol
    readers might choose to use the "partial symbol table" utilities,
@@ -176,18 +188,18 @@ struct quick_symbol_functions
 					void *data);
 
   /* Check to see if the symbol is defined in a "partial" symbol table
-     of OBJFILE.  KIND should be either GLOBAL_BLOCK or STATIC_BLOCK,
+     of OBJFILE.  BLOCK_INDEX should be either GLOBAL_BLOCK or STATIC_BLOCK,
      depending on whether we want to search global symbols or static
      symbols.  NAME is the name of the symbol to look for.  DOMAIN
      indicates what sort of symbol to search for.
 
-     Returns the newly-expanded symbol table in which the symbol is
+     Returns the newly-expanded compunit in which the symbol is
      defined, or NULL if no such symbol table exists.  If OBJFILE
-     contains !TYPE_OPAQUE symbol prefer its symtab.  If it contains
-     only TYPE_OPAQUE symbol(s), return at least that symtab.  */
-  struct symtab *(*lookup_symbol) (struct objfile *objfile,
-				   int kind, const char *name,
-				   domain_enum domain);
+     contains !TYPE_OPAQUE symbol prefer its compunit.  If it contains
+     only TYPE_OPAQUE symbol(s), return at least that compunit.  */
+  struct compunit_symtab *(*lookup_symbol) (struct objfile *objfile,
+					    int block_index, const char *name,
+					    domain_enum domain);
 
   /* Print statistics about any indices loaded for OBJFILE.  The
      statistics should be printed to gdb_stdout.  This is used for
@@ -256,11 +268,11 @@ struct quick_symbol_functions
 
      Otherwise, if KIND does not match this symbol is skipped.
 
-     If even KIND matches, then NAME_MATCHER is called for each symbol
+     If even KIND matches, then SYMBOL_MATCHER is called for each symbol
      defined in the file.  The symbol "search" name and DATA are passed
-     to NAME_MATCHER.
+     to SYMBOL_MATCHER.
 
-     If NAME_MATCHER returns zero, then this symbol is skipped.
+     If SYMBOL_MATCHER returns zero, then this symbol is skipped.
 
      Otherwise, this symbol's symbol table is expanded.
 
@@ -268,22 +280,20 @@ struct quick_symbol_functions
      functions.  */
   void (*expand_symtabs_matching)
     (struct objfile *objfile,
-     int (*file_matcher) (const char *, void *, int basenames),
-     int (*name_matcher) (const char *, void *),
+     expand_symtabs_file_matcher_ftype *file_matcher,
+     expand_symtabs_symbol_matcher_ftype *symbol_matcher,
      enum search_domain kind,
      void *data);
 
-  /* Return the symbol table from OBJFILE that contains PC and
-     SECTION.  Return NULL if there is no such symbol table.  This
-     should return the symbol table that contains a symbol whose
+  /* Return the comp unit from OBJFILE that contains PC and
+     SECTION.  Return NULL if there is no such compunit.  This
+     should return the compunit that contains a symbol whose
      address exactly matches PC, or, if there is no exact match, the
-     symbol table that contains a symbol whose address is closest to
+     compunit that contains a symbol whose address is closest to
      PC.  */
-  struct symtab *(*find_pc_sect_symtab) (struct objfile *objfile,
-					 struct minimal_symbol *msymbol,
-					 CORE_ADDR pc,
-					 struct obj_section *section,
-					 int warn_if_readin);
+  struct compunit_symtab *(*find_pc_sect_compunit_symtab)
+    (struct objfile *objfile, struct bound_minimal_symbol msymbol,
+     CORE_ADDR pc, struct obj_section *section, int warn_if_readin);
 
   /* Call a callback for every file defined in OBJFILE whose symtab is
      not already read in.  FUN is the callback.  It is passed the file's
@@ -304,11 +314,6 @@ struct sym_probe_fns
      The returned value does not have to be freed and it has lifetime of the
      OBJFILE.  */
   VEC (probe_p) *(*sym_get_probes) (struct objfile *);
-
-  /* Relocate the probe section of OBJFILE.  */
-  void (*sym_relocate_probe) (struct objfile *objfile,
-			      const struct section_offsets *new_offsets,
-			      const struct section_offsets *delta);
 };
 
 /* Structure to keep track of symbol reading functions for various
@@ -348,12 +353,12 @@ struct sym_fns
 
   void (*sym_finish) (struct objfile *);
 
+
   /* This function produces a file-dependent section_offsets
-     structure, allocated in the objfile's storage, and based on the
-     parameter.  The parameter is currently a CORE_ADDR (FIXME!) for
-     backward compatibility with the higher levels of GDB.  It should
-     probably be changed to a string, where NULL means the default,
-     and others are parsed in a file dependent way.  */
+     structure, allocated in the objfile's storage.
+
+     The section_addr_info structure contains the offset of loadable and
+     allocated sections, relative to the absolute offsets found in the BFD.  */
 
   void (*sym_offsets) (struct objfile *, const struct section_addr_info *);
 
@@ -411,8 +416,14 @@ extern struct symfile_segment_data *default_symfile_segments (bfd *abfd);
 extern bfd_byte *default_symfile_relocate (struct objfile *objfile,
                                            asection *sectp, bfd_byte *buf);
 
-extern struct symtab *allocate_symtab (const char *, struct objfile *)
+extern struct symtab *allocate_symtab (struct compunit_symtab *, const char *)
   ATTRIBUTE_NONNULL (1);
+
+extern struct compunit_symtab *allocate_compunit_symtab (struct objfile *,
+							 const char *)
+  ATTRIBUTE_NONNULL (1);
+
+extern void add_compunit_symtab_to_objfile (struct compunit_symtab *cu);
 
 extern void add_symtab_fns (enum bfd_flavour flavour, const struct sym_fns *);
 
@@ -496,6 +507,8 @@ extern bfd *gdb_bfd_open_maybe_remote (const char *);
 
 extern int get_section_index (struct objfile *, char *);
 
+extern int print_symbol_loading_p (int from_tty, int mainline, int full);
+
 /* Utility functions for overlay sections: */
 extern enum overlay_debugging_state
 {
@@ -553,6 +566,13 @@ struct symfile_segment_data *get_symfile_segment_data (bfd *abfd);
 void free_symfile_segment_data (struct symfile_segment_data *data);
 
 extern struct cleanup *increment_reading_symtab (void);
+
+void expand_symtabs_matching (expand_symtabs_file_matcher_ftype *,
+			      expand_symtabs_symbol_matcher_ftype *,
+			      enum search_domain kind, void *data);
+
+void map_symbol_filenames (symbol_filename_ftype *fun, void *data,
+			   int need_fullname);
 
 /* From dwarf2read.c */
 

@@ -1,4 +1,4 @@
-# Copyright 1997-2014 Free Software Foundation, Inc.
+# Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -112,15 +112,12 @@ if [support_complex_tests] {
     global gdb_prompt
 
     set test "print find_max_float_real(4, fc1, fc2, fc3, fc4)"
-    setup_kfail gdb/12791 "arm*-*-*"
     gdb_test $test ".*= 4 \\+ 4 \\* I" $test
 
     set test "print find_max_double_real(4, dc1, dc2, dc3, dc4)"
-    setup_kfail gdb/12791 "arm*-*-*"
     gdb_test $test ".*= 4 \\+ 4 \\* I" $test
 
     set test "print find_max_long_double_real(4, ldc1, ldc2, ldc3, ldc4)"
-    setup_kfail gdb/12791 "arm*-*-*"
     gdb_test $test ".*= 4 \\+ 4 \\* I" $test
 
 }

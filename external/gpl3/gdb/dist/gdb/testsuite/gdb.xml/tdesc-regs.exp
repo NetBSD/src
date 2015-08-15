@@ -1,4 +1,4 @@
-# Copyright 2007-2014 Free Software Foundation, Inc.
+# Copyright 2007-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -75,8 +75,12 @@ switch -glob -- [istarget] {
 # support target-defined registers.  Verify that we get a warning if
 # we try to use them.  This not only tests the warning, but also
 # reminds maintainers to add test support when they add the feature.
+
+set single_reg_xml [gdb_remote_download host  \
+			"$srcdir/$subdir/single-reg.xml"]
+
 if {[string equal ${core-regs} ""]} {
-    gdb_test "set tdesc file $srcdir/$subdir/single-reg.xml" \
+    gdb_test "set tdesc file $single_reg_xml" \
 	"warning: Target-supplied registers are not supported.*" \
 	"set tdesc file single-reg.xml"
     unsupported "register tests"
@@ -87,7 +91,7 @@ if {[string equal ${core-regs} ""]} {
 
 # Make sure we reject a description missing standard registers,
 # like the PC.
-gdb_test "set tdesc file $srcdir/$subdir/single-reg.xml" \
+gdb_test "set tdesc file $single_reg_xml" \
     "warning: Architecture rejected target-supplied description" \
     "set tdesc file single-reg.xml"
 
@@ -167,7 +171,3 @@ gdb_test "ptype \$bitfields" \
 load_description "core-only.xml" ""
 # The extra register from the previous description should be gone.
 gdb_test "ptype \$extrareg" "type = void"
-
-foreach src ${core-regs} {
-    remote_file host delete $remote_filename($src)
-}

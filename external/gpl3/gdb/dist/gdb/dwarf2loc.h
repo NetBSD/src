@@ -1,6 +1,6 @@
 /* DWARF 2 location expression support for GDB.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -80,6 +80,18 @@ extern const gdb_byte *dwarf2_fetch_constant_bytes (sect_offset,
 struct type *dwarf2_get_die_type (cu_offset die_offset,
 				  struct dwarf2_per_cu_data *per_cu);
 
+/* Find the frame base information for FRAMEFUNC at PC.  START is an
+   out parameter which is set to point to the DWARF expression to
+   compute.  LENGTH is an out parameter which is set to the length of
+   the DWARF expression.  This throws an exception on error or if an
+   expression is not found; the returned length will never be
+   zero.  */
+
+extern void func_get_frame_base_dwarf_block (struct symbol *framefunc,
+					     CORE_ADDR pc,
+					     const gdb_byte **start,
+					     size_t *length);
+
 /* Evaluate a location description, starting at DATA and with length
    SIZE, to find the current location of variable of TYPE in the context
    of FRAME.  */
@@ -89,6 +101,36 @@ struct value *dwarf2_evaluate_loc_desc (struct type *type,
 					const gdb_byte *data,
 					size_t size,
 					struct dwarf2_per_cu_data *per_cu);
+
+/* Converts a dynamic property into a static one.  ADDRESS is the address
+   of the object currently being evaluated and might be nedded.
+   Returns 1 if PROP could be converted and the static value is passed back
+   into VALUE, otherwise returns 0.  */
+
+int dwarf2_evaluate_property (const struct dynamic_prop *prop,
+			      CORE_ADDR address,
+			      CORE_ADDR *value);
+
+/* A helper for the compiler interface that compiles a single dynamic
+   property to C code.
+
+   STREAM is where the C code is to be written.
+   RESULT_NAME is the name of the generated variable.
+   GDBARCH is the architecture to use.
+   REGISTERS_USED is a bit-vector that is filled to note which
+   registers are required by the generated expression.
+   PROP is the property for which code is generated.
+   ADDRESS is the address at which the property is considered to be
+   evaluated.
+   SYM the originating symbol, used for error reporting.  */
+
+void dwarf2_compile_property_to_c (struct ui_file *stream,
+				   const char *result_name,
+				   struct gdbarch *gdbarch,
+				   unsigned char *registers_used,
+				   const struct dynamic_prop *prop,
+				   CORE_ADDR address,
+				   struct symbol *sym);
 
 CORE_ADDR dwarf2_read_addr_index (struct dwarf2_per_cu_data *per_cu,
 				  unsigned int addr_index);
@@ -133,6 +175,26 @@ struct dwarf2_loclist_baton
   /* Non-zero if the location list lives in .debug_loc.dwo.
      The format of entries in this section are different.  */
   unsigned char from_dwo;
+};
+
+/* A dynamic property is either expressed as a single location expression
+   or a location list.  If the property is an indirection, pointing to
+   another die, keep track of the targeted type in REFERENCED_TYPE.  */
+
+struct dwarf2_property_baton
+{
+  /* If the property is an indirection, we need to evaluate the location
+     LOCEXPR or LOCLIST in the context of the type REFERENCED_TYPE.
+     If NULL, the location is the actual value of the property.  */
+  struct type *referenced_type;
+  union
+  {
+    /* Location expression.  */
+    struct dwarf2_locexpr_baton locexpr;
+
+    /* Location list to be evaluated in the context of REFERENCED_TYPE.  */
+    struct dwarf2_loclist_baton loclist;
+  };
 };
 
 extern const struct symbol_computed_ops dwarf2_locexpr_funcs;
@@ -180,5 +242,13 @@ struct call_site_stuff;
 extern struct call_site_chain *call_site_find_chain (struct gdbarch *gdbarch,
 						     CORE_ADDR caller_pc,
 						     CORE_ADDR callee_pc);
+
+/* A helper function to convert a DWARF register to an arch register.
+   ARCH is the architecture.
+   DWARF_REG is the register.
+   This will throw an exception if the DWARF register cannot be
+   translated to an architecture register.  */
+
+extern int dwarf2_reg_to_regnum_or_error (struct gdbarch *arch, int dwarf_reg);
 
 #endif /* dwarf2loc.h */

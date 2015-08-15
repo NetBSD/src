@@ -1,5 +1,5 @@
 /* Altera Nios II disassemble routines
-   Copyright (C) 2012, 2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -35,7 +35,7 @@
 #include "elf/nios2.h"
 #endif
 
-/* Length of Nios II instruction in bytes.  */
+/* Default length of Nios II instruction in bytes.  */
 #define INSNLEN 4
 
 /* Data structures used by the opcode hash table.  */
@@ -45,36 +45,66 @@ typedef struct _nios2_opcode_hash
   struct _nios2_opcode_hash *next;
 } nios2_opcode_hash;
 
-static bfd_boolean nios2_hash_init = 0;
-static nios2_opcode_hash *nios2_hash[(OP_MASK_OP) + 1];
+/* Hash table size.  */
+#define OPCODE_HASH_SIZE (IW_R1_OP_UNSHIFTED_MASK + 1)
 
-/* Separate hash table for pseudo-ops.  */
-static nios2_opcode_hash *nios2_ps_hash[(OP_MASK_OP) + 1];
+/* Extract the opcode from an instruction word.  */
+static unsigned int
+nios2_r1_extract_opcode (unsigned int x)
+{
+  return GET_IW_R1_OP (x);
+}
+
+/* Pseudo-ops are stored in a different table than regular instructions.  */
+
+typedef struct _nios2_disassembler_state
+{
+  const struct nios2_opcode *opcodes;
+  const int *num_opcodes;
+  unsigned int (*extract_opcode) (unsigned int);
+  nios2_opcode_hash *hash[OPCODE_HASH_SIZE];
+  nios2_opcode_hash *ps_hash[OPCODE_HASH_SIZE];
+  const struct nios2_opcode *nop;
+  bfd_boolean init;
+} nios2_disassembler_state;
+
+static nios2_disassembler_state
+nios2_r1_disassembler_state = {
+  nios2_r1_opcodes,
+  &nios2_num_r1_opcodes,
+  nios2_r1_extract_opcode,
+  {},
+  {},
+  NULL,
+  0
+};
 
 /* Function to initialize the opcode hash table.  */
 static void
-nios2_init_opcode_hash (void)
+nios2_init_opcode_hash (nios2_disassembler_state *state)
 {
   unsigned int i;
   register const struct nios2_opcode *op;
 
-  for (i = 0; i <= OP_MASK_OP; ++i)
-    nios2_hash[0] = NULL;
-  for (i = 0; i <= OP_MASK_OP; i++)
-    for (op = nios2_opcodes; op < &nios2_opcodes[NUMOPCODES]; op++)
+  for (i = 0; i < OPCODE_HASH_SIZE; i++)
+    for (op = state->opcodes; op < &state->opcodes[*(state->num_opcodes)]; op++)
       {
 	nios2_opcode_hash *new_hash;
 	nios2_opcode_hash **bucket = NULL;
 
 	if ((op->pinfo & NIOS2_INSN_MACRO) == NIOS2_INSN_MACRO)
 	  {
-	    if (i == ((op->match >> OP_SH_OP) & OP_MASK_OP)
+	    if (i == state->extract_opcode (op->match)
 		&& (op->pinfo & (NIOS2_INSN_MACRO_MOV | NIOS2_INSN_MACRO_MOVI)
 		    & 0x7fffffff))
-	      bucket = &(nios2_ps_hash[i]);
+	      {
+		bucket = &(state->ps_hash[i]);
+		if (strcmp (op->name, "nop") == 0)
+		  state->nop = op;
+	      }
 	  }
-	else if (i == ((op->match >> OP_SH_OP) & OP_MASK_OP))
-	  bucket = &(nios2_hash[i]);
+	else if (i == state->extract_opcode (op->match))
+	  bucket = &(state->hash[i]);
 
 	if (bucket)
 	  {
@@ -93,11 +123,12 @@ nios2_init_opcode_hash (void)
 	    *bucket = new_hash;
 	  }
       }
-  nios2_hash_init = 1;
+  state->init = 1;
+
 #ifdef DEBUG_HASHTABLE
-  for (i = 0; i <= OP_MASK_OP; ++i)
+  for (i = 0; i < OPCODE_HASH_SIZE; ++i)
     {
-      nios2_opcode_hash *tmp_hash = nios2_hash[i];
+      nios2_opcode_hash *tmp_hash = state->hash[i];
       printf ("index: 0x%02X	ops: ", i);
       while (tmp_hash != NULL)
 	{
@@ -107,9 +138,9 @@ nios2_init_opcode_hash (void)
       printf ("\n");
     }
 
-  for (i = 0; i <= OP_MASK_OP; ++i)
+  for (i = 0; i < OPCODE_HASH_SIZE; ++i)
     {
-      nios2_opcode_hash *tmp_hash = nios2_ps_hash[i];
+      nios2_opcode_hash *tmp_hash = state->ps_hash[i];
       printf ("index: 0x%02X	ops: ", i);
       while (tmp_hash != NULL)
 	{
@@ -122,24 +153,33 @@ nios2_init_opcode_hash (void)
 }
 
 /* Return a pointer to an nios2_opcode struct for a given instruction
-   opcode, or NULL if there is an error.  */
+   word OPCODE for bfd machine MACH, or NULL if there is an error.  */
 const struct nios2_opcode *
-nios2_find_opcode_hash (unsigned long opcode)
+nios2_find_opcode_hash (unsigned long opcode,
+			unsigned long mach ATTRIBUTE_UNUSED)
 {
   nios2_opcode_hash *entry;
+  nios2_disassembler_state *state;
+
+  state = &nios2_r1_disassembler_state;
 
   /* Build a hash table to shorten the search time.  */
-  if (!nios2_hash_init)
-    nios2_init_opcode_hash ();
+  if (!state->init)
+    nios2_init_opcode_hash (state);
+
+  /* Check for NOP first.  Both NOP and MOV are macros that expand into
+     an ADD instruction, and we always want to give priority to NOP.  */
+  if (state->nop->match == (opcode & state->nop->mask))
+    return state->nop;
 
   /* First look in the pseudo-op hashtable.  */
-  for (entry = nios2_ps_hash[(opcode >> OP_SH_OP) & OP_MASK_OP];
+  for (entry = state->ps_hash[state->extract_opcode (opcode)];
        entry; entry = entry->next)
     if (entry->opcode->match == (opcode & entry->opcode->mask))
       return entry->opcode;
 
   /* Otherwise look in the main hashtable.  */
-  for (entry = nios2_hash[(opcode >> OP_SH_OP) & OP_MASK_OP];
+  for (entry = state->hash[state->extract_opcode (opcode)];
        entry; entry = entry->next)
     if (entry->opcode->match == (opcode & entry->opcode->mask))
       return entry->opcode;
@@ -191,13 +231,23 @@ nios2_control_regs (void)
   return cached;
 }
 
+/* Helper routine to report internal errors.  */
+static void
+bad_opcode (const struct nios2_opcode *op)
+{
+  fprintf (stderr, "Internal error: broken opcode descriptor for `%s %s'\n",
+	   op->name, op->args);
+  abort ();
+}
+
 /* The function nios2_print_insn_arg uses the character pointed
    to by ARGPTR to determine how it print the next token or separator
    character in the arguments to an instruction.  */
 static int
 nios2_print_insn_arg (const char *argptr,
 		      unsigned long opcode, bfd_vma address,
-		      disassemble_info *info)
+		      disassemble_info *info,
+		      const struct nios2_opcode *op)
 {
   unsigned long i = 0;
   struct nios2_reg *reg_base;
@@ -209,98 +259,180 @@ nios2_print_insn_arg (const char *argptr,
     case ')':
       (*info->fprintf_func) (info->stream, "%c", *argptr);
       break;
+
     case 'd':
-      i = GET_INSN_FIELD (RRD, opcode);
-
-      if (GET_INSN_FIELD (OP, opcode) == OP_MATCH_CUSTOM
-	  && GET_INSN_FIELD (CUSTOM_C, opcode) == 0)
-	reg_base = nios2_coprocessor_regs ();
-      else
-	reg_base = nios2_regs;
-
+      switch (op->format)
+	{
+	case iw_r_type:
+	  i = GET_IW_R_C (opcode);
+	  reg_base = nios2_regs;
+	  break;
+	case iw_custom_type:
+	  i = GET_IW_CUSTOM_C (opcode);
+	  if (GET_IW_CUSTOM_READC (opcode) == 0)
+	    reg_base = nios2_coprocessor_regs ();
+	  else
+	    reg_base = nios2_regs;
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       if (i < NUMREGNAMES)
 	(*info->fprintf_func) (info->stream, "%s", reg_base[i].name);
       else
 	(*info->fprintf_func) (info->stream, "unknown");
       break;
+
     case 's':
-      i = GET_INSN_FIELD (RRS, opcode);
-
-      if (GET_INSN_FIELD (OP, opcode) == OP_MATCH_CUSTOM
-	  && GET_INSN_FIELD (CUSTOM_A, opcode) == 0)
-	reg_base = nios2_coprocessor_regs ();
-      else
-	reg_base = nios2_regs;
-
+      switch (op->format)
+	{
+	case iw_r_type:
+	  i = GET_IW_R_A (opcode);
+	  reg_base = nios2_regs;
+	  break;
+	case iw_i_type:
+	  i = GET_IW_I_A (opcode);
+	  reg_base = nios2_regs;
+	  break;
+	case iw_custom_type:
+	  i = GET_IW_CUSTOM_A (opcode);
+	  if (GET_IW_CUSTOM_READA (opcode) == 0)
+	    reg_base = nios2_coprocessor_regs ();
+	  else
+	    reg_base = nios2_regs;
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       if (i < NUMREGNAMES)
 	(*info->fprintf_func) (info->stream, "%s", reg_base[i].name);
       else
 	(*info->fprintf_func) (info->stream, "unknown");
       break;
+
     case 't':
-      i = GET_INSN_FIELD (RRT, opcode);
-
-      if (GET_INSN_FIELD (OP, opcode) == OP_MATCH_CUSTOM
-	  && GET_INSN_FIELD (CUSTOM_B, opcode) == 0)
-	reg_base = nios2_coprocessor_regs ();
-      else
-	reg_base = nios2_regs;
-
+      switch (op->format)
+	{
+	case iw_r_type:
+	  i = GET_IW_R_B (opcode);
+	  reg_base = nios2_regs;
+	  break;
+	case iw_i_type:
+	  i = GET_IW_I_B (opcode);
+	  reg_base = nios2_regs;
+	  break;
+	case iw_custom_type:
+	  i = GET_IW_CUSTOM_B (opcode);
+	  if (GET_IW_CUSTOM_READB (opcode) == 0)
+	    reg_base = nios2_coprocessor_regs ();
+	  else
+	    reg_base = nios2_regs;
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       if (i < NUMREGNAMES)
 	(*info->fprintf_func) (info->stream, "%s", reg_base[i].name);
       else
 	(*info->fprintf_func) (info->stream, "unknown");
       break;
+
     case 'i':
       /* 16-bit signed immediate.  */
-      i = (signed) (GET_INSN_FIELD (IMM16, opcode) << 16) >> 16;
+      switch (op->format)
+	{
+	case iw_i_type:
+	  i = (signed) (GET_IW_I_IMM16 (opcode) << 16) >> 16;
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       (*info->fprintf_func) (info->stream, "%ld", i);
       break;
+
     case 'u':
       /* 16-bit unsigned immediate.  */
-      i = GET_INSN_FIELD (IMM16, opcode);
+      switch (op->format)
+	{
+	case iw_i_type:
+	  i = GET_IW_I_IMM16 (opcode);
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       (*info->fprintf_func) (info->stream, "%ld", i);
       break;
+
     case 'o':
       /* 16-bit signed immediate address offset.  */
-      i = (signed) (GET_INSN_FIELD (IMM16, opcode) << 16) >> 16;
+      switch (op->format)
+	{
+	case iw_i_type:
+	  i = (signed) (GET_IW_I_IMM16 (opcode) << 16) >> 16;
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       address = address + 4 + i;
       (*info->print_address_func) (address, info);
       break;
-    case 'p':
-      /* 5-bit unsigned immediate.  */
-      i = GET_INSN_FIELD (CACHE_OPX, opcode);
-      (*info->fprintf_func) (info->stream, "%ld", i);
-      break;
+
     case 'j':
       /* 5-bit unsigned immediate.  */
-      i = GET_INSN_FIELD (IMM5, opcode);
+      switch (op->format)
+	{
+	case iw_r_type:
+	  i = GET_IW_R_IMM5 (opcode);
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       (*info->fprintf_func) (info->stream, "%ld", i);
       break;
+
     case 'l':
       /* 8-bit unsigned immediate.  */
-      /* FIXME - not yet implemented */
-      i = GET_INSN_FIELD (CUSTOM_N, opcode);
+      switch (op->format)
+	{
+	case iw_custom_type:
+	  i = GET_IW_CUSTOM_N (opcode);
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       (*info->fprintf_func) (info->stream, "%lu", i);
       break;
+
     case 'm':
       /* 26-bit unsigned immediate.  */
-      i = GET_INSN_FIELD (IMM26, opcode);
+      switch (op->format)
+	{
+	case iw_j_type:
+	  i = GET_IW_J_IMM26 (opcode);
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       /* This translates to an address because it's only used in call
 	 instructions.  */
       address = (address & 0xf0000000) | (i << 2);
       (*info->print_address_func) (address, info);
       break;
+
     case 'c':
       /* Control register index.  */
-      i = GET_INSN_FIELD (IMM5, opcode);
+      switch (op->format)
+	{
+	case iw_r_type:
+	  i = GET_IW_R_IMM5 (opcode);
+	  break;
+	default:
+	  bad_opcode (op);
+	}
       reg_base = nios2_control_regs ();
       (*info->fprintf_func) (info->stream, "%s", reg_base[i].name);
       break;
-    case 'b':
-      i = GET_INSN_FIELD (IMM5, opcode);
-      (*info->fprintf_func) (info->stream, "%ld", i);
-      break;
+
     default:
       (*info->fprintf_func) (info->stream, "unknown");
       break;
@@ -328,50 +460,32 @@ nios2_disassemble (bfd_vma address, unsigned long opcode,
 
   /* Find the major opcode and use this to disassemble
      the instruction and its arguments.  */
-  op = nios2_find_opcode_hash (opcode);
+  op = nios2_find_opcode_hash (opcode, info->mach);
 
   if (op != NULL)
     {
-      bfd_boolean is_nop = FALSE;
-      if (op->pinfo == NIOS2_INSN_MACRO_MOV)
+      const char *argstr = op->args;
+      (*info->fprintf_func) (info->stream, "%s", op->name);
+      if (argstr != NULL && *argstr != '\0')
 	{
-	  /* Check for mov r0, r0 and change to nop.  */
-	  int dst, src;
-	  dst = GET_INSN_FIELD (RRD, opcode);
-	  src = GET_INSN_FIELD (RRS, opcode);
-	  if (dst == 0 && src == 0)
+	  (*info->fprintf_func) (info->stream, "\t");
+	  while (*argstr != '\0')
 	    {
-	      (*info->fprintf_func) (info->stream, "nop");
-	      is_nop = TRUE;
-	    }
-	  else
-	    (*info->fprintf_func) (info->stream, "%s", op->name);
-	}
-      else
-	(*info->fprintf_func) (info->stream, "%s", op->name);
-
-      if (!is_nop)
-	{
-	  const char *argstr = op->args;
-	  if (argstr != NULL && *argstr != '\0')
-	    {
-	      (*info->fprintf_func) (info->stream, "\t");
-	      while (*argstr != '\0')
-		{
-		  nios2_print_insn_arg (argstr, opcode, address, info);
-		  ++argstr;
-		}
+	      nios2_print_insn_arg (argstr, opcode, address, info, op);
+	      ++argstr;
 	    }
 	}
+      /* Tell the caller how far to advance the program counter.  */
+      info->bytes_per_chunk = op->size;
+      return op->size;
     }
   else
     {
       /* Handle undefined instructions.  */
       info->insn_type = dis_noninsn;
       (*info->fprintf_func) (info->stream, "0x%lx", opcode);
+      return INSNLEN;
     }
-  /* Tell the caller how far to advance the program counter.  */
-  return INSNLEN;
 }
 
 

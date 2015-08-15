@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2002-2014 Free Software Foundation, Inc.
+   Copyright 2002-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -48,6 +48,28 @@ int main() {
     exit(EXIT_SUCCESS);
 }
 
+void some_function (void) {
+  /* Sleep a bit to give the other threads a chance to run, if not
+     locked.  This also ensure that even if the compiler optimizes out
+     or inlines some_function, there's still be some function that
+     needs to be stepped over.  */
+  usleep (1);
+}
+
+/* When testing "next", this is set to have the loop call
+   some_function, which GDB should step over.  When testing "step",
+   that would step into the function, which is not what we want.  */
+volatile int call_function = 0;
+
+/* Call some_function if CALL_FUNCTION is set.  This is wrapped in a
+   macro so that it's a single source line in the main loop.  */
+#define MAYBE_CALL_SOME_FUNCTION()		\
+  do						\
+    {						\
+      if (call_function)			\
+	some_function ();			\
+    } while (0)
+
 void *thread_function(void *arg) {
     int my_number =  (long) arg;
     int *myp = (int *) &args[my_number];
@@ -56,7 +78,7 @@ void *thread_function(void *arg) {
     while (*myp > 0)
       {
 	/* schedlock.exp: main loop.  */
-	(*myp) ++;
+	MAYBE_CALL_SOME_FUNCTION(); (*myp) ++;
       }
 
     pthread_exit(NULL);

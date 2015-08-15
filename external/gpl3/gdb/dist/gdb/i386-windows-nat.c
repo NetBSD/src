@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2014 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
 
 #include "defs.h"
 #include "windows-nat.h"
-#include "i386-nat.h"
+#include "x86-nat.h"
 #include "i386-tdep.h"
 
 #include <windows.h>
@@ -87,5 +87,5 @@ _initialize_i386_windows_nat (void)
 {
   windows_set_context_register_offsets (mappings);
   windows_set_segment_register_p (i386_windows_segment_register_p);
-  i386_set_debug_register_length (4);
+  x86_set_debug_register_length (4);
 }

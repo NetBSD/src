@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,10 +28,6 @@ runto_main
 # Run until there are some threads.
 gdb_breakpoint [gdb_get_line_number "linuxthreads.exp: info threads 2"]
 gdb_continue_to_breakpoint "main thread's sleep"
-
-# Make sure thread list is up-to-date (in case remote targets have not yet
-# reported thread creation events)
-gdb_test "info threads"
 
 # Create thread names.
 gdb_test "thread apply 1 thread name threadname_1" \

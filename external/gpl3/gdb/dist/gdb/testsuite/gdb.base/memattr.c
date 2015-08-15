@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2014 Free Software Foundation, Inc.
+   Copyright 2011-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #define MEMSIZE 64
-static int mem1[MEMSIZE] = {111, 222, 333, 444, 555};
-static int mem2[MEMSIZE];
-static int mem3[MEMSIZE];
-static int mem4[MEMSIZE];
-static int mem5[MEMSIZE];
+int mem1[MEMSIZE] = {111, 222, 333, 444, 555};
+int mem2[MEMSIZE];
+int mem3[MEMSIZE];
+int mem4[MEMSIZE];
+int mem5[MEMSIZE];
 
 int main()
 {

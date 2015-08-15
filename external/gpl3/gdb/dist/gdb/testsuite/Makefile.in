@@ -1,5 +1,5 @@
 # Makefile for regression testing the GNU debugger.
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -33,15 +33,23 @@ EXEEXT = @EXEEXT@
 SUBDIRS = @subdirs@
 RPATH_ENVVAR = @RPATH_ENVVAR@
 ALL_SUBDIRS = gdb.ada gdb.arch gdb.asm gdb.base gdb.btrace gdb.cell gdb.cp \
-	gdb.disasm gdb.dwarf2 gdb.fortran gdb.gdb gdb.go gdb.hp \
+	gdb.disasm gdb.dlang gdb.dwarf2 gdb.fortran gdb.gdb gdb.go gdb.hp \
 	gdb.java gdb.linespec gdb.mi gdb.modula2 gdb.multi \
 	gdb.objc gdb.opencl gdb.opt gdb.pascal gdb.python gdb.server \
 	gdb.stabs gdb.reverse gdb.threads gdb.trace gdb.xml \
 	$(SUBDIRS)
 
-EXPECT = `if [ -f $${rootme}/../../expect/expect ] ; then \
-          echo $${rootme}/../../expect/expect ; \
-          else echo expect ; fi`
+EXTRA_RULES = @EXTRA_RULES@
+
+CC=@CC@
+
+EXPECT = `if [ "$${READ1}" != "" ] ; then \
+            echo $${rootme}/expect-read1; \
+          elif [ -f $${rootme}/../../expect/expect ] ; then \
+            echo $${rootme}/../../expect/expect ; \
+          else \
+            echo expect ; \
+          fi`
 
 RUNTEST = $(RUNTEST_FOR_TARGET)
 
@@ -84,7 +92,7 @@ TARGET_FLAGS_TO_PASS = \
         "RUNTEST=$(RUNTEST)" \
         "RUNTESTFLAGS=$(RUNTESTFLAGS)"
 
-all:
+all: $(EXTRA_RULES)
 	@echo "Nothing to be done for all..."
 
 .NOEXPORT:
@@ -146,6 +154,9 @@ installcheck:
 check: all $(abs_builddir)/site.exp
 	$(MAKE) $(CHECK_TARGET)
 
+check-read1:
+	$(MAKE) READ1="1" check
+
 # All the hair to invoke dejagnu.  A given invocation can just append
 # $(RUNTESTFLAGS)
 DO_RUNTEST = \
@@ -160,11 +171,32 @@ DO_RUNTEST = \
 	  export TCL_LIBRARY ; fi ; \
 	$(RUNTEST)
 
+# TESTS exists for the user to pass on the command line to easily
+# say "Only run these tests."  With check-single it's not necessary, but
+# with check-parallel there's no other way to (easily) specify a subset
+# of tests.  For consistency we support it for check-single as well.
+# To specify all tests in a subdirectory, use TESTS=gdb.subdir/*.exp.
+# E.g., make check TESTS="gdb.server/*.exp gdb.threads/*.exp".
+@GMAKE_TRUE@TESTS :=
+@GMAKE_FALSE@TESTS =
+
+@GMAKE_TRUE@ifeq ($(strip $(TESTS)),)
+@GMAKE_TRUE@expanded_tests_or_none :=
+@GMAKE_TRUE@else
+@GMAKE_TRUE@expanded_tests := $(patsubst $(srcdir)/%,%,$(wildcard $(addprefix $(srcdir)/,$(TESTS))))
+@GMAKE_TRUE@expanded_tests_or_none := $(or $(expanded_tests),no-matching-tests-found)
+@GMAKE_TRUE@endif
+@GMAKE_FALSE@expanded_tests_or_none = $(TESTS)
+
+# Shorthand for running all the tests in a single directory.
+@GMAKE_TRUE@check-gdb.%:
+@GMAKE_TRUE@	$(MAKE) check TESTS="gdb.$*/*.exp"
+
 check-single:
-	$(DO_RUNTEST) $(RUNTESTFLAGS)
+	$(DO_RUNTEST) $(RUNTESTFLAGS) $(expanded_tests_or_none)
 
 check-parallel:
-	-rm -rf cache
+	-rm -rf cache outputs temp
 	$(MAKE) -k do-check-parallel; \
 	$(SHELL) $(srcdir)/dg-extract-results.sh \
 	  `find outputs -name gdb.sum -print` > gdb.sum; \
@@ -180,11 +212,15 @@ check-parallel:
 # them to the front of the list to try to lessen the overall time
 # taken by the test suite -- if one of these tests happens to be run
 # late, it will cause the overall time to increase.
+@GMAKE_TRUE@ifeq ($(strip $(TESTS)),)
 slow_tests = gdb.base/break-interp.exp gdb.base/interp.exp \
 	gdb.base/multi-forks.exp
 @GMAKE_TRUE@all_tests := $(shell cd $(srcdir) && find gdb.* -name '*.exp' -print)
 @GMAKE_TRUE@reordered_tests := $(slow_tests) $(filter-out $(slow_tests),$(all_tests))
 @GMAKE_TRUE@TEST_TARGETS := $(addprefix check/,$(reordered_tests))
+@GMAKE_TRUE@else
+@GMAKE_TRUE@TEST_TARGETS := $(addprefix check/,$(expanded_tests_or_none))
+@GMAKE_TRUE@endif
 
 do-check-parallel: $(TEST_TARGETS)
 	@:
@@ -192,6 +228,11 @@ do-check-parallel: $(TEST_TARGETS)
 @GMAKE_TRUE@check/%.exp:
 @GMAKE_TRUE@	-mkdir -p outputs/$*
 @GMAKE_TRUE@	@$(DO_RUNTEST) GDB_PARALLEL=yes --outdir=outputs/$* $*.exp $(RUNTESTFLAGS)
+
+check/no-matching-tests-found:
+	@echo ""
+	@echo "No matching tests found."
+	@echo ""
 
 check-perf: all $(abs_builddir)/site.exp
 	@if test ! -d gdb.perf; then mkdir gdb.perf; fi
@@ -201,9 +242,10 @@ force:;
 
 clean mostlyclean:
 	-rm -f *~ core *.o a.out xgdb *.x *.grt bigcore.corefile .gdb_history
-	-rm -f core.* *.tf *.cl *.py tracecommandsscript copy1.txt zzz-gdbscript
+	-rm -f core.* *.tf *.cl tracecommandsscript copy1.txt zzz-gdbscript
 	-rm -f *.dwo *.dwp
 	-rm -rf outputs temp cache
+	-rm -f read1.so expect-read1
 	if [ x"${ALL_SUBDIRS}" != x ] ; then \
 	    for dir in ${ALL_SUBDIRS}; \
 	    do \
@@ -237,3 +279,27 @@ config.status: configure
 TAGS: force
 	find $(srcdir) -name '*.exp' -print | \
 	    etags --regex='/proc[ \t]+\([^ \t]+\)/\1/' -
+
+# Build the expect wrapper script that preloads the read1.so library.
+expect-read1:
+	@echo Making expect-read1
+	@rm -f expect-read1-tmp
+	@touch expect-read1-tmp
+	@echo "# THIS FILE IS GENERATED -*- buffer-read-only: t -*- \n" >>expect-read1-tmp
+	@echo "# vi:set ro: */\n\n" >>expect-read1-tmp
+	@echo "# To regenerate this file, run:\n" >>expect-read1-tmp
+	@echo "#      make clean; make/\n" >>expect-read1-tmp
+	@echo "export LD_PRELOAD=`pwd`/read1.so" >>expect-read1-tmp
+	@echo 'exec expect "$$@"' >>expect-read1-tmp
+	@chmod +x expect-read1-tmp
+	@mv expect-read1-tmp expect-read1
+
+# Build the read1.so preload library.  This overrides the `read'
+# function, making it read one byte at a time.  Running the testsuite
+# with this catches racy tests.
+read1.so: lib/read1.c
+	$(CC) -o $@ ${srcdir}/lib/read1.c -Wall -g -shared -fPIC $(CFLAGS)
+
+# Build the read1 machinery.
+.PHONY: read1
+read1: read1.so expect-read1

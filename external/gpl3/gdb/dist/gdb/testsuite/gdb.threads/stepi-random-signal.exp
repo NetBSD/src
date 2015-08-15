@@ -1,4 +1,4 @@
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,6 +55,11 @@ delete_breakpoints
 # Turn on infrun debugging, so we can tell whether the signal is
 # really dequeued and that GDB sees it.
 gdb_test_no_output "set debug infrun 1"
+
+# Make sure the target backend reports the signal to GDB core.  Some
+# backends (like Linux) skip reporting a signal if set to
+# pass/nostop/noprint, resuming the thread immediately instead.
+gdb_test "handle SIGCHLD print"
 
 # Helper to extract the current PC.  PREFIX is used to make each call
 # have its own unique test name.

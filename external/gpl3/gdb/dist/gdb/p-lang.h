@@ -1,6 +1,6 @@
 /* Pascal language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,11 +20,12 @@
 /* This file is derived from c-lang.h */
 
 struct value;
+struct parser_state;
 
 /* Defined in p-lang.c */
 extern const char *pascal_main_name (void);
 
-extern int pascal_parse (void);	/* Defined in p-exp.y */
+extern int pascal_parse (struct parser_state *); /* Defined in p-exp.y */
 
 extern void pascal_error (char *);	/* Defined in p-exp.y */
 

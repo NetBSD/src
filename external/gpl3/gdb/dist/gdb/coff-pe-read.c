@@ -2,7 +2,7 @@
    convert to internal format, for GDB. Used as a last resort if no
    debugging symbols recognized.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -204,7 +204,7 @@ add_pe_forwarded_sym (const char *sym_name, const char *forward_dll_name,
 		      const char *forward_func_name, int ordinal,
 		      const char *dll_name, struct objfile *objfile)
 {
-  CORE_ADDR vma;
+  CORE_ADDR vma, baseaddr;
   struct bound_minimal_symbol msymbol;
   enum minimal_symbol_type msymtype;
   char *qualified_name, *bare_name;
@@ -244,9 +244,9 @@ add_pe_forwarded_sym (const char *sym_name, const char *forward_dll_name,
 			" \"%s\" in dll \"%s\", pointing to \"%s\"\n"),
 			sym_name, dll_name, forward_qualified_name);
 
-  vma = SYMBOL_VALUE_ADDRESS (msymbol.minsym);
+  vma = BMSYMBOL_VALUE_ADDRESS (msymbol);
   msymtype = MSYMBOL_TYPE (msymbol.minsym);
-  section = SYMBOL_SECTION (msymbol.minsym);
+  section = MSYMBOL_SECTION (msymbol.minsym);
 
   /* Generate a (hopefully unique) qualified name using the first part
      of the dll name, e.g. KERNEL32!AddAtomA.  This matches the style
@@ -259,11 +259,18 @@ add_pe_forwarded_sym (const char *sym_name, const char *forward_dll_name,
 
   qualified_name = xstrprintf ("%s!%s", dll_name, bare_name);
 
-  prim_record_minimal_symbol_and_info (qualified_name, vma, msymtype,
-				       section, objfile);
+  /* Note that this code makes a minimal symbol whose value may point
+     outside of any section in this objfile.  These symbols can't
+     really be relocated properly, but nevertheless we make a stab at
+     it, choosing an approach consistent with the history of this
+     code.  */
+  baseaddr = ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT (objfile));
+
+  prim_record_minimal_symbol_and_info (qualified_name, vma - baseaddr,
+				       msymtype, section, objfile);
 
   /* Enter the plain name as well, which might not be unique.  */
-  prim_record_minimal_symbol_and_info (bare_name, vma, msymtype,
+  prim_record_minimal_symbol_and_info (bare_name, vma - baseaddr, msymtype,
 				       section, objfile);
   xfree (qualified_name);
   xfree (bare_name);
@@ -527,15 +534,6 @@ read_pe_exported_syms (struct objfile *objfile)
   pe_sections_info.sections = section_data;
 
   bfd_map_over_sections (dll, get_section_vmas, &pe_sections_info);
-
-  /* Adjust the vma_offsets in case this PE got relocated. This
-     assumes that *all* sections share the same relocation offset
-     as the text section.  */
-  for (i = 0; i < otherix; i++)
-    {
-      section_data[i].vma_offset
-	+= ANOFFSET (objfile->section_offsets, SECT_OFF_TEXT (objfile));
-    }
 
   /* Truncate name at first dot. Should maybe also convert to all
      lower case for convenience on Windows.  */

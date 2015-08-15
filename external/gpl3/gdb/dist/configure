@@ -574,6 +574,7 @@ STRIP_FOR_TARGET
 READELF_FOR_TARGET
 RANLIB_FOR_TARGET
 OBJDUMP_FOR_TARGET
+OBJCOPY_FOR_TARGET
 NM_FOR_TARGET
 LIPO_FOR_TARGET
 LD_FOR_TARGET
@@ -783,6 +784,7 @@ enable_objc_gc
 with_build_sysroot
 with_debug_prefix_map
 with_build_config
+enable_vtable_verify
 enable_serial_configure
 with_build_time_tools
 enable_maintainer_mode
@@ -829,6 +831,7 @@ DLLTOOL_FOR_TARGET
 LD_FOR_TARGET
 LIPO_FOR_TARGET
 NM_FOR_TARGET
+OBJCOPY_FOR_TARGET
 OBJDUMP_FOR_TARGET
 RANLIB_FOR_TARGET
 READELF_FOR_TARGET
@@ -1481,6 +1484,7 @@ Optional Features:
                           Mostly useful for compiler development
   --enable-objc-gc        enable use of Boehm's garbage collector with the GNU
                           Objective-C runtime
+  --enable-vtable-verify    Enable vtable verification feature
   --enable-serial-[{host,target,build}-]configure
                           force sequential configuration of sub-packages for
                           the host, target or build machine, or all
@@ -1601,6 +1605,8 @@ Some influential environment variables:
               LIPO for the target
   NM_FOR_TARGET
               NM for the target
+  OBJCOPY_FOR_TARGET
+              OBJCOPY for the target
   OBJDUMP_FOR_TARGET
               OBJDUMP for the target
   RANLIB_FOR_TARGET
@@ -2969,7 +2975,8 @@ case "${ENABLE_GOLD}" in
     if test "$is_elf" = "yes"; then
       # Check for target supported by gold.
       case "${target}" in
-        i?86-*-* | x86_64-*-* | sparc*-*-* | powerpc*-*-* | arm*-*-* | tilegx*-*-*)
+        i?86-*-* | x86_64-*-* | sparc*-*-* | powerpc*-*-* | arm*-*-* \
+        | aarch64*-*-* | tilegx*-*-*)
 	  configdirs="$configdirs gold"
 	  if test x${ENABLE_GOLD} = xdefault; then
 	    default_ld=gold
@@ -3601,6 +3608,10 @@ case "${target}" in
     ;;
   *-*-rtems*)
     noconfigdirs="$noconfigdirs target-libgloss"
+    # this is not caught below because this stanza matches earlier
+    case $target in
+      or1k*-*-*) noconfigdirs="$noconfigdirs gdb" ;;
+    esac
     ;;
     # The tpf target doesn't support gdb yet.
   *-*-tpf*)
@@ -3776,7 +3787,7 @@ case "${target}" in
   microblaze*)
     noconfigdirs="$noconfigdirs gprof"
     ;;
-  mips*-sde-elf* | mips*-mti-elf*)
+  mips*-sde-elf* | mips*-mti-elf* | mips*-img-elf*)
     if test x$with_newlib = xyes; then
       noconfigdirs="$noconfigdirs gprof"
     fi
@@ -3799,6 +3810,12 @@ case "${target}" in
   mips*-*-*)
     noconfigdirs="$noconfigdirs gprof"
     ;;
+  nds32*-*-*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
+  or1k*-*-*)
+    noconfigdirs="$noconfigdirs gdb"
+    ;;
   sh-*-* | sh64-*-*)
     case "${target}" in
       sh*-*-elf)
@@ -3815,7 +3832,7 @@ case "${target}" in
   tic6x-*-*)
     noconfigdirs="$noconfigdirs sim"
     ;;
-  tilepro-*-* | tilegx-*-*)
+  tilepro*-*-* | tilegx*-*-*)
     noconfigdirs="$noconfigdirs sim"
     ;;
   v810-*-*)
@@ -6981,7 +6998,7 @@ case "${target}" in
   spu-*-*)
     target_makefile_frag="config/mt-spu"
     ;;
-  mips*-sde-elf* | mips*-mti-elf*)
+  mips*-sde-elf* | mips*-mti-elf* | mips*-img-elf*)
     target_makefile_frag="config/mt-sde"
     ;;
   mipsisa*-*-elfoabi*)
@@ -6989,6 +7006,9 @@ case "${target}" in
     ;;
   mips*-*-*linux* | mips*-*-gnu*)
     target_makefile_frag="config/mt-mips-gnu"
+    ;;
+  nios2-*-elf*)
+    target_makefile_frag="config/mt-nios2-elf"
     ;;
   *-*-linux* | *-*-gnu* | *-*-k*bsd*-gnu | *-*-kopensolaris*-gnu)
     target_makefile_frag="config/mt-gnu"
@@ -7092,23 +7112,96 @@ else
   GCC_SHLIB_SUBDIR=
 fi
 
+# Adjust the toplevel makefile according to whether bootstrap was selected.
+case $enable_bootstrap in
+  yes)
+    bootstrap_suffix=bootstrap
+    BUILD_CONFIG=bootstrap-debug
+    ;;
+  no)
+    bootstrap_suffix=no-bootstrap
+    BUILD_CONFIG=
+    ;;
+esac
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for default BUILD_CONFIG" >&5
+$as_echo_n "checking for default BUILD_CONFIG... " >&6; }
+
+
+# Check whether --with-build-config was given.
+if test "${with_build_config+set}" = set; then :
+  withval=$with_build_config; case $with_build_config in
+   yes) with_build_config= ;;
+   no) with_build_config= BUILD_CONFIG= ;;
+   esac
+fi
+
+
+if test "x${with_build_config}" != x; then
+  BUILD_CONFIG=$with_build_config
+else
+  case $BUILD_CONFIG in
+  bootstrap-debug)
+    if echo "int f (void) { return 0; }" > conftest.c &&
+       ${CC} -c conftest.c &&
+       mv conftest.o conftest.o.g0 &&
+       ${CC} -c -g conftest.c &&
+       mv conftest.o conftest.o.g &&
+       ${srcdir}/contrib/compare-debug conftest.o.g0 conftest.o.g > /dev/null 2>&1; then
+      :
+    else
+      BUILD_CONFIG=
+    fi
+    rm -f conftest.c conftest.o conftest.o.g0 conftest.o.g
+    ;;
+  esac
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $BUILD_CONFIG" >&5
+$as_echo "$BUILD_CONFIG" >&6; }
+
+
+# Use same top-level configure hooks in libgcc/libstdc++/libvtv.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for --enable-vtable-verify" >&5
+$as_echo_n "checking for --enable-vtable-verify... " >&6; }
+# Check whether --enable-vtable-verify was given.
+if test "${enable_vtable_verify+set}" = set; then :
+  enableval=$enable_vtable_verify; case "$enableval" in
+ yes) enable_vtable_verify=yes ;;
+ no)  enable_vtable_verify=no ;;
+ *)   enable_vtable_verify=no;;
+ esac
+else
+  enable_vtable_verify=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_vtable_verify" >&5
+$as_echo "$enable_vtable_verify" >&6; }
+
 # Record target_configdirs and the configure arguments for target and
 # build configuration in Makefile.
 target_configdirs=`echo "${target_configdirs}" | sed -e 's/target-//g'`
 build_configdirs=`echo "${build_configdirs}" | sed -e 's/build-//g'`
+bootstrap_fixincludes=no
 
 # If we are building libgomp, bootstrap it.
 if echo " ${target_configdirs} " | grep " libgomp " > /dev/null 2>&1 ; then
   bootstrap_target_libs=${bootstrap_target_libs}target-libgomp,
 fi
 
-# If we are building libsanitizer, bootstrap it.
-if echo " ${target_configdirs} " | grep " libsanitizer " > /dev/null 2>&1 ; then
-  bootstrap_target_libs=${bootstrap_target_libs}target-libsanitizer,
+# If we are building libsanitizer and $BUILD_CONFIG contains bootstrap-asan
+# or bootstrap-ubsan, bootstrap it.
+if echo " ${target_configdirs} " | grep " libsanitizer " > /dev/null 2>&1; then
+  case "$BUILD_CONFIG" in
+    *bootstrap-asan* | *bootstrap-ubsan* )
+      bootstrap_target_libs=${bootstrap_target_libs}target-libsanitizer,
+      bootstrap_fixincludes=yes
+      ;;
+  esac
 fi
 
-# If we are building libvtv, bootstrap it.
-if echo " ${target_configdirs} " | grep " libvtv " > /dev/null 2>&1 ; then
+# If we are building libvtv and --enable-vtable-verify, bootstrap it.
+if echo " ${target_configdirs} " | grep " libvtv " > /dev/null 2>&1 &&
+   test "$enable_vtable_verify" != no; then
   bootstrap_target_libs=${bootstrap_target_libs}target-libvtv,
 fi
 
@@ -7161,54 +7254,6 @@ case "$enable_bootstrap:$ENABLE_GOLD: $configdirs :,$stage1_languages," in
     ;;
 esac
 
-# Adjust the toplevel makefile according to whether bootstrap was selected.
-case $enable_bootstrap in
-  yes)
-    bootstrap_suffix=bootstrap
-    BUILD_CONFIG=bootstrap-debug
-    ;;
-  no)
-    bootstrap_suffix=no-bootstrap
-    BUILD_CONFIG=
-    ;;
-esac
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for default BUILD_CONFIG" >&5
-$as_echo_n "checking for default BUILD_CONFIG... " >&6; }
-
-
-# Check whether --with-build-config was given.
-if test "${with_build_config+set}" = set; then :
-  withval=$with_build_config; case $with_build_config in
-   yes) with_build_config= ;;
-   no) with_build_config= BUILD_CONFIG= ;;
-   esac
-fi
-
-
-if test "x${with_build_config}" != x; then
-  BUILD_CONFIG=$with_build_config
-else
-  case $BUILD_CONFIG in
-  bootstrap-debug)
-    if echo "int f (void) { return 0; }" > conftest.c &&
-       ${CC} -c conftest.c &&
-       mv conftest.o conftest.o.g0 &&
-       ${CC} -c -g conftest.c &&
-       mv conftest.o conftest.o.g &&
-       ${srcdir}/contrib/compare-debug conftest.o.g0 conftest.o.g > /dev/null 2>&1; then
-      :
-    else
-      BUILD_CONFIG=
-    fi
-    rm -f conftest.c conftest.o conftest.o.g0 conftest.o.g
-    ;;
-  esac
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $BUILD_CONFIG" >&5
-$as_echo "$BUILD_CONFIG" >&6; }
-
-
 extrasub_build=
 for module in ${build_configdirs} ; do
   if test -z "${no_recursion}" \
@@ -7232,11 +7277,15 @@ for module in ${configdirs} ; do
       fi
     done
   fi
+  case ${module},${bootstrap_fixincludes} in
+    fixincludes,no) host_bootstrap_suffix=no-bootstrap ;;
+    *) host_bootstrap_suffix=$bootstrap_suffix ;;
+  esac
   extrasub_host="$extrasub_host
 /^@if $module\$/d
 /^@endif $module\$/d
-/^@if $module-$bootstrap_suffix\$/d
-/^@endif $module-$bootstrap_suffix\$/d"
+/^@if $module-$host_bootstrap_suffix\$/d
+/^@endif $module-$host_bootstrap_suffix\$/d"
 done
 extrasub_target=
 for module in ${target_configdirs} ; do
@@ -12316,6 +12365,236 @@ fi
 
 
 
+if test -z "$ac_cv_path_OBJCOPY_FOR_TARGET" ; then
+  if test -n "$with_build_time_tools"; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for objcopy in $with_build_time_tools" >&5
+$as_echo_n "checking for objcopy in $with_build_time_tools... " >&6; }
+    if test -x $with_build_time_tools/objcopy; then
+      OBJCOPY_FOR_TARGET=`cd $with_build_time_tools && pwd`/objcopy
+      ac_cv_path_OBJCOPY_FOR_TARGET=$OBJCOPY_FOR_TARGET
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_path_OBJCOPY_FOR_TARGET" >&5
+$as_echo "$ac_cv_path_OBJCOPY_FOR_TARGET" >&6; }
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+  elif test $build != $host && test $have_gcc_for_target = yes; then
+    OBJCOPY_FOR_TARGET=`$GCC_FOR_TARGET --print-prog-name=objcopy`
+    test $OBJCOPY_FOR_TARGET = objcopy && OBJCOPY_FOR_TARGET=
+    test -n "$OBJCOPY_FOR_TARGET" && ac_cv_path_OBJCOPY_FOR_TARGET=$OBJCOPY_FOR_TARGET
+  fi
+fi
+if test -z "$ac_cv_path_OBJCOPY_FOR_TARGET" && test -n "$gcc_cv_tool_dirs"; then
+  # Extract the first word of "objcopy", so it can be a program name with args.
+set dummy objcopy; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_path_OBJCOPY_FOR_TARGET+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $OBJCOPY_FOR_TARGET in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_OBJCOPY_FOR_TARGET="$OBJCOPY_FOR_TARGET" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $gcc_cv_tool_dirs
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_path_OBJCOPY_FOR_TARGET="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+OBJCOPY_FOR_TARGET=$ac_cv_path_OBJCOPY_FOR_TARGET
+if test -n "$OBJCOPY_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJCOPY_FOR_TARGET" >&5
+$as_echo "$OBJCOPY_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+fi
+if test -z "$ac_cv_path_OBJCOPY_FOR_TARGET" ; then
+
+
+if test -n "$OBJCOPY_FOR_TARGET"; then
+  ac_cv_prog_OBJCOPY_FOR_TARGET=$OBJCOPY_FOR_TARGET
+elif test -n "$ac_cv_prog_OBJCOPY_FOR_TARGET"; then
+  OBJCOPY_FOR_TARGET=$ac_cv_prog_OBJCOPY_FOR_TARGET
+fi
+
+if test -n "$ac_cv_prog_OBJCOPY_FOR_TARGET"; then
+  for ncn_progname in objcopy; do
+    # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_OBJCOPY_FOR_TARGET+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OBJCOPY_FOR_TARGET"; then
+  ac_cv_prog_OBJCOPY_FOR_TARGET="$OBJCOPY_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_OBJCOPY_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OBJCOPY_FOR_TARGET=$ac_cv_prog_OBJCOPY_FOR_TARGET
+if test -n "$OBJCOPY_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJCOPY_FOR_TARGET" >&5
+$as_echo "$OBJCOPY_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  done
+fi
+
+if test -z "$ac_cv_prog_OBJCOPY_FOR_TARGET" && test -n "$with_build_time_tools"; then
+  for ncn_progname in objcopy; do
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ${ncn_progname} in $with_build_time_tools" >&5
+$as_echo_n "checking for ${ncn_progname} in $with_build_time_tools... " >&6; }
+    if test -x $with_build_time_tools/${ncn_progname}; then
+      ac_cv_prog_OBJCOPY_FOR_TARGET=$with_build_time_tools/${ncn_progname}
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+      break
+    else
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    fi
+  done
+fi
+
+if test -z "$ac_cv_prog_OBJCOPY_FOR_TARGET"; then
+  for ncn_progname in objcopy; do
+    if test -n "$ncn_target_tool_prefix"; then
+      # Extract the first word of "${ncn_target_tool_prefix}${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_target_tool_prefix}${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_OBJCOPY_FOR_TARGET+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OBJCOPY_FOR_TARGET"; then
+  ac_cv_prog_OBJCOPY_FOR_TARGET="$OBJCOPY_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_OBJCOPY_FOR_TARGET="${ncn_target_tool_prefix}${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OBJCOPY_FOR_TARGET=$ac_cv_prog_OBJCOPY_FOR_TARGET
+if test -n "$OBJCOPY_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJCOPY_FOR_TARGET" >&5
+$as_echo "$OBJCOPY_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    if test -z "$ac_cv_prog_OBJCOPY_FOR_TARGET" && test $build = $target ; then
+      # Extract the first word of "${ncn_progname}", so it can be a program name with args.
+set dummy ${ncn_progname}; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if test "${ac_cv_prog_OBJCOPY_FOR_TARGET+set}" = set; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$OBJCOPY_FOR_TARGET"; then
+  ac_cv_prog_OBJCOPY_FOR_TARGET="$OBJCOPY_FOR_TARGET" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if { test -f "$as_dir/$ac_word$ac_exec_ext" && $as_test_x "$as_dir/$ac_word$ac_exec_ext"; }; then
+    ac_cv_prog_OBJCOPY_FOR_TARGET="${ncn_progname}"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+fi
+fi
+OBJCOPY_FOR_TARGET=$ac_cv_prog_OBJCOPY_FOR_TARGET
+if test -n "$OBJCOPY_FOR_TARGET"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $OBJCOPY_FOR_TARGET" >&5
+$as_echo "$OBJCOPY_FOR_TARGET" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+    fi
+    test -n "$ac_cv_prog_OBJCOPY_FOR_TARGET" && break
+  done
+fi
+
+if test -z "$ac_cv_prog_OBJCOPY_FOR_TARGET" ; then
+  set dummy objcopy
+  if test $build = $target ; then
+    OBJCOPY_FOR_TARGET="$2"
+  else
+    OBJCOPY_FOR_TARGET="${ncn_target_tool_prefix}$2"
+  fi
+else
+  OBJCOPY_FOR_TARGET="$ac_cv_prog_OBJCOPY_FOR_TARGET"
+fi
+
+else
+  OBJCOPY_FOR_TARGET=$ac_cv_path_OBJCOPY_FOR_TARGET
+fi
+
+
+
+
 if test -z "$ac_cv_path_OBJDUMP_FOR_TARGET" ; then
   if test -n "$with_build_time_tools"; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for objdump in $with_build_time_tools" >&5
@@ -14237,6 +14516,48 @@ $as_echo "pre-installed in $ac_dir" >&6; }
   elif test "x$target" = "x$host"; then
     # We can use an host tool
     NM_FOR_TARGET='$(NM)'
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: host tool" >&5
+$as_echo "host tool" >&6; }
+  else
+    # We need a cross tool
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking where to find the target objcopy" >&5
+$as_echo_n "checking where to find the target objcopy... " >&6; }
+if test "x${build}" != "x${host}" ; then
+  if expr "x$OBJCOPY_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $OBJCOPY_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  else
+    # Canadian cross, just use what we found
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed" >&5
+$as_echo "pre-installed" >&6; }
+  fi
+else
+  ok=yes
+  case " ${configdirs} " in
+    *" binutils "*) ;;
+    *) ok=no ;;
+  esac
+
+  if test $ok = yes; then
+    # An in-tree tool is available and we can use it
+    OBJCOPY_FOR_TARGET='$$r/$(HOST_SUBDIR)/binutils/objcopy'
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: just compiled" >&5
+$as_echo "just compiled" >&6; }
+  elif expr "x$OBJCOPY_FOR_TARGET" : "x/" > /dev/null; then
+    # We already found the complete path
+    ac_dir=`dirname $OBJCOPY_FOR_TARGET`
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: pre-installed in $ac_dir" >&5
+$as_echo "pre-installed in $ac_dir" >&6; }
+  elif test "x$target" = "x$host"; then
+    # We can use an host tool
+    OBJCOPY_FOR_TARGET='$(OBJDUMP)'
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: host tool" >&5
 $as_echo "host tool" >&6; }
   else

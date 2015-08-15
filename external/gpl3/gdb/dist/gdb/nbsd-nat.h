@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD.
 
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,6 +23,6 @@
 /* Return the name of a file that can be opened to get the symbols for
    the child process identified by PID.  */
 
-extern char *nbsd_pid_to_exec_file (int pid);
+extern char *nbsd_pid_to_exec_file (struct target_ops *self, int pid);
 
 #endif /* nbsd-nat.h */

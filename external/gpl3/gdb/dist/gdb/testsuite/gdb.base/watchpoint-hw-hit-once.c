@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2009-2014 Free Software Foundation, Inc.
+   Copyright 2009-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ main (void)
 {
   volatile int dummy;
 
-  /* Stub lines are present as no breakpoints/watchpoint gets hit if current PC
+  /* Stub lines are present as no breakpoint gets hit if current PC
      already stays on the line PC while entering "step"/"continue".  */
 
   dummy = 0;	/* Stub to catch WATCHEE access after runto_main.  */

@@ -1,6 +1,6 @@
 /* Main interface for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,6 @@ struct captured_main_args
 {
   int argc;
   char **argv;
-  int use_windows;
   const char *interpreter_p;
 };
 
@@ -47,5 +46,7 @@ extern char *windows_get_absolute_argv0 (const char *argv0);
    platform.  Could return NULL if called before gdb has had a chance to
    parse the argv array.  */
 extern const char *get_gdb_program_name (void);
+
+extern void set_gdb_data_directory (const char *new_data_dir);
 
 #endif

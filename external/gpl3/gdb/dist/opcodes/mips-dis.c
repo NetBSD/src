@@ -1,7 +1,5 @@
 /* Print mips instructions for GDB, the GNU debugger, or for objdump.
-   Copyright 1989, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-   2000, 2001, 2002, 2003, 2005, 2006, 2007, 2008, 2009, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1989-2015 Free Software Foundation, Inc.
    Contributed by Nobuyuki Hikichi(hikichi@sra.co.jp).
 
    This file is part of the GNU opcodes library.
@@ -553,7 +551,31 @@ const struct mips_arch_choice mips_arch_choices[] =
   { "mips32r2",	1, bfd_mach_mipsisa32r2, CPU_MIPS32R2,
     ISA_MIPS32R2,
     (ASE_SMARTMIPS | ASE_DSP | ASE_DSPR2 | ASE_EVA | ASE_MIPS3D
-     | ASE_MT | ASE_MCU | ASE_VIRT | ASE_MSA),
+     | ASE_MT | ASE_MCU | ASE_VIRT | ASE_MSA | ASE_XPA),
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
+
+  { "mips32r3",	1, bfd_mach_mipsisa32r3, CPU_MIPS32R3,
+    ISA_MIPS32R3,
+    (ASE_SMARTMIPS | ASE_DSP | ASE_DSPR2 | ASE_EVA | ASE_MIPS3D
+     | ASE_MT | ASE_MCU | ASE_VIRT | ASE_MSA | ASE_XPA),
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
+
+  { "mips32r5",	1, bfd_mach_mipsisa32r5, CPU_MIPS32R5,
+    ISA_MIPS32R5,
+    (ASE_SMARTMIPS | ASE_DSP | ASE_DSPR2 | ASE_EVA | ASE_MIPS3D
+     | ASE_MT | ASE_MCU | ASE_VIRT | ASE_MSA | ASE_XPA),
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
+
+  { "mips32r6",	1, bfd_mach_mipsisa32r6, CPU_MIPS32R6,
+    ISA_MIPS32R6,
+    (ASE_EVA | ASE_MSA | ASE_VIRT | ASE_XPA | ASE_MCU | ASE_MT | ASE_DSP
+     | ASE_DSPR2),
     mips_cp0_names_mips3264r2,
     mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
     mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
@@ -568,7 +590,31 @@ const struct mips_arch_choice mips_arch_choices[] =
   { "mips64r2",	1, bfd_mach_mipsisa64r2, CPU_MIPS64R2,
     ISA_MIPS64R2,
     (ASE_MIPS3D | ASE_DSP | ASE_DSPR2 | ASE_DSP64 | ASE_EVA | ASE_MT
-     | ASE_MCU | ASE_VIRT | ASE_VIRT64 | ASE_MSA | ASE_MSA64),
+     | ASE_MCU | ASE_VIRT | ASE_VIRT64 | ASE_MSA | ASE_MSA64 | ASE_XPA),
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
+
+  { "mips64r3",	1, bfd_mach_mipsisa64r3, CPU_MIPS64R3,
+    ISA_MIPS64R3,
+    (ASE_MIPS3D | ASE_DSP | ASE_DSPR2 | ASE_DSP64 | ASE_EVA | ASE_MT
+     | ASE_MCU | ASE_VIRT | ASE_VIRT64 | ASE_MSA | ASE_MSA64 | ASE_XPA),
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
+
+  { "mips64r5",	1, bfd_mach_mipsisa64r5, CPU_MIPS64R5,
+    ISA_MIPS64R5,
+    (ASE_MIPS3D | ASE_DSP | ASE_DSPR2 | ASE_DSP64 | ASE_EVA | ASE_MT
+     | ASE_MCU | ASE_VIRT | ASE_VIRT64 | ASE_MSA | ASE_MSA64 | ASE_XPA),
+    mips_cp0_names_mips3264r2,
+    mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
+    mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
+
+  { "mips64r6",	1, bfd_mach_mipsisa64r6, CPU_MIPS64R6,
+    ISA_MIPS64R6,
+    (ASE_EVA | ASE_MSA | ASE_MSA64 | ASE_XPA | ASE_VIRT | ASE_VIRT64
+     | ASE_MCU | ASE_MT | ASE_DSP | ASE_DSPR2),
     mips_cp0_names_mips3264r2,
     mips_cp0sel_names_mips3264r2, ARRAY_SIZE (mips_cp0sel_names_mips3264r2),
     mips_cp1_names_mips3264, mips_hwr_names_mips3264r2 },
@@ -588,7 +634,7 @@ const struct mips_arch_choice mips_arch_choices[] =
     NULL, 0, mips_cp1_names_numeric, mips_hwr_names_numeric },
 
   { "loongson3a",   1, bfd_mach_mips_loongson_3a, CPU_LOONGSON_3A,
-    ISA_MIPS64 | INSN_LOONGSON_3A, 0, mips_cp0_names_numeric,
+    ISA_MIPS64R2 | INSN_LOONGSON_3A, 0, mips_cp0_names_numeric,
     NULL, 0, mips_cp1_names_mips3264, mips_hwr_names_numeric },
 
   { "octeon",   1, bfd_mach_mips_octeon, CPU_OCTEON,
@@ -601,6 +647,11 @@ const struct mips_arch_choice mips_arch_choices[] =
 
   { "octeon2",   1, bfd_mach_mips_octeon2, CPU_OCTEON2,
     ISA_MIPS64R2 | INSN_OCTEON2, 0, mips_cp0_names_numeric,
+    NULL, 0, mips_cp1_names_mips3264, mips_hwr_names_numeric },
+
+  { "octeon3",   1, bfd_mach_mips_octeon3, CPU_OCTEON3,
+    ISA_MIPS64R5 | INSN_OCTEON3, ASE_VIRT | ASE_VIRT64,
+    mips_cp0_names_numeric,
     NULL, 0, mips_cp1_names_mips3264, mips_hwr_names_numeric },
 
   { "xlr", 1, bfd_mach_mips_xlr, CPU_XLR,
@@ -800,7 +851,10 @@ parse_mips_dis_option (const char *option, unsigned int len)
   if (CONST_STRNEQ (option, "msa"))
     {
       mips_ase |= ASE_MSA;
-      if ((mips_isa & INSN_ISA_MASK) == ISA_MIPS64R2)
+      if ((mips_isa & INSN_ISA_MASK) == ISA_MIPS64R2
+	   || (mips_isa & INSN_ISA_MASK) == ISA_MIPS64R3
+	   || (mips_isa & INSN_ISA_MASK) == ISA_MIPS64R5
+	   || (mips_isa & INSN_ISA_MASK) == ISA_MIPS64R6)
 	  mips_ase |= ASE_MSA64;
       return;
     }
@@ -808,10 +862,20 @@ parse_mips_dis_option (const char *option, unsigned int len)
   if (CONST_STRNEQ (option, "virt"))
     {
       mips_ase |= ASE_VIRT;
-      if (mips_isa & ISA_MIPS64R2)
+      if (mips_isa & ISA_MIPS64R2
+	  || mips_isa & ISA_MIPS64R3
+	  || mips_isa & ISA_MIPS64R5
+	  || mips_isa & ISA_MIPS64R6)
 	mips_ase |= ASE_VIRT64;
       return;
     }
+
+  if (CONST_STRNEQ (option, "xpa"))
+    {
+      mips_ase |= ASE_XPA;
+      return;
+    }
+  
   
   /* Look for the = that delimits the end of the option name.  */
   for (i = 0; i < len; i++)
@@ -1043,6 +1107,8 @@ struct mips_print_arg_state {
      OP_REPEAT_DEST_REG and OP_REPEAT_PREV_REG.  */
   enum mips_reg_operand_type last_reg_type;
   unsigned int last_regno;
+  unsigned int dest_regno;
+  unsigned int seen_dest;
 };
 
 /* Initialize STATE for the start of an instruction.  */
@@ -1070,6 +1136,23 @@ print_vu0_channel (struct disassemble_info *info,
     info->fprintf_func (info->stream, "%c", "xyzw"[uval]);
   else
     abort ();
+}
+
+/* Record information about a register operand.  */
+
+static void
+mips_seen_register (struct mips_print_arg_state *state,
+		    unsigned int regno,
+		    enum mips_reg_operand_type reg_type)
+{
+  state->last_reg_type = reg_type;
+  state->last_regno = regno;
+
+  if (!state->seen_dest)
+    {
+      state->seen_dest = 1;
+      state->dest_regno = regno;
+    }
 }
 
 /* Print operand OPERAND of OPCODE, using STATE to track inter-operand state.
@@ -1138,8 +1221,7 @@ print_insn_arg (struct disassemble_info *info,
 	uval = mips_decode_reg_operand (reg_op, uval);
 	print_reg (info, opcode, reg_op->reg_type, uval);
 
-	state->last_reg_type = reg_op->reg_type;
-	state->last_regno = uval;
+	mips_seen_register (state, uval, reg_op->reg_type);
       }
       break;
 
@@ -1202,6 +1284,15 @@ print_insn_arg (struct disassemble_info *info,
 	  /* Bogus, result depends on processor.  */
 	  infprintf (is, "%s or %s", mips_gpr_names[reg1],
 		     mips_gpr_names[reg2]);
+      }
+      break;
+
+    case OP_SAME_RS_RT:
+    case OP_CHECK_PREV:
+    case OP_NON_ZERO_REG:
+      {
+	print_reg (info, opcode, OP_REG_GP, uval & 31);
+	mips_seen_register (state, uval, OP_REG_GP);
       }
       break;
 
@@ -1327,8 +1418,8 @@ print_insn_arg (struct disassemble_info *info,
       break;
 
     case OP_REPEAT_DEST_REG:
-      /* Should always match OP_REPEAT_PREV_REG first.  */
-      abort ();
+      print_reg (info, opcode, state->last_reg_type, state->dest_regno);
+      break;
 
     case OP_PC:
       infprintf (is, "$pc");
@@ -1351,15 +1442,130 @@ print_insn_arg (struct disassemble_info *info,
     }
 }
 
+/* Validate the arguments for INSN, which is described by OPCODE.
+   Use DECODE_OPERAND to get the encoding of each operand.  */
+
+static bfd_boolean
+validate_insn_args (const struct mips_opcode *opcode,
+		    const struct mips_operand *(*decode_operand) (const char *),
+		    unsigned int insn)
+{
+  struct mips_print_arg_state state;
+  const struct mips_operand *operand;
+  const char *s;
+  unsigned int uval;
+
+  init_print_arg_state (&state);
+  for (s = opcode->args; *s; ++s)
+    {
+      switch (*s)
+	{
+	case ',':
+	case '(':
+	case ')':
+	  break;
+
+	case '#':
+	  ++s;
+	  break;
+
+	default:
+	  operand = decode_operand (s);
+
+	  if (operand)
+	    {
+	      uval = mips_extract_operand (operand, insn);
+	      switch (operand->type)
+		{
+		case OP_REG:
+		case OP_OPTIONAL_REG:
+		  {
+		    const struct mips_reg_operand *reg_op;
+
+		    reg_op = (const struct mips_reg_operand *) operand;
+		    uval = mips_decode_reg_operand (reg_op, uval);
+		    mips_seen_register (&state, uval, reg_op->reg_type);
+		  }
+		break;
+
+		case OP_SAME_RS_RT:
+		  {
+		    unsigned int reg1, reg2;
+
+		    reg1 = uval & 31;
+		    reg2 = uval >> 5;
+
+		    if (reg1 != reg2 || reg1 == 0)
+		      return FALSE;
+		  }
+		break;
+
+		case OP_CHECK_PREV:
+		  {
+		    const struct mips_check_prev_operand *prev_op;
+
+		    prev_op = (const struct mips_check_prev_operand *) operand;
+
+		    if (!prev_op->zero_ok && uval == 0)
+		      return FALSE;
+
+		    if (((prev_op->less_than_ok && uval < state.last_regno)
+			|| (prev_op->greater_than_ok && uval > state.last_regno)
+			|| (prev_op->equal_ok && uval == state.last_regno)))
+		      break;
+
+		    return FALSE;
+		  }
+
+		case OP_NON_ZERO_REG:
+		  {
+		    if (uval == 0)
+		      return FALSE;
+		  }
+		break;
+
+		case OP_INT:
+		case OP_MAPPED_INT:
+		case OP_MSB:
+		case OP_REG_PAIR:
+		case OP_PCREL:
+		case OP_PERF_REG:
+		case OP_ADDIUSP_INT:
+		case OP_CLO_CLZ_DEST:
+		case OP_LWM_SWM_LIST:
+		case OP_ENTRY_EXIT_LIST:
+		case OP_MDMX_IMM_REG:
+		case OP_REPEAT_PREV_REG:
+		case OP_REPEAT_DEST_REG:
+		case OP_PC:
+		case OP_VU0_SUFFIX:
+		case OP_VU0_MATCH_SUFFIX:
+		case OP_IMM_INDEX:
+		case OP_REG_INDEX:
+		  break;
+
+		case OP_SAVE_RESTORE_LIST:
+		/* Should be handled by the caller due to extend behavior.  */
+		  abort ();
+		}
+	    }
+	  if (*s == 'm' || *s == '+' || *s == '-')
+	    ++s;
+	}
+    }
+  return TRUE;
+}
+
 /* Print the arguments for INSN, which is described by OPCODE.
    Use DECODE_OPERAND to get the encoding of each operand.  Use BASE_PC
-   as the base of OP_PCREL operands.  */
+   as the base of OP_PCREL operands, adjusting by LENGTH if the OP_PCREL
+   operand is for a branch or jump.  */
 
 static void
 print_insn_args (struct disassemble_info *info,
 		 const struct mips_opcode *opcode,
 		 const struct mips_operand *(*decode_operand) (const char *),
-		 unsigned int insn, bfd_vma base_pc)
+		 unsigned int insn, bfd_vma insn_pc, unsigned int length)
 {
   const fprintf_ftype infprintf = info->fprintf_func;
   void *is = info->stream;
@@ -1421,9 +1627,27 @@ print_insn_args (struct disassemble_info *info,
 		infprintf (is, "$%d,%d", reg, sel);
 	    }
 	  else
-	    print_insn_arg (info, &state, opcode, operand, base_pc,
-			    mips_extract_operand (operand, insn));
-	  if (*s == 'm' || *s == '+')
+	    {
+	      bfd_vma base_pc = insn_pc;
+
+	      /* Adjust the PC relative base so that branch/jump insns use
+		 the following PC as the base but genuinely PC relative
+		 operands use the current PC.  */
+	      if (operand->type == OP_PCREL)
+		{
+		  const struct mips_pcrel_operand *pcrel_op;
+
+		  pcrel_op = (const struct mips_pcrel_operand *) operand;
+		  /* The include_isa_bit flag is sufficient to distinguish
+		     branch/jump from other PC relative operands.  */
+		  if (pcrel_op->include_isa_bit)
+		    base_pc += length;
+		}
+
+	      print_insn_arg (info, &state, opcode, operand, base_pc,
+			      mips_extract_operand (operand, insn));
+	    }
+	  if (*s == 'm' || *s == '+' || *s == '-')
 	    ++s;
 	  break;
 	}
@@ -1489,9 +1713,11 @@ print_insn_mips (bfd_vma memaddr,
 	      && !(no_aliases && (op->pinfo2 & INSN2_ALIAS))
 	      && (word & op->mask) == op->match)
 	    {
-	      /* We always allow to disassemble the jalx instruction.  */
+	      /* We always disassemble the jalx instruction, except for MIPS r6.  */
 	      if (!opcode_is_member (op, mips_isa, mips_ase, mips_processor)
-		  && strcmp (op->name, "jalx"))
+		 && (strcmp (op->name, "jalx")
+		     || (mips_isa & INSN_ISA_MASK) == ISA_MIPS32R6
+		     || (mips_isa & INSN_ISA_MASK) == ISA_MIPS64R6))
 		continue;
 
 	      /* Figure out instruction type and branch delay information.  */
@@ -1516,6 +1742,9 @@ print_insn_mips (bfd_vma memaddr,
 				     | INSN_LOAD_MEMORY)) != 0)
 		info->insn_type = dis_dref;
 
+	      if (!validate_insn_args (op, decode_mips_operand, word))
+		continue;
+
 	      infprintf (is, "%s", op->name);
 	      if (op->pinfo2 & INSN2_VU0_CHANNEL_SUFFIX)
 		{
@@ -1530,7 +1759,7 @@ print_insn_mips (bfd_vma memaddr,
 		{
 		  infprintf (is, "\t");
 		  print_insn_args (info, op, decode_mips_operand, word,
-				   memaddr + 4);
+				   memaddr, 4);
 		}
 
 	      return INSNLEN;
@@ -2036,13 +2265,16 @@ print_insn_micromips (bfd_vma memaddr, struct disassemble_info *info)
 	  && ((length == 2 && (op->mask & 0xffff0000) == 0)
 	      || (length == 4 && (op->mask & 0xffff0000) != 0)))
 	{
+	  if (!validate_insn_args (op, decode_micromips_operand, insn))
+	    continue;
+
 	  infprintf (is, "%s", op->name);
 
 	  if (op->args[0])
 	    {
 	      infprintf (is, "\t");
 	      print_insn_args (info, op, decode_micromips_operand, insn,
-			       memaddr + length + 1);
+			       memaddr + 1, length);
 	    }
 
 	  /* Figure out instruction type and branch delay information.  */
@@ -2196,6 +2428,9 @@ with the -M switch (multiple options should be separated by commas):\n"));
 
   fprintf (stream, _("\n\
   virt            Recognize the virtualization ASE instructions.\n"));
+
+  fprintf (stream, _("\n\
+  xpa            Recognize the eXtended Physical Address (XPA) ASE instructions.\n"));
 
   fprintf (stream, _("\n\
   gpr-names=ABI            Print GPR names according to  specified ABI.\n\

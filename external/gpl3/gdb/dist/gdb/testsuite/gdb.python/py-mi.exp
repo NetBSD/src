@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -356,5 +356,3 @@ mi_list_varobj_children fake.private {
 
 mi_gdb_test "-var-set-visualizer fake.private gdb.default_visualizer" \
     "\\^done" "Install visualizer on a cplus_fake_child"
-
-remote_file host delete ${remote_python_file}

@@ -1,3 +1,507 @@
+2015-05-12  Doug Evans  <dje@google.com>
+
+	* python.texi (Xmethod API) <gdb.XMethodWorker.get_result_type>:
+	Document.
+	(Writing an Xmethod): Add get_result_type to example.
+
+2015-02-20  David Taylor  <dtaylor@emc.com>
+
+	* agentexpr.texi (Bytecode Descriptions): Fix summary line for setv.
+
+2015-01-16  Eli Zaretskii  <eliz@gnu.org>
+
+	* doc/gdb.texinfo (TUI Commands): Document the possible
+	values of NAME argument to 'winheight' command.  Explain the
+	effect of 'tabset' setting better.
+
+2015-01-11  Doug Evans  <xdje42@gmail.com>
+
+	PR gdb/15830
+	* gdb.texinfo (Debugging C Plus Plus): Mention "demangle".
+	(Symbols): Ditto.
+	(Maintenance Commands): Delete docs for "maint demangle".
+
+2014-12-31  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Files): Remove documentation of the
+	"add-shared-symbol-files" and "assf" commands.
+	(Cygwin Native): Remove documentation of the "dll-symbols"
+	command.
+
+2014-12-17  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.texinfo (Debugging Output): Document "debug symbol-lookup".
+
+2014-12-12  Phil Muldoon  <pmuldoon@redhat.com>
+	    Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (Altering): Update.
+	(Compiling and Injecting Code): New node.
+
+2014-12-12  Doug Evans  <dje@google.com>
+
+	* python.texi (Objfiles In Python): Document gdb.lookup_objfile.
+
+2014-12-12  Andreas Arnez  <arnez@linux.vnet.ibm.com>
+
+	* gdb.texinfo: Document "maint print user-registers".
+
+2014-12-08  Doug Evans  <dje@google.com>
+
+	* python.texi (Objfiles In Python): Document Objfile.owner.
+
+2014-12-04  Doug Evans  <dje@google.com>
+
+	* python.texi (Objfiles In Python): Document
+	Objfile.add_separate_debug_file.
+
+2014-12-04  Doug Evans  <dje@google.com>
+
+	* python.texi (Objfiles In Python): Document Objfile.build_id.
+
+2014-12-02  Nick Bull  <nicholaspbull@gmail.com>
+
+	* python.texi (Events In Python): Document new events
+	InferiorCallPreEvent, InferiorCallPostEvent, MemoryChangedEvent
+	and RegisterChangedEvent.
+
+2014-11-30  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Add add-auto-load-scripts-directory.
+	* gdb.texinfo (Auto-loading): Add add-auto-load-scripts-directory link.
+	(objfile-gdbdotext file): Add add-auto-load-scripts-directory.
+
+2014-11-30  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* gdb.texinfo (Auto-loading safe path): Fix add-auto-load-safe-path
+	description typo.
+
+2014-10-30  Doug Evans  <dje@google.com>
+
+	* python.texi (Progspaces In Python): Document ability to add
+	random attributes to gdb.Progspace objects.
+	(Objfiles In Python): Document ability to add random attributes to
+	gdb.objfile objects.
+
+2014-10-27  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Continuing and Stepping): Add cross reference to
+	info on stepping and signal handlers.
+	(Signals): Explain stepping and signal handlers.  Add context
+	index entry, and cross references.
+
+2014-10-20  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* python.texi (Breakpoints In Python): Add parenthesis after
+	Breakpoint.delete.  Clarify Breakpoint.enabled description so
+	that it contains "disable".
+
+2014-10-17  Doug Evans  <dje@google.com>
+
+	* python.texi (Events In Python): Document clear_objfiles event.
+
+2014-10-17  Doug Evans  <dje@google.com>
+
+	* python.texi (Objfiles In Python): Document new progspace attribute.
+
+2014-10-17  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Ada Tasks and Core Files): Delete mention of Tru64.
+	(SVR4 Process Information): Delete mention of OSF/1.
+
+2014-10-01  Simon Marchi  <simon.marchi@ericsson.com>
+
+	* gdb.texinfo (Miscellaneous gdb/mi Commands): Document new
+	exit-code field in -list-thread-groups output.
+
+2014-09-22  Jan-Benedict Glaw  <jbglaw@lug-owl.de>
+
+	* gdb.texinfo (Set Breaks): Add missing "@end table".
+
+2014-09-22  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Set Breaks): Document that "set breakpoint
+	always-inserted off" is the default mode now.  Delete
+	documentation of "set breakpoint always-inserted auto".
+
+2014-09-18  Doug Evans  <dje@google.com>
+
+	* python.texi (Symbol Tables In Python): Document "producer"
+	attribute of gdb.Symtab objects.
+
+2014-09-16  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Starting) <run command>: Don't mention VxWorks.
+	(Embedded OS): Remove VxWorks menu entry.
+	(VxWorks): Remove node.
+
+2014-09-13  Doug Evans  <xdje42@gmail.com>
+
+	* gdb.texinfo (Signaling): Document new queue-signal command.
+
+2014-09-06  Doug Evans  <xdje42@gmail.com>
+
+	PR 15276
+	* gdb.texinfo (Convenience Funs): Document $_caller_is,
+	$_caller_matches, $_any_caller_is, $_any_caller_matches.
+
+2014-09-03  Justin Lebar <jlebar@google.com>
+
+	* python.texi (Types In Python): Type.template_argument(n) returns a
+	gdb.Value or a gdb.Type and throws an exception if n is out of
+	range.
+
+2014-09-03  Sasha Smundak  <asmundak@google.com>
+
+	* python.texi (Frames in Python): Add read_register description.
+
+2014-08-04  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Debugging Output): Update for change to "set debug
+	target".
+
+2014-08-01  Masaki Muranaka  <monaka@monami-software.com>
+
+	Pushed by Joel Brobecker  <brobecker@adacore.com>.
+	* Makefile.in (transform): New variable.
+	(install-man1, install-man5): Apply $(transform) to man file names.
+
+2014-07-26  Doug Evans  <xdje42@gmail.com>
+
+	PR guile/17177
+	* guile.texi (Guile Pretty Printing API): Fix typo.
+	Document set-pretty-printers!, pretty-printers.
+	(Selecting Guile Pretty-Printers): Update.
+	Mention program-space based pretty-printers.
+
+2014-07-25  Pedro Alves  <palves@redhat.com>
+	    Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Signaling) <signal command>: Explain what happens
+	with multi-threaded programs.
+
+2014-06-27  Yao Qi  <yao@codesourcery.com>
+
+	* gdb.texinfo (Maintenance Commands): Update the output of
+	'maint print dummy-frames' command.
+
+2014-06-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* gdb.texinfo (Screen Size): Improve indexing.
+
+2014-06-19  Gary Benson  <gbenson@redhat.com>
+
+	* gdb.texinfo (Maintenance Commands): Document new
+	"maint set/show catch-demangler-crashes" option.
+
+2014-06-19  Gary Benson  <gbenson@redhat.com>
+
+	* gdb.texinfo (Maintenance Commands): Document new
+	"maint demangler-warning" command and new
+	"maint set/show demangler-warning" option.
+
+2014-06-09  Siva Chandra Reddy  <sivachandra@google.com>
+
+	* python.texi (Xmethod API): Add space before the opening
+	parenthesis in function descriptions.
+
+2014-06-06  Doug Evans  <xdje42@gmail.com>
+
+	* guile.texi (Guile Configuration): Document guile-data-directory.
+
+2014-06-06  Mingjie Xing  <mingjie.xing@gmail.com>
+
+	* gdb.texinfo (Invoking GDB): Add -q and --quiet.
+
+2014-06-04  Doug Evans  <xdje42@gmail.com>
+
+	* guile.texi (Breakpoints In Guile): Update.
+
+2014-06-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* python.texi (Xmethod API): Fix reference to "Progspaces In
+	Python".
+
+2014-06-03  Siva Chandra Reddy  <sivachandra@google.com>
+
+	*  python.texi (Xmethods In Python, XMethod API)
+	(Writing an Xmethod): New nodes.
+	(Python API): New menu entries "Xmethods In Python",
+	"Xmethod API", "Writing an Xmethod".
+
+2014-06-02  Doug Evans  <xdje42@gmail.com>
+
+	* guile.texi (Guile API): Add entry for Parameters In Guile.
+	(GDB Scheme Data Types): Mention <gdb:parameter> object.
+	(Parameters In Guile): New node.
+
+2014-06-02  Doug Evans  <xdje42@gmail.com>
+
+	* guile.texi (Guile API): Add entry for Commands In Guile.
+	(Basic Guile) <parse-and-eval>: Add reference.
+	(Basic Guile) <string->argv>: Move definition to Commands In Guile.
+	(GDB Scheme Data Types): Mention <gdb:command> object.
+	(Commands In Guile): New node.
+
+2014-06-02  Doug Evans  <xdje42@gmail.com>
+
+	* guile.texi (Guile API): Add entry for Progspaces In Guile.
+	(GDB Scheme Data Types): Mention <gdb:progspace> object.
+	(Progspaces In Guile): New node.
+
+2014-05-30  Andrew Burgess  <aburgess@broadcom.com>
+
+	* guile.texi (Frames In Guile): Mention FRAME_UNWIND_MEMORY_ERROR.
+	* python.texi (Frames In Python): Mention
+	gdb.FRAME_UNWIND_MEMORY_ERROR.
+
+2014-05-29  Pedro Alves  <palves@redhat.com>
+	    Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Non-Stop Mode): Remove "set target-async 1"
+	from example.
+	(Asynchronous and non-stop modes): Document '-gdb-set mi-async'.
+	Mention that target-async is now deprecated.
+	(Maintenance Commands): Document maint set/show target-async.
+
+2014-05-29  Pedro Alves  <palves@redhat.com>
+
+	* observer.texi (sync_execution_done, command_error): New
+	subjects.
+
+2014-05-29  Pedro Alves  <palves@redhat.com>
+
+	PR gdb/13860
+	* observer.texi (signal_received, end_stepping_range)
+	(signal_exited, exited, no_history): New observer subjects.
+
+2014-05-26  Andy Wingo  <wingo@igalia.com>
+
+	* guile.texi (GDB Scheme Data Types): Remove documentation for
+	removed interfaces.  Update spelling of gdb-object-kind.
+
+2014-05-26  Andy Wingo  <wingo@igalia.com>
+
+	* guile.texi (Basic Guile): Fix some typos.
+
+2014-05-26  Andy Wingo  <wingo@igalia.com>
+
+	* guile.texi (Writing a Guile Pretty-Printer)
+	(Guile Types Module): Fix excess parentheses in use-modules forms.
+
+2014-05-24  Eli Zaretskii  <eliz@gnu.org>
+
+	* guile.texi (Types In Guile, Basic Guile, Frames In Guile)
+	(Breakpoints In Guile, Guile Printing Module)
+	(Guile Exception Handling, Values From Inferior In Guile)
+	(Objfiles In Guile, Breakpoints In Guile, Memory Ports in Guile):
+	Don't use @var at the beginning of a sentence.
+
+	* gdb.texinfo (Frame Filter Management, Trace Files)
+	(C Operators, Ada Tasks, Calling, Bootstrapping, ARM)
+	(PowerPC Embedded, Define, Annotations for Running)
+	(IPA Protocol Commands, Packets, General Query Packets)
+	(Tracepoint Packets, Notification Packets, Environment)
+	(Inferiors and Programs, Set Breaks, Set Catchpoints)
+	(Continuing and Stepping, Signals, Thread-Specific Breakpoints)
+	(Frames, Backtrace, Selection, Expressions, Registers)
+	(Trace State Variables, Built-In Func/Proc, Signaling, Files)
+	(Numbers, GDB/MI Async Records, GDB/MI Data Manipulation)
+	(Source Annotations, Using JIT Debug Info Readers, Packets)
+	(Stop Reply Packets, Host I/O Packets)
+	(Target Description Format): Don't use @var at the beginning of a
+	sentence.
+
+	* python.texi (Basic Python, Types In Python)
+	(Commands In Python, Frames In Python, Line Tables In Python)
+	(Breakpoints In Python, gdb.printing, gdb.types)
+	(Type Printing API): Don't use @var at the beginning of a
+	sentence.
+
+2014-05-23  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo (Process Record and Replay): Document "set/show btrace
+	replay-memory-access".
+
+2014-05-21  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Starting): Document "set/show
+	auto-connect-native-target".
+	(Target Commands): Document "target native".
+
+2014-05-20  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Memory) <compare-sections>: Generalize comments to
+	not be remote specific.  Add cross reference to the qCRC packet.
+	(Separate Debug Files): Update cross reference to the qCRC packet.
+	(General Query Packets) <qCRC packet>: Add anchor.
+
+2014-05-17  Doug Evans  <xdje42@gmail.com>
+
+	Copy over changes from guile.texi.
+	* python.texi (Basic Python) <gdb.execute>: Add text.
+	(Basic Python) <gdb.post_event>: Remove "main" from "main GDB thread".
+	(Values From Inferior) <Python string>: Add text.
+	(Values From Inferior) <Value.string>: Clarify string length handling.
+	(Pretty Printing API): Add cindex.
+	(Types In Python) <TYPE_CODE_*>: Use vtable instead of table.
+	Remove unnecessary index of gdb.TYPE_CODE_*.  Replace @findex with
+	@vindex.
+	(Commands In Python) <COMPLETE_*>: Similarly.
+	(Symbols In Python) <SYMBOL_*>: Similarly.
+	(Breakpoints In Python) <WP_*>: Similarly.
+	(Breakpoints In Python) <BP_*>: Similarly.
+
+2014-05-17  David Taylor <dtaylor@emc.com>
+
+	* gdb.texinfo (General Query Packets): Add a note about thread IDs
+	mentioned in the qfThreadInfo reply.
+
+2014-05-16  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Mode Options): Add -D.
+
+2014-05-09  Samuel Bronson  <naesten@gmail.com>
+
+	* Makefile.in (PACKAGE): Copy from ../Makefile.in in case of
+	"make -C".
+
+2014-04-29  Tom Tromey  <tromey@redhat.com>
+
+	* gdb.texinfo (Debugging Output): Rename to "set debug varobj" and
+	"show debug varobj".
+
+2014-05-01  David Taylor  <dtaylor@emc.com>
+
+	* gdb.texinfo (compare-sections): Document the new -r (read-only)
+	option.
+
+2014-04-24  Michael Sturm  <michael.sturm@mintel.com>
+	    Walfred Tedeschi  <walfred.tedeschi@intel.com>
+
+	* gdb.texinfo (i386 Features): Add description of AVX512
+	registers.
+
+2014-03-31  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Symbols): Document set/show print symbol-loading.
+
+2014-03-30  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Non-Stop Mode): Remove trailing whitespace.
+	(Background Execution): Ditto.
+
+2014-03-21  Pedro Alves  <palves@redhat.com>
+	    Stan Shebs  <stan@codesourcery.com>
+	    Hui Zhu  <hui@codesourcery.com>
+
+	* gdb.texinfo (Packets): Add anchor to "? packet".
+	Remove fixme and update introduction of "k packet".
+	Add anchor to "vKill packet".
+
+2014-03-12  Stan Shebs  <stan@codesourcery.com>
+
+	* Doxyfile-gdb-api.in (INPUT): Add gdbtypes.h.
+
+2014-02-26  Ludovic Courtès  <ludo@gnu.org>
+
+	* guile.texi (Basic Guile): Document 'history-append!'.
+
+2014-02-20  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Files): Document "add-shared-symbol-files"
+	and "assf" as being deprecated.
+	(Cygwin Native): Likewise for "dll-symbols".
+	(Non-debug DLL Symbols): Remove reference to "dll-symbols"
+	as a way to force the loading of symbols from a DLL.
+
+2014-02-19  Siva Chandra Reddy  <sivachandra@google.com>
+
+	* python.texi (Values From Inferior): Add description about the
+	new feature.
+
+2014-02-17  Doug Evans  <xdje42@gmail.com>
+
+	* Makefile.in (GDB_DOC_FILES): Add python.texi.
+	* gdb.texinfo (Python): Moved to ...
+	* python.texi: ... here.  New file.
+
+2014-02-17  Ludovic Courtès  <ludo@gnu.org>
+
+	* guile.texi (Writing a Guile Pretty-Printer) <example>:
+	Remove 'string-begins-with' procedure.  Add 'pretty-printer'
+	parameter to 'str-lookup-function' procedure.  Look for
+	the "std::string<" prefix.
+	(Frames In Guile): Add 'frame' parameter to 'frame-read-var'.
+	Adjust description.
+
+2014-02-11  Tejas Belagod  <tejas.belagod@arm.com>
+
+	* guile.texi (Values From Inferior In Guile): Remove stray
+	parantheses for deffn.
+	(Disassembly In Guile): Ditto.
+
+2014-02-10  Stan Shebs  <stan@codesourcery.com>
+
+	Add Doxygen support.
+	* Makefile.in (doxy): New action, generates Doxygen files.
+	(DOXYGEN): New.
+	(doxyedit): New.
+	* Doxyfile-base.in: New file.
+	* Doxyfile-gdb-api.in: New file.
+	* Doxyfile-gdb-xref.in: New file.
+	* Doxyfile-gdbserver.in: New file.
+	* doxy-index.in: New file.
+	* filter-for-doxygen: New file.
+	* filter-params.pl: New file.
+
+2014-02-10  Doug Evans  <xdje42@gmail.com>
+
+	* Makefile.in (GDB_DOC_FILES): Add guile.texi.
+	* gdb.texinfo (Auto-loading): Add set/show auto-load guile-scripts.
+	(Extending GDB): New menu entries Guile, Multiple Extension Languages.
+	(Guile docs): Include guile.texi.
+	(objfile-gdbdotext file): Add objfile-gdb.scm.
+	(dotdebug_gdb_scripts section): Mention Guile scripts.
+	(Multiple Extension Languages): New node.
+	* guile.texi: New file.
+
+2014-01-28  Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (Ada Glitches): Document the new "maint ada set/show
+	ignore-descriptive-types". commands.
+
+2014-01-22  Doug Evans  <dje@google.com>
+
+	* gdb.texinfo (Server): Mention --debug-format=all|none|timestamp.
+	(gdbserver man): Ditto.
+
+2014-01-16  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo: Document limited reverse/replay support
+	for target record-btrace.
+
+2014-01-16  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo (Process Record and Replay): Update documentation.
+
+2014-01-16  Markus Metzger  <markus.t.metzger@intel.com>
+
+	* gdb.texinfo (Process Record and Replay): Document new /c
+	modifier accepted by "record function-call-history".
+	Add /i modifier to "record function-call-history" example.
+
+2014-01-15  Yuanhui Zhang  <asmwarrior@gmail.com>
+	    Joel Brobecker  <brobecker@adacore.com>
+
+	* gdb.texinfo (GDB/MI Output Syntax): Add some missing "nl"
+	markers.  Remove one that was misplaced.
+
+2014-01-10  Pedro Alves  <palves@redhat.com>
+
+	* gdb.texinfo (Your Program's Environment) <set environment>:
+	Mention the shell, and point at 'set exec-wrapper'.
+
 2014-01-07  Joel Brobecker  <brobecker@adacore.com>
 
 	* gdb.texinfo (Types In Python): Document new attribute Types.name.

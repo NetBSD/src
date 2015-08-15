@@ -2,22 +2,13 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-#ifdef PROTOTYPES
 void callee (int i)
-#else
-void callee (i)
-  int  i;
-#endif
 {
   /* Any output corrupts GDB CLI expect strings.
      printf("callee: %d\n", i);  */
 }
 
-#ifdef PROTOTYPES
 int main (void)
-#else
-main ()
-#endif
 {
   int  pid;
   int  v = 5;

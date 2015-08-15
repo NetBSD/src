@@ -1,4 +1,4 @@
-#   Copyright 1997-2014 Free Software Foundation, Inc.
+#   Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -106,14 +106,7 @@ gdb_test "undisp" \
 # Test displaying a variable that is temporarily at a bad address.
 # But if we can examine what's at memory address 0, then we'll also be
 # able to display it without error.  Don't run the test in that case.
-set can_read_0 0
-gdb_test_multiple "x 0" "memory at address 0" {
-    -re "0x0:.*Cannot access memory at address 0x0.*$gdb_prompt $" { }
-    -re "0x0:.*Error accessing memory address 0x0.*$gdb_prompt $" { }
-    -re ".*$gdb_prompt $" {
-	set can_read_0 1
-    }
-}
+set can_read_0 [is_address_zero_readable]
 
 if { !$can_read_0 } {
     gdb_test "disp *p_i" ".*: \\*p_i = 0"

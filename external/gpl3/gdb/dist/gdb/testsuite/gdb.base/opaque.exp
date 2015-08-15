@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,9 +56,9 @@ proc setup_xfail_on_opaque_pointer {} {
 	global gcc_compiled
 
 	setup_xfail "vax-*-*" "i*86-sequent-bsd*"
-	if {!$gcc_compiled} then {
-		setup_xfail "alpha-*-*" "mips-sgi-irix5*"
-	}
+       if {!$gcc_compiled} then {
+               setup_xfail "alpha-*-*"
+       }
 }
 
 # This seems easier than trying to track different versions of xlc; I'm

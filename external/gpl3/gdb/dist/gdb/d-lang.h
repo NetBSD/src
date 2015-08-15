@@ -1,6 +1,6 @@
 /* D language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2014 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,53 @@
 
 #include "symtab.h"
 
+/* Language specific builtin types for D.  Any additional types added
+   should be kept in sync with enum d_primitive_types, where these
+   types are documented.  */
+
+struct builtin_d_type
+{
+  struct type *builtin_void;
+  struct type *builtin_bool;
+  struct type *builtin_byte;
+  struct type *builtin_ubyte;
+  struct type *builtin_short;
+  struct type *builtin_ushort;
+  struct type *builtin_int;
+  struct type *builtin_uint;
+  struct type *builtin_long;
+  struct type *builtin_ulong;
+  struct type *builtin_cent;
+  struct type *builtin_ucent;
+  struct type *builtin_float;
+  struct type *builtin_double;
+  struct type *builtin_real;
+  struct type *builtin_ifloat;
+  struct type *builtin_idouble;
+  struct type *builtin_ireal;
+  struct type *builtin_cfloat;
+  struct type *builtin_cdouble;
+  struct type *builtin_creal;
+  struct type *builtin_char;
+  struct type *builtin_wchar;
+  struct type *builtin_dchar;
+};
+
+/* Defined in d-exp.y.  */
+
+extern int d_parse (struct parser_state *);
+
+extern void d_error (char *);
+
+/* Defined in d-lang.c  */
+
+extern const char *d_main_name (void);
+
 extern char *d_demangle (const char *mangled, int options);
+
+extern const struct builtin_d_type *builtin_d_type (struct gdbarch *);
+
+/* Defined in d-valprint.c  */
 
 extern void d_val_print (struct type *type, const gdb_byte *valaddr,
 			 int embedded_offset, CORE_ADDR address,

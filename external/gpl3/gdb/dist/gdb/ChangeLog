@@ -1,504 +1,715 @@
-2014-05-05  Joel Brobecker  <brobecker@adacore.com>
+2015-05-13  Joel Brobecker  <brobecker@adacore.com>
 
-	* version.in: Set GDB version number to 7.7.1.
+	* version.in: Set GDB version number to 7.9.1.
 
-2014-04-19  Eli Zaretskii  <eliz@gnu.org>
+2015-05-12  Doug Evans  <dje@google.com>
 
-	PR gdb/14018
-	* windows-nat.c (thread_rec): Don't display a warning when
-	SuspendThread fails with ERROR_ACCESS_DENIED.  If SuspendThread
-	fails for any reason, set th->suspended to -1, so that we don't
-	try to resume such a thread.  Also, don't return NULL in these
-	cases, to avoid completely ruin the session due to "PC register is
-	not available" error.
-	(do_windows_fetch_inferior_registers): Check errors in
-	GetThreadContext call.
-	(windows_continue): Accept an additional argument KILLED; if not
-	zero, ignore errors in the SetThreadContext call, since the
-	inferior was killed and is shutting down.
-	(windows_resume, get_windows_debug_event)
-	(windows_create_inferior, windows_mourn_inferior)
-	(windows_kill_inferior): All callers of windows_continue changed
-	to adjust to its new calling sequence.
+	PR python/18285
+	* NEWS: Document new gdb.XMethodWorker.get_result_type method.
+	* eval.c (evaluate_subexp_standard) <OP_FUNCALL>: Handle
+	EVAL_AVOID_SIDE_EFFECTS for xmethods.
+	* extension-priv.h (struct extension_language_ops)
+	<get_xmethod_result_type>: New member.
+	* extension.c (get_xmethod_result_type): New function.
+	* extension.h (get_xmethod_result_type): Declare.
+	* python/py-xmethods.c (get_result_type_method_name): New static
+	global.
+	(py_get_result_type_method_name): Ditto.
+	(gdbpy_get_xmethod_result_type): New function.
+	(gdbpy_initialize_xmethods): Initialize py_get_result_type_method_name.
+	* python/python-internal.h (gdbpy_get_xmethod_result_type): Declare.
+	* python/python.c (python_extension_ops): Add
+	gdbpy_get_xmethod_result_type.
+	* python/lib/gdb/xmethod.py (XMethodWorker): Add get_result_type.
+	* valarith.c (value_x_binop): Handle EVAL_AVOID_SIDE_EFFECTS for
+	xmethods.
+	(value_x_unop): Ditto.
+	* value.c (result_type_of_xmethod): New function.
+	* value.h (result_type_of_xmethod): Declare.
 
-2014-04-11  Pierre Langlois  <pierre.langlois@embecosm.com>
+2015-05-02  Pierre Muller  <muller@sourceware.org>
 
-	PR backtrace/16721
-	PR backtrace/16832
-	* avr-tdep.c (struct gdbarch_tdep): Mention avrxmega in the comment.
-	(avr_gdbarch_init): Add xmega architectures given by bfd_architecture
-	when setting the size of call_length.
-	(avr_scan_prologue): Accept push r1 instruction for small stack
-	allocation.
-	* MAINTAINERS (Write After Approval): Add "Pierre Langlois".
+	PR pascal/17815
+	p-exp.y (yylex): Reorganize code to return the matched pattern
+	for a field of this.
 
-2014-03-05  Pedro Alves  <palves@redhat.com>
+2015-04-28  Doug Evans  <dje@google.com>
 
-	PR gdb/16575
-	* dcache.c (dcache_poke_byte): Constify ptr parameter.  Return
-	void.  Update comment.
-	(dcache_xfer_memory): Delete.
-	(dcache_read_memory_partial): New, based on the read bits of
-	dcache_xfer_memory.
-	(dcache_update): Add status parameter.  Use ULONGEST for len, and
-	adjust.  Discard cache lines if the reason for the update was
-	error.
-	* dcache.h (dcache_xfer_memory): Delete declaration.
-	(dcache_read_memory_partial): New declaration.
-	(dcache_update): Update prototype.
-	* target.c (raw_memory_xfer_partial): Update the dcache here.
-	(memory_xfer_partial_1): Don't handle dcache writes here.
+	PR python/18299
+	* python/lib/gdb/printing.py (register_pretty_printer): Handle
+	name or __name__ attributes.  Handle gdb module as first argument.
 
-2014-02-26  Pedro Alves  <palves@redhat.com>
+2015-03-31  Matthias Klose  <doko@ubuntu.com>
 
-	PR breakpoints/16292
-	* infrun.c (handle_signal_stop) <signal arrives while stepping
-	over a breakpoint>: Switch back to the stepping thread.
+	* compile/compile.c (compile_to_object): Allow triplets with or
+	without vendor set.
 
-2014-02-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+2015-03-21  Eli Zaretskii  <eliz@gnu.org>
 
-	PR gdb/16626
-	* auto-load.c (auto_load_objfile_script_1): Change filename to
-	debugfile.
+	* tui/tui-io.c (tui_expand_tabs): Reinitialize the column counter
+	before the second loop, to avoid undefined behavior.  Reported by
+	Anton Blanchard <anton@samba.org>.
 
-2014-02-09  Jan Kratochvil  <jan.kratochvil@redhat.com>
+2015-02-26  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
-	Fix Python stack corruption.
-	* python/py-linetable.c (ltpy_get_pcs_for_line, ltpy_has_line): Use
-	gdb_py_longest.
+	PR build/18033
+	* compile/compile-c-support.c (c_compute_program): Change // comment.
+	* compile/compile-object-load.c (setup_sections): Change // comment.
 
-2014-02-06  Joel Brobecker  <brobecker@adacore.com>
+2015-02-26  Joel Brobecker  <brobecker@adacore.com>
 
-	* version.in: Set GDB version number to 7.7.0.DATE-cvs.
+	PR build/18033:
+	* iq2000-tdep.c (iq2000_frame_cache): Delete C++-style comment.
 
-2014-02-06  Joel Brobecker  <brobecker@adacore.com>
+2015-02-20  Joel Brobecker  <brobecker@adacore.com>
 
-	GDB 7.7 released.
+	* version.in: Set GDB version number to 7.9.0.DATE-cvs.
 
-2014-02-06  Joel Brobecker  <brobecker@adacore.com>
+2015-02-20  Joel Brobecker  <brobecker@adacore.com>
 
-	* version.in: Set GDB version number to 7.7.
+	GDB 7.9 released.
 
-2014-02-06  Joel Brobecker  <brobecker@adacore.com>
+2015-02-20  David Taylor  <dtaylor@emc.com>
 
-	* NEWS: Change "Changes since GDB 7.6" to "Changes in GDB 7.7".
+	* common/ax.def (setv): Fix consumed entry in setv DEFOP.
 
-2014-02-05  Yao Qi  <yao@codesourcery.com>
+2015-02-20  Andreas Arnez  <arnez@linux.vnet.ibm.com>
 
-	* ctf.c: Include "inferior.h" and "gdbthread.h".
-	(CTF_PID): A new macro.
-	(ctf_open): Call inferior_appeared and add_thread_silent.
-	(ctf_close): Call exit_inferior_silent and set inferior_ptid.
-	(ctf_thread_alive): New function.
-	(init_ctf_ops): Install ctf_thread_alive to to_thread_alive.
+	PR corefiles/17808:
+	* gdbarch.sh (iterate_over_regset_sections_cb): Document this
+	function type, particularly its SIZE parameter.
+	* gdbarch.h: Regenerate.
+	* amd64-tdep.c (amd64_supply_fpregset): In gdb_assert, compare
+	actual against required size using ">=" instead of "==".
+	(amd64_collect_fpregset): Likewise.
+	* i386-tdep.c (i386_supply_gregset): Likewise.
+	(i386_collect_gregset): Likewise.
+	(i386_supply_fpregset): Likewise.
+	(i386_collect_fpregset): Likewise.
+	* mips-linux-tdep.c (mips_supply_gregset_wrapper): Likewise.
+	(mips_fill_gregset_wrapper): Likewise.
+	(mips_supply_fpregset_wrapper): Likewise.
+	(mips_fill_fpregset_wrapper): Likewise.
+	(mips64_supply_gregset_wrapper): Likewise.
+	(mips64_fill_gregset_wrapper): Likewise.
+	(mips64_supply_fpregset_wrapper): Likewise.
+	(mips64_fill_fpregset_wrapper): Likewise.
+	* mn10300-linux-tdep.c (am33_supply_gregset_method): Likewise.
+	(am33_supply_fpregset_method): Likewise.
+	(am33_collect_gregset_method): Likewise.
+	(am33_collect_fpregset_method): Likewise.
 
-2014-02-05  Yao Qi  <yao@codesourcery.com>
+2015-02-19  Joel Brobecker  <brobecker@adacore.com>
 
-	Revert this patch:
+	* version.in: Set GDB version number to 7.9.
 
-	2013-05-24  Yao Qi  <yao@codesourcery.com>
+2015-02-19  Joel Brobecker  <brobecker@adacore.com>
 
-	* tracepoint.c (TFILE_PID): Remove.
-	(tfile_open): Don't add thread and inferior.
-	(tfile_close): Don't set 'inferior_ptid'.  Don't call
-	exit_inferior_silent.
-	(tfile_thread_alive): Remove.
-	(init_tfile_ops): Don't set field 'to_thread_alive' of
-	tfile_ops.
+	* version.in: Set GDB version number to str 7.9.
 
-2014-01-28  Ulrich Weigand  <uweigand@de.ibm.com>
+2015-02-19  Joel Brobecker  <brobecker@adacore.com>
 
-	* ppc64-tdep.c (ppc64_standard_linkage7): Fix typo.
+	* NEWS: Rewrite "Changes since GDB 7.8" into "Changes in GDB 7.9".
 
-2014-01-23  Tom Tromey  <tromey@redhat.com>
+2015-02-17  Pedro Alves  <palves@redhat.com>
 
-	PR python/16485:
-	* python/lib/gdb/FrameDecorator.py: (FrameVars.fetch_frame_args):
-	Handle exception from frame.block.
-	(FrameVars.fetch_frame_locals): Likewise.
+	* event-loop.c: Don't declare nor define a queue type for
+	gdb_event_p.
+	(event_queue): Delete.
+	(create_event, create_file_event, gdb_event_xfree)
+	(initialize_event_loop, process_event): Delete.
+	(gdb_do_one_event): Return as soon as one event is handled.
+	(handle_file_event): Change prototype.  Used the passed in
+	file_handler pointer and ready_mask instead of looping over all
+	file handlers.
+	(gdb_wait_for_event): Update the poll/select timeouts before
+	blocking.  Run event handlers directly instead of queueing events.
+	Return as soon as one event is handled.
+	(struct async_event_handler_data): Delete.
+	(invoke_async_event_handler): Delete.
+	(check_async_event_handlers): Change return type to int.  Run
+	event handlers directly instead of queueing events.  Return as
+	soon as one event is handled.
+	(handle_timer_event): Delete.
+	(update_wait_timeout): New function, factored out from
+	poll_timers.
+	(poll_timers): Reimplement.
+	* event-loop.h (initialize_event_loop): Delete declaration.
+	* top.c (gdb_init): Don't call initialize_event_loop.
 
-2014-01-23  Tom Tromey  <tromey@redhat.com>
+2015-02-17  Pedro Alves  <palves@redhat.com>
 
-	PR python/16487:
-	* python/py-framefilter.c (py_print_frame): Don't call Py_DECREF
-	on a NULL pointer.  Move "goto error" to correct place.
+	* event-loop.c (clear_async_event_handler): New function.
+	* event-loop.h (clear_async_event_handler): New declaration.
+	* record-btrace.c (record_btrace_async): New function.
+	(init_record_btrace_ops): Install record_btrace_async.
+	* record-full.c (record_full_async): New function.
+	(record_full_resume): Don't mark the async event source here.
+	(init_record_full_ops): Install record_full_async.
+	(record_full_core_resume): Don't mark the async event source here.
+	(init_record_full_core_ops): Install record_full_async.
+	* remote.c (remote_async): Mark and clear the async stop reply
+	queue event-loop token as appropriate.
 
-2014-01-23  Tom Tromey  <tromey@redhat.com>
+2015-02-17  Pedro Alves  <palves@redhat.com>
 
-	PR python/16491:
-	* python/py-framefilter.c (apply_frame_filter): Call
-	ensure_python_env after computing gdbarch.
+	* linux-nat.c (linux_child_follow_fork, linux_nat_wait_1): Use
+	target_is_async_p instead of target_can_async.
+	(linux_nat_wait): Use target_is_async_p instead of
+	target_can_async.  Don't enable async here.
+	* remote.c (interrupt_query, remote_wait, putpkt_binary): Use
+	target_is_async_p instead of target_can_async.
 
-2014-01-22  Baruch Siach  <baruch@tkos.co.il>
+2015-02-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
-	* xtensa-tdep.h (xtensa_elf_greg_t): Change type to uint32_t.
+	* python/py-framefilter.c (py_print_single_arg, enumerate_locals)
+	(py_print_frame): Use RETURN_MASK_ERROR.
 
-2014-01-22  Pedro Alves  <palves@redhat.com>
+2015-02-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
-	* xtensa-config.c: Include defs.h.
+	* python/py-framefilter.c (py_print_frame): Mention RETURN_QUIT in
+	function comment.  Wrap all function that can throw in cleanups.
+	(gdbpy_apply_frame_filter): Wrap all function that can throw in
+	cleanups.
 
-2014-01-22  Baruch Siach  <baruch@tkos.co.il>
+2015-02-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
-	* xtensa-linux-nat.c: Include asm/ptrace.h.
+	* python/py-framefilter.c (py_print_frame): Substitute goto error.
+	Remove the error label.
 
-2014-01-21  Roland McGrath  <mcgrathr@google.com>
+2015-02-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
 
-	* configure.ac: Call AM_PROG_INSTALL_STRIP.
+	* python/py-framefilter.c (py_print_frame): Put conditional code paths
+	with goto first, indent the former else codepath left.  Put variable
+	'elided' to a new inner block.
+
+2015-02-11  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* python/py-framefilter.c (py_print_frame): Whitespacing fixes.
+
+2015-02-04  Doug Evans  <dje@google.com>
+	    Pedro Alves  <palves@redhat.com>
+	    Eli Zaretskii  <eliz@gnu.org>
+
+	PR tui/17810
+	* tui/tui-command.c (tui_refresh_cmd_win): New function.
+	* tui/tui-command.c (tui_refresh_cmd_win): Declare.
+	* tui/tui-file.c: #include tui/tui-command.h.
+	(tui_file_fputs): Refresh command window if stream is not gdb_stdout.
+	(tui_file_flush): Refresh command window if stream is gdb_stdout.
+	* tui/tui-io.c (tui_puts): Remove calls to wrefresh, fflush.
+	(tui_readline_output): Call tui_refresh_cmd_win.
+	(print_filename): Likewise.
+	(tui_rl_display_match_list): Likewise.
+
+2015-02-03  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Filter out inferior gcc option -fpreprocessed.
+	* compile/compile.c (filter_args): New function.
+	(get_args): Use it.
+
+2015-02-02  Joel Brobecker  <brobecker@adacore.com>
+
+	PR gdb/17856:
+	* ada-lang.c (ada_lookup_symbol_list_worker): Do not re-cache
+	results found in the cache.
+
+2015-02-02  Joel Brobecker  <brobecker@adacore.com>
+
+	PR gdb/17854:
+	* ada-lang.c (ada_get_symbol_cache): Set pspace_data->sym_cache
+	when allocating a new one.
+
+2015-01-31  Joel Brobecker  <brobecker@adacore.com>
+
+	PR symtab/17855
+	* symfile.c (clear_symtab_users): Move call to breakpoint_re_set
+	to end.
+
+2015-01-31  Eli Zaretskii  <eliz@gnu.org>
+
+	* tui/tui-io.c (tui_expand_tabs): New function.
+	(tui_puts, tui_redisplay_readline): Expand TABs into the
+	appropriate number of spaces.
+	* tui/tui-regs.c: Include tui-io.h.
+	(tui_register_format): Call tui_expand_tabs to expand TABs into
+	the appropriate number of spaces.
+	* tui/tui-io.h: Add prototype for tui_expand_tabs.
+
+2015-01-29  Doug Evans  <dje@google.com>
+
+	PR symtab/17890
+	* dwarf2read.c (dwarf_decode_line_header): Punt if version > 4.
+
+2015-01-26  Wei-cheng Wang  <cole945@gmail.com>
+
+	Backport from mainline:
+
+	* ppc-linux-tdep.c (ppc_skip_trampoline_code,
+	ppc_canonicalize_syscall, ppc_linux_syscall_record,
+	ppc_linux_record_signal, ppc_init_linux_record_tdep): Add comments.
+	* ppc64-tdep.c (ppc64_skip_trampoline_code): Likewise.
+	* rs6000-tdep.c (rs6000_epilogue_frame_cache,
+	rs6000_epilogue_frame_this_id, rs6000_epilogue_frame_prev_register,
+	rs6000_epilogue_frame_sniffer, ppc_record_vsr, ppc_process_record_op4,
+	ppc_process_record_op19, ppc_process_record_op31,
+	ppc_process_record_op59, ppc_process_record_op60,
+	ppc_process_record_op63): Likewise.
+
+2015-01-26  Wei-cheng Wang  <cole945@gmail.com>
+
+	Backport from mainline:
+
+	* rs6000-tdep.c (ppc_process_record_op4, ppc_process_record_op19,
+	ppc_process_record_op31, ppc_process_record_op59,
+	ppc_process_record_op60, ppc_process_record_op63,
+	ppc_process_record): Fix -Wformat warning.
+	* rs6000-tdep.c (rs6000_epilogue_frame_cache, ppc_process_record_op60):
+	Remove unused variables.
+
+2015-01-26  Wei-cheng Wang  <cole945@gmail.com>
+
+	Backport from mainline:
+
+	* ppc-linux-tdep.c (ppc_skip_trampoline_code):
+	Scan PLT stub backward for reverse debugging.
+	* ppc64-tdep.c (ppc64_skip_trampoline_code): Likewise.
+
+2015-01-26  Wei-cheng Wang  <cole945@gmail.com>
+	    Ulrich Weigand  <uweigand@de.ibm.com>
+
+	Backport from mainline:
+
+	* configure.tgt (powerpc*-*-linux): Add linux-record.o to
+	gdb_target_obs.
+	(ppc_linux_record_tdep, ppc64_linux_record_tdep): New for linux syscall
+	record.
+	(ppc_canonicalize_syscall, ppc_linux_syscall_record,
+	ppc_linux_record_signal, ppc_init_linux_record_tdep): New functions.
+	(ppc_linux_init_abi): Set process_record, process_record_signal.
+	* ppc-tdep.h (struct gdbarch_tdep): Add ppc_syscall_record and
+	ppc_linux_record_tdep to gdbarch_tdep.
+	(ppc_process_record): New declaration.
+	* rs6000-tdep.c (ppc_record_vsr, ppc_process_record_op4,
+	ppc_process_record_op19, ppc_process_record_op31,
+	ppc_process_record_op59, ppc_process_record_op60,
+	ppc_process_record_op63, ppc_process_record): New functions.
+
+2015-01-26  Wei-cheng Wang  <cole945@gmail.com>
+
+	Backport from mainline:
+
+	* rs6000-tdep.c (rs6000_in_function_epilogue_p): Rename to
+	rs6000_in_function_epilogue_frame_p and add an argument
+	for frame_info.
+	(rs6000_epilogue_frame_cache, rs6000_epilogue_frame_this_id,
+	rs6000_epilogue_frame_prev_register, rs6000_epilogue_frame_sniffer):
+	New functions.
+	(rs6000_epilogue_frame_unwind): New.
+	(rs6000_gdbarch_init): Append epilogue unwinder.
+
+2015-01-25  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	Fix 100x slowdown regression on DWZ files.
+	* dwarf2read.c (struct dwarf2_per_objfile): Add line_header_hash.
+	(struct line_header): Add offset and offset_in_dwz.
+	(dwarf_decode_lines): Add parameter decode_mapping to the declaration.
+	(free_line_header_voidp): New declaration.
+	(line_header_hash, line_header_hash_voidp, line_header_eq_voidp): New
+	functions.
+	(dwarf2_build_include_psymtabs): Update dwarf_decode_lines caller.
+	(handle_DW_AT_stmt_list): Use line_header_hash.
+	(free_line_header_voidp): New function.
+	(dwarf_decode_line_header): Initialize offset and offset_in_dwz.
+	(dwarf_decode_lines): New parameter decode_mapping, use it.
+	(dwarf2_free_objfile): Free line_header_hash.
+
+2015-01-23  Pedro Alves  <palves@redhat.com>
+
+	* linux-nat.c (linux_is_async_p): New macro.
+	(linux_nat_is_async_p):
+	(linux_nat_terminal_inferior): Check whether the target can async
+	instead of whether it is already async.
+	(linux_nat_terminal_ours): Don't check whether the target is
+	async.
+	(linux_async_pipe): Use linux_is_async_p.
+
+2015-01-23  Jan Kratochvil  <jan.kratochvil@redhat.com>
+
+	* compile/compile.c (_initialize_compile): Use -fPIE for compile_args.
+
+2015-01-22  Pedro Alves  <palves@redhat.com>
+
+	* configure.ac [*mingw32*]: Check $curses_found instead of
+	$prefer_curses.
 	* configure: Regenerate.
-	* aclocal.m4: Regenerate.
-	* Makefile.in (install_sh, INSTALL_STRIP_PROGRAM, STRIP):
-	New substituted	variables.
-	(install-strip): New target.
-	(INSTALL_SCRIPT): New substituted variable.
-	(FLAGS_TO_PASS): Add it.
-	(install-only): Use $(INSTALL_SCRIPT) rather than
-	$(INSTALL_PROGRAM) for gcore.
+	* windows-termcap.c: Remove HAVE_CURSES_H, HAVE_NCURSES_H and
+	HAVE_NCURSES_NCURSES_H checks.
 
-2014-01-16  Doug Evans  <dje@google.com>
+2015-01-22  Eli Zaretskii  <eliz@gnu.org>
 
-	* dwarf2read.c (open_and_init_dwp_file): Fix typo in comment.
+	* tui/tui.c (tui_enable) [__MINGW32__]: If the call to 'newterm'
+	fails with the 1st arg NULL, try again with "unknown".  Don't test
+	the "cup" capability: it isn't supported by the Windows port of
+	ncurses, but the Windows console driver is still capable of
+	supporting TUI.
 
-2014-01-16  Pedro Alves  <palves@redhat.com>
+2015-01-22  Eli Zaretskii  <eliz@gnu.org>
 
-	* go32-nat.c (go32_open, go32_close, go32_attach, go32_detach)
-	(go32_resume, go32_fetch_registers, store_register)
-	(go32_store_registers, go32_prepare_to_store)
-	(go32_xfer_memory, go32_files_info, go32_kill_inferior)
-	(go32_create_inferior, go32_can_run, go32_terminal_init)
-	(go32_terminal_inferior, go32_terminal_ours): Delete forward
-	declarations.
+	* Makefile.in (HFILES_NO_SRCDIR): Remove ada-varobj.h.
+	(ALLDEPFILES): Remove irix5-nat.c.  These two are part of the
+	reason that "make TAGS" is broken.
 
-2014-01-15  Doug Evans  <dje@google.com>
+2015-01-19  Eli Zaretskii  <eliz@gnu.org>
 
-	* dwarf2read.c (open_and_init_dwp_file): Use pulongest to print
-	uint32_t.
+	* configure.ac [*mingw32*]: Only add windows-termcap.o to
+	CONFIG_OBS if not building with a curses library.
+	* configure: Regenerate.
 
-2014-01-15  Joel Brobecker  <brobecker@adacore.com>
+	* windows-termcap.c: Include defs.h.  Make the whole body empty if
+	either one of HAVE_CURSES_H or HAVE_NCURSES_H or
+	HAVE_NCURSES_NCURSES_H is defined.
 
-	* python/py-value.c (get_field_type): Remove unnecessary curly
-	braces for single-statement if block.
+2015-01-16  Eli Zaretskii  <eliz@gnu.org>
 
-2014-01-15  Joel Brobecker  <brobecker@adacore.com>
+	* tui/tui-win.c (tui_rehighlight_all, tui_set_var_cmd): New
+	functions.
+	(_initialize_tui_win) <border-kind, border-mode>:
+	<active-border-mode>: Use tui_set_var_cmd as the "set" function.
+	* tui/tui-win.h: Add prototype for tui_rehighlight_all.
 
-	* python/py-type.c (convert_field): Add missing empty line
-	after declarations.
+2015-01-16  Eli Zaretskii  <eliz@gnu.org>
 
-2014-01-13  Siva Chandra Reddy  <sivachandra@google.com>
+	* tui/tui-win.c (tui_scroll_left_command, tui_scroll_right_command):
+	Doc fix.
+	(tui_set_tab_width_command): Delete and recreate the source and
+	the disassembly windows, to show the effect of the changed tab
+	size immediately.
 
-	PR python/15464
-	PR python/16113
-	* valops.c (value_struct_elt_bitpos): New function
-	* py-type.c (convert_field): Set 'name' attribute of a gdb.Field
-	object to 'None' if the field name is an empty string ("").
-	* python/py-value.c (valpy_getitem): Use 'bitpos' and 'type'
-	attribute to look for a field when 'name' is 'None'.
-	(get_field_type): New function
+	* tui/tui-data.h (LINE_PREFIX): Make shorter
+	(MAX_PID_WIDTH): Enlarge from 14 to 19, to leave enough space for
+	"Thread NNNNN.XXXX" thread ID notation on Windows.
 
-2014-01-14  Doug Evans  <dje@google.com>
+2015-01-14  Pedro Alves  <palves@redhat.com>
 
-	PR symtab/16426
-	* dwarf2read.c (dwarf2_get_dwz_file): Call gdb_bfd_record_inclusion.
-	(try_open_dwop_file): Ditto.
-	* gdb_bfd.c: #include "vec.h".
-	(bfdp): New typedef.
-	(struct gdb_bfd_data): New member included_bfds.
-	(gdb_bfd_unref): Unref all included bfds.
-	(gdb_bfd_record_inclusion): New function.
-	* gdb_bfd.h (gdb_bfd_record_inclusion): Declare.
+	PR gdb/17525
+	* breakpoint.c: Include "interps.h".
+	(bpstat_do_actions_1): Also check whether the interpreter is
+	async.
 
-2014-01-13  Jan Kratochvil  <jan.kratochvil@redhat.com>
-
-	PR threads/16216
-	* linux-thread-db.c (try_thread_db_load): Add parameter
-	check_auto_load_safe.  Move here the file_is_auto_load_safe call.
-	(try_thread_db_load_from_pdir_1): Move it there from here.
-	(try_thread_db_load_from_sdir): Update caller.
-	(try_thread_db_load_from_dir): Move it there from here.
-
-2014-01-08  Joel Brobecker  <brobecker@adacore.com>
-
-	* version.in: Set GDB version number to 7.6.90.DATE-cvs.
-
-2014-01-08  Joel Brobecker  <brobecker@adacore.com>
-
-	GDB 7.6.90 released.
-
-2014-01-08  Joel Brobecker  <brobecker@adacore.com>
-
-	* version.in: Set GDB version number to 7.6.90.
-
-2014-01-08  Joel Brobecker  <brobecker@adacore.com>
+2015-01-14  Pedro Alves  <palves@redhat.com>
 
-	* development.sh (development): Set to false.
-
-2014-01-08  Joel Brobecker  <brobecker@adacore.com>
+	PR cli/17828
+	* infrun.c (reinstall_readline_callback_handler_cleanup): Don't
+	reinstall if the interpreter is sync.
 
-	GDB 7.7 branch created (79301218fa0f074c5656db0ec8972a5ddcf91fb5):
-	* version.in: Bump version to 7.6.90.DATE-cvs.
+2015-01-13  Joel Brobecker  <brobecker@adacore.com>
 
-2014-01-08  Yao Qi  <yao@codesourcery.com>
+	* version.in: Set GDB version number to 7.8.90.DATE-cvs.
 
-	* spu-linux-nat.c (spu_symbol_file_add_from_memory): Change
-	type of 'id' to gdb_byte.  Cast 'id' to 'const char *'.
-	(spu_xfer_partial): Cast 'buf' to 'const char *'.
+2015-01-13  Joel Brobecker  <brobecker@adacore.com>
 
-2014-01-08  Yao Qi  <yao@codesourcery.com>
+	GDB 7.8.90 released.
 
-	* spu-linux-nat.c (spu_symbol_file_add_from_memory): Pass
-	return value of bfd_get_filename to symbol_file_add_from_bfd.
-
-2014-01-08  Pierre Muller  <muller@sourceware.org>
-
-	Fix PR16201.
-	* coff-pe-read.c (struct read_pe_section_data): Add index field.
-	(add_pe_exported_sym): Use SECTION_DATA->INDEX for call
-	to prim_record_mininal_symbol_and_info.
-	(add_pe_forwarded_sym): Use known section number of forwarded symbol
-	in call to prim_record_minimal_symbol_and_info.
-	(read_pe_exported_syms): Set index field of section_data.
-
-2014-01-07  Andrew Pinski  <apinski@cavium.com>
-
-	* features/aarch64-core.xml (cpsr): Change to be 64bit.
-	* features/aarch64.c: Regenerate.
-
-2014-01-07  Andreas Schwab  <schwab@linux-m68k.org>
-
-	* target.c (return_null): Define.
-	(update_current_target): Use it instead of return_zero for
-	functions that return a pointer.
-
-2014-01-07  Edjunior Barbosa Machado  <emachado@linux.vnet.ibm.com>
-
-	* source.c (add_path): Fix check for duplicated paths in the previously
-	included paths.
-
-2014-01-07  Honggyu Kim  <hong.gyu.kim@lge.com>
-
-	* ada-lang.c: Remove duplicated include statements.
-	* alphabsd-nat.c: Ditto.
-	* amd64-darwin-tdep.c: Ditto.
-	* amd64fbsd-nat.c: Ditto.
-	* auto-load.c: Ditto.
-	* ax-gdb.c: Ditto.
-	* breakpoint.c: Ditto.
-	* dbxread.c: Ditto.
-	* fork-child.c: Ditto.
-	* gdb_usleep.c: Ditto.
-	* i386-darwin-tdep.c: Ditto.
-	* i386fbsd-nat.c: Ditto.
-	* infcmd.c: Ditto.
-	* inferior.c: Ditto.
-	* jv-lang.c: Ditto.
-	* linux-nat.c: Ditto.
-	* linux-tdep.c: Ditto.
-	* m68kbsd-nat.c: Ditto.
-	* m68klinux-nat.c: Ditto.
-	* microblaze-tdep.c: Ditto.
-	* mips-linux-tdep.c: Ditto.
-	* mn10300-tdep.c: Ditto.
-	* nto-tdep.c: Ditto.
-	* opencl-lang.c: Ditto.
-	* osdata.c: Ditto.
-	* printcmd.c: Ditto.
-	* regcache.c: Ditto.
-	* remote-m32r-sdi.c: Ditto.
-	* remote.c: Ditto.
-	* symfile.c: Ditto.
-	* symtab.c: Ditto.
-	* tilegx-linux-nat.c: Ditto.
-	* tilegx-tdep.c: Ditto.
-	* tracepoint.c: Ditto.
-	* valops.c: Ditto.
-	* vaxbsd-nat.c: Ditto.
-	* windows-nat.c: Ditto.
-	* xtensa-tdep.c: Ditto.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* spu-linux-nat.c (_initialize_spu_nat): Declare.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-	    Joel Brobecker  <brobecker@adacore.com>
-
-	* aix-thread.c (pdc_read_regs): Cast parameter to uintptr_t.
-	(pdc_write_regs): Likewise.
-	(fetch_regs_kernel_thread): Likewise.
-	(store_regs_kernel_thread): Likewise.
-
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* ada-varobj.c (ada_varobj_adjust_for_child_access): Convert
-	tagged type objects to their actual type.
+2015-01-13  Joel Brobecker  <brobecker@adacore.com>
 
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
+	* version.in: Set GDB version number to 7.8.90.
 
-	* ada-valprint.c (print_field_values): Add "language" parameter.
-	Update calls to print_field_values and print_variant_part.
-	Pass new parameter "language" in call to val_print instead
-	of "current_language".  Replace call to ada_val_print by call
-	to val_print.
-	(print_variant_part): Add "language" parameter.
-	(ada_val_print_struct_union): Update call to print_field_values.
+2015-01-13  Joel Brobecker  <brobecker@adacore.com>
 
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
+	GDB 7.9 branch created (92fc2e6978d9a7c8324c7e851dbee59e22ec7a37):
+	* version.in: Bump version to 7.8.90.DATE-cvs.
 
-	* ada-valprint.c (ui_memcpy): Delete.
-	(ada_print_floating): Update documentation.  Add empty line
-	between between function documentation and implementation.
-	Delete variable "buffer".  Use ui_file_xstrdup in place of
-	ui_file_put.  Minor adjustments following this change.
+2015-01-13  Joel Brobecker  <brobecker@adacore.com>
 
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
+	* nat/linux-procfs.c (linux_proc_attach_tgid_threads):
+	Remove trailing new-line in argument of call to warning.
 
-	* ada-valprint.c (ada_val_print_string): New function,
-	extracted from ada_val_print_array.
-	(ada_val_print_array): Replace extracted code by call
-	to ada_val_print_string followed by a return.  Move
-	"else" branch to the function's top block.
+2015-01-13  Joel Brobecker  <brobecker@adacore.com>
 
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
+	* linux-nat.c (attach_proc_task_lwp_callback): Remove trailing
+	new-line in argument of call to "warning".
 
-	* ada-valprint.c (ada_val_print_array): Move implementation
-	down.  Rename parameter "offset" and "val" into "offset_aligned"
-	and "original_value" respectively.  Add parameter "offset".
+2015-01-13  Joel Brobecker  <brobecker@adacore.com>
 
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
+	* ada-lang.c (ada_lookup_symbol_nonlocal): If name not found
+	in static block, then try searching for primitive types.
 
-	* ada-valprint.c (ada_val_print_ref): Rewrite by mostly
-	re-organizing the code. Change the "???" message printed
-	when target type is a TYPE_CODE_UNDEF into
-	"<ref to undefined type>".
+2015-01-12  Patrick Palka  <patrick@parcs.ath.cx>
 
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* ada-valprint.c (print_record): Delete, implementation inlined...
-	(ada_val_print_struct_union): ... here.  Remove call to
-	ada_check_typedef in inlined implementation.
-
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* ada-valprint.c (ada_val_print_gnat_array): New function,
-	extracted from ada_val_print_1;
-	(ada_val_print_ptr, ada_val_print_num, ada_val_print_enum)
-	(ada_val_print_flt, ada_val_print_struct_union)
-	(ada_val_print_ref): Likewise.
-	(ada_val_print_1): Delete variables i and elttype.
-	Replace extracted-out code by call to corresponding
-	new functions.
-
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* ada-valprint.c (ada_val_print_1): Remove call to gdb_flush.
-
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* ada-valprint.c (ada_val_print_1): Replace calls to
-	ada_val_print_1 by calls to val_print.
-
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* ada-valprint.c (ada_val_print_1): Add parameter "language".
-	Update calls to self accordingly.  Replace calls to c_val_print
-	by calls to val_print.
-
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* ada-valprint.c (print_record): Delete declaration.
-	(adjust_type_signedness, ada_val_print_1): Likewise.
-	(ada_val_print): Move function implementation down.
-	(print_variant_part, print_field_values, print_record):
-	Move function implementation up.
-
-2014-01-07  Joel Brobecker  <brobecker@adacore.com>
-
-	* python/py-type.c (typy_get_name): New function.
-	(type_object_getset): Add entry for attribute "name".
-	* NEWS: Add entry mentioning this new attribute.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* gnu-nat.c (set_exceptions_cmd): Remove an empty body 'if'
-	statement.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* gnu-nat.c (info_port_rights): Add qualifier const to
-	argument args.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* gnu-nat.c (trace_me): Use 'void' for empty argument list.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* gnu-nat.c (make_inf) Update declaration.
-	(make_inf): Make it static.
-	(inf_set_traced): Likewise.
-	(inf_port_to_thread, inf_task_died_status): Likewise.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* gnu-nat.c (inf_tid_to_proc): Remove declaration.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* gnu-nat.c (_initialize_gnu_nat): Declare.
-
-2014-01-07  Yao Qi  <yao@codesourcery.com>
-
-	* gdbarch.sh (byte_order, byte_order_for_code): Change type to
-	'enum bfd_endian'.
-	(struct gdbarch_info) <byte_order>: Change type to
-	'enum bfd_endian'.
-	<byte_order_for_code>: Likewise.
-	* gdbarch.c, gdbarch.h: Regenerated.
-
-2014-01-06  Sasha Smundak  <asmundak@google.com>
-
-	* jit.c: (jit_reader_load_command): Fix JIT reader path creation.
-
-2014-01-06  Tom Tromey  <tromey@redhat.com>
-
-	* doublest.c (convert_doublest_to_floatformat): Use const, not
-	CONST.
-	* somread.c (som_symtab_read): Likewise.
-
-2014-01-07  Hui Zhu  <hui@codesourcery.com>
-
-	* gdb_bfd.c (gdb_bfd_stash_filename): Removed.
-	(gdb_bfd_open): Removed gdb_bfd_stash_filename.
-	(gdb_bfd_fopen): Ditto.
-	(gdb_bfd_openr): Ditto.
-	(gdb_bfd_openw): Ditto.
-	(gdb_bfd_openr_iovec): Ditto.
-	(gdb_bfd_fdopenr): Ditto.
-	* gdb_bfd.h (gdb_bfd_stash_filename): Removed.
-	* solib-aix.c (solib_aix_bfd_open): Alloc object_bfd->filename
-	with xstrdup.
-	* solib-darwin.c (darwin_bfd_open): Alloc res->filename
-	with xstrdup.
-	* symfile-mem.c (symbol_file_add_from_memory): Removed
-	gdb_bfd_stash_filename.
-
-2014-01-03  Doug Evans  <dje@google.com>
-
-	* nat/linux-waitpid.c (linux_debug): Remove extraneous \n from
-	output.
-
-2014-01-01  Joel Brobecker  <brobecker@adacore.com>
+	* top.h (gdb_add_history): Declare.
+	* top.c (command_count): New variable.
+	(gdb_add_history): New function.
+	(gdb_safe_append_history): New static function.
+	(quit_force): Call it.
+	(command_line_input): Use gdb_add_history instead of
+	add_history.
+	* event-top.c (command_line_handler): Likewise.
+
+2015-01-12  James Clarke  <jrtc27@jrtc27.com>  (tiny patch)
+
+	PR gdb/17046
+	* darwin-nat.c: Replace <machine/setjmp.h> #include by
+	<setjmp.h> #include.
+
+2015-01-11  Doug Evans  <xdje42@gmail.com>
+
+	* dwarf2read.c (compute_delayed_physnames): Use TYPE_FN_FIELD_PHYSNAME.
+
+2015-01-11  Doug Evans  <xdje42@gmail.com>
+
+	PR gdb/15830
+	* NEWS: The "maint demangle" command is renamed as "demangle".
+	* demangle.c: #include cli/cli-utils.h, language.h.
+	(demangle_command): New function.
+	(_initialize_demangle): Add new command "demangle".
+	* maint.c (maintenance_demangle): Stub out.
+	(_initialize_maint_cmds): Update help text for "maint demangle",
+	and mark as deprecated.
+
+2015-01-11  Mark Kettenis  <kettenis@gnu.org>
+
+	* inf-ptrace.c (inf_ptrace_follow_fork): Adjust now that
+	inferior_thread is a function.
+
+2015-01-09  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* Makefile.in (.y.c): Don't munge yacc's #line
+	directives.
+
+2015-01-09  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* utils.c (defaulted_query): Rewrite to use gdb_readline_wrapper
+	to prompt for input.
+	* tui/tui-hooks.c (tui_query_hook): Remove.
+	(tui_install_hooks): Don't set deprecated_query_hook.
+	* tui/tui-io.c (tui_redisplay_readline): Fix off-by-one error in
+	height calculation.  Always update the command window's cur_line.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* breakpoint.c (hardware_breakpoint_inserted_here_p): New
+	function.
+	* breakpoint.h (hardware_breakpoint_inserted_here_p): New
+	declaration.
+	* linux-nat.c (linux_nat_status_is_event): Move higher up in file.
+	(linux_resume_one_lwp): Store the thread's PC.  Adjust to clear
+	stop_reason.
+	(check_stopped_by_watchpoint): New function.
+	(save_sigtrap): Reimplement.
+	(linux_nat_stopped_by_watchpoint): Adjust.
+	(linux_nat_lp_status_is_event): Delete.
+	(stop_wait_callback): Only call save_sigtrap after storing the
+	pending status.
+	(status_callback): If the thread had been stopped for a breakpoint
+	that has since been removed, discard the event and resume the LWP.
+	(count_events_callback, select_event_lwp_callback): Use
+	lwp_status_pending_p instead of linux_nat_lp_status_is_event.
+	(cancel_breakpoint): Rename to ...
+	(check_stopped_by_breakpoint): ... this.  Record whether the LWP
+	stopped for a software breakpoint or hardware breakpoint.
+	(select_event_lwp): Only give preference to the stepping LWP in
+	all-stop mode.  Adjust comments.
+	(stop_and_resume_callback): Remove references to new_pending_p.
+	(linux_nat_filter_event): Likewise.  Leave exit events of the
+	leader thread pending here.  Handle signal short circuiting here.
+	Only call save_sigtrap after storing the pending waitstatus.
+	(linux_nat_wait_1): Remove 'retry' label.  Remove references to
+	new_pending.  Don't handle leaving events the caller is not
+	interested in pending here, nor handle signal short-circuiting
+	here.  Also give equal priority to all LWPs that have had events
+	in non-stop mode.  If reporting a software breakpoint event,
+	unadjust the LWP's PC.
+	* linux-nat.h (enum lwp_stop_reason): New.
+	(struct lwp_info) <stop_pc>: New field.
+	(struct lwp_info) <stopped_by_watchpoint>: Delete field.
+	(struct lwp_info) <stop_reason>: New field.
+	* x86-linux-nat.c (x86_linux_prepare_to_resume): Adjust.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-nat.c (linux_handle_extended_wait) <PTRACE_EVENT_EXEC>:
+	Set the LWP's 'resumed' flag.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-nat.c (linux_resume_one_lwp): New function.
+	(resume_lwp): Use lwp_status_pending_p and linux_resume_one_lwp.
+	(linux_nat_resume): Use lwp_status_pending_p and
+	linux_resume_one_lwp.
+	(linux_handle_syscall_trap): Use linux_resume_one_lwp.
+	(linux_handle_extended_wait): Use linux_resume_one_lwp.
+	(status_callback, running_callback): Use lwp_status_pending_p.
+	(lwp_status_pending_p): New function.
+	(stop_and_resume_callback): Use lwp_status_pending_p.
+	(linux_nat_filter_event): Use linux_resume_one_lwp.
+	(linux_nat_wait_1): Always use status_callback to look for an LWP
+	with a pending status.  Use linux_resume_one_lwp.
+	(resume_stopped_resumed_lwps): Use lwp_status_pending_p and
+	linux_resume_one_lwp.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* breakpoint.c (bp_location_inserted_here_p): New function,
+	factored out from ...
+	(breakpoint_inserted_here_p): ... here.  Use
+	ALL_BP_LOCATIONS_AT_ADDR.
+	(software_breakpoint_inserted_here_p): Use
+	bp_location_inserted_here_p and ALL_BP_LOCATIONS_AT_ADDR.
+
+2014-01-09  Pedro Alves  <palves@redhat.com>
+
+	Skip enabling event reporting if the kernel supports
+	PTRACE_EVENT_CLONE.
+	* linux-thread-db.c: Include "nat/linux-ptrace.h".
+	(thread_db_use_events): New function.
+	(try_thread_db_load_1): Check thread_db_use_events before enabling
+	event reporting.
+	(update_thread_state): New function.
+	(attach_thread): Use it.  Check thread_db_use_events before
+	enabling event reporting.
+	(thread_db_detach): Check thread_db_use_events before disabling
+	event reporting.
+	(find_new_threads_callback): Check thread_db_use_events before
+	enabling event reporting.  Update the thread's state if not using
+	libthread_db events.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-nat.c (lin_lwp_attach_lwp): Assert that the lwp id we're
+	about to wait for is > 0.
+	* linux-thread-db.c (find_new_threads_callback): Ignore thread if
+	the kernel thread ID is -1.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-nat.c (attach_proc_task_lwp_callback): New function.
+	(linux_nat_attach): Use linux_proc_attach_tgid_threads.
+	(wait_lwp, linux_nat_filter_event): If not set yet, set the lwp's
+	ptrace option flags.
+	* linux-nat.h (struct lwp_info) <must_set_ptrace_flags>: New
+	field.
+	* nat/linux-procfs.c: Include <dirent.h>.
+	(linux_proc_get_int): New parameter "warn".  Handle it.
+	(linux_proc_get_tgid): Adjust.
+	(linux_proc_get_tracerpid): Rename to ...
+	(linux_proc_get_tracerpid_nowarn): ... this.
+	(linux_proc_pid_get_state): New function, factored out from
+	(linux_proc_pid_has_state): ... this.  Add new parameter "warn"
+	and handle it.
+	(linux_proc_pid_is_gone): New function.
+	(linux_proc_pid_is_stopped): Adjust.
+	(linux_proc_pid_is_zombie_maybe_warn)
+	(linux_proc_pid_is_zombie_nowarn): New functions.
+	(linux_proc_pid_is_zombie): Use
+	linux_proc_pid_is_zombie_maybe_warn.
+	(linux_proc_attach_tgid_threads): New function.
+	* nat/linux-procfs.h (linux_proc_get_tgid): Update comment.
+	(linux_proc_get_tracerpid): Rename to ...
+	(linux_proc_get_tracerpid_nowarn): ... this, and update comment.
+	(linux_proc_pid_is_gone): New declaration.
+	(linux_proc_pid_is_zombie): Update comment.
+	(linux_proc_pid_is_zombie_nowarn): New declaration.
+	(linux_proc_attach_lwp_func): New typedef.
+	(linux_proc_attach_tgid_threads): New declaration.
+	* nat/linux-ptrace.c (linux_ptrace_attach_fail_reason): Adjust to
+	use nowarn functions.
+	(linux_ptrace_attach_fail_reason_string): Move here from
+	gdbserver/linux-low.c and rename.
+	(ptrace_supports_feature): If the current ptrace options are not
+	known yet, check them now, instead of asserting.
+	* nat/linux-ptrace.h (linux_ptrace_attach_fail_reason_string):
+	Declare.
+
+2015-01-09  Pedro Alves  <palves@redhat.com>
+
+	* linux-thread-db.c (thread_db_find_new_threads_silently)
+	(try_thread_db_load_1, try_thread_db_load, thread_db_load_search)
+	(find_new_threads_once): Print debug output on gdb_stdlog.
+
+2015-01-09  Chen Gang  <gang.chen.5i5j@gmail.com>
+	    Pedro Alves  <palves@redhat.com>
+
+	* compile/compile.c: Include "gdb_wait.h".
+	(do_rmdir): Check return value, and free 'zap'.
+
+2015-01-08  Pedro Alves  <palves@redhat.com>
+	    Yao Qi  <yao@codesourcery.com>
+
+	* dwarf2loc.c (indirect_pieced_value): Don't call
+	gdb_sign_extend.  Call extract_signed_integer instead.
+	* utils.c (gdb_sign_extend): Remove.
+	* utils.h (gdb_sign_extend): Remove declaration.
+
+2015-01-07  Pierre Muller  <muller@sourceware.org>
+
+	PR symtab/17811
+	* stabsread.c (define_symbol): Set language for C++ special symbols.
+
+2015-01-07  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* inflow.c (initial_gdb_ttystate): Tweak comment.
+
+2015-01-07  Joel Brobecker  <brobecker@adacore.com>
+
+	* inflow.c (set_initial_gdb_ttystate): Add empty line after
+	comment documenting function.
+
+2015-01-07  Patrick Palka  <patrick@parcs.ath.cx>
+
+	* terminal.h (set_initial_gdb_ttystate): Declare.
+	* inflow.c (initial_gdb_ttystate): New static variable.
+	(set_initial_gdb_ttystate): New setter.
+	(child_terminal_init_with_pgrp): Copy initial_gdb_ttystate
+	instead of our current terminal state.
+	* top.c (gdb_init): Call set_initial_gdb_ttystate.
+
+2015-01-07  Joel Brobecker  <brobecker@adacore.com>
+
+	* guile/scm-type.c (tyscm_array_1): Add comment.
+	* python/py-type.c (typy_array_1): Add comment.
+
+2015-01-06  Joel Brobecker  <brobecker@adacore.com>
+
+	* guile/scm-type.c (tyscm_array_1): Do not raise out-of-range
+	error if N2 is equal to N1 - 1.
+
+2015-01-06  Joel Brobecker  <brobecker@adacore.com>
+
+	* python/py-type.c (typy_array_1): Do not raise negative-length
+	exception if N2 is equal to N1 - 1.
+
+2015-01-03  Doug Evans  <xdje42@gmail.com>
+
+	* c-exp.y: Whitespace cleanup.
+	(classify_inner_name): Remove extra ;.
+
+2015-01-02  Maciej W. Rozycki  <macro@codesourcery.com>
+
+	* mips-tdep.c (mips32_scan_prologue): Keep the extracted stack
+	offset signed.
+
+2015-01-02  Doug Evans  <dje@google.com>
+
+	* dwarf2read.c (setup_type_unit_groups): Remove outdated comment.
+
+2015-01-02  Doug Evans  <dje@google.com>
+
+	* symtab.h (struct symbol): Fix typo in comment.
+
+2015-01-01  Joel Brobecker  <brobecker@adacore.com>
 
 	Update year range in copyright notice of all files.
 
-2014-01-01  Joel Brobecker  <brobecker@adacore.com>
+2015-01-01  Joel Brobecker  <brobecker@adacore.com>
 
-	* top.c (print_gdb_version): Set copyright year to 2014.
+	* top.c (print_gdb_version): Update copyright year to 2015.
 
-2014-01-01  Joel Brobecker  <brobecker@adacore.com>
+2015-01-01  Joel Brobecker  <brobecker@adacore.com>
 
-	* config/djgpp/fnchange.lst: Add entry for gdb/ChangeLog-2013.
+	* config/djgpp/fnchange.lst: Add entry for gdb/ChangeLog-2014.
 
-For older changes see ChangeLog-2013.
+For older changes see ChangeLog-2014.
 
 Local Variables:
 mode: change-log

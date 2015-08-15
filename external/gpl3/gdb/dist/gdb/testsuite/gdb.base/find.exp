@@ -1,4 +1,4 @@
-# Copyright 2008-2014 Free Software Foundation, Inc.
+# Copyright 2008-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,17 +29,7 @@ gdb_test "break $srcfile:stop_here" \
     "breakpoint function in file"
 
 gdb_run_cmd
-gdb_expect {
-    -re "Breakpoint \[0-9\]+,.*stop_here.* at .*$srcfile:.*$gdb_prompt $" {
-	pass "run until function breakpoint"
-    }
-    -re "$gdb_prompt $" {
-	fail "run until function breakpoint"
-    }
-    timeout {
-	fail "run until function breakpoint (timeout)"
-    }
-}
+gdb_test "" "Breakpoint \[0-9\]+,.*stop_here.* at .*$srcfile:.*" "run until function breakpoint"
 
 # We've now got the target program in a state where we can test "find".
 

@@ -1,4 +1,4 @@
-# Copyright 2011-2014 Free Software Foundation, Inc.
+# Copyright 2011-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,7 +93,7 @@ proc one_jit_test {count match_str} {
 	gdb_breakpoint [gdb_get_line_number "break here 1"]
 	gdb_continue_to_breakpoint "break here 1"
 
-	gdb_test "info function jit_function" "$match_str"
+	gdb_test "info function ^jit_function" "$match_str"
 
 	# This is just to help debugging when things fail
 	if {$verbose > 0} {

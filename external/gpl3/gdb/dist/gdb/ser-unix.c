@@ -1,6 +1,6 @@
 /* Serial interface for local (hardwired) serial ports on Un*x like systems
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,7 +29,6 @@
 #include <sys/time.h>
 
 #include "gdb_select.h"
-#include <string.h>
 #include "gdbcmd.h"
 #include "filestuff.h"
 

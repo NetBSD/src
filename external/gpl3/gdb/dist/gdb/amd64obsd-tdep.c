@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,9 +29,7 @@
 #include "target.h"
 #include "trad-frame.h"
 
-#include "gdb_assert.h"
-#include <string.h>
-
+#include "obsd-tdep.h"
 #include "amd64-tdep.h"
 #include "i387-tdep.h"
 #include "solib-svr4.h"
@@ -44,7 +42,8 @@ amd64obsd_supply_regset (const struct regset *regset,
 			 struct regcache *regcache, int regnum,
 			 const void *regs, size_t len)
 {
-  const struct gdbarch_tdep *tdep = gdbarch_tdep (regset->arch);
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  const struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   gdb_assert (len >= tdep->sizeof_gregset + I387_SIZEOF_FXSAVE);
 
@@ -53,24 +52,24 @@ amd64obsd_supply_regset (const struct regset *regset,
 		       ((const gdb_byte *)regs) + tdep->sizeof_gregset);
 }
 
-static const struct regset *
-amd64obsd_regset_from_core_section (struct gdbarch *gdbarch,
-				    const char *sect_name, size_t sect_size)
+static const struct regset amd64obsd_combined_regset =
+  {
+    NULL, amd64obsd_supply_regset, NULL
+  };
+
+static void
+amd64obsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					iterate_over_regset_sections_cb *cb,
+					void *cb_data,
+					const struct regcache *regcache)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   /* OpenBSD core dumps don't use seperate register sets for the
      general-purpose and floating-point registers.  */
 
-  if (strcmp (sect_name, ".reg") == 0
-      && sect_size >= tdep->sizeof_gregset + I387_SIZEOF_FXSAVE)
-    {
-      if (tdep->gregset == NULL)
-        tdep->gregset = regset_alloc (gdbarch, amd64obsd_supply_regset, NULL);
-      return tdep->gregset;
-    }
-
-  return NULL;
+  cb (".reg", tdep->sizeof_gregset + I387_SIZEOF_FXSAVE,
+      &amd64obsd_combined_regset, NULL, cb_data);
 }
 
 
@@ -459,6 +458,7 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
 
   amd64_init_abi (info, gdbarch);
+  obsd_init_abi (info, gdbarch);
 
   /* Initialize general-purpose register set details.  */
   tdep->gregset_reg_offset = amd64obsd_r_reg_offset;
@@ -491,8 +491,8 @@ amd64obsd_core_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   amd64obsd_init_abi (info, gdbarch);
 
-  set_gdbarch_regset_from_core_section
-    (gdbarch, amd64obsd_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, amd64obsd_iterate_over_regset_sections);
 }
 
 

@@ -1,6 +1,6 @@
 /* Target-dependent definitions for AMD64.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -68,13 +68,21 @@ enum amd64_regnum
   AMD64_BND0R_REGNUM = AMD64_YMM15H_REGNUM + 1,
   AMD64_BND3R_REGNUM = AMD64_BND0R_REGNUM + 3,
   AMD64_BNDCFGU_REGNUM,
-  AMD64_BNDSTATUS_REGNUM
+  AMD64_BNDSTATUS_REGNUM,
+  AMD64_XMM16_REGNUM,
+  AMD64_XMM31_REGNUM = AMD64_XMM16_REGNUM + 15,
+  AMD64_YMM16H_REGNUM,
+  AMD64_YMM31H_REGNUM = AMD64_YMM16H_REGNUM + 15,
+  AMD64_K0_REGNUM,
+  AMD64_K7_REGNUM = AMD64_K0_REGNUM + 7,
+  AMD64_ZMM0H_REGNUM,
+  AMD64_ZMM31H_REGNUM = AMD64_ZMM0H_REGNUM + 31
 };
 
 /* Number of general purpose registers.  */
 #define AMD64_NUM_GREGS		24
 
-#define AMD64_NUM_REGS		(AMD64_BNDSTATUS_REGNUM + 1)
+#define AMD64_NUM_REGS		(AMD64_ZMM31H_REGNUM + 1)
 
 extern struct displaced_step_closure *amd64_displaced_step_copy_insn
   (struct gdbarch *gdbarch, CORE_ADDR from, CORE_ADDR to,
@@ -111,6 +119,8 @@ extern void amd64_collect_fxsave (const struct regcache *regcache, int regnum,
 extern void amd64_collect_xsave (const struct regcache *regcache,
 				 int regnum, void *xsave, int gcore);
 
+/* Floating-point register set. */
+extern const struct regset amd64_fpregset;
 
 /* Variables exported from amd64-linux-tdep.c.  */
 extern int amd64_linux_gregset_reg_offset[];

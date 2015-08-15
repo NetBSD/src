@@ -1,6 +1,6 @@
-This is gdb.info, produced by makeinfo version 5.1 from gdb.texinfo.
+This is gdb.info, produced by makeinfo version 5.2 from gdb.texinfo.
 
-Copyright (C) 1988-2014 Free Software Foundation, Inc.
+Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -17,6 +17,798 @@ START-INFO-DIR-ENTRY
 * Gdb: (gdb).                     The GNU debugger.
 * gdbserver: (gdb) Server.        The GNU debugging server.
 END-INFO-DIR-ENTRY
+
+   This file documents the GNU debugger GDB.
+
+   This is the Tenth Edition, of 'Debugging with GDB: the GNU
+Source-Level Debugger' for GDB (GDB) Version 7.9.1.
+
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
+
+   Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.3 or
+any later version published by the Free Software Foundation; with the
+Invariant Sections being "Free Software" and "Free Software Needs Free
+Documentation", with the Front-Cover Texts being "A GNU Manual," and
+with the Back-Cover Texts as in (a) below.
+
+   (a) The FSF's Back-Cover Text is: "You are free to copy and modify
+this GNU Manual.  Buying copies from GNU Press supports the FSF in
+developing GNU and promoting software freedom."
+
+
+File: gdb.info,  Node: Patching,  Next: Compiling and Injecting Code,  Prev: Calling,  Up: Altering
+
+17.6 Patching Programs
+======================
+
+By default, GDB opens the file containing your program's executable code
+(or the corefile) read-only.  This prevents accidental alterations to
+machine code; but it also prevents you from intentionally patching your
+program's binary.
+
+   If you'd like to be able to patch the binary, you can specify that
+explicitly with the 'set write' command.  For example, you might want to
+turn on internal debugging flags, or even to make emergency repairs.
+
+'set write on'
+'set write off'
+     If you specify 'set write on', GDB opens executable and core files
+     for both reading and writing; if you specify 'set write off' (the
+     default), GDB opens them read-only.
+
+     If you have already loaded a file, you must load it again (using
+     the 'exec-file' or 'core-file' command) after changing 'set write',
+     for your new setting to take effect.
+
+'show write'
+     Display whether executable files and core files are opened for
+     writing as well as reading.
+
+
+File: gdb.info,  Node: Compiling and Injecting Code,  Prev: Patching,  Up: Altering
+
+17.7 Compiling and injecting code in GDB
+========================================
+
+GDB supports on-demand compilation and code injection into programs
+running under GDB.  GCC 5.0 or higher built with 'libcc1.so' must be
+installed for this functionality to be enabled.  This functionality is
+implemented with the following commands.
+
+'compile code SOURCE-CODE'
+'compile code -raw -- SOURCE-CODE'
+     Compile SOURCE-CODE with the compiler language found as the current
+     language in GDB (*note Languages::).  If compilation and injection
+     is not supported with the current language specified in GDB, or the
+     compiler does not support this feature, an error message will be
+     printed.  If SOURCE-CODE compiles and links successfully, GDB will
+     load the object-code emitted, and execute it within the context of
+     the currently selected inferior.  It is important to note that the
+     compiled code is executed immediately.  After execution, the
+     compiled code is removed from GDB and any new types or variables
+     you have defined will be deleted.
+
+     The command allows you to specify SOURCE-CODE in two ways.  The
+     simplest method is to provide a single line of code to the command.
+     E.g.:
+
+          compile code printf ("hello world\n");
+
+     If you specify options on the command line as well as source code,
+     they may conflict.  The '--' delimiter can be used to separate
+     options from actual source code.  E.g.:
+
+          compile code -r -- printf ("hello world\n");
+
+     Alternatively you can enter source code as multiple lines of text.
+     To enter this mode, invoke the 'compile code' command without any
+     text following the command.  This will start the multiple-line
+     editor and allow you to type as many lines of source code as
+     required.  When you have completed typing, enter 'end' on its own
+     line to exit the editor.
+
+          compile code
+          >printf ("hello\n");
+          >printf ("world\n");
+          >end
+
+     Specifying '-raw', prohibits GDB from wrapping the provided
+     SOURCE-CODE in a callable scope.  In this case, you must specify
+     the entry point of the code by defining a function named
+     '_gdb_expr_'.  The '-raw' code cannot access variables of the
+     inferior.  Using '-raw' option may be needed for example when
+     SOURCE-CODE requires '#include' lines which may conflict with
+     inferior symbols otherwise.
+
+'compile file FILENAME'
+'compile file -raw FILENAME'
+     Like 'compile code', but take the source code from FILENAME.
+
+          compile file /home/user/example.c
+
+17.7.1 Caveats when using the 'compile' command
+-----------------------------------------------
+
+There are a few caveats to keep in mind when using the 'compile'
+command.  As the caveats are different per language, the table below
+highlights specific issues on a per language basis.
+
+C code examples and caveats
+     When the language in GDB is set to 'C', the compiler will attempt
+     to compile the source code with a 'C' compiler.  The source code
+     provided to the 'compile' command will have much the same access to
+     variables and types as it normally would if it were part of the
+     program currently being debugged in GDB.
+
+     Below is a sample program that forms the basis of the examples that
+     follow.  This program has been compiled and loaded into GDB, much
+     like any other normal debugging session.
+
+          void function1 (void)
+          {
+             int i = 42;
+             printf ("function 1\n");
+          }
+
+          void function2 (void)
+          {
+             int j = 12;
+             function1 ();
+          }
+
+          int main(void)
+          {
+             int k = 6;
+             int *p;
+             function2 ();
+             return 0;
+          }
+
+     For the purposes of the examples in this section, the program above
+     has been compiled, loaded into GDB, stopped at the function 'main',
+     and GDB is awaiting input from the user.
+
+     To access variables and types for any program in GDB, the program
+     must be compiled and packaged with debug information.  The
+     'compile' command is not an exception to this rule.  Without debug
+     information, you can still use the 'compile' command, but you will
+     be very limited in what variables and types you can access.
+
+     So with that in mind, the example above has been compiled with
+     debug information enabled.  The 'compile' command will have access
+     to all variables and types (except those that may have been
+     optimized out).  Currently, as GDB has stopped the program in the
+     'main' function, the 'compile' command would have access to the
+     variable 'k'.  You could invoke the 'compile' command and type some
+     source code to set the value of 'k'.  You can also read it, or do
+     anything with that variable you would normally do in 'C'.  Be aware
+     that changes to inferior variables in the 'compile' command are
+     persistent.  In the following example:
+
+          compile code k = 3;
+
+     the variable 'k' is now 3.  It will retain that value until
+     something else in the example program changes it, or another
+     'compile' command changes it.
+
+     Normal scope and access rules apply to source code compiled and
+     injected by the 'compile' command.  In the example, the variables
+     'j' and 'k' are not accessible yet, because the program is
+     currently stopped in the 'main' function, where these variables are
+     not in scope.  Therefore, the following command
+
+          compile code j = 3;
+
+     will result in a compilation error message.
+
+     Once the program is continued, execution will bring these variables
+     in scope, and they will become accessible; then the code you
+     specify via the 'compile' command will be able to access them.
+
+     You can create variables and types with the 'compile' command as
+     part of your source code.  Variables and types that are created as
+     part of the 'compile' command are not visible to the rest of the
+     program for the duration of its run.  This example is valid:
+
+          compile code int ff = 5; printf ("ff is %d\n", ff);
+
+     However, if you were to type the following into GDB after that
+     command has completed:
+
+          compile code printf ("ff is %d\n'', ff);
+
+     a compiler error would be raised as the variable 'ff' no longer
+     exists.  Object code generated and injected by the 'compile'
+     command is removed when its execution ends.  Caution is advised
+     when assigning to program variables values of variables created by
+     the code submitted to the 'compile' command.  This example is
+     valid:
+
+          compile code int ff = 5; k = ff;
+
+     The value of the variable 'ff' is assigned to 'k'.  The variable
+     'k' does not require the existence of 'ff' to maintain the value it
+     has been assigned.  However, pointers require particular care in
+     assignment.  If the source code compiled with the 'compile' command
+     changed the address of a pointer in the example program, perhaps to
+     a variable created in the 'compile' command, that pointer would
+     point to an invalid location when the command exits.  The following
+     example would likely cause issues with your debugged program:
+
+          compile code int ff = 5; p = &ff;
+
+     In this example, 'p' would point to 'ff' when the 'compile' command
+     is executing the source code provided to it.  However, as variables
+     in the (example) program persist with their assigned values, the
+     variable 'p' would point to an invalid location when the command
+     exists.  A general rule should be followed in that you should
+     either assign 'NULL' to any assigned pointers, or restore a valid
+     location to the pointer before the command exits.
+
+     Similar caution must be exercised with any structs, unions, and
+     typedefs defined in 'compile' command.  Types defined in the
+     'compile' command will no longer be available in the next 'compile'
+     command.  Therefore, if you cast a variable to a type defined in
+     the 'compile' command, care must be taken to ensure that any future
+     need to resolve the type can be achieved.
+
+          (gdb) compile code static struct a { int a; } v = { 42 }; argv = &v;
+          (gdb) compile code printf ("%d\n", ((struct a *) argv)->a);
+          gdb command line:1:36: error: dereferencing pointer to incomplete type ‘struct a’
+          Compilation failed.
+          (gdb) compile code struct a { int a; }; printf ("%d\n", ((struct a *) argv)->a);
+          42
+
+     Variables that have been optimized away by the compiler are not
+     accessible to the code submitted to the 'compile' command.  Access
+     to those variables will generate a compiler error which GDB will
+     print to the console.
+
+
+File: gdb.info,  Node: GDB Files,  Next: Targets,  Prev: Altering,  Up: Top
+
+18 GDB Files
+************
+
+GDB needs to know the file name of the program to be debugged, both in
+order to read its symbol table and in order to start your program.  To
+debug a core dump of a previous run, you must also tell GDB the name of
+the core dump file.
+
+* Menu:
+
+* Files::                       Commands to specify files
+* Separate Debug Files::        Debugging information in separate files
+* MiniDebugInfo::               Debugging information in a special section
+* Index Files::                 Index files speed up GDB
+* Symbol Errors::               Errors reading symbol files
+* Data Files::                  GDB data files
+
+
+File: gdb.info,  Node: Files,  Next: Separate Debug Files,  Up: GDB Files
+
+18.1 Commands to Specify Files
+==============================
+
+You may want to specify executable and core dump file names.  The usual
+way to do this is at start-up time, using the arguments to GDB's
+start-up commands (*note Getting In and Out of GDB: Invocation.).
+
+   Occasionally it is necessary to change to a different file during a
+GDB session.  Or you may run GDB and forget to specify a file you want
+to use.  Or you are debugging a remote target via 'gdbserver' (*note
+file: Server.).  In these situations the GDB commands to specify new
+files are useful.
+
+'file FILENAME'
+     Use FILENAME as the program to be debugged.  It is read for its
+     symbols and for the contents of pure memory.  It is also the
+     program executed when you use the 'run' command.  If you do not
+     specify a directory and the file is not found in the GDB working
+     directory, GDB uses the environment variable 'PATH' as a list of
+     directories to search, just as the shell does when looking for a
+     program to run.  You can change the value of this variable, for
+     both GDB and your program, using the 'path' command.
+
+     You can load unlinked object '.o' files into GDB using the 'file'
+     command.  You will not be able to "run" an object file, but you can
+     disassemble functions and inspect variables.  Also, if the
+     underlying BFD functionality supports it, you could use 'gdb
+     -write' to patch object files using this technique.  Note that GDB
+     can neither interpret nor modify relocations in this case, so
+     branches and some initialized variables will appear to go to the
+     wrong place.  But this feature is still handy from time to time.
+
+'file'
+     'file' with no argument makes GDB discard any information it has on
+     both executable file and the symbol table.
+
+'exec-file [ FILENAME ]'
+     Specify that the program to be run (but not the symbol table) is
+     found in FILENAME.  GDB searches the environment variable 'PATH' if
+     necessary to locate your program.  Omitting FILENAME means to
+     discard information on the executable file.
+
+'symbol-file [ FILENAME ]'
+     Read symbol table information from file FILENAME.  'PATH' is
+     searched when necessary.  Use the 'file' command to get both symbol
+     table and program to run from the same file.
+
+     'symbol-file' with no argument clears out GDB information on your
+     program's symbol table.
+
+     The 'symbol-file' command causes GDB to forget the contents of some
+     breakpoints and auto-display expressions.  This is because they may
+     contain pointers to the internal data recording symbols and data
+     types, which are part of the old symbol table data being discarded
+     inside GDB.
+
+     'symbol-file' does not repeat if you press <RET> again after
+     executing it once.
+
+     When GDB is configured for a particular environment, it understands
+     debugging information in whatever format is the standard generated
+     for that environment; you may use either a GNU compiler, or other
+     compilers that adhere to the local conventions.  Best results are
+     usually obtained from GNU compilers; for example, using 'GCC' you
+     can generate debugging information for optimized code.
+
+     For most kinds of object files, with the exception of old SVR3
+     systems using COFF, the 'symbol-file' command does not normally
+     read the symbol table in full right away.  Instead, it scans the
+     symbol table quickly to find which source files and which symbols
+     are present.  The details are read later, one source file at a
+     time, as they are needed.
+
+     The purpose of this two-stage reading strategy is to make GDB start
+     up faster.  For the most part, it is invisible except for
+     occasional pauses while the symbol table details for a particular
+     source file are being read.  (The 'set verbose' command can turn
+     these pauses into messages if desired.  *Note Optional Warnings and
+     Messages: Messages/Warnings.)
+
+     We have not implemented the two-stage strategy for COFF yet.  When
+     the symbol table is stored in COFF format, 'symbol-file' reads the
+     symbol table data in full right away.  Note that "stabs-in-COFF"
+     still does the two-stage strategy, since the debug info is actually
+     in stabs format.
+
+'symbol-file [ -readnow ] FILENAME'
+'file [ -readnow ] FILENAME'
+     You can override the GDB two-stage strategy for reading symbol
+     tables by using the '-readnow' option with any of the commands that
+     load symbol table information, if you want to be sure GDB has the
+     entire symbol table available.
+
+'core-file [FILENAME]'
+'core'
+     Specify the whereabouts of a core dump file to be used as the
+     "contents of memory".  Traditionally, core files contain only some
+     parts of the address space of the process that generated them; GDB
+     can access the executable file itself for other parts.
+
+     'core-file' with no argument specifies that no core file is to be
+     used.
+
+     Note that the core file is ignored when your program is actually
+     running under GDB.  So, if you have been running your program and
+     you wish to debug a core file instead, you must kill the subprocess
+     in which the program is running.  To do this, use the 'kill'
+     command (*note Killing the Child Process: Kill Process.).
+
+'add-symbol-file FILENAME ADDRESS'
+'add-symbol-file FILENAME ADDRESS [ -readnow ]'
+'add-symbol-file FILENAME ADDRESS -s SECTION ADDRESS ...'
+     The 'add-symbol-file' command reads additional symbol table
+     information from the file FILENAME.  You would use this command
+     when FILENAME has been dynamically loaded (by some other means)
+     into the program that is running.  The ADDRESS should give the
+     memory address at which the file has been loaded; GDB cannot figure
+     this out for itself.  You can additionally specify an arbitrary
+     number of '-s SECTION ADDRESS' pairs, to give an explicit section
+     name and base address for that section.  You can specify any
+     ADDRESS as an expression.
+
+     The symbol table of the file FILENAME is added to the symbol table
+     originally read with the 'symbol-file' command.  You can use the
+     'add-symbol-file' command any number of times; the new symbol data
+     thus read is kept in addition to the old.
+
+     Changes can be reverted using the command 'remove-symbol-file'.
+
+     Although FILENAME is typically a shared library file, an executable
+     file, or some other object file which has been fully relocated for
+     loading into a process, you can also load symbolic information from
+     relocatable '.o' files, as long as:
+
+        * the file's symbolic information refers only to linker symbols
+          defined in that file, not to symbols defined by other object
+          files,
+        * every section the file's symbolic information refers to has
+          actually been loaded into the inferior, as it appears in the
+          file, and
+        * you can determine the address at which every section was
+          loaded, and provide these to the 'add-symbol-file' command.
+
+     Some embedded operating systems, like Sun Chorus and VxWorks, can
+     load relocatable files into an already running program; such
+     systems typically make the requirements above easy to meet.
+     However, it's important to recognize that many native systems use
+     complex link procedures ('.linkonce' section factoring and C++
+     constructor table assembly, for example) that make the requirements
+     difficult to meet.  In general, one cannot assume that using
+     'add-symbol-file' to read a relocatable object file's symbolic
+     information will have the same effect as linking the relocatable
+     object file into the program in the normal way.
+
+     'add-symbol-file' does not repeat if you press <RET> after using
+     it.
+
+'remove-symbol-file FILENAME'
+'remove-symbol-file -a ADDRESS'
+     Remove a symbol file added via the 'add-symbol-file' command.  The
+     file to remove can be identified by its FILENAME or by an ADDRESS
+     that lies within the boundaries of this symbol file in memory.
+     Example:
+
+          (gdb) add-symbol-file /home/user/gdb/mylib.so 0x7ffff7ff9480
+          add symbol table from file "/home/user/gdb/mylib.so" at
+              .text_addr = 0x7ffff7ff9480
+          (y or n) y
+          Reading symbols from /home/user/gdb/mylib.so...done.
+          (gdb) remove-symbol-file -a 0x7ffff7ff9480
+          Remove symbol table from file "/home/user/gdb/mylib.so"? (y or n) y
+          (gdb)
+
+     'remove-symbol-file' does not repeat if you press <RET> after using
+     it.
+
+'add-symbol-file-from-memory ADDRESS'
+     Load symbols from the given ADDRESS in a dynamically loaded object
+     file whose image is mapped directly into the inferior's memory.
+     For example, the Linux kernel maps a 'syscall DSO' into each
+     process's address space; this DSO provides kernel-specific code for
+     some system calls.  The argument can be any expression whose
+     evaluation yields the address of the file's shared object file
+     header.  For this command to work, you must have used 'symbol-file'
+     or 'exec-file' commands in advance.
+
+'section SECTION ADDR'
+     The 'section' command changes the base address of the named SECTION
+     of the exec file to ADDR.  This can be used if the exec file does
+     not contain section addresses, (such as in the 'a.out' format), or
+     when the addresses specified in the file itself are wrong.  Each
+     section must be changed separately.  The 'info files' command,
+     described below, lists all the sections and their addresses.
+
+'info files'
+'info target'
+     'info files' and 'info target' are synonymous; both print the
+     current target (*note Specifying a Debugging Target: Targets.),
+     including the names of the executable and core dump files currently
+     in use by GDB, and the files from which symbols were loaded.  The
+     command 'help target' lists all possible targets rather than
+     current ones.
+
+'maint info sections'
+     Another command that can give you extra information about program
+     sections is 'maint info sections'.  In addition to the section
+     information displayed by 'info files', this command displays the
+     flags and file offset of each section in the executable and core
+     dump files.  In addition, 'maint info sections' provides the
+     following command options (which may be arbitrarily combined):
+
+     'ALLOBJ'
+          Display sections for all loaded object files, including shared
+          libraries.
+     'SECTIONS'
+          Display info only for named SECTIONS.
+     'SECTION-FLAGS'
+          Display info only for sections for which SECTION-FLAGS are
+          true.  The section flags that GDB currently knows about are:
+          'ALLOC'
+               Section will have space allocated in the process when
+               loaded.  Set for all sections except those containing
+               debug information.
+          'LOAD'
+               Section will be loaded from the file into the child
+               process memory.  Set for pre-initialized code and data,
+               clear for '.bss' sections.
+          'RELOC'
+               Section needs to be relocated before loading.
+          'READONLY'
+               Section cannot be modified by the child process.
+          'CODE'
+               Section contains executable code only.
+          'DATA'
+               Section contains data only (no executable code).
+          'ROM'
+               Section will reside in ROM.
+          'CONSTRUCTOR'
+               Section contains data for constructor/destructor lists.
+          'HAS_CONTENTS'
+               Section is not empty.
+          'NEVER_LOAD'
+               An instruction to the linker to not output the section.
+          'COFF_SHARED_LIBRARY'
+               A notification to the linker that the section contains
+               COFF shared library information.
+          'IS_COMMON'
+               Section contains common symbols.
+'set trust-readonly-sections on'
+     Tell GDB that readonly sections in your object file really are
+     read-only (i.e. that their contents will not change).  In that
+     case, GDB can fetch values from these sections out of the object
+     file, rather than from the target program.  For some targets
+     (notably embedded ones), this can be a significant enhancement to
+     debugging performance.
+
+     The default is off.
+
+'set trust-readonly-sections off'
+     Tell GDB not to trust readonly sections.  This means that the
+     contents of the section might change while the program is running,
+     and must therefore be fetched from the target when needed.
+
+'show trust-readonly-sections'
+     Show the current setting of trusting readonly sections.
+
+   All file-specifying commands allow both absolute and relative file
+names as arguments.  GDB always converts the file name to an absolute
+file name and remembers it that way.
+
+   GDB supports GNU/Linux, MS-Windows, HP-UX, SunOS, SVr4, Irix, and IBM
+RS/6000 AIX shared libraries.
+
+   On MS-Windows GDB must be linked with the Expat library to support
+shared libraries.  *Note Expat::.
+
+   GDB automatically loads symbol definitions from shared libraries when
+you use the 'run' command, or when you examine a core file.  (Before you
+issue the 'run' command, GDB does not understand references to a
+function in a shared library, however--unless you are debugging a core
+file).
+
+   On HP-UX, if the program loads a library explicitly, GDB
+automatically loads the symbols at the time of the 'shl_load' call.
+
+   There are times, however, when you may wish to not automatically load
+symbol definitions from shared libraries, such as when they are
+particularly large or there are many of them.
+
+   To control the automatic loading of shared library symbols, use the
+commands:
+
+'set auto-solib-add MODE'
+     If MODE is 'on', symbols from all shared object libraries will be
+     loaded automatically when the inferior begins execution, you attach
+     to an independently started inferior, or when the dynamic linker
+     informs GDB that a new library has been loaded.  If MODE is 'off',
+     symbols must be loaded manually, using the 'sharedlibrary' command.
+     The default value is 'on'.
+
+     If your program uses lots of shared libraries with debug info that
+     takes large amounts of memory, you can decrease the GDB memory
+     footprint by preventing it from automatically loading the symbols
+     from shared libraries.  To that end, type 'set auto-solib-add off'
+     before running the inferior, then load each library whose debug
+     symbols you do need with 'sharedlibrary REGEXP', where REGEXP is a
+     regular expression that matches the libraries whose symbols you
+     want to be loaded.
+
+'show auto-solib-add'
+     Display the current autoloading mode.
+
+   To explicitly load shared library symbols, use the 'sharedlibrary'
+command:
+
+'info share REGEX'
+'info sharedlibrary REGEX'
+     Print the names of the shared libraries which are currently loaded
+     that match REGEX.  If REGEX is omitted then print all shared
+     libraries that are loaded.
+
+'sharedlibrary REGEX'
+'share REGEX'
+     Load shared object library symbols for files matching a Unix
+     regular expression.  As with files loaded automatically, it only
+     loads shared libraries required by your program for a core file or
+     after typing 'run'.  If REGEX is omitted all shared libraries
+     required by your program are loaded.
+
+'nosharedlibrary'
+     Unload all shared object library symbols.  This discards all
+     symbols that have been loaded from all shared libraries.  Symbols
+     from shared libraries that were loaded by explicit user requests
+     are not discarded.
+
+   Sometimes you may wish that GDB stops and gives you control when any
+of shared library events happen.  The best way to do this is to use
+'catch load' and 'catch unload' (*note Set Catchpoints::).
+
+   GDB also supports the the 'set stop-on-solib-events' command for
+this.  This command exists for historical reasons.  It is less useful
+than setting a catchpoint, because it does not allow for conditions or
+commands as a catchpoint does.
+
+'set stop-on-solib-events'
+     This command controls whether GDB should give you control when the
+     dynamic linker notifies it about some shared library event.  The
+     most common event of interest is loading or unloading of a new
+     shared library.
+
+'show stop-on-solib-events'
+     Show whether GDB stops and gives you control when shared library
+     events happen.
+
+   Shared libraries are also supported in many cross or remote debugging
+configurations.  GDB needs to have access to the target's libraries;
+this can be accomplished either by providing copies of the libraries on
+the host system, or by asking GDB to automatically retrieve the
+libraries from the target.  If copies of the target libraries are
+provided, they need to be the same as the target libraries, although the
+copies on the target can be stripped as long as the copies on the host
+are not.
+
+   For remote debugging, you need to tell GDB where the target libraries
+are, so that it can load the correct copies--otherwise, it may try to
+load the host's libraries.  GDB has two variables to specify the search
+directories for target libraries.
+
+'set sysroot PATH'
+     Use PATH as the system root for the program being debugged.  Any
+     absolute shared library paths will be prefixed with PATH; many
+     runtime loaders store the absolute paths to the shared library in
+     the target program's memory.  If you use 'set sysroot' to find
+     shared libraries, they need to be laid out in the same way that
+     they are on the target, with e.g. a '/lib' and '/usr/lib' hierarchy
+     under PATH.
+
+     If PATH starts with the sequence 'remote:', GDB will retrieve the
+     target libraries from the remote system.  This is only supported
+     when using a remote target that supports the 'remote get' command
+     (*note Sending files to a remote system: File Transfer.).  The part
+     of PATH following the initial 'remote:' (if present) is used as
+     system root prefix on the remote file system.  (1)
+
+     For targets with an MS-DOS based filesystem, such as MS-Windows and
+     SymbianOS, GDB tries prefixing a few variants of the target
+     absolute file name with PATH.  But first, on Unix hosts, GDB
+     converts all backslash directory separators into forward slashes,
+     because the backslash is not a directory separator on Unix:
+
+            c:\foo\bar.dll => c:/foo/bar.dll
+
+     Then, GDB attempts prefixing the target file name with PATH, and
+     looks for the resulting file name in the host file system:
+
+            c:/foo/bar.dll => /path/to/sysroot/c:/foo/bar.dll
+
+     If that does not find the shared library, GDB tries removing the
+     ':' character from the drive spec, both for convenience, and, for
+     the case of the host file system not supporting file names with
+     colons:
+
+            c:/foo/bar.dll => /path/to/sysroot/c/foo/bar.dll
+
+     This makes it possible to have a system root that mirrors a target
+     with more than one drive.  E.g., you may want to setup your local
+     copies of the target system shared libraries like so (note 'c' vs
+     'z'):
+
+           /path/to/sysroot/c/sys/bin/foo.dll
+           /path/to/sysroot/c/sys/bin/bar.dll
+           /path/to/sysroot/z/sys/bin/bar.dll
+
+     and point the system root at '/path/to/sysroot', so that GDB can
+     find the correct copies of both 'c:\sys\bin\foo.dll', and
+     'z:\sys\bin\bar.dll'.
+
+     If that still does not find the shared library, GDB tries removing
+     the whole drive spec from the target file name:
+
+            c:/foo/bar.dll => /path/to/sysroot/foo/bar.dll
+
+     This last lookup makes it possible to not care about the drive
+     name, if you don't want or need to.
+
+     The 'set solib-absolute-prefix' command is an alias for 'set
+     sysroot'.
+
+     You can set the default system root by using the configure-time
+     '--with-sysroot' option.  If the system root is inside GDB's
+     configured binary prefix (set with '--prefix' or '--exec-prefix'),
+     then the default system root will be updated automatically if the
+     installed GDB is moved to a new location.
+
+'show sysroot'
+     Display the current shared library prefix.
+
+'set solib-search-path PATH'
+     If this variable is set, PATH is a colon-separated list of
+     directories to search for shared libraries.  'solib-search-path' is
+     used after 'sysroot' fails to locate the library, or if the path to
+     the library is relative instead of absolute.  If you want to use
+     'solib-search-path' instead of 'sysroot', be sure to set 'sysroot'
+     to a nonexistent directory to prevent GDB from finding your host's
+     libraries.  'sysroot' is preferred; setting it to a nonexistent
+     directory may interfere with automatic loading of shared library
+     symbols.
+
+'show solib-search-path'
+     Display the current shared library search path.
+
+'set target-file-system-kind KIND'
+     Set assumed file system kind for target reported file names.
+
+     Shared library file names as reported by the target system may not
+     make sense as is on the system GDB is running on.  For example,
+     when remote debugging a target that has MS-DOS based file system
+     semantics, from a Unix host, the target may be reporting to GDB a
+     list of loaded shared libraries with file names such as
+     'c:\Windows\kernel32.dll'.  On Unix hosts, there's no concept of
+     drive letters, so the 'c:\' prefix is not normally understood as
+     indicating an absolute file name, and neither is the backslash
+     normally considered a directory separator character.  In that case,
+     the native file system would interpret this whole absolute file
+     name as a relative file name with no directory components.  This
+     would make it impossible to point GDB at a copy of the remote
+     target's shared libraries on the host using 'set sysroot', and
+     impractical with 'set solib-search-path'.  Setting
+     'target-file-system-kind' to 'dos-based' tells GDB to interpret
+     such file names similarly to how the target would, and to map them
+     to file names valid on GDB's native file system semantics.  The
+     value of KIND can be '"auto"', in addition to one of the supported
+     file system kinds.  In that case, GDB tries to determine the
+     appropriate file system variant based on the current target's
+     operating system (*note Configuring the Current ABI: ABI.).  The
+     supported file system settings are:
+
+     'unix'
+          Instruct GDB to assume the target file system is of Unix kind.
+          Only file names starting the forward slash ('/') character are
+          considered absolute, and the directory separator character is
+          also the forward slash.
+
+     'dos-based'
+          Instruct GDB to assume the target file system is DOS based.
+          File names starting with either a forward slash, or a drive
+          letter followed by a colon (e.g., 'c:'), are considered
+          absolute, and both the slash ('/') and the backslash ('\\')
+          characters are considered directory separators.
+
+     'auto'
+          Instruct GDB to use the file system kind associated with the
+          target operating system (*note Configuring the Current ABI:
+          ABI.).  This is the default.
+
+   When processing file names provided by the user, GDB frequently needs
+to compare them to the file names recorded in the program's debug info.
+Normally, GDB compares just the "base names" of the files as strings,
+which is reasonably fast even for very large programs.  (The base name
+of a file is the last portion of its name, after stripping all the
+leading directories.)  This shortcut in comparison is based upon the
+assumption that files cannot have more than one base name.  This is
+usually true, but references to files that use symlinks or similar
+filesystem facilities violate that assumption.  If your program records
+files using such facilities, or if you provide file names to GDB using
+symlinks etc., you can set 'basenames-may-differ' to 'true' to instruct
+GDB to completely canonicalize each pair of file names it needs to
+compare.  This will make file-name comparisons accurate, but at a price
+of a significant slowdown.
+
+'set basenames-may-differ'
+     Set whether a source file may have multiple base names.
+
+'show basenames-may-differ'
+     Show whether a source file may have multiple base names.
+
+   ---------- Footnotes ----------
+
+   (1) If you want to specify a local system root using a directory that
+happens to be named 'remote:', you need to use some equivalent variant
+of the name like './remote:'.
 
 
 File: gdb.info,  Node: Separate Debug Files,  Next: MiniDebugInfo,  Prev: Files,  Up: GDB Files
@@ -166,11 +958,10 @@ ensure leading zeros affect the CRC and the final result is inverted to
 ensure trailing zeros also affect the CRC.
 
    _Note:_ This is the same CRC polynomial as used in handling the
-"Remote Serial Protocol" 'qCRC' packet (*note GDB Remote Serial
-Protocol: Remote Protocol.).  However in the case of the Remote Serial
-Protocol, the CRC is computed _most_ significant bit first, and the
-result is not inverted, so trailing zeros have no effect on the CRC
-value.
+"Remote Serial Protocol" 'qCRC' packet (*note qCRC packet::).  However
+in the case of the Remote Serial Protocol, the CRC is computed _most_
+significant bit first, and the result is not inverted, so trailing zeros
+have no effect on the CRC value.
 
    To complete the description, we show below the code of the function
 which produces the CRC used in '.gnu_debuglink'.  Inverting the
@@ -615,6 +1406,12 @@ configuration):
      simulator details, see the appropriate section in *note Embedded
      Processors: Embedded Processors.
 
+'target native'
+     Setup for local/native process debugging.  Useful to make the 'run'
+     command spawn native processes (likewise 'attach', etc.) even when
+     'set auto-connect-native-target' is 'off' (*note set
+     auto-connect-native-target::).
+
    Different targets are available on different configurations of GDB;
 your configuration may have more or fewer targets.
 
@@ -1030,6 +1827,19 @@ tells 'gdbserver' to display remote protocol debug output.  These
 options are intended for 'gdbserver' development and for bug reports to
 the developers.
 
+   The '--debug-format=option1[,option2,...]' option tells 'gdbserver'
+to include additional information in each output.  Possible options are:
+
+'none'
+     Turn off all extra information in debugging output.
+'all'
+     Turn on all extra information in debugging output.
+'timestamps'
+     Include a timestamp in each line of debugging output.
+
+   Options are processed in order.  Thus, for example, if 'none' appears
+last then no additional information is added to debugging output.
+
    The '--wrapper' option specifies a wrapper to launch programs for
 debugging.  The option should be followed by the name of the wrapper,
 then any command-line arguments to pass to the wrapper, then '--'
@@ -1093,6 +1903,21 @@ commands.
 'monitor set remote-debug 1'
      Disable or enable specific debugging messages associated with the
      remote protocol (*note Remote Protocol::).
+
+'monitor set debug-format option1[,option2,...]'
+     Specify additional text to add to debugging messages.  Possible
+     options are:
+
+     'none'
+          Turn off all extra information in debugging output.
+     'all'
+          Turn on all extra information in debugging output.
+     'timestamps'
+          Include a timestamp in each line of debugging output.
+
+     Options are processed in order.  Thus, for example, if 'none'
+     appears last then no additional information is added to debugging
+     output.
 
 'monitor set libthread-db-search-path [PATH]'
      When this command is issued, PATH is a colon-separated list of
@@ -1633,8 +2458,8 @@ GDB reports a 'SIGTRAP' instead of a 'SIGINT').
      handling tables.  You need to do this because the stub does not
      have any way of knowing what the exception handling tables on your
      target system are like (for example, the processor's table might be
-     in ROM, containing entries which point to a table in RAM).
-     EXCEPTION_NUMBER is the exception number which should be changed;
+     in ROM, containing entries which point to a table in RAM).  The
+     EXCEPTION_NUMBER specifies the exception which should be changed;
      its meaning is architecture-dependent (for example, different
      numbers might represent divide by zero, misaligned access, etc).
      When this exception occurs, control should be transferred directly
@@ -1818,8 +2643,8 @@ file-system subroutines.
    If GDB is configured for an operating system with this facility, the
 command 'info proc' is available to report information about the process
 running your program, or about any process running on your system.  This
-includes, as of this writing, GNU/Linux, OSF/1 (Digital Unix), Solaris,
-and Irix, but not HP-UX, for example.
+includes, as of this writing, GNU/Linux and Solaris, but not HP-UX, for
+example.
 
    This command may also work on core files that were created on a
 system that has the '/proc' facility.
@@ -2083,10 +2908,6 @@ described in *note Non-debug DLL Symbols::.
 'info dll'
      This is a Cygwin-specific alias of 'info shared'.
 
-'dll-symbols'
-     This command loads symbols from a dll similarly to add-sym command
-     but without the need to specify a base address.
-
 'set cygwin-exceptions MODE'
      If MODE is 'on', GDB will break on exceptions that happen inside
      the Cygwin DLL. If MODE is 'off', GDB will delay recognition of
@@ -2162,13 +2983,7 @@ symbols, known internally to GDB as "minimal symbols".
    Note that before the debugged program has started execution, no DLLs
 will have been loaded.  The easiest way around this problem is simply to
 start the program -- either by setting a breakpoint or letting the
-program run once to completion.  It is also possible to force GDB to
-load a particular DLL before starting the executable -- see the shared
-library information in *note Files::, or the 'dll-symbols' command in
-*note Cygwin Native::.  Currently, explicitly loading symbols from a DLL
-with no debugging information will cause the symbol names to be
-duplicated in GDB's lookup table, which may adversely affect symbol
-lookup performance.
+program run once to completion.
 
 21.1.5.2 DLL Name Prefixes
 ..........................
@@ -2436,148 +3251,8 @@ This section describes configurations involving the debugging of
 embedded operating systems that are available for several different
 architectures.
 
-* Menu:
-
-* VxWorks::                     Using GDB with VxWorks
-
    GDB includes the ability to debug programs running on various
 real-time operating systems.
-
-
-File: gdb.info,  Node: VxWorks,  Up: Embedded OS
-
-21.2.1 Using GDB with VxWorks
------------------------------
-
-'target vxworks MACHINENAME'
-     A VxWorks system, attached via TCP/IP. The argument MACHINENAME is
-     the target system's machine name or IP address.
-
-   On VxWorks, 'load' links FILENAME dynamically on the current target
-system as well as adding its symbols in GDB.
-
-   GDB enables developers to spawn and debug tasks running on networked
-VxWorks targets from a Unix host.  Already-running tasks spawned from
-the VxWorks shell can also be debugged.  GDB uses code that runs on both
-the Unix host and on the VxWorks target.  The program 'gdb' is installed
-and executed on the Unix host.  (It may be installed with the name
-'vxgdb', to distinguish it from a GDB for debugging programs on the host
-itself.)
-
-'VxWorks-timeout ARGS'
-     All VxWorks-based targets now support the option 'vxworks-timeout'.
-     This option is set by the user, and ARGS represents the number of
-     seconds GDB waits for responses to rpc's.  You might use this if
-     your VxWorks target is a slow software simulator or is on the far
-     side of a thin network line.
-
-   The following information on connecting to VxWorks was current when
-this manual was produced; newer releases of VxWorks may use revised
-procedures.
-
-   To use GDB with VxWorks, you must rebuild your VxWorks kernel to
-include the remote debugging interface routines in the VxWorks library
-'rdb.a'.  To do this, define 'INCLUDE_RDB' in the VxWorks configuration
-file 'configAll.h' and rebuild your VxWorks kernel.  The resulting
-kernel contains 'rdb.a', and spawns the source debugging task 'tRdbTask'
-when VxWorks is booted.  For more information on configuring and
-remaking VxWorks, see the manufacturer's manual.
-
-   Once you have included 'rdb.a' in your VxWorks system image and set
-your Unix execution search path to find GDB, you are ready to run GDB.
-From your Unix host, run 'gdb' (or 'vxgdb', depending on your
-installation).
-
-   GDB comes up showing the prompt:
-
-     (vxgdb)
-
-* Menu:
-
-* VxWorks Connection::          Connecting to VxWorks
-* VxWorks Download::            VxWorks download
-* VxWorks Attach::              Running tasks
-
-
-File: gdb.info,  Node: VxWorks Connection,  Next: VxWorks Download,  Up: VxWorks
-
-21.2.1.1 Connecting to VxWorks
-..............................
-
-The GDB command 'target' lets you connect to a VxWorks target on the
-network.  To connect to a target whose host name is "'tt'", type:
-
-     (vxgdb) target vxworks tt
-
-   GDB displays messages like these:
-
-     Attaching remote machine across net...
-     Connected to tt.
-
-   GDB then attempts to read the symbol tables of any object modules
-loaded into the VxWorks target since it was last booted.  GDB locates
-these files by searching the directories listed in the command search
-path (*note Your Program's Environment: Environment.); if it fails to
-find an object file, it displays a message such as:
-
-     prog.o: No such file or directory.
-
-   When this happens, add the appropriate directory to the search path
-with the GDB command 'path', and execute the 'target' command again.
-
-
-File: gdb.info,  Node: VxWorks Download,  Next: VxWorks Attach,  Prev: VxWorks Connection,  Up: VxWorks
-
-21.2.1.2 VxWorks Download
-.........................
-
-If you have connected to the VxWorks target and you want to debug an
-object that has not yet been loaded, you can use the GDB 'load' command
-to download a file from Unix to VxWorks incrementally.  The object file
-given as an argument to the 'load' command is actually opened twice:
-first by the VxWorks target in order to download the code, then by GDB
-in order to read the symbol table.  This can lead to problems if the
-current working directories on the two systems differ.  If both systems
-have NFS mounted the same filesystems, you can avoid these problems by
-using absolute paths.  Otherwise, it is simplest to set the working
-directory on both systems to the directory in which the object file
-resides, and then to reference the file by its name, without any path.
-For instance, a program 'prog.o' may reside in 'VXPATH/vw/demo/rdb' in
-VxWorks and in 'HOSTPATH/vw/demo/rdb' on the host.  To load this
-program, type this on VxWorks:
-
-     -> cd "VXPATH/vw/demo/rdb"
-
-Then, in GDB, type:
-
-     (vxgdb) cd HOSTPATH/vw/demo/rdb
-     (vxgdb) load prog.o
-
-   GDB displays a response similar to this:
-
-     Reading symbol data from wherever/vw/demo/rdb/prog.o... done.
-
-   You can also use the 'load' command to reload an object module after
-editing and recompiling the corresponding source file.  Note that this
-makes GDB delete all currently-defined breakpoints, auto-displays, and
-convenience variables, and to clear the value history.  (This is
-necessary in order to preserve the integrity of debugger's data
-structures that reference the target system's symbol table.)
-
-
-File: gdb.info,  Node: VxWorks Attach,  Prev: VxWorks Download,  Up: VxWorks
-
-21.2.1.3 Running Tasks
-......................
-
-You can also attach to an existing task using the 'attach' command as
-follows:
-
-     (vxgdb) attach TASK
-
-where TASK is the VxWorks hexadecimal task ID. The task can be running
-or suspended when you attach to it.  Running tasks are suspended at the
-time of attachment.
 
 
 File: gdb.info,  Node: Embedded Processors,  Next: Architectures,  Prev: Embedded OS,  Up: Configurations
@@ -2730,9 +3405,9 @@ using the RDI interface:
      The GDB ARM simulator accepts the following optional arguments.
 
      '--swi-support=TYPE'
-          Tell the simulator which SWI interfaces to support.  TYPE may
-          be a comma separated list of the following values.  The
-          default value is 'all'.
+          Tell the simulator which SWI interfaces to support.  The
+          argument TYPE may be a comma separated list of the following
+          values.  The default value is 'all'.
 
           'none'
           'demon'
@@ -3028,14 +3703,14 @@ command.
    GDB provides the following PowerPC-specific commands:
 
 'break-range START-LOCATION, END-LOCATION'
-     Set a breakpoint for an address range.  START-LOCATION and
-     END-LOCATION can specify a function name, a line number, an offset
-     of lines from the current line or from the start location, or an
-     address of an instruction (see *note Specify Location::, for a list
-     of all the possible ways to specify a LOCATION.)  The breakpoint
-     will stop execution of the inferior whenever it executes an
-     instruction at any address within the specified range, (including
-     START-LOCATION and END-LOCATION.)
+     Set a breakpoint for an address range given by START-LOCATION and
+     END-LOCATION, which can specify a function name, a line number, an
+     offset of lines from the current line or from the start location,
+     or an address of an instruction (see *note Specify Location::, for
+     a list of all the possible ways to specify a LOCATION.)  The
+     breakpoint will stop execution of the inferior whenever it executes
+     an instruction at any address within the specified range,
+     (including START-LOCATION and END-LOCATION.)
 
 'set powerpc soft-float'
 'show powerpc soft-float'
@@ -3904,7 +4579,7 @@ both input and output with the commands described below.
 
 'set input-radix BASE'
      Set the default base for numeric input.  Supported choices for BASE
-     are decimal 8, 10, or 16.  BASE must itself be specified either
+     are decimal 8, 10, or 16.  The base must itself be specified either
      unambiguously or using the current input radix; for example, any of
 
           set input-radix 012
@@ -3920,7 +4595,7 @@ both input and output with the commands described below.
 
 'set output-radix BASE'
      Set the default base for numeric display.  Supported choices for
-     BASE are decimal 8, 10, or 16.  BASE must itself be specified
+     BASE are decimal 8, 10, or 16.  The base must itself be specified
      either unambiguously or using the current input radix.
 
 'show input-radix'
@@ -4105,10 +4780,18 @@ python-scripts::.
 python-scripts::.                    scripts.
 *Note info auto-load                 Show state of GDB Python scripts.
 python-scripts::.
+*Note set auto-load                  Control for GDB Guile scripts.
+guile-scripts::.
+*Note show auto-load                 Show setting of GDB Guile scripts.
+guile-scripts::.
+*Note info auto-load                 Show state of GDB Guile scripts.
+guile-scripts::.
 *Note set auto-load                  Control for GDB auto-loaded
 scripts-directory::.                 scripts location.
 *Note show auto-load                 Show GDB auto-loaded scripts
 scripts-directory::.                 location.
+*Note                                Add directory for auto-loaded
+add-auto-load-scripts-directory::.   scripts location list.
 *Note set auto-load                  Control for init file in the
 local-gdbinit::.                     current directory.
 *Note show auto-load                 Show setting of init file in the
@@ -4239,9 +4922,10 @@ commands:
      execution of scripts.
 
 'add-auto-load-safe-path'
-     Add an entry (or list of entries) the list of directories trusted
-     for automatic loading and execution of scripts.  Multiple entries
-     may be delimited by the host platform path separator in use.
+     Add an entry (or list of entries) to the list of directories
+     trusted for automatic loading and execution of scripts.  Multiple
+     entries may be delimited by the host platform path separator in
+     use.
 
    This variable defaults to what '--with-auto-load-dir' has been
 configured to (*note with-auto-load-dir::).  '$debugdir' and '$datadir'
@@ -4561,6 +5245,13 @@ commands.
 'show debug solib-frv'
      Display the current state of FR-V shared-library code debugging
      messages.
+'set debug symbol-lookup'
+     Turns on or off display of debugging messages related to symbol
+     lookup.  The default is 0 (off).  A value of 1 provides basic
+     information.  A value greater than 1 provides more verbose
+     information.
+'show debug symbol-lookup'
+     Show the current state of symbol lookup debugging messages.
 'set debug symfile'
      Turns on or off display of debugging messages related to symbol
      file functions.  The default is off.  *Note Files::.
@@ -4577,9 +5268,7 @@ commands.
      Turns on or off display of GDB target debugging info.  This info
      includes what is going on at the target level of GDB, as it
      happens.  The default is 0.  Set it to 1 to track events, and to 2
-     to also track the value of large memory transfers.  Changes to this
-     flag do not take effect until the next time you connect to a target
-     or use the 'run' command.
+     to also track the value of large memory transfers.
 'show debug target'
      Displays the current state of displaying GDB target debugging info.
 'set debug timestamp'
@@ -4589,10 +5278,10 @@ commands.
 'show debug timestamp'
      Displays the current state of displaying timestamps with GDB
      debugging info.
-'set debugvarobj'
+'set debug varobj'
      Turns on or off display of GDB variable object debugging info.  The
      default is off.
-'show debugvarobj'
+'show debug varobj'
      Displays the current state of displaying GDB variable object
      debugging info.
 'set debug xml'
@@ -4639,7 +5328,9 @@ program being debugged.
 
 * Sequences::                Canned Sequences of GDB Commands
 * Python::                   Extending GDB using Python
+* Guile::                    Extending GDB using Guile
 * Auto-loading extensions::  Automatically loading extensions
+* Multiple Extension Languages:: Working with multiple extension languages
 * Aliases::                  Creating new spellings of existing commands
 
    To facilitate the use of extension languages, GDB is capable of
@@ -4726,10 +5417,10 @@ been passed.  This expands to a number in the range 0...10.
 'define COMMANDNAME'
      Define a command named COMMANDNAME.  If there is already a command
      by that name, you are asked to confirm that you want to redefine
-     it.  COMMANDNAME may be a bare command name consisting of letters,
-     numbers, dashes, and underscores.  It may also start with any
-     predefined prefix command.  For example, 'define target my-target'
-     creates a user-defined 'target my-target' command.
+     it.  The argument COMMANDNAME may be a bare command name consisting
+     of letters, numbers, dashes, and underscores.  It may also start
+     with any predefined prefix command.  For example, 'define target
+     my-target' creates a user-defined 'target my-target' command.
 
      The definition of the command is made up of other GDB command
      lines, which are given following the 'define' command.  The end of
@@ -4839,6 +5530,7 @@ you could define:
      (gdb) echo Hello World
      <<<---Hello World--->>>
      (gdb)
+
 
    You can define a hook for any single-word command in GDB, but not for
 command aliases; you should define a hook for the basic command name,
@@ -5110,7 +5802,7 @@ scripts can be printed.
 matching names are printed.
 
 
-File: gdb.info,  Node: Python,  Next: Auto-loading extensions,  Prev: Sequences,  Up: Extending GDB
+File: gdb.info,  Node: Python,  Next: Guile,  Prev: Sequences,  Up: Extending GDB
 
 23.2 Extending GDB using Python
 ===============================
@@ -5232,6 +5924,9 @@ optional arguments while skipping others.  Example:
 * Frame Filter API::            Filtering Frames.
 * Frame Decorator API::         Decorating Frames.
 * Writing a Frame Filter::      Writing a Frame Filter.
+* Xmethods In Python::          Adding and replacing methods of C++ classes.
+* Xmethod API::                 Xmethod types.
+* Writing an Xmethod::          Writing an xmethod.
 * Inferiors In Python::         Python representation of inferiors (processes)
 * Events In Python::            Listening for events from GDB.
 * Threads In Python::           Accessing inferior threads from Python.
@@ -5292,27 +5987,29 @@ classes added by GDB are placed in this module.  GDB automatically
      exception happens while COMMAND runs, it is translated as described
      in *note Exception Handling: Exception Handling.
 
-     FROM_TTY specifies whether GDB ought to consider this command as
-     having originated from the user invoking it interactively.  It must
-     be a boolean value.  If omitted, it defaults to 'False'.
+     The FROM_TTY flag specifies whether GDB ought to consider this
+     command as having originated from the user invoking it
+     interactively.  It must be a boolean value.  If omitted, it
+     defaults to 'False'.
 
      By default, any output produced by COMMAND is sent to GDB's
-     standard output.  If the TO_STRING parameter is 'True', then output
-     will be collected by 'gdb.execute' and returned as a string.  The
-     default is 'False', in which case the return value is 'None'.  If
-     TO_STRING is 'True', the GDB virtual terminal will be temporarily
-     set to unlimited width and height, and its pagination will be
-     disabled; *note Screen Size::.
+     standard output (and to the log output if logging is turned on).
+     If the TO_STRING parameter is 'True', then output will be collected
+     by 'gdb.execute' and returned as a string.  The default is 'False',
+     in which case the return value is 'None'.  If TO_STRING is 'True',
+     the GDB virtual terminal will be temporarily set to unlimited width
+     and height, and its pagination will be disabled; *note Screen
+     Size::.
 
  -- Function: gdb.breakpoints ()
      Return a sequence holding all of GDB's breakpoints.  *Note
      Breakpoints In Python::, for more information.
 
  -- Function: gdb.parameter (parameter)
-     Return the value of a GDB parameter.  PARAMETER is a string naming
-     the parameter to look up; PARAMETER may contain spaces if the
-     parameter has a multi-part name.  For example, 'print object' is a
-     valid parameter name.
+     Return the value of a GDB PARAMETER given by its name, a string;
+     the parameter name string may contain spaces if the parameter has a
+     multi-part name.  For example, 'print object' is a valid parameter
+     name.
 
      If the named parameter does not exist, this function throws a
      'gdb.error' (*note Exception Handling::).  Otherwise, the
@@ -5321,20 +6018,21 @@ classes added by GDB are placed in this module.  GDB automatically
 
  -- Function: gdb.history (number)
      Return a value from GDB's value history (*note Value History::).
-     NUMBER indicates which history element to return.  If NUMBER is
-     negative, then GDB will take its absolute value and count backward
-     from the last element (i.e., the most recent element) to find the
-     value to return.  If NUMBER is zero, then GDB will return the most
-     recent element.  If the element specified by NUMBER doesn't exist
-     in the value history, a 'gdb.error' exception will be raised.
+     The NUMBER argument indicates which history element to return.  If
+     NUMBER is negative, then GDB will take its absolute value and count
+     backward from the last element (i.e., the most recent element) to
+     find the value to return.  If NUMBER is zero, then GDB will return
+     the most recent element.  If the element specified by NUMBER
+     doesn't exist in the value history, a 'gdb.error' exception will be
+     raised.
 
      If no exception is raised, the return value is always an instance
      of 'gdb.Value' (*note Values From Inferior::).
 
  -- Function: gdb.parse_and_eval (expression)
-     Parse EXPRESSION as an expression in the current language, evaluate
-     it, and return the result as a 'gdb.Value'.  EXPRESSION must be a
-     string.
+     Parse EXPRESSION, which must be a string, as an expression in the
+     current language, evaluate it, and return the result as a
+     'gdb.Value'.
 
      This function can be useful when implementing a new command (*note
      Commands In Python::), as it provides a way to parse the command's
@@ -5359,7 +6057,7 @@ classes added by GDB are placed in this module.  GDB automatically
 
      GDB is not thread-safe.  If your Python program uses multiple
      threads, you must be careful to only call GDB-specific functions in
-     the main GDB thread.  'post_event' ensures this.  For example:
+     the GDB thread.  'post_event' ensures this.  For example:
 
           (gdb) python
           >import threading
@@ -5541,7 +6239,21 @@ example for an integer or floating-point value 'some_val':
      bar = some_val + 2
 
 As result of this, 'bar' will also be a 'gdb.Value' object whose values
-are of the same type as those of 'some_val'.
+are of the same type as those of 'some_val'.  Valid Python operations
+can also be performed on 'gdb.Value' objects representing a 'struct' or
+'class' object.  For such cases, the overloaded operator (if present),
+is used to perform the operation.  For example, if 'val1' and 'val2' are
+'gdb.Value' objects representing instances of a 'class' which overloads
+the '+' operator, then one can use the '+' operator in their Python
+script as follows:
+
+     val3 = val1 + val2
+
+The result of the operation 'val3' is also a 'gdb.Value' object
+corresponding to the value returned by the overloaded '+' operator.  In
+general, overloaded operators are invoked for the following operations:
+'+' (binary addition), '-' (binary subtraction), '*' (multiplication),
+'/', '%', '<<', '>>', '|', '&', '^'.
 
    Inferior values that are structures or instances of some class can be
 accessed using the Python "dictionary syntax".  For example, if
@@ -5638,8 +6350,10 @@ function, call it like so:
           current architecture.
 
      Python string
-          A Python string is converted to a target string, using the
-          current target encoding.
+          A Python string is converted to a target string in the current
+          target language using the current target encoding.  If a
+          character cannot be represented in the current target
+          encoding, then an exception is thrown.
 
      'gdb.Value'
           If 'val' is a 'gdb.Value', then a copy of the value is made.
@@ -5746,16 +6460,16 @@ function, call it like so:
      the contents to a Python string.  Otherwise, this method will throw
      an exception.
 
-     Strings are recognized in a language-specific way; whether a given
-     'gdb.Value' represents a string is determined by the current
-     language.
+     Values are interpreted as strings according to the rules of the
+     current language.  If the optional length argument is given, the
+     string will be converted to that length, and will include any
+     embedded zeroes that the string may contain.  Otherwise, for
+     languages where the string is zero-terminated, the entire string
+     will be converted.
 
-     For C-like languages, a value is a string if it is a pointer to or
-     an array of characters or ints.  The string is assumed to be
-     terminated by a zero of the appropriate width.  However if the
-     optional length argument is given, the string will be converted to
-     that given length, ignoring any embedded zeros that the string may
-     contain.
+     For example, in C-like languages, a value is a string if it is a
+     pointer to or an array of characters or ints of type 'wchar_t',
+     'char16_t', or 'char32_t'.
 
      If the optional ENCODING argument is given, it must be a string
      naming the encoding of the string in the 'gdb.Value', such as
@@ -5818,8 +6532,7 @@ GDB represents types from the inferior using the class 'gdb.Type'.
 module:
 
  -- Function: gdb.lookup_type (name [, block])
-     This function looks up a type by name.  NAME is the name of the
-     type to look up.  It must be a string.
+     This function looks up a type by its NAME, which must be a string.
 
      If BLOCK is given, then NAME is looked up in that scope.
      Otherwise, it is searched for globally.
@@ -5977,11 +6690,12 @@ of the 'Type.fields' method for a description of the 'gdb.Field' class.
 
  -- Function: Type.template_argument (n [, block])
      If this 'gdb.Type' is an instantiation of a template, this will
-     return a new 'gdb.Type' which represents the type of the Nth
-     template argument.
+     return a new 'gdb.Value' or 'gdb.Type' which represents the value
+     of the Nth template argument (indexed starting at 0).
 
-     If this 'gdb.Type' is not a template type, this will throw an
-     exception.  Ordinarily, only C++ code will have template types.
+     If this 'gdb.Type' is not a template type, or if the type has fewer
+     than N template arguments, this will throw an exception.
+     Ordinarily, only C++ code will have template types.
 
      If BLOCK is given, then NAME is looked up in that scope.
      Otherwise, it is searched for globally.
@@ -6405,8 +7119,9 @@ function is defined as:
 
  -- Method on type_recognizer: recognize (self, type)
      If TYPE is not recognized, return 'None'.  Otherwise, return a
-     string which is to be printed as the name of TYPE.  TYPE will be an
-     instance of 'gdb.Type' (*note Types In Python::).
+     string which is to be printed as the name of TYPE.  The TYPE
+     argument will be an instance of 'gdb.Type' (*note Types In
+     Python::).
 
    GDB uses this two-pass approach so that type printers can efficiently
 cache information without holding on to it too long.  For example, it
@@ -6557,444 +7272,4 @@ implement, defined here:
      frame filter can be assigned.  Frame filters that have the same
      priority are executed in unsorted order in that priority slot.
      This attribute is mandatory.
-
-
-File: gdb.info,  Node: Frame Decorator API,  Next: Writing a Frame Filter,  Prev: Frame Filter API,  Up: Python API
-
-23.2.2.10 Decorating Frames.
-............................
-
-Frame decorators are sister objects to frame filters (*note Frame Filter
-API::).  Frame decorators are applied by a frame filter and can only be
-used in conjunction with frame filters.
-
-   The purpose of a frame decorator is to customize the printed content
-of each 'gdb.Frame' in commands where frame filters are executed.  This
-concept is called decorating a frame.  Frame decorators decorate a
-'gdb.Frame' with Python code contained within each API call.  This
-separates the actual data contained in a 'gdb.Frame' from the decorated
-data produced by a frame decorator.  This abstraction is necessary to
-maintain integrity of the data contained in each 'gdb.Frame'.
-
-   Frame decorators have a mandatory interface, defined below.
-
-   GDB already contains a frame decorator called 'FrameDecorator'.  This
-contains substantial amounts of boilerplate code to decorate the content
-of a 'gdb.Frame'.  It is recommended that other frame decorators inherit
-and extend this object, and only to override the methods needed.
-
- -- Function: FrameDecorator.elided (self)
-
-     The 'elided' method groups frames together in a hierarchical
-     system.  An example would be an interpreter, where multiple
-     low-level frames make up a single call in the interpreted language.
-     In this example, the frame filter would elide the low-level frames
-     and present a single high-level frame, representing the call in the
-     interpreted language, to the user.
-
-     The 'elided' function must return an iterable and this iterable
-     must contain the frames that are being elided wrapped in a suitable
-     frame decorator.  If no frames are being elided this function may
-     return an empty iterable, or 'None'.  Elided frames are indented
-     from normal frames in a 'CLI' backtrace, or in the case of
-     'GDB/MI', are placed in the 'children' field of the eliding frame.
-
-     It is the frame filter's task to also filter out the elided frames
-     from the source iterator.  This will avoid printing the frame
-     twice.
-
- -- Function: FrameDecorator.function (self)
-
-     This method returns the name of the function in the frame that is
-     to be printed.
-
-     This method must return a Python string describing the function, or
-     'None'.
-
-     If this function returns 'None', GDB will not print any data for
-     this field.
-
- -- Function: FrameDecorator.address (self)
-
-     This method returns the address of the frame that is to be printed.
-
-     This method must return a Python numeric integer type of sufficient
-     size to describe the address of the frame, or 'None'.
-
-     If this function returns a 'None', GDB will not print any data for
-     this field.
-
- -- Function: FrameDecorator.filename (self)
-
-     This method returns the filename and path associated with this
-     frame.
-
-     This method must return a Python string containing the filename and
-     the path to the object file backing the frame, or 'None'.
-
-     If this function returns a 'None', GDB will not print any data for
-     this field.
-
- -- Function: FrameDecorator.line (self):
-
-     This method returns the line number associated with the current
-     position within the function addressed by this frame.
-
-     This method must return a Python integer type, or 'None'.
-
-     If this function returns a 'None', GDB will not print any data for
-     this field.
-
- -- Function: FrameDecorator.frame_args (self)
-
-     This method must return an iterable, or 'None'.  Returning an empty
-     iterable, or 'None' means frame arguments will not be printed for
-     this frame.  This iterable must contain objects that implement two
-     methods, described here.
-
-     This object must implement a 'argument' method which takes a single
-     'self' parameter and must return a 'gdb.Symbol' (*note Symbols In
-     Python::), or a Python string.  The object must also implement a
-     'value' method which takes a single 'self' parameter and must
-     return a 'gdb.Value' (*note Values From Inferior::), a Python
-     value, or 'None'.  If the 'value' method returns 'None', and the
-     'argument' method returns a 'gdb.Symbol', GDB will look-up and
-     print the value of the 'gdb.Symbol' automatically.
-
-     A brief example:
-
-          class SymValueWrapper():
-
-              def __init__(self, symbol, value):
-                  self.sym = symbol
-                  self.val = value
-
-              def value(self):
-                  return self.val
-
-              def symbol(self):
-                  return self.sym
-
-          class SomeFrameDecorator()
-          ...
-          ...
-              def frame_args(self):
-                  args = []
-                  try:
-                      block = self.inferior_frame.block()
-                  except:
-                      return None
-
-                  # Iterate over all symbols in a block.  Only add
-                  # symbols that are arguments.
-                  for sym in block:
-                      if not sym.is_argument:
-                          continue
-                      args.append(SymValueWrapper(sym,None))
-
-                  # Add example synthetic argument.
-                  args.append(SymValueWrapper(``foo'', 42))
-
-                  return args
-
- -- Function: FrameDecorator.frame_locals (self)
-
-     This method must return an iterable or 'None'.  Returning an empty
-     iterable, or 'None' means frame local arguments will not be printed
-     for this frame.
-
-     The object interface, the description of the various strategies for
-     reading frame locals, and the example are largely similar to those
-     described in the 'frame_args' function, (*note The frame filter
-     frame_args function: frame_args.).  Below is a modified example:
-
-          class SomeFrameDecorator()
-          ...
-          ...
-              def frame_locals(self):
-                  vars = []
-                  try:
-                      block = self.inferior_frame.block()
-                  except:
-                      return None
-
-                  # Iterate over all symbols in a block.  Add all
-                  # symbols, except arguments.
-                  for sym in block:
-                      if sym.is_argument:
-                          continue
-                      vars.append(SymValueWrapper(sym,None))
-
-                  # Add an example of a synthetic local variable.
-                  vars.append(SymValueWrapper(``bar'', 99))
-
-                  return vars
-
- -- Function: FrameDecorator.inferior_frame (self):
-
-     This method must return the underlying 'gdb.Frame' that this frame
-     decorator is decorating.  GDB requires the underlying frame for
-     internal frame information to determine how to print certain values
-     when printing a frame.
-
-
-File: gdb.info,  Node: Writing a Frame Filter,  Next: Inferiors In Python,  Prev: Frame Decorator API,  Up: Python API
-
-23.2.2.11 Writing a Frame Filter
-................................
-
-There are three basic elements that a frame filter must implement: it
-must correctly implement the documented interface (*note Frame Filter
-API::), it must register itself with GDB, and finally, it must decide if
-it is to work on the data provided by GDB.  In all cases, whether it
-works on the iterator or not, each frame filter must return an iterator.
-A bare-bones frame filter follows the pattern in the following example.
-
-     import gdb
-
-     class FrameFilter():
-
-         def __init__(self):
-             # Frame filter attribute creation.
-             #
-             # 'name' is the name of the filter that GDB will display.
-             #
-             # 'priority' is the priority of the filter relative to other
-             # filters.
-             #
-             # 'enabled' is a boolean that indicates whether this filter is
-             # enabled and should be executed.
-
-             self.name = "Foo"
-             self.priority = 100
-             self.enabled = True
-
-             # Register this frame filter with the global frame_filters
-             # dictionary.
-             gdb.frame_filters[self.name] = self
-
-         def filter(self, frame_iter):
-             # Just return the iterator.
-             return frame_iter
-
-   The frame filter in the example above implements the three
-requirements for all frame filters.  It implements the API, self
-registers, and makes a decision on the iterator (in this case, it just
-returns the iterator untouched).
-
-   The first step is attribute creation and assignment, and as shown in
-the comments the filter assigns the following attributes: 'name',
-'priority' and whether the filter should be enabled with the 'enabled'
-attribute.
-
-   The second step is registering the frame filter with the dictionary
-or dictionaries that the frame filter has interest in.  As shown in the
-comments, this filter just registers itself with the global dictionary
-'gdb.frame_filters'.  As noted earlier, 'gdb.frame_filters' is a
-dictionary that is initialized in the 'gdb' module when GDB starts.
-What dictionary a filter registers with is an important consideration.
-Generally, if a filter is specific to a set of code, it should be
-registered either in the 'objfile' or 'progspace' dictionaries as they
-are specific to the program currently loaded in GDB.  The global
-dictionary is always present in GDB and is never unloaded.  Any filters
-registered with the global dictionary will exist until GDB exits.  To
-avoid filters that may conflict, it is generally better to register
-frame filters against the dictionaries that more closely align with the
-usage of the filter currently in question.  *Note Python Auto-loading::,
-for further information on auto-loading Python scripts.
-
-   GDB takes a hands-off approach to frame filter registration,
-therefore it is the frame filter's responsibility to ensure registration
-has occurred, and that any exceptions are handled appropriately.  In
-particular, you may wish to handle exceptions relating to Python
-dictionary key uniqueness.  It is mandatory that the dictionary key is
-the same as frame filter's 'name' attribute.  When a user manages frame
-filters (*note Frame Filter Management::), the names GDB will display
-are those contained in the 'name' attribute.
-
-   The final step of this example is the implementation of the 'filter'
-method.  As shown in the example comments, we define the 'filter' method
-and note that the method must take an iterator, and also must return an
-iterator.  In this bare-bones example, the frame filter is not very
-useful as it just returns the iterator untouched.  However this is a
-valid operation for frame filters that have the 'enabled' attribute set,
-but decide not to operate on any frames.
-
-   In the next example, the frame filter operates on all frames and
-utilizes a frame decorator to perform some work on the frames.  *Note
-Frame Decorator API::, for further information on the frame decorator
-interface.
-
-   This example works on inlined frames.  It highlights frames which are
-inlined by tagging them with an "[inlined]" tag.  By applying a frame
-decorator to all frames with the Python 'itertools imap' method, the
-example defers actions to the frame decorator.  Frame decorators are
-only processed when GDB prints the backtrace.
-
-   This introduces a new decision making topic: whether to perform
-decision making operations at the filtering step, or at the printing
-step.  In this example's approach, it does not perform any filtering
-decisions at the filtering step beyond mapping a frame decorator to each
-frame.  This allows the actual decision making to be performed when each
-frame is printed.  This is an important consideration, and well worth
-reflecting upon when designing a frame filter.  An issue that frame
-filters should avoid is unwinding the stack if possible.  Some stacks
-can run very deep, into the tens of thousands in some cases.  To search
-every frame to determine if it is inlined ahead of time may be too
-expensive at the filtering step.  The frame filter cannot know how many
-frames it has to iterate over, and it would have to iterate through them
-all.  This ends up duplicating effort as GDB performs this iteration
-when it prints the frames.
-
-   In this example decision making can be deferred to the printing step.
-As each frame is printed, the frame decorator can examine each frame in
-turn when GDB iterates.  From a performance viewpoint, this is the most
-appropriate decision to make as it avoids duplicating the effort that
-the printing step would undertake anyway.  Also, if there are many frame
-filters unwinding the stack during filtering, it can substantially delay
-the printing of the backtrace which will result in large memory usage,
-and a poor user experience.
-
-     class InlineFilter():
-
-         def __init__(self):
-             self.name = "InlinedFrameFilter"
-             self.priority = 100
-             self.enabled = True
-             gdb.frame_filters[self.name] = self
-
-         def filter(self, frame_iter):
-             frame_iter = itertools.imap(InlinedFrameDecorator,
-                                         frame_iter)
-             return frame_iter
-
-   This frame filter is somewhat similar to the earlier example, except
-that the 'filter' method applies a frame decorator object called
-'InlinedFrameDecorator' to each element in the iterator.  The 'imap'
-Python method is light-weight.  It does not proactively iterate over the
-iterator, but rather creates a new iterator which wraps the existing
-one.
-
-   Below is the frame decorator for this example.
-
-     class InlinedFrameDecorator(FrameDecorator):
-
-         def __init__(self, fobj):
-             super(InlinedFrameDecorator, self).__init__(fobj)
-
-         def function(self):
-             frame = fobj.inferior_frame()
-             name = str(frame.name())
-
-             if frame.type() == gdb.INLINE_FRAME:
-                 name = name + " [inlined]"
-
-             return name
-
-   This frame decorator only defines and overrides the 'function'
-method.  It lets the supplied 'FrameDecorator', which is shipped with
-GDB, perform the other work associated with printing this frame.
-
-   The combination of these two objects create this output from a
-backtrace:
-
-     #0  0x004004e0 in bar () at inline.c:11
-     #1  0x00400566 in max [inlined] (b=6, a=12) at inline.c:21
-     #2  0x00400566 in main () at inline.c:31
-
-   So in the case of this example, a frame decorator is applied to all
-frames, regardless of whether they may be inlined or not.  As GDB
-iterates over the iterator produced by the frame filters, GDB executes
-each frame decorator which then makes a decision on what to print in the
-'function' callback.  Using a strategy like this is a way to defer
-decisions on the frame content to printing time.
-
-Eliding Frames
---------------
-
-It might be that the above example is not desirable for representing
-inlined frames, and a hierarchical approach may be preferred.  If we
-want to hierarchically represent frames, the 'elided' frame decorator
-interface might be preferable.
-
-   This example approaches the issue with the 'elided' method.  This
-example is quite long, but very simplistic.  It is out-of-scope for this
-section to write a complete example that comprehensively covers all
-approaches of finding and printing inlined frames.  However, this
-example illustrates the approach an author might use.
-
-   This example comprises of three sections.
-
-     class InlineFrameFilter():
-
-         def __init__(self):
-             self.name = "InlinedFrameFilter"
-             self.priority = 100
-             self.enabled = True
-             gdb.frame_filters[self.name] = self
-
-         def filter(self, frame_iter):
-             return ElidingInlineIterator(frame_iter)
-
-   This frame filter is very similar to the other examples.  The only
-difference is this frame filter is wrapping the iterator provided to it
-('frame_iter') with a custom iterator called 'ElidingInlineIterator'.
-This again defers actions to when GDB prints the backtrace, as the
-iterator is not traversed until printing.
-
-   The iterator for this example is as follows.  It is in this section
-of the example where decisions are made on the content of the backtrace.
-
-     class ElidingInlineIterator:
-         def __init__(self, ii):
-             self.input_iterator = ii
-
-         def __iter__(self):
-             return self
-
-         def next(self):
-             frame = next(self.input_iterator)
-
-             if frame.inferior_frame().type() != gdb.INLINE_FRAME:
-                 return frame
-
-             try:
-                 eliding_frame = next(self.input_iterator)
-             except StopIteration:
-                 return frame
-             return ElidingFrameDecorator(eliding_frame, [frame])
-
-   This iterator implements the Python iterator protocol.  When the
-'next' function is called (when GDB prints each frame), the iterator
-checks if this frame decorator, 'frame', is wrapping an inlined frame.
-If it is not, it returns the existing frame decorator untouched.  If it
-is wrapping an inlined frame, it assumes that the inlined frame was
-contained within the next oldest frame, 'eliding_frame', which it
-fetches.  It then creates and returns a frame decorator,
-'ElidingFrameDecorator', which contains both the elided frame, and the
-eliding frame.
-
-     class ElidingInlineDecorator(FrameDecorator):
-
-         def __init__(self, frame, elided_frames):
-             super(ElidingInlineDecorator, self).__init__(frame)
-             self.frame = frame
-             self.elided_frames = elided_frames
-
-         def elided(self):
-             return iter(self.elided_frames)
-
-   This frame decorator overrides one function and returns the inlined
-frame in the 'elided' method.  As before it lets 'FrameDecorator' do the
-rest of the work involved in printing this frame.  This produces the
-following output.
-
-     #0  0x004004e0 in bar () at inline.c:11
-     #2  0x00400529 in main () at inline.c:25
-         #1  0x00400529 in max (b=6, a=12) at inline.c:15
-
-   In that output, 'max' which has been inlined into 'main' is printed
-hierarchically.  Another approach would be to combine the 'function'
-method, and the 'elided' method to both print a marker in the inlined
-frame, and also show the hierarchical relationship.
 

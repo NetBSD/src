@@ -1,6 +1,6 @@
 /* Common target-dependent code for ppc64 GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #include "defs.h"
 #include "frame.h"
 #include "gdbcore.h"
+#include "infrun.h"
 #include "ppc-tdep.h"
 #include "ppc64-tdep.h"
 #include "elf-bfd.h"
@@ -303,6 +304,29 @@ static struct ppc_insn_pattern ppc64_standard_linkage7[] =
     { 0, 0, 0 }
   };
 
+/* ELFv2 PLT call stub to access PLT entries more than +/- 32k from r2,
+   supporting fusion.  */
+
+static struct ppc_insn_pattern ppc64_standard_linkage8[] =
+  {
+    /* std r2, 24(r1) <optional> */
+    { -1, insn_ds (62, 2, 1, 24, 0), 1 },
+
+    /* addis r12, r2, <any> */
+    { insn_d (-1, -1, -1, 0), insn_d (15, 12, 2, 0), 0 },
+
+    /* ld r12, <any>(r12) */
+    { insn_ds (-1, -1, -1, 0, -1), insn_ds (58, 12, 12, 0, 0), 0 },
+
+    /* mtctr r12 */
+    { insn_xfx (-1, -1, -1, -1), insn_xfx (31, 12, 9, 467), 0 },
+
+    /* bctr */
+    { -1, 0x4e800420, 0 },
+
+    { 0, 0, 0 }
+  };
+
 /* When the dynamic linker is doing lazy symbol resolution, the first
    call to a function in another object will go like this:
 
@@ -425,7 +449,10 @@ ppc64_standard_linkage4_target (struct frame_info *frame,
 
 
 /* Given that we've begun executing a call trampoline at PC, return
-   the entry point of the function the trampoline will go to.  */
+   the entry point of the function the trampoline will go to.
+
+   When the execution direction is EXEC_REVERSE, scan backward to
+   check whether we are in the middle of a PLT stub.  */
 
 CORE_ADDR
 ppc64_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
@@ -437,35 +464,70 @@ ppc64_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
 				    ARRAY_SIZE (ppc64_standard_linkage4))),
 			  MAX (MAX (ARRAY_SIZE (ppc64_standard_linkage5),
 				    ARRAY_SIZE (ppc64_standard_linkage6)),
-			       ARRAY_SIZE (ppc64_standard_linkage7))) - 1];
+			       MAX (ARRAY_SIZE (ppc64_standard_linkage7),
+				    ARRAY_SIZE (ppc64_standard_linkage8))))
+		     - 1];
   CORE_ADDR target;
+  int scan_limit, i;
 
-  if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage7, insns))
-    pc = ppc64_standard_linkage3_target (frame, pc, insns);
-  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage6, insns))
-    pc = ppc64_standard_linkage4_target (frame, pc, insns);
-  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage5, insns)
-	   && (insns[8] != 0 || insns[9] != 0))
-    pc = ppc64_standard_linkage3_target (frame, pc, insns);
-  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage4, insns)
-	   && (insns[9] != 0 || insns[10] != 0))
-    pc = ppc64_standard_linkage4_target (frame, pc, insns);
-  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage3, insns)
-	   && (insns[8] != 0 || insns[9] != 0))
-    pc = ppc64_standard_linkage3_target (frame, pc, insns);
-  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage2, insns)
-	   && (insns[10] != 0 || insns[11] != 0))
-    pc = ppc64_standard_linkage2_target (frame, pc, insns);
-  else if (ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage1, insns))
-    pc = ppc64_standard_linkage1_target (frame, pc, insns);
-  else
-    return 0;
+  scan_limit = 1;
+  /* When reverse-debugging, scan backward to check whether we are
+     in the middle of trampoline code.  */
+  if (execution_direction == EXEC_REVERSE)
+    scan_limit = ARRAY_SIZE (insns) - 1;
 
-  /* The PLT descriptor will either point to the already resolved target
-     address, or else to a glink stub.  As the latter carry synthetic @plt
-     symbols, find_solib_trampoline_target should be able to resolve them.  */
-  target = find_solib_trampoline_target (frame, pc);
-  return target ? target : pc;
+  for (i = 0; i < scan_limit; i++)
+    {
+      if (i < ARRAY_SIZE (ppc64_standard_linkage8) - 1
+	  && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage8, insns))
+	pc = ppc64_standard_linkage4_target (frame, pc, insns);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage7) - 1
+	       && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage7,
+					   insns))
+	pc = ppc64_standard_linkage3_target (frame, pc, insns);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage6) - 1
+	       && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage6,
+					   insns))
+	pc = ppc64_standard_linkage4_target (frame, pc, insns);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage5) - 1
+	       && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage5,
+					   insns)
+	       && (insns[8] != 0 || insns[9] != 0))
+	pc = ppc64_standard_linkage3_target (frame, pc, insns);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage4) - 1
+	       && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage4,
+					   insns)
+	       && (insns[9] != 0 || insns[10] != 0))
+	pc = ppc64_standard_linkage4_target (frame, pc, insns);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage3) - 1
+	       && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage3,
+					   insns)
+	       && (insns[8] != 0 || insns[9] != 0))
+	pc = ppc64_standard_linkage3_target (frame, pc, insns);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage2) - 1
+	       && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage2,
+					   insns)
+	       && (insns[10] != 0 || insns[11] != 0))
+	pc = ppc64_standard_linkage2_target (frame, pc, insns);
+      else if (i < ARRAY_SIZE (ppc64_standard_linkage1) - 1
+	       && ppc_insns_match_pattern (frame, pc, ppc64_standard_linkage1,
+					   insns))
+	pc = ppc64_standard_linkage1_target (frame, pc, insns);
+      else
+	{
+	  /* Scan backward one more instructions if doesn't match.  */
+	  pc -= 4;
+	  continue;
+	}
+
+      /* The PLT descriptor will either point to the already resolved target
+         address, or else to a glink stub.  As the latter carry synthetic @plt
+         symbols, find_solib_trampoline_target should be able to resolve them.  */
+      target = find_solib_trampoline_target (frame, pc);
+      return target ? target : pc;
+  }
+
+  return 0;
 }
 
 /* Support for convert_from_func_ptr_addr (ARCH, ADDR, TARG) on PPC64

@@ -1,6 +1,6 @@
 /* GDB-specific functions for operating on agent expressions.
 
-   Copyright (C) 1998-2014 Free Software Foundation, Inc.
+   Copyright (C) 1998-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,6 @@
 #include "target.h"
 #include "ax.h"
 #include "ax-gdb.h"
-#include <string.h>
 #include "block.h"
 #include "regcache.h"
 #include "user-regs.h"
@@ -41,6 +40,7 @@
 #include "arch-utils.h"
 #include "cli/cli-utils.h"
 #include "linespec.h"
+#include "objfiles.h"
 
 #include "valprint.h"
 #include "c-lang.h"
@@ -712,14 +712,14 @@ gen_var_ref (struct gdbarch *gdbarch, struct agent_expr *ax,
 
     case LOC_UNRESOLVED:
       {
-	struct minimal_symbol *msym
+	struct bound_minimal_symbol msym
 	  = lookup_minimal_symbol (SYMBOL_LINKAGE_NAME (var), NULL, NULL);
 
-	if (!msym)
+	if (!msym.minsym)
 	  error (_("Couldn't resolve symbol `%s'."), SYMBOL_PRINT_NAME (var));
 
 	/* Push the address of the variable.  */
-	ax_const_l (ax, SYMBOL_VALUE_ADDRESS (msym));
+	ax_const_l (ax, BMSYMBOL_VALUE_ADDRESS (msym));
 	value->kind = axs_lvalue_memory;
       }
       break;
@@ -2187,7 +2187,7 @@ gen_expr (struct expression *exp, union exp_element **pc,
     case OP_THIS:
       {
 	struct symbol *sym, *func;
-	struct block *b;
+	const struct block *b;
 	const struct language_defn *lang;
 
 	b = block_for_pc (ax->scope);

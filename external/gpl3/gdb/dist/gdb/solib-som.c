@@ -1,6 +1,6 @@
 /* Handle SOM shared libraries.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,8 +30,6 @@
 #include "solist.h"
 #include "solib.h"
 #include "solib-som.h"
-
-#include <string.h>
 
 #undef SOLIB_SOM_DBG 
 
@@ -186,7 +184,7 @@ static void
 som_solib_create_inferior_hook (int from_tty)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  struct minimal_symbol *msymbol;
+  struct bound_minimal_symbol msymbol;
   unsigned int dld_flags, status, have_endo;
   asection *shlib_info;
   gdb_byte buf[4];
@@ -216,10 +214,10 @@ som_solib_create_inferior_hook (int from_tty)
      annoyance to users of modern systems and foul up the testsuite as
      well.  As a result, the warnings have been disabled.  */
   msymbol = lookup_minimal_symbol ("__d_pid", NULL, symfile_objfile);
-  if (msymbol == NULL)
+  if (msymbol.minsym == NULL)
     goto keep_going;
 
-  anaddr = SYMBOL_VALUE_ADDRESS (msymbol);
+  anaddr = BMSYMBOL_VALUE_ADDRESS (msymbol);
   store_unsigned_integer (buf, 4, byte_order, ptid_get_pid (inferior_ptid));
   status = target_write_memory (anaddr, buf, 4);
   if (status != 0)
@@ -241,9 +239,9 @@ GDB will be unable to track shl_load/shl_unload calls"));
      We'll look first for the old flavor and then the new.  */
 
   msymbol = lookup_minimal_symbol ("_DLD_HOOK", NULL, symfile_objfile);
-  if (msymbol == NULL)
+  if (msymbol.minsym == NULL)
     msymbol = lookup_minimal_symbol ("__d_trap", NULL, symfile_objfile);
-  if (msymbol == NULL)
+  if (msymbol.minsym == NULL)
     {
       warning (_("\
 Unable to find _DLD_HOOK symbol in object file.\n\
@@ -251,22 +249,23 @@ Suggest linking with /opt/langtools/lib/end.o.\n\
 GDB will be unable to track shl_load/shl_unload calls"));
       goto keep_going;
     }
-  anaddr = SYMBOL_VALUE_ADDRESS (msymbol);
+  anaddr = BMSYMBOL_VALUE_ADDRESS (msymbol);
   dld_cache.hook.address = anaddr;
 
   /* Grrr, this might not be an export symbol!  We have to find the
      export stub.  */
-  msymbol = hppa_lookup_stub_minimal_symbol (SYMBOL_LINKAGE_NAME (msymbol),
-                                             EXPORT);
-  if (msymbol != NULL)
+  msymbol
+    = hppa_lookup_stub_minimal_symbol (MSYMBOL_LINKAGE_NAME (msymbol.minsym),
+				       EXPORT);
+  if (msymbol.minsym != NULL)
     {
-      anaddr = SYMBOL_VALUE (msymbol);
+      anaddr = MSYMBOL_VALUE (msymbol.minsym);
       dld_cache.hook_stub.address = anaddr;
     }
   store_unsigned_integer (buf, 4, byte_order, anaddr);
 
   msymbol = lookup_minimal_symbol ("__dld_hook", NULL, symfile_objfile);
-  if (msymbol == NULL)
+  if (msymbol.minsym == NULL)
     {
       warning (_("\
 Unable to find __dld_hook symbol in object file.\n\
@@ -274,13 +273,13 @@ Suggest linking with /opt/langtools/lib/end.o.\n\
 GDB will be unable to track shl_load/shl_unload calls"));
       goto keep_going;
     }
-  anaddr = SYMBOL_VALUE_ADDRESS (msymbol);
+  anaddr = BMSYMBOL_VALUE_ADDRESS (msymbol);
   status = target_write_memory (anaddr, buf, 4);
 
   /* Now set a shlib_event breakpoint at __d_trap so we can track
      significant shared library events.  */
   msymbol = lookup_minimal_symbol ("__d_trap", NULL, symfile_objfile);
-  if (msymbol == NULL)
+  if (msymbol.minsym == NULL)
     {
       warning (_("\
 Unable to find __dld_d_trap symbol in object file.\n\
@@ -289,7 +288,7 @@ GDB will be unable to track shl_load/shl_unload calls"));
       goto keep_going;
     }
   create_solib_event_breakpoint (target_gdbarch (),
-				 SYMBOL_VALUE_ADDRESS (msymbol));
+				 BMSYMBOL_VALUE_ADDRESS (msymbol));
 
   /* We have all the support usually found in end.o, so we can track
      shl_load and shl_unload calls.  */
@@ -300,12 +299,12 @@ keep_going:
   /* Get the address of __dld_flags, if no such symbol exists, then we can
      not debug the shared code.  */
   msymbol = lookup_minimal_symbol ("__dld_flags", NULL, NULL);
-  if (msymbol == NULL)
+  if (msymbol.minsym == NULL)
     {
       error (_("Unable to find __dld_flags symbol in object file."));
     }
 
-  anaddr = SYMBOL_VALUE_ADDRESS (msymbol);
+  anaddr = BMSYMBOL_VALUE_ADDRESS (msymbol);
 
   /* Read the current contents.  */
   status = target_read_memory (anaddr, buf, 4);
@@ -347,10 +346,10 @@ manpage for methods to privately map shared library text."));
      loaded at startup time (what a crock).  */
 
   msymbol = lookup_minimal_symbol ("_start", NULL, symfile_objfile);
-  if (msymbol == NULL)
+  if (msymbol.minsym == NULL)
     error (_("Unable to find _start symbol in object file."));
 
-  anaddr = SYMBOL_VALUE_ADDRESS (msymbol);
+  anaddr = BMSYMBOL_VALUE_ADDRESS (msymbol);
 
   /* Make the breakpoint at "_start" a shared library event breakpoint.  */
   create_solib_event_breakpoint (target_gdbarch (), anaddr);
@@ -368,7 +367,7 @@ som_solib_desire_dynamic_linker_symbols (void)
 {
   struct objfile *objfile;
   struct unwind_table_entry *u;
-  struct minimal_symbol *dld_msymbol;
+  struct bound_minimal_symbol dld_msymbol;
 
   /* Do we already know the value of these symbols?  If so, then
      we've no work to do.
@@ -382,31 +381,32 @@ som_solib_desire_dynamic_linker_symbols (void)
   ALL_OBJFILES (objfile)
   {
     dld_msymbol = lookup_minimal_symbol ("shl_load", NULL, objfile);
-    if (dld_msymbol != NULL)
+    if (dld_msymbol.minsym != NULL)
       {
-	dld_cache.load.address = SYMBOL_VALUE (dld_msymbol);
+	dld_cache.load.address = MSYMBOL_VALUE (dld_msymbol.minsym);
 	dld_cache.load.unwind = find_unwind_entry (dld_cache.load.address);
       }
 
     dld_msymbol = lookup_minimal_symbol_solib_trampoline ("shl_load",
 							  objfile);
-    if (dld_msymbol != NULL)
+    if (dld_msymbol.minsym != NULL)
       {
-	if (MSYMBOL_TYPE (dld_msymbol) == mst_solib_trampoline)
+	if (MSYMBOL_TYPE (dld_msymbol.minsym) == mst_solib_trampoline)
 	  {
-	    u = find_unwind_entry (SYMBOL_VALUE (dld_msymbol));
+	    u = find_unwind_entry (MSYMBOL_VALUE (dld_msymbol.minsym));
 	    if ((u != NULL) && (u->stub_unwind.stub_type == EXPORT))
 	      {
-		dld_cache.load_stub.address = SYMBOL_VALUE (dld_msymbol);
+		dld_cache.load_stub.address
+		  = MSYMBOL_VALUE (dld_msymbol.minsym);
 		dld_cache.load_stub.unwind = u;
 	      }
 	  }
       }
 
     dld_msymbol = lookup_minimal_symbol ("shl_unload", NULL, objfile);
-    if (dld_msymbol != NULL)
+    if (dld_msymbol.minsym != NULL)
       {
-	dld_cache.unload.address = SYMBOL_VALUE (dld_msymbol);
+	dld_cache.unload.address = MSYMBOL_VALUE (dld_msymbol.minsym);
 	dld_cache.unload.unwind = find_unwind_entry (dld_cache.unload.address);
 
 	/* ??rehrauer: I'm not sure exactly what this is, but it appears
@@ -429,14 +429,15 @@ som_solib_desire_dynamic_linker_symbols (void)
 
     dld_msymbol = lookup_minimal_symbol_solib_trampoline ("shl_unload",
 							  objfile);
-    if (dld_msymbol != NULL)
+    if (dld_msymbol.minsym != NULL)
       {
-	if (MSYMBOL_TYPE (dld_msymbol) == mst_solib_trampoline)
+	if (MSYMBOL_TYPE (dld_msymbol.minsym) == mst_solib_trampoline)
 	  {
-	    u = find_unwind_entry (SYMBOL_VALUE (dld_msymbol));
+	    u = find_unwind_entry (MSYMBOL_VALUE (dld_msymbol.minsym));
 	    if ((u != NULL) && (u->stub_unwind.stub_type == EXPORT))
 	      {
-		dld_cache.unload_stub.address = SYMBOL_VALUE (dld_msymbol);
+		dld_cache.unload_stub.address
+		  = MSYMBOL_VALUE (dld_msymbol.minsym);
 		dld_cache.unload_stub.unwind = u;
 	      }
 	  }
@@ -526,35 +527,35 @@ static CORE_ADDR
 link_map_start (void)
 {
   enum bfd_endian byte_order = gdbarch_byte_order (target_gdbarch ());
-  struct minimal_symbol *sym;
+  struct bound_minimal_symbol sym;
   CORE_ADDR addr;
   gdb_byte buf[4];
   unsigned int dld_flags;
 
   sym = lookup_minimal_symbol ("__dld_flags", NULL, NULL);
-  if (!sym)
+  if (!sym.minsym)
     error (_("Unable to find __dld_flags symbol in object file."));
-  addr = SYMBOL_VALUE_ADDRESS (sym);
+  addr = BMSYMBOL_VALUE_ADDRESS (sym);
   read_memory (addr, buf, 4);
   dld_flags = extract_unsigned_integer (buf, 4, byte_order);
   if ((dld_flags & DLD_FLAGS_LISTVALID) == 0)
     error (_("__dld_list is not valid according to __dld_flags."));
 
   sym = lookup_minimal_symbol ("__dld_list", NULL, NULL);
-  if (!sym)
+  if (!sym.minsym)
     {
       /* Older crt0.o files (hpux8) don't have __dld_list as a symbol,
          but the data is still available if you know where to look.  */
       sym = lookup_minimal_symbol ("__dld_flags", NULL, NULL);
-      if (!sym)
+      if (!sym.minsym)
 	{
 	  error (_("Unable to find dynamic library list."));
 	  return 0;
 	}
-      addr = SYMBOL_VALUE_ADDRESS (sym) - 8;
+      addr = BMSYMBOL_VALUE_ADDRESS (sym) - 8;
     }
   else
-    addr = SYMBOL_VALUE_ADDRESS (sym);
+    addr = BMSYMBOL_VALUE_ADDRESS (sym);
 
   read_memory (addr, buf, 4);
   addr = extract_unsigned_integer (buf, 4, byte_order);

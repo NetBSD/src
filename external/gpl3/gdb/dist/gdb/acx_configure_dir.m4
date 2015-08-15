@@ -1,10 +1,10 @@
-# Copyright (C) 1992-2014 Free Software Foundation, Inc.
+# Copyright (C) 1992-2015 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation gives
 # unlimited permission to copy and/or distribute it, with or without
 # modifications, as long as this notice is preserved.
 
-# ACX_CONFIGURE_DIR(SRC-DIR-NAME, BUILD-DIR-NAME)
+# ACX_CONFIGURE_DIR(SRC-DIR-NAME, BUILD-DIR-NAME, EXTRA-ARGS)
 # ---------------------------
 #
 # Configure a subdirectory.  This is an alternative to
@@ -16,11 +16,14 @@
 # Inputs:
 #   - SRC-DIR-NAME is the source directory, relative to $srcdir.
 #   - BUILD-DIR-NAME is `top-build -> build'
+#   - EXTRA-ARGS is an optional list of extra arguments to add
+#     at the end of the configure command.
 
 AC_DEFUN([ACX_CONFIGURE_DIR],
 [
   in_src=$1
   in_build=$2
+  in_extra_args=$3
 
   # Remove --cache-file, --srcdir, and --disable-option-checking arguments
   # so they do not pile up.
@@ -104,6 +107,11 @@ AC_DEFUN([ACX_CONFIGURE_DIR],
   *) # Relative name.
     ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
   esac
+
+  if test -n "$in_extra_args"; then
+    # Add the extra args at the end.
+    ac_sub_configure_args="$ac_sub_configure_args $in_extra_args"
+  fi
 
   AC_MSG_NOTICE([running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir])
   # The eval makes quoting arguments work.

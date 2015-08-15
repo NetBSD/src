@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    Contributed by AdaCore.
 
@@ -28,14 +28,11 @@
 #include "gdbcmd.h"
 #include "gdbcore.h"
 #include "mach-o.h"
-#include "gdb_assert.h"
 #include "aout/stab_gnu.h"
 #include "vec.h"
 #include "psympriv.h"
 #include "complaints.h"
 #include "gdb_bfd.h"
-
-#include <string.h>
 
 /* If non-zero displays debugging message.  */
 static unsigned int mach_o_debug_level = 0;
@@ -111,23 +108,10 @@ macho_symtab_add_minsym (struct objfile *objfile, const asymbol *sym)
   if (sym->flags & (BSF_GLOBAL | BSF_LOCAL | BSF_WEAK))
     {
       CORE_ADDR symaddr;
-      CORE_ADDR offset;
       enum minimal_symbol_type ms_type;
-
-      offset = ANOFFSET (objfile->section_offsets,
-			 gdb_bfd_section_index (objfile->obfd, sym->section));
 
       /* Bfd symbols are section relative.  */
       symaddr = sym->value + sym->section->vma;
-
-      /* Select global/local/weak symbols.  Note that bfd puts abs
-         symbols in their own section, so all symbols we are
-         interested in will have a section.  */
-      /* Relocate all non-absolute and non-TLS symbols by the
-         section offset.  */
-      if (sym->section != bfd_abs_section_ptr
-          && !(sym->section->flags & SEC_THREAD_LOCAL))
-        symaddr += offset;
 
       if (sym->section == bfd_abs_section_ptr)
         ms_type = mst_abs;
@@ -429,19 +413,19 @@ static CORE_ADDR
 macho_resolve_oso_sym_with_minsym (struct objfile *main_objfile, asymbol *sym)
 {
   /* For common symbol and global symbols, use the min symtab.  */
-  struct minimal_symbol *msym;
+  struct bound_minimal_symbol msym;
   const char *name = sym->name;
 
   if (name[0] == bfd_get_symbol_leading_char (main_objfile->obfd))
     ++name;
   msym = lookup_minimal_symbol (name, NULL, main_objfile);
-  if (msym == NULL)
+  if (msym.minsym == NULL)
     {
       warning (_("can't find symbol '%s' in minsymtab"), name);
       return 0;
     }
   else
-    return SYMBOL_VALUE_ADDRESS (msym);
+    return BMSYMBOL_VALUE_ADDRESS (msym);
 }
 
 /* Add oso file OSO/ABFD as a symbol file.  */

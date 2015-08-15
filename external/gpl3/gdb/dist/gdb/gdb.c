@@ -1,5 +1,5 @@
 /* Main function for CLI gdb.  
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
 
 #include "defs.h"
 #include "main.h"
-#include <string.h>
 #include "interps.h"
 
 int
@@ -29,7 +28,6 @@ main (int argc, char **argv)
   memset (&args, 0, sizeof args);
   args.argc = argc;
   args.argv = argv;
-  args.use_windows = 0;
   args.interpreter_p = INTERP_CONSOLE;
   return gdb_main (&args);
 }

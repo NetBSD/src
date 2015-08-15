@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,6 @@ if { [prepare_for_testing ${testfile}.exp ${testfile} $srcfile] } {
 
 set gdbindex_warning_re "warning: Skipping \[^\r\n\]+ \\.gdb_index section \[^\r\n\]*\r\nDo \"set use-deprecated-index-sections on\" before the file is read\r\nto use the section anyway\\."
 
-gdb_test_no_output "set target-async on "
 gdb_test_no_output "set non-stop on"
 gdb_test "run &" "Starting program: \[^\r\n\]*(\r\n$gdbindex_warning_re)?"
 

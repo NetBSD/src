@@ -1,4 +1,4 @@
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,102 +26,58 @@ if  {[gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile}1.o \
     return -1
 }
 
-# Start GDB and load object file, compute the function length and
-# the offset of branch instruction in function.  They are needed
-# in the Dwarf Assembler below.
+# Start GDB and load object file, compute the offset of the
+# instruction in bar returned from foo.  It is needed in the Dwarf
+# Assembler.
 
 gdb_exit
 gdb_start
 gdb_reinitialize_dir $srcdir/$subdir
 gdb_load ${binfile}1.o
 
-set foo_length ""
-
-# Calculate the offset of the last instruction from the beginning.
-set test "disassemble foo"
-gdb_test_multiple $test $test {
-    -re ".*$hex <\\+($decimal)>:\[^\r\n\]+\r\nEnd of assembler dump\.\r\n$gdb_prompt $" {
-	set foo_length $expect_out(1,string)
-	pass $test
-    }
-    -re ".*$gdb_prompt $" {
-	fail $test
-	# Bail out here, because we can't do the following tests if
-	# $foo_length is unknown.
-	return -1
-    }
-}
-
-# Calculate the size of the last instruction.  Single instruction
-# shouldn't be longer than 10 bytes.
-
-set test "disassemble foo+$foo_length,+10"
-gdb_test_multiple $test $test {
-    -re ".*($hex) <foo\\+$foo_length>:\[^\r\n\]+\r\n\[ \]+($hex) .*\.\r\n$gdb_prompt $" {
-	set start $expect_out(1,string)
-	set end $expect_out(2,string)
-
-	set foo_length [expr $foo_length + $end - $start]
-	pass $test
-    }
-    -re ".*$gdb_prompt $" {
-	fail $test
-	# Bail out here, because we can't do the following tests if
-	# $foo_length is unknown.
-	return -1
-    }
-}
-
-set bar_length ""
-set bar_call_foo ""
+set returned_from_foo ""
 
 if { [istarget "arm*-*-*"] || [istarget "aarch64*-*-*"] } {
     set call_insn "bl"
+} elseif { [istarget "s390*-*-*"] } {
+    set call_insn "brasl"
+} elseif { [istarget "powerpc*-*-*"] } {
+    set call_insn "bl"
+} elseif { [istarget "mips*-*-*"] } {
+    # Skip the delay slot after the instruction used to make a call
+    # (which can be a jump or a branch) if it has one.
+    #
+    #  JUMP (or BRANCH) foo
+    #  insn1
+    #  insn2
+    #
+    # Most MIPS instructions used to make calls have a delay slot.
+    # These include JAL, JALS, JALX, JALR, JALRS, BAL and BALS.
+    # In this case the program continues from `insn2' when `foo'
+    # returns.  The only exception is JALRC, in which case execution
+    # resumes from `insn1' instead.
+    set call_insn {jalrc|[jb]al[sxr]*[ \t][^\r\n]+\r\n}
 } else {
     set call_insn "call"
 }
 
-# Calculate the offset of the last instruction from the beginning.
+# Calculate the offset of the instruction in bar returned from foo.
 set test "disassemble bar"
 gdb_test_multiple $test $test {
-    -re ".*$hex <\\+$decimal>:\[ \t\]+$call_insn\[^\r\n\]+\r\n\[ \]+$hex <\\+($decimal)>:" {
-	set bar_call_foo $expect_out(1,string)
-	exp_continue
-    }
-    -re ".*$hex <\\+($decimal)>:\[^\r\n\]+\r\nEnd of assembler dump\.\r\n$gdb_prompt $" {
-	set bar_length $expect_out(1,string)
-	pass $test
+    -re ".*$hex <\\+$decimal>:\[ \t\]+$call_insn\[^\r\n\]+\r\n\[ \]+$hex <\\+($decimal)>:.*$gdb_prompt $" {
+	set returned_from_foo $expect_out(1,string)
     }
     -re ".*$gdb_prompt $" {
 	fail $test
     }
 }
 
-if { [string equal $bar_call_foo ""] || [string equal $bar_length ""] } {
+if { [string equal $returned_from_foo ""] } {
     fail "Find the call or branch instruction offset in bar"
     # The following test makes no sense if the offset is unknown.  We need
     # to update the pattern above to match call or branch instruction for
     # the target architecture.
     return -1
-}
-
-# Calculate the size of the last instruction.
-
-set test "disassemble bar+$bar_length,+10"
-gdb_test_multiple $test $test {
-    -re ".*($hex) <bar\\+$bar_length>:\[^\r\n\]+\r\n\[ \]+($hex) .*\.\r\n$gdb_prompt $" {
-	set start $expect_out(1,string)
-	set end $expect_out(2,string)
-
-	set bar_length [expr $bar_length + $end - $start]
-	pass $test
-    }
-    -re ".*$gdb_prompt $" {
-	fail $test
-	# Bail out here, because we can't do the following tests if
-	# $bar_length is unknown.
-	return -1
-    }
 }
 
 gdb_exit
@@ -130,7 +86,12 @@ gdb_exit
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
     declare_labels int_label foo_label
-    global foo_length bar_length bar_call_foo
+    global returned_from_foo
+    global srcdir subdir srcfile
+
+    set bar_result [function_range bar ${srcdir}/${subdir}/${srcfile}]
+    set bar_start [lindex $bar_result 0]
+    set bar_length [lindex $bar_result 1]
 
     cu {} {
 	compile_unit {{language @DW_LANG_C}} {
@@ -141,10 +102,8 @@ Dwarf::assemble $asm_file {
 	    }
 
 	    foo_label: subprogram {
-		{name foo}
-		{decl_file 1}
-		{low_pc foo addr}
-		{high_pc "foo + $foo_length" addr}
+		{decl_file 1 sdata}
+		{MACRO_AT_func { foo ${srcdir}/${subdir}/${srcfile} }}
 	    } {
 		formal_parameter {
 		    {type :$int_label}
@@ -160,10 +119,10 @@ Dwarf::assemble $asm_file {
 
 	    subprogram {
 		{name bar}
-		{decl_file 1}
-		{low_pc bar addr}
-		{high_pc "bar + $bar_length" addr}
-		{GNU_all_call_sites 1}
+		{decl_file 1 sdata}
+		{low_pc $bar_start addr}
+		{high_pc "$bar_start + $bar_length" addr}
+		{GNU_all_call_sites 1 sdata}
 	    } {
 		formal_parameter {
 		    {type :$int_label}
@@ -171,7 +130,7 @@ Dwarf::assemble $asm_file {
 		}
 
 		GNU_call_site {
-		    {low_pc "bar + $bar_call_foo" addr}
+		    {low_pc "$bar_start + $returned_from_foo" addr}
 		    {abstract_origin :$foo_label}
 		} {
 		    # Faked entry values are reference to variables 'global1'

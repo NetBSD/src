@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2009-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -236,9 +236,6 @@ extern struct program_space *current_program_space;
    pointer to the new object.  */
 extern struct program_space *add_program_space (struct address_space *aspace);
 
-/* Release PSPACE and removes it from the pspace list.  */
-extern void remove_program_space (struct program_space *pspace);
-
 /* Returns the number of program spaces listed.  */
 extern int number_of_program_spaces (void);
 
@@ -267,7 +264,8 @@ extern void set_current_program_space (struct program_space *pspace);
 extern struct cleanup *save_current_space_and_thread (void);
 
 /* Switches full context to program space PSPACE.  Switches to the
-   first thread found bound to PSPACE.  */
+   first thread found bound to PSPACE, giving preference to the
+   current thread, if there's one and it isn't executing.  */
 extern void switch_to_program_space_and_thread (struct program_space *pspace);
 
 /* Create a new address space object, and add it to the list.  */

@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright 1994-2013 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -2583,6 +2583,8 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 	      arm_decode_shift (given, func, stream, TRUE);
 	    }
 	}
+      if (NEGATIVE_BIT_SET)
+	offset = -offset;
     }
 
   return (signed long) offset;

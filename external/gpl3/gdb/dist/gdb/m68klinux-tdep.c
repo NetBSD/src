@@ -1,6 +1,6 @@
 /* Motorola m68k target-dependent support for GNU/Linux.
 
-   Copyright (C) 1996-2014 Free Software Foundation, Inc.
+   Copyright (C) 1996-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
 #include "floatformat.h"
 #include "frame.h"
 #include "target.h"
-#include <string.h>
 #include "gdbtypes.h"
 #include "osabi.h"
 #include "regcache.h"
@@ -38,6 +37,7 @@
 #include "observer.h"
 #include "elf/common.h"
 #include "linux-tdep.h"
+#include "regset.h"
 
 /* Offsets (in target ints) into jmp_buf.  */
 
@@ -327,6 +327,60 @@ static const struct frame_unwind m68k_linux_sigtramp_frame_unwind =
   m68k_linux_sigtramp_frame_sniffer
 };
 
+/* Register maps for supply/collect regset functions.  */
+
+static const struct regcache_map_entry m68k_linux_gregmap[] =
+  {
+    { 7, M68K_D1_REGNUM, 4 },	/* d1 ... d7 */
+    { 7, M68K_A0_REGNUM, 4 },	/* a0 ... a6 */
+    { 1, M68K_D0_REGNUM, 4 },
+    { 1, M68K_SP_REGNUM, 4 },
+    { 1, REGCACHE_MAP_SKIP, 4 }, /* orig_d0 (skip) */
+    { 1, M68K_PS_REGNUM, 4 },
+    { 1, M68K_PC_REGNUM, 4 },
+    /* Ignore 16-bit fields 'fmtvec' and '__fill'.  */
+    { 0 }
+  };
+
+#define M68K_LINUX_GREGS_SIZE (20 * 4)
+
+static const struct regcache_map_entry m68k_linux_fpregmap[] =
+  {
+    { 8, M68K_FP0_REGNUM, 12 },	/* fp0 ... fp7 */
+    { 1, M68K_FPC_REGNUM, 4 },
+    { 1, M68K_FPS_REGNUM, 4 },
+    { 1, M68K_FPI_REGNUM, 4 },
+    { 0 }
+  };
+
+#define M68K_LINUX_FPREGS_SIZE (27 * 4)
+
+/* Register sets. */
+
+static const struct regset m68k_linux_gregset =
+  {
+    m68k_linux_gregmap,
+    regcache_supply_regset, regcache_collect_regset
+  };
+
+static const struct regset m68k_linux_fpregset =
+  {
+    m68k_linux_fpregmap,
+    regcache_supply_regset, regcache_collect_regset
+  };
+
+/* Iterate over core file register note sections.  */
+
+static void
+m68k_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					 iterate_over_regset_sections_cb *cb,
+					 void *cb_data,
+					 const struct regcache *regcache)
+{
+  cb (".reg", M68K_LINUX_GREGS_SIZE, &m68k_linux_gregset, NULL, cb_data);
+  cb (".reg2", M68K_LINUX_FPREGS_SIZE, &m68k_linux_fpregset, NULL, cb_data);
+}
+
 static void
 m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -360,6 +414,10 @@ m68k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
 
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
+
+  /* Core file support. */
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, m68k_linux_iterate_over_regset_sections);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,

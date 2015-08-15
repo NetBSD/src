@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -550,21 +550,16 @@ proc test_complex_watchpoint {} {
 proc test_watchpoint_and_breakpoint {} {
     global gdb_prompt
 
-    # This is a test for PR gdb/38, which involves setting a
+    # This is a test for PR breakpoints/7143, which involves setting a
     # watchpoint right after you've reached a breakpoint.
 
     if [runto func3] then {
 	gdb_breakpoint [gdb_get_line_number "second x assignment"]
 	gdb_continue_to_breakpoint "second x assignment"
 	gdb_test "watch x" ".*atchpoint \[0-9\]+: x"
-	gdb_test_multiple "next" "next after watch x" {
-	    -re ".*atchpoint \[0-9\]+: x\r\n\r\nOld value = 0\r\nNew value = 1\r\n.*$gdb_prompt $" {
-		pass "next after watch x"
-	    }
-	    -re "\[0-9\]+\[\t \]+y = 1;\r\n$gdb_prompt $" {
-		kfail "gdb/38" "next after watch x"
-	    }
-	}
+	gdb_test "next" \
+	    ".*atchpoint \[0-9\]+: x\r\n\r\nOld value = 0\r\nNew value = 1\r\n.*" \
+	    "next after watch x"
 
 	gdb_test_no_output "delete \$bpnum" "delete watch x"
     }
@@ -600,11 +595,21 @@ proc test_disable_enable_software_watchpoint {} {
 }
 
 proc test_watch_location {} {
+    global gdb_prompt
+
     gdb_breakpoint [gdb_get_line_number "func5 breakpoint here"]
     gdb_continue_to_breakpoint "func5 breakpoint here"
 
-    gdb_test "watch -location nullptr->p->x" \
-	"Cannot access memory at address 0x0"
+    # Check first if a null pointer can be dereferenced on the target.
+    gdb_test_multiple "p *nullptr" "" {
+	-re "Cannot access memory at address 0x0.*$gdb_prompt $" {
+	    gdb_test "watch -location nullptr->p->x" \
+		"Cannot access memory at address 0x0"
+	}
+	-re ".*$gdb_prompt $" {
+	    # Null pointer dereference is legitimate.
+	}
+    }
 
     gdb_test "watch -location *x" "atchpoint .*: .*" "watch -location .x"
 

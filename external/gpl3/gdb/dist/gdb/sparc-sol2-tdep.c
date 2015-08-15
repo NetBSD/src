@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris SPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,18 +25,16 @@
 #include "objfiles.h"
 #include "osabi.h"
 #include "regcache.h"
+#include "regset.h"
 #include "target.h"
 #include "trad-frame.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "sol2-tdep.h"
 #include "sparc-tdep.h"
 #include "solib-svr4.h"
 
 /* From <sys/regset.h>.  */
-const struct sparc_gregset sparc32_sol2_gregset =
+const struct sparc_gregmap sparc32_sol2_gregmap =
 {
   32 * 4,			/* %psr */
   33 * 4,			/* %pc */
@@ -48,11 +46,57 @@ const struct sparc_gregset sparc32_sol2_gregset =
   16 * 4,			/* %l0 */
 };
 
-const struct sparc_fpregset sparc32_sol2_fpregset =
+const struct sparc_fpregmap sparc32_sol2_fpregmap =
 {
   0 * 4,			/* %f0 */
   33 * 4,			/* %fsr */
 };
+
+static void
+sparc32_sol2_supply_core_gregset (const struct regset *regset,
+				  struct regcache *regcache,
+				  int regnum, const void *gregs, size_t len)
+{
+  sparc32_supply_gregset (&sparc32_sol2_gregmap, regcache, regnum, gregs);
+}
+
+static void
+sparc32_sol2_collect_core_gregset (const struct regset *regset,
+				   const struct regcache *regcache,
+				   int regnum, void *gregs, size_t len)
+{
+  sparc32_collect_gregset (&sparc32_sol2_gregmap, regcache, regnum, gregs);
+}
+
+static void
+sparc32_sol2_supply_core_fpregset (const struct regset *regset,
+				   struct regcache *regcache,
+				   int regnum, const void *fpregs, size_t len)
+{
+  sparc32_supply_fpregset (&sparc32_sol2_fpregmap, regcache, regnum, fpregs);
+}
+
+static void
+sparc32_sol2_collect_core_fpregset (const struct regset *regset,
+				    const struct regcache *regcache,
+				    int regnum, void *fpregs, size_t len)
+{
+  sparc32_collect_fpregset (&sparc32_sol2_fpregmap, regcache, regnum, fpregs);
+}
+
+static const struct regset sparc32_sol2_gregset =
+  {
+    NULL,
+    sparc32_sol2_supply_core_gregset,
+    sparc32_sol2_collect_core_gregset
+  };
+
+static const struct regset sparc32_sol2_fpregset =
+  {
+    NULL,
+    sparc32_sol2_supply_core_fpregset,
+    sparc32_sol2_collect_core_fpregset
+  };
 
 
 /* The Solaris signal trampolines reside in libc.  For normal signals,
@@ -213,6 +257,12 @@ void
 sparc32_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  tdep->gregset = &sparc32_sol2_gregset;
+  tdep->sizeof_gregset = 152;
+
+  tdep->fpregset = &sparc32_sol2_fpregset;
+  tdep->sizeof_fpregset = 400;
 
   /* The Sun compilers (Sun ONE Studio, Forte Developer, Sun WorkShop, SunPRO)
      compiler puts out 0 instead of the address in N_SO stabs.  Starting with

@@ -1,4 +1,4 @@
-# Copyright 1992-2014 Free Software Foundation, Inc.
+# Copyright 1992-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -499,11 +499,6 @@ proc test_at_localscopes {} {
     gdb_stop_suppressing_tests
 }
 
-if [istarget "*-*-vxworks*"] {
-    set timeout 120
-    verbose "Timeout is now $timeout seconds" 2
-}
-
 # Test that variables in various segments print out correctly before
 # the program is run.  
 
@@ -536,8 +531,3 @@ if [runto foo] then { test_at_foo }
 if [runto bar] then { test_at_bar }
 if [runto localscopes] then { test_at_localscopes }
 if [runto autovars] then { test_at_autovars }
-
-if [istarget "*-*-vxworks*"] {
-    set timeout 120
-    verbose "Timeout is now $timeout seconds" 2
-}

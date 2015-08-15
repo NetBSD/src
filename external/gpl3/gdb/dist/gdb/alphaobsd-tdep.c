@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/alpha.
 
-   Copyright (C) 2006-2014 Free Software Foundation, Inc.
+   Copyright (C) 2006-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -121,8 +121,8 @@ alphaobsd_init_abi(struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->jb_pc = 2;
   tdep->jb_elt_size = 8;
 
-  set_gdbarch_regset_from_core_section
-    (gdbarch, alphanbsd_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, alphanbsd_iterate_over_regset_sections);
 }
 
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on Tilera TILE-Gx processors.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -73,45 +73,35 @@ static const struct tramp_frame tilegx_linux_rt_sigframe =
   tilegx_linux_sigframe_init
 };
 
-/* Supply raw registers from REGCACHE to REGS.  */
+/* Register map; must match struct pt_regs in "ptrace.h".  */
 
-static void
-tilegx_linux_supply_regset (const struct regset *regset,
-			    struct regcache *regcache,
-			    int regnum, const void *regs, size_t len)
-{
-  struct gdbarch *arch = get_regcache_arch (regcache);
-  const char *ptr = regs;
-  int i;
+static const struct regcache_map_entry tilegx_linux_regmap[] =
+  {
+    { TILEGX_NUM_EASY_REGS, TILEGX_FIRST_EASY_REGNUM, 8 },
+    { 1, TILEGX_PC_REGNUM, 8 },
+    { 1, TILEGX_FAULTNUM_REGNUM, 8 },
+    { 0 }
+  };
 
-  /* This logic must match that of struct pt_regs in "ptrace.h".  */
-  for (i = 0; i < TILEGX_NUM_EASY_REGS + 2; i++, ptr += tilegx_reg_size)
-    {
-      int gri = (i < TILEGX_NUM_EASY_REGS)
-                 ? i : (i == TILEGX_NUM_EASY_REGS)
-                        ? TILEGX_PC_REGNUM : TILEGX_FAULTNUM_REGNUM;
-
-      if (regnum == gri || regnum == -1)
-	regcache_raw_supply (regcache, gri, ptr);
-    }
-}
+#define TILEGX_LINUX_SIZEOF_GREGSET (64 * 8)
 
 /* TILE-Gx Linux kernel register set.  */
-static struct regset tilegx_linux_regset =
+
+static const struct regset tilegx_linux_regset =
 {
-  NULL,
-  tilegx_linux_supply_regset
+  tilegx_linux_regmap,
+  regcache_supply_regset, regcache_collect_regset
 };
 
-static const struct regset *
-tilegx_regset_from_core_section (struct gdbarch *gdbarch,
-				 const char *sect_name,
-				 size_t sect_size)
-{
-  if (strcmp (sect_name, ".reg") == 0)
-    return &tilegx_linux_regset;
 
-  return NULL;
+static void
+tilegx_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				     iterate_over_regset_sections_cb *cb,
+				     void *cb_data,
+				     const struct regcache *regcache)
+{
+  cb (".reg", TILEGX_LINUX_SIZEOF_GREGSET, &tilegx_linux_regset,
+      NULL, cb_data);
 }
 
 /* OS specific initialization of gdbarch.  */
@@ -125,8 +115,8 @@ tilegx_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   tramp_frame_prepend_unwinder (gdbarch, &tilegx_linux_rt_sigframe);
 
-  set_gdbarch_regset_from_core_section (gdbarch,
-					tilegx_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, tilegx_iterate_over_regset_sections);
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   if (arch_size == 32)

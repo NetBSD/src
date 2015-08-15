@@ -33,11 +33,56 @@
 /* Define as the word index where to find the exponent of 'double'. */
 #undef DBL_EXPBIT0_WORD
 
+/* the name of the file descriptor member of DIR */
+#undef DIR_FD_MEMBER_NAME
+
+#ifdef DIR_FD_MEMBER_NAME
+# define DIR_TO_FD(Dir_p) ((Dir_p)->DIR_FD_MEMBER_NAME)
+#else
+# define DIR_TO_FD(Dir_p) -1
+#endif
+
+
+/* Define to 1 if // is a file system root distinct from /. */
+#undef DOUBLE_SLASH_IS_DISTINCT_ROOT
+
+/* Define to 1 if realpath() can malloc memory, always gives an absolute path,
+   and handles trailing slash correctly. */
+#undef FUNC_REALPATH_WORKS
+
+/* Define to a C preprocessor expression that evaluates to 1 or 0, depending
+   whether the gnulib module canonicalize-lgpl shall be considered present. */
+#undef GNULIB_CANONICALIZE_LGPL
+
+/* Define to a C preprocessor expression that evaluates to 1 or 0, depending
+   whether the gnulib module fscanf shall be considered present. */
+#undef GNULIB_FSCANF
+
+/* Define to a C preprocessor expression that evaluates to 1 or 0, depending
+   whether the gnulib module scanf shall be considered present. */
+#undef GNULIB_SCANF
+
+/* Define to 1 when the gnulib module canonicalize_file_name should be tested.
+   */
+#undef GNULIB_TEST_CANONICALIZE_FILE_NAME
+
+/* Define to 1 when the gnulib module chdir should be tested. */
+#undef GNULIB_TEST_CHDIR
+
+/* Define to 1 when the gnulib module dirfd should be tested. */
+#undef GNULIB_TEST_DIRFD
+
 /* Define to 1 when the gnulib module frexp should be tested. */
 #undef GNULIB_TEST_FREXP
 
 /* Define to 1 when the gnulib module frexpl should be tested. */
 #undef GNULIB_TEST_FREXPL
+
+/* Define to 1 when the gnulib module lstat should be tested. */
+#undef GNULIB_TEST_LSTAT
+
+/* Define to 1 when the gnulib module malloc-posix should be tested. */
+#undef GNULIB_TEST_MALLOC_POSIX
 
 /* Define to 1 when the gnulib module mbrtowc should be tested. */
 #undef GNULIB_TEST_MBRTOWC
@@ -53,6 +98,21 @@
 
 /* Define to 1 when the gnulib module memmem should be tested. */
 #undef GNULIB_TEST_MEMMEM
+
+/* Define to 1 when the gnulib module readlink should be tested. */
+#undef GNULIB_TEST_READLINK
+
+/* Define to 1 when the gnulib module realpath should be tested. */
+#undef GNULIB_TEST_REALPATH
+
+/* Define to 1 when the gnulib module rename should be tested. */
+#undef GNULIB_TEST_RENAME
+
+/* Define to 1 when the gnulib module rmdir should be tested. */
+#undef GNULIB_TEST_RMDIR
+
+/* Define to 1 when the gnulib module stat should be tested. */
+#undef GNULIB_TEST_STAT
 
 /* Define to 1 when the gnulib module strstr should be tested. */
 #undef GNULIB_TEST_STRSTR
@@ -73,6 +133,13 @@
 
 /* Define to 1 if you have the `btowc' function. */
 #undef HAVE_BTOWC
+
+/* Define to 1 if you have the `canonicalize_file_name' function. */
+#undef HAVE_CANONICALIZE_FILE_NAME
+
+/* Define to 1 if you have the declaration of `dirfd', and to 0 if you don't.
+   */
+#undef HAVE_DECL_DIRFD
 
 /* Define to 1 if you have the declaration of `getc_unlocked', and to 0 if you
    don't. */
@@ -105,6 +172,9 @@
 /* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
+/* Define to 1 if you have the `dirfd' function. */
+#undef HAVE_DIRFD
+
 /* Define to 1 if you have the <features.h> header file. */
 #undef HAVE_FEATURES_H
 
@@ -113,6 +183,9 @@
 
 /* Define if the frexpl() function is available. */
 #undef HAVE_FREXPL
+
+/* Define to 1 if you have the `getcwd' function. */
+#undef HAVE_GETCWD
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
@@ -135,8 +208,17 @@
 /* Define if you have <langinfo.h> and nl_langinfo(CODESET). */
 #undef HAVE_LANGINFO_CODESET
 
+/* Define to 1 if you have the `link' function. */
+#undef HAVE_LINK
+
 /* Define to 1 if the system has the type 'long long int'. */
 #undef HAVE_LONG_LONG_INT
+
+/* Define to 1 if you have the `lstat' function. */
+#undef HAVE_LSTAT
+
+/* Define if the 'malloc' function is POSIX compliant. */
+#undef HAVE_MALLOC_POSIX
 
 /* Define to 1 if mmap()'s MAP_ANONYMOUS flag is available after including
    config.h and <sys/mman.h>. */
@@ -190,8 +272,15 @@
 /* Define to 1 if atanl is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_ATANL
 
+/* Define to 1 if atoll is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_ATOLL
+
 /* Define to 1 if btowc is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_BTOWC
+
+/* Define to 1 if canonicalize_file_name is declared even after undefining
+   macros. */
+#undef HAVE_RAW_DECL_CANONICALIZE_FILE_NAME
 
 /* Define to 1 if cbrt is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_CBRT
@@ -237,6 +326,9 @@
 
 /* Define to 1 if dirfd is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_DIRFD
+
+/* Define to 1 if dprintf is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_DPRINTF
 
 /* Define to 1 if dup is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_DUP
@@ -334,11 +426,17 @@
 /* Define to 1 if fmodl is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_FMODL
 
+/* Define to 1 if fpurge is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_FPURGE
+
 /* Define to 1 if frexpf is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_FREXPF
 
 /* Define to 1 if frexpl is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_FREXPL
+
+/* Define to 1 if fseeko is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_FSEEKO
 
 /* Define to 1 if fstat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_FSTAT
@@ -349,6 +447,9 @@
 /* Define to 1 if fsync is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_FSYNC
 
+/* Define to 1 if ftello is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_FTELLO
+
 /* Define to 1 if ftruncate is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_FTRUNCATE
 
@@ -357,6 +458,9 @@
 
 /* Define to 1 if getcwd is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_GETCWD
+
+/* Define to 1 if getdelim is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_GETDELIM
 
 /* Define to 1 if getdomainname is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_GETDOMAINNAME
@@ -370,6 +474,12 @@
 /* Define to 1 if gethostname is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_GETHOSTNAME
 
+/* Define to 1 if getline is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_GETLINE
+
+/* Define to 1 if getloadavg is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_GETLOADAVG
+
 /* Define to 1 if getlogin is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_GETLOGIN
 
@@ -379,8 +489,17 @@
 /* Define to 1 if getpagesize is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_GETPAGESIZE
 
+/* Define to 1 if gets is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_GETS
+
+/* Define to 1 if getsubopt is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_GETSUBOPT
+
 /* Define to 1 if getusershell is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_GETUSERSHELL
+
+/* Define to 1 if grantpt is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_GRANTPT
 
 /* Define to 1 if group_member is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_GROUP_MEMBER
@@ -405,6 +524,12 @@
 
 /* Define to 1 if imaxdiv is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_IMAXDIV
+
+/* Define to 1 if initstate is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_INITSTATE
+
+/* Define to 1 if initstate_r is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_INITSTATE_R
 
 /* Define to 1 if isatty is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_ISATTY
@@ -508,6 +633,9 @@
 /* Define to 1 if mkdirat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_MKDIRAT
 
+/* Define to 1 if mkdtemp is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_MKDTEMP
+
 /* Define to 1 if mkfifo is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_MKFIFO
 
@@ -519,6 +647,18 @@
 
 /* Define to 1 if mknodat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_MKNODAT
+
+/* Define to 1 if mkostemp is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_MKOSTEMP
+
+/* Define to 1 if mkostemps is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_MKOSTEMPS
+
+/* Define to 1 if mkstemp is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_MKSTEMP
+
+/* Define to 1 if mkstemps is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_MKSTEMPS
 
 /* Define to 1 if modf is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_MODF
@@ -532,11 +672,20 @@
 /* Define to 1 if opendir is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_OPENDIR
 
+/* Define to 1 if pclose is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_PCLOSE
+
 /* Define to 1 if pipe is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_PIPE
 
 /* Define to 1 if pipe2 is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_PIPE2
+
+/* Define to 1 if popen is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_POPEN
+
+/* Define to 1 if posix_openpt is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_POSIX_OPENPT
 
 /* Define to 1 if powf is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_POWF
@@ -544,8 +693,20 @@
 /* Define to 1 if pread is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_PREAD
 
+/* Define to 1 if ptsname is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_PTSNAME
+
+/* Define to 1 if ptsname_r is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_PTSNAME_R
+
 /* Define to 1 if pwrite is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_PWRITE
+
+/* Define to 1 if random is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_RANDOM
+
+/* Define to 1 if random_r is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_RANDOM_R
 
 /* Define to 1 if rawmemchr is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_RAWMEMCHR
@@ -559,6 +720,9 @@
 /* Define to 1 if readlinkat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_READLINKAT
 
+/* Define to 1 if realpath is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_REALPATH
+
 /* Define to 1 if remainder is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_REMAINDER
 
@@ -567,6 +731,9 @@
 
 /* Define to 1 if remainderl is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_REMAINDERL
+
+/* Define to 1 if renameat is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_RENAMEAT
 
 /* Define to 1 if rewinddir is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_REWINDDIR
@@ -592,11 +759,23 @@
 /* Define to 1 if roundl is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_ROUNDL
 
+/* Define to 1 if rpmatch is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_RPMATCH
+
 /* Define to 1 if scandir is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_SCANDIR
 
+/* Define to 1 if setenv is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_SETENV
+
 /* Define to 1 if sethostname is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_SETHOSTNAME
+
+/* Define to 1 if setstate is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_SETSTATE
+
+/* Define to 1 if setstate_r is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_SETSTATE_R
 
 /* Define to 1 if setusershell is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_SETUSERSHELL
@@ -613,11 +792,20 @@
 /* Define to 1 if sleep is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_SLEEP
 
+/* Define to 1 if snprintf is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_SNPRINTF
+
 /* Define to 1 if sqrtf is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_SQRTF
 
 /* Define to 1 if sqrtl is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_SQRTL
+
+/* Define to 1 if srandom is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_SRANDOM
+
+/* Define to 1 if srandom_r is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_SRANDOM_R
 
 /* Define to 1 if stat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_STAT
@@ -658,11 +846,20 @@
 /* Define to 1 if strsignal is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_STRSIGNAL
 
+/* Define to 1 if strtod is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_STRTOD
+
 /* Define to 1 if strtoimax is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_STRTOIMAX
 
 /* Define to 1 if strtok_r is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_STRTOK_R
+
+/* Define to 1 if strtoll is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_STRTOLL
+
+/* Define to 1 if strtoull is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_STRTOULL
 
 /* Define to 1 if strtoumax is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_STRTOUMAX
@@ -685,6 +882,9 @@
 /* Define to 1 if tanl is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_TANL
 
+/* Define to 1 if tmpfile is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_TMPFILE
+
 /* Define to 1 if towctrans is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_TOWCTRANS
 
@@ -706,11 +906,23 @@
 /* Define to 1 if unlinkat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_UNLINKAT
 
+/* Define to 1 if unlockpt is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_UNLOCKPT
+
+/* Define to 1 if unsetenv is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_UNSETENV
+
 /* Define to 1 if usleep is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_USLEEP
 
 /* Define to 1 if utimensat is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_UTIMENSAT
+
+/* Define to 1 if vdprintf is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_VDPRINTF
+
+/* Define to 1 if vsnprintf is declared even after undefining macros. */
+#undef HAVE_RAW_DECL_VSNPRINTF
 
 /* Define to 1 if wcpcpy is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_WCPCPY
@@ -817,6 +1029,15 @@
 /* Define to 1 if wmemset is declared even after undefining macros. */
 #undef HAVE_RAW_DECL_WMEMSET
 
+/* Define to 1 if _Exit is declared even after undefining macros. */
+#undef HAVE_RAW_DECL__EXIT
+
+/* Define to 1 if you have the `readlink' function. */
+#undef HAVE_READLINK
+
+/* Define to 1 if you have the `realpath' function. */
+#undef HAVE_REALPATH
+
 /* Define to 1 if 'long double' and 'double' have the same representation. */
 #undef HAVE_SAME_LONG_DOUBLE_AS_DOUBLE
 
@@ -911,6 +1132,13 @@
 /* Define as the word index where to find the exponent of 'long double'. */
 #undef LDBL_EXPBIT0_WORD
 
+/* Define to 1 if 'lstat' dereferences a symlink specified with a trailing
+   slash. */
+#undef LSTAT_FOLLOWS_SLASHED_SYMLINK
+
+/* If malloc(0) is != NULL, define this to 1. Otherwise define this to 0. */
+#undef MALLOC_0_IS_NONNULL
+
 /* Define to a substitute value for mmap()'s MAP_ANONYMOUS flag. */
 #undef MAP_ANONYMOUS
 
@@ -950,6 +1178,33 @@
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'ptrdiff_t'. */
 #undef PTRDIFF_T_SUFFIX
+
+/* Define to 1 if readlink fails to recognize a trailing slash. */
+#undef READLINK_TRAILING_SLASH_BUG
+
+/* Define if rename does not work when the destination file exists, as on
+   Cygwin 1.5 or Windows. */
+#undef RENAME_DEST_EXISTS_BUG
+
+/* Define if rename fails to leave hard links alone, as on NetBSD 1.6 or
+   Cygwin 1.5. */
+#undef RENAME_HARD_LINK_BUG
+
+/* Define if rename does not correctly handle slashes on the destination
+   argument, such as on Solaris 10 or NetBSD 1.6. */
+#undef RENAME_TRAILING_SLASH_DEST_BUG
+
+/* Define if rename does not correctly handle slashes on the source argument,
+   such as on Solaris 9 or cygwin 1.5. */
+#undef RENAME_TRAILING_SLASH_SOURCE_BUG
+
+/* Define to 1 if stat needs help when passed a directory name with a trailing
+   slash */
+#undef REPLACE_FUNC_STAT_DIR
+
+/* Define to 1 if stat needs help when passed a file name with a trailing
+   slash */
+#undef REPLACE_FUNC_STAT_FILE
 
 /* Define to l, ll, u, ul, ull, etc., as suitable for constants of type
    'sig_atomic_t'. */
@@ -993,9 +1248,20 @@
 # endif
 #endif
 
+/* Enable large inode numbers on Mac OS X.  */
+#ifndef _DARWIN_USE_64_BIT_INODE
+# define _DARWIN_USE_64_BIT_INODE 1
+#endif
+
+/* Number of bits in a file offset, on hosts where this is settable. */
+#undef _FILE_OFFSET_BITS
+
 /* Define to 1 if Gnulib overrides 'struct stat' on Windows so that struct
    stat.st_size becomes 64-bit. */
 #undef _GL_WINDOWS_64_BIT_ST_SIZE
+
+/* Define for large files, on AIX-style hosts. */
+#undef _LARGE_FILES
 
 /* Define to 1 if on MINIX. */
 #undef _MINIX

@@ -1,6 +1,6 @@
 /* Target dependent code for CRIS, for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, and Orjan Friberg.
@@ -37,13 +37,11 @@
 #include "osabi.h"
 #include "arch-utils.h"
 #include "regcache.h"
-#include "gdb_assert.h"
 
 #include "objfiles.h"
 
 #include "solib.h"              /* Support for shared libraries.  */
 #include "solib-svr4.h"
-#include <string.h>
 #include "dis-asm.h"
 
 #include "cris-tdep.h"
@@ -3833,7 +3831,6 @@ cris_supply_gregset (struct regcache *regcache, cris_elf_gregset_t *gregsetp)
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   int i;
   cris_elf_greg_t *regp = *gregsetp;
-  static char zerobuf[4] = {0};
 
   /* The kernel dumps all 32 registers as unsigned longs, but supply_register
      knows about the actual size of each register so that's no problem.  */
@@ -3901,9 +3898,6 @@ extern initialize_file_ftype _initialize_cris_tdep; /* -Wmissing-prototypes */
 void
 _initialize_cris_tdep (void)
 {
-  static struct cmd_list_element *cris_set_cmdlist;
-  static struct cmd_list_element *cris_show_cmdlist;
-
   struct cmd_list_element *c;
 
   gdbarch_register (bfd_arch_cris, cris_gdbarch_init, cris_dump_tdep);

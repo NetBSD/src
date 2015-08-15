@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2014 Free Software Foundation, Inc.
+# Copyright (C) 2011-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,9 +53,6 @@ if { $gdb_py_is_py24 == 1 } {
     return 0
 }
 
-set python_file ${srcdir}/${subdir}/${testfile}.py
-
-
 # Skip all tests if Python scripting is not enabled.
 if { [skip_python_tests] } { continue }
 
@@ -70,6 +67,9 @@ if ![runto_main] then {
     fail "Cannot run to main."
     return 0
 }
+
+set python_file [gdb_remote_download host \
+		     ${srcdir}/${subdir}/${testfile}.py]
 
 gdb_test_no_output "set confirm off" "disable confirmation"
 gdb_test "source $python_file" "Python script imported.*" \

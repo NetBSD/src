@@ -1,4 +1,4 @@
-#   Copyright 2007-2014 Free Software Foundation, Inc.
+#   Copyright 2007-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,14 +70,22 @@ gdb_test_multiple "break foo" "set pending breakpoint" {
      }
 }
 
-set prev_timeout $timeout
-set timeout 120
-
 gdb_test "continue" ".*Breakpoint 2.*foo.*" "continue to foo"
 gdb_test "watch g" "atchpoint 3: g" "set watchpoint on g"
 gdb_test "continue" ".*New value = 1.*" "continue to watchpoint hit"
 rerun_to_main
-gdb_test "continue" ".*Breakpoint 2.*foo.*" "continue to foo again"
-gdb_test "continue" ".*New value = 1.*" "continue to watchpoint hit again"
 
-set timeout $prev_timeout
+set savedtimeout $timeout
+if { [target_info exists gdb,timeout]
+     && $timeout < [target_info gdb,timeout] } {
+    set oldtimeout [target_info gdb,timeout]
+} else {
+    set oldtimeout $timeout
+}
+set timeout [expr $oldtimeout * 30]
+
+gdb_test "continue" ".*Breakpoint 2.*foo.*" "continue to foo again"
+
+set timeout $savedtimeout
+
+gdb_test "continue" ".*New value = 1.*" "continue to watchpoint hit again"

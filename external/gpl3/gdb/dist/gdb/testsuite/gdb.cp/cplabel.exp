@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +34,7 @@ set labels {"to_the_top" "get_out_of_here"}
 foreach m $methods {
     foreach l $labels {
 	set line [gdb_get_line_number "$m:$l"]
+	if {[test_compiler_info {clang-*-*}]} { setup_xfail clang/14500 *-*-* }
 	gdb_test "break foo::$m:$l" \
 	    "Breakpoint $decimal at $hex: file .*$srcfile, line $line\."
     }

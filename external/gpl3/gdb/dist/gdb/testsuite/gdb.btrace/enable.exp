@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2014 Free Software Foundation, Inc.
+# Copyright 2013-2015 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <christian.himpel@intel.com>
 #
@@ -50,10 +50,10 @@ gdb_test "record function-call-history" "No trace\\." "record function-call-hist
 gdb_test "record instruction-history" "No trace\\." "record instruction-history without trace"
 
 # btrace cannot be enabled twice
-gdb_test "record btrace" "The process is already being recorded\\." "record btrace the second time"
+gdb_test "record btrace" "The process is already being recorded\\.  Use \"record stop\" to stop recording first\\." "record btrace the second time"
 
 # full record cannot be activated as long as btrace is active
-gdb_test "record full" "Process record target already running\\.  Use \"record stop\" to stop record target first\\." "record full cannot be enabled"
+gdb_test "record full" "The process is already being recorded\\.  Use \"record stop\" to stop recording first\\." "record full cannot be enabled"
 
 # no trace recorded yet
 gdb_test "info record" "Active record target: record-btrace\r\nRecorded 0 instructions in 0 functions for thread 1.*\\." "info record without trace"
@@ -64,7 +64,7 @@ gdb_test "record stop" "No record target is currently active\\..*" "record stop 
 
 # enable btrace again
 gdb_test_no_output "record btrace" "record btrace re-enable"
-gdb_test "record btrace" "The process is already being recorded\\." "record btrace re-enable twice"
+gdb_test "record btrace" "The process is already being recorded\\.  Use \"record stop\" to stop recording first\\." "record btrace re-enable twice"
 
 # continue to the end and make sure we don't die
 gdb_test "continue" ".*Inferior.*exited.*" "continue to end"

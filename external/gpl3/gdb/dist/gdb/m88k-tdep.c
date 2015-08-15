@@ -1,6 +1,6 @@
 /* Target-dependent code for the Motorola 88000 series.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,9 +30,6 @@
 #include "symtab.h"
 #include "trad-frame.h"
 #include "value.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 
 #include "m88k-tdep.h"
 
@@ -799,23 +796,21 @@ m88k_supply_gregset (const struct regset *regset,
 
 /* Motorola 88000 register set.  */
 
-static struct regset m88k_gregset =
+static const struct regset m88k_gregset =
 {
   NULL,
   m88k_supply_gregset
 };
 
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
+/* Iterate over supported core file register note sections. */
 
-static const struct regset *
-m88k_regset_from_core_section (struct gdbarch *gdbarch,
-			       const char *sect_name, size_t sect_size)
+static void
+m88k_iterate_over_regset_sections (struct gdbarch *gdbarch,
+				   iterate_over_regset_sections_cb *cb,
+				   void *cb_data,
+				   const struct regcache *regcache)
 {
-  if (strcmp (sect_name, ".reg") == 0 && sect_size >= M88K_NUM_REGS * 4)
-    return &m88k_gregset;
-
-  return NULL;
+  cb (".reg", M88K_NUM_REGS * 4, &m88k_gregset, NULL, cb_data);
 }
 
 
@@ -845,8 +840,8 @@ m88k_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_pc_regnum (gdbarch, M88K_SXIP_REGNUM);
 
   /* Core file support.  */
-  set_gdbarch_regset_from_core_section
-    (gdbarch, m88k_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, m88k_iterate_over_regset_sections);
 
   set_gdbarch_print_insn (gdbarch, print_insn_m88k);
 

@@ -1,6 +1,6 @@
 /* Support for printing Ada values for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 #include "defs.h"
 #include <ctype.h>
-#include <string.h>
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -31,7 +30,6 @@
 #include "ada-lang.h"
 #include "c-lang.h"
 #include "infcall.h"
-#include "exceptions.h"
 #include "objfiles.h"
 
 static int print_field_values (struct type *, const gdb_byte *,
@@ -79,7 +77,7 @@ print_optional_low_bound (struct ui_file *stream, struct type *type,
 
   index_type = TYPE_INDEX_TYPE (type);
 
-  if (TYPE_CODE (index_type) == TYPE_CODE_RANGE)
+  while (TYPE_CODE (index_type) == TYPE_CODE_RANGE)
     {
       /* We need to know what the base type is, in order to do the
          appropriate check below.  Otherwise, if this is a subrange
@@ -186,9 +184,9 @@ val_print_packed_array_elements (struct type *type, const gdb_byte *valaddr,
 					       (i * bitsize) / HOST_CHAR_BIT,
 					       (i * bitsize) % HOST_CHAR_BIT,
 					       bitsize, elttype);
-	  if (!value_available_contents_eq (v0, value_embedded_offset (v0),
-					    v1, value_embedded_offset (v1),
-					    eltlen))
+	  if (!value_contents_eq (v0, value_embedded_offset (v0),
+				  v1, value_embedded_offset (v1),
+				  eltlen))
 	    break;
 	}
 
@@ -1057,6 +1055,12 @@ ada_val_print_ref (struct type *type, const gdb_byte *valaddr,
   if (ada_is_tagged_type (value_type (deref_val), 1))
     deref_val = ada_tag_value_at_base_address (deref_val);
 
+  /* Make sure that the object does not have an unreasonable size
+     before trying to print it.  This can happen for instance with
+     references to dynamic objects whose contents is uninitialized
+     (Eg: an array whose bounds are not set yet).  */
+  ada_ensure_varsize_limit (value_type (deref_val));
+
   val_print (value_type (deref_val),
 	     value_contents_for_printing (deref_val),
 	     value_embedded_offset (deref_val),
@@ -1172,7 +1176,7 @@ ada_value_print (struct value *val0, struct ui_file *stream,
 {
   struct value *val = ada_to_fixed_value (val0);
   CORE_ADDR address = value_address (val);
-  struct type *type = ada_check_typedef (value_type (val));
+  struct type *type = ada_check_typedef (value_enclosing_type (val));
   struct value_print_options opts;
 
   /* If it is a pointer, indicate what it points to.  */

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2014 Free Software Foundation, Inc.
+   Copyright 2010-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,6 +44,8 @@ static pthread_mutex_t thread2_tid_mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_
 
 static pthread_mutex_t terminate_mutex = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP;
 
+static pthread_barrier_t threads_started_barrier;
+
 /* Do not use alarm as it would create a ptrace event which would hang up us if
    we are being traced by GDB which we stopped ourselves.  */
 
@@ -77,6 +79,8 @@ thread_func (void *threadno_voidp)
 {
   int threadno = (intptr_t) threadno_voidp;
   int i;
+
+  pthread_barrier_wait (&threads_started_barrier);
 
   switch (threadno)
   {
@@ -272,6 +276,8 @@ main (int argc, char **argv)
 
   timed_mutex_lock (&terminate_mutex);
 
+  pthread_barrier_init (&threads_started_barrier, NULL, 3);
+
   i = pthread_create (&thread1, NULL, thread_func, (void *) (intptr_t) 1);
   assert (i == 0);
 
@@ -297,6 +303,11 @@ main (int argc, char **argv)
      otherwise.  */
 
   atexit (cleanup);
+
+  /* Wait until all threads are seen running.  On Linux (at least),
+     new threads start stopped, and the debugger must resume them.
+     Need to wait for that before stopping GDB.  */
+  pthread_barrier_wait (&threads_started_barrier);
 
   printf ("Stopping GDB PID %lu.\n", (unsigned long) tracer);
 

@@ -1,4 +1,4 @@
-#   Copyright 1998-2014 Free Software Foundation, Inc.
+#   Copyright 1998-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -60,13 +60,13 @@ if ![runto_main] then {
 
 get_debug_format
 
-#go -until 1209
-gdb_test "tbreak 1209" \
-    "Temporary breakpoint \[0-9\]+.*file.*$srcfile, line 1209.*" \
-    "tbreakpoint line 1209"
+set stop_line [gdb_get_line_number "-tbreak1-"]
+gdb_test "tbreak $stop_line" \
+    "Temporary breakpoint ${decimal}.*file.*$srcfile, line $stop_line.*" \
+    "tbreakpoint at tbreak1"
 
 gdb_test continue \
-"Continuing\\..*main \\(\\) at.*$srcfile:1209.*" \
+"Continuing\\..*main \\(\\) at.*$srcfile:$stop_line.*" \
 "run until breakpoint set at a line"
 
 
@@ -95,21 +95,21 @@ if ![gdb_skip_stdio_test "print_char_array(char_array)"] {
     }
 }
 
-#go -until 1216
-gdb_test "tbreak 1216" \
-"Temporary breakpoint.*file.*$srcfile, line 1216.*" \
-"tbreakpoint line 1216"
+set stop_line [gdb_get_line_number "-tbreak2-"]
+gdb_test "tbreak $stop_line" \
+"Temporary breakpoint.*file.*$srcfile, line $stop_line.*" \
+"tbreakpoint at tbreak2"
 
-if ![gdb_skip_stdio_test "continue to 1216"] {
-    gdb_test_sequence "continue" "continue to 1216" {
+if ![gdb_skip_stdio_test "continue to tbreak2"] {
+    gdb_test_sequence "continue" "continue to tbreak2" {
 	"\[ \t\r\n\]+array_c :"
 	"\[ \t\r\n\]+========="
 	"\[ \t\r\n\]+\[ \t\r\n\]+Z"
 	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ"
 	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZ"
 	"\[ \t\r\n\]+aZaZaZaZaZaZaZaZaZa"
-	"\[ \t\r\n\]+main.*at.*:1216"
-	"\[ \t\r\n\]+1216.*print_double_array\\(double_array\\)"
+	"\[ \t\r\n\]+main.*at.*:\[0-9\]+"
+	"\[ \t\r\n\]+\[0-9\]+.*print_double_array\\(double_array\\)"
     }
 } else {
     gdb_test "continue" ".*" ""
@@ -128,14 +128,14 @@ if ![gdb_skip_stdio_test "continue to 1216"] {
 #  }
 
 #set timeout $oldtimeout
-#go -until 1220
-gdb_test "tbreak 1220" \
-	"Temporary breakpoint.* file .*$srcfile, line 1220.*" \
-	"tbreakpoint line 1220"
+set stop_line [gdb_get_line_number "-tbreak3-"]
+gdb_test "tbreak $stop_line" \
+	"Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
+	"tbreakpoint at tbreak3"
 
-if {![gdb_skip_float_test "continuing to breakpoint 1220"] && \
-    ![gdb_skip_stdio_test "continuing to breakpoint 1220"] } {
-    gdb_test_sequence "continue" "continuing to breakpoint 1220" {
+if {![gdb_skip_float_test "continuing to tbreak3"] && \
+    ![gdb_skip_stdio_test "continuing to tbreak3"] } {
+    gdb_test_sequence "continue" "continuing to tbreak3" {
 	"Continuing\\."
 	"\[ \t\r\n\]+array_d :"
 	"\[ \t\r\n\]+========="
@@ -145,21 +145,23 @@ if {![gdb_skip_float_test "continuing to breakpoint 1220"] && \
 	"array_f :"
 	"student id :\[\t \]+.*YELLOW"
 	"array_i :"
-	"main \\(\\) at .*call-ar-st.c:1220\[ \t\r\n\]+.*print_all_arrays\\(integer_array, char_array, float_array, double_array\\)."
+	"main \\(\\) at .*call-ar-st.c:\[0-9\]+\[ \t\r\n\]+.*print_all_arrays\\(integer_array, char_array, float_array, double_array\\)."
     }
 } else {
     gdb_test "continue" ".*" ""
 }
 
 #step
+set stop_line [gdb_get_line_number "-step1-"]
 gdb_test "step" \
-    "print_all_arrays \\(array_i=<integer_array.*>, array_c=<char_array.*> .ZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZa., array_f=<float_array.*>, array_d=<double_array.*>\\) at .*call-ar-st.c:306\[ \t\r\n\]+306.*print_int_array\\(array_i\\);.*" \
+    "print_all_arrays \\(array_i=<integer_array.*>, array_c=<char_array.*> .ZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZaZa., array_f=<float_array.*>, array_d=<double_array.*>\\) at .*$srcfile:$stop_line\[ \t\r\n\]+$stop_line.*print_int_array\\(array_i\\);.*" \
     "step inside print_all_arrays"
 
 #step -over
 if ![gdb_skip_stdio_test "next over print_int_array in print_all_arrays"] {
+    set stop_line [gdb_get_line_number "-next1-"]
     gdb_test "next" \
-	"array_i :.*307.*print_char_array.*" \
+	"array_i :.*$stop_line.*print_char_array.*" \
 	"next over print_int_array in print-all_arrays"
 } else {
     gdb_test "next" ".*" ""
@@ -177,21 +179,21 @@ if {![gdb_skip_float_test "print print_double_array(array_d)"] && \
     }
 }
 
-#go -until 1236
-gdb_test "tbreak 1236" \
-"Temporary breakpoint.* file .*$srcfile, line 1236.*" \
-"tbreakpoint line 1236"
+set stop_line [gdb_get_line_number "-tbreak4-"]
+gdb_test "tbreak $stop_line" \
+"Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
+"tbreakpoint at tbreak4"
 
-if {![gdb_skip_float_test "continuing to 1236"] && \
-    ![gdb_skip_stdio_test "continuing to 1236"] } {
-    gdb_test_sequence "continue" "continuing to 1236" {
+if {![gdb_skip_float_test "continuing to tbreak4"] && \
+    ![gdb_skip_stdio_test "continuing to tbreak4"] } {
+    gdb_test_sequence "continue" "continuing to tbreak4" {
 	"Continuing\\..*array_c"
 	"array_f"
 	"\[ \t\r\n\]+array_d :"
 	"\[ \t\r\n\]+========="
 	"\[ \t\r\n\]+0.000000"
 	"\[ \t\r\n\]+23.456\[0-9\]*  46.913\[0-9\]*  70.370\[0-9\]*  93.826\[0-9\]*  117.283\[0-9\]*  140.740\[0-9\]*  164.196\[0-9\]*  187.653\[0-9\]*"
-	"\[ \t\r\n\]+.*HELLO WORLD.*main \\(\\) at .*call-ar-st.c:1236.*printf\\(.BYE BYE FOR NOW.n.\\)."
+	"\[ \t\r\n\]+.*HELLO WORLD.*main \\(\\) at .*call-ar-st.c:\[0-9\]+.*printf\\(.BYE BYE FOR NOW.n.\\)."
     }
 } else {
     gdb_test "continue" ".*" ""
@@ -207,10 +209,11 @@ if ![gdb_skip_stdio_test "print sum_array_print(...)"] {
 }
 
 #step over
-if ![gdb_skip_stdio_test "next to 1237"] {
+set stop_line [gdb_get_line_number "-next2-"]
+if ![gdb_skip_stdio_test "next to next2"] {
     gdb_test "next" \
-	"BYE BYE FOR NOW.*1237.*printf\\(.VERY GREEN GRASS.n.\\);.*" \
-	"next to 1237"
+	"BYE BYE FOR NOW.*$stop_line.*printf\\(.VERY GREEN GRASS.n.\\);.*" \
+	"next to next2"
 } else {
     gdb_test "next" ".*" ""
 }
@@ -223,14 +226,14 @@ if ![gdb_skip_stdio_test "print print_array_rep(...)"] {
 	"print print_array_rep(*list1, *list2, *list3)"
 }
 
-#go -until 1241
-gdb_test "tbreak 1241" \
-    "Temporary breakpoint..* file .*$srcfile, line 1241.*" \
-    "tbreakpoint line 1241"
+set stop_line [gdb_get_line_number "-tbreak5-"]
+gdb_test "tbreak $stop_line" \
+    "Temporary breakpoint..* file .*$srcfile, line $stop_line.*" \
+    "tbreakpoint at tbreak5"
 
 gdb_test "continue" \
-    "main \\(\\) at .*call-ar-st.c:1241\r\n1241\[\t \]+sum_array_print\\(10, \\*list1, \\*list2, \\*list3, \\*list4\\);.*" \
-    "continue to 1241"
+    "main \\(\\) at .*$srcfile:$stop_line\r\n$stop_line\[\t \]+sum_array_print\\(10, \\*list1, \\*list2, \\*list3, \\*list4\\);.*" \
+    "continue to tbreak5"
 
 
 # Run into sum_array_print, and verify that the arguments were passed
@@ -242,11 +245,11 @@ gdb_test "continue" \
 # may itself be a bug, but it's not the one we're trying to catch
 # here.  I've added something to step-test.exp for this.
 gdb_test "break sum_array_print" \
-	".*Breakpoint ${decimal}: file .*call-ar-st.c, line.*" \
+	".*Breakpoint ${decimal}: file .*$srcfile, line.*" \
 	"set breakpoint in sum_array_print"
 gdb_test_no_output "set print frame-arguments all"
 gdb_test "continue" \
-	".*Breakpoint ${decimal}, sum_array_print \\(seed=10, linked_list1=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .4, 6, 8, 10, 12, 14, 16, 18, 20, 22., head = 0., linked_list2=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .8, 10, 12, 14, 16, 18, 20, 22, 24, 26., head = 0., linked_list3=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .10, 12, 14, 16, 18, 20, 22, 24, 26, 28., head = 0., linked_list4=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .20, 22, 24, 26, 28, 30, 32, 34, 36, 38., head = 0.\\) at .*call-ar-st.c:1105\[ \t\n\r\]+1105.*printf\\(.Sum of 4 arrays, by element \\(add in seed as well\\).*\\);.*" \
+    ".*Breakpoint ${decimal}, sum_array_print \\(seed=10, linked_list1=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .4, 6, 8, 10, 12, 14, 16, 18, 20, 22., head = 0., linked_list2=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .8, 10, 12, 14, 16, 18, 20, 22, 24, 26., head = 0., linked_list3=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .10, 12, 14, 16, 18, 20, 22, 24, 26, 28., head = 0., linked_list4=.next_index = .1, 2, 3, 4, 5, 6, 7, 8, 9, 10., values = .20, 22, 24, 26, 28, 30, 32, 34, 36, 38., head = 0.\\) at .*$srcfile:${decimal}\[ \t\n\r\]+${decimal}.*printf\\(.Sum of 4 arrays, by element \\(add in seed as well\\).*\\);.*" \
 	"check args of sum_array_print"
 
 #call print_array_rep(linked_list1, linked_list2, linked_list3)
@@ -263,15 +266,15 @@ gdb_test "continue" \
 #}
 
 
-#go -until 1281
-gdb_test "tbreak 1281" \
-    "Temporary breakpoint.* file .*call-ar-st.c, line 1281.*" \
-    "tbreakpoint line 1281"
+set stop_line [gdb_get_line_number "-tbreak6-"]
+gdb_test "tbreak $stop_line" \
+    "Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
+    "tbreakpoint at tbreak6"
 
-if ![gdb_skip_stdio_test "continuing to 1281"] {
+if ![gdb_skip_stdio_test "continuing to tbreak6"] {
     gdb_test "continue" \
-	"Continuing\\..*Sum of 4 arrays.*Contents of linked list1.*Contents of two_floats_t.*main \\(\\) at .*call-ar-st.c:1281.*c = 0.*" \
-	"continue to 1281"
+	"Continuing\\..*Sum of 4 arrays.*Contents of linked list1.*Contents of two_floats_t.*main \\(\\) at .*$srcfile:$stop_line.*c = 0.*" \
+	"continue to tbreak6"
 } else {
     gdb_test "continue" ".*" ""
 }
@@ -339,13 +342,14 @@ if {![gdb_skip_float_test "print print_ten_doubles(...)"] && \
     }
 }
 
-#go -until 1286
-gdb_test "tbreak 1286" \
-    "Temporary breakpoint .* file .*call-ar-st.c, line 1286.*" \
-    "tbreakpoint line 1286"
+set stop_line [gdb_get_line_number "-tbreak7-"]
+gdb_test "tbreak $stop_line" \
+    "Temporary breakpoint .* file .*$srcfile, line $stop_line.*" \
+    "tbreakpoint at tbreak7"
 
-gdb_test continue "Continuing\\..*main \\(.*\\) at.*call-ar-st.c:1286\[\t\r\n \]+1286.*print_long_arg_list \\( a, b, c, d, e, f, .struct1, .struct2, .struct3, .struct4,.*" "continue to 1286"
+gdb_test continue "Continuing\\..*main \\(.*\\) at.*$srcfile:$stop_line\[\t\r\n \]+$stop_line.*print_long_arg_list \\( a, b, c, d, e, f, .struct1, .struct2, .struct3, .struct4,.*" "continue to tbreak7"
 
+set stop_line [gdb_get_line_number "-step2-"]
 if { [istarget "hppa*-*-hpux*"] } {
     #
     # NOTE:(FIXME)
@@ -359,24 +363,24 @@ if { [istarget "hppa*-*-hpux*"] } {
     # guo 990621
     #
     gdb_test "step" \
-	"print_long_arg_list.*\\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:992\[\r\n\]+992\[ \t\]+printf\\(\"double :.*\", a\\);" \
+	"print_long_arg_list.*\\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);" \
 	"step into print_long_arg_list"
 } else {
 
     # We can't just assume that a "step" will get us into
     # print_long_arg_list here,either.
     gdb_test "tbreak print_long_arg_list" \
-	"Temporary breakpoint .* file .*call-ar-st.c, line .*" \
+	"Temporary breakpoint .* file .*$srcfile, line .*" \
 	"tbreak in print_long_arg_list after stepping into memcpy"
     # The short match case below handles cases where a buffer
     # overflows or something, and expect can't deal with the full
     # line.  Perhaps a more elegant solution exists... -sts 1999-08-17
     if {![gdb_skip_float_test "step into print_long_arg_list"]} {
 	gdb_test_multiple "continue" "step into print_long_arg_list" {
-	    -re ".*print_long_arg_list \\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:992\[\r\n\]+992\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
+	    -re ".*print_long_arg_list \\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}, five_char=\{ch1 = 108 \'l\', ch2 = 109 \'m\', ch3 = 110 \'n\', ch4 = 111 \'o\', ch5 = 112 \'p\'\}, int_char_combo=\{int1 = 123, ch1 = 122 \'z\'\}, d1=\{double1 = 10.5\}, d2=\{double1 = -3.375\}, d3=\{double1 = 675.09375\}, f1=\{float1 = 45.2340012, float2 = 43.5999985\}, f2=\{float1 = 78.0100021, float2 = 122.099998\}, f3=\{float1 = -1232.34497, float2 = -199.210007\}\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
 		pass "step into print_long_arg_list"
 	    }
-	    -re ".*print_long_arg_list.*\\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}.*\\) at .*${srcfile}:992\[\r\n\]+992\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
+	    -re ".*print_long_arg_list.*\\(a=22.25, b=33.375, c=0, d=-25, e=100, f=2345, struct1=\{value = 6, head = 0\}, struct2=\{value = 10, head = 0\}, struct3=\{value = 12, head = 0\}, struct4=\{value = 14, head = 0\}, flags=\{alpha = 1, beta = 0, gamma = 1, delta = 0, epsilon = 1, omega = 0\}, flags_combo=\{alpha = 1, beta = 0, ch1 = 121 \'y\', gamma = 1, delta = 0, ch2 = 110 \'n\', epsilon = 1, omega = 0\}, three_char=\{ch1 = 97 \'a\', ch2 = 98 \'b\', ch3 = 99 \'c\'\}.*\\) at .*${srcfile}:$stop_line\[\r\n\]+$stop_line\[ \t\]+printf\\(\"double :.*\", a\\);.*$gdb_prompt $" {
 		pass "step into print_long_arg_list (short match)"
 	    }
 	}
@@ -442,38 +446,39 @@ if {![gdb_skip_float_test "print_small_structs from print_long_arg_list"] && \
 }
 
 
-#go -until 1300
-gdb_test "tbreak 1300" \
-    "Temporary breakpoint.* file .*call-ar-st.c, line 1300.*" \
-    "tbreakpoint line 1300"
+set stop_line [gdb_get_line_number "-tbreak8-"]
+gdb_test "tbreak $stop_line" \
+    "Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
+    "tbreakpoint at tbreak8"
 
-if ![gdb_skip_stdio_test "continuing to 1300"] {
-    gdb_test "continue" "Continuing\\..*Contents of two_floats_t:.*main \\(\\) at.*call-ar-st.c:1300.*1300.*init_bit_flags_combo\\(flags_combo, \\(unsigned\\)1, \\(unsigned\\)0, .y.,.*" \
-	    "continue to 1300"
+if ![gdb_skip_stdio_test "continuing to tbreak8"] {
+    gdb_test "continue" "Continuing\\..*Contents of two_floats_t:.*main \\(\\) at.*$srcfile:$stop_line.*$stop_line.*init_bit_flags_combo\\(flags_combo, \\(unsigned\\)1, \\(unsigned\\)0, .y.,.*" \
+	    "continue to tbreak8"
 } else {
     gdb_test "continue" ".*" ""
 }
 
 #step
+set stop_line [gdb_get_line_number "-step3-"]
 gdb_test "step" \
-    "init_bit_flags_combo \\(bit_flags_combo=, a=1, b=0, ch1=121 .y., g=1, d=0, ch2=110 .n., e=1, o=0\\) at .*call-ar-st.c:416\[ \t\n\r\]+416.*bit_flags_combo->alpha = a;" \
+    "init_bit_flags_combo \\(bit_flags_combo=, a=1, b=0, ch1=121 .y., g=1, d=0, ch2=110 .n., e=1, o=0\\) at .*$srcfile:$stop_line\[ \t\n\r\]+$stop_line.*bit_flags_combo->alpha = a;.*" \
     "step into init_bit_flags_combo"
 
 #call print_bit_flags_combo(*bit_flags_combo)
-if ![gdb_skip_stdio_test "continuing to 1300"] {
+if ![gdb_skip_stdio_test "continuing at step3"] {
     gdb_test "print print_bit_flags_combo(*bit_flags_combo)" \
 	"alpha.*gamma.*epsilon.*ch1: y.*ch2: n.*" \
 	"print print_bit_flags_combo from init_bit_flags_combo"
 }
 
 
-#go -until 1305
-gdb_test "tbreak 1305" \
-    "Temporary breakpoint.* file .*call-ar-st.c, line 1305.*" \
-    "tbreakpoint line 1305"
+set stop_line [gdb_get_line_number "-tbreak9-"]
+gdb_test "tbreak $stop_line" \
+    "Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
+    "tbreakpoint at tbreak9"
 
-gdb_test continue "Continuing\\..*main \\(\\) at .*call-ar-st.c:1305\[\r\n\t \]+1305.*init_int_char_combo\\(int_char_combo, 13, .!.\\);" \
-"continue to 1305"
+gdb_test continue "Continuing\\..*main \\(\\) at .*$srcfile:$stop_line\[\r\n\t \]+$stop_line.*init_int_char_combo\\(int_char_combo, 13, .!.\\);.*" \
+"continue to tbreak9"
 
 #call print_long_arg_list(a, b, c, d, e, f, *struct1, *struct2, *struct3, *struct4, *flags, *flags_combo, *three_char, *five_char, *int_char_combo, *d1, *d2, *d3, *f1, *f2, *f3)
 
@@ -526,13 +531,13 @@ if {![gdb_skip_float_test "print print_long_arg_list"] && \
 }
 
 
-#go -until 1311
-gdb_test "tbreak 1311" \
-    "Temporary breakpoint.* file .*call-ar-st.c, line 1311.*" \
-    "tbreakpoint line 1311"
+set stop_line [gdb_get_line_number "-tbreak10-"]
+gdb_test "tbreak $stop_line" \
+    "Temporary breakpoint.* file .*$srcfile, line $stop_line.*" \
+    "tbreakpoint at tbreak10"
 
-gdb_test continue "Continuing\\..*main \\(\\) at .*call-ar-st.c:1311\[ \t\n\r\]+1311.*compute_with_small_structs\\(35\\);" \
-"continue to 1311"
+gdb_test continue "Continuing\\..*main \\(\\) at .*$srcfile:$stop_line\[ \t\n\r\]+$stop_line.*compute_with_small_structs\\(35\\);.*" \
+"continue to tbreak10"
 
 
 #call sum_struct_print(10, *struct1, *struct2, *struct3, *struct4)

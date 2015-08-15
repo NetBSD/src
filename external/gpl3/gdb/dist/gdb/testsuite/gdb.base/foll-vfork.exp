@@ -1,4 +1,4 @@
-#   Copyright 1997-2014 Free Software Foundation, Inc.
+#   Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -121,7 +121,7 @@ proc vfork_parent_follow_through_step {} {
 
    set test "step"
    gdb_test_multiple "next" $test {
-       -re "Detaching after fork from.*if \\(pid == 0\\).*$gdb_prompt " {
+       -re "Detaching after vfork from.*if \\(pid == 0\\).*$gdb_prompt " {
 	   pass $test
        }
    }
@@ -146,7 +146,7 @@ proc vfork_parent_follow_to_bp {} {
 
    set test "continue to bp"
    gdb_test_multiple "continue" $test {
-       -re ".*Detaching after fork from child process.*Breakpoint.*${bp_location}.*$gdb_prompt " {
+       -re ".*Detaching after vfork from child process.*Breakpoint.*${bp_location}.*$gdb_prompt " {
 	   pass $test
        }
    }
@@ -195,7 +195,7 @@ proc vfork_and_exec_child_follow_to_main_bp {} {
 
    set test "continue to bp"
    gdb_test_multiple "continue" $test {
-      -re "Attaching after.* vfork to.*xecuting new program.*Breakpoint.*vforked-prog.c:${linenum}.*$gdb_prompt " {
+      -re "Attaching after.* vfork to.*Detaching vfork parent.*xecuting new program.*Breakpoint.*vforked-prog.c:${linenum}.*$gdb_prompt " {
 	  pass $test
       }
    }
@@ -239,7 +239,7 @@ proc vfork_and_exec_child_follow_through_step {} {
        #
        set linenum [gdb_get_line_number "printf(\"Hello from vforked-prog" ${srcfile2}]
        gdb_test_multiple "next" $test {
-	   -re "Attaching after fork to.*Executing new program.*Breakpoint.*vforked-prog.c:${linenum}.*$gdb_prompt " {
+	   -re "Attaching after vfork to.*Executing new program.*Breakpoint.*vforked-prog.c:${linenum}.*$gdb_prompt " {
 	       pass "$test"
 	   }
        }

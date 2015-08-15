@@ -1,4 +1,4 @@
-#   Copyright 1997-2014 Free Software Foundation, Inc.
+#   Copyright 1997-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -119,7 +119,7 @@ proc do_exec_tests {} {
    #
    send_gdb "next 3\n"
    gdb_expect {
-     -re "20.*execlp.*$gdb_prompt $"\
+     -re "execlp \\(.*$gdb_prompt $"\
                      {pass "step to exec call"}
      -re "$gdb_prompt $" {fail "step to exec call"}
      timeout         {fail "(timeout) step to exec call"}
@@ -149,9 +149,10 @@ proc do_exec_tests {} {
    # Try stepping through an execlp call, without catching it.
    # We should stop in execd-program, at its first statement.
    #
+   set execd_line [gdb_get_line_number "after-exec" $srcfile2]
    send_gdb "next\n"
    gdb_expect {
-     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:${execd_line}.*int  local_j = argc;.*$gdb_prompt $"\
                      {pass "step through execlp call"}
      -re "$gdb_prompt $" {fail "step through execlp call"}
      timeout         {fail "(timeout) step through execlp call"}
@@ -162,7 +163,7 @@ proc do_exec_tests {} {
    #
    send_gdb "next\n"
    gdb_expect {
-     -re "26.*printf.*$gdb_prompt $"\
+     -re "printf \\(.Hello .*$gdb_prompt $"\
                      {pass "step after execlp call"}
      -re "$gdb_prompt $" {fail "step after execlp call"}
      timeout         {fail "(timeout) step after execlp call"}
@@ -256,7 +257,7 @@ proc do_exec_tests {} {
    #
    send_gdb "continue\n"
    gdb_expect {
-     -re ".*${srcfile2}:23.*$gdb_prompt $"\
+     -re ".*${srcfile2}:${execd_line}.*$gdb_prompt $"\
                      {pass "continue after hit catch exec"}
      -re "$gdb_prompt $" {fail "continue after hit catch exec"}
      timeout         {fail "(timeout) continue after hit catch exec"}
@@ -276,16 +277,17 @@ proc do_exec_tests {} {
    # Verify that we can follow through follow an execl()
    # call.  (We must jump around earlier exec* calls.)
    #
-   send_gdb "tbreak 27\n"
+   set tbreak_line [gdb_get_line_number "tbreak-execl" $srcfile]
+   send_gdb "tbreak ${tbreak_line}\n"
    gdb_expect {
-     -re "Temporary breakpoint .*file .*${srcfile}, line 27.*$gdb_prompt $"\
+     -re "Temporary breakpoint .*file .*${srcfile}, line ${tbreak_line}.*$gdb_prompt $"\
                      {pass "prepare to jump to execl call"}
      -re "$gdb_prompt $" {fail "prepare to jump to execl call"}
      timeout         {fail "(timeout) prepare to jump to execl call"}
    }
-   send_gdb "jump 27\n"
+   send_gdb "jump ${tbreak_line}\n"
    gdb_expect {
-     -re "main.* at .*${srcfile}:27.*$gdb_prompt $"\
+     -re "main.* at .*${srcfile}:${tbreak_line}.*$gdb_prompt $"\
                      {pass "jump to execl call"}
      -re "$gdb_prompt $" {fail "jump to execl call"}
      timeout         {fail "(timeout) jump to execl call"}
@@ -298,14 +300,14 @@ proc do_exec_tests {} {
    #
    send_gdb "next 2\n"
    gdb_expect {
-     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:${execd_line}.*int  local_j = argc;.*$gdb_prompt $"\
                      {pass "step through execl call"}
      -re "$gdb_prompt $" {fail "step through execl call"}
      timeout         {fail "(timeout) step through execl call"}
    }
    send_gdb "next\n"
    gdb_expect {
-     -re "26.*printf.*$gdb_prompt $"\
+     -re "printf \\(.Hello .*$gdb_prompt $"\
                      {pass "step after execl call"}
      -re "$gdb_prompt $" {fail "step after execl call"}
      timeout         {fail "(timeout) step after execl call"}
@@ -336,30 +338,31 @@ proc do_exec_tests {} {
    # Verify that we can follow through follow an execv()
    # call.  (We must jump around earlier exec* calls.)
    #
-   send_gdb "tbreak 41\n"
+   set tbreak_line [gdb_get_line_number "tbreak-execv"]
+   send_gdb "tbreak ${tbreak_line}\n"
    gdb_expect {
-     -re "Temporary breakpoint .*file .*${srcfile}, line 41.*$gdb_prompt $"\
+     -re "Temporary breakpoint .*file .*${srcfile}, line ${tbreak_line}.*$gdb_prompt $"\
                      {pass "prepare to jump to execv call"}
      -re "$gdb_prompt $" {fail "prepare to jump to execv call"}
      timeout         {fail "(timeout) prepare to jump to execv call"}
    }
-   send_gdb "jump 41\n"
+   send_gdb "jump ${tbreak_line}\n"
    gdb_expect {
-     -re "main.* at .*${srcfile}:41.*$gdb_prompt $"\
+     -re "main.* at .*${srcfile}:${tbreak_line}.*$gdb_prompt $"\
                      {pass "jump to execv call"}
      -re "$gdb_prompt $" {fail "jump to execv call"}
      timeout         {fail "(timeout) jump to execv call"}
    }
    send_gdb "next\n"
    gdb_expect {
-     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:${execd_line}.*int  local_j = argc;.*$gdb_prompt $"\
                      {pass "step through execv call"}
      -re "$gdb_prompt $" {fail "step through execv call"}
      timeout         {fail "(timeout) step through execv call"}
    }
    send_gdb "next\n"
    gdb_expect {
-     -re "26.*printf.*$gdb_prompt $"\
+     -re "printf \\(.Hello .*$gdb_prompt $"\
                      {pass "step after execv call"}
      -re "$gdb_prompt $" {fail "step after execv call"}
      timeout         {fail "(timeout) step after execv call"}
@@ -393,7 +396,7 @@ proc do_exec_tests {} {
    #
    send_gdb "continue\n"
    gdb_expect {
-     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:23.*int  local_j = argc;.*$gdb_prompt $"\
+     -re ".*xecuting new program: .*${testfile2}.*${srcfile2}:${execd_line}.*int  local_j = argc;.*$gdb_prompt $"\
                      {pass "continue through exec"}
      -re "$gdb_prompt $" {fail "continue through exec"}
      timeout         {fail "(timeout) continue through exec"}

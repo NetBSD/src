@@ -1,6 +1,6 @@
 /* Fortran language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2014 Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C definitions by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -21,8 +21,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 struct type_print_options;
+struct parser_state;
 
-extern int f_parse (void);
+extern int f_parse (struct parser_state *);
 
 extern void f_error (char *);	/* Defined in f-exp.y */
 

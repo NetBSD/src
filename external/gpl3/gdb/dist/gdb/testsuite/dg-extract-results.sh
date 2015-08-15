@@ -6,7 +6,7 @@
 # The resulting file can be used with test result comparison scripts for
 # results from tests that were run in parallel.  See usage() below.
 
-# Copyright (C) 2008-2014 Free Software Foundation, Inc.
+# Copyright (C) 2008-2015 Free Software Foundation, Inc.
 # Contributed by Janis Johnson <janis187@us.ibm.com>
 #
 # This file is part of GCC.
@@ -25,6 +25,15 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 PROGNAME=dg-extract-results.sh
+
+# Try to use the python version if possible, since it tends to be faster.
+PYTHON_VER=`echo "$0" | sed 's/sh$/py/'`
+if test "$PYTHON_VER" != "$0" &&
+   test -f "$PYTHON_VER" &&
+   python -c 'import sys; sys.exit (0 if sys.version_info >= (2, 6) else 1)' \
+     > /dev/null 2> /dev/null; then
+  exec python $PYTHON_VER "$@"
+fi
 
 usage() {
   cat <<EOF >&2

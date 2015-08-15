@@ -39,7 +39,7 @@ host_modules= { module= cgen; };
 host_modules= { module= dejagnu; };
 host_modules= { module= etc; };
 host_modules= { module= fastjar; no_check_cross= true; };
-host_modules= { module= fixincludes;
+host_modules= { module= fixincludes; bootstrap=true;
 		missing= TAGS; };
 host_modules= { module= flex; no_check_cross= true; };
 host_modules= { module= gas; bootstrap=true; };
@@ -271,6 +271,7 @@ flags_to_pass = { flag= LIBCFLAGS_FOR_TARGET ; };
 flags_to_pass = { flag= LIBCXXFLAGS_FOR_TARGET ; };
 flags_to_pass = { flag= NM_FOR_TARGET ; };
 flags_to_pass = { flag= OBJDUMP_FOR_TARGET ; };
+flags_to_pass = { flag= OBJCOPY_FOR_TARGET ; };
 flags_to_pass = { flag= RANLIB_FOR_TARGET ; };
 flags_to_pass = { flag= READELF_FOR_TARGET ; };
 flags_to_pass = { flag= STRIP_FOR_TARGET ; };
@@ -336,6 +337,7 @@ dependencies = { module=all-libcpp; on=all-intl; };
 dependencies = { module=all-fixincludes; on=all-libiberty; };
 
 dependencies = { module=all-gnattools; on=all-target-libada; };
+dependencies = { module=all-gnattools; on=all-target-libstdc++-v3; };
 
 dependencies = { module=all-lto-plugin; on=all-libiberty; };
 
@@ -418,6 +420,7 @@ dependencies = { module=all-ld; on=all-build-bison; };
 dependencies = { module=all-ld; on=all-build-flex; };
 dependencies = { module=all-ld; on=all-intl; };
 dependencies = { module=all-ld; on=all-gas; };
+dependencies = { module=all-ld; on=all-binutils; };
 dependencies = { module=install-ld; on=install-gold; };
 dependencies = { module=install-strip-ld; on=install-strip-gold; };
 dependencies = { module=configure-gold; on=configure-intl; };

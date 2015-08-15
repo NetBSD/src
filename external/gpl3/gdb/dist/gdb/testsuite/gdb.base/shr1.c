@@ -7,12 +7,7 @@ float sg = 5.5;
 int sgi = 2;
 static int sgs = 7;
 
-#ifdef PROTOTYPES
 int shr1(int x)
-#else
-int shr1(x)
-int x;
-#endif
 {
   f mumble;
   int l;
@@ -29,32 +24,17 @@ int x;
   return 2*x;
 }
 
-#ifdef PROTOTYPES
 static int shr1_local(int x)
-#else
-static int shr1_local(x)
-int x;
-#endif
 {
   return 2*x;
 }
 
-#ifdef PROTOTYPES
 int structarg(struct s x)
-#else
-int structarg(x)
-struct s x;
-#endif
 {
   return x.a;
 }
 
-#ifdef PROTOTYPES
 int pstructarg(struct s *x)
-#else
-int pstructarg(x)
-struct s *x;
-#endif
 {
   return x->a;
 }

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2014 Free Software Foundation, Inc.
+   Copyright 2008-2015 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Keith Seitz.
 
@@ -49,8 +49,7 @@ void tclass<short>::do_something () { } // tclass<short>::do_something
 
 // A simple template with multiple template parameters
 template <class A, class B, class C, class D, class E>
-void flubber (void) // flubber
-{
+void flubber (void) { // flubber
   A a;
   B b;
   C c;
@@ -144,128 +143,128 @@ public:
   int overload (base& b) const { return 5; } // base::overload(base&) const
 
   // Operators
-  int operator+ (base const& o) const // base::operator+
-  { return foo_ + o.foo_; }
+  int operator+ (base const& o) const { // base::operator+
+    return foo_ + o.foo_;  }
 
-  base operator++ (void) // base::operator++
-  { ++foo_; return *this; }
+  base operator++ (void) { // base::operator++
+    ++foo_; return *this; }
 
-  base operator+=(base const& o) // base::operator+=
-  { foo_ += o.foo_; return *this; }
+  base operator+=(base const& o) { // base::operator+=
+    foo_ += o.foo_; return *this; }
 
-  int operator- (base const& o) const // base::operator-
-  { return foo_ - o.foo_; }
+  int operator- (base const& o) const { // base::operator-
+    return foo_ - o.foo_; }
 
-  base operator-- (void) // base::operator--
-  { --foo_; return *this; }
+  base operator-- (void) { // base::operator--
+    --foo_; return *this; }
 
-  base operator-= (base const& o) // base::operator-=
-  { foo_ -= o.foo_; return *this; }
+  base operator-= (base const& o) { // base::operator-=
+    foo_ -= o.foo_; return *this; }
 
-  int operator* (base const& o) const // base::operator*
-  { return foo_ * o.foo_; }
+  int operator* (base const& o) const { // base::operator*
+    return foo_ * o.foo_; }
 
-  base operator*= (base const& o) // base::operator*=
-  { foo_ *= o.foo_; return *this; }
+  base operator*= (base const& o) { // base::operator*=
+    foo_ *= o.foo_; return *this; }
 
-  int operator/ (base const& o) const // base::operator/
-  { return foo_ / o.foo_; }
+  int operator/ (base const& o) const { // base::operator/
+    return foo_ / o.foo_; }
 
-  base operator/= (base const& o) // base::operator/=
-  { foo_ /= o.foo_; return *this; }
+  base operator/= (base const& o) { // base::operator/=
+    foo_ /= o.foo_; return *this; }
 
-  int operator% (base const& o) const // base::operator%
-  { return foo_ % o.foo_; }
+  int operator% (base const& o) const { // base::operator%
+    return foo_ % o.foo_; }
   
-  base operator%= (base const& o) // base::operator%=
-  { foo_ %= o.foo_; return *this; }
+  base operator%= (base const& o) { // base::operator%=
+    foo_ %= o.foo_; return *this; }
 
-  bool operator< (base const& o) const // base::operator<
-  { return foo_ < o.foo_; }
+  bool operator< (base const& o) const { // base::operator<
+    return foo_ < o.foo_; }
 
-  bool operator<= (base const& o) const // base::operator<=
-  { return foo_ <= o.foo_; }
+  bool operator<= (base const& o) const { // base::operator<=
+    return foo_ <= o.foo_; }
 
-  bool operator> (base const& o) const // base::operator>
-  { return foo_ > o.foo_; }
+  bool operator> (base const& o) const { // base::operator>
+    return foo_ > o.foo_; }
 
-  bool operator>= (base const& o) const // base::operator>=
-  { return foo_ >= o.foo_; }
+  bool operator>= (base const& o) const { // base::operator>=
+    return foo_ >= o.foo_; }
 
-  bool operator!= (base const& o) const // base::operator!=
-  { return foo_ != o.foo_; }
+  bool operator!= (base const& o) const { // base::operator!=
+    return foo_ != o.foo_; }
 
-  bool operator== (base const& o) const // base::operator==
-  { return foo_ == o.foo_; }
+  bool operator== (base const& o) const { // base::operator==
+    return foo_ == o.foo_; }
 
-  bool operator! (void) const // base::operator!
-  { return !foo_; }
+  bool operator! (void) const { // base::operator!
+    return !foo_; }
 
-  bool operator&& (base const& o) const // base::operator&&
-  { return foo_ && o.foo_; }
+  bool operator&& (base const& o) const { // base::operator&&
+    return foo_ && o.foo_; }
 
-  bool operator|| (base const& o) const // base::operator||
-  { return foo_ || o.foo_; }
+  bool operator|| (base const& o) const { // base::operator||
+    return foo_ || o.foo_; }
 
-  int operator<< (int value) const // base::operator<<
-  { return foo_  << value; }
+  int operator<< (int value) const { // base::operator<<
+    return foo_  << value; }
 
-  base operator<<= (int value) // base::operator<<=
-  { foo_ <<= value; return *this; }
+  base operator<<= (int value) { // base::operator<<=
+    foo_ <<= value; return *this; }
 
-  int operator>> (int value) const // base::operator>>
-  { return foo_  >> value; }
+  int operator>> (int value) const { // base::operator>>
+    return foo_  >> value; }
 
-  base operator>>= (int value) // base::operator>>=
-  { foo_ >>= value; return *this; }
+  base operator>>= (int value) { // base::operator>>=
+    foo_ >>= value; return *this; }
 
-  int operator~ (void) const // base::operator~
-  { return ~foo_; }
+  int operator~ (void) const { // base::operator~
+    return ~foo_; }
 
-  int operator& (base const& o) const // base::operator&
-  { return foo_ & o.foo_; }
+  int operator& (base const& o) const { // base::operator&
+    return foo_ & o.foo_; }
 
-  base operator&= (base const& o) // base::operator&=
-  { foo_ &= o.foo_; return *this; }
+  base operator&= (base const& o) { // base::operator&=
+    foo_ &= o.foo_; return *this; }
 
-  int operator| (base const& o) const // base::operator|
-  { return foo_ | o.foo_; }
+  int operator| (base const& o) const { // base::operator|
+    return foo_ | o.foo_; }
 
-  base operator|= (base const& o) // base::operator|=
-  { foo_ |= o.foo_; return *this; }
+  base operator|= (base const& o) { // base::operator|=
+    foo_ |= o.foo_; return *this; }
   
-  int operator^ (base const& o) const // base::operator^
-  { return foo_ ^ o.foo_; }
+  int operator^ (base const& o) const { // base::operator^
+    return foo_ ^ o.foo_; }
 
-  base operator^= (base const& o) // base::operator^=
-  { foo_ ^= o.foo_; return *this; }
+  base operator^= (base const& o) { // base::operator^=
+    foo_ ^= o.foo_; return *this; }
 
-  base operator= (base const& o) // base::operator=
-  { foo_ = o.foo_; return *this; }
+  base operator= (base const& o) { // base::operator=
+    foo_ = o.foo_; return *this; }
 
-  void operator() (void) const // base::operator()
-  { return; }
+  void operator() (void) const { // base::operator()
+    return; }
 
-  int operator[] (int idx) const // base::operator[]
-  { return idx; }
+  int operator[] (int idx) const { // base::operator[]
+    return idx; }
 
-  void* operator new (size_t size) throw () // base::operator new
-  { return malloc (size); }
+  void* operator new (size_t size) throw () { // base::operator new
+    return malloc (size); }
 
-  void operator delete (void* ptr) // base::operator delete
-  { free (ptr); }
+  void operator delete (void* ptr) { // base::operator delete
+    free (ptr); }
 
-  void* operator new[] (size_t size) throw () // base::operator new[]
-  { return malloc (size); }
+  void* operator new[] (size_t size) throw () { // base::operator new[]
+    return malloc (size); }
 
-  void operator delete[] (void* ptr) // base::operator delete[]
-  { free (ptr); }
+  void operator delete[] (void* ptr) { // base::operator delete[]
+    free (ptr); }
 
-  base const* operator-> (void) const // base::opeartor->
-  { return this; }
+  base const* operator-> (void) const { // base::opeartor->
+    return this; }
 
-  int operator->* (base const& b) const // base::operator->*
-  {  return foo_ * b.foo_; }
+  int operator->* (base const& b) const { // base::operator->*
+    return foo_ * b.foo_; }
 
   operator char* () const { return const_cast<char*> ("hello"); } // base::operator char*
   operator int () const { return 21; } // base::operator int
@@ -298,8 +297,7 @@ class derived : public base1, public base2
 {
   public:
   derived(void) : foo_ (4) { } // derived::derived
-  void a_function (void) const // derived::a_function
-  { 
+  void a_function (void) const { // derived::a_function
     this->base1::a_function ();
     this->base2::a_function ();
   }

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 1988-2014 Free Software Foundation, Inc.
+# Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -123,13 +123,19 @@ test_set "set variable v_signed_char=97" "print v_signed_char" ".\[0-9\]* = 97 \
 test_set "set variable v_signed_char=126" "print v_signed_char" ".\[0-9\]* = 126 \'~\'"        "set variable signed char=126 ('~')" 
 test_set "set variable v_signed_char=127" "print v_signed_char" ".\[0-9\]* = 127 \'.177\'"        "set variable signed char=127 (8-bit)" 
 gdb_test_no_output "set variable v_signed_char=-1"
-if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix4*" }
-gdb_test "print v_signed_char" ".\[0-9\]* = -1 \'.377\'" \
-    "set variable signed char=-1 (-1)"
+
+with_target_charset "ASCII" {
+    gdb_test "print v_signed_char" ".\[0-9\]* = -1 \'.377\'" \
+	"set variable signed char=-1 (-1)"
+}
+
 gdb_test_no_output "set variable v_signed_char=0xFF"
-if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix4*" }
-gdb_test "print v_signed_char" ".\[0-9\]* = -1 \'.377\'" \
-    "set variable signed char=0xFF (0xFF)"
+
+with_target_charset "ASCII" {
+    gdb_test "print v_signed_char" ".\[0-9\]* = -1 \'.377\'" \
+	"set variable signed char=0xFF (0xFF)"
+}
+
 #
 # test "set variable" for type "unsigned char"
 #
@@ -140,7 +146,10 @@ test_set "set variable v_unsigned_char=32" "print v_unsigned_char" ".\[0-9\]* = 
 test_set "set variable v_unsigned_char=65" "print v_unsigned_char" ".\[0-9\]* = 65 \'A\'"        "set variable unsigned char=65 ('A')" 
 test_set "set variable v_unsigned_char=97" "print v_unsigned_char" ".\[0-9\]* = 97 \'a\'"        "set variable unsigned char=97 ('a')" 
 test_set "set variable v_unsigned_char=126" "print v_unsigned_char" ".\[0-9\]* = 126 \'~\'"        "set variable unsigned char=126 ('~')" 
-test_set "set variable v_unsigned_char=~0" "print v_unsigned_char" ".\[0-9\]* = 255 \'.377\'"        "set variable unsigned char=255 (8-bit)" 
+
+with_target_charset "ASCII" {
+    test_set "set variable v_unsigned_char=~0" "print v_unsigned_char" ".\[0-9\]* = 255 \'.377\'"        "set variable unsigned char=255 (8-bit)" 
+}
 #
 # test "set variable" for type "short"
 #

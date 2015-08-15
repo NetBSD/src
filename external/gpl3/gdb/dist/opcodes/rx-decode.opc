@@ -1,5 +1,5 @@
 /* -*- c -*- */
-/* Copyright 2012 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Red Hat.
    Written by DJ Delorie.
 
@@ -48,21 +48,24 @@ static int bwl[] =
 {
   RX_Byte,
   RX_Word,
-  RX_Long
+  RX_Long,
+  0 /* Bogus instructions can have a size field set to 3.  */
 };
 
 static int sbwl[] =
 {
   RX_SByte,
   RX_SWord,
-  RX_Long
+  RX_Long,
+  0 /* Bogus instructions can have a size field set to 3.  */
 };
 
 static int ubwl[] =
 {
   RX_UByte,
   RX_UWord,
-  RX_Long
+  RX_Long,
+  0 /* Bogus instructions can have a size field set to 3.  */  
 };
 
 static int memex[] =
@@ -81,7 +84,7 @@ static int memex[] =
 			rx->op[n].size = s )
 
 /* This is for the BWL and BW bitfields.  */
-static int SCALE[] = { 1, 2, 4 };
+static int SCALE[] = { 1, 2, 4, 0 };
 /* This is for the prefix size enum.  */
 static int PSCALE[] = { 4, 1, 1, 1, 2, 2, 2, 3, 4 };
 

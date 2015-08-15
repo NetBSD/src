@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -117,6 +117,7 @@ foreach {arg desc} {"" "standard signals" \
 	"set catchpoint '$arg' for printing"
     gdb_test "info break" "$decimal.*catchpoint.*signal.*$desc.*" \
 	"info break for '$arg'"
+    gdb_breakpoint "main"
     gdb_test "save breakpoints [standard_output_file bps.$i]" \
 	"Saved to file .*bps.$i.*" \
 	"save breakpoints for '$arg'"
@@ -124,7 +125,8 @@ foreach {arg desc} {"" "standard signals" \
     set filename [remote_upload host [standard_output_file bps.$i] \
 		      [standard_output_file bps-local.$i]]
     set fd [open $filename]
-    set contents [read -nonewline $fd]
+    set file_data [read $fd]
+    set data [split $file_data "\n"]
     close $fd
 
     if {$arg == ""} {
@@ -132,11 +134,17 @@ foreach {arg desc} {"" "standard signals" \
     } else {
 	set pattern "catch signal $arg"
     }
-    if {[string match $pattern $contents]} {
-	pass "results of save breakpoints for '$arg'"
-    } else {
-	fail "results of save breakpoints for '$arg'"
-    }
+    gdb_assert {[expr [llength $data] == 3]} \
+	"Number of lines of save breakpoints for '$arg'"
+    # Check the first line.
+    gdb_assert {[string match $pattern [lindex $data 0]]} \
+	"1st line of save breakpoints for '$arg'"
+    # Check the second line.
+    gdb_assert {[string match "break main" [lindex $data 1]]} \
+        "2nd line of save breakpoints for '$arg'"
+    # Check the trailing newline.
+    gdb_assert {[string match "" [lindex $data 2]]} \
+        "Trailing newline of save breakpoints for '$arg'"
 
     incr i
 }

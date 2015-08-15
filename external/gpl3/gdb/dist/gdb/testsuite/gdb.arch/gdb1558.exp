@@ -1,4 +1,4 @@
-# Copyright 2004-2014 Free Software Foundation, Inc.
+# Copyright 2004-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -50,17 +50,12 @@ gdb_test "b sub2" "Breakpoint 3.*" "set breakpoint at sub2"
 
 gdb_run_cmd
 
-gdb_expect 30 {
+set test "Hits breakpoint at main after function called from main"
+gdb_test_multiple "" $test {
     -re "Breakpoint 1.*main .*$gdb_prompt $" {
-	pass "Hits breakpoint at main after function called from main"
+	pass $test
     }
     -re "Breakpoint 2.*sub1 .*$gdb_prompt $" {
-	kfail "gdb/1558" "Hits breakpoint at main after function called from main"
-    }
-    -re "$gdb_prompt $" { 
-	fail "Hits breakpoint at main after function called from main"
-    }
-    timeout { 
-	fail "Hits breakpoint at main after function called from main (timeout)"
+	kfail "gdb/1558" $test
     }
 }

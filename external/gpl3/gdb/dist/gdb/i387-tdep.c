@@ -1,6 +1,6 @@
 /* Intel 387 floating point stuff.
 
-   Copyright (C) 1988-2014 Free Software Foundation, Inc.
+   Copyright (C) 1988-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,12 +27,9 @@
 #include "regcache.h"
 #include "value.h"
 
-#include "gdb_assert.h"
-#include <string.h>
-
 #include "i386-tdep.h"
 #include "i387-tdep.h"
-#include "i386-xstate.h"
+#include "x86-xstate.h"
 
 /* Print the floating point number specified by RAW.  */
 
@@ -763,8 +760,61 @@ static int xsave_avxh_offset[] =
   576 + 15 * 16		/* Upper 128bit of ... %ymm15 (128 bits each).  */
 };
 
-static int xsave_mpx_offset[] =
+#define XSAVE_AVXH_ADDR(tdep, xsave, regnum) \
+  (xsave + xsave_avxh_offset[regnum - I387_YMM0H_REGNUM (tdep)])
+
+/* At xsave_ymm_avx512_offset[REGNUM] you'll find the offset to the location in
+   the upper 128bit of ZMM register data structure used by the "xsave"
+   instruction where GDB register REGNUM is stored.  */
+
+static int xsave_ymm_avx512_offset[] =
 {
+  /* HI16_ZMM_area + 16 bytes + regnum* 64 bytes.  */
+  1664 + 16 + 0 * 64,		/* %ymm16 through...  */
+  1664 + 16 + 1 * 64,
+  1664 + 16 + 2 * 64,
+  1664 + 16 + 3 * 64,
+  1664 + 16 + 4 * 64,
+  1664 + 16 + 5 * 64,
+  1664 + 16 + 6 * 64,
+  1664 + 16 + 7 * 64,
+  1664 + 16 + 8 * 64,
+  1664 + 16 + 9 * 64,
+  1664 + 16 + 10 * 64,
+  1664 + 16 + 11 * 64,
+  1664 + 16 + 12 * 64,
+  1664 + 16 + 13 * 64,
+  1664 + 16 + 14 * 64,
+  1664 + 16 + 15 * 64		/* ...  %ymm31 (128 bits each).  */
+};
+
+#define XSAVE_YMM_AVX512_ADDR(tdep, xsave, regnum) \
+  (xsave + xsave_ymm_avx512_offset[regnum - I387_YMM16H_REGNUM (tdep)])
+
+static int xsave_xmm_avx512_offset[] =
+{
+  1664 + 0 * 64,		/* %ymm16 through...  */
+  1664 + 1 * 64,
+  1664 + 2 * 64,
+  1664 + 3 * 64,
+  1664 + 4 * 64,
+  1664 + 5 * 64,
+  1664 + 6 * 64,
+  1664 + 7 * 64,
+  1664 + 8 * 64,
+  1664 + 9 * 64,
+  1664 + 10 * 64,
+  1664 + 11 * 64,
+  1664 + 12 * 64,
+  1664 + 13 * 64,
+  1664 + 14 * 64,
+  1664 + 15 * 64		/* ...  %ymm31 (128 bits each).  */
+};
+
+#define XSAVE_XMM_AVX512_ADDR(tdep, xsave, regnum) \
+  (xsave + xsave_xmm_avx512_offset[regnum - I387_XMM16_REGNUM (tdep)])
+
+static int xsave_mpx_offset[] = {
   960 + 0 * 16,			/* bnd0r...bnd3r registers.  */
   960 + 1 * 16,
   960 + 2 * 16,
@@ -773,11 +823,70 @@ static int xsave_mpx_offset[] =
   1024 + 1 * 8,
 };
 
-#define XSAVE_AVXH_ADDR(tdep, xsave, regnum) \
-  (xsave + xsave_avxh_offset[regnum - I387_YMM0H_REGNUM (tdep)])
-
 #define XSAVE_MPX_ADDR(tdep, xsave, regnum) \
   (xsave + xsave_mpx_offset[regnum - I387_BND0R_REGNUM (tdep)])
+
+  /* At xsave_avx512__h_offset[REGNUM] you find the offset to the location
+   of the AVX512 opmask register data structure used by the "xsave"
+   instruction where GDB register REGNUM is stored.  */
+
+static int xsave_avx512_k_offset[] =
+{
+  1088 + 0 * 8,			/* %k0 through...  */
+  1088 + 1 * 8,
+  1088 + 2 * 8,
+  1088 + 3 * 8,
+  1088 + 4 * 8,
+  1088 + 5 * 8,
+  1088 + 6 * 8,
+  1088 + 7 * 8     		/* %k7 (64 bits each).  */
+};
+
+#define XSAVE_AVX512_K_ADDR(tdep, xsave, regnum) \
+  (xsave + xsave_avx512_k_offset[regnum - I387_K0_REGNUM (tdep)])
+
+/* At xsave_avx512_zmm_h_offset[REGNUM] you find the offset to the location in
+   the upper 256bit of AVX512 ZMMH register data structure used by the "xsave"
+   instruction where GDB register REGNUM is stored.  */
+
+static int xsave_avx512_zmm_h_offset[] =
+{
+  1152 + 0 * 32,
+  1152 + 1 * 32,	/* Upper 256bit of %zmmh0 through...  */
+  1152 + 2 * 32,
+  1152 + 3 * 32,
+  1152 + 4 * 32,
+  1152 + 5 * 32,
+  1152 + 6 * 32,
+  1152 + 7 * 32,
+  1152 + 8 * 32,
+  1152 + 9 * 32,
+  1152 + 10 * 32,
+  1152 + 11 * 32,
+  1152 + 12 * 32,
+  1152 + 13 * 32,
+  1152 + 14 * 32,
+  1152 + 15 * 32,	/* Upper 256bit of...  %zmmh15 (256 bits each).  */
+  1664 + 32 + 0 * 64,   /* Upper 256bit of...  %zmmh16 (256 bits each).  */
+  1664 + 32 + 1 * 64,
+  1664 + 32 + 2 * 64,
+  1664 + 32 + 3 * 64,
+  1664 + 32 + 4 * 64,
+  1664 + 32 + 5 * 64,
+  1664 + 32 + 6 * 64,
+  1664 + 32 + 7 * 64,
+  1664 + 32 + 8 * 64,
+  1664 + 32 + 9 * 64,
+  1664 + 32 + 10 * 64,
+  1664 + 32 + 11 * 64,
+  1664 + 32 + 12 * 64,
+  1664 + 32 + 13 * 64,
+  1664 + 32 + 14 * 64,
+  1664 + 32 + 15 * 64   /* Upper 256bit of... %zmmh31 (256 bits each).  */
+};
+
+#define XSAVE_AVX512_ZMM_H_ADDR(tdep, xsave, regnum) \
+  (xsave + xsave_avx512_zmm_h_offset[regnum - I387_ZMM0H_REGNUM (tdep)])
 
 /* Similar to i387_supply_fxsave, but use XSAVE extended state.  */
 
@@ -785,7 +894,8 @@ void
 i387_supply_xsave (struct regcache *regcache, int regnum,
 		   const void *xsave)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (get_regcache_arch (regcache));
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   const gdb_byte *regs = xsave;
   int i;
   unsigned int clear_bv;
@@ -797,7 +907,12 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       sse = 0x2,
       avxh = 0x4,
       mpx  = 0x8,
-      all = x87 | sse | avxh | mpx
+      avx512_k = 0x10,
+      avx512_zmm_h = 0x20,
+      avx512_ymmh_avx512 = 0x40,
+      avx512_xmm_avx512 = 0x80,
+      all = x87 | sse | avxh | mpx | avx512_k | avx512_zmm_h
+	    | avx512_ymmh_avx512 | avx512_xmm_avx512
     } regclass;
 
   gdb_assert (regs != NULL);
@@ -806,13 +921,25 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 
   if (regnum == -1)
     regclass = all;
+  else if (regnum >= I387_ZMM0H_REGNUM (tdep)
+	   && regnum < I387_ZMMENDH_REGNUM (tdep))
+    regclass = avx512_zmm_h;
+  else if (regnum >= I387_K0_REGNUM (tdep)
+	   && regnum < I387_KEND_REGNUM (tdep))
+    regclass = avx512_k;
+  else if (regnum >= I387_YMM16H_REGNUM (tdep)
+	   && regnum < I387_YMMH_AVX512_END_REGNUM (tdep))
+    regclass = avx512_ymmh_avx512;
+  else if (regnum >= I387_XMM16_REGNUM (tdep)
+	   && regnum < I387_XMM_AVX512_END_REGNUM (tdep))
+    regclass = avx512_xmm_avx512;
   else if (regnum >= I387_YMM0H_REGNUM (tdep)
 	   && regnum < I387_YMMENDH_REGNUM (tdep))
     regclass = avxh;
   else if (regnum >= I387_BND0R_REGNUM (tdep)
 	   && regnum < I387_MPXEND_REGNUM (tdep))
     regclass = mpx;
-  else if (regnum >= I387_XMM0_REGNUM(tdep)
+  else if (regnum >= I387_XMM0_REGNUM (tdep)
 	   && regnum < I387_MXCSR_REGNUM (tdep))
     regclass = sse;
   else if (regnum >= I387_ST0_REGNUM (tdep)
@@ -831,7 +958,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       clear_bv = (~(*xstate_bv_p)) & tdep->xcr0;
     }
   else
-    clear_bv = I386_XSTATE_ALL_MASK;
+    clear_bv = X86_XSTATE_ALL_MASK;
 
   /* With the delayed xsave mechanism, in between the program
      starting, and the program accessing the vector registers for the
@@ -847,8 +974,40 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
     case none:
       break;
 
+    case avx512_zmm_h:
+      if ((clear_bv & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
+	regcache_raw_supply (regcache, regnum, zero);
+      else
+	regcache_raw_supply (regcache, regnum,
+			     XSAVE_AVX512_ZMM_H_ADDR (tdep, regs, regnum));
+      return;
+
+    case avx512_k:
+      if ((clear_bv & X86_XSTATE_K))
+	regcache_raw_supply (regcache, regnum, zero);
+      else
+	regcache_raw_supply (regcache, regnum,
+			     XSAVE_AVX512_K_ADDR (tdep, regs, regnum));
+      return;
+
+    case avx512_ymmh_avx512:
+      if ((clear_bv & X86_XSTATE_ZMM))
+	regcache_raw_supply (regcache, regnum, zero);
+      else
+	regcache_raw_supply (regcache, regnum,
+			     XSAVE_YMM_AVX512_ADDR (tdep, regs, regnum));
+      return;
+
+    case avx512_xmm_avx512:
+      if ((clear_bv & X86_XSTATE_ZMM))
+	regcache_raw_supply (regcache, regnum, zero);
+      else
+	regcache_raw_supply (regcache, regnum,
+			     XSAVE_XMM_AVX512_ADDR (tdep, regs, regnum));
+      return;
+
     case avxh:
-      if ((clear_bv & I386_XSTATE_AVX))
+      if ((clear_bv & X86_XSTATE_AVX))
 	regcache_raw_supply (regcache, regnum, zero);
       else
 	regcache_raw_supply (regcache, regnum,
@@ -856,7 +1015,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       return;
 
     case mpx:
-      if ((clear_bv & I386_XSTATE_BNDREGS))
+      if ((clear_bv & X86_XSTATE_BNDREGS))
 	regcache_raw_supply (regcache, regnum, zero);
       else
 	regcache_raw_supply (regcache, regnum,
@@ -864,7 +1023,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       return;
 
     case sse:
-      if ((clear_bv & I386_XSTATE_SSE))
+      if ((clear_bv & X86_XSTATE_SSE))
 	regcache_raw_supply (regcache, regnum, zero);
       else
 	regcache_raw_supply (regcache, regnum,
@@ -872,7 +1031,7 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       return;
 
     case x87:
-      if ((clear_bv & I386_XSTATE_X87))
+      if ((clear_bv & X86_XSTATE_X87))
 	regcache_raw_supply (regcache, regnum, zero);
       else
 	regcache_raw_supply (regcache, regnum,
@@ -880,10 +1039,78 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
       return;
 
     case all:
-      /* Handle the upper YMM registers.  */
-      if ((tdep->xcr0 & I386_XSTATE_AVX))
+      /* Handle the upper ZMM registers.  */
+      if ((tdep->xcr0 & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
 	{
-	  if ((clear_bv & I386_XSTATE_AVX))
+	  if ((clear_bv & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
+	    {
+	      for (i = I387_ZMM0H_REGNUM (tdep);
+		   i < I387_ZMMENDH_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i, zero);
+	    }
+	  else
+	    {
+	      for (i = I387_ZMM0H_REGNUM (tdep);
+		   i < I387_ZMMENDH_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i,
+				     XSAVE_AVX512_ZMM_H_ADDR (tdep, regs, i));
+	    }
+	}
+
+      /* Handle AVX512 OpMask registers.  */
+      if ((tdep->xcr0 & X86_XSTATE_K))
+	{
+	  if ((clear_bv & X86_XSTATE_K))
+	    {
+	      for (i = I387_K0_REGNUM (tdep);
+		   i < I387_KEND_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i, zero);
+	    }
+	  else
+	    {
+	      for (i = I387_K0_REGNUM (tdep);
+		   i < I387_KEND_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i,
+				     XSAVE_AVX512_K_ADDR (tdep, regs, i));
+	    }
+	}
+
+      /* Handle the YMM_AVX512 registers.  */
+      if ((tdep->xcr0 & X86_XSTATE_ZMM))
+	{
+	  if ((clear_bv & X86_XSTATE_ZMM))
+	    {
+	      for (i = I387_YMM16H_REGNUM (tdep);
+		   i < I387_YMMH_AVX512_END_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i, zero);
+	      for (i = I387_XMM16_REGNUM (tdep);
+		   i < I387_XMM_AVX512_END_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i, zero);
+	    }
+	  else
+	    {
+	      for (i = I387_YMM16H_REGNUM (tdep);
+		   i < I387_YMMH_AVX512_END_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i,
+				     XSAVE_YMM_AVX512_ADDR (tdep, regs, i));
+	      for (i = I387_XMM16_REGNUM (tdep);
+		   i < I387_XMM_AVX512_END_REGNUM (tdep);
+		   i++)
+		regcache_raw_supply (regcache, i,
+				     XSAVE_XMM_AVX512_ADDR (tdep, regs, i));
+	    }
+	}
+      /* Handle the upper YMM registers.  */
+      if ((tdep->xcr0 & X86_XSTATE_AVX))
+	{
+	  if ((clear_bv & X86_XSTATE_AVX))
 	    {
 	      for (i = I387_YMM0H_REGNUM (tdep);
 		   i < I387_YMMENDH_REGNUM (tdep);
@@ -901,9 +1128,9 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 	}
 
       /* Handle the MPX registers.  */
-      if ((tdep->xcr0 & I386_XSTATE_BNDREGS))
+      if ((tdep->xcr0 & X86_XSTATE_BNDREGS))
 	{
-	  if (clear_bv & I386_XSTATE_BNDREGS)
+	  if (clear_bv & X86_XSTATE_BNDREGS)
 	    {
 	      for (i = I387_BND0R_REGNUM (tdep);
 		   i < I387_BNDCFGU_REGNUM (tdep); i++)
@@ -919,9 +1146,9 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 	}
 
       /* Handle the MPX registers.  */
-      if ((tdep->xcr0 & I386_XSTATE_BNDCFG))
+      if ((tdep->xcr0 & X86_XSTATE_BNDCFG))
 	{
-	  if (clear_bv & I386_XSTATE_BNDCFG)
+	  if (clear_bv & X86_XSTATE_BNDCFG)
 	    {
 	      for (i = I387_BNDCFGU_REGNUM (tdep);
 		   i < I387_MPXEND_REGNUM (tdep); i++)
@@ -937,9 +1164,9 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 	}
 
       /* Handle the XMM registers.  */
-      if ((tdep->xcr0 & I386_XSTATE_SSE))
+      if ((tdep->xcr0 & X86_XSTATE_SSE))
 	{
-	  if ((clear_bv & I386_XSTATE_SSE))
+	  if ((clear_bv & X86_XSTATE_SSE))
 	    {
 	      for (i = I387_XMM0_REGNUM (tdep);
 		   i < I387_MXCSR_REGNUM (tdep);
@@ -956,9 +1183,9 @@ i387_supply_xsave (struct regcache *regcache, int regnum,
 	}
 
       /* Handle the x87 registers.  */
-      if ((tdep->xcr0 & I386_XSTATE_X87))
+      if ((tdep->xcr0 & X86_XSTATE_X87))
 	{
-	  if ((clear_bv & I386_XSTATE_X87))
+	  if ((clear_bv & X86_XSTATE_X87))
 	    {
 	      for (i = I387_ST0_REGNUM (tdep);
 		   i < I387_FCTRL_REGNUM (tdep);
@@ -1040,7 +1267,8 @@ void
 i387_collect_xsave (const struct regcache *regcache, int regnum,
 		    void *xsave, int gcore)
 {
-  struct gdbarch_tdep *tdep = gdbarch_tdep (get_regcache_arch (regcache));
+  struct gdbarch *gdbarch = get_regcache_arch (regcache);
+  struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
   gdb_byte *regs = xsave;
   int i;
   enum
@@ -1051,7 +1279,12 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
       sse = 0x4 | check,
       avxh = 0x8 | check,
       mpx  = 0x10 | check,
-      all = x87 | sse | avxh | mpx
+      avx512_k = 0x20 | check,
+      avx512_zmm_h = 0x40 | check,
+      avx512_ymmh_avx512 = 0x80 | check,
+      avx512_xmm_avx512 = 0x100 | check,
+      all = x87 | sse | avxh | mpx | avx512_k | avx512_zmm_h
+	    | avx512_ymmh_avx512 | avx512_xmm_avx512
     } regclass;
 
   gdb_assert (tdep->st0_regnum >= I386_ST0_REGNUM);
@@ -1059,6 +1292,18 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 
   if (regnum == -1)
     regclass = all;
+  else if (regnum >= I387_ZMM0H_REGNUM (tdep)
+	   && regnum < I387_ZMMENDH_REGNUM (tdep))
+    regclass = avx512_zmm_h;
+  else if (regnum >= I387_K0_REGNUM (tdep)
+	   && regnum < I387_KEND_REGNUM (tdep))
+    regclass = avx512_k;
+  else if (regnum >= I387_YMM16H_REGNUM (tdep)
+	   && regnum < I387_YMMH_AVX512_END_REGNUM (tdep))
+    regclass = avx512_ymmh_avx512;
+  else if (regnum >= I387_XMM16_REGNUM (tdep)
+	   && regnum < I387_XMM_AVX512_END_REGNUM (tdep))
+    regclass = avx512_xmm_avx512;
   else if (regnum >= I387_YMM0H_REGNUM (tdep)
 	   && regnum < I387_YMMENDH_REGNUM (tdep))
     regclass = avxh;
@@ -1077,7 +1322,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
   if (gcore)
     {
       /* Clear XSAVE extended state.  */
-      memset (regs, 0, I386_XSTATE_SIZE (tdep->xcr0));
+      memset (regs, 0, X86_XSTATE_SIZE (tdep->xcr0));
 
       /* Update XCR0 and `xstate_bv' with XCR0 for gcore.  */
       if (tdep->xsave_xcr0_offset != -1)
@@ -1097,27 +1342,47 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
       /* Clear register set if its bit in xstat_bv is zero.  */
       if (clear_bv)
 	{
-	  if ((clear_bv & I386_XSTATE_BNDREGS))
+	  if ((clear_bv & X86_XSTATE_BNDREGS))
 	    for (i = I387_BND0R_REGNUM (tdep);
 		 i < I387_BNDCFGU_REGNUM (tdep); i++)
 	      memset (XSAVE_MPX_ADDR (tdep, regs, i), 0, 16);
 
-	  if ((clear_bv & I386_XSTATE_BNDCFG))
+	  if ((clear_bv & X86_XSTATE_BNDCFG))
 	    for (i = I387_BNDCFGU_REGNUM (tdep);
 		 i < I387_MPXEND_REGNUM (tdep); i++)
 	      memset (XSAVE_MPX_ADDR (tdep, regs, i), 0, 8);
 
-	  if ((clear_bv & I386_XSTATE_AVX))
+	  if ((clear_bv & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
+	    for (i = I387_ZMM0H_REGNUM (tdep);
+		i < I387_ZMMENDH_REGNUM (tdep); i++)
+	      memset (XSAVE_AVX512_ZMM_H_ADDR (tdep, regs, i), 0, 32);
+
+	  if ((clear_bv & X86_XSTATE_K))
+	    for (i = I387_K0_REGNUM (tdep);
+		i < I387_KEND_REGNUM (tdep); i++)
+	      memset (XSAVE_AVX512_K_ADDR (tdep, regs, i), 0, 8);
+
+	  if ((clear_bv & X86_XSTATE_ZMM))
+	    {
+	      for (i = I387_YMM16H_REGNUM (tdep);
+		  i < I387_YMMH_AVX512_END_REGNUM (tdep); i++)
+		memset (XSAVE_YMM_AVX512_ADDR (tdep, regs, i), 0, 16);
+	      for (i = I387_XMM16_REGNUM (tdep);
+	          i < I387_XMM_AVX512_END_REGNUM (tdep); i++)
+		memset (XSAVE_XMM_AVX512_ADDR (tdep, regs, i), 0, 16);
+	    }
+
+	  if ((clear_bv & X86_XSTATE_AVX))
 	    for (i = I387_YMM0H_REGNUM (tdep);
 		 i < I387_YMMENDH_REGNUM (tdep); i++)
 	      memset (XSAVE_AVXH_ADDR (tdep, regs, i), 0, 16);
 
-	  if ((clear_bv & I386_XSTATE_SSE))
+	  if ((clear_bv & X86_XSTATE_SSE))
 	    for (i = I387_XMM0_REGNUM (tdep);
 		 i < I387_MXCSR_REGNUM (tdep); i++)
 	      memset (FXSAVE_ADDR (tdep, regs, i), 0, 16);
 
-	  if ((clear_bv & I386_XSTATE_X87))
+	  if ((clear_bv & X86_XSTATE_X87))
 	    for (i = I387_ST0_REGNUM (tdep);
 		 i < I387_FCTRL_REGNUM (tdep); i++)
 	      memset (FXSAVE_ADDR (tdep, regs, i), 0, 10);
@@ -1125,8 +1390,63 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 
       if (regclass == all)
 	{
+	  /* Check if any ZMMH registers are changed.  */
+	  if ((tdep->xcr0 & (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM)))
+	    for (i = I387_ZMM0H_REGNUM (tdep);
+		 i < I387_ZMMENDH_REGNUM (tdep); i++)
+	      {
+		regcache_raw_collect (regcache, i, raw);
+		p = XSAVE_AVX512_ZMM_H_ADDR (tdep, regs, i);
+		if (memcmp (raw, p, 32) != 0)
+		  {
+		    xstate_bv |= (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM);
+		    memcpy (p, raw, 32);
+		  }
+	      }
+
+	  /* Check if any K registers are changed.  */
+	  if ((tdep->xcr0 & X86_XSTATE_K))
+	    for (i = I387_K0_REGNUM (tdep);
+		 i < I387_KEND_REGNUM (tdep); i++)
+	      {
+		regcache_raw_collect (regcache, i, raw);
+		p = XSAVE_AVX512_K_ADDR (tdep, regs, i);
+		if (memcmp (raw, p, 8) != 0)
+		  {
+		    xstate_bv |= X86_XSTATE_K;
+		    memcpy (p, raw, 8);
+		  }
+	      }
+
+	  /* Check if any XMM or upper YMM registers are changed.  */
+	  if ((tdep->xcr0 & X86_XSTATE_ZMM))
+	    {
+	      for (i = I387_YMM16H_REGNUM (tdep);
+		   i < I387_YMMH_AVX512_END_REGNUM (tdep); i++)
+		{
+		  regcache_raw_collect (regcache, i, raw);
+		  p = XSAVE_YMM_AVX512_ADDR (tdep, regs, i);
+		  if (memcmp (raw, p, 16) != 0)
+		    {
+		      xstate_bv |= X86_XSTATE_ZMM;
+		      memcpy (p, raw, 16);
+		    }
+		}
+	      for (i = I387_XMM16_REGNUM (tdep);
+		   i < I387_XMM_AVX512_END_REGNUM (tdep); i++)
+		{
+		  regcache_raw_collect (regcache, i, raw);
+		  p = XSAVE_XMM_AVX512_ADDR (tdep, regs, i);
+		  if (memcmp (raw, p, 16) != 0)
+		    {
+		      xstate_bv |= X86_XSTATE_ZMM;
+		      memcpy (p, raw, 16);
+		    }
+		}
+	    }
+
 	  /* Check if any upper YMM registers are changed.  */
-	  if ((tdep->xcr0 & I386_XSTATE_AVX))
+	  if ((tdep->xcr0 & X86_XSTATE_AVX))
 	    for (i = I387_YMM0H_REGNUM (tdep);
 		 i < I387_YMMENDH_REGNUM (tdep); i++)
 	      {
@@ -1134,12 +1454,12 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		p = XSAVE_AVXH_ADDR (tdep, regs, i);
 		if (memcmp (raw, p, 16))
 		  {
-		    xstate_bv |= I386_XSTATE_AVX;
+		    xstate_bv |= X86_XSTATE_AVX;
 		    memcpy (p, raw, 16);
 		  }
 	      }
 	  /* Check if any upper MPX registers are changed.  */
-	  if ((tdep->xcr0 & I386_XSTATE_BNDREGS))
+	  if ((tdep->xcr0 & X86_XSTATE_BNDREGS))
 	    for (i = I387_BND0R_REGNUM (tdep);
 		 i < I387_BNDCFGU_REGNUM (tdep); i++)
 	      {
@@ -1147,13 +1467,13 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		p = XSAVE_MPX_ADDR (tdep, regs, i);
 		if (memcmp (raw, p, 16))
 		  {
-		    xstate_bv |= I386_XSTATE_BNDREGS;
+		    xstate_bv |= X86_XSTATE_BNDREGS;
 		    memcpy (p, raw, 16);
 		  }
 	      }
 
 	  /* Check if any upper MPX registers are changed.  */
-	  if ((tdep->xcr0 & I386_XSTATE_BNDCFG))
+	  if ((tdep->xcr0 & X86_XSTATE_BNDCFG))
 	    for (i = I387_BNDCFGU_REGNUM (tdep);
 		 i < I387_MPXEND_REGNUM (tdep); i++)
 	      {
@@ -1161,13 +1481,13 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		p = XSAVE_MPX_ADDR (tdep, regs, i);
 		if (memcmp (raw, p, 8))
 		  {
-		    xstate_bv |= I386_XSTATE_BNDCFG;
+		    xstate_bv |= X86_XSTATE_BNDCFG;
 		    memcpy (p, raw, 8);
 		  }
 	      }
 
 	  /* Check if any SSE registers are changed.  */
-	  if ((tdep->xcr0 & I386_XSTATE_SSE))
+	  if ((tdep->xcr0 & X86_XSTATE_SSE))
 	    for (i = I387_XMM0_REGNUM (tdep);
 		 i < I387_MXCSR_REGNUM (tdep); i++)
 	      {
@@ -1175,13 +1495,13 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		p = FXSAVE_ADDR (tdep, regs, i);
 		if (memcmp (raw, p, 16))
 		  {
-		    xstate_bv |= I386_XSTATE_SSE;
+		    xstate_bv |= X86_XSTATE_SSE;
 		    memcpy (p, raw, 16);
 		  }
 	      }
 
 	  /* Check if any X87 registers are changed.  */
-	  if ((tdep->xcr0 & I386_XSTATE_X87))
+	  if ((tdep->xcr0 & X86_XSTATE_X87))
 	    for (i = I387_ST0_REGNUM (tdep);
 		 i < I387_FCTRL_REGNUM (tdep); i++)
 	      {
@@ -1189,7 +1509,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		p = FXSAVE_ADDR (tdep, regs, i);
 		if (memcmp (raw, p, 10))
 		  {
-		    xstate_bv |= I386_XSTATE_X87;
+		    xstate_bv |= X86_XSTATE_X87;
 		    memcpy (p, raw, 10);
 		  }
 	      }
@@ -1205,12 +1525,51 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	      internal_error (__FILE__, __LINE__,
 			      _("invalid i387 regclass"));
 
+	    case avx512_zmm_h:
+	      /* This is a ZMM register.  */
+	      p = XSAVE_AVX512_ZMM_H_ADDR (tdep, regs, regnum);
+	      if (memcmp (raw, p, 32) != 0)
+		{
+		  xstate_bv |= (X86_XSTATE_ZMM_H | X86_XSTATE_ZMM);
+		  memcpy (p, raw, 32);
+		}
+	      break;
+	    case avx512_k:
+	      /* This is a AVX512 mask register.  */
+	      p = XSAVE_AVX512_K_ADDR (tdep, regs, regnum);
+	      if (memcmp (raw, p, 8) != 0)
+		{
+		  xstate_bv |= X86_XSTATE_K;
+		  memcpy (p, raw, 8);
+		}
+	      break;
+
+	    case avx512_ymmh_avx512:
+	      /* This is an upper YMM16-31 register.  */
+	      p = XSAVE_YMM_AVX512_ADDR (tdep, regs, regnum);
+	      if (memcmp (raw, p, 16) != 0)
+		{
+		  xstate_bv |= X86_XSTATE_ZMM;
+		  memcpy (p, raw, 16);
+		}
+	      break;
+
+	    case avx512_xmm_avx512:
+	      /* This is an upper XMM16-31 register.  */
+	      p = XSAVE_XMM_AVX512_ADDR (tdep, regs, regnum);
+	      if (memcmp (raw, p, 16) != 0)
+		{
+		  xstate_bv |= X86_XSTATE_ZMM;
+		  memcpy (p, raw, 16);
+		}
+	      break;
+
 	    case avxh:
 	      /* This is an upper YMM register.  */
 	      p = XSAVE_AVXH_ADDR (tdep, regs, regnum);
 	      if (memcmp (raw, p, 16))
 		{
-		  xstate_bv |= I386_XSTATE_AVX;
+		  xstate_bv |= X86_XSTATE_AVX;
 		  memcpy (p, raw, 16);
 		}
 	      break;
@@ -1222,14 +1581,14 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 		  p = XSAVE_MPX_ADDR (tdep, regs, regnum);
 		  if (memcmp (raw, p, 16))
 		    {
-		      xstate_bv |= I386_XSTATE_BNDREGS;
+		      xstate_bv |= X86_XSTATE_BNDREGS;
 		      memcpy (p, raw, 16);
 		    }
 		}
 	      else
 		{
 		  p = XSAVE_MPX_ADDR (tdep, regs, regnum);
-		  xstate_bv |= I386_XSTATE_BNDCFG;
+		  xstate_bv |= X86_XSTATE_BNDCFG;
 		  memcpy (p, raw, 8);
 		}
 	      break;
@@ -1239,7 +1598,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	      p = FXSAVE_ADDR (tdep, regs, regnum);
 	      if (memcmp (raw, p, 16))
 		{
-		  xstate_bv |= I386_XSTATE_SSE;
+		  xstate_bv |= X86_XSTATE_SSE;
 		  memcpy (p, raw, 16);
 		}
 	      break;
@@ -1249,7 +1608,7 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	      p = FXSAVE_ADDR (tdep, regs, regnum);
 	      if (memcmp (raw, p, 10))
 		{
-		  xstate_bv |= I386_XSTATE_X87;
+		  xstate_bv |= X86_XSTATE_X87;
 		  memcpy (p, raw, 10);
 		}
 	      break;
@@ -1276,6 +1635,10 @@ i387_collect_xsave (const struct regcache *regcache, int regnum,
 	    case sse:
 	    case avxh:
 	    case mpx:
+	    case avx512_k:
+	    case avx512_zmm_h:
+	    case avx512_ymmh_avx512:
+	    case avx512_xmm_avx512:
 	      /* Register REGNUM has been updated.  Return.  */
 	      return;
 	    }

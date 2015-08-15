@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
-   02110-1301, USA.*/
+   02110-1301, USA.  */
 
 
 #ifndef NDS32_ASM_H
@@ -70,7 +70,7 @@ enum
   NASM_ATTR_FPU_FMA		= 0x0080000,
   NASM_ATTR_DXREG		= 0x0100000,
   NASM_ATTR_BRANCH		= 0x0200000,
-  NASM_ATTR_RELAXABLE		= 0x0400000,
+  NASM_ATTR_SATURATION_EXT	= 0x0400000,
   NASM_ATTR_PCREL		= 0x0800000,
   NASM_ATTR_GPREL		= 0x1000000,
 
@@ -81,6 +81,81 @@ enum
 
   /* Attributes for registers.  */
   NASM_ATTR_RDREG		= 0x000100
+};
+
+enum
+{
+  /* This is a field (operand) of just a separator char.  */
+  SYN_FIELD = 0x100,
+
+  /* This operand is used for input or output.  (define or use)  */
+  SYN_INPUT = 0x1000,
+  SYN_OUTPUT = 0x2000,
+  SYN_LOPT = 0x4000,
+  SYN_ROPT = 0x8000,
+
+  /* Hardware resources.  */
+  HW_GPR = 0,
+  HW_USR,
+  HW_DXR,
+  HW_SR,
+  HW_FSR,
+  HW_FDR,
+  HW_CP,	/* Co-processor ID.  */
+  HW_CPR,	/* Co-processor registers.  */
+  HW_ABDIM,	/* [ab][di]m? flag for LSMWA?.  */
+  HW_ABM,	/* [ab]m? flag for LSMWZB.  */
+  HW_DTITON,
+  HW_DTITOFF,
+  HW_DPREF_ST,
+  HW_CCTL_ST0,
+  HW_CCTL_ST1,
+  HW_CCTL_ST2,
+  HW_CCTL_ST3,
+  HW_CCTL_ST4,
+  HW_CCTL_ST5,
+  HW_CCTL_LV,
+  HW_TLBOP_ST,
+  HW_STANDBY_ST,
+  HW_MSYNC_ST,
+  HW_AEXT_IM_I,
+  HW_AEXT_IM_M,
+  HW_AEXT_ACC,
+  HW_AEXT_ARIDX,
+  HW_AEXT_ARIDX2,
+  HW_AEXT_ARIDXI,
+  _HW_LAST,
+  /* TODO: Maybe we should add a new type to distinguish address and
+	   const int.  Only the former allows symbols and relocations.  */
+  HW_INT,
+  HW_UINT
+};
+
+/* for audio-extension.  */
+enum
+{
+  N32_AEXT_AMADD = 0,
+  N32_AEXT_AMSUB,
+  N32_AEXT_AMULT,
+  N32_AEXT_AMFAR,
+  N32_AEXT_AMADDS,
+  N32_AEXT_AMSUBS,
+  N32_AEXT_AMULTS,
+  N32_AEXT_AMNEGS,
+  N32_AEXT_AADDL,
+  N32_AEXT_AMTARI,
+  N32_AEXT_AMAWBS = 0x0c,
+  N32_AEXT_AMAWTS,
+  N32_AEXT_AMWBS,
+  N32_AEXT_AMWTS,
+  N32_AEXT_AMABBS,
+  N32_AEXT_AMABTS,
+  N32_AEXT_AMATBS,
+  N32_AEXT_AMATTS,
+  N32_AEXT_AMBBS,
+  N32_AEXT_AMBTS,
+  N32_AEXT_AMTBS,
+  N32_AEXT_AMTTS
 };
 
 /* Macro for instruction attribute.  */
@@ -131,6 +206,7 @@ typedef struct nds32_opcode
   int variant;
   /* Next form of the same mnemonic.  */
   struct nds32_opcode *next;
+
   /* TODO: Extra constrains and verification.
 	   For example, `mov55 $sp, $sp' is not allowed in v3.  */
 } opcode_t;
@@ -186,5 +262,36 @@ typedef struct nds32_field
 
 extern void nds32_assemble (nds32_asm_desc_t *, nds32_asm_insn_t *, char *);
 extern void nds32_asm_init (nds32_asm_desc_t *, int);
+
+#define OP6(op6)	(N32_OP6_ ## op6 << 25)
+
+#define LSMW(sub)	(OP6 (LSMW) | N32_LSMW_ ## sub)
+#define JREG(sub)	(OP6 (JREG) | N32_JREG_ ## sub)
+#define JREG_RET	(1 << 5)
+#define JREG_IFC	(1 << 6)
+#define BR2(sub)	(OP6 (BR2) | (N32_BR2_ ## sub << 16))
+#define SIMD(sub)	(OP6 (SIMD) | N32_SIMD_ ## sub)
+#define ALU1(sub)	(OP6 (ALU1) | N32_ALU1_ ## sub)
+#define ALU2(sub)	(OP6 (ALU2) | N32_ALU2_ ## sub)
+#define MISC(sub)	(OP6 (MISC) | N32_MISC_ ## sub)
+#define MEM(sub)	(OP6 (MEM) | N32_MEM_ ## sub)
+#define FPU_RA_IMMBI(sub)	(OP6 (sub) | __BIT (12))
+#define FS1(sub)	(OP6 (COP) | N32_FPU_FS1 | (N32_FPU_FS1_ ## sub << 6))
+#define FS1_F2OP(sub)	(OP6 (COP) | N32_FPU_FS1 | (N32_FPU_FS1_F2OP << 6) \
+			| (N32_FPU_FS1_F2OP_ ## sub << 10))
+#define FS2(sub) 	(OP6 (COP) | N32_FPU_FS2 | (N32_FPU_FS2_ ## sub << 6))
+#define FD1(sub)	(OP6 (COP) | N32_FPU_FD1 | (N32_FPU_FD1_ ## sub << 6))
+#define FD1_F2OP(sub)	(OP6 (COP) | N32_FPU_FD1 | (N32_FPU_FD1_F2OP << 6) \
+			| (N32_FPU_FD1_F2OP_ ## sub << 10))
+#define FD2(sub)	(OP6 (COP) | N32_FPU_FD2 | (N32_FPU_FD2_ ## sub << 6))
+#define MFCP(sub)	(OP6 (COP) | N32_FPU_MFCP | (N32_FPU_MFCP_ ## sub << 6))
+#define MFCP_XR(sub)	(OP6 (COP) | N32_FPU_MFCP | (N32_FPU_MFCP_XR << 6) \
+			| (N32_FPU_MFCP_XR_ ## sub << 10))
+#define MTCP(sub)	(OP6 (COP) | N32_FPU_MTCP | (N32_FPU_MTCP_ ## sub << 6))
+#define MTCP_XR(sub)	(OP6 (COP) | N32_FPU_MTCP | (N32_FPU_MTCP_XR << 6) \
+			| (N32_FPU_MTCP_XR_ ## sub << 10))
+#define FPU_MEM(sub)	(OP6 (COP) | N32_FPU_ ## sub)
+#define FPU_MEMBI(sub)	(OP6 (COP) | N32_FPU_ ## sub | 0x1 << 7)
+#define AUDIO(sub)	(OP6 (AEXT) | (N32_AEXT_ ## sub << 20))
 
 #endif

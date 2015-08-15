@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
    this file, and should be regenerated if this file is modified.  */
 
 #ifdef __GNUC__
-# define ATTR __attribute__((always_inline))
+# define ATTR __attribute__((gnu_inline)) __attribute__((always_inline))
 #else
 # define ATTR
 #endif

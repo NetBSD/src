@@ -1,5 +1,5 @@
 /* Support routines for building symbol tables in GDB's internal format.
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,7 +21,53 @@
    file-reading routines.
 
    Routines to support specific debugging information formats (stabs,
-   DWARF, etc) belong somewhere else.  */
+   DWARF, etc) belong somewhere else.
+
+   The basic way this module is used is as follows:
+
+   buildsym_init ();
+   cleanups = make_cleanup (really_free_pendings, NULL);
+   cust = start_symtab (...);
+   ... read debug info ...
+   cust = end_symtab (...);
+   do_cleanups (cleanups);
+
+   The compunit symtab pointer ("cust") is returned from both start_symtab
+   and end_symtab to simplify the debug info readers.
+
+   There are minor variations on this, e.g., dwarf2read.c splits end_symtab
+   into two calls: end_symtab_get_static_block, end_symtab_from_static_block,
+   but all debug info readers follow this basic flow.
+
+   Reading DWARF Type Units is another variation:
+
+   buildsym_init ();
+   cleanups = make_cleanup (really_free_pendings, NULL);
+   cust = start_symtab (...);
+   ... read debug info ...
+   cust = end_expandable_symtab (...);
+   do_cleanups (cleanups);
+
+   And then reading subsequent Type Units within the containing "Comp Unit"
+   will use a second flow:
+
+   buildsym_init ();
+   cleanups = make_cleanup (really_free_pendings, NULL);
+   cust = restart_symtab (...);
+   ... read debug info ...
+   cust = augment_type_symtab (...);
+   do_cleanups (cleanups);
+
+   dbxread.c and xcoffread.c use another variation:
+
+   buildsym_init ();
+   cleanups = make_cleanup (really_free_pendings, NULL);
+   cust = start_symtab (...);
+   ... read debug info ...
+   cust = end_symtab (...);
+   ... start_symtab + read + end_symtab repeated ...
+   do_cleanups (cleanups);
+*/
 
 #include "defs.h"
 #include "bfd.h"
@@ -30,9 +76,7 @@
 #include "symfile.h"
 #include "objfiles.h"
 #include "gdbtypes.h"
-#include "gdb_assert.h"
 #include "complaints.h"
-#include <string.h>
 #include "expression.h"		/* For "enum exp_opcode" used by...  */
 #include "bcache.h"
 #include "filenames.h"		/* For DOSish file names.  */
@@ -54,9 +98,42 @@
 
 #include "stabsread.h"
 
-/* List of subfiles.  */
+/* Buildsym's counterpart to struct compunit_symtab.
+   TODO(dje): Move all related global state into here.  */
 
-static struct subfile *subfiles;
+struct buildsym_compunit
+{
+  /* The objfile we're reading debug info from.  */
+  struct objfile *objfile;
+
+  /* List of subfiles (source files).
+     Files are added to the front of the list.
+     This is important mostly for the language determination hacks we use,
+     which iterate over previously added files.  */
+  struct subfile *subfiles;
+
+  /* The subfile of the main source file.  */
+  struct subfile *main_subfile;
+
+  /* E.g., DW_AT_comp_dir if DWARF.  Space for this is malloc'd.  */
+  char *comp_dir;
+
+  /* Space for this is not malloc'd, and is assumed to have at least
+     the same lifetime as objfile.  */
+  const char *producer;
+
+  /* Space for this is not malloc'd, and is assumed to have at least
+     the same lifetime as objfile.  */
+  const char *debugformat;
+
+  /* The compunit we are building.  */
+  struct compunit_symtab *compunit_symtab;
+};
+
+/* The work-in-progress of the compunit we are building.
+   This is created first, before any subfiles by start_symtab.  */
+
+static struct buildsym_compunit *buildsym_compunit;
 
 /* List of free `struct pending' structures for reuse.  */
 
@@ -112,8 +189,10 @@ struct subfile_stack
 static struct subfile_stack *subfile_stack;
 
 /* The macro table for the compilation unit whose symbols we're
-   currently reading.  All the symtabs for the CU will point to this.  */
+   currently reading.  */
 static struct macro_table *pending_macros;
+
+static void free_buildsym_compunit (void);
 
 static int compare_line_numbers (const void *ln1p, const void *ln2p);
 
@@ -189,8 +268,12 @@ find_symbol_in_list (struct pending *list, char *name, int length)
   return (NULL);
 }
 
-/* At end of reading syms, or in case of quit, really free as many
-   `struct pending's as we can easily find.  */
+/* At end of reading syms, or in case of quit, ensure everything associated
+   with building symtabs is freed.  This is intended to be registered as a
+   cleanup before doing psymtab->symtab expansion.
+
+   N.B. This is *not* intended to be used when building psymtabs.  Some debug
+   info readers call this anyway, which is harmless if confusing.  */
 
 void
 really_free_pendings (void *dummy)
@@ -222,12 +305,13 @@ really_free_pendings (void *dummy)
 
   if (pending_macros)
     free_macro_table (pending_macros);
+  pending_macros = NULL;
 
   if (pending_addrmap)
-    {
-      obstack_free (&pending_addrmap_obstack, NULL);
-      pending_addrmap = NULL;
-    }
+    obstack_free (&pending_addrmap_obstack, NULL);
+  pending_addrmap = NULL;
+
+  free_buildsym_compunit ();
 }
 
 /* This function is called to discard any pending blocks.  */
@@ -250,9 +334,9 @@ static struct block *
 finish_block_internal (struct symbol *symbol, struct pending **listhead,
 		       struct pending_block *old_blocks,
 		       CORE_ADDR start, CORE_ADDR end,
-		       struct objfile *objfile,
 		       int is_global, int expandable)
 {
+  struct objfile *objfile = buildsym_compunit->objfile;
   struct gdbarch *gdbarch = get_objfile_arch (objfile);
   struct pending *next, *next1;
   struct block *block;
@@ -430,11 +514,10 @@ finish_block_internal (struct symbol *symbol, struct pending **listhead,
 struct block *
 finish_block (struct symbol *symbol, struct pending **listhead,
 	      struct pending_block *old_blocks,
-	      CORE_ADDR start, CORE_ADDR end,
-	      struct objfile *objfile)
+	      CORE_ADDR start, CORE_ADDR end)
 {
   return finish_block_internal (symbol, listhead, old_blocks,
-				start, end, objfile, 0, 0);
+				start, end, 0, 0);
 }
 
 /* Record BLOCK on the list of all blocks in the file.  Put it after
@@ -499,10 +582,10 @@ record_block_range (struct block *block,
   addrmap_set_empty (pending_addrmap, start, end_inclusive, block);
 }
 
-
 static struct blockvector *
-make_blockvector (struct objfile *objfile)
+make_blockvector (void)
 {
+  struct objfile *objfile = buildsym_compunit->objfile;
   struct pending_block *next;
   struct blockvector *blockvector;
   int i;
@@ -567,19 +650,21 @@ make_blockvector (struct objfile *objfile)
 
 /* Start recording information about source code that came from an
    included (or otherwise merged-in) source file with a different
-   name.  NAME is the name of the file (cannot be NULL), DIRNAME is
-   the directory in which the file was compiled (or NULL if not
-   known).  */
+   name.  NAME is the name of the file (cannot be NULL).  */
 
 void
-start_subfile (const char *name, const char *dirname)
+start_subfile (const char *name)
 {
+  const char *subfile_dirname;
   struct subfile *subfile;
 
-  /* See if this subfile is already known as a subfile of the current
-     main source file.  */
+  gdb_assert (buildsym_compunit != NULL);
 
-  for (subfile = subfiles; subfile; subfile = subfile->next)
+  subfile_dirname = buildsym_compunit->comp_dir;
+
+  /* See if this subfile is already registered.  */
+
+  for (subfile = buildsym_compunit->subfiles; subfile; subfile = subfile->next)
     {
       char *subfile_name;
 
@@ -587,8 +672,8 @@ start_subfile (const char *name, const char *dirname)
 	 attempt to create an absolute path to compare.  */
       if (IS_ABSOLUTE_PATH (name)
 	  && !IS_ABSOLUTE_PATH (subfile->name)
-	  && subfile->dirname != NULL)
-	subfile_name = concat (subfile->dirname, SLASH_STRING,
+	  && subfile_dirname != NULL)
+	subfile_name = concat (subfile_dirname, SLASH_STRING,
 			       subfile->name, (char *) NULL);
       else
 	subfile_name = subfile->name;
@@ -604,19 +689,18 @@ start_subfile (const char *name, const char *dirname)
 	xfree (subfile_name);
     }
 
-  /* This subfile is not known.  Add an entry for it.  Make an entry
-     for this subfile in the list of all subfiles of the current main
-     source file.  */
+  /* This subfile is not known.  Add an entry for it.  */
 
   subfile = (struct subfile *) xmalloc (sizeof (struct subfile));
-  memset ((char *) subfile, 0, sizeof (struct subfile));
-  subfile->next = subfiles;
-  subfiles = subfile;
+  memset (subfile, 0, sizeof (struct subfile));
+  subfile->buildsym_compunit = buildsym_compunit;
+
+  subfile->next = buildsym_compunit->subfiles;
+  buildsym_compunit->subfiles = subfile;
+
   current_subfile = subfile;
 
-  /* Save its name and compilation directory name.  */
   subfile->name = xstrdup (name);
-  subfile->dirname = (dirname == NULL) ? NULL : xstrdup (dirname);
 
   /* Initialize line-number recording for this subfile.  */
   subfile->line_vector = NULL;
@@ -639,13 +723,6 @@ start_subfile (const char *name, const char *dirname)
       subfile->language = subfile->next->language;
     }
 
-  /* Initialize the debug format string to NULL.  We may supply it
-     later via a call to record_debugformat.  */
-  subfile->debugformat = NULL;
-
-  /* Similarly for the producer.  */
-  subfile->producer = NULL;
-
   /* If the filename of this subfile ends in .C, then change the
      language of any pending subfiles from C to C++.  We also accept
      any other C++ suffixes accepted by deduce_language_from_filename.  */
@@ -657,7 +734,7 @@ start_subfile (const char *name, const char *dirname)
       enum language sublang = deduce_language_from_filename (subfile->name);
 
       if (sublang == language_cplus || sublang == language_fortran)
-	for (s = subfiles; s != NULL; s = s->next)
+	for (s = buildsym_compunit->subfiles; s != NULL; s = s->next)
 	  if (s->language == language_c)
 	    s->language = sublang;
     }
@@ -670,6 +747,57 @@ start_subfile (const char *name, const char *dirname)
     {
       subfile->language = subfile->next->language;
     }
+}
+
+/* Start recording information about a primary source file (IOW, not an
+   included source file).
+   COMP_DIR is the directory in which the compilation unit was compiled
+   (or NULL if not known).  */
+
+static struct buildsym_compunit *
+start_buildsym_compunit (struct objfile *objfile, const char *comp_dir)
+{
+  struct buildsym_compunit *bscu;
+
+  bscu = (struct buildsym_compunit *)
+    xmalloc (sizeof (struct buildsym_compunit));
+  memset (bscu, 0, sizeof (struct buildsym_compunit));
+
+  bscu->objfile = objfile;
+  bscu->comp_dir = (comp_dir == NULL) ? NULL : xstrdup (comp_dir);
+
+  /* Initialize the debug format string to NULL.  We may supply it
+     later via a call to record_debugformat.  */
+  bscu->debugformat = NULL;
+
+  /* Similarly for the producer.  */
+  bscu->producer = NULL;
+
+  return bscu;
+}
+
+/* Delete the buildsym compunit.  */
+
+static void
+free_buildsym_compunit (void)
+{
+  struct subfile *subfile, *nextsub;
+
+  if (buildsym_compunit == NULL)
+    return;
+  for (subfile = buildsym_compunit->subfiles;
+       subfile != NULL;
+       subfile = nextsub)
+    {
+      nextsub = subfile->next;
+      xfree (subfile->name);
+      xfree (subfile->line_vector);
+      xfree (subfile);
+    }
+  xfree (buildsym_compunit->comp_dir);
+  xfree (buildsym_compunit);
+  buildsym_compunit = NULL;
+  current_subfile = NULL;
 }
 
 /* For stabs readers, the first N_SO symbol is assumed to be the
@@ -687,10 +815,12 @@ start_subfile (const char *name, const char *dirname)
 void
 patch_subfile_names (struct subfile *subfile, char *name)
 {
-  if (subfile != NULL && subfile->dirname == NULL && subfile->name != NULL
+  if (subfile != NULL
+      && buildsym_compunit->comp_dir == NULL
+      && subfile->name != NULL
       && IS_DIR_SEPARATOR (subfile->name[strlen (subfile->name) - 1]))
     {
-      subfile->dirname = subfile->name;
+      buildsym_compunit->comp_dir = subfile->name;
       subfile->name = xstrdup (name);
       set_last_source_file (name);
 
@@ -836,68 +966,117 @@ compare_line_numbers (const void *ln1p, const void *ln2p)
   return ln1->line - ln2->line;
 }
 
-/* Return the macro table.
-   Initialize it if this is the first use.  */
+/* See buildsym.h.  */
+
+struct compunit_symtab *
+buildsym_compunit_symtab (void)
+{
+  gdb_assert (buildsym_compunit != NULL);
+
+  return buildsym_compunit->compunit_symtab;
+}
+
+/* See buildsym.h.  */
 
 struct macro_table *
-get_macro_table (struct objfile *objfile, const char *comp_dir)
+get_macro_table (void)
 {
+  struct objfile *objfile;
+
+  gdb_assert (buildsym_compunit != NULL);
+
+  objfile = buildsym_compunit->objfile;
+
   if (! pending_macros)
-    pending_macros = new_macro_table (&objfile->per_bfd->storage_obstack,
-				      objfile->per_bfd->macro_cache,
-				      comp_dir);
+    {
+      pending_macros = new_macro_table (&objfile->per_bfd->storage_obstack,
+					objfile->per_bfd->macro_cache,
+					buildsym_compunit->compunit_symtab);
+    }
+
   return pending_macros;
 }
 
-/* Start a new symtab for a new source file.  Called, for example,
+/* Init state to prepare for building a symtab.
+   Note: This can't be done in buildsym_init because dbxread.c and xcoffread.c
+   can call start_symtab+end_symtab multiple times after one call to
+   buildsym_init.  */
+
+static void
+prepare_for_building (const char *name, CORE_ADDR start_addr)
+{
+  set_last_source_file (name);
+  last_source_start_addr = start_addr;
+
+  local_symbols = NULL;
+  within_function = 0;
+  have_line_numbers = 0;
+
+  context_stack_depth = 0;
+
+  /* These should have been reset either by successful completion of building
+     a symtab, or by the really_free_pendings cleanup.  */
+  gdb_assert (file_symbols == NULL);
+  gdb_assert (global_symbols == NULL);
+  gdb_assert (pending_macros == NULL);
+  gdb_assert (pending_addrmap == NULL);
+  gdb_assert (current_subfile == NULL);
+}
+
+/* Start a new symtab for a new source file in OBJFILE.  Called, for example,
    when a stabs symbol of type N_SO is seen, or when a DWARF
    TAG_compile_unit DIE is seen.  It indicates the start of data for
    one original source file.
 
-   NAME is the name of the file (cannot be NULL).  DIRNAME is the directory in
+   NAME is the name of the file (cannot be NULL).  COMP_DIR is the directory in
    which the file was compiled (or NULL if not known).  START_ADDR is the
    lowest address of objects in the file (or 0 if not known).  */
 
-void
-start_symtab (const char *name, const char *dirname, CORE_ADDR start_addr)
+struct compunit_symtab *
+start_symtab (struct objfile *objfile, const char *name, const char *comp_dir,
+	      CORE_ADDR start_addr)
 {
-  restart_symtab (start_addr);
-  set_last_source_file (name);
-  start_subfile (name, dirname);
+  prepare_for_building (name, start_addr);
+
+  buildsym_compunit = start_buildsym_compunit (objfile, comp_dir);
+
+  /* Allocate the compunit symtab now.  The caller needs it to allocate
+     non-primary symtabs.  It is also needed by get_macro_table.  */
+  buildsym_compunit->compunit_symtab = allocate_compunit_symtab (objfile,
+								 name);
+
+  /* Build the subfile for NAME (the main source file) so that we can record
+     a pointer to it for later.
+     IMPORTANT: Do not allocate a struct symtab for NAME here.
+     It can happen that the debug info provides a different path to NAME than
+     DIRNAME,NAME.  We cope with this in watch_main_source_file_lossage but
+     that only works if the main_subfile doesn't have a symtab yet.  */
+  start_subfile (name);
+  /* Save this so that we don't have to go looking for it at the end
+     of the subfiles list.  */
+  buildsym_compunit->main_subfile = current_subfile;
+
+  return buildsym_compunit->compunit_symtab;
 }
 
 /* Restart compilation for a symtab.
+   CUST is the result of end_expandable_symtab.
+   NAME, START_ADDR are the source file we are resuming with.
+
    This is used when a symtab is built from multiple sources.
-   The symtab is first built with start_symtab and then for each additional
-   piece call restart_symtab.  */
+   The symtab is first built with start_symtab/end_expandable_symtab
+   and then for each additional piece call restart_symtab/augment_*_symtab.
+   Note: At the moment there is only augment_type_symtab.  */
 
 void
-restart_symtab (CORE_ADDR start_addr)
+restart_symtab (struct compunit_symtab *cust,
+		const char *name, CORE_ADDR start_addr)
 {
-  set_last_source_file (NULL);
-  last_source_start_addr = start_addr;
-  file_symbols = NULL;
-  global_symbols = NULL;
-  within_function = 0;
-  have_line_numbers = 0;
+  prepare_for_building (name, start_addr);
 
-  /* Context stack is initially empty.  Allocate first one with room
-     for 10 levels; reuse it forever afterward.  */
-  if (context_stack == NULL)
-    {
-      context_stack_size = INITIAL_CONTEXT_STACK_SIZE;
-      context_stack = (struct context_stack *)
-	xmalloc (context_stack_size * sizeof (struct context_stack));
-    }
-  context_stack_depth = 0;
-
-  /* We shouldn't have any address map at this point.  */
-  gdb_assert (! pending_addrmap);
-
-  /* Initialize the list of sub source files with one entry for this
-     file (the top-level source file).  */
-  subfiles = NULL;
-  current_subfile = NULL;
+  buildsym_compunit = start_buildsym_compunit (COMPUNIT_OBJFILE (cust),
+					       COMPUNIT_DIRNAME (cust));
+  buildsym_compunit->compunit_symtab = cust;
 }
 
 /* Subroutine of end_symtab to simplify it.  Look for a subfile that
@@ -907,32 +1086,26 @@ restart_symtab (CORE_ADDR start_addr)
    main source file's subfile and discard the other subfile.  This can
    happen because of a compiler bug or from the user playing games
    with #line or from things like a distributed build system that
-   manipulates the debug info.  */
+   manipulates the debug info.  This can also happen from an innocent
+   symlink in the paths, we don't canonicalize paths here.  */
 
 static void
 watch_main_source_file_lossage (void)
 {
   struct subfile *mainsub, *subfile;
 
-  /* Find the main source file.
-     This loop could be eliminated if start_symtab saved it for us.  */
-  mainsub = NULL;
-  for (subfile = subfiles; subfile; subfile = subfile->next)
-    {
-      /* The main subfile is guaranteed to be the last one.  */
-      if (subfile->next == NULL)
-	mainsub = subfile;
-    }
+  /* We have to watch for buildsym_compunit == NULL here.  It's a quirk of
+     end_symtab, it can return NULL so there may not be a main subfile.  */
+  if (buildsym_compunit == NULL)
+    return;
+
+  /* Get the main source file.  */
+  mainsub = buildsym_compunit->main_subfile;
 
   /* If the main source file doesn't have any line number or symbol
-     info, look for an alias in another subfile.
+     info, look for an alias in another subfile.  */
 
-     We have to watch for mainsub == NULL here.  It's a quirk of
-     end_symtab, it can return NULL so there may not be a main
-     subfile.  */
-
-  if (mainsub
-      && mainsub->line_vector == NULL
+  if (mainsub->line_vector == NULL
       && mainsub->symtab == NULL)
     {
       const char *mainbase = lbasename (mainsub->name);
@@ -942,11 +1115,12 @@ watch_main_source_file_lossage (void)
       struct subfile *prev_mainsub_alias = NULL;
 
       prevsub = NULL;
-      for (subfile = subfiles;
-	   /* Stop before we get to the last one.  */
-	   subfile->next;
+      for (subfile = buildsym_compunit->subfiles;
+	   subfile != NULL;
 	   subfile = subfile->next)
 	{
+	  if (subfile == mainsub)
+	    continue;
 	  if (filename_cmp (lbasename (subfile->name), mainbase) == 0)
 	    {
 	      ++nr_matches;
@@ -969,9 +1143,10 @@ watch_main_source_file_lossage (void)
 	  mainsub->symtab = mainsub_alias->symtab;
 
 	  if (prev_mainsub_alias == NULL)
-	    subfiles = mainsub_alias->next;
+	    buildsym_compunit->subfiles = mainsub_alias->next;
 	  else
 	    prev_mainsub_alias->next = mainsub_alias->next;
+	  xfree (mainsub_alias->name);
 	  xfree (mainsub_alias);
 	}
     }
@@ -990,19 +1165,30 @@ block_compar (const void *ap, const void *bp)
 	  - (BLOCK_START (b) < BLOCK_START (a)));
 }
 
-/* Reset globals used to build symtabs.  */
+/* Reset state after a successful building of a symtab.
+   This exists because dbxread.c and xcoffread.c can call
+   start_symtab+end_symtab multiple times after one call to buildsym_init,
+   and before the really_free_pendings cleanup is called.
+   We keep the free_pendings list around for dbx/xcoff sake.  */
 
 static void
 reset_symtab_globals (void)
 {
   set_last_source_file (NULL);
-  current_subfile = NULL;
+
+  local_symbols = NULL;
+  file_symbols = NULL;
+  global_symbols = NULL;
+
+  /* We don't free pending_macros here because if the symtab was successfully
+     built then ownership was transferred to the symtab.  */
   pending_macros = NULL;
+
   if (pending_addrmap)
-    {
-      obstack_free (&pending_addrmap_obstack, NULL);
-      pending_addrmap = NULL;
-    }
+    obstack_free (&pending_addrmap_obstack, NULL);
+  pending_addrmap = NULL;
+
+  free_buildsym_compunit ();
 }
 
 /* Implementation of the first part of end_symtab.  It allows modifying
@@ -1020,9 +1206,10 @@ reset_symtab_globals (void)
    not contain any symbols.  */
 
 struct block *
-end_symtab_get_static_block (CORE_ADDR end_addr, struct objfile *objfile,
-			     int expandable, int required)
+end_symtab_get_static_block (CORE_ADDR end_addr, int expandable, int required)
 {
+  struct objfile *objfile = buildsym_compunit->objfile;
+
   /* Finish the lexical context of the last function in the file; pop
      the context stack.  */
 
@@ -1032,7 +1219,7 @@ end_symtab_get_static_block (CORE_ADDR end_addr, struct objfile *objfile,
 
       /* Make a block for the local symbols within.  */
       finish_block (cstk->name, &local_symbols, cstk->old_blocks,
-		    cstk->start_addr, end_addr, objfile);
+		    cstk->start_addr, end_addr);
 
       if (context_stack_depth > 0)
 	{
@@ -1103,46 +1290,37 @@ end_symtab_get_static_block (CORE_ADDR end_addr, struct objfile *objfile,
     {
       /* Define the STATIC_BLOCK.  */
       return finish_block_internal (NULL, &file_symbols, NULL,
-				    last_source_start_addr, end_addr, objfile,
+				    last_source_start_addr, end_addr,
 				    0, expandable);
     }
 }
 
-/* Implementation of the second part of end_symtab.  Pass STATIC_BLOCK
-   as value returned by end_symtab_get_static_block.
+/* Subroutine of end_symtab_from_static_block to simplify it.
+   Handle the "have blockvector" case.
+   See end_symtab_from_static_block for a description of the arguments.  */
 
-   SECTION is the same as for end_symtab: the section number
-   (in objfile->section_offsets) of the blockvector and linetable.
-
-   If EXPANDABLE is non-zero the GLOBAL_BLOCK dictionary is made
-   expandable.  */
-
-struct symtab *
-end_symtab_from_static_block (struct block *static_block,
-			      struct objfile *objfile, int section,
-			      int expandable)
+static struct compunit_symtab *
+end_symtab_with_blockvector (struct block *static_block,
+			     int section, int expandable)
 {
-  struct symtab *symtab = NULL;
+  struct objfile *objfile = buildsym_compunit->objfile;
+  struct compunit_symtab *cu = buildsym_compunit->compunit_symtab;
+  struct symtab *symtab;
   struct blockvector *blockvector;
   struct subfile *subfile;
-  struct subfile *nextsub;
+  CORE_ADDR end_addr;
 
-  if (static_block == NULL)
-    {
-      /* Ignore symtabs that have no functions with real debugging info.  */
-      blockvector = NULL;
-    }
-  else
-    {
-      CORE_ADDR end_addr = BLOCK_END (static_block);
+  gdb_assert (static_block != NULL);
+  gdb_assert (buildsym_compunit != NULL);
+  gdb_assert (buildsym_compunit->subfiles != NULL);
 
-      /* Define after STATIC_BLOCK also GLOBAL_BLOCK, and build the
-         blockvector.  */
-      finish_block_internal (NULL, &global_symbols, NULL,
-			     last_source_start_addr, end_addr, objfile,
-			     1, expandable);
-      blockvector = make_blockvector (objfile);
-    }
+  end_addr = BLOCK_END (static_block);
+
+  /* Create the GLOBAL_BLOCK and build the blockvector.  */
+  finish_block_internal (NULL, &global_symbols, NULL,
+			 last_source_start_addr, end_addr,
+			 1, expandable);
+  blockvector = make_blockvector ();
 
   /* Read the line table if it has to be read separately.
      This is only used by xcoffread.c.  */
@@ -1154,172 +1332,176 @@ end_symtab_from_static_block (struct block *static_block,
      line number information.  */
   watch_main_source_file_lossage ();
 
-  /* Now create the symtab objects proper, one for each subfile.  */
-  /* (The main file is the last one on the chain.)  */
+  /* Now create the symtab objects proper, if not already done,
+     one for each subfile.  */
 
-  for (subfile = subfiles; subfile; subfile = nextsub)
+  for (subfile = buildsym_compunit->subfiles;
+       subfile != NULL;
+       subfile = subfile->next)
     {
       int linetablesize = 0;
-      symtab = NULL;
 
-      /* If we have blocks of symbols, make a symtab.  Otherwise, just
-         ignore this file and any line number info in it.  */
-      if (blockvector)
+      if (subfile->line_vector)
 	{
-	  if (subfile->line_vector)
-	    {
-	      linetablesize = sizeof (struct linetable) +
-	        subfile->line_vector->nitems * sizeof (struct linetable_entry);
+	  linetablesize = sizeof (struct linetable) +
+	    subfile->line_vector->nitems * sizeof (struct linetable_entry);
 
-	      /* Like the pending blocks, the line table may be
-	         scrambled in reordered executables.  Sort it if
-	         OBJF_REORDERED is true.  */
-	      if (objfile->flags & OBJF_REORDERED)
-		qsort (subfile->line_vector->item,
-		       subfile->line_vector->nitems,
-		     sizeof (struct linetable_entry), compare_line_numbers);
-	    }
+	  /* Like the pending blocks, the line table may be
+	     scrambled in reordered executables.  Sort it if
+	     OBJF_REORDERED is true.  */
+	  if (objfile->flags & OBJF_REORDERED)
+	    qsort (subfile->line_vector->item,
+		   subfile->line_vector->nitems,
+		   sizeof (struct linetable_entry), compare_line_numbers);
+	}
 
-	  /* Now, allocate a symbol table.  */
-	  if (subfile->symtab == NULL)
-	    symtab = allocate_symtab (subfile->name, objfile);
-	  else
-	    symtab = subfile->symtab;
+      /* Allocate a symbol table if necessary.  */
+      if (subfile->symtab == NULL)
+	subfile->symtab = allocate_symtab (cu, subfile->name);
+      symtab = subfile->symtab;
 
-	  /* Fill in its components.  */
-	  symtab->blockvector = blockvector;
-          symtab->macro_table = pending_macros;
-	  if (subfile->line_vector)
-	    {
-	      /* Reallocate the line table on the symbol obstack.  */
-	      symtab->linetable = (struct linetable *)
-		obstack_alloc (&objfile->objfile_obstack, linetablesize);
-	      memcpy (symtab->linetable, subfile->line_vector, linetablesize);
-	    }
-	  else
-	    {
-	      symtab->linetable = NULL;
-	    }
-	  symtab->block_line_section = section;
-	  if (subfile->dirname)
-	    {
-	      /* Reallocate the dirname on the symbol obstack.  */
-	      symtab->dirname =
-		obstack_copy0 (&objfile->objfile_obstack,
-			       subfile->dirname,
-			       strlen (subfile->dirname));
-	    }
-	  else
-	    {
-	      symtab->dirname = NULL;
-	    }
+      /* Fill in its components.  */
 
-	  /* Use whatever language we have been using for this
-	     subfile, not the one that was deduced in allocate_symtab
-	     from the filename.  We already did our own deducing when
-	     we created the subfile, and we may have altered our
-	     opinion of what language it is from things we found in
-	     the symbols.  */
-	  symtab->language = subfile->language;
-
-	  /* Save the debug format string (if any) in the symtab.  */
-	  symtab->debugformat = subfile->debugformat;
-
-	  /* Similarly for the producer.  */
-	  symtab->producer = subfile->producer;
-
-	  /* All symtabs for the main file and the subfiles share a
-	     blockvector, so we need to clear primary for everything
-	     but the main file.  */
-	  set_symtab_primary (symtab, 0);
+      if (subfile->line_vector)
+	{
+	  /* Reallocate the line table on the symbol obstack.  */
+	  SYMTAB_LINETABLE (symtab) = (struct linetable *)
+	    obstack_alloc (&objfile->objfile_obstack, linetablesize);
+	  memcpy (SYMTAB_LINETABLE (symtab), subfile->line_vector,
+		  linetablesize);
 	}
       else
-        {
-          if (subfile->symtab)
-            {
-              /* Since we are ignoring that subfile, we also need
-                 to unlink the associated empty symtab that we created.
-                 Otherwise, we can run into trouble because various parts
-                 such as the block-vector are uninitialized whereas
-                 the rest of the code assumes that they are.
-                 
-                 We can only unlink the symtab because it was allocated
-                 on the objfile obstack.  */
-              struct symtab *s;
-
-              if (objfile->symtabs == subfile->symtab)
-                objfile->symtabs = objfile->symtabs->next;
-              else
-                ALL_OBJFILE_SYMTABS (objfile, s)
-                  if (s->next == subfile->symtab)
-                    {
-                      s->next = s->next->next;
-                      break;
-                    }
-              subfile->symtab = NULL;
-            }
-        }
-      if (subfile->name != NULL)
 	{
-	  xfree ((void *) subfile->name);
-	}
-      if (subfile->dirname != NULL)
-	{
-	  xfree ((void *) subfile->dirname);
-	}
-      if (subfile->line_vector != NULL)
-	{
-	  xfree ((void *) subfile->line_vector);
+	  SYMTAB_LINETABLE (symtab) = NULL;
 	}
 
-      nextsub = subfile->next;
-      xfree ((void *) subfile);
+      /* Use whatever language we have been using for this
+	 subfile, not the one that was deduced in allocate_symtab
+	 from the filename.  We already did our own deducing when
+	 we created the subfile, and we may have altered our
+	 opinion of what language it is from things we found in
+	 the symbols.  */
+      symtab->language = subfile->language;
     }
 
-  /* Set this for the main source file.  */
-  if (symtab)
+  /* Make sure the symtab of main_subfile is the first in its list.  */
+  {
+    struct symtab *main_symtab, *prev_symtab;
+
+    main_symtab = buildsym_compunit->main_subfile->symtab;
+    prev_symtab = NULL;
+    ALL_COMPUNIT_FILETABS (cu, symtab)
+      {
+	if (symtab == main_symtab)
+	  {
+	    if (prev_symtab != NULL)
+	      {
+		prev_symtab->next = main_symtab->next;
+		main_symtab->next = COMPUNIT_FILETABS (cu);
+		COMPUNIT_FILETABS (cu) = main_symtab;
+	      }
+	    break;
+	  }
+	prev_symtab = symtab;
+      }
+    gdb_assert (main_symtab == COMPUNIT_FILETABS (cu));
+  }
+
+  /* Fill out the compunit symtab.  */
+
+  if (buildsym_compunit->comp_dir != NULL)
     {
-      set_symtab_primary (symtab, 1);
-
-      if (symtab->blockvector)
-	{
-	  struct block *b = BLOCKVECTOR_BLOCK (symtab->blockvector,
-					       GLOBAL_BLOCK);
-
-	  set_block_symtab (b, symtab);
-	}
+      /* Reallocate the dirname on the symbol obstack.  */
+      COMPUNIT_DIRNAME (cu)
+	= obstack_copy0 (&objfile->objfile_obstack,
+			 buildsym_compunit->comp_dir,
+			 strlen (buildsym_compunit->comp_dir));
     }
 
-  /* Default any symbols without a specified symtab to the primary
-     symtab.  */
-  if (blockvector)
+  /* Save the debug format string (if any) in the symtab.  */
+  COMPUNIT_DEBUGFORMAT (cu) = buildsym_compunit->debugformat;
+
+  /* Similarly for the producer.  */
+  COMPUNIT_PRODUCER (cu) = buildsym_compunit->producer;
+
+  COMPUNIT_BLOCKVECTOR (cu) = blockvector;
+  {
+    struct block *b = BLOCKVECTOR_BLOCK (blockvector, GLOBAL_BLOCK);
+
+    set_block_compunit_symtab (b, cu);
+  }
+
+  COMPUNIT_BLOCK_LINE_SECTION (cu) = section;
+
+  COMPUNIT_MACRO_TABLE (cu) = pending_macros;
+
+  /* Default any symbols without a specified symtab to the primary symtab.  */
+  {
+    int block_i;
+
+    /* The main source file's symtab.  */
+    symtab = COMPUNIT_FILETABS (cu);
+
+    for (block_i = 0; block_i < BLOCKVECTOR_NBLOCKS (blockvector); block_i++)
+      {
+	struct block *block = BLOCKVECTOR_BLOCK (blockvector, block_i);
+	struct symbol *sym;
+	struct dict_iterator iter;
+
+	/* Inlined functions may have symbols not in the global or
+	   static symbol lists.  */
+	if (BLOCK_FUNCTION (block) != NULL)
+	  if (symbol_symtab (BLOCK_FUNCTION (block)) == NULL)
+	    symbol_set_symtab (BLOCK_FUNCTION (block), symtab);
+
+	/* Note that we only want to fix up symbols from the local
+	   blocks, not blocks coming from included symtabs.  That is why
+	   we use ALL_DICT_SYMBOLS here and not ALL_BLOCK_SYMBOLS.  */
+	ALL_DICT_SYMBOLS (BLOCK_DICT (block), iter, sym)
+	  if (symbol_symtab (sym) == NULL)
+	    symbol_set_symtab (sym, symtab);
+      }
+  }
+
+  add_compunit_symtab_to_objfile (cu);
+
+  return cu;
+}
+
+/* Implementation of the second part of end_symtab.  Pass STATIC_BLOCK
+   as value returned by end_symtab_get_static_block.
+
+   SECTION is the same as for end_symtab: the section number
+   (in objfile->section_offsets) of the blockvector and linetable.
+
+   If EXPANDABLE is non-zero the GLOBAL_BLOCK dictionary is made
+   expandable.  */
+
+struct compunit_symtab *
+end_symtab_from_static_block (struct block *static_block,
+			      int section, int expandable)
+{
+  struct compunit_symtab *cu;
+
+  if (static_block == NULL)
     {
-      int block_i;
+      /* Handle the "no blockvector" case.
+	 When this happens there is nothing to record, so there's nothing
+	 to do: memory will be freed up later.
 
-      for (block_i = 0; block_i < BLOCKVECTOR_NBLOCKS (blockvector); block_i++)
-	{
-	  struct block *block = BLOCKVECTOR_BLOCK (blockvector, block_i);
-	  struct symbol *sym;
-	  struct dict_iterator iter;
-
-	  /* Inlined functions may have symbols not in the global or
-	     static symbol lists.  */
-	  if (BLOCK_FUNCTION (block) != NULL)
-	    if (SYMBOL_SYMTAB (BLOCK_FUNCTION (block)) == NULL)
-	      SYMBOL_SYMTAB (BLOCK_FUNCTION (block)) = symtab;
-
-	  /* Note that we only want to fix up symbols from the local
-	     blocks, not blocks coming from included symtabs.  That is why
-	     we use ALL_DICT_SYMBOLS here and not ALL_BLOCK_SYMBOLS.  */
-	  ALL_DICT_SYMBOLS (BLOCK_DICT (block), iter, sym)
-	    if (SYMBOL_SYMTAB (sym) == NULL)
-	      SYMBOL_SYMTAB (sym) = symtab;
-	}
+	 Note: We won't be adding a compunit to the objfile's list of
+	 compunits, so there's nothing to unchain.  However, since each symtab
+	 is added to the objfile's obstack we can't free that space.
+	 We could do better, but this is believed to be a sufficiently rare
+	 event.  */
+      cu = NULL;
     }
+  else
+    cu = end_symtab_with_blockvector (static_block, section, expandable);
 
   reset_symtab_globals ();
 
-  return symtab;
+  return cu;
 }
 
 /* Finish the symbol definitions for one main source file, close off
@@ -1343,32 +1525,33 @@ end_symtab_from_static_block (struct block *static_block,
    call end_symtab_get_static_block and end_symtab_from_static_block
    yourself.  */
 
-struct symtab *
-end_symtab (CORE_ADDR end_addr, struct objfile *objfile, int section)
+struct compunit_symtab *
+end_symtab (CORE_ADDR end_addr, int section)
 {
   struct block *static_block;
 
-  static_block = end_symtab_get_static_block (end_addr, objfile, 0, 0);
-  return end_symtab_from_static_block (static_block, objfile, section, 0);
+  static_block = end_symtab_get_static_block (end_addr, 0, 0);
+  return end_symtab_from_static_block (static_block, section, 0);
 }
 
 /* Same as end_symtab except create a symtab that can be later added to.  */
 
-struct symtab *
-end_expandable_symtab (CORE_ADDR end_addr, struct objfile *objfile,
-		       int section)
+struct compunit_symtab *
+end_expandable_symtab (CORE_ADDR end_addr, int section)
 {
   struct block *static_block;
 
-  static_block = end_symtab_get_static_block (end_addr, objfile, 1, 0);
-  return end_symtab_from_static_block (static_block, objfile, section, 1);
+  static_block = end_symtab_get_static_block (end_addr, 1, 0);
+  return end_symtab_from_static_block (static_block, section, 1);
 }
 
 /* Subroutine of augment_type_symtab to simplify it.
-   Attach SYMTAB to all symbols in PENDING_LIST that don't have one.  */
+   Attach the main source file's symtab to all symbols in PENDING_LIST that
+   don't have one.  */
 
 static void
-set_missing_symtab (struct pending *pending_list, struct symtab *symtab)
+set_missing_symtab (struct pending *pending_list,
+		    struct compunit_symtab *cu)
 {
   struct pending *pending;
   int i;
@@ -1377,8 +1560,8 @@ set_missing_symtab (struct pending *pending_list, struct symtab *symtab)
     {
       for (i = 0; i < pending->nsyms; ++i)
 	{
-	  if (SYMBOL_SYMTAB (pending->symbol[i]) == NULL)
-	    SYMBOL_SYMTAB (pending->symbol[i]) = symtab;
+	  if (symbol_symtab (pending->symbol[i]) == NULL)
+	    symbol_set_symtab (pending->symbol[i], COMPUNIT_FILETABS (cu));
 	}
     }
 }
@@ -1388,9 +1571,10 @@ set_missing_symtab (struct pending *pending_list, struct symtab *symtab)
    This is the case for DWARF4 Type Units.  */
 
 void
-augment_type_symtab (struct objfile *objfile, struct symtab *primary_symtab)
+augment_type_symtab (void)
 {
-  struct blockvector *blockvector = primary_symtab->blockvector;
+  struct compunit_symtab *cust = buildsym_compunit->compunit_symtab;
+  const struct blockvector *blockvector = COMPUNIT_BLOCKVECTOR (cust);
 
   if (context_stack_depth > 0)
     {
@@ -1412,7 +1596,7 @@ augment_type_symtab (struct objfile *objfile, struct symtab *primary_symtab)
 
       /* First mark any symbols without a specified symtab as belonging
 	 to the primary symtab.  */
-      set_missing_symtab (file_symbols, primary_symtab);
+      set_missing_symtab (file_symbols, cust);
 
       dict_add_pending (BLOCK_DICT (block), file_symbols);
     }
@@ -1423,7 +1607,7 @@ augment_type_symtab (struct objfile *objfile, struct symtab *primary_symtab)
 
       /* First mark any symbols without a specified symtab as belonging
 	 to the primary symtab.  */
-      set_missing_symtab (global_symbols, primary_symtab);
+      set_missing_symtab (global_symbols, cust);
 
       dict_add_pending (BLOCK_DICT (block), global_symbols);
     }
@@ -1486,13 +1670,13 @@ hashname (const char *name)
 void
 record_debugformat (const char *format)
 {
-  current_subfile->debugformat = format;
+  buildsym_compunit->debugformat = format;
 }
 
 void
 record_producer (const char *producer)
 {
-  current_subfile->producer = producer;
+  buildsym_compunit->producer = producer;
 }
 
 /* Merge the first symbol list SRCLIST into the second symbol list
@@ -1556,17 +1740,29 @@ get_last_source_file (void)
 void
 buildsym_init (void)
 {
-  free_pendings = NULL;
-  file_symbols = NULL;
-  global_symbols = NULL;
-  pending_blocks = NULL;
-  pending_macros = NULL;
   using_directives = NULL;
   subfile_stack = NULL;
 
-  /* We shouldn't have any address map at this point.  */
-  gdb_assert (! pending_addrmap);
   pending_addrmap_interesting = 0;
+
+  /* Context stack is initially empty.  Allocate first one with room
+     for a few levels; reuse it forever afterward.  */
+  if (context_stack == NULL)
+    {
+      context_stack_size = INITIAL_CONTEXT_STACK_SIZE;
+      context_stack = (struct context_stack *)
+	xmalloc (context_stack_size * sizeof (struct context_stack));
+    }
+
+  /* Ensure the really_free_pendings cleanup was called after
+     the last time.  */
+  gdb_assert (free_pendings == NULL);
+  gdb_assert (pending_blocks == NULL);
+  gdb_assert (file_symbols == NULL);
+  gdb_assert (global_symbols == NULL);
+  gdb_assert (pending_macros == NULL);
+  gdb_assert (pending_addrmap == NULL);
+  gdb_assert (buildsym_compunit == NULL);
 }
 
 /* Initialize anything that needs initializing when a completely new
