@@ -1,5 +1,5 @@
 /* mips-formats.h
-   Copyright 2013 Free Software Foundation, Inc.
+   Copyright (C) 2013-2015 Free Software Foundation, Inc.
 
    This library is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -133,4 +133,12 @@
   { \
     static const struct mips_operand op = { OP_##TYPE, SIZE, LSB }; \
     return &op; \
+  }
+
+#define PREV_CHECK(SIZE, LSB, GT_OK, LT_OK, EQ_OK, ZERO_OK) \
+  { \
+    static const struct mips_check_prev_operand op = { \
+      { OP_CHECK_PREV, SIZE, LSB }, GT_OK, LT_OK, EQ_OK, ZERO_OK \
+    }; \
+    return &op.root; \
   }

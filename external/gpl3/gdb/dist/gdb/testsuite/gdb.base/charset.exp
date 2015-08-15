@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2001-2014 Free Software Foundation, Inc.
+# Copyright 2001-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -324,18 +324,7 @@ gdb_test "break ${srcfile}:[gdb_get_line_number "all strings initialized"]" \
          ".*Breakpoint.* at .*" \
          "set breakpoint after all strings have been initialized"
 gdb_run_cmd
-gdb_expect {
-    -re "Breakpoint.*all strings initialized.*$gdb_prompt $" {
-        pass "run until all strings have been initialized"
-    }
-    -re "$gdb_prompt $" {
-        fail "run until all strings have been initialized"
-    }
-    timeout {
-        fail "run until all strings have been initialized (timeout)"
-    }
-}
-
+gdb_test "" "Breakpoint.*all strings initialized.*" "run until all strings have been initialized"
 
 # We only try the wide character tests on machines where the wchar_t
 # typedef in the test case has the right size.

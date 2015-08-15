@@ -1,4 +1,4 @@
-# Copyright 1999-2014 Free Software Foundation, Inc.
+# Copyright 1999-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -104,14 +104,7 @@ for {set i 0} {$i < 5} {incr i} {
 	-re "$gdb_prompt $" {
 	}
     }
-    if { $threads_created == 0 } {
-	# Not all targets announce new threads as they are created.
-	# For example, the GDB
-	# remote protocol target only finds out about threads when
-	# they actually report some event like a breakpoint hit,
-	# or when the user types 'info threads'.
-	unsupported "create philosopher: $i"
-    } elseif { $threads_created == 1 } {
+    if { $threads_created == 1 } {
 	if { $expect_manager < 0 } {
 	    set expect_manager 0
 	}

@@ -1,4 +1,4 @@
-# Copyright 2014 Free Software Foundation, Inc.
+# Copyright 2014-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,7 +28,8 @@ if { [skip_python_tests] } { continue }
 
 set remote_python_file \
     [gdb_remote_download host ${srcdir}/${subdir}/${gdb_test_file_name}.py]
-gdb_test_no_output "source ${remote_python_file}"
+gdb_test_no_output "source ${remote_python_file}" \
+    "source ${gdb_test_file_name}.py"
 
 set bp_location [gdb_get_line_number "BREAK" ${testdir}/foo.adb]
 runto "foo.adb:$bp_location"

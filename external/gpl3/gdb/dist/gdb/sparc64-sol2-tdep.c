@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris UltraSPARC.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,15 +25,14 @@
 #include "objfiles.h"
 #include "osabi.h"
 #include "trad-frame.h"
-
-#include "gdb_assert.h"
+#include "regset.h"
 
 #include "sol2-tdep.h"
 #include "sparc64-tdep.h"
 #include "solib-svr4.h"
 
 /* From <sys/regset.h>.  */
-const struct sparc_gregset sparc64_sol2_gregset =
+const struct sparc_gregmap sparc64_sol2_gregmap =
 {
   32 * 8,			/* "tstate" */
   33 * 8,			/* %pc */
@@ -46,11 +45,57 @@ const struct sparc_gregset sparc64_sol2_gregset =
   8				/* sizeof (%y) */
 };
 
-const struct sparc_fpregset sparc64_sol2_fpregset =
+const struct sparc_fpregmap sparc64_sol2_fpregmap =
 {
   0 * 8,			/* %f0 */
   33 * 8,			/* %fsr */
 };
+
+static void
+sparc64_sol2_supply_core_gregset (const struct regset *regset,
+				  struct regcache *regcache,
+				  int regnum, const void *gregs, size_t len)
+{
+  sparc64_supply_gregset (&sparc64_sol2_gregmap, regcache, regnum, gregs);
+}
+
+static void
+sparc64_sol2_collect_core_gregset (const struct regset *regset,
+				   const struct regcache *regcache,
+				   int regnum, void *gregs, size_t len)
+{
+  sparc64_collect_gregset (&sparc64_sol2_gregmap, regcache, regnum, gregs);
+}
+
+static void
+sparc64_sol2_supply_core_fpregset (const struct regset *regset,
+				   struct regcache *regcache,
+				   int regnum, const void *fpregs, size_t len)
+{
+  sparc64_supply_fpregset (&sparc64_sol2_fpregmap, regcache, regnum, fpregs);
+}
+
+static void
+sparc64_sol2_collect_core_fpregset (const struct regset *regset,
+				    const struct regcache *regcache,
+				    int regnum, void *fpregs, size_t len)
+{
+  sparc64_collect_fpregset (&sparc64_sol2_fpregmap, regcache, regnum, fpregs);
+}
+
+static const struct regset sparc64_sol2_gregset =
+  {
+    NULL,
+    sparc64_sol2_supply_core_gregset,
+    sparc64_sol2_collect_core_gregset
+  };
+
+static const struct regset sparc64_sol2_fpregset =
+  {
+    NULL,
+    sparc64_sol2_supply_core_fpregset,
+    sparc64_sol2_collect_core_fpregset
+  };
 
 
 static struct sparc_frame_cache *
@@ -160,6 +205,12 @@ void
 sparc64_sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   struct gdbarch_tdep *tdep = gdbarch_tdep (gdbarch);
+
+  tdep->gregset = &sparc64_sol2_gregset;
+  tdep->sizeof_gregset = 304;
+
+  tdep->fpregset = &sparc64_sol2_fpregset;
+  tdep->sizeof_fpregset = 544;
 
   frame_unwind_append_unwinder (gdbarch, &sparc64_sol2_sigtramp_frame_unwind);
 

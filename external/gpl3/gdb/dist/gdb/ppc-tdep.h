@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -182,6 +182,15 @@ extern void ppc_collect_vsxregset (const struct regset *regset,
 
 /* Private data that this module attaches to struct gdbarch.  */
 
+/* ELF ABI version used by the inferior.  */
+enum powerpc_elf_abi
+{
+  POWERPC_ELF_AUTO,
+  POWERPC_ELF_V1,
+  POWERPC_ELF_V2,
+  POWERPC_ELF_LAST
+};
+
 /* Vector ABI used by the inferior.  */
 enum powerpc_vector_abi
 {
@@ -196,6 +205,8 @@ struct gdbarch_tdep
   {
     int wordsize;		/* Size in bytes of fixed-point word.  */
     int soft_float;		/* Avoid FP registers for arguments?  */
+
+    enum powerpc_elf_abi elf_abi;	/* ELF ABI version.  */
 
     /* How to pass vector arguments.  Never set to AUTO or LAST.  */
     enum powerpc_vector_abi vector_abi;
@@ -248,6 +259,8 @@ struct gdbarch_tdep
     /* ISA-specific types.  */
     struct type *ppc_builtin_type_vec64;
     struct type *ppc_builtin_type_vec128;
+
+    int (*ppc_syscall_record) (struct regcache *regcache);
 };
 
 
@@ -306,6 +319,9 @@ extern int ppc_insns_match_pattern (struct frame_info *frame, CORE_ADDR pc,
 extern CORE_ADDR ppc_insn_d_field (unsigned int insn);
 
 extern CORE_ADDR ppc_insn_ds_field (unsigned int insn);
+
+extern int ppc_process_record (struct gdbarch *gdbarch,
+			       struct regcache *regcache, CORE_ADDR addr);
 
 /* Instruction size.  */
 #define PPC_INSN_SIZE 4

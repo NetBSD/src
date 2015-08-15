@@ -1,5 +1,5 @@
 /* Print Z80 and R800 instructions
-   Copyright 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2005-2015 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of the GNU opcodes library.

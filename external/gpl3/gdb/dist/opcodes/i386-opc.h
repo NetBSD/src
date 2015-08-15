@@ -1,6 +1,5 @@
 /* Declarations for Intel 80386 opcode table
-   Copyright 2007, 2008, 2009, 2010, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 2007-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -103,6 +102,12 @@ enum
   CpuAVX512ER,
   /* Intel AVX-512 Prefetch Instructions support required */
   CpuAVX512PF,
+  /* Intel AVX-512 VL Instructions support required.  */
+  CpuAVX512VL,
+  /* Intel AVX-512 DQ Instructions support required.  */
+  CpuAVX512DQ,
+  /* Intel AVX-512 BW Instructions support required.  */
+  CpuAVX512BW,
   /* Intel L1OM support required */
   CpuL1OM,
   /* Intel K1OM support required */
@@ -169,6 +174,24 @@ enum
   CpuSHA,
   /* VREX support required  */
   CpuVREX,
+  /* CLFLUSHOPT instruction required */
+  CpuClflushOpt,
+  /* XSAVES/XRSTORS instruction required */
+  CpuXSAVES,
+  /* XSAVEC instruction required */
+  CpuXSAVEC,
+  /* PREFETCHWT1 instruction required */
+  CpuPREFETCHWT1,
+  /* SE1 instruction required */
+  CpuSE1,
+  /* CLWB instruction required */
+  CpuCLWB,
+  /* PCOMMIT instruction required */
+  CpuPCOMMIT,
+  /* Intel AVX-512 IFMA Instructions support required.  */
+  CpuAVX512IFMA,
+  /* Intel AVX-512 VBMI Instructions support required.  */
+  CpuAVX512VBMI,
   /* 64bit support required  */
   Cpu64,
   /* Not supported in the 64bit mode  */
@@ -227,6 +250,9 @@ typedef union i386_cpu_flags
       unsigned int cpuavx512cd:1;
       unsigned int cpuavx512er:1;
       unsigned int cpuavx512pf:1;
+      unsigned int cpuavx512vl:1;
+      unsigned int cpuavx512dq:1;
+      unsigned int cpuavx512bw:1;
       unsigned int cpul1om:1;
       unsigned int cpuk1om:1;
       unsigned int cpuxsave:1;
@@ -260,6 +286,15 @@ typedef union i386_cpu_flags
       unsigned int cpusmap:1;
       unsigned int cpusha:1;
       unsigned int cpuvrex:1;
+      unsigned int cpuclflushopt:1;
+      unsigned int cpuxsaves:1;
+      unsigned int cpuxsavec:1;
+      unsigned int cpuprefetchwt1:1;
+      unsigned int cpuse1:1;
+      unsigned int cpuclwb:1;
+      unsigned int cpupcommit:1;
+      unsigned int cpuavx512ifma:1;
+      unsigned int cpuavx512vbmi:1;
       unsigned int cpu64:1;
       unsigned int cpuno64:1;
 #ifdef CpuUnused
@@ -478,6 +513,8 @@ enum
 #define NO_BROADCAST	0
 #define BROADCAST_1TO16	1
 #define BROADCAST_1TO8	2
+#define BROADCAST_1TO4	3
+#define BROADCAST_1TO2	4
   Broadcast,
 
   /* Static rounding control is supported.  */

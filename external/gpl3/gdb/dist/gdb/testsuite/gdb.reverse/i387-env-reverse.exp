@@ -1,4 +1,4 @@
-# Copyright 2009-2014 Free Software Foundation, Inc.
+# Copyright 2009-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ gdb_test_no_output "record"  "Turn on process record"
 # This can take awhile.
 set oldtimeout $timeout
 set timeout [expr $oldtimeout + 120]
-gdb_test "until $location" ".*/$srcfile:$location.*" \
+gdb_test "until $location" ".*$srcfile:$location.*" \
     "record to end of main"
 set timeout $oldtimeout
 
@@ -48,14 +48,14 @@ set timeout $oldtimeout
 
 set location [gdb_get_line_number "BEGIN I387-FLOAT-REVERSE"]
 gdb_test_no_output "set exec-dir reverse" "set reverse direction"
-gdb_test "until $location" ".*/$srcfile:$location.*" \
+gdb_test "until $location" ".*$srcfile:$location.*" \
     "rewind to beginning of main"
 gdb_test_no_output "set exec-dir forward" "set forward direction"
 
 # Test FPU env particularly ftag and fstatus reigters.
 
 set location [gdb_get_line_number "TEST ENV"]
-gdb_test "until $location" ".*/$srcfile:$location.*asm.*nop.*" \
+gdb_test "until $location" ".*$srcfile:$location.*asm.*nop.*" \
     "begin testing fpu env"       
 
 gdb_test "n" "asm.*fsave.*"               "save FPU env in memory"    

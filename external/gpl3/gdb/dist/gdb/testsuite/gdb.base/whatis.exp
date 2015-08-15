@@ -1,4 +1,4 @@
-# Copyright 1988-2014 Free Software Foundation, Inc.
+# Copyright 1988-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,14 +44,14 @@ clean_restart $binfile
 
 # Define a procedure to set up an xfail for all targets that put out a
 # `long' type as an `int' type.
-# Sun/Ultrix cc have this problem.
+# Sun cc has this problem.
 # It was said that COFF targets can not distinguish int from long either.
 
 proc setup_xfail_on_long_vs_int {} {
     global gcc_compiled
 
     if {!$gcc_compiled} {
-	setup_xfail "*-sun-sunos4*" "*-*-ultrix*" "i*86-sequent-bsd*"
+	setup_xfail "*-sun-sunos4*" "i*86-sequent-bsd*"
     }
 }
 
@@ -67,7 +67,6 @@ gdb_test "whatis v_char" \
     "type = (unsigned char|char)" \
     "whatis char"
 
-if {!$gcc_compiled} then { setup_xfail "mips-sgi-irix*" }
 gdb_test "whatis v_signed_char" \
     "type = (signed char|char)" \
     "whatis signed char"

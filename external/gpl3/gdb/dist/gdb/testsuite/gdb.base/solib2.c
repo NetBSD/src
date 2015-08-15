@@ -5,12 +5,7 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
-#ifdef PROTOTYPES
 int  solib_main (int  arg)
-#else
-int  solib_main (arg)
-  int  arg;
-#endif
 {
   return arg*arg*arg;
 }
