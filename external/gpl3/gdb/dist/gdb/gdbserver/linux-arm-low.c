@@ -1,5 +1,5 @@
 /* GNU/Linux/ARM specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2014 Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -256,7 +256,7 @@ arm_get_pc (struct regcache *regcache)
   unsigned long pc;
   collect_register_by_name (regcache, "pc", &pc);
   if (debug_threads)
-    fprintf (stderr, "stop pc is %08lx\n", pc);
+    debug_printf ("stop pc is %08lx\n", pc);
   return pc;
 }
 
@@ -282,7 +282,7 @@ static const unsigned long arm_eabi_breakpoint = 0xe7f001f0;
 static int
 arm_breakpoint_at (CORE_ADDR where)
 {
-  struct regcache *regcache = get_thread_regcache (current_inferior, 1);
+  struct regcache *regcache = get_thread_regcache (current_thread, 1);
   unsigned long cpsr;
 
   collect_register_by_name (regcache, "cpsr", &cpsr);
@@ -325,7 +325,7 @@ arm_breakpoint_at (CORE_ADDR where)
 static CORE_ADDR
 arm_reinsert_addr (void)
 {
-  struct regcache *regcache = get_thread_regcache (current_inferior, 1);
+  struct regcache *regcache = get_thread_regcache (current_thread, 1);
   unsigned long pc;
   collect_register_by_name (regcache, "lr", &pc);
   return pc;
@@ -439,43 +439,39 @@ arm_linux_hw_breakpoint_equal (const struct arm_linux_hw_breakpoint *p1,
   return p1->address == p2->address && p1->control == p2->control;
 }
 
+/* Convert a raw breakpoint type to an enum arm_hwbp_type.  */
+
+static int
+raw_bkpt_type_to_arm_hwbp_type (enum raw_bkpt_type raw_type)
+{
+  switch (raw_type)
+    {
+    case raw_bkpt_type_hw:
+      return arm_hwbp_break;
+    case raw_bkpt_type_write_wp:
+      return arm_hwbp_store;
+    case raw_bkpt_type_read_wp:
+      return arm_hwbp_load;
+    case raw_bkpt_type_access_wp:
+      return arm_hwbp_access;
+    default:
+      gdb_assert_not_reached ("unhandled raw type");
+    }
+}
+
 /* Initialize the hardware breakpoint structure P for a breakpoint or
    watchpoint at ADDR to LEN.  The type of watchpoint is given in TYPE.
    Returns -1 if TYPE is unsupported, or -2 if the particular combination
    of ADDR and LEN cannot be implemented.  Otherwise, returns 0 if TYPE
    represents a breakpoint and 1 if type represents a watchpoint.  */
 static int
-arm_linux_hw_point_initialize (char type, CORE_ADDR addr, int len,
-			       struct arm_linux_hw_breakpoint *p)
+arm_linux_hw_point_initialize (enum raw_bkpt_type raw_type, CORE_ADDR addr,
+			       int len, struct arm_linux_hw_breakpoint *p)
 {
   arm_hwbp_type hwbp_type;
   unsigned mask;
 
-  /* Breakpoint/watchpoint types (GDB terminology):
-     0 = memory breakpoint for instructions
-     (not supported; done via memory write instead)
-     1 = hardware breakpoint for instructions (supported)
-     2 = write watchpoint (supported)
-     3 = read watchpoint (supported)
-     4 = access watchpoint (supported).  */
-  switch (type)
-    {
-    case '1':
-      hwbp_type = arm_hwbp_break;
-      break;
-    case '2':
-      hwbp_type = arm_hwbp_store;
-      break;
-    case '3':
-      hwbp_type = arm_hwbp_load;
-      break;
-    case '4':
-      hwbp_type = arm_hwbp_access;
-      break;
-    default:
-      /* Unsupported.  */
-      return -1;
-    }
+  hwbp_type = raw_bkpt_type_to_arm_hwbp_type (raw_type);
 
   if (hwbp_type == arm_hwbp_break)
     {
@@ -536,11 +532,12 @@ struct update_registers_data
 static int
 update_registers_callback (struct inferior_list_entry *entry, void *arg)
 {
-  struct lwp_info *lwp = (struct lwp_info *) entry;
+  struct thread_info *thread = (struct thread_info *) entry;
+  struct lwp_info *lwp = get_thread_lwp (thread);
   struct update_registers_data *data = (struct update_registers_data *) arg;
 
   /* Only update the threads of the current process.  */
-  if (pid_of (lwp) == pid_of (get_thread_lwp (current_inferior)))
+  if (pid_of (thread) == pid_of (current_thread))
     {
       /* The actual update is done later just before resuming the lwp,
          we just mark that the registers need updating.  */
@@ -558,9 +555,26 @@ update_registers_callback (struct inferior_list_entry *entry, void *arg)
   return 0;
 }
 
+static int
+arm_supports_z_point_type (char z_type)
+{
+  switch (z_type)
+    {
+    case Z_PACKET_HW_BP:
+    case Z_PACKET_WRITE_WP:
+    case Z_PACKET_READ_WP:
+    case Z_PACKET_ACCESS_WP:
+      return 1;
+    default:
+      /* Leave the handling of sw breakpoints with the gdb client.  */
+      return 0;
+    }
+}
+
 /* Insert hardware break-/watchpoint.  */
 static int
-arm_insert_point (char type, CORE_ADDR addr, int len)
+arm_insert_point (enum raw_bkpt_type type, CORE_ADDR addr,
+		  int len, struct raw_breakpoint *bp)
 {
   struct process_info *proc = current_process ();
   struct arm_linux_hw_breakpoint p, *pts;
@@ -589,7 +603,7 @@ arm_insert_point (char type, CORE_ADDR addr, int len)
       {
 	struct update_registers_data data = { watch, i };
 	pts[i] = p;
-	find_inferior (&all_lwps, update_registers_callback, &data);
+	find_inferior (&all_threads, update_registers_callback, &data);
 	return 0;
       }
 
@@ -599,7 +613,8 @@ arm_insert_point (char type, CORE_ADDR addr, int len)
 
 /* Remove hardware break-/watchpoint.  */
 static int
-arm_remove_point (char type, CORE_ADDR addr, int len)
+arm_remove_point (enum raw_bkpt_type type, CORE_ADDR addr,
+		  int len, struct raw_breakpoint *bp)
 {
   struct process_info *proc = current_process ();
   struct arm_linux_hw_breakpoint p, *pts;
@@ -628,7 +643,7 @@ arm_remove_point (char type, CORE_ADDR addr, int len)
       {
 	struct update_registers_data data = { watch, i };
 	pts[i].control = arm_hwbp_control_disable (pts[i].control);
-	find_inferior (&all_lwps, update_registers_callback, &data);
+	find_inferior (&all_threads, update_registers_callback, &data);
 	return 0;
       }
 
@@ -640,7 +655,7 @@ arm_remove_point (char type, CORE_ADDR addr, int len)
 static int
 arm_stopped_by_watchpoint (void)
 {
-  struct lwp_info *lwp = get_thread_lwp (current_inferior);
+  struct lwp_info *lwp = get_thread_lwp (current_thread);
   siginfo_t siginfo;
 
   /* We must be able to set hardware watchpoints.  */
@@ -649,7 +664,7 @@ arm_stopped_by_watchpoint (void)
 
   /* Retrieve siginfo.  */
   errno = 0;
-  ptrace (PTRACE_GETSIGINFO, lwpid_of (lwp), 0, &siginfo);
+  ptrace (PTRACE_GETSIGINFO, lwpid_of (current_thread), 0, &siginfo);
   if (errno != 0)
     return 0;
 
@@ -675,7 +690,7 @@ arm_stopped_by_watchpoint (void)
 static CORE_ADDR
 arm_stopped_data_address (void)
 {
-  struct lwp_info *lwp = get_thread_lwp (current_inferior);
+  struct lwp_info *lwp = get_thread_lwp (current_thread);
   return lwp->arch_private->stopped_data_address;
 }
 
@@ -707,8 +722,9 @@ arm_new_thread (void)
 static void
 arm_prepare_to_resume (struct lwp_info *lwp)
 {
-  int pid = lwpid_of (lwp);
-  struct process_info *proc = find_process_pid (pid_of (lwp));
+  struct thread_info *thread = get_lwp_thread (lwp);
+  int pid = lwpid_of (thread);
+  struct process_info *proc = find_process_pid (pid_of (thread));
   struct arch_process_info *proc_info = proc->private->arch_private;
   struct arch_lwp_info *lwp_info = lwp->arch_private;
   int i;
@@ -780,7 +796,7 @@ arm_get_hwcap (unsigned long *valp)
 static const struct target_desc *
 arm_read_description (void)
 {
-  int pid = lwpid_of (get_thread_lwp (current_inferior));
+  int pid = lwpid_of (current_thread);
 
   /* Query hardware watchpoint/breakpoint capabilities.  */
   arm_linux_init_hwbp_cap (pid);
@@ -894,6 +910,7 @@ struct linux_target_ops the_low_target = {
   arm_reinsert_addr,
   0,
   arm_breakpoint_at,
+  arm_supports_z_point_type,
   arm_insert_point,
   arm_remove_point,
   arm_stopped_by_watchpoint,

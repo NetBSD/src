@@ -1,4 +1,4 @@
-# Copyright 2002-2014 Free Software Foundation, Inc.
+# Copyright 2002-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,8 +35,9 @@ mi_gdb_exit
 mi_gdb_start
 mi_run_to_main
 
-mi_create_breakpoint "foo" 2 keep foo ".*mi-syn-frame.c" $decimal $hex \
-    "insert breakpoint foo"
+mi_create_breakpoint "foo" \
+    "insert breakpoint foo" \
+    -number 2 -func foo -file ".*mi-syn-frame.c"
 
 #
 # Call foo() by hand, where we'll hit a breakpoint.
@@ -64,8 +65,9 @@ mi_gdb_test "404-stack-list-frames 0 0" \
 # Call have_a_very_merry_interrupt() which will eventually raise a signal
 # that's caught by handler() which calls subroutine().
 
-mi_create_breakpoint "subroutine" 3 keep subroutine ".*mi-syn-frame.c" $decimal $hex \
-    "insert breakpoint subroutine"
+mi_create_breakpoint "subroutine" \
+    "insert breakpoint subroutine" \
+    -number 3 -func subroutine -file ".*mi-syn-frame.c"
 
 mi_gdb_test "406-data-evaluate-expression have_a_very_merry_interrupt()" \
   ".*406\\^error,msg=\"The program being debugged stopped while in a function called from GDB.\\\\nEvaluation of the expression containing the function\\\\n\\(have_a_very_merry_interrupt\\) will be abandoned.\\\\nWhen the function is done executing, GDB will silently stop.\"" \

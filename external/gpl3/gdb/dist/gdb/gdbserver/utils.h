@@ -1,5 +1,5 @@
 /* General utility routines for the remote server for GDB.
-   Copyright (C) 1993-2014 Free Software Foundation, Inc.
+   Copyright (C) 1993-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,14 +19,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-void perror_with_name (const char *string);
-void error (const char *string,...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 2);
-void fatal (const char *string,...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 2);
-void warning (const char *string,...) ATTRIBUTE_PRINTF (1, 2);
 char *paddress (CORE_ADDR addr);
-char *pulongest (ULONGEST u);
-char *plongest (LONGEST l);
-char *phex_nz (ULONGEST l, int sizeof_l);
 char *pfildes (gdb_fildes_t fd);
 
 #endif /* UTILS_H */

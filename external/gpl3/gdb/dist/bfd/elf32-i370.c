@@ -1,6 +1,5 @@
 /* i370-specific support for 32-bit ELF
-   Copyright 1994, 1995, 1996, 1997, 1998, 2000, 2001, 2002, 2003, 2004,
-   2005, 2006, 2007, 2008, 2010, 2011, 2012 Free Software Foundation, Inc.
+   Copyright (C) 1994-2015 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
    Hacked by Linas Vepstas for i370 linas@linas.org
 
@@ -535,7 +534,7 @@ i370_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
       h->needs_copy = 1;
     }
 
-  return _bfd_elf_adjust_dynamic_copy (h, s);
+  return _bfd_elf_adjust_dynamic_copy (info, h, s);
 }
 
 /* Increment the index of a dynamic symbol by a given amount.  Called
@@ -1091,6 +1090,12 @@ i370_elf_relocate_section (bfd *output_bfd,
       else
 	{
 	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+
+	  if (info->wrap_hash != NULL
+	      && (input_section->flags & SEC_DEBUGGING) != 0)
+	    h = ((struct elf_link_hash_entry *)
+		 unwrap_hash_lookup (info, input_bfd, &h->root));
+
 	  while (h->root.type == bfd_link_hash_indirect
 		 || h->root.type == bfd_link_hash_warning)
 	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
@@ -1357,7 +1362,7 @@ i370_elf_relocate_section (bfd *output_bfd,
   return ret;
 }
 
-#define TARGET_BIG_SYM		bfd_elf32_i370_vec
+#define TARGET_BIG_SYM		i370_elf32_vec
 #define TARGET_BIG_NAME		"elf32-i370"
 #define ELF_ARCH		bfd_arch_i370
 #define ELF_MACHINE_CODE	EM_S370

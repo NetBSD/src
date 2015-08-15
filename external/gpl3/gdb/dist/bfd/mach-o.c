@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright 1999-2013 Free Software Foundation, Inc.
+   Copyright (C) 1999-2015 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -36,6 +36,9 @@
 
 #define FILE_ALIGN(off, algn) \
   (((off) + ((file_ptr) 1 << (algn)) - 1) & ((file_ptr) -1 << (algn)))
+
+static bfd_boolean
+bfd_mach_o_read_dyld_content (bfd *abfd, bfd_mach_o_dyld_info_command *cmd);
 
 unsigned int
 bfd_mach_o_version (bfd *abfd)
@@ -467,7 +470,8 @@ bfd_mach_o_convert_section_name_to_mach_o (bfd *abfd ATTRIBUTE_UNUSED,
       seglen = dot - name;
       seclen = len - (dot + 1 - name);
 
-      if (seglen < 16 && seclen < 16)
+      if (seglen <= BFD_MACH_O_SEGNAME_SIZE
+	  && seclen <= BFD_MACH_O_SECTNAME_SIZE)
         {
           memcpy (section->segname, name, seglen);
           section->segname[seglen] = 0;
@@ -528,6 +532,20 @@ bfd_mach_o_section_get_nbr_indirect (bfd *abfd, bfd_mach_o_section *sec)
     return sec->size / elsz;
 }
 
+/* Append command CMD to ABFD.  Note that header.ncmds is not updated.  */
+
+static void
+bfd_mach_o_append_command (bfd *abfd, bfd_mach_o_load_command *cmd)
+{
+  bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
+
+  if (mdata->last_command != NULL)
+    mdata->last_command->next = cmd;
+  else
+    mdata->first_command = cmd;
+  mdata->last_command = cmd;
+  cmd->next = NULL;
+}
 
 /* Copy any private info we understand from the input symbol
    to the output symbol.  */
@@ -539,12 +557,14 @@ bfd_mach_o_bfd_copy_private_symbol_data (bfd *ibfd ATTRIBUTE_UNUSED,
 					 asymbol *osymbol)
 {
   bfd_mach_o_asymbol *os, *is;
+
   os = (bfd_mach_o_asymbol *)osymbol;
   is = (bfd_mach_o_asymbol *)isymbol;
   os->n_type = is->n_type;
   os->n_sect = is->n_sect;
   os->n_desc = is->n_desc;
   os->symbol.udata.i = is->symbol.udata.i;
+
   return TRUE;
 }
 
@@ -552,20 +572,22 @@ bfd_mach_o_bfd_copy_private_symbol_data (bfd *ibfd ATTRIBUTE_UNUSED,
    to the output section.  */
 
 bfd_boolean
-bfd_mach_o_bfd_copy_private_section_data (bfd *ibfd ATTRIBUTE_UNUSED,
-					  asection *isection,
-					  bfd *obfd ATTRIBUTE_UNUSED,
-					  asection *osection)
+bfd_mach_o_bfd_copy_private_section_data (bfd *ibfd, asection *isection,
+					  bfd *obfd, asection *osection)
 {
-  if (osection->used_by_bfd == NULL)
-    osection->used_by_bfd = isection->used_by_bfd;
-  else
-    if (isection->used_by_bfd != NULL)
-      memcpy (osection->used_by_bfd, isection->used_by_bfd,
-	      sizeof (bfd_mach_o_section));
+  bfd_mach_o_section *os = bfd_mach_o_get_mach_o_section (osection);
+  bfd_mach_o_section *is = bfd_mach_o_get_mach_o_section (isection);
 
-  if (osection->used_by_bfd != NULL)
-    ((bfd_mach_o_section *)osection->used_by_bfd)->bfdsection = osection;
+  if (ibfd->xvec->flavour != bfd_target_mach_o_flavour
+      || obfd->xvec->flavour != bfd_target_mach_o_flavour)
+    return TRUE;
+
+  BFD_ASSERT (is != NULL && os != NULL);
+
+  os->flags = is->flags;
+  os->reserved1 = is->reserved1;
+  os->reserved2 = is->reserved2;
+  os->reserved3 = is->reserved3;
 
   return TRUE;
 }
@@ -574,8 +596,12 @@ bfd_mach_o_bfd_copy_private_section_data (bfd *ibfd ATTRIBUTE_UNUSED,
    to the output bfd.  */
 
 bfd_boolean
-bfd_mach_o_bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
+bfd_mach_o_bfd_copy_private_header_data (bfd *ibfd, bfd *obfd)
 {
+  bfd_mach_o_data_struct *imdata;
+  bfd_mach_o_data_struct *omdata;
+  bfd_mach_o_load_command *icmd;
+
   if (bfd_get_flavour (ibfd) != bfd_target_mach_o_flavour
       || bfd_get_flavour (obfd) != bfd_target_mach_o_flavour)
     return TRUE;
@@ -583,7 +609,98 @@ bfd_mach_o_bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
   BFD_ASSERT (bfd_mach_o_valid (ibfd));
   BFD_ASSERT (bfd_mach_o_valid (obfd));
 
-  /* FIXME: copy commands.  */
+  imdata = bfd_mach_o_get_data (ibfd);
+  omdata = bfd_mach_o_get_data (obfd);
+
+  /* Copy header flags.  */
+  omdata->header.flags = imdata->header.flags;
+
+  /* Copy commands.  */
+  for (icmd = imdata->first_command; icmd != NULL; icmd = icmd->next)
+    {
+      bfd_mach_o_load_command *ocmd;
+
+      switch (icmd->type)
+	{
+	case BFD_MACH_O_LC_LOAD_DYLIB:
+	case BFD_MACH_O_LC_LOAD_DYLINKER:
+	case BFD_MACH_O_LC_DYLD_INFO:
+	  /* Command is copied.  */
+	  ocmd = bfd_alloc (obfd, sizeof (bfd_mach_o_load_command));
+	  if (ocmd == NULL)
+	    return FALSE;
+
+	  /* Copy common fields.  */
+	  ocmd->type = icmd->type;
+	  ocmd->type_required = icmd->type_required;
+	  ocmd->offset = 0;
+	  ocmd->len = icmd->len;
+	  break;
+
+	default:
+	  /* Command is not copied.  */
+	  continue;
+	  break;
+	}
+
+      switch (icmd->type)
+	{
+	case BFD_MACH_O_LC_LOAD_DYLIB:
+	  {
+	    bfd_mach_o_dylib_command *idy = &icmd->command.dylib;
+	    bfd_mach_o_dylib_command *ody = &ocmd->command.dylib;
+
+	    ody->name_offset = idy->name_offset;
+	    ody->timestamp = idy->timestamp;
+	    ody->current_version = idy->current_version;
+	    ody->compatibility_version = idy->compatibility_version;
+	    ody->name_str = idy->name_str;
+	  }
+	  break;
+
+	case BFD_MACH_O_LC_LOAD_DYLINKER:
+	  {
+	    bfd_mach_o_dylinker_command *idy = &icmd->command.dylinker;
+	    bfd_mach_o_dylinker_command *ody = &ocmd->command.dylinker;
+
+	    ody->name_offset = idy->name_offset;
+	    ody->name_str = idy->name_str;
+	  }
+	  break;
+
+	case BFD_MACH_O_LC_DYLD_INFO:
+	  {
+	    bfd_mach_o_dyld_info_command *idy = &icmd->command.dyld_info;
+	    bfd_mach_o_dyld_info_command *ody = &ocmd->command.dyld_info;
+
+	    if (bfd_mach_o_read_dyld_content (ibfd, idy))
+	      {
+		ody->rebase_size = idy->rebase_size;
+		ody->rebase_content = idy->rebase_content;
+
+		ody->bind_size = idy->bind_size;
+		ody->bind_content = idy->bind_content;
+
+		ody->weak_bind_size = idy->weak_bind_size;
+		ody->weak_bind_content = idy->weak_bind_content;
+
+		ody->lazy_bind_size = idy->lazy_bind_size;
+		ody->lazy_bind_content = idy->lazy_bind_content;
+
+		ody->export_size = idy->export_size;
+		ody->export_content = idy->export_content;
+	      }
+	  }
+	  break;
+
+	default:
+	  /* That command should be handled.  */
+	  abort ();
+	}
+
+      /* Insert command.  */
+      bfd_mach_o_append_command (obfd, ocmd);
+    }
 
   return TRUE;
 }
@@ -673,18 +790,19 @@ bfd_mach_o_get_synthetic_symtab (bfd *abfd,
   bfd_mach_o_dysymtab_command *dysymtab = mdata->dysymtab;
   bfd_mach_o_symtab_command *symtab = mdata->symtab;
   asymbol *s;
+  char * s_start;
+  char * s_end;
   unsigned long count, i, j, n;
   size_t size;
   char *names;
   char *nul_name;
+  const char stub [] = "$stub";
 
   *ret = NULL;
 
   /* Stop now if no symbols or no indirect symbols.  */
-  if (dysymtab == NULL || symtab == NULL || symtab->symbols == NULL)
-    return 0;
-
-  if (dysymtab->nindirectsyms == 0)
+  if (dysymtab == NULL || dysymtab->nindirectsyms == 0
+      || symtab == NULL || symtab->symbols == NULL)
     return 0;
 
   /* We need to allocate a bfd symbol for every indirect symbol and to
@@ -694,19 +812,23 @@ bfd_mach_o_get_synthetic_symtab (bfd *abfd,
 
   for (j = 0; j < count; j++)
     {
+      const char * strng;
       unsigned int isym = dysymtab->indirect_syms[j];
 
       /* Some indirect symbols are anonymous.  */
-      if (isym < symtab->nsyms && symtab->symbols[isym].symbol.name)
-        size += strlen (symtab->symbols[isym].symbol.name) + sizeof ("$stub");
+      if (isym < symtab->nsyms && (strng = symtab->symbols[isym].symbol.name))
+	/* PR 17512: file: f5b8eeba.  */
+	size += strnlen (strng, symtab->strsize - (strng - symtab->strtab)) + sizeof (stub);
     }
 
-  s = *ret = (asymbol *) bfd_malloc (size);
+  s_start = bfd_malloc (size);
+  s = *ret = (asymbol *) s_start;
   if (s == NULL)
     return -1;
   names = (char *) (s + count);
   nul_name = names;
   *names++ = 0;
+  s_end = s_start + size;
 
   n = 0;
   for (i = 0; i < mdata->nsects; i++)
@@ -726,9 +848,18 @@ bfd_mach_o_get_synthetic_symtab (bfd *abfd,
           last = first + bfd_mach_o_section_get_nbr_indirect (abfd, sec);
           addr = sec->addr;
           entry_size = bfd_mach_o_section_get_entry_size (abfd, sec);
+
+	  /* PR 17512: file: 08e15eec.  */
+	  if (first >= count || last >= count || first > last)
+	    goto fail;
+
           for (j = first; j < last; j++)
             {
               unsigned int isym = dysymtab->indirect_syms[j];
+
+	      /* PR 17512: file: 04d64d9b.  */
+	      if (((char *) s) + sizeof (* s) > s_end)
+		goto fail;
 
               s->flags = BSF_GLOBAL | BSF_SYNTHETIC;
               s->section = sec->bfdsection;
@@ -743,10 +874,16 @@ bfd_mach_o_get_synthetic_symtab (bfd *abfd,
 
                   s->name = names;
                   len = strlen (sym);
+		  /* PR 17512: file: 47dfd4d2.  */
+		  if (names + len >= s_end)
+		    goto fail;
                   memcpy (names, sym, len);
                   names += len;
-                  memcpy (names, "$stub", sizeof ("$stub"));
-                  names += sizeof ("$stub");
+		  /* PR 17512: file: 18f340a4.  */
+		  if (names + sizeof (stub) >= s_end)
+		    goto fail;
+                  memcpy (names, stub, sizeof (stub));
+                  names += sizeof (stub);
                 }
               else
                 s->name = nul_name;
@@ -762,6 +899,11 @@ bfd_mach_o_get_synthetic_symtab (bfd *abfd,
     }
 
   return n;
+
+ fail:
+  free (s_start);
+  * ret = NULL;
+  return -1;
 }
 
 void
@@ -905,10 +1047,55 @@ bfd_mach_o_convert_architecture (bfd_mach_o_cpu_type mtype,
       *type = bfd_arch_powerpc;
       *subtype = bfd_mach_ppc64;
       break;
+    case BFD_MACH_O_CPU_TYPE_ARM64:
+      *type = bfd_arch_aarch64;
+      *subtype = bfd_mach_aarch64;
+      break;
     default:
       *type = bfd_arch_unknown;
       break;
     }
+}
+
+/* Write n NUL bytes to ABFD so that LEN + n is a multiple of 4.  Return the
+   number of bytes written or -1 in case of error.  */
+
+static int
+bfd_mach_o_pad4 (bfd *abfd, unsigned int len)
+{
+  if (len % 4 != 0)
+    {
+      char pad[4] = {0,0,0,0};
+      unsigned int padlen = 4 - (len % 4);
+
+      if (bfd_bwrite (pad, padlen, abfd) != padlen)
+	return -1;
+
+      return padlen;
+    }
+  else
+    return 0;
+}
+
+/* Likewise, but for a command.  */
+
+static int
+bfd_mach_o_pad_command (bfd *abfd, unsigned int len)
+{
+  unsigned int align = bfd_mach_o_wide_p (abfd) ? 8 : 4;
+
+  if (len % align != 0)
+    {
+      char pad[8] = {0};
+      unsigned int padlen = align - (len % align);
+
+      if (bfd_bwrite (pad, padlen, abfd) != padlen)
+	return -1;
+
+      return padlen;
+    }
+  else
+    return 0;
 }
 
 static bfd_boolean
@@ -938,7 +1125,7 @@ bfd_mach_o_write_header (bfd *abfd, bfd_mach_o_header *header)
   return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_write_thread (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_thread_command *cmd = &command->command.thread;
@@ -949,7 +1136,7 @@ bfd_mach_o_write_thread (bfd *abfd, bfd_mach_o_load_command *command)
   BFD_ASSERT ((command->type == BFD_MACH_O_LC_THREAD)
 	      || (command->type == BFD_MACH_O_LC_UNIXTHREAD));
 
-  offset = 8;
+  offset = BFD_MACH_O_LC_SIZE;
   for (i = 0; i < cmd->nflavours; i++)
     {
       BFD_ASSERT ((cmd->flavours[i].size % 4) == 0);
@@ -961,12 +1148,131 @@ bfd_mach_o_write_thread (bfd *abfd, bfd_mach_o_load_command *command)
 
       if (bfd_seek (abfd, command->offset + offset, SEEK_SET) != 0
           || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
-	return -1;
+	return FALSE;
 
       offset += cmd->flavours[i].size + sizeof (raw);
     }
 
-  return 0;
+  return TRUE;
+}
+
+static bfd_boolean
+bfd_mach_o_write_dylinker (bfd *abfd, bfd_mach_o_load_command *command)
+{
+  bfd_mach_o_dylinker_command *cmd = &command->command.dylinker;
+  struct mach_o_str_command_external raw;
+  unsigned int namelen;
+
+  bfd_h_put_32 (abfd, cmd->name_offset, raw.str);
+
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  namelen = strlen (cmd->name_str) + 1;
+  if (bfd_bwrite (cmd->name_str, namelen, abfd) != namelen)
+    return FALSE;
+
+  if (bfd_mach_o_pad_command (abfd, namelen) < 0)
+    return FALSE;
+
+  return TRUE;
+}
+
+static bfd_boolean
+bfd_mach_o_write_dylib (bfd *abfd, bfd_mach_o_load_command *command)
+{
+  bfd_mach_o_dylib_command *cmd = &command->command.dylib;
+  struct mach_o_dylib_command_external raw;
+  unsigned int namelen;
+
+  bfd_h_put_32 (abfd, cmd->name_offset, raw.name);
+  bfd_h_put_32 (abfd, cmd->timestamp, raw.timestamp);
+  bfd_h_put_32 (abfd, cmd->current_version, raw.current_version);
+  bfd_h_put_32 (abfd, cmd->compatibility_version, raw.compatibility_version);
+
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  namelen = strlen (cmd->name_str) + 1;
+  if (bfd_bwrite (cmd->name_str, namelen, abfd) != namelen)
+    return FALSE;
+
+  if (bfd_mach_o_pad_command (abfd, namelen) < 0)
+    return FALSE;
+
+  return TRUE;
+}
+
+static bfd_boolean
+bfd_mach_o_write_main (bfd *abfd, bfd_mach_o_load_command *command)
+{
+  bfd_mach_o_main_command *cmd = &command->command.main;
+  struct mach_o_entry_point_command_external raw;
+
+  bfd_h_put_64 (abfd, cmd->entryoff, raw.entryoff);
+  bfd_h_put_64 (abfd, cmd->stacksize, raw.stacksize);
+
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  return TRUE;
+}
+
+static bfd_boolean
+bfd_mach_o_write_dyld_info (bfd *abfd, bfd_mach_o_load_command *command)
+{
+  bfd_mach_o_dyld_info_command *cmd = &command->command.dyld_info;
+  struct mach_o_dyld_info_command_external raw;
+
+  bfd_h_put_32 (abfd, cmd->rebase_off, raw.rebase_off);
+  bfd_h_put_32 (abfd, cmd->rebase_size, raw.rebase_size);
+  bfd_h_put_32 (abfd, cmd->bind_off, raw.bind_off);
+  bfd_h_put_32 (abfd, cmd->bind_size, raw.bind_size);
+  bfd_h_put_32 (abfd, cmd->weak_bind_off, raw.weak_bind_off);
+  bfd_h_put_32 (abfd, cmd->weak_bind_size, raw.weak_bind_size);
+  bfd_h_put_32 (abfd, cmd->lazy_bind_off, raw.lazy_bind_off);
+  bfd_h_put_32 (abfd, cmd->lazy_bind_size, raw.lazy_bind_size);
+  bfd_h_put_32 (abfd, cmd->export_off, raw.export_off);
+  bfd_h_put_32 (abfd, cmd->export_size, raw.export_size);
+
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  if (cmd->rebase_size != 0)
+    if (bfd_seek (abfd, cmd->rebase_off, SEEK_SET) != 0
+	|| (bfd_bwrite (cmd->rebase_content, cmd->rebase_size, abfd) !=
+	    cmd->rebase_size))
+      return FALSE;
+
+  if (cmd->bind_size != 0)
+    if (bfd_seek (abfd, cmd->bind_off, SEEK_SET) != 0
+	|| (bfd_bwrite (cmd->bind_content, cmd->bind_size, abfd) !=
+	    cmd->bind_size))
+      return FALSE;
+
+  if (cmd->weak_bind_size != 0)
+    if (bfd_seek (abfd, cmd->weak_bind_off, SEEK_SET) != 0
+	|| (bfd_bwrite (cmd->weak_bind_content, cmd->weak_bind_size, abfd) !=
+	    cmd->weak_bind_size))
+      return FALSE;
+
+  if (cmd->lazy_bind_size != 0)
+    if (bfd_seek (abfd, cmd->lazy_bind_off, SEEK_SET) != 0
+	|| (bfd_bwrite (cmd->lazy_bind_content, cmd->lazy_bind_size, abfd) !=
+	    cmd->lazy_bind_size))
+      return FALSE;
+
+  if (cmd->export_size != 0)
+    if (bfd_seek (abfd, cmd->export_off, SEEK_SET) != 0
+	|| (bfd_bwrite (cmd->export_content, cmd->export_size, abfd) !=
+	    cmd->export_size))
+      return FALSE;
+
+  return TRUE;
 }
 
 long
@@ -1068,10 +1374,16 @@ bfd_mach_o_canonicalize_one_reloc (bfd *abfd,
 
       if (reloc.r_extern)
 	{
-	  /* An external symbol number.  */
-	  sym = syms + num;
+	  /* PR 17512: file: 8396-1185-0.004.  */
+	  if (bfd_get_symcount (abfd) > 0 && num > bfd_get_symcount (abfd))
+	    sym = bfd_und_section_ptr->symbol_ptr_ptr;
+	  else if (syms == NULL)
+	    sym = bfd_und_section_ptr->symbol_ptr_ptr;	    
+	  else
+	    /* An external symbol number.  */
+	    sym = syms + num;
 	}
-      else if (num == 0x00ffffff)
+      else if (num == 0x00ffffff || num == 0)
 	{
 	  /* The 'symnum' in a non-scattered PAIR is 0x00ffffff.  But as this
 	     is generic code, we don't know wether this is really a PAIR.
@@ -1082,10 +1394,11 @@ bfd_mach_o_canonicalize_one_reloc (bfd *abfd,
 	}
       else
         {
+	  /* PR 17512: file: 006-2964-0.004.  */
+	  if (num > mdata->nsects)
+	    return -1;
+	  
 	  /* A section number.  */
-          BFD_ASSERT (num != 0);
-          BFD_ASSERT (num <= mdata->nsects);
-
           sym = mdata->sections[num - 1]->bfdsection->symbol_ptr_ptr;
           /* For a symbol defined in section S, the addend (stored in the
              binary) contains the address of the section.  To comply with
@@ -1114,6 +1427,7 @@ bfd_mach_o_canonicalize_one_reloc (bfd *abfd,
 
   if (!(*bed->_bfd_mach_o_swap_reloc_in)(res, &reloc))
     return -1;
+
   return 0;
 }
 
@@ -1128,6 +1442,7 @@ bfd_mach_o_canonicalize_relocs (bfd *abfd, unsigned long filepos,
 
   /* Allocate and read relocs.  */
   native_size = count * BFD_MACH_O_RELENT_SIZE;
+
   native_relocs =
     (struct mach_o_reloc_info_external *) bfd_malloc (native_size);
   if (native_relocs == NULL)
@@ -1322,9 +1637,9 @@ bfd_mach_o_write_relocs (bfd *abfd, bfd_mach_o_section *section)
 
           v = BFD_MACH_O_SR_SCATTERED
             | (pinfo->r_pcrel ? BFD_MACH_O_SR_PCREL : 0)
-            | BFD_MACH_O_SET_SR_LENGTH(pinfo->r_length)
-            | BFD_MACH_O_SET_SR_TYPE(pinfo->r_type)
-            | BFD_MACH_O_SET_SR_ADDRESS(pinfo->r_address);
+            | BFD_MACH_O_SET_SR_LENGTH (pinfo->r_length)
+            | BFD_MACH_O_SET_SR_TYPE (pinfo->r_type)
+            | BFD_MACH_O_SET_SR_ADDRESS (pinfo->r_address);
           /* Note: scattered relocs have field in reverse order...  */
           bfd_put_32 (abfd, v, raw.r_address);
           bfd_put_32 (abfd, pinfo->r_value, raw.r_symbolnum);
@@ -1343,7 +1658,7 @@ bfd_mach_o_write_relocs (bfd *abfd, bfd_mach_o_section *section)
   return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_write_section_32 (bfd *abfd, bfd_mach_o_section *section)
 {
   struct mach_o_section_32_external raw;
@@ -1362,12 +1677,12 @@ bfd_mach_o_write_section_32 (bfd *abfd, bfd_mach_o_section *section)
 
   if (bfd_bwrite (&raw, BFD_MACH_O_SECTION_SIZE, abfd)
       != BFD_MACH_O_SECTION_SIZE)
-    return -1;
+    return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_write_section_64 (bfd *abfd, bfd_mach_o_section *section)
 {
   struct mach_o_section_64_external raw;
@@ -1387,12 +1702,12 @@ bfd_mach_o_write_section_64 (bfd *abfd, bfd_mach_o_section *section)
 
   if (bfd_bwrite (&raw, BFD_MACH_O_SECTION_64_SIZE, abfd)
       != BFD_MACH_O_SECTION_64_SIZE)
-    return -1;
+    return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_write_segment_32 (bfd *abfd, bfd_mach_o_load_command *command)
 {
   struct mach_o_segment_command_32_external raw;
@@ -1403,7 +1718,7 @@ bfd_mach_o_write_segment_32 (bfd *abfd, bfd_mach_o_load_command *command)
 
   for (sec = seg->sect_head; sec != NULL; sec = sec->next)
     if (!bfd_mach_o_write_relocs (abfd, sec))
-      return -1;
+      return FALSE;
 
   memcpy (raw.segname, seg->segname, 16);
   bfd_h_put_32 (abfd, seg->vmaddr, raw.vmaddr);
@@ -1417,16 +1732,16 @@ bfd_mach_o_write_segment_32 (bfd *abfd, bfd_mach_o_load_command *command)
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   for (sec = seg->sect_head; sec != NULL; sec = sec->next)
-    if (bfd_mach_o_write_section_32 (abfd, sec))
-      return -1;
+    if (!bfd_mach_o_write_section_32 (abfd, sec))
+      return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_write_segment_64 (bfd *abfd, bfd_mach_o_load_command *command)
 {
   struct mach_o_segment_command_64_external raw;
@@ -1437,7 +1752,7 @@ bfd_mach_o_write_segment_64 (bfd *abfd, bfd_mach_o_load_command *command)
 
   for (sec = seg->sect_head; sec != NULL; sec = sec->next)
     if (!bfd_mach_o_write_relocs (abfd, sec))
-      return -1;
+      return FALSE;
 
   memcpy (raw.segname, seg->segname, 16);
   bfd_h_put_64 (abfd, seg->vmaddr, raw.vmaddr);
@@ -1451,36 +1766,28 @@ bfd_mach_o_write_segment_64 (bfd *abfd, bfd_mach_o_load_command *command)
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   for (sec = seg->sect_head; sec != NULL; sec = sec->next)
-    if (bfd_mach_o_write_section_64 (abfd, sec))
-      return -1;
+    if (!bfd_mach_o_write_section_64 (abfd, sec))
+      return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
 static bfd_boolean
-bfd_mach_o_write_symtab (bfd *abfd, bfd_mach_o_load_command *command)
+bfd_mach_o_write_symtab_content (bfd *abfd, bfd_mach_o_symtab_command *sym)
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
-  bfd_mach_o_symtab_command *sym = &command->command.symtab;
   unsigned long i;
   unsigned int wide = bfd_mach_o_wide_p (abfd);
-  unsigned int symlen = wide ? BFD_MACH_O_NLIST_64_SIZE : BFD_MACH_O_NLIST_SIZE;
   struct bfd_strtab_hash *strtab;
   asymbol **symbols = bfd_get_outsymbols (abfd);
-
-  BFD_ASSERT (command->type == BFD_MACH_O_LC_SYMTAB);
+  int padlen;
 
   /* Write the symbols first.  */
-  mdata->filelen = FILE_ALIGN(mdata->filelen, wide ? 3 : 2);
-  sym->symoff = mdata->filelen;
   if (bfd_seek (abfd, sym->symoff, SEEK_SET) != 0)
     return FALSE;
-
-  sym->nsyms = bfd_get_symcount (abfd);
-  mdata->filelen += sym->nsyms * symlen;
 
   strtab = _bfd_stringtab_init ();
   if (strtab == NULL)
@@ -1541,29 +1848,184 @@ bfd_mach_o_write_symtab (bfd *abfd, bfd_mach_o_load_command *command)
   sym->stroff = mdata->filelen;
   mdata->filelen += sym->strsize;
 
+  if (bfd_seek (abfd, sym->stroff, SEEK_SET) != 0)
+    return FALSE;
+
   if (_bfd_stringtab_emit (abfd, strtab) != TRUE)
     goto err;
   _bfd_stringtab_free (strtab);
 
-  /* The command.  */
-  {
-    struct mach_o_symtab_command_external raw;
-
-    bfd_h_put_32 (abfd, sym->symoff, raw.symoff);
-    bfd_h_put_32 (abfd, sym->nsyms, raw.nsyms);
-    bfd_h_put_32 (abfd, sym->stroff, raw.stroff);
-    bfd_h_put_32 (abfd, sym->strsize, raw.strsize);
-
-    if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
-        || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
-      return FALSE;
-  }
+  /* Pad string table.  */
+  padlen = bfd_mach_o_pad4 (abfd, sym->strsize);
+  if (padlen < 0)
+    return FALSE;
+  mdata->filelen += padlen;
+  sym->strsize += padlen;
 
   return TRUE;
 
  err:
   _bfd_stringtab_free (strtab);
   return FALSE;
+}
+
+static bfd_boolean
+bfd_mach_o_write_symtab (bfd *abfd, bfd_mach_o_load_command *command)
+{
+  bfd_mach_o_symtab_command *sym = &command->command.symtab;
+  struct mach_o_symtab_command_external raw;
+
+  BFD_ASSERT (command->type == BFD_MACH_O_LC_SYMTAB);
+
+  /* The command.  */
+  bfd_h_put_32 (abfd, sym->symoff, raw.symoff);
+  bfd_h_put_32 (abfd, sym->nsyms, raw.nsyms);
+  bfd_h_put_32 (abfd, sym->stroff, raw.stroff);
+  bfd_h_put_32 (abfd, sym->strsize, raw.strsize);
+
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bwrite (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  return TRUE;
+}
+
+/* Count the number of indirect symbols in the image.
+   Requires that the sections are in their final order.  */
+
+static unsigned int
+bfd_mach_o_count_indirect_symbols (bfd *abfd, bfd_mach_o_data_struct *mdata)
+{
+  unsigned int i;
+  unsigned int nisyms = 0;
+
+  for (i = 0; i < mdata->nsects; ++i)
+    {
+      bfd_mach_o_section *sec = mdata->sections[i];
+
+      switch (sec->flags & BFD_MACH_O_SECTION_TYPE_MASK)
+	{
+	  case BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS:
+	  case BFD_MACH_O_S_LAZY_SYMBOL_POINTERS:
+	  case BFD_MACH_O_S_SYMBOL_STUBS:
+	    nisyms += bfd_mach_o_section_get_nbr_indirect (abfd, sec);
+	    break;
+	  default:
+	    break;
+	}
+    }
+  return nisyms;
+}
+
+/* Create the dysymtab.  */
+
+static bfd_boolean
+bfd_mach_o_build_dysymtab (bfd *abfd, bfd_mach_o_dysymtab_command *cmd)
+{
+  bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
+
+  /* TODO:
+     We are not going to try and fill these in yet and, moreover, we are
+     going to bail if they are already set.  */
+  if (cmd->nmodtab != 0
+      || cmd->ntoc != 0
+      || cmd->nextrefsyms != 0)
+    {
+      (*_bfd_error_handler) (_("sorry: modtab, toc and extrefsyms are not yet"
+				" implemented for dysymtab commands."));
+      return FALSE;
+    }
+
+  cmd->ilocalsym = 0;
+
+  if (bfd_get_symcount (abfd) > 0)
+    {
+      asymbol **symbols = bfd_get_outsymbols (abfd);
+      unsigned long i;
+
+       /* Count the number of each kind of symbol.  */
+      for (i = 0; i < bfd_get_symcount (abfd); ++i)
+	{
+	  bfd_mach_o_asymbol *s = (bfd_mach_o_asymbol *)symbols[i];
+	  if (s->n_type & (BFD_MACH_O_N_EXT | BFD_MACH_O_N_PEXT))
+	    break;
+	}
+      cmd->nlocalsym = i;
+      cmd->iextdefsym = i;
+      for (; i < bfd_get_symcount (abfd); ++i)
+	{
+	  bfd_mach_o_asymbol *s = (bfd_mach_o_asymbol *)symbols[i];
+	  if ((s->n_type & BFD_MACH_O_N_TYPE) == BFD_MACH_O_N_UNDF)
+	    break;
+	}
+      cmd->nextdefsym = i - cmd->nlocalsym;
+      cmd->iundefsym = cmd->nextdefsym + cmd->iextdefsym;
+      cmd->nundefsym = bfd_get_symcount (abfd)
+			- cmd->nlocalsym
+			- cmd->nextdefsym;
+    }
+  else
+    {
+      cmd->nlocalsym = 0;
+      cmd->iextdefsym = 0;
+      cmd->nextdefsym = 0;
+      cmd->iundefsym = 0;
+      cmd->nundefsym = 0;
+    }
+
+  cmd->nindirectsyms = bfd_mach_o_count_indirect_symbols (abfd, mdata);
+  if (cmd->nindirectsyms > 0)
+    {
+      unsigned i;
+      unsigned n;
+
+      mdata->filelen = FILE_ALIGN (mdata->filelen, 2);
+      cmd->indirectsymoff = mdata->filelen;
+      mdata->filelen += cmd->nindirectsyms * 4;
+
+      cmd->indirect_syms = bfd_zalloc (abfd, cmd->nindirectsyms * 4);
+      if (cmd->indirect_syms == NULL)
+        return FALSE;
+
+      n = 0;
+      for (i = 0; i < mdata->nsects; ++i)
+	{
+	  bfd_mach_o_section *sec = mdata->sections[i];
+
+	  switch (sec->flags & BFD_MACH_O_SECTION_TYPE_MASK)
+	    {
+	      case BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS:
+	      case BFD_MACH_O_S_LAZY_SYMBOL_POINTERS:
+	      case BFD_MACH_O_S_SYMBOL_STUBS:
+		{
+		  unsigned j, num;
+		  bfd_mach_o_asymbol **isyms = sec->indirect_syms;
+
+		  num = bfd_mach_o_section_get_nbr_indirect (abfd, sec);
+		  if (isyms == NULL || num == 0)
+		    break;
+		  /* Record the starting index in the reserved1 field.  */
+		  sec->reserved1 = n;
+		  for (j = 0; j < num; j++, n++)
+		    {
+		      if (isyms[j] == NULL)
+		        cmd->indirect_syms[n] = BFD_MACH_O_INDIRECT_SYM_LOCAL;
+		      else if (isyms[j]->symbol.section == bfd_abs_section_ptr
+			       && ! (isyms[j]->n_type & BFD_MACH_O_N_EXT))
+		        cmd->indirect_syms[n] = BFD_MACH_O_INDIRECT_SYM_LOCAL
+						 | BFD_MACH_O_INDIRECT_SYM_ABS;
+		      else
+		        cmd->indirect_syms[n] = isyms[j]->symbol.udata.i;
+		    }
+		}
+		break;
+	      default:
+		break;
+	    }
+	}
+    }
+
+  return TRUE;
 }
 
 /* Write a dysymtab command.
@@ -1870,7 +2332,7 @@ bfd_mach_o_mangle_symbols (bfd *abfd)
           && s->symbol.section != bfd_com_section_ptr)
           || ((s->n_type & BFD_MACH_O_N_STAB) != 0
                && s->symbol.name == NULL))
-	s->n_sect = s->symbol.section->target_index;
+	s->n_sect = s->symbol.section->output_section->target_index;
 
       /* Number to preserve order for local and debug syms.  */
       s->symbol.udata.i = i;
@@ -1907,16 +2369,19 @@ bfd_mach_o_mangle_sections (bfd *abfd, bfd_mach_o_data_struct *mdata)
       && (mdata->nsects == 0 || mdata->sections != NULL))
     return TRUE;
 
+  /* We need to check that this can be done...  */
+  if (nsect > 255)
+    {
+      (*_bfd_error_handler) (_("mach-o: there are too many sections (%u)"
+			       " maximum is 255,\n"), nsect);
+      return FALSE;
+    }
+
   mdata->nsects = nsect;
   mdata->sections = bfd_alloc (abfd,
 			       mdata->nsects * sizeof (bfd_mach_o_section *));
   if (mdata->sections == NULL)
     return FALSE;
-
-  /* We need to check that this can be done...  */
-  if (nsect > 255)
-    (*_bfd_error_handler) (_("mach-o: there are too many sections (%d)"
-			     " maximum is 255,\n"), nsect);
 
   /* Create Mach-O sections.
      Section type, attribute and align should have been set when the
@@ -1946,76 +2411,181 @@ bfd_mach_o_mangle_sections (bfd *abfd, bfd_mach_o_data_struct *mdata)
 bfd_boolean
 bfd_mach_o_write_contents (bfd *abfd)
 {
-  unsigned int i;
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
+  bfd_mach_o_load_command *cmd;
+  bfd_mach_o_symtab_command *symtab = NULL;
+  bfd_mach_o_dysymtab_command *dysymtab = NULL;
+  bfd_mach_o_segment_command *linkedit = NULL;
 
   /* Make the commands, if not already present.  */
-  if (mdata->header.ncmds == 0)
-    if (!bfd_mach_o_build_commands (abfd))
-      return FALSE;
+  if (!abfd->output_has_begun && !bfd_mach_o_build_commands (abfd))
+    return FALSE;
+  abfd->output_has_begun = TRUE;
 
+  /* Write the header.  */
   if (!bfd_mach_o_write_header (abfd, &mdata->header))
     return FALSE;
 
-  for (i = 0; i < mdata->header.ncmds; i++)
+  /* First pass: allocate the linkedit segment.  */
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
+    switch (cmd->type)
+      {
+      case BFD_MACH_O_LC_SEGMENT_64:
+      case BFD_MACH_O_LC_SEGMENT:
+	if (strcmp (cmd->command.segment.segname, "__LINKEDIT") == 0)
+	  linkedit = &cmd->command.segment;
+	break;
+      case BFD_MACH_O_LC_SYMTAB:
+	symtab = &cmd->command.symtab;
+	break;
+      case BFD_MACH_O_LC_DYSYMTAB:
+	dysymtab = &cmd->command.dysymtab;
+	break;
+      case BFD_MACH_O_LC_DYLD_INFO:
+	{
+	  bfd_mach_o_dyld_info_command *di = &cmd->command.dyld_info;
+
+	  if (di->rebase_size != 0)
+	    {
+	      di->rebase_off = mdata->filelen;
+	      mdata->filelen += di->rebase_size;
+	    }
+	  if (di->bind_size != 0)
+	    {
+	      di->bind_off = mdata->filelen;
+	      mdata->filelen += di->bind_size;
+	    }
+	  if (di->weak_bind_size != 0)
+	    {
+	      di->weak_bind_off = mdata->filelen;
+	      mdata->filelen += di->weak_bind_size;
+	    }
+	  if (di->lazy_bind_size != 0)
+	    {
+	      di->lazy_bind_off = mdata->filelen;
+	      mdata->filelen += di->lazy_bind_size;
+	    }
+	  if (di->export_size != 0)
+	    {
+	      di->export_off = mdata->filelen;
+	      mdata->filelen += di->export_size;
+	    }
+	}
+	break;
+      case BFD_MACH_O_LC_LOAD_DYLIB:
+      case BFD_MACH_O_LC_LOAD_DYLINKER:
+      case BFD_MACH_O_LC_MAIN:
+	/* Nothing to do.  */
+	break;
+      default:
+	(*_bfd_error_handler)
+	  (_("unable to allocate data for load command 0x%lx"),
+	   (unsigned long) cmd->type);
+	break;
+      }
+
+  /* Specially handle symtab and dysymtab.  */
+
+  /* Pre-allocate the symbol table (but not the string table).  The reason
+     is that the dysymtab is after the symbol table but before the string
+     table (required by the native strip tool).  */
+  if (symtab != NULL)
+    {
+      unsigned int symlen;
+      unsigned int wide = bfd_mach_o_wide_p (abfd);
+
+      symlen = wide ? BFD_MACH_O_NLIST_64_SIZE : BFD_MACH_O_NLIST_SIZE;
+
+      /* Align for symbols.  */
+      mdata->filelen = FILE_ALIGN (mdata->filelen, wide ? 3 : 2);
+      symtab->symoff = mdata->filelen;
+
+      symtab->nsyms = bfd_get_symcount (abfd);
+      mdata->filelen += symtab->nsyms * symlen;
+    }
+
+  /* Build the dysymtab.  */
+  if (dysymtab != NULL)
+    if (!bfd_mach_o_build_dysymtab (abfd, dysymtab))
+      return FALSE;
+
+  /* Write symtab and strtab.  */
+  if (symtab != NULL)
+    if (!bfd_mach_o_write_symtab_content (abfd, symtab))
+      return FALSE;
+
+  /* Adjust linkedit size.  */
+  if (linkedit != NULL)
+    {
+      /* bfd_vma pagemask = bfd_mach_o_get_backend_data (abfd)->page_size - 1; */
+
+      linkedit->vmsize = mdata->filelen - linkedit->fileoff;
+      /* linkedit->vmsize = (linkedit->vmsize + pagemask) & ~pagemask; */
+      linkedit->filesize = mdata->filelen - linkedit->fileoff;
+
+      linkedit->initprot = BFD_MACH_O_PROT_READ;
+      linkedit->maxprot = BFD_MACH_O_PROT_READ | BFD_MACH_O_PROT_WRITE
+	| BFD_MACH_O_PROT_EXECUTE;
+    }
+
+  /* Second pass: write commands.  */
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
     {
       struct mach_o_load_command_external raw;
-      bfd_mach_o_load_command *cur = &mdata->commands[i];
       unsigned long typeflag;
 
-      typeflag = cur->type | (cur->type_required ? BFD_MACH_O_LC_REQ_DYLD : 0);
+      typeflag = cmd->type | (cmd->type_required ? BFD_MACH_O_LC_REQ_DYLD : 0);
 
       bfd_h_put_32 (abfd, typeflag, raw.cmd);
-      bfd_h_put_32 (abfd, cur->len, raw.cmdsize);
+      bfd_h_put_32 (abfd, cmd->len, raw.cmdsize);
 
-      if (bfd_seek (abfd, cur->offset, SEEK_SET) != 0
+      if (bfd_seek (abfd, cmd->offset, SEEK_SET) != 0
           || bfd_bwrite (&raw, BFD_MACH_O_LC_SIZE, abfd) != 8)
 	return FALSE;
 
-      switch (cur->type)
+      switch (cmd->type)
 	{
 	case BFD_MACH_O_LC_SEGMENT:
-	  if (bfd_mach_o_write_segment_32 (abfd, cur) != 0)
+	  if (!bfd_mach_o_write_segment_32 (abfd, cmd))
 	    return FALSE;
 	  break;
 	case BFD_MACH_O_LC_SEGMENT_64:
-	  if (bfd_mach_o_write_segment_64 (abfd, cur) != 0)
+	  if (!bfd_mach_o_write_segment_64 (abfd, cmd))
 	    return FALSE;
 	  break;
 	case BFD_MACH_O_LC_SYMTAB:
-	  if (!bfd_mach_o_write_symtab (abfd, cur))
+	  if (!bfd_mach_o_write_symtab (abfd, cmd))
 	    return FALSE;
 	  break;
 	case BFD_MACH_O_LC_DYSYMTAB:
-	  if (!bfd_mach_o_write_dysymtab (abfd, cur))
+	  if (!bfd_mach_o_write_dysymtab (abfd, cmd))
 	    return FALSE;
-	  break;
-	case BFD_MACH_O_LC_SYMSEG:
 	  break;
 	case BFD_MACH_O_LC_THREAD:
 	case BFD_MACH_O_LC_UNIXTHREAD:
-	  if (bfd_mach_o_write_thread (abfd, cur) != 0)
+	  if (!bfd_mach_o_write_thread (abfd, cmd))
 	    return FALSE;
 	  break;
-	case BFD_MACH_O_LC_LOADFVMLIB:
-	case BFD_MACH_O_LC_IDFVMLIB:
-	case BFD_MACH_O_LC_IDENT:
-	case BFD_MACH_O_LC_FVMFILE:
-	case BFD_MACH_O_LC_PREPAGE:
 	case BFD_MACH_O_LC_LOAD_DYLIB:
-	case BFD_MACH_O_LC_LOAD_WEAK_DYLIB:
-	case BFD_MACH_O_LC_ID_DYLIB:
-	case BFD_MACH_O_LC_REEXPORT_DYLIB:
-        case BFD_MACH_O_LC_LOAD_UPWARD_DYLIB:
+	  if (!bfd_mach_o_write_dylib (abfd, cmd))
+	    return FALSE;
+	  break;
 	case BFD_MACH_O_LC_LOAD_DYLINKER:
-	case BFD_MACH_O_LC_ID_DYLINKER:
-	case BFD_MACH_O_LC_PREBOUND_DYLIB:
-	case BFD_MACH_O_LC_ROUTINES:
-	case BFD_MACH_O_LC_SUB_FRAMEWORK:
+	  if (!bfd_mach_o_write_dylinker (abfd, cmd))
+	    return FALSE;
+	  break;
+	case BFD_MACH_O_LC_MAIN:
+	  if (!bfd_mach_o_write_main (abfd, cmd))
+	    return FALSE;
+	  break;
+	case BFD_MACH_O_LC_DYLD_INFO:
+	  if (!bfd_mach_o_write_dyld_info (abfd, cmd))
+	    return FALSE;
 	  break;
 	default:
-	  (*_bfd_error_handler) (_("unable to write unknown load command 0x%lx"),
-				 (unsigned long) cur->type);
+	  (*_bfd_error_handler)
+	    (_("unable to write unknown load command 0x%lx"),
+	     (unsigned long) cmd->type);
 	  return FALSE;
 	}
     }
@@ -2025,9 +2595,8 @@ bfd_mach_o_write_contents (bfd *abfd)
 
 static void
 bfd_mach_o_append_section_to_segment (bfd_mach_o_segment_command *seg,
-                                      asection *sec)
+                                      bfd_mach_o_section *s)
 {
-  bfd_mach_o_section *s = (bfd_mach_o_section *)sec->used_by_bfd;
   if (seg->sect_head == NULL)
     seg->sect_head = s;
   else
@@ -2038,7 +2607,8 @@ bfd_mach_o_append_section_to_segment (bfd_mach_o_segment_command *seg,
 /* Create section Mach-O flags from BFD flags.  */
 
 static void
-bfd_mach_o_set_section_flags_from_bfd (bfd *abfd ATTRIBUTE_UNUSED, asection *sec)
+bfd_mach_o_set_section_flags_from_bfd (bfd *abfd ATTRIBUTE_UNUSED,
+				       asection *sec)
 {
   flagword bfd_flags;
   bfd_mach_o_section *s = bfd_mach_o_get_mach_o_section (sec);
@@ -2057,71 +2627,17 @@ bfd_mach_o_set_section_flags_from_bfd (bfd *abfd ATTRIBUTE_UNUSED, asection *sec
     s->flags = BFD_MACH_O_S_REGULAR;
 }
 
-/* Count the number of sections in the list for the segment named.
-
-   The special case of NULL or "" for the segment name is valid for
-   an MH_OBJECT file and means 'all sections available'.
-
-   Requires that the sections table in mdata be filled in.
-
-   Returns the number of sections (0 is valid).
-   Any number > 255 signals an invalid section count, although we will,
-   perhaps, allow the file to be written (in line with Darwin tools up
-   to XCode 4).
-
-   A section count of (unsigned long) -1 signals a definite error.  */
-
-static unsigned long
-bfd_mach_o_count_sections_for_seg (const char *segment,
-				   bfd_mach_o_data_struct *mdata)
-{
-  unsigned i,j;
-  if (mdata == NULL || mdata->sections == NULL)
-    return (unsigned long) -1;
-
-  /* The MH_OBJECT case, all sections are considered; Although nsects is
-     is an unsigned long, the maximum valid section count is 255 and this
-     will have been checked already by mangle_sections.  */
-  if (segment == NULL || segment[0] == '\0')
-    return mdata->nsects;
-
-  /* Count the number of sections we see in this segment.  */
-  j = 0;
-  for (i = 0; i < mdata->nsects; ++i)
-    {
-      bfd_mach_o_section *s = mdata->sections[i];
-      if (strncmp (segment, s->segname, BFD_MACH_O_SEGNAME_SIZE) == 0)
-        j++;
-    }
-  return j;
-}
-
 static bfd_boolean
-bfd_mach_o_build_seg_command (const char *segment,
-			      bfd_mach_o_data_struct *mdata,
-			      bfd_mach_o_segment_command *seg)
+bfd_mach_o_build_obj_seg_command (bfd *abfd, bfd_mach_o_segment_command *seg)
 {
-  unsigned i;
-  int is_mho = (segment == NULL || segment[0] == '\0');
+  bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
+  unsigned int i, j;
 
-  /* Fill segment command.  */
-  if (is_mho)
-    memset (seg->segname, 0, sizeof (seg->segname));
-  else
-    strncpy (seg->segname, segment, sizeof (seg->segname));
-
-  /* TODO: fix this up for non-MH_OBJECT cases.  */
   seg->vmaddr = 0;
-  seg->vmsize = 0;
-
   seg->fileoff = mdata->filelen;
-  seg->filesize = 0;
-  seg->maxprot = BFD_MACH_O_PROT_READ | BFD_MACH_O_PROT_WRITE
-		 | BFD_MACH_O_PROT_EXECUTE;
-  seg->initprot = seg->maxprot;
-  seg->flags = 0;
-  seg->sect_head = NULL;
-  seg->sect_tail = NULL;
+  seg->initprot = BFD_MACH_O_PROT_READ | BFD_MACH_O_PROT_WRITE
+    | BFD_MACH_O_PROT_EXECUTE;
+  seg->maxprot = seg->initprot;
 
   /*  Append sections to the segment.
 
@@ -2129,94 +2645,85 @@ bfd_mach_o_build_seg_command (const char *segment,
       sections after all the rest.  This forces us to do the calculation of
       total vmsize in three passes so that any alignment increments are
       properly accounted.  */
-
   for (i = 0; i < mdata->nsects; ++i)
     {
       bfd_mach_o_section *s = mdata->sections[i];
       asection *sec = s->bfdsection;
 
-      /* If we're not making an MH_OBJECT, check whether this section is from
-	 our segment, and skip if not.  Otherwise, just add all sections.  */
-      if (! is_mho
-	  && strncmp (segment, s->segname, BFD_MACH_O_SEGNAME_SIZE) != 0)
-	continue;
-
       /* Although we account for zerofill section sizes in vm order, they are
 	 placed in the file in source sequence.  */
-      bfd_mach_o_append_section_to_segment (seg, sec);
+      bfd_mach_o_append_section_to_segment (seg, s);
       s->offset = 0;
 
-      /* Zerofill sections have zero file size & offset,
-	 and are not written.  */
+      /* Zerofill sections have zero file size & offset, the only content
+	 written to the file is the symbols.  */
       if ((s->flags & BFD_MACH_O_SECTION_TYPE_MASK) == BFD_MACH_O_S_ZEROFILL
-          || (s->flags & BFD_MACH_O_SECTION_TYPE_MASK)
-	      == BFD_MACH_O_S_GB_ZEROFILL)
+          || ((s->flags & BFD_MACH_O_SECTION_TYPE_MASK)
+	      == BFD_MACH_O_S_GB_ZEROFILL))
         continue;
 
+      /* The Darwin system tools (in MH_OBJECT files, at least) always account
+	 sections, even those with zero size.  */
       if (s->size > 0)
-       {
+	{
 	  seg->vmsize = FILE_ALIGN (seg->vmsize, s->align);
 	  seg->vmsize += s->size;
 
-	  seg->filesize = FILE_ALIGN (seg->filesize, s->align);
+	  /* MH_OBJECT files have unaligned content.  */
+	  if (1)
+	    {
+	      seg->filesize = FILE_ALIGN (seg->filesize, s->align);
+              mdata->filelen = FILE_ALIGN (mdata->filelen, s->align);
+            }
 	  seg->filesize += s->size;
 
-          mdata->filelen = FILE_ALIGN (mdata->filelen, s->align);
+	  /* The system tools write even zero-sized sections with an offset
+	     field set to the current file position.  */
           s->offset = mdata->filelen;
-        }
+	}
 
       sec->filepos = s->offset;
       mdata->filelen += s->size;
     }
 
-  /* Now pass through again, for zerofill, only now we just update the vmsize.  */
-  for (i = 0; i < mdata->nsects; ++i)
+  /* Now pass through again, for zerofill, only now we just update the
+     vmsize, and then for zerofill_GB.  */
+  for (j = 0; j < 2; j++)
     {
-      bfd_mach_o_section *s = mdata->sections[i];
+      unsigned int stype;
 
-      if ((s->flags & BFD_MACH_O_SECTION_TYPE_MASK) != BFD_MACH_O_S_ZEROFILL)
-        continue;
+      if (j == 0)
+	stype = BFD_MACH_O_S_ZEROFILL;
+      else
+	stype = BFD_MACH_O_S_GB_ZEROFILL;
 
-      if (! is_mho
-	  && strncmp (segment, s->segname, BFD_MACH_O_SEGNAME_SIZE) != 0)
-	continue;
-
-      if (s->size > 0)
+      for (i = 0; i < mdata->nsects; ++i)
 	{
-	  seg->vmsize = FILE_ALIGN (seg->vmsize, s->align);
-	  seg->vmsize += s->size;
-	}
-    }
+	  bfd_mach_o_section *s = mdata->sections[i];
 
-  /* Now pass through again, for zerofill_GB.  */
-  for (i = 0; i < mdata->nsects; ++i)
-    {
-      bfd_mach_o_section *s = mdata->sections[i];
+	  if ((s->flags & BFD_MACH_O_SECTION_TYPE_MASK) != stype)
+	    continue;
 
-      if ((s->flags & BFD_MACH_O_SECTION_TYPE_MASK) != BFD_MACH_O_S_GB_ZEROFILL)
-        continue;
-
-      if (! is_mho
-	  && strncmp (segment, s->segname, BFD_MACH_O_SEGNAME_SIZE) != 0)
-	continue;
-
-      if (s->size > 0)
-	{
-	  seg->vmsize = FILE_ALIGN (seg->vmsize, s->align);
-	  seg->vmsize += s->size;
+	  if (s->size > 0)
+	    {
+	      seg->vmsize = FILE_ALIGN (seg->vmsize, s->align);
+	      seg->vmsize += s->size;
+	    }
 	}
     }
 
   /* Allocate space for the relocations.  */
-  mdata->filelen = FILE_ALIGN(mdata->filelen, 2);
+  mdata->filelen = FILE_ALIGN (mdata->filelen, 2);
 
   for (i = 0; i < mdata->nsects; ++i)
     {
       bfd_mach_o_section *ms = mdata->sections[i];
       asection *sec = ms->bfdsection;
 
-      if ((ms->nreloc = sec->reloc_count) == 0)
+      ms->nreloc = sec->reloc_count;
+      if (ms->nreloc == 0)
         {
+	  /* Clear nreloc and reloff if there is no relocs.  */
 	  ms->reloff = 0;
 	  continue;
         }
@@ -2228,142 +2735,211 @@ bfd_mach_o_build_seg_command (const char *segment,
   return TRUE;
 }
 
-/* Count the number of indirect symbols in the image.
-   Requires that the sections are in their final order.  */
-
-static unsigned int
-bfd_mach_o_count_indirect_symbols (bfd *abfd, bfd_mach_o_data_struct *mdata)
+static bfd_boolean
+bfd_mach_o_build_exec_seg_command (bfd *abfd, bfd_mach_o_segment_command *seg)
 {
+  bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
   unsigned int i;
-  unsigned int nisyms = 0;
+  bfd_vma pagemask = bfd_mach_o_get_backend_data (abfd)->page_size - 1;
+  bfd_vma vma;
+  bfd_mach_o_section *s;
 
+  seg->vmsize = 0;
+
+  seg->fileoff = mdata->filelen;
+  seg->maxprot = 0;
+  seg->initprot = 0;
+  seg->flags = 0;
+
+  /*  Append sections to the segment.  We assume they are properly ordered
+      by vma (but we check that).  */
+  vma = 0;
   for (i = 0; i < mdata->nsects; ++i)
     {
-      bfd_mach_o_section *sec = mdata->sections[i];
+      s = mdata->sections[i];
 
-      switch (sec->flags & BFD_MACH_O_SECTION_TYPE_MASK)
-	{
-	  case BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS:
-	  case BFD_MACH_O_S_LAZY_SYMBOL_POINTERS:
-	  case BFD_MACH_O_S_SYMBOL_STUBS:
-	    nisyms += bfd_mach_o_section_get_nbr_indirect (abfd, sec);
-	    break;
-	  default:
-	    break;
-	}
+      /* Consider only sections for this segment.  */
+      if (strcmp (seg->segname, s->segname) != 0)
+	continue;
+
+      bfd_mach_o_append_section_to_segment (seg, s);
+
+      BFD_ASSERT (s->addr >= vma);
+      vma = s->addr + s->size;
     }
-  return nisyms;
-}
 
-static bfd_boolean
-bfd_mach_o_build_dysymtab_command (bfd *abfd,
-				   bfd_mach_o_data_struct *mdata,
-				   bfd_mach_o_load_command *cmd)
-{
-  bfd_mach_o_dysymtab_command *dsym = &cmd->command.dysymtab;
+  /* Set segment file offset: make it page aligned.  */
+  vma = seg->sect_head->addr;
+  seg->vmaddr = vma & ~pagemask;
+  if ((mdata->filelen & pagemask) > (vma & pagemask))
+    mdata->filelen += pagemask + 1;
+  seg->fileoff = mdata->filelen & ~pagemask;
+  mdata->filelen = seg->fileoff + (vma & pagemask);
 
-  /* TODO:
-     We are not going to try and fill these in yet and, moreover, we are
-     going to bail if they are already set.  */
-  if (dsym->nmodtab != 0
-      || dsym->ntoc != 0
-      || dsym->nextrefsyms != 0)
+  /* Set section file offset.  */
+  for (s = seg->sect_head; s != NULL; s = s->next)
     {
-      (*_bfd_error_handler) (_("sorry: modtab, toc and extrefsyms are not yet"
-				" implemented for dysymtab commands."));
-      return FALSE;
+      asection *sec = s->bfdsection;
+      flagword flags = bfd_get_section_flags (abfd, sec);
+
+      /* Adjust segment size.  */
+      seg->vmsize = FILE_ALIGN (seg->vmsize, s->align);
+      seg->vmsize += s->size;
+
+      /* File offset and length.  */
+      seg->filesize = FILE_ALIGN (seg->filesize, s->align);
+
+      if ((s->flags & BFD_MACH_O_SECTION_TYPE_MASK) != BFD_MACH_O_S_ZEROFILL
+          && ((s->flags & BFD_MACH_O_SECTION_TYPE_MASK)
+	      != BFD_MACH_O_S_GB_ZEROFILL))
+	{
+	  mdata->filelen = FILE_ALIGN (mdata->filelen, s->align);
+
+	  s->offset = mdata->filelen;
+	  s->bfdsection->filepos = s->offset;
+
+	  seg->filesize += s->size;
+	  mdata->filelen += s->size;
+	}
+      else
+	{
+	  s->offset = 0;
+	  s->bfdsection->filepos = 0;
+	}
+
+      /* Set protection.  */
+      if (flags & SEC_LOAD)
+	{
+	  if (flags & SEC_CODE)
+	    seg->initprot |= BFD_MACH_O_PROT_READ | BFD_MACH_O_PROT_EXECUTE;
+	  if ((flags & (SEC_DATA | SEC_READONLY)) == SEC_DATA)
+	    seg->initprot |= BFD_MACH_O_PROT_WRITE | BFD_MACH_O_PROT_READ;
+	}
+
+      /* Relocs shouldn't appear in non-object files.  */
+      if (s->bfdsection->reloc_count != 0)
+	return FALSE;
     }
 
-  dsym->ilocalsym = 0;
-
-  if (bfd_get_symcount (abfd) > 0)
-    {
-      asymbol **symbols = bfd_get_outsymbols (abfd);
-      unsigned long i;
-
-       /* Count the number of each kind of symbol.  */
-      for (i = 0; i < bfd_get_symcount (abfd); ++i)
-	{
-	  bfd_mach_o_asymbol *s = (bfd_mach_o_asymbol *)symbols[i];
-	  if (s->n_type & (BFD_MACH_O_N_EXT | BFD_MACH_O_N_PEXT))
-	    break;
-	}
-      dsym->nlocalsym = i;
-      dsym->iextdefsym = i;
-      for (; i < bfd_get_symcount (abfd); ++i)
-	{
-	  bfd_mach_o_asymbol *s = (bfd_mach_o_asymbol *)symbols[i];
-	  if ((s->n_type & BFD_MACH_O_N_TYPE) == BFD_MACH_O_N_UNDF)
-	    break;
-	}
-      dsym->nextdefsym = i - dsym->nlocalsym;
-      dsym->iundefsym = dsym->nextdefsym + dsym->iextdefsym;
-      dsym->nundefsym = bfd_get_symcount (abfd)
-			- dsym->nlocalsym
-			- dsym->nextdefsym;
-    }
+  /* Set maxprot.  */
+  if (seg->initprot != 0)
+    seg->maxprot = BFD_MACH_O_PROT_READ | BFD_MACH_O_PROT_WRITE
+		 | BFD_MACH_O_PROT_EXECUTE;
   else
-    {
-      dsym->nlocalsym = 0;
-      dsym->iextdefsym = 0;
-      dsym->nextdefsym = 0;
-      dsym->iundefsym = 0;
-      dsym->nundefsym = 0;
-    }
+    seg->maxprot = 0;
 
-  dsym->nindirectsyms = bfd_mach_o_count_indirect_symbols (abfd, mdata);
-  if (dsym->nindirectsyms > 0)
-    {
-      unsigned i;
-      unsigned n;
-
-      mdata->filelen = FILE_ALIGN (mdata->filelen, 2);
-      dsym->indirectsymoff = mdata->filelen;
-      mdata->filelen += dsym->nindirectsyms * 4;
-
-      dsym->indirect_syms = bfd_zalloc (abfd, dsym->nindirectsyms * 4);
-      if (dsym->indirect_syms == NULL)
-        return FALSE;
-
-      n = 0;
-      for (i = 0; i < mdata->nsects; ++i)
-	{
-	  bfd_mach_o_section *sec = mdata->sections[i];
-
-	  switch (sec->flags & BFD_MACH_O_SECTION_TYPE_MASK)
-	    {
-	      case BFD_MACH_O_S_NON_LAZY_SYMBOL_POINTERS:
-	      case BFD_MACH_O_S_LAZY_SYMBOL_POINTERS:
-	      case BFD_MACH_O_S_SYMBOL_STUBS:
-		{
-		  unsigned j, num;
-		  bfd_mach_o_asymbol **isyms = sec->indirect_syms;
-
-		  num = bfd_mach_o_section_get_nbr_indirect (abfd, sec);
-		  if (isyms == NULL || num == 0)
-		    break;
-		  /* Record the starting index in the reserved1 field.  */
-		  sec->reserved1 = n;
-		  for (j = 0; j < num; j++, n++)
-		    {
-		      if (isyms[j] == NULL)
-		        dsym->indirect_syms[n] = BFD_MACH_O_INDIRECT_SYM_LOCAL;
-		      else if (isyms[j]->symbol.section == bfd_abs_section_ptr
-			       && ! (isyms[j]->n_type & BFD_MACH_O_N_EXT))
-		        dsym->indirect_syms[n] = BFD_MACH_O_INDIRECT_SYM_LOCAL
-						 | BFD_MACH_O_INDIRECT_SYM_ABS;
-		      else
-		        dsym->indirect_syms[n] = isyms[j]->symbol.udata.i;
-		    }
-		}
-		break;
-	      default:
-		break;
-	    }
-	}
-    }
+  /* Round segment size (and file size).  */
+  seg->vmsize = (seg->vmsize + pagemask) & ~pagemask;
+  seg->filesize = (seg->filesize + pagemask) & ~pagemask;
+  mdata->filelen = (mdata->filelen + pagemask) & ~pagemask;
 
   return TRUE;
+}
+
+/* Layout the commands: set commands size and offset, set ncmds and sizeofcmds
+   fields in header.  */
+
+static void
+bfd_mach_o_layout_commands (bfd_mach_o_data_struct *mdata)
+{
+  unsigned wide = mach_o_wide_p (&mdata->header);
+  unsigned int hdrlen;
+  ufile_ptr offset;
+  bfd_mach_o_load_command *cmd;
+  unsigned int align;
+
+  hdrlen = wide ? BFD_MACH_O_HEADER_64_SIZE : BFD_MACH_O_HEADER_SIZE;
+  align = wide ? 8 - 1 : 4 - 1;
+  offset = hdrlen;
+  mdata->header.ncmds = 0;
+
+  for (cmd = mdata->first_command; cmd; cmd = cmd->next)
+    {
+      mdata->header.ncmds++;
+      cmd->offset = offset;
+
+      switch (cmd->type)
+	{
+	case BFD_MACH_O_LC_SEGMENT_64:
+	  cmd->len = BFD_MACH_O_LC_SEGMENT_64_SIZE
+	    + BFD_MACH_O_SECTION_64_SIZE * cmd->command.segment.nsects;
+	  break;
+	case BFD_MACH_O_LC_SEGMENT:
+	  cmd->len = BFD_MACH_O_LC_SEGMENT_SIZE
+	    + BFD_MACH_O_SECTION_SIZE * cmd->command.segment.nsects;
+	  break;
+	case BFD_MACH_O_LC_SYMTAB:
+	  cmd->len = sizeof (struct mach_o_symtab_command_external)
+	    + BFD_MACH_O_LC_SIZE;
+	  break;
+	case BFD_MACH_O_LC_DYSYMTAB:
+	  cmd->len = sizeof (struct mach_o_dysymtab_command_external)
+		 + BFD_MACH_O_LC_SIZE;
+	  break;
+	case BFD_MACH_O_LC_LOAD_DYLIB:
+	  cmd->len = sizeof (struct mach_o_dylib_command_external)
+		 + BFD_MACH_O_LC_SIZE;
+	  cmd->command.dylib.name_offset = cmd->len;
+	  cmd->len += strlen (cmd->command.dylib.name_str);
+	  cmd->len = (cmd->len + align) & ~align;
+	  break;
+	case BFD_MACH_O_LC_LOAD_DYLINKER:
+	  cmd->len = sizeof (struct mach_o_str_command_external)
+		 + BFD_MACH_O_LC_SIZE;
+	  cmd->command.dylinker.name_offset = cmd->len;
+	  cmd->len += strlen (cmd->command.dylinker.name_str);
+	  cmd->len = (cmd->len + align) & ~align;
+	  break;
+	case BFD_MACH_O_LC_MAIN:
+	  cmd->len = sizeof (struct mach_o_entry_point_command_external)
+		 + BFD_MACH_O_LC_SIZE;
+	  break;
+	case BFD_MACH_O_LC_DYLD_INFO:
+	  cmd->len = sizeof (struct mach_o_dyld_info_command_external)
+		 + BFD_MACH_O_LC_SIZE;
+	  break;
+	default:
+	  (*_bfd_error_handler)
+	    (_("unable to layout unknown load command 0x%lx"),
+	     (unsigned long) cmd->type);
+	  break;
+	}
+
+      BFD_ASSERT (cmd->len % (align + 1) == 0);
+      offset += cmd->len;
+    }
+  mdata->header.sizeofcmds = offset - hdrlen;
+  mdata->filelen = offset;
+}
+
+/* Subroutine of bfd_mach_o_build_commands: set type, name and nsects of a
+   segment.  */
+
+static void
+bfd_mach_o_init_segment (bfd_mach_o_data_struct *mdata,
+			 bfd_mach_o_load_command *cmd,
+			 const char *segname, unsigned int nbr_sect)
+{
+  bfd_mach_o_segment_command *seg = &cmd->command.segment;
+  unsigned wide = mach_o_wide_p (&mdata->header);
+
+  /* Init segment command.  */
+  cmd->type = wide ? BFD_MACH_O_LC_SEGMENT_64 : BFD_MACH_O_LC_SEGMENT;
+  cmd->type_required = FALSE;
+
+  strcpy (seg->segname, segname);
+  seg->nsects = nbr_sect;
+
+  seg->vmaddr = 0;
+  seg->vmsize = 0;
+
+  seg->fileoff = 0;
+  seg->filesize = 0;
+  seg->maxprot = 0;
+  seg->initprot = 0;
+  seg->flags = 0;
+  seg->sect_head = NULL;
+  seg->sect_tail = NULL;
 }
 
 /* Build Mach-O load commands (currently assuming an MH_OBJECT file).
@@ -2375,17 +2951,19 @@ bfd_mach_o_build_commands (bfd *abfd)
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
   unsigned wide = mach_o_wide_p (&mdata->header);
-  int segcmd_idx = -1;
+  unsigned int nbr_segcmd = 0;
+  bfd_mach_o_load_command *commands;
+  unsigned int nbr_commands;
   int symtab_idx = -1;
   int dysymtab_idx = -1;
-  unsigned long base_offset = 0;
+  int main_idx = -1;
+  unsigned int i;
 
-  /* Return now if commands are already present.  */
-  if (mdata->header.ncmds)
-    return FALSE;
+  /* Return now if already built.  */
+  if (mdata->header.ncmds != 0)
+    return TRUE;
 
   /* Fill in the file type, if not already set.  */
-
   if (mdata->header.filetype == 0)
     {
       if (abfd->flags & EXEC_P)
@@ -2408,142 +2986,189 @@ bfd_mach_o_build_commands (bfd *abfd)
   if (!bfd_mach_o_mangle_symbols (abfd))
     return FALSE;
 
-  /* Very simple command set (only really applicable to MH_OBJECTs):
-     All the commands are optional - present only when there is suitable data.
-     (i.e. it is valid to have an empty file)
-
-	a command (segment) to contain all the sections,
-	command for the symbol table,
-	a command for the dysymtab.
-
-     ??? maybe we should assert that this is an MH_OBJECT?  */
-
-  if (mdata->nsects > 0)
+  /* Segment commands.  */
+  if (mdata->header.filetype == BFD_MACH_O_MH_OBJECT)
     {
-      segcmd_idx = 0;
-      mdata->header.ncmds = 1;
+      /* Only one segment for all the sections.  But the segment is
+	 optional if there is no sections.  */
+      nbr_segcmd = (mdata->nsects > 0) ? 1 : 0;
+    }
+  else
+    {
+      bfd_mach_o_section *prev_sect = NULL;
+
+      /* One pagezero segment and one linkedit segment.  */
+      nbr_segcmd = 2;
+
+      /* Create one segment for associated segment name in sections.
+	 Assume that sections with the same segment name are consecutive.  */
+      for (i = 0; i < mdata->nsects; i++)
+	{
+	  bfd_mach_o_section *this_sect = mdata->sections[i];
+
+	  if (prev_sect == NULL
+	      || strcmp (prev_sect->segname, this_sect->segname) != 0)
+	    {
+	      nbr_segcmd++;
+	      prev_sect = this_sect;
+	    }
+	}
     }
 
+  nbr_commands = nbr_segcmd;
+
+  /* One command for the symbol table (only if there are symbols.  */
   if (bfd_get_symcount (abfd) > 0)
-    {
-      mdata->header.ncmds++;
-      symtab_idx = segcmd_idx + 1; /* 0 if the seg command is absent.  */
-    }
+    symtab_idx = nbr_commands++;
 
   /* FIXME:
      This is a rather crude test for whether we should build a dysymtab.  */
   if (bfd_mach_o_should_emit_dysymtab ()
       && bfd_get_symcount (abfd))
     {
-      mdata->header.ncmds++;
       /* If there should be a case where a dysymtab could be emitted without
 	 a symtab (seems improbable), this would need amending.  */
-      dysymtab_idx = symtab_idx + 1;
+      dysymtab_idx = nbr_commands++;
     }
 
-  if (wide)
-    base_offset = BFD_MACH_O_HEADER_64_SIZE;
-  else
-    base_offset = BFD_MACH_O_HEADER_SIZE;
+  /* Add an entry point command.  */
+  if (mdata->header.filetype == BFD_MACH_O_MH_EXECUTE
+      && bfd_get_start_address (abfd) != 0)
+    main_idx = nbr_commands++;
 
   /* Well, we must have a header, at least.  */
-  mdata->filelen = base_offset;
+  mdata->filelen = wide ? BFD_MACH_O_HEADER_64_SIZE : BFD_MACH_O_HEADER_SIZE;
 
   /* A bit unusual, but no content is valid;
      as -n empty.s -o empty.o  */
-  if (mdata->header.ncmds == 0)
-    return TRUE;
-
-  mdata->commands = bfd_zalloc (abfd, mdata->header.ncmds
-                                * sizeof (bfd_mach_o_load_command));
-  if (mdata->commands == NULL)
-    return FALSE;
-
-  if (segcmd_idx >= 0)
+  if (nbr_commands == 0)
     {
-      bfd_mach_o_load_command *cmd = &mdata->commands[segcmd_idx];
-      bfd_mach_o_segment_command *seg = &cmd->command.segment;
+      /* Layout commands (well none...) and set headers command fields.  */
+      bfd_mach_o_layout_commands (mdata);
+      return TRUE;
+    }
 
-      /* Count the segctions in the special blank segment used for MH_OBJECT.  */
-      seg->nsects = bfd_mach_o_count_sections_for_seg (NULL, mdata);
-      if (seg->nsects == (unsigned long) -1)
-	return FALSE;
+  /* Create commands for segments (and symtabs), prepend them.  */
+  commands = bfd_zalloc (abfd, nbr_commands * sizeof (bfd_mach_o_load_command));
+  if (commands == NULL)
+    return FALSE;
+  for (i = 0; i < nbr_commands - 1; i++)
+    commands[i].next = &commands[i + 1];
+  commands[nbr_commands - 1].next = mdata->first_command;
+  if (mdata->first_command == NULL)
+    mdata->last_command = &commands[nbr_commands - 1];
+  mdata->first_command = &commands[0];
 
-      /* Init segment command.  */
-      cmd->offset = base_offset;
-      if (wide)
+  if (mdata->header.filetype == BFD_MACH_O_MH_OBJECT && nbr_segcmd != 0)
+    {
+      /* For object file, there is only one segment.  */
+      bfd_mach_o_init_segment (mdata, &commands[0], "", mdata->nsects);
+    }
+  else if (nbr_segcmd != 0)
+    {
+      bfd_mach_o_load_command *cmd;
+
+      BFD_ASSERT (nbr_segcmd >= 2);
+
+      /* The pagezero.  */
+      cmd = &commands[0];
+      bfd_mach_o_init_segment (mdata, cmd, "__PAGEZERO", 0);
+
+      /* Segments from sections.  */
+      cmd++;
+      for (i = 0; i < mdata->nsects;)
 	{
-	  cmd->type = BFD_MACH_O_LC_SEGMENT_64;
-	  cmd->len = BFD_MACH_O_LC_SEGMENT_64_SIZE
-			+ BFD_MACH_O_SECTION_64_SIZE * seg->nsects;
-	}
-      else
-	{
-	  cmd->type = BFD_MACH_O_LC_SEGMENT;
-	  cmd->len = BFD_MACH_O_LC_SEGMENT_SIZE
-			+ BFD_MACH_O_SECTION_SIZE * seg->nsects;
+	  const char *segname = mdata->sections[i]->segname;
+	  unsigned int nbr_sect = 1;
+
+	  /* Count number of sections for this segment.  */
+	  for (i++; i < mdata->nsects; i++)
+	    if (strcmp (mdata->sections[i]->segname, segname) == 0)
+	      nbr_sect++;
+	    else
+	      break;
+
+	  bfd_mach_o_init_segment (mdata, cmd, segname, nbr_sect);
+	  cmd++;
 	}
 
-      cmd->type_required = FALSE;
-      mdata->header.sizeofcmds = cmd->len;
-      mdata->filelen += cmd->len;
+      /* The linkedit.  */
+      bfd_mach_o_init_segment (mdata, cmd, "__LINKEDIT", 0);
     }
 
   if (symtab_idx >= 0)
     {
       /* Init symtab command.  */
-      bfd_mach_o_load_command *cmd = &mdata->commands[symtab_idx];
+      bfd_mach_o_load_command *cmd = &commands[symtab_idx];
 
       cmd->type = BFD_MACH_O_LC_SYMTAB;
-      cmd->offset = base_offset;
-      if (segcmd_idx >= 0)
-        cmd->offset += mdata->commands[segcmd_idx].len;
-
-      cmd->len = sizeof (struct mach_o_symtab_command_external)
-		 + BFD_MACH_O_LC_SIZE;
       cmd->type_required = FALSE;
-      mdata->header.sizeofcmds += cmd->len;
-      mdata->filelen += cmd->len;
     }
 
   /* If required, setup symtab command, see comment above about the quality
      of this test.  */
   if (dysymtab_idx >= 0)
     {
-      bfd_mach_o_load_command *cmd = &mdata->commands[dysymtab_idx];
+      bfd_mach_o_load_command *cmd = &commands[dysymtab_idx];
 
       cmd->type = BFD_MACH_O_LC_DYSYMTAB;
-      if (symtab_idx >= 0)
-        cmd->offset = mdata->commands[symtab_idx].offset
-		    + mdata->commands[symtab_idx].len;
-      else if (segcmd_idx >= 0)
-        cmd->offset = mdata->commands[segcmd_idx].offset
-		    + mdata->commands[segcmd_idx].len;
-      else
-	cmd->offset = base_offset;
-
       cmd->type_required = FALSE;
-      cmd->len = sizeof (struct mach_o_dysymtab_command_external)
-		 + BFD_MACH_O_LC_SIZE;
-
-      mdata->header.sizeofcmds += cmd->len;
-      mdata->filelen += cmd->len;
     }
+
+  /* Create the main command.  */
+  if (main_idx >= 0)
+    {
+      bfd_mach_o_load_command *cmd = &commands[main_idx];
+
+      cmd->type = BFD_MACH_O_LC_MAIN;
+      cmd->type_required = TRUE;
+
+      cmd->command.main.entryoff = 0;
+      cmd->command.main.stacksize = 0;
+    }
+
+  /* Layout commands.  */
+  bfd_mach_o_layout_commands (mdata);
 
   /* So, now we have sized the commands and the filelen set to that.
      Now we can build the segment command and set the section file offsets.  */
-  if (segcmd_idx >= 0
-      && ! bfd_mach_o_build_seg_command
-		(NULL, mdata, &mdata->commands[segcmd_idx].command.segment))
-    return FALSE;
+  if (mdata->header.filetype == BFD_MACH_O_MH_OBJECT)
+    {
+      for (i = 0; i < nbr_segcmd; i++)
+	if (!bfd_mach_o_build_obj_seg_command
+	    (abfd, &commands[i].command.segment))
+	  return FALSE;
+    }
+  else
+    {
+      bfd_vma maxvma = 0;
 
-  /* If we're doing a dysymtab, cmd points to its load command.  */
-  if (dysymtab_idx >= 0
-      && ! bfd_mach_o_build_dysymtab_command (abfd, mdata,
-					      &mdata->commands[dysymtab_idx]))
-    return FALSE;
+      /* Skip pagezero and linkedit segments.  */
+      for (i = 1; i < nbr_segcmd - 1; i++)
+	{
+	  bfd_mach_o_segment_command *seg = &commands[i].command.segment;
 
-  /* The symtab command is filled in when the symtab is written.  */
+	  if (!bfd_mach_o_build_exec_seg_command (abfd, seg))
+	    return FALSE;
+
+	  if (seg->vmaddr + seg->vmsize > maxvma)
+	    maxvma = seg->vmaddr + seg->vmsize;
+	}
+
+      /* Set the size of __PAGEZERO.  */
+      commands[0].command.segment.vmsize =
+	commands[1].command.segment.vmaddr;
+
+      /* Set the vma and fileoff of __LINKEDIT.  */
+      commands[nbr_segcmd - 1].command.segment.vmaddr = maxvma;
+      commands[nbr_segcmd - 1].command.segment.fileoff = mdata->filelen;
+
+      /* Set entry point (once segments have been laid out).  */
+      if (main_idx >= 0)
+	commands[main_idx].command.main.entryoff =
+	  bfd_get_start_address (abfd) - commands[1].command.segment.vmaddr;
+    }
+
   return TRUE;
 }
 
@@ -2560,7 +3185,7 @@ bfd_mach_o_set_section_contents (bfd *abfd,
 
   /* Trying to write the first section contents will trigger the creation of
      the load commands if they are not already present.  */
-  if (! abfd->output_has_begun && ! bfd_mach_o_build_commands (abfd))
+  if (!abfd->output_has_begun && !bfd_mach_o_build_commands (abfd))
     return FALSE;
 
   if (count == 0)
@@ -3050,16 +3675,21 @@ bfd_mach_o_read_symtab_strtab (bfd *abfd)
     }
   else
     {
-      sym->strtab = bfd_alloc (abfd, sym->strsize);
+      sym->strtab = bfd_alloc (abfd, sym->strsize + 1);
       if (sym->strtab == NULL)
         return FALSE;
 
       if (bfd_seek (abfd, sym->stroff, SEEK_SET) != 0
           || bfd_bread (sym->strtab, sym->strsize, abfd) != sym->strsize)
         {
+	  /* PR 17512: file: 10888-1609-0.004.  */
+	  bfd_release (abfd, sym->strtab);
+	  sym->strtab = NULL;
           bfd_set_error (bfd_error_file_truncated);
           return FALSE;
         }
+      /* Zero terminate the string table.  */
+      sym->strtab[sym->strsize] = 0;
     }
 
   return TRUE;
@@ -3073,10 +3703,8 @@ bfd_mach_o_read_symtab_symbols (bfd *abfd)
   unsigned long i;
 
   if (sym == NULL || sym->symbols)
-    {
-      /* Return now if there are no symbols or if already loaded.  */
-      return TRUE;
-    }
+    /* Return now if there are no symbols or if already loaded.  */
+    return TRUE;
 
   sym->symbols = bfd_alloc (abfd, sym->nsyms * sizeof (bfd_mach_o_asymbol));
 
@@ -3087,12 +3715,20 @@ bfd_mach_o_read_symtab_symbols (bfd *abfd)
     }
 
   if (!bfd_mach_o_read_symtab_strtab (abfd))
-    return FALSE;
+    {
+      bfd_release (abfd, sym->symbols);
+      sym->symbols = NULL;
+      return FALSE;
+    }
 
   for (i = 0; i < sym->nsyms; i++)
     {
       if (!bfd_mach_o_read_symtab_symbol (abfd, sym, &sym->symbols[i], i))
-	return FALSE;
+	{
+	  bfd_release (abfd, sym->symbols);
+	  sym->symbols = NULL;
+	  return FALSE;
+	}
     }
 
   return TRUE;
@@ -3135,43 +3771,44 @@ bfd_mach_o_ppc_flavour_string (unsigned int flavour)
     }
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_dylinker (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_dylinker_command *cmd = &command->command.dylinker;
   struct mach_o_str_command_external raw;
   unsigned int nameoff;
-
-  BFD_ASSERT ((command->type == BFD_MACH_O_LC_ID_DYLINKER)
-	      || (command->type == BFD_MACH_O_LC_LOAD_DYLINKER));
+  unsigned int namelen;
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   nameoff = bfd_h_get_32 (abfd, raw.str);
 
-  cmd->name_offset = command->offset + nameoff;
-  cmd->name_len = command->len - nameoff;
-  cmd->name_str = bfd_alloc (abfd, cmd->name_len);
+  cmd->name_offset = nameoff;
+  namelen = command->len - nameoff;
+  nameoff += command->offset;
+  cmd->name_str = bfd_alloc (abfd, namelen);
   if (cmd->name_str == NULL)
-    return -1;
-  if (bfd_seek (abfd, cmd->name_offset, SEEK_SET) != 0
-      || bfd_bread (cmd->name_str, cmd->name_len, abfd) != cmd->name_len)
-    return -1;
-  return 0;
+    return FALSE;
+  if (bfd_seek (abfd, nameoff, SEEK_SET) != 0
+      || bfd_bread (cmd->name_str, namelen, abfd) != namelen)
+    return FALSE;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_dylib (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_dylib_command *cmd = &command->command.dylib;
   struct mach_o_dylib_command_external raw;
   unsigned int nameoff;
+  unsigned int namelen;
 
   switch (command->type)
     {
     case BFD_MACH_O_LC_LOAD_DYLIB:
+    case BFD_MACH_O_LC_LAZY_LOAD_DYLIB:
     case BFD_MACH_O_LC_LOAD_WEAK_DYLIB:
     case BFD_MACH_O_LC_ID_DYLIB:
     case BFD_MACH_O_LC_REEXPORT_DYLIB:
@@ -3179,12 +3816,12 @@ bfd_mach_o_read_dylib (bfd *abfd, bfd_mach_o_load_command *command)
       break;
     default:
       BFD_FAIL ();
-      return -1;
+      return FALSE;
     }
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   nameoff = bfd_h_get_32 (abfd, raw.name);
   cmd->timestamp = bfd_h_get_32 (abfd, raw.timestamp);
@@ -3192,53 +3829,111 @@ bfd_mach_o_read_dylib (bfd *abfd, bfd_mach_o_load_command *command)
   cmd->compatibility_version = bfd_h_get_32 (abfd, raw.compatibility_version);
 
   cmd->name_offset = command->offset + nameoff;
-  cmd->name_len = command->len - nameoff;
-  cmd->name_str = bfd_alloc (abfd, cmd->name_len);
+  namelen = command->len - nameoff;
+  cmd->name_str = bfd_alloc (abfd, namelen);
   if (cmd->name_str == NULL)
-    return -1;
+    return FALSE;
   if (bfd_seek (abfd, cmd->name_offset, SEEK_SET) != 0
-      || bfd_bread (cmd->name_str, cmd->name_len, abfd) != cmd->name_len)
-    return -1;
-  return 0;
+      || bfd_bread (cmd->name_str, namelen, abfd) != namelen)
+    return FALSE;
+  return TRUE;
 }
 
-static int
-bfd_mach_o_read_prebound_dylib (bfd *abfd ATTRIBUTE_UNUSED,
-                                bfd_mach_o_load_command *command ATTRIBUTE_UNUSED)
+static bfd_boolean
+bfd_mach_o_read_prebound_dylib (bfd *abfd,
+                                bfd_mach_o_load_command *command)
 {
-  /* bfd_mach_o_prebound_dylib_command *cmd = &command->command.prebound_dylib; */
+  bfd_mach_o_prebound_dylib_command *cmd = &command->command.prebound_dylib;
+  struct mach_o_prebound_dylib_command_external raw;
+  unsigned int nameoff;
+  unsigned int modoff;
+  unsigned int str_len;
+  unsigned char *str;
 
-  BFD_ASSERT (command->type == BFD_MACH_O_LC_PREBOUND_DYLIB);
-  return 0;
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  nameoff = bfd_h_get_32 (abfd, raw.name);
+  modoff = bfd_h_get_32 (abfd, raw.linked_modules);
+  if (nameoff > command->len || modoff > command->len)
+    return FALSE;
+
+  str_len = command->len - sizeof (raw);
+  str = bfd_alloc (abfd, str_len);
+  if (str == NULL)
+    return FALSE;
+  if (bfd_bread (str, str_len, abfd) != str_len)
+    return FALSE;
+
+  cmd->name_offset = command->offset + nameoff;
+  cmd->nmodules = bfd_h_get_32 (abfd, raw.nmodules);
+  cmd->linked_modules_offset = command->offset + modoff;
+
+  cmd->name_str = (char *)str + nameoff - (sizeof (raw) + BFD_MACH_O_LC_SIZE);
+  cmd->linked_modules = str + modoff - (sizeof (raw) + BFD_MACH_O_LC_SIZE);
+  return TRUE;
 }
 
-static int
+static bfd_boolean
+bfd_mach_o_read_prebind_cksum (bfd *abfd,
+			       bfd_mach_o_load_command *command)
+{
+  bfd_mach_o_prebind_cksum_command *cmd = &command->command.prebind_cksum;
+  struct mach_o_prebind_cksum_command_external raw;
+
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  cmd->cksum = bfd_get_32 (abfd, raw.cksum);
+  return TRUE;
+}
+
+static bfd_boolean
+bfd_mach_o_read_twolevel_hints (bfd *abfd,
+				bfd_mach_o_load_command *command)
+{
+  bfd_mach_o_twolevel_hints_command *cmd = &command->command.twolevel_hints;
+  struct mach_o_twolevel_hints_command_external raw;
+
+  if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
+      || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
+    return FALSE;
+
+  cmd->offset = bfd_get_32 (abfd, raw.offset);
+  cmd->nhints = bfd_get_32 (abfd, raw.nhints);
+  return TRUE;
+}
+
+static bfd_boolean
 bfd_mach_o_read_fvmlib (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_fvmlib_command *fvm = &command->command.fvmlib;
   struct mach_o_fvmlib_command_external raw;
   unsigned int nameoff;
+  unsigned int namelen;
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   nameoff = bfd_h_get_32 (abfd, raw.name);
   fvm->minor_version = bfd_h_get_32 (abfd, raw.minor_version);
   fvm->header_addr = bfd_h_get_32 (abfd, raw.header_addr);
 
   fvm->name_offset = command->offset + nameoff;
-  fvm->name_len = command->len - nameoff;
-  fvm->name_str = bfd_alloc (abfd, fvm->name_len);
+  namelen = command->len - nameoff;
+  fvm->name_str = bfd_alloc (abfd, namelen);
   if (fvm->name_str == NULL)
-    return -1;
+    return FALSE;
   if (bfd_seek (abfd, fvm->name_offset, SEEK_SET) != 0
-      || bfd_bread (fvm->name_str, fvm->name_len, abfd) != fvm->name_len)
-    return -1;
-  return 0;
+      || bfd_bread (fvm->name_str, namelen, abfd) != namelen)
+    return FALSE;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_thread (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
@@ -3258,11 +3953,11 @@ bfd_mach_o_read_thread (bfd *abfd, bfd_mach_o_load_command *command)
       struct mach_o_thread_command_external raw;
 
       if (offset >= command->len)
-	return -1;
+	return FALSE;
 
       if (bfd_seek (abfd, command->offset + offset, SEEK_SET) != 0
           || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-	return -1;
+	return FALSE;
 
       offset += sizeof (raw) + bfd_h_get_32 (abfd, raw.count) * 4;
       nflavours++;
@@ -3272,7 +3967,7 @@ bfd_mach_o_read_thread (bfd *abfd, bfd_mach_o_load_command *command)
   cmd->flavours = bfd_alloc
     (abfd, nflavours * sizeof (bfd_mach_o_thread_flavour));
   if (cmd->flavours == NULL)
-    return -1;
+    return FALSE;
   cmd->nflavours = nflavours;
 
   offset = 8;
@@ -3282,14 +3977,14 @@ bfd_mach_o_read_thread (bfd *abfd, bfd_mach_o_load_command *command)
       struct mach_o_thread_command_external raw;
 
       if (offset >= command->len)
-	return -1;
+	return FALSE;
 
       if (nflavours >= cmd->nflavours)
-	return -1;
+	return FALSE;
 
       if (bfd_seek (abfd, command->offset + offset, SEEK_SET) != 0
           || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-	return -1;
+	return FALSE;
 
       cmd->flavours[nflavours].flavour = bfd_h_get_32 (abfd, raw.flavour);
       cmd->flavours[nflavours].offset = command->offset + offset + sizeof (raw);
@@ -3311,11 +4006,13 @@ bfd_mach_o_read_thread (bfd *abfd, bfd_mach_o_load_command *command)
 	{
 	case BFD_MACH_O_CPU_TYPE_POWERPC:
 	case BFD_MACH_O_CPU_TYPE_POWERPC_64:
-	  flavourstr = bfd_mach_o_ppc_flavour_string (cmd->flavours[i].flavour);
+	  flavourstr =
+	    bfd_mach_o_ppc_flavour_string (cmd->flavours[i].flavour);
 	  break;
 	case BFD_MACH_O_CPU_TYPE_I386:
 	case BFD_MACH_O_CPU_TYPE_X86_64:
-	  flavourstr = bfd_mach_o_i386_flavour_string (cmd->flavours[i].flavour);
+	  flavourstr =
+	    bfd_mach_o_i386_flavour_string (cmd->flavours[i].flavour);
 	  break;
 	default:
 	  flavourstr = "UNKNOWN_ARCHITECTURE";
@@ -3325,7 +4022,7 @@ bfd_mach_o_read_thread (bfd *abfd, bfd_mach_o_load_command *command)
       snamelen = strlen (prefix) + 1 + 20 + 1 + strlen (flavourstr) + 1;
       sname = bfd_alloc (abfd, snamelen);
       if (sname == NULL)
-	return -1;
+	return FALSE;
 
       for (;;)
 	{
@@ -3346,10 +4043,10 @@ bfd_mach_o_read_thread (bfd *abfd, bfd_mach_o_load_command *command)
       cmd->section = bfdsec;
     }
 
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_dysymtab_command *cmd = &command->command.dysymtab;
@@ -3362,7 +4059,7 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
 
     if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
         || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-      return -1;
+      return FALSE;
 
     cmd->ilocalsym = bfd_h_get_32 (abfd, raw.ilocalsym);
     cmd->nlocalsym = bfd_h_get_32 (abfd, raw.nlocalsym);
@@ -3393,10 +4090,10 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
       cmd->dylib_module =
         bfd_alloc (abfd, cmd->nmodtab * sizeof (bfd_mach_o_dylib_module));
       if (cmd->dylib_module == NULL)
-        return -1;
+        return FALSE;
 
       if (bfd_seek (abfd, cmd->modtaboff, SEEK_SET) != 0)
-        return -1;
+        return FALSE;
 
       for (i = 0; i < cmd->nmodtab; i++)
         {
@@ -3405,7 +4102,7 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
           unsigned char buf[56];
 
           if (bfd_bread ((void *) buf, module_len, abfd) != module_len)
-            return -1;
+            return FALSE;
 
           module->module_name_idx = bfd_h_get_32 (abfd, buf + 0);
           module->iextdefsym = bfd_h_get_32 (abfd, buf + 4);
@@ -3442,10 +4139,10 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
       cmd->dylib_toc = bfd_alloc
         (abfd, cmd->ntoc * sizeof (bfd_mach_o_dylib_table_of_content));
       if (cmd->dylib_toc == NULL)
-        return -1;
+        return FALSE;
 
       if (bfd_seek (abfd, cmd->tocoff, SEEK_SET) != 0)
-        return -1;
+        return FALSE;
 
       for (i = 0; i < cmd->ntoc; i++)
         {
@@ -3453,7 +4150,7 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
           bfd_mach_o_dylib_table_of_content *toc = &cmd->dylib_toc[i];
 
           if (bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-            return -1;
+            return FALSE;
 
           toc->symbol_index = bfd_h_get_32 (abfd, raw.symbol_index);
           toc->module_index = bfd_h_get_32 (abfd, raw.module_index);
@@ -3467,10 +4164,10 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
       cmd->indirect_syms = bfd_alloc
         (abfd, cmd->nindirectsyms * sizeof (unsigned int));
       if (cmd->indirect_syms == NULL)
-        return -1;
+        return FALSE;
 
       if (bfd_seek (abfd, cmd->indirectsymoff, SEEK_SET) != 0)
-        return -1;
+        return FALSE;
 
       for (i = 0; i < cmd->nindirectsyms; i++)
         {
@@ -3478,7 +4175,7 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
           unsigned int *is = &cmd->indirect_syms[i];
 
           if (bfd_bread (raw, sizeof (raw), abfd) != sizeof (raw))
-            return -1;
+            return FALSE;
 
           *is = bfd_h_get_32 (abfd, raw);
         }
@@ -3492,10 +4189,10 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
       cmd->ext_refs = bfd_alloc
         (abfd, cmd->nextrefsyms * sizeof (bfd_mach_o_dylib_reference));
       if (cmd->ext_refs == NULL)
-        return -1;
+        return FALSE;
 
       if (bfd_seek (abfd, cmd->extrefsymoff, SEEK_SET) != 0)
-        return -1;
+        return FALSE;
 
       for (i = 0; i < cmd->nextrefsyms; i++)
         {
@@ -3503,7 +4200,7 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
           bfd_mach_o_dylib_reference *ref = &cmd->ext_refs[i];
 
           if (bfd_bread (raw, sizeof (raw), abfd) != sizeof (raw))
-            return -1;
+            return FALSE;
 
           /* Fields isym and flags are written as bit-fields, thus we need
              a specific processing for endianness.  */
@@ -3522,13 +4219,13 @@ bfd_mach_o_read_dysymtab (bfd *abfd, bfd_mach_o_load_command *command)
     }
 
   if (mdata->dysymtab)
-    return -1;
+    return FALSE;
   mdata->dysymtab = cmd;
 
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_symtab (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_symtab_command *symtab = &command->command.symtab;
@@ -3539,7 +4236,7 @@ bfd_mach_o_read_symtab (bfd *abfd, bfd_mach_o_load_command *command)
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   symtab->symoff = bfd_h_get_32 (abfd, raw.symoff);
   symtab->nsyms = bfd_h_get_32 (abfd, raw.nsyms);
@@ -3552,12 +4249,12 @@ bfd_mach_o_read_symtab (bfd *abfd, bfd_mach_o_load_command *command)
     abfd->flags |= HAS_SYMS;
 
   if (mdata->symtab)
-    return -1;
+    return FALSE;
   mdata->symtab = symtab;
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_uuid (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_uuid_command *cmd = &command->command.uuid;
@@ -3566,12 +4263,12 @@ bfd_mach_o_read_uuid (bfd *abfd, bfd_mach_o_load_command *command)
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (cmd->uuid, 16, abfd) != 16)
-    return -1;
+    return FALSE;
 
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_linkedit (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_linkedit_command *cmd = &command->command.linkedit;
@@ -3579,14 +4276,14 @@ bfd_mach_o_read_linkedit (bfd *abfd, bfd_mach_o_load_command *command)
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   cmd->dataoff = bfd_get_32 (abfd, raw.dataoff);
   cmd->datasize = bfd_get_32 (abfd, raw.datasize);
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_str (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_str_command *cmd = &command->command.str;
@@ -3595,21 +4292,86 @@ bfd_mach_o_read_str (bfd *abfd, bfd_mach_o_load_command *command)
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   off = bfd_get_32 (abfd, raw.str);
   cmd->stroff = command->offset + off;
   cmd->str_len = command->len - off;
   cmd->str = bfd_alloc (abfd, cmd->str_len);
   if (cmd->str == NULL)
-    return -1;
+    return FALSE;
   if (bfd_seek (abfd, cmd->stroff, SEEK_SET) != 0
       || bfd_bread ((void *) cmd->str, cmd->str_len, abfd) != cmd->str_len)
-    return -1;
-  return 0;
+    return FALSE;
+  return TRUE;
 }
 
-static int
+static unsigned char *
+bfd_mach_o_alloc_and_read (bfd *abfd, unsigned int off, unsigned int size)
+{
+  unsigned char *buf;
+
+  buf = bfd_alloc (abfd, size);
+  if (buf == NULL)
+    return NULL;
+  if (bfd_seek (abfd, off, SEEK_SET) != 0
+      || bfd_bread (buf, size, abfd) != size)
+    return NULL;
+  return buf;
+}
+
+static bfd_boolean
+bfd_mach_o_read_dyld_content (bfd *abfd, bfd_mach_o_dyld_info_command *cmd)
+{
+  /* Read rebase content.  */
+  if (cmd->rebase_content == NULL && cmd->rebase_size != 0)
+    {
+      cmd->rebase_content =
+	bfd_mach_o_alloc_and_read (abfd, cmd->rebase_off, cmd->rebase_size);
+      if (cmd->rebase_content == NULL)
+	return FALSE;
+    }
+
+  /* Read bind content.  */
+  if (cmd->bind_content == NULL && cmd->bind_size != 0)
+    {
+      cmd->bind_content =
+	bfd_mach_o_alloc_and_read (abfd, cmd->bind_off, cmd->bind_size);
+      if (cmd->bind_content == NULL)
+	return FALSE;
+    }
+
+  /* Read weak bind content.  */
+  if (cmd->weak_bind_content == NULL && cmd->weak_bind_size != 0)
+    {
+      cmd->weak_bind_content = bfd_mach_o_alloc_and_read
+	(abfd, cmd->weak_bind_off, cmd->weak_bind_size);
+      if (cmd->weak_bind_content == NULL)
+	return FALSE;
+    }
+
+  /* Read lazy bind content.  */
+  if (cmd->lazy_bind_content == NULL && cmd->lazy_bind_size != 0)
+    {
+      cmd->lazy_bind_content = bfd_mach_o_alloc_and_read
+	(abfd, cmd->lazy_bind_off, cmd->lazy_bind_size);
+      if (cmd->lazy_bind_content == NULL)
+	return FALSE;
+    }
+
+  /* Read export content.  */
+  if (cmd->export_content == NULL && cmd->export_size != 0)
+    {
+      cmd->export_content = bfd_mach_o_alloc_and_read
+	(abfd, cmd->export_off, cmd->export_size);
+      if (cmd->export_content == NULL)
+	return FALSE;
+    }
+
+  return TRUE;
+}
+
+static bfd_boolean
 bfd_mach_o_read_dyld_info (bfd *abfd, bfd_mach_o_load_command *command)
 {
   bfd_mach_o_dyld_info_command *cmd = &command->command.dyld_info;
@@ -3617,19 +4379,24 @@ bfd_mach_o_read_dyld_info (bfd *abfd, bfd_mach_o_load_command *command)
 
   if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
       || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-    return -1;
+    return FALSE;
 
   cmd->rebase_off = bfd_get_32 (abfd, raw.rebase_off);
   cmd->rebase_size = bfd_get_32 (abfd, raw.rebase_size);
+  cmd->rebase_content = NULL;
   cmd->bind_off = bfd_get_32 (abfd, raw.bind_off);
   cmd->bind_size = bfd_get_32 (abfd, raw.bind_size);
+  cmd->bind_content = NULL;
   cmd->weak_bind_off = bfd_get_32 (abfd, raw.weak_bind_off);
   cmd->weak_bind_size = bfd_get_32 (abfd, raw.weak_bind_size);
+  cmd->weak_bind_content = NULL;
   cmd->lazy_bind_off = bfd_get_32 (abfd, raw.lazy_bind_off);
   cmd->lazy_bind_size = bfd_get_32 (abfd, raw.lazy_bind_size);
+  cmd->lazy_bind_content = NULL;
   cmd->export_off = bfd_get_32 (abfd, raw.export_off);
   cmd->export_size = bfd_get_32 (abfd, raw.export_size);
-  return 0;
+  cmd->export_content = NULL;
+  return TRUE;
 }
 
 static bfd_boolean
@@ -3709,7 +4476,7 @@ bfd_mach_o_read_source_version (bfd *abfd, bfd_mach_o_load_command *command)
   return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_segment (bfd *abfd,
                          bfd_mach_o_load_command *command,
                          unsigned int wide)
@@ -3725,7 +4492,7 @@ bfd_mach_o_read_segment (bfd *abfd,
 
       if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
           || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-        return -1;
+        return FALSE;
 
       memcpy (seg->segname, raw.segname, 16);
       seg->segname[16] = '\0';
@@ -3747,7 +4514,7 @@ bfd_mach_o_read_segment (bfd *abfd,
 
       if (bfd_seek (abfd, command->offset + BFD_MACH_O_LC_SIZE, SEEK_SET) != 0
           || bfd_bread (&raw, sizeof (raw), abfd) != sizeof (raw))
-        return -1;
+        return FALSE;
 
       memcpy (seg->segname, raw.segname, 16);
       seg->segname[16] = '\0';
@@ -3778,27 +4545,28 @@ bfd_mach_o_read_segment (bfd *abfd,
 
       sec = bfd_mach_o_read_section (abfd, segoff, seg->initprot, wide);
       if (sec == NULL)
-        return -1;
+        return FALSE;
 
-      bfd_mach_o_append_section_to_segment (seg, sec);
+      bfd_mach_o_append_section_to_segment
+	(seg, bfd_mach_o_get_mach_o_section (sec));
     }
 
-  return 0;
+  return TRUE;
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_segment_32 (bfd *abfd, bfd_mach_o_load_command *command)
 {
   return bfd_mach_o_read_segment (abfd, command, 0);
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_segment_64 (bfd *abfd, bfd_mach_o_load_command *command)
 {
   return bfd_mach_o_read_segment (abfd, command, 1);
 }
 
-static int
+static bfd_boolean
 bfd_mach_o_read_command (bfd *abfd, bfd_mach_o_load_command *command)
 {
   struct mach_o_load_command_external raw;
@@ -3807,7 +4575,7 @@ bfd_mach_o_read_command (bfd *abfd, bfd_mach_o_load_command *command)
   /* Read command type and length.  */
   if (bfd_seek (abfd, command->offset, SEEK_SET) != 0
       || bfd_bread (&raw, BFD_MACH_O_LC_SIZE, abfd) != BFD_MACH_O_LC_SIZE)
-    return -1;
+    return FALSE;
 
   cmd = bfd_h_get_32 (abfd, raw.cmd);
   command->type =  cmd & ~BFD_MACH_O_LC_REQ_DYLD;
@@ -3817,45 +4585,47 @@ bfd_mach_o_read_command (bfd *abfd, bfd_mach_o_load_command *command)
   switch (command->type)
     {
     case BFD_MACH_O_LC_SEGMENT:
-      if (bfd_mach_o_read_segment_32 (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_segment_32 (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_SEGMENT_64:
-      if (bfd_mach_o_read_segment_64 (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_segment_64 (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_SYMTAB:
-      if (bfd_mach_o_read_symtab (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_symtab (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_SYMSEG:
       break;
     case BFD_MACH_O_LC_THREAD:
     case BFD_MACH_O_LC_UNIXTHREAD:
-      if (bfd_mach_o_read_thread (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_thread (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_LOAD_DYLINKER:
     case BFD_MACH_O_LC_ID_DYLINKER:
-      if (bfd_mach_o_read_dylinker (abfd, command) != 0)
-	return -1;
+    case BFD_MACH_O_LC_DYLD_ENVIRONMENT:
+      if (!bfd_mach_o_read_dylinker (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_LOAD_DYLIB:
+    case BFD_MACH_O_LC_LAZY_LOAD_DYLIB:
     case BFD_MACH_O_LC_ID_DYLIB:
     case BFD_MACH_O_LC_LOAD_WEAK_DYLIB:
     case BFD_MACH_O_LC_REEXPORT_DYLIB:
     case BFD_MACH_O_LC_LOAD_UPWARD_DYLIB:
-      if (bfd_mach_o_read_dylib (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_dylib (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_PREBOUND_DYLIB:
-      if (bfd_mach_o_read_prebound_dylib (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_prebound_dylib (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_LOADFVMLIB:
     case BFD_MACH_O_LC_IDFVMLIB:
-      if (bfd_mach_o_read_fvmlib (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_fvmlib (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_IDENT:
     case BFD_MACH_O_LC_FVMFILE:
@@ -3868,76 +4638,92 @@ bfd_mach_o_read_command (bfd *abfd, bfd_mach_o_load_command *command)
     case BFD_MACH_O_LC_SUB_LIBRARY:
     case BFD_MACH_O_LC_SUB_CLIENT:
     case BFD_MACH_O_LC_RPATH:
-      if (bfd_mach_o_read_str (abfd, command) != 0)
-        return -1;
+      if (!bfd_mach_o_read_str (abfd, command))
+        return FALSE;
       break;
     case BFD_MACH_O_LC_DYSYMTAB:
-      if (bfd_mach_o_read_dysymtab (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_dysymtab (abfd, command))
+	return FALSE;
+      break;
+    case BFD_MACH_O_LC_PREBIND_CKSUM:
+      if (!bfd_mach_o_read_prebind_cksum (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_TWOLEVEL_HINTS:
-    case BFD_MACH_O_LC_PREBIND_CKSUM:
+      if (!bfd_mach_o_read_twolevel_hints (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_UUID:
-      if (bfd_mach_o_read_uuid (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_uuid (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_CODE_SIGNATURE:
     case BFD_MACH_O_LC_SEGMENT_SPLIT_INFO:
     case BFD_MACH_O_LC_FUNCTION_STARTS:
     case BFD_MACH_O_LC_DATA_IN_CODE:
     case BFD_MACH_O_LC_DYLIB_CODE_SIGN_DRS:
-      if (bfd_mach_o_read_linkedit (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_linkedit (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_ENCRYPTION_INFO:
       if (!bfd_mach_o_read_encryption_info (abfd, command))
-	return -1;
+	return FALSE;
       break;
     case BFD_MACH_O_LC_DYLD_INFO:
-      if (bfd_mach_o_read_dyld_info (abfd, command) != 0)
-	return -1;
+      if (!bfd_mach_o_read_dyld_info (abfd, command))
+	return FALSE;
       break;
     case BFD_MACH_O_LC_VERSION_MIN_MACOSX:
     case BFD_MACH_O_LC_VERSION_MIN_IPHONEOS:
       if (!bfd_mach_o_read_version_min (abfd, command))
-	return -1;
+	return FALSE;
       break;
     case BFD_MACH_O_LC_MAIN:
       if (!bfd_mach_o_read_main (abfd, command))
-	return -1;
+	return FALSE;
       break;
     case BFD_MACH_O_LC_SOURCE_VERSION:
       if (!bfd_mach_o_read_source_version (abfd, command))
-	return -1;
+	return FALSE;
       break;
     default:
-      (*_bfd_error_handler)(_("%B: unknown load command 0x%lx"),
-         abfd, (unsigned long) command->type);
-      break;
+      {
+	static bfd_boolean unknown_set = FALSE;
+	static unsigned long unknown_command = 0;
+
+	/* Prevent reams of error messages when parsing corrupt binaries.  */
+	if (!unknown_set)
+	  unknown_set = TRUE;
+	else if (command->type == unknown_command)
+	  break;
+	unknown_command = command->type;
+
+	(*_bfd_error_handler)(_("%B: unknown load command 0x%lx"),
+			      abfd, (unsigned long) command->type);
+	break;
+      }
     }
 
-  return 0;
+  return TRUE;
 }
 
 static void
 bfd_mach_o_flatten_sections (bfd *abfd)
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
+  bfd_mach_o_load_command *cmd;
   long csect = 0;
-  unsigned long i;
 
   /* Count total number of sections.  */
   mdata->nsects = 0;
 
-  for (i = 0; i < mdata->header.ncmds; i++)
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
     {
-      if (mdata->commands[i].type == BFD_MACH_O_LC_SEGMENT
-	  || mdata->commands[i].type == BFD_MACH_O_LC_SEGMENT_64)
+      if (cmd->type == BFD_MACH_O_LC_SEGMENT
+	  || cmd->type == BFD_MACH_O_LC_SEGMENT_64)
 	{
-	  bfd_mach_o_segment_command *seg;
+	  bfd_mach_o_segment_command *seg = &cmd->command.segment;
 
-	  seg = &mdata->commands[i].command.segment;
 	  mdata->nsects += seg->nsects;
 	}
     }
@@ -3949,15 +4735,14 @@ bfd_mach_o_flatten_sections (bfd *abfd)
   /* Fill the array.  */
   csect = 0;
 
-  for (i = 0; i < mdata->header.ncmds; i++)
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
     {
-      if (mdata->commands[i].type == BFD_MACH_O_LC_SEGMENT
-	  || mdata->commands[i].type == BFD_MACH_O_LC_SEGMENT_64)
+      if (cmd->type == BFD_MACH_O_LC_SEGMENT
+	  || cmd->type == BFD_MACH_O_LC_SEGMENT_64)
 	{
-	  bfd_mach_o_segment_command *seg;
+	  bfd_mach_o_segment_command *seg = &cmd->command.segment;
           bfd_mach_o_section *sec;
 
-	  seg = &mdata->commands[i].command.segment;
 	  BFD_ASSERT (csect + seg->nsects <= mdata->nsects);
 
           for (sec = seg->sect_head; sec != NULL; sec = sec->next)
@@ -3970,21 +4755,22 @@ static bfd_boolean
 bfd_mach_o_scan_start_address (bfd *abfd)
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
-  bfd_mach_o_thread_command *cmd = NULL;
+  bfd_mach_o_thread_command *thr = NULL;
+  bfd_mach_o_load_command *cmd;
   unsigned long i;
 
-  for (i = 0; i < mdata->header.ncmds; i++)
-    if ((mdata->commands[i].type == BFD_MACH_O_LC_THREAD) ||
-        (mdata->commands[i].type == BFD_MACH_O_LC_UNIXTHREAD))
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
+    if (cmd->type == BFD_MACH_O_LC_THREAD
+	|| cmd->type == BFD_MACH_O_LC_UNIXTHREAD)
       {
-        cmd = &mdata->commands[i].command.thread;
+        thr = &cmd->command.thread;
         break;
       }
-    else if (mdata->commands[i].type == BFD_MACH_O_LC_MAIN
-	     && mdata->nsects > 1)
+    else if (cmd->type == BFD_MACH_O_LC_MAIN && mdata->nsects > 1)
       {
-	bfd_mach_o_main_command *main_cmd = &mdata->commands[i].command.main;
+	bfd_mach_o_main_command *main_cmd = &cmd->command.main;
 	bfd_mach_o_section *text_sect = mdata->sections[0];
+
 	if (text_sect)
 	  {
 	    abfd->start_address = main_cmd->entryoff
@@ -3994,52 +4780,51 @@ bfd_mach_o_scan_start_address (bfd *abfd)
       }
 
   /* An object file has no start address, so do not fail if not found.  */
-  if (cmd == NULL)
+  if (thr == NULL)
     return TRUE;
 
   /* FIXME: create a subtarget hook ?  */
-  for (i = 0; i < cmd->nflavours; i++)
+  for (i = 0; i < thr->nflavours; i++)
     {
       if ((mdata->header.cputype == BFD_MACH_O_CPU_TYPE_I386)
-	  && (cmd->flavours[i].flavour
-	      == (unsigned long) BFD_MACH_O_x86_THREAD_STATE32))
+	  && (thr->flavours[i].flavour == BFD_MACH_O_x86_THREAD_STATE32))
 	{
 	  unsigned char buf[4];
 
-	  if (bfd_seek (abfd, cmd->flavours[i].offset + 40, SEEK_SET) != 0
+	  if (bfd_seek (abfd, thr->flavours[i].offset + 40, SEEK_SET) != 0
               || bfd_bread (buf, 4, abfd) != 4)
 	    return FALSE;
 
 	  abfd->start_address = bfd_h_get_32 (abfd, buf);
 	}
       else if ((mdata->header.cputype == BFD_MACH_O_CPU_TYPE_POWERPC)
-	       && (cmd->flavours[i].flavour == BFD_MACH_O_PPC_THREAD_STATE))
+	       && (thr->flavours[i].flavour == BFD_MACH_O_PPC_THREAD_STATE))
 	{
 	  unsigned char buf[4];
 
-	  if (bfd_seek (abfd, cmd->flavours[i].offset + 0, SEEK_SET) != 0
+	  if (bfd_seek (abfd, thr->flavours[i].offset + 0, SEEK_SET) != 0
               || bfd_bread (buf, 4, abfd) != 4)
 	    return FALSE;
 
 	  abfd->start_address = bfd_h_get_32 (abfd, buf);
 	}
       else if ((mdata->header.cputype == BFD_MACH_O_CPU_TYPE_POWERPC_64)
-               && (cmd->flavours[i].flavour == BFD_MACH_O_PPC_THREAD_STATE64))
+               && (thr->flavours[i].flavour == BFD_MACH_O_PPC_THREAD_STATE64))
         {
           unsigned char buf[8];
 
-          if (bfd_seek (abfd, cmd->flavours[i].offset + 0, SEEK_SET) != 0
+          if (bfd_seek (abfd, thr->flavours[i].offset + 0, SEEK_SET) != 0
               || bfd_bread (buf, 8, abfd) != 8)
             return FALSE;
 
           abfd->start_address = bfd_h_get_64 (abfd, buf);
         }
       else if ((mdata->header.cputype == BFD_MACH_O_CPU_TYPE_X86_64)
-               && (cmd->flavours[i].flavour == BFD_MACH_O_x86_THREAD_STATE64))
+               && (thr->flavours[i].flavour == BFD_MACH_O_x86_THREAD_STATE64))
         {
           unsigned char buf[8];
 
-          if (bfd_seek (abfd, cmd->flavours[i].offset + (16 * 8), SEEK_SET) != 0
+          if (bfd_seek (abfd, thr->flavours[i].offset + (16 * 8), SEEK_SET) != 0
               || bfd_bread (buf, 8, abfd) != 8)
             return FALSE;
 
@@ -4113,24 +4898,29 @@ bfd_mach_o_scan (bfd *abfd,
 
   if (header->ncmds != 0)
     {
-      mdata->commands = bfd_alloc
-        (abfd, header->ncmds * sizeof (bfd_mach_o_load_command));
-      if (mdata->commands == NULL)
+      bfd_mach_o_load_command *cmd;
+
+      mdata->first_command = NULL;
+      mdata->last_command = NULL;
+      cmd = bfd_alloc (abfd, header->ncmds * sizeof (bfd_mach_o_load_command));
+      if (cmd == NULL)
 	return FALSE;
 
       for (i = 0; i < header->ncmds; i++)
 	{
-	  bfd_mach_o_load_command *cur = &mdata->commands[i];
+	  bfd_mach_o_load_command *cur = &cmd[i];
+
+	  bfd_mach_o_append_command (abfd, cur);
 
 	  if (i == 0)
 	    cur->offset = hdrsize;
 	  else
 	    {
-	      bfd_mach_o_load_command *prev = &mdata->commands[i - 1];
+	      bfd_mach_o_load_command *prev = &cmd[i - 1];
 	      cur->offset = prev->offset + prev->len;
 	    }
 
-	  if (bfd_mach_o_read_command (abfd, cur) < 0)
+	  if (!bfd_mach_o_read_command (abfd, cur))
 	    return FALSE;
 	}
     }
@@ -4161,7 +4951,8 @@ bfd_mach_o_mkobject_init (bfd *abfd)
   mdata->header.sizeofcmds = 0;
   mdata->header.flags = 0;
   mdata->header.byteorder = BFD_ENDIAN_UNKNOWN;
-  mdata->commands = NULL;
+  mdata->first_command = NULL;
+  mdata->last_command = NULL;
   mdata->nsects = 0;
   mdata->sections = NULL;
   mdata->dyn_reloc_cache = NULL;
@@ -4222,6 +5013,15 @@ bfd_mach_o_header_p (bfd *abfd,
       if (header.cputype != cputype)
         goto wrong;
     }
+  else
+    {
+#ifndef BFD64
+      /* Do not recognize 64 architectures if not configured for 64bit targets.
+	 This could happen only for generic targets.  */
+      if (mach_o_wide_p (&header))
+	 goto wrong;
+#endif
+    }
 
   if (filetype)
     {
@@ -4266,6 +5066,34 @@ static const bfd_target *
 bfd_mach_o_gen_core_p (bfd *abfd)
 {
   return bfd_mach_o_header_p (abfd, BFD_MACH_O_MH_CORE, 0);
+}
+
+/* Return the base address of ABFD, ie the address at which the image is
+   mapped.  The possible initial pagezero is ignored.  */
+
+bfd_vma
+bfd_mach_o_get_base_address (bfd *abfd)
+{
+  bfd_mach_o_data_struct *mdata;
+  bfd_mach_o_load_command *cmd;
+
+  /* Check for Mach-O.  */
+  if (!bfd_mach_o_valid (abfd))
+    return 0;
+  mdata = bfd_mach_o_get_data (abfd);
+
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
+    {
+      if ((cmd->type == BFD_MACH_O_LC_SEGMENT
+	   || cmd->type == BFD_MACH_O_LC_SEGMENT_64))
+	{
+	  struct bfd_mach_o_segment_command *segcmd = &cmd->command.segment;
+
+	  if (segcmd->initprot != 0)
+	    return segcmd->vmaddr;
+	}
+    }
+  return 0;
 }
 
 typedef struct mach_o_fat_archentry
@@ -4516,27 +5344,24 @@ bfd_mach_o_lookup_command (bfd *abfd,
 			   bfd_mach_o_load_command_type type,
 			   bfd_mach_o_load_command **mcommand)
 {
-  struct mach_o_data_struct *md = bfd_mach_o_get_data (abfd);
-  bfd_mach_o_load_command *ncmd = NULL;
-  unsigned int i, num;
+  struct mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
+  struct bfd_mach_o_load_command *cmd;
+  unsigned int num;
 
-  BFD_ASSERT (md != NULL);
+  BFD_ASSERT (mdata != NULL);
   BFD_ASSERT (mcommand != NULL);
 
   num = 0;
-  for (i = 0; i < md->header.ncmds; i++)
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
     {
-      struct bfd_mach_o_load_command *cmd = &md->commands[i];
-
       if (cmd->type != type)
 	continue;
 
       if (num == 0)
-	ncmd = cmd;
+	*mcommand = cmd;
       num++;
     }
 
-  *mcommand = ncmd;
   return num;
 }
 
@@ -4647,17 +5472,16 @@ bfd_mach_o_core_fetch_environment (bfd *abfd,
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
   unsigned long stackaddr = bfd_mach_o_stack_addr (mdata->header.cputype);
-  unsigned int i = 0;
+  bfd_mach_o_load_command *cmd;
 
-  for (i = 0; i < mdata->header.ncmds; i++)
+  for (cmd = mdata->first_command; cmd != NULL; cmd = cmd->next)
     {
-      bfd_mach_o_load_command *cur = &mdata->commands[i];
-      bfd_mach_o_segment_command *seg = NULL;
+      bfd_mach_o_segment_command *seg;
 
-      if (cur->type != BFD_MACH_O_LC_SEGMENT)
+      if (cmd->type != BFD_MACH_O_LC_SEGMENT)
 	continue;
 
-      seg = &cur->command.segment;
+      seg = &cmd->command.segment;
 
       if ((seg->vmaddr + seg->vmsize) == stackaddr)
 	{
@@ -4737,7 +5561,7 @@ bfd_mach_o_core_file_failing_command (bfd *abfd)
 {
   unsigned char *buf = NULL;
   unsigned int len = 0;
-  int ret = -1;
+  int ret;
 
   ret = bfd_mach_o_core_fetch_environment (abfd, &buf, &len);
   if (ret < 0)
@@ -4868,12 +5692,13 @@ bfd_mach_o_follow_dsym (bfd *abfd)
 
 bfd_boolean
 bfd_mach_o_find_nearest_line (bfd *abfd,
-			      asection *section,
 			      asymbol **symbols,
+			      asection *section,
 			      bfd_vma offset,
 			      const char **filename_ptr,
 			      const char **functionname_ptr,
-			      unsigned int *line_ptr)
+			      unsigned int *line_ptr,
+			      unsigned int *discriminator_ptr)
 {
   bfd_mach_o_data_struct *mdata = bfd_mach_o_get_data (abfd);
   if (mdata == NULL)
@@ -4897,20 +5722,19 @@ bfd_mach_o_find_nearest_line (bfd *abfd,
             break;
           if (! _bfd_dwarf2_slurp_debug_info (abfd, mdata->dsym_bfd,
                                               dwarf_debug_sections, symbols,
-                                              &mdata->dwarf2_find_line_info))
+                                              &mdata->dwarf2_find_line_info,
+					      FALSE))
             return FALSE;
         }
       break;
     default:
       return FALSE;
     }
-  if (_bfd_dwarf2_find_nearest_line (abfd, dwarf_debug_sections,
-				     section, symbols, offset,
-				     filename_ptr, functionname_ptr,
-				     line_ptr, NULL, 0,
-				     &mdata->dwarf2_find_line_info))
-    return TRUE;
-  return FALSE;
+  return _bfd_dwarf2_find_nearest_line (abfd, symbols, NULL, section, offset,
+					filename_ptr, functionname_ptr,
+					line_ptr, discriminator_ptr,
+					dwarf_debug_sections, 0,
+					&mdata->dwarf2_find_line_info);
 }
 
 bfd_boolean
@@ -4968,6 +5792,7 @@ bfd_boolean bfd_mach_o_free_cached_info (bfd *abfd)
 #define TARGET_NAME 		mach_o_be_vec
 #define TARGET_STRING     	"mach-o-be"
 #define TARGET_ARCHITECTURE	bfd_arch_unknown
+#define TARGET_PAGESIZE		1
 #define TARGET_BIG_ENDIAN 	1
 #define TARGET_ARCHIVE 		0
 #define TARGET_PRIORITY		1
@@ -4976,6 +5801,7 @@ bfd_boolean bfd_mach_o_free_cached_info (bfd *abfd)
 #undef TARGET_NAME
 #undef TARGET_STRING
 #undef TARGET_ARCHITECTURE
+#undef TARGET_PAGESIZE
 #undef TARGET_BIG_ENDIAN
 #undef TARGET_ARCHIVE
 #undef TARGET_PRIORITY
@@ -4983,6 +5809,7 @@ bfd_boolean bfd_mach_o_free_cached_info (bfd *abfd)
 #define TARGET_NAME 		mach_o_le_vec
 #define TARGET_STRING 		"mach-o-le"
 #define TARGET_ARCHITECTURE	bfd_arch_unknown
+#define TARGET_PAGESIZE		1
 #define TARGET_BIG_ENDIAN 	0
 #define TARGET_ARCHIVE 		0
 #define TARGET_PRIORITY		1
@@ -4992,6 +5819,7 @@ bfd_boolean bfd_mach_o_free_cached_info (bfd *abfd)
 #undef TARGET_NAME
 #undef TARGET_STRING
 #undef TARGET_ARCHITECTURE
+#undef TARGET_PAGESIZE
 #undef TARGET_BIG_ENDIAN
 #undef TARGET_ARCHIVE
 #undef TARGET_PRIORITY
@@ -5014,6 +5842,7 @@ bfd_boolean bfd_mach_o_free_cached_info (bfd *abfd)
 #define TARGET_NAME 		mach_o_fat_vec
 #define TARGET_STRING 		"mach-o-fat"
 #define TARGET_ARCHITECTURE	bfd_arch_unknown
+#define TARGET_PAGESIZE		1
 #define TARGET_BIG_ENDIAN 	1
 #define TARGET_ARCHIVE 		1
 #define TARGET_PRIORITY		0
@@ -5023,6 +5852,7 @@ bfd_boolean bfd_mach_o_free_cached_info (bfd *abfd)
 #undef TARGET_NAME
 #undef TARGET_STRING
 #undef TARGET_ARCHITECTURE
+#undef TARGET_PAGESIZE
 #undef TARGET_BIG_ENDIAN
 #undef TARGET_ARCHIVE
 #undef TARGET_PRIORITY

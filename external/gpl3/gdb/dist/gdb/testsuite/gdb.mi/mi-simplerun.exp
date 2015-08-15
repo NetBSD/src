@@ -1,4 +1,4 @@
-# Copyright 1999-2014 Free Software Foundation, Inc.
+# Copyright 1999-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,9 +45,7 @@ mi_gdb_reinitialize_dir $srcdir/$subdir
 mi_gdb_load ${binfile}
 
 proc test_breakpoints_creation_and_listing {} {
-    global mi_gdb_prompt
     global srcfile
-    global hex
 
     set line_callee4_head  [gdb_get_line_number "callee4 ("]
     set line_callee4_body  [expr $line_callee4_head + 2]
@@ -66,35 +64,43 @@ proc test_breakpoints_creation_and_listing {} {
     # -break-disable
     # -break-info
 
-    mi_create_breakpoint "main" 1 keep main ".*basics.c" $line_main_body $hex \
-             "break-insert operation"
+    set bps {}
+    lappend bps [mi_create_breakpoint "main" \
+		     "break-insert operation" \
+		     -number 1 -func main -file ".*basics.c" \
+		     -line $line_main_body]
 
-    mi_create_breakpoint "basics.c:callee2" 2 keep callee2 ".*basics.c" $line_callee2_body $hex \
-             "insert breakpoint at basics.c:callee2"
+    lappend bps [mi_create_breakpoint "basics.c:callee2" \
+		     "insert breakpoint at basics.c:callee2" \
+		     -number 2 -func callee2 -file ".*basics.c" \
+		     -line $line_callee2_body]
 
-    mi_create_breakpoint "basics.c:$line_callee3_head" 3 keep callee3 ".*basics.c" $line_callee3_head $hex \
-             "insert breakpoint at basics.c:\$line_callee3_head"
+    lappend bps [mi_create_breakpoint "basics.c:$line_callee3_head" \
+		     "insert breakpoint at basics.c:\$line_callee3_head" \
+		     -number 3 -func callee3 -file ".*basics.c" \
+		     -line $line_callee3_head]
 
-    mi_create_breakpoint "\"\\\"${srcfile}\\\":$line_callee4_head\"" 4 keep callee4 ".*basics.c" $line_callee4_head $hex \
-             "insert breakpoint at \"<fullfilename>\":\$line_callee4_head"
+    lappend bps [mi_create_breakpoint \
+		     "\"\\\"${srcfile}\\\":$line_callee4_head\"" \
+		     "insert breakpoint at \"<fullfilename>\":\$line_callee4_head" \
+		     -number 4 -func callee4 -file ".*basics.c" \
+		     -line $line_callee4_head]
 
     mi_gdb_test "204-break-list" \
-	    "204\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"1\",type=\"breakpoint\",disp=\"keep\",enabled=\"y\",addr=\"$hex\",func=\"main\",file=\".*basics.c\",line=\"$line_main_body\",thread-groups=\\\[\"i1\"\\\],times=\"0\",original-location=\".*\"\},.*\}\\\]\}" \
-                "list of breakpoints"
+	"204\\^done,[mi_make_breakpoint_table $bps]" \
+	"list of breakpoints"
 
     mi_gdb_test "205-break-disable 2 3 4" \
                 "205\\^done.*" \
                 "disabling of breakpoints"
 
+    set bp2 [mi_make_breakpoint -number 2 -enabled n]
     mi_gdb_test "206-break-info 2" \
-	    "206\\^done,BreakpointTable=\{.*,hdr=\\\[.*\\\],body=\\\[bkpt=\{number=\"2\",.*,enabled=\"n\",.*\}\\\]\}" \
-                "list of breakpoints, 16 disabled"
+	"206\\^done,[mi_make_breakpoint_table [list $bp2]]"\
+	"list of breakpoints, 16 disabled"
 }
 
 proc test_running_the_program {} {
-    global mi_gdb_prompt
-    global hex
-
     set line_main_head     [gdb_get_line_number "main ("]
     set line_main_body     [expr $line_main_head + 2]
 
@@ -112,7 +118,6 @@ proc test_running_the_program {} {
 }
 
 proc test_controlled_execution {} {
-    global mi_gdb_prompt
     global hex
 
     set line_callee4_head         [gdb_get_line_number "callee4 ("]
@@ -156,8 +161,6 @@ proc test_controlled_execution {} {
 }
 
 proc test_controlling_breakpoints {} {
-    global mi_gdb_prompt
-
     # Enable, delete, set ignore counts in breakpoints
     # (disable was already tested above)
     # Tests:
@@ -169,8 +172,6 @@ proc test_controlling_breakpoints {} {
 }
 
 proc test_program_termination {} {
-    global mi_gdb_prompt
-
     # Run to completion: normal and forced
     # Tests:
     # -exec-abort

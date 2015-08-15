@@ -1,6 +1,6 @@
 /* Wrapper implementation for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2001-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,15 +17,18 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "common-defs.h"
+
 #ifdef GDBSERVER
+/* FIXME: server.h is required for the definition of debug_threads
+   which is used in the gdbserver-specific debug printing in
+   linux_debug.  This code should be made available to GDB also,
+   but the lack of a suitable flag to enable it prevents this.  */
 #include "server.h"
-#else
-#include "defs.h"
-#include "signal.h"
 #endif
 
-#include "nat/linux-nat.h"
-#include "nat/linux-waitpid.h"
+#include "linux-nat.h"
+#include "linux-waitpid.h"
 #include "gdb_wait.h"
 
 /* Print debugging output based on the format string FORMAT and
@@ -42,9 +45,33 @@ linux_debug (const char *format, ...)
       vfprintf (stderr, format, args);
       va_end (args);
     }
-#else
-  /* GDB-specific debugging output.  */
 #endif
+}
+
+/* Convert wait status STATUS to a string.  Used for printing debug
+   messages only.  */
+
+char *
+status_to_str (int status)
+{
+  static char buf[64];
+
+  if (WIFSTOPPED (status))
+    {
+      if (WSTOPSIG (status) == SYSCALL_SIGTRAP)
+	snprintf (buf, sizeof (buf), "%s (stopped at syscall)",
+		  strsignal (SIGTRAP));
+      else
+	snprintf (buf, sizeof (buf), "%s (stopped)",
+		  strsignal (WSTOPSIG (status)));
+    }
+  else if (WIFSIGNALED (status))
+    snprintf (buf, sizeof (buf), "%s (terminated)",
+	      strsignal (WTERMSIG (status)));
+  else
+    snprintf (buf, sizeof (buf), "%d (exited)", WEXITSTATUS (status));
+
+  return buf;
 }
 
 /* Wrapper function for waitpid which handles EINTR, and emulates
@@ -64,15 +91,19 @@ my_waitpid (int pid, int *status, int flags)
 
       wnohang = (flags & WNOHANG) != 0;
       flags &= ~(__WALL | __WCLONE);
-      flags |= WNOHANG;
 
-      /* Block all signals while here.  This avoids knowing about
-	 LinuxThread's signals.  */
-      sigfillset (&block_mask);
-      sigprocmask (SIG_BLOCK, &block_mask, &org_mask);
+      if (!wnohang)
+	{
+	  flags |= WNOHANG;
 
-      /* ... except during the sigsuspend below.  */
-      sigemptyset (&wake_mask);
+	  /* Block all signals while here.  This avoids knowing about
+	     LinuxThread's signals.  */
+	  sigfillset (&block_mask);
+	  sigprocmask (SIG_BLOCK, &block_mask, &org_mask);
+
+	  /* ... except during the sigsuspend below.  */
+	  sigemptyset (&wake_mask);
+	}
 
       while (1)
 	{
@@ -101,7 +132,8 @@ my_waitpid (int pid, int *status, int flags)
 	  flags ^= __WCLONE;
 	}
 
-      sigprocmask (SIG_SETMASK, &org_mask, NULL);
+      if (!wnohang)
+	sigprocmask (SIG_SETMASK, &org_mask, NULL);
     }
   else
     {

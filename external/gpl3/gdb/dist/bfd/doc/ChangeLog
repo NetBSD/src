@@ -1,3 +1,54 @@
+2015-01-12  Bernd Edlinger  <bernd.edlinger@hotmail.de>
+	    Alan Modra  <amodra@gmail.com>
+
+	PR 17817
+	* Makefile.am (aoutx.stamp): cp -p $srcdir/aoutx.texi to keep
+	timestamps so that makeinfo need not be installed.
+	(archive.stamp, archures.stamp, bfdt.stamp, cache.stamp,
+	coffcode.stamp, core.stamp, elf.stamp, elfcode.stamp, mmo.stamp,
+	format.stamp, libbfd.stamp, bfdio.stamp, bfdwin.stamp,
+	opncls.stamp, reloc.stamp, section.stamp, syms.stamp, targets.stamp,
+	init.stamp, hash.stamp, linker.stamp): Similarly.
+	(bfdver.texi): Use test rather than [ ] in commands.
+	* Makefile.in: Regenerate.
+
+2014-08-05  Doug Evans  <dje@google.com>
+
+	* chew.c (skip_past_newline_1): New function.
+	(outputdots): Call it.
+	(skip_past_newline): Ditto.
+
+2014-08-05  Alan Modra  <amodra@gmail.com>
+
+	* chew.c (print_stack_level, main): Cast result of pointer
+	difference to match format string.
+
+2014-04-09  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am ($(MKDOC)): New rule, depend on chew.stamp.  Move
+	old rule to..
+	(chew.stamp): ..here.
+	(DISTCLEANFILES): Move *.stamp..
+	(MOSTLYCLEANFILES): ..to here.
+	* Makefile.in: Regenerate.
+
+2014-04-09  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (MKDOC): Use $@ in command.
+	(aoutx.texi): New rule, depend on aoutx.stamp.  Move old rule..
+	(aoutx.stamp): .. to here.  Don't depend on chew.c, depend on MKDOC
+	and omit recursive MAKE.  Use $< in command.
+	(archive.texi, archures.texi, bfdt.texi, cache.texi, coffcode.texi,
+	core.texi, elf.texi, elfcode.texi, mmo.texi, format.texi, libbfd.texi,
+	bfdio.texi, bfdwin.texi, opncls.texi, reloc.texi, section.texi,
+	syms.texi, targets.texi, init.texi, hash.texi, linker.texi): Similarly.
+	(DISTCLEANFILES): Remove *.stamp.
+	* Makefile.in: Regenerate.
+
+2014-03-12  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.in: Regenerate.
+
 2013-10-14  Nick Clifton  <nickc@redhat.com>
 
 	* chew.c (perform): Free next.
@@ -267,7 +318,7 @@
 
 For older changes see ChangeLog-9103
 
-Copyright (C) 2004-2012 Free Software Foundation, Inc.
+Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

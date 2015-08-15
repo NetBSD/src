@@ -1,6 +1,6 @@
 /* Python interface to symbols.
 
-   Copyright (C) 2008-2014 Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 #include "defs.h"
 #include "block.h"
-#include "exceptions.h"
 #include "frame.h"
 #include "symtab.h"
 #include "python-internal.h"
@@ -88,7 +87,10 @@ sympy_get_symtab (PyObject *self, void *closure)
 
   SYMPY_REQUIRE_VALID (self, symbol);
 
-  return symtab_to_symtab_object (SYMBOL_SYMTAB (symbol));
+  if (!SYMBOL_OBJFILE_OWNED (symbol))
+    Py_RETURN_NONE;
+
+  return symtab_to_symtab_object (symbol_symtab (symbol));
 }
 
 static PyObject *
@@ -291,15 +293,15 @@ set_symbol (symbol_object *obj, struct symbol *symbol)
 {
   obj->symbol = symbol;
   obj->prev = NULL;
-  if (SYMBOL_SYMTAB (symbol))
+  if (SYMBOL_OBJFILE_OWNED (symbol)
+      && symbol_symtab (symbol) != NULL)
     {
-      obj->next = objfile_data (SYMBOL_SYMTAB (symbol)->objfile,
-				sympy_objfile_data_key);
+      struct objfile *objfile = symbol_objfile (symbol);
 
+      obj->next = objfile_data (objfile, sympy_objfile_data_key);
       if (obj->next)
 	obj->next->prev = obj;
-      set_objfile_data (SYMBOL_SYMTAB (symbol)->objfile,
-			sympy_objfile_data_key, obj);
+      set_objfile_data (objfile, sympy_objfile_data_key, obj);
     }
   else
     obj->next = NULL;
@@ -335,9 +337,11 @@ sympy_dealloc (PyObject *obj)
 
   if (sym_obj->prev)
     sym_obj->prev->next = sym_obj->next;
-  else if (sym_obj->symbol && SYMBOL_SYMTAB (sym_obj->symbol))
+  else if (sym_obj->symbol != NULL
+	   && SYMBOL_OBJFILE_OWNED (sym_obj->symbol)
+	   && symbol_symtab (sym_obj->symbol) != NULL)
     {
-      set_objfile_data (SYMBOL_SYMTAB (sym_obj->symbol)->objfile,
+      set_objfile_data (symbol_objfile (sym_obj->symbol),
 			sympy_objfile_data_key, sym_obj->next);
     }
   if (sym_obj->next)
@@ -434,7 +438,7 @@ gdbpy_lookup_global_symbol (PyObject *self, PyObject *args, PyObject *kw)
 
   TRY_CATCH (except, RETURN_MASK_ALL)
     {
-      symbol = lookup_symbol_global (name, NULL, domain);
+      symbol = lookup_global_symbol (name, NULL, domain);
     }
   GDB_PY_HANDLE_EXCEPTION (except);
 
