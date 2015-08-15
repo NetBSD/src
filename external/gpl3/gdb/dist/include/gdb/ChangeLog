@@ -1,3 +1,26 @@
+2014-12-03  Joel Brobecker  <brobecker@adacore.com>
+
+	* callback.h (struct host_callback_struct) <to_stat>: Renamed
+	from "stat".
+	<to_fstat>: Renamed from "fstat".
+	<to_lstat>: Renamed from "lstat".
+
+2014-03-10  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_do_command): Add const to cmd.
+
+2014-03-05  Alan Modra  <amodra@gmail.com>
+
+	Update copyright notice.
+
+2014-03-05  Mike Frysinger  <vapier@gentoo.org>
+
+	* remote-sim.h (sim_load): Add const to prog.
+
+2014-02-09  Doug Evans  <xdje42@gmail.com>
+
+	* section-scripts.h: New file.
+
 2013-03-15  Steve Ellcey  <sellcey@mips.com>
 
 	* gdb/remote-sim.h (sim_command_completer): Make char arguments const.
@@ -258,7 +281,7 @@ Wed Jul 17 19:36:38 2002  J"orn Rennecke <joern.rennecke@superh.com>
 	* signals.h: New file, from gdb/defs.h.
 
 
-Copyright (C) 2002-2014 Free Software Foundation, Inc.
+Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
