@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.40 2015/08/14 06:48:11 knakahara Exp $
+.\"     $NetBSD: pci.9,v 1.41 2015/08/15 16:39:58 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -450,11 +450,15 @@ capability
 .Fa capid .
 If
 .Fa offsetp
-is not NULL, the register offset in configuration space is returned in
+is not
+.Dv NULL ,
+the register offset in configuration space is returned in
 .Fa offsetp .
 If
 .Fa valuep
-is not NULL, the value of the capability is returned in
+is not
+.Dv NULL ,
+the value of the capability is returned in
 .Fa valuep .
 The argument
 .Fa tag
@@ -472,11 +476,15 @@ space looking for capability
 .Fa capid .
 If
 .Fa offsetp
-is not NULL, the register offset in configuration space is returned in
+is not
+.Dv NULL ,
+the register offset in configuration space is returned in
 .Fa offsetp .
 If
 .Fa valuep
-is not NULL, the value of the capability is returned in
+is not
+.Dv NULL ,
+the value of the capability is returned in
 .Fa valuep .
 The argument
 .Fa tag
@@ -563,7 +571,9 @@ If any of
 .Fa basep ,
 or
 .Fa sizep
-are NULL then
+are
+.Dv NULL
+then
 .Fn pci_mapreg_map
 does not define their return value.
 This function returns zero on success and non-zero on error.
