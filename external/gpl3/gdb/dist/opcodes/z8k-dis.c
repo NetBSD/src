@@ -1,6 +1,5 @@
 /* Disassemble z8000 code.
-   Copyright 1992, 1993, 1998, 2000, 2001, 2002, 2003, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2015 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -38,7 +37,7 @@ typedef struct
   /* Nibble number of first word not yet fetched.  */
   int max_fetched;
   bfd_vma insn_start;
-  jmp_buf bailout;
+  OPCODES_SIGJMP_BUF bailout;
 
   int tabl_index;
   char instr_asmsrc[80];
@@ -77,7 +76,7 @@ fetch_data (struct disassemble_info *info, int nibble)
   if (status != 0)
     {
       (*info->memory_error_func) (status, priv->insn_start, info);
-      longjmp (priv->bailout, 1);
+      OPCODES_SIGLONGJMP (priv->bailout, 1);
     }
 
   {
@@ -150,7 +149,7 @@ print_insn_z8k (bfd_vma addr, disassemble_info *info, int is_segmented)
   info->private_data = (PTR) &instr_data;
   instr_data.max_fetched = 0;
   instr_data.insn_start = addr;
-  if (setjmp (instr_data.bailout) != 0)
+  if (OPCODES_SIGSETJMP (instr_data.bailout) != 0)
     /* Error return.  */
     return -1;
 

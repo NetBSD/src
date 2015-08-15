@@ -1,7 +1,7 @@
 /* Target-dependent code for the Texas Instruments MSP430 for GDB, the
    GNU debugger.
 
-   Copyright (C) 2012-2014 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -850,7 +850,7 @@ msp430_skip_trampoline_code (struct frame_info *frame, CORE_ADDR pc)
   if (!bms.minsym)
     return pc;
 
-  stub_name = SYMBOL_LINKAGE_NAME (bms.minsym);
+  stub_name = MSYMBOL_LINKAGE_NAME (bms.minsym);
 
   if (gdbarch_tdep (gdbarch)->code_model == MSP_SMALL_CODE_MODEL
       && msp430_in_return_stub (gdbarch, pc, stub_name))

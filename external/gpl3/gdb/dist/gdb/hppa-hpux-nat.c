@@ -1,6 +1,6 @@
 /* Native-dependent code for PA-RISC HP-UX.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,7 +22,6 @@
 #include "regcache.h"
 #include "target.h"
 
-#include "gdb_assert.h"
 #include <sys/ptrace.h>
 #include <sys/utsname.h>
 #include <machine/save_state.h>

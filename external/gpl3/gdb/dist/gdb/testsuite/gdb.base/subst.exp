@@ -1,4 +1,4 @@
-# Copyright 2006-2014 Free Software Foundation, Inc.
+# Copyright 2006-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -94,6 +94,14 @@ gdb_test "show substitute-path from" \
 gdb_test "show substitute-path depuis" \
          "Source path substitution rule matching `depuis':\r\n +`depuis' -> `vers'." \
          "show substitute-path depuis, after all paths added"
+
+gdb_test "show substitute-path from/path" \
+         "Source path substitution rule matching `from/path':\r\n +`from' -> `to'." \
+         "show substitute-path from/path, after all paths added"
+
+gdb_test "show substitute-path from_a_bad_path" \
+         "Source path substitution rule matching `from_a_bad_path':" \
+         "show substitute-path from_a_bad_path, after all paths added"
 
 gdb_test "show substitute-path garbage" \
          "Source path substitution rule matching `garbage':" \

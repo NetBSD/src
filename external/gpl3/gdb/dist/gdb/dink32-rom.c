@@ -1,6 +1,6 @@
 /* Remote debugging interface for DINK32 (PowerPC) ROM monitor for
    GDB, the GNU debugger.
-   Copyright (C) 1997-2014 Free Software Foundation, Inc.
+   Copyright (C) 1997-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,8 +25,6 @@
 #include "symfile.h" /* For generic_load() */
 #include "inferior.h"
 #include "regcache.h"
-
-static void dink32_open (char *args, int from_tty);
 
 static void
 dink32_supply_register (struct regcache *regcache, char *regname,
@@ -123,7 +121,7 @@ static char *dink32_inits[] =
 static struct monitor_ops dink32_cmds;
 
 static void
-dink32_open (char *args, int from_tty)
+dink32_open (const char *args, int from_tty)
 {
   monitor_open (args, &dink32_cmds, from_tty);
 }

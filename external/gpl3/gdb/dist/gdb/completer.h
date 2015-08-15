@@ -1,5 +1,5 @@
 /* Header for GDB line completion.
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,9 +18,10 @@
 #define COMPLETER_H 1
 
 #include "gdb_vecs.h"
+#include "command.h"
 
 extern VEC (char_ptr) *complete_line (const char *text,
-				      char *line_buffer,
+				      const char *line_buffer,
 				      int point);
 
 extern char *readline_line_completion_function (const char *text,
@@ -44,9 +45,19 @@ extern VEC (char_ptr) *command_completer (struct cmd_list_element *,
 extern VEC (char_ptr) *signal_completer (struct cmd_list_element *,
 					 const char *, const char *);
 
+extern VEC (char_ptr) *reg_or_group_completer (struct cmd_list_element *,
+					       const char *, const char *);
+
 extern char *get_gdb_completer_quote_characters (void);
 
 extern char *gdb_completion_word_break_characters (void);
+
+/* Set the word break characters array to the corresponding set of
+   chars, based on FN.  This function is useful for cases when the
+   completer doesn't know the type of the completion until some
+   calculation is done (e.g., for Python functions).  */
+
+extern void set_gdb_completion_word_break_characters (completer_ftype *fn);
 
 /* Exported to linespec.c */
 

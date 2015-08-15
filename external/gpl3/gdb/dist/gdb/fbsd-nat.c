@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,9 +23,6 @@
 #include "regcache.h"
 #include "regset.h"
 #include "gdbthread.h"
-
-#include "gdb_assert.h"
-#include <string.h>
 #include <sys/types.h>
 #include <sys/procfs.h>
 #include <sys/sysctl.h>
@@ -37,11 +34,11 @@
    the child process identified by PID.  */
 
 char *
-fbsd_pid_to_exec_file (int pid)
+fbsd_pid_to_exec_file (struct target_ops *self, int pid)
 {
-  size_t len = PATH_MAX;
-  char *buf = xcalloc (len, sizeof (char));
-  char *path;
+  ssize_t len = PATH_MAX;
+  static char buf[PATH_MAX];
+  char name[PATH_MAX];
 
 #ifdef KERN_PROC_PATHNAME
   int mib[4];
@@ -54,15 +51,15 @@ fbsd_pid_to_exec_file (int pid)
     return buf;
 #endif
 
-  path = xstrprintf ("/proc/%d/file", pid);
-  if (readlink (path, buf, PATH_MAX - 1) == -1)
+  xsnprintf (name, PATH_MAX, "/proc/%d/exe", pid);
+  len = readlink (name, buf, PATH_MAX - 1);
+  if (len != -1)
     {
-      xfree (buf);
-      buf = NULL;
+      buf[len] = '\0';
+      return buf;
     }
 
-  xfree (path);
-  return buf;
+  return NULL;
 }
 
 static int
@@ -91,7 +88,8 @@ fbsd_read_mapping (FILE *mapfile, unsigned long *start, unsigned long *end,
    argument to FUNC.  */
 
 int
-fbsd_find_memory_regions (find_memory_region_ftype func, void *obfd)
+fbsd_find_memory_regions (struct target_ops *self,
+			  find_memory_region_ftype func, void *obfd)
 {
   pid_t pid = ptid_get_pid (inferior_ptid);
   char *mapfilename;
@@ -138,81 +136,4 @@ fbsd_find_memory_regions (find_memory_region_ftype func, void *obfd)
 
   do_cleanups (cleanup);
   return 0;
-}
-
-static int
-find_signalled_thread (struct thread_info *info, void *data)
-{
-  if (info->suspend.stop_signal != GDB_SIGNAL_0
-      && ptid_get_pid (info->ptid) == ptid_get_pid (inferior_ptid))
-    return 1;
-
-  return 0;
-}
-
-static enum gdb_signal
-find_stop_signal (void)
-{
-  struct thread_info *info =
-    iterate_over_threads (find_signalled_thread, NULL);
-
-  if (info)
-    return info->suspend.stop_signal;
-  else
-    return GDB_SIGNAL_0;
-}
-
-/* Create appropriate note sections for a corefile, returning them in
-   allocated memory.  */
-
-char *
-fbsd_make_corefile_notes (bfd *obfd, int *note_size)
-{
-  const struct regcache *regcache = get_current_regcache ();
-  struct gdbarch *gdbarch = get_regcache_arch (regcache);
-  gregset_t gregs;
-  fpregset_t fpregs;
-  char *note_data = NULL;
-  Elf_Internal_Ehdr *i_ehdrp;
-  const struct regset *regset;
-  size_t size;
-
-  /* Put a "FreeBSD" label in the ELF header.  */
-  i_ehdrp = elf_elfheader (obfd);
-  i_ehdrp->e_ident[EI_OSABI] = ELFOSABI_FREEBSD;
-
-  gdb_assert (gdbarch_regset_from_core_section_p (gdbarch));
-
-  size = sizeof gregs;
-  regset = gdbarch_regset_from_core_section (gdbarch, ".reg", size);
-  gdb_assert (regset && regset->collect_regset);
-  regset->collect_regset (regset, regcache, -1, &gregs, size);
-
-  note_data = elfcore_write_prstatus (obfd, note_data, note_size,
-				      ptid_get_pid (inferior_ptid),
-				      find_stop_signal (), &gregs);
-
-  size = sizeof fpregs;
-  regset = gdbarch_regset_from_core_section (gdbarch, ".reg2", size);
-  gdb_assert (regset && regset->collect_regset);
-  regset->collect_regset (regset, regcache, -1, &fpregs, size);
-
-  note_data = elfcore_write_prfpreg (obfd, note_data, note_size,
-				     &fpregs, sizeof (fpregs));
-
-  if (get_exec_file (0))
-    {
-      const char *fname = lbasename (get_exec_file (0));
-      char *psargs = xstrdup (fname);
-
-      if (get_inferior_args ())
-	psargs = reconcat (psargs, psargs, " ", get_inferior_args (),
-			   (char *) NULL);
-
-      note_data = elfcore_write_prpsinfo (obfd, note_data, note_size,
-					  fname, psargs);
-    }
-
-  make_cleanup (xfree, note_data);
-  return note_data;
 }

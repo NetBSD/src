@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Free Software Foundation, Inc.
+# Copyright 2012-2015 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ set testfile "i386-sse-stack-align"
 set srcfile ${testfile}.S
 set csrcfile ${testfile}.c
 set executable ${testfile}
-set binfile ${objdir}/${subdir}/${executable}
+set binfile [standard_output_file ${executable}]
 set opts {}
 
 if [info exists COMPILE] {

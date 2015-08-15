@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2014 Free Software Foundation, Inc.
+# Copyright (C) 2010-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -79,8 +79,126 @@ all threads stopped"
 
 delete_breakpoints
 
+# Test inferior call events
+
+gdb_test_multiple "info threads" "get current thread" {
+    -re "\[^\n\r\]*process (\[0-9\]+)\[^\n\r\]*do_nothing.*$gdb_prompt $" {
+	set process_id $expect_out(1,string)
+	pass "get current thread"
+    }
+}
+
+gdb_test_multiple "print do_nothing" "get address of do_nothing" {
+    -re "\[^\n\r\]*(0x\[0-9a-f\]+) \<do_nothing\>.*$gdb_prompt $" {
+	set addr $expect_out(1,string)
+	pass "get address of do_nothing"
+    }
+}
+
+set expected [list "event type: pre-call"]
+lappend expected "ptid: \\($process_id, $process_id, 0\\)" "address: $addr"
+lappend expected "event type: post-call"
+lappend expected "ptid: \\($process_id, $process_id, 0\\)" "address: $addr"
+gdb_test_sequence "call do_nothing()" "" $expected
+
+# Test register changed event
+gdb_test_no_output {set $old_sp = $sp}
+gdb_test_sequence {set $sp = 0} "" {
+    "event type: register-changed"
+    "frame: "
+    "num: "
+}
+gdb_test_sequence {set $sp = 1} "" {
+    "event type: register-changed"
+    "frame: "
+    "num: "
+}
+gdb_test_sequence {set $sp = $old_sp} "" {
+    "event type: register-changed"
+    "frame: "
+    "num: "
+}
+
+# Test that no register_changed event is generated on "non-user"
+# modifications
+set test "up"
+gdb_test_multiple {up} $test {
+    -re "event type: register-changed.*\r\n$gdb_prompt $" {
+	fail $test
+    }
+    -re "#1.*in first.*\r\n.*do_nothing.*\r\n$gdb_prompt $" {
+	pass $test
+    }
+}
+
+set test "down"
+gdb_test_multiple {down} $test {
+    -re "event type: register-changed.*\r\n$gdb_prompt $" {
+	fail $test
+    }
+    -re "#0.*do_nothing.* at .*\r\n.*void do_nothing.*\r\n$gdb_prompt $" {
+	pass $test
+    }
+}
+
+set test "step"
+# Note: This will step the inferior out of do_nothing and back into first.
+gdb_test_multiple {step} $test {
+    -re "event type: register-changed.*\r\n$gdb_prompt $" {
+	fail $test
+    }
+    -re "first.* at .*\r\n$gdb_prompt $" {
+	pass $test
+    }
+}
+
+# Test memory changed event
+gdb_test_no_output {set $saved = *(int*) $sp}
+gdb_test_sequence {set *(int*) $sp = 0} "" {
+    "event type: memory-changed"
+    "address: "
+    "length: "
+}
+gdb_test_sequence {set *(int*) $sp = $saved} "" {
+    "event type: memory-changed"
+    "address: "
+    "length: "
+}
+
+# Test that no memory_changed event is generated on breakpoint
+# activity
+set test "break second"
+gdb_test_multiple "break second" $test {
+    -re "event type: memory-changed" {
+	fail $test
+    }
+    -re "Breakpoint (\[0-9\]+) at .*\r\n$gdb_prompt $" {
+	set second_breakpoint $expect_out(1,string)
+	pass $test
+    }
+
+}
+
+set test "continue to breakpoint $second_breakpoint"
+set expected ".*event type: continue.*\r\n"
+append expected ".*event type: stop.*\r\n"
+append expected ".*stop reason: breakpoint.*\r\n"
+append expected ".*all threads stopped.*\r\n$gdb_prompt $"
+
+gdb_test_multiple "continue" $test {
+    -re "event type: memory-changed.*\r\n$gdb_prompt $" {
+	fail $test
+    }
+    -re $expected {
+	pass $test
+    }
+}
+
+gdb_test_no_output "delete $second_breakpoint"
+
 #test exited event.
 gdb_test "continue" ".*event type: continue.*
+.*clear_objfiles\[\r\n\]*progspace: .*py-events.*
 .*event type: exit.*
 .*exit code: 12.*
 .*exit inf: 1.*

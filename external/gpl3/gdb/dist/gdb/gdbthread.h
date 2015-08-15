@@ -1,5 +1,5 @@
 /* Multi-process/thread control defs for GDB, the GNU debugger.
-   Copyright (C) 1987-2014 Free Software Foundation, Inc.
+   Copyright (C) 1987-2015 Free Software Foundation, Inc.
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
    
 
@@ -28,6 +28,7 @@ struct symtab;
 #include "ui-out.h"
 #include "inferior.h"
 #include "btrace.h"
+#include "common/vec.h"
 
 /* Frontend view of the thread state.  Possible extensions: stepping,
    finishing, until(ling),...  */
@@ -51,6 +52,13 @@ struct thread_control_state
 
   /* Exception-resume breakpoint.  */
   struct breakpoint *exception_resume_breakpoint;
+
+  /* Breakpoints used for software single stepping.  Plural, because
+     it may have multiple locations.  E.g., if stepping over a
+     conditional branch instruction we can't decode the condition for,
+     we'll need to put a breakpoint at the branch destination, and
+     another at the instruction after the branch.  */
+  struct breakpoint *single_step_breakpoints;
 
   /* Range to single step within.
 
@@ -122,6 +130,11 @@ struct thread_control_state
   /* Chain containing status of breakpoint(s) the thread stopped
      at.  */
   bpstat stop_bpstat;
+
+  /* The interpreter that issued the execution command.  NULL if the
+     thread was resumed as a result of a command applied to some other
+     thread (e.g., "next" with scheduler-locking off).  */
+  struct interp *command_interp;
 };
 
 /* Inferior thread specific part of `struct infcall_suspend_state'.
@@ -130,9 +143,19 @@ struct thread_control_state
 
 struct thread_suspend_state
 {
-  /* Last signal that the inferior received (why it stopped).  */
+  /* Last signal that the inferior received (why it stopped).  When
+     the thread is resumed, this signal is delivered.  Note: the
+     target should not check whether the signal is in pass state,
+     because the signal may have been explicitly passed with the
+     "signal" command, which overrides "handle nopass".  If the signal
+     should be suppressed, the core will take care of clearing this
+     before the target is resumed.  */
   enum gdb_signal stop_signal;
 };
+
+typedef struct value *value_ptr;
+DEF_VEC_P (value_ptr);
+typedef VEC (value_ptr) value_vec;
 
 struct thread_info
 {
@@ -152,14 +175,12 @@ struct thread_info
      thread is off and running.  */
   int executing;
 
-  /* Frontend view of the thread state.  Note that the RUNNING/STOPPED
-     states are different from EXECUTING.  When the thread is stopped
-     internally while handling an internal event, like a software
-     single-step breakpoint, EXECUTING will be false, but running will
-     still be true.  As a possible future extension, this could turn
-     into enum { stopped, exited, stepping, finishing, until(ling),
-     running ... }  */
-  int state;
+  /* Frontend view of the thread state.  Note that the THREAD_RUNNING/
+     THREAD_STOPPED states are different from EXECUTING.  When the
+     thread is stopped internally while handling an internal event,
+     like a software single-step breakpoint, EXECUTING will be false,
+     but STATE will still be THREAD_RUNNING.  */
+  enum thread_state state;
 
   /* If this is > 0, then it means there's code out there that relies
      on this thread being listed.  Don't delete it from the lists even
@@ -185,8 +206,18 @@ struct thread_info
      SIGTRAP from a breakpoint SIGTRAP.  */
   CORE_ADDR prev_pc;
 
+  /* Did we set the thread stepping a breakpoint instruction?  This is
+     used in conjunction with PREV_PC to decide whether to adjust the
+     PC.  */
+  int stepped_breakpoint;
+
   /* Should we step over breakpoint next time keep_going is called?  */
   int stepping_over_breakpoint;
+
+  /* Should we step over a watchpoint next time keep_going is called?
+     This is needed on targets with non-continuable, non-steppable
+     watchpoints.  */
+  int stepping_over_watchpoint;
 
   /* Set to TRUE if we should finish single-stepping over a breakpoint
      after hitting the current step-resume breakpoint.  The context here
@@ -238,6 +269,14 @@ struct thread_info
 
   /* Branch trace information for this thread.  */
   struct btrace_thread_info btrace;
+
+  /* Flag which indicates that the stack temporaries should be stored while
+     evaluating expressions.  */
+  int stack_temporaries_enabled;
+
+  /* Values that are stored as temporaries on stack while evaluating
+     expressions.  */
+  value_vec *stack_temporaries;
 };
 
 /* Create an empty thread list, or empty the existing one.  */
@@ -271,6 +310,19 @@ extern void delete_step_resume_breakpoint (struct thread_info *);
 /* Delete an exception_resume_breakpoint from the thread database.  */
 extern void delete_exception_resume_breakpoint (struct thread_info *);
 
+/* Delete the single-step breakpoints of thread TP, if any.  */
+extern void delete_single_step_breakpoints (struct thread_info *tp);
+
+/* Check if the thread has software single stepping breakpoints
+   set.  */
+extern int thread_has_single_step_breakpoints_set (struct thread_info *tp);
+
+/* Check whether the thread has software single stepping breakpoints
+   set at PC.  */
+extern int thread_has_single_step_breakpoint_here (struct thread_info *tp,
+						   struct address_space *aspace,
+						   CORE_ADDR addr);
+
 /* Translate the integer thread id (GDB's homegrown id, not the system's)
    into a "pid" (which may be overloaded with extra thread information).  */
 extern ptid_t thread_id_to_pid (int);
@@ -297,11 +349,12 @@ struct thread_info *find_thread_id (int num);
    returns the first thread in the list.  */
 struct thread_info *first_thread_of_process (int pid);
 
-/* Returns any thread of process PID.  */
+/* Returns any thread of process PID, giving preference to the current
+   thread.  */
 extern struct thread_info *any_thread_of_process (int pid);
 
-/* Returns any non-exited thread of process PID, giving preference for
-   not executing threads.  */
+/* Returns any non-exited thread of process PID, giving preference to
+   the current thread, and to not executing threads.  */
 extern struct thread_info *any_live_thread_of_process (int pid);
 
 /* Change the ptid of thread OLD_PTID to NEW_PTID.  */
@@ -312,10 +365,20 @@ void thread_change_ptid (ptid_t old_ptid, ptid_t new_ptid);
 typedef int (*thread_callback_func) (struct thread_info *, void *);
 extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
 
-/* Traverse all threads.  */
+/* Traverse all threads, except those that have THREAD_EXITED
+   state.  */
 
-#define ALL_THREADS(T)				\
-  for (T = thread_list; T; T = T->next)
+#define ALL_NON_EXITED_THREADS(T)				\
+  for (T = thread_list; T; T = T->next) \
+    if ((T)->state != THREAD_EXITED)
+
+/* Like ALL_NON_EXITED_THREADS, but allows deleting the currently
+   iterated thread.  */
+#define ALL_NON_EXITED_THREADS_SAFE(T, TMP)	\
+  for ((T) = thread_list;			\
+       (T) != NULL ? ((TMP) = (T)->next, 1): 0;	\
+       (T) = (TMP))				\
+    if ((T)->state != THREAD_EXITED)
 
 extern int thread_count (void);
 
@@ -323,7 +386,7 @@ extern int thread_count (void);
 extern void switch_to_thread (ptid_t ptid);
 
 /* Marks thread PTID is running, or stopped. 
-   If ptid_get_pid (PTID) is -1, marks all threads.  */
+   If PTID is minus_one_ptid, marks all threads.  */
 extern void set_running (ptid_t ptid, int running);
 
 /* Marks or clears thread(s) PTID as having been requested to stop.
@@ -358,10 +421,7 @@ extern int is_exited (ptid_t ptid);
 /* In the frontend's perpective, is this thread stopped?  */
 extern int is_stopped (ptid_t ptid);
 
-/* In the frontend's perpective is there any thread running?  */
-extern int any_running (void);
-
-/* Marks thread PTID as executing, or not.  If ptid_get_pid (PTID) is -1,
+/* Marks thread PTID as executing, or not.  If PTID is minus_one_ptid,
    marks all threads.
 
    Note that this is different from the running state.  See the
@@ -372,6 +432,9 @@ extern void set_executing (ptid_t ptid, int executing);
 /* Reports if thread PTID is executing.  */
 extern int is_executing (ptid_t ptid);
 
+/* True if any (known or unknown) thread is or may be executing.  */
+extern int threads_are_executing (void);
+
 /* Merge the executing property of thread PTID over to its thread
    state property (frontend running/stopped view).
 
@@ -379,7 +442,7 @@ extern int is_executing (ptid_t ptid);
    "executing"     -> "running"
    "exited"        -> "exited"
 
-   If ptid_get_pid (PTID) is -1, go over all threads.
+   If PTID is minus_one_ptid, go over all threads.
 
    Notifications are only emitted if the thread state did change.  */
 extern void finish_thread_state (ptid_t ptid);
@@ -407,9 +470,23 @@ extern struct thread_info* inferior_thread (void);
 
 extern void update_thread_list (void);
 
+/* Delete any thread the target says is no longer alive.  */
+
+extern void prune_threads (void);
+
 /* Return true if PC is in the stepping range of THREAD.  */
 
 int pc_in_thread_step_range (CORE_ADDR pc, struct thread_info *thread);
+
+extern struct cleanup *enable_thread_stack_temporaries (ptid_t ptid);
+
+extern int thread_stack_temporaries_enabled_p (ptid_t ptid);
+
+extern void push_thread_stack_temporary (ptid_t ptid, struct value *v);
+
+extern struct value *get_last_thread_stack_temporary (ptid_t);
+
+extern int value_in_thread_stack_temporaries (struct value *, ptid_t);
 
 extern struct thread_info *thread_list;
 

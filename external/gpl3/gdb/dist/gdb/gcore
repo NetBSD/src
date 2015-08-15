@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@
 
 if [ "$#" -eq "0" ]
 then
-    echo "usage:  gcore [-o filename] pid"
+    echo "usage:  i386-pc-linux-gnu-gcore [-o filename] pid"
     exit 2
 fi
 
@@ -34,7 +34,7 @@ then
     if [ "$#" -lt "3" ]
     then
 	# Not enough arguments.
-	echo "usage:  gcore [-o filename] pid"
+	echo "usage:  i386-pc-linux-gnu-gcore [-o filename] pid"
 	exit 2
     fi
     name=$2
@@ -72,8 +72,8 @@ fi
 
 # Check if the GDB binary is in the expected path.  If not, just
 # quit with a message.
-if [ ! -f "$binary_path"/gdb ]; then
-  echo "gcore: GDB binary (${binary_path}/gdb) not found"
+if [ ! -f "$binary_path"/i386-pc-linux-gnu-gdb ]; then
+  echo "gcore: GDB binary (${binary_path}/i386-pc-linux-gnu-gdb) not found"
   exit 1
 fi
 
@@ -85,14 +85,14 @@ for pid in $*
 do
 	# `</dev/null' to avoid touching interactive terminal if it is
 	# available but not accessible as GDB would get stopped on SIGTTIN.
-	$binary_path/gdb </dev/null --nx --batch \
+	$binary_path/i386-pc-linux-gnu-gdb </dev/null --nx --batch \
 	    -ex "set pagination off" -ex "set height 0" -ex "set width 0" \
 	    -ex "attach $pid" -ex "gcore $name.$pid" -ex detach -ex quit
 
 	if [ -r $name.$pid ] ; then 
 	    rc=0
 	else
-	    echo "gcore: failed to create $name.$pid"
+	    echo "i386-pc-linux-gnu-gcore: failed to create $name.$pid"
 	    rc=1
 	    break
 	fi

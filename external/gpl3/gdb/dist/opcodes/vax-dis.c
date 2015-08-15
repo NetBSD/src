@@ -1,6 +1,5 @@
 /* Print VAX instructions.
-   Copyright 1995, 1998, 2000, 2001, 2002, 2005, 2007, 2009, 2012
-   Free Software Foundation, Inc.
+   Copyright (C) 1995-2015 Free Software Foundation, Inc.
    Contributed by Pauline Middelink <middelin@polyware.iaf.nl>
 
    This file is part of the GNU opcodes library.
@@ -76,7 +75,7 @@ struct private
   bfd_byte * max_fetched;
   bfd_byte   the_buffer[MAXLEN];
   bfd_vma    insn_start;
-  jmp_buf    bailout;
+  OPCODES_SIGJMP_BUF    bailout;
 };
 
 /* Make sure that bytes from INFO->PRIVATE_DATA->BUFFER (inclusive)
@@ -100,7 +99,7 @@ fetch_data (struct disassemble_info *info, bfd_byte *addr)
   if (status != 0)
     {
       (*info->memory_error_func) (status, start, info);
-      longjmp (priv->bailout, 1);
+      OPCODES_SIGLONGJMP (priv->bailout, 1);
     }
   else
     priv->max_fetched = addr;
@@ -396,7 +395,7 @@ print_insn_vax (bfd_vma memaddr, disassemble_info *info)
       parsed_disassembler_options = TRUE;
     }
 
-  if (setjmp (priv.bailout) != 0)
+  if (OPCODES_SIGSETJMP (priv.bailout) != 0)
     /* Error return.  */
     return -1;
 

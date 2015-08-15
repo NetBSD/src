@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on Alpha.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,6 @@
 
 #include "defs.h"
 #include "frame.h"
-#include "gdb_assert.h"
-#include <string.h>
 #include "osabi.h"
 #include "solib-svr4.h"
 #include "symtab.h"
@@ -166,21 +164,27 @@ alpha_linux_supply_gregset (const struct regset *regset,
 			    int regnum, const void *gregs, size_t len)
 {
   const gdb_byte *regs = gregs;
-  int i;
+
   gdb_assert (len >= 32 * 8);
-
-  for (i = 0; i < ALPHA_ZERO_REGNUM; i++)
-    {
-      if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + i * 8);
-    }
-
-  if (regnum == ALPHA_PC_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ALPHA_PC_REGNUM, regs + 31 * 8);
-
-  if (regnum == ALPHA_UNIQUE_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ALPHA_UNIQUE_REGNUM,
+  alpha_supply_int_regs (regcache, regnum, regs, regs + 31 * 8,
 			 len >= 33 * 8 ? regs + 32 * 8 : NULL);
+}
+
+/* Collect register REGNUM from the register cache REGCACHE and store
+   it in the buffer specified by GREGS and LEN as described by the
+   general-purpose register set REGSET.  If REGNUM is -1, do this for
+   all registers in REGSET.  */
+
+static void
+alpha_linux_collect_gregset (const struct regset *regset,
+			     const struct regcache *regcache,
+			     int regnum, void *gregs, size_t len)
+{
+  gdb_byte *regs = gregs;
+
+  gdb_assert (len >= 32 * 8);
+  alpha_fill_int_regs (regcache, regnum, regs, regs + 31 * 8,
+		       len >= 33 * 8 ? regs + 32 * 8 : NULL);
 }
 
 /* Supply register REGNUM from the buffer specified by FPREGS and LEN
@@ -193,45 +197,49 @@ alpha_linux_supply_fpregset (const struct regset *regset,
 			     int regnum, const void *fpregs, size_t len)
 {
   const gdb_byte *regs = fpregs;
-  int i;
+
   gdb_assert (len >= 32 * 8);
-
-  for (i = ALPHA_FP0_REGNUM; i < ALPHA_FP0_REGNUM + 31; i++)
-    {
-      if (regnum == i || regnum == -1)
-	regcache_raw_supply (regcache, i, regs + (i - ALPHA_FP0_REGNUM) * 8);
-    }
-
-  if (regnum == ALPHA_FPCR_REGNUM || regnum == -1)
-    regcache_raw_supply (regcache, ALPHA_FPCR_REGNUM, regs + 31 * 8);
+  alpha_supply_fp_regs (regcache, regnum, regs, regs + 31 * 8);
 }
 
-static struct regset alpha_linux_gregset =
+/* Collect register REGNUM from the register cache REGCACHE and store
+   it in the buffer specified by FPREGS and LEN as described by the
+   general-purpose register set REGSET.  If REGNUM is -1, do this for
+   all registers in REGSET.  */
+
+static void
+alpha_linux_collect_fpregset (const struct regset *regset,
+			      const struct regcache *regcache,
+			      int regnum, void *fpregs, size_t len)
+{
+  gdb_byte *regs = fpregs;
+
+  gdb_assert (len >= 32 * 8);
+  alpha_fill_fp_regs (regcache, regnum, regs, regs + 31 * 8);
+}
+
+static const struct regset alpha_linux_gregset =
 {
   NULL,
-  alpha_linux_supply_gregset
+  alpha_linux_supply_gregset, alpha_linux_collect_gregset
 };
 
-static struct regset alpha_linux_fpregset =
+static const struct regset alpha_linux_fpregset =
 {
   NULL,
-  alpha_linux_supply_fpregset
+  alpha_linux_supply_fpregset, alpha_linux_collect_fpregset
 };
 
-/* Return the appropriate register set for the core section identified
-   by SECT_NAME and SECT_SIZE.  */
+/* Iterate over core file register note sections.  */
 
-static const struct regset *
-alpha_linux_regset_from_core_section (struct gdbarch *gdbarch,
-				      const char *sect_name, size_t sect_size)
+static void
+alpha_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
+					  iterate_over_regset_sections_cb *cb,
+					  void *cb_data,
+					  const struct regcache *regcache)
 {
-  if (strcmp (sect_name, ".reg") == 0 && sect_size >= 32 * 8)
-    return &alpha_linux_gregset;
-
-  if (strcmp (sect_name, ".reg2") == 0 && sect_size >= 32 * 8)
-    return &alpha_linux_fpregset;
-
-  return NULL;
+  cb (".reg", 32 * 8, &alpha_linux_gregset, NULL, cb_data);
+  cb (".reg2", 32 * 8, &alpha_linux_fpregset, NULL, cb_data);
 }
 
 /* Implementation of `gdbarch_gdb_signal_from_target', as defined in
@@ -371,8 +379,8 @@ alpha_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
                                              svr4_fetch_objfile_link_map);
 
-  set_gdbarch_regset_from_core_section
-    (gdbarch, alpha_linux_regset_from_core_section);
+  set_gdbarch_iterate_over_regset_sections
+    (gdbarch, alpha_linux_iterate_over_regset_sections);
 
   set_gdbarch_gdb_signal_from_target (gdbarch,
 				      alpha_linux_gdb_signal_from_target);

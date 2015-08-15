@@ -1,5 +1,5 @@
 /* Target-dependent code for the GNU Hurd.
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,27 @@
 
 #include "i386-tdep.h"
 
+/* From <sys/ucontext.h>.  */
+static int i386gnu_gregset_reg_offset[] =
+{
+  11 * 4,		/* %eax */
+  10 * 4,		/* %ecx */
+  9 * 4,		/* %edx */
+  8 * 4,		/* %ebx */
+  17 * 4,		/* %uesp */
+  6 * 4,		/* %ebp */
+  5 * 4,		/* %esi */
+  4 * 4,		/* %edi */
+  14 * 4,		/* %eip */
+  16 * 4,		/* %efl */
+  15 * 4,		/* %cs */
+  18 * 4,		/* %ss */
+  3 * 4,		/* %ds */
+  2 * 4,		/* %es */
+  1 * 4,		/* %fs */
+  0 * 4,		/* %gs */
+};
+
 static void
 i386gnu_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -32,6 +53,10 @@ i386gnu_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+
+  tdep->gregset_reg_offset = i386gnu_gregset_reg_offset;
+  tdep->gregset_num_regs = ARRAY_SIZE (i386gnu_gregset_reg_offset);
+  tdep->sizeof_gregset = 19 * 4;
 
   tdep->jb_pc_offset = 20;	/* From <bits/setjmp.h>.  */
 }
