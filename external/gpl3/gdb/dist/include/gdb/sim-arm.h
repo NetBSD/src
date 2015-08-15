@@ -1,6 +1,6 @@
 /* This file defines the interface between the Arm simulator and GDB.
 
-   Copyright 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 

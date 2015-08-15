@@ -1,7 +1,7 @@
 /* ECOFF support on Alpha machines.
    coff/ecoff.h must be included before this file.
 
-   Copyright 2001, 2005, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2001-2015 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by

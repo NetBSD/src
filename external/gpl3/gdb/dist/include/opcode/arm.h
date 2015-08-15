@@ -1,5 +1,5 @@
 /* ARM assembler/disassembler support.
-   Copyright 2004, 2010, 2011 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB and GAS.
 
@@ -78,10 +78,11 @@
 #define FPU_VFP_EXT_FP16 0x00100000	/* Half-precision extensions. */
 #define FPU_NEON_EXT_FMA 0x00080000	/* Neon fused multiply-add    */
 #define FPU_VFP_EXT_FMA	 0x00040000	/* VFP fused multiply-add     */
-#define FPU_VFP_EXT_ARMV8 0x00020000	/* FP for ARMv8.  */
+#define FPU_VFP_EXT_ARMV8 0x00020000	/* Double-precision FP for ARMv8.  */
 #define FPU_NEON_EXT_ARMV8 0x00010000	/* Neon for ARMv8.  */
 #define FPU_CRYPTO_EXT_ARMV8 0x00008000	/* Crypto for ARMv8.  */
 #define CRC_EXT_ARMV8	 0x00004000	/* CRC32 for ARMv8.  */
+#define FPU_VFP_EXT_ARMV8xD 0x00002000	/* Single-precision FP for ARMv8.  */
 
 /* Architectures are the sum of the base and extensions.  The ARM ARM (rev E)
    defines the following: ARMv3, ARMv3M, ARMv4xM, ARMv4, ARMv4TxM, ARMv4T,
@@ -153,7 +154,9 @@
 #define FPU_VFP_V4D16	(FPU_VFP_V3D16 | FPU_VFP_EXT_FP16 | FPU_VFP_EXT_FMA)
 #define FPU_VFP_V4	(FPU_VFP_V3 | FPU_VFP_EXT_FP16 | FPU_VFP_EXT_FMA)
 #define FPU_VFP_V4_SP_D16 (FPU_VFP_V3xD | FPU_VFP_EXT_FP16 | FPU_VFP_EXT_FMA)
-#define FPU_VFP_ARMV8	(FPU_VFP_V4 | FPU_VFP_EXT_ARMV8)
+#define FPU_VFP_V5D16	(FPU_VFP_V4D16 | FPU_VFP_EXT_ARMV8xD | FPU_VFP_EXT_ARMV8)
+#define FPU_VFP_V5_SP_D16 (FPU_VFP_V4_SP_D16 | FPU_VFP_EXT_ARMV8xD)
+#define FPU_VFP_ARMV8	(FPU_VFP_V4 | FPU_VFP_EXT_ARMV8 | FPU_VFP_EXT_ARMV8xD)
 #define FPU_NEON_ARMV8	(FPU_NEON_EXT_V1 | FPU_NEON_EXT_FMA | FPU_NEON_EXT_ARMV8)
 #define FPU_CRYPTO_ARMV8 (FPU_CRYPTO_EXT_ARMV8)
 #define FPU_VFP_HARD	(FPU_VFP_EXT_V1xD | FPU_VFP_EXT_V1 | FPU_VFP_EXT_V2 \
@@ -186,6 +189,8 @@
 #define FPU_ARCH_VFP_V4 ARM_FEATURE(0, FPU_VFP_V4)
 #define FPU_ARCH_VFP_V4D16 ARM_FEATURE(0, FPU_VFP_V4D16)
 #define FPU_ARCH_VFP_V4_SP_D16 ARM_FEATURE(0, FPU_VFP_V4_SP_D16)
+#define FPU_ARCH_VFP_V5D16 ARM_FEATURE(0, FPU_VFP_V5D16)
+#define FPU_ARCH_VFP_V5_SP_D16 ARM_FEATURE(0, FPU_VFP_V5_SP_D16)
 #define FPU_ARCH_NEON_VFP_V4 \
   ARM_FEATURE(0, FPU_VFP_V4 | FPU_NEON_EXT_V1 | FPU_NEON_EXT_FMA)
 #define FPU_ARCH_VFP_ARMV8 ARM_FEATURE(0, FPU_VFP_ARMV8)

@@ -1,5 +1,5 @@
 /* Table of opcodes for the DLX microprocess.
-   Copyright 2002, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB and GAS.
 

@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright 1991-2013 Free Software Foundation, Inc.
+   Copyright (C) 1991-2015 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -192,7 +192,7 @@
 #define EM_MN10300	 89	/* Matsushita MN10300 */
 #define EM_MN10200	 90	/* Matsushita MN10200 */
 #define EM_PJ		 91	/* picoJava */
-#define EM_OPENRISC	 92	/* OpenRISC 32-bit embedded processor */
+#define EM_OR1K		 92	/* OpenRISC 1000 32-bit embedded processor */
 #define EM_ARC_A5	 93	/* ARC Cores Tangent-A5 */
 #define EM_XTENSA	 94	/* Tensilica Xtensa Architecture */
 #define EM_VIDEOCORE	 95	/* Alphamosaic VideoCore processor */
@@ -301,6 +301,8 @@
 #define EM_INTEL207	207	/* Reserved by Intel */
 #define EM_INTEL208	208	/* Reserved by Intel */
 #define EM_INTEL209	209	/* Reserved by Intel */
+#define EM_VISIUM	221	/* Controls and Data Services VISIUMcore processor */
+#define EM_MOXIE        223     /* Moxie processor family */
 
 /* If it is necessary to assign new unofficial EM_* values, please pick large
    random numbers (0x8523, 0xa7f2, etc.) to minimize the chances of collision
@@ -339,9 +341,6 @@
 /* FR30 magic number - no EABI available.  */
 #define EM_CYGNUS_FR30		0x3330
 
-/* OpenRISC magic number.  Written in the absense of an ABI.  */
-#define EM_OPENRISC_OLD		0x3426
-
 /* DLX magic number.  Written in the absense of an ABI.  */
 #define EM_DLX			0x5aa5
 
@@ -359,9 +358,6 @@
 
 /* Ubicom IP2xxx;   Written in the absense of an ABI.  */
 #define EM_IP2K_OLD		0x8217
-
-/* (Deprecated) Temporary number for the OpenRISC processor.  */
-#define EM_OR32			0x8472
 
 /* Cygnus PowerPC ELF backend.  Written in the absence of an ABI.  */
 #define EM_CYGNUS_POWERPC	0x9025
@@ -399,7 +395,8 @@
 
 #define EM_CYGNUS_MEP		0xF00D  /* Toshiba MeP */
 
-#define EM_MOXIE                0xFEED  /* Moxie */
+/* Old, unofficial value for Moxie.  */
+#define EM_MOXIE_OLD            0xFEED
 
 /* Old Sunplus S+core7 backend magic number. Written in the absence of an ABI.  */
 #define EM_SCORE_OLD            95
@@ -407,6 +404,9 @@
 #define EM_MICROBLAZE_OLD	0xbaab	/* Old MicroBlaze */
 
 #define EM_ADAPTEVA_EPIPHANY   0x1223  /* Adapteva's Epiphany architecture.  */
+
+/* Old constant that might be in use by some software. */
+#define EM_OPENRISC		EM_OR1K
 
 /* See the above comment before you add a new EM_* value here.  */
 
@@ -959,6 +959,7 @@
 #define AT_BASE_PLATFORM 24		/* String identifying real platform,
 					   may differ from AT_PLATFORM.  */
 #define AT_RANDOM	25		/* Address of 16 random bytes.  */
+#define AT_HWCAP2	26		/* Extension of AT_HWCAP.  */
 #define AT_EXECFN	31		/* Filename of executable.  */
 /* Pointer to the global system page used for system calls and other
    nice things.  */

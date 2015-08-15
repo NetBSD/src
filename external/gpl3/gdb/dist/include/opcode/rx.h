@@ -1,6 +1,5 @@
 /* Opcode decoder for the Renesas RX
-   Copyright 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2008-2015 Free Software Foundation, Inc.
    Written by DJ Delorie <dj@redhat.com>
 
    This file is part of GDB, the GNU Debugger and GAS, the GNU Assembler.

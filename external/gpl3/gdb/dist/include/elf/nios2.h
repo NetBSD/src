@@ -1,5 +1,5 @@
 /* Altera Nios II ELF support for BFD.
-   Copyright (C) 2012, 2013 Free Software Foundation, Inc.
+   Copyright (C) 2012-2015 Free Software Foundation, Inc.
    Contributed by Nigel Gray (ngray@altera.com).
    Contributed by Mentor Graphics, Inc.
 
@@ -75,7 +75,12 @@ START_RELOC_NUMBERS (elf_nios2_reloc_type)
   RELOC_NUMBER (R_NIOS2_JUMP_SLOT, 38)
   RELOC_NUMBER (R_NIOS2_RELATIVE, 39)
   RELOC_NUMBER (R_NIOS2_GOTOFF, 40)
-  RELOC_NUMBER (R_NIOS2_ILLEGAL, 41)
+  RELOC_NUMBER (R_NIOS2_CALL26_NOAT,  41)
+  RELOC_NUMBER (R_NIOS2_GOT_LO, 42)
+  RELOC_NUMBER (R_NIOS2_GOT_HA, 43)
+  RELOC_NUMBER (R_NIOS2_CALL_LO, 44)
+  RELOC_NUMBER (R_NIOS2_CALL_HA, 45)
+  RELOC_NUMBER (R_NIOS2_ILLEGAL, 46)
 END_RELOC_NUMBERS (R_NIOS2_maxext)
 
 /* Processor-specific section flags.  */

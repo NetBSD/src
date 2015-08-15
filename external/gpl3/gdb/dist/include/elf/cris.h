@@ -1,5 +1,5 @@
 /* CRIS ELF support for BFD.
-   Copyright 2000, 2001, 2004, 2010  Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
    Contributed by Axis Communications AB, Lund, Sweden.
    Written by Hans-Peter Nilsson.
 

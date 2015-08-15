@@ -1,5 +1,5 @@
 /* Xtensa ELF support for BFD.
-   Copyright 2003, 2004, 2007, 2008, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
    Contributed by Bob Wilson (bwilson@tensilica.com) at Tensilica.
 
    This file is part of BFD, the Binary File Descriptor library.
