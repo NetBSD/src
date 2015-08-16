@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.85 2015/08/16 14:02:52 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.86 2015/08/16 14:07:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.85 2015/08/16 14:02:52 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.86 2015/08/16 14:07:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,10 @@ ldenddetach(struct ld_softc *sc)
 	mutex_enter(&sc->sc_mutex);
 
 	/* Wait for commands queued with the hardware to complete. */
-	if (sc->sc_queuecnt != 0)
-		if (tsleep(&sc->sc_queuecnt, PRIBIO, "lddtch", 30 * hz))
+	if (sc->sc_queuecnt != 0) {
+		if (cv_timedwait(&sc->sc_drain, &sc->sc_mutex, 30 * hz))
 			printf("%s: not drained\n", dksc->sc_xname);
+	}
 
 	/* Kill off any queued buffers. */
 	bufq_drain(dksc->sc_bufq);
