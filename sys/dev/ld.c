@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.88 2015/08/16 17:32:31 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.89 2015/08/16 18:00:03 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.88 2015/08/16 17:32:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.89 2015/08/16 18:00:03 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.88 2015/08/16 17:32:31 mlelstv Exp $");
 static void	ldminphys(struct buf *bp);
 static bool	ld_suspend(device_t, const pmf_qual_t *);
 static bool	ld_shutdown(device_t, int);
-static void	ld_start(device_t);
+static int	ld_diskstart(device_t, struct buf *bp);
 static void	ld_iosize(device_t, int *);
 static int	ld_dumpblocks(device_t, void *, daddr_t, int);
 static void	ld_fake_geometry(struct ld_softc *);
@@ -90,7 +90,7 @@ const struct bdevsw ld_bdevsw = {
 	.d_dump = lddump,
 	.d_psize = ldsize,
 	.d_discard = nodiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 const struct cdevsw ld_cdevsw = {
@@ -105,7 +105,7 @@ const struct cdevsw ld_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_DISK
+	.d_flag = D_DISK | D_MPSAFE
 };
 
 static struct	dkdriver lddkdriver = {
@@ -114,7 +114,7 @@ static struct	dkdriver lddkdriver = {
 	.d_strategy = ldstrategy,
 	.d_iosize = ld_iosize,
 	.d_minphys  = ldminphys,
-	.d_diskstart = ld_start,
+	.d_diskstart = ld_diskstart,
 	.d_dumpblocks = ld_dumpblocks,
 	.d_lastclose = ld_lastclose
 };
@@ -404,55 +404,28 @@ ldstrategy(struct buf *bp)
 	return dk_strategy(dksc, bp);
 }
 
-static void
-ld_start(device_t dev)
+static int
+ld_diskstart(device_t dev, struct buf *bp)
 {
 	struct ld_softc *sc = device_private(dev);
-	struct dk_softc *dksc = &sc->sc_dksc;
-	struct buf *bp;
 	int error;
+
+	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
+		return EAGAIN;
 
 	mutex_enter(&sc->sc_mutex);
 
-	while (sc->sc_queuecnt < sc->sc_maxqueuecnt) {
-		/* See if there is work to do. */
-		if ((bp = bufq_peek(dksc->sc_bufq)) == NULL)
-			break;
-
-		disk_busy(&dksc->sc_dkdev);
-		sc->sc_queuecnt++;
-
-		if (__predict_true((error = (*sc->sc_start)(sc, bp)) == 0)) {
-			/*
-			 * The back-end is running the job; remove it from
-			 * the queue.
-			 */
-			(void) bufq_get(dksc->sc_bufq);
-		} else  {
-			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-			sc->sc_queuecnt--;
-			if (error == EAGAIN) {
-				/*
-				 * Temporary resource shortage in the
-				 * back-end; just defer the job until
-				 * later.
-				 *
-				 * XXX We might consider a watchdog timer
-				 * XXX to make sure we are kicked into action.
-				 */
-				break;
-			} else {
-				(void) bufq_get(dksc->sc_bufq);
-				bp->b_error = error;
-				bp->b_resid = bp->b_bcount;
-				mutex_exit(&sc->sc_mutex);
-				biodone(bp);
-				mutex_enter(&sc->sc_mutex);
-			}
-		}
+	if (sc->sc_queuecnt >= sc->sc_maxqueuecnt)
+		error = EAGAIN;
+	else {
+		error = (*sc->sc_start)(sc, bp);
+		if (error == 0)
+			sc->sc_queuecnt++;
 	}
 
 	mutex_exit(&sc->sc_mutex);
+
+	return error;
 }
 
 void
@@ -469,7 +442,7 @@ lddone(struct ld_softc *sc, struct buf *bp)
 			cv_broadcast(&sc->sc_drain);
 		}
 		mutex_exit(&sc->sc_mutex);
-		ld_start(dksc->sc_dev);
+		dk_start(dksc, NULL);
 	} else
 		mutex_exit(&sc->sc_mutex);
 }
