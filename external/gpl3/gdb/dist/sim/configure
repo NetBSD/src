@@ -3775,6 +3775,7 @@ subdirs="$subdirs arm"
   subdirs="$subdirs msp430"
 
 
+       sim_testsuite=yes
        ;;
    rl78-*-*)
 

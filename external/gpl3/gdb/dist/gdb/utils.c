@@ -2889,7 +2889,7 @@ gdb_realpath (const char *filename)
   }
 #else
   {
-    char *rp = canonicalize_file_name (filename);
+    char *rp = lrealpath (filename);
 
     if (rp != NULL)
       return rp;
