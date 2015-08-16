@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/amd64.
 
-   Copyright (C) 2003-2014 Free Software Foundation, Inc.
+   Copyright (C) 2003-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,8 +23,6 @@
 #include "gdbcore.h"
 #include "osabi.h"
 #include "symtab.h"
-
-#include "gdb_assert.h"
 
 #include "amd64-tdep.h"
 #include "nbsd-tdep.h"
