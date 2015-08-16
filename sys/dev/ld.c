@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.84 2015/07/22 10:32:16 skrll Exp $	*/
+/*	$NetBSD: ld.c,v 1.85 2015/08/16 14:02:52 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.84 2015/07/22 10:32:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.85 2015/08/16 14:02:52 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -126,6 +126,7 @@ ldattach(struct ld_softc *sc)
 	struct dk_softc *dksc = &sc->sc_dksc;
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sc->sc_drain, "lddrain");
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0) {
 		return;
@@ -168,11 +169,10 @@ ldattach(struct ld_softc *sc)
 int
 ldadjqparam(struct ld_softc *sc, int xmax)
 {
-	int s;
 
-	s = splbio();
+	mutex_enter(&sc->sc_mutex);
 	sc->sc_maxqueuecnt = xmax;
-	splx(s);
+	mutex_exit(&sc->sc_mutex);
 
 	return (0);
 }
@@ -181,7 +181,7 @@ int
 ldbegindetach(struct ld_softc *sc, int flags)
 {
 	struct dk_softc *dksc = &sc->sc_dksc;
-	int s, rv = 0;
+	int rv = 0;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return (0);
@@ -191,18 +191,16 @@ ldbegindetach(struct ld_softc *sc, int flags)
 	if (rv != 0)
 		return rv;
 
-	s = splbio();
+	mutex_enter(&sc->sc_mutex);
 	sc->sc_maxqueuecnt = 0;
 
 	dk_detach(dksc);
 
 	while (sc->sc_queuecnt > 0) {
 		sc->sc_flags |= LDF_DRAIN;
-		rv = tsleep(&sc->sc_queuecnt, PRIBIO, "lddrn", 0);
-		if (rv)
-			break;
+		cv_wait(&sc->sc_drain, &sc->sc_mutex);
 	}
-	splx(s);
+	mutex_exit(&sc->sc_mutex);
 
 	return (rv);
 }
@@ -211,26 +209,27 @@ void
 ldenddetach(struct ld_softc *sc)
 {
 	struct dk_softc *dksc = &sc->sc_dksc;
-	int s, bmaj, cmaj, i, mn;
+	int bmaj, cmaj, i, mn;
 
 	if ((sc->sc_flags & LDF_ENABLED) == 0)
 		return;
+
+	mutex_enter(&sc->sc_mutex);
 
 	/* Wait for commands queued with the hardware to complete. */
 	if (sc->sc_queuecnt != 0)
 		if (tsleep(&sc->sc_queuecnt, PRIBIO, "lddtch", 30 * hz))
 			printf("%s: not drained\n", dksc->sc_xname);
 
+	/* Kill off any queued buffers. */
+	bufq_drain(dksc->sc_bufq);
+	mutex_exit(&sc->sc_mutex);
+
+	bufq_free(dksc->sc_bufq);
+
 	/* Locate the major numbers. */
 	bmaj = bdevsw_lookup_major(&ld_bdevsw);
 	cmaj = cdevsw_lookup_major(&ld_cdevsw);
-
-	/* Kill off any queued buffers. */
-	s = splbio();
-	bufq_drain(dksc->sc_bufq);
-	splx(s);
-
-	bufq_free(dksc->sc_bufq);
 
 	/* Nuke the vnodes for any open instances. */
 	for (i = 0; i < MAXPARTITIONS; i++) {
@@ -263,6 +262,7 @@ ldenddetach(struct ld_softc *sc)
 		if ((*sc->sc_flush)(sc, 0) != 0)
 			aprint_error_dev(dksc->sc_dev, "unable to flush cache\n");
 #endif
+	cv_destroy(&sc->sc_drain);
 	mutex_destroy(&sc->sc_mutex);
 }
 
