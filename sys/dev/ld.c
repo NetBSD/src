@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.87 2015/08/16 17:22:00 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.88 2015/08/16 17:32:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.87 2015/08/16 17:22:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.88 2015/08/16 17:32:31 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ lddone(struct ld_softc *sc, struct buf *bp)
 	if (--sc->sc_queuecnt <= sc->sc_maxqueuecnt) {
 		if ((sc->sc_flags & LDF_DRAIN) != 0) {
 			sc->sc_flags &= ~LDF_DRAIN;
-			wakeup(&sc->sc_queuecnt);
+			cv_broadcast(&sc->sc_drain);
 		}
 		mutex_exit(&sc->sc_mutex);
 		ld_start(dksc->sc_dev);
