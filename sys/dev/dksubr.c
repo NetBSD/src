@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.68 2015/08/02 07:25:40 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.69 2015/08/16 17:26:16 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.68 2015/08/02 07:25:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.69 2015/08/16 17:26:16 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -357,9 +357,10 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 	case ODIOCSDINFO:
 	case ODIOCWDINFO:
 #endif
+	case DIOCKLABEL:
 	case DIOCWLABEL:
 	case DIOCAWEDGE:
-	case DIOCDWEDGE:
+	case DIOCSSTRATEGY:
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 	}
@@ -431,8 +432,6 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 		break;
 
 	case DIOCKLABEL:
-		if ((flag & FWRITE) == 0)
-			return (EBADF);
 		if (*(int *)data != 0)
 			dksc->sc_flags |= DKF_KLABEL;
 		else
@@ -480,9 +479,6 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 		struct bufq_state *old;
 		int s;
 
-		if ((flag & FWRITE) == 0) {
-			return EBADF;
-		}
 		if (dks->dks_param != NULL) {
 			return EINVAL;
 		}
