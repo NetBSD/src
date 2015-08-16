@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.86 2015/08/16 14:07:19 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.87 2015/08/16 17:22:00 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.86 2015/08/16 14:07:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.87 2015/08/16 17:22:00 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ ldenddetach(struct ld_softc *sc)
 	/* Flush the device's cache. */
 	if (sc->sc_flush != NULL)
 		if ((*sc->sc_flush)(sc, 0) != 0)
-			aprint_error_dev(dksc->sc_dev, "unable to flush cache\n");
+			device_printf(dksc->sc_dev, "unable to flush cache\n");
 #endif
 	cv_destroy(&sc->sc_drain);
 	mutex_destroy(&sc->sc_mutex);
@@ -282,7 +282,7 @@ ld_shutdown(device_t dev, int flags)
 	struct dk_softc *dksc = &sc->sc_dksc;
 
 	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, LDFL_POLL) != 0) {
-		printf("%s: unable to flush cache\n", dksc->sc_xname);
+		device_printf(dksc->sc_dev, "unable to flush cache\n");
 		return false;
 	}
 
@@ -311,7 +311,7 @@ ld_lastclose(device_t self)
 	struct ld_softc *sc = device_private(self);
 
 	if (sc->sc_flush != NULL && (*sc->sc_flush)(sc, 0) != 0)
-		aprint_error_dev(self, "unable to flush cache\n");
+		device_printf(self, "unable to flush cache\n");
 
 	return 0;
 }
