@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.70 2015/08/16 17:28:28 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.71 2015/08/16 18:00:03 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.70 2015/08/16 17:28:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.71 2015/08/16 18:00:03 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ static int dk_subr_modcmd(modcmd_t, void *);
 	(MAKEDISKDEV(major((dev)), DISKUNIT((dev)), RAW_PART))
 
 static void	dk_makedisklabel(struct dk_softc *);
+static int	dk_translate(struct dk_softc *, struct buf *);
 
 void
 dk_init(struct dk_softc *dksc, device_t dev, int dtype)
@@ -89,6 +90,7 @@ dk_init(struct dk_softc *dksc, device_t dev, int dtype)
 void
 dk_attach(struct dk_softc *dksc)
 {
+	mutex_init(&dksc->sc_iolock, MUTEX_DEFAULT, IPL_VM);
 	dksc->sc_flags |= DKF_INITED;
 #ifdef DIAGNOSTIC
 	dksc->sc_flags |= DKF_WARNLABEL | DKF_LABELSANITY;
@@ -99,6 +101,7 @@ void
 dk_detach(struct dk_softc *dksc)
 {
 	dksc->sc_flags &= ~DKF_INITED;
+	mutex_destroy(&dksc->sc_iolock);
 }
 
 /* ARGSUSED */
@@ -199,27 +202,16 @@ dk_close(struct dk_softc *dksc, dev_t dev,
 	return 0;
 }
 
-void
-dk_strategy(struct dk_softc *dksc, struct buf *bp)
+static int
+dk_translate(struct dk_softc *dksc, struct buf *bp)
 {
-	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
-	int	s, part;
+	int	part;
 	int	wlabel;
 	daddr_t	blkno;
 	struct disklabel *lp;
 	struct disk *dk;
 	uint64_t numsecs;
 	unsigned secsize;
-
-	DPRINTF_FOLLOW(("dk_strategy(%s, %p, %p)\n",
-	    dksc->sc_xname, dksc, bp));
-
-	if (!(dksc->sc_flags & DKF_INITED)) {
-		DPRINTF_FOLLOW(("dk_strategy: not inited\n"));
-		bp->b_error  = ENXIO;
-		biodone(bp);
-		return;
-	}
 
 	lp = dksc->sc_dkdev.dk_label;
 	dk = &dksc->sc_dkdev;
@@ -234,29 +226,20 @@ dk_strategy(struct dk_softc *dksc, struct buf *bp)
 	 * The transfer must be a whole number of blocks and the offset must
 	 * not be negative.
 	 */
-	if ((bp->b_bcount % secsize) != 0 || bp->b_blkno < 0) {
-		bp->b_error = EINVAL;
-		biodone(bp);
-		return;
-	}
+	if ((bp->b_bcount % secsize) != 0 || bp->b_blkno < 0)
+		return EINVAL;
 
 	/* If there is nothing to do, then we are done */
-	if (bp->b_bcount == 0) {
-		biodone(bp);
-		return;
-	}
+	if (bp->b_bcount == 0)
+		return 0;
 
 	wlabel = dksc->sc_flags & (DKF_WLABEL|DKF_LABELLING);
 	if (part == RAW_PART) {
-		if (bounds_check_with_mediasize(bp, DEV_BSIZE, numsecs) <= 0) {
-			biodone(bp);
-			return;
-		}
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE, numsecs) <= 0)
+			return bp->b_error;
 	} else {
-		if (bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0) {
-			biodone(bp);
-			return;
-		}
+		if (bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0)
+			return bp->b_error;
 	}
 
 	/*
@@ -272,15 +255,72 @@ dk_strategy(struct dk_softc *dksc, struct buf *bp)
 		blkno += lp->d_partitions[DISKPART(bp->b_dev)].p_offset;
 	bp->b_rawblkno = blkno;
 
+	return -1;
+}
+
+void
+dk_strategy(struct dk_softc *dksc, struct buf *bp)
+{
+	int error;
+
+	DPRINTF_FOLLOW(("dk_strategy(%s, %p, %p)\n",
+	    dksc->sc_xname, dksc, bp));
+
+	if (!(dksc->sc_flags & DKF_INITED)) {
+		DPRINTF_FOLLOW(("dk_strategy: not inited\n"));
+		bp->b_error  = ENXIO;
+		biodone(bp);
+		return;
+	}
+
+	error = dk_translate(dksc, bp);
+	if (error >= 0) {
+		biodone(bp);
+		return;
+	}
+
 	/*
-	 * Start the unit by calling the start routine
-	 * provided by the individual driver.
+	 * Queue buffer and start unit
 	 */
-	s = splbio();
-	bufq_put(dksc->sc_bufq, bp);
-	dkd->d_diskstart(dksc->sc_dev);
-	splx(s);
-	return;
+	dk_start(dksc, bp);
+}
+
+void
+dk_start(struct dk_softc *dksc, struct buf *bp)
+{
+	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
+	int error;
+	struct buf *qbp __diagused;
+
+	mutex_enter(&dksc->sc_iolock);
+
+	if (bp != NULL)
+		bufq_put(dksc->sc_bufq, bp);
+
+	while ((bp = bufq_peek(dksc->sc_bufq)) != NULL) {
+
+		disk_busy(&dksc->sc_dkdev);
+		error = dkd->d_diskstart(dksc->sc_dev, bp);
+		if (error == EAGAIN) {
+			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
+			break;
+		}
+
+#ifdef DIAGNOSTIC
+		qbp = bufq_get(dksc->sc_bufq);
+		KASSERT(bp == qbp);
+#else
+		(void) bufq_get(dksc->sc_bufq);
+#endif
+
+		if (error != 0) {
+			bp->b_error = error;
+			bp->b_resid = bp->b_bcount;
+			dk_done(dksc, bp);
+		}
+	}
+
+	mutex_exit(&dksc->sc_iolock);
 }
 
 void
@@ -296,11 +336,51 @@ dk_done(struct dk_softc *dksc, struct buf *bp)
 		printf("\n");
 	}
 
+	mutex_enter(&dksc->sc_iolock);
 	disk_unbusy(dk, bp->b_bcount - bp->b_resid, (bp->b_flags & B_READ));
+	mutex_exit(&dksc->sc_iolock);
+
 #ifdef notyet
 	rnd_add_uint(&dksc->sc_rnd_source, bp->b_rawblkno);
 #endif
+
 	biodone(bp);
+}
+
+int
+dk_discard(struct dk_softc *dksc, dev_t dev, off_t pos, off_t len)
+{
+	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
+	unsigned secsize = dksc->sc_dkdev.dk_geom.dg_secsize;
+	struct buf tmp, *bp = &tmp;
+	int error;
+
+	DPRINTF_FOLLOW(("dk_discard(%s, %p, 0x"PRIx64", %jd, %jd)\n",
+	    dksc->sc_xname, dksc, (intmax_t)pos, (intmax_t)len));
+
+	if (!(dksc->sc_flags & DKF_INITED)) {
+		DPRINTF_FOLLOW(("dk_discard: not inited\n"));
+		return ENXIO;
+	}
+
+	if (secsize == 0 || (pos % secsize) != 0)
+		return EINVAL;
+
+	/* enough data to please the bounds checking code */
+	bp->b_dev = dev;
+	bp->b_blkno = (daddr_t)(pos / secsize);
+	bp->b_bcount = len;
+	bp->b_flags = B_WRITE;
+
+	error = dk_translate(dksc, bp);
+	if (error >= 0)
+		return error;
+
+	error = dkd->d_discard(dksc->sc_dev,
+		(off_t)bp->b_rawblkno * secsize,
+		(off_t)bp->b_bcount);
+
+	return error;
 }
 
 int
@@ -462,12 +542,11 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 	case DIOCGSTRATEGY:
 	    {
 		struct disk_strategy *dks = (void *)data;
-		int s;
 
-		s = splbio();
+		mutex_enter(&dksc->sc_iolock);
 		strlcpy(dks->dks_name, bufq_getstrategyname(dksc->sc_bufq),
 		    sizeof(dks->dks_name));
-		splx(s);
+		mutex_exit(&dksc->sc_iolock);
 		dks->dks_paramlen = 0;
 
 		return 0;
@@ -478,7 +557,6 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 		struct disk_strategy *dks = (void *)data;
 		struct bufq_state *new;
 		struct bufq_state *old;
-		int s;
 
 		if (dks->dks_param != NULL) {
 			return EINVAL;
@@ -489,11 +567,11 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 		if (error) {
 			return error;
 		}
-		s = splbio();
+		mutex_enter(&dksc->sc_iolock);
 		old = dksc->sc_bufq;
 		bufq_move(new, old);
 		dksc->sc_bufq = new;
-		splx(s);
+		mutex_exit(&dksc->sc_iolock);
 		bufq_free(old);
 
 		return 0;
