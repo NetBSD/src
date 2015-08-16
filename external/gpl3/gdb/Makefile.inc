@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8 2013/08/06 05:35:57 matt Exp $
+# $NetBSD: Makefile.inc,v 1.9 2015/08/16 09:51:58 christos Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
@@ -13,4 +13,4 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-conversion \
 			-Wno-tautological-compare -Wno-format-extra-args \
 			-Wno-string-plus-int
 
-DIST=		${NETBSDSRCDIR}/external/gpl3/gdb/dist
+DIST:=		${.PARSEDIR}/dist

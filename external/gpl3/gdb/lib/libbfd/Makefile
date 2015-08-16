@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2014/01/20 10:49:33 apb Exp $
+#	$NetBSD: Makefile,v 1.6 2015/08/16 09:51:58 christos Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -12,7 +12,7 @@ LIB=		bfd
 GCPPFLAGS=	${G_archdefs} ${G_DEFS} ${G_INCLUDES} ${G_TDEFAULTS}
 CPPFLAGS+=	-I${.CURDIR}/arch/${GDB_MACHINE_ARCH} -I${DIST}/include -I. \
 		-I${DIST}/bfd ${GCPPFLAGS:M-D*} ${GCPPFLAGS:M-I*:N-I.*} \
-		-DDEBUGDIR=\"/usr/libdata/debug\"
+		-DDEBUGDIR=\"/usr/libdata/debug\" -DBINDIR=\"${BINDIR}\"
 
 GSRCS=		${G_libbfd_la_OBJECTS:libbfd.lo=lib_bfd.lo} \
 		${G_libbfd_la_DEPENDENCIES:M*.lo}
