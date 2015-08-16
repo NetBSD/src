@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2015/08/15 09:34:17 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2015/08/16 09:17:18 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -11,9 +11,11 @@ SUBDIR+=	${EXTERNAL_GCC_SUBDIR}
 .endif
 
 .if ${MKGDB} != "no"
-.if ${HAVE_GDB} == "7"
-SUBDIR+=        gdb.old
-.endif
+.	if ${HAVE_GDB} == "79"
+SUBDIR+=        gdb
+.	elif ${HAVE_GDB} == "7"
+SUBDIR+=        gdb
+.	endif
 .endif
 
 .include <bsd.subdir.mk>
