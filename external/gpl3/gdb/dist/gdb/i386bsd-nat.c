@@ -1,6 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2000-2014 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,9 +21,7 @@
 #include "inferior.h"
 #include "regcache.h"
 
-#include "gdb_assert.h"
 #include <signal.h>
-#include <stddef.h>
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <machine/reg.h>

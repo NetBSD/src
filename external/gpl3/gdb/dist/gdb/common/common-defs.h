@@ -33,7 +33,9 @@
 #include <stddef.h>
 #include <string.h>
 #include <errno.h>
+#ifdef HAVE_ALLOCA_H
 #include <alloca.h>
+#endif
 #include "ansidecl.h"
 #include "libiberty.h"
 #include "pathmax.h"
