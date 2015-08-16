@@ -1,6 +1,6 @@
 /* Target-dependent code for the HP PA-RISC architecture.
 
-   Copyright (C) 1986-2014 Free Software Foundation, Inc.
+   Copyright (C) 1986-2015 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -26,7 +26,6 @@
 #include "regcache.h"
 #include "completer.h"
 #include "osabi.h"
-#include "gdb_assert.h"
 #include "arch-utils.h"
 /* For argument passing to the inferior.  */
 #include "symtab.h"
@@ -162,11 +161,11 @@ hppa_extract_17 (unsigned word)
 CORE_ADDR 
 hppa_symbol_address(const char *sym)
 {
-  struct minimal_symbol *minsym;
+  struct bound_minimal_symbol minsym;
 
   minsym = lookup_minimal_symbol (sym, NULL, NULL);
-  if (minsym)
-    return SYMBOL_VALUE_ADDRESS (minsym);
+  if (minsym.minsym)
+    return BMSYMBOL_VALUE_ADDRESS (minsym);
   else
     return (CORE_ADDR)-1;
 }
@@ -221,7 +220,7 @@ record_text_segment_lowaddr (bfd *abfd, asection *section, void *data)
 static void
 internalize_unwinds (struct objfile *objfile, struct unwind_table_entry *table,
 		     asection *section, unsigned int entries,
-		     unsigned int size, CORE_ADDR text_offset)
+		     size_t size, CORE_ADDR text_offset)
 {
   /* We will read the unwind entries into temporary memory, then
      fill in the actual unwind table.  */
@@ -320,7 +319,7 @@ static void
 read_unwind_info (struct objfile *objfile)
 {
   asection *unwind_sec, *stub_unwind_sec;
-  unsigned unwind_size, stub_unwind_size, total_size;
+  size_t unwind_size, stub_unwind_size, total_size;
   unsigned index, unwind_entries;
   unsigned stub_entries, total_entries;
   CORE_ADDR text_offset;
@@ -2463,26 +2462,31 @@ hppa_unwind_pc (struct gdbarch *gdbarch, struct frame_info *next_frame)
 /* Return the minimal symbol whose name is NAME and stub type is STUB_TYPE.
    Return NULL if no such symbol was found.  */
 
-struct minimal_symbol *
+struct bound_minimal_symbol
 hppa_lookup_stub_minimal_symbol (const char *name,
                                  enum unwind_stub_types stub_type)
 {
   struct objfile *objfile;
   struct minimal_symbol *msym;
+  struct bound_minimal_symbol result = { NULL, NULL };
 
   ALL_MSYMBOLS (objfile, msym)
     {
-      if (strcmp (SYMBOL_LINKAGE_NAME (msym), name) == 0)
+      if (strcmp (MSYMBOL_LINKAGE_NAME (msym), name) == 0)
         {
           struct unwind_table_entry *u;
 
-          u = find_unwind_entry (SYMBOL_VALUE (msym));
+          u = find_unwind_entry (MSYMBOL_VALUE (msym));
           if (u != NULL && u->stub_unwind.stub_type == stub_type)
-            return msym;
+	    {
+	      result.objfile = objfile;
+	      result.minsym = msym;
+	      return result;
+	    }
         }
     }
 
-  return NULL;
+  return result;
 }
 
 static void
@@ -2775,18 +2779,6 @@ static struct insn_pattern hppa_plt_stub[] = {
   { 0, 0 }
 };
 
-static struct insn_pattern hppa_sigtramp[] = {
-  /* ldi 0, %r25 or ldi 1, %r25 */
-  { 0x34190000, 0xfffffffd },
-  /* ldi __NR_rt_sigreturn, %r20 */
-  { 0x3414015a, 0xffffffff },
-  /* be,l 0x100(%sr2, %r0), %sr0, %r31 */
-  { 0xe4008200, 0xffffffff },
-  /* nop */
-  { 0x08000240, 0xffffffff },
-  { 0, 0 }
-};
-
 /* Maximum number of instructions on the patterns above.  */
 #define HPPA_MAX_INSN_PATTERN_LEN	4
 
@@ -2997,7 +2989,7 @@ hppa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return (arches->gdbarch);
 
   /* If none found, then allocate and initialize one.  */
-  tdep = XZALLOC (struct gdbarch_tdep);
+  tdep = XCNEW (struct gdbarch_tdep);
   gdbarch = gdbarch_alloc (&info, tdep);
 
   /* Determine from the bfd_arch_info structure if we are dealing with

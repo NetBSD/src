@@ -1,6 +1,6 @@
 /* BSD Kernel Data Access Library (libkvm) interface.
 
-   Copyright (C) 2004-2014 Free Software Foundation, Inc.
+   Copyright (C) 2004-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,6 @@
 #include "gdbcore.h"		/* for get_exec_file */
 #include "gdbthread.h"
 
-#include "gdb_assert.h"
 #include <fcntl.h>
 #include <kvm.h>
 #ifdef HAVE_NLIST_H
@@ -64,20 +63,21 @@ static struct target_ops bsd_kvm_ops;
 static ptid_t bsd_kvm_ptid;
 
 static void
-bsd_kvm_open (char *filename, int from_tty)
+bsd_kvm_open (const char *arg, int from_tty)
 {
   char errbuf[_POSIX2_LINE_MAX];
   char *execfile = NULL;
   kvm_t *temp_kd;
   struct inferior *inf;
+  char *filename = NULL;
 
   target_preopen (from_tty);
 
-  if (filename)
+  if (arg)
     {
       char *temp;
 
-      filename = tilde_expand (filename);
+      filename = tilde_expand (arg);
       if (filename[0] != '/')
 	{
 	  temp = concat (current_directory, "/", filename, (char *)NULL);
@@ -111,7 +111,7 @@ bsd_kvm_open (char *filename, int from_tty)
 }
 
 static void
-bsd_kvm_close (void)
+bsd_kvm_close (struct target_ops *self)
 {
   if (core_kd)
     {
@@ -137,19 +137,31 @@ bsd_kvm_xfer_memory (CORE_ADDR addr, ULONGEST len,
   return nbytes;
 }
 
-static LONGEST
+static enum target_xfer_status
 bsd_kvm_xfer_partial (struct target_ops *ops, enum target_object object,
 		      const char *annex, gdb_byte *readbuf,
 		      const gdb_byte *writebuf,
-		      ULONGEST offset, LONGEST len)
+		      ULONGEST offset, ULONGEST len, ULONGEST *xfered_len)
 {
   switch (object)
     {
     case TARGET_OBJECT_MEMORY:
-      return bsd_kvm_xfer_memory (offset, len, readbuf, writebuf);
+      {
+	LONGEST ret = bsd_kvm_xfer_memory (offset, len, readbuf, writebuf);
+
+	if (ret < 0)
+	  return TARGET_XFER_E_IO;
+	else if (ret == 0)
+	  return TARGET_XFER_EOF;
+	else
+	  {
+	    *xfered_len = (ULONGEST) ret;
+	    return TARGET_XFER_OK;
+	  }
+      }
 
     default:
-      return -1;
+      return TARGET_XFER_E_IO;
     }
 }
 

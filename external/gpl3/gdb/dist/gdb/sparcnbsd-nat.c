@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD/sparc.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -100,6 +100,10 @@ _initialize_sparcnbsd_nat (void)
   struct target_ops *t;
   sparc_gregset = &sparc32nbsd_gregset;
   sparc_fpregset = &sparc32_bsd_fpregset;
+#if 0
+  sparc_gregmap = &sparc32nbsd_gregmap;
+  sparc_fpregmap = &sparc32_bsd_fpregmap;
+#endif
 
   /* Add some extra features to the generic SPARC target.  */
   t = sparc_target ();

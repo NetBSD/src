@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/sh.
 
-   Copyright (C) 2002-2014 Free Software Foundation, Inc.
+   Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -204,6 +204,10 @@ shnbsd_init_abi (struct gdbarch_info info,
 
   tdep->core_gregmap = (struct sh_corefile_regmap *)gregs_table;
   tdep->core_fpregmap = (struct sh_corefile_regmap *)fpregs_table;
+#if 0
+  tdep->core_gregmap = (struct sh_corefile_regmap *)regmap;
+  tdep->sizeof_gregset = 84;
+#endif
 
   set_solib_svr4_fetch_link_map_offsets
     (gdbarch, nbsd_ilp32_solib_svr4_fetch_link_map_offsets);
