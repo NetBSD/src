@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_sp.c,v 1.69 2015/02/04 12:55:47 pooka Exp $	*/
+/*      $NetBSD: rumpuser_sp.c,v 1.70 2015/08/16 11:37:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_sp.c,v 1.69 2015/02/04 12:55:47 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_sp.c,v 1.70 2015/08/16 11:37:39 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -89,8 +89,8 @@ static char banner[MAXBANNER];
 #define PROTOMINOR 4
 
 
-/* how to use atomic ops on Linux? */
-#if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__OpenBSD__)
+/* either no atomic ops, or we haven't figured out how to use them */
+#if defined(__linux__) || defined(__APPLE__) || defined(__CYGWIN__) || defined(__OpenBSD__) || defined(__GNU__) || defined(__GLIBC__)
 static pthread_mutex_t discomtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void
