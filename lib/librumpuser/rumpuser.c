@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser.c,v 1.66 2015/07/27 07:31:00 pooka Exp $	*/
+/*	$NetBSD: rumpuser.c,v 1.67 2015/08/16 11:05:06 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser.c,v 1.66 2015/07/27 07:31:00 pooka Exp $");
+__RCSID("$NetBSD: rumpuser.c,v 1.67 2015/08/16 11:05:06 pooka Exp $");
 #endif /* !lint */
 
 #include <sys/stat.h>
@@ -156,12 +156,11 @@ rumpuser_clock_sleep(int enum_rumpclock, int64_t sec, long nsec)
 					tsr.tv_nsec += 1000*1000*1000;
 				}
 				rv = nanosleep(&tsr, NULL);
+				if (rv == -1)
+					rv = errno;
 			}
 #endif
-		} while (rv == -1 && errno == EINTR);
-		if (rv == -1) {
-			rv = errno;
-		}
+		} while (rv == EINTR);
 		break;
 	default:
 		abort();
