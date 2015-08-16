@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.44 2015/03/05 00:25:39 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.45 2015/08/16 11:37:39 pooka Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -63,7 +63,7 @@
 #include "rumpuser_config.h"
 #endif
 
-#ifdef __linux__
+#if defined(__linux__) || defined(__GNU__) || defined(__GLIBC__)
 #define _GNU_SOURCE
 #endif
 
