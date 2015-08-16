@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.13 2010/06/24 00:54:12 eeh Exp $
+\	$NetBSD: bootblk.fth,v 1.14 2015/08/16 10:58:54 jdc Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -605,7 +605,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
    boot-debug?  if  ." LFS v2" cr  then
    init-lfs-common
    ' lfs_bsize  to  fs-bsize
-   ' ifile_SIZEOF  to  /ifile
+   ' ifile32_SIZEOF  to  /ifile
    ' if2_daddr  to  if_daddr
 ;   
 
@@ -890,7 +890,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 : do-boot ( bootfile -- )
    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-   ." Version $NetBSD: bootblk.fth,v 1.13 2010/06/24 00:54:12 eeh Exp $" cr
+   ." Version $NetBSD: bootblk.fth,v 1.14 2015/08/16 10:58:54 jdc Exp $" cr
    boot-path load-file ( -- load-base )
    dup 0<>  if  " init-program " evaluate  then
 ; 
