@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.3 2015/07/31 00:23:54 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.4 2015/08/17 07:06:58 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -73,6 +73,21 @@ make_pkt_str()
 	echo $pkt
 }
 
+extract_new_packets()
+{
+	local old=./old
+
+	if [ ! -f $old ]; then
+		old=/dev/null
+	fi
+
+	shmif_dumpbus -p - bus1 2>/dev/null| \
+	    tcpdump -n -e -r - 2>/dev/null > ./new
+	diff -u $old ./new |grep '^+' |cut -d '+' -f 2 > ./diff
+	mv -f ./new ./old
+	cat ./diff
+}
+
 dad_basic_body()
 {
 	local pkt=
@@ -84,17 +99,21 @@ dad_basic_body()
 	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.1/24
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.2/24 alias
-	atf_check -s exit:0 rump.ifconfig shmif0 up
 	$DEBUG && rump.ifconfig shmif0
 
-	atf_check -s exit:0 sleep 1
+	atf_check -s exit:0 rump.ifconfig shmif0 up
+	rump.ifconfig shmif0 > ./out
+	$DEBUG && cat ./out
 
-	# The primary address is not tentative from the beginning
-	atf_check -s not-exit:0 -x "rump.ifconfig shmif0 |grep 10.0.0.1 |grep -q tentative"
-	# The alias address is still tentative
-	atf_check -s exit:0 -x "rump.ifconfig shmif0 |grep 10.0.0.2 |grep -q tentative"
+	# The primary address doesn't start with tentative state
+	atf_check -s not-exit:0 -x "cat ./out |grep 10.0.0.1 |grep -q tentative"
+	# The alias address starts with tentative state
+	# XXX we have no stable way to check this, so skip for now
+	#atf_check -s exit:0 -x "cat ./out |grep 10.0.0.2 |grep -q tentative"
 
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - > ./out
+	atf_check -s exit:0 sleep 2
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
 
 	# Check DAD probe packets
 	pkt=$(make_pkt_str 10.0.0.2 0.0.0.0)
@@ -105,7 +124,8 @@ dad_basic_body()
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - |tail -1 > ./out
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
 	pkt=$(make_pkt_str 10.0.0.2 10.0.0.2)
@@ -118,19 +138,20 @@ dad_basic_body()
 	#
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 10.0.0.3/24 alias
 
-	atf_check -s exit:0 sleep 1
-
-	# The new address is still tentative
+	# The new address starts with tentative state
 	atf_check -s exit:0 -x "rump.ifconfig shmif0 |grep 10.0.0.3 |grep -q tentative"
 
 	# Check DAD probe packets
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - |tail -1 > ./out
+	atf_check -s exit:0 sleep 2
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
 	pkt=$(make_pkt_str 10.0.0.3 0.0.0.0)
 	atf_check -s exit:0 -x "cat ./out |grep -q '$pkt'"
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
-	shmif_dumpbus -p - bus1 2>/dev/null| tcpdump -n -e -r - |tail -1 > ./out
+	extract_new_packets > ./out
+	$DEBUG && cat ./out
 
 	# Check the DAD announce packet
 	pkt=$(make_pkt_str 10.0.0.3 10.0.0.3)
