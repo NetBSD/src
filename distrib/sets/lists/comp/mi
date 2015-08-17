@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1982 2015/08/17 12:55:49 nonaka Exp $
+#	$NetBSD: mi,v 1.1983 2015/08/17 22:20:39 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1938,6 +1938,7 @@
 ./usr/include/g++/vector			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
 ./usr/include/gcc-4.5/mf-runtime.h		comp-gcc-include	obsolete
+./usr/include/gcc-4.5/omp.h			comp-gcc-include	obsolete
 ./usr/include/gcc-4.8/mf-runtime.h		comp-gcc-include	gcc
 ./usr/include/gcc-4.8/omp.h			comp-gcc-include	gcc
 ./usr/include/gelf.h				comp-c-include
