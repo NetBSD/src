@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.h 257176 2013-10-26 17:58:36Z glebius $*/
-/*$NetBSD: ixv.h,v 1.6 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixv.h,v 1.7 2015/08/17 06:16:03 knakahara Exp $*/
 
 
 #ifndef _IXV_H_
@@ -75,6 +75,7 @@
 #include <sys/proc.h>
 #include <sys/sysctl.h>
 #include <sys/endian.h>
+#include <sys/interrupt.h>
 
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"

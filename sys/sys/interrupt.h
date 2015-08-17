@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.h,v 1.3 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: interrupt.h,v 1.1 2015/08/17 06:16:03 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -26,21 +26,31 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_PCI_PCI_MSI_MACHDEP_H_
-#define _X86_PCI_PCI_MSI_MACHDEP_H_
+#ifndef _SYS_INTERRUPT_H_
+#define _SYS_INTERUPT_H_
 
-const char	*x86_pci_msi_string(pci_chipset_tag_t, pci_intr_handle_t,
-		    char *, size_t);
-void		x86_pci_msi_release(pci_chipset_tag_t, pci_intr_handle_t *,
-		    int);
-void		*x86_pci_msi_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *, const char *);
-void		x86_pci_msi_disestablish(pci_chipset_tag_t, void *);
+#include <sys/types.h>
+#include <sys/intr.h>
+#include <sys/kcpuset.h>
 
-void		x86_pci_msix_release(pci_chipset_tag_t, pci_intr_handle_t *,
-		    int);
-void		*x86_pci_msix_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *, const char *xname);
-void		x86_pci_msix_disestablish(pci_chipset_tag_t, void *);
+typedef char intrid_t[INTRIDBUF];
+struct intrids_handler {
+	int iih_nids;
+	intrid_t iih_intrids[1];
+	/*
+	 * The number of the "iih_intrids" array will be overwritten by
+	 * "iih_nids" after intr_construct_intrids().
+	 */
+};
 
-#endif /* _X86_PCI_PCI_MSI_MACHDEP_H_ */
+uint64_t	interrupt_get_count(const char *, u_int);
+void		interrupt_get_assigned(const char *, kcpuset_t *);
+void		interrupt_get_available(kcpuset_t *);
+void		interrupt_get_devname(const char *, char *, size_t);
+struct intrids_handler	*interrupt_construct_intrids(const kcpuset_t *);
+void		interrupt_destruct_intrids(struct intrids_handler *);
+int		interrupt_distribute(void *, const kcpuset_t *, kcpuset_t *);
+int		interrupt_distribute_handler(const char *, const kcpuset_t *,
+		    kcpuset_t *);
+
+#endif /* !_SYS_INTERRUPT_H_ */
