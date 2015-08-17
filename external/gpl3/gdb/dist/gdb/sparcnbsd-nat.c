@@ -45,25 +45,25 @@ typedef struct fpreg fpregset_t;
 void
 supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 {
-  sparc_supply_gregset (sparc_gregset, regcache, -1, gregs);
+  sparc_supply_gregset (sparc_gregmap, regcache, -1, gregs);
 }
 
 void
 supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
 {
-  sparc_supply_fpregset (sparc_fpregset, regcache, -1, fpregs);
+  sparc_supply_fpregset (sparc_fpregmap, regcache, -1, fpregs);
 }
 
 void
 fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 {
-  sparc_collect_gregset (sparc_gregset, regcache, regnum, gregs);
+  sparc_collect_gregset (sparc_gregmap, regcache, regnum, gregs);
 }
 
 void
 fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
 {
-  sparc_collect_fpregset (sparc_fpregset, regcache, regnum, fpregs);
+  sparc_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
 }
 
 static int
@@ -98,12 +98,8 @@ void
 _initialize_sparcnbsd_nat (void)
 {
   struct target_ops *t;
-  sparc_gregset = &sparc32nbsd_gregset;
-  sparc_fpregset = &sparc32_bsd_fpregset;
-#if 0
   sparc_gregmap = &sparc32nbsd_gregmap;
   sparc_fpregmap = &sparc32_bsd_fpregmap;
-#endif
 
   /* Add some extra features to the generic SPARC target.  */
   t = sparc_target ();
