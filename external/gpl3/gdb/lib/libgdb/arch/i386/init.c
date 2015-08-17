@@ -24,6 +24,8 @@ extern initialize_file_ftype _initialize_tracepoint;
 extern initialize_file_ftype _initialize_ax_gdb;
 extern initialize_file_ftype _initialize_notif;
 extern initialize_file_ftype _initialize_ctf;
+extern initialize_file_ftype _initialize_tracefile;
+extern initialize_file_ftype _initialize_tracefile_tfile;
 extern initialize_file_ftype _initialize_elfread;
 extern initialize_file_ftype _initialize_stap_probe;
 extern initialize_file_ftype _initialize_annotate;
@@ -54,6 +56,7 @@ extern initialize_file_ftype _initialize_infcmd;
 extern initialize_file_ftype _initialize_infrun;
 extern initialize_file_ftype _initialize_stack;
 extern initialize_file_ftype _initialize_thread;
+extern initialize_file_ftype _initialize_extension;
 extern initialize_file_ftype _initialize_filesystem;
 extern initialize_file_ftype _initialize_interpreter;
 extern initialize_file_ftype _initialize_macrocmd;
@@ -139,6 +142,7 @@ extern initialize_file_ftype _initialize_cli_interp;
 extern initialize_file_ftype _initialize_mi_cmds;
 extern initialize_file_ftype _initialize_mi_cmd_env;
 extern initialize_file_ftype _initialize_mi_interp;
+extern initialize_file_ftype _initialize_mi_main;
 extern initialize_file_ftype _initialize_tui_hooks;
 extern initialize_file_ftype _initialize_tui_interp;
 extern initialize_file_ftype _initialize_tui_layout;
@@ -147,6 +151,8 @@ extern initialize_file_ftype _initialize_tui_regs;
 extern initialize_file_ftype _initialize_tui_stack;
 extern initialize_file_ftype _initialize_tui_win;
 extern initialize_file_ftype _initialize_python;
+extern initialize_file_ftype _initialize_guile;
+extern initialize_file_ftype _initialize_compile;
 void
 initialize_all_files (void)
 {
@@ -168,6 +174,8 @@ initialize_all_files (void)
   _initialize_ax_gdb ();
   _initialize_notif ();
   _initialize_ctf ();
+  _initialize_tracefile ();
+  _initialize_tracefile_tfile ();
   _initialize_elfread ();
   _initialize_stap_probe ();
   _initialize_annotate ();
@@ -198,6 +206,7 @@ initialize_all_files (void)
   _initialize_infrun ();
   _initialize_stack ();
   _initialize_thread ();
+  _initialize_extension ();
   _initialize_filesystem ();
   _initialize_interpreter ();
   _initialize_macrocmd ();
@@ -283,6 +292,7 @@ initialize_all_files (void)
   _initialize_mi_cmds ();
   _initialize_mi_cmd_env ();
   _initialize_mi_interp ();
+  _initialize_mi_main ();
   _initialize_tui_hooks ();
   _initialize_tui_interp ();
   _initialize_tui_layout ();
@@ -291,4 +301,6 @@ initialize_all_files (void)
   _initialize_tui_stack ();
   _initialize_tui_win ();
   _initialize_python ();
+  _initialize_guile ();
+  _initialize_compile ();
 }
