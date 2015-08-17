@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.6 2015/05/10 07:41:15 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.7 2015/08/17 06:16:03 knakahara Exp $
 
 #
 # kernel sources
@@ -131,6 +131,7 @@ file	kern/subr_exec_fd.c		kern
 file	kern/subr_extent.c		kern
 file	kern/subr_hash.c		kern
 file	kern/subr_humanize.c		kern
+file	kern/subr_interrupt.c		kern
 file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern

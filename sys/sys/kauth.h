@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.71 2013/03/18 19:35:46 plunky Exp $ */
+/* $NetBSD: kauth.h,v 1.72 2015/08/17 06:16:03 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -111,6 +111,7 @@ enum {
 	KAUTH_SYSTEM_LFS,
 	KAUTH_SYSTEM_FS_EXTATTR,
 	KAUTH_SYSTEM_FS_SNAPSHOT,
+	KAUTH_SYSTEM_INTR,
 };
 
 /*
@@ -156,6 +157,7 @@ enum kauth_system_req {
 	KAUTH_REQ_SYSTEM_LFS_FCNTL,
 	KAUTH_REQ_SYSTEM_MOUNT_UMAP,
 	KAUTH_REQ_SYSTEM_MOUNT_DEVICE,
+	KAUTH_REQ_SYSTEM_INTR_AFFINITY,
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.20 2015/08/13 04:39:33 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.21 2015/08/17 06:16:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -118,7 +118,6 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
-int		pci_intr_distribute(void *, const kcpuset_t *, kcpuset_t *);
 
 typedef enum {
 	PCI_INTR_TYPE_INTX = 0,

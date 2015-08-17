@@ -1,4 +1,4 @@
-/*	$NetBSD: intr_distribute.h,v 1.1 2015/04/27 06:42:52 knakahara Exp $	*/
+/*	$NetBSD: intr_distribute.h,v 1.2 2015/08/17 06:16:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,6 +34,7 @@
 #include <sys/kcpuset.h>
 
 int intr_distribute(struct intrhand *, const kcpuset_t *, kcpuset_t *);
+int intr_distribute_handler(const char *, const kcpuset_t *, kcpuset_t *);
 
 #endif /* _KERNEL */
 

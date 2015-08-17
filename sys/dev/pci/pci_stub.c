@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.1 2011/08/24 20:27:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.2 2015/08/17 06:16:03 knakahara Exp $");
 
 #include "opt_pci.h"
 
@@ -14,10 +14,14 @@ int default_pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 int default_pci_chipset_tag_create(pci_chipset_tag_t, uint64_t,
     const struct pci_overrides *, void *, pci_chipset_tag_t *);
 void default_pci_chipset_tag_destroy(pci_chipset_tag_t);
+void *default_pci_intr_establish_xname(pci_chipset_tag_t, pci_intr_handle_t,
+    int, int (*)(void *), void *, const char *);
 
 __strict_weak_alias(pci_bus_devorder, default_pci_bus_devorder);
 __strict_weak_alias(pci_chipset_tag_create, default_pci_chipset_tag_create);
 __strict_weak_alias(pci_chipset_tag_destroy, default_pci_chipset_tag_destroy);
+
+__strict_weak_alias(pci_intr_establish_xname, default_pci_intr_establish_xname);
 
 int
 default_pci_bus_devorder(pci_chipset_tag_t pc, int bus, uint8_t *devs,
@@ -42,4 +46,12 @@ default_pci_chipset_tag_create(pci_chipset_tag_t opc, const uint64_t present,
     const struct pci_overrides *ov, void *ctx, pci_chipset_tag_t *pcp)
 {
 	return EOPNOTSUPP;
+}
+
+void *
+default_pci_intr_establish_xname(pci_chipset_tag_t pc, pci_intr_handle_t ih,
+    int level, int (*func)(void *), void *arg, const char *__nouse)
+{
+
+	return pci_intr_establish(pc, ih, level, func, arg);
 }

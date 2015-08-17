@@ -31,7 +31,7 @@
 
 ******************************************************************************/
 /*$FreeBSD: head/sys/dev/ixgbe/ixv.c 275358 2014-12-01 11:45:24Z hselasky $*/
-/*$NetBSD: ixv.c,v 1.14 2015/08/14 15:27:28 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.15 2015/08/17 06:16:03 knakahara Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -1713,7 +1713,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		/* Round-robin affinity */
 		kcpuset_zero(affinity);
 		kcpuset_set(affinity, cpu_id % ncpu);
-		error = pci_intr_distribute(adapter->osdep.ihs[i], affinity,
+		error = interrupt_distribute(adapter->osdep.ihs[i], affinity,
 		    NULL);
 		aprint_normal_dev(dev, "for TX/RX, interrupting at %s",
 		    intrstr);
@@ -1750,7 +1750,7 @@ ixv_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* Round-robin affinity */
 	kcpuset_zero(affinity);
 	kcpuset_set(affinity, cpu_id % ncpu);
-	error = pci_intr_distribute(adapter->osdep.ihs[vector], affinity,NULL);
+	error = interrupt_distribute(adapter->osdep.ihs[vector], affinity,NULL);
 
 	aprint_normal_dev(dev,
 	    "for link, interrupting at %s, ", intrstr);

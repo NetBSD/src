@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.345 2015/07/28 07:15:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.346 2015/08/17 06:16:03 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.345 2015/07/28 07:15:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.346 2015/08/17 06:16:03 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.345 2015/07/28 07:15:03 msaitoh Exp $");
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/syslog.h>
+#include <sys/interrupt.h>
 
 #include <sys/rndsource.h>
 
@@ -1601,7 +1602,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 #ifdef WM_MPSAFE
 	pci_intr_setattr(pc, &ih, PCI_INTR_MPSAFE, true);
 #endif
-	sc->sc_ihs[0] = pci_intr_establish(pc, ih, IPL_NET, wm_intr_legacy,sc);
+	sc->sc_ihs[0] = pci_intr_establish_xname(pc, ih, IPL_NET,
+	    wm_intr_legacy, sc, device_xname(sc->sc_dev));
 	if (sc->sc_ihs[0] == NULL) {
 		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
 		if (intrstr != NULL)
@@ -1627,6 +1629,7 @@ alloc_retry:
 	if (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSIX) {
 		void *vih;
 		kcpuset_t *affinity;
+		char intr_xname[INTRDEVNAMEBUF];
 
 		kcpuset_create(&affinity, false);
 
@@ -1639,9 +1642,14 @@ alloc_retry:
 			    &sc->sc_intrs[msix_matrix[i].intridx],
 			    PCI_INTR_MPSAFE, true);
 #endif
-			vih = pci_intr_establish(pc,
+			memset(intr_xname, 0, sizeof(intr_xname));
+			strlcat(intr_xname, device_xname(sc->sc_dev),
+			    sizeof(intr_xname));
+			strlcat(intr_xname, msix_matrix[i].intrname,
+			    sizeof(intr_xname));
+			vih = pci_intr_establish_xname(pc,
 			    sc->sc_intrs[msix_matrix[i].intridx], IPL_NET,
-			    msix_matrix[i].func, sc);
+			    msix_matrix[i].func, sc, intr_xname);
 			if (vih == NULL) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to establish MSI-X(for %s)%s%s\n",
@@ -1661,7 +1669,7 @@ alloc_retry:
 			kcpuset_zero(affinity);
 			/* Round-robin affinity */
 			kcpuset_set(affinity, msix_matrix[i].cpuid % ncpu);
-			error = pci_intr_distribute(vih, affinity, NULL);
+			error = interrupt_distribute(vih, affinity, NULL);
 			if (error == 0) {
 				aprint_normal_dev(sc->sc_dev,
 				    "for %s interrupting at %s affinity to %u\n",
@@ -1684,8 +1692,8 @@ alloc_retry:
 #ifdef WM_MPSAFE
 		pci_intr_setattr(pc, &sc->sc_intrs[0], PCI_INTR_MPSAFE, true);
 #endif
-		sc->sc_ihs[0] = pci_intr_establish(pc, sc->sc_intrs[0],
-		    IPL_NET, wm_intr_legacy, sc);
+		sc->sc_ihs[0] = pci_intr_establish_xname(pc, sc->sc_intrs[0],
+		    IPL_NET, wm_intr_legacy, sc, device_xname(sc->sc_dev));
 		if (sc->sc_ihs[0] == NULL) {
 			aprint_error_dev(sc->sc_dev,"unable to establish %s\n",
 			    (pci_intr_type(sc->sc_intrs[0])
