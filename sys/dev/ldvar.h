@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.25 2015/08/16 14:02:52 mlelstv Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.26 2015/08/17 19:47:21 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -62,6 +62,7 @@ struct ld_softc {
 	int		(*sc_dump)(struct ld_softc *, void *, int, int);
 	int		(*sc_flush)(struct ld_softc *, int);
 	int		(*sc_start)(struct ld_softc *, struct buf *);
+	int		(*sc_discard)(struct ld_softc *, off_t, off_t);
 };
 
 /* sc_flags */
