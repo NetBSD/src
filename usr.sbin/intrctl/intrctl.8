@@ -1,4 +1,4 @@
-.\" $NetBSD: intrctl.8,v 1.1 2015/08/17 06:50:03 knakahara Exp $
+.\" $NetBSD: intrctl.8,v 1.2 2015/08/17 17:47:22 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -37,7 +37,7 @@
 .Sh DESCRIPTION
 The
 .Nm
-command can be used to control and inspect the state of intrerupts
+command can be used to control and inspect the state of interrupts
 in the system.
 .Pp
 The first argument,
@@ -45,9 +45,6 @@ The first argument,
 specifies the action to take.
 Valid commands are:
 .Bl -tag -width XofflineXcpunoX
-.It list
-for each intrid in the system, display interrupt counts per CPU.
-The intrid is an interrupt name such as "ioapic0 pin 22" for x86.
 .It affinity Fl c Ar cpu_index Fl i Ar intrid
 set an
 .Ar intrid
@@ -59,12 +56,15 @@ enable to set an interrupt's affinity to
 If
 .Ar cpu_index
 is already enabled, this command has no effect.
+.It list
+for each intrid in the system, display interrupt counts per CPU.
+The intrid is an interrupt name such as "ioapic0 pin 22" for x86.
 .It nointr Fl c Ar cpu_index
 disable to set an interrupt's affinity to
 .Ar cpu_index .
 If
 .Ar cpu_index
 is already disabled, this command has no effect.
-.Ed
+.El
 .Sh SEE ALSO
 .Xr cpuctl 8
