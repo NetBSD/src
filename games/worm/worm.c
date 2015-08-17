@@ -1,4 +1,4 @@
-/*	$NetBSD: worm.c,v 1.30 2011/05/23 23:03:38 joerg Exp $	*/
+/*	$NetBSD: worm.c,v 1.31 2015/08/17 17:17:01 dholland Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: worm.c,v 1.30 2011/05/23 23:03:38 joerg Exp $");
+__RCSID("$NetBSD: worm.c,v 1.31 2015/08/17 17:17:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,6 @@ __RCSID("$NetBSD: worm.c,v 1.30 2011/05/23 23:03:38 joerg Exp $");
 #include <termios.h>
 #include <unistd.h>
 
-#define newlink() (struct body *) malloc(sizeof (struct body));
 #define HEAD '@'
 #define BODY 'o'
 #define LENGTH 7
@@ -93,6 +92,18 @@ static void prize(void);
 static int rnd(int);
 static void setup(void);
 static void wake(int);
+
+static struct body *
+newlink(void)
+{
+	struct body *b;
+
+	b = malloc(sizeof(*b));
+	if (b == NULL) {
+		err(EXIT_FAILURE, NULL);
+	}
+	return b;
+}
 
 int
 main(int argc, char **argv)
@@ -163,16 +174,12 @@ life(void)
 
 	np = NULL;
 	head = newlink();
-	if (head == NULL)
-		err(1, NULL);
 	head->x = start_len % (COLS-5) + 2;
 	head->y = LINES / 2;
 	head->next = NULL;
 	display(head, HEAD);
 	for (i = 0, bp = head; i < start_len; i++, bp = np) {
 		np = newlink();
-		if (np == NULL)
-			err(1, NULL);
 		np->next = bp;
 		bp->prev = np;
 		if (((bp->x <= 2) && (j == 1)) || ((bp->x >= COLS-4) && (j == -1))) {
@@ -326,8 +333,6 @@ process(int ch)
 	}
 	else if(ch != ' ') crash();
 	nh = newlink();
-	if (nh == NULL)
-		err(1, NULL);
 	nh->next = NULL;
 	nh->prev = head;
 	head->next = nh;
