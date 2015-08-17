@@ -36,7 +36,7 @@
 #define DEFAULT_BFD_ARCH bfd_rs6000_arch
 
 /* Define to BFD's default target vector. */
-#define DEFAULT_BFD_VEC bfd_elf64_powerpc_vec
+#define DEFAULT_BFD_VEC powerpc_elf64_vec
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
@@ -79,9 +79,6 @@
 
 /* Define to 1 if you have the `btowc' function. */
 #define HAVE_BTOWC 1
-
-/* Define to 1 if you have the `canonicalize_file_name' function. */
-/* #undef HAVE_CANONICALIZE_FILE_NAME */
 
 /* Define to 1 if you have the <cursesX.h> header file. */
 /* #undef HAVE_CURSESX_H */
@@ -164,6 +161,9 @@
 /* Define if <sys/procfs.h> has gregset_t. */
 /* #undef HAVE_GREGSET_T */
 
+/* Define if Guile interpreter is being linked in. */
+/* #undef HAVE_GUILE */
+
 /* Define if you have the iconv() function. */
 #define HAVE_ICONV 1
 
@@ -227,9 +227,6 @@
 /* Define to 1 if the compiler supports long double. */
 #define HAVE_LONG_DOUBLE 1
 
-/* Define to 1 if you have the `lstat' function. */
-#define HAVE_LSTAT 1
-
 /* Define if <sys/procfs.h> has lwpid_t. */
 /* #undef HAVE_LWPID_T */
 
@@ -238,6 +235,9 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
+
+/* Define to 1 if you have the `mkdtemp' function. */
+#define HAVE_MKDTEMP 1
 
 /* Define to 1 if you have a working `mmap' system call. */
 #define HAVE_MMAP 1
@@ -332,17 +332,14 @@
 /* Define if Python interpreter is being linked in. */
 /* #undef HAVE_PYTHON */
 
-/* Define to 1 if you have the `readlink' function. */
-#define HAVE_READLINK 1
-
-/* Define to 1 if you have the `realpath' function. */
-#define HAVE_REALPATH 1
-
 /* Define to 1 if you have the `resize_term' function. */
 /* #undef HAVE_RESIZE_TERM */
 
 /* Define to 1 if you have the `sbrk' function. */
 #define HAVE_SBRK 1
+
+/* Define to 1 if you have the `scm_new_smob' function. */
+/* #undef HAVE_SCM_NEW_SMOB */
 
 /* Define to 1 if you have the `setlocale' function. */
 #define HAVE_SETLOCALE 1
@@ -364,6 +361,9 @@
 
 /* Define to 1 if you have the `sigaction' function. */
 /* #undef HAVE_SIGACTION */
+
+/* Define to 1 if you have the `sigaltstack' function. */
+#define HAVE_SIGALTSTACK 1
 
 /* Define to 1 if you have the <signal.h> header file. */
 #define HAVE_SIGNAL_H 1
@@ -521,6 +521,9 @@
 /* Define to 1 if you have the `wborder' function. */
 #define HAVE_WBORDER 1
 
+/* Define to 1 if you have the <windows.h> header file. */
+/* #undef HAVE_WINDOWS_H */
+
 /* Define to 1 if `fork' works. */
 #define HAVE_WORKING_FORK 1
 
@@ -641,7 +644,7 @@
 #define SIZEOF_UNSIGNED_LONG_LONG 8
 
 /* The size of `unsigned __int128', as computed by sizeof. */
-#define SIZEOF_UNSIGNED___INT128 0
+#define SIZEOF_UNSIGNED___INT128 16
 
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
