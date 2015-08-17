@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.h,v 1.1 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: interrupt.h,v 1.2 2015/08/17 18:43:37 macallan Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #ifndef _SYS_INTERRUPT_H_
-#define _SYS_INTERUPT_H_
+#define _SYS_INTERRUPT_H_
 
 #include <sys/types.h>
 #include <sys/intr.h>
