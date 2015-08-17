@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.270 2015/03/22 09:57:42 ast Exp $
+#	$NetBSD: Makefile,v 1.271 2015/08/17 06:42:46 knakahara Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -11,7 +11,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	flashctl fssconfig fusermount fwctl \
 	gpioctl grfconfig gspa \
 	hdaudioctl \
-	i2cscan ifwatchd inetd installboot iopctl iostat ipwctl irdaattach \
+	i2cscan ifwatchd inetd installboot intrctl iopctl iostat ipwctl irdaattach \
 	isdn isibootd iteconfig iwictl \
 	kgmon \
 	lastlogin ldpd link lmcconfig lockstat lpr \
