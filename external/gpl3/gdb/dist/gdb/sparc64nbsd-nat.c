@@ -141,25 +141,25 @@ sparc64nbsd_fpregset_supplies_p (struct gdbarch *gdbarch, int regnum)
 void
 supply_gregset (struct regcache *regcache, const gregset_t *gregs)
 {
-  sparc64nbsd_supply_gregset (sparc_gregset, regcache, -1, gregs);
+  sparc64nbsd_supply_gregset (sparc_gregmap, regcache, -1, gregs);
 }
 
 void
 supply_fpregset (struct regcache *regcache, const fpregset_t *fpregs)
 {
-  sparc64nbsd_supply_fpregset (sparc_fpregset, regcache, -1, fpregs);
+  sparc64nbsd_supply_fpregset (sparc_fpregmap, regcache, -1, fpregs);
 }
 
 void
 fill_gregset (const struct regcache *regcache, gregset_t *gregs, int regnum)
 {
-  sparc64nbsd_collect_gregset (sparc_gregset, regcache, regnum, gregs);
+  sparc64nbsd_collect_gregset (sparc_gregmap, regcache, regnum, gregs);
 }
 
 void
 fill_fpregset (const struct regcache *regcache, fpregset_t *fpregs, int regnum)
 {
-  sparc64nbsd_collect_fpregset (sparc_fpregset, regcache, regnum, fpregs);
+  sparc64nbsd_collect_fpregset (sparc_fpregmap, regcache, regnum, fpregs);
 }
 /* Support for debugging kernel virtual memory images.  */
 
