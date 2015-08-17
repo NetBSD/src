@@ -341,16 +341,12 @@ alphanbsd_init_abi (struct gdbarch_info info,
   tdep->jb_pc = 2;
   tdep->jb_elt_size = 8;
 
-  set_gdbarch_regset_from_core_section
-    (gdbarch, alphanbsd_regset_from_core_section);
-
   tramp_frame_prepend_unwinder (gdbarch, &alphanbsd_sigtramp_sc1);
   tramp_frame_prepend_unwinder (gdbarch, &alphanbsd_sigtramp_si2);
   tramp_frame_prepend_unwinder (gdbarch, &alphanbsd_sigtramp_si4);
-#if 0
+
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, alphanbsd_iterate_over_regset_sections);
-#endif
 }
 
 
