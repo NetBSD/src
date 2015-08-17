@@ -3,7 +3,7 @@
 /* Generated from: NetBSD: mknative.common,v 1.11 2014/02/17 21:39:43 christos Exp  */
 
 /* config.h.  Generated from config.in by configure.  */
-/* config.in.  Generated from configure.in by autoheader.  */
+/* config.in.  Generated from configure.ac by autoheader.  */
 
 /* Check that config.h is #included before system headers
     (this works only for glibc, but that should be enough).  */
@@ -68,6 +68,10 @@
 /* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
    */
 #define HAVE_DECL_STPCPY 1
+
+/* Define to 1 if you have the declaration of `strnlen', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRNLEN 1
 
 /* Define to 1 if you have the declaration of `strstr', and to 0 if you don't.
    */
@@ -286,7 +290,7 @@
 #define PACKAGE_NAME "bfd"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "bfd 2.24.51"
+#define PACKAGE_STRING "bfd 2.25.51"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "bfd"
@@ -295,7 +299,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.24.51"
+#define PACKAGE_VERSION "2.25.51"
 
 /* The size of `char', as computed by sizeof. */
 /* #undef SIZEOF_CHAR */
@@ -340,7 +344,7 @@
 /* #undef USE_MMAP */
 
 /* Define if we should default to creating read-only plt entries */
-/* #undef USE_SECUREPLT */
+#define USE_SECUREPLT 1
 
 /* Define if we may generate symbols with ELF's STT_COMMON type */
 /* #undef USE_STT_COMMON */
@@ -368,7 +372,7 @@
 
 
 /* Version number of package */
-#define VERSION "2.24.51"
+#define VERSION "2.25.51"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */
