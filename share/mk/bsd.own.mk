@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.867 2015/08/17 09:58:52 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.868 2015/08/17 10:06:29 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -113,6 +113,7 @@ HAVE_LIBGCC_EH?=	yes
 
 .if (${MACHINE_ARCH} == "x86_64") || \
     (${MACHINE_ARCH} == "sparc") || \
+    (${MACHINE_ARCH} == "sparc64") || \
     (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_CPU} == "m68k") || \
     (${MACHINE_ARCH} == "i386")
