@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.4 2015/08/10 09:32:01 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.5 2015/08/17 07:47:21 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -127,6 +127,13 @@ cache_expiration_body()
 	atf_check -s exit:0 -o match:'23h59m' rump.ndp -n $IP6DST
 }
 
+ifdown_dst_server()
+{
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 rump.ifconfig shmif0 down
+	export RUMP_SERVER=$SOCKSRC
+}
+
 command_body()
 {
 	atf_check -s exit:0 ${inetserver} $SOCKSRC
@@ -169,6 +176,9 @@ command_body()
 	# Test ndp -a
 	atf_check -s exit:0 -o match:'fc00::11' rump.ndp -n -a
 	atf_check -s exit:0 -o match:'fc00::12' rump.ndp -n -a
+
+	# Ensure no packet upsets the src server
+	ifdown_dst_server
 
 	# Flush all entries (-c)
 	$DEBUG && rump.ndp -n -a
