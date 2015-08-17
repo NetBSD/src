@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.h 279393 2015-02-28 14:57:57Z ngie $*/
-/*$NetBSD: ixgbe.h,v 1.8 2015/08/05 04:08:44 msaitoh Exp $*/
+/*$NetBSD: ixgbe.h,v 1.9 2015/08/17 06:16:03 knakahara Exp $*/
 
 
 #ifndef _IXGBE_H_
@@ -107,6 +107,7 @@
 #include <sys/endian.h>
 #include <sys/workqueue.h>
 #include <sys/cpu.h>
+#include <sys/interrupt.h>
 
 #include "ixgbe_netbsd.h"
 #include "ixgbe_api.h"
