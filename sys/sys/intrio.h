@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.h,v 1.3 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: intrio.h,v 1.1 2015/08/17 06:16:03 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -26,21 +26,43 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _X86_PCI_PCI_MSI_MACHDEP_H_
-#define _X86_PCI_PCI_MSI_MACHDEP_H_
+#ifndef _SYS_INTRIO_H_
+#define _SYS_INTRIO_H_
 
-const char	*x86_pci_msi_string(pci_chipset_tag_t, pci_intr_handle_t,
-		    char *, size_t);
-void		x86_pci_msi_release(pci_chipset_tag_t, pci_intr_handle_t *,
-		    int);
-void		*x86_pci_msi_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *, const char *);
-void		x86_pci_msi_disestablish(pci_chipset_tag_t, void *);
+#include <sys/types.h>
+#include <sys/intr.h>
+#include <sys/sched.h>
 
-void		x86_pci_msix_release(pci_chipset_tag_t, pci_intr_handle_t *,
-		    int);
-void		*x86_pci_msix_establish(pci_chipset_tag_t, pci_intr_handle_t,
-		    int, int (*)(void *), void *, const char *xname);
-void		x86_pci_msix_disestablish(pci_chipset_tag_t, void *);
+#define INTRIO_LIST_VERSION 1
 
-#endif /* _X86_PCI_PCI_MSI_MACHDEP_H_ */
+struct intrio_set {
+	char intrid[INTRIDBUF];
+	cpuset_t *cpuset;
+	size_t cpuset_size;
+};
+
+struct intrio_list_line_cpu {
+	bool illc_assigned;
+	uint64_t illc_count;
+};
+
+struct intrio_list_line {
+	char ill_intrid[INTRIDBUF];
+	char ill_xname[INTRDEVNAMEBUF];
+	struct intrio_list_line_cpu ill_cpu[1]; /* Array size is overwritten to ncpu. */
+};
+
+struct intrio_list {
+	int il_version; /* Version number of this struct. */
+	int il_ncpus;
+	int il_nintrs;
+	size_t il_bufsize;
+
+	size_t il_linesize;
+	off_t il_lineoffset;
+/*
+ * struct intrio_list_line il_lines[interrupt_num] must be followed here.
+ */
+};
+
+#endif /* !_SYS_INTRIO_H_ */

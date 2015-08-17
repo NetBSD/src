@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 /*$FreeBSD: head/sys/dev/ixgbe/ixgbe.c 279805 2015-03-09 10:29:15Z araujo $*/
-/*$NetBSD: ixgbe.c,v 1.35 2015/08/13 10:03:37 msaitoh Exp $*/
+/*$NetBSD: ixgbe.c,v 1.36 2015/08/17 06:16:03 knakahara Exp $*/
 
 #include "opt_inet.h"
 #include "opt_inet6.h"
@@ -2689,7 +2689,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 		/* Round-robin affinity */
 		kcpuset_zero(affinity);
 		kcpuset_set(affinity, cpu_id % ncpu);
-		error = pci_intr_distribute(adapter->osdep.ihs[i], affinity,
+		error = interrupt_distribute(adapter->osdep.ihs[i], affinity,
 		    NULL);
 		aprint_normal_dev(dev, "for TX/RX, interrupting at %s",
 		    intrstr);
@@ -2736,7 +2736,7 @@ ixgbe_allocate_msix(struct adapter *adapter, const struct pci_attach_args *pa)
 	/* Round-robin affinity */
 	kcpuset_zero(affinity);
 	kcpuset_set(affinity, cpu_id % ncpu);
-	error = pci_intr_distribute(adapter->osdep.ihs[vector], affinity,NULL);
+	error = interrupt_distribute(adapter->osdep.ihs[vector], affinity,NULL);
 
 	aprint_normal_dev(dev,
 	    "for link, interrupting at %s", intrstr);
