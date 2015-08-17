@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.155 2014/11/09 22:50:38 christos Exp $ */
+/*	$NetBSD: sysctl.c,v 1.156 2015/08/17 06:42:46 knakahara Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.155 2014/11/09 22:50:38 christos Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.156 2015/08/17 06:42:46 knakahara Exp $");
 #endif
 #endif /* not lint */
 
@@ -196,6 +196,11 @@ static const struct handlespec {
 
 	{ "/kern/coredump/setid/mode",		mode_bits, mode_bits, NULL },
 	{ "/kern/drivers",			kern_drivers, NULL, NULL },
+
+	{ "/kern/intr/list",			printother, NULL, "intrctl" },
+	{ "/kern/intr/affinity",		printother, NULL, "intrctl" },
+	{ "/kern/intr/intr",			printother, NULL, "intrctl" },
+	{ "/kern/intr/nointr",			printother, NULL, "intrctl" },
 
 	{ "/vm/vmmeter",			printother, NULL,
 						"vmstat' or 'systat" },
