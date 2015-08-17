@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.89 2015/08/16 18:00:03 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.90 2015/08/17 19:47:21 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.89 2015/08/16 18:00:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.90 2015/08/17 19:47:21 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ static void	ld_fake_geometry(struct ld_softc *);
 static void	ld_set_geometry(struct ld_softc *);
 static void	ld_config_interrupts (device_t);
 static int	ld_lastclose(device_t);
+static int	ld_discard(device_t, off_t, off_t);
 
 extern struct	cfdriver ld_cd;
 
@@ -81,6 +82,7 @@ static dev_type_ioctl(ldioctl);
 static dev_type_strategy(ldstrategy);
 static dev_type_dump(lddump);
 static dev_type_size(ldsize);
+static dev_type_discard(lddiscard);
 
 const struct bdevsw ld_bdevsw = {
 	.d_open = ldopen,
@@ -89,7 +91,7 @@ const struct bdevsw ld_bdevsw = {
 	.d_ioctl = ldioctl,
 	.d_dump = lddump,
 	.d_psize = ldsize,
-	.d_discard = nodiscard,
+	.d_discard = lddiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -104,7 +106,7 @@ const struct cdevsw ld_cdevsw = {
 	.d_poll = nopoll,
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
-	.d_discard = nodiscard,
+	.d_discard = lddiscard,
 	.d_flag = D_DISK | D_MPSAFE
 };
 
@@ -116,7 +118,8 @@ static struct	dkdriver lddkdriver = {
 	.d_minphys  = ldminphys,
 	.d_diskstart = ld_diskstart,
 	.d_dumpblocks = ld_dumpblocks,
-	.d_lastclose = ld_lastclose
+	.d_lastclose = ld_lastclose,
+	.d_discard = ld_discard
 };
 
 void
@@ -577,4 +580,29 @@ ld_config_interrupts(device_t d)
 	struct dk_softc *dksc = &sc->sc_dksc;
 
 	dkwedge_discover(&dksc->sc_dkdev);
+}
+
+static int
+ld_discard(device_t dev, off_t pos, off_t len)
+{
+	struct ld_softc *sc = device_private(dev);
+
+	if (sc->sc_discard == NULL)
+		return (ENXIO);
+
+	return (*sc->sc_discard)(sc, pos, len);
+}
+
+static int
+lddiscard(dev_t dev, off_t pos, off_t len)
+{
+	struct ld_softc *sc;
+	struct dk_softc *dksc;
+	int unit;
+
+	unit = DISKUNIT(dev);
+	sc = device_lookup_private(&ld_cd, unit);
+	dksc = &sc->sc_dksc;
+
+	return dk_discard(dksc, dev, pos, len);
 }
