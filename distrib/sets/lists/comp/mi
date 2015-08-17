@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1979 2015/08/14 02:35:32 knakahara Exp $
+#	$NetBSD: mi,v 1.1980 2015/08/17 06:28:11 knakahara Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9953,6 +9953,7 @@
 ./usr/share/man/cat9/in_getifa.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/incore.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/inittodr.0			comp-sys-catman		.cat
+./usr/share/man/cat9/interrupt_distribute.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/intro.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ioasic.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/ioasic_attach_devs.0	comp-sys-catman		.cat
@@ -10192,7 +10193,6 @@
 ./usr/share/man/cat9/pci_intr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_alloc.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_disestablish.0	comp-sys-catman		.cat
-./usr/share/man/cat9/pci_intr_distribute.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_establish.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_evcnt.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/pci_intr_map.0		comp-sys-catman		.cat
@@ -16768,6 +16768,7 @@
 ./usr/share/man/html9/in_getifa.html		comp-sys-htmlman	html
 ./usr/share/man/html9/incore.html		comp-sys-htmlman	html
 ./usr/share/man/html9/inittodr.html		comp-sys-htmlman	html
+./usr/share/man/html9/interrupt_distribute.html	comp-sys-htmlman	html
 ./usr/share/man/html9/intro.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioasic.html		comp-sys-htmlman	html
 ./usr/share/man/html9/ioasic_attach_devs.html	comp-sys-htmlman	html
@@ -17001,7 +17002,6 @@
 ./usr/share/man/html9/pci_intr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_alloc.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_disestablish.html	comp-sys-htmlman	html
-./usr/share/man/html9/pci_intr_distribute.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_establish.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_evcnt.html	comp-sys-htmlman	html
 ./usr/share/man/html9/pci_intr_map.html		comp-sys-htmlman	html
@@ -23733,6 +23733,7 @@
 ./usr/share/man/man9/in_getifa.9		comp-sys-man		.man
 ./usr/share/man/man9/incore.9			comp-sys-man		.man
 ./usr/share/man/man9/inittodr.9			comp-sys-man		.man
+./usr/share/man/man9/interrupt_distribute.9	comp-sys-man		.man
 ./usr/share/man/man9/intro.9			comp-sys-man		.man
 ./usr/share/man/man9/ioasic.9			comp-sys-man		.man
 ./usr/share/man/man9/ioasic_attach_devs.9	comp-sys-man		.man
@@ -23972,7 +23973,6 @@
 ./usr/share/man/man9/pci_intr.9			comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_alloc.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_disestablish.9	comp-sys-man		.man
-./usr/share/man/man9/pci_intr_distribute.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_establish.9	comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_evcnt.9		comp-sys-man		.man
 ./usr/share/man/man9/pci_intr_map.9		comp-sys-man		.man

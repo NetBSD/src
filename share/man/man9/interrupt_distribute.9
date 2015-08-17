@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr_distribute.9,v 1.2 2015/04/27 10:32:22 wiz Exp $
+.\" $NetBSD: interrupt_distribute.9,v 1.1 2015/08/17 06:28:11 knakahara Exp $
 .\"
 .\" Copyright (c) 2015 Internet Initiative Japan Inc.
 .\" All rights reserved.
@@ -24,15 +24,15 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 8, 2015
-.Dt PCI_INTR_DISTRIBUTE 9
+.Dd August 17, 2015
+.Dt INTERRUPT_DISTRIBUTE 9
 .Os
 .Sh NAME
-.Nm pci_intr_distribute
+.Nm interrupt_distribute
 .Sh SYNOPSIS
-.In dev/pci/pcivar.h
+.In sys/interrupt.h
 .Ft int
-.Fn pci_intr_distribute "void *ich" "const kcpuset_t *newset" \
+.Fn interrupt_distribute "void *ich" "const kcpuset_t *newset" \
 "kcpuset_t *oldset"
 .Sh DESCRIPTION
 The
@@ -40,7 +40,8 @@ The
 function exists to assign an interrupt to a CPU.
 .Pp
 If a driver (or the other kernel component) wishes to assign an
-interrupt to a CPU, it should pass the return value of
+interrupt to a CPU, it should pass a interrupt handler such as
+the return value of
 .Fn pci_intr_establish
 as
 .Fa ich
