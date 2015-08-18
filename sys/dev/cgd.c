@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.99 2015/08/16 18:00:03 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.100 2015/08/18 21:24:19 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.99 2015/08/16 18:00:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.100 2015/08/18 21:24:19 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -476,6 +476,11 @@ cgdiodone(struct buf *nbp)
 		cgd_putdata(dksc, nbp->b_data);
 
 	putiobuf(nbp);
+
+	/* Request is complete for whatever reason */
+	obp->b_resid = 0;
+	if (obp->b_error != 0)
+		obp->b_resid = obp->b_bcount;
 
 	dk_done(dksc, obp);
 }
