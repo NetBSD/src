@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2015/04/13 17:24:24 christos Exp $
+# $NetBSD: Makefile,v 1.10 2015/08/18 10:38:31 christos Exp $
 
 .if (${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64")
 PROG=	iasl
@@ -99,6 +99,7 @@ SRCS+= \
 	adwalk.c \
 	ahids.c \
 	ahpredef.c \
+	ahtable.c \
 	ahuuids.c \
 	cmfsize.c \
 	dmextern.c \
@@ -117,7 +118,6 @@ SRCS+= \
 	dmcstyle.c \
 	dmdeferred.c \
 	dmnames.c \
-	dmobject.c \
 	dmopcode.c \
 	dmresrc.c \
 	dmresrcl.c \
@@ -218,6 +218,7 @@ SRCS+= \
 	utmath.c \
 	utmisc.c \
 	utmutex.c \
+	utnonansi.c \
 	utobject.c \
 	utosi.c \
 	utownerid.c \
