@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.9 2015/08/18 10:39:46 christos Exp $
+# $NetBSD: files.acpica,v 1.10 2015/08/18 15:38:02 chs Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -40,7 +40,7 @@ file	external/bsd/acpica/dist/disassembler/dmwalk.c		acpica & acpi_debug & ddb
 # dispatcher/
 file	external/bsd/acpica/dist/dispatcher/dsargs.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dscontrol.c		acpica
-file	external/bsd/acpica/dist/dispatcher/dsdebug.c		acpica & acpi_debug & ddb
+file	external/bsd/acpica/dist/dispatcher/dsdebug.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dsfield.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dsinit.c		acpica
 file	external/bsd/acpica/dist/dispatcher/dsmethod.c		acpica
