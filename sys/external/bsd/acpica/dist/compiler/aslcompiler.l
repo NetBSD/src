@@ -709,9 +709,18 @@ NamePathTail                [.]{NameSeg}
                                 return (PARSEOP_NAMESTRING); }
 
 .                           { count (1);
-                                snprintf (MsgBuffer, sizeof(MsgBuffer),
-                                    "Invalid character (0x%2.2X), expecting ASL keyword or name",
-                                    *AslCompilertext);
+                                if (isprint ((unsigned int) *AslCompilertext))
+                                {
+                                    snprintf (MsgBuffer, sizeof(MsgBuffer),
+                                        "Invalid character (%c), expecting ASL keyword or name",
+                                        *AslCompilertext);
+                                }
+                                else
+                                {
+                                    snprintf (MsgBuffer, sizeof(MsgBuffer),
+                                        "Invalid character (0x%2.2X), expecting ASL keyword or name",
+                                        *AslCompilertext);
+                                }
                                 AslCompilererror (MsgBuffer);}
 
 <<EOF>>                     { if (AslPopInputFileStack ())
