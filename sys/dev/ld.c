@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.90 2015/08/17 19:47:21 jakllsch Exp $	*/
+/*	$NetBSD: ld.c,v 1.91 2015/08/18 04:20:25 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.90 2015/08/17 19:47:21 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.91 2015/08/18 04:20:25 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,7 +495,7 @@ ld_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	struct ld_softc *sc = device_private(dev);
 
 	if (sc->sc_dump == NULL)
-		return (ENXIO);
+		return (ENODEV);
 
 	return (*sc->sc_dump)(sc, va, blkno, nblk);
 }
@@ -588,7 +588,7 @@ ld_discard(device_t dev, off_t pos, off_t len)
 	struct ld_softc *sc = device_private(dev);
 
 	if (sc->sc_discard == NULL)
-		return (ENXIO);
+		return (ENODEV);
 
 	return (*sc->sc_discard)(sc, pos, len);
 }
