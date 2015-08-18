@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.36 2014/07/25 08:10:40 dholland Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.37 2015/08/18 13:46:20 uebayasi Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.36 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.37 2015/08/18 13:46:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ const struct cdevsw drvctl_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-void drvctlattach(int);
+void drvctlattach(void);
 
 static int	drvctl_read(struct file *, off_t *, struct uio *,
 			    kauth_cred_t, int);
@@ -432,7 +432,7 @@ drvctl_close(struct file *fp)
 }
 
 void
-drvctlattach(int arg)
+drvctlattach(void)
 {
 }
 
