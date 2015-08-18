@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.10 2015/06/16 23:04:13 christos Exp $ */
+/* $NetBSD: acpi.c,v 1.11 2015/08/18 17:46:09 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.10 2015/06/16 23:04:13 christos Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.11 2015/08/18 17:46:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1667,6 +1667,7 @@ acpi_handle_srat(ACPI_TABLE_HEADER *sdp)
 static void
 acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp)
 {
+#if 0
 	ACPI_TABLE_TCPA *tcpa;
 
 	printf(BEGIN_COMMENT);
@@ -1676,7 +1677,7 @@ acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp)
 	printf("\tMaximum Length of Event Log Area=%d\n", tcpa->MaxLogLength);
 	printf("\tPhysical Address of Log Area=0x%08"PRIx64"\n",
 	    tcpa->LogAddress);
-
+#endif
 	printf(END_COMMENT);
 }
 
