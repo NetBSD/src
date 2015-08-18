@@ -192,8 +192,12 @@ typedef struct acpi_namespace_node
      */
 #ifdef ACPI_LARGE_NAMESPACE_NODE
     union acpi_parse_object         *Op;
+    void                            *MethodLocals;
+    void                            *MethodArgs;
     UINT32                          Value;
     UINT32                          Length;
+    UINT8                           ArgCount;
+
 #endif
 
 } ACPI_NAMESPACE_NODE;
@@ -237,6 +241,7 @@ typedef struct acpi_table_list
 
 #define ACPI_TABLE_INDEX_DSDT           (0)
 #define ACPI_TABLE_INDEX_FACS           (1)
+#define ACPI_TABLE_INDEX_X_FACS         (2)
 
 
 typedef struct acpi_find_context
@@ -400,12 +405,24 @@ typedef struct acpi_package_info3
 
 } ACPI_PACKAGE_INFO3;
 
+typedef struct acpi_package_info4
+{
+    UINT8                       Type;
+    UINT8                       ObjectType1;
+    UINT8                       Count1;
+    UINT8                       SubObjectTypes;
+    UINT8                       PkgCount;
+    UINT16                      Reserved;
+
+} ACPI_PACKAGE_INFO4;
+
 typedef union acpi_predefined_info
 {
     ACPI_NAME_INFO              Info;
     ACPI_PACKAGE_INFO           RetInfo;
     ACPI_PACKAGE_INFO2          RetInfo2;
     ACPI_PACKAGE_INFO3          RetInfo3;
+    ACPI_PACKAGE_INFO4          RetInfo4;
 
 } ACPI_PREDEFINED_INFO;
 
@@ -850,7 +867,7 @@ typedef union acpi_parse_value
 } ACPI_PARSE_VALUE;
 
 
-#ifdef ACPI_DISASSEMBLER
+#if defined(ACPI_DISASSEMBLER) || defined(ACPI_DEBUG_OUTPUT)
 #define ACPI_DISASM_ONLY_MEMBERS(a)     a;
 #else
 #define ACPI_DISASM_ONLY_MEMBERS(a)
@@ -861,7 +878,7 @@ typedef union acpi_parse_value
     UINT8                           DescriptorType; /* To differentiate various internal objs */\
     UINT8                           Flags;          /* Type of Op */\
     UINT16                          AmlOpcode;      /* AML opcode */\
-    UINT32                          AmlOffset;      /* Offset of declaration in AML */\
+    UINT8                           *Aml;           /* Address of declaration in AML */\
     union acpi_parse_object         *Next;          /* Next op */\
     ACPI_NAMESPACE_NODE             *Node;          /* For use by interpreter */\
     ACPI_PARSE_VALUE                Value;          /* Value or args associated with the opcode */\
@@ -1277,7 +1294,9 @@ typedef struct acpi_db_method_info
      *   Index of current thread inside all them created.
      */
     char                            InitArgs;
+#ifdef ACPI_DEBUGGER
     ACPI_OBJECT_TYPE                ArgTypes[4];
+#endif
     char                            *Arguments[4];
     char                            NumThreadsStr[11];
     char                            IdOfThreadStr[11];
@@ -1369,5 +1388,12 @@ typedef struct ah_uuid
     const char      *String;
 
 } AH_UUID;
+
+typedef struct ah_table
+{
+    char                    *Signature;
+    char                    *Description;
+
+} AH_TABLE;
 
 #endif /* __ACLOCAL_H__ */
