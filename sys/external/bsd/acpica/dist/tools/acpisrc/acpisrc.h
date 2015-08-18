@@ -261,11 +261,6 @@ AsRemoveLine (
     char                    *Keyword);
 
 void
-AsRemoveMacro (
-    char                    *Buffer,
-    char                    *Keyword);
-
-void
 AsCheckForBraces (
     char                    *Buffer,
     char                    *Filename);
@@ -431,7 +426,3 @@ AsInsertCarriageReturns (
 void
 AsConvertToLineFeeds (
     char                    *Buffer);
-
-void
-AsStrlwr (
-    char                    *SrcString);
