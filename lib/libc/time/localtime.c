@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.96 2015/08/13 11:21:18 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.97 2015/08/18 16:54:27 riz Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.96 2015/08/13 11:21:18 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.97 2015/08/18 16:54:27 riz Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1581,7 +1581,7 @@ leaps_thru_end_of(const int y)
 
 static struct tm *
 timesub(const time_t *timep, int_fast32_t offset,
-    const struct state const *sp, struct tm *tmp)
+    const struct state *sp, struct tm *tmp)
 {
 	const struct lsinfo *	lp;
 	time_t			tdays;
