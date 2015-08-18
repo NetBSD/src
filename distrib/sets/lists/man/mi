@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1504 2015/08/17 06:50:03 knakahara Exp $
+# $NetBSD: mi,v 1.1505 2015/08/18 15:54:20 phx Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1391,6 +1391,7 @@
 ./usr/share/man/cat4/mcclock.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcd.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcp23s17gpio.0		man-sys-catman		.cat
+./usr/share/man/cat4/mcp3kadc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mcp980x.0			man-sys-catman		.cat
 ./usr/share/man/cat4/md.0			man-sys-catman		.cat
 ./usr/share/man/cat4/mfb.0			man-sys-catman		.cat
@@ -4415,6 +4416,7 @@
 ./usr/share/man/html4/mcclock.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcd.html			man-sys-htmlman		html
 ./usr/share/man/html4/mcp23s17gpio.html		man-sys-htmlman		html
+./usr/share/man/html4/mcp3kadc.html		man-sys-htmlman		html
 ./usr/share/man/html4/mcp980x.html		man-sys-htmlman		html
 ./usr/share/man/html4/md.html			man-sys-htmlman		html
 ./usr/share/man/html4/mfb.html			man-sys-htmlman		html
@@ -7289,6 +7291,7 @@
 ./usr/share/man/man4/mcclock.4			man-sys-man		.man
 ./usr/share/man/man4/mcd.4			man-sys-man		.man
 ./usr/share/man/man4/mcp23s17gpio.4		man-sys-man		.man
+./usr/share/man/man4/mcp3kadc.4			man-sys-man		.man
 ./usr/share/man/man4/mcp980x.4			man-sys-man		.man
 ./usr/share/man/man4/md.4			man-sys-man		.man
 ./usr/share/man/man4/mfb.4			man-sys-man		.man
