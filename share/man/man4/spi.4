@@ -1,4 +1,4 @@
-.\"	$NetBSD: spi.4,v 1.4 2009/05/27 19:24:00 snj Exp $
+.\"	$NetBSD: spi.4,v 1.5 2015/08/18 19:40:21 phx Exp $
 .\"
 .\" Copyright (c) 2006 Urbana-Champaign Independent Media Center.
 .\" Copyright (c) 2006 Garrett D'Amore.
@@ -97,11 +97,20 @@ drivers
 .Bl -tag -width pcdisplay -offset indent
 .It m25p
 STMicroelectronics M25P family of NOR flash devices.
+.It mcp23s17gpio
+Microchip MCP23S17 16-bit GPIO chip.
+.It mcp3kadc
+Microchip MCP3x0x SAR analog to digital converter.
+.It mcp48x1dac
+Microchip MCP4801/MCP4811/MCP4821 digital to analog converter.
 .It tm121temp
 Texas Instruments TMP121 temperature sensor.
 .El
 .Sh SEE ALSO
 .Xr m25p 4 ,
+.Xr mcp23s17gpio 4 ,
+.Xr mcp3kadc 4 ,
+.Xr mcp48x1dac 4 ,
 .Xr tm121temp 4
 .Sh HISTORY
 The machine-independent
