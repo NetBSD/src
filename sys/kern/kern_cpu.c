@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.67 2015/01/07 07:05:48 ozaki-r Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.68 2015/08/18 13:46:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.67 2015/01/07 07:05:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.68 2015/08/18 13:46:20 uebayasi Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -94,7 +94,7 @@ CTASSERT(offsetof(struct cpu_info, ci_data) == 0);
 CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
 #endif
 
-void	cpuctlattach(int);
+void	cpuctlattach(void);
 
 static void	cpu_xc_online(struct cpu_info *);
 static void	cpu_xc_offline(struct cpu_info *);
@@ -204,7 +204,7 @@ mi_cpu_attach(struct cpu_info *ci)
 }
 
 void
-cpuctlattach(int dummy)
+cpuctlattach(void)
 {
 
 	KASSERT(cpu_infos != NULL);
