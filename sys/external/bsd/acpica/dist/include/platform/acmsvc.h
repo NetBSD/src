@@ -44,6 +44,7 @@
 #ifndef __ACMSVC_H__
 #define __ACMSVC_H__
 
+/* Note: do not include any C library headers here */
 
 /*
  * Map low I/O functions for MS. This allows us to disable MS language
@@ -56,7 +57,6 @@
 #define stat            _stat
 #define fstat           _fstat
 #define mkdir           _mkdir
-#define strlwr          _strlwr
 #define O_RDONLY        _O_RDONLY
 #define O_BINARY        _O_BINARY
 #define O_CREAT         _O_CREAT
@@ -147,14 +147,9 @@
 #endif
 
 
-/* Debug support. Must be last in this file, do not move. */
+/* Debug support. */
 
 #ifdef _DEBUG
-#define _CRTDBG_MAP_ALLOC /* Enables specific file/lineno for leaks */
-
-#include <stdlib.h>
-#include <malloc.h>
-#include <crtdbg.h>
 
 /*
  * Debugging memory corruption issues with windows:
@@ -183,6 +178,11 @@ Dumping objects ->
 _CrtSetBreakAlloc (937);
 #endif
 
+#endif
+
+#if _MSC_VER > 1200 /* Versions above VC++ 6 */
+#define COMPILER_VA_MACRO               1
+#else
 #endif
 
 #endif /* __ACMSVC_H__ */

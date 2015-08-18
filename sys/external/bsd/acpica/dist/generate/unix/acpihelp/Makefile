@@ -35,6 +35,7 @@ OBJECTS = \
 	$(OBJDIR)/ahids.o\
 	$(OBJDIR)/ahpredef.o\
 	$(OBJDIR)/ahmain.o\
+	$(OBJDIR)/ahtable.o\
 	$(OBJDIR)/ahuuids.o\
 	$(OBJDIR)/getopt.o\
 	$(OBJDIR)/oslibcfs.o\
@@ -44,6 +45,7 @@ OBJECTS = \
 	$(OBJDIR)/utglobal.o\
 	$(OBJDIR)/uthex.o\
 	$(OBJDIR)/utmath.o\
+	$(OBJDIR)/utnonansi.o\
 	$(OBJDIR)/utpredef.o\
 	$(OBJDIR)/utprint.o\
 	$(OBJDIR)/utuuid.o
