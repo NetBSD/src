@@ -604,16 +604,10 @@ AcpiDsCreateOperand (
                     /* TBD: May only be temporary */
 
                     ObjDesc = AcpiUtCreateStringObject ((ACPI_SIZE) NameLength);
-		    if (ObjDesc)
-		    {
-			ACPI_STRNCPY (ObjDesc->String.Pointer, NameString, NameLength);
-			Status = AE_OK;
-		    }
-		    else
-		    {
-			Status = AE_NO_MEMORY;
-		    }
-		}
+
+                    strncpy (ObjDesc->String.Pointer, NameString, NameLength);
+                    Status = AE_OK;
+                }
                 else
                 {
                     /*
