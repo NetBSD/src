@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.71 2015/08/16 18:00:03 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.72 2015/08/18 21:26:16 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.71 2015/08/16 18:00:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.72 2015/08/18 21:26:16 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,26 +220,26 @@ dk_translate(struct dk_softc *dksc, struct buf *bp)
 	numsecs = dk->dk_geom.dg_secperunit;
 	secsize = dk->dk_geom.dg_secsize;
 
-	bp->b_resid = bp->b_bcount;
-
 	/*
 	 * The transfer must be a whole number of blocks and the offset must
 	 * not be negative.
 	 */
-	if ((bp->b_bcount % secsize) != 0 || bp->b_blkno < 0)
-		return EINVAL;
+	if ((bp->b_bcount % secsize) != 0 || bp->b_blkno < 0) {
+		bp->b_error = EINVAL;
+		goto done;
+	}
 
 	/* If there is nothing to do, then we are done */
 	if (bp->b_bcount == 0)
-		return 0;
+		goto done;
 
 	wlabel = dksc->sc_flags & (DKF_WLABEL|DKF_LABELLING);
 	if (part == RAW_PART) {
 		if (bounds_check_with_mediasize(bp, DEV_BSIZE, numsecs) <= 0)
-			return bp->b_error;
+			goto done;
 	} else {
 		if (bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0)
-			return bp->b_error;
+			goto done;
 	}
 
 	/*
@@ -256,6 +256,10 @@ dk_translate(struct dk_softc *dksc, struct buf *bp)
 	bp->b_rawblkno = blkno;
 
 	return -1;
+
+done:
+	bp->b_resid = bp->b_bcount;
+	return bp->b_error;
 }
 
 void
