@@ -1,6 +1,7 @@
 /******************************************************************************
  *
- * Module Name: ahaslkey - Table of all known ASL non-operator keywords
+ * Module Name: ahaslkey - Table of all known ASL non-operator keywords and
+ *                         table of iASL Preprocessor directives
  *
  *****************************************************************************/
 
@@ -146,4 +147,46 @@ const AH_ASL_KEYWORD        AslKeywordInfo[] =
     {"XferTypeKeyword", "DMA Transfer Types",
         ":= Transfer8 | Transfer16 | Transfer8_16"},
     {NULL, NULL, NULL}
+};
+
+/* Preprocessor directives */
+
+const AH_DIRECTIVE_INFO      PreprocessorDirectives[] =
+{
+    {"#include \"Filename\"",               "Standard include of an ASCII ASL source code file"},
+    {"#include <Filename>",                 "Alternate syntax for #include, alternate search path"},
+    {"#includebuffer \"Filename\" <Name>",  "Include a binary file to create AML Buffer with ASL namepath"},
+    {"#includebuffer <Filename> <Name>",    "Alternate syntax for #includebuffer, alternate search path"},
+
+    {"",  ""},
+    {"#define <Name>, <Defined name>",      "Simple macro definition (full macros not supported at this time)"},
+    {"#define <Expression>, <Defined name>","Simple macro definition (full macros not supported at this time)"},
+    {"#undef <Defined name>",               "Delete a previous #define"},
+
+    {"",  ""},
+    {"#if <Expression>",                    "Evaluate <Expression> and test return value"},
+    {"#ifdef <Defined name>",               "Test existence of the <Defined Name>"},
+    {"#ifndef <Defined name>",              "Test non-existence of the <Defined Name>"},
+    {"#elif <Expression>",                  "Else-If contraction - evaluate #if <Expression>, test return value"},
+    {"#else",                               "Execute alternate case for a previous #if, #ifdef or #ifndef block"},
+    {"#endif",                              "Close a previous #if, #ifdef or #ifndef block"},
+
+    {"",   ""},
+    {"#line <LineNumber> [Filename]",       "Set the current ASL source code line number, optional filename"},
+
+    {"",   ""},
+    {"#error \"String\"",                   "Emit error message and abort compilation"},
+    {"#warning \"String\"",                 "Emit an iASL warning at this location in the ASL source"},
+
+    {"",  ""},
+    {"#pragma disable (Error number)",      "Disable an iASL error or warning number"},
+    {"#pragma message \"String\"",          "Emit an informational message to the output file(s)"},
+
+    {"",  ""},
+    {"__FILE__",                            "Return the simple filename of the current ASL file"},
+    {"__PATH__",                            "Return the full pathname of the current ASL file"},
+    {"__LINE__",                            "Return the current line number within the current ASL file"},
+    {"__DATE__",                            "Return the current date"},
+    {"__IASL__",                            "Permanently defined for the iASL compiler"},
+    {NULL,                                   NULL}
 };
