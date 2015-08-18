@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1244 2015/08/13 11:30:17 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1245 2015/08/18 08:39:34 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -450,8 +450,8 @@ Before importing a new version of external/gpl3/gcc:
 	- update tools/gcc/gcc-version.mk
 
 Package:	gdb
-Version:	7.7.1
-Current Vers:	7.9
+Version:	7.9.1
+Current Vers:	7.9.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
