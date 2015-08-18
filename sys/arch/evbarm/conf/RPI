@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.63 2015/04/18 13:43:45 skrll Exp $
+#	$NetBSD: RPI,v 1.64 2015/08/18 15:54:20 phx Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -143,6 +143,10 @@ iic* at i2cbus?
 # SPI controller
 bcmspi* at obio?
 spi* at spibus?
+
+# MCP3x0x ADC
+# flags selects the actual chip, refer to mcp3kadc(4)
+#mcp3kadc0 at spi? slave 0 flags 0
 
 # PIFace or other boards using that chip (needs gpio)
 #mcp23s17gpio0 at spi? slave 0 flags 0
