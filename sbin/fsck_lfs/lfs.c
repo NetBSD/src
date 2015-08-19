@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.56 2015/08/12 18:28:00 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.57 2015/08/19 20:33:29 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -356,9 +356,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 
 	ip = ecalloc(1, sizeof(*ip));
 
-	dip = ecalloc(1, sizeof(*dip));
-	// XXX bogus cast
-	ip->i_din.ffs1_din = (struct lfs32_dinode *)dip;
+	ip->i_din = dip = ecalloc(1, sizeof(*dip));
 
 	/* Initialize the inode -- from lfs_vcreate. */
 	ip->inode_ext.lfs = ecalloc(1, sizeof(*ip->inode_ext.lfs));
@@ -381,12 +379,7 @@ lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
 			free(vp);
 			return NULL;
 		}
-		// XXX this should go away
-		if (fs->lfs_is64) {
-			memcpy(ip->i_din.ffs2_din, &dip->u_64, sizeof(dip->u_64));
-		} else {
-			memcpy(ip->i_din.ffs1_din, &dip->u_32, sizeof(dip->u_32));
-		}
+		lfs_copy_dinode(fs, ip->i_din, dip);
 		brelse(bp, 0);
 	}
 	ip->i_number = ino;
