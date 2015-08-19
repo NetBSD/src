@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.265 2015/03/01 08:10:57 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.266 2015/08/19 06:23:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.265 2015/03/01 08:10:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.266 2015/08/19 06:23:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -529,7 +529,7 @@ uhci_init(uhci_softc_t *sc)
 	callout_init(&sc->sc_poll_handle, CALLOUT_MPSAFE);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_softwake_cv, "uhciab");
 
 	/* Set up the bus struct. */

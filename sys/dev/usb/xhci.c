@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28 2014/11/18 10:18:45 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.29 2015/08/19 06:23:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28 2014/11/18 10:18:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.29 2015/08/19 06:23:35 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -872,7 +872,7 @@ xhci_init(struct xhci_softc *sc)
 	    xhci_op_read_4(sc, XHCI_USBCMD));
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_softwake_cv, "xhciab");
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct xhci_xfer), 0, 0, 0,
