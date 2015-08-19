@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci_pci.c,v 1.58 2014/09/21 14:30:22 christos Exp $	*/
+/*	$NetBSD: uhci_pci.c,v 1.59 2015/08/19 06:16:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.58 2014/09/21 14:30:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci_pci.c,v 1.59 2015/08/19 06:16:18 skrll Exp $");
 
 #include "ehci.h"
 
@@ -132,7 +132,7 @@ uhci_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, uhci_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, uhci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
