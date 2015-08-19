@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.12 2015/08/18 17:49:49 christos Exp $ */
+/* $NetBSD: acpi.c,v 1.13 2015/08/19 07:37:17 christos Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.12 2015/08/18 17:49:49 christos Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.13 2015/08/19 07:37:17 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -1667,18 +1667,37 @@ acpi_handle_srat(ACPI_TABLE_HEADER *sdp)
 static void
 acpi_handle_tcpa(ACPI_TABLE_HEADER *sdp)
 {
-#if 0
-	ACPI_TABLE_TCPA *tcpa;
+	ACPI_TABLE_TCPA_HDR *tcpah;
+	ACPI_TABLE_TCPA_CLIENT *tcpac;
+	ACPI_TABLE_TCPA_SERVER *tcpas;
 
 	printf(BEGIN_COMMENT);
 	acpi_print_sdt(sdp);
-	tcpa = (ACPI_TABLE_TCPA *)sdp;
+	tcpah = (void *)sdp;
+	switch (tcpah->PlatformClass) {
+	case ACPI_TCPA_CLIENT_TABLE:
+		tcpac = (void *)((char *)sdp + sizeof(*tcpah));
+		printf("\tMinimum Length of Event Log Area=%"PRIu32"\n",
+		    tcpac->MinimumLogLength);
+		printf("\tPhysical Address of Log Area=0x%08"PRIx64"\n",
+		    tcpac->LogAddress);
+		break;
 
-	printf("\tMaximum Length of Event Log Area=%d\n", tcpa->MaxLogLength);
-	printf("\tPhysical Address of Log Area=0x%08"PRIx64"\n",
-	    tcpa->LogAddress);
+	case ACPI_TCPA_SERVER_TABLE:
+		tcpas = (void *)((char *)sdp + sizeof(*tcpah));
+		printf("\tMinimum Length of Event Log Area=%"PRIu64"\n",
+		    tcpas->MinimumLogLength);
+		printf("\tPhysical Address of Log Area=0x%08"PRIx64"\n",
+		    tcpas->LogAddress);
+		break;
+
+	default:
+		printf ("\tUnknown TCPA Platform Class 0x%X\n",
+		    tcpah->PlatformClass);
+		break;
+	}
+
 	printf(END_COMMENT);
-#endif
 }
 
 static void
