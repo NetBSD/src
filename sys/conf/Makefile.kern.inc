@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.184 2015/05/01 02:00:41 nat Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.185 2015/08/19 05:46:11 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -242,6 +242,13 @@ SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
 		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+
+# Give MD generated ldscript dependency on ${SYSTEM_OBJ}
+.if defined(KERNLDSCRIPT)
+.if target(${KERNLDSCRIPT})
+${KERNLDSCRIPT}: ${SYSTEM_OBJ}
+.endif
+.endif
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
