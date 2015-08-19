@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_user.h,v 1.10 2015/08/12 18:28:00 dholland Exp $ */
+/* $NetBSD: lfs_user.h,v 1.11 2015/08/19 20:33:29 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -72,8 +72,7 @@ typedef int32_t ulfs_daddr_t;
 
 /* Convert between inode pointers and vnode pointers. */
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
-// XXX bogus cast
-#define VTOD(vp)	((union lfs_dinode *)(VTOI(vp)->i_din.ffs1_din))
+#define VTOD(vp)	(VTOI(vp)->i_din)
 
 #define sbdirty()	++fsdirty
 

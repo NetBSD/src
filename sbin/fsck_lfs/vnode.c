@@ -1,4 +1,4 @@
-/* $NetBSD: vnode.c,v 1.14 2013/06/08 02:16:03 dholland Exp $ */
+/* $NetBSD: vnode.c,v 1.15 2015/08/19 20:33:29 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -141,7 +141,7 @@ vnode_destroy(struct uvnode *tossvp)
 		buf_destroy(bp);
 	}
 	free(VTOI(tossvp)->inode_ext.lfs);
-	free(VTOI(tossvp)->i_din.ffs1_din);
+	free(VTOI(tossvp)->i_din);
 	memset(VTOI(tossvp), 0, sizeof(struct inode));
 	free(tossvp->v_data);
 	memset(tossvp, 0, sizeof(*tossvp));

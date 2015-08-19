@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.9 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.10 2015/08/19 20:33:29 dholland Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
@@ -152,56 +152,53 @@ struct inode {
 	/*
 	 * The on-disk dinode itself.
 	 */
-	union {
-		struct	lfs32_dinode *ffs1_din;	/* 128 bytes of the on-disk dinode. */
-		struct	lfs64_dinode *ffs2_din;
-	} i_din;
+	union lfs_dinode *i_din;
 };
 
-#define	i_ffs1_atime		i_din.ffs1_din->di_atime
-#define	i_ffs1_atimensec	i_din.ffs1_din->di_atimensec
-#define	i_ffs1_blocks		i_din.ffs1_din->di_blocks
-#define	i_ffs1_ctime		i_din.ffs1_din->di_ctime
-#define	i_ffs1_ctimensec	i_din.ffs1_din->di_ctimensec
-#define	i_ffs1_db		i_din.ffs1_din->di_db
-#define	i_ffs1_flags		i_din.ffs1_din->di_flags
-#define	i_ffs1_gen		i_din.ffs1_din->di_gen
-#define	i_ffs1_gid		i_din.ffs1_din->di_gid
-#define	i_ffs1_ib		i_din.ffs1_din->di_ib
-#define	i_ffs1_mode		i_din.ffs1_din->di_mode
-#define	i_ffs1_mtime		i_din.ffs1_din->di_mtime
-#define	i_ffs1_mtimensec	i_din.ffs1_din->di_mtimensec
-#define	i_ffs1_nlink		i_din.ffs1_din->di_nlink
-#define	i_ffs1_rdev		i_din.ffs1_din->di_rdev
-#define	i_ffs1_size		i_din.ffs1_din->di_size
-#define	i_ffs1_uid		i_din.ffs1_din->di_uid
-#define	i_ffs1_modrev		i_din.ffs1_din->di_modrev
+#define	i_ffs1_atime		i_din->u_32.di_atime
+#define	i_ffs1_atimensec	i_din->u_32.di_atimensec
+#define	i_ffs1_blocks		i_din->u_32.di_blocks
+#define	i_ffs1_ctime		i_din->u_32.di_ctime
+#define	i_ffs1_ctimensec	i_din->u_32.di_ctimensec
+#define	i_ffs1_db		i_din->u_32.di_db
+#define	i_ffs1_flags		i_din->u_32.di_flags
+#define	i_ffs1_gen		i_din->u_32.di_gen
+#define	i_ffs1_gid		i_din->u_32.di_gid
+#define	i_ffs1_ib		i_din->u_32.di_ib
+#define	i_ffs1_mode		i_din->u_32.di_mode
+#define	i_ffs1_mtime		i_din->u_32.di_mtime
+#define	i_ffs1_mtimensec	i_din->u_32.di_mtimensec
+#define	i_ffs1_nlink		i_din->u_32.di_nlink
+#define	i_ffs1_rdev		i_din->u_32.di_rdev
+#define	i_ffs1_size		i_din->u_32.di_size
+#define	i_ffs1_uid		i_din->u_32.di_uid
+#define	i_ffs1_modrev		i_din->u_32.di_modrev
 
-#define	i_ffs2_atime		i_din.ffs2_din->di_atime
-#define	i_ffs2_atimensec	i_din.ffs2_din->di_atimensec
-#define	i_ffs2_birthtime	i_din.ffs2_din->di_birthtime
-#define	i_ffs2_birthnsec	i_din.ffs2_din->di_birthnsec
-#define	i_ffs2_blocks		i_din.ffs2_din->di_blocks
-#define	i_ffs2_blksize		i_din.ffs2_din->di_blksize
-#define	i_ffs2_ctime		i_din.ffs2_din->di_ctime
-#define	i_ffs2_ctimensec	i_din.ffs2_din->di_ctimensec
-#define	i_ffs2_db		i_din.ffs2_din->di_db
-#define	i_ffs2_flags		i_din.ffs2_din->di_flags
-#define	i_ffs2_gen		i_din.ffs2_din->di_gen
-#define	i_ffs2_gid		i_din.ffs2_din->di_gid
-#define	i_ffs2_ib		i_din.ffs2_din->di_ib
-#define	i_ffs2_mode		i_din.ffs2_din->di_mode
-#define	i_ffs2_mtime		i_din.ffs2_din->di_mtime
-#define	i_ffs2_mtimensec	i_din.ffs2_din->di_mtimensec
-#define	i_ffs2_nlink		i_din.ffs2_din->di_nlink
-#define	i_ffs2_rdev		i_din.ffs2_din->di_rdev
-#define	i_ffs2_size		i_din.ffs2_din->di_size
-#define	i_ffs2_uid		i_din.ffs2_din->di_uid
-#define	i_ffs2_kernflags	i_din.ffs2_din->di_kernflags
-#define	i_ffs2_extsize		i_din.ffs2_din->di_extsize
-#define	i_ffs2_extb		i_din.ffs2_din->di_extb
-#define	i_ffs2_inumber		i_din.ffs2_din->di_inumber
-#define	i_ffs2_modrev		i_din.ffs2_din->di_modrev
+#define	i_ffs2_atime		i_din->u_64.di_atime
+#define	i_ffs2_atimensec	i_din->u_64.di_atimensec
+#define	i_ffs2_birthtime	i_din->u_64.di_birthtime
+#define	i_ffs2_birthnsec	i_din->u_64.di_birthnsec
+#define	i_ffs2_blocks		i_din->u_64.di_blocks
+#define	i_ffs2_blksize		i_din->u_64.di_blksize
+#define	i_ffs2_ctime		i_din->u_64.di_ctime
+#define	i_ffs2_ctimensec	i_din->u_64.di_ctimensec
+#define	i_ffs2_db		i_din->u_64.di_db
+#define	i_ffs2_flags		i_din->u_64.di_flags
+#define	i_ffs2_gen		i_din->u_64.di_gen
+#define	i_ffs2_gid		i_din->u_64.di_gid
+#define	i_ffs2_ib		i_din->u_64.di_ib
+#define	i_ffs2_mode		i_din->u_64.di_mode
+#define	i_ffs2_mtime		i_din->u_64.di_mtime
+#define	i_ffs2_mtimensec	i_din->u_64.di_mtimensec
+#define	i_ffs2_nlink		i_din->u_64.di_nlink
+#define	i_ffs2_rdev		i_din->u_64.di_rdev
+#define	i_ffs2_size		i_din->u_64.di_size
+#define	i_ffs2_uid		i_din->u_64.di_uid
+#define	i_ffs2_kernflags	i_din->u_64.di_kernflags
+#define	i_ffs2_extsize		i_din->u_64.di_extsize
+#define	i_ffs2_extb		i_din->u_64.di_extb
+#define	i_ffs2_inumber		i_din->u_64.di_inumber
+#define	i_ffs2_modrev		i_din->u_64.di_modrev
 
 /* These flags are kept in i_flag. */
 #define	IN_ACCESS	0x0001		/* Access time update request. */

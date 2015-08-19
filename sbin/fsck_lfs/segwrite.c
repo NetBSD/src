@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.41 2015/08/12 18:28:00 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.42 2015/08/19 20:33:29 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -291,6 +291,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		sp->sum_bytes_left -= sizeof(ulfs_daddr_t);
 		ndx = lfs_sb_getsumsize(fs) / sizeof(ulfs_daddr_t) -
 		    sp->ninodes / LFS_INOPB(fs) - 1;
+		/* XXX ondisk32 */
 		((ulfs_daddr_t *) (sp->segsum))[ndx] = daddr;
 	}
 	/* Update the inode times and copy the inode onto the inode page. */
@@ -309,23 +310,13 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	 * already been gathered.
 	 */
 	if (ip->i_number == LFS_IFILE_INUM && sp->idp) {
-		// XXX weak
-		if (fs->lfs_is64) {
-			sp->idp->u_64 = *ip->i_din.ffs2_din;
-		} else {
-			sp->idp->u_32 = *ip->i_din.ffs1_din;
-		}
+		lfs_copy_dinode(fs, sp->idp, ip->i_din);
 		ip->i_lfs_osize = ip->i_ffs1_size;
 		return 0;
 	}
 	bp = sp->ibp;
 	cdp = DINO_IN_BLOCK(fs, bp->b_data, sp->ninodes % LFS_INOPB(fs));
-	// XXX weak
-	if (fs->lfs_is64) {
-		cdp->u_64 = *ip->i_din.ffs2_din;
-	} else {
-		cdp->u_32 = *ip->i_din.ffs1_din;
-	}
+	lfs_copy_dinode(fs, cdp, ip->i_din);
 
 	/* If all blocks are goig to disk, update the "size on disk" */
 	ip->i_lfs_osize = ip->i_ffs1_size;

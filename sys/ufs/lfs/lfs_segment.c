@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.256 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.257 2015/08/19 20:33:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.256 2015/08/12 18:28:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.257 2015/08/19 20:33:29 dholland Exp $");
 
 #define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
 
@@ -1163,22 +1163,14 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 * already been gathered.
 	 */
 	if (ip->i_number == LFS_IFILE_INUM && sp->idp) {
-		if (fs->lfs_is64) {
-			sp->idp->u_64 = *ip->i_din.ffs2_din;
-		} else {
-			sp->idp->u_32 = *ip->i_din.ffs1_din;
-		}
+		lfs_copy_dinode(fs, sp->idp, ip->i_din);
 		ip->i_lfs_osize = ip->i_size;
 		return 0;
 	}
 
 	bp = sp->ibp;
-	cdp = (union lfs_dinode *)((char *)bp->b_data + DINOSIZE(fs) * (sp->ninodes % LFS_INOPB(fs)));
-	if (fs->lfs_is64) {
-		cdp->u_64 = *ip->i_din.ffs2_din;
-	} else {
-		cdp->u_32 = *ip->i_din.ffs1_din;
-	}
+	cdp = DINO_IN_BLOCK(fs, bp->b_data, sp->ninodes % LFS_INOPB(fs));
+	lfs_copy_dinode(fs, cdp, ip->i_din);
 
 	/*
 	 * This inode is on its way to disk; clear its VU_DIROP status when
