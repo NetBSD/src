@@ -304,3 +304,15 @@ o Convert pseudo(dev) attach functions to take (void) (== kernel ctors).
   pseudo attach functions have no choice when to be called.  This could
   be solved by converting to kctors, where functions are called in order
   by dependency.
+
+o Enhance ioconf behavior for pseudo-devices
+
+  See "bin/48571: config(1) ioconf is insufficient for pseudo-devices" for
+  more details.  In a nutshell, it would be "useful" for config to emit
+  the necessary stuff in the generated ioconf.[ch] to enable use of
+  config_{init,fini}_component() for attaching and detaching pseudodev's.
+
+  Currently, you need to manually construct your own data structures, and
+  manually "attach" them, one at a time.  This leads to duplication of
+  code (where multiple drivers contain the same basic logic), and doesn't
+  necessarily handle all of the "frobbing" of the kernel lists.
