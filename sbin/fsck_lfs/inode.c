@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.59 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.60 2015/08/19 20:33:29 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -119,8 +119,7 @@ ginode(ino_t ino)
 		seg_table[segno].su_nbytes += DINOSIZE(fs);
 		brelse(bp, 0);
 	}
-	// XXX bogus cast
-	return (union lfs_dinode *)(VTOI(vp)->i_din.ffs1_din);
+	return VTOI(vp)->i_din;
 }
 
 /*
@@ -621,8 +620,7 @@ allocino(ino_t request, int type)
         vp = lfs_valloc(fs, ino);
 	if (vp == NULL)
 		return (0);
-	// XXX bogus cast
-	dp = (union lfs_dinode *)(VTOI(vp)->i_din.ffs1_din);
+	dp = VTOI(vp)->i_din;
 	bp = getblk(vp, 0, lfs_sb_getfsize(fs));
 	VOP_BWRITE(bp);
 	lfs_dino_setmode(fs, dp, type);

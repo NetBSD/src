@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.144 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.145 2015/08/19 20:33:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.144 2015/08/12 18:28:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.145 2015/08/19 20:33:29 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -100,7 +100,6 @@ static int lfs_vtruncbuf(struct vnode *, daddr_t, bool, int);
 union lfs_dinode *
 lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 {
-	char *base = bp->b_data;
 	union lfs_dinode *ldip;
 	unsigned num, i;
 
@@ -112,12 +111,12 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct buf *bp)
 	 */
 	num = LFS_INOPB(fs);
 	for (i = num; i-- > 0; ) {
-		ldip = (union lfs_dinode *)(base + i * DINOSIZE(fs));
+		ldip = DINO_IN_BLOCK(fs, bp->b_data, i);
 		if (lfs_dino_getinumber(fs, ldip) == ino)
 			return (ldip);
 	}
 
-	printf("searched %u entries\n", num);
+	printf("searched %u entries for %ju\n", num, (uintmax_t)ino);
 	printf("offset is 0x%jx (seg %d)\n", (uintmax_t)lfs_sb_getoffset(fs),
 	       lfs_dtosn(fs, lfs_sb_getoffset(fs)));
 	printf("block is 0x%jx (seg %d)\n",

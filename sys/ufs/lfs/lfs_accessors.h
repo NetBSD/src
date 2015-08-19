@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.13 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.14 2015/08/19 20:33:29 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -178,6 +178,23 @@
 
 #define DINO_IN_BLOCK(fs, base, ix) \
 	((union lfs_dinode *)((char *)(base) + DINOSIZE(fs) * (ix)))
+
+static __unused inline void
+lfs_copy_dinode(STRUCT_LFS *fs,
+    union lfs_dinode *dst, const union lfs_dinode *src)
+{
+	/*
+	 * We can do structure assignment of the structs, but not of
+	 * the whole union, as the union is the size of the (larger)
+	 * 64-bit struct and on a 32-bit fs the upper half of it might
+	 * be off the end of a buffer or otherwise invalid.
+	 */
+	if (fs->lfs_is64) {
+		dst->u_64 = src->u_64;
+	} else {
+		dst->u_32 = src->u_32;
+	}
+}
 
 #define LFS_DEF_DINO_ACCESSOR(type, type32, field) \
 	static __unused inline type				\
