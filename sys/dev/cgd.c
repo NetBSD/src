@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.100 2015/08/18 21:24:19 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.101 2015/08/19 20:15:20 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.100 2015/08/18 21:24:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.101 2015/08/19 20:15:20 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,6 +483,7 @@ cgdiodone(struct buf *nbp)
 		obp->b_resid = obp->b_bcount;
 
 	dk_done(dksc, obp);
+	dk_start(dksc, NULL);
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
