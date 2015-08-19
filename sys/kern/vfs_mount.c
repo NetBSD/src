@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.36 2015/08/02 03:29:22 manu Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.37 2015/08/19 08:40:02 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.36 2015/08/02 03:29:22 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.37 2015/08/19 08:40:02 hannken Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -394,7 +394,8 @@ again:
 		}
 		mutex_enter(vp->v_interlock);
 		if (ISSET(vp->v_iflag, VI_MARKER) ||
-		    (f && !ISSET(vp->v_iflag, VI_XLOCK) && !(*f)(cl, vp))) {
+		    ISSET(vp->v_iflag, VI_XLOCK) ||
+		    (f && !(*f)(cl, vp))) {
 			mutex_exit(vp->v_interlock);
 			vp = TAILQ_NEXT(vp, v_mntvnodes);
 			goto again;
@@ -507,7 +508,7 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 {
 	vnode_t *vp;
 	struct vnode_iterator *marker;
-	int busy = 0, when = 0;
+	int error, busy = 0, when = 0;
 	struct vflush_ctx ctx;
 
 	/* First, flush out any vnode references from vrele_list. */
@@ -540,7 +541,31 @@ vflush(struct mount *mp, vnode_t *skipvp, int flags)
 	vfs_vnode_iterator_destroy(marker);
 	if (busy)
 		return (EBUSY);
-	return (0);
+
+	/* Wait for all vnodes to be reclaimed. */
+	for (;;) {
+		mutex_enter(&mntvnode_lock);
+		TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
+			if (vp == skipvp)
+				continue;
+			if ((flags & SKIPSYSTEM) && (vp->v_vflag & VV_SYSTEM))
+				continue;
+			break;
+		}
+		if (vp != NULL) {
+			mutex_enter(vp->v_interlock);
+			mutex_exit(&mntvnode_lock);
+			error = vget(vp, 0, true /* wait */);
+			if (error == ENOENT)
+				continue;
+			else if (error == 0)
+				vrele(vp);
+			return EBUSY;
+		} else {
+			mutex_exit(&mntvnode_lock);
+			return 0;
+		}
+	}
 }
 
 /*
