@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.242 2015/07/11 03:06:25 msaitoh Exp $ */
+/*	$NetBSD: ehci.c,v 1.243 2015/08/19 06:23:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.242 2015/07/11 03:06:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.243 2015/08/19 06:23:35 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -370,7 +370,7 @@ ehci_init(ehci_softc_t *sc)
 #endif
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_softwake_cv, "ehciab");
 	cv_init(&sc->sc_doorbell, "ehcidi");
 
