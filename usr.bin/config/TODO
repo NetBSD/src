@@ -285,3 +285,22 @@ o Namespace.
   module and its dependencies (selectattr()).  In other words, an option is
   only safely converted to a module (define), only if it doesn't depend on
   anything.  (One example is DDB.)
+
+o Convert pseudo(dev) attach functions to take (void) (== kernel ctors).
+
+  The pseudo attach function was originally designed to take `int n' as
+  the number of instances of the pseudo device.  Now most of pseudo
+  devices have been converted to be `cloneable', meaning that their
+  instances are dynamically allocated at run-time, because guessing how
+  much instances are needed for users at compile time is almost impossible.
+  Restricting such a pure software resource at compile time is senseless,
+  considering that the rest of the world is dynamic.
+
+  If pseudo attach functions once become (void), config(1) no longer
+  has to generate iteration to call those functions, by making them part
+  of kernel constructors, that are a list of (void) functions.
+
+  Some pseudo devices may have dependency/ordering problems, because
+  pseudo attach functions have no choice when to be called.  This could
+  be solved by converting to kctors, where functions are called in order
+  by dependency.
