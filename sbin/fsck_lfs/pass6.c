@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.42 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.43 2015/08/19 20:33:29 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -448,12 +448,7 @@ readdress_inode(union lfs_dinode *dp, ulfs_daddr_t daddr)
 
 	/* Copy over preexisting in-core inode, if any */
 	vp = vget(fs, thisino);
-	/* XXX this is lame */
-	if (fs->lfs_is64) {
-		memcpy(VTOI(vp)->i_din.ffs2_din, &dp->u_64, sizeof(dp->u_64));
-	} else {
-		memcpy(VTOI(vp)->i_din.ffs1_din, &dp->u_32, sizeof(dp->u_32));
-	}
+	lfs_copy_dinode(fs, VTOI(vp)->i_din, dp);
 
 	/* Finally account the inode itself */
 	sn = lfs_dtosn(fs, odaddr);

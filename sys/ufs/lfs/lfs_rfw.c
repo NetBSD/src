@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.29 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.30 2015/08/19 20:33:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.29 2015/08/12 18:28:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.30 2015/08/19 20:33:29 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -250,6 +250,61 @@ update_meta(struct lfs *fs, ino_t ino, int vers, daddr_t lbn,
 	return 0;
 }
 
+/*
+ * Copy some the fields of the dinode as needed by update_inoblk().
+ */
+static void
+update_inoblk_copy_dinode(struct lfs *fs,
+    union lfs_dinode *dstu, const union lfs_dinode *srcu)
+{
+	if (fs->lfs_is64) {
+		struct lfs64_dinode *dst = &dstu->u_64;
+		const struct lfs64_dinode *src = &srcu->u_64;
+		unsigned i;
+
+		/*
+		 * Copy everything but the block pointers and di_blocks.
+		 * XXX what about di_extb?
+		 */
+		dst->di_mode = src->di_mode;
+		dst->di_nlink = src->di_nlink;
+		dst->di_uid = src->di_uid;
+		dst->di_gid = src->di_gid;
+		dst->di_blksize = src->di_blksize;
+		dst->di_size = src->di_size;
+		dst->di_atime = src->di_atime;
+		dst->di_mtime = src->di_mtime;
+		dst->di_ctime = src->di_ctime;
+		dst->di_birthtime = src->di_birthtime;
+		dst->di_mtimensec = src->di_mtimensec;
+		dst->di_atimensec = src->di_atimensec;
+		dst->di_ctimensec = src->di_ctimensec;
+		dst->di_birthnsec = src->di_birthnsec;
+		dst->di_gen = src->di_gen;
+		dst->di_kernflags = src->di_kernflags;
+		dst->di_flags = src->di_flags;
+		dst->di_extsize = src->di_extsize;
+		dst->di_modrev = src->di_modrev;
+		dst->di_inumber = src->di_inumber;
+		for (i = 0; i < __arraycount(src->di_spare); i++) {
+			dst->di_spare[i] = src->di_spare[i];
+		}
+	} else {
+		struct lfs32_dinode *dst = &dstu->u_32;
+		const struct lfs32_dinode *src = &srcu->u_32;
+
+		/* Get mode, link count, size, and times */
+		memcpy(dst, src, offsetof(struct lfs32_dinode, di_db[0]));
+
+		/* Then the rest, except di_blocks */
+		dst->di_flags = src->di_flags;
+		dst->di_gen = src->di_gen;
+		dst->di_uid = src->di_uid;
+		dst->di_gid = src->di_gid;
+		dst->di_modrev = src->di_modrev;
+	}
+}
+
 static int
 update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 	      struct lwp *l)
@@ -278,7 +333,7 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 	}
 	num = LFS_INOPB(fs);
 	for (i = num; i-- > 0; ) {
-		dip = (union lfs_dinode *)((char *)dbp->b_data + i * DINOSIZE(fs));
+		dip = DINO_IN_BLOCK(fs, dbp->b_data, i);
 		if (lfs_dino_getinumber(fs, dip) > LFS_IFILE_INUM) {
 			error = lfs_rf_valloc(fs, lfs_dino_getinumber(fs, dip),
 					      lfs_dino_getgen(fs, dip),
@@ -292,31 +347,8 @@ update_inoblk(struct lfs *fs, daddr_t offset, kauth_cred_t cred,
 			if (lfs_dino_getsize(fs, dip) != ip->i_size)
 				lfs_truncate(vp, lfs_dino_getsize(fs, dip), 0,
 					     NOCRED);
-			/* Get mode, link count, size, and times */
-			/* XXX: ugly, simplify */
-			if (fs->lfs_is64) {
-				/*
-				 * XXX what about di_extb?
-				 */
-				memcpy(ip->i_din.ffs2_din, dip,
-				       offsetof(struct lfs64_dinode, di_db[0]));
-				/* Then the rest, except di_blocks */
-				ip->i_ffs2_modrev = dip->u_64.di_modrev;
-				ip->i_ffs2_inumber = dip->u_64.di_inumber;
-				memset(ip->i_din.ffs2_din->di_spare, 0,
-				       sizeof(ip->i_din.ffs2_din->di_spare));
-			} else {
-				memcpy(ip->i_din.ffs1_din, dip,
-				       offsetof(struct lfs32_dinode, di_db[0]));
-				/* Then the rest, except di_blocks */
-				ip->i_ffs1_flags = dip->u_32.di_flags;
-				ip->i_ffs1_gen = dip->u_32.di_gen;
-				ip->i_ffs1_uid = dip->u_32.di_uid;
-				ip->i_ffs1_gid = dip->u_32.di_gid;
-				ip->i_ffs1_modrev = dip->u_32.di_modrev;
-			}
+			update_inoblk_copy_dinode(fs, ip->i_din, dip);
 
-			/* Then the rest, except di_blocks */
 			ip->i_flags = lfs_dino_getflags(fs, dip);
 			ip->i_gen = lfs_dino_getgen(fs, dip);
 			ip->i_uid = lfs_dino_getuid(fs, dip);
