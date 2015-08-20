@@ -37,6 +37,7 @@
 #include <sys/kmem.h>
 #include <sys/socketvar.h>
 
+#include "ioconf.h"
 
 /*------------------------- Global Variables ------------------------*/
 
@@ -72,8 +73,6 @@ login_isid_t iscsi_InitiatorISID;
 /*
    System interface: autoconf and device structures
 */
-
-void iscsiattach(int);
 
 static void iscsi_attach(device_t parent, device_t self, void *aux);
 static int iscsi_match(device_t, cfdata_t, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo.c,v 1.34 2015/04/21 12:57:03 riastradh Exp $	*/
+/*	$NetBSD: rndpseudo.c,v 1.35 2015/08/20 14:40:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.34 2015/04/21 12:57:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.35 2015/08/20 14:40:17 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: rndpseudo.c,v 1.34 2015/04/21 12:57:03 riastradh Exp
 #include <sys/vnode.h>
 
 #include <dev/rnd_private.h>
+
+#include "ioconf.h"
 
 #if defined(__HAVE_CPU_COUNTER)
 #include <machine/cpu_counter.h>
@@ -104,8 +106,6 @@ static pool_cache_t rnd_ctx_cache __read_mostly;
  */
 static percpu_t *percpu_urandom_cprng __read_mostly;
 
-/* Used by ioconf.c to attach the rnd pseudo-device.  */
-void	rndattach(int);
 
 dev_type_open(rndopen);
 
@@ -175,6 +175,7 @@ rndpseudo_counter(void)
 }
 
 /*
+ * Used by ioconf.c to attach the rnd pseudo-device.
  * `Attach' the random device.  We use the timing of this event as
  * another potential source of initial entropy.
  */
