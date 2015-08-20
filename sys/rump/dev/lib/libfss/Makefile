@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/13 01:59:05 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2015/08/20 11:51:12 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
 
 LIB=	rumpdev_fss
-
+IOCONF=	FSS.ioconf
 SRCS=   fss.c
 
 SRCS+=	fss_component.c
