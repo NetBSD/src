@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.2 2014/03/13 02:05:29 pooka Exp $
+# $NetBSD: Makefile,v 1.3 2015/08/20 12:20:09 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net ${.CURDIR}/../../../../netmpls
 
 LIB=	rumpnet_netmpls
-
+IOCONF=	NETMPLS.ioconf
 SRCS=	mpls_ttl.c if_mpls.c
 SRCS+=	netmpls_component.c
 
