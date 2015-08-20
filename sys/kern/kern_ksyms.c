@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.76 2015/05/20 02:45:20 matt Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.77 2015/08/20 09:45:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.76 2015/05/20 02:45:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.77 2015/08/20 09:45:45 christos Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -95,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.76 2015/05/20 02:45:20 matt Exp $")
 #endif
 
 #include "ksyms.h"
+#include "ioconf.h"
 
 #define KSYMS_MAX_ID	65536
 #ifdef KDTRACE_HOOKS
@@ -110,7 +111,6 @@ static bool ksyms_loaded;
 static kmutex_t ksyms_lock __cacheline_aligned;
 static struct ksyms_symtab kernel_symtab;
 
-void ksymsattach(int);
 static void ksyms_hdr_init(void *);
 static void ksyms_sizes_calc(void);
 

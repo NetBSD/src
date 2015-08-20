@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.69 2015/08/20 08:27:09 uebayasi Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.70 2015/08/20 09:45:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.69 2015/08/20 08:27:09 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.70 2015/08/20 09:45:45 christos Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.69 2015/08/20 08:27:09 uebayasi Exp $
 
 #include <uvm/uvm_extern.h>
 
+#include "ioconf.h"
+
 /*
  * If the port has stated that cpu_data is the first thing in cpu_info,
  * verify that the claim is true. This will prevent them from getting out
@@ -93,8 +95,6 @@ CTASSERT(offsetof(struct cpu_info, ci_data) == 0);
 #else
 CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
 #endif
-
-void	cpuctlattach(int);
 
 static void	cpu_xc_online(struct cpu_info *);
 static void	cpu_xc_offline(struct cpu_info *);
