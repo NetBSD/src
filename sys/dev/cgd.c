@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.101 2015/08/19 20:15:20 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.102 2015/08/20 14:40:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.101 2015/08/19 20:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.102 2015/08/20 14:40:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.101 2015/08/19 20:15:20 mlelstv Exp $");
 
 #include <miscfs/specfs/specdev.h> /* for v_rdev */
 
-/* Entry Point Functions */
+#include "ioconf.h"
 
-void	cgdattach(int);
+/* Entry Point Functions */
 
 static dev_type_open(cgdopen);
 static dev_type_close(cgdclose);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.31 2013/09/12 20:47:59 martin Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.32 2015/08/20 14:40:18 christos Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31 2013/09/12 20:47:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.32 2015/08/20 14:40:18 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -60,7 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.31 2013/09/12 20:47:59 martin Exp $");
 #include <net/agr/if_agrsubr.h>
 #include <net/agr/if_agrethervar.h>
 
-void agrattach(int);
+#include "ioconf.h"
 
 static int agr_clone_create(struct if_clone *, int);
 static int agr_clone_destroy(struct ifnet *);
