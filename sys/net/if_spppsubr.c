@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.134 2015/05/25 08:29:01 ozaki-r Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.135 2015/08/20 14:40:19 christos Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.134 2015/05/25 08:29:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.135 2015/08/20 14:40:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -441,13 +441,6 @@ static const struct cp *cps[IDX_COUNT] = {
 	&chap,			/* IDX_CHAP */
 };
 
-
-void spppattach(int);
-void
-/*ARGSUSED*/
-spppattach(int count)
-{
-}
 
 /*
  * Exported functions, comprising our interface to the lower layer.

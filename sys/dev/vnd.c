@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.247 2015/08/02 11:40:41 mlelstv Exp $	*/
+/*	$NetBSD: vnd.c,v 1.248 2015/08/20 14:40:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.247 2015/08/02 11:40:41 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.248 2015/08/20 14:40:17 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.247 2015/08/02 11:40:41 mlelstv Exp $");
 #include <dev/dkvar.h>
 #include <dev/vndvar.h>
 
+#include "ioconf.h"
+
 #if defined(VNDDEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif
@@ -156,8 +158,6 @@ struct vndxfer {
 
 #define	VND_MAXPENDING(vnd)	((vnd)->sc_maxactive * 4)
 
-/* called by main() at boot time */
-void	vndattach(int);
 
 static void	vndclear(struct vnd_softc *, int);
 static int	vnddoclear(struct vnd_softc *, int, int, bool);
