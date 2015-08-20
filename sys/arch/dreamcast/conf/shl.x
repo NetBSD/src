@@ -1,4 +1,4 @@
-/*	$NetBSD: shl.x,v 1.7 2002/04/25 17:02:41 uch Exp $	*/
+/*	$NetBSD: shl.x,v 1.8 2015/08/20 06:53:11 uebayasi Exp $	*/
 
 OUTPUT_FORMAT("elf32-shl-nbsd")
 OUTPUT_ARCH(sh)
@@ -76,4 +76,3 @@ SECTIONS
   .debug_varnames  0 : { *(.debug_varnames) }
   /* These must appear regardless of  .  */
 }
-
