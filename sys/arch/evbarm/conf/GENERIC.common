@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.common,v 1.9 2015/08/07 13:53:28 maxv Exp $
+#	$NetBSD: GENERIC.common,v 1.10 2015/08/20 18:25:09 riz Exp $
 #
 #	GENERIC evbarm kernel config (template)
 #
@@ -27,7 +27,7 @@ no pseudo-device vcoda
 # File system options
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
-#options 	FFS_EI		# FFS Endian Independent support
+options 	FFS_EI		# FFS Endian Independent support
 #options 	NFSSERVER
 options 	WAPBL		# File system journaling support
 #options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
@@ -37,7 +37,7 @@ options 	WAPBL		# File system journaling support
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
+options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast
