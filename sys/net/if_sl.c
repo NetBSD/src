@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.119 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.120 2015/08/20 11:18:53 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.119 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.120 2015/08/20 11:18:53 uebayasi Exp $");
 
 #include "opt_inet.h"
 
@@ -104,6 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.119 2014/06/05 23:48:16 rmind Exp $");
 
 #include <sys/time.h>
 #include <net/bpf.h>
+
+#include "ioconf.h"
 
 /*
  * SLMAX is a hard limit on input packet size.  To simplify the code
@@ -211,10 +213,8 @@ static struct linesw slip_disc = {
 	.l_poll = ttyerrpoll
 };
 
-void	slattach(void);
-
 void
-slattach(void)
+slattach(int n __unused)
 {
 
 	if (ttyldisc_attach(&slip_disc) != 0)
