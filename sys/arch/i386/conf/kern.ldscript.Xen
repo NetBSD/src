@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.Xen,v 1.7 2015/08/20 07:00:48 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript.Xen,v 1.8 2015/08/20 09:34:54 uebayasi Exp $	*/
 
 OUTPUT_FORMAT("elf32-i386", "elf32-i386",
 	      "elf32-i386")
@@ -11,7 +11,7 @@ SECTIONS
     *(.text)
     *(.text.*)
     *(.stub)
-  } =0
+  }
   _etext = . ;
   PROVIDE (etext = .) ;
 
@@ -31,13 +31,11 @@ SECTIONS
   }
   . = ALIGN(64);	/* COHERENCY_UNIT */
   .data.cacheline_aligned :
-  AT (LOADADDR(.text) + (ADDR(.data.cacheline_aligned) - ADDR(.text)))
   {
     *(.data.cacheline_aligned)
   }
   . = ALIGN(64);	/* COHERENCY_UNIT */
   .data.read_mostly :
-  AT (LOADADDR(.text) + (ADDR(.data.read_mostly) - ADDR(.text)))
   {
     *(.data.read_mostly)
   }
@@ -59,4 +57,12 @@ SECTIONS
   {
     KEEP(*(.note.netbsd.ident));
   }
+}
+SECTIONS
+{
+  .text :
+  AT (ADDR(.text))
+  {
+    *(.text)
+  } =0
 }
