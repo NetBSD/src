@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2015/04/14 13:32:34 riastradh Exp $
+#	$NetBSD: Makefile,v 1.9 2015/08/20 11:51:12 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
 
 LIB=	rumpdev_rnd
-
+IOCONF=	RND.ioconf
 SRCS=	rndpseudo.c
 
 SRCS+=	rnd_component.c
