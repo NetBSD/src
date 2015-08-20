@@ -1,4 +1,4 @@
-#	$NetBSD: genlfs.cf,v 1.3 2015/08/16 10:58:54 jdc Exp $
+#	$NetBSD: genlfs.cf,v 1.4 2015/08/20 05:40:24 dholland Exp $
 
 #	Copyright (c) 2010 Eduardo Horvath.
 #	All rights reserved.
@@ -63,14 +63,14 @@ member	if1_version	if_version
 member 	if1_daddr	if_daddr
 
 #
-# LFS v2 ifile32
+# LFS v2 ifile
 #
 struct	ifile32
 member	if2_version	if_version
 member 	if2_daddr	if_daddr
 
 #
-# LFS v1 dinode
+# LFS v1/v2 dinode
 #
 struct  lfs32_dinode
 member	di_inumber	di_inumber
