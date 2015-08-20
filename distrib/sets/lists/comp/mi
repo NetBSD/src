@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1983 2015/08/17 22:20:39 mrg Exp $
+#	$NetBSD: mi,v 1.1984 2015/08/20 10:06:20 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -218,7 +218,8 @@
 ./usr/include/c++/__std_stream			comp-cxx-include	libcxx
 ./usr/include/c++/__tree			comp-cxx-include	libcxx
 ./usr/include/c++/__tuple			comp-cxx-include	libcxx
-./usr/include/c++/__tuple_03			comp-cxx-include	libcxx
+./usr/include/c++/__tuple_03			comp-obsolete		obsolete
+./usr/include/c++/__undef___deallocate		comp-cxx-include	libcxx
 ./usr/include/c++/__undef_min_max		comp-cxx-include	libcxx
 ./usr/include/c++/algorithm			comp-cxx-include	libcxx
 ./usr/include/c++/array				comp-cxx-include	libcxx
@@ -258,9 +259,15 @@
 ./usr/include/c++/dynarray			comp-obsolete		obsolete
 ./usr/include/c++/exception			comp-cxx-include	libcxx
 ./usr/include/c++/experimental/__config		comp-cxx-include	libcxx
+./usr/include/c++/experimental/algorithm	comp-cxx-include	libcxx
+./usr/include/c++/experimental/chrono		comp-cxx-include	libcxx
 ./usr/include/c++/experimental/dynarray		comp-cxx-include	libcxx
 ./usr/include/c++/experimental/optional		comp-cxx-include	libcxx
+./usr/include/c++/experimental/ratio		comp-cxx-include	libcxx
 ./usr/include/c++/experimental/string_view	comp-cxx-include	libcxx
+./usr/include/c++/experimental/system_error	comp-cxx-include	libcxx
+./usr/include/c++/experimental/tuple		comp-cxx-include	libcxx
+./usr/include/c++/experimental/type_traits	comp-cxx-include	libcxx
 ./usr/include/c++/experimental/utility		comp-cxx-include	libcxx
 ./usr/include/c++/ext/__hash			comp-cxx-include	libcxx
 ./usr/include/c++/ext/hash_map			comp-cxx-include	libcxx
