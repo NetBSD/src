@@ -1,4 +1,4 @@
-/* $NetBSD: kern.ldscript,v 1.6 2014/01/19 02:32:21 mrg Exp $ */
+/* $NetBSD: kern.ldscript,v 1.7 2015/08/20 07:00:49 uebayasi Exp $ */
 
 /*  ldscript for NetBSD/powerpc kernels and LKMs, based on elf32ppc.x */
 OUTPUT_FORMAT("elf32-powerpc", "elf32-powerpc",
@@ -82,15 +82,15 @@ SECTIONS
   }
   .bss            :
   {
-   *(.dynbss)
-   *(.bss .bss.* .gnu.linkonce.b.*)
-   *(COMMON)
-   /* Align here to ensure that the .bss section occupies space up to
-      _end.  Align after .bss to ensure correct alignment even if the
-      .bss section disappears because there are no input sections.
-      FIXME: Why do we need it? When there is no .bss section, we don't
-      pad the .data section.  */
-   . = ALIGN(. != 0 ? 32 / 8 : 1);
+    *(.dynbss)
+    *(.bss .bss.* .gnu.linkonce.b.*)
+    *(COMMON)
+    /* Align here to ensure that the .bss section occupies space up to
+       _end.  Align after .bss to ensure correct alignment even if the
+       .bss section disappears because there are no input sections.
+       FIXME: Why do we need it? When there is no .bss section, we don't
+       pad the .data section.  */
+    . = ALIGN(. != 0 ? 32 / 8 : 1);
   }
   . = ALIGN(32 / 8);
   . = ALIGN(32 / 8);
