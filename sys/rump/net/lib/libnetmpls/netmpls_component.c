@@ -1,4 +1,4 @@
-/* $NetBSD: netmpls_component.c,v 1.2 2014/08/22 11:34:28 pooka Exp $ */
+/* $NetBSD: netmpls_component.c,v 1.3 2015/08/20 12:20:09 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.2 2014/08/22 11:34:28 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.3 2015/08/20 12:20:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: netmpls_component.c,v 1.2 2014/08/22 11:34:28 pooka 
 #include "rump_private.h"
 #include "rump_net_private.h"
 
-void ifmplsattach(int);
+#include "ioconf.h"
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET)
 {
