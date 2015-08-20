@@ -19,8 +19,13 @@ namespace std
 
     // helper class:
     template <class T, T v> struct integral_constant;
-    typedef integral_constant<bool, true>  true_type;
-    typedef integral_constant<bool, false> false_type;
+    typedef integral_constant<bool, true>  true_type;   // C++11
+    typedef integral_constant<bool, false> false_type;  // C++11
+    
+    template <bool B>                                   // C++14
+    using bool_constant = integral_constant<bool, B>;   // C++14
+    typedef bool_constant<true> true_type;              // C++14
+    typedef bool_constant<false> false_type;            // C++14
 
     // helper traits
     template <bool, class T = void> struct enable_if;
@@ -197,7 +202,9 @@ namespace std
     template <class F, class... ArgTypes>
       using result_of_t       = typename result_of<F(ArgTypes...)>::type;  // C++14
 
-}  // std
+    template <class...>
+      using void_t = void;
+}  // C++17
 
 */
 #include <__config>
@@ -209,6 +216,15 @@ namespace std
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
+template <class>
+struct __void_t { typedef void type; };
+
+template <class _Tp>
+struct __identity { typedef _Tp type; };
+
+template <class _Tp, bool>
+struct _LIBCPP_TYPE_VIS_ONLY __dependent_type : public _Tp {};
+
 template <bool _Bp, class _If, class _Then>
     struct _LIBCPP_TYPE_VIS_ONLY conditional {typedef _If type;};
 template <class _If, class _Then>
@@ -217,6 +233,9 @@ template <class _If, class _Then>
 #if _LIBCPP_STD_VER > 11
 template <bool _Bp, class _If, class _Then> using conditional_t = typename conditional<_Bp, _If, _Then>::type;
 #endif
+
+template <bool, class _Tp> struct _LIBCPP_TYPE_VIS_ONLY __lazy_enable_if {};
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY __lazy_enable_if<true, _Tp> {typedef typename _Tp::type type;};
 
 template <bool, class _Tp = void> struct _LIBCPP_TYPE_VIS_ONLY enable_if {};
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY enable_if<true, _Tp> {typedef _Tp type;};
@@ -247,8 +266,16 @@ struct _LIBCPP_TYPE_VIS_ONLY integral_constant
 template <class _Tp, _Tp __v>
 _LIBCPP_CONSTEXPR const _Tp integral_constant<_Tp, __v>::value;
 
-typedef integral_constant<bool, true>  true_type;
-typedef integral_constant<bool, false> false_type;
+#if _LIBCPP_STD_VER > 14
+template <bool __b>
+using bool_constant = integral_constant<bool, __b>;
+#define	_LIBCPP_BOOL_CONSTANT(__b) bool_constant<(__b)>
+#else
+#define	_LIBCPP_BOOL_CONSTANT(__b) integral_constant<bool,(__b)>
+#endif
+
+typedef _LIBCPP_BOOL_CONSTANT(true)  true_type;
+typedef _LIBCPP_BOOL_CONSTANT(false) false_type;
 
 // is_const
 
@@ -420,9 +447,12 @@ template <class _Tp>            struct _LIBCPP_TYPE_VIS_ONLY is_same<_Tp, _Tp> :
 
 namespace __libcpp_is_function_imp
 {
+struct __dummy_type {};
 template <class _Tp> char  __test(_Tp*);
+template <class _Tp> char __test(__dummy_type);
 template <class _Tp> __two __test(...);
-template <class _Tp> _Tp&  __source();
+template <class _Tp> _Tp&  __source(int);
+template <class _Tp> __dummy_type __source(...);
 }
 
 template <class _Tp, bool = is_class<_Tp>::value ||
@@ -431,7 +461,7 @@ template <class _Tp, bool = is_class<_Tp>::value ||
                             is_reference<_Tp>::value ||
                             __is_nullptr_t<_Tp>::value >
 struct __libcpp_is_function
-    : public integral_constant<bool, sizeof(__libcpp_is_function_imp::__test<_Tp>(__libcpp_is_function_imp::__source<_Tp>())) == 1>
+    : public integral_constant<bool, sizeof(__libcpp_is_function_imp::__test<_Tp>(__libcpp_is_function_imp::__source<_Tp>(0))) == 1>
     {};
 template <class _Tp> struct __libcpp_is_function<_Tp, true> : public false_type {};
 
@@ -444,25 +474,21 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_function
 // template <class _Tp, class _Up> struct __libcpp_is_member_function_pointer<_Tp _Up::*> : public is_function<_Tp> {};
 // 
 
-template <class _MP, bool _IsMemberFuctionPtr, bool _IsMemberObjectPtr>
+template <class _MP, bool _IsMemberFunctionPtr, bool _IsMemberObjectPtr>
 struct __member_pointer_traits_imp
 {  // forward declaration; specializations later
 };
 
 
-namespace __libcpp_is_member_function_pointer_imp {
-    template <typename _Tp>
-    char __test(typename std::__member_pointer_traits_imp<_Tp, true, false>::_FnType *);
-
-    template <typename>
-    std::__two __test(...);
-};
-    
 template <class _Tp> struct __libcpp_is_member_function_pointer
-    : public integral_constant<bool, sizeof(__libcpp_is_member_function_pointer_imp::__test<_Tp>(nullptr)) == 1> {};
+    : public false_type {};
+
+template <class _Ret, class _Class>
+struct __libcpp_is_member_function_pointer<_Ret _Class::*>
+    : public is_function<_Ret> {};
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_member_function_pointer
-    : public __libcpp_is_member_function_pointer<typename remove_cv<_Tp>::type> {};
+    : public __libcpp_is_member_function_pointer<typename remove_cv<_Tp>::type>::type {};
 
 // is_member_pointer
 
@@ -663,7 +689,7 @@ template <class _Tp> using add_pointer_t = typename add_pointer<_Tp>::type;
 // is_signed
 
 template <class _Tp, bool = is_integral<_Tp>::value>
-struct __libcpp_is_signed_impl : public integral_constant<bool, _Tp(-1) < _Tp(0)> {};
+struct __libcpp_is_signed_impl : public _LIBCPP_BOOL_CONSTANT(_Tp(-1) < _Tp(0)) {};
 
 template <class _Tp>
 struct __libcpp_is_signed_impl<_Tp, false> : public true_type {};  // floating point
@@ -678,7 +704,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_signed : public __libcpp_is
 // is_unsigned
 
 template <class _Tp, bool = is_integral<_Tp>::value>
-struct __libcpp_is_unsigned_impl : public integral_constant<bool, _Tp(0) < _Tp(-1)> {};
+struct __libcpp_is_unsigned_impl : public _LIBCPP_BOOL_CONSTANT(_Tp(0) < _Tp(-1)) {};
 
 template <class _Tp>
 struct __libcpp_is_unsigned_impl<_Tp, false> : public false_type {};  // floating point
@@ -780,8 +806,16 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_abstract : public __libcpp_
 
 // is_final
 
-#if _LIBCPP_STD_VER > 11 && __has_feature(is_final)
-template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY 
+#if defined(_LIBCPP_HAS_IS_FINAL)
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY
+__libcpp_is_final : public integral_constant<bool, __is_final(_Tp)> {};
+#else
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY
+__libcpp_is_final : public false_type {};
+#endif
+
+#if defined(_LIBCPP_HAS_IS_FINAL) && _LIBCPP_STD_VER > 11
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY
 is_final : public integral_constant<bool, __is_final(_Tp)> {};
 #endif
 
@@ -822,7 +856,7 @@ struct _LIBCPP_TYPE_VIS_ONLY is_base_of
 
 // is_convertible
 
-#if __has_feature(is_convertible_to)
+#if __has_feature(is_convertible_to) && !defined(_LIBCPP_USE_IS_CONVERTIBLE_FALLBACK)
 
 template <class _T1, class _T2> struct _LIBCPP_TYPE_VIS_ONLY is_convertible
     : public integral_constant<bool, __is_convertible_to(_T1, _T2) &&
@@ -832,7 +866,16 @@ template <class _T1, class _T2> struct _LIBCPP_TYPE_VIS_ONLY is_convertible
 
 namespace __is_convertible_imp
 {
-template <class _Tp> char  __test(_Tp);
+template <class _Tp> void  __test_convert(_Tp);
+
+template <class _From, class _To, class = void>
+struct __is_convertible_test : public false_type {};
+
+template <class _From, class _To>
+struct __is_convertible_test<_From, _To,
+    decltype(__test_convert<_To>(_VSTD::declval<_From>()))> : public true_type
+{};
+
 template <class _Tp> __two __test(...);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _Tp> _Tp&& __source();
@@ -867,10 +910,8 @@ template <class _T1, class _T2,
     unsigned _T2_is_array_function_or_void = __is_convertible_imp::__is_array_function_or_void<_T2>::value>
 struct __is_convertible
     : public integral_constant<bool,
-#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-        sizeof(__is_convertible_imp::__test<_T2>(__is_convertible_imp::__source<_T1>())) == 1
-#else
-        sizeof(__is_convertible_imp::__test<_T2>(__is_convertible_imp::__source<_T1>())) == 1
+        __is_convertible_imp::__is_convertible_test<_T1, _T2>::value
+#if defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
          && !(!is_function<_T1>::value && !is_reference<_T1>::value && is_reference<_T2>::value
               && (!is_const<typename remove_reference<_T2>::type>::value
                   || is_volatile<typename remove_reference<_T2>::type>::value)
@@ -884,6 +925,7 @@ struct __is_convertible
 template <class _T1, class _T2> struct __is_convertible<_T1, _T2, 1, 0> : false_type {};
 
 template <class _T1> struct __is_convertible<_T1, const _T1&, 1, 0> : true_type {};
+template <class _T1> struct __is_convertible<const _T1, const _T1&, 1, 0> : true_type {};
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 template <class _T1> struct __is_convertible<_T1, _T1&&, 1, 0> : true_type {};
 template <class _T1> struct __is_convertible<_T1, const _T1&&, 1, 0> : true_type {};
@@ -1208,42 +1250,45 @@ template <class _A1, class _A2 = void, class _A3 = void,
           bool = __numeric_type<_A1>::value &&
                  __numeric_type<_A2>::value &&
                  __numeric_type<_A3>::value>
-class __promote
+class __promote_imp
 {
+public:
     static const bool value = false;
 };
 
 template <class _A1, class _A2, class _A3>
-class __promote<_A1, _A2, _A3, true>
+class __promote_imp<_A1, _A2, _A3, true>
 {
 private:
-    typedef typename __promote<_A1>::type __type1;
-    typedef typename __promote<_A2>::type __type2;
-    typedef typename __promote<_A3>::type __type3;
+    typedef typename __promote_imp<_A1>::type __type1;
+    typedef typename __promote_imp<_A2>::type __type2;
+    typedef typename __promote_imp<_A3>::type __type3;
 public:
     typedef decltype(__type1() + __type2() + __type3()) type;
     static const bool value = true;
 };
 
 template <class _A1, class _A2>
-class __promote<_A1, _A2, void, true>
+class __promote_imp<_A1, _A2, void, true>
 {
 private:
-    typedef typename __promote<_A1>::type __type1;
-    typedef typename __promote<_A2>::type __type2;
+    typedef typename __promote_imp<_A1>::type __type1;
+    typedef typename __promote_imp<_A2>::type __type2;
 public:
     typedef decltype(__type1() + __type2()) type;
     static const bool value = true;
 };
 
 template <class _A1>
-class __promote<_A1, void, void, true>
+class __promote_imp<_A1, void, void, true>
 {
 public:
     typedef typename __numeric_type<_A1>::type type;
     static const bool value = true;
-    static const bool __does_not_throw = _NOEXCEPT_OR_FALSE(static_cast<type>(declval<_A1>()));
 };
+
+template <class _A1, class _A2 = void, class _A3 = void>
+class __promote : public __promote_imp<_A1, _A2, _A3> {};
 
 #ifdef _LIBCPP_STORE_AS_OPTIMIZATION
 
@@ -1420,11 +1465,11 @@ template <class _Tp> using make_unsigned_t = typename make_unsigned<_Tp>::type;
 
 #ifdef _LIBCPP_HAS_NO_VARIADICS
 
-template <class _Tp, class _Up = void, class V = void>
+template <class _Tp, class _Up = void, class _Vp = void>
 struct _LIBCPP_TYPE_VIS_ONLY common_type
 {
 public:
-    typedef typename common_type<typename common_type<_Tp, _Up>::type, V>::type type;
+    typedef typename common_type<typename common_type<_Tp, _Up>::type, _Vp>::type type;
 };
 
 template <class _Tp>
@@ -1506,7 +1551,7 @@ template <class _Tp, class _Arg, bool = is_void<_Tp>::value || is_void<_Arg>::va
 struct __is_assignable_imp
     : public common_type
         <
-            decltype(__is_assignable_test(declval<_Tp>(), declval<_Arg>()))
+            decltype(_VSTD::__is_assignable_test(declval<_Tp>(), declval<_Arg>()))
         >::type {};
 
 template <class _Tp, class _Arg>
@@ -1523,7 +1568,7 @@ struct is_assignable
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_copy_assignable
     : public is_assignable<typename add_lvalue_reference<_Tp>::type,
-                     const typename add_lvalue_reference<_Tp>::type> {};
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_move_assignable
 
@@ -1537,11 +1582,11 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_move_assignable
 
 // is_destructible
 
-//	if it's a reference, return true
-//	if it's a function, return false
-//	if it's   void,     return false
-//	if it's an array of unknown bound, return false
-//	Otherwise, return "std::declval<_Up&>().~_Up()" is well-formed
+//  if it's a reference, return true
+//  if it's a function, return false
+//  if it's   void,     return false
+//  if it's an array of unknown bound, return false
+//  Otherwise, return "std::declval<_Up&>().~_Up()" is well-formed
 //    where _Up is remove_all_extents<_Tp>::type
 
 template <class>
@@ -1549,15 +1594,15 @@ struct __is_destructible_apply { typedef int type; };
 
 template <typename _Tp>
 struct __is_destructor_wellformed {
-	template <typename _Tp1>
-	static char  __test (
+    template <typename _Tp1>
+    static char  __test (
         typename __is_destructible_apply<decltype(_VSTD::declval<_Tp1&>().~_Tp1())>::type
     );
 
-	template <typename _Tp1>
-	static __two __test (...);
-	
-	static const bool value = sizeof(__test<_Tp>(12)) == sizeof(char);
+    template <typename _Tp1>
+    static __two __test (...);
+    
+    static const bool value = sizeof(__test<_Tp>(12)) == sizeof(char);
 };
 
 template <class _Tp, bool>
@@ -1698,11 +1743,27 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...), true, false>
 };
 
 template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const, true, false>
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_Param...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1714,6 +1775,14 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile, true, fa
 };
 
 template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
@@ -1721,7 +1790,16 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile, tr
     typedef _Rp (_FnType) (_Param...);
 };
 
-#if __has_feature(cxx_reference_qualified_functions)
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
+};
+
+#if __has_feature(cxx_reference_qualified_functions) || \
+    (defined(_GNUC_VER) && _GNUC_VER >= 409)
 
 template <class _Rp, class _Class, class ..._Param>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &, true, false>
@@ -1729,6 +1807,14 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &, true, false>
     typedef _Class& _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_Param...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) &, true, false>
+{
+    typedef _Class& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1740,11 +1826,27 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const&, true, fals
 };
 
 template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const&, true, false>
+{
+    typedef _Class const& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile&, true, false>
 {
     typedef _Class volatile& _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_Param...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) volatile&, true, false>
+{
+    typedef _Class volatile& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1756,11 +1858,27 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile&, t
 };
 
 template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const volatile&, true, false>
+{
+    typedef _Class const volatile& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) &&, true, false>
 {
     typedef _Class&& _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_Param...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) &&, true, false>
+{
+    typedef _Class&& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1772,11 +1890,27 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const&&, true, fal
 };
 
 template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const&&, true, false>
+{
+    typedef _Class const&& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) volatile&&, true, false>
 {
     typedef _Class volatile&& _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_Param...);
+};
+
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) volatile&&, true, false>
+{
+    typedef _Class volatile&& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
 };
 
 template <class _Rp, class _Class, class ..._Param>
@@ -1787,7 +1921,15 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param...) const volatile&&, 
     typedef _Rp (_FnType) (_Param...);
 };
 
-#endif  // __has_feature(cxx_reference_qualified_functions)
+template <class _Rp, class _Class, class ..._Param>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_Param..., ...) const volatile&&, true, false>
+{
+    typedef _Class const volatile&& _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_Param..., ...);
+};
+
+#endif  // __has_feature(cxx_reference_qualified_functions) || _GNUC_VER >= 409
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
 
@@ -1799,12 +1941,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(), true, false>
     typedef _Rp (_FnType) ();
 };
 
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(...), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (...);
+};
+
 template <class _Rp, class _Class, class _P0>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0), true, false>
 {
     typedef _Class _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0);
+};
+
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, ...), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, ...);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1815,12 +1973,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1), true, false>
     typedef _Rp (_FnType) (_P0, _P1);
 };
 
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, ...), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, ...);
+};
+
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2), true, false>
 {
     typedef _Class _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0, _P1, _P2);
+};
+
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2, ...), true, false>
+{
+    typedef _Class _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2, ...);
 };
 
 template <class _Rp, class _Class>
@@ -1831,12 +2005,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)() const, true, false>
     typedef _Rp (_FnType) ();
 };
 
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(...) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (...);
+};
+
 template <class _Rp, class _Class, class _P0>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) const, true, false>
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0);
+};
+
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, ...) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, ...);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1847,12 +2037,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) const, true, false>
     typedef _Rp (_FnType) (_P0, _P1);
 };
 
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, ...) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, ...);
+};
+
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) const, true, false>
 {
     typedef _Class const _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0, _P1, _P2);
+};
+
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2, ...) const, true, false>
+{
+    typedef _Class const _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2, ...);
 };
 
 template <class _Rp, class _Class>
@@ -1863,12 +2069,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)() volatile, true, false>
     typedef _Rp (_FnType) ();
 };
 
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(...) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (...);
+};
+
 template <class _Rp, class _Class, class _P0>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) volatile, true, false>
 {
     typedef _Class volatile _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0);
+};
+
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, ...) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, ...);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1879,12 +2101,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) volatile, true, fal
     typedef _Rp (_FnType) (_P0, _P1);
 };
 
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, ...) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, ...);
+};
+
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) volatile, true, false>
 {
     typedef _Class volatile _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0, _P1, _P2);
+};
+
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2, ...) volatile, true, false>
+{
+    typedef _Class volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2, ...);
 };
 
 template <class _Rp, class _Class>
@@ -1895,12 +2133,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)() const volatile, true, false
     typedef _Rp (_FnType) ();
 };
 
+template <class _Rp, class _Class>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(...) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (...);
+};
+
 template <class _Rp, class _Class, class _P0>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0) const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0);
+};
+
+template <class _Rp, class _Class, class _P0>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, ...) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, ...);
 };
 
 template <class _Rp, class _Class, class _P0, class _P1>
@@ -1911,12 +2165,28 @@ struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1) const volatile, tru
     typedef _Rp (_FnType) (_P0, _P1);
 };
 
+template <class _Rp, class _Class, class _P0, class _P1>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, ...) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, ...);
+};
+
 template <class _Rp, class _Class, class _P0, class _P1, class _P2>
 struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2) const volatile, true, false>
 {
     typedef _Class const volatile _ClassType;
     typedef _Rp _ReturnType;
     typedef _Rp (_FnType) (_P0, _P1, _P2);
+};
+
+template <class _Rp, class _Class, class _P0, class _P1, class _P2>
+struct __member_pointer_traits_imp<_Rp (_Class::*)(_P0, _P1, _P2, ...) const volatile, true, false>
+{
+    typedef _Class const volatile _ClassType;
+    typedef _Rp _ReturnType;
+    typedef _Rp (_FnType) (_P0, _P1, _P2, ...);
 };
 
 #endif  // _LIBCPP_HAS_NO_VARIADICS
@@ -1985,7 +2255,7 @@ struct __result_of_mp;
 
 template <class _MP, class _Tp>
 struct __result_of_mp<_MP, _Tp, true>
-    : public common_type<typename __member_pointer_traits<_MP>::_ReturnType>
+    : public __identity<typename __member_pointer_traits<_MP>::_ReturnType>
 {
 };
 
@@ -2053,7 +2323,7 @@ template <class _Fn>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn()>
     : public __result_of<_Fn(),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
@@ -2063,7 +2333,7 @@ template <class _Fn, class _A0>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0)>
     : public __result_of<_Fn(_A0),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
@@ -2073,7 +2343,7 @@ template <class _Fn, class _A0, class _A1>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0, _A1)>
     : public __result_of<_Fn(_A0, _A1),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
@@ -2083,7 +2353,7 @@ template <class _Fn, class _A0, class _A1, class _A2>
 class _LIBCPP_TYPE_VIS_ONLY result_of<_Fn(_A0, _A1, _A2)>
     : public __result_of<_Fn(_A0, _A1, _A2),
                          is_class<typename remove_reference<_Fn>::type>::value ||
-                         is_function<typename remove_reference<_Fn>::type>::value,
+                         is_function<typename remove_pointer<typename remove_reference<_Fn>::type>::type>::value,
                          is_member_pointer<typename remove_reference<_Fn>::type>::value
                         >
 {
@@ -2413,8 +2683,8 @@ struct _LIBCPP_TYPE_VIS_ONLY is_default_constructible
 
 template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY is_copy_constructible
-    : public is_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
-    {};
+    : public is_constructible<_Tp, 
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_move_constructible
 
@@ -2431,7 +2701,7 @@ struct _LIBCPP_TYPE_VIS_ONLY is_move_constructible
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS
 
-#if __has_feature(is_trivially_constructible)
+#if __has_feature(is_trivially_constructible) || _GNUC_VER >= 501
 
 template <class _Tp, class... _Args>
 struct _LIBCPP_TYPE_VIS_ONLY is_trivially_constructible
@@ -2490,7 +2760,7 @@ struct _LIBCPP_TYPE_VIS_ONLY is_trivially_constructible
 {
 };
 
-#if __has_feature(is_trivially_constructible)
+#if __has_feature(is_trivially_constructible) || _GNUC_VER >= 501
 
 template <class _Tp>
 struct _LIBCPP_TYPE_VIS_ONLY is_trivially_constructible<_Tp, __is_construct::__nat,
@@ -2578,7 +2848,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_move_constructibl
 
 // is_trivially_assignable
 
-#if __has_feature(is_trivially_assignable)
+#if __has_feature(is_trivially_assignable) || _GNUC_VER >= 501
 
 template <class _Tp, class _Arg>
 struct is_trivially_assignable
@@ -2618,8 +2888,7 @@ struct is_trivially_assignable<_Tp&, _Tp&&>
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_copy_assignable
     : public is_trivially_assignable<typename add_lvalue_reference<_Tp>::type,
-                               const typename add_lvalue_reference<_Tp>::type>
-    {};
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_trivially_move_assignable
 
@@ -2637,7 +2906,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_move_assignable
 #if __has_feature(has_trivial_destructor) || (_GNUC_VER >= 403)
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible
-    : public integral_constant<bool, __has_trivial_destructor(_Tp)> {};
+    : public integral_constant<bool, is_destructible<_Tp>::value && __has_trivial_destructor(_Tp)> {};
 
 #else
 
@@ -2647,6 +2916,9 @@ template <class _Tp> struct __libcpp_trivial_destructor
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible
     : public __libcpp_trivial_destructor<typename remove_all_extents<_Tp>::type> {};
+
+template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_destructible<_Tp[]>
+    : public false_type {};
 
 #endif
 
@@ -2665,29 +2937,38 @@ struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_constructible
 
 #if __has_feature(cxx_noexcept) || (_GNUC_VER >= 407 && __cplusplus >= 201103L)
 
-template <bool, class _Tp, class... _Args> struct __libcpp_is_nothrow_constructible;
+template <bool, bool, class _Tp, class... _Args> struct __libcpp_is_nothrow_constructible;
 
 template <class _Tp, class... _Args>
-struct __libcpp_is_nothrow_constructible<true, _Tp, _Args...>
+struct __libcpp_is_nothrow_constructible</*is constructible*/true, /*is reference*/false, _Tp, _Args...>
     : public integral_constant<bool, noexcept(_Tp(declval<_Args>()...))>
 {
 };
 
-template <class _Tp, class... _Args>
-struct __libcpp_is_nothrow_constructible<false, _Tp, _Args...>
+template <class _Tp>
+void __implicit_conversion_to(_Tp) noexcept { }
+
+template <class _Tp, class _Arg>
+struct __libcpp_is_nothrow_constructible</*is constructible*/true, /*is reference*/true, _Tp, _Arg>
+    : public integral_constant<bool, noexcept(__implicit_conversion_to<_Tp>(declval<_Arg>()))>
+{
+};
+
+template <class _Tp, bool _IsReference, class... _Args>
+struct __libcpp_is_nothrow_constructible</*is constructible*/false, _IsReference, _Tp, _Args...>
     : public false_type
 {
 };
 
 template <class _Tp, class... _Args>
 struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_constructible
-    : __libcpp_is_nothrow_constructible<is_constructible<_Tp, _Args...>::value, _Tp, _Args...>
+    : __libcpp_is_nothrow_constructible<is_constructible<_Tp, _Args...>::value, is_reference<_Tp>::value, _Tp, _Args...>
 {
 };
 
 template <class _Tp, size_t _Ns>
 struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_constructible<_Tp[_Ns]>
-    : __libcpp_is_nothrow_constructible<is_constructible<_Tp>::value, _Tp>
+    : __libcpp_is_nothrow_constructible<is_constructible<_Tp>::value, is_reference<_Tp>::value, _Tp>
 {
 };
 
@@ -2810,8 +3091,8 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_default_constructib
 // is_nothrow_copy_constructible
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_copy_constructible
-    : public is_nothrow_constructible<_Tp, const typename add_lvalue_reference<_Tp>::type>
-    {};
+    : public is_nothrow_constructible<_Tp,
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_nothrow_move_constructible
 
@@ -2895,8 +3176,7 @@ struct is_nothrow_assignable<_Tp&, _Tp&&>
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_copy_assignable
     : public is_nothrow_assignable<typename add_lvalue_reference<_Tp>::type,
-                               const typename add_lvalue_reference<_Tp>::type>
-    {};
+                  typename add_lvalue_reference<typename add_const<_Tp>::type>::type> {};
 
 // is_nothrow_move_assignable
 
@@ -2964,6 +3244,10 @@ template <class _Tp> struct __libcpp_nothrow_destructor
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_destructible
     : public __libcpp_nothrow_destructor<typename remove_all_extents<_Tp>::type> {};
 
+template <class _Tp>
+struct _LIBCPP_TYPE_VIS_ONLY is_nothrow_destructible<_Tp[]>
+    : public false_type {};
+
 #endif
 
 // is_pod
@@ -3009,6 +3293,8 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_standard_layout
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_copyable
 #if __has_feature(is_trivially_copyable)
     : public integral_constant<bool, __is_trivially_copyable(_Tp)>
+#elif _GNUC_VER >= 501
+    : public integral_constant<bool, !is_volatile<_Tp>::value && __is_trivially_copyable(_Tp)>
 #else
     : integral_constant<bool, is_scalar<typename remove_all_extents<_Tp>::type>::value>
 #endif
@@ -3017,7 +3303,7 @@ template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivially_copyable
 // is_trivial;
 
 template <class _Tp> struct _LIBCPP_TYPE_VIS_ONLY is_trivial
-#if __has_feature(is_trivial) || (_GNUC_VER >= 407)
+#if __has_feature(is_trivial) || _GNUC_VER >= 407
     : public integral_constant<bool, __is_trivial(_Tp)>
 #else
     : integral_constant<bool, is_trivially_copyable<_Tp>::value &&
@@ -3402,26 +3688,85 @@ struct underlying_type
 
 #endif // _LIBCPP_UNDERLYING_TYPE
 
+
+template <class _Tp, bool = std::is_enum<_Tp>::value>
+struct __sfinae_underlying_type
+{
+    typedef typename underlying_type<_Tp>::type type;
+    typedef decltype(((type)1) + 0) __promoted_type;
+};
+
+template <class _Tp>
+struct __sfinae_underlying_type<_Tp, false> {};
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+int __convert_to_integral(int __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+unsigned __convert_to_integral(unsigned __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+long __convert_to_integral(long __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+unsigned long __convert_to_integral(unsigned long __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+long long __convert_to_integral(long long __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+unsigned long long __convert_to_integral(unsigned long long __val) {return __val; }
+
+#ifndef _LIBCPP_HAS_NO_INT128
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+__int128_t __convert_to_integral(__int128_t __val) { return __val; }
+
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+__uint128_t __convert_to_integral(__uint128_t __val) { return __val; }
+#endif
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY _LIBCPP_ALWAYS_INLINE
+typename __sfinae_underlying_type<_Tp>::__promoted_type
+__convert_to_integral(_Tp __val) { return __val; }
+
 #ifndef _LIBCPP_HAS_NO_ADVANCED_SFINAE
 
 template <class _Tp>
-struct __has_operator_addressof_imp
+struct __has_operator_addressof_member_imp
 {
-    template <class>
-        static auto __test(__any) -> false_type;
     template <class _Up>
-        static auto __test(_Up* __u)
-            -> typename __select_2nd<decltype(__u->operator&()), true_type>::type;
+        static auto __test(int)
+            -> typename __select_2nd<decltype(_VSTD::declval<_Up>().operator&()), true_type>::type;
+    template <class>
+        static auto __test(long) -> false_type;
 
-    static const bool value = decltype(__test<_Tp>(nullptr))::value;
+    static const bool value = decltype(__test<_Tp>(0))::value;
+};
+
+template <class _Tp>
+struct __has_operator_addressof_free_imp
+{
+    template <class _Up>
+        static auto __test(int)
+            -> typename __select_2nd<decltype(operator&(_VSTD::declval<_Up>())), true_type>::type;
+    template <class>
+        static auto __test(long) -> false_type;
+
+    static const bool value = decltype(__test<_Tp>(0))::value;
 };
 
 template <class _Tp>
 struct __has_operator_addressof
-    : public integral_constant<bool, __has_operator_addressof_imp<_Tp>::value>
+    : public integral_constant<bool, __has_operator_addressof_member_imp<_Tp>::value
+                                  || __has_operator_addressof_free_imp<_Tp>::value>
 {};
 
 #endif  // _LIBCPP_HAS_NO_ADVANCED_SFINAE
+
+#if _LIBCPP_STD_VER > 14
+template <class...> using void_t = void;
+#endif
 
 _LIBCPP_END_NAMESPACE_STD
 
