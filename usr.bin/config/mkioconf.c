@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.28 2014/11/01 11:02:41 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.29 2015/08/20 09:44:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.28 2014/11/01 11:02:41 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.29 2015/08/20 09:44:24 christos Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -91,6 +91,8 @@ mkioconf(void)
 		warn("cannot write ioconf.c");
 		return (1);
 	}
+
+	fprintf(fp, "#include \"ioconf.h\"\n");
 
 	emithdr(fp);
 	emitcfdrivers(fp);
@@ -476,10 +478,6 @@ emitpseudo(FILE *fp)
 	struct devbase *d;
 
 	fputs("\n/* pseudo-devices */\n", fp);
-	TAILQ_FOREACH(i, &allpseudo, i_next) {
-		fprintf(fp, "void %sattach(int);\n",
-		    i->i_base->d_name);
-	}
 	fputs("\nconst struct pdevinit pdevinit[] = {\n", fp);
 	TAILQ_FOREACH(i, &allpseudo, i_next) {
 		d = i->i_base;
