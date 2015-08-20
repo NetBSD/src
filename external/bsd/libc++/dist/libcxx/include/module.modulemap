@@ -16,6 +16,7 @@ module std [system] {
   module atomic {
     header "atomic"
     export *
+    requires cplusplus11
   }
   module bitset {
     header "bitset"
@@ -468,4 +469,5 @@ module std [system] {
   module __tree { header "__tree" export * }
   module __tuple { header "__tuple" export * }
   module __undef_min_max { header "__undef_min_max" export * }
+  module __undef___deallocate { header "__undef___deallocate" export * }
 }

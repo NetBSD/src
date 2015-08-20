@@ -17,6 +17,8 @@
 #include <climits>
 #include <cassert>
 
+#include "test_macros.h"
+
 class test_alloc_base
 {
 protected:
@@ -72,10 +74,10 @@ public:
             }
             ++time_to_throw;
             ++alloc_count;
-            return (pointer)std::malloc(n * sizeof(T));
+            return (pointer)::operator new(n * sizeof(T));
         }
     void deallocate(pointer p, size_type n)
-        {assert(data_ >= 0); --alloc_count; std::free(p);}
+        {assert(data_ >= 0); --alloc_count; ::operator delete((void*)p);}
     size_type max_size() const throw()
         {return UINT_MAX / sizeof(T);}
     void construct(pointer p, const T& val)
@@ -132,10 +134,10 @@ public:
             }
             ++time_to_throw;
             ++alloc_count;
-            return (pointer)std::malloc(n * sizeof(T));
+            return (pointer)::operator new (n * sizeof(T));
         }
     void deallocate(pointer p, size_type n)
-        {assert(data_ >= 0); --alloc_count; std::free(p);}
+        {assert(data_ >= 0); --alloc_count; ::operator delete((void*)p); }
     size_type max_size() const throw()
         {return UINT_MAX / sizeof(T);}
     void construct(pointer p, const T& val)
@@ -198,9 +200,9 @@ public:
     template <class U> other_allocator(const other_allocator<U>& a)
         : data_(a.data_) {}
     T* allocate(std::size_t n)
-        {return (T*)std::malloc(n * sizeof(T));}
+        {return (T*)::operator new(n * sizeof(T));}
     void deallocate(T* p, std::size_t n)
-        {std::free(p);}
+        {::operator delete((void*)p);}
 
     other_allocator select_on_container_copy_construction() const
         {return other_allocator(-2);}
