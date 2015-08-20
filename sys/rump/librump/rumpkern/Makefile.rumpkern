@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile.rumpkern,v 1.160 2015/06/17 11:46:34 pooka Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.161 2015/08/20 12:04:30 christos Exp $
 #
 
+IOCONF=KERN.ioconf
 .include "${RUMPTOP}/Makefile.rump"
 
 .include <bsd.own.mk>
 
 LIB=		rump
-
 MAN=		rump.3 rump_lwproc.3
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\
