@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.83 2015/03/26 17:40:16 prlw1 Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.84 2015/08/20 14:40:19 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.83 2015/03/26 17:40:16 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.84 2015/08/20 14:40:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.83 2015/03/26 17:40:16 prlw1 Exp $")
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptodev_internal.h>
 #include <opencrypto/xform.h>
+
+#include "ioconf.h"
 
 struct csession {
 	TAILQ_ENTRY(csession) next;
@@ -2080,8 +2082,6 @@ cryptof_poll(struct file *fp, int events)
 /*
  * Pseudo-device initialization routine for /dev/crypto
  */
-void	cryptoattach(int);
-
 void
 cryptoattach(int num)
 {

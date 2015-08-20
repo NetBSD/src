@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.164 2015/07/21 21:42:15 skrll Exp $	*/
+/*	$NetBSD: ccd.c,v 1.165 2015/08/20 14:40:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.164 2015/07/21 21:42:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.165 2015/08/20 14:40:17 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.164 2015/07/21 21:42:15 skrll Exp $");
 
 #include <miscfs/specfs/specdev.h> /* for v_rdev */
 
+#include "ioconf.h"
+
 #if defined(CCDDEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif
@@ -160,7 +162,6 @@ static pool_cache_t ccd_cache;
 	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
 
 /* called by main() at boot time */
-void	ccdattach(int);
 void	ccddetach(void);
 
 /* called by biodone() at interrupt time */

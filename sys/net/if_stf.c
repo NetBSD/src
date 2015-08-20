@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.80 2014/06/12 16:43:09 christos Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.81 2015/08/20 14:40:19 christos Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80 2014/06/12 16:43:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.81 2015/08/20 14:40:19 christos Exp $");
 
 #include "opt_inet.h"
 #ifndef INET6
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.80 2014/06/12 16:43:09 christos Exp $")
 #include <net/if_gif.h>
 #endif
 
+#include "ioconf.h"
+
 #define IN6_IS_ADDR_6TO4(x)	(ntohs((x)->s6_addr16[0]) == 0x2002)
 #define GET_V4(x)	((const struct in_addr *)(&(x)->s6_addr16[1]))
 
@@ -165,8 +167,6 @@ static const struct protosw in_stf_protosw =
 	.pr_ctloutput	= rip_ctloutput,
 	.pr_usrreqs	= &rip_usrreqs,
 };
-
-void	stfattach(int);
 
 static int stf_encapcheck(struct mbuf *, int, int, void *);
 static struct in6_ifaddr *stf_getsrcifa6(struct ifnet *);

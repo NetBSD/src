@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.100 2015/07/23 10:52:34 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.101 2015/08/20 14:40:19 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.100 2015/07/23 10:52:34 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.101 2015/08/20 14:40:19 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -142,6 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.100 2015/07/23 10:52:34 ozaki-r Exp 
 #include <netinet/in_var.h>
 #include <netinet/ip_carp.h>
 #endif
+
+#include "ioconf.h"
 
 __CTASSERT(sizeof(struct ifbifconf) == sizeof(struct ifbaconf));
 __CTASSERT(offsetof(struct ifbifconf, ifbic_len) == offsetof(struct ifbaconf, ifbac_len));
@@ -216,8 +218,6 @@ int	bridge_rtable_prune_period = BRIDGE_RTABLE_PRUNE_PERIOD;
 
 static struct pool bridge_rtnode_pool;
 static struct work bridge_rtage_wk;
-
-void	bridgeattach(int);
 
 static int	bridge_clone_create(struct if_clone *, int);
 static int	bridge_clone_destroy(struct ifnet *);

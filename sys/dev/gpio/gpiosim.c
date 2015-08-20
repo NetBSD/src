@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.17 2015/08/20 12:09:22 uebayasi Exp $ */
+/* $NetBSD: gpiosim.c,v 1.18 2015/08/20 14:40:18 christos Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -31,6 +31,7 @@
 #include <dev/gpio/gpiovar.h>
 
 #include "gpiosim.h"
+#include "ioconf.h"
 
 #define	GPIOSIM_NPINS	64
 
@@ -45,7 +46,6 @@ struct gpiosim_softc {
 };
 
 static int	gpiosim_match(device_t, cfdata_t, void *);
-void		gpiosimattach(int);
 static void	gpiosim_attach(device_t, device_t, void *);
 static int	gpiosim_detach(device_t, int);
 static int	gpiosim_sysctl(SYSCTLFN_PROTO);

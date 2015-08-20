@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.43 2015/05/30 19:14:46 joerg Exp $      */
+/*      $NetBSD: xenevt.c,v 1.44 2015/08/20 14:40:17 christos Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.43 2015/05/30 19:14:46 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.44 2015/08/20 14:40:17 christos Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.43 2015/05/30 19:14:46 joerg Exp $");
 #include <xen/xenio3.h>
 #include <xen/xen.h>
 
+#include "ioconf.h"
+
 /*
  * Interface between the event channel and userland.
  * Each process with a xenevt device instance open can regiter events it
@@ -62,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.43 2015/05/30 19:14:46 joerg Exp $");
  * Processes get a device instance by opening a cloning device.
  */
 
-void		xenevtattach(int);
 static int	xenevt_fread(struct file *, off_t *, struct uio *,
     kauth_cred_t, int);
 static int	xenevt_fwrite(struct file *, off_t *, struct uio *,

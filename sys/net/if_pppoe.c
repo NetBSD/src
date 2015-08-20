@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.102 2014/10/18 08:33:29 snj Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.103 2015/08/20 14:40:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.103 2015/08/20 14:40:19 christos Exp $");
 
 #include "pppoe.h"
 #include "opt_pppoe.h"
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.102 2014/10/18 08:33:29 snj Exp $");
 
 #include <net/bpf.h>
 
+#include "ioconf.h"
 
 #undef PPPOE_DEBUG		/* XXX - remove this or make it an option */
 /* #define PPPOE_DEBUG 1 */
@@ -162,7 +163,6 @@ static void pppoe_dispatch_disc_pkt(struct mbuf *, int);
 static void pppoe_data_input(struct mbuf *);
 
 /* management routines */
-void pppoeattach(int);
 static int pppoe_connect(struct pppoe_softc *);
 static int pppoe_disconnect(struct pppoe_softc *);
 static void pppoe_abort_connect(struct pppoe_softc *);

@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.42 2014/07/25 08:10:33 dholland Exp $ */
+/* $NetBSD: siotty.c,v 1.43 2015/08/20 14:40:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.42 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.43 2015/08/20 14:40:17 christos Exp $");
 
 #include "opt_ddb.h"
 
@@ -693,7 +693,6 @@ getsiocsr(struct sioreg *sio)
 
 /*---------------------  console interface ----------------------*/
 
-void syscnattach(int);
 int  syscngetc(dev_t);
 void syscnputc(dev_t, int);
 

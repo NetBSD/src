@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.81 2014/12/17 09:41:30 ozaki-r Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.82 2015/08/20 14:40:19 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.81 2014/12/17 09:41:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.82 2015/08/20 14:40:19 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.81 2014/12/17 09:41:30 ozaki-r Exp $");
 #include <net/bpf.h>
 
 #include <compat/sys/sockio.h>
+
+#include "ioconf.h"
 
 #if defined(COMPAT_40) || defined(MODULAR)
 /*
@@ -118,8 +120,6 @@ struct tap_softc {
 };
 
 /* autoconf(9) glue */
-
-void	tapattach(int);
 
 static int	tap_match(device_t, cfdata_t, void *);
 static void	tap_attach(device_t, device_t, void *);

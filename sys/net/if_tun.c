@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.121 2015/04/20 10:19:54 roy Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.122 2015/08/20 14:40:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,7 +15,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.121 2015/04/20 10:19:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.122 2015/08/20 14:40:19 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -58,11 +58,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.121 2015/04/20 10:19:54 roy Exp $");
 
 #include <net/if_tun.h>
 
+#include "ioconf.h"
+
 #define TUNDEBUG	if (tundebug) printf
 int	tundebug = 0;
 
 extern int ifqmaxlen;
-void	tunattach(int);
 
 static LIST_HEAD(, tun_softc) tun_softc_list;
 static LIST_HEAD(, tun_softc) tunz_softc_list;

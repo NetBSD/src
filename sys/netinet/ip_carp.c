@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.60 2015/02/26 09:54:46 roy Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.61 2015/08/20 14:40:19 christos Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
 #include "opt_mbuftrace.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.60 2015/02/26 09:54:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.61 2015/08/20 14:40:19 christos Exp $");
 
 /*
  * TODO:
@@ -99,6 +99,8 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.60 2015/02/26 09:54:46 roy Exp $");
 #include <sys/sha1.h>
 
 #include <netinet/ip_carp.h>
+
+#include "ioconf.h"
 
 struct carp_mc_entry {
 	LIST_ENTRY(carp_mc_entry)	mc_entries;
@@ -193,7 +195,6 @@ static int	carp_hmac_verify(struct carp_softc *, u_int32_t *,
 static void	carp_setroute(struct carp_softc *, int);
 static void	carp_proto_input_c(struct mbuf *, struct carp_header *,
 		    sa_family_t);
-void	carpattach(int);
 static void	carpdetach(struct carp_softc *);
 static int	carp_prepare_ad(struct mbuf *, struct carp_softc *,
 		    struct carp_header *);
