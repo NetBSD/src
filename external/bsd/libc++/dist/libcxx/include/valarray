@@ -348,6 +348,7 @@ template <class T> unspecified2 end(const valarray<T>& v);
 #include <new>
 
 #include <__undef_min_max>
+#include <__undef___deallocate>
 
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
@@ -1220,6 +1221,7 @@ slice_array<_Tp>::operator=(const slice_array& __sa) const
     const value_type* __s = __sa.__vp_;
     for (size_t __n = __size_; __n; --__n, __t += __stride_, __s += __sa.__stride_)
         *__t = *__s;
+    return *this;
 }
 
 template <class _Tp>
@@ -2090,6 +2092,7 @@ mask_array<_Tp>::operator=(const mask_array& __ma) const
     size_t __n = __1d_.size();
     for (size_t __i = 0; __i < __n; ++__i)
         __vp_[__1d_[__i]] = __ma.__vp_[__1d_[__i]];
+    return *this;
 }
 
 template <class _Tp>
