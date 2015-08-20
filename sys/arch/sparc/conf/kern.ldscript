@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.5 2005/12/11 12:19:05 christos Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.6 2015/08/20 07:00:49 uebayasi Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc.  This script is based on
@@ -95,9 +95,9 @@ SECTIONS
   .sbss      : { *(.sbss) *(.scommon) }
   .bss       :
   {
-   *(.dynbss)
-   *(.bss)
-   *(COMMON)
+    *(.dynbss)
+    *(.bss)
+    *(COMMON)
   }
   . = ALIGN(32 / 8);
   _end = . ;

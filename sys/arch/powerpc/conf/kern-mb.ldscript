@@ -1,4 +1,4 @@
-/* $NetBSD: kern-mb.ldscript,v 1.1 2012/03/29 15:42:15 matt Exp $ */
+/* $NetBSD: kern-mb.ldscript,v 1.2 2015/08/20 07:00:49 uebayasi Exp $ */
 
 /*  ldscript for NetBSD/powerpc kernels and LKMs */
 OUTPUT_ARCH(powerpc)
@@ -51,8 +51,8 @@ SECTIONS
   .sbss      : { *(.sbss) *(.scommon) }
   .bss       :
   {
-   *(.bss)
-   *(COMMON)
+    *(.bss)
+    *(COMMON)
   }
   _end = . ;
   PROVIDE (end = .);
