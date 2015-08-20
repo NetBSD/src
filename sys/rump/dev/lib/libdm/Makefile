@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2014/03/13 01:54:22 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2015/08/20 11:51:12 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/dm
 
 LIB=	rumpdev_dm
-
+IOCONF=	DM.ioconf
 SRCS=   device-mapper.c dm_dev.c dm_ioctl.c dm_pdev.c dm_table.c dm_target.c \
         dm_target_linear.c dm_target_stripe.c
 
