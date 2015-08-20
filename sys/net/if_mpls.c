@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.17 2015/06/04 09:19:59 ozaki-r Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.18 2015/08/20 14:40:19 christos Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.17 2015/06/04 09:19:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.18 2015/08/20 14:40:19 christos Exp $");
 
 #include "opt_inet.h"
 #include "opt_mpls.h"
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.17 2015/06/04 09:19:59 ozaki-r Exp $")
 
 #include "if_mpls.h"
 
+#include "ioconf.h"
+
 #define TRIM_LABEL do { \
 	m_adj(m, sizeof(union mpls_shim)); \
 	if (m->m_len < sizeof(union mpls_shim) && \
@@ -75,8 +77,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.17 2015/06/04 09:19:59 ozaki-r Exp $")
 	dst.smpls_addr.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr); \
 	} while (/* CONSTCOND */ 0)
 
-
-void ifmplsattach(int);
 
 static int mpls_clone_create(struct if_clone *, int);
 static int mpls_clone_destroy(struct ifnet *);

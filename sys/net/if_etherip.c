@@ -1,4 +1,4 @@
-/*      $NetBSD: if_etherip.c,v 1.35 2014/02/25 18:30:12 pooka Exp $        */
+/*      $NetBSD: if_etherip.c,v 1.36 2015/08/20 14:40:19 christos Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.35 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.36 2015/08/20 14:40:19 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -134,13 +134,13 @@ __KERNEL_RCSID(0, "$NetBSD: if_etherip.c,v 1.35 2014/02/25 18:30:12 pooka Exp $"
 
 #include <compat/sys/sockio.h>
 
+#include "ioconf.h"
+
 struct etherip_softc_list etherip_softc_list;
 
 static int etherip_node;
 static int etherip_sysctl_handler(SYSCTLFN_PROTO);
 SYSCTL_SETUP_PROTO(sysctl_etherip_setup);
-
-void etheripattach(int);
 
 static int  etherip_match(device_t, cfdata_t, void *);
 static void etherip_attach(device_t, device_t, void *);
