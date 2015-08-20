@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/13 02:08:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2015/08/20 12:20:09 christos Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
 
 LIB=	rumpnet_bridge
-
+IOCONF=	BRIDGE.ioconf
 SRCS=	if_bridge.c bridgestp.c
 
 SRCS+=	bridge_component.c
