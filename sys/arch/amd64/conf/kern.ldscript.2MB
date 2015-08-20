@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript.2MB,v 1.5 2014/11/02 17:58:14 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript.2MB,v 1.6 2015/08/20 06:48:25 uebayasi Exp $	*/
 
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
 	      "elf64-x86-64")
@@ -23,7 +23,7 @@ SECTIONS
      *(.rodata)
      *(.rodata.*)
    }
- 
+
    /* Adjust the address for the data segment.  We push the data segment
       up to the next 2MB boundary so that we can map the text with large
       pages. */

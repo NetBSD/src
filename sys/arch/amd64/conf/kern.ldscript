@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.8 2014/11/02 17:58:14 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.9 2015/08/20 06:48:25 uebayasi Exp $	*/
 
 OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
 	      "elf64-x86-64")
@@ -23,7 +23,7 @@ SECTIONS
      *(.rodata)
      *(.rodata.*)
    }
- 
+
    /* Adjust the address for the data segment.  We want to adjust up to
       the same address within the page on the next page up.  */
    . = ALIGN(0x100000) + (. & (0x100000 - 1));

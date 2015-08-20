@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.4 2014/01/30 15:36:44 matt Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.5 2015/08/20 06:48:25 uebayasi Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -45,7 +45,7 @@ SECTIONS
   .sdata     :
   AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
   {
-    *(.sdata) 
+    *(.sdata)
     *(.sdata.*)
   }
   _edata = .;
