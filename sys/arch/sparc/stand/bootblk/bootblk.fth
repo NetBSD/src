@@ -1,4 +1,4 @@
-\	$NetBSD: bootblk.fth,v 1.14 2015/08/16 10:58:54 jdc Exp $
+\	$NetBSD: bootblk.fth,v 1.15 2015/08/20 05:40:08 dholland Exp $
 \
 \	IEEE 1275 Open Firmware Boot Block
 \
@@ -581,7 +581,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
    ' dlfs_SIZEOF  to  fs-size 
    ' di1_size  to  di-size
    ' di1_mode  to  di-mode
-   ' ufs1_dinode_SIZEOF  to  /dino
+   ' lfs32_dinode_SIZEOF  to  /dino
    ' cgbase  to  cgstart
    ' di-db-v1@  to  di-db@
    ' di-ib-v1@  to  di-ib@
@@ -890,7 +890,7 @@ create cur-blockno -1 l, -1 l,		\ Current disk block.
 
 : do-boot ( bootfile -- )
    ." NetBSD IEEE 1275 Multi-FS Bootblock" cr
-   ." Version $NetBSD: bootblk.fth,v 1.14 2015/08/16 10:58:54 jdc Exp $" cr
+   ." Version $NetBSD: bootblk.fth,v 1.15 2015/08/20 05:40:08 dholland Exp $" cr
    boot-path load-file ( -- load-base )
    dup 0<>  if  " init-program " evaluate  then
 ; 
