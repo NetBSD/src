@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.28 2015/05/08 11:47:53 christos Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.29 2015/08/20 14:40:17 christos Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.28 2015/05/08 11:47:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.29 2015/08/20 14:40:17 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,7 +131,6 @@ struct bcsp_softc {
 #define	BCSP_XMIT	(1 << 0)	/* transmit active */
 #define	BCSP_ENABLED	(1 << 1)	/* is enabled */
 
-void bcspattach(int);
 static int bcsp_match(device_t, cfdata_t, void *);
 static void bcsp_attach(device_t, device_t, void *);
 static int bcsp_detach(device_t, int);
