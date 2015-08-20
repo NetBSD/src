@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2014/08/09 19:06:49 joerg Exp $
+#	$NetBSD: Makefile,v 1.7 2015/08/20 10:06:21 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -20,7 +20,7 @@ INCS=	__bit_reference \
 	__std_stream \
 	__tree \
 	__tuple \
-	__tuple_03 \
+	__undef___deallocate \
 	__undef_min_max \
 	algorithm \
 	array \
@@ -109,9 +109,15 @@ INCS+=	ext/__hash \
 	ext/hash_map \
 	ext/hash_set
 INCS+=	experimental/__config \
+	experimental/algorithm \
+	experimental/chrono \
 	experimental/dynarray \
 	experimental/optional \
+	experimental/ratio \
 	experimental/string_view \
+	experimental/system_error \
+	experimental/tuple \
+	experimental/type_traits \
 	experimental/utility
 
 cxxabi.h: ${LIBCXXRT_SRCDIR}/src/cxxabi.h
