@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.33 2015/08/19 04:53:03 uebayasi Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.34 2015/08/20 06:20:19 uebayasi Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -18,7 +18,7 @@ LOADADDRESS=	0xF0000020
 KERNLDSCRIPT=	ldscript
 EXTRA_CLEAN+=	${KERNLDSCRIPT}
 
-ldscript: \
+${KERNLDSCRIPT}: \
     ${ARM}/conf/kern.ldscript.head \
     ${ARM}/conf/kern.ldscript.tail \
     $S/conf/mkldscript.sh \
@@ -26,7 +26,7 @@ ldscript: \
 	( cat ${ARM}/conf/kern.ldscript.head ; \
 	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
-	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
+	  cat ${ARM}/conf/kern.ldscript.tail ) > $@
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout"; \
