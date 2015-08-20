@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.237 2015/05/18 11:56:20 pooka Exp $
+$NetBSD: acronyms,v 1.238 2015/08/20 07:10:02 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -180,6 +180,7 @@ GLHF	good luck, have fun
 GLINE	global kill line
 GLWT	good luck with that
 GM	game master
+GMT	Greenwich mean time
 GMTA	great minds think alike
 GOK	God only knows
 GOWI	get on with it
