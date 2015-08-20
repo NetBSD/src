@@ -1,4 +1,4 @@
-/* $NetBSD: reallocarr.c,v 1.3 2015/07/28 17:13:34 kamil Exp $ */
+/* $NetBSD: reallocarr.c,v 1.4 2015/08/20 20:08:04 joerg Exp $ */
 
 /*-
  * Copyright (c) 2015 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarr.c,v 1.3 2015/07/28 17:13:34 kamil Exp $");
+__RCSID("$NetBSD: reallocarr.c,v 1.4 2015/08/20 20:08:04 joerg Exp $");
 
 #include "namespace.h"
 #include <errno.h>
@@ -50,7 +50,7 @@ __weak_alias(reallocarr, _reallocarr)
 #endif
 #endif
 
-#define SQRT_SIZE_MAX (1UL << (sizeof(size_t) << 2))
+#define SQRT_SIZE_MAX (((size_t)1) << (sizeof(size_t) * CHAR_BIT / 2))
 
 #if !HAVE_REALLOCARR
 int
