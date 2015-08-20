@@ -1,4 +1,4 @@
-/* $NetBSD: reallocarr.c,v 1.4 2015/08/20 20:08:04 joerg Exp $ */
+/* $NetBSD: reallocarr.c,v 1.5 2015/08/20 22:27:49 kamil Exp $ */
 
 /*-
  * Copyright (c) 2015 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reallocarr.c,v 1.4 2015/08/20 20:08:04 joerg Exp $");
+__RCSID("$NetBSD: reallocarr.c,v 1.5 2015/08/20 22:27:49 kamil Exp $");
 
 #include "namespace.h"
 #include <errno.h>
@@ -70,14 +70,20 @@ reallocarr(void *ptr, size_t number, size_t size)
 		return 0;
 	}
 
-	if ((number >= SQRT_SIZE_MAX || size >= SQRT_SIZE_MAX) &&
-	    number > SIZE_MAX / size) {
+	/*
+	 * Try to avoid division here.
+	 *
+	 * It isn't possible to overflow during multiplication if neither
+	 * operand uses any of the most significant half of the bits.
+	 */
+	if (__predict_false((number|size) >= SQRT_SIZE_MAX &&
+	                    number > SIZE_MAX / size)) {
 		errno = saved_errno;
 		return EOVERFLOW;
 	}
 
 	nptr = realloc(optr, number * size);
-	if (nptr == NULL) {
+	if (__predict_false(nptr == NULL)) {
 		result = errno;
 	} else {
 		result = 0;
