@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.113 2015/06/03 14:40:11 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.114 2015/08/21 12:39:07 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -40,14 +40,13 @@ RUMP_NBCOMPAT=
 RUMP_NBCOMPAT:=	${RUMP_NBCOMPAT:S/,/ /g}
 CPPFLAGS+=	${RUMP_NBCOMPAT:C/[1-9]0/-DCOMPAT_&/g}
 
-CPPFLAGS+=	-DMAXUSERS=32
-
 CPPFLAGS+=	-nostdinc
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
 
 CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
-CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
-CPPFLAGS+=	-DDEBUGPRINT
+
+CPPFLAGS+=	-imacros ${RUMPTOP}/include/opt/opt_rumpkernel.h
+
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include
 CPPFLAGS+=	-I${RUMPTOP}/include
@@ -118,7 +117,7 @@ CPPFLAGS+=	-DKTRACE
 
 # make sure __NetBSD__ gets defined (for builds on non-NetBSD)
 # also, give those builds a way to undef the local compiler's macros
-CPPFLAGS+=	-D__NetBSD__ ${RUMPKERN_UNDEF}
+CPPFLAGS+=	${RUMPKERN_UNDEF}
 
 RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 
@@ -127,8 +126,9 @@ RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 CPPFLAGS+=	-DPPC_OEA
 .endif
 
-# If this file changes, we need a full rebuild
+# If any of these files change, we need a full rebuild
 DPSRCS+=	${RUMPTOP}/Makefile.rump
+DPSRCS+=	${RUMPTOP}/include/opt/opt_rumpkernel.h
 
 #
 # Support for component-specific hypercalls
