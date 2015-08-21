@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.257 2015/08/19 20:33:29 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.258 2015/08/21 07:35:56 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,9 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.257 2015/08/19 20:33:29 dholland Exp $");
-
-#define _VFS_VNODE_PRIVATE	/* XXX: check for VI_MARKER, this has to go */
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.258 2015/08/21 07:35:56 hannken Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -478,131 +476,113 @@ lfs_vflush(struct vnode *vp)
 	return (0);
 }
 
+struct lfs_writevnodes_ctx {
+	int op;
+	struct lfs *fs;
+};
+static bool
+lfs_writevnodes_selector(void *cl, struct vnode *vp)
+{
+	struct lfs_writevnodes_ctx *c = cl;
+	struct inode *ip = VTOI(vp);
+	int op = c->op;
+
+	if (ip == NULL || vp->v_type == VNON)
+		return false;
+	if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
+	    (op != VN_DIROP && op != VN_CLEAN && (vp->v_uflag & VU_DIROP))) {
+		vndebug(vp, "dirop");
+		return false;
+	}
+	if (op == VN_EMPTY && !VPISEMPTY(vp)) {
+		vndebug(vp,"empty");
+		return false;;
+	}
+	if (op == VN_CLEAN && ip->i_number != LFS_IFILE_INUM &&
+	    vp != c->fs->lfs_flushvp && !(ip->i_flag & IN_CLEANING)) {
+		vndebug(vp,"cleaning");
+		return false;
+	}
+	mutex_enter(&lfs_lock);
+	if (vp == c->fs->lfs_unlockvp) {
+		mutex_exit(&lfs_lock);
+		return false;
+	}
+	mutex_exit(&lfs_lock);
+
+	return true;
+}
+
 int
 lfs_writevnodes(struct lfs *fs, struct mount *mp, struct segment *sp, int op)
 {
 	struct inode *ip;
 	struct vnode *vp;
+	struct vnode_iterator *marker;
+	struct lfs_writevnodes_ctx ctx;
 	int inodes_written = 0;
 	int error = 0;
 
+	/*
+	 * XXX This was TAILQ_FOREACH_REVERSE on &mp->mnt_vnodelist.
+	 * XXX The rationale is unclear, the initial commit had no information.
+	 * XXX If the order really matters we have to sort the vnodes first.
+	*/
+
 	ASSERT_SEGLOCK(fs);
- loop:
-	/* start at last (newest) vnode. */
-	mutex_enter(&mntvnode_lock);
-	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
-		/*
-		 * If the vnode that we are about to sync is no longer
-		 * associated with this mount point, start over.
-		 */
-		if (vp->v_mount != mp) {
-			DLOG((DLOG_VNODE, "lfs_writevnodes: starting over\n"));
-			/*
-			 * After this, pages might be busy
-			 * due to our own previous putpages.
-			 * Start actual segment write here to avoid deadlock.
-			 * If we were just writing one segment and we've done
-			 * that, break out.
-			 */
-			mutex_exit(&mntvnode_lock);
-			if (lfs_writeseg(fs, sp) &&
-			    (sp->seg_flags & SEGM_SINGLE) &&
-			    lfs_sb_getcurseg(fs) != fs->lfs_startseg) {
-				DLOG((DLOG_VNODE, "lfs_writevnodes: breaking out of segment write at daddr 0x%jx\n", (uintmax_t)lfs_sb_getoffset(fs)));
-				break;
-			}
-			goto loop;
-		}
-
-		mutex_enter(vp->v_interlock);
-		if (vp->v_type == VNON || (vp->v_iflag & VI_MARKER) ||
-		    vdead_check(vp, VDEAD_NOWAIT) != 0) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-
+	vfs_vnode_iterator_init(mp, &marker);
+	ctx.op = op;
+	ctx.fs = fs;
+	while ((vp = vfs_vnode_iterator_next(marker,
+	    lfs_writevnodes_selector, &ctx)) != NULL) {
 		ip = VTOI(vp);
-		if ((op == VN_DIROP && !(vp->v_uflag & VU_DIROP)) ||
-		    (op != VN_DIROP && op != VN_CLEAN &&
-		    (vp->v_uflag & VU_DIROP))) {
-			mutex_exit(vp->v_interlock);
-			vndebug(vp,"dirop");
-			continue;
-		}
-
-		if (op == VN_EMPTY && !VPISEMPTY(vp)) {
-			mutex_exit(vp->v_interlock);
-			vndebug(vp,"empty");
-			continue;
-		}
-
-		if (op == VN_CLEAN && ip->i_number != LFS_IFILE_INUM
-		   && vp != fs->lfs_flushvp
-		   && !(ip->i_flag & IN_CLEANING)) {
-			mutex_exit(vp->v_interlock);
-			vndebug(vp,"cleaning");
-			continue;
-		}
-
-		mutex_exit(&mntvnode_lock);
-		if (vget(vp, LK_NOWAIT, false /* !wait */)) {
-			vndebug(vp,"vget");
-			mutex_enter(&mntvnode_lock);
-			continue;
-		}
 
 		/*
 		 * Write the inode/file if dirty and it's not the IFILE.
 		 */
-		if ((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp)) {
-			if (ip->i_number != LFS_IFILE_INUM) {
-				error = lfs_writefile(fs, sp, vp);
-				if (error) {
-					vrele(vp);
-					if (error == EAGAIN) {
-						/*
-						 * This error from lfs_putpages
-						 * indicates we need to drop
-						 * the segment lock and start
-						 * over after the cleaner has
-						 * had a chance to run.
-						 */
-						lfs_writeinode(fs, sp, ip);
-						lfs_writeseg(fs, sp);
-						if (!VPISEMPTY(vp) &&
-						    !WRITEINPROG(vp) &&
-						    !(ip->i_flag & IN_ALLMOD)) {
-							mutex_enter(&lfs_lock);
-							LFS_SET_UINO(ip, IN_MODIFIED);
-							mutex_exit(&lfs_lock);
-						}
-						mutex_enter(&mntvnode_lock);
-						break;
-					}
-					error = 0; /* XXX not quite right */
-					mutex_enter(&mntvnode_lock);
-					continue;
-				}
-				
-				if (!VPISEMPTY(vp)) {
-					if (WRITEINPROG(vp)) {
-						ivndebug(vp,"writevnodes/write2");
-					} else if (!(ip->i_flag & IN_ALLMOD)) {
+		if (((ip->i_flag & IN_ALLMOD) || !VPISEMPTY(vp)) &&
+		    ip->i_number != LFS_IFILE_INUM) {
+			error = lfs_writefile(fs, sp, vp);
+			if (error) {
+				vrele(vp);
+				if (error == EAGAIN) {
+					/*
+					 * This error from lfs_putpages
+					 * indicates we need to drop
+					 * the segment lock and start
+					 * over after the cleaner has
+					 * had a chance to run.
+					 */
+					lfs_writeinode(fs, sp, ip);
+					lfs_writeseg(fs, sp);
+					if (!VPISEMPTY(vp) &&
+					    !WRITEINPROG(vp) &&
+					    !(ip->i_flag & IN_ALLMOD)) {
 						mutex_enter(&lfs_lock);
 						LFS_SET_UINO(ip, IN_MODIFIED);
 						mutex_exit(&lfs_lock);
 					}
+					break;
 				}
-				(void) lfs_writeinode(fs, sp, ip);
-				inodes_written++;
+				error = 0; /* XXX not quite right */
+				continue;
 			}
+			
+			if (!VPISEMPTY(vp)) {
+				if (WRITEINPROG(vp)) {
+					ivndebug(vp,"writevnodes/write2");
+				} else if (!(ip->i_flag & IN_ALLMOD)) {
+					mutex_enter(&lfs_lock);
+					LFS_SET_UINO(ip, IN_MODIFIED);
+					mutex_exit(&lfs_lock);
+				}
+			}
+			(void) lfs_writeinode(fs, sp, ip);
+			inodes_written++;
 		}
-
 		vrele(vp);
-
-		mutex_enter(&mntvnode_lock);
 	}
-	mutex_exit(&mntvnode_lock);
+	vfs_vnode_iterator_destroy(marker);
 	return error;
 }
 
