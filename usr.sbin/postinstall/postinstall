@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.175.2.8 2015/08/07 06:22:10 msaitoh Exp $
+# $NetBSD: postinstall,v 1.175.2.9 2015/08/21 17:27:16 snj Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1338,7 +1338,7 @@ do_rc()
 
 	compare_dir "${op}" "${SRC_DIR}/etc/rc.d" "${DEST_DIR}/etc/rc.d" 555 \
 		DAEMON DISKS LOGIN NETWORKING SERVERS \
-		accounting altqd amd apmd \
+		accounting altqd amd apmd blacklistd \
 		bluetooth bootconf.sh bootparams \
 		ccd cgd cleartmp cron devpubd \
 		dhclient dhcpcd dhcpd dhcrelay dmesg downinterfaces envsys \
