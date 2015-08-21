@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.238 2015/08/20 07:10:02 dholland Exp $
+$NetBSD: acronyms,v 1.239 2015/08/21 09:46:43 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -536,6 +536,7 @@ WMNC	watch me not care
 WOMBAT	waste of money, brain, and time
 WRT	with respect to
 WTB	{waiting,want,willing} to buy
+WTF	where's the food
 WTG	way to go
 WTH	{what,when,where,who,why} the hell
 WTS	{waiting,want,willing} to sell
