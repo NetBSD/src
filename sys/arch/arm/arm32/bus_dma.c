@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.91 2015/02/25 13:52:42 joerg Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.92 2015/08/21 20:52:47 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.91 2015/02/25 13:52:42 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.92 2015/08/21 20:52:47 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -924,9 +924,15 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
 		 * cache), this will have to be revisited.
 		 */
 
-		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0)
+		if ((ds->_ds_flags & _BUS_DMAMAP_COHERENT) == 0) {
+			/*
+			 * If we are doing preread (DMAing into the mbuf),
+			 * this mbuf better not be readonly, 
+			 */
+			KASSERT(!(ops & BUS_DMASYNC_PREREAD) || !M_ROMAP(m));
 			_bus_dmamap_sync_segment(va, pa, seglen, ops,
 			    M_ROMAP(m));
+		}
 		voff += seglen;
 		ds_off += seglen;
 		len -= seglen;
