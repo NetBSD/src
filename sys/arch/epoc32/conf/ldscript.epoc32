@@ -1,28 +1,24 @@
-/*	$NetBSD: ldscript.epoc32,v 1.4 2015/08/20 07:00:48 uebayasi Exp $	*/
+/*	$NetBSD: ldscript.epoc32,v 1.5 2015/08/21 04:00:48 uebayasi Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
-  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
-  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
-
   /* Kernel start: */
-  .start (KERNEL_BASE_phys) :
+  .start :
   {
     *(.start)
-  } =0
+  }
 
   /* Read-only sections, merged into text segment: */
-  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
-  AT (LOADADDR(.start) + SIZEOF(.start))
+  .text :
   {
     *(.text)
     *(.text.*)
     *(.stub)
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
-  } =0
+  }
   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
   PROVIDE (__exidx_start = .);
   .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
@@ -34,14 +30,12 @@ SECTIONS
      boundary.  */
   . = ALIGN(0x8000);
   .data    :
-  AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
   {
     __data_start = . ;
     *(.data)
     *(.data.*)
   }
   .sdata     :
-  AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
   {
     *(.sdata)
     *(.sdata.*)
@@ -80,4 +74,20 @@ SECTIONS
   {
     KEEP(*(.note.netbsd.ident));
   }
+}
+SECTIONS
+{
+  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
+  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
+
+  .start (KERNEL_BASE_phys) :
+  {
+    *(.start)
+  } =0
+
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
+  {
+    *(.text)
+  } =0
 }
