@@ -1,4 +1,4 @@
-/* $NetBSD: ipv4.h,v 1.12 2015/07/09 10:15:34 roy Exp $ */
+/* $NetBSD: ipv4.h,v 1.13 2015/08/21 10:39:00 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -63,8 +63,10 @@ struct rt {
 #ifdef HAVE_ROUTE_METRIC
 	unsigned int metric;
 #endif
+	unsigned int mtu;
 	struct in_addr src;
 	unsigned int flags;
+	unsigned int state;
 };
 TAILQ_HEAD(rt_head, rt);
 

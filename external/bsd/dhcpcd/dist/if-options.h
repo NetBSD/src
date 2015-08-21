@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.12 2015/07/09 10:15:34 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.13 2015/08/21 10:39:00 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -106,7 +106,7 @@
 #define DHCPCD_IAID			(1ULL << 48)
 #define DHCPCD_DHCP			(1ULL << 49)
 #define DHCPCD_DHCP6			(1ULL << 50)
-// unassigned				(1ULL << 51)
+#define DHCPCD_IF_UP			(1ULL << 51)
 // unassigned				(1ULL << 52)
 // unassinged				(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
