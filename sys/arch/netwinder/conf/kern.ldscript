@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.6 2015/08/20 07:00:49 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.7 2015/08/21 04:13:23 uebayasi Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -6,25 +6,21 @@ OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
-  KERNEL_BASE_phys = 0x0000c000;
-  KERNEL_BASE_virt = 0xf000c000;
-
   /* Kernel start: */
-  .start (KERNEL_BASE_phys) :
+  .start :
   {
     *(.start)
-  } =0
+  }
 
   /* Read-only sections, merged into text segment: */
-  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
-  AT (LOADADDR(.start) + SIZEOF(.start))
+  .text :
   {
     *(.text)
     *(.text.*)
     *(.stub)
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
-  } =0
+  }
   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
   PROVIDE (__exidx_start = .);
   .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
@@ -36,14 +32,12 @@ SECTIONS
      boundary.  */
   . = ALIGN(0x8000);
   .data    :
-  AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
   {
     __data_start = . ;
     *(.data)
     *(.data.*)
   }
   .sdata     :
-  AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
   {
     *(.sdata)
     *(.sdata.*)
@@ -78,4 +72,20 @@ SECTIONS
   _end = .;
   _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
   PROVIDE (end = .);
+}
+SECTIONS
+{
+  KERNEL_BASE_phys = 0x0000c000;
+  KERNEL_BASE_virt = 0xf000c000;
+
+  .start (KERNEL_BASE_phys) :
+  {
+    *(.start)
+  } =0
+
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
+  {
+    *(.text)
+  } =0
 }
