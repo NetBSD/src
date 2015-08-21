@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephyreg.h,v 1.8 2015/03/31 21:01:02 jmcneill Exp $	*/
+/*	$NetBSD: rgephyreg.h,v 1.9 2015/08/21 16:29:48 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -58,6 +58,11 @@
 /* RTL8211F */
 #define RGEPHY_MII_PHYCR1	0x18	/* PHY Specific control register 1 */
 #define RGEPHY_PHYCR1_MDI_MMCE	__BIT(9)
+#define RGEPHY_PHYCR1_ALDPS_EN	__BIT(2)
+#define RGEPHY_MII_MACR		0x0d	/* MMD Access control register */
+#define RGEPHY_MACR_FUNCTION	__BITS(15,14)
+#define RGEPHY_MACR_DEVAD	__BITS(4,0)
+#define RGEPHY_MII_MAADR	0x0e	/* MMD Access address data register */
 
 #define RGEPHY_MII_PHYSR	0x1a	/* PHY Specific status register */
 #define RGEPHY_PHYSR_ALDPS	__BIT(14)
