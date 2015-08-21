@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.15 2014/07/20 10:06:11 alnsn Exp $
+# 	$NetBSD: LCARD,v 1.16 2015/08/21 01:52:08 uebayasi Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -24,6 +24,7 @@ options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	DDB			# in-kernel debugger
+pseudo-device	ksyms
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
 options 	DUMP_GIU_LEVEL2_INTR	# Debugging use

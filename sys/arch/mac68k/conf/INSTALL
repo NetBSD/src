@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.54 2014/08/23 20:26:58 dholland Exp $
+#	$NetBSD: INSTALL,v 1.55 2015/08/21 01:52:08 uebayasi Exp $
 #
 # INSTALL
 
@@ -38,6 +38,7 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 # Diagnostic/debugging support options - XXX remove these at some point
 options 	DIAGNOSTIC	# cheap kernel consistency checks
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 #options 	ADB_DEBUG	# ADB debugging
 
 # Compatibility options
