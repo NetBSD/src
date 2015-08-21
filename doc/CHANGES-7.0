@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.367 2015/08/14 05:33:34 msaitoh Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.368 2015/08/21 17:32:36 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33922,3 +33922,15 @@ crypto/external/bsd/openssh/dist/monitor.c	patch
 
 	OpenSSH PAM fix (BFS-SA-2015-002).
 	[christos, ticket #950]
+
+share/man/man7/hier.7				1.110
+
+	Update Lua version.
+	[mbalmer, ticket #952]
+
+usr.sbin/postinstall/postinstall		1.200 via patch
+
+	Make postinstall check for the presence of the blacklistd
+	rc.d script.  PR install/50158.
+	[jnemeth, ticket #957]
+
