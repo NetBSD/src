@@ -30,6 +30,9 @@
 
 #include "arp.h"
 
+extern const struct in_addr inaddr_llmask;
+extern const struct in_addr inaddr_llbcast;
+
 #define LINKLOCAL_ADDR	0xa9fe0000
 #define LINKLOCAL_MASK	IN_CLASSB_NET
 #define LINKLOCAL_BRDC	(LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
@@ -56,6 +59,7 @@ struct ipv4ll_state {
 	IN_LINKLOCAL(ntohl(IPV4LL_CSTATE((ifp))->addr.s_addr)))
 
 struct rt* ipv4ll_subnet_route(const struct interface *);
+struct rt* ipv4ll_default_route(const struct interface *);
 ssize_t ipv4ll_env(char **, const char *, const struct interface *);
 void ipv4ll_start(void *);
 void ipv4ll_claimed(void *);

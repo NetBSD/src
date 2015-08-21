@@ -93,16 +93,17 @@ struct interface *if_find(struct if_head *, const char *);
 struct interface *if_findindex(struct if_head *, unsigned int);
 void if_sortinterfaces(struct dhcpcd_ctx *);
 void if_free(struct interface *);
-int if_domtu(const char *, short int);
-#define if_getmtu(iface) if_domtu(iface, 0)
-#define if_setmtu(iface, mtu) if_domtu(iface, mtu)
+int if_domtu(const struct interface *, short int);
+#define if_getmtu(ifp) if_domtu((ifp), 0)
+#define if_setmtu(ifp, mtu) if_domtu((ifp), (mtu))
 int if_carrier(struct interface *);
 
 /* The below functions are provided by if-KERNEL.c */
 int if_conf(struct interface *);
 int if_init(struct interface *);
 int if_getssid(struct interface *);
-int if_vimaster(const char *);
+int if_vimaster(const struct dhcpcd_ctx *ctx, const char *);
+int if_opensockets(struct dhcpcd_ctx *);
 int if_openlinksocket(void);
 int if_managelink(struct dhcpcd_ctx *);
 
@@ -161,4 +162,5 @@ int if_initrt6(struct interface *);
 #endif
 
 int if_machinearch(char *, size_t);
+int xsocket(int, int, int, int);
 #endif

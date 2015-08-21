@@ -94,7 +94,7 @@
 #define O_CONTROLGRP		O_BASE + 34
 #define O_SLAAC			O_BASE + 35
 #define O_GATEWAY		O_BASE + 36
-// unassigned			O_BASE + 37
+#define O_NOUP			O_BASE + 37
 #define O_IPV6RA_AUTOCONF	O_BASE + 38
 #define O_IPV6RA_NOAUTOCONF	O_BASE + 39
 #define O_REJECT		O_BASE + 40
@@ -196,6 +196,7 @@ const struct option cf_options[] = {
 	{"reject",          required_argument, NULL, O_REJECT},
 	{"bootp",           no_argument,       NULL, O_BOOTP},
 	{"nodelay",         no_argument,       NULL, O_NODELAY},
+	{"noup",            no_argument,       NULL, O_NOUP},
 	{NULL,              0,                 NULL, '\0'}
 };
 
@@ -2003,6 +2004,9 @@ err_sla:
 	case O_GATEWAY:
 		ifo->options |= DHCPCD_GATEWAY;
 		break;
+	case O_NOUP:
+		ifo->options &= ~DHCPCD_IF_UP;
+		break;
 	case O_SLAAC:
 		if (strcmp(arg, "private") == 0 ||
 		    strcmp(arg, "stableprivate") == 0 ||
@@ -2117,6 +2121,7 @@ read_config(struct dhcpcd_ctx *ctx,
 		return NULL;
 	}
 	ifo->options |= DHCPCD_DAEMONISE | DHCPCD_LINK | DHCPCD_INITIAL_DELAY;
+	ifo->options |= DHCPCD_IF_UP;
 #ifdef PLUGIN_DEV
 	ifo->options |= DHCPCD_DEV;
 #endif

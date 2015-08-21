@@ -322,7 +322,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	EMALLOC(6, e);
 	snprintf(env[6], e, "ifflags=%u", ifp->flags);
 	EMALLOC(7, e);
-	snprintf(env[7], e, "ifmtu=%d", if_getmtu(ifp->name));
+	snprintf(env[7], e, "ifmtu=%d", if_getmtu(ifp));
 	l = e = strlen("interface_order=");
 	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 		e += strlen(ifp2->name) + 1;

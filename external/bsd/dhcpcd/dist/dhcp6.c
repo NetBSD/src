@@ -40,6 +40,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #define ELOOP_QUEUE 4
 #include "config.h"
@@ -2244,7 +2245,9 @@ auth:
 		else
 			logger(ifp->ctx, LOG_DEBUG,
 			    "%s: accepted reconfigure key", ifp->name);
-	} else if (ifp->options->auth.options & DHCPCD_AUTH_REQUIRE) {
+	} else if ((ifp->options->auth.options & DHCPCD_AUTH_SENDREQUIRE) ==
+	    DHCPCD_AUTH_SENDREQUIRE)
+	{
 		logger(ifp->ctx, LOG_ERR,
 		    "%s: authentication now required", ifp->name);
 		goto ex;
@@ -2750,13 +2753,16 @@ dhcp6_handledata(void *arg)
 		else
 			logger(ifp->ctx, LOG_DEBUG,
 			    "%s: accepted reconfigure key", ifp->name);
-	} else if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
-		logger(ifp->ctx, LOG_ERR,
-		    "%s: no authentication from %s", ifp->name, ctx->sfrom);
-		return;
-	} else if (ifo->auth.options & DHCPCD_AUTH_SEND)
+	} else if (ifo->auth.options & DHCPCD_AUTH_SEND) {
+		if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
+			logger(ifp->ctx, LOG_ERR,
+			    "%s: no authentication from %s",
+			    ifp->name, ctx->sfrom);
+			return;
+		}
 		logger(ifp->ctx, LOG_WARNING,
 		    "%s: no authentication from %s", ifp->name, ctx->sfrom);
+	}
 
 	op = dhcp6_get_op(r->type);
 	switch(r->type) {
@@ -2860,7 +2866,8 @@ dhcp6_handledata(void *arg)
 			logger(ifp->ctx, LOG_ERR,
 			    "%s: unauthenticated %s from %s",
 			    ifp->name, op, ctx->sfrom);
-			return;
+			if (ifo->auth.options & DHCPCD_AUTH_REQUIRE)
+				return;
 		}
 		logger(ifp->ctx, LOG_INFO, "%s: %s from %s",
 		    ifp->name, op, ctx->sfrom);
@@ -3070,30 +3077,10 @@ dhcp6_open(struct dhcpcd_ctx *dctx)
 #endif
 
 	ctx = dctx->ipv6;
-#ifdef SOCK_CLOEXEC
-	ctx->dhcp_fd = socket(PF_INET6,
-	    SOCK_DGRAM | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	    IPPROTO_UDP);
+	ctx->dhcp_fd = xsocket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP,
+	    O_NONBLOCK|O_CLOEXEC);
 	if (ctx->dhcp_fd == -1)
 		return -1;
-#else
-	if ((ctx->dhcp_fd = socket(PF_INET6, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-		return -1;
-	if ((n = fcntl(ctx->dhcp_fd, F_GETFD, 0)) == -1 ||
-	    fcntl(ctx->dhcp_fd, F_SETFD, n | FD_CLOEXEC) == -1)
-	{
-		close(ctx->dhcp_fd);
-		ctx->dhcp_fd = -1;
-	        return -1;
-	}
-	if ((n = fcntl(ctx->dhcp_fd, F_GETFL, 0)) == -1 ||
-	    fcntl(ctx->dhcp_fd, F_SETFL, n | O_NONBLOCK) == -1)
-	{
-		close(ctx->dhcp_fd);
-		ctx->dhcp_fd = -1;
-	        return -1;
-	}
-#endif
 
 	n = 1;
 	if (setsockopt(ctx->dhcp_fd, SOL_SOCKET, SO_REUSEADDR,
@@ -3140,8 +3127,8 @@ dhcp6_start1(void *arg)
 	const struct dhcp_compat *dhc;
 
 	state = D6_STATE(ifp);
-	/* Match any DHCPv4 opton to DHCPv6 options if given for easy
-	 * configuration */
+	/* If no DHCPv6 options are configured,
+	   match configured DHCPv4 options to DHCPv6 equivalents. */
 	for (i = 0; i < sizeof(ifo->requestmask6); i++) {
 		if (ifo->requestmask6[i] != '\0')
 			break;
@@ -3157,7 +3144,7 @@ dhcp6_start1(void *arg)
 			add_option_mask(ifo->requestmask6, D6_OPTION_FQDN);
 	}
 
-	/* Rapid commit won't wor with Prefix Delegation Exclusion */
+	/* Rapid commit won't work with Prefix Delegation Exclusion */
 	if (dhcp6_findselfsla(ifp, NULL))
 		del_option_mask(ifo->requestmask6, D6_OPTION_RAPID_COMMIT);
 

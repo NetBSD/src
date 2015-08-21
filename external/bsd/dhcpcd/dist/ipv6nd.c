@@ -189,29 +189,10 @@ ipv6nd_open(struct dhcpcd_ctx *dctx)
 	ctx = dctx->ipv6;
 	if (ctx->nd_fd != -1)
 		return ctx->nd_fd;
-#ifdef SOCK_CLOEXEC
-	ctx->nd_fd = socket(PF_INET6, SOCK_RAW | SOCK_CLOEXEC | SOCK_NONBLOCK,
-	    IPPROTO_ICMPV6);
+	ctx->nd_fd = xsocket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6,
+	    O_NONBLOCK|O_CLOEXEC);
 	if (ctx->nd_fd == -1)
 		return -1;
-#else
-	if ((ctx->nd_fd = socket(PF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) == -1)
-		return -1;
-	if ((on = fcntl(ctx->nd_fd, F_GETFD, 0)) == -1 ||
-	    fcntl(ctx->nd_fd, F_SETFD, on | FD_CLOEXEC) == -1)
-	{
-		close(ctx->nd_fd);
-		ctx->nd_fd = -1;
-	        return -1;
-	}
-	if ((on = fcntl(ctx->nd_fd, F_GETFL, 0)) == -1 ||
-	    fcntl(ctx->nd_fd, F_SETFL, on | O_NONBLOCK) == -1)
-	{
-		close(ctx->nd_fd);
-		ctx->nd_fd = -1;
-	        return -1;
-	}
-#endif
 
 	/* RFC4861 4.1 */
 	on = 255;
@@ -732,14 +713,19 @@ try_script:
 }
 
 static int
-ipv6nd_ra_has_public_addr(const struct ra *rap)
+ipv6nd_has_public_addr(const struct interface *ifp)
 {
+	const struct ra *rap;
 	const struct ipv6_addr *ia;
 
-	TAILQ_FOREACH(ia, &rap->addrs, next) {
-		if (ia->flags & IPV6_AF_AUTOCONF &&
-		    ipv6_publicaddr(ia))
-			return 1;
+	TAILQ_FOREACH(rap, ifp->ctx->ipv6->ra_routers, next) {
+		if (rap->iface == ifp) {
+			TAILQ_FOREACH(ia, &rap->addrs, next) {
+				if (ia->flags & IPV6_AF_AUTOCONF &&
+				    ipv6_publicaddr(ia))
+					return 1;
+			}
+		}
 	}
 	return 0;
 }
@@ -1106,7 +1092,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *dctx, struct interface *ifp,
 	if (new_rap)
 		add_router(ifp->ctx->ipv6, rap);
 
-	if (!ipv6nd_ra_has_public_addr(rap) &&
+	if (!ipv6nd_has_public_addr(rap->iface) &&
 	    !(rap->iface->options->options & DHCPCD_IPV6RA_ACCEPT_NOPUBLIC) &&
 	    (!(rap->flags & ND_RA_FLAG_MANAGED) ||
 	    !dhcp6_has_public_addr(rap->iface)))

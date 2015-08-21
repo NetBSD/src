@@ -43,6 +43,7 @@
 #include "dhcpcd.h"
 #include "control.h"
 #include "eloop.h"
+#include "if.h"
 
 #ifndef SUN_LEN
 #define SUN_LEN(su) \
@@ -207,28 +208,8 @@ make_sock(struct sockaddr_un *sa, const char *ifname, int unpriv)
 {
 	int fd;
 
-#ifdef SOCK_CLOEXEC
-	if ((fd = socket(AF_UNIX,
-	    SOCK_STREAM | SOCK_CLOEXEC | SOCK_NONBLOCK, 0)) == -1)
+	if ((fd = xsocket(AF_UNIX, SOCK_STREAM, 0, O_NONBLOCK|O_CLOEXEC)) == -1)
 		return -1;
-#else
-	int flags;
-
-	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-		return -1;
-	if ((flags = fcntl(fd, F_GETFD, 0)) == -1 ||
-	    fcntl(fd, F_SETFD, flags | FD_CLOEXEC) == -1)
-	{
-		close(fd);
-	        return -1;
-	}
-	if ((flags = fcntl(fd, F_GETFL, 0)) == -1 ||
-	    fcntl(fd, F_SETFL, flags | O_NONBLOCK) == -1)
-	{
-		close(fd);
-	        return -1;
-	}
-#endif
 	memset(sa, 0, sizeof(*sa));
 	sa->sun_family = AF_UNIX;
 	if (unpriv)

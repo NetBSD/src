@@ -61,8 +61,10 @@ struct rt {
 #ifdef HAVE_ROUTE_METRIC
 	unsigned int metric;
 #endif
+	unsigned int mtu;
 	struct in_addr src;
 	unsigned int flags;
+	unsigned int state;
 };
 TAILQ_HEAD(rt_head, rt);
 
