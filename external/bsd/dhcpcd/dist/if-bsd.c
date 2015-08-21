@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-bsd.c,v 1.23 2015/08/21 10:39:00 roy Exp $");
+ __RCSID("$NetBSD: if-bsd.c,v 1.24 2015/08/21 13:24:47 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1060,12 +1060,10 @@ if_addrflags6(const struct in6_addr *addr, const struct interface *ifp)
 int
 if_getlifetime6(struct ipv6_addr *ia)
 {
-	int r;
 	struct in6_ifreq ifr6;
 	time_t t;
 	struct in6_addrlifetime *lifetime;
 
-	r = -1;
 	memset(&ifr6, 0, sizeof(ifr6));
 	strlcpy(ifr6.ifr_name, ia->iface->name, sizeof(ifr6.ifr_name));
 	ifr6.ifr_addr.sin6_family = AF_INET6;
