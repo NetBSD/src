@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.78 2015/08/21 06:50:56 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.79 2015/08/21 06:55:25 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.78 2015/08/21 06:50:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.79 2015/08/21 06:55:25 christos Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -95,7 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.78 2015/08/21 06:50:56 christos Exp
 #endif
 
 #include "ksyms.h"
+#if NKSYMS > 0
 #include "ioconf.h"
+#endif
 
 #define KSYMS_MAX_ID	65536
 #ifdef KDTRACE_HOOKS
@@ -209,7 +211,7 @@ findsym(const char *name, struct ksyms_symtab *table, int type)
 /*
  * The "attach" is in reality done in ksyms_init().
  */
-#if NKSYMS >=  1
+#if NKSYMS > 0
 /*
  * ksyms can be loaded even if the kernel has a missing "pseudo-device ksyms"
  * statement because ddb and modules require it. Fixing it properly requires
