@@ -1,4 +1,4 @@
-.\"	$NetBSD: sshd_config.5,v 1.19 2015/08/13 10:33:21 christos Exp $
+.\"	$NetBSD: sshd_config.5,v 1.20 2015/08/21 08:20:59 christos Exp $
 .\"  -*- nroff -*-
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -35,8 +35,8 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: sshd_config.5,v 1.210 2015/08/06 14:53:21 deraadt Exp $
-.Dd August 6 2015
+.\" $OpenBSD: sshd_config.5,v 1.211 2015/08/14 15:32:41 jmc Exp $
+.Dd August 14 2015
 .Dt SSHD_CONFIG 5
 .Os
 .Sh NAME
@@ -479,9 +479,9 @@ chacha20-poly1305@openssh.com
 .Pp
 The default is:
 .Bd -literal -offset indent
+chacha20-poly1305@openssh.com,
 aes128-ctr,aes192-ctr,aes256-ctr,
-aes128-gcm@openssh.com,aes256-gcm@openssh.com,
-chacha20-poly1305@openssh.com
+aes128-gcm@openssh.com,aes256-gcm@openssh.com
 .Ed
 .Pp
 The list of available ciphers may also be obtained using the
@@ -1533,7 +1533,7 @@ If this option is set to
 .Pa ~/.ssh/known_hosts
 .Cm from
 and
-.Xr sshd_config 5
+.Nm
 .Cm Match
 .Cm Host
 directives.
