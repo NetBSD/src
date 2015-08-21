@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.102 2015/08/20 14:40:17 christos Exp $ */
+/* $NetBSD: cgd.c,v 1.103 2015/08/21 09:33:53 christos Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.102 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.103 2015/08/21 09:33:53 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -563,6 +563,11 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * We pass this call down to the underlying disk.
 		 */
 		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
+	case DIOCGSTRATEGY:
+	case DIOCSSTRATEGY:
+		if ((dksc->sc_flags & DKF_INITED) == 0)
+			return ENOENT;
+		/*FALLTHROUGH*/
 	default:
 		return dk_ioctl(dksc, dev, cmd, data, flag, l);
 	case CGDIOCGET:
