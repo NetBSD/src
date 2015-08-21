@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.13 2015/07/09 10:15:34 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.14 2015/08/21 10:39:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -647,7 +647,13 @@ ipv6_addaddr(struct ipv6_addr *ap, const struct timespec *now)
 		ap->flags |= IPV6_AF_DADCOMPLETED;
 
 	logger(ap->iface->ctx, ap->flags & IPV6_AF_NEW ? LOG_INFO : LOG_DEBUG,
-	    "%s: adding address %s", ap->iface->name, ap->saddr);
+	    "%s: adding %saddress %s", ap->iface->name,
+#ifdef IPV6_AF_TEMPORARY
+	    ap->flags & IPV6_AF_TEMPORARY ? "temporary " : "",
+#else
+	    "",
+#endif
+	    ap->saddr);
 	if (ap->prefix_pltime == ND6_INFINITE_LIFETIME &&
 	    ap->prefix_vltime == ND6_INFINITE_LIFETIME)
 		logger(ap->iface->ctx, LOG_DEBUG,
@@ -881,17 +887,22 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 		{
 			if (drop == 2)
 				TAILQ_REMOVE(addrs, ap, next);
-			/* Find the same address somewhere else */
-			apf = ipv6_findaddr(ap->iface->ctx, &ap->addr, 0);
-			if (apf == NULL ||
-			    (apf->iface != ap->iface))
-				ipv6_deleteaddr(ap);
-			if (!(ap->iface->options->options &
-			    DHCPCD_EXITING) && apf)
-			{
-				if (!timespecisset(&now))
-					clock_gettime(CLOCK_MONOTONIC, &now);
-				ipv6_addaddr(apf, &now);
+			/* Don't drop link-local addresses. */
+			if (!IN6_IS_ADDR_LINKLOCAL(&ap->addr)) {
+				/* Find the same address somewhere else */
+				apf = ipv6_findaddr(ap->iface->ctx, &ap->addr,
+				    0);
+				if ((apf == NULL ||
+				    (apf->iface != ap->iface)))
+					ipv6_deleteaddr(ap);
+				if (!(ap->iface->options->options &
+				    DHCPCD_EXITING) && apf)
+				{
+					if (!timespecisset(&now))
+						clock_gettime(CLOCK_MONOTONIC,
+						    &now);
+					ipv6_addaddr(apf, &now);
+				}
 			}
 			if (drop == 2)
 				ipv6_freeaddr(ap);
@@ -1850,6 +1861,7 @@ ipv6_handlert(struct dhcpcd_ctx *ctx, int cmd, struct rt6 *rt)
 static int
 nc_route(struct rt6 *ort, struct rt6 *nrt)
 {
+	int change;
 
 	/* Don't set default routes if not asked to */
 	if (IN6_IS_ADDR_UNSPECIFIED(&nrt->dest) &&
@@ -1859,6 +1871,7 @@ nc_route(struct rt6 *ort, struct rt6 *nrt)
 
 	desc_route(ort == NULL ? "adding" : "changing", nrt);
 
+	change = 0;
 	if (ort == NULL) {
 		ort = ipv6_findrt(nrt->iface->ctx, nrt, 0);
 		if (ort &&
@@ -1868,7 +1881,27 @@ nc_route(struct rt6 *ort, struct rt6 *nrt)
 		    ort->metric == nrt->metric &&
 #endif
 		    IN6_ARE_ADDR_EQUAL(&ort->gate, &nrt->gate))))
+		{
+			if (ort->mtu == nrt->mtu)
+				return 0;
+			change = 1;
+		}
+	}
+
+#ifdef RTF_CLONING
+	/* BSD can set routes to be cloning routes.
+	 * Cloned routes inherit the parent flags.
+	 * As such, we need to delete and re-add the route to flush children
+	 * to correct the flags. */
+	if (change && ort != NULL && ort->flags & RTF_CLONING)
+		change = 0;
+#endif
+
+	if (change) {
+		if (if_route6(RTM_CHANGE, nrt) == 0)
 			return 0;
+		if (errno != ESRCH)
+			logger(nrt->iface->ctx, LOG_ERR, "if_route6 (CHG): %m");
 	}
 
 #ifdef HAVE_ROUTE_METRIC
