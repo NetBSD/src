@@ -2,7 +2,6 @@
 OUTPUT_FORMAT("elf64-ia64-little", "elf64-ia64-little", "elf64-ia64-little")
 OUTPUT_ARCH(ia64)
 ENTRY(start)
-SEARCH_DIR(/usr/lib);
 kernel_text = 0xe000000004000000;
 SECTIONS
 {

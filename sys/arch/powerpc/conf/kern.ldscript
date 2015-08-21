@@ -1,11 +1,10 @@
-/* $NetBSD: kern.ldscript,v 1.7 2015/08/20 07:00:49 uebayasi Exp $ */
+/* $NetBSD: kern.ldscript,v 1.8 2015/08/21 02:35:52 uebayasi Exp $ */
 
 /*  ldscript for NetBSD/powerpc kernels and LKMs, based on elf32ppc.x */
 OUTPUT_FORMAT("elf32-powerpc", "elf32-powerpc",
 	      "elf32-powerpc")
 OUTPUT_ARCH(powerpc:common)
 ENTRY(_start)
-SEARCH_DIR(/lib);
 /* Do we need any of these?
    __DYNAMIC = 0;    */
 _DYNAMIC_LINK = 0;

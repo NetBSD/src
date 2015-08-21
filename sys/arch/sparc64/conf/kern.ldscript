@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.12 2015/08/20 07:00:49 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.13 2015/08/21 02:35:52 uebayasi Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc64.  This script is based on
@@ -8,7 +8,6 @@ OUTPUT_FORMAT("elf64-sparc", "elf64-sparc",
 	      "elf64-sparc")
 OUTPUT_ARCH(sparc:v9)
 ENTRY(_start)
-SEARCH_DIR(/usr/lib);
 /* Do we need any of these for elf?
    __DYNAMIC = 0;    */
 SECTIONS
