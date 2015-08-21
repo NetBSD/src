@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4ll.c,v 1.11 2015/07/09 10:15:34 roy Exp $");
+ __RCSID("$NetBSD: ipv4ll.c,v 1.12 2015/08/21 10:39:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -48,13 +48,17 @@
 #include "ipv4ll.h"
 #include "script.h"
 
-static const struct in_addr inaddr_llmask = { HTONL(LINKLOCAL_MASK) };
-static const struct in_addr inaddr_llbcast = { HTONL(LINKLOCAL_BRDC) };
+const struct in_addr inaddr_llmask = { HTONL(LINKLOCAL_MASK) };
+const struct in_addr inaddr_llbcast = { HTONL(LINKLOCAL_BRDC) };
 
 static in_addr_t
 ipv4ll_pick_addr(const struct arp_state *astate)
 {
 	struct in_addr addr;
+	struct ipv4ll_state *istate;
+
+	istate = IPV4LL_STATE(astate->iface);
+	setstate(istate->randomstate);
 
 	do {
 		/* RFC 3927 Section 2.1 states that the first 256 and
@@ -68,6 +72,9 @@ ipv4ll_pick_addr(const struct arp_state *astate)
 			continue;
 		/* Ensure we don't have the address on another interface */
 	} while (ipv4_findaddr(astate->iface->ctx, &addr) != NULL);
+
+	/* Restore the original random state */
+	setstate(astate->iface->ctx->randomstate);
 
 	return addr.s_addr;
 }
@@ -83,13 +90,36 @@ ipv4ll_subnet_route(const struct interface *ifp)
 	    state->addr.s_addr == INADDR_ANY)
 		return NULL;
 
-	if ((rt = malloc(sizeof(*rt))) == NULL) {
+	if ((rt = calloc(1, sizeof(*rt))) == NULL) {
 		logger(ifp->ctx, LOG_ERR, "%s: malloc: %m", __func__);
 		return NULL;
 	}
 	rt->iface = ifp;
 	rt->dest.s_addr = state->addr.s_addr & inaddr_llmask.s_addr;
 	rt->net = inaddr_llmask;
+	rt->gate.s_addr = INADDR_ANY;
+	rt->src = state->addr;
+	return rt;
+}
+
+struct rt *
+ipv4ll_default_route(const struct interface *ifp)
+{
+	const struct ipv4ll_state *state;
+	struct rt *rt;
+
+	assert(ifp != NULL);
+	if ((state = IPV4LL_CSTATE(ifp)) == NULL ||
+	    state->addr.s_addr == INADDR_ANY)
+		return NULL;
+
+	if ((rt = calloc(1, sizeof(*rt))) == NULL) {
+		logger(ifp->ctx, LOG_ERR, "%s: malloc: %m", __func__);
+		return NULL;
+	}
+	rt->iface = ifp;
+	rt->dest.s_addr = INADDR_ANY;
+	rt->net.s_addr = INADDR_ANY;
 	rt->gate.s_addr = INADDR_ANY;
 	rt->src = state->addr;
 	return rt;
@@ -162,6 +192,7 @@ ipv4ll_probed(struct arp_state *astate)
 #endif
 	state->addr = astate->addr;
 	timespecclear(&state->defend);
+	if_initrt(ifp);
 	ipv4_buildroutes(ifp->ctx);
 	arp_announce(astate);
 	script_runreason(ifp, "IPV4LL");
@@ -295,6 +326,7 @@ ipv4ll_start(void *arg)
 	 * the same address without persistent storage. */
 	if (state->conflicts == 0) {
 		unsigned int seed;
+		char *orig;
 
 		if (sizeof(seed) > ifp->hwlen) {
 			seed = 0;
@@ -302,7 +334,15 @@ ipv4ll_start(void *arg)
 		} else
 			memcpy(&seed, ifp->hwaddr + ifp->hwlen - sizeof(seed),
 			    sizeof(seed));
-		initstate(seed, state->randomstate, sizeof(state->randomstate));
+		orig = initstate(seed,
+		    state->randomstate, sizeof(state->randomstate));
+
+		/* Save the original state. */
+		if (ifp->ctx->randomstate == NULL)
+			ifp->ctx->randomstate = orig;
+
+		/* Set back the original state until we need the seeded one. */
+		setstate(ifp->ctx->randomstate);
 	}
 
 	if ((astate = arp_new(ifp, NULL)) == NULL)
@@ -338,7 +378,6 @@ ipv4ll_start(void *arg)
 		return;
 	}
 
-	setstate(state->randomstate);
 	logger(ifp->ctx, LOG_INFO, "%s: probing for an IPv4LL address",
 	    ifp->name);
 	astate->addr.s_addr = ipv4ll_pick_addr(astate);
@@ -353,9 +392,11 @@ void
 ipv4ll_freedrop(struct interface *ifp, int drop)
 {
 	struct ipv4ll_state *state;
+	int dropped;
 
 	assert(ifp != NULL);
 	state = IPV4LL_STATE(ifp);
+	dropped = 0;
 
 	/* Free ARP state first because ipv4_deladdr might also ... */
 	if (state && state->arp) {
@@ -370,6 +411,7 @@ ipv4ll_freedrop(struct interface *ifp, int drop)
 		if (state && state->addr.s_addr != INADDR_ANY) {
 			ipv4_deladdr(ifp, &state->addr, &inaddr_llmask, 1);
 			state->addr.s_addr = INADDR_ANY;
+			dropped = 1;
 		}
 
 		/* Free any other link local addresses that might exist. */
@@ -377,18 +419,22 @@ ipv4ll_freedrop(struct interface *ifp, int drop)
 			struct ipv4_addr *ia, *ian;
 
 			TAILQ_FOREACH_SAFE(ia, &istate->addrs, next, ian) {
-				if (IN_LINKLOCAL(ntohl(ia->addr.s_addr)))
+				if (IN_LINKLOCAL(ntohl(ia->addr.s_addr))) {
 					ipv4_deladdr(ifp, &ia->addr,
 					    &ia->net, 0);
+					dropped = 1;
+				}
 			}
 		}
-		script_runreason(ifp, "IPV4LL");
 	}
 
 	if (state) {
 		free(state);
 		ifp->if_data[IF_DATA_IPV4LL] = NULL;
 
-		ipv4_buildroutes(ifp->ctx);
+		if (dropped) {
+			ipv4_buildroutes(ifp->ctx);
+			script_runreason(ifp, "IPV4LL");
+		}
 	}
 }
