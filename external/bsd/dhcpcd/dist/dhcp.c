@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.32 2015/07/09 10:15:34 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.33 2015/08/21 10:39:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -275,6 +275,23 @@ get_option_uint32(struct dhcpcd_ctx *ctx,
 	memcpy(&d, p, sizeof(d));
 	if (i)
 		*i = ntohl(d);
+	return 0;
+}
+
+static int
+get_option_uint16(struct dhcpcd_ctx *ctx,
+    uint16_t *i, const struct dhcp_message *dhcp, uint8_t option)
+{
+	const uint8_t *p;
+	size_t len;
+	uint16_t d;
+
+	p = get_option(ctx, dhcp, option, &len);
+	if (!p || len < (ssize_t)sizeof(d))
+		return -1;
+	memcpy(&d, p, sizeof(d));
+	if (i)
+		*i = ntohs(d);
 	return 0;
 }
 
@@ -586,7 +603,7 @@ route_netmask(uint32_t ip_in)
 /* We need to obey routing options.
  * If we have a CSR then we only use that.
  * Otherwise we add static routes and then routers. */
-struct rt_head *
+static struct rt_head *
 get_option_routes(struct interface *ifp, const struct dhcp_message *dhcp)
 {
 	struct if_options *ifo = ifp->options;
@@ -689,6 +706,40 @@ get_option_routes(struct interface *ifp, const struct dhcp_message *dhcp)
 		}
 	}
 
+	return routes;
+}
+
+uint16_t
+dhcp_get_mtu(const struct interface *ifp)
+{
+	const struct dhcp_message *dhcp;
+	uint16_t mtu;
+
+	if ((dhcp = D_CSTATE(ifp)->new) == NULL ||
+	    has_option_mask(ifp->options->nomask, DHO_MTU) ||
+	    get_option_uint16(ifp->ctx, &mtu, dhcp, DHO_MTU) == -1)
+		return 0;
+	return mtu;
+}
+
+/* Grab our routers from the DHCP message and apply any MTU value
+ * the message contains */
+struct rt_head *
+dhcp_get_routes(struct interface *ifp)
+{
+	struct rt_head *routes;
+	uint16_t mtu;
+	const struct dhcp_message *dhcp;
+
+	dhcp = D_CSTATE(ifp)->new;
+	routes = get_option_routes(ifp, dhcp);
+	if ((mtu = dhcp_get_mtu(ifp)) != 0) {
+		struct rt *rt;
+
+		TAILQ_FOREACH(rt, routes, next) {
+			rt->mtu = mtu;
+		}
+	}
 	return routes;
 }
 
@@ -852,21 +903,27 @@ make_message(struct dhcp_message **message,
 		if (!(ifo->options & DHCPCD_BOOTP)) {
 			int mtu;
 
-			*p++ = DHO_MAXMESSAGESIZE;
-			*p++ = 2;
-			mtu = if_getmtu(ifp->name);
-			if (mtu < MTU_MIN) {
-				if (if_setmtu(ifp->name, MTU_MIN) == 0)
-					sz = MTU_MIN;
+			if ((mtu = if_getmtu(ifp)) == -1)
+				logger(ifp->ctx, LOG_ERR,
+				    "%s: if_getmtu: %m", ifp->name);
+			else if (mtu < MTU_MIN) {
+				if (if_setmtu(ifp, MTU_MIN) == -1)
+					logger(ifp->ctx, LOG_ERR,
+					    "%s: if_setmtu: %m", ifp->name);
+				mtu = MTU_MIN;
 			} else if (mtu > MTU_MAX) {
 				/* Even though our MTU could be greater than
 				 * MTU_MAX (1500) dhcpcd does not presently
 				 * handle DHCP packets any bigger. */
 				mtu = MTU_MAX;
 			}
-			sz = htons((uint16_t)mtu);
-			memcpy(p, &sz, 2);
-			p += 2;
+			if (mtu != -1) {
+				*p++ = DHO_MAXMESSAGESIZE;
+				*p++ = 2;
+				sz = htons((uint16_t)mtu);
+				memcpy(p, &sz, 2);
+				p += 2;
+			}
 		}
 
 		if (ifo->userclass[0]) {
@@ -1184,6 +1241,13 @@ read_lease(struct interface *ifp)
 		else
 			logger(ifp->ctx, LOG_DEBUG,
 			    "%s: accepted reconfigure key", ifp->name);
+	} else if ((ifp->options->auth.options & DHCPCD_AUTH_SENDREQUIRE) ==
+	    DHCPCD_AUTH_SENDREQUIRE)
+	{
+		logger(ifp->ctx, LOG_ERR,
+		    "%s: authentication now required", ifp->name);
+		free(dhcp);
+		return NULL;
 	}
 
 	return dhcp;
@@ -1483,19 +1547,8 @@ dhcp_openudp(struct interface *ifp)
 	char *p;
 #endif
 
-#ifdef SOCK_CLOEXEC
-	if ((s = socket(PF_INET, SOCK_DGRAM | SOCK_CLOEXEC, IPPROTO_UDP)) == -1)
+	if ((s = xsocket(PF_INET, SOCK_DGRAM, IPPROTO_UDP, O_CLOEXEC)) == -1)
 		return -1;
-#else
-	if ((s = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP)) == -1)
-		return -1;
-	if ((n = fcntl(s, F_GETFD, 0)) == -1 ||
-	    fcntl(s, F_SETFD, n | FD_CLOEXEC) == -1)
-	{
-		close(s);
-	        return -1;
-	}
-#endif
 
 	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1)
@@ -2325,6 +2378,8 @@ dhcp_drop(struct interface *ifp, const char *reason)
 	dhcp_auth_reset(&state->auth);
 	dhcp_close(ifp);
 
+	free(state->offer);
+	state->offer = NULL;
 	free(state->old);
 	state->old = state->new;
 	state->new = NULL;
@@ -2481,12 +2536,15 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 		else
 			logger(ifp->ctx, LOG_DEBUG,
 			    "%s: accepted reconfigure key", ifp->name);
-	} else if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
-		log_dhcp1(LOG_ERR, "no authentication", ifp, dhcp, from, 0);
-		return;
-	} else if (ifo->auth.options & DHCPCD_AUTH_SEND)
+	} else if (ifo->auth.options & DHCPCD_AUTH_SEND) {
+		if (ifo->auth.options & DHCPCD_AUTH_REQUIRE) {
+			log_dhcp1(LOG_ERR, "no authentication",
+			    ifp, dhcp, from, 0);
+			return;
+		}
 		log_dhcp1(LOG_WARNING, "no authentication",
 		    ifp, dhcp, from, 0);
+	}
 
 	/* RFC 3203 */
 	if (type == DHCP_FORCERENEW) {
@@ -2500,7 +2558,8 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 		if (auth == NULL) {
 			log_dhcp(LOG_ERR, "unauthenticated Force Renew",
 			    ifp, dhcp, from);
-			return;
+			if (ifo->auth.options & DHCPCD_AUTH_REQUIRE)
+				return;
 		}
 		if (state->state != DHS_BOUND && state->state != DHS_INFORM) {
 			log_dhcp(LOG_DEBUG, "not bound, ignoring Force Renew",
@@ -3203,7 +3262,7 @@ dhcp_start1(void *arg)
 	}
 	/* We don't want to read the old lease if we NAK an old test */
 	nolease = state->offer && ifp->ctx->options & DHCPCD_TEST;
-	if (!nolease) {
+	if (!nolease && ifo->options & DHCPCD_DHCP) {
 		state->offer = read_lease(ifp);
 		/* Check the saved lease matches the type we want */
 		if (state->offer) {
@@ -3294,13 +3353,8 @@ dhcp_start1(void *arg)
 	}
 
 	if (!(ifo->options & DHCPCD_DHCP)) {
-		if (ifo->options & DHCPCD_IPV4LL) {
-			if (state->offer && state->offer->cookie != 0) {
-				free(state->offer);
-				state->offer = NULL;
-			}
+		if (ifo->options & DHCPCD_IPV4LL)
 			ipv4ll_start(ifp);
-		}
 		return;
 	}
 
@@ -3335,6 +3389,13 @@ dhcp_start(struct interface *ifp)
 	    ifp->name, timespec_to_double(&tv));
 
 	eloop_timeout_add_tv(ifp->ctx->eloop, &tv, dhcp_start1, ifp);
+}
+
+void
+dhcp_abort(struct interface *ifp)
+{
+
+	eloop_timeout_delete(ifp->ctx->eloop, dhcp_start1, ifp);
 }
 
 void
