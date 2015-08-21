@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.48 2015/08/12 07:53:57 maxv Exp $
+# $NetBSD: VME,v 1.49 2015/08/21 01:52:09 uebayasi Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.48 $"
+#ident 		"VME-$Revision: 1.49 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -32,6 +32,7 @@ options 	USERCONF	# userconf(4) support
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
 # ... or these for KGDB (gdb remote target)
+pseudo-device	ksyms
 #makeoptions	DEBUG="-g"	# debugging symbols for gdb
 #options 	KGDB
 #options 	KGDB_DEV=0x0C00	# ttya=0C00 ttyb=0C01

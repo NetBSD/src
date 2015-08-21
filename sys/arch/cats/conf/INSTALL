@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.95 2015/08/08 06:36:25 maxv Exp $
+#	$NetBSD: INSTALL,v 1.96 2015/08/21 01:52:07 uebayasi Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -134,6 +134,7 @@ options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 #options 	DIAGNOSTIC	# internal consistency checks
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
