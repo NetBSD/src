@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.29 2009/04/18 13:04:50 lukem Exp $	*/
+/*	$NetBSD: statd.c,v 1.30 2015/08/21 15:41:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 Christos Zoulas. All rights reserved.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.29 2009/04/18 13:04:50 lukem Exp $");
+__RCSID("$NetBSD: statd.c,v 1.30 2015/08/21 15:41:38 christos Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
@@ -119,11 +119,11 @@ main(argc, argv)
 	rpc_control(RPC_SVC_CONNMAXREC_SET, &maxrec);
 
 	if (!svc_create(sm_prog_1, SM_PROG, SM_VERS, "udp")) {
-		errx(1, "cannot create udp service.");
+		errx(EXIT_FAILURE, "cannot create udp service.");
 		/* NOTREACHED */
 	}
 	if (!svc_create(sm_prog_1, SM_PROG, SM_VERS, "tcp")) {
-		errx(1, "cannot create udp service.");
+		errx(EXIT_FAILURE, "cannot create udp service.");
 		/* NOTREACHED */
 	}
 
@@ -525,7 +525,7 @@ init_file(filename)
 	db = dbopen(filename, O_RDWR|O_CREAT|O_NDELAY|O_EXLOCK, 0644, DB_HASH, 
 	    NULL);
 	if (db == NULL)
-		err(1, "Cannot open `%s'", filename);
+		err(EXIT_FAILURE, "Cannot open `%s'", filename);
 
 	switch ((*db->get)(db, &undefkey, &data, 0)) {
 	case 1:
@@ -535,11 +535,11 @@ init_file(filename)
 		return;
 
 	case -1:
-		err(1, "error accessing database (%m)");
+		err(EXIT_FAILURE, "error accessing database (%s)", strerror(errno));
 	case 0:
 		/* Existing database */
 		if (data.size != sizeof(status_info))
-			errx(1, "database corrupted %lu != %lu",
+			errx(EXIT_FAILURE, "database corrupted %lu != %lu",
 			    (u_long)data.size, (u_long)sizeof(status_info));
 		memcpy(&status_info, data.data, data.size);
 		break;
