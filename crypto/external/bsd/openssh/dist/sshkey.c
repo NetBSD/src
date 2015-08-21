@@ -1,5 +1,5 @@
-/*	$NetBSD: sshkey.c,v 1.5 2015/08/13 10:33:21 christos Exp $	*/
-/* $OpenBSD: sshkey.c,v 1.20 2015/07/03 03:43:18 djm Exp $ */
+/*	$NetBSD: sshkey.c,v 1.6 2015/08/21 08:20:59 christos Exp $	*/
+/* $OpenBSD: sshkey.c,v 1.21 2015/08/19 23:19:01 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  * Copyright (c) 2008 Alexander von Gernler.  All rights reserved.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.5 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.6 2015/08/21 08:20:59 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -1531,7 +1531,6 @@ dsa_generate_private_key(u_int bits, DSA **dsap)
 	*dsap = NULL;
 	if (!DSA_generate_parameters_ex(private, bits, NULL, 0, NULL,
 	    NULL, NULL) || !DSA_generate_key(private)) {
-		DSA_free(private);
 		ret = SSH_ERR_LIBCRYPTO_ERROR;
 		goto out;
 	}
