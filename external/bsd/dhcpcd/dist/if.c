@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if.c,v 1.14 2015/07/09 10:15:34 roy Exp $");
+ __RCSID("$NetBSD: if.c,v 1.15 2015/08/21 10:39:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -61,6 +61,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <fcntl.h>
 
 #include "config.h"
 #include "common.h"
@@ -72,11 +73,6 @@
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "ipv6nd.h"
-
-#ifdef __QNX__
-/* QNX carries defines for, but does not actually support PF_LINK */
-#undef IFLR_ACTIVE
-#endif
 
 void
 if_free(struct interface *ifp)
@@ -95,28 +91,50 @@ if_free(struct interface *ifp)
 }
 
 int
-if_carrier(struct interface *iface)
+if_opensockets(struct dhcpcd_ctx *ctx)
 {
-	int s, r;
+
+	if ((ctx->link_fd = if_openlinksocket()) == -1)
+		return -1;
+
+	ctx->pf_inet_fd = xsocket(PF_INET, SOCK_DGRAM, 0, O_CLOEXEC);
+	if (ctx->pf_inet_fd == -1)
+		return -1;
+
+#if defined(INET6) && defined(BSD)
+	ctx->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM, 0, O_CLOEXEC);
+	if (ctx->pf_inet6_fd == -1)
+		return -1;
+#endif
+
+#ifdef IFLR_ACTIVE
+	ctx->pf_link_fd = xsocket(PF_LINK, SOCK_DGRAM, 0, O_CLOEXEC);
+	if (ctx->pf_link_fd == -1)
+		return -1;
+#endif
+
+	return 0;
+}
+
+int
+if_carrier(struct interface *ifp)
+{
+	int r;
 	struct ifreq ifr;
 #ifdef SIOCGIFMEDIA
 	struct ifmediareq ifmr;
 #endif
 
-	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
-		return LINK_UNKNOWN;
 	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, iface->name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFFLAGS, &ifr) == -1) {
-		close(s);
+	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == -1)
 		return LINK_UNKNOWN;
-	}
-	iface->flags = (unsigned int)ifr.ifr_flags;
+	ifp->flags = (unsigned int)ifr.ifr_flags;
 
 #ifdef SIOCGIFMEDIA
 	memset(&ifmr, 0, sizeof(ifmr));
-	strlcpy(ifmr.ifm_name, iface->name, sizeof(ifmr.ifm_name));
-	if (ioctl(s, SIOCGIFMEDIA, &ifmr) != -1 &&
+	strlcpy(ifmr.ifm_name, ifp->name, sizeof(ifmr.ifm_name));
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFMEDIA, &ifmr) != -1 &&
 	    ifmr.ifm_status & IFM_AVALID)
 		r = (ifmr.ifm_status & IFM_ACTIVE) ? LINK_UP : LINK_DOWN;
 	else
@@ -124,7 +142,6 @@ if_carrier(struct interface *iface)
 #else
 	r = ifr.ifr_flags & IFF_RUNNING ? LINK_UP : LINK_DOWN;
 #endif
-	close(s);
 	return r;
 }
 
@@ -132,24 +149,21 @@ int
 if_setflag(struct interface *ifp, short flag)
 {
 	struct ifreq ifr;
-	int s, r;
+	int r;
 
-	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
-		return -1;
 	memset(&ifr, 0, sizeof(ifr));
 	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
 	r = -1;
-	if (ioctl(s, SIOCGIFFLAGS, &ifr) == 0) {
+	if (ioctl(ifp->ctx->pf_inet_fd, SIOCGIFFLAGS, &ifr) == 0) {
 		if (flag == 0 || (ifr.ifr_flags & flag) == flag)
 			r = 0;
 		else {
 			ifr.ifr_flags |= flag;
-			if (ioctl(s, SIOCSIFFLAGS, &ifr) == 0)
+			if (ioctl(ifp->ctx->pf_inet_fd, SIOCSIFFLAGS, &ifr) ==0)
 				r = 0;
 		}
 		ifp->flags = (unsigned int)ifr.ifr_flags;
 	}
-	close(s);
 	return r;
 }
 
@@ -241,24 +255,12 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 	const struct sockaddr_dl *sdl;
 #ifdef SIOCGIFPRIORITY
 	struct ifreq ifr;
-	int s_inet;
 #endif
 #ifdef IFLR_ACTIVE
 	struct if_laddrreq iflr;
-	int s_link;
 #endif
 
-#ifdef SIOCGIFPRIORITY
-	if ((s_inet = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
-		return NULL;
-#endif
 #ifdef IFLR_ACTIVE
-	if ((s_link = socket(PF_LINK, SOCK_DGRAM, 0)) == -1) {
-#ifdef SIOCGIFPRIORITY
-		close(s_inet);
-#endif
-		return NULL;
-	}
 	memset(&iflr, 0, sizeof(iflr));
 #endif
 #elif AF_PACKET
@@ -343,7 +345,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 				continue;
 		}
 
-		if (if_vimaster(p) == 1) {
+		if (if_vimaster(ctx, p) == 1) {
 			logger(ctx, argc ? LOG_ERR : LOG_DEBUG,
 			    "%s: is a Virtual Interface Master, skipping", p);
 			continue;
@@ -376,7 +378,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			    MIN(ifa->ifa_addr->sa_len, sizeof(iflr.addr)));
 			iflr.flags = IFLR_PREFIX;
 			iflr.prefixlen = (unsigned int)sdl->sdl_alen * NBBY;
-			if (ioctl(s_link, SIOCGLIFADDR, &iflr) == -1 ||
+			if (ioctl(ctx->pf_link_fd, SIOCGLIFADDR, &iflr) == -1 ||
 			    !(iflr.flags & IFLR_ACTIVE))
 			{
 				if_free(ifp);
@@ -497,27 +499,30 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			}
 		}
 
-		/* Handle any platform init for the interface */
-		if (if_init(ifp) == -1) {
-			logger(ifp->ctx, LOG_ERR, "%s: if_init: %m", p);
-			if_free(ifp);
-			continue;
-		}
+		if (!(ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))) {
+			/* Handle any platform init for the interface */
+			if (if_init(ifp) == -1) {
+				logger(ifp->ctx, LOG_ERR, "%s: if_init: %m", p);
+				if_free(ifp);
+				continue;
+			}
 
-		/* Ensure that the MTU is big enough for DHCP */
-		if (if_getmtu(ifp->name) < MTU_MIN &&
-		    if_setmtu(ifp->name, MTU_MIN) == -1)
-		{
-			logger(ifp->ctx, LOG_ERR, "%s: set_mtu: %m", p);
-			if_free(ifp);
-			continue;
+			/* Ensure that the MTU is big enough for DHCP */
+			if (if_getmtu(ifp) < MTU_MIN &&
+			    if_setmtu(ifp, MTU_MIN) == -1)
+			{
+				logger(ifp->ctx, LOG_ERR,
+				    "%s: if_setmtu: %m", p);
+				if_free(ifp);
+				continue;
+			}
 		}
 
 #ifdef SIOCGIFPRIORITY
 		/* Respect the interface priority */
 		memset(&ifr, 0, sizeof(ifr));
 		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
-		if (ioctl(s_inet, SIOCGIFPRIORITY, &ifr) == 0)
+		if (ioctl(ctx->pf_inet_fd, SIOCGIFPRIORITY, &ifr) == 0)
 			ifp->metric = ifr.ifr_metric;
 #else
 		/* We reserve the 100 range for virtual interfaces, if and when
@@ -534,13 +539,6 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 
 	if_learnaddrs1(ctx, ifs, ifaddrs);
 	freeifaddrs(ifaddrs);
-
-#ifdef SIOCGIFPRIORITY
-	close(s_inet);
-#endif
-#ifdef IFLR_ACTIVE
-	close(s_link);
-#endif
 
 	return ifs;
 }
@@ -581,18 +579,15 @@ if_findindex(struct if_head *ifaces, unsigned int idx)
 }
 
 int
-if_domtu(const char *ifname, short int mtu)
+if_domtu(const struct interface *ifp, short int mtu)
 {
-	int s, r;
+	int r;
 	struct ifreq ifr;
 
-	if ((s = socket(PF_INET, SOCK_DGRAM, 0)) == -1)
-		return -1;
 	memset(&ifr, 0, sizeof(ifr));
-	strlcpy(ifr.ifr_name, ifname, sizeof(ifr.ifr_name));
+	strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
 	ifr.ifr_mtu = mtu;
-	r = ioctl(s, mtu ? SIOCSIFMTU : SIOCGIFMTU, &ifr);
-	close(s);
+	r = ioctl(ifp->ctx->pf_inet_fd, mtu ? SIOCSIFMTU : SIOCGIFMTU, &ifr);
 	if (r == -1)
 		return -1;
 	return ifr.ifr_mtu;
@@ -666,4 +661,32 @@ if_sortinterfaces(struct dhcpcd_ctx *ctx)
 			TAILQ_INSERT_TAIL(&sorted, ifp, next);
 	}
 	TAILQ_CONCAT(ctx->ifaces, &sorted, next);
+}
+
+int
+xsocket(int domain, int type, int protocol, int flags)
+{
+#ifdef SOCK_CLOEXEC
+	if (flags & O_CLOEXEC)
+		type |= SOCK_CLOEXEC;
+	if (flags & O_NONBLOCK)
+		type |= SOCK_NONBLOCK;
+
+	return socket(domain, type, protocol);
+#else
+	int s, xflags;
+
+	if ((s = socket(domain, type, protocol)) == -1)
+		return -1;
+	if ((flags & O_CLOEXEC) && (xflags = fcntl(s, F_GETFD, 0)) == -1 ||
+	    fcntl(s, F_SETFD, xlags | FD_CLOEXEC) == -1)
+		goto out;
+	if ((flags & O_NONBLOCK) && (xflags = fcntl(s, F_GETFL, 0)) == -1 ||
+	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1)
+		goto out;
+	return s;
+out:
+	close(s);
+	return -1;
+#endif
 }

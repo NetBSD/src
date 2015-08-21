@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.22 2015/07/09 10:15:34 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.23 2015/08/21 10:39:00 roy Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd July 9, 2015
+.Dd August 1, 2015
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -408,6 +408,7 @@ Don't send any ARP requests.
 This also disables IPv4LL.
 .It Ic noauthrequired
 Don't require authentication even though we requested it.
+Also allows FORCERENEW and RECONFIGURE messages without authentication.
 .It Ic nodelay
 Don't delay for an initial randomised time when starting protocols.
 .It Ic nodev
@@ -431,8 +432,8 @@ Matches full name, or prefixed with 2 numbers optionally ending with
 .Pp
 So to stop
 .Nm dhcpcd
-from touching your DNS or MTU settings you would do:-
-.D1 nohook resolv.conf, mtu
+from touching your DNS settings or starting wpa_supplicant you would do:-
+.D1 nohook resolv.conf, wpa_supplicant
 .It Ic noipv4
 Don't attempt to configure an IPv4 address.
 .It Ic noipv4ll
@@ -448,6 +449,14 @@ Disable solicitation and receipt of IPv6 Router Advertisements.
 .It Ic nolink
 Don't receive link messages about carrier status.
 You should only set this for buggy interface drivers.
+.It Ic noup
+Don't bring the interface up when in master mode.
+If
+.Nm
+cannot determine the carrier state,
+.Nm
+will enter a tight polling loop until the interface is marked up and running
+or a valid carrier state is reported.
 .It Ic option Ar option
 Requests the
 .Ar option
@@ -464,7 +473,8 @@ lines.
 Prepend dhcp6_ to
 .Ar option
 to request a DHCPv6 option.
-DHCPv4 options are mapped to DHCPv6 where applicable.
+If no DHCPv6 options are configured,
+then DHCPv4 options are mapped to equivalent DHCPv6 options.
 .Pp
 Prepend nd_ to
 .Ar option

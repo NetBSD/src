@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.21 2015/07/09 10:15:34 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.22 2015/08/21 10:39:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -325,7 +325,7 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 	EMALLOC(6, e);
 	snprintf(env[6], e, "ifflags=%u", ifp->flags);
 	EMALLOC(7, e);
-	snprintf(env[7], e, "ifmtu=%d", if_getmtu(ifp->name));
+	snprintf(env[7], e, "ifmtu=%d", if_getmtu(ifp));
 	l = e = strlen("interface_order=");
 	TAILQ_FOREACH(ifp2, ifp->ctx->ifaces, next) {
 		e += strlen(ifp2->name) + 1;

@@ -1,4 +1,4 @@
-/* $NetBSD: dhcpcd.h,v 1.12 2015/07/09 10:15:34 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.13 2015/08/21 10:39:00 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -64,6 +64,11 @@
  * dhcpcd can poll it for the relevant flags periodically */
 #define IF_POLL_UP	100	/* milliseconds */
 
+#ifdef __QNX__
+/* QNX carries defines for, but does not actually support PF_LINK */
+#undef IFLR_ACTIVE
+#endif
+
 struct interface {
 	struct dhcpcd_ctx *ctx;
 	TAILQ_ENTRY(interface) next;
@@ -107,8 +112,16 @@ struct dhcpcd_ctx {
 	char **ifcv;	/* configured interfaces */
 	unsigned char *duid;
 	size_t duid_len;
-	int link_fd;
 	struct if_head *ifaces;
+
+	int pf_inet_fd;
+#if defined(INET6) && defined(BSD)
+	int pf_inet6_fd;
+#endif
+#ifdef IFLR_ACTIVE
+	int pf_link_fd;
+#endif
+	int link_fd;
 
 #ifdef USE_SIGNALS
 	sigset_t sigset;
@@ -124,6 +137,8 @@ struct dhcpcd_ctx {
 	/* DHCP Enterprise options, RFC3925 */
 	struct dhcp_opt *vivso;
 	size_t vivso_len;
+
+	char *randomstate; /* original state */
 
 #ifdef INET
 	struct dhcp_opt *dhcp_opts;
