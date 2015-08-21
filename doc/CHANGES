@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2096 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2097 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -189,3 +189,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	acpi(4): Updated ACPICA to 20150717. [christos 20150818]
 	mcp3kadc(4): Driver for Microchip 3x0x SAR ADC chips. [phx 20150818]
 	OpenSSH: Imported 7.1. [christos 20150821]
+	dhcpcd: Import dhcpcd 6.9.2. [roy 20150821]
