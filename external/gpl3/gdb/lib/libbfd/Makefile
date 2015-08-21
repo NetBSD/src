@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2015/08/16 09:51:58 christos Exp $
+#	$NetBSD: Makefile,v 1.7 2015/08/21 08:19:28 tron Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -26,6 +26,8 @@ CLEANFILES+=	elf32-target.h elf64-target.h targmatch.h \
 .PATH: ${DIST}/bfd
 
 .include <bsd.lib.mk>
+
+COPTS+=         -Wno-stack-protector
 
 ${OBJS} ${SOBJS}: elf32-target.h elf64-target.h
 targets.o targets.pico: targmatch.h Makefile
