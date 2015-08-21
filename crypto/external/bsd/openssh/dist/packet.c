@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.20 2015/08/13 10:33:21 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.213 2015/07/29 04:43:06 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.21 2015/08/21 08:20:59 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.214 2015/08/20 22:32:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.20 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.21 2015/08/21 08:20:59 christos Exp $");
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
 #include <sys/queue.h>

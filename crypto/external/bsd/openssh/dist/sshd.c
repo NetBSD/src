@@ -1,5 +1,5 @@
-/*	$NetBSD: sshd.c,v 1.21 2015/08/13 10:33:21 christos Exp $	*/
-/* $OpenBSD: sshd.c,v 1.457 2015/07/30 00:01:34 djm Exp $ */
+/*	$NetBSD: sshd.c,v 1.22 2015/08/21 08:20:59 christos Exp $	*/
+/* $OpenBSD: sshd.c,v 1.458 2015/08/20 22:32:42 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.21 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.22 2015/08/21 08:20:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -1238,7 +1238,7 @@ server_accept_loop(int *sock_in, int *sock_out, int *newsock, int *config_s)
 			sighup_restart();
 		if (fdset != NULL)
 			free(fdset);
-		fdset = (fd_set *)xcalloc(howmany(maxfd + 1, NFDBITS),
+		fdset = xcalloc(howmany(maxfd + 1, NFDBITS),
 		    sizeof(fd_mask));
 
 		for (i = 0; i < num_listen_socks; i++)

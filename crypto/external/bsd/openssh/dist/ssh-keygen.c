@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keygen.c,v 1.18 2015/08/13 10:33:21 christos Exp $	*/
-/* $OpenBSD: ssh-keygen.c,v 1.276 2015/07/03 03:49:45 djm Exp $ */
+/*	$NetBSD: ssh-keygen.c,v 1.19 2015/08/21 08:20:59 christos Exp $	*/
+/* $OpenBSD: ssh-keygen.c,v 1.277 2015/08/19 23:17:51 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1994 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keygen.c,v 1.18 2015/08/13 10:33:21 christos Exp $");
+__RCSID("$NetBSD: ssh-keygen.c,v 1.19 2015/08/21 08:20:59 christos Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -1189,7 +1189,8 @@ do_known_hosts(struct passwd *pw, const char *name)
 		exit(1);
 	} else if (delete_host && !ctx.found_key) {
 		logit("Host %s not found in %s", name, identity_file);
-		unlink(tmp);
+		if (inplace)
+			unlink(tmp);
 	} else if (inplace) {
 		/* Backup existing file */
 		if (unlink(old) == -1 && errno != ENOENT)
