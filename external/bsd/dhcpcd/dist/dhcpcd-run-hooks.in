@@ -118,8 +118,7 @@ remove_markers()
 comp_file()
 {
 
-	[ -e "$1" ] || return 1
-	[ -e "$2" ] || return 1
+	[ -e "$1" -a -e "$2" ] || return 1
 
 	if type cmp >/dev/null 2>&1; then
 		cmp -s "$1" "$2"
