@@ -146,6 +146,7 @@ set_hostname()
 case "$reason" in
 BOUND6|RENEW6|REBIND6|REBOOT6|INFORM6)
 	new_fqdn="$new_dhcp6_fqdn"
+	old_fqdn="$old_dhcp6_fqdn"
 	;;
 esac
 
