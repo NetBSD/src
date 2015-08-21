@@ -1,28 +1,24 @@
-/*	$NetBSD: ldscript.evbarm,v 1.9 2015/08/20 07:00:48 uebayasi Exp $	*/
+/*	$NetBSD: ldscript.evbarm,v 1.10 2015/08/21 04:27:54 uebayasi Exp $	*/
 
 OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
-  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
-  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
-
   /* Kernel start: */
-  .start (KERNEL_BASE_phys) :
+  .start :
   {
     *(.start)
-  } =0
+  }
 
   /* Read-only sections, merged into text segment: */
-  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
-  AT (LOADADDR(.start) + SIZEOF(.start))
+  .text :
   {
     *(.text)
     *(.text.*)
     *(.stub)
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
-  } =0
+  }
   .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
   PROVIDE (__exidx_start = .);
   .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
@@ -34,14 +30,12 @@ SECTIONS
      boundary.  */
   . = ALIGN(0x10000);
   .data    :
-  AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
   {
     __data_start = . ;
     *(.data)
     *(.data.*)
   }
   .sdata     :
-  AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
   {
     *(.sdata)
     *(.sdata.*)
@@ -52,7 +46,6 @@ SECTIONS
   __bss_start = .;
   __bss_start__ = .;
   .sbss      :
-  AT (LOADADDR(.sdata) + (ADDR(.sbss) - ADDR(.sdata)))
   {
     PROVIDE (__sbss_start = .);
     PROVIDE (___sbss_start = .);
@@ -64,7 +57,6 @@ SECTIONS
     PROVIDE (___sbss_end = .);
   }
   .bss       :
-  AT (LOADADDR(.sbss) + (ADDR(.bss) - ADDR(.sbss)))
   {
     *(.dynbss)
     *(.bss)
@@ -79,4 +71,20 @@ SECTIONS
   _end = .;
   _bss_end__ = . ; __bss_end__ = . ; __end__ = . ;
   PROVIDE (end = .);
+}
+SECTIONS
+{
+  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
+  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
+
+  .start (KERNEL_BASE_phys) :
+  {
+    *(.start)
+  } =0
+
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
+  {
+    *(.text)
+  } =0
 }
