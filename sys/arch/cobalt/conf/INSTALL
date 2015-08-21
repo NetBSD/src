@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.58 2015/08/12 07:53:57 maxv Exp $
+# $NetBSD: INSTALL,v 1.59 2015/08/21 01:52:07 uebayasi Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.58 $"
+#ident 		"INSTALL-$Revision: 1.59 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -40,6 +40,7 @@ options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
 options 	DDB		# kernel dynamic debugger
+pseudo-device	ksyms
 #options 	DDB_HISTORY_SIZE=100 # enable history editing in DDB
 #makeoptions	DEBUG="-g"	# compile full symbol table
 

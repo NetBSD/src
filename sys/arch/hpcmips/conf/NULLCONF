@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: NULLCONF,v 1.22 2005/12/07 09:10:13 tsutsui Exp $
+# 	$NetBSD: NULLCONF,v 1.23 2015/08/21 01:52:08 uebayasi Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -15,6 +15,7 @@ options 	VR4111			# NEC VR4111
 options 	VR4121			# NEC VR4121
 
 options 	DDB			# in-kernel debugger
+pseudo-device	ksyms
 
 options 	WINCE_DEFAULT_SETTING	# Debugging use
 options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
