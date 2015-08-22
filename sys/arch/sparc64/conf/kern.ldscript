@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.14 2015/08/22 23:47:34 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.15 2015/08/22 23:49:54 uebayasi Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc64.  This script is based on
@@ -14,31 +14,6 @@ SECTIONS
 {
   /* Read-only sections, merged into text segment: */
   . = 0x100000 + SIZEOF_HEADERS;
-  .interp     : { *(.interp) 	}
-  .hash          : { *(.hash)		}
-  .dynsym        : { *(.dynsym)		}
-  .dynstr        : { *(.dynstr)		}
-  .gnu.version   : { *(.gnu.version)	}
-  .gnu.version_d   : { *(.gnu.version_d)	}
-  .gnu.version_r   : { *(.gnu.version_r)	}
-  .rel.text      :
-    { *(.rel.text) *(.rel.gnu.linkonce.t*) }
-  .rela.text     :
-    { *(.rela.text) *(.rela.gnu.linkonce.t*) }
-  .rel.data      :
-    { *(.rel.data) *(.rel.gnu.linkonce.d*) }
-  .rela.data     :
-    { *(.rela.data) *(.rela.gnu.linkonce.d*) }
-  .rel.rodata    :
-    { *(.rel.rodata) *(.rel.gnu.linkonce.r*) }
-  .rela.rodata   :
-    { *(.rela.rodata) *(.rela.gnu.linkonce.r*) }
-  .rel.got       : { *(.rel.got)		}
-  .rela.got      : { *(.rela.got)		}
-  .rel.bss       : { *(.rel.bss)		}
-  .rela.bss      : { *(.rela.bss)		}
-  .rel.plt       : { *(.rel.plt)		}
-  .rela.plt      : { *(.rela.plt)		}
   .text      :
   {
     *(.text)
