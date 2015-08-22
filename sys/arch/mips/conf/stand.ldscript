@@ -1,4 +1,4 @@
-/* $NetBSD: stand.ldscript,v 1.6 2015/08/20 07:00:49 uebayasi Exp $ */
+/* $NetBSD: stand.ldscript,v 1.7 2015/08/22 23:49:54 uebayasi Exp $ */
 
 /*  ldscript for NetBSD/mips stand-alone programs */
 OUTPUT_ARCH(mips)
@@ -41,7 +41,5 @@ SECTIONS
   /DISCARD/ : {
     *(.eh_frame_hdr)
     *(.eh_frame)
-    *(.rel.eh_frame)
-    *(.rela.eh_frame)
   }
 }
