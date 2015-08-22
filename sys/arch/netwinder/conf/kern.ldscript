@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.8 2015/08/21 06:37:09 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.9 2015/08/22 23:19:55 uebayasi Exp $	*/
 
 OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
 	      "elf32-littlearm")
@@ -21,10 +21,6 @@ SECTIONS
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
   }
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
-  PROVIDE (__exidx_start = .);
-  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
-  PROVIDE (__exidx_end = .);
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
