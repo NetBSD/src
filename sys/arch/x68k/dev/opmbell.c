@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.26 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.27 2015/08/22 14:11:19 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.26 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.27 2015/08/22 14:11:19 christos Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.26 2015/08/20 14:40:17 christos Exp $"
 
 #include <x68k/dev/opmvar.h>
 
-#include "ioconfig.h"
+#include "ioconf.h"
 
 /* In opm.c. */
 void opm_set_volume(int, int);
