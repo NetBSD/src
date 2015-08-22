@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.149 2015/04/13 00:39:57 rodent Exp $
+$NetBSD: acronyms.comp,v 1.150 2015/08/22 19:18:10 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -683,6 +683,7 @@ LSN	Large Scale NAT
 LSN	log sequence number
 LSR	label switch router
 LTCC	low temperature co-fired ceramic
+LTO	link time optimization
 LTR	left to right
 LTR	load task register
 LTR	letter(-sized paper)
