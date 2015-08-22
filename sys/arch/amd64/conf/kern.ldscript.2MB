@@ -1,8 +1,5 @@
-/*	$NetBSD: kern.ldscript.2MB,v 1.8 2015/08/20 08:53:31 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript.2MB,v 1.9 2015/08/22 02:23:58 uebayasi Exp $	*/
 
-OUTPUT_FORMAT("elf64-x86-64", "elf64-x86-64",
-	      "elf64-x86-64")
-OUTPUT_ARCH(i386:x86-64)
 ENTRY(_start)
 SECTIONS
 {
