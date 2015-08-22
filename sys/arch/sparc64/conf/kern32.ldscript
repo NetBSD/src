@@ -1,4 +1,4 @@
-/*	$NetBSD: kern32.ldscript,v 1.12 2015/08/21 02:35:52 uebayasi Exp $	*/
+/*	$NetBSD: kern32.ldscript,v 1.13 2015/08/22 23:47:34 uebayasi Exp $	*/
 
 /*
  * Kernel linker script for NetBSD/sparc.  This script is based on
@@ -36,19 +36,10 @@ SECTIONS
     { *(.rela.rodata) *(.rela.gnu.linkonce.r*) }
   .rel.got       : { *(.rel.got)		}
   .rela.got      : { *(.rela.got)		}
-  .rel.ctors     : { *(.rel.ctors)	}
-  .rela.ctors    : { *(.rela.ctors)	}
-  .rel.dtors     : { *(.rel.dtors)	}
-  .rela.dtors    : { *(.rela.dtors)	}
-  .rel.init      : { *(.rel.init)	}
-  .rela.init     : { *(.rela.init)	}
-  .rel.fini      : { *(.rel.fini)	}
-  .rela.fini     : { *(.rela.fini)	}
   .rel.bss       : { *(.rel.bss)		}
   .rela.bss      : { *(.rela.bss)		}
   .rel.plt       : { *(.rel.plt)		}
   .rela.plt      : { *(.rela.plt)		}
-  .init          : { *(.init)	} =0
   .text      :
   {
     *(.text)
@@ -57,7 +48,6 @@ SECTIONS
     *(.gnu.warning)
     *(.gnu.linkonce.t*)
   } =0
-  .fini      : { *(.fini)    } =0
   .rodata    : { *(.rodata) *(.gnu.linkonce.r*) }
   .rodata1   : { *(.rodata1) }
   _etext = .;
@@ -79,14 +69,6 @@ SECTIONS
   . = ALIGN(64);	/* COHERENCY_UNIT */
   .data.read_mostly : { *(.data.read_mostly) }
   . = ALIGN(64);	/* COHERENCY_UNIT */
-  .ctors         :
-  {
-    *(.ctors)
-  }
-  .dtors         :
-  {
-    *(.dtors)
-  }
   .plt      : { *(.plt)	}
   .got           : { *(.got.plt) *(.got) }
   .dynamic       : { *(.dynamic) }

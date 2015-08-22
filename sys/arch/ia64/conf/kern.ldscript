@@ -14,13 +14,9 @@ SECTIONS
   .gnu.version    : { *(.gnu.version) }
   .gnu.version_d  : { *(.gnu.version_d) }
   .gnu.version_r  : { *(.gnu.version_r) }
-  .rela.init      : { *(.rela.init) }
   .rela.text      : { *(.rela.text .rela.text.* .rela.gnu.linkonce.t.*) }
-  .rela.fini      : { *(.rela.fini) }
   .rela.rodata    : { *(.rela.rodata .rela.rodata.* .rela.gnu.linkonce.r.*) }
   .rela.data      : { *(.rela.data .rela.data.* .rela.gnu.linkonce.d.*) }
-  .rela.ctors     : { *(.rela.ctors) }
-  .rela.dtors     : { *(.rela.dtors) }
   .rela.got       : { *(.rela.got) }
   .rela.sdata     : { *(.rela.sdata .rela.sdata.* .rela.gnu.linkonce.s.*) }
   .rela.sbss      : { *(.rela.sbss .rela.sbss.* .rela.gnu.linkonce.sb.*) }
@@ -30,20 +26,12 @@ SECTIONS
   .rela.plt       : { *(.rela.plt) }
   .rela.IA_64.pltoff   : { *(.rela.IA_64.pltoff) }
   PROVIDE (btext = .);
-  .init           :
-  {
-    *(.init)
-  } =0x00300000010070000002000001000400
   .plt            : { *(.plt) }
   .text           :
   {
     *(.text .stub .text.* .gnu.linkonce.t.*)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
-  } =0x00300000010070000002000001000400
-  .fini           :
-  {
-    *(.fini)
   } =0x00300000010070000002000001000400
   _etext = .;
   PROVIDE (etext = .);
@@ -64,16 +52,6 @@ SECTIONS
   }
   .data1          : { *(.data1) }
   .dynamic        : { *(.dynamic) }
-  .ctors          :
-  {
-    *(.ctors)
-    *(SORT(.ctors.*))
-  }
-  .dtors          :
-  {
-    *(.dtors)
-    *(SORT(.dtors.*))
-  }
   . = ALIGN(16);
   __gp = . + 0x200000;
   .got            : { *(.got.plt) *(.got) }
