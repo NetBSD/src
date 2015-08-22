@@ -1,8 +1,5 @@
-/*	$NetBSD: kern.ldscript.4MB,v 1.14 2015/08/20 09:34:54 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript.4MB,v 1.15 2015/08/22 02:23:58 uebayasi Exp $	*/
 
-OUTPUT_FORMAT("elf32-i386", "elf32-i386",
-	      "elf32-i386")
-OUTPUT_ARCH(i386)
 ENTRY(_start)
 SECTIONS
 {
