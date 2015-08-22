@@ -265,6 +265,39 @@ o Control ELF sections using linker script.
   of debug information.  In the future .symtab will be copied using linker
   during this stage.
 
+o Preprocess and generate linker scripts dynamically.
+
+  Include opt_xxx.h and replace some constant values (e.g. COHERENCY_UNIT,
+  PAGE_SIZE, KERNEL_BASE_PHYS, KERNEL_BASE_VIRT, ...) with cpp(1).
+
+  Don't unnecessarily define symbols.  Don't use sed(1).
+
+o Clean up linker scripts.
+
+  o Don't specify OUTPUT_FORMAT()/OUTPUT_ARCH()
+
+    These are basically set in compilers/linkers.  If non-default ABI is used,
+    command-line arguments should be specified.
+
+  o Remove .rel/.rela handlings.
+
+    These are set in relocatable objects, and handled by dynamic linkers.
+    Totally irrelefant for kernels.
+
+  o Clean up debug section handlings.
+
+  o Document (section boundary) symbols set in linker scripts.
+
+    There must be a reason why symbols are defined and exported.
+
+    PROVIDE() is to define internal symbols.
+
+  o Clean up load addresses.
+
+  o Program headers.
+
+  o According to matt@, .ARM.extab/.ARM.exidx sections are no longer needed.
+
 o Redesign swapnetbsd.c (root/swap device specification)
 
   Don't build a whole kernel only to specify root/swap devices.
