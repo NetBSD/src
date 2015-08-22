@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.33 2015/08/21 10:39:00 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.34 2015/08/22 05:45:57 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -713,7 +713,7 @@ uint16_t
 dhcp_get_mtu(const struct interface *ifp)
 {
 	const struct dhcp_message *dhcp;
-	uint16_t mtu;
+	uint16_t mtu = 0;	// XXX: gcc
 
 	if ((dhcp = D_CSTATE(ifp)->new) == NULL ||
 	    has_option_mask(ifp->options->nomask, DHO_MTU) ||
