@@ -1,4 +1,4 @@
-.\" $NetBSD: mcp48x1dac.4,v 1.1 2015/08/23 19:09:02 rkujawa Exp $
+.\" $NetBSD: mcp48x1dac.4,v 1.2 2015/08/23 20:07:16 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,17 +40,18 @@
 .Sh DESCRIPTION
 The
 .Nm
-driver supports the MCP48x1 family of digital to analog converters. The digital
+driver supports the MCP48x1 family of digital to analog converters.
+The digital
 values to be converted to analog signal are passed through the
 .Xr sysctl 8
 node.
-
-The driver reports the current voltage outputted on the chip's DAC channel
+.Pp
+The driver reports the current voltage output on the chip's DAC channel
 through the
 .Xr envsys 4
 API.
 It calculates these values assuming that internal 2.048V reference voltage
-.Li ( Vref ) 
+.Li ( Vref )
 is used.
 .Pp
 The following table shows the supported chips.
@@ -70,7 +71,7 @@ variables are provided:
 .Bl -tag -width indent
 .It machdep.mcp48x1dac0.data
 Defines digital data to be converted into analog signal.
-This value is interpreted literally and send to the DAC without any conversion.
+This value is interpreted literally and sent to the DAC without any conversion.
 Refer to the chip datasheet for more information.
 .It machdep.mcp48x1dac0.gain
 When set to 1 it enables 2x output gain on the DAC channel.
@@ -80,15 +81,17 @@ The default value is 0.
 .Xr envsys 4 ,
 .Xr spi 4 ,
 .Xr sysctl 8
-.Pp
-MCP4801/4811/4821 8/10/12-Bit Voltage Output Digital-to-Analog Converter
+.Rs
+.%T MCP4801/4811/4821 8/10/12-Bit Voltage Output Digital-to-Analog Converter \
 with Internal VREF and SPI Interface Data Sheet
+.Re
 .Sh HISTORY
 The
 .Nm
 driver first appeared in
 .Nx 7.0 .
 .Sh AUTHORS
+.An -nosplit
 The
 .Nm
 driver was written by
@@ -100,4 +103,3 @@ page by
 .An Frank Wille .
 .Sh BUGS
 There are bugs.
-
