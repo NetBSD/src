@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.237 2015/03/30 10:58:37 chopps Exp $
+# $NetBSD: mi,v 1.238 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: end-user configuration files that are moved to another location
 #	should not be marked "obsolete"; they should just be removed from
@@ -348,6 +348,7 @@
 ./var/crash/minfree				etc-sys-root
 ./var/cron/tabs/root				etc-cron-root
 ./var/db/locate.database			etc-sys-root
+./var/db/obsolete/etc				base-sys-root
 ./var/games/atc_score				etc-games-scores
 ./var/games/battlestar.log			etc-games-scores
 ./var/games/cfscores				etc-games-scores

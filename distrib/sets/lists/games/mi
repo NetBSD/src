@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.53 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: mi,v 1.54 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -366,6 +366,7 @@
 ./usr/share/man/man8/dm.8			games-games-man		.man
 ./usr/share/man/man8/strfile.8			games-utils-man		.man
 ./usr/share/man/man8/unstr.8			games-utils-man		.man
+./var/db/obsolete/games				base-sys-root
 ./var/games/atc_scores				games-obsolete		obsolete
 ./var/games/hackdir/data			games-games-root
 ./var/games/hackdir/help			games-games-root

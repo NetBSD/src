@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.127 2015/08/17 06:42:46 knakahara Exp $
+# $NetBSD: mi,v 1.128 2015/08/23 18:28:40 mrg Exp $
 
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
@@ -2259,3 +2259,4 @@
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso1_g.a	comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_helper_dso2_g.a	comp-c-debuglib	atf,debuglib,compattestfile
 ./usr/tests/libexec/ld.elf_so/libh_helper_ifunc_dso_g.a	comp-c-debuglib	atf,debuglib,compattestfile
+./var/db/obsolete/debug				base-sys-root		debug

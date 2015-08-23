@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.173 2015/07/23 05:46:39 mrg Exp $
+#	 $NetBSD: mi,v 1.174 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9376,3 +9376,4 @@
 ./usr/libdata/lint/llib-lxkbfile.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lxkbui.ln			-unknown-	lint,x11
 ./usr/libdata/lint/llib-lxkbui.ln			-unknown-	lint,xorg
+./var/db/obsolete/xcomp					xbase-sys-root	xorg

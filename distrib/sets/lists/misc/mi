@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.195 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: mi,v 1.196 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1635,3 +1635,4 @@
 ./usr/share/xsl/atf				misc-atf-share
 ./usr/share/xsl/atf/tests-results.xsl		misc-atf-share		share,atf,!kyua
 ./usr/share/xsl/atf/tests-results.xsl		misc-obsolete		share,kyua,obsolete
+./var/db/obsolete/misc				base-sys-root
