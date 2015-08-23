@@ -1,8 +1,5 @@
-/*	$NetBSD: kern.ldscript,v 1.9 2015/08/22 23:19:55 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.10 2015/08/23 08:57:25 uebayasi Exp $	*/
 
-OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
-	      "elf32-littlearm")
-OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
