@@ -1,6 +1,5 @@
-/*	$NetBSD: ldscript.elf,v 1.5 2015/08/21 03:42:29 uebayasi Exp $	*/
+/*	$NetBSD: ldscript.elf,v 1.6 2015/08/23 08:57:25 uebayasi Exp $	*/
 
-OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
