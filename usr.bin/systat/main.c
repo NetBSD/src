@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.48 2014/06/03 22:22:41 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.49 2015/08/23 18:33:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -36,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: main.c,v 1.48 2014/06/03 22:22:41 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.49 2015/08/23 18:33:15 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -380,6 +380,13 @@ error(const char *fmt, ...)
 		fprintf(stderr, "\n");
 	}
 	va_end(ap);
+}
+
+void
+clearerror(void)
+{
+
+	error("%s", "");
 }
 
 void
