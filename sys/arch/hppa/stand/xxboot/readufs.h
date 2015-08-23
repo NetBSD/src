@@ -1,4 +1,4 @@
-/*	$NetBSD: readufs.h,v 1.2 2015/08/20 07:50:08 christos Exp $	*/
+/*	$NetBSD: readufs.h,v 1.3 2015/08/23 04:56:20 dholland Exp $	*/
 /*	from Id: readufs.h,v 1.10 2003/12/16 13:54:11 itohy Exp	*/
 
 /*
@@ -24,7 +24,6 @@ union ufs_dinode {
 #endif
 #ifdef USE_LFS
 	struct lfs32_dinode dil32;
-	struct lfs64_dinode dil64;
 #endif
 };
 
