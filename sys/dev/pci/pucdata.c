@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.95 2015/05/04 21:21:39 ryo Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.96 2015/08/23 17:59:40 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.95 2015/05/04 21:21:39 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.96 2015/08/23 17:59:40 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1857,6 +1857,14 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel Q45 KT (again) */
+	{   "Intel Q45 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_KT_1, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
 	/* Intel 5 Series and Intel 3400 Series KT */
 	{   "Intel 5 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT, 0, 0 },
