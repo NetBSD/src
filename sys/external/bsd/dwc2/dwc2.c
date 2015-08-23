@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.33 2015/08/18 12:01:16 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.34 2015/08/23 11:15:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.33 2015/08/18 12:01:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.34 2015/08/23 11:15:08 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1752,6 +1752,20 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		break;
 	default:
 		printf("%s: unknown error status %d\n", __func__, status);
+	}
+
+	if (xfer->status == USBD_NORMAL_COMPLETION) {
+		int rd = usbd_xfer_isread(xfer);
+
+		/*
+		 * control transfers with no data phase don't touch dmabuf, but
+		 * everything else does.
+		 */
+		if (!(xfertype == UE_CONTROL &&
+		    UGETW(xfer->request.wLength) == 0)) {
+			usb_syncmem(&xfer->dmabuf, 0, xfer->actlen,
+			    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		}
 	}
 
 	if (xfertype == UE_ISOCHRONOUS ||
