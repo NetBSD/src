@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.72 2015/08/18 21:26:16 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.73 2015/08/23 07:47:52 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.72 2015/08/18 21:26:16 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.73 2015/08/23 07:47:52 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ dk_init(struct dk_softc *dksc, device_t dev, int dtype)
 void
 dk_attach(struct dk_softc *dksc)
 {
-	mutex_init(&dksc->sc_iolock, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&dksc->sc_iolock, MUTEX_DEFAULT, IPL_NONE);
 	dksc->sc_flags |= DKF_INITED;
 #ifdef DIAGNOSTIC
 	dksc->sc_flags |= DKF_WARNLABEL | DKF_LABELSANITY;
