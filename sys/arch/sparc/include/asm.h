@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.20 2014/04/12 21:26:45 joerg Exp $ */
+/*	$NetBSD: asm.h,v 1.21 2015/08/23 10:59:15 joerg Exp $ */
 
 /*
  * Copyright (c) 1994 Allen Briggs
@@ -113,7 +113,7 @@
 #define OTYPE(x)		.type x,@object
 
 #define	_ENTRY(name) \
-	.align 4; .globl name; .proc 1; FTYPE(name); name:
+	.align 4; .globl name; FTYPE(name); name:
 
 #ifdef GPROF
 /* see _MCOUNT_ENTRY in profile.h */
