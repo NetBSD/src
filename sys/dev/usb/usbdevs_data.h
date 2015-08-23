@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.691 2015/07/03 13:17:20 skrll Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.692 2015/08/23 10:49:09 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.698 2015/07/03 13:15:54 skrll Exp
+ *	NetBSD: usbdevs,v 1.699 2015/08/23 10:46:20 skrll Exp
  */
 
 /*
@@ -571,10 +571,9 @@ static const uint16_t usb_vendors[] = {
 	    USB_VENDOR_xxFTDI, 4646, 0,
 	    USB_VENDOR_CACE, 4651, 704, 0,
 	    USB_VENDOR_COMPARE, 4656, 0,
-	    USB_VENDOR_EMPIA, 4664, 126, 0,
-	    USB_VENDOR_DATAAPEX, 4670, 0,
-	    USB_VENDOR_EVOLUTION, 4679, 735, 0,
-	    USB_VENDOR_EMPIA, 4664, 126, 0,
+	    USB_VENDOR_DATAAPEX, 4664, 0,
+	    USB_VENDOR_EVOLUTION, 4673, 735, 0,
+	    USB_VENDOR_EMPIA, 4683, 126, 0,
 	    USB_VENDOR_HP2, 62, 70, 0,
 	    USB_VENDOR_USRP, 4689, 3204, 4693, 0,
 };
@@ -1682,14 +1681,8 @@ static const uint16_t usb_products[] = {
 	    8818, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWLG122, 
 	    8828, 8836, 3658, 4710, 4724, 0,
-	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWLG122C1, 
-	    8787, 8380, 8746, 0,
-	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_WUA1340, 
-	    8838, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DUBE100B1, 
-	    8737, 8380, 8847, 0,
-	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA111, 
-	    8850, 0,
+	    8737, 8380, 8838, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_RT2870, 
 	    4936, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_RT3072, 
@@ -1713,23 +1706,23 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_RTL8192SU_2, 
 	    5205, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA131A1, 
-	    8761, 8858, 0,
+	    8761, 8841, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_WUA2340, 
-	    8861, 0,
+	    8844, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_WUA2340_NF, 
-	    8861, 0,
+	    8844, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA160A2, 
-	    8870, 8796, 0,
+	    8853, 8796, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA130D1, 
-	    8751, 8380, 8878, 0,
+	    8751, 8380, 8861, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_AR9271, 
 	    6667, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWLG122C1, 
 	    8787, 8380, 8746, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_WUA1340, 
-	    8838, 0,
+	    8864, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA111, 
-	    8850, 0,
+	    8873, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA110, 
 	    8881, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_RT2870_1, 
@@ -1745,7 +1738,7 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_RT3070_3, 
 	    4943, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA160A1, 
-	    8870, 8858, 0,
+	    8853, 8841, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_RT2870_2, 
 	    4936, 0,
 	    USB_VENDOR_DLINK2, USB_PRODUCT_DLINK2_DWA130, 
@@ -2949,7 +2942,7 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_MINOLTA, USB_PRODUCT_MINOLTA_5400, 
 	    13561, 13581, 0,
 	    USB_VENDOR_MINOLTA, USB_PRODUCT_MINOLTA_DIMAGEA1, 
-	    13561, 8858, 0,
+	    13561, 8841, 0,
 	    USB_VENDOR_MINOLTA, USB_PRODUCT_MINOLTA_XT, 
 	    13561, 13586, 0,
 	    USB_VENDOR_MISC, USB_PRODUCT_MISC_WISPY_24X, 
@@ -4640,12 +4633,10 @@ static const uint16_t usb_products[] = {
 	    19180, 17863, 10470, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_980N, 
 	    15688, 7555, 0,
-	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G200V2, 
-	    19185, 7183, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_ZYAIRG220, 
-	    18070, 19191, 0,
+	    18070, 19185, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G200V2, 
-	    19185, 7183, 0,
+	    19191, 7183, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_AG225H, 
 	    19197, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_M202, 
@@ -4653,7 +4644,7 @@ static const uint16_t usb_products[] = {
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G270S, 
 	    19211, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G220V2, 
-	    19191, 7183, 0,
+	    19185, 7183, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_G202, 
 	    19218, 0,
 	    USB_VENDOR_ZYXEL, USB_PRODUCT_ZYXEL_RT2573, 
@@ -4693,7 +4684,7 @@ static const char usb_words[] = { "."
 	    "Acer\0" /* 6 refs @ 109 */
 	    "Labs\0" /* 8 refs @ 114 */
 	    "Future\0" /* 2 refs @ 119 */
-	    "Technology\0" /* 33 refs @ 126 */
+	    "Technology\0" /* 32 refs @ 126 */
 	    "Devices\0" /* 4 refs @ 137 */
 	    "NEC\0" /* 3 refs @ 145 */
 	    "Eastman\0" /* 1 refs @ 149 */
@@ -5288,9 +5279,9 @@ static const char usb_words[] = { "."
 	    "FTDI\0" /* 1 refs @ 4646 */
 	    "CACE\0" /* 1 refs @ 4651 */
 	    "Compare\0" /* 1 refs @ 4656 */
-	    "eMPIA\0" /* 2 refs @ 4664 */
-	    "DataApex\0" /* 1 refs @ 4670 */
-	    "Evolution\0" /* 1 refs @ 4679 */
+	    "DataApex\0" /* 1 refs @ 4664 */
+	    "Evolution\0" /* 1 refs @ 4673 */
+	    "eMPIA\0" /* 1 refs @ 4683 */
 	    "GNU\0" /* 1 refs @ 4689 */
 	    "USRP\0" /* 2 refs @ 4693 */
 	    "HomeConnect\0" /* 4 refs @ 4698 */
@@ -5618,7 +5609,7 @@ static const char usb_words[] = { "."
 	    "F5D8053\0" /* 1 refs @ 7164 */
 	    "v3\0" /* 2 refs @ 7172 */
 	    "F5D8055\0" /* 2 refs @ 7175 */
-	    "v2\0" /* 12 refs @ 7183 */
+	    "v2\0" /* 11 refs @ 7183 */
 	    "F5D9050\0" /* 1 refs @ 7186 */
 	    "ver\0" /* 3 refs @ 7194 */
 	    "3\0" /* 3 refs @ 7198 */
@@ -5782,7 +5773,7 @@ static const char usb_words[] = { "."
 	    "XH1153\0" /* 1 refs @ 8359 */
 	    "C-Net\0" /* 1 refs @ 8366 */
 	    "CWD-854\0" /* 1 refs @ 8372 */
-	    "rev\0" /* 14 refs @ 8380 */
+	    "rev\0" /* 13 refs @ 8380 */
 	    "F\0" /* 2 refs @ 8384 */
 	    "RTL8187\0" /* 4 refs @ 8386 */
 	    "AccelePort\0" /* 3 refs @ 8394 */
@@ -5828,7 +5819,7 @@ static const char usb_words[] = { "."
 	    "nanovision\0" /* 1 refs @ 8721 */
 	    "MiMo\0" /* 1 refs @ 8732 */
 	    "DUB-E100\0" /* 2 refs @ 8737 */
-	    "C1\0" /* 4 refs @ 8746 */
+	    "C1\0" /* 3 refs @ 8746 */
 	    "E\0" /* 1 refs @ 8749 */
 	    "DWA-130\0" /* 3 refs @ 8751 */
 	    "C\0" /* 1 refs @ 8759 */
@@ -5836,20 +5827,20 @@ static const char usb_words[] = { "."
 	    "B\0" /* 3 refs @ 8769 */
 	    "DWL122\0" /* 1 refs @ 8771 */
 	    "DWL-G120\0" /* 1 refs @ 8778 */
-	    "DWL-G122\0" /* 3 refs @ 8787 */
+	    "DWL-G122\0" /* 2 refs @ 8787 */
 	    "A2\0" /* 2 refs @ 8796 */
 	    "DWL-AG132\0" /* 2 refs @ 8799 */
 	    "DWL-G132\0" /* 2 refs @ 8809 */
 	    "DWL-AG122\0" /* 2 refs @ 8818 */
 	    "AirPlus\0" /* 1 refs @ 8828 */
 	    "G\0" /* 1 refs @ 8836 */
-	    "WUA-1340\0" /* 2 refs @ 8838 */
-	    "B1\0" /* 1 refs @ 8847 */
-	    "DWA-111\0" /* 2 refs @ 8850 */
-	    "A1\0" /* 3 refs @ 8858 */
-	    "WUA-2340\0" /* 2 refs @ 8861 */
-	    "DWA-160\0" /* 2 refs @ 8870 */
-	    "D1\0" /* 1 refs @ 8878 */
+	    "B1\0" /* 1 refs @ 8838 */
+	    "A1\0" /* 3 refs @ 8841 */
+	    "WUA-2340\0" /* 2 refs @ 8844 */
+	    "DWA-160\0" /* 2 refs @ 8853 */
+	    "D1\0" /* 1 refs @ 8861 */
+	    "WUA-1340\0" /* 1 refs @ 8864 */
+	    "DWA-111\0" /* 1 refs @ 8873 */
 	    "DWA-110\0" /* 1 refs @ 8881 */
 	    "KVM-221\0" /* 1 refs @ 8889 */
 	    "Storage\0" /* 4 refs @ 8897 */
@@ -7221,8 +7212,8 @@ static const char usb_words[] = { "."
 	    "abg\0" /* 1 refs @ 19169 */
 	    "ZD1221\0" /* 1 refs @ 19173 */
 	    "Omni\0" /* 1 refs @ 19180 */
-	    "G-200\0" /* 2 refs @ 19185 */
-	    "G-220\0" /* 2 refs @ 19191 */
+	    "G-220\0" /* 2 refs @ 19185 */
+	    "G-200\0" /* 1 refs @ 19191 */
 	    "AG-225H\0" /* 1 refs @ 19197 */
 	    "M-202\0" /* 1 refs @ 19205 */
 	    "G-270S\0" /* 1 refs @ 19211 */

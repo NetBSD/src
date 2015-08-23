@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.690 2015/07/03 13:17:20 skrll Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.691 2015/08/23 10:49:09 skrll Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.698 2015/07/03 13:15:54 skrll Exp
+ *	NetBSD: usbdevs,v 1.699 2015/08/23 10:46:20 skrll Exp
  */
 
 /*
@@ -598,7 +598,6 @@
 #define	USB_VENDOR_xxFTDI	0x9e88		/* FTDI */
 #define	USB_VENDOR_CACE	0xcace		/* CACE Technologies */
 #define	USB_VENDOR_COMPARE	0xcdab		/* Compare */
-#define	USB_VENDOR_EMPIA	0xeb1a		/* eMPIA Technology */
 #define	USB_VENDOR_DATAAPEX	0xdaae		/* DataApex */
 #define	USB_VENDOR_EVOLUTION	0xdeee		/* Evolution Robotics */
 #define	USB_VENDOR_EMPIA	0xeb1a		/* eMPIA Technology */
@@ -1360,10 +1359,7 @@
 #define	USB_PRODUCT_DLINK_DWLAG122_NF	0x3a05		/* DWL-AG122 */
 #define	USB_PRODUCT_DLINK_DWLG122	0x3c00		/* AirPlus G Wireless USB Adapter */
 /* product DLINK RT2570		0x3c00	RT2570 */
-#define	USB_PRODUCT_DLINK2_DWLG122C1	0x3c03		/* DWL-G122 rev C1 */
-#define	USB_PRODUCT_DLINK2_WUA1340	0x3c04		/* WUA-1340 */
 #define	USB_PRODUCT_DLINK_DUBE100B1	0x3c05		/* DUB-E100 rev B1 */
-#define	USB_PRODUCT_DLINK2_DWA111	0x3c06		/* DWA-111 */
 #define	USB_PRODUCT_DLINK_RT2870	0x3c09		/* RT2870 */
 #define	USB_PRODUCT_DLINK_RT3072	0x3c0a		/* RT3072 */
 #define	USB_PRODUCT_DLINK_DSB650C	0x4000		/* 10Mbps ethernet adapter */
@@ -3437,7 +3433,6 @@
 /* ZyXEL Communication Co. products */
 #define	USB_PRODUCT_ZYXEL_OMNI56K	0x1500		/* Omni 56K Plus */
 #define	USB_PRODUCT_ZYXEL_980N	0x2011		/* Scorpion-980N keyboard */
-#define	USB_PRODUCT_ZYXEL_G200V2	0x3407		/* G-200 v2 */
 #define	USB_PRODUCT_ZYXEL_ZYAIRG220	0x3401		/* ZyAIR G-220 */
 #define	USB_PRODUCT_ZYXEL_G200V2	0x3407		/* G-200 v2 */
 #define	USB_PRODUCT_ZYXEL_AG225H	0x3409		/* AG-225H */
