@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.35 2015/01/05 03:45:31 mrg Exp $
+# $NetBSD: mi,v 1.36 2015/08/23 18:28:41 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -81,3 +81,4 @@
 ./usr/X11R7/man/man1/Xserver.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man1/Xvfb.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/SecurityPolicy.5			-unknown-	obsolete
+./var/db/obsolete/xserver				xbase-sys-root	xorg
