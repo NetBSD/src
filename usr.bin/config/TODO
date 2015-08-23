@@ -349,3 +349,19 @@ o Enhance ioconf behavior for pseudo-devices
   manually "attach" them, one at a time.  This leads to duplication of
   code (where multiple drivers contain the same basic logic), and doesn't
   necessarily handle all of the "frobbing" of the kernel lists.
+
+o Disallow unknown options.
+
+  Don't accept options that are not defined as either defflag or defparam.
+  Report them and exit.  Don't set ${IDENT} in the generated Makefile.
+
+o Convert ${DIAGNOSTIC} and ${DEBUG} as flags (defflag).
+
+  Probably generate opt_diagnostic.h/opt_debug.h and include them in
+  sys/param.h.
+
+o Strictly define DIAGNOSTIC.
+
+  It is possible to make DIAGNOSTIC kernel and modules binary-compatible with
+  non-DIAGNOSTIC ones.  In that case, debug type informations should match
+  theoretically (not confirmed).
