@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.641 2015/08/10 03:21:44 mrg Exp $
+# $NetBSD: mi,v 1.642 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4098,3 +4098,4 @@
 ./usr/tests/util/xlint/lint1/d_typename_as_var.c		tests-obsolete	obsolete
 ./usr/tests/util/xlint/lint1/d_zero_sized_arrays.c		tests-obsolete	obsolete
 ./usr/tests/util/xlint/lint1/t_integration			tests-obsolete	obsolete
+./var/db/obsolete/tests				base-sys-root		atf
