@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.43 2014/06/03 22:22:41 joerg Exp $	*/
+/*	$NetBSD: extern.h,v 1.44 2015/08/23 18:33:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -93,6 +93,7 @@ void	 disks_remove(char *);
 void	 disks_drives(char *);
 void	 display(int);
 void	 error(const char *, ...) __printflike(1, 2);
+void	 clearerror(void);
 void	 fetchbufcache(void);
 void	 fetchdf(void);
 void	 fetchicmp(void);
