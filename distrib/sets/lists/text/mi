@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44 2014/07/05 19:25:58 dholland Exp $
+# $NetBSD: mi,v 1.45 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -747,3 +747,4 @@
 ./usr/share/tmac/unicode.tmac			text-groff-share	share,groff
 ./usr/share/tmac/vgrind.tmac			text-groff-share	share
 ./usr/share/tmac/www.tmac			text-groff-share	share,groff
+./var/db/obsolete/text				base-sys-root

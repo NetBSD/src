@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1505 2015/08/18 15:54:20 phx Exp $
+# $NetBSD: mi,v 1.1506 2015/08/23 18:28:40 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -9082,3 +9082,4 @@
 ./usr/share/man/man9lua/pmf.9lua		man-sys-man		.man
 ./usr/share/man/man9lua/systm.9lua		man-sys-man		.man
 ./usr/share/man/style.css			man-mdocml-htmlman	html
+./var/db/obsolete/man				base-sys-root
