@@ -1,8 +1,5 @@
-/*	$NetBSD: kern.ldscript,v 1.4 2015/08/22 23:19:55 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.5 2015/08/23 08:57:25 uebayasi Exp $	*/
 
-OUTPUT_FORMAT("elf32-littlearm", "elf32-bigarm",
-	      "elf32-littlearm")
-OUTPUT_ARCH(arm)
 SECTIONS
 {
   . = 0xf0000020;	/* 0x20 == sizeof(a.out header) */
