@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.698 2015/07/03 13:15:54 skrll Exp $
+$NetBSD: usbdevs,v 1.699 2015/08/23 10:46:20 skrll Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -591,7 +591,6 @@ vendor NETGEAR4		0x9846	Netgear
 vendor xxFTDI		0x9e88  FTDI
 vendor CACE		0xcace	CACE Technologies
 vendor COMPARE		0xcdab	Compare
-vendor EMPIA		0xeb1a	eMPIA Technology
 vendor DATAAPEX		0xdaae	DataApex
 vendor EVOLUTION	0xdeee	Evolution Robotics
 vendor EMPIA		0xeb1a	eMPIA Technology
@@ -1353,10 +1352,7 @@ product DLINK DWLAG122		0x3a04	DWL-AG122
 product DLINK DWLAG122_NF	0x3a05	DWL-AG122
 product DLINK DWLG122		0x3c00	AirPlus G Wireless USB Adapter
 /* product DLINK RT2570		0x3c00	RT2570 */
-product DLINK2 DWLG122C1	0x3c03	DWL-G122 rev C1
-product DLINK2 WUA1340		0x3c04	WUA-1340
 product DLINK DUBE100B1		0x3c05	DUB-E100 rev B1
-product DLINK2 DWA111		0x3c06	DWA-111
 product DLINK RT2870		0x3c09	RT2870
 product DLINK RT3072		0x3c0a	RT3072
 product DLINK DSB650C		0x4000	10Mbps ethernet adapter
@@ -3430,7 +3426,6 @@ product ZYDAS ZD1211B_2		0xb215	ZD1211B
 /* ZyXEL Communication Co. products */
 product ZYXEL OMNI56K		0x1500	Omni 56K Plus
 product ZYXEL 980N		0x2011	Scorpion-980N keyboard
-product ZYXEL G200V2		0x3407	G-200 v2
 product ZYXEL ZYAIRG220		0x3401	ZyAIR G-220
 product ZYXEL G200V2		0x3407	G-200 v2
 product ZYXEL AG225H		0x3409	AG-225H
