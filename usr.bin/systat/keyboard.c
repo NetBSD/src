@@ -1,4 +1,4 @@
-/*	$NetBSD: keyboard.c,v 1.25 2013/10/14 22:23:22 bad Exp $	*/
+/*	$NetBSD: keyboard.c,v 1.26 2015/08/23 18:33:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)keyboard.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: keyboard.c,v 1.25 2013/10/14 22:23:22 bad Exp $");
+__RCSID("$NetBSD: keyboard.c,v 1.26 2015/08/23 18:33:15 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -94,9 +94,11 @@ keyboard(void)
 				    case '\n':
 				    case '\r':
 				    case ' ':
+					clearerror();
 					display(0);
 					break;
 				    case CTRL('l'):
+					clearerror();
 					wrefresh(curscr);
 					break;
 				    case CTRL('g'):
