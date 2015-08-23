@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.24 2014/12/18 06:24:28 mrg Exp $
+# $NetBSD: mi,v 1.25 2015/08/23 18:28:41 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -114,3 +114,4 @@
 ./etc/rc.d/xdm						etc-x11-rc	xorg
 ./etc/rc.d/xfs						etc-x11-rc	x11
 ./etc/rc.d/xfs						etc-x11-rc	xorg
+./var/db/obsolete/xetc					xbase-sys-root	xorg
