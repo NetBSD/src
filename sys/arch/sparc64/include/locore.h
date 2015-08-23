@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.6 2013/03/16 23:04:22 christos Exp $	*/
+/*	$NetBSD: locore.h,v 1.7 2015/08/23 10:53:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -171,7 +171,7 @@
 _C_LABEL(x): ; \
 	.data; \
 	.align 8; \
-0:	.uaword 0; .uaword 0; \
+0:	.word 0; .word 0; \
 	.text;	\
 	save	%sp, -CC64FSZ, %sp; \
 	sethi	%hi(0b), %o0; \
