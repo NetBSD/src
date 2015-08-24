@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/05/20 11:53:08 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2015/08/24 23:01:59 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -16,8 +16,6 @@ SRCS=	dummy.c
 .endif
 
 #CPPFLAGS+= -DUHUB_DEBUG
-
-CPPFLAGS+=	-I${.CURDIR}/opt
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
