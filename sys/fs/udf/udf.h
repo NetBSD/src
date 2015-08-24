@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.48 2015/04/06 08:39:23 hannken Exp $ */
+/* $NetBSD: udf.h,v 1.49 2015/08/24 08:30:17 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -344,7 +344,6 @@ struct udf_mount {
 
 	/* syncing */
 	int		syncing;			/* are we syncing?   */
-	kcondvar_t 	dirtynodes_cv;			/* sleeping on sync  */
 
 	/* late allocation */
 	int32_t			 uncommitted_lbs[UDF_PARTITIONS];
