@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.3 2015/08/13 14:51:35 rjs Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.4 2015/08/24 18:11:12 rjs Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.3 2015/08/13 14:51:35 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.4 2015/08/24 18:11:12 rjs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -698,7 +698,7 @@ cemac_tick(void *arg)
 	if (!ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
 		uint32_t misses = CEMAC_READ(ETH_DRFC);
 		if (misses > 0)
-			printf("%s: %d rx misses\n", device_xname(sc->sc_dev), misses);
+			aprint_normal_ifnet(ifp, "%d rx misses\n", misses);
 	}
 
 	s = splnet();
@@ -848,8 +848,8 @@ cemac_ifwatchdog(struct ifnet *ifp)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-       	printf("%s: device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
-		device_xname(sc->sc_dev), CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
+       	aprint_error_ifnet(ifp, "device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
+		CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
 }
 
 static int
