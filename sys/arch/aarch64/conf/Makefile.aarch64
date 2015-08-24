@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.5 2015/08/20 06:19:36 uebayasi Exp $
+#	$NetBSD: Makefile.aarch64,v 1.6 2015/08/24 14:04:24 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -61,9 +61,6 @@ locore.o: ${A64}/aarch64/locore.S assym.h
 KERNLDSCRIPT?=	${A64}/conf/kern.ldscript
 LOADADDRESS?=	0xFFFFFFFF00000000
 LINKFLAGS_NORMAL=	-X
-.if "${KERNLDSCRIPT}" != ""
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
-.endif
 
 # Strip AArch64 mapping symbols from the kernel image, as they interfere
 # with ddb. Do it differently if 'makeoptions DEBUG="-g"' was specified.

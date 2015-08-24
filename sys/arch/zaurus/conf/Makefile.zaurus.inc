@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zaurus.inc,v 1.7 2015/08/19 04:33:00 uebayasi Exp $
+#	$NetBSD: Makefile.zaurus.inc,v 1.8 2015/08/24 14:04:25 uebayasi Exp $
 
 MACHINE_ARCH?=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -20,7 +20,6 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 KERNEL_BASE_VIRT=	$(LOADADDRESS)
 
 KERNLDSCRIPT=		ldscript
-LINKSCRIPT=		-T ${KERNLDSCRIPT}
 
 EXTRA_CLEAN+=		netbsd.map assym.d ldscript tmp
 

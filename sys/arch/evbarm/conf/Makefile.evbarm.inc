@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.32 2015/08/20 06:21:26 uebayasi Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.33 2015/08/24 14:04:24 uebayasi Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
@@ -33,7 +33,6 @@ EXTRA_CLEAN+=	${KERNELS:=.map}
 .if defined(KERNEL_BASE_PHYS)
 LINKTEXT=
 KERNLDSCRIPT=	ldscript
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
 
 EXTRA_CLEAN+=	${KERNLDSCRIPT} tmp
 

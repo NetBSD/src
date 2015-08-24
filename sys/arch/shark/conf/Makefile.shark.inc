@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.25 2015/08/19 05:47:38 uebayasi Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.26 2015/08/24 14:04:25 uebayasi Exp $
 
 CPPFLAGS+=		-D${MACHINE}
 CFLAGS+=		-fno-unwind-tables
@@ -10,7 +10,6 @@ GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
 KERNLDSCRIPT=	ldscript
 EXTRA_CLEAN+=	${KERNLDSCRIPT}
 
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
 LOADADDRESS=	0xF0000020
 
 ldscript: \
