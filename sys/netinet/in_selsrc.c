@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.13 2015/06/08 07:59:54 roy Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.14 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,10 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.13 2015/06/08 07:59:54 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.14 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
+#endif
 
 #include <lib/libkern/libkern.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.262 2015/05/19 17:33:43 kefren Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.263 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,13 +91,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.262 2015/05/19 17:33:43 kefren Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_subr.c,v 1.263 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_tcp_compat_42.h"
 #include "opt_inet_csum.h"
 #include "opt_mbuftrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/atomic.h>

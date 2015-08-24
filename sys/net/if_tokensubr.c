@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.69 2015/07/01 03:39:36 ozaki-r Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.70 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,12 +92,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.69 2015/07/01 03:39:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.70 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_gateway.h"
-
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

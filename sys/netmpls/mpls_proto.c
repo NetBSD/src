@@ -1,4 +1,4 @@
-/*	$NetBSD: mpls_proto.c,v 1.28 2015/05/02 17:18:04 rtr Exp $ */
+/*	$NetBSD: mpls_proto.c,v 1.29 2015/08/24 22:21:27 pooka Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.28 2015/05/02 17:18:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpls_proto.c,v 1.29 2015/08/24 22:21:27 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
