@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall,v 1.200 2015/08/21 12:02:07 jnemeth Exp $
+# $NetBSD: postinstall,v 1.201 2015/08/24 07:21:14 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1336,7 +1336,6 @@ accounting
 altqd
 amd
 apmd
-blacklistd
 bluetooth
 bootconf.sh
 bootparams
@@ -1506,6 +1505,16 @@ do_rc()
 		${rc_555_files} \
 		${extra_scripts}
 	failed=$(( ${failed} + $? ))
+
+	if ! find_file_in_dirlist blacklistd "blacklistd" \
+	    "${SRC_DIR}/external/bsd/blacklist/etc/rc.d" \
+	    "${SRC_DIR}/etc/rc.d"; then
+	    failed=1
+	else
+	    populate_dir "$op" true "${dir}" "${DEST_DIR}/etc/rc.d" 555 \
+		blacklistd
+	    failed=$(( ${failed} + $? ))
+	fi
 
 	if $SOURCEMODE && [ -n "${generated_scripts}" ]; then
 		# generate scripts
