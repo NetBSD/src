@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.168 2015/08/11 09:30:32 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.169 2015/08/24 22:21:27 pooka Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.168 2015/08/11 09:30:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.169 2015/08/24 22:21:27 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
+#endif
 
 #include "bridge.h"
 #include "carp.h"

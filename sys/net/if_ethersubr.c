@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.211 2015/08/12 02:20:31 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.212 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,8 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.211 2015/08/12 02:20:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.212 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_mbuftrace.h"
@@ -70,6 +71,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.211 2015/08/12 02:20:31 ozaki-r E
 #include "opt_gateway.h"
 #include "opt_pppoe.h"
 #include "opt_net_mpsafe.h"
+#endif
+
 #include "vlan.h"
 #include "pppoe.h"
 #include "bridge.h"
