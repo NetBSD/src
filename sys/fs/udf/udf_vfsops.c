@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.68 2015/04/06 08:39:23 hannken Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.69 2015/08/24 08:30:17 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.68 2015/04/06 08:39:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.69 2015/08/24 08:30:17 hannken Exp $");
 #endif /* not lint */
 
 
@@ -262,7 +262,6 @@ free_udf_mountinfo(struct mount *mp)
 		mutex_destroy(&ump->ihash_lock);
 		mutex_destroy(&ump->logvol_mutex);
 		mutex_destroy(&ump->allocate_mutex);
-		cv_destroy(&ump->dirtynodes_cv);
 
 		MPFREE(ump->vat_table, M_UDFVOLD);
 
@@ -583,7 +582,6 @@ udf_mountfs(struct vnode *devvp, struct mount *mp,
 	mutex_init(&ump->logvol_mutex, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ump->ihash_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&ump->allocate_mutex, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&ump->dirtynodes_cv, "udfsync2");
 
 	/* init rbtree for nodes, ordered by their icb address (long_ad) */
 	udf_init_nodes_tree(ump);
