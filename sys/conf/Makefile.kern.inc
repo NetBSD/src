@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.187 2015/08/24 15:44:01 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.188 2015/08/24 15:50:47 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -230,8 +230,7 @@ SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
 .endif
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ} .gdbinit
 .if defined(KERNLDSCRIPT)
-SYSTEM_DEP+=	${KERNLDSCRIPT}
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
+SYSTEM_DEP+=	${.TARGET}.ldscript
 .endif
 .if defined(CTFMERGE)
 SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
@@ -249,6 +248,15 @@ SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 .if target(${KERNLDSCRIPT})
 ${KERNLDSCRIPT}: ${SYSTEM_OBJ}
 .endif
+.endif
+
+.if defined(KERNLDSCRIPT)
+.for k in ${KERNELS}
+EXTRA_CLEAN+=	${k}.ldscript
+${k}.ldscript: ${KERNLDSCRIPT}
+	${CPP} ${KERNLDSCRIPT} | grep -v '^#' >$@
+.endfor
+LINKSCRIPT=	-T ${.TARGET}.ldscript
 .endif
 
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
