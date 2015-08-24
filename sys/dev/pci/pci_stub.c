@@ -1,7 +1,9 @@
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.2 2015/08/17 06:16:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_stub.c,v 1.3 2015/08/24 23:55:04 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
