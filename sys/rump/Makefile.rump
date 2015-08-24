@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.115 2015/08/24 09:45:44 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.116 2015/08/24 18:17:04 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -131,7 +131,6 @@ CPPFLAGS+=	-DPPC_OEA
 
 # If any of these files change, we need a full rebuild
 DPSRCS+=	${RUMPTOP}/Makefile.rump
-DPSRCS+=	${RUMPTOP}/include/opt/opt_rumpkernel.h
 
 #
 # Support for component-specific hypercalls
