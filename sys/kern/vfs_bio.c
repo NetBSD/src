@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.255 2015/03/28 19:24:04 maxv Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.256 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,9 +123,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.255 2015/03/28 19:24:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.256 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

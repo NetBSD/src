@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.92 2014/04/02 18:09:10 para Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.93 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,11 +46,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.92 2014/04/02 18:09:10 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.93 2015/08/24 22:50:32 pooka Exp $");
 
-#if defined(_KERNEL)
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
-#endif /* defined(_KERNEL) */
+#endif /* defined(_KERNEL) && defined(_KERNEL_OPT) */
 
 #include <sys/param.h>
 #include <sys/hash.h>

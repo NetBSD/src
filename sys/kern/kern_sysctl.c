@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.256 2015/04/14 12:18:37 riastradh Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.257 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,9 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.256 2015/04/14 12:18:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.257 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
+#endif
+
 #include "ksyms.h"
 
 #include <sys/param.h>

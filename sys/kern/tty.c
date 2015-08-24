@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.265 2015/08/19 12:02:55 gson Exp $	*/
+/*	$NetBSD: tty.c,v 1.266 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.265 2015/08/19 12:02:55 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.266 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #define TTY_ALLOW_PRIVATE
 

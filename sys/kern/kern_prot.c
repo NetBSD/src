@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_prot.c,v 1.118 2014/10/20 08:20:08 maxv Exp $	*/
+/*	$NetBSD: kern_prot.c,v 1.119 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1991, 1993
@@ -41,9 +41,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.118 2014/10/20 08:20:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_prot.c,v 1.119 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/acct.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.202 2015/04/21 03:19:03 riastradh Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.203 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.202 2015/04/21 03:19:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.203 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
