@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.130 2015/04/20 13:44:16 riastradh Exp $ */
+/* $NetBSD: udf_subr.c,v 1.131 2015/08/24 08:30:17 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.130 2015/04/20 13:44:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.131 2015/08/24 08:30:17 hannken Exp $");
 #endif /* not lint */
 
 
@@ -6433,8 +6433,7 @@ recount:
 	
 		if (ndirty) {
 			/* 1/4 second wait */
-			cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,
-				hz/4);
+			kpause("udfsync2", false, hz/4, NULL);
 			goto recount;
 		}
 	}
