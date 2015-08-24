@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.36 2015/08/20 09:45:45 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,10 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.36 2015/08/20 09:45:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.37 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
+#endif
 
 /* pty multiplexor driver /dev/ptm{,x} */
 

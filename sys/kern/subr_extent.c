@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_extent.c,v 1.78 2015/07/28 19:48:12 christos Exp $	*/
+/*	$NetBSD: subr_extent.c,v 1.79 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998, 2007 The NetBSD Foundation, Inc.
@@ -34,10 +34,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.78 2015/07/28 19:48:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_extent.c,v 1.79 2015/08/24 22:50:32 pooka Exp $");
 
 #ifdef _KERNEL
+#ifdef _KERNEL_OPT
 #include "opt_lockdebug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/extent.h>
