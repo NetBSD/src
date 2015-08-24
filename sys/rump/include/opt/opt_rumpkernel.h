@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.2 2015/08/24 22:25:50 pooka Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.3 2015/08/24 22:52:15 pooka Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -12,6 +12,9 @@
 #define MAXUSERS 32
 
 #define DEBUGPRINT
+
+#define DEFCORENAME "rumpdump"
+#define DUMP_ON_PANIC 0
 
 #define INET	1
 #define INET6	1
