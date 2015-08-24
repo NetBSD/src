@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.122 2015/08/20 14:40:19 christos Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.123 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -15,9 +15,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.122 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.123 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

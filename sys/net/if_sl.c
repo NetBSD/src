@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.120 2015/08/20 11:18:53 uebayasi Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.121 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,9 +60,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.120 2015/08/20 11:18:53 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.121 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
