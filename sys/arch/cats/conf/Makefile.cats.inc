@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cats.inc,v 1.34 2015/08/20 06:20:19 uebayasi Exp $
+#	$NetBSD: Makefile.cats.inc,v 1.35 2015/08/24 14:04:24 uebayasi Exp $
 
 MACHINE_ARCH?=	arm
 CPPFLAGS+=	-D${MACHINE}
@@ -33,4 +33,3 @@ SYSTEM_LD_TAIL_EXTRA+=; \
 	${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout
 .endif
 
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
