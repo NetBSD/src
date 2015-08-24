@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.186 2015/08/24 14:04:25 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.187 2015/08/24 15:44:01 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -316,7 +316,7 @@ _NVFLAGS=${NVFLAGS}
 
 .if !target(vers.o)
 newvers: vers.o
-vers.o: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP} $S/conf/newvers.sh \
+vers.o: ${SYSTEM_OBJ} Makefile $S/conf/newvers.sh \
 		$S/conf/osrelease.sh ${_NETBSD_VERSION_DEPENDS}
 	${_MKMSG_CREATE} vers.c
 	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
