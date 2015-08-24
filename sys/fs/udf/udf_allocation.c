@@ -1,4 +1,4 @@
-/* $NetBSD: udf_allocation.c,v 1.37 2014/12/03 21:34:55 reinoud Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.38 2015/08/24 08:30:17 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.37 2014/12/03 21:34:55 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.38 2015/08/24 08:30:17 hannken Exp $");
 #endif /* not lint */
 
 
@@ -1084,11 +1084,8 @@ udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
 		DPRINTF(RESERVE, ("udf_reserve_space: issuing sync\n"));
 		mutex_exit(&ump->allocate_mutex);
 		udf_do_sync(ump, FSCRED, 0);
-		mutex_enter(&mntvnode_lock);
 		/* 1/8 second wait */
-		cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,
-			hz/8);
-		mutex_exit(&mntvnode_lock);
+		kpause("udfsync2", false, hz/8, NULL);
 		mutex_enter(&ump->allocate_mutex);
 	}
 
