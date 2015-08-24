@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.6 2015/08/24 18:40:57 rjs Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.7 2015/08/24 18:51:37 rjs Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.6 2015/08/24 18:40:57 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.7 2015/08/24 18:51:37 rjs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -322,7 +322,7 @@ cemac_intr(void *arg)
 		uint32_t nfo;
 		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN, sc->RDSC[sc->rxqi % RX_QLEN].Info));
 		while (sc->RDSC[(bi = sc->rxqi % RX_QLEN)].Addr & ETH_RDSC_F_USED) {
-			int fl;
+			int fl, csum;
 			struct mbuf *m;
 
 			nfo = sc->RDSC[bi].Info;
@@ -339,6 +339,23 @@ cemac_intr(void *arg)
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
 				sc->rxq[bi].m->m_pkthdr.len =
 					sc->rxq[bi].m->m_len = fl;
+				switch (nfo & ETH_RDSC_I_CHKSUM) {
+				case ETH_RDSC_I_CHKSUM_IP:
+					csum = M_CSUM_IPv4;
+					break;
+				case ETH_RDSC_I_CHKSUM_UDP:
+					csum = M_CSUM_IPv4 | M_CSUM_UDPv4 |
+					    M_CSUM_UDPv6;
+					break;
+				case ETH_RDSC_I_CHKSUM_TCP:
+					csum = M_CSUM_IPv4 | M_CSUM_TCPv4 |
+					    M_CSUM_TCPv6;
+					break;
+				default:
+					csum = 0;
+					break;
+				}
+				sc->rxq[bi].m->m_pkthdr.csum_flags = csum;
 				bpf_mtap(ifp, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
                                 (*ifp->if_input)(ifp, sc->rxq[bi].m);
@@ -579,6 +596,16 @@ cemac_init(struct cemac_softc *sc)
 	    | ETH_CTL_CSR | ETH_CTL_MPE);
 #endif
 	/*
+	 * We can support hardware checksumming.
+	 */
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |  
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
+	    IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx;
+
+	/*
 	 * We can support 802.1Q VLAN-sized frames.
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -726,10 +753,16 @@ cemac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				cemac_setaddr(ifp);
-			error = 0;
+		if (error != ENETRESET)
+			break;
+		error = 0;
+
+		if (cmd == SIOCSIFCAP) {
+			error = (*ifp->if_init)(ifp);
+		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			cemac_setaddr(ifp);
 		}
 	}
 	splx(s);
@@ -856,9 +889,30 @@ static int
 cemac_ifinit(struct ifnet *ifp)
 {
 	struct cemac_softc *sc = ifp->if_softc;
+	uint32_t dma, cfg;
 	int s = splnet();
 
 	callout_stop(&sc->cemac_tick_ch);
+
+	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
+
+		if (ifp->if_capenable &
+		    (IFCAP_CSUM_IPv4_Tx |
+			IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx |
+			IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx)) {
+			dma = CEMAC_READ(GEM_DMA_CFG);
+			dma |= GEM_DMA_CFG_CHKSUM_GEN_OFFLOAD_EN;
+			CEMAC_WRITE(GEM_DMA_CFG, dma);
+		}
+		if (ifp->if_capenable &
+		    (IFCAP_CSUM_IPv4_Rx |
+			IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
+			IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx)) {
+			cfg = CEMAC_READ(ETH_CFG);
+			cfg |= GEM_CFG_RX_CHKSUM_OFFLD_EN;
+			CEMAC_WRITE(ETH_CFG, cfg);
+		}
+	}
 
 	// enable interrupts
 	CEMAC_WRITE(ETH_IDR, -1);
