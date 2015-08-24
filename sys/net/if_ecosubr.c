@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ecosubr.c,v 1.43 2015/06/04 09:19:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_ecosubr.c,v 1.44 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -58,9 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.43 2015/06/04 09:19:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ecosubr.c,v 1.44 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/errno.h>

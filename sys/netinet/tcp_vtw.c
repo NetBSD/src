@@ -76,10 +76,12 @@
 
 #include <sys/cdefs.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
 #include "opt_tcp_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +124,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.13 2015/03/31 08:47:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.14 2015/08/24 22:21:26 pooka Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 

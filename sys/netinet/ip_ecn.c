@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_ecn.c,v 1.15 2006/09/05 00:29:36 rpaulo Exp $	*/
+/*	$NetBSD: ip_ecn.c,v 1.16 2015/08/24 22:21:26 pooka Exp $	*/
 /*	$KAME: ip_ecn.c,v 1.11 2001/05/03 16:09:29 itojun Exp $	*/
 
 /*
@@ -36,9 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.15 2006/09/05 00:29:36 rpaulo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_ecn.c,v 1.16 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

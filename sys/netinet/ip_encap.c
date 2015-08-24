@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.45 2015/04/20 07:34:48 ozaki-r Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.46 2015/08/24 22:21:26 pooka Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -70,10 +70,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.45 2015/04/20 07:34:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.46 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
