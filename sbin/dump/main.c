@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.72 2015/08/24 17:34:03 bouyer Exp $	*/
+/*	$NetBSD: main.c,v 1.73 2015/08/24 17:37:10 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.72 2015/08/24 17:34:03 bouyer Exp $");
+__RCSID("$NetBSD: main.c,v 1.73 2015/08/24 17:37:10 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -641,10 +641,10 @@ main(int argc, char *argv[])
 	for (i = 0; i < ntrec; i++)
 		writeheader(maxino - 1);
 	if (pipeout)
-		msg("%d tape blocks\n",iswap32(spcl.c_tapea));
+		msg("%lld tape blocks\n",(long long)iswap64(spcl.c_tapea));
 	else
-		msg("%d tape blocks on %d volume%s\n",
-		    iswap32(spcl.c_tapea), iswap32(spcl.c_volume),
+		msg("%lld tape blocks on %d volume%s\n",
+		    (long long)iswap64(spcl.c_tapea), iswap32(spcl.c_volume),
 		    (iswap32(spcl.c_volume) == 1) ? "" : "s");
 	tnow = do_stats();
 	date = iswap32(spcl.c_date);
