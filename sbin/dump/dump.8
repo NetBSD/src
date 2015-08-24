@@ -1,4 +1,4 @@
-.\"	$NetBSD: dump.8,v 1.66 2015/04/28 09:48:30 prlw1 Exp $
+.\"	$NetBSD: dump.8,v 1.67 2015/08/24 17:34:03 bouyer Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	 Regents of the University of California.
@@ -30,7 +30,7 @@
 .\"
 .\"     @(#)dump.8	8.3 (Berkeley) 5/1/95
 .\"
-.Dd February 19, 2012
+.Dd August 24, 2015
 .Dt DUMP 8
 .Os
 .Sh NAME
@@ -207,7 +207,9 @@ dump.
 .It Fl k Ar read-blocksize
 The size in kilobytes of the read buffers, rounded up to a multiple of the
 file system block size.
-Default is 32k.
+Default is the value of the
+.Xr sysctl 7
+kern.maxphys.
 .It Fl L Ar label
 The user-supplied text string
 .Ar label
