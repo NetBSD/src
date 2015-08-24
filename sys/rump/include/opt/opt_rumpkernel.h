@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.1 2015/08/21 12:39:07 pooka Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.2 2015/08/24 22:25:50 pooka Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -12,3 +12,14 @@
 #define MAXUSERS 32
 
 #define DEBUGPRINT
+
+#define INET	1
+#define INET6	1
+#define GATEWAY	1
+
+#define MPLS	1
+
+#define SOSEND_NO_LOAN
+
+#undef PIPE_SOCKETPAIR /* would need uipc_usrreq.c */
+#define PIPE_NODIRECT
