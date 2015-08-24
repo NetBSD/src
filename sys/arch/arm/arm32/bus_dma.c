@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.92 2015/08/21 20:52:47 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.93 2015/08/24 04:51:18 matt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.92 2015/08/21 20:52:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.93 2015/08/24 04:51:18 matt Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,13 +775,19 @@ _bus_dmamap_sync_segment(vaddr_t va, paddr_t pa, vsize_t len, int ops, bool read
 
 	switch (ops) {
 	case BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE:
+#ifdef ARM_MMU_EXTENDED
+		(void)readonly_p;
+#else
 		if (!readonly_p) {
+#endif
 			STAT_INCR(sync_prereadwrite);
 			cpu_dcache_wbinv_range(va, len);
 			cpu_sdcache_wbinv_range(va, pa, len);
 			break;
+#ifndef ARM_MMU_EXTENDED
 		}
 		/* FALLTHROUGH */
+#endif
 
 	case BUS_DMASYNC_PREREAD: {
 		const size_t line_size = arm_dcache_align;
@@ -909,7 +915,8 @@ _bus_dmamap_sync_mbuf(bus_dma_tag_t t, bus_dmamap_t map, bus_size_t offset,
 
 		/*
 		 * We can save a lot of work here if we know the mapping
-		 * is read-only at the MMU:
+		 * is read-only at the MMU and we aren't using the armv6+
+		 * MMU:
 		 *
 		 * If a mapping is read-only, no dirty cache blocks will
 		 * exist for it.  If a writable mapping was made read-only,
