@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.173 2015/08/07 08:11:33 ozaki-r Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.174 2015/08/24 09:45:29 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.173 2015/08/07 08:11:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.174 2015/08/24 09:45:29 ozaki-r Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2717,7 +2717,7 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
 	} else {
 		if (!(rt->rt_rmx.rmx_locks & RTV_MTU))
 			rt->rt_rmx.rmx_mtu = 0;
@@ -2732,7 +2732,7 @@ icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),
-		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, 0);
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
 	}
 }
 

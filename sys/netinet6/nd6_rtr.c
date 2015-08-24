@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.102 2015/08/07 08:11:33 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.103 2015/08/24 09:45:29 ozaki-r Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.102 2015/08/07 08:11:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.103 2015/08/24 09:45:29 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2122,7 +2122,7 @@ rt6_deleteroute(struct rtentry *rt, void *arg)
 		return (0);
 
 	return (rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
-	    rt_mask(rt), rt->rt_flags, 0));
+	    rt_mask(rt), rt->rt_flags, NULL));
 #undef SIN6
 }
 
