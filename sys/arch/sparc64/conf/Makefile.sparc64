@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.77 2015/08/18 10:00:11 uebayasi Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.78 2015/08/24 14:04:25 uebayasi Exp $
 
 #=========================================================================
 #
@@ -108,7 +108,6 @@ dependkernlib:	assym.h
 ## (5) link settings
 ##
 TEXTADDR?=	01000000
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
 .if ${LP64} == "yes"
 KERNLDSCRIPT?= ${SPARC64}/conf/kern.ldscript
 .else
