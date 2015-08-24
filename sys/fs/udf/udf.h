@@ -1,4 +1,4 @@
-/* $NetBSD: udf.h,v 1.49 2015/08/24 08:30:17 hannken Exp $ */
+/* $NetBSD: udf.h,v 1.50 2015/08/24 08:31:56 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -339,11 +339,11 @@ struct udf_mount {
 	uint8_t			 metadata_flags;
 
 	/* rb tree for lookup icb to udf_node and sorted list for sync */
-	kmutex_t	ihash_lock;
 	struct rb_tree	udf_node_tree;
 
 	/* syncing */
 	int		syncing;			/* are we syncing?   */
+	kmutex_t	sync_lock;			/* serialize syncing */
 
 	/* late allocation */
 	int32_t			 uncommitted_lbs[UDF_PARTITIONS];
