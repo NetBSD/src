@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.147 2015/08/13 04:39:33 msaitoh Exp $	*/
+/*	$NetBSD: pci.c,v 1.148 2015/08/24 23:55:04 pooka Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,9 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.147 2015/08/13 04:39:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.148 2015/08/24 23:55:04 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
