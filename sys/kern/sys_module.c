@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.18 2015/06/19 14:23:59 martin Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.19 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.18 2015/06/19 14:23:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.19 2015/08/24 22:50:32 pooka Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_modular.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,8 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.18 2015/06/19 14:23:59 martin Exp $
 #include <sys/module.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
-
-#include <opt_modular.h>
 
 /*
  * Arbitrary limit to avoid DoS for excessive memory allocation.
