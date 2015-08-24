@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tcplike.c,v 1.19 2005/07/27 06:27:25 nishida Exp $	*/
-/*	$NetBSD: dccp_tcplike.c,v 1.1 2015/02/10 19:11:52 rjs Exp $ */
+/*	$NetBSD: dccp_tcplike.c,v 1.2 2015/08/24 22:21:26 pooka Exp $ */
 
 /*
  * Copyright (c) 2003 Magnus Erixzon
@@ -33,9 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.1 2015/02/10 19:11:52 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.2 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dccp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

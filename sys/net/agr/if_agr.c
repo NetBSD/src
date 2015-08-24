@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agr.c,v 1.32 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: if_agr.c,v 1.33 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,9 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.32 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agr.c,v 1.33 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/callout.h>
