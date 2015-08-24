@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.61 2015/08/20 14:40:19 christos Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.62 2015/08/24 22:21:26 pooka Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -27,11 +27,13 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.61 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.62 2015/08/24 22:21:26 pooka Exp $");
 
 /*
  * TODO:

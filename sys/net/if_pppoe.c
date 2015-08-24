@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.103 2015/08/20 14:40:19 christos Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.104 2015/08/24 22:21:26 pooka Exp $ */
 
 /*-
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.103 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.104 2015/08/24 22:21:26 pooka Exp $");
 
 #include "pppoe.h"
+
+#ifdef _KERNEL_OPT
 #include "opt_pppoe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

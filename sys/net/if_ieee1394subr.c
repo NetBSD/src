@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.49 2015/06/04 09:19:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.50 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,9 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.49 2015/06/04 09:19:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.50 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
