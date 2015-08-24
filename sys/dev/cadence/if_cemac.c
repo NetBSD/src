@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.5 2015/08/24 18:26:51 rjs Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.6 2015/08/24 18:40:57 rjs Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.5 2015/08/24 18:26:51 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.6 2015/08/24 18:40:57 rjs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -949,7 +949,7 @@ cemac_setaddr(struct ifnet *ifp)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			cfg |= ETH_CFG_CAF;
+			cfg |= ETH_CFG_MTI;
 			hashes[0] = 0xffffffffUL;
 			hashes[1] = 0xffffffffUL;
 			ifp->if_flags |= IFF_ALLMULTI;
@@ -969,8 +969,12 @@ cemac_setaddr(struct ifnet *ifp)
 
 			/* Just want the 6 most-significant bits. */
 			h = h >> 26;
-
+#if 0
 			hashes[h / 32] |=  (1 << (h % 32));
+#else
+			hashes[0] = 0xffffffffUL;
+			hashes[1] = 0xffffffffUL;
+#endif
 			cfg |= ETH_CFG_MTI;
 		}
 		ETHER_NEXT_MULTI(step, enm);
@@ -986,7 +990,7 @@ cemac_setaddr(struct ifnet *ifp)
 	    | (sc->sc_enaddr[0]));
 	CEMAC_GEM_WRITE(SA1H, (sc->sc_enaddr[5] << 8)
 	    | (sc->sc_enaddr[4]));
-	if (nma > 1) {
+	if (nma > 0) {
 		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
 			ias[0][0], ias[0][1], ias[0][2],
 			ias[0][3], ias[0][4], ias[0][5]));
@@ -996,7 +1000,7 @@ cemac_setaddr(struct ifnet *ifp)
 		CEMAC_WRITE(ETH_SA2H, (ias[0][4] << 8)
 		    | (ias[0][5]));
 	}
-	if (nma > 2) {
+	if (nma > 1) {
 		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
 			ias[1][0], ias[1][1], ias[1][2],
 			ias[1][3], ias[1][4], ias[1][5]));
@@ -1006,14 +1010,14 @@ cemac_setaddr(struct ifnet *ifp)
 		CEMAC_WRITE(ETH_SA3H, (ias[1][4] << 8)
 		    | (ias[1][5]));
 	}
-	if (nma > 3) {
+	if (nma > 2) {
 		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
 			ias[2][0], ias[2][1], ias[2][2],
 			ias[2][3], ias[2][4], ias[2][5]));
-		CEMAC_WRITE(ETH_SA3L, (ias[2][3] << 24)
+		CEMAC_WRITE(ETH_SA4L, (ias[2][3] << 24)
 		    | (ias[2][2] << 16) | (ias[2][1] << 8)
 		    | (ias[2][0]));
-		CEMAC_WRITE(ETH_SA3H, (ias[2][4] << 8)
+		CEMAC_WRITE(ETH_SA4H, (ias[2][4] << 8)
 		    | (ias[2][5]));
 	}
 	CEMAC_GEM_WRITE(HSH, hashes[0]);
