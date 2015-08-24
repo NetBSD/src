@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.316 2015/04/26 15:15:20 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.317 2015/08/24 23:13:15 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -47,9 +47,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.316 2015/04/26 15:15:20 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.317 2015/08/24 23:13:15 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_scsi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
