@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.92 2015/07/17 02:21:08 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.93 2015/08/24 04:44:54 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -430,6 +430,7 @@ rtcache_invariants(const struct route *ro)
 {
 	KASSERT(ro->ro_sa != NULL || ro->_ro_rt == NULL);
 	KASSERT(!ro->ro_invalid || ro->_ro_rt != NULL);
+	KASSERT(ro->_ro_rt == NULL || ro->_ro_rt->rt_refcnt > 0);
 }
 
 static inline struct rtentry *
