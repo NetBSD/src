@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.204 2015/07/28 12:32:44 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.205 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015
@@ -33,10 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.204 2015/07/28 12:32:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.205 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

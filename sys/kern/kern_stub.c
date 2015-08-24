@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.40 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.41 2015/08/24 22:50:32 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,10 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.40 2015/08/17 06:16:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.41 2015/08/24 22:50:32 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
 #include "opt_ktrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
