@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2015/06/13 23:33:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.9 2015/08/24 23:21:51 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -13,8 +13,6 @@ SRCS+=	umass_component.c
 .else
 SRCS=	dummy.c
 .endif
-
-CPPFLAGS+=	-I${.CURDIR}/../libscsipi/opt# -I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
