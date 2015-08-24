@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.4 2015/08/24 18:11:12 rjs Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.5 2015/08/24 18:26:51 rjs Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.4 2015/08/24 18:11:12 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.5 2015/08/24 18:26:51 rjs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -848,7 +848,7 @@ cemac_ifwatchdog(struct ifnet *ifp)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-       	aprint_error_ifnet(ifp, "device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
+	aprint_error_ifnet(ifp, "device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
 		CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
 }
 
