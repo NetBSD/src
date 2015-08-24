@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.69 2015/08/24 08:30:17 hannken Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.70 2015/08/24 08:30:52 hannken Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.69 2015/08/24 08:30:17 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.70 2015/08/24 08:30:52 hannken Exp $");
 #endif /* not lint */
 
 
@@ -438,20 +438,28 @@ udf_mount(struct mount *mp, const char *path,
 /* --------------------------------------------------------------------- */
 
 #ifdef DEBUG
+static bool
+udf_sanity_selector(void *cl, struct vnode *vp)
+{
+
+	vprint("", vp);
+	if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
+		printf("  is locked\n");
+	}
+	if (vp->v_usecount > 1)
+		printf("  more than one usecount %d\n", vp->v_usecount);
+	return false;
+}
+
 static void
 udf_unmount_sanity_check(struct mount *mp)
 {
-	struct vnode *vp;
+	struct vnode_iterator *marker;
 
 	printf("On unmount, i found the following nodes:\n");
-	TAILQ_FOREACH(vp, &mp->mnt_vnodelist, v_mntvnodes) {
-		vprint("", vp);
-		if (VOP_ISLOCKED(vp) == LK_EXCLUSIVE) {
-			printf("  is locked\n");
-		}
-		if (vp->v_usecount > 1)
-			printf("  more than one usecount %d\n", vp->v_usecount);
-	}
+	vfs_vnode_iterator_init(mp, &marker);
+	vfs_vnode_iterator_next(marker, udf_sanity_selector, NULL);
+	vfs_vnode_iterator_destroy(marker);
 }
 #endif
 
