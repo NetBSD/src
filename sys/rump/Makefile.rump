@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.114 2015/08/21 12:39:07 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.115 2015/08/24 09:45:44 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -46,6 +46,9 @@ CFLAGS+=	-ffreestanding -fno-strict-aliasing
 CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
 
 CPPFLAGS+=	-imacros ${RUMPTOP}/include/opt/opt_rumpkernel.h
+.ifdef BUILDRUMP_IMACROS
+CPPFLAGS+=	-imacros ${BUILDRUMP_IMACROS}
+.endif
 
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include
