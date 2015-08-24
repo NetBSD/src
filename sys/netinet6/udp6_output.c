@@ -1,4 +1,4 @@
-/*	$NetBSD: udp6_output.c,v 1.49 2015/05/02 17:18:03 rtr Exp $	*/
+/*	$NetBSD: udp6_output.c,v 1.50 2015/08/24 22:21:27 pooka Exp $	*/
 /*	$KAME: udp6_output.c,v 1.43 2001/10/15 09:19:52 itojun Exp $	*/
 
 /*
@@ -62,9 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.49 2015/05/02 17:18:03 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp6_output.c,v 1.50 2015/08/24 22:21:27 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.166 2015/08/20 14:40:19 christos Exp $ */
+/*	$NetBSD: if_gre.c,v 1.167 2015/08/24 22:21:26 pooka Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,12 +45,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.166 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.167 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_atalk.h"
 #include "opt_gre.h"
 #include "opt_inet.h"
 #include "opt_mpls.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/file.h>

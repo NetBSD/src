@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.100 2015/07/14 08:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.101 2015/08/24 22:21:26 pooka Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,9 +87,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.100 2015/07/14 08:44:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.101 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>

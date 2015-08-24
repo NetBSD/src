@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.148 2015/08/13 10:14:26 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.149 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -90,11 +90,13 @@
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_route.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.148 2015/08/13 10:14:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.149 2015/08/24 22:21:26 pooka Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG

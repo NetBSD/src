@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.323 2015/08/07 08:11:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.324 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,8 +91,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.323 2015/08/07 08:11:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.324 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
 #include "opt_gateway.h"
@@ -100,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.323 2015/08/07 08:11:33 ozaki-r Exp $
 #include "opt_mrouting.h"
 #include "opt_mbuftrace.h"
 #include "opt_inet_csum.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

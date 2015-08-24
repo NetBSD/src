@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.179 2015/07/22 14:18:08 maxv Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.180 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,9 +61,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.179 2015/07/22 14:18:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.180 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pipe.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

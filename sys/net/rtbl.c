@@ -1,4 +1,4 @@
-/*	$NetBSD: rtbl.c,v 1.1 2011/03/31 19:40:52 dyoung Exp $	*/
+/*	$NetBSD: rtbl.c,v 1.2 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008, 2011 The NetBSD Foundation, Inc.
@@ -90,12 +90,12 @@
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
-#ifdef _KERNEL
+#if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_route.h"
-#endif /* _KERNEL */
+#endif /* _KERNEL && _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.1 2011/03/31 19:40:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtbl.c,v 1.2 2015/08/24 22:21:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>

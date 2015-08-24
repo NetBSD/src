@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.1 2015/02/10 19:11:52 rjs Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.2 2015/08/24 22:21:26 pooka Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,9 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.1 2015/02/10 19:11:52 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.2 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dccp.h"
+#endif
 
 /*
  * This implementation conforms to the drafts of DCCP dated Mars 2003.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stf.c,v 1.81 2015/08/20 14:40:19 christos Exp $	*/
+/*	$NetBSD: if_stf.c,v 1.82 2015/08/24 22:21:26 pooka Exp $	*/
 /*	$KAME: if_stf.c,v 1.62 2001/06/07 22:32:16 itojun Exp $ */
 
 /*
@@ -75,9 +75,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.81 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stf.c,v 1.82 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
+
 #ifndef INET6
 	#error "pseudo-device stf requires options INET6"
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.172 2015/08/12 07:13:14 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.173 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,10 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.172 2015/08/12 07:13:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.173 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_inet.h"
+#endif
 
 #ifdef INET
 

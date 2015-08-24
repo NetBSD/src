@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.245 2015/08/07 08:11:33 ozaki-r Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.246 2015/08/24 22:21:26 pooka Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,13 +91,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.245 2015/08/07 08:11:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.246 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_mrouting.h"
 #include "opt_net_mpsafe.h"
 #include "opt_mpls.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kmem.h>

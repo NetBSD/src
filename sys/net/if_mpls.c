@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.18 2015/08/20 14:40:19 christos Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.19 2015/08/24 22:21:26 pooka Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.18 2015/08/20 14:40:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.19 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mpls.h"
+#endif
 
 #include <sys/param.h>
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atmsubr.c,v 1.53 2015/06/04 09:19:59 ozaki-r Exp $       */
+/*      $NetBSD: if_atmsubr.c,v 1.54 2015/08/24 22:21:26 pooka Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.53 2015/06/04 09:19:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atmsubr.c,v 1.54 2015/08/24 22:21:26 pooka Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_natm.h"
-
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
