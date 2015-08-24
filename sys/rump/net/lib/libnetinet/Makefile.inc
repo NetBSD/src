@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.12 2015/01/18 17:06:24 justin Exp $
+#	$NetBSD: Makefile.inc,v 1.13 2015/08/24 23:04:43 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netinet
@@ -19,8 +19,6 @@ SRCS+=	tcp_congctl.c tcp_input.c tcp_output.c tcp_sack.c tcp_subr.c \
 
 # UDP
 SRCS+=	udp_usrreq.c
-
-CPPFLAGS+=	-I${.CURDIR}/opt -I${.CURDIR}/../libnet/opt
 
 CPPFLAGS+=	-DPORTALGO_INET4_DEFAULT=PORTALGO_RANDOM_START
 
