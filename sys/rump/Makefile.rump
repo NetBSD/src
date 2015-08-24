@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.116 2015/08/24 18:17:04 pooka Exp $
+#	$NetBSD: Makefile.rump,v 1.117 2015/08/24 22:31:33 pooka Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -53,6 +53,7 @@ CPPFLAGS+=	-imacros ${BUILDRUMP_IMACROS}
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include
 CPPFLAGS+=	-I${RUMPTOP}/include
+CPPFLAGS+=	-I${RUMPTOP}/include/opt
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
 
 SHLIB_MAJOR?=	0
