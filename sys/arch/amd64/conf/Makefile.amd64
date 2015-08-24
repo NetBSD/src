@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.50 2015/08/18 10:18:20 uebayasi Exp $
+#	$NetBSD: Makefile.amd64,v 1.51 2015/08/24 14:04:24 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -80,7 +80,6 @@ TEXTADDR?=	0xffffffff80100000
 EXTRA_LINKFLAGS=	-z max-page-size=0x100000
 LINKFLAGS_NORMAL=	-X
 KERNLDSCRIPT?= ${AMD64}/conf/kern.ldscript
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
 
 ##
 ## (6) port specific target dependencies
