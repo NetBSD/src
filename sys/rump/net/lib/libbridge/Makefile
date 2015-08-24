@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/08/20 12:20:09 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2015/08/24 23:04:42 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
@@ -8,8 +8,6 @@ IOCONF=	BRIDGE.ioconf
 SRCS=	if_bridge.c bridgestp.c
 
 SRCS+=	bridge_component.c
-
-CPPFLAGS+=	-I${.CURDIR}/../libnet/opt
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>
