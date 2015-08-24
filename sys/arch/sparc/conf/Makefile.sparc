@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc,v 1.92 2015/08/18 10:00:11 uebayasi Exp $
+# 	$NetBSD: Makefile.sparc,v 1.93 2015/08/24 14:04:25 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -62,7 +62,6 @@ TEXTADDR?=	F0004000
 EXTRA_LINKFLAGS=	-X
 KERNLDSCRIPT?= ${SPARC}/conf/kern.ldscript
 LINKFORMAT=	-n
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
 
 ##
 ## (6) port specific target dependencies
