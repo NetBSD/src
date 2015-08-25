@@ -1,4 +1,6 @@
-/* $NetBSD: kern.ldscript,v 1.10 2015/08/24 08:13:07 uebayasi Exp $ */
+/* $NetBSD: kern.ldscript,v 1.11 2015/08/25 08:08:12 uebayasi Exp $ */
+
+#include "assym.h"
 
 /*  ldscript for NetBSD/mips kernels and LKMs */
 OUTPUT_ARCH(mips)
@@ -29,11 +31,11 @@ SECTIONS
     _fdata = . ;
     *(.data)
     CONSTRUCTORS
-    . = ALIGN(32);       /* COHERENCY_UNIT */
+    . = ALIGN(COHERENCY_UNIT);
     *(.data.cacheline_aligned)
-    . = ALIGN(32);       /* COHERENCY_UNIT */
+    . = ALIGN(COHERENCY_UNIT);
     *(.data.read_mostly)
-    . = ALIGN(32);       /* COHERENCY_UNIT */
+    . = ALIGN(COHERENCY_UNIT);
   }
   _gp = ALIGN(16) + 0x7ff0;
   .lit8 : { *(.lit8) }
