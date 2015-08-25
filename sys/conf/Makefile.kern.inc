@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.190 2015/08/25 02:57:32 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.191 2015/08/25 08:01:18 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -251,9 +251,9 @@ ${KERNLDSCRIPT}: ${SYSTEM_OBJ}
 .for k in ${KERNELS}
 EXTRA_CLEAN+=	${k}.ldscript
 ${k}: ${k}.ldscript
-${k}.ldscript: ${KERNLDSCRIPT}
+${k}.ldscript: ${KERNLDSCRIPT} assym.h
 	${_MKTARGET_CREATE}
-	${CPP} ${KERNLDSCRIPT} | grep -v '^#' | grep -v '^$$' >$@
+	${CPP} -I. ${KERNLDSCRIPT} | grep -v '^#' | grep -v '^$$' >$@
 .endfor
 LINKSCRIPT=	-T ${.TARGET}.ldscript
 .endif
