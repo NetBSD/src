@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.117 2015/04/11 12:54:41 riastradh Exp $	*/
+/*      $NetBSD: hijack.c,v 1.118 2015/08/25 13:45:00 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.117 2015/04/11 12:54:41 riastradh Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.118 2015/08/25 13:45:00 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -885,7 +885,8 @@ rcinit(void)
 
 	host_fork = dlsym(RTLD_NEXT, "fork");
 	host_daemon = dlsym(RTLD_NEXT, "daemon");
-	host_mmap = dlsym(RTLD_NEXT, "mmap");
+	if (host_mmap == NULL)
+		host_mmap = dlsym(RTLD_NEXT, "mmap");
 
 	/*
 	 * In theory cannot print anything during lookups because
@@ -2232,6 +2233,9 @@ mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 	if (flags & MAP_FILE && fd_isrump(fd)) {
 		errno = ENOSYS;
 		return MAP_FAILED;
+	}
+	if (__predict_false(host_mmap == NULL)) {
+		host_mmap = dlsym(RTLD_NEXT, "mmap");
 	}
 	return host_mmap(addr, len, prot, flags, fd, offset);
 }
