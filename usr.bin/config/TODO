@@ -362,6 +362,13 @@ o Kill makeoptions.
   kept as simple as possible and have nothing that affects output contents.
   Consider to kill `makeoptions' totally, replace existing ones with `options'.
 
+o Don't use -Ttext ${TEXTADDR}.
+
+  Although ld(1)'s `-Ttext ${TEXTADDR}' is an easy way to specify the virtual
+  base address of .text at link time, it needs to change command-line; in
+  kernel build, Makefile needs to change to reflect kernel's configuration.
+  It is simpler to reflect kenel configuration using linker script via assym.h.
+
 o Convert ${DIAGNOSTIC} and ${DEBUG} as flags (defflag).
 
   Probably generate opt_diagnostic.h/opt_debug.h and include them in
