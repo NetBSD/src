@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.epoc32.inc,v 1.4 2015/08/24 14:04:24 uebayasi Exp $
+#	$NetBSD: Makefile.epoc32.inc,v 1.5 2015/08/25 02:38:15 uebayasi Exp $
 
 MACHINE_ARCH=		arm
 CPPFLAGS+=		-D${MACHINE}
@@ -17,6 +17,7 @@ ${KERNLDSCRIPT}: \
     ${THISARM}/conf/ldscript.epoc32 \
     ${THISARM}/conf/Makefile.epoc32.inc \
     Makefile
+	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
 	    ${THISARM}/conf/ldscript.epoc32 > tmp && mv tmp $@
