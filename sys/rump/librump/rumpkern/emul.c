@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.172 2015/07/24 14:11:11 pooka Exp $	*/
+/*	$NetBSD: emul.c,v 1.173 2015/08/25 14:47:26 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.172 2015/07/24 14:11:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.173 2015/08/25 14:47:26 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/null.h>
@@ -391,4 +391,11 @@ cpu_reboot(int howto, char *bootstr)
  out:
 	rump_sysproxy_fini(finiarg);
 	rumpuser_exit(ruhow);
+}
+
+const char *
+cpu_getmodel(void)
+{
+
+	return "rumpcore (virtual)";
 }
