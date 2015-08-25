@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdev,v 1.10 2015/05/20 11:22:54 pooka Exp $
+#	$NetBSD: Makefile.rumpdev,v 1.11 2015/08/25 00:08:56 pooka Exp $
 #
 
 LIB=	rumpdev
@@ -18,7 +18,7 @@ SRCS+=	kern_pmf.c subr_autoconf.c
 # sys/dev
 SRCS+=	dev_verbose.c
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpdev/opt
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
 .include "${RUMPTOP}/Makefile.rump"
 
