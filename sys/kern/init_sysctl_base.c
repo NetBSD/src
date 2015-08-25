@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl_base.c,v 1.5 2015/07/07 13:07:10 justin Exp $ */
+/*	$NetBSD: init_sysctl_base.c,v 1.6 2015/08/25 14:32:34 pooka Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.5 2015/07/07 13:07:10 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.6 2015/08/25 14:32:34 pooka Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,6 +181,11 @@ SYSCTL_SETUP(sysctl_kernbase_setup, "sysctl kern subtree base setup")
 		       SYSCTL_DESCR("Raw partition of a disk"),
 		       NULL, RAW_PART, NULL, 0,
 		       CTL_KERN, KERN_RAWPARTITION, CTL_EOL);
+}
+
+SYSCTL_SETUP(sysctl_hwbase_setup, "sysctl hw subtree base setup")
+{
+
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "machine",
