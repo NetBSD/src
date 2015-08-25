@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.40 2015/04/22 16:01:07 pooka Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.41 2015/08/25 14:47:39 pooka Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.40 2015/04/22 16:01:07 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.41 2015/08/25 14:47:39 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -72,7 +72,7 @@ static struct rumpcpu {
 struct cpu_info *rump_cpu = &rump_cpus[0];
 kcpuset_t *kcpuset_attached = NULL;
 kcpuset_t *kcpuset_running = NULL;
-int ncpu;
+int ncpu, ncpuonline;
 
 #define RCPULWP_BUSY	((void *)-1)
 #define RCPULWP_WANTED	((void *)-2)
