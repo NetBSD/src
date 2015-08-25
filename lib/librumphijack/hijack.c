@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.118 2015/08/25 13:45:00 pooka Exp $	*/
+/*      $NetBSD: hijack.c,v 1.119 2015/08/25 13:50:19 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.118 2015/08/25 13:45:00 pooka Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.119 2015/08/25 13:50:19 pooka Exp $");
 #endif
 
 #include <sys/param.h>
@@ -2235,7 +2235,7 @@ mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 		return MAP_FAILED;
 	}
 	if (__predict_false(host_mmap == NULL)) {
-		host_mmap = dlsym(RTLD_NEXT, "mmap");
+		host_mmap = rumphijack_dlsym(RTLD_NEXT, "mmap");
 	}
 	return host_mmap(addr, len, prot, flags, fd, offset);
 }
