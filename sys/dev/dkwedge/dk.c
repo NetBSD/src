@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.82 2015/08/22 07:48:14 mlelstv Exp $	*/
+/*	$NetBSD: dk.c,v 1.83 2015/08/25 11:08:59 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.82 2015/08/22 07:48:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.83 2015/08/25 11:08:59 pooka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -949,7 +949,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	int error;
 	bool isopen;
 	dev_t bdev;
-	struct vnode *bdevvp;
+	struct vnode *bdvp;
 
 	/*
 	 * The kernel cannot read from a character device vnode
@@ -968,17 +968,17 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 		KASSERT(pdk->dk_rawvp != NULL);
 		isopen = true;
 		++pdk->dk_rawopens;
-		bdevvp = pdk->dk_rawvp;
+		bdvp = pdk->dk_rawvp;
 	} else {
 		isopen = false;
-		bdevvp = dk_open_parent(bdev, FREAD);
+		bdvp = dk_open_parent(bdev, FREAD);
 	}
 	mutex_exit(&pdk->dk_rawlock);
 
-	if (bdevvp == NULL)
+	if (bdvp == NULL)
 		return EBUSY;
 
-	bp = getiobuf(bdevvp, true);
+	bp = getiobuf(bdvp, true);
 	bp->b_flags = B_READ;
 	bp->b_cflags = BC_BUSY;
 	bp->b_dev = bdev;
@@ -988,7 +988,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	bp->b_cylinder = 0;
 	bp->b_error = 0;
 
-	VOP_STRATEGY(bdevvp, bp);
+	VOP_STRATEGY(bdvp, bp);
 	error = biowait(bp);
 	putiobuf(bp);
 
@@ -996,7 +996,7 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 	if (isopen) {
 		--pdk->dk_rawopens;
 	} else {
-		dk_close_parent(bdevvp, FREAD);
+		dk_close_parent(bdvp, FREAD);
 	}
 	mutex_exit(&pdk->dk_rawlock);
 
