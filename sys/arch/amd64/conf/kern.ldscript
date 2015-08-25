@@ -1,4 +1,6 @@
-/*	$NetBSD: kern.ldscript,v 1.14 2015/08/25 08:04:31 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.15 2015/08/25 08:07:24 uebayasi Exp $	*/
+
+#include "assym.h"
 
 ENTRY(_start)
 SECTIONS
