@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.13 2015/08/22 02:23:58 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.14 2015/08/25 08:04:31 uebayasi Exp $	*/
 
 ENTRY(_start)
 SECTIONS
@@ -28,17 +28,17 @@ SECTIONS
     *(.data)
   }
 
-  . = ALIGN(64);	/* COHERENCY_UNIT */
+  . = ALIGN(COHERENCY_UNIT);
   .data.cacheline_aligned :
   {
     *(.data.cacheline_aligned)
   }
-  . = ALIGN(64);	/* COHERENCY_UNIT */
+  . = ALIGN(COHERENCY_UNIT);
   .data.read_mostly :
   {
     *(.data.read_mostly)
   }
-  . = ALIGN(64);	/* COHERENCY_UNIT */
+  . = ALIGN(COHERENCY_UNIT);
 
   _edata = . ;
   PROVIDE (edata = .) ;

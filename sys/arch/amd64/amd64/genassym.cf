@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.57 2015/07/11 10:15:33 kamil Exp $
+#	$NetBSD: genassym.cf,v 1.58 2015/08/25 08:04:31 uebayasi Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -373,3 +373,5 @@ define	VM_MIN_KERNEL_ADDRESS_HIGH32	(VM_MIN_KERNEL_ADDRESS >> 32)
 define	RESCHED_KPREEMPT	RESCHED_KPREEMPT
 
 define	SEL_RPL_MASK		SEL_RPL
+
+define	COHERENCY_UNIT		COHERENCY_UNIT
