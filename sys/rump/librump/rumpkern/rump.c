@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.323 2015/08/25 14:52:59 pooka Exp $	*/
+/*	$NetBSD: rump.c,v 1.324 2015/08/25 14:53:25 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.323 2015/08/25 14:52:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.324 2015/08/25 14:53:25 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -384,6 +384,7 @@ rump_init(void)
 
 		aprint_verbose("cpu%d at thinair0: rump virtual cpu\n", i);
 	}
+	ncpuonline = ncpu;
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
 	cprng_fast_init();
