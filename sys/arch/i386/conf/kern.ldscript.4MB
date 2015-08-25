@@ -1,4 +1,6 @@
-/*	$NetBSD: kern.ldscript.4MB,v 1.15 2015/08/22 02:23:58 uebayasi Exp $	*/
+/*	$NetBSD: kern.ldscript.4MB,v 1.16 2015/08/25 12:56:58 uebayasi Exp $	*/
+
+#include "assym.h"
 
 ENTRY(_start)
 SECTIONS
@@ -28,17 +30,17 @@ SECTIONS
   {
     *(.data)
   }
-  . = ALIGN(64);	/* COHERENCY_UNIT */
+  . = ALIGN(COHERENCY_UNIT);
   .data.cacheline_aligned :
   {
     *(.data.cacheline_aligned)
   }
-  . = ALIGN(64);	/* COHERENCY_UNIT */
+  . = ALIGN(COHERENCY_UNIT);
   .data.read_mostly :
   {
     *(.data.read_mostly)
   }
-  . = ALIGN(64);	/* COHERENCY_UNIT */
+  . = ALIGN(COHERENCY_UNIT);
   _edata = . ;
   PROVIDE (edata = .) ;
   __bss_start = . ;
