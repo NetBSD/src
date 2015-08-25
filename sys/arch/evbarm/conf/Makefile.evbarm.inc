@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.evbarm.inc,v 1.33 2015/08/24 14:04:24 uebayasi Exp $
+#	$NetBSD: Makefile.evbarm.inc,v 1.34 2015/08/25 02:38:15 uebayasi Exp $
 
 #
 # If this is a install kernel and the ramdisk image exists in the object
@@ -42,7 +42,7 @@ ${KERNLDSCRIPT}: \
     ${THISARM}/conf/Makefile.evbarm.inc \
     Makefile \
     ${BOARDMKFRAG}
-	echo ${KERNELS}
+	${_MKTARGET_CREATE}
 	${TOOL_SED} -e 's/@KERNEL_BASE_PHYS@/${KERNEL_BASE_PHYS}/' \
 	    -e 's/@KERNEL_BASE_VIRT@/${KERNEL_BASE_VIRT}/' \
 	    ${THISARM}/conf/ldscript.evbarm > tmp && mv tmp $@
