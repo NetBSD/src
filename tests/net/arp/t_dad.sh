@@ -1,4 +1,4 @@
-#	$NetBSD: t_dad.sh,v 1.5 2015/08/24 02:02:25 ozaki-r Exp $
+#	$NetBSD: t_dad.sh,v 1.6 2015/08/25 02:24:34 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -124,6 +124,8 @@ dad_basic_body()
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
+	# Give a chance to send a DAD announce packet
+	atf_check -s exit:0 sleep 1
 	extract_new_packets > ./out
 	$DEBUG && cat ./out
 
@@ -151,6 +153,8 @@ dad_basic_body()
 
 	# Waiting for DAD complete
 	atf_check -s exit:0 rump.ifconfig -w 10
+	# Give a chance to send a DAD announce packet
+	atf_check -s exit:0 sleep 1
 	extract_new_packets > ./out
 	$DEBUG && cat ./out
 
