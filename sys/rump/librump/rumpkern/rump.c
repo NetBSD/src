@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.322 2015/07/07 12:38:02 justin Exp $	*/
+/*	$NetBSD: rump.c,v 1.323 2015/08/25 14:52:59 pooka Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.322 2015/07/07 12:38:02 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.323 2015/08/25 14:52:59 pooka Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -132,25 +132,6 @@ rump_proc_vfs_init_fn rump_proc_vfs_init = (void *)nullop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = (void *)nullop;
 
 static void add_linkedin_modules(const struct modinfo *const *, size_t);
-
-/*
- * Create some sysctl nodes.  why only this you ask.  well, init_sysctl
- * is a kitchen sink in need of some gardening.  but i want to use
- * others today.  Furthermore, creating a whole kitchen sink full of
- * sysctl nodes is a waste of cycles for rump kernel bootstrap.
- */
-static void
-mksysctls(void)
-{
-
-	/* hw.pagesize */
-	sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-	    CTLTYPE_INT, "pagesize",
-	    SYSCTL_DESCR("Software page size"),
-	    NULL, PAGE_SIZE, NULL, 0,
-	    CTL_HW, HW_PAGESIZE, CTL_EOL);
-}
 
 static pid_t rspo_wrap_getpid(void) {
 	return rump_sysproxy_hyp_getpid();
@@ -412,7 +393,6 @@ rump_init(void)
 
 	rnd_init_softint();
 
-	mksysctls();
 	kqueue_init();
 	iostat_init();
 	fd_sys_init();
