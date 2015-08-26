@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.191 2015/08/25 08:01:18 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.192 2015/08/26 02:54:09 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -303,7 +303,6 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ##
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
-.if !target(assym.h)
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
@@ -311,7 +310,6 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS}
 	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
 ${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
-.endif
 
 MKREPRO?=no
 
