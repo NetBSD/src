@@ -3474,7 +3474,7 @@ DtCompileGeneric (
 
     /* Now we can actually compile the parse tree */
 
-    if (Length && *Length)
+    if (Length)
     {
         *Length = 0;
     }
