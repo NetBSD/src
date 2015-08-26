@@ -1,4 +1,4 @@
-#       $NetBSD: t_tcpip.sh,v 1.14 2014/10/09 06:52:37 apb Exp $
+#       $NetBSD: t_tcpip.sh,v 1.15 2015/08/26 09:19:20 martin Exp $
 #
 # Copyright (c) 2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -122,6 +122,7 @@ ssh_head()
 
 ssh_body()
 {
+	atf_expect_fail "PR lib/50174"
 
 	atf_check -s exit:0 ${rumpnetsrv} ${RUMP_SERVER}
 	# make sure clients die after we nuke the server
