@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1226 2015/08/23 17:54:30 jakllsch Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1227 2015/08/26 09:24:01 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1232 2015/08/23 17:52:42 jakllsch Exp
+ *	NetBSD: pcidevs,v 1.1233 2015/08/26 09:23:39 msaitoh Exp
  */
 
 /*
@@ -2651,6 +2651,7 @@
 #define	PCI_PRODUCT_INTEL_X1000_MAC	0x0937		/* Quark X1000 10/100 Ethernet MAC */
 #define	PCI_PRODUCT_INTEL_X1000_EHCI	0x0939		/* Quark X1000 EHCI */
 #define	PCI_PRODUCT_INTEL_X1000_OHCI	0x093a		/* Quark X1000 OHCI */
+#define	PCI_PRODUCT_INTEL_PCIE_NVME_SSD	0x0953		/* PCIe NVMe SSD */
 #define	PCI_PRODUCT_INTEL_X1000_HB	0x0958		/* Quark X1000 Host Bridge */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_7265_1	0x095a		/* Dual Band Wireless AC 7265 */
 #define	PCI_PRODUCT_INTEL_WIFI_LINK_7265_2	0x095b		/* Dual Band Wireless AC 7265 */
