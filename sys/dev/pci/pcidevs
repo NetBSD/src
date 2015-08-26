@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1232 2015/08/23 17:52:42 jakllsch Exp $
+$NetBSD: pcidevs,v 1.1233 2015/08/26 09:23:39 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2644,6 +2644,7 @@ product INTEL X1000_HS_UART	0x0936	Quark X1000 HS-UART
 product INTEL X1000_MAC		0x0937	Quark X1000 10/100 Ethernet MAC
 product INTEL X1000_EHCI	0x0939	Quark X1000 EHCI
 product INTEL X1000_OHCI	0x093a	Quark X1000 OHCI
+product INTEL PCIE_NVME_SSD	0x0953	PCIe NVMe SSD
 product INTEL X1000_HB		0x0958	Quark X1000 Host Bridge
 product INTEL WIFI_LINK_7265_1	0x095a	Dual Band Wireless AC 7265
 product INTEL WIFI_LINK_7265_2	0x095b	Dual Band Wireless AC 7265
