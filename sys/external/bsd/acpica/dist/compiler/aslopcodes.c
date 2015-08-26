@@ -1314,7 +1314,6 @@ OpcDoPld (
         Node = Node->Asl.Next;
     }
 
-    UtLocalFree (Buffer, ACPI_PLD_BUFFER_SIZE);
     Buffer = OpcEncodePldBuffer(&PldInfo);
 
     /* Change Op to a Buffer */
