@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.21 2015/08/16 18:00:03 mlelstv Exp $ */
+/* $NetBSD: dkvar.h,v 1.22 2015/08/27 05:51:50 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -47,6 +47,7 @@ struct dk_softc {
 	kmutex_t		 sc_iolock;	/* protects buffer queue */
 	struct bufq_state	*sc_bufq;	/* buffer queue */
 	int			 sc_dtype;	/* disk type */
+	struct buf		*sc_deferred;	/* retry after start failed */
 };
 
 /* sc_flags:
@@ -62,6 +63,7 @@ struct dk_softc {
 #define DKF_TAKEDUMP	0x00200000 /* allow dumping */
 #define DKF_KLABEL      0x00400000 /* keep label on close */
 #define DKF_VLABEL      0x00800000 /* label is valid */
+#define DKF_SLEEP       0x80000000 /* dk_start/dk_done may sleep */
 
 /* Mask of flags that dksubr.c understands, other flags are fair game */
 #define DK_FLAGMASK	0xffff0000
@@ -89,6 +91,7 @@ void	dk_strategy(struct dk_softc *, struct buf *);
 int	dk_discard(struct dk_softc *, dev_t, off_t, off_t);
 void	dk_start(struct dk_softc *, struct buf *);
 void	dk_done(struct dk_softc *, struct buf *);
+void	dk_drain(struct dk_softc *);
 int	dk_size(struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_softc *, dev_t,
 		 u_long, void *, int, struct lwp *);
