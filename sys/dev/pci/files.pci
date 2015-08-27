@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.376 2015/03/28 14:09:59 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.377 2015/08/27 14:04:08 nonaka Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -780,6 +780,11 @@ file	dev/pci/if_atw_pci.c		atw_pci
 # Realtek RTL8180 PCI/Mini-PCI
 attach	rtw at pci with rtw_pci
 file	dev/pci/if_rtw_pci.c		rtw_pci
+
+# Realtek RTL8188CE Mini-PCIe
+device	rtwn: ifnet, arp, wlan, firmload
+attach	rtwn at pci
+file	dev/pci/if_rtwn.c		rtwn
 
 # Ralink RT2500/RT2600 PCI/Mini-PCI
 attach	ral at pci with ral_pci

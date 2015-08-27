@@ -1,5 +1,5 @@
-# $NetBSD: Makefile,v 1.1 2012/06/14 04:14:36 riz Exp $
+# $NetBSD: Makefile,v 1.2 2015/08/27 14:04:07 nonaka Exp $
 
-SUBDIR+=	urtwn
+SUBDIR+=	rtwn urtwn
 
 .include <bsd.subdir.mk>
