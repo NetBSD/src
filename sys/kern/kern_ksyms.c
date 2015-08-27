@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.79 2015/08/21 06:55:25 christos Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.80 2015/08/27 02:43:20 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,10 +68,12 @@
  * TODO:
  *
  *	Add support for mmap, poll.
+ *	Constify tables.
+ *	Constify db_symtab and move it to .rodata.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.79 2015/08/21 06:55:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.80 2015/08/27 02:43:20 uebayasi Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -113,7 +115,7 @@ static bool ksyms_loaded;
 static kmutex_t ksyms_lock __cacheline_aligned;
 static struct ksyms_symtab kernel_symtab;
 
-static void ksyms_hdr_init(void *);
+static void ksyms_hdr_init(const void *);
 static void ksyms_sizes_calc(void);
 
 #ifdef KSYMS_DEBUG
@@ -141,7 +143,7 @@ TAILQ_HEAD(, ksyms_symtab) ksyms_symtabs =
     TAILQ_HEAD_INITIALIZER(ksyms_symtabs);
 
 static int
-ksyms_verify(void *symstart, void *strstart)
+ksyms_verify(const void *symstart, const void *strstart)
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 	if (symstart == NULL)
@@ -864,7 +866,7 @@ ksyms_fill_note(void)
 }
 
 static void
-ksyms_hdr_init(void *hdraddr)
+ksyms_hdr_init(const void *hdraddr)
 {
 	/* Copy the loaded elf exec header */
 	memcpy(&ksyms_hdr.kh_ehdr, hdraddr, sizeof(Elf_Ehdr));
