@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.293 2015/08/27 09:59:06 phx Exp $
+#	$NetBSD: DEVNAMES,v 1.294 2015/08/27 14:04:07 nonaka Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1187,6 +1187,7 @@ rtii			MI
 rtk			MI
 rtl80x9			MI		Attribute
 rtsx			MI
+rtwn			MI
 rum			MI
 run			MI
 rx			MI
