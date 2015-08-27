@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.91 2015/08/18 04:20:25 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.92 2015/08/27 05:51:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.91 2015/08/18 04:20:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.92 2015/08/27 05:51:50 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -197,8 +197,6 @@ ldbegindetach(struct ld_softc *sc, int flags)
 	mutex_enter(&sc->sc_mutex);
 	sc->sc_maxqueuecnt = 0;
 
-	dk_detach(dksc);
-
 	while (sc->sc_queuecnt > 0) {
 		sc->sc_flags |= LDF_DRAIN;
 		cv_wait(&sc->sc_drain, &sc->sc_mutex);
@@ -224,11 +222,10 @@ ldenddetach(struct ld_softc *sc)
 		if (cv_timedwait(&sc->sc_drain, &sc->sc_mutex, 30 * hz))
 			printf("%s: not drained\n", dksc->sc_xname);
 	}
-
-	/* Kill off any queued buffers. */
-	bufq_drain(dksc->sc_bufq);
 	mutex_exit(&sc->sc_mutex);
 
+	/* Kill off any queued buffers. */
+	dk_drain(dksc);
 	bufq_free(dksc->sc_bufq);
 
 	/* Locate the major numbers. */
@@ -248,6 +245,8 @@ ldenddetach(struct ld_softc *sc)
 	/* Detach from the disk list. */
 	disk_detach(&dksc->sc_dkdev);
 	disk_destroy(&dksc->sc_dkdev);
+
+	dk_detach(dksc);
 
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->sc_rnd_source);
