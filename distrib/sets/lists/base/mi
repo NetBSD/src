@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1112 2015/08/23 18:28:40 mrg Exp $
+# $NetBSD: mi,v 1.1113 2015/08/27 14:04:07 nonaka Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -201,6 +201,11 @@
 ./libdata/firmware/if_otus/otus-init		base-firmware-root
 ./libdata/firmware/if_otus/otus-license		base-firmware-root
 ./libdata/firmware/if_otus/otus-main		base-firmware-root
+./libdata/firmware/if_rtwn			base-firmware-root
+./libdata/firmware/if_rtwn/Realtek-Firmware-License.txt	base-firmware-root
+./libdata/firmware/if_rtwn/rtl8192cfw.bin	base-firmware-root
+./libdata/firmware/if_rtwn/rtl8192cfwU.bin	base-firmware-root
+./libdata/firmware/if_rtwn/rtl8192cfwU_B.bin	base-firmware-root
 ./libdata/firmware/if_urtwn			base-firmware-root
 ./libdata/firmware/if_urtwn/Realtek-Firmware-License.txt	base-firmware-root
 ./libdata/firmware/if_urtwn/rtl8188eufw.bin	base-firmware-root
