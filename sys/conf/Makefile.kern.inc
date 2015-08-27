@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.193 2015/08/26 03:00:52 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.194 2015/08/27 03:17:46 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -235,10 +235,14 @@ SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OB
 SYSTEM_CTFMERGE= ${_MKSHECHO}
 .endif
 SYSTEM_LD_HEAD?=@rm -f $@
-SYSTEM_LD?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
+SYSTEM_LD?=	@do_system_ld() { \
+		target=$$1; shift; \
+		${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o; \
-		${LD} -Map $@.map --cref ${LINKFLAGS} -o $@ ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $${target} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o $$@; \
+		${LD} -Map $@.map --cref ${LINKFLAGS} -o $${target} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o $$@; \
+		}; \
+		do_system_ld
 
 # Give MD generated ldscript dependency on ${SYSTEM_OBJ}
 .if defined(KERNLDSCRIPT)
@@ -576,20 +580,20 @@ CPPFLAGS.kern_ksyms_buf.c+=	-DCOPY_SYMTAB
 .if !defined(COPY_SYMTAB)
 build_kernel: .USE
 	${SYSTEM_LD_HEAD}
-	${SYSTEM_LD} swap${.TARGET}.o
+	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o
 	${SYSTEM_LD_TAIL_STAGE2}
 .else
 build_kernel: .USE
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf.o
 	${SYSTEM_LD_HEAD}
-	${SYSTEM_LD} swap${.TARGET}.o kern_ksyms_buf.o
+	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o kern_ksyms_buf.o
 	${SYSTEM_LD_TAIL_STAGE1}
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -DSYMTAB_SPACE=$$(${DBSYM} -P ${.TARGET}${TARGETSFX}) \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf_real.o
 	${SYSTEM_LD_HEAD}
-	${SYSTEM_LD} swap${.TARGET}.o kern_ksyms_buf_real.o
+	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o kern_ksyms_buf_real.o
 	${SYSTEM_LD_TAIL_STAGE2}
 .endif
 
