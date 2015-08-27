@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.161 2015/07/23 08:03:25 mrg Exp $
+# $NetBSD: HACKS,v 1.162 2015/08/27 12:32:05 pooka Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -381,11 +381,10 @@ descr
 	used in the link(2) system call.
 kcah
 
-hack	g++ 5.1 barfs on volatile in initializers
-cdata	26 Jun 2015
+hack	g++ 5.x barfs on volatile in constexpr initializers
+cdata	27 Aug 2015
 who	pooka
-file	src/lib/libpthread/pthread_types.h	: 1.14
-file	src/lib/libpthread/pthread_types.h	: 1.15
+file	src/lib/libpthread/pthread_types.h	: 1.17
 pr	lib/49989
 descr
 	Trying to use e.g. pthread_mutex_t m = PTHREAD_MUTEX_INITIALIZER
