@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.642 2015/08/23 18:28:40 mrg Exp $
+# $NetBSD: mi,v 1.643 2015/08/27 12:59:36 rjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -31,7 +31,7 @@
 ./usr/libdata/debug/usr/tests/dev/sysmon				tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug		compattestfile,atf
-./usr/libdata/debug/usr/tests/fs/fifofs					tests-fs-debug		compattestfile,atf,rump
+./usr/libdata/debug/usr/tests/fs/fifofs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/hfs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/kernfs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/lfs					tests-fs-debug		compattestfile,atf
