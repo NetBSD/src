@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.72 2015/08/16 18:00:03 mlelstv Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.73 2015/08/27 05:51:50 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.72 2015/08/16 18:00:03 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.73 2015/08/27 05:51:50 mlelstv Exp $");
 
 #include "opt_xen.h"
 
@@ -363,11 +363,9 @@ xbd_xenbus_detach(device_t dev, int flags)
 		/* Delete all of our wedges. */
 		dkwedge_delall(&sc->sc_dksc.sc_dkdev);
 
-		s = splbio();
 		/* Kill off any queued buffers. */
-		bufq_drain(sc->sc_dksc.sc_bufq);
+		dk_drain(&sc->sc_dksc);
 		bufq_free(sc->sc_dksc.sc_bufq);
-		splx(s);
 
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
@@ -701,12 +699,11 @@ again:
 next:
 		if (bp->b_data != xbdreq->req_data)
 			xbd_unmap_align(xbdreq);
-		disk_unbusy(&sc->sc_dksc.sc_dkdev,
-		    (bp->b_bcount - bp->b_resid),
-		    (bp->b_flags & B_READ));
+
 		rnd_add_uint32(&sc->sc_rnd_source,
 		    bp->b_blkno);
-		biodone(bp);
+		dk_done(&sc->sc_dksc, bp);
+
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
 done:
