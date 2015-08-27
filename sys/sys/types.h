@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.94 2015/07/30 21:38:53 kamil Exp $	*/
+/*	$NetBSD: types.h,v 1.95 2015/08/27 12:30:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -198,6 +198,8 @@ typedef int		mqd_t;
 typedef	unsigned long	cpuid_t;
 
 typedef	int		psetid_t;
+
+typedef volatile __cpu_simple_lock_nv_t __cpu_simple_lock_t;
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.58 2015/06/11 14:32:16 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.59 2015/08/27 12:30:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -133,7 +133,7 @@ typedef __uint32_t tlb_asid_t;
 #define	PCU_UNIT_COUNT	2
 #endif
 
-typedef	volatile unsigned int	__cpu_simple_lock_t;
+typedef	unsigned int	__cpu_simple_lock_nv_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

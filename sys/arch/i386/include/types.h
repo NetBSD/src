@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.82 2015/08/21 14:22:14 pooka Exp $	*/
+/*	$NetBSD: types.h,v 1.83 2015/08/27 12:30:51 pooka Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,7 +90,7 @@ typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
 #define	PRIxREGISTER	"x"
 
-typedef	volatile unsigned char		__cpu_simple_lock_t;
+typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD
