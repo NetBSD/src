@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.194 2015/08/27 03:17:46 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.195 2015/08/27 03:20:13 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -239,8 +239,8 @@ SYSTEM_LD?=	@do_system_ld() { \
 		target=$$1; shift; \
 		${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} -Map $@.map --cref ${LINKFLAGS} -o $${target} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o $$@; \
-		${LD} -Map $@.map --cref ${LINKFLAGS} -o $${target} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o $$@; \
+		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o $$@; \
+		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o $$@; \
 		}; \
 		do_system_ld
 

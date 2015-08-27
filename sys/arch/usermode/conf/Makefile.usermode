@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.usermode,v 1.38 2015/08/27 03:17:46 uebayasi Exp $
+# $NetBSD: Makefile.usermode,v 1.39 2015/08/27 03:20:13 uebayasi Exp $
 
 USETOOLS?=			no
 NEED_OWN_INSTALL_TARGET?=	no
@@ -74,9 +74,9 @@ SYSTEM_LD=	@do_system_ld() { \
 		target=$$1; shift; \
 		${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${CC} -static ${COPTS} -Wl,-Map,$@.map -o $@ ${LINKFORMAT} -Ttext ${TEXTADDR} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS} $$@; \
+		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o $${target} ${LINKFORMAT} -Ttext ${TEXTADDR} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o ${USERMODE_LIBS} $$@; \
 		${SYSTEM_LD_FIX} \
-		${CC} -static ${COPTS} -Wl,-Map,$@.map -o $@ ${LINKFORMAT} -Ttext ${TEXTADDR} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS} $$@; \
+		${CC} -static ${COPTS} -Wl,-Map,$${target}.map -o $${target} ${LINKFORMAT} -Ttext ${TEXTADDR} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o ${USERMODE_LIBS} $$@; \
 		}; \
 		do_system_ld
 NVFLAGS=	-n
