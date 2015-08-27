@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.147 2015/08/12 21:55:05 nakayama Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.148 2015/08/27 14:04:07 nonaka Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -71,6 +71,7 @@
 ./libdata/firmware/if_iwm
 ./libdata/firmware/if_iwn
 ./libdata/firmware/if_otus
+./libdata/firmware/if_rtwn
 ./libdata/firmware/if_urtwn
 ./libdata/firmware/if_wpi
 ./libdata/firmware/radeon
