@@ -275,6 +275,21 @@ o Control ELF sections using linker script.
   of debug information.  In the future .symtab will be copied using linker
   during this stage.
 
+o Fix db_symtab copying (COPY_SYMTAB)
+
+  o Collect all objects and create a relocatable (netbsd.ro).  At this point,
+    the number of symbols is known.
+
+  o Relink and allocate .rodata.symtab with the calculated size of .symtab.
+    Linker recalculates symbol addresses.
+
+  o Embed the .symtab into .rodata.symtab.
+
+  o Link the final netbsd ELF.
+
+  The make(1) rule (dependency graph) should be identical with/without
+  COPY_SYMTAB.  Kill .ifdef COPY_SYMTAB from $S/conf/Makefile.kern.inc.
+
 o Preprocess and generate linker scripts dynamically.
 
   Include opt_xxx.h and replace some constant values (e.g. COHERENCY_UNIT,
