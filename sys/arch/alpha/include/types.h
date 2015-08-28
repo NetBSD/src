@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.50 2015/01/08 22:27:17 riastradh Exp $ */
+/* $NetBSD: types.h,v 1.51 2015/08/28 09:30:01 pooka Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@ typedef long int	register_t;
 #define	PRIxREGISTER	"lx"
 #endif
 
-typedef	volatile int		__cpu_simple_lock_t;
+typedef	int		__cpu_simple_lock_nv_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0
