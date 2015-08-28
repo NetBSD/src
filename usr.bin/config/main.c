@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.76 2015/08/08 15:52:41 shm Exp $	*/
+/*	$NetBSD: main.c,v 1.77 2015/08/28 03:55:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.76 2015/08/08 15:52:41 shm Exp $");
+__RCSID("$NetBSD: main.c,v 1.77 2015/08/28 03:55:15 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -616,30 +616,26 @@ mksymlinks(void)
 	const char *q;
 	struct nvlist *nv;
 
-	snprintf(buf, sizeof(buf), "arch/%s/include", machine);
-	p = sourcepath(buf);
+	p = buf;
+
+	snprintf(buf, sizeof(buf), "%s/arch/%s/include", srcdir, machine);
 	ret = recreate(p, "machine");
 	ret = recreate(p, machine);
-	free(p);
 
 	if (machinearch != NULL) {
-		snprintf(buf, sizeof(buf), "arch/%s/include", machinearch);
-		p = sourcepath(buf);
+		snprintf(buf, sizeof(buf), "%s/arch/%s/include", srcdir, machinearch);
 		q = machinearch;
 	} else {
-		p = estrdup("machine");
+		snprintf(buf, sizeof(buf), "machine");
 		q = machine;
 	}
 
 	ret = recreate(p, q);
-	free(p);
 
 	for (nv = machinesubarches; nv != NULL; nv = nv->nv_next) {
 		q = nv->nv_name;
-		snprintf(buf, sizeof(buf), "arch/%s/include", q);
-		p = sourcepath(buf);
+		snprintf(buf, sizeof(buf), "%s/arch/%s/include", srcdir, q);
 		ret = recreate(p, q);
-		free(p);
 	}
 
 	return (ret);
