@@ -1,4 +1,4 @@
-/*	$NetBSD: pflogd.c,v 1.9 2012/02/29 23:42:28 joerg Exp $	*/
+/*	$NetBSD: pflogd.c,v 1.10 2015/08/28 12:17:41 joerg Exp $	*/
 /*	$OpenBSD: pflogd.c,v 1.45 2007/06/06 14:11:26 henning Exp $	*/
 
 /*
@@ -729,7 +729,7 @@ main(int argc, char **argv)
 		np = pcap_dispatch(hpcap, PCAP_NUM_PKTS,
 		    phandler, (u_char *)dpcap);
 		if (np < 0) {
-			if (!if_exists(interface) == -1) {
+			if (!if_exists(interface)) {
 				logmsg(LOG_NOTICE, "interface %s went away",
 				    interface);
 				ret = -1;
