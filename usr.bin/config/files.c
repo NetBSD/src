@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.18 2014/11/17 00:53:15 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.19 2015/08/28 08:56:39 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.18 2014/11/17 00:53:15 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.19 2015/08/28 08:56:39 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -104,6 +104,10 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 	if (optx == NULL && (needc || needf)) {
 		cfgerror("nothing to %s for %s", needc ? "count" : "flag",
 		    path);
+		goto bad;
+	}
+	if (*path == '/') {
+		cfgerror("path must be relative");
 		goto bad;
 	}
 
