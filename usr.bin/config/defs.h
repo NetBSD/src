@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.65 2015/08/20 09:44:24 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.66 2015/08/28 09:04:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -365,7 +365,6 @@ struct files {
 	const  char *fi_base;	/* tail minus ".c" (or whatever) */
 	struct condexpr *fi_optx; /* options expression */
 	struct nvlist *fi_optf; /* flattened version of above, if needed */
-	const  char *fi_mkrule;	/* special make rule, if any */
 };
 #define fi_srcfile fi_fit.fit_srcfile
 #define fi_srcline fi_fit.fit_srcline
@@ -550,7 +549,7 @@ void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
 int	fixdevsw(void);
-void	addfile(const char *, struct condexpr *, u_char, const char *);
+void	addfile(const char *, struct condexpr *, u_char);
 void	addobject(const char *, struct condexpr *, u_char);
 int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
 
