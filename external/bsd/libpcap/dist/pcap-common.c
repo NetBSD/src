@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-common.c,v 1.3 2015/03/31 21:39:42 christos Exp $	*/
+/*	$NetBSD: pcap-common.c,v 1.4 2015/08/28 11:20:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-common.c,v 1.3 2015/03/31 21:39:42 christos Exp $");
+__RCSID("$NetBSD: pcap-common.c,v 1.4 2015/08/28 11:20:55 joerg Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -1326,7 +1326,7 @@ swap_nflog_header(const struct pcap_pkthdr *hdr, u_char *buf)
 		return;
 	}
 
-	if (!(nfhdr->nflog_version) == 0) {
+	if (nfhdr->nflog_version != 0) {
 		/* Unknown NFLOG version */
 		return;
 	}
