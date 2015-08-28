@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.40 2015/08/28 09:04:02 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.41 2015/08/28 09:16:29 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.40 2015/08/28 09:04:02 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.41 2015/08/28 09:16:29 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -305,18 +305,17 @@ emitobjs(FILE *fp)
 		fprintf(fp, "\t%s.o \\\n", fi->fi_base);
 	}
 	TAILQ_FOREACH(oi, &allobjects, oi_next) {
-		const char *prologue, *prefix, *sep;
+		const char *prefix, *sep;
 
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
-		prologue = "$S/";
 		if (oi->oi_prefix != NULL) {
 			prefix = oi->oi_prefix;
 			sep = "/";
 		} else {
 			prefix = sep = "";
 		}
-		fprintf(fp, "\t%s%s%s%s \\\n", prologue, prefix, sep,
+		fprintf(fp, "\t%s%s%s%s \\\n", "$S/", prefix, sep,
 		    oi->oi_path);
 	}
 	putc('\n', fp);
@@ -455,20 +454,19 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 
 	fprintf(fp, "%cFILES= \\\n", toupper(suffix));
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
-		const char *prologue, *prefix, *sep;
+		const char *prefix, *sep;
 
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		if (fi->fi_suffix != suffix && fi->fi_suffix != upper_suffix)
 			continue;
-		prologue = "$S/";
 		if (fi->fi_prefix != NULL) {
 			prefix = fi->fi_prefix;
 			sep = "/";
 		} else {
 			prefix = sep = "";
 		}
-		fprintf(fp, "\t%s%s%s%s \\\n", prologue, prefix, sep,
+		fprintf(fp, "\t%s%s%s%s \\\n", "$S/", prefix, sep,
 		    fi->fi_path);
 	}
  	/*
@@ -495,18 +493,17 @@ emitrules(FILE *fp)
 	struct files *fi;
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
-		const char *prologue, *prefix, *sep;
+		const char *prefix, *sep;
 
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
-		prologue = "$S/";
 		if (fi->fi_prefix != NULL) {
 			prefix = fi->fi_prefix;
 			sep = "/";
 		} else {
 			prefix = sep = "";
  		}
-		fprintf(fp, "%s.o: %s%s%s%s\n", fi->fi_base, prologue, prefix,
+		fprintf(fp, "%s.o: %s%s%s%s\n", fi->fi_base, "$S/", prefix,
 		    sep, fi->fi_path);
 		fprintf(fp, "\t${NORMAL_%c}\n\n", toupper(fi->fi_suffix));
 	}
