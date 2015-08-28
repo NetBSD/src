@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.74 2015/08/27 05:51:50 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.75 2015/08/28 05:49:31 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.74 2015/08/27 05:51:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.75 2015/08/28 05:49:31 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,6 +301,10 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 	if (bp != NULL)
 		bufq_put(dksc->sc_bufq, bp);
 
+	if (dksc->sc_busy)
+		goto done;
+	dksc->sc_busy = true;
+
 	/*
 	 * Peeking at the buffer queue and committing the operation
 	 * only after success isn't atomic.
@@ -339,6 +343,8 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 		bp = bufq_get(dksc->sc_bufq);
 	}
 
+	dksc->sc_busy = false;
+done:
 	mutex_exit(&dksc->sc_iolock);
 }
 
