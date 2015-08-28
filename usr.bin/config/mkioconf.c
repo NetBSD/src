@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.29 2015/08/20 09:44:24 christos Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.30 2015/08/28 03:55:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.29 2015/08/20 09:44:24 christos Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.30 2015/08/28 03:55:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -147,9 +147,10 @@ emithdr(FILE *ofp)
 
 	autogen_comment(ofp, "ioconf.c");
 
-	(void)snprintf(ifnbuf, sizeof(ifnbuf), "arch/%s/conf/ioconf.incl.%s",
+	(void)snprintf(ifnbuf, sizeof(ifnbuf), "%s/arch/%s/conf/ioconf.incl.%s",
+	    srcdir,
 	    machine ? machine : "(null)", machine ? machine : "(null)");
-	ifn = sourcepath(ifnbuf);
+	ifn = ifnbuf;
 	if ((ifp = fopen(ifn, "r")) != NULL) {
 		while ((n = fread(buf, 1, sizeof(buf), ifp)) > 0)
 			(void)fwrite(buf, 1, n, ofp);
@@ -162,7 +163,6 @@ emithdr(FILE *ofp)
 			"#include <sys/device.h>\n"
 			"#include <sys/mount.h>\n", ofp);
 	}
-	free(ifn);
 }
 
 /*

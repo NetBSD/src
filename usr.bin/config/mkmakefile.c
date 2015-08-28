@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.37 2014/12/15 15:49:25 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.38 2015/08/28 03:55:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.37 2014/12/15 15:49:25 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.38 2015/08/28 03:55:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -94,8 +94,7 @@ mkmakefile(void)
 	FILE *ifp, *ofp;
 	int lineno;
 	void (*fn)(FILE *);
-	char *ifname;
-	char line[BUFSIZ], buf[200];
+	char line[BUFSIZ], ifname[200];
 
 	/*
 	 * Check if conf/Makefile.kern.inc defines "build_kernel".
@@ -104,8 +103,8 @@ mkmakefile(void)
 	 * unfortunately the "build_kernel" change done around 2014 Aug didn't
 	 * bump that version.  Thus this hack.)
 	 */
-	(void)snprintf(buf, sizeof(buf), "conf/Makefile.kern.inc");
-	ifname = sourcepath(buf);
+	(void)snprintf(ifname, sizeof(ifname), "%s/conf/Makefile.kern.inc",
+	    srcdir);
 	if ((ifp = fopen(ifname, "r")) == NULL) {
 		warn("cannot read %s", ifname);
 		goto bad2;
@@ -121,17 +120,15 @@ mkmakefile(void)
 	/*
 	 * Try a makefile for the port first.
 	 */
-	(void)snprintf(buf, sizeof(buf), "arch/%s/conf/Makefile.%s",
-	    machine, machine);
-	ifname = sourcepath(buf);
+	(void)snprintf(ifname, sizeof(ifname), "%s/arch/%s/conf/Makefile.%s",
+	    srcdir, machine, machine);
 	if ((ifp = fopen(ifname, "r")) == NULL) {
 		/*
 		 * Try a makefile for the architecture second.
 		 */
-		(void)snprintf(buf, sizeof(buf), "arch/%s/conf/Makefile.%s",
-		    machinearch, machinearch);
-		free(ifname);
-		ifname = sourcepath(buf);
+		(void)snprintf(ifname, sizeof(ifname),
+		    "%s/arch/%s/conf/Makefile.%s",
+		    srcdir, machinearch, machinearch);
 		ifp = fopen(ifname, "r");
 	}
 	if (ifp == NULL) {
@@ -205,7 +202,6 @@ mkmakefile(void)
 		warn("error renaming Makefile");
 		goto bad2;
 	}
-	free(ifname);
 	return (0);
 
  wrerror:
@@ -217,7 +213,6 @@ mkmakefile(void)
 	(void)fclose(ifp);
 	/* (void)unlink("Makefile.tmp"); */
  bad2:
-	free(ifname);
 	return (1);
 }
 
