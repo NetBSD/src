@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.38 2015/08/28 03:55:15 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.39 2015/08/28 08:31:28 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.38 2015/08/28 03:55:15 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.39 2015/08/28 08:31:28 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -61,12 +61,6 @@ __RCSID("$NetBSD: mkmakefile.c,v 1.38 2015/08/28 03:55:15 uebayasi Exp $");
 /*
  * Make the Makefile.
  */
-
-static const char *srcpath(struct files *); 
-
-static const char *prefix_prologue(const char *);
-static const char *filetype_prologue(struct filetype *);
-
 
 static void emitdefs(FILE *);
 static void emitfiles(FILE *, int, int);
@@ -263,46 +257,6 @@ emitsubs(FILE *fp, const char *line, const char *file, int lineno)
 	}
 }
 
-/*
- * Return (possibly in a static buffer) the name of the `source' for a
- * file.  If we have `options source', or if the file is marked `always
- * source', this is always the path from the `file' line; otherwise we
- * get the .o from the obj-directory.
- */
-static const char *
-srcpath(struct files *fi)
-{
-#if 1
-	/* Always have source, don't support object dirs for kernel builds. */
-	return (fi->fi_path);
-#else
-	static char buf[MAXPATHLEN];
-
-	if (have_source || (fi->fi_flags & FI_ALWAYSSRC) != 0)
-		return (fi->fi_path);
-	if (objpath == NULL) {
-		cfgerror("obj-directory not set");
-		return (NULL);
-	}
-	(void)snprintf(buf, sizeof buf, "%s/%s.o", objpath, fi->fi_base);
-	return (buf);
-#endif
-}
-
-static const char *
-filetype_prologue(struct filetype *fit)
-{
-
-	return (*fit->fit_path == '/') ? "" : "$S/";
-}
-
-static const char *
-prefix_prologue(const char *path)
-{
-
-	return (*path == '/') ? "" : "$S/";
-}
-
 static void
 emitdefs(FILE *fp)
 {
@@ -355,15 +309,12 @@ emitobjs(FILE *fp)
 
 		if ((oi->oi_flags & OI_SEL) == 0)
 			continue;
-		prologue = prefix = sep = "";
-		if (*oi->oi_path != '/') {
-			if (oi->oi_prefix != NULL) {
-				prologue = prefix_prologue(oi->oi_path);
-				prefix = oi->oi_prefix;
-				sep = "/";
-			} else {
-				prologue = filetype_prologue(&oi->oi_fit);
-			}
+		prologue = "$S/";
+		if (oi->oi_prefix != NULL) {
+			prefix = oi->oi_prefix;
+			sep = "/";
+		} else {
+			prefix = sep = "";
 		}
 		fprintf(fp, "\t%s%s%s%s \\\n", prologue, prefix, sep,
 		    oi->oi_path);
@@ -499,7 +450,6 @@ static void
 emitfiles(FILE *fp, int suffix, int upper_suffix)
 {
 	struct files *fi;
-	const char *fpath;
  	struct config *cf;
  	char swapname[100];
 
@@ -509,21 +459,17 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
-		fpath = srcpath(fi);
 		if (fi->fi_suffix != suffix && fi->fi_suffix != upper_suffix)
 			continue;
-		prologue = prefix = sep = "";
-		if (*fi->fi_path != '/') {
-			if (fi->fi_prefix != NULL) {
-				prologue = prefix_prologue(fi->fi_prefix);
-				prefix = fi->fi_prefix;
-				sep = "/";
-			} else {
-				prologue = filetype_prologue(&fi->fi_fit);
-			}
+		prologue = "$S/";
+		if (fi->fi_prefix != NULL) {
+			prefix = fi->fi_prefix;
+			sep = "/";
+		} else {
+			prefix = sep = "";
 		}
-		fprintf(fp, "\t%s%s%s%s \\\n",
-		    prologue, prefix, sep, fpath);
+		fprintf(fp, "\t%s%s%s%s \\\n", prologue, prefix, sep,
+		    fi->fi_path);
 	}
  	/*
  	 * The allfiles list does not include the configuration-specific
@@ -547,26 +493,21 @@ static void
 emitrules(FILE *fp)
 {
 	struct files *fi;
-	const char *fpath;
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		const char *prologue, *prefix, *sep;
 
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
-		fpath = srcpath(fi);
-		prologue = prefix = sep = "";
-		if (*fpath != '/') {
-			if (fi->fi_prefix != NULL) {
-				prologue = prefix_prologue(fi->fi_prefix);
-				prefix = fi->fi_prefix;
-				sep = "/";
-			} else {
-				prologue = filetype_prologue(&fi->fi_fit);
- 			}
-		}
-		fprintf(fp, "%s.o: %s%s%s%s\n", fi->fi_base,
-		    prologue, prefix, sep, fpath);
+		prologue = "$S/";
+		if (fi->fi_prefix != NULL) {
+			prefix = fi->fi_prefix;
+			sep = "/";
+		} else {
+			prefix = sep = "";
+ 		}
+		fprintf(fp, "%s.o: %s%s%s%s\n", fi->fi_base, prologue, prefix,
+		    sep, fi->fi_path);
 		if (fi->fi_mkrule != NULL) {
 			fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
 		} else {
@@ -632,7 +573,7 @@ emitincludes(FILE *fp)
 
 	SLIST_FOREACH(pf, &allprefixes, pf_next) {
 		fprintf(fp, "EXTRA_INCLUDES+=\t-I%s%s\n",
-		    prefix_prologue(pf->pf_prefix), pf->pf_prefix);
+		    "$S/", pf->pf_prefix);
 	}
 }
 
