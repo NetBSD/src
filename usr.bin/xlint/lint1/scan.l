@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.60 2014/10/18 08:33:30 snj Exp $ */
+/* $NetBSD: scan.l,v 1.61 2015/08/28 09:42:07 joerg Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.60 2014/10/18 08:33:30 snj Exp $");
+__RCSID("$NetBSD: scan.l,v 1.61 2015/08/28 09:42:07 joerg Exp $");
 #endif
 
 #include <stdlib.h>
@@ -49,7 +49,7 @@ __RCSID("$NetBSD: scan.l,v 1.60 2014/10/18 08:33:30 snj Exp $");
 #include "lint1.h"
 #include "cgram.h"
 
-#define CHAR_MASK	(~(~0 << CHAR_BIT))
+#define CHAR_MASK	((int)(~(~0U << CHAR_BIT)))
 
 /* Current position (its also updated when an included file is parsed) */
 pos_t	curr_pos = { 1, "", 0 };
