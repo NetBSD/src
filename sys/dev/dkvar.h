@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.22 2015/08/27 05:51:50 mlelstv Exp $ */
+/* $NetBSD: dkvar.h,v 1.23 2015/08/28 05:49:31 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -48,6 +48,7 @@ struct dk_softc {
 	struct bufq_state	*sc_bufq;	/* buffer queue */
 	int			 sc_dtype;	/* disk type */
 	struct buf		*sc_deferred;	/* retry after start failed */
+	bool			 sc_busy;	/* processing buffers */
 };
 
 /* sc_flags:
