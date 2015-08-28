@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.23 2015/08/28 05:49:31 mlelstv Exp $ */
+/* $NetBSD: dkvar.h,v 1.24 2015/08/28 17:41:49 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,6 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/rndsource.h>
+
 struct pathbuf; /* from namei.h */
 
 /* literally this is not a softc, but is intended to be included in
@@ -49,6 +51,7 @@ struct dk_softc {
 	int			 sc_dtype;	/* disk type */
 	struct buf		*sc_deferred;	/* retry after start failed */
 	bool			 sc_busy;	/* processing buffers */
+	krndsource_t		 sc_rnd_source;	/* entropy source */
 };
 
 /* sc_flags:
