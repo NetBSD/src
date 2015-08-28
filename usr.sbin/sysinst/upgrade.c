@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.5 2015/07/25 07:12:30 isaki Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.6 2015/08/28 12:04:08 joerg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -105,7 +105,7 @@ do_upgrade(void)
 	    MSG_upgrcomplete, MSG_abortupgr) != 0)
 		return;
 
-	if (!md_post_extract() == 0)
+	if (md_post_extract())
 		return;
 
 	merge_X("/usr/X11R6");
