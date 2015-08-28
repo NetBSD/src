@@ -1,4 +1,4 @@
-/*	$NetBSD: info_ldap.c,v 1.1.1.3 2015/01/17 16:34:15 christos Exp $	*/
+/*	$NetBSD: info_ldap.c,v 1.2 2015/08/28 11:38:57 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997-2014 Erez Zadok
@@ -448,7 +448,7 @@ get_ldap_timestamp(ALD *a, char *map, time_t *ts)
 	   vals[0], map);
       err = ENOENT;
     }
-    if (!*ts > 0) {
+    if (*ts <= 0) {
       plog(XLOG_USER, "Nonpositive timestamp %ld for map %s\n",
 	   (u_long) *ts, map);
       err = ENOENT;
