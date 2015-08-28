@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.39 2015/08/28 08:31:28 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.40 2015/08/28 09:04:02 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.39 2015/08/28 08:31:28 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.40 2015/08/28 09:04:02 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -508,11 +508,7 @@ emitrules(FILE *fp)
  		}
 		fprintf(fp, "%s.o: %s%s%s%s\n", fi->fi_base, prologue, prefix,
 		    sep, fi->fi_path);
-		if (fi->fi_mkrule != NULL) {
-			fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
-		} else {
-			fprintf(fp, "\t${NORMAL_%c}\n\n", toupper(fi->fi_suffix));
-		}
+		fprintf(fp, "\t${NORMAL_%c}\n\n", toupper(fi->fi_suffix));
 	}
 }
 
