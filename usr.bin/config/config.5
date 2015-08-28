@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.26 2015/08/28 02:59:09 uebayasi Exp $
+.\" $NetBSD: config.5,v 1.27 2015/08/28 09:04:02 uebayasi Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -471,7 +471,7 @@ Interface attributes can also be defined in the
 .Ar dependencies
 list.
 .It Ic file Ar path Oo Ar condition Oc Oo Ic needs-count Oc \
-    Oo Ic needs-flag Oc Op Ic compile with Ar rule
+    Oo Ic needs-flag Oc
 Adds a source file to the list of files to be compiled into the kernel, if the
 .Ar conditions
 are met.
@@ -508,23 +508,6 @@ set to 0 if the attribute was not selected by the user, or to the number of
 instances of the device in the
 .Ic needs-count
 case, or to 1 in all the other cases.
-.Pp
-The
-.Ar rule
-argument specifies the
-.Xr make 1
-rule that will be used to compile the source file.
-If it is not given, the default rule for the type of the file will be used.
-For a given file, there can be more than one
-.Ic file
-statement, but not from the same configuration source file, and all later
-statements can only specify a
-.Ar rule
-argument, and no
-.Ar conditions
-or flags.
-This is useful when a file needs special consideration from one particular
-architecture.
 .Pp
 The path is relative to the top of the kernel source tree, or the inner-most
 defined
