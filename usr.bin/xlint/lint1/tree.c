@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.80 2015/07/29 18:23:32 christos Exp $	*/
+/*	$NetBSD: tree.c,v 1.81 2015/08/28 09:42:07 joerg Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.80 2015/07/29 18:23:32 christos Exp $");
+__RCSID("$NetBSD: tree.c,v 1.81 2015/08/28 09:42:07 joerg Exp $");
 #endif
 
 #include <stdlib.h>
@@ -3795,14 +3795,14 @@ chkcomp(op_t op, tnode_t *ln, tnode_t *rn)
 
 	if ((hflag || pflag) && lt == CHAR && rn->tn_op == CON &&
 	    (rn->tn_val->v_quad < 0 ||
-	     rn->tn_val->v_quad > ~(~0 << (CHAR_BIT - 1)))) {
+	     rn->tn_val->v_quad > (int)~(~0U << (CHAR_BIT - 1)))) {
 		/* nonportable character comparison, op %s */
 		warning(230, mp->m_name);
 		return;
 	}
 	if ((hflag || pflag) && rt == CHAR && ln->tn_op == CON &&
 	    (ln->tn_val->v_quad < 0 ||
-	     ln->tn_val->v_quad > ~(~0 << (CHAR_BIT - 1)))) {
+	     ln->tn_val->v_quad > (int)~(~0U << (CHAR_BIT - 1)))) {
 		/* nonportable character comparison, op %s */
 		warning(230, mp->m_name);
 		return;
