@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.75 2015/08/28 05:49:31 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.76 2015/08/28 17:41:49 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.75 2015/08/28 05:49:31 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.76 2015/08/28 17:41:49 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,11 +96,18 @@ dk_attach(struct dk_softc *dksc)
 #ifdef DIAGNOSTIC
 	dksc->sc_flags |= DKF_WARNLABEL | DKF_LABELSANITY;
 #endif
+
+	/* Attach the device into the rnd source list. */
+	rnd_attach_source(&dksc->sc_rnd_source, dksc->sc_xname,
+	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 }
 
 void
 dk_detach(struct dk_softc *dksc)
 {
+	/* Unhook the entropy source. */
+	rnd_detach_source(&dksc->sc_rnd_source);
+
 	dksc->sc_flags &= ~DKF_INITED;
 	mutex_destroy(&dksc->sc_iolock);
 }
@@ -367,9 +374,7 @@ dk_done1(struct dk_softc *dksc, struct buf *bp, bool lock)
 	if (lock)
 		mutex_exit(&dksc->sc_iolock);
 
-#ifdef notyet
-	rnd_add_uint(&dksc->sc_rnd_source, bp->b_rawblkno);
-#endif
+	rnd_add_uint32(&dksc->sc_rnd_source, bp->b_rawblkno);
 
 	biodone(bp);
 }

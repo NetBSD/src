@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.92 2015/08/27 05:51:50 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.93 2015/08/28 17:41:49 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.92 2015/08/27 05:51:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.93 2015/08/28 17:41:49 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.92 2015/08/27 05:51:50 mlelstv Exp $");
 #include <sys/vnode.h>
 #include <sys/syslog.h>
 #include <sys/mutex.h>
-#include <sys/rndsource.h>
 
 #include <dev/ldvar.h>
 
@@ -138,10 +137,6 @@ ldattach(struct ld_softc *sc)
 	/* Initialise dk and disk structure. */
 	dk_init(dksc, self, DKTYPE_LD);
 	disk_init(&dksc->sc_dkdev, dksc->sc_xname, &lddkdriver);
-
-	/* Attach the device into the rnd source list. */
-	rnd_attach_source(&sc->sc_rnd_source, dksc->sc_xname,
-	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
 
 	if (sc->sc_maxxfer > MAXPHYS)
 		sc->sc_maxxfer = MAXPHYS;
@@ -247,9 +242,6 @@ ldenddetach(struct ld_softc *sc)
 	disk_destroy(&dksc->sc_dkdev);
 
 	dk_detach(dksc);
-
-	/* Unhook the entropy source. */
-	rnd_detach_source(&sc->sc_rnd_source);
 
 	/* Deregister with PMF */
 	pmf_device_deregister(dksc->sc_dev);
