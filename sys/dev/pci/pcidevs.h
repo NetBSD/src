@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1228 2015/08/27 09:34:18 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1229 2015/08/28 13:10:42 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1234 2015/08/27 09:30:36 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1235 2015/08/28 13:09:48 nonaka Exp
  */
 
 /*
@@ -3623,6 +3623,7 @@
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_A	0x2fd9		/* Xeon E5 v3 IMC DDRIO */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_B	0x2fda		/* Xeon E5 v3 IMC DDRIO */
 #define	PCI_PRODUCT_INTEL_XE5_V3_IMC0_DDRIO_C	0x2fdb		/* Xeon E5 v3 IMC DDRIO */
+#define	PCI_PRODUCT_INTEL_WIFI_LINK_3165_1	0x3165		/* Dual Band Wireless AC 3165 */
 #define	PCI_PRODUCT_INTEL_31244	0x3200		/* 31244 Serial ATA Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_DDR	0x3340		/* 82855PM MCH Host Controller */
 #define	PCI_PRODUCT_INTEL_82855PM_AGP	0x3341		/* 82855PM Host-AGP Bridge */
