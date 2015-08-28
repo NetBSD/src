@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2014/12/10 00:37:30 pooka Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2015/08/28 11:45:02 joerg Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 # All library objects contain sccsid strings by default; they may be
@@ -29,7 +29,10 @@ RUMPRUN?=	no
 
 WARNS=5
 CPPFLAGS+=	-D_LIBC -DLIBC_SCCS -DSYSLIBC_SCCS -D_REENTRANT
-CPPFLAGS+=	-D_DIAGNOSTIC -DMLIBDIR=\"${MLIBDIR}\"
+CPPFLAGS+=	-D_DIAGNOSTIC
+.if defined(MLIBDIR)
+CPPFLAGS+=	-DMLIBDIR=\"${MLIBDIR}\"
+.endif
 
 .if (${USE_HESIOD} != "no")
 CPPFLAGS+=	-DHESIOD
