@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1234 2015/08/27 09:30:36 nonaka Exp $
+$NetBSD: pcidevs,v 1.1235 2015/08/28 13:09:48 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3616,6 +3616,7 @@ product INTEL XE5_V3_IMC0_DDRIO_9 0x2fd8 Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC0_DDRIO_A 0x2fd9 Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC0_DDRIO_B 0x2fda Xeon E5 v3 IMC DDRIO
 product INTEL XE5_V3_IMC0_DDRIO_C 0x2fdb Xeon E5 v3 IMC DDRIO
+product INTEL WIFI_LINK_3165_1	0x3165	Dual Band Wireless AC 3165
 product INTEL 31244		0x3200	31244 Serial ATA Controller
 product INTEL 82855PM_DDR	0x3340	82855PM MCH Host Controller
 product INTEL 82855PM_AGP	0x3341	82855PM Host-AGP Bridge
