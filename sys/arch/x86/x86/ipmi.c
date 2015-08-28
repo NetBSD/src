@@ -1,4 +1,4 @@
-/*	$NetBSD: ipmi.c,v 1.61 2015/04/13 16:03:51 riastradh Exp $ */
+/*	$NetBSD: ipmi.c,v 1.62 2015/08/28 14:06:01 joerg Exp $ */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.61 2015/04/13 16:03:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipmi.c,v 1.62 2015/08/28 14:06:01 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1303,7 +1303,7 @@ signextend(unsigned long val, int bits)
 
 /* fixpoint arithmetic */
 #define FIX2INT(x)   ((int64_t)((x) >> 32))
-#define INT2FIX(x)   ((int64_t)((int64_t)(x) << 32))
+#define INT2FIX(x)   ((int64_t)((uint64_t)(x) << 32))
 
 #define FIX2            0x0000000200000000ll /* 2.0 */
 #define FIX3            0x0000000300000000ll /* 3.0 */
