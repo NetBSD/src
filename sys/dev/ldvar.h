@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.26 2015/08/17 19:47:21 jakllsch Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.27 2015/08/28 17:41:49 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -41,7 +41,6 @@ struct ld_softc {
 	struct dk_softc	sc_dksc;
 	kmutex_t	sc_mutex;
 	kcondvar_t	sc_drain;
-	krndsource_t	sc_rnd_source;
 
 	int		sc_queuecnt;	/* current h/w queue depth */
 	int		sc_ncylinders;	/* # cylinders */

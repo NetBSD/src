@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.73 2015/08/27 05:51:50 mlelstv Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.74 2015/08/28 17:41:49 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.73 2015/08/27 05:51:50 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.74 2015/08/28 17:41:49 mlelstv Exp $");
 
 #include "opt_xen.h"
 
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.73 2015/08/27 05:51:50 mlelstv Exp 
 #include <dev/dkvar.h>
 
 #include <uvm/uvm.h>
-
-#include <sys/rndsource.h>
 
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
@@ -151,7 +149,6 @@ struct xbd_xenbus_softc {
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
 	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
-	krndsource_t     sc_rnd_source;
 };
 
 #if 0
@@ -309,9 +306,6 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
-	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
-
 	if (!pmf_device_register(self, xbd_xenbus_suspend, xbd_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -371,8 +365,6 @@ xbd_xenbus_detach(device_t dev, int flags)
 		disk_detach(&sc->sc_dksc.sc_dkdev);
 		disk_destroy(&sc->sc_dksc.sc_dkdev);
 		dk_detach(&sc->sc_dksc);
-		/* Unhook the entropy source. */
-		rnd_detach_source(&sc->sc_rnd_source);
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
@@ -700,8 +692,6 @@ next:
 		if (bp->b_data != xbdreq->req_data)
 			xbd_unmap_align(xbdreq);
 
-		rnd_add_uint32(&sc->sc_rnd_source,
-		    bp->b_blkno);
 		dk_done(&sc->sc_dksc, bp);
 
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
