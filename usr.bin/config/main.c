@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.77 2015/08/28 03:55:15 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.78 2015/08/29 07:24:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.77 2015/08/28 03:55:15 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.78 2015/08/29 07:24:49 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -427,6 +427,13 @@ main(int argc, char **argv)
 	yyfile = "fixdevis";
 	if (fixdevis())
 		stop();
+
+	/*
+	 * Fix maxusers.
+	 */
+	char buf[32];
+	snprintf(buf, sizeof(buf), "%d", maxusers);
+	addoption(intern("MAXUSERS"), intern(buf));
 
 	/*
 	 * If working on an ioconf-only config, process here and exit
