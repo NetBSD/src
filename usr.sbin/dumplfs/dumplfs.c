@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.54 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.55 2015/08/29 05:33:20 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.54 2015/08/12 18:28:01 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.55 2015/08/29 05:33:20 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -371,7 +371,7 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 			inum = dump_ipage_ifile(lfsp, inum, ipage, lfs_sb_getifpb(lfsp));
 	}
 
-	if (nblocks <= lfs_sb_getnindir(lfsp) * lfs_sb_getifpb(lfsp))
+	if (nblocks <= ULFS_NDADDR + lfs_sb_getnindir(lfsp))
 		goto e1;
 
 	/* Get the double indirect block */
