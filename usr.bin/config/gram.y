@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.47 2015/08/28 09:04:02 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.48 2015/08/29 02:54:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.47 2015/08/28 09:04:02 uebayasi Exp $");
+__RCSID("$NetBSD: gram.y,v 1.48 2015/08/29 02:54:07 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -194,6 +194,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %type	<condexpr>	 cond_base_expr
 %type	<str>	fs_spec
 %type	<flag>	fflags fflag oflags oflag
+%type	<str>	rule
 %type	<attr>	depend
 %type	<devb>	devbase
 %type	<deva>	devattach_opt
@@ -337,7 +338,7 @@ definition:
 
 /* source file: file foo/bar.c bar|baz needs-flag compile-with blah */
 define_file:
-	XFILE filename fopts fflags	{ addfile($2, $3, $4); }
+	XFILE filename fopts fflags rule	{ addfile($2, $3, $4, $5); }
 ;
 
 /* object file: object zot.o foo|zot needs-flag */
@@ -456,6 +457,12 @@ fflags:
 fflag:
 	  NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; }
 	| NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; }
+;
+
+/* extra compile directive for a source file */
+rule:
+	  /* empty */			{ $$ = NULL; }
+	| COMPILE_WITH stringvalue	{ $$ = $2; }
 ;
 
 /* zero or more flags for an object file */
