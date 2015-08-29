@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.207 2015/08/29 15:51:53 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.208 2015/08/29 15:58:38 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -204,8 +204,6 @@ param.c: $S/conf/param.c
 	${_MKTARGET_CREATE}
 	rm -f param.c
 	cp $S/conf/param.c .
-
-param.o: Makefile
 
 .for _cfile in ${MI_CFILES}
 ${_cfile:T:R}.o: ${_cfile}
