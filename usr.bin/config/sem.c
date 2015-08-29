@@ -1,4 +1,4 @@
-/*	$NetBSD: sem.c,v 1.72 2015/08/29 07:08:38 uebayasi Exp $	*/
+/*	$NetBSD: sem.c,v 1.73 2015/08/29 07:24:49 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sem.c,v 1.72 2015/08/29 07:08:38 uebayasi Exp $");
+__RCSID("$NetBSD: sem.c,v 1.73 2015/08/29 07:24:49 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -239,7 +239,6 @@ setdefmaxusers(int min, int def, int max)
 void
 setmaxusers(int n)
 {
-	char buf[32];
 
 	if (maxusers == n) {
 		cfgerror("duplicate maxusers parameter");
@@ -257,8 +256,6 @@ setmaxusers(int n)
 		cfgerror("warning: maxusers (%d) > %d", n, maxmaxusers);
 		errors--;
 	}
-	snprintf(buf, sizeof(buf), "%d", maxusers);
-	addoption("MAXUSERS", buf);
 }
 
 void
