@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.20 2015/08/28 09:04:02 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.21 2015/08/29 02:54:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.20 2015/08/28 09:04:02 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.21 2015/08/29 02:54:07 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -86,7 +86,7 @@ initfiles(void)
 }
 
 void
-addfile(const char *path, struct condexpr *optx, u_char flags)
+addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 {
 	struct files *fi;
 	const char *dotp, *tail;
@@ -133,6 +133,20 @@ addfile(const char *path, struct condexpr *optx, u_char flags)
 		free(fi);
 		if ((fi = ht_lookup(pathtab, path)) == NULL)
 			panic("addfile: ht_lookup(%s)", path);
+
+		/*
+		 * If it's a duplicate entry, it is must specify a make
+		 * rule, and only a make rule, and must come from
+		 * a different source file than the original entry.
+		 * If it does otherwise, it is disallowed.  This allows
+		 * machine-dependent files to override the compilation
+		 * options for specific files.
+		 */
+		if (rule != NULL && optx == NULL && flags == 0 &&
+		    yyfile != fi->fi_srcfile) {
+			fi->fi_mkrule = rule;
+			return;
+		}
 		cfgerror("duplicate file %s", path);
 		cfgxerror(fi->fi_srcfile, fi->fi_srcline,
 		    "here is the original definition");
@@ -152,6 +166,7 @@ addfile(const char *path, struct condexpr *optx, u_char flags)
 	fi->fi_suffix = path[fi->fi_len - 1];
 	fi->fi_optx = optx;
 	fi->fi_optf = NULL;
+	fi->fi_mkrule = rule;
 	fi->fi_attr = NULL;
 	TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 	return;
