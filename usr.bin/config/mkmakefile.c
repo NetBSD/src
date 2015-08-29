@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.46 2015/08/29 17:35:23 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.47 2015/08/29 17:42:05 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.46 2015/08/29 17:35:23 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.47 2015/08/29 17:42:05 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -583,8 +583,6 @@ emitload(FILE *fp)
 		fprintf(fp, "KERNELS+=%s\n", cf->cf_name);
 		fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o build_kernel\n",
 		    cf->cf_name, cf->cf_name);
-		fprintf(fp, "swap%s.o: swap%s.c\n"
-		    "\t${NORMAL_C}\n\n", cf->cf_name, cf->cf_name);
 	}
 	fputs("\n", fp);
 }
