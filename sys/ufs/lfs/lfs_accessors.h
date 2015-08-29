@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.14 2015/08/19 20:33:29 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.15 2015/08/29 21:04:22 mlelstv Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -493,6 +493,15 @@ lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
 				 (IN) % lfs_sb_getifpb(F));		\
 	}								\
 	UNSHARE_IFLOCK(F);						\
+} while (0)
+#define LFS_IENTRY_NEXT(IP, F) do { \
+	if ((F)->lfs_is64) {						\
+		(IP) = (IFILE *)((IFILE64 *)(IP) + 1);			\
+	} else if (lfs_sb_getversion(F) > 1) {				\
+		(IP) = (IFILE *)((IFILE32 *)(IP) + 1);			\
+	} else {							\
+		(IP) = (IFILE *)((IFILE_V1 *)(IP) + 1);			\
+	}								\
 } while (0)
 
 #define LFS_DEF_IF_ACCESSOR(type, type32, field) \
