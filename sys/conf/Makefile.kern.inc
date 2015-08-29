@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.208 2015/08/29 15:58:38 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.209 2015/08/29 16:07:07 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -163,6 +163,14 @@ LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
 		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC} && \
 		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
 
+.SUFFIXES: .c .o
+.c.o:
+	${NORMAL_C}
+
+.SUFFIXES: .S .o
+.S.o:
+	${NORMAL_S}
+
 ##
 ## (3) libkern and compat
 ##
@@ -196,6 +204,7 @@ SYSLIBCOMPATLN?=	${COMPATLIBLN}
 ## Each port should have a corresponding section with settings for
 ## MD_CFILES, MD_SFILES, and MD_OBJS, along with build rules for same.
 ##
+
 MI_CFILES=devsw.c ioconf.c param.c
 # the need for a MI_SFILES variable is dubitable at best
 MI_OBJS=${MI_CFILES:S/.c/.o/}
@@ -204,11 +213,6 @@ param.c: $S/conf/param.c
 	${_MKTARGET_CREATE}
 	rm -f param.c
 	cp $S/conf/param.c .
-
-.for _cfile in ${MI_CFILES}
-${_cfile:T:R}.o: ${_cfile}
-	${NORMAL_C}
-.endfor
 
 ##
 ## (5) link settings
