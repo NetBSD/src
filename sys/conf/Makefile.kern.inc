@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.203 2015/08/29 14:07:45 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.204 2015/08/29 14:43:38 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -364,9 +364,6 @@ md_root.o: Makefile
 
 # depend on root or device configuration
 autoconf.o conf.o: Makefile
-
-# depend on network or filesystem configuration
-uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers and CPU configuration
 assym.h machdep.o: Makefile
