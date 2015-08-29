@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.45 2015/08/29 14:07:45 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.46 2015/08/29 17:35:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.45 2015/08/29 14:07:45 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.46 2015/08/29 17:35:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -445,13 +445,13 @@ emitsfiles(FILE *fp)
 }
 
 static void
-emitfiles(FILE *fp, int suffix, int upper_suffix)
+emitxfiles(FILE *fp, int suffix, int upper_suffix, int normal)
 {
 	struct files *fi;
  	struct config *cf;
- 	char swapname[100];
 
-	fprintf(fp, "%cFILES= \\\n", toupper(suffix));
+	fprintf(fp, "%cFILES.%snormal= \\\n", toupper(suffix),
+	    normal ? "" : "ab");
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		const char *prefix, *sep;
 
@@ -465,9 +465,25 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		} else {
 			prefix = sep = "";
 		}
-		fprintf(fp, "\t%s%s%s%s \\\n", "$S/", prefix, sep,
-		    fi->fi_path);
+		if (((fi->fi_mkrule == NULL) && normal) ||
+		    ((fi->fi_mkrule != NULL) && !normal))
+			fprintf(fp, "\t%s%s%s%s \\\n", "$S/", prefix, sep,
+			    fi->fi_path);
 	}
+	putc('\n', fp);
+}
+
+static void
+emitfiles(FILE *fp, int suffix, int upper_suffix)
+{
+	struct files *fi;
+ 	struct config *cf;
+ 	char swapname[100];
+
+	emitxfiles(fp, suffix, upper_suffix, 1);
+	emitxfiles(fp, suffix, upper_suffix, 0);
+	fprintf(fp, "%cFILES= ${%cFILES.normal} ${%cFILES.abnormal} \\\n",
+	    toupper(suffix), toupper(suffix), toupper(suffix));
  	/*
  	 * The allfiles list does not include the configuration-specific
  	 * C source files.  These files should be eliminated someday, but
@@ -487,14 +503,32 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
  * Emit the make-rules.
  */
 static void
+emitxrules(FILE *fp, int suffix)
+{
+	char s = tolower(suffix), S = toupper(suffix);
+
+	fprintf(fp, ".for _%cfile in ${%cFILES.normal}\n", s, S);
+	fprintf(fp, "${_%cfile:T:R}.o: ${_%cfile}\n", s, s);
+	fprintf(fp, "\t${NORMAL_%c}\n", S);
+	fprintf(fp, ".endfor\n\n");
+}
+
+static void
 emitrules(FILE *fp)
 {
 	struct files *fi;
 
+	/* normal */
+	emitxrules(fp, 'c');
+	emitxrules(fp, 's');
+
+	/* abnormal */
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		const char *prefix, *sep;
 
 		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		if (fi->fi_mkrule == NULL)
 			continue;
 		if (fi->fi_prefix != NULL) {
 			prefix = fi->fi_prefix;
@@ -504,11 +538,7 @@ emitrules(FILE *fp)
  		}
 		fprintf(fp, "%s.o: %s%s%s%s\n", fi->fi_base, "$S/", prefix,
 		    sep, fi->fi_path);
-		if (fi->fi_mkrule != NULL) {
-			fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
-		} else {
-			fprintf(fp, "\t${NORMAL_%c}\n\n", toupper(fi->fi_suffix));
-		}
+		fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
 	}
 }
 
