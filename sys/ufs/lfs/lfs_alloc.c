@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.127 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.128 2015/08/29 21:04:22 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.127 2015/08/12 18:28:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.128 2015/08/29 21:04:22 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -586,7 +586,7 @@ lfs_order_freelist(struct lfs *fs)
 		if (ino % lfs_sb_getifpb(fs) == 0)
 			LFS_IENTRY(ifp, fs, ino, bp);
 		else
-			++ifp;
+			LFS_IENTRY_NEXT(ifp, fs);
 
 		/* Don't put zero or ifile on the free list */
 		if (ino == LFS_UNUSED_INUM || ino == LFS_IFILE_INUM)
