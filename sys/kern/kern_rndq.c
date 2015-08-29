@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.72 2015/08/05 16:51:09 riastradh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.73 2015/08/29 10:00:19 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.72 2015/08/05 16:51:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.73 2015/08/29 10:00:19 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1493,7 +1493,7 @@ rnd_system_ioctl(struct file *fp, u_long cmd, void *addr)
 		 */
 		kr = LIST_FIRST(&rnd_global.sources);
 		start = rset->start;
-		while (kr != NULL && start > 1) {
+		while (kr != NULL && start > 0) {
 			kr = LIST_NEXT(kr, list);
 			start--;
 		}
