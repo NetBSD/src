@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.199 2015/08/29 05:02:43 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.200 2015/08/29 05:03:36 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -379,6 +379,11 @@ assym.h machdep.o: Makefile
 ## EXTRA_CLEAN.  Some ports may want different settings for
 ## KERNLINTFLAGS, MKDEP_CFLAGS, or MKDEP_AFLAGS.
 ##
+
+##
+## clean
+##
+
 .if !target(__CLEANKERNEL)
 __CLEANKERNEL: .USE
 	${_MKMSG} "${.TARGET}ing the kernel objects"
@@ -402,6 +407,10 @@ cleandir distclean: __CLEANKERNEL __CLEANDEPEND
 clean: __CLEANKERNEL
 depend: .depend
 dependall: depend .WAIT all
+
+##
+## depend
+##
 
 .if !target(.depend)
 MKDEP_AFLAGS?=	${AFLAGS}
@@ -456,6 +465,10 @@ DEPS+=	assym.d
 	echo "${.ALLSRC}" | ${MKDEP} -D
 .endif
 
+##
+## lint
+##
+
 .if !target(lint)
 ALLSFILES?=	${MD_SFILES} ${SFILES}
 LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
@@ -494,6 +507,10 @@ syntax-only: ${CFILES} ${MD_CFILES}
 # to be loaded directly by the firmware), so this can be overriden by them.
 KERNIMAGES?=	netbsd
 
+##
+## install
+##
+
 .if !target(install)
 # The install target can be redefined by putting a
 # install-kernel-${MACHINE_NAME} target into /etc/mk.conf
@@ -510,10 +527,18 @@ install-kernel-${MACHINE_NAME}:
 .endif
 .endif
 
+##
+## tags
+##
+
 .if !target(tags)
 tags:
 	@echo "see $S/kern/Makefile for tags"
 .endif
+
+##
+## cscope
+##
 
 EXTRA_CLEAN+= cscope.out cscope.tmp
 .if !target(cscope.out)
@@ -559,6 +584,10 @@ ID: Makefile depend
 
 .endif
 
+##
+## .gdbinit
+##
+
 .include "${S}/gdbscripts/Makefile.inc"
 
 EXTRA_CLEAN+= .gdbinit
@@ -573,6 +602,10 @@ EXTRA_CLEAN+= .gdbinit
 	echo "source ${__gdbinit}" >> .gdbinit
 .endfor
 .endif
+
+##
+## the kernel
+##
 
 # The following files use alloca(3) or variable array allocations.
 # Their full name is noted as documentation.
