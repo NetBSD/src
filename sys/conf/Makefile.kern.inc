@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.198 2015/08/29 04:46:27 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.199 2015/08/29 05:02:43 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -307,6 +307,15 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ##
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
+
+.SUFFIXES: .genassym .assym.h
+.genassym.assym.h:
+	${_MKTARGET_CREATE}
+	cat $< | \
+	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
+	    ${GENASSYM_CPPFLAGS} > $@.tmp && \
+	mv -f $@.tmp $@
+
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf | \
@@ -402,6 +411,12 @@ CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
 SRCS=${SSRCS} ${CSRCS}
 DEPS=	${SRCS:T:u:R:S/$/.d/g}
 
+.SUFFIXES: .S .d
+.S.d:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} $<
+
 .for _s in ${SSRCS}
 .if !target(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s} assym.h
@@ -410,6 +425,13 @@ ${_s:T:R}.d: ${_s} assym.h
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endif
 .endfor
+
+.SUFFIXES: .c .d
+.c.d:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} $<
+
 .for _s in ${CSRCS}
 .if !target(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s}
