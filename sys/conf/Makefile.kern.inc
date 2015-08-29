@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.209 2015/08/29 16:07:07 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.210 2015/08/29 16:27:07 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -446,50 +446,13 @@ DEPS+=	assym.d
 .endif
 
 ##
-## lint
+## install
 ##
-
-.if !target(lint)
-ALLSFILES?=	${MD_SFILES} ${SFILES}
-LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
-KERNLINTFLAGS?=	-bcehnxzFS
-NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i $< -o $@
-
-_lsrc=${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
-LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
-
-.for _sfile in ${ALLSFILES}
-LintStub_${_sfile:T:R}.c: ${_sfile} assym.h
-	${_MKTARGET_COMPILE}
-	${CC} -E -C ${AFLAGS} ${CPPFLAGS} ${_sfile} | \
-	      ${TOOL_AWK} -f $S/kern/genlintstub.awk >${.TARGET}
-.endfor
-
-.for _cfile in ${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
-${_cfile:T:R}.ln: ${_cfile}
-	${_MKTARGET_COMPILE}
-	${NORMAL_LN}
-.endfor
-
-lint: ${LOBJS}
-	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} ${LOBJS}
-.endif
-
-# Attempt to do a syntax-only compile of the entire kernel as one entity.
-# Alas, bugs in the GCC C frontend prevent this from completely effective
-# but information can be gleaned from the output.
-syntax-only: ${CFILES} ${MD_CFILES}
-	${CC} -fsyntax-only -combine ${CFLAGS} ${CPPFLAGS} \
-		${CFILES} ${MD_CFILES}
 
 # List of kernel images that will be installed into the root file system.
 # Some platforms may need to install more than one (e.g. a netbsd.aout file
 # to be loaded directly by the firmware), so this can be overriden by them.
 KERNIMAGES?=	netbsd
-
-##
-## install
-##
 
 .if !target(install)
 # The install target can be redefined by putting a
@@ -507,81 +470,9 @@ install-kernel-${MACHINE_NAME}:
 .endif
 .endif
 
-##
-## tags
-##
-
-.if !target(tags)
-tags:
-	@echo "see $S/kern/Makefile for tags"
-.endif
-
-##
-## cscope
-##
-
-EXTRA_CLEAN+= cscope.out cscope.tmp
-.if !target(cscope.out)
-cscope.out: Makefile depend
-	${_MKTARGET_CREATE}
-	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/kern/.depend \
-	    | tr -s ' ' '\n' \
-	    | ${TOOL_SED} ';s|^../../||;' \
-	    > cscope.tmp
-	@${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\ *$$//;' lib/compat/.depend \
-	    | tr -s ' ' '\n' \
-	    | ${TOOL_SED} 's|^../../||;' \
-	    >> cscope.tmp
-	@echo ${SRCS} | cat - cscope.tmp | tr -s ' ' '\n' | sort -u | \
-	    ${CSCOPE} -k -i - -b `echo ${INCLUDES} | ${TOOL_SED} s/-nostdinc//`
-#	cscope doesn't write cscope.out if it's uptodate, so ensure
-#	make doesn't keep calling cscope when not needed.
-	@rm -f cscope.tmp; touch cscope.out
-.endif
-
-.if !target(cscope)
-cscope: cscope.out
-	@${CSCOPE} -d
-.endif
-
-EXTRA_CLEAN+= ID
-.if !target(mkid)
-.PHONY: mkid
-mkid: ID
-
-ID: Makefile depend
-	${_MKTARGET_CREATE}
-	@${MKID} \
-	    `${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
-			lib/kern/.depend lib/compat/.depend \
-		    | tr ' ' '\n' \
-		    | ${TOOL_SED} "s|^../../||" \
-		    | sort -u` \
-	    `${TOOL_SED} 's/[^:]*://;s/^ *//;s/ *\\\\ *$$//;' \
-			.depend \
-		    | tr ' ' '\n' \
-		    | sort -u`
-
-.endif
-
-##
-## .gdbinit
-##
-
-.include "${S}/gdbscripts/Makefile.inc"
-
-EXTRA_CLEAN+= .gdbinit
-.gdbinit: Makefile ${S}/gdbscripts/Makefile.inc
-	${_MKTARGET_CREATE}
-	rm -f .gdbinit
-.for __gdbinit in ${SYS_GDBINIT}
-	echo "source ${S}/gdbscripts/${__gdbinit}" >> .gdbinit
-.endfor
-.if defined(GDBINIT) && !empty(GDBINIT)
-.for __gdbinit in ${GDBINIT}
-	echo "source ${__gdbinit}" >> .gdbinit
-.endfor
-.endif
+.include "${S}/conf/lint.mk"
+.include "${S}/conf/cscope.mk"
+.include "${S}/conf/gdbinit.mk"
 
 ##
 ## the kernel
