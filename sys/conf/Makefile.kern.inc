@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.206 2015/08/29 15:37:18 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.207 2015/08/29 15:51:53 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -348,19 +348,6 @@ vers.o: ${SYSTEM_OBJ} Makefile $S/conf/newvers.sh \
 .include "${S}/dev/splash/splash.mk"
 init_main.o: splash_image.o
 .endif
-
-.if defined(MEMORY_DISK_IMAGE)
-md_root_image.h: ${MEMORY_DISK_IMAGE}
-	${_MKTARGET_CREATE}
-	${TOOL_HEXDUMP} -v -e '"\t" 8/1 "0x%02x, " "\n"' ${.ALLSRC} > ${.TARGET}
-
-# XXX This is only needed when building md_root.o
-CPPFLAGS+=	-DMEMORY_DISK_IMAGE
-md_root.o: md_root_image.h
-.endif
-
-# depend on MEMORY_DISK_IMAGE configuration
-md_root.o: Makefile
 
 ##
 ## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
