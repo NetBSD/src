@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.42 2015/08/29 02:54:07 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.43 2015/08/29 07:08:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.42 2015/08/29 02:54:07 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.43 2015/08/29 07:08:38 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -276,7 +276,6 @@ emitdefs(FILE *fp)
 		    s ? "\"" : "");
 	}
 	putc('\n', fp);
-	fprintf(fp, "PARAM=-DMAXUSERS=%d\n", maxusers);
 	fprintf(fp, "MACHINE=%s\n", machine);
 
 	const char *subdir = "";
