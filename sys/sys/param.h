@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.485 2015/08/29 07:33:18 uebayasi Exp $	*/
+/*	$NetBSD: param.h,v 1.486 2015/08/29 14:07:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -38,6 +38,10 @@
 
 #ifndef _SYS_PARAM_H_
 #define	_SYS_PARAM_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
 
 /*
  * Historic BSD #defines -- probably will remain untouched for all time.

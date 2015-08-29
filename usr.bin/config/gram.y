@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.48 2015/08/29 02:54:07 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.49 2015/08/29 14:07:45 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.48 2015/08/29 02:54:07 uebayasi Exp $");
+__RCSID("$NetBSD: gram.y,v 1.49 2015/08/29 14:07:45 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -760,7 +760,13 @@ select_options:
 ;
 
 select_maxusers:
-	MAXUSERS int32			{ setmaxusers($2); }
+	MAXUSERS int32			{
+		char str[32];
+
+		setmaxusers($2);
+		snprintf(str, sizeof(str), "%d", $2);
+		addoption(intern("MAXUSERS"), intern(str));
+	}
 ;
 
 select_ident:
