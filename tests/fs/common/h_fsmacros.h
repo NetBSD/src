@@ -1,4 +1,4 @@
-/*	$NetBSD: h_fsmacros.h,v 1.39 2015/03/24 23:22:47 riastradh Exp $	*/
+/*	$NetBSD: h_fsmacros.h,v 1.40 2015/08/29 19:19:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ do {									\
 			atf_tc_fail_errno("unmount r/w failed");	\
 		if (_fs_##_fstest_mount(tc, _fs_##_func_##tmp,		\
 		    FSTEST_MNTNAME, MNT_RDONLY) != 0)			\
-		atf_tc_fail_errno("mount ro failed");			\
+			atf_tc_fail_errno("mount ro failed");		\
 		_func_(tc,FSTEST_MNTNAME);				\
 		if (_fs_##_fstest_unmount(tc, FSTEST_MNTNAME, 0) != 0) {\
 			rump_pub_vfs_mount_print(FSTEST_MNTNAME, 1);	\
