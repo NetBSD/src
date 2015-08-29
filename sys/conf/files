@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.1137 2015/08/29 07:08:38 uebayasi Exp $
+#	$NetBSD: files,v 1.1138 2015/08/29 07:33:18 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20150829
+version 	20150820
 
 #
 # device classes
@@ -17,7 +17,6 @@ devclass bus
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
 #
-defparam opt_param.h		MAXUSERS
 defflag				INSECURE
 defflag				KMEMSTATS
 defflag				KTRACE
