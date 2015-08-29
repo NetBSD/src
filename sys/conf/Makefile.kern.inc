@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.197 2015/08/29 04:43:05 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.198 2015/08/29 04:46:27 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -438,7 +438,7 @@ DEPS+=	assym.d
 ALLSFILES?=	${MD_SFILES} ${SFILES}
 LINTSTUBS?=	${ALLSFILES:T:R:C/^.*$/LintStub_&.c/g}
 KERNLINTFLAGS?=	-bcehnxzFS
-NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i $<
+NORMAL_LN?=	${LINT} ${KERNLINTFLAGS} ${CPPFLAGS:M-[IDU]*} -i $< -o $@
 
 _lsrc=${CFILES} ${LINTSTUBS} ${MI_CFILES} ${MD_CFILES}
 LOBJS?= ${_lsrc:T:S/.c$/.ln/g} ${LIBKERNLN} ${SYSLIBCOMPATLN}
