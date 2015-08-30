@@ -1,4 +1,4 @@
-/*	$NetBSD: clri.c,v 1.23 2013/06/23 02:06:04 dholland Exp $	*/
+/*	$NetBSD: clri.c,v 1.24 2015/08/30 05:23:17 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)clri.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: clri.c,v 1.23 2013/06/23 02:06:04 dholland Exp $");
+__RCSID("$NetBSD: clri.c,v 1.24 2015/08/30 05:23:17 mlelstv Exp $");
 #endif
 #endif /* not lint */
 
@@ -84,6 +84,7 @@ main(int argc, char *argv[])
 	char *fs, sblock[SBLOCKSIZE];
 	int needswap = 0, is_ufs2 = 0;
 	int i, imax;
+	long dev_bsize;
 
 	if (argc < 3) {
 		(void)fprintf(stderr, "usage: clri filesystem inode ...\n");
@@ -151,6 +152,9 @@ main(int argc, char *argv[])
 	if (needswap)
 		ffs_sb_swap(sbp, sbp);
 
+	/* compute disk block size from superblock parameters */
+	dev_bsize = sbp->fs_fsize / FFS_FSBTODB(sbp, 1);
+
 	bsize = sbp->fs_bsize;
 	ibuf = malloc(bsize);
 	if (ibuf == NULL) {
@@ -166,7 +170,7 @@ main(int argc, char *argv[])
 		/* read in the appropriate block. */
 		offset = ino_to_fsba(sbp, inonum);	/* inode to fs blk */
 		offset = FFS_FSBTODB(sbp, offset);	/* fs blk disk blk */
-		offset *= DEV_BSIZE;			/* disk blk to bytes */
+		offset *= dev_bsize;			/* disk blk to bytes */
 
 		/* seek and read the block */
 		if (lseek(fd, offset, SEEK_SET) < 0)
