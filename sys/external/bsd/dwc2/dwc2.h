@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.5 2015/07/30 07:32:40 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.6 2015/08/30 12:26:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 #define _EXTERNAL_BSD_DWC2_DWC2_H_
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 
-#include <sys/workqueue.h>
 #include <sys/callout.h>
+#include <sys/kernel.h>
+#include <sys/workqueue.h>
 
 #include <linux/list.h>
 
