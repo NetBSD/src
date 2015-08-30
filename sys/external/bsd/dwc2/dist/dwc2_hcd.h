@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.h,v 1.1.1.4 2014/04/03 06:10:51 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.h,v 1.1.1.5 2015/08/30 12:46:43 skrll Exp $	*/
 
 /*
  * hcd.h - DesignWare HS OTG Controller host-mode declarations
@@ -245,7 +245,8 @@ enum dwc2_transaction_type {
  * @ntd:                Actual number of transfer descriptors in a list
  * @dw_align_buf:       Used instead of original buffer if its physical address
  *                      is not dword-aligned
- * @dw_align_buf_dma:   DMA address for align_buf
+ * @dw_align_buf_size:  Size of dw_align_buf
+ * @dw_align_buf_dma:   DMA address for dw_align_buf
  * @qtd_list:           List of QTDs for this QH
  * @channel:            Host channel currently processing transfers for this QH
  * @qh_list_entry:      Entry for QH in either the periodic or non-periodic
@@ -278,6 +279,7 @@ struct dwc2_qh {
 	u16 start_split_frame;
 	u16 ntd;
 	u8 *dw_align_buf;
+	int dw_align_buf_size;
 	dma_addr_t dw_align_buf_dma;
 	struct list_head qtd_list;
 	struct dwc2_host_chan *channel;
@@ -451,13 +453,8 @@ static inline u8 dwc2_hcd_is_pipe_out(struct dwc2_hcd_pipe_info *pipe)
 	return !dwc2_hcd_is_pipe_in(pipe);
 }
 
-extern int dwc2_hcd_init(struct dwc2_hsotg *hsotg, int irq,
-			 const struct dwc2_core_params *params);
+extern int dwc2_hcd_init(struct dwc2_hsotg *hsotg, int irq);
 extern void dwc2_hcd_remove(struct dwc2_hsotg *hsotg);
-extern void dwc2_set_parameters(struct dwc2_hsotg *hsotg,
-				const struct dwc2_core_params *params);
-extern void dwc2_set_all_params(struct dwc2_core_params *params, int value);
-extern int dwc2_get_hwparams(struct dwc2_hsotg *hsotg);
 
 /* Transaction Execution Functions */
 extern enum dwc2_transaction_type dwc2_hcd_select_transactions(
@@ -468,6 +465,9 @@ extern void dwc2_hcd_queue_transactions(struct dwc2_hsotg *hsotg,
 /* Schedule Queue Functions */
 /* Implemented in hcd_queue.c */
 extern void dwc2_hcd_init_usecs(struct dwc2_hsotg *hsotg);
+extern struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
+					  struct dwc2_hcd_urb *urb,
+					  gfp_t mem_flags);
 extern void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh);
 extern int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh);
 extern void dwc2_hcd_qh_unlink(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh);
@@ -476,7 +476,7 @@ extern void dwc2_hcd_qh_deactivate(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
 
 extern void dwc2_hcd_qtd_init(struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb);
 extern int dwc2_hcd_qtd_add(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
-			    struct dwc2_qh **qh, gfp_t mem_flags);
+			    struct dwc2_qh *qh);
 
 /* Unlinks and frees a QTD */
 static inline void dwc2_hcd_qtd_unlink_and_free(struct dwc2_hsotg *hsotg,
@@ -668,9 +668,6 @@ extern irqreturn_t dwc2_handle_hcd_intr(struct dwc2_hsotg *hsotg);
  */
 extern void dwc2_hcd_stop(struct dwc2_hsotg *hsotg);
 
-extern void dwc2_hcd_start(struct dwc2_hsotg *hsotg);
-extern void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg);
-
 /**
  * dwc2_hcd_is_b_host() - Returns 1 if core currently is acting as B host,
  * and 0 otherwise
@@ -678,13 +675,6 @@ extern void dwc2_hcd_disconnect(struct dwc2_hsotg *hsotg);
  * @hsotg: The DWC2 HCD
  */
 extern int dwc2_hcd_is_b_host(struct dwc2_hsotg *hsotg);
-
-/**
- * dwc2_hcd_get_frame_number() - Returns current frame number
- *
- * @hsotg: The DWC2 HCD
- */
-extern int dwc2_hcd_get_frame_number(struct dwc2_hsotg *hsotg);
 
 /**
  * dwc2_hcd_dump_state() - Dumps hsotg state

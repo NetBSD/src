@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.5 2014/04/03 06:10:56 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdintr.c,v 1.1.1.6 2015/08/30 12:46:49 skrll Exp $	*/
 
 /*
  * hcd_intr.c - DesignWare HS OTG Controller host-mode interrupt handling
@@ -352,6 +352,9 @@ static void dwc2_port_intr(struct dwc2_hsotg *hsotg)
 		dev_vdbg(hsotg->dev,
 			 "--Port Interrupt HPRT0=0x%08x Port Connect Detected--\n",
 			 hprt0);
+		if (hsotg->lx_state != DWC2_L0)
+			usb_hcd_resume_root_hub(hsotg->priv);
+
 		hsotg->flags.b.port_connect_status_change = 1;
 		hsotg->flags.b.port_connect_status = 1;
 		hprt0_modify |= HPRT0_CONNDET;
@@ -465,14 +468,15 @@ static int dwc2_update_urb_state(struct dwc2_hsotg *hsotg,
 	}
 
 	/* Non DWORD-aligned buffer case handling */
-	if (chan->align_buf && xfer_length && chan->ep_is_in) {
+	if (chan->align_buf && xfer_length) {
 		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
-		dma_sync_single_for_cpu(hsotg->dev, urb->dma, urb->length,
-					DMA_FROM_DEVICE);
-		memcpy(urb->buf + urb->actual_length, chan->qh->dw_align_buf,
-		       xfer_length);
-		dma_sync_single_for_device(hsotg->dev, urb->dma, urb->length,
-					   DMA_FROM_DEVICE);
+		dma_unmap_single(hsotg->dev, chan->qh->dw_align_buf_dma,
+				chan->qh->dw_align_buf_size,
+				chan->ep_is_in ?
+				DMA_FROM_DEVICE : DMA_TO_DEVICE);
+		if (chan->ep_is_in)
+			memcpy(urb->buf + urb->actual_length,
+					chan->qh->dw_align_buf, xfer_length);
 	}
 
 	dev_vdbg(hsotg->dev, "urb->actual_length=%d xfer_length=%d\n",
@@ -558,18 +562,18 @@ static enum dwc2_halt_status dwc2_update_isoc_urb_state(
 					chan, chnum, qtd, halt_status, NULL);
 
 		/* Non DWORD-aligned buffer case handling */
-		if (chan->align_buf && frame_desc->actual_length &&
-		    chan->ep_is_in) {
+		if (chan->align_buf && frame_desc->actual_length) {
 			dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n",
 				 __func__);
-			dma_sync_single_for_cpu(hsotg->dev, urb->dma,
-						urb->length, DMA_FROM_DEVICE);
-			memcpy(urb->buf + frame_desc->offset +
-			       qtd->isoc_split_offset, chan->qh->dw_align_buf,
-			       frame_desc->actual_length);
-			dma_sync_single_for_device(hsotg->dev, urb->dma,
-						   urb->length,
-						   DMA_FROM_DEVICE);
+			dma_unmap_single(hsotg->dev, chan->qh->dw_align_buf_dma,
+					chan->qh->dw_align_buf_size,
+					chan->ep_is_in ?
+					DMA_FROM_DEVICE : DMA_TO_DEVICE);
+			if (chan->ep_is_in)
+				memcpy(urb->buf + frame_desc->offset +
+					qtd->isoc_split_offset,
+					chan->qh->dw_align_buf,
+					frame_desc->actual_length);
 		}
 		break;
 	case DWC2_HC_XFER_FRAME_OVERRUN:
@@ -592,18 +596,18 @@ static enum dwc2_halt_status dwc2_update_isoc_urb_state(
 					chan, chnum, qtd, halt_status, NULL);
 
 		/* Non DWORD-aligned buffer case handling */
-		if (chan->align_buf && frame_desc->actual_length &&
-		    chan->ep_is_in) {
+		if (chan->align_buf && frame_desc->actual_length) {
 			dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n",
 				 __func__);
-			dma_sync_single_for_cpu(hsotg->dev, urb->dma,
-						urb->length, DMA_FROM_DEVICE);
-			memcpy(urb->buf + frame_desc->offset +
-			       qtd->isoc_split_offset, chan->qh->dw_align_buf,
-			       frame_desc->actual_length);
-			dma_sync_single_for_device(hsotg->dev, urb->dma,
-						   urb->length,
-						   DMA_FROM_DEVICE);
+			dma_unmap_single(hsotg->dev, chan->qh->dw_align_buf_dma,
+					chan->qh->dw_align_buf_size,
+					chan->ep_is_in ?
+					DMA_FROM_DEVICE : DMA_TO_DEVICE);
+			if (chan->ep_is_in)
+				memcpy(urb->buf + frame_desc->offset +
+					qtd->isoc_split_offset,
+					chan->qh->dw_align_buf,
+					frame_desc->actual_length);
 		}
 
 		/* Skip whole frame */
@@ -939,12 +943,10 @@ static int dwc2_xfercomp_isoc_split_in(struct dwc2_hsotg *hsotg,
 
 	if (chan->align_buf) {
 		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
-		dma_sync_single_for_cpu(hsotg->dev, qtd->urb->dma,
-					qtd->urb->length, DMA_FROM_DEVICE);
+		dma_unmap_single(hsotg->dev, chan->qh->dw_align_buf_dma,
+				chan->qh->dw_align_buf_size, DMA_FROM_DEVICE);
 		memcpy(qtd->urb->buf + frame_desc->offset +
 		       qtd->isoc_split_offset, chan->qh->dw_align_buf, len);
-		dma_sync_single_for_device(hsotg->dev, qtd->urb->dma,
-					   qtd->urb->length, DMA_FROM_DEVICE);
 	}
 
 	qtd->isoc_split_offset += len;
@@ -1172,12 +1174,14 @@ static void dwc2_update_urb_state_abn(struct dwc2_hsotg *hsotg,
 	/* Non DWORD-aligned buffer case handling */
 	if (chan->align_buf && xfer_length && chan->ep_is_in) {
 		dev_vdbg(hsotg->dev, "%s(): non-aligned buffer\n", __func__);
-		dma_sync_single_for_cpu(hsotg->dev, urb->dma, urb->length,
-					DMA_FROM_DEVICE);
-		memcpy(urb->buf + urb->actual_length, chan->qh->dw_align_buf,
-		       xfer_length);
-		dma_sync_single_for_device(hsotg->dev, urb->dma, urb->length,
-					   DMA_FROM_DEVICE);
+		dma_unmap_single(hsotg->dev, chan->qh->dw_align_buf_dma,
+				chan->qh->dw_align_buf_size,
+				chan->ep_is_in ?
+				DMA_FROM_DEVICE : DMA_TO_DEVICE);
+		if (chan->ep_is_in)
+			memcpy(urb->buf + urb->actual_length,
+					chan->qh->dw_align_buf,
+					xfer_length);
 	}
 
 	urb->actual_length += xfer_length;
@@ -1206,6 +1210,16 @@ static void dwc2_hc_nak_intr(struct dwc2_hsotg *hsotg,
 			     struct dwc2_host_chan *chan, int chnum,
 			     struct dwc2_qtd *qtd)
 {
+	if (!qtd) {
+		dev_dbg(hsotg->dev, "%s: qtd is NULL\n", __func__);
+		return;
+	}
+
+	if (!qtd->urb) {
+		dev_dbg(hsotg->dev, "%s: qtd->urb is NULL\n", __func__);
+		return;
+	}
+
 	if (dbg_hc(chan))
 		dev_vdbg(hsotg->dev, "--Host Channel %d Interrupt: NAK Received--\n",
 			 chnum);
@@ -1892,12 +1906,20 @@ static void dwc2_hc_chhltd_intr_dma(struct dwc2_hsotg *hsotg,
 					"hcint 0x%08x, intsts 0x%08x\n",
 					chan->hcint,
 					readl(hsotg->regs + GINTSTS));
+				goto error;
 			}
 		}
 	} else {
 		dev_info(hsotg->dev,
 			 "NYET/NAK/ACK/other in non-error case, 0x%08x\n",
 			 chan->hcint);
+error:
+		/* Failthrough: use 3-strikes rule */
+		qtd->error_count++;
+		dwc2_update_urb_state_abn(hsotg, chan, chnum, qtd->urb,
+					  qtd, DWC2_HC_XFER_XACT_ERR);
+		dwc2_hcd_save_data_toggle(hsotg, chan, chnum, qtd);
+		dwc2_halt_channel(hsotg, chan, qtd, DWC2_HC_XFER_XACT_ERR);
 	}
 }
 
