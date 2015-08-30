@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.212 2015/08/30 05:12:00 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.213 2015/08/30 05:24:04 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -484,6 +484,7 @@ install-kernel-${MACHINE_NAME}:
 .endif
 .endif
 
+.include "${S}/conf/mdroot.mk"
 .include "${S}/conf/lint.mk"
 .include "${S}/conf/cscope.mk"
 .include "${S}/conf/gdbinit.mk"
