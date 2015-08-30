@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.35 2015/08/23 13:18:44 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.36 2015/08/30 10:48:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.35 2015/08/23 13:18:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.36 2015/08/30 10:48:15 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1070,7 +1070,7 @@ Static void
 dwc2_device_bulk_done(usbd_xfer_handle xfer)
 {
 
-    	DPRINTF("xfer=%p\n", xfer);
+	DPRINTF("xfer=%p\n", xfer);
 }
 
 /***********************************************************************/
@@ -1317,7 +1317,7 @@ dwc2_device_start(usbd_xfer_handle xfer)
 	 * everything else does.
 	 */
 	if (!(xfertype == UE_CONTROL && len == 0)) {
-    		dwc2_urb->usbdma = &xfer->dmabuf;
+		dwc2_urb->usbdma = &xfer->dmabuf;
 		dwc2_urb->buf = KERNADDR(dwc2_urb->usbdma, 0);
 		dwc2_urb->dma = DMAADDR(dwc2_urb->usbdma, 0);
  	}
