@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.213 2015/08/30 05:24:04 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.214 2015/08/30 07:33:53 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -359,12 +359,6 @@ vers.o: ${SYSTEM_OBJ} Makefile $S/conf/newvers.sh \
 	${COMPILE_CTFCONVERT}
 .endif
 
-# Option for embedding a splashscreen image.
-.if defined(SPLASHSCREEN_IMAGE) 
-.include "${S}/dev/splash/splash.mk"
-init_main.o: splash_image.o
-.endif
-
 ##
 ## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
 ##                   cscope, mkid
@@ -484,6 +478,7 @@ install-kernel-${MACHINE_NAME}:
 .endif
 .endif
 
+.include "${S}/conf/splash.mk"
 .include "${S}/conf/mdroot.mk"
 .include "${S}/conf/lint.mk"
 .include "${S}/conf/cscope.mk"
