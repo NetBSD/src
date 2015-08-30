@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.1140 2015/08/30 01:46:02 uebayasi Exp $
+#	$NetBSD: files,v 1.1141 2015/08/30 05:12:00 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20150831
+version 	20150832
 
 #
 # device classes
