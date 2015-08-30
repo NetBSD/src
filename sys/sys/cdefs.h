@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.125 2015/08/30 07:55:45 uebayasi Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.126 2015/08/30 08:46:44 mlelstv Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -37,7 +37,7 @@
 #define	_SYS_CDEFS_H_
 
 #ifdef _KERNEL_OPT
-#included "opt_diagnostic.h"
+#include "opt_diagnostic.h"
 #endif
 
 /*
