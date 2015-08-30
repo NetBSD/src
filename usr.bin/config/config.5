@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.29 2015/08/30 01:33:20 uebayasi Exp $
+.\" $NetBSD: config.5,v 1.30 2015/08/30 06:57:51 wiz Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -693,7 +693,7 @@ indicate how many instances should be created.
 It defaults to 1, and some pseudo-devices ignore that parameter.
 .It Ic no pseudo-device Ar name
 Removes support for the specified pseudo-device.
-.It Ic makeoptions Ar name Ns = Ns value Op , Ar name Ns += Ns value \
+.It Ic makeoptions Ar name Ns = Ns Ar value Op , Ar name Ns += Ns Ar value \
     Op , Ar ...
 Adds or appends to a definition in the generated
 .Pa Makefile .
@@ -704,7 +704,7 @@ Optionally, if an option
 is defined with
 .Ic defparam ,
 the
-Ns value
+.Ar value
 is defined as an option too.
 .It Ic makeoptions Ar condition name Ns += Ns Ar value Op , Ar condition \
     name Ns += Ns Ar value
