@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.80 2015/08/27 02:43:20 uebayasi Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.81 2015/08/30 01:46:02 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,9 +73,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.80 2015/08/27 02:43:20 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.81 2015/08/30 01:46:02 uebayasi Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
+#include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
 #endif
@@ -127,7 +128,7 @@ static int ksyms_debug;
 
 #define		SYMTAB_FILLER	"|This is the symbol table!"
 
-#ifdef COPY_SYMTAB
+#ifdef makeoptions_COPY_SYMTAB
 extern char db_symtab[];
 extern int db_symtabsize;
 #endif
@@ -231,7 +232,7 @@ void
 ksyms_init(void)
 {
 
-#ifdef COPY_SYMTAB
+#ifdef makeoptions_COPY_SYMTAB
 	if (!ksyms_loaded &&
 	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
 		ksyms_addsyms_elf(db_symtabsize, db_symtab,
