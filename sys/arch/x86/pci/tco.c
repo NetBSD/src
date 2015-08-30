@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.1 2015/05/03 02:50:59 pgoyette Exp $	*/
+/*	$NetBSD: tco.c,v 1.2 2015/08/30 07:50:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.1 2015/05/03 02:50:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.2 2015/08/30 07:50:34 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,6 +112,9 @@ tco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcib = ta->ta_pcib;
 	sc->sc_has_rcba = ta->ta_has_rcba;
 
+	aprint_normal(": TCO (watchdog) timer configured.\n");
+	aprint_naive("\n");
+
 	/* Explicitly stop the TCO timer. */
 	tcotimer_stop(sc);
 
@@ -160,8 +163,6 @@ tco_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_smw.smw_period = lpcib_tcotimer_tick_to_second(sc->sc_max_t);
 
-	aprint_normal(": TCO (watchdog) timer configured.\n");
-	aprint_naive("\n");
 	aprint_verbose_dev(self, "Min/Max interval %u/%u seconds\n",
 		lpcib_tcotimer_tick_to_second(sc->sc_min_t),
 		lpcib_tcotimer_tick_to_second(sc->sc_max_t));
