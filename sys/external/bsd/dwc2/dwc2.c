@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.36 2015/08/30 10:48:15 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.37 2015/08/30 13:02:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.36 2015/08/30 10:48:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.37 2015/08/30 13:02:42 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1241,7 +1241,7 @@ dwc2_device_start(usbd_xfer_handle xfer)
 
 	uint32_t flags = 0;
 	uint32_t off = 0;
-	int retval, err = USBD_IN_PROGRESS;
+	int retval, err;
 	int alloc_bandwidth = 0;
 	int i;
 
@@ -1297,6 +1297,8 @@ dwc2_device_start(usbd_xfer_handle xfer)
 
 	memset(dwc2_urb, 0, sizeof(*dwc2_urb) +
 	    sizeof(dwc2_urb->iso_descs[0]) * DWC2_MAXISOCPACKETS);
+
+	dwc2_urb->priv = xfer;
 
 	dwc2_hcd_urb_set_pipeinfo(hsotg, dwc2_urb, addr, epnum, xfertype, dir,
 				  mps);
@@ -1378,6 +1380,28 @@ dwc2_device_start(usbd_xfer_handle xfer)
 		off += xfer->frlengths[i];
 	}
 
+	struct dwc2_qh *qh = dpipe->priv;
+	struct dwc2_qtd *qtd;
+	bool qh_allocated = false;
+
+	/* Create QH for the endpoint if it doesn't exist */
+	if (!qh) {
+		qh = dwc2_hcd_qh_create(hsotg, dwc2_urb, GFP_ATOMIC);
+		if (!qh) {
+			retval = -ENOMEM;
+			goto fail;
+		}
+		dpipe->priv = qh;
+		qh_allocated = true;
+	}
+
+	qtd = pool_cache_get(sc->sc_qtdpool, PR_NOWAIT);
+	if (!qtd) {
+		retval = -ENOMEM;
+		goto fail1;
+	}
+	memset(qtd, 0, sizeof(*qtd));
+
 	/* might need to check cpu_intr_p */
 	mutex_spin_enter(&hsotg->lock);
 
@@ -1385,11 +1409,9 @@ dwc2_device_start(usbd_xfer_handle xfer)
 		callout_reset(&xfer->timeout_handle, mstohz(xfer->timeout),
 		    dwc2_timeout, xfer);
 	}
-
-	dwc2_urb->priv = xfer;
-	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, &dpipe->priv, 0);
+	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, qh, qtd);
 	if (retval)
-		goto fail;
+		goto fail2;
 
 	if (alloc_bandwidth) {
 		dwc2_allocate_bus_bandwidth(hsotg,
@@ -1397,14 +1419,25 @@ dwc2_device_start(usbd_xfer_handle xfer)
 				xfer);
 	}
 
-fail:
 	mutex_spin_exit(&hsotg->lock);
-
 // 	mutex_exit(&sc->sc_lock);
 
+	return USBD_IN_PROGRESS;
+
+fail2:
+	dwc2_urb->priv = NULL;
+	mutex_spin_exit(&hsotg->lock);
+	pool_cache_put(sc->sc_qtdpool, qtd);
+
+fail1:
+	if (qh_allocated) {
+		dpipe->priv = NULL;
+		dwc2_hcd_qh_free(hsotg, qh);
+	}
+fail:
+
 	switch (retval) {
-	case 0:
-		break;
+	case -EINVAL:
 	case -ENODEV:
 		err = USBD_INVAL;
 		break;
@@ -1419,6 +1452,7 @@ fail:
 
 }
 
+#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
 void
 dwc2_worker(struct work *wk, void *priv)
 {
@@ -1455,6 +1489,7 @@ Debugger();
 	}
 	mutex_exit(&sc->sc_lock);
 }
+#endif
 
 int dwc2_intr(void *p)
 {
@@ -1600,15 +1635,66 @@ dwc2_init(struct dwc2_softc *sc)
 	sc->sc_hsotg->dev = sc->sc_dev;
 	sc->sc_hcdenabled = true;
 
-	err = dwc2_hcd_init(sc->sc_hsotg, sc->sc_params);
-	if (err) {
-		err = -err;
+	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
+	struct dwc2_core_params defparams;
+	int retval;
+
+	if (sc->sc_params == NULL) {
+		/* Default all params to autodetect */
+		dwc2_set_all_params(&defparams, -1);
+		sc->sc_params = &defparams;
+
+		/*
+		 * Disable descriptor dma mode by default as the HW can support
+		 * it, but does not support it for SPLIT transactions.
+		 */
+		defparams.dma_desc_enable = 0;
+	}
+	hsotg->dr_mode = USB_DR_MODE_HOST;
+
+	/* Detect config values from hardware */
+	retval = dwc2_get_hwparams(hsotg);
+	if (retval) {
 		goto fail2;
 	}
+
+	hsotg->core_params = kmem_zalloc(sizeof(*hsotg->core_params), KM_SLEEP);
+	if (!hsotg->core_params) {
+		retval = -ENOMEM;
+		goto fail2;
+	}
+
+	dwc2_set_all_params(hsotg->core_params, -1);
+
+	/* Validate parameter values */
+	dwc2_set_parameters(hsotg, sc->sc_params);
+
+#if IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
+    IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+	if (hsotg->dr_mode != USB_DR_MODE_HOST) {
+		retval = dwc2_gadget_init(hsotg);
+		if (retval)
+			goto fail2;
+		hsotg->gadget_enabled = 1;
+	}
+#endif
+#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || \
+    IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+	if (hsotg->dr_mode != USB_DR_MODE_PERIPHERAL) {
+		retval = dwc2_hcd_init(hsotg);
+		if (retval) {
+			if (hsotg->gadget_enabled)
+				s3c_hsotg_remove(hsotg);
+			goto fail2;
+		}
+	    hsotg->hcd_enabled = 1;
+        }
+#endif
 
 	return 0;
 
 fail2:
+	err = -retval;
 	kmem_free(sc->sc_hsotg, sizeof(struct dwc2_hsotg));
 fail1:
 	softint_disestablish(sc->sc_rhc_si);
@@ -1797,12 +1883,7 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 
 	mutex_spin_enter(&hsotg->lock);
 
-	hsotg->op_state = OTG_STATE_A_HOST;
-
 	dwc2_hcd_reinit(hsotg);
-
-	/*XXXNH*/
-	delay(50);
 
 	mutex_spin_exit(&hsotg->lock);
 	return 0;

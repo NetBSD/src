@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $	*/
+/*	$NetBSD: bcm2835_dwctwo.c,v 1.6 2015/08/30 13:02:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_dwctwo.c,v 1.6 2015/08/30 13:02:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ static struct dwc2_core_params bcmdwc2_params = {
 	.reload_ctl			= 0,
 	.ahbcfg				= 0x10,
 	.uframe_sched			= 1,
+	.external_id_pin_ctl		= -1,
+	.hibernation			= -1,
 };
 
 static int bcmdwc2_match(device_t, struct cfdata *, void *);

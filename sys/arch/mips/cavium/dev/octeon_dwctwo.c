@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.6 2015/08/30 13:02:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.5 2015/07/30 07:32:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.6 2015/08/30 13:02:42 skrll Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -135,6 +135,8 @@ static struct dwc2_core_params octeon_dwc2_params = {
 	.reload_ctl			= 0,
 	.ahbcfg				= 0,	/* XXX */
 	.uframe_sched			= 1,
+	.external_id_pin_ctl		= -1,
+	.hibernation			= -1,
 };
 
 CFATTACH_DECL_NEW(octeon_dwctwo, sizeof(struct octeon_dwc2_softc),

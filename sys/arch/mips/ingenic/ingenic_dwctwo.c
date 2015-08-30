@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dwctwo.c,v 1.11 2015/05/18 15:11:47 macallan Exp $ */
+/*	$NetBSD: ingenic_dwctwo.c,v 1.12 2015/08/30 13:02:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.11 2015/05/18 15:11:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dwctwo.c,v 1.12 2015/08/30 13:02:42 skrll Exp $");
 
 /*
  * adapted from bcm2835_dwctwo.c
@@ -87,6 +87,8 @@ static struct dwc2_core_params ingenic_dwc2_params = {
 	.reload_ctl			= -1,
 	.ahbcfg				= -1,
 	.uframe_sched			= 0,
+	.external_id_pin_ctl		= -1,
+	.hibernation			= -1,
 };
 
 static int ingenic_dwc2_match(device_t, struct cfdata *, void *);
