@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.16 2015/08/21 01:52:08 uebayasi Exp $
+# 	$NetBSD: LCARD,v 1.17 2015/08/30 14:06:17 uebayasi Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -30,7 +30,6 @@ pseudo-device	ksyms
 options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
 #options 	DEBUG_FIND_PCIC		# Debugging use XXX harmful don't define until read source.
 #options 	DEBUG_FIND_PCIC_I82365SL_ONLY
-#makeoptions	DEFWARNINGS=no	# override DEFWARNINGS?=yes
 
 file-system 	FFS		# fast filesystem with user and group quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support
