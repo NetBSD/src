@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.215 2015/08/30 14:06:17 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.216 2015/08/30 21:16:10 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -161,14 +161,14 @@ LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
 		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
 
 .for _s in ${CFILES}
-.if !target(${_s:T:R}.o)
+.if !commands(${_s:T:R}.o)
 ${_s:T:R}.o: ${_s}
 	${NORMAL_C}
 .endif
 .endfor
 
 .for _s in ${SFILES}
-.if !target(${_s:T:R}.o)
+.if !commands(${_s:T:R}.o)
 ${_s:T:R}.o: ${_s}
 	${NORMAL_S}
 .endif
