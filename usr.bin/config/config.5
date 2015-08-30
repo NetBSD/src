@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.28 2015/08/29 02:54:07 uebayasi Exp $
+.\" $NetBSD: config.5,v 1.29 2015/08/30 01:33:20 uebayasi Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -24,7 +24,7 @@
 .\"  ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\"  POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 28, 2015
+.Dd August 31, 2015
 .Dt CONFIG 5
 .Os
 .Sh NAME
@@ -551,10 +551,6 @@ indicates when the relevant line should be added to
 and works just like the
 .Ic file
 statement.
-.It Ic makeoptions Ar condition name Ns += Ns Ar value Op , Ar condition \
-    name Ns += Ns Ar value
-Appends to a definition in the generated
-.Pa Makefile .
 .El
 .Ss OPTIONS SELECTION
 .Bl -ohang
@@ -703,6 +699,17 @@ Adds or appends to a definition in the generated
 .Pa Makefile .
 A definition cannot be overriden, it must be removed before it can be added
 again.
+Optionally, if an option
+.Pa makeoptions_\*[Lt]name\*[Gt]
+is defined with
+.Ic defparam ,
+the
+Ns value
+is defined as an option too.
+.It Ic makeoptions Ar condition name Ns += Ns Ar value Op , Ar condition \
+    name Ns += Ns Ar value
+Appends to a definition in the generated
+.Pa Makefile .
 .It Ic no makeoptions Ar name Op , Ar name Op , Ar ...
 Removes one or more definitions from the generated
 .Pa Makefile .
