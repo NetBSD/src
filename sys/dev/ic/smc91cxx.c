@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.89 2015/04/13 16:33:24 riastradh Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.90 2015/08/30 04:11:40 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.89 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.90 2015/08/30 04:11:40 dholland Exp $");
 
 #include "opt_inet.h"
 
@@ -524,8 +524,11 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 	sc->sc_txpacketno = ARR_FAILED;
 	for (;;) {
 		tmp = bus_space_read_2(bst, bsh, MMU_CMD_REG_W);
-		if (tmp == 0xffff)	/* card went away! */
+		if (tmp == 0xffff) {
+			/* card went away! */
+			splx(s);
 			return;
+		}
 		if ((tmp & MMUCR_BUSY) == 0)
 			break;
 	}
