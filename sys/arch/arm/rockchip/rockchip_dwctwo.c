@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_dwctwo.c,v 1.4 2015/07/30 07:32:40 skrll Exp $	*/
+/*	$NetBSD: rockchip_dwctwo.c,v 1.5 2015/08/30 13:02:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.4 2015/07/30 07:32:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.5 2015/08/30 13:02:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ static struct dwc2_core_params rkdwc2_params = {
 	.reload_ctl			= 0,	/* 0 - No (default for core < 2.92a) */
 	.ahbcfg				= 0x7,	/* INCR16 */
 	.uframe_sched			= 1,	/* True to enable microframe scheduler */
+	.external_id_pin_ctl		= -1,
+	.hibernation			= -1,
 };
 
 static int rkdwc2_match(device_t, struct cfdata *, void *);
