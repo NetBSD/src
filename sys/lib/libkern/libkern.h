@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.120 2015/05/29 19:38:59 matt Exp $	*/
+/*	$NetBSD: libkern.h,v 1.121 2015/08/30 07:55:45 uebayasi Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -33,6 +33,10 @@
 
 #ifndef _LIB_LIBKERN_LIBKERN_H_
 #define _LIB_LIBKERN_LIBKERN_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_diagnostic.h"
+#endif
 
 #include <sys/types.h>
 #include <sys/inttypes.h>
