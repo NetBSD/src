@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.79 2015/08/29 13:34:21 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.80 2015/08/30 01:33:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.79 2015/08/29 13:34:21 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.80 2015/08/30 01:33:20 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -427,6 +427,12 @@ main(int argc, char **argv)
 	yyfile = "fixdevis";
 	if (fixdevis())
 		stop();
+
+	/*
+	 * Copy makeoptions to params
+	 */
+	yyfile = "fixmkoption";
+	fixmkoption();
 
 	/*
 	 * If working on an ioconf-only config, process here and exit
@@ -1095,6 +1101,25 @@ appendcondmkoption(struct condexpr *cond, const char *name, const char *value)
 	nv = newnv(name, value, cond, 0, NULL);
 	*nextcndmkopt = nv;
 	nextcndmkopt = &nv->nv_next;
+}
+
+/*
+ * Copy makeoptions to params with "makeoptions_" prefix.
+ */
+void
+fixmkoption(void)
+{
+	struct nvlist *nv;
+	char buf[100];
+	const char *name;
+
+	for (nv = mkoptions; nv != NULL; nv = nv->nv_next) {
+		snprintf(buf, sizeof(buf), "makeoptions_%s", nv->nv_name);
+		name = intern(buf);
+		if (!DEFINED_OPTION(name) || !OPT_DEFPARAM(name))
+			continue;
+		addoption(name, intern(nv->nv_str));
+	}
 }
 
 /*
