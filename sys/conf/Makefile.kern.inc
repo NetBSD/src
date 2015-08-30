@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.214 2015/08/30 07:33:53 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.215 2015/08/30 14:06:17 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -67,8 +67,6 @@ CPPFLAGS+=	-std=gnu99
 DEFCOPTS?=	-O2
 COPTS?=		${DEFCOPTS}
 DBG=		# might contain unwanted -Ofoo
-DEFWARNINGS?=	yes
-.if (${DEFWARNINGS} == "yes")
 CWARNFLAGS+=	-Wall -Wno-main -Wno-format-zero-length -Wpointer-arith
 CWARNFLAGS+=	-Wmissing-prototypes -Wstrict-prototypes
 CWARNFLAGS+=	-Wold-style-definition
@@ -87,7 +85,6 @@ CWARNFLAGS+=	-Wold-style-definition
 # Add -Wno-sign-compare.  -Wsign-compare is included in -Wall as of GCC 3.3,
 # but our sources aren't up for it yet.
 CWARNFLAGS+=	-Wno-sign-compare
-.endif
 
 CWARNFLAGS.clang+=	-Wno-unknown-pragmas -Wno-conversion \
 			-Wno-self-assign
