@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.1139 2015/08/29 14:07:45 uebayasi Exp $
+#	$NetBSD: files,v 1.1140 2015/08/30 01:46:02 uebayasi Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20150830
+version 	20150831
 
 #
 # device classes
@@ -28,6 +28,8 @@ defflag	opt_modular.h		MODULAR
 defflag	opt_modular.h		MODULAR_DEFAULT_AUTOLOAD
 defflag				KEYLOCK
 defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
+
+defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
 defparam			DEFCORENAME
 defparam			HZ
