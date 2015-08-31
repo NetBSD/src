@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.317 2015/07/17 02:21:08 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.318 2015/08/31 08:02:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.317 2015/07/17 02:21:08 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.318 2015/08/31 08:02:44 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -614,6 +614,8 @@ if_initialize(ifnet_t *ifp)
 	ifp->if_pfil = pfil_head_create(PFIL_TYPE_IFNET, ifp);
 	(void)pfil_run_hooks(if_pfil,
 	    (struct mbuf **)PFIL_IFNET_ATTACH, ifp, PFIL_IFNET);
+
+	IF_AFDATA_LOCK_INIT(ifp);
 
 	if_getindex(ifp);
 }

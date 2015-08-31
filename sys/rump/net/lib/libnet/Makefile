@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2015/08/24 23:04:43 pooka Exp $
+#	$NetBSD: Makefile,v 1.26 2015/08/31 08:02:45 ozaki-r Exp $
 #
 
 
@@ -10,6 +10,7 @@ IOCONF=	NET.ioconf
 SRCS=	if.c if_loop.c route.c rtsock.c raw_usrreq.c			\
 	raw_cb.c if_media.c link_proto.c net_stats.c if_ethersubr.c
 SRCS+=	if_43.c pfil.c
+SRCS+=	if_llatbl.c
 SRCS+=	net_component.c
 
 .include <bsd.init.mk>
