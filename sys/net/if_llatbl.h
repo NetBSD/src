@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.1 2015/08/31 07:56:58 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.2 2015/08/31 08:05:20 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -94,10 +94,29 @@ struct llentry {
 #endif
 };
 
-#define	LLE_WLOCK(lle)		rw_enter(&(lle)->lle_lock, RW_WRITER)
-#define	LLE_RLOCK(lle)		rw_enter(&(lle)->lle_lock, RW_READER)
-#define	LLE_WUNLOCK(lle)	rw_exit(&(lle)->lle_lock)
-#define	LLE_RUNLOCK(lle)	rw_exit(&(lle)->lle_lock)
+
+#if 0
+#define LLE_LOCK_TRACE(n)	aprint_normal("%s: " #n " line %d\n", __func__, __LINE__)
+#else
+#define LLE_LOCK_TRACE(n)
+#endif
+
+#define	LLE_WLOCK(lle)		do { \
+					LLE_LOCK_TRACE(WL); \
+					rw_enter(&(lle)->lle_lock, RW_WRITER); \
+				} while (0)
+#define	LLE_RLOCK(lle)		do { \
+					LLE_LOCK_TRACE(RL); \
+					rw_enter(&(lle)->lle_lock, RW_READER); \
+				} while (0)
+#define	LLE_WUNLOCK(lle)	do { \
+					LLE_LOCK_TRACE(WU); \
+					rw_exit(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_RUNLOCK(lle)	do { \
+					LLE_LOCK_TRACE(RU); \
+					rw_exit(&(lle)->lle_lock); \
+				} while (0)
 #define	LLE_DOWNGRADE(lle)	rw_downgrade(&(lle)->lle_lock)
 #define	LLE_TRY_UPGRADE(lle)	rw_tryupgrade(&(lle)->lle_lock)
 #ifdef __FreeBSD__
@@ -106,7 +125,7 @@ struct llentry {
 #define	LLE_LOCK_INIT(lle)	rw_init(&(lle)->lle_lock)
 #endif
 #define	LLE_LOCK_DESTROY(lle)	rw_destroy(&(lle)->lle_lock)
-#define	LLE_WLOCK_ASSERT(lle)	KASSERT(rw_lock_held(&(lle)->lle_lock))
+#define	LLE_WLOCK_ASSERT(lle)	KASSERT(rw_write_held(&(lle)->lle_lock))
 
 #define LLE_IS_VALID(lle)	(((lle) != NULL) && ((lle) != (void *)-1))
 

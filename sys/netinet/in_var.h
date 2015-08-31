@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.73 2015/08/31 08:02:44 ozaki-r Exp $	*/
+/*	$NetBSD: in_var.h,v 1.74 2015/08/31 08:05:20 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -322,6 +322,9 @@ ip_newid(const struct in_ifaddr *ia)
 #ifdef SYSCTLFN_PROTO
 int	sysctl_inpcblist(SYSCTLFN_PROTO);
 #endif
+
+#define LLTABLE(ifp)	\
+	((struct in_ifinfo *)(ifp)->if_afdata[AF_INET])->ii_llt
 
 #endif	/* !_KERNEL */
 
