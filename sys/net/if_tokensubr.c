@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.70 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.71 2015/08/31 08:05:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.70 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.71 2015/08/31 08:05:20 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -114,11 +114,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.70 2015/08/24 22:21:26 pooka Exp 
 #include <sys/cpu.h>
 
 #include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_llatbl.h>
+#include <net/if_llc.h>
+#include <net/if_types.h>
 #include <net/netisr.h>
 #include <net/route.h>
-#include <net/if_llc.h>
-#include <net/if_dl.h>
-#include <net/if_types.h>
 
 #include <net/bpf.h>
 
@@ -217,9 +218,13 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
  * XXX m->m_flags & M_MCAST   IEEE802_MAP_IP_MULTICAST ??
  */
 		else {
+			struct llentry *la;
 			if (!arpresolve(ifp, rt, m, dst, edst))
 				return (0);	/* if not yet resolved */
-			rif = TOKEN_RIF((struct llinfo_arp *) rt->rt_llinfo);
+			la = rt->rt_llinfo;
+			KASSERT(la != NULL);
+			KASSERT(la->la_opaque != NULL);
+			rif = la->la_opaque;
 			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 		}
 		/* If broadcasting on a simplex interface, loopback a copy. */

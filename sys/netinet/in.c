@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.158 2015/08/31 08:02:44 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.159 2015/08/31 08:05:20 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.158 2015/08/31 08:02:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.159 2015/08/31 08:05:20 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.158 2015/08/31 08:02:44 ozaki-r Exp $");
 #include <net/route.h>
 #include <net/pfil.h>
 
+#include <net/if_arp.h>
 #include <net/if_ether.h>
 #include <net/if_types.h>
 #include <net/if_llatbl.h>
@@ -1574,7 +1575,7 @@ in_lltable_new(struct in_addr addr4, u_int flags)
 	lle->base.lle_refcnt = 1;
 	lle->base.lle_free = in_lltable_destroy_lle;
 	LLE_LOCK_INIT(&lle->base);
-	callout_init(&lle->base.la_timer, 1);
+	callout_init(&lle->base.la_timer, CALLOUT_MPSAFE);
 
 	return (&lle->base);
 }
@@ -1622,11 +1623,7 @@ in_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 
 	/* Drop hold queue */
 	pkts_dropped = llentry_free(lle);
-#ifdef __FreeBSD__
-	ARPSTAT_ADD(dropped, pkts_dropped);
-#else
-	(void) pkts_dropped; /* FIXME */
-#endif
+	arp_stat_add(ARP_STAT_DFRDROPPED, (uint64_t)pkts_dropped);
 }
 
 static int
@@ -1653,7 +1650,7 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 		    rt->rt_ifp->if_type != IFT_ETHER ||
 #ifdef __FreeBSD__
 		    (rt->rt_ifp->if_flags & (IFF_NOARP | IFF_STATICARP)) != 0 ||
-#else /* XXX */
+#else
 		    (rt->rt_ifp->if_flags & IFF_NOARP) != 0 ||
 #endif
 		    memcmp(rt->rt_gateway->sa_data, l3addr->sa_data,
@@ -1699,9 +1696,6 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 
 	error = 0;
 error:
-#ifdef __FreeBSD__
-	RTFREE_LOCKED(rt);
-#endif
 	return error;
 }
 
@@ -1773,9 +1767,6 @@ in_lltable_delete(struct lltable *llt, u_int flags,
 	if (!(lle->la_flags & LLE_IFADDR) || (flags & LLE_IFADDR)) {
 		LLE_WLOCK(lle);
 		lle->la_flags |= LLE_DELETED;
-#ifdef __FreeBSD__
-		EVENTHANDLER_INVOKE(lle_event, lle, LLENTRY_DELETED);
-#endif
 #ifdef DIAGNOSTIC
 		log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.1 2015/08/31 07:56:58 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.2 2015/08/31 08:05:20 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -373,6 +373,11 @@ lltable_free(struct lltable *llt)
 	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next) {
 		if (callout_stop(&lle->la_timer))
 			LLE_REMREF(lle);
+#if __NetBSD__
+		/* XXX should have callback? */
+		if (lle->la_rt != NULL)
+			rtfree(lle->la_rt);
+#endif
 		llentry_free(lle);
 	}
 
