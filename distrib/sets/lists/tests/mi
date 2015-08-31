@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.643 2015/08/27 12:59:36 rjs Exp $
+# $NetBSD: mi,v 1.644 2015/08/31 06:16:08 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3134,6 +3134,7 @@
 ./usr/tests/net/icmp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/icmp/t_forward			tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_forward			tests-net-tests		atf,rump
+./usr/tests/net/icmp/t_icmp_redirect		tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_ping			tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_ping2			tests-net-tests		atf,rump
 ./usr/tests/net/if				tests-net-tests		compattestfile,atf
