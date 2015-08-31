@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.61 2015/08/19 06:16:18 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.62 2015/08/31 10:41:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.61 2015/08/19 06:16:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.62 2015/08/31 10:41:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,7 +183,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -193,7 +193,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.usbrev = USBREV_UNKNOWN;
 		aprint_verbose_dev(self, "pre-2.0 USB rev\n");
-		return;
+		goto fail;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.usbrev = USBREV_2_0;
 		break;
