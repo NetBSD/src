@@ -1,4 +1,4 @@
-#	$NetBSD: t_arp.sh,v 1.8 2015/08/13 10:22:21 ozaki-r Exp $
+#	$NetBSD: t_arp.sh,v 1.9 2015/08/31 08:08:20 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -87,16 +87,12 @@ setup_dst_server()
 
 setup_src_server()
 {
-	local prune=$1
-	local keep=$2
+	local keep=$1
 
 	export RUMP_SERVER=$SOCKSRC
 
 	# Adjust ARP parameters
-	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.arp.prune=$prune
 	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.arp.keep=$keep
-	# Don't refresh to test expiration easily
-	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.arp.refresh=0
 
 	# Setup an interface
 	atf_check -s exit:0 rump.ifconfig shmif0 create
@@ -114,7 +110,6 @@ setup_src_server()
 
 test_cache_expiration()
 {
-	local arp_prune=1
 	local arp_keep=$1
 	local bonus=2
 
@@ -122,7 +117,7 @@ test_cache_expiration()
 	atf_check -s exit:0 ${inetserver} $SOCKDST
 
 	setup_dst_server
-	setup_src_server $arp_prune $arp_keep
+	setup_src_server $arp_keep
 
 	#
 	# Check if a cache is expired expectedly
@@ -135,7 +130,7 @@ test_cache_expiration()
 	# Should be cached
 	atf_check -s exit:0 -o ignore rump.arp -n $IP4DST
 
-	atf_check -s exit:0 sleep $(($arp_keep + $arp_prune + $bonus))
+	atf_check -s exit:0 sleep $(($arp_keep + $bonus))
 
 	$DEBUG && rump.arp -n -a
 	atf_check -s exit:0 -o ignore rump.arp -n $IP4SRC
@@ -155,7 +150,6 @@ cache_expiration_10s_body()
 
 command_body()
 {
-	local arp_prune=1
 	local arp_keep=5
 	local bonus=2
 
@@ -163,7 +157,7 @@ command_body()
 	atf_check -s exit:0 ${inetserver} $SOCKDST
 
 	setup_dst_server
-	setup_src_server $arp_prune $arp_keep
+	setup_src_server $arp_keep
 
 	export RUMP_SERVER=$SOCKSRC
 
@@ -224,7 +218,7 @@ command_body()
 	atf_check -s exit:0 -o not-match:'permanent' rump.arp -n 10.0.1.10
 
 	# Hm? the cache doesn't expire...
-	atf_check -s exit:0 sleep $(($arp_keep + $arp_prune + $bonus))
+	atf_check -s exit:0 sleep $(($arp_keep + $bonus))
 	$DEBUG && rump.arp -n -a
 	#atf_check -s not-exit:0 -e ignore rump.arp -n 10.0.1.10
 
@@ -279,7 +273,6 @@ garp_body()
 
 cache_overwriting_body()
 {
-	local arp_prune=1
 	local arp_keep=5
 	local bonus=2
 
@@ -287,7 +280,7 @@ cache_overwriting_body()
 	atf_check -s exit:0 ${inetserver} $SOCKDST
 
 	setup_dst_server
-	setup_src_server $arp_prune $arp_keep
+	setup_src_server $arp_keep
 
 	export RUMP_SERVER=$SOCKSRC
 
