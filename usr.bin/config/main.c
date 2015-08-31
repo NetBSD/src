@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.80 2015/08/30 01:33:20 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.81 2015/08/31 02:58:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.80 2015/08/30 01:33:20 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.81 2015/08/31 02:58:25 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -427,6 +427,12 @@ main(int argc, char **argv)
 	yyfile = "fixdevis";
 	if (fixdevis())
 		stop();
+
+	/*
+	 * Copy maxusers to param.
+	 */
+	yyfile = "fixmaxusers";
+	fixmaxusers();
 
 	/*
 	 * Copy makeoptions to params
@@ -1101,6 +1107,18 @@ appendcondmkoption(struct condexpr *cond, const char *name, const char *value)
 	nv = newnv(name, value, cond, 0, NULL);
 	*nextcndmkopt = nv;
 	nextcndmkopt = &nv->nv_next;
+}
+
+/*
+ * Copy maxusers to param "MAXUSERS".
+ */
+void
+fixmaxusers(void)
+{
+	char str[32];
+
+	snprintf(str, sizeof(str), "%d", maxusers);
+	addoption(intern("MAXUSERS"), intern(str));
 }
 
 /*

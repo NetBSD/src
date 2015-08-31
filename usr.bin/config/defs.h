@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.73 2015/08/30 21:58:19 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.74 2015/08/31 02:58:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20150833
+#define CONFIG_VERSION		20150834
 #define CONFIG_MINVERSION	0
 
 /*
@@ -610,6 +610,7 @@ int	devbase_has_instances(struct devbase *, int);
 int	is_declared_option(const char *);
 int	deva_has_instances(struct deva *, int);
 void	setupdirs(void);
+void	fixmaxusers(void);
 void	fixmkoption(void);
 const char *strtolower(const char *);
 
