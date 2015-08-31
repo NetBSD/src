@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.12 2015/08/30 12:59:59 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.13 2015/08/31 06:12:55 uebayasi Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.12 2015/08/30 12:59:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.13 2015/08/31 06:12:55 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -797,7 +797,7 @@ int dwc2_hcd_qtd_add(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		     struct dwc2_qh *qh)
 {
 
-	KASSERT(mutex_owned(hsotg->lock));
+	KASSERT(mutex_owned(&hsotg->lock));
 	int retval;
 
 	if (unlikely(!qh)) {
