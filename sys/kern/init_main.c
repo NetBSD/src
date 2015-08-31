@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.468 2015/08/31 08:02:44 ozaki-r Exp $	*/
+/*	$NetBSD: init_main.c,v 1.469 2015/08/31 16:46:14 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.468 2015/08/31 08:02:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.469 2015/08/31 16:46:14 ozaki-r Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -121,6 +121,7 @@ extern void *_binary_splash_image_end;
 #endif
 
 #include "drvctl.h"
+#include "ether.h"
 #include "ksyms.h"
 
 #include "veriexec.h"
@@ -566,7 +567,9 @@ main(void)
 	 */
 	s = splnet();
 	ifinit();
+#if NETHER > 0
 	lltableinit();
+#endif
 	domaininit(true);
 	if_attachdomain();
 	splx(s);
