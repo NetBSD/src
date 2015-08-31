@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2015/07/30 10:26:14 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2015/08/31 09:34:07 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -33,12 +33,12 @@ SRCS+=	netbsd32_exec_elf32.c
 SRCS+=	netbsd32_execve.c netbsd32_fs.c
 SRCS+=	netbsd32_ioctl.c netbsd32_ipc.c
 SRCS+=	netbsd32_lwp.c netbsd32_netbsd.c
-SRCS+=	netbsd32_select.c
+SRCS+=	netbsd32_select.c netbsd32_nfssvc.c
 SRCS+=	netbsd32_sem.c netbsd32_signal.c
 SRCS+=	netbsd32_socket.c netbsd32_syscalls.c
 SRCS+=	netbsd32_sysctl.c netbsd32_sysent.c
 SRCS+=	netbsd32_time.c netbsd32_wait.c
-SRCS+=	netbsd32_mod.c
+SRCS+=	netbsd32_mod.c netbsd32_mqueue.c netbsd32_module.c
 
 .if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "powerpc"
 CPPFLAGS+=	-DEXEC_AOUT -DCOMPAT_NOMID
