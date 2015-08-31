@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.4 2015/04/07 07:11:58 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.5 2015/08/31 08:33:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -31,10 +31,12 @@
 
 #include <sys/pool.h>
 
+#define XHCI_XFER_NTRB	20
+
 struct xhci_xfer {
 	struct usbd_xfer xx_xfer;
 	struct usb_task xx_abort_task;
-	struct xhci_trb xx_trb[20];
+	struct xhci_trb xx_trb[XHCI_XFER_NTRB];
 };
 
 struct xhci_ring {
@@ -62,7 +64,6 @@ struct xhci_slot {
 struct xhci_softc {
 	device_t sc_dev;
 	device_t sc_child;
-	void *sc_ih;
 	bus_size_t sc_ios;
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_ioh;	/* Base */
@@ -75,6 +76,9 @@ struct xhci_softc {
 	kmutex_t sc_lock;
 	kmutex_t sc_intr_lock;
 	kcondvar_t sc_softwake_cv;
+
+	char sc_vendor[32];		/* vendor string for root hub */
+	int sc_id_vendor;		/* vendor ID for root hub */
 
 	struct usbd_xfer *sc_intrxfer;
 
@@ -109,6 +113,9 @@ struct xhci_softc {
 
 	bool sc_ac64;
 	bool sc_dying;
+
+	void (*sc_vendor_init)(struct xhci_softc *);
+	int (*sc_vendor_port_status)(struct xhci_softc *, uint32_t, int);
 
 	int sc_quirks;
 #define XHCI_QUIRK_FORCE_INTR	__BIT(0) /* force interrupt reading */
