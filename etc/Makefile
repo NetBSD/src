@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.423 2015/07/23 08:03:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.424 2015/08/31 06:08:07 uebayasi Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -571,7 +571,7 @@ build_kernels: .PHONY
 # (e.g. Linux) when building on NFS.
 #
 .if !defined(KERNELS_DONE)						# {
-.for configfile in ${ALL_KERNELS}					# {
+.for configfile in ${ALL_KERNELS:O:u}					# {
 build_kernels: kern-${configfile}
 kern-${configfile}: .PHONY .MAKE
 	cd ${KERNCONFDIR} && ${TOOL_CONFIG} ${CONFIGOPTS} -s ${KERNSRCDIR} \
@@ -588,8 +588,8 @@ build_kernelsets: .PHONY
 #	Create kernel sets from ${KERNEL_SETS} into
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets
 #
-.for configfile in ${KERNEL_SETS}					# {
-.for configsel in ${ALL_KERNELS}
+.for configfile in ${KERNEL_SETS:O:u}					# {
+.for configsel in ${ALL_KERNELS:O:u}
 .if ${configfile} == ${configsel}
 build_kernelsets: kernset-${configfile}
 kernset-${configfile}: .PHONY build_kernels snap_pre
@@ -626,8 +626,8 @@ build_releasekernels: .PHONY
 #	Build kernel.gz from ${KERNEL_SETS} ${EXTRA_KERNELS} into
 #	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel
 #
-.for configfile in ${KERNEL_SETS} ${EXTRA_KERNELS}			# {
-.for configsel in ${ALL_KERNELS}
+.for configfile in ${KERNEL_SETS:O:u} ${EXTRA_KERNELS:O:u}		# {
+.for configsel in ${ALL_KERNELS:O:u}
 .if ${configfile} == ${configsel}
 build_releasekernels: releasekern-${configfile}
 releasekern-${configfile}: .PHONY build_kernels snap_pre
