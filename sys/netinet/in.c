@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.159 2015/08/31 08:05:20 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.160 2015/08/31 09:21:55 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.159 2015/08/31 08:05:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.160 2015/08/31 09:21:55 ozaki-r Exp $");
 
 #include "arp.h"
 
@@ -1604,7 +1604,7 @@ in_lltable_match_prefix(const struct sockaddr *prefix,
 static void
 in_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
-	struct ifnet *ifp;
+	struct ifnet *ifp __diagused;
 	size_t pkts_dropped;
 
 	LLE_WLOCK_ASSERT(lle);
@@ -1749,7 +1749,7 @@ in_lltable_delete(struct lltable *llt, u_int flags,
     const struct sockaddr *l3addr)
 {
 	const struct sockaddr_in *sin = (const struct sockaddr_in *)l3addr;
-	struct ifnet *ifp = llt->llt_ifp;
+	struct ifnet *ifp __diagused = llt->llt_ifp;
 	struct llentry *lle;
 
 	IF_AFDATA_WLOCK_ASSERT(ifp);
