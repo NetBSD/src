@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.17 2015/01/23 03:39:39 chs Exp $
+#	$NetBSD: Makefile.cesfic,v 1.18 2015/08/31 05:46:41 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -78,7 +78,7 @@ TEXTADDR?=	2000
 
 %CFILES
 
-#%SFILES
+%SFILES
 
 %LOAD
 
