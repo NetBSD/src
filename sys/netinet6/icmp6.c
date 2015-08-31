@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.175 2015/08/24 22:21:27 pooka Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.176 2015/08/31 06:25:15 ozaki-r Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.175 2015/08/24 22:21:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.176 2015/08/31 06:25:15 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2714,8 +2714,10 @@ icmp6_mtudisc_clone(struct sockaddr *dst)
 static void
 icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp6_mtudisc_timeout: bad route to timeout");
+
+	KASSERT(rt != NULL);
+	rt_assert_referenced(rt);
+
 	if ((rt->rt_flags & (RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),
@@ -2729,8 +2731,10 @@ icmp6_mtudisc_timeout(struct rtentry *rt, struct rttimer *r)
 static void
 icmp6_redirect_timeout(struct rtentry *rt, struct rttimer *r)
 {
-	if (rt == NULL)
-		panic("icmp6_redirect_timeout: bad route to timeout");
+
+	KASSERT(rt != NULL);
+	rt_assert_referenced(rt);
+
 	if ((rt->rt_flags & (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) ==
 	    (RTF_GATEWAY | RTF_DYNAMIC | RTF_HOST)) {
 		rtrequest((int) RTM_DELETE, rt_getkey(rt),

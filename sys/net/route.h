@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.93 2015/08/24 04:44:54 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.94 2015/08/31 06:25:15 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -410,6 +410,13 @@ rt_get_gwroute(struct rtentry *rt)
 		return NULL;
 	rt->rt_gwroute->rt_refcnt++;
 	return rt->rt_gwroute;
+}
+
+static inline void
+rt_assert_referenced(const struct rtentry *rt)
+{
+
+	KASSERT(rt->rt_refcnt > 0);
 }
 
 void	rtcache_copy(struct route *, const struct route *);
