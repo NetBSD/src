@@ -1,4 +1,4 @@
-/*	$NetBSD: in_var.h,v 1.72 2015/05/16 12:12:46 roy Exp $	*/
+/*	$NetBSD: in_var.h,v 1.73 2015/08/31 08:02:44 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -204,7 +204,17 @@ extern	const	int	inetctlerrmap[];
 	} \
 	(ia) = ifatoia(ifa); \
 }
-#endif
+
+#include <netinet/in_selsrc.h>
+/*
+ * IPv4 per-interface state.
+ */
+struct in_ifinfo {
+	struct lltable		*ii_llt;	/* ARP state */
+	struct in_ifsysctl	*ii_selsrc;
+};
+
+#endif /* _KERNEL */
 
 /*
  * Internet multicast address structure.  There is one of these for each IP
