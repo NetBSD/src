@@ -1,4 +1,4 @@
-# 	$NetBSD: Makefile.sparc64,v 1.79 2015/08/30 18:20:27 martin Exp $
+# 	$NetBSD: Makefile.sparc64,v 1.80 2015/08/31 08:00:44 martin Exp $
 
 #=========================================================================
 #
@@ -72,7 +72,7 @@ CPPFLAGS+=	-m32 -Wa,-Av8plusa -mcpu=ultrasparc
 AFLAGS+=	-Wa,-Av8plusa
 .endif
 CFLAGS+=	-mno-fpu
-AFLAGS+=	-x assembler-with-cpp ${INCLUDES}
+AFLAGS+=	-x assembler-with-cpp
 
 ##
 ## (3) libkern and compat
