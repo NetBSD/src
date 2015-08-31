@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.4.2.3 2015/05/27 07:22:51 skrll Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.4.2.4 2015/08/31 08:33:03 skrll Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.3 2015/05/27 07:22:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.4.2.4 2015/08/31 08:33:03 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,7 @@ struct xhci_pci_softc {
 	struct xhci_softc	sc_xhci;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_tag;
+	void			*sc_ih;
 };
 
 static int
@@ -144,7 +145,6 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr, memtype;
 	int err;
-	//const char *vendor;
 	uint32_t hccparams;
 	char intrbuf[PCI_INTRSTR_LEN];
 
@@ -160,7 +160,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	/* check if memory space access is enabled */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
 #ifdef DEBUG
-	printf("csr: %08x\n", csr);
+	printf("%s: csr: %08x\n", __func__, csr);
 #endif
 	if ((csr & PCI_COMMAND_MEM_ENABLE) == 0) {
 		aprint_error_dev(self, "memory access is disabled\n");
@@ -208,8 +208,8 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, xhci_intr, sc);
-	if (sc->sc_ih == NULL) {
+	psc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, xhci_intr, sc);
+	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
@@ -218,12 +218,10 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-#if 0
 	/* Figure out vendor for root hub descriptor. */
 	sc->sc_id_vendor = PCI_VENDOR(pa->pa_id);
 	pci_findvendor(sc->sc_vendor, sizeof(sc->sc_vendor),
 	    sc->sc_id_vendor);
-#endif
 
 	/* Intel chipset requires SuperSpeed enable and USB2 port routing */
 	switch (PCI_VENDOR(pa->pa_id)) {
@@ -252,9 +250,9 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 	return;
 
 fail:
-	if (sc->sc_ih) {
-		pci_intr_disestablish(psc->sc_pc, sc->sc_ih);
-		sc->sc_ih = NULL;
+	if (psc->sc_ih) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
 	}
 	if (sc->sc_ios) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
@@ -286,9 +284,9 @@ xhci_pci_detach(device_t self, int flags)
 #endif
 	}
 
-	if (sc->sc_ih != NULL) {
-		pci_intr_disestablish(psc->sc_pc, sc->sc_ih);
-		sc->sc_ih = NULL;
+	if (psc->sc_ih != NULL) {
+		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
+		psc->sc_ih = NULL;
 	}
 	if (sc->sc_ios) {
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);

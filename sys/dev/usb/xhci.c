@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.33 2015/06/26 15:51:05 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.34 2015/08/31 08:33:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.33 2015/06/26 15:51:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.34 2015/08/31 08:33:03 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -493,9 +493,9 @@ static inline void
 xhci_trb_put(struct xhci_trb * const trb, uint64_t parameter, uint32_t status,
     uint32_t control)
 {
-	trb->trb_0 = parameter;
-	trb->trb_2 = status;
-	trb->trb_3 = control;
+	trb->trb_0 = htole64(parameter);
+	trb->trb_2 = htole32(status);
+	trb->trb_3 = htole32(control);
 }
 
 /* --- */
@@ -775,6 +775,9 @@ xhci_init(struct xhci_softc *sc)
 	if (i >= 100)
 		return EIO;
 
+	if (sc->sc_vendor_init)
+		sc->sc_vendor_init(sc);
+
 	pagesize = xhci_op_read_4(sc, XHCI_PAGESIZE);
 	aprint_debug_dev(sc->sc_dev, "PAGESIZE 0x%08x\n", pagesize);
 	pagesize = ffs(pagesize);
@@ -879,7 +882,7 @@ xhci_init(struct xhci_softc *sc)
 
 	cv_init(&sc->sc_command_cv, "xhcicmd");
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_softwake_cv, "xhciab");
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct xhci_xfer), 0, 0, 0,
@@ -979,6 +982,7 @@ xhci_intr1(struct xhci_softc * const sc)
 	iman = xhci_rt_read_4(sc, XHCI_IMAN(0));
 	DPRINTFN(16, "IMAN0 %08x", iman, 0, 0, 0);
 
+	/* XXX 4.17.5 IP may be 0 if MSI/MSI-X is used */
 	if (!(sc->sc_quirks & XHCI_QUIRK_FORCE_INTR)) {
 		if ((iman & XHCI_IMAN_INTR_PEND) == 0) {
 			return 0;
@@ -2298,8 +2302,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 		status = 0;
 		control = XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_LINK) |
 		    XHCI_TRB_3_TC_BIT | (cs ? XHCI_TRB_3_CYCLE_BIT : 0);
-		xhci_trb_put(&xr->xr_trb[ri], htole64(parameter),
-		    htole32(status), htole32(control));
+		xhci_trb_put(&xr->xr_trb[ri], parameter, status, control);
 		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
 		    BUS_DMASYNC_PREWRITE);
 		xr->xr_cookies[ri] = NULL;
@@ -2323,8 +2326,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 			control &= ~XHCI_TRB_3_CYCLE_BIT;
 		}
 
-		xhci_trb_put(&xr->xr_trb[ri], htole64(parameter),
-		    htole32(status), htole32(control));
+		xhci_trb_put(&xr->xr_trb[ri], parameter, status, control);
 		usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
 		    BUS_DMASYNC_PREWRITE);
 		xr->xr_cookies[ri] = cookie;
@@ -2343,8 +2345,7 @@ xhci_ring_put(struct xhci_softc * const sc, struct xhci_ring * const xr,
 		control &= ~XHCI_TRB_3_CYCLE_BIT;
 	}
 
-	xhci_trb_put(&xr->xr_trb[xr->xr_ep], htole64(parameter),
-	    htole32(status), htole32(control));
+	xhci_trb_put(&xr->xr_trb[xr->xr_ep], parameter, status, control);
 	usb_syncmem(&xr->xr_dma, XHCI_TRB_SIZE * ri, XHCI_TRB_SIZE * 1,
 	    BUS_DMASYNC_PREWRITE);
 	xr->xr_cookies[xr->xr_ep] = cookie;
@@ -2716,7 +2717,19 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (len == 0)
 			break;
 		switch (value) {
+		case C(0, UDESC_DEVICE): {
+			usb_device_descriptor_t devd;
+			totlen = min(buflen, sizeof(devd));
+			memcpy(&devd, buf, totlen);
+			USETW(devd.idVendor, sc->sc_id_vendor);
+			memcpy(buf, &devd, totlen);
+			break;
+		}
 #define sd ((usb_string_descriptor_t *)buf)
+		case C(1, UDESC_STRING):
+			/* Vendor */
+			totlen = usb_makestrdesc(sd, len, sc->sc_vendor);
+			break;
 		case C(2, UDESC_STRING):
 			/* Product */
 			totlen = usb_makestrdesc(sd, len, "xHCI Root Hub");
@@ -2825,6 +2838,8 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		}
 		if (i & UPS_OTHER_SPEED)
 			i |= UPS_PORT_LS_SET(XHCI_PS_PLS_GET(v));
+		if (sc->sc_vendor_port_status)
+			i = sc->sc_vendor_port_status(sc, v, i);
 		USETW(ps.wPortStatus, i);
 		i = 0;
 		if (v & XHCI_PS_CSC)    i |= UPS_C_CONNECT_STATUS;
@@ -3027,7 +3042,7 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 	struct xhci_ring * const tr = &xs->xs_ep[dci].xe_tr;
 	struct xhci_xfer * const xx = (void *)xfer;
 	usb_device_request_t * const req = &xfer->ux_request;
-	const bool isread = UT_GET_DIR(req->bmRequestType) == UT_READ;
+	const int isread = usbd_xfer_isread(xfer);
 	const uint32_t len = UGETW(req->wLength);
 	usb_dma_t * const dma = &xfer->ux_dmabuf;
 	uint64_t parameter;
@@ -3058,7 +3073,6 @@ xhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	/* setup phase */
 	memcpy(&parameter, req, sizeof(*req));
-	parameter = le64toh(parameter);
 	status = XHCI_TRB_2_IRQ_SET(0) | XHCI_TRB_2_BYTES_SET(sizeof(*req));
 	control = ((len == 0) ? XHCI_TRB_3_TRT_NONE :
 	     (isread ? XHCI_TRB_3_TRT_IN : XHCI_TRB_3_TRT_OUT)) |
@@ -3238,8 +3252,7 @@ xhci_device_bulk_done(struct usbd_xfer *xfer)
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 #endif
-	const u_int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
-	const bool isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+	const int isread = usbd_xfer_isread(xfer);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
@@ -3348,8 +3361,7 @@ xhci_device_intr_done(struct usbd_xfer *xfer)
 	struct xhci_slot * const xs = xfer->ux_pipe->up_dev->ud_hcpriv;
 	const u_int dci = xhci_ep_get_dci(xfer->ux_pipe->up_endpoint->ue_edesc);
 #endif
-	const u_int endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
-	const bool isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+	const int isread = usbd_xfer_isread(xfer);
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
