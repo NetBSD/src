@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.24.2.7 2015/02/27 07:19:22 snj Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.24.2.8 2015/08/31 01:53:54 snj Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.24.2.7 2015/02/27 07:19:22 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.24.2.8 2015/08/31 01:53:54 snj Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -912,7 +912,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	data->td_active = map;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 
 	/* Pass first to device */
 	sc->sc_txq.t_desc[first].ddesc_status =
