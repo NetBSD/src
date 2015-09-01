@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.19 2015/09/01 06:12:04 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.20 2015/09/01 06:12:33 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -208,12 +208,16 @@
 /*
  * Maximum length of a symlink that can be stored within the inode.
  */
-#define ULFS1_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int32_t))
-#define ULFS2_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int64_t))
+#define LFS32_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int32_t))
+#define LFS64_MAXSYMLINKLEN	((ULFS_NDADDR + ULFS_NIADDR) * sizeof(int64_t))
 
+#define LFS_MAXSYMLINKLEN(fs) \
+	((fs)->lfs_is64 ? LFS64_MAXSYMLINKLEN : LFS32_MAXSYMLINKLEN)
+
+/* get rid of this eventually */
 #define ULFS_MAXSYMLINKLEN(ip) \
 	((ip)->i_ump->um_fstype == ULFS1) ? \
-	ULFS1_MAXSYMLINKLEN : ULFS2_MAXSYMLINKLEN
+	LFS32_MAXSYMLINKLEN : LFS64_MAXSYMLINKLEN
 
 #define DINOSIZE(fs) ((fs)->lfs_is64 ? sizeof(struct lfs64_dinode) : sizeof(struct lfs32_dinode))
 

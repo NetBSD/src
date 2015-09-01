@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.57 2015/09/01 06:12:04 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.58 2015/09/01 06:12:33 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -394,10 +394,10 @@ setup(const char *dev)
 			sbdirty();
 		}
 	}
-	if (lfs_sb_getmaxsymlinklen(fs) != ULFS1_MAXSYMLINKLEN) {
+	if (lfs_sb_getmaxsymlinklen(fs) != LFS_MAXSYMLINKLEN(fs)) {
 		pwarn("INCORRECT MAXSYMLINKLEN=%d IN SUPERBLOCK (SHOULD BE %zu)",
-		    lfs_sb_getmaxsymlinklen(fs), ULFS1_MAXSYMLINKLEN);
-		lfs_sb_setmaxsymlinklen(fs, ULFS1_MAXSYMLINKLEN);
+		    lfs_sb_getmaxsymlinklen(fs), LFS_MAXSYMLINKLEN(fs));
+		lfs_sb_setmaxsymlinklen(fs, LFS_MAXSYMLINKLEN(fs));
 		if (preen)
 			printf(" (FIXED)\n");
 		if (preen || reply("FIX") == 1) {
