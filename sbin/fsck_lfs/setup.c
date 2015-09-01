@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.55 2015/08/12 18:28:00 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.56 2015/09/01 06:08:37 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -413,11 +413,11 @@ setup(const char *dev)
 	 * XXX dirty while we do the rest.
 	 */
 	ivp = fs->lfs_ivnode;
-	maxino = ((VTOI(ivp)->i_ffs1_size - (lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs))
+	maxino = ((lfs_dino_getsize(fs, VTOI(ivp)->i_din) - (lfs_sb_getcleansz(fs) + lfs_sb_getsegtabsz(fs))
 		* lfs_sb_getbsize(fs)) / lfs_sb_getbsize(fs)) * lfs_sb_getifpb(fs);
 	if (debug)
 		pwarn("maxino    = %llu\n", (unsigned long long)maxino);
-	for (i = 0; i < VTOI(ivp)->i_ffs1_size; i += lfs_sb_getbsize(fs)) {
+	for (i = 0; i < lfs_dino_getsize(fs, VTOI(ivp)->i_din); i += lfs_sb_getbsize(fs)) {
 		bread(ivp, i >> lfs_sb_getbshift(fs), lfs_sb_getbsize(fs), 0, &bp);
 		/* XXX check B_ERROR */
 		brelse(bp, 0);

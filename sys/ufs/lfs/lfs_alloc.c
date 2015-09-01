@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.128 2015/08/29 21:04:22 mlelstv Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.129 2015/09/01 06:08:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.128 2015/08/29 21:04:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.129 2015/09/01 06:08:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -135,7 +135,7 @@ lfs_extend_ifile(struct lfs *fs, kauth_cred_t cred)
 		return (error);
 	}
 	ip->i_size += lfs_sb_getbsize(fs);
-	ip->i_ffs1_size = ip->i_size;
+	lfs_dino_setsize(fs, ip->i_din, ip->i_size);
 	uvm_vnp_setsize(vp, ip->i_size);
 
 	maxino = ((ip->i_size >> lfs_sb_getbshift(fs)) - lfs_sb_getcleansz(fs) -
