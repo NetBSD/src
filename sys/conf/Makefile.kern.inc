@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.216 2015/08/30 21:16:10 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.217 2015/09/01 16:04:04 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -216,7 +216,11 @@ SYSLIBCOMPATLN?=	${COMPATLIBLN}
 ## MD_CFILES, MD_SFILES, and MD_OBJS, along with build rules for same.
 ##
 
-MI_CFILES=devsw.c ioconf.c param.c
+MI_CFILES=	param.c
+.if !defined(___USE_SUFFIX_RULES___)
+MI_CFILES+=	devsw.c ioconf.c
+.endif
+
 # the need for a MI_SFILES variable is dubitable at best
 MI_OBJS=${MI_CFILES:S/.c/.o/}
 
@@ -504,7 +508,11 @@ CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 .if !defined(COPY_SYMTAB)
 build_kernel: .USE
 	${SYSTEM_LD_HEAD}
+.if !defined(___USE_SUFFIX_RULES___)
 	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o
+.else
+	${SYSTEM_LD} ${.TARGET}
+.endif
 	${SYSTEM_LD_TAIL_STAGE2}
 .else
 .for k in ${KERNELS}
@@ -514,13 +522,21 @@ build_kernel: .USE
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf.o
 	${SYSTEM_LD_HEAD}
+.if !defined(___USE_SUFFIX_RULES___)
 	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o kern_ksyms_buf.o
+.else
+	${SYSTEM_LD} ${.TARGET} kern_ksyms_buf.o
+.endif
 	${SYSTEM_LD_TAIL_STAGE1}
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -DSYMTAB_SPACE=$$(${DBSYM} -P ${.TARGET}${TARGETSFX}) \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf_real.o
 	${SYSTEM_LD_HEAD}
+.if !defined(___USE_SUFFIX_RULES___)
 	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o kern_ksyms_buf_real.o
+.else
+	${SYSTEM_LD} ${.TARGET} kern_ksyms_buf_real.o
+.endif
 	${SYSTEM_LD_TAIL_STAGE2}
 .endif
 
