@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.46 2015/09/01 06:13:33 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.47 2015/09/01 06:13:57 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ static int nnewblocks;
  * Account for this change in the segment table.
  */
 static void
-rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, size_t size)
+rfw_update_single(struct uvnode *vp, daddr_t lbn, daddr_t ndaddr, size_t size)
 {
 	SEGUSE *sup;
 	struct ubuf *bp;
@@ -260,7 +260,7 @@ remove_ino(struct uvnode *vp, ino_t ino)
  * Use FIP records to update blocks, if the generation number matches.
  */
 static void
-pass6harvest(ulfs_daddr_t daddr, FINFO *fip)
+pass6harvest(daddr_t daddr, FINFO *fip)
 {
 	struct uvnode *vp;
 	int i;

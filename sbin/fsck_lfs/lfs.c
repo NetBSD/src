@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.61 2015/09/01 06:13:33 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.62 2015/09/01 06:13:57 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -579,14 +579,14 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
  * or "goal" if we reached it without failure (the partial segment *at* goal
  * need not be valid).
  */
-ulfs_daddr_t
-try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
+daddr_t
+try_verify(struct lfs *osb, struct uvnode *devvp, daddr_t goal, int debug)
 {
-	ulfs_daddr_t daddr, odaddr;
+	daddr_t daddr, odaddr;
 	SEGSUM *sp;
 	int i, bc, hitclean;
 	struct ubuf *bp;
-	ulfs_daddr_t nodirop_daddr;
+	daddr_t nodirop_daddr;
 	u_int64_t serial;
 
 	bc = 0;
@@ -603,6 +603,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 			if (daddr == lfs_sb_gets0addr(osb))
 				daddr += lfs_btofsb(osb, LFS_LABELPAD);
 			for (i = 0; i < LFS_MAXNUMSB; i++) {
+				/* XXX dholland 20150828 I think this is wrong */
 				if (lfs_sb_getsboff(osb, i) < daddr)
 					break;
 				if (lfs_sb_getsboff(osb, i) == daddr)
@@ -694,7 +695,7 @@ try_verify(struct lfs *osb, struct uvnode *devvp, ulfs_daddr_t goal, int debug)
 struct lfs *
 lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 {
-	ulfs_daddr_t daddr;
+	daddr_t daddr;
 	struct lfs *osb, *nsb;
 
 	/*
@@ -753,14 +754,14 @@ lfs_verify(struct lfs *sb0, struct lfs *sb1, struct uvnode *devvp, int debug)
 
 /* Verify a partial-segment summary; return the number of bytes on disk. */
 int
-check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
-	      struct uvnode *devvp, void (func(ulfs_daddr_t, FINFO *)))
+check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
+	      struct uvnode *devvp, void (func(daddr_t, FINFO *)))
 {
 	FINFO *fp;
 	int bc;			/* Bytes in partial segment */
 	int nblocks;
-	ulfs_daddr_t daddr;
-	ulfs_daddr_t *dp, *idp;
+	daddr_t daddr;
+	uint32_t *dp, *idp; // XXX ondisk32
 	struct ubuf *bp;
 	int i, j, k, datac, len;
 	u_int32_t *datap;
@@ -786,8 +787,8 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 	datap = emalloc(nblocks * sizeof(*datap));
 	datac = 0;
 
-	dp = (ulfs_daddr_t *) sp;
-	dp += lfs_sb_getsumsize(fs) / sizeof(ulfs_daddr_t);
+	dp = (uint32_t *) sp; /* XXX ondisk32 */
+	dp += lfs_sb_getsumsize(fs) / sizeof(*dp);
 	dp--;
 
 	idp = dp;
@@ -796,13 +797,13 @@ check_summary(struct lfs *fs, SEGSUM *sp, ulfs_daddr_t pseg_addr, int debug,
 	for (i = 0, j = 0;
 	     i < lfs_ss_getnfinfo(fs, sp) || j < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)); i++) {
 		if (i >= lfs_ss_getnfinfo(fs, sp) && *idp != daddr) {
-			pwarn("Not enough inode blocks in pseg at 0x%" PRIx32
-			      ": found %d, wanted %d\n",
+			pwarn("Not enough inode blocks in pseg at 0x%jx: "
+			      "found %d, wanted %d\n",
 			      pseg_addr, j, howmany(lfs_ss_getninos(fs, sp),
 						    LFS_INOPB(fs)));
 			if (debug)
-				pwarn("*idp=%x, daddr=%" PRIx32 "\n", *idp,
-				      daddr);
+				pwarn("*idp=0x%jx, daddr=0x%jx\n",
+				    (uintmax_t)*idp, (intmax_t)daddr);
 			break;
 		}
 		while (j < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)) && *idp == daddr) {
