@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.51 2015/09/01 06:10:16 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.52 2015/09/01 06:12:04 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -1017,10 +1017,10 @@ check_hidden_cost(struct clfs *fs, BLOCK_INFO *bip, int bic, off_t *ifc)
 			/*
 			 * Look for IFILE blocks, unless this is the Ifile.
 			 */
-			if (bip[i].bi_inode != lfs_sb_getifile(fs)) {
+			if (bip[i].bi_inode != LFS_IFILE_INUM) {
 				lbn = lfs_sb_getcleansz(fs) + bip[i].bi_inode /
 							lfs_sb_getifpb(fs);
-				*ifc += check_or_add(lfs_sb_getifile(fs), lbn,
+				*ifc += check_or_add(LFS_IFILE_INUM, lbn,
 						     bip, bic, &ebip, &ebic);
 			}
 		}
