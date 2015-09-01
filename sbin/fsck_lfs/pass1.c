@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.42 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.43 2015/09/01 06:12:04 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -112,7 +112,7 @@ pass1(void)
 	for (i = 0; i < maxino; i++) {
 		dins[i] = emalloc(sizeof(**dins));
 		dins[i]->ino = i;
-		if (i == lfs_sb_getifile(fs))
+		if (i == LFS_IFILE_INUM)
 			dins[i]->daddr = lfs_sb_getidaddr(fs);
 		else {
 			LFS_IENTRY(ifp, fs, i, bp);

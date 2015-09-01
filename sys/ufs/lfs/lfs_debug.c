@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_debug.c,v 1.53 2015/09/01 06:11:06 dholland Exp $	*/
+/*	$NetBSD: lfs_debug.c,v 1.54 2015/09/01 06:12:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.53 2015/09/01 06:11:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_debug.c,v 1.54 2015/09/01 06:12:04 dholland Exp $");
 
 #ifdef DEBUG
 
@@ -176,10 +176,9 @@ lfs_dump_super(struct lfs *lfsp)
 	printf("\n");
 
 	printf("Checkpoint Info\n");
-	printf("%s%ju\t%s%jx\t%s%d\n",
+	printf("%s%ju\t%s%jx\n",
 	       "freehd	 ", (uintmax_t)lfs_sb_getfreehd(lfsp),
-	       "idaddr	 ", (intmax_t)lfs_sb_getidaddr(lfsp),
-	       "ifile	 ", lfs_sb_getifile(lfsp));
+	       "idaddr	 ", (intmax_t)lfs_sb_getidaddr(lfsp));
 	printf("%s%jx\t%s%ju\t%s%jx\t%s%jx\t%s%jx\t%s%jx\n",
 	       "bfree	 ", (intmax_t)lfs_sb_getbfree(lfsp),
 	       "nfiles	 ", (uintmax_t)lfs_sb_getnfiles(lfsp),
@@ -188,6 +187,12 @@ lfs_dump_super(struct lfs *lfsp)
 	       "curseg	 ", (intmax_t)lfs_sb_getcurseg(lfsp),
 	       "offset	 ", (intmax_t)lfs_sb_getoffset(lfsp));
 	printf("tstamp	 %llx\n", (long long)lfs_sb_gettstamp(lfsp));
+
+	if (!lfsp->lfs_is64) {
+		printf("32-bit only derived or constant fields\n");
+		printf("%s%u\n",
+		       "ifile	 ", lfs_sb_getifile(lfsp));
+	}
 }
 
 void

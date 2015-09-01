@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.56 2015/09/01 06:11:06 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.57 2015/09/01 06:12:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.56 2015/09/01 06:11:06 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.57 2015/09/01 06:12:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -816,10 +816,9 @@ dump_super(struct lfs *lfsp)
   	(void)printf("\n");
  	
  	(void)printf("  Checkpoint Info\n");
- 	(void)printf("    %s%-10ju  %s0x%-8jx  %s%-10ju\n",
+ 	(void)printf("    %s%-10ju  %s0x%-8jx\n",
  		     "freehd   ", (uintmax_t)lfs_sb_getfreehd(lfsp),
- 		     "idaddr   ", (intmax_t)lfs_sb_getidaddr(lfsp),
- 		     "ifile    ", (uintmax_t)lfs_sb_getifile(lfsp));
+ 		     "idaddr   ", (intmax_t)lfs_sb_getidaddr(lfsp));
  	(void)printf("    %s%-10d  %s%-10jd  %s%-10jd\n",
  		     "uinodes  ", lfs_sb_getuinodes(lfsp),
  		     "bfree    ", (intmax_t)lfs_sb_getbfree(lfsp),
@@ -834,6 +833,12 @@ dump_super(struct lfs *lfsp)
 		     "serial   ", (uintmax_t)lfs_sb_getserial(lfsp));
 	stamp = lfs_sb_gettstamp(lfsp);
  	(void)printf("    tstamp   %s", ctime(&stamp));
+
+	if (!lfsp->lfs_is64) {
+		(void)printf("  32-bit only derived or constant fields\n");
+		(void)printf("    %s%-10u\n",
+ 		     "ifile    ", lfs_sb_getifile(lfsp));
+	}
 }
 
 static void
