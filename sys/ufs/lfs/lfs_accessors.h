@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.21 2015/09/01 06:13:09 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.22 2015/09/01 06:16:59 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -200,6 +200,157 @@
 #define LFS_SWAP_uint64_t(fs, val) \
 	((fs)->lfs_dobyteswap ? bswap64(val) : (val))
 #endif
+
+/*
+ * For handling directories we will need to know if the volume is
+ * little-endian.
+ */
+#if BYTE_ORDER == LITTLE_ENDIAN
+#define LFS_LITTLE_ENDIAN_ONDISK(fs) (!(fs)->lfs_dobyteswap)
+#else
+#define LFS_LITTLE_ENDIAN_ONDISK(fs) ((fs)->lfs_dobyteswap)
+#endif
+
+
+/*
+ * directories
+ */
+
+/*
+ * The LFS_DIRSIZ macro gives the minimum record length which will hold
+ * the directory entry.  This requires the amount of space in struct lfs_direct
+ * without the d_name field, plus enough space for the name with a terminating
+ * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
+ */
+#define	LFS_DIRECTSIZ(namlen) \
+	((sizeof(struct lfs_direct) - (LFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+#define LFS_OLDDIRSIZ(oldfmt, dp, needswap)	\
+    (((oldfmt) && !(needswap)) ?		\
+    LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
+#else
+#define LFS_OLDDIRSIZ(oldfmt, dp, needswap)	\
+    (((oldfmt) && (needswap)) ?			\
+    LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
+#endif
+
+#define LFS_DIRSIZ(fs, dp) LFS_DIRECTSIZ(lfs_dir_getnamlen(fs, dp))
+
+/* Constants for the first argument of LFS_OLDDIRSIZ */
+#define LFS_OLDDIRFMT	1
+#define LFS_NEWDIRFMT	0
+
+static __unused inline uint8_t
+lfs_dir_gettype(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+{
+	if (fs->lfs_hasolddirfmt) {
+		return LFS_DT_UNKNOWN;
+	}
+	return dp->d_type;
+}
+
+static __unused inline uint8_t
+lfs_dir_getnamlen(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+{
+	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
+		/* low-order byte of old 16-bit namlen field */
+		return dp->d_type;
+	}
+	return dp->d_namlen;
+}
+
+static __unused inline void
+lfs_dir_settype(const STRUCT_LFS *fs, struct lfs_direct *dp, uint8_t type)
+{
+	if (fs->lfs_hasolddirfmt) {
+		/* do nothing */
+		return;
+	}
+	dp->d_type = type;
+}
+
+static __unused inline void
+lfs_dir_setnamlen(const STRUCT_LFS *fs, struct lfs_direct *dp, uint8_t namlen)
+{
+	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
+		/* low-order byte of old 16-bit namlen field */
+		dp->d_type = namlen;
+	}
+	dp->d_namlen = namlen;
+}
+
+/*
+ * These are called "dirt" because they ought to be cleaned up.
+ */
+
+static __unused inline uint8_t
+lfs_dirt_getdottype(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
+{
+	if (fs->lfs_hasolddirfmt) {
+		return LFS_DT_UNKNOWN;
+	}
+	return dp->dot_type;
+}
+
+static __unused inline uint8_t
+lfs_dirt_getdotnamlen(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
+{
+	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
+		/* low-order byte of old 16-bit namlen field */
+		return dp->dot_type;
+	}
+	return dp->dot_namlen;
+}
+
+static __unused inline uint8_t
+lfs_dirt_getdotdottype(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
+{
+	if (fs->lfs_hasolddirfmt) {
+		return LFS_DT_UNKNOWN;
+	}
+	return dp->dotdot_type;
+}
+
+static __unused inline uint8_t
+lfs_dirt_getdotdotnamlen(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
+{
+	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
+		/* low-order byte of old 16-bit namlen field */
+		return dp->dotdot_type;
+	}
+	return dp->dotdot_namlen;
+}
+
+static __unused inline void
+lfs_dirt_settypes(const STRUCT_LFS *fs, struct lfs_dirtemplate *dtp,
+    unsigned dt1, unsigned dt2)
+{
+	if (fs->lfs_hasolddirfmt) {
+		/* do nothing */
+		return;
+	}
+	dtp->dot_type = dt1;
+	dtp->dotdot_type = dt2;
+}
+
+static __unused inline void
+lfs_dirt_setnamlens(const STRUCT_LFS *fs, struct lfs_dirtemplate *dtp,
+    unsigned len1, unsigned len2)
+{
+	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
+		/* low-order bytes of old 16-bit namlen field */
+		dtp->dot_type = len1;
+		dtp->dotdot_type = len2;
+		/* clear the high-order bytes */
+		dtp->dot_namlen = 0;
+		dtp->dotdot_namlen = 0;
+		return;
+	}
+	dtp->dot_namlen = len1;
+	dtp->dotdot_namlen = len2;
+}
+
 
 /*
  * dinodes

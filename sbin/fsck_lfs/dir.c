@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.37 2015/09/01 06:08:37 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.38 2015/09/01 06:16:58 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -70,6 +70,7 @@ struct lfs_dirtemplate dirhead = {
 	.dotdot_namlen = 2,
 	.dotdot_name = ".."
 };
+#if 0
 struct lfs_odirtemplate odirhead = {
 	.dot_ino = 0,
 	.dot_reclen = 12,
@@ -80,6 +81,7 @@ struct lfs_odirtemplate odirhead = {
 	.dotdot_namlen = 2,
 	.dotdot_name = ".."
 };
+#endif
 
 static int expanddir(struct uvnode *, union lfs_dinode *, char *);
 static void freedir(ino_t, ino_t);
@@ -193,8 +195,8 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
 		dp->d_reclen = LFS_DIRBLKSIZ;
 		dp->d_ino = 0;
-		dp->d_type = 0;
-		dp->d_namlen = 0;
+		lfs_dir_settype(fs, dp, LFS_DT_UNKNOWN);
+		lfs_dir_setnamlen(fs, dp, 0);
 		dp->d_name[0] = '\0';
 		if (fix)
 			VOP_BWRITE(bp);
@@ -266,9 +268,9 @@ dircheck(struct inodesc *idesc, struct lfs_direct *dp)
 	}
 	if (dp->d_ino == 0)
 		return (1);
-	size = LFS_DIRSIZ(0, dp, 0);
-	namlen = dp->d_namlen;
-	type = dp->d_type;
+	size = LFS_DIRSIZ(fs, dp);
+	namlen = lfs_dir_getnamlen(fs, dp);
+	type = lfs_dir_gettype(fs, dp);
 	if (dp->d_reclen < size ||
 	    idesc->id_filesize < size ||
 	/* namlen > MAXNAMLEN || */
@@ -366,12 +368,14 @@ mkentry(struct inodesc *idesc)
 {
 	struct lfs_direct *dirp = idesc->id_dirp;
 	struct lfs_direct newent;
+	unsigned namlen;
 	int newlen, oldlen;
 
-	newent.d_namlen = strlen(idesc->id_name);
-	newlen = LFS_DIRSIZ(0, &newent, 0);
+	namlen = strlen(idesc->id_name);
+	lfs_dir_setnamlen(fs, &newent, namlen);
+	newlen = LFS_DIRSIZ(fs, &newent);
 	if (dirp->d_ino != 0)
-		oldlen = LFS_DIRSIZ(0, dirp, 0);
+		oldlen = LFS_DIRSIZ(fs, dirp);
 	else
 		oldlen = 0;
 	if (dirp->d_reclen - oldlen < newlen)
@@ -381,9 +385,9 @@ mkentry(struct inodesc *idesc)
 	dirp = (struct lfs_direct *) (((char *) dirp) + oldlen);
 	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
 	dirp->d_reclen = newent.d_reclen;
-	dirp->d_type = typemap[idesc->id_parent];
-	dirp->d_namlen = newent.d_namlen;
-	memcpy(dirp->d_name, idesc->id_name, (size_t) dirp->d_namlen + 1);
+	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);
+	lfs_dir_setnamlen(fs, dirp, namlen);
+	memcpy(dirp->d_name, idesc->id_name, (size_t)namlen + 1);
 	return (ALTERED | STOP);
 }
 
@@ -391,11 +395,13 @@ static int
 chgino(struct inodesc *idesc)
 {
 	struct lfs_direct *dirp = idesc->id_dirp;
+	int namlen;
 
-	if (memcmp(dirp->d_name, idesc->id_name, (int) dirp->d_namlen + 1))
+	namlen = lfs_dir_getnamlen(fs, dirp);
+	if (memcmp(dirp->d_name, idesc->id_name, namlen + 1))
 		return (KEEPON);
 	dirp->d_ino = idesc->id_parent;
-	dirp->d_type = typemap[idesc->id_parent];
+	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);
 	return (ALTERED | STOP);
 }
 
