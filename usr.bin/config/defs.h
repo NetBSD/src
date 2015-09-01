@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.79 2015/09/01 12:32:26 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.80 2015/09/01 12:46:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -343,6 +343,7 @@ struct files {
 	u_char fi_flags;	/* as below */
 	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
+	const char *fi_dir;	/* path to file */
 	const char *fi_path;	/* full file path */
 	const char *fi_prefix;	/* any file prefix */
 	int fi_suffix;		/* single char suffix */
