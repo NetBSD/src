@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.43 2015/09/01 06:08:37 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.44 2015/09/01 06:15:02 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -264,7 +264,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	    sp->ibp == NULL) {
 		/* Allocate a new segment if necessary. */
 		if (sp->seg_bytes_left < lfs_sb_getibsize(fs) ||
-		    sp->sum_bytes_left < sizeof(ulfs_daddr_t))
+		    sp->sum_bytes_left < LFS_BLKPTRSIZE(fs))
 			(void) lfs_writeseg(fs, sp);
 
 		/* Get next inode block. */
@@ -288,11 +288,11 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		lfs_sb_subavail(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= lfs_sb_getibsize(fs);
-		sp->sum_bytes_left -= sizeof(ulfs_daddr_t);
-		ndx = lfs_sb_getsumsize(fs) / sizeof(ulfs_daddr_t) -
+		sp->sum_bytes_left -= LFS_BLKPTRSIZE(fs);
+		ndx = lfs_sb_getsumsize(fs) / sizeof(uint32_t) -
 		    sp->ninodes / LFS_INOPB(fs) - 1;
 		/* XXX ondisk32 */
-		((ulfs_daddr_t *) (sp->segsum))[ndx] = daddr;
+		((uint32_t *) (sp->segsum))[ndx] = daddr;
 	}
 	/* Update the inode times and copy the inode onto the inode page. */
 	ts.tv_nsec = 0;
@@ -384,7 +384,7 @@ lfs_gatherblock(struct segment * sp, struct ubuf * bp)
 	 */
 	fs = sp->fs;
 	blksinblk = howmany(bp->b_bcount, lfs_sb_getbsize(fs));
-	if (sp->sum_bytes_left < sizeof(ulfs_daddr_t) * blksinblk ||
+	if (sp->sum_bytes_left < LFS_BLKPTRSIZE(fs) * blksinblk ||
 	    sp->seg_bytes_left < bp->b_bcount) {
 		lfs_updatemeta(sp);
 
@@ -413,7 +413,7 @@ lfs_gatherblock(struct segment * sp, struct ubuf * bp)
 		lfs_fi_setblock(fs, sp->fip, bn, bp->b_lblkno + j);;
 	}
 
-	sp->sum_bytes_left -= sizeof(ulfs_daddr_t) * blksinblk;
+	sp->sum_bytes_left -= LFS_BLKPTRSIZE(fs) * blksinblk;
 	sp->seg_bytes_left -= bp->b_bcount;
 	return 0;
 }
@@ -451,9 +451,9 @@ loop:
  *
  * Account for this change in the segment table.
  */
-void
+static void
 lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
-    ulfs_daddr_t ndaddr, int size)
+    daddr_t ndaddr, int size)
 {
 	SEGUSE *sup;
 	struct ubuf *bp;
@@ -1037,7 +1037,7 @@ lfs_writevnodes(struct lfs *fs, struct segment *sp, int op)
 }
 
 void
-lfs_writesuper(struct lfs *fs, ulfs_daddr_t daddr)
+lfs_writesuper(struct lfs *fs, daddr_t daddr)
 {
 	struct ubuf *bp;
 

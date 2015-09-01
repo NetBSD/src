@@ -1,4 +1,4 @@
-/* $NetBSD: pass5.c,v 1.35 2015/08/03 04:16:10 dholland Exp $	 */
+/* $NetBSD: pass5.c,v 1.36 2015/09/01 06:15:02 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2000, 2003 The NetBSD Foundation, Inc.
@@ -51,7 +51,6 @@
 #include "extern.h"
 #include "fsutil.h"
 
-extern SEGUSE *seg_table;
 extern off_t locked_queue_bytes;
 
 void

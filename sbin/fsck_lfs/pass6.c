@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.47 2015/09/01 06:13:57 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.48 2015/09/01 06:15:02 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -61,9 +61,6 @@
 
 extern u_int32_t cksum(void *, size_t);
 extern u_int32_t lfs_sb_cksum(struct dlfs *);
-
-extern ulfs_daddr_t badblk;
-extern SEGUSE *seg_table;
 
 static int nnewblocks;
 
@@ -318,7 +315,7 @@ pass6check(struct inodesc * idesc)
 	}
 	if (anyout) {
 		blkerror(idesc->id_number, "BAD", idesc->id_blkno);
-		if (badblk++ >= MAXBAD) {
+		if (badblkcount++ >= MAXBAD) {
 			pwarn("EXCESSIVE BAD BLKS I=%llu",
 			    (unsigned long long)idesc->id_number);
 			if (preen)
@@ -472,7 +469,7 @@ readdress_inode(union lfs_dinode *dp, daddr_t daddr)
  * Allocate the given inode from the free list.
  */
 static void
-alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
+alloc_inode(ino_t thisino, daddr_t daddr)
 {
 	ino_t ino, nextfree, oldhead;
 	IFILE *ifp;
@@ -481,8 +478,8 @@ alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
 	CLEANERINFO *cip;
 
 	if (debug)
-		pwarn("allocating ino %d at 0x%x\n", (int)thisino,
-			(unsigned)daddr);
+		pwarn("allocating ino %ju at 0x%jx\n", (uintmax_t)thisino,
+			(intmax_t)daddr);
 	while (thisino >= maxino) {
 		extend_ifile(fs);
 	}
