@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.24 2015/09/01 12:46:20 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.25 2015/09/01 13:42:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.24 2015/09/01 12:46:20 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.25 2015/09/01 13:42:48 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -173,6 +173,8 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 	fi->fi_dir = intern(dir);
 	fi->fi_prefix = SLIST_EMPTY(&prefixes) ? NULL :
 			SLIST_FIRST(&prefixes)->pf_prefix;
+	fi->fi_buildprefix = SLIST_EMPTY(&buildprefixes) ? NULL :
+			SLIST_FIRST(&buildprefixes)->pf_prefix;
 	fi->fi_len = strlen(path);
 	fi->fi_suffix = path[fi->fi_len - 1];
 	fi->fi_optx = optx;

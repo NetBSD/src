@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.51 2015/09/01 11:22:59 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.52 2015/09/01 13:42:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.51 2015/09/01 11:22:59 uebayasi Exp $");
+__RCSID("$NetBSD: gram.y,v 1.52 2015/09/01 13:42:48 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -179,7 +179,7 @@ static struct loclist *namelocvals(const char *, struct loclist *);
 %token	XMACHINE MAJOR MAKEOPTIONS MAXUSERS MAXPARTITIONS MINOR
 %token	NEEDS_COUNT NEEDS_FLAG NO
 %token	XOBJECT OBSOLETE ON OPTIONS
-%token	PACKAGE PLUSEQ PREFIX PSEUDO_DEVICE PSEUDO_ROOT
+%token	PACKAGE PLUSEQ PREFIX BUILDPREFIX PSEUDO_DEVICE PSEUDO_ROOT
 %token	ROOT
 %token	SELECT SINGLE SOURCE
 %token	TYPE
@@ -317,6 +317,7 @@ definition:
 	| define_object
 	| define_device_major
 	| define_prefix
+	| define_buildprefix
 	| define_devclass
 	| define_filesystems
 	| define_attribute
@@ -359,6 +360,12 @@ define_device_major:
 define_prefix:
 	  PREFIX filename		{ prefix_push($2); }
 	| PREFIX			{ prefix_pop(); }
+;
+
+define_buildprefix:
+	  BUILDPREFIX filename		{ buildprefix_push($2); }
+	| BUILDPREFIX WORD		{ buildprefix_push($2); }
+	| BUILDPREFIX			{ buildprefix_pop(); }
 ;
 
 define_devclass:
