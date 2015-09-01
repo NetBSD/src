@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.60 2015/08/19 20:33:29 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.61 2015/09/01 06:08:37 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -305,7 +305,10 @@ iblock(struct inodesc *idesc, long ilevel, u_int64_t isize)
 				    pathbuf, (long long)idesc->id_number);
 				if (reply("ADJUST LENGTH") == 1) {
 					vp = vget(fs, idesc->id_number);
-					VTOI(vp)->i_ffs1_size -= isize;
+					lfs_dino_setsize(fs, VTOI(vp)->i_din,
+					    lfs_dino_getsize(fs,
+							     VTOI(vp)->i_din)
+					    - isize);
 					isize = 0;
 					printf(
 					    "YOU MUST RERUN FSCK AFTERWARDS\n");
@@ -444,7 +447,7 @@ clri(struct inodesc * idesc, const char *type, int flag)
 	vp = vget(fs, idesc->id_number);
 	if (flag & 0x1) {
 		pwarn("%s %s", type,
-		      (VTOI(vp)->i_ffs1_mode & LFS_IFMT) == LFS_IFDIR ? "DIR" : "FILE");
+		      (lfs_dino_getmode(fs, VTOI(vp)->i_din) & LFS_IFMT) == LFS_IFDIR ? "DIR" : "FILE");
 		pinode(idesc->id_number);
 	}
 	if ((flag & 0x2) || preen || reply("CLEAR") == 1) {

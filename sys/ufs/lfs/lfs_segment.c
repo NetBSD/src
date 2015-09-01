@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.258 2015/08/21 07:35:56 hannken Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.259 2015/09/01 06:08:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.258 2015/08/21 07:35:56 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.259 2015/09/01 06:08:37 dholland Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -175,8 +175,8 @@ lfs_imtime(struct lfs *fs)
 	ASSERT_MAYBE_SEGLOCK(fs);
 	vfs_timestamp(&ts);
 	ip = VTOI(fs->lfs_ivnode);
-	ip->i_ffs1_mtime = ts.tv_sec;
-	ip->i_ffs1_mtimensec = ts.tv_nsec;
+	lfs_dino_setmtime(fs, ip->i_din, ts.tv_sec);
+	lfs_dino_setmtimensec(fs, ip->i_din, ts.tv_nsec);
 }
 
 /*
@@ -1200,17 +1200,17 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	 */
 
 	/* Check file size based on highest allocated block */
-	if (((ip->i_ffs1_mode & LFS_IFMT) == LFS_IFREG ||
-	     (ip->i_ffs1_mode & LFS_IFMT) == LFS_IFDIR) &&
+	if (((lfs_dino_getmode(fs, ip->i_din) & LFS_IFMT) == LFS_IFREG ||
+	     (lfs_dino_getmode(fs, ip->i_din) & LFS_IFMT) == LFS_IFDIR) &&
 	    ip->i_size > ((ip->i_lfs_hiblk + 1) << lfs_sb_getbshift(fs))) {
 		lfs_dino_setsize(fs, cdp, (ip->i_lfs_hiblk + 1) << lfs_sb_getbshift(fs));
 		DLOG((DLOG_SEG, "lfs_writeinode: ino %d size %" PRId64 " -> %"
 		      PRId64 "\n", (int)ip->i_number, ip->i_size, lfs_dino_getsize(fs, cdp)));
 	}
-	if (ip->i_lfs_effnblks != ip->i_ffs1_blocks) {
+	if (ip->i_lfs_effnblks != lfs_dino_getblocks(fs, ip->i_din)) {
 		DLOG((DLOG_SEG, "lfs_writeinode: cleansing ino %d eff %jd != nblk %d)"
 		      " at %jx\n", ip->i_number, (intmax_t)ip->i_lfs_effnblks,
-		      ip->i_ffs1_blocks, (uintmax_t)lfs_sb_getoffset(fs)));
+		      lfs_dino_getblocks(fs, ip->i_din), (uintmax_t)lfs_sb_getoffset(fs)));
 		for (i=0; i<ULFS_NDADDR; i++) {
 			if (lfs_dino_getdb(fs, cdp, i) == UNWRITTEN) {
 				DLOG((DLOG_SEG, "lfs_writeinode: wiping UNWRITTEN\n"));
@@ -1253,12 +1253,12 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		/* XXX IN_ALLMOD */
 		LFS_CLR_UINO(ip, IN_ACCESSED | IN_ACCESS | IN_CHANGE |
 			     IN_UPDATE | IN_MODIFY);
-		if (ip->i_lfs_effnblks == ip->i_ffs1_blocks)
+		if (ip->i_lfs_effnblks == lfs_dino_getblocks(fs, ip->i_din))
 			LFS_CLR_UINO(ip, IN_MODIFIED);
 		else {
 			DLOG((DLOG_VNODE, "lfs_writeinode: ino %d: real "
 			    "blks=%d, eff=%jd\n", ip->i_number,
-			    ip->i_ffs1_blocks, (intmax_t)ip->i_lfs_effnblks));
+			    lfs_dino_getblocks(fs, ip->i_din), (intmax_t)ip->i_lfs_effnblks));
 		}
 	}
 
@@ -1483,23 +1483,26 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 	bb = lfs_numfrags(fs, size);
 	switch (num) {
 	    case 0:
-		    ooff = ip->i_ffs1_db[lbn];
+		    ooff = lfs_dino_getdb(fs, ip->i_din, lbn);
 		    DEBUG_OOFF(0);
 		    if (ooff == UNWRITTEN)
-			    ip->i_ffs1_blocks += bb;
+			    lfs_dino_setblocks(fs, ip->i_din,
+				lfs_dino_getblocks(fs, ip->i_din) + bb);
 		    else {
 			    /* possible fragment truncation or extension */
 			    obb = lfs_btofsb(fs, ip->i_lfs_fragsize[lbn]);
-			    ip->i_ffs1_blocks += (bb - obb);
+			    lfs_dino_setblocks(fs, ip->i_din,
+				lfs_dino_getblocks(fs, ip->i_din) + (bb-obb));
 		    }
-		    ip->i_ffs1_db[lbn] = ndaddr;
+		    lfs_dino_setdb(fs, ip->i_din, lbn, ndaddr);
 		    break;
 	    case 1:
-		    ooff = ip->i_ffs1_ib[a[0].in_off];
+		    ooff = lfs_dino_getib(fs, ip->i_din, a[0].in_off);
 		    DEBUG_OOFF(1);
 		    if (ooff == UNWRITTEN)
-			    ip->i_ffs1_blocks += bb;
-		    ip->i_ffs1_ib[a[0].in_off] = ndaddr;
+			    lfs_dino_setblocks(fs, ip->i_din,
+				lfs_dino_getblocks(fs, ip->i_din) + bb);
+		    lfs_dino_setib(fs, ip->i_din, a[0].in_off, ndaddr);
 		    break;
 	    default:
 		    ap = &a[num - 1];
@@ -1508,13 +1511,12 @@ lfs_update_single(struct lfs *fs, struct segment *sp,
 			    panic("lfs_updatemeta: bread bno %" PRId64,
 				  ap->in_lbn);
 
-		    /* XXX ondisk32 */
-		    ooff = ((int32_t *)bp->b_data)[ap->in_off];
+		    ooff = lfs_iblock_get(fs, bp->b_data, ap->in_off);
 		    DEBUG_OOFF(num);
 		    if (ooff == UNWRITTEN)
-			    ip->i_ffs1_blocks += bb;
-		    /* XXX ondisk32 */
-		    ((int32_t *)bp->b_data)[ap->in_off] = ndaddr;
+			    lfs_dino_setblocks(fs, ip->i_din,
+				lfs_dino_getblocks(fs, ip->i_din) + bb);
+		    lfs_iblock_set(fs, bp->b_data, ap->in_off, ndaddr);
 		    (void) VOP_BWRITE(bp->b_vp, bp);
 	}
 
@@ -2145,12 +2147,12 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 		 * XXX See comment in lfs_writefile.
 		 */
 		if (bp->b_lblkno < 0 && bp->b_vp != devvp && bp->b_vp &&
-		   VTOI(bp->b_vp)->i_ffs1_blocks !=
+		   lfs_dino_getblocks(fs, VTOI(bp->b_vp)->i_din) !=
 		   VTOI(bp->b_vp)->i_lfs_effnblks) {
 			DLOG((DLOG_VNODE, "lfs_writeseg: cleansing ino %d (%jd != %d)\n",
 			      VTOI(bp->b_vp)->i_number,
 			      (intmax_t)VTOI(bp->b_vp)->i_lfs_effnblks,
-			      VTOI(bp->b_vp)->i_ffs1_blocks));
+			      lfs_dino_getblocks(fs, VTOI(bp->b_vp)->i_din)));
 			/* Make a copy we'll make changes to */
 			newbp = lfs_newbuf(fs, bp->b_vp, bp->b_lblkno,
 					   bp->b_bcount, LFS_NB_IBLOCK);
