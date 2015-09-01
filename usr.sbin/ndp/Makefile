@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2015/08/03 09:51:40 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.11 2015/09/01 09:54:34 ozaki-r Exp $
 
 .include <bsd.own.mk>
 
@@ -15,7 +15,7 @@ CPPFLAGS+=	-DINET6
 CPPFLAGS+=	-I. -I${TCPDUMP}
 
 .PATH:		${.CURDIR}/../../lib/libc/net
-RUMPSRCS=	getifaddrs.c getnameinfo.c if_indextoname.c
+RUMPSRCS=	getifaddrs.c getnameinfo.c if_indextoname.c if_nametoindex.c
 .if (${MKRUMP} != "no")
 CPPFLAGS+= 	-DRUMP_ACTION
 .endif
