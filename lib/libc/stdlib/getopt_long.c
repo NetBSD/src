@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.25 2009/03/20 14:05:54 joerg Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.26 2015/09/01 01:28:17 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getopt_long.c,v 1.25 2009/03/20 14:05:54 joerg Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.26 2015/09/01 01:28:17 kamil Exp $");
 
 #include "namespace.h"
 
@@ -326,7 +326,7 @@ getopt(nargc, nargv, options)
 		 */
 		if (nonopt_end != -1) {
 			permute_args(nonopt_start, nonopt_end, optind,
-				       nargv);
+				       __UNCONST(nargv));
 			optind -= nonopt_end - nonopt_start;
 		}
 		nonopt_start = nonopt_end = -1;
