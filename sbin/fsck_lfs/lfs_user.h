@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_user.h,v 1.12 2015/09/01 06:13:33 dholland Exp $ */
+/* $NetBSD: lfs_user.h,v 1.13 2015/09/01 06:13:57 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -86,8 +86,8 @@ int lfs_vop_bmap(struct uvnode *, daddr_t, daddr_t *);
 struct uvnode *lfs_raw_vget(struct lfs *, ino_t, int, daddr_t);
 struct lfs *lfs_init(int, daddr_t, daddr_t, int, int);
 struct lfs *lfs_verify(struct lfs *, struct lfs *, struct uvnode *, int);
-int check_summary(struct lfs *, union segsum *, ulfs_daddr_t, int, struct uvnode *, void (*)(ulfs_daddr_t, union finfo *));
-ulfs_daddr_t try_verify(struct lfs *, struct uvnode *, ulfs_daddr_t, int);
+int check_summary(struct lfs *, union segsum *, daddr_t, int, struct uvnode *, void (*)(daddr_t, union finfo *));
+daddr_t try_verify(struct lfs *, struct uvnode *, daddr_t, int);
 union lfs_dinode *lfs_ifind(struct lfs *, ino_t, struct ubuf *);
 void call_panic(const char *, ...);
 void my_vpanic(int, const char *, va_list);
