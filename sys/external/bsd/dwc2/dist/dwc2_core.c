@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.8 2015/08/30 12:59:59 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.9 2015/09/01 06:24:21 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.8 2015/08/30 12:59:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.9 2015/09/01 06:24:21 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -1842,10 +1842,18 @@ void dwc2_hc_start_transfer(struct dwc2_hsotg *hsotg,
 		} else {
 			dma_addr = chan->xfer_dma;
 		}
-		DWC2_WRITE_4(hsotg, HCDMA(chan->hc_num), (u32)dma_addr);
-		if (dbg_hc(chan))
-			dev_vdbg(hsotg->dev, "Wrote %08lx to HCDMA(%d)\n",
-				 (unsigned long)dma_addr, chan->hc_num);
+		if (hsotg->hsotg_sc->sc_set_dma_addr == NULL) {
+			DWC2_WRITE_4(hsotg, HCDMA(chan->hc_num),
+			    (u32)dma_addr);
+			if (dbg_hc(chan))
+				dev_vdbg(hsotg->dev,
+				    "Wrote %08lx to HCDMA(%d)\n",
+				     (unsigned long)dma_addr,
+				    chan->hc_num);
+		} else {
+			(void)(*hsotg->hsotg_sc->sc_set_dma_addr)(
+			    hsotg->dev, dma_addr, chan->hc_num);
+		}
 	}
 
 	/* Start the split */
