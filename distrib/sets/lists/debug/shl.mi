@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.108 2015/08/13 10:36:38 christos Exp $
+# $NetBSD: shl.mi,v 1.109 2015/09/01 19:58:57 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -19,7 +19,7 @@
 ./usr/libdata/debug/lib/libppath.so.0.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libprop.so.1.1.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libradius.so.4.0.debug			comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/librumpclient.so.0.0.debug		comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/librumpclient.so.0.0.debug		comp-sys-debug	debug,dynamicroot,rump
 ./usr/libdata/debug/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libutil.so.7.22.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libz.so.1.0.debug			comp-sys-debug	debug,dynamicroot
