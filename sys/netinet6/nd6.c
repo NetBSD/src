@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.171 2015/09/01 08:46:27 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.172 2015/09/01 08:52:02 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.171 2015/09/01 08:46:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.172 2015/09/01 08:52:02 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1547,7 +1547,6 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 	struct in6_ndifreq *ndif = (struct in6_ndifreq *)data;
 	struct nd_defrouter *dr;
 	struct nd_prefix *pr;
-	struct rtentry *rt;
 	int i = 0, error = 0;
 	int s;
 
@@ -1820,6 +1819,7 @@ nd6_ioctl(u_long cmd, void *data, struct ifnet *ifp)
 	{
 		struct llinfo_nd6 *ln;
 		struct in6_addr nb_addr = nbi->addr; /* make local for safety */
+		struct rtentry *rt;
 
 		if ((error = in6_setscope(&nb_addr, ifp, NULL)) != 0)
 			return error;
