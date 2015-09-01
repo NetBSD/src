@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.17 2015/09/01 06:10:16 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.18 2015/09/01 06:11:06 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -919,9 +919,9 @@ LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, dsize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, bsize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, fsize);
 LFS_DEF_SB_ACCESSOR(u_int32_t, frag);
-LFS_DEF_SB_ACCESSOR(u_int32_t, freehd);
+LFS_DEF_SB_ACCESSOR_FULL(uint64_t, uint32_t, freehd);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, bfree);
-LFS_DEF_SB_ACCESSOR(u_int32_t, nfiles);
+LFS_DEF_SB_ACCESSOR_FULL(uint64_t, uint32_t, nfiles);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, avail);
 LFS_DEF_SB_ACCESSOR(int32_t, uinodes);
 LFS_DEF_SB_ACCESSOR_FULL(int64_t, int32_t, idaddr);
