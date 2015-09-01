@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.45 2015/09/01 06:12:04 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.46 2015/09/01 06:13:33 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@ remove_ino(struct uvnode *vp, ino_t ino)
 	CLEANERINFO *cip;
 	struct ubuf *bp, *sbp, *cbp;
 	struct inodesc idesc;
-	ulfs_daddr_t daddr;
+	daddr_t daddr;
 
 	if (debug)
 		pwarn("remove ino %d\n", (int)ino);
@@ -422,13 +422,13 @@ account_block_changes(union lfs_dinode *dp)
  * free list accounting is done.
  */
 static void
-readdress_inode(union lfs_dinode *dp, ulfs_daddr_t daddr)
+readdress_inode(union lfs_dinode *dp, daddr_t daddr)
 {
 	IFILE *ifp;
 	SEGUSE *sup;
 	struct ubuf *bp;
 	int sn;
-	ulfs_daddr_t odaddr;
+	daddr_t odaddr;
 	ino_t thisino = lfs_dino_getinumber(fs, dp);
 	struct uvnode *vp;
 
@@ -443,10 +443,10 @@ readdress_inode(union lfs_dinode *dp, ulfs_daddr_t daddr)
 	VOP_BWRITE(bp);
 
 	if (debug)
-		pwarn("readdress ino %ju from 0x%x to 0x%x mode %o nlink %d\n",
+		pwarn("readdress ino %ju from 0x%jx to 0x%jx mode %o nlink %d\n",
 			(uintmax_t)lfs_dino_getinumber(fs, dp),
-			(unsigned)odaddr,
-			(unsigned)daddr,
+			(uintmax_t)odaddr,
+			(intmax_t)daddr,
 			(int)lfs_dino_getmode(fs, dp),
 			(int)lfs_dino_getnlink(fs, dp));
 
@@ -549,7 +549,8 @@ alloc_inode(ino_t thisino, ulfs_daddr_t daddr)
 void
 pass6(void)
 {
-	ulfs_daddr_t daddr, ibdaddr, odaddr, lastgood, *idaddrp;
+	daddr_t daddr, ibdaddr, odaddr, lastgood;
+	uint32_t *idaddrp; /* XXX ondisk32 */
 	struct uvnode *vp, *devvp;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -618,13 +619,14 @@ pass6(void)
 					break;
 			}
 		}
+		KASSERT(hassuper == 0 || hassuper == 1);
 		
 		/* Read in summary block */
 		bread(devvp, LFS_FSBTODB(fs, daddr), lfs_sb_getsumsize(fs), 0, &bp);
 		sp = (SEGSUM *)bp->b_data;
 		if (debug)
-			pwarn("sum at 0x%x: ninos=%d nfinfo=%d\n",
-				(unsigned)daddr, (int)lfs_ss_getninos(fs, sp),
+			pwarn("sum at 0x%jx: ninos=%d nfinfo=%d\n",
+				(intmax_t)daddr, (int)lfs_ss_getninos(fs, sp),
 				(int)lfs_ss_getnfinfo(fs, sp));
 
 		/* We have verified that this is a good summary. */
@@ -650,7 +652,8 @@ pass6(void)
 							    LFS_INOPB(fs)) *
 						lfs_sb_getibsize(fs)));
 		}
-		idaddrp = ((ulfs_daddr_t *)((char *)bp->b_data + lfs_sb_getsumsize(fs)));
+		// XXX ondisk32
+		idaddrp = ((uint32_t *)((char *)bp->b_data + lfs_sb_getsumsize(fs)));
 		for (i = 0; i < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)); i++) {
 			ino_t *inums;
 			
@@ -676,8 +679,8 @@ pass6(void)
 				    || lfs_dino_getsize(fs, dp) < 0
 #endif
 				) {
-					pwarn("BAD INODE AT 0x%" PRIx32 "\n",
-						ibdaddr);
+					pwarn("BAD INODE AT 0x%jx\n",
+						(intmax_t)ibdaddr);
 					brelse(bp, 0);
 					free(inums);
 					goto out;
@@ -783,14 +786,14 @@ pass6(void)
 
 		bc = check_summary(fs, sp, daddr, debug, devvp, NULL);
 		if (bc == 0) {
-			pwarn("unexpected bad seg ptr at 0x%x with serial=%d\n",
-				(int)daddr, (int)lfs_ss_getserial(fs, sp));
+			pwarn("unexpected bad seg ptr at 0x%jx with serial=%ju\n",
+				(intmax_t)daddr, (uintmax_t)lfs_ss_getserial(fs, sp));
 			brelse(bp, 0);
 			break;
 		} else {
 			if (debug)
-				pwarn("good seg ptr at 0x%x with serial=%d\n",
-					(int)daddr, (int)lfs_ss_getserial(fs, sp));
+				pwarn("good seg ptr at 0x%jx with serial=%ju\n",
+					(intmax_t)daddr, (uintmax_t)lfs_ss_getserial(fs, sp));
 			lastserial = lfs_ss_getserial(fs, sp);
 		}
 		odaddr = daddr;
@@ -858,8 +861,8 @@ pass6(void)
 		sp = (SEGSUM *)bp->b_data;
 		bc = check_summary(fs, sp, daddr, debug, devvp, pass6harvest);
 		if (bc == 0) {
-			pwarn("unexpected bad seg ptr [2] at 0x%x with serial=%d\n",
-				(int)daddr, (int)lfs_ss_getserial(fs, sp));
+			pwarn("unexpected bad seg ptr [2] at 0x%jx with serial=%ju\n",
+				(intmax_t)daddr, (uintmax_t)lfs_ss_getserial(fs, sp));
 			brelse(bp, 0);
 			break;
 		}
