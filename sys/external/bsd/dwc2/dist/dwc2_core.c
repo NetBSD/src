@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.9 2015/09/01 06:24:21 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.10 2015/09/01 14:03:00 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.9 2015/09/01 06:24:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.10 2015/09/01 14:03:00 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -686,12 +686,22 @@ static int dwc2_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 
 static int dwc2_gahbcfg_init(struct dwc2_hsotg *hsotg)
 {
+	struct dwc2_softc *sc = hsotg->hsotg_sc;
 	u32 ahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
 
 	switch (hsotg->hw_params.arch) {
 	case GHWCFG2_EXT_DMA_ARCH:
-		dev_err(hsotg->dev, "External DMA Mode not supported\n");
-		return -EINVAL;
+		dev_dbg(hsotg->dev, "External DMA Mode\n");
+		if (!sc->sc_set_dma_addr) {
+			dev_err(hsotg->dev, "External DMA Mode not supported\n");
+			return -EINVAL;
+		}
+		if (hsotg->core_params->ahbcfg != -1) {
+			ahbcfg &= GAHBCFG_CTRL_MASK;
+			ahbcfg |= hsotg->core_params->ahbcfg &
+				  ~GAHBCFG_CTRL_MASK;
+		}
+		break;
 
 	case GHWCFG2_INT_DMA_ARCH:
 		dev_dbg(hsotg->dev, "Internal DMA Mode\n");
