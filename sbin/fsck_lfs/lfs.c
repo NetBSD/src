@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.60 2015/09/01 06:12:04 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.61 2015/09/01 06:13:33 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -336,7 +336,7 @@ lfs_ifind(struct lfs *fs, ino_t ino, struct ubuf *bp)
  * XXX it currently loses atime information.
  */
 struct uvnode *
-lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, ulfs_daddr_t daddr)
+lfs_raw_vget(struct lfs * fs, ino_t ino, int fd, daddr_t daddr)
 {
 	struct uvnode *vp;
 	struct inode *ip;
@@ -412,7 +412,7 @@ static struct uvnode *
 lfs_vget(void *vfs, ino_t ino)
 {
 	struct lfs *fs = (struct lfs *)vfs;
-	ulfs_daddr_t daddr;
+	daddr_t daddr;
 	struct ubuf *bp;
 	IFILE *ifp;
 
