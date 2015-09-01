@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.58 2015/09/01 06:08:37 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.59 2015/09/01 06:10:16 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -424,7 +424,10 @@ lfs_vget(void *vfs, ino_t ino)
 	return lfs_raw_vget(fs, ino, fs->lfs_ivnode->v_fd, daddr);
 }
 
-/* Check superblock magic number and checksum */
+/*
+ * Check superblock magic number and checksum.
+ * Sets lfs_is64 and lfs_dobyteswap.
+ */
 static int
 check_sb(struct lfs *fs)
 {
@@ -440,6 +443,9 @@ check_sb(struct lfs *fs)
 		       (unsigned long) LFS_MAGIC);
 		return 1;
 	}
+	fs->lfs_is64 = 0; /* XXX notyet */
+	fs->lfs_dobyteswap = 0; /* XXX notyet */
+
 	/* checksum */
 	checksum = lfs_sb_cksum(fs);
 	if (lfs_sb_getcksum(fs) != checksum) {

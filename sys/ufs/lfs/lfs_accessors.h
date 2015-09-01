@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.16 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.17 2015/09/01 06:10:16 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -145,6 +145,12 @@
 #ifndef _UFS_LFS_LFS_ACCESSORS_H_
 #define _UFS_LFS_LFS_ACCESSORS_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_lfs.h"
+#endif
+
+#include <sys/bswap.h>
+
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <assert.h>
 #define KASSERT assert
@@ -158,6 +164,41 @@
 
 #ifndef STRUCT_LFS
 #define STRUCT_LFS struct lfs
+#endif
+
+/*
+ * byte order
+ */
+
+/*
+ * For now at least, the bootblocks shall not be endian-independent.
+ * We can see later if it fits in the size budget. Also disable the
+ * byteswapping if LFS_EI is off.
+ *
+ * Caution: these functions "know" that bswap16/32/64 are unsigned,
+ * and if that changes will likely break silently.
+ */
+
+#if defined(_STANDALONE) || (defined(_KERNEL) && !defined(LFS_EI))
+#define LFS_SWAP_int16_t(fs, val) (val)
+#define LFS_SWAP_int32_t(fs, val) (val)
+#define LFS_SWAP_int64_t(fs, val) (val)
+#define LFS_SWAP_uint16_t(fs, val) (val)
+#define LFS_SWAP_uint32_t(fs, val) (val)
+#define LFS_SWAP_uint64_t(fs, val) (val)
+#else
+#define LFS_SWAP_int16_t(fs, val) \
+	((fs)->lfs_dobyteswap ? (int16_t)bswap16(val) : (val))
+#define LFS_SWAP_int32_t(fs, val) \
+	((fs)->lfs_dobyteswap ? (int32_t)bswap32(val) : (val))
+#define LFS_SWAP_int64_t(fs, val) \
+	((fs)->lfs_dobyteswap ? (int64_t)bswap64(val) : (val))
+#define LFS_SWAP_uint16_t(fs, val) \
+	((fs)->lfs_dobyteswap ? bswap16(val) : (val))
+#define LFS_SWAP_uint32_t(fs, val) \
+	((fs)->lfs_dobyteswap ? bswap32(val) : (val))
+#define LFS_SWAP_uint64_t(fs, val) \
+	((fs)->lfs_dobyteswap ? bswap64(val) : (val))
 #endif
 
 /*
@@ -201,9 +242,9 @@ lfs_copy_dinode(STRUCT_LFS *fs,
 	lfs_dino_get##field(STRUCT_LFS *fs, union lfs_dinode *dip) \
 	{							\
 		if (fs->lfs_is64) {				\
-			return dip->u_64.di_##field; 		\
+			return LFS_SWAP_##type(fs, dip->u_64.di_##field); \
 		} else {					\
-			return dip->u_32.di_##field; 		\
+			return LFS_SWAP_##type32(fs, dip->u_32.di_##field); \
 		}						\
 	}							\
 	static __unused inline void				\
@@ -212,11 +253,11 @@ lfs_copy_dinode(STRUCT_LFS *fs,
 		if (fs->lfs_is64) {				\
 			type *p = &dip->u_64.di_##field;	\
 			(void)p;				\
-			dip->u_64.di_##field = val;		\
+			dip->u_64.di_##field = LFS_SWAP_##type(fs, val); \
 		} else {					\
 			type32 *p = &dip->u_32.di_##field;	\
 			(void)p;				\
-			dip->u_32.di_##field = val;		\
+			dip->u_32.di_##field = LFS_SWAP_##type32(fs, val); \
 		}						\
 	}							\
 

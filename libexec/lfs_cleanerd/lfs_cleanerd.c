@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.50 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.51 2015/09/01 06:10:16 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -269,6 +269,7 @@ init_fs(struct clfs *fs, char *fsname)
 		return -1;
 	}
 	fs->lfs_is64 = 0; /* XXX notyet */
+	fs->lfs_dobyteswap = 0; /* XXX notyet */
 
 	/* If this is not a version 2 filesystem, complain and exit */
 	if (lfs_sb_getversion(fs) != 2) {
