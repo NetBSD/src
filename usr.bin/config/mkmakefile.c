@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.53 2015/09/01 11:35:46 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.54 2015/09/01 12:10:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.53 2015/09/01 11:35:46 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.54 2015/09/01 12:10:56 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -63,7 +63,7 @@ __RCSID("$NetBSD: mkmakefile.c,v 1.53 2015/09/01 11:35:46 uebayasi Exp $");
  */
 
 static void emitdefs(FILE *);
-static void emitfiles(FILE *, int, int);
+static void emitfiles(FILE *, struct filelist *, int);
 
 static void emitobjs(FILE *);
 static void emitallkobjs(FILE *);
@@ -320,7 +320,7 @@ emitobjs(FILE *fp)
 			continue;
 		fprintf(fp, "\t%s.o \\\n", fi->fi_base);
 	}
-	TAILQ_FOREACH(fi, &allobjects, fi_next) {
+	TAILQ_FOREACH(fi, &allofiles, fi_snext) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		putc('\t', fp);
@@ -444,28 +444,26 @@ static void
 emitcfiles(FILE *fp)
 {
 
-	emitfiles(fp, 'c', 0);
+	emitfiles(fp, &allcfiles, 'c');
 }
 
 static void
 emitsfiles(FILE *fp)
 {
 
-	emitfiles(fp, 's', 'S');
+	emitfiles(fp, &allsfiles, 's');
 }
 
 static void
-emitfiles(FILE *fp, int suffix, int upper_suffix)
+emitfiles(FILE *fp, struct filelist *filelist, int suffix)
 {
 	struct files *fi;
  	struct config *cf;
  	char swapname[100];
 
 	fprintf(fp, "%cFILES= \\\n", toupper(suffix));
-	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+	TAILQ_FOREACH(fi, filelist, fi_snext) {
 		if ((fi->fi_flags & FI_SEL) == 0)
-			continue;
-		if (fi->fi_suffix != suffix && fi->fi_suffix != upper_suffix)
 			continue;
 		putc('\t', fp);
 		emitfile(fp, fi);

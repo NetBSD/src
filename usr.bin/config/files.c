@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.22 2015/09/01 11:22:59 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.23 2015/09/01 12:10:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.22 2015/09/01 11:22:59 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.23 2015/09/01 12:10:56 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -85,7 +85,6 @@ initfiles(void)
 	TAILQ_INIT(&allsfiles);
 	TAILQ_INIT(&allofiles);
 	unchecked = &TAILQ_FIRST(&allfiles);
-	TAILQ_INIT(&allobjects);
 }
 
 void
@@ -177,13 +176,18 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 		TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 		break;
 	case 'S':
+		fi->fi_suffix = 's';
+		/* FALLTHRU */
 	case 's':
 		TAILQ_INSERT_TAIL(&allsfiles, fi, fi_snext);
 		TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 		break;
 	case 'o':
 		TAILQ_INSERT_TAIL(&allofiles, fi, fi_snext);
-		TAILQ_INSERT_TAIL(&allobjects, fi, fi_next);
+		break;
+	default:
+		cfgxerror(fi->fi_srcfile, fi->fi_srcline,
+		    "unknown suffix");
 		break;
 	}
 	return;
@@ -331,7 +335,7 @@ fixobjects(void)
 	int err, sel; 
  
 	err = 0;
-	TAILQ_FOREACH(fi, &allobjects, fi_next) {
+	TAILQ_FOREACH(fi, &allofiles, fi_snext) {
 		/* Optional: see if it is to be included. */
 		if (fi->fi_optx != NULL) {
 			flathead = NULL;

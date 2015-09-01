@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.77 2015/09/01 11:35:46 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.78 2015/09/01 12:10:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -481,8 +481,6 @@ struct filelist		allfiles;	/* list of all kernel source files */
 struct filelist		allcfiles;	/* list of all .c files */
 struct filelist		allsfiles;	/* list of all .S files */
 struct filelist		allofiles;	/* list of all .o files */
-TAILQ_HEAD(, files)	allobjects;	/* list of all kernel object and
-					   library files */
 
 SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
 			allprefixes;	/* all prefixes used (after popped) */
