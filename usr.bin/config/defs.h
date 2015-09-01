@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.74 2015/08/31 02:58:25 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.75 2015/09/01 10:37:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -332,16 +332,21 @@ struct devi {
  * Files or objects.  This structure defines the common fields
  * between the two.
  */
-struct filetype
-{
+struct filetype {
+	TAILQ_ENTRY(files) fit_next;
 	const char *fit_srcfile;	/* the name of the "files" file that got us */
 	u_short	fit_srcline;	/* and the line number */
 	u_char	fit_flags;	/* as below */
 	char	fit_lastc;	/* last char from path */
+	const char *fit_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
+	const char *fit_base;	/* tail minus ".c" (or whatever) */
 	const char *fit_path;	/* full file path */
 	const char *fit_prefix;	/* any file prefix */
-	size_t fit_len;		/* path string length */
 	int fit_suffix;		/* single char suffix */
+	size_t fit_len;		/* path string length */
+	struct condexpr *fit_optx; /* options expression */
+	struct nvlist *fit_optf; /* flattened version of above, if needed */
+	const  char *fit_mkrule;	/* special make rule, if any */
 	struct attr *fit_attr;	/* owner attr */
 	TAILQ_ENTRY(files) fit_anext;	/* next file in attr */
 };
@@ -360,21 +365,21 @@ struct filetype
  */
 struct files {
 	struct filetype fi_fit;
-	TAILQ_ENTRY(files) fi_next;
-	const  char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
-	const  char *fi_base;	/* tail minus ".c" (or whatever) */
-	struct condexpr *fi_optx; /* options expression */
-	struct nvlist *fi_optf; /* flattened version of above, if needed */
-	const  char *fi_mkrule;	/* special make rule, if any */
 };
+#define fi_next    fi_fit.fit_next
 #define fi_srcfile fi_fit.fit_srcfile
 #define fi_srcline fi_fit.fit_srcline
 #define fi_flags   fi_fit.fit_flags
 #define fi_lastc   fi_fit.fit_lastc
+#define fi_tail    fi_fit.fit_tail
+#define fi_base    fi_fit.fit_base
 #define fi_path    fi_fit.fit_path
 #define fi_prefix  fi_fit.fit_prefix
 #define fi_suffix  fi_fit.fit_suffix
 #define fi_len     fi_fit.fit_len
+#define fi_optx    fi_fit.fit_optx
+#define fi_optf    fi_fit.fit_optf
+#define fi_mkrule  fi_fit.fit_mkrule
 #define fi_attr    fi_fit.fit_attr
 #define fi_anext   fi_fit.fit_anext
 
@@ -390,17 +395,24 @@ struct files {
  */
 struct objects {
 	struct  filetype oi_fit;
-	TAILQ_ENTRY(objects) oi_next;
-	struct condexpr *oi_optx;	/* condition expression */
-	struct  nvlist *oi_optf;/* flattened version of above, if needed */
 };
 
+#define oi_next    oi_fit.fit_next
 #define oi_srcfile oi_fit.fit_srcfile
 #define oi_srcline oi_fit.fit_srcline
 #define oi_flags   oi_fit.fit_flags
 #define oi_lastc   oi_fit.fit_lastc
+#define oi_tail    oi_fit.fit_tail
+#define oi_base    oi_fit.fit_base
 #define oi_path    oi_fit.fit_path
 #define oi_prefix  oi_fit.fit_prefix
+#define oi_suffix  oi_fit.fit_suffix
+#define oi_len     oi_fit.fit_len
+#define oi_optx    oi_fit.fit_optx
+#define oi_optf    oi_fit.fit_optf
+#define oi_mkrule  oi_fit.fit_mkrule
+#define oi_attr    oi_fit.fit_attr
+#define oi_anext   oi_fit.fit_anext
 
 /* flags */
 #define	OI_SEL		0x01	/* selected */
