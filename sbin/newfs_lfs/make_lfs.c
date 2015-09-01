@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.45 2015/09/01 06:10:16 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.46 2015/09/01 06:12:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.45 2015/09/01 06:10:16 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.46 2015/09/01 06:12:04 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -189,7 +189,7 @@ static const struct dlfs64 dlfs64_default = {
 		.dlfs_avail =		0,
 		.dlfs_idaddr =		0,
 		.dlfs_uinodes =		0,
-		.dlfs_ifile =		LFS_IFILE_INUM,
+		.dlfs_unused_0 =	0,
 		.dlfs_lastseg =		0,
 		.dlfs_nextseg =		0,
 		.dlfs_curseg =		0,
