@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.78 2015/09/01 12:10:56 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.79 2015/09/01 12:32:26 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -337,11 +337,10 @@ struct devi {
  */
 struct files {
 	TAILQ_ENTRY(files) fi_next;
-	TAILQ_ENTRY(files) fi_snext;
+	TAILQ_ENTRY(files) fi_snext;	/* per-suffix list */
 	const char *fi_srcfile;	/* the name of the "files" file that got us */
 	u_short	fi_srcline;	/* and the line number */
-	u_char	fi_flags;	/* as below */
-	char	fi_lastc;	/* last char from path */
+	u_char fi_flags;	/* as below */
 	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
 	const char *fi_base;	/* tail minus ".c" (or whatever) */
 	const char *fi_path;	/* full file path */
@@ -350,7 +349,7 @@ struct files {
 	size_t fi_len;		/* path string length */
 	struct condexpr *fi_optx; /* options expression */
 	struct nvlist *fi_optf; /* flattened version of above, if needed */
-	const  char *fi_mkrule;	/* special make rule, if any */
+	const char *fi_mkrule;	/* special make rule, if any */
 	struct attr *fi_attr;	/* owner attr */
 	TAILQ_ENTRY(files) fi_anext;	/* next file in attr */
 };
