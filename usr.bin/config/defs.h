@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.75 2015/09/01 10:37:48 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.76 2015/09/01 11:22:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -149,6 +149,9 @@ struct defoptlist {
 	struct nvlist *dl_depends;
 };
 
+struct files;
+TAILQ_HEAD(filelist, files);
+
 struct module {
 	const char		*m_name;
 #if 1
@@ -158,7 +161,7 @@ struct module {
 	struct modulelist	*m_deps;
 #endif
 	int			m_expanding;
-	TAILQ_HEAD(, files)	m_files;
+	struct filelist		m_files;
 	int			m_weight;
 };
 
@@ -334,6 +337,7 @@ struct devi {
  */
 struct filetype {
 	TAILQ_ENTRY(files) fit_next;
+	TAILQ_ENTRY(files) fit_snext;
 	const char *fit_srcfile;	/* the name of the "files" file that got us */
 	u_short	fit_srcline;	/* and the line number */
 	u_char	fit_flags;	/* as below */
@@ -367,6 +371,7 @@ struct files {
 	struct filetype fi_fit;
 };
 #define fi_next    fi_fit.fit_next
+#define fi_snext    fi_fit.fit_snext
 #define fi_srcfile fi_fit.fit_srcfile
 #define fi_srcline fi_fit.fit_srcline
 #define fi_flags   fi_fit.fit_flags
@@ -388,35 +393,6 @@ struct files {
 #define	FI_NEEDSCOUNT	0x02	/* needs-count */
 #define	FI_NEEDSFLAG	0x04	/* needs-flag */
 #define	FI_HIDDEN	0x08	/* obscured by other(s), base names overlap */
-
-/*
- * Objects and libraries.  This allows precompiled object and library
- * files (e.g. binary-only device drivers) to be linked in.
- */
-struct objects {
-	struct  filetype oi_fit;
-};
-
-#define oi_next    oi_fit.fit_next
-#define oi_srcfile oi_fit.fit_srcfile
-#define oi_srcline oi_fit.fit_srcline
-#define oi_flags   oi_fit.fit_flags
-#define oi_lastc   oi_fit.fit_lastc
-#define oi_tail    oi_fit.fit_tail
-#define oi_base    oi_fit.fit_base
-#define oi_path    oi_fit.fit_path
-#define oi_prefix  oi_fit.fit_prefix
-#define oi_suffix  oi_fit.fit_suffix
-#define oi_len     oi_fit.fit_len
-#define oi_optx    oi_fit.fit_optx
-#define oi_optf    oi_fit.fit_optf
-#define oi_mkrule  oi_fit.fit_mkrule
-#define oi_attr    oi_fit.fit_attr
-#define oi_anext   oi_fit.fit_anext
-
-/* flags */
-#define	OI_SEL		0x01	/* selected */
-#define	OI_NEEDSFLAG	0x02	/* needs-flag */
 
 /*
  * Condition expressions.
@@ -534,8 +510,11 @@ int	do_devsw;			/* 0 if pre-devsw config */
 int	oktopackage;			/* 0 before setmachine() */
 int	devilevel;			/* used for devi->i_level */
 
-TAILQ_HEAD(, files)	allfiles;	/* list of all kernel source files */
-TAILQ_HEAD(, objects)	allobjects;	/* list of all kernel object and
+struct filelist		allfiles;	/* list of all kernel source files */
+struct filelist		allcfiles;	/* list of all .c files */
+struct filelist		allsfiles;	/* list of all .S files */
+struct filelist		allofiles;	/* list of all .o files */
+TAILQ_HEAD(, files)	allobjects;	/* list of all kernel object and
 					   library files */
 
 SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
@@ -563,7 +542,6 @@ int	fixfiles(void);		/* finalize */
 int	fixobjects(void);
 int	fixdevsw(void);
 void	addfile(const char *, struct condexpr *, u_char, const char *);
-void	addobject(const char *, struct condexpr *, u_char);
 int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
 
 /* hash.c */
