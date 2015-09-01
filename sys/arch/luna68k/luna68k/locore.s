@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.59 2014/03/22 16:52:07 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.60 2015/09/01 13:46:14 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -287,7 +287,7 @@ Lmotommu1:
 	RELOC(protott1,%a0)		| tt1 range 8000.0000-ffff.ffff
 	.long	0xf0100c00		| pmove %a0@,mmutt1
 	pflusha
-	RELOC(prototc,%a0)		| %tc: SRP,CRP,4KB page,A=10bit,B=10bit
+	RELOC(prototc,%a0)		| %tc: SRP,CRP,4KB or 8KB page
 	pmove	%a0@,%tc
 /*
  * Should be running mapped from this point on
@@ -909,13 +909,21 @@ GLOBAL(protocrp)
 	.long	0x80000002,0	| prototype CPU root pointer
 
 GLOBAL(prototc)
+#if PGSHIFT == 13
+	.long	0x82d08b00	| %tc (SRP,CRP,8KB page, TIA/TIB=8/11bits)
+#else
 	.long	0x82c0aa00	| %tc (SRP,CRP,4KB page, TIA/TIB=10/10bits)
+#endif
 GLOBAL(protott0)		| tt0 0x4000.0000-0x7fff.ffff
 	.long	0x403f8543	|
 GLOBAL(protott1)		| tt1 0x8000.0000-0xffff.ffff
 	.long	0x807f8543	|
 GLOBAL(proto040tc)
+#if PGSHIFT == 13
+	.long	0xc000		| %tc (8KB page)
+#else
 	.long	0x8000		| %tc (4KB page)
+#endif
 GLOBAL(proto040tt0)		| tt0 0x4000.0000-0x7fff.ffff
 	.long	0x403fa040	| kernel only, cache inhebit, serialized
 GLOBAL(proto040tt1)		| tt1 0x8000.0000-0xffff.ffff
