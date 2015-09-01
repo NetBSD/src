@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.82 2015/09/01 01:50:14 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.83 2015/09/01 14:32:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.82 2015/09/01 01:50:14 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.83 2015/09/01 14:32:20 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -122,6 +122,7 @@ static	int	undo_option(struct hashtab *, struct nvlist **,
 static	int	crosscheck(void);
 static	int	badstar(void);
 	int	main(int, char **);
+static	int	mksubdirs(void);
 static	int	mksymlinks(void);
 static	int	mkident(void);
 static	int	devbase_has_dead_instances(const char *, void *, void *);
@@ -516,7 +517,7 @@ main(int argc, char **argv)
 	/*
 	 * Ready to go.  Build all the various files.
 	 */
-	if (mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
+	if (mksubdirs() || mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
 	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident() || errors)
 		stop();
 	(void)printf("Build directory is %s\n", builddir);
@@ -615,6 +616,59 @@ recreate(const char *p, const char *q)
 	if ((ret = symlink(p, q)) == -1)
 		warn("symlink(%s -> %s)", q, p);
 	return ret;
+}
+
+static void
+mksubdir(char *buf)
+{
+	char *p;
+	struct stat st;
+
+	p = strrchr(buf, '/');
+	if (p != NULL && *p == '/') {
+		*p = '\0';
+		mksubdir(buf);
+		*p = '/';
+	}
+	if (stat(buf, &st) == 0) {
+		if (!S_ISDIR(st.st_mode))
+			errx(EXIT_FAILURE, "not directory %s", buf);
+	} else
+		if (mkdir(buf, 0777) == -1)
+			errx(EXIT_FAILURE, "cannot create %s", buf);
+}
+
+static int
+mksubdirs(void)
+{
+	struct files *fi;
+	const char *prefix, *sep;
+	char buf[MAXPATHLEN];
+
+	// XXX notyet
+	if (1)
+		return 0;
+
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		prefix = sep = "";
+		if (fi->fi_buildprefix != NULL) {
+			prefix = fi->fi_buildprefix;
+			sep = "/";
+		} else {
+			if (fi->fi_prefix != NULL) {
+				prefix = fi->fi_prefix;
+				sep = "/";
+			}
+		}
+		snprintf(buf, sizeof(buf), "%s%s%s", prefix, sep, fi->fi_dir);
+		if (buf[0] == '\0')
+			continue;
+		mksubdir(buf);
+	}
+
+	return 0;
 }
 
 /*
