@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.146 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.147 2015/09/01 06:13:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.146 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.147 2015/09/01 06:13:09 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -726,10 +726,10 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	int i;
 	struct buf *bp;
 	struct lfs *fs = ip->i_lfs;
-	int32_t *bap;	/* XXX ondisk32 */
+	void *bap;
+	bool bap_needs_free;
 	struct vnode *vp;
 	daddr_t nb, nlbn, last;
-	int32_t *copy = NULL;	/* XXX ondisk32 */
 	daddr_t blkcount, rblkcount, factor;
 	int nblocks;
 	daddr_t blocksreleased = 0, real_released = 0;
@@ -777,17 +777,25 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		return (error);
 	}
 
-	bap = (int32_t *)bp->b_data;	/* XXX ondisk32 */
 	if (lastbn >= 0) {
-		copy = lfs_malloc(fs, lfs_sb_getbsize(fs), LFS_NB_IBLOCK);
-		memcpy((void *)copy, (void *)bap, lfs_sb_getbsize(fs));
-		memset((void *)&bap[last + 1], 0,
-		/* XXX ondisk32 */
-		  (u_int)(LFS_NINDIR(fs) - (last + 1)) * sizeof (int32_t));
+		/*
+		 * We still need this block, so copy the data for
+		 * subsequent processing; then in the original block,
+		 * zero out the dying block pointers and send it off.
+		 */
+		bap = lfs_malloc(fs, lfs_sb_getbsize(fs), LFS_NB_IBLOCK);
+		memcpy(bap, bp->b_data, lfs_sb_getbsize(fs));
+		bap_needs_free = true;
+
+		for (i = last + 1; i < LFS_NINDIR(fs); i++) {
+			lfs_iblock_set(fs, bp->b_data, i, 0);
+		}
 		error = VOP_BWRITE(bp->b_vp, bp);
 		if (error)
 			allerror = error;
-		bap = copy;
+	} else {
+		bap = bp->b_data;
+		bap_needs_free = false;
 	}
 
 	/*
@@ -795,7 +803,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	 */
 	for (i = LFS_NINDIR(fs) - 1, nlbn = lbn + 1 - i * factor; i > last;
 	    i--, nlbn += factor) {
-		nb = bap[i];
+		nb = lfs_iblock_get(fs, bap, i);
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
@@ -809,7 +817,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 			real_released += rblkcount;
 		}
 		lfs_blkfree(fs, ip, nb, lfs_sb_getbsize(fs), lastsegp, bcp);
-		if (bap[i] > 0)
+		if (lfs_iblock_get(fs, bap, i) > 0)
 			real_released += nblocks;
 		blocksreleased += nblocks;
 	}
@@ -819,7 +827,7 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 	 */
 	if (level > SINGLE && lastbn >= 0) {
 		last = lastbn % factor;
-		nb = bap[i];
+		nb = lfs_iblock_get(fs, bap, i);
 		if (nb != 0) {
 			error = lfs_indirtrunc(ip, nlbn, nb,
 					       last, level - 1, &blkcount,
@@ -831,8 +839,8 @@ lfs_indirtrunc(struct inode *ip, daddr_t lbn, daddr_t dbn,
 		}
 	}
 
-	if (copy != NULL) {
-		lfs_free(fs, copy, LFS_NB_IBLOCK);
+	if (bap_needs_free) {
+		lfs_free(fs, bap, LFS_NB_IBLOCK);
 	} else {
 		mutex_enter(&bufcache_lock);
 		if (bp->b_oflags & BO_DELWRI) {
