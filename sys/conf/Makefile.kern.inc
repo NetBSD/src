@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.217 2015/09/01 16:04:04 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.218 2015/09/01 23:04:35 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -174,14 +174,6 @@ ${_s:T:R}.o: ${_s}
 .endif
 .endfor
 
-.SUFFIXES: .c .o
-.c.o:
-	${NORMAL_C}
-
-.SUFFIXES: .S .o
-.S.o:
-	${NORMAL_S}
-
 ##
 ## (3) libkern and compat
 ##
@@ -325,14 +317,6 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 
-.SUFFIXES: .genassym .assym.h
-.genassym.assym.h:
-	${_MKTARGET_CREATE}
-	cat $< | \
-	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    ${GENASSYM_CPPFLAGS} > $@.tmp && \
-	mv -f $@.tmp $@
-
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf | \
@@ -409,12 +393,6 @@ CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
 SRCS=${SSRCS} ${CSRCS}
 DEPS=	${SRCS:T:u:R:S/$/.d/g}
 
-.SUFFIXES: .S .d
-.S.d:
-	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
-	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} $<
-
 .for _s in ${SSRCS}
 .if !target(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s} assym.h
@@ -423,12 +401,6 @@ ${_s:T:R}.d: ${_s} assym.h
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
 .endif
 .endfor
-
-.SUFFIXES: .c .d
-.c.d:
-	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
-	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} $<
 
 .for _s in ${CSRCS}
 .if !target(${_s:T:R}.d)
@@ -542,6 +514,50 @@ build_kernel: .USE
 
 .include <bsd.files.mk>
 .include <bsd.clang-analyze.mk>
+
+##
+## suffix rules
+##
+
+.if defined(___USE_SUFFIX_RULES___)
+.SUFFIXES: .genassym .assym.h
+.genassym.assym.h:
+	${_MKTARGET_CREATE}
+	cat $< | \
+	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
+	    ${GENASSYM_CPPFLAGS} > $@.tmp && \
+	mv -f $@.tmp $@
+
+.SUFFIXES: .s .d
+.s.d:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+
+.SUFFIXES: .S .d
+.S.d:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+
+.SUFFIXES: .c .d
+.c.d:
+	${_MKTARGET_CREATE}
+	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	    ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+
+.SUFFIXES: .c .o
+.c.o:
+	${NORMAL_C}
+
+.SUFFIXES: .s .o
+.s.o:
+	${NORMAL_S}
+
+.SUFFIXES: .S .o
+.S.o:
+	${NORMAL_S}
+.endif # ___USE_SUFFIX_RULES___
 
 ##
 ## the end
