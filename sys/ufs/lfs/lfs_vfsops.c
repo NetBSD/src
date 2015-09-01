@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.341 2015/08/19 20:33:29 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.342 2015/09/01 06:08:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.341 2015/08/19 20:33:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.342 2015/09/01 06:08:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1661,8 +1661,8 @@ again:
 
 out:	
 	if (lfs_sb_getversion(fs) > 1) {
-		ip->i_ffs1_atime = ts.tv_sec;
-		ip->i_ffs1_atimensec = ts.tv_nsec;
+		lfs_dino_setatime(fs, ip->i_din, ts.tv_sec);
+		lfs_dino_setatimensec(fs, ip->i_din, ts.tv_nsec);
 	}
 
 	lfs_vinit(mp, &vp);
@@ -1721,7 +1721,7 @@ lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 
 	/* Set a new generation number for this inode. */
 	ip->i_gen = gen;
-	ip->i_ffs1_gen = gen;
+	lfs_dino_setgen(fs, ip->i_din, gen);
 
 	memset(ip->i_lfs_fragsize, 0,
 	    ULFS_NDADDR * sizeof(*ip->i_lfs_fragsize));
@@ -1757,11 +1757,12 @@ lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 		 * Want to be able to use this to make badblock
 		 * inodes, so don't truncate the dev number.
 		 */
+		// XXX clean this up
 		if (ump->um_fstype == ULFS1)
-			ip->i_ffs1_rdev = ulfs_rw32(vap->va_rdev,
+			ip->i_din->u_32.di_rdev = ulfs_rw32(vap->va_rdev,
 			    ULFS_MPNEEDSWAP(fs));
 		else
-			ip->i_ffs2_rdev = ulfs_rw64(vap->va_rdev,
+			ip->i_din->u_64.di_rdev = ulfs_rw64(vap->va_rdev,
 			    ULFS_MPNEEDSWAP(fs));
 	}
 	lfs_vinit(mp, &vp);
@@ -1791,7 +1792,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		return ESTALE;
 
 	if (lfh.lfid_ino >
-	    ((VTOI(fs->lfs_ivnode)->i_ffs1_size >> lfs_sb_getbshift(fs)) -
+	    ((lfs_dino_getsize(fs, VTOI(fs->lfs_ivnode)->i_din) >> lfs_sb_getbshift(fs)) -
 	     lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs))
 		return ESTALE;
 
@@ -2203,16 +2204,16 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 	struct lfs *fs = ump->um_lfs;
 	int i;
 
-	ip->i_mode = ip->i_ffs1_mode;
-	ip->i_nlink = ip->i_ffs1_nlink;
-	ip->i_lfs_osize = ip->i_size = ip->i_ffs1_size;
-	ip->i_flags = ip->i_ffs1_flags;
-	ip->i_gen = ip->i_ffs1_gen;
-	ip->i_uid = ip->i_ffs1_uid;
-	ip->i_gid = ip->i_ffs1_gid;
+	ip->i_mode = lfs_dino_getmode(fs, ip->i_din);
+	ip->i_nlink = lfs_dino_getnlink(fs, ip->i_din);
+	ip->i_lfs_osize = ip->i_size = lfs_dino_getsize(fs, ip->i_din);
+	ip->i_flags = lfs_dino_getflags(fs, ip->i_din);
+	ip->i_gen = lfs_dino_getgen(fs, ip->i_din);
+	ip->i_uid = lfs_dino_getuid(fs, ip->i_din);
+	ip->i_gid = lfs_dino_getgid(fs, ip->i_din);
 
-	ip->i_lfs_effnblks = ip->i_ffs1_blocks;
-	ip->i_lfs_odnlink = ip->i_ffs1_nlink;
+	ip->i_lfs_effnblks = lfs_dino_getblocks(fs, ip->i_din);
+	ip->i_lfs_odnlink = lfs_dino_getnlink(fs, ip->i_din);
 
 	/*
 	 * Initialize the vnode from the inode, check for aliases.  In all
@@ -2229,20 +2230,20 @@ lfs_vinit(struct mount *mp, struct vnode **vpp)
 			if ((vp->v_type == VBLK || vp->v_type == VCHR) &&
 			    i == 0)
 				continue;
-			if (ip->i_ffs1_db[i] != 0) {
+			if (lfs_dino_getdb(fs, ip->i_din, i) != 0) {
 				lfs_dump_dinode(fs, ip->i_din);
 				panic("inconsistent inode (direct)");
 			}
 		}
 		for ( ; i < ULFS_NDADDR + ULFS_NIADDR; i++) {
-			if (ip->i_ffs1_ib[i - ULFS_NDADDR] != 0) {
+			if (lfs_dino_getib(fs, ip->i_din, i - ULFS_NDADDR) != 0) {
 				lfs_dump_dinode(fs, ip->i_din);
 				panic("inconsistent inode (indirect)");
 			}
 		}
 #endif /* DEBUG */
 		for (i = 0; i < ULFS_NDADDR; i++)
-			if (ip->i_ffs1_db[i] != 0)
+			if (lfs_dino_getdb(fs, ip->i_din, i) != 0)
 				ip->i_lfs_fragsize[i] = lfs_blksize(fs, ip, i);
 	}
 
@@ -2367,7 +2368,7 @@ lfs_resize_fs(struct lfs *fs, int newnsegs)
 
 	/* Register new ifile size */
 	ip->i_size += noff * lfs_sb_getbsize(fs); 
-	ip->i_ffs1_size = ip->i_size;
+	lfs_dino_setsize(fs, ip->i_din, ip->i_size);
 	uvm_vnp_setsize(ivp, ip->i_size);
 
 	/* Copy the inode table to its new position */

@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.42 2015/08/19 20:33:29 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.43 2015/09/01 06:08:37 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -311,7 +311,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	 */
 	if (ip->i_number == LFS_IFILE_INUM && sp->idp) {
 		lfs_copy_dinode(fs, sp->idp, ip->i_din);
-		ip->i_lfs_osize = ip->i_ffs1_size;
+		ip->i_lfs_osize = lfs_dino_getsize(fs, ip->i_din);
 		return 0;
 	}
 	bp = sp->ibp;
@@ -319,7 +319,7 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	lfs_copy_dinode(fs, cdp, ip->i_din);
 
 	/* If all blocks are goig to disk, update the "size on disk" */
-	ip->i_lfs_osize = ip->i_ffs1_size;
+	ip->i_lfs_osize = lfs_dino_getsize(fs, ip->i_din);
 
 	if (ip->i_number == LFS_IFILE_INUM)	/* We know sp->idp == NULL */
 		sp->idp = DINO_IN_BLOCK(fs, bp->b_data, sp->ninodes % LFS_INOPB(fs));
@@ -478,21 +478,24 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 	frags = lfs_numfrags(fs, size);
 	switch (num) {
 	case 0:
-		ooff = ip->i_ffs1_db[lbn];
+		ooff = lfs_dino_getdb(fs, ip->i_din, lbn);
 		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += frags;
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + frags);
 		else {
 			/* possible fragment truncation or extension */
 			ofrags = lfs_btofsb(fs, ip->i_lfs_fragsize[lbn]);
-			ip->i_ffs1_blocks += (frags - ofrags);
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + (frags - ofrags));
 		}
-		ip->i_ffs1_db[lbn] = ndaddr;
+		lfs_dino_setdb(fs, ip->i_din, lbn, ndaddr);
 		break;
 	case 1:
-		ooff = ip->i_ffs1_ib[a[0].in_off];
+		ooff = lfs_dino_getib(fs, ip->i_din, a[0].in_off);
 		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += frags;
-		ip->i_ffs1_ib[a[0].in_off] = ndaddr;
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + frags);
+		lfs_dino_setib(fs, ip->i_din, a[0].in_off, ndaddr);
 		break;
 	default:
 		ap = &a[num - 1];
@@ -500,10 +503,11 @@ lfs_update_single(struct lfs * fs, struct segment * sp, daddr_t lbn,
 			errx(EXIT_FAILURE, "%s: bread bno %" PRId64, __func__,
 			    ap->in_lbn);
 
-		ooff = ((ulfs_daddr_t *) bp->b_data)[ap->in_off];
+		ooff = lfs_iblock_get(fs, bp->b_data, ap->in_off);
 		if (ooff == UNWRITTEN)
-			ip->i_ffs1_blocks += frags;
-		((ulfs_daddr_t *) bp->b_data)[ap->in_off] = ndaddr;
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + frags);
+		lfs_iblock_set(fs, bp->b_data, ap->in_off, ndaddr);
 		(void) VOP_BWRITE(bp);
 	}
 

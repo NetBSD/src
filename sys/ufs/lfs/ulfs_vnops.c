@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.26 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.27 2015/09/01 06:08:37 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.26 2015/05/31 15:48:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.27 2015/09/01 06:08:37 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.26 2015/05/31 15:48:03 hannken Exp 
 #endif
 #include <ufs/lfs/lfs_extern.h>
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 
 #include <uvm/uvm.h>
 
@@ -236,6 +237,7 @@ ulfs_setattr(void *v)
 	struct vattr	*vap;
 	struct vnode	*vp;
 	struct inode	*ip;
+	struct lfs	*fs;
 	kauth_cred_t	cred;
 	struct lwp	*l;
 	int		error;
@@ -245,6 +247,7 @@ ulfs_setattr(void *v)
 	vap = ap->a_vap;
 	vp = ap->a_vp;
 	ip = VTOI(vp);
+	fs = ip->i_lfs;
 	cred = ap->a_cred;
 	l = curlwp;
 	action = KAUTH_VNODE_WRITE_FLAGS;
@@ -375,10 +378,9 @@ ulfs_setattr(void *v)
 			if (vp->v_mount->mnt_flag & MNT_RELATIME)
 				ip->i_flag |= IN_ACCESS;
 		}
-		if (vap->va_birthtime.tv_sec != VNOVAL &&
-		    ip->i_ump->um_fstype == ULFS2) {
-			ip->i_ffs2_birthtime = vap->va_birthtime.tv_sec;
-			ip->i_ffs2_birthnsec = vap->va_birthtime.tv_nsec;
+		if (vap->va_birthtime.tv_sec != VNOVAL) {
+			lfs_dino_setbirthtime(fs, ip->i_din,
+					      &vap->va_birthtime);
 		}
 		error = lfs_update(vp, &vap->va_atime, &vap->va_mtime, 0);
 		if (error)
@@ -1140,11 +1142,12 @@ ulfs_vinit(struct mount *mntp, int (**specops)(void *), int (**fifoops)(void *),
 	case VBLK:
 		vp->v_op = specops;
 		ump = ip->i_ump;
+		// XXX clean this up
 		if (ump->um_fstype == ULFS1)
-			rdev = (dev_t)ulfs_rw32(ip->i_ffs1_rdev,
+			rdev = (dev_t)ulfs_rw32(ip->i_din->u_32.di_rdev,
 			    ULFS_MPNEEDSWAP(ump->um_lfs));
 		else
-			rdev = (dev_t)ulfs_rw64(ip->i_ffs2_rdev,
+			rdev = (dev_t)ulfs_rw64(ip->i_din->u_64.di_rdev,
 			    ULFS_MPNEEDSWAP(ump->um_lfs));
 		spec_node_init(vp, rdev);
 		break;

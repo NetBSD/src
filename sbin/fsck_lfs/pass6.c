@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.43 2015/08/19 20:33:29 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.44 2015/09/01 06:08:37 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -103,21 +103,24 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, size_t si
 	frags = lfs_numfrags(fs, size);
 	switch (num) {
 	case 0:
-		ooff = ip->i_ffs1_db[lbn];
+		ooff = lfs_dino_getdb(fs, ip->i_din, lbn);
 		if (ooff <= 0)
-			ip->i_ffs1_blocks += frags;
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + frags);
 		else {
 			/* possible fragment truncation or extension */
 			ofrags = lfs_numfrags(fs, ip->i_lfs_fragsize[lbn]);
-			ip->i_ffs1_blocks += (frags - ofrags);
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + (frags - ofrags));
 		}
-		ip->i_ffs1_db[lbn] = ndaddr;
+		lfs_dino_setdb(fs, ip->i_din, lbn, ndaddr);
 		break;
 	case 1:
-		ooff = ip->i_ffs1_ib[a[0].in_off];
+		ooff = lfs_dino_getib(fs, ip->i_din, a[0].in_off);
 		if (ooff <= 0)
-			ip->i_ffs1_blocks += frags;
-		ip->i_ffs1_ib[a[0].in_off] = ndaddr;
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + frags);
+		lfs_dino_setib(fs, ip->i_din, a[0].in_off, ndaddr);
 		break;
 	default:
 		ap = &a[num - 1];
@@ -125,10 +128,11 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, size_t si
 			errx(1, "lfs_updatemeta: bread bno %" PRId64,
 			    ap->in_lbn);
 
-		ooff = ((ulfs_daddr_t *) bp->b_data)[ap->in_off];
+		ooff = lfs_iblock_get(fs, bp->b_data, ap->in_off);
 		if (ooff <= 0)
-			ip->i_ffs1_blocks += frags;
-		((ulfs_daddr_t *) bp->b_data)[ap->in_off] = ndaddr;
+			lfs_dino_setblocks(fs, ip->i_din,
+			    lfs_dino_getblocks(fs, ip->i_din) + frags);
+		lfs_iblock_set(fs, bp->b_data, ap->in_off, ndaddr);
 		(void) VOP_BWRITE(bp);
 	}
 
@@ -153,8 +157,8 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, size_t si
 	}
 
 	/* If block is beyond EOF, update size */
-	if (lbn >= 0 && ip->i_ffs1_size <= (lbn << lfs_sb_getbshift(fs))) {
-		ip->i_ffs1_size = (lbn << lfs_sb_getbshift(fs)) + 1;
+	if (lbn >= 0 && lfs_dino_getsize(fs, ip->i_din) <= (lbn << lfs_sb_getbshift(fs))) {
+		lfs_dino_setsize(fs, ip->i_din, (lbn << lfs_sb_getbshift(fs)) + 1);
 	}
 
 	/* If block frag size is too large for old EOF, update size */
@@ -163,8 +167,8 @@ rfw_update_single(struct uvnode *vp, daddr_t lbn, ulfs_daddr_t ndaddr, size_t si
 
 		minsize = (lbn << lfs_sb_getbshift(fs));
 		minsize += (size - lfs_sb_getfsize(fs)) + 1;
-		if (ip->i_ffs1_size < minsize)
-			ip->i_ffs1_size = minsize;
+		if (lfs_dino_getsize(fs, ip->i_din) < minsize)
+			lfs_dino_setsize(fs, ip->i_din, minsize);
 	}
 
 	/* Count for the user */
@@ -264,7 +268,7 @@ pass6harvest(ulfs_daddr_t daddr, FINFO *fip)
 
 	vp = vget(fs, lfs_fi_getino(fs, fip));
 	if (vp && vp != fs->lfs_ivnode &&
-	    VTOI(vp)->i_ffs1_gen == lfs_fi_getversion(fs, fip)) {
+	    lfs_dino_getgen(fs, VTOI(vp)->i_din) == lfs_fi_getversion(fs, fip)) {
 		for (i = 0; i < lfs_fi_getnblocks(fs, fip); i++) {
 			size = (i == lfs_fi_getnblocks(fs, fip) - 1 ?
 				lfs_fi_getlastlength(fs, fip) : lfs_sb_getbsize(fs));
@@ -388,7 +392,7 @@ account_block_changes(union lfs_dinode *dp)
 
 	/* Check direct block holdings between existing and new */
 	for (i = 0; i < ULFS_NDADDR; i++) {
-		odaddr = (ip ? ip->i_ffs1_db[i] : 0x0);
+		odaddr = (ip ? lfs_dino_getdb(fs, ip->i_din, i) : 0x0);
 		if (lfs_dino_getdb(fs, dp, i) > 0 && lfs_dino_getdb(fs, dp, i) != odaddr)
 			rfw_update_single(vp, i, lfs_dino_getdb(fs, dp, i),
 					  lfs_dblksize(fs, dp, i));
@@ -397,7 +401,7 @@ account_block_changes(union lfs_dinode *dp)
 	/* Check indirect block holdings between existing and new */
 	off = 0;
 	for (i = 0; i < ULFS_NIADDR; i++) {
-		odaddr = (ip ? ip->i_ffs1_ib[i] : 0x0);
+		odaddr = (ip ? lfs_dino_getib(fs, ip->i_din, i) : 0x0);
 		if (lfs_dino_getib(fs, dp, i) > 0 && lfs_dino_getib(fs, dp, i) != odaddr) {
 			lbn = -(ULFS_NDADDR + off + i);
 			rfw_update_single(vp, i, lfs_dino_getib(fs, dp, i), lfs_sb_getbsize(fs));
@@ -711,11 +715,9 @@ pass6(void)
 				 *     allocated inode.  Delete old file
 				 *     and proceed as in (2).
 				 */
-				if (vp && (
-					fs->lfs_is64 ?
-					VTOI(vp)->i_ffs2_gen :
-					VTOI(vp)->i_ffs1_gen
-				    ) < lfs_dino_getgen(fs, dp)) {
+				if (vp &&
+				    lfs_dino_getgen(fs, VTOI(vp)->i_din)
+				    < lfs_dino_getgen(fs, dp)) {
 					remove_ino(vp, lfs_dino_getinumber(fs, dp));
 					if (!(lfs_ss_getflags(fs, sp) & SS_DIROP))
 						pfatal("NEW FILE VERSION IN NON-DIROP PARTIAL SEGMENT");
@@ -733,11 +735,9 @@ pass6(void)
 				 *     only.  We'll pick up any new
 				 *     blocks when we do the block pass.
 				 */
-				if (vp && (
-					fs->lfs_is64 ?
-					VTOI(vp)->i_ffs2_gen :
-					VTOI(vp)->i_ffs1_gen
-				    ) == lfs_dino_getgen(fs, dp)) {
+				if (vp &&
+				    lfs_dino_getgen(fs, VTOI(vp)->i_din)
+				    == lfs_dino_getgen(fs, dp)) {
 					nmvfiles++;
 					readdress_inode(dp, ibdaddr);
 

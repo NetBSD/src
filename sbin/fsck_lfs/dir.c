@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.36 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.37 2015/09/01 06:08:37 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -316,7 +316,7 @@ fileerror(ino_t cwd, ino_t ino, const char *errmesg)
 	else {
 		if (ftypeok(VTOD(vp)))
 			pfatal("%s=%s\n",
-			    (VTOI(vp)->i_ffs1_mode & LFS_IFMT) == LFS_IFDIR ?
+			    (lfs_dino_getmode(fs, VTOI(vp)->i_din) & LFS_IFMT) == LFS_IFDIR ?
 			    "DIR" : "FILE", pathbuf);
 		else
 			pfatal("NAME=%s\n", pathbuf);
@@ -492,7 +492,8 @@ linkup(ino_t orphan, ino_t parentdir)
 		    parentdir != (ino_t) - 1)
 			(void) makeentry(orphan, lfdir, "..");
 		vp = vget(fs, lfdir);
-		VTOI(vp)->i_ffs1_nlink++;
+		lfs_dino_setnlink(fs, VTOI(vp)->i_din,
+		    lfs_dino_getnlink(fs, VTOI(vp)->i_din) + 1);
 		inodirty(VTOI(vp));
 		lncntp[lfdir]++;
 		pwarn("DIR I=%llu CONNECTED. ", (unsigned long long)orphan);
@@ -688,7 +689,8 @@ freedir(ino_t ino, ino_t parent)
 
 	if (ino != parent) {
 		vp = vget(fs, parent);
-		VTOI(vp)->i_ffs1_nlink--;
+		lfs_dino_setnlink(fs, VTOI(vp)->i_din,
+		    lfs_dino_getnlink(fs, VTOI(vp)->i_din) - 1);
 		inodirty(VTOI(vp));
 	}
 	freeino(ino);

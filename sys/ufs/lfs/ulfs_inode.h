@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.15 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.16 2015/09/01 06:08:37 dholland Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -189,27 +189,28 @@ struct lfid {
  */
 #define	DIP(ip, field) \
 	(((ip)->i_ump->um_fstype == ULFS1) ? \
-	(ip)->i_ffs1_##field : (ip)->i_ffs2_##field)
+	(ip)->i_din->u_32.di_##field : (ip)->i_din->u_64.di_##field)
 
 #define	DIP_ASSIGN(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == ULFS1)			\
-			(ip)->i_ffs1_##field = (value);			\
+			(ip)->i_din->u_32.di_##field = (value);	\
 		else							\
-			(ip)->i_ffs2_##field = (value);			\
+			(ip)->i_din->u_64.di_##field = (value);	\
 	} while(0)
 
 #define	DIP_ADD(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == ULFS1)			\
-			(ip)->i_ffs1_##field += (value);		\
+			(ip)->i_din->u_32.di_##field += (value);	\
 		else							\
-			(ip)->i_ffs2_##field += (value);		\
+			(ip)->i_din->u_64.di_##field += (value);	\
 	} while(0)
 
+/* XXX rework this better */
 #define	 SHORTLINK(ip) \
 	(((ip)->i_ump->um_fstype == ULFS1) ? \
-	(void *)(ip)->i_ffs1_db : (void *)(ip)->i_ffs2_db)
+	(void *)(ip)->i_din->u_32.di_db : (void *)(ip)->i_din->u_64.di_db)
 
 
 /*
