@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.73 2015/09/01 06:12:04 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.74 2015/09/01 06:16:58 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -108,7 +108,9 @@ struct salfs {
 		struct dlfs u_32;
 		struct dlfs64 u_64;
 	} lfs_dlfs_u;
-	unsigned lfs_is64 : 1;
+	unsigned lfs_is64 : 1,
+		lfs_dobyteswap : 1,
+		lfs_hasolddirfmt : 1;
 };
 /* Get lfs accessors that use struct salfs. */
 #define STRUCT_LFS struct salfs
@@ -598,6 +600,8 @@ ufs_open(const char *path, struct open_file *f)
 #endif
 #if defined(LIBSA_LFS)
 	fs->lfs_is64 = 0;
+	fs->lfs_dobyteswap = 0;
+	fs->lfs_hasolddirfmt = (fs->fs_maxsymlinklen <= 0);
 #endif
 #endif
 
