@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.82 2015/09/01 13:45:52 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.83 2015/09/01 16:01:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ extern const char *progname;
  * The next two lines define the current version of the config(1) binary,
  * and the minimum version of the configuration files it supports.
  */
-#define CONFIG_VERSION		20150835
+#define CONFIG_VERSION		20150840
 #define CONFIG_MINVERSION	0
 
 /*
@@ -556,6 +556,7 @@ void	emit_params(void);
 
 /* main.c */
 extern	int Mflag;
+extern	int Sflag;
 void	addoption(const char *, const char *);
 void	addfsoption(const char *);
 void	addmkoption(const char *, const char *);
