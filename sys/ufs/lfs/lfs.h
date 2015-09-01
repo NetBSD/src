@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.182 2015/09/01 06:11:06 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.183 2015/09/01 06:12:04 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -795,7 +795,7 @@ struct dlfs64 {
 	int64_t	  dlfs_avail;	  /* 64: blocks available for writing */
 	int64_t	  dlfs_idaddr;	  /* 72: inode file disk address */
 	int32_t	  dlfs_uinodes;	  /* 80: inodes in cache not yet on disk */
-	u_int32_t dlfs_ifile;	  /* 84: inode file inode number */
+	u_int32_t dlfs_unused_0;  /* 84: not used */
 	int64_t	  dlfs_lastseg;	  /* 88: address of last segment written */
 	int64_t	  dlfs_nextseg;	  /* 96: address of next segment to write */
 	int64_t	  dlfs_curseg;	  /* 104: current segment being written */
