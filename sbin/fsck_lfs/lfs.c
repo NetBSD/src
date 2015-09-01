@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.59 2015/09/01 06:10:16 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.60 2015/09/01 06:12:04 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -559,8 +559,7 @@ lfs_init(int devfd, daddr_t sblkno, daddr_t idaddr, int dummy_read, int debug)
 	else
 		lfs_sb_setidaddr(fs, idaddr);
 	/* NB: If dummy_read!=0, idaddr==0 here so we get a fake inode. */
-	fs->lfs_ivnode = lfs_raw_vget(fs,
-		(dummy_read ? LFS_IFILE_INUM : lfs_sb_getifile(fs)),
+	fs->lfs_ivnode = lfs_raw_vget(fs, LFS_IFILE_INUM,
 		devvp->v_fd, idaddr);
 	if (fs->lfs_ivnode == NULL)
 		return NULL;

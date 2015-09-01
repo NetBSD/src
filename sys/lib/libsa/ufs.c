@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs.c,v 1.72 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: ufs.c,v 1.73 2015/09/01 06:12:04 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -218,7 +218,7 @@ find_inode_sector(ino32_t inumber, struct open_file *f, daddr_t *isp)
 	size_t entsize;
 	int rc;
 
-	rc = read_inode(lfs_sb_getifile(fs), f);
+	rc = read_inode(LFS_IFILE_INUM, f);
 	if (rc)
 		return rc;
 
@@ -260,7 +260,7 @@ read_inode(ino32_t inumber, struct open_file *f)
 #endif
 
 #ifdef LIBSA_LFS
-	if (inumber == lfs_sb_getifile(fs))
+	if (inumber == LFS_IFILE_INUM)
 		inode_sector = FSBTODB(fs, lfs_sb_getidaddr(fs));
 	else if ((rc = find_inode_sector(inumber, f, &inode_sector)) != 0)
 		return rc;

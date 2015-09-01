@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.44 2015/09/01 06:08:37 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.45 2015/09/01 06:12:04 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -667,7 +667,7 @@ pass6(void)
 			for (k = 0; k < LFS_INOPB(fs); k++) {
 				dp = DINO_IN_BLOCK(fs, ibbuf, k);
 				if (lfs_dino_getinumber(fs, dp) == 0 ||
-				    lfs_dino_getinumber(fs, dp) == lfs_sb_getifile(fs))
+				    lfs_dino_getinumber(fs, dp) == LFS_IFILE_INUM)
 					continue;
 				/* Basic sanity checks */
 				if (lfs_dino_getnlink(fs, dp) < 0 
