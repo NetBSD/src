@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.50 2015/08/31 02:58:25 uebayasi Exp $	*/
+/*	$NetBSD: gram.y,v 1.51 2015/09/01 11:22:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.50 2015/08/31 02:58:25 uebayasi Exp $");
+__RCSID("$NetBSD: gram.y,v 1.51 2015/09/01 11:22:59 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -343,7 +343,7 @@ define_file:
 
 /* object file: object zot.o foo|zot needs-flag */
 define_object:
-	XOBJECT filename fopts oflags	{ addobject($2, $3, $4); }
+	XOBJECT filename fopts oflags	{ addfile($2, $3, $4, NULL); }
 ;
 
 /* device major declaration */
@@ -473,7 +473,7 @@ oflags:
 
 /* a single flag for an object file */
 oflag:
-	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; }
+	NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; }
 ;
 
 /* char 55 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.21 2015/08/29 02:54:07 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.22 2015/09/01 11:22:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.21 2015/08/29 02:54:07 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.22 2015/09/01 11:22:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -81,6 +81,9 @@ initfiles(void)
 	basetab = ht_new();
 	pathtab = ht_new();
 	TAILQ_INIT(&allfiles);
+	TAILQ_INIT(&allcfiles);
+	TAILQ_INIT(&allsfiles);
+	TAILQ_INIT(&allofiles);
 	unchecked = &TAILQ_FIRST(&allfiles);
 	TAILQ_INIT(&allobjects);
 }
@@ -168,43 +171,27 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 	fi->fi_optf = NULL;
 	fi->fi_mkrule = rule;
 	fi->fi_attr = NULL;
-	TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
+	switch (fi->fi_suffix) {
+	case 'c':
+		TAILQ_INSERT_TAIL(&allcfiles, fi, fi_snext);
+		TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
+		break;
+	case 'S':
+	case 's':
+		TAILQ_INSERT_TAIL(&allsfiles, fi, fi_snext);
+		TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
+		break;
+	case 'o':
+		TAILQ_INSERT_TAIL(&allofiles, fi, fi_snext);
+		TAILQ_INSERT_TAIL(&allobjects, fi, fi_next);
+		break;
+	}
 	return;
  bad:
 	if (optx != NULL) {
 		condexpr_destroy(optx);
 	}
 }
-
-void
-addobject(const char *path, struct condexpr *optx, u_char flags)
-{
-	struct objects *oi;
-
-	/*
-	 * Commit this object to memory.  We will decide later whether it
-	 * will be used after all.
-	 */
-	oi = ecalloc(1, sizeof *oi);
-	if (ht_insert(pathtab, path, oi)) {
-		free(oi);
-		if ((oi = ht_lookup(pathtab, path)) == NULL)
-			panic("addfile: ht_lookup(%s)", path);
-		cfgerror("duplicate file %s", path);
-		cfgxerror(oi->oi_srcfile, oi->oi_srcline,
-		    "here is the original definition");
-	} 
-	oi->oi_srcfile = yyfile;
-	oi->oi_srcline = currentline();
-	oi->oi_flags = flags;
-	oi->oi_path = path;
-	oi->oi_prefix = SLIST_EMPTY(&prefixes) ? NULL :
-			SLIST_FIRST(&prefixes)->pf_prefix;
-	oi->oi_optx = optx;
-	oi->oi_optf = NULL;
-	TAILQ_INSERT_TAIL(&allobjects, oi, oi_next);
-	return;
-}     
 
 static void
 addfiletoattr(const char *name, struct files *fi)
@@ -339,26 +326,26 @@ fixfiles(void)
 int    
 fixobjects(void)
 {     
-	struct objects *oi;
+	struct files *fi;
 	struct nvlist *flathead, **flatp;
 	int err, sel; 
  
 	err = 0;
-	TAILQ_FOREACH(oi, &allobjects, oi_next) {
+	TAILQ_FOREACH(fi, &allobjects, fi_next) {
 		/* Optional: see if it is to be included. */
-		if (oi->oi_optx != NULL) {
+		if (fi->fi_optx != NULL) {
 			flathead = NULL;
 			flatp = &flathead;
-			sel = expr_eval(oi->oi_optx,
-			    oi->oi_flags & OI_NEEDSFLAG ? fixfsel :
+			sel = expr_eval(fi->fi_optx,
+			    fi->fi_flags & FI_NEEDSFLAG ? fixfsel :
 			    fixsel,
 			    &flatp);
-			oi->oi_optf = flathead;
+			fi->fi_optf = flathead;
 			if (!sel)
 				continue;
 		}
 
-		oi->oi_flags |= OI_SEL;  
+		fi->fi_flags |= FI_SEL;  
 	}
 	return (err);
 }     

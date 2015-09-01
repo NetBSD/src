@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.51 2015/09/01 01:17:56 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.52 2015/09/01 11:22:59 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.51 2015/09/01 01:17:56 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.52 2015/09/01 11:22:59 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -313,7 +313,6 @@ static void
 emitobjs(FILE *fp)
 {
 	struct files *fi;
-	struct objects *oi;
 
 	fputs("OBJS= \\\n", fp);
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
@@ -321,11 +320,11 @@ emitobjs(FILE *fp)
 			continue;
 		fprintf(fp, "\t%s.o \\\n", fi->fi_base);
 	}
-	TAILQ_FOREACH(oi, &allobjects, oi_next) {
-		if ((oi->oi_flags & OI_SEL) == 0)
+	TAILQ_FOREACH(fi, &allobjects, fi_next) {
+		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		putc('\t', fp);
-		emitfiletype(fp, &oi->oi_fit);
+		emitfiletype(fp, &fi->fi_fit);
 		fputs(" \\\n", fp);
 	}
 	putc('\n', fp);
