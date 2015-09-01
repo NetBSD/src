@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.46 2015/09/01 06:12:04 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.47 2015/09/01 06:12:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.46 2015/09/01 06:12:04 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.47 2015/09/01 06:12:33 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -152,7 +152,7 @@ static const struct dlfs dlfs32_default = {
 		.dlfs_fbmask =		DFL_LFS_FBMASK,
 		.dlfs_blktodb =		0,
 		.dlfs_sushift =		0,
-		.dlfs_maxsymlinklen =	ULFS1_MAXSYMLINKLEN,
+		.dlfs_maxsymlinklen =	LFS32_MAXSYMLINKLEN,
 		.dlfs_sboffs =		{ 0 },
 		.dlfs_nclean =  	0,
 		.dlfs_fsmnt =   	{ 0 },
@@ -216,7 +216,7 @@ static const struct dlfs64 dlfs64_default = {
 		.dlfs_blktodb =		0,
 		.dlfs_sushift =		0,
 		.dlfs_sboffs =		{ 0 },
-		.dlfs_maxsymlinklen =	ULFS2_MAXSYMLINKLEN,
+		.dlfs_maxsymlinklen =	LFS64_MAXSYMLINKLEN,
 		.dlfs_nclean =  	0,
 		.dlfs_fsmnt =   	{ 0 },
 		.dlfs_pflags =  	LFS_PF_CLEAN,
