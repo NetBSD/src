@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.55 2015/09/01 16:01:23 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.56 2015/09/01 20:18:41 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.55 2015/09/01 16:01:23 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.56 2015/09/01 20:18:41 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -298,14 +298,14 @@ emitdefs(FILE *fp)
 static void
 emitfile(FILE *fp, struct files *fi)
 {
-	const char *srcdir = "$S/";
+	const char *defprologue = "$S/";
 	const char *prologue, *prefix, *sep;
 
 	if (Sflag)
-		srcdir = "";
+		defprologue = "";
 	prologue = prefix = sep = "";
 	if (*fi->fi_path != '/') {
-		prologue = srcdir;
+		prologue = defprologue;
 		if (fi->fi_prefix != NULL) {
 			if (*fi->fi_prefix == '/')
 				prologue = "";
@@ -319,13 +319,20 @@ emitfile(FILE *fp, struct files *fi)
 static void
 emitobjs(FILE *fp)
 {
+	const char *prologue, *prefix, *sep;
 	struct files *fi;
 
 	fputs("OBJS= \\\n", fp);
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+		prologue = prefix = sep = "";
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
-		fprintf(fp, "\t%s.o \\\n", fi->fi_base);
+		if (fi->fi_buildprefix != NULL) {
+			prefix = fi->fi_buildprefix;
+			sep = "/";
+		}
+		fprintf(fp, "\t%s%s%s%s.o \\\n", prologue, prefix, sep,
+		    fi->fi_base);
 	}
 	TAILQ_FOREACH(fi, &allofiles, fi_snext) {
 		if ((fi->fi_flags & FI_SEL) == 0)
