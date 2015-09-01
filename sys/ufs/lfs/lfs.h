@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.180 2015/08/12 18:28:01 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.181 2015/09/01 06:10:16 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -873,7 +873,8 @@ struct lfs {
 	} lfs_dlfs_u;
 
 /* These fields are set at mount time and are meaningless on disk. */
-	unsigned lfs_is64 : 1;		/* are we lfs64 or lfs32? */
+	unsigned lfs_is64 : 1,		/* are we lfs64 or lfs32? */
+		lfs_dobyteswap : 1;	/* are we opposite-endian? */
 
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
