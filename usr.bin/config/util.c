@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.20 2015/09/01 13:42:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: util.c,v 1.19 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: util.c,v 1.20 2015/09/01 13:42:48 uebayasi Exp $");
 
 #include <sys/types.h>
 #include <assert.h>
@@ -73,28 +73,49 @@ static void cfgvxmsg(const char *, int, const char *, const char *, va_list)
  * Prefix stack
  */
 
+static void
+prefixlist_push(struct prefixlist *pl, const char *path)
+{
+	struct prefix *prevpf = SLIST_FIRST(pl);
+	struct prefix *pf;
+	char *cp;
+
+	pf = ecalloc(1, sizeof(struct prefix));
+
+	if (prevpf != NULL) {
+		cp = emalloc(strlen(prevpf->pf_prefix) + 1 +
+		    strlen(path) + 1);
+		(void) sprintf(cp, "%s/%s", prevpf->pf_prefix, path);
+		pf->pf_prefix = intern(cp);
+		free(cp);
+	} else
+		pf->pf_prefix = intern(path);
+
+	SLIST_INSERT_HEAD(pl, pf, pf_next);
+}
+
+static void
+prefixlist_pop(struct prefixlist *allpl, struct prefixlist *pl)
+{
+	struct prefix *pf;
+
+	if ((pf = SLIST_FIRST(pl)) == NULL) {
+		cfgerror("no prefixes on the stack to pop");
+		return;
+	}
+
+	SLIST_REMOVE_HEAD(pl, pf_next);
+	/* Remember this prefix for emitting -I... directives later. */
+	SLIST_INSERT_HEAD(allpl, pf, pf_next);
+}
+
 /*
  * Push a prefix onto the prefix stack.
  */
 void
 prefix_push(const char *path)
 {
-	struct prefix *pf;
-	char *cp;
-
-	pf = ecalloc(1, sizeof(struct prefix));
-
-	if (! SLIST_EMPTY(&prefixes) && *path != '/') {
-		cp = emalloc(strlen(SLIST_FIRST(&prefixes)->pf_prefix) + 1 +
-		    strlen(path) + 1);
-		(void) sprintf(cp, "%s/%s",
-		    SLIST_FIRST(&prefixes)->pf_prefix, path);
-		pf->pf_prefix = intern(cp);
-		free(cp);
-	} else
-		pf->pf_prefix = intern(path);
-
-	SLIST_INSERT_HEAD(&prefixes, pf, pf_next);
+	prefixlist_push(&prefixes, path);
 }
 
 /*
@@ -103,16 +124,25 @@ prefix_push(const char *path)
 void
 prefix_pop(void)
 {
-	struct prefix *pf;
+	prefixlist_pop(&allprefixes, &prefixes);
+}
 
-	if ((pf = SLIST_FIRST(&prefixes)) == NULL) {
-		cfgerror("no prefixes on the stack to pop");
-		return;
-	}
+/*
+ * Push a buildprefix onto the buildprefix stack.
+ */
+void
+buildprefix_push(const char *path)
+{
+	prefixlist_push(&buildprefixes, path);
+}
 
-	SLIST_REMOVE_HEAD(&prefixes, pf_next);
-	/* Remember this prefix for emitting -I... directives later. */
-	SLIST_INSERT_HEAD(&allprefixes, pf, pf_next);
+/*
+ * Pop a buildprefix off the buildprefix stack.
+ */
+void
+buildprefix_pop(void)
+{
+	prefixlist_pop(&allbuildprefixes, &buildprefixes);
 }
 
 /*

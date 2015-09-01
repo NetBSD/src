@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.23 2015/06/16 21:12:19 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.24 2015/09/01 13:42:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.23 2015/06/16 21:12:19 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.24 2015/09/01 13:42:48 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -164,6 +164,7 @@ obsolete	return OBSOLETE;
 on		return ON;
 options		return OPTIONS;
 prefix		return PREFIX;
+buildprefix	return BUILDPREFIX;
 pseudo-device	return PSEUDO_DEVICE;
 pseudo-root	return PSEUDO_ROOT;
 root		return ROOT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.80 2015/09/01 12:46:20 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.81 2015/09/01 13:42:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -346,6 +346,7 @@ struct files {
 	const char *fi_dir;	/* path to file */
 	const char *fi_path;	/* full file path */
 	const char *fi_prefix;	/* any file prefix */
+	const char *fi_buildprefix;	/* prefix in builddir */
 	int fi_suffix;		/* single char suffix */
 	size_t fi_len;		/* path string length */
 	struct condexpr *fi_optx; /* options expression */
@@ -391,6 +392,10 @@ struct condexpr {
  * File/object prefixes.  These are arranged in a stack, and affect
  * the behavior of the source path.
  */
+
+struct prefix;
+SLIST_HEAD(prefixlist, prefix);
+
 struct prefix {
 	SLIST_ENTRY(prefix)	pf_next;	/* next prefix in stack */
 	const char		*pf_prefix;	/* the actual prefix */
@@ -482,8 +487,10 @@ struct filelist		allcfiles;	/* list of all .c files */
 struct filelist		allsfiles;	/* list of all .S files */
 struct filelist		allofiles;	/* list of all .o files */
 
-SLIST_HEAD(, prefix)	prefixes,	/* prefix stack */
+struct prefixlist	prefixes,	/* prefix stack */
 			allprefixes;	/* all prefixes used (after popped) */
+struct prefixlist	buildprefixes,	/* build prefix stack */
+			allbuildprefixes;/* all build prefixes used (after popped) */
 SLIST_HEAD(, prefix)	curdirs;	/* curdir stack */
 
 extern struct attr allattr;
@@ -614,6 +621,8 @@ int	onlist(struct nvlist *, void *);
 /* util.c */
 void	prefix_push(const char *);
 void	prefix_pop(void);
+void	buildprefix_push(const char *);
+void	buildprefix_pop(void);
 char	*sourcepath(const char *);
 extern	int dflag;
 #define	CFGDBG(n, ...) \
