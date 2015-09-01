@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.47 2015/09/01 06:12:33 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.48 2015/09/01 06:15:02 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.47 2015/09/01 06:12:33 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.48 2015/09/01 06:15:02 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,8 @@ __RCSID("$NetBSD: make_lfs.c,v 1.47 2015/09/01 06:12:33 dholland Exp $");
 #include "segwrite.h"
 
 extern int Nflag; /* Don't write anything */
-ulfs_daddr_t ifibc; /* How many indirect blocks */
+
+static blkcnt_t ifibc; /* How many indirect blocks */
 
 #ifdef MAKE_LF_DIR
 # define HIGHEST_USED_INO LOSTFOUNDINO
@@ -410,7 +411,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	bufinit(tnseg / tsepb);
 
 	/* Initialize LFS subsystem with blank superblock and ifile. */
-	fs = lfs_init(devfd, start, (ulfs_daddr_t)0, 1, 1/* XXX debug*/);
+	fs = lfs_init(devfd, start, 0, 1, 1/* XXX debug*/);
 	save_devvp = fs->lfs_devvp;
 	vp = fs->lfs_ivnode;
 	/* XXX this seems like a rubbish */

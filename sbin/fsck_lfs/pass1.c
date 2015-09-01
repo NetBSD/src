@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.43 2015/09/01 06:12:04 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.44 2015/09/01 06:15:02 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -55,16 +55,13 @@
 #include "extern.h"
 #include "fsutil.h"
 
-SEGUSE *seg_table;
-extern ulfs_daddr_t *din_table;
-
-ulfs_daddr_t badblk;
-static ulfs_daddr_t dupblk;
+blkcnt_t badblkcount;
+static blkcnt_t dupblkcount;
 static int i_d_cmp(const void *, const void *);
 
 struct ino_daddr {
 	ino_t ino;
-	ulfs_daddr_t daddr;
+	daddr_t daddr;
 };
 
 static int
@@ -255,7 +252,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 		 */
 		if (lfs_dino_getsize(fs, dp) < lfs_sb_getmaxsymlinklen(fs) ||
 		    (lfs_sb_getmaxsymlinklen(fs) == 0 && lfs_dino_getblocks(fs, dp) == 0)) {
-			ndb = howmany(lfs_dino_getsize(fs, dp), sizeof(ulfs_daddr_t));
+			ndb = howmany(lfs_dino_getsize(fs, dp), LFS_BLKPTRSIZE(fs));
 			if (ndb > ULFS_NDADDR) {
 				j = ndb - ULFS_NDADDR;
 				for (ndb = 1; j > 1; j--)
@@ -324,7 +321,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	/* XXX: why VTOD(vp) instead of dp here? */
 
 	typemap[inumber] = LFS_IFTODT(mode);
-	badblk = dupblk = 0;
+	badblkcount = dupblkcount = 0;
 	idesc->id_number = inumber;
 	(void) ckinode(VTOD(vp), idesc);
 	if (lfs_dino_getblocks(fs, dp) != idesc->id_entryno) {
@@ -361,7 +358,7 @@ pass1check(struct inodesc *idesc)
 
 	if ((anyout = chkrange(blkno, idesc->id_numfrags)) != 0) {
 		blkerror(idesc->id_number, "BAD", blkno);
-		if (badblk++ >= MAXBAD) {
+		if (badblkcount++ >= MAXBAD) {
 			pwarn("EXCESSIVE BAD BLKS I=%llu",
 			    (unsigned long long)idesc->id_number);
 			if (preen)
@@ -390,7 +387,7 @@ pass1check(struct inodesc *idesc)
 				(long long)idesc->id_lblkno,
 				(long long)testbmap(blkno));
 #endif
-			if (dupblk++ >= MAXDUP) {
+			if (dupblkcount++ >= MAXDUP) {
 				pwarn("EXCESSIVE DUP BLKS I=%llu",
 				    (unsigned long long)idesc->id_number);
 				if (preen)

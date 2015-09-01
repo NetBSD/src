@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.58 2015/09/01 06:12:33 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.59 2015/09/01 06:15:02 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -98,7 +98,7 @@
 extern u_int32_t cksum(void *, size_t);
 static uint64_t calcmaxfilesize(unsigned);
 
-ulfs_daddr_t *din_table;
+daddr_t *din_table;
 SEGUSE *seg_table;
 
 #ifdef DKTYPENAMES
