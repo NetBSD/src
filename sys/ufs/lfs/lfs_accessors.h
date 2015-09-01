@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.15 2015/08/29 21:04:22 mlelstv Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.16 2015/09/01 06:08:37 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -236,6 +236,9 @@ LFS_DEF_DINO_ACCESSOR(int32_t, int32_t, gen);
 LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, uid);
 LFS_DEF_DINO_ACCESSOR(uint32_t, uint32_t, gid);
 
+/* XXX this should be done differently (it's a fake field) */
+LFS_DEF_DINO_ACCESSOR(uint64_t, int32_t, rdev);
+
 static __unused inline daddr_t
 lfs_dino_getdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 {
@@ -277,6 +280,49 @@ lfs_dino_setib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
 		dip->u_64.di_ib[ix] = val;
 	} else {
 		dip->u_32.di_ib[ix] = val;
+	}
+}
+
+/* birthtime is present only in the 64-bit inode */
+static __unused inline void
+lfs_dino_setbirthtime(STRUCT_LFS *fs, union lfs_dinode *dip,
+    const struct timespec *ts)
+{
+	if (fs->lfs_is64) {
+		dip->u_64.di_birthtime = ts->tv_sec;
+		dip->u_64.di_birthnsec = ts->tv_nsec;
+	} else {
+		/* drop it on the floor */
+	}
+}
+
+/*
+ * indirect blocks
+ */
+
+static __unused inline daddr_t
+lfs_iblock_get(STRUCT_LFS *fs, void *block, unsigned ix)
+{
+	if (fs->lfs_is64) {
+		// XXX re-enable these asserts after reorging this file
+		//KASSERT(ix < lfs_sb_getbsize(fs) / sizeof(int64_t));
+		return (daddr_t)(((int64_t *)block)[ix]);
+	} else {
+		//KASSERT(ix < lfs_sb_getbsize(fs) / sizeof(int32_t));
+		/* must sign-extend or UNWRITTEN gets trashed */
+		return (daddr_t)(int64_t)(((int32_t *)block)[ix]);
+	}
+}
+
+static __unused inline void
+lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
+{
+	if (fs->lfs_is64) {
+		//KASSERT(ix < lfs_sb_getbsize(fs) / sizeof(int64_t));
+		((int64_t *)block)[ix] = val;
+	} else {
+		//KASSERT(ix < lfs_sb_getbsize(fs) / sizeof(int32_t));
+		((int32_t *)block)[ix] = val;
 	}
 }
 
@@ -1032,10 +1078,10 @@ lfs_btofsb(STRUCT_LFS *fs, uint64_t b)
 static __unused inline uint32_t
 lfs_blksize(STRUCT_LFS *fs, struct inode *ip, uint64_t lbn)
 {
-	if (lbn >= ULFS_NDADDR || ip->i_ffs1_size >= (lbn + 1) << lfs_sb_getbshift(fs)) {
+	if (lbn >= ULFS_NDADDR || lfs_dino_getsize(fs, ip->i_din) >= (lbn + 1) << lfs_sb_getbshift(fs)) {
 		return lfs_sb_getbsize(fs);
 	} else {
-		return lfs_fragroundup(fs, lfs_blkoff(fs, ip->i_ffs1_size));
+		return lfs_fragroundup(fs, lfs_blkoff(fs, lfs_dino_getsize(fs, ip->i_din)));
 	}
 }
 #endif
