@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.55 2015/08/29 05:33:20 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.56 2015/09/01 06:11:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.55 2015/08/29 05:33:20 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.56 2015/09/01 06:11:06 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -816,16 +816,16 @@ dump_super(struct lfs *lfsp)
   	(void)printf("\n");
  	
  	(void)printf("  Checkpoint Info\n");
- 	(void)printf("    %s%-10d  %s0x%-8jx  %s%-10d\n",
- 		     "freehd   ", lfs_sb_getfreehd(lfsp),
+ 	(void)printf("    %s%-10ju  %s0x%-8jx  %s%-10ju\n",
+ 		     "freehd   ", (uintmax_t)lfs_sb_getfreehd(lfsp),
  		     "idaddr   ", (intmax_t)lfs_sb_getidaddr(lfsp),
- 		     "ifile    ", lfs_sb_getifile(lfsp));
+ 		     "ifile    ", (uintmax_t)lfs_sb_getifile(lfsp));
  	(void)printf("    %s%-10d  %s%-10jd  %s%-10jd\n",
  		     "uinodes  ", lfs_sb_getuinodes(lfsp),
  		     "bfree    ", (intmax_t)lfs_sb_getbfree(lfsp),
  		     "avail    ", (intmax_t)lfs_sb_getavail(lfsp));
- 	(void)printf("    %s%-10d  %s0x%-8jx  %s0x%-8jx\n",
- 		     "nfiles   ", lfs_sb_getnfiles(lfsp),
+ 	(void)printf("    %s%-10ju  %s0x%-8jx  %s0x%-8jx\n",
+ 		     "nfiles   ", (uintmax_t)lfs_sb_getnfiles(lfsp),
  		     "lastseg  ", (uintmax_t)lfs_sb_getlastseg(lfsp),
  		     "nextseg  ", (uintmax_t)lfs_sb_getnextseg(lfsp));
  	(void)printf("    %s0x%-8jx  %s0x%-8jx  %s%-10ju\n",
