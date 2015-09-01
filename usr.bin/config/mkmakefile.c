@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.54 2015/09/01 12:10:56 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.55 2015/09/01 16:01:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.54 2015/09/01 12:10:56 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.55 2015/09/01 16:01:23 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -287,6 +287,10 @@ emitdefs(FILE *fp)
 		subdir = "./";
 	}
 	fprintf(fp, "S=\t%s%s\n", subdir, srcdir);
+	if (Sflag) {
+		fprintf(fp, ".PATH: $S\n");
+		fprintf(fp, "___USE_SUFFIX_RULES___=1\n");
+	}
 	for (nv = mkoptions; nv != NULL; nv = nv->nv_next)
 		fprintf(fp, "%s=%s\n", nv->nv_name, nv->nv_str);
 }
@@ -294,11 +298,14 @@ emitdefs(FILE *fp)
 static void
 emitfile(FILE *fp, struct files *fi)
 {
+	const char *srcdir = "$S/";
 	const char *prologue, *prefix, *sep;
 
+	if (Sflag)
+		srcdir = "";
 	prologue = prefix = sep = "";
 	if (*fi->fi_path != '/') {
-		prologue = "$S/";
+		prologue = srcdir;
 		if (fi->fi_prefix != NULL) {
 			if (*fi->fi_prefix == '/')
 				prologue = "";
@@ -475,6 +482,7 @@ emitfiles(FILE *fp, struct filelist *filelist, int suffix)
  	 * C source files.  These files should be eliminated someday, but
  	 * for now, we have to add them to ${CFILES} (and only ${CFILES}).
  	 */
+ 	if (!Sflag) {
  	if (suffix == 'c') {
  		TAILQ_FOREACH(cf, &allcf, cf_next) {
  			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
@@ -482,6 +490,7 @@ emitfiles(FILE *fp, struct filelist *filelist, int suffix)
  			fprintf(fp, "\t%s \\\n", swapname);
  		}
  	}
+	}
 	putc('\n', fp);
 }
 
@@ -535,17 +544,26 @@ emitload(FILE *fp)
 	if (has_build_kernel == 0) {
 		fprintf(fp, "build_kernel: .USE\n"
 		    "\t${SYSTEM_LD_HEAD}\n"
-		    "\t${SYSTEM_LD} swap${.TARGET}.o\n"
+		    "\t${SYSTEM_LD}%s\n"
 		    "\t${SYSTEM_LD_TAIL}\n"
-		    "\n");
+		    "\n",
+		    Sflag ? "" : " swap${.TARGET}.o");
 	}
 	/*
 	 * Generate per-kernel rules.
 	 */
 	TAILQ_FOREACH(cf, &allcf, cf_next) {
+		char swapobj[100];
+
+		if (Sflag) {
+			swapobj[0] = '\0';
+		} else {
+			(void)snprintf(swapobj, sizeof(swapobj), " swap%s.o",
+	 		    cf->cf_name);
+		}
 		fprintf(fp, "KERNELS+=%s\n", cf->cf_name);
-		fprintf(fp, "%s: ${SYSTEM_DEP} swap%s.o vers.o build_kernel\n",
-		    cf->cf_name, cf->cf_name);
+		fprintf(fp, "%s: ${SYSTEM_DEP}%s vers.o build_kernel\n",
+		    cf->cf_name, swapobj);
 	}
 	fputs("\n", fp);
 }
