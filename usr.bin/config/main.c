@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.83 2015/09/01 14:32:20 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.84 2015/09/01 16:01:23 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.83 2015/09/01 14:32:20 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.84 2015/09/01 16:01:23 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -90,6 +90,7 @@ int	vflag;				/* verbose output */
 int	Pflag;				/* pack locators */
 int	Lflag;				/* lint config generation */
 int	Mflag;				/* modular build */
+int	Sflag;				/* suffix rules & subdirectory */
 int	handling_cmdlineopts;		/* currently processing -D/-U options */
 
 int	yyparse(void);
@@ -168,7 +169,7 @@ main(int argc, char **argv)
 
 	pflag = 0;
 	xflag = 0;
-	while ((ch = getopt(argc, argv, "D:LMPU:dgpvb:s:x")) != -1) {
+	while ((ch = getopt(argc, argv, "D:LMPSU:dgpvb:s:x")) != -1) {
 		switch (ch) {
 
 		case 'd':
@@ -225,6 +226,10 @@ main(int argc, char **argv)
 
 		case 's':
 			srcdir = optarg;
+			break;
+
+		case 'S':
+			Sflag = 1;
 			break;
 
 		case 'x':
@@ -645,8 +650,7 @@ mksubdirs(void)
 	const char *prefix, *sep;
 	char buf[MAXPATHLEN];
 
-	// XXX notyet
-	if (1)
+	if (!Sflag)
 		return 0;
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
