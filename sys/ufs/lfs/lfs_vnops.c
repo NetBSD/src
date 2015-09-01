@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.287 2015/08/19 20:33:29 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.288 2015/09/01 06:08:37 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.287 2015/08/19 20:33:29 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.288 2015/09/01 06:08:37 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1150,14 +1150,22 @@ lfs_getattr(void *v)
 	vap->va_nlink = ip->i_nlink;
 	vap->va_uid = ip->i_uid;
 	vap->va_gid = ip->i_gid;
-	vap->va_rdev = (dev_t)ip->i_ffs1_rdev;
+	switch (vp->v_type) {
+	    case VBLK:
+	    case VCHR:
+		vap->va_rdev = (dev_t)lfs_dino_getrdev(fs, ip->i_din);
+		break;
+	    default:
+		vap->va_rdev = NODEV;
+		break;
+	}
 	vap->va_size = vp->v_size;
-	vap->va_atime.tv_sec = ip->i_ffs1_atime;
-	vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
-	vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
-	vap->va_mtime.tv_nsec = ip->i_ffs1_mtimensec;
-	vap->va_ctime.tv_sec = ip->i_ffs1_ctime;
-	vap->va_ctime.tv_nsec = ip->i_ffs1_ctimensec;
+	vap->va_atime.tv_sec = lfs_dino_getatime(fs, ip->i_din);
+	vap->va_atime.tv_nsec = lfs_dino_getatimensec(fs, ip->i_din);
+	vap->va_mtime.tv_sec = lfs_dino_getmtime(fs, ip->i_din);
+	vap->va_mtime.tv_nsec = lfs_dino_getmtimensec(fs, ip->i_din);
+	vap->va_ctime.tv_sec = lfs_dino_getctime(fs, ip->i_din);
+	vap->va_ctime.tv_nsec = lfs_dino_getctimensec(fs, ip->i_din);
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
