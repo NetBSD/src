@@ -1,4 +1,4 @@
-/* $NetBSD: pass0.c,v 1.41 2015/08/23 16:00:23 christos Exp $	 */
+/* $NetBSD: pass0.c,v 1.42 2015/09/01 06:11:06 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -200,8 +200,8 @@ pass0(void)
 		writeit = 1;
 	}
 	if (freehd != lfs_sb_getfreehd(fs)) {
-		pwarn("FREE LIST HEAD IN SUPERBLOCK SHOULD BE %ju (WAS %u)\n",
-			(uintmax_t)freehd, lfs_sb_getfreehd(fs));
+		pwarn("FREE LIST HEAD IN SUPERBLOCK SHOULD BE %ju (WAS %ju)\n",
+			(uintmax_t)freehd, (uintmax_t)lfs_sb_getfreehd(fs));
 		if (preen || reply("FIX")) {
 			lfs_sb_setfreehd(fs, freehd);
 			sbdirty();
