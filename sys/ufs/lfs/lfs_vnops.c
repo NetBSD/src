@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.288 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.289 2015/09/01 06:16:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.288 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.289 2015/09/01 06:16:59 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -944,19 +944,8 @@ lfs_mkdir(void *v)
 	    ULFS_MPNEEDSWAP(fs));
 	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
 	    ULFS_MPNEEDSWAP(fs));
-	if (fs->um_maxsymlinklen <= 0) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		if (ULFS_MPNEEDSWAP(fs) == 0)
-#else
-		if (ULFS_MPNEEDSWAP(fs) != 0)
-#endif
-		{
-			dirtemplate.dot_type = dirtemplate.dot_namlen;
-			dirtemplate.dotdot_type = dirtemplate.dotdot_namlen;
-			dirtemplate.dot_namlen = dirtemplate.dotdot_namlen = 0;
-		} else
-			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
-	}
+	lfs_dirt_settypes(fs, &dirtemplate, LFS_DT_DIR, LFS_DT_DIR);
+	lfs_dirt_setnamlens(fs, &dirtemplate, 1, 2);
 	if ((error = lfs_balloc(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;

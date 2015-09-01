@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.9 2015/09/01 06:16:59 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.9 2015/09/01 06:16:59 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.8 2015/03/27 17:27:56 riastradh Exp
 #include <ufs/lfs/ulfs_extern.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 
 /*
@@ -329,20 +330,16 @@ ulfs_rename_ulr_overlap_p(const struct ulfs_lookup_results *fulr,
 static int			/* XXX int?  uint8_t?  */
 ulfs_direct_namlen(const struct lfs_direct *ep, const struct vnode *vp)
 {
-	bool swap;
+	struct lfs *fs;
 
 	KASSERT(ep != NULL);
 	KASSERT(vp != NULL);
 	KASSERT(VTOI(vp) != NULL);
 	KASSERT(VTOI(vp)->i_ump != NULL);
+	KASSERT(VTOI(vp)->i_lfs != NULL);
+	fs = VTOI(vp)->i_lfs;
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) == 0);
-#else
-	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) != 0);
-#endif
-
-	return ((FSFMT(vp) && swap)? ep->d_type : ep->d_namlen);
+	return lfs_dir_getnamlen(fs, ep);
 }
 
 /*
@@ -598,21 +595,16 @@ static int			/* XXX int?  uint8_t?  */
 ulfs_dirbuf_dotdot_namlen(const struct lfs_dirtemplate *dirbuf,
     const struct vnode *vp)
 {
-	bool swap;
+	struct lfs *fs;
 
 	KASSERT(dirbuf != NULL);
 	KASSERT(vp != NULL);
 	KASSERT(VTOI(vp) != NULL);
 	KASSERT(VTOI(vp)->i_ump != NULL);
+	KASSERT(VTOI(vp)->i_lfs != NULL);
+	fs = VTOI(vp)->i_lfs;
 
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) == 0);
-#else
-	swap = (ULFS_IPNEEDSWAP(VTOI(vp)) != 0);
-#endif
-
-	return ((FSFMT(vp) && swap)?
-	    dirbuf->dotdot_type : dirbuf->dotdot_namlen);
+	return lfs_dirt_getdotdotnamlen(fs, dirbuf);
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.26 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.27 2015/09/01 06:16:58 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -229,24 +229,26 @@ pass2check(struct inodesc * idesc)
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, ".") == 0) {
 		if (dirp->d_ino != idesc->id_number) {
 			direrror(idesc->id_number, "BAD INODE NUMBER FOR '.'");
-			dirp->d_ino = idesc->id_number;
-			if (reply("FIX") == 1)
+			if (reply("FIX") == 1) {
+				dirp->d_ino = idesc->id_number;
 				ret |= ALTERED;
+			}
 		}
-		if (dirp->d_type != LFS_DT_DIR) {
+		if (lfs_dir_gettype(fs, dirp) != LFS_DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '.'");
-			dirp->d_type = LFS_DT_DIR;
-			if (reply("FIX") == 1)
+			if (reply("FIX") == 1) {
+				lfs_dir_settype(fs, dirp, LFS_DT_DIR);
 				ret |= ALTERED;
+			}
 		}
 		goto chk1;
 	}
 	direrror(idesc->id_number, "MISSING '.'");
 	proto.d_ino = idesc->id_number;
-	proto.d_type = LFS_DT_DIR;
-	proto.d_namlen = 1;
+	lfs_dir_settype(fs, &proto, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, &proto, 1);
 	(void) strlcpy(proto.d_name, ".", sizeof(proto.d_name));
-	entrysize = LFS_DIRSIZ(0, &proto, 0);
+	entrysize = LFS_DIRSIZ(fs, &proto);
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 		    dirp->d_name);
@@ -274,12 +276,12 @@ chk1:
 		goto chk2;
 	inp = getinoinfo(idesc->id_number);
 	proto.d_ino = inp->i_parent;
-	proto.d_type = LFS_DT_DIR;
-	proto.d_namlen = 2;
+	lfs_dir_settype(fs, &proto, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, &proto, 2);
 	(void) strlcpy(proto.d_name, "..", sizeof(proto.d_name));
-	entrysize = LFS_DIRSIZ(0, &proto, 0);
+	entrysize = LFS_DIRSIZ(fs, &proto);
 	if (idesc->id_entryno == 0) {
-		n = LFS_DIRSIZ(0, dirp, 0);
+		n = LFS_DIRSIZ(fs, dirp);
 		if (dirp->d_reclen < n + entrysize)
 			goto chk2;
 		proto.d_reclen = dirp->d_reclen - n;
@@ -292,9 +294,9 @@ chk1:
 	}
 	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") == 0) {
 		inp->i_dotdot = dirp->d_ino;
-		if (dirp->d_type != LFS_DT_DIR) {
+		if (lfs_dir_gettype(fs, dirp) != LFS_DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
-			dirp->d_type = LFS_DT_DIR;
+			lfs_dir_settype(fs, dirp, LFS_DT_DIR);
 			if (reply("FIX") == 1)
 				ret |= ALTERED;
 		}
@@ -327,21 +329,23 @@ chk1:
 chk2:
 	if (dirp->d_ino == 0)
 		return (ret | KEEPON);
-	if (dirp->d_namlen <= 2 &&
+	if (lfs_dir_getnamlen(fs, dirp) <= 2 &&
 	    dirp->d_name[0] == '.' &&
 	    idesc->id_entryno >= 2) {
-		if (dirp->d_namlen == 1) {
+		if (lfs_dir_getnamlen(fs, dirp) == 1) {
 			direrror(idesc->id_number, "EXTRA '.' ENTRY");
-			dirp->d_ino = 0;
-			if (reply("FIX") == 1)
+			if (reply("FIX") == 1) {
+				dirp->d_ino = 0;
 				ret |= ALTERED;
+			}
 			return (KEEPON | ret);
 		}
 		if (dirp->d_name[1] == '.') {
 			direrror(idesc->id_number, "EXTRA '..' ENTRY");
-			dirp->d_ino = 0;
-			if (reply("FIX") == 1)
+			if (reply("FIX") == 1) {
+				dirp->d_ino = 0;
 				ret |= ALTERED;
+			}
 			return (KEEPON | ret);
 		}
 	}
@@ -352,20 +356,22 @@ chk2:
 		n = reply("REMOVE");
 	} else if (dirp->d_ino == LFS_IFILE_INUM &&
 	    idesc->id_number == ULFS_ROOTINO) {
-		if (dirp->d_type != LFS_DT_REG) {
+		if (lfs_dir_gettype(fs, dirp) != LFS_DT_REG) {
 			fileerror(idesc->id_number, dirp->d_ino,
 			    "BAD TYPE FOR IFILE");
-			dirp->d_type = LFS_DT_REG;
-			if (reply("FIX") == 1)
+			if (reply("FIX") == 1) {
+				lfs_dir_settype(fs, dirp, LFS_DT_REG);
 				ret |= ALTERED;
+			}
 		}
-	} else if (((dirp->d_ino == ULFS_WINO && (dirp->d_type != LFS_DT_WHT)) ||
-		(dirp->d_ino != ULFS_WINO && dirp->d_type == LFS_DT_WHT))) {
+	} else if (((dirp->d_ino == ULFS_WINO && lfs_dir_gettype(fs, dirp) != LFS_DT_WHT) ||
+		(dirp->d_ino != ULFS_WINO && lfs_dir_gettype(fs, dirp) == LFS_DT_WHT))) {
 		fileerror(idesc->id_number, dirp->d_ino, "BAD WHITEOUT ENTRY");
 		dirp->d_ino = ULFS_WINO;
-		dirp->d_type = LFS_DT_WHT;
-		if (reply("FIX") == 1)
+		if (reply("FIX") == 1) {
+			lfs_dir_settype(fs, dirp, LFS_DT_WHT);
 			ret |= ALTERED;
+		}
 	} else {
 again:
 		switch (statemap[dirp->d_ino]) {
@@ -418,13 +424,13 @@ again:
 			/* fall through */
 
 		case FSTATE:
-			if (dirp->d_type != typemap[dirp->d_ino]) {
+			if (lfs_dir_gettype(fs, dirp) != typemap[dirp->d_ino]) {
 				fileerror(idesc->id_number, dirp->d_ino,
 				    "BAD TYPE VALUE");
 				if (debug)
 					pwarn("dir has %d, typemap has %d\n",
-						dirp->d_type, typemap[dirp->d_ino]);
-				dirp->d_type = typemap[dirp->d_ino];
+						lfs_dir_gettype(fs, dirp), typemap[dirp->d_ino]);
+				lfs_dir_settype(fs, dirp, typemap[dirp->d_ino]);
 				if (reply("FIX") == 1)
 					ret |= ALTERED;
 			}

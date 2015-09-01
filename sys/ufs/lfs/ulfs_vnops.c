@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.27 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.28 2015/09/01 06:16:59 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.27 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.28 2015/09/01 06:16:59 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -97,6 +97,10 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.27 2015/09/01 06:08:37 dholland Exp
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/genfs/genfs.h>
 
+#include <ufs/lfs/lfs_extern.h>
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
+
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfsmount.h>
 #include <ufs/lfs/ulfs_bswap.h>
@@ -104,9 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.27 2015/09/01 06:08:37 dholland Exp
 #ifdef LFS_DIRHASH
 #include <ufs/lfs/ulfs_dirhash.h>
 #endif
-#include <ufs/lfs/lfs_extern.h>
-#include <ufs/lfs/lfs.h>
-#include <ufs/lfs/lfs_accessors.h>
 
 #include <uvm/uvm.h>
 
@@ -646,12 +647,8 @@ ulfs_whiteout(void *v)
 #endif
 
 		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-		newdir->d_ino = ULFS_WINO;
-		newdir->d_namlen = cnp->cn_namelen;
-		memcpy(newdir->d_name, cnp->cn_nameptr,
-		    (size_t)cnp->cn_namelen);
-		newdir->d_name[cnp->cn_namelen] = '\0';
-		newdir->d_type = LFS_DT_WHT;
+		ulfs_makedirentry_bytype(fs, cnp, ULFS_WINO, LFS_DT_WHT,
+					 newdir);
 		error = ulfs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
 		pool_cache_put(ulfs_direct_cache, newdir);
 		break;
@@ -798,11 +795,6 @@ ulfs_readdir(void *v)
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	struct lfs *fs = ump->um_lfs;
 	int nswap = ULFS_MPNEEDSWAP(fs);
-#if BYTE_ORDER == LITTLE_ENDIAN
-	int needswap = fs->um_maxsymlinklen <= 0 && nswap == 0;
-#else
-	int needswap = fs->um_maxsymlinklen <= 0 && nswap != 0;
-#endif
 	uio = ap->a_uio;
 	count = uio->uio_resid;
 	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
@@ -873,13 +865,8 @@ ulfs_readdir(void *v)
 			cdp = ecdp;
 			break;
 		}
-		if (needswap) {
-			ndp->d_type = cdp->d_namlen;
-			ndp->d_namlen = cdp->d_type;
-		} else {
-			ndp->d_type = cdp->d_type;
-			ndp->d_namlen = cdp->d_namlen;
-		}
+		ndp->d_type = lfs_dir_gettype(fs, cdp);
+		ndp->d_namlen = lfs_dir_getnamlen(fs, cdp);
 		ndp->d_reclen = _DIRENT_RECLEN(ndp, ndp->d_namlen);
 		if ((char *)(void *)ndp + ndp->d_reclen +
 		    _DIRENT_MINSIZE(ndp) > endp)

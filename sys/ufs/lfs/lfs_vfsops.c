@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.344 2015/09/01 06:11:06 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.345 2015/09/01 06:16:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.344 2015/09/01 06:11:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.345 2015/09/01 06:16:59 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -958,6 +958,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	memcpy(&fs->lfs_dlfs_u.u_32, tdfs, sizeof(struct dlfs));
 	fs->lfs_is64 = false; /* XXX notyet */
 	fs->lfs_dobyteswap = false; /* XXX notyet */
+	fs->lfs_hasolddirfmt = false; /* set for real below */
 
 	/* Compatibility */
 	if (lfs_sb_getversion(fs) < 2) {
@@ -1065,6 +1066,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = lfs_sb_getbshift(fs);
 	if (fs->um_maxsymlinklen > 0)
 		mp->mnt_iflag |= IMNT_DTYPE;
+	else
+		fs->lfs_hasolddirfmt = true;
 
 	ump->um_mountp = mp;
 	ump->um_dev = dev;
