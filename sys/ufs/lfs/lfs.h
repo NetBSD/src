@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.181 2015/09/01 06:10:16 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.182 2015/09/01 06:11:06 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -789,63 +789,63 @@ struct dlfs64 {
 	u_int32_t dlfs_frag;	  /* 36: number of frags in a block in fs */
 
 /* Checkpoint region. */
-	u_int32_t dlfs_freehd;	  /* 40: start of the free inode list */
-	u_int32_t dlfs_nfiles;	  /* 44: number of allocated inodes */
-	int64_t   dlfs_bfree;	  /* 48: number of free frags */
-	int64_t	  dlfs_avail;	  /* 56: blocks available for writing */
-	int64_t	  dlfs_idaddr;	  /* 64: inode file disk address */
-	int32_t	  dlfs_uinodes;	  /* 72: inodes in cache not yet on disk */
-	u_int32_t dlfs_ifile;	  /* 76: inode file inode number */
-	int64_t	  dlfs_lastseg;	  /* 80: address of last segment written */
-	int64_t	  dlfs_nextseg;	  /* 88: address of next segment to write */
-	int64_t	  dlfs_curseg;	  /* 96: current segment being written */
-	int64_t	  dlfs_offset;	  /* 104: offset in curseg for next partial */
-	int64_t	  dlfs_lastpseg;  /* 112: address of last partial written */
-	u_int32_t dlfs_inopf;	  /* 120: inodes per frag */
+	u_int64_t dlfs_freehd;	  /* 40: start of the free inode list */
+	u_int64_t dlfs_nfiles;	  /* 48: number of allocated inodes */
+	int64_t   dlfs_bfree;	  /* 56: number of free frags */
+	int64_t	  dlfs_avail;	  /* 64: blocks available for writing */
+	int64_t	  dlfs_idaddr;	  /* 72: inode file disk address */
+	int32_t	  dlfs_uinodes;	  /* 80: inodes in cache not yet on disk */
+	u_int32_t dlfs_ifile;	  /* 84: inode file inode number */
+	int64_t	  dlfs_lastseg;	  /* 88: address of last segment written */
+	int64_t	  dlfs_nextseg;	  /* 96: address of next segment to write */
+	int64_t	  dlfs_curseg;	  /* 104: current segment being written */
+	int64_t	  dlfs_offset;	  /* 112: offset in curseg for next partial */
+	int64_t	  dlfs_lastpseg;  /* 120: address of last partial written */
+	u_int32_t dlfs_inopf;	  /* 128: inodes per frag */
 
 /* These are configuration parameters. */
-	u_int32_t dlfs_minfree;	  /* 124: minimum percentage of free blocks */
+	u_int32_t dlfs_minfree;	  /* 132: minimum percentage of free blocks */
 
 /* These fields can be computed from the others. */
-	u_int64_t dlfs_maxfilesize; /* 128: maximum representable file size */
-	u_int32_t dlfs_fsbpseg;	  /* 136: frags (fsb) per segment */
-	u_int32_t dlfs_inopb;	  /* 140: inodes per block */
-	u_int32_t dlfs_ifpb;	  /* 144: IFILE entries per block */
-	u_int32_t dlfs_sepb;	  /* 148: SEGUSE entries per block */
-	u_int32_t dlfs_nindir;	  /* 152: indirect pointers per block */
-	u_int32_t dlfs_nseg;	  /* 156: number of segments */
-	u_int32_t dlfs_nspf;	  /* 160: number of sectors per fragment */
-	u_int32_t dlfs_cleansz;	  /* 164: cleaner info size in blocks */
-	u_int32_t dlfs_segtabsz;  /* 168: segment table size in blocks */
-	u_int32_t dlfs_bshift;	  /* 172: calc block number from file offset */
-	u_int32_t dlfs_ffshift;	  /* 176: fast mult/div for frag from file */
-	u_int32_t dlfs_fbshift;	  /* 180: fast mult/div for frag from block */
-	u_int64_t dlfs_bmask;	  /* 184: calc block offset from file offset */
-	u_int64_t dlfs_ffmask;	  /* 192: calc frag offset from file offset */
-	u_int64_t dlfs_fbmask;	  /* 200: calc frag offset from block offset */
-	u_int32_t dlfs_blktodb;	  /* 208: blktodb and dbtoblk shift constant */
-	u_int32_t dlfs_sushift;	  /* 212: fast mult/div for segusage table */
+	u_int64_t dlfs_maxfilesize; /* 136: maximum representable file size */
+	u_int32_t dlfs_fsbpseg;	  /* 144: frags (fsb) per segment */
+	u_int32_t dlfs_inopb;	  /* 148: inodes per block */
+	u_int32_t dlfs_ifpb;	  /* 152: IFILE entries per block */
+	u_int32_t dlfs_sepb;	  /* 156: SEGUSE entries per block */
+	u_int32_t dlfs_nindir;	  /* 160: indirect pointers per block */
+	u_int32_t dlfs_nseg;	  /* 164: number of segments */
+	u_int32_t dlfs_nspf;	  /* 168: number of sectors per fragment */
+	u_int32_t dlfs_cleansz;	  /* 172: cleaner info size in blocks */
+	u_int32_t dlfs_segtabsz;  /* 176: segment table size in blocks */
+	u_int32_t dlfs_bshift;	  /* 180: calc block number from file offset */
+	u_int32_t dlfs_ffshift;	  /* 184: fast mult/div for frag from file */
+	u_int32_t dlfs_fbshift;	  /* 188: fast mult/div for frag from block */
+	u_int64_t dlfs_bmask;	  /* 192: calc block offset from file offset */
+	u_int64_t dlfs_ffmask;	  /* 200: calc frag offset from file offset */
+	u_int64_t dlfs_fbmask;	  /* 208: calc frag offset from block offset */
+	u_int32_t dlfs_blktodb;	  /* 216: blktodb and dbtoblk shift constant */
+	u_int32_t dlfs_sushift;	  /* 220: fast mult/div for segusage table */
 
-				  /* 216: superblock disk offsets */
+				  /* 224: superblock disk offsets */
 	int64_t	   dlfs_sboffs[LFS_MAXNUMSB];
 
-	int32_t	  dlfs_maxsymlinklen; /* 296: max len of an internal symlink */
-	u_int32_t dlfs_nclean;	  /* 300: Number of clean segments */
-	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 304: name mounted on */
-	u_int16_t dlfs_pflags;	  /* 394: file system persistent flags */
-	int32_t	  dlfs_dmeta;	  /* 396: total number of dirty summaries */
-	u_int32_t dlfs_minfreeseg; /* 400: segments not counted in bfree */
-	u_int32_t dlfs_sumsize;	  /* 404: size of summary blocks */
-	u_int32_t dlfs_ibsize;	  /* 408: size of inode blocks */
-	u_int32_t dlfs_inodefmt;  /* 412: inode format version */
-	u_int64_t dlfs_serial;	  /* 416: serial number */
-	int64_t	  dlfs_s0addr;	  /* 424: start of segment 0 */
-	u_int64_t dlfs_tstamp;	  /* 432: time stamp */
-	u_int32_t dlfs_interleave; /* 440: segment interleave */
-	u_int32_t dlfs_ident;	  /* 444: per-fs identifier */
-	u_int32_t dlfs_fsbtodb;	  /* 448: fsbtodb and dbtodsb shift constant */
-	u_int32_t dlfs_resvseg;   /* 452: segments reserved for the cleaner */
-	int8_t	  dlfs_pad[52];   /* 456: round to 512 bytes */
+	int32_t	  dlfs_maxsymlinklen; /* 304: max len of an internal symlink */
+	u_int32_t dlfs_nclean;	  /* 308: Number of clean segments */
+	u_char	  dlfs_fsmnt[MNAMELEN];	 /* 312: name mounted on */
+	u_int16_t dlfs_pflags;	  /* 402: file system persistent flags */
+	int32_t	  dlfs_dmeta;	  /* 404: total number of dirty summaries */
+	u_int32_t dlfs_minfreeseg; /* 408: segments not counted in bfree */
+	u_int32_t dlfs_sumsize;	  /* 412: size of summary blocks */
+	u_int32_t dlfs_ibsize;	  /* 416: size of inode blocks */
+	u_int32_t dlfs_inodefmt;  /* 420: inode format version */
+	u_int64_t dlfs_serial;	  /* 424: serial number */
+	int64_t	  dlfs_s0addr;	  /* 432: start of segment 0 */
+	u_int64_t dlfs_tstamp;	  /* 440: time stamp */
+	u_int32_t dlfs_interleave; /* 448: segment interleave */
+	u_int32_t dlfs_ident;	  /* 452: per-fs identifier */
+	u_int32_t dlfs_fsbtodb;	  /* 456: fsbtodb and dbtodsb shift constant */
+	u_int32_t dlfs_resvseg;   /* 460: segments reserved for the cleaner */
+	int8_t	  dlfs_pad[44];   /* 464: round to 512 bytes */
 /* Checksum -- last valid disk field. */
 	u_int32_t dlfs_cksum;	  /* 508: checksum for superblock checking */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.343 2015/09/01 06:10:16 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.344 2015/09/01 06:11:06 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.343 2015/09/01 06:10:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.344 2015/09/01 06:11:06 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -842,6 +842,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	daddr_t sb_addr;
 
 	cred = l ? l->l_cred : NOCRED;
+
+	/* The superblock is supposed to be 512 bytes. */
+	__CTASSERT(sizeof(struct dlfs) == DEV_BSIZE);
 
 	/*
 	 * Flush out any old buffers remaining from a previous use.
