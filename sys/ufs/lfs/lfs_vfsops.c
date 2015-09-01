@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.342 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.343 2015/09/01 06:10:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.342 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.343 2015/09/01 06:10:16 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -953,7 +953,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/* Allocate the mount structure, copy the superblock into it. */
 	fs = kmem_zalloc(sizeof(struct lfs), KM_SLEEP);
 	memcpy(&fs->lfs_dlfs_u.u_32, tdfs, sizeof(struct dlfs));
-	fs->lfs_is64 = false;
+	fs->lfs_is64 = false; /* XXX notyet */
+	fs->lfs_dobyteswap = false; /* XXX notyet */
 
 	/* Compatibility */
 	if (lfs_sb_getversion(fs) < 2) {
