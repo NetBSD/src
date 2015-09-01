@@ -1,4 +1,4 @@
-/*	$NetBSD: getopt_long.c,v 1.26 2015/09/01 01:28:17 kamil Exp $	*/
+/*	$NetBSD: getopt_long.c,v 1.27 2015/09/01 19:39:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: getopt_long.c,v 1.26 2015/09/01 01:28:17 kamil Exp $");
+__RCSID("$NetBSD: getopt_long.c,v 1.27 2015/09/01 19:39:57 kamil Exp $");
 
 #include "namespace.h"
 
@@ -307,10 +307,7 @@ start:
  * [eventually this will replace the real getopt]
  */
 int
-getopt(nargc, nargv, options)
-	int nargc;
-	char * const *nargv;
-	const char *options;
+getopt(int nargc, char * const *nargv, const char *options)
 {
 	int retval;
 
