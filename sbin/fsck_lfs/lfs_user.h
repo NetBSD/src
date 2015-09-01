@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_user.h,v 1.13 2015/09/01 06:13:57 dholland Exp $ */
+/* $NetBSD: lfs_user.h,v 1.14 2015/09/01 06:15:16 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -67,8 +67,6 @@ struct indir {
 	int in_off;		/* Offset in buffer. */
 	int in_exists;		/* Flag if the block exists. */
 };
-
-typedef int32_t ulfs_daddr_t;
 
 /* Convert between inode pointers and vnode pointers. */
 #define	VTOI(vp)	((struct inode *)(vp)->v_data)
