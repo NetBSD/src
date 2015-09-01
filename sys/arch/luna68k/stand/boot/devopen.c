@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.9 2015/02/14 05:58:02 tsutsui Exp $	*/
+/*	$NetBSD: devopen.c,v 1.10 2015/09/01 13:46:50 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -136,7 +136,7 @@ make_device(const char *str, int *devp, int *unitp, int *partp, char **fname)
 	 */
 	/* find end of dev type name */
 	for (cp = str, i = 0; *cp != '\0' && *cp != '(' && i < MAXDEVNAME; i++)
-			devname[i] = *cp++;
+		devname[i] = *cp++;
 	if (*cp != '(') {
 		return -1;
 	}
