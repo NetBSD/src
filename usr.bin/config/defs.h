@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.76 2015/09/01 11:22:59 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.77 2015/09/01 11:35:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -332,61 +332,28 @@ struct devi {
 #define	WILD	(-2)		/* unit number for, e.g., "sd?" */
 
 /*
- * Files or objects.  This structure defines the common fields
+ * Files (*.c, *.S, or *.o).  This structure defines the common fields
  * between the two.
  */
-struct filetype {
-	TAILQ_ENTRY(files) fit_next;
-	TAILQ_ENTRY(files) fit_snext;
-	const char *fit_srcfile;	/* the name of the "files" file that got us */
-	u_short	fit_srcline;	/* and the line number */
-	u_char	fit_flags;	/* as below */
-	char	fit_lastc;	/* last char from path */
-	const char *fit_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
-	const char *fit_base;	/* tail minus ".c" (or whatever) */
-	const char *fit_path;	/* full file path */
-	const char *fit_prefix;	/* any file prefix */
-	int fit_suffix;		/* single char suffix */
-	size_t fit_len;		/* path string length */
-	struct condexpr *fit_optx; /* options expression */
-	struct nvlist *fit_optf; /* flattened version of above, if needed */
-	const  char *fit_mkrule;	/* special make rule, if any */
-	struct attr *fit_attr;	/* owner attr */
-	TAILQ_ENTRY(files) fit_anext;	/* next file in attr */
-};
-/* Anything less than 0x10 is sub-type specific */
-
-/*
- * Files.  Each file is either standard (always included) or optional,
- * depending on whether it has names on which to *be* optional.  The
- * options field (fi_optx) is an expression tree of type struct
- * condexpr, with nodes for OR, AND, and NOT, as well as atoms (words)
- * representing some particular option.
- * 
- * For any file marked as needs-count or needs-flag, fixfiles() will
- * build fi_optf, a `flat list' of the options with nv_num fields that
- * contain counts or `need' flags; this is used in mkheaders().
- */
 struct files {
-	struct filetype fi_fit;
+	TAILQ_ENTRY(files) fi_next;
+	TAILQ_ENTRY(files) fi_snext;
+	const char *fi_srcfile;	/* the name of the "files" file that got us */
+	u_short	fi_srcline;	/* and the line number */
+	u_char	fi_flags;	/* as below */
+	char	fi_lastc;	/* last char from path */
+	const char *fi_tail;	/* name, i.e., strrchr(fi_path, '/') + 1 */
+	const char *fi_base;	/* tail minus ".c" (or whatever) */
+	const char *fi_path;	/* full file path */
+	const char *fi_prefix;	/* any file prefix */
+	int fi_suffix;		/* single char suffix */
+	size_t fi_len;		/* path string length */
+	struct condexpr *fi_optx; /* options expression */
+	struct nvlist *fi_optf; /* flattened version of above, if needed */
+	const  char *fi_mkrule;	/* special make rule, if any */
+	struct attr *fi_attr;	/* owner attr */
+	TAILQ_ENTRY(files) fi_anext;	/* next file in attr */
 };
-#define fi_next    fi_fit.fit_next
-#define fi_snext    fi_fit.fit_snext
-#define fi_srcfile fi_fit.fit_srcfile
-#define fi_srcline fi_fit.fit_srcline
-#define fi_flags   fi_fit.fit_flags
-#define fi_lastc   fi_fit.fit_lastc
-#define fi_tail    fi_fit.fit_tail
-#define fi_base    fi_fit.fit_base
-#define fi_path    fi_fit.fit_path
-#define fi_prefix  fi_fit.fit_prefix
-#define fi_suffix  fi_fit.fit_suffix
-#define fi_len     fi_fit.fit_len
-#define fi_optx    fi_fit.fit_optx
-#define fi_optf    fi_fit.fit_optf
-#define fi_mkrule  fi_fit.fit_mkrule
-#define fi_attr    fi_fit.fit_attr
-#define fi_anext   fi_fit.fit_anext
 
 /* flags */
 #define	FI_SEL		0x01	/* selected */

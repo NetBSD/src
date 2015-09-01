@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.52 2015/09/01 11:22:59 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.53 2015/09/01 11:35:46 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.52 2015/09/01 11:22:59 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.53 2015/09/01 11:35:46 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -292,21 +292,21 @@ emitdefs(FILE *fp)
 }
 
 static void
-emitfiletype(FILE *fp, struct filetype *fit)
+emitfile(FILE *fp, struct files *fi)
 {
 	const char *prologue, *prefix, *sep;
 
 	prologue = prefix = sep = "";
-	if (*fit->fit_path != '/') {
+	if (*fi->fi_path != '/') {
 		prologue = "$S/";
-		if (fit->fit_prefix != NULL) {
-			if (*fit->fit_prefix == '/')
+		if (fi->fi_prefix != NULL) {
+			if (*fi->fi_prefix == '/')
 				prologue = "";
-			prefix = fit->fit_prefix;
+			prefix = fi->fi_prefix;
 			sep = "/";
 		}
 	}
-	fprintf(fp, "%s%s%s%s", prologue, prefix, sep, fit->fit_path);
+	fprintf(fp, "%s%s%s%s", prologue, prefix, sep, fi->fi_path);
 }
 
 static void
@@ -324,7 +324,7 @@ emitobjs(FILE *fp)
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		putc('\t', fp);
-		emitfiletype(fp, &fi->fi_fit);
+		emitfile(fp, fi);
 		fputs(" \\\n", fp);
 	}
 	putc('\n', fp);
@@ -468,7 +468,7 @@ emitfiles(FILE *fp, int suffix, int upper_suffix)
 		if (fi->fi_suffix != suffix && fi->fi_suffix != upper_suffix)
 			continue;
 		putc('\t', fp);
-		emitfiletype(fp, &fi->fi_fit);
+		emitfile(fp, fi);
 		fputs(" \\\n", fp);
 	}
 
@@ -501,7 +501,7 @@ emitrules(FILE *fp)
 		if (fi->fi_mkrule == NULL)
 			continue;
 		fprintf(fp, "%s.o: ", fi->fi_base);
-		emitfiletype(fp, &fi->fi_fit);
+		emitfile(fp, fi);
 		putc('\n', fp);
 		fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
 	}
