@@ -20,7 +20,8 @@ struct clfs {
 		struct dlfs u_32;
 		struct dlfs64 u_64;
 	} lfs_dlfs_u;
-	unsigned lfs_is64 : 1;
+	unsigned lfs_is64 : 1,
+		lfs_dobyteswap : 1;
 
 	/* Ifile */
 	int clfs_ifilefd;	   /* Ifile file descriptor */

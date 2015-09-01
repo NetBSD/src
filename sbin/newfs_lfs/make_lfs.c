@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.44 2015/08/19 20:33:29 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.45 2015/09/01 06:10:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.44 2015/08/19 20:33:29 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.45 2015/09/01 06:10:16 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -397,6 +397,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	u_int64_t tsepb, tnseg;
 	time_t stamp;
 	bool is64 = false; /* XXX notyet */
+	bool dobyteswap = false; /* XXX notyet */
 
 	/*
 	 * Initialize buffer cache.  Use a ballpark guess of the length of
@@ -420,6 +421,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		fs->lfs_dlfs_u.u_32 = dlfs32_default;
 	}
 	fs->lfs_is64 = is64;
+	fs->lfs_dobyteswap = dobyteswap;
 	fs->lfs_ivnode = vp;
 	fs->lfs_devvp = save_devvp;
 
