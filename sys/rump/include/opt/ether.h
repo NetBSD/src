@@ -1,3 +1,3 @@
-/*	$NetBSD: ether.h,v 1.1 2015/08/24 23:04:42 pooka Exp $	*/
+/*	$NetBSD: ether.h,v 1.2 2015/09/01 03:26:09 ozaki-r Exp $	*/
 
-/* dummy */
+#define NETHER 1
