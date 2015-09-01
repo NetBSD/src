@@ -1,4 +1,4 @@
-.\" $NetBSD: config.5,v 1.32 2015/08/31 12:00:12 pgoyette Exp $
+.\" $NetBSD: config.5,v 1.33 2015/09/01 01:50:14 pgoyette Exp $
 .\"
 .\"  Copyright (c) 2006, 2007 The NetBSD Foundation.
 .\"  All rights reserved.
@@ -618,12 +618,16 @@ statements).
 If the option has not been declared in the options description part of the
 kernel configuration machinery, it will be added as a pre-processor definition
 when source files are compiled.
+If the option has previously been selected, the statement produces a
+warning, and the new
+.Ic options
+statement replaces the original.
 .It Ic no options Ar name Op , Ar name Op , Ar ...
 Un-selects the option
 .Ar name .
 If option
 .Ar name
-has not been previously selected, the statement produces an error.
+has not previously been selected, the statement produces a warning.
 .It Ic file-system Ar name Op , Ar name Op , Ar ...
 Adds support for all the listed file-systems.
 .It Ic no file-system Ar name Op , Ar name Op , Ar ...

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.81 2015/08/31 02:58:25 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.82 2015/09/01 01:50:14 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.81 2015/08/31 02:58:25 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.82 2015/09/01 01:50:14 pgoyette Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -114,8 +114,9 @@ static	void	dependopts_one(const char *);
 static	void	do_depends(struct nvlist *);
 static	void	do_depend(struct nvlist *);
 static	void	stop(void);
-static	int	do_option(struct hashtab *, struct nvlist ***,
-		    const char *, const char *, const char *);
+static	int	do_option(struct hashtab *, struct nvlist **,
+		    struct nvlist ***, const char *, const char *,
+		    const char *, struct hashtab *);
 static	int	undo_option(struct hashtab *, struct nvlist **,
 		    struct nvlist ***, const char *, const char *);
 static	int	crosscheck(void);
@@ -994,7 +995,8 @@ addoption(const char *name, const char *value)
 		cfgwarn("undeclared option `%s' added to IDENT", name);
 	}
 
-	if (do_option(opttab, &nextopt, name, value, "options"))
+	if (do_option(opttab, &options, &nextopt, name, value, "options",
+	    selecttab))
 		return;
 
 	/* make lowercase, then add to select table */
@@ -1036,7 +1038,8 @@ addfsoption(const char *name)
 	 */
 	n = strtolower(name);
 
-	if (do_option(fsopttab, &nextfsopt, name, n, "file-system"))
+	if (do_option(fsopttab, &fsoptions, &nextfsopt, name, n, "file-system",
+	    selecttab))
 		return;
 
 	/* Add to select table. */
@@ -1071,7 +1074,8 @@ void
 addmkoption(const char *name, const char *value)
 {
 
-	(void)do_option(mkopttab, &nextmkopt, name, value, "makeoptions");
+	(void)do_option(mkopttab, &mkoptions, &nextmkopt, name, value,
+		        "makeoptions", NULL);
 }
 
 void
@@ -1144,28 +1148,41 @@ fixmkoption(void)
  * Add a name=value pair to an option list.  The value may be NULL.
  */
 static int
-do_option(struct hashtab *ht, struct nvlist ***nppp, const char *name,
-	  const char *value, const char *type)
+do_option(struct hashtab *ht, struct nvlist **npp, struct nvlist ***next,
+	  const char *name, const char *value, const char *type,
+	  struct hashtab *stab)
 {
-	struct nvlist *nv;
+	struct nvlist *nv, *onv;
 
 	/* assume it will work */
 	nv = newnv(name, value, NULL, 0, NULL);
-	if (ht_insert(ht, name, nv) == 0) {
-		**nppp = nv;
-		*nppp = &nv->nv_next;
-		return (0);
-	}
+	if (ht_insert(ht, name, nv) != 0) {
 
-	/* oops, already got that option */
-	nvfree(nv);
-	if ((nv = ht_lookup(ht, name)) == NULL)
-		panic("do_option");
-	if (nv->nv_str != NULL && !OPT_FSOPT(name))
-		cfgerror("already have %s `%s=%s'", type, name, nv->nv_str);
-	else
-		cfgerror("already have %s `%s'", type, name);
-	return (1);
+		/* oops, already got that option - remove it first */
+		if ((onv = ht_lookup(ht, name)) == NULL)
+			panic("do_option 1");
+		if (onv->nv_str != NULL && !OPT_FSOPT(name))
+			cfgwarn("already have %s `%s=%s'", type, name,
+			    onv->nv_str);
+		else
+			cfgwarn("already have %s `%s'", type, name);
+
+		if (undo_option(ht, npp, next, name, type))
+			panic("do_option 2");
+		if (stab != NULL &&
+		    undo_option(stab, NULL, NULL, strtolower(name), type))
+			panic("do_option 3");
+
+		/* now try adding it again */
+		if (ht_insert(ht, name, nv) != 0)
+			panic("do_option 4");
+
+		CFGDBG(2, "opt `%s' replaced", name);
+	}
+	**next = nv;
+	*next = &nv->nv_next;
+
+	return (0);
 }
 
 /*
