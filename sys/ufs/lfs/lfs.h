@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.183 2015/09/01 06:12:04 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.184 2015/09/01 06:15:46 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -217,29 +217,115 @@
  */
 
 /*
- * A directory consists of some number of blocks of LFS_DIRBLKSIZ
- * bytes, where LFS_DIRBLKSIZ is chosen such that it can be transferred
- * to disk in a single atomic operation (e.g. 512 bytes on most machines).
+ * Directories in LFS are files; they use the same inode and block
+ * mapping structures that regular files do. The directory per se is
+ * manifested in the file contents: an unordered, unstructured
+ * sequence of variable-size directory entries.
  *
- * Each LFS_DIRBLKSIZ byte block contains some number of directory entry
- * structures, which are of variable length.  Each directory entry has
- * a struct lfs_direct at the front of it, containing its inode number,
- * the length of the entry, and the length of the name contained in
- * the entry.  These are followed by the name padded to a 4 byte boundary.
- * All names are guaranteed null terminated.
- * The maximum length of a name in a directory is LFS_MAXNAMLEN.
+ * This format and structure is taken (via what was originally shared
+ * ufs-level code) from FFS. Each directory entry is a fixed header
+ * followed by a string, the total length padded to a 4-byte boundary.
+ * All strings include a null terminator; the maximum string length
+ * is LFS_MAXNAMLEN, which is 255.
  *
- * The macro DIRSIZ(fmt, dp) gives the amount of space required to represent
- * a directory entry.  Free space in a directory is represented by
- * entries which have dp->d_reclen > DIRSIZ(fmt, dp).  All LFS_DIRBLKSIZ bytes
- * in a directory block are claimed by the directory entries.  This
- * usually results in the last entry in a directory having a large
- * dp->d_reclen.  When entries are deleted from a directory, the
- * space is returned to the previous entry in the same directory
- * block by increasing its dp->d_reclen.  If the first entry of
- * a directory block is free, then its dp->d_ino is set to 0.
- * Entries other than the first in a directory do not normally have
- * dp->d_ino set to 0.
+ * The directory entry structure (struct lfs_direct) includes both the
+ * header and a maximal string. A real entry is potentially smaller;
+ * this causes assorted complications and hazards. For example, if
+ * pointing at the last entry in a directory block, in most cases the
+ * end of the struct lfs_direct will be off the end of the block
+ * buffer and pointing into some other memory (or into the void); thus
+ * one must never e.g. assign structures directly or do anything that
+ * accesses the name field beyond the real length stored in the
+ * header.
+ *
+ * Historically, FFS directories were/are organized into blocks of
+ * size DIRBLKSIZE that can be written atomically to disk at the
+ * hardware level. Directory entries are not allowed to cross the
+ * boundaries of these blocks. The resulting atomicity is important
+ * for the integrity of FFS volumes; however, for LFS it's irrelevant.
+ * All we have to care about is not writing out directories that
+ * confuse earlier ufs-based versions of the LFS code.
+ *
+ * This means [to be determined]. (XXX)
+ *
+ * As DIRBLKSIZE in its FFS sense is hardware-dependent, and file
+ * system images do from time to time move to different hardware, code
+ * that reads directories should be prepared to handle directories
+ * written in a context where DIRBLKSIZE was different (smaller or
+ * larger) than its current value. Note however that it is not
+ * sensible for DIRBLKSIZE to be larger than the volume fragment size,
+ * and not practically possible for it to be larger than the volume
+ * block size.
+ *
+ * Some further notes:
+ *    - the LFS_DIRSIZ macro provides the minimum space needed to hold
+ *      a directory entry.
+ *    - any particular entry may be arbitrarily larger (which is why the
+ *      header stores both the entry size and the name size) to pad out
+ *      unused space.
+ *    - dp->d_reclen is the size of the entry. This is always 4-byte
+ *      aligned.
+ *    - dp->d_namlen is the length of the string, and should always be
+ *      the same as strlen(dp->d_name).
+ *    - in particular, space available in an entry is given by
+ *      dp->d_reclen - LFS_DIRSIZ(dp), and all space available within a
+ *      directory block is tucked away within an existing entry.
+ *    - all space within a directory block is part of some entry.
+ *    - therefore, inserting a new entry requires finding and
+ *      splitting a suitable existing entry, and when entries are
+ *      removed their space is merged into the entry ahead of them.
+ *    - an empty/unused entry has d_ino set to 0. This normally only
+ *      appears in the first entry in a block, as elsewhere the unused
+ *      entry should have been merged into the one before it.
+ *    - a completely empty directory block has one entry whose
+ *      d_reclen is DIRBLKSIZ and whose d_ino is 0.
+ *
+ * LFS_OLDDIRFMT and LFS_NEWDIRFMT are code numbers for a directory
+ * format change that happened in ffs a long time ago. This was in the
+ * 80s, if I'm not mistaken, and well before LFS was first written, so
+ * there should be no LFS volumes (and certainly no LFS v2-format
+ * volumes, or LFS64 volumes) where LFS_OLDDIRFMT pertains. All the
+ * same, we get to carry the logic around until we can conclusively
+ * demonstrate that it's never needed.
+ *
+ * Note that these code numbers do not appear on disk. They're
+ * generated from runtime logic that is cued by other things, which is
+ * why LFS_OLDDIRFMT is confusingly 1 and LFS_NEWDIRFMT is confusingly
+ * 0.
+ *
+ * Relatedly, the byte swapping logic for directories we have, which
+ * is derived from the FFS_EI code, is a horrible mess. For example,
+ * to access the namlen field, one does the following:
+ *
+ * #if (BYTE_ORDER == LITTLE_ENDIAN)
+ *         swap = (ULFS_IPNEEDSWAP(VTOI(vp)) == 0);
+ * #else
+ *         swap = (ULFS_IPNEEDSWAP(VTOI(vp)) != 0);
+ * #endif
+ *         return ((FSFMT(vp) && swap)? ep->d_type : ep->d_namlen);
+ *
+ * ULFS_IPNEEDSWAP() is the same as fetching fs->lfs_dobyteswap. This
+ * horrible "swap" logic is cutpasted all over everywhere but amounts
+ * to the following:
+ *
+ *    running code      volume          lfs_dobyteswap  "swap"
+ *    ----------------------------------------------------------
+ *    LITTLE_ENDIAN     LITTLE_ENDIAN   false           true
+ *    LITTLE_ENDIAN     BIG_ENDIAN      true            false
+ *    BIG_ENDIAN        LITTLE_ENDIAN   true            true
+ *    BIG_ENDIAN        BIG_ENDIAN      false           false
+ *
+ * which you'll note boils down to "volume is little-endian".
+ *
+ * Meanwhile, FSFMT(vp) yields LFS_OLDDIRFMT or LFS_NEWDIRFMT via
+ * perverted logic of its own. Since LFS_OLDDIRFMT is 1 (contrary to
+ * what one might expect approaching this cold) what this mess means
+ * is: on OLDDIRFMT volumes that are little-endian, we read the
+ * namlen value out of the type field. This is because on OLDDIRFMT
+ * volumes there is no d_type field, just a 16-bit d_namlen; so if
+ * the 16-bit d_namlen is little-endian, the useful part of it is
+ * in the first byte, which in the NEWDIRFMT structure is the d_type
+ * field.
  */
 
 /*
@@ -249,7 +335,7 @@
 #define	LFS_DIRBLKSIZ	DEV_BSIZE
 
 /*
- * Convert between stat structure types and directory types.
+ * Convert between stat structure type codes and directory entry type codes.
  */
 #define	LFS_IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	LFS_DTTOIF(dirtype)	((dirtype) << 12)
