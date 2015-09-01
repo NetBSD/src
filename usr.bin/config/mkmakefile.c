@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.50 2015/09/01 00:38:30 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.51 2015/09/01 01:17:56 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.50 2015/09/01 00:38:30 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.51 2015/09/01 01:17:56 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -300,6 +300,8 @@ emitfiletype(FILE *fp, struct filetype *fit)
 	if (*fit->fit_path != '/') {
 		prologue = "$S/";
 		if (fit->fit_prefix != NULL) {
+			if (*fit->fit_prefix == '/')
+				prologue = "";
 			prefix = fit->fit_prefix;
 			sep = "/";
 		}
