@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.52 2015/09/01 06:12:04 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.53 2015/09/01 06:16:58 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -270,6 +270,8 @@ init_fs(struct clfs *fs, char *fsname)
 	}
 	fs->lfs_is64 = 0; /* XXX notyet */
 	fs->lfs_dobyteswap = 0; /* XXX notyet */
+	/* XXX: can this ever need to be set? does the cleaner even care? */
+	fs->lfs_hasolddirfmt = 0;
 
 	/* If this is not a version 2 filesystem, complain and exit */
 	if (lfs_sb_getversion(fs) != 2) {

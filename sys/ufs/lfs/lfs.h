@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.184 2015/09/01 06:15:46 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.185 2015/09/01 06:16:59 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -339,29 +339,6 @@
  */
 #define	LFS_IFTODT(mode)	(((mode) & 0170000) >> 12)
 #define	LFS_DTTOIF(dirtype)	((dirtype) << 12)
-
-/*
- * The LFS_DIRSIZ macro gives the minimum record length which will hold
- * the directory entry.  This requires the amount of space in struct lfs_direct
- * without the d_name field, plus enough space for the name with a terminating
- * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
- */
-#define	LFS_DIRECTSIZ(namlen) \
-	((sizeof(struct lfs_direct) - (LFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
-
-#if (BYTE_ORDER == LITTLE_ENDIAN)
-#define LFS_DIRSIZ(oldfmt, dp, needswap)	\
-    (((oldfmt) && !(needswap)) ?		\
-    LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
-#else
-#define LFS_DIRSIZ(oldfmt, dp, needswap)	\
-    (((oldfmt) && (needswap)) ?			\
-    LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
-#endif
-
-/* Constants for the first argument of LFS_DIRSIZ */
-#define LFS_OLDDIRFMT	1
-#define LFS_NEWDIRFMT	0
 
 /*
  * Theoretically, directories can be more than 2Gb in length; however, in
@@ -960,7 +937,8 @@ struct lfs {
 
 /* These fields are set at mount time and are meaningless on disk. */
 	unsigned lfs_is64 : 1,		/* are we lfs64 or lfs32? */
-		lfs_dobyteswap : 1;	/* are we opposite-endian? */
+		lfs_dobyteswap : 1,	/* are we opposite-endian? */
+		lfs_hasolddirfmt : 1;	/* dir entries have no d_type */
 
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */

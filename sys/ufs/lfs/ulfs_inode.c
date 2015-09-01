@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.10 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.11 2015/09/01 06:16:59 dholland Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.10 2015/05/31 15:48:03 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.11 2015/09/01 06:16:59 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -58,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.10 2015/05/31 15:48:03 hannken Exp 
 #include <sys/fstrans.h>
 #include <sys/kmem.h>
 
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <ufs/lfs/ulfs_inode.h>
