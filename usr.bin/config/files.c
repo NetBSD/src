@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.23 2015/09/01 12:10:56 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.24 2015/09/01 12:46:20 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.23 2015/09/01 12:10:56 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.24 2015/09/01 12:46:20 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -93,8 +93,10 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 	struct files *fi;
 	const char *dotp, *tail;
 	size_t baselen;
+	size_t dirlen;
 	int needc, needf;
 	char base[200];
+	char dir[MAXPATHLEN];
 
 	/* check various errors */
 	needc = flags & FI_NEEDSCOUNT;
@@ -115,10 +117,16 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 
 	/* find last part of pathname, and same without trailing suffix */
 	tail = strrchr(path, '/');
-	if (tail == NULL)
+	if (tail == NULL) {
+		dirlen = 0;
 		tail = path;
-	else
+	} else {
+		dirlen = (size_t)(tail - path);
 		tail++;
+	}
+	memcpy(dir, path, dirlen);
+	dir[dirlen] = '\0';
+
 	dotp = strrchr(tail, '.');
 	if (dotp == NULL || dotp[1] == 0 ||
 	    (baselen = (size_t)(dotp - tail)) >= sizeof(base)) {
@@ -155,13 +163,14 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 		goto bad;
 	}
 	memcpy(base, tail, baselen);
-	base[baselen] = 0;
+	base[baselen] = '\0';
 	fi->fi_srcfile = yyfile;
 	fi->fi_srcline = currentline();
 	fi->fi_flags = flags;
 	fi->fi_path = path;
 	fi->fi_tail = tail;
 	fi->fi_base = intern(base);
+	fi->fi_dir = intern(dir);
 	fi->fi_prefix = SLIST_EMPTY(&prefixes) ? NULL :
 			SLIST_FIRST(&prefixes)->pf_prefix;
 	fi->fi_len = strlen(path);
