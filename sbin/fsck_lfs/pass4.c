@@ -1,4 +1,4 @@
-/* $NetBSD: pass4.c,v 1.26 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: pass4.c,v 1.27 2015/09/01 06:15:02 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -51,8 +51,6 @@
 #include "fsutil.h"
 #include "fsck.h"
 #include "extern.h"
-
-extern SEGUSE *seg_table;
 
 static int check_orphan(struct inodesc *idp);
 
