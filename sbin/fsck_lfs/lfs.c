@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.62 2015/09/01 06:13:57 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.63 2015/09/01 06:15:02 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -212,12 +212,12 @@ ulfs_bmaparray(struct lfs * fs, struct uvnode * vp, daddr_t bn, daddr_t * bnp, s
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);
 		}
-		daddr = ((ulfs_daddr_t *) bp->b_data)[xap->in_off];
+		daddr = lfs_iblock_get(fs, bp->b_data, xap->in_off);
 	}
 	if (bp)
 		brelse(bp, 0);
 
-	daddr = LFS_FSBTODB(fs, (ulfs_daddr_t) daddr);
+	daddr = LFS_FSBTODB(fs, daddr);
 	*bnp = daddr == 0 ? -1 : daddr;
 	return (0);
 }
