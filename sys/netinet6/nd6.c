@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.172 2015/09/01 08:52:02 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.173 2015/09/02 08:03:10 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.172 2015/09/01 08:52:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.173 2015/09/02 08:03:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -451,10 +451,11 @@ nd6_llinfo_timer(void *arg)
 		return;
 	}
 
-	if ((rt = ln->ln_rt) == NULL)
-		panic("ln->ln_rt == NULL");
-	if ((ifp = rt->rt_ifp) == NULL)
-		panic("ln->ln_rt->rt_ifp == NULL");
+	rt = ln->ln_rt;
+	KASSERT(rt != NULL);
+	ifp = rt->rt_ifp;
+	KASSERT(ifp != NULL);
+
 	ndi = ND_IFINFO(ifp);
 	dst = satocsin6(rt_getkey(rt));
 
