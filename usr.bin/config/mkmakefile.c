@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.59 2015/09/02 14:17:03 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.60 2015/09/02 16:29:44 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.59 2015/09/02 14:17:03 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.60 2015/09/02 16:29:44 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -334,7 +334,6 @@ emitfilerel(FILE *fp, struct files *fi)
 static void
 emitobjs(FILE *fp)
 {
-	const char *prologue, *prefix, *sep;
 	struct files *fi;
 
 	fputs("OFILES= \\\n", fp);
