@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.218 2015/09/01 23:04:35 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.219 2015/09/02 03:22:41 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -397,8 +397,9 @@ DEPS=	${SRCS:T:u:R:S/$/.d/g}
 .if !target(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s} assym.h
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
+	${MKDEP} -f ${.TARGET}.tmp -- ${MKDEP_AFLAGS} \
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
+	mv -f ${.TARGET}.tmp ${.TARGET}
 .endif
 .endfor
 
@@ -406,8 +407,9 @@ ${_s:T:R}.d: ${_s} assym.h
 .if !target(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s}
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
+	${MKDEP} -f ${.TARGET}.tmp -- ${MKDEP_CFLAGS} \
 	    ${CPPFLAGS} ${CPPFLAGS.${_s:T}} ${_s}
+	mv -f ${.TARGET}.tmp ${.TARGET}
 .endif
 .endfor
 
@@ -523,28 +525,27 @@ build_kernel: .USE
 .SUFFIXES: .genassym .assym.h
 .genassym.assym.h:
 	${_MKTARGET_CREATE}
-	cat $< | \
-	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    ${GENASSYM_CPPFLAGS} > $@.tmp && \
+	${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
+	    ${GENASSYM_CPPFLAGS} < $< > $@
 	mv -f $@.tmp $@
 
 .SUFFIXES: .s .d
 .s.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
-	    ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+	${MKDEP} -f $@.tmp -- ${MKDEP_AFLAGS} ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+	mv -f $@.tmp $@
 
 .SUFFIXES: .S .d
 .S.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_AFLAGS} \
-	    ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+	${MKDEP} -f $@.tmp -- ${MKDEP_AFLAGS} ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+	mv -f $@.tmp $@
 
 .SUFFIXES: .c .d
 .c.d:
 	${_MKTARGET_CREATE}
-	${MKDEP} -f ${.TARGET} -- ${MKDEP_CFLAGS} \
-	    ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+	${MKDEP} -f $@.tmp -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
+	mv -f $@.tmp $@
 
 .SUFFIXES: .c .o
 .c.o:
