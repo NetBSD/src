@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.220 2015/09/02 12:38:48 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.221 2015/09/02 13:42:14 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -160,20 +160,6 @@ LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
 		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC} && \
 		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
 
-.for _s in ${CFILES}
-.if !commands(${_s:T:R}.o)
-${_s:T:R}.o: ${_s}
-	${NORMAL_C}
-.endif
-.endfor
-
-.for _s in ${SFILES}
-.if !commands(${_s:T:R}.o)
-${_s:T:R}.o: ${_s}
-	${NORMAL_S}
-.endif
-.endfor
-
 ##
 ## (3) libkern and compat
 ##
@@ -317,6 +303,23 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 
+_CFILES=${CFILES:M/*} ${CFILES:Nswapnetbsd*:N/*:C|^|$S/|}
+_SFILES=${SFILES:M/*} ${SFILES:N/*:C|^|$S/|}
+
+.for _s in ${_CFILES}
+.if !commands(${_s:T:R}.o)
+${_s:T:R}.o: ${_s}
+	${NORMAL_C}
+.endif
+.endfor
+
+.for _s in ${_SFILES}
+.if !commands(${_s:T:R}.o)
+${_s:T:R}.o: ${_s}
+	${NORMAL_S}
+.endif
+.endfor
+
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	${_MKTARGET_CREATE}
 	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf | \
@@ -388,8 +391,8 @@ dependall: depend .WAIT all
 .if !target(.depend)
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
-SSRCS=${MD_SFILES} ${SFILES}
-CSRCS=${MD_CFILES} ${MI_CFILES} ${CFILES}
+SSRCS=${MD_SFILES} ${_SFILES}
+CSRCS=${MD_CFILES} ${MI_CFILES} ${_CFILES}
 SRCS=${SSRCS} ${CSRCS}
 DEPS=	${SRCS:T:u:R:S/$/.d/g}
 
