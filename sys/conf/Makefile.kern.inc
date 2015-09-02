@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.222 2015/09/02 14:17:03 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.223 2015/09/02 15:29:23 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -223,6 +223,7 @@ SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
 .else
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
 .endif
+SYSTEM_OBJ_NOSWAP=	${SYSTEM_OBJ:N*swapnetbsd*}
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ} .gdbinit
 .if defined(CTFMERGE)
 SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
@@ -230,14 +231,10 @@ SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OB
 SYSTEM_CTFMERGE= ${_MKSHECHO}
 .endif
 SYSTEM_LD_HEAD?=@rm -f $@
-SYSTEM_LD?=	@do_system_ld() { \
-		target=$$1; shift; \
-		${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
+SYSTEM_LD?=	${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o swap$${target}.o $$@; \
-		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o swap$${target}.o $$@; \
-		}; \
-		do_system_ld
+		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} '$${SYSTEM_OBJ_NOSWAP}' '$${EXTRA_OBJ}' vers.o '$${OBJS:M*swap${.TARGET}.o}'; \
+		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} ${SYSTEM_OBJ_NOSWAP} ${EXTRA_OBJ} vers.o ${OBJS:M*swap${.TARGET}.o}
 
 # Give MD generated ldscript dependency on ${SYSTEM_OBJ}
 .if defined(KERNLDSCRIPT)
@@ -304,16 +301,17 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ##
 
 .if !defined(___USE_SUFFIX_RULES___)
-OBJS=	${CFILES:T:R:C|$|.o|:N*swapnetbsd*} \
+OBJS=	${CFILES:T:R:C|$|.o|} \
 	${SFILES:T:R:C|$|.o|} \
 	${OFILES}
-_CFILES=${CFILES:M/*} ${CFILES:N*swapnetbsd*:N/*:C|^|$S/|}
-_SFILES=${SFILES:M/*} ${SFILES:N/*:C|^|$S/|}
+# absolute, generated (build directory), relative (under $S)
+_CFILES=${CFILES:M/*} ${CFILES:N/*:N*/*} ${CFILES:N/*:M*/*:C|^|$S/|}
+_SFILES=${SFILES:M/*} ${SFILES:N/*:N*/*} ${SFILES:N/*:M*/*:C|^|$S/|}
 .else
-OBJS=	${CFILES:R:C|$|.o|:N*swapnetbsd*} \
+OBJS=	${CFILES:R:C|$|.o|} \
 	${SFILES:R:C|$|.o|} \
 	${OFILES}
-_CFILES=${CFILES:N*swapnetbsd*}
+_CFILES=${CFILES}
 _SFILES=${SFILES}
 .endif # ___USE_SUFFIX_RULES___
 
@@ -504,7 +502,7 @@ CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 .if !defined(COPY_SYMTAB)
 build_kernel: .USE
 	${SYSTEM_LD_HEAD}
-	${SYSTEM_LD} ${.TARGET}
+	${SYSTEM_LD}
 	${SYSTEM_LD_TAIL_STAGE2}
 .else
 .for k in ${KERNELS}
@@ -514,13 +512,13 @@ build_kernel: .USE
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf.o
 	${SYSTEM_LD_HEAD}
-	${SYSTEM_LD} ${.TARGET} kern_ksyms_buf.o
+	${SYSTEM_LD} kern_ksyms_buf.o
 	${SYSTEM_LD_TAIL_STAGE1}
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -DSYMTAB_SPACE=$$(${DBSYM} -P ${.TARGET}${TARGETSFX}) \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf_real.o
 	${SYSTEM_LD_HEAD}
-	${SYSTEM_LD} ${.TARGET} kern_ksyms_buf_real.o
+	${SYSTEM_LD} kern_ksyms_buf_real.o
 	${SYSTEM_LD_TAIL_STAGE2}
 .endif
 
