@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.60 2015/09/01 13:46:14 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.61 2015/09/02 11:33:30 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -187,12 +187,14 @@ Lstart1:
 	jra	Lstart2
 1:
 #endif
+#if defined(M68030)
 	cmpl	#CPU_68030,%a0@		| 68030?
 	jne	1f			| no, skip
 	movl	#_C_LABEL(busaddrerr2030),%a2@(8)
 	movl	#_C_LABEL(busaddrerr2030),%a2@(12)
 	jra	Lstart2
 1:
+#endif
 	/* Config botch; no hope. */
 	PANIC("Config botch in locore")
 
