@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.224 2015/09/02 15:35:52 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.225 2015/09/02 23:03:41 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -227,7 +227,7 @@ SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
 .else
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS:O} ${SYSLIBCOMPAT} ${LIBKERN}
 .endif
-SYSTEM_OBJ_NOSWAP=	${SYSTEM_OBJ:N*swapnetbsd*}
+SYSTEM_OBJ_NOSWAP=	${SYSTEM_OBJ:N*swap*netbsd*}
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ} .gdbinit
 .if defined(CTFMERGE)
 SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
