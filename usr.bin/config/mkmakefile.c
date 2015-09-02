@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.56 2015/09/01 20:18:41 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.57 2015/09/02 13:06:06 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.56 2015/09/01 20:18:41 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.57 2015/09/02 13:06:06 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -323,17 +323,12 @@ emitobjs(FILE *fp)
 	struct files *fi;
 
 	fputs("OBJS= \\\n", fp);
-	TAILQ_FOREACH(fi, &allfiles, fi_next) {
-		prologue = prefix = sep = "";
-		if ((fi->fi_flags & FI_SEL) == 0)
-			continue;
-		if (fi->fi_buildprefix != NULL) {
-			prefix = fi->fi_buildprefix;
-			sep = "/";
-		}
-		fprintf(fp, "\t%s%s%s%s.o \\\n", prologue, prefix, sep,
-		    fi->fi_base);
-	}
+	fprintf(fp, "\t${CFILES:T:R:C|$|.o|:Nswapnetbsd*} \\\n");
+	fprintf(fp, "\t${SFILES:T:R:C|$|.o|} \\\n");
+	fprintf(fp, "\t${OFILES} \\\n");
+	putc('\n', fp);
+
+	fputs("OFILES= \\\n", fp);
 	TAILQ_FOREACH(fi, &allofiles, fi_snext) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
