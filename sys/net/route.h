@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.95 2015/08/31 08:02:44 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.96 2015/09/02 11:35:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -411,6 +411,15 @@ rt_get_gwroute(struct rtentry *rt)
 		return NULL;
 	rt->rt_gwroute->rt_refcnt++;
 	return rt->rt_gwroute;
+}
+
+static inline void
+rt_set_gwroute(struct rtentry *rt, struct rtentry *gwrt)
+{
+
+	rt->rt_gwroute = gwrt;
+	if (rt->rt_gwroute != NULL)
+		rt->rt_gwroute->rt_refcnt++;
 }
 
 static inline void
