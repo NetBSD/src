@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.246 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.247 2015/09/02 11:35:11 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.246 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.247 2015/09/02 11:35:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -260,7 +260,8 @@ retry:
 			error = EHOSTUNREACH;
 			goto bad;
 		}
-		gwrt = rt->rt_gwroute = rtalloc1(rt->rt_gateway, 1);
+		gwrt = rtalloc1(rt->rt_gateway, 1);
+		rt_set_gwroute(rt, gwrt);
 		RTFREE_IF_NEEDED(rt);
 		rt = gwrt;
 		if (rt == NULL) {
@@ -269,6 +270,8 @@ retry:
 		}
 		/* the "G" test below also prevents rt == rt0 */
 		if ((rt->rt_flags & RTF_GATEWAY) != 0 || rt->rt_ifp != ifp) {
+			if (rt0->rt_gwroute != NULL)
+				rtfree(rt0->rt_gwroute);
 			rt0->rt_gwroute = NULL;
 			error = EHOSTUNREACH;
 			goto bad;
