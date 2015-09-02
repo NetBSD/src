@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.221 2015/09/02 13:42:14 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.222 2015/09/02 14:17:03 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -303,9 +303,21 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 
-_CFILES=${CFILES:M/*} ${CFILES:Nswapnetbsd*:N/*:C|^|$S/|}
+.if !defined(___USE_SUFFIX_RULES___)
+OBJS=	${CFILES:T:R:C|$|.o|:N*swapnetbsd*} \
+	${SFILES:T:R:C|$|.o|} \
+	${OFILES}
+_CFILES=${CFILES:M/*} ${CFILES:N*swapnetbsd*:N/*:C|^|$S/|}
 _SFILES=${SFILES:M/*} ${SFILES:N/*:C|^|$S/|}
+.else
+OBJS=	${CFILES:R:C|$|.o|:N*swapnetbsd*} \
+	${SFILES:R:C|$|.o|} \
+	${OFILES}
+_CFILES=${CFILES:N*swapnetbsd*}
+_SFILES=${SFILES}
+.endif # ___USE_SUFFIX_RULES___
 
+.if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${_CFILES}
 .if !commands(${_s:T:R}.o)
 ${_s:T:R}.o: ${_s}
@@ -319,6 +331,7 @@ ${_s:T:R}.o: ${_s}
 	${NORMAL_S}
 .endif
 .endfor
+.endif # !___USE_SUFFIX_RULES___
 
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	${_MKTARGET_CREATE}
@@ -394,8 +407,13 @@ MKDEP_CFLAGS?=	${CFLAGS}
 SSRCS=${MD_SFILES} ${_SFILES}
 CSRCS=${MD_CFILES} ${MI_CFILES} ${_CFILES}
 SRCS=${SSRCS} ${CSRCS}
+.if !defined(___USE_SUFFIX_RULES___)
 DEPS=	${SRCS:T:u:R:S/$/.d/g}
+.else
+DEPS=	${SRCS:u:R:S/$/.d/g}
+.endif
 
+.if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${SSRCS}
 .if !target(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s} assym.h
@@ -415,6 +433,7 @@ ${_s:T:R}.d: ${_s}
 	mv -f ${.TARGET}.tmp ${.TARGET}
 .endif
 .endfor
+.endif # !___USE_SUFFIX_RULES___
 
 assym.d: assym.h
 	${_MKTARGET_CREATE}
