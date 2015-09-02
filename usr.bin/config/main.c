@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.84 2015/09/01 16:01:23 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.85 2015/09/02 05:09:25 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.84 2015/09/01 16:01:23 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.85 2015/09/02 05:09:25 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -99,6 +99,8 @@ int	yyparse(void);
 extern int yydebug;
 #endif
 int	dflag;
+
+static const char *buildconfdir = ".";
 
 static struct dlhash *obsopttab;
 static struct hashtab *mkopttab;
@@ -522,11 +524,15 @@ main(int argc, char **argv)
 	/*
 	 * Ready to go.  Build all the various files.
 	 */
-	if (mksubdirs() || mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
+	if ((Sflag && mksubdirs()) || mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
 	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident() || errors)
 		stop();
 	(void)printf("Build directory is %s\n", builddir);
 	(void)printf("Don't forget to run \"make depend\"\n");
+
+	close(buildconfdirfd);
+	close(builddirfd);
+
 	return 0;
 }
 
@@ -650,9 +656,6 @@ mksubdirs(void)
 	const char *prefix, *sep;
 	char buf[MAXPATHLEN];
 
-	if (!Sflag)
-		return 0;
-
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
@@ -672,6 +675,8 @@ mksubdirs(void)
 		mksubdir(buf);
 	}
 
+	buildconfdir = "conf";
+
 	return 0;
 }
 
@@ -688,6 +693,9 @@ mksymlinks(void)
 	struct nvlist *nv;
 
 	p = buf;
+
+	if ((buildconfdirfd = open(buildconfdir, O_RDONLY)) == -1)
+		errx(EXIT_FAILURE, "cannot opens %s", buildconfdir);
 
 	snprintf(buf, sizeof(buf), "%s/arch/%s/include", srcdir, machine);
 	ret = recreate(p, "machine");
@@ -1464,6 +1472,8 @@ setupdirs(void)
 			errx(EXIT_FAILURE, "cannot create %s", builddir);
 	} else if (!S_ISDIR(st.st_mode))
 		errx(EXIT_FAILURE, "%s is not a directory", builddir);
+	if ((builddirfd = open(builddir, O_RDONLY)) == -1)
+		errx(EXIT_FAILURE, "cannot opens %s", builddir);
 	if (chdir(builddir) == -1)
 		err(EXIT_FAILURE, "cannot change to %s", builddir);
 	if (stat(srcdir, &st) == -1)
