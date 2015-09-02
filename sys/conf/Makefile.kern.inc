@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.219 2015/09/02 03:22:41 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.220 2015/09/02 12:38:48 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -248,8 +248,8 @@ SYSTEM_LD?=	@do_system_ld() { \
 		target=$$1; shift; \
 		${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o $$@; \
-		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o $$@; \
+		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} '$${SYSTEM_OBJ}' '$${EXTRA_OBJ}' vers.o swap$${target}.o $$@; \
+		${LD} -Map $${target}.map --cref ${LINKFLAGS} -o $${target} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o swap$${target}.o $$@; \
 		}; \
 		do_system_ld
 
@@ -482,11 +482,7 @@ CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 .if !defined(COPY_SYMTAB)
 build_kernel: .USE
 	${SYSTEM_LD_HEAD}
-.if !defined(___USE_SUFFIX_RULES___)
-	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o
-.else
 	${SYSTEM_LD} ${.TARGET}
-.endif
 	${SYSTEM_LD_TAIL_STAGE2}
 .else
 .for k in ${KERNELS}
@@ -496,21 +492,13 @@ build_kernel: .USE
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf.o
 	${SYSTEM_LD_HEAD}
-.if !defined(___USE_SUFFIX_RULES___)
-	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o kern_ksyms_buf.o
-.else
 	${SYSTEM_LD} ${.TARGET} kern_ksyms_buf.o
-.endif
 	${SYSTEM_LD_TAIL_STAGE1}
 	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
 	    -DSYMTAB_SPACE=$$(${DBSYM} -P ${.TARGET}${TARGETSFX}) \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf_real.o
 	${SYSTEM_LD_HEAD}
-.if !defined(___USE_SUFFIX_RULES___)
-	${SYSTEM_LD} ${.TARGET} swap${.TARGET}.o kern_ksyms_buf_real.o
-.else
 	${SYSTEM_LD} ${.TARGET} kern_ksyms_buf_real.o
-.endif
 	${SYSTEM_LD_TAIL_STAGE2}
 .endif
 
