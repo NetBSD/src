@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.175 2015/08/31 08:06:30 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.176 2015/09/02 09:28:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.175 2015/08/31 08:06:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.176 2015/09/02 09:28:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1428,7 +1428,20 @@ static void arptfree(struct llentry *la)
 {
 	struct rtentry *rt = la->la_rt;
 
+#ifdef notyet
+	/*
+	 * This is racy; arptfree() is called without a lock from
+	 * arptimer(), and something can delete the route before
+	 * we get here. This happens for me when a ppp interface
+	 * gets deleted.
+	 */
 	KASSERT(rt != NULL);
+#else
+	if (rt == NULL) {
+		aprint_error("%s: llentry without rt\n", __func__);
+		return;
+	}
+#endif
 
 	if (la->la_rt != NULL) {
 		rtfree(la->la_rt);
