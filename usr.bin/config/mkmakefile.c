@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.57 2015/09/02 13:06:06 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.58 2015/09/02 13:42:14 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.57 2015/09/02 13:06:06 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.58 2015/09/02 13:42:14 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -317,6 +317,21 @@ emitfile(FILE *fp, struct files *fi)
 }
 
 static void
+emitfilerel(FILE *fp, struct files *fi)
+{
+	const char *prefix, *sep;
+
+	prefix = sep = "";
+	if (*fi->fi_path != '/') {
+		if (fi->fi_prefix != NULL) {
+			prefix = fi->fi_prefix;
+			sep = "/";
+		}
+	}
+	fprintf(fp, "%s%s%s", prefix, sep, fi->fi_path);
+}
+
+static void
 emitobjs(FILE *fp)
 {
 	const char *prologue, *prefix, *sep;
@@ -475,7 +490,7 @@ emitfiles(FILE *fp, struct filelist *filelist, int suffix)
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		putc('\t', fp);
-		emitfile(fp, fi);
+		emitfilerel(fp, fi);
 		fputs(" \\\n", fp);
 	}
 
