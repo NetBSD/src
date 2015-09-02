@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2098 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2099 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -173,6 +173,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	iostat(8): Support fnmatch(3) patterns for disknames.  [mrg 20150709]
 	openssl: Import openssl 1.0.1p [christos 20150709]
 	ntp: Import ntp 4.2.8p3. [christos 20150710]
+	arm: Add support for NVIDIA Tegra K1 SoC. [jmcneill 20150725]
+	evbarm: Add support for NVIDIA Jetson TK1. [jmcneill 20150725]
 	bind: Import version 9.10.2-P3. [christos 20150728]
 	kernel: Several bug fixes and improvements in the PaX subsystem.
 		[maxv 20150804]
