@@ -375,18 +375,6 @@ o Enhance ioconf behavior for pseudo-devices
   code (where multiple drivers contain the same basic logic), and doesn't
   necessarily handle all of the "frobbing" of the kernel lists.
 
-o Disallow unknown options.
-
-  Don't accept options that are not defined as either defflag or defparam.
-  Report them and exit.  Don't set ${IDENT} in the generated Makefile.
-
-o Kill makeoptions.
-
-  It adds a variable defined in the generated `Makefile'.  While it looks
-  useful, it is too flexible and easy to abuse.  The `Makefile' should be
-  kept as simple as possible and have nothing that affects output contents.
-  Consider to kill `makeoptions' totally, replace existing ones with `options'.
-
 o Don't use -Ttext ${TEXTADDR}.
 
   Although ld(1)'s `-Ttext ${TEXTADDR}' is an easy way to specify the virtual
