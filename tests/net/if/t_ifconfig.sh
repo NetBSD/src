@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.1 2015/07/01 08:33:31 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.2 2015/09/03 10:22:52 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -71,8 +71,116 @@ create_destroy_cleanup()
 	RUMP_SERVER=${RUMP_SERVER1} rump.halt
 }
 
+atf_test_case options cleanup
+options_head()
+{
+
+	atf_set "descr" "tests of ifconfig options"
+	atf_set "require.progs" "rump_server"
+}
+
+options_body()
+{
+
+	export RUMP_SERVER=${RUMP_SERVER1}
+	atf_check -s exit:0 rump_server $RUMP_FLAGS $RUMP_SERVER1
+
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 create
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 linkstr bus1
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet 10.0.0.1/24
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 fc00::1/64
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o ignore rump.ifconfig -w 10
+	$DEBUG && rump.ifconfig shmif0
+
+	# ifconfig [-N] interface address_family
+	#   -N resolves hostnames
+	atf_check -s exit:0 -o match:'inet 127.0.0.1' rump.ifconfig lo0 inet
+	atf_check -s exit:0 -o match:'inet localhost' rump.ifconfig -N lo0 inet
+	atf_check -s exit:0 -o match:'inet6 ::1' rump.ifconfig lo0 inet6
+	atf_check -s exit:0 -o match:'inet6 localhost' rump.ifconfig -N lo0 inet6
+	atf_check -s not-exit:0 -e match:'not supported' rump.ifconfig lo0 atalk
+	atf_check -s not-exit:0 -e match:'not supported' rump.ifconfig -N lo0 atalk
+	atf_check -s exit:0 -o ignore rump.ifconfig lo0 link
+	atf_check -s exit:0 -o ignore rump.ifconfig -N lo0 link
+
+	# ifconfig [-hLmNvz] interface
+	#   -h -v shows statistics in human readable format
+	atf_check -s exit:0 -o ignore rump.ifconfig -h -v lo0
+	#   -L shows IPv6 lifetime
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 inet6 fc00::2 \
+	    pltime 100
+	$DEBUG && rump.ifconfig -L shmif0
+	atf_check -s exit:0 -o match:'pltime' rump.ifconfig -L shmif0
+	atf_check -s exit:0 -o match:'vltime' rump.ifconfig -L shmif0
+	#   -m shows all of the supported media (not supported in shmif)
+	$DEBUG && rump.ifconfig -m shmif0
+	atf_check -s exit:0 -o ignore rump.ifconfig -m shmif0
+	atf_check -s exit:0 -o match:'localhost' rump.ifconfig -N lo0
+	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -v lo0
+	atf_check -s exit:0 -o ignore rump.ping -c 1 localhost
+	#   -z clears and shows statistics at that point
+	atf_check -s exit:0 -o match:'2 packets' rump.ifconfig -z lo0
+	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -v lo0
+
+	# ifconfig -a [-bdhLNmsuvz]
+	#   -a shows all interfaces in the system
+	$DEBUG && rump.ifconfig -a
+	atf_check -s exit:0 -o match:'shmif0' -o match:'lo0' rump.ifconfig -a
+	#   -a -b shows only broadcast interfaces
+	atf_check -s exit:0 -o match:'shmif0' -o not-match:'lo0' rump.ifconfig -a -b
+	#   -a -d shows only down interfaces
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 down
+	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -a -d
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o not-match:'shmif0' rump.ifconfig -a -d
+	atf_check -s exit:0 -o match:'pltime' rump.ifconfig -a -L
+	atf_check -s exit:0 -o match:'vltime' rump.ifconfig -a -L
+	atf_check -s exit:0 -o match:'localhost' rump.ifconfig -a -N
+	atf_check -s exit:0 -o ignore rump.ifconfig -a -m
+	#   -a -s shows only interfaces connected to a network
+	#   (shmif is always connected)
+	$DEBUG && rump.ifconfig -a -s
+	atf_check -s exit:0 -o ignore rump.ifconfig -a -s
+	#   -a -u shows only up interfaces
+	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -a -u
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 down
+	atf_check -s exit:0 -o not-match:'shmif0' rump.ifconfig -a -u
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
+	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -a -v
+	atf_check -s exit:0 -o ignore rump.ping -c 1 localhost
+	atf_check -s exit:0 -o match:'2 packets' rump.ifconfig -a -z
+	atf_check -s exit:0 -o not-match:'2 packets' rump.ifconfig -a -v
+
+	# ifconfig -l [-bdsu]
+	#   -l shows only inteface names
+	atf_check -s exit:0 -o match:'lo0 shmif0' rump.ifconfig -l
+	atf_check -s exit:0 -o match:'shmif0' rump.ifconfig -l -b
+	atf_check -s exit:0 -o ignore rump.ifconfig -l -d
+	atf_check -s exit:0 -o match:'lo0 shmif0' rump.ifconfig -l -s
+	atf_check -s exit:0 -o match:'lo0 shmif0' rump.ifconfig -l -u
+
+	# ifconfig -s interface
+	#   -s interface exists with 0 / 1 if connected / disconnected
+	atf_check -s exit:0 -o empty rump.ifconfig -s lo0
+	atf_check -s exit:0 -o empty rump.ifconfig -s shmif0
+
+	# ifconfig -C
+	#   -C shows all of the interface cloners available on the system
+	atf_check -s exit:0 -o match:'shmif lo carp' rump.ifconfig -C
+
+	unset RUMP_SERVER
+}
+
+options_cleanup()
+{
+
+	env RUMP_SERVER=${RUMP_SERVER1} rump.halt
+}
+
 atf_init_test_cases()
 {
 
 	atf_add_test_case create_destroy
+	atf_add_test_case options
 }
