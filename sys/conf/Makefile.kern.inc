@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.225 2015/09/02 23:03:41 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.226 2015/09/03 01:09:38 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -195,21 +195,11 @@ SYSLIBCOMPATLN?=	${COMPATLIBLN}
 ##
 
 .if !defined(___USE_SUFFIX_RULES___)
-MI_CFILES=	param.c
-MI_CFILES+=	devsw.c ioconf.c
-.else
-MI_CFILES=	conf/param.c
+MI_CFILES=	devsw.c ioconf.c
 .endif
 
 # the need for a MI_SFILES variable is dubitable at best
 MI_OBJS=${MI_CFILES:S/.c/.o/}
-
-.if !defined(___USE_SUFFIX_RULES___)
-param.c: $S/conf/param.c
-	${_MKTARGET_CREATE}
-	rm -f param.c
-	cp $S/conf/param.c .
-.endif
 
 ##
 ## (5) link settings
