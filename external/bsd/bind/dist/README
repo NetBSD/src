@@ -51,6 +51,11 @@ BIND 9
 	For up-to-date release notes and errata, see
 	http://www.isc.org/software/bind9/releasenotes
 
+BIND 9.10.2-P4
+
+	BIND 9.10.2-P4 is a security release addressing the flaws
+	described in CVE-2015-5722 and CVE-2015-5986.
+
 BIND 9.10.2-P3
 
 	BIND 9.10.2-P3 is a security release addressing the flaw
