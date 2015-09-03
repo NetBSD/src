@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.234 2015/09/03 09:28:00 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.235 2015/09/03 12:31:16 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -196,6 +196,9 @@ SYSLIBCOMPATLN?=	${COMPATLIBLN}
 
 .if !defined(___USE_SUFFIX_RULES___)
 MI_CFILES=	devsw.c ioconf.c
+_MD_OBJS=	${MD_OBJS:T}
+.else
+_MD_OBJS=	${MD_OBJS}
 .endif
 
 # the need for a MI_SFILES variable is dubitable at best
@@ -212,7 +215,7 @@ MI_OBJS=${MI_CFILES:S/.c/.o/}
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxxx.o vers.o build_kernel
 
-SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
+SYSTEM_OBJ?=	${_MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ}
 .if defined(CTFMERGE)
 SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
@@ -300,12 +303,16 @@ OBJS.o=	${OFILES}
 # absolute, generated (build directory), relative (under $S)
 _CFILES=${CFILES:M/*} ${CFILES:N/*:N*/*} ${CFILES:N/*:M*/*:C|^|$S/|}
 _SFILES=${SFILES:M/*} ${SFILES:N/*:N*/*} ${SFILES:N/*:M*/*:C|^|$S/|}
+_MD_CFILES=${MD_CFILES}
+_MD_SFILES=${MD_SFILES}
 .else
 OBJS.c=	${CFILES:R:C|$|.o|}
 OBJS.s=	${SFILES:R:C|$|.o|}
 OBJS.o=	${OFILES}
 _CFILES=${CFILES}
 _SFILES=${SFILES}
+_MD_CFILES=${MD_CFILES:C|^$S/||}
+_MD_SFILES=${MD_SFILES:C|^$S/||}
 .endif # ___USE_SUFFIX_RULES___
 OBJS=	${OBJS.c} ${OBJS.s} ${OBJS.o}
 
@@ -331,7 +338,7 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
 	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
-${MD_SFILES:C/\.[Ss]/.o/} ${SFILES:C/\.[Ss]/.o/}: assym.h
+${_MD_SFILES:C/\.[Ss]/.o/} ${_SFILES:C/\.[Ss]/.o/}: assym.h
 
 MKREPRO?=no
 
@@ -396,8 +403,8 @@ dependall: depend .WAIT all
 .if !target(.depend)
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
-SSRCS=${MD_SFILES} ${_SFILES}
-CSRCS=${MD_CFILES} ${MI_CFILES} ${_CFILES}
+SSRCS=${_MD_SFILES} ${_SFILES}
+CSRCS=${_MD_CFILES} ${MI_CFILES} ${_CFILES}
 SRCS=${SSRCS} ${CSRCS}
 .if !defined(___USE_SUFFIX_RULES___)
 DEPS=	${SRCS:T:u:R:S/$/.d/g}
