@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.229 2015/09/03 03:47:25 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.230 2015/09/03 04:17:55 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -137,28 +137,28 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}\
 COMPILE_CTFCONVERT=	${_MKSHNOECHO}
 .endif
 
-COMPILE.c=	${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< -o $@
-COMPILE.s=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $< -o $@
-LINK.o=		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
+KCOMPILE.c=	${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< -o $@
+KCOMPILE.s=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $< -o $@
+KLINK.o=	${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
 
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO} ${COMPILE.c} ${PROF} && \
-		${COMPILE.c} ${PROF} && \
+		${_MKSHECHO} ${KCOMPILE.c} ${PROF} && \
+		${KCOMPILE.c} ${PROF} && \
 		${COMPILE_CTFCONVERT}
 NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO} ${COMPILE.c} && \
-		${COMPILE.c} && \
+		${_MKSHECHO} ${KCOMPILE.c} && \
+		${KCOMPILE.c} && \
 		${COMPILE_CTFCONVERT}
 NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO} ${COMPILE.s} && \
-		${COMPILE.s}
+		${_MKSHECHO} ${KCOMPILE.s} && \
+		${KCOMPILE.s}
  
 # link rules: 
 LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO} ${LINK.o} && \
-		${LINK.o}
+		${_MKSHECHO} ${KLINK.o} && \
+		${KLINK.o}
 
 ##
 ## (3) libkern and compat
@@ -294,19 +294,20 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ##
 
 .if !defined(___USE_SUFFIX_RULES___)
-OBJS=	${CFILES:T:R:C|$|.o|} \
-	${SFILES:T:R:C|$|.o|} \
-	${OFILES}
+OBJS.c=	${CFILES:T:R:C|$|.o|}
+OBJS.s=	${SFILES:T:R:C|$|.o|}
+OBJS.o=	${OFILES}
 # absolute, generated (build directory), relative (under $S)
 _CFILES=${CFILES:M/*} ${CFILES:N/*:N*/*} ${CFILES:N/*:M*/*:C|^|$S/|}
 _SFILES=${SFILES:M/*} ${SFILES:N/*:N*/*} ${SFILES:N/*:M*/*:C|^|$S/|}
 .else
-OBJS=	${CFILES:R:C|$|.o|} \
-	${SFILES:R:C|$|.o|} \
-	${OFILES}
+OBJS.c=	${CFILES:R:C|$|.o|}
+OBJS.s=	${SFILES:R:C|$|.o|}
+OBJS.o=	${OFILES}
 _CFILES=${CFILES}
 _SFILES=${SFILES}
 .endif # ___USE_SUFFIX_RULES___
+OBJS=	${OBJS.c} ${OBJS.s} ${OBJS.o}
 
 .if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${_CFILES}
@@ -548,17 +549,49 @@ build_kernel: .USE
 	${MKDEP} -f $@.tmp -- ${MKDEP_CFLAGS} ${CPPFLAGS} ${CPPFLAGS.${<:T}} $<
 	mv -f $@.tmp $@
 
-.SUFFIXES: .c .o
+.SUFFIXES: .c .o .go .po
 .c.o:
-	${NORMAL_C}
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.c}
+	@${KCOMPILE.c}
+	@${COMPILE_CTFCONVERT}
+.c.go:
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.c} -g
+	@${KCOMPILE.c} -g
+	@${COMPILE_CTFCONVERT}
+.c.po:
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.c} -pg
+	@${KCOMPILE.c} -pg
+	@${COMPILE_CTFCONVERT}
 
-.SUFFIXES: .s .o
+.SUFFIXES: .s .o .go .po
 .s.o:
-	${NORMAL_S}
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.s}
+	@${KCOMPILE.s}
+.s.go:
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.s} -g
+	@${KCOMPILE.s} -g
+.s.po:
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.s} -pg
+	@${KCOMPILE.s} -pg
 
-.SUFFIXES: .S .o
 .S.o:
-	${NORMAL_S}
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.s}
+	@${KCOMPILE.s}
+.S.go:
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.s} -g
+	@${KCOMPILE.s} -g
+.S.po:
+	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}"
+	@${_MKSHECHO} ${KCOMPILE.s} -pg
+	@${KCOMPILE.s} -pg
 .endif # ___USE_SUFFIX_RULES___
 
 ##
