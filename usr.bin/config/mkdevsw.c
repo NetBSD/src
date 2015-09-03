@@ -1,4 +1,4 @@
-/*	$NetBSD: mkdevsw.c,v 1.13 2015/09/02 05:09:25 uebayasi Exp $	*/
+/*	$NetBSD: mkdevsw.c,v 1.14 2015/09/03 13:53:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkdevsw.c,v 1.13 2015/09/02 05:09:25 uebayasi Exp $");
+__RCSID("$NetBSD: mkdevsw.c,v 1.14 2015/09/03 13:53:36 uebayasi Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -53,10 +53,9 @@ mkdevsw(void)
 {
 	FILE *fp;
 
-	fchdir(buildconfdirfd);
 	if ((fp = fopen("devsw.c.tmp", "w")) == NULL) {
 		warn("cannot create devsw.c");
-		goto err;
+		return (1);
 	}
 
 	emitheader(fp);
@@ -68,21 +67,17 @@ mkdevsw(void)
 	if (ferror(fp)) {
 		warn("error writing devsw.c");
 		fclose(fp);
-		goto err;
+		return 1;
 	}
 
 	(void)fclose(fp);
 
 	if (moveifchanged("devsw.c.tmp", "devsw.c") != 0) {
 		warn("error renaming devsw.c");
-		goto err;
+		return (1);
 	}
-	fchdir(builddirfd);
-	return (0);
 
-err:
-	fchdir(builddirfd);
-	return (1);
+	return (0);
 }
 
 static void

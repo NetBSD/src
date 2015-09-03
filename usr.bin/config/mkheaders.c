@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.28 2015/09/02 05:09:25 uebayasi Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.29 2015/09/03 13:53:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkheaders.c,v 1.28 2015/09/02 05:09:25 uebayasi Exp $");
+__RCSID("$NetBSD: mkheaders.c,v 1.29 2015/09/03 13:53:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -392,7 +392,6 @@ emitioconfh(void)
 	struct devi *i;
 
 	tfname = "tmp_ioconf.h";
-	fchdir(buildconfdirfd);
 	if ((tfp = fopen(tfname, "w")) == NULL)
 		return (herr("open", tfname, NULL));
 
@@ -416,11 +415,7 @@ emitioconfh(void)
 	if (fclose(tfp) == EOF)
 		return (herr("clos", tfname, NULL));
 
-	if (moveifchanged(tfname, "ioconf.h") != 0)
-		return (herr("mvif", tfname, NULL));
-
-	fchdir(builddirfd);
-	return 0;
+	return (moveifchanged(tfname, "ioconf.h"));
 }
 
 /*
@@ -533,7 +528,6 @@ herr(const char *what, const char *fname, FILE *fp)
 	warn("error %sing %s", what, fname);
 	if (fp)
 		(void)fclose(fp);
-	fchdir(builddirfd);
 	return (1);
 }
 

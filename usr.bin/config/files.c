@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.27 2015/09/02 05:09:25 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.28 2015/09/03 13:53:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.27 2015/09/02 05:09:25 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.28 2015/09/03 13:53:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -278,15 +278,13 @@ fixfiles(void)
  		struct config *cf;
  		char swapname[100];
 
-		buildprefix_push("conf");
-		addfile("conf/devsw.c", NULL, 0, NULL);
-		addfile("conf/ioconf.c", NULL, 0, NULL);
+		addfile("devsw.c", NULL, 0, NULL);
+		addfile("ioconf.c", NULL, 0, NULL);
  		TAILQ_FOREACH(cf, &allcf, cf_next) {
- 			(void)snprintf(swapname, sizeof(swapname), "conf/swap%s.c",
+ 			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
  			    cf->cf_name);
  			addfile(intern(swapname), NULL, 0, NULL);
  		}
-		buildprefix_pop();
 	}
 
 	err = 0;
