@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.231 2015/09/03 06:09:46 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.232 2015/09/03 06:10:53 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -343,7 +343,7 @@ _NVFLAGS=${NVFLAGS}
 
 .if !target(vers.o)
 newvers: vers.o
-vers.o: ${SYSTEM_OBJ} Makefile $S/conf/newvers.sh \
+vers.o: ${SYSTEM_OBJ:O} Makefile $S/conf/newvers.sh \
 		$S/conf/osrelease.sh ${_NETBSD_VERSION_DEPENDS}
 	${_MKMSG_CREATE} vers.c
 	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
@@ -494,7 +494,7 @@ CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 
 .for k in ${KERNELS}
-${k}: ${SYSTEM_DEP} vers.o build_kernel
+${k}: ${SYSTEM_DEP:O} vers.o build_kernel
 .endfor
 
 .if !defined(COPY_SYMTAB)
