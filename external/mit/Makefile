@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/07/23 08:03:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2015/09/03 22:24:02 youri Exp $
 
 .include <bsd.own.mk>
 
@@ -6,6 +6,7 @@ SUBDIR+=	expat lua
 
 .if ${MKX11} != "no"
 SUBDIR+=	xorg
+SUBDIR+=	.WAIT ctwm
 .endif
 
 .include <bsd.subdir.mk>
