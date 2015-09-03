@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.228 2015/09/03 01:40:06 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.229 2015/09/03 03:47:25 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -137,28 +137,28 @@ COMPILE_CTFCONVERT=	${_MKSHECHO}\
 COMPILE_CTFCONVERT=	${_MKSHNOECHO}
 .endif
 
+COMPILE.c=	${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< -o $@
+COMPILE.s=	${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $< -o $@
+LINK.o=		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
+
 # compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
 # NOPROF and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 NORMAL_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO}\
-		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< -o $@ && \
-		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $< -o $@ && \
+		${_MKSHECHO} ${COMPILE.c} ${PROF} && \
+		${COMPILE.c} ${PROF} && \
 		${COMPILE_CTFCONVERT}
 NOPROF_C?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO}\
-		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< -o $@ && \
-		${CC} ${COPTS.${<:T}} ${CFLAGS} ${CPPFLAGS} -c $< -o $@ && \
+		${_MKSHECHO} ${COMPILE.c} && \
+		${COMPILE.c} && \
 		${COMPILE_CTFCONVERT}
 NORMAL_S?=	@${_MKSHMSG} "compile  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO}\
-		${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $< -o $@ && \
-		${CC} ${AFLAGS} ${AFLAGS.${<:T}} ${CPPFLAGS} -c $< -o $@
+		${_MKSHECHO} ${COMPILE.s} && \
+		${COMPILE.s}
  
 # link rules: 
 LINK_O?=	@${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}" && \
-		${_MKSHECHO}\
-		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC} && \
-		${LD} -r ${LINKFORMAT} -Map=${.TARGET}.map -o ${.TARGET} ${.ALLSRC}
+		${_MKSHECHO} ${LINK.o} && \
+		${LINK.o}
 
 ##
 ## (3) libkern and compat
