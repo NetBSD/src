@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.31 2015/09/02 05:09:25 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.32 2015/09/03 13:53:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.31 2015/09/02 05:09:25 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.32 2015/09/03 13:53:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -87,10 +87,9 @@ mkioconf(void)
 	FILE *fp;
 
 	qsort(packed, npacked, sizeof *packed, cforder);
-	fchdir(buildconfdirfd);
 	if ((fp = fopen("ioconf.c.tmp", "w")) == NULL) {
 		warn("cannot write ioconf.c");
-		goto err;
+		return (1);
 	}
 
 	fprintf(fp, "#include \"ioconf.h\"\n");
@@ -117,20 +116,15 @@ mkioconf(void)
 #if 0
 		(void)unlink("ioconf.c.tmp");
 #endif
-		goto err;
+		return (1);
 	}
 
 	(void)fclose(fp);
 	if (moveifchanged("ioconf.c.tmp", "ioconf.c") != 0) {
 		warn("error renaming ioconf.c");
-		goto err;
+		return (1);
 	}
-	fchdir(builddirfd);
 	return (0);
-
-err:
-	fchdir(builddirfd);
-	return (1);
 }
 
 static int
