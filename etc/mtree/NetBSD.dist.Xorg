@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.Xorg,v 1.14 2014/03/20 09:05:28 mrg Exp $
+#	$NetBSD: NetBSD.dist.Xorg,v 1.15 2015/09/03 22:24:02 youri Exp $
 ./usr/X11R7
 ./usr/X11R7/bin
 ./usr/X11R7/include
@@ -19,6 +19,7 @@
 ./usr/X11R7/include/X11/extensions
 ./usr/X11R7/include/X11/fonts
 ./usr/X11R7/include/X11/pixmaps
+./usr/X11R7/include/X11/pixmaps/ctwm
 ./usr/X11R7/include/fontconfig
 ./usr/X11R7/include/freetype2
 ./usr/X11R7/include/freetype2
