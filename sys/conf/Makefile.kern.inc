@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.235 2015/09/03 12:31:16 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.236 2015/09/03 14:23:52 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -195,14 +195,10 @@ SYSLIBCOMPATLN?=	${COMPATLIBLN}
 ##
 
 .if !defined(___USE_SUFFIX_RULES___)
-MI_CFILES=	devsw.c ioconf.c
 _MD_OBJS=	${MD_OBJS:T}
 .else
 _MD_OBJS=	${MD_OBJS}
 .endif
-
-# the need for a MI_SFILES variable is dubitable at best
-MI_OBJS=${MI_CFILES:S/.c/.o/}
 
 ##
 ## (5) link settings
@@ -215,7 +211,7 @@ MI_OBJS=${MI_CFILES:S/.c/.o/}
 # load lines for config "xxx" will be emitted as:
 # xxx: ${SYSTEM_DEP} swapxxxx.o vers.o build_kernel
 
-SYSTEM_OBJ?=	${_MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
+SYSTEM_OBJ?=	${_MD_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ}
 .if defined(CTFMERGE)
 SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
@@ -404,7 +400,7 @@ dependall: depend .WAIT all
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 SSRCS=${_MD_SFILES} ${_SFILES}
-CSRCS=${_MD_CFILES} ${MI_CFILES} ${_CFILES}
+CSRCS=${_MD_CFILES} ${_CFILES}
 SRCS=${SSRCS} ${CSRCS}
 .if !defined(___USE_SUFFIX_RULES___)
 DEPS=	${SRCS:T:u:R:S/$/.d/g}
