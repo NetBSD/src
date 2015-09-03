@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.232 2015/09/03 06:10:53 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.233 2015/09/03 06:24:15 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -494,7 +494,7 @@ CPPFLAGS+=	${CPPFLAGS.${.IMPSRC:T}}
 CWARNFLAGS+=	${CWARNFLAGS.${.IMPSRC:T}}
 
 .for k in ${KERNELS}
-${k}: ${SYSTEM_DEP:O} vers.o build_kernel
+${k}: ${SYSTEM_DEP:O} swap${k}.o vers.o build_kernel
 .endfor
 
 .if !defined(COPY_SYMTAB)
