@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.87 2015/09/03 06:08:38 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.88 2015/09/03 13:53:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.87 2015/09/03 06:08:38 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.88 2015/09/03 13:53:36 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -99,8 +99,6 @@ int	yyparse(void);
 extern int yydebug;
 #endif
 int	dflag;
-
-static const char *buildconfdir = ".";
 
 static struct dlhash *obsopttab;
 static struct hashtab *mkopttab;
@@ -530,9 +528,6 @@ main(int argc, char **argv)
 	(void)printf("Build directory is %s\n", builddir);
 	(void)printf("Don't forget to run \"make depend\"\n");
 
-	close(buildconfdirfd);
-	close(builddirfd);
-
 	return 0;
 }
 
@@ -702,7 +697,6 @@ mkallsubdirs(void)
 
 	mksubdirs(&allfiles);
 	mksubdirs(&allofiles);
-	buildconfdir = "conf";
 	return 0;
 }
 
@@ -719,9 +713,6 @@ mksymlinks(void)
 	struct nvlist *nv;
 
 	p = buf;
-
-	if ((buildconfdirfd = open(buildconfdir, O_RDONLY)) == -1)
-		errx(EXIT_FAILURE, "cannot opens %s", buildconfdir);
 
 	snprintf(buf, sizeof(buf), "%s/arch/%s/include", srcdir, machine);
 	ret = recreate(p, "machine");
@@ -1498,8 +1489,6 @@ setupdirs(void)
 			errx(EXIT_FAILURE, "cannot create %s", builddir);
 	} else if (!S_ISDIR(st.st_mode))
 		errx(EXIT_FAILURE, "%s is not a directory", builddir);
-	if ((builddirfd = open(builddir, O_RDONLY)) == -1)
-		errx(EXIT_FAILURE, "cannot opens %s", builddir);
 	if (chdir(builddir) == -1)
 		err(EXIT_FAILURE, "cannot change to %s", builddir);
 	if (stat(srcdir, &st) == -1)
