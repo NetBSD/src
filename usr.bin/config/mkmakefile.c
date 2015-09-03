@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.61 2015/09/03 06:09:46 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.62 2015/09/03 09:28:00 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.61 2015/09/03 06:09:46 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.62 2015/09/03 09:28:00 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -534,19 +534,6 @@ emitload(FILE *fp)
 {
 	struct config *cf;
 
-	fputs(".MAIN: all\n", fp);
-	fputs("all:", fp);
-	TAILQ_FOREACH(cf, &allcf, cf_next) {
-		fprintf(fp, " %s", cf->cf_name);
-		/*
-		 * If we generate multiple configs inside the same build directory
-		 * with a parallel build, strange things may happen, so sequentialize
-		 * them.
-		 */
-		if (cf != TAILQ_LAST(&allcf,conftq))
-			fprintf(fp, " .WAIT");
-	}
-	fputs("\n\n", fp);
 	/*
 	 * Generate the backward-compatible "build_kernel" rule if
 	 * sys/conf/Makefile.kern.inc doesn't define any (pre-2014 Aug).
