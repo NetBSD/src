@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.62 2015/09/03 09:28:00 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.63 2015/09/03 13:32:07 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.62 2015/09/03 09:28:00 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.63 2015/09/03 13:32:07 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -335,16 +335,19 @@ static void
 emitobjs(FILE *fp)
 {
 	struct files *fi;
+	int found = 0;
 
-	fputs("OFILES= \\\n", fp);
 	TAILQ_FOREACH(fi, &allofiles, fi_snext) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
+		if (found++ == 0)
+			fputs("OFILES= \\\n", fp);
 		putc('\t', fp);
 		emitfile(fp, fi);
 		fputs(" \\\n", fp);
 	}
-	putc('\n', fp);
+	if (found == 0)
+		fprintf(fp, "#%%OBJS\n");
 }
 
 static void
@@ -477,9 +480,11 @@ emitfiles(FILE *fp, struct filelist *filelist, int suffix)
 	struct files *fi;
  	struct config *cf;
  	char swapname[100];
+	int found = 0;
 
-	fprintf(fp, "%cFILES= \\\n", toupper(suffix));
 	TAILQ_FOREACH(fi, filelist, fi_snext) {
+		if (found++ == 0)
+			fprintf(fp, "%cFILES= \\\n", toupper(suffix));
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		putc('\t', fp);
@@ -495,13 +500,16 @@ emitfiles(FILE *fp, struct filelist *filelist, int suffix)
  	if (!Sflag) {
  	if (suffix == 'c') {
  		TAILQ_FOREACH(cf, &allcf, cf_next) {
+			found++;
  			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
  			    cf->cf_name);
  			fprintf(fp, "\t%s \\\n", swapname);
  		}
  	}
 	}
-	putc('\n', fp);
+
+	if (found == 0)
+		fprintf(fp, "#%%%cFILES\n", toupper(suffix));
 }
 
 /*
@@ -511,6 +519,7 @@ static void
 emitrules(FILE *fp)
 {
 	struct files *fi;
+	int found = 0;
 
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
@@ -521,7 +530,10 @@ emitrules(FILE *fp)
 		emitfile(fp, fi);
 		putc('\n', fp);
 		fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
+		found = 1;
 	}
+	if (found == 0)
+		fprintf(fp, "#%%RULES\n");
 }
 
 /*
@@ -533,6 +545,7 @@ static void
 emitload(FILE *fp)
 {
 	struct config *cf;
+	int found = 0;
 
 	/*
 	 * Generate the backward-compatible "build_kernel" rule if
@@ -559,8 +572,10 @@ emitload(FILE *fp)
 	 		    cf->cf_name);
 		}
 		fprintf(fp, "KERNELS+=%s\n", cf->cf_name);
+		found = 1;
 	}
-	fputs("\n", fp);
+	if (found == 0)
+		fprintf(fp, "#%%LOAD\n");
 }
 
 /*
