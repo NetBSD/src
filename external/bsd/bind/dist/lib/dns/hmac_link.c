@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_link.c,v 1.1.1.11 2014/12/10 03:34:39 christos Exp $	*/
+/*	$NetBSD: hmac_link.c,v 1.1.1.12 2015/09/03 07:21:36 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -78,7 +78,7 @@ hmacmd5_createctx(dst_key_t *key, dst_context_t *dctx) {
 	hmacmd5ctx = isc_mem_get(dctx->mctx, sizeof(isc_hmacmd5_t));
 	if (hmacmd5ctx == NULL)
 		return (ISC_R_NOMEMORY);
-	isc_hmacmd5_init(hmacmd5ctx, hkey->key, ISC_SHA1_BLOCK_LENGTH);
+	isc_hmacmd5_init(hmacmd5ctx, hkey->key, ISC_MD5_BLOCK_LENGTH);
 	dctx->ctxdata.hmacmd5ctx = hmacmd5ctx;
 	return (ISC_R_SUCCESS);
 }
@@ -141,7 +141,7 @@ hmacmd5_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	else if (hkey1 == NULL || hkey2 == NULL)
 		return (ISC_FALSE);
 
-	if (isc_safe_memcmp(hkey1->key, hkey2->key, ISC_SHA1_BLOCK_LENGTH))
+	if (isc_safe_memcmp(hkey1->key, hkey2->key, ISC_MD5_BLOCK_LENGTH))
 		return (ISC_TRUE);
 	else
 		return (ISC_FALSE);
@@ -152,17 +152,17 @@ hmacmd5_generate(dst_key_t *key, int pseudorandom_ok, void (*callback)(int)) {
 	isc_buffer_t b;
 	isc_result_t ret;
 	unsigned int bytes;
-	unsigned char data[ISC_SHA1_BLOCK_LENGTH];
+	unsigned char data[ISC_MD5_BLOCK_LENGTH];
 
 	UNUSED(callback);
 
 	bytes = (key->key_size + 7) / 8;
-	if (bytes > ISC_SHA1_BLOCK_LENGTH) {
-		bytes = ISC_SHA1_BLOCK_LENGTH;
-		key->key_size = ISC_SHA1_BLOCK_LENGTH * 8;
+	if (bytes > ISC_MD5_BLOCK_LENGTH) {
+		bytes = ISC_MD5_BLOCK_LENGTH;
+		key->key_size = ISC_MD5_BLOCK_LENGTH * 8;
 	}
 
-	memset(data, 0, ISC_SHA1_BLOCK_LENGTH);
+	memset(data, 0, ISC_MD5_BLOCK_LENGTH);
 	ret = dst__entropy_getdata(data, bytes, ISC_TF(pseudorandom_ok != 0));
 
 	if (ret != ISC_R_SUCCESS)
@@ -171,7 +171,7 @@ hmacmd5_generate(dst_key_t *key, int pseudorandom_ok, void (*callback)(int)) {
 	isc_buffer_init(&b, data, bytes);
 	isc_buffer_add(&b, bytes);
 	ret = hmacmd5_fromdns(key, &b);
-	memset(data, 0, ISC_SHA1_BLOCK_LENGTH);
+	memset(data, 0, ISC_MD5_BLOCK_LENGTH);
 
 	return (ret);
 }
@@ -225,7 +225,7 @@ hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	memset(hkey->key, 0, sizeof(hkey->key));
 
-	if (r.length > ISC_SHA1_BLOCK_LENGTH) {
+	if (r.length > ISC_MD5_BLOCK_LENGTH) {
 		isc_md5_init(&md5ctx);
 		isc_md5_update(&md5ctx, r.base, r.length);
 		isc_md5_final(&md5ctx, hkey->key);
@@ -237,6 +237,8 @@ hmacmd5_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	key->key_size = keylen * 8;
 	key->keydata.hmacmd5 = hkey;
+
+	isc_buffer_forward(data, r.length);
 
 	return (ISC_R_SUCCESS);
 }
@@ -520,6 +522,8 @@ hmacsha1_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	key->key_size = keylen * 8;
 	key->keydata.hmacsha1 = hkey;
+
+	isc_buffer_forward(data, r.length);
 
 	return (ISC_R_SUCCESS);
 }
@@ -806,6 +810,8 @@ hmacsha224_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	key->key_size = keylen * 8;
 	key->keydata.hmacsha224 = hkey;
 
+	isc_buffer_forward(data, r.length);
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -1090,6 +1096,8 @@ hmacsha256_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	key->key_size = keylen * 8;
 	key->keydata.hmacsha256 = hkey;
+
+	isc_buffer_forward(data, r.length);
 
 	return (ISC_R_SUCCESS);
 }
@@ -1376,6 +1384,8 @@ hmacsha384_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	key->key_size = keylen * 8;
 	key->keydata.hmacsha384 = hkey;
 
+	isc_buffer_forward(data, r.length);
+
 	return (ISC_R_SUCCESS);
 }
 
@@ -1660,6 +1670,8 @@ hmacsha512_fromdns(dst_key_t *key, isc_buffer_t *data) {
 
 	key->key_size = keylen * 8;
 	key->keydata.hmacsha512 = hkey;
+
+	isc_buffer_forward(data, r.length);
 
 	return (ISC_R_SUCCESS);
 }

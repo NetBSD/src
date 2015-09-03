@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslecdsa_link.c,v 1.1.1.8 2015/07/08 15:38:01 christos Exp $	*/
+/*	$NetBSD: opensslecdsa_link.c,v 1.1.1.9 2015/09/03 07:21:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #include <config.h>
 
@@ -161,9 +159,9 @@ opensslecdsa_sign(dst_context_t *dctx, isc_buffer_t *sig) {
 					       "ECDSA_do_sign",
 					       DST_R_SIGNFAILURE));
 	BN_bn2bin_fixed(ecdsasig->r, r.base, siglen / 2);
-	r.base += siglen / 2;
+	isc_region_consume(&r, siglen / 2);
 	BN_bn2bin_fixed(ecdsasig->s, r.base, siglen / 2);
-	r.base += siglen / 2;
+	isc_region_consume(&r, siglen / 2);
 	ECDSA_SIG_free(ecdsasig);
 	isc_buffer_add(sig, siglen);
 	ret = ISC_R_SUCCESS;

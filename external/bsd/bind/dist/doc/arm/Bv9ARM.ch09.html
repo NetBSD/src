@@ -45,7 +45,7 @@
 <div class="toc">
 <p><b>Table of Contents</b></p>
 <dl>
-<dt><span class="sect1"><a href="Bv9ARM.ch09.html#id2610666">Release Notes for BIND Version 9.10.2-P3</a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch09.html#id2610666">Release Notes for BIND Version 9.10.2-P4</a></span></dt>
 <dd><dl>
 <dt><span class="sect2"><a href="Bv9ARM.ch09.html#relnotes_intro">Introduction</a></span></dt>
 <dt><span class="sect2"><a href="Bv9ARM.ch09.html#relnotes_download">Download</a></span></dt>
@@ -60,12 +60,16 @@
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2610666"></a>Release Notes for BIND Version 9.10.2-P3</h2></div></div></div>
+<a name="id2610666"></a>Release Notes for BIND Version 9.10.2-P4</h2></div></div></div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_intro"></a>Introduction</h3></div></div></div>
 <p>
       This document summarizes changes since BIND 9.10.2:
+    </p>
+<p>
+      BIND 9.10.2-P4 addresses security issues described in
+      CVE-2015-5722 and CVE-2015-5986.
     </p>
 <p>
       BIND 9.10.2-P3 addresses a security issue described in
@@ -102,6 +106,21 @@
 <div class="titlepage"><div><div><h3 class="title">
 <a name="relnotes_security"></a>Security Fixes</h3></div></div></div>
 <div class="itemizedlist"><ul type="disc">
+<li><p>
+	  An incorrect boundary check in the OPENPGPKEY rdatatype
+	  could trigger an assertion failure. This flaw is disclosed
+	  in CVE-2015-5986. [RT #40286]
+	</p></li>
+<li>
+<p>
+	  A buffer accounting error could trigger an assertion failure
+	  when parsing certain malformed DNSSEC keys.
+	</p>
+<p>
+	  This flaw was discovered by Hanno B&#50102;eck of the Fuzzing
+	  Project, and is disclosed in CVE-2015-5722. [RT #40212]
+	</p>
+</li>
 <li>
 <p>
 	  A specially crafted query could trigger an assertion failure
@@ -226,6 +245,6 @@
 </tr>
 </table>
 </div>
-<p style="text-align: center;">BIND 9.10.2-P3</p>
+<p style="text-align: center;">BIND 9.10.2-P4</p>
 </body>
 </html>

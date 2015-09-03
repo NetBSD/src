@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.1.1.14 2015/07/08 15:38:02 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.1.1.15 2015/09/03 07:21:37 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1272,7 +1272,7 @@ txt_fromwire(isc_buffer_t *source, isc_buffer_t *target) {
 
 	isc_buffer_activeregion(source, &sregion);
 	if (sregion.length == 0)
-		return(ISC_R_UNEXPECTEDEND);
+		return (ISC_R_UNEXPECTEDEND);
 	n = *sregion.base + 1;
 	if (n > sregion.length)
 		return (ISC_R_UNEXPECTEDEND);
