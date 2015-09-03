@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.88 2015/09/03 09:28:00 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.89 2015/09/03 13:53:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -433,8 +433,6 @@ struct	nvlist *machinesubarches;
 const char *ioconfname;		/* ioconf name, mutually exclusive to machine */
 const char *srcdir;		/* path to source directory (rel. to build) */
 const char *builddir;		/* path to build directory */
-int	builddirfd;		/* dir fd of builddir */
-int	buildconfdirfd;		/* dir fd of builddir/conf */
 const char *defbuilddir;	/* default build directory */
 const char *ident;		/* kernel "ident"ification string */
 int	errors;			/* counts calls to error() */
