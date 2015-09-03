@@ -1,4 +1,4 @@
-/*	$NetBSD: openpgpkey_61.c,v 1.1.1.1 2015/07/08 15:38:04 christos Exp $	*/
+/*	$NetBSD: openpgpkey_61.c,v 1.1.1.2 2015/09/03 07:21:39 christos Exp $	*/
 
 /*
  * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -83,6 +83,8 @@ fromwire_openpgpkey(ARGS_FROMWIRE) {
 	 * Keyring.
 	 */
 	isc_buffer_activeregion(source, &sr);
+	if (sr.length < 1)
+		return (ISC_R_UNEXPECTEDEND);
 	isc_buffer_forward(source, sr.length);
 	return (mem_tobuffer(target, sr.base, sr.length));
 }
