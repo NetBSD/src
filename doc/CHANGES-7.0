@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.371 2015/08/31 01:59:37 snj Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.372 2015/09/03 03:31:53 riz Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33950,4 +33950,9 @@ sys/dev/ic/dwc_gmac.c				1.34
 	No need to BUS_DMASYNC_PREREAD the transmit data buffer.  Fixes 
 	an NFS write corruption issue on ODROID-C1.
 	[jmcneill, ticket #958]
+
+usr.sbin/postinstall/postinstall		1.201 via patch
+
+	Handle blacklistd properly in postinstall.
+	[snj, ticket #968]
 
