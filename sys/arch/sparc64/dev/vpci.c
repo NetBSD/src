@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.1 2015/02/12 04:48:37 palle Exp $	*/
+/*	$NetBSD: vpci.c,v 1.2 2015/09/03 19:43:35 palle Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.1 2015/02/12 04:48:37 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.2 2015/09/03 19:43:35 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -56,11 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.1 2015/02/12 04:48:37 palle Exp $");
 #include <sparc64/hypervisor.h>
 
 #ifdef DEBUG
-#define VDB_PROM        0x01
-#define VDB_BUSMAP      0x02
-#define VDB_INTR        0x04
-#define VDB_CONF        0x08
-int vpci_debug = 0xff;
+#define VDB_PROM             0x01
+#define VDB_BUSMAP           0x02
+#define VDB_INTR             0x04
+#define VDB_CONF_READ        0x08
+#define VDB_CONF_WRITE       0x10
+#define VDB_CONF             VDB_CONF_READ|VDB_CONF_WRITE
+int vpci_debug = 0x00;
 #define DPRINTF(l, s)   do { if (vpci_debug & l) printf s; } while (0)
 #else
 #define DPRINTF(l, s)
@@ -94,10 +96,7 @@ CFATTACH_DECL_NEW(vpci, sizeof(struct vpci_softc),
     vpci_match, vpci_attach, NULL, NULL);
 
 void vpci_init(struct vpci_softc */*FIXME, int*/, struct mainbus_attach_args *);
-#if 0
-FIXME
 void vpci_init_iommu(struct vpci_softc *, struct vpci_pbm *);
-#endif
 pci_chipset_tag_t vpci_alloc_chipset(struct vpci_pbm *, int,
     pci_chipset_tag_t);
 bus_space_tag_t vpci_alloc_mem_tag(struct vpci_pbm *);
@@ -233,20 +232,9 @@ FiXME
 		panic("vpci: can't get bus-range");
 	for (int range = 0; range < nranges; range++)
 		DPRINTF(VDB_PROM, ("\nvpci_attach: bus-range %d %08x", range, busranges[range]));
-#if 0
-FIXME	
-	printf(": \"%s\", rev %d, ign %x, bus %c %d to %d\n",
-	    sc->sc_oberon ? "Oberon" : "Fire",
-	    prom_getpropint(sc->sc_node, "module-revision#", 0), sc->sc_ign,
-	    busa ? 'A' : 'B', busranges[0], busranges[1]);
-#else 
-	printf(": ign %x, bus %d to %d\n", sc->sc_ign, busranges[0], busranges[1]);
-#endif
-	printf("%s: ", device_xname(sc->sc_dev));
-#if 0
-FIXME	
+
 	vpci_init_iommu(sc, pbm);
-#endif
+
 	pbm->vp_memt = vpci_alloc_mem_tag(pbm);
 	pbm->vp_iot = vpci_alloc_io_tag(pbm);
 	pbm->vp_cfgt = vpci_alloc_config_tag(pbm);
@@ -284,14 +272,15 @@ FIXME
 	config_found(sc->sc_dev, &pba, vpci_print);
 }
 
-#if 0
-FIXME	
 void
 vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 {
 	struct iommu_state *is = &pbm->vp_is;
-	int tsbsize = 7;
+	int *vdma = NULL;
+	int nitem;
+	int tsbsize = 0;
 	u_int32_t iobase = -1;
+	u_int32_t iolen = 0;
 	char *name;
 
 	pbm->vp_sb.sb_is = is;
@@ -302,6 +291,20 @@ vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 		panic("vpci: unable to create iommu handle");
 	}
 
+	/* Construct tsbsize */
+	if (!prom_getprop(sc->sc_node, "virtual-dma", sizeof(vdma), &nitem, 
+	    (void **)&vdma)) {
+		DPRINTF(VDB_BUSMAP, ("vpci_init_iommu: vdma[0]=0x%x  vdma[1]=0x%x\n",
+		    vdma[0], vdma[1]));
+		iobase = vdma[0];
+		iolen = vdma[1];
+		for (tsbsize = 8; (1 << (tsbsize+23)) > iolen; tsbsize--) ;
+		DPRINTF(VDB_BUSMAP, ("vpci_init_iommu: iobase=0x%x  iolen = 0x%x  tsbsize=0x%x\n",
+		    iobase, iolen, tsbsize));
+		free(vdma, M_DEVBUF);
+	} else
+		panic("vpci_init_iommu: getprop virtual-dma failed");
+	
 	/* We have no STC.  */
 	is->is_sb[0] = NULL;
 
@@ -313,13 +316,10 @@ vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	/* Tell iommu how to set the TSB size.  */
 	is->is_flags = IOMMU_TSBSIZE_IN_PTSB;
 
-	/* On Oberon, we need to flush the cache. */
-	if (sc->sc_oberon)
-		is->is_flags |= IOMMU_FLUSH_CACHE;
-
+	is->is_devhandle = pbm->vp_devhandle;
 	iommu_init(name, is, tsbsize, iobase);
 }
-#endif	
+
 
 int
 vpci_print(void *aux, const char *p)
@@ -336,7 +336,7 @@ vpci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	uint64_t error_flag, data;
 
 	int64_t hv_rc;
-	DPRINTF(VDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
+	DPRINTF(VDB_CONF_READ, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
 	hv_rc = hv_pci_config_get(pbm->vp_devhandle, PCITAG_OFFSET(tag), reg, 4,
 	    &error_flag, &data);
 	if (hv_rc != H_EOK)
@@ -344,7 +344,7 @@ vpci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		    hv_rc);
 	
 	pcireg_t val = error_flag ? (pcireg_t)~0 : data;
-	DPRINTF(VDB_CONF, (" returning %08x\n", (u_int)val));
+	DPRINTF(VDB_CONF_READ, (" returning %08x\n", (u_int)val));
 	return val;
 }
 
@@ -355,14 +355,14 @@ vpci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 	struct vpci_pbm *pbm = pc->cookie;
 	uint64_t error_flag;
 	int64_t hv_rc;
-	DPRINTF(VDB_CONF, ("%s: tag %lx; reg %x; data %x", __func__,
+	DPRINTF(VDB_CONF_WRITE, ("%s: tag %lx; reg %x; data %x", __func__,
 		(long)tag, reg, (int)data));
 	hv_rc = hv_pci_config_put(pbm->vp_devhandle, PCITAG_OFFSET(tag), reg, 4,
             data, &error_flag);
 	if (hv_rc != H_EOK)
 		panic("hv_pci_config_put() failed - rc = %" PRId64 "\n",
 		    hv_rc);
-	DPRINTF(VDB_CONF, (" .. done\n"));
+	DPRINTF(VDB_CONF_WRITE, (" .. done\n"));
 }
 
 /*
@@ -371,8 +371,6 @@ vpci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 int
 vpci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 {
-	DPRINTF(VDB_INTR, ("vpci_intr_map()\n"));
-
 	struct vpci_pbm *pbm = pa->pa_pc->cookie;
 	uint64_t devhandle = pbm->vp_devhandle;
 	uint64_t devino = INTINO(*ihp);
@@ -459,8 +457,8 @@ vpci_alloc_dma_tag(struct vpci_pbm *pbm)
 	dt->_dmamap_sync	= iommu_dvmamap_sync;
 	dt->_dmamem_alloc	= iommu_dvmamem_alloc;
 	dt->_dmamem_free	= iommu_dvmamem_free;
-	dt->_dmamem_map = iommu_dvmamem_map;
-	dt->_dmamem_unmap = iommu_dvmamem_unmap;
+	dt->_dmamem_map         = iommu_dvmamem_map;
+	dt->_dmamem_unmap       = iommu_dvmamem_unmap;
 	PCOPY(_dmamem_mmap);
 #undef	PCOPY
 	return (dt);
@@ -508,14 +506,14 @@ vpci_bus_map(bus_space_tag_t t, bus_addr_t offset,
 	struct vpci_softc *sc = pbm->vp_sc;
 	int i, ss;
 
-	DPRINTF(VDB_BUSMAP, ("vpci_bus_map: type %d off %qx sz %qx flags %d\n",
+	DPRINTF(VDB_BUSMAP, ("vpci_bus_map: type %d off %qx sz %qx flags %d",
 	    t->type,
 	    (unsigned long long)offset,
 	    (unsigned long long)size,
 	    flags));
 
 	ss = sparc_pci_childspace(t->type);
-	DPRINTF(VDB_BUSMAP, (" cspace %d", ss));
+	DPRINTF(VDB_BUSMAP, (" cspace %d\n", ss));
 
 	if (t->parent == 0 || t->parent->sparc_bus_map == 0) {
 		printf("\n_vpci_bus_map: invalid parent");
