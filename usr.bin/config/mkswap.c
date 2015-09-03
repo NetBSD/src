@@ -1,4 +1,4 @@
-/*	$NetBSD: mkswap.c,v 1.9 2015/09/02 05:09:25 uebayasi Exp $	*/
+/*	$NetBSD: mkswap.c,v 1.10 2015/09/03 13:53:36 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkswap.c,v 1.9 2015/09/02 05:09:25 uebayasi Exp $");
+__RCSID("$NetBSD: mkswap.c,v 1.10 2015/09/03 13:53:36 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -97,10 +97,9 @@ mkoneswap(struct config *cf)
 
 	(void)snprintf(fname, sizeof(fname), "swap%s.c", cf->cf_name);
 	(void)snprintf(tname, sizeof(tname), "swap%s.c.tmp", cf->cf_name);
-	fchdir(buildconfdirfd);
 	if ((fp = fopen(tname, "w")) == NULL) {
 		warn("cannot open %s", fname);
-		goto err;
+		return (1);
 	}
 
 	autogen_comment(fp, fname);
@@ -150,9 +149,8 @@ mkoneswap(struct config *cf)
 	}
 	if (moveifchanged(tname, fname) != 0) {
 		warn("error renaming %s", fname);
-		goto err;
+		return (1);
 	}
-	fchdir(builddirfd);
 	return (0);
 
  wrerror:
@@ -162,7 +160,5 @@ mkoneswap(struct config *cf)
 #if 0
 	(void)unlink(fname);
 #endif
- err:
-	fchdir(builddirfd);
 	return (1);
 }
