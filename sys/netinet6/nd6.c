@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.174 2015/09/02 11:35:11 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.175 2015/09/03 00:54:39 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.174 2015/09/02 11:35:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.175 2015/09/03 00:54:39 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2212,12 +2212,12 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 			RTFREE_IF_NEEDED(rt);
 			rt = gwrt;
 			if ((rt->rt_flags & RTF_UP) == 0) {
-				rtfree(rt);
+				RTFREE_IF_NEEDED(rt);
 				rt = rt0;
 			lookup:
 				gwrt = rtalloc1(rt->rt_gateway, 1);
 				rt_set_gwroute(rt, gwrt);
-				rtfree(rt);
+				RTFREE_IF_NEEDED(rt);
 				rt = gwrt;
 				if (rt == NULL)
 					senderr(EHOSTUNREACH);
