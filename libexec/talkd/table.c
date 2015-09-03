@@ -1,4 +1,4 @@
-/*	$NetBSD: table.c,v 1.10 2009/03/16 01:13:38 lukem Exp $	*/
+/*	$NetBSD: table.c,v 1.11 2015/09/03 08:16:36 dholland Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)table.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: table.c,v 1.10 2009/03/16 01:13:38 lukem Exp $");
+__RCSID("$NetBSD: table.c,v 1.11 2015/09/03 08:16:36 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -199,7 +199,6 @@ delete_invite(uint32_t id_num)
 {
 	TABLE_ENTRY *ptr;
 
-	ptr = table;
 	if (debug)
 		syslog(LOG_DEBUG, "delete_invite(%"PRIu32")", id_num);
 	for (ptr = table; ptr != NIL; ptr = ptr->next) {
