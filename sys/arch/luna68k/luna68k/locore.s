@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.61 2015/09/02 11:33:30 tsutsui Exp $ */
+/* $NetBSD: locore.s,v 1.62 2015/09/03 13:07:46 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -927,9 +927,9 @@ GLOBAL(proto040tc)
 	.long	0x8000		| %tc (4KB page)
 #endif
 GLOBAL(proto040tt0)		| tt0 0x4000.0000-0x7fff.ffff
-	.long	0x403fa040	| kernel only, cache inhebit, serialized
+	.long	0x403fa040	| kernel only, cache inhibit, serialized
 GLOBAL(proto040tt1)		| tt1 0x8000.0000-0xffff.ffff
-	.long	0x807fa040	| kernel only, cache inhebit, serialized
+	.long	0x807fa040	| kernel only, cache inhibit, serialized
 nullrp:
 	.long	0x7fff0001	| do-nothing MMU root pointer
 
