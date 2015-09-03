@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.86 2015/09/03 02:45:24 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.87 2015/09/03 06:08:38 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.86 2015/09/03 02:45:24 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.87 2015/09/03 06:08:38 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -653,7 +653,7 @@ static int
 mksubdirs(struct filelist *fl)
 {
 	struct files *fi;
-	const char *prefix, *sep;
+	const char *prologue, *prefix, *sep;
 	char buf[MAXPATHLEN];
 
 	TAILQ_FOREACH(fi, fl, fi_next) {
@@ -674,7 +674,6 @@ mksubdirs(struct filelist *fl)
 			continue;
 		mksubdir(buf);
 		if (fi->fi_prefix != NULL && fi->fi_buildprefix != NULL) {
-			const char *prologue, *sep;
 			char org[MAXPATHLEN];
 
 			if (fi->fi_prefix[0] == '/') {
@@ -704,6 +703,7 @@ mkallsubdirs(void)
 	mksubdirs(&allfiles);
 	mksubdirs(&allofiles);
 	buildconfdir = "conf";
+	return 0;
 }
 
 /*
