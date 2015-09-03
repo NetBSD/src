@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.85 2015/09/02 05:09:25 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.86 2015/09/03 02:45:24 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.85 2015/09/02 05:09:25 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.86 2015/09/03 02:45:24 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -125,7 +125,7 @@ static	int	undo_option(struct hashtab *, struct nvlist **,
 static	int	crosscheck(void);
 static	int	badstar(void);
 	int	main(int, char **);
-static	int	mksubdirs(void);
+static	int	mkallsubdirs(void);
 static	int	mksymlinks(void);
 static	int	mkident(void);
 static	int	devbase_has_dead_instances(const char *, void *, void *);
@@ -524,7 +524,7 @@ main(int argc, char **argv)
 	/*
 	 * Ready to go.  Build all the various files.
 	 */
-	if ((Sflag && mksubdirs()) || mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
+	if ((Sflag && mkallsubdirs()) || mksymlinks() || mkmakefile() || mkheaders() || mkswap() ||
 	    mkioconf() || (do_devsw ? mkdevsw() : 0) || mkident() || errors)
 		stop();
 	(void)printf("Build directory is %s\n", builddir);
@@ -650,13 +650,13 @@ mksubdir(char *buf)
 }
 
 static int
-mksubdirs(void)
+mksubdirs(struct filelist *fl)
 {
 	struct files *fi;
 	const char *prefix, *sep;
 	char buf[MAXPATHLEN];
 
-	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+	TAILQ_FOREACH(fi, fl, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
 		prefix = sep = "";
@@ -673,11 +673,37 @@ mksubdirs(void)
 		if (buf[0] == '\0')
 			continue;
 		mksubdir(buf);
+		if (fi->fi_prefix != NULL && fi->fi_buildprefix != NULL) {
+			const char *prologue, *sep;
+			char org[MAXPATHLEN];
+
+			if (fi->fi_prefix[0] == '/') {
+				prologue = "";
+				sep = "";
+			} else {
+				prologue = srcdir;
+				sep = "/";
+			}
+			snprintf(buf, sizeof(buf), "%s%s%s",
+			    fi->fi_buildprefix, "/", fi->fi_path);
+			snprintf(org, sizeof(org), "%s%s%s%s%s",
+			    prologue, sep, fi->fi_prefix, "/", fi->fi_path);
+			recreate(org, buf);
+			fi->fi_prefix = fi->fi_buildprefix;
+			fi->fi_buildprefix = NULL;
+		}
 	}
 
-	buildconfdir = "conf";
-
 	return 0;
+}
+
+static int
+mkallsubdirs(void)
+{
+
+	mksubdirs(&allfiles);
+	mksubdirs(&allofiles);
+	buildconfdir = "conf";
 }
 
 /*
