@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.227 2015/09/03 01:30:18 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.228 2015/09/03 01:40:06 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -213,7 +213,6 @@ MI_OBJS=${MI_CFILES:S/.c/.o/}
 # xxx: ${SYSTEM_DEP} swapxxxx.o vers.o build_kernel
 
 SYSTEM_OBJ?=	${MD_OBJS} ${MI_OBJS} ${OBJS} ${SYSLIBCOMPAT} ${LIBKERN}
-SYSTEM_OBJ_NOSWAP=	${SYSTEM_OBJ:N*swap*netbsd*}
 SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ} .gdbinit
 .if defined(CTFMERGE)
 SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
@@ -223,8 +222,12 @@ SYSTEM_CTFMERGE= ${_MKSHECHO}
 SYSTEM_LD_HEAD?=@rm -f $@
 SYSTEM_LD?=	${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${_MKSHECHO}\
-		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} '$${SYSTEM_OBJ_NOSWAP}' '$${EXTRA_OBJ}' vers.o '$${OBJS:M*swap${.TARGET}.o}'; \
-		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} ${SYSTEM_OBJ_NOSWAP} ${EXTRA_OBJ} vers.o ${OBJS:M*swap${.TARGET}.o}
+		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} \
+		'$${SYSTEM_OBJ:N*swap*netbsd*}' '$${EXTRA_OBJ}' vers.o \
+		${OBJS:M*swap${.TARGET}.o}; \
+		${LD} -Map ${.TARGET}.map --cref ${LINKFLAGS} -o ${.TARGET} \
+		${SYSTEM_OBJ:N*swap*netbsd*} ${EXTRA_OBJ} vers.o \
+		${OBJS:M*swap${.TARGET}.o}
 
 # Give MD generated ldscript dependency on ${SYSTEM_OBJ}
 .if defined(KERNLDSCRIPT)
