@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1113 2015/08/27 14:04:07 nonaka Exp $
+# $NetBSD: mi,v 1.1114 2015/09/03 22:24:02 youri Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -84,6 +84,7 @@
 ./etc/X11/rstart/commands			base-x11-root
 ./etc/X11/rstart/commands/x11r6			base-x11-root
 ./etc/X11/rstart/contexts			base-x11-root
+./etc/X11/ctwm					base-x11-root
 ./etc/X11/twm					base-x11-root
 ./etc/X11/xdm					base-x11-root
 ./etc/X11/xinit					base-x11-root
