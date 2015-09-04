@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.372 2015/09/03 03:31:53 riz Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.373 2015/09/04 15:09:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33955,4 +33955,29 @@ usr.sbin/postinstall/postinstall		1.201 via patch
 
 	Handle blacklistd properly in postinstall.
 	[snj, ticket #968]
+
+sys/arch/sparc64/dev/pckbc_ebus.c		1.2
+sys/arch/sparc64/sparc64/autoconf.c		1.204
+
+	Detect a boot device more precisely on QEMU by checking the device
+	name.
+	pckbc@ebus: match "kb_ps2" device to make keyboard and mouse work
+	on qemu-sparc64.
+	[nakayama, ticket #951]
+
+sys/arch/arm/arm32/cortex_pmc.c			1.4
+
+	Cortex delay() sometimes returned too early.
+	[skrll, ticket #953]
+
+xsrc/external/mit/MesaLib/dist/src/util/ralloc.c 1.2
+
+	Use __attribute__((__destructor__)), not atexit, in shared objects.
+
+sys/dev/pci/hdaudio/hdafg.c			1.26
+sys/dev/pci/hdaudio/hdaudio.c			1.25
+sys/dev/pci/hdaudio/hdaudiovar.h		1.10
+
+	Fix locking against myself problem.
+	[tsutsui, ticket #963]
 
