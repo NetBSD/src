@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usb.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq_usb.c,v 1.2 2015/09/04 07:38:05 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.1 2015/01/23 12:34:09 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_usb.c,v 1.2 2015/09/04 07:38:05 skrll Exp $");
 
 #include "opt_zynq.h"
 
@@ -372,7 +372,7 @@ zynqusb_host_mode(struct zynqehci_softc *sc)
 	reg |= OTGSC_DPIE | OTGSC_IDIE;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ZYNQUSB_OTGSC, reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ZYNQUSB_OTGMODE);
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ZYNQUSB_USBMODE);
 	reg |= USBMODE_CM_HOST;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ZYNQUSB_OTGMODE, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, ZYNQUSB_USBMODE, reg);
 }
