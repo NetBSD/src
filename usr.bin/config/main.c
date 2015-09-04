@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.88 2015/09/03 13:53:36 uebayasi Exp $	*/
+/*	$NetBSD: main.c,v 1.89 2015/09/04 06:01:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.88 2015/09/03 13:53:36 uebayasi Exp $");
+__RCSID("$NetBSD: main.c,v 1.89 2015/09/04 06:01:40 uebayasi Exp $");
 
 #ifndef MAKE_BOOTSTRAP
 #include <sys/cdefs.h>
@@ -476,13 +476,6 @@ main(int argc, char **argv)
 	 */
 	yyfile = "fixfiles";
 	if (fixfiles())
-		stop();
-
-	/*
-	 * Fix objects and libraries.
-	 */
-	yyfile = "fixobjects";
-	if (fixobjects())
 		stop();
 
 	/*
