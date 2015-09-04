@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.13 2015/08/21 10:39:00 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.14 2015/09/04 12:25:01 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -174,6 +174,7 @@ struct if_options {
 	struct in_addr req_addr;
 	struct in_addr req_mask;
 	struct rt_head *routes;
+	unsigned int mtu;
 	char **config;
 
 	char **environ;
