@@ -131,8 +131,7 @@ make_var(struct dhcpcd_ctx *ctx, const char *prefix, const char *var)
 	char *v;
 
 	len = strlen(prefix) + strlen(var) + 2;
-	v = malloc(len);
-	if (v == NULL) {
+	if ((v = malloc(len)) == NULL) {
 		logger(ctx, LOG_ERR, "%s: %m", __func__);
 		return NULL;
 	}
@@ -158,8 +157,10 @@ append_config(struct dhcpcd_ctx *ctx, char ***env, size_t *len,
 		eq = strchr(config[i], '=');
 		e1 = (size_t)(eq - config[i] + 1);
 		for (j = 0; j < *len; j++) {
-			if (strncmp(ne[j] + strlen(prefix) + 1,
-				config[i], e1) == 0)
+			if (strncmp(ne[j], prefix, strlen(prefix)) == 0 &&
+			    ne[j][strlen(prefix)] == '_' &&
+			    strncmp(ne[j] + strlen(prefix) + 1,
+			    config[i], e1) == 0)
 			{
 				p = make_var(ctx, prefix, config[i]);
 				if (p == NULL) {

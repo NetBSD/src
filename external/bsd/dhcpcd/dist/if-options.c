@@ -810,7 +810,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 			ifo->req_mask.s_addr = 0;
 		}
 		ifo->options |= DHCPCD_INFORM | DHCPCD_PERSISTENT;
-		ifo->options &= ~(DHCPCD_ARP | DHCPCD_STATIC);
+		ifo->options &= ~DHCPCD_STATIC;
 		break;
 	case 't':
 		ifo->timeout = (time_t)strtoi(arg, NULL, 0, 0, INT32_MAX, &e);
@@ -1098,6 +1098,16 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 				return -1;
 			}
 			TAILQ_INSERT_TAIL(ifo->routes, rt, next);
+		} else if (strncmp(arg, "interface_mtu=",
+		    strlen("interface_mtu=")) == 0 ||
+		    strncmp(arg, "mtu=", strlen("mtu=")) == 0)
+		{
+			ifo->mtu = (unsigned int)strtou(p, NULL, 0,
+			    MTU_MIN, MTU_MAX, &e);
+			if (e) {
+				logger(ctx, LOG_ERR, "invalid MTU %s", p);
+				return -1;
+			}
 		} else {
 			dl = 0;
 			if (ifo->config != NULL) {

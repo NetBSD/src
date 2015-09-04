@@ -172,6 +172,7 @@ struct if_options {
 	struct in_addr req_addr;
 	struct in_addr req_mask;
 	struct rt_head *routes;
+	unsigned int mtu;
 	char **config;
 
 	char **environ;

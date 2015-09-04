@@ -676,7 +676,7 @@ xsocket(int domain, int type, int protocol, int flags)
 	if ((s = socket(domain, type, protocol)) == -1)
 		return -1;
 	if ((flags & O_CLOEXEC) && (xflags = fcntl(s, F_GETFD, 0)) == -1 ||
-	    fcntl(s, F_SETFD, xlags | FD_CLOEXEC) == -1)
+	    fcntl(s, F_SETFD, xflags | FD_CLOEXEC) == -1)
 		goto out;
 	if ((flags & O_NONBLOCK) && (xflags = fcntl(s, F_GETFL, 0)) == -1 ||
 	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1)
