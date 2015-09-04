@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusbreg.h,v 1.3 2015/09/04 07:34:32 skrll Exp $	*/
+/*	$NetBSD: imxusbreg.h,v 1.4 2015/09/04 07:35:56 skrll Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -81,7 +81,11 @@
 #define	 OTGSC_VC	__BIT( 1)
 #define	 OTGSC_VD	__BIT( 0)
 #define	IMXUSB_USBMODE	0x01A8
-#define	 USBMODE_CM		__BITS(1,0)
+#define	 USBMODE_VBPS	__BIT(5)	/* Vbus power selectt */
+#define	 USBMODE_SDIS	__BIT(4)	/* Stream disable mode 1=act */
+#define	 USBMODE_SLOM	__BIT(3)	/* setup lockouts on */
+#define	 USBMODE_ES	__BIT(2)	/* Endian Select ES=1 */
+#define	 USBMODE_CM	__BITS(1,0)	/* Controller mode */
 #define	 USBMODE_CM_IDLE	__SHIFTIN(0,USBMODE_CM)
 #define	 USBMODE_CM_DEVICE	__SHIFTIN(2,USBMODE_CM)
 #define	 USBMODE_CM_HOST	__SHIFTIN(3,USBMODE_CM)
