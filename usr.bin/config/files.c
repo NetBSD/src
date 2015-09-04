@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.33 2015/09/04 10:16:35 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.34 2015/09/04 15:50:48 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,9 +45,10 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.33 2015/09/04 10:16:35 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.34 2015/09/04 15:50:48 uebayasi Exp $");
 
 #include <sys/param.h>
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -379,6 +380,8 @@ fixfiles(void)
 			continue;
 		selfiles[i++] = fi;
 	}
+	assert(i <= nselfiles);
+	nselfiles = i;
 	qsort(selfiles, nselfiles, (unsigned)sizeof(fi), cmpfiles);
 	return (err);
 }
