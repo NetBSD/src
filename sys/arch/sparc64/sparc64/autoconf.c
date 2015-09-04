@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.198.2.3 2015/07/20 06:12:23 snj Exp $ */
+/*	$NetBSD: autoconf.c,v 1.198.2.4 2015/09/04 14:43:45 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198.2.3 2015/07/20 06:12:23 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.198.2.4 2015/09/04 14:43:45 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -838,7 +838,8 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 			snprintf(buf, sizeof(buf), "%s@w%016" PRIx64 ",%d",
 			    name, wwn, lun);
 		else if (ide_node)
-			snprintf(buf, sizeof(buf), "%s@0", name);
+			snprintf(buf, sizeof(buf), "%s@0",
+			    device_is_a(dev, "cd") ? "cdrom" : "disk");
 		else
 			snprintf(buf, sizeof(buf), "%s@%d,%d",
 			    name, target, lun);
