@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.7 2014/09/25 05:05:28 ryo Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.8 2015/09/04 07:34:32 skrll Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.7 2014/09/25 05:05:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.8 2015/09/04 07:34:32 skrll Exp $");
 
 #include "opt_imx.h"
 
@@ -425,7 +425,7 @@ imxehci_host_mode(struct imxehci_softc *sc)
 	reg |= OTGSC_DPIE;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGSC, reg);
 
-	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGMODE);
+	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_USBMODE);
 	reg |= USBMODE_CM_HOST;
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGMODE, reg);
+	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_USBMODE, reg);
 }
