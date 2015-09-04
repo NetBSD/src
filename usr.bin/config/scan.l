@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.24 2015/09/01 13:42:48 uebayasi Exp $	*/
+/*	$NetBSD: scan.l,v 1.25 2015/09/04 10:16:35 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.24 2015/09/01 13:42:48 uebayasi Exp $");
+__RCSID("$NetBSD: scan.l,v 1.25 2015/09/04 10:16:35 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -476,6 +476,8 @@ package(const char *fname)
 	free(fname2);
 }
 
+int includedepth;
+
 /*
  * Open the named file for inclusion at the current point.  Returns 0 on
  * success (file opened and previous state pushed), nonzero on failure
@@ -537,6 +539,7 @@ include(const char *fname, int ateof, int conditional, int direct)
 	yyfile = intern(s);
 	yyline = 1;
 	free(s);
+	includedepth++;
 	return (0);
 }
 
@@ -598,6 +601,8 @@ endinclude(void)
 	ateof  = in->in_ateof;
 	interesting = in->in_interesting;
 	free(in);
+
+	includedepth--;
 
 	return (ateof);
 }
