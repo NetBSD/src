@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.34 2015/08/22 05:45:57 christos Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.35 2015/09/04 12:25:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -713,8 +713,11 @@ uint16_t
 dhcp_get_mtu(const struct interface *ifp)
 {
 	const struct dhcp_message *dhcp;
-	uint16_t mtu = 0;	// XXX: gcc
+	uint16_t mtu;
 
+	if (ifp->options->mtu)
+		return (uint16_t)ifp->options->mtu;
+	mtu = 0; /* bogus gcc warning */
 	if ((dhcp = D_CSTATE(ifp)->new) == NULL ||
 	    has_option_mask(ifp->options->nomask, DHO_MTU) ||
 	    get_option_uint16(ifp->ctx, &mtu, dhcp, DHO_MTU) == -1)
@@ -2022,7 +2025,8 @@ dhcp_arp_conflicted(struct arp_state *astate, const struct arp_msg *amsg)
 			astate->failed = astate->addr;
 		arp_report_conflicted(astate, amsg);
 		unlink(state->leasefile);
-		if (!state->lease.frominfo)
+		if (!(ifp->options->options & DHCPCD_STATIC) &&
+		    !state->lease.frominfo)
 			dhcp_decline(ifp);
 #ifdef IN_IFF_DUPLICATED
 		ia = ipv4_iffindaddr(ifp, &astate->addr, NULL);
@@ -2186,6 +2190,61 @@ dhcp_message_new(const struct in_addr *addr, const struct in_addr *mask)
 }
 
 static void
+dhcp_arp_bind(struct interface *ifp)
+{
+	const struct dhcp_state *state;
+	struct in_addr addr;
+	struct ipv4_addr *ia;
+	struct arp_state *astate;
+
+	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
+
+	state = D_CSTATE(ifp);
+	addr.s_addr = state->offer->yiaddr;
+	/* If the interface already has the address configured
+	 * then we can't ARP for duplicate detection. */
+	ia = ipv4_findaddr(ifp->ctx, &addr);
+
+#ifdef IN_IFF_TENTATIVE
+	if (ia == NULL || ia->addr_flags & IN_IFF_NOTUSEABLE) {
+		if ((astate = arp_new(ifp, &addr)) != NULL) {
+			astate->probed_cb = dhcp_arp_probed;
+			astate->conflicted_cb = dhcp_arp_conflicted;
+			astate->announced_cb = dhcp_arp_announced;
+		}
+		if (ia == NULL) {
+			struct dhcp_lease l;
+
+			get_lease(ifp->ctx, &l, state->offer);
+			/* Add the address now, let the kernel handle DAD. */
+			ipv4_addaddr(ifp, &l.addr, &l.net, &l.brd);
+		} else
+			logger(ifp->ctx, LOG_INFO, "%s: waiting for DAD on %s",
+			    ifp->name, inet_ntoa(addr));
+		return;
+	}
+#else
+	if (ifp->options->options & DHCPCD_ARP && ia == NULL) {
+		struct dhcp_lease l;
+
+		get_lease(ifp->ctx, &l, state->offer);
+		logger(ifp->ctx, LOG_INFO, "%s: probing static address %s/%d",
+		    ifp->name, inet_ntoa(l.addr), inet_ntocidr(l.net));
+		if ((astate = arp_new(ifp, &addr)) != NULL) {
+			astate->probed_cb = dhcp_arp_probed;
+			astate->conflicted_cb = dhcp_arp_conflicted;
+			astate->announced_cb = dhcp_arp_announced;
+			/* We need to handle DAD. */
+			arp_probe(astate);
+		}
+		return;
+	}
+#endif
+
+	dhcp_bind(ifp);
+}
+
+static void
 dhcp_static(struct interface *ifp)
 {
 	struct if_options *ifo;
@@ -2210,10 +2269,8 @@ dhcp_static(struct interface *ifp)
 
 	state->offer = dhcp_message_new(ia ? &ia->addr : &ifo->req_addr,
 	    ia ? &ia->net : &ifo->req_mask);
-	if (state->offer) {
-		eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
-		dhcp_bind(ifp);
-	}
+	if (state->offer)
+		dhcp_arp_bind(ifp);
 }
 
 void
@@ -2503,8 +2560,9 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 	unsigned int i;
 	size_t auth_len;
 	char *msg;
+#ifdef IN_IFF_DUPLICATED
 	struct ipv4_addr *ia;
-	struct arp_state *astate;
+#endif
 
 	/* We may have found a BOOTP server */
 	if (get_option_uint8(ifp->ctx, &type, dhcp, DHO_MESSAGETYPE) == -1)
@@ -2797,43 +2855,7 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 	lease->frominfo = 0;
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 
-	addr.s_addr = state->offer->yiaddr;
-	/* If the interface already has the address configured
-	 * then we can't ARP for duplicate detection. */
-	ia = ipv4_findaddr(ifp->ctx, &addr);
-
-#ifdef IN_IFF_TENTATIVE
-	if (ia == NULL || ia->addr_flags & IN_IFF_NOTUSEABLE) {
-		if ((astate = arp_new(ifp, &addr)) != NULL) {
-			astate->probed_cb = dhcp_arp_probed;
-			astate->conflicted_cb = dhcp_arp_conflicted;
-			astate->announced_cb = dhcp_arp_announced;
-		}
-		if (ia == NULL) {
-			struct dhcp_lease l;
-
-			get_lease(ifp->ctx, &l, state->offer);
-			/* Add the address now, let the kernel handle DAD. */
-			ipv4_addaddr(ifp, &l.addr, &l.net, &l.brd);
-		}
-		return;
-	}
-#else
-	if (ifo->options & DHCPCD_ARP) {
-		if (ia == NULL) {
-			if ((astate = arp_new(ifp, &addr)) != NULL) {
-				astate->probed_cb = dhcp_arp_probed;
-				astate->conflicted_cb = dhcp_arp_conflicted;
-				astate->announced_cb = dhcp_arp_announced;
-				/* We need to handle DAD. */
-				arp_probe(astate);
-			}
-			return;
-		}
-	}
-#endif
-
-	dhcp_bind(ifp);
+	dhcp_arp_bind(ifp);
 }
 
 static size_t
