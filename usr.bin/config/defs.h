@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.90 2015/09/03 14:23:52 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.91 2015/09/04 06:01:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -511,7 +511,6 @@ struct numconst {
 void	initfiles(void);
 void	checkfiles(void);
 int	fixfiles(void);		/* finalize */
-int	fixobjects(void);
 int	fixdevsw(void);
 void	addfile(const char *, struct condexpr *, u_char, const char *);
 int	expr_eval(struct condexpr *, int (*)(const char *, void *), void *);
