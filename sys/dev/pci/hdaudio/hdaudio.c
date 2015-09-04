@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.22 2014/07/25 08:10:38 dholland Exp $ */
+/* $NetBSD: hdaudio.c,v 1.22.2.1 2015/09/04 15:07:08 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.22 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.22.2.1 2015/09/04 15:07:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -326,15 +326,25 @@ uint32_t
 hdaudio_command(struct hdaudio_codec *co, int nid, uint32_t control,
     uint32_t param)
 {
+	uint32_t result;
+	struct hdaudio_softc *sc = co->co_host;
+	mutex_enter(&sc->sc_corb_mtx);
+	result = hdaudio_command_unlocked(co, nid, control, param);
+	mutex_exit(&sc->sc_corb_mtx);
+	return result;
+}
+
+uint32_t
+hdaudio_command_unlocked(struct hdaudio_codec *co, int nid, uint32_t control,
+    uint32_t param)
+{
 	struct hdaudio_softc *sc = co->co_host;
 	uint32_t result;
 
-	mutex_enter(&sc->sc_corb_mtx);
 	hda_trace(sc, "cmd  : request %08X %08X (%02X)\n",
 	    control, param, nid);
 	hdaudio_corb_enqueue(sc, co->co_addr, nid, control, param);
 	result = hdaudio_rirb_dequeue(sc, false);
-	mutex_exit(&sc->sc_corb_mtx);
 
 	return result;
 }
