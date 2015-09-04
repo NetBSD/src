@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.236 2015/09/03 14:23:52 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.237 2015/09/04 06:10:47 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -118,7 +118,7 @@ COPTS.cpu.c+=		-fno-stack-protector
 # files that match the shell patterns given in ${DEBUGLIST}
 #
 .for i in ${DEBUGLIST}
-. for j in ${CFILES:T:M$i.c}
+. for j in ${ALLFILES:M*.c:T:M$i.c}
 COPTS.${j}+=-g
 . endfor
 .endfor
@@ -292,6 +292,9 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 
+CFILES=	${ALLFILES:M*.c}
+SFILES=	${ALLFILES:M*.[sS]}
+OFILES=	${ALLFILES:M*.o}
 .if !defined(___USE_SUFFIX_RULES___)
 OBJS.c=	${CFILES:T:R:C|$|.o|}
 OBJS.s=	${SFILES:T:R:C|$|.o|}

@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.66 2015/09/04 05:52:15 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.67 2015/09/04 06:10:47 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.66 2015/09/04 05:52:15 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.67 2015/09/04 06:10:47 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -336,7 +336,7 @@ emitofiles(FILE *fp)
 {
 
 	emitallfiles(fp);
-	fprintf(fp, "OFILES=\t${ALLFILES:M*.o}\n");
+	fprintf(fp, "#%%OFILES\n");
 }
 
 static void
@@ -454,7 +454,7 @@ emitcfiles(FILE *fp)
 {
 
 	emitallfiles(fp);
-	fprintf(fp, "CFILES=\t${ALLFILES:M*.c}\n");
+	fprintf(fp, "#%%CFILES\n");
 }
 
 static void
@@ -462,7 +462,7 @@ emitsfiles(FILE *fp)
 {
 
 	emitallfiles(fp);
-	fprintf(fp, "SFILES=\t${ALLFILES:M*.[sS]}\n");
+	fprintf(fp, "#%%SFILES\n");
 }
 
 static void
