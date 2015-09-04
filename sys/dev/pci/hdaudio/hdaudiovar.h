@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.9 2011/02/13 17:49:12 jmcneill Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.9.30.1 2015/09/04 15:07:08 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -176,6 +176,8 @@ int	hdaudio_rescan(struct hdaudio_softc *, const char *, const int *);
 void	hdaudio_childdet(struct hdaudio_softc *, device_t);
 
 uint32_t hdaudio_command(struct hdaudio_codec *, int, uint32_t, uint32_t);
+uint32_t hdaudio_command_unlocked(struct hdaudio_codec *, int, uint32_t,
+    uint32_t);
 int	hdaudio_intr(struct hdaudio_softc *);
 
 int	hdaudio_dma_alloc(struct hdaudio_softc *, struct hdaudio_dma *, int);

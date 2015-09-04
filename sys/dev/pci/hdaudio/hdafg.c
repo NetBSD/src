@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.21 2014/05/23 13:57:04 msaitoh Exp $ */
+/* $NetBSD: hdafg.c,v 1.21.2.1 2015/09/04 15:07:08 martin Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21 2014/05/23 13:57:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21.2.1 2015/09/04 15:07:08 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -834,21 +834,24 @@ hdafg_assoc_type_string(struct hdaudio_assoc *as)
 }
 
 static void
-hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin)
+hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin,
+	int lock)
 {
 	struct hdafg_dd_info hdi;
 	struct hdaudio_widget *w;
 	uint8_t elddata[256];
 	unsigned int elddatalen = 0, i;
 	uint32_t res;
+	uint32_t (*cmd)(struct hdaudio_codec *, int, uint32_t, uint32_t) =
+	    lock ? hdaudio_command : hdaudio_command_unlocked;
 
 	w = hdafg_widget_lookup(sc, as->as_pins[pin]);
 
 	if (w->w_pin.cap & COP_PINCAP_TRIGGER_REQD) {
-		hdaudio_command(sc->sc_codec, as->as_pins[pin],
+		(*cmd)(sc->sc_codec, as->as_pins[pin],
 		    CORB_SET_PIN_SENSE, 0);
 	}
-	res = hdaudio_command(sc->sc_codec, as->as_pins[pin],
+	res = (*cmd)(sc->sc_codec, as->as_pins[pin],
 	    CORB_GET_PIN_SENSE, 0);
 
 #ifdef HDAFG_HDMI_DEBUG
@@ -862,13 +865,13 @@ hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin)
 	if ((res &
 	    (COP_GET_PIN_SENSE_PRESENSE_DETECT|COP_GET_PIN_SENSE_ELD_VALID)) ==
 	    (COP_GET_PIN_SENSE_PRESENSE_DETECT|COP_GET_PIN_SENSE_ELD_VALID)) {
-		res = hdaudio_command(sc->sc_codec, as->as_pins[pin],
+		res = (*cmd)(sc->sc_codec, as->as_pins[pin],
 		    CORB_GET_HDMI_DIP_SIZE, COP_DIP_ELD_SIZE);
 		elddatalen = COP_DIP_BUFFER_SIZE(res);
 		if (elddatalen == 0)
 			elddatalen = sizeof(elddata); /* paranoid */
 		for (i = 0; i < elddatalen; i++) {
-			res = hdaudio_command(sc->sc_codec, as->as_pins[pin],
+			res = (*cmd)(sc->sc_codec, as->as_pins[pin],
 			    CORB_GET_HDMI_ELD_DATA, i);
 			if (!(res & COP_ELD_VALID)) {
 				hda_error(sc, "bad ELD size (%u/%u)\n",
@@ -1087,7 +1090,7 @@ hdafg_assoc_dump(struct hdafg_softc *sc)
 			for (j = 0; j < HDAUDIO_MAXPINS; j++) {
 				if (as[i].as_pins[j] == 0)
 					continue;
-				hdafg_assoc_dump_dd(sc, &as[i], j);
+				hdafg_assoc_dump_dd(sc, &as[i], j, 1);
 			}
 		}
 	}
@@ -4264,7 +4267,7 @@ hdafg_unsol(device_t self, uint8_t tag)
 			for (j = 0; j < HDAUDIO_MAXPINS; j++) {
 				if (as[i].as_pins[j] == 0)
 					continue;
-				hdafg_assoc_dump_dd(sc, &as[i], j);
+				hdafg_assoc_dump_dd(sc, &as[i], j, 0);
 			}
 		}
 		break;
