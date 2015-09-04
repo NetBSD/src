@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.92 2015/09/04 06:10:47 uebayasi Exp $	*/
+/*	$NetBSD: defs.h,v 1.93 2015/09/04 10:16:35 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -353,6 +353,7 @@ struct files {
 	struct nvlist *fi_optf; /* flattened version of above, if needed */
 	const char *fi_mkrule;	/* special make rule, if any */
 	struct attr *fi_attr;	/* owner attr */
+	int fi_order;		/* score of order in ${ALLFILES} */
 	TAILQ_ENTRY(files) fi_anext;	/* next file in attr */
 };
 
@@ -361,6 +362,9 @@ struct files {
 #define	FI_NEEDSCOUNT	0x02	/* needs-count */
 #define	FI_NEEDSFLAG	0x04	/* needs-flag */
 #define	FI_HIDDEN	0x08	/* obscured by other(s), base names overlap */
+
+extern size_t nselfiles;
+extern struct files **selfiles;
 
 /*
  * Condition expressions.
@@ -613,6 +617,7 @@ u_short	currentline(void);
 int	firstfile(const char *);
 void	package(const char *);
 int	include(const char *, int, int, int);
+extern int includedepth;
 
 /* sem.c, other than for yacc actions */
 void	initsem(void);

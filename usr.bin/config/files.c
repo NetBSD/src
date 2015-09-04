@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.32 2015/09/04 06:01:40 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.33 2015/09/04 10:16:35 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.32 2015/09/04 06:01:40 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.33 2015/09/04 10:16:35 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -56,6 +56,10 @@ __RCSID("$NetBSD: files.c,v 1.32 2015/09/04 06:01:40 uebayasi Exp $");
 #include "defs.h"
 
 extern const char *yyfile;
+
+int nallfiles;
+size_t nselfiles;
+struct files **selfiles;
 
 /*
  * We check that each full path name is unique.  File base names
@@ -181,6 +185,7 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 	fi->fi_optf = NULL;
 	fi->fi_mkrule = rule;
 	fi->fi_attr = NULL;
+	fi->fi_order = (int)nallfiles + (includedepth << 16);
 	switch (fi->fi_suffix) {
 	case 'c':
 		TAILQ_INSERT_TAIL(&allcfiles, fi, fi_snext);
@@ -202,6 +207,8 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 		    "unknown suffix");
 		break;
 	}
+	CFGDBG(3, "file added `%s' at order score %d", fi->fi_path, fi->fi_order);
+	nallfiles++;
 	return;
  bad:
 	if (optx != NULL) {
@@ -263,6 +270,21 @@ checkaux(const char *name, void *context)
 	return (0);
 }
 
+static int
+cmpfiles(const void *a, const void *b)
+{
+	const struct files * const *fia = a, * const *fib = b;
+	int sa = (*fia)->fi_order;
+	int sb = (*fib)->fi_order;
+
+	if (sa < sb)
+		return -1;
+	else if (sa > sb)
+		return 1;
+	else
+		return 0;
+}
+
 /*
  * We have finished reading everything.  Tack the files down: calculate
  * selection and counts as needed.  Check that the object files built
@@ -277,6 +299,9 @@ fixfiles(void)
 	struct config *cf;
  	char swapname[100];
 
+	/* Place these files at last. */
+	int onallfiles = nallfiles;
+	nallfiles = 1 << 30;
 	addfile("devsw.c", NULL, 0, NULL);
 	addfile("ioconf.c", NULL, 0, NULL);
 
@@ -285,6 +310,7 @@ fixfiles(void)
  		    cf->cf_name);
  		addfile(intern(swapname), NULL, 0, NULL);
  	}
+	nallfiles = onallfiles;
 
 	err = 0;
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
@@ -334,6 +360,7 @@ fixfiles(void)
 			}
 		}
 		fi->fi_flags |= FI_SEL;
+		nselfiles++;
 		CFGDBG(3, "file selected `%s'", fi->fi_path);
 
 		/* Add other files to the default "netbsd" attribute. */
@@ -343,6 +370,16 @@ fixfiles(void)
 		CFGDBG(3, "file `%s' belongs to attr `%s'", fi->fi_path,
 		    fi->fi_attr->a_name);
 	}
+
+	/* Order files. */
+	selfiles = malloc(nselfiles * sizeof(fi));
+	int i = 0;
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
+		if ((fi->fi_flags & FI_SEL) == 0)
+			continue;
+		selfiles[i++] = fi;
+	}
+	qsort(selfiles, nselfiles, (unsigned)sizeof(fi), cmpfiles);
 	return (err);
 }
 

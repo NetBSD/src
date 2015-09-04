@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.67 2015/09/04 06:10:47 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.68 2015/09/04 10:16:35 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.67 2015/09/04 06:10:47 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.68 2015/09/04 10:16:35 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -470,13 +470,13 @@ emitallfiles(FILE *fp)
 {
 	struct files *fi;
 	static int called;
+	int i;
 	int found = 0;
 
 	if (called++ != 0)
 		return;
-	TAILQ_FOREACH(fi, &allfiles, fi_next) {
-		if ((fi->fi_flags & FI_SEL) == 0)
-			continue;
+	for (i = 0; i < (int)nselfiles; i++) {
+		fi = selfiles[i];
 		if (found++ == 0)
 			fprintf(fp, "ALLFILES= \\\n");
 		putc('\t', fp);
@@ -493,18 +493,18 @@ static void
 emitrules(FILE *fp)
 {
 	struct files *fi;
+	int i;
 	int found = 0;
 
-	TAILQ_FOREACH(fi, &allfiles, fi_next) {
-		if ((fi->fi_flags & FI_SEL) == 0)
-			continue;
+	for (i = 0; i < (int)nselfiles; i++) {
+		fi = selfiles[i];
 		if (fi->fi_mkrule == NULL)
 			continue;
 		fprintf(fp, "%s.o: ", fi->fi_base);
 		emitfile(fp, fi);
 		putc('\n', fp);
 		fprintf(fp, "\t%s\n\n", fi->fi_mkrule);
-		found = 1;
+		found++;
 	}
 	if (found == 0)
 		fprintf(fp, "#%%RULES\n");
