@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.30 2015/09/04 01:24:01 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.31 2015/09/04 05:13:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.30 2015/09/04 01:24:01 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.31 2015/09/04 05:13:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -274,20 +274,17 @@ fixfiles(void)
 	struct files *fi, *ofi;
 	struct nvlist *flathead, **flatp;
 	int err, sel;
+	struct config *cf;
+ 	char swapname[100];
 
 	addfile("devsw.c", NULL, 0, NULL);
 	addfile("ioconf.c", NULL, 0, NULL);
 
-	if (Sflag) {
- 		struct config *cf;
- 		char swapname[100];
-
- 		TAILQ_FOREACH(cf, &allcf, cf_next) {
- 			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
- 			    cf->cf_name);
- 			addfile(intern(swapname), NULL, 0, NULL);
- 		}
-	}
+	TAILQ_FOREACH(cf, &allcf, cf_next) {
+ 		(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
+ 		    cf->cf_name);
+ 		addfile(intern(swapname), NULL, 0, NULL);
+ 	}
 
 	err = 0;
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
