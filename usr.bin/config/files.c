@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.31 2015/09/04 05:13:32 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.32 2015/09/04 06:01:40 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.31 2015/09/04 05:13:32 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.32 2015/09/04 06:01:40 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -346,36 +346,6 @@ fixfiles(void)
 	return (err);
 }
 
-/*    
- * We have finished reading everything.  Tack the objects down: calculate
- * selection.
- */   
-int    
-fixobjects(void)
-{     
-	struct files *fi;
-	struct nvlist *flathead, **flatp;
-	int err, sel; 
- 
-	err = 0;
-	TAILQ_FOREACH(fi, &allofiles, fi_snext) {
-		/* Optional: see if it is to be included. */
-		if (fi->fi_optx != NULL) {
-			flathead = NULL;
-			flatp = &flathead;
-			sel = expr_eval(fi->fi_optx,
-			    fi->fi_flags & FI_NEEDSFLAG ? fixfsel :
-			    fixsel,
-			    &flatp);
-			fi->fi_optf = flathead;
-			if (!sel)
-				continue;
-		}
-
-		fi->fi_flags |= FI_SEL;  
-	}
-	return (err);
-}     
 
 /*
  * We have finished reading everything.  Tack the devsws down: calculate
