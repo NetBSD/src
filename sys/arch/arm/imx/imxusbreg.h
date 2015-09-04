@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusbreg.h,v 1.2 2014/07/25 07:49:56 hkenken Exp $	*/
+/*	$NetBSD: imxusbreg.h,v 1.3 2015/09/04 07:34:32 skrll Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -80,7 +80,7 @@
 #define	 OTGSC_OT	__BIT( 3)
 #define	 OTGSC_VC	__BIT( 1)
 #define	 OTGSC_VD	__BIT( 0)
-#define	IMXUSB_OTGMODE	0x01A8
+#define	IMXUSB_USBMODE	0x01A8
 #define	 USBMODE_CM		__BITS(1,0)
 #define	 USBMODE_CM_IDLE	__SHIFTIN(0,USBMODE_CM)
 #define	 USBMODE_CM_DEVICE	__SHIFTIN(2,USBMODE_CM)
