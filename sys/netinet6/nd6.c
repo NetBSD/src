@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.175 2015/09/03 00:54:39 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.176 2015/09/04 05:33:23 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.175 2015/09/03 00:54:39 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.176 2015/09/04 05:33:23 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2145,22 +2145,112 @@ nd6_slowtimo(void *ignored_arg)
 	mutex_exit(softnet_lock);
 }
 
-#define senderr(e) { error = (e); goto bad;}
-int
-nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
-    const struct sockaddr_in6 *dst, struct rtentry *rt00)
+/*
+ * Next hop determination.  This routine was derived from ether_output.
+ */
+static int
+nd6_determine_nexthop(struct ifnet *ifp, const struct sockaddr_in6 *dst,
+    struct rtentry *rt00, struct rtentry **ret_rt, bool *sendpkt)
 {
-	struct mbuf *m = m0;
 	struct rtentry *rt, *rt0;
-	struct sockaddr_in6 *gw6 = NULL;
-	struct llinfo_nd6 *ln = NULL;
-	int error = 0;
+	struct rtentry *gwrt;
+	struct sockaddr_in6 *gw6;
 
 #define RTFREE_IF_NEEDED(_rt) \
 	if ((_rt) != NULL && (_rt) != rt00) \
 		rtfree((_rt));
 
+	KASSERT(rt00 != NULL);
+
 	rt = rt0 = rt00;
+
+	if ((rt->rt_flags & RTF_UP) == 0) {
+		rt0 = rt = rtalloc1(sin6tocsa(dst), 1);
+		if (rt == NULL)
+			goto hostunreach;
+		if (rt->rt_ifp != ifp)
+			goto hostunreach;
+	}
+
+	if ((rt->rt_flags & RTF_GATEWAY) == 0)
+		goto out;
+
+	gw6 = (struct sockaddr_in6 *)rt->rt_gateway;
+
+	/*
+	 * We skip link-layer address resolution and NUD
+	 * if the gateway is not a neighbor from ND point
+	 * of view, regardless of the value of nd_ifinfo.flags.
+	 * The second condition is a bit tricky; we skip
+	 * if the gateway is our own address, which is
+	 * sometimes used to install a route to a p2p link.
+	 */
+	if (!nd6_is_addr_neighbor(gw6, ifp) ||
+	    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
+		/*
+		 * We allow this kind of tricky route only
+		 * when the outgoing interface is p2p.
+		 * XXX: we may need a more generic rule here.
+		 */
+		if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
+			goto hostunreach;
+
+		*sendpkt = true;
+		goto out;
+	}
+
+	/* Try to use a cached nexthop route (gwroute) if exists */
+	gwrt = rt_get_gwroute(rt);
+	if (gwrt == NULL)
+		goto lookup;
+
+	RTFREE_IF_NEEDED(rt);
+	rt = gwrt;
+	if ((rt->rt_flags & RTF_UP) == 0) {
+		RTFREE_IF_NEEDED(rt);
+		rt = rt0;
+	lookup:
+		/* Look up a nexthop route */
+		gwrt = rtalloc1(rt->rt_gateway, 1);
+		rt_set_gwroute(rt, gwrt);
+		RTFREE_IF_NEEDED(rt);
+		rt = gwrt;
+		if (rt == NULL)
+			goto hostunreach;
+		/* the "G" test below also prevents rt == rt0 */
+		if ((rt->rt_flags & RTF_GATEWAY) ||
+		    (rt->rt_ifp != ifp)) {
+			if (rt0->rt_gwroute != NULL)
+				rtfree(rt0->rt_gwroute);
+			rt0->rt_gwroute = NULL;
+			goto hostunreach;
+		}
+	}
+
+out:
+	*ret_rt = rt;
+	return 0;
+
+hostunreach:
+	RTFREE_IF_NEEDED(rt);
+
+	return EHOSTUNREACH;
+#undef RTFREE_IF_NEEDED
+}
+
+#define senderr(e) { error = (e); goto bad;}
+int
+nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
+    const struct sockaddr_in6 *dst, struct rtentry *rt0)
+{
+	struct mbuf *m = m0;
+	struct rtentry *rt = rt0;
+	struct llinfo_nd6 *ln = NULL;
+	int error = 0;
+
+#define RTFREE_IF_NEEDED(_rt) \
+	if ((_rt) != NULL && (_rt) != rt0) \
+		rtfree((_rt));
 
 	if (IN6_IS_ADDR_MULTICAST(&dst->sin6_addr))
 		goto sendpkt;
@@ -2168,69 +2258,16 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	if (nd6_need_cache(ifp) == 0)
 		goto sendpkt;
 
-	/*
-	 * next hop determination.  This routine is derived from ether_output.
-	 */
 	if (rt) {
-		if ((rt->rt_flags & RTF_UP) == 0) {
-			if ((rt0 = rt = rtalloc1(sin6tocsa(dst), 1)) != NULL) {
-				if (rt->rt_ifp != ifp)
-					senderr(EHOSTUNREACH);
-			} else
-				senderr(EHOSTUNREACH);
-		}
+		struct rtentry *nexthop = NULL;
+		bool sendpkt = false;
 
-		if (rt->rt_flags & RTF_GATEWAY) {
-			struct rtentry *gwrt;
-			gw6 = (struct sockaddr_in6 *)rt->rt_gateway;
-
-			/*
-			 * We skip link-layer address resolution and NUD
-			 * if the gateway is not a neighbor from ND point
-			 * of view, regardless of the value of nd_ifinfo.flags.
-			 * The second condition is a bit tricky; we skip
-			 * if the gateway is our own address, which is
-			 * sometimes used to install a route to a p2p link.
-			 */
-			if (!nd6_is_addr_neighbor(gw6, ifp) ||
-			    in6ifa_ifpwithaddr(ifp, &gw6->sin6_addr)) {
-				/*
-				 * We allow this kind of tricky route only
-				 * when the outgoing interface is p2p.
-				 * XXX: we may need a more generic rule here.
-				 */
-				if ((ifp->if_flags & IFF_POINTOPOINT) == 0)
-					senderr(EHOSTUNREACH);
-
-				goto sendpkt;
-			}
-
-			gwrt = rt_get_gwroute(rt);
-			if (gwrt == NULL)
-				goto lookup;
-
-			RTFREE_IF_NEEDED(rt);
-			rt = gwrt;
-			if ((rt->rt_flags & RTF_UP) == 0) {
-				RTFREE_IF_NEEDED(rt);
-				rt = rt0;
-			lookup:
-				gwrt = rtalloc1(rt->rt_gateway, 1);
-				rt_set_gwroute(rt, gwrt);
-				RTFREE_IF_NEEDED(rt);
-				rt = gwrt;
-				if (rt == NULL)
-					senderr(EHOSTUNREACH);
-				/* the "G" test below also prevents rt == rt0 */
-				if ((rt->rt_flags & RTF_GATEWAY) ||
-				    (rt->rt_ifp != ifp)) {
-					if (rt0->rt_gwroute != NULL)
-						rtfree(rt0->rt_gwroute);
-					rt0->rt_gwroute = NULL;
-					senderr(EHOSTUNREACH);
-				}
-			}
-		}
+		error = nd6_determine_nexthop(ifp, dst, rt, &nexthop, &sendpkt);
+		if (error != 0)
+			senderr(error);
+		rt = nexthop;
+		if (sendpkt)
+			goto sendpkt;
 	}
 
 	/*
