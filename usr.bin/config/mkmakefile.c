@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.65 2015/09/04 05:13:32 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.66 2015/09/04 05:52:15 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.65 2015/09/04 05:13:32 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.66 2015/09/04 05:52:15 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -63,9 +63,9 @@ __RCSID("$NetBSD: mkmakefile.c,v 1.65 2015/09/04 05:13:32 uebayasi Exp $");
  */
 
 static void emitdefs(FILE *);
-static void emitfiles(FILE *, struct filelist *, int);
+static void emitallfiles(FILE *);
 
-static void emitobjs(FILE *);
+static void emitofiles(FILE *);
 static void emitallkobjs(FILE *);
 static int emitallkobjscb(const char *, void *, void *);
 static void emitattrkobjs(FILE *);
@@ -145,7 +145,7 @@ mkmakefile(void)
 			continue;
 		}
 		if (strcmp(line, "%OBJS\n") == 0)
-			fn = Mflag ? emitkobjs : emitobjs;
+			fn = Mflag ? emitkobjs : emitofiles;
 		else if (strcmp(line, "%CFILES\n") == 0)
 			fn = emitcfiles;
 		else if (strcmp(line, "%SFILES\n") == 0)
@@ -332,10 +332,11 @@ emitfilerel(FILE *fp, struct files *fi)
 }
 
 static void
-emitobjs(FILE *fp)
+emitofiles(FILE *fp)
 {
 
-	emitfiles(fp, &allofiles, 'o');
+	emitallfiles(fp);
+	fprintf(fp, "OFILES=\t${ALLFILES:M*.o}\n");
 }
 
 static void
@@ -452,33 +453,37 @@ static void
 emitcfiles(FILE *fp)
 {
 
-	emitfiles(fp, &allcfiles, 'c');
+	emitallfiles(fp);
+	fprintf(fp, "CFILES=\t${ALLFILES:M*.c}\n");
 }
 
 static void
 emitsfiles(FILE *fp)
 {
 
-	emitfiles(fp, &allsfiles, 's');
+	emitallfiles(fp);
+	fprintf(fp, "SFILES=\t${ALLFILES:M*.[sS]}\n");
 }
 
 static void
-emitfiles(FILE *fp, struct filelist *filelist, int suffix)
+emitallfiles(FILE *fp)
 {
 	struct files *fi;
+	static int called;
 	int found = 0;
 
-	TAILQ_FOREACH(fi, filelist, fi_snext) {
-		if (found++ == 0)
-			fprintf(fp, "%cFILES= \\\n", toupper(suffix));
+	if (called++ != 0)
+		return;
+	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
+		if (found++ == 0)
+			fprintf(fp, "ALLFILES= \\\n");
 		putc('\t', fp);
 		emitfilerel(fp, fi);
 		fputs(" \\\n", fp);
 	}
-	if (found == 0)
-		fprintf(fp, "#%%%cFILES\n", toupper(suffix));
+	fputc('\n', fp);
 }
 
 /*
