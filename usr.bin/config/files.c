@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.29 2015/09/03 14:23:52 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.30 2015/09/04 01:24:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.29 2015/09/03 14:23:52 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.30 2015/09/04 01:24:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -195,6 +195,7 @@ addfile(const char *path, struct condexpr *optx, u_char flags, const char *rule)
 		break;
 	case 'o':
 		TAILQ_INSERT_TAIL(&allofiles, fi, fi_snext);
+		TAILQ_INSERT_TAIL(&allfiles, fi, fi_next);
 		break;
 	default:
 		cfgxerror(fi->fi_srcfile, fi->fi_srcline,

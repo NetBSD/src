@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.63 2015/09/03 13:32:07 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.64 2015/09/04 01:24:01 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.63 2015/09/03 13:32:07 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.64 2015/09/04 01:24:01 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -334,20 +334,8 @@ emitfilerel(FILE *fp, struct files *fi)
 static void
 emitobjs(FILE *fp)
 {
-	struct files *fi;
-	int found = 0;
 
-	TAILQ_FOREACH(fi, &allofiles, fi_snext) {
-		if ((fi->fi_flags & FI_SEL) == 0)
-			continue;
-		if (found++ == 0)
-			fputs("OFILES= \\\n", fp);
-		putc('\t', fp);
-		emitfile(fp, fi);
-		fputs(" \\\n", fp);
-	}
-	if (found == 0)
-		fprintf(fp, "#%%OBJS\n");
+	emitfiles(fp, &allofiles, 'o');
 }
 
 static void
