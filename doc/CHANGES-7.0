@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.373 2015/09/04 15:09:00 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.374 2015/09/04 15:11:00 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33973,6 +33973,7 @@ sys/arch/arm/arm32/cortex_pmc.c			1.4
 xsrc/external/mit/MesaLib/dist/src/util/ralloc.c 1.2
 
 	Use __attribute__((__destructor__)), not atexit, in shared objects.
+	[mlelstv, ticket #954]
 
 sys/dev/pci/hdaudio/hdafg.c			1.26
 sys/dev/pci/hdaudio/hdaudio.c			1.25
