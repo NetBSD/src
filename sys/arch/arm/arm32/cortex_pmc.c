@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.2 2012/08/29 19:10:15 matt Exp $"); */
+/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.2.16.1 2015/09/04 14:48:57 martin Exp $"); */
 #include "opt_perfctrs.h"
 #include <sys/types.h>
 #include <sys/param.h>
@@ -101,7 +101,7 @@ delay(u_int arg)
 		if (ctrl & CORTEX_CNTOFL_C) {
 		  /* Reset overflow flag for cycle counter in overflow register */
 			armreg_pmovsr_write(CORTEX_CNTOFL_C);
-			delta += (last + (counts_per_wrap - cur));
+			delta += (cur + (counts_per_wrap - last));
 		} else {
 			delta += (cur - last);
 		}
