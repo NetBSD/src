@@ -1,4 +1,4 @@
-/*	$NetBSD: mkmakefile.c,v 1.64 2015/09/04 01:24:01 uebayasi Exp $	*/
+/*	$NetBSD: mkmakefile.c,v 1.65 2015/09/04 05:13:32 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkmakefile.c,v 1.64 2015/09/04 01:24:01 uebayasi Exp $");
+__RCSID("$NetBSD: mkmakefile.c,v 1.65 2015/09/04 05:13:32 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -466,8 +466,6 @@ static void
 emitfiles(FILE *fp, struct filelist *filelist, int suffix)
 {
 	struct files *fi;
- 	struct config *cf;
- 	char swapname[100];
 	int found = 0;
 
 	TAILQ_FOREACH(fi, filelist, fi_snext) {
@@ -479,23 +477,6 @@ emitfiles(FILE *fp, struct filelist *filelist, int suffix)
 		emitfilerel(fp, fi);
 		fputs(" \\\n", fp);
 	}
-
- 	/*
- 	 * The allfiles list does not include the configuration-specific
- 	 * C source files.  These files should be eliminated someday, but
- 	 * for now, we have to add them to ${CFILES} (and only ${CFILES}).
- 	 */
- 	if (!Sflag) {
- 	if (suffix == 'c') {
- 		TAILQ_FOREACH(cf, &allcf, cf_next) {
-			found++;
- 			(void)snprintf(swapname, sizeof(swapname), "swap%s.c",
- 			    cf->cf_name);
- 			fprintf(fp, "\t%s \\\n", swapname);
- 		}
- 	}
-	}
-
 	if (found == 0)
 		fprintf(fp, "#%%%cFILES\n", toupper(suffix));
 }
