@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd.c,v 1.27 2015/08/21 10:39:00 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd.c,v 1.28 2015/09/04 12:25:01 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -436,7 +436,7 @@ configure_interface1(struct interface *ifp)
 		ifo->options |= DHCPCD_STATIC;
 	if (ifp->flags & IFF_NOARP ||
 	    ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))
-		ifo->options &= ~(DHCPCD_ARP | DHCPCD_IPV4LL);
+		ifo->options &= ~DHCPCD_IPV4LL;
 	if (ifp->flags & (IFF_POINTOPOINT | IFF_LOOPBACK) ||
 	    !(ifp->flags & IFF_MULTICAST))
 		ifo->options &= ~DHCPCD_IPV6RS;
