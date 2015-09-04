@@ -1,4 +1,4 @@
-/*	$NetBSD: files.c,v 1.34 2015/09/04 15:50:48 uebayasi Exp $	*/
+/*	$NetBSD: files.c,v 1.35 2015/09/04 21:32:54 uebayasi Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: files.c,v 1.34 2015/09/04 15:50:48 uebayasi Exp $");
+__RCSID("$NetBSD: files.c,v 1.35 2015/09/04 21:32:54 uebayasi Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -374,7 +374,7 @@ fixfiles(void)
 
 	/* Order files. */
 	selfiles = malloc(nselfiles * sizeof(fi));
-	int i = 0;
+	unsigned i = 0;
 	TAILQ_FOREACH(fi, &allfiles, fi_next) {
 		if ((fi->fi_flags & FI_SEL) == 0)
 			continue;
