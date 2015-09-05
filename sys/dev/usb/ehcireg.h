@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34 2012/11/04 12:01:55 matt Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.35 2015/09/05 06:13:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -36,8 +36,8 @@
  * http://www.usb.org/developers/data/usb_20.zip
  */
 
-#ifndef _DEV_PCI_EHCIREG_H_
-#define _DEV_PCI_EHCIREG_H_
+#ifndef _DEV_USB_EHCIREG_H_
+#define _DEV_USB_EHCIREG_H_
 
 /*** PCI config registers ***/
 
@@ -370,4 +370,4 @@ typedef struct {
 #define  EHCI_DAR_ENDPOINT	__BITS(3,0)
 #define  EHCI_DAR_ADDRESS	__BITS(14,8)
 
-#endif /* _DEV_PCI_EHCIREG_H_ */
+#endif /* _DEV_USB_EHCIREG_H_ */
