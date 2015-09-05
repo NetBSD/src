@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.19 2008/04/28 20:23:59 martin Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.20 2015/09/05 06:13:54 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -31,8 +31,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_PCI_UHCIREG_H_
-#define _DEV_PCI_UHCIREG_H_
+#ifndef _DEV_USB_UHCIREG_H_
+#define _DEV_USB_UHCIREG_H_
 
 /*** PCI config registers ***/
 
@@ -194,4 +194,4 @@ typedef struct {
 	volatile uhci_physaddr_t qh_elink;
 } uhci_qh_t;
 
-#endif /* _DEV_PCI_UHCIREG_H_ */
+#endif /* _DEV_USB_UHCIREG_H_ */
