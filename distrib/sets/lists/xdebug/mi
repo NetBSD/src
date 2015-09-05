@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.19 2015/09/05 07:35:31 christos Exp $
+# $NetBSD: mi,v 1.20 2015/09/05 17:50:01 martin Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R6/lib/libFS_g.a				-unknown-	debuglib,x11
 ./usr/X11R6/lib/libGLU_g.a				-unknown-	debuglib,x11
@@ -294,6 +294,7 @@
 ./usr/libdata/debug/usr/X11R7/bin/beforelight.debug	-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/bitmap.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/bmtoa.debug		-unknown-	debug,xorg
+./usr/libdata/debug/usr/X11R7/bin/ctwm.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/cxpm.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/dga.debug		-unknown-	debug,xorg
 ./usr/libdata/debug/usr/X11R7/bin/editres.debug		-unknown-	debug,xorg
