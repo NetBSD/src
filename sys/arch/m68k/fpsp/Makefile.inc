@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.17 2015/09/04 09:18:11 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.18 2015/09/06 02:17:30 uebayasi Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -40,9 +40,6 @@ FPSPMAKE= \
 	    FPSPMISCCPPFLAGS=${FPSPMISCCPPFLAGS:Q} \
 	    FPSPDIR=${FPSPDIR:Q} \
 	    ${FPSPMISCMAKEFLAGS}
-
-fpsp.o: ${FPSP}
-	ln -sf ${FPSP} $@
 
 ${FPSP}:		.NOTMAIN __always_make_fpsp
 	@echo making sure the 68040 FPSP is up to date...
