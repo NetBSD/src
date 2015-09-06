@@ -27,7 +27,7 @@
  *	i4b_rbch_ioctl.h raw B-channel driver interface ioctls
  *	------------------------------------------------------
  *
- *	$Id: i4b_rbch_ioctl.h,v 1.2 2005/12/10 23:51:50 elad Exp $
+ *	$Id: i4b_rbch_ioctl.h,v 1.3 2015/09/06 06:01:01 dholland Exp $
  *
  * $FreeBSD$
  *
@@ -37,6 +37,8 @@
 
 #ifndef _NETISDN_I4B_RBCH_IOCTL_H_
 #define _NETISDN_I4B_RBCH_IOCTL_H_
+
+#include <sys/ioccom.h>
 
 /*---------------------------------------------------------------------------*
  *	instruct the rbch device to dial the given number

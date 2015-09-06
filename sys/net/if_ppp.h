@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.26 2015/08/20 11:18:53 uebayasi Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.27 2015/09/06 06:01:01 dholland Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -45,6 +45,8 @@
 
 #ifndef _NET_IF_PPP_H_
 #define _NET_IF_PPP_H_
+
+#include <sys/ioccom.h>
 
 /*
  * Bit definitions for flags.

@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.9 2015/03/12 15:33:10 christos Exp $ */
+/*	$NetBSD: biovar.h,v 1.10 2015/09/06 06:00:59 dholland Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/ioccom.h>
 
 #ifndef _KERNEL
 #include <stdbool.h>

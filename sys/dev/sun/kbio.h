@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.4 2006/08/28 17:15:24 he Exp $ */
+/*	$NetBSD: kbio.h,v 1.5 2015/09/06 06:01:01 dholland Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 
 #ifndef _DEV_SUN_KBIO_H_
 #define _DEV_SUN_KBIO_H_
+
+#include <sys/ioccom.h>
 
 /*
  * The following is a minimal emulation of Sun's `kio' structures

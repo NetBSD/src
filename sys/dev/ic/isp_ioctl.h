@@ -1,4 +1,4 @@
-/* $NetBSD: isp_ioctl.h,v 1.11 2008/03/11 05:33:30 mjacob Exp $ */
+/* $NetBSD: isp_ioctl.h,v 1.12 2015/09/06 06:01:00 dholland Exp $ */
 /*
  * Copyright (c) 2001-2007 by Matthew Jacob
  * All rights reserved.
@@ -25,9 +25,13 @@
  *  OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  *  SUCH DAMAGE. 
  */
+
 /*
  * ioctl definitions for Qlogic FC/SCSI HBA driver
  */
+
+#include <sys/ioccom.h>
+
 #define	ISP_IOC		(021)	/* 'Ctrl-Q' */
 
 /*
