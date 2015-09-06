@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.116 2015/09/06 16:45:09 martin Exp $ */
+/*	$NetBSD: cpu.h,v 1.117 2015/09/06 23:48:39 nakayama Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #include <sparc64/sparc64/intreg.h>
 #endif
 #ifdef SUN4V
-#include <sparc64/hypervisor.h>
+#include <machine/hypervisor.h>
 #endif
 
 #include <sys/cpu_data.h>

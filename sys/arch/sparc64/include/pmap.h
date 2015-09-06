@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.59 2014/09/04 18:48:29 palle Exp $	*/
+/*	$NetBSD: pmap.h,v 1.60 2015/09/06 23:48:39 nakayama Exp $	*/
 
 /*-
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -41,7 +41,7 @@
 #ifdef _KERNEL
 #include <machine/cpuset.h>
 #ifdef SUN4V
-#include <sparc64/hypervisor.h>
+#include <machine/hypervisor.h>
 #endif
 #endif
 #endif
