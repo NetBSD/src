@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2015/09/05 04:44:29 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2015/09/06 02:22:50 uebayasi Exp $
 
 #	$OpenBSD: Makefile.inc,v 1.4 2001/03/29 03:58:17 mickey Exp $
 #
@@ -22,9 +22,6 @@ SPMATHMAKE= \
 	    CPP='${CPP}' STRIP='${STRIP}' AR='${AR}' \
 	    NM='${NM}' LORDER='${LORDER}' \
 	    XMACHINE='${MACHINE}' XMACHINE_ARCH='${MACHINE_ARCH}'
-
-spmath.o: ${SPMATH}
-	ln -sf ${SPMATH} $@
 
 ${SPMATH}:	.NOTMAIN .MAKE __always_make_spmath
 	@echo making sure the spmath library is up to date...
