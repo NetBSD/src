@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.239 2015/09/06 04:42:06 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.240 2015/09/06 06:13:16 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -307,6 +307,9 @@ _MD_SFILES=${MD_SFILES:C|^$S/||}
 .endif # ___USE_SUFFIX_RULES___
 
 OBJS=	${COBJS} ${SOBJS} ${OOBJS}
+CSRCS=	${_MD_CFILES} ${_CFILES}
+SSRCS=	${_MD_SFILES} ${_SFILES}
+SRCS=	${CSRCS} ${SSRCS}
 
 .if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${_CFILES}
@@ -323,33 +326,6 @@ ${_s:T:R}.o: ${_s}
 .endif
 .endfor
 .endif # !___USE_SUFFIX_RULES___
-
-assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
-	${_MKTARGET_CREATE}
-	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf | \
-	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
-	mv -f assym.h.tmp assym.h
-${_MD_SFILES:C/\.[Ss]/.o/} ${_SFILES:C/\.[Ss]/.o/}: assym.h
-
-MKREPRO?=no
-
-.if ${MKREPRO} == "yes"
-_NVFLAGS=${NVFLAGS} -r
-.else
-_NVFLAGS=${NVFLAGS}
-.endif
-
-.if !target(vers.o)
-newvers: vers.o
-vers.o: ${SYSTEM_OBJ:O} Makefile $S/conf/newvers.sh \
-		$S/conf/osrelease.sh ${_NETBSD_VERSION_DEPENDS}
-	${_MKMSG_CREATE} vers.c
-	${HOST_SH} $S/conf/newvers.sh ${_NVFLAGS}
-	${_MKTARGET_COMPILE}
-	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c vers.c
-	${COMPILE_CTFCONVERT}
-.endif
 
 ##
 ## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
@@ -395,9 +371,6 @@ dependall: depend .WAIT all
 .if !target(.depend)
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
-SSRCS=${_MD_SFILES} ${_SFILES}
-CSRCS=${_MD_CFILES} ${_CFILES}
-SRCS=${SSRCS} ${CSRCS}
 .if !defined(___USE_SUFFIX_RULES___)
 DEPS=	${SRCS:T:u:R:S/$/.d/g}
 .else
@@ -425,16 +398,6 @@ ${_s:T:R}.d: ${_s}
 .endif
 .endfor
 .endif # !___USE_SUFFIX_RULES___
-
-assym.d: assym.h
-	${_MKTARGET_CREATE}
-	cat ${GENASSYM_CONF} ${GENASSYM_EXTRAS} | \
-	    ${GENASSYM} -- ${MKDEP} -f assym.dep -- \
-	    ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${GENASSYM_CPPFLAGS}
-	${TOOL_SED} -e 's/.*\.o:.*\.c/assym.h:/' < assym.dep >${.TARGET}
-	rm -f assym.dep
-
-DEPS+=	assym.d
 
 .depend: ${DEPS}
 	${_MKTARGET_CREATE}
@@ -466,6 +429,8 @@ install-kernel-${MACHINE_NAME}:
 .endif
 .endif
 
+.include "${S}/conf/assym.mk"
+.include "${S}/conf/newvers.mk"
 .include "${S}/conf/splash.mk"
 .include "${S}/conf/mdroot.mk"
 .include "${S}/conf/lint.mk"
@@ -520,13 +485,6 @@ build_kernel: .USE
 ##
 
 .if defined(___USE_SUFFIX_RULES___)
-.SUFFIXES: .genassym .assym.h
-.genassym.assym.h:
-	${_MKTARGET_CREATE}
-	${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
-	    ${GENASSYM_CPPFLAGS} < $< > $@
-	mv -f $@.tmp $@
-
 .SUFFIXES: .s .d
 .s.d:
 	${_MKTARGET_CREATE}
