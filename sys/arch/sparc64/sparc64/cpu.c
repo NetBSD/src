@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.125 2015/05/07 04:03:38 palle Exp $ */
+/*	$NetBSD: cpu.c,v 1.126 2015/09/06 16:45:09 martin Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.125 2015/05/07 04:03:38 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2015/09/06 16:45:09 martin Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -263,7 +263,7 @@ cpu_dcache_associativity(int node)
 		return prom_getpropint(node, "dcache-associativity", 1);
 }
 
-static int
+int
 cpu_ecache_size(int node)
 {
 	if (CPU_ISSUN4V)
@@ -290,7 +290,7 @@ cpu_ecache_nlines(int node)
 		return prom_getpropint(node, "ecache-nlines", 32768);
 }
 
-static int
+int
 cpu_ecache_associativity(int node)
 {
 	if (CPU_ISSUN4V) {

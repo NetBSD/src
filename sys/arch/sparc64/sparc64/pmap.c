@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.296 2015/06/15 07:48:08 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.297 2015/09/06 16:45:09 martin Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2015/06/15 07:48:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.297 2015/09/06 16:45:09 martin Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.296 2015/06/15 07:48:08 martin Exp $");
 #include <sparc64/sparc64/cache.h>
 #ifdef SUN4V
 #include <sparc64/hypervisor.h>
+#include <sparc64/mdesc.h>
 #endif
 
 #ifdef DDB
@@ -478,16 +479,15 @@ static int pmap_calculate_colors(void)
 			continue;
 
 		/* Found a CPU, get the E$ info. */
-		size = prom_getpropint(node, "ecache-size", -1);
-		if (size == -1) {
-			/* XXX sun4v support missing */
+		size = cpu_ecache_size(node);
+		if (size == 0) {
 			prom_printf("pmap_calculate_colors: node %x has "
 				"no ecache-size\n", node);
 			/* If we can't get the E$ size, skip the node */
 			continue;
 		}
 
-		assoc = prom_getpropint(node, "ecache-associativity", 1);
+		assoc = cpu_ecache_associativity(node);
 		color = size/assoc/PAGE_SIZE;
 		if (color > maxcolor)
 			maxcolor = color;
@@ -731,6 +731,18 @@ pmap_bootstrap(u_long kernelstart, u_long kernelend)
 
 	/* Initialize bootstrap allocator. */
 	kdata_alloc_init(kernelend + 1 * 1024 * 1024, ekdata);
+
+	/* make sure we have access to the mdesc data on SUN4V machines */
+	if (CPU_ISSUN4V) {
+		vaddr_t m_va;
+		psize_t m_len;
+		paddr_t m_pa;
+
+		m_len = mdesc_get_len();
+		m_va = kdata_alloc(m_len, 16);
+		m_pa = kdatap + (m_va - kdata);
+		mdesc_init(m_va, m_pa, m_len);
+	}
 
 	pmap_bootdebug();
 	pmap_alloc_bootargs();
