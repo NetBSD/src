@@ -1,4 +1,4 @@
-/*	$NetBSD: ioctl_compat.h,v 1.16 2013/07/11 19:17:57 christos Exp $	*/
+/*	$NetBSD: ioctl_compat.h,v 1.17 2015/09/06 06:01:02 dholland Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -39,6 +39,7 @@
 #ifndef _SYS_IOCTL_COMPAT_H_
 #define	_SYS_IOCTL_COMPAT_H_
 
+#include <sys/ioccom.h>
 #include <sys/ttychars.h>
 #include <sys/ttydev.h>
 
