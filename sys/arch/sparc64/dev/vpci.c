@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.2 2015/09/03 19:43:35 palle Exp $	*/
+/*	$NetBSD: vpci.c,v 1.3 2015/09/06 23:48:39 nakayama Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.2 2015/09/03 19:43:35 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.3 2015/09/06 23:48:39 nakayama Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.2 2015/09/03 19:43:35 palle Exp $");
 #include <sparc64/dev/iommuvar.h>
 #include <sparc64/dev/vpcivar.h>
 
-#include <sparc64/hypervisor.h>
+#include <machine/hypervisor.h>
 
 #ifdef DEBUG
 #define VDB_PROM             0x01
