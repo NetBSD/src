@@ -1,4 +1,4 @@
-/*	$NetBSD: vndvar.h,v 1.34 2015/05/25 20:57:18 prlw1 Exp $	*/
+/*	$NetBSD: vndvar.h,v 1.35 2015/09/06 06:00:59 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -70,6 +70,7 @@
 #ifndef _SYS_DEV_VNDVAR_H_
 #define _SYS_DEV_VNDVAR_H_
 
+#include <sys/ioccom.h>
 #include <sys/pool.h>
 
 /*

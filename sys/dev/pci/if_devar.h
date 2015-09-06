@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.59 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.60 2015/09/06 06:01:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -927,6 +927,7 @@ static void tulip_softintr(void);
 #endif
 
 #ifdef notyet
+#include <sys/ioccom.h>
 #define	SIOCGADDRROM		_IOW('i', 240, struct ifreq)	/* get 128 bytes of ROM */
 #define	SIOCGCHIPID		_IOWR('i', 241, struct ifreq)	/* get chipid */
 #endif
