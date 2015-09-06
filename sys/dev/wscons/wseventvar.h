@@ -1,4 +1,4 @@
-/* $NetBSD: wseventvar.h,v 1.15 2009/01/16 15:14:11 yamt Exp $ */
+/* $NetBSD: wseventvar.h,v 1.16 2015/09/06 06:01:01 dholland Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -69,6 +69,8 @@
  *
  *	@(#)event_var.h	8.1 (Berkeley) 6/11/93
  */
+
+#include <sys/ioccom.h>
 
 /*
  * Internal "wscons_event" queue interface for the keyboard and mouse drivers.

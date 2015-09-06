@@ -1,4 +1,4 @@
-/* $NetBSD: lptio.h,v 1.8 2008/04/28 20:23:56 martin Exp $ */
+/* $NetBSD: lptio.h,v 1.9 2015/09/06 06:01:00 dholland Exp $ */
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef __DEV_PPBUS_LPTIO_H_
 #define __DEV_PPBUS_LPTIO_H_
+
+#include <sys/ioccom.h>
 
 /* Definitions for get status command */
 enum lpt_mode_t {

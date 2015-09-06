@@ -1,4 +1,4 @@
-/*	$NetBSD: fbio.h,v 1.11 2009/08/26 22:34:50 macallan Exp $ */
+/*	$NetBSD: fbio.h,v 1.12 2015/09/06 06:01:01 dholland Exp $ */
 
 /*
  * Copyright (c) 1992 Regents of the University of California.
@@ -37,6 +37,8 @@
 
 #ifndef FBIO_H
 #define FBIO_H
+
+#include <sys/ioccom.h>
 
 /*
  * Frame buffer ioctls (from Sprite, trimmed to essentials for X11).

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.4 2005/12/11 12:23:56 christos Exp $ */
+/*	$NetBSD: disklabel.h,v 1.5 2015/09/06 06:01:01 dholland Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,8 @@
 /*
  * SunOS disk label layout (only relevant portions discovered here).
  */
+
+#include <sys/ioccom.h>
 
 #define	SUN_DKMAGIC	55998
 

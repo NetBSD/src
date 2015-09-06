@@ -1,4 +1,4 @@
-/*	$NetBSD: btdev.h,v 1.9 2010/04/28 06:13:51 plunky Exp $	*/
+/*	$NetBSD: btdev.h,v 1.10 2015/09/06 06:01:00 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,6 +33,8 @@
 
 #ifndef _DEV_BLUETOOTH_BTDEV_H_
 #define _DEV_BLUETOOTH_BTDEV_H_
+
+#include <sys/ioccom.h>
 
 /* btdev attach/detach ioctl's */
 #define BTDEV_ATTACH		_IOW('b', 14, struct plistref)
