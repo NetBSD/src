@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.240 2015/09/06 06:13:16 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.241 2015/09/06 06:41:14 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -219,24 +219,6 @@ SYSTEM_LD?=	${_MKSHMSG} "   link  ${.CURDIR:T}/${.TARGET}"; \
 		${SYSTEM_OBJ:N*swap*netbsd*} ${EXTRA_OBJ} vers.o \
 		${OBJS:M*swap${.TARGET}.o}
 
-# Give MD generated ldscript dependency on ${SYSTEM_OBJ}
-.if defined(KERNLDSCRIPT)
-.if target(${KERNLDSCRIPT})
-${KERNLDSCRIPT}: ${SYSTEM_OBJ}
-.endif
-.endif
-
-.if defined(KERNLDSCRIPT)
-.for k in ${KERNELS}
-EXTRA_CLEAN+=	${k}.ldscript
-${k}: ${k}.ldscript
-${k}.ldscript: ${KERNLDSCRIPT} assym.h
-	${_MKTARGET_CREATE}
-	${CPP} -I. ${KERNLDSCRIPT} | grep -v '^#' | grep -v '^$$' >$@
-.endfor
-LINKSCRIPT=	-T ${.TARGET}.ldscript
-.endif
-
 TEXTADDR?=	${LOADADDRESS}			# backwards compatibility
 LINKTEXT?=	${TEXTADDR:C/.+/-Ttext &/}
 LINKDATA?=	${DATAADDR:C/.+/-Tdata &/}
@@ -429,6 +411,7 @@ install-kernel-${MACHINE_NAME}:
 .endif
 .endif
 
+.include "${S}/conf/ldscript.mk"
 .include "${S}/conf/assym.mk"
 .include "${S}/conf/newvers.mk"
 .include "${S}/conf/splash.mk"
