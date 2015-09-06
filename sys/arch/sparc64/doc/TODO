@@ -1,4 +1,4 @@
- /* $NetBSD: TODO,v 1.12 2015/09/05 21:08:40 palle Exp $ */
+ /* $NetBSD: TODO,v 1.13 2015/09/06 18:41:34 palle Exp $ */
 
 Things to be done:
 
@@ -16,9 +16,8 @@ sun4v:
 - libkvm
 - ofwboot: tlb_init_sun4v() hardcodes number of slots to 64
 - locore.s: sun4v_datatrap missing implementation for trap levels 0 and 1
-- pmap.c: pmap_calculate_colors() should known about sun4v
 - check build without SUN4V defined
-- replace relevant references til %ver with GET_MAXCWP
+- replace relevant references to %ver with GET_MAXCWP
 - pmap_mp_init(): sun4v missing handling
 - replace constructs like "wrpr %g0, PSTATE_KERN, %pstate" with NORMAL_GLOBALS
 - replace constructs line "wrpr %g0, PSTATE_INTR, %pstate" with ALTERNATE_GOBALS
