@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.126 2015/09/06 16:45:09 martin Exp $ */
+/*	$NetBSD: cpu.c,v 1.127 2015/09/06 23:48:39 nakayama Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2015/09/06 16:45:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.127 2015/09/06 23:48:39 nakayama Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -72,10 +72,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.126 2015/09/06 16:45:09 martin Exp $");
 #include <machine/pmap.h>
 #include <machine/sparc64.h>
 #include <machine/openfirm.h>
+#include <machine/hypervisor.h>
+#include <machine/mdesc.h>
 
 #include <sparc64/sparc64/cache.h>
-#include <sparc64/hypervisor.h>
-#include <sparc64/mdesc.h>
 
 #define SUN4V_MONDO_QUEUE_SIZE	32
 #define SUN4V_QUEUE_ENTRY_SIZE	64
