@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.hppa,v 1.4 2015/08/24 14:04:24 uebayasi Exp $
+# $NetBSD: Makefile.hppa,v 1.5 2015/09/06 02:22:50 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -57,7 +57,8 @@ KERN_AS=	obj
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o ${LIBSPMATH}
+MD_OBJS=	locore.o
+MD_LIBS=	${LIBSPMATH}
 MD_CFILES=
 MD_SFILES=	${HPPA}/hppa/locore.S
 
