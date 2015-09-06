@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.242 2015/09/06 14:35:01 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.243 2015/09/06 15:20:59 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -203,7 +203,7 @@ _MD_OBJS=	${MD_OBJS}
 
 SYSTEM_LIB=	${MD_LIBS} ${SYSLIBCOMPAT} ${LIBKERN}
 SYSTEM_OBJ?=	${_MD_OBJS} ${OBJS} ${SYSTEM_LIB}
-SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ}
+SYSTEM_DEP+=	Makefile ${SYSTEM_OBJ:O}
 .if defined(CTFMERGE)
 SYSTEM_CTFMERGE= ${CTFMERGE} ${CTFMFLAGS} -o ${.TARGET} ${SYSTEM_OBJ} ${EXTRA_OBJ} vers.o
 .else
@@ -381,7 +381,7 @@ ${_s:T:R}.d: ${_s}
 .endfor
 .endif # !___USE_SUFFIX_RULES___
 
-.depend: ${DEPS}
+.depend: ${DEPS:O}
 	${_MKTARGET_CREATE}
 	echo "${.ALLSRC}" | ${MKDEP} -D
 .endif
