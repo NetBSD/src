@@ -1,4 +1,4 @@
-/*	$NetBSD: iommu.c,v 1.109 2015/09/03 19:43:35 palle Exp $	*/
+/*	$NetBSD: iommu.c,v 1.110 2015/09/06 23:47:09 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.109 2015/09/03 19:43:35 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.110 2015/09/06 23:47:09 nakayama Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: iommu.c,v 1.109 2015/09/03 19:43:35 palle Exp $");
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
+#include <machine/hypervisor.h>
 
 #ifdef DEBUG
 #define IDB_BUSDMA	0x1
