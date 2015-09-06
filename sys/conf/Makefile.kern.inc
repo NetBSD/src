@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.238 2015/09/06 02:05:11 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.239 2015/09/06 04:42:06 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -102,16 +102,6 @@ AFLAGS+=	-D_LOCORE -Wa,--fatal-warnings
 .if defined(HAVE_GCC) || defined(HAVE_LLVM)
 CFLAGS+=	-fno-strict-aliasing
 CFLAGS+=	-fno-common
-.endif
-
-.if ${USE_SSP:Uno} == "yes"
-COPTS.kern_ssp.c+=	-fno-stack-protector -D__SSP__
-.endif
-
-# for multi-cpu machines, cpu_hatch() straddles the init of
-# __stack_chk_guard, so ensure stack protection is disabled
-.if ${MACHINE} == "i386" || ${MACHINE_ARCH} == "x86_64"
-COPTS.cpu.c+=		-fno-stack-protector
 .endif
 
 # Use the per-source COPTS variables to add -g to just those
@@ -296,25 +286,27 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 CFILES=	${ALLFILES:M*.c}
 SFILES=	${ALLFILES:M*.[sS]}
 OFILES=	${ALLFILES:M*.o}
+
 .if !defined(___USE_SUFFIX_RULES___)
-OBJS.c=	${CFILES:T:R:C|$|.o|}
-OBJS.s=	${SFILES:T:R:C|$|.o|}
-OBJS.o=	${OFILES}
+COBJS=	${CFILES:T:R:C|$|.o|}
+SOBJS=	${SFILES:T:R:C|$|.o|}
+OOBJS=	${OFILES}
 # absolute, generated (build directory), relative (under $S)
 _CFILES=${CFILES:M/*} ${CFILES:N/*:N*/*} ${CFILES:N/*:M*/*:C|^|$S/|}
 _SFILES=${SFILES:M/*} ${SFILES:N/*:N*/*} ${SFILES:N/*:M*/*:C|^|$S/|}
 _MD_CFILES=${MD_CFILES}
 _MD_SFILES=${MD_SFILES}
 .else
-OBJS.c=	${CFILES:R:C|$|.o|}
-OBJS.s=	${SFILES:R:C|$|.o|}
-OBJS.o=	${OFILES}
+COBJS=	${CFILES:R:C|$|.o|}
+SOBJS=	${SFILES:R:C|$|.o|}
+OOBJS=	${OFILES}
 _CFILES=${CFILES}
 _SFILES=${SFILES}
 _MD_CFILES=${MD_CFILES:C|^$S/||}
 _MD_SFILES=${MD_SFILES:C|^$S/||}
 .endif # ___USE_SUFFIX_RULES___
-OBJS=	${OBJS.c} ${OBJS.s} ${OBJS.o}
+
+OBJS=	${COBJS} ${SOBJS} ${OOBJS}
 
 .if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${_CFILES}
@@ -479,21 +471,11 @@ install-kernel-${MACHINE_NAME}:
 .include "${S}/conf/lint.mk"
 .include "${S}/conf/cscope.mk"
 .include "${S}/conf/gdbinit.mk"
+.include "${S}/conf/ssp.mk"
 
 ##
 ## the kernel
 ##
-
-# The following files use alloca(3) or variable array allocations.
-# Their full name is noted as documentation.
-VARSTACK=kern/uipc_socket.c miscfs/genfs/genfs_vnops.c \
-    nfs/nfs_bio.c uvm/uvm_bio.c \
-    uvm/uvm_pager.c dev/ic/aic7xxx.c dev/ic/aic79xx.c arch/xen/i386/gdt.c \
-    dev/ofw/ofw_subr.c
-
-.for __varstack in ${VARSTACK}
-COPTS.${__varstack:T} += -Wno-stack-protector
-.endfor
 
 AFLAGS+=	${AOPTS.${.IMPSRC:T}}
 CFLAGS+=	${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}}
