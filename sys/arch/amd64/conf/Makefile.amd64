@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.52 2015/09/03 12:33:11 uebayasi Exp $
+#	$NetBSD: Makefile.amd64,v 1.53 2015/09/06 07:17:14 uebayasi Exp $
 
 # Makefile for NetBSD
 #
@@ -56,25 +56,6 @@ KERN_AS=	library
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	arch/amd64/amd64/locore.o arch/amd64/amd64/vector.o \
-		arch/amd64/amd64/copy.o arch/amd64/amd64/spl.o
-MD_CFILES=
-MD_SFILES=	${AMD64}/amd64/locore.S ${AMD64}/amd64/vector.S \
-		${AMD64}/amd64/copy.S ${AMD64}/amd64/spl.S
-
-.if !defined(___USE_SUFFIX_RULES___)
-locore.o: ${AMD64}/amd64/locore.S assym.h
-	${NORMAL_S}
-
-vector.o: ${AMD64}/amd64/vector.S assym.h
-	${NORMAL_S}
-
-copy.o: ${AMD64}/amd64/copy.S assym.h
-	${NORMAL_S}
-
-spl.o: ${AMD64}/amd64/spl.S assym.h
-	${NORMAL_S}
-.endif # ___USE_SUFFIX_RULES___
 
 ##
 ## (5) link settings
