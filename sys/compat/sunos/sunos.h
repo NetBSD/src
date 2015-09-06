@@ -1,7 +1,9 @@
-/*	$NetBSD: sunos.h,v 1.23 2009/01/11 02:45:49 christos Exp $	*/
+/*	$NetBSD: sunos.h,v 1.24 2015/09/06 06:00:59 dholland Exp $	*/
 
 #ifndef _COMPAT_SUNOS_SUNOS_H_
 #define _COMPAT_SUNOS_SUNOS_H_
+
+#include <sys/ioccom.h>
 
 /* used to ensure `struct sunos' types rename constantly sized. */
 #ifdef __arch64__

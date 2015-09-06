@@ -1,4 +1,4 @@
-/* $NetBSD: filemon.h,v 1.6 2015/06/17 02:17:00 sjg Exp $ */
+/* $NetBSD: filemon.h,v 1.7 2015/09/06 06:01:00 dholland Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -24,6 +24,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #ifndef FILEMON_SET_FD
+
+#include <sys/ioccom.h>
 
 #ifndef _PATH_FILEMON
 #define _PATH_FILEMON "/dev/filemon"
