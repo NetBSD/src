@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.241 2015/09/06 06:41:14 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.242 2015/09/06 14:35:01 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -447,12 +447,12 @@ build_kernel: .USE
 ${k}: $S/kern/kern_ksyms_buf.c
 .endfor
 build_kernel: .USE
-	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
+	${CC} ${CFLAGS} ${CPPFLAGS} \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf.o
 	${SYSTEM_LD_HEAD}
 	${SYSTEM_LD} kern_ksyms_buf.o
 	${SYSTEM_LD_TAIL_STAGE1}
-	${CC} ${CFLAGS} ${CPPFLAGS} -DCOPY_SYMTAB \
+	${CC} ${CFLAGS} ${CPPFLAGS} \
 	    -DSYMTAB_SPACE=$$(${DBSYM} -P ${.TARGET}${TARGETSFX}) \
 	    -c $S/kern/kern_ksyms_buf.c -o kern_ksyms_buf_real.o
 	${SYSTEM_LD_HEAD}
