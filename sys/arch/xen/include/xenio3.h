@@ -1,4 +1,4 @@
-/* $NetBSD: xenio3.h,v 1.3 2010/09/03 06:07:24 cegger Exp $ */
+/* $NetBSD: xenio3.h,v 1.4 2015/09/07 03:49:46 dholland Exp $ */
 /******************************************************************************
  * evtchn.h
  * 
@@ -30,6 +30,8 @@
 
 #ifndef __XEN_XENIO3_H__
 #define __XEN_XENIO3_H__
+
+#include <sys/ioccom.h>
 
 /*
  * Bind a fresh port to VIRQ @virq.

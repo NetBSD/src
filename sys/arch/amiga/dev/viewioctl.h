@@ -1,4 +1,4 @@
-/*	$NetBSD: viewioctl.h,v 1.9 2002/09/06 13:18:43 gehenna Exp $	*/
+/*	$NetBSD: viewioctl.h,v 1.10 2015/09/07 03:49:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,6 +38,8 @@
  * refered to by open/close/ioctl.  This device serves as
  * a interface to graphics.
  */
+
+#include <sys/ioccom.h>
 
 struct view_size {
     int x;

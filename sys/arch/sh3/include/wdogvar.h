@@ -1,7 +1,9 @@
-/*	$NetBSD: wdogvar.h,v 1.6 2002/04/28 17:10:37 uch Exp $	*/
+/*	$NetBSD: wdogvar.h,v 1.7 2015/09/07 03:49:45 dholland Exp $	*/
 
 #ifndef _SH3_WDOGVAR_H_
 #define	_SH3_WDOGVAR_H_
+
+#include <sys/ioccom.h>
 
 #define	WDOGF_OPEN	1
 
