@@ -1,8 +1,9 @@
-/*	$NetBSD: wsconsio.h,v 1.2 2005/12/11 12:18:24 christos Exp $	*/
+/*	$NetBSD: wsconsio.h,v 1.3 2015/09/07 03:49:45 dholland Exp $	*/
 
 #ifndef _NEWSMIPS_WSCONSIO_H_
 #define	_NEWSMIPS_WSCONSIO_H_
 
+#include <sys/ioccom.h>
 #include <dev/wscons/wsconsio.h>
 
 struct newsmips_wsdisplay_fbinfo {

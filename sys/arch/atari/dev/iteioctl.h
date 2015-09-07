@@ -1,4 +1,4 @@
-/*	$NetBSD: iteioctl.h,v 1.7 2011/02/08 20:20:10 rmind Exp $	*/
+/*	$NetBSD: iteioctl.h,v 1.8 2015/09/07 03:49:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,8 @@
 
 #ifndef _MACHINE_ITEIOCTL_H_
 #define _MACHINE_ITEIOCTL_H_
+
+#include <sys/ioccom.h>
 
 #ifndef _KERNEL
 #include <machine/kbdmap.h>
