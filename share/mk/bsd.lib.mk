@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.360 2015/07/29 14:35:04 tsutsui Exp $
+#	$NetBSD: bsd.lib.mk,v 1.361 2015/09/07 06:42:07 uebayasi Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -559,15 +559,15 @@ __archivesymlinkpic: .USE
 DPSRCS+=	${_YLSRCS}
 CLEANFILES+=	${_YLSRCS}
 
-${STOBJS} ${POBJS} ${GOBJS} ${SOBJS} ${LOBJS}: ${DPSRCS}
+${STOBJS} ${POBJS} ${GOBJS} ${SOBJS} ${LOBJS}: ${DPSRCS:O}
 
-${_LIB.a}:: ${STOBJS} __archivebuild
+${_LIB.a}:: ${STOBJS:O} __archivebuild
 
-${_LIB_p.a}:: ${POBJS} __archivebuild
+${_LIB_p.a}:: ${POBJS:O} __archivebuild
 
-${_LIB_pic.a}:: ${SOBJS} __archivebuild
+${_LIB_pic.a}:: ${SOBJS:O} __archivebuild
 
-${_LIB_g.a}:: ${GOBJS} __archivebuild
+${_LIB_g.a}:: ${GOBJS:O} __archivebuild
 
 
 _LIBLDOPTS=
