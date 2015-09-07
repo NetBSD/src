@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.177 2015/09/07 01:17:37 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.178 2015/09/07 01:18:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.177 2015/09/07 01:17:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.178 2015/09/07 01:18:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -788,6 +788,8 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	int flags = 0;
 	int error;
 
+	KASSERT(m != NULL);
+
 	la = arplookup(ifp, m, &satocsin(dst)->sin_addr, 1, 0, 0, rt);
 	if (la != NULL)
 		rt = la->la_rt;
@@ -903,43 +905,42 @@ retry:
 	}
 
 	renew = (la->la_asked == 0 || la->la_expire != time_uptime);
-	if ((renew || m != NULL) && (flags & LLE_EXCLUSIVE) == 0) {
+	if (renew && (flags & LLE_EXCLUSIVE) == 0) {
 		flags |= LLE_EXCLUSIVE;
 		LLE_RUNLOCK(la);
 		la = NULL;
 		goto retry;
 	}
+
 	/*
 	 * There is an arptab entry, but no ethernet address
 	 * response yet.  Add the mbuf to the list, dropping
 	 * the oldest packet if we have exceeded the system
 	 * setting.
 	 */
-	if (m != NULL) {
-		LLE_WLOCK_ASSERT(la);
-		if (la->la_numheld >= arp_maxhold) {
-			if (la->la_hold != NULL) {
-				struct mbuf *next = la->la_hold->m_nextpkt;
-				m_freem(la->la_hold);
-				la->la_hold = next;
-				la->la_numheld--;
-				ARP_STATINC(ARP_STAT_DFRDROPPED);
-			}
-		}
+	LLE_WLOCK_ASSERT(la);
+	if (la->la_numheld >= arp_maxhold) {
 		if (la->la_hold != NULL) {
-			struct mbuf *curr = la->la_hold;
-			while (curr->m_nextpkt != NULL)
-				curr = curr->m_nextpkt;
-			curr->m_nextpkt = m;
-		} else
-			la->la_hold = m;
-		la->la_numheld++;
-		if (renew == 0 && (flags & LLE_EXCLUSIVE)) {
-			flags &= ~LLE_EXCLUSIVE;
-			LLE_DOWNGRADE(la);
+			struct mbuf *next = la->la_hold->m_nextpkt;
+			m_freem(la->la_hold);
+			la->la_hold = next;
+			la->la_numheld--;
+			ARP_STATINC(ARP_STAT_DFRDROPPED);
 		}
-
 	}
+	if (la->la_hold != NULL) {
+		struct mbuf *curr = la->la_hold;
+		while (curr->m_nextpkt != NULL)
+			curr = curr->m_nextpkt;
+		curr->m_nextpkt = m;
+	} else
+		la->la_hold = m;
+	la->la_numheld++;
+	if (renew == 0 && (flags & LLE_EXCLUSIVE)) {
+		flags &= ~LLE_EXCLUSIVE;
+		LLE_DOWNGRADE(la);
+	}
+
 	/*
 	 * Return EWOULDBLOCK if we have tried less than arp_maxtries. It
 	 * will be masked by ether_output(). Return EHOSTDOWN/EHOSTUNREACH
