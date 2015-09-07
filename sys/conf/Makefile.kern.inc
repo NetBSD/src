@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.243 2015/09/06 15:20:59 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.244 2015/09/07 15:55:06 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -265,33 +265,29 @@ SYSTEM_LD_TAIL_STAGE2+=	${SYSTEM_LD_TAIL_EXTRA}
 ## (6) port independent targets and dependencies: assym.h, vers.o
 ##
 
+.if !defined(___USE_SUFFIX_RULES___)
+
+# Generate list of *.o files to pass to ${LD}, preserving order.
+#	x/y/z/a.[csS] -> a.[csS]
+#	a.[csS] -> a.o
+OBJS=	${ALLFILES:C|^.*/([^/]*\.[csS])$$|\1|:C|^(.*)\.[csS]$$|\1.o|}
+
 CFILES=	${ALLFILES:M*.c}
 SFILES=	${ALLFILES:M*.[sS]}
 OFILES=	${ALLFILES:M*.o}
-
-.if !defined(___USE_SUFFIX_RULES___)
-COBJS=	${CFILES:T:R:C|$|.o|}
-SOBJS=	${SFILES:T:R:C|$|.o|}
-OOBJS=	${OFILES}
 # absolute, generated (build directory), relative (under $S)
 _CFILES=${CFILES:M/*} ${CFILES:N/*:N*/*} ${CFILES:N/*:M*/*:C|^|$S/|}
 _SFILES=${SFILES:M/*} ${SFILES:N/*:N*/*} ${SFILES:N/*:M*/*:C|^|$S/|}
 _MD_CFILES=${MD_CFILES}
 _MD_SFILES=${MD_SFILES}
-.else
-COBJS=	${CFILES:R:C|$|.o|}
-SOBJS=	${SFILES:R:C|$|.o|}
-OOBJS=	${OFILES}
-_CFILES=${CFILES}
-_SFILES=${SFILES}
-_MD_CFILES=${MD_CFILES:C|^$S/||}
-_MD_SFILES=${MD_SFILES:C|^$S/||}
-.endif # ___USE_SUFFIX_RULES___
-
-OBJS=	${COBJS} ${SOBJS} ${OOBJS}
 CSRCS=	${_MD_CFILES} ${_CFILES}
 SSRCS=	${_MD_SFILES} ${_SFILES}
 SRCS=	${CSRCS} ${SSRCS}
+
+.else # ___USE_SUFFIX_RULES___
+OBJS=	${ALLFILES:C|\.[csS]$$|.o|}
+SRCS=	${ALLFILES:M*.[csS]}
+.endif # ___USE_SUFFIX_RULES___
 
 .if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${_CFILES}
@@ -354,9 +350,9 @@ dependall: depend .WAIT all
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 .if !defined(___USE_SUFFIX_RULES___)
-DEPS=	${SRCS:T:u:R:S/$/.d/g}
+DEPS=	${SRCS:T:R:S/$/.d/g}
 .else
-DEPS=	${SRCS:u:R:S/$/.d/g}
+DEPS=	${SRCS:R:S/$/.d/g}
 .endif
 
 .if !defined(___USE_SUFFIX_RULES___)
