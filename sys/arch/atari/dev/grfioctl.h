@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.9 2011/02/08 20:20:10 rmind Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.10 2015/09/07 03:49:45 dholland Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,8 @@
 
 #ifndef _MACHINE_GRFIOCTL_H_
 #define _MACHINE_GRFIOCTL_H_
+
+#include <sys/ioccom.h>
 
 /* these are changeable values, encapsulated in their own structure, so
    no the whole thing has to be copied when setting parameters. */
