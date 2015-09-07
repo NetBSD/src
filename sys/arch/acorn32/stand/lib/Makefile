@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2006/04/01 19:08:08 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.4 2015/09/07 03:20:18 uebayasi Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -24,3 +24,4 @@ lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@echo done

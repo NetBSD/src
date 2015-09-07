@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2015/04/16 08:38:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.42 2015/09/07 03:20:18 uebayasi Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -52,6 +52,7 @@ lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@echo done
 
 # XXX
 .if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U} == 48

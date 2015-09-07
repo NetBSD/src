@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2014/06/14 20:49:37 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2015/09/07 03:20:19 uebayasi Exp $
 
 LIB=	z
 LIBISPRIVATE=	yes
@@ -28,6 +28,7 @@ lib${LIB}.o:: ${OBJS}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@echo done
 
 .if defined(HAVE_GCC) && ${MACHINE_ARCH} == "vax"
 COPTS.inftrees.c+=	-O0
