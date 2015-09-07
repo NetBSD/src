@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.c,v 1.5 2015/09/06 16:45:09 martin Exp $	*/
+/*	$NetBSD: mdesc.c,v 1.6 2015/09/07 17:14:54 uebayasi Exp $	*/
 /*	$OpenBSD: mdesc.c,v 1.7 2014/11/30 22:26:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -33,7 +33,7 @@ vaddr_t mdesc;
 paddr_t mdesc_pa;
 size_t mdesc_len;
 
-size_t
+psize_t
 mdesc_get_len(void)
 {
 	psize_t len = 0;
@@ -46,7 +46,7 @@ mdesc_get_len(void)
 }
 
 void
-mdesc_init(vaddr_t va, paddr_t pa, size_t avail_len)
+mdesc_init(vaddr_t va, paddr_t pa, psize_t avail_len)
 {
 	psize_t len;
 	int64_t err;
