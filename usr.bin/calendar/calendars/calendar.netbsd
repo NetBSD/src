@@ -50,6 +50,7 @@
 05/28   NetBSD/ofppc port started, 1998
 05/29   NetBSD 1.3.2 released, 1998
 05/31   NetBSD/pmppc port started, 2002
+06/04   pkgsrc/Bitrig support added, 2015
 06/05   NetBSD gets its own package system, 1997
 06/06   NetBSD/hp700 port started, 2002
 06/09   NetBSD/netwinder port started, 2001
