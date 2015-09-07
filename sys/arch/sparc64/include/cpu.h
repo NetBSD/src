@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.117 2015/09/06 23:48:39 nakayama Exp $ */
+/*	$NetBSD: cpu.h,v 1.118 2015/09/07 20:00:49 palle Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -263,6 +263,10 @@ void	cpu_pmap_init(struct cpu_info *);
 /* run upfront to prepare the cpu_info */
 void	cpu_pmap_prepare(struct cpu_info *, bool);
 
+/* Helper functions to retrieve cache info */
+int	cpu_ecache_associativity(int node);
+int	cpu_ecache_size(int node);
+
 #if defined(MULTIPROCESSOR)
 extern vaddr_t cpu_spinup_trampoline;
 
@@ -274,10 +278,6 @@ extern  u_long  mp_tramp_ci;
 
 void	cpu_hatch(void);
 void	cpu_boot_secondary_processors(void);
-
-/* Helper functions to retrieve cache info */
-int	cpu_ecache_associativity(int node);
-int	cpu_ecache_size(int node);
 
 /*
  * Call a function on other cpus:
