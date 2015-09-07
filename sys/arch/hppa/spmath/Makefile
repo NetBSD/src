@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2015/09/07 03:20:18 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.5 2015/09/07 03:44:19 uebayasi Exp $
 
 #	$OpenBSD: Makefile,v 1.4 2000/01/11 21:32:57 mickey Exp $
 
@@ -23,13 +23,13 @@ install:
 
 .include <bsd.lib.mk>
 
-${LIB}.o:: ${OBJS}
+${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f ${LIB}.o
 	@${LD} -r -o ${LIB}.o `${LORDER} ${OBJS} | tsort`
 	@echo done
 
-${LIB}.po:: ${POBJS}
+${LIB}.po:: ${POBJS:O}
 	@echo building profiled ${LIB} library
 	@rm -f ${LIB}.po
 	@${LD} -r -o ${LIB}.po `${LORDER} ${POBJS} | tsort`
