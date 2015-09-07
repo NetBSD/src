@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.346 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.347 2015/09/07 15:19:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -74,14 +74,16 @@
  *
  *	- Check XXX'ed comments
  *	- EEE (Energy Efficiency Ethernet)
- *	- MSI/MSI-X
+ *	- Multi queue
+ *	- Image Unique ID
+ *	- LPLU other than PCH*
  *	- Virtual Function
  *	- Set LED correctly (based on contents in EEPROM)
  *	- Rework how parameters are loaded from the EEPROM.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.346 2015/08/17 06:16:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.347 2015/09/07 15:19:05 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -723,6 +725,7 @@ static void	wm_nvm_release(struct wm_softc *);
 static int	wm_nvm_is_onboard_eeprom(struct wm_softc *);
 static int	wm_nvm_get_flash_presence_i210(struct wm_softc *);
 static int	wm_nvm_validate_checksum(struct wm_softc *);
+static void	wm_nvm_version_invm(struct wm_softc *);
 static void	wm_nvm_version(struct wm_softc *);
 static int	wm_nvm_read(struct wm_softc *, int, int, uint16_t *);
 
@@ -9753,6 +9756,26 @@ wm_nvm_validate_checksum(struct wm_softc *sc)
 }
 
 static void
+wm_nvm_version_invm(struct wm_softc *sc)
+{
+	uint32_t dword;
+
+	/*
+	 * Linux's code to decode version is very strange, so we don't
+	 * obey that algorithm and just use word 61 as the document.
+	 * Perhaps it's not perfect though...
+	 *
+	 * Example:
+	 *
+	 *   Word61: 00800030 -> Version 0.6 (I211 spec update notes about 0.6)
+	 */
+	dword = CSR_READ(sc, WM_INVM_DATA_REG(61));
+	dword = __SHIFTOUT(dword, INVM_VER_1);
+	sc->sc_nvm_ver_major = __SHIFTOUT(dword, INVM_MAJOR);
+	sc->sc_nvm_ver_minor = __SHIFTOUT(dword, INVM_MINOR);
+}
+
+static void
 wm_nvm_version(struct wm_softc *sc)
 {
 	uint16_t major, minor, build, patch;
@@ -9796,12 +9819,12 @@ wm_nvm_version(struct wm_softc *sc)
 			check_version = true;
 		break;
 	case WM_T_I211:
-		/* XXX wm_nvm_version_invm(sc); */
-		return;
+		wm_nvm_version_invm(sc);
+		goto printver;
 	case WM_T_I210:
 		if (!wm_nvm_get_flash_presence_i210(sc)) {
-			/* XXX wm_nvm_version_invm(sc); */
-			return;
+			wm_nvm_version_invm(sc);
+			goto printver;
 		}
 		/* FALLTHROUGH */
 	case WM_T_I350:
@@ -9824,12 +9847,14 @@ wm_nvm_version(struct wm_softc *sc)
 
 		/* Decimal */
 		minor = (minor / 16) * 10 + (minor % 16);
-
-		aprint_verbose(", version %d.%d", major, minor);
-		if (have_build)
-			aprint_verbose(".%d", build);
 		sc->sc_nvm_ver_major = major;
 		sc->sc_nvm_ver_minor = minor;
+
+printver:
+		aprint_verbose(", version %d.%d", sc->sc_nvm_ver_major,
+		    sc->sc_nvm_ver_minor);
+		if (have_build)
+			aprint_verbose(".%d", build);
 	}
 	if (check_optionrom) {
 		wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off);
