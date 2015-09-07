@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.78 2015/06/13 15:47:58 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.79 2015/09/07 15:19:05 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1113,6 +1113,13 @@ struct livengood_tcpip_ctxdesc {
 #define INVM_DEFAULT_AL		0x202f
 #define INVM_AUTOLOAD		0x0a
 #define INVM_PLL_WO_VAL		0x0010
+
+/* Version and Image Type field */
+#define INVM_VER_1	__BITS(12,3)
+#define INVM_VER_2	__BITS(22,13)
+#define INVM_IMGTYPE	__BITS(28,23)
+#define INVM_MINOR	__BITS(3,0)
+#define INVM_MAJOR	__BITS(9,4)
 
 /* Word definitions for ID LED Settings */
 #define ID_LED_RESERVED_FFFF 0xFFFF
