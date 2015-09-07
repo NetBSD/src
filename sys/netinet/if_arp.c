@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.176 2015/09/02 09:28:13 christos Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.177 2015/09/07 01:17:37 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.176 2015/09/02 09:28:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.177 2015/09/07 01:17:37 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -787,7 +787,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	int renew;
 	int flags = 0;
 	int error;
-	bool create;
 
 	la = arplookup(ifp, m, &satocsin(dst)->sin_addr, 1, 0, 0, rt);
 	if (la != NULL)
@@ -830,7 +829,6 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 #endif
 
 retry:
-	create = false;
 	if (la == NULL) {
 		IF_AFDATA_RLOCK(ifp);
 		la = lla_lookup(LLTABLE(ifp), flags, dst);
@@ -843,20 +841,20 @@ retry:
 #else
 	    && ((ifp->if_flags & IFF_NOARP) == 0)) {
 #endif
-		create = true;
 		flags |= LLE_EXCLUSIVE;
 		IF_AFDATA_WLOCK(ifp);
 		la = lla_create(LLTABLE(ifp), flags, dst);
 		IF_AFDATA_WUNLOCK(ifp);
-	}
 
-	if (la == NULL) {
-		if (create) {
+		if (la == NULL) {
 			log(LOG_DEBUG,
 			    "%s: failed to create llentry for %s on %s\n",
 			    __func__, inet_ntoa(satocsin(dst)->sin_addr),
 			    ifp->if_xname);
 		}
+	}
+
+	if (la == NULL) {
 		m_freem(m);
 		return 0;
 	}
