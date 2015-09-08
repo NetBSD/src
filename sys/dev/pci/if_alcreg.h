@@ -200,7 +200,7 @@
  * alc(4) does not rely on Tx completion interrupts, so set it
  * somewhat large value to reduce Tx completion interrupts.
  */
-#define	ALC_IM_TX_TIMER_DEFAULT		50000	/* 50ms */
+#define	ALC_IM_TX_TIMER_DEFAULT		1000	/* 1ms */
 
 #define	ALC_GPHY_CFG			0x140C	/* 16 bits, 32 bits on AR816x */
 #define	GPHY_CFG_EXT_RESET		0x0001
@@ -1147,7 +1147,6 @@ struct smb {
 	uint32_t tx_multi_colls;
 	uint32_t tx_late_colls;
 	uint32_t tx_excess_colls;
-	uint32_t tx_abort;
 	uint32_t tx_underrun;
 	uint32_t tx_desc_underrun;
 	uint32_t tx_lenerrs;
@@ -1421,7 +1420,6 @@ struct alc_hw_stats {
 	uint32_t tx_multi_colls;
 	uint32_t tx_late_colls;
 	uint32_t tx_excess_colls;
-	uint32_t tx_abort;
 	uint32_t tx_underrun;
 	uint32_t tx_desc_underrun;
 	uint32_t tx_lenerrs;
