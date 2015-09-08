@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.62 2015/07/21 05:54:44 mrg Exp $   */
+/*      $NetBSD: raidctl.c,v 1.63 2015/09/08 08:59:09 bad Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.62 2015/07/21 05:54:44 mrg Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.63 2015/09/08 08:59:09 bad Exp $");
 #endif
 
 
@@ -577,12 +577,12 @@ rf_pm_configure(int fd, int raidID, char *parityconf, int parityparams[])
 }
 
 /* convert "component0" into "absent" */
-static const char *rf_output_devname(const char *devname)
+static const char *rf_output_devname(const char *name)
 {
 
-	if (strncmp(devname, "component", 9) == 0)
+	if (strncmp(name, "component", 9) == 0)
 		return "absent";
-	return devname;
+	return name;
 }
 
 static void
