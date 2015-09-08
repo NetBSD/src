@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.3 2015/09/06 23:48:39 nakayama Exp $	*/
+/*	$NetBSD: vpci.c,v 1.4 2015/09/08 04:04:33 palle Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.3 2015/09/06 23:48:39 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.4 2015/09/08 04:04:33 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -233,6 +233,8 @@ FiXME
 	for (int range = 0; range < nranges; range++)
 		DPRINTF(VDB_PROM, ("\nvpci_attach: bus-range %d %08x", range, busranges[range]));
 
+ 	aprint_normal(": bus %d to %d", busranges[0], busranges[1]);
+	
 	vpci_init_iommu(sc, pbm);
 
 	pbm->vp_memt = vpci_alloc_mem_tag(pbm);
@@ -304,6 +306,8 @@ vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 		free(vdma, M_DEVBUF);
 	} else
 		panic("vpci_init_iommu: getprop virtual-dma failed");
+
+ 	aprint_normal(" vdma %x length %x\n", iobase, iolen);
 	
 	/* We have no STC.  */
 	is->is_sb[0] = NULL;
