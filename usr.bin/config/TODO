@@ -440,3 +440,13 @@ o Support library.
 o Accept `.a' suffix.
 
   Make "file" command accept `.a' suffix.  Handle it the same way as `.o'.
+
+o Clean up ${MD_OBJS} and friends in Makefile.${MACHINE}.
+
+  Don't use ${MD_OBJS}, ${MD_LIBS}, ${MD_SFILES}, and ${MD_CFILES}.
+
+  List files in config(5)'s "file".  Override build rules only when neccesary.
+
+  Rely on the fact that config(1) parses files.${MACHINE} first, outputs
+  files in the order it parses files.* (actually include depth), and
+  `Makefile.kern.inc' preserve file order to pass to ${LD}.
