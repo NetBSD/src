@@ -450,3 +450,9 @@ o Clean up ${MD_OBJS} and friends in Makefile.${MACHINE}.
   Rely on the fact that config(1) parses files.${MACHINE} first, outputs
   files in the order it parses files.* (actually include depth), and
   `Makefile.kern.inc' preserve file order to pass to ${LD}.
+
+o Clean up CTF-related rules.
+
+  Don't overwrite compile/link rules conditionally by existence of
+  ${CTFCONVERT}/${CTFMERGE}.  Give a separate suffix (*.ctfo) and define its
+  rules (.c -> .ctfo).
