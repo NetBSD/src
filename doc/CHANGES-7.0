@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.374 2015/09/04 15:11:00 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.375 2015/09/08 12:05:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -33981,4 +33981,17 @@ sys/dev/pci/hdaudio/hdaudiovar.h		1.10
 
 	Fix locking against myself problem.
 	[tsutsui, ticket #963]
+
+sys/dev/dkwedge/dk.c				1.82
+
+	No longer access the disk driver directly.
+	If there is an open wedge, temporarily reference its vnode.
+	Otherwise try to open the block device.
+	[mlelstv, ticket #967]
+
+sbin/gpt/gpt_uuid.h				1.4
+
+	A change to the GPT_TYPE list also requires a change to the GPT_TYPE
+	index constants.
+	[mlelstv, ticket #969]
 
