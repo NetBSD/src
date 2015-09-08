@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.72.2.3 2014/12/09 20:17:16 martin Exp $	*/
+/*	$NetBSD: dk.c,v 1.72.2.4 2015/09/08 12:02:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.72.2.3 2014/12/09 20:17:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.72.2.4 2015/09/08 12:02:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -102,6 +102,8 @@ static int	dkwedge_cleanup_parent(struct dkwedge_softc *, int);
 static int	dkwedge_detach(device_t, int);
 static void	dkwedge_delall1(struct disk *, bool);
 static int	dkwedge_del1(struct dkwedge_info *, int);
+static struct vnode *dk_open_parent(dev_t, int);
+static int	dk_close_parent(struct vnode *, int);
 
 static dev_type_open(dkopen);
 static dev_type_close(dkclose);
@@ -946,34 +948,58 @@ dkwedge_read(struct disk *pdk, struct vnode *vp, daddr_t blkno,
 {
 	buf_t *bp;
 	int error;
+	bool isopen;
+	dev_t bdev;
+	struct vnode *bdevvp;
 
 	/*
 	 * The kernel cannot read from a character device vnode
 	 * as physio() only handles user memory.
 	 *
-	 * Determine the corresponding block device and call into
-	 * the driver directly.
+	 * If the block device has already been opened by a wedge
+	 * use that vnode and temporarily bump the open counter.
+	 *
+	 * Otherwise try to open the block device.
 	 */
 
-	bp = getiobuf(vp, true);
+	bdev = devsw_chr2blk(vp->v_rdev);
+
+	mutex_enter(&pdk->dk_rawlock);
+	if (pdk->dk_rawopens != 0) {
+		KASSERT(pdk->dk_rawvp != NULL);
+		isopen = true;
+		++pdk->dk_rawopens;
+		bdevvp = pdk->dk_rawvp;
+	} else {
+		isopen = false;
+		bdevvp = dk_open_parent(bdev, FREAD);
+	}
+	mutex_exit(&pdk->dk_rawlock);
+
+	if (bdevvp == NULL)
+		return EBUSY;
+
+	bp = getiobuf(bdevvp, true);
 	bp->b_flags = B_READ;
 	bp->b_cflags = BC_BUSY;
-	bp->b_dev = devsw_chr2blk(vp->v_rdev);
+	bp->b_dev = bdev;
 	bp->b_data = tbuf;
 	bp->b_bufsize = bp->b_bcount = len;
 	bp->b_blkno = blkno;
 	bp->b_cylinder = 0;
 	bp->b_error = 0;
 
-	error = bdev_open(bp->b_dev, FREAD, S_IFBLK, curlwp);
-	if (error)
-		return error;
-
-	bdev_strategy(bp);
+	VOP_STRATEGY(bdevvp, bp);
 	error = biowait(bp);
 	putiobuf(bp);
 
-	bdev_close(bp->b_dev, FREAD, S_IFBLK, curlwp);
+	mutex_enter(&pdk->dk_rawlock);
+	if (isopen) {
+		--pdk->dk_rawopens;
+	} else {
+		dk_close_parent(bdevvp, FREAD);
+	}
+	mutex_exit(&pdk->dk_rawlock);
 
 	return error;
 }
@@ -994,6 +1020,48 @@ dkwedge_lookup(dev_t dev)
 	KASSERT(dkwedges != NULL);
 
 	return (dkwedges[unit]);
+}
+
+static struct vnode *
+dk_open_parent(dev_t dev, int mode)
+{
+	struct vnode *vp;
+	int error;
+
+	error = bdevvp(dev, &vp);
+	if (error)
+		return NULL;
+
+	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	if (error) {
+		vrele(vp);
+		return NULL;
+	}
+	error = VOP_OPEN(vp, mode, NOCRED);
+	if (error) {
+		vput(vp);
+		return NULL;
+	}
+
+	/* VOP_OPEN() doesn't do this for us. */
+	if (mode & FWRITE) {
+		mutex_enter(vp->v_interlock);
+		vp->v_writecount++;
+		mutex_exit(vp->v_interlock);
+	}
+
+	VOP_UNLOCK(vp);
+
+	return vp;
+}
+
+static int
+dk_close_parent(struct vnode *vp, int mode)
+{
+	int error;
+
+	error = vn_close(vp, mode, NOCRED);
+	return error;
 }
 
 /*
@@ -1024,24 +1092,9 @@ dkopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	if (sc->sc_dk.dk_openmask == 0) {
 		if (sc->sc_parent->dk_rawopens == 0) {
 			KASSERT(sc->sc_parent->dk_rawvp == NULL);
-			error = bdevvp(sc->sc_pdev, &vp);
-			if (error)
+			vp = dk_open_parent(sc->sc_pdev, FREAD | FWRITE);
+			if (vp == NULL)
 				goto popen_fail;
-			error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-			if (error) {
-				vrele(vp);
-				goto popen_fail;
-			}
-			error = VOP_OPEN(vp, FREAD | FWRITE, NOCRED);
-			if (error) {
-				vput(vp);
-				goto popen_fail;
-			}
-			/* VOP_OPEN() doesn't do this for us. */
-			mutex_enter(vp->v_interlock);
-			vp->v_writecount++;
-			mutex_exit(vp->v_interlock);
-			VOP_UNLOCK(vp);
 			sc->sc_parent->dk_rawvp = vp;
 		}
 		sc->sc_parent->dk_rawopens++;
@@ -1077,8 +1130,7 @@ dklastclose(struct dkwedge_softc *sc)
 
 	if (doclose) {
 		KASSERT(sc->sc_parent->dk_rawvp != NULL);
-		error = vn_close(sc->sc_parent->dk_rawvp,
-		    FREAD | FWRITE, NOCRED);
+		dk_close_parent(sc->sc_parent->dk_rawvp, FREAD | FWRITE);
 		sc->sc_parent->dk_rawvp = NULL;
 	}
 
