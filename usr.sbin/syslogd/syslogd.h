@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.h,v 1.6 2015/02/15 14:51:57 joerg Exp $	*/
+/*	$NetBSD: syslogd.h,v 1.7 2015/09/08 18:33:12 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@ char *strndup(const char *str, size_t n);
 void dbprintf(const char *, const char *, size_t, const char *, ...)
     __printflike(4, 5);
 #define DPRINTF(x, ...) /*LINTED null effect */(void)(Debug & (x) \
-    ? dbprintf(__FILE__, __func__, __LINE__, __VA_ARGS__) : 0)
+    ? dbprintf(__FILE__, __func__, __LINE__, __VA_ARGS__) : ((void)0))
 #endif
 
 /* shortcuts for libevent */
