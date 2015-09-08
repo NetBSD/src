@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.298 2015/09/06 23:48:39 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.299 2015/09/08 13:18:06 nakayama Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.298 2015/09/06 23:48:39 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2015/09/08 13:18:06 nakayama Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -60,8 +60,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.298 2015/09/06 23:48:39 nakayama Exp $");
 #include <machine/bootinfo.h>
 #ifdef SUN4V
 #include <machine/hypervisor.h>
-#include <machine/mdesc.h>
 #endif
+#include <machine/mdesc.h>
 
 #include <sparc64/sparc64/cache.h>
 
