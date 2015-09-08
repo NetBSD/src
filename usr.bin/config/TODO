@@ -221,6 +221,18 @@ o Always use explicit kernel linker script.
   because these have no constraints about page boundary; they map and access
   kernel .text/.data in the same way.
 
+o Pass input files to ${LD} via linker script.
+
+  Instead of passing input files on command-line, output "INPUT(xxx.o)"
+  commands, and include it from generated linker scripts.
+
+o Generate `*.d' files.
+
+  Output source/object files in raw texts instead of `Makefile'.  Generate
+  `*.d' (make(1) depend) files.  make(1) knows which object files are to be
+  compiled.  With "INPUT(xxx.o)" linker scripts, either generated `Makefile'
+  or `Makefile.kern.inc' don't need to keep source/object files in variables.
+
 o Control ELF sections using linker script.
 
   Now kernel is linked and built directly from object files (*.o).  Each port
@@ -420,3 +432,11 @@ o Define genassym(1) symbols per file.
   When one header is updated, only related *.assym.h files are regenerated,
   instead of rebuilding all MD/*.S files that depend on the global, single
   assym.h.
+
+o Support library.
+
+  Provide a consistent way to build library either as .o or .a.
+
+o Accept `.a' suffix.
+
+  Make "file" command accept `.a' suffix.  Handle it the same way as `.o'.
