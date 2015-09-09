@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.179 2015/09/09 01:22:28 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.180 2015/09/09 01:24:01 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.179 2015/09/09 01:22:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.180 2015/09/09 01:24:01 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -159,7 +159,7 @@ static	void arp_init(void);
 
 static	struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
 	    const struct sockaddr *);
-static	void arptfree(struct llentry *);
+static	void arptfree(struct rtentry *);
 static	void arptimer(void *);
 static	struct llentry *arplookup(struct ifnet *, struct mbuf *,
 	    const struct in_addr *, int, int, int, struct rtentry *);
@@ -351,8 +351,11 @@ arptimer(void *arg)
 	/* XXX: LOR avoidance. We still have ref on lle. */
 	LLE_WUNLOCK(lle);
 
-	/* We have to call this w/o lock */
-	arptfree(lle);
+	if (lle->la_rt != NULL) {
+		/* We have to call arptfree w/o IF_AFDATA_LOCK */
+		arptfree(lle->la_rt);
+		lle->la_rt = NULL;
+	}
 
 	IF_AFDATA_LOCK(ifp);
 	LLE_WLOCK(lle);
@@ -1423,18 +1426,11 @@ out:
 /*
  * Free an arp entry.
  */
-static void arptfree(struct llentry *la)
+static void arptfree(struct rtentry *rt)
 {
-	struct rtentry *rt = la->la_rt;
-
-	KASSERT(rt != NULL);
-
-	if (la->la_rt != NULL) {
-		rtfree(la->la_rt);
-		la->la_rt = NULL;
-	}
 
 	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, NULL);
+	rtfree(rt);
 }
 
 /*
