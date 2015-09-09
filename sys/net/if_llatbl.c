@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.3 2015/08/31 12:57:45 pooka Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.4 2015/09/09 01:26:50 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -42,6 +42,7 @@
 #include <sys/syslog.h>
 #include <sys/sysctl.h>
 #include <sys/socket.h>
+#include <sys/socketvar.h>
 #include <sys/kernel.h>
 #include <sys/lock.h>
 #include <sys/mutex.h>
@@ -370,8 +371,9 @@ lltable_free(struct lltable *llt)
 	llentries_unlink(llt, &dchain);
 	IF_AFDATA_WUNLOCK(llt->llt_ifp);
 
+	mutex_enter(softnet_lock);
 	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next) {
-		if (callout_stop(&lle->la_timer))
+		if (callout_halt(&lle->la_timer, softnet_lock))
 			LLE_REMREF(lle);
 #if defined(__NetBSD__)
 		/* XXX should have callback? */
@@ -380,6 +382,7 @@ lltable_free(struct lltable *llt)
 #endif
 		llentry_free(lle);
 	}
+	mutex_exit(softnet_lock);
 
 	llt->llt_free_tbl(llt);
 }
