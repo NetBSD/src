@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.4 2015/09/08 04:04:33 palle Exp $	*/
+/*	$NetBSD: vpci.c,v 1.5 2015/09/09 03:47:58 palle Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.4 2015/09/08 04:04:33 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.5 2015/09/09 03:47:58 palle Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -307,7 +307,8 @@ vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 	} else
 		panic("vpci_init_iommu: getprop virtual-dma failed");
 
- 	aprint_normal(" vdma %x length %x\n", iobase, iolen);
+	aprint_normal(" vdma %x length %x\n", iobase, iolen);
+	aprint_naive("\n");
 	
 	/* We have no STC.  */
 	is->is_sb[0] = NULL;
