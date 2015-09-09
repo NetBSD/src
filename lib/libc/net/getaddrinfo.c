@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.106 2013/12/22 02:40:48 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.107 2015/09/09 10:06:05 ozaki-r Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,10 +55,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.106 2013/12/22 02:40:48 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.107 2015/09/09 10:06:05 ozaki-r Exp $");
 #endif /* LIBC_SCCS and not lint */
 
+#ifndef RUMP_ACTION
 #include "namespace.h"
+#endif
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -90,10 +92,12 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.106 2013/12/22 02:40:48 christos Exp $");
 
 #include "servent.h"
 
+#ifndef RUMP_ACTION
 #ifdef __weak_alias
 __weak_alias(getaddrinfo,_getaddrinfo)
 __weak_alias(freeaddrinfo,_freeaddrinfo)
 __weak_alias(gai_strerror,_gai_strerror)
+#endif
 #endif
 
 #define SUCCESS 0
