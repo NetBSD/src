@@ -1,3 +1,13 @@
+	--- 9.10.2-P4 released ---
+
+4170.	[security]	An incorrect boundary check in the OPENPGPKEY
+			rdatatype could trigger an assertion failure.
+			(CVE-2015-5986) [RT #40286]
+
+4168.	[security]	A buffer accounting error could trigger an
+			assertion failure when parsing certain malformed 
+			DNSSEC keys. (CVE-2015-5722) [RT #40212]
+
 	--- 9.10.2-P3 released ---
 
 4165.	[security]	A failure to reset a value to NULL in tkey.c could

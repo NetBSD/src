@@ -43,6 +43,8 @@ while (<>) {
     s/{\\texttt{{\.\\dbz{}}}}/\\mbox{{\\texttt{{\.\\dbz{}}}}}/;
 
     # Add any further tweaking here.
+    # https://en.wikibooks.org/wiki/LaTeX/Special_Characters
+    s/&#50102;/{\\"o}/;  # omlaut o &#xc3b6; or &#50102;
 
     # Write out whatever we have now.
     print;

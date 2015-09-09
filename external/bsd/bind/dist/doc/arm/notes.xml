@@ -23,6 +23,10 @@
       This document summarizes changes since BIND 9.10.2:
     </para>
     <para>
+      BIND 9.10.2-P4 addresses security issues described in
+      CVE-2015-5722 and CVE-2015-5986.
+    </para>
+    <para>
       BIND 9.10.2-P3 addresses a security issue described in
       CVE-2015-5477.
     </para>
@@ -56,6 +60,23 @@
   <sect2 id="relnotes_security">
     <title>Security Fixes</title>
     <itemizedlist>
+      <listitem>
+	<para>
+	  An incorrect boundary check in the OPENPGPKEY rdatatype
+	  could trigger an assertion failure. This flaw is disclosed
+	  in CVE-2015-5986. [RT #40286]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  A buffer accounting error could trigger an assertion failure
+	  when parsing certain malformed DNSSEC keys.
+	</para>
+	<para>
+	  This flaw was discovered by Hanno B&#xc3b6;eck of the Fuzzing
+	  Project, and is disclosed in CVE-2015-5722. [RT #40212]
+	</para>
+      </listitem>
       <listitem>
 	<para>
 	  A specially crafted query could trigger an assertion failure

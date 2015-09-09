@@ -1,4 +1,4 @@
-/*	$NetBSD: dst.h,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: dst.h,v 1.8.4.1 2015/09/09 08:10:03 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -73,6 +73,7 @@ typedef struct dst_context 	dst_context_t;
 #define DST_ALG_HMACSHA256	163	/* XXXMPA */
 #define DST_ALG_HMACSHA384	164	/* XXXMPA */
 #define DST_ALG_HMACSHA512	165	/* XXXMPA */
+#define DST_ALG_INDIRECT	252
 #define DST_ALG_PRIVATE		254
 #define DST_ALG_EXPAND		255
 #define DST_MAX_ALGS		255
