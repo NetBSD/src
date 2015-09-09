@@ -1,4 +1,4 @@
-# $NetBSD: assym.mk,v 1.1 2015/09/06 06:13:16 uebayasi Exp $
+# $NetBSD: assym.mk,v 1.2 2015/09/09 03:16:14 uebayasi Exp $
 
 assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	${_MKTARGET_CREATE}
@@ -6,7 +6,12 @@ assym.h: ${GENASSYM_CONF} ${GENASSYM_EXTRAS} $S/conf/genassym.cf
 	    ${GENASSYM} -- ${CC} ${CFLAGS:N-Wa,*} ${CPPFLAGS} ${PROF} \
 	    ${GENASSYM_CPPFLAGS} > assym.h.tmp && \
 	mv -f assym.h.tmp assym.h
+
+.if !defined(___USE_SUFFIX_RULES___)
 ${_MD_SFILES:C/\.[Ss]/.o/} ${_SFILES:C/\.[Ss]/.o/}: assym.h
+.else
+${ALLFILES:M*.[sS]}: assym.h
+.endif
 
 assym.d: assym.h
 	${_MKTARGET_CREATE}
