@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.8 2014/03/01 03:24:37 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.8.4.1 2015/09/09 08:10:03 martin Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -966,6 +966,7 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	RSA *rsa;
 	isc_region_t r;
 	unsigned int e_bytes;
+	unsigned int length;
 #if USE_EVP
 	EVP_PKEY *pkey;
 #endif
@@ -973,6 +974,7 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 	isc_buffer_remainingregion(data, &r);
 	if (r.length == 0)
 		return (ISC_R_SUCCESS);
+	length = r.length;
 
 	rsa = RSA_new();
 	if (rsa == NULL)
@@ -983,17 +985,18 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		RSA_free(rsa);
 		return (DST_R_INVALIDPUBLICKEY);
 	}
-	e_bytes = *r.base++;
-	r.length--;
+	e_bytes = *r.base;
+	isc_region_consume(&r, 1);
 
 	if (e_bytes == 0) {
 		if (r.length < 2) {
 			RSA_free(rsa);
 			return (DST_R_INVALIDPUBLICKEY);
 		}
-		e_bytes = ((*r.base++) << 8);
-		e_bytes += *r.base++;
-		r.length -= 2;
+		e_bytes = (*r.base) << 8;
+		isc_region_consume(&r, 1);
+		e_bytes += *r.base;
+		isc_region_consume(&r, 1);
 	}
 
 	if (r.length < e_bytes) {
@@ -1001,14 +1004,13 @@ opensslrsa_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		return (DST_R_INVALIDPUBLICKEY);
 	}
 	rsa->e = BN_bin2bn(r.base, e_bytes, NULL);
-	r.base += e_bytes;
-	r.length -= e_bytes;
+	isc_region_consume(&r, e_bytes);
 
 	rsa->n = BN_bin2bn(r.base, r.length, NULL);
 
 	key->key_size = BN_num_bits(rsa->n);
 
-	isc_buffer_forward(data, r.length);
+	isc_buffer_forward(data, length);
 
 #if USE_EVP
 	pkey = EVP_PKEY_new();
