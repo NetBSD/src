@@ -1,4 +1,4 @@
-.\" $NetBSD: mount_ntfs.8,v 1.20 2014/03/18 18:20:39 riastradh Exp $
+.\" $NetBSD: mount_ntfs.8,v 1.21 2015/09/09 11:14:09 christos Exp $
 .\"
 .\" Copyright (c) 1993,1994 Christopher G. Demetriou
 .\" Copyright (c) 1999 Semen Ustimenko
@@ -31,7 +31,7 @@
 .\"
 .\"	Id: mount_ntfs.8,v 1.3 1999/05/04 11:34:33 jkoshy Exp
 .\"
-.Dd October 31, 2001
+.Dd September 9, 2015
 .Dt MOUNT_NTFS 8
 .Os
 .Sh NAME
@@ -179,9 +179,16 @@ mount_ntfs: /dev/wd0k on /mnt: Invalid argument
 .Pp
 make sure that appropriate partition has correct entry in the
 disk label, particularly that the partition offset is correct.
+.Pp
+Recently many cards (in particular SDXC ones) are formatted using
+exFAT.
+For those cards, disklabel reports NTFS as the partition type.
+There is currently no support for mounting exFAT drives.
+.Pp
 If the NTFS partition is the first partition on the disk, the
-offset should be '63' on i386 (see
+offset should be '63' or '2048' on i386 (see
 .Xr disklabel 8 ) .
+exFAT partitions typically report an offset of '32768'.
 .Xr mbrlabel 8
 could help you to set up the disk label correctly.
 .Pp
