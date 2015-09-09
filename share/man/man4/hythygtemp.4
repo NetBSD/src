@@ -1,4 +1,4 @@
-.\"	$NetBSD: hythygtemp.4,v 1.2 2014/05/18 12:45:03 wiz Exp $
+.\"	$NetBSD: hythygtemp.4,v 1.3 2015/09/09 17:16:20 phx Exp $
 .\"
 .\" Copyright (c) 2014 Frank Kardel
 .\" All rights reserved.
@@ -44,13 +44,28 @@ The
 .Ar addr
 argument selects the address at the
 .Xr iic 4
-bus.
+bus. The sampling interval can be changed through the
+.Xr sysctl 8
+node
+.Li hw.hythygtemp0.interval .
+.Pp
 The sensor chips can be reconfigured to respond to other addresses than the
-default value of 0x28.
+default value of 0x28 by external utilities, like for example the
+.Pa pkgsrc/sysutils/hytctl
+package.
+.Sh SYSCTL VARIABLES
+The following
+.Xr sysctl 3
+variables are provided:
+.Bl -tag -width indent
+.It hw.hythygtemp0.interval
+Defines the sensor's sampling interval in seconds. It defaults to 50 seconds.
+.El
 .Sh SEE ALSO
 .Xr envsys 4 ,
 .Xr iic 4 ,
-.Xr envstat 8
+.Xr envstat 8 ,
+.Xr sysctl 8
 .Sh HISTORY
 The
 .Nm
@@ -61,4 +76,6 @@ driver first appeared in
 The
 .Nm
 driver was written by
-.An Frank Kardel Aq Mt kardel@NetBSD.org .
+.An Frank Kardel Aq Mt kardel@NetBSD.org
+and
+.An Frank Wille Aq phx@NetBSD.org .
