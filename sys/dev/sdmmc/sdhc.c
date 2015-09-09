@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.85 2015/09/09 08:04:33 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.86 2015/09/09 08:06:47 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.85 2015/09/09 08:04:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.86 2015/09/09 08:06:47 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -2223,8 +2223,7 @@ sdhc_intr(void *arg)
 		 * Wake up the blocking process to service command
 		 * related interrupt(s).
 		 */
-		if (ISSET(status, SDHC_COMMAND_COMPLETE|
-		    SDHC_CMD_TIMEOUT_ERROR|SDHC_DATA_TIMEOUT_ERROR|
+		if (ISSET(status, SDHC_COMMAND_COMPLETE|SDHC_ERROR_INTERRUPT|
 		    SDHC_BUFFER_READ_READY|SDHC_BUFFER_WRITE_READY|
 		    SDHC_TRANSFER_COMPLETE|SDHC_DMA_INTERRUPT)) {
 			hp->intr_error_status |= error;
