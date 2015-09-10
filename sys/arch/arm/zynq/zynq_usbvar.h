@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usbvar.h,v 1.1 2015/01/23 12:34:09 hkenken Exp $	*/
+/*	$NetBSD: zynq_usbvar.h,v 1.2 2015/09/10 04:00:32 hkenken Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -63,9 +63,6 @@ void zynqusb_attach_common(device_t parent, device_t self,
  */
 int zynqusb_match(device_t, cfdata_t, void *);
 void zynqusb_attach(device_t, device_t, void *);
-
-void zynqusb_select_interface(struct zynqehci_softc *, enum zynq_usb_if);
-void zynqusb_host_mode(struct zynqehci_softc *);
 void zynqusb_reset(struct zynqehci_softc *);
 
 #endif	/* _ARM_ZYNQ_ZYNQ_USBVAR_H */

@@ -45,8 +45,6 @@ struct imxehci_softc {
 };
 
 int imxusbc_attach_common(device_t, device_t, bus_space_tag_t);
-void imxehci_select_interface(struct imxehci_softc *, enum imx_usb_if);
-void imxehci_host_mode(struct imxehci_softc *);
 void imxehci_reset(struct imxehci_softc *);
 
 #endif	/* _ARM_IMX_IMXUSBVAR_H */
