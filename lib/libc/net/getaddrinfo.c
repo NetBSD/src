@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.108 2015/09/10 11:33:27 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.109 2015/09/10 14:05:06 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.108 2015/09/10 11:33:27 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.109 2015/09/10 14:05:06 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -95,6 +95,7 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.108 2015/09/10 11:33:27 christos Exp $");
 #ifndef RUMP_ACTION
 #ifdef __weak_alias
 __weak_alias(getaddrinfo,_getaddrinfo)
+__weak_alias(allocaddrinfo,_allocaddrinfo)
 __weak_alias(freeaddrinfo,_freeaddrinfo)
 __weak_alias(gai_strerror,_gai_strerror)
 #endif
@@ -935,7 +936,7 @@ get_canonname(const struct addrinfo *pai, struct addrinfo *ai, const char *str)
 	return 0;
 }
 
-static struct addrinfo *
+struct addrinfo *
 allocaddrinfo(socklen_t addrlen)
 {
 	struct addrinfo *ai;
