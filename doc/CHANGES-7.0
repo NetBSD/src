@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0,v 1.1.2.377 2015/09/09 09:15:18 martin Exp $
+# $NetBSD: CHANGES-7.0,v 1.1.2.378 2015/09/10 03:03:57 snj Exp $
 
 A complete list of changes from the initial NetBSD 7.0 branch on 11 Aug 2014
 until the 7.0 release:
@@ -34071,4 +34071,27 @@ external/mit/xorg/lib/libxcb/xkb/Makefile	1.2
 
 	Fix libxcb-xkb.so version.
 	[mrg, ticket #974]
+
+doc/3RDPARTY					patch
+external/public-domain/tz/dist/Makefile         up to 1.1.1.9
+external/public-domain/tz/dist/NEWS             up to 1.1.1.9
+external/public-domain/tz/dist/Theory           up to 1.1.1.4
+external/public-domain/tz/dist/africa           up to 1.1.1.6
+external/public-domain/tz/dist/antarctica       up to 1.1.1.4
+external/public-domain/tz/dist/asia             up to 1.1.1.8
+external/public-domain/tz/dist/backward         up to 1.1.1.4
+external/public-domain/tz/dist/backzone         up to 1.1.1.7
+external/public-domain/tz/dist/checktab.awk     up to 1.1.1.7
+external/public-domain/tz/dist/europe           up to 1.1.1.9
+external/public-domain/tz/dist/iso3166.tab      up to 1.1.1.2
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.4
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.5
+external/public-domain/tz/dist/northamerica     up to 1.1.1.9
+external/public-domain/tz/dist/southamerica     up to 1.1.1.7
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.5
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.7
+external/public-domain/tz/tzdata2netbsd         up to 1.7
+
+	Update tzdata to 2015f.
+	[jun, ticket #955]
 
