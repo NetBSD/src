@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.31 2015/09/10 16:16:35 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.32 2015/09/10 16:21:48 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -76,7 +76,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_EDOM		33		/* Numerical argument out of domain */
 #define	RUMP_ERANGE		34		/* Result too large or too small */
 #define	RUMP_EAGAIN		35		/* Resource temporarily unavailable */
-#define	RUMP_EWOULDBLOCK	EAGAIN		/* Operation would block */
+#define	RUMP_EWOULDBLOCK	RUMP_EAGAIN		/* Operation would block */
 #define	RUMP_EINPROGRESS	36		/* Operation now in progress */
 #define	RUMP_EALREADY	37		/* Operation already in progress */
 #define	RUMP_ENOTSOCK	38		/* Socket operation on non-socket */
