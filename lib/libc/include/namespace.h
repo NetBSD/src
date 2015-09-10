@@ -1,4 +1,4 @@
-/*	$NetBSD: namespace.h,v 1.178 2015/05/01 14:17:56 christos Exp $	*/
+/*	$NetBSD: namespace.h,v 1.179 2015/09/10 14:05:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2004 The NetBSD Foundation, Inc.
@@ -170,6 +170,7 @@
 #define a64l			_a64l
 #define adjtime			_adjtime
 #define alarm			_alarm
+#define allocaddrinfo		_allocaddrinfo
 #define alphasort		_alphasort
 #define arc4random		_arc4random
 #define arc4random_addrandom	_arc4random_addrandom
