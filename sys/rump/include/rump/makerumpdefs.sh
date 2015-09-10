@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec 3>&1 > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.26 2015/09/10 16:14:22 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.27 2015/09/10 16:21:32 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -60,7 +60,8 @@ sed -n '/#define.*LK_[A-Z]/s/LK_/RUMP_LK_/gp' <../../../sys/vnode.h	\
     | sed 's,/\*.*$,,'
 
 fromvers ../../../sys/errno.h
-sed -n '/#define[ 	]*E/s/E[A-Z]*/RUMP_&/p' < ../../../sys/errno.h
+sed -n '/#define[ 	]*E/s/\([ 	]\)\(E[A-Z2][A-Z]*\)/\1RUMP_\2/gp' \
+    < ../../../sys/errno.h
 
 fromvers ../../../sys/reboot.h
 sed -n '/#define.*RB_[A-Z]/s/RB_/RUMP_RB_/gp' <../../../sys/reboot.h	\
@@ -129,7 +130,7 @@ echo Generating rumperr.h
 rm -f rumperr.h
 exec > rumperr.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.26 2015/09/10 16:14:22 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.27 2015/09/10 16:21:32 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n'
 
 fromvers ../../../sys/errno.h
