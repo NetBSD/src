@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.232 2015/03/26 22:20:42 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.233 2015/09/10 17:15:11 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.232 2015/03/26 22:20:42 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.233 2015/09/10 17:15:11 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.232 2015/03/26 22:20:42 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.233 2015/09/10 17:15:11 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -168,6 +168,7 @@ Boolean			keepgoing;	/* -k flag */
 Boolean			queryFlag;	/* -q flag */
 Boolean			touchFlag;	/* -t flag */
 Boolean			enterFlag;	/* -w flag */
+Boolean			enterFlagObj;	/* -w and objdir != srcdir */
 Boolean			ignoreErrors;	/* -i flag */
 Boolean			beSilent;	/* -s flag */
 Boolean			oldVars;	/* variable substitution style */
@@ -710,6 +711,8 @@ Main_SetObjdir(const char *path)
 			setenv("PWD", objdir, 1);
 			Dir_InitDot();
 			rc = TRUE;
+			if (enterFlag && strcmp(objdir, curdir) != 0)
+				enterFlagObj = TRUE;
 		}
 	}
 
@@ -1231,6 +1234,9 @@ main(int argc, char **argv)
 	    doing_depend = FALSE;
 	}
 
+	if (enterFlagObj)
+		printf("%s: Entering directory `%s'\n", progname, objdir);
+	
 	MakeMode(NULL);
 
 	Var_Append("MFLAGS", Var_Value(MAKEFLAGS, VAR_GLOBAL, &p1), VAR_GLOBAL);
@@ -1372,6 +1378,8 @@ main(int argc, char **argv)
 
 	Trace_Log(MAKEEND, 0);
 
+	if (enterFlagObj)
+		printf("%s: Leaving directory `%s'\n", progname, objdir);
 	if (enterFlag)
 		printf("%s: Leaving directory `%s'\n", progname, curdir);
 
