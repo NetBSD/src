@@ -1,4 +1,4 @@
-/*	$NetBSD: imxusb.c,v 1.8 2015/09/04 07:34:32 skrll Exp $	*/
+/*	$NetBSD: imxusb.c,v 1.9 2015/09/10 04:00:32 hkenken Exp $	*/
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi and Hiroyuki Bessho for Genetec Corporation.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.8 2015/09/04 07:34:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxusb.c,v 1.9 2015/09/10 04:00:32 hkenken Exp $");
 
 #include "opt_imx.h"
 
@@ -61,7 +61,8 @@ uint8_t imxusb_ulpi_read(struct imxehci_softc *sc, int addr);
 void imxusb_ulpi_write(struct imxehci_softc *sc, int addr, uint8_t data);
 static void ulpi_reset(struct imxehci_softc *sc);
 
-
+static void imxehci_select_interface(struct imxehci_softc *, enum imx_usb_if);
+static void imxehci_init(struct ehci_softc *);
 
 /* attach structures */
 CFATTACH_DECL_NEW(imxehci, sizeof(struct imxehci_softc),
@@ -98,6 +99,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc_usbc = usbc;
 	hsc->sc_bus.hci_private = sc;
 	hsc->sc_flags |= EHCIF_ETTF;
+	hsc->sc_vendor_init = imxehci_init;
 
 	aprint_naive("\n");
 	aprint_normal(": i.MX USB Controller\n");
@@ -153,7 +155,6 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	/* Platform dependent setup */
 	if (usbc->sc_init_md_hook)
 		usbc->sc_init_md_hook(sc);
-
 	
 	imxehci_reset(sc);
 	imxehci_select_interface(sc, sc->sc_iftype);
@@ -172,8 +173,6 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 
 	}
 
-	imxehci_host_mode(sc);
-	
 	if (usbc->sc_setup_md_hook)
 		usbc->sc_setup_md_hook(sc, IMXUSB_HOST);
 
@@ -214,10 +213,7 @@ imxehci_attach(device_t parent, device_t self, void *aux)
 	hsc->sc_child = config_found(self, &hsc->sc_bus, usbctlprint);
 }
 
-
-
-
-void
+static void
 imxehci_select_interface(struct imxehci_softc *sc, enum imx_usb_if interface)
 {
 	uint32_t reg;
@@ -243,7 +239,6 @@ imxehci_select_interface(struct imxehci_softc *sc, enum imx_usb_if interface)
 	}
 	EOWRITE4(hsc, EHCI_PORTSC(1), reg);
 }
-
 
 static uint32_t
 ulpi_wakeup(struct imxehci_softc *sc, int tout)
@@ -407,10 +402,10 @@ imxehci_reset(struct imxehci_softc *sc)
 	usb_delay_ms(&hsc->sc_bus, 100);
 }
 
-void
-imxehci_host_mode(struct imxehci_softc *sc)
+static void
+imxehci_init(struct ehci_softc *hsc)
 {
-	struct ehci_softc *hsc = &sc->sc_hsc;
+	struct imxehci_softc *sc = device_private(hsc->sc_dev);
 	uint32_t reg;
 
 	reg = EOREAD4(hsc, EHCI_PORTSC(1));
@@ -426,6 +421,7 @@ imxehci_host_mode(struct imxehci_softc *sc)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_OTGSC, reg);
 
 	reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXUSB_USBMODE);
+	reg &= ~USBMODE_CM;
 	reg |= USBMODE_CM_HOST;
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, IMXUSB_USBMODE, reg);
 }
