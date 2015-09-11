@@ -437,6 +437,9 @@ o Support library.
 
   Provide a consistent way to build library either as .o or .a.
 
+  Build libraries in sub-make.  Don't include library makefiles.  Don't
+  pollute search path (.PATH).  libkern does too much.
+
 o Accept `.a' suffix.
 
   Make "file" command accept `.a' suffix.  Handle it the same way as `.o'.
