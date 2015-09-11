@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.6 2015/09/11 06:51:43 skrll Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.7 2015/09/11 06:55:56 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.6 2015/09/11 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.7 2015/09/11 06:55:56 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -130,7 +130,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	 * We need to tell the USB interface to snoop all off RAM starting
 	 * at 0.  Since it can do it by powers of 2, get the highest RAM
 	 * address and roughly round it to the next power of 2 and find
-	 * the number of leading zero bits.  
+	 * the number of leading zero bits.
 	 */
 	cpu_write_4(cnl->cnl_addr + USB_SNOOP1,
 	    SNOOP_2GB - __builtin_clz(curcpu()->ci_softc->cpu_highmem * 2 - 1));
