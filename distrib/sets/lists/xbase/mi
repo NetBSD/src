@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.128 2015/09/03 22:24:02 youri Exp $
+# $NetBSD: mi,v 1.129 2015/09/11 10:35:44 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1015,7 +1015,6 @@
 ./usr/X11R6/man/cat1/sxpm.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/texteroids.0			-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/twm.0				-unknown-	.cat,x11
-./usr/X11R6/man/cat1/ctwm.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/ucs2any.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/viewres.0				-unknown-	.cat,x11
 ./usr/X11R6/man/cat1/x11perf.0				-unknown-	.cat,x11
@@ -2631,6 +2630,7 @@
 ./usr/X11R7/man/cat1/startx.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/sxpm.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/twm.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat1/ctwm.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/ucs2any.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/viewres.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat1/x11perf.0				-unknown-	.cat,xorg
