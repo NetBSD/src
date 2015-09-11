@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.176 2015/09/04 05:33:23 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.177 2015/09/11 10:33:32 roy Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.176 2015/09/04 05:33:23 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.177 2015/09/11 10:33:32 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1478,8 +1478,10 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				 */
 				if (ifa != rt->rt_ifa)
 					rt_replace_ifa(rt, ifa);
+				rt->rt_rmx.rmx_mtu = 0;
 				rt->rt_flags &= ~RTF_CLONED;
 			}
+			rt->rt_flags |= RTF_LOCAL;
 		} else if (rt->rt_flags & RTF_ANNOUNCE) {
 			nd6_llinfo_settimer(ln, -1);
 			ln->ln_state = ND6_LLINFO_REACHABLE;
