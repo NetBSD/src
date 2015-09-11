@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.245 2015/09/10 13:11:39 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.246 2015/09/11 01:40:52 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -250,7 +250,7 @@ TARGETSFX=	.gdb
 LINKFLAGS+=	${LINKFLAGS_NORMAL}
 .endif
 
-SYSTEM_LD_HEAD+=${SYSTEM_LD_HEAD_EXTRA}
+SYSTEM_LD_HEAD+=	${SYSTEM_LD_HEAD_EXTRA}
 SYSTEM_LD_TAIL_STAGE1=	${SYSTEM_LD_TAIL}
 SYSTEM_LD_TAIL_STAGE2=	${SYSTEM_LD_TAIL}
 .if defined(COPY_SYMTAB)
