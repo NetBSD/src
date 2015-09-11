@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.180 2015/09/09 01:24:01 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.181 2015/09/11 10:33:32 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.180 2015/09/09 01:24:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.181 2015/09/11 10:33:32 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -641,8 +641,11 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 				panic("%s(%s): sockaddr_dl_init cannot fail",
 				    __func__, ifp->if_xname);
 			}
-			if (useloopback)
+			if (useloopback) {
 				ifp = rt->rt_ifp = lo0ifp;
+				rt->rt_rmx.rmx_mtu = 0;
+			}
+			rt->rt_flags |= RTF_LOCAL;
 			/*
 			 * make sure to set rt->rt_ifa to the interface
 			 * address we are using, otherwise we will have trouble
