@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.244 2015/08/24 23:55:04 pooka Exp $ */
+/*	$NetBSD: ehci.c,v 1.245 2015/09/11 06:51:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.244 2015/08/24 23:55:04 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.245 2015/09/11 06:51:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -449,17 +449,6 @@ ehci_init(ehci_softc_t *sc)
 	}
 	if (sc->sc_vendor_init)
 		sc->sc_vendor_init(sc);
-
-	/*
-	 * If we are doing embedded transaction translation function, force
-	 * the controller to host mode.
-	 */
-	if (sc->sc_flags & EHCIF_ETTF) {
-		uint32_t usbmode = EOREAD4(sc, EHCI_USBMODE);
-		usbmode &= ~EHCI_USBMODE_CM;
-		usbmode |= EHCI_USBMODE_CM_HOST;
-		EOWRITE4(sc, EHCI_USBMODE, usbmode);
-	}
 
 	/* XXX need proper intr scheduling */
 	sc->sc_rand = 96;

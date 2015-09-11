@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_arbus.c,v 1.2 2012/07/20 02:14:02 matt Exp $	*/
+/*	$NetBSD: ehci_arbus.c,v 1.3 2015/09/11 06:51:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2 2012/07/20 02:14:02 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.3 2015/09/11 06:51:43 skrll Exp $");
 
 #include "locators.h"
 
@@ -50,11 +50,23 @@ __KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.2 2012/07/20 02:14:02 matt Exp $");
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+/*
+ * This is relative to the start of the unreserved registers in USB contoller
+ * block and not the full USB block which would be 0x1a8.
+ */
+#define	ARBUS_USBMODE		0xa8			/* USB mode */
+#define	 USBMODE_CM		__BITS(0,1)		/* Controller Mode */
+#define	 USBMODE_CM_IDLE	__SHIFTIN(0,USBMODE_CM)	/* Idle (both) */
+#define	 USBMODE_CM_DEVICE	__SHIFTIN(2,USBMODE_CM)	/* Device Controller */
+#define	 USBMODE_CM_HOST	__SHIFTIN(3,USBMODE_CM)	/* Host Controller */
+
 static int	ehci_arbus_match(device_t, cfdata_t, void *);
 static void	ehci_arbus_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(ehci_arbus, sizeof (ehci_softc_t),
     ehci_arbus_match, ehci_arbus_attach, NULL, NULL);
+
+static void ehci_arbus_init(struct ehci_soft *);
 
 int
 ehci_arbus_match(device_t parent, cfdata_t cf, void *aux)
@@ -85,6 +97,7 @@ ehci_arbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bus.dmatag = aa->aa_dmat;
 	sc->sc_bus.usbrev = USBREV_1_0;
 	sc->sc_flags |= EHCIF_ETTF;
+	sc->sc_vendor_init = ehci_arbus_init;
 
 	error = bus_space_map(aa->aa_bst, aa->aa_addr, aa->aa_size, 0,
 	    &sc->ioh);
@@ -136,3 +149,16 @@ ehci_arbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
 }
 
+static void
+ehci_arbus_init(struct ehci_softc *sc)
+{
+	/* Set host mode */
+	uint32_t old = bus_space_read_4(sc->iot, sc->ioh, ARBUS_USBMODE);
+	uint32_t reg = old;
+
+	reg &= ~USBMODE_CM;
+	reg |= USBMODE_CM_HOST;
+	if (reg != old)
+		bus_space_write_4(sc->iot, sc->ioh, ARBUS_USBMODE, reg);
+
+}
