@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1252 2015/09/07 10:35:10 wiz Exp $
+#	$NetBSD: 3RDPARTY,v 1.1253 2015/09/11 08:02:20 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1368,23 +1368,6 @@ License:	BSD or GPLv2
 Location:	external/bsd/wpa/dist
 Notes:
 See /usr/src/external/bsd/wpa/NetBSD-upgrade for update instructions.
-
-Package:	XFree86
-Version:	4.5.0
-Current Vers:	4.8.0
-Maintainer:	XFree86 Project, Inc.
-Archive Site:	ftp://ftp.xfree86.org/pub/XFree86/
-Home Page:	http://www.xfree86.org/
-Mailing List:	devel@xfree86.org
-Responsible:	tron
-License:	XFree
-Location:	(xsrc)
-Notes:
-4.x:
- Only X4??src-1 to X4??src-6 were imported. X4??src-7 contains postscript
- files which we don't need in our tree.
- ALL changes must be sent back to the XFree86 repository. Patches should
- be submitted back via http://bugzilla.xfree86.org.
 
 Package:	zlib
 Version:	1.2.3
