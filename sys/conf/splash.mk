@@ -1,7 +1,7 @@
-# $NetBSD: splash.mk,v 1.1 2015/08/30 07:33:53 uebayasi Exp $
+# $NetBSD: splash.mk,v 1.2 2015/09/11 15:56:56 nat Exp $
 
 # Option for embedding a splashscreen image.
 .if defined(SPLASHSCREEN_IMAGE) 
 .include "${S}/dev/splash/splash.mk"
-init_main.o: splash_image.o
+OBJS+= splash_image.o
 .endif
