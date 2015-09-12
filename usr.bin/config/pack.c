@@ -1,4 +1,4 @@
-/*	$NetBSD: pack.c,v 1.9 2014/10/29 17:14:50 christos Exp $	*/
+/*	$NetBSD: pack.c,v 1.10 2015/09/12 19:11:13 joerg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pack.c,v 1.9 2014/10/29 17:14:50 christos Exp $");
+__RCSID("$NetBSD: pack.c,v 1.10 2015/09/12 19:11:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -119,7 +119,7 @@ pack(void)
 	 */
 	locspace = 0;
 	TAILQ_FOREACH(i, &alldevi, i_next) {
-		if (!i->i_active == DEVI_ACTIVE || i->i_collapsed)
+		if (i->i_active != DEVI_ACTIVE || i->i_collapsed)
 			continue;
 		if ((p = i->i_pspec) == NULL)
 			continue;
