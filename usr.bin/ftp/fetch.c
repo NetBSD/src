@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.206 2014/10/26 16:21:59 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.207 2015/09/12 19:38:42 wiz Exp $	*/
 
 /*-
- * Copyright (c) 1997-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -9,6 +9,9 @@
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Scott Aaron Bamford.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Thomas Klausner.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -34,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.206 2014/10/26 16:21:59 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.207 2015/09/12 19:38:42 wiz Exp $");
 #endif /* not lint */
 
 /*
@@ -782,7 +785,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 #ifdef WITH_SSL
 			if (urltype == HTTPS_URL_T) {
-				if ((ssl = fetch_start_ssl(s)) == NULL) {
+				if ((ssl = fetch_start_ssl(s, host)) == NULL) {
 					close(s);
 					s = -1;
 					continue;
