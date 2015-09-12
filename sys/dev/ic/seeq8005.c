@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.53 2015/04/13 16:33:24 riastradh Exp $ */
+/* $NetBSD: seeq8005.c,v 1.54 2015/09/12 19:18:24 christos Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.53 2015/04/13 16:33:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.54 2015/09/12 19:18:24 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,8 +875,10 @@ ea_start(struct ifnet *ifp)
 	 * us (actually ea_txpacket()) back when the card's ready for more
 	 * frames.
 	 */
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE) {
+		splx(s);
 		return;
+	}
 
 	/* Mark interface as output active */
 
