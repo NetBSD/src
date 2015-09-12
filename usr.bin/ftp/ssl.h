@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl.h,v 1.2 2014/01/07 02:07:08 joerg Exp $	*/
+/*	$NetBSD: ssl.h,v 1.3 2015/09/12 19:38:42 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ ssize_t fetch_read(void *, size_t, size_t, struct fetch_connect *);
 char *fetch_getln(char *, int, struct fetch_connect *);
 int fetch_getline(struct fetch_connect *, char *, size_t, const char **);
 void fetch_set_ssl(struct fetch_connect *, void *);
-void *fetch_start_ssl(int);
+void *fetch_start_ssl(int, const char *);
 
 #else	/* !WITH_SSL */
 
