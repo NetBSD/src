@@ -446,7 +446,7 @@ SMTPD(8)                                                              SMTPD(8)
               Postfix SMTP server cipher list at mandatory TLS  security  lev-
               els.
 
-       <b><a href="postconf.5.html#smtpd_tls_mandatory_protocols">smtpd_tls_mandatory_protocols</a> (!SSLv2)</b>
+       <b><a href="postconf.5.html#smtpd_tls_mandatory_protocols">smtpd_tls_mandatory_protocols</a> (!SSLv2, !SSLv3)</b>
               The  SSL/TLS  protocols accepted by the Postfix SMTP server with
               mandatory TLS encryption.
 
@@ -494,11 +494,11 @@ SMTPD(8)                                                              SMTPD(8)
 
        Available in Postfix version 2.6 and later:
 
-       <b><a href="postconf.5.html#smtpd_tls_protocols">smtpd_tls_protocols</a> (empty)</b>
+       <b><a href="postconf.5.html#smtpd_tls_protocols">smtpd_tls_protocols</a> (!SSLv2, !SSLv3)</b>
               List  of TLS protocols that the Postfix SMTP server will exclude
               or include with opportunistic TLS encryption.
 
-       <b><a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a> (export)</b>
+       <b><a href="postconf.5.html#smtpd_tls_ciphers">smtpd_tls_ciphers</a> (medium)</b>
               The minimum TLS cipher grade that the Postfix SMTP  server  will
               use with opportunistic TLS encryption.
 

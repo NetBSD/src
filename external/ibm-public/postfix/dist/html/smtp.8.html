@@ -432,7 +432,7 @@ SMTP(8)                                                                SMTP(8)
               policy by next-hop destination; when a non-empty value is speci-
               fied, this overrides the obsolete <a href="postconf.5.html#smtp_tls_per_site">smtp_tls_per_site</a> parameter.
 
-       <b><a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> (!SSLv2)</b>
+       <b><a href="postconf.5.html#smtp_tls_mandatory_protocols">smtp_tls_mandatory_protocols</a> (!SSLv2, !SSLv3)</b>
               List  of SSL/TLS protocols that the Postfix SMTP client will use
               with mandatory TLS encryption.
 
@@ -497,11 +497,11 @@ SMTP(8)                                                                SMTP(8)
 
        Available in Postfix version 2.6 and later:
 
-       <b><a href="postconf.5.html#smtp_tls_protocols">smtp_tls_protocols</a> (!SSLv2)</b>
+       <b><a href="postconf.5.html#smtp_tls_protocols">smtp_tls_protocols</a> (!SSLv2, !SSLv3)</b>
               List of TLS protocols that the Postfix SMTP client will  exclude
               or include with opportunistic TLS encryption.
 
-       <b><a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a> (export)</b>
+       <b><a href="postconf.5.html#smtp_tls_ciphers">smtp_tls_ciphers</a> (medium)</b>
               The  minimum  TLS cipher grade that the Postfix SMTP client will
               use with opportunistic TLS encryption.
 
