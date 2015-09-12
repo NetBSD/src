@@ -17919,7 +17919,7 @@ Apologies for any names omitted.
 
 20120824
 
-	Feature: support for "sendmail -R hdrs|full". Jan Kundrát.
+	Feature: support for "sendmail -R hdrs|full". Jan Kundr?t.
 	File: sendmail/sendmail.c.
 
 20120902
@@ -19641,3 +19641,46 @@ Apologies for any names omitted.
 
 	Cleanup: missing " in \%s\" in postconf(1) fatal error
 	messages. Iain Hibbert. File: postconf/postconf_master.c.
+
+20150324
+
+	Bugfix (introduced: Postfix 2.6): sender_dependent_relayhost_maps
+	ignored the relayhost setting in the case of a DUNNO lookup
+	result.  It would use the recipient domain instead.  Viktor
+	Dukhovni. Wietse took the pieces of code that enforce the
+	precedence of a sender-dependent relayhost, the global
+	relayhost, and the recipient domain, and put that code
+	together in once place so that it is easier to maintain.
+	File: trivial-rewrite/resolve.c.
+
+20150330
+
+	Bitrot: prepare for future changes in OpenSSL API. Viktor
+	Dukhovni. File: tls_dane.c.
+
+20150408
+
+	Portability: FreeBSD10 support. Files: makedefs, util/sys_defs.h.
+
+	Incompatibility: specifying "make makefiles" with "CC=command"
+	will no longer override the default WARN setting.
+
+20150501
+
+	Support for Linux 4.*, and some simplification for future
+	makedefs files. Files: makedefs, util/sys_defs.h.
+
+20150718
+
+	Security: opportunistic TLS by default uses "medium" or
+	stronger ciphers instead of "export" or stronger. See the
+	RELEASE_NOTES file for how to get the old settings back.
+	Files: global/mail_params.h, proto/TLS_README.html,
+	proto/postconf.proto, and files derived from those.
+
+20150719
+
+	Security: Postfix TLS support by default no longer uses
+	SSLv2 or SSLv3.  See the RELEASE_NOTES file for how to get
+	the old settings back. Files: global/mail_params.h,
+	proto/postconf.proto, and files derived from those.

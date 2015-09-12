@@ -14,6 +14,40 @@ specifies the release date of a stable release or snapshot release.
 If you upgrade from Postfix 2.9 or earlier, read RELEASE_NOTES-2.10
 before proceeding.
 
+Incompatible change with Postfix 2.11.6
+---------------------------------------
+
+As of the middle of 2015, all supported Postfix releases no longer
+enable "export" grade ciphers for opportunistic TLS, and no longer
+use the deprecated SSLv2 and SSLv3 protocols for mandatory or
+opportunistic TLS.
+
+These changes are very unlikely to cause problems with server-to-server
+communication over the Internet, but they may result in interoperability
+problems with ancient client or server implementations on internal
+networks.  To address this problem, you can revert the changes with:
+
+Postfix SMTP client settings:
+
+    lmtp_tls_ciphers = export
+    smtp_tls_ciphers = export
+    lmtp_tls_protocols = !SSLv2
+    smtp_tls_protocols = !SSLv2
+    lmtp_tls_mandatory_protocols = !SSLv2
+    smtp_tls_mandatory_protocols = !SSLv2
+
+Postfix SMTP server settings:
+
+    smtpd_tls_ciphers = export
+    smtpd_tls_protocols =
+    smtpd_tls_mandatory_protocols = !SSLv2
+
+These settings, if put in main.cf, affect all Postfix SMTP client
+or server communication, which may be undesirable. To be more
+selective, use "-o name=value" parameter overrides on specific
+services in master.cf. Execute the command "postfix reload" to make
+the changes effective.
+
 Major changes - tls
 -------------------
 
