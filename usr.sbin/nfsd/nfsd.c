@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.63 2014/12/05 19:24:41 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.64 2015/09/12 13:50:55 joerg Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.63 2014/12/05 19:24:41 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.64 2015/09/12 13:50:55 joerg Exp $");
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ daemon2_fork(void)
 	 int detach_msg_pipe[2];
 
 	 /*
-	  * Set up a pipe for singalling the parent, making sure the
+	  * Set up a pipe for signalling the parent, making sure the
 	  * write end does not get allocated one of the file
 	  * descriptors that may be closed in daemon2_detach().  The
 	  * read end does not need such protection.
