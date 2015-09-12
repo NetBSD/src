@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.35 2015/02/17 20:30:44 joerg Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.36 2015/09/12 19:08:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994
@@ -76,7 +76,7 @@
 #if 0
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: regcomp.c,v 1.35 2015/02/17 20:30:44 joerg Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.36 2015/09/12 19:08:47 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -1074,19 +1074,19 @@ ordinary(
     int ch)
 {
 	cat_t *cap;
+	unsigned char uc = (unsigned char)ch;
 
 	_DIAGASSERT(p != NULL);
 
 	cap = p->g->categories;
-	if ((p->g->cflags&REG_ICASE) && isalpha((unsigned char) ch)
-	    && othercase((unsigned char) ch) != (unsigned char) ch)
-		bothcases(p, (unsigned char) ch);
+	if ((p->g->cflags & REG_ICASE) && isalpha(uc) && othercase(uc) != uc)
+		bothcases(p, uc);
 	else {
-		EMIT(OCHAR, (sopno)(unsigned char)ch);
-		if (cap[ch] == 0) {
+		EMIT(OCHAR, (sopno)uc);
+		if (cap[uc] == 0) {
 			_DIAGASSERT(__type_fit(unsigned char,
 			    p->g->ncategories + 1));
-			cap[ch] = (unsigned char)p->g->ncategories++;
+			cap[uc] = (unsigned char)p->g->ncategories++;
 		}
 	}
 }
