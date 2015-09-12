@@ -10784,14 +10784,16 @@ configurations in environments where DNS security is not assured. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
-%PARAM smtp_tls_mandatory_protocols !SSLv2
+%PARAM smtp_tls_mandatory_protocols !SSLv2, !SSLv3
 
 <p> List of SSL/TLS protocols that the Postfix SMTP client will use with
 mandatory TLS encryption.  In main.cf the values are separated by
 whitespace, commas or colons. In the policy table "protocols" attribute
 (see smtp_tls_policy_maps) the only valid separator is colon. An
 empty value means allow all protocols. The valid protocol names, (see
-<b>SSL_get_version(3)</b>), are "SSLv2", "SSLv3" and "TLSv1". </p>
+<b>SSL_get_version(3)</b>), are "SSLv2", "SSLv3" and "TLSv1". The
+default value is "!SSLv2, !SSLv3" for Postfix releases after the
+middle of 2015, "!SSLv2" for older releases. </p>
 
 <p> With Postfix &ge; 2.5 the parameter syntax was expanded to support
 protocol exclusions. One can explicitly exclude "SSLv2" by setting
@@ -10833,11 +10835,6 @@ later, the Postfix SMTP client must disable "SSLv2" and "SSLv3" when
 SNI is required.  If you use "dane" or "dane-only" do not disable
 TLSv1, except perhaps via the policy table for destinations which
 you are sure will support "TLSv1.1" or "TLSv1.2".  </p>
-
-<p> Since SSL version 2 has known protocol weaknesses and is now
-deprecated, the default setting excludes "SSLv2".  This means that by
-default, SSL version 2 will not be used at the "encrypt" security level
-and higher. </p>
 
 <p> See the documentation of the smtp_tls_policy_maps parameter and
 TLS_README for more information about security levels. </p>
@@ -10977,7 +10974,7 @@ configuration parameter. See there for details. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
-%PARAM lmtp_tls_mandatory_protocols !SSLv2
+%PARAM lmtp_tls_mandatory_protocols !SSLv2, !SSLv3
 
 <p> The LMTP-specific version of the smtp_tls_mandatory_protocols
 configuration parameter. See there for details. </p>
@@ -10998,14 +10995,16 @@ configuration parameter. See there for details. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
-%PARAM smtpd_tls_mandatory_protocols !SSLv2
+%PARAM smtpd_tls_mandatory_protocols !SSLv2, !SSLv3
 
 <p> The SSL/TLS protocols accepted by the Postfix SMTP server with
 mandatory TLS encryption. If the list is empty, the server supports
 all available SSL/TLS protocol versions.  A non-empty value is a
 list of protocol names separated by whitespace, commas or colons.
 The supported protocol names are "SSLv2", "SSLv3" and "TLSv1", and
-are not case sensitive. </p>
+are not case sensitive. The default value is "!SSLv2, !SSLv3" for
+Postfix releases after the middle of 2015, "!SSLv2" for older
+releases. </p>
 
 <p> With Postfix &ge; 2.5 the parameter syntax was expanded to support
 protocol exclusions. One can explicitly exclude "SSLv2" by setting
@@ -11021,11 +11020,6 @@ or later, these, or any other new protocol versions, cannot be
 disabled.  The latest patch levels of Postfix &ge; 2.6, and all
 versions of Postfix &ge; 2.10 can disable support for "TLSv1.1" or
 "TLSv1.2". </p>
-
-<p> Since SSL version 2 has known protocol weaknesses and is now
-deprecated, the default setting excludes "SSLv2".  This means that
-by default, SSL version 2 will not be used at the "encrypt" security
-level. </p>
 
 <p> Example: </p>
 
@@ -11161,7 +11155,7 @@ smtp_tls_security_level = may
 # can be mitigated by disabling a particular protocol or raising the
 # cipher grade from "export" to "low" or "medium").
 smtp_tls_ciphers = export
-smtp_tls_protocols = !SSLv2
+smtp_tls_protocols = !SSLv2, !SSLv3
 </pre>
 
 <pre>
@@ -11419,17 +11413,16 @@ one "medium" or "high" grade cipher. </p>
 
 <dl>
 <dt><b>export</b></dt>
-<dd> Enable "EXPORT" grade or stronger OpenSSL ciphers.
-This is the most appropriate setting for public MX hosts, and is always
-used with opportunistic TLS encryption. The underlying cipherlist
-is specified via the tls_export_cipherlist configuration parameter,
-which you are strongly encouraged to not change. </dd>
+<dd> Enable "EXPORT" grade or stronger OpenSSL ciphers.  The
+underlying cipherlist is specified via the tls_export_cipherlist
+configuration parameter, which you are strongly encouraged to not
+change.  This choice is insecure and SHOULD NOT be used.  </dd>
 
 <dt><b>low</b></dt>
-<dd> Enable "LOW" grade or stronger OpenSSL ciphers. The
-underlying cipherlist is specified via the tls_low_cipherlist
-configuration parameter, which you are strongly encouraged to
-not change. </dd>
+<dd> Enable "LOW" grade or stronger OpenSSL ciphers. The underlying
+cipherlist is specified via the tls_low_cipherlist configuration
+parameter, which you are strongly encouraged to not change.  This
+choice is insecure and SHOULD NOT be used.  </dd>
 
 <dt><b>medium</b></dt>
 <dd> Enable "MEDIUM" grade or stronger OpenSSL ciphers. These use 128-bit
@@ -11526,18 +11519,16 @@ on a per-destination basis. </p>
 
 <dl>
 <dt><b>export</b></dt>
-<dd> Enable "EXPORT" grade or better OpenSSL
-ciphers.  This is the default for opportunistic encryption. It is
-not recommended for mandatory encryption unless you must enforce TLS
-with "crippled" peers. The underlying cipherlist is specified via the
-tls_export_cipherlist configuration parameter, which you are strongly
-encouraged to not change. </dd>
+<dd> Enable "EXPORT" grade or better OpenSSL ciphers.  The underlying
+cipherlist is specified via the tls_export_cipherlist configuration
+parameter, which you are strongly encouraged to not change.  This
+choice is insecure and SHOULD NOT be used.  </dd>
 
 <dt><b>low</b></dt>
-<dd> Enable "LOW" grade or better OpenSSL ciphers.  This
-setting is only appropriate for internal mail servers.  The underlying
+<dd> Enable "LOW" grade or better OpenSSL ciphers.  The underlying
 cipherlist is specified via the tls_low_cipherlist configuration
-parameter, which you are strongly encouraged to not change. </dd>
+parameter, which you are strongly encouraged to not change.  This
+choice is insecure and SHOULD NOT be used.  </dd>
 
 <dt><b>medium</b></dt>
 <dd> Enable "MEDIUM" grade or better OpenSSL ciphers.
@@ -11623,56 +11614,47 @@ attribute. See smtp_tls_policy_maps for notes and examples. </p>
 %PARAM tls_high_cipherlist ALL:!EXPORT:!LOW:!MEDIUM:+RC4:@STRENGTH
 
 <p> The OpenSSL cipherlist for "HIGH" grade ciphers. This defines
-the meaning of the "high" setting in smtpd_tls_mandatory_ciphers,
-smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. You are
-strongly encouraged to not change this setting. With OpenSSL 1.0.0 and
-later the cipherlist may start with an "aNULL:" prefix, which restores
-the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
-list when they are enabled. This prefix is not needed with previous
-OpenSSL releases. </p>
+the meaning of the "high" setting in smtpd_tls_ciphers,
+smtpd_tls_mandatory_ciphers, smtp_tls_ciphers, smtp_tls_mandatory_ciphers,
+lmtp_tls_ciphers, and lmtp_tls_mandatory_ciphers. You are strongly
+encouraged to not change this setting.  </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
 %PARAM tls_medium_cipherlist ALL:!EXPORT:!LOW:+RC4:@STRENGTH
 
 <p> The OpenSSL cipherlist for "MEDIUM" or higher grade ciphers. This
-defines the meaning of the "medium" setting in smtpd_tls_mandatory_ciphers,
-smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. This is
-the default cipherlist for mandatory TLS encryption in the TLS
-client (with anonymous ciphers disabled when verifying server
-certificates). You are strongly encouraged to not change this
-setting.  With OpenSSL 1.0.0 and later the cipherlist may start with an
-"aNULL:" prefix, which restores the 0.9.8-compatible ordering of the
-aNULL ciphers to the top of the list when they are enabled. This prefix
-is not needed with previous OpenSSL releases. </p>
+defines the meaning of the "medium" setting in smtpd_tls_ciphers,
+smtpd_tls_mandatory_ciphers, smtp_tls_ciphers, smtp_tls_mandatory_ciphers,
+lmtp_tls_ciphers, and lmtp_tls_mandatory_ciphers.  This is the
+default cipherlist for mandatory TLS encryption in the TLS client
+(with anonymous ciphers disabled when verifying server certificates).
+This is the default cipherlist for opportunistic TLS with Postfix
+releases after the middle of 2015.  You are strongly encouraged to
+not change this setting.  </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
 %PARAM tls_low_cipherlist ALL:!EXPORT:+RC4:@STRENGTH
 
 <p> The OpenSSL cipherlist for "LOW" or higher grade ciphers. This defines
-the meaning of the "low" setting in smtpd_tls_mandatory_ciphers,
-smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. You are
-strongly encouraged to not change this setting.  With OpenSSL 1.0.0 and
-later the cipherlist may start with an "aNULL:" prefix, which restores
-the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
-list when they are enabled. This prefix is not needed with previous
-OpenSSL releases. </p>
+the meaning of the "low" setting in smtpd_tls_ciphers,
+smtpd_tls_mandatory_ciphers, smtp_tls_ciphers, smtp_tls_mandatory_ciphers,
+lmtp_tls_ciphers, and lmtp_tls_mandatory_ciphers. You are strongly
+encouraged to not change this setting.  </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
 %PARAM tls_export_cipherlist ALL:+RC4:@STRENGTH
 
 <p> The OpenSSL cipherlist for "EXPORT" or higher grade ciphers. This
-defines the meaning of the "export" setting in smtpd_tls_mandatory_ciphers,
-smtp_tls_mandatory_ciphers and lmtp_tls_mandatory_ciphers. This is
-the cipherlist for the opportunistic ("may") TLS client security
-level and is the default cipherlist for the SMTP server. You are
-strongly encouraged to not change this setting. With OpenSSL 1.0.0 and
-later the cipherlist may start with an "aNULL:" prefix, which restores
-the 0.9.8-compatible ordering of the aNULL ciphers to the top of the
-list when they are enabled. This prefix is not needed with previous
-OpenSSL releases. </p>
+defines the meaning of the "export" setting in smtpd_tls_ciphers,
+smtpd_tls_mandatory_ciphers, smtp_tls_ciphers, smtp_tls_mandatory_ciphers,
+lmtp_tls_ciphers, and lmtp_tls_mandatory_ciphers.  With Postfix
+releases before the middle of 2015 this is the default cipherlist
+for the opportunistic ("may") TLS client security level and also
+the default cipherlist for the SMTP server. You are strongly
+encouraged to not change this setting.  </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
@@ -11686,7 +11668,7 @@ change this setting. </p>
 
 <p> This feature is available in Postfix 2.3 and later. </p>
 
-%PARAM lmtp_tls_mandatory_ciphers
+%PARAM lmtp_tls_mandatory_ciphers medium
 
 <p> The LMTP-specific version of the smtp_tls_mandatory_ciphers
 configuration parameter.  See there for details. </p>
@@ -12144,12 +12126,13 @@ the hostname and IP address. The logging format is "host[address]:port".
 
 <p> This feature is available in Postfix 2.5 and later. </p>
 
-%PARAM smtp_tls_protocols !SSLv2
+%PARAM smtp_tls_protocols !SSLv2, !SSLv3
 
 <p> List of TLS protocols that the Postfix SMTP client will exclude or
-include with opportunistic TLS encryption. Starting with Postfix 2.6,
-the Postfix SMTP client will by default not use the obsolete SSLv2
-protocol. </p>
+include with opportunistic TLS encryption. The default value is
+"!SSLv2, !SSLv3" for Postfix releases after the middle of 2015,
+"!SSLv2" for older releases. Before Postfix 2.6, the Postfix SMTP
+client would use all protocols with opportunistic TLS. </p>
 
 <p> In main.cf the values are separated by whitespace, commas or
 colons. In the policy table (see smtp_tls_policy_maps) the only valid
@@ -12175,7 +12158,7 @@ versions of Postfix &ge; 2.10 can explicitly disable support for
 "TLSv1.1" or "TLSv1.2"</p>
 
 <p> To include a protocol list its name, to exclude it, prefix the name
-with a "!" character. To exclude SSLv2 even for opportunistic TLS set
+with a "!" character. To exclude SSLv2 for opportunistic TLS set
 "smtp_tls_protocols = !SSLv2". To exclude both "SSLv2" and "SSLv3" set
 "smtp_tls_protocols = !SSLv2, !SSLv3". Explicitly listing the protocols to
 include, rather than protocols to exclude, is supported, but not
@@ -12190,11 +12173,12 @@ smtp_tls_protocols = !SSLv2, !SSLv3
 
 <p> This feature is available in Postfix 2.6 and later. </p>
 
-%PARAM smtpd_tls_protocols
+%PARAM smtpd_tls_protocols !SSLv2, !SSLv3
 
 <p> List of TLS protocols that the Postfix SMTP server will exclude
-or include with opportunistic TLS encryption. This parameter SHOULD
-be left at its default empty value, allowing all protocols to be
+or include with opportunistic TLS encryption. The default value is
+"!SSLv2, !SSLv3" for Postfix releases after the middle of 2015,
+empty for older releases allowing all protocols to be
 used with opportunistic TLS.  A non-empty value is a list of protocol
 names separated by whitespace, commas or colons.  The supported
 protocol names are "SSLv2", "SSLv3" and "TLSv1", and are not case
@@ -12206,7 +12190,7 @@ versions of Postfix &ge; 2.10 can disable support for "TLSv1.1" or
 "TLSv1.2". </p>
 
 <p> To include a protocol list its name, to exclude it, prefix the name
-with a "!" character. To exclude SSLv2 even for opportunistic TLS set
+with a "!" character. To exclude SSLv2 for opportunistic TLS set
 "smtpd_tls_protocols = !SSLv2". To exclude both "SSLv2" and "SSLv3" set
 "smtpd_tls_protocols = !SSLv2, !SSLv3". Explicitly listing the protocols to
 include, rather than protocols to exclude, is supported, but not
@@ -12215,66 +12199,54 @@ OpenSSL interface semantics. </p>
 
 <p> Example: </p>
 <pre>
-smtpd_tls_protocols = !SSLv2
+smtpd_tls_protocols = !SSLv2, !SSLv3
 </pre>
 
 <p> This feature is available in Postfix 2.6 and later. </p>
 
-%PARAM lmtp_tls_protocols
+%PARAM lmtp_tls_protocols !SSLv2, !SSLv3
 
 <p> The LMTP-specific version of the smtp_tls_protocols configuration
 parameter. See there for details. </p>
 
 <p> This feature is available in Postfix 2.6 and later. </p>
 
-%PARAM smtp_tls_ciphers export
+%PARAM smtp_tls_ciphers medium
 
 <p> The minimum TLS cipher grade that the Postfix SMTP client
 will use with opportunistic TLS encryption. Cipher types listed in
 smtp_tls_exclude_ciphers are excluded from the base definition of
-the selected cipher grade. The default value "export" ensures maximum
-inter-operability. Because encryption is optional, stronger controls
-are not appropriate, and this setting SHOULD NOT be changed unless the
-change is essential. </p>
+the selected cipher grade.   The default value is "medium" for
+Postfix releases after the middle of 2015, "export" for older
+releases.  </p>
 
 <p> When TLS is mandatory the cipher grade is chosen via the
 smtp_tls_mandatory_ciphers configuration parameter, see there for syntax
 details. See smtp_tls_policy_maps for information on how to configure
 ciphers on a per-destination basis. </p>
 
-<p> Example: </p>
-<pre>
-smtp_tls_ciphers = export
-</pre>
-
 <p> This feature is available in Postfix 2.6 and later. With earlier Postfix
 releases only the smtp_tls_mandatory_ciphers parameter is implemented,
 and opportunistic TLS always uses "export" or better (i.e. all) ciphers. </p>
 
-%PARAM smtpd_tls_ciphers export
+%PARAM smtpd_tls_ciphers medium
 
 <p> The minimum TLS cipher grade that the Postfix SMTP server
 will use with opportunistic TLS encryption. Cipher types listed in
 smtpd_tls_exclude_ciphers are excluded from the base definition of
-the selected cipher grade. The default value "export" ensures maximum
-inter-operability. Because encryption is optional, stronger controls
-are not appropriate, and this setting SHOULD NOT be changed unless the
-change is essential. </p>
+the selected cipher grade.  The default value is "medium" for Postfix
+releases after the middle of 2015, "export" for older releases.
+</p>
 
 <p> When TLS is mandatory the cipher grade is chosen via the
 smtpd_tls_mandatory_ciphers configuration parameter, see there for syntax
 details. </p>
 
-<p> Example: </p>
-<pre>
-smtpd_tls_ciphers = export
-</pre>
-
 <p> This feature is available in Postfix 2.6 and later. With earlier Postfix
 releases only the smtpd_tls_mandatory_ciphers parameter is implemented,
 and opportunistic TLS always uses "export" or better (i.e. all) ciphers. </p>
 
-%PARAM lmtp_tls_ciphers export
+%PARAM lmtp_tls_ciphers medium
 
 <p> The LMTP-specific version of the smtp_tls_ciphers configuration
 parameter. See there for details. </p>
