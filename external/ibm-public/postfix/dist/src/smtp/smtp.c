@@ -1,4 +1,4 @@
-/*	$NetBSD: smtp.c,v 1.1.1.7 2014/07/06 19:27:55 tron Exp $	*/
+/*	$NetBSD: smtp.c,v 1.1.1.8 2015/09/12 08:20:37 tron Exp $	*/
 
 /*++
 /* NAME
@@ -373,7 +373,7 @@
 /*	Optional lookup tables with the Postfix SMTP client TLS security
 /*	policy by next-hop destination; when a non-empty value is specified,
 /*	this overrides the obsolete smtp_tls_per_site parameter.
-/* .IP "\fBsmtp_tls_mandatory_protocols (!SSLv2)\fR"
+/* .IP "\fBsmtp_tls_mandatory_protocols (!SSLv2, !SSLv3)\fR"
 /*	List of SSL/TLS protocols that the Postfix SMTP client will use with
 /*	mandatory TLS encryption.
 /* .IP "\fBsmtp_tls_scert_verifydepth (9)\fR"
@@ -423,10 +423,10 @@
 /*	certificate fingerprints.
 /* .PP
 /*	Available in Postfix version 2.6 and later:
-/* .IP "\fBsmtp_tls_protocols (!SSLv2)\fR"
+/* .IP "\fBsmtp_tls_protocols (!SSLv2, !SSLv3)\fR"
 /*	List of TLS protocols that the Postfix SMTP client will exclude or
 /*	include with opportunistic TLS encryption.
-/* .IP "\fBsmtp_tls_ciphers (export)\fR"
+/* .IP "\fBsmtp_tls_ciphers (medium)\fR"
 /*	The minimum TLS cipher grade that the Postfix SMTP client
 /*	will use with opportunistic TLS encryption.
 /* .IP "\fBsmtp_tls_eccert_file (empty)\fR"

@@ -1,4 +1,4 @@
-/*	$NetBSD: smtpd.c,v 1.1.1.11 2015/01/24 18:08:30 tron Exp $	*/
+/*	$NetBSD: smtpd.c,v 1.1.1.12 2015/09/12 08:20:37 tron Exp $	*/
 
 /*++
 /* NAME
@@ -382,7 +382,7 @@
 /* .IP "\fBsmtpd_tls_mandatory_exclude_ciphers (empty)\fR"
 /*	Additional list of ciphers or cipher types to exclude from the
 /*	Postfix SMTP server cipher list at mandatory TLS security levels.
-/* .IP "\fBsmtpd_tls_mandatory_protocols (!SSLv2)\fR"
+/* .IP "\fBsmtpd_tls_mandatory_protocols (!SSLv2, !SSLv3)\fR"
 /*	The SSL/TLS protocols accepted by the Postfix SMTP server with
 /*	mandatory TLS encryption.
 /* .IP "\fBsmtpd_tls_received_header (no)\fR"
@@ -420,10 +420,10 @@
 /*	for \fBcheck_ccert_access\fR and \fBpermit_tls_clientcerts\fR.
 /* .PP
 /*	Available in Postfix version 2.6 and later:
-/* .IP "\fBsmtpd_tls_protocols (empty)\fR"
+/* .IP "\fBsmtpd_tls_protocols (!SSLv2, !SSLv3)\fR"
 /*	List of TLS protocols that the Postfix SMTP server will exclude
 /*	or include with opportunistic TLS encryption.
-/* .IP "\fBsmtpd_tls_ciphers (export)\fR"
+/* .IP "\fBsmtpd_tls_ciphers (medium)\fR"
 /*	The minimum TLS cipher grade that the Postfix SMTP server
 /*	will use with opportunistic TLS encryption.
 /* .IP "\fBsmtpd_tls_eccert_file (empty)\fR"
