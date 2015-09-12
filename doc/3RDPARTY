@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1253 2015/09/11 08:02:20 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.1254 2015/09/12 09:49:21 tron Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1140,13 +1140,13 @@ and more. Vern's ping is gone. We are too different from everyone else
 now to do a new import.
 
 Package:	Postfix
-Version:	2.11.4
+Version:	2.11.6
 Current Vers:	3.0.2
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://postfix.cloud9.net/official/
 Home Page:	http://www.postfix.org/
 Mailing List:	postfix-users@postfix.org
-Responsible:	christos, tron
+Responsible:	christos
 License:	IBM Public License. See also src/external/ibm-public/postfix/dist.
 Location:	external/ibm-public/postfix/dist
 Notes:
@@ -1376,7 +1376,7 @@ Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
 Home Page:	http://www.zlib.net/
 Mailing List:
-Responsible:	gwr, tron, christos
+Responsible:	gwr, christos
 License:	BSD (3-clause)
 Location:	common/dist/zlib
 Notes:
