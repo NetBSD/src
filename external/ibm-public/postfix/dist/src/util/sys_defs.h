@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_defs.h,v 1.7 2014/07/06 19:45:51 tron Exp $	*/
+/*	$NetBSD: sys_defs.h,v 1.8 2015/09/12 08:23:24 tron Exp $	*/
 
 #ifndef _SYS_DEFS_H_INCLUDED_
 #define _SYS_DEFS_H_INCLUDED_
@@ -27,7 +27,7 @@
   */
 #if defined(FREEBSD2) || defined(FREEBSD3) || defined(FREEBSD4) \
     || defined(FREEBSD5) || defined(FREEBSD6) || defined(FREEBSD7) \
-    || defined(FREEBSD8) || defined(FREEBSD9) \
+    || defined(FREEBSD8) || defined(FREEBSD9) || defined(FREEBSD10) \
     || defined(BSDI2) || defined(BSDI3) || defined(BSDI4) \
     || defined(OPENBSD2) || defined(OPENBSD3) || defined(OPENBSD4) \
     || defined(OPENBSD5) \
@@ -757,7 +757,7 @@ extern int initgroups(const char *, int);
  /*
   * LINUX.
   */
-#if defined(LINUX2) || defined(LINUX3)
+#if defined(LINUX2) || defined(LINUX3) || defined(LINUX4)
 #define SUPPORTED
 #include <sys/types.h>
 #define UINT32_TYPE	unsigned int
