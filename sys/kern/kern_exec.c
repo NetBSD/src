@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.415 2015/09/12 17:04:57 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.416 2015/09/12 18:30:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.415 2015/09/12 17:04:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.416 2015/09/12 18:30:46 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -653,7 +653,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct proc		*p;
 	char			*dp;
 	u_int			modgen;
-	size_t			offs;
+	size_t			offs = 0;	// XXX: GCC
 
 	KASSERT(data != NULL);
 
