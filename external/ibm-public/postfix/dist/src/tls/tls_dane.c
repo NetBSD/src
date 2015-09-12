@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dane.c,v 1.1.1.1 2014/07/06 19:27:54 tron Exp $	*/
+/*	$NetBSD: tls_dane.c,v 1.1.1.2 2015/09/12 08:20:36 tron Exp $	*/
 
 /*++
 /* NAME
@@ -385,7 +385,7 @@ static dane_digest *add_digest(char *mdalg, int pref)
 	&& ((md = EVP_get_digestbyname(dane_mdalg)) == 0
 	    || (mdlen = EVP_MD_size(md)) <= 0
 	    || mdlen > EVP_MAX_MD_SIZE)) {
-	msg_warn("Unimplemented digest algoritm in %s: %s%s%s",
+	msg_warn("Unimplemented digest algorithm in %s: %s%s%s",
 		 VAR_TLS_DANE_DIGESTS, mdalg,
 		 value ? "=" : "", value ? value : "");
 	return (0);
@@ -1454,7 +1454,7 @@ static int set_serial(X509 *cert, AUTHORITY_KEYID *akid, X509 *subject)
 
 static int add_akid(X509 *cert, AUTHORITY_KEYID *akid)
 {
-    ASN1_STRING *id;
+    ASN1_OCTET_STRING *id;
     unsigned char c = 0;
     int     nid = NID_authority_key_identifier;
     int     ret = 0;
@@ -1466,13 +1466,13 @@ static int add_akid(X509 *cert, AUTHORITY_KEYID *akid)
      * exempt from any potential (off by default for now in OpenSSL)
      * self-signature checks!
      */
-    id = (ASN1_STRING *) ((akid && akid->keyid) ? akid->keyid : 0);
-    if (id && M_ASN1_STRING_length(id) == 1 && *M_ASN1_STRING_data(id) == c)
+    id = ((akid && akid->keyid) ? akid->keyid : 0);
+    if (id && ASN1_STRING_length(id) == 1 && *ASN1_STRING_data(id) == c)
 	c = 1;
 
     if ((akid = AUTHORITY_KEYID_new()) != 0
 	&& (akid->keyid = ASN1_OCTET_STRING_new()) != 0
-	&& M_ASN1_OCTET_STRING_set(akid->keyid, (void *) &c, 1)
+	&& ASN1_OCTET_STRING_set(akid->keyid, (void *) &c, 1)
 	&& X509_add1_ext_i2d(cert, nid, akid, 0, X509V3_ADD_DEFAULT) > 0)
 	ret = 1;
     if (akid)
