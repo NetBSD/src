@@ -1,4 +1,4 @@
-/*	$NetBSD: mail_params.h,v 1.12 2014/07/06 19:45:50 tron Exp $	*/
+/*	$NetBSD: mail_params.h,v 1.13 2015/09/12 08:23:24 tron Exp $	*/
 
 #ifndef _MAIL_PARAMS_H_INCLUDED_
 #define _MAIL_PARAMS_H_INCLUDED_
@@ -1278,15 +1278,15 @@ extern char *var_smtpd_tls_CAfile;
 extern char *var_smtpd_tls_CApath;
 
 #define VAR_SMTPD_TLS_PROTO		"smtpd_tls_protocols"
-#define DEF_SMTPD_TLS_PROTO		""
+#define DEF_SMTPD_TLS_PROTO		"!SSLv2, !SSLv3"
 extern char *var_smtpd_tls_proto;
 
 #define VAR_SMTPD_TLS_MAND_PROTO	"smtpd_tls_mandatory_protocols"
-#define DEF_SMTPD_TLS_MAND_PROTO	"!SSLv2"
+#define DEF_SMTPD_TLS_MAND_PROTO	"!SSLv2, !SSLv3"
 extern char *var_smtpd_tls_mand_proto;
 
 #define VAR_SMTPD_TLS_CIPH	"smtpd_tls_ciphers"
-#define DEF_SMTPD_TLS_CIPH	"export"
+#define DEF_SMTPD_TLS_CIPH	"medium"
 extern char *var_smtpd_tls_ciph;
 
 #define VAR_SMTPD_TLS_MAND_CIPH	"smtpd_tls_mandatory_ciphers"
@@ -1427,9 +1427,9 @@ extern char *var_smtp_tls_CAfile;
 extern char *var_smtp_tls_CApath;
 
 #define VAR_SMTP_TLS_CIPH	"smtp_tls_ciphers"
-#define DEF_SMTP_TLS_CIPH	"export"
+#define DEF_SMTP_TLS_CIPH	"medium"
 #define VAR_LMTP_TLS_CIPH	"lmtp_tls_ciphers"
-#define DEF_LMTP_TLS_CIPH	"export"
+#define DEF_LMTP_TLS_CIPH	"medium"
 extern char *var_smtp_tls_ciph;
 
 #define VAR_SMTP_TLS_MAND_CIPH	"smtp_tls_mandatory_ciphers"
@@ -1498,15 +1498,15 @@ extern int var_lmtp_tls_scache_timeout;
 extern char *var_smtp_tls_policy;
 
 #define VAR_SMTP_TLS_PROTO	"smtp_tls_protocols"
-#define DEF_SMTP_TLS_PROTO	"!SSLv2"
+#define DEF_SMTP_TLS_PROTO	"!SSLv2, !SSLv3"
 #define VAR_LMTP_TLS_PROTO	"lmtp_tls_protocols"
-#define DEF_LMTP_TLS_PROTO	"!SSLv2"
+#define DEF_LMTP_TLS_PROTO	"!SSLv2, !SSLv3"
 extern char *var_smtp_tls_proto;
 
 #define VAR_SMTP_TLS_MAND_PROTO	"smtp_tls_mandatory_protocols"
-#define DEF_SMTP_TLS_MAND_PROTO	"!SSLv2"
+#define DEF_SMTP_TLS_MAND_PROTO	"!SSLv2, !SSLv3"
 #define VAR_LMTP_TLS_MAND_PROTO	"lmtp_tls_mandatory_protocols"
-#define DEF_LMTP_TLS_MAND_PROTO	"!SSLv2"
+#define DEF_LMTP_TLS_MAND_PROTO	"!SSLv2, !SSLv3"
 extern char *var_smtp_tls_mand_proto;
 
 #define VAR_SMTP_TLS_VFY_CMATCH	"smtp_tls_verify_cert_match"
