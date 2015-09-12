@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.414 2015/09/11 01:23:37 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.415 2015/09/12 17:04:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.414 2015/09/11 01:23:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.415 2015/09/12 17:04:57 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -593,11 +593,12 @@ exec_autoload(void)
 #endif
 }
 
-static struct pathbuf *
-makepathbuf(struct lwp *l, const char *upath)
+static int
+makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
+    size_t *offs)
 {
 	char *path, *bp;
-	size_t len;
+	size_t len, tlen;
 	int error;
 	struct cwdinfo *cwdi;
 
@@ -606,11 +607,13 @@ makepathbuf(struct lwp *l, const char *upath)
 	if (error) {
 		PNBUF_PUT(path);
 		DPRINTF(("%s: copyin path @%p %d\n", __func__, upath, error));
-		return NULL;
+		return error;
 	}
 
-	if (path[0] == '/')
+	if (path[0] == '/') {
+		*offs = 0;
 		goto out;
+	}
 
 	len++;
 	if (len + 1 >= MAXPATHLEN)
@@ -630,12 +633,14 @@ makepathbuf(struct lwp *l, const char *upath)
 		    error));
 		goto out;
 	}
-	len = path + MAXPATHLEN - bp;
+	tlen = path + MAXPATHLEN - bp;
 
-	memmove(path, bp, len);
-	path[len] = '\0';
+	memmove(path, bp, tlen);
+	path[tlen] = '\0';
+	*offs = tlen - len;
 out:
-	return pathbuf_assimilate(path);
+	*pbp = pathbuf_assimilate(path);
+	return 0;
 }
 
 static int
@@ -648,6 +653,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct proc		*p;
 	char			*dp;
 	u_int			modgen;
+	size_t			offs;
 
 	KASSERT(data != NULL);
 
@@ -697,8 +703,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	data->ed_pathbuf = makepathbuf(l, path);
-	if (data->ed_pathbuf == NULL)
+	if ((error = makepathbuf(l, path, &data->ed_pathbuf, &offs)) != 0)
 		goto clrflg;
 	data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
 	data->ed_resolvedpathbuf = PNBUF_GET();
@@ -706,7 +711,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	epp->ep_kname = data->ed_pathstring;
+	epp->ep_kname = data->ed_pathstring + offs;
 	epp->ep_resolvedname = data->ed_resolvedpathbuf;
 	epp->ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	epp->ep_hdrlen = exec_maxhdrsz;
