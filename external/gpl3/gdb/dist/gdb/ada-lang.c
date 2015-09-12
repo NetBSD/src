@@ -2518,7 +2518,7 @@ ada_value_primitive_packed_val (struct value *obj, const gdb_byte *valaddr,
       accumSize += HOST_CHAR_BIT - unusedLS;
       if (accumSize >= HOST_CHAR_BIT)
         {
-          unpacked[targ] = accum & ~(~0L << HOST_CHAR_BIT);
+          unpacked[targ] = accum & ~(~0UL << HOST_CHAR_BIT);
           accumSize -= HOST_CHAR_BIT;
           accum >>= HOST_CHAR_BIT;
           ntarg -= 1;
@@ -2532,7 +2532,7 @@ ada_value_primitive_packed_val (struct value *obj, const gdb_byte *valaddr,
   while (ntarg > 0)
     {
       accum |= sign << accumSize;
-      unpacked[targ] = accum & ~(~0L << HOST_CHAR_BIT);
+      unpacked[targ] = accum & ~(~0UL << HOST_CHAR_BIT);
       accumSize -= HOST_CHAR_BIT;
       accum >>= HOST_CHAR_BIT;
       ntarg -= 1;
