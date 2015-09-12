@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.27 2015/04/13 16:33:25 riastradh Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.28 2015/09/12 19:19:11 christos Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.27 2015/04/13 16:33:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.28 2015/09/12 19:19:11 christos Exp $");
 
 
 #include <sys/param.h>
@@ -949,6 +949,7 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 			error = 0;
 		else if (error != 0) {
 			aprint_error_dev(sc->jme_dev, "could not set media\n");
+			splx(s);
 			return error;
 		}
 	}
