@@ -1,7 +1,10 @@
-#	$NetBSD: airport,v 1.58 2014/09/21 08:38:03 mbalmer Exp $
+#	$NetBSD: airport,v 1.59 2015/09/13 09:21:51 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
+#
+# Note that these are three letter IATA codes, most airports also have a
+# four letter ICAO code, e.g. Bern is BRN (IATA) and LSZB (ICAO).
 #
 # Airport Code : Airport
 AAA:Anaa, French Polynesia
@@ -918,7 +921,7 @@ BRJ:Bright, Victoria, Australia
 BRK:Bourke, New South Wales, Australia
 BRL:Burlington Municipal Airport, IA, USA
 BRM:Barquisimeto, Venezuela
-BRN:Bern-Belp, Switzerland
+BRN:Bern Airport, Bern-Belp, Switzerland
 BRO:Brownsville/South Padre Island, TX, USA
 BRP:Biaru, Papua New Guinea
 BRQ:Brno, Czech Republic
@@ -9167,9 +9170,7 @@ ZBX:Branson (Table Rock Heliport), MO, USA
 ZBY:Sayaboury, Laos
 ZCC:Baden Baden (Railway Station), Germany
 ZCL:Zacatecas (General Leobardo Ruiz), Mexico
-ZCO:Temuco, Chile
-ZDJ:Bern, Switzerland
-ZDT:Chur, Switzerland
+ZCO:Maquehue Airport, Temuco, Chile
 ZEC:Seconda, South Africa
 ZEF:Elkin Municipal Airport, NC, USA
 ZEG:Senggo, Indonesia
