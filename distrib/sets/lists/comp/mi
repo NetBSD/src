@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1986 2015/09/13 09:46:30 he Exp $
+#	$NetBSD: mi,v 1.1987 2015/09/13 10:58:30 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7719,6 +7719,7 @@
 ./usr/share/man/cat3/nextafterf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nextafterl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nexttoward.0		comp-c-catman		.cat
+./usr/share/man/cat3/nexttowardf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nftw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ngettext.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nice.0			comp-c-catman		.cat
@@ -14625,6 +14626,7 @@
 ./usr/share/man/html3/nextafterf.html		comp-c-htmlman		html
 ./usr/share/man/html3/nextafterl.html		comp-c-htmlman		html
 ./usr/share/man/html3/nexttoward.html		comp-c-htmlman		html
+./usr/share/man/html3/nexttowardf.html		comp-c-htmlman		html
 ./usr/share/man/html3/nftw.html			comp-c-htmlman		html
 ./usr/share/man/html3/ngettext.html		comp-c-htmlman		html
 ./usr/share/man/html3/nice.html			comp-c-htmlman		html
@@ -21514,6 +21516,7 @@
 ./usr/share/man/man3/nextafterf.3		comp-c-man		.man
 ./usr/share/man/man3/nextafterl.3		comp-c-man		.man
 ./usr/share/man/man3/nexttoward.3		comp-c-man		.man
+./usr/share/man/man3/nexttowardf.3		comp-c-man		.man
 ./usr/share/man/man3/nftw.3			comp-c-man		.man
 ./usr/share/man/man3/ngettext.3			comp-c-man		.man
 ./usr/share/man/man3/nice.3			comp-c-man		.man
