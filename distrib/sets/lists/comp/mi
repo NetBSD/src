@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1985 2015/08/23 18:28:40 mrg Exp $
+#	$NetBSD: mi,v 1.1986 2015/09/13 09:46:30 he Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7702,6 +7702,9 @@
 ./usr/share/man/cat3/nc_perror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nc_sperror.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ndbm.0			comp-c-catman		.cat
+./usr/share/man/cat3/nearbyint.0		comp-c-catman		.cat
+./usr/share/man/cat3/nearbyintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/nearbyintl.0		comp-c-catman		.cat
 ./usr/share/man/cat3/network.0			comp-c-catman		.cat
 ./usr/share/man/cat3/new_field.0		comp-c-catman		.cat
 ./usr/share/man/cat3/new_fieldtype.0		comp-c-catman		.cat
@@ -8435,6 +8438,7 @@
 ./usr/share/man/cat3/rindex.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rint.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/rintl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ripemd.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/rmd160.0			comp-c-catman		.cat
 ./usr/share/man/cat3/rmtops.0			comp-c-catman		.cat
@@ -14604,6 +14608,9 @@
 ./usr/share/man/html3/nc_perror.html		comp-c-htmlman		html
 ./usr/share/man/html3/nc_sperror.html		comp-c-htmlman		html
 ./usr/share/man/html3/ndbm.html			comp-c-htmlman		html
+./usr/share/man/html3/nearbyint.html		comp-c-htmlman		html
+./usr/share/man/html3/nearbyintf.html		comp-c-htmlman		html
+./usr/share/man/html3/nearbyintl.html		comp-c-htmlman		html
 ./usr/share/man/html3/network.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_field.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_fieldtype.html	comp-c-htmlman		html
@@ -15329,6 +15336,7 @@
 ./usr/share/man/html3/rindex.html		comp-c-htmlman		html
 ./usr/share/man/html3/rint.html			comp-c-htmlman		html
 ./usr/share/man/html3/rintf.html		comp-c-htmlman		html
+./usr/share/man/html3/rintl.html		comp-c-htmlman		html
 ./usr/share/man/html3/rmd160.html		comp-c-htmlman		html
 ./usr/share/man/html3/rmtops.html		comp-c-htmlman		html
 ./usr/share/man/html3/round.html		comp-c-htmlman		html
@@ -21489,6 +21497,9 @@
 ./usr/share/man/man3/nc_perror.3		comp-c-man		.man
 ./usr/share/man/man3/nc_sperror.3		comp-c-man		.man
 ./usr/share/man/man3/ndbm.3			comp-c-man		.man
+./usr/share/man/man3/nearbyint.3		comp-c-man		.man
+./usr/share/man/man3/nearbyintf.3		comp-c-man		.man
+./usr/share/man/man3/nearbyintl.3		comp-c-man		.man
 ./usr/share/man/man3/network.3			comp-c-man		.man
 ./usr/share/man/man3/new_field.3		comp-c-man		.man
 ./usr/share/man/man3/new_fieldtype.3		comp-c-man		.man
@@ -22222,6 +22233,7 @@
 ./usr/share/man/man3/rindex.3			comp-c-man		.man
 ./usr/share/man/man3/rint.3			comp-c-man		.man
 ./usr/share/man/man3/rintf.3			comp-c-man		.man
+./usr/share/man/man3/rintl.3			comp-c-man		.man
 ./usr/share/man/man3/ripemd.3			comp-obsolete		obsolete
 ./usr/share/man/man3/rmd160.3			comp-c-man		.man
 ./usr/share/man/man3/rmtops.3			comp-c-man		.man

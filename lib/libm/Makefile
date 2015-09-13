@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.168 2014/12/27 16:54:02 martin Exp $
+#  $NetBSD: Makefile,v 1.169 2015/09/13 09:46:30 he Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -146,7 +146,8 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_fmod.S e_log.S \
 .elif (${LIBC_MACHINE_ARCH} == "vax")
 .PATH:	${.CURDIR}/arch/vax
 
-#NOIEEE_ARCH= n_infnan.S n_argred.S n_sqrt.S
+#NOIEEE_ARCH+= s_fmax.c s_fmaxf.c s_fmaxl.c
+#NOIEEE_ARCH+= n_infnan.S n_argred.S n_sqrt.S
 #ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_support.S n_sincos.S n_tan.S
 # XXX - ripped out due to lack of the insn polyd in the Mariah chip,
 # and emulation code isn't written yet.
@@ -352,7 +353,11 @@ MLINKS+=lrint.3 lrintf.3 lrint.3 llrint.3 lrint.3 llrintf.3
 MLINKS+=remainder.3 remainderf.3 \
 	remainder.3 remquo.3 \
 	remainder.3 remquof.3
-MLINKS+=rint.3 rintf.3
+MLINKS+=rint.3 rintf.3 \
+	rint.3 rintl.3 \
+	rint.3 nearbyint.3 \
+	rint.3 nearbyintf.3 \
+	rint.3 nearbyintl.3
 MLINKS+=scalbn.3 scalbnf.3 \
 	scalbn.3 scalbnl.3
 MLINKS+=sin.3 sinf.3
