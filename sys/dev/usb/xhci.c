@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.34 2015/08/31 08:33:03 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.35 2015/09/13 06:48:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.34 2015/08/31 08:33:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.35 2015/09/13 06:48:03 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1587,7 +1587,7 @@ xhci_close_pipe(struct usbd_pipe *pipe)
 	trb.trb_3 = XHCI_TRB_3_SLOT_SET(xs->xs_idx) |
 	    XHCI_TRB_3_TYPE_SET(XHCI_TRB_TYPE_CONFIGURE_EP);
 
-	(void)xhci_do_command(sc, &trb, USBD_DEFAULT_TIMEOUT);
+	(void)xhci_do_command_locked(sc, &trb, USBD_DEFAULT_TIMEOUT);
 	usb_syncmem(&xs->xs_dc_dma, 0, sc->sc_pgsz, BUS_DMASYNC_POSTREAD);
 }
 
