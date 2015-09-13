@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.35 2015/09/13 06:48:03 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.36 2015/09/13 06:50:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.35 2015/09/13 06:48:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.36 2015/09/13 06:50:09 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1677,9 +1677,7 @@ xhci_clear_endpoint_stall_async(struct usbd_xfer *xfer)
 
 #endif /* XXX experimental */
 
-/*
- * Notify roothub port status/change to uhub_intr.
- */
+/* Process roothub port status/change events and notify to uhub_intr. */
 static void
 xhci_rhpsc(struct xhci_softc * const sc, u_int port)
 {
@@ -1704,11 +1702,180 @@ xhci_rhpsc(struct xhci_softc * const sc, u_int port)
 	usb_transfer_complete(xfer);
 }
 
+/* Process Transfer Events */
+static void
+xhci_event_transfer(struct xhci_softc * const sc,
+    const struct xhci_trb * const trb)
+{
+	uint64_t trb_0;
+	uint32_t trb_2, trb_3;
+	uint8_t trbcode;
+	u_int slot, dci;
+	struct xhci_slot *xs;
+	struct xhci_ring *xr;
+	struct xhci_xfer *xx;
+	struct usbd_xfer *xfer;
+	usbd_status err;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	trb_0 = le64toh(trb->trb_0);
+	trb_2 = le32toh(trb->trb_2);
+	trb_3 = le32toh(trb->trb_3);
+	trbcode = XHCI_TRB_2_ERROR_GET(trb_2);
+	slot = XHCI_TRB_3_SLOT_GET(trb_3);
+	dci = XHCI_TRB_3_EP_GET(trb_3);
+	xs = &sc->sc_slots[slot];
+	xr = &xs->xs_ep[dci].xe_tr;
+
+	/* sanity check */
+	if (xs->xs_idx == 0 || xs->xs_idx >= sc->sc_maxslots) {
+		DPRINTFN(1, "invalid slot %u", xs->xs_idx, 0, 0, 0);
+		return;
+	}
+
+	if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
+		bus_addr_t trbp = xhci_ring_trbp(xr, 0);
+
+		/* trb_0 range sanity check */
+		if (trb_0 < trbp ||
+		    (trb_0 - trbp) % sizeof(struct xhci_trb) != 0 ||
+		    (trb_0 - trbp) / sizeof(struct xhci_trb) >=
+		     xr->xr_ntrb) {
+			DPRINTFN(1, "invalid trb_0 0x%"PRIx64" trbp 0x%"PRIx64,
+			    trb_0, trbp, 0, 0);
+			return;
+		}
+		int idx = (trb_0 - trbp) / sizeof(struct xhci_trb);
+		xx = xr->xr_cookies[idx];
+	} else {
+		xx = (void *)(uintptr_t)(trb_0 & ~0x3);
+	}
+	/* XXX this may not happen */
+	if (xx == NULL) {
+		DPRINTFN(1, "xfer done: xx is NULL", 0, 0, 0, 0);
+		return;
+	}
+	xfer = &xx->xx_xfer;
+	/* XXX this may happen when detaching */
+	if (xfer == NULL) {
+		DPRINTFN(1, "xfer done: xfer is NULL", 0, 0, 0, 0);
+		return;
+	}
+	DPRINTFN(14, "xfer %p", xfer, 0, 0, 0);
+	/* XXX I dunno why this happens */
+	KASSERT(xfer->ux_pipe != NULL);
+
+	if (!xfer->ux_pipe->up_repeat &&
+	    SIMPLEQ_EMPTY(&xfer->ux_pipe->up_queue)) {
+		DPRINTFN(1, "xfer done: xfer not started", 0, 0, 0, 0);
+		return;
+	}
+
+	if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
+		DPRINTFN(14, "transfer event data: "
+		    "0x%016"PRIx64" 0x%08"PRIx32" %02x",
+		    trb_0, XHCI_TRB_2_REM_GET(trb_2),
+		    XHCI_TRB_2_ERROR_GET(trb_2), 0);
+		if ((trb_0 & 0x3) == 0x3) {
+			xfer->ux_actlen = XHCI_TRB_2_REM_GET(trb_2);
+		}
+	}
+
+	switch (trbcode) {
+	case XHCI_TRB_ERROR_SHORT_PKT:
+	case XHCI_TRB_ERROR_SUCCESS:
+		xfer->ux_actlen =
+		    xfer->ux_length - XHCI_TRB_2_REM_GET(trb_2);
+		err = USBD_NORMAL_COMPLETION;
+		break;
+	case XHCI_TRB_ERROR_STALL:
+	case XHCI_TRB_ERROR_BABBLE:
+		DPRINTFN(1, "evh: xfer done: ERR %u slot %u dci %u",
+		    trbcode, slot, dci, 0);
+		xr->is_halted = true;
+		err = USBD_STALLED;
+#if 1 /* XXX experimental */
+		/*
+		 * Stalled endpoints can be recoverd by issuing
+		 * command TRB TYPE_RESET_EP on xHCI instead of
+		 * issuing request CLEAR_PORT_FEATURE UF_ENDPOINT_HALT
+		 * on the endpoint. However, this function may be
+		 * called from softint context (e.g. from umass),
+		 * in that case driver gets KASSERT in cv_timedwait
+		 * in xhci_do_command.
+		 * To avoid this, this runs reset_endpoint and
+		 * usb_transfer_complete in usb task thread
+		 * asynchronously (and then umass issues clear
+		 * UF_ENDPOINT_HALT).
+		 */
+		xfer->ux_status = err;
+		xhci_clear_endpoint_stall_async(xfer);
+		return;
+#else
+		break;
+#endif
+	case XHCI_TRB_ERROR_CMD_ABORTED:
+	case XHCI_TRB_ERROR_STOPPED:
+		err = USBD_CANCELLED;
+		break;
+	case XHCI_TRB_ERROR_NO_SLOTS:
+		err = USBD_NO_ADDR;
+		break;
+	default:
+		DPRINTFN(1, "evh: xfer done: ERR %u slot %u dci %u",
+		    trbcode, slot, dci, 0);
+		err = USBD_IOERROR;
+		break;
+	}
+	xfer->ux_status = err;
+
+	//mutex_enter(&sc->sc_lock); /* XXX ??? */
+	if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
+		if ((trb_0 & 0x3) == 0x0) {
+			usb_transfer_complete(xfer);
+		}
+	} else {
+		usb_transfer_complete(xfer);
+	}
+	//mutex_exit(&sc->sc_lock); /* XXX ??? */
+}
+
+/* Process Command complete events */
+static void
+xhci_event_cmd(struct xhci_softc * const sc,
+    const struct xhci_trb * const trb)
+{
+	uint64_t trb_0;
+	uint32_t trb_2, trb_3;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	trb_0 = le64toh(trb->trb_0);
+	trb_2 = le32toh(trb->trb_2);
+	trb_3 = le32toh(trb->trb_3);
+
+	if (trb_0 == sc->sc_command_addr) {
+		sc->sc_result_trb.trb_0 = trb_0;
+		sc->sc_result_trb.trb_2 = trb_2;
+		sc->sc_result_trb.trb_3 = trb_3;
+		if (XHCI_TRB_2_ERROR_GET(trb_2) !=
+		    XHCI_TRB_ERROR_SUCCESS) {
+			DPRINTFN(1, "command completion "
+			    "failure: 0x%016"PRIx64" 0x%08"PRIx32" "
+			    "0x%08"PRIx32, trb_0, trb_2, trb_3, 0);
+		}
+		cv_signal(&sc->sc_command_cv);
+	} else {
+		DPRINTFN(1, "spurious event: %p 0x%016"PRIx64" "
+		    "0x%08"PRIx32" 0x%08"PRIx32, trb, trb_0,
+		    trb_2, trb_3);
+	}
+}
+
 /*
- * Process events:
- * + Transfer comeplete
- * + Command complete
- * + Roothub Port status/change
+ * Process events.
+ * called from xhci_softintr
  */
 static void
 xhci_handle_event(struct xhci_softc * const sc,
@@ -1716,164 +1883,40 @@ xhci_handle_event(struct xhci_softc * const sc,
 {
 	uint64_t trb_0;
 	uint32_t trb_2, trb_3;
-	uint8_t trberr;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	trb_0 = le64toh(trb->trb_0);
 	trb_2 = le32toh(trb->trb_2);
 	trb_3 = le32toh(trb->trb_3);
-	trberr = XHCI_TRB_2_ERROR_GET(trb_2);
 
 	DPRINTFN(14, "event: %p 0x%016"PRIx64" 0x%08"PRIx32" 0x%08"PRIx32,
 	    trb, trb_0, trb_2, trb_3);
 
-	switch (XHCI_TRB_3_TYPE_GET(trb_3)) {
-	case XHCI_TRB_EVENT_TRANSFER: {
-		u_int slot, dci;
-		struct xhci_slot *xs;
-		struct xhci_ring *xr;
-		struct xhci_xfer *xx;
-		struct usbd_xfer *xfer;
-		usbd_status err;
-
-		slot = XHCI_TRB_3_SLOT_GET(trb_3);
-		dci = XHCI_TRB_3_EP_GET(trb_3);
-
-		xs = &sc->sc_slots[slot];
-		xr = &xs->xs_ep[dci].xe_tr;
-		/* sanity check */
-		if (xs->xs_idx == 0 || xs->xs_idx >= sc->sc_maxslots) {
-			DPRINTFN(1, "invalid slot %u", xs->xs_idx, 0, 0, 0);
-			break;
-		}
-
-		if ((trb_3 & XHCI_TRB_3_ED_BIT) == 0) {
-			bus_addr_t trbp = xhci_ring_trbp(xr, 0);
-
-			/* trb_0 range sanity check */
-			if (trb_0 < trbp ||
-			    (trb_0 - trbp) % sizeof(struct xhci_trb) != 0 ||
-			    (trb_0 - trbp) / sizeof(struct xhci_trb) >=
-			     xr->xr_ntrb) {
-				DPRINTFN(1,
-				    "invalid trb_0 0x%"PRIx64" trbp 0x%"PRIx64,
-				    trb_0, trbp, 0, 0);
-				break;
-			}
-			int idx = (trb_0 - trbp) / sizeof(struct xhci_trb);
-			xx = xr->xr_cookies[idx];
-		} else {
-			xx = (void *)(uintptr_t)(trb_0 & ~0x3);
-		}
-		/* XXX this may not happen */
-		if (xx == NULL) {
-			DPRINTFN(1, "xfer done: xx is NULL", 0, 0, 0, 0);
-			break;
-		}
-		xfer = &xx->xx_xfer;
-		/* XXX this may happen when detaching */
-		if (xfer == NULL) {
-			DPRINTFN(1, "xfer done: xfer is NULL", 0, 0, 0, 0);
-			break;
-		}
-		DPRINTFN(14, "xfer %p", xfer, 0, 0, 0);
-		/* XXX I dunno why this happens */
-		KASSERT(xfer->ux_pipe != NULL);
-
-		if (!xfer->ux_pipe->up_repeat &&
-		    SIMPLEQ_EMPTY(&xfer->ux_pipe->up_queue)) {
-			DPRINTFN(1, "xfer done: xfer not started", 0, 0, 0, 0);
-			break;
-		}
-
-		if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
-			DPRINTFN(14, "transfer event data: "
-			    "0x%016"PRIx64" 0x%08"PRIx32" %02x",
-			    trb_0, XHCI_TRB_2_REM_GET(trb_2),
-			    XHCI_TRB_2_ERROR_GET(trb_2), 0);
-			if ((trb_0 & 0x3) == 0x3) {
-				xfer->ux_actlen = XHCI_TRB_2_REM_GET(trb_2);
-			}
-		}
-
-		switch (trberr) {
-		case XHCI_TRB_ERROR_SHORT_PKT:
-		case XHCI_TRB_ERROR_SUCCESS:
-			xfer->ux_actlen =
-			    xfer->ux_length - XHCI_TRB_2_REM_GET(trb_2);
-			err = USBD_NORMAL_COMPLETION;
-			break;
-		case XHCI_TRB_ERROR_STALL:
-		case XHCI_TRB_ERROR_BABBLE:
-			DPRINTFN(1, "evh: xfer done: ERR %u slot %u dci %u",
-			    trberr, slot, dci, 0);
-			xr->is_halted = true;
-			err = USBD_STALLED;
-#if 1 /* XXX experimental */
-			/*
-			 * Stalled endpoints can be recoverd by issuing
-			 * command TRB TYPE_RESET_EP on xHCI instead of
-			 * issuing request CLEAR_PORT_FEATURE UF_ENDPOINT_HALT
-			 * on the endpoint. However, this function may be
-			 * called from softint context (e.g. from umass),
-			 * in that case driver gets KASSERT in cv_timedwait
-			 * in xhci_do_command.
-			 * To avoid this, this runs reset_endpoint and
-			 * usb_transfer_complete in usb task thread
-			 * asynchronously (and then umass issues clear
-			 * UF_ENDPOINT_HALT).
-			 */
-			xfer->ux_status = err;
-			xhci_clear_endpoint_stall_async(xfer);
+	/*
+	 * 4.11.3.1, 6.4.2.1
+	 * TRB Pointer is invalid for these completion codes.
+	 */
+	switch (XHCI_TRB_2_ERROR_GET(trb_2)) {
+	case XHCI_TRB_ERROR_RING_UNDERRUN:
+	case XHCI_TRB_ERROR_RING_OVERRUN:
+	case XHCI_TRB_ERROR_VF_RING_FULL:
+		return;
+	default:
+		if (trb_0 == 0) {
 			return;
-#else
-			break;
-#endif
-		case XHCI_TRB_ERROR_CMD_ABORTED:
-		case XHCI_TRB_ERROR_STOPPED:
-			err = USBD_CANCELLED;
-			break;
-		case XHCI_TRB_ERROR_NO_SLOTS:
-			err = USBD_NO_ADDR;
-			break;
-		default:
-			DPRINTFN(1, "evh: xfer done: ERR %u slot %u dci %u",
-			    trberr, slot, dci, 0);
-			err = USBD_IOERROR;
-			break;
-		}
-		xfer->ux_status = err;
-
-		//mutex_enter(&sc->sc_lock); /* XXX ??? */
-		if ((trb_3 & XHCI_TRB_3_ED_BIT) != 0) {
-			if ((trb_0 & 0x3) == 0x0) {
-				usb_transfer_complete(xfer);
-			}
-		} else {
-			usb_transfer_complete(xfer);
-		}
-		//mutex_exit(&sc->sc_lock); /* XXX ??? */
-
 		}
 		break;
+	}
+
+	switch (XHCI_TRB_3_TYPE_GET(trb_3)) {
+	case XHCI_TRB_EVENT_TRANSFER:
+		xhci_event_transfer(sc, trb);
+		break;
 	case XHCI_TRB_EVENT_CMD_COMPLETE:
-		if (trb_0 == sc->sc_command_addr) {
-			sc->sc_result_trb.trb_0 = trb_0;
-			sc->sc_result_trb.trb_2 = trb_2;
-			sc->sc_result_trb.trb_3 = trb_3;
-			if (XHCI_TRB_2_ERROR_GET(trb_2) !=
-			    XHCI_TRB_ERROR_SUCCESS) {
-				DPRINTFN(1, "command completion "
-				    "failure: 0x%016"PRIx64" 0x%08"PRIx32" "
-				    "0x%08"PRIx32, trb_0, trb_2, trb_3, 0);
-			}
-			cv_signal(&sc->sc_command_cv);
-		} else {
-			DPRINTFN(1, "spurious event: %p 0x%016"PRIx64" "
-			    "0x%08"PRIx32" 0x%08"PRIx32, trb, trb_0,
-			    trb_2, trb_3);
-		}
+		xhci_event_cmd(sc, trb);
 		break;
 	case XHCI_TRB_EVENT_PORT_STS_CHANGE:
 		xhci_rhpsc(sc, (uint32_t)((trb_0 >> 24) & 0xff));
