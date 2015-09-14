@@ -1,10 +1,7 @@
-# $NetBSD: splash.mk,v 1.3 2015/05/01 02:35:16 nat Exp $
+# $NetBSD: splash.mk,v 1.4 2015/09/14 01:40:03 uebayasi Exp $
 
 # Makefile for embedding splash image into kernel.
 .include <bsd.endian.mk>
-
-MI_OBJS+=	splash_image.o
-CFLAGS+=	-DSPLASHSCREEN_IMAGE
 
 .if (${OBJECT_FMTS:Melf64})
 BFD_ELFTARGET=elf64
