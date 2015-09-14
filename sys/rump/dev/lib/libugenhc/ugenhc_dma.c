@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc_dma.c,v 1.1 2013/09/19 17:55:22 pooka Exp $	*/
+/*	$NetBSD: ugenhc_dma.c,v 1.2 2015/09/14 15:08:50 pooka Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,16 @@
 #include <sys/bus.h>
 
 /*
- * bus_dma(9) that works for USB drivers
+ * bus_dma(9) that works for USB drivers.
+ *
+ * So why is it here instead of in libusb?  Well, first of all, it's
+ * actually a bus_dma implementation which works with ugenhc.  Of course,
+ * ugenhc doesn't make any bus_dma calls itself, all of those calls come
+ * from the usb code.  However, the USB component can be paired with other
+ * USB host controllers, such as {e,o,u}hci.  Therefore, we keep the "D"MA
+ * code here.
+ *
+ * Note: this implementation requires a __HAVE_NEW_STYLE_BUS_H arch
  */
 
 int
