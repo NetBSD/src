@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.23 2015/09/15 14:58:06 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.24 2015/09/15 14:59:58 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -247,13 +247,13 @@
 static __unused inline uint32_t
 lfs_dir_getino(const STRUCT_LFS *fs, const struct lfs_direct *dp)
 {
-	return LFS_SWAP_uint32_t(fs, dp->d_ino);
+	return LFS_SWAP_uint32_t(fs, dp->d_header.dh_ino);
 }
 
 static __unused inline uint16_t
 lfs_dir_getreclen(const STRUCT_LFS *fs, const struct lfs_direct *dp)
 {
-	return LFS_SWAP_uint16_t(fs, dp->d_reclen);
+	return LFS_SWAP_uint16_t(fs, dp->d_header.dh_reclen);
 }
 
 static __unused inline uint8_t
@@ -262,7 +262,7 @@ lfs_dir_gettype(const STRUCT_LFS *fs, const struct lfs_direct *dp)
 	if (fs->lfs_hasolddirfmt) {
 		return LFS_DT_UNKNOWN;
 	}
-	return dp->d_type;
+	return dp->d_header.dh_type;
 }
 
 static __unused inline uint8_t
@@ -270,21 +270,21 @@ lfs_dir_getnamlen(const STRUCT_LFS *fs, const struct lfs_direct *dp)
 {
 	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
 		/* low-order byte of old 16-bit namlen field */
-		return dp->d_type;
+		return dp->d_header.dh_type;
 	}
-	return dp->d_namlen;
+	return dp->d_header.dh_namlen;
 }
 
 static __unused inline void
 lfs_dir_setino(STRUCT_LFS *fs, struct lfs_direct *dp, uint32_t ino)
 {
-	dp->d_ino = LFS_SWAP_uint32_t(fs, ino);
+	dp->d_header.dh_ino = LFS_SWAP_uint32_t(fs, ino);
 }
 
 static __unused inline void
 lfs_dir_setreclen(STRUCT_LFS *fs, struct lfs_direct *dp, uint16_t reclen)
 {
-	dp->d_reclen = LFS_SWAP_uint16_t(fs, reclen);
+	dp->d_header.dh_reclen = LFS_SWAP_uint16_t(fs, reclen);
 }
 
 static __unused inline void
@@ -294,7 +294,7 @@ lfs_dir_settype(const STRUCT_LFS *fs, struct lfs_direct *dp, uint8_t type)
 		/* do nothing */
 		return;
 	}
-	dp->d_type = type;
+	dp->d_header.dh_type = type;
 }
 
 static __unused inline void
@@ -302,9 +302,9 @@ lfs_dir_setnamlen(const STRUCT_LFS *fs, struct lfs_direct *dp, uint8_t namlen)
 {
 	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
 		/* low-order byte of old 16-bit namlen field */
-		dp->d_type = namlen;
+		dp->d_header.dh_type = namlen;
 	}
-	dp->d_namlen = namlen;
+	dp->d_header.dh_namlen = namlen;
 }
 
 /*
