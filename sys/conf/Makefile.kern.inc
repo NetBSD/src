@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.246 2015/09/11 01:40:52 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.247 2015/09/15 02:22:43 uebayasi Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -410,7 +410,7 @@ install-kernel-${MACHINE_NAME}:
 .include "${S}/conf/ldscript.mk"
 .include "${S}/conf/assym.mk"
 .include "${S}/conf/newvers.mk"
-.include "${S}/conf/splash.mk"
+.include "${S}/dev/splash/splash.mk"
 .include "${S}/conf/mdroot.mk"
 .include "${S}/conf/lint.mk"
 .include "${S}/conf/cscope.mk"
