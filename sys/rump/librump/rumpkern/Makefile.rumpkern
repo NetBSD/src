@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.163 2015/08/31 07:38:48 ozaki-r Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.164 2015/09/15 15:09:10 pooka Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -83,6 +83,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_rndpool.c		\
 	kern_rndq.c		\
 	kern_rndsink.c		\
+	kern_rwlock_obj.c	\
 	kern_stub.c		\
 	kern_syscall.c		\
 	kern_sysctl.c		\
@@ -92,11 +93,11 @@ SRCS+=	init_sysctl_base.c	\
 	kern_uidinfo.c		\
 	kern_xxx.c		\
 	param.c			\
-	subr_devsw.c		\
 	subr_callback.c		\
 	subr_copy.c		\
 	subr_cprng.c		\
 	subr_device.c		\
+	subr_devsw.c		\
 	subr_evcnt.c		\
 	subr_extent.c		\
 	subr_hash.c		\
@@ -113,7 +114,6 @@ SRCS+=	init_sysctl_base.c	\
 	subr_pool.c		\
 	subr_prf.c		\
 	subr_pserialize.c	\
-	kern_rwlock_obj.c	\
 	subr_specificdata.c	\
 	subr_time.c		\
 	subr_vmem.c		\
