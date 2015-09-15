@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.2 2015/09/03 10:22:52 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.3 2015/09/15 09:51:01 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -149,8 +149,11 @@ options_body()
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -a -v
 	atf_check -s exit:0 -o ignore rump.ping -c 1 localhost
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 down
 	atf_check -s exit:0 -o match:'2 packets' rump.ifconfig -a -z
 	atf_check -s exit:0 -o not-match:'2 packets' rump.ifconfig -a -v
+	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -a -v
+	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 
 	# ifconfig -l [-bdsu]
 	#   -l shows only inteface names
