@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.40 2015/09/15 15:01:22 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.41 2015/09/15 15:01:38 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -198,6 +198,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		lfs_dir_setnamlen(fs, dp, 0);
 		lfs_dir_setreclen(fs, dp, LFS_DIRBLKSIZ);
 		/* for now at least, don't zero the old contents */
+		/*lfs_copydirname(fs, dp->d_name, "", 0, LFS_DIRBLKSIZ);*/
 		dp->d_name[0] = '\0';
 		if (fix)
 			VOP_BWRITE(bp);
@@ -399,7 +400,9 @@ mkentry(struct inodesc *idesc)
 	lfs_dir_setreclen(fs, dirp, newreclen);
 	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);
 	lfs_dir_setnamlen(fs, dirp, namlen);
-	memcpy(dirp->d_name, idesc->id_name, (size_t)namlen + 1);
+	lfs_copydirname(fs, dirp->d_name, idesc->id_name,
+			namlen, newreclen);
+
 	return (ALTERED | STOP);
 }
 
