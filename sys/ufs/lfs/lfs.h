@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.188 2015/09/15 15:02:01 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.189 2015/09/15 15:02:40 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -228,15 +228,15 @@
  * All strings include a null terminator; the maximum string length
  * is LFS_MAXNAMLEN, which is 255.
  *
- * The directory entry structure (struct lfs_direct) includes both the
- * header and a maximal string. A real entry is potentially smaller;
- * this causes assorted complications and hazards. For example, if
- * pointing at the last entry in a directory block, in most cases the
- * end of the struct lfs_direct will be off the end of the block
- * buffer and pointing into some other memory (or into the void); thus
- * one must never e.g. assign structures directly or do anything that
- * accesses the name field beyond the real length stored in the
- * header.
+ * The directory entry header structure (struct lfs_dirheader) is just
+ * the header information. A complete entry is this plus a null-
+ * terminated name following it, plus some amount of padding. The
+ * length of the name (not including the null terminator) is given by
+ * the namlen field of the header; the complete record length,
+ * including the null terminator and padding, is given by the reclen
+ * field of the header. The record length is always 4-byte aligned.
+ * (Even on 64-bit volumes, the record length is only 4-byte aligned,
+ * not 8-byte.)
  *
  * Historically, FFS directories were/are organized into blocks of
  * size DIRBLKSIZE that can be written atomically to disk at the
@@ -263,6 +263,8 @@
  *    - any particular entry may be arbitrarily larger (which is why the
  *      header stores both the entry size and the name size) to pad out
  *      unused space.
+ *    - historically the padding in an entry is not necessarily zeroed
+ *      but may contain trash.
  *    - dp->d_reclen is the size of the entry. This is always 4-byte
  *      aligned.
  *    - dp->d_namlen is the length of the string, and should always be
@@ -276,56 +278,37 @@
  *      removed their space is merged into the entry ahead of them.
  *    - an empty/unused entry has d_ino set to 0. This normally only
  *      appears in the first entry in a block, as elsewhere the unused
- *      entry should have been merged into the one before it.
+ *      entry should have been merged into the one before it. However,
+ *      fsck leaves such entries behind so they must be tolerated
+ *      elsewhere.
  *    - a completely empty directory block has one entry whose
  *      d_reclen is DIRBLKSIZ and whose d_ino is 0.
  *
- * LFS_OLDDIRFMT and LFS_NEWDIRFMT are code numbers for a directory
- * format change that happened in ffs a long time ago. This was in the
- * 80s, if I'm not mistaken, and well before LFS was first written, so
- * there should be no LFS volumes (and certainly no LFS v2-format
- * volumes, or LFS64 volumes) where LFS_OLDDIRFMT pertains. All the
- * same, we get to carry the logic around until we can conclusively
- * demonstrate that it's never needed.
+ * The "old directory format" referenced by the fs->lfs_isolddirfmt
+ * flag (and some other things) refers to when the type field was
+ * added to directory entries. This change was made to FFS in the 80s,
+ * well before LFS was first written; there should be no LFS volumes
+ * (and certainly no LFS v2-format volumes or LFS64 volumes) where the
+ * old format pertains. All of the related logic should probably be
+ * removed; however, it hasn't been yet, and we get to carry it around
+ * until we can be conclusively sure it isn't needed.
  *
- * Note that these code numbers do not appear on disk. They're
- * generated from runtime logic that is cued by other things, which is
- * why LFS_OLDDIRFMT is confusingly 1 and LFS_NEWDIRFMT is confusingly
- * 0.
+ * In the "old directory format" there is no type field and the namlen
+ * field is correspondingly 16 bits wide. On big-endian volumes this
+ * has no effect: namlen cannot exceed 255, so the upper byte is
+ * always 0 and this reads back from the type field as LFS_DT_UNKNOWN.
+ * On little-endian volumes, the namlen field will always be 0 and
+ * the namlen value needs to be read out of the type field. (The type
+ * is always LFS_DT_UNKNOWN.) The directory accessor functions take
+ * care of this so nothing else needs to be aware of it.
  *
- * Relatedly, the byte swapping logic for directories we have, which
- * is derived from the FFS_EI code, is a horrible mess. For example,
- * to access the namlen field, one does the following:
+ * LFS_OLDDIRFMT and LFS_NEWDIRFMT are code numbers for the old and
+ * new directory format respectively. These codes do not appear on
+ * disk; they're generated from a runtime macro called FSFMT() that's
+ * cued by other things. This is why (confusingly) LFS_OLDDIRFMT is 1
+ * and LFS_NEWDIRFMT is 0.
  *
- * #if (BYTE_ORDER == LITTLE_ENDIAN)
- *         swap = (ULFS_IPNEEDSWAP(VTOI(vp)) == 0);
- * #else
- *         swap = (ULFS_IPNEEDSWAP(VTOI(vp)) != 0);
- * #endif
- *         return ((FSFMT(vp) && swap)? ep->d_type : ep->d_namlen);
- *
- * ULFS_IPNEEDSWAP() is the same as fetching fs->lfs_dobyteswap. This
- * horrible "swap" logic is cutpasted all over everywhere but amounts
- * to the following:
- *
- *    running code      volume          lfs_dobyteswap  "swap"
- *    ----------------------------------------------------------
- *    LITTLE_ENDIAN     LITTLE_ENDIAN   false           true
- *    LITTLE_ENDIAN     BIG_ENDIAN      true            false
- *    BIG_ENDIAN        LITTLE_ENDIAN   true            true
- *    BIG_ENDIAN        BIG_ENDIAN      false           false
- *
- * which you'll note boils down to "volume is little-endian".
- *
- * Meanwhile, FSFMT(vp) yields LFS_OLDDIRFMT or LFS_NEWDIRFMT via
- * perverted logic of its own. Since LFS_OLDDIRFMT is 1 (contrary to
- * what one might expect approaching this cold) what this mess means
- * is: on OLDDIRFMT volumes that are little-endian, we read the
- * namlen value out of the type field. This is because on OLDDIRFMT
- * volumes there is no d_type field, just a 16-bit d_namlen; so if
- * the 16-bit d_namlen is little-endian, the useful part of it is
- * in the first byte, which in the NEWDIRFMT structure is the d_type
- * field.
+ * FSFMT(), LFS_OLDDIRFMT, and LFS_NEWDIRFMT should be removed. (XXX)
  */
 
 /*
@@ -370,10 +353,6 @@ struct lfs_dirheader {
 	u_int16_t dh_reclen;		/* length of this record */
 	u_int8_t  dh_type; 		/* file type, see below */
 	u_int8_t  dh_namlen;		/* length of string in d_name */
-};
-struct lfs_direct {
-	struct lfs_dirheader d_header;
-	char	  d_name[LFS_MAXNAMLEN + 1];/* name with length <= LFS_MAXNAMLEN */
 };
 
 /*
