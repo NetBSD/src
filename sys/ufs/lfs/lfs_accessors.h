@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.24 2015/09/15 14:59:58 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.25 2015/09/15 15:01:38 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -305,6 +305,17 @@ lfs_dir_setnamlen(const STRUCT_LFS *fs, struct lfs_direct *dp, uint8_t namlen)
 		dp->d_header.dh_type = namlen;
 	}
 	dp->d_header.dh_namlen = namlen;
+}
+
+static __unused inline void
+lfs_copydirname(STRUCT_LFS *fs, char *dest, const char *src,
+		unsigned namlen, unsigned reclen)
+{
+	/* must always be at least 1 byte as a null terminator */
+	KASSERT(reclen > namlen);
+
+	memcpy(dest, src, namlen);
+	memset(dest + namlen, '\0', reclen - namlen);
 }
 
 /*
