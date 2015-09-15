@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.11 2015/09/15 15:00:32 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.12 2015/09/15 15:02:01 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.11 2015/09/15 15:00:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.12 2015/09/15 15:02:01 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 		if (fcnp->cn_namelen != ulfs_direct_namlen(ep, dvp))
 			goto next;	/* Wrong name length.  */
 
-		if (memcmp(ep->d_name, fcnp->cn_nameptr, fcnp->cn_namelen))
+		if (memcmp(lfs_dir_nameptr(fs, ep), fcnp->cn_nameptr, fcnp->cn_namelen))
 			goto next;	/* Wrong name.  */
 
 		/* Got it!  */

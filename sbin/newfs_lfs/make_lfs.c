@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.52 2015/09/15 15:01:38 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.53 2015/09/15 15:02:01 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.52 2015/09/15 15:01:38 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.53 2015/09/15 15:02:01 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -380,7 +380,7 @@ make_dir(struct lfs *fs, void *bufp,
 		lfs_dir_setreclen(fs, ep, reclen);
 		lfs_dir_settype(fs, ep, protodir[i].dp_type);
 		lfs_dir_setnamlen(fs, ep, namlen);
-		lfs_copydirname(fs, ep->d_name, protodir[i].dp_name,
+		lfs_copydirname(fs, lfs_dir_nameptr(fs, ep), protodir[i].dp_name,
 				namlen, reclen);
 		ep = LFS_NEXTDIR(fs, ep);
 	}
