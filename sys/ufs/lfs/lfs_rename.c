@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.10 2015/09/15 14:58:06 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.11 2015/09/15 15:00:32 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.10 2015/09/15 14:58:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.11 2015/09/15 15:00:32 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -770,7 +770,6 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	struct ulfs_lookup_results *fulr = fde;
 	struct ulfs_lookup_results *tulr = tde;
 	bool directory_p, reparent_p;
-	struct lfs_direct *newdir;
 	int error;
 
 	KASSERT(mp != NULL);
@@ -871,10 +870,9 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 			}
 		}
 
-		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-		ulfs_makedirentry(VTOI(fvp), tcnp, newdir);
-		error = ulfs_direnter(tdvp, tulr, NULL, newdir, tcnp, NULL);
-		pool_cache_put(ulfs_direct_cache, newdir);
+		error = ulfs_direnter(tdvp, tulr,
+		    NULL, tcnp, VTOI(fvp)->i_number, LFS_IFTODT(VTOI(fvp)->i_mode),
+		    NULL);
 		if (error) {
 			if (directory_p && reparent_p) {
 				/*

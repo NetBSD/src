@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.27 2015/09/15 14:58:06 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.28 2015/09/15 15:00:32 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.27 2015/09/15 14:58:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.28 2015/09/15 15:00:32 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -697,29 +697,18 @@ bad:
 
 /*
  * Construct a new directory entry after a call to namei, using the
- * name in the componentname argument cnp. The argument ip is the
- * inode to which the new directory entry will refer.
+ * name in the componentname argument cnp. The new directory entry
+ * will refer to inode INUM which has type (directory-level type)
+ * DTYPE. If adding a reference to an already-created or
+ * already-extant inode, these values are retrieved with:
+ *   ip->i_number
+ *   LFS_IFTODT(ip->i_mode)
+ * (The latter should be tidier. XXX)
  *
  * Does not set d_reclen.
  */
-void
-ulfs_makedirentry(struct inode *ip, struct componentname *cnp,
-    struct lfs_direct *newdirp)
-{
-	struct lfs *fs = ip->i_lfs;
-
-	lfs_dir_setino(fs, newdirp, ip->i_number);
-	memcpy(newdirp->d_name, cnp->cn_nameptr, (size_t)cnp->cn_namelen);
-	newdirp->d_name[cnp->cn_namelen] = '\0';
-	lfs_dir_setnamlen(fs, newdirp, cnp->cn_namelen);
-	lfs_dir_settype(fs, newdirp, LFS_IFTODT(ip->i_mode));
-}
-
-/*
- * Similar but for special inodes.
- */
-void
-ulfs_makedirentry_bytype(struct lfs *fs, struct componentname *cnp,
+static void
+ulfs_makedirentry_tmp(struct lfs *fs, struct componentname *cnp,
     ino_t inum, unsigned dtype, struct lfs_direct *newdirp)
 {
 	lfs_dir_setino(fs, newdirp, inum);
@@ -736,19 +725,14 @@ ulfs_makedirentry_bytype(struct lfs *fs, struct componentname *cnp,
  * DVP is the directory to be updated. It must be locked.
  * ULR is the ulfs_lookup_results structure from the final lookup step.
  * TVP is not used. (XXX: why is it here? remove it)
- * DIRP is the new directory entry contents.
  * CNP is the componentname from the final lookup step.
+ * INUM is the inode number to insert into the new directory entry.
+ * DTYPE is the type code (LFS_DT_*) to insert into the new directory entry.
  * NEWDIRBP is not used and (XXX) should be removed. The previous
  * comment here said it was used by the now-removed softupdates code.
  *
  * The link count of the target inode is *not* incremented; the
  * caller does that.
- *
- * DIRP should have been filled in by ulfs_makedirentry(). Manual
- * initialization should be avoided, but if needed should be
- * equivalent to ulfs_makedirentry in byteswapping, use of accessor
- * functions, etc.; otherwise we might byteswap too many times or not
- * enough.
  *
  * If ulr->ulr_count is 0, ulfs_lookup did not find space to insert the
  * directory entry. ulr_offset, which is the place to put the entry,
@@ -766,8 +750,9 @@ ulfs_makedirentry_bytype(struct lfs *fs, struct componentname *cnp,
  */
 int
 ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
-    struct vnode *tvp, struct lfs_direct *dirp,
-    struct componentname *cnp, struct buf *newdirbp)
+    struct vnode *tvp,
+    struct componentname *cnp, ino_t inum, unsigned dtype,
+    struct buf *newdirbp)
 {
 	kauth_cred_t cr;
 	int newentrysize;
@@ -781,6 +766,10 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	struct ulfsmount *ump = VFSTOULFS(dvp->v_mount);
 	struct lfs *fs = ump->um_lfs;
 	int dirblksiz = fs->um_dirblksiz;
+	struct lfs_direct *dirp;
+
+	dirp = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
+	ulfs_makedirentry_tmp(fs, cnp, inum, dtype, dirp);
 
 	error = 0;
 	cr = cnp->cn_cred;
@@ -799,6 +788,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 			panic("ulfs_direnter: newblk");
 		if ((error = lfs_balloc(dvp, (off_t)ulr->ulr_offset, dirblksiz,
 		    cr, B_CLRBUF | B_SYNC, &bp)) != 0) {
+			pool_cache_put(ulfs_direct_cache, dirp);
 			return (error);
 		}
 		dp->i_size = ulr->ulr_offset + dirblksiz;
@@ -818,6 +808,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		error = VOP_BWRITE(bp->b_vp, bp);
 		vfs_timestamp(&ts);
 		ret = lfs_update(dvp, &ts, &ts, UPDATE_DIROP);
+		pool_cache_put(ulfs_direct_cache, dirp);
 		if (error == 0)
 			return (ret);
 		return (error);
@@ -853,6 +844,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	 */
 	error = ulfs_blkatoff(dvp, (off_t)ulr->ulr_offset, &dirbuf, &bp, true);
 	if (error) {
+		pool_cache_put(ulfs_direct_cache, dirp);
 		return (error);
 	}
 	/*
@@ -950,6 +942,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 #endif
 		(void) lfs_truncate(dvp, (off_t)ulr->ulr_endoff, IO_SYNC, cr);
 	}
+	pool_cache_put(ulfs_direct_cache, dirp);
 	return (error);
 }
 
