@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.2 2014/08/11 22:09:08 matt Exp $ */
+/* $NetBSD: ptrace.h,v 1.3 2015/09/15 15:49:02 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -48,6 +48,13 @@
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
+
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->r_pc
+#define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
+#define PTRACE_REG_SP(r)	(r)->r_sp
+#define PTRACE_REG_INTRV(r)	(r)->r_reg[0]
 
 #elif defined(__arm__)
 
