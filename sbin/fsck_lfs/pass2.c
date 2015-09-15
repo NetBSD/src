@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.29 2015/09/15 15:01:22 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.30 2015/09/15 15:01:38 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -258,16 +258,16 @@ pass2check(struct inodesc * idesc)
 		/* convert this entry to a . entry */
 		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
 		memcpy(dirp, &proto, sizeof(proto));
-		/* 4 is entrysize - headersize (XXX: clean up) */
-		(void) strlcpy(dirp->d_name, ".", 4);
+		lfs_copydirname(fs, dirp->d_name, ".", 1,
+				lfs_dir_getreclen(fs, dirp));
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	} else {
 		/* split this entry and use the beginning for the . entry */
 		n = lfs_dir_getreclen(fs, dirp) - entrysize;
 		memcpy(dirp, &proto, sizeof(proto));
-		/* XXX see case above */
-		(void) strlcpy(dirp->d_name, ".", 4);
+		lfs_copydirname(fs, dirp->d_name, ".", 1,
+				lfs_dir_getreclen(fs, dirp));
 		idesc->id_entryno++;
 		lncntp[lfs_dir_getino(fs, dirp)]--;
 		dirp = LFS_NEXTDIR(fs, dirp);
@@ -324,8 +324,8 @@ chk1:
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
 		memcpy(dirp, &proto, (size_t) entrysize);
-		/* 4 is entrysize - headersize (XXX: clean up) */
-		(void) strlcpy(proto.d_name, "..", 4);
+		lfs_copydirname(fs, dirp->d_name, "..", 2,
+				lfs_dir_getreclen(fs, dirp));
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	}
