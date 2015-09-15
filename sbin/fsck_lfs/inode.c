@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.64 2015/09/15 14:58:05 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.65 2015/09/15 15:01:22 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -508,7 +508,6 @@ findname(struct inodesc * idesc)
 	if (lfs_dir_getino(fs, dirp) != idesc->id_parent)
 		return (KEEPON);
 	len = lfs_dir_getnamlen(fs, dirp) + 1;
-	/* XXX this is wrong: namlen+1 can be up to MAXPATHLEN+1 */
 	if (len > MAXPATHLEN) {
 		/* Truncate it but don't overflow the buffer */
 		/* XXX: this case doesn't null-terminate the result */

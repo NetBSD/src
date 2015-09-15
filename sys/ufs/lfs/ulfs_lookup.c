@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.29 2015/09/15 15:00:49 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.30 2015/09/15 15:01:22 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.29 2015/09/15 15:00:49 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.30 2015/09/15 15:01:22 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -665,6 +665,7 @@ ulfs_dirbadentry(struct vnode *dp, struct lfs_direct *ep, int entryoffsetinblock
 	struct ulfsmount *ump = VFSTOULFS(dp->v_mount);
 	struct lfs *fs = ump->um_lfs;
 	int dirblksiz = fs->um_dirblksiz;
+	const char *name;
 
 	namlen = lfs_dir_getnamlen(fs, ep);
 	reclen = lfs_dir_getreclen(fs, ep);
@@ -682,13 +683,14 @@ ulfs_dirbadentry(struct vnode *dp, struct lfs_direct *ep, int entryoffsetinblock
 	}
 	if (lfs_dir_getino(fs, ep) == 0)
 		return (0);
+	name = ep->d_name;
 	for (i = 0; i < namlen; i++)
-		if (ep->d_name[i] == '\0') {
+		if (name[i] == '\0') {
 			/*return (1); */
 			printf("Second bad\n");
 			goto bad;
 	}
-	if (ep->d_name[i])
+	if (name[i])
 		goto bad;
 	return (0);
 bad:
@@ -1136,6 +1138,7 @@ ulfs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 	struct lfs_dirtemplate dbuf;
 	struct lfs_direct *dp = (struct lfs_direct *)&dbuf;
 	int error, namlen;
+	const char *name;
 	size_t count;
 #define	MINDIRSIZ (sizeof (struct lfs_dirtemplate) / 2)
 
@@ -1157,9 +1160,10 @@ ulfs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 			continue;
 		/* accept only "." and ".." */
 		namlen = lfs_dir_getnamlen(fs, dp);
+		name = dp->d_name;
 		if (namlen > 2)
 			return (0);
-		if (dp->d_name[0] != '.')
+		if (name[0] != '.')
 			return (0);
 		/*
 		 * At this point namlen must be 1 or 2.
@@ -1168,7 +1172,7 @@ ulfs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 		 */
 		if (namlen == 1 && lfs_dir_getino(fs, dp) == ip->i_number)
 			continue;
-		if (dp->d_name[1] == '.' && lfs_dir_getino(fs, dp) == parentino)
+		if (name[1] == '.' && lfs_dir_getino(fs, dp) == parentino)
 			continue;
 		return (0);
 	}
