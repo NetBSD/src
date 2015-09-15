@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.42 2015/09/15 15:02:01 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.43 2015/09/15 15:02:25 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -85,7 +85,7 @@ struct lfs_odirtemplate odirhead = {
 
 static int expanddir(struct uvnode *, union lfs_dinode *, char *);
 static void freedir(ino_t, ino_t);
-static struct lfs_direct *fsck_readdir(struct uvnode *, struct inodesc *);
+static struct lfs_dirheader *fsck_readdir(struct uvnode *, struct inodesc *);
 static int lftempname(char *, ino_t);
 static int mkentry(struct inodesc *);
 static int chgino(struct inodesc *);
@@ -132,7 +132,7 @@ propagate(void)
 int
 dirscan(struct inodesc *idesc)
 {
-	struct lfs_direct *dp;
+	struct lfs_dirheader *dp;
 	struct ubuf *bp;
 	int dsize, n;
 	long blksiz;
@@ -156,7 +156,7 @@ dirscan(struct inodesc *idesc)
 	    dp = fsck_readdir(vp, idesc)) {
 		dsize = lfs_dir_getreclen(fs, dp);
 		memcpy(dbuf, dp, (size_t) dsize);
-		idesc->id_dirp = (struct lfs_direct *) dbuf;
+		idesc->id_dirp = (struct lfs_dirheader *) dbuf;
 		if ((n = (*idesc->id_func) (idesc)) & ALTERED) {
 			bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 			memcpy(bp->b_data + idesc->id_loc - dsize, dbuf,
@@ -173,10 +173,10 @@ dirscan(struct inodesc *idesc)
 /*
  * get next entry in a directory.
  */
-static struct lfs_direct *
+static struct lfs_dirheader *
 fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 {
-	struct lfs_direct *dp, *ndp;
+	struct lfs_dirheader *dp, *ndp;
 	struct ubuf *bp;
 	long size, blksiz, fix, dploc;
 
@@ -184,7 +184,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 	bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 	if (idesc->id_loc % LFS_DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
-		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
+		dp = (struct lfs_dirheader *) (bp->b_data + idesc->id_loc);
 		if (dircheck(idesc, dp))
 			goto dpok;
 		brelse(bp, 0);
@@ -192,7 +192,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 			return (0);
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
-		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
+		dp = (struct lfs_dirheader *) (bp->b_data + idesc->id_loc);
 		lfs_dir_setino(fs, dp, 0);
 		lfs_dir_settype(fs, dp, LFS_DT_UNKNOWN);
 		lfs_dir_setnamlen(fs, dp, 0);
@@ -214,14 +214,14 @@ dpok:
 		return NULL;
 	}
 	dploc = idesc->id_loc;
-	dp = (struct lfs_direct *) (bp->b_data + dploc);
+	dp = (struct lfs_dirheader *) (bp->b_data + dploc);
 	idesc->id_loc += lfs_dir_getreclen(fs, dp);
 	idesc->id_filesize -= lfs_dir_getreclen(fs, dp);
 	if ((idesc->id_loc % LFS_DIRBLKSIZ) == 0) {
 		brelse(bp, 0);
 		return dp;
 	}
-	ndp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
+	ndp = (struct lfs_dirheader *) (bp->b_data + idesc->id_loc);
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
 	    dircheck(idesc, ndp) == 0) {
 		brelse(bp, 0);
@@ -232,7 +232,7 @@ dpok:
 			return 0;
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
-		dp = (struct lfs_direct *) (bp->b_data + dploc);
+		dp = (struct lfs_dirheader *) (bp->b_data + dploc);
 		lfs_dir_setreclen(fs, dp, lfs_dir_getreclen(fs, dp) + size);
 		if (fix)
 			VOP_BWRITE(bp);
@@ -249,7 +249,7 @@ dpok:
  * This is a superset of the checks made in the kernel.
  */
 int
-dircheck(struct inodesc *idesc, struct lfs_direct *dp)
+dircheck(struct inodesc *idesc, struct lfs_dirheader *dp)
 {
 	int size;
 	const char *cp;
@@ -370,7 +370,7 @@ adjust(struct inodesc *idesc, short lcnt)
 static int
 mkentry(struct inodesc *idesc)
 {
-	struct lfs_direct *dirp = idesc->id_dirp;
+	struct lfs_dirheader *dirp = idesc->id_dirp;
 	unsigned namlen;
 	unsigned newreclen, oldreclen;
 
@@ -409,7 +409,7 @@ mkentry(struct inodesc *idesc)
 static int
 chgino(struct inodesc *idesc)
 {
-	struct lfs_direct *dirp = idesc->id_dirp;
+	struct lfs_dirheader *dirp = idesc->id_dirp;
 	int namlen;
 
 	namlen = lfs_dir_getnamlen(fs, dirp);

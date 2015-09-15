@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.31 2015/09/15 15:02:01 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.32 2015/09/15 15:02:25 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -212,12 +212,12 @@ pass2(void)
 static int
 pass2check(struct inodesc * idesc)
 {
-	struct lfs_direct *dirp = idesc->id_dirp;
+	struct lfs_dirheader *dirp = idesc->id_dirp;
 	struct inoinfo *inp;
 	int n, entrysize, ret = 0;
 	union lfs_dinode *dp;
 	const char *errmsg;
-	struct lfs_direct proto;
+	struct lfs_dirheader proto;
 	char namebuf[MAXPATHLEN + 1];
 	char pathbuf[MAXPATHLEN + 1];
 
@@ -293,7 +293,7 @@ chk1:
 		lfs_dir_setreclen(fs, dirp, n);
 		idesc->id_entryno++;
 		lncntp[lfs_dir_getino(fs, dirp)]--;
-		dirp = (struct lfs_direct *) ((char *) (dirp) + n);
+		dirp = (struct lfs_dirheader *) ((char *) (dirp) + n);
 		memset(dirp, 0, lfs_dir_getreclen(fs, &proto));
 		lfs_dir_setreclen(fs, dirp, lfs_dir_getreclen(fs, &proto));
 	}

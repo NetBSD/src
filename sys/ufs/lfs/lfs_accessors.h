@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.26 2015/09/15 15:02:01 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.27 2015/09/15 15:02:25 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -223,7 +223,7 @@
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
 #define	LFS_DIRECTSIZ(namlen) \
-	((sizeof(struct lfs_direct) - (LFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+	(sizeof(struct lfs_dirheader) + (((namlen)+1 + 3) &~ 3))
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define LFS_OLDDIRSIZ(oldfmt, dp, needswap)	\
@@ -242,75 +242,75 @@
 #define LFS_NEWDIRFMT	0
 
 #define LFS_NEXTDIR(fs, dp) \
-	((struct lfs_direct *)((char *)(dp) + lfs_dir_getreclen(fs, dp)))
+	((struct lfs_dirheader *)((char *)(dp) + lfs_dir_getreclen(fs, dp)))
 
 static __unused inline char *
-lfs_dir_nameptr(const STRUCT_LFS *fs, struct lfs_direct *dp)
+lfs_dir_nameptr(const STRUCT_LFS *fs, struct lfs_dirheader *dh)
 {
-	return (char *)(&dp->d_header + 1);
+	return (char *)(dh + 1);
 }
 
 static __unused inline uint32_t
-lfs_dir_getino(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+lfs_dir_getino(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
 {
-	return LFS_SWAP_uint32_t(fs, dp->d_header.dh_ino);
+	return LFS_SWAP_uint32_t(fs, dh->dh_ino);
 }
 
 static __unused inline uint16_t
-lfs_dir_getreclen(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+lfs_dir_getreclen(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
 {
-	return LFS_SWAP_uint16_t(fs, dp->d_header.dh_reclen);
+	return LFS_SWAP_uint16_t(fs, dh->dh_reclen);
 }
 
 static __unused inline uint8_t
-lfs_dir_gettype(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+lfs_dir_gettype(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
 {
 	if (fs->lfs_hasolddirfmt) {
 		return LFS_DT_UNKNOWN;
 	}
-	return dp->d_header.dh_type;
+	return dh->dh_type;
 }
 
 static __unused inline uint8_t
-lfs_dir_getnamlen(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+lfs_dir_getnamlen(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
 {
 	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
 		/* low-order byte of old 16-bit namlen field */
-		return dp->d_header.dh_type;
+		return dh->dh_type;
 	}
-	return dp->d_header.dh_namlen;
+	return dh->dh_namlen;
 }
 
 static __unused inline void
-lfs_dir_setino(STRUCT_LFS *fs, struct lfs_direct *dp, uint32_t ino)
+lfs_dir_setino(STRUCT_LFS *fs, struct lfs_dirheader *dh, uint32_t ino)
 {
-	dp->d_header.dh_ino = LFS_SWAP_uint32_t(fs, ino);
+	dh->dh_ino = LFS_SWAP_uint32_t(fs, ino);
 }
 
 static __unused inline void
-lfs_dir_setreclen(STRUCT_LFS *fs, struct lfs_direct *dp, uint16_t reclen)
+lfs_dir_setreclen(STRUCT_LFS *fs, struct lfs_dirheader *dh, uint16_t reclen)
 {
-	dp->d_header.dh_reclen = LFS_SWAP_uint16_t(fs, reclen);
+	dh->dh_reclen = LFS_SWAP_uint16_t(fs, reclen);
 }
 
 static __unused inline void
-lfs_dir_settype(const STRUCT_LFS *fs, struct lfs_direct *dp, uint8_t type)
+lfs_dir_settype(const STRUCT_LFS *fs, struct lfs_dirheader *dh, uint8_t type)
 {
 	if (fs->lfs_hasolddirfmt) {
 		/* do nothing */
 		return;
 	}
-	dp->d_header.dh_type = type;
+	dh->dh_type = type;
 }
 
 static __unused inline void
-lfs_dir_setnamlen(const STRUCT_LFS *fs, struct lfs_direct *dp, uint8_t namlen)
+lfs_dir_setnamlen(const STRUCT_LFS *fs, struct lfs_dirheader *dh, uint8_t namlen)
 {
 	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
 		/* low-order byte of old 16-bit namlen field */
-		dp->d_header.dh_type = namlen;
+		dh->dh_type = namlen;
 	}
-	dp->d_header.dh_namlen = namlen;
+	dh->dh_namlen = namlen;
 }
 
 static __unused inline void

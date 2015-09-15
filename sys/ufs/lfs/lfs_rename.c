@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.12 2015/09/15 15:02:01 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.13 2015/09/15 15:02:25 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.12 2015/09/15 15:02:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.13 2015/09/15 15:02:25 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,7 @@ ulfs_rename_ulr_overlap_p(const struct ulfs_lookup_results *fulr,
  * the directory vp.
  */
 static int			/* XXX int?  uint8_t?  */
-ulfs_direct_namlen(const struct lfs_direct *ep, const struct vnode *vp)
+ulfs_direct_namlen(const struct lfs_dirheader *ep, const struct vnode *vp)
 {
 	struct lfs *fs;
 
@@ -361,7 +361,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 	doff_t offset;		/* Offset of entry we're examining.  */
 	struct buf *bp;		/* I/O block we're examining.  */
 	char *dirbuf;		/* Pointer into directory at search_start.  */
-	struct lfs_direct *ep;	/* Pointer to the entry we're examining.  */
+	struct lfs_dirheader *ep;	/* Pointer to the entry we're examining.  */
 	/* XXX direct::d_reclen is 16-bit;
 	 * ulfs_lookup_results::ulr_reclen is 32-bit.  Blah.  */
 	uint32_t reclen;	/* Length of the entry we're examining.  */
@@ -430,7 +430,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 		/*
 		 * Examine the directory entry at offset.
 		 */
-		ep = (struct lfs_direct *)(dirbuf + (offset - search_start));
+		ep = (struct lfs_dirheader *)(dirbuf + (offset - search_start));
 		reclen = lfs_dir_getreclen(fs, ep);
 
 		if (lfs_dir_getino(fs, ep) == 0)

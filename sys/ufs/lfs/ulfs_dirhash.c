@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.11 2015/09/15 15:02:01 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.12 2015/09/15 15:02:25 dholland Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.11 2015/09/15 15:02:01 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.12 2015/09/15 15:02:25 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -73,7 +73,7 @@ static void ulfsdirhash_adjfree(struct dirhash *dh, doff_t offset, int diff,
 static void ulfsdirhash_delslot(struct dirhash *dh, int slot);
 static int ulfsdirhash_findslot(struct dirhash *dh, const char *name,
 	   int namelen, doff_t offset);
-static doff_t ulfsdirhash_getprev(struct lfs *fs, struct lfs_direct *dp,
+static doff_t ulfsdirhash_getprev(struct lfs *fs, struct lfs_dirheader *dp,
 	   doff_t offset, int dirblksiz);
 static int ulfsdirhash_recycle(int wanted);
 
@@ -117,7 +117,7 @@ ulfsdirhash_build(struct inode *ip)
 	struct lfs *fs = ip->i_lfs;
 	struct dirhash *dh;
 	struct buf *bp = NULL;
-	struct lfs_direct *ep;
+	struct lfs_dirheader *ep;
 	struct vnode *vp;
 	doff_t bmask, pos;
 	int dirblocks, i, j, memreqd, nblocks, narrays, nslots, slot;
@@ -227,7 +227,7 @@ ulfsdirhash_build(struct inode *ip)
 		}
 
 		/* Add this entry to the hash. */
-		ep = (struct lfs_direct *)((char *)bp->b_data + (pos & bmask));
+		ep = (struct lfs_dirheader *)((char *)bp->b_data + (pos & bmask));
 		if (lfs_dir_getreclen(fs, ep) == 0 || lfs_dir_getreclen(fs, ep) >
 		    dirblksiz - (pos & (dirblksiz - 1))) {
 			/* Corrupted directory. */
@@ -328,7 +328,7 @@ ulfsdirhash_lookup(struct inode *ip, const char *name, int namelen, doff_t *offp
 {
 	struct lfs *fs = ip->i_lfs;
 	struct dirhash *dh, *dh_next;
-	struct lfs_direct *dp;
+	struct lfs_dirheader *dp;
 	struct vnode *vp;
 	struct buf *bp;
 	doff_t blkoff, bmask, offset, prevoff;
@@ -424,7 +424,7 @@ restart:
 				return (EJUSTRETURN);
 			}
 		}
-		dp = (struct lfs_direct *)((char *)bp->b_data + (offset & bmask));
+		dp = (struct lfs_dirheader *)((char *)bp->b_data + (offset & bmask));
 		if (lfs_dir_getreclen(fs, dp) == 0 || lfs_dir_getreclen(fs, dp) >
 		    dirblksiz - (offset & (dirblksiz - 1))) {
 			/* Corrupted directory. */
@@ -501,7 +501,7 @@ doff_t
 ulfsdirhash_findfree(struct inode *ip, int slotneeded, int *slotsize)
 {
 	struct lfs *fs = ip->i_lfs;
-	struct lfs_direct *dp;
+	struct lfs_dirheader *dp;
 	struct dirhash *dh;
 	struct buf *bp;
 	doff_t pos, slotstart;
@@ -621,7 +621,7 @@ ulfsdirhash_enduseful(struct inode *ip)
  * the offset of this entry.
  */
 void
-ulfsdirhash_add(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
+ulfsdirhash_add(struct inode *ip, struct lfs_dirheader *dirp, doff_t offset)
 {
 	struct lfs *fs = ip->i_lfs;
 	struct dirhash *dh;
@@ -669,7 +669,7 @@ ulfsdirhash_add(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
  * `offset' within the directory.
  */
 void
-ulfsdirhash_remove(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
+ulfsdirhash_remove(struct inode *ip, struct lfs_dirheader *dirp, doff_t offset)
 {
 	struct lfs *fs = ip->i_lfs;
 	struct dirhash *dh;
@@ -704,7 +704,7 @@ ulfsdirhash_remove(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
  * when compacting directory blocks.
  */
 void
-ulfsdirhash_move(struct inode *ip, struct lfs_direct *dirp, doff_t oldoff,
+ulfsdirhash_move(struct inode *ip, struct lfs_dirheader *dirp, doff_t oldoff,
     doff_t newoff)
 {
 	struct lfs *fs = ip->i_lfs;
@@ -831,7 +831,7 @@ ulfsdirhash_checkblock(struct inode *ip, char *sbuf, doff_t offset)
 {
 	struct lfs *fs = ip->i_lfs;
 	struct dirhash *dh;
-	struct lfs_direct *dp;
+	struct lfs_dirheader *dp;
 	int block, ffslot, i, nfree;
 	int dirblksiz = ip->i_lfs->um_dirblksiz;
 
@@ -853,7 +853,7 @@ ulfsdirhash_checkblock(struct inode *ip, char *sbuf, doff_t offset)
 
 	nfree = 0;
 	for (i = 0; i < dirblksiz; i += lfs_dir_getreclen(fs, dp)) {
-		dp = (struct lfs_direct *)(sbuf + i);
+		dp = (struct lfs_dirheader *)(sbuf + i);
 		if (lfs_dir_getreclen(fs, dp) == 0 || i + lfs_dir_getreclen(fs, dp) > dirblksiz)
 			panic("ulfsdirhash_checkblock: bad dir");
 
@@ -1014,10 +1014,10 @@ ulfsdirhash_delslot(struct dirhash *dh, int slot)
  * other problem occurred.
  */
 static doff_t
-ulfsdirhash_getprev(struct lfs *fs, struct lfs_direct *dirp,
+ulfsdirhash_getprev(struct lfs *fs, struct lfs_dirheader *dirp,
 		doff_t offset, int dirblksiz)
 {
-	struct lfs_direct *dp;
+	struct lfs_dirheader *dp;
 	char *blkbuf;
 	doff_t blkoff, prevoff;
 	int entrypos, i;
@@ -1034,7 +1034,7 @@ ulfsdirhash_getprev(struct lfs *fs, struct lfs_direct *dirp,
 
 	/* Scan from the start of the block until we get to the entry. */
 	for (i = 0; i < entrypos; i += reclen) {
-		dp = (struct lfs_direct *)(blkbuf + i);
+		dp = (struct lfs_dirheader *)(blkbuf + i);
 		reclen = lfs_dir_getreclen(fs, dp);
 		if (reclen == 0 || i + reclen > entrypos)
 			return (-1);	/* Corrupted directory. */

@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.66 2015/09/15 15:02:01 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.67 2015/09/15 15:02:25 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -501,7 +501,7 @@ clearinode(ino_t inumber)
 int
 findname(struct inodesc * idesc)
 {
-	struct lfs_direct *dirp = idesc->id_dirp;
+	struct lfs_dirheader *dirp = idesc->id_dirp;
 	size_t len;
 	char *buf;
 
@@ -522,7 +522,7 @@ findname(struct inodesc * idesc)
 int
 findino(struct inodesc * idesc)
 {
-	struct lfs_direct *dirp = idesc->id_dirp;
+	struct lfs_dirheader *dirp = idesc->id_dirp;
 	ino_t ino;
 
 	ino = lfs_dir_getino(fs, dirp);
