@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.3 2007/04/16 12:22:26 njoly Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.4 2015/09/15 15:49:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -45,6 +45,12 @@
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->regs[_REG_RIP]
+#define PTRACE_REG_SET_PC(r, v)	(r)->regs[_REG_RIP] = (v)
+#define PTRACE_REG_SP(r)	(r)->regs[_REG_RSP]
+#define PTRACE_REG_INTRV(r)	(r)->regs[_REG_RAX]
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
