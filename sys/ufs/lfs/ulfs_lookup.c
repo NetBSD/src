@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.30 2015/09/15 15:01:22 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.31 2015/09/15 15:02:01 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.30 2015/09/15 15:01:22 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.31 2015/09/15 15:02:01 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -377,7 +377,7 @@ searchloop:
 
 			namlen = lfs_dir_getnamlen(fs, ep);
 			if (namlen == cnp->cn_namelen &&
-			    !memcmp(cnp->cn_nameptr, ep->d_name,
+			    !memcmp(cnp->cn_nameptr, lfs_dir_nameptr(fs, ep),
 			    (unsigned)namlen)) {
 #ifdef LFS_DIRHASH
 foundentry:
@@ -683,7 +683,7 @@ ulfs_dirbadentry(struct vnode *dp, struct lfs_direct *ep, int entryoffsetinblock
 	}
 	if (lfs_dir_getino(fs, ep) == 0)
 		return (0);
-	name = ep->d_name;
+	name = lfs_dir_nameptr(fs, ep);
 	for (i = 0; i < namlen; i++)
 		if (name[i] == '\0') {
 			/*return (1); */
@@ -719,8 +719,8 @@ ulfs_direntry_assign(struct lfs *fs, struct lfs_direct *dirp,
 	lfs_dir_setino(fs, dirp, inum);
 	lfs_dir_setnamlen(fs, dirp, namlen);
 	lfs_dir_settype(fs, dirp, dtype);
-	memcpy(dirp->d_name, name, namlen);
-	dirp->d_name[namlen] = '\0';
+	memcpy(lfs_dir_nameptr(fs, dirp), name, namlen);
+	lfs_dir_nameptr(fs, dirp)[namlen] = '\0';
 }
 
 /*
@@ -907,7 +907,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	 */
 	if (lfs_dir_getino(fs, ep) == 0 ||
 	    (lfs_dir_getino(fs, ep) == ULFS_WINO &&
-	     memcmp(ep->d_name, name, namlen) == 0)) {
+	     memcmp(lfs_dir_nameptr(fs, ep), name, namlen) == 0)) {
 		if (spacefree + dsize < newentrysize)
 			panic("ulfs_direnter: compact1");
 		reclen = spacefree + dsize;
@@ -1160,7 +1160,7 @@ ulfs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 			continue;
 		/* accept only "." and ".." */
 		namlen = lfs_dir_getnamlen(fs, dp);
-		name = dp->d_name;
+		name = lfs_dir_nameptr(fs, dp);
 		if (namlen > 2)
 			return (0);
 		if (name[0] != '.')

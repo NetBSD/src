@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.10 2015/09/15 14:58:06 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.11 2015/09/15 15:02:01 dholland Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.10 2015/09/15 14:58:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.11 2015/09/15 15:02:01 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -236,7 +236,7 @@ ulfsdirhash_build(struct inode *ip)
 		}
 		if (lfs_dir_getino(fs, ep) != 0) {
 			/* Add the entry (simplified ulfsdirhash_add). */
-			slot = ulfsdirhash_hash(dh, ep->d_name,
+			slot = ulfsdirhash_hash(dh, lfs_dir_nameptr(fs, ep),
 						lfs_dir_getnamlen(fs, ep));
 			while (DH_ENTRY(dh, slot) != DIRHASH_EMPTY)
 				slot = WRAPINCR(slot, dh->dh_hlen);
@@ -433,7 +433,7 @@ restart:
 			return (EJUSTRETURN);
 		}
 		if (lfs_dir_getnamlen(fs, dp) == namelen &&
-		    memcmp(dp->d_name, name, namelen) == 0) {
+		    memcmp(lfs_dir_nameptr(fs, dp), name, namelen) == 0) {
 			/* Found. Get the prev offset if needed. */
 			if (prevoffp != NULL) {
 				if (offset & (dirblksiz - 1)) {
@@ -650,7 +650,8 @@ ulfsdirhash_add(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
 	}
 
 	/* Find a free hash slot (empty or deleted), and add the entry. */
-	slot = ulfsdirhash_hash(dh, dirp->d_name, lfs_dir_getnamlen(fs, dirp));
+	slot = ulfsdirhash_hash(dh, lfs_dir_nameptr(fs, dirp),
+				lfs_dir_getnamlen(fs, dirp));
 	while (DH_ENTRY(dh, slot) >= 0)
 		slot = WRAPINCR(slot, dh->dh_hlen);
 	if (DH_ENTRY(dh, slot) == DIRHASH_EMPTY)
@@ -687,7 +688,7 @@ ulfsdirhash_remove(struct inode *ip, struct lfs_direct *dirp, doff_t offset)
 
 	KASSERT(offset < dh->dh_dirblks * dirblksiz);
 	/* Find the entry */
-	slot = ulfsdirhash_findslot(dh, dirp->d_name,
+	slot = ulfsdirhash_findslot(dh, lfs_dir_nameptr(fs, dirp),
 				    lfs_dir_getnamlen(fs, dirp), offset);
 
 	/* Remove the hash entry. */
@@ -722,7 +723,7 @@ ulfsdirhash_move(struct inode *ip, struct lfs_direct *dirp, doff_t oldoff,
 	KASSERT(oldoff < dh->dh_dirblks * ip->i_lfs->um_dirblksiz &&
 	    newoff < dh->dh_dirblks * ip->i_lfs->um_dirblksiz);
 	/* Find the entry, and update the offset. */
-	slot = ulfsdirhash_findslot(dh, dirp->d_name,
+	slot = ulfsdirhash_findslot(dh, lfs_dir_nameptr(fs, dirp),
 				    lfs_dir_getnamlen(fs, dirp), oldoff);
 	DH_ENTRY(dh, slot) = newoff;
 	DIRHASH_UNLOCK(dh);
@@ -872,7 +873,8 @@ ulfsdirhash_checkblock(struct inode *ip, char *sbuf, doff_t offset)
 		}
 
 		/* Check that the entry	exists (will panic if it doesn't). */
-		ulfsdirhash_findslot(dh, dp->d_name, lfs_dir_getnamlen(fs, dp),
+		ulfsdirhash_findslot(dh, lfs_dir_nameptr(fs, dp),
+				     lfs_dir_getnamlen(fs, dp),
 				     offset + i);
 
 		nfree += lfs_dir_getreclen(fs, dp) - LFS_DIRSIZ(fs, dp);

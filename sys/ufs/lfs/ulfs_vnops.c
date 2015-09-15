@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.30 2015/09/15 15:00:32 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.31 2015/09/15 15:02:01 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.30 2015/09/15 15:00:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.31 2015/09/15 15:02:01 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -863,7 +863,8 @@ ulfs_readdir(void *v)
 		    _DIRENT_MINSIZE(ndp) > endp)
 			break;
 		ndp->d_fileno = lfs_dir_getino(fs, cdp);
-		(void)memcpy(ndp->d_name, cdp->d_name, ndp->d_namlen);
+		(void)memcpy(ndp->d_name, lfs_dir_nameptr(fs, cdp),
+			     ndp->d_namlen);
 		memset(&ndp->d_name[ndp->d_namlen], 0,
 		    ndp->d_reclen - _DIRENT_NAMEOFF(ndp) - ndp->d_namlen);
 		off += lfs_dir_getreclen(fs, cdp);

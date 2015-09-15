@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.30 2015/09/15 15:01:38 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.31 2015/09/15 15:02:01 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -226,7 +226,7 @@ pass2check(struct inodesc * idesc)
 	 */
 	if (idesc->id_entryno != 0)
 		goto chk1;
-	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, ".") == 0) {
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(lfs_dir_nameptr(fs, dirp), ".") == 0) {
 		if (lfs_dir_getino(fs, dirp) != idesc->id_number) {
 			direrror(idesc->id_number, "BAD INODE NUMBER FOR '.'");
 			if (reply("FIX") == 1) {
@@ -249,16 +249,16 @@ pass2check(struct inodesc * idesc)
 	lfs_dir_setnamlen(fs, &proto, 1);
 	entrysize = LFS_DIRECTSIZ(1);
 	lfs_dir_setreclen(fs, &proto, entrysize);
-	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, "..") != 0) {
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(lfs_dir_nameptr(fs, dirp), "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
-		    dirp->d_name);
+		    lfs_dir_nameptr(fs, dirp));
 	} else if (lfs_dir_getreclen(fs, dirp) < entrysize) {
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '.'\n");
 	} else if (lfs_dir_getreclen(fs, dirp) < 2 * entrysize) {
 		/* convert this entry to a . entry */
 		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
 		memcpy(dirp, &proto, sizeof(proto));
-		lfs_copydirname(fs, dirp->d_name, ".", 1,
+		lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), ".", 1,
 				lfs_dir_getreclen(fs, dirp));
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
@@ -266,7 +266,7 @@ pass2check(struct inodesc * idesc)
 		/* split this entry and use the beginning for the . entry */
 		n = lfs_dir_getreclen(fs, dirp) - entrysize;
 		memcpy(dirp, &proto, sizeof(proto));
-		lfs_copydirname(fs, dirp->d_name, ".", 1,
+		lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), ".", 1,
 				lfs_dir_getreclen(fs, dirp));
 		idesc->id_entryno++;
 		lncntp[lfs_dir_getino(fs, dirp)]--;
@@ -297,7 +297,7 @@ chk1:
 		memset(dirp, 0, lfs_dir_getreclen(fs, &proto));
 		lfs_dir_setreclen(fs, dirp, lfs_dir_getreclen(fs, &proto));
 	}
-	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, "..") == 0) {
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(lfs_dir_nameptr(fs, dirp), "..") == 0) {
 		inp->i_dotdot = lfs_dir_getino(fs, dirp);
 		if (lfs_dir_gettype(fs, dirp) != LFS_DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
@@ -307,10 +307,10 @@ chk1:
 		}
 		goto chk2;
 	}
-	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, ".") != 0) {
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(lfs_dir_nameptr(fs, dirp), ".") != 0) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, SECOND ENTRY IN DIRECTORY CONTAINS %s\n",
-		    dirp->d_name);
+		    lfs_dir_nameptr(fs, dirp));
 		inp->i_dotdot = (ino_t) - 1;
 	} else if (lfs_dir_getreclen(fs, dirp) < entrysize) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
@@ -324,7 +324,7 @@ chk1:
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
 		memcpy(dirp, &proto, (size_t) entrysize);
-		lfs_copydirname(fs, dirp->d_name, "..", 2,
+		lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), "..", 2,
 				lfs_dir_getreclen(fs, dirp));
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
@@ -337,7 +337,7 @@ chk2:
 	if (lfs_dir_getino(fs, dirp) == 0)
 		return (ret | KEEPON);
 	if (lfs_dir_getnamlen(fs, dirp) <= 2 &&
-	    dirp->d_name[0] == '.' &&
+	    lfs_dir_nameptr(fs, dirp)[0] == '.' &&
 	    idesc->id_entryno >= 2) {
 		if (lfs_dir_getnamlen(fs, dirp) == 1) {
 			direrror(idesc->id_number, "EXTRA '.' ENTRY");
@@ -347,7 +347,7 @@ chk2:
 			}
 			return (KEEPON | ret);
 		}
-		if (dirp->d_name[1] == '.') {
+		if (lfs_dir_nameptr(fs, dirp)[1] == '.') {
 			direrror(idesc->id_number, "EXTRA '..' ENTRY");
 			if (reply("FIX") == 1) {
 				lfs_dir_setino(fs, dirp, 0);
