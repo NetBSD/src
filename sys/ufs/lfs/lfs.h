@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.186 2015/09/15 14:58:06 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.187 2015/09/15 14:59:58 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -365,11 +365,14 @@
 /*
  * (See notes above)
  */
+struct lfs_dirheader {
+	u_int32_t dh_ino;		/* inode number of entry */
+	u_int16_t dh_reclen;		/* length of this record */
+	u_int8_t  dh_type; 		/* file type, see below */
+	u_int8_t  dh_namlen;		/* length of string in d_name */
+};
 struct lfs_direct {
-	u_int32_t d_ino;		/* inode number of entry */
-	u_int16_t d_reclen;		/* length of this record */
-	u_int8_t  d_type; 		/* file type, see below */
-	u_int8_t  d_namlen;		/* length of string in d_name */
+	struct lfs_dirheader d_header;
 	char	  d_name[LFS_MAXNAMLEN + 1];/* name with length <= LFS_MAXNAMLEN */
 };
 
