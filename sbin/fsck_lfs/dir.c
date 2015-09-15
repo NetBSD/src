@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.38 2015/09/01 06:16:58 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.39 2015/09/15 14:58:05 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -154,7 +154,7 @@ dirscan(struct inodesc *idesc)
 	vp = vget(fs, idesc->id_number);
 	for (dp = fsck_readdir(vp, idesc); dp != NULL;
 	    dp = fsck_readdir(vp, idesc)) {
-		dsize = dp->d_reclen;
+		dsize = lfs_dir_getreclen(fs, dp);
 		memcpy(dbuf, dp, (size_t) dsize);
 		idesc->id_dirp = (struct lfs_direct *) dbuf;
 		if ((n = (*idesc->id_func) (idesc)) & ALTERED) {
@@ -193,8 +193,8 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
-		dp->d_reclen = LFS_DIRBLKSIZ;
-		dp->d_ino = 0;
+		lfs_dir_setreclen(fs, dp, LFS_DIRBLKSIZ);
+		lfs_dir_setino(fs, dp, 0);
 		lfs_dir_settype(fs, dp, LFS_DT_UNKNOWN);
 		lfs_dir_setnamlen(fs, dp, 0);
 		dp->d_name[0] = '\0';
@@ -213,8 +213,8 @@ dpok:
 	}
 	dploc = idesc->id_loc;
 	dp = (struct lfs_direct *) (bp->b_data + dploc);
-	idesc->id_loc += dp->d_reclen;
-	idesc->id_filesize -= dp->d_reclen;
+	idesc->id_loc += lfs_dir_getreclen(fs, dp);
+	idesc->id_filesize -= lfs_dir_getreclen(fs, dp);
 	if ((idesc->id_loc % LFS_DIRBLKSIZ) == 0) {
 		brelse(bp, 0);
 		return dp;
@@ -231,7 +231,7 @@ dpok:
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 		dp = (struct lfs_direct *) (bp->b_data + dploc);
-		dp->d_reclen += size;
+		lfs_dir_setreclen(fs, dp, lfs_dir_getreclen(fs, dp) + size);
 		if (fix)
 			VOP_BWRITE(bp);
 		else
@@ -255,23 +255,24 @@ dircheck(struct inodesc *idesc, struct lfs_direct *dp)
 	int spaceleft;
 
 	spaceleft = LFS_DIRBLKSIZ - (idesc->id_loc % LFS_DIRBLKSIZ);
-	if (dp->d_ino >= maxino ||
-	    dp->d_reclen == 0 ||
-	    dp->d_reclen > spaceleft ||
-	    (dp->d_reclen & 0x3) != 0) {
+	if (lfs_dir_getino(fs, dp) >= maxino ||
+	    lfs_dir_getreclen(fs, dp) == 0 ||
+	    lfs_dir_getreclen(fs, dp) > spaceleft ||
+	    (lfs_dir_getreclen(fs, dp) & 0x3) != 0) {
 		pwarn("ino too large, reclen=0, reclen>space, or reclen&3!=0\n");
-		pwarn("dp->d_ino = 0x%x\tdp->d_reclen = 0x%x\n",
-		    dp->d_ino, dp->d_reclen);
-		pwarn("maxino = %llu\tspaceleft = 0x%x\n",
-		    (unsigned long long)maxino, spaceleft);
+		pwarn("dp->d_ino = 0x%jx\tdp->d_reclen = 0x%x\n",
+		    (uintmax_t)lfs_dir_getino(fs, dp),
+		    lfs_dir_getreclen(fs, dp));
+		pwarn("maxino = %ju\tspaceleft = 0x%x\n",
+		    (uintmax_t)maxino, spaceleft);
 		return (0);
 	}
-	if (dp->d_ino == 0)
+	if (lfs_dir_getino(fs, dp) == 0)
 		return (1);
 	size = LFS_DIRSIZ(fs, dp);
 	namlen = lfs_dir_getnamlen(fs, dp);
 	type = lfs_dir_gettype(fs, dp);
-	if (dp->d_reclen < size ||
+	if (lfs_dir_getreclen(fs, dp) < size ||
 	    idesc->id_filesize < size ||
 	/* namlen > MAXNAMLEN || */
 	    type > 15) {
@@ -374,17 +375,18 @@ mkentry(struct inodesc *idesc)
 	namlen = strlen(idesc->id_name);
 	lfs_dir_setnamlen(fs, &newent, namlen);
 	newlen = LFS_DIRSIZ(fs, &newent);
-	if (dirp->d_ino != 0)
+	if (lfs_dir_getino(fs, dirp) != 0)
 		oldlen = LFS_DIRSIZ(fs, dirp);
 	else
 		oldlen = 0;
-	if (dirp->d_reclen - oldlen < newlen)
+	if (lfs_dir_getreclen(fs, dirp) - oldlen < newlen)
 		return (KEEPON);
-	newent.d_reclen = dirp->d_reclen - oldlen;
-	dirp->d_reclen = oldlen;
+	lfs_dir_setreclen(fs, &newent, lfs_dir_getreclen(fs, dirp) - oldlen);
+	lfs_dir_setreclen(fs, dirp, oldlen);
 	dirp = (struct lfs_direct *) (((char *) dirp) + oldlen);
-	dirp->d_ino = idesc->id_parent;	/* ino to be entered is in id_parent */
-	dirp->d_reclen = newent.d_reclen;
+	/* ino to be entered is in id_parent */
+	lfs_dir_setino(fs, dirp, idesc->id_parent);
+	lfs_dir_setreclen(fs, dirp, lfs_dir_getreclen(fs, &newent));
 	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);
 	lfs_dir_setnamlen(fs, dirp, namlen);
 	memcpy(dirp->d_name, idesc->id_name, (size_t)namlen + 1);
@@ -400,7 +402,7 @@ chgino(struct inodesc *idesc)
 	namlen = lfs_dir_getnamlen(fs, dirp);
 	if (memcmp(dirp->d_name, idesc->id_name, namlen + 1))
 		return (KEEPON);
-	dirp->d_ino = idesc->id_parent;
+	lfs_dir_setino(fs, dirp, idesc->id_parent);
 	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);
 	return (ALTERED | STOP);
 }
