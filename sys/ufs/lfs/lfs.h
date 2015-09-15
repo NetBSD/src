@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.187 2015/09/15 14:59:58 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.188 2015/09/15 15:02:01 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -375,16 +375,6 @@ struct lfs_direct {
 	struct lfs_dirheader d_header;
 	char	  d_name[LFS_MAXNAMLEN + 1];/* name with length <= LFS_MAXNAMLEN */
 };
-
-/* Note that this does *not* byteswap and should probably be phased out */
-#define LFS_DIRECT_INITIALIZER(ino, type, namlen, name) \
-	{							\
-		.d_ino = (ino),					\
-		.d_reclen = LFS_DIRECTSIZE(namlen),		\
-		.d_type = (type),				\
-		.d_namlen = (namlen),				\
-		.d_name = (name)				\
-	}
 
 /*
  * Template for manipulating directories.  Should use struct lfs_direct's,
