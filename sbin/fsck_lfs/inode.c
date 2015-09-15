@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.63 2015/09/01 06:16:58 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.64 2015/09/15 14:58:05 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -505,7 +505,7 @@ findname(struct inodesc * idesc)
 	size_t len;
 	char *buf;
 
-	if (dirp->d_ino != idesc->id_parent)
+	if (lfs_dir_getino(fs, dirp) != idesc->id_parent)
 		return (KEEPON);
 	len = lfs_dir_getnamlen(fs, dirp) + 1;
 	/* XXX this is wrong: namlen+1 can be up to MAXPATHLEN+1 */
@@ -524,12 +524,14 @@ int
 findino(struct inodesc * idesc)
 {
 	struct lfs_direct *dirp = idesc->id_dirp;
+	ino_t ino;
 
-	if (dirp->d_ino == 0)
+	ino = lfs_dir_getino(fs, dirp);
+	if (ino == 0)
 		return (KEEPON);
 	if (strcmp(dirp->d_name, idesc->id_name) == 0 &&
-	    dirp->d_ino >= ULFS_ROOTINO && dirp->d_ino < maxino) {
-		idesc->id_parent = dirp->d_ino;
+	    ino >= ULFS_ROOTINO && ino < maxino) {
+		idesc->id_parent = ino;
 		return (STOP | FOUND);
 	}
 	return (KEEPON);

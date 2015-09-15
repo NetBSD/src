@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.49 2015/09/01 06:16:58 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.50 2015/09/15 14:58:05 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.49 2015/09/01 06:16:58 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.50 2015/09/15 14:58:05 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -389,16 +389,18 @@ make_dir(struct lfs *fs, void *bufp, struct lfs_direct *protodir, int entries)
 {
 	char *cp;
 	int i, spcleft;
+	unsigned reclen;
 
 	spcleft = LFS_DIRBLKSIZ;
 	for (cp = bufp, i = 0; i < entries - 1; i++) {
-		protodir[i].d_reclen = LFS_DIRSIZ(fs, &protodir[i]);
-		memmove(cp, &protodir[i], protodir[i].d_reclen);
-		cp += protodir[i].d_reclen;
-		if ((spcleft -= protodir[i].d_reclen) < 0)
+		reclen = LFS_DIRSIZ(fs, &protodir[i]);
+		lfs_dir_setreclen(fs, &protodir[i], reclen);
+		memmove(cp, &protodir[i], lfs_dir_getreclen(fs, &protodir[i]));
+		cp += reclen;
+		if ((spcleft -= reclen) < 0)
 			fatal("%s: %s", special, "directory too big");
 	}
-	protodir[i].d_reclen = spcleft;
+	lfs_dir_setreclen(fs, &protodir[i], spcleft);
 	memmove(cp, &protodir[i], LFS_DIRSIZ(fs, &protodir[i]));
 }
 
