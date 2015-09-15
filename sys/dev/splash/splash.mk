@@ -1,4 +1,4 @@
-# $NetBSD: splash.mk,v 1.4 2015/09/14 01:40:03 uebayasi Exp $
+# $NetBSD: splash.mk,v 1.5 2015/09/15 00:16:42 uebayasi Exp $
 
 # Makefile for embedding splash image into kernel.
 .include <bsd.endian.mk>
@@ -18,8 +18,13 @@ BFD_TARGET=${BFD_ELFTARGET}-${BFD_ENDIANNESS}${BFD_CPU}
 BFD_TARGET=${BFD_ELFTARGET}-${BFD_CPU}
 .endif
 
+.if defined(SPLASHSCREEN_IMAGE)
 splash_image.o:	${SPLASHSCREEN_IMAGE}
 	cp ${SPLASHSCREEN_IMAGE} splash.image
 	${OBJCOPY} -I binary -B ${MACHINE_CPU:C/x86_64/i386/} \
 		-O ${BFD_TARGET} splash.image splash_image.o
 	rm splash.image
+.else
+splash_image.c:
+	echo > $@
+.endif
