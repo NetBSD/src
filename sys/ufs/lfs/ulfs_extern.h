@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.18 2015/09/15 15:01:03 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.19 2015/09/15 15:02:25 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -109,7 +109,7 @@ int	ulfs_balloc_range(struct vnode *, off_t, off_t, kauth_cred_t, int);
 
 /* ulfs_lookup.c */
 void	ulfs_dirbad(struct inode *, doff_t, const char *);
-int	ulfs_dirbadentry(struct vnode *, struct lfs_direct *, int);
+int	ulfs_dirbadentry(struct vnode *, struct lfs_dirheader *, int);
 int	ulfs_direnter(struct vnode *, const struct ulfs_lookup_results *,
 		     struct vnode *,
 		     struct componentname *, ino_t, unsigned,
