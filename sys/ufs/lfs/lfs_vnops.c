@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.289 2015/09/01 06:16:59 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.290 2015/09/15 15:00:32 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.289 2015/09/01 06:16:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.290 2015/09/15 15:00:32 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -858,7 +858,6 @@ lfs_mkdir(void *v)
 	struct ulfs_lookup_results *ulr;
 	struct buf *bp;
 	struct lfs_dirtemplate dirtemplate;
-	struct lfs_direct *newdir;
 	int dirblksiz;
 	int error;
 
@@ -963,10 +962,8 @@ lfs_mkdir(void *v)
 	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		goto bad;
 	}
-	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-	ulfs_makedirentry(ip, cnp, newdir);
-	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
-	pool_cache_put(ulfs_direct_cache, newdir);
+	error = ulfs_direnter(dvp, ulr, tvp,
+			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), bp);
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
