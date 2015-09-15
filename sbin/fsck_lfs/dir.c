@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.39 2015/09/15 14:58:05 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.40 2015/09/15 15:01:22 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -193,10 +193,11 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 		dp = (struct lfs_direct *) (bp->b_data + idesc->id_loc);
-		lfs_dir_setreclen(fs, dp, LFS_DIRBLKSIZ);
 		lfs_dir_setino(fs, dp, 0);
 		lfs_dir_settype(fs, dp, LFS_DT_UNKNOWN);
 		lfs_dir_setnamlen(fs, dp, 0);
+		lfs_dir_setreclen(fs, dp, LFS_DIRBLKSIZ);
+		/* for now at least, don't zero the old contents */
 		dp->d_name[0] = '\0';
 		if (fix)
 			VOP_BWRITE(bp);
@@ -250,7 +251,7 @@ int
 dircheck(struct inodesc *idesc, struct lfs_direct *dp)
 {
 	int size;
-	char *cp;
+	const char *cp;
 	u_char namlen, type;
 	int spaceleft;
 
@@ -279,7 +280,8 @@ dircheck(struct inodesc *idesc, struct lfs_direct *dp)
 		printf("reclen<size, filesize<size, namlen too large, or type>15\n");
 		return (0);
 	}
-	for (cp = dp->d_name, size = 0; size < namlen; size++)
+	cp = dp->d_name;
+	for (size = 0; size < namlen; size++)
 		if (*cp == '\0' || (*cp++ == '/')) {
 			printf("name contains NUL or /\n");
 			return (0);
@@ -368,25 +370,33 @@ static int
 mkentry(struct inodesc *idesc)
 {
 	struct lfs_direct *dirp = idesc->id_dirp;
-	struct lfs_direct newent;
 	unsigned namlen;
-	int newlen, oldlen;
+	unsigned newreclen, oldreclen;
 
+	/* figure the length needed for id_name */
 	namlen = strlen(idesc->id_name);
-	lfs_dir_setnamlen(fs, &newent, namlen);
-	newlen = LFS_DIRSIZ(fs, &newent);
+	newreclen = LFS_DIRECTSIZ(namlen);
+
+	/* find the minimum record length for the existing name */
 	if (lfs_dir_getino(fs, dirp) != 0)
-		oldlen = LFS_DIRSIZ(fs, dirp);
+		oldreclen = LFS_DIRSIZ(fs, dirp);
 	else
-		oldlen = 0;
-	if (lfs_dir_getreclen(fs, dirp) - oldlen < newlen)
+		oldreclen = 0;
+
+	/* Can we insert here? */
+	if (lfs_dir_getreclen(fs, dirp) - oldreclen < newreclen)
 		return (KEEPON);
-	lfs_dir_setreclen(fs, &newent, lfs_dir_getreclen(fs, dirp) - oldlen);
-	lfs_dir_setreclen(fs, dirp, oldlen);
-	dirp = (struct lfs_direct *) (((char *) dirp) + oldlen);
-	/* ino to be entered is in id_parent */
+
+	/* Divide the record; all but oldreclen goes to the new record */
+	newreclen = lfs_dir_getreclen(fs, dirp) - oldreclen;
+	lfs_dir_setreclen(fs, dirp, oldreclen);
+
+	/* advance the pointer to the new record */
+	dirp = LFS_NEXTDIR(fs, dirp);
+
+	/* write record; ino to be entered is in id_parent */
 	lfs_dir_setino(fs, dirp, idesc->id_parent);
-	lfs_dir_setreclen(fs, dirp, lfs_dir_getreclen(fs, &newent));
+	lfs_dir_setreclen(fs, dirp, newreclen);
 	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);
 	lfs_dir_setnamlen(fs, dirp, namlen);
 	memcpy(dirp->d_name, idesc->id_name, (size_t)namlen + 1);
