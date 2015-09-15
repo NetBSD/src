@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extern.h,v 1.17 2015/09/15 15:00:32 dholland Exp $	*/
+/*	$NetBSD: ulfs_extern.h,v 1.18 2015/09/15 15:01:03 dholland Exp $	*/
 /*  from NetBSD: ufs_extern.h,v 1.72 2012/05/09 00:21:18 riastradh Exp  */
 
 /*-
@@ -57,8 +57,6 @@ struct ulfsmount;
 struct uio;
 struct vattr;
 struct vnode;
-
-extern pool_cache_t ulfs_direct_cache;	/* memory pool for lfs_directs */
 
 __BEGIN_DECLS
 #define	ulfs_abortop	genfs_abortop
