@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.41 2015/09/15 15:01:38 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.42 2015/09/15 15:02:01 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -198,8 +198,8 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 		lfs_dir_setnamlen(fs, dp, 0);
 		lfs_dir_setreclen(fs, dp, LFS_DIRBLKSIZ);
 		/* for now at least, don't zero the old contents */
-		/*lfs_copydirname(fs, dp->d_name, "", 0, LFS_DIRBLKSIZ);*/
-		dp->d_name[0] = '\0';
+		/*lfs_copydirname(fs, lfs_dir_nameptr(fs, dp), "", 0, LFS_DIRBLKSIZ);*/
+		lfs_dir_nameptr(fs, dp)[0] = '\0';
 		if (fix)
 			VOP_BWRITE(bp);
 		else
@@ -281,7 +281,7 @@ dircheck(struct inodesc *idesc, struct lfs_direct *dp)
 		printf("reclen<size, filesize<size, namlen too large, or type>15\n");
 		return (0);
 	}
-	cp = dp->d_name;
+	cp = lfs_dir_nameptr(fs, dp);
 	for (size = 0; size < namlen; size++)
 		if (*cp == '\0' || (*cp++ == '/')) {
 			printf("name contains NUL or /\n");
@@ -400,7 +400,7 @@ mkentry(struct inodesc *idesc)
 	lfs_dir_setreclen(fs, dirp, newreclen);
 	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);
 	lfs_dir_setnamlen(fs, dirp, namlen);
-	lfs_copydirname(fs, dirp->d_name, idesc->id_name,
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), idesc->id_name,
 			namlen, newreclen);
 
 	return (ALTERED | STOP);
@@ -413,7 +413,7 @@ chgino(struct inodesc *idesc)
 	int namlen;
 
 	namlen = lfs_dir_getnamlen(fs, dirp);
-	if (memcmp(dirp->d_name, idesc->id_name, namlen + 1))
+	if (memcmp(lfs_dir_nameptr(fs, dirp), idesc->id_name, namlen + 1))
 		return (KEEPON);
 	lfs_dir_setino(fs, dirp, idesc->id_parent);
 	lfs_dir_settype(fs, dirp, typemap[idesc->id_parent]);

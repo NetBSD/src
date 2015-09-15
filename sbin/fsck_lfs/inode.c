@@ -1,4 +1,4 @@
-/* $NetBSD: inode.c,v 1.65 2015/09/15 15:01:22 dholland Exp $	 */
+/* $NetBSD: inode.c,v 1.66 2015/09/15 15:02:01 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -515,7 +515,7 @@ findname(struct inodesc * idesc)
 	}
 	/* this is namebuf with utils.h */
 	buf = __UNCONST(idesc->id_name);
-	(void)memcpy(buf, dirp->d_name, len);
+	(void)memcpy(buf, lfs_dir_nameptr(fs, dirp), len);
 	return (STOP | FOUND);
 }
 
@@ -528,7 +528,7 @@ findino(struct inodesc * idesc)
 	ino = lfs_dir_getino(fs, dirp);
 	if (ino == 0)
 		return (KEEPON);
-	if (strcmp(dirp->d_name, idesc->id_name) == 0 &&
+	if (strcmp(lfs_dir_nameptr(fs, dirp), idesc->id_name) == 0 &&
 	    ino >= ULFS_ROOTINO && ino < maxino) {
 		idesc->id_parent = ino;
 		return (STOP | FOUND);

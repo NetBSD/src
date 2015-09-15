@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.25 2015/09/15 15:01:38 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.26 2015/09/15 15:02:01 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -243,6 +243,12 @@
 
 #define LFS_NEXTDIR(fs, dp) \
 	((struct lfs_direct *)((char *)(dp) + lfs_dir_getreclen(fs, dp)))
+
+static __unused inline char *
+lfs_dir_nameptr(const STRUCT_LFS *fs, struct lfs_direct *dp)
+{
+	return (char *)(&dp->d_header + 1);
+}
 
 static __unused inline uint32_t
 lfs_dir_getino(const STRUCT_LFS *fs, const struct lfs_direct *dp)
