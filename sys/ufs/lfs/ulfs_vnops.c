@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.29 2015/09/15 14:58:06 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.30 2015/09/15 15:00:32 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.29 2015/09/15 14:58:06 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.30 2015/09/15 15:00:32 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -554,7 +554,6 @@ ulfs_link(void *v)
 	struct componentname *cnp = ap->a_cnp;
 	struct mount *mp = dvp->v_mount;
 	struct inode *ip;
-	struct lfs_direct *newdir;
 	int error;
 	struct ulfs_lookup_results *ulr;
 
@@ -588,10 +587,8 @@ ulfs_link(void *v)
 	ip->i_flag |= IN_CHANGE;
 	error = lfs_update(vp, NULL, NULL, UPDATE_DIROP);
 	if (!error) {
-		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-		ulfs_makedirentry(ip, cnp, newdir);
-		error = ulfs_direnter(dvp, ulr, vp, newdir, cnp, NULL);
-		pool_cache_put(ulfs_direct_cache, newdir);
+		error = ulfs_direnter(dvp, ulr, vp,
+				      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), NULL);
 	}
 	if (error) {
 		ip->i_nlink--;
@@ -620,7 +617,6 @@ ulfs_whiteout(void *v)
 	} */ *ap = v;
 	struct vnode		*dvp = ap->a_dvp;
 	struct componentname	*cnp = ap->a_cnp;
-	struct lfs_direct		*newdir;
 	int			error;
 	struct ulfsmount	*ump = VFSTOULFS(dvp->v_mount);
 	struct lfs *fs = ump->um_lfs;
@@ -646,11 +642,8 @@ ulfs_whiteout(void *v)
 			panic("ulfs_whiteout: old format filesystem");
 #endif
 
-		newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-		ulfs_makedirentry_bytype(fs, cnp, ULFS_WINO, LFS_DT_WHT,
-					 newdir);
-		error = ulfs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
-		pool_cache_put(ulfs_direct_cache, newdir);
+		error = ulfs_direnter(dvp, ulr, NULL,
+				      cnp, ULFS_WINO, LFS_DT_WHT,  NULL);
 		break;
 
 	case DELETE:
@@ -1167,7 +1160,6 @@ ulfs_makeinode(struct vattr *vap, struct vnode *dvp,
 	struct vnode **vpp, struct componentname *cnp)
 {
 	struct inode	*ip;
-	struct lfs_direct	*newdir;
 	struct vnode	*tvp;
 	int		error;
 
@@ -1207,10 +1199,8 @@ ulfs_makeinode(struct vattr *vap, struct vnode *dvp,
 	 */
 	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0)
 		goto bad;
-	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-	ulfs_makedirentry(ip, cnp, newdir);
-	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, NULL);
-	pool_cache_put(ulfs_direct_cache, newdir);
+	error = ulfs_direnter(dvp, ulr, tvp,
+			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), NULL);
 	if (error)
 		goto bad;
 	*vpp = tvp;
