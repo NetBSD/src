@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.28 2015/09/01 06:16:59 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.29 2015/09/15 14:58:06 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.28 2015/09/01 06:16:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.29 2015/09/15 14:58:06 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -794,12 +794,11 @@ ulfs_readdir(void *v)
 	size_t		skipbytes;
 	struct ulfsmount *ump = VFSTOULFS(vp->v_mount);
 	struct lfs *fs = ump->um_lfs;
-	int nswap = ULFS_MPNEEDSWAP(fs);
 	uio = ap->a_uio;
 	count = uio->uio_resid;
 	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
 
-	if (rcount < _DIRENT_MINSIZE(cdp) || count < _DIRENT_MINSIZE(ndp))
+	if (rcount < LFS_DIRECTSIZ(0) || count < _DIRENT_MINSIZE(ndp))
 		return EINVAL;
 
 	startoff = uio->uio_offset & ~(fs->um_dirblksiz - 1);
@@ -834,7 +833,7 @@ ulfs_readdir(void *v)
 
 	off = uio->uio_offset;
 	if (ap->a_cookies) {
-		ccount = rcount / _DIRENT_RECLEN(cdp, 1);
+		ccount = rcount / _DIRENT_RECLEN(ndp, 1);
 		ccp = *(ap->a_cookies) = malloc(ccount * sizeof(*ccp),
 		    M_TEMP, M_WAITOK);
 	} else {
@@ -844,11 +843,10 @@ ulfs_readdir(void *v)
 	}
 
 	while (cdp < ecdp) {
-		cdp->d_reclen = ulfs_rw16(cdp->d_reclen, nswap);
 		if (skipbytes > 0) {
-			if (cdp->d_reclen <= skipbytes) {
-				skipbytes -= cdp->d_reclen;
-				cdp = _DIRENT_NEXT(cdp);
+			if (lfs_dir_getreclen(fs, cdp) <= skipbytes) {
+				skipbytes -= lfs_dir_getreclen(fs, cdp);
+				cdp = LFS_NEXTDIR(fs, cdp);
 				continue;
 			}
 			/*
@@ -857,7 +855,7 @@ ulfs_readdir(void *v)
 			error = EINVAL;
 			goto out;
 		}
-		if (cdp->d_reclen == 0) {
+		if (lfs_dir_getreclen(fs, cdp) == 0) {
 			struct dirent *ondp = ndp;
 			ndp->d_reclen = _DIRENT_MINSIZE(ndp);
 			ndp = _DIRENT_NEXT(ndp);
@@ -871,17 +869,17 @@ ulfs_readdir(void *v)
 		if ((char *)(void *)ndp + ndp->d_reclen +
 		    _DIRENT_MINSIZE(ndp) > endp)
 			break;
-		ndp->d_fileno = ulfs_rw32(cdp->d_ino, nswap);
+		ndp->d_fileno = lfs_dir_getino(fs, cdp);
 		(void)memcpy(ndp->d_name, cdp->d_name, ndp->d_namlen);
 		memset(&ndp->d_name[ndp->d_namlen], 0,
 		    ndp->d_reclen - _DIRENT_NAMEOFF(ndp) - ndp->d_namlen);
-		off += cdp->d_reclen;
+		off += lfs_dir_getreclen(fs, cdp);
 		if (ap->a_cookies) {
 			KASSERT(ccp - *(ap->a_cookies) < ccount);
 			*(ccp++) = off;
 		}
 		ndp = _DIRENT_NEXT(ndp);
-		cdp = _DIRENT_NEXT(cdp);
+		cdp = LFS_NEXTDIR(fs, cdp);
 	}
 
 	count = ((char *)(void *)ndp - ndbuf);
