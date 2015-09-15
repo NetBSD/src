@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.22 2015/09/01 06:16:59 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.23 2015/09/15 14:58:06 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -241,6 +241,21 @@
 #define LFS_OLDDIRFMT	1
 #define LFS_NEWDIRFMT	0
 
+#define LFS_NEXTDIR(fs, dp) \
+	((struct lfs_direct *)((char *)(dp) + lfs_dir_getreclen(fs, dp)))
+
+static __unused inline uint32_t
+lfs_dir_getino(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+{
+	return LFS_SWAP_uint32_t(fs, dp->d_ino);
+}
+
+static __unused inline uint16_t
+lfs_dir_getreclen(const STRUCT_LFS *fs, const struct lfs_direct *dp)
+{
+	return LFS_SWAP_uint16_t(fs, dp->d_reclen);
+}
+
 static __unused inline uint8_t
 lfs_dir_gettype(const STRUCT_LFS *fs, const struct lfs_direct *dp)
 {
@@ -258,6 +273,18 @@ lfs_dir_getnamlen(const STRUCT_LFS *fs, const struct lfs_direct *dp)
 		return dp->d_type;
 	}
 	return dp->d_namlen;
+}
+
+static __unused inline void
+lfs_dir_setino(STRUCT_LFS *fs, struct lfs_direct *dp, uint32_t ino)
+{
+	dp->d_ino = LFS_SWAP_uint32_t(fs, ino);
+}
+
+static __unused inline void
+lfs_dir_setreclen(STRUCT_LFS *fs, struct lfs_direct *dp, uint16_t reclen)
+{
+	dp->d_reclen = LFS_SWAP_uint16_t(fs, reclen);
 }
 
 static __unused inline void

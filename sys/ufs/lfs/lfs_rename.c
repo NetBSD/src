@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.9 2015/09/01 06:16:59 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.10 2015/09/15 14:58:06 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.9 2015/09/01 06:16:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.10 2015/09/15 14:58:06 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -355,7 +355,6 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 	struct mount *mp;
 	struct lfs *fs;
 	struct ulfsmount *ump;
-	int needswap;
 	/* XXX int is a silly type for this; blame ulfsmount::um_dirblksiz.  */
 	int dirblksiz;
 	doff_t search_start, search_end;
@@ -383,8 +382,6 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 	KASSERT(ump != NULL);
 	KASSERT(ump == VTOI(dvp)->i_ump);
 	KASSERT(fs == VTOI(dvp)->i_lfs);
-
-	needswap = ULFS_MPNEEDSWAP(fs);
 
 	dirblksiz = fs->um_dirblksiz;
 	KASSERT(0 < dirblksiz);
@@ -434,12 +431,12 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 		 * Examine the directory entry at offset.
 		 */
 		ep = (struct lfs_direct *)(dirbuf + (offset - search_start));
-		reclen = ulfs_rw16(ep->d_reclen, needswap);
+		reclen = lfs_dir_getreclen(fs, ep);
 
-		if (ep->d_ino == 0)
+		if (lfs_dir_getino(fs, ep) == 0)
 			goto next;	/* Entry is unused.  */
 
-		if (ulfs_rw32(ep->d_ino, needswap) == ULFS_WINO)
+		if (lfs_dir_getino(fs, ep) == ULFS_WINO)
 			goto next;	/* Entry is whiteout.  */
 
 		if (fcnp->cn_namelen != ulfs_direct_namlen(ep, dvp))

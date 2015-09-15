@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.27 2015/09/01 06:16:58 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.28 2015/09/15 14:58:05 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -226,11 +226,11 @@ pass2check(struct inodesc * idesc)
 	 */
 	if (idesc->id_entryno != 0)
 		goto chk1;
-	if (dirp->d_ino != 0 && strcmp(dirp->d_name, ".") == 0) {
-		if (dirp->d_ino != idesc->id_number) {
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, ".") == 0) {
+		if (lfs_dir_getino(fs, dirp) != idesc->id_number) {
 			direrror(idesc->id_number, "BAD INODE NUMBER FOR '.'");
 			if (reply("FIX") == 1) {
-				dirp->d_ino = idesc->id_number;
+				lfs_dir_setino(fs, dirp, idesc->id_number);
 				ret |= ALTERED;
 			}
 		}
@@ -244,30 +244,30 @@ pass2check(struct inodesc * idesc)
 		goto chk1;
 	}
 	direrror(idesc->id_number, "MISSING '.'");
-	proto.d_ino = idesc->id_number;
+	lfs_dir_setino(fs, &proto, idesc->id_number);
 	lfs_dir_settype(fs, &proto, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, &proto, 1);
 	(void) strlcpy(proto.d_name, ".", sizeof(proto.d_name));
 	entrysize = LFS_DIRSIZ(fs, &proto);
-	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") != 0) {
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 		    dirp->d_name);
-	} else if (dirp->d_reclen < entrysize) {
+	} else if (lfs_dir_getreclen(fs, dirp) < entrysize) {
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '.'\n");
-	} else if (dirp->d_reclen < 2 * entrysize) {
-		proto.d_reclen = dirp->d_reclen;
+	} else if (lfs_dir_getreclen(fs, dirp) < 2 * entrysize) {
+		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
 		memcpy(dirp, &proto, (size_t) entrysize);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	} else {
-		n = dirp->d_reclen - entrysize;
-		proto.d_reclen = entrysize;
+		n = lfs_dir_getreclen(fs, dirp) - entrysize;
+		lfs_dir_setreclen(fs, &proto, entrysize);
 		memcpy(dirp, &proto, (size_t) entrysize);
 		idesc->id_entryno++;
-		lncntp[dirp->d_ino]--;
+		lncntp[lfs_dir_getino(fs, dirp)]--;
 		dirp = (struct lfs_direct *) ((char *) (dirp) + entrysize);
 		memset(dirp, 0, (size_t) n);
-		dirp->d_reclen = n;
+		lfs_dir_setreclen(fs, dirp, n);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	}
@@ -275,25 +275,25 @@ chk1:
 	if (idesc->id_entryno > 1)
 		goto chk2;
 	inp = getinoinfo(idesc->id_number);
-	proto.d_ino = inp->i_parent;
+	lfs_dir_setino(fs, &proto, inp->i_parent);
 	lfs_dir_settype(fs, &proto, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, &proto, 2);
 	(void) strlcpy(proto.d_name, "..", sizeof(proto.d_name));
 	entrysize = LFS_DIRSIZ(fs, &proto);
 	if (idesc->id_entryno == 0) {
 		n = LFS_DIRSIZ(fs, dirp);
-		if (dirp->d_reclen < n + entrysize)
+		if (lfs_dir_getreclen(fs, dirp) < n + entrysize)
 			goto chk2;
-		proto.d_reclen = dirp->d_reclen - n;
-		dirp->d_reclen = n;
+		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp) - n);
+		lfs_dir_setreclen(fs, dirp, n);
 		idesc->id_entryno++;
-		lncntp[dirp->d_ino]--;
+		lncntp[lfs_dir_getino(fs, dirp)]--;
 		dirp = (struct lfs_direct *) ((char *) (dirp) + n);
-		memset(dirp, 0, (size_t) proto.d_reclen);
-		dirp->d_reclen = proto.d_reclen;
+		memset(dirp, 0, lfs_dir_getreclen(fs, &proto));
+		lfs_dir_setreclen(fs, dirp, lfs_dir_getreclen(fs, &proto));
 	}
-	if (dirp->d_ino != 0 && strcmp(dirp->d_name, "..") == 0) {
-		inp->i_dotdot = dirp->d_ino;
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, "..") == 0) {
+		inp->i_dotdot = lfs_dir_getino(fs, dirp);
 		if (lfs_dir_gettype(fs, dirp) != LFS_DT_DIR) {
 			direrror(idesc->id_number, "BAD TYPE VALUE FOR '..'");
 			lfs_dir_settype(fs, dirp, LFS_DT_DIR);
@@ -302,12 +302,12 @@ chk1:
 		}
 		goto chk2;
 	}
-	if (dirp->d_ino != 0 && strcmp(dirp->d_name, ".") != 0) {
+	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, ".") != 0) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, SECOND ENTRY IN DIRECTORY CONTAINS %s\n",
 		    dirp->d_name);
 		inp->i_dotdot = (ino_t) - 1;
-	} else if (dirp->d_reclen < entrysize) {
+	} else if (lfs_dir_getreclen(fs, dirp) < entrysize) {
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '..'\n");
 		inp->i_dotdot = (ino_t) - 1;
@@ -317,17 +317,17 @@ chk1:
 		 */
 		inp->i_dotdot = inp->i_parent;
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
-		proto.d_reclen = dirp->d_reclen;
+		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
 		memcpy(dirp, &proto, (size_t) entrysize);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	}
 	idesc->id_entryno++;
-	if (dirp->d_ino != 0)
-		lncntp[dirp->d_ino]--;
+	if (lfs_dir_getino(fs, dirp) != 0)
+		lncntp[lfs_dir_getino(fs, dirp)]--;
 	return (ret | KEEPON);
 chk2:
-	if (dirp->d_ino == 0)
+	if (lfs_dir_getino(fs, dirp) == 0)
 		return (ret | KEEPON);
 	if (lfs_dir_getnamlen(fs, dirp) <= 2 &&
 	    dirp->d_name[0] == '.' &&
@@ -335,7 +335,7 @@ chk2:
 		if (lfs_dir_getnamlen(fs, dirp) == 1) {
 			direrror(idesc->id_number, "EXTRA '.' ENTRY");
 			if (reply("FIX") == 1) {
-				dirp->d_ino = 0;
+				lfs_dir_setino(fs, dirp, 0);
 				ret |= ALTERED;
 			}
 			return (KEEPON | ret);
@@ -343,7 +343,7 @@ chk2:
 		if (dirp->d_name[1] == '.') {
 			direrror(idesc->id_number, "EXTRA '..' ENTRY");
 			if (reply("FIX") == 1) {
-				dirp->d_ino = 0;
+				lfs_dir_setino(fs, dirp, 0);
 				ret |= ALTERED;
 			}
 			return (KEEPON | ret);
@@ -351,34 +351,35 @@ chk2:
 	}
 	idesc->id_entryno++;
 	n = 0;
-	if (dirp->d_ino >= maxino) {
-		fileerror(idesc->id_number, dirp->d_ino, "I OUT OF RANGE");
+	if (lfs_dir_getino(fs, dirp) >= maxino) {
+		fileerror(idesc->id_number, lfs_dir_getino(fs, dirp), "I OUT OF RANGE");
 		n = reply("REMOVE");
-	} else if (dirp->d_ino == LFS_IFILE_INUM &&
+	} else if (lfs_dir_getino(fs, dirp) == LFS_IFILE_INUM &&
 	    idesc->id_number == ULFS_ROOTINO) {
 		if (lfs_dir_gettype(fs, dirp) != LFS_DT_REG) {
-			fileerror(idesc->id_number, dirp->d_ino,
+			fileerror(idesc->id_number, lfs_dir_getino(fs, dirp),
 			    "BAD TYPE FOR IFILE");
 			if (reply("FIX") == 1) {
 				lfs_dir_settype(fs, dirp, LFS_DT_REG);
 				ret |= ALTERED;
 			}
 		}
-	} else if (((dirp->d_ino == ULFS_WINO && lfs_dir_gettype(fs, dirp) != LFS_DT_WHT) ||
-		(dirp->d_ino != ULFS_WINO && lfs_dir_gettype(fs, dirp) == LFS_DT_WHT))) {
-		fileerror(idesc->id_number, dirp->d_ino, "BAD WHITEOUT ENTRY");
-		dirp->d_ino = ULFS_WINO;
+	} else if (((lfs_dir_getino(fs, dirp) == ULFS_WINO && lfs_dir_gettype(fs, dirp) != LFS_DT_WHT) ||
+		(lfs_dir_getino(fs, dirp) != ULFS_WINO && lfs_dir_gettype(fs, dirp) == LFS_DT_WHT))) {
+		fileerror(idesc->id_number, lfs_dir_getino(fs, dirp), "BAD WHITEOUT ENTRY");
 		if (reply("FIX") == 1) {
+			lfs_dir_setino(fs, dirp, ULFS_WINO);
 			lfs_dir_settype(fs, dirp, LFS_DT_WHT);
 			ret |= ALTERED;
 		}
 	} else {
 again:
-		switch (statemap[dirp->d_ino]) {
+		switch (statemap[lfs_dir_getino(fs, dirp)]) {
 		case USTATE:
 			if (idesc->id_entryno <= 2)
 				break;
-			fileerror(idesc->id_number, dirp->d_ino, "UNALLOCATED");
+			fileerror(idesc->id_number, lfs_dir_getino(fs, dirp),
+			    "UNALLOCATED");
 			n = reply("REMOVE");
 			break;
 
@@ -386,7 +387,7 @@ again:
 		case FCLEAR:
 			if (idesc->id_entryno <= 2)
 				break;
-			if (statemap[dirp->d_ino] == FCLEAR)
+			if (statemap[lfs_dir_getino(fs, dirp)] == FCLEAR)
 				errmsg = "DUP/BAD";
 			else if (!preen)
 				errmsg = "ZERO LENGTH DIRECTORY";
@@ -394,23 +395,24 @@ again:
 				n = 1;
 				break;
 			}
-			fileerror(idesc->id_number, dirp->d_ino, errmsg);
+			fileerror(idesc->id_number, lfs_dir_getino(fs, dirp), errmsg);
 			if ((n = reply("REMOVE")) == 1)
 				break;
-			dp = ginode(dirp->d_ino);
-			statemap[dirp->d_ino] =
+			dp = ginode(lfs_dir_getino(fs, dirp));
+			statemap[lfs_dir_getino(fs, dirp)] =
 			    (lfs_dino_getmode(fs, dp) & LFS_IFMT) == LFS_IFDIR ? DSTATE : FSTATE;
-			lncntp[dirp->d_ino] = lfs_dino_getnlink(fs, dp);
+			lncntp[lfs_dir_getino(fs, dirp)] = lfs_dino_getnlink(fs, dp);
 			goto again;
 
 		case DSTATE:
 		case DFOUND:
-			inp = getinoinfo(dirp->d_ino);
+			inp = getinoinfo(lfs_dir_getino(fs, dirp));
 			if (inp->i_parent != 0 && idesc->id_entryno > 2) {
 				getpathname(pathbuf, sizeof(pathbuf),
 				    idesc->id_number, idesc->id_number);
 				getpathname(namebuf, sizeof(namebuf),
-				    dirp->d_ino, dirp->d_ino);
+				    lfs_dir_getino(fs, dirp),
+				    lfs_dir_getino(fs, dirp));
 				pwarn("%s %s %s\n", pathbuf,
 				    "IS AN EXTRANEOUS HARD LINK TO DIRECTORY",
 				    namebuf);
@@ -424,27 +426,29 @@ again:
 			/* fall through */
 
 		case FSTATE:
-			if (lfs_dir_gettype(fs, dirp) != typemap[dirp->d_ino]) {
-				fileerror(idesc->id_number, dirp->d_ino,
+			if (lfs_dir_gettype(fs, dirp) != typemap[lfs_dir_getino(fs, dirp)]) {
+				fileerror(idesc->id_number,
+				    lfs_dir_getino(fs, dirp),
 				    "BAD TYPE VALUE");
 				if (debug)
 					pwarn("dir has %d, typemap has %d\n",
-						lfs_dir_gettype(fs, dirp), typemap[dirp->d_ino]);
-				lfs_dir_settype(fs, dirp, typemap[dirp->d_ino]);
+						lfs_dir_gettype(fs, dirp), typemap[lfs_dir_getino(fs, dirp)]);
+				lfs_dir_settype(fs, dirp, typemap[lfs_dir_getino(fs, dirp)]);
 				if (reply("FIX") == 1)
 					ret |= ALTERED;
 			}
-			lncntp[dirp->d_ino]--;
+			lncntp[lfs_dir_getino(fs, dirp)]--;
 			break;
 
 		default:
-			errx(EEXIT, "BAD STATE %d FOR INODE I=%d",
-			    statemap[dirp->d_ino], dirp->d_ino);
+			errx(EEXIT, "BAD STATE %d FOR INODE I=%ju",
+			    statemap[lfs_dir_getino(fs, dirp)],
+			    (uintmax_t)lfs_dir_getino(fs, dirp));
 		}
 	}
 	if (n == 0)
 		return (ret | KEEPON);
-	dirp->d_ino = 0;
+	lfs_dir_setino(fs, dirp, 0);
 	return (ret | KEEPON | ALTERED);
 }
 /*
