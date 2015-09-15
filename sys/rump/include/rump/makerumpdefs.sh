@@ -8,7 +8,7 @@ echo Generating rumpdefs.h
 rm -f rumpdefs.h
 exec 3>&1 > rumpdefs.h
 
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.27 2015/09/10 16:21:32 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.28 2015/09/15 14:55:12 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n\n'
 printf '#ifndef _RUMP_RUMPDEFS_H_\n'
 printf '#define _RUMP_RUMPDEFS_H_\n\n'
@@ -126,11 +126,11 @@ getstruct ../../../sys/dirent.h dirent
 printf '\n#endif /* _RUMP_RUMPDEFS_H_ */\n'
 
 exec 1>&3
+
 echo Generating rumperr.h
 rm -f rumperr.h
 exec > rumperr.h
-
-printf '/*	$NetBSD: makerumpdefs.sh,v 1.27 2015/09/10 16:21:32 pooka Exp $	*/\n\n'
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.28 2015/09/15 14:55:12 pooka Exp $	*/\n\n'
 printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n'
 
 fromvers ../../../sys/errno.h
@@ -165,6 +165,46 @@ END {
 if [ $? -ne 0 ]; then
 	echo 'Parsing errno.h failed!' 1>&3
 	rm -f rumpdefs.h rumperr.h
+	exit 1
+fi
+
+echo Generating rumperrno2host.h 1>&3
+rm -f rumperrno2host.h
+exec > rumperrno2host.h
+printf '/*	$NetBSD: makerumpdefs.sh,v 1.28 2015/09/15 14:55:12 pooka Exp $	*/\n\n'
+printf '/*\n *\tAUTOMATICALLY GENERATED.  DO NOT EDIT.\n */\n'
+
+fromvers ../../../sys/errno.h
+
+printf "\n#ifndef ERANGE\n#error include ISO C style errno.h first\n#endif\n"
+printf "\nstatic inline int \nrump_errno2host(int rumperrno)\n{\n\n"
+printf "\tswitch (rumperrno) {\n\tcase 0:\n"
+printf "\t\t return 0;\n"
+awk '/^#define[ 	]*E.*[0-9]/{
+	ename = $2
+	evalue = $3
+	error = 1
+	if (ename == "ELAST") {
+		printf "\tdefault:\n"
+		printf "#ifdef EINVAL\n\t\treturn EINVAL;\n"
+		printf "#else\n\t\treturn ERANGE;\n#endif\n"
+		printf "\t}\n}\n"
+		error = 0
+		exit 0
+	}
+	if (preverror + 1 != evalue)
+		exit 1
+	preverror = evalue
+	printf "#ifdef %s\n", ename
+	printf "\tcase %d:\n\t\treturn %s;\n", evalue, ename
+	printf "#endif\n"
+}
+END {
+	exit error
+}' < ../../../sys/errno.h
+if [ $? -ne 0 ]; then
+	echo 'Parsing errno.h failed!' 1>&3
+	rm -f rumpdefs.h rumperr.h rumperrno2host.h
 	exit 1
 fi
 
