@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.h,v 1.5 2013/06/08 02:14:46 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.h,v 1.6 2015/09/15 15:02:25 dholland Exp $	*/
 /*  from NetBSD: dirhash.h,v 1.6 2008/06/04 11:33:19 ad Exp  */
 
 /*
@@ -118,9 +118,9 @@ doff_t	ulfsdirhash_enduseful(struct inode *);
 int	ulfsdirhash_lookup(struct inode *, const char *, int, doff_t *,
 	    struct buf **, doff_t *);
 void	ulfsdirhash_newblk(struct inode *, doff_t);
-void	ulfsdirhash_add(struct inode *, struct lfs_direct *, doff_t);
-void	ulfsdirhash_remove(struct inode *, struct lfs_direct *, doff_t);
-void	ulfsdirhash_move(struct inode *, struct lfs_direct *, doff_t, doff_t);
+void	ulfsdirhash_add(struct inode *, struct lfs_dirheader *, doff_t);
+void	ulfsdirhash_remove(struct inode *, struct lfs_dirheader *, doff_t);
+void	ulfsdirhash_move(struct inode *, struct lfs_dirheader *, doff_t, doff_t);
 void	ulfsdirhash_dirtrunc(struct inode *, doff_t);
 void	ulfsdirhash_free(struct inode *);
 void	ulfsdirhash_checkblock(struct inode *, char *, doff_t);

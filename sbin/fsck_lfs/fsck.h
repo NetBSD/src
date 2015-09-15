@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.21 2015/08/12 18:28:00 dholland Exp $	 */
+/* $NetBSD: fsck.h,v 1.22 2015/09/15 15:02:25 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -132,7 +132,7 @@ struct inodesc {
 	off_t id_filesize;	/* for DATA nodes, the size of the directory */
 	int id_loc;		/* for DATA nodes, current location in dir */
 	int id_entryno;		/* for DATA nodes, current entry number */
-	struct lfs_direct *id_dirp;	/* for DATA nodes, ptr to current entry */
+	struct lfs_dirheader *id_dirp;	/* for DATA nodes, ptr to current entry */
 	const char *id_name;	/* for DATA nodes, name to find or enter */
 	char id_type;		/* type of descriptor, DATA or ADDR */
 };
