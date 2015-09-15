@@ -1,4 +1,4 @@
-/* $NetBSD: pass2.c,v 1.28 2015/09/15 14:58:05 dholland Exp $	 */
+/* $NetBSD: pass2.c,v 1.29 2015/09/15 15:01:22 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -247,25 +247,30 @@ pass2check(struct inodesc * idesc)
 	lfs_dir_setino(fs, &proto, idesc->id_number);
 	lfs_dir_settype(fs, &proto, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, &proto, 1);
-	(void) strlcpy(proto.d_name, ".", sizeof(proto.d_name));
-	entrysize = LFS_DIRSIZ(fs, &proto);
+	entrysize = LFS_DIRECTSIZ(1);
+	lfs_dir_setreclen(fs, &proto, entrysize);
 	if (lfs_dir_getino(fs, dirp) != 0 && strcmp(dirp->d_name, "..") != 0) {
 		pfatal("CANNOT FIX, FIRST ENTRY IN DIRECTORY CONTAINS %s\n",
 		    dirp->d_name);
 	} else if (lfs_dir_getreclen(fs, dirp) < entrysize) {
 		pfatal("CANNOT FIX, INSUFFICIENT SPACE TO ADD '.'\n");
 	} else if (lfs_dir_getreclen(fs, dirp) < 2 * entrysize) {
+		/* convert this entry to a . entry */
 		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
-		memcpy(dirp, &proto, (size_t) entrysize);
+		memcpy(dirp, &proto, sizeof(proto));
+		/* 4 is entrysize - headersize (XXX: clean up) */
+		(void) strlcpy(dirp->d_name, ".", 4);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	} else {
+		/* split this entry and use the beginning for the . entry */
 		n = lfs_dir_getreclen(fs, dirp) - entrysize;
-		lfs_dir_setreclen(fs, &proto, entrysize);
-		memcpy(dirp, &proto, (size_t) entrysize);
+		memcpy(dirp, &proto, sizeof(proto));
+		/* XXX see case above */
+		(void) strlcpy(dirp->d_name, ".", 4);
 		idesc->id_entryno++;
 		lncntp[lfs_dir_getino(fs, dirp)]--;
-		dirp = (struct lfs_direct *) ((char *) (dirp) + entrysize);
+		dirp = LFS_NEXTDIR(fs, dirp);
 		memset(dirp, 0, (size_t) n);
 		lfs_dir_setreclen(fs, dirp, n);
 		if (reply("FIX") == 1)
@@ -278,8 +283,8 @@ chk1:
 	lfs_dir_setino(fs, &proto, inp->i_parent);
 	lfs_dir_settype(fs, &proto, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, &proto, 2);
-	(void) strlcpy(proto.d_name, "..", sizeof(proto.d_name));
-	entrysize = LFS_DIRSIZ(fs, &proto);
+	entrysize = LFS_DIRECTSIZ(2);
+	lfs_dir_setreclen(fs, &proto, entrysize);
 	if (idesc->id_entryno == 0) {
 		n = LFS_DIRSIZ(fs, dirp);
 		if (lfs_dir_getreclen(fs, dirp) < n + entrysize)
@@ -319,6 +324,8 @@ chk1:
 		fileerror(inp->i_parent, idesc->id_number, "MISSING '..'");
 		lfs_dir_setreclen(fs, &proto, lfs_dir_getreclen(fs, dirp));
 		memcpy(dirp, &proto, (size_t) entrysize);
+		/* 4 is entrysize - headersize (XXX: clean up) */
+		(void) strlcpy(proto.d_name, "..", 4);
 		if (reply("FIX") == 1)
 			ret |= ALTERED;
 	}
