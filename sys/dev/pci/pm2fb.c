@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.27 2014/12/17 16:50:08 macallan Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.28 2015/09/16 16:52:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.27 2014/12/17 16:50:08 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.28 2015/09/16 16:52:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -315,7 +315,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
-	bool			is_console;
+	bool			is_console = FALSE;
 	uint32_t		flags;
 	int			i;
 

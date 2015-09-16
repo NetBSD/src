@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.38 2013/10/09 17:18:23 macallan Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.39 2015/09/16 16:52:54 macallan Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.38 2013/10/09 17:18:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.39 2015/09/16 16:52:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,7 +201,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
-	bool			is_console;
+	bool			is_console = FALSE;
 	int			i, j;
 	uint32_t		reg, flags;
 	uint8_t			cmap[768];
