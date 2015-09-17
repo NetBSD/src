@@ -30,7 +30,7 @@
 static const char copyright[] _U_ =
     "@(#) Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 2000\n\
 The Regents of the University of California.  All rights reserved.\n";
-__RCSID("$NetBSD: tcpdump.c,v 1.11 2015/03/31 21:59:35 christos Exp $");
+__RCSID("$NetBSD: tcpdump.c,v 1.12 2015/09/17 14:03:10 nonaka Exp $");
 #endif
 
 /*
@@ -1856,8 +1856,12 @@ main(int argc, char **argv)
 		}
 		capng_apply(CAPNG_SELECT_BOTH);
 #endif /* HAVE_LIBCAP_NG */
-		if (username || chroot_dir)
+		if (username || chroot_dir) {
+#ifndef HAVE_LIBCAP_NG
+			if (!WFileName)
+#endif
 			droproot(username, chroot_dir);
+		}
 	}
 #endif /* WIN32 */
 
