@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.226 2015/07/08 01:08:24 matt Exp $
+#	$NetBSD: Makefile,v 1.227 2015/09/17 02:00:33 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -68,10 +68,6 @@ SUBDIR+=	libbpfjit
 SUBDIR+=        ../external/cddl/osnet/lib/libdtrace
 .endif
 
-.if ${MKDTRACE} != "no" || ${MKCTF} != "no"
-SUBDIR+=        ../external/cddl/osnet/lib/libctf
-.endif
-
 .if (${MKZFS} != "no")
 SUBDIR+=        ../external/cddl/osnet/lib/libavl
 SUBDIR+=        ../external/cddl/osnet/lib/libnvpair
@@ -106,6 +102,10 @@ SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 #
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+.if ${MKDTRACE} != "no" || ${MKCTF} != "no"
+SUBDIR+=        ../external/cddl/osnet/lib/libctf
+.endif
 
 SUBDIR+=	../external/public-domain/xz/lib	# depends on libpthread
 
