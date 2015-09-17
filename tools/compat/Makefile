@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2015/07/26 14:01:53 kamil Exp $
+#	$NetBSD: Makefile,v 1.75 2015/09/17 02:22:47 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -125,7 +125,7 @@ ${HOST_INCSDIR}/compat/${_d}:
 
 # Install include files in ${TOOLDIR}/include/compat
 includes: .PHONY ${HOST_INCINSTDIRS} .WAIT ${HOST_INCINSTFILES}
-	@(cd include && find . -name '*.h' -print | while read f ; do \
+	@(cd ${.CURDIR}/include && find . -name '*.h' -print | while read f ; do \
 	    ${HOST_INSTALL_FILE} $$f ${HOST_INCSDIR}/compat/$$f ; \
 	done)
 
