@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.4 2015/09/15 15:49:02 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.5 2015/09/17 14:39:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -29,7 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _AMD64_PTRACE_H_
+#define _AMD64_PTRACE_H_
 
+#ifdef __x86_64__
 /*
  * i386-dependent ptrace definitions
  */
@@ -63,5 +66,13 @@
 
 #define process_reg32		struct reg32
 #define process_fpreg32		struct fpreg32
-#endif
-#endif
+#endif	/* COMPAT_NETBSD32 */
+#endif	/* _KERNEL_OPT */
+
+#else	/* !__x86_64__ */
+
+#include <i386/ptrace.h>
+
+#endif	/* __x86_64__ */
+
+#endif	/* _AMD64_PTRACE_H_ */
