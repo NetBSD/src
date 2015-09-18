@@ -37,7 +37,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.5 2015/09/09 17:16:20 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hytp14.c,v 1.6 2015/09/18 17:21:43 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,7 @@ hytp14_measurement_request(void *aux)
 			DPRINTF(2, ("%s: %s: failed read from 0x%02x - error %d\n",
 			    device_xname(sc->sc_dev), __func__,
 			    sc->sc_addr, error));
+			sc->sc_valid = ENVSYS_SINVALID;
 		} else {
 			DPRINTF(3, ("%s(%s): DF success : "
 			    "0x%02x%02x%02x%02x\n",
@@ -288,6 +289,7 @@ hytp14_refresh_sensor(struct hytp14_sc *sc)
 			DPRINTF(2, ("%s: %s: failed read from 0x%02x - error %d\n",
 			    device_xname(sc->sc_dev), __func__,
 			    sc->sc_addr, error));
+			sc->sc_valid = ENVSYS_SINVALID;
 		} else {
 			DPRINTF(3, ("%s(%s): DF success : "
 			    "0x%02x%02x%02x%02x\n",
@@ -317,7 +319,7 @@ hytp14_refresh_sensor(struct hytp14_sc *sc)
 		DPRINTF(2, ("%s: %s: failed acquire i2c bus - error %d\n",
 		    device_xname(sc->sc_dev), __func__, error));
 	}
-	
+
 	return sc->sc_valid;
 }
 
