@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.239 2015/08/21 09:46:43 pgoyette Exp $
+$NetBSD: acronyms,v 1.240 2015/09/18 13:40:10 wiz Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -469,6 +469,7 @@ TCB	taking care of business
 TCO	taken care of
 TCO	total cost of ownership
 TFOA	things falling off aircraft
+TGIF	thank goodness it's Friday
 THNX	thanks
 THX	thanks
 TIA	thanks in advance
