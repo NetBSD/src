@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.262 2015/04/14 14:18:59 christos Exp $
+$NetBSD: UPDATING,v 1.263 2015/09/19 18:31:41 dholland Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,10 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20150818:
+	New acpica requires "make cleandir" in src/external/bsd/acpica
+	again.
 
 20150413:
 	New acpica requires "make cleandir" and reinstalling yacc
