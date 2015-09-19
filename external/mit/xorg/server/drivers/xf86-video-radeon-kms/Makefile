@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2015/03/01 07:46:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.2 2015/09/19 23:00:44 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -40,7 +40,8 @@ SRCS=		radeon_accel.c radeon_video.c \
 		$(SRCS.EXA) \
 		$(SRCS.KMS)
 
-MAN=	radeon.4
+MAN=		radeon.4
+MANSUBDIR=	/x86
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \

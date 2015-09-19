@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.129 2015/09/11 10:35:44 kamil Exp $
+# $NetBSD: mi,v 1.130 2015/09/19 23:00:44 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2712,6 +2712,7 @@
 ./usr/X11R7/man/cat1/xwud.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat3					base-x11-root	xorg
 ./usr/X11R7/man/cat4					base-x11-root	xorg
+./usr/X11R7/man/cat4/x86					base-x11-root	xorg
 ./usr/X11R7/man/cat5					base-x11-root	xorg
 ./usr/X11R7/man/cat5/fonts-conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/cat7					base-x11-root	xorg
@@ -2853,6 +2854,7 @@
 ./usr/X11R7/man/html1/xwud.html				-unknown-	html,xorg
 ./usr/X11R7/man/html3					base-x11-root	xorg
 ./usr/X11R7/man/html4					base-x11-root	xorg
+./usr/X11R7/man/html4/x86					base-x11-root	xorg
 ./usr/X11R7/man/html5					base-x11-root	xorg
 ./usr/X11R7/man/html5/fonts-conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/html7					base-x11-root	xorg
@@ -2995,6 +2997,7 @@
 ./usr/X11R7/man/man1/xwud.1				-unknown-	.man,xorg
 ./usr/X11R7/man/man3					base-x11-root	xorg
 ./usr/X11R7/man/man4					base-x11-root	xorg
+./usr/X11R7/man/man4/x86					base-x11-root	xorg
 ./usr/X11R7/man/man5					base-x11-root	xorg
 ./usr/X11R7/man/man5/fonts-conf.5			-unknown-	.man,xorg
 ./usr/X11R7/man/man7					base-x11-root	xorg

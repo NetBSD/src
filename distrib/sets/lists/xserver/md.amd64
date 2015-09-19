@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.83 2015/07/24 07:13:34 mrg Exp $
+# $NetBSD: md.amd64,v 1.84 2015/09/19 23:00:44 wiz Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -355,8 +355,6 @@
 ./usr/X11R7/lib/X11/doc/README.fonts			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
-./usr/X11R7/lib/modules/dri/mesa_dri_drivers.so		-unknown-	xorg
-./usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/i810_dri.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/i810_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/i915_dri.so			-unknown-	xorg
@@ -365,6 +363,8 @@
 ./usr/X11R7/lib/modules/dri/i965_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mach64_dri.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/mach64_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/mesa_dri_drivers.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	obsolete
@@ -447,10 +447,10 @@
 ./usr/X11R7/lib/modules/drivers/openchrome_drv.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/r128_drv.so.6		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeon_drv_old.so	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeon_drv.so.7		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeon_drv_old.so	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/drivers/radeonhd_drv.so.1	-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/drivers/s3_drv.so		-unknown-	xorg
@@ -514,11 +514,11 @@
 ./usr/X11R7/lib/modules/extensions/libdri.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri.so.0		-unknown-	xorg
-./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libdri2.a		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libdri2_pic.a	-unknown-	xorg,picinstall,obsolete
+./usr/X11R7/lib/modules/extensions/libdri_pic.a		-unknown-	xorg,picinstall,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod.a		-unknown-	xorg,obsolete
 ./usr/X11R7/lib/modules/extensions/libextmod.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/extensions/libextmod.so.0	-unknown-	xorg
@@ -650,6 +650,7 @@
 ./usr/X11R7/man/cat4/void.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/ws.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/wsfb.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/x86/radeon.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/xgi.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat5/xorg.conf.0			-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/Xorg.html				-unknown-	html,xorg
@@ -695,6 +696,7 @@
 ./usr/X11R7/man/html4/void.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/ws.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/wsfb.html				-unknown-	html,xorg
+./usr/X11R7/man/html4/x86/radeon.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/xgi.html				-unknown-	html,xorg
 ./usr/X11R7/man/html5/xorg.conf.html			-unknown-	html,xorg
 ./usr/X11R7/man/man1/Xorg.1				-unknown-	.man,xorg
@@ -740,6 +742,7 @@
 ./usr/X11R7/man/man4/void.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/ws.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/wsfb.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/x86/radeon.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/xgi.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man5/xorg.conf.5			-unknown-	.man,xorg
 ./usr/X11R7/share/aclocal/xorg-server.m4		-unknown-	xorg
