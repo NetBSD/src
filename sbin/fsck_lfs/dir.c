@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.43 2015/09/15 15:02:25 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.44 2015/09/20 04:51:43 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -54,6 +54,7 @@
 
 const char *lfname = "lost+found";
 int lfmode = 01700;
+#if 0
 struct lfs_dirtemplate emptydir = {
 	.dot_ino = 0,
 	.dot_reclen = LFS_DIRBLKSIZ,
@@ -70,7 +71,6 @@ struct lfs_dirtemplate dirhead = {
 	.dotdot_namlen = 2,
 	.dotdot_name = ".."
 };
-#if 0
 struct lfs_odirtemplate odirhead = {
 	.dot_ino = 0,
 	.dot_reclen = 12,
@@ -587,6 +587,24 @@ makeentry(ino_t parent, ino_t ino, const char *name)
 }
 
 /*
+ * Initialize a completely empty directory block.
+ * (block size is LFS_DIRBLKSIZ)
+ */
+static void
+zerodirblk(void *buf)
+{
+	struct lfs_dirheader *dirp;
+
+	dirp = buf;
+	lfs_dir_setino(fs, dirp, 0);
+	lfs_dir_setreclen(fs, dirp, LFS_DIRBLKSIZ);
+	lfs_dir_settype(fs, dirp, LFS_DT_UNKNOWN);
+	lfs_dir_setnamlen(fs, dirp, 0);
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), "", 0,
+			LFS_DIRBLKSIZ);
+}
+
+/*
  * Attempt to expand the size of a directory
  */
 static int
@@ -620,13 +638,13 @@ expanddir(struct uvnode *vp, union lfs_dinode *dp, char *name)
 	for (cp = &bp->b_data[LFS_DIRBLKSIZ];
 	    cp < &bp->b_data[lfs_sb_getbsize(fs)];
 	    cp += LFS_DIRBLKSIZ)
-		memcpy(cp, &emptydir, sizeof emptydir);
+		zerodirblk(cp);
 	VOP_BWRITE(bp);
 	bread(vp, lfs_dino_getdb(fs, dp, lastbn + 1),
 	    (long) lfs_dblksize(fs, dp, lastbn + 1), 0, &bp);
 	if (bp->b_flags & B_ERROR)
 		goto bad;
-	memcpy(bp->b_data, &emptydir, sizeof emptydir);
+	zerodirblk(bp->b_data);
 	pwarn("NO SPACE LEFT IN %s", name);
 	if (preen)
 		printf(" (EXPANDED)\n");
@@ -655,13 +673,10 @@ allocdir(ino_t parent, ino_t request, int mode)
 	char *cp;
 	union lfs_dinode *dp;
 	struct ubuf *bp;
-	struct lfs_dirtemplate *dirp;
+	struct lfs_dirheader *dirp;
 	struct uvnode *vp;
 
 	ino = allocino(request, LFS_IFDIR | mode);
-	dirp = &dirhead;
-	dirp->dot_ino = ino;
-	dirp->dotdot_ino = parent;
 	vp = vget(fs, ino);
 	dp = VTOD(vp);
 	bread(vp, lfs_dino_getdb(fs, dp, 0), lfs_sb_getfsize(fs), 0, &bp);
@@ -670,11 +685,27 @@ allocdir(ino_t parent, ino_t request, int mode)
 		freeino(ino);
 		return (0);
 	}
-	memcpy(bp->b_data, dirp, sizeof(struct lfs_dirtemplate));
+	dirp = (struct lfs_dirheader *)bp->b_data;
+	/* . */
+	lfs_dir_setino(fs, dirp, ino);
+	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(1));
+	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, dirp, 1);
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), ".", 1,
+			LFS_DIRECTSIZ(1));
+	/* .. */
+	dirp = LFS_NEXTDIR(fs, dirp);
+	lfs_dir_setino(fs, dirp, parent);
+	lfs_dir_setreclen(fs, dirp, LFS_DIRBLKSIZ - LFS_DIRECTSIZ(1));
+	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, dirp, 2);
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), "..", 2,
+			LFS_DIRBLKSIZ - LFS_DIRECTSIZ(1));
 	for (cp = &bp->b_data[LFS_DIRBLKSIZ];
 	    cp < &bp->b_data[lfs_sb_getfsize(fs)];
-	    cp += LFS_DIRBLKSIZ)
-		memcpy(cp, &emptydir, sizeof emptydir);
+	    cp += LFS_DIRBLKSIZ) {
+		zerodirblk(cp);
+	}
 	VOP_BWRITE(bp);
 	lfs_dino_setnlink(fs, dp, 2);
 	inodirty(VTOI(vp));
