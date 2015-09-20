@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.42 2015/05/09 23:12:57 dholland Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.43 2015/09/20 16:39:04 kamil Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.42 2015/05/09 23:12:57 dholland Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.43 2015/09/20 16:39:04 kamil Exp $");
 #endif
 #endif
 
@@ -495,21 +495,56 @@ static char *
 generate_guard(const char *pathname)
 {
 	const char *filename;
-	char *guard, *tmp, *tmp2;
+	char *guard, *tmp, *tmp2, *extdot;
 
 	filename = strrchr(pathname, '/');	/* find last component */
 	filename = ((filename == 0) ? pathname : filename + 1);
 	guard = strdup(filename);
-	/* convert to upper case */
-	tmp = guard;
-	while (*tmp) {
-		*tmp = toupper((unsigned char)*tmp);
-		tmp++;
+	if (guard == NULL) {
+		err(EXIT_FAILURE, "strdup");
+	}
+	extdot = strrchr(guard, '.');
+
+	/*
+	 * Convert to valid C symbol name and make it upper case.
+	 * Map non alphanumerical characters to '_'.
+	 *
+	 * Leave extension as it is. It will be handled in extendfile().
+	 */
+	for (tmp = guard; *tmp; tmp++) {
+		if (islower((unsigned char)*tmp))
+			*tmp = toupper((unsigned char)*tmp);
+		else if (isupper((unsigned char)*tmp))
+			continue;
+		else if (isdigit((unsigned char)*tmp))
+			continue;
+		else if (*tmp == '_')
+			continue;
+		else if (tmp == extdot)
+			break;
+		else
+			*tmp = '_';
 	}
 
+	/*
+	 * Can't have a '_' or '.' at the front of a symbol name, beacuse it
+	 * will end up as "__".
+	 *
+	 * Prefix it with "RPCGEN_".
+	 */
+	if (guard[0] == '_' || guard[0] == '.') {
+		if (asprintf(&tmp2, "RPCGEN_%s", guard) == -1) {
+			err(EXIT_FAILURE, "asprintf");
+		}
+		free(guard);
+		guard = tmp2;
+	}
+
+	/* Replace the file extension */
 	tmp2 = extendfile(guard, "_H_RPCGEN");
 	free(guard);
 	guard = tmp2;
+
 	return (guard);
 }
 
