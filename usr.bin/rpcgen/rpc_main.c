@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_main.c,v 1.43 2015/09/20 16:39:04 kamil Exp $	*/
+/*	$NetBSD: rpc_main.c,v 1.44 2015/09/20 16:57:13 kamil Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_main.c 1.30 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_main.c,v 1.43 2015/09/20 16:39:04 kamil Exp $");
+__RCSID("$NetBSD: rpc_main.c,v 1.44 2015/09/20 16:57:13 kamil Exp $");
 #endif
 #endif
 
@@ -278,7 +278,7 @@ extendfile(const char *path, const char *ext)
 
 	res = alloc(strlen(file) + strlen(ext) + 1);
 	if (res == NULL) {
-		errx(1, "Out of memory");
+		err(EXIT_FAILURE, "Out of memory");
 	}
 	p = strrchr(file, '.');
 	if (p == NULL) {
