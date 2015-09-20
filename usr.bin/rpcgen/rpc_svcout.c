@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.29 2015/05/09 21:44:47 christos Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.30 2015/09/20 15:52:11 kamil Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.29 2015/05/09 21:44:47 christos Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.30 2015/09/20 15:52:11 kamil Exp $");
 #endif
 #endif
 
@@ -449,9 +449,12 @@ write_program(definition *def, const char *storage)
 				    "\t\t%s = (char *(*)(char *, struct svc_req *))",
 				    ROUTINE);
 
-			if (newstyle)	/* new style: calls internal routine */
+			if (newstyle) {	/* new style: calls internal routine */
 				f_print(fout, "_");
-			pvname_svc(proc->proc_name, vp->vers_num);
+				pvname(proc->proc_name, vp->vers_num);
+			} else {
+				pvname_svc(proc->proc_name, vp->vers_num);
+			}
 			f_print(fout, ";\n");
 			f_print(fout, "\t\tbreak;\n\n");
 		}
