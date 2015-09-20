@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.81 2015/01/07 22:43:01 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.82 2015/09/20 00:30:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-__RCSID("$NetBSD: if.c,v 1.81 2015/01/07 22:43:01 christos Exp $");
+__RCSID("$NetBSD: if.c,v 1.82 2015/09/20 00:30:04 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -44,6 +44,7 @@ __RCSID("$NetBSD: if.c,v 1.81 2015/01/07 22:43:01 christos Exp $");
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/sysctl.h>
+#include <sys/ioctl.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -82,6 +83,7 @@ struct	iftot {
 	int ift_dr;			/* drops */
 };
 
+static void set_lines(void);
 static void print_addr(struct sockaddr *, struct sockaddr **, struct if_data *,
     struct ifnet *);
 static void sidewaysintpr(u_int, u_long);
@@ -99,6 +101,22 @@ static void intpr_kvm(u_long, void (*)(const char *));
 
 struct iftot iftot[MAXIF], ip_cur, ip_old, sum_cur, sum_old;
 bool	signalled;			/* set if alarm goes off "early" */
+
+static unsigned redraw_lines = 21;
+
+static void
+set_lines(void)
+{
+	static bool first = true;
+	struct ttysize ts;
+
+	if (!first)
+		return;
+	first = false;
+	if (ioctl(STDOUT_FILENO, TIOCGSIZE, &ts) != -1 && ts.ts_lines)
+		redraw_lines = ts.ts_lines - 3;
+}
+
 
 /*
  * Print a description of the network interfaces.
@@ -613,7 +631,9 @@ __dead static void
 sidewaysintpr_sysctl(unsigned interval)
 {
 	sigset_t emptyset;
-	int line;
+	unsigned line;
+
+	set_lines();
 
 	fetchifs();
 	if (ip_cur.ift_name[0] == '\0') {
@@ -652,7 +672,7 @@ loop:
 		sigsuspend(&emptyset);
 	signalled = 0;
 	(void)alarm(interval);
-	if (line == 21)
+	if (line == redraw_lines)
 		goto banner;
 	goto loop;
 	/*NOTREACHED*/
@@ -665,10 +685,12 @@ sidewaysintpr_kvm(unsigned interval, u_long off)
 	struct ifnet ifnet;
 	u_long firstifnet;
 	struct iftot *ip, *total;
-	int line;
+	unsigned line;
 	struct iftot *lastif, *sum, *interesting;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	int oldmask;
+
+	set_lines();
 
 	/*
 	 * Find the pointer to the first ifnet structure.  Replace
@@ -883,7 +905,7 @@ loop:
 	}
 	sigsetmask(oldmask);
 	signalled = false;
-	if (line == 21)
+	if (line == redraw_lines)
 		goto banner;
 	goto loop;
 	/*NOTREACHED*/
