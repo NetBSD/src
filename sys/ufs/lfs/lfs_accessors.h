@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.28 2015/09/20 04:50:58 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.29 2015/09/20 04:51:43 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -328,78 +328,6 @@ lfs_copydirname(STRUCT_LFS *fs, char *dest, const char *src,
 	memcpy(dest, src, namlen);
 	memset(dest + namlen, '\0', spacelen - namlen);
 }
-
-/*
- * These are called "dirt" because they ought to be cleaned up.
- */
-
-static __unused inline uint8_t
-lfs_dirt_getdottype(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
-{
-	if (fs->lfs_hasolddirfmt) {
-		return LFS_DT_UNKNOWN;
-	}
-	return dp->dot_type;
-}
-
-static __unused inline uint8_t
-lfs_dirt_getdotnamlen(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
-{
-	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
-		/* low-order byte of old 16-bit namlen field */
-		return dp->dot_type;
-	}
-	return dp->dot_namlen;
-}
-
-static __unused inline uint8_t
-lfs_dirt_getdotdottype(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
-{
-	if (fs->lfs_hasolddirfmt) {
-		return LFS_DT_UNKNOWN;
-	}
-	return dp->dotdot_type;
-}
-
-static __unused inline uint8_t
-lfs_dirt_getdotdotnamlen(const STRUCT_LFS *fs, const struct lfs_dirtemplate *dp)
-{
-	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
-		/* low-order byte of old 16-bit namlen field */
-		return dp->dotdot_type;
-	}
-	return dp->dotdot_namlen;
-}
-
-static __unused inline void
-lfs_dirt_settypes(const STRUCT_LFS *fs, struct lfs_dirtemplate *dtp,
-    unsigned dt1, unsigned dt2)
-{
-	if (fs->lfs_hasolddirfmt) {
-		/* do nothing */
-		return;
-	}
-	dtp->dot_type = dt1;
-	dtp->dotdot_type = dt2;
-}
-
-static __unused inline void
-lfs_dirt_setnamlens(const STRUCT_LFS *fs, struct lfs_dirtemplate *dtp,
-    unsigned len1, unsigned len2)
-{
-	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
-		/* low-order bytes of old 16-bit namlen field */
-		dtp->dot_type = len1;
-		dtp->dotdot_type = len2;
-		/* clear the high-order bytes */
-		dtp->dot_namlen = 0;
-		dtp->dotdot_namlen = 0;
-		return;
-	}
-	dtp->dot_namlen = len1;
-	dtp->dotdot_namlen = len2;
-}
-
 
 /*
  * dinodes

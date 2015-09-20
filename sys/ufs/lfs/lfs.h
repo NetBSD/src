@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.189 2015/09/15 15:02:40 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.190 2015/09/20 04:51:43 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -356,22 +356,16 @@ struct lfs_dirheader {
 };
 
 /*
- * Template for manipulating directories.  Should use struct lfs_direct's,
- * but the name field is LFS_MAXNAMLEN - 1, and this just won't do.
+ * Template for manipulating directories.
  */
 struct lfs_dirtemplate {
-	u_int32_t	dot_ino;
-	int16_t		dot_reclen;
-	u_int8_t	dot_type;
-	u_int8_t	dot_namlen;
-	char		dot_name[4];	/* must be multiple of 4 */
-	u_int32_t	dotdot_ino;
-	int16_t		dotdot_reclen;
-	u_int8_t	dotdot_type;
-	u_int8_t	dotdot_namlen;
-	char		dotdot_name[4];	/* ditto */
+	struct lfs_dirheader	dot_header;
+	char			dot_name[4];	/* must be multiple of 4 */
+	struct lfs_dirheader	dotdot_header;
+	char			dotdot_name[4];	/* ditto */
 };
 
+#if 0
 /*
  * This is the old format of directories, sans type element.
  */
@@ -385,6 +379,7 @@ struct lfs_odirtemplate {
 	u_int16_t	dotdot_namlen;
 	char		dotdot_name[4];	/* ditto */
 };
+#endif
 
 /*
  * Inodes

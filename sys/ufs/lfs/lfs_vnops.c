@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.290 2015/09/15 15:00:32 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.291 2015/09/20 04:51:43 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.290 2015/09/15 15:00:32 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.291 2015/09/20 04:51:43 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -177,14 +177,6 @@ static int lfs_getextattr(void *v);
 static int lfs_setextattr(void *v);
 static int lfs_listextattr(void *v);
 static int lfs_deleteextattr(void *v);
-
-/*
- * A virgin directory (no blushing please).
- */
-static const struct lfs_dirtemplate mastertemplate = {
-	0,	12,			LFS_DT_DIR,	1,	".",
-	0,	LFS_DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
-};
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -857,7 +849,7 @@ lfs_mkdir(void *v)
 	struct vattr *vap;
 	struct ulfs_lookup_results *ulr;
 	struct buf *bp;
-	struct lfs_dirtemplate dirtemplate;
+	struct lfs_dirheader *dirp;
 	int dirblksiz;
 	int error;
 
@@ -884,6 +876,8 @@ lfs_mkdir(void *v)
 		return EROFS;
 	}
 	dirblksiz = fs->um_dirblksiz;
+	/* XXX dholland 20150911 I believe this to be true, but... */
+	//KASSERT(dirblksiz == LFS_DIRBLKSIZ);
 
 	error = lfs_set_dirop(dvp, NULL);
 	if (error)
@@ -933,18 +927,10 @@ lfs_mkdir(void *v)
 		goto bad;
 
 	/*
-	 * Initialize directory with "." and ".." from static template.
+	 * Initialize directory with "." and "..". This used to use a
+	 * static template but that adds moving parts for very little
+	 * benefit.
 	 */
-	dirtemplate = mastertemplate;
-	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
-	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dot_reclen = ulfs_rw16(dirtemplate.dot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	lfs_dirt_settypes(fs, &dirtemplate, LFS_DT_DIR, LFS_DT_DIR);
-	lfs_dirt_setnamlens(fs, &dirtemplate, 1, 2);
 	if ((error = lfs_balloc(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;
@@ -952,7 +938,23 @@ lfs_mkdir(void *v)
 	DIP_ASSIGN(ip, size, dirblksiz);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, ip->i_size);
-	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
+	dirp = bp->b_data;
+
+	/* . */
+	lfs_dir_setino(fs, dirp, ip->i_number);
+	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(1));
+	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, dirp, 1);
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), ".", 1,
+			LFS_DIRECTSIZ(1));
+	dirp = LFS_NEXTDIR(fs, dirp);
+	/* .. */
+	lfs_dir_setino(fs, dirp, dp->i_number);
+	lfs_dir_setreclen(fs, dirp, dirblksiz - LFS_DIRECTSIZ(1));
+	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, dirp, 2);
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), "..", 2,
+			dirblksiz - LFS_DIRECTSIZ(1));
 
 	/*
 	 * Directory set up; now install its entry in the parent directory.
