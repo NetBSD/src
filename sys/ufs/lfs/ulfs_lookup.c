@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.33 2015/09/21 01:22:18 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.34 2015/09/21 01:24:23 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.33 2015/09/21 01:22:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.34 2015/09/21 01:24:23 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -123,7 +123,7 @@ ulfs_lookup(void *v)
 	struct vnode *vdp = ap->a_dvp;	/* vnode for directory being searched */
 	struct inode *dp = VTOI(vdp);	/* inode for directory being searched */
 	struct buf *bp;			/* a buffer of directory entries */
-	struct lfs_dirheader *ep;		/* the current directory entry */
+	LFS_DIRHEADER *ep;		/* the current directory entry */
 	int entryoffsetinblock;		/* offset of ep in bp's buffer */
 	enum {
 		NONE,		/* need to search a slot for our new entry */
@@ -263,7 +263,7 @@ ulfs_lookup(void *v)
 		switch (ulfsdirhash_lookup(dp, cnp->cn_nameptr, cnp->cn_namelen,
 		    &results->ulr_offset, &bp, nameiop == DELETE ? &prevoff : NULL)) {
 		case 0:
-			ep = (struct lfs_dirheader *)((char *)bp->b_data +
+			ep = (LFS_DIRHEADER *)((char *)bp->b_data +
 			    (results->ulr_offset & bmask));
 			goto foundentry;
 		case ENOENT:
@@ -327,7 +327,7 @@ searchloop:
 		 * "lfs_dirchk" to be true.
 		 */
 		KASSERT(bp != NULL);
-		ep = (struct lfs_dirheader *)((char *)bp->b_data + entryoffsetinblock);
+		ep = (LFS_DIRHEADER *)((char *)bp->b_data + entryoffsetinblock);
 		if (lfs_dir_getreclen(fs, ep) == 0 ||
 		    (lfs_dirchk && ulfs_dirbadentry(vdp, ep, entryoffsetinblock))) {
 			int i;
@@ -657,7 +657,7 @@ ulfs_dirbad(struct inode *ip, doff_t offset, const char *how)
  *	name must be as long as advertised, and null terminated
  */
 int
-ulfs_dirbadentry(struct vnode *dp, struct lfs_dirheader *ep, int entryoffsetinblock)
+ulfs_dirbadentry(struct vnode *dp, LFS_DIRHEADER *ep, int entryoffsetinblock)
 {
 	int i;
 	int namlen;
@@ -712,7 +712,7 @@ bad:
  * Does not set d_reclen.
  */
 static void
-ulfs_direntry_assign(struct lfs *fs, struct lfs_dirheader *dirp,
+ulfs_direntry_assign(struct lfs *fs, LFS_DIRHEADER *dirp,
 		     const char *name, size_t namlen,
 		     ino_t inum, unsigned dtype)
 {
@@ -764,7 +764,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	struct inode *dp;
 	struct buf *bp;
 	u_int dsize;
-	struct lfs_dirheader *ep, *nep;
+	LFS_DIRHEADER *ep, *nep;
 	int error, ret, lfs_blkoff, loc, spacefree;
 	char *dirbuf;
 	struct timespec ts;
@@ -803,7 +803,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 		dp->i_flag |= IN_CHANGE | IN_UPDATE;
 		uvm_vnp_setsize(dvp, dp->i_size);
 		lfs_blkoff = ulr->ulr_offset & (ump->um_mountp->mnt_stat.f_iosize - 1);
-		ep = (struct lfs_dirheader *)((char *)bp->b_data + lfs_blkoff);
+		ep = (LFS_DIRHEADER *)((char *)bp->b_data + lfs_blkoff);
 		ulfs_direntry_assign(fs, ep, name, namlen, inum, dtype);
 		lfs_dir_setreclen(fs, ep, dirblksiz);
 #ifdef LFS_DIRHASH
@@ -860,11 +860,11 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	 * arranged that compacting the region ulr_offset to
 	 * ulr_offset + ulr_count would yield the space.
 	 */
-	ep = (struct lfs_dirheader *)dirbuf;
+	ep = (LFS_DIRHEADER *)dirbuf;
 	dsize = (lfs_dir_getino(fs, ep) != 0) ? LFS_DIRSIZ(fs, ep) : 0;
 	spacefree = lfs_dir_getreclen(fs, ep) - dsize;
 	for (loc = lfs_dir_getreclen(fs, ep); loc < ulr->ulr_count; ) {
-		nep = (struct lfs_dirheader *)(dirbuf + loc);
+		nep = (LFS_DIRHEADER *)(dirbuf + loc);
 
 		/* Trim the existing slot (NB: dsize may be zero). */
 		lfs_dir_setreclen(fs, ep, dsize);
@@ -995,7 +995,7 @@ ulfs_dirremove(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 {
 	struct inode *dp = VTOI(dvp);
 	struct lfs *fs = dp->i_lfs;
-	struct lfs_dirheader *ep;
+	LFS_DIRHEADER *ep;
 	struct buf *bp;
 	int error;
 
@@ -1097,7 +1097,7 @@ ulfs_dirrewrite(struct inode *dp, off_t offset,
 {
 	struct lfs *fs = dp->i_lfs;
 	struct buf *bp;
-	struct lfs_dirheader *ep;
+	LFS_DIRHEADER *ep;
 	struct vnode *vdp = ITOV(dp);
 	int error;
 
@@ -1135,12 +1135,13 @@ ulfs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 {
 	struct lfs *fs = ip->i_lfs;
 	doff_t off;
-	struct lfs_dirtemplate dbuf;
-	struct lfs_dirheader *dp = (struct lfs_dirheader *)&dbuf;
+	union lfs_dirtemplate dbuf;
+	LFS_DIRHEADER *dp = (LFS_DIRHEADER *)&dbuf;
 	int error, namlen;
 	const char *name;
 	size_t count;
-#define	MINDIRSIZ (sizeof (struct lfs_dirtemplate) / 2)
+/* XXX this should probably use LFS_DIRECTSIZ(fs, 2) */
+#define	MINDIRSIZ (sizeof (struct lfs_dirtemplate64) / 2)
 
 	for (off = 0; off < ip->i_size; off += lfs_dir_getreclen(fs, dp)) {
 		error = ulfs_bufio(UIO_READ, ITOV(ip), (void *)dp, MINDIRSIZ,
