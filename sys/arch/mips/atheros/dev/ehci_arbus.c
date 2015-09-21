@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_arbus.c,v 1.4 2015/09/11 06:55:45 skrll Exp $	*/
+/*	$NetBSD: ehci_arbus.c,v 1.5 2015/09/21 10:10:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.4 2015/09/11 06:55:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_arbus.c,v 1.5 2015/09/21 10:10:19 skrll Exp $");
 
 #include "locators.h"
 
@@ -66,7 +66,7 @@ static void	ehci_arbus_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ehci_arbus, sizeof (ehci_softc_t),
     ehci_arbus_match, ehci_arbus_attach, NULL, NULL);
 
-static void ehci_arbus_init(struct ehci_soft *);
+static void ehci_arbus_init(struct ehci_softc *);
 
 int
 ehci_arbus_match(device_t parent, cfdata_t cf, void *aux)
