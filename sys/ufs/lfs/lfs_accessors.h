@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.32 2015/09/21 01:24:39 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.33 2015/09/21 01:24:58 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -770,6 +770,9 @@ lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
  * Index file inode entries.
  */
 
+#define IFILE_ENTRYSIZE(fs) \
+	((fs)->lfs_is64 ? sizeof(IFILE64) : sizeof(IFILE32))
+
 /*
  * LFSv1 compatibility code is not allowed to touch if_atime, since it
  * may not be mapped!
@@ -1445,7 +1448,7 @@ lfs_blocks_sub(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
  * This approximates the old formula of E = C * M / D when D is close to T,
  * but avoids falsely reporting "disk full" when the sample size (D) is small.
  */
-#define LFS_EST_CMETA(F) (int32_t)((					\
+#define LFS_EST_CMETA(F) ((						\
 	(lfs_sb_getdmeta(F) * (int64_t)lfs_sb_getnclean(F)) / 		\
 	(lfs_sb_getnseg(F))))
 
@@ -1457,7 +1460,7 @@ lfs_blocks_sub(STRUCT_LFS *fs, union lfs_blocks *bp1, union lfs_blocks *bp2)
 			  lfs_sb_getbfree(F) - LFS_EST_CMETA(F) : 0)
 
 /* Amount of non-meta space not available to mortal man */
-#define LFS_EST_RSVD(F) (int32_t)((LFS_EST_NONMETA(F) *			     \
+#define LFS_EST_RSVD(F) ((LFS_EST_NONMETA(F) *			     \
 				   (u_int64_t)lfs_sb_getminfree(F)) /	     \
 				  100)
 
