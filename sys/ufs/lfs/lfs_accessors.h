@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.30 2015/09/21 01:22:18 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.31 2015/09/21 01:24:23 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -216,6 +216,9 @@
  * directories
  */
 
+#define LFS_DIRHEADERSIZE(fs) \
+	((fs)->lfs_is64 ? sizeof(struct lfs_dirheader64) : sizeof(struct lfs_dirheader32))
+
 /*
  * The LFS_DIRSIZ macro gives the minimum record length which will hold
  * the directory entry.  This requires the amount of space in struct lfs_direct
@@ -223,7 +226,7 @@
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
 #define	LFS_DIRECTSIZ(fs, namlen) \
-	(sizeof(struct lfs_dirheader) + (((namlen)+1 + 3) &~ 3))
+	(LFS_DIRHEADERSIZE(fs) + (((namlen)+1 + 3) &~ 3))
 
 /*
  * The size of the largest possible directory entry. This is
@@ -231,7 +234,7 @@
  * need a single constant value true for both lfs32 and lfs64.
  */
 #define LFS_MAXDIRENTRYSIZE \
-	(sizeof(struct lfs_dirheader) + (((LFS_MAXNAMLEN+1)+1 + 3) & ~3))
+	(sizeof(struct lfs_dirheader64) + (((LFS_MAXNAMLEN+1)+1 + 3) & ~3))
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define LFS_OLDDIRSIZ(oldfmt, dp, needswap)	\
@@ -250,75 +253,130 @@
 #define LFS_NEWDIRFMT	0
 
 #define LFS_NEXTDIR(fs, dp) \
-	((struct lfs_dirheader *)((char *)(dp) + lfs_dir_getreclen(fs, dp)))
+	((LFS_DIRHEADER *)((char *)(dp) + lfs_dir_getreclen(fs, dp)))
 
 static __unused inline char *
-lfs_dir_nameptr(const STRUCT_LFS *fs, struct lfs_dirheader *dh)
+lfs_dir_nameptr(const STRUCT_LFS *fs, LFS_DIRHEADER *dh)
 {
-	return (char *)(dh + 1);
+	if (fs->lfs_is64) {
+		return (char *)(&dh->u_64 + 1);
+	} else {
+		return (char *)(&dh->u_32 + 1);
+	}
 }
 
-static __unused inline uint32_t
-lfs_dir_getino(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
+static __unused inline uint64_t
+lfs_dir_getino(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
-	return LFS_SWAP_uint32_t(fs, dh->dh_ino);
+	if (fs->lfs_is64) {
+		uint64_t ino;
+
+		/*
+		 * XXX we can probably write this in a way that's both
+		 * still legal and generates better code.
+		 */
+		memcpy(&ino, &dh->u_64.dh_inoA, sizeof(dh->u_64.dh_inoA));
+		memcpy((char *)&ino + sizeof(dh->u_64.dh_inoA),
+		       &dh->u_64.dh_inoB,
+		       sizeof(dh->u_64.dh_inoB));
+		return LFS_SWAP_uint64_t(fs, ino);
+	} else {
+		return LFS_SWAP_uint32_t(fs, dh->u_32.dh_ino);
+	}
 }
 
 static __unused inline uint16_t
-lfs_dir_getreclen(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
+lfs_dir_getreclen(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
-	return LFS_SWAP_uint16_t(fs, dh->dh_reclen);
+	if (fs->lfs_is64) {
+		return LFS_SWAP_uint16_t(fs, dh->u_64.dh_reclen);
+	} else {
+		return LFS_SWAP_uint16_t(fs, dh->u_32.dh_reclen);
+	}
 }
 
 static __unused inline uint8_t
-lfs_dir_gettype(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
+lfs_dir_gettype(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
-	if (fs->lfs_hasolddirfmt) {
+	if (fs->lfs_is64) {
+		KASSERT(fs->lfs_hasolddirfmt == 0);
+		return dh->u_64.dh_type;
+	} else if (fs->lfs_hasolddirfmt) {
 		return LFS_DT_UNKNOWN;
+	} else {
+		return dh->u_32.dh_type;
 	}
-	return dh->dh_type;
 }
 
 static __unused inline uint8_t
-lfs_dir_getnamlen(const STRUCT_LFS *fs, const struct lfs_dirheader *dh)
+lfs_dir_getnamlen(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
-	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
+	if (fs->lfs_is64) {
+		KASSERT(fs->lfs_hasolddirfmt == 0);
+		return dh->u_64.dh_type;
+	} else if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
 		/* low-order byte of old 16-bit namlen field */
-		return dh->dh_type;
+		return dh->u_32.dh_type;
+	} else {
+		return dh->u_32.dh_namlen;
 	}
-	return dh->dh_namlen;
 }
 
 static __unused inline void
-lfs_dir_setino(STRUCT_LFS *fs, struct lfs_dirheader *dh, uint32_t ino)
+lfs_dir_setino(STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint64_t ino)
 {
-	dh->dh_ino = LFS_SWAP_uint32_t(fs, ino);
+	if (fs->lfs_is64) {
+
+		ino = LFS_SWAP_uint64_t(fs, ino);
+		/*
+		 * XXX we can probably write this in a way that's both
+		 * still legal and generates better code.
+		 */
+		memcpy(&dh->u_64.dh_inoA, &ino, sizeof(dh->u_64.dh_inoA));
+		memcpy(&dh->u_64.dh_inoB,
+		       (char *)&ino + sizeof(dh->u_64.dh_inoA),
+		       sizeof(dh->u_64.dh_inoB));
+	} else {
+		dh->u_32.dh_ino = LFS_SWAP_uint32_t(fs, ino);
+	}
 }
 
 static __unused inline void
-lfs_dir_setreclen(STRUCT_LFS *fs, struct lfs_dirheader *dh, uint16_t reclen)
+lfs_dir_setreclen(STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint16_t reclen)
 {
-	dh->dh_reclen = LFS_SWAP_uint16_t(fs, reclen);
+	if (fs->lfs_is64) {
+		dh->u_64.dh_reclen = LFS_SWAP_uint16_t(fs, reclen);
+	} else {
+		dh->u_32.dh_reclen = LFS_SWAP_uint16_t(fs, reclen);
+	}
 }
 
 static __unused inline void
-lfs_dir_settype(const STRUCT_LFS *fs, struct lfs_dirheader *dh, uint8_t type)
+lfs_dir_settype(const STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint8_t type)
 {
-	if (fs->lfs_hasolddirfmt) {
+	if (fs->lfs_is64) {
+		KASSERT(fs->lfs_hasolddirfmt == 0);
+		dh->u_64.dh_type = type;
+	} else if (fs->lfs_hasolddirfmt) {
 		/* do nothing */
 		return;
+	} else {
+		dh->u_32.dh_type = type;
 	}
-	dh->dh_type = type;
 }
 
 static __unused inline void
-lfs_dir_setnamlen(const STRUCT_LFS *fs, struct lfs_dirheader *dh, uint8_t namlen)
+lfs_dir_setnamlen(const STRUCT_LFS *fs, LFS_DIRHEADER *dh, uint8_t namlen)
 {
-	if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
+	if (fs->lfs_is64) {
+		KASSERT(fs->lfs_hasolddirfmt == 0);
+		dh->u_64.dh_namlen = namlen;
+	} else if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
 		/* low-order byte of old 16-bit namlen field */
-		dh->dh_type = namlen;
+		dh->u_32.dh_type = namlen;
+	} else {
+		dh->u_32.dh_namlen = namlen;
 	}
-	dh->dh_namlen = namlen;
 }
 
 static __unused inline void
@@ -327,14 +385,35 @@ lfs_copydirname(STRUCT_LFS *fs, char *dest, const char *src,
 {
 	unsigned spacelen;
 
-	KASSERT(reclen > sizeof(struct lfs_dirheader));
-	spacelen = reclen - sizeof(struct lfs_dirheader);
+	KASSERT(reclen > LFS_DIRHEADERSIZE(fs));
+	spacelen = reclen - LFS_DIRHEADERSIZE(fs);
 
 	/* must always be at least 1 byte as a null terminator */
 	KASSERT(spacelen > namlen);
 
 	memcpy(dest, src, namlen);
 	memset(dest + namlen, '\0', spacelen - namlen);
+}
+
+static __unused LFS_DIRHEADER *
+lfs_dirtemplate_dotdot(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
+{
+	/* XXX blah, be nice to have a way to do this w/o casts */
+	if (fs->lfs_is64) {
+		return (LFS_DIRHEADER *)&dt->u_64.dotdot_header;
+	} else {
+		return (LFS_DIRHEADER *)&dt->u_32.dotdot_header;
+	}
+}
+
+static __unused char *
+lfs_dirtemplate_dotdotname(STRUCT_LFS *fs, union lfs_dirtemplate *dt)
+{
+	if (fs->lfs_is64) {
+		return dt->u_64.dotdot_name;
+	} else {
+		return dt->u_32.dotdot_name;
+	}
 }
 
 /*
