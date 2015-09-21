@@ -1,4 +1,4 @@
-/*	$NetBSD: properties.c,v 1.4 2008/04/28 20:24:17 martin Exp $	*/
+/*	$NetBSD: properties.c,v 1.5 2015/09/21 08:04:43 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -120,7 +120,7 @@ struct property properties[] = {
 	{
 		"display", "contrast",
 		40, 1, 0, {byte:{[0] 0}}, 0, {byte:{[0] 0}}, {byte:{[0] 14}},
-		parse_uchar, 0, 1,
+		parse_uchar, 0, 15,
 		print_uchar,
 		fill_uchar, flush_uchar,
 		" Display contrast (0-15).\n"
