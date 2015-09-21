@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.292 2015/09/21 01:22:18 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.293 2015/09/21 01:24:23 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.292 2015/09/21 01:22:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.293 2015/09/21 01:24:23 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -849,7 +849,7 @@ lfs_mkdir(void *v)
 	struct vattr *vap;
 	struct ulfs_lookup_results *ulr;
 	struct buf *bp;
-	struct lfs_dirheader *dirp;
+	LFS_DIRHEADER *dirp;
 	int dirblksiz;
 	int error;
 

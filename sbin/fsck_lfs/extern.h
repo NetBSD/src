@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.13 2015/09/15 15:02:25 dholland Exp $	 */
+/* $NetBSD: extern.h,v 1.14 2015/09/21 01:24:23 dholland Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -36,7 +36,7 @@ int chkrange(daddr_t, int);
 void ckfini(int);
 int ckinode(union lfs_dinode *, struct inodesc *);
 void clri(struct inodesc *, const char *, int);
-int dircheck(struct inodesc *, struct lfs_dirheader *);
+int dircheck(struct inodesc *, LFS_DIRHEADER *);
 void direrror(ino_t, const char *);
 int dirscan(struct inodesc *);
 int dofix(struct inodesc *, const char *);

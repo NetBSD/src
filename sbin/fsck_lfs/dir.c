@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.45 2015/09/21 01:22:18 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.46 2015/09/21 01:24:23 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -85,7 +85,7 @@ struct lfs_odirtemplate odirhead = {
 
 static int expanddir(struct uvnode *, union lfs_dinode *, char *);
 static void freedir(ino_t, ino_t);
-static struct lfs_dirheader *fsck_readdir(struct uvnode *, struct inodesc *);
+static LFS_DIRHEADER *fsck_readdir(struct uvnode *, struct inodesc *);
 static int lftempname(char *, ino_t);
 static int mkentry(struct inodesc *);
 static int chgino(struct inodesc *);
@@ -132,7 +132,7 @@ propagate(void)
 int
 dirscan(struct inodesc *idesc)
 {
-	struct lfs_dirheader *dp;
+	LFS_DIRHEADER *dp;
 	struct ubuf *bp;
 	int dsize, n;
 	long blksiz;
@@ -156,7 +156,7 @@ dirscan(struct inodesc *idesc)
 	    dp = fsck_readdir(vp, idesc)) {
 		dsize = lfs_dir_getreclen(fs, dp);
 		memcpy(dbuf, dp, (size_t) dsize);
-		idesc->id_dirp = (struct lfs_dirheader *) dbuf;
+		idesc->id_dirp = (LFS_DIRHEADER *) dbuf;
 		if ((n = (*idesc->id_func) (idesc)) & ALTERED) {
 			bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 			memcpy(bp->b_data + idesc->id_loc - dsize, dbuf,
@@ -173,10 +173,10 @@ dirscan(struct inodesc *idesc)
 /*
  * get next entry in a directory.
  */
-static struct lfs_dirheader *
+static LFS_DIRHEADER *
 fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 {
-	struct lfs_dirheader *dp, *ndp;
+	LFS_DIRHEADER *dp, *ndp;
 	struct ubuf *bp;
 	long size, blksiz, fix, dploc;
 
@@ -184,7 +184,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 	bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
 	if (idesc->id_loc % LFS_DIRBLKSIZ == 0 && idesc->id_filesize > 0 &&
 	    idesc->id_loc < blksiz) {
-		dp = (struct lfs_dirheader *) (bp->b_data + idesc->id_loc);
+		dp = (LFS_DIRHEADER *) (bp->b_data + idesc->id_loc);
 		if (dircheck(idesc, dp))
 			goto dpok;
 		brelse(bp, 0);
@@ -192,7 +192,7 @@ fsck_readdir(struct uvnode *vp, struct inodesc *idesc)
 			return (0);
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
-		dp = (struct lfs_dirheader *) (bp->b_data + idesc->id_loc);
+		dp = (LFS_DIRHEADER *) (bp->b_data + idesc->id_loc);
 		lfs_dir_setino(fs, dp, 0);
 		lfs_dir_settype(fs, dp, LFS_DT_UNKNOWN);
 		lfs_dir_setnamlen(fs, dp, 0);
@@ -214,14 +214,14 @@ dpok:
 		return NULL;
 	}
 	dploc = idesc->id_loc;
-	dp = (struct lfs_dirheader *) (bp->b_data + dploc);
+	dp = (LFS_DIRHEADER *) (bp->b_data + dploc);
 	idesc->id_loc += lfs_dir_getreclen(fs, dp);
 	idesc->id_filesize -= lfs_dir_getreclen(fs, dp);
 	if ((idesc->id_loc % LFS_DIRBLKSIZ) == 0) {
 		brelse(bp, 0);
 		return dp;
 	}
-	ndp = (struct lfs_dirheader *) (bp->b_data + idesc->id_loc);
+	ndp = (LFS_DIRHEADER *) (bp->b_data + idesc->id_loc);
 	if (idesc->id_loc < blksiz && idesc->id_filesize > 0 &&
 	    dircheck(idesc, ndp) == 0) {
 		brelse(bp, 0);
@@ -232,7 +232,7 @@ dpok:
 			return 0;
 		fix = dofix(idesc, "DIRECTORY CORRUPTED");
 		bread(vp, idesc->id_lblkno, blksiz, 0, &bp);
-		dp = (struct lfs_dirheader *) (bp->b_data + dploc);
+		dp = (LFS_DIRHEADER *) (bp->b_data + dploc);
 		lfs_dir_setreclen(fs, dp, lfs_dir_getreclen(fs, dp) + size);
 		if (fix)
 			VOP_BWRITE(bp);
@@ -249,7 +249,7 @@ dpok:
  * This is a superset of the checks made in the kernel.
  */
 int
-dircheck(struct inodesc *idesc, struct lfs_dirheader *dp)
+dircheck(struct inodesc *idesc, LFS_DIRHEADER *dp)
 {
 	int size;
 	const char *cp;
@@ -370,7 +370,7 @@ adjust(struct inodesc *idesc, short lcnt)
 static int
 mkentry(struct inodesc *idesc)
 {
-	struct lfs_dirheader *dirp = idesc->id_dirp;
+	LFS_DIRHEADER *dirp = idesc->id_dirp;
 	unsigned namlen;
 	unsigned newreclen, oldreclen;
 
@@ -409,7 +409,7 @@ mkentry(struct inodesc *idesc)
 static int
 chgino(struct inodesc *idesc)
 {
-	struct lfs_dirheader *dirp = idesc->id_dirp;
+	LFS_DIRHEADER *dirp = idesc->id_dirp;
 	int namlen;
 
 	namlen = lfs_dir_getnamlen(fs, dirp);
@@ -593,7 +593,7 @@ makeentry(ino_t parent, ino_t ino, const char *name)
 static void
 zerodirblk(void *buf)
 {
-	struct lfs_dirheader *dirp;
+	LFS_DIRHEADER *dirp;
 
 	dirp = buf;
 	lfs_dir_setino(fs, dirp, 0);
@@ -673,7 +673,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 	char *cp;
 	union lfs_dinode *dp;
 	struct ubuf *bp;
-	struct lfs_dirheader *dirp;
+	LFS_DIRHEADER *dirp;
 	struct uvnode *vp;
 
 	ino = allocino(request, LFS_IFDIR | mode);
@@ -685,7 +685,7 @@ allocdir(ino_t parent, ino_t request, int mode)
 		freeino(ino);
 		return (0);
 	}
-	dirp = (struct lfs_dirheader *)bp->b_data;
+	dirp = (LFS_DIRHEADER *)bp->b_data;
 	/* . */
 	lfs_dir_setino(fs, dirp, ino);
 	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(fs, 1));

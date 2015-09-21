@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.15 2015/09/21 01:22:18 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.16 2015/09/21 01:24:23 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.15 2015/09/21 01:22:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.16 2015/09/21 01:24:23 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -318,7 +318,7 @@ ulfs_rename_ulr_overlap_p(const struct ulfs_lookup_results *fulr,
  * the directory vp.
  */
 static int			/* XXX int?  uint8_t?  */
-ulfs_direct_namlen(const struct lfs_dirheader *ep, const struct vnode *vp)
+ulfs_direct_namlen(const LFS_DIRHEADER *ep, const struct vnode *vp)
 {
 	struct lfs *fs;
 
@@ -351,7 +351,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 	doff_t offset;		/* Offset of entry we're examining.  */
 	struct buf *bp;		/* I/O block we're examining.  */
 	char *dirbuf;		/* Pointer into directory at search_start.  */
-	struct lfs_dirheader *ep;	/* Pointer to the entry we're examining.  */
+	LFS_DIRHEADER *ep;	/* Pointer to the entry we're examining.  */
 	/* XXX direct::d_reclen is 16-bit;
 	 * ulfs_lookup_results::ulr_reclen is 32-bit.  Blah.  */
 	uint32_t reclen;	/* Length of the entry we're examining.  */
@@ -420,7 +420,7 @@ ulfs_rename_recalculate_fulr(struct vnode *dvp,
 		/*
 		 * Examine the directory entry at offset.
 		 */
-		ep = (struct lfs_dirheader *)(dirbuf + (offset - search_start));
+		ep = (LFS_DIRHEADER *)(dirbuf + (offset - search_start));
 		reclen = lfs_dir_getreclen(fs, ep);
 
 		if (lfs_dir_getino(fs, ep) == 0)
@@ -581,7 +581,9 @@ static int
 ulfs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 {
 	struct lfs *fs;
-	struct lfs_dirtemplate dirbuf;
+	union lfs_dirtemplate dirbuf;
+	LFS_DIRHEADER *dotdot;
+	const char *name;
 	int error;
 
 	KASSERT(vp != NULL);
@@ -597,13 +599,15 @@ ulfs_read_dotdot(struct vnode *vp, kauth_cred_t cred, ino_t *ino_ret)
 	if (error)
 		return error;
 
-	if (lfs_dir_getnamlen(fs, &dirbuf.dotdot_header) != 2 ||
-	    dirbuf.dotdot_name[0] != '.' ||
-	    dirbuf.dotdot_name[1] != '.')
+	dotdot = lfs_dirtemplate_dotdot(fs, &dirbuf);
+	name = lfs_dirtemplate_dotdotname(fs, &dirbuf);
+	if (lfs_dir_getnamlen(fs, dotdot) != 2 ||
+	    name[0] != '.' ||
+	    name[1] != '.')
 		/* XXX Panic?  Print warning?  */
 		return ENOTDIR;
 
-	*ino_ret = lfs_dir_getino(fs, &dirbuf.dotdot_header);
+	*ino_ret = lfs_dir_getino(fs, dotdot);
 	return 0;
 }
 
@@ -740,6 +744,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
     struct vnode *tdvp, struct componentname *tcnp,
     void *tde, struct vnode *tvp)
 {
+	struct lfs *fs;
 	struct ulfs_lookup_results *fulr = fde;
 	struct ulfs_lookup_results *tulr = tde;
 	bool directory_p, reparent_p;
@@ -767,6 +772,9 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 	KASSERT(VOP_ISLOCKED(fvp) == LK_EXCLUSIVE);
 	KASSERT(VOP_ISLOCKED(tdvp) == LK_EXCLUSIVE);
 	KASSERT((tvp == NULL) || (VOP_ISLOCKED(tvp) == LK_EXCLUSIVE));
+
+	fs = VTOI(fdvp)->i_lfs;
+	KASSERT(fs == VTOI(tdvp)->i_lfs);
 
 	/*
 	 * We shall need to temporarily bump the link count, so make
