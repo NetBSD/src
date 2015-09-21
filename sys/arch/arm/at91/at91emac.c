@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.14 2015/05/20 09:17:17 ozaki-r Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.14 2015/05/20 09:17:17 ozaki-r Exp $	*/
+/*	$Id: at91emac.c,v 1.15 2015/09/21 13:31:30 skrll Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.15 2015/09/21 13:31:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.14 2015/05/20 09:17:17 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.15 2015/09/21 13:31:30 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -224,7 +224,7 @@ emac_intr(void *arg)
 {
 	struct emac_softc *sc = (struct emac_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
-	uint32_t imr, isr, rsr, ctl;
+	uint32_t imr, isr, ctl;
 	int bi;
 
 	imr = ~EMAC_READ(ETH_IMR);
@@ -234,7 +234,10 @@ emac_intr(void *arg)
 	}
 
 	isr = EMAC_READ(ETH_ISR) & imr;
-	rsr = EMAC_READ(ETH_RSR);		// get receive status register
+#ifdef EMAC_DEBUG 
+	uint32_t rsr = 
+#endif
+	EMAC_READ(ETH_RSR);		// get receive status register
 
 	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__, isr, rsr, imr));
 
@@ -519,9 +522,9 @@ emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 emac_mii_readreg(device_t self, int phy, int reg)
 {
-	struct emac_softc *sc;
-
-	sc = device_private(self);
+#ifndef EMAC_FAST
+	struct emac_softc *sc = device_private(self);
+#endif
 
 	EMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_RD
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
@@ -534,9 +537,9 @@ emac_mii_readreg(device_t self, int phy, int reg)
 void
 emac_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct emac_softc *sc;
-
-	sc = device_private(self);
+#ifndef EMAC_FAST
+	struct emac_softc *sc = device_private(self);
+#endif
 
 	EMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_WR
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
