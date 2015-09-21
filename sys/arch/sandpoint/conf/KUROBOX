@@ -1,9 +1,16 @@
-#	$NetBSD: KUROBOX,v 1.5 2012/05/12 10:27:17 nisimura Exp $
+#	$NetBSD: KUROBOX,v 1.6 2015/09/21 23:31:41 phx Exp $
 #
 # KuroBox/LinkStation support
 #
 
 include "arch/sandpoint/conf/GENERIC"
+
+options 	DIAGNOSTIC      # cheap kernel consistency checks
+options 	DEBUG           # expensive debugging checks/support
+makeoptions	DEBUG="-g"
+
+options		NOR_DEBUG
+options		NOR_VERBOSE
 
 no com0
 no satmgr0

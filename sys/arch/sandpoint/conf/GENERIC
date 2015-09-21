@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.89 2015/09/07 23:01:08 phx Exp $
+# $NetBSD: GENERIC,v 1.90 2015/09/21 23:31:41 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.89 $"
+#ident 		"GENERIC-$Revision: 1.90 $"
 
 maxusers	32
 
@@ -323,7 +323,6 @@ pseudo-device	bpfilter		# packet filter
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
