@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.c,v 1.12 2015/09/15 15:02:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.c,v 1.13 2015/09/21 01:22:18 dholland Exp $	*/
 /*  from NetBSD: ufs_dirhash.c,v 1.34 2009/10/05 23:48:08 rmind Exp  */
 
 /*
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.12 2015/09/15 15:02:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_dirhash.c,v 1.13 2015/09/21 01:22:18 dholland Exp $");
 
 /*
  * This implements a hash-based lookup scheme for ULFS directories.
@@ -148,7 +148,7 @@ ulfsdirhash_build(struct inode *ip)
 	vp = ip->i_vnode;
 	/* Allocate 50% more entries than this dir size could ever need. */
 	KASSERT(ip->i_size >= dirblksiz);
-	nslots = ip->i_size / LFS_DIRECTSIZ(1);
+	nslots = ip->i_size / LFS_DIRECTSIZ(fs, 1);
 	nslots = (nslots * 3 + 1) / 2;
 	narrays = howmany(nslots, DH_NBLKOFF);
 	nslots = narrays * DH_NBLKOFF;

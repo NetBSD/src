@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rename.c,v 1.14 2015/09/20 04:51:43 dholland Exp $	*/
+/*	$NetBSD: lfs_rename.c,v 1.15 2015/09/21 01:22:18 dholland Exp $	*/
 /*  from NetBSD: ufs_rename.c,v 1.6 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.14 2015/09/20 04:51:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rename.c,v 1.15 2015/09/21 01:22:18 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -942,7 +942,7 @@ ulfs_gro_rename(struct mount *mp, kauth_cred_t cred,
 		 * the position is the record length of the . entry,
 		 * namely LFS_DIRECTSIZ(1).
 		 */
-		position = LFS_DIRECTSIZ(1);
+		position = LFS_DIRECTSIZ(fs, 1);
 		error = ulfs_dirrewrite(VTOI(fvp), position,
 		    VTOI(fdvp), VTOI(tdvp)->i_number, LFS_DT_DIR, 0, IN_CHANGE);
 #if 0		/* XXX This branch was not in ulfs_rename! */
