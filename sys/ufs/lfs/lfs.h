@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.190 2015/09/20 04:51:43 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.191 2015/09/21 01:24:23 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -348,21 +348,50 @@
 /*
  * (See notes above)
  */
-struct lfs_dirheader {
+
+struct lfs_dirheader32 {
 	u_int32_t dh_ino;		/* inode number of entry */
 	u_int16_t dh_reclen;		/* length of this record */
 	u_int8_t  dh_type; 		/* file type, see below */
 	u_int8_t  dh_namlen;		/* length of string in d_name */
 };
 
+struct lfs_dirheader64 {
+	u_int32_t dh_inoA;		/* inode number of entry */
+	u_int32_t dh_inoB;		/* inode number of entry */
+	u_int16_t dh_reclen;		/* length of this record */
+	u_int8_t  dh_type; 		/* file type, see below */
+	u_int8_t  dh_namlen;		/* length of string in d_name */
+};
+
+union lfs_dirheader {
+	struct lfs_dirheader64 u_64;
+	struct lfs_dirheader32 u_32;
+};
+
+typedef union lfs_dirheader LFS_DIRHEADER;
+
 /*
  * Template for manipulating directories.
  */
-struct lfs_dirtemplate {
-	struct lfs_dirheader	dot_header;
+
+struct lfs_dirtemplate32 {
+	struct lfs_dirheader32	dot_header;
 	char			dot_name[4];	/* must be multiple of 4 */
-	struct lfs_dirheader	dotdot_header;
+	struct lfs_dirheader32	dotdot_header;
 	char			dotdot_name[4];	/* ditto */
+};
+
+struct lfs_dirtemplate64 {
+	struct lfs_dirheader64	dot_header;
+	char			dot_name[4];	/* must be multiple of 4 */
+	struct lfs_dirheader64	dotdot_header;
+	char			dotdot_name[4];	/* ditto */
+};
+
+union lfs_dirtemplate {
+	struct lfs_dirtemplate64 u_64;
+	struct lfs_dirtemplate32 u_32;
 };
 
 #if 0

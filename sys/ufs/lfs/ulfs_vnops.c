@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.33 2015/09/21 01:22:18 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.34 2015/09/21 01:24:23 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.33 2015/09/21 01:22:18 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.34 2015/09/21 01:24:23 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -775,7 +775,7 @@ ulfs_readdir(void *v)
 		int		*ncookies;
 	} */ *ap = v;
 	struct vnode	*vp = ap->a_vp;
-	struct lfs_dirheader	*cdp, *ecdp;
+	LFS_DIRHEADER	*cdp, *ecdp;
 	struct dirent	*ndp;
 	char		*cdbuf, *ndbuf, *endp;
 	struct uio	auio, *uio;
@@ -816,8 +816,8 @@ ulfs_readdir(void *v)
 
 	rcount -= auio.uio_resid;
 
-	cdp = (struct lfs_dirheader *)(void *)cdbuf;
-	ecdp = (struct lfs_dirheader *)(void *)&cdbuf[rcount];
+	cdp = (LFS_DIRHEADER *)(void *)cdbuf;
+	ecdp = (LFS_DIRHEADER *)(void *)&cdbuf[rcount];
 
 	ndbufsz = count;
 	ndbuf = kmem_alloc(ndbufsz, KM_SLEEP);
