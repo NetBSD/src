@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.291 2015/09/20 04:51:43 dholland Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.292 2015/09/21 01:22:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.291 2015/09/20 04:51:43 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.292 2015/09/21 01:22:18 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -942,19 +942,19 @@ lfs_mkdir(void *v)
 
 	/* . */
 	lfs_dir_setino(fs, dirp, ip->i_number);
-	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(1));
+	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(fs, 1));
 	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, dirp, 1);
 	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), ".", 1,
-			LFS_DIRECTSIZ(1));
+			LFS_DIRECTSIZ(fs, 1));
 	dirp = LFS_NEXTDIR(fs, dirp);
 	/* .. */
 	lfs_dir_setino(fs, dirp, dp->i_number);
-	lfs_dir_setreclen(fs, dirp, dirblksiz - LFS_DIRECTSIZ(1));
+	lfs_dir_setreclen(fs, dirp, dirblksiz - LFS_DIRECTSIZ(fs, 1));
 	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, dirp, 2);
 	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), "..", 2,
-			dirblksiz - LFS_DIRECTSIZ(1));
+			dirblksiz - LFS_DIRECTSIZ(fs, 1));
 
 	/*
 	 * Directory set up; now install its entry in the parent directory.
