@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_dirhash.h,v 1.6 2015/09/15 15:02:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_dirhash.h,v 1.7 2015/09/21 01:22:18 dholland Exp $	*/
 /*  from NetBSD: dirhash.h,v 1.6 2008/06/04 11:33:19 ad Exp  */
 
 /*
@@ -48,8 +48,8 @@
 #define DIRHASH_DEL	(-2)	/* deleted entry; may be part of chain */
 
 #define DIRALIGN	4
-#define DH_NFSTATS	(LFS_DIRECTSIZ(LFS_MAXNAMLEN + 1) / DIRALIGN)
-				 /* max DIRALIGN words in a directory entry */
+#define DH_NFSTATS	(LFS_MAXDIRENTRYSIZE / DIRALIGN)
+			 /* max DIRALIGN words in a directory entry */
 
 /*
  * Dirhash uses a score mechanism to achieve a hybrid between a

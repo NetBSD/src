@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.29 2015/09/20 04:51:43 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.30 2015/09/21 01:22:18 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -222,8 +222,16 @@
  * without the d_name field, plus enough space for the name with a terminating
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
-#define	LFS_DIRECTSIZ(namlen) \
+#define	LFS_DIRECTSIZ(fs, namlen) \
 	(sizeof(struct lfs_dirheader) + (((namlen)+1 + 3) &~ 3))
+
+/*
+ * The size of the largest possible directory entry. This is
+ * used by ulfs_dirhash to figure the size of an array, so we
+ * need a single constant value true for both lfs32 and lfs64.
+ */
+#define LFS_MAXDIRENTRYSIZE \
+	(sizeof(struct lfs_dirheader) + (((LFS_MAXNAMLEN+1)+1 + 3) & ~3))
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define LFS_OLDDIRSIZ(oldfmt, dp, needswap)	\
@@ -235,7 +243,7 @@
     LFS_DIRECTSIZ((dp)->d_type) : LFS_DIRECTSIZ((dp)->d_namlen))
 #endif
 
-#define LFS_DIRSIZ(fs, dp) LFS_DIRECTSIZ(lfs_dir_getnamlen(fs, dp))
+#define LFS_DIRSIZ(fs, dp) LFS_DIRECTSIZ(fs, lfs_dir_getnamlen(fs, dp))
 
 /* Constants for the first argument of LFS_OLDDIRSIZ */
 #define LFS_OLDDIRFMT	1

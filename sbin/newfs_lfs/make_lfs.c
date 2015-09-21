@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.54 2015/09/15 15:02:25 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.55 2015/09/21 01:22:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.54 2015/09/15 15:02:25 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.55 2015/09/21 01:22:18 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -366,7 +366,7 @@ make_dir(struct lfs *fs, void *bufp,
 	ep = bufp;
 	for (i = 0; i < numentries; i++) {
 		namlen = strlen(protodir[i].dp_name);
-		reclen = LFS_DIRECTSIZ(namlen);
+		reclen = LFS_DIRECTSIZ(fs, namlen);
 		if (spaceleft < reclen)
 			fatal("%s: %s", special, "directory too big");
 

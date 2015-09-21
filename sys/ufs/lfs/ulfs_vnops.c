@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vnops.c,v 1.32 2015/09/15 15:02:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_vnops.c,v 1.33 2015/09/21 01:22:18 dholland Exp $	*/
 /*  from NetBSD: ufs_vnops.c,v 1.213 2013/06/08 05:47:02 kardel Exp  */
 
 /*-
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.32 2015/09/15 15:02:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vnops.c,v 1.33 2015/09/21 01:22:18 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -791,7 +791,7 @@ ulfs_readdir(void *v)
 	count = uio->uio_resid;
 	rcount = count - ((uio->uio_offset + count) & (fs->um_dirblksiz - 1));
 
-	if (rcount < LFS_DIRECTSIZ(0) || count < _DIRENT_MINSIZE(ndp))
+	if (rcount < LFS_DIRECTSIZ(fs, 0) || count < _DIRENT_MINSIZE(ndp))
 		return EINVAL;
 
 	startoff = uio->uio_offset & ~(fs->um_dirblksiz - 1);
