@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.15 2015/08/31 08:02:44 ozaki-r Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.16 2015/09/21 13:32:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.15 2015/08/31 08:02:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.16 2015/09/21 13:32:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -312,7 +312,7 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 
 	ifp = ifa->ifa_ifp;
 	KASSERT(ifp->if_afdata[AF_INET] != NULL);
-	isc = ifp->if_afdata[AF_INET]->ii_selsrc;
+	isc = ((struct in_ifinfo *)(ifp)->if_afdata[AF_INET])->ii_selsrc;
 	if (isc != NULL && isc->isc_selsrc != NULL &&
 	    isc->isc_selsrc->iss_score_src[0] != NULL)
 		iss = isc->isc_selsrc;
