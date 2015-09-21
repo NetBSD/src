@@ -1,4 +1,4 @@
-/* $NetBSD: dir.c,v 1.44 2015/09/20 04:51:43 dholland Exp $	 */
+/* $NetBSD: dir.c,v 1.45 2015/09/21 01:22:18 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -376,7 +376,7 @@ mkentry(struct inodesc *idesc)
 
 	/* figure the length needed for id_name */
 	namlen = strlen(idesc->id_name);
-	newreclen = LFS_DIRECTSIZ(namlen);
+	newreclen = LFS_DIRECTSIZ(fs, namlen);
 
 	/* find the minimum record length for the existing name */
 	if (lfs_dir_getino(fs, dirp) != 0)
@@ -688,19 +688,19 @@ allocdir(ino_t parent, ino_t request, int mode)
 	dirp = (struct lfs_dirheader *)bp->b_data;
 	/* . */
 	lfs_dir_setino(fs, dirp, ino);
-	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(1));
+	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(fs, 1));
 	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, dirp, 1);
 	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), ".", 1,
-			LFS_DIRECTSIZ(1));
+			LFS_DIRECTSIZ(fs, 1));
 	/* .. */
 	dirp = LFS_NEXTDIR(fs, dirp);
 	lfs_dir_setino(fs, dirp, parent);
-	lfs_dir_setreclen(fs, dirp, LFS_DIRBLKSIZ - LFS_DIRECTSIZ(1));
+	lfs_dir_setreclen(fs, dirp, LFS_DIRBLKSIZ - LFS_DIRECTSIZ(fs, 1));
 	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
 	lfs_dir_setnamlen(fs, dirp, 2);
 	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), "..", 2,
-			LFS_DIRBLKSIZ - LFS_DIRECTSIZ(1));
+			LFS_DIRBLKSIZ - LFS_DIRECTSIZ(fs, 1));
 	for (cp = &bp->b_data[LFS_DIRBLKSIZ];
 	    cp < &bp->b_data[lfs_sb_getfsize(fs)];
 	    cp += LFS_DIRBLKSIZ) {
