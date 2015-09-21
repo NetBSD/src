@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.56 2015/09/21 01:24:23 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.57 2015/09/21 01:24:58 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.56 2015/09/21 01:24:23 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.57 2015/09/21 01:24:58 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,19 +268,17 @@ void pwarn(const char *, ...);
 static void make_dinode(ino_t, union lfs_dinode *, int, struct lfs *);
 static void make_dir(struct lfs *, void *,
 		const struct dirproto *, unsigned);
-static uint64_t maxfilesize(int);
 
 /*
  * calculate the maximum file size allowed with the specified block shift.
  */
 static uint64_t
-maxfilesize(int bshift)
+maxfilesize(struct lfs *fs, int bshift)
 {
 	uint64_t nptr; /* number of block pointers per block */
 	uint64_t maxblock;
 
-	/* XXX ondisk32 */
-	nptr = (1 << bshift) / sizeof(uint32_t);
+	nptr = (1 << bshift) / LFS_BLKPTRSIZE(fs);
 	maxblock = ULFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
 	return maxblock << bshift;
@@ -522,9 +520,8 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 		lfs_sb_setfrag(fs, lfs_numfrags(fs, bsize));
 		lfs_sb_setfbmask(fs, lfs_sb_getfrag(fs) - 1);
 		lfs_sb_setfbshift(fs, lfs_log2(lfs_sb_getfrag(fs)));
-		lfs_sb_setifpb(fs, bsize / sizeof(IFILE));
-		/* XXX ondisk32 */
-		lfs_sb_setnindir(fs, bsize / sizeof(int32_t));
+		lfs_sb_setifpb(fs, bsize / IFILE_ENTRYSIZE(fs));
+		lfs_sb_setnindir(fs, bsize / LFS_BLKPTRSIZE(fs));
 	}
 
 	if (lfs_sb_getversion(fs) == 1) {
@@ -597,7 +594,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	lfs_sb_setnseg(fs, lfs_sb_getdsize(fs) / lfs_segtod(fs, 1));
 
 	lfs_sb_setnclean(fs, lfs_sb_getnseg(fs) - 1);
-	lfs_sb_setmaxfilesize(fs, maxfilesize(lfs_sb_getbshift(fs)));
+	lfs_sb_setmaxfilesize(fs, maxfilesize(fs, lfs_sb_getbshift(fs)));
 
 	if (minfreeseg == 0)
 		lfs_sb_setminfreeseg(fs, lfs_sb_getnseg(fs) / DFL_MIN_FREE_SEGS);
