@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.416 2015/08/27 14:04:07 nonaka Exp $
+# $NetBSD: GENERIC,v 1.417 2015/09/21 12:32:06 nonaka Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.416 $"
+#ident 		"GENERIC-$Revision: 1.417 $"
 
 maxusers	64		# estimated number of users
 
@@ -325,6 +325,7 @@ wsmouse*	at spic?		# mouse
 thinkpad*	at acpi?		# IBM/Lenovo Thinkpad hotkeys
 #tpm*		at acpi?		# ACPI TPM (Experimental)
 ug*		at acpi?		# Abit uGuru Hardware monitor
+valz*		at acpi?		# Toshiba Dynabook hotkeys
 wb*		at acpi?		# Winbond W83L518D SD/MMC reader
 sdmmc*		at wb?			# SD/MMC bus
 wmidell*	at acpiwmibus?		# Dell WMI mappings
