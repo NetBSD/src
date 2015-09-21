@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.191 2015/09/21 01:24:23 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.192 2015/09/21 01:24:39 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -588,11 +588,10 @@ typedef union finfo {
 typedef struct ifile64 IFILE64;
 struct ifile64 {
 	u_int32_t if_version;		/* inode version number */
-	u_int32_t if_pad;		/* 64-bit alignment padding */
+	u_int32_t if_atime_nsec;	/* and nanoseconds */
+	u_int64_t if_atime_sec;		/* Last access time, seconds */
 	int64_t	  if_daddr;		/* inode disk address */
 	u_int64_t if_nextfree;		/* next-unallocated inode */
-	u_int32_t if_atime_sec;		/* Last access time, seconds */
-	u_int32_t if_atime_nsec;	/* and nanoseconds */
 };
 
 typedef struct ifile32 IFILE32;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.31 2015/09/21 01:24:23 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.32 2015/09/21 01:24:39 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -832,7 +832,7 @@ lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
 LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, version);
 LFS_DEF_IF_ACCESSOR(int64_t, int32_t, daddr);
 LFS_DEF_IF_ACCESSOR(u_int64_t, u_int32_t, nextfree);
-LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_sec);
+LFS_DEF_IF_ACCESSOR(u_int64_t, u_int32_t, atime_sec);
 LFS_DEF_IF_ACCESSOR(u_int32_t, u_int32_t, atime_nsec);
 
 /*
