@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.14 2015/04/13 21:18:40 riastradh Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.14 2015/04/13 21:18:40 riastradh Exp $ */
+/*	$Id: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.14 2015/04/13 21:18:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -910,7 +910,7 @@ at91dbgu_cn_getc(dev_t dev)
 	if (!db_active)
 #endif
 	{
-		int cn_trapped = 0; /* unused */
+		int cn_trapped __unused = 0;
 
 		cn_check_magic(dev, c, at91dbgu_cnm_state);
 	}
