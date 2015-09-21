@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.1 2013/10/02 16:48:26 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omapl1x_emac.c,v 1.2 2015/09/21 13:32:48 skrll Exp $");
 
 #include "opt_omapl1x.h"
 
@@ -621,7 +621,7 @@ emac_rx_desc_process (struct emac_softc *sc, struct emac_channel *chan)
 	bus_addr_t desc_offset;
 	struct mbuf *mb;
 	bus_addr_t desc_base;
-	u_int buf_len, off;
+	u_int buf_len;
 
 	if ((entry = SIMPLEQ_FIRST(&chan->inuse_head)) == NULL) {
 		return ENOENT;
@@ -646,7 +646,7 @@ emac_rx_desc_process (struct emac_softc *sc, struct emac_channel *chan)
 			     "Received packet spanning multiple buffers\n");
 	}
 
-	off = __SHIFTOUT(desc->len, (uint32_t)__BITS(26, 16));
+	//off = __SHIFTOUT(desc->len, (uint32_t)__BITS(26, 16));
 	buf_len = __SHIFTOUT(desc->mode, (uint32_t)__BITS(10,  0));
 
 	if (desc->mode & PASSCRC)
@@ -782,7 +782,6 @@ emac_soft_intr (void *arg)
 	struct emac_softc * const sc = arg;
 	struct ifnet * const ifp = &sc->sc_if;
 	u_int soft_flags = atomic_swap_uint(&sc->sc_soft_flags, 0);
-	u_int tx_pkts_freed, rx_pkts_freed;
 
 	if (soft_flags & SOFT_RESET) {
 		int s = splnet();
@@ -797,15 +796,13 @@ emac_soft_intr (void *arg)
 
 	/* We are working on channel 0 */
 	if (mask & TX0PEND) {
-		tx_pkts_freed = emac_free_descs(sc, &sc->tx_chan,
-						EMAC_TX_DESC_FREE);
+		emac_free_descs(sc, &sc->tx_chan, EMAC_TX_DESC_FREE);
 	}
 
 	EMAC_WRITE(sc, MACEOIVECTOR, C0TXDONE);
 
 	if (mask & RX0PEND) {
-		rx_pkts_freed = emac_free_descs(sc, &sc->rx_chan,
-						EMAC_RX_DESC_FREE);
+		emac_free_descs(sc, &sc->rx_chan, EMAC_RX_DESC_FREE);
 	}
 
 	EMAC_WRITE(sc, MACEOIVECTOR, C0RXDONE);
