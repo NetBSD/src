@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_lookup.c,v 1.32 2015/09/15 15:02:25 dholland Exp $	*/
+/*	$NetBSD: ulfs_lookup.c,v 1.33 2015/09/21 01:22:18 dholland Exp $	*/
 /*  from NetBSD: ufs_lookup.c,v 1.122 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.32 2015/09/15 15:02:25 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_lookup.c,v 1.33 2015/09/21 01:22:18 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -221,7 +221,7 @@ ulfs_lookup(void *v)
 	slotfreespace = slotsize = slotneeded = 0;
 	if ((nameiop == CREATE || nameiop == RENAME) && (flags & ISLASTCN)) {
 		slotstatus = NONE;
-		slotneeded = LFS_DIRECTSIZ(cnp->cn_namelen);
+		slotneeded = LFS_DIRECTSIZ(fs, cnp->cn_namelen);
 	}
 
 	/*
@@ -783,7 +783,7 @@ ulfs_direnter(struct vnode *dvp, const struct ulfs_lookup_results *ulr,
 	cr = cnp->cn_cred;
 
 	dp = VTOI(dvp);
-	newentrysize = LFS_DIRECTSIZ(namlen);
+	newentrysize = LFS_DIRECTSIZ(fs, namlen);
 
 	if (ulr->ulr_count == 0) {
 		/*
