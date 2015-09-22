@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.h,v 1.3.2.2 2015/04/06 15:18:03 skrll Exp $	*/
+/*	$NetBSD: mdesc.h,v 1.3.2.3 2015/09/22 12:05:52 skrll Exp $	*/
 /*	$OpenBSD: mdesc.h,v 1.3 2014/11/30 22:26:14 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -38,10 +38,8 @@ struct md_element {
 };
 
 #ifdef _KERNEL
-extern vaddr_t mdesc;
-extern size_t mdesc_len;
-
-void	 mdesc_init(void);
+psize_t	mdesc_get_len(void);
+void	mdesc_init(vaddr_t, paddr_t, psize_t);
 uint64_t mdesc_get_prop_val(int, const char *);
 const char *mdesc_get_prop_str(int, const char *);
 const char *mdesc_get_prop_data(int, const char *, size_t *);

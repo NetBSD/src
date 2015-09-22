@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.20 2011/01/21 15:59:08 joerg Exp $
+#	$NetBSD: Makefile.news68k,v 1.20.32.1 2015/09/22 12:05:48 skrll Exp $
 #
 # Makefile for NetBSD
 #
@@ -46,7 +46,8 @@ KERN_AS=	obj
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	${NEWS68K}/news68k/locore.s
 

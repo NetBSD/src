@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.35.2.1 2015/04/06 15:18:08 skrll Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.35.2.2 2015/09/22 12:05:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -49,6 +49,7 @@
 
 #include "netbsd-dm.h"
 #include "dm.h"
+#include "ioconf.h"
 
 static dev_type_open(dmopen);
 static dev_type_close(dmclose);
@@ -59,7 +60,6 @@ static dev_type_strategy(dmstrategy);
 static dev_type_size(dmsize);
 
 /* attach and detach routines */
-void dmattach(int);
 #ifdef _MODULE
 static int dmdestroy(void);
 #endif
@@ -118,7 +118,7 @@ extern uint32_t dm_dev_counter;
 /*
  * This array is used to translate cmd to function pointer.
  *
- * Interface between libdevmapper and lvm2tools uses different 
+ * Interface between libdevmapper and lvm2tools uses different
  * names for one IOCTL call because libdevmapper do another thing
  * then. When I run "info" or "mknodes" libdevmapper will send same
  * ioctl to kernel but will do another things in userspace.
@@ -132,7 +132,7 @@ static const struct cmd_function cmd_fn[] = {
 	{ .cmd = "mknodes", .fn = dm_dev_status_ioctl,    .allowed = 1 },
 	{ .cmd = "names",   .fn = dm_dev_list_ioctl,      .allowed = 1 },
 	{ .cmd = "suspend", .fn = dm_dev_suspend_ioctl,   .allowed = 0 },
-	{ .cmd = "remove",  .fn = dm_dev_remove_ioctl,    .allowed = 0 }, 
+	{ .cmd = "remove",  .fn = dm_dev_remove_ioctl,    .allowed = 0 },
 	{ .cmd = "rename",  .fn = dm_dev_rename_ioctl,    .allowed = 0 },
 	{ .cmd = "resume",  .fn = dm_dev_resume_ioctl,    .allowed = 0 },
 	{ .cmd = "clear",   .fn = dm_table_clear_ioctl,   .allowed = 0 },
@@ -140,7 +140,7 @@ static const struct cmd_function cmd_fn[] = {
 	{ .cmd = "reload",  .fn = dm_table_load_ioctl,    .allowed = 0 },
 	{ .cmd = "status",  .fn = dm_table_status_ioctl,  .allowed = 1 },
 	{ .cmd = "table",   .fn = dm_table_status_ioctl,  .allowed = 1 },
-	{ .cmd = NULL, 	    .fn = NULL,			  .allowed = 0 }	
+	{ .cmd = NULL, 	    .fn = NULL,			  .allowed = 0 }
 };
 
 #ifdef _MODULE
@@ -196,7 +196,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		 * defined in driver. This is probably too strong we need
 		 * to disable auto-unload only if there is mounted dm device
 		 * present.
-		 */ 
+		 */
 		if (dm_dev_counter > 0)
 			return EBUSY;
 
@@ -254,7 +254,7 @@ dm_attach(device_t parent, device_t self,
  *
  *	Autoconfiguration detach function for pseudo-device glue.
  * This routine is called by dm_ioctl::dm_dev_remove_ioctl and by autoconf to
- * remove devices created in device-mapper. 
+ * remove devices created in device-mapper.
  */
 static int
 dm_detach(device_t self, int flags)
@@ -270,7 +270,7 @@ dm_detach(device_t self, int flags)
 
 	/* Destroy inactive table if exits, too. */
 	dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
-	
+
 	dm_table_head_destroy(&dmv->table_head);
 
 	/* Destroy disk device structure */
@@ -319,7 +319,7 @@ dmdestroy(void)
 	error = config_cfattach_detach(dm_cd.cd_name, &dm_ca);
 	if (error)
 		return error;
-	
+
 	dm_dev_destroy();
 	dm_pdev_destroy();
 	dm_target_destroy();
@@ -355,7 +355,7 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 
 	aprint_debug("dmioctl called\n");
 	KASSERT(data != NULL);
-	
+
 	if (( r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
 		struct plistref *pref = (struct plistref *) data;
 
@@ -389,7 +389,7 @@ static int
 dm_cmd_to_fun(prop_dictionary_t dm_dict) {
 	int i, r;
 	prop_string_t command;
-	
+
 	r = 0;
 
 	if ((command = prop_dictionary_get(dm_dict, DM_IOCTL_COMMAND)) == NULL)
@@ -399,7 +399,7 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict) {
 		if (prop_string_equals_cstring(command, cmd_fn[i].cmd))
 			break;
 
-	if (!cmd_fn[i].allowed && 
+	if (!cmd_fn[i].allowed &&
 	    (r = kauth_authorize_system(kauth_cred_get(),
 	    KAUTH_SYSTEM_DEVMAPPER, 0, NULL, NULL, NULL)) != 0)
 		return r;
@@ -444,7 +444,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	/* disk ioctls make sense only on block devices */
 	if (minor(dev) == 0)
 		return ENOTTY;
-	
+
 	switch(cmd) {
 	case DIOCGWEDGEINFO:
 	{
@@ -490,7 +490,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	{
 		dm_table_entry_t *table_en;
 		dm_table_t *tbl;
-		
+
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
 
@@ -509,8 +509,8 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		dm_dev_unbusy(dmv);
 		break;
 	}
-		
-	
+
+
 	default:
 		aprint_debug("unknown disk_ioctl called\n");
 		return ENOTTY;
@@ -538,7 +538,7 @@ dmstrategy(struct buf *bp)
 	buf_start = bp->b_blkno * DEV_BSIZE;
 	buf_len = bp->b_bcount;
 
-	tbl = NULL; 
+	tbl = NULL;
 
 	table_end = 0;
 	issued_len = 0;
@@ -548,7 +548,7 @@ dmstrategy(struct buf *bp)
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 		return;
-	} 
+	}
 
 	if (bounds_check_with_mediasize(bp, DEV_BSIZE,
 	    dm_table_size(&dmv->table_head)) <= 0) {
@@ -658,7 +658,7 @@ dmsize(dev_t dev)
 
 	size = dm_table_size(&dmv->table_head);
 	dm_dev_unbusy(dmv);
-	
+
   	return size;
 }
 

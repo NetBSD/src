@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.11.4.1 2015/04/06 15:18:08 skrll Exp $ */
+/*	$NetBSD: bio.c,v 1.11.4.2 2015/09/22 12:05:56 skrll Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.11.4.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.11.4.2 2015/09/22 12:05:56 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.11.4.1 2015/04/06 15:18:08 skrll Exp $");
 
 #include <dev/biovar.h>
 #include <dev/sysmon/sysmonvar.h>
+
+#include "ioconf.h"
 
 struct bio_mapping {
 	LIST_ENTRY(bio_mapping) bm_link;
@@ -65,8 +67,6 @@ static int	bioopen(dev_t, int, int, struct lwp *);
 static int	bio_delegate_ioctl(void *, u_long, void *);
 static struct	bio_mapping *bio_lookup(char *);
 static int	bio_validate(void *);
-
-void	bioattach(int);
 
 const struct cdevsw bio_cdevsw = {
         .d_open = bioopen,
@@ -300,7 +300,7 @@ static int
 bio_delegate_ioctl(void *cookie, u_long cmd, void *addr)
 {
 	struct bio_mapping *bm = cookie;
-	
+
 	return bm->bm_ioctl(bm->bm_dev, cmd, addr);
 }
 

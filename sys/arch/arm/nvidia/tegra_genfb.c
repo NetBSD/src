@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_genfb.c,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_genfb.c,v 1.1.2.3 2015/09/22 12:05:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_genfb.c,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_genfb.c,v 1.1.2.3 2015/09/22 12:05:38 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -95,8 +95,7 @@ tegra_genfb_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint32(prop, "height", tfb->tfb_height);
 	prop_dictionary_set_uint8(prop, "depth", tfb->tfb_depth);
 	prop_dictionary_set_uint32(prop, "linebytes", tfb->tfb_stride);
-	prop_dictionary_set_uint64(prop, "address",
-	    tfb->tfb_dmamap->dm_segs[0].ds_addr);
+	prop_dictionary_set_uint64(prop, "address", 0);
 	prop_dictionary_set_uint64(prop, "virtual_address",
 	    (uintptr_t)tfb->tfb_dmap);
 

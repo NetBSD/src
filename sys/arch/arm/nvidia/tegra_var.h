@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_var.h,v 1.2.2.4 2015/09/22 12:05:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -96,11 +96,12 @@ u_int	tegra_car_pllp0_rate(void);
 u_int	tegra_car_plld2_rate(void);
 u_int	tegra_car_uart_rate(u_int);
 u_int	tegra_car_periph_sdmmc_rate(u_int);
-int	tegra_car_periph_sdmmc_set_div(u_int, u_int);
+int	tegra_car_periph_sdmmc_set_rate(u_int, u_int);
 int	tegra_car_periph_usb_enable(u_int);
 void	tegra_car_periph_hda_enable(void);
 void	tegra_car_periph_sata_enable(void);
 int	tegra_car_periph_i2c_enable(u_int, u_int);
+void	tegra_car_periph_cec_enable(void);
 void	tegra_car_utmip_init(void);
 void	tegra_car_utmip_enable(u_int);
 void	tegra_car_hdmi_enable(u_int);
@@ -148,7 +149,8 @@ void	tegra_xusbpad_sata_enable(void);
 
 struct videomode;
 int	tegra_dc_port(device_t);
-int	tegra_dc_enable(device_t, device_t, const struct videomode *);
+int	tegra_dc_enable(device_t, device_t, const struct videomode *,
+			const uint8_t *);
 void	tegra_dc_hdmi_start(device_t);
 
 #define TEGRA_CPUFREQ_MAX	16

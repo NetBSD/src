@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.82 2014/08/23 20:26:56 dholland Exp $
+#	$NetBSD: P5064,v 1.82.2.1 2015/09/22 12:05:35 skrll Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.82 $"
+#ident 		"P5064-$Revision: 1.82.2.1 $"
 
 maxusers 32
 
@@ -23,6 +23,7 @@ options 	NTP			# kernel PLL for NTP
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 options 	DDB			# kernel debugger
+pseudo-device	ksyms
 makeoptions	DEBUG="-g"
 #makeoptions	DEBUGLIST="pattern1 pattern2 ..."
 makeoptions	COPY_SYMTAB=1

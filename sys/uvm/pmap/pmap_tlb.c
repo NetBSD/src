@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.10.2.1 2015/06/06 14:40:31 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.10.2.2 2015/09/22 12:06:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10.2.1 2015/06/06 14:40:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.10.2.2 2015/09/22 12:06:18 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -635,9 +635,10 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 		kcpuset_remove(pm_active, ti->ti_kcpuset);
 		TLBINFO_LOCK(ti);
-		if (pmap_tlb_intersecting_onproc_p(pm, ti)) {
-			cpuid_t j = kcpuset_ffs_intersecting(pm->pm_onproc,
-			    ti->ti_kcpuset);
+		cpuid_t j = kcpuset_ffs_intersecting(pm->pm_onproc,
+		    ti->ti_kcpuset);
+		// post decrement since ffs returns bit + 1 or 0 if no bit
+		if (j-- > 0) {
 			if (kernel_p) {
 				ti->ti_tlbinvop =
 				    TLBINV_KERNEL_MAP(ti->ti_tlbinvop);
@@ -735,7 +736,7 @@ pmap_tlb_invalidate_addr(pmap_t pm, vaddr_t va)
 	TLBINFO_LOCK(ti);
 	if (pm == pmap_kernel() || PMAP_PAI_ASIDVALID_P(pai, ti)) {
 		pmap_tlb_asid_check();
-		UVMHIST_LOG(maphist, " invalidating %#x asid %#x", 
+		UVMHIST_LOG(maphist, " invalidating %#x asid %#x",
 		    va, pai->pai_asid, 0, 0);
 		tlb_invalidate_addr(va, pai->pai_asid);
 		pmap_tlb_asid_check();

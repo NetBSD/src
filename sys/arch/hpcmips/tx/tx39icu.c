@@ -1,4 +1,4 @@
-/*	$NetBSD: tx39icu.c,v 1.34 2014/09/21 15:52:43 christos Exp $ */
+/*	$NetBSD: tx39icu.c,v 1.34.2.1 2015/09/22 12:05:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 1999-2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.34 2014/09/21 15:52:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tx39icu.c,v 1.34.2.1 2015/09/22 12:05:43 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -315,7 +315,7 @@ TX_INTR(int ppl, vaddr_t pc, uint32_t status)
 	tc = tx_conf_get_tag();
 	sc = tc->tc_intrt;
 	/*
-	 * Read regsiter ASAP
+	 * Read register ASAP
 	 */
 	regs = sc->sc_regs;
 	regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
@@ -395,7 +395,7 @@ TX_INTR(int ppl, vaddr_t pc, uint32_t status)
 			}
 		}
 		/*
-		 * Read regsiter again
+		 * Read register again
 		 */
 		regs[0] = tx_conf_read(tc, TX39_INTRSTATUS6_REG);
 		regs[1] = tx_conf_read(tc, TX39_INTRSTATUS1_REG);

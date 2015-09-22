@@ -1,4 +1,4 @@
-#	$NetBSD: MMTAROMNEW,v 1.50 2013/06/30 21:38:57 rmind Exp $
+#	$NetBSD: MMTAROMNEW,v 1.50.8.1 2015/09/22 12:05:48 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -53,7 +53,6 @@ options 	USERCONF	# userconf(4) support
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
 #options 	KGDB		# remote debugger
 #options 	KGDB_DEVNAME="\"com\"",KGDB_DEVADDR=0x3f8,KGDB_DEVRATE=9600

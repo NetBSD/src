@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.57 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: SMDK2410,v 1.57.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -120,7 +120,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #XXX: options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages

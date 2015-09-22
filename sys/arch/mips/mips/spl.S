@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.5.32.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.5.32.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -35,11 +35,10 @@
 
 #include <sys/cdefs.h>
 
-#include <machine/param.h>
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.5.32.1 2015/06/06 14:40:02 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.5.32.2 2015/09/22 12:05:47 skrll Exp $")
 
 #include "assym.h"
 
@@ -87,8 +86,8 @@ _splraise:
 	or	v1, MIPS_INT_MASK		# enable all interrupts
 	xor	a0, v1				# disable ipl's masked bits
 	DYNAMIC_STATUS_MASK(a0,v0)		# machine dependent masking
-#if defined(_LP64) && MULTIPROCESSOR
-	li	v1, MIPS3_SR_KX | MIPS3_SR_UX	# keep 64-bit addressing on
+#if !defined(__mips_o32) && defined(MULTIPROCESSOR)
+	li	v1, MIPS3_SR_KX			# keep 64-bit addressing on
 	mtc0	v1, MIPS_COP_0_STATUS		## disable interrupts
 #else
 	mtc0	zero, MIPS_COP_0_STATUS		## disable interrupts
@@ -234,7 +233,7 @@ STATIC_XLEAF(_splsw_splhigh_noprof)
 	PTR_L	a3, L_CPU(MIPS_CURLWP)
 	NOP_L					# load delay
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
-	li	a1, IPL_HIGH			# 
+	li	a1, IPL_HIGH			#
 	beq	v0, a1, 1f			# don't do anything if IPL_HIGH
 	 nop					# branch delay
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register

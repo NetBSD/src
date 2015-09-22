@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontdev.c,v 1.16 2014/07/25 08:10:39 dholland Exp $ */
+/* $NetBSD: wsfontdev.c,v 1.16.4.1 2015/09/22 12:06:01 skrll Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.16 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.16.4.1 2015/09/22 12:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,7 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: wsfontdev.c,v 1.16 2014/07/25 08:10:39 dholland Exp 
 #include <dev/wsfont/wsfont.h>
 #include <dev/wscons/wsconsio.h> /* XXX */
 
-void wsfontattach(int);
+#include "ioconf.h"
 
 static int wsfont_isopen;
 

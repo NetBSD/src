@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_msi_machdep.c,v 1.5.2.2 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: pci_msi_machdep.c,v 1.5.2.3 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -34,7 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5.2.2 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.5.2.3 2015/09/22 12:05:54 skrll Exp $");
+
+#include "opt_intrdebug.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -206,7 +208,8 @@ pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count,
 
 static void *
 pci_msi_common_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-    int level, int (*func)(void *), void *arg, struct pic *pic)
+    int level, int (*func)(void *), void *arg, struct pic *pic,
+    const char *xname)
 {
 	int irq, pin;
 	bool mpsafe;
@@ -217,8 +220,8 @@ pci_msi_common_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 	pin = MSI_INT_VEC(ih);
 	mpsafe = ((ih & MPSAFE_MASK) != 0);
 
-	return intr_establish(irq, pic, pin, IST_EDGE, level, func, arg,
-	    mpsafe);
+	return intr_establish_xname(irq, pic, pin, IST_EDGE, level, func, arg,
+	    mpsafe, xname);
 }
 
 static void
@@ -236,8 +239,7 @@ pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes,
 	pci_intr_handle_t *vectors;
 	int error, i;
 
-	if (((pa->pa_flags & PCI_FLAGS_MSI_OKAY) == 0)
-	    || ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0)) {
+	if ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0) {
 		DPRINTF(("PCI host bridge does not support MSI-X.\n"));
 		return ENODEV;
 	}
@@ -395,7 +397,7 @@ x86_pci_msi_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
  */
 void *
 x86_pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-    int level, int (*func)(void *), void *arg)
+    int level, int (*func)(void *), void *arg, const char *xname)
 {
 	struct pic *pic;
 
@@ -405,7 +407,7 @@ x86_pci_msi_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 		return NULL;
 	}
 
-	return pci_msi_common_establish(pc, ih, level, func, arg, pic);
+	return pci_msi_common_establish(pc, ih, level, func, arg, pic, xname);
 }
 
 /*
@@ -440,7 +442,7 @@ x86_pci_msix_release(pci_chipset_tag_t pc, pci_intr_handle_t *pihs, int count)
  */
 void *
 x86_pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
-    int level, int (*func)(void *), void *arg)
+    int level, int (*func)(void *), void *arg, const char *xname)
 {
 	struct pic *pic;
 
@@ -450,7 +452,7 @@ x86_pci_msix_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih,
 		return NULL;
 	}
 
-	return pci_msi_common_establish(pc, ih, level, func, arg, pic);
+	return pci_msi_common_establish(pc, ih, level, func, arg, pic, xname);
 }
 
 /*
@@ -471,35 +473,6 @@ x86_pci_msix_disestablish(pci_chipset_tag_t pc, void *cookie)
  */
 
 /*
- * return number of the devices's MSI vectors
- * return 0 if the device does not support MSI
- */
-int
-pci_msi_count(const struct pci_attach_args *pa)
-{
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pcireg_t reg;
-	uint32_t mmc;
-	int count, offset;
-
-	pc = pa->pa_pc;
-	tag = pa->pa_tag;
-	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &offset, NULL) == 0)
-		return 0;
-
-	reg = pci_conf_read(pc, tag, offset + PCI_MSI_CTL);
-	mmc = PCI_MSI_CTL_MMC(reg);
-	count = 1 << mmc;
-	if (count > PCI_MSI_MAX_VECTORS) {
-		aprint_error("detect an illegal device! The device use reserved MMC values.\n");
-		return 0;
-	}
-
-	return count;
-}
-
-/*
  * This function is used by device drivers like pci_intr_map().
  *
  * "ihps" is the array  of vector numbers which MSI used instead of IRQ number.
@@ -517,7 +490,7 @@ pci_msi_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 	KASSERT(*count > 0);
 	KASSERT(((*count - 1) & *count) == 0);
 
-	hw_max = pci_msi_count(pa);
+	hw_max = pci_msi_count(pa->pa_pc, pa->pa_tag);
 	if (hw_max == 0)
 		return ENODEV;
 
@@ -547,7 +520,7 @@ pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 	KASSERT(count > 0);
 	KASSERT(((count - 1) & count) == 0);
 
-	hw_max = pci_msi_count(pa);
+	hw_max = pci_msi_count(pa->pa_pc, pa->pa_tag);
 	if (hw_max == 0)
 		return ENODEV;
 
@@ -557,28 +530,6 @@ pci_msi_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 	}
 
 	return x86_pci_msi_alloc_exact(ihps, count, pa);
-}
-
-/*
- * return number of the devices's MSI-X vectors
- * return 0 if the device does not support MSI-X
- */
-int
-pci_msix_count(const struct pci_attach_args *pa)
-{
-	pci_chipset_tag_t pc;
-	pcitag_t tag;
-	pcireg_t reg;
-	int offset;
-
-	pc = pa->pa_pc;
-	tag = pa->pa_tag;
-	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &offset, NULL) == 0)
-		return 0;
-
-	reg = pci_conf_read(pc, tag, offset + PCI_MSIX_CTL);
-
-	return PCI_MSIX_CTL_TBLSIZE(reg);
 }
 
 /*
@@ -596,7 +547,7 @@ pci_msix_alloc(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 	KASSERT(*count > 0);
 
-	hw_max = pci_msix_count(pa);
+	hw_max = pci_msix_count(pa->pa_pc, pa->pa_tag);
 	if (hw_max == 0)
 		return ENODEV;
 
@@ -623,7 +574,7 @@ pci_msix_alloc_exact(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 	KASSERT(count > 0);
 
-	hw_max = pci_msix_count(pa);
+	hw_max = pci_msix_count(pa->pa_pc, pa->pa_tag);
 	if (hw_max == 0)
 		return ENODEV;
 
@@ -657,7 +608,7 @@ pci_msix_alloc_map(const struct pci_attach_args *pa, pci_intr_handle_t **ihps,
 
 	KASSERT(count > 0);
 
-	hw_max = pci_msix_count(pa);
+	hw_max = pci_msix_count(pa->pa_pc, pa->pa_tag);
 	if (hw_max == 0)
 		return ENODEV;
 

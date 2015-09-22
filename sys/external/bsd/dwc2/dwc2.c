@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.10 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.11 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.10 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.11 2015/09/22 12:06:06 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -295,7 +295,7 @@ dwc2_softintr(void *v)
 	mutex_spin_enter(&hsotg->lock);
 	while ((dxfer = TAILQ_FIRST(&sc->sc_complete)) != NULL) {
 
-    		KASSERTMSG(!callout_pending(&dxfer->xfer.ux_callout),
+		KASSERTMSG(!callout_pending(&dxfer->xfer.ux_callout),
 		    "xfer %p pipe %p\n", dxfer, dxfer->xfer.ux_pipe);
 
 		/*
@@ -822,7 +822,7 @@ Static void
 dwc2_device_bulk_done(struct usbd_xfer *xfer)
 {
 
-    	DPRINTF("xfer=%p\n", xfer);
+	DPRINTF("xfer=%p\n", xfer);
 }
 
 /***********************************************************************/
@@ -993,7 +993,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 
 	uint32_t flags = 0;
 	uint32_t off = 0;
-	int retval, err = USBD_IN_PROGRESS;
+	int retval, err;
 	int alloc_bandwidth = 0;
 	int i;
 
@@ -1050,6 +1050,8 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	memset(dwc2_urb, 0, sizeof(*dwc2_urb) +
 	    sizeof(dwc2_urb->iso_descs[0]) * DWC2_MAXISOCPACKETS);
 
+	dwc2_urb->priv = xfer;
+
 	dwc2_hcd_urb_set_pipeinfo(hsotg, dwc2_urb, addr, epnum, xfertype, dir,
 				  mps);
 
@@ -1069,7 +1071,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	 * everything else does.
 	 */
 	if (!(xfertype == UE_CONTROL && len == 0)) {
-    		dwc2_urb->usbdma = &xfer->ux_dmabuf;
+		dwc2_urb->usbdma = &xfer->ux_dmabuf;
 		dwc2_urb->buf = KERNADDR(dwc2_urb->usbdma, 0);
 		dwc2_urb->dma = DMAADDR(dwc2_urb->usbdma, 0);
  	}
@@ -1130,6 +1132,28 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		off += xfer->ux_frlengths[i];
 	}
 
+	struct dwc2_qh *qh = dpipe->priv;
+	struct dwc2_qtd *qtd;
+	bool qh_allocated = false;
+
+	/* Create QH for the endpoint if it doesn't exist */
+	if (!qh) {
+		qh = dwc2_hcd_qh_create(hsotg, dwc2_urb, GFP_ATOMIC);
+		if (!qh) {
+			retval = -ENOMEM;
+			goto fail;
+		}
+		dpipe->priv = qh;
+		qh_allocated = true;
+	}
+
+	qtd = pool_cache_get(sc->sc_qtdpool, PR_NOWAIT);
+	if (!qtd) {
+		retval = -ENOMEM;
+		goto fail1;
+	}
+	memset(qtd, 0, sizeof(*qtd));
+
 	/* might need to check cpu_intr_p */
 	mutex_spin_enter(&hsotg->lock);
 
@@ -1137,11 +1161,9 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    dwc2_timeout, xfer);
 	}
-
-	dwc2_urb->priv = xfer;
-	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, &dpipe->priv, 0);
+	retval = dwc2_hcd_urb_enqueue(hsotg, dwc2_urb, qh, qtd);
 	if (retval)
-		goto fail;
+		goto fail2;
 
 	if (alloc_bandwidth) {
 		dwc2_allocate_bus_bandwidth(hsotg,
@@ -1149,14 +1171,25 @@ dwc2_device_start(struct usbd_xfer *xfer)
 				xfer);
 	}
 
-fail:
 	mutex_spin_exit(&hsotg->lock);
-
 // 	mutex_exit(&sc->sc_lock);
 
+	return USBD_IN_PROGRESS;
+
+fail2:
+	dwc2_urb->priv = NULL;
+	mutex_spin_exit(&hsotg->lock);
+	pool_cache_put(sc->sc_qtdpool, qtd);
+
+fail1:
+	if (qh_allocated) {
+		dpipe->priv = NULL;
+		dwc2_hcd_qh_free(hsotg, qh);
+	}
+fail:
+
 	switch (retval) {
-	case 0:
-		break;
+	case -EINVAL:
 	case -ENODEV:
 		err = USBD_INVAL;
 		break;
@@ -1171,6 +1204,7 @@ fail:
 
 }
 
+#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
 void
 dwc2_worker(struct work *wk, void *priv)
 {
@@ -1207,6 +1241,7 @@ Debugger();
 	}
 	mutex_exit(&sc->sc_lock);
 }
+#endif
 
 int dwc2_intr(void *p)
 {
@@ -1350,15 +1385,66 @@ dwc2_init(struct dwc2_softc *sc)
 	sc->sc_hsotg->dev = sc->sc_dev;
 	sc->sc_hcdenabled = true;
 
-	err = dwc2_hcd_init(sc->sc_hsotg, sc->sc_params);
-	if (err) {
-		err = -err;
+	struct dwc2_hsotg *hsotg = sc->sc_hsotg;
+	struct dwc2_core_params defparams;
+	int retval;
+
+	if (sc->sc_params == NULL) {
+		/* Default all params to autodetect */
+		dwc2_set_all_params(&defparams, -1);
+		sc->sc_params = &defparams;
+
+		/*
+		 * Disable descriptor dma mode by default as the HW can support
+		 * it, but does not support it for SPLIT transactions.
+		 */
+		defparams.dma_desc_enable = 0;
+	}
+	hsotg->dr_mode = USB_DR_MODE_HOST;
+
+	/* Detect config values from hardware */
+	retval = dwc2_get_hwparams(hsotg);
+	if (retval) {
 		goto fail2;
 	}
+
+	hsotg->core_params = kmem_zalloc(sizeof(*hsotg->core_params), KM_SLEEP);
+	if (!hsotg->core_params) {
+		retval = -ENOMEM;
+		goto fail2;
+	}
+
+	dwc2_set_all_params(hsotg->core_params, -1);
+
+	/* Validate parameter values */
+	dwc2_set_parameters(hsotg, sc->sc_params);
+
+#if IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
+    IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+	if (hsotg->dr_mode != USB_DR_MODE_HOST) {
+		retval = dwc2_gadget_init(hsotg);
+		if (retval)
+			goto fail2;
+		hsotg->gadget_enabled = 1;
+	}
+#endif
+#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || \
+    IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+	if (hsotg->dr_mode != USB_DR_MODE_PERIPHERAL) {
+		retval = dwc2_hcd_init(hsotg);
+		if (retval) {
+			if (hsotg->gadget_enabled)
+				s3c_hsotg_remove(hsotg);
+			goto fail2;
+		}
+	    hsotg->hcd_enabled = 1;
+        }
+#endif
 
 	return 0;
 
 fail2:
+	err = -retval;
 	kmem_free(sc->sc_hsotg, sizeof(struct dwc2_hsotg));
 fail1:
 	softint_disestablish(sc->sc_rhc_si);
@@ -1504,6 +1590,20 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 		printf("%s: unknown error status %d\n", __func__, status);
 	}
 
+	if (xfer->ux_status == USBD_NORMAL_COMPLETION) {
+		/*
+		 * control transfers with no data phase don't touch dmabuf, but
+		 * everything else does.
+		 */
+		if (!(xfertype == UE_CONTROL &&
+		    UGETW(xfer->ux_request.wLength) == 0)) {
+			int rd = usbd_xfer_isread(xfer);
+
+			usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_actlen,
+			    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+		}
+	}
+
 	if (xfertype == UE_ISOCHRONOUS ||
 	    xfertype == UE_INTERRUPT) {
 		struct dwc2_pipe *dpipe = DWC2_XFER2DPIPE(xfer);
@@ -1533,12 +1633,7 @@ _dwc2_hcd_start(struct dwc2_hsotg *hsotg)
 
 	mutex_spin_enter(&hsotg->lock);
 
-	hsotg->op_state = OTG_STATE_A_HOST;
-
 	dwc2_hcd_reinit(hsotg);
-
-	/*XXXNH*/
-	delay(50);
 
 	mutex_spin_exit(&hsotg->lock);
 	return 0;

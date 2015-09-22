@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_var.h,v 1.92 2014/05/30 08:47:45 hannken Exp $	*/
+/*	$NetBSD: nfs_var.h,v 1.92.4.1 2015/09/22 12:06:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -323,13 +323,13 @@ struct sys_nfssvc_args;
 int sys_getfh(struct lwp *, const struct sys_getfh_args *, register_t *);
 int sys_nfssvc(struct lwp *, const struct sys_nfssvc_args *, register_t *);
 int nfssvc_addsock(struct file *, struct mbuf *);
-int nfssvc_nfsd(struct nfsd_srvargs *, void *, struct lwp *);
 void nfsrv_zapsock(struct nfssvc_sock *);
 void nfsrv_slpderef(struct nfssvc_sock *);
 void nfsrv_init(int);
 void nfsrv_fini(void);
 void nfs_iodinit(void);
 void nfs_iodfini(void);
+int nfs_iodbusy(struct nfsmount *);
 int nfs_set_niothreads(int);
 int nfs_getauth(struct nfsmount *, struct nfsreq *, kauth_cred_t, char **,
 	int *, char *, int *, NFSKERBKEY_T);
@@ -337,6 +337,21 @@ int nfs_getnickauth(struct nfsmount *, kauth_cred_t, char **, int *, char *,
 	int);
 int nfs_savenickauth(struct nfsmount *, kauth_cred_t, int, NFSKERBKEY_T,
 	struct mbuf **, char **, struct mbuf *);
+/*
+ * Backend copyin/out functions for nfssvc(2), so that netbsd32 can
+ * easily access NFS.  Each operation either must perform a copyin or
+ * copyout of the right data for the emulation.  exp_in() takes a count
+ * of the number of export_args to copyin, and order arguments for
+ * func(dst, src).
+ */
+struct nfssvc_copy_ops {
+	int (*addsock_in)(struct nfsd_args *, const void *);
+	int (*setexports_in)(struct mountd_exports_list *, const void *);
+	int (*nsd_in)(struct nfsd_srvargs *, const void *);
+	int (*nsd_out)(void *, const struct nfsd_srvargs *);
+	int (*exp_in)(struct export_args *, const void *, size_t);
+};
+int do_nfssvc(struct nfssvc_copy_ops *, struct lwp *, int, void *, register_t *);
 
 /* nfs_export.c */
 extern struct nfs_public nfs_pub;

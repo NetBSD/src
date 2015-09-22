@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.11.2.3 2015/06/06 14:40:01 skrll Exp $ */
+/*	$NetBSD: apbus.c,v 1.11.2.4 2015/09/22 12:05:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.11.2.3 2015/06/06 14:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.11.2.4 2015/09/22 12:05:47 skrll Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -72,6 +72,11 @@ typedef struct apbus_dev {
 } apbus_dev_t;
 
 static const apbus_dev_t apbus_devs[] = {
+	{ "com",	JZ_UART0,	51, CLK_UART0, 0, 0},
+	{ "com",	JZ_UART1,	50, CLK_UART1, 0, 0},
+	{ "com",	JZ_UART2,	49, CLK_UART2, 0, 0},
+	{ "com",	JZ_UART3,	48, CLK_UART3, 0, 0},
+	{ "com",	JZ_UART4,	34, 0, CLK_UART4, 0},
 	{ "dwctwo",	JZ_DWC2_BASE,   21, CLK_OTG0 | CLK_UHC, CLK_OTG1, 0},
 	{ "ohci",	JZ_OHCI_BASE,    5, CLK_UHC, 0, 0},
 	{ "ehci",	JZ_EHCI_BASE,   20, CLK_UHC, 0, 0},
@@ -91,6 +96,7 @@ static const apbus_dev_t apbus_devs[] = {
 	{ "jzmmc",	JZ_MSC1_BASE,   36, CLK_MSC1, 0, JZ_MSC1CDR},
 	{ "jzmmc",	JZ_MSC2_BASE,   35, CLK_MSC2, 0, JZ_MSC2CDR},
 	{ "jzfb",	JZ_LCDC0_BASE,  31, CLK_LCD, CLK_HDMI, 0},
+	{ "jzrng",	JZ_RNG,		-1, 0, 0, 0},
 	{ NULL,		-1,             -1, 0, 0, 0}
 };
 
@@ -155,6 +161,9 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	reg &= ~CLK_AHB_MON;	/* AHB_MON clock */
 	writereg(JZ_CLKGR1, reg);
 
+	/* enable RNG */
+	writereg(JZ_ERNG, 1);
+
 	/* wake up the USB part */
 	reg = readreg(JZ_OPCR);
 	reg |= OPCR_SPENDN0 | OPCR_SPENDN1;
@@ -181,7 +190,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	gpio_as_dev1(4, 12);
 	gpio_as_dev1(4, 13);
 	/* these can be DDC2 or SMB4 */
-#if 1
+#if 0
 	/* DDC2 devices show up at SMB4 */
 	gpio_as_dev1(5, 24);
 	gpio_as_dev1(5, 25);
@@ -219,7 +228,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	gpio_as_dev0(1, 30);
 	gpio_as_dev0(1, 31);
 
-#ifdef INGENIC_DEBUG
+#ifndef INGENIC_DEBUG
 	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
 	printf("JZ_CLKGR1 %08x\n", readreg(JZ_CLKGR1));
 	printf("JZ_SPCR0  %08x\n", readreg(JZ_SPCR0));
@@ -227,6 +236,8 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	printf("JZ_SRBC   %08x\n", readreg(JZ_SRBC));
 	printf("JZ_OPCR   %08x\n", readreg(JZ_OPCR));
 	printf("JZ_UHCCDR %08x\n", readreg(JZ_UHCCDR));
+	printf("JZ_ERNG   %08x\n", readreg(JZ_ERNG));
+	printf("JZ_RNG    %08x\n", readreg(JZ_RNG));
 #endif
 
 	for (const apbus_dev_t *adv = apbus_devs; adv->name != NULL; adv++) {

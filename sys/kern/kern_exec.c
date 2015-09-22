@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410.2.2 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.2 2015/09/22 12:06:07 skrll Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.1 2015/04/06 15:18:20 skrll Ex
 #include <sys/namei.h>
 #include <sys/vnode.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/acct.h>
 #include <sys/atomic.h>
 #include <sys/exec.h>
@@ -151,11 +152,11 @@ SDT_PROBE_DEFINE(proc,,,exec,exec,
 	    "char *", NULL,
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,exec_success,exec-success, 
+SDT_PROBE_DEFINE(proc,,,exec_success,exec-success,
 	    "char *", NULL,
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,exec_failure,exec-failure, 
+SDT_PROBE_DEFINE(proc,,,exec_failure,exec-failure,
 	    "int", NULL,
 	    NULL, NULL, NULL, NULL,
 	    NULL, NULL, NULL, NULL);
@@ -593,6 +594,56 @@ exec_autoload(void)
 }
 
 static int
+makepathbuf(struct lwp *l, const char *upath, struct pathbuf **pbp,
+    size_t *offs)
+{
+	char *path, *bp;
+	size_t len, tlen;
+	int error;
+	struct cwdinfo *cwdi;
+
+	path = PNBUF_GET();
+	error = copyinstr(upath, path, MAXPATHLEN, &len);
+	if (error) {
+		PNBUF_PUT(path);
+		DPRINTF(("%s: copyin path @%p %d\n", __func__, upath, error));
+		return error;
+	}
+
+	if (path[0] == '/') {
+		*offs = 0;
+		goto out;
+	}
+
+	len++;
+	if (len + 1 >= MAXPATHLEN)
+		goto out;
+	bp = path + MAXPATHLEN - len;
+	memmove(bp, path, len);
+	*(--bp) = '/';
+
+	cwdi = l->l_proc->p_cwdi;
+	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, MAXPATHLEN / 2,
+	    GETCWD_CHECK_ACCESS, l);
+	rw_exit(&cwdi->cwdi_lock);
+
+	if (error) {
+		DPRINTF(("%s: getcwd_common path %s %d\n", __func__, path,
+		    error));
+		goto out;
+	}
+	tlen = path + MAXPATHLEN - bp;
+
+	memmove(path, bp, tlen);
+	path[tlen] = '\0';
+	*offs = tlen - len;
+out:
+	*pbp = pathbuf_assimilate(path);
+	return 0;
+}
+
+static int
 execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	char * const *envs, execve_fetch_element_t fetch_element,
 	struct execve_data * restrict data)
@@ -602,6 +653,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	struct proc		*p;
 	char			*dp;
 	u_int			modgen;
+	size_t			offs = 0;	// XXX: GCC
 
 	KASSERT(data != NULL);
 
@@ -651,19 +703,15 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 * functions call check_exec() recursively - for example,
 	 * see exec_script_makecmds().
 	 */
-	error = pathbuf_copyin(path, &data->ed_pathbuf);
-	if (error) {
-		DPRINTF(("%s: pathbuf_copyin path @%p %d\n", __func__,
-		    path, error));
+	if ((error = makepathbuf(l, path, &data->ed_pathbuf, &offs)) != 0)
 		goto clrflg;
-	}
 	data->ed_pathstring = pathbuf_stringcopy_get(data->ed_pathbuf);
 	data->ed_resolvedpathbuf = PNBUF_GET();
 
 	/*
 	 * initialize the fields of the exec package.
 	 */
-	epp->ep_kname = data->ed_pathstring;
+	epp->ep_kname = data->ed_pathstring + offs;
 	epp->ep_resolvedname = data->ed_resolvedpathbuf;
 	epp->ep_hdr = kmem_alloc(exec_maxhdrsz, KM_SLEEP);
 	epp->ep_hdrlen = exec_maxhdrsz;
@@ -880,7 +928,6 @@ pathexec(struct exec_package *epp, struct proc *p, const char *pathstring)
 	(void)memcpy(p->p_comm, commandname, commandlen);
 	p->p_comm[commandlen] = '\0';
 
-	path = PNBUF_GET();
 
 	/*
 	 * If the path starts with /, we don't need to do any work.
@@ -888,30 +935,11 @@ pathexec(struct exec_package *epp, struct proc *p, const char *pathstring)
 	 * In the future perhaps we could canonicalize it?
 	 */
 	if (pathstring[0] == '/') {
-		(void)strlcpy(path, pathstring,
-		    MAXPATHLEN);
+		path = PNBUF_GET();
+		(void)strlcpy(path, pathstring, MAXPATHLEN);
 		epp->ep_path = path;
-	}
-#ifdef notyet
-	/*
-	 * Although this works most of the time [since the entry was just
-	 * entered in the cache] we don't use it because it will fail for
-	 * entries that are not placed in the cache because their name is
-	 * longer than NCHNAMLEN and it is not the cleanest interface,
-	 * because there could be races. When the namei cache is re-written,
-	 * this can be changed to use the appropriate function.
-	 */
-	else if (!(error = vnode_to_path(path, MAXPATHLEN, p->p_textvp, l, p)))
-		epp->ep_path = path;
-#endif
-	else {
-#ifdef notyet
-		printf("Cannot get path for pid %d [%s] (error %d)\n",
-		    (int)p->p_pid, p->p_comm, error);
-#endif
+	} else
 		epp->ep_path = NULL;
-		PNBUF_PUT(path);
-	}
 }
 
 /* XXX elsewhere */
@@ -1123,7 +1151,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	vm->vm_minsaddr = (void *)epp->ep_minsaddr;
 
 #ifdef PAX_ASLR
-	pax_aslr_init(l, vm);
+	pax_aslr_init_vm(l, vm);
 #endif /* PAX_ASLR */
 
 	/* Now map address space. */
@@ -2037,7 +2065,7 @@ spawn_return(void *arg)
 		sigact._sa_u._sa_handler = SIG_DFL;
 		sigact.sa_flags = 0;
 
-		/* 
+		/*
 		 * set state to SSTOP so that this proc can be found by pid.
 		 * see proc_enterprp, do_sched_setparam below
 		 */
@@ -2334,7 +2362,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 		error = ENOMEM;
 		goto error_exit;
 	}
-	
+
 	/*
 	 * Allocate new proc. Borrow proc0 vmspace for it, we will
 	 * replace it with its own before returning to userland
@@ -2564,7 +2592,7 @@ sys_posix_spawn(struct lwp *l1, const struct sys_posix_spawn_args *uap,
 		syscallarg(const struct posix_spawnattr *) attrp;
 		syscallarg(char *const *) argv;
 		syscallarg(char *const *) envp;
-	} */	
+	} */
 
 	int error;
 	struct posix_spawn_file_actions *fa = NULL;
@@ -2650,7 +2678,7 @@ dump_vmcmds(const struct exec_package * const epp, size_t x, int error)
 	if (error == 0)
 		DPRINTF(("vmcmds %u\n", epp->ep_vmcmds.evs_used));
 	else
-		DPRINTF(("vmcmds %zu/%u, error %d\n", x, 
+		DPRINTF(("vmcmds %zu/%u, error %d\n", x,
 		    epp->ep_vmcmds.evs_used, error));
 
 	for (j = 0; j < epp->ep_vmcmds.evs_used; j++) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.h,v 1.3.2.1 2015/04/06 15:18:18 skrll Exp $	*/
+/*	$NetBSD: dwc2.h,v 1.3.2.2 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -33,10 +33,11 @@
 #define _EXTERNAL_BSD_DWC2_DWC2_H_
 
 #include <sys/param.h>
-#include <sys/kernel.h>
 
-#include <sys/workqueue.h>
 #include <sys/callout.h>
+#include <sys/kernel.h>
+#include <sys/proc.h>
+#include <sys/workqueue.h>
 
 #include <linux/list.h>
 
@@ -44,6 +45,10 @@
 // #define VERBOSE_DEBUG
 // #define DWC2_DUMP_FRREM
 // #define CONFIG_USB_DWC2_TRACK_MISSED_SOFS
+
+#define CONFIG_USB_DWC2_HOST		1
+#define CONFIG_USB_DWC2_DUAL_ROLE	0
+#define CONFIG_USB_DWC2_PERIPHERAL	0
 
 typedef int irqreturn_t;
 #define	IRQ_NONE 0
@@ -119,7 +124,7 @@ enum usb_otg_state {
 #define usleep_range(l, u)	do { DELAY(u); } while (0)
 
 #define spinlock_t		kmutex_t
-#define spin_lock_init(lock)	mutex_init(lock, MUTEX_DEFAULT, IPL_SCHED)
+#define spin_lock_init(lock)	mutex_init(lock, MUTEX_DEFAULT, IPL_VM)
 #define	spin_lock(l)		do { mutex_spin_enter(l); } while (0)
 #define	spin_unlock(l)		do { mutex_spin_exit(l); } while (0)
 
@@ -191,16 +196,83 @@ enum usb_otg_state {
 #define	USB_PORT_STAT_C_RESET		UPS_C_PORT_RESET
 #define	USB_PORT_STAT_C_L1		UPS_C_PORT_L1
 
+#define	USB_DT_HUB			UDESC_HUB
+
+/* See USB 2.0 spec Table 11-13, offset 3 */
+#define HUB_CHAR_LPSM		UHD_PWR
+#define HUB_CHAR_COMMON_LPSM	UHD_PWR_GANGED
+#define HUB_CHAR_INDV_PORT_LPSM	UHD_PWR_INDIVIDUAL
+#define HUB_CHAR_NO_LPSM	UHD_PWR_NO_SWITCH
+
+#define HUB_CHAR_COMPOUND	UHD_COMPOUND
+
+#define HUB_CHAR_OCPM		UHD_OC
+#define HUB_CHAR_COMMON_OCPM	UHD_OC_GLOBAL
+#define HUB_CHAR_INDV_PORT_OCPM	UHD_OC_INDIVIDUAL
+#define HUB_CHAR_NO_OCPM	UHD_OC_NONE
+
+#define HUB_CHAR_TTTT		UHD_TT_THINK
+#define HUB_CHAR_PORTIND	UHD_PORT_IND
+
+enum usb_dr_mode {
+	USB_DR_MODE_UNKNOWN,
+	USB_DR_MODE_HOST,
+	USB_DR_MODE_PERIPHERAL,
+	USB_DR_MODE_OTG,
+};
+
+struct usb_phy;
+struct usb_hcd;
+
+static inline int
+usb_phy_set_suspend(struct usb_phy *x, int suspend)
+{
+
+	return 0;
+}
+
+static inline void
+usb_hcd_resume_root_hub(struct usb_hcd *hcd)
+{
+
+	return;
+}
+
+static inline int
+usb_disabled(void)
+{
+
+	return 0;
+}
+
 static inline void
 udelay(unsigned long usecs)
 {
+
 	DELAY(usecs);
+}
+
+static inline void
+ndelay(unsigned long nsecs)
+{
+
+	DELAY(nsecs / 1000);
+}
+
+static inline void
+msleep(unsigned int msecs)
+{
+
+	kpause("mdelay", false, mstohz(msecs), NULL);
 }
 
 #define	EREMOTEIO	EIO
 #define	ECOMM		EIO
+#define	ENOTSUPP	ENOTSUP
 
 #define NS_TO_US(ns)	((ns + 500L) / 1000L)
+
+#define USB_RESUME_TIMEOUT	40 /* ms */
 
 void dw_callout(void *);
 void dwc2_worker(struct work *, void *);

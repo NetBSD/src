@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.11 2014/06/28 10:25:16 skrll Exp $ */
+/* $NetBSD: admpci.c,v 1.11.4.1 2015/09/22 12:05:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,13 +61,12 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.11 2014/06/28 10:25:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.11.4.1 2015/09/22 12:05:46 skrll Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
-
-#include <sys/param.h>
 #include <sys/time.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
@@ -84,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.11 2014/06/28 10:25:16 skrll Exp $");
 #ifdef	PCI_NETBSD_CONFIGURE
 #include <mips/cache.h>
 #endif
-
-#include <mips/pte.h>
 
 #include <mips/adm5120/include/adm5120_mainbusvar.h>
 #include <mips/adm5120/include/adm5120reg.h>

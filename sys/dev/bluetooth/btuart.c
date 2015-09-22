@@ -1,4 +1,4 @@
-/*	$NetBSD: btuart.c,v 1.27 2014/05/20 18:25:54 rmind Exp $	*/
+/*	$NetBSD: btuart.c,v 1.27.4.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 KIYOHARA Takashi
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.27 2014/05/20 18:25:54 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btuart.c,v 1.27.4.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,6 @@ struct btuart_softc {
 #define BTUART_RECV_SCO_DATA	5	/* sco packet data */
 #define BTUART_RECV_EVENT_DATA	6	/* event packet data */
 
-void btuartattach(int);
 static int btuart_match(device_t, cfdata_t, void *);
 static void btuart_attach(device_t, device_t, void *);
 static int btuart_detach(device_t, int);

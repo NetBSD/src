@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.101 2014/11/16 16:01:42 manu Exp $
+# $NetBSD: GENERIC,v 1.101.2.1 2015/09/22 12:05:50 skrll Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.101 $"
+#ident 		"GENERIC-$Revision: 1.101.2.1 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -26,7 +26,6 @@ options 	SYSVSHM		# System V shared memory
 # Debugging options
 #options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	USERCONF	# userconf(4) support
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger

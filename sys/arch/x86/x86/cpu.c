@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111.4.2 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.111.4.3 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.4.2 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.4.3 2015/09/22 12:05:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1277,6 +1277,7 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 {
 #ifdef PAE
 	struct cpu_info *ci = curcpu();
+	bool interrupts_enabled;
 	pd_entry_t *l3_pd = ci->ci_pae_l3_pdir;
 	int i;
 
@@ -1285,11 +1286,16 @@ cpu_load_pmap(struct pmap *pmap, struct pmap *oldpmap)
 	 * while this doesn't block NMIs, it's probably ok as NMIs unlikely
 	 * reload cr3.
 	 */
-	x86_disable_intr();
+	interrupts_enabled = (x86_read_flags() & PSL_I) != 0;
+	if (interrupts_enabled)
+		x86_disable_intr();
+
 	for (i = 0 ; i < PDP_SIZE; i++) {
 		l3_pd[i] = pmap->pm_pdirpa[i] | PG_V;
 	}
-	x86_enable_intr();
+
+	if (interrupts_enabled)
+		x86_enable_intr();
 	tlbflush();
 #else /* PAE */
 	lcr3(pmap_pdirpa(pmap, 0));

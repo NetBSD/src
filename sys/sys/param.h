@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.462.2.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.462.2.3 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -39,6 +39,10 @@
 #ifndef _SYS_PARAM_H_
 #define	_SYS_PARAM_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_param.h"
+#endif
+
 /*
  * Historic BSD #defines -- probably will remain untouched for all time.
  */
@@ -63,7 +67,7 @@
  *	2.99.9		(299000900)
  */
 
-#define	__NetBSD_Version__	799001800	/* NetBSD 7.99.18 */
+#define	__NetBSD_Version__	799002100	/* NetBSD 7.99.21 */
 
 #define __NetBSD_Prereq__(M,m,p) (((((M) * 100000000) + \
     (m) * 1000000) + (p) * 100) <= __NetBSD_Version__)

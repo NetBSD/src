@@ -30,13 +30,15 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_api.h,v 1.1.30.2 2015/06/06 14:40:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.h 251964 2013-06-18 21:28:19Z jfv $*/
+/*$NetBSD: ixgbe_api.h,v 1.1.30.3 2015/09/22 12:05:59 skrll Exp $*/
 
 #ifndef _IXGBE_API_H_
 #define _IXGBE_API_H_
 
 #include "ixgbe_type.h"
+
+void ixgbe_dcb_get_rtrup2tc(struct ixgbe_hw *hw, u8 *map);
 
 s32 ixgbe_init_shared_code(struct ixgbe_hw *hw);
 
@@ -135,6 +137,7 @@ u32 ixgbe_get_supported_physical_layer(struct ixgbe_hw *hw);
 s32 ixgbe_enable_rx_dma(struct ixgbe_hw *hw, u32 regval);
 s32 ixgbe_disable_sec_rx_path(struct ixgbe_hw *hw);
 s32 ixgbe_enable_sec_rx_path(struct ixgbe_hw *hw);
+s32 ixgbe_mng_fw_enabled(struct ixgbe_hw *hw);
 s32 ixgbe_reinit_fdir_tables_82599(struct ixgbe_hw *hw);
 s32 ixgbe_init_fdir_signature_82599(struct ixgbe_hw *hw, u32 fdirctrl);
 s32 ixgbe_init_fdir_perfect_82599(struct ixgbe_hw *hw, u32 fdirctrl);

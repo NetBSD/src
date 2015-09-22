@@ -1,4 +1,4 @@
-/*	$NetBSD: openpromio.h,v 1.6 2005/12/11 12:19:05 christos Exp $ */
+/*	$NetBSD: openpromio.h,v 1.6.142.1 2015/09/22 12:05:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,6 +42,8 @@
 
 #ifndef _SPARC_OPENPROMIO_H_
 #define _SPARC_OPENPROMIO_H_
+
+#include <sys/ioccom.h>
 
 struct opiocdesc {
 	int	op_nodeid;		/* passed or returned node id */

@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.c,v 1.50 2009/12/04 22:37:35 dyoung Exp $	*/
+/*	$NetBSD: mii.c,v 1.50.40.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.50 2009/12/04 22:37:35 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii.c,v 1.50.40.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -266,7 +266,7 @@ mii_down(struct mii_data *mii)
 static unsigned char
 bitreverse(unsigned char x)
 {
-	static unsigned char nibbletab[16] = {
+	static const unsigned char nibbletab[16] = {
 		0, 8, 4, 12, 2, 10, 6, 14, 1, 9, 5, 13, 3, 11, 7, 15
 	};
 

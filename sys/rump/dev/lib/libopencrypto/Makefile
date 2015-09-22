@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.7 2014/03/13 01:51:30 pooka Exp $
+#	$NetBSD: Makefile,v 1.7.12.1 2015/09/22 12:06:13 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../opencrypto
 
 LIB=	rumpdev_opencrypto
-
+IOCONF=	OPENCRYPTO.ioconf
 SRCS=	opencrypto_component.c
 
 # Sources for crypto framework

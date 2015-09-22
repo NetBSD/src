@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.1 2014/09/03 19:34:26 matt Exp $ */
+/* $NetBSD: types.h,v 1.1.2.1 2015/09/22 12:05:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ typedef struct label_t {	/* Used by setjmp & longjmp */
 } label_t;
 #endif
          
-typedef	volatile unsigned int	__cpu_simple_lock_t;
+typedef	unsigned int	__cpu_simple_lock_nv_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0

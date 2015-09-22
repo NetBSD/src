@@ -1,4 +1,4 @@
-/*	$NetBSD: mdesc.c,v 1.4.2.2 2015/04/06 15:18:03 skrll Exp $	*/
+/*	$NetBSD: mdesc.c,v 1.4.2.3 2015/09/22 12:05:52 skrll Exp $	*/
 /*	$OpenBSD: mdesc.c,v 1.7 2014/11/30 22:26:15 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -27,67 +27,38 @@
 #include <machine/autoconf.h>
 #include <machine/hypervisor.h>
 #include <machine/mdesc.h>
+#include <machine/sparc64.h>
 
 vaddr_t mdesc;
 paddr_t mdesc_pa;
 size_t mdesc_len;
 
-void
-mdesc_init(void)
+psize_t
+mdesc_get_len(void)
 {
-	struct pglist mlist;
-	struct vm_page *m;
-	psize_t len, size;
-	paddr_t pa;
-	vaddr_t va;
-	int err;
+	psize_t len = 0;
 
-	pa = 0;
-	len = 0;  /* trick to determine actual buffer size */
-	hv_mach_desc(pa, &len);
+	len = 0;
+	hv_mach_desc(0, &len);
 	KASSERT(len != 0);
 
-again:
-	size = round_page(len);
+	return len;
+}
 
-	TAILQ_INIT(&mlist);
-	err = uvm_pglistalloc(len, 0, -1, PAGE_SIZE, 0, &mlist, 1, 0);
-	if (err)
-		panic("%s: out of memory", __func__);
- 
-	len = size;
-	pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&mlist));
+void
+mdesc_init(vaddr_t va, paddr_t pa, psize_t avail_len)
+{
+	psize_t len;
+	int64_t err;
+
+	len = avail_len;
 	err = hv_mach_desc(pa, &len);
 	if (err != H_EOK)
-		goto fail;
-
-	va = (vaddr_t)uvm_km_alloc(kernel_map, size, 0, UVM_KMF_VAONLY);
-	if (va == 0)
-		panic("%s: out of memory", __func__);
-
+		panic("hv_mach_desc() failed - err = %" PRId64 "\n", err);
+	KASSERT(len <= avail_len);
 	mdesc = (vaddr_t)va;
 	mdesc_pa = pa;
 	mdesc_len = len;
-
-	TAILQ_FOREACH(m, &mlist, pageq.queue) {
-		pa = VM_PAGE_TO_PHYS(m);
-		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
-		va += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-
-	return;
-
-fail:
-	uvm_pglistfree(&mlist);
-
-	/*
-	 * If the machine description was updated while we were trying
-	 * to fetch it, the allocated buffer may have been to small.
-	 * Try again in that case.
-	 */
-	if (err == H_EINVAL && len > size)
-		goto again;
 
 	return;
 }
@@ -268,7 +239,7 @@ mdesc_name_by_idx(int idx)
 	str = name_blk + elem[idx].name_offset;
 
 	return str;
-	
+
 }
 
 

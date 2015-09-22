@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_compat.c,v 1.26.4.1 2015/04/06 15:17:58 skrll Exp $	*/
+/*	$NetBSD: grf_compat.c,v 1.26.4.2 2015/09/22 12:05:45 skrll Exp $	*/
 
 /*
  * Copyright (C) 1999 Scott Reynolds
@@ -34,7 +34,7 @@
 #include "opt_grf_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.26.4.1 2015/04/06 15:17:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.26.4.2 2015/09/22 12:05:45 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: grf_compat.c,v 1.26.4.1 2015/04/06 15:17:58 skrll Ex
 #include <miscfs/specfs/specdev.h>
 
 #include <uvm/uvm_extern.h>
+
+#include "ioconf.h"
 
 dev_type_open(grfopen);
 dev_type_close(grfclose);
@@ -79,7 +81,6 @@ const struct cdevsw grf_cdevsw = {
 
 void	grf_scinit(struct grf_softc *, const char *, int);
 void	grf_init(int);
-void	grfattach(int);
 int	grfmap(dev_t, struct macfb_softc *, void **, struct proc *);
 int	grfunmap(dev_t, struct macfb_softc *, void *, struct proc *);
 
@@ -92,7 +93,7 @@ int	numgrf = 0;
  */
 void
 grf_scinit(struct grf_softc *sc, const char *name, int unit)
-{ 
+{
 	memset(sc, 0, sizeof(struct grf_softc));
 	snprintf(sc->sc_xname, sizeof(sc->sc_xname), "%s%d", name, unit);
 	sc->mfb_sc = NULL;

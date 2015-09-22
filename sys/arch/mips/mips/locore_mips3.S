@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips3.S,v 1.102.30.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: locore_mips3.S,v 1.102.30.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Jonathan Stone (hereinafter referred to as the author)
@@ -91,7 +91,6 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
-#include <machine/param.h>
 
 #include "assym.h"
 
@@ -122,7 +121,7 @@
  *============================================================================
  */
 	.set	noreorder
-#if __mips < 3
+#if (__mips < 3) || __mips_o32
 	.set	mips3
 #endif
 
@@ -174,19 +173,42 @@ END(mips3_wbflush)
 LEAF(mips_wait_idle)
 	mfc0	v0, MIPS_COP_0_STATUS
 	andi	v1, v0, MIPS_SR_INT_IE
+#if __mips >= 32
+	teqi	v1, 0
+#else
 	beqz	v1, 1f
 	 nop
+#endif
 	andi	v1, v0, MIPS_INT_MASK
+#if __mips >= 32
+	teqi	v1, 0
+#else
 	bnez	v1, 2f
 	 nop
 1:
 	move	a1, v0
 	PANIC("mips_wait_idle: interrupts disabled status=%#x")
+#endif
 
 2:	wait
 	nop
 	nop
 	nop
+	mfc0	v0, MIPS_COP_0_STATUS
+	andi	v1, v0, MIPS_SR_INT_IE
+#if __mips >= 32
+	teqi	v1, 0
+#else
+	beqz	v1, 1b
+	 nop
+#endif
+	andi	v1, v0, MIPS_INT_MASK
+#if __mips >= 32
+	teqi	v1, 0
+#else
+	beqz	v1, 1b
+	 nop
+#endif
 	jr	ra
 	 nop
 END(mips_wait_idle)
@@ -409,7 +431,7 @@ END(mipsNN_cp0_watchhi_write)
  */
 LEAF(mipsNN_cp0_ebase_read)
 	jr	ra
-	 mfc0	v0, MIPS_COP_0_PRID, 1
+	 mfc0	v0, MIPS_COP_0_EBASE
 END(mipsNN_cp0_ebase_read)
 
 /*
@@ -420,13 +442,13 @@ LEAF(mipsNN_cp0_ebase_write)
 	and	v0, v0, 0x1ff
 	xor	v0, v0, a0
 	jr	ra
-	 mtc0	v0, MIPS_COP_0_PRID, 1
+	 mtc0	v0, MIPS_COP_0_EBASE
 END(mipsNN_cp0_ebase_write)
 
 #if (MIPS32R2 + MIPS64R2) > 0
 /*
- * void mipsNN_cp0_userlocal_write(void *);
- *	Set the value of the CP0 USERLOCAL (TLB_CONTEXT, select 2) register.
+ * void mipsNN_cp0_hwrena_write(void *);
+ *	Set the value of the CP0 HWRENA register.
  */
 LEAF(mipsNN_cp0_hwrena_write)
 	jr	ra
@@ -439,7 +461,7 @@ END(mipsNN_cp0_hwrena_write)
  */
 LEAF(mipsNN_cp0_userlocal_write)
 	jr	ra
-	 _MTC0	a0, MIPS_COP_0_TLB_CONTEXT, 2
+	 _MTC0	a0, MIPS_COP_0_USERLOCAL
 END(mipsNN_cp0_userlocal_write)
 #endif /* (MIPS32R2 + MIPS64R2) > 0 */
 	.set	pop

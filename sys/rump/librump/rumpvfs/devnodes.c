@@ -1,4 +1,4 @@
-/*	$NetBSD: devnodes.c,v 1.10 2014/06/20 11:27:25 pooka Exp $	*/
+/*	$NetBSD: devnodes.c,v 1.10.4.1 2015/09/22 12:06:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.10 2014/06/20 11:27:25 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: devnodes.c,v 1.10.4.1 2015/09/22 12:06:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -85,6 +85,13 @@ makedevnodes(dev_t devtype, const char *basename, char minchar,
  out:
 	kmem_free(devname, devlen);
 	return error;
+}
+
+static int
+makesymlink(const char *dst, const char *src)
+{
+
+	return do_sys_symlink(dst, src, UIO_SYSSPACE);
 }
 
 enum { NOTEXIST, SAME, DIFFERENT };
@@ -177,6 +184,7 @@ rump_vfs_builddevs(struct devsw_conv *dcvec, size_t dcvecsize)
 
 	rump_vfs_makeonedevnode = makeonedevnode;
 	rump_vfs_makedevnodes = makedevnodes;
+	rump_vfs_makesymlink = makesymlink;
 
 	for (i = 0; i < dcvecsize; i++) {
 		dc = &dcvec[i];

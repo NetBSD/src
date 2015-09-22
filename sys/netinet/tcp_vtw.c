@@ -31,16 +31,16 @@
  * Reduces the resources demanded by TCP sessions in TIME_WAIT-state using
  * methods called Vestigial Time-Wait (VTW) and Maximum Segment Lifetime
  * Truncation (MSLT).
- * 
+ *
  * MSLT and VTW were contributed by Coyote Point Systems, Inc.
- * 
+ *
  * Even after a TCP session enters the TIME_WAIT state, its corresponding
  * socket and protocol control blocks (PCBs) stick around until the TCP
  * Maximum Segment Lifetime (MSL) expires.  On a host whose workload
  * necessarily creates and closes down many TCP sockets, the sockets & PCBs
  * for TCP sessions in TIME_WAIT state amount to many megabytes of dead
  * weight in RAM.
- * 
+ *
  * Maximum Segment Lifetimes Truncation (MSLT) assigns each TCP session to
  * a class based on the nearness of the peer.  Corresponding to each class
  * is an MSL, and a session uses the MSL of its class.  The classes are
@@ -50,7 +50,7 @@
  * nearer peers have lower MSLs by default: 2 seconds for loopback, 10
  * seconds for local, 60 seconds for remote.  Loopback and local sessions
  * expire more quickly when MSLT is used.
- * 
+ *
  * Vestigial Time-Wait (VTW) replaces a TIME_WAIT session's PCB/socket
  * dead weight with a compact representation of the session, called a
  * "vestigial PCB".  VTW data structures are designed to be very fast and
@@ -63,10 +63,10 @@
  * start of a pool instead of a pointer.  When space for new vestigial PCBs
  * runs out, VTW makes room by discarding old vestigial PCBs, oldest first.
  * VTW cooperates with MSLT.
- * 
+ *
  * It may help to think of VTW as a "FIN cache" by analogy to the SYN
  * cache.
- * 
+ *
  * A 2.8-GHz Pentium 4 running a test workload that creates TIME_WAIT
  * sessions as fast as it can is approximately 17% idle when VTW is active
  * versus 0% idle when VTW is inactive.  It has 103 megabytes more free RAM
@@ -76,10 +76,12 @@
 
 #include <sys/cdefs.h>
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_inet.h"
 #include "opt_inet_csum.h"
 #include "opt_tcp_debug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,7 +124,7 @@
 
 #include <netinet/tcp_vtw.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_vtw.c,v 1.12.2.2 2015/09/22 12:06:11 skrll Exp $");
 
 #define db_trace(__a, __b)	do { } while (/*CONSTCOND*/0)
 
@@ -603,7 +605,7 @@ vtw_unhash(vtw_ctl_t *ctl, vtw_t *vtw)
 		}
 		vtw->key ^= ~0;
 	}
-	
+
 	if (fat->vtw->is_v4) {
 		tag = v4_port_tag(v4->lport);
 	} else if (fat->vtw->is_v6) {
@@ -850,7 +852,7 @@ vtw_lookup_hash_v4(vtw_ctl_t *ctl, uint32_t faddr, uint16_t fport
 			}
 			++vtw_stats.losing[which];
 			++losings;
-			
+
 			if (vtw_alive(vtw)) {
 				db_trace(KTR_VTW
 					 , (fp, "vtw:!mis %8.8x:%4.4x"
@@ -2188,7 +2190,7 @@ vtw_restart(vestigial_inpcb_t *vp)
 
 int
 sysctl_tcp_vtw_enable(SYSCTLFN_ARGS)
-{  
+{
 	int en, rc;
 	struct sysctlnode node;
 
@@ -2440,7 +2442,7 @@ vtw_sanity_check(void)
 		KASSERT(n == ctl->nfree);
 	}
 }
-		
+
 /*!\brief	Initialise debug support.
  */
 static void

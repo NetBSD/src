@@ -1,4 +1,4 @@
-/*	$NetBSD: weasel_isa.c,v 1.5 2008/04/08 20:08:50 cegger Exp $	*/
+/*	$NetBSD: weasel_isa.c,v 1.5.68.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.5 2008/04/08 20:08:50 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.5.68.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,13 +56,13 @@ __KERNEL_RCSID(0, "$NetBSD: weasel_isa.c,v 1.5 2008/04/08 20:08:50 cegger Exp $"
 
 #include <dev/sysmon/sysmonvar.h>
 
+#include "ioconf.h"
+
 int	weasel_isa_wdog_setmode(struct sysmon_wdog *);
 int	weasel_isa_wdog_tickle(struct sysmon_wdog *);
 int	weasel_isa_wdog_arm_disarm(struct weasel_handle *, u_int8_t);
 int	weasel_isa_wdog_query_state(struct weasel_handle *);
 
-
-void	pcweaselattach(int);
 
 /* ARGSUSED */
 void

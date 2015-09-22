@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_mips1.S,v 1.84 2012/02/19 21:06:17 rmind Exp $	*/
+/*	$NetBSD: locore_mips1.S,v 1.84.16.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,6 @@
 
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
-#include <machine/param.h>
 
 #include "assym.h"
 

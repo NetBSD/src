@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.13.2.1 2015/06/06 14:39:58 skrll Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.13.2.2 2015/09/22 12:05:40 skrll Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -141,7 +141,6 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	MIIVERBOSE	# Verbose MII auto configuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	SCSIVERBOSE	# Verbose SCSI errors
@@ -185,13 +184,14 @@ mvsata* at mvsoc? offset ? irq ?
 # On-chip Gigabit Ethernet Controller Interface (backward compatible mode)
 mvgbec* at mvsoc? offset ?
 mvgbe*	at mvgbec? port ? irq ?
-makphy* at mii? phy ?
 
 # On-chip Gigabit Ethernet Controller Interface (counter mode)
-#mvxpbm* 	at mvsoc? offset ?
-#mvxpe* 	at mvsoc? irq ?
+#mvxpbm*	at mvsoc? offset ?
+#mvxpe*	at mvsoc? irq ?
 #options 	MVXPE_EVENT_COUNTERS
 #options 	MVXPE_DEBUG=0
+
+makphy* at mii? phy ?
 
 # On-chip USB 2.0 Interface
 ehci*	at mvsoc? offset ? irq ?
@@ -206,7 +206,7 @@ iic*	at gttwsi?
 s390rtc* at iic1 addr 0x30
 
 # On-chip Cryptographic Engines and Security Accelerator (DMA)
-#mvxpsec*	at mvsoc? offset ? irq ?
+#mvxpsec* at mvsoc? offset ? irq ?
 #options 	MVXPSEC_DEBUG=MVXPSEC_DEBUG_ALL
 
 # On-chip UART Interface
@@ -219,10 +219,6 @@ mvpex*	at mvsoc? offset ? irq ?
 
 # On-chip IDMA Controller
 gtidmac* at mvsoc? offset ? irq ?
-
-# On-chip SD/MMC Interface
-mvsdio* at mvsoc? offset ? irq ?
-sdmmc*	at mvsdio?
 
 # On-chip Timers
 mvsoctmr* at mvsoc? offset ? irq ?
@@ -267,8 +263,6 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 
 # USB Generic driver
 ugen*	at uhub? port ?
-
-ld*	at sdmmc?
 
 
 # Pseudo-Devices

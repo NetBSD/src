@@ -44,6 +44,7 @@ OBJECTS = \
 	$(OBJDIR)/utexcep.o\
 	$(OBJDIR)/utglobal.o\
 	$(OBJDIR)/utmath.o\
+	$(OBJDIR)/utnonansi.o\
 	$(OBJDIR)/utprint.o\
 	$(OBJDIR)/utstring.o\
 	$(OBJDIR)/utxferror.o
@@ -51,6 +52,10 @@ OBJECTS = \
 #
 # Per-host interfaces
 #
+ifeq ($(HOST), _DragonFly)
+HOST_FAMILY = BSD
+endif
+
 ifeq ($(HOST), _FreeBSD)
 HOST_FAMILY = BSD
 endif

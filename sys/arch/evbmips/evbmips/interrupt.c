@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.20.2.1 2015/04/06 15:17:56 skrll Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.20.2.2 2015/09/22 12:05:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.2.1 2015/04/06 15:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.20.2.2 2015/09/22 12:05:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -61,11 +61,14 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	const u_int blcnt = curlwp->l_blcnt;
 #endif
 	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 
 	ci->ci_data.cpu_nintr++;
 
 	while (ppl < (ipl = splintr(&pending))) {
+		KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 		splx(ipl);	/* lower to interrupt level */
+		KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 
 		KASSERTMSG(ci->ci_cpl == ipl,
 		    "%s: cpl (%d) != ipl (%d)", __func__, ci->ci_cpl, ipl);
@@ -80,7 +83,7 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 			KASSERTMSG(ipl == IPL_SCHED,
 			    "%s: ipl (%d) != IPL_SCHED (%d)",
 			     __func__, ipl, IPL_SCHED);
-			/* call the common MIPS3 clock interrupt handler */ 
+			/* call the common MIPS3 clock interrupt handler */
 			mips3_clockintr(&cf);
 			pending ^= MIPS_INT_MASK_5;
 		}
@@ -104,4 +107,5 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 	}
 
 	KASSERT(ci->ci_cpl == IPL_HIGH);
+	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 }

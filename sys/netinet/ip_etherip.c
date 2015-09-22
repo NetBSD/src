@@ -1,4 +1,4 @@
-/*      $NetBSD: ip_etherip.c,v 1.14 2011/07/17 20:54:53 joerg Exp $        */
+/*      $NetBSD: ip_etherip.c,v 1.14.30.1 2015/09/22 12:06:11 skrll Exp $        */
 
 /*
  *  Copyright (c) 2006, Hans Rosenfeld <rosenfeld@grumpf.hope-2000.org>
@@ -58,9 +58,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.14 2011/07/17 20:54:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_etherip.c,v 1.14.30.1 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

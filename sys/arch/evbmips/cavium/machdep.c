@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.2.2 2015/06/06 14:39:59 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.2.3 2015/09/22 12:05:41 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -111,8 +111,10 @@
  *	from: Utah Hdr: machdep.c 1.63 91/04/24
  */
 
+#include "opt_multiprocessor.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.2 2015/06/06 14:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.2.3 2015/09/22 12:05:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,8 +174,6 @@ int	netboot;
 phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
 int mem_cluster_cnt;
 
-
-void	configure(void);
 void	mach_init(uint64_t, uint64_t, uint64_t, uint64_t);
 
 struct octeon_config octeon_configuration;
@@ -215,7 +215,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	case 7: cpu_setmodel("Cavium Octeon CN52XX"); break;
 	default: cpu_setmodel("Cavium Octeon"); break;
 	}
-	
+
 	mach_init_vector();
 
 	/* set the VM page size */
@@ -233,6 +233,7 @@ mach_init(uint64_t arg0, uint64_t arg1, uint64_t arg2, uint64_t arg3)
 	mips_init_lwp0_uarea();
 
 	boothowto = RB_AUTOBOOT;
+	boothowto |= AB_VERBOSE;
 
 #if defined(DDB)
 	if (boothowto & RB_KDB)
@@ -266,7 +267,7 @@ mach_init_vector(void)
 {
 
 	/* Make sure exception base at 0 (MIPS_COP_0_EBASE) */
-	asm volatile("mtc0 %0, $15, 1" : : "r"(0x80000000) );
+	__asm __volatile("mtc0 %0, $15, 1" : : "r"(0x80000000) );
 
 	/*
 	 * Set up the exception vectors and CPU-specific function
@@ -275,11 +276,7 @@ mach_init_vector(void)
 	 * first printf() after that is called).
 	 * Also clears the I+D caches.
 	 */
-#if MULTIPROCESSOR
 	mips_vector_init(NULL, true);
-#else
-	mips_vector_init(NULL, false);
-#endif
 }
 
 void
@@ -347,7 +344,7 @@ mach_init_memory(u_quad_t memsize)
 		mem_cluster_cnt = 3;
 	}
 
-	
+
 #ifdef MULTIPROCESSOR
 	const u_int cores = mipsNN_cp0_ebase_read() & MIPS_EBASE_CPUNUM;
 	mem_clusters[0].start = cores * 4096;
@@ -380,6 +377,11 @@ int	waittime = -1;
 void
 cpu_startup(void)
 {
+#ifdef MULTIPROCESSOR
+	// Create a kcpuset so we can see on which CPUs the kernel was started.
+	kcpuset_create(&cpus_booted, true);
+#endif
+
 	/*
 	 * Do the common startup items.
 	 */

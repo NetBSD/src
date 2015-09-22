@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.4.1 2015/06/06 14:39:54 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.4.2 2015/09/22 12:05:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.1 2015/06/06 14:39:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.2 2015/09/22 12:05:35 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -263,7 +263,7 @@ struct {
 	psize_t sz;
 } msgbuf_p_seg[VM_PHYSSEG_MAX];
 unsigned int msgbuf_p_cnt = 0;
-      
+
 vaddr_t	idt_vaddr;
 paddr_t	idt_paddr;
 
@@ -1421,7 +1421,7 @@ cpu_init_idt(void)
 	struct region_descriptor region;
 
 	setregion(&region, idt, NIDT * sizeof(idt[0]) - 1);
-	lidt(&region); 
+	lidt(&region);
 #else
 	if (HYPERVISOR_set_trap_table(xen_idt))
 		panic("HYPERVISOR_set_trap_table() failed");
@@ -1444,7 +1444,7 @@ init_x86_64_msgbuf(void)
 	psize_t sz = round_page(MSGBUFSIZE);
 	psize_t reqsz = sz;
 	int x;
-		
+
  search_again:
 	vps = NULL;
 
@@ -1581,7 +1581,7 @@ init_x86_64(paddr_t first_avail)
 	 * Page 0:	BIOS data
 	 * Page 1:	BIOS callback (not used yet, for symmetry with i386)
 	 * Page 2:	MP bootstrap
-	 * Page 3:	ACPI wakeup code
+	 * Page 3:	ACPI wakeup code (ACPI_WAKEUP_ADDR)
 	 * Page 4:	Temporary page table for 0MB-4MB
 	 * Page 5:	Temporary page directory
 	 * Page 6:	Temporary page map level 3
@@ -1851,7 +1851,7 @@ cpu_reset(void)
 	 * invalid and causing a fault.
 	 */
 	kpreempt_disable();
-	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);           
+	pmap_changeprot_local(idt_vaddr, VM_PROT_READ|VM_PROT_WRITE);
 	pmap_changeprot_local(idt_vaddr + PAGE_SIZE,
 	    VM_PROT_READ|VM_PROT_WRITE);
 	memset((void *)idt, 0, NIDT * sizeof(idt[0]));
@@ -1864,7 +1864,7 @@ cpu_reset(void)
 	 * entire address space and doing a TLB flush.
 	 */
 	memset((void *)PTD, 0, PAGE_SIZE);
-	tlbflush(); 
+	tlbflush();
 #endif
 #endif	/* XEN */
 

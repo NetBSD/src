@@ -1,0 +1,7 @@
+#	$NetBSD: nandemulator.ioconf,v 1.1.2.2 2015/09/22 12:06:09 skrll Exp $
+
+ioconf		nandemulator
+
+include		"conf/files"
+
+pseudo-device   nandemulator

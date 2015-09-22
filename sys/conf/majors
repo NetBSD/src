@@ -1,4 +1,4 @@
-# $NetBSD: majors,v 1.69 2014/09/19 17:46:28 matt Exp $
+# $NetBSD: majors,v 1.69.2.1 2015/09/22 12:05:56 skrll Exp $
 #
 # Device majors for Machine-Independent drivers.
 #
@@ -59,3 +59,5 @@ device-major lua       char 209            lua
 # 210-219 reserved for MI ws devices
 # 220-239 reserved for MI usb devices
 # 240-259 reserved for MI "std" devices
+
+device-major hdmicec   char 260            hdmicec

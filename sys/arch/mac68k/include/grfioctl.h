@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.14 2011/02/08 20:20:17 rmind Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.14.32.1 2015/09/22 12:05:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,8 @@
 
 #ifndef _MAC68K_GRFIOCTL_H_
 #define _MAC68K_GRFIOCTL_H_
+
+#include <sys/ioccom.h>
 
 struct grfmode {
 	u_int8_t	mode_id;	/* Identifier for mode              */

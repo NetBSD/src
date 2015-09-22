@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.6 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.7 2015/09/22 12:06:01 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -1294,7 +1294,12 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		buf += sizeof(rxhdr);
 		total_len -= sizeof(rxhdr);
 
-		if (rxhdr & SMSC_RX_STAT_ERROR) {
+		if (rxhdr & SMSC_RX_STAT_COLLISION)
+			ifp->if_collisions++;
+
+		if (rxhdr & (SMSC_RX_STAT_ERROR
+		           | SMSC_RX_STAT_LENGTH_ERROR
+		           | SMSC_RX_STAT_MII_ERROR)) {
 			smsc_dbg_printf(sc, "rx error (hdr 0x%08x)\n", rxhdr);
 			ifp->if_ierrors++;
 			goto done;

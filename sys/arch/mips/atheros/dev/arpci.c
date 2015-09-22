@@ -1,4 +1,4 @@
-/*	$NetBSD: arpci.c,v 1.3 2014/03/29 19:28:29 christos Exp $	*/
+/*	$NetBSD: arpci.c,v 1.3.6.1 2015/09/22 12:05:46 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,13 +30,15 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.3 2014/03/29 19:28:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.3.6.1 2015/09/22 12:05:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 
 #include <dev/pci/pcivar.h>
+
+#include <mips/locore.h>
 
 #include <mips/atheros/include/arbusvar.h>
 #include <mips/atheros/include/ar9344reg.h>

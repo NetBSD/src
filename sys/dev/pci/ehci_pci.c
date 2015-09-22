@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.59.2.3 2014/12/05 13:23:38 skrll Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.59.2.4 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.59.2.3 2014/12/05 13:23:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.59.2.4 2015/09/22 12:05:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -141,14 +141,14 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_pc = pc;
+	sc->sc_tag = tag;
+	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
+
 	/* Disable interrupts, so we don't get any spurious ones. */
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 	DPRINTF(("%s: offs=%d\n", device_xname(self), sc->sc.sc_offs));
 	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
-
-	sc->sc_pc = pc;
-	sc->sc_tag = tag;
-	sc->sc.sc_bus.ub_dmatag = pa->pa_dmat;
 
 	/* Handle quirks */
 	switch (quirk) {
@@ -176,13 +176,13 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	 * Allocate IRQ
 	 */
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_SCHED, ehci_intr, sc);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_USB, ehci_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
-		return;
+		goto fail;
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
@@ -192,7 +192,7 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_USBREV_1_1:
 		sc->sc.sc_bus.ub_revision = USBREV_UNKNOWN;
 		aprint_verbose_dev(self, "pre-2.0 USB rev\n");
-		return;
+		goto fail;
 	case PCI_USBREV_2_0:
 		sc->sc.sc_bus.ub_revision = USBREV_2_0;
 		break;
@@ -324,7 +324,7 @@ ehci_dump_caps(ehci_softc_t *sc, pci_chipset_tag_t pc, pcitag_t tag)
 		switch (id) {
 		case EHCI_CAP_ID_LEGACY:
 			legctlsts = pci_conf_read(pc, tag,
-						  addr + PCI_EHCI_USBLEGCTLSTS);
+			    addr + PCI_EHCI_USBLEGCTLSTS);
 			printf("ehci_dump_caps: legsup=0x%08x "
 			       "legctlsts=0x%08x\n", cap, legctlsts);
 			break;

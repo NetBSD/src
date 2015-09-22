@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.6 2013/03/16 23:04:22 christos Exp $	*/
+/*	$NetBSD: locore.h,v 1.6.14.1 2015/09/22 12:05:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath
@@ -167,11 +167,11 @@
 #ifdef GPROF
 	.globl	_mcount
 #define	ENTRY(x) \
-	.globl _C_LABEL(x); .proc 1; .type _C_LABEL(x),@function; \
+	.globl _C_LABEL(x); .type _C_LABEL(x),@function; \
 _C_LABEL(x): ; \
 	.data; \
 	.align 8; \
-0:	.uaword 0; .uaword 0; \
+0:	.word 0; .word 0; \
 	.text;	\
 	save	%sp, -CC64FSZ, %sp; \
 	sethi	%hi(0b), %o0; \
@@ -179,8 +179,8 @@ _C_LABEL(x): ; \
 	or	%o0, %lo(0b), %o0; \
 	restore
 #else
-#define	ENTRY(x)	.globl _C_LABEL(x); .proc 1; \
-	.type _C_LABEL(x),@function; _C_LABEL(x):
+#define	ENTRY(x)	.globl _C_LABEL(x); .type _C_LABEL(x),@function; \
+	_C_LABEL(x):
 #endif
 #define	ALTENTRY(x)	.globl _C_LABEL(x); _C_LABEL(x):
 

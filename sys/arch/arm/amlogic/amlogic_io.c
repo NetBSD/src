@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_io.c,v 1.9.2.3 2015/06/06 14:39:55 skrll Exp $ */
+/* $NetBSD: amlogic_io.c,v 1.9.2.4 2015/09/22 12:05:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.9.2.3 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.9.2.4 2015/09/22 12:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,13 +76,9 @@ static const struct amlogic_locators amlogic_locators[] = {
   { "awge",
     AMLOGIC_GMAC_OFFSET, AMLOGIC_GMAC_SIZE, NOPORT, AMLOGIC_INTR_GMAC },
   { "amlogicsdio",
-    AMLOGIC_SDIO_OFFSET, AMLOGIC_SDIO_SIZE, 1, AMLOGIC_INTR_SDIO },
-  { "amlogicsdio",
-    AMLOGIC_SDIO_OFFSET, AMLOGIC_SDIO_SIZE, 2, AMLOGIC_INTR_SDIO },
+    AMLOGIC_SDIO_OFFSET, AMLOGIC_SDIO_SIZE, NOPORT, AMLOGIC_INTR_SDIO },
   { "amlogicsdhc",
-    AMLOGIC_SDHC_OFFSET, AMLOGIC_SDHC_SIZE, 1, AMLOGIC_INTR_SDHC },
-  { "amlogicsdhc",
-    AMLOGIC_SDHC_OFFSET, AMLOGIC_SDHC_SIZE, 2, AMLOGIC_INTR_SDHC },
+    AMLOGIC_SDHC_OFFSET, AMLOGIC_SDHC_SIZE, NOPORT, AMLOGIC_INTR_SDHC },
   { "amlogicrtc",
     AMLOGIC_RTC_OFFSET, AMLOGIC_RTC_SIZE, NOPORT, AMLOGIC_INTR_RTC },
 };

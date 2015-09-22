@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_prcm.h,v 1.8 2014/07/20 23:08:43 bouyer Exp $	*/
+/*	$NetBSD: am335x_prcm.h,v 1.8.4.1 2015/09/22 12:05:38 skrll Exp $	*/
 
 /*
  * TI OMAP Power, Reset, and Clock Management on the AM335x
@@ -63,6 +63,7 @@ struct omap_module {
 #define CM_PER_TIMER2_CLKCTRL		0x080
 #define CM_PER_TIMER3_CLKCTRL		0x084
 #define CM_PER_TIMER4_CLKCTRL		0x088
+#define CM_PER_RNG_CLKCTRL		0x090
 #define CM_PER_GPIO1_CLKCTRL		0x0AC
 #define CM_PER_GPIO2_CLKCTRL		0x0B0
 #define CM_PER_GPIO3_CLKCTRL		0x0B4

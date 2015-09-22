@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.19.4.1 2015/06/06 14:40:06 skrll Exp $ */
+/* $NetBSD: dkvar.h,v 1.19.4.2 2015/09/22 12:05:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -29,6 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/rndsource.h>
+
 struct pathbuf; /* from namei.h */
 
 /* literally this is not a softc, but is intended to be included in
@@ -44,8 +46,12 @@ struct dk_softc {
 #define DK_XNAME_SIZE 8
 	char			 sc_xname[DK_XNAME_SIZE]; /* external name */
 	struct disk		 sc_dkdev;	/* generic disk info */
+	kmutex_t		 sc_iolock;	/* protects buffer queue */
 	struct bufq_state	*sc_bufq;	/* buffer queue */
 	int			 sc_dtype;	/* disk type */
+	struct buf		*sc_deferred;	/* retry after start failed */
+	bool			 sc_busy;	/* processing buffers */
+	krndsource_t		 sc_rnd_source;	/* entropy source */
 };
 
 /* sc_flags:
@@ -61,6 +67,7 @@ struct dk_softc {
 #define DKF_TAKEDUMP	0x00200000 /* allow dumping */
 #define DKF_KLABEL      0x00400000 /* keep label on close */
 #define DKF_VLABEL      0x00800000 /* label is valid */
+#define DKF_SLEEP       0x80000000 /* dk_start/dk_done may sleep */
 
 /* Mask of flags that dksubr.c understands, other flags are fair game */
 #define DK_FLAGMASK	0xffff0000
@@ -85,7 +92,10 @@ int	dk_open(struct dk_softc *, dev_t,
 int	dk_close(struct dk_softc *, dev_t,
 		 int, int, struct lwp *);
 void	dk_strategy(struct dk_softc *, struct buf *);
+int	dk_discard(struct dk_softc *, dev_t, off_t, off_t);
+void	dk_start(struct dk_softc *, struct buf *);
 void	dk_done(struct dk_softc *, struct buf *);
+void	dk_drain(struct dk_softc *);
 int	dk_size(struct dk_softc *, dev_t);
 int	dk_ioctl(struct dk_softc *, dev_t,
 		 u_long, void *, int, struct lwp *);

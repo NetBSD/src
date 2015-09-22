@@ -1,4 +1,4 @@
-/*	$NetBSD: uba_mainbus.c,v 1.10 2010/12/14 23:38:30 matt Exp $	   */
+/*	$NetBSD: uba_mainbus.c,v 1.10.36.1 2015/09/22 12:05:53 skrll Exp $	   */
 /*
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.10 2010/12/14 23:38:30 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.10.36.1 2015/09/22 12:05:53 skrll Exp $");
 
 #define _VAX_BUS_DMA_PRIVATE
 
@@ -91,6 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: uba_mainbus.c,v 1.10 2010/12/14 23:38:30 matt Exp $"
 /* Some Qbus-specific defines */
 #define	QBASIZE	(8192 * VAX_NBPG)
 #define	QBAMAP	0x20088000
+#define	QBAMEM	0x30000000
 #define	QIOPAGE	0x20000000
 
 /*
@@ -121,6 +122,12 @@ qba_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args * const ma = aux;
 	struct uba_vsoftc * const sc = device_private(self);
+	paddr_t paddr;
+	vaddr_t vaddr;
+	int *mapp;
+	int pgnum;
+	//int val;
+	int start;
 
 	aprint_normal(": Q22\n");
 
@@ -140,6 +147,40 @@ qba_attach(device_t parent, device_t self, void *aux)
 	sc->uv_addr = QBAMAP;	/* Physical address of map registers */
 
 	uba_dma_init(sc);
+
+	mapp = (int *)vax_map_physmem(QBAMAP, QBASIZE/VAX_NBPG);
+	//val = 0;
+	
+	for (paddr = QBAMEM, pgnum = 0, start = -1;
+	     paddr < QBAMEM + QBASIZE - 8192;
+	     paddr += VAX_NBPG, pgnum += 1) {
+		//val = mapp[pgnum];
+		mapp[pgnum] = 0;
+		vaddr = vax_map_physmem(paddr, 1);
+		if (badaddr((void *)vaddr, 2) == 0) {
+			if (start < 0)
+				start = pgnum;
+		} else if (start >= 0) {
+			aprint_normal("sgmap exclusion at %#x - %#x\n", 
+			    start*VAX_NBPG, pgnum*VAX_NBPG - 1);
+			vax_sgmap_reserve(start*VAX_NBPG,
+			    (pgnum - start)*VAX_NBPG, &sc->uv_sgmap);
+			start = -1;
+		}
+		vax_unmap_physmem(vaddr, 1);
+		//mapp[pgnum] = val;
+	}
+	vax_unmap_physmem((vaddr_t)mapp, QBASIZE/VAX_NBPG);
+	if (start >= 0) {
+		aprint_normal("sgmap exclusion at %#x - %#x\n", 
+		    start*VAX_NBPG, pgnum*VAX_NBPG - 1);
+		vax_sgmap_reserve(start*VAX_NBPG, (pgnum - start)*VAX_NBPG,
+		    &sc->uv_sgmap);
+	}
+
+	/* reserve I/O space within Qbus */
+	vax_sgmap_reserve(0x3fe000, 0x400000 - 0x3fe000, &sc->uv_sgmap);
+
 	uba_attach(&sc->uv_sc, QIOPAGE);
 }
 

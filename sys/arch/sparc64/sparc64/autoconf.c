@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.200.2.1 2015/04/06 15:18:03 skrll Exp $ */
+/*	$NetBSD: autoconf.c,v 1.200.2.2 2015/09/22 12:05:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.1 2015/04/06 15:18:03 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.2 2015/09/22 12:05:52 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -93,7 +93,6 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.1 2015/04/06 15:18:03 skrll Exp
 #include <machine/bootinfo.h>
 #include <sparc64/sparc64/cache.h>
 #include <sparc64/sparc64/timerreg.h>
-#include <machine/mdesc.h>
 
 #include <dev/ata/atavar.h>
 #include <dev/pci/pcivar.h>
@@ -159,10 +158,11 @@ static	void get_bootpath_from_prom(void);
  * Kernel 4MB mappings.
  */
 struct tlb_entry *kernel_tlbs;
-int kernel_tlb_slots;
+int kernel_dtlb_slots;
+int kernel_itlb_slots;
 
 /* Global interrupt mappings for all device types.  Match against the OBP
- * 'device_type' property. 
+ * 'device_type' property.
  */
 struct intrmap intrmap[] = {
 	{ "block",	PIL_FD },	/* Floppy disk */
@@ -256,7 +256,7 @@ lookup_bootinfo(int type)
  *   kernel load and end addresses
  * - Initialize ksyms
  * - Find out number of active CPUs
- * - Finalize the bootstrap by calling pmap_bootstrap() 
+ * - Finalize the bootstrap by calling pmap_bootstrap()
  *
  * We will try to run out of the prom until we get out of pmap_bootstrap().
  */
@@ -355,7 +355,11 @@ die_old_boot_loader:
 		boothowto = bi_howto->boothowto;
 
 	LOOKUP_BOOTINFO(bi_count, BTINFO_DTLB_SLOTS);
-	kernel_tlb_slots = bi_count->count;
+	kernel_dtlb_slots = bi_count->count;
+	kernel_itlb_slots = kernel_dtlb_slots-1;
+	bi_count = lookup_bootinfo(BTINFO_ITLB_SLOTS);
+	if (bi_count)
+		kernel_itlb_slots = bi_count->count;
 	LOOKUP_BOOTINFO(bi_tlb, BTINFO_DTLB);
 	kernel_tlbs = &bi_tlb->tlb[0];
 
@@ -476,10 +480,7 @@ get_bootpath_from_prom(void)
 void
 cpu_configure(void)
 {
-	
-	if (CPU_ISSUN4V)
-		mdesc_init();
-	
+
 	bool userconf = (boothowto & RB_USERCONF) != 0;
 
 	/* fetch boot device settings */
@@ -673,20 +674,20 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		ma.ma_name = sbuf;
 		ma.ma_node = node;
 		if (OF_getprop(node, "upa-portid", &portid, sizeof(portid)) !=
-		    sizeof(portid) && 
+		    sizeof(portid) &&
 		    OF_getprop(node, "portid", &portid, sizeof(portid)) !=
 		    sizeof(portid))
 			portid = -1;
 		ma.ma_upaid = portid;
 
-		if (prom_getprop(node, "reg", sizeof(*ma.ma_reg), 
+		if (prom_getprop(node, "reg", sizeof(*ma.ma_reg),
 				 &ma.ma_nreg, &ma.ma_reg) != 0)
 			continue;
 #ifdef DEBUG
 		if (autoconf_debug & ACDB_PROBE) {
 			if (ma.ma_nreg)
 				printf(" reg %08lx.%08lx\n",
-					(long)ma.ma_reg->ur_paddr, 
+					(long)ma.ma_reg->ur_paddr,
 					(long)ma.ma_reg->ur_len);
 			else
 				printf(" no reg\n");
@@ -706,7 +707,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 				printf(" no interrupts\n");
 		}
 #endif
-		rv = prom_getprop(node, "address", sizeof(*ma.ma_address), 
+		rv = prom_getprop(node, "address", sizeof(*ma.ma_address),
 			&ma.ma_naddress, &ma.ma_address);
 		if (rv != 0 && rv != ENOENT) {
 			free(ma.ma_reg, M_DEVBUF);
@@ -838,7 +839,8 @@ dev_path_drive_match(device_t dev, int ctrlnode, int target,
 			snprintf(buf, sizeof(buf), "%s@w%016" PRIx64 ",%d",
 			    name, wwn, lun);
 		else if (ide_node)
-			snprintf(buf, sizeof(buf), "%s@0", name);
+			snprintf(buf, sizeof(buf), "%s@0",
+			    device_is_a(dev, "cd") ? "cdrom" : "disk");
 		else
 			snprintf(buf, sizeof(buf), "%s@%d,%d",
 			    name, target, lun);
@@ -1045,7 +1047,7 @@ noether:
 
 			if (OF_getprop(ofnode, "port-wwn", &pwwn, sizeof(pwwn))
 			    == sizeof(pwwn)) {
-				pwwnd = 
+				pwwnd =
 				    prop_number_create_unsigned_integer(pwwn);
 				prop_dictionary_set(dict, "port-wwn", pwwnd);
 				prop_object_release(pwwnd);
@@ -1053,7 +1055,7 @@ noether:
 
 			if (OF_getprop(ofnode, "node-wwn", &nwwn, sizeof(nwwn))
 			    == sizeof(nwwn)) {
-				nwwnd = 
+				nwwnd =
 				    prop_number_create_unsigned_integer(nwwn);
 				prop_dictionary_set(dict, "node-wwn", nwwnd);
 				prop_object_release(nwwnd);
@@ -1138,7 +1140,7 @@ noether:
 			}
 			prop_dictionary_set(props, "i2c-child-devices", cfg);
 			prop_object_release(cfg);
-			
+
 		}
 	}
 
@@ -1181,14 +1183,14 @@ noether:
 			prop_dictionary_set_uint32(dict,
 			    "instance_handle", console_instance);
 
-			gfb_cb.gcc_cookie = 
+			gfb_cb.gcc_cookie =
 			    (void *)(intptr_t)console_instance;
 			gfb_cb.gcc_set_mapreg = of_set_palette;
 			cmap_cb = (uint64_t)(uintptr_t)&gfb_cb;
 			prop_dictionary_set_uint64(dict,
 			    "cmap_callback", cmap_cb);
 		}
-#ifdef notyet 
+#ifdef notyet
 		else {
 			int width;
 
@@ -1281,7 +1283,7 @@ copyprops(device_t busdev, int node, prop_dictionary_t dict, int is_console)
 
 	OF_getprop(node, "address", &fbaddr, sizeof(fbaddr));
 	if (fbaddr != 0) {
-	
+
 		pmap_extract(pmap_kernel(), fbaddr, &fbpa);
 #ifdef DEBUG
 		printf("membase: %lx fbpa: %lx\n", (unsigned long)mem_base,

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.53 2014/03/24 20:06:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.53.6.1 2015/09/22 12:05:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.53.6.1 2015/09/22 12:05:35 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
@@ -511,66 +511,24 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;		/* Shut up pmap debug during bootstrap */
-#endif
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ptoa(physmem));
-	printf("total memory = %s\n", pbuf);
-
 	/*
 	 * Virtual memory is bootstrapped -- notify the bus spaces
 	 * that memory allocation is now safe.
 	 */
 #if defined(ALGOR_P4032)
-	    {
-		struct p4032_config *acp = &p4032_configuration;
+	struct p4032_config * const acp = &p4032_configuration;
 
-		acp->ac_mallocsafe = 1;
-	    }
+	acp->ac_mallocsafe = 1;
 #elif defined(ALGOR_P5064)
-	    {
-		struct p5064_config *acp = &p5064_configuration;
+	struct p5064_config * const acp = &p5064_configuration;
 
-		acp->ac_mallocsafe = 1;
-	    }
+	acp->ac_mallocsafe = 1;
 #elif defined(ALGOR_P6032)
-	    {
-		struct p6032_config *acp = &p6032_configuration;
+	struct p6032_config * const acp = &p6032_configuration;
 
-		acp->ac_mallocsafe = 1;
-	    }
+	acp->ac_mallocsafe = 1;
 #endif
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocate via the pool allocator, and we use KSEG0 to
-	 * map those pages.
-	 */
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 int	waittime = -1;

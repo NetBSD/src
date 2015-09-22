@@ -1,4 +1,4 @@
-/*	$NetBSD: biovar.h,v 1.8.40.1 2015/04/06 15:18:08 skrll Exp $ */
+/*	$NetBSD: biovar.h,v 1.8.40.2 2015/09/22 12:05:56 skrll Exp $ */
 /*	$OpenBSD: biovar.h,v 1.26 2007/03/19 03:02:08 marco Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include <sys/types.h>
 #include <sys/device.h>
+#include <sys/ioccom.h>
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -105,7 +106,7 @@ struct bioc_disk {
 	char		bd_vendor[32];	/* scsi string */
 	char		bd_serial[32];	/* serial number */
 	char		bd_procdev[16];	/* processor device */
-	
+
 	bool		bd_disknovol;	/* disk not associated with volumes */
 };
 
@@ -242,8 +243,8 @@ struct bioc_volops {
 	void		*bc_cookie;
 	uint64_t	bc_size;	/* size of the volume set */
 	uint64_t	bc_other_id;	/* unused for now */
-	uint32_t	bc_devmask;	/* device mask for the volume set */	
-	
+	uint32_t	bc_devmask;	/* device mask for the volume set */
+
 	uint16_t	bc_channel;
 	uint16_t	bc_target;
 	uint16_t	bc_lun;

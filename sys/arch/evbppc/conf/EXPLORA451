@@ -1,4 +1,4 @@
-#	$NetBSD: EXPLORA451,v 1.58 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: EXPLORA451,v 1.58.2.1 2015/09/22 12:05:42 skrll Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -46,7 +46,6 @@ options 	USERCONF	# userconf(4) support
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# expensive kernel consistency checks
 options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger

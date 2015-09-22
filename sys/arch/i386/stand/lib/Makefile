@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40.4.1 2015/06/06 14:40:00 skrll Exp $
+#	$NetBSD: Makefile,v 1.40.4.2 2015/09/22 12:05:44 skrll Exp $
 
 S?=	${.CURDIR}/../../../..
 
@@ -48,10 +48,11 @@ SRCS+= biosmca.S biosmemps2.S
 .undef DESTDIR
 .include <bsd.lib.mk>
 
-lib${LIB}.o:: ${OBJS}
+lib${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@echo done
 
 # XXX
 .if ${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U} == 48

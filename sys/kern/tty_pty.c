@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.141 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.141.2.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.141 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.141.2.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include "opt_ptm.h"
 
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_pty.c,v 1.141 2014/10/18 08:33:29 snj Exp $");
 #include <sys/poll.h>
 #include <sys/pty.h>
 #include <sys/kauth.h>
+
+#include "ioconf.h"
 
 #define	DEFAULT_NPTYS		16	/* default number of initial ptys */
 #define DEFAULT_MAXPTYS		992	/* default maximum number of ptys */
@@ -86,7 +88,6 @@ int npty = 0;			/* for pstat -t */
 #define	PF_NOSTOP	0x40
 #define PF_UCNTL	0x80		/* user control mode */
 
-void	ptyattach(int);
 void	ptcwakeup(struct tty *, int);
 void	ptsstart(struct tty *);
 int	pty_maxptys(int, int);

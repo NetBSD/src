@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.h,v 1.29 2008/04/15 15:17:54 thorpej Exp $	*/
+/*	$NetBSD: if_arp.h,v 1.29.68.1 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -126,5 +126,7 @@ struct arpreq {
 #define	ARP_STAT_ALLOCFAIL	22	/* failures to allocate llinfo */
 
 #define	ARP_NSTATS		23
+
+void arp_stat_add(int, uint64_t);
 
 #endif /* !_NET_IF_ARP_H_ */

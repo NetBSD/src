@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.15.2.1 2015/04/06 15:17:51 skrll Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.15.2.2 2015/09/22 12:05:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.15.2.1 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.15.2.2 2015/09/22 12:05:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -688,7 +688,7 @@ awin_mmc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	}
 
 	sc->sc_mmc_width = width;
-	
+
 	return 0;
 }
 
@@ -926,7 +926,7 @@ awin_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 #endif
 		goto done;
 	}
-		
+
 	if (cmd->c_datalen > 0) {
 		cmd->c_error = awin_mmc_wait_rint(sc,
 		    AWIN_MMC_INT_ERROR|
@@ -976,7 +976,14 @@ done:
 #ifdef AWIN_MMC_DEBUG
 		aprint_error_dev(sc->sc_dev, "i/o error %d\n", cmd->c_error);
 #endif
-		awin_mmc_host_reset(sc);
+		MMC_WRITE(sc, AWIN_MMC_GCTRL,
+		    MMC_READ(sc, AWIN_MMC_GCTRL) |
+		      AWIN_MMC_GCTRL_DMARESET | AWIN_MMC_GCTRL_FIFORESET);
+		for (int retry = 0; retry < 1000; retry++) {
+			if (!(MMC_READ(sc, AWIN_MMC_GCTRL) & AWIN_MMC_GCTRL_RESET))
+				break;
+			delay(10);
+		}
 		awin_mmc_update_clock(sc);
 	}
 

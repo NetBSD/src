@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.1 2015/04/06 15:18:02 skrll Exp $
+# $NetBSD: GENERIC,v 1.177.2.2 2015/09/22 12:05:52 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.1 $"
+#ident 		"GENERIC-$Revision: 1.177.2.2 $"
 
 maxusers	64
 
@@ -68,7 +68,7 @@ options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -516,6 +516,7 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gem*	at sbus? slot ? offset ?
 gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
+ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 # XXX lacks bus_dmamap_sync()
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 # XXX uses vtophys()
@@ -985,7 +986,7 @@ pseudo-device	fss			# file system snapshot device
 pseudo-device	lockstat		# lock profiling
 pseudo-device	putter			# for puffs and pud
 
-options		FILEASSOC		# fileassoc(9) - required for Veriexec 
+options		FILEASSOC		# fileassoc(9) - required for Veriexec
 
 # Veriexec
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: bcsp.c,v 1.25.2.1 2015/06/06 14:40:06 skrll Exp $	*/
+/*	$NetBSD: bcsp.c,v 1.25.2.2 2015/09/22 12:05:56 skrll Exp $	*/
 /*
  * Copyright (c) 2007 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.25.2.1 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcsp.c,v 1.25.2.2 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,7 +131,6 @@ struct bcsp_softc {
 #define	BCSP_XMIT	(1 << 0)	/* transmit active */
 #define	BCSP_ENABLED	(1 << 1)	/* is enabled */
 
-void bcspattach(int);
 static int bcsp_match(device_t, cfdata_t, void *);
 static void bcsp_attach(device_t, device_t, void *);
 static int bcsp_detach(device_t, int);
@@ -681,7 +680,7 @@ bcsp_slip_receive(int c, struct tty *tp)
 
 		if (sc->sc_slip_rxexp == BCSP_SLIP_ESCAPE) {
 			discard = 1;
-			errstr = "waiting 0xdc or 0xdb"; 
+			errstr = "waiting 0xdc or 0xdb";
 		} else
 			sc->sc_slip_rxexp = BCSP_SLIP_ESCAPE;
 		break;
@@ -781,7 +780,7 @@ bcsp_pktintegrity_receive(struct bcsp_softc *sc, struct mbuf *m)
 	u_int pldlen;
 	int discard = 0;
 	uint16_t crc = 0xffff;
-	const char *errstr 
+	const char *errstr
 
 	DPRINTFN(3, ("%s: pi receive\n", device_xname(sc->sc_dev)));
 #ifdef BCSP_DEBUG
@@ -1055,7 +1054,7 @@ bcsp_sequencing_receive(struct bcsp_softc *sc, struct mbuf *m)
 
 	/*
 	 * We remove the header of BCSP and add the 'uint8_t type' of
-	 * hci_*_hdr_t to the head. 
+	 * hci_*_hdr_t to the head.
 	 */
 	m_adj(m, sizeof(bcsp_hdr_t) - sizeof(uint8_t));
 
@@ -1335,7 +1334,7 @@ bcsp_datagramq_receive(struct bcsp_softc *sc, struct mbuf *m)
 	case BCSP_CHANNEL_HCI_SCO:
 		/*
 		 * We remove the header of BCSP and add the 'uint8_t type' of
-		 * hci_scodata_hdr_t to the head. 
+		 * hci_scodata_hdr_t to the head.
 		 */
 		m_adj(m, sizeof(bcsp_hdr_t) - sizeof(uint8_t));
 		*(mtod(m, uint8_t *)) = HCI_SCO_DATA_PKT;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.73.2.2 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.73.2.3 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -68,12 +68,15 @@
  * TODO:
  *
  *	Add support for mmap, poll.
+ *	Constify tables.
+ *	Constify db_symtab and move it to .rodata.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.73.2.2 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.73.2.3 2015/09/22 12:06:07 skrll Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
+#include "opt_copy_symtab.h"
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
 #endif
@@ -95,6 +98,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.73.2.2 2015/06/06 14:40:21 skrll Ex
 #endif
 
 #include "ksyms.h"
+#if NKSYMS > 0
+#include "ioconf.h"
+#endif
 
 #define KSYMS_MAX_ID	65536
 #ifdef KDTRACE_HOOKS
@@ -110,8 +116,7 @@ static bool ksyms_loaded;
 static kmutex_t ksyms_lock __cacheline_aligned;
 static struct ksyms_symtab kernel_symtab;
 
-void ksymsattach(int);
-static void ksyms_hdr_init(void *);
+static void ksyms_hdr_init(const void *);
 static void ksyms_sizes_calc(void);
 
 #ifdef KSYMS_DEBUG
@@ -123,7 +128,7 @@ static int ksyms_debug;
 
 #define		SYMTAB_FILLER	"|This is the symbol table!"
 
-#ifdef COPY_SYMTAB
+#ifdef makeoptions_COPY_SYMTAB
 extern char db_symtab[];
 extern int db_symtabsize;
 #endif
@@ -139,7 +144,7 @@ TAILQ_HEAD(, ksyms_symtab) ksyms_symtabs =
     TAILQ_HEAD_INITIALIZER(ksyms_symtabs);
 
 static int
-ksyms_verify(void *symstart, void *strstart)
+ksyms_verify(const void *symstart, const void *strstart)
 {
 #if defined(DIAGNOSTIC) || defined(DEBUG)
 	if (symstart == NULL)
@@ -209,17 +214,25 @@ findsym(const char *name, struct ksyms_symtab *table, int type)
 /*
  * The "attach" is in reality done in ksyms_init().
  */
+#if NKSYMS > 0
+/*
+ * ksyms can be loaded even if the kernel has a missing "pseudo-device ksyms"
+ * statement because ddb and modules require it. Fixing it properly requires
+ * fixing config to warn about required, but missing preudo-devices. For now,
+ * if we don't have the pseudo-device we don't need the attach function; this
+ * is fine, as it does nothing.
+ */
 void
 ksymsattach(int arg)
 {
-
 }
+#endif
 
 void
 ksyms_init(void)
 {
 
-#ifdef COPY_SYMTAB
+#ifdef makeoptions_COPY_SYMTAB
 	if (!ksyms_loaded &&
 	    strncmp(db_symtab, SYMTAB_FILLER, sizeof(SYMTAB_FILLER))) {
 		ksyms_addsyms_elf(db_symtabsize, db_symtab,
@@ -854,7 +867,7 @@ ksyms_fill_note(void)
 }
 
 static void
-ksyms_hdr_init(void *hdraddr)
+ksyms_hdr_init(const void *hdraddr)
 {
 	/* Copy the loaded elf exec header */
 	memcpy(&ksyms_hdr.kh_ehdr, hdraddr, sizeof(Elf_Ehdr));

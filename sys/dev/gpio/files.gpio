@@ -1,4 +1,4 @@
-# $NetBSD: files.gpio,v 1.10.28.1 2015/06/06 14:40:07 skrll Exp $
+# $NetBSD: files.gpio,v 1.10.28.2 2015/09/22 12:05:57 skrll Exp $
 
 define	gpio {[offset = -1], [mask = 0], [flag = 0]}
 
@@ -8,7 +8,7 @@ file	dev/gpio/gpio.c				gpio	needs-flag
 
 # GPIO simulator
 defpseudodev	gpiosim: gpiobus
-file	dev/gpio/gpiosim.c			gpiosim
+file	dev/gpio/gpiosim.c			gpiosim	needs-count
 
 # I2C bus bit-banging
 device	gpioiic: i2cbus, i2c_bitbang

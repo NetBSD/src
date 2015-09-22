@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.6 2012/12/05 19:05:46 matt Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.6.14.1 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -51,3 +51,9 @@
 	"old PT_SETFPREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->r_pc
+#define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
+#define PTRACE_REG_SP(r)	(r)->r_sp
+#define PTRACE_REG_INTRV(r)	(r)->r[0]

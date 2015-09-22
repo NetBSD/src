@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_ioctl.c,v 1.67 2012/04/19 17:45:20 bouyer Exp $	*/
+/*	$NetBSD: scsipi_ioctl.c,v 1.67.16.1 2015/09/22 12:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,10 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.67 2012/04/19 17:45:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_ioctl.c,v 1.67.16.1 2015/09/22 12:06:00 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_freebsd.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/errno.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs_private.h,v 1.18 2014/11/17 14:30:31 pooka Exp $	*/
+/*	$NetBSD: rump_vfs_private.h,v 1.18.2.1 2015/09/22 12:06:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -50,6 +50,7 @@ extern int	(*rump_vfs_makeonedevnode)(dev_t, const char *,
 					   devmajor_t, devminor_t);
 extern int	(*rump_vfs_makedevnodes)(dev_t, const char *, char,
 					 devmajor_t, devminor_t, int);
+extern int	(*rump_vfs_makesymlink)(const char *, const char *);
 extern void	(*rump_vfs_drainbufs)(int);
 extern void	(*rump_vfs_fini)(void);
 

@@ -1,17 +1,18 @@
-#	$NetBSD: files.ingenic,v 1.1.2.1 2015/04/06 15:17:59 skrll Exp $
+#	$NetBSD: files.ingenic,v 1.1.2.2 2015/09/22 12:05:47 skrll Exp $
 
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/ata/files.ata"			# ATA devices
 include "dev/usb/files.usb"			# USB devices
 
-# On-chip UART device
-attach	com at mainbus with com_mainbus
-file	arch/mips/ingenic/ingenic_com.c	com_mainbus
-
 # Ingenic system bus
 device	apbus { [addr=-1] }
 attach	apbus at mainbus
 file	arch/mips/ingenic/apbus.c		apbus
+
+# On-chip UART device
+attach	com at apbus with ingenic_com
+file	arch/mips/ingenic/ingenic_com.c	ingenic_com
+options	COM_REGMAP
 
 # USB
 attach dwctwo at apbus with ingenic_dwctwo
@@ -22,6 +23,7 @@ file	arch/mips/ingenic/ingenic_ohci.c	ingenic_ohci	needs-flag
 
 attach ehci at apbus with ingenic_ehci
 file	arch/mips/ingenic/ingenic_ehci.c	ingenic_ehci	needs-flag
+defflag	opt_ingenic.h	INGENIC_EHCI_DEBUG
 
 # Ethernet
 attach dme at apbus with ingenic_dme
@@ -32,3 +34,14 @@ device 	jziic : i2cbus
 attach 	jziic at apbus
 file 	arch/mips/ingenic/jziic.c	jziic
 defflag	opt_ingenic.h	JZIIC_DEBUG
+
+# SDMMC
+device 	jzmmc : sdmmcbus
+attach 	jzmmc at apbus
+file 	arch/mips/ingenic/jzmmc.c	jzmmc
+defflag	opt_ingenic.h	JZMMC_DEBUG
+
+# Random number generator
+device	jzrng
+attach	jzrng at apbus with ingenic_rng
+file	arch/mips/ingenic/ingenic_rng.c	ingenic_rng

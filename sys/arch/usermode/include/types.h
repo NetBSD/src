@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.8 2012/02/08 17:55:21 reinoud Exp $ */
+/* $NetBSD: types.h,v 1.8.24.1 2015/09/22 12:05:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,7 +52,7 @@ typedef long int	register_t;
 #define	PRIuVSIZE	"lu"
 #define	PRIxREGISTER	"lx"
 
-typedef volatile unsigned char	__cpu_simple_lock_t;
+typedef unsigned char	__cpu_simple_lock_nv_t;
 #define __CPU_SIMPLE_LOCK_PAD
 
 #define __SIMPLELOCK_LOCKED	1

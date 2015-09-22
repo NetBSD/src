@@ -1,4 +1,4 @@
-#	$NetBSD: WZERO3,v 1.37.2.1 2015/04/06 15:17:57 skrll Exp $
+#	$NetBSD: WZERO3,v 1.37.2.2 2015/09/22 12:05:42 skrll Exp $
 #
 #	WZERO3 -- Sharp Windows Mobile 5 based PDA
 #
@@ -8,7 +8,7 @@ include	"arch/hpcarm/conf/files.wzero3"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.37.2.1 $"
+#ident 		"GENERIC-$Revision: 1.37.2.2 $"
 
 # estimated number of users
 maxusers	32
@@ -109,7 +109,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

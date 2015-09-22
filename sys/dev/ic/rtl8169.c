@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.143.2.1 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.143.2.2 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143.2.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.143.2.2 2015/09/22 12:05:58 skrll Exp $");
+
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -602,6 +603,8 @@ re_attach(struct rtk_softc *sc)
 			sc->sc_quirk |= RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168E:
+		case RTK_HWREV_8168H:
+		case RTK_HWREV_8168H_SPIN1:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_PHYWAKE_PM |
 			    RTKQ_NOJUMBO;
@@ -616,7 +619,7 @@ re_attach(struct rtk_softc *sc)
 		case RTK_HWREV_8168G_SPIN2:
 		case RTK_HWREV_8168G_SPIN4:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
-			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO | 
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO |
 			    RTKQ_RXDV_GATED;
 			break;
 		case RTK_HWREV_8100E:
@@ -1856,7 +1859,7 @@ re_init(struct ifnet *ifp)
 		CSR_WRITE_4(sc, RTK_MISC,
 		    CSR_READ_4(sc, RTK_MISC) & ~RTK_MISC_RXDV_GATED_EN);
 	}
-		
+
 	/*
 	 * Enable transmit and receive.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.16.4.1 2015/06/06 14:40:25 skrll Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.16.4.2 2015/09/22 12:06:10 skrll Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16.4.1 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16.4.2 2015/09/22 12:06:10 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_mpls.h"
+#endif
 
 #include <sys/param.h>
 
@@ -67,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16.4.1 2015/06/06 14:40:25 skrll Exp $
 
 #include "if_mpls.h"
 
+#include "ioconf.h"
+
 #define TRIM_LABEL do { \
 	m_adj(m, sizeof(union mpls_shim)); \
 	if (m->m_len < sizeof(union mpls_shim) && \
@@ -75,8 +79,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.16.4.1 2015/06/06 14:40:25 skrll Exp $
 	dst.smpls_addr.s_addr = ntohl(mtod(m, union mpls_shim *)->s_addr); \
 	} while (/* CONSTCOND */ 0)
 
-
-void ifmplsattach(int);
 
 static int mpls_clone_create(struct if_clone *, int);
 static int mpls_clone_destroy(struct ifnet *);
@@ -637,10 +639,10 @@ mpls_label_inet6(struct mbuf *m, union mpls_shim *ms, uint offset)
 #endif	/* INET6 */
 
 static struct mbuf *
-mpls_prepend_shim(struct mbuf *m, union mpls_shim *ms) 
+mpls_prepend_shim(struct mbuf *m, union mpls_shim *ms)
 {
-	union mpls_shim *shim; 
- 
+	union mpls_shim *shim;
+
 	M_PREPEND(m, sizeof(*ms), M_DONTWAIT);
 	if (m == NULL)
 		return NULL;

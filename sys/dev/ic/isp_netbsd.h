@@ -1,4 +1,4 @@
-/* $NetBSD: isp_netbsd.h,v 1.74 2011/07/17 20:54:51 joerg Exp $ */
+/* $NetBSD: isp_netbsd.h,v 1.74.30.1 2015/09/22 12:05:58 skrll Exp $ */
 /*
  * NetBSD Specific definitions for the Qlogic ISP Host Adapter
  */
@@ -252,7 +252,7 @@ default:							\
 #	define	HBA_ARQFAIL		XS_DRIVER_STUFFUP
 
 #define	XS_ERR(xs)		(xs)->error
-#define	XS_NOERR(xs)		(xs)->error == XS_NOERROR
+#define	XS_NOERR(xs)		((xs)->error == XS_NOERROR)
 #define	XS_INITERR(xs)		(xs)->error = 0, XS_CMD_S_CLEAR(xs)
 
 #define	XS_SAVE_SENSE(xs, ptr, len)				\

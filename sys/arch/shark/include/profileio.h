@@ -1,4 +1,4 @@
-/*	$NetBSD: profileio.h,v 1.1 2002/02/10 01:57:37 thorpej Exp $	*/
+/*	$NetBSD: profileio.h,v 1.1.192.1 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -45,6 +45,7 @@
 #define __PROFILE_IO_H__
 
 #include <sys/types.h>
+#include <sys/ioccom.h>
 
 /* I have no idea what the 'P' group id means, 
  * I presume it isn't used for much.??

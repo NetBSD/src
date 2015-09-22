@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.4.2.2 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: msipic.c,v 1.4.2.3 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4.2.2 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4.2.3 2015/09/22 12:05:54 skrll Exp $");
+
+#include "opt_intrdebug.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -617,10 +619,12 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 	size_t table_size;
 	uint32_t table_offset;
 	u_int memtype;
+	bus_addr_t memaddr;
+	int flags;
 	int bir, bar, err, off, table_nentry;
 	char pic_name_buf[MSIPICNAMEBUF];
 
-	table_nentry = pci_msix_count(pa);
+	table_nentry = pci_msix_count(pa->pa_pc, pa->pa_tag);
 	if (table_nentry == 0) {
 		DPRINTF(("MSI-X table entry is 0.\n"));
 		return NULL;
@@ -682,9 +686,32 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 	  *     - Message Lower Address (32bit)
 	  */
 	table_size = table_nentry * PCI_MSIX_TABLE_ENTRY_SIZE;
+#if 0
 	err = pci_mapreg_submap(pa, bar, memtype, BUS_SPACE_MAP_LINEAR,
 	    roundup(table_size, PAGE_SIZE), table_offset,
 	    &bstag, &bshandle, NULL, &bssize);
+#else
+	/*
+	 * Workaround for PCI prefetchable bit. Some chips (e.g. Intel 82599)
+	 * report SERR and MSI-X doesn't work. This problem might not be the
+	 * driver's bug but our PCI common part or VMs' bug. Until we find a
+	 * real reason, we ignore the prefetchable bit.
+	 */
+	if (pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, memtype,
+		&memaddr, NULL, &flags) != 0) {
+		DPRINTF(("cannot get a map info.\n"));
+		msipic_destruct_common_msi_pic(msix_pic);
+		return NULL;
+	}
+	if ((flags & BUS_SPACE_MAP_PREFETCHABLE) != 0) {
+		DPRINTF(( "clear prefetchable bit\n"));
+		flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+	}
+	bssize = roundup(table_size, PAGE_SIZE);
+	err = bus_space_map(pa->pa_memt, memaddr + table_offset, bssize, flags,
+	    &bshandle);
+	bstag = pa->pa_memt;
+#endif
 	if (err) {
 		DPRINTF(("cannot map msix table.\n"));
 		msipic_destruct_common_msi_pic(msix_pic);

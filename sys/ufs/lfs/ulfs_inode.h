@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.h,v 1.12 2014/05/17 07:08:35 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.h,v 1.12.6.1 2015/09/22 12:06:17 skrll Exp $	*/
 /*  from NetBSD: inode.h,v 1.64 2012/11/19 00:36:21 jakllsch Exp  */
 
 /*
@@ -76,10 +76,10 @@ void lfs_unset_dirop(struct lfs *, struct vnode *, const char *);
 #define LFS_INVERSE_MAX_BYTES(n) LFS_INVERSE_MAX_RESOURCE(n, PAGE_SIZE)
 #define LFS_WAIT_BYTES	    LFS_WAIT_RESOURCE(bufmem_lowater, PAGE_SIZE)
 #define LFS_MAX_DIROP	    ((desiredvnodes >> 2) + (desiredvnodes >> 3))
-#define SIZEOF_DIROP(fs)	(2 * ((fs)->lfs_bsize + LFS_DINODE1_SIZE))
+#define SIZEOF_DIROP(fs)	(2 * (lfs_sb_getbsize(fs) + DINOSIZE(fs)))
 #define LFS_MAX_FSDIROP(fs)						\
-	((fs)->lfs_nclean <= (fs)->lfs_resvseg ? 0 :			\
-	 (((fs)->lfs_nclean - (fs)->lfs_resvseg) * (fs)->lfs_ssize) /	\
+	(lfs_sb_getnclean(fs) <= lfs_sb_getresvseg(fs) ? 0 :		\
+	 ((lfs_sb_getnclean(fs) - lfs_sb_getresvseg(fs)) * lfs_sb_getssize(fs)) / \
           (2 * SIZEOF_DIROP(fs)))
 #define LFS_MAX_PAGES	lfs_max_pages()
 #define LFS_WAIT_PAGES	lfs_wait_pages()
@@ -93,7 +93,7 @@ int lfs_max_pages(void);
 #endif /* _KERNEL */
 
 /* How starved can we be before we start holding back page writes */
-#define LFS_STARVED_FOR_SEGS(fs) ((fs)->lfs_nclean < (fs)->lfs_resvseg)
+#define LFS_STARVED_FOR_SEGS(fs) (lfs_sb_getnclean(fs) < lfs_sb_getresvseg(fs))
 
 /*
  * Reserved blocks for lfs_malloc
@@ -189,27 +189,28 @@ struct lfid {
  */
 #define	DIP(ip, field) \
 	(((ip)->i_ump->um_fstype == ULFS1) ? \
-	(ip)->i_ffs1_##field : (ip)->i_ffs2_##field)
+	(ip)->i_din->u_32.di_##field : (ip)->i_din->u_64.di_##field)
 
 #define	DIP_ASSIGN(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == ULFS1)			\
-			(ip)->i_ffs1_##field = (value);			\
+			(ip)->i_din->u_32.di_##field = (value);	\
 		else							\
-			(ip)->i_ffs2_##field = (value);			\
+			(ip)->i_din->u_64.di_##field = (value);	\
 	} while(0)
 
 #define	DIP_ADD(ip, field, value)					\
 	do {								\
 		if ((ip)->i_ump->um_fstype == ULFS1)			\
-			(ip)->i_ffs1_##field += (value);		\
+			(ip)->i_din->u_32.di_##field += (value);	\
 		else							\
-			(ip)->i_ffs2_##field += (value);		\
+			(ip)->i_din->u_64.di_##field += (value);	\
 	} while(0)
 
+/* XXX rework this better */
 #define	 SHORTLINK(ip) \
 	(((ip)->i_ump->um_fstype == ULFS1) ? \
-	(void *)(ip)->i_ffs1_db : (void *)(ip)->i_ffs2_db)
+	(void *)(ip)->i_din->u_32.di_db : (void *)(ip)->i_din->u_64.di_db)
 
 
 /*

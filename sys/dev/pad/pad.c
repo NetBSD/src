@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.22 2014/11/18 01:53:17 jmcneill Exp $ */
+/* $NetBSD: pad.c,v 1.22.2.1 2015/09/22 12:05:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.22 2014/11/18 01:53:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.22.2.1 2015/09/22 12:05:59 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -354,6 +354,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 	intr = sc->sc_intr;
 	intrarg = sc->sc_intrarg;
 
+	kpreempt_disable();
 	while (uio->uio_resid > 0 && !err) {
 		err = pad_get_block(sc, &pb, min(uio->uio_resid, PAD_BLKSIZE));
 		if (!err) {
@@ -375,6 +376,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 		err = cv_wait_sig(&sc->sc_condvar, &sc->sc_lock);
 		if (err != 0) {
 			mutex_exit(&sc->sc_lock);
+			kpreempt_enable();
 			return err;
 		}
 		intr = sc->sc_intr;
@@ -387,6 +389,7 @@ pad_read(dev_t dev, struct uio *uio, int flags)
 		mutex_exit(&sc->sc_intr_lock);
 	}
 	mutex_exit(&sc->sc_lock);
+	kpreempt_enable();
 
 	return err;
 }

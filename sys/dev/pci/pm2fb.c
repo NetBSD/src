@@ -1,4 +1,4 @@
-/*	$NetBSD: pm2fb.c,v 1.25.6.1 2015/04/06 15:18:12 skrll Exp $	*/
+/*	$NetBSD: pm2fb.c,v 1.25.6.2 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.25.6.1 2015/04/06 15:18:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.25.6.2 2015/09/22 12:05:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -80,7 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: pm2fb.c,v 1.25.6.1 2015/04/06 15:18:12 skrll Exp $")
  * This makes pm2fb_bitblt() work well on little endian hardware to get
  * scrolling right, but not much more. Unaligned blits ( as in, where the lower
  * 2 bits of the source and destination X coordinates don't match ) are still
- * wrong so the glyph cache is also disabled.  
+ * wrong so the glyph cache is also disabled.
  */
 #define BITBLT_LE_WORKAROUND
 #endif
@@ -214,7 +214,7 @@ const struct {
 	{
 		PCI_VENDOR_TI,
 		PCI_PRODUCT_TI_TVP4020,
-		1 	
+		1
 	},
 	{
 		0,
@@ -230,15 +230,15 @@ int partprodPermedia[] = {
 	PARTPROD(0,0,1), PARTPROD(0,1,1), PARTPROD(1,1,1), PARTPROD(1,1,2),
 	PARTPROD(1,2,2), PARTPROD(2,2,2), PARTPROD(1,2,3), PARTPROD(2,2,3),
 	PARTPROD(1,3,3), PARTPROD(2,3,3), PARTPROD(1,2,4), PARTPROD(3,3,3),
-	PARTPROD(1,3,4), PARTPROD(2,3,4),              -1, PARTPROD(3,3,4), 
-	PARTPROD(1,4,4), PARTPROD(2,4,4),              -1, PARTPROD(3,4,4), 
-	             -1, PARTPROD(2,3,5),              -1, PARTPROD(4,4,4), 
+	PARTPROD(1,3,4), PARTPROD(2,3,4),              -1, PARTPROD(3,3,4),
+	PARTPROD(1,4,4), PARTPROD(2,4,4),              -1, PARTPROD(3,4,4),
+	             -1, PARTPROD(2,3,5),              -1, PARTPROD(4,4,4),
 	PARTPROD(1,4,5), PARTPROD(2,4,5), PARTPROD(3,4,5),              -1,
-	             -1,              -1,              -1, PARTPROD(4,4,5), 
-	PARTPROD(1,5,5), PARTPROD(2,5,5),              -1, PARTPROD(3,5,5), 
-	             -1,              -1,              -1, PARTPROD(4,5,5), 
+	             -1,              -1,              -1, PARTPROD(4,4,5),
+	PARTPROD(1,5,5), PARTPROD(2,5,5),              -1, PARTPROD(3,5,5),
+	             -1,              -1,              -1, PARTPROD(4,5,5),
 	             -1,              -1,              -1, PARTPROD(3,4,6),
-	             -1,              -1,              -1, PARTPROD(5,5,5), 
+	             -1,              -1,              -1, PARTPROD(5,5,5),
 	PARTPROD(1,5,6), PARTPROD(2,5,6),              -1, PARTPROD(3,5,6),
 	             -1,              -1,              -1, PARTPROD(4,5,6),
 	             -1,              -1,              -1,              -1,
@@ -267,7 +267,7 @@ pm2fb_wait(struct pm2fb_softc *sc, int slots)
 	uint32_t reg;
 
 	do {
-		reg = bus_space_read_4(sc->sc_memt, sc->sc_regh, 
+		reg = bus_space_read_4(sc->sc_memt, sc->sc_regh,
 			PM2_INPUT_FIFO_SPACE);
 	} while (reg <= slots);
 }
@@ -282,9 +282,9 @@ pm2fb_flush_engine(struct pm2fb_softc *sc)
 	    PM2FLT_PASS_SYNC);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SYNC, 0);
 	do {
-		while (bus_space_read_4(sc->sc_memt, sc->sc_regh, 
+		while (bus_space_read_4(sc->sc_memt, sc->sc_regh,
 			PM2_OUTPUT_FIFO_WORDS) == 0);
-	} while (bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_OUTPUT_FIFO) != 
+	} while (bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_OUTPUT_FIFO) !=
 	    PM2_SYNC_TAG);
 }
 
@@ -299,7 +299,7 @@ pm2fb_match(device_t parent, cfdata_t match, void *aux)
 
 	for (i = 0; pm2fb_pci_devices[i].vendor; i++) {
 		if ((PCI_VENDOR(pa->pa_id) == pm2fb_pci_devices[i].vendor &&
-		     PCI_PRODUCT(pa->pa_id) == pm2fb_pci_devices[i].product)) 
+		     PCI_PRODUCT(pa->pa_id) == pm2fb_pci_devices[i].product))
 			return 100;
 	}
 
@@ -315,7 +315,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
-	bool			is_console;
+	bool			is_console = FALSE;
 	uint32_t		flags;
 	int			i;
 
@@ -337,7 +337,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * fill in parameters from properties
 	 * if we can't get a usable mode via DDC2 we'll use this to pick one,
-	 * which is why we fill them in with some conservative values that 
+	 * which is why we fill them in with some conservative values that
 	 * hopefully work as a last resort
 	 */
 	dict = device_properties(self);
@@ -441,7 +441,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	} else {
 		if (sc->sc_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdnesses later */
-			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, 
+			vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1,
 			   &defattr);
 		} else
 			(*ri->ri_ops.allocattr)(ri, 0, 0, 0, &defattr);
@@ -455,7 +455,7 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	}
 
 	pm2fb_init_palette(sc);
-	
+
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
 	aa.accessops = &pm2fb_accessops;
@@ -472,10 +472,10 @@ pm2fb_attach(device_t parent, device_t self, void *aux)
 	pm2fb_rectfill(sc, 0, sc->sc_height, 300, 10, 0);
 	pm2fb_rectfill(sc, 10, sc->sc_height, 200, 10, 0xe0e0e0e0);
 	for (i = 1; i < 20; i++) {
-		pm2fb_bitblt(sc, 0, sc->sc_height, 
+		pm2fb_bitblt(sc, 0, sc->sc_height,
 			i, sc->sc_height + 10 * i,
 			300, 10, 3);
-		pm2fb_bitblt(sc, i, sc->sc_height, 
+		pm2fb_bitblt(sc, i, sc->sc_height,
 			400, sc->sc_height + 10 * i,
 			300, 10, 3);
 	}
@@ -583,7 +583,7 @@ pm2fb_mmap(void *v, void *vs, off_t offset, int prot)
 	 * restrict all other mappings to processes with superuser privileges
 	 * or the kernel itself
 	 */
-	if (kauth_authorize_machdep(kauth_cred_get(), 
+	if (kauth_authorize_machdep(kauth_cred_get(),
 	    KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: mmap() rejected.\n",
@@ -597,7 +597,7 @@ pm2fb_mmap(void *v, void *vs, off_t offset, int prot)
 		return pa;
 	}
 
-	if ((offset >= sc->sc_reg) && 
+	if ((offset >= sc->sc_reg) &&
 	    (offset < (sc->sc_reg + sc->sc_regsize))) {
 		pa = bus_space_mmap(sc->sc_memt, offset, 0, prot,
 		    BUS_SPACE_MAP_LINEAR);
@@ -757,7 +757,7 @@ pm2fb_read_dac(struct pm2fb_softc *sc, int reg)
 		    PM2V_DAC_INDEX_HIGH, (reg >> 8) & 0xff);
 		return bus_space_read_1(sc->sc_memt, sc->sc_regh,
 		    PM2V_DAC_INDEX_DATA);
-	}	
+	}
 }
 
 static void
@@ -778,7 +778,7 @@ pm2fb_write_dac(struct pm2fb_softc *sc, int reg, uint8_t data)
 		    PM2V_DAC_INDEX_HIGH, (reg >> 8) & 0xff);
 		bus_space_write_1(sc->sc_memt, sc->sc_regh,
 		    PM2V_DAC_INDEX_DATA, data);
-	}	
+	}
 }
 
 static void
@@ -791,25 +791,25 @@ pm2fb_init(struct pm2fb_softc *sc)
 	/* set aperture endianness */
 #if BYTE_ORDER == BIG_ENDIAN
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_APERTURE1_CONTROL,
-		PM2_AP_BYTESWAP | PM2_AP_HALFWORDSWAP);	
+		PM2_AP_BYTESWAP | PM2_AP_HALFWORDSWAP);
 #else
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_APERTURE1_CONTROL, 0);
-#endif	
+#endif
 #if 0
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_BYPASS_MASK, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_BYPASS_MASK,
 		0xffffffff);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_FB_WRITE_MASK, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_FB_WRITE_MASK,
 		0xffffffff);
 #endif
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HW_WRITEMASK, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HW_WRITEMASK,
 		0xffffffff);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SW_WRITEMASK, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SW_WRITEMASK,
 		0xffffffff);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_WRITE_MODE, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_WRITE_MODE,
 		PM2WM_WRITE_EN);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SCREENSIZE,
 	    (sc->sc_height << 16) | sc->sc_width);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SCISSOR_MODE, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_SCISSOR_MODE,
 	    PM2SC_SCREEN_EN);
 	pm2fb_wait(sc, 8);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DITHER_MODE, 0);
@@ -828,15 +828,15 @@ pm2fb_init(struct pm2fb_softc *sc)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_ROP_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_WINDOW_ORIGIN, 0);
 #if 0
-	sc->sc_pprod = bus_space_read_4(sc->sc_memt, sc->sc_regh, 
+	sc->sc_pprod = bus_space_read_4(sc->sc_memt, sc->sc_regh,
 	    PM2_FB_READMODE) &
 	    (PM2FB_PP0_MASK | PM2FB_PP1_MASK | PM2FB_PP2_MASK);
 #endif
 	sc->sc_pprod = partprodPermedia[sc->sc_stride >> 5];
 
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_FB_READMODE, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_FB_READMODE,
 	    sc->sc_pprod);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_TEXMAP_FORMAT, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_TEXMAP_FORMAT,
 	    sc->sc_pprod);
 	pm2fb_wait(sc, 9);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_DY, 1 << 16);
@@ -870,7 +870,7 @@ pm2fb_init(struct pm2fb_softc *sc)
 			break;
 	}
 	pm2fb_flush_engine(sc);
-	DPRINTF("pixel size: %08x\n", 
+	DPRINTF("pixel size: %08x\n",
 	    bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_RE_PIXEL_SIZE));
 }
 
@@ -954,7 +954,7 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 		bus_space_write_4(sc->sc_memt, sc->sc_regh,
 		    PM2_RE_PACKEDDATA_LIMIT,
 		    (xd << 16) | (xd + wi) | (adjust << 29));
-		
+
 	} else {
 		/* we're in 16 or 32bit mode */
 		if (rop == 3) {
@@ -972,7 +972,7 @@ pm2fb_bitblt(void *cookie, int xs, int ys, int xd, int yd,
 		rxd = xd;
 		rwi = wi;
 		rxdelta = xs - xd;
-	}		
+	}
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RECT_START,
 	    (yd << 16) | rxd);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_RECT_SIZE,
@@ -990,10 +990,10 @@ pm2fb_cursor(void *cookie, int on, int row, int col)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he;
-	
+
 	wi = ri->ri_font->fontwidth;
 	he = ri->ri_font->fontheight;
-	
+
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
 		x = ri->ri_ccol * wi + ri->ri_xorigin;
 		y = ri->ri_crow * he + ri->ri_yorigin;
@@ -1071,21 +1071,21 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_MODE, mode);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_CONFIG, PM2RECFG_WRITE_EN);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_BLOCK_COLOUR, bg);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_RECT_START, (y << 16) | x);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_RECT_SIZE, (he << 16) | wi);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_RENDER,
 			    PM2RE_RECTANGLE |
 			    PM2RE_INC_X | PM2RE_INC_Y | PM2RE_FASTFILL);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_BLOCK_COLOUR, fg);
-			bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+			bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_RENDER,
 			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_MASK |
 			    PM2RE_INC_X | PM2RE_INC_Y | PM2RE_FASTFILL);
@@ -1097,7 +1097,7 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				uint32_t reg;
 				for (i = 0; i < he; i++) {
 					reg = *data8;
-					bus_space_write_4(sc->sc_memt, 
+					bus_space_write_4(sc->sc_memt,
 					    sc->sc_regh,
 					    PM2_RE_BITMASK, reg);
 					data8++;
@@ -1109,7 +1109,7 @@ pm2fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 				uint32_t reg;
 				for (i = 0; i < he; i++) {
 					reg = *data16;
-					bus_space_write_4(sc->sc_memt, 
+					bus_space_write_4(sc->sc_memt,
 					    sc->sc_regh,
 					    PM2_RE_BITMASK, reg);
 					data16++;
@@ -1136,7 +1136,7 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	uint8_t *data8;
 	int rv = GC_NOPE, cnt = 0;
 
-	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL) 
+	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
 
 	if (!CHAR_IN_FONT(c, font))
@@ -1179,11 +1179,11 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_MODE, 0);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_RE_CONFIG,
 			    PM2RECFG_WRITE_EN /*| PM2RECFG_PACKED*/);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_RECT_START, (y << 16) | x);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_RECT_SIZE, (he << 16) | wi);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_RENDER,
 			    PM2RE_RECTANGLE | PM2RE_SYNC_ON_HOST |
 			    PM2RE_INC_X | PM2RE_INC_Y);
@@ -1226,8 +1226,8 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
 			    PM2_RE_DATA, latch);
 			/*
-			 * not strictly necessary, old data should be shifted 
-			 * out 
+			 * not strictly necessary, old data should be shifted
+			 * out
 			 */
 			latch = 0;
 			cnt++;
@@ -1243,19 +1243,19 @@ pm2fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		if (cnt > 190) {
 			pm2fb_wait(sc, 200);
 			cnt = 0;
-		}		
+		}
 #endif
 		data8++;
 	}
 #if 0
 	/* if we have pixels left in latch write them out */
 	if ((i & 3) != 0) {
-		latch = latch << ((4 - (i & 3)) << 3);	
+		latch = latch << ((4 - (i & 3)) << 3);
 		bus_space_write_stream_4(sc->sc_memt, sc->sc_regh,
 				    PM2_RE_DATA, latch);
 	}
 #endif
-	/* 
+	/*
 	 * XXX
 	 * occasionally characters end up in the cache only partially drawn
 	 * apparently the blitter might end up grabbing them before they're
@@ -1277,7 +1277,7 @@ pm2fb_copycols(void *cookie, int row, int srccol, int dstcol, int ncols)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
 	int32_t xs, xd, y, width, height;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		xs = ri->ri_xorigin + ri->ri_font->fontwidth * srccol;
 		xd = ri->ri_xorigin + ri->ri_font->fontwidth * dstcol;
@@ -1295,7 +1295,7 @@ pm2fb_erasecols(void *cookie, int row, int startcol, int ncols, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin + ri->ri_font->fontwidth * startcol;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1332,7 +1332,7 @@ pm2fb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct pm2fb_softc *sc = scr->scr_cookie;
 	int32_t x, y, width, height, fg, bg, ul;
-	
+
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
 		x = ri->ri_xorigin;
 		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
@@ -1432,7 +1432,7 @@ pm2_setup_i2c(struct pm2fb_softc *sc)
 	}
 	if (sc->sc_videomode == NULL) {
 		/* no EDID data? */
-		sc->sc_videomode = pick_mode_by_ref(sc->sc_width, 
+		sc->sc_videomode = pick_mode_by_ref(sc->sc_width,
 		    sc->sc_height, 60);
 	}
 	if (sc->sc_videomode != NULL) {
@@ -1497,7 +1497,7 @@ static int
 pm2fb_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
 
-	return (i2c_bitbang_initiate_xfer(cookie, addr, flags, 
+	return (i2c_bitbang_initiate_xfer(cookie, addr, flags,
 	    &pm2fb_i2cbb_ops));
 }
 
@@ -1595,13 +1595,13 @@ pm2fb_set_pll(struct pm2fb_softc *sc, int freq)
  * most of the following was adapted from the xf86-video-glint driver's
  * pm2_dac.c (8bpp only)
  */
-static void 
+static void
 pm2fb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 {
 	int t1, t2, t3, t4, stride;
 	uint32_t vclk, tmp;
 	uint8_t sync = 0;
-	
+
 	t1 = mode->hsync_start - mode->hdisplay;
 	t2 = mode->vsync_start - mode->vdisplay;
 	t3 = mode->hsync_end - mode->hsync_start;
@@ -1614,7 +1614,7 @@ pm2fb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 		stride += 32;
 	}
 
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HTOTAL, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HTOTAL,
 	    ((mode->htotal) >> 2) - 1);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HSYNC_END,
 	    (t1 + t3) >> 2);
@@ -1624,10 +1624,10 @@ pm2fb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 	    (mode->htotal - mode->hdisplay) >> 2);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_HGATE_END,
 	    (mode->htotal - mode->hdisplay) >> 2);
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SCREEN_STRIDE,  
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_SCREEN_STRIDE,
 	    stride >> 3);
 
-	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VTOTAL, 
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VTOTAL,
 	    mode->vtotal - 2);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VSYNC_END,
 	    t2 + t4 - 1);
@@ -1636,7 +1636,7 @@ pm2fb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VBLANK_END,
 	    mode->vtotal - mode->vdisplay);
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, PM2_VIDEO_CONTROL,
-	    PM2_VC_VIDEO_ENABLE | 
+	    PM2_VC_VIDEO_ENABLE |
 	    PM2_VC_HSYNC_ACT_HIGH | PM2_VC_VSYNC_ACT_HIGH);
 
 	vclk = bus_space_read_4(sc->sc_memt, sc->sc_regh, PM2_VCLKCTL);
@@ -1648,7 +1648,7 @@ pm2fb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 	    tmp & 0xffffffdd);
 
 	pm2fb_write_dac(sc, PM2_DAC_MODE_CONTROL, MOC_BUFFERFRONT);
-	pm2fb_set_pll(sc, mode->dot_clock);  	
+	pm2fb_set_pll(sc, mode->dot_clock);
 
 	sync = MC_PALETTE_8BIT;
 
@@ -1672,14 +1672,14 @@ pm2fb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 /*
  * most of the following was adapted from the xf86-video-glint driver's
  * pm2v_dac.c
- */				
+ */
 static void
 pm2vfb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 {
 	int t1, t2, t3, t4, stride;
 	uint32_t vclk;
 	uint8_t sync = 0;
-	
+
 	t1 = mode->hsync_start - mode->hdisplay;
 	t2 = mode->vsync_start - mode->vdisplay;
 	t3 = mode->hsync_end - mode->hsync_start;
@@ -1730,7 +1730,7 @@ pm2vfb_set_dac(struct pm2fb_softc *sc, const struct videomode *mode)
 	if (mode->flags & VID_PVSYNC)
 		sync |= PM2V_DAC_VSYNC_INV;
 	pm2fb_write_dac(sc, PM2V_DAC_SYNC_CONTROL, sync);
-	
+
 	pm2fb_write_dac(sc, PM2V_DAC_COLOR_FORMAT, PM2V_DAC_PALETTE);
 	pm2fb_write_dac(sc, PM2V_DAC_PIXEL_SIZE, PM2V_PS_8BIT);
 	sc->sc_width = mode->hdisplay;
@@ -1748,5 +1748,5 @@ pm2fb_set_mode(struct pm2fb_softc *sc, const struct videomode *mode)
 		pm2fb_set_dac(sc, mode);
 	} else {
 		pm2vfb_set_dac(sc, mode);
-	}      
+	}
 }

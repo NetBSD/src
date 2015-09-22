@@ -1,4 +1,4 @@
-/* $NetBSD: hd44780var.h,v 1.7 2009/08/30 02:07:05 tsutsui Exp $ */
+/* $NetBSD: hd44780var.h,v 1.7.40.1 2015/09/22 12:05:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Dennis I. Chernoivanov
@@ -29,6 +29,8 @@
 
 #ifndef _DEV_IC_HD44780VAR_H_
 #define _DEV_IC_HD44780VAR_H_
+
+#include <sys/ioccom.h>
 
 /* IOCTL definitions */
 #define HLCD_DISPCTL		_IOW('h',   1, struct hd44780_dispctl)

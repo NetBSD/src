@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl_base.c,v 1.3 2014/02/25 18:30:11 pooka Exp $ */
+/*	$NetBSD: init_sysctl_base.c,v 1.3.6.1 2015/09/22 12:06:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,10 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.3 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl_base.c,v 1.3.6.1 2015/09/22 12:06:07 skrll Exp $");
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <sys/cpu.h>
 #include <sys/kernel.h>
 #include <sys/disklabel.h>
 
@@ -179,6 +181,78 @@ SYSCTL_SETUP(sysctl_kernbase_setup, "sysctl kern subtree base setup")
 		       SYSCTL_DESCR("Raw partition of a disk"),
 		       NULL, RAW_PART, NULL, 0,
 		       CTL_KERN, KERN_RAWPARTITION, CTL_EOL);
+}
+
+SYSCTL_SETUP(sysctl_hwbase_setup, "sysctl hw subtree base setup")
+{
+	u_int u;
+	u_quad_t q;
+	const char *model = cpu_getmodel();
+
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "model",
+		       SYSCTL_DESCR("Machine model"),
+		       NULL, 0, __UNCONST(model), 0,
+		       CTL_HW, HW_MODEL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "machine",
+		       SYSCTL_DESCR("Machine class"),
+		       NULL, 0, machine, 0,
+		       CTL_HW, HW_MACHINE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "machine_arch",
+		       SYSCTL_DESCR("Machine CPU class"),
+		       NULL, 0, machine_arch, 0,
+		       CTL_HW, HW_MACHINE_ARCH, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "ncpu",
+		       SYSCTL_DESCR("Number of CPUs configured"),
+		       NULL, 0, &ncpu, 0,
+		       CTL_HW, HW_NCPU, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "byteorder",
+		       SYSCTL_DESCR("System byte order"),
+		       NULL, BYTE_ORDER, NULL, 0,
+		       CTL_HW, HW_BYTEORDER, CTL_EOL);
+	u = ((u_int)physmem > (UINT_MAX / PAGE_SIZE)) ?
+		UINT_MAX : physmem * PAGE_SIZE;
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "physmem",
+		       SYSCTL_DESCR("Bytes of physical memory"),
+		       NULL, u, NULL, 0,
+		       CTL_HW, HW_PHYSMEM, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "pagesize",
+		       SYSCTL_DESCR("Software page size"),
+		       NULL, PAGE_SIZE, NULL, 0,
+		       CTL_HW, HW_PAGESIZE, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "alignbytes",
+		       SYSCTL_DESCR("Alignment constraint for all possible "
+				    "data types"),
+		       NULL, ALIGNBYTES, NULL, 0,
+		       CTL_HW, HW_ALIGNBYTES, CTL_EOL);
+	q = (u_quad_t)physmem * PAGE_SIZE;
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_QUAD, "physmem64",
+		       SYSCTL_DESCR("Bytes of physical memory"),
+		       NULL, q, NULL, 0,
+		       CTL_HW, HW_PHYSMEM64, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_INT, "ncpuonline",
+		       SYSCTL_DESCR("Number of CPUs online"),
+		       NULL, 0, &ncpuonline, 0,
+		       CTL_HW, HW_NCPUONLINE, CTL_EOL);
 }
 
 /*

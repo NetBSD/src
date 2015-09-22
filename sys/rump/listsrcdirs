@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.22.2.2 2015/06/06 14:40:26 skrll Exp $
+#	$NetBSD: listsrcdirs,v 1.22.2.3 2015/09/22 12:06:12 skrll Exp $
 #
 
 #
@@ -79,7 +79,7 @@ lsrc sys /bin/			cat
 lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
 lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
 lsrc sys /usr.bin/		rpcgen rump_wmd
-lsrc sys /usr.bin/		genassym stat
+lsrc sys /usr.bin/		genassym stat uname
 lsrc sys /usr.sbin/		mtree
 
 # sources hosted in the NetBSD tree that are required/useful
@@ -97,7 +97,7 @@ lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
 lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
-lsrc usr /sbin/			cgdconfig chown
+lsrc usr /sbin/			brconfig cgdconfig chown
 lsrc usr /sbin/			disklabel dump fdisk
 lsrc usr /sbin/			fsck fsck_ext2fs fsck_ffs fsck_msdos
 lsrc usr /sbin/			ifconfig mknod
@@ -106,7 +106,7 @@ lsrc usr /sbin/			mount_ext2fs mount_ffs mount_msdos mount_tmpfs
 lsrc usr /sbin/			newfs newfs_ext2fs newfs_msdos
 lsrc usr /sbin/			ping ping6 raidctl reboot
 lsrc usr /sbin/			rndctl route setkey sysctl umount
-lsrc usr /usr.bin/		kdump ktrace sockstat
+lsrc usr /usr.bin/		kdump ktrace mixerctl sockstat
 lsrc usr /usr.sbin/		arp dumpfs mdconfig ndp npf pcictl
 lsrc usr /usr.sbin/		rtadvd vnconfig wlanctl
 lsrc usr /external/bsd/		libelf libpcap tcpdump wpa

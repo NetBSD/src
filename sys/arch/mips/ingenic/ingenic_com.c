@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_com.c,v 1.1.2.1 2015/04/06 15:17:59 skrll Exp $ */
+/*	$NetBSD: ingenic_com.c,v 1.1.2.2 2015/09/22 12:05:47 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.1.2.1 2015/04/06 15:17:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.1.2.2 2015/09/22 12:05:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,9 +45,14 @@ __KERNEL_RCSID(0, "$NetBSD: ingenic_com.c,v 1.1.2.1 2015/04/06 15:17:59 skrll Ex
 
 #include <mips/cpuregs.h>
 
+#include <mips/ingenic/ingenic_var.h>
 #include <mips/ingenic/ingenic_regs.h>
 
 #include "opt_com.h"
+
+#ifndef COM_REGMAP
+#error We need COM_REGMAP
+#endif
 
 volatile int32_t *com0addr = (int32_t *)MIPS_PHYS_TO_KSEG1(JZ_UART0);
 
@@ -60,9 +65,6 @@ void	ingenic_putchar(char);
 #endif
 
 
-static struct mips_bus_space	ingenic_com_mbst;
-static int	mbst_valid = 0;
-static void	ingenic_com_bus_mem_init(bus_space_tag_t, void *);
 void		ingenic_com_cnattach(void);
 
 static int	ingenic_com_match(device_t, cfdata_t , void *);
@@ -70,12 +72,17 @@ static void	ingenic_com_attach(device_t, device_t, void *);
 
 struct ingenic_com_softc {
 	struct com_softc sc_com;
+	bus_space_tag_t sc_tag;
+	bus_space_handle_t sc_regh;
 };
 
-CFATTACH_DECL_NEW(com_mainbus, sizeof(struct ingenic_com_softc),
+CFATTACH_DECL_NEW(ingenic_com, sizeof(struct ingenic_com_softc),
     ingenic_com_match, ingenic_com_attach, NULL, NULL);
 
-bus_space_handle_t regh = 0;
+static bus_space_handle_t regh = 0;
+static bus_addr_t cons_com = 0;
+static struct com_regs regs;
+extern bus_space_tag_t apbus_memt;
 
 void
 ingenic_putchar_init(void)
@@ -105,7 +112,7 @@ ingenic_putchar_init(void)
 		com0addr[com_lctl] = htole32(LCR_8BITS);	/* XXX */
 		com0addr[com_mcr]  = htole32(MCR_DTR|MCR_RTS);
 		com0addr[com_fifo] = htole32(
-		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | 
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
 		    FIFO_TRIGGER_1 | FIFO_UART_ON);
 #if 0
 	}
@@ -138,31 +145,20 @@ ingenic_puts(const char *restrict s)
 		ingenic_putchar(c);
 }
 
-static void
-ingenic_com_bus_init(void)
-{
-	if (mbst_valid) return;
-	ingenic_com_bus_mem_init(&ingenic_com_mbst, NULL);
-	mbst_valid = 1;
-}
-
 void
 ingenic_com_cnattach(void)
 {
-	struct com_regs	regs;
-	
-	ingenic_com_bus_init();
-	bus_space_map(&ingenic_com_mbst, 0, 0x1000, 0, &regh);
+	int i;
 
+	bus_space_map(apbus_memt, JZ_UART0, 0x100, 0, &regh);
+	cons_com = JZ_UART0;
 	memset(&regs, 0, sizeof(regs));
-	COM_INIT_REGS(regs, &ingenic_com_mbst, regh, 0);
+	COM_INIT_REGS(regs, apbus_memt, regh, JZ_UART0);
+	for (i = 0; i < 16; i++) {
+		regs.cr_map[i] = regs.cr_map[i] << 2;
+	}
+	regs.cr_nports = 32;
 
-	/*
-	 * XXX
-	 * UART clock is either 6MHz or 12MHz, the manual is rather unclear
-	 * so we just leave alone whatever u-boot set up
-	 * my uplcom is too tolerant to show any difference
-	 */
 	comcnattach1(&regs, 115200, 48000000, COM_TYPE_INGENIC, CONMODE);
 }
 
@@ -182,24 +178,25 @@ ingenic_com_attach(device_t parent, device_t self, void *args)
 {
 	struct ingenic_com_softc *isc = device_private(self);
 	struct com_softc *sc = &isc->sc_com;
+	struct apbus_attach_args *aa = args;
+	int i;
 
 	sc->sc_dev = self;
 	sc->sc_frequency = 48000000;
 	sc->sc_type = COM_TYPE_INGENIC;
+	isc->sc_tag = aa->aa_bst;
+
+	if (cons_com == aa->aa_addr) {
+		isc->sc_regh = regh;
+	} else {
+		bus_space_map(apbus_memt, aa->aa_addr, 0x1000, 0, &isc->sc_regh);
+	}
 	memset(&sc->sc_regs, 0, sizeof(sc->sc_regs));
-	COM_INIT_REGS(sc->sc_regs, &ingenic_com_mbst, regh, 0);
+	COM_INIT_REGS(sc->sc_regs, aa->aa_bst, isc->sc_regh, aa->aa_addr);
+	for (i = 0; i < 16; i++)
+		sc->sc_regs.cr_map[i] = sc->sc_regs.cr_map[i] << 2;
+	sc->sc_regs.cr_nports = 32;
+
 	com_attach_subr(sc);
-	printf("\n");
-	evbmips_intr_establish(51, comintr, sc);
+	evbmips_intr_establish(aa->aa_irq, comintr, sc);
 }
-
-#define CHIP	   		ingenic_com
-#define	CHIP_MEM		/* defined */
-#define	CHIP_W1_BUS_START(v)	0x00000000UL
-#define CHIP_W1_BUS_END(v)	0x00010000UL
-#define	CHIP_W1_SYS_START(v)	0x10030000UL
-#define	CHIP_W1_SYS_END(v)	0x10035000UL
-#define	CHIP_ACCESS_SIZE	1
-#define CHIP_ALIGN_STRIDE	2
-
-#include <mips/mips/bus_space_alignstride_chipdep.c>

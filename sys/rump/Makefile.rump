@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.99.4.2 2015/06/06 14:40:26 skrll Exp $
+#	$NetBSD: Makefile.rump,v 1.99.4.3 2015/09/22 12:06:12 skrll Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -40,18 +40,20 @@ RUMP_NBCOMPAT=
 RUMP_NBCOMPAT:=	${RUMP_NBCOMPAT:S/,/ /g}
 CPPFLAGS+=	${RUMP_NBCOMPAT:C/[1-9]0/-DCOMPAT_&/g}
 
-CPPFLAGS+=	-DMAXUSERS=32
-
 CPPFLAGS+=	-nostdinc
 CFLAGS+=	-ffreestanding -fno-strict-aliasing
 
 CWARNFLAGS+=	-Wno-format-zero-length -Wno-pointer-sign
-CPPFLAGS+=	-D_KERNEL -DMULTIPROCESSOR -D_MODULE -DMODULAR
-CPPFLAGS+=	-DDEBUGPRINT
+
+CPPFLAGS+=	-imacros ${RUMPTOP}/include/opt/opt_rumpkernel.h
+.ifdef BUILDRUMP_IMACROS
+CPPFLAGS+=	-imacros ${BUILDRUMP_IMACROS}
+.endif
+
 CPPFLAGS+=	-I${.CURDIR} -I.
 CPPFLAGS+=	-I${RUMPTOP}/../../common/include
 CPPFLAGS+=	-I${RUMPTOP}/include
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern/opt
+CPPFLAGS+=	-I${RUMPTOP}/include/opt
 
 SHLIB_MAJOR?=	0
 SHLIB_MINOR?=	0
@@ -118,7 +120,7 @@ CPPFLAGS+=	-DKTRACE
 
 # make sure __NetBSD__ gets defined (for builds on non-NetBSD)
 # also, give those builds a way to undef the local compiler's macros
-CPPFLAGS+=	-D__NetBSD__ ${RUMPKERN_UNDEF}
+CPPFLAGS+=	${RUMPKERN_UNDEF}
 
 RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 
@@ -127,7 +129,7 @@ RUMPKERNEL=	This is NetBSD and I am the rump.  Good evening.
 CPPFLAGS+=	-DPPC_OEA
 .endif
 
-# If this file changes, we need a full rebuild
+# If any of these files change, we need a full rebuild
 DPSRCS+=	${RUMPTOP}/Makefile.rump
 
 #

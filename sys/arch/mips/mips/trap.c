@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.236 2014/03/26 17:42:00 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.236.6.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.236 2014/03/26 17:42:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.236.6.1 2015/09/22 12:05:47 skrll Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -99,16 +99,16 @@ const char * const trap_names[] = {
 	"r4k trap/r3k reserved 13",
 	"r4k virtual coherency instruction/r3k reserved 14",
 	"r4k floating point/ r3k reserved 15",
-	"reserved 16",
+	"mips NMI",
 	"reserved 17",
 	"mipsNN cp2 exception",
-	"reserved 19",
-	"reserved 20",
+	"mipsNN TLBRI",
+	"mipsNN TLBXI",
 	"reserved 21",
 	"mips64 MDMX",
 	"r4k watch",
 	"mipsNN machine check",
-	"reserved 25",
+	"mipsNN thread",
 	"DSP exception",
 	"reserved 27",
 	"reserved 28",
@@ -167,7 +167,11 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 	KSI_INIT_TRAP(&ksi);
 
 	curcpu()->ci_data.cpu_ntrap++;
-	type = TRAPTYPE(cause);
+	if (status & MIPS3_SR_NMI) {
+		type = T_NMI;
+	} else {
+		type = TRAPTYPE(cause);
+	}
 	if (USERMODE(status)) {
 		tf = utf;
 		type |= T_USER;
@@ -193,7 +197,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			USERMODE(status) ? "user" : "kernel");
 		sz -= n; 
 		str += n;
-		n = snprintf(str, sz, "status=0x%x, cause=0x%x, epc=%#"
+		n = snprintf(str, sz, "status=%#x, cause=%#x, epc=%#"
 			PRIxVADDR ", vaddr=%#" PRIxVADDR "\n",
 			status, cause, pc, vaddr);
 		sz -= n; 
@@ -207,15 +211,17 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 			str += n;
 		} else {
 			n = snprintf(str, sz, "tf=%p ksp=%p ra=%#"
-			    PRIxREGISTER " ppl=%#x\n",
-			    tf, tf+1, tf->tf_regs[_R_RA],
-			    tf->tf_ppl);
+			    PRIxREGISTER " ppl=%#x\n", tf,
+			    type == T_NMI
+				? (void*)(uintptr_t)tf->tf_regs[_R_SP]
+				: tf+1,
+			    tf->tf_regs[_R_RA], tf->tf_ppl);
 			sz -= n; 
 			str += n;
 		}
 		printf("%s", strbuf);
 
-		if ((TRAPTYPE(cause) == 6) || (TRAPTYPE(cause) == 7))
+		if (type == T_BUS_ERR_IFETCH || type == T_BUS_ERR_LD_ST)
 			(void)(*mips_locoresw.lsw_bus_error)(cause);
 
 #if defined(DDB)
@@ -375,9 +381,10 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		 */
 		struct cpu_info * const ci = curcpu();
 		if ((va >> XSEGSHIFT) == 0 &&
-		    __predict_false(ci->ci_pmap_seg0tab == NULL
-				&& ci->ci_pmap_segtab->seg_seg[0] != NULL)) {
-			ci->ci_pmap_seg0tab = ci->ci_pmap_segtab->seg_seg[0];
+		    __predict_false(ci->ci_pmap_user_seg0tab == NULL
+				&& ci->ci_pmap_user_segtab->seg_seg[0] != NULL)) {
+			ci->ci_pmap_user_seg0tab =
+			    ci->ci_pmap_user_segtab->seg_seg[0];
 			kpreempt_enable();
 			if (type & T_USER) {
 				userret(l);

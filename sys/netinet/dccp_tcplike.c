@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tcplike.c,v 1.19 2005/07/27 06:27:25 nishida Exp $	*/
-/*	$NetBSD: dccp_tcplike.c,v 1.1.2.2 2015/04/06 15:18:22 skrll Exp $ */
+/*	$NetBSD: dccp_tcplike.c,v 1.1.2.3 2015/09/22 12:06:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2003 Magnus Erixzon
@@ -33,9 +33,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.1.2.2 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.1.2.3 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dccp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,18 +124,18 @@ tcplike_rto_timeout(void *ccb)
 	struct tcplike_send_ccb *cb = (struct tcplike_send_ccb *) ccb;
 	/*struct inpcb *inp;*/
 	int s;
-	
+
 	mutex_enter(&(cb->mutex));
-	
+
 	cb->ssthresh = cb->cwnd >>1;
 	cb->cwnd = 1; /* allowing 1 packet to be sent */
 	cb->outstanding = 0; /* is this correct? */
 	cb->rto_timer_callout = 0;
 	cb->rto = cb->rto << 1;
 	TIMEOUT_DEBUG((LOG_INFO, "RTO Timeout. New RTO = %u\n", cb->rto));
-	
+
 	cb->sample_rtt = 0;
-	
+
 	cb->ack_last = 0;
 	cb->ack_miss = 0;
 
@@ -144,7 +146,7 @@ tcplike_rto_timeout(void *ccb)
 	cb->acked_in_win = 0;
 	cb->acked_windows = 0;
 	cb->oldcwnd_ts = cb->pcb->seq_snd;
-	
+
 	LOSS_DEBUG((LOG_INFO, "Timeout. CWND value: %u , OUTSTANDING value: %u\n",
 	    cb->cwnd, cb->outstanding));
 	mutex_exit(&(cb->mutex));
@@ -155,9 +157,9 @@ tcplike_rto_timeout(void *ccb)
 	/*inp = cb->pcb->d_inpcb;*/
 	INP_LOCK(inp);
 	INP_INFO_RUNLOCK(&dccpbinfo);
-	
+
 	dccp_output(cb->pcb, 1);
-	
+
 	INP_UNLOCK(inp);
 	splx(s);
 }
@@ -165,7 +167,7 @@ tcplike_rto_timeout(void *ccb)
 void tcplike_rtt_sample(struct tcplike_send_ccb *cb, u_int16_t sample)
 {
 	u_int16_t err;
-	
+
 	if (cb->rtt == 0xffff) {
 		/* hmmmmm. */
 		cb->rtt = sample;
@@ -194,7 +196,7 @@ void tcplike_rtt_sample(struct tcplike_send_ccb *cb, u_int16_t sample)
 		cb->srtt = TCPLIKE_MIN_RTT;
 	cb->rto = cb->srtt << 1;
 #endif
-	
+
 	LOSS_DEBUG((LOG_INFO, "RTT Sample: %u , New RTO: %u\n", sample, cb->rto));
 }
 
@@ -203,14 +205,14 @@ void tcplike_rtt_sample(struct tcplike_send_ccb *cb, u_int16_t sample)
 /*
  * Initialises the sender side
  * returns: pointer to a tfrc_send_ccb struct on success, otherwise 0
- */ 
+ */
 void *
 tcplike_send_init(struct dccpcb* pcb)
 {
 	struct tcplike_send_ccb *cb;
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "Entering tcplike_send_init()\n"));
-	
+
 	cb = malloc(sizeof (struct tcplike_send_ccb), M_PCB, M_NOWAIT | M_ZERO);
 	if (cb == 0) {
 		TCPLIKE_DEBUG((LOG_INFO, "Unable to allocate memory for tcplike_send_ccb!\n"));
@@ -218,10 +220,10 @@ tcplike_send_init(struct dccpcb* pcb)
 		return 0;
 	}
 	memset(cb, 0, sizeof (struct tcplike_send_ccb));
-	
+
 	/* init sender */
 	cb->pcb = pcb;
-	
+
 	cb->cwnd = TCPLIKE_INITIAL_CWND;
 	cb->ssthresh = 0xafff; /* lim-> infinity */
 	cb->oldcwnd_ts = 0;
@@ -229,7 +231,7 @@ tcplike_send_init(struct dccpcb* pcb)
 	cb->rcvr_ackratio = 2; /* Ack Ratio */
 	cb->acked_in_win = 0;
 	cb->acked_windows = 0;
-	
+
 	CWND_DEBUG((LOG_INFO, "Init. CWND value: %u , OUTSTANDING value: %u\n",
 		    cb->cwnd, cb->outstanding));
 	cb->rtt = 0xffff;
@@ -239,7 +241,7 @@ tcplike_send_init(struct dccpcb* pcb)
 	cb->rto_timer_callout = 0;
 	cb->rtt_d = 0;
 	cb->timestamp = 0;
-	
+
 	cb->sample_rtt = 1;
 
 	cb->cv_size = TCPLIKE_INITIAL_CWNDVECTOR;
@@ -258,20 +260,20 @@ tcplike_send_init(struct dccpcb* pcb)
 
 	cb->ack_last = 0;
 	cb->ack_miss = 0;
-	
+
 	mutex_init(&(cb->mutex), MUTEX_DEFAULT, IPL_SOFTNET);
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "TCPlike sender initialised!\n"));
 	dccpstat.tcplikes_send_conn++;
 	return cb;
-} 
+}
 
 void tcplike_send_term(void *ccb)
 {
 	struct tcplike_send_ccb *cb = (struct tcplike_send_ccb *) ccb;
 	if (ccb == 0)
 		return;
-	
+
 	mutex_destroy(&(cb->mutex));
 
 	free(cb, M_PCB);
@@ -286,14 +288,14 @@ void
 tcplike_send_free(void *ccb)
 {
 	struct tcplike_send_ccb *cb = (struct tcplike_send_ccb *) ccb;
-	
+
 	LOSS_DEBUG((LOG_INFO, "Entering tcplike_send_free()\n"));
 
 	if (ccb == 0)
 		return;
-	
+
 	mutex_enter(&(cb->mutex));
-	
+
 	free(cb->cwndvector, M_PCB);
 	cb->cv_hs = cb->cv_ts = 0;
 
@@ -303,17 +305,17 @@ tcplike_send_free(void *ccb)
 		callout_stop(&cb->rto_timer);
 		cb->rto_timer_callout = 0;
 	}
-	
+
 	mutex_exit(&(cb->mutex));
 
 	callout_reset(&cb->free_timer, 10 * hz, tcplike_send_term, (void *)cb);
 }
 
 /*
- * Ask TCPlike wheter one can send a packet or not 
- * args: ccb  -  ccb block for current connection 
+ * Ask TCPlike wheter one can send a packet or not
+ * args: ccb  -  ccb block for current connection
  * returns: 0 if ok, else <> 0.
- */ 
+ */
 int
 tcplike_send_packet(void *ccb, long datasize)
 {
@@ -321,7 +323,7 @@ tcplike_send_packet(void *ccb, long datasize)
 	struct tcplike_send_ccb *cb = (struct tcplike_send_ccb *) ccb;
 	long ticks;
 	char feature[1];
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "Entering tcplike_send_packet()\n"));
 
 	if (datasize == 0) {
@@ -344,7 +346,7 @@ tcplike_send_packet(void *ccb, long datasize)
 		mutex_exit(&(cb->mutex));
 		return 0;
 	}
-	
+
 	/* We're allowed to send */
 
 	feature[0] = 1;
@@ -353,7 +355,7 @@ tcplike_send_packet(void *ccb, long datasize)
 		dccp_remove_feature(cb->pcb, DCCP_OPT_CHANGE_R, DCCP_FEATURE_ACKVECTOR);
 		dccp_add_feature(cb->pcb, DCCP_OPT_CHANGE_R, DCCP_FEATURE_ACKVECTOR, feature, 1);
 	}
-	
+
 	/* untimeout any active timer */
 	if (cb->rto_timer_callout) {
 		LOSS_DEBUG((LOG_INFO, "Untimeout RTO Timer\n"));
@@ -369,14 +371,14 @@ tcplike_send_packet(void *ccb, long datasize)
 		/*LOSS_DEBUG((LOG_INFO, "Adding timestamp %u\n", cb->timestamp));*/
 		cb->sample_rtt = 1;
 	}
-	
+
 	mutex_exit(&(cb->mutex));
 	return 1;
-	
+
 }
 
 /*
- * Notify sender that a packet has been sent 
+ * Notify sender that a packet has been sent
  * args: ccb - ccb block for current connection
  *	 moreToSend - if there exists more packets to send
  */
@@ -384,16 +386,16 @@ void
 tcplike_send_packet_sent(void *ccb, int moreToSend, long datasize)
 {
 	struct tcplike_send_ccb *cb = (struct tcplike_send_ccb *) ccb;
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "Entering tcplike_send_packet_sent(,%i,%i)\n",moreToSend,(int) datasize));
-	
+
 	if (datasize == 0) {
 		TCPLIKE_DEBUG((LOG_INFO, "Sent pure ACK. Dont care about cwnd-storing\n"));
 		return;
 	}
 
 	mutex_enter(&(cb->mutex));
-	
+
 	cb->outstanding++;
 	TCPLIKE_DEBUG((LOG_INFO, "SENT. cwnd: %d, outstanding: %d\n",cb->cwnd, cb->outstanding));
 
@@ -401,7 +403,7 @@ tcplike_send_packet_sent(void *ccb, int moreToSend, long datasize)
 	/* Dont do this if we're only sending an ACK ! */
 	_add_to_cwndvector(cb, cb->pcb->seq_snd);
 	CWND_DEBUG((LOG_INFO, "Sent. CWND value: %u , OUTSTANDING value: %u\n",cb->cwnd, cb->outstanding));
-	
+
 	dccp_remove_feature(cb->pcb, DCCP_OPT_CHANGE_R, DCCP_FEATURE_ACKRATIO);
 	mutex_exit(&(cb->mutex));
 }
@@ -433,10 +435,10 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 			struct timeval time;
 			u_int32_t c_stamp;
 			u_int16_t diff;
-			
+
 			microtime(&time);
 			c_stamp = ((time.tv_sec & 0x00000FFF) * 1000000) + time.tv_usec;
-			
+
 			diff = (u_int16_t) c_stamp - cb->timestamp - elapsed;
 			diff = (u_int16_t)(diff / 1000);
 			TCPLIKE_DEBUG((LOG_INFO, "Got Timestamp Echo; Echo = %u, Elapsed = %u. DIFF = %u\n",
@@ -463,7 +465,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 	}
 
 	cb->sample_rtt = 0;
-	
+
 	/* check ackVector for lost packets. cmp with cv_list */
 	avsize = dccp_get_option(options, optlen, DCCP_OPT_ACK_VECTOR0, av,10);
 	if (avsize == 0)
@@ -471,17 +473,17 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 
 	if (avsize > 0)
 		dccpstat.tcplikes_send_ackrecv++;
-	
+
 	acknum = cb->pcb->ack_rcv;
 	numlostpackets = 0;
 	numokpackets = 0;
 	lastok = 0;
 	prev_size = _cwndvector_size(cb);
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "Start removing from cwndvector %d\n", avsize));
 	if (avsize == 0)
 		_remove_from_cwndvector(cb, acknum);
-	
+
 	for (i=0; i < avsize; i++) {
 		state = (av[i] & 0xc0) >> 6;
 		length = (av[i] & 0x3f) +1;
@@ -524,9 +526,9 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 		mutex_exit(&(cb->mutex));
 		return;
 	}
-	
+
 	cb->acked_in_win += numokpackets;
-	
+
 	if (cb->cwnd < cb->ssthresh) {
 		/* Slow start */
 
@@ -540,13 +542,13 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 			cb->acked_in_win = 0;
 			cb->acked_windows = 0;
 			cb->oldcwnd_ts = cb->pcb->seq_snd;
-			
+
 		} else {
 			cb->cwnd++;
 		}
-		
+
 	} else if (cb->cwnd >= cb->ssthresh) {
-		
+
 		if (numlostpackets > 0) {
 			/* Packet loss */
 			LOSS_DEBUG((LOG_INFO, "Packet Loss in action\n"));
@@ -557,7 +559,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 			cb->acked_in_win = 0;
 			cb->acked_windows = 0;
 			cb->oldcwnd_ts = cb->pcb->seq_snd;
-			
+
 		} else if (cb->acked_in_win > cb->cwnd) {
 			cb->cwnd++;
 		}
@@ -566,7 +568,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 	/* Ok let's check if there are missing Ack packets */
 	ACKRATIO_DEBUG((LOG_INFO, "Check Ack. seq_rcv: %u ,ack_last: %u ,ack_miss: %u\n",
 			cb->pcb->seq_rcv, cb->ack_last, cb->ack_miss));
-	
+
 	if (cb->ack_last == 0) {
 		/* First received ack (or first after Data packet). Yey */
 		cb->ack_last = cb->pcb->seq_rcv;
@@ -586,7 +588,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 			/* Yea it was. great */
 			cb->ack_miss = 0;
 		}
-		
+
 	} else if (cb->pcb->seq_rcv > (cb->ack_last + 1)) {
 		/* There is a jump in Ack seqnums.. */
 		cb->ack_miss = cb->ack_last + 1;
@@ -613,7 +615,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 		cb->acked_windows = 0;
 		cb->acked_in_win = 0;
 		dccpstat.tcplikes_send_missack++;
-		
+
 	} else if (cb->acked_in_win > cb->cwnd) {
 		cb->acked_in_win = 0;
 		cb->acked_windows++;
@@ -624,7 +626,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 			cb->acked_windows = 0;
 		}
 	}
-	
+
 	if (cb->acked_windows >= 1) {
 		ackratiocnt = (cb->cwnd / ((cb->rcvr_ackratio*cb->rcvr_ackratio) - cb->rcvr_ackratio));
 		if (cb->acked_windows >= ackratiocnt) {
@@ -640,7 +642,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
 			cb->acked_windows = 0;
 		}
 	}
-	
+
 	CWND_DEBUG((LOG_INFO, "Recvd. CWND value: %u , OUTSTANDING value: %u\n",
 		    cb->cwnd, cb->outstanding));
 
@@ -649,7 +651,7 @@ tcplike_send_packet_recv(void *ccb, char *options, int optlen)
                             cb->cwnd, cb->outstanding));
 		callout_stop(&cb->rto_timer);
 		cb->rto_timer_callout = 0;
-		
+
 		mutex_exit(&(cb->mutex));
                 dccp_output(cb->pcb, 1);
 		return;
@@ -673,7 +675,7 @@ _cwndvector_size(struct tcplike_send_ccb *cb)
 		t = cb->cv_hp + (gap/8);
 		if (t >= (cb->cwndvector + (cb->cv_size/8)))
 			t -= (cb->cv_size / 8); /* wrapped */
-	
+
 		if (((*t & (0x01 << offset)) >> offset) == 0x01)
 			cnt++;
 	}
@@ -713,9 +715,9 @@ _add_to_cwndvector(struct tcplike_send_ccb *cb, u_int64_t seqnr)
 {
 	u_int64_t offset, dc, gap;
 	u_char *t, *n;
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "Entering add_to_cwndvector\n"));
-	
+
 	if (cb->cv_hs == cb->cv_ts) {
 		/* Empty cwndvector */
 		cb->cv_hs = cb->cv_ts = seqnr;
@@ -738,12 +740,12 @@ _add_to_cwndvector(struct tcplike_send_ccb *cb, u_int64_t seqnr)
 		dccpstat.tcplikes_send_badseq++;
 		return;
 	}
-	
+
 	offset = gap % 8; /* bit to mark */
 	t = cb->cv_hp + (gap/8);
 	if (t >= (cb->cwndvector + (cb->cv_size/8)))
 		t -= (cb->cv_size / 8); /* cwndvector wrapped */
-	
+
 	*t = *t | (0x01 << offset); /* turn on bit */
 
 	cb->cv_ts = seqnr+1;
@@ -774,9 +776,9 @@ _remove_from_cwndvector(struct tcplike_send_ccb *cb, u_int64_t seqnr)
 	u_int64_t offset;
 	int64_t gap;
 	u_char *t;
-	
+
 	DCCP_DEBUG((LOG_INFO, "Entering remove_from_cwndvector\n"));
-	
+
 	if (cb->cv_hs == cb->cv_ts) {
 		/* Empty cwndvector */
 		return;
@@ -795,12 +797,12 @@ _remove_from_cwndvector(struct tcplike_send_ccb *cb, u_int64_t seqnr)
 		/* gap is bigger than cwndvector size. has already been chopped */
 		return;
 	}
-	
+
 	offset = gap % 8; /* hi or low 2 bits to mark */
 	t = cb->cv_hp + (gap/8);
 	if (t >= (cb->cwndvector + (cb->cv_size/8)))
 		t -= (cb->cv_size / 8); /* cwndvector wrapped */
-	
+
 	*t = *t & (~(0x01 << offset)); /* turn off bits */
 }
 
@@ -814,7 +816,7 @@ _chop_cwndvector(struct tcplike_send_ccb *cb, u_int64_t seqnr)
 
 	if (cb->cv_hs == cb->cv_ts)
 		return 0;
-	
+
 	if (seqnr > cb->cv_hs) {
 		gap = seqnr - cb->cv_hs;
 	} else {
@@ -825,7 +827,7 @@ _chop_cwndvector(struct tcplike_send_ccb *cb, u_int64_t seqnr)
 	bytegap = gap/8;
 	if (bytegap == 0)
 		return 0;
-	
+
 	t = cb->cv_hp + bytegap;
 	if (t >= (cb->cwndvector + (cb->cv_size/8)))
 		t -= (cb->cv_size / 8); /* ackvector wrapped */
@@ -842,14 +844,14 @@ _chop_cwndvector(struct tcplike_send_ccb *cb, u_int64_t seqnr)
 
 /* Initialises the receiver side
  * returns: pointer to a tcplike_recv_ccb struct on success, otherwise 0
- */ 
+ */
 void *
 tcplike_recv_init(struct dccpcb *pcb)
 {
 	struct tcplike_recv_ccb *ccb;
-  
+
 	TCPLIKE_DEBUG((LOG_INFO, "Entering tcplike_recv_init()\n"));
-  
+
 	ccb = malloc(sizeof (struct tcplike_recv_ccb), M_PCB, M_NOWAIT | M_ZERO);
 	if (ccb == 0) {
 		TCPLIKE_DEBUG((LOG_INFO, "Unable to allocate memory for tcplike_recv_ccb!\n"));
@@ -858,7 +860,7 @@ tcplike_recv_init(struct dccpcb *pcb)
 	}
 
 	memset(ccb, 0, sizeof (struct tcplike_recv_ccb));
-	
+
 	ccb->pcb = pcb;
 	ccb->unacked = 0;
 	ccb->pcb->ack_ratio = 2;
@@ -867,9 +869,9 @@ tcplike_recv_init(struct dccpcb *pcb)
 	dccp_use_ackvector(ccb->pcb);
 
 	callout_init(&ccb->free_timer, 0);
-	
+
 	mutex_init(&(ccb->mutex), MUTEX_DEFAULT, IPL_SOFTNET);
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "TCPlike receiver initialised!\n"));
 	dccpstat.tcplikes_recv_conn++;
 	return ccb;
@@ -880,7 +882,7 @@ void tcplike_recv_term(void *ccb)
 	struct tcplike_recv_ccb *cb = (struct tcplike_recv_ccb *) ccb;
 	if (ccb == 0)
 		return;
-	
+
 	mutex_destroy(&(cb->mutex));
 	free(cb, M_PCB);
 	TCPLIKE_DEBUG((LOG_INFO, "TCP-like receiver is destroyed\n"));
@@ -899,7 +901,7 @@ tcplike_recv_free(void *ccb)
 
 	if (ccb == 0)
 		return;
-	
+
 	mutex_enter(&(cb->mutex));
 
 	a = cb->av_list;
@@ -911,14 +913,14 @@ tcplike_recv_free(void *ccb)
 
 	cb->pcb->av_size = 0;
 	free(cb->pcb->ackvector, M_PCB);
-	
+
 	mutex_exit(&(cb->mutex));
 	callout_reset(&cb->free_timer, 10 * hz, tcplike_recv_term, (void *)cb);
 }
 
 /*
  * Tell TCPlike that a packet has been received
- * args: ccb  -  ccb block for current connection 
+ * args: ccb  -  ccb block for current connection
  */
 void
 tcplike_recv_packet_recv(void *ccb, char *options, int optlen)
@@ -927,7 +929,7 @@ tcplike_recv_packet_recv(void *ccb, char *options, int optlen)
 	u_char ackvector[16];
 	u_int16_t avsize;
 	u_char av_rcv[10];
-	
+
 	TCPLIKE_DEBUG((LOG_INFO, "Entering tcplike_recv_packet()\n"));
 
 	mutex_enter(&(cb->mutex));
@@ -935,7 +937,7 @@ tcplike_recv_packet_recv(void *ccb, char *options, int optlen)
 	if (cb->pcb->type_rcv == DCCP_TYPE_DATA ||
 	    cb->pcb->type_rcv == DCCP_TYPE_DATAACK)
 		dccpstat.tcplikes_recv_datarecv++;
-	
+
 	/* Grab Ack Vector 0 or 1 */
 	avsize = dccp_get_option(options, optlen, DCCP_OPT_ACK_VECTOR0, av_rcv,10);
 	if (avsize == 0)
@@ -970,7 +972,7 @@ tcplike_recv_packet_recv(void *ccb, char *options, int optlen)
 				ACK_DEBUG((LOG_INFO, "Packets %u - %u are FUCKED\n",acknum-len, acknum));
 				continue;
 			}
-			
+
 			while (len>0) {
 				ackthru = _avlist_get(cb, acknum);
 				ACK_DEBUG((LOG_INFO, "Ackthru: %u\n", ackthru));
@@ -980,7 +982,7 @@ tcplike_recv_packet_recv(void *ccb, char *options, int optlen)
 				}
 				acknum--;
 				len--;
-			} 
+			}
 		}
 	}
 
@@ -990,7 +992,7 @@ tcplike_recv_packet_recv(void *ccb, char *options, int optlen)
 
 	if (cb->unacked >= cb->pcb->ack_ratio) {
 		/* Time to send an Ack */
-		
+
 		avsize = dccp_generate_ackvector(cb->pcb, ackvector);
 TCPLIKE_DEBUG((LOG_INFO, "recv_packet avsize %d ackvector %d\n", avsize, ackvector));
 		cb->unacked = 0;

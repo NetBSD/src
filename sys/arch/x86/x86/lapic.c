@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.47.6.1 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: lapic.c,v 1.47.6.2 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.1 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.47.6.2 2015/09/22 12:05:54 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -76,6 +76,8 @@ static void 	lapic_map(paddr_t);
 static void lapic_hwmask(struct pic *, int);
 static void lapic_hwunmask(struct pic *, int);
 static void lapic_setup(struct pic *, struct cpu_info *, int, int, int);
+/* Make it public to call via ddb */
+void	lapic_dump(void);
 
 struct pic local_pic = {
 	.pic_name = "lapic",
@@ -153,9 +155,9 @@ lapic_set_lvt(void)
 
 #ifdef MULTIPROCESSOR
 	if (mp_verbose) {
-		apic_format_redir (device_xname(ci->ci_dev), "prelint", 0, 0,
+		apic_format_redir(device_xname(ci->ci_dev), "prelint", 0, 0,
 		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (device_xname(ci->ci_dev), "prelint", 1, 0,
+		apic_format_redir(device_xname(ci->ci_dev), "prelint", 1, 0,
 		    i82489_readreg(LAPIC_LVINT1));
 	}
 #endif
@@ -194,18 +196,8 @@ lapic_set_lvt(void)
 	}
 
 #ifdef MULTIPROCESSOR
-	if (mp_verbose) {
-		apic_format_redir (device_xname(ci->ci_dev), "timer", 0, 0,
-		    i82489_readreg(LAPIC_LVTT));
-		apic_format_redir (device_xname(ci->ci_dev), "pcint", 0, 0,
-		    i82489_readreg(LAPIC_PCINT));
-		apic_format_redir (device_xname(ci->ci_dev), "lint", 0, 0,
-		    i82489_readreg(LAPIC_LVINT0));
-		apic_format_redir (device_xname(ci->ci_dev), "lint", 1, 0,
-		    i82489_readreg(LAPIC_LVINT1));
-		apic_format_redir (device_xname(ci->ci_dev), "err", 0, 0,
-		    i82489_readreg(LAPIC_LVERR));
-	}
+	if (mp_verbose)
+		lapic_dump();
 #endif
 }
 
@@ -325,11 +317,11 @@ lapic_initclocks(void)
 	 * then set divisor,
 	 * then unmask and set the vector.
 	 */
-	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M);
-	i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg (LAPIC_ICR_TIMER, lapic_tval);
-	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_TIMER_VECTOR);
-	i82489_writereg (LAPIC_EOI, 0);
+	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M);
+	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
+	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_TIMER_VECTOR);
+	i82489_writereg(LAPIC_EOI, 0);
 }
 
 extern unsigned int gettick(void);	/* XXX put in header file */
@@ -362,9 +354,9 @@ lapic_calibrate_timer(struct cpu_info *ci)
 	 * Configure timer to one-shot, interrupt masked,
 	 * large positive number.
 	 */
-	i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_M);
-	i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-	i82489_writereg (LAPIC_ICR_TIMER, 0x80000000);
+	i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_M);
+	i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+	i82489_writereg(LAPIC_ICR_TIMER, 0x80000000);
 
 	x86_disable_intr();
 
@@ -398,10 +390,10 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		lapic_tval = (lapic_per_second * 2) / hz;
 		lapic_tval = (lapic_tval / 2) + (lapic_tval & 0x1);
 
-		i82489_writereg (LAPIC_LVTT, LAPIC_LVTT_TM|LAPIC_LVTT_M
-		    |LAPIC_TIMER_VECTOR);
-		i82489_writereg (LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
-		i82489_writereg (LAPIC_ICR_TIMER, lapic_tval);
+		i82489_writereg(LAPIC_LVTT, LAPIC_LVTT_TM | LAPIC_LVTT_M
+		    | LAPIC_TIMER_VECTOR);
+		i82489_writereg(LAPIC_DCR_TIMER, LAPIC_DCRT_DIV1);
+		i82489_writereg(LAPIC_ICR_TIMER, lapic_tval);
 
 		/*
 		 * Compute fixed-point ratios between cycles and
@@ -409,17 +401,17 @@ lapic_calibrate_timer(struct cpu_info *ci)
 		 * in lapic_delay.
 		 */
 
-		tmp = (1000000 * (uint64_t)1<<32) / lapic_per_second;
+		tmp = (1000000 * (uint64_t)1 << 32) / lapic_per_second;
 		lapic_frac_usec_per_cycle = tmp;
 
-		tmp = (lapic_per_second * (uint64_t)1<<32) / 1000000;
+		tmp = (lapic_per_second * (uint64_t)1 << 32) / 1000000;
 
 		lapic_frac_cycle_per_usec = tmp;
 
 		/*
 		 * Compute delay in cycles for likely short delays in usec.
 		 */
-		for (i=0; i<26; i++)
+		for (i = 0; i < 26; i++)
 			lapic_delaytab[i] = (lapic_frac_cycle_per_usec * i) >>
 			    32;
 
@@ -502,9 +494,9 @@ x86_ipi_init(int target)
 	i82489_writereg(LAPIC_ESR, 0);
 	(void)i82489_readreg(LAPIC_ESR);
 
-	if ((target&LAPIC_DEST_MASK)==0) {
+	if ((target&LAPIC_DEST_MASK)==0)
 		i82489_writereg(LAPIC_ICRHI, target<<LAPIC_ID_SHIFT);
-	}
+
 	i82489_writereg(LAPIC_ICRLO, (target & LAPIC_DEST_MASK) |
 	    LAPIC_DLMODE_INIT | LAPIC_LEVEL_ASSERT );
 	i82489_icr_wait();
@@ -513,13 +505,12 @@ x86_ipi_init(int target)
 	     LAPIC_DLMODE_INIT | LAPIC_TRIGGER_LEVEL | LAPIC_LEVEL_DEASSERT);
 	i82489_icr_wait();
 
-	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0)
 		return EBUSY;
-	}
+
 	esr = i82489_readreg(LAPIC_ESR);
-	if (esr != 0) {
+	if (esr != 0)
 		aprint_debug("x86_ipi_init: ESR %08x\n", esr);
-	}
 
 	return 0;
 }
@@ -538,13 +529,12 @@ x86_ipi_startup(int target, int vec)
 	    LAPIC_LEVEL_ASSERT);
 	i82489_icr_wait();
 
-	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0) {
+	if ((i82489_readreg(LAPIC_ICRLO) & LAPIC_DLSTAT_BUSY) != 0)
 		return EBUSY;
-	}
+
 	esr = i82489_readreg(LAPIC_ESR);
-	if (esr != 0) {
+	if (esr != 0)
 		aprint_debug("x86_ipi_startup: ESR %08x\n", esr);
-	}
 
 	return 0;
 }
@@ -615,4 +605,21 @@ static void
 lapic_setup(struct pic *pic, struct cpu_info *ci,
     int pin, int idtvec, int type)
 {
+}
+
+void
+lapic_dump(void)
+{
+	struct cpu_info *ci = curcpu();
+
+	apic_format_redir(device_xname(ci->ci_dev), "timer", 0, 0,
+	    i82489_readreg(LAPIC_LVTT));
+	apic_format_redir(device_xname(ci->ci_dev), "pcint", 0, 0,
+	    i82489_readreg(LAPIC_PCINT));
+	apic_format_redir(device_xname(ci->ci_dev), "lint", 0, 0,
+	    i82489_readreg(LAPIC_LVINT0));
+	apic_format_redir(device_xname(ci->ci_dev), "lint", 1, 0,
+	    i82489_readreg(LAPIC_LVINT1));
+	apic_format_redir(device_xname(ci->ci_dev), "err", 0, 0,
+	    i82489_readreg(LAPIC_LVERR));
 }

@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.13.2.1 2015/06/06 14:39:55 skrll Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.13.2.1 2015/06/06 14:39:55 skrll Exp $ */
+/*	$Id: at91dbgu.c,v 1.13.2.2 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.13.2.2 2015/09/22 12:05:37 skrll Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.13.2.1 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.13.2.2 2015/09/22 12:05:37 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -335,7 +335,7 @@ at91dbgu_param(struct tty *tp, struct termios *t)
 	s = splserial();
 
 	sc->sc_brgr = (AT91_MSTCLK / 16 + t->c_ospeed / 2) / t->c_ospeed;
-	
+
 	/* And copy to tty. */
 	tp->t_ispeed = 0;
 	tp->t_ospeed = t->c_ospeed;
@@ -582,7 +582,7 @@ at91dbgu_open(dev_t dev, int flag, int mode, struct lwp *l)
 
 		splx(s2);
 	}
-	
+
 	splx(s);
 
 	error = ttyopen(tp, COMDIALOUT(dev), ISSET(flag, O_NONBLOCK));
@@ -643,7 +643,7 @@ at91dbgu_read(dev_t dev, struct uio *uio, int flag)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_read)(tp, uio, flag));
 }
 
@@ -655,7 +655,7 @@ at91dbgu_write(dev_t dev, struct uio *uio, int flag)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_write)(tp, uio, flag));
 }
 
@@ -667,7 +667,7 @@ at91dbgu_poll(dev_t dev, int events, struct lwp *l)
 
 	if (COM_ISALIVE(sc) == 0)
 		return (EIO);
- 
+
 	return ((*tp->t_linesw->l_poll)(tp, events, l));
 }
 
@@ -718,7 +718,7 @@ at91dbgu_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case TIOCSFLAGS:
 		error = kauth_authorize_device_tty(l->l_cred,
-		    KAUTH_DEVICE_TTY_PRIVSET, tp); 
+		    KAUTH_DEVICE_TTY_PRIVSET, tp);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -910,7 +910,7 @@ at91dbgu_cn_getc(dev_t dev)
 	if (!db_active)
 #endif
 	{
-		int cn_trapped = 0; /* unused */
+		int cn_trapped __unused = 0;
 
 		cn_check_magic(dev, c, at91dbgu_cnm_state);
 	}
@@ -1007,7 +1007,7 @@ at91dbgu_rxsoft(struct at91dbgu_softc *sc, struct tty *tp)
 	if (cc != scc) {
 		sc->sc_rbget = get;
 		s = splserial();
-		
+
 		cc = sc->sc_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
 		if (cc >= 1) {

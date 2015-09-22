@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.60.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: nd6.h,v 1.60.2.2 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -417,12 +417,12 @@ void nd6_setmtu(struct ifnet *);
 void nd6_llinfo_settimer(struct llinfo_nd6 *, long);
 void nd6_timer(void *);
 void nd6_purge(struct ifnet *, struct in6_ifextra *);
-void nd6_nud_hint(struct rtentry *, struct in6_addr *, int);
+void nd6_nud_hint(struct rtentry *);
 int nd6_resolve(struct ifnet *, struct rtentry *,
 	struct mbuf *, struct sockaddr *, u_char *);
 void nd6_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 int nd6_ioctl(u_long, void *, struct ifnet *);
-struct rtentry *nd6_cache_lladdr(struct ifnet *, struct in6_addr *,
+void nd6_cache_lladdr(struct ifnet *, struct in6_addr *,
 	char *, int, int, int);
 int nd6_output(struct ifnet *, struct ifnet *, struct mbuf *,
 	const struct sockaddr_in6 *, struct rtentry *);

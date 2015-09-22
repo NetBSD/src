@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.56 2013/03/29 01:08:17 christos Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.56.12.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.56 2013/03/29 01:08:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.56.12.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,7 +134,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 		syscallarg(lwpid_t *) new_lwp;
 	} */
 	struct proc *p = l->l_proc;
-	ucontext_t *newuc = NULL;
+	ucontext_t *newuc;
 	lwpid_t lid;
 	int error;
 

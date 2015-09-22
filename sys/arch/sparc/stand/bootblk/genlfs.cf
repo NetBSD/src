@@ -1,4 +1,4 @@
-#	$NetBSD: genlfs.cf,v 1.2 2013/06/10 10:26:22 hannken Exp $
+#	$NetBSD: genlfs.cf,v 1.2.10.1 2015/09/22 12:05:52 skrll Exp $
 
 #	Copyright (c) 2010 Eduardo Horvath.
 #	All rights reserved.
@@ -65,14 +65,14 @@ member 	if1_daddr	if_daddr
 #
 # LFS v2 ifile
 #
-struct	ifile
+struct	ifile32
 member	if2_version	if_version
 member 	if2_daddr	if_daddr
 
 #
-# LFS v1 dinode
+# LFS v1/v2 dinode
 #
-struct  ulfs1_dinode
+struct  lfs32_dinode
 member	di_inumber	di_inumber
 
 define	lfs_magic_value		LFS_MAGIC

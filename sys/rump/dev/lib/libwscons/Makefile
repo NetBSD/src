@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2014/03/13 01:48:08 pooka Exp $
+#	$NetBSD: Makefile,v 1.4.6.1 2015/09/22 12:06:14 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/wscons
@@ -10,7 +10,7 @@ SRCS=   wsevent.c wskbd.c wskbdutil.c wsmouse.c
 
 SRCS+=	wscons_component.c
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs -I${.CURDIR}/opt
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpvfs
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

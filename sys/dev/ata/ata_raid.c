@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid.c,v 1.35 2012/10/27 17:18:14 chs Exp $	*/
+/*	$NetBSD: ata_raid.c,v 1.35.14.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.35 2012/10/27 17:18:14 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.35.14.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -64,14 +64,13 @@ __KERNEL_RCSID(0, "$NetBSD: ata_raid.c,v 1.35 2012/10/27 17:18:14 chs Exp $");
 #include <dev/ata/ata_raidvar.h>
 
 #include "locators.h"
+#include "ioconf.h"
 
 #ifdef ATA_RAID_DEBUG
 #define	DPRINTF(x)	printf x
 #else
 #define	DPRINTF(x)	/* nothing */
 #endif
-
-void		ataraidattach(int);
 
 static int	ataraid_match(device_t, cfdata_t, void *);
 static void	ataraid_attach(device_t, device_t, void *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.52 2014/01/25 15:16:50 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.52.6.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -42,13 +42,18 @@
 #define	_MIPS_VMPARAM_H_
 
 #ifdef _KERNEL_OPT
-#include "opt_multiprocessor.h"
 #include "opt_cputype.h"
+#include "opt_multiprocessor.h"
+#include "opt_modular.h"
 #endif
 
 /*
  * Machine dependent VM constants for MIPS.
  */
+#if !defined(_RUMPKERNEL) && (defined(MODULAR) || defined(_MODULE))
+#define MAX_PAGE_SIZE	16384
+#define MIN_PAGE_SIZE	4096
+#endif
 
 /*
  * We normally use a 4K page but may use 16K on MIPS systems.

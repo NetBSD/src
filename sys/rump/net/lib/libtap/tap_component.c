@@ -1,4 +1,4 @@
-/*	$NetBSD: tap_component.c,v 1.1.2.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: tap_component.c,v 1.1.2.3 2015/09/22 12:06:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Wei Liu.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.2 2015/06/06 14:40:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.3 2015/09/22 12:06:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -36,9 +36,9 @@ __KERNEL_RCSID(0, "$NetBSD: tap_component.c,v 1.1.2.2 2015/06/06 14:40:30 skrll 
 #include "rump_net_private.h"
 #include "rump_vfs_private.h"
 
-CFDRIVER_DECL(tap, DV_IFNET, NULL);
+#include "ioconf.h"
 
-void tapattach(int);
+CFDRIVER_DECL(tap, DV_IFNET, NULL);
 
 RUMP_COMPONENT(RUMP_COMPONENT_NET_IF)
 {

@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.70 2014/08/10 06:22:06 matt Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.70.4.1 2015/09/22 12:06:08 skrll Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.70 2014/08/10 06:22:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.70.4.1 2015/09/22 12:06:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -371,7 +371,6 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 	int	 	 error;
 	int	 	 len;
 
-	error = ENAMETOOLONG;
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
 	/* XXX - we use values from vmspace, since dsl says that ru figures
@@ -419,7 +418,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	struct timeval rt;
 	struct vmspace	*vm;
 	struct kinfo_proc2 ki;
-	int error = 0;
+	int error;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 

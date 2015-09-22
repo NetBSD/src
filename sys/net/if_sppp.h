@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sppp.h,v 1.27 2010/04/20 14:32:03 jmcneill Exp $	*/
+/*	$NetBSD: if_sppp.h,v 1.27.36.1 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,9 @@
 #define _NET_IF_SPPP_H_
 
 /* ioctls used by the if_spppsubr.c driver */
+
+#include <sys/ioccom.h>
+
 
 #define	SPPP_AUTHPROTO_NONE	0
 #define SPPP_AUTHPROTO_PAP	1

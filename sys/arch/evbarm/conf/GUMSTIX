@@ -1,4 +1,4 @@
-#	$NetBSD: GUMSTIX,v 1.84 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: GUMSTIX,v 1.84.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 #	GUMSTIX -- Gumstix. Inc. gumstix platforms kernel
 #
@@ -136,7 +136,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 #options 	USBVERBOSE	# verbose USB device autoconfig messages
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages

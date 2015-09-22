@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.119 2014/03/26 17:53:36 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.119.6.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura, All rights reserved.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119 2014/03/26 17:53:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.119.6.1 2015/09/22 12:05:43 skrll Exp $");
 
 #include "opt_vr41xx.h"
 #include "opt_tx39xx.h"
@@ -478,55 +478,19 @@ cpuname_printf(const char *fmt, ...)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-	size_t i;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
 	cpu_setmodel("%s (%s)", platid_name(&platid), hpcmips_cpuname);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-	if (bootverbose) {
-		/* show again when verbose mode */
-		printf("total memory banks = %d\n", mem_cluster_cnt);
-		for (i = 0; i < mem_cluster_cnt; i++) {
-			printf("memory bank %zu = "
-			    "0x%08"PRIxPADDR" %"PRIdPSIZE"KB(0x%08"PRIxPSIZE")\n", i,
-			    (paddr_t)mem_clusters[i].start,
-			    (psize_t)mem_clusters[i].size/1024,
-			    (psize_t)mem_clusters[i].size);
-		}
+
+	/* show again when verbose mode */
+	aprint_verbose("total memory banks = %d\n", mem_cluster_cnt);
+	for (size_t i = 0; i < mem_cluster_cnt; i++) {
+		aprint_verbose("memory bank %zu = "
+		    "%#08"PRIxPADDR" %"PRIdPSIZE"KB(%#"PRIxPSIZE")\n", i,
+		    (paddr_t)mem_clusters[i].start,
+		    (psize_t)mem_clusters[i].size/1024,
+		    (psize_t)mem_clusters[i].size);
 	}
 
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.
-	 */
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.h,v 1.11 2011/03/15 07:39:22 matt Exp $	*/
+/*	$NetBSD: cache.h,v 1.11.32.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -34,6 +34,9 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _MIPS_CACHE_H_
+#define _MIPS_CACHE_H_
 
 /*
  * Cache operations.
@@ -287,3 +290,5 @@ void	mips_config_cache(void);
 void	mips_dcache_compute_align(void);
 
 #include <mips/cache_mipsNN.h>
+
+#endif /* _MIPS_CACHE_H_ */

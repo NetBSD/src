@@ -1,4 +1,4 @@
-/*	$NetBSD: sdvar.h,v 1.35.2.1 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: sdvar.h,v 1.35.2.2 2015/09/22 12:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -49,7 +49,9 @@
 #ifndef _DEV_SCSIPI_SDVAR_H_
 #define _DEV_SCSIPI_SDVAR_H_
 
+#ifdef _KERNEL_OPT
 #include "opt_scsi.h"
+#endif
 
 #include <sys/rndsource.h>
 

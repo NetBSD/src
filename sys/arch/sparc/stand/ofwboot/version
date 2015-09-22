@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.20 2013/12/08 14:41:28 palle Exp $
+$NetBSD: version,v 1.20.6.1 2015/09/22 12:05:52 skrll Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -21,3 +21,4 @@ is taken as the current.
 1.15:	Properly close the firmware handle before starting the kernel
 1.16:	Add support to boot with root on cd9660
 1.17:	Add support for sun4v architecture
+1.18:	Fix loading of kernels with huge .bss

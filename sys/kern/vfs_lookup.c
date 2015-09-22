@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.201.6.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.201.6.2 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.201.6.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.201.6.2 2015/09/22 12:06:07 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -789,7 +791,7 @@ namei_follow(struct namei_state *state, int inhibitmagic,
 		/* Keep absolute symbolic links inside emulation root */
 		searchdir = ndp->ni_erootdir;
 		if (searchdir == NULL ||
-		    (ndp->ni_pnbuf[1] == '.' 
+		    (ndp->ni_pnbuf[1] == '.'
 		     && ndp->ni_pnbuf[2] == '.'
 		     && ndp->ni_pnbuf[3] == '/')) {
 			ndp->ni_erootdir = NULL;
@@ -890,7 +892,7 @@ lookup_parsepath(struct namei_state *state)
 
 /*
  * Call VOP_LOOKUP for a single lookup; return a new search directory
- * (used when crossing mountpoints up or searching union mounts down) and 
+ * (used when crossing mountpoints up or searching union mounts down) and
  * the found object, which for create operations may be NULL on success.
  */
 static int
@@ -1822,7 +1824,7 @@ namei_simple_kernel(const char *path, namei_simple_flags_t sflags,
 }
 
 int
-nameiat_simple_kernel(struct vnode *dvp, const char *path, 
+nameiat_simple_kernel(struct vnode *dvp, const char *path,
 	namei_simple_flags_t sflags, struct vnode **vp_ret)
 {
 	struct nameidata nd;

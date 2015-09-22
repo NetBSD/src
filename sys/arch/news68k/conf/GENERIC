@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.125 2014/11/16 16:01:42 manu Exp $
+# $NetBSD: GENERIC,v 1.125.2.1 2015/09/22 12:05:48 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/news68k/conf/std.news68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.125.2.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -55,7 +55,6 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Debugging options
 #options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	DEBUG			# extra kernel debugging support
-#options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# kernel dynamic debugger
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'

@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_rename.c,v 1.6 2013/11/23 16:35:32 rmind Exp $	*/
+/*	$NetBSD: tmpfs_rename.c,v 1.6.6.1 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.6 2013/11/23 16:35:32 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_rename.c,v 1.6.6.1 2015/09/22 12:06:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
@@ -425,7 +425,7 @@ tmpfs_gro_lookup(struct mount *mp, struct vnode *dvp,
 {
 	struct tmpfs_dirent *dirent, **dep_ret = de_ret;
 	struct vnode *vp;
-	int error;
+	int error __diagused;
 
 	(void)mp;
 	KASSERT(mp != NULL);
@@ -439,27 +439,15 @@ tmpfs_gro_lookup(struct mount *mp, struct vnode *dvp,
 	if (dirent == NULL)
 		return ENOENT;
 
-	mutex_enter(&dirent->td_node->tn_vlock);
-	error = tmpfs_vnode_get(mp, dirent->td_node, &vp);
-	/* Note: tmpfs_vnode_get always releases dirent->td_node->tn_vlock.  */
+	error = vcache_get(mp, &dirent->td_node, sizeof(dirent->td_node), &vp);
 	if (error)
 		return error;
-
 	KASSERT(vp != NULL);
-	KASSERT(VOP_ISLOCKED(vp) == LK_EXCLUSIVE);
 
 	/*
-	 * tmpfs_vnode_get returns this locked for us, which would be
-	 * convenient but for lossage in other file systems.  So, for
-	 * hysterical raisins, we have to unlock it here.  The caller
-	 * will lock it again, and we don't rely on any interesting
-	 * invariants in the interim, beyond that it won't vanish from
-	 * under us, which it won't because it's referenced.
-	 *
 	 * XXX Once namei is fixed, we can change the genfs_rename
-	 * protocol so that this unlock is not necessary.
+	 * protocol so that we have to lock vp here.
 	 */
-	VOP_UNLOCK(vp);
 
 	*dep_ret = dirent;
 	*vp_ret = vp;
@@ -491,7 +479,7 @@ tmpfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
     struct vnode *fdvp, struct vnode *tdvp,
     struct vnode **intermediate_node_ret)
 {
-	struct vnode *vp;
+	struct vnode *vp, *ovp;
 	struct tmpfs_node *dnode;
 	int error;
 
@@ -549,15 +537,20 @@ tmpfs_gro_genealogy(struct mount *mp, kauth_cred_t cred,
 		}
 
 		/* Neither -- keep ascending the family tree.  */
-		mutex_enter(&dnode->tn_vlock);
-		vput(vp);
-		vp = NULL;	/* Just in case, for the kassert above...  */
-		error = tmpfs_vnode_get(mp, dnode, &vp);
+		ovp = vp;
+		vp = NULL;
+		error = vcache_get(mp, &dnode, sizeof(dnode), &vp);
+		vput(ovp);
 		if (error)
 			return error;
+		error = vn_lock(vp, LK_EXCLUSIVE);
+		if (error) {
+			vrele(vp);
+			return error;
+		}
 
 		/*
-		 * tmpfs_vnode_get only guarantees that dnode will not
+		 * vcache_get only guarantees that dnode will not
 		 * be freed while we get a vnode for it.  It does not
 		 * preserve any other invariants, so we must check
 		 * whether the parent has been removed in the meantime.

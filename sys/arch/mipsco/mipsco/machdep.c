@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.78 2014/06/08 07:01:30 he Exp $	*/
+/*	$NetBSD: machdep.c,v 1.78.4.1 2015/09/22 12:05:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,66 +39,48 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78 2014/06/08 07:01:30 he Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.78.4.1 2015/09/22 12:05:48 skrll Exp $");
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
+#include "opt_execfmt.h"
+
+#include "zsc.h"			/* XXX */
+#include "com.h"			/* XXX */
+#include "ksyms.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/signalvar.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/buf.h>
-#include <sys/reboot.h>
+#include <sys/boot_flag.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/callout.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/msgbuf.h>
-#include <sys/ioctl.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/exec.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
+#include <sys/intr.h>
 #include <sys/kcore.h>
 #include <sys/ksyms.h>
-#include <sys/cpu.h>
+#include <sys/kernel.h>
+#include <sys/reboot.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <ufs/mfs/mfs_extern.h>		/* mfs_initminiroot() */
 
-#include <machine/cpu.h>
-#include <machine/reg.h>
-#include <machine/psl.h>
-#include <machine/pte.h>
+#include <dev/clock_subr.h>
+#include <dev/cons.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>
 #endif
 
-#include <machine/intr.h>
 #include <machine/mainboard.h>
 #include <machine/sysconf.h>
 #include <machine/autoconf.h>
 #include <machine/bootinfo.h>
 #include <machine/prom.h>
-#include <dev/clock_subr.h>
-#include <dev/cons.h>
-
-#include <sys/boot_flag.h>
-
-#include "opt_execfmt.h"
-
-#include "zsc.h"			/* XXX */
-#include "com.h"			/* XXX */
-#include "ksyms.h"
 
 /* maps for VM objects */
 
@@ -328,41 +310,7 @@ mach_init(int argc, char *argv[], char *envp[], u_int bim, char *bip)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, true, false, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.
-	 */
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 /*

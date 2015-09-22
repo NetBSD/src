@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214 2014/05/11 07:53:28 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.214.4.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2014/05/11 07:53:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214.4.1 2015/09/22 12:05:47 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -115,6 +115,8 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214 2014/05/11 07:53:28 skrll Exp $");
 #include "opt_cputype.h"
 #include "opt_multiprocessor.h"
 #include "opt_mips_cache.h"
+
+#define __MUTEX_PRIVATE
 
 #ifdef MULTIPROCESSOR
 #define PMAP_NO_PV_UNCACHED
@@ -265,31 +267,18 @@ struct pmap_kernel kernel_pmap_store = {
 	.kernel_pmap = {
 		.pm_count = 1,
 		.pm_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef),
-#ifdef MULTIPROCESSOR
-		.pm_active = 1,
-		.pm_onproc = 1,
-#endif
+		.pm_minaddr = VM_MIN_KERNEL_ADDRESS,
+		.pm_maxaddr = VM_MAX_KERNEL_ADDRESS,
 	},
 };
 struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 
-paddr_t mips_avail_start;	/* PA of first available physical page */
-paddr_t mips_avail_end;		/* PA of last available physical page */
-vaddr_t mips_virtual_end;	/* VA of last avail page (end of kernel AS) */
-vaddr_t iospace;		/* VA of start of I/O space, if needed  */
-vsize_t iospace_size = 0;	/* Size of (initial) range of I/O addresses */
+struct pmap_limits pmap_limits = {	/* VA and PA limits */
+	.virtual_start = VM_MIN_KERNEL_ADDRESS,
+};
 
 pt_entry_t	*Sysmap;		/* kernel pte table */
 unsigned int	Sysmapsize;		/* number of pte's in Sysmap */
-
-#ifdef PMAP_POOLPAGE_DEBUG
-struct poolpage_info {
-	vaddr_t base;
-	vaddr_t size;
-	vaddr_t hint;
-	pt_entry_t *sysmap;
-} poolpage;
-#endif
 
 static void pmap_pvlist_lock_init(void);
 
@@ -375,12 +364,14 @@ pmap_page_syncicache(struct vm_page *pg)
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 #ifdef MULTIPROCESSOR
 	pv_entry_t pv = &md->pvh_first;
-	uint32_t onproc = 0;
+	kcpuset_t *onproc;
+	kcpuset_create(&onproc, true);
+	KASSERT(onproc != NULL);
 	(void)PG_MD_PVLIST_LOCK(md, false);
 	if (pv->pv_pmap != NULL) {
 		for (; pv != NULL; pv = pv->pv_next) {
-			onproc |= pv->pv_pmap->pm_onproc;
-			if (onproc == cpus_running)
+			kcpuset_merge(onproc, pv->pv_pmap->pm_onproc);
+			if (kcpuset_match(onproc, cpus_running))
 				break;
 		}
 	}
@@ -388,6 +379,7 @@ pmap_page_syncicache(struct vm_page *pg)
 	kpreempt_disable();
 	pmap_tlb_syncicache(trunc_page(md->pvh_first.pv_va), onproc);
 	kpreempt_enable();
+	kcpuset_destroy(onproc);
 #else
 	if (MIPS_HAS_R4K_MMU) {
 		if (PG_MD_CACHED_P(md)) {
@@ -485,6 +477,15 @@ pmap_bootstrap(void)
 
 	pmap_page_colormask = (uvmexp.ncolors -1) << PAGE_SHIFT;
 
+#ifdef MULTIPROCESSOR
+	pmap_t pm = pmap_kernel();
+	kcpuset_create(&pm->pm_onproc, true);
+	kcpuset_create(&pm->pm_active, true);
+	KASSERT(pm->pm_onproc != NULL);
+	KASSERT(pm->pm_active != NULL);
+	kcpuset_set(pm->pm_onproc, cpu_number());
+	kcpuset_set(pm->pm_active, cpu_number());
+#endif
 	pmap_tlb_info_init(&pmap_tlb0_info);		/* init the lock */
 
 	/*
@@ -503,7 +504,7 @@ pmap_bootstrap(void)
 	buf_setvalimit(bufsz);
 
 	Sysmapsize = (VM_PHYS_SIZE + (ubc_nwins << ubc_winshift) +
-	    bufsz + 16 * NCARGS + pager_map_size + iospace_size) / NBPG +
+	    bufsz + 16 * NCARGS + pager_map_size) / NBPG +
 	    (maxproc * UPAGES) + nkmempages;
 #ifdef DEBUG
 	{
@@ -517,10 +518,6 @@ pmap_bootstrap(void)
 #endif
 #ifdef KSEG2IOBUFSIZE
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
-#endif
-#ifdef PMAP_POOLPAGE_DEBUG
-	poolpage.size = nkmempages + MCLBYTES * nmbclusters;
-	Sysmapsize += poolpage.size;
 #endif
 #ifdef _LP64
 	/*
@@ -541,42 +538,28 @@ pmap_bootstrap(void)
 	 * for us.  Must do this before uvm_pageboot_alloc()
 	 * can be called.
 	 */
-	mips_avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
-	mips_avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
-	mips_virtual_end = VM_MIN_KERNEL_ADDRESS + (vaddr_t)Sysmapsize * NBPG;
+	pmap_limits.avail_start = ptoa(VM_PHYSMEM_PTR(0)->start);
+	pmap_limits.avail_end = ptoa(VM_PHYSMEM_PTR(vm_nphysseg - 1)->end);
+	pmap_limits.virtual_end = pmap_limits.virtual_start + (vaddr_t)Sysmapsize * NBPG;
 
 #ifndef _LP64
 	/* Need space for I/O (not in K1SEG) ? */
 
-	if (mips_virtual_end > VM_MAX_KERNEL_ADDRESS) {
-		mips_virtual_end = VM_MAX_KERNEL_ADDRESS;
+	if (pmap_limits.virtual_end > VM_MAX_KERNEL_ADDRESS) {
+		pmap_limits.virtual_end = VM_MAX_KERNEL_ADDRESS;
 		Sysmapsize =
-		    (VM_MAX_KERNEL_ADDRESS -
-		     (VM_MIN_KERNEL_ADDRESS + iospace_size)) / NBPG;
-	}
-
-	if (iospace_size) {
-		iospace = mips_virtual_end - iospace_size;
-#ifdef DEBUG
-		printf("io: %#"PRIxVADDR".%#"PRIxVADDR" %#"PRIxVADDR"\n",
-		    iospace, iospace_size, mips_virtual_end);
-#endif
+		    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) / NBPG;
 	}
 #endif
 	pmap_pvlist_lock_init();
 
 	/*
 	 * Now actually allocate the kernel PTE array (must be done
-	 * after mips_virtual_end is initialized).
+	 * after pmap_limits.virtual_end is initialized).
 	 */
 	Sysmap = (pt_entry_t *)
 	    uvm_pageboot_alloc(sizeof(pt_entry_t) * Sysmapsize);
 
-#ifdef PMAP_POOLPAGE_DEBUG
-	mips_virtual_end -= poolpage.size;
-	poolpage.base = mips_virtual_end;
-	poolpage.sysmap = Sysmap + atop(poolpage.size);
-#endif
 	/*
 	 * Initialize the pools.
 	 */
@@ -612,8 +595,8 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
-	*vstartp = VM_MIN_KERNEL_ADDRESS;	/* kernel is in K0SEG */
-	*vendp = trunc_page(mips_virtual_end);	/* XXX need pmap_growkernel() */
+	*vstartp = trunc_page(pmap_limits.virtual_start);
+	*vendp = trunc_page(pmap_limits.virtual_end);
 }
 
 /*
@@ -753,7 +736,7 @@ pmap_init(void)
 	 * allocate enough VA so we can map pages with the right color
 	 * (to avoid cache alias problems).
 	 */
-	if (mips_avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
+	if (pmap_limits.avail_end > MIPS_KSEG1_START - MIPS_KSEG0_START) {
 		curcpu()->ci_pmap_dstbase = uvm_km_alloc(kernel_map,
 		    uvmexp.ncolors * PAGE_SIZE, 0, UVM_KMF_VAONLY);
 		KASSERT(curcpu()->ci_pmap_dstbase);
@@ -812,8 +795,17 @@ pmap_create(void)
 	memset(pmap, 0, PMAP_SIZE);
 
 	pmap->pm_count = 1;
+	pmap->pm_minaddr = VM_MIN_ADDRESS;
+	pmap->pm_maxaddr = VM_MAXUSER_ADDRESS;
 
 	pmap_segtab_init(pmap);
+
+#ifdef MULTIPROCESSOR
+	kcpuset_create(&pmap->pm_onproc, true);
+	kcpuset_create(&pmap->pm_active, true);
+	KASSERT(pmap->pm_onproc != NULL);
+	KASSERT(pmap->pm_active != NULL);
+#endif
 
 	return pmap;
 }
@@ -839,7 +831,14 @@ pmap_destroy(pmap_t pmap)
 	PMAP_COUNT(destroy);
 	kpreempt_disable();
 	pmap_tlb_asid_release_all(pmap);
-	pmap_segtab_destroy(pmap);
+	pmap_segtab_destroy(pmap, NULL, 0);
+
+#ifdef MULTIPROCESSOR
+	kcpuset_destroy(pmap->pm_onproc);
+	kcpuset_destroy(pmap->pm_active);
+	pmap->pm_onproc = NULL;
+	pmap->pm_active = NULL;
+#endif
 
 	pool_put(&pmap_pmap_pool, pmap);
 	kpreempt_enable();
@@ -890,11 +889,9 @@ pmap_deactivate(struct lwp *l)
 
 	kpreempt_disable();
 	KASSERT(l == curlwp || l->l_cpu == curlwp->l_cpu);
+	curcpu()->ci_pmap_user_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
 #ifdef _LP64
-	curcpu()->ci_pmap_segtab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
-	curcpu()->ci_pmap_seg0tab = NULL;
-#else
-	curcpu()->ci_pmap_seg0tab = (void *)(MIPS_KSEG2_START + 0x1eadbeef);
+	curcpu()->ci_pmap_user_seg0tab = NULL;
 #endif
 	pmap_tlb_asid_deactivate(l->l_proc->p_vmspace->vm_map.pmap);
 	kpreempt_enable();
@@ -980,7 +977,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		/* remove entries from kernel pmap */
 		PMAP_COUNT(remove_kernel_calls);
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= mips_virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= pmap_limits.virtual_end)
 			panic("pmap_remove: kva not in range");
 #endif
 		pt_entry_t *pte = kvtopte(sva);
@@ -1181,7 +1178,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 * read-only.
 		 */
 #ifdef PARANOIADIAG
-		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= mips_virtual_end)
+		if (sva < VM_MIN_KERNEL_ADDRESS || eva >= pmap_limits.virtual_end)
 			panic("pmap_protect: kva not in range");
 #endif
 		pte = kvtopte(sva);
@@ -1375,7 +1372,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (!good_color)
 			PMAP_COUNT(kernel_mappings_bad);
 #if defined(DEBUG) || defined(DIAGNOSTIC) || defined(PARANOIADIAG)
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= mips_virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS || va >= pmap_limits.virtual_end)
 			panic("pmap_enter: kva %#"PRIxVADDR"too big", va);
 #endif
 	} else {
@@ -1716,9 +1713,9 @@ pmap_remove_all(struct pmap *pmap)
 	 * tlb_invalidate_addrs().
 	 */
 #ifdef MULTIPROCESSOR
-	const uint32_t cpu_mask = 1 << cpu_index(curcpu());
-	KASSERT((pmap->pm_onproc & ~cpu_mask) == 0);
-	if (pmap->pm_onproc & cpu_mask)
+	// This should be the last CPU with this pmap onproc
+	KASSERT(!kcpuset_isotherset(pmap->pm_onproc, cpu_index(curcpu())));
+	if (kcpuset_isset(pmap->pm_onproc, cpu_index(curcpu())))
 		pmap_tlb_asid_deactivate(pmap);
 #endif
 	pmap_tlb_asid_release_all(pmap);
@@ -1755,7 +1752,7 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 	if (pmap == pmap_kernel()) {
 		/* change entries in kernel pmap */
 #ifdef PARANOIADIAG
-		if (va < VM_MIN_KERNEL_ADDRESS || va >= mips_virtual_end)
+		if (va < VM_MIN_KERNEL_ADDRESS || va >= pmap_limits.virtual_end)
 			panic("pmap_unwire");
 #endif
 		pte = kvtopte(va);
@@ -1818,7 +1815,7 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 		if (MIPS_KSEG1_P(va))
 			panic("pmap_extract: kseg1 address %#"PRIxVADDR"", va);
 #endif
-		if (va >= mips_virtual_end)
+		if (va >= pmap_limits.virtual_end)
 			panic("pmap_extract: illegal kernel mapped address %#"PRIxVADDR"", va);
 		pte = kvtopte(va);
 		kpreempt_disable();
@@ -2242,7 +2239,7 @@ again:
 			    pmap, va);
 #endif
 		if (__predict_true(apv == NULL)) {
-#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(LOCKDEBUG)
 			/*
 			 * To allocate a PV, we have to release the PVLIST lock
 			 * so get the page generation.  We allocate the PV, and
@@ -2253,7 +2250,7 @@ again:
 			apv = (pv_entry_t)pmap_pv_alloc();
 			if (apv == NULL)
 				panic("pmap_enter_pv: pmap_pv_alloc() failed");
-#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG) || defined(LOCKDEBUG)
+#if defined(MULTIPROCESSOR) || !defined(_LP64) || defined(LOCKDEBUG)
 #ifdef MULTIPROCESSOR
 			/*
 			 * If the generation has changed, then someone else
@@ -2408,6 +2405,7 @@ pmap_pvlist_lock_init(void)
 	if (sizeof(kmutex_t) > cache_line_size) {
 		cache_line_size = roundup2(sizeof(kmutex_t), cache_line_size);
 	}
+	memset((void *)lock_page, 0, PAGE_SIZE);
 	const size_t nlocks = PAGE_SIZE / cache_line_size;
 	KASSERT((nlocks & (nlocks - 1)) == 0);
 	/*
@@ -2415,7 +2413,7 @@ pmap_pvlist_lock_init(void)
 	 */
 	for (size_t i = 0; i < nlocks; lock_va += cache_line_size, i++) {
 		kmutex_t * const lock = (kmutex_t *)lock_va;
-		mutex_init(lock, MUTEX_DEFAULT, IPL_VM);
+		mutex_init(lock, MUTEX_DEFAULT, IPL_HIGH);
 		pli->pli_locks[i] = lock;
 	}
 	pli->pli_lock_mask = nlocks - 1;
@@ -2447,9 +2445,16 @@ pmap_pvlist_lock(struct vm_page_md *md, bool list_change)
 		}
 	}
 
+	KASSERTMSG(lock >= pli->pli_locks[0],
+	    "lock %p < start %p", lock, pli->pli_locks);
+	KASSERTMSG(lock <= pli->pli_locks[pli->pli_lock_mask],
+	    "lock %p > end %p", lock, &pli->pli_locks[pli->pli_lock_mask]);
+
 	/*
 	 * Now finally lock the pvlists.
 	 */
+	KASSERTMSG(lock->mtx_ipl._spl == IPL_HIGH,
+	    "%p ipl %d", lock, lock->mtx_ipl._spl);
 	mutex_spin_enter(lock);
 
 	/*
@@ -2469,7 +2474,7 @@ pmap_pvlist_lock(struct vm_page_md *md, bool list_change)
 static void
 pmap_pvlist_lock_init(void)
 {
-	mutex_init(&pmap_pvlist_mutex, MUTEX_DEFAULT, IPL_VM);
+	mutex_init(&pmap_pvlist_mutex, MUTEX_DEFAULT, IPL_HIGH);
 }
 #endif /* MULTIPROCESSOR */
 
@@ -2591,31 +2596,6 @@ mips_pmap_map_poolpage(paddr_t pa)
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	pmap_set_mdpage_attributes(md, PG_MD_POOLPAGE);
 
-#ifdef PMAP_POOLPAGE_DEBUG
-	KASSERT((poolpage.hint & MIPS_CACHE_ALIAS_MASK) == 0);
-	vaddr_t va_offset = poolpage.hint + mips_cache_indexof(pa);
-	pt_entry_t *pte = poolpage.sysmap + atop(va_offset);
-	const size_t va_inc = MIPS_CACHE_ALIAS_MASK + PAGE_SIZE;
-	const size_t pte_inc = atop(va_inc);
-
-	for (; va_offset < poolpage.size;
-	     va_offset += va_inc, pte += pte_inc) {
-		if (!mips_pg_v(pte->pt_entry))
-			break;
-	}
-	if (va_offset >= poolpage.size) {
-		for (va_offset -= poolpage.size, pte -= atop(poolpage.size);
-		     va_offset < poolpage.hint;
-		     va_offset += va_inc, pte += pte_inc) {
-			if (!mips_pg_v(pte->pt_entry))
-				break;
-		}
-	}
-	KASSERT(!mips_pg_v(pte->pt_entry));
-	va = poolpage.base + va_offset;
-	poolpage.hint = roundup2(va_offset + 1, va_inc);
-	pmap_kenter_pa(va, pa, VM_PROT_READ|VM_PROT_WRITE, 0);
-#else
 #ifdef _LP64
 	KASSERT(mips_options.mips3_xkphys_cached);
 	va = MIPS_PHYS_TO_XKPHYS_CACHED(pa);
@@ -2626,8 +2606,7 @@ mips_pmap_map_poolpage(paddr_t pa)
 
 	va = MIPS_PHYS_TO_KSEG0(pa);
 #endif
-#endif
-#if !defined(_LP64) || defined(PMAP_POOLPAGE_DEBUG)
+#if !defined(_LP64)
 	if (MIPS_CACHE_VIRTUAL_ALIAS) {
 		/*
 		 * If this page was last mapped with an address that might
@@ -2650,10 +2629,7 @@ paddr_t
 mips_pmap_unmap_poolpage(vaddr_t va)
 {
 	paddr_t pa;
-#ifdef PMAP_POOLPAGE_DEBUG
-	KASSERT(poolpage.base <= va && va < poolpage.base + poolpage.size);
-	pa = mips_tlbpfn_to_paddr(kvtopte(va)->pt_entry);
-#elif defined(_LP64)
+#if defined(_LP64)
 	KASSERT(MIPS_XKPHYS_P(va));
 	pa = MIPS_XKPHYS_TO_PHYS(va);
 #else
@@ -2673,14 +2649,15 @@ mips_pmap_unmap_poolpage(vaddr_t va)
 		mips_dcache_inv_range(va, PAGE_SIZE);
 	}
 #endif
-#ifdef PMAP_POOLPAGE_DEBUG
-	pmap_kremove(va, PAGE_SIZE);
-#endif
 	return pa;
 }
 
-
-
-/******************** page table page management ********************/
-
-/* TO BE DONE */
+bool
+pmap_md_direct_mapped_vaddr_p(vaddr_t va)
+{
+#ifdef _LP64
+	if (MIPS_XKPHYS_P(va))
+		return true;
+#endif
+	return MIPS_KSEG0_P(va);
+}

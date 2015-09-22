@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.56.16.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.56.16.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -131,8 +131,6 @@
 #include <mips/cache_r4k.h>
 #endif
 #include <mips/trap.h>
-
-#include <machine/param.h>
 
 #include "assym.h"
 
@@ -334,7 +332,7 @@
  * Loongson2 processors don't have separate tlbmiss and xtlbmiss handlers;
  * so we have to check for useg addresses in tlb_miss. The good news is that
  * we can use 64 intructions form tlbmiss instead of 32.
- * 
+ *
  *----------------------------------------------------------------------------
  */
 #ifdef MIPS3_LOONGSON2
@@ -622,7 +620,7 @@ MIPSX(slowfault):
 NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	.set	noat
 	.mask	0x80000000, -4
-#ifdef PARANOIA
+#if defined(PARANOIA)
 	PTR_L	k0, L_PCB(MIPS_CURLWP)
 	slt	k0, k0, sp		# k0 = L_PCB(MIPS_CURLWP) < sp
 1:	beqz	k0, 1b			# loop forever if false
@@ -632,7 +630,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	slt	k0, sp, k0		# k0 = sp < L_PCB(MIPS_CURLWP) + USPACE
 2:	beqz	k0, 2b			# loop forever if false
 	 nop
-#endif /* PARANOIA
+#endif /* PARANOIA */
 /*
  * Save the relevant kernel registers onto the stack.
  * We don't need to save s0 - s8, sp and gp because
@@ -700,7 +698,7 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	INT_S	t1, TF_BASE+TF_PPL(sp)		# save priority level
 #endif /* PARANOIA */
 
-#if defined(DDB) || defined(DEBUG) || defined(KGDB)
+#if defined(__mips_o32) && (defined(DDB) || defined(DEBUG) || defined(KGDB))
 	PTR_ADDU v0, sp, KERNFRAME_SIZ
 	REG_S	v0, KERNFRAME_SP(sp)
 #endif
@@ -726,9 +724,11 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	xor	v0, a0, v1 			# generate new status
 	mtc0	v0, MIPS_COP_0_STATUS		# update.
 	COP0_SYNC
+#ifdef MIPS3
 	nop
 	nop
 	nop
+#endif
 	/*
 	 * Call the trap handler.
 	 */
@@ -740,9 +740,11 @@ NESTED_NOPROFILE(MIPSX(kern_gen_exception), KERNFRAME_SIZ, ra)
 	 */
 	RESET_EXCEPTION_LEVEL_DISABLE_INTERRUPTS(v0)
 	COP0_SYNC
+#ifdef MIPS3
 	nop					# 3 nop delay
 	nop
 	nop
+#endif
 	REG_L	a0, TF_BASE+TF_REG_SR(sp)	# get SR with EXL set
 	mtc0	a0, MIPS_COP_0_STATUS		# restore the SR, disable intrs
 	COP0_SYNC
@@ -820,6 +822,145 @@ MIPSX(kern_return):
 	eret					# return to interrupted point
 	.set	at
 END(MIPSX(kern_gen_exception))
+
+#ifdef DDB
+/*
+ * mipsN_kern_nonmaskable_intr
+ *
+ * Handle a NMI during kernel mode.
+ * Build trapframe on stack to hold interrupted kernel context, then
+ * call trap() to process the condition.
+ *
+ * trapframe is pointed to by the 5th arg and a dummy sixth argument is used
+ * to avoid alignment problems
+ * {
+ *	register_t cf_args[4 + 1];
+ *	register_t cf_pad;		(for 8 word alignment)
+ *	register_t cf_sp;
+ *	register_t cf_ra;
+ *	struct reg cf_tf;
+ * };
+ */
+NESTED_NOPROFILE(MIPSX(kern_nonmaskable_intr), KERNFRAME_SIZ, ra)
+	.set	noat
+	.mask	0x80000000, -4
+#if defined(PARANOIA)
+	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	slt	k0, k0, sp		# k0 = L_PCB(MIPS_CURLWP) < sp
+1:	beqz	k0, 1b			# loop forever if false
+	 nop
+
+	PTR_L	k0, L_PCB(MIPS_CURLWP)
+	PTR_ADDU k0, USPACE
+	slt	k0, sp, k0		# k0 = sp < L_PCB(MIPS_CURLWP) + USPACE
+2:	beqz	k0, 2b			# loop forever if false
+	 nop
+#endif /* PARANOIA */
+
+/*
+ * Save the relevant kernel registers onto the NMI stack.
+ * We save s0 - s8, sp and gp so DDB can see them.
+ */
+	move	k1, sp				# save for later
+	PTR_L	sp, CPU_INFO_NMI_STACK(k0)	# get NMI stack
+	REG_S	k1, TF_BASE+TF_REG_SP(sp)
+	REG_S	AT, TF_BASE+TF_REG_AST(sp)
+	REG_S	v0, TF_BASE+TF_REG_V0(sp)
+	REG_S	v1, TF_BASE+TF_REG_V1(sp)
+	mflo	v0
+	mfhi	v1
+
+	REG_S	a0, TF_BASE+TF_REG_A0(sp)
+	REG_S	a1, TF_BASE+TF_REG_A1(sp)
+	REG_S	a2, TF_BASE+TF_REG_A2(sp)
+	REG_S	a3, TF_BASE+TF_REG_A3(sp)
+	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
+	REG_S	t0, TF_BASE+TF_REG_T0(sp)
+	REG_S	t1, TF_BASE+TF_REG_T1(sp)
+	REG_S	t2, TF_BASE+TF_REG_T2(sp)
+	REG_S	t3, TF_BASE+TF_REG_T3(sp)
+	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
+	REG_S	ta0, TF_BASE+TF_REG_TA0(sp)
+	REG_S	ta1, TF_BASE+TF_REG_TA1(sp)
+	REG_S	ta2, TF_BASE+TF_REG_TA2(sp)
+	REG_S	ta3, TF_BASE+TF_REG_TA3(sp)
+	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
+	REG_S	t8, TF_BASE+TF_REG_T8(sp)	# is MIPS_CURLWP
+	REG_S	t9, TF_BASE+TF_REG_T9(sp)
+	REG_S	ra, TF_BASE+TF_REG_RA(sp)
+	REG_S	a0, TF_BASE+TF_REG_SR(sp)
+	_MFC0	a3, MIPS_COP_0_ERROR_PC		# 4th arg is exception PC
+	REG_S	v0, TF_BASE+TF_REG_MULLO(sp)
+	REG_S	v1, TF_BASE+TF_REG_MULHI(sp)
+	REG_S	a3, TF_BASE+TF_REG_EPC(sp)
+	REG_S	a1, TF_BASE+TF_REG_CAUSE(sp)
+	REG_S	s0, TF_BASE+TF_REG_S0(sp)
+	REG_S	s1, TF_BASE+TF_REG_S1(sp)
+	REG_S	s2, TF_BASE+TF_REG_S2(sp)
+	REG_S	s3, TF_BASE+TF_REG_S3(sp)
+	REG_S	s4, TF_BASE+TF_REG_S4(sp)
+	REG_S	s5, TF_BASE+TF_REG_S5(sp)
+	REG_S	s6, TF_BASE+TF_REG_S6(sp)
+	REG_S	s7, TF_BASE+TF_REG_S7(sp)
+	//PTR_ADDU v0, sp, KERNFRAME_SIZ
+	REG_S	s8, TF_BASE+TF_REG_S8(sp)
+	REG_S	gp, TF_BASE+TF_REG_GP(sp)
+	PTR_L	t8, CPU_INFO_CURLWP(k0)
+#if defined(__mips_o32) || defined(__mips_o64)
+	PTR_ADDU v0, sp, TF_BASE
+	REG_S	v0, KERNFRAME_ARG5(sp)		# 5th arg is p. to trapframe
+#endif
+#if defined(__mips_n32) || defined(__mips_n64)
+	PTR_ADDU a4, sp, TF_BASE		# 5th arg is p. to trapframe
+#endif
+
+	/*
+	 * save PPL in trapframe
+	 */
+	PTR_L	t0, L_CPU(MIPS_CURLWP)
+	INT_L	t1, CPU_INFO_CPL(t0)		# get current priority level
+	INT_S	t1, TF_BASE+TF_PPL(sp)		# save priority level
+
+#if defined(__mips_o32) && (defined(DDB) || defined(DEBUG) || defined(KGDB))
+	PTR_ADDU v0, sp, KERNFRAME_SIZ
+	REG_S	v0, KERNFRAME_SP(sp)
+#endif
+
+#if defined(PARANOIA_SPL)
+	/*
+	 * Verify our existing interrupt level.
+	 */
+	jal	_C_LABEL(splcheck)
+	 nop
+#endif /* PARANOIA_SPL */
+
+	/*
+	 * Clear exception level.
+	 */
+	xor	v0, a0, MIPS_SR_EXL		# xor out the EXL bit
+	mtc0	v0, MIPS_COP_0_STATUS		# update.
+	COP0_SYNC
+#ifdef MIPS3
+	nop
+	nop
+	nop
+#endif
+
+	/*
+	 * Call the trap handler.
+	 */
+	jal	_C_LABEL(trap)
+	 REG_S	a3, KERNFRAME_RA(sp)		# for debugging
+
+	/*
+	 * Wait for a reset
+	 */
+1:	wait
+	b	1b
+	 nop
+	.set	at
+END(MIPSX(kern_nonmaskable_intr))
+#endif /* DDB */
 
 /*
  * mipsN_kern_intr
@@ -955,11 +1096,15 @@ NESTED_NOPROFILE(MIPSX(kern_intr), KERNFRAME_SIZ, ra)
 	and	t1, s0, 0xff			# get previous interrupt depth
 	INT_S	t1, CPU_INFO_IDEPTH(s2)		# to it previous value
 
-#ifdef PARANOIA
+#if defined(PARANOIA)
 	mfc0	t0, MIPS_COP_0_STATUS		# verify INT_IE is still set
 	and	t0, MIPS_SR_INT_IE
+#if defined(MIPS32) || defined(MIPS32R2) || defined(MIPS64) || defined(MIPS64R2)
+	teqi	t0, 0
+#else
 3:	beqz	t0, 3b
 	 nop
+#endif
 #endif /* PARANOIA */
 
 #ifdef __HAVE_FAST_SOFTINTS
@@ -2335,7 +2480,7 @@ LEAF(MIPSX(tlb_enter))
 	tlbwi					# enter it into the TLB
 	COP0_SYNC
 
-	_MTC0	ta1, MIPS_COP_0_TLB_HI		# restore EntryHi
+	_MTC0	ta0, MIPS_COP_0_TLB_HI		# restore EntryHi
 #ifdef MIPS3_LOONGSON2
 	li	v0, MIPS_DIAG_ITLB_CLEAR
 	mtc0	v0, MIPS_COP_0_DIAG		# invalidate ITLB
@@ -2508,7 +2653,7 @@ MIPSX(resume):
 #endif /* !ENABLE_MIPS_16KB_PAGE */
 #if (MIPS32R2 + MIPS64R2) > 0
 	PTR_L	v0, L_PRIVATE(a0)		# get lwp private
-	_MTC0	v0, MIPS_COP_0_TLB_CONTEXT, 4	# make available for rdhwr
+	_MTC0	v0, MIPS_COP_0_USERLOCAL	# make available for rdhwr
 #endif
 	jr	ra
 	 nop

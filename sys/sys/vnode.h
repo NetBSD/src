@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.249.4.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: vnode.h,v 1.249.4.3 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -522,9 +522,6 @@ struct vnode;
 void	vfs_vnode_sysinit(void);
 int 	bdevvp(dev_t, struct vnode **);
 int 	cdevvp(dev_t, struct vnode **);
-int 	getnewvnode(enum vtagtype, struct mount *, int (**)(void *),
-	    kmutex_t *, struct vnode **);
-void	ungetnewvnode(struct vnode *);
 int	vaccess(enum vtype, mode_t, uid_t, gid_t, mode_t, kauth_cred_t);
 void 	vattr_null(struct vattr *);
 void	vdevgone(int, int, int, enum vtype);

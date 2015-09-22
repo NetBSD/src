@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.33 2011/07/01 19:28:00 dyoung Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.33.30.1 2015/09/22 12:05:36 skrll Exp $	*/
 /*	NetBSD: bus_dma.c,v 1.20 2000/01/10 03:24:36 simonb Exp 	*/
 
 /*-
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33 2011/07/01 19:28:00 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.33.30.1 2015/09/22 12:05:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -554,8 +554,8 @@ _bus_dmamem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 {
 
 	return _bus_dmamem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, mips_avail_start,
-	    trunc_page(mips_avail_end));
+	    segs, nsegs, rsegs, flags, pmap_limits.avail_start,
+	    trunc_page(pmap_limits.avail_end));
 }
 
 /*
@@ -575,7 +575,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	/* Always round the size. */
 	size = round_page(size);
 
-	high = mips_avail_end - PAGE_SIZE;
+	high = pmap_limits.avail_end - PAGE_SIZE;
 
 	/*
 	 * Allocate pages from the VM system.
@@ -599,7 +599,7 @@ _bus_dmamem_alloc_range(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
 	for (; m != NULL; m = TAILQ_NEXT(m, pageq.queue)) {
 		curaddr = VM_PAGE_TO_PHYS(m);
 #ifdef DIAGNOSTIC
-		if (curaddr < mips_avail_start || curaddr >= high) {
+		if (curaddr < pmap_limits.avail_start || curaddr >= high) {
 			printf("uvm_pglistalloc returned non-sensical"
 			    " address 0x%llx\n", (long long)curaddr);
 			panic("_bus_dmamem_alloc_range");

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.29.2.2 2015/06/06 14:39:58 skrll Exp $
+#	$NetBSD: BEAGLEBONE,v 1.29.2.3 2015/09/22 12:05:40 skrll Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -122,7 +122,6 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40
@@ -252,6 +251,9 @@ omapdmtimer2	at obio0 addr 0x48044000 size 0x1000 intr 92	# DM Timer 4
 
 # Watchdog timers
 omapwdt32k*	at obio0 addr 0x44e35000 size 0x1000	# WDT1
+
+# Random number generator
+trng*		at obio0 addr 0x48310000 size 0x2000 intr 111	# TRNG
 
 # onboard video, experimental. Video mode is hardcoded in the driver
 #tifb* 	at obio0 addr 0x4830E000 size 0x1000 intr 36

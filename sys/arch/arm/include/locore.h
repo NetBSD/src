@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.18.2.2 2015/06/06 14:39:56 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.18.2.3 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -133,7 +133,11 @@
 		((r15) & (R15_IRQ_DISABLE | R15_FIQ_DISABLE)) == 0)
 #endif
 
-
+/*
+ * Translation Table Base Register Share/Cache settings
+ */
+#define	TTBR_UPATTR	(TTBR_S | TTBR_RGN_WBNWA | TTBR_C)
+#define	TTBR_MPATTR	(TTBR_S | TTBR_RGN_WBNWA /* | TTBR_NOS */ | TTBR_IRGN_WBNWA)
 
 /* The address of the vector page. */
 extern vaddr_t vector_page;

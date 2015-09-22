@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.3 2009/11/03 05:07:26 snj Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.3.40.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /*	$OpenBSD: ptrace.h,v 1.2 1998/12/01 03:05:44 mickey Exp $	*/
 
@@ -43,3 +43,12 @@
 	"PT_SETREGS", \
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->r_pcoqh
+#define PTRACE_REG_SET_PC(r, v)	do {	\
+	(r)->r_pcoqh = (v);		\
+	(r)->r_pcoqt = (v) + 4;		\
+    } while (/*CONSTCOND*/0)
+#define PTRACE_REG_SP(r)	(r)->r_out[30]
+#define PTRACE_REG_INTRV(r)	(r)->r_out[28]

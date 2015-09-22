@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdio.c,v 1.2.2.2 2015/06/06 14:39:55 skrll Exp $ */
+/* $NetBSD: amlogic_sdio.c,v 1.2.2.3 2015/09/22 12:05:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdio.c,v 1.2.2.2 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdio.c,v 1.2.2.3 2015/09/22 12:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +61,7 @@ struct amlogic_sdio_softc {
 
 	uint32_t		sc_bus_freq;
 	u_int			sc_cur_width;
-	u_int			sc_cur_port;
+	int			sc_cur_port;
 
 	device_t		sc_sdmmc_dev;
 	kmutex_t		sc_intr_lock;
@@ -119,12 +119,6 @@ static struct sdmmc_chip_functions amlogic_sdio_chip_functions = {
 static int
 amlogic_sdio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct amlogicio_attach_args * const aio = aux;
-	const struct amlogic_locators * const loc = &aio->aio_loc;
-
-	if (loc->loc_port == AMLOGICIOCF_PORT_DEFAULT)
-		return 0;
-
 	return 1;
 }
 
@@ -134,6 +128,8 @@ amlogic_sdio_attach(device_t parent, device_t self, void *aux)
 	struct amlogic_sdio_softc * const sc = device_private(self);
 	struct amlogicio_attach_args * const aio = aux;
 	const struct amlogic_locators * const loc = &aio->aio_loc;
+	prop_dictionary_t cfg = device_properties(self);
+	uint32_t boot_id;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
@@ -144,14 +140,27 @@ amlogic_sdio_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "sdiointr");
 
+	if (sc->sc_cur_port == AMLOGICIOCF_PORT_DEFAULT) {
+		if (!prop_dictionary_get_uint32(cfg, "boot_id", &boot_id)) {
+			aprint_error(": no port selected\n");
+			return;
+		}
+		/* Non-booted device goes on SDIO controller */
+		if (boot_id == 0) {
+			sc->sc_cur_port = AMLOGIC_SDIO_PORT_B;	/* SD card */
+		} else {
+			sc->sc_cur_port = AMLOGIC_SDIO_PORT_C;	/* eMMC */
+		}
+	}
+
 	amlogic_sdio_init();
-	if (amlogic_sdio_select_port(loc->loc_port) != 0) {
-		aprint_error(": couldn't select port %d\n", loc->loc_port);
+	if (amlogic_sdio_select_port(sc->sc_cur_port) != 0) {
+		aprint_error(": couldn't select port %d\n", sc->sc_cur_port);
 		return;
 	}
 
 	aprint_naive("\n");
-	aprint_normal(": SDIO controller\n");
+	aprint_normal(": SDIO controller (port %c)\n", sc->sc_cur_port + 'A');
 
 	sc->sc_ih = intr_establish(loc->loc_intr, IPL_BIO, IST_EDGE,
 	    amlogic_sdio_intr, sc);
@@ -186,7 +195,7 @@ amlogic_sdio_attach_i(device_t self)
 	saa.saa_dmat = sc->sc_dmat;
 	saa.saa_sch = sc;
 	saa.saa_clkmin = 400;
-	saa.saa_clkmax = 50000;
+	saa.saa_clkmax = sc->sc_bus_freq;
 	/* Do not advertise DMA capabilities, we handle DMA ourselves */
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
@@ -322,7 +331,9 @@ amlogic_sdio_host_maxblklen(sdmmc_chipset_handle_t sch)
 static int
 amlogic_sdio_card_detect(sdmmc_chipset_handle_t sch)
 {
-	return 1;
+	struct amlogic_sdio_softc *sc = sch;
+
+	return amlogic_sdhc_is_card_present(sc->sc_cur_port);
 }
 
 static int

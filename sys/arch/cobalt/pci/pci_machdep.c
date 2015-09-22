@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.36 2014/07/29 21:21:44 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.36.4.1 2015/09/22 12:05:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,14 +26,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.36 2014/07/29 21:21:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.36.4.1 2015/09/22 12:05:39 skrll Exp $");
 
 #define _MIPS_BUS_DMA_PRIVATE
 
 #include <sys/param.h>
 #include <sys/bus.h>
-#include <sys/errno.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/extent.h>
 #include <sys/intr.h>
 #include <sys/systm.h>

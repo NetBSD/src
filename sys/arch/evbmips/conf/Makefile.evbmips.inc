@@ -4,9 +4,15 @@ RAMDISKDIR!=	cd ${NETBSDSRCDIR}/distrib/${THISMIPS:T}/instkernel/ramdisk && ${PR
 
 .if defined(NEED_MDSETIMAGE) && ${NEED_MDSETIMAGE} != no \
     && exists(${RAMDISKDIR}/ramdisk.fs)
+SYSTEM_DEP+= ${RAMDISKDIR}/ramdisk.fs
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo ${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs; \
 	${TOOL_MDSETIMAGE} -s $@ ${RAMDISKDIR}/ramdisk.fs
+.if defined(DEBUG)
+SYSTEM_LD_TAIL_EXTRA+=; \
+	echo ${TOOL_MDSETIMAGE} -s $@.gdb ${RAMDISKDIR}/ramdisk.fs; \
+	${TOOL_MDSETIMAGE} -s $@.gdb ${RAMDISKDIR}/ramdisk.fs
+.endif
 .endif
 
 .if defined(NEED_SREC) && ${NEED_SREC} != "no"

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $ */
+/*	$NetBSD: machdep.c,v 1.1.2.2 2015/09/22 12:05:41 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.1 2015/04/06 15:17:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.1.2.2 2015/09/22 12:05:41 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -91,7 +91,7 @@ cal_timer(void)
 	 */
 	curcpu()->ci_cpu_freq = 1200000000;	/* for now */
 	cntfreq = 12000000;	/* EXTCLK / 4 */
-	
+
 	curcpu()->ci_cctr_freq = cntfreq;
 	curcpu()->ci_cycles_per_hz = (cntfreq + hz / 2) / hz;
 
@@ -138,7 +138,7 @@ ingenic_send_ipi(struct cpu_info *ci, int tag)
 
 	msg = 1 << tag;
 
-	if (cpus_running & (1 << cpu_index(ci))) {
+	if (kcpuset_isset(cpus_running, cpu_index(ci))) {
 		if (cpu_index(ci) == 0) {
 			MTC0(msg, CP0_CORE_MBOX, 0);
 		} else {
@@ -242,47 +242,14 @@ consinit(void)
 	 * Everything related to console initialization is done
 	 * in mach_init().
 	 */
+	apbus_init();
 	ingenic_com_cnattach();
 }
 
 void
 cpu_startup(void)
 {
-	char pbuf[9];
-	vaddr_t minaddr, maxaddr;
-#ifdef DEBUG
-	extern int pmapdebug;		/* XXX */
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;		/* Shut up pmap debug during bootstrap */
-#endif
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.
-	 */
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 void
@@ -374,5 +341,5 @@ ingenic_reset(void)
 	writereg(JZ_WDOG_TCNT, 0);	/* reset counter */
 	writereg(JZ_WDOG_TDR, 128);	/* wait for ~1s */
 	writereg(JZ_WDOG_TCSR, TCSR_RTC_EN | TCSR_DIV_256);
-	writereg(JZ_WDOG_TCER, TCER_ENABLE);	/* fire! */	
+	writereg(JZ_WDOG_TCER, TCER_ENABLE);	/* fire! */
 }

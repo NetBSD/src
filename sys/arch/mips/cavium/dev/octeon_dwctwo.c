@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_dwctwo.c,v 1.2.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeon_dwctwo.c,v 1.2.2.3 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Masao Uebayashi <uebayasi@tombiinc.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.2.2.2 2015/06/06 14:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.2.2.3 2015/09/22 12:05:47 skrll Exp $");
 
 #include "opt_octeon.h"
 #include "opt_usb.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: octeon_dwctwo.c,v 1.2.2.2 2015/06/06 14:40:01 skrll 
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/workqueue.h>
 
 #include <dev/usb/usb.h>
@@ -134,6 +135,8 @@ static struct dwc2_core_params octeon_dwc2_params = {
 	.reload_ctl			= 0,
 	.ahbcfg				= 0,	/* XXX */
 	.uframe_sched			= 1,
+	.external_id_pin_ctl		= -1,
+	.hibernation			= -1,
 };
 
 CFATTACH_DECL_NEW(octeon_dwctwo, sizeof(struct octeon_dwc2_softc),
@@ -192,7 +195,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 	switch (MIPS_PRID_IMPL(mips_options.mips_cpu_id)) {
 	case MIPS_CN50XX:
 		/*
-		 * 2. Configure the reference clock, PHY, and HCLK: 
+		 * 2. Configure the reference clock, PHY, and HCLK:
 		 * a. Write USBN_CLK_CTL[POR] = 1 and
 		 *    USBN_CLK_CTL[HRST,PRST,HCLK_RST] = 0
 		 */
@@ -308,7 +311,7 @@ octeon_dwc2_attach(device_t parent, device_t self, void *aux)
 	    config_found(sc->sc_dwc2.sc_dev, &sc->sc_dwc2.sc_bus, usbctlprint);
 
 	sc->sc_ih = octeon_intr_establish(ffs64(CIU_INTX_SUM0_USB) - 1,
-	    IPL_BIO, dwc2_intr, sc);
+	    IPL_VM, dwc2_intr, sc);
 	if (sc->sc_ih == NULL)
 		panic("can't establish common interrupt\n");
 }

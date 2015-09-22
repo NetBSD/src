@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.122.2.2 2015/06/06 14:40:05 skrll Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.122.2.3 2015/09/22 12:05:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.122.2.2 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.122.2.3 2015/09/22 12:05:55 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1115,7 +1115,7 @@ linux_getifconf(struct lwp *l, register_t *retval, void *data)
 	struct ifaddr *ifa;
 	struct sockaddr *sa;
 	struct osockaddr *osa;
-	int space = 0, error = 0;
+	int space = 0, error;
 	const int sz = (int)sizeof(ifr);
 	bool docopy;
 

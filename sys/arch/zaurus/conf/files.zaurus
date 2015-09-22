@@ -1,4 +1,4 @@
-#	$NetBSD: files.zaurus,v 1.12 2014/09/23 14:49:46 nonaka Exp $
+#	$NetBSD: files.zaurus,v 1.12.2.1 2015/09/22 12:05:54 skrll Exp $
 #
 # Sharp Zaurus specific configuration info
 #
@@ -38,11 +38,6 @@ defflag debug_kloader.h				KLOADER_DEBUG
 file	dev/kloader.c				kloader
 file	arch/zaurus/zaurus/kloader_machdep.c	kloader
 file	arch/zaurus/zaurus/kloader_zaurus.S	kloader
-
-# ARM FPE
-file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
-file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
-file	arch/arm32/fpe-arm/armfpe.s		armfpe
 
 # Include Intel XScale PXA2x0 config definitions.
 include "arch/arm/xscale/files.pxa2x0"

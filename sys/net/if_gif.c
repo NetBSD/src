@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.83.4.1 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.83.4.2 2015/09/22 12:06:10 skrll Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.1 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.2 2015/09/22 12:06:10 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,10 +81,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.1 2015/06/06 14:40:25 skrll Exp $"
 #include <netinet/ip_encap.h>
 #include <net/if_gif.h>
 
-
 #include <net/net_osdep.h>
 
-void	gifattach(int);
+#include "ioconf.h"
+
 static void	gifintr(void *);
 
 /*

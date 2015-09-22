@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vfsops.c,v 1.2 2014/03/23 15:21:16 hannken Exp $	*/
+/*	$NetBSD: dead_vfsops.c,v 1.2.12.1 2015/09/22 12:06:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,12 +30,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.2 2014/03/23 15:21:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vfsops.c,v 1.2.12.1 2015/09/22 12:06:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
+
+#include <miscfs/specfs/specdev.h>
+
+VFS_PROTOS(dead);
+
+static void dead_panic(void);
 
 extern const struct vnodeopv_desc dead_vnodeop_opv_desc;
 
@@ -44,12 +50,7 @@ static const struct vnodeopv_desc * const dead_vnodeopv_descs[] = {
 	NULL
 };
 
-static void
-dead_panic(void)
-{
-
-	panic("dead fs operation used");
-}
+struct mount *dead_rootmount;
 
 struct vfsops dead_vfsops = {
 	.vfs_name = "dead",
@@ -62,6 +63,8 @@ struct vfsops dead_vfsops = {
 	.vfs_statvfs = (void *)dead_panic,
 	.vfs_sync = (void *)dead_panic,
 	.vfs_vget = (void *)dead_panic,
+	.vfs_loadvnode = (void *)dead_panic,
+	.vfs_newvnode = dead_newvnode,
 	.vfs_fhtovp = (void *)dead_panic,
 	.vfs_vptofh = (void *)dead_panic,
 	.vfs_init = (void *)dead_panic,
@@ -76,3 +79,37 @@ struct vfsops dead_vfsops = {
 	.vfs_fsync = (void *)eopnotsupp,
 	.vfs_opv_descs = dead_vnodeopv_descs
 };
+
+static void
+dead_panic(void)
+{
+
+	panic("dead fs operation used");
+}
+
+/*
+ * Create a new anonymous device vnode.
+ */
+int
+dead_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
+    struct vattr *vap, kauth_cred_t cred,
+    size_t *key_len, const void **new_key)
+{
+
+	KASSERT(mp == dead_rootmount);
+	KASSERT(dvp == NULL);
+	KASSERT(vap->va_type == VCHR || vap->va_type == VBLK);
+	KASSERT(vap->va_rdev != VNOVAL);
+
+	vp->v_tag = VT_NON;
+	vp->v_type = vap->va_type;
+	vp->v_op = spec_vnodeop_p;
+	vp->v_vflag |= VV_MPSAFE;
+	uvm_vnp_setsize(vp, 0);
+	spec_node_init(vp, vap->va_rdev);
+
+	*key_len = sizeof(vp->v_interlock);
+	*new_key = &vp->v_interlock;
+
+	return 0;
+}

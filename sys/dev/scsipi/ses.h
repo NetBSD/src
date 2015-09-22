@@ -1,4 +1,4 @@
-/* $NetBSD: ses.h,v 1.3 2005/12/11 12:23:51 christos Exp $ */
+/* $NetBSD: ses.h,v 1.3.140.1 2015/09/22 12:06:00 skrll Exp $ */
 /*
  * Copyright (C) 2000 National Aeronautics & Space Administration
  * All rights reserved.
@@ -23,6 +23,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/ioccom.h>
 
 #define	SESIOC			(('s' - 040) << 8)
 #define	SESIOC_GETNOBJ		_IO(SESIOC, 1)

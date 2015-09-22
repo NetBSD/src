@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.54.32.1 2015/06/06 14:40:02 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.54.32.2 2015/09/22 12:05:47 skrll Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -80,6 +80,7 @@ include <sys/proc.h>
 include <sys/mbuf.h>
 include <sys/mutex.h>
 include <sys/cpu.h>
+include <sys/bitops.h>
 
 include <uvm/uvm.h>
 
@@ -90,7 +91,17 @@ include <mips/vmparam.h>
 include <mips/pte.h>
 include <mips/locore.h>
 
+define	SIGFPE		 	SIGFPE
+define	SIGILL		 	SIGILL
+define	SIGSEGV			SIGSEGV
+
+ifndef _MODULE
 define	PAGE_SIZE		PAGE_SIZE
+define	PGSHIFT			PGSHIFT
+define	NBPG			NBPG
+define	USPACE			USPACE
+define	UPAGES			UPAGES
+endif
 
 ifdef __HAVE_FAST_SOFTINTS
 define	__HAVE_FAST_SOFTINTS	1
@@ -113,12 +124,14 @@ define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_STAT			offsetof(struct lwp, l_stat)
+ifndef _MODULE
 define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)
 if USPACE > PAGE_SIZE
 define	L_MD_UPTE_0		offsetof(struct lwp, l_md.md_upte[0])
 define	L_MD_UPTE_1		offsetof(struct lwp, l_md.md_upte[1])
 endif
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
+endif
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 
 define	P_RASLIST		offsetof(struct proc, p_raslist)
@@ -135,13 +148,10 @@ define	VM_MAX_KERNEL_ADDRESS	VM_MAX_KERNEL_ADDRESS
 
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 
-define	SIGFPE		 	SIGFPE
-define	SIGILL		 	SIGILL
-define	SIGSEGV			SIGSEGV
-
 #				/* XXX */
 define	MIPSX_FLUSHICACHE	0
 
+ifndef _MODULE
 define	PG_ASID			PG_ASID
 define	MIPS1_PG_G		MIPS1_PG_G
 define	MIPS1_PG_V		MIPS1_PG_V
@@ -150,6 +160,7 @@ define	MIPS3_PG_V		MIPS3_PG_V
 define	MIPS3_PG_HVPN		MIPS3_PG_HVPN
 define	MIPS3_PG_ASID		MIPS3_PG_ASID
 define	MIPS3_PG_ODDPG		MIPS3_PG_ODDPG
+endif
 
 define	TF_SIZ			sizeof(struct trapframe)
 define	TF_REG_ZERO		offsetof(struct trapframe, tf_regs[_R_ZERO])
@@ -195,6 +206,7 @@ define	TF_REG_S5		offsetof(struct trapframe, tf_regs[_R_S5])
 define	TF_REG_S6		offsetof(struct trapframe, tf_regs[_R_S6])
 define	TF_REG_S7		offsetof(struct trapframe, tf_regs[_R_S7])
 define	TF_REG_T8		offsetof(struct trapframe, tf_regs[_R_T8])
+define	TF_MIPS_CURLWP		offsetof(struct trapframe, tf_regs[_R_T8])
 define	TF_REG_T9		offsetof(struct trapframe, tf_regs[_R_T9])
 define	TF_REG_K0		offsetof(struct trapframe, tf_regs[_R_K0])
 define	TF_REG_K1		offsetof(struct trapframe, tf_regs[_R_K1])
@@ -284,13 +296,17 @@ define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_EV_TLBMISSES	offsetof(struct cpu_info, ci_ev_tlbmisses.ev_count)
-define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tab)
 ifdef _LP64
-define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtab)
+define	CPU_INFO_PMAP_SEGTAB	offsetof(struct cpu_info, ci_pmap_segtabs[0])
+define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_seg0tabs[0])
+else
+define	CPU_INFO_PMAP_SEG0TAB	offsetof(struct cpu_info, ci_pmap_segtabs[0])
 endif
 define	CPU_INFO_DIVISOR_DELAY	offsetof(struct cpu_info, ci_divisor_delay)
 define	CPU_INFO_MTX_COUNT	offsetof(struct cpu_info, ci_mtx_count)
 define	CPU_INFO_MTX_OLDSPL	offsetof(struct cpu_info, ci_mtx_oldspl)
+define	CPU_INFO_NMI_STACK	offsetof(struct cpu_info, ci_nmi_stack)
+
 ifdef MULTIPROCESSOR
 define	CPU_INFO_FLAGS		offsetof(struct cpu_info, ci_flags)
 define	CPU_INFO_KSP_TLB_SLOT	offsetof(struct cpu_info, ci_ksp_tlb_slot)
@@ -308,6 +324,9 @@ define	IPL_SCHED		IPL_SCHED
 define	IPL_DDB			IPL_DDB
 define	IPL_HIGH		IPL_HIGH
 
+define	V_MIPS3_SR_SR		ilog2(MIPS3_SR_SR)
+define	V_MIPS_SR_BEV		ilog2(MIPS_SR_BEV)
+
 ifdef __HAVE_PREEMPTION
 define	__HAVE_PREEMPTION	1
 define	CPU_INFO_SOFTINTS	offsetof(struct cpu_info, ci_softints)
@@ -324,3 +343,6 @@ define	MO_FPU_ID		offsetof(struct mips_options, mips_fpu_id)
 define	MO_NUM_TLB_ENTRIES	offsetof(struct mips_options, mips_num_tlb_entries)
 
 define	MCI_SDCACHE_SIZE	offsetof(struct mips_cache_info, mci_sdcache_size)
+
+define	MIPS_CURLWP_LABEL	MIPS_CURLWP_LABEL
+define	MIPS_CURLWP_REG		MIPS_CURLWP_REG

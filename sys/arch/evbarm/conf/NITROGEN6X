@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.4 2014/10/11 11:55:07 uebayasi Exp $
+# $NetBSD: NITROGEN6X,v 1.4.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -11,6 +11,9 @@ include	"arch/evbarm/conf/std.nitrogen6"
 # estimated number of users
 
 maxusers	32
+
+# Board Type
+options 	EVBARM_BOARDTYPE=nitrogen6x
 
 # CPU options
 options 	CPU_CORTEX
@@ -49,7 +52,6 @@ options 	DIAGNOSTIC	# internally consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	LOCKDEBUG	# expensive locking checks/support
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	IRQSTATS	# manage IRQ statistics
 #options 	NO_POWERSAVE	# uncomment this to run under ICE
 

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.121 2014/11/16 16:01:40 manu Exp $
+# $NetBSD: GENERIC,v 1.121.2.1 2015/09/22 12:05:39 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -47,7 +47,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 #options 	KGDB			# remote debugger
 #options 	"KGDB_DEVNAME=\"scif\"",KGDB_DEVRATE=57600

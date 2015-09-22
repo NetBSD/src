@@ -1,4 +1,4 @@
-/*	$NetBSD: dt.c,v 1.11 2011/06/04 01:37:36 tsutsui Exp $	*/
+/*	$NetBSD: dt.c,v 1.11.30.1 2015/09/22 12:05:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@ SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.11 2011/06/04 01:37:36 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dt.c,v 1.11.30.1 2015/09/22 12:05:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,6 +225,7 @@ dt_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_sih == NULL) {
 		printf("%s: memory exhausted\n", device_xname(self));
 		free(msg, M_DEVBUF);
+		return;
 	}
 
 	SIMPLEQ_INIT(&sc->sc_queue);

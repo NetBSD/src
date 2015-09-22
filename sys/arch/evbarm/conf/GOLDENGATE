@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GOLDENGATE,v 1.11 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: GOLDENGATE,v 1.11.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 #	GOLDENGATE -- Cortina GOLDENGATE Eval Board Kernel
 #
@@ -124,7 +124,6 @@ options 	DKWEDGE_METHOD_GPT	# Supports GPT partitions as wedges
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 options 	PCIVERBOSE	# Verbose PCI autoconfiguration messages
 #options 	PCI_CONFIG_DUMP	# Verbose PCI autoconfiguration messages
 options 	PCI_NETBSD_CONFIGURE # perform PCI configuration

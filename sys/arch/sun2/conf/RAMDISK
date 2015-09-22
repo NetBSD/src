@@ -1,4 +1,4 @@
-# $NetBSD: RAMDISK,v 1.55 2013/06/30 21:38:59 rmind Exp $
+# $NetBSD: RAMDISK,v 1.55.8.1 2015/09/22 12:05:52 skrll Exp $
 
 # RAMDISK: Root/swap on ramdisk
 # This kernel is used to:
@@ -42,7 +42,6 @@ options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG		# kernel debugging code
 #options 	DIAGNOSTIC	# extra kernel sanity checking
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors

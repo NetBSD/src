@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.h,v 1.18 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: if_tun.h,v 1.18.2.1 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -18,6 +18,8 @@
 
 #ifndef _NET_IF_TUN_H_
 #define _NET_IF_TUN_H_
+
+#include <sys/ioccom.h>
 
 #ifdef _KERNEL
 struct tun_softc {

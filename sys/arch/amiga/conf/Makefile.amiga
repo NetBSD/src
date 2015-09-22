@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.107.32.1 2015/06/06 14:39:54 skrll Exp $
+#	$NetBSD: Makefile.amiga,v 1.107.32.2 2015/09/22 12:05:36 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -53,7 +53,8 @@ KERN_AS=	obj
 # for the Motorola 68060 Software Support Package
 .include "$S/arch/m68k/060sp/Makefile.inc"
 
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	${AMIGA}/amiga/locore.s
 

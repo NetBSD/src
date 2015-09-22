@@ -48,6 +48,7 @@ OBJECTS = \
 	$(OBJDIR)/adwalk.o\
 	$(OBJDIR)/ahids.o\
 	$(OBJDIR)/ahpredef.o\
+	$(OBJDIR)/ahtable.o\
 	$(OBJDIR)/ahuuids.o\
 	$(OBJDIR)/aslanalyze.o\
 	$(OBJDIR)/aslascii.o\
@@ -105,7 +106,6 @@ OBJECTS = \
 	$(OBJDIR)/dmdeferred.o\
 	$(OBJDIR)/dmextern.o\
 	$(OBJDIR)/dmnames.o\
-	$(OBJDIR)/dmobject.o\
 	$(OBJDIR)/dmopcode.o\
 	$(OBJDIR)/dmresrc.o\
 	$(OBJDIR)/dmresrcl.o\
@@ -207,6 +207,7 @@ OBJECTS = \
 	$(OBJDIR)/utmath.o\
 	$(OBJDIR)/utmisc.o\
 	$(OBJDIR)/utmutex.o\
+	$(OBJDIR)/utnonansi.o\
 	$(OBJDIR)/utobject.o\
 	$(OBJDIR)/utownerid.o\
 	$(OBJDIR)/utpredef.o\

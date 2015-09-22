@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.37.2.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.37.2.2 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.37.2.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.37.2.2 2015/09/22 12:05:58 skrll Exp $");
 
 
 /*
@@ -637,10 +637,9 @@ rgephy_reset(struct mii_softc *sc)
 	} else if (sc->mii_mpd_rev == 6) {
 		/* RTL8211F */
 		phycr1 = PHY_READ(sc, RGEPHY_MII_PHYCR1);
-		if ((phycr1 & RGEPHY_PHYCR1_MDI_MMCE) != 0) {
-			phycr1 &= ~RGEPHY_PHYCR1_MDI_MMCE;
-			PHY_WRITE(sc, RGEPHY_MII_PHYCR1, phycr1);
-		}
+		phycr1 &= ~RGEPHY_PHYCR1_MDI_MMCE;
+		phycr1 &= ~RGEPHY_PHYCR1_ALDPS_EN;
+		PHY_WRITE(sc, RGEPHY_MII_PHYCR1, phycr1);
 	} else {
 		PHY_WRITE(sc, 0x1F, 0x0000);
 		PHY_WRITE(sc, 0x0e, 0x0000);
@@ -657,4 +656,14 @@ rgephy_reset(struct mii_softc *sc)
 	/* Step2: Restart NWay */
 	/* NWay enable and Restart NWay */
 	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_AUTOEN | BMCR_STARTNEG);
+
+	if (sc->mii_mpd_rev == 6) {
+		/* RTL8211F */
+		delay(10000);
+		/* disable EEE */
+		PHY_WRITE(sc, RGEPHY_MII_MACR, 0x0007);
+		PHY_WRITE(sc, RGEPHY_MII_MAADR, 0x003c);
+		PHY_WRITE(sc, RGEPHY_MII_MACR, 0x4007);
+		PHY_WRITE(sc, RGEPHY_MII_MAADR, 0x0000);
+	}
 }

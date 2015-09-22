@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.243 2014/03/24 20:06:31 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.243.6.1 2015/09/22 12:05:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,7 +50,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.243.6.1 2015/09/22 12:05:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -535,7 +535,7 @@ cpu_dumpconf(void)
 		else if (dumplo == 0)
 			dumplo = nblks - btodb(ctob(dumpsize));
 	}
-	--dumplo;	/* XXX assume header fits in one block */
+	dumplo -= ctod(btoc(MDHDRSIZE));
 	/*
 	 * Don't dump on the first PAGE_SIZE (why PAGE_SIZE?)
 	 * in case the dump device includes a disk label.
