@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.10 2014/07/24 19:47:15 riz Exp $	*/
+/*	$NetBSD: athn.c,v 1.11 2015/09/22 13:28:02 joerg Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.10 2014/07/24 19:47:15 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.11 2015/09/22 13:28:02 joerg Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -2248,7 +2248,7 @@ athn_hw_reset(struct athn_softc *sc, struct ieee80211_channel *curchan,
 		/* Do not mask the subtype field in management frames. */
 		reg = RW(reg, AR_AES_MUTE_MASK1_FC0_MGMT, 0xff);
 		reg = RW(reg, AR_AES_MUTE_MASK1_FC1_MGMT,
-		    ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
+		    (uint32_t)~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 		      IEEE80211_FC1_MORE_DATA));
 		AR_WRITE(sc, AR_AES_MUTE_MASK1, reg);
 	}
