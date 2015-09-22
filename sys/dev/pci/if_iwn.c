@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwn.c,v 1.75 2015/08/24 23:52:18 pooka Exp $	*/
+/*	$NetBSD: if_iwn.c,v 1.76 2015/09/22 23:23:06 nonaka Exp $	*/
 /*	$OpenBSD: if_iwn.c,v 1.135 2014/09/10 07:22:09 dcoppa Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  * adapters.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.75 2015/08/24 23:52:18 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwn.c,v 1.76 2015/09/22 23:23:06 nonaka Exp $");
 
 #define IWN_USE_RBUF	/* Use local storage for RX */
 #undef IWN_HWCRYPTO	/* XXX does not even compile yet */
@@ -330,7 +330,8 @@ static u_int8_t	*ieee80211_add_rates(u_int8_t *,
 static u_int8_t	*ieee80211_add_xrates(u_int8_t *,
     const struct ieee80211_rateset *);
 
-static void	iwn_fix_channel(struct ieee80211com *, struct mbuf *);
+static void	iwn_fix_channel(struct ieee80211com *, struct mbuf *,
+		    struct iwn_rx_stat *);
 
 #ifdef IWN_DEBUG
 #define DPRINTF(x)	do { if (iwn_debug > 0) printf x; } while (0)
@@ -1866,7 +1867,7 @@ iwn_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 		/* XXX Not sure if call and flags are needed. */
 		ieee80211_node_table_reset(&ic->ic_scan);
 		ic->ic_flags |= IEEE80211_F_SCAN | IEEE80211_F_ASCAN;
-		sc->sc_flags |= IWN_FLAG_SCANNING;
+		sc->sc_flags |= IWN_FLAG_SCANNING_2GHZ;
 
 		/* Make the link LED blink while we're scanning. */
 		iwn_set_led(sc, IWN_LED_LINK, 10, 10);
@@ -2089,7 +2090,7 @@ iwn_rx_done(struct iwn_softc *sc, struct iwn_rx_desc *desc,
 
 	/* XXX Added for NetBSD: scans never stop without it */
 	if (ic->ic_state == IEEE80211_S_SCAN)
-		iwn_fix_channel(ic, m);
+		iwn_fix_channel(ic, m, stat);
 
 	if (sc->sc_drvbpf != NULL) {
 		struct iwn_rx_radiotap_header *tap = &sc->sc_rxtap;
@@ -2520,6 +2521,8 @@ iwn_notif_intr(struct iwn_softc *sc)
 				 * We just finished scanning 2GHz channels,
 				 * start scanning 5GHz ones.
 				 */
+				sc->sc_flags &= ~IWN_FLAG_SCANNING_2GHZ;
+				sc->sc_flags |= IWN_FLAG_SCANNING_5GHZ;
 				if (iwn_scan(sc, IEEE80211_CHAN_5GHZ) == 0)
 					break;
 			}
@@ -6506,8 +6509,10 @@ ieee80211_add_xrates(u_int8_t *frm, const struct ieee80211_rateset *rs)
  * XXX: Duplicated from if_iwi.c
  */
 static void
-iwn_fix_channel(struct ieee80211com *ic, struct mbuf *m)
+iwn_fix_channel(struct ieee80211com *ic, struct mbuf *m,
+    struct iwn_rx_stat *stat)
 {
+	struct iwn_softc *sc = ic->ic_ifp->if_softc;
 	struct ieee80211_frame *wh;
 	uint8_t subtype;
 	uint8_t *frm, *efrm;
@@ -6522,6 +6527,13 @@ iwn_fix_channel(struct ieee80211com *ic, struct mbuf *m)
 	if (subtype != IEEE80211_FC0_SUBTYPE_BEACON &&
 	    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
 		return;
+
+	if (sc->sc_flags & IWN_FLAG_SCANNING_5GHZ) {
+		int chan = le16toh(stat->chan);
+		if (chan < __arraycount(ic->ic_channels))
+			ic->ic_curchan = &ic->ic_channels[chan];
+		return;
+	}
 
 	frm = (uint8_t *)(wh + 1);
 	efrm = mtod(m, uint8_t *) + m->m_len;
