@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.113.2.1 2015/04/06 15:18:03 skrll Exp $ */
+/*	$NetBSD: cpu.h,v 1.113.2.2 2015/09/22 12:05:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -72,7 +72,7 @@
 #include <sparc64/sparc64/intreg.h>
 #endif
 #ifdef SUN4V
-#include <sparc64/hypervisor.h>
+#include <machine/hypervisor.h>
 #endif
 
 #include <sys/cpu_data.h>
@@ -179,7 +179,7 @@ struct cpu_info {
 
 	/* TSB description (sun4v). */
 	struct tsb_desc         *ci_tsb_desc;
-	
+
 	/* MMU Fault Status Area (sun4v).
 	 * Will be initialized to the physical address of the bottom of
 	 * the interrupt stack.
@@ -191,9 +191,9 @@ struct cpu_info {
 	 */
 	paddr_t			ci_cpumq;  /* cpu mondo queue address */
 	paddr_t			ci_devmq;  /* device mondo queue address */
-	paddr_t			ci_cpuset; /* mondo recipient address */ 
+	paddr_t			ci_cpuset; /* mondo recipient address */
 	paddr_t			ci_mondo;  /* mondo message address */
-	
+
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;
 	bool			ci_pci_fault;
@@ -263,12 +263,16 @@ void	cpu_pmap_init(struct cpu_info *);
 /* run upfront to prepare the cpu_info */
 void	cpu_pmap_prepare(struct cpu_info *, bool);
 
+/* Helper functions to retrieve cache info */
+int	cpu_ecache_associativity(int node);
+int	cpu_ecache_size(int node);
+
 #if defined(MULTIPROCESSOR)
 extern vaddr_t cpu_spinup_trampoline;
 
 extern  char   *mp_tramp_code;
 extern  u_long  mp_tramp_code_len;
-extern  u_long  mp_tramp_tlb_slots;
+extern  u_long  mp_tramp_dtlb_slots, mp_tramp_itlb_slots;
 extern  u_long  mp_tramp_func;
 extern  u_long  mp_tramp_ci;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.8 2011/09/27 01:02:34 jym Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.8.30.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.8 2011/09/27 01:02:34 jym Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.8.30.1 2015/09/22 12:05:47 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -156,7 +156,6 @@ struct pmap_tlb_info pmap_tlb0_info = {
 	.ti_lock = &pmap_tlb0_mutex,
 	.ti_pais = LIST_HEAD_INITIALIZER(pmap_tlb_info.ti_pais),
 #ifdef MULTIPROCESSOR
-	.ti_cpu_mask = 1,
 	.ti_tlbinvop = TLBINV_NOBODY,
 #endif
 };
@@ -191,7 +190,7 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 	 */
 	KASSERT(pai->pai_asid);
 #ifdef MULTIPROCESSOR
-	KASSERT((pm->pm_onproc & ti->ti_cpu_mask) == 0);
+	KASSERT(!kcpuset_intersecting_p(pm->pm_onproc, ti->ti_kcpuset));
 #endif
 	LIST_REMOVE(pai, pai_link);
 #ifdef DIAGNOSTIC
@@ -212,7 +211,7 @@ pmap_pai_reset(struct pmap_tlb_info *ti, struct pmap_asid_info *pai,
 	 * The bits in pm_active belonging to this TLB can only be changed
 	 * while this TLB's lock is held.
 	 */
-	atomic_and_32(&pm->pm_active, ~ti->ti_cpu_mask);
+	kcpuset_atomicly_remove(pm->pm_active, ti->ti_kcpuset);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -265,6 +264,9 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 			}
 		}
 #ifdef MULTIPROCESSOR
+		kcpuset_create(&ti->ti_kcpuset, true);
+		KASSERT(ti->ti_kcpuset != NULL);
+		kcpuset_set(ti->ti_kcpuset, cpu_number());
 		const u_int icache_way_pages =
 			mips_cache_info.mci_picache_way_size >> PGSHIFT;
 		KASSERT(icache_way_pages <= 8*sizeof(pmap_tlb_synci_page_mask));
@@ -288,7 +290,8 @@ pmap_tlb_info_init(struct pmap_tlb_info *ti)
 	ti->ti_asids_free = ti->ti_asid_max;
 	ti->ti_tlbinvop = TLBINV_NOBODY,
 	ti->ti_victim = NULL;
-	ti->ti_cpu_mask = 0;
+	kcpuset_create(&ti->ti_kcpuset, true);
+	KASSERT(ti->ti_kcpuset != NULL);
 	ti->ti_index = pmap_ntlbs++;
 	snprintf(ti->ti_name, sizeof(ti->ti_name), "tlb%u", ti->ti_index);
 
@@ -313,8 +316,7 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 	KASSERT(cold);
 
 	TLBINFO_LOCK(ti);
-	uint32_t cpu_mask = 1 << cpu_index(ci);
-	ti->ti_cpu_mask |= cpu_mask;
+	kcpuset_set(ti->ti_kcpuset, cpu_index(ci));
 	ci->ci_tlb_info = ti;
 	ci->ci_ksp_tlb_slot = ti->ti_wired++;
 	/*
@@ -326,8 +328,8 @@ pmap_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 	 * Mark the kernel as active and "onproc" for this cpu.  We assume
 	 * we are the only CPU running so atomic ops are not needed.
 	 */
-	pmap_kernel()->pm_active |= cpu_mask;
-	pmap_kernel()->pm_onproc |= cpu_mask;
+	kcpuset_atomic_set(pmap_kernel()->pm_active, cpu_index(ci));
+	kcpuset_atomic_set(pmap_kernel()->pm_onproc, cpu_index(ci));
 	TLBINFO_UNLOCK(ti);
 }
 #endif /* MULTIPROCESSOR */
@@ -406,7 +408,7 @@ pmap_tlb_asid_reinitialize(struct pmap_tlb_info *ti, enum tlb_invalidate_op op)
 		next = LIST_NEXT(pai, pai_link);
 		KASSERT(pai->pai_asid != 0);
 #ifdef MULTIPROCESSOR
-		if (pm->pm_onproc & ti->ti_cpu_mask) {
+		if (kcpuset_intersecting_p(pm->pm_onproc, ti->ti_kcpuset)) {
 			if (!TLBINFO_ASID_INUSE_P(ti, pai->pai_asid)) {
 				TLBINFO_ASID_MARK_USED(ti, pai->pai_asid);
 				ti->ti_asids_free--;
@@ -451,7 +453,7 @@ pmap_tlb_shootdown_process(void)
 		 */
 		struct pmap_asid_info * const pai = PMAP_PAI(ti->ti_victim, ti);
 		KASSERT(ti->ti_victim != pmap_kernel());
-		if (ti->ti_victim->pm_onproc & ti->ti_cpu_mask) {
+		if (kcpuset_intersecting_p(ti->ti_victim->pm_onproc, ti->ti_kcpuset)) {
 			/*
 			 * The victim is an active pmap so we will just
 			 * invalidate its TLB entries.
@@ -467,7 +469,7 @@ pmap_tlb_shootdown_process(void)
 			 * next called for this pmap, it will allocate a new
 			 * ASID.
 			 */
-			KASSERT((curpmap->pm_onproc & ti->ti_cpu_mask) == 0);
+			KASSERT(kcpuset_intersecting_p(curpmap->pm_onproc, ti->ti_kcpuset) == 0);
 			pmap_pai_reset(ti, pai, PAI_PMAP(pai, ti));
 		}
 		break;
@@ -534,29 +536,38 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 	/*
 	 * We don't need to deal our own TLB.
 	 */
-	uint32_t pm_active = pm->pm_active & ~curcpu()->ci_tlb_info->ti_cpu_mask;
 	const bool kernel_p = (pm == pmap_kernel());
 	bool ipi_sent = false;
+	kcpuset_t *pm_active;
+
+	if (pmap_ntlbs == 1)
+		return false;
+
+	KASSERT(pm->pm_active != NULL);
+	kcpuset_clone(&pm_active, pm->pm_active);
+	KASSERT(pm_active != NULL);
+	kcpuset_remove(pm_active, curcpu()->ci_tlb_info->ti_kcpuset);
 
 	/*
 	 * If pm_active gets more bits set, then it's after all our changes
 	 * have been made so they will already be cognizant of them.
 	 */
 
-	for (size_t i = 0; pm_active != 0; i++) {
+	for (size_t i = 0; !kcpuset_iszero(pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
 		KASSERT(tlbinfo_index(ti) == i);
 		/*
 		 * Skip this TLB if there are no active mappings for it.
 		 */
-		if ((pm_active & ti->ti_cpu_mask) == 0)
+		if (!kcpuset_intersecting_p(pm_active, ti->ti_kcpuset))
 			continue;
 		struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
-		pm_active &= ~ti->ti_cpu_mask;
+		kcpuset_remove(pm_active, ti->ti_kcpuset);
 		TLBINFO_LOCK(ti);
-		const uint32_t onproc = (pm->pm_onproc & ti->ti_cpu_mask);
-		if (onproc != 0) {
+		cpuid_t j = kcpuset_ffs_intersecting(pm->pm_onproc, ti->ti_kcpuset);
+		// post decrement since ffs returns bit + 1 or 0 if no bit
+		if (j-- > 0) {
 			if (kernel_p) {
 				ti->ti_tlbinvop =
 				    TLBINV_KERNEL_MAP(ti->ti_tlbinvop);
@@ -588,13 +599,11 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 			 * change now that we have released the lock but we
 			 * can tolerate spurious shootdowns.
 			 */
-			KASSERT(onproc != 0);
-			u_int j = ffs(onproc) - 1;
 			cpu_send_ipi(cpu_lookup(j), IPI_SHOOTDOWN);
 			ipi_sent = true;
 			continue;
 		}
-		if (pm->pm_active & ti->ti_cpu_mask) {
+		if (kcpuset_intersecting_p(pm->pm_active, ti->ti_kcpuset)) {
 			/*
 			 * If this pmap has an ASID assigned but it's not
 			 * currently running, nuke its ASID.  Next time the
@@ -607,6 +616,7 @@ pmap_tlb_shootdown_bystanders(pmap_t pm)
 		}
 		TLBINFO_UNLOCK(ti);
 	}
+	kcpuset_destroy(pm_active);
 
 	return ipi_sent;
 }
@@ -668,8 +678,8 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	KASSERT(pai->pai_asid == 0);
 	KASSERT(pai->pai_link.le_prev == NULL);
 #ifdef MULTIPROCESSOR
-	KASSERT((pm->pm_onproc & ti->ti_cpu_mask) == 0);
-	KASSERT((pm->pm_active & ti->ti_cpu_mask) == 0);
+	KASSERT(!kcpuset_intersecting_p(pm->pm_onproc, ti->ti_kcpuset));
+	KASSERT(!kcpuset_intersecting_p(pm->pm_active, ti->ti_kcpuset));
 #endif
 	KASSERT(ti->ti_asids_free > 0);
 	KASSERT(ti->ti_asid_hint <= ti->ti_asid_max);
@@ -724,7 +734,7 @@ pmap_tlb_asid_alloc(struct pmap_tlb_info *ti, pmap_t pm,
 	 * The bits in pm_active belonging to this TLB can only be changed
 	 * while this TLBs lock is held.
 	 */
-	atomic_or_32(&pm->pm_active, ti->ti_cpu_mask);
+	kcpuset_atomicly_merge(pm->pm_active, ti->ti_kcpuset);
 #endif
 }
 
@@ -769,7 +779,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		 * The bits in pm_onproc belonging to this TLB can only
 		 * be changed while this TLBs lock is held.
 		 */
-		atomic_or_32(&pm->pm_onproc, 1 << cpu_index(ci));
+		kcpuset_atomic_set(pm->pm_onproc, cpu_index(ci));
 		/*
 		 * If this CPU has had exec pages changes that haven't been
 		 * icache synched, make sure to do that before returning to
@@ -782,6 +792,7 @@ pmap_tlb_asid_acquire(pmap_t pm, struct lwp *l)
 		atomic_or_ulong(&ci->ci_flags, CPUF_USERPMAP);
 #endif /* MULTIPROCESSOR */
 		ci->ci_pmap_asid_cur = pai->pai_asid;
+		KASSERT(!cold);
 		tlb_set_asid(pai->pai_asid);
 		pmap_tlb_asid_check();
 	} else {
@@ -810,19 +821,18 @@ pmap_tlb_asid_deactivate(pmap_t pm)
 	 * deactivated the pmap and thusly onproc will be 0 so there's nothing
 	 * to do.
 	 */
-	if (pm != pmap_kernel() && pm->pm_onproc != 0) {
+	if (pm != pmap_kernel() && !kcpuset_iszero(pm->pm_onproc)) {
 		struct cpu_info * const ci = curcpu();
-		const uint32_t cpu_mask = 1 << cpu_index(ci);
 		KASSERT(!cpu_intr_p());
-		KASSERTMSG(pm->pm_onproc & cpu_mask,
-		    "%s: pmap %p onproc %#x doesn't include cpu %d (%p)",
+		KASSERTMSG(kcpuset_isset(pm->pm_onproc, cpu_index(ci)),
+		    "%s: pmap %p onproc %p doesn't include cpu %d (%p)",
 		    __func__, pm, pm->pm_onproc, cpu_index(ci), ci);
 		/*
 		 * The bits in pm_onproc that belong to this TLB can
 		 * be changed while this TLBs lock is not held as long
 		 * as we use atomic ops.
 		 */
-		atomic_and_32(&pm->pm_onproc, ~cpu_mask);
+		kcpuset_atomic_clear(pm->pm_onproc, cpu_index(ci));
 		atomic_and_ulong(&ci->ci_flags, ~CPUF_USERPMAP);
 	}
 #elif defined(DEBUG)
@@ -838,11 +848,11 @@ pmap_tlb_asid_release_all(struct pmap *pm)
 	KASSERT(pm != pmap_kernel());
 	KASSERT(kpreempt_disabled());
 #ifdef MULTIPROCESSOR
-	KASSERT(pm->pm_onproc == 0);
-	for (u_int i = 0; pm->pm_active != 0; i++) {
+	KASSERT(kcpuset_iszero(pm->pm_onproc));
+	for (u_int i = 0; !kcpuset_iszero(pm->pm_active); i++) {
 		KASSERT(i < pmap_ntlbs);
 		struct pmap_tlb_info * const ti = pmap_tlbs[i];
-		if (pm->pm_active & ti->ti_cpu_mask) {
+		if (kcpuset_intersecting_p(pm->pm_active, ti->ti_kcpuset)) {
 			struct pmap_asid_info * const pai = PMAP_PAI(pm, ti);
 			TLBINFO_LOCK(ti);
 			KASSERT(ti->ti_victim != pm);
@@ -907,7 +917,7 @@ pmap_tlb_syncicache_ast(struct cpu_info *ci)
 }
 
 void
-pmap_tlb_syncicache(vaddr_t va, uint32_t page_onproc)
+pmap_tlb_syncicache(vaddr_t va, const kcpuset_t *page_onproc)
 {
 	KASSERT(kpreempt_disabled());
 	/*
@@ -929,10 +939,12 @@ pmap_tlb_syncicache(vaddr_t va, uint32_t page_onproc)
 	 * then become equal but that's a one in 4 billion cache and will
 	 * just cause an extra sync of the icache.
 	 */
-	const uint32_t cpu_mask = 1L << cpu_index(curcpu());
+	struct cpu_info * const ci = curcpu();
 	const uint32_t page_mask =
 	    1L << ((va >> PGSHIFT) & pmap_tlb_synci_page_mask);
-	uint32_t onproc = 0;
+	kcpuset_t *onproc;
+	kcpuset_create(&onproc, true);
+	KASSERT(onproc != NULL);
 	for (size_t i = 0; i < pmap_ntlbs; i++) {
 		struct pmap_tlb_info * const ti = pmap_tlbs[0];
 		TLBINFO_LOCK(ti);
@@ -949,7 +961,7 @@ pmap_tlb_syncicache(vaddr_t va, uint32_t page_onproc)
 
 			if (orig_page_bitmap == old_page_bitmap) {
 				if (old_page_bitmap == 0) {
-					onproc |= ti->ti_cpu_mask;
+					kcpuset_merge(onproc, ti->ti_kcpuset);
 				} else {
 					ti->ti_evcnt_synci_deferred.ev_count++;
 				}
@@ -960,24 +972,24 @@ pmap_tlb_syncicache(vaddr_t va, uint32_t page_onproc)
 #if 0
 		printf("%s: %s: %x to %x on cpus %#x\n", __func__,
 		    ti->ti_name, page_mask, ti->ti_synci_page_bitmap,
-		     onproc & page_onproc & ti->ti_cpu_mask);
+		     onproc & page_onproc & ti->ti_kcpuset);
 #endif
 		TLBINFO_UNLOCK(ti);
 	}
-	onproc &= page_onproc;
-	if (__predict_false(onproc != 0)) {
+	kcpuset_intersect(onproc, page_onproc);
+	if (__predict_false(!kcpuset_iszero(onproc))) {
 		/*
 		 * If the cpu need to sync this page, tell the current lwp
 		 * to sync the icache before it returns to userspace.
 		 */
-		if (onproc & cpu_mask) {
-			if (curcpu()->ci_flags & CPUF_USERPMAP) {
+		if (kcpuset_isset(onproc, cpu_index(ci))) {
+			if (ci->ci_flags & CPUF_USERPMAP) {
 				curlwp->l_md.md_astpending = 1;	/* force call to ast() */
-				curcpu()->ci_evcnt_synci_onproc_rqst.ev_count++;
+				ci->ci_evcnt_synci_onproc_rqst.ev_count++;
 			} else {
-				curcpu()->ci_evcnt_synci_deferred_rqst.ev_count++;
+				ci->ci_evcnt_synci_deferred_rqst.ev_count++;
 			}
-			onproc ^= cpu_mask;
+			kcpuset_clear(onproc, cpu_index(ci));
 		}
 
 		/*
@@ -986,12 +998,15 @@ pmap_tlb_syncicache(vaddr_t va, uint32_t page_onproc)
 		 * We might cause some spurious icache syncs but that's not
 		 * going to break anything.
 		 */
-		for (u_int n = ffs(onproc);
-		     onproc != 0;
-		     onproc >>= n, onproc <<= n, n = ffs(onproc)) {
-			cpu_send_ipi(cpu_lookup(n-1), IPI_SYNCICACHE);
+		for (cpuid_t n = kcpuset_ffs(onproc);
+		     n-- != 0;
+		     n = kcpuset_ffs(onproc)) {
+			kcpuset_clear(onproc, n);
+			cpu_send_ipi(cpu_lookup(n), IPI_SYNCICACHE);
 		}
 	}
+
+	kcpuset_destroy(onproc);
 }
 
 void

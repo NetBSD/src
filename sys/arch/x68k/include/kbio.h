@@ -1,4 +1,4 @@
-/*	$NetBSD: kbio.h,v 1.5 2006/08/28 17:15:24 he Exp $ */
+/*	$NetBSD: kbio.h,v 1.5.124.1 2015/09/22 12:05:53 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
 #ifndef _X68K_KBIO_H_
 #define _X68K_KBIO_H_
 
+#include <sys/ioccom.h>
 #include <dev/sun/kbio.h>
 
 struct kiockey {

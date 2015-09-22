@@ -1,4 +1,4 @@
-/* $NetBSD: types.h,v 1.49.24.1 2015/04/06 15:17:50 skrll Exp $ */
+/* $NetBSD: types.h,v 1.49.24.2 2015/09/22 12:05:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 1990, 1993
@@ -63,7 +63,7 @@ typedef long int	register_t;
 #define	PRIxREGISTER	"lx"
 #endif
 
-typedef	volatile int		__cpu_simple_lock_t;
+typedef	int		__cpu_simple_lock_nv_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

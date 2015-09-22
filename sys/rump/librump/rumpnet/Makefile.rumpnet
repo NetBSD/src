@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpnet,v 1.15.4.1 2015/04/06 15:18:30 skrll Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.15.4.2 2015/09/22 12:06:15 skrll Exp $
 #
 
 LIB=		rumpnet
@@ -32,12 +32,12 @@ SRCS+=	radix.c
 SRCS+=	rtbl.c
 
 # compat (nothing for now)
-SRCS+=	
+SRCS+=
 
 # bpf stubs, required for all kernels
 SRCS+=	bpf_stub.c
 
-CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/librump/rumpnet/opt
+CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 
 .include "${RUMPTOP}/Makefile.rump"
 

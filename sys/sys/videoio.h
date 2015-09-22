@@ -1,4 +1,4 @@
-/* $NetBSD: videoio.h,v 1.8 2011/08/13 02:49:06 jakllsch Exp $ */
+/* $NetBSD: videoio.h,v 1.8.30.1 2015/09/22 12:06:17 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,7 @@
 #define _HAVE_SYS_VIDEOIO_H
 
 #include <sys/types.h>
+#include <sys/ioccom.h>
 #include <sys/time.h>
 #ifdef _KERNEL
 #include <compat/sys/time.h>

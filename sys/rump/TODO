@@ -1,4 +1,4 @@
-	$NetBSD: TODO,v 1.10.6.1 2015/06/06 14:40:26 skrll Exp $
+	$NetBSD: TODO,v 1.10.6.2 2015/09/22 12:06:12 skrll Exp $
 
 * integrate build framework with config(1) to stop the need to
   maintain a separate build infrastructure.  the remaining step
@@ -7,10 +7,6 @@
   + this will also benefit kernel modules
   + the patch to config(1) exists but is not in-tree.  remaining work is
     modifications to files.*
-* find a better solution for rumpdefs.h, the sed "solution"
-  doesn't really scale nicely
-  + everything except deeply embedded (i.e. small) can use:
-    http://github.com/justincormack/rumprun
 * the .a semantics do not make sense for rump kernel components.
   additionally, they cannot be loaded as modules since they are
   ar's instead of elf objects.  make the build produce and use elf

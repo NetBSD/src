@@ -1,4 +1,4 @@
-# $NetBSD: NULL,v 1.45 2014/08/23 20:26:56 dholland Exp $
+# $NetBSD: NULL,v 1.45.2.1 2015/09/22 12:05:36 skrll Exp $
 #
 # NULL machine description file
 # 
@@ -7,7 +7,7 @@ include "arch/amigappc/conf/std.amigappc"
 
 #options 	INCLUDE_CONFIG_FILE     # embed config file in kernel binary
 
-#ident          "GENERIC-$Revision: 1.45 $"
+#ident          "GENERIC-$Revision: 1.45.2.1 $"
 
 maxusers	8
 
@@ -50,7 +50,6 @@ options 	SCSIVERBOSE	# human readable SCSI error messages
 #
 options 	DIAGNOSTIC	# Extra kernel sanity checks
 options 	DEBUG		# Enable misc. kernel debugging code
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB

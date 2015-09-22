@@ -1,4 +1,4 @@
-# $NetBSD: FOURMEG,v 1.48 2014/08/23 20:26:56 dholland Exp $
+# $NetBSD: FOURMEG,v 1.48.2.1 2015/09/22 12:05:35 skrll Exp $
 
 # FOURMEG arm26 configuration -- something small
 
@@ -89,7 +89,6 @@ options 	SYSVSHM		# System V-like shared memory
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	BUFPAGES=1
 #options 	USERCONF	# userconf(4) support

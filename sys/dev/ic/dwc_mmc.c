@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.6.2.2 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.6.2.3 2015/09/22 12:05:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_dwc_mmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.6.2.2 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.6.2.3 2015/09/22 12:05:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -275,7 +275,7 @@ dwc_mmc_pio_transfer(struct dwc_mmc_softc *sc, struct sdmmc_command *cmd)
 
 	return 0;
 }
-				     
+
 static int
 dwc_mmc_host_reset(sdmmc_chipset_handle_t sch)
 {
@@ -482,12 +482,6 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 	cmd->c_resid = cmd->c_datalen;
 	MMC_WRITE(sc, DWC_MMC_CMD_REG, cmdval | cmd->c_opcode);
-	if (cmd->c_datalen > 0) {
-		cmd->c_error = dwc_mmc_pio_transfer(sc, cmd);
-		if (cmd->c_error) {
-			goto done;
-		}
-	}
 
 	cmd->c_error = dwc_mmc_wait_rint(sc,
 	    DWC_MMC_INT_ERROR|DWC_MMC_INT_CD, hz * 10);
@@ -506,6 +500,11 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 	if (cmd->c_datalen > 0) {
+		cmd->c_error = dwc_mmc_pio_transfer(sc, cmd);
+		if (cmd->c_error) {
+			goto done;
+		}
+
 		cmd->c_error = dwc_mmc_wait_rint(sc,
 		    DWC_MMC_INT_ERROR|DWC_MMC_INT_ACD|DWC_MMC_INT_DTO,
 		    hz * 10);

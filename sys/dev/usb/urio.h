@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.h,v 1.3 2008/04/28 20:24:00 martin Exp $	*/
+/*	$NetBSD: urio.h,v 1.3.66.1 2015/09/22 12:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -29,6 +29,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 struct urio_command
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs_llsc.S,v 1.2.30.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: lock_stubs_llsc.S,v 1.2.30.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -15,7 +15,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *      
+ *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
  * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
@@ -36,7 +36,6 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-#include <machine/cpu.h>		/* MIPS_CURLWP */
 
 #include "assym.h"
 

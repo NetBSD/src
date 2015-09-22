@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.312.2.2 2015/06/06 14:40:29 skrll Exp $	*/
+/*	$NetBSD: rump.c,v 1.312.2.3 2015/09/22 12:06:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.2 2015/06/06 14:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.3 2015/09/22 12:06:15 skrll Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.312.2.2 2015/06/06 14:40:29 skrll Exp $")
 #include "rump_dev_private.h"
 
 char machine[] = MACHINE;
+char machine_arch[] = MACHINE_ARCH;
 
 struct proc *initproc;
 
@@ -125,30 +126,12 @@ int  (*rump_vfs_makeonedevnode)(dev_t, const char *,
 				devmajor_t, devminor_t) = (void *)nullop;
 int  (*rump_vfs_makedevnodes)(dev_t, const char *, char,
 			      devmajor_t, devminor_t, int) = (void *)nullop;
+int  (*rump_vfs_makesymlink)(const char *, const char *) = (void *)nullop;
 
 rump_proc_vfs_init_fn rump_proc_vfs_init = (void *)nullop;
 rump_proc_vfs_release_fn rump_proc_vfs_release = (void *)nullop;
 
 static void add_linkedin_modules(const struct modinfo *const *, size_t);
-
-/*
- * Create some sysctl nodes.  why only this you ask.  well, init_sysctl
- * is a kitchen sink in need of some gardening.  but i want to use
- * others today.  Furthermore, creating a whole kitchen sink full of
- * sysctl nodes is a waste of cycles for rump kernel bootstrap.
- */
-static void
-mksysctls(void)
-{
-
-	/* hw.pagesize */
-	sysctl_createv(NULL, 0, NULL, NULL,
-	    CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
-	    CTLTYPE_INT, "pagesize",
-	    SYSCTL_DESCR("Software page size"),
-	    NULL, PAGE_SIZE, NULL, 0,
-	    CTL_HW, HW_PAGESIZE, CTL_EOL);
-}
 
 static pid_t rspo_wrap_getpid(void) {
 	return rump_sysproxy_hyp_getpid();
@@ -313,6 +296,7 @@ rump_init(void)
 	uao_init();
 
 	mutex_obj_init();
+	rw_obj_init();
 	callout_startup();
 
 	kprintf_init();
@@ -401,6 +385,7 @@ rump_init(void)
 
 		aprint_verbose("cpu%d at thinair0: rump virtual cpu\n", i);
 	}
+	ncpuonline = ncpu;
 
 	/* Once all CPUs are detected, initialize the per-CPU cprng_fast.  */
 	cprng_fast_init();
@@ -410,7 +395,6 @@ rump_init(void)
 
 	rnd_init_softint();
 
-	mksysctls();
 	kqueue_init();
 	iostat_init();
 	fd_sys_init();

@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.41.4.1 2015/06/06 14:40:05 skrll Exp $      */
+/*      $NetBSD: xenevt.c,v 1.41.4.2 2015/09/22 12:05:54 skrll Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.41.4.1 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.41.4.2 2015/09/22 12:05:54 skrll Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.41.4.1 2015/06/06 14:40:05 skrll Exp $"
 #include <xen/xenio3.h>
 #include <xen/xen.h>
 
+#include "ioconf.h"
+
 /*
  * Interface between the event channel and userland.
  * Each process with a xenevt device instance open can regiter events it
@@ -62,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.41.4.1 2015/06/06 14:40:05 skrll Exp $"
  * Processes get a device instance by opening a cloning device.
  */
 
-void		xenevtattach(int);
 static int	xenevt_fread(struct file *, off_t *, struct uio *,
     kauth_cred_t, int);
 static int	xenevt_fwrite(struct file *, off_t *, struct uio *,
@@ -117,7 +118,7 @@ struct xenevt_d {
 	kcondvar_t cv;
 	STAILQ_ENTRY(xenevt_d) pendingq;
 	bool pending;
-	evtchn_port_t ring[2048]; 
+	evtchn_port_t ring[2048];
 	u_int ring_read; /* pointer of the reader */
 	u_int ring_write; /* pointer of the writer */
 	u_int flags;
@@ -581,7 +582,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	case IOCTL_EVTCHN_UNBIND:
 	{
 		struct ioctl_evtchn_unbind *unbind = addr;
-		
+
 		if (unbind->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
@@ -602,7 +603,7 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	case IOCTL_EVTCHN_NOTIFY:
 	{
 		struct ioctl_evtchn_notify *notify = addr;
-		
+
 		if (notify->port >= NR_EVENT_CHANNELS)
 			return EINVAL;
 		mutex_enter(&devevent_lock);
@@ -622,11 +623,11 @@ xenevt_fioctl(struct file *fp, u_long cmd, void *addr)
 	return 0;
 }
 
-/*      
- * Support for poll() system call  
+/*
+ * Support for poll() system call
  *
  * Return true if the specific operation will not block indefinitely.
- */      
+ */
 
 static int
 xenevt_fpoll(struct file *fp, int events)

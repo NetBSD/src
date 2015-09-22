@@ -1,4 +1,4 @@
-#	$NetBSD: std.nitrogen6,v 1.1.2.1 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: std.nitrogen6,v 1.1.2.2 2015/09/22 12:05:40 skrll Exp $
 #
 # standard NetBSD/evbarm options for Nitrogen6X
 
@@ -21,8 +21,6 @@ makeoptions	CPUFLAGS="-mcpu=cortex-a9"
 options 	FPU_VFP
 options 	CORTEX_PMC
 options 	CORTEX_PMC_CCNT_HZ=792000000
-
-options 	EVBARM_BOARDTYPE="nitrogen6"
 
 options 	KERNEL_BASE_EXT=0x80000000
 makeoptions 	KERNEL_BASE_PHYS="0x10800000"

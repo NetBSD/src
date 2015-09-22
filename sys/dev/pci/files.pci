@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.372.2.1 2015/04/06 15:18:10 skrll Exp $
+#	$NetBSD: files.pci,v 1.372.2.2 2015/09/22 12:05:59 skrll Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -781,6 +781,11 @@ file	dev/pci/if_atw_pci.c		atw_pci
 attach	rtw at pci with rtw_pci
 file	dev/pci/if_rtw_pci.c		rtw_pci
 
+# Realtek RTL8188CE Mini-PCIe
+device	rtwn: ifnet, arp, wlan, firmload
+attach	rtwn at pci
+file	dev/pci/if_rtwn.c		rtwn
+
 # Ralink RT2500/RT2600 PCI/Mini-PCI
 attach	ral at pci with ral_pci
 file	dev/pci/if_ral_pci.c		ral_pci
@@ -952,7 +957,7 @@ file	dev/pci/njs_pci.c		njs_pci
 
 # S2io Xframe 10 Gigabit ethernet (Xframe driver)
 device  xge: ether, ifnet, arp
-attach  xge  at pci 
+attach  xge  at pci
 file    dev/pci/if_xge.c		xge
 
 # Via Velocity 612x 10/100/1000 Ethernet
@@ -1154,7 +1159,7 @@ file	dev/pci/igma.c		igma
 defflag	opt_tdvfb.h		TDVFB_CONSOLE
 device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
-file	dev/pci/tdvfb.c		tdvfb	
+file	dev/pci/tdvfb.c		tdvfb
 
 # nvidia geforce framebuffer console driver
 device	gffb: wsemuldisplaydev, rasops8, vcons, videomode, i2cbus, i2c_bitbang, glyphcache

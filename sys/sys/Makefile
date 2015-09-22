@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.152.2.1 2015/06/06 14:40:30 skrll Exp $
+#	$NetBSD: Makefile,v 1.152.2.2 2015/09/22 12:06:17 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -10,7 +10,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	cdefs_elf.h cdio.h chio.h clock.h clockctl.h \
 	common_ansi.h common_int_const.h common_int_fmtio.h \
 	common_int_limits.h common_int_mwgwtypes.h common_int_types.h \
-	common_limits.h common_wchar_limits.h \
+	common_limits.h common_lock.h common_wchar_limits.h \
 	condvar.h conf.h core.h \
 	cpufreq.h cpuio.h ctype_bits.h ctype_inline.h \
 	device.h device_if.h \
@@ -21,7 +21,7 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	exec_coff.h exec_ecoff.h exec_elf.h exec_script.h extattr.h extent.h \
 	fcntl.h fd_set.h fdio.h featuretest.h file.h filedesc.h filio.h \
 	flashio.h float_ieee754.h fstypes.h gcq.h gmon.h gpio.h hash.h \
-	ieee754.h inttypes.h ioccom.h ioctl.h ioctl_compat.h iostat.h ipc.h \
+	ieee754.h intr.h intrio.h inttypes.h ioccom.h ioctl.h ioctl_compat.h iostat.h ipc.h \
 	joystick.h \
 	kcore.h kcpuset.h kgdb.h kmem.h ksem.h ksyms.h ktrace.h \
 	localedef.h lock.h lockf.h lua.h lwp.h lwpctl.h \
@@ -37,9 +37,9 @@ INCS=	acct.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h audioio.h \
 	sha2.h shm.h siginfo.h signal.h signalvar.h sigtypes.h \
 	sleepq.h socket.h \
 	socketvar.h sockio.h spawn.h specificdata.h stat.h \
-	statvfs.h syscall.h syscallargs.h sysctl.h stdarg.h stdint.h swap.h \
-	syncobj.h syslimits.h syslog.h \
-	tape.h termios.h time.h timeb.h timepps.h times.h \
+	statvfs.h syscall.h syscallargs.h sysctl.h stdarg.h stdbool.h \
+	stdint.h swap.h syncobj.h syslimits.h syslog.h \
+	tape.h termios.h time.h timeb.h timepps.h times.h timespec.h \
 	timex.h tls.h trace.h tree.h tty.h ttychars.h ttycom.h \
 	ttydefaults.h ttydev.h types.h \
 	ucontext.h ucred.h uio.h un.h unistd.h unpcb.h user.h utsname.h uuid.h \
@@ -52,6 +52,7 @@ INCSYMLINKS=\
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/poll.h /usr/include/poll.h \
 	sys/stdarg.h /usr/include/stdarg.h \
+	sys/stdbool.h /usr/include/stdbool.h \
 	sys/stdint.h /usr/include/stdint.h \
 	sys/syslog.h /usr/include/syslog.h \
 	sys/termios.h /usr/include/termios.h \

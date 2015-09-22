@@ -1,4 +1,4 @@
-#	$NetBSD: archdirs.mk,v 1.2 2014/08/11 03:43:25 jnemeth Exp $
+#	$NetBSD: archdirs.mk,v 1.2.4.1 2015/09/22 12:06:08 skrll Exp $
 
 # list of subdirs used per-platform
 
@@ -12,4 +12,8 @@ ARCHDIR_SUBDIR=	x86/i386-xen x86/i386pae-xen
 
 .if ${MACHINE_ARCH} == "powerpc"
 ARCHDIR_SUBDIR=	powerpc/powerpc-4xx powerpc/powerpc-booke
+.endif
+
+.if ${MACHINE_ARCH} == "mips64eb" || ${MACHINE_ARCH} == "mips64el"
+ARCHDIR_SUBDIR= mips/mips-n32
 .endif

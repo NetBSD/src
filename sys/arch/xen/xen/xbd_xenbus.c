@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.66.4.2 2015/06/06 14:40:05 skrll Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.66.4.3 2015/09/22 12:05:54 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -40,7 +40,7 @@
  * - initiate request: xbdread/write/open/ioctl/..
  * - depending on operation, it is handled directly by disk(9) subsystem or
  *   goes through physio(9) first.
- * - the request is ultimately processed by xbdstart() that prepares the
+ * - the request is ultimately processed by xbd_diskstart() that prepares the
  *   xbd requests, post them in the ring I/O queue, then signal the backend.
  *
  * When a response is available in the queue, the backend signals the frontend
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.2 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.3 2015/09/22 12:05:54 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -72,8 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.2 2015/06/06 14:40:05 skrll Ex
 #include <dev/dkvar.h>
 
 #include <uvm/uvm.h>
-
-#include <sys/rndsource.h>
 
 #include <xen/hypervisor.h>
 #include <xen/evtchn.h>
@@ -151,7 +149,6 @@ struct xbd_xenbus_softc {
 	u_long sc_info; /* VDISK_* */
 	u_long sc_handle; /* from backend */
 	int sc_cache_flush; /* backend supports BLKIF_OP_FLUSH_DISKCACHE */
-	krndsource_t     sc_rnd_source;
 };
 
 #if 0
@@ -168,7 +165,7 @@ static bool xbd_xenbus_suspend(device_t, const pmf_qual_t *);
 static bool xbd_xenbus_resume(device_t, const pmf_qual_t *);
 
 static int  xbd_handler(void *);
-static void xbdstart(device_t);
+static int  xbd_diskstart(device_t, struct buf *);
 static void xbd_backend_changed(void *, XenbusState);
 static void xbd_connect(struct xbd_xenbus_softc *);
 
@@ -223,7 +220,7 @@ static struct dkdriver xbddkdriver = {
 	.d_minphys = xbdminphys,
 	.d_open = xbdopen,
 	.d_close = xbdclose,
-	.d_diskstart = xbdstart,
+	.d_diskstart = xbd_diskstart,
 };
 
 static int
@@ -309,9 +306,6 @@ xbd_xenbus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	rnd_attach_source(&sc->sc_rnd_source, device_xname(self),
-	    RND_TYPE_DISK, RND_FLAG_DEFAULT);
-
 	if (!pmf_device_register(self, xbd_xenbus_suspend, xbd_xenbus_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -363,18 +357,14 @@ xbd_xenbus_detach(device_t dev, int flags)
 		/* Delete all of our wedges. */
 		dkwedge_delall(&sc->sc_dksc.sc_dkdev);
 
-		s = splbio();
 		/* Kill off any queued buffers. */
-		bufq_drain(sc->sc_dksc.sc_bufq);
+		dk_drain(&sc->sc_dksc);
 		bufq_free(sc->sc_dksc.sc_bufq);
-		splx(s);
 
 		/* detach disk */
 		disk_detach(&sc->sc_dksc.sc_dkdev);
 		disk_destroy(&sc->sc_dksc.sc_dkdev);
 		dk_detach(&sc->sc_dksc);
-		/* Unhook the entropy source. */
-		rnd_detach_source(&sc->sc_rnd_source);
 	}
 
 	hypervisor_mask_event(sc->sc_evtchn);
@@ -697,16 +687,13 @@ again:
 			bp->b_resid = bp->b_bcount;
 			goto next;
 		}
-		/* b_resid was set in xbdstart */
+		/* b_resid was set in dk_start */
 next:
 		if (bp->b_data != xbdreq->req_data)
 			xbd_unmap_align(xbdreq);
-		disk_unbusy(&sc->sc_dksc.sc_dkdev,
-		    (bp->b_bcount - bp->b_resid),
-		    (bp->b_flags & B_READ));
-		rnd_add_uint32(&sc->sc_rnd_source,
-		    bp->b_blkno);
-		biodone(bp);
+
+		dk_done(&sc->sc_dksc, bp);
+
 		SLIST_INSERT_HEAD(&sc->sc_xbdreq_head, xbdreq, req_next);
 	}
 done:
@@ -720,7 +707,7 @@ done:
 	if (sc->sc_xbdreq_wait)
 		wakeup(&sc->sc_xbdreq_wait);
 	else
-		xbdstart(sc->sc_dksc.sc_dev);
+		dk_start(&sc->sc_dksc, NULL);
 	return 1;
 }
 
@@ -918,156 +905,111 @@ xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	return dk_dump(&sc->sc_dksc, dev, blkno, va, size);
 }
 
-static void
-xbdstart(device_t self)
+static int
+xbd_diskstart(device_t self, struct buf *bp)
 {
 	struct xbd_xenbus_softc *sc = device_private(self);
-	struct dk_softc *dksc = &sc->sc_dksc;
-	struct buf *bp;
-#ifdef DIAGNOSTIC
-	struct  buf *qbp;
-#endif
 	struct xbd_req *xbdreq;
 	blkif_request_t *req;
 	size_t bcount, off;
 	paddr_t ma;
 	vaddr_t va;
 	int nsects, nbytes, seg;
-	int notify;
+	int notify, error = 0;
 
-	while ((bp = bufq_peek(dksc->sc_bufq)) != NULL) {
+	DPRINTF(("xbd_diskstart(%p): b_bcount = %ld\n",
+	    bp, (long)bp->b_bcount));
 
-		DPRINTF(("xbdstart(%p): b_bcount = %ld\n",
-		    bp, (long)bp->b_bcount));
-
-		if (sc->sc_shutdown != BLKIF_SHUTDOWN_RUN) {
-			bp->b_error = EIO;
-			goto err;
-		}
-
-		if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_xbdsize) {
-			/* invalid block number */
-			bp->b_error = EINVAL;
-			goto err;
-		}
-
-		if (bp->b_rawblkno == sc->sc_xbdsize) {
-			/* at end of disk; return short read */
-			bp->b_resid = bp->b_bcount;
-#ifdef DIAGNOSTIC
-			qbp = bufq_get(dksc->sc_bufq);
-			KASSERT(bp == qbp);
-#else
-			(void)bufq_get(dksc->sc_bufq);
-#endif
-			biodone(bp);
-			continue;
-		}
-
-		if (__predict_false(
-		    sc->sc_backend_status == BLKIF_STATE_SUSPENDED)) {
-			/* device is suspended, do not consume buffer */
-			DPRINTF(("%s: (xbdstart) device suspended\n",
-			    device_xname(sc->sc_dksc.sc_dev)));
-			goto out;
-		}
-
-		if (RING_FULL(&sc->sc_ring) || sc->sc_xbdreq_wait) {
-			DPRINTF(("xbdstart: ring_full\n"));
-			goto out;
-		}
-
-		xbdreq = SLIST_FIRST(&sc->sc_xbdreq_head);
-		if (__predict_false(xbdreq == NULL)) {
-			DPRINTF(("xbdstart: no req\n"));
-			goto out;
-		}
-
-		xbdreq->req_bp = bp;
-		xbdreq->req_data = bp->b_data;
-		if ((vaddr_t)bp->b_data & (XEN_BSIZE - 1)) {
-			if (__predict_false(xbd_map_align(xbdreq) != 0)) {
-				DPRINTF(("xbdstart: no align\n"));
-				goto out;
-			}
-		}
-		/* now we're sure we'll send this buf */
-#ifdef DIAGNOSTIC
-		qbp = bufq_get(dksc->sc_bufq);
-		KASSERT(bp == qbp);
-#else
-		(void)bufq_get(dksc->sc_bufq);
-#endif
-		disk_busy(&dksc->sc_dkdev);
-
-		SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
-		req = RING_GET_REQUEST(&sc->sc_ring, sc->sc_ring.req_prod_pvt);
-		req->id = xbdreq->req_id;
-		req->operation =
-		    bp->b_flags & B_READ ? BLKIF_OP_READ : BLKIF_OP_WRITE;
-		req->sector_number = bp->b_rawblkno;
-		req->handle = sc->sc_handle;
-
-		va = (vaddr_t)xbdreq->req_data & ~PAGE_MASK;
-		off = (vaddr_t)xbdreq->req_data & PAGE_MASK;
-		if (bp->b_rawblkno + bp->b_bcount / DEV_BSIZE >=
-		    sc->sc_xbdsize) {
-			bcount = (sc->sc_xbdsize - bp->b_rawblkno) * DEV_BSIZE;
-			bp->b_resid = bp->b_bcount - bcount;
-		} else {
-			bcount = bp->b_bcount;
-			bp->b_resid = 0;
-		}
-		if (bcount > XBD_MAX_XFER) {
-			bp->b_resid += bcount - XBD_MAX_XFER;
-			bcount = XBD_MAX_XFER;
-		}
-		for (seg = 0; bcount > 0;) {
-			pmap_extract_ma(pmap_kernel(), va, &ma);
-			KASSERT((ma & (XEN_BSIZE - 1)) == 0);
-			if (bcount > PAGE_SIZE - off)
-				nbytes = PAGE_SIZE - off;
-			else
-				nbytes = bcount;
-			nsects = nbytes >> XEN_BSHIFT;
-			req->seg[seg].first_sect = off >> XEN_BSHIFT;
-			req->seg[seg].last_sect =
-			    (off >> XEN_BSHIFT) + nsects - 1;
-			KASSERT(req->seg[seg].first_sect <=
-			    req->seg[seg].last_sect);
-			KASSERT(req->seg[seg].last_sect < 8);
-			if (__predict_false(xengnt_grant_access(
-			    sc->sc_xbusd->xbusd_otherend_id, ma,
-			    (bp->b_flags & B_READ) == 0,
-			    &xbdreq->req_gntref[seg])))
-				panic("xbdstart: xengnt_grant_access"); /* XXX XXX !!! */
-			req->seg[seg].gref = xbdreq->req_gntref[seg];
-			seg++;
-			KASSERT(seg <= BLKIF_MAX_SEGMENTS_PER_REQUEST);
-			va += PAGE_SIZE;
-			off = 0;
-			bcount -= nbytes;
-		}
-		xbdreq->req_nr_segments = req->nr_segments = seg;
-		sc->sc_ring.req_prod_pvt++;
+	if (sc->sc_shutdown != BLKIF_SHUTDOWN_RUN) {
+		error = EIO;
+		goto err;
 	}
+
+	if (bp->b_rawblkno < 0 || bp->b_rawblkno > sc->sc_xbdsize) {
+		/* invalid block number */
+		error = EINVAL;
+		goto err;
+	}
+
+	if (__predict_false(
+	    sc->sc_backend_status == BLKIF_STATE_SUSPENDED)) {
+		/* device is suspended, do not consume buffer */
+		DPRINTF(("%s: (xbd_diskstart) device suspended\n",
+		    sc->sc_dksc.sc_xname));
+		error = EAGAIN;
+		goto out;
+	}
+
+	if (RING_FULL(&sc->sc_ring) || sc->sc_xbdreq_wait) {
+		DPRINTF(("xbd_diskstart: ring_full\n"));
+		error = EAGAIN;
+		goto out;
+	}
+
+	xbdreq = SLIST_FIRST(&sc->sc_xbdreq_head);
+	if (__predict_false(xbdreq == NULL)) {
+		DPRINTF(("xbd_diskstart: no req\n"));
+		error = EAGAIN;
+		goto out;
+	}
+
+	xbdreq->req_bp = bp;
+	xbdreq->req_data = bp->b_data;
+	if ((vaddr_t)bp->b_data & (XEN_BSIZE - 1)) {
+		if (__predict_false(xbd_map_align(xbdreq) != 0)) {
+			DPRINTF(("xbd_diskstart: no align\n"));
+			error = EAGAIN;
+			goto out;
+		}
+	}
+
+	SLIST_REMOVE_HEAD(&sc->sc_xbdreq_head, req_next);
+	req = RING_GET_REQUEST(&sc->sc_ring, sc->sc_ring.req_prod_pvt);
+	req->id = xbdreq->req_id;
+	req->operation =
+	    bp->b_flags & B_READ ? BLKIF_OP_READ : BLKIF_OP_WRITE;
+	req->sector_number = bp->b_rawblkno;
+	req->handle = sc->sc_handle;
+
+	va = (vaddr_t)xbdreq->req_data & ~PAGE_MASK;
+	off = (vaddr_t)xbdreq->req_data & PAGE_MASK;
+	bcount = bp->b_bcount;
+	bp->b_resid = 0;
+	for (seg = 0; bcount > 0;) {
+		pmap_extract_ma(pmap_kernel(), va, &ma);
+		KASSERT((ma & (XEN_BSIZE - 1)) == 0);
+		if (bcount > PAGE_SIZE - off)
+			nbytes = PAGE_SIZE - off;
+		else
+			nbytes = bcount;
+		nsects = nbytes >> XEN_BSHIFT;
+		req->seg[seg].first_sect = off >> XEN_BSHIFT;
+		req->seg[seg].last_sect =
+		    (off >> XEN_BSHIFT) + nsects - 1;
+		KASSERT(req->seg[seg].first_sect <=
+		    req->seg[seg].last_sect);
+		KASSERT(req->seg[seg].last_sect < 8);
+		if (__predict_false(xengnt_grant_access(
+		    sc->sc_xbusd->xbusd_otherend_id, ma,
+		    (bp->b_flags & B_READ) == 0,
+		    &xbdreq->req_gntref[seg])))
+			panic("xbd_diskstart: xengnt_grant_access"); /* XXX XXX !!! */
+		req->seg[seg].gref = xbdreq->req_gntref[seg];
+		seg++;
+		KASSERT(seg <= BLKIF_MAX_SEGMENTS_PER_REQUEST);
+		va += PAGE_SIZE;
+		off = 0;
+		bcount -= nbytes;
+	}
+	xbdreq->req_nr_segments = req->nr_segments = seg;
+	sc->sc_ring.req_prod_pvt++;
 
 out:
 	RING_PUSH_REQUESTS_AND_CHECK_NOTIFY(&sc->sc_ring, notify);
 	if (notify)
 		hypervisor_notify_via_evtchn(sc->sc_evtchn);
-	return;
-
 err:
-#ifdef DIAGNOSTIC
-	qbp = bufq_get(dksc->sc_bufq);
-	KASSERT(bp == qbp);
-#else
-	(void)bufq_get(dksc->sc_bufq);
-#endif
-	bp->b_resid = bp->b_bcount;
-	biodone(bp);
-	return;
+	return error;
 }
 
 static int

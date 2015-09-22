@@ -1,4 +1,4 @@
-/*	$NetBSD: pciide_machdep.c,v 1.13.4.1 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: pciide_machdep.c,v 1.13.4.2 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.13.4.1 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciide_machdep.c,v 1.13.4.2 2015/09/22 12:05:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,7 +93,8 @@ pciide_machdep_compat_intr_establish(device_t dev,
 }
 
 void
-pciide_machdep_compat_intr_disestablish(device_t dev, pci_chipset_tag_t pc, int chan, void *cookie)
+pciide_machdep_compat_intr_disestablish(device_t dev, pci_chipset_tag_t pc,
+    int chan, void *cookie)
 {
 	isa_intr_disestablish(NULL, cookie);
 	return;

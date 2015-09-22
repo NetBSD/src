@@ -1,4 +1,4 @@
-# $NetBSD: NET4501,v 1.87 2014/08/23 21:10:20 dholland Exp $
+# $NetBSD: NET4501,v 1.87.2.1 2015/09/22 12:05:44 skrll Exp $
 #
 # NET4501 -- kernel configuration for a Soekris Engineering net4501
 # single-board computer.
@@ -10,7 +10,7 @@ include 	"arch/i386/conf/std.i386"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"NET4501-$Revision: 1.87 $"
+#ident 		"NET4501-$Revision: 1.87.2.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -68,8 +68,8 @@ options 	USERCONF	# userconf(4) support
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 #options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger

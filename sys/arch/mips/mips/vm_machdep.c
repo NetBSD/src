@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.143 2014/04/23 20:57:15 skrll Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.143.4.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.143 2014/04/23 20:57:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.143.4.1 2015/09/22 12:05:47 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_coredump.h"
@@ -144,7 +144,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 #ifdef _LP64
 	KASSERT(pcb2->pcb_context.val[_L_SR] & MIPS_SR_KX);
 #endif
-	KASSERT(pcb2->pcb_context.val[_L_SR] & MIPS_SR_INT_IE);
+	KASSERTMSG(pcb2->pcb_context.val[_L_SR] & MIPS_SR_INT_IE,
+	    "%d.%d %#"PRIxREGISTER,
+	    l1->l_proc->p_pid, l1->l_lid, 
+	    pcb2->pcb_context.val[_L_SR]);
 }
 
 /*
@@ -162,7 +165,7 @@ cpu_uarea_alloc(bool system)
 {
 	struct pglist pglist;
 #ifdef _LP64
-	const paddr_t high = mips_avail_end;
+	const paddr_t high = pmap_limits.avail_end;
 #else
 	const paddr_t high = MIPS_KSEG1_START - MIPS_KSEG0_START;
 	/*
@@ -170,7 +173,7 @@ cpu_uarea_alloc(bool system)
 	 * system lwp and we have memory that can't be mapped via KSEG0.
 	 * If 
 	 */
-	if (!system && high > mips_avail_end)
+	if (!system && high > pmap_limits.avail_end)
 		return NULL;
 #endif
 	int error;
@@ -179,7 +182,7 @@ cpu_uarea_alloc(bool system)
 	 * Allocate a new physically contiguous uarea which can be
 	 * direct-mapped.
 	 */
-	error = uvm_pglistalloc(USPACE, mips_avail_start, high,
+	error = uvm_pglistalloc(USPACE, pmap_limits.avail_start, high,
 	    USPACE_ALIGN, 0, &pglist, 1, 1);
 	if (error) {
 #ifdef _LP64
@@ -195,12 +198,12 @@ cpu_uarea_alloc(bool system)
 	const struct vm_page * const pg = TAILQ_FIRST(&pglist);
 	KASSERT(pg != NULL);
 	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
-	KASSERTMSG(pa >= mips_avail_start,
-	    "pa (%#"PRIxPADDR") < mips_avail_start (%#"PRIxPADDR")",
-	     pa, mips_avail_start);
-	KASSERTMSG(pa < mips_avail_end,
-	    "pa (%#"PRIxPADDR") >= mips_avail_end (%#"PRIxPADDR")",
-	     pa, mips_avail_end);
+	KASSERTMSG(pa >= pmap_limits.avail_start,
+	    "pa (%#"PRIxPADDR") < pmap_limits.avail_start (%#"PRIxPADDR")",
+	     pa, pmap_limits.avail_start);
+	KASSERTMSG(pa < pmap_limits.avail_end,
+	    "pa (%#"PRIxPADDR") >= pmap_limits.avail_end (%#"PRIxPADDR")",
+	     pa, pmap_limits.avail_end);
 
 	/*
 	 * we need to return a direct-mapped VA for the pa.

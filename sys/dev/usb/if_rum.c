@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.7 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.8 2015/09/22 12:06:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.7 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.8 2015/09/22 12:06:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -265,7 +265,7 @@ rum_attachhook(void *xsc)
 	int error;
 
 	if ((error = firmware_open("rum", name, &fwh)) != 0) {
-		printf("%s: failed loadfirmware of file %s (error %d)\n",
+		printf("%s: failed firmware_open of file %s (error %d)\n",
 		    device_xname(sc->sc_dev), name, error);
 		return error;
 	}

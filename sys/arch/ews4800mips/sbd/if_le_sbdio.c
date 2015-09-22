@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_sbdio.c,v 1.7 2012/10/13 06:08:30 tsutsui Exp $	*/
+/*	$NetBSD: if_le_sbdio.c,v 1.7.14.1 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2005 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.7 2012/10/13 06:08:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.7.14.1 2015/09/22 12:05:42 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -61,7 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_le_sbdio.c,v 1.7 2012/10/13 06:08:30 tsutsui Exp 
 #include <dev/ic/am7990var.h>
 
 #define	LEREG1_RDP	0	/* offset to lance data register */
-#define	LEREG1_RAP	6	/* offset to lance address regsiter */
+#define	LEREG1_RAP	6	/* offset to lance address register */
 #define	LE_MEMSIZE	(64 * 1024)
 
 struct le_sbdio_softc {

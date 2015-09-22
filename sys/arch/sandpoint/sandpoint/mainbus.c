@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.29 2012/01/31 21:12:03 phx Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.29.24.1 2015/09/22 12:05:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29 2012/01/31 21:12:03 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.29.24.1 2015/09/22 12:05:50 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -103,7 +103,6 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 
 	mba.ma_name = "cfi";
 	mba.ma_bst = &sandpoint_flash_space_tag;
-	mba.ma_addr = 0xffe00000; /* smallest flash is 2 MiB */
 	config_found_ia(self, "mainbus", &mba, mainbus_print);
 
 	/*

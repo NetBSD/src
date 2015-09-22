@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.97 2014/02/15 10:11:15 dsl Exp $
+#	$NetBSD: genassym.cf,v 1.97.6.1 2015/09/22 12:05:44 skrll Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -422,4 +422,3 @@ define EVTCHN_UPCALL_MASK	offsetof(struct vcpu_info, evtchn_upcall_mask)
 define HYPERVISOR_sched_op	__HYPERVISOR_sched_op
 define SCHEDOP_yield		SCHEDOP_yield
 endif
-

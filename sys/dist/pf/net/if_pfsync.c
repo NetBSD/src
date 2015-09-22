@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pfsync.c,v 1.10 2014/03/06 15:21:58 nonaka Exp $	*/
+/*	$NetBSD: if_pfsync.c,v 1.10.6.1 2015/09/22 12:06:01 skrll Exp $	*/
 /*	$OpenBSD: if_pfsync.c,v 1.83 2007/06/26 14:44:12 mcbride Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.10 2014/03/06 15:21:58 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pfsync.c,v 1.10.6.1 2015/09/22 12:06:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -85,6 +85,8 @@ extern int carp_suppress_preempt;
 
 #include <net/net_stats.h>
 
+#include "ioconf.h"
+
 percpu_t	*pfsyncstat_percpu;
 
 #define	PFSYNC_STATINC(x) _NET_STATINC(pfsyncstat_percpu, x)
@@ -106,7 +108,6 @@ extern int ifqmaxlen; /* XXX */
 
 struct pfsync_softc	*pfsyncif = NULL;
 
-void	pfsyncattach(int);
 int	pfsync_clone_create(struct if_clone *, int);
 int	pfsync_clone_destroy(struct ifnet *);
 void	pfsync_setmtu(struct pfsync_softc *, int);

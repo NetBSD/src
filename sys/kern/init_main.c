@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.461.2.2 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: init_main.c,v 1.461.2.3 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.2 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.3 2015/09/22 12:06:07 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -115,12 +115,13 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.461.2.2 2015/06/06 14:40:21 skrll Ex
 #include "opt_rnd_printf.h"
 #include "opt_splash.h"
 
-#if defined(SPLASHSCREEN) && defined(SPLASHSCREEN_IMAGE)
+#if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 extern void *_binary_splash_image_start;
 extern void *_binary_splash_image_end;
 #endif
 
 #include "drvctl.h"
+#include "ether.h"
 #include "ksyms.h"
 
 #include "veriexec.h"
@@ -228,6 +229,7 @@ extern void *_binary_splash_image_end;
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/raw_cb.h>
+#include <net/if_llatbl.h>
 
 #include <prop/proplib.h>
 
@@ -565,6 +567,9 @@ main(void)
 	 */
 	s = splnet();
 	ifinit();
+#if NETHER > 0
+	lltableinit();
+#endif
 	domaininit(true);
 	if_attachdomain();
 	splx(s);

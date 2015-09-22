@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_A6,v 1.24 2014/10/17 18:45:14 martin Exp $
+#	$NetBSD: OPENBLOCKS_A6,v 1.24.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 #	OPENBLOCKS_A6 -- Plat'Home. OpenBlockS A6 kernel
 #
@@ -131,7 +131,6 @@ options 	SYSVSHM		# System V-like memory sharing
 
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	MIIVERBOSE	# Verbose MII auto configuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	SCSIVERBOSE	# Verbose SCSI errors

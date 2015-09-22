@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.228 2014/09/21 17:17:15 christos Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.228.2.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.228 2014/09/21 17:17:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.228.2.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1861,8 +1861,14 @@ int
 fd_clone(file_t *fp, unsigned fd, int flag, const struct fileops *fops,
 	 void *data)
 {
+	fdfile_t *ff;
+	filedesc_t *fdp;
 
-	fp->f_flag = flag;
+	fp->f_flag |= flag & FMASK;
+	fdp = curproc->p_fd;
+	ff = fdp->fd_dt->dt_ff[fd];
+	KASSERT(ff != NULL);
+	ff->ff_exclose = (flag & O_CLOEXEC) != 0;
 	fp->f_type = DTYPE_MISC;
 	fp->f_ops = fops;
 	fp->f_data = data;

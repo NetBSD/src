@@ -1,4 +1,4 @@
-	$NetBSD: README.compileopts,v 1.6.6.1 2015/06/06 14:40:26 skrll Exp $
+	$NetBSD: README.compileopts,v 1.6.6.2 2015/09/22 12:06:12 skrll Exp $
 
 This file describes compile-time options for rump kernels.  Additionally,
 NetBSD build options will have an effect.  See src/share/mk/bsd.README
@@ -18,13 +18,15 @@ effect:	Iff "yes", build with -DDIAGNOSTIC.
 
     RUMP_DEBUG
 
-values:	defined / not defined
+values:	<defined> / <undefined>
+defval:	<undefined>
 effect:	Iff defined, build with -DDEBUG.
 
 
     RUMP_LOCKDEBUG
 
-values:	defined / not defined
+values:	<defined> / <undefined>
+defval:	<undefined>
 effect:	Iff defined, build with -DLOCKDEBUG.
 
 
@@ -42,16 +44,6 @@ defval:	no
 effect: If "yes", build rump kernel with uniprocess-optimized locking.
 	An implication of this is that RUMP_NCPU==1 is required at
 	runtime.  If "no", build with multiprocessor-capable locking.
-
-
-    RUMP_UNREAL_ALLOCATORS
-
-values: yes|no
-defval:	no
-effect: If "yes", build version of kmem_alloc, pool and pool_cache
-	that directly relegate allocation to a hypercall.  If "no",
-	build the regular NetBSD memory allocators which use
-	page-sized memory allocation hypercalls.
 
 
     RUMP_VIRTIF

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.145.2.1 2015/06/06 14:40:09 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.145.2.2 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,9 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145.2.1 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145.2.2 2015/09/22 12:05:59 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pci.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -354,7 +356,7 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 				nr->r_flags = BUS_SPACE_MAP_LINEAR |
 					      BUS_SPACE_MAP_PREFETCHABLE;
 			}
-			
+
 		}
 	}
 
@@ -566,6 +568,49 @@ pci_get_ht_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
 	}
 
 	return 0;
+}
+
+/*
+ * return number of the devices's MSI vectors
+ * return 0 if the device does not support MSI
+ */
+int
+pci_msi_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+	uint32_t mmc;
+	int count, offset;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSI, &offset, NULL) == 0)
+		return 0;
+
+	reg = pci_conf_read(pc, tag, offset + PCI_MSI_CTL);
+	mmc = PCI_MSI_CTL_MMC(reg);
+	count = 1 << mmc;
+	if (count > PCI_MSI_MAX_VECTORS) {
+		aprint_error("detect an illegal device! The device use reserved MMC values.\n");
+		return 0;
+	}
+
+	return count;
+}
+
+/*
+ * return number of the devices's MSI-X vectors
+ * return 0 if the device does not support MSI-X
+ */
+int
+pci_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
+{
+	pcireg_t reg;
+	int offset;
+
+	if (pci_get_capability(pc, tag, PCI_CAP_MSIX, &offset, NULL) == 0)
+		return 0;
+
+	reg = pci_conf_read(pc, tag, offset + PCI_MSIX_CTL);
+
+	return PCI_MSIX_CTL_TBLSIZE(reg);
 }
 
 int

@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.112.2.1 2015/04/06 15:17:51 skrll Exp $
+# $NetBSD: XEN3_DOM0,v 1.112.2.2 2015/09/22 12:05:36 skrll Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -49,7 +49,6 @@ options 	BUFQ_PRIOCSCAN
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
@@ -123,7 +122,7 @@ options 	UFS_EXTATTR	# Extended attribute support for UFS1
 #options 	GATEWAY		# packet forwarding
 options 	INET		# IP + ICMP + TCP + UDP
 options 	INET6		# IPV6
-#options 	IPSEC		# IP security
+options 	IPSEC		# IP security
 #options 	IPSEC_DEBUG	# debug for IP security
 #options 	MROUTING	# IP multicast routing
 #options 	PIM		# Protocol Independent Multicast

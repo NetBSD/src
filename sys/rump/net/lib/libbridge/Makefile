@@ -1,15 +1,13 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/13 02:08:24 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2015/09/22 12:06:16 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
 
 LIB=	rumpnet_bridge
-
+IOCONF=	BRIDGE.ioconf
 SRCS=	if_bridge.c bridgestp.c
 
 SRCS+=	bridge_component.c
-
-CPPFLAGS+=	-I${.CURDIR}/../libnet/opt
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

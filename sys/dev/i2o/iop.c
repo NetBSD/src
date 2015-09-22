@@ -1,4 +1,4 @@
-/*	$NetBSD: iop.c,v 1.86 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: iop.c,v 1.86.4.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2002, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.86 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iop.c,v 1.86.4.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include "iop.h"
 
@@ -2088,9 +2088,9 @@ iop_msg_unmap(struct iop_softc *sc, struct iop_msg *im)
 		/* Only the first DMA map is static. */
 		if (i != 0)
 			bus_dmamap_destroy(sc->sc_dmat, ix->ix_map);
-		if ((++ix)->ix_size == 0)
-			break;
 		if (++i >= IOP_MAX_MSG_XFERS)
+			break;
+		if ((++ix)->ix_size == 0)
 			break;
 	}
 }

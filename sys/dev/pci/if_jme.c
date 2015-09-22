@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.26.4.1 2015/06/06 14:40:09 skrll Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.26.4.2 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.26.4.1 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.26.4.2 2015/09/22 12:05:59 skrll Exp $");
 
 
 #include <sys/param.h>
@@ -949,6 +949,7 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 			error = 0;
 		else if (error != 0) {
 			aprint_error_dev(sc->jme_dev, "could not set media\n");
+			splx(s);
 			return error;
 		}
 	}
@@ -2011,7 +2012,7 @@ jme_eeprom_macaddr(struct jme_softc *sc)
 		}
 		if (fup & JME_EEPROM_DESC_END)
 			break;
-		
+
 		/* Try next eeprom descriptor. */
 		offset += JME_EEPROM_DESC_BYTES;
 	} while (match != ETHER_ADDR_LEN && offset < JME_EEPROM_END);

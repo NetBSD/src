@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.5.2.1 2015/04/06 15:18:09 skrll Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.5.2.2 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -809,8 +809,12 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 					  sc->dme_io, DM9000_MRCMD);
 
 			rx_status = sc->sc_pkt_read(sc, ifp, &m);
-
-			if (rx_status & (DM9000_RSR_CE | DM9000_RSR_PLE)) {
+			if (m == NULL) {
+				/* failed to allocate a receive buffer */
+				ifp->if_ierrors++;
+				RX_DPRINTF(("dme_receive: "
+					"Error allocating buffer\n"));
+			} else if (rx_status & (DM9000_RSR_CE | DM9000_RSR_PLE)) {
 				/* Error while receiving the packet,
 				 * discard it and keep track of counters
 				 */
@@ -1082,6 +1086,18 @@ dme_pkt_read_2(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 
 
 	m = dme_alloc_receive_buffer(ifp, frame_length);
+	if (m == NULL) {
+		/*
+		 * didn't get a receive buffer, so we read the rest of the
+		 * packet, throw it away and return an error
+		 */
+		for (i = 0; i < frame_length; i += 2 ) {
+			data = bus_space_read_2(sc->sc_iot,
+					sc->sc_ioh, sc->dme_data);
+		}
+		*outBuf = NULL;
+		return 0;
+	}
 
 	buf = mtod(m, uint16_t*);
 
@@ -1163,6 +1179,18 @@ dme_pkt_read_1(struct dme_softc *sc, struct ifnet *ifp, struct mbuf **outBuf)
 
 
 	m = dme_alloc_receive_buffer(ifp, frame_length);
+	if (m == NULL) {
+		/*
+		 * didn't get a receive buffer, so we read the rest of the
+		 * packet, throw it away and return an error
+		 */
+		for (i = 0; i < frame_length; i++ ) {
+			data = bus_space_read_2(sc->sc_iot,
+					sc->sc_ioh, sc->dme_data);
+		}
+		*outBuf = NULL;
+		return 0;
+	}
 
 	buf = mtod(m, uint8_t *);
 
@@ -1190,6 +1218,8 @@ dme_alloc_receive_buffer(struct ifnet *ifp, unsigned int frame_length)
 	int pad;
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
+	if (m == NULL) return NULL;
+
 	m->m_pkthdr.rcvif = ifp;
 	/* Ensure that we always allocate an even number of
 	 * bytes in order to avoid writing beyond the buffer

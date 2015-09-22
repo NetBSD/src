@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.12 2014/03/30 23:25:20 christos Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.12.6.1 2015/09/22 12:05:58 skrll Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.12 2014/03/30 23:25:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.12.6.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -660,7 +660,6 @@ mvpex_intr_establish(void *v, pci_intr_handle_t pin, int ipl,
 	struct mvpex_intrhand *pexih;
 	uint32_t mask;
 	int ih = pin - 1, s;
-	char buf[PCI_INTRSTR_LEN];
 
 	intrtab = &sc->sc_intrtab[ih];
 
@@ -674,8 +673,9 @@ mvpex_intr_establish(void *v, pci_intr_handle_t pin, int ipl,
 	pexih->ih_arg = intrarg;
 	pexih->ih_type = ipl;
 	pexih->ih_intrtab = intrtab;
+	mvpex_intr_string(v, pin, pexih->ih_evname, sizeof(pexih->ih_evname));
 	evcnt_attach_dynamic(&pexih->ih_evcnt, EVCNT_TYPE_INTR, NULL, "mvpex",
-	    mvpex_intr_string(v, pin, buf, sizeof(buf)));
+	    pexih->ih_evname);
 
 	s = splhigh();
 
@@ -702,6 +702,8 @@ mvpex_intr_disestablish(void *v, void *ih)
 	struct mvpex_intrhand *pexih = ih;
 	uint32_t mask;
 	int s;
+
+	evcnt_detach(&pexih->ih_evcnt);
 
 	intrtab = pexih->ih_intrtab;
 

@@ -1,4 +1,4 @@
-#	$NetBSD: INTEGRATOR_CP,v 1.9.2.1 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: INTEGRATOR_CP,v 1.9.2.2 2015/09/22 12:05:40 skrll Exp $
 #
 #	INTEGRATOR_CP -- ARM Integrator CP kernel
 #
@@ -108,7 +108,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages

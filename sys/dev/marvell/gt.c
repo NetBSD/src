@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.26 2010/07/20 11:42:22 kiyohara Exp $	*/
+/*	$NetBSD: gt.c,v 1.26.36.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.26 2010/07/20 11:42:22 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.26.36.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include "opt_marvell.h"
 #include "gtmpsc.h"
@@ -759,7 +759,7 @@ gt_watchdog_init(struct gt_softc *gt)
 	 * from scratch to get it in a known state.
 	 *
 	 * on GT-64260A we always see 0xffffffff
-	 * in both the GT_WDOG_Config_Enb and GT_WDOG_Value regsiters.
+	 * in both the GT_WDOG_Config_Enb and GT_WDOG_Value registers.
 	 */
 	r = gt_read(gt, GT_WDOG_Config);
 	if (r != ~0) {

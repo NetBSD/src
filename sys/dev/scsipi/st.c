@@ -1,4 +1,4 @@
-/*	$NetBSD: st.c,v 1.226 2014/08/10 16:44:36 tls Exp $ */
+/*	$NetBSD: st.c,v 1.226.4.1 2015/09/22 12:06:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -50,9 +50,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.226 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: st.c,v 1.226.4.1 2015/09/22 12:06:00 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_scsi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

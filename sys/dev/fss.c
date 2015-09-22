@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.92 2014/10/02 22:05:38 justin Exp $	*/
+/*	$NetBSD: fss.c,v 1.92.2.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.92 2014/10/02 22:05:38 justin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.92.2.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.92 2014/10/02 22:05:38 justin Exp $");
 
 #include <uvm/uvm.h>
 
-void fssattach(int);
+#include "ioconf.h"
 
 dev_type_open(fss_open);
 dev_type_close(fss_close);

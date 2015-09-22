@@ -1,4 +1,4 @@
-/* $NetBSD: pckbd.c,v 1.31 2013/09/15 09:24:05 martin Exp $ */
+/* $NetBSD: pckbd.c,v 1.31.6.1 2015/09/22 12:06:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2009 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.31 2013/09/15 09:24:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbd.c,v 1.31.6.1 2015/09/22 12:06:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -288,10 +288,9 @@ pckbd_resume(device_t dv, const pmf_qual_t *qual)
 	res = pckbport_poll_cmd(sc->id->t_kbctag,
 	    sc->id->t_kbcslot, cmd, 1, 1, resp, 1);
 	if (res)
-		aprint_debug("pckbdprobe: reset error %d\n", res);
+		aprint_debug("%s: reset error %d\n", __func__, res);
 	if (resp[0] != KBR_RSTDONE)
-		printf("pckbdprobe: reset response 0x%x\n",
-		    resp[0]);
+		printf("%s: reset response 0x%x\n", __func__, resp[0]);
 
 	pckbport_flush(sc->id->t_kbctag, sc->id->t_kbcslot);
 

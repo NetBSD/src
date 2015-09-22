@@ -1,4 +1,4 @@
-/*	$NetBSD: tco.c,v 1.1.2.2 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: tco.c,v 1.1.2.3 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.1.2.2 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tco.c,v 1.1.2.3 2015/09/22 12:05:54 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -112,6 +112,9 @@ tco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pcib = ta->ta_pcib;
 	sc->sc_has_rcba = ta->ta_has_rcba;
 
+	aprint_normal(": TCO (watchdog) timer configured.\n");
+	aprint_naive("\n");
+
 	/* Explicitly stop the TCO timer. */
 	tcotimer_stop(sc);
 
@@ -122,7 +125,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	ioreg = bus_space_read_4(sc->sc_iot, sc->sc_ioh, LPCIB_SMI_EN);
 	ioreg &= ~LPCIB_SMI_EN_TCO_EN;
 
-	/* 
+	/*
 	 * Clear the No Reboot (NR) bit. If this fails, enabling the TCO_EN bit
 	 * in the SMI_EN register is the last chance.
 	 */
@@ -136,7 +139,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	/* Reset the watchdog status registers. */
 	tcotimer_status_reset(sc);
 
-	/* 
+	/*
 	 * Register the driver with the sysmon watchdog framework.
 	 */
 	sc->sc_smw.smw_name = device_xname(self);
@@ -144,7 +147,7 @@ tco_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_setmode = tcotimer_setmode;
 	sc->sc_smw.smw_tickle = tcotimer_tickle;
 
-	/* 
+	/*
 	 * ICH6 or newer are limited to 2ticks min and 613ticks max.
 	 *                              1sec           367secs
 	 *
@@ -160,8 +163,6 @@ tco_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_smw.smw_period = lpcib_tcotimer_tick_to_second(sc->sc_max_t);
 
-	aprint_normal(": TCO (watchdog) timer configured.\n");
-	aprint_naive("\n");
 	aprint_verbose_dev(self, "Min/Max interval %u/%u seconds\n",
 		lpcib_tcotimer_tick_to_second(sc->sc_min_t),
 		lpcib_tcotimer_tick_to_second(sc->sc_max_t));
@@ -224,7 +225,7 @@ tcotimer_setmode(struct sysmon_wdog *smw)
 		period = lpcib_tcotimer_second_to_tick(smw->smw_period);
 		if (period < sc->sc_min_t || period > sc->sc_max_t)
 			return EINVAL;
-		
+
 		/* Stop the TCO timer, */
 		tcotimer_stop(sc);
 
@@ -344,7 +345,7 @@ error:
 MODULE(MODULE_CLASS_DRIVER, tco, "sysmon_wdog");
 
 #ifdef _MODULE
-#include "ioconf.c" 
+#include "ioconf.c"
 #endif
 
 static int

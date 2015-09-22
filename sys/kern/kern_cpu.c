@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.66.4.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.66.4.2 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.66.4.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.66.4.2 2015/09/22 12:06:07 skrll Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.66.4.1 2015/04/06 15:18:20 skrll Exp 
 
 #include <uvm/uvm_extern.h>
 
+#include "ioconf.h"
+
 /*
  * If the port has stated that cpu_data is the first thing in cpu_info,
  * verify that the claim is true. This will prevent them from getting out
@@ -93,8 +95,6 @@ CTASSERT(offsetof(struct cpu_info, ci_data) == 0);
 #else
 CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
 #endif
-
-void	cpuctlattach(int);
 
 static void	cpu_xc_online(struct cpu_info *);
 static void	cpu_xc_offline(struct cpu_info *);
@@ -204,7 +204,7 @@ mi_cpu_attach(struct cpu_info *ci)
 }
 
 void
-cpuctlattach(int dummy)
+cpuctlattach(int dummy __unused)
 {
 
 	KASSERT(cpu_infos != NULL);
@@ -444,7 +444,6 @@ cpu_setstate(struct cpu_info *ci, bool online)
 		if ((spc->spc_flags & SPCF_OFFLINE) == 0)
 			return 0;
 		func = (xcfunc_t)cpu_xc_online;
-		ncpuonline++;
 	} else {
 		if ((spc->spc_flags & SPCF_OFFLINE) != 0)
 			return 0;
@@ -463,16 +462,19 @@ cpu_setstate(struct cpu_info *ci, bool online)
 		if (nonline == 1)
 			return EBUSY;
 		func = (xcfunc_t)cpu_xc_offline;
-		ncpuonline--;
 	}
 
 	where = xc_unicast(0, func, ci, NULL, ci);
 	xc_wait(where);
 	if (online) {
 		KASSERT((spc->spc_flags & SPCF_OFFLINE) == 0);
-	} else if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
-		/* If was not set offline, then it is busy */
-		return EBUSY;
+		ncpuonline++;
+	} else {
+		if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
+			/* If was not set offline, then it is busy */
+			return EBUSY;
+		}
+		ncpuonline--;
 	}
 
 	spc->spc_lastmod = time_second;

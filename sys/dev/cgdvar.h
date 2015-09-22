@@ -1,4 +1,4 @@
-/* $NetBSD: cgdvar.h,v 1.17 2014/03/18 15:44:37 skrll Exp $ */
+/* $NetBSD: cgdvar.h,v 1.17.6.1 2015/09/22 12:05:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _DEV_CGDVAR_H_
 #define	_DEV_CGDVAR_H_
+
+#include <sys/ioccom.h>
 
 /* ioctl(2) code: used by CGDIOCSET and CGDIOCCLR */
 struct cgd_ioctl {

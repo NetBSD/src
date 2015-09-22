@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.35 2014/10/15 15:00:03 christos Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.35.2.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,10 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.35 2014/10/15 15:00:03 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.35.2.1 2015/09/22 12:06:07 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_ptm.h"
+#endif
 
 /* pty multiplexor driver /dev/ptm{,x} */
 
@@ -57,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.35 2014/10/15 15:00:03 christos Exp $"
 #ifdef COMPAT_60
 #include <compat/sys/ttycom.h>
 #endif /* COMPAT_60 */
+
+#include "ioconf.h"
 
 #ifdef DEBUG_PTM
 #define DPRINTF(a)	printf a
@@ -88,8 +92,6 @@ static dev_t pty_getfree(void);
 static int pty_alloc_master(struct lwp *, int *, dev_t *, struct mount *);
 static int pty_alloc_slave(struct lwp *, int *, dev_t, struct mount *);
 static int pty_vn_open(struct vnode *, struct lwp *);
-
-void ptmattach(int);
 
 int
 pty_getmp(struct lwp *l, struct mount **mpp)

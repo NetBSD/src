@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.262 2014/09/05 05:33:39 matt Exp $	*/
+/*	$NetBSD: tty.c,v 1.262.2.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,9 +63,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.262 2014/09/05 05:33:39 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.262.2.1 2015/09/22 12:06:07 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#endif
 
 #define TTY_ALLOW_PRIVATE
 
@@ -1536,10 +1538,10 @@ ttnread(struct tty *tp)
 }
 
 /*
- * Wait for output to drain.
+ * Wait for output to drain, or if this times out, flush it.
  */
-int
-ttywait(struct tty *tp)
+static int
+ttywait_timo(struct tty *tp, int timo)
 {
 	int	error;
 
@@ -1549,13 +1551,24 @@ ttywait(struct tty *tp)
 	while ((tp->t_outq.c_cc || ISSET(tp->t_state, TS_BUSY)) &&
 	    CONNECTED(tp) && tp->t_oproc) {
 		(*tp->t_oproc)(tp);
-		error = ttysleep(tp, &tp->t_outcv, true, 0);
+		error = ttysleep(tp, &tp->t_outcv, true, timo);
+		if (error == EWOULDBLOCK)
+			ttyflush(tp, FWRITE);
 		if (error)
 			break;
 	}
 	mutex_spin_exit(&tty_lock);
 
 	return (error);
+}
+
+/*
+ * Wait for output to drain.
+ */
+int
+ttywait(struct tty *tp)
+{
+	return ttywait_timo(tp, 0);
 }
 
 /*
@@ -1566,7 +1579,8 @@ ttywflush(struct tty *tp)
 {
 	int	error;
 
-	if ((error = ttywait(tp)) == 0) {
+	error = ttywait_timo(tp, 5 * hz);
+	if (error == 0 || error == EWOULDBLOCK) {
 		mutex_spin_enter(&tty_lock);
 		ttyflush(tp, FREAD);
 		mutex_spin_exit(&tty_lock);

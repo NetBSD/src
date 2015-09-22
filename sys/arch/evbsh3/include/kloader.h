@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.1 2010/04/06 15:54:30 nonaka Exp $	*/
+/*	$NetBSD: kloader.h,v 1.1.42.1 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #define PG_VADDR(pg)	SH3_PHYS_TO_P1SEG(VM_PAGE_TO_PHYS(pg))
 
 #define	KLOADER_NO_BOOTINFO
+extern paddr_t avail_start, avail_end;
 
 #include <dev/kloader.h>
 

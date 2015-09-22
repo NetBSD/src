@@ -1,9 +1,9 @@
-/* $NetBSD: udf.h,v 1.47.2.1 2015/04/06 15:18:19 skrll Exp $ */
+/* $NetBSD: udf.h,v 1.47.2.2 2015/09/22 12:06:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,7 +23,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #ifndef _FS_UDF_UDF_H_
@@ -265,7 +265,7 @@ extern struct udf_strategy udf_strat_rmw;
 /* pre cleanup */
 struct udf_mount {
 	struct mount		*vfs_mountp;
-	struct vnode		*devvp;	
+	struct vnode		*devvp;
 	struct mmc_discinfo	 discinfo;
 	struct udf_args		 mount_args;
 
@@ -339,12 +339,11 @@ struct udf_mount {
 	uint8_t			 metadata_flags;
 
 	/* rb tree for lookup icb to udf_node and sorted list for sync */
-	kmutex_t	ihash_lock;
 	struct rb_tree	udf_node_tree;
 
 	/* syncing */
 	int		syncing;			/* are we syncing?   */
-	kcondvar_t 	dirtynodes_cv;			/* sleeping on sync  */
+	kmutex_t	sync_lock;			/* serialize syncing */
 
 	/* late allocation */
 	int32_t			 uncommitted_lbs[UDF_PARTITIONS];

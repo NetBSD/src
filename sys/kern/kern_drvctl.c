@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.36 2014/07/25 08:10:40 dholland Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.36.4.1 2015/09/22 12:06:07 skrll Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.36 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.36.4.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.36 2014/07/25 08:10:40 dholland Ex
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/lwp.h>
+
+#include "ioconf.h"
 
 struct drvctl_event {
 	TAILQ_ENTRY(drvctl_event) dce_link;
@@ -79,8 +81,6 @@ const struct cdevsw drvctl_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
-
-void drvctlattach(int);
 
 static int	drvctl_read(struct file *, off_t *, struct uio *,
 			    kauth_cred_t, int);
@@ -432,7 +432,7 @@ drvctl_close(struct file *fp)
 }
 
 void
-drvctlattach(int arg)
+drvctlattach(int arg __unused)
 {
 }
 

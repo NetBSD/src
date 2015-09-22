@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.c,v 1.82 2014/05/23 19:05:35 martin Exp $	*/
+/*	$NetBSD: locore.c,v 1.82.4.1 2015/09/22 12:05:53 skrll Exp $	*/
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -32,7 +32,7 @@
  /* All bugs are subject to removal without further notice */
 		
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.82 2014/05/23 19:05:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.c,v 1.82.4.1 2015/09/22 12:05:53 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -190,7 +190,7 @@ _start(struct rpb *prpb)
 #if VAX49 || VAXANY
 	case VAX_BTYP_49:
 		dep_call = &ka49_calls;
-		cpu_setmodel("%s 4000/90", mv);
+		cpu_setmodel("%s 4000/{90,90A,96}", mv);
 		mv = NULL;
 		break;
 #endif

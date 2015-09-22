@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.11 2014/03/29 19:28:25 christos Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.11.6.1 2015/09/22 12:05:59 skrll Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.11 2014/03/29 19:28:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.11.6.1 2015/09/22 12:05:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -85,6 +85,7 @@ static const struct sdhc_pci_quirk {
 #define	SDHC_PCI_QUIRK_TI_HACK			(1U << 1)
 #define	SDHC_PCI_QUIRK_NO_PWR0			(1U << 2)
 #define	SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK	(1U << 3)
+#define	SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK	(1U << 4)
 } sdhc_pci_quirk_table[] = {
 	{
 		PCI_VENDOR_TI,
@@ -112,16 +113,14 @@ static const struct sdhc_pci_quirk {
 		0,
 		SDHC_PCI_QUIRK_NO_PWR0
 	},
-
 	{
 		PCI_VENDOR_RICOH,
 		PCI_PRODUCT_RICOH_Rx5U823,
 		0xffff,
 		0xffff,
 		0,
-		SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK
+		SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK
 	},
-
 	{
 		PCI_VENDOR_RICOH,
 		PCI_PRODUCT_RICOH_Rx5C822,
@@ -241,6 +240,8 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 		SET(sc->sc.sc_flags, SDHC_FLAG_NO_PWR0);
 	if (ISSET(flags, SDHC_PCI_QUIRK_RICOH_LOWER_FREQ_HACK))
 		sdhc_pci_quirk_ricoh_lower_freq_hack(pa);
+	if (ISSET(flags, SDHC_PCI_QUIRK_RICOH_SLOW_SDR50_HACK))
+		SET(sc->sc.sc_flags, SDHC_FLAG_SLOW_SDR50);
 
 	/*
 	 * Map and attach all hosts supported by the host controller.
@@ -395,7 +396,6 @@ sdhc_pci_quirk_ti_hack(struct pci_attach_args *pa)
 static void
 sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *pa)
 {
-
 	/* Enable SD2.0 mode. */
 	sdhc_pci_conf_write(pa, SDHC_PCI_MODE_KEY, 0xfc);
 	sdhc_pci_conf_write(pa, SDHC_PCI_MODE, SDHC_PCI_MODE_SD20);
@@ -408,4 +408,5 @@ sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *pa)
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x01);
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ, 50);
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x00);
+printf("quirked\n");
 }

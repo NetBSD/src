@@ -1,4 +1,4 @@
-/*	$NetBSD: regdef.h,v 1.12 2005/12/11 12:18:09 christos Exp $	*/
+/*	$NetBSD: regdef.h,v 1.12.142.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,5 +103,9 @@
 #define	ta2	$14
 #define	ta3	$15
 #endif /* __mips_n32 || __mips_n64 */
+
+#ifdef _KERNEL
+#define	MIPS_CURLWP	t8	/* needs to synced with cpu.h */
+#endif
 
 #endif /* _MIPS_REGDEF_H */

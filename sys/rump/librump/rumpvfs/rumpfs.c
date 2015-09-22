@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.130.2.1 2015/04/06 15:18:30 skrll Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.130.2.2 2015/09/22 12:06:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.1 2015/04/06 15:18:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.130.2.2 2015/09/22 12:06:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -266,7 +266,7 @@ ettype_to_vtype(enum rump_etfs_type et)
 	case RUMP_ETFS_DIR_SUBDIRS:
 		vt = VDIR;
 		break;
-	default:	
+	default:
 		panic("invalid et type: %d", et);
 	}
 
@@ -294,7 +294,7 @@ hft_to_vtype(int hft)
 	case RUMPUSER_FT_CHR:
 		vt = VCHR;
 		break;
-	default:	
+	default:
 		vt = VNON;
 		break;
 	}
@@ -325,7 +325,7 @@ etfs_find(const char *key, struct etfs **etp, bool forceprefix)
 #define REGDIR(ftype) \
     ((ftype) == RUMP_ETFS_DIR || (ftype) == RUMP_ETFS_DIR_SUBDIRS)
 static int
-etfsregister(const char *key, const char *hostpath, 
+etfsregister(const char *key, const char *hostpath,
 	enum rump_etfs_type ftype, uint64_t begin, uint64_t size)
 {
 	char buf[9];
@@ -538,7 +538,7 @@ makeprivate(enum vtype vt, mode_t mode, dev_t rdev, off_t size, bool et)
 		va->va_nlink = 1;
 	va->va_uid = 0;
 	va->va_gid = 0;
-	va->va_fsid = 
+	va->va_fsid =
 	va->va_fileid = atomic_inc_uint_nv(&lastino);
 	va->va_size = size;
 	va->va_blocksize = 512;
@@ -931,7 +931,7 @@ rump_vop_setattr(void *v)
 		copylen = MIN(rn->rn_dlen, newlen);
 		memset(newdata, 0, newlen);
 		memcpy(newdata, rn->rn_data, copylen);
-		rump_hyperfree(rn->rn_data, rn->rn_dlen); 
+		rump_hyperfree(rn->rn_data, rn->rn_dlen);
 
 		rn->rn_data = newdata;
 		rn->rn_dlen = newlen;
@@ -1269,7 +1269,7 @@ rump_vop_readdir(void *v)
 			break;
 		}
 
-		rv = uiomove(dentp, dentp->d_reclen, uio); 
+		rv = uiomove(dentp, dentp->d_reclen, uio);
 		if (rv) {
 			i--;
 			break;
@@ -1647,6 +1647,7 @@ rump_vop_spec(void *v)
 	case VOP_LOCK_DESCOFFSET:
 	case VOP_UNLOCK_DESCOFFSET:
 	case VOP_ISLOCKED_DESCOFFSET:
+	case VOP_INACTIVE_DESCOFFSET:
 	case VOP_RECLAIM_DESCOFFSET:
 		opvec = rump_vnodeop_p;
 		break;

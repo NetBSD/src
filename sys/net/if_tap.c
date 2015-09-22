@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.80.2.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.80.2.2 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.1 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.2 2015/09/22 12:06:10 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.80.2.1 2015/04/06 15:18:22 skrll Exp $"
 #include <net/bpf.h>
 
 #include <compat/sys/sockio.h>
+
+#include "ioconf.h"
 
 #if defined(COMPAT_40) || defined(MODULAR)
 /*
@@ -118,8 +120,6 @@ struct tap_softc {
 };
 
 /* autoconf(9) glue */
-
-void	tapattach(int);
 
 static int	tap_match(device_t, cfdata_t, void *);
 static void	tap_attach(device_t, device_t, void *);
@@ -1104,7 +1104,7 @@ tap_dev_ioctl(int unit, u_long cmd, void *data, struct lwp *l)
 				*(int *)data = m->m_pkthdr.len;
 			splx(s);
 			return 0;
-		} 
+		}
 	case TIOCSPGRP:
 	case FIOSETOWN:
 		return fsetown(&sc->sc_pgid, cmd, data);

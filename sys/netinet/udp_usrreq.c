@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.217.4.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.217.4.3 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -66,14 +66,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udp_usrreq.c,v 1.217.4.3 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
 #include "opt_ipsec.h"
 #include "opt_inet_csum.h"
 #include "opt_ipkdb.h"
 #include "opt_mbuftrace.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/mbuf.h>

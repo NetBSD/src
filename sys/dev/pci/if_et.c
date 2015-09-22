@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.8 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_et.c,v 1.8.6.1 2015/09/22 12:05:59 skrll Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.11 2008/06/08 06:18:07 jsg Exp $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.8 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.8.6.1 2015/09/22 12:05:59 skrll Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1823,7 +1823,6 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
-			m_freem(m);
 			aprint_error_dev(sc->sc_dev, "can't defrag TX mbuf\n");
 			error = ENOBUFS;
 			goto back;
@@ -1833,7 +1832,6 @@ et_encap(struct et_softc *sc, struct mbuf **m0)
 		if (m->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
-				m_freem(m);
 				m_freem(m_new);
 				error = ENOBUFS;
 			}

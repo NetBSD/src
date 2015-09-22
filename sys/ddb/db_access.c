@@ -1,4 +1,4 @@
-/*	$NetBSD: db_access.c,v 1.21 2009/09/28 05:53:37 bsh Exp $	*/
+/*	$NetBSD: db_access.c,v 1.21.40.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.21 2009/09/28 05:53:37 bsh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.21.40.1 2015/09/22 12:05:56 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_kgdb.h"
@@ -55,17 +55,10 @@ __KERNEL_RCSID(0, "$NetBSD: db_access.c,v 1.21 2009/09/28 05:53:37 bsh Exp $");
 
 #if defined(_COMPILE_THIS) || defined(KGDB) && defined(SOFTWARE_SSTEP)
 
-const int db_extend[] = {	/* table for sign-extending */
-	0,
-	0xFFFFFF80,
-	0xFFFF8000,
-	0xFF800000
-};
-
 db_expr_t
 db_get_value(db_addr_t addr, size_t size, bool is_signed)
 {
-	char data[sizeof(db_expr_t)];
+	char data[sizeof(db_expr_t)] __aligned(sizeof(db_expr_t));
 	db_expr_t value;
 	size_t i;
 
@@ -79,15 +72,17 @@ db_get_value(db_addr_t addr, size_t size, bool is_signed)
 #endif /* BYTE_ORDER */
 		value = (value << 8) + (data[i] & 0xFF);
 
-	if (size < 4 && is_signed && (value & db_extend[size]) != 0)
-		value |= db_extend[size];
+	if (size < sizeof(db_expr_t) && is_signed
+	    && (value & ((db_expr_t)1 << (8*size - 1)))) {
+		value |= ~(db_expr_t)0 << (8*size - 1);
+	}
 	return (value);
 }
 
 void
 db_put_value(db_addr_t addr, size_t size, db_expr_t value)
 {
-	char data[sizeof(db_expr_t)];
+	char data[sizeof(db_expr_t)] __aligned(sizeof(db_expr_t));
 	size_t i;
 
 #if BYTE_ORDER == LITTLE_ENDIAN

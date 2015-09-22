@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.23 2014/02/24 07:23:43 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.23.6.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /*	$OpenBSD: types.h,v 1.6 2001/08/11 01:58:34 art Exp $	*/
 
@@ -68,9 +68,9 @@ typedef	unsigned long		psize_t;
 /*
  * Semaphores must be aligned on 16-byte boundaries on the PA-RISC.
  */
-typedef volatile struct {
+typedef struct {
 	volatile unsigned long csl_lock[4];
-} __cpu_simple_lock_t;
+} __cpu_simple_lock_nv_t;
 
 
 #define __SIMPLELOCK_LOCKED	{ { 0, 0, 0, 0} }

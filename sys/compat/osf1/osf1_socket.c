@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_socket.c,v 1.20 2010/04/23 15:19:21 rmind Exp $ */
+/* $NetBSD: osf1_socket.c,v 1.20.36.1 2015/09/22 12:05:55 skrll Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.20 2010/04/23 15:19:21 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_socket.c,v 1.20.36.1 2015/09/22 12:05:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ osf1_sys_sendmsg_xopen(struct lwp *l, const struct osf1_sys_sendmsg_xopen_args *
 		return (EINVAL);
 
 	iov_len = bsd_msghdr.msg_iovlen;
-	if (iov_len > IOV_MAX)
+	if ((iov_len > IOV_MAX) || (iov_len == 0))
 		return EMSGSIZE;
 	bsd_iovec = kmem_alloc(iov_len * sizeof(struct iovec), KM_SLEEP);
 	bsd_msghdr.msg_iov = bsd_iovec;

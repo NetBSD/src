@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.5.2.2 2015/06/06 14:39:54 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_wdt.c,v 1.5.2.3 2015/09/22 12:05:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -145,10 +145,12 @@ awin_wdt_setmode(struct sysmon_wdog *smw)
 	}
 
 	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
-		/*
-		 * We can't disarm the watchdog.
-		 */
-		return sc->sc_wdog_armed ? EBUSY : 0;
+		if (sc->sc_wdog_armed)
+			/* can not disarm pre-armed kernel mode wdog */
+			return EBUSY;
+
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, sc->sc_mode_reg, 0);
+		return 0;
 	}
 
 	if (sc->sc_wdog_armed && smw->smw_period == sc->sc_wdog_period) {
@@ -164,12 +166,14 @@ awin_wdt_setmode(struct sysmon_wdog *smw)
 		awin_wdt_tickle(smw);
 		return 0;
 	}
-	if (smw->smw_period > mapsize) {
-		return EINVAL;
-	}
 	if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
 		smw->smw_period = AWIN_WDT_PERIOD_DEFAULT;
 		sc->sc_wdog_period = AWIN_WDT_PERIOD_DEFAULT;
+	} else {
+		if (smw->smw_period > mapsize) {
+			return EINVAL;
+		}
+		sc->sc_wdog_period = smw->smw_period;
 	}
 	sc->sc_wdog_mode = AWIN_WDOG_MODE_EN | map[sc->sc_wdog_period];
 	if (awin_chip_id() == AWIN_CHIP_ID_A20 ||

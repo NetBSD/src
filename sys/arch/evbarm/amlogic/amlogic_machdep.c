@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_machdep.c,v 1.20.2.2 2015/04/06 15:17:55 skrll Exp $ */
+/*	$NetBSD: amlogic_machdep.c,v 1.20.2.3 2015/09/22 12:05:40 skrll Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.20.2.2 2015/04/06 15:17:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_machdep.c,v 1.20.2.3 2015/09/22 12:05:40 skrll Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -384,7 +384,7 @@ initarm(void *arg)
 #ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
 	if (ram_size > KERNEL_VM_BASE - KERNEL_BASE) {
 		printf("%s: dropping RAM size from %luMB to %uMB\n",
-		    __func__, (unsigned long) (ram_size >> 20),     
+		    __func__, (unsigned long) (ram_size >> 20),
 		    (KERNEL_VM_BASE - KERNEL_BASE) >> 20);
 		ram_size = KERNEL_VM_BASE - KERNEL_BASE;
 	}
@@ -495,6 +495,16 @@ amlogic_reset(void)
 	}
 }
 
+static uint32_t
+amlogic_get_boot_device(void)
+{
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh = amlogic_core_bsh;
+	bus_size_t off = AMLOGIC_BOOTINFO_OFFSET;
+
+	return bus_space_read_4(bst, bsh, off + 4);
+}
+
 void
 amlogic_device_register(device_t self, void *aux)
 {
@@ -540,6 +550,12 @@ amlogic_device_register(device_t self, void *aux)
 			prop_dictionary_set(dict, "mac-address", pd);
 			prop_object_release(pd);
 		}
+	}
+
+	if (device_is_a(self, "amlogicsdhc") ||
+	    device_is_a(self, "amlogicsdio")) {
+		prop_dictionary_set_uint32(dict, "boot_id",
+		    amlogic_get_boot_device());
 	}
 
 #if NGENFB > 0

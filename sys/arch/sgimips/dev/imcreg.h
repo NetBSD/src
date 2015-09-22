@@ -1,4 +1,4 @@
-/*	$NetBSD: imcreg.h,v 1.4 2005/12/11 12:18:52 christos Exp $	*/
+/*	$NetBSD: imcreg.h,v 1.4.142.1 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -115,9 +115,9 @@
 
 #define IMC_LBTIME		0x9c	/* Arbiter long-burst time */
 
-#define IMC_MEMCFG0		0xc4	/* Mem config, regsiter 0 */
+#define IMC_MEMCFG0		0xc4	/* Mem config, register 0 */
 
-#define IMC_MEMCFG1		0xcc	/* Mem config, regsiter 1 */
+#define IMC_MEMCFG1		0xcc	/* Mem config, register 1 */
 
 #define IMC_CPU_MEMACC		0xd4	/* CPU mem access config */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gic_reg.h,v 1.3.4.1 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: gic_reg.h,v 1.3.4.2 2015/09/22 12:05:37 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -48,7 +48,7 @@
 
 #define	GICC_CTRL	0x0000	// CPU Interface Control Register
 #define	GICC_PMR	0x0004	// Interrupt Priority Mask Register
-#define	GICC_BPR	0x0008	// Aliased Binary Point Register
+#define	GICC_BPR	0x0008	// Binary Point Register
 #define	GICC_IAR	0x000C	// Interrupt Acknowledge Register
 #define	GICC_EOIR	0x0010	// End Of Interrupt Register (WO)
 #define	GICC_RPR	0x0014	// Running Priority Register

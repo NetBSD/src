@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.133.2.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: route.c,v 1.133.2.3 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -90,11 +90,13 @@
  *	@(#)route.c	8.3 (Berkeley) 1/9/95
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_route.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.133.2.3 2015/09/22 12:06:10 skrll Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -213,6 +215,8 @@ rt_get_ifa(struct rtentry *rt)
 #endif
 	else {
 		ifa = (*ifa->ifa_getifa)(ifa, rt_getkey(rt));
+		if (ifa == NULL)
+			return NULL;
 		rt_replace_ifa(rt, ifa);
 		return ifa;
 	}
@@ -353,7 +357,8 @@ rtcache(struct route *ro)
 }
 
 /*
- * Packet routing routines.
+ * Packet routing routines. If success, refcnt of a returned rtentry
+ * will be incremented. The caller has to rtfree it by itself.
  */
 struct rtentry *
 rtalloc1(const struct sockaddr *dst, int report)
@@ -405,6 +410,26 @@ rtalloc1(const struct sockaddr *dst, int report)
 	return newrt;
 }
 
+#ifdef DEBUG
+/*
+ * Check the following constraint for each rtcache:
+ *   if a rtcache holds a rtentry, the rtentry's refcnt is more than zero,
+ *   i.e., the rtentry should be referenced at least by the rtcache.
+ */
+static void
+rtcache_check_rtrefcnt(int family)
+{
+	struct domain *dom = pffinddomain(family);
+	struct route *ro;
+
+	if (dom == NULL)
+		return;
+
+	LIST_FOREACH(ro, &dom->dom_rtcache, ro_rtcache_next)
+		KDASSERT(ro->_ro_rt == NULL || ro->_ro_rt->rt_refcnt > 0);
+}
+#endif
+
 void
 rtfree(struct rtentry *rt)
 {
@@ -414,6 +439,10 @@ rtfree(struct rtentry *rt)
 	KASSERT(rt->rt_refcnt > 0);
 
 	rt->rt_refcnt--;
+#ifdef DEBUG
+	if (rt_getkey(rt) != NULL)
+		rtcache_check_rtrefcnt(rt_getkey(rt)->sa_family);
+#endif
 	if (rt->rt_refcnt == 0 && (rt->rt_flags & RTF_UP) == 0) {
 		rt_assert_inactive(rt);
 		rttrash--;
@@ -531,13 +560,15 @@ out:
 }
 
 /*
- * Delete a route and generate a message
+ * Delete a route and generate a message.
+ * It doesn't free a passed rt.
  */
 static int
 rtdeletemsg(struct rtentry *rt)
 {
 	int error;
 	struct rt_addrinfo info;
+	struct rtentry *retrt;
 
 	/*
 	 * Request the new route so that the entry is not actually
@@ -549,15 +580,12 @@ rtdeletemsg(struct rtentry *rt)
 	info.rti_info[RTAX_NETMASK] = rt_mask(rt);
 	info.rti_info[RTAX_GATEWAY] = rt->rt_gateway;
 	info.rti_flags = rt->rt_flags;
-	error = rtrequest1(RTM_DELETE, &info, &rt);
+	error = rtrequest1(RTM_DELETE, &info, &retrt);
 
 	rt_missmsg(RTM_DELETE, &info, info.rti_flags, error);
 
-	/* Adjust the refcount */
-	if (error == 0 && rt->rt_refcnt <= 0) {
-		rt->rt_refcnt++;
-		rtfree(rt);
-	}
+	if (error == 0)
+		rtfree(retrt);
 	return error;
 }
 
@@ -615,8 +643,9 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 		struct rtentry *rt = rtalloc1(dst, 0);
 		if (rt == NULL)
 			return NULL;
-		rt->rt_refcnt--;
-		if ((ifa = rt->rt_ifa) == NULL)
+		ifa = rt->rt_ifa;
+		rtfree(rt);
+		if (ifa == NULL)
 			return NULL;
 	}
 	if (ifa->ifa_addr->sa_family != dst->sa_family) {
@@ -628,6 +657,10 @@ ifa_ifwithroute(int flags, const struct sockaddr *dst,
 	return ifa;
 }
 
+/*
+ * If it suceeds and ret_nrt isn't NULL, refcnt of ret_nrt is incremented.
+ * The caller has to rtfree it by itself.
+ */
 int
 rtrequest(int req, const struct sockaddr *dst, const struct sockaddr *gateway,
 	const struct sockaddr *netmask, int flags, struct rtentry **ret_nrt)
@@ -640,6 +673,32 @@ rtrequest(int req, const struct sockaddr *dst, const struct sockaddr *gateway,
 	info.rti_info[RTAX_GATEWAY] = gateway;
 	info.rti_info[RTAX_NETMASK] = netmask;
 	return rtrequest1(req, &info, ret_nrt);
+}
+
+/*
+ * It's a utility function to add/remove a route to/from the routing table
+ * and tell user processes the addition/removal on success.
+ */
+int
+rtrequest_newmsg(const int req, const struct sockaddr *dst,
+	const struct sockaddr *gateway, const struct sockaddr *netmask,
+	const int flags)
+{
+	int error;
+	struct rtentry *ret_nrt = NULL;
+
+	KASSERT(req == RTM_ADD || req == RTM_DELETE);
+
+	error = rtrequest(req, dst, gateway, netmask, flags, &ret_nrt);
+	if (error != 0)
+		return error;
+
+	KASSERT(ret_nrt != NULL);
+
+	rt_newmsg(req, ret_nrt); /* tell user process */
+	rtfree(ret_nrt);
+
+	return 0;
 }
 
 int
@@ -676,13 +735,20 @@ rt_getifa(struct rt_addrinfo *info)
 	}
 	if ((ifa = info->rti_ifa) == NULL)
 		return ENETUNREACH;
-	if (ifa->ifa_getifa != NULL)
+	if (ifa->ifa_getifa != NULL) {
 		info->rti_ifa = ifa = (*ifa->ifa_getifa)(ifa, dst);
+		if (ifa == NULL)
+			return ENETUNREACH;
+	}
 	if (info->rti_ifp == NULL)
 		info->rti_ifp = ifa->ifa_ifp;
 	return 0;
 }
 
+/*
+ * If it suceeds and ret_nrt isn't NULL, refcnt of ret_nrt is incremented.
+ * The caller has to rtfree it by itself.
+ */
 int
 rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 {
@@ -738,9 +804,11 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 				ifa->ifa_rtrequest(RTM_DELETE, rt, info);
 		}
 		rttrash++;
-		if (ret_nrt)
+		if (ret_nrt) {
 			*ret_nrt = rt;
-		else if (rt->rt_refcnt <= 0) {
+			rt->rt_refcnt++;
+		} else if (rt->rt_refcnt <= 0) {
+			/* Adjust the refcount */
 			rt->rt_refcnt++;
 			rtfree(rt);
 		}
@@ -969,10 +1037,12 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 			rt_maskedcopy(odst, dst, ifa->ifa_netmask);
 		}
 		if ((rt = rtalloc1(dst, 0)) != NULL) {
-			rt->rt_refcnt--;
-			if (rt->rt_ifa != ifa)
+			if (rt->rt_ifa != ifa) {
+				rtfree(rt);
 				return (flags & RTF_HOST) ? EHOSTUNREACH
 							: ENETUNREACH;
+			}
+			rtfree(rt);
 		}
 	}
 	memset(&info, 0, sizeof(info));
@@ -991,17 +1061,13 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 	error = rtrequest1((cmd == RTM_LLINFO_UPD) ? RTM_GET : cmd, &info,
 	    &nrt);
 	if (error != 0 || (rt = nrt) == NULL)
-		;
-	else switch (cmd) {
+		return error;
+
+	switch (cmd) {
 	case RTM_DELETE:
-		rt_newmsg(cmd, nrt);
-		if (rt->rt_refcnt <= 0) {
-			rt->rt_refcnt++;
-			rtfree(rt);
-		}
+		rt_newmsg(cmd, rt);
 		break;
 	case RTM_LLINFO_UPD:
-		rt->rt_refcnt--;
 		RT_DPRINTF("%s: updating%s\n", __func__,
 		    ((rt->rt_flags & RTF_LLINFO) == 0) ? " (no llinfo)" : "");
 
@@ -1018,10 +1084,9 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 
 		if (cmd == RTM_LLINFO_UPD && ifa->ifa_rtrequest != NULL)
 			ifa->ifa_rtrequest(RTM_LLINFO_UPD, rt, &info);
-		rt_newmsg(RTM_CHANGE, nrt);
+		rt_newmsg(RTM_CHANGE, rt);
 		break;
 	case RTM_ADD:
-		rt->rt_refcnt--;
 		if (rt->rt_ifa != ifa) {
 			printf("rtinit: wrong ifa (%p) was (%p)\n", ifa,
 				rt->rt_ifa);
@@ -1034,9 +1099,10 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 			if (ifa->ifa_rtrequest != NULL)
 				ifa->ifa_rtrequest(RTM_ADD, rt, &info);
 		}
-		rt_newmsg(cmd, nrt);
+		rt_newmsg(cmd, rt);
 		break;
 	}
+	rtfree(rt);
 	return error;
 }
 
@@ -1080,18 +1146,9 @@ rt_ifa_localrequest(int cmd, struct ifaddr *ifa)
 		rt_replace_ifa(nrt, ifa);
 
 	rt_newaddrmsg(cmd, ifa, e, nrt);
-	if (nrt) {
-		if (cmd == RTM_DELETE) {
-			if (nrt->rt_refcnt <= 0) {
-				/* XXX: we should free the entry ourselves. */
-				nrt->rt_refcnt++;
-				rtfree(nrt);
-			}
-		} else {
-			/* the cmd must be RTM_ADD here */
-			nrt->rt_refcnt--;
-		}
-	}
+	if (nrt != NULL)
+		rtfree(nrt);
+
 	return e;
 }
 
@@ -1115,7 +1172,7 @@ rt_ifa_addlocal(struct ifaddr *ifa)
 		rt_newaddrmsg(RTM_NEWADDR, ifa, 0, NULL);
 	}
 	if (rt != NULL)
-		rt->rt_refcnt--;
+		rtfree(rt);
 	return e;
 }
 
@@ -1156,7 +1213,7 @@ rt_ifa_remlocal(struct ifaddr *ifa, struct ifaddr *alt_ifa)
 	} else
 		rt_newaddrmsg(RTM_DELADDR, ifa, 0, NULL);
 	if (rt != NULL)
-		rt->rt_refcnt--;
+		rtfree(rt);
 	return e;
 }
 
@@ -1237,6 +1294,7 @@ rt_timer_queue_remove_all(struct rttimer_queue *rtq, int destroy)
 		TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 		if (destroy)
 			RTTIMER_CALLOUT(r);
+		rtfree(r->rtt_rt);
 		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 		if (rtq->rtq_count > 0)
@@ -1280,6 +1338,7 @@ rt_timer_remove_all(struct rtentry *rt, int destroy)
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_remove_all: rtq_count reached 0\n");
+		rtfree(r->rtt_rt);
 		/* we are already at splsoftnet */
 		pool_put(&rttimer_pool, r);
 	}
@@ -1308,6 +1367,7 @@ rt_timer_add(struct rtentry *rt,
 			r->rtt_queue->rtq_count--;
 		else
 			printf("rt_timer_add: rtq_count reached 0\n");
+		rtfree(r->rtt_rt);
 	} else {
 		s = splsoftnet();
 		r = pool_get(&rttimer_pool, PR_NOWAIT);
@@ -1318,6 +1378,7 @@ rt_timer_add(struct rtentry *rt,
 
 	memset(r, 0, sizeof(*r));
 
+	rt->rt_refcnt++;
 	r->rtt_rt = rt;
 	r->rtt_time = time_uptime;
 	r->rtt_func = func;
@@ -1344,6 +1405,7 @@ rt_timer_timer(void *arg)
 			LIST_REMOVE(r, rtt_link);
 			TAILQ_REMOVE(&rtq->rtq_head, r, rtt_next);
 			RTTIMER_CALLOUT(r);
+			rtfree(r->rtt_rt);
 			pool_put(&rttimer_pool, r);
 			if (rtq->rtq_count > 0)
 				rtq->rtq_count--;

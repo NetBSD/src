@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_opcode.h,v 1.18.30.1 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: mips_opcode.h,v 1.18.30.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -150,6 +150,8 @@ typedef union {
 #define OP_LDR		033		/* MIPS-II, for r4000 port */
 
 #define OP_SPECIAL2	034		/* QED opcodes */
+#define OP_JALX		035
+#define OP_MDMX		036
 #define OP_SPECIAL3	037
 
 #define OP_LB		040
@@ -309,14 +311,30 @@ typedef union {
 #define OP_DINSU	006		/* MIPS32/64 r2 */
 #define OP_DINS		007		/* MIPS32/64 r2 */
 #define	OP_LX		012		/* DSP */
+#define OP_LWLE		031		/* EVA */
+#define OP_LWRE		032		/* EVA */
+#define OP_CACHEE	033		/* EVA */
+#define OP_SBE		034		/* EVA */
+#define OP_SHE		035		/* EVA */
+#define OP_SCE		035		/* EVA */
+#define OP_SWE		035		/* EVA */
 #define OP_BSHFL	040		/* MIPS32/64 r2 */
+#define OP_SWLE		041		/* EVA */
+#define OP_SWRE		042		/* EVA */
+#define OP_PREFE	043		/* EVA */
 #define OP_DBSHFL	044		/* MIPS32/64 r2 */
+#define OP_LBUE		050		/* EVA */
+#define OP_LHUE		051		/* EVA */
+#define OP_LBE		054		/* EVA */
+#define OP_LHE		055		/* EVA */
+#define OP_LLE		056		/* EVA */
+#define OP_LWE		057		/* EVA */
 #define OP_RDHWR	073		/* MIPS32/64 r2 */
 
-#define OP_BSHFL_SBH	2		/* swap bytes within halfwords */
-#define OP_BSHFL_SHD	4		/* swap halfworks within double */
-#define OP_BSHFL_SEB	16		/* sign extend byte */
-#define OP_BSHFL_SEH	24		/* sign extend halfword */
+#define OP_BSHFL_SBH	002		/* swap bytes within halfwords */
+#define OP_BSHFL_SHD	005		/* swap halfworks within double */
+#define OP_BSHFL_SEB	020		/* sign extend byte */
+#define OP_BSHFL_SEH	030		/* sign extend halfword */
 
 #define	OP_LX_LWX	0		/* lwx */
 #define	OP_LX_LHX	4		/* lhx */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.3 2007/04/16 12:22:26 njoly Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.3.100.1 2015/09/22 12:05:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -29,7 +29,10 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _AMD64_PTRACE_H_
+#define _AMD64_PTRACE_H_
 
+#ifdef __x86_64__
 /*
  * i386-dependent ptrace definitions
  */
@@ -46,6 +49,12 @@
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
 
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->regs[_REG_RIP]
+#define PTRACE_REG_SET_PC(r, v)	(r)->regs[_REG_RIP] = (v)
+#define PTRACE_REG_SP(r)	(r)->regs[_REG_RSP]
+#define PTRACE_REG_INTRV(r)	(r)->regs[_REG_RAX]
+
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
 
@@ -57,5 +66,13 @@
 
 #define process_reg32		struct reg32
 #define process_fpreg32		struct fpreg32
-#endif
-#endif
+#endif	/* COMPAT_NETBSD32 */
+#endif	/* _KERNEL_OPT */
+
+#else	/* !__x86_64__ */
+
+#include <i386/ptrace.h>
+
+#endif	/* __x86_64__ */
+
+#endif	/* _AMD64_PTRACE_H_ */

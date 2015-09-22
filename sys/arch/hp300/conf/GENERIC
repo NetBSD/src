@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.190 2014/11/16 16:01:41 manu Exp $
+# $NetBSD: GENERIC,v 1.190.2.1 2015/09/22 12:05:42 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.190 $"
+#ident 		"GENERIC-$Revision: 1.190.2.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -70,7 +70,6 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 # Debugging options
 #options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# Kernel Dynamic Debugger
 options 	DDB_HISTORY_SIZE=512	# Enable history editing in DDB
 #options 	KGDB		# remote debugger

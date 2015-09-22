@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.1.2.1 2015/04/06 15:18:22 skrll Exp $
+#	$NetBSD: files.net,v 1.1.2.2 2015/09/22 12:06:10 skrll Exp $
 
 # XXX CLEANUP
 define	net
@@ -22,6 +22,7 @@ file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
+file	net/if_llatbl.c			ether
 file	net/if_loop.c			loop
 file	net/if_media.c			net
 file	net/if_mpls.c			ifmpls			needs-flag

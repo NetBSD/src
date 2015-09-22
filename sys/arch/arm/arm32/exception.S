@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.S,v 1.22 2014/03/13 01:45:35 matt Exp $	*/
+/*	$NetBSD: exception.S,v 1.22.6.1 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1997 Mark Brinicombe.
@@ -51,7 +51,7 @@
 
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: exception.S,v 1.22 2014/03/13 01:45:35 matt Exp $")
+	RCSID("$NetBSD: exception.S,v 1.22.6.1 2015/09/22 12:05:37 skrll Exp $")
 
 	.text	
 	.align	0
@@ -265,4 +265,3 @@ ENTRY_NP(undefinedinstruction_bounce)
 	adr	lr, .Lexception_exit
 	b	_C_LABEL(undefinedinstruction)
 END(undefinedinstruction_bounce)
-ASEND(undefined_entry)

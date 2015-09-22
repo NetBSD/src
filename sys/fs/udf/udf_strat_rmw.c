@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.24 2013/10/30 08:41:38 mrg Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.24.6.1 2015/09/22 12:06:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.24 2013/10/30 08:41:38 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.24.6.1 2015/09/22 12:06:06 skrll Exp $");
 #endif /* not lint */
 
 
@@ -616,10 +616,9 @@ udf_read_nodedscr_rmw(struct udf_strat_args *args)
 	uint32_t sectornr, dummy;
 	uint8_t *pos;
 	int sector_size = ump->discinfo.sector_size;
-	int lb_size = udf_rw32(ump->logical_vol->lb_size);
+	int lb_size __diagused = udf_rw32(ump->logical_vol->lb_size);
 	int i, error, dscrlen, eccsect;
 
-	lb_size = lb_size;
 	KASSERT(sector_size == lb_size);
 	error = udf_translate_vtop(ump, icb, &sectornr, &dummy);
 	if (error)
@@ -711,10 +710,9 @@ udf_write_nodedscr_rmw(struct udf_strat_args *args)
 	uint32_t sectornr, logsectornr, dummy;
 	// int waitfor  = args->waitfor;
 	int sector_size = ump->discinfo.sector_size;
-	int lb_size = udf_rw32(ump->logical_vol->lb_size);
+	int lb_size __diagused = udf_rw32(ump->logical_vol->lb_size);
 	int error, eccsect;
 
-	lb_size = lb_size;
 	KASSERT(sector_size == lb_size);
 	sectornr    = 0;
 	error = udf_translate_vtop(ump, icb, &sectornr, &dummy);

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.42 2012/10/02 01:44:28 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.42.14.1 2015/09/22 12:05:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.42 2012/10/02 01:44:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.42.14.1 2015/09/22 12:05:55 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -323,16 +323,13 @@ netbsd32___adjtime50(struct lwp *l, const struct netbsd32___adjtime50_args *uap,
 			atv.tv_usec += 1000000;
 			atv.tv_sec--;
 		}
-		(void) copyout(&atv,
-			       SCARG_P32(uap, olddelta), 
-			       sizeof(atv));
+		error = copyout(&atv, SCARG_P32(uap, olddelta), sizeof(atv));
 		if (error)
 			return (error);
 	}
 	
 	if (SCARG_P32(uap, delta)) {
-		error = copyin(SCARG_P32(uap, delta), &atv,
-			       sizeof(struct timeval));
+		error = copyin(SCARG_P32(uap, delta), &atv, sizeof(atv));
 		if (error)
 			return (error);
 

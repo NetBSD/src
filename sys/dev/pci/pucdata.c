@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.93.6.2 2015/06/06 14:40:12 skrll Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.93.6.3 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.93.6.2 2015/06/06 14:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.93.6.3 2015/09/22 12:05:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1315,7 +1315,7 @@ const struct puc_device_description puc_devices[] = {
 	},
 
 	{   "SUNIX 5008 1P",
-	    {	PCI_VENDOR_SUNIX2, 	PCI_PRODUCT_SUNIX2_SER5XXXX,
+	    {	PCI_VENDOR_SUNIX2,	PCI_PRODUCT_SUNIX2_SER5XXXX,
 		0x1fd4,	0x0100 },
 	    {	0xffff,	0xffff,	0xffff,	0xeff0 },
 	    {
@@ -1857,6 +1857,14 @@ const struct puc_device_description puc_devices[] = {
 	    },
 	},
 
+	/* Intel Q45 KT (again) */
+	{   "Intel Q45 KT",
+	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82Q45_KT_1, 0, 0 },
+	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
 	/* Intel 5 Series and Intel 3400 Series KT */
 	{   "Intel 5 Series KT",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_3400_KT, 0, 0 },

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.16.4.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.16.4.2 2015/09/22 12:06:17 skrll Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.16.4.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.16.4.2 2015/09/22 12:06:17 skrll Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.16.4.1 2015/04/06 15:18:33 skrll E
 #include <sys/quota.h>
 #include <sys/quotactl.h>
 
+#include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_extern.h>
 
 #include <ufs/lfs/ulfs_quota2.h>
@@ -152,7 +154,7 @@ getq2h(struct ulfsmount *ump, int type,
 	error = bread(ump->um_quotas[type], 0, ump->umq2_bsize, flags, &bp);
 	if (error)
 		return error;
-	if (bp->b_resid != 0) 
+	if (bp->b_resid != 0)
 		panic("dq2get: %s quota file truncated", lfs_quotatypes[type]);
 
 	q2h = (void *)bp->b_data;
@@ -215,7 +217,7 @@ quota2_walk_list(struct ulfsmount *ump, struct buf *hbp, int type,
 			/* still in the same buf */
 			bp = obp;
 		} else {
-			ret = bread(ump->um_quotas[type], lblkno, 
+			ret = bread(ump->um_quotas[type], lblkno,
 			    ump->umq2_bsize, flags, &bp);
 			if (ret)
 				return ret;
@@ -289,7 +291,7 @@ lfsquota2_umount(struct mount *mp, int flags)
 	return 0;
 }
 
-static int 
+static int
 quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 {
 	int error, error2;
@@ -355,7 +357,7 @@ quota2_q2ealloc(struct ulfsmount *ump, int type, uid_t uid, struct dquot *dq)
 
 	memcpy(q2e, &q2h->q2h_defentry, sizeof(*q2e));
 	q2e->q2e_uid = ulfs_rw32(uid, needswap);
-	/* insert in hash list */ 
+	/* insert in hash list */
 	q2e->q2e_next = q2h->q2h_entries[uid & hash_mask];
 	q2h->q2h_entries[uid & hash_mask] = ulfs_rw64(offset, needswap);
 	if (hbp != bp) {
@@ -592,7 +594,7 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 
 	if (ump->um_quotas[key->qk_idtype] == NULLVP)
 		return ENODEV;
-	
+
 	if (key->qk_id == QUOTA_DEFAULTID) {
 		mutex_enter(&lfs_dqlock);
 		error = getq2h(ump, key->qk_idtype, &bp, &q2h, B_MODIFY);
@@ -626,7 +628,7 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 	    dq->dq2_blkoff, &bp, &q2ep, B_MODIFY);
 	if (error)
 		goto out_il;
-	
+
 	lfsquota2_ulfs_rwq2e(q2ep, &q2e, needswap);
 	quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
 	lfsquota2_ulfs_rwq2e(&q2e, q2ep, needswap);
@@ -736,11 +738,11 @@ lfsquota2_handle_cmd_del(struct ulfsmount *ump, const struct quotakey *qk)
 	canfree = 1;
 	for (i = 0; i < N_QL; i++) {
 		if (q2ep->q2e_val[i].q2v_cur != 0 ||
-		    (q2ep->q2e_val[i].q2v_softlimit != 
+		    (q2ep->q2e_val[i].q2v_softlimit !=
 		     q2e.q2e_val[i].q2v_softlimit) ||
-		    (q2ep->q2e_val[i].q2v_hardlimit != 
+		    (q2ep->q2e_val[i].q2v_hardlimit !=
 		     q2e.q2e_val[i].q2v_hardlimit) ||
-		    (q2ep->q2e_val[i].q2v_grace != 
+		    (q2ep->q2e_val[i].q2v_grace !=
 		     q2e.q2e_val[i].q2v_grace)) {
 			canfree = 0;
 			break;
@@ -895,7 +897,7 @@ lfsquota2_handle_cmd_get(struct ulfsmount *ump, const struct quotakey *qk,
 		(void)id2;
 	} else
 		error = quota2_fetch_quotaval(ump, qk, qv);
-	
+
 	return error;
 }
 
@@ -1562,8 +1564,8 @@ lfs_quota2_mount(struct mount *mp)
 		return 0;
 
 	fs->um_flags |= ULFS_QUOTA2;
-	ump->umq2_bsize = fs->lfs_bsize;
-	ump->umq2_bmask = fs->lfs_bmask;
+	ump->umq2_bsize = lfs_sb_getbsize(fs);
+	ump->umq2_bmask = lfs_sb_getbmask(fs);
 	if (fs->lfs_quota_magic != Q2_HEAD_MAGIC) {
 		printf("%s: Invalid quota magic number\n",
 		    mp->mnt_stat.f_mntonname);
@@ -1572,7 +1574,7 @@ lfs_quota2_mount(struct mount *mp)
         if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_USRQUOTA)) &&
             fs->lfs_quotaino[ULFS_USRQUOTA] == 0) {
                 printf("%s: no user quota inode\n",
-		    mp->mnt_stat.f_mntonname); 
+		    mp->mnt_stat.f_mntonname);
                 error = EINVAL;
         }
         if ((fs->lfs_quota_flags & FS_Q2_DO_TYPE(ULFS_GRPQUOTA)) &&

@@ -1,4 +1,4 @@
-#	$NetBSD: ZYXELKX,v 1.5 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: ZYXELKX,v 1.5.2.1 2015/09/22 12:05:41 skrll Exp $
 
 include		"arch/evbmips/conf/std.rasoc"
 
@@ -41,7 +41,6 @@ options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	LOCKDEBUG
 #options 	KSTACK_CHECK_MAGIC
 options 	DEBUG		# expensive debugging checks/support
-options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# in-kernel debugger
 options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB

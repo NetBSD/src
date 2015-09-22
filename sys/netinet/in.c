@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.148.2.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: in.c,v 1.148.2.3 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,12 +91,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.3 2015/09/22 12:06:11 skrll Exp $");
 
 #include "arp.h"
+#include "ether.h"
+
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
 #include "opt_mrouting.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -110,6 +114,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.2 2015/06/06 14:40:25 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/kauth.h>
+#include <sys/kmem.h>
 
 #include <sys/cprng.h>
 
@@ -117,7 +122,11 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.2 2015/06/06 14:40:25 skrll Exp $");
 #include <net/route.h>
 #include <net/pfil.h>
 
+#include <net/if_arp.h>
 #include <net/if_ether.h>
+#include <net/if_types.h>
+#include <net/if_llatbl.h>
+#include <net/if_dl.h>
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
@@ -126,6 +135,7 @@ __KERNEL_RCSID(0, "$NetBSD: in.c,v 1.148.2.2 2015/06/06 14:40:25 skrll Exp $");
 #include <netinet/ip_var.h>
 #include <netinet/in_ifattach.h>
 #include <netinet/in_pcb.h>
+#include <netinet/in_selsrc.h>
 #include <netinet/if_inarp.h>
 #include <netinet/ip_mroute.h>
 #include <netinet/igmp_var.h>
@@ -1526,6 +1536,327 @@ in_selectsrc(struct sockaddr_in *sin, struct route *ro,
 	return satosin(&ia->ia_addr);
 }
 
+#if NETHER > 0
+
+struct in_llentry {
+	struct llentry		base;
+};
+
+#define	IN_LLTBL_DEFAULT_HSIZE	32
+#define	IN_LLTBL_HASH(k, h) \
+	(((((((k >> 8) ^ k) >> 8) ^ k) >> 8) ^ k) & ((h) - 1))
+
+/*
+ * Do actual deallocation of @lle.
+ * Called by LLE_FREE_LOCKED when number of references
+ * drops to zero.
+ */
+static void
+in_lltable_destroy_lle(struct llentry *lle)
+{
+
+	LLE_WUNLOCK(lle);
+	LLE_LOCK_DESTROY(lle);
+	kmem_intr_free(lle, sizeof(*lle));
+}
+
+static struct llentry *
+in_lltable_new(struct in_addr addr4, u_int flags)
+{
+	struct in_llentry *lle;
+
+	lle = kmem_intr_zalloc(sizeof(*lle), KM_NOSLEEP);
+	if (lle == NULL)		/* NB: caller generates msg */
+		return NULL;
+
+	/*
+	 * For IPv4 this will trigger "arpresolve" to generate
+	 * an ARP request.
+	 */
+	lle->base.la_expire = time_uptime; /* mark expired */
+	lle->base.r_l3addr.addr4 = addr4;
+	lle->base.lle_refcnt = 1;
+	lle->base.lle_free = in_lltable_destroy_lle;
+	LLE_LOCK_INIT(&lle->base);
+	callout_init(&lle->base.la_timer, CALLOUT_MPSAFE);
+
+	return (&lle->base);
+}
+
+#define IN_ARE_MASKED_ADDR_EQUAL(d, a, m)	(			\
+	    (((ntohl((d).s_addr) ^ (a)->sin_addr.s_addr) & (m)->sin_addr.s_addr)) == 0 )
+
+static int
+in_lltable_match_prefix(const struct sockaddr *prefix,
+    const struct sockaddr *mask, u_int flags, struct llentry *lle)
+{
+	const struct sockaddr_in *pfx = (const struct sockaddr_in *)prefix;
+	const struct sockaddr_in *msk = (const struct sockaddr_in *)mask;
+
+	/*
+	 * (flags & LLE_STATIC) means deleting all entries
+	 * including static ARP entries.
+	 */
+	if (IN_ARE_MASKED_ADDR_EQUAL(lle->r_l3addr.addr4, pfx, msk) &&
+	    ((flags & LLE_STATIC) || !(lle->la_flags & LLE_STATIC)))
+		return (1);
+
+	return (0);
+}
+
+static void
+in_lltable_free_entry(struct lltable *llt, struct llentry *lle)
+{
+	struct ifnet *ifp __diagused;
+	size_t pkts_dropped;
+
+	LLE_WLOCK_ASSERT(lle);
+	KASSERT(llt != NULL);
+
+	/* Unlink entry from table if not already */
+	if ((lle->la_flags & LLE_LINKED) != 0) {
+		ifp = llt->llt_ifp;
+		IF_AFDATA_WLOCK_ASSERT(ifp);
+		lltable_unlink_entry(llt, lle);
+	}
+
+	/* cancel timer */
+	if (callout_stop(&lle->lle_timer))
+		LLE_REMREF(lle);
+
+	/* Drop hold queue */
+	pkts_dropped = llentry_free(lle);
+	arp_stat_add(ARP_STAT_DFRDROPPED, (uint64_t)pkts_dropped);
+}
+
+static int
+in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr)
+{
+	struct rtentry *rt;
+	int error = EINVAL;
+
+	KASSERTMSG(l3addr->sa_family == AF_INET,
+	    "sin_family %d", l3addr->sa_family);
+
+	rt = rtalloc1(l3addr, 0);
+	if (rt == NULL)
+		return error;
+
+	/*
+	 * If the gateway for an existing host route matches the target L3
+	 * address, which is a special route inserted by some implementation
+	 * such as MANET, and the interface is of the correct type, then
+	 * allow for ARP to proceed.
+	 */
+	if (rt->rt_flags & RTF_GATEWAY) {
+		if (!(rt->rt_flags & RTF_HOST) || !rt->rt_ifp ||
+		    rt->rt_ifp->if_type != IFT_ETHER ||
+#ifdef __FreeBSD__
+		    (rt->rt_ifp->if_flags & (IFF_NOARP | IFF_STATICARP)) != 0 ||
+#else
+		    (rt->rt_ifp->if_flags & IFF_NOARP) != 0 ||
+#endif
+		    memcmp(rt->rt_gateway->sa_data, l3addr->sa_data,
+		    sizeof(in_addr_t)) != 0) {
+			goto error;
+		}
+	}
+
+	/*
+	 * Make sure that at least the destination address is covered
+	 * by the route. This is for handling the case where 2 or more
+	 * interfaces have the same prefix. An incoming packet arrives
+	 * on one interface and the corresponding outgoing packet leaves
+	 * another interface.
+	 */
+	if (!(rt->rt_flags & RTF_HOST) && rt->rt_ifp != ifp) {
+		const char *sa, *mask, *addr, *lim;
+		int len;
+
+		mask = (const char *)rt_mask(rt);
+		/*
+		 * Just being extra cautious to avoid some custom
+		 * code getting into trouble.
+		 */
+		if (mask == NULL)
+			goto error;
+
+		sa = (const char *)rt_getkey(rt);
+		addr = (const char *)l3addr;
+		len = ((const struct sockaddr_in *)l3addr)->sin_len;
+		lim = addr + len;
+
+		for ( ; addr < lim; sa++, mask++, addr++) {
+			if ((*sa ^ *addr) & *mask) {
+#ifdef DIAGNOSTIC
+				log(LOG_INFO, "IPv4 address: \"%s\" is not on the network\n",
+				    inet_ntoa(((const struct sockaddr_in *)l3addr)->sin_addr));
+#endif
+				goto error;
+			}
+		}
+	}
+
+	error = 0;
+error:
+	return error;
+}
+
+static inline uint32_t
+in_lltable_hash_dst(const struct in_addr dst, uint32_t hsize)
+{
+
+	return (IN_LLTBL_HASH(dst.s_addr, hsize));
+}
+
+static uint32_t
+in_lltable_hash(const struct llentry *lle, uint32_t hsize)
+{
+
+	return (in_lltable_hash_dst(lle->r_l3addr.addr4, hsize));
+}
+
+static void
+in_lltable_fill_sa_entry(const struct llentry *lle, struct sockaddr *sa)
+{
+	struct sockaddr_in *sin;
+
+	sin = (struct sockaddr_in *)sa;
+	memset(sin, 0, sizeof(*sin));
+	sin->sin_family = AF_INET;
+	sin->sin_len = sizeof(*sin);
+	sin->sin_addr = lle->r_l3addr.addr4;
+}
+
+static inline struct llentry *
+in_lltable_find_dst(struct lltable *llt, struct in_addr dst)
+{
+	struct llentry *lle;
+	struct llentries *lleh;
+	u_int hashidx;
+
+	hashidx = in_lltable_hash_dst(dst, llt->llt_hsize);
+	lleh = &llt->lle_head[hashidx];
+	LIST_FOREACH(lle, lleh, lle_next) {
+		if (lle->la_flags & LLE_DELETED)
+			continue;
+		if (lle->r_l3addr.addr4.s_addr == dst.s_addr)
+			break;
+	}
+
+	return (lle);
+}
+
+static int
+in_lltable_delete(struct lltable *llt, u_int flags,
+    const struct sockaddr *l3addr)
+{
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)l3addr;
+	struct ifnet *ifp __diagused = llt->llt_ifp;
+	struct llentry *lle;
+
+	IF_AFDATA_WLOCK_ASSERT(ifp);
+	KASSERTMSG(l3addr->sa_family == AF_INET,
+	    "sin_family %d", l3addr->sa_family);
+
+	lle = in_lltable_find_dst(llt, sin->sin_addr);
+	if (lle == NULL) {
+#ifdef DIAGNOSTIC
+		log(LOG_INFO, "interface address is missing from cache = %p  in delete\n", lle);
+#endif
+		return (ENOENT);
+	}
+
+	if (!(lle->la_flags & LLE_IFADDR) || (flags & LLE_IFADDR)) {
+		LLE_WLOCK(lle);
+		lle->la_flags |= LLE_DELETED;
+#ifdef DIAGNOSTIC
+		log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
+#endif
+		if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
+			llentry_free(lle);
+		else
+			LLE_WUNLOCK(lle);
+	}
+
+	return (0);
+}
+
+static struct llentry *
+in_lltable_create(struct lltable *llt, u_int flags, const struct sockaddr *l3addr)
+{
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)l3addr;
+	struct ifnet *ifp = llt->llt_ifp;
+	struct llentry *lle;
+
+	IF_AFDATA_WLOCK_ASSERT(ifp);
+	KASSERTMSG(l3addr->sa_family == AF_INET,
+	    "sin_family %d", l3addr->sa_family);
+
+	lle = in_lltable_find_dst(llt, sin->sin_addr);
+
+	if (lle != NULL) {
+		LLE_WLOCK(lle);
+		return (lle);
+	}
+
+	/* no existing record, we need to create new one */
+
+	/*
+	 * A route that covers the given address must have
+	 * been installed 1st because we are doing a resolution,
+	 * verify this.
+	 */
+	if (!(flags & LLE_IFADDR) &&
+	    in_lltable_rtcheck(ifp, flags, l3addr) != 0)
+		return (NULL);
+
+	lle = in_lltable_new(sin->sin_addr, flags);
+	if (lle == NULL) {
+		log(LOG_INFO, "lla_lookup: new lle malloc failed\n");
+		return (NULL);
+	}
+	lle->la_flags = flags;
+	if ((flags & LLE_IFADDR) == LLE_IFADDR) {
+		memcpy(&lle->ll_addr, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
+		lle->la_flags |= (LLE_VALID | LLE_STATIC);
+	}
+
+	lltable_link_entry(llt, lle);
+	LLE_WLOCK(lle);
+
+	return (lle);
+}
+
+/*
+ * Return NULL if not found or marked for deletion.
+ * If found return lle read locked.
+ */
+static struct llentry *
+in_lltable_lookup(struct lltable *llt, u_int flags, const struct sockaddr *l3addr)
+{
+	const struct sockaddr_in *sin = (const struct sockaddr_in *)l3addr;
+	struct llentry *lle;
+
+	IF_AFDATA_LOCK_ASSERT(llt->llt_ifp);
+	KASSERTMSG(l3addr->sa_family == AF_INET,
+	    "sin_family %d", l3addr->sa_family);
+
+	lle = in_lltable_find_dst(llt, sin->sin_addr);
+
+	if (lle == NULL)
+		return NULL;
+
+	if (flags & LLE_EXCLUSIVE)
+		LLE_WLOCK(lle);
+	else
+		LLE_RLOCK(lle);
+
+	return lle;
+}
+
+#endif /* NETHER > 0 */
+
 static void
 in_sysctl_init(struct sysctllog **clog)
 {
@@ -1557,4 +1888,64 @@ in_sysctl_init(struct sysctllog **clog)
 		       NULL, 0, &hostzeroisbroadcast, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_HOSTZEROBROADCAST, CTL_EOL);
+}
+
+#if NETHER > 0
+static struct lltable *
+in_lltattach(struct ifnet *ifp)
+{
+	struct lltable *llt;
+
+	llt = lltable_allocate_htbl(IN_LLTBL_DEFAULT_HSIZE);
+	llt->llt_af = AF_INET;
+	llt->llt_ifp = ifp;
+
+	llt->llt_lookup = in_lltable_lookup;
+	llt->llt_create = in_lltable_create;
+	llt->llt_delete = in_lltable_delete;
+#if 0
+	llt->llt_dump_entry = in_lltable_dump_entry;
+#endif
+	llt->llt_hash = in_lltable_hash;
+	llt->llt_fill_sa_entry = in_lltable_fill_sa_entry;
+	llt->llt_free_entry = in_lltable_free_entry;
+	llt->llt_match_prefix = in_lltable_match_prefix;
+	lltable_link(llt);
+
+	return (llt);
+}
+#endif /* NETHER > 0 */
+
+void *
+in_domifattach(struct ifnet *ifp)
+{
+	struct in_ifinfo *ii;
+
+	ii = kmem_zalloc(sizeof(struct in_ifinfo), KM_SLEEP);
+	KASSERT(ii != NULL);
+
+#if NETHER > 0
+	ii->ii_llt = in_lltattach(ifp);
+#endif
+
+#ifdef IPSELSRC
+	ii->ii_selsrc = in_selsrc_domifattach(ifp);
+	KASSERT(ii->ii_selsrc != NULL);
+#endif
+
+	return ii;
+}
+
+void
+in_domifdetach(struct ifnet *ifp, void *aux)
+{
+	struct in_ifinfo *ii = aux;
+
+#ifdef IPSELSRC
+	in_selsrc_domifdetach(ifp, ii->ii_selsrc);
+#endif
+#if NETHER > 0
+	lltable_free(ii->ii_llt);
+#endif
+	kmem_free(ii, sizeof(struct in_ifinfo));
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.11.2.3 2015/06/06 14:39:55 skrll Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.11.2.4 2015/09/22 12:05:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11.2.3 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11.2.4 2015/09/22 12:05:37 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -235,6 +235,11 @@ amlogic_sdhc_select_port(int port)
 {
 	switch (port) {
 	case AMLOGIC_SDHC_PORT_B:
+		/* Set CARD 0-5 to input */
+		CBUS_SET_CLEAR(PAD_PULL_UP_2_REG, 0x03f00000, 0);
+		CBUS_SET_CLEAR(PAD_PULL_UP_EN_2_REG, 0x03f00000, 0);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO0_EN_N_REG, 0x0fc00000, 0);
+
 		/* CARD -> SDHC pin mux settings */
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_5_REG, 0, 0x00007c00);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_4_REG, 0, 0x7c000000);
@@ -248,6 +253,11 @@ amlogic_sdhc_select_port(int port)
 		CBUS_SET_CLEAR(PREG_PAD_GPIO5_EN_N_REG, 0, 0x80000000);
 		break;
 	case AMLOGIC_SDHC_PORT_C:
+		/* Set BOOT 0-8,10 to input */
+		CBUS_SET_CLEAR(PAD_PULL_UP_2_REG, 0x000005ff, 0);
+		CBUS_SET_CLEAR(PAD_PULL_UP_EN_2_REG, 0x000005ff, 0);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO3_EN_N_REG, 0x000005ff, 0);
+
 		/* BOOT -> SDHC pin mux settings */
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x04c000f0);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_5_REG, 0, 0x00007c00);
@@ -306,6 +316,33 @@ amlogic_sdhc_is_card_present(int port)
 }
 
 void
+amlogic_sdhc_set_voltage(int port, int voltage)
+{
+	const bus_size_t gpioao_reg = AMLOGIC_GPIOAO_OFFSET;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
+	bus_space_handle_t bsh = amlogic_core_bsh;
+	uint32_t val;
+	u_int pin;
+
+	switch (port) {
+	case AMLOGIC_SDHC_PORT_B:
+		/* GPIO GPIOAO_3 */
+		pin = 3;
+		val = bus_space_read_4(bst, bsh, gpioao_reg);
+		val &= ~__BIT(pin);	/* OEN */
+		bus_space_write_4(bst, bsh, gpioao_reg, val);
+		if (voltage == AMLOGIC_SDHC_VOL_180) {
+			val |= __BIT(pin + 16);		/* OUT */
+		} else {
+			val &= ~__BIT(pin + 16);	/* OUT */
+		}
+		bus_space_write_4(bst, bsh, gpioao_reg, val);
+		delay(20000);
+		break;
+	}
+}
+
+void
 amlogic_sdio_init(void)
 {
 	/* enable SDIO clk */
@@ -321,6 +358,11 @@ amlogic_sdio_select_port(int port)
 {
 	switch (port) {
 	case AMLOGIC_SDIO_PORT_B:
+		/* Set CARD 0-5 to input */
+		CBUS_SET_CLEAR(PAD_PULL_UP_2_REG, 0x03f00000, 0);
+		CBUS_SET_CLEAR(PAD_PULL_UP_EN_2_REG, 0x03f00000, 0);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO0_EN_N_REG, 0x0fc00000, 0);
+
 		/* CARD -> SDIO pin mux settings */
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_6_REG, 0, 0x3f000000);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x0000063f);
@@ -333,6 +375,13 @@ amlogic_sdio_select_port(int port)
 		CBUS_SET_CLEAR(PREG_PAD_GPIO5_EN_N_REG, 0, 0x80000000);
 		break;
 	case AMLOGIC_SDIO_PORT_C:
+		delay(100);
+
+		/* Set BOOT 0-8,10 to input */
+		CBUS_SET_CLEAR(PAD_PULL_UP_2_REG, 0x0000050f, 0);
+		CBUS_SET_CLEAR(PAD_PULL_UP_EN_2_REG, 0x0000050f, 0);
+		CBUS_SET_CLEAR(PREG_PAD_GPIO3_EN_N_REG, 0x0000050f, 0);
+
 		/* BOOT -> SDIO pin mux settings */
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_2_REG, 0, 0x06c2fc00);
 		CBUS_SET_CLEAR(PERIPHS_PIN_MUX_8_REG, 0, 0x0000003f);

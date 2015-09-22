@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_mbuf.c,v 1.13 2014/08/10 19:09:43 rmind Exp $	*/
+/*	$NetBSD: npf_mbuf.c,v 1.13.4.1 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.13 2014/08/10 19:09:43 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_mbuf.c,v 1.13.4.1 2015/09/22 12:06:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -57,7 +57,7 @@ nbuf_init(nbuf_t *nbuf, struct mbuf *m, const ifnet_t *ifp)
 
 	nbuf->nb_mbuf0 = m;
 	nbuf->nb_ifp = ifp;
-	nbuf->nb_ifid =  ifid;
+	nbuf->nb_ifid = ifid;
 	nbuf_reset(nbuf);
 }
 

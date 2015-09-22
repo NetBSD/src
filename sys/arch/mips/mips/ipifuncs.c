@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.7.4.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.7.4.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7.4.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7.4.2 2015/09/22 12:05:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -44,7 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.7.4.1 2015/06/06 14:40:02 skrll Exp $
 #include <uvm/uvm_extern.h>
 
 #include <mips/cache.h>
-#include <mips/cpuset.h>
+#include <mips/locore.h>
 #ifdef DDB
 #include <mips/db_machdep.h>
 #endif
@@ -102,7 +102,7 @@ ipi_halt(void)
 {
 	const u_int my_cpu = cpu_number();
 	printf("cpu%u: shutting down\n", my_cpu);
-	CPUSET_ADD(cpus_halted, my_cpu);
+	kcpuset_set(cpus_halted, my_cpu);
 	splhigh();
 	for (;;)
 		;

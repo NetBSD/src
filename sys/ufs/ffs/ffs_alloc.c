@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.147.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.147.2.2 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.147.2.1 2015/04/06 15:18:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.147.2.2 2015/09/22 12:06:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -111,7 +111,7 @@ static daddr_t ffs_alloccg(struct inode *, int, daddr_t, int, int);
 static daddr_t ffs_alloccgblk(struct inode *, struct buf *, daddr_t, int);
 static ino_t ffs_dirpref(struct inode *);
 static daddr_t ffs_fragextend(struct inode *, int, daddr_t, int, int);
-static void ffs_fserr(struct fs *, u_int, const char *);
+static void ffs_fserr(struct fs *, kauth_cred_t, const char *);
 static daddr_t ffs_hashalloc(struct inode *, int, daddr_t, int, int,
     daddr_t (*)(struct inode *, int, daddr_t, int, int));
 static daddr_t ffs_nodealloccg(struct inode *, int, daddr_t, int, int);
@@ -145,7 +145,7 @@ ffs_check_bad_allocation(const char *func, struct fs *fs, daddr_t bno,
 	if (bno >= fs->fs_size) {
 		printf("bad block %" PRId64 ", ino %llu\n", bno,
 		    (unsigned long long)inum);
-		ffs_fserr(fs, inum, "bad block");
+		ffs_fserr(fs, NOCRED, "bad block");
 		return EINVAL;
 	}
 	return 0;
@@ -217,7 +217,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT((pg == NULL && (vp->v_vflag & VV_MAPPED) == 0 &&
-				 (size & PAGE_MASK) == 0 && 
+				 (size & PAGE_MASK) == 0 &&
 				 ffs_blkoff(fs, size) == 0) ||
 				(pg != NULL && pg->owner == curproc->p_pid &&
 				 pg->lowner == curlwp->l_lid));
@@ -286,7 +286,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size, int flags,
 	}
 nospace:
 	mutex_exit(&ump->um_lock);
-	ffs_fserr(fs, kauth_cred_geteuid(cred), "file system full");
+	ffs_fserr(fs, cred, "file system full");
 	uprintf("\n%s: write failed, file system is full\n", fs->fs_fsmnt);
 	return (ENOSPC);
 }
@@ -532,7 +532,7 @@ nospace:
 	/*
 	 * no space available
 	 */
-	ffs_fserr(fs, kauth_cred_geteuid(cred), "file system full");
+	ffs_fserr(fs, cred, "file system full");
 	uprintf("\n%s: write failed, file system is full\n", fs->fs_fsmnt);
 	return (ENOSPC);
 }
@@ -605,7 +605,7 @@ ffs_valloc(struct vnode *pvp, int mode, kauth_cred_t cred, ino_t *inop)
 noinodes:
 	mutex_exit(&ump->um_lock);
 	UFS_WAPBL_END(pvp->v_mount);
-	ffs_fserr(fs, kauth_cred_geteuid(cred), "out of inodes");
+	ffs_fserr(fs, cred, "out of inodes");
 	uprintf("\n%s: create/symlink failed, no inodes free\n", fs->fs_fsmnt);
 	return ENOSPC;
 }
@@ -1553,12 +1553,21 @@ struct discarddata {
 static void
 ffs_blkfree_td(struct fs *fs, struct discardopdata *td)
 {
+	struct mount *mp = spec_node_getmountedfs(td->devvp);
 	long todo;
+	int error;
 
 	while (td->size) {
 		todo = min(td->size,
 		  ffs_lfragtosize(fs, (fs->fs_frag - ffs_fragnum(fs, td->bno))));
+		error = UFS_WAPBL_BEGIN(mp);
+		if (error) {
+			printf("ffs: failed to begin wapbl transaction"
+			    " for discard: %d\n", error);
+			break;
+		}
 		ffs_blkfree_cg(fs, td->devvp, td->bno, todo);
+		UFS_WAPBL_END(mp);
 		td->bno += ffs_numfrags(fs, todo);
 		td->size -= todo;
 	}
@@ -2159,9 +2168,17 @@ ffs_mapsearch(struct fs *fs, struct cg *cgp, daddr_t bpref, int allocsiz)
  *	fs: error message
  */
 static void
-ffs_fserr(struct fs *fs, u_int uid, const char *cp)
+ffs_fserr(struct fs *fs, kauth_cred_t cred, const char *cp)
 {
+	KASSERT(cred != NULL);
 
-	log(LOG_ERR, "uid %d, pid %d, command %s, on %s: %s\n",
-	    uid, curproc->p_pid, curproc->p_comm, fs->fs_fsmnt, cp);
+	if (cred == NOCRED || cred == FSCRED) {
+		log(LOG_ERR, "pid %d, command %s, on %s: %s\n",
+		    curproc->p_pid, curproc->p_comm,
+		    fs->fs_fsmnt, cp);
+	} else {
+		log(LOG_ERR, "uid %d, pid %d, command %s, on %s: %s\n",
+		    kauth_cred_getuid(cred), curproc->p_pid, curproc->p_comm,
+		    fs->fs_fsmnt, cp);
+	}
 }

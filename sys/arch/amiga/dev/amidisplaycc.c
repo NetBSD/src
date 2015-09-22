@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.27 2014/03/29 12:55:11 mlelstv Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.27.6.1 2015/09/22 12:05:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.27 2014/03/29 12:55:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.27.6.1 2015/09/22 12:05:36 skrll Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -60,7 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.27 2014/03/29 12:55:11 mlelstv Ex
 #include <amiga/dev/viewioctl.h>
 #include <amiga/amiga/device.h>
 #include <dev/wscons/wsconsio.h>
-#include <dev/rcons/raster.h>
 #include <dev/wscons/wscons_raster.h>
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/cons.h>

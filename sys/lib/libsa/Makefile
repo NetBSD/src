@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.84 2014/08/10 07:40:49 isaki Exp $
+#	$NetBSD: Makefile,v 1.84.4.1 2015/09/22 12:06:07 skrll Exp $
 
 LIB=	sa
 LIBISPRIVATE?= yes
@@ -79,10 +79,11 @@ SRCS+=	ufs.c
 
 .include <bsd.lib.mk>
 
-lib${LIB}.o:: ${OBJS}
+lib${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@echo done
 
 CPPFLAGS+=	-Wno-pointer-sign
 

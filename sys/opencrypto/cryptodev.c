@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.82.2.1 2015/04/06 15:18:24 skrll Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.82.2.2 2015/09/22 12:06:12 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.82.2.1 2015/04/06 15:18:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.82.2.2 2015/09/22 12:06:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,8 @@ __KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.82.2.1 2015/04/06 15:18:24 skrll Exp
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptodev_internal.h>
 #include <opencrypto/xform.h>
+
+#include "ioconf.h"
 
 struct csession {
 	TAILQ_ENTRY(csession) next;
@@ -316,7 +318,7 @@ mbail:
 		fcr->mtime = fcr->atime;
 		mutex_exit(&crypto_mtx);
 		sfop = (struct crypt_sfop *)data;
-		sesid = kmem_alloc((sfop->count * sizeof(u_int32_t)), 
+		sesid = kmem_alloc((sfop->count * sizeof(u_int32_t)),
 		    KM_SLEEP);
 		error = copyin(sfop->sesid, sesid,
 		    (sfop->count * sizeof(u_int32_t)));
@@ -350,12 +352,12 @@ mbail:
 		if(!error) {
 			error = cryptodev_mop(fcr, cnop, mop->count, curlwp);
 			if (!error) {
-				error = copyout(cnop, mop->reqs, 
+				error = copyout(cnop, mop->reqs,
 				    (mop->count * sizeof(struct crypt_n_op)));
 			}
 		}
 		kmem_free(cnop, (mop->count * sizeof(struct crypt_n_op)));
-		break;		
+		break;
 	case CIOCKEY:
 		error = cryptodev_key((struct crypt_kop *)data);
 		DPRINTF(("cryptodev_key error = %d\n", error));
@@ -386,7 +388,7 @@ mbail:
 		mutex_exit(&crypto_mtx);
 		crypt_ret = (struct cryptret *)data;
 		count = crypt_ret->count;
-		crypt_res = kmem_alloc((count * sizeof(struct crypt_result)),  
+		crypt_res = kmem_alloc((count * sizeof(struct crypt_result)),
 		    KM_SLEEP);
 		error = copyin(crypt_ret->results, crypt_res,
 		    (count * sizeof(struct crypt_result)));
@@ -408,7 +410,7 @@ reterr:
 		kmem_free(crypt_res, (count * sizeof(struct crypt_result)));
 		break;
 	case CIOCNCRYPTRET:
-		error = cryptodev_getstatus(fcr, (struct crypt_result *)data); 
+		error = cryptodev_getstatus(fcr, (struct crypt_result *)data);
 		break;
 	default:
 #ifdef COMPAT_50
@@ -504,7 +506,7 @@ cryptodev_op(struct csession *cse, struct crypt_op *cop, struct lwp *l)
 
 	DPRINTF(("ocf[%u]: iov_len %zu, cop->len %u\n",
 			CRYPTO_SESID2LID(cse->sid),
-			cse->uio.uio_iov[0].iov_len, 
+			cse->uio.uio_iov[0].iov_len,
 			cop->len));
 
 	if ((error = copyin(cop->src, cse->uio.uio_iov[0].iov_base, cop->len)))
@@ -640,7 +642,7 @@ eagain:
 	error = crypto_dispatch(crp);
 	mutex_enter(&crypto_mtx);
 
-	/* 
+	/*
 	 * If the request was going to be completed by the
 	 * ioctl thread then it would have been done by now.
 	 * Remove the F_USER flag so crypto_done() is not confused
@@ -779,7 +781,7 @@ static int
 cryptodevkey_cb(void *op)
 {
 	struct cryptkop *krp = op;
-	
+
 	mutex_enter(&crypto_mtx);
 	cv_signal(&krp->krp_cv);
 	mutex_exit(&crypto_mtx);
@@ -977,7 +979,7 @@ csefind(struct fcrypt *fcr, u_int ses)
 	TAILQ_FOREACH_SAFE(cse, &fcr->csessions, next, cnext)
 		if (cse->ses == ses)
 			ret = cse;
-	
+
 	return ret;
 }
 
@@ -1123,8 +1125,8 @@ struct cdevsw crypto_cdevsw = {
 	.d_flag = D_OTHER
 };
 
-int 
-cryptodev_mop(struct fcrypt *fcr, 
+int
+cryptodev_mop(struct fcrypt *fcr,
               struct crypt_n_op * cnop,
               int count, struct lwp *l)
 {
@@ -1145,7 +1147,7 @@ cryptodev_mop(struct fcrypt *fcr,
 			continue;
 		}
 		mutex_exit(&crypto_mtx);
-	
+
 		if (cnop[req].len > 256*1024-4) {
 			DPRINTF(("length failed\n"));
 			cnop[req].status = EINVAL;
@@ -1209,7 +1211,7 @@ cryptodev_mop(struct fcrypt *fcr,
 			}
 		}
 
-		if ((copyin(cnop[req].src, 
+		if ((copyin(cnop[req].src,
 		    crp->uio.uio_iov[0].iov_base, cnop[req].len))) {
 			cnop[req].status = EINVAL;
 			goto bail;
@@ -1241,7 +1243,7 @@ cryptodev_mop(struct fcrypt *fcr,
 				(uint32_t)cse->sid, crdc->crd_alg,
 				crdc->crd_len));
 		}
-	
+
 		if (crda) {
 			crda->crd_skip = 0;
 			crda->crd_len = cnop[req].len;
@@ -1265,7 +1267,7 @@ cryptodev_mop(struct fcrypt *fcr,
 			if(cnop[req].key && cnop[req].keylen) {
 				crde->crd_key = malloc(cnop[req].keylen,
 						    M_XDATA, M_WAITOK);
-				if((error = copyin(cnop[req].key, 
+				if((error = copyin(cnop[req].key,
 				    crde->crd_key, cnop[req].keylen))) {
 					cnop[req].status = EINVAL;
 					goto bail;
@@ -1320,7 +1322,7 @@ cryptodev_mop(struct fcrypt *fcr,
 				crde->crd_len -= cse->txform->ivsize;
 			}
 		}
-	
+
 		if (cnop[req].mac) {
 			if (crda == NULL) {
 				cnop[req].status = EINVAL;
@@ -1427,7 +1429,7 @@ cryptodev_mkey(struct fcrypt *fcr, struct crypt_n_kop *kop, int count)
 			continue;
 		case CRK_MOD_MULT:
 			if (in == 3 && out == 1)
-				break;	
+				break;
 			kop[req].crk_status = EINVAL;
 			continue;
 		case CRK_MOD_MULTINV:
@@ -1513,7 +1515,7 @@ fail:
 }
 
 int
-cryptodev_session(struct fcrypt *fcr, struct session_op *sop) 
+cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 {
 	struct cryptoini cria, crie;
 	struct cryptoini cric;		/* compressor */
@@ -1683,7 +1685,7 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 		}
 		if (thash)
 			crie.cri_next = &cria;
-	} 
+	}
 
 	if (thash) {
 		cria.cri_alg = thash->type;
@@ -1797,14 +1799,14 @@ cryptodev_getmstatus(struct fcrypt *fcr, struct crypt_result *crypt_res,
 
 	/* On queue so nobody else can grab them
 	 * and copyout can be delayed-- no locking */
-	TAILQ_HEAD(, cryptop) crp_delfree_q = 
+	TAILQ_HEAD(, cryptop) crp_delfree_q =
 		TAILQ_HEAD_INITIALIZER(crp_delfree_q);
-	TAILQ_HEAD(, cryptkop) krp_delfree_q = 
+	TAILQ_HEAD(, cryptkop) krp_delfree_q =
 		TAILQ_HEAD_INITIALIZER(krp_delfree_q);
 
-	/* at this point we do not know which response user is requesting for 
-	 * (symmetric or asymmetric) so we copyout one from each i.e if the 
-	 * count is 2 then 1 from symmetric and 1 from asymmetric queue and 
+	/* at this point we do not know which response user is requesting for
+	 * (symmetric or asymmetric) so we copyout one from each i.e if the
+	 * count is 2 then 1 from symmetric and 1 from asymmetric queue and
 	 * if 3 then 2 symmetric and 1 asymmetric and so on */
 
 	/* pull off a list of requests while protected from changes */
@@ -1850,7 +1852,7 @@ cryptodev_getmstatus(struct fcrypt *fcr, struct crypt_result *crypt_res,
 			crypt_res[req].reqid = crp->crp_reqid;
 			crypt_res[req].opaque = crp->crp_usropaque;
 			completed++;
-			
+
 			if (crp->crp_etype != 0) {
 				crypt_res[req].status = crp->crp_etype;
 				goto bail;
@@ -1906,7 +1908,7 @@ bail:
 						DPRINTF(("cryptodev_key: "
 						    "copyout oparam %d failed, "
 						    "error=%d\n",
-						    i - krp->krp_iparams, 
+						    i - krp->krp_iparams,
 						    crypt_res[req].status));
 						goto fail;
 					}
@@ -1914,7 +1916,7 @@ bail:
 fail:
 				TAILQ_REMOVE(&krp_delfree_q, krp, krp_next);
 				/* not sure what to do for this */
-				/* kop[req].crk_status = krp->krp_status; */ 
+				/* kop[req].crk_status = krp->krp_status; */
 				for (i = 0; i < CRK_MAXPARAM; i++) {
 					struct crparam *kp = &(krp->krp_param[i]);
 					if (kp->crp_p) {
@@ -1931,7 +1933,7 @@ fail:
 		}
 	}
 
-	return completed;	
+	return completed;
 }
 
 static int
@@ -1942,8 +1944,8 @@ cryptodev_getstatus (struct fcrypt *fcr, struct crypt_result *crypt_res)
         struct csession *cse;
         int i, size, req = 0;
 
-	mutex_enter(&crypto_mtx);		
-	/* Here we dont know for which request the user is requesting the 
+	mutex_enter(&crypto_mtx);
+	/* Here we dont know for which request the user is requesting the
 	 * response so checking in both the queues */
 	TAILQ_FOREACH_SAFE(crp, &fcr->crp_ret_mq, crp_next, cnext) {
 		if(crp && (crp->crp_reqid == crypt_res->reqid)) {
@@ -1967,10 +1969,10 @@ cryptodev_getstatus (struct fcrypt *fcr, struct crypt_result *crypt_res)
 			}
 
 			if (crp->dst && (crypt_res->status =
-			    copyout(crp->uio.uio_iov[0].iov_base, 
+			    copyout(crp->uio.uio_iov[0].iov_base,
 			    crp->dst, crp->len)))
 				goto bail;
-			
+
 			if (crp->mac && (crypt_res->status =
 			    copyout(crp->crp_mac, crp->mac,
 			    cse->thash->authsize)))
@@ -1989,7 +1991,7 @@ bail:
 			crypt_res[req].opaque = krp->krp_usropaque;
 			if (krp->krp_status != 0) {
 				DPRINTF(("cryptodev_key: "
-				    "krp->krp_status 0x%08x\n", 
+				    "krp->krp_status 0x%08x\n",
 				    krp->krp_status));
 				crypt_res[req].status = krp->krp_status;
 				goto fail;
@@ -2001,12 +2003,12 @@ bail:
 				if (size == 0)
 					continue;
 				crypt_res[req].status = copyout(
-				    krp->krp_param[i].crp_p, 
+				    krp->krp_param[i].crp_p,
 				    krp->crk_param[i].crp_p, size);
 				if (crypt_res[req].status) {
 					DPRINTF(("cryptodev_key: copyout oparam"
-					    "%d failed, error=%d\n", 
-					    i - krp->krp_iparams, 
+					    "%d failed, error=%d\n",
+					    i - krp->krp_iparams,
 					    crypt_res[req].status));
 					goto fail;
 				}
@@ -2015,7 +2017,7 @@ fail:
 			TAILQ_REMOVE(&fcr->crp_ret_mkq, krp, krp_next);
 			mutex_exit(&crypto_mtx);
 			/* not sure what to do for this */
-			/* kop[req].crk_status = krp->krp_status; */ 
+			/* kop[req].crk_status = krp->krp_status; */
 			for (i = 0; i < CRK_MAXPARAM; i++) {
 				struct crparam *kp = &(krp->krp_param[i]);
 				if (kp->crp_p) {
@@ -2031,10 +2033,10 @@ fail:
 		}
 	}
 	mutex_exit(&crypto_mtx);
-	return EINPROGRESS;			
+	return EINPROGRESS;
 }
 
-static int      
+static int
 cryptof_stat(struct file *fp, struct stat *st)
 {
 	struct fcrypt *fcr = fp->f_fcrypt;
@@ -2053,7 +2055,7 @@ cryptof_stat(struct file *fp, struct stat *st)
 	return 0;
 }
 
-static int      
+static int
 cryptof_poll(struct file *fp, int events)
 {
 	struct fcrypt *fcr = fp->f_fcrypt;
@@ -2080,8 +2082,6 @@ cryptof_poll(struct file *fp, int events)
 /*
  * Pseudo-device initialization routine for /dev/crypto
  */
-void	cryptoattach(int);
-
 void
 cryptoattach(int num)
 {
@@ -2125,11 +2125,11 @@ crypto_detach(device_t self, int num)
 }
 
 int crypto_match(device_t, cfdata_t, void *);
- 
+
 int
-crypto_match(device_t parent, cfdata_t data, void *opaque) 
-{   
- 
+crypto_match(device_t parent, cfdata_t data, void *opaque)
+{
+
 	return 1;
 }
 

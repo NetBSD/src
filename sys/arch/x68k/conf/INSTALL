@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.107 2014/08/23 20:27:00 dholland Exp $
+#	$NetBSD: INSTALL,v 1.107.2.1 2015/09/22 12:05:53 skrll Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,7 +8,7 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.107 $"
+#ident 		"INSTALL-$Revision: 1.107.2.1 $"
 
 makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
@@ -61,11 +61,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 ## System call tracing (see ktrace(1)).
 #options 	KTRACE
-
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
 
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 #options 	SYSVMSG		# System V message queues

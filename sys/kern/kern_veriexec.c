@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.1.2.3 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.1.2.4 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.1.2.3 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.1.2.4 2015/09/22 12:06:07 skrll Exp $");
 
 #include "opt_veriexec.h"
 
@@ -38,7 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.1.2.3 2015/06/06 14:40:21 skrll 
 #include <sys/kmem.h>
 #include <sys/vnode.h>
 #include <sys/namei.h>
-#include <sys/exec.h>
 #include <sys/once.h>
 #include <sys/proc.h>
 #include <sys/rwlock.h>
@@ -50,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.1.2.3 2015/06/06 14:40:21 skrll 
 #include <sys/sha2.h>
 #include <sys/rmd160.h>
 #include <sys/md5.h>
-#include <uvm/uvm_extern.h>
 #include <sys/fileassoc.h>
 #include <sys/kauth.h>
 #include <sys/conf.h>
@@ -92,11 +90,7 @@ struct veriexec_file_entry {
 	u_char *filename;			/* File name. */
 	u_char type;				/* Entry type. */
 	u_char status;				/* Evaluation status. */
-	u_char page_fp_status;			/* Per-page FP status. */
 	u_char *fp;				/* Fingerprint. */
-	void *page_fp;				/* Per-page fingerprints */
-	size_t npages;			    	/* Number of pages. */
-	size_t last_page_size;			/* To support < PAGE_SIZE */
 	struct veriexec_fpops *ops;		/* Fingerprint ops vector*/
 	size_t filename_len;			/* Length of filename. */
 };
@@ -227,7 +221,7 @@ SYSCTL_SETUP(sysctl_kern_veriexec_setup, "sysctl kern.veriexec setup")
 }
 
 /*
- * Add ops to the fignerprint ops vector list.
+ * Add ops to the fingerprint ops vector list.
  */
 int
 veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
@@ -236,16 +230,14 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 {
 	struct veriexec_fpops *ops;
 
-	/* Sanity check all parameters. */
-	if ((fp_type == NULL) || (hash_len == 0) || (ctx_size == 0) ||
-	    (init == NULL) || (update == NULL) || (final == NULL))
-		return (EFAULT);
+	KASSERT((init != NULL) && (update != NULL) && (final != NULL));
+	KASSERT((hash_len != 0) && (ctx_size != 0));
+	KASSERT(fp_type != NULL);
 
 	if (veriexec_fpops_lookup(fp_type) != NULL)
 		return (EEXIST);
 
 	ops = kmem_alloc(sizeof(*ops), KM_SLEEP);
-
 	ops->type = fp_type;
 	ops->hash_len = hash_len;
 	ops->context_size = ctx_size;
@@ -422,11 +414,11 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp, int file_lock_state,
     struct veriexec_file_entry *vfe, u_char *fp)
 {
 	struct vattr va;
-	void *ctx, *page_ctx;
-	u_char *buf, *page_fp;
+	void *ctx;
+	u_char *buf;
 	off_t offset, len;
-	size_t resid, npages;
-	int error, do_perpage, pagen;
+	size_t resid;
+	int error;
 
 	KASSERT(file_lock_state != VERIEXEC_LOCKED);
 	KASSERT(file_lock_state != VERIEXEC_UNLOCKED);
@@ -439,32 +431,13 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp, int file_lock_state,
 	if (error)
 		return (error);
 
-#ifdef notyet /* XXX - for now */
-	if ((vfe->type & VERIEXEC_UNTRUSTED) &&
-	    (vfe->page_fp_status == PAGE_FP_NONE))
-		do_perpage = 1;
-	else
-#endif  /* notyet */
-		do_perpage = 0;
-
 	ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
 	buf = kmem_alloc(PAGE_SIZE, KM_SLEEP);
-
-	page_ctx = NULL;
-	page_fp = NULL;
-	npages = 0;
-	if (do_perpage) {
-		npages = (va.va_size >> PAGE_SHIFT) + 1;
-		page_fp = kmem_alloc(vfe->ops->hash_len * npages, KM_SLEEP);
-		vfe->page_fp = page_fp;
-		page_ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
-	}
 
 	(vfe->ops->init)(ctx);
 
 	len = 0;
 	error = 0;
-	pagen = 0;
 	for (offset = 0; offset < va.va_size; offset += PAGE_SIZE) {
 		len = ((va.va_size - offset) < PAGE_SIZE) ?
 		    (va.va_size - offset) : PAGE_SIZE;
@@ -476,34 +449,10 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp, int file_lock_state,
 				l->l_cred, &resid, NULL);
 
 		if (error) {
-			if (do_perpage) {
-				kmem_free(vfe->page_fp,
-				    vfe->ops->hash_len * npages);
-				vfe->page_fp = NULL;
-			}
-
 			goto bad;
 		}
 
 		(vfe->ops->update)(ctx, buf, (unsigned int) len);
-
-		if (do_perpage) {
-			(vfe->ops->init)(page_ctx);
-			(vfe->ops->update)(page_ctx, buf, (unsigned int)len);
-			(vfe->ops->final)(page_fp, page_ctx);
-
-			if (veriexec_verbose >= 2) {
-				int i;
-
-				printf("hash for page %d: ", pagen);
-				for (i = 0; i < vfe->ops->hash_len; i++)
-					printf("%02x", page_fp[i]);
-				printf("\n");
-			}
-
-			page_fp += vfe->ops->hash_len;
-			pagen++;
-		}
 
 		if (len != PAGE_SIZE)
 			break;
@@ -511,16 +460,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp, int file_lock_state,
 
 	(vfe->ops->final)(fp, ctx);
 
-	if (do_perpage) {
-		vfe->last_page_size = len;
-		vfe->page_fp_status = PAGE_FP_READY;
-		vfe->npages = npages;
-	}
-
 bad:
-	if (do_perpage)
-		kmem_free(page_ctx, vfe->ops->context_size);
-
 	kmem_free(ctx, vfe->ops->context_size);
 	kmem_free(buf, PAGE_SIZE);
 
@@ -555,7 +495,7 @@ veriexec_fp_status(struct lwp *l, struct vnode *vp, int file_lock_state,
 {
 	size_t hash_len = vfe->ops->hash_len;
 	u_char *digest;
-	int error = 0;
+	int error;
 
 	digest = kmem_zalloc(hash_len, KM_SLEEP);
 
@@ -606,7 +546,6 @@ veriexec_file_report(struct veriexec_file_entry *vfe, const u_char *msg,
 {
 	if (vfe != NULL && vfe->filename != NULL)
 		filename = vfe->filename;
-
 	if (filename == NULL)
 		return;
 
@@ -782,81 +721,6 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	return (r);
 }
 
-#ifdef notyet
-/*
- * Evaluate per-page fingerprints.
- */
-int
-veriexec_page_verify(struct veriexec_file_entry *vfe, struct vm_page *pg,
-    size_t idx, struct lwp *l)
-{
-	void *ctx;
-	u_char *fp;
-	u_char *page_fp;
-	int error;
-	vaddr_t kva;
-
-	if (vfe->page_fp_status == PAGE_FP_NONE)
-		return (0);
-
-	if (vfe->page_fp_status == PAGE_FP_FAIL)
-		return (EPERM);
-
-	if (idx >= vfe->npages)
-		return (0);
-
-	ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
-	fp = kmem_alloc(vfe->ops->hash_len, KM_SLEEP);
-	kva = uvm_km_alloc(kernel_map, PAGE_SIZE, VM_PGCOLOR_BUCKET(pg),
-	    UVM_KMF_COLORMATCH | UVM_KMF_VAONLY | UVM_KMF_WAITVA);
-	pmap_kenter_pa(kva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
-	pmap_update(pmap_kernel());
-
-	page_fp = (u_char *) vfe->page_fp + (vfe->ops->hash_len * idx);
-	(vfe->ops->init)(ctx);
-	(vfe->ops->update)(ctx, (void *) kva,
-			   ((vfe->npages - 1) == idx) ? vfe->last_page_size
-						      : PAGE_SIZE);
-	(vfe->ops->final)(fp, ctx);
-
-	pmap_kremove(kva, PAGE_SIZE);
-	pmap_update(pmap_kernel());
-	uvm_km_free(kernel_map, kva, PAGE_SIZE, UVM_KMF_VAONLY);
-
-	error = veriexec_fp_cmp(vfe->ops, page_fp, fp);
-	if (error) {
-		const char *msg;
-
-		if (veriexec_strict > VERIEXEC_LEARNING) {
-			msg = "Pages modified: Killing process.";
-		} else {
-			msg = "Pages modified.";
-			error = 0;
-		}
-
-		veriexec_file_report(msg, "[page_in]", l,
-		    REPORT_ALWAYS|REPORT_ALARM);
-
-		if (error) {
-			ksiginfo_t ksi;
-
-			KSI_INIT(&ksi);
-			ksi.ksi_signo = SIGKILL;
-			ksi.ksi_code = SI_NOINFO;
-			ksi.ksi_pid = l->l_proc->p_pid;
-			ksi.ksi_uid = 0;
-
-			kpsignal(l->l_proc, &ksi, NULL);
-		}
-	}
-
-	kmem_free(ctx, vfe->ops->context_size);
-	kmem_free(fp, vfe->ops->hash_len);
-
-	return (error);
-}
-#endif /* notyet */
-
 /*
  * Veriexec remove policy code.
  */
@@ -992,8 +856,6 @@ veriexec_file_free(struct veriexec_file_entry *vfe)
 	if (vfe != NULL) {
 		if (vfe->fp != NULL)
 			kmem_free(vfe->fp, vfe->ops->hash_len);
-		if (vfe->page_fp != NULL)
-			kmem_free(vfe->page_fp, vfe->ops->hash_len);
 		if (vfe->filename != NULL)
 			kmem_free(vfe->filename, vfe->filename_len);
 		rw_destroy(&vfe->lock);
@@ -1266,11 +1128,6 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		strlcpy(vfe->filename, file, vfe->filename_len);
 	} else
 		vfe->filename = NULL;
-
-	vfe->page_fp = NULL;
-	vfe->page_fp_status = PAGE_FP_NONE;
-	vfe->npages = 0;
-	vfe->last_page_size = 0;
 
 	if (prop_bool_true(prop_dictionary_get(dict, "eval-on-load")) ||
 	    (vfe->type & VERIEXEC_UNTRUSTED)) {

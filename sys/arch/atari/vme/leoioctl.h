@@ -1,4 +1,4 @@
-/*	$NetBSD: leoioctl.h,v 1.2 2008/04/28 20:23:15 martin Exp $	*/
+/*	$NetBSD: leoioctl.h,v 1.2.64.1 2015/09/22 12:05:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 maximum entropy <entropy@zippy.bernstein.com>
@@ -26,6 +26,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 #define LIOCYRES _IOW('l', 0, int)
 #define LIOCSCRL _IOW('l', 1, int)

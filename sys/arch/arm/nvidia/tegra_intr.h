@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_intr.h,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_intr.h,v 1.2.2.4 2015/09/22 12:05:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -39,6 +39,7 @@
 
 #define TEGRA_INTR_TMR1		TEGRA_INTR(0)
 #define TEGRA_INTR_TMR2		TEGRA_INTR(1)
+#define TEGRA_INTR_CEC		TEGRA_INTR(3)
 #define TEGRA_INTR_SDMMC1	TEGRA_INTR(14)
 #define TEGRA_INTR_SDMMC2	TEGRA_INTR(15)
 #define TEGRA_INTR_SDMMC3	TEGRA_INTR(19)

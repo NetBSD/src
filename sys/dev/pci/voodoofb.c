@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.49 2014/07/24 09:39:58 macallan Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.49.4.1 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.49 2014/07/24 09:39:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.49.4.1 2015/09/22 12:05:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -694,7 +694,7 @@ static bool
 voodoofb_is_console(struct voodoofb_softc *sc)
 {
 	prop_dictionary_t dict;
-	bool console;
+	bool console = FALSE;
 
 	dict = device_properties(sc->sc_dev);
 	prop_dictionary_get_bool(dict, "is_console", &console);

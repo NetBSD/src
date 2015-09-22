@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.179 2014/11/16 16:01:43 manu Exp $
+# $NetBSD: GENERIC,v 1.179.2.1 2015/09/22 12:05:53 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.179 $"
+#ident 		"GENERIC-$Revision: 1.179.2.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -68,11 +68,6 @@ options 	RTC_OFFSET=-540	# hardware clock is this many mins. west of GMT
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
 
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues

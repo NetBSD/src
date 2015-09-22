@@ -1,4 +1,4 @@
-/*	$NetBSD: slip.h,v 1.9 2005/12/10 23:21:39 elad Exp $	*/
+/*	$NetBSD: slip.h,v 1.9.140.1 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -33,6 +33,8 @@
 
 #ifndef _NET_SLIP_H_
 #define _NET_SLIP_H_
+
+#include <sys/ioccom.h>
 
 /* Ioctls operating on SLIP ttys. */
 #define	SLIOCGUNIT	_IOR('t', 88, int)	/* get slip unit number */

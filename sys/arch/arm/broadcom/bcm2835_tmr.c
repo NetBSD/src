@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_tmr.c,v 1.3.14.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: bcm2835_tmr.c,v 1.3.14.2 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.3.14.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_tmr.c,v 1.3.14.2 2015/09/22 12:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -143,7 +143,7 @@ cpu_initclocks(void)
 	stcl += counts_per_hz;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_STIMER_C3, stcl);
-	clock_ih = bcm2835_intr_establish(BCM2835_INT_TIMER3, IPL_CLOCK,
+	clock_ih = intr_establish(BCM2835_INT_TIMER3, IPL_CLOCK, IST_LEVEL,
 	    clockhandler, NULL);
 	if (clock_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);

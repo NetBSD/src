@@ -1,4 +1,4 @@
-/*	$NetBSD: iopsp.c,v 1.36 2012/10/27 17:18:17 chs Exp $	*/
+/*	$NetBSD: iopsp.c,v 1.36.14.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.36 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iopsp.c,v 1.36.14.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,6 +83,7 @@ static int
 iopsp_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct iop_attach_args *ia;
+	struct iop_softc *iop;
 	struct {
 		struct	i2o_param_op_results pr;
 		struct	i2o_param_read_results prr;
@@ -90,12 +91,13 @@ iopsp_match(device_t parent, cfdata_t match, void *aux)
 	} __packed param;
 
 	ia = aux;
+	iop = device_private(parent);
 
 	if (ia->ia_class != I2O_CLASS_BUS_ADAPTER_PORT)
 		return (0);
 
-	if (iop_field_get_all((struct iop_softc *)parent, ia->ia_tid,
-	    I2O_PARAM_HBA_CTLR_INFO, &param, sizeof(param), NULL) != 0)
+	if (iop_field_get_all(iop, ia->ia_tid, I2O_PARAM_HBA_CTLR_INFO, &param,
+	    sizeof(param), NULL) != 0)
 		return (0);
 
 	return (param.ci.bustype == I2O_HBA_BUS_SCSI ||

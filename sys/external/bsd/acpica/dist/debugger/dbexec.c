@@ -435,15 +435,15 @@ AcpiDbExecute (
     }
     else
     {
-        NameString = ACPI_ALLOCATE (ACPI_STRLEN (Name) + 1);
+        NameString = ACPI_ALLOCATE (strlen (Name) + 1);
         if (!NameString)
         {
             return;
         }
 
-        ACPI_MEMSET (&AcpiGbl_DbMethodInfo, 0, sizeof (ACPI_DB_METHOD_INFO));
+        memset (&AcpiGbl_DbMethodInfo, 0, sizeof (ACPI_DB_METHOD_INFO));
 
-        ACPI_STRCPY (NameString, Name);
+        strcpy (NameString, Name);
         AcpiUtStrupr (NameString);
         AcpiGbl_DbMethodInfo.Name = NameString;
         AcpiGbl_DbMethodInfo.Args = Args;
@@ -671,8 +671,8 @@ AcpiDbCreateExecutionThreads (
 
     /* Get the arguments */
 
-    NumThreads = ACPI_STRTOUL (NumThreadsArg, NULL, 0);
-    NumLoops   = ACPI_STRTOUL (NumLoopsArg, NULL, 0);
+    NumThreads = strtoul (NumThreadsArg, NULL, 0);
+    NumLoops   = strtoul (NumLoopsArg, NULL, 0);
 
     if (!NumThreads || !NumLoops)
     {
@@ -716,7 +716,7 @@ AcpiDbCreateExecutionThreads (
         return;
     }
 
-    ACPI_MEMSET (&AcpiGbl_DbMethodInfo, 0, sizeof (ACPI_DB_METHOD_INFO));
+    memset (&AcpiGbl_DbMethodInfo, 0, sizeof (ACPI_DB_METHOD_INFO));
 
     /* Array to store IDs of threads */
 
@@ -731,7 +731,7 @@ AcpiDbCreateExecutionThreads (
         (void) AcpiOsDeleteSemaphore (InfoGate);
         return;
     }
-    ACPI_MEMSET (AcpiGbl_DbMethodInfo.Threads, 0, Size);
+    memset (AcpiGbl_DbMethodInfo.Threads, 0, Size);
 
     /* Setup the context to be passed to each thread */
 

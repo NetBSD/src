@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_ebus.c,v 1.1 2012/10/09 20:55:04 jdc Exp $ */
+/*	$NetBSD: pckbc_ebus.c,v 1.1.18.1 2015/09/22 12:05:52 skrll Exp $ */
 
 /*
  * Copyright (c) 2002 Valeriy E. Ushakov
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_ebus.c,v 1.1 2012/10/09 20:55:04 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_ebus.c,v 1.1.18.1 2015/09/22 12:05:52 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -58,6 +58,7 @@ static void	pckbc_ebus_attach(device_t, device_t, void *);
 static void	pckbc_ebus_intr_establish(struct pckbc_softc *, pckbport_slot_t);
 
 #define PCKBC_PROM_DEVICE_NAME "8042"
+#define PCKBC_PROM_DEVICE_NAME2 "kb_ps2"
 
 CFATTACH_DECL_NEW(pckbc_ebus, sizeof(struct pckbc_ebus_softc),
     pckbc_ebus_match, pckbc_ebus_attach, NULL, NULL);
@@ -68,7 +69,10 @@ pckbc_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
 
-	return (strcmp(ea->ea_name, PCKBC_PROM_DEVICE_NAME) == 0);
+	if (strcmp(ea->ea_name, PCKBC_PROM_DEVICE_NAME) == 0 ||
+	    strcmp(ea->ea_name, PCKBC_PROM_DEVICE_NAME2) == 0)
+		return 1;
+	return 0;
 }
 
 static void
@@ -98,8 +102,25 @@ pckbc_ebus_attach(device_t parent, device_t self, void *aux)
 
 	psc->intr_establish = pckbc_ebus_intr_establish;
 
-	for (i = 0; i < PCKBC_NSLOTS; i++)
-		sc->psc_intr[i] = ea->ea_intr[i];
+	if (ea->ea_nintr < PCKBC_NSLOTS) {
+		aprint_error(": no intr %d", ea->ea_nintr);
+
+		/*
+		 * XXX OpenBIOS doesn't provide interrupts for pckbc
+		 * currently, so use the interrupt numbers described in
+		 * QEMU's hw/sparc64/sun4u.c::isa_irq_handler.
+		 */
+		if (strcmp(machine_model, "OpenBiosTeam,OpenBIOS") == 0) {
+			sc->psc_intr[PCKBC_KBD_SLOT] = 0x29;
+			sc->psc_intr[PCKBC_AUX_SLOT] = 0x2a;
+		} else {
+			aprint_error("\n");
+			return;
+		}
+	} else {
+		for (i = 0; i < PCKBC_NSLOTS; i++)
+			sc->psc_intr[i] = ea->ea_intr[i];
+	}
 
 	if (isconsole) {
 		int status;

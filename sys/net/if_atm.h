@@ -1,4 +1,4 @@
-/*      $NetBSD: if_atm.h,v 1.19 2011/02/01 19:46:28 chuck Exp $       */
+/*      $NetBSD: if_atm.h,v 1.19.32.1 2015/09/22 12:06:10 skrll Exp $       */
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -31,6 +31,8 @@
 
 #ifndef _NET_IF_ATM_H_
 #define _NET_IF_ATM_H_
+
+#include <sys/ioccom.h>
 
 #if (defined(__FreeBSD__) || defined(__bsdi__)) && defined(KERNEL)
 #ifndef _KERNEL

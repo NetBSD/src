@@ -1,4 +1,4 @@
-/* $NetBSD: omap2_reg.h,v 1.28.4.1 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: omap2_reg.h,v 1.28.4.2 2015/09/22 12:05:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Microsoft
@@ -645,7 +645,7 @@
 #define	INTC_PENDING_IRQ	0x0098	/* masked irq state */
 #define	INTC_PENDING_FIQ	0x009c	/* masked fiq state */
 
-#define	INTC_ILR		0x0100	
+#define	INTC_ILR		0x0100
 
 #define	INTC_SYSCONFIG_SOFTRESET	0x2
 #define	INTC_SYSCONFIG_AUTOIDLE		0x1
@@ -912,4 +912,10 @@
 #define AM335X_INT_TCERRINT0		112
 #define AM335X_INT_TCERRINT1		113
 #define AM335X_INT_TCERRINT2		114
+
+/* TRNG */
+#define AM335X_TRNG_BASE		0x48310000
+#define AM335X_TRNG_SIZE		0x2000
+#define AM335X_INT_TRNG			111
+
 #endif	/* _ARM_OMAP_OMAP2_REG_H_ */

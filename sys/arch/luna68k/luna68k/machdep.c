@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.98 2014/03/24 19:46:24 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.98.6.1 2015/09/22 12:05:45 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2014/03/24 19:46:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98.6.1 2015/09/22 12:05:45 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -83,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.98 2014/03/24 19:46:24 christos Exp $"
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
+
+#include <luna68k/dev/syscn.h>
 
 #include <dev/cons.h>
 #include <dev/mm.h>
@@ -137,7 +139,6 @@ int	sysconsole;	/* console: 0 for ttya, 1 for video */
 extern struct consdev syscons;
 extern void omfb_cnattach(void);
 extern void ws_cnattach(void);
-extern void syscnattach(int);
 
 /*
  * On the 68020/68030, the value of delay_divisor is roughly
@@ -248,7 +249,7 @@ consinit(void)
 {
 
 	if (sysconsole == 0)
-		syscnattach(0);
+		syscninit(0);
 	else {
 		omfb_cnattach();
 		ws_cnattach();

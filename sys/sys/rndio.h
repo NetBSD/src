@@ -1,4 +1,4 @@
-/*	$NetBSD: rndio.h,v 1.1.2.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: rndio.h,v 1.1.2.3 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 
 #include <sys/types.h>
 #include <sys/sha1.h>
+#include <sys/ioccom.h>
 
 /*
  * Exposed "size" of entropy pool, for convenience in load/save

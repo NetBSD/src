@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_intr.c,v 1.3.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeon_intr.c,v 1.3.2.3 2015/09/22 12:05:47 skrll Exp $	*/
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
  * All rights reserved.
@@ -39,10 +39,11 @@
  */
 
 #include "opt_octeon.h"
+#include "cpunode.h"
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.3.2.2 2015/06/06 14:40:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_intr.c,v 1.3.2.3 2015/09/22 12:05:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -199,6 +200,9 @@ struct cpu_softc octeon_cpu0_softc = {
 
 	.cpu_int32_en = X(CIU_INT32_EN0),
 
+	.cpu_wdog = X(CIU_WDOG0),
+	.cpu_pp_poke = X(CIU_PP_POKE0),
+
 #ifdef MULTIPROCESSOR
 	.cpu_mbox_set = X(CIU_MBOX_SET0),
 	.cpu_mbox_clr = X(CIU_MBOX_CLR0),
@@ -221,9 +225,74 @@ struct cpu_softc octeon_cpu1_softc = {
 
 	.cpu_int32_en = X(CIU_INT32_EN1),
 
+	.cpu_wdog = X(CIU_WDOG1),
+	.cpu_pp_poke = X(CIU_PP_POKE1),
+
 	.cpu_mbox_set = X(CIU_MBOX_SET1),
 	.cpu_mbox_clr = X(CIU_MBOX_CLR1),
 };
+#endif
+
+#ifdef DEBUG
+static void
+octeon_mbox_test(void)
+{
+	const uint64_t mbox_clr0 = X(CIU_MBOX_CLR0);
+	const uint64_t mbox_clr1 = X(CIU_MBOX_CLR1);
+	const uint64_t mbox_set0 = X(CIU_MBOX_SET0);
+	const uint64_t mbox_set1 = X(CIU_MBOX_SET1);
+	const uint64_t int_sum0 = X(CIU_INT0_SUM0);
+	const uint64_t int_sum1 = X(CIU_INT2_SUM0);
+	const uint64_t sum_mbox_lo = __BIT(_CIU_INT_MBOX_15_0_SHIFT);
+	const uint64_t sum_mbox_hi = __BIT(_CIU_INT_MBOX_31_16_SHIFT);
+
+	mips64_sd_a64(mbox_clr0, ~0ULL);
+	mips64_sd_a64(mbox_clr1, ~0ULL);
+
+	uint32_t mbox0 = mips64_ld_a64(mbox_set0);
+	uint32_t mbox1 = mips64_ld_a64(mbox_set1);
+
+	KDASSERTMSG(mbox0 == 0, "mbox0 %#x mbox1 %#x", mbox0, mbox1);
+	KDASSERTMSG(mbox1 == 0, "mbox0 %#x mbox1 %#x", mbox0, mbox1);
+
+	mips64_sd_a64(mbox_set0, __BIT(0));
+
+	mbox0 = mips64_ld_a64(mbox_set0);
+	mbox1 = mips64_ld_a64(mbox_set1);
+
+	KDASSERTMSG(mbox0 == 1, "mbox0 %#x mbox1 %#x", mbox0, mbox1);
+	KDASSERTMSG(mbox1 == 0, "mbox0 %#x mbox1 %#x", mbox0, mbox1);
+
+	uint64_t sum0 = mips64_ld_a64(int_sum0);
+	uint64_t sum1 = mips64_ld_a64(int_sum1);
+
+	KDASSERTMSG((sum0 & sum_mbox_lo) != 0, "sum0 %#"PRIx64, sum0);
+	KDASSERTMSG((sum0 & sum_mbox_hi) == 0, "sum0 %#"PRIx64, sum0);
+
+	KDASSERTMSG((sum1 & sum_mbox_lo) == 0, "sum1 %#"PRIx64, sum1);
+	KDASSERTMSG((sum1 & sum_mbox_hi) == 0, "sum1 %#"PRIx64, sum1);
+
+	mips64_sd_a64(mbox_clr0, mbox0);
+	mbox0 = mips64_ld_a64(mbox_set0);
+	KDASSERTMSG(mbox0 == 0, "mbox0 %#x", mbox0);
+
+	mips64_sd_a64(mbox_set0, __BIT(16));
+
+	mbox0 = mips64_ld_a64(mbox_set0);
+	mbox1 = mips64_ld_a64(mbox_set1);
+
+	KDASSERTMSG(mbox0 == __BIT(16), "mbox0 %#x", mbox0);
+	KDASSERTMSG(mbox1 == 0, "mbox1 %#x", mbox1);
+
+	sum0 = mips64_ld_a64(int_sum0);
+	sum1 = mips64_ld_a64(int_sum1);
+
+	KDASSERTMSG((sum0 & sum_mbox_lo) == 0, "sum0 %#"PRIx64, sum0);
+	KDASSERTMSG((sum0 & sum_mbox_hi) != 0, "sum0 %#"PRIx64, sum0);
+
+	KDASSERTMSG((sum1 & sum_mbox_lo) == 0, "sum1 %#"PRIx64, sum1);
+	KDASSERTMSG((sum1 & sum_mbox_hi) == 0, "sum1 %#"PRIx64, sum1);
+}
 #endif
 
 #undef X
@@ -233,31 +302,36 @@ octeon_intr_init(struct cpu_info *ci)
 {
 	const int cpunum = cpu_index(ci);
 	const char * const xname = cpu_name(ci);
-	struct cpu_softc *cpu;
+	struct cpu_softc *cpu = ci->ci_softc;
 
-	ipl_sr_map = octeon_ipl_sr_map;
 
 	if (ci->ci_cpuid == 0) {
+		KASSERT(ci->ci_softc == &octeon_cpu0_softc);
+		ipl_sr_map = octeon_ipl_sr_map;
 		mutex_init(&octeon_intr_lock, MUTEX_DEFAULT, IPL_HIGH);
-		cpu = &octeon_cpu0_softc;
 #ifdef MULTIPROCESSOR
 		mips_locoresw.lsw_send_ipi = octeon_send_ipi;
+#endif
+#ifdef DEBUG
+		octeon_mbox_test();
 #endif
 	} else {
 		KASSERT(cpunum == 1);
 #ifdef MULTIPROCESSOR
-		cpu = &octeon_cpu1_softc;
-#else
-		cpu = NULL;
+		KASSERT(ci->ci_softc == &octeon_cpu1_softc);
 #endif
 	}
-	ci->ci_softc = cpu;
 
 #ifdef MULTIPROCESSOR
 	// Enable the IPIs
 	cpu->cpu_int0_enable0 |= __BIT(_CIU_INT_MBOX_15_0_SHIFT);
 	cpu->cpu_int2_enable0 |= __BIT(_CIU_INT_MBOX_31_16_SHIFT);
 #endif
+
+	if (ci->ci_dev)
+	aprint_verbose_dev(ci->ci_dev,
+	    "enabling intr masks %#"PRIx64"/%#"PRIx64"/%#"PRIx64"\n",
+	    cpu->cpu_int0_enable0, cpu->cpu_int1_enable0, cpu->cpu_int2_enable0);
 
 	mips64_sd_a64(cpu->cpu_int0_en0, cpu->cpu_int0_enable0);
 	mips64_sd_a64(cpu->cpu_int1_en0, cpu->cpu_int1_enable0);
@@ -429,6 +503,7 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
 
+	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 	KASSERT((ipending & ~MIPS_INT_MASK) == 0);
 	KASSERT(ipending & MIPS_HARD_INT_MASK);
 	uint64_t hwpend = 0;
@@ -448,7 +523,7 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 	while (hwpend != 0) {
 		const int irq = ffs64(hwpend) - 1;
 		hwpend &= ~__BIT(irq);
-		
+
 		struct octeon_intrhand * const ih = octeon_ciu_intrs[irq];
 		cpu->cpu_intr_evs[irq].ev_count++;
 		if (__predict_true(ih != NULL)) {
@@ -463,8 +538,10 @@ octeon_iointr(int ipl, vaddr_t pc, uint32_t ipending)
 				(*ih->ih_func)(ih->ih_arg);
 			}
 #endif
+			KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 		}
 	}
+	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 }
 
 #ifdef MULTIPROCESSOR
@@ -475,16 +552,33 @@ octeon_ipi_intr(void *arg)
 {
 	struct cpu_info * const ci = curcpu();
 	struct cpu_softc * const cpu = ci->ci_softc;
-	uint64_t ipi_mask = (uintptr_t) arg;
+	uint32_t ipi_mask = (uintptr_t) arg;
+
+	KASSERTMSG((ipi_mask & __BITS(31,16)) == 0 || ci->ci_cpl >= IPL_SCHED,
+	    "ipi_mask %#"PRIx32" cpl %d", ipi_mask, ci->ci_cpl);
 
 	ipi_mask &= mips64_ld_a64(cpu->cpu_mbox_set);
+	if (ipi_mask == 0)
+		return 0;
+
 	mips64_sd_a64(cpu->cpu_mbox_clr, ipi_mask);
 
 	ipi_mask |= (ipi_mask >> 16);
 	ipi_mask &= __BITS(15,0);
 
-	KASSERT(ci->ci_cpl >= IPL_SCHED);
 	KASSERT(ipi_mask < __BIT(NIPIS));
+
+#if NWDOG > 0
+	// Handle WDOG requests ourselves.
+	if (ipi_mask & __BIT(IPI_WDOG)) {
+		softint_schedule(cpu->cpu_wdog_sih);
+		atomic_and_64(&ci->ci_request_ipis, ~__BIT(IPI_WDOG));
+		ipi_mask &= ~__BIT(IPI_WDOG);
+		ci->ci_evcnt_per_ipi[IPI_WDOG].ev_count++;
+		if (__predict_true(ipi_mask == 0))
+			return 1;
+	}
+#endif
 
 	/* if the request is clear, it was previously processed */
 	if ((ci->ci_request_ipis & ipi_mask) == 0)
@@ -503,17 +597,24 @@ octeon_ipi_intr(void *arg)
 int
 octeon_send_ipi(struct cpu_info *ci, int req)
 {
-
 	KASSERT(req < NIPIS);
 	if (ci == NULL) {
-		// only deals with 2 CPUs
-		ci = cpuid_infos[(cpu_number() == 0) ? 1 : 0];
+		CPU_INFO_ITERATOR cii;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (ci != curcpu()) {
+				octeon_send_ipi(ci, req);
+			}
+		}
+		return 0;
 	}
+	KASSERT(cold || ci->ci_softc != NULL);
+	if (ci->ci_softc == NULL)
+		return -1;
 
 	struct cpu_softc * const cpu = ci->ci_softc;
 	uint64_t ipi_mask = __BIT(req);
 
-	if (req == IPI_SUSPEND) {
+	if (__BIT(req) == (__BIT(IPI_SUSPEND)|__BIT(IPI_WDOG))) {
 		ipi_mask <<= 16;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.259 2014/10/25 21:00:20 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.259.2.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.259 2014/10/25 21:00:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.259.2.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -1408,7 +1408,7 @@ acpi_enter_sleep_state(int state)
 
 			(void)pmf_system_bus_resume(PMF_Q_NONE);
 			(void)AcpiLeaveSleepState(state);
-			(void)AcpiSetFirmwareWakingVector(0);
+			(void)AcpiSetFirmwareWakingVector(0, 0);
 			(void)pmf_system_resume(PMF_Q_NONE);
 		}
 

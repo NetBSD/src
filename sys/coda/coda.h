@@ -1,4 +1,4 @@
-/* $NetBSD: coda.h,v 1.17.36.1 2015/04/06 15:18:05 skrll Exp $ */
+/* $NetBSD: coda.h,v 1.17.36.2 2015/09/22 12:05:55 skrll Exp $ */
 
 /*
 
@@ -40,6 +40,7 @@ Mellon the rights to redistribute these changes without encumbrance.
 #define _CODA_HEADER_
 
 #if defined(__NetBSD__)
+#include <sys/ioccom.h>
 #if defined(_KERNEL_OPT)
 /* pull in optional CODA_COMPAT_5 flag and NVCODA. */
 #include "opt_coda_compat.h"

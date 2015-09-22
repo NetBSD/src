@@ -1,4 +1,4 @@
-/*	$NetBSD: ansi.h,v 1.15 2011/07/17 20:54:47 joerg Exp $	*/
+/*	$NetBSD: ansi.h,v 1.15.30.1 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  *	#undef	_BSD_SIZE_T_
  *	#endif
  */
-#define	_BSD_CLOCK_T_		unsigned long	/* clock() */
+#define	_BSD_CLOCK_T_		unsigned int	/* clock() */
 #define	_BSD_PTRDIFF_T_		int		/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_		unsigned int	/* sizeof() */
 #define	_BSD_SSIZE_T_		int		/* byte count or error */

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.75.30.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.75.30.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Mach Operating System
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75.30.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.75.30.2 2015/09/22 12:05:47 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_cputype.h"	/* which mips CPUs do we support? */
@@ -290,7 +290,7 @@ db_kvtophys_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		 * Cast the physical address -- some platforms, while
 		 * being ILP32, may be using 64-bit paddr_t's.
 		 */
-		db_printf("0x%lx -> 0x%" PRIx64 "\n", addr,
+		db_printf("0x%" DDB_EXPR_FMT "x -> 0x%" PRIx64 "\n", addr,
 		    (uint64_t) kvtophys(addr));
 	} else
 		printf("not a kernel virtual address\n");
@@ -695,8 +695,9 @@ db_mfcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		"mfcr %0,%1			\n\t"			\
 		".set pop 			\n\t"			\
 	    : "=r"(value) : "r"(addr));
-	
-	db_printf("control reg 0x%lx = 0x%" PRIx64 "\n", addr, value);
+
+	db_printf("control reg 0x%" DDB_EXPR_FMT "x = 0x%" PRIx64 "\n",
+	    addr, value);
 }
 
 void
@@ -726,7 +727,8 @@ db_mtcr_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		".set pop 			\n\t"			\
 	    :: "r"(value), "r"(addr));
 
-	db_printf("control reg 0x%lx = 0x%lx\n", addr, value);
+	db_printf("control reg 0x%" DDB_EXPR_FMT "x = 0x%" DDB_EXPR_FMT "x\n",
+	    addr, value);
 }
 #endif /* MIPS64_XLS */
 
@@ -740,7 +742,7 @@ db_mach_nmi_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	
+
 	if (!have_addr) {
 		db_printf("CPU not specific\n");
 		return;
@@ -790,7 +792,7 @@ const struct db_command db_machine_command_table[] = {
 #endif	/* (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0 */
 	{ DDB_ADD_CMD("kvtop",	db_kvtophys_cmd,	0,
 		"Print the physical address for a given kernel virtual address",
-		"address", 
+		"address",
 		"   address:\tvirtual address to look up") },
 	{ DDB_ADD_CMD("tlb",	db_tlbdump_cmd,		0,
 		"Print out TLB entries. (only works with options DEBUG)",
@@ -980,7 +982,7 @@ next_instr_address(db_addr_t pc, bool bd)
 
 	if (bd == false)
 		return (pc + 4);
-	
+
 	if (pc < MIPS_KSEG0_START)
 		ins = ufetch_uint32((void *)pc);
 	else
@@ -994,15 +996,15 @@ next_instr_address(db_addr_t pc, bool bd)
 
 #ifdef MULTIPROCESSOR
 
-bool 
+bool
 ddb_running_on_this_cpu_p(void)
-{               
+{
 	return ddb_cpu == cpu_number();
 }
 
-bool 
+bool
 ddb_running_on_any_cpu_p(void)
-{               
+{
 	return ddb_cpu != NOCPU;
 }
 
@@ -1020,7 +1022,7 @@ db_mach_cpu_cmd(db_expr_t addr, bool have_addr, db_expr_t count, const char *mod
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	
+
 	if (!have_addr) {
 		cpu_debug_dump();
 		return;

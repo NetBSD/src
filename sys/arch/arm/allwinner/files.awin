@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.26.2.2 2015/06/06 14:39:54 skrll Exp $
+#	$NetBSD: files.awin,v 1.26.2.3 2015/09/22 12:05:36 skrll Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -140,7 +140,7 @@ attach	awinac at awinio with awin_ac
 file	arch/arm/allwinner/awin_ac.c		awin_ac
 
 # A20/A31 HDMI
-device	awinhdmi: edid, ddc_read_edid, videomode
+device	awinhdmi: edid, videomode
 attach	awinhdmi at awinio with awin_hdmi
 file	arch/arm/allwinner/awin_hdmi.c		awin_hdmi
 

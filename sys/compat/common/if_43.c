@@ -1,4 +1,4 @@
-/*	$NetBSD: if_43.c,v 1.9.2.1 2015/06/06 14:40:05 skrll Exp $	*/
+/*	$NetBSD: if_43.c,v 1.9.2.2 2015/09/22 12:05:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9.2.1 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9.2.2 2015/09/22 12:05:55 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -76,9 +76,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_43.c,v 1.9.2.1 2015/06/06 14:40:05 skrll Exp $");
 
 #include <uvm/uvm_extern.h>
 
-u_long 
+u_long
 compat_cvtcmd(u_long cmd)
-{ 
+{
 	u_long ncmd;
 
 	if (IOCPARM_LEN(cmd) != sizeof(struct oifreq))
@@ -133,7 +133,7 @@ compat_cvtcmd(u_long cmd)
 		 * needing treatment ioctls should move to the switch
 		 * above.
 		 */
-		ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) | 
+		ncmd = ((cmd) & ~(IOCPARM_MASK << IOCPARM_SHIFT)) |
 		    (sizeof(struct ifreq) << IOCPARM_SHIFT);
 		switch (ncmd) {
 		case BIOCGETIF:
@@ -231,11 +231,11 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	 */
 	if (cmd == ocmd) {
 		cmd = compat_cvtcmd(ocmd);
-		if (cmd != ocmd) {
-			oifr = data;
-			data = ifr = &ifrb;
-			ifreqo2n(oifr, ifr);
-		}
+	}
+	if (cmd != ocmd) {
+		oifr = data;
+		data = ifr = &ifrb;
+		ifreqo2n(oifr, ifr);
 	}
 
 	switch (ocmd) {
@@ -263,7 +263,7 @@ compat_ifioctl(struct socket *so, u_long ocmd, u_long cmd, void *data,
 	case OOSIOCGIFDSTADDR:
 	case OOSIOCGIFBRDADDR:
 	case OOSIOCGIFNETMASK:
-		*(u_int16_t *)&ifr->ifr_addr = 
+		*(u_int16_t *)&ifr->ifr_addr =
 		    ((struct sockaddr *)&ifr->ifr_addr)->sa_family;
 		break;
 	}

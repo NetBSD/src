@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.155 2014/11/16 16:01:40 manu Exp $
+# $NetBSD: GENERIC,v 1.155.2.1 2015/09/22 12:05:39 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -155,7 +155,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# verbose PHY autoconfig messages

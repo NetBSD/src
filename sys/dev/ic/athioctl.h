@@ -1,4 +1,4 @@
-/*	$NetBSD: athioctl.h,v 1.15 2014/08/03 19:14:24 wiz Exp $	*/
+/*	$NetBSD: athioctl.h,v 1.15.4.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -43,6 +43,8 @@
  */
 #ifndef _DEV_ATH_ATHIOCTL_H
 #define _DEV_ATH_ATHIOCTL_H
+
+#include <sys/ioccom.h>
 
 struct ath_stats {
 	u_int32_t	ast_watchdog;	/* device reset by watchdog */

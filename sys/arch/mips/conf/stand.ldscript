@@ -1,4 +1,4 @@
-/* $NetBSD: stand.ldscript,v 1.5 2013/10/04 15:02:43 christos Exp $ */
+/* $NetBSD: stand.ldscript,v 1.5.6.1 2015/09/22 12:05:47 skrll Exp $ */
 
 /*  ldscript for NetBSD/mips stand-alone programs */
 OUTPUT_ARCH(mips)
@@ -33,15 +33,13 @@ SECTIONS
   .sbss      : { *(.sbss) *(.scommon) }
   .bss       :
   {
-   *(.bss)
-   *(COMMON)
+    *(.bss)
+    *(COMMON)
   }
   _end = . ;
   PROVIDE (end = .);
   /DISCARD/ : {
     *(.eh_frame_hdr)
     *(.eh_frame)
-    *(.rel.eh_frame)
-    *(.rela.eh_frame)
   }
 }

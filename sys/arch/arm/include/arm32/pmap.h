@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.137.2.2 2015/06/06 14:39:56 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.137.2.3 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -794,12 +794,12 @@ extern void (*pmap_zero_page_func)(paddr_t);
 #define	L2_S_CACHE_MASK_generic	(L2_B|L2_C)
 #define	L2_S_CACHE_MASK_xscale	(L2_B|L2_C|L2_XS_T_TEX(TEX_XSCALE_X))
 #define	L2_XS_CACHE_MASK_armv6	(L2_B|L2_C|L2_V6_XS_TEX(TEX_ARMV6_TEX))
-#define	L2_S_CACHE_MASK_armv6n	L2_XS_CACHE_MASK_armv6
 #ifdef	ARMV6_EXTENDED_SMALL_PAGE
 #define	L2_S_CACHE_MASK_armv6c	L2_XS_CACHE_MASK_armv6
 #else
 #define	L2_S_CACHE_MASK_armv6c	L2_S_CACHE_MASK_generic
 #endif
+#define	L2_S_CACHE_MASK_armv6n	(L2_B|L2_C|L2_V6_XS_TEX(TEX_ARMV6_TEX)|L2_XS_S)
 #define	L2_S_CACHE_MASK_armv7	(L2_B|L2_C|L2_V6_XS_TEX(TEX_ARMV6_TEX)|L2_XS_S)
 
 

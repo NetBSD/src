@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.110.4.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.110.4.3 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,8 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.3 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -70,6 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.110.4.2 2015/06/06 14:40:25 skrll Exp
 #include "opt_gateway.h"
 #include "opt_dccp.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/socket.h>
@@ -386,13 +388,8 @@ struct domain inetdomain = {
 	.dom_maxrtkey = sizeof(struct ip_pack4),
 	.dom_if_up = in_if_up,
 	.dom_if_down = in_if_down,
-#ifdef IPSELSRC
 	.dom_ifattach = in_domifattach,
 	.dom_ifdetach = in_domifdetach,
-#else
-	.dom_ifattach = NULL,
-	.dom_ifdetach = NULL,
-#endif
 	.dom_if_link_state_change = in_if_link_state_change,
 	.dom_ifqueues = { NULL, NULL },
 	.dom_link = { NULL },

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.302.2.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.302.2.3 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.302.2.2 2015/06/06 14:40:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.302.2.3 2015/09/22 12:06:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2269,7 +2269,7 @@ ffs_sbupdate(struct ufsmount *mp, int waitfor)
 {
 	struct fs *fs = mp->um_fs;
 	struct buf *bp;
-	int error = 0;
+	int error;
 	u_int32_t saveflag;
 
 	error = ffs_getblk(mp->um_devvp,

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.10.28.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.10.28.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10.28.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.10.28.2 2015/09/22 12:05:47 skrll Exp $");
 
 #include "opt_mips3_wired.h"
 #include "opt_multiprocessor.h"
@@ -48,8 +48,14 @@ bool
 mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 {
 #if (MIPS32 + MIPS32R2 + MIPS64 + MIPS64R2) > 0
-	uint32_t * const start =
-	    (uint32_t *)(intptr_t)(mipsNN_cp0_ebase_read() & ~MIPS_EBASE_CPUNUM);
+	int32_t ebase = mipsNN_cp0_ebase_read();
+	uint32_t *start;
+	if (ebase == mips_options.mips_cpu_id
+	    || (ebase & __BITS(31,30)) != __BIT(31)) {
+		start = (uint32_t *)MIPS_KSEG0_START;
+	} else {
+		start = (uint32_t *)(intptr_t)(ebase & ~MIPS_EBASE_CPUNUM);
+	}
 #else
 	uint32_t * const start = (uint32_t *)MIPS_KSEG0_START;
 #endif
@@ -61,6 +67,9 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 	int32_t lui_offset = 0;
 	bool fixed = false;
 	size_t lui_reg = 0;
+#ifdef DEBUG_VERBOSE
+	printf("%s: fixing %p..%p\n", __func__, start, end);
+#endif
 	/*
 	 * If this was allocated so that bit 15 of the value/address is 1, then
 	 * %hi will add 1 to the immediate (or 0x10000 to the value loaded)
@@ -142,13 +151,13 @@ mips_fixup_exceptions(mips_fixup_callback_t callback, void *arg)
 	if (fixed)
 		mips_icache_sync_range((vaddr_t)start,
 		   sizeof(start[0]) * (end - start));
-		
+
 	return fixed;
 }
 
 #ifdef MIPS3_PLUS
 bool
-mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2])
+mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 {
 	struct cpu_info * const ci = curcpu();
 	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
@@ -266,8 +275,8 @@ mips_fixup_addr(const uint32_t *stubp)
 	 * This is basically a small MIPS emulator for those instructions
 	 * that might in a stub routine.
 	 */
-	for (n = 0; n < 16; n++) { 
-		const InstFmt insn = { .word = stubp[n] }; 
+	for (n = 0; n < 16; n++) {
+		const InstFmt insn = { .word = stubp[n] };
 		switch (insn.IType.op) {
 		case OP_LUI:
 			regs[insn.IType.rt] = (int16_t)insn.IType.imm << 16;
@@ -479,7 +488,7 @@ mips_cpu_switch_resume(struct lwp *l)
 void
 tlb_set_asid(uint32_t asid)
 {
-        (*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);  
+        (*mips_locore_jumpvec.ljv_tlb_set_asid)(asid);
 }
 
 void

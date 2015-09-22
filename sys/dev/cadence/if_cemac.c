@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cemac.c,v 1.1.2.3 2015/06/06 14:40:06 skrll Exp $	*/
+/*	$NetBSD: if_cemac.c,v 1.1.2.4 2015/09/22 12:05:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.1.2.3 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cemac.c,v 1.1.2.4 2015/09/22 12:05:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -322,7 +322,7 @@ cemac_intr(void *arg)
 		uint32_t nfo;
 		DPRINTFN(2,("#2 RDSC[%i].INFO=0x%08X\n", sc->rxqi % RX_QLEN, sc->RDSC[sc->rxqi % RX_QLEN].Info));
 		while (sc->RDSC[(bi = sc->rxqi % RX_QLEN)].Addr & ETH_RDSC_F_USED) {
-			int fl;
+			int fl, csum;
 			struct mbuf *m;
 
 			nfo = sc->RDSC[bi].Info;
@@ -339,6 +339,23 @@ cemac_intr(void *arg)
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
 				sc->rxq[bi].m->m_pkthdr.len =
 					sc->rxq[bi].m->m_len = fl;
+				switch (nfo & ETH_RDSC_I_CHKSUM) {
+				case ETH_RDSC_I_CHKSUM_IP:
+					csum = M_CSUM_IPv4;
+					break;
+				case ETH_RDSC_I_CHKSUM_UDP:
+					csum = M_CSUM_IPv4 | M_CSUM_UDPv4 |
+					    M_CSUM_UDPv6;
+					break;
+				case ETH_RDSC_I_CHKSUM_TCP:
+					csum = M_CSUM_IPv4 | M_CSUM_TCPv4 |
+					    M_CSUM_TCPv6;
+					break;
+				default:
+					csum = 0;
+					break;
+				}
+				sc->rxq[bi].m->m_pkthdr.csum_flags = csum;
 				bpf_mtap(ifp, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
                                 (*ifp->if_input)(ifp, sc->rxq[bi].m);
@@ -579,6 +596,16 @@ cemac_init(struct cemac_softc *sc)
 	    | ETH_CTL_CSR | ETH_CTL_MPE);
 #endif
 	/*
+	 * We can support hardware checksumming.
+	 */
+	ifp->if_capabilities |=
+	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx |
+	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_TCPv6_Rx |
+	    IFCAP_CSUM_UDPv6_Tx | IFCAP_CSUM_UDPv6_Rx;
+
+	/*
 	 * We can support 802.1Q VLAN-sized frames.
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -689,12 +716,16 @@ cemac_tick(void *arg)
 	struct ifnet * ifp = &sc->sc_ethercom.ec_if;
 	int s;
 
-	ifp->if_collisions += CEMAC_READ(ETH_SCOL) + CEMAC_READ(ETH_MCOL);
+	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM))
+		ifp->if_collisions += CEMAC_READ(GEM_SCOL) + CEMAC_READ(GEM_MCOL);
+	else
+		ifp->if_collisions += CEMAC_READ(ETH_SCOL) + CEMAC_READ(ETH_MCOL);
+
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	if (!ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
 		uint32_t misses = CEMAC_READ(ETH_DRFC);
 		if (misses > 0)
-			printf("%s: %d rx misses\n", device_xname(sc->sc_dev), misses);
+			aprint_normal_ifnet(ifp, "%d rx misses\n", misses);
 	}
 
 	s = splnet();
@@ -722,10 +753,16 @@ cemac_ifioctl(struct ifnet *ifp, u_long cmd, void *data)
 		break;
 	default:
 		error = ether_ioctl(ifp, cmd, data);
-		if (error == ENETRESET) {
-			if (ifp->if_flags & IFF_RUNNING)
-				cemac_setaddr(ifp);
-			error = 0;
+		if (error != ENETRESET)
+			break;
+		error = 0;
+
+		if (cmd == SIOCSIFCAP) {
+			error = (*ifp->if_init)(ifp);
+		} else if (cmd != SIOCADDMULTI && cmd != SIOCDELMULTI)
+			;
+		else if (ifp->if_flags & IFF_RUNNING) {
+			cemac_setaddr(ifp);
 		}
 	}
 	splx(s);
@@ -844,17 +881,38 @@ cemac_ifwatchdog(struct ifnet *ifp)
 
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
-       	printf("%s: device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
-		device_xname(sc->sc_dev), CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
+	aprint_error_ifnet(ifp, "device timeout, CTL = 0x%08x, CFG = 0x%08x\n",
+		CEMAC_READ(ETH_CTL), CEMAC_READ(ETH_CFG));
 }
 
 static int
 cemac_ifinit(struct ifnet *ifp)
 {
 	struct cemac_softc *sc = ifp->if_softc;
+	uint32_t dma, cfg;
 	int s = splnet();
 
 	callout_stop(&sc->cemac_tick_ch);
+
+	if (ISSET(sc->cemac_flags, CEMAC_FLAG_GEM)) {
+
+		if (ifp->if_capenable &
+		    (IFCAP_CSUM_IPv4_Tx |
+			IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx |
+			IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx)) {
+			dma = CEMAC_READ(GEM_DMA_CFG);
+			dma |= GEM_DMA_CFG_CHKSUM_GEN_OFFLOAD_EN;
+			CEMAC_WRITE(GEM_DMA_CFG, dma);
+		}
+		if (ifp->if_capenable &
+		    (IFCAP_CSUM_IPv4_Rx |
+			IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
+			IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx)) {
+			cfg = CEMAC_READ(ETH_CFG);
+			cfg |= GEM_CFG_RX_CHKSUM_OFFLD_EN;
+			CEMAC_WRITE(ETH_CFG, cfg);
+		}
+	}
 
 	// enable interrupts
 	CEMAC_WRITE(ETH_IDR, -1);
@@ -945,7 +1003,7 @@ cemac_setaddr(struct ifnet *ifp)
 			 * ranges is for IP multicast routing, for which the
 			 * range is big enough to require all bits set.)
 			 */
-			cfg |= ETH_CFG_CAF;
+			cfg |= ETH_CFG_MTI;
 			hashes[0] = 0xffffffffUL;
 			hashes[1] = 0xffffffffUL;
 			ifp->if_flags |= IFF_ALLMULTI;
@@ -965,8 +1023,12 @@ cemac_setaddr(struct ifnet *ifp)
 
 			/* Just want the 6 most-significant bits. */
 			h = h >> 26;
-
+#if 0
 			hashes[h / 32] |=  (1 << (h % 32));
+#else
+			hashes[0] = 0xffffffffUL;
+			hashes[1] = 0xffffffffUL;
+#endif
 			cfg |= ETH_CFG_MTI;
 		}
 		ETHER_NEXT_MULTI(step, enm);
@@ -982,7 +1044,7 @@ cemac_setaddr(struct ifnet *ifp)
 	    | (sc->sc_enaddr[0]));
 	CEMAC_GEM_WRITE(SA1H, (sc->sc_enaddr[5] << 8)
 	    | (sc->sc_enaddr[4]));
-	if (nma > 1) {
+	if (nma > 0) {
 		DPRINTFN(1,("%s: en1 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
 			ias[0][0], ias[0][1], ias[0][2],
 			ias[0][3], ias[0][4], ias[0][5]));
@@ -992,7 +1054,7 @@ cemac_setaddr(struct ifnet *ifp)
 		CEMAC_WRITE(ETH_SA2H, (ias[0][4] << 8)
 		    | (ias[0][5]));
 	}
-	if (nma > 2) {
+	if (nma > 1) {
 		DPRINTFN(1,("%s: en2 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
 			ias[1][0], ias[1][1], ias[1][2],
 			ias[1][3], ias[1][4], ias[1][5]));
@@ -1002,14 +1064,14 @@ cemac_setaddr(struct ifnet *ifp)
 		CEMAC_WRITE(ETH_SA3H, (ias[1][4] << 8)
 		    | (ias[1][5]));
 	}
-	if (nma > 3) {
+	if (nma > 2) {
 		DPRINTFN(1,("%s: en3 %02x:%02x:%02x:%02x:%02x:%02x\n", __FUNCTION__,
 			ias[2][0], ias[2][1], ias[2][2],
 			ias[2][3], ias[2][4], ias[2][5]));
-		CEMAC_WRITE(ETH_SA3L, (ias[2][3] << 24)
+		CEMAC_WRITE(ETH_SA4L, (ias[2][3] << 24)
 		    | (ias[2][2] << 16) | (ias[2][1] << 8)
 		    | (ias[2][0]));
-		CEMAC_WRITE(ETH_SA3H, (ias[2][4] << 8)
+		CEMAC_WRITE(ETH_SA4H, (ias[2][4] << 8)
 		    | (ias[2][5]));
 	}
 	CEMAC_GEM_WRITE(HSH, hashes[0]);

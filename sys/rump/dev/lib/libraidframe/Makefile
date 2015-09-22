@@ -1,12 +1,10 @@
-#	$NetBSD: Makefile,v 1.4.6.1 2015/06/06 14:40:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.6.2 2015/09/22 12:06:13 skrll Exp $
 #
-
-.include <bsd.init.mk>
 
 .PATH:	${.CURDIR}/../../../../dev/raidframe
 
 LIB=	rumpdev_raidframe
-
+IOCONF=	RAIDFRAME.ioconf
 SRCS=   rf_acctrace.c rf_alloclist.c rf_aselect.c rf_callback.c		\
 	rf_chaindecluster.c rf_copyback.c rf_cvscan.c rf_dagdegrd.c	\
 	rf_dagdegwr.c rf_dagffrd.c rf_dagffwr.c rf_dagfuncs.c		\
@@ -24,6 +22,8 @@ SRCS=   rf_acctrace.c rf_alloclist.c rf_aselect.c rf_callback.c		\
 	rf_strutils.c rf_utils.c rf_paritymap.c
 
 SRCS+=	raidframe_component.c
+
+.include <bsd.init.mk>
 
 .if !empty(RUMP_NBCOMPAT:M50)
 SRCS+=	rf_compat50.c

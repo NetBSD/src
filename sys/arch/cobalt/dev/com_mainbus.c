@@ -1,4 +1,4 @@
-/*	$NetBSD: com_mainbus.c,v 1.19 2011/07/09 16:09:01 matt Exp $	*/
+/*	$NetBSD: com_mainbus.c,v 1.19.30.1 2015/09/22 12:05:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,10 +26,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.19 2011/07/09 16:09:01 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com_mainbus.c,v 1.19.30.1 2015/09/22 12:05:39 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.25 2012/02/02 21:54:34 phx Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.25.24.1 2015/09/22 12:05:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 Frank Wille.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25 2012/02/02 21:54:34 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.25.24.1 2015/09/22 12:05:49 skrll Exp $");
 
 #include "opt_disksubr.h"
 
@@ -410,7 +410,6 @@ read_rdb_label(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 			 */
 			msg = "bad partition info (environ < 11)";
 			goto done;
-			continue;
 		}
 
 		/*

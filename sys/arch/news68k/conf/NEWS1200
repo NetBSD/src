@@ -1,4 +1,4 @@
-# 	$NetBSD: NEWS1200,v 1.62 2014/08/23 20:26:59 dholland Exp $
+# 	$NetBSD: NEWS1200,v 1.62.2.1 2015/09/22 12:05:48 skrll Exp $
 
 #	news1200 config file
 #
@@ -25,8 +25,8 @@ options 	USERCONF		# userconf(4) support
 # Debugging options
 options 	DIAGNOSTIC		# extra kernel sanity checking
 #options 	DEBUG			# extra kernel debugging support
-#options 	KMEMSTATS		# kernel memory statistics (vmstat -m)
 options 	DDB			# kernel dynamic debugger
+pseudo-device	ksyms
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DDB_ONPANIC=1		# see also sysctl(7): `ddb.onpanic'
 #options 	SCSIVERBOSE		# Verbose SCSI errors

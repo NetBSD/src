@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.h,v 1.2 2009/03/14 14:46:06 dsl Exp $	*/
+/*	$NetBSD: kbd.h,v 1.2.40.1 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -38,6 +38,8 @@
  *
  * Created      : 21/07/95
  */
+
+#include <sys/ioccom.h>
 
 struct kbd_data {
 	int keycode;

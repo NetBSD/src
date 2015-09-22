@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.h,v 1.20 2011/06/12 00:07:19 christos Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.h,v 1.20.30.1 2015/09/22 12:06:11 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -38,6 +38,7 @@
 /*
  * IEEE 802.11 ioctls.
  */
+#include <sys/ioccom.h>
 #include <net80211/_ieee80211.h>
 #include <net80211/ieee80211.h>
 #include <net80211/ieee80211_crypto.h>

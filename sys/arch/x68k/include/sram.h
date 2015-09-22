@@ -1,4 +1,4 @@
-/*	$NetBSD: sram.h,v 1.3 2005/12/11 12:19:44 christos Exp $	*/
+/*	$NetBSD: sram.h,v 1.3.142.1 2015/09/22 12:05:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Kazuhisa Shimizu.
@@ -34,6 +34,8 @@
 #define _X68K_SRAM_H_
 
 /* This is sram device driver. */
+
+#include <sys/ioccom.h>
 
 #define SRAM_SIZE 16*1024	/* Sram size is 16K bytes. */
 #define SRAM_IO_SIZE 16		/* IO size */

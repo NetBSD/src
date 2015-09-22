@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.164 2014/11/18 17:03:41 joerg Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.164.2.1 2015/09/22 12:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.164 2014/11/18 17:03:41 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.164.2.1 2015/09/22 12:06:00 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_scsi.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

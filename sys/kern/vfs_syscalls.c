@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.492.2.2 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.492.2.3 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.2 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.3 2015/09/22 12:06:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -573,7 +573,7 @@ sys_unmount(struct lwp *l, const struct sys_unmount_args *uap, register_t *retva
 		return error;
 	}
 
-	NDINIT(&nd, LOOKUP, LOCKLEAF | TRYEMULROOT, pb);
+	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF | TRYEMULROOT, pb);
 	if ((error = namei(&nd)) != 0) {
 		pathbuf_destroy(pb);
 		return error;
@@ -1950,7 +1950,7 @@ dofhopen(struct lwp *l, const void *ufhp, size_t fhsize, int oflags,
 	struct vnode *vp = NULL;
 	kauth_cred_t cred = l->l_cred;
 	file_t *nfp;
-	int indx, error = 0;
+	int indx, error;
 	struct vattr va;
 	fhandle_t *fh;
 	int flags;

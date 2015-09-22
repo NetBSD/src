@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.powerpc,v 1.58 2014/11/15 12:36:42 uebayasi Exp $
+#	$NetBSD: Makefile.powerpc,v 1.58.2.1 2015/09/22 12:05:49 skrll Exp $
 #
 # Makefile for NetBSD
 #
@@ -85,7 +85,6 @@ ${SYSTEM_FIRST_OBJ}: ${SYSTEM_FIRST_SFILE} assym.h
 KERNLDSCRIPT?=	${POWERPC}/conf/kern.ldscript
 TEXTADDR?=	0x100000
 LINKFORMAT=	-N
-LINKSCRIPT=	-T ${KERNLDSCRIPT}
 
 ENTRYPOINT=	__start
 

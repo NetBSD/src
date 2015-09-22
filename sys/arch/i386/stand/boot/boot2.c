@@ -1,4 +1,4 @@
-/*	$NetBSD: boot2.c,v 1.63.4.1 2015/04/06 15:17:58 skrll Exp $	*/
+/*	$NetBSD: boot2.c,v 1.63.4.2 2015/09/22 12:05:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -267,7 +267,7 @@ print_banner(void)
 	int n;
 	if (bootcfg_info.banner[0]) {
 		for (n = 0; bootcfg_info.banner[n]
-		    && n < BOOTCFG_MAXBANNER; n++) 
+		    && n < BOOTCFG_MAXBANNER; n++)
 			printf("%s\n", bootcfg_info.banner[n]);
 	} else {
 #endif /* !SMALL */
@@ -328,7 +328,7 @@ boot2(int biosdev, uint64_t biossector)
 	} else {
 		bootcfg_info.timeout = boot_params.bp_timeout;
 	}
-	
+
 
 	/*
 	 * If console set in boot.cfg, switch to it.
@@ -336,7 +336,7 @@ boot2(int biosdev, uint64_t biossector)
 	 */
 	if (bootcfg_info.consdev)
 		command_consdev(bootcfg_info.consdev);
-	else 
+	else
 		print_banner();
 
 	/* Display the menu, if applicable */
@@ -413,6 +413,7 @@ command_help(char *arg)
 	       "modules {on|off|enabled|disabled}\n"
 	       "load {path_to_module}\n"
 	       "multiboot [xdNx:][filename] [<args>]\n"
+	       "splash {path_to_image_file}\n"
 	       "userconf {command}\n"
 	       "rndseed {path_to_rndseed_file}\n"
 	       "help|?\n"

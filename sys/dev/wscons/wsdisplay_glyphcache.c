@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.6 2014/01/13 19:30:33 macallan Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.6.6.1 2015/09/22 12:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -31,13 +31,16 @@
  * the most commonly used glyphs ) but the API should at least not prevent
  * more sophisticated caching algorithms
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_glyphcache.h"
+#endif
  
 #include <sys/systm.h>
 #include <sys/atomic.h>
 #include <sys/errno.h>
 #include <sys/kmem.h>
 #include <dev/wscons/wsdisplay_glyphcachevar.h>
-#include "opt_glyphcache.h"
 
 #ifdef GLYPHCACHE_DEBUG
 #define DPRINTF aprint_normal

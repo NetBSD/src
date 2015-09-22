@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.3.32.1 2015/06/06 14:39:59 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.3.32.2 2015/09/22 12:05:41 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,12 +36,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.32.1 2015/06/06 14:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.3.32.2 2015/09/22 12:05:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+
+#include <mips/locore.h>
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);

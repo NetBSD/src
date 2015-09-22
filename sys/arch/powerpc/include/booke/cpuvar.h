@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuvar.h,v 1.17 2012/10/02 23:51:39 christos Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.17.14.1 2015/09/22 12:05:50 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -107,6 +107,7 @@ struct generic_attach_args {
 #ifndef __BSD_PT_ENTRY_T
 #define __BSD_PT_ENTRY_T	__uint32_t
 typedef __BSD_PT_ENTRY_T	pt_entry_t;
+#define PRIxPTE			PRIx32
 #endif
 
 #include <uvm/pmap/tlb.h>

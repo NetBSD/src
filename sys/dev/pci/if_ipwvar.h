@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipwvar.h,v 1.16 2012/10/27 17:18:33 chs Exp $	*/
+/*	$NetBSD: if_ipwvar.h,v 1.16.14.1 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -26,6 +26,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 struct ipw_firmware {
 	void	*main;

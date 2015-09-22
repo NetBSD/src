@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.234.2.2 2015/06/06 14:40:06 skrll Exp $	*/
+/*	$NetBSD: vnd.c,v 1.234.2.3 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.2 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.3 2015/09/22 12:05:56 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.234.2.2 2015/06/06 14:40:06 skrll Exp $");
 #include <dev/dkvar.h>
 #include <dev/vndvar.h>
 
+#include "ioconf.h"
+
 #if defined(VNDDEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif
@@ -156,8 +158,6 @@ struct vndxfer {
 
 #define	VND_MAXPENDING(vnd)	((vnd)->sc_maxactive * 4)
 
-/* called by main() at boot time */
-void	vndattach(int);
 
 static void	vndclear(struct vnd_softc *, int);
 static int	vnddoclear(struct vnd_softc *, int, int, bool);
@@ -245,8 +245,8 @@ vndattach(int num)
 
 	error = config_cfattach_attach(vnd_cd.cd_name, &vnd_ca);
 	if (error)
-		aprint_error("%s: unable to register cfattach\n",
-		    vnd_cd.cd_name);
+		aprint_error("%s: unable to register cfattach, error = %d\n",
+		    vnd_cd.cd_name, error);
 }
 
 static int
@@ -343,6 +343,8 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	if ((error = vndlock(sc)) != 0)
 		return error;
 
+	mutex_enter(&sc->sc_dkdev.dk_openlock);
+
 	if ((sc->sc_flags & VNF_CLEARING) != 0) {
 		error = ENXIO;
 		goto done;
@@ -403,6 +405,7 @@ vndopen(dev_t dev, int flags, int mode, struct lwp *l)
 	    sc->sc_dkdev.dk_copenmask | sc->sc_dkdev.dk_bopenmask;
 
  done:
+	mutex_exit(&sc->sc_dkdev.dk_openlock);
 	vndunlock(sc);
 	return error;
 }
@@ -425,6 +428,8 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 	if ((error = vndlock(sc)) != 0)
 		return error;
 
+	mutex_enter(&sc->sc_dkdev.dk_openlock);
+
 	part = DISKPART(dev);
 
 	/* ...that much closer to allowing unconfiguration... */
@@ -445,6 +450,8 @@ vndclose(dev_t dev, int flags, int mode, struct lwp *l)
 		if ((sc->sc_flags & VNF_KLABEL) == 0)
 			sc->sc_flags &= ~VNF_VLABEL;
 	}
+
+	mutex_exit(&sc->sc_dkdev.dk_openlock);
 
 	vndunlock(sc);
 

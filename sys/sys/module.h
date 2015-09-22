@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.35.4.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: module.h,v 1.35.4.2 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@ typedef struct modinfo {
 	const char	*mi_required;
 } const modinfo_t;
 
-/* Per module information, maintained by kern_module.c */ 
+/* Per module information, maintained by kern_module.c */
 typedef struct module {
 	u_int			mod_refcnt;
 	const modinfo_t		*mod_info;
@@ -185,7 +185,7 @@ void	module_print(const char *, ...) __printflike(1, 2);
 
 #define MODULE_BASE_SIZE 64
 extern char	module_base[MODULE_BASE_SIZE];
-extern char	*module_machine;
+extern const char	*module_machine;
 
 #else	/* _KERNEL */
 
@@ -227,5 +227,11 @@ typedef struct modstat {
 } modstat_t;
 
 int	modctl(int, void *);
+
+#ifdef _KERNEL
+/* attention: pointers passed are userland pointers!,
+   see modctl_load_t */
+int	handle_modctl_load(const char *, int, const char *, size_t);
+#endif
 
 #endif	/* !_SYS_MODULE_H_ */

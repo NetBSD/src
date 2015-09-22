@@ -1,7 +1,7 @@
 #
 # Distribution kernel (TOSHIBA TX3922 based model) kernel config file
 #
-#	$NetBSD: TX3922,v 1.100 2014/08/23 20:26:58 dholland Exp $
+#	$NetBSD: TX3922,v 1.100.2.1 2015/09/22 12:05:43 skrll Exp $
 #
 include		"arch/hpcmips/conf/std.hpcmips"
 
@@ -26,6 +26,7 @@ options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options		KLOADER_DEBUG
 
 options 	DDB			# in-kernel debugger
+pseudo-device	ksyms
 #options 	DIAGNOSTIC		# extra kernel debugging checks
 options 	DEBUG			# extra kernel debugging support
 options 	KTRACE			# system call tracing support

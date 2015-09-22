@@ -1,4 +1,4 @@
-/*	$NetBSD: kbdreg.h,v 1.7 2005/12/11 12:16:28 christos Exp $	*/
+/*	$NetBSD: kbdreg.h,v 1.7.142.1 2015/09/22 12:05:36 skrll Exp $	*/
 
 /*
  * losely based on:
@@ -43,6 +43,8 @@
  *
  * Header: kbio.h,v 1.4 92/11/26 01:16:32 torek Exp  (LBL)
  */
+
+#include <sys/ioccom.h>
 
 #define	KIOCTRANS	_IOW('k', 0, int)	/* set translation mode */
 			/* (we only accept TR_UNTRANS_EVENT) */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.54 2013/11/27 17:24:44 christos Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.54.6.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.54 2013/11/27 17:24:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.54.6.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,7 +214,7 @@ ultrix_sys_getmnt(struct lwp *l, const struct ultrix_sys_getmnt_args *uap, regis
 	int skip;
 	int start;
 	long count, maxcount;
-	int error = 0;
+	int error;
 
 	nmp = NULL;	/* XXX keep gcc quiet */
 	path = NULL;

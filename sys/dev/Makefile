@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile,v 1.35.16.1 2015/04/06 15:18:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.35.16.2 2015/09/22 12:05:56 skrll Exp $
 
-SUBDIR=	apm ata bluetooth dec dm dmover dtv filemon hdaudio hpc \
+SUBDIR=	apm ata bluetooth dec dm dmover dtv filemon hdaudio hdmicec hpc \
 	i2c i2o ic ieee1394 ir isa \
 	microcode ofw pci pckbport pcmcia pud putter raidframe sbus scsipi \
 	sun tc usb vme wscons

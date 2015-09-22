@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.h,v 1.11 2008/04/28 20:24:09 martin Exp $ */
+/* $NetBSD: if_pppoe.h,v 1.11.64.1 2015/09/22 12:06:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _NET_IF_PPPOE_H_
 #define _NET_IF_PPPOE_H_
+
+#include <sys/ioccom.h>
 
 struct pppoediscparms {
 	char	ifname[IFNAMSIZ];	/* pppoe interface name */

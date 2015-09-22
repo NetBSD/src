@@ -1,7 +1,7 @@
 #
 # NEWS3400 config file
 #
-# 	$NetBSD: WAPIKO,v 1.46 2014/08/23 20:26:59 dholland Exp $
+# 	$NetBSD: WAPIKO,v 1.46.2.1 2015/09/22 12:05:48 skrll Exp $
 #
 include		"arch/newsmips/conf/std.newsmips"
 
@@ -23,6 +23,7 @@ options 	USERCONF		# userconf(4) support
 
 # Debugging options
 options 	DDB			# kernel dynamic debugger
+pseudo-device	ksyms
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG			# extra kernel debugging support
 options 	DIAGNOSTIC		# extra kernel sanity checking

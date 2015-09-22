@@ -1,4 +1,4 @@
-/*	$NetBSD: mii.h,v 1.18 2014/06/16 14:43:22 msaitoh Exp $	*/
+/*	$NetBSD: mii.h,v 1.18.4.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -198,9 +198,9 @@
 #define	PSECR_PSEDIS	0x0000	/* PSE Disabled */
 
 #define	MII_PSESR	0x0c	/* PSE status register */
-#define	PSESR_PWRDENIED	0x1000	/* Power Deined */
+#define	PSESR_PWRDENIED	0x1000	/* Power Denied */
 #define	PSESR_VALSIG	0x0800	/* Valid PD signature detected */
-#define	PSESR_INVALSIG	0x0400	/* Inalid PD signature detected */
+#define	PSESR_INVALSIG	0x0400	/* Invalid PD signature detected */
 #define	PSESR_SHORTCIRC	0x0200	/* Short circuit condition detected */
 #define	PSESR_OVERLOAD	0x0100	/* Overload condition detected */
 #define	PSESR_MPSABSENT	0x0080	/* MPS absent condition detected */

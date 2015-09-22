@@ -1,0 +1,149 @@
+#
+#	$NetBSD: NYAN-BIG,v 1.1.2.2 2015/09/22 12:05:40 skrll Exp $
+#
+#	Chrome OS nyan_big board - Tegra K1
+#	- Acer Chromebook 13 (CB5-311)
+#
+
+include	"arch/evbarm/conf/std.tegra"
+include	"arch/evbarm/conf/GENERIC.common"
+
+options 	BOOT_ARGS="\"console=fb\""
+
+options 	CPU_CORTEXA15
+options 	SOC_TEGRA124
+options 	BOARD_NYAN_BIG
+#options 	CPUFREQ_BOOT=xxx
+options 	MULTIPROCESSOR
+#options 	MEMSIZE=2048
+
+options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+mainbus0	at root
+cpu*		at mainbus?
+
+# A15 core devices
+armperiph0	at mainbus?
+armgic0		at armperiph?				# Interrupt Controller
+armgtmr0	at armperiph?				# ARM Generic Timer
+
+# On-board I/O
+tegraio0	at mainbus?
+
+# Memory controller
+tegramc0	at tegraio?		# MC
+
+# Power management controller
+tegrapmc0	at tegraio?		# PMC
+
+# Clock and Reset controller
+tegracar0	at tegraio?		# CAR
+
+# GPIO controller
+tegragpio0	at tegraio?		# GPIO
+gpio*		at gpiobus?
+#gpiobutton0	at gpio16 offset 0 mask 1 flag 0x01	# Power button
+#gpiorfkill0	at gpio23 offset 7 mask 1		# WiFi enable
+
+# Timers
+tegratimer0	at tegraio?		# Timers
+
+# MPIO / Pinmux
+tegrampio0	at tegraio?		# MPIO
+
+# XUSB PADCTL
+tegraxusbpad0	at tegraio?		# XUSB PADCTL
+
+# PCIE
+tegrapcie0	at tegraio?		# PCIE
+pci*		at tegrapcie0
+ppb*		at pci? dev ? function ?
+pci*		at ppb?
+
+# UART
+com0		at tegraio? port 0	# UART-A
+options 	CONSADDR=0x70006000, CONSPEED=115200
+
+# I2C
+tegrai2c0	at tegraio? port 0	# I2C1
+iic0		at tegrai2c0
+titemp0		at iic0 addr 0x4c		# TI TMP451 
+tegrai2c1	at tegraio? port 1	# I2C2
+iic1		at tegrai2c1
+tegrai2c2	at tegraio? port 2	# I2C3
+iic2		at tegrai2c2
+tegrai2c3	at tegraio? port 3	# I2C4
+iic3		at tegrai2c3
+ddc0		at iic3 addr 0x50		# HDMI DDC
+tegrai2c4	at tegraio? port 4	# I2C5
+iic4		at tegrai2c4
+
+# RTC
+tegrartc0	at tegraio?		# RTC
+
+# SDMMC
+#sdhc0		at tegraio? port 0	# SDMMC1 (WiFi/BT)
+#sdmmc0		at sdhc0
+sdhc2		at tegraio? port 2	# SDMMC3 (SD card)
+sdmmc2		at sdhc2
+sdhc3		at tegraio? port 3	# SDMMC4 (eMMC)
+sdmmc3		at sdhc3
+
+ld0		at sdmmc3		# eMMC
+ld1		at sdmmc2		# SD card
+
+# HDA
+hdaudio*	at tegraio?		# HDA
+hdafg*		at hdaudiobus?
+audio*		at audiobus?
+options 	HDAUDIOVERBOSE
+options 	HDAUDIO_32BIT_ACCESS
+options 	HDAUDIO_ENABLE_HDMI
+options 	HDAUDIO_ENABLE_DISPLAYPORT
+
+# Host1x subsystem
+tegrahost1x0	at tegraio?		# HOST1X
+
+# Display controller
+tegradc0	at tegraio? port 0	# DISPLAYA
+tegradc1	at tegraio? port 1	# DISPLAYB
+genfb*		at tegradc?
+wsdisplay*	at genfb?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+pseudo-device	wsmux
+pseudo-device	wsfont
+
+# HDMI
+tegrahdmi0	at tegraio?		# HDMI
+tegracec0	at tegraio?		# HDMI CEC
+hdmicec*	at hdmicecbus?
+
+# USB 2.0
+ehci0		at tegraio? port 0	# USB1
+ehci1		at tegraio? port 1	# USB2
+ehci2		at tegraio? port 2	# USB3
+usb*		at ehci?
+
+include "dev/usb/usbdevices.config"
+midi*		at midibus?
+
+cinclude "arch/evbarm/conf/NYAN-BIG.local"

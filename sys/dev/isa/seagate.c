@@ -1,4 +1,4 @@
-/*	$NetBSD: seagate.c,v 1.72 2014/04/08 13:20:01 hannken Exp $	*/
+/*	$NetBSD: seagate.c,v 1.72.4.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * ST01/02, Future Domain TMC-885, TMC-950 SCSI driver
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.72 2014/04/08 13:20:01 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seagate.c,v 1.72.4.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -721,51 +721,54 @@ loop:
 			 */
 			for (scb = sea->ready_list.tqh_first; scb;
 			    scb = scb->chain.tqe_next) {
-				if (!(sea->busy[scb->xs->xs_periph->periph_target] &
-				    (1 << scb->xs->xs_periph->periph_lun))) {
-					TAILQ_REMOVE(&sea->ready_list, scb,
-					    chain);
+				if ((sea->busy[scb->xs->xs_periph->periph_target] &
+				    (1 << scb->xs->xs_periph->periph_lun)))
+					continue;
 
-					/* Re-enable interrupts. */
-					splx(s);
+				/* target/lun is not busy */
+				TAILQ_REMOVE(&sea->ready_list, scb, chain);
 
-					/*
-					 * Attempt to establish an I_T_L nexus.
-					 * On success, sea->nexus is set.
-					 * On failure, we must add the command
-					 * back to the issue queue so we can
-					 * keep trying.
-					 */
+				/* Re-enable interrupts. */
+				splx(s);
 
-					/*
-					 * REQUEST_SENSE commands are issued
-					 * without tagged queueing, even on
-					 * SCSI-II devices because the
-					 * contingent alligence condition
-					 * exists for the entire unit.
-					 */
+				/*
+				 * Attempt to establish an I_T_L nexus.
+				 * On success, sea->nexus is set.
+				 * On failure, we must add the command
+				 * back to the issue queue so we can
+				 * keep trying.
+				 */
 
-					/*
-					 * First check that if any device has
-					 * tried a reconnect while we have done
-					 * other things with interrupts
-					 * disabled.
-					 */
+				/*
+				 * REQUEST_SENSE commands are issued
+				 * without tagged queueing, even on
+				 * SCSI-II devices because the
+				 * contingent alligence condition
+				 * exists for the entire unit.
+				 */
 
-					if ((STATUS & (STAT_SEL | STAT_IO)) ==
-					    (STAT_SEL | STAT_IO)) {
-						sea_reselect(sea);
-						break;
-					}
-					if (sea_select(sea, scb)) {
-						s = splbio();
-						TAILQ_INSERT_HEAD(&sea->ready_list,
-						    scb, chain);
-						splx(s);
-					} else
-						break;
-				} /* if target/lun is not busy */
-			} /* for scb */
+				/*
+				 * First check that if any device has
+				 * tried a reconnect while we have done
+				 * other things with interrupts
+				 * disabled.
+				 */
+
+				if ((STATUS & (STAT_SEL | STAT_IO)) ==
+				    (STAT_SEL | STAT_IO)) {
+					sea_reselect(sea);
+					s = splbio();
+					break;
+				}
+				if (sea_select(sea, scb)) {
+					s = splbio();
+					TAILQ_INSERT_HEAD(&sea->ready_list,
+					    scb, chain);
+				} else {
+					s = splbio();
+					break;
+				}
+			}
 			if (!sea->nexus) {
 				/* check for reselection phase */
 				if ((STATUS & (STAT_SEL | STAT_IO)) ==

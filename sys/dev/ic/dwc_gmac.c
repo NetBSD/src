@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.28.2.1 2015/04/06 15:18:09 skrll Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.28.2.2 2015/09/22 12:05:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.1 2015/04/06 15:18:09 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.28.2.2 2015/09/22 12:05:58 skrll Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -192,7 +192,7 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
 		aprint_error_dev(sc->sc_dev, "could not allocate DMA rings\n");
 		goto fail;
 	}
-		
+
 	if (dwc_gmac_alloc_tx_ring(sc, &sc->sc_txq) != 0) {
 		aprint_error_dev(sc->sc_dev, "could not allocate Tx ring\n");
 		goto fail;
@@ -229,13 +229,18 @@ dwc_gmac_attach(struct dwc_gmac_softc *sc, uint32_t mii_clk)
         mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY,
 	    MIIF_DOPAUSE);
 
-        if (LIST_EMPTY(&mii->mii_phys)) { 
+        if (LIST_EMPTY(&mii->mii_phys)) {
                 aprint_error_dev(sc->sc_dev, "no PHY found!\n");
                 ifmedia_add(&mii->mii_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
                 ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_MANUAL);
         } else {
                 ifmedia_set(&mii->mii_media, IFM_ETHER|IFM_AUTO);
         }
+
+	/*
+	 * We can support 802.1Q VLAN-sized frames.
+	 */
+	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/*
 	 * Ready, attach interface
@@ -346,7 +351,7 @@ dwc_gmac_miibus_write_reg(device_t self, int phy, int reg, int val)
 			break;
 		delay(10);
 	}
-	
+
 	mutex_exit(&sc->sc_mdio_lock);
 }
 
@@ -406,7 +411,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 		desc = &sc->sc_rxq.r_desc[i];
 		desc->ddesc_data = htole32(physaddr);
 		next = RX_NEXT(i);
-		desc->ddesc_next = htole32(ring->r_physaddr 
+		desc->ddesc_next = htole32(ring->r_physaddr
 		    + next * sizeof(*desc));
 		desc->ddesc_cntl = htole32(
 		    __SHIFTIN(AWGE_MAX_PACKET,DDESC_CNTL_SIZE1MASK) |
@@ -499,7 +504,7 @@ dwc_gmac_alloc_dma_rings(struct dwc_gmac_softc *sc)
 
 	/* and next rings to the TX side */
 	sc->sc_txq.t_desc = sc->sc_rxq.r_desc + AWGE_RX_RING_COUNT;
-	sc->sc_txq.t_physaddr = sc->sc_rxq.r_physaddr + 
+	sc->sc_txq.t_physaddr = sc->sc_rxq.r_physaddr +
 	    AWGE_RX_RING_COUNT*sizeof(struct dwc_gmac_dev_dmadesc);
 
 	return 0;
@@ -674,7 +679,7 @@ dwc_gmac_miibus_statchg(struct ifnet *ifp)
 
 	/*
 	 * Set MII or GMII interface based on the speed
-	 * negotiated by the PHY.                                           
+	 * negotiated by the PHY.
 	 */
 	conf = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_CONF);
 	conf &= ~(AWIN_GMAC_MAC_CONF_FES100|AWIN_GMAC_MAC_CONF_MIISEL
@@ -912,7 +917,7 @@ dwc_gmac_queue(struct dwc_gmac_softc *sc, struct mbuf *m0)
 	data->td_active = map;
 
 	bus_dmamap_sync(sc->sc_dmat, map, 0, map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREWRITE);
 
 	/* Pass first to device */
 	sc->sc_txq.t_desc[first].ddesc_status =
@@ -1168,7 +1173,7 @@ dwc_gmac_setmulti(struct dwc_gmac_softc *sc)
 	s = splnet();
 
 	ffilt = bus_space_read_4(sc->sc_bst, sc->sc_bsh, AWIN_GMAC_MAC_FFILT);
-	
+
 	if (ifp->if_flags & IFF_PROMISC) {
 		ffilt |= AWIN_GMAC_MAC_FFILT_PR;
 		goto special_filter;

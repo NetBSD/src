@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_dc.c,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_dc.c,v 1.1.2.3 2015/09/22 12:05:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_dc.c,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_dc.c,v 1.1.2.3 2015/09/22 12:05:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_dc.c,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $
 
 #define TEGRA_DC_NPORTS		2
 #define TEGRA_DC_DEPTH		32
-#define TEGRA_DC_FBALIGN	16
+#define TEGRA_DC_FBALIGN	PAGE_SIZE
 
 static int	tegra_dc_match(device_t, cfdata_t, void *);
 static void	tegra_dc_attach(device_t, device_t, void *);
@@ -145,6 +145,8 @@ tegra_dc_allocmem(struct tegra_dc_softc *sc, bus_size_t size)
 
 	sc->sc_dmasize = size;
 
+	memset(sc->sc_dmap, 0, size);
+
 	return 0;
 
 destroy:
@@ -185,6 +187,10 @@ tegra_dc_init(struct tegra_dc_softc *sc, const struct videomode *mode)
 static void
 tegra_dc_init_win(struct tegra_dc_softc *sc, const struct videomode *mode)
 {
+	/* Write access control */
+	DC_WRITE(sc, DC_CMD_STATE_ACCESS_REG,
+	    DC_CMD_STATE_ACCESS_WRITE_MUX | DC_CMD_STATE_ACCESS_READ_MUX);
+
 	/* Enable window A programming */
 	DC_WRITE(sc, DC_CMD_DISPLAY_WINDOW_HEADER_REG,
 	    DC_CMD_DISPLAY_WINDOW_HEADER_WINDOW_A_SELECT);
@@ -198,6 +204,11 @@ tegra_dc_init_win(struct tegra_dc_softc *sc, const struct videomode *mode)
 	DC_WRITE(sc, DC_WINC_A_BYTE_SWAP_REG,
 	    __SHIFTIN(DC_WINC_A_BYTE_SWAP_SWAP_NOSWAP,
 		      DC_WINC_A_BYTE_SWAP_SWAP));
+
+	/* Initial DDA */
+	DC_WRITE(sc, DC_WINC_A_H_INITIAL_DDA_REG, 0);
+	DC_WRITE(sc, DC_WINC_A_V_INITIAL_DDA_REG, 0);
+	DC_WRITE(sc, DC_WINC_A_DDA_INCREMENT_REG, 0x10001000);
 
 	/* Window position, size, stride */
 	DC_WRITE(sc, DC_WINC_A_POSITION_REG,
@@ -218,6 +229,10 @@ tegra_dc_init_win(struct tegra_dc_softc *sc, const struct videomode *mode)
 	DC_WRITE(sc, DC_WINBUF_A_START_ADDR_REG,
 	    (uint32_t)sc->sc_dmamap->dm_segs[0].ds_addr);
 
+	/* Offsets */
+	DC_WRITE(sc, DC_WINBUF_A_ADDR_H_OFFSET_REG, 0);
+	DC_WRITE(sc, DC_WINBUF_A_ADDR_V_OFFSET_REG, 0);
+
 	/* Surface kind */
 	DC_WRITE(sc, DC_WINBUF_A_SURFACE_KIND_REG,
 	    __SHIFTIN(DC_WINBUF_A_SURFACE_KIND_SURFACE_KIND_PITCH,
@@ -232,14 +247,35 @@ static void
 tegra_dc_init_disp(struct tegra_dc_softc *sc, const struct videomode *mode)
 {
 	const u_int hspw = mode->hsync_end - mode->hsync_start;
-	const u_int hbp = mode->htotal - mode->hsync_start;
+	const u_int hbp = mode->htotal - mode->hsync_end;
 	const u_int hfp = mode->hsync_start - mode->hdisplay;
 	const u_int vspw = mode->vsync_end - mode->vsync_start;
-	const u_int vbp = mode->vtotal - mode->vsync_start;
+	const u_int vbp = mode->vtotal - mode->vsync_end;
 	const u_int vfp = mode->vsync_start - mode->vdisplay;
 
+	DC_WRITE(sc, DC_DISP_DISP_TIMING_OPTIONS_REG,
+	    __SHIFTIN(1, DC_DISP_DISP_TIMING_OPTIONS_VSYNC_POS));
+	DC_WRITE(sc, DC_DISP_DISP_COLOR_CONTROL_REG,
+	    __SHIFTIN(DC_DISP_DISP_COLOR_CONTROL_BASE_COLOR_SIZE_888,
+		      DC_DISP_DISP_COLOR_CONTROL_BASE_COLOR_SIZE));
+	DC_WRITE(sc, DC_DISP_DISP_SIGNAL_OPTIONS0_REG,
+	    DC_DISP_DISP_SIGNAL_OPTIONS0_H_PULSE2_ENABLE);
+	DC_WRITE(sc, DC_DISP_H_PULSE2_CONTROL_REG,
+	    __SHIFTIN(DC_DISP_H_PULSE2_CONTROL_V_QUAL_VACTIVE,
+		      DC_DISP_H_PULSE2_CONTROL_V_QUAL) |
+	    __SHIFTIN(DC_DISP_H_PULSE2_CONTROL_LAST_END_A,
+		      DC_DISP_H_PULSE2_CONTROL_LAST));
+
+	u_int pulse_start = 1 + hspw + hbp - 10;
+	DC_WRITE(sc, DC_DISP_H_PULSE2_POSITION_A_REG,
+	    __SHIFTIN(pulse_start, DC_DISP_H_PULSE2_POSITION_A_START) |
+	    __SHIFTIN(pulse_start + 8, DC_DISP_H_PULSE2_POSITION_A_END));
+
 	/* Pixel clock */
-	DC_WRITE(sc, DC_DISP_DISP_CLOCK_CONTROL_REG, 0);
+	const u_int div = (tegra_car_plld2_rate() * 2) / (mode->dot_clock * 1000) - 2;
+	DC_WRITE(sc, DC_DISP_DISP_CLOCK_CONTROL_REG,
+	    __SHIFTIN(0, DC_DISP_DISP_CLOCK_CONTROL_PIXEL_CLK_DIVIDER) |
+	    __SHIFTIN(div, DC_DISP_DISP_CLOCK_CONTROL_SHIFT_CLK_DIVIDER));
 
 	/* Mode timings */
 	DC_WRITE(sc, DC_DISP_REF_TO_SYNC_REG,
@@ -259,10 +295,9 @@ tegra_dc_init_disp(struct tegra_dc_softc *sc, const struct videomode *mode)
 	    __SHIFTIN(mode->hdisplay, DC_DISP_DISP_ACTIVE_H));
 
 	/* Enable continus display mode */
-	DC_SET_CLEAR(sc, DC_CMD_DISPLAY_COMMAND_REG,
+	DC_WRITE(sc, DC_CMD_DISPLAY_COMMAND_REG,
 	    __SHIFTIN(DC_CMD_DISPLAY_COMMAND_DISPLAY_CTRL_MODE_C_DISPLAY,
-		      DC_CMD_DISPLAY_COMMAND_DISPLAY_CTRL_MODE),
-	    DC_CMD_DISPLAY_COMMAND_DISPLAY_CTRL_MODE);
+		      DC_CMD_DISPLAY_COMMAND_DISPLAY_CTRL_MODE));
 
 	/* Enable power */
 	DC_SET_CLEAR(sc, DC_CMD_DISPLAY_POWER_CONTROL_REG,
@@ -281,9 +316,9 @@ tegra_dc_update(struct tegra_dc_softc *sc)
 {
 	/* Commit settings */
 	DC_WRITE(sc, DC_CMD_STATE_CONTROL_REG,
-	    DC_CMD_STATE_CONTROL_GENERAL_UPDATE);
+	    DC_CMD_STATE_CONTROL_GENERAL_UPDATE | DC_CMD_STATE_CONTROL_WIN_A_UPDATE);
 	DC_WRITE(sc, DC_CMD_STATE_CONTROL_REG,
-	    DC_CMD_STATE_CONTROL_GENERAL_ACT_REQ);
+	    DC_CMD_STATE_CONTROL_GENERAL_ACT_REQ | DC_CMD_STATE_CONTROL_WIN_A_ACT_REQ);
 }
 
 int
@@ -296,7 +331,7 @@ tegra_dc_port(device_t dev)
 
 int
 tegra_dc_enable(device_t dev, device_t outputdev,
-    const struct videomode *mode)
+    const struct videomode *mode, const uint8_t *edid)
 {
 	struct tegra_dc_softc * const sc = device_private(dev);
 	prop_dictionary_t prop = device_properties(dev);
@@ -309,7 +344,7 @@ tegra_dc_enable(device_t dev, device_t outputdev,
 
 	const uint32_t depth = TEGRA_DC_DEPTH;
 	const uint32_t fbsize = mode->vdisplay * mode->hdisplay * (depth / 8);
-	const bus_size_t dmasize = (fbsize + 3) & ~3;
+	const bus_size_t dmasize = (fbsize + PAGE_MASK) & ~PAGE_MASK;
 	error = tegra_dc_allocmem(sc, dmasize);
 	if (error) {
 		aprint_error_dev(dev,
@@ -338,6 +373,13 @@ tegra_dc_enable(device_t dev, device_t outputdev,
 	};
 
 	sc->sc_fbdev = config_found(sc->sc_dev, &tfb, tegra_dc_print);
+
+	if (sc->sc_fbdev != NULL && edid != NULL) {
+		prop_data_t data = prop_data_create_data(edid, 128);
+		prop_dictionary_set(device_properties(sc->sc_fbdev),
+		    "EDID", data);
+		prop_object_release(data);
+	}
 
 	return 0;
 }

@@ -1,7 +1,9 @@
-/*	$NetBSD: cdio.h,v 1.33 2009/01/29 19:36:28 reinoud Exp $	*/
+/*	$NetBSD: cdio.h,v 1.33.42.1 2015/09/22 12:06:17 skrll Exp $	*/
 
 #ifndef _SYS_CDIO_H_
 #define _SYS_CDIO_H_
+
+#include <sys/ioccom.h>
 
 /* Shared between kernel & process */
 

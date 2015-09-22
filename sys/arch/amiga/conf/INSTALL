@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.125 2014/07/05 10:00:42 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.125.4.1 2015/09/22 12:05:36 skrll Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,7 +29,7 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.125 $"
+#ident 		"GENERIC-$Revision: 1.125.4.1 $"
 
 makeoptions	COPTS="-Os"
 
@@ -142,6 +142,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Misc. debugging options
 #
 options 	DDB		# Kernel debugger
+pseudo-device	ksyms
 #options 	DDB_HISTORY_SIZE=100	# Enable history editing in DDB
 #options 	DIAGNOSTIC	# Extra kernel sanity checks
 #options 	DEBUG		# Enable misc. kernel debugging code

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88 2014/11/16 16:01:42 manu Exp $
+# $NetBSD: GENERIC,v 1.88.2.1 2015/09/22 12:05:50 skrll Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88 $"
+#ident 		"GENERIC-$Revision: 1.88.2.1 $"
 
 maxusers	32
 
@@ -173,9 +173,9 @@ config		netbsd	root on ? type ?
 mainbus0	at root
 cpu*		at mainbus0
 
-#cfi0		at mainbus0
-#nor*		at cfi?
-#flash*		at nor?
+cfi0		at mainbus0
+nor*		at cfi?
+flash*		at nor?
 
 nhpow0		at mainbus0			# NH230/231 power,LED,buttons
 

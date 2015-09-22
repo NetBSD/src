@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.101.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.101.2.2 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.2 2015/09/22 12:06:07 skrll Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -58,7 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.1 2015/04/06 15:18:20 skrll 
 #include <uvm/uvm_extern.h>
 
 struct vm_map *module_map;
-char	*module_machine;
+const char *module_machine;
 char	module_base[MODULE_BASE_SIZE];
 
 struct modlist        module_list = TAILQ_HEAD_INITIALIZER(module_list);
@@ -80,7 +80,7 @@ static kcondvar_t module_thread_cv;
 static kmutex_t module_thread_lock;
 static int	module_thread_ticks;
 int (*module_load_vfs_vec)(const char *, int, bool, module_t *,
-			   prop_dictionary_t *) = (void *)eopnotsupp; 
+			   prop_dictionary_t *) = (void *)eopnotsupp;
 
 static kauth_listener_t	module_listener;
 
@@ -394,7 +394,7 @@ module_start_unload_thread(void)
 /*
  * module_builtin_require_force
  *
- * Require MODCTL_MUST_FORCE to load any built-in modules that have 
+ * Require MODCTL_MUST_FORCE to load any built-in modules that have
  * not yet been initialized
  */
 void
@@ -948,7 +948,7 @@ module_do_load(const char *name, bool isdep, int flags,
 				depth--;
 				return 0;
 			}
-		}				
+		}
 		mod = module_newmodule(MODULE_SOURCE_FILESYS);
 		if (mod == NULL) {
 			module_error("out of memory for `%s'", name);
@@ -1362,7 +1362,7 @@ module_thread(void *cookie)
 			/*
 			 * If this module wants to avoid autounload then
 			 * skip it.  Some modules can ping-pong in and out
-			 * because their use is transient but often. 
+			 * because their use is transient but often.
 			 * Example: exec_script.
 			 */
 			mi = mod->mod_info;

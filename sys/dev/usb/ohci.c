@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.21 2015/04/06 08:58:44 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.22 2015/09/22 12:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.21 2015/04/06 08:58:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.22 2015/09/22 12:06:01 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -673,7 +673,7 @@ ohci_init(ohci_softc_t *sc)
 	callout_init(&sc->sc_tmo_rhsc, CALLOUT_MPSAFE);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
-	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
 	cv_init(&sc->sc_softwake_cv, "ohciab");
 
 	sc->sc_rhsc_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,

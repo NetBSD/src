@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.71.4.2 2015/06/06 14:40:06 skrll Exp $	*/
+/*	$NetBSD: md.c,v 1.71.4.3 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross, Leo Weppelman.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.71.4.2 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: md.c,v 1.71.4.3 2015/09/22 12:05:56 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_md.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: md.c,v 1.71.4.2 2015/06/06 14:40:06 skrll Exp $");
 
 #include <dev/md.h>
 
+#include "ioconf.h"
 /*
  * The user-space functionality is included by default.
  * Use  `options MEMORY_DISK_SERVER=0' to turn it off.
@@ -92,8 +93,6 @@ struct md_softc {
 #define sc_addr sc_md.md_addr
 #define sc_size sc_md.md_size
 #define sc_type sc_md.md_type
-
-void	mdattach(int);
 
 static void	md_attach(device_t, device_t, void *);
 static int	md_detach(device_t, int);

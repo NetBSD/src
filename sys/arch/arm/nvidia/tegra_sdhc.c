@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.1.2.4 2015/09/22 12:05:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.1.2.4 2015/09/22 12:05:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -93,8 +93,10 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags = SDHC_FLAG_32BIT_ACCESS |
 			  SDHC_FLAG_NO_PWR0 |
 			  SDHC_FLAG_NO_CLKBASE |
+			  SDHC_FLAG_NO_TIMEOUT |
 			  SDHC_FLAG_SINGLE_POWER_WRITE |
-			  SDHC_FLAG_USE_DMA;
+			  SDHC_FLAG_USE_DMA |
+			  SDHC_FLAG_USE_ADMA2;
 	if (SDMMC_8BIT_P(loc->loc_port)) {
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
 	}
@@ -117,17 +119,14 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 	if (prop_dictionary_get_cstring_nocopy(prop, "wp-gpio", &pin))
 		sc->sc_pin_wp = tegra_gpio_acquire(pin, GPIO_PIN_INPUT);
 
-	if (sc->sc_pin_cd)
+	if (sc->sc_pin_cd) {
 		sc->sc.sc_vendor_card_detect = tegra_sdhc_card_detect;
+		sc->sc.sc_flags |= SDHC_FLAG_POLL_CARD_DET;
+	}
 	if (sc->sc_pin_wp)
 		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 
-#if notyet
-	tegra_car_periph_sdmmc_set_div(sc->sc_port, 1);
-#else
-	const u_int div = howmany(tegra_car_pllp0_rate() / 1000, 50000);
-	tegra_car_periph_sdmmc_set_div(sc->sc_port, div);
-#endif
+	tegra_car_periph_sdmmc_set_rate(sc->sc_port, 204000000);
 	sc->sc.sc_clkbase = tegra_car_periph_sdmmc_rate(sc->sc_port) / 1000;
 
 	aprint_naive("\n");

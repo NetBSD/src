@@ -1,4 +1,4 @@
-/* $NetBSD: au_chipdep.c,v 1.4 2011/07/10 23:13:23 matt Exp $ */
+/* $NetBSD: au_chipdep.c,v 1.4.30.1 2015/09/22 12:05:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,10 +32,12 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: au_chipdep.c,v 1.4 2011/07/10 23:13:23 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: au_chipdep.c,v 1.4.30.1 2015/09/22 12:05:46 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
+
 #include <mips/locore.h>
 #include <mips/alchemy/include/aureg.h>
 #include <mips/alchemy/include/auvar.h>

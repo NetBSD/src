@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_socket.c,v 1.193.2.2 2015/06/06 14:40:26 skrll Exp $	*/
+/*	$NetBSD: nfs_socket.c,v 1.193.2.3 2015/09/22 12:06:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.193.2.2 2015/06/06 14:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.193.2.3 2015/09/22 12:06:12 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_socket.c,v 1.193.2.2 2015/06/06 14:40:26 skrll E
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/kauth.h>
+#include <sys/time.h>
 
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -349,11 +350,33 @@ nfs_reconnect(struct nfsreq *rep)
 	struct nfsreq *rp;
 	struct nfsmount *nmp = rep->r_nmp;
 	int error;
+	time_t before_ts;
 
 	nfs_disconnect(nmp);
+
+	/*
+	 * Force unmount: do not try to reconnect
+	 */
+	if (nmp->nm_iflag & NFSMNT_DISMNTFORCE)
+		return EIO;
+
+	before_ts = time_uptime;
 	while ((error = nfs_connect(nmp, rep, &lwp0)) != 0) {
 		if (error == EINTR || error == ERESTART)
 			return (EINTR);
+
+		if (rep->r_flags & R_SOFTTERM)
+			return (EIO);
+
+		/*
+		 * Soft mount can fail here, but not too fast:
+		 * we want to make sure we at least honoured
+		 * NFS timeout.
+		 */
+		if ((nmp->nm_flag & NFSMNT_SOFT) &&
+		    (time_uptime - before_ts > nmp->nm_timeo / NFS_HZ))
+			return (EIO);
+
 		kpause("nfscn2", false, hz, NULL);
 	}
 
@@ -886,6 +909,12 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 
 	KASSERT(nmp == rep->r_nmp);
 
+	if (nmp->nm_flag & NFSMNT_SOFT)
+		slptimeo = nmp->nm_retry * nmp->nm_timeo;
+
+	if (nmp->nm_iflag & NFSMNT_DISMNTFORCE)
+		slptimeo = hz;
+
 	catch_p = (nmp->nm_flag & NFSMNT_INT) != 0;
 	mutex_enter(&nmp->nm_lock);
 	while (/* CONSTCOND */ true) {
@@ -914,11 +943,19 @@ nfs_rcvlock(struct nfsmount *nmp, struct nfsreq *rep)
 			break;
 		}
 		if (catch_p) {
-			cv_timedwait_sig(&nmp->nm_rcvcv, &nmp->nm_lock,
+			error = cv_timedwait_sig(&nmp->nm_rcvcv, &nmp->nm_lock,
 			    slptimeo);
 		} else {
-			cv_timedwait(&nmp->nm_rcvcv, &nmp->nm_lock,
+			error = cv_timedwait(&nmp->nm_rcvcv, &nmp->nm_lock,
 			    slptimeo);
+		}
+		if (error) {
+			if ((error == EWOULDBLOCK) &&
+			    (nmp->nm_flag & NFSMNT_SOFT)) {
+				error = EIO;
+				break;
+			}
+			error = 0;
 		}
 		if (catch_p) {
 			catch_p = false;

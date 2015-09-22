@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_plcom.c,v 1.1 2012/07/26 06:21:57 skrll Exp $	*/
+/*	$NetBSD: bcm2835_plcom.c,v 1.1.20.1 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 /* Interface to plcom (PL011) serial driver. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_plcom.c,v 1.1 2012/07/26 06:21:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_plcom.c,v 1.1.20.1 2015/09/22 12:05:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ bcm2835_plcom_attach(device_t parent, device_t self, void *aux)
 	}
 
 	plcom_attach_subr(sc);
-	ih = bcm2835_intr_establish(aaa->aaa_intr, IPL_SERIAL, plcomintr, sc);
+	ih = intr_establish(aaa->aaa_intr, IPL_SERIAL, IST_LEVEL, plcomintr, sc);
 	if (ih == NULL)
 		panic("%s: cannot install interrupt handler",
 		    device_xname(sc->sc_dev));

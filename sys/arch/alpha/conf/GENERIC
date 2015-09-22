@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.362.2.1 2015/04/06 15:17:50 skrll Exp $
+# $NetBSD: GENERIC,v 1.362.2.2 2015/09/22 12:05:35 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.362.2.1 $"
+ident		"GENERIC-$Revision: 1.362.2.2 $"
 
 maxusers 32
 
@@ -56,7 +56,6 @@ options 	NTP			# kernel PLL for NTP
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC		# Cheap kernel consistency checks
 #options 	DEBUG			# Expensive debugging checks/support
-#options 	KMEMSTATS		# Collect kmem usage statistics
 options 	DDB			# kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #makeoptions	DEBUG="-g"
@@ -609,18 +608,18 @@ uhso*	at uhub? port ? configuration ?
 umass*	at uhub? port ? configuration ? interface ?
 
 # USB audio
-uaudio*	at uhub? port ? configuration ?  
+uaudio*	at uhub? port ? configuration ?
 
-# USB MIDI      
+# USB MIDI
 umidi*	at uhub? port ? configuration ?
 
 # USB IrDA
 # USB-IrDA bridge spec
 uirda*	at uhub? port ? configuration ? interface ?
-irframe* at uirda? 
+irframe* at uirda?
 
 # SigmaTel STIr4200 USB/IrDA Bridge
-ustir*	at uhub? port ?  
+ustir*	at uhub? port ?
 irframe* at ustir?
 
 # USB Ethernet adapters
@@ -721,7 +720,7 @@ pseudo-device	swcrypto		# software crypto implementation
 
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
-pseudo-device	ccd		
+pseudo-device	ccd
 pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
@@ -736,15 +735,15 @@ options 	RAID_AUTOCONFIG		# auto-configuration of RAID components
 pseudo-device	fss			# file system snapshot device
 pseudo-device	ipfilter
 pseudo-device	loop
-pseudo-device	md		
-pseudo-device	ppp		
+pseudo-device	md
+pseudo-device	ppp
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	pty			# pseudo-terminals
-pseudo-device	sl		
-pseudo-device	strip		
-pseudo-device	tun		
+pseudo-device	sl
+pseudo-device	strip
+pseudo-device	tun
 pseudo-device	tap			# virtual Ethernet
-pseudo-device	vnd		
+pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)

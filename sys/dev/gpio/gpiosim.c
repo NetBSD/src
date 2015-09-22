@@ -1,4 +1,4 @@
-/* $NetBSD: gpiosim.c,v 1.16 2014/02/25 18:30:09 pooka Exp $ */
+/* $NetBSD: gpiosim.c,v 1.16.6.1 2015/09/22 12:05:57 skrll Exp $ */
 /*      $OpenBSD: gpiosim.c,v 1.1 2008/11/23 18:46:49 mbalmer Exp $	*/
 
 /*
@@ -30,6 +30,9 @@
 #include <sys/ioccom.h>
 #include <dev/gpio/gpiovar.h>
 
+#include "gpiosim.h"
+#include "ioconf.h"
+
 #define	GPIOSIM_NPINS	64
 
 struct gpiosim_softc {
@@ -43,7 +46,6 @@ struct gpiosim_softc {
 };
 
 static int	gpiosim_match(device_t, cfdata_t, void *);
-void		gpiosimattach(int);
 static void	gpiosim_attach(device_t, device_t, void *);
 static int	gpiosim_detach(device_t, int);
 static int	gpiosim_sysctl(SYSCTLFN_PROTO);
@@ -64,7 +66,7 @@ gpiosim_match(device_t parent, cfdata_t match, void *aux)
 }
 
 void
-gpiosimattach(int num)
+gpiosimattach(int num __unused)
 {
 	cfdata_t cf;
 	int n, err;
@@ -73,7 +75,7 @@ gpiosimattach(int num)
 	if (err)
 		printf("%s: unable to register cfattach\n", gpiosim_cd.cd_name);
 
-	for (n = 0; n < num; n++) {
+	for (n = 0; n < NGPIOSIM; n++) {
 		cf = malloc(sizeof(*cf), M_DEVBUF, M_WAITOK);
 		cf->cf_name = "gpiosim";
 		cf->cf_atname = "gpiosim";

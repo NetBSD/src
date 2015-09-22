@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.161.2.2 2015/06/06 14:40:25 skrll Exp $ */
+/*	$NetBSD: if_gre.c,v 1.161.2.3 2015/09/22 12:06:10 skrll Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,12 +45,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.161.2.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.161.2.3 2015/09/22 12:06:10 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_atalk.h"
 #include "opt_gre.h"
 #include "opt_inet.h"
 #include "opt_mpls.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/file.h>
@@ -114,6 +116,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.161.2.2 2015/06/06 14:40:25 skrll Exp $
 
 #include <compat/sys/socket.h>
 #include <compat/sys/sockio.h>
+
+#include "ioconf.h"
+
 /*
  * It is not easy to calculate the right value for a GRE MTU.
  * We leave this task to the admin and use the same default that
@@ -1424,8 +1429,6 @@ out:
 	splx(s);
 	return error;
 }
-
-void	greattach(int);
 
 /* ARGSUSED */
 void

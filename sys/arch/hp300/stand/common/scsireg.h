@@ -1,4 +1,4 @@
-/*	$NetBSD: scsireg.h,v 1.3 2011/02/08 20:20:14 rmind Exp $	*/
+/*	$NetBSD: scsireg.h,v 1.3.32.1 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -37,6 +37,8 @@
 /*
  * HP 98265A SCSI Interface Hardware Description.
  */
+
+#include <sys/ioccom.h>
 
 struct scsidevice {
 	u_char	p0,  scsi_id;

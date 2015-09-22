@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.79.4.1 2015/06/06 14:40:00 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.79.4.2 2015/09/22 12:05:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -90,7 +90,7 @@ typedef __uint64_t	pmc_ctr_t;
 typedef int		register_t;
 #define	PRIxREGISTER	"x"
 
-typedef	volatile unsigned char		__cpu_simple_lock_t;
+typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD
@@ -130,7 +130,7 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #if defined(_KERNEL)
 #define	__HAVE_RAS
 
-#if !defined(XEN)
+#if !defined(XEN) && !defined(NO_PCI_MSI_MSIX)
 #define __HAVE_PCI_MSI_MSIX
 #endif
 #endif

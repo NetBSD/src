@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.445.2.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.445.2.2 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,11 +68,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.445.2.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.445.2.2 2015/09/22 12:06:07 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_43.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,11 +119,12 @@ const int	vttoif_tab[9] = {
 int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 
+extern struct mount *dead_rootmount;
+
 /*
  * Local declarations.
  */
 
-static int getdevvp(dev_t, vnode_t **, enum vtype);
 static void vn_initialize_syncerd(void);
 
 /*
@@ -342,8 +345,13 @@ loop:
 int
 bdevvp(dev_t dev, vnode_t **vpp)
 {
+	struct vattr va;
 
-	return (getdevvp(dev, vpp, VBLK));
+	vattr_null(&va);
+	va.va_type = VBLK;
+	va.va_rdev = dev;
+
+	return vcache_new(dead_rootmount, NULL, &va, NOCRED, vpp);
 }
 
 /*
@@ -353,8 +361,13 @@ bdevvp(dev_t dev, vnode_t **vpp)
 int
 cdevvp(dev_t dev, vnode_t **vpp)
 {
+	struct vattr va;
 
-	return (getdevvp(dev, vpp, VCHR));
+	vattr_null(&va);
+	va.va_type = VCHR;
+	va.va_rdev = dev;
+
+	return vcache_new(dead_rootmount, NULL, &va, NOCRED, vpp);
 }
 
 /*
@@ -476,36 +489,6 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 		}
 	}
 	bufinsvn(bp, listheadp);
-}
-
-/*
- * Create a vnode for a device.
- * Used by bdevvp (block device) for root file system etc.,
- * and by cdevvp (character device) for console and kernfs.
- */
-static int
-getdevvp(dev_t dev, vnode_t **vpp, enum vtype type)
-{
-	vnode_t *vp;
-	vnode_t *nvp;
-	int error;
-
-	if (dev == NODEV) {
-		*vpp = NULL;
-		return (0);
-	}
-	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, NULL, &nvp);
-	if (error) {
-		*vpp = NULL;
-		return (error);
-	}
-	vp = nvp;
-	vp->v_type = type;
-	vp->v_vflag |= VV_MPSAFE;
-	uvm_vnp_setsize(vp, 0);
-	spec_node_init(vp, dev);
-	*vpp = vp;
-	return (0);
 }
 
 /*
@@ -833,11 +816,11 @@ sched_sync(void *arg)
 				 *
 				 * If we locked it yet arrive here, it's
 				 * likely that lazy sync is in progress and
-				 * so the vnode still has dirty metadata. 
+				 * so the vnode still has dirty metadata.
 				 * syncdelay is mainly to get this vnode out
 				 * of the way so we do not consider it again
 				 * "soon" in this loop, so the delay time is
-				 * not critical as long as it is not "soon". 
+				 * not critical as long as it is not "soon".
 				 * While write-back strategy is the file
 				 * system's domain, we expect write-back to
 				 * occur no later than syncdelay seconds
@@ -1284,7 +1267,7 @@ VFS_MOUNT(struct mount *mp, const char *a, void *b, size_t *c)
 
 	return error;
 }
-	
+
 int
 VFS_START(struct mount *mp, int a)
 {
@@ -1300,7 +1283,7 @@ VFS_START(struct mount *mp, int a)
 
 	return error;
 }
-	
+
 int
 VFS_UNMOUNT(struct mount *mp, int a)
 {

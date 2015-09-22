@@ -1,4 +1,4 @@
-/* $NetBSD: arcpp.c,v 1.14 2014/07/25 08:10:31 dholland Exp $ */
+/* $NetBSD: arcpp.c,v 1.14.4.1 2015/09/22 12:05:35 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 Ben Harris
@@ -52,7 +52,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.14 2014/07/25 08:10:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcpp.c,v 1.14.4.1 2015/09/22 12:05:35 skrll Exp $");
 
 #include <sys/conf.h>
 #include <sys/device.h>
@@ -217,10 +217,12 @@ arcppopen(dev_t dev, int flag, int mode, struct lwp *l)
 	error = tsleep((void *)sc, ARCPPPRI | PCATCH, "arcppopen", TIMEOUT);
 	if (error == EWOULDBLOCK) {
 		sc->sc_state = 0;
+		splx(s);
 		return EBUSY;
 	}
 	if (error) {
 		sc->sc_state = 0;
+		splx(s);
 		return error;
 	}
 

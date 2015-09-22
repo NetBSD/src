@@ -1,4 +1,4 @@
-/*	$NetBSD: beep.h,v 1.2 2007/03/04 06:00:42 christos Exp $	*/
+/*	$NetBSD: beep.h,v 1.2.110.1 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*
  * Copyright (c) Mark Brinicombe 1995 All rights reserved
@@ -30,6 +30,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/ioccom.h>
 
 struct wavebuffer {
 	void *addr;

@@ -1,7 +1,8 @@
-/* $NetBSD: bus_defs.h,v 1.1 2011/07/01 17:09:59 dyoung Exp $ */
+/* $NetBSD: bus_defs.h,v 1.1.30.1 2015/09/22 12:05:41 skrll Exp $ */
 
 #ifndef _EVBMIPS_BUS_DEFS_H_
-#define	_EVBMIPS_BUS_DEFS_H_
+#define _EVBMIPS_BUS_DEFS_H_
+
 #define _MIPS_NEED_BUS_DMA_BOUNCE
 
 #include <mips/bus_space_defs.h>

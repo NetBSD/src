@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.235.2.2 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.235.2.3 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,14 +71,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.2 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.235.2.3 2015/09/22 12:06:07 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_sock_counters.h"
 #include "opt_sosend_loan.h"
 #include "opt_mbuftrace.h"
 #include "opt_somaxkva.h"
 #include "opt_multiprocessor.h"	/* XXX */
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

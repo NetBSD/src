@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_condvar.c,v 1.34 2013/10/25 15:51:36 martin Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.34.6.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -34,12 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.34 2013/10/25 15:51:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.34.6.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/proc.h>
-#include <sys/sched.h>
 #include <sys/systm.h>
+#include <sys/lwp.h>
 #include <sys/condvar.h>
 #include <sys/sleepq.h>
 #include <sys/lockdebug.h>

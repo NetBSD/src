@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.20.6.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.20.6.2 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995-1997 Mark Brinicombe.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.20.6.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.20.6.2 2015/09/22 12:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,11 +142,11 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	int error = 0;
 
 	switch(SCARG(uap, op)) {
-	case ARM_SYNC_ICACHE : 
+	case ARM_SYNC_ICACHE :
 		error = arm32_sync_icache(l, SCARG(uap, parms), retval);
 		break;
 
-	case ARM_DRAIN_WRITEBUF : 
+	case ARM_DRAIN_WRITEBUF :
 		error = arm32_drain_writebuf(l, SCARG(uap, parms), retval);
 		break;
 
@@ -164,14 +164,15 @@ sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retva
 	}
 	return (error);
 }
-  
+
 int
 cpu_lwp_setprivate(lwp_t *l, void *addr)
 {
 #ifdef _ARM_ARCH_6
 	if (l == curlwp) {
+		u_int val = (u_int)addr;
 		kpreempt_disable();
-		__asm __volatile("mcr p15, 0, %0, c13, c0, 3" : : "r" (addr));
+		armreg_tpidruro_write(val);
 		kpreempt_enable();
 	}
 	return 0;

@@ -30,11 +30,24 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_api.c,v 1.2.4.2 2015/06/06 14:40:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_api.c 251964 2013-06-18 21:28:19Z jfv $*/
+/*$NetBSD: ixgbe_api.c,v 1.2.4.3 2015/09/22 12:05:59 skrll Exp $*/
 
 #include "ixgbe_api.h"
 #include "ixgbe_common.h"
+
+/**
+ * ixgbe_dcb_get_rtrup2tc - read rtrup2tc reg
+ * @hw: pointer to hardware structure
+ * @map: pointer to u8 arr for returning map
+ *
+ * Read the rtrup2tc HW register and resolve its content into map
+ **/
+void ixgbe_dcb_get_rtrup2tc(struct ixgbe_hw *hw, u8 *map)
+{
+	if (hw->mac.ops.get_rtrup2tc)
+		hw->mac.ops.get_rtrup2tc(hw, map);
+}
 
 /**
  *  ixgbe_init_shared_code - Initialize the shared code
@@ -94,6 +107,12 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 
 	DEBUGFUNC("ixgbe_set_mac_type\n");
 
+	if (hw->vendor_id != IXGBE_INTEL_VENDOR_ID) {
+		ERROR_REPORT2(IXGBE_ERROR_UNSUPPORTED,
+			     "Unsupported vendor id: %x", hw->vendor_id);
+		return IXGBE_ERR_DEVICE_NOT_SUPPORTED;
+	}
+
 	switch (hw->device_id) {
 	case IXGBE_DEV_ID_82598:
 	case IXGBE_DEV_ID_82598_BX:
@@ -139,9 +158,12 @@ s32 ixgbe_set_mac_type(struct ixgbe_hw *hw)
 		hw->mac.type = ixgbe_mac_X540;
 		break;
 	default:
- 		ret_val = IXGBE_ERR_DEVICE_NOT_SUPPORTED;
+		ret_val = IXGBE_ERR_DEVICE_NOT_SUPPORTED;
+		ERROR_REPORT2(IXGBE_ERROR_UNSUPPORTED,
+			     "Unsupported device id: %x",
+			     hw->device_id);
 		break;
- 	}
+	}
 
 	DEBUGOUT2("ixgbe_set_mac_type found mac: %d, returns: %d\n",
 		  hw->mac.type, ret_val);
@@ -994,6 +1016,8 @@ s32 ixgbe_set_fw_drv_ver(struct ixgbe_hw *hw, u8 maj, u8 min, u8 build,
 	return ixgbe_call_func(hw, hw->mac.ops.set_fw_drv_ver, (hw, maj, min,
 			       build, ver), IXGBE_NOT_IMPLEMENTED);
 }
+
+
 
 
 /**

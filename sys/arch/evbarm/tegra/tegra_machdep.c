@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.3.2.3 2015/06/06 14:39:58 skrll Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.3 2015/06/06 14:39:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -95,7 +95,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.3 2015/06/06 14:39:58 skrll 
 BootConfig bootconfig;
 char bootargs[TEGRA_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
+#ifdef TEGRA_UBOOT
 u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
+#endif
 
 extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
@@ -244,8 +246,10 @@ initarm(void *arg)
 
 	DPRINTF(" ok\n");
 
+#ifdef TEGRA_UBOOT
 	DPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
+#endif
 
 	cpu_reset_address = tegra_pmc_reset;
 
@@ -395,6 +399,10 @@ tegra_device_register(device_t self, void *aux)
 #endif
 	}
 
+	if (device_is_a(self, "tegracec")) {
+		prop_dictionary_set_cstring(dict, "hdmi-device", "tegrahdmi0");
+	}
+
 #ifdef BOARD_JETSONTK1
 	if (device_is_a(self, "sdhc")
 	    && device_is_a(device_parent(self), "tegraio")) {
@@ -411,6 +419,39 @@ tegra_device_register(device_t self, void *aux)
 	if (device_is_a(self, "ahcisata")
 	    && device_is_a(device_parent(self), "tegraio")) {
 		prop_dictionary_set_cstring(dict, "power-gpio", "EE2");
+	}
+
+	if (device_is_a(self, "ehci")
+	    && device_is_a(device_parent(self), "tegraio")) {
+		struct tegraio_attach_args * const tio = aux;
+		const struct tegra_locators * const loc = &tio->tio_loc;
+
+		if (loc->loc_port == 0) {
+			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
+		} else if (loc->loc_port == 2) {
+			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
+		}
+	}
+
+	if (device_is_a(self, "tegrahdmi")) {
+		prop_dictionary_set_cstring(dict, "hpd-gpio", "N7");
+		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
+		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
+		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
+		prop_dictionary_set_cstring(dict, "display-device", "tegradc1");
+	}
+#endif
+
+#ifdef BOARD_NYAN_BIG
+	if (device_is_a(self, "sdhc")
+	    && device_is_a(device_parent(self), "tegraio")) {
+		struct tegraio_attach_args * const tio = aux;
+		const struct tegra_locators * const loc = &tio->tio_loc;
+
+		if (loc->loc_port == 2) {
+			prop_dictionary_set_cstring(dict, "cd-gpio", "V2");
+			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
+		}
 	}
 
 	if (device_is_a(self, "ehci")

@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.52.4.1 2015/06/06 14:40:07 skrll Exp $ */
+/* $NetBSD: seeq8005.c,v 1.52.4.2 2015/09/22 12:05:58 skrll Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.52.4.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.52.4.2 2015/09/22 12:05:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -875,8 +875,10 @@ ea_start(struct ifnet *ifp)
 	 * us (actually ea_txpacket()) back when the card's ready for more
 	 * frames.
 	 */
-	if (ifp->if_flags & IFF_OACTIVE)
+	if (ifp->if_flags & IFF_OACTIVE) {
+		splx(s);
 		return;
+	}
 
 	/* Mark interface as output active */
 
@@ -1308,7 +1310,7 @@ ea_get(struct seeq8005_softc *sc, int addr, int totlen, struct ifnet *ifp)
 		if (top == NULL) {
 			/* Make sure the payload is aligned */
 			char *newdata = (char *)
-			    ALIGN((char*)m->m_data + 
+			    ALIGN((char*)m->m_data +
 				sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
 			len -= newdata - m->m_data;

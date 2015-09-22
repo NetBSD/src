@@ -1,4 +1,4 @@
-/* $NetBSD: iplcb.h,v 1.1 2007/12/17 19:09:21 garbled Exp $ */
+/* $NetBSD: iplcb.h,v 1.1.82.1 2015/09/22 12:05:50 skrll Exp $ */
 
 /* Structure for the IPL Control Block on RS/6000 machines */
 
@@ -547,7 +547,7 @@ struct ipl_info {
 	int32_t		io_planar_level_reg_22;
 	int32_t		io_planar_level_reg_23;
 
-	/* Component regsiter test results for the other BUID's */
+	/* Component register test results for the other BUID's */
 	int32_t		CRR_results_21;
 	int32_t		CRR_results_22;
 	int32_t		CRR_results_23;

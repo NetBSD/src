@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pflog.c,v 1.18 2010/04/12 13:57:38 ahoka Exp $	*/
+/*	$NetBSD: if_pflog.c,v 1.18.36.1 2015/09/22 12:06:01 skrll Exp $	*/
 /*	$OpenBSD: if_pflog.c,v 1.24 2007/05/26 17:13:30 jason Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.18 2010/04/12 13:57:38 ahoka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.18.36.1 2015/09/22 12:06:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -73,6 +73,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.18 2010/04/12 13:57:38 ahoka Exp $");
 #include <net/pfvar.h>
 #include <net/if_pflog.h>
 
+#include "ioconf.h"
+
 #define PFLOGMTU	(32768 + MHLEN + MLEN)
 
 #ifdef PFLOGDEBUG
@@ -81,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_pflog.c,v 1.18 2010/04/12 13:57:38 ahoka Exp $");
 #define DPRINTF(x)
 #endif
 
-void	pflogattach(int);
 #ifdef _MODULE
 void	pflogdetach(void);
 #endif /* _MODULE */

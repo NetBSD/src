@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirmio.h,v 1.6 2005/12/11 12:22:48 christos Exp $ */
+/*	$NetBSD: openfirmio.h,v 1.6.140.1 2015/09/22 12:05:59 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,6 +41,8 @@
  */
 #ifndef _DEV_OFW_OPENFIRMIO_H_
 #define _DEV_OFW_OPENFIRMIO_H_
+
+#include <sys/ioccom.h>
 
 struct ofiocdesc {
 	int	of_nodeid;		/* passed or returned node id */

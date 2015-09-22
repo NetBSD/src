@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.11.2.1 2015/04/06 15:18:17 skrll Exp $	*/
+/*	$NetBSD: pci.h,v 1.11.2.2 2015/09/22 12:06:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -126,6 +126,8 @@ struct pci_dev {
 	bus_space_tag_t		pd_rom_bst;
 	bus_space_handle_t	pd_rom_bsh;
 	bus_size_t		pd_rom_size;
+	bus_space_handle_t	pd_rom_found_bsh;
+	bus_size_t		pd_rom_found_size;
 	void			*pd_rom_vaddr;
 	device_t		pd_dev;
 	struct drm_device	*pd_drm_dev; /* XXX Nouveau kludge!  */
@@ -504,8 +506,6 @@ pci_map_rom_md(struct pci_dev *pdev)
 static inline void __pci_rom_iomem *
 pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 {
-	bus_space_handle_t bsh;
-	bus_size_t size;
 
 	KASSERT(!ISSET(pdev->pd_kludges, NBPCI_KLUDGE_MAP_ROM));
 
@@ -519,14 +519,16 @@ pci_map_rom(struct pci_dev *pdev, size_t *sizep)
 
 	/* XXX This type is obviously wrong in general...  */
 	if (pci_find_rom(&pdev->pd_pa, pdev->pd_rom_bst, pdev->pd_rom_bsh,
-		pdev->pd_rom_size, PCI_ROM_CODE_TYPE_X86, &bsh, &size)) {
+		pdev->pd_rom_size, PCI_ROM_CODE_TYPE_X86,
+		&pdev->pd_rom_found_bsh, &pdev->pd_rom_found_size)) {
 		pci_unmap_rom(pdev, NULL);
 		return NULL;
 	}
 
-	KASSERT(size <= SIZE_T_MAX);
-	*sizep = size;
-	pdev->pd_rom_vaddr = bus_space_vaddr(pdev->pd_rom_bst, bsh);
+	KASSERT(pdev->pd_rom_found_size <= SIZE_T_MAX);
+	*sizep = pdev->pd_rom_found_size;
+	pdev->pd_rom_vaddr = bus_space_vaddr(pdev->pd_rom_bst,
+	    pdev->pd_rom_found_bsh);
 	return pdev->pd_rom_vaddr;
 }
 

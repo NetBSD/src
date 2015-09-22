@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.28 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.28.6.1 2015/09/22 12:05:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/dirent.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #define msg __msg /* Don't ask me! */
@@ -784,6 +785,26 @@ netbsd32_copyout_plistref(netbsd32_pointer_t n32p, struct plistref *p)
 	n32plist.pref_len = p->pref_len;
 	return copyout(&n32plist, NETBSD32PTR64(n32p),
 	    sizeof(struct netbsd32_plistref));
+}
+
+static __inline void
+netbsd32_to_mq_attr(const struct netbsd32_mq_attr *a32,
+    struct mq_attr *attr)
+{
+	attr->mq_flags = a32->mq_flags;
+	attr->mq_maxmsg = a32->mq_maxmsg;
+	attr->mq_msgsize = a32->mq_msgsize;
+	attr->mq_curmsgs = a32->mq_curmsgs;
+}
+
+static __inline void
+netbsd32_from_mq_attr(const struct mq_attr *attr,
+	struct netbsd32_mq_attr *a32)
+{
+	a32->mq_flags = attr->mq_flags;
+	a32->mq_maxmsg = attr->mq_maxmsg;
+	a32->mq_msgsize = attr->mq_msgsize;
+	a32->mq_curmsgs = attr->mq_curmsgs;
 }
 
 #endif /* _COMPAT_NETBSD32_NETBSD32_CONV_H_ */

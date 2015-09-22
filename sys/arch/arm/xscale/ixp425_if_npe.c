@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.27.2.1 2015/06/06 14:39:57 skrll Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.27.2.2 2015/09/22 12:05:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.27.2.1 2015/06/06 14:39:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.27.2.2 2015/09/22 12:05:38 skrll Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -103,7 +103,7 @@ struct npe_softc {
 	struct ethercom	sc_ethercom;
 	uint8_t		sc_enaddr[ETHER_ADDR_LEN];
 	struct mii_data	sc_mii;
-	bus_space_tag_t	sc_iot;		
+	bus_space_tag_t	sc_iot;
 	bus_dma_tag_t	sc_dt;
 	bus_space_handle_t sc_ioh;	/* MAC register window */
 	bus_space_handle_t sc_miih;	/* MII register window */
@@ -602,8 +602,9 @@ npe_activate(struct npe_softc *sc)
 		return error;
 	}
 
-	if (bus_dmamap_load(sc->sc_dt, sc->sc_stats_map, sc->sc_stats,
-	    sizeof(struct npestats), NULL, BUS_DMA_NOWAIT) != 0) {
+	error = bus_dmamap_load(sc->sc_dt, sc->sc_stats_map, sc->sc_stats,
+	    sizeof(struct npestats), NULL, BUS_DMA_NOWAIT);
+	if (error) {
 		aprint_error_dev(sc->sc_dev,
 		    "unable to %s for %s, error %u\n",
 		    "load map", "stats block", error);
@@ -1388,7 +1389,7 @@ npestop(struct ifnet *ifp, int disable)
 
 	/*
 	 * The MAC core rx/tx disable may leave the MAC hardware in an
-	 * unpredictable state. A hw reset is executed before resetting 
+	 * unpredictable state. A hw reset is executed before resetting
 	 * all the MAC parameters to a known value.
 	 */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_RESET);

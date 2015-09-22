@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.45.6.1 2015/06/06 14:39:54 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.45.6.2 2015/09/22 12:05:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -60,14 +60,14 @@ typedef unsigned long	vsize_t;
 #define	PRIuVSIZE	"lu"
 #endif
 
-typedef int             pmc_evid_t; 
+typedef int             pmc_evid_t;
 typedef __uint64_t      pmc_ctr_t;
 typedef long int	register_t;
 typedef int		register32_t;
 #define	PRIxREGISTER	"lx"
 #define	PRIxREGISTER32	"x"
 
-typedef	volatile unsigned char		__cpu_simple_lock_t;
+typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD
@@ -103,7 +103,9 @@ typedef	volatile unsigned char		__cpu_simple_lock_t;
 #define	__HAVE_MM_MD_DIRECT_MAPPED_IO
 #define	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 #define	__HAVE_CPU_UAREA_ROUTINES
+#if !defined(NO_PCI_MSI_MSIX)
 #define	__HAVE_PCI_MSI_MSIX
+#endif
 #endif
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfioctl.h,v 1.6 2011/02/08 20:20:26 rmind Exp $	*/
+/*	$NetBSD: grfioctl.h,v 1.6.32.1 2015/09/22 12:05:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,6 +40,8 @@
 
 #ifndef _X68K_GRFIOCTL_H_
 #define	_X68K_GRFIOCTL_H_
+
+#include <sys/ioccom.h>
 
 struct	grfinfo {
 	int	gd_id;			/* HPUX identifier */
