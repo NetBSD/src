@@ -1,4 +1,4 @@
-/*	$NetBSD: getnameinfo.c,v 1.57 2015/09/03 15:01:19 christos Exp $	*/
+/*	$NetBSD: getnameinfo.c,v 1.58 2015/09/22 14:46:09 christos Exp $	*/
 /*	$KAME: getnameinfo.c,v 1.45 2000/09/25 22:43:56 itojun Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getnameinfo.c,v 1.57 2015/09/03 15:01:19 christos Exp $");
+__RCSID("$NetBSD: getnameinfo.c,v 1.58 2015/09/22 14:46:09 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: getnameinfo.c,v 1.57 2015/09/03 15:01:19 christos Exp $");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <limits.h>
 #include <netdb.h>
@@ -404,8 +405,22 @@ getnameinfo_inet(const struct sockaddr *sa, socklen_t salen,
 			}
 			strlcpy(host, hp->h_name, hostlen);
 		} else {
-			if (flags & NI_NAMEREQD)
-				return EAI_NONAME;
+			switch (he) {
+			case NETDB_INTERNAL:
+			case NO_RECOVERY:
+				return EAI_SYSTEM;
+			case NO_DATA:
+			case HOST_NOT_FOUND:
+				if (flags & NI_NAMEREQD)
+					return EAI_NONAME;
+				break;
+			case TRY_AGAIN:
+				return EAI_AGAIN;
+			case NETDB_SUCCESS:
+				/*FALLTHROUGH*/
+			default:
+				abort();
+			}
 			switch(afd->a_af) {
 #ifdef INET6
 			case AF_INET6:
