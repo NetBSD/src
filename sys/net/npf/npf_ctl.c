@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_ctl.c,v 1.40.2.1 2015/04/06 15:18:22 skrll Exp $	*/
+/*	$NetBSD: npf_ctl.c,v 1.40.2.2 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.40.2.1 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.40.2.2 2015/09/22 12:06:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -49,13 +49,9 @@ __KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.40.2.1 2015/04/06 15:18:22 skrll Exp $
 #include "npf_impl.h"
 #include "npf_conn.h"
 
-#if defined(DEBUG) || defined(DIAGNOSTIC)
 #define	NPF_ERR_DEBUG(e) \
 	prop_dictionary_set_cstring_nocopy((e), "source-file", __FILE__); \
 	prop_dictionary_set_uint32((e), "source-line", __LINE__);
-#else
-#define	NPF_ERR_DEBUG(e)
-#endif
 
 /*
  * npfctl_switch: enable or disable packet inspection.

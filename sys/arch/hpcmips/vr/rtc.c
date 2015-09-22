@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.34 2014/11/20 16:18:29 christos Exp $	*/
+/*	$NetBSD: rtc.c,v 1.34.2.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 Shin Takemura. All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.34 2014/11/20 16:18:29 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.34.2.1 2015/09/22 12:05:43 skrll Exp $");
 
 #include "opt_vr41xx.h"
 
@@ -162,7 +162,7 @@ vrrtc_attach(device_t parent, device_t self, void *aux)
 	/* RTC interrupt handler is directly dispatched from CPU intr */
 	vr_intr_establish(VR_INTR1, vrrtc_intr, sc);
 	/* But need to set level 1 interrupt mask register, 
-	 * so regsiter fake interrurpt handler
+	 * so register fake interrurpt handler
 	 */
 	if (!(sc->sc_ih = vrip_intr_establish(va->va_vc, va->va_unit, 0,
 	    IPL_CLOCK, 0, 0))) {

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.shark.inc,v 1.23.2.1 2015/04/06 15:18:02 skrll Exp $
+#	$NetBSD: Makefile.shark.inc,v 1.23.2.2 2015/09/22 12:05:51 skrll Exp $
 
 CPPFLAGS+=		-D${MACHINE}
 CFLAGS+=		-fno-unwind-tables
@@ -7,17 +7,20 @@ GENASSYM_EXTRAS+=	${THISARM}/shark/genassym.cf
 # Need to convert the kernel from ELF to a.out so that OpenFirmware
 # can load it.
 
-LINKSCRIPT=	-T ldscript
+KERNLDSCRIPT=	ldscript
+EXTRA_CLEAN+=	${KERNLDSCRIPT}
+
 LOADADDRESS=	0xF0000020
 
-SYSTEM_LD_HEAD_EXTRA+=; \
+ldscript: \
+    ${ARM}/conf/kern.ldscript.head \
+    ${ARM}/conf/kern.ldscript.tail \
+    $S/conf/mkldscript.sh \
+    ${SYSTEM_OBJ}
 	( cat ${ARM}/conf/kern.ldscript.head ; \
 	  OBJDUMP=${OBJDUMP} ${HOST_SH} $S/conf/mkldscript.sh \
 		${SYSTEM_OBJ} ; \
 	  cat ${ARM}/conf/kern.ldscript.tail ) > ldscript
-KERNLDSCRIPT=	${ARM}/conf/kern.ldscript.head \
-		$S/conf/mkldscript.sh \
-		${ARM}/conf/kern.ldscript.tail
 
 SYSTEM_LD_TAIL_EXTRA+=; \
 	echo "${OBJCOPY} ${OBJCOPY_ELF2AOUT_FLAGS} $@ $@.aout"; \

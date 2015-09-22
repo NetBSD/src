@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.7 2012/12/26 19:43:10 martin Exp $	*/
+/*	$NetBSD: types.h,v 1.7.14.1 2015/09/22 12:05:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -63,7 +63,7 @@ typedef __uint64_t	pmc_ctr_t;
 typedef long int	register_t;
 #define	PRIxREGISTER	"lx"
 
-typedef	__volatile int		__cpu_simple_lock_t;
+typedef	int		__cpu_simple_lock_nv_t;
 
 #define	__SIMPLELOCK_LOCKED	1
 #define	__SIMPLELOCK_UNLOCKED	0

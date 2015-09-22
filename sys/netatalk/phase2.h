@@ -1,4 +1,4 @@
-/*	$NetBSD: phase2.h,v 1.2 2005/12/10 23:29:05 elad Exp $	*/
+/*	$NetBSD: phase2.h,v 1.2.140.1 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990,1991 Regents of The University of Michigan.
@@ -29,6 +29,7 @@
 #ifndef _NETATALK_PHASE2_H_
 #define _NETATALK_PHASE2_H_
 
+#include <sys/ioccom.h>
 #include <net/if_llc.h>
 
 #define llc_org_code llc_un.type_snap.org_code

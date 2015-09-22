@@ -1,4 +1,4 @@
-/*	$NetBSD: libhfs.h,v 1.6 2012/07/28 00:43:23 matt Exp $	*/
+/*	$NetBSD: libhfs.h,v 1.6.16.1 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */                                     
+ */
 
 #ifndef _FS_HFS_LIBHFS_H_
 #define _FS_HFS_LIBHFS_H_
@@ -72,15 +72,13 @@
 #endif
 
 
-enum
-{
+enum {
 	HFS_SIG_HFSP	= 0x482B,	/* 'H+' */
 	HFS_SIG_HFSX	= 0x4858,	/* 'HX' */
 	HFS_SIG_HFS	= 0x4244	/* 'BD' */
 }; /* volume signatures */
 
-typedef enum
-{
+typedef enum {
 							/* bits 0-6 are reserved */
 	HFS_VOL_HWLOCK			= 7,
 	HFS_VOL_UNMOUNTED		= 8,
@@ -94,23 +92,20 @@ typedef enum
 							/* bits 16-31 are reserved */
 } hfs_volume_attribute_bit; /* volume header attribute bits */
 
-typedef enum
-{
+typedef enum {
 	HFS_LEAFNODE	= -1,
 	HFS_INDEXNODE	= 0,
 	HFS_HEADERNODE	= 1,
 	HFS_MAPNODE	= 2
 } hfs_node_kind; /* btree node kinds */
 
-enum
-{
+enum {
 	HFS_BAD_CLOSE_MASK			= 0x00000001,
 	HFS_BIG_KEYS_MASK			= 0x00000002,
 	HFS_VAR_INDEX_KEYS_MASK	= 0x00000004
 }; /* btree header attribute masks */
 
-typedef enum
-{
+typedef enum {
 	HFS_CNID_ROOT_PARENT	= 1,
 	HFS_CNID_ROOT_FOLDER	= 2,
 	HFS_CNID_EXTENTS		= 3,
@@ -125,49 +120,43 @@ typedef enum
 	HFS_CNID_USER			= 16
 } hfs_special_cnid; /* special CNID values */
 
-typedef enum
-{
+typedef enum {
 	HFS_REC_FLDR			= 0x0001,
 	HFS_REC_FILE			= 0x0002,
 	HFS_REC_FLDR_THREAD	= 0x0003,
 	HFS_REC_FILE_THREAD	= 0x0004
 } hfs_catalog_rec_kind; /* catalog record types */
 
-enum
-{
-    HFS_JOURNAL_ON_DISK_MASK		= 0x00000001, /* journal on same volume */
-    HFS_JOURNAL_ON_OTHER_MASK		= 0x00000002, /* journal elsewhere */
-    HFS_JOURNAL_NEEDS_INIT_MASK	= 0x00000004
+enum {
+	HFS_JOURNAL_ON_DISK_MASK		= 0x00000001, /* journal on same volume */
+	HFS_JOURNAL_ON_OTHER_MASK		= 0x00000002, /* journal elsewhere */
+	HFS_JOURNAL_NEEDS_INIT_MASK	= 0x00000004
 }; /* journal flag masks */
 
-enum
-{
+enum {
 	HFS_JOURNAL_HEADER_MAGIC	= 0x4a4e4c78,
 	HFS_JOURNAL_ENDIAN_MAGIC	= 0x12345678
 }; /* journal magic numbers */
 
-enum
-{
+enum {
 	HFS_DATAFORK	= 0x00,
 	HFS_RSRCFORK	= 0xFF
 }; /* common fork types */
 
-enum
-{
+enum {
 	HFS_KEY_CASEFOLD	= 0xCF,
 	HFS_KEY_BINARY		= 0XBC
 }; /* catalog key comparison method types */
 
-enum
-{
+enum {
 	HFS_MIN_CAT_KEY_LEN	= 6,
 	HFS_MAX_CAT_KEY_LEN	= 516,
 	HFS_MAX_EXT_KEY_LEN	= 10
 };
 
 enum {
-    HFS_HARD_LINK_FILE_TYPE = 0x686C6E6B,  /* 'hlnk' */
-    HFS_HFSLUS_CREATOR     = 0x6866732B   /* 'hfs+' */
+	HFS_HARD_LINK_FILE_TYPE = 0x686C6E6B,  /* 'hlnk' */
+	HFS_HFSLUS_CREATOR     = 0x6866732B   /* 'hfs+' */
 };
 
 
@@ -180,8 +169,7 @@ enum {
 /* number of bytes between start of volume and volume header */
 #define HFS_VOLUME_HEAD_RESERVE_SIZE	1024
 
-typedef enum
-{
+typedef enum {
 	HFS_CATALOG_FILE = 1,
 	HFS_EXTENTS_FILE = 2,
 	HFS_ATTRIBUTES_FILE = 3
@@ -195,52 +183,46 @@ typedef enum
 
 typedef uint32_t	hfs_macos_type_code; /* four 1-byte char field */
 
-typedef struct
-{
-  int16_t	v;
-  int16_t	h;
+typedef struct {
+	int16_t	v;
+	int16_t	h;
 } hfs_macos_point_t;
 
-typedef struct
-{
-  int16_t	t;	/* top */
-  int16_t	l;	/* left */
-  int16_t	b;	/* bottom */
-  int16_t	r;	/* right */
+typedef struct {
+	int16_t	t;	/* top */
+	int16_t	l;	/* left */
+	int16_t	b;	/* bottom */
+	int16_t	r;	/* right */
 } hfs_macos_rect_t;
 
-typedef struct
-{
-  hfs_macos_type_code	file_type;
-  hfs_macos_type_code	file_creator;
-  uint16_t				finder_flags;
-  hfs_macos_point_t	location;
-  uint16_t				reserved;
+typedef struct {
+	hfs_macos_type_code	file_type;
+	hfs_macos_type_code	file_creator;
+	uint16_t				finder_flags;
+	hfs_macos_point_t	location;
+	uint16_t				reserved;
 } hfs_macos_file_info_t;
 
-typedef struct
-{
-  int16_t	reserved[4];
-  uint16_t	extended_finder_flags;
-  int16_t	reserved2;
-  int32_t	put_away_folder_cnid;
+typedef struct {
+	int16_t	reserved[4];
+	uint16_t	extended_finder_flags;
+	int16_t	reserved2;
+	int32_t	put_away_folder_cnid;
 } hfs_macos_extended_file_info_t;
 
-typedef struct
-{
-  hfs_macos_rect_t		window_bounds;
-  uint16_t				finder_flags;
-  hfs_macos_point_t	location;
-  uint16_t				reserved;
+typedef struct {
+	hfs_macos_rect_t		window_bounds;
+	uint16_t				finder_flags;
+	hfs_macos_point_t	location;
+	uint16_t				reserved;
 } hfs_macos_folder_info_t;
 
-typedef struct
-{
-  hfs_macos_point_t	scroll_position;
-  int32_t				reserved;
-  uint16_t				extended_finder_flags;
-  int16_t				reserved2;
-  int32_t				put_away_folder_cnid;
+typedef struct {
+	hfs_macos_point_t	scroll_position;
+	int32_t				reserved;
+	uint16_t				extended_finder_flags;
+	int16_t				reserved2;
+	int32_t				put_away_folder_cnid;
 } hfs_macos_extended_folder_info_t;
 
 
@@ -253,59 +235,54 @@ typedef uint16_t unichar_t;
 
 typedef uint32_t hfs_cnid_t;
 
-
-typedef struct
-{
+typedef struct {
 	uint16_t	length;
 	unichar_t	unicode[255];
 } hfs_unistr255_t;
 
-typedef struct
-{
+typedef struct {
 	uint32_t	start_block;
 	uint32_t	block_count;
 } hfs_extent_descriptor_t;
 
 typedef hfs_extent_descriptor_t hfs_extent_record_t[8];
 
-typedef struct hfs_fork_t
-{
+typedef struct hfs_fork_t {
 	uint64_t				logical_size;
 	uint32_t				clump_size;
 	uint32_t				total_blocks;
 	hfs_extent_record_t	extents;
 } hfs_fork_t;
- 
-typedef struct
-{
+
+typedef struct {
 	uint16_t	signature;
 	uint16_t	version;
 	uint32_t	attributes;
 	uint32_t	last_mounting_version;
 	uint32_t	journal_info_block;
- 
+
 	uint32_t	date_created;
 	uint32_t	date_modified;
 	uint32_t	date_backedup;
 	uint32_t	date_checked;
- 
+
 	uint32_t	file_count;
 	uint32_t	folder_count;
- 
+
 	uint32_t	block_size;
 	uint32_t	total_blocks;
 	uint32_t	free_blocks;
- 
+
 	uint32_t	next_alloc_block;
 	uint32_t	rsrc_clump_size;
 	uint32_t	data_clump_size;
 	hfs_cnid_t	next_cnid;
- 
+
 	uint32_t	write_count;
 	uint64_t	encodings;
- 
+
 	uint32_t	finder_info[8];
- 
+
 	hfs_fork_t	allocation_file;
 	hfs_fork_t	extents_file;
 	hfs_fork_t	catalog_file;
@@ -313,8 +290,7 @@ typedef struct
 	hfs_fork_t	startup_file;
 } hfs_volume_header_t;
 
-typedef struct
-{
+typedef struct {
 	uint32_t	flink;
 	uint32_t	blink;
 	int8_t		kind;
@@ -323,8 +299,7 @@ typedef struct
 	uint16_t	reserved;
 } hfs_node_descriptor_t;
 
-typedef struct
-{
+typedef struct {
 	uint16_t	tree_depth;
 	uint32_t	root_node;
 	uint32_t	leaf_recs;
@@ -342,15 +317,13 @@ typedef struct
 	uint32_t	reserved2[16];
 } hfs_header_record_t;
 
-typedef struct
-{
+typedef struct {
 	uint16_t			key_len;
 	hfs_cnid_t			parent_cnid;
 	hfs_unistr255_t	name;
 } hfs_catalog_key_t;
 
-typedef struct
-{
+typedef struct {
 	uint16_t	key_length;
 	uint8_t		fork_type;
 	uint8_t		padding;
@@ -358,23 +331,20 @@ typedef struct
 	uint32_t	start_block;
 } hfs_extent_key_t;
 
-typedef struct
-{
+typedef struct {
 	uint32_t	owner_id;
 	uint32_t	group_id;
 	uint8_t		admin_flags;
 	uint8_t		owner_flags;
 	uint16_t	file_mode;
-	union
-	{
+	union {
 		uint32_t	inode_num;
 		uint32_t	link_count;
 		uint32_t	raw_device;
 	} special;
 } hfs_bsd_data_t;
 
-typedef struct
-{
+typedef struct {
 	int16_t			rec_type;
 	uint16_t		flags;
 	uint32_t		valence;
@@ -391,8 +361,7 @@ typedef struct
 	uint32_t		reserved;
 } hfs_folder_record_t;
 
-typedef struct
-{
+typedef struct {
 	int16_t			rec_type;
 	uint16_t		flags;
 	uint32_t		reserved;
@@ -411,16 +380,14 @@ typedef struct
 	hfs_fork_t		rsrc_fork;
 } hfs_file_record_t;
 
-typedef struct
-{
+typedef struct {
 	int16_t				rec_type;
 	int16_t				reserved;
 	hfs_cnid_t			parent_cnid;
 	hfs_unistr255_t	name;
 } hfs_thread_record_t;
 
-typedef struct
-{
+typedef struct {
 	uint32_t	flags;
 	uint32_t	device_signature[8];
 	uint64_t	offset;
@@ -428,8 +395,7 @@ typedef struct
 	uint64_t	reserved[32];
 } hfs_journal_info_t;
 
-typedef struct
-{
+typedef struct {
 	uint32_t	magic;
 	uint32_t	endian;
 	uint64_t	start;
@@ -442,45 +408,43 @@ typedef struct
 
 /* plain HFS structures needed for hfs wrapper support */
 
-typedef struct
-{
-        uint16_t        start_block;
-        uint16_t        block_count;
+typedef struct {
+	uint16_t        start_block;
+	uint16_t        block_count;
 } hfs_hfs_extent_descriptor_t;
 
 typedef hfs_hfs_extent_descriptor_t hfs_hfs_extent_record_t[3];
 
-typedef struct
-{
-        uint16_t        signature;
-        uint32_t        date_created;
-        uint32_t        date_modified;
-        uint16_t        attributes;
-        uint16_t        root_file_count;
-        uint16_t        volume_bitmap;
-        uint16_t        next_alloc_block;
-        uint16_t        total_blocks;
-        uint32_t        block_size;
-        uint32_t        clump_size;
-        uint16_t        first_block;
-        hfs_cnid_t      next_cnid;
-        uint16_t        free_blocks;
-        unsigned char   volume_name[28];
-        uint32_t        date_backedup;
-        uint16_t        backup_seqnum;
-        uint32_t        write_count;
-        uint32_t        extents_clump_size;
-        uint32_t        catalog_clump_size;
-        uint16_t        root_folder_count;
-        uint32_t        file_count;
-        uint32_t        folder_count;
-        uint32_t        finder_info[8];
-        uint16_t        embedded_signature;
-        hfs_hfs_extent_descriptor_t embedded_extent;
-        uint32_t        extents_size;
-        hfs_hfs_extent_record_t extents_extents;
-        uint32_t        catalog_size;
-        hfs_hfs_extent_record_t catalog_extents;
+typedef struct {
+	uint16_t        signature;
+	uint32_t        date_created;
+	uint32_t        date_modified;
+	uint16_t        attributes;
+	uint16_t        root_file_count;
+	uint16_t        volume_bitmap;
+	uint16_t        next_alloc_block;
+	uint16_t        total_blocks;
+	uint32_t        block_size;
+	uint32_t        clump_size;
+	uint16_t        first_block;
+	hfs_cnid_t      next_cnid;
+	uint16_t        free_blocks;
+	unsigned char   volume_name[28];
+	uint32_t        date_backedup;
+	uint16_t        backup_seqnum;
+	uint32_t        write_count;
+	uint32_t        extents_clump_size;
+	uint32_t        catalog_clump_size;
+	uint16_t        root_folder_count;
+	uint32_t        file_count;
+	uint32_t        folder_count;
+	uint32_t        finder_info[8];
+	uint16_t        embedded_signature;
+	hfs_hfs_extent_descriptor_t embedded_extent;
+	uint32_t        extents_size;
+	hfs_hfs_extent_record_t extents_extents;
+	uint32_t        catalog_size;
+	hfs_hfs_extent_record_t catalog_extents;
 } hfs_hfs_master_directory_block_t;
 
 #if 0
@@ -488,8 +452,7 @@ typedef struct
 #pragma mark Custom Types
 #endif
 
-typedef struct
-{
+typedef struct {
 	hfs_volume_header_t	vh;		/* volume header */
 	hfs_header_record_t	chr;	/* catalog file header node record*/
 	hfs_header_record_t	ehr;	/* extent overflow file header node record*/
@@ -513,14 +476,13 @@ typedef struct
 						 * callback routines */
 } hfs_volume;
 
-typedef union
-{
+typedef union {
 	/* for leaf nodes */
 	int16_t					type; /* type of record: folder, file, or thread */
 	hfs_folder_record_t	folder;
 	hfs_file_record_t		file;
 	hfs_thread_record_t	thread;
-	
+
 	/* for pointer nodes */
 	/* (using this large union for just one tiny field is not memory-efficient,
 	 *	 so change this if it becomes problematic) */ 
@@ -547,10 +509,9 @@ typedef union
  * umbrella. (E.g., if a public function makes two calls to read(), one call
  * should not be passed a uid of root and the other passed a uid of daemon.)
  */
-typedef struct
-{
+typedef struct {
 	/* The 'error' function does not take an argument. All others do. */
-	
+
 	void*	allocmem;
 	void*	reallocmem;
 	void*	freemem;
@@ -559,32 +520,30 @@ typedef struct
 	void*	read;
 } hfs_callback_args;
 
-typedef struct
-{
+typedef struct {
 	/* error(in_format, in_file, in_line, in_args) */
 	void (*error) (const char*, const char*, int, va_list);
-	
+
 	/* allocmem(in_size, cbargs) */
 	void* (*allocmem) (size_t, hfs_callback_args*);
-	
+
 	/* reallocmem(in_ptr, in_size, cbargs) */
 	void* (*reallocmem) (void*, size_t, hfs_callback_args*);
-	
+
 	/* freemem(in_ptr, cbargs) */
 	void (*freemem) (void*, hfs_callback_args*);
-	
+
 	/* openvol(in_volume, in_devicepath, cbargs)
 	 * returns 0 on success */
 	int (*openvol) (hfs_volume*, const char*, hfs_callback_args*);
-	
+
 	/* closevol(in_volume, cbargs) */
 	void (*closevol) (hfs_volume*, hfs_callback_args*);
-	
+
 	/* read(in_volume, out_buffer, in_length, in_offset, cbargs)
 	 * returns 0 on success */
 	int (*read) (hfs_volume*, void*, uint64_t, uint64_t,
 		hfs_callback_args*);
-		
 } hfs_callbacks;
 
 extern hfs_callbacks	hfs_gcb;	/* global callbacks */

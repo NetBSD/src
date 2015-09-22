@@ -172,7 +172,6 @@ FlCheckForAcpiTable (
 
 ACPI_STATUS
 FlCheckForAscii (
-    FILE                    *Handle,
     char                    *Filename,
     BOOLEAN                 DisplayErrors);
 
@@ -1009,7 +1008,7 @@ UtDoConstant (
     char                    *String);
 
 ACPI_STATUS
-UtStrtoul64 (
+stroul64 (
     char                    *String,
     UINT32                  Base,
     UINT64                  *RetInteger);

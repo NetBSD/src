@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.38 2012/10/02 23:54:52 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.38.14.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38 2012/10/02 23:54:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.38.14.1 2015/09/22 12:05:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -517,12 +517,10 @@ _hpcmips_bd_mem_alloc(bus_dma_tag_t t, bus_size_t size, bus_size_t alignment,
     bus_size_t boundary, bus_dma_segment_t *segs, int nsegs, int *rsegs,
     int flags)
 {
-	psize_t high;
-
-	high = mips_avail_end - PAGE_SIZE;
+	paddr_t high = pmap_limits.avail_end - PAGE_SIZE;
 
 	return (_hpcmips_bd_mem_alloc_range(t, size, alignment, boundary,
-	    segs, nsegs, rsegs, flags, mips_avail_start, high));
+	    segs, nsegs, rsegs, flags, pmap_limits.avail_start, high));
 }
 
 /*
@@ -537,8 +535,8 @@ _hpcmips_bd_mem_alloc_range(bus_dma_tag_t t, bus_size_t size,
 {
 #ifdef DIAGNOSTIC
 
-	high = high<(mips_avail_end - PAGE_SIZE)? high: (mips_avail_end - PAGE_SIZE);
-	low = low>mips_avail_start? low: mips_avail_start;
+	high = high<(pmap_limits.avail_end - PAGE_SIZE)? high: (pmap_limits.avail_end - PAGE_SIZE);
+	low = low>pmap_limits.avail_start? low: pmap_limits.avail_start;
 #endif
 
 	return (_bus_dmamem_alloc_range_common(t, size, alignment, boundary,

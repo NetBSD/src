@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_usbreg.h,v 1.1.2.2 2015/04/06 15:17:53 skrll Exp $	*/
+/*	$NetBSD: zynq_usbreg.h,v 1.1.2.3 2015/09/22 12:05:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2015  Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -87,7 +87,7 @@
 #define  OTGSC_HAAR		__BIT( 2)
 #define	 OTGSC_VC		__BIT( 1)
 #define	 OTGSC_VD		__BIT( 0)
-#define	ZYNQUSB_OTGMODE		0x01A8
+#define	ZYNQUSB_USBMODE		0x01A8
 #define	 USBMODE_CM		__BITS(1,0)
 #define	 USBMODE_CM_IDLE	__SHIFTIN(0, USBMODE_CM)
 #define	 USBMODE_CM_DEVICE	__SHIFTIN(2, USBMODE_CM)

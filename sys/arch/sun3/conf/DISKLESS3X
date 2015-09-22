@@ -1,4 +1,4 @@
-# $NetBSD: DISKLESS3X,v 1.56 2014/08/23 20:27:00 dholland Exp $
+# $NetBSD: DISKLESS3X,v 1.56.2.1 2015/09/22 12:05:52 skrll Exp $
 
 # DISKLESS - Root and swap on NFS
 # Desktop machines only (3/80)
@@ -39,7 +39,6 @@ options 	USERCONF	# userconf(4) support
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG		# kernel debugging code
 #options 	DIAGNOSTIC	# extra kernel sanity checking
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 
 # Compatibility options

@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.84.2.1 2015/04/06 15:17:51 skrll Exp $
+#	$NetBSD: files.amd64,v 1.84.2.2 2015/09/22 12:05:36 skrll Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -26,6 +26,12 @@ defparam opt_physmem.h	PHYSMEM_MAX_ADDR PHYSMEM_MAX_SIZE
 
 defflag			USER_LDT
 defflag eisa.h EISA
+
+# Start code
+file	arch/amd64/amd64/locore.S		machdep
+file	arch/amd64/amd64/vector.S		machdep
+file	arch/amd64/amd64/copy.S			machdep
+file	arch/amd64/amd64/spl.S			machdep
 
 file	arch/amd64/amd64/amd64func.S		machdep
 file	arch/amd64/amd64/autoconf.c		machdep

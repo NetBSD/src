@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_socket.c,v 1.19 2014/11/26 09:53:53 ozaki-r Exp $ */
+/*	$NetBSD: linux32_socket.c,v 1.19.2.1 2015/09/22 12:05:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.19 2014/11/26 09:53:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_socket.c,v 1.19.2.1 2015/09/22 12:05:55 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -416,7 +416,7 @@ linux32_getifconf(struct lwp *l, register_t *retval, void *data)
 	struct ifaddr *ifa;
 	struct sockaddr *sa;
 	struct osockaddr *osa;
-	int space = 0, error = 0;
+	int space = 0, error;
 	const int sz = (int)sizeof(ifr);
 	bool docopy;
 

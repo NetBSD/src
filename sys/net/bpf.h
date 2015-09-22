@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.66 2014/11/19 19:35:21 christos Exp $	*/
+/*	$NetBSD: bpf.h,v 1.66.2.1 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -40,6 +40,7 @@
 #ifndef _NET_BPF_H_
 #define _NET_BPF_H_
 
+#include <sys/ioccom.h>
 #include <sys/time.h>
 
 /* BSD style release date */

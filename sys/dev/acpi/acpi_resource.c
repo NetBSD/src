@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_resource.c,v 1.35.30.1 2015/06/06 14:40:06 skrll Exp $	*/
+/*	$NetBSD: acpi_resource.c,v 1.35.30.2 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.35.30.1 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_resource.c,v 1.35.30.2 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -99,6 +99,9 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 	ops = arg->ops;
 
 	switch (res->Type) {
+	case ACPI_RESOURCE_TYPE_END_TAG:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES, "EndTag\n"));
+		break;
 	case ACPI_RESOURCE_TYPE_FIXED_IO:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				     "FixedIo 0x%x/%u\n",
@@ -290,6 +293,10 @@ acpi_resource_parse_callback(ACPI_RESOURCE *res, void *context)
 				     "Address16 unimplemented\n"));
 		break;
 
+	case ACPI_RESOURCE_TYPE_ADDRESS64:
+		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
+				     "Address64 unimplemented\n"));
+		break;
 	case ACPI_RESOURCE_TYPE_EXTENDED_ADDRESS64:
 		ACPI_DEBUG_PRINT((ACPI_DB_RESOURCES,
 				     "Extended address64 unimplemented\n"));

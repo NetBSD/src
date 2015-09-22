@@ -1,4 +1,4 @@
-/*	$NetBSD: lockstat.c,v 1.19.4.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: lockstat.c,v 1.19.4.2 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -40,22 +40,25 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.19.4.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lockstat.c,v 1.19.4.2 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-#include <sys/proc.h> 
+#include <sys/proc.h>
 #include <sys/resourcevar.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 #include <sys/syslog.h>
 #include <sys/atomic.h>
 
 #include <dev/lockstat.h>
 
 #include <machine/lock.h>
+
+#include "ioconf.h"
 
 #ifndef __HAVE_CPU_COUNTER
 #error CPU counters not available
@@ -84,7 +87,6 @@ typedef struct lscpu {
 
 typedef struct lslist lslist_t;
 
-void	lockstatattach(int);
 void	lockstat_start(lsenable_t *);
 int	lockstat_alloc(lsenable_t *);
 void	lockstat_init_tables(lsenable_t *);
@@ -333,7 +335,7 @@ lockstat_alloc(lsenable_t *le)
 	KASSERT(lockstat_baseb == NULL);
 	lockstat_sizeb = sz;
 	lockstat_baseb = lb;
-		
+
 	return (0);
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.14.2.1 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: MINI2440,v 1.14.2.2 2015/09/22 12:05:40 skrll Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -129,7 +129,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 #options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
 #options 	LKM		# loadable kernel modules
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages

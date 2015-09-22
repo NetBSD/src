@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_oioc.c,v 1.4 2011/02/20 07:59:50 matt Exp $	*/
+/*	$NetBSD: if_le_oioc.c,v 1.4.32.1 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.4 2011/02/20 07:59:50 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_oioc.c,v 1.4.32.1 2015/09/22 12:05:51 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -188,7 +188,8 @@ le_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate a contiguous chunk of physical memory for the le buffer. */
 	error = uvm_pglistalloc(OIOC_LANCE_NPAGES * PAGE_SIZE,
-	    mips_avail_start, mips_avail_end, PAGE_SIZE, 0, &mlist, 1, 0);
+	    pmap_limits.avail_start, pmap_limits.avail_end, PAGE_SIZE, 0,
+	    &mlist, 1, 0);
 	if (error) {
 		aprint_error(": failed to allocate ioc<->lance buffer space, "
 		    "error = %d\n", error);

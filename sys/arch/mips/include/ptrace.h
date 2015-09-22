@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.12 2008/01/25 12:03:36 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.12.74.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,6 +53,11 @@
 	"PT_GETFPREGS", \
 	"PT_SETFPREGS",
 
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->r_regs[35]
+#define PTRACE_REG_SET_PC(r, v)	(r)->r_regs[35] = (v)
+#define PTRACE_REG_SP(r)	(r)->r_regs[29]
+#define PTRACE_REG_INTRV(r)	(r)->r_regs[2]
 /*
  * Glue for gdb: map NetBSD register names to legacy ptrace register names
  */

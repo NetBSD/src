@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.46 2014/07/02 18:58:42 riastradh Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.46.4.1 2015/09/22 12:06:12 skrll Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.46 2014/07/02 18:58:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.46.4.1 2015/09/22 12:06:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.46 2014/07/02 18:58:42 riastradh Ex
 #include <opencrypto/xform.h>
 
 #include <opencrypto/cryptosoft_xform.c>
+
+#include "ioconf.h"
 
 union authctx {
 	MD5_CTX md5ctx;
@@ -1317,7 +1319,6 @@ swcr_init(void)
 /*
  * Pseudo-device init routine for software crypto.
  */
-void	swcryptoattach(int);
 
 void
 swcryptoattach(int num)

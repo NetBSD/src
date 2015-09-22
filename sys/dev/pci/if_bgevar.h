@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.17.6.1 2015/06/06 14:40:09 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.17.6.2 2015/09/22 12:05:59 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -338,6 +338,7 @@ struct bge_softc {
 	int			bge_txcnt;
 	struct callout		bge_timeout;
 	int			bge_pending_rxintr_change;
+	int			bge_detaching;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
 

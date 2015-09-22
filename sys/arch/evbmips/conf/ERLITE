@@ -1,11 +1,11 @@
-#	$NetBSD: ERLITE,v 1.9.2.2 2015/06/06 14:39:59 skrll Exp $
+#	$NetBSD: ERLITE,v 1.9.2.3 2015/09/22 12:05:41 skrll Exp $
 
 include 	"arch/mips/conf/std.octeon"
 include 	"arch/evbmips/conf/files.octeon"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"ERLITE-$Revision: 1.9.2.2 $"
+#ident 		"ERLITE-$Revision: 1.9.2.3 $"
 
 maxusers	32
 
@@ -75,7 +75,7 @@ file-system	MSDOSFS		# MS-DOS FAT filesystem(s).
 file-system	PTYFS		# /dev/pts/N support
 
 # File system options
-#options 	NFSSERVER	# Sun NFS-compatible filesystem server
+options 	NFSSERVER	# Sun NFS-compatible filesystem server
 #options 	QUOTA		# legacy UFS quotas
 #options 	QUOTA2		# new, in-filesystem UFS quotas
 #options 	FFS_EI		# FFS Endian Independent support
@@ -113,7 +113,6 @@ options 	MIIVERBOSE	# verbose PHY autoconfig messages
 #options 	PCI_NETBSD_ENABLE_IDE=0x1
 
 options 	NFS_BOOT_DHCP
-options 	NFS_V2_ONLY
 
 config		netbsd	root on ? type ?
 #config		netbsd	root on cnmac0 type nfs
@@ -121,6 +120,7 @@ config		netbsd	root on ? type ?
 mainbus0	at root
 cpunode0	at mainbus?
 cpu*		at cpunode? core ?
+wdog0		at cpunode0 flags 0		# flags 1 will enable it on boot
 
 iobus0		at mainbus?
 bootbus0	at mainbus?

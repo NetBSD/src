@@ -1,4 +1,4 @@
-/*	$NetBSD: cache_r3k.c,v 1.5 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: cache_r3k.c,v 1.5.32.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,10 +36,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache_r3k.c,v 1.5 2011/02/20 07:45:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache_r3k.c,v 1.5.32.1 2015/09/22 12:05:47 skrll Exp $");
 
 #include <sys/param.h>
 
+#include <mips/cpuregs.h>
 #include <mips/cache.h>
 #include <mips/cache_r3k.h>
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.3.2.3 2015/06/06 14:39:58 skrll Exp $
+#	$NetBSD: JETSONTK1,v 1.3.2.4 2015/09/22 12:05:40 skrll Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -16,8 +16,8 @@ options 	MULTIPROCESSOR
 #options 	MEMSIZE=2048
 
 options 	DIAGNOSTIC	# internal consistency checks
-options 	DEBUG
-options 	LOCKDEBUG
+#options 	DEBUG
+#options 	LOCKDEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	IPKDB		# remote kernel debugging
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
@@ -100,10 +100,10 @@ tegrartc0	at tegraio?		# RTC
 # SDMMC
 sdhc2		at tegraio? port 2	# SDMMC3 (SD card)
 sdmmc2		at sdhc2
-#sdhc3		at tegraio? port 3	# SDMMC4 (eMMC)
-#sdmmc3		at sdhc3
+sdhc3		at tegraio? port 3	# SDMMC4 (eMMC)
+sdmmc3		at sdhc3
 
-#ld0		at sdmmc3		# eMMC
+ld0		at sdmmc3		# eMMC
 ld1		at sdmmc2		# SD card
 
 # SATA
@@ -146,6 +146,8 @@ pseudo-device	wsfont
 
 # HDMI
 tegrahdmi0	at tegraio?		# HDMI
+tegracec0	at tegraio?		# HDMI CEC
+hdmicec*	at hdmicecbus?
 
 # USB 2.0
 ehci0		at tegraio? port 0	# USB1

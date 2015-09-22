@@ -1,4 +1,4 @@
-/*	$NetBSD: auxioreg.h,v 1.7 2008/05/29 14:51:26 mrg Exp $	*/
+/*	$NetBSD: auxioreg.h,v 1.7.62.1 2015/09/22 12:05:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Matthew R. Green
@@ -29,7 +29,7 @@
 /*
  * The AUXIO registers; their offset in the Ebus2 address space, plus the
  * bits for each register.  Note that the fdthree (FD), SUNW,CS4231 (AUDIO)
- * and power (POWER) devices on the Ebus2 have their AUXIO regsiters mapped
+ * and power (POWER) devices on the Ebus2 have their AUXIO registers mapped
  * into their own "reg" properties, not the "auxio" device's "reg" properties.
  */
 #define	AUXIO_FD			0x00720000

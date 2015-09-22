@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.2.2.2 2015/06/06 14:39:59 skrll Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.2.2.3 2015/09/22 12:05:41 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.2.2 2015/06/06 14:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.2.3 2015/09/22 12:05:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,7 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2.2.2 2015/06/06 14:39:59 skrll Exp $
 
 #include <net/if_ether.h>
 
-#include <machine/cpu.h>
+#include <mips/cpu.h>
+#include <mips/locore.h>
 
 #include <evbmips/cavium/octeon_uboot.h>
 
@@ -65,6 +66,7 @@ cpu_configure(void)
 
 	/* XXX need this? */
 	(void)spl0();
+	KDASSERT(mips_cp0_status_read() & MIPS_SR_INT_IE);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$NetBSD: hci.h,v 1.39 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: hci.h,v 1.39.4.1 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -54,7 +54,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $Id: hci.h,v 1.39 2014/07/01 05:49:18 rtr Exp $
+ * $Id: hci.h,v 1.39.4.1 2015/09/22 12:06:11 skrll Exp $
  * $FreeBSD: src/sys/netgraph/bluetooth/include/ng_hci.h,v 1.6 2005/01/07 01:45:43 imp Exp $
  */
 
@@ -75,6 +75,8 @@
 #define _NETBT_HCI_H_
 
 #include <netbt/bluetooth.h>
+
+#include <sys/ioccom.h>
 
 /**************************************************************************
  **************************************************************************

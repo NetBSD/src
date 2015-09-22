@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mips,v 1.61 2014/11/15 15:01:41 uebayasi Exp $
+#	$NetBSD: Makefile.mips,v 1.61.2.1 2015/09/22 12:05:47 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -102,7 +102,6 @@ TEXTADDR?=		${DEFTEXTADDR}
 .endif
 KERNLDSCRIPT?=		${MIPS}/conf/kern.ldscript
 # some mips ports specify a "magic" format
-LINKSCRIPT=		-T ${KERNLDSCRIPT}
 EXTRA_LINKFLAGS=	${GP} ${LDOPTS}
 LINKFLAGS_NORMAL=	-X
 STRIPFLAGS=		-g -X

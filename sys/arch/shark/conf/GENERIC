@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.121 2014/11/16 16:01:43 manu Exp $
+#	$NetBSD: GENERIC,v 1.121.2.1 2015/09/22 12:05:51 skrll Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.121 $"
+#ident		"GENERIC-$Revision: 1.121.2.1 $"
 
 # estimated number of users
 maxusers	32
@@ -143,7 +143,6 @@ options 	INSECURE		# disable kernel securelevel
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics, XXX temp required
-options 	KMEMSTATS	# kernel memory statistics, XXX temp required
 options 	USERCONF	# userconf(4) support
 #options 	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel

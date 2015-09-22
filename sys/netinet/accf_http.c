@@ -1,4 +1,4 @@
-/*	$NetBSD: accf_http.c,v 1.8 2014/02/25 18:30:12 pooka Exp $	*/
+/*	$NetBSD: accf_http.c,v 1.8.6.1 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Paycounter, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.8 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.8.6.1 2015/09/22 12:06:11 skrll Exp $");
 
 #define ACCEPT_FILTER_MOD
 
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: accf_http.c,v 1.8 2014/02/25 18:30:12 pooka Exp $");
 #include <sys/socketvar.h>
 
 #include <netinet/accept_filter.h>
+
+#include "ioconf.h"
 
 MODULE(MODULE_CLASS_MISC, accf_httpready, NULL);
 
@@ -71,9 +73,6 @@ static struct accept_filter accf_http_filter = {
 #define ACCFCTL_PARSEVER	1	/* Parse HTTP version */
 
 static int parse_http_version = 1;
-
-/* XXX pseudo-device */
-void	accf_httpattach(int);
 
 void
 accf_httpattach(int junk)

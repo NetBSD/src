@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.15 2014/11/17 10:00:14 jmcneill Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.15.2.1 2015/09/22 12:05:36 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
 #define AWIN_HDMI_PLL	3	/* PLL7 or PLL3 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.15 2014/11/17 10:00:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.15.2.1 2015/09/22 12:05:36 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,6 +99,8 @@ static int	awin_hdmi_i2c_reset(struct awin_hdmi_softc *, int);
 
 static void	awin_hdmi_enable(struct awin_hdmi_softc *);
 static void	awin_hdmi_read_edid(struct awin_hdmi_softc *);
+static int	awin_hdmi_read_edid_block(struct awin_hdmi_softc *, uint8_t *,
+					  uint8_t);
 static u_int	awin_hdmi_get_display_mode(struct awin_hdmi_softc *,
 					   const struct edid_info *);
 static void	awin_hdmi_video_enable(struct awin_hdmi_softc *, bool);
@@ -486,6 +488,29 @@ awin_hdmi_enable(struct awin_hdmi_softc *sc)
 	delay(1000);
 }
 
+static int
+awin_hdmi_read_edid_block(struct awin_hdmi_softc *sc, uint8_t *data,
+    uint8_t block)
+{
+	i2c_tag_t tag = &sc->sc_ic;
+	uint8_t wbuf[2];
+	int error;
+
+	if ((error = iic_acquire_bus(tag, I2C_F_POLL)) != 0)
+		return error;
+
+	wbuf[0] = block;	/* start address */
+
+	if ((error = iic_exec(tag, I2C_OP_READ_WITH_STOP, DDC_ADDR, wbuf, 1,
+	    data, 128, I2C_F_POLL)) != 0) {
+		iic_release_bus(tag, I2C_F_POLL);
+		return error;
+	}
+	iic_release_bus(tag, I2C_F_POLL);
+
+	return 0;
+}
+
 static void
 awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 {
@@ -499,7 +524,7 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 	memset(&ei, 0, sizeof(ei));
 
 	while (--retry > 0) {
-		if (!ddc_read_edid_block(&sc->sc_ic, edid, sizeof(edid), 0))
+		if (!awin_hdmi_read_edid_block(sc, edid, 0))
 			break;
 	}
 	if (retry == 0) {
@@ -566,7 +591,7 @@ awin_hdmi_get_display_mode(struct awin_hdmi_softc *sc,
 	 * found in that, assume HDMI mode.
 	 */
 	for (n = 1; n <= MIN(ei->edid_ext_block_count, 4); n++) {
-		if (ddc_read_edid_block(&sc->sc_ic, edid, sizeof(edid), n)) {
+		if (awin_hdmi_read_edid_block(sc, edid, n)) {
 #ifdef AWIN_HDMI_DEBUG
 			device_printf(sc->sc_dev,
 			    "Failed to read EDID block %d\n", n);

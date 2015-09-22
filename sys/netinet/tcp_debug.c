@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_debug.c,v 1.28 2009/04/18 14:58:05 tsutsui Exp $	*/
+/*	$NetBSD: tcp_debug.c,v 1.28.40.1 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,10 +61,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.28 2009/04/18 14:58:05 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_debug.c,v 1.28.40.1 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_tcp_debug.h"
+#endif
 
 /* load symbolic names */
 #define	PRUREQUESTS

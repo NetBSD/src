@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.39.2.2 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.39.2.3 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  *	VOP_CREATE(9) and VOP_LOOKUP(9).  The life-cycle of a vnode
  *	starts in one of the following ways:
  *
- *	- Allocation, via getnewvnode(9) and/or vnalloc(9).
+ *	- Allocation, via vcache_get(9) or vcache_new(9).
  *	- Reclamation of inactive vnode, via vget(9).
  *
  *	Recycle from a free list, via getnewvnode(9) -> getcleanvnode(9)
@@ -116,7 +116,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39.2.2 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.39.2.3 2015/09/22 12:06:07 skrll Exp $");
 
 #define _VFS_VNODE_PRIVATE
 
@@ -162,7 +162,6 @@ struct vcache_node {
 u_int			numvnodes		__cacheline_aligned;
 
 static pool_cache_t	vnode_cache		__read_mostly;
-static struct mount	*dead_mount;
 
 /*
  * There are two free lists: one is for vnodes which have no buffer/page
@@ -201,6 +200,7 @@ static void		vnpanic(vnode_t *, const char *, ...)
 static void		vwait(vnode_t *, int);
 
 /* Routines having to do with the management of the vnode table. */
+extern struct mount	*dead_rootmount;
 extern int		(**dead_vnodeop_p)(void *);
 extern struct vfsops	dead_vfsops;
 
@@ -213,9 +213,9 @@ vfs_vnode_sysinit(void)
 	    NULL, IPL_NONE, NULL, NULL, NULL);
 	KASSERT(vnode_cache != NULL);
 
-	dead_mount = vfs_mountalloc(&dead_vfsops, NULL);
-	KASSERT(dead_mount != NULL);
-	dead_mount->mnt_iflag = IMNT_MPSAFE;
+	dead_rootmount = vfs_mountalloc(&dead_vfsops, NULL);
+	KASSERT(dead_rootmount != NULL);
+	dead_rootmount->mnt_iflag = IMNT_MPSAFE;
 
 	mutex_init(&vnode_free_list_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&vnode_free_list);
@@ -368,89 +368,6 @@ try_nextlist:
 	fstrans_done(mp);
 
 	return 0;
-}
-
-/*
- * getnewvnode: return a fresh vnode.
- *
- * => Returns referenced vnode, moved into the mount queue.
- * => Shares the interlock specified by 'slock', if it is not NULL.
- */
-int
-getnewvnode(enum vtagtype tag, struct mount *mp, int (**vops)(void *),
-    kmutex_t *slock, vnode_t **vpp)
-{
-	struct uvm_object *uobj __diagused;
-	vnode_t *vp;
-	int error = 0;
-
-	if (mp != NULL) {
-		/*
-		 * Mark filesystem busy while we are creating a vnode.
-		 * If unmount is in progress, this will fail.
-		 */
-		error = vfs_busy(mp, NULL);
-		if (error)
-			return error;
-	}
-
-	vp = NULL;
-
-	/* Allocate a new vnode. */
-	vp = vnalloc(NULL);
-
-	KASSERT(vp->v_freelisthd == NULL);
-	KASSERT(LIST_EMPTY(&vp->v_nclist));
-	KASSERT(LIST_EMPTY(&vp->v_dnclist));
-	KASSERT(vp->v_data == NULL);
-
-	/* Initialize vnode. */
-	vp->v_tag = tag;
-	vp->v_op = vops;
-
-	uobj = &vp->v_uobj;
-	KASSERT(uobj->pgops == &uvm_vnodeops);
-	KASSERT(uobj->uo_npages == 0);
-	KASSERT(TAILQ_FIRST(&uobj->memq) == NULL);
-
-	/* Share the vnode_t::v_interlock, if requested. */
-	if (slock) {
-		/* Set the interlock and mark that it is shared. */
-		KASSERT(vp->v_mount == NULL);
-		mutex_obj_hold(slock);
-		uvm_obj_setlock(&vp->v_uobj, slock);
-		KASSERT(vp->v_interlock == slock);
-	}
-
-	/* Finally, move vnode into the mount queue. */
-	vfs_insmntque(vp, mp);
-
-	if (mp != NULL) {
-		if ((mp->mnt_iflag & IMNT_MPSAFE) != 0)
-			vp->v_vflag |= VV_MPSAFE;
-		vfs_unbusy(mp, true, NULL);
-	}
-
-	*vpp = vp;
-	return 0;
-}
-
-/*
- * This is really just the reverse of getnewvnode(). Needed for
- * VFS_VGET functions who may need to push back a vnode in case
- * of a locking race.
- */
-void
-ungetnewvnode(vnode_t *vp)
-{
-
-	KASSERT(vp->v_usecount == 1);
-	KASSERT(vp->v_data == NULL);
-	KASSERT(vp->v_freelisthd == NULL);
-
-	mutex_enter(vp->v_interlock);
-	vp->v_iflag |= VI_CLEAN;
-	vrelel(vp, 0);
 }
 
 /*
@@ -956,7 +873,7 @@ static void
 vclean(vnode_t *vp)
 {
 	lwp_t *l = curlwp;
-	bool recycle, active, doclose;
+	bool recycle, active;
 	int error;
 
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -969,8 +886,6 @@ vclean(vnode_t *vp)
 	}
 
 	active = (vp->v_usecount > 1);
-	doclose = ! (active && vp->v_type == VBLK &&
-	    spec_node_getmountedfs(vp) != NULL);
 	mutex_exit(vp->v_interlock);
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
@@ -995,18 +910,16 @@ vclean(vnode_t *vp)
 	 * deactivated before being reclaimed. Note that the
 	 * VOP_INACTIVE will unlock the vnode.
 	 */
-	if (doclose) {
-		error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
-		if (error != 0) {
-			if (wapbl_vphaswapbl(vp))
-				WAPBL_DISCARD(wapbl_vptomp(vp));
-			error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
-		}
-		KASSERT(error == 0);
-		KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
-		if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
-			 spec_node_revoke(vp);
-		}
+	error = vinvalbuf(vp, V_SAVE, NOCRED, l, 0, 0);
+	if (error != 0) {
+		if (wapbl_vphaswapbl(vp))
+			WAPBL_DISCARD(wapbl_vptomp(vp));
+		error = vinvalbuf(vp, 0, NOCRED, l, 0, 0);
+	}
+	KASSERT(error == 0);
+	KASSERT((vp->v_iflag & VI_ONWORKLST) == 0);
+	if (active && (vp->v_type == VBLK || vp->v_type == VCHR)) {
+		 spec_node_revoke(vp);
 	}
 	if (active) {
 		VOP_INACTIVE(vp, &recycle);
@@ -1036,19 +949,14 @@ vclean(vnode_t *vp)
 
 	/* Move to dead mount. */
 	vp->v_vflag &= ~VV_ROOT;
-	atomic_inc_uint(&dead_mount->mnt_refcnt);
-	vfs_insmntque(vp, dead_mount);
+	atomic_inc_uint(&dead_rootmount->mnt_refcnt);
+	vfs_insmntque(vp, dead_rootmount);
 
 	/* Done with purge, notify sleepers of the grim news. */
 	mutex_enter(vp->v_interlock);
-	if (doclose) {
-		vp->v_op = dead_vnodeop_p;
-		vp->v_vflag |= VV_LOCKSWORK;
-		vp->v_iflag |= VI_CLEAN;
-	} else {
-		vp->v_op = spec_vnodeop_p;
-		vp->v_vflag &= ~VV_LOCKSWORK;
-	}
+	vp->v_op = dead_vnodeop_p;
+	vp->v_vflag |= VV_LOCKSWORK;
+	vp->v_iflag |= VI_CLEAN;
 	vp->v_tag = VT_NON;
 	KNOTE(&vp->v_klist, NOTE_REVOKE);
 	vp->v_iflag &= ~VI_XLOCK;

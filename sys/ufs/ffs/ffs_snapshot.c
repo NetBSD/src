@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.137.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.137.2.2 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.137.2.1 2015/04/06 15:18:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.137.2.2 2015/09/22 12:06:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -82,7 +82,7 @@ TAILQ_HEAD(inodelst, inode);			/* List of active snapshots */
 struct snap_info {
 	kmutex_t si_lock;			/* Lock this snapinfo */
 	kmutex_t si_snaplock;			/* Snapshot vnode common lock */
-	lwp_t *si_owner;			/* Sanplock owner */
+	lwp_t *si_owner;			/* Snaplock owner */
 	struct inodelst si_snapshots;		/* List of active snapshots */
 	daddr_t *si_snapblklist;		/* Snapshot block hints list */
 	uint32_t si_gen;			/* Incremented on change */
@@ -198,12 +198,12 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	/*
 	 * If the vnode already is a snapshot, return.
 	 */
-	if ((VTOI(vp)->i_flags & SF_SNAPSHOT)) {
-		if ((VTOI(vp)->i_flags & SF_SNAPINVAL))
+	if ((ip->i_flags & SF_SNAPSHOT)) {
+		if ((ip->i_flags & SF_SNAPINVAL))
 			return EINVAL;
 		if (ctime) {
-			ctime->tv_sec = DIP(VTOI(vp), mtime);
-			ctime->tv_nsec = DIP(VTOI(vp), mtimensec);
+			ctime->tv_sec = DIP(ip, mtime);
+			ctime->tv_nsec = DIP(ip, mtimensec);
 		}
 		return 0;
 	}
@@ -269,9 +269,9 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * Create a copy of the superblock and its summary information.
 	 */
 	error = snapshot_copyfs(mp, vp, &sbbuf);
-	copy_fs = (struct fs *)((char *)sbbuf + ffs_blkoff(fs, fs->fs_sblockloc));
 	if (error)
 		goto out;
+	copy_fs = (struct fs *)((char *)sbbuf + ffs_blkoff(fs, fs->fs_sblockloc));
 	/*
 	 * Expunge unlinked files from our view.
 	 */
@@ -567,7 +567,7 @@ snapshot_copyfs(struct mount *mp, struct vnode *vp, void **sbbuf)
 	memcpy(copyfs, fs, fs->fs_sbsize);
 	size = fs->fs_bsize < SBLOCKSIZE ? fs->fs_bsize : SBLOCKSIZE;
 	if (fs->fs_sbsize < size)
-		memset((char *)(*sbbuf) + loc + fs->fs_sbsize, 0, 
+		memset((char *)(*sbbuf) + loc + fs->fs_sbsize, 0,
 		    size - fs->fs_sbsize);
 	size = ffs_blkroundup(fs, fs->fs_cssize);
 	if (fs->fs_contigsumsize > 0)
@@ -1558,7 +1558,7 @@ ffs_snapblkfree(struct fs *fs, struct vnode *devvp, daddr_t bno,
 	mutex_enter(&si->si_snaplock);
 	mutex_enter(&si->si_lock);
 	si->si_owner = curlwp;
-		
+
 retry:
 	gen = si->si_gen;
 	TAILQ_FOREACH(ip, &si->si_snapshots, i_nextsnap) {

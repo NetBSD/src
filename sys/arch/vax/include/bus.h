@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.31 2008/04/28 20:23:39 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.31.64.1 2015/09/22 12:05:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -184,7 +184,11 @@ struct vax_bus_space {
 
 #define bus_space_free(t, h, s)						\
 	(*(t)->vbs_free)((t)->vbs_cookie, (h), (s))
-
+/*
+ * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
+ */
+#define bus_space_vaddr(t, h)						\
+	((void *) (h))
 /*
  * Mmap bus space for a user application.
  */

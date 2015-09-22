@@ -1,4 +1,4 @@
-/*	$NetBSD: bcopy.S,v 1.14 2011/01/31 12:10:58 skrll Exp $	*/
+/*	$NetBSD: bcopy.S,v 1.14.32.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #if defined(SPCOPY) && !defined(_STANDALONE)
 
+#include "opt_diagnostic.h"
 #include "opt_multiprocessor.h"
 
 #include <machine/cpu.h>
@@ -49,7 +50,7 @@
 #include <machine/reg.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-RCSID("$NetBSD: bcopy.S,v 1.14 2011/01/31 12:10:58 skrll Exp $")
+RCSID("$NetBSD: bcopy.S,v 1.14.32.1 2015/09/22 12:06:07 skrll Exp $")
 #endif /* LIBC_SCCS and not lint */
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.c,v 1.33 2014/08/05 07:55:31 rtr Exp $	*/
+/*	$NetBSD: btsco.c,v 1.33.4.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.33 2014/08/05 07:55:31 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btsco.c,v 1.33.4.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -798,7 +798,9 @@ btsco_start_output(void *hdl, void *block, int blksize,
 	sc->sc_tx_intr = intr;
 	sc->sc_tx_intrarg = intrarg;
 
+	kpreempt_disable();
 	softint_schedule(sc->sc_intr);
+	kpreempt_enable();
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_output.c,v 1.52 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: ieee80211_output.c,v 1.52.2.1 2015/09/22 12:06:11 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,10 +36,12 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_output.c,v 1.34 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.52 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_output.c,v 1.52.2.1 2015/09/22 12:06:11 skrll Exp $");
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #ifdef __NetBSD__
 #endif /* __NetBSD__ */

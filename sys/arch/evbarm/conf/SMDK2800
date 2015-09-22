@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.56 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: SMDK2800,v 1.56.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -109,7 +109,6 @@ options		COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #XXX: options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	PCIVERBOSE	# Verbose PCI descriptions
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.7.8.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.7.8.3 2015/09/22 12:06:17 skrll Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.2 2015/06/06 14:40:30 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.3 2015/09/22 12:06:17 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -44,7 +44,7 @@ __KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.2 2015/06/06 14:40:30 skrll
 #define	WRITE_S			"lfs_write"
 #define	BUFRD			lfs_bufrd
 #define	BUFWR			lfs_bufwr
-#define	fs_bsize		lfs_bsize
+#define	fs_sb_getbsize(fs)	lfs_sb_getbsize(fs)
 #define	fs_bmask		lfs_bmask
 #else
 #define	FS			struct fs
@@ -55,6 +55,7 @@ __KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.2 2015/06/06 14:40:30 skrll
 #define	WRITE_S			"ffs_write"
 #define	BUFRD			ffs_bufrd
 #define	BUFWR			ffs_bufwr
+#define fs_sb_getbsize(fs)	(fs)->fs_bsize
 #endif
 
 static int	ulfs_post_read_update(struct vnode *, int, int);
@@ -186,7 +187,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 		nextlbn = lbn + 1;
 		size = lfs_blksize(fs, ip, lbn);
 		blkoffset = lfs_blkoff(fs, uio->uio_offset);
-		xfersize = MIN(MIN(fs->fs_bsize - blkoffset, uio->uio_resid),
+		xfersize = MIN(MIN(fs_sb_getbsize(fs) - blkoffset, uio->uio_resid),
 		    bytesinfile);
 
 		if (lfs_lblktosize(fs, nextlbn) >= ip->i_size)
@@ -336,7 +337,7 @@ WRITE(void *v)
 			goto out;
 		if (flags & B_SYNC) {
 			mutex_enter(vp->v_interlock);
-			VOP_PUTPAGES(vp, trunc_page(osize & fs->fs_bmask),
+			VOP_PUTPAGES(vp, trunc_page(osize & lfs_sb_getbmask(fs)),
 			    round_page(eob),
 			    PGO_CLEANIT | PGO_SYNCIO);
 		}
@@ -353,7 +354,7 @@ WRITE(void *v)
 
 		oldoff = uio->uio_offset;
 		blkoffset = lfs_blkoff(fs, uio->uio_offset);
-		bytelen = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
+		bytelen = MIN(fs_sb_getbsize(fs) - blkoffset, uio->uio_resid);
 		if (bytelen == 0) {
 			break;
 		}
@@ -442,7 +443,7 @@ WRITE(void *v)
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
 		mutex_enter(vp->v_interlock);
-		error = VOP_PUTPAGES(vp, trunc_page(origoff & fs->fs_bmask),
+		error = VOP_PUTPAGES(vp, trunc_page(origoff & lfs_sb_getbmask(fs)),
 		    round_page(lfs_blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO);
 	}
@@ -514,15 +515,15 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	while (uio->uio_resid > 0) {
 		lbn = lfs_lblkno(fs, uio->uio_offset);
 		blkoffset = lfs_blkoff(fs, uio->uio_offset);
-		xfersize = MIN(fs->fs_bsize - blkoffset, uio->uio_resid);
-		if (fs->fs_bsize > xfersize)
+		xfersize = MIN(fs_sb_getbsize(fs) - blkoffset, uio->uio_resid);
+		if (fs_sb_getbsize(fs) > xfersize)
 			flags |= B_CLRBUF;
 		else
 			flags &= ~B_CLRBUF;
 
 #ifdef LFS_READWRITE
 		error = lfs_reserve(fs, vp, NULL,
-		    lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    lfs_btofsb(fs, (ULFS_NIADDR + 1) << lfs_sb_getbshift(fs)));
 		if (error)
 			break;
 		need_unreserve = true;
@@ -556,7 +557,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #ifdef LFS_READWRITE
 		(void)VOP_BWRITE(bp->b_vp, bp);
 		lfs_reserve(fs, vp, NULL,
-		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << lfs_sb_getbshift(fs)));
 		need_unreserve = false;
 #else
 		if (ioflag & IO_SYNC)
@@ -572,7 +573,7 @@ BUFWR(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 #ifdef LFS_READWRITE
 	if (need_unreserve) {
 		lfs_reserve(fs, vp, NULL,
-		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << fs->lfs_bshift));
+		    -lfs_btofsb(fs, (ULFS_NIADDR + 1) << lfs_sb_getbshift(fs)));
 	}
 #endif
 

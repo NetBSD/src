@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_var.h,v 1.9.2.3 2015/06/06 14:39:55 skrll Exp $ */
+/* $NetBSD: amlogic_var.h,v 1.9.2.4 2015/09/22 12:05:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,6 +72,9 @@ bool	amlogic_sdhc_is_card_present(int);
 #define AMLOGIC_SDHC_PORT_A	0
 #define AMLOGIC_SDHC_PORT_B	1
 #define AMLOGIC_SDHC_PORT_C	2
+void	amlogic_sdhc_set_voltage(int, int);
+#define AMLOGIC_SDHC_VOL_330	0
+#define AMLOGIC_SDHC_VOL_180	1
 
 int	amlogic_sdio_select_port(int);
 #define AMLOGIC_SDIO_PORT_A	0

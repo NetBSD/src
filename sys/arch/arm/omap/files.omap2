@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.29.2.1 2015/06/06 14:39:56 skrll Exp $
+#	$NetBSD: files.omap2,v 1.29.2.2 2015/09/22 12:05:38 skrll Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -173,6 +173,10 @@ file	arch/arm/omap/omap3_sdma.c		omapdma needs-flag
 device	edma
 attach	edma at obio
 file	arch/arm/omap/omap_edma.c		edma needs-flag
+
+device	trng
+attach	trng at obio
+file	arch/arm/omap/am335x_trng.c		trng
 
 # these bus space methods are not bus-specific ...
 #

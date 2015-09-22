@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.24.30.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.24.30.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -35,14 +35,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.30.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.24.30.2 2015/09/22 12:05:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
 #include <sys/systm.h>
 
-#include <mips/reg.h>
+#include <mips/locore.h>
 #include <mips/mips_opcode.h>
+#include <mips/reg.h>
 
 #include <machine/db_machdep.h>
 
@@ -118,8 +119,24 @@ static const char * const spec3_name[64] = {
 	[OP_DINSM] = "dinsm",
 	[OP_DINSU] = "dinsu",
 	[OP_DINS] = "dins",
+	[OP_LWLE] = "lwle",
+	[OP_LWRE] = "lwre",
+	[OP_CACHEE] = "cachee",
+	[OP_SBE] = "sbe",
+	[OP_SHE] = "she",
+	[OP_SCE] = "sce",
+	[OP_SWE] = "swe",
 	[OP_BSHFL] = "bshfl",
+	[OP_SWLE] = "swle",
+	[OP_SWRE] = "swre",
+	[OP_PREFE] = "prefe",
 	[OP_DBSHFL] = "dbshfl",
+	[OP_LBUE] = "lbue",
+	[OP_LHUE] = "lhue",
+	[OP_LBE] = "lbe",
+	[OP_LHE] = "lhe",
+	[OP_LLE] = "lle",
+	[OP_LWE] = "lwe",
 	[OP_RDHWR] = "rdhwr",
 };
 
@@ -202,7 +219,7 @@ static void print_addr(db_addr_t);
 db_addr_t
 db_disasm(db_addr_t loc, bool altfmt)
 {
-	u_int32_t instr;
+	uint32_t instr;
 
 	/*
 	 * Take some care with addresses to not UTLB here as it
@@ -217,7 +234,7 @@ db_disasm(db_addr_t loc, bool altfmt)
 		}
 	}
 	else {
-		instr =  *(u_int32_t *)loc;
+		instr =  *(uint32_t *)loc;
 	}
 
 	return (db_disasm_insn(instr, loc, altfmt));
@@ -243,11 +260,25 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			db_printf("nop");
 			break;
 		}
+		if (i.word == (1 << 6)) {
+			db_printf("ssnop");
+			break;
+		}
+		if (i.word == (3 << 6)) {
+			db_printf("ehb");
+			break;
+		}
 		/* XXX
 		 * "addu" is a "move" only in 32-bit mode.  What's the correct
 		 * answer - never decode addu/daddu as "move"?
 		 */
-		if (i.RType.func == OP_ADDU && i.RType.rt == 0) {
+		if (true
+#ifdef __mips_o32
+		    && i.RType.func == OP_ADDU
+#else
+		    && i.RType.func == OP_DADDU
+#endif
+		    && i.RType.rt == 0) {
 			db_printf("move\t%s,%s",
 			    reg_name[i.RType.rd],
 			    reg_name[i.RType.rs]);
@@ -260,14 +291,13 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 		    && i.RType.shamt == 1) {
 			name = (i.RType.func == OP_DSRL) ? "drotr" : "drotrv";
 		}
-		
+
 		db_printf("%s", name);
 		switch (i.RType.func) {
 		case OP_SLL:
 		case OP_SRL:
 		case OP_SRA:
 		case OP_DSLL:
-
 		case OP_DSRL:
 		case OP_DSRA:
 		case OP_DSLL32:
@@ -298,7 +328,8 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 		case OP_JR:
 		case OP_JALR:
-			db_printf("\t%s", reg_name[i.RType.rs]);
+			db_printf("\t%s%s", reg_name[i.RType.rs],
+			    (insn & __BIT(10)) ? ".hb" : "");
 			bdslot = true;
 			break;
 		case OP_MTLO:
@@ -422,15 +453,16 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 			break;
 		}
 		if (i.RType.func <= OP_DINS) {
-			int lsb = i.RType.shamt
-			    + ((i.RType.func & 3) == 2) ? 32 : 0;
-			int msb = i.RType.rd
-			    + (((i.RType.func - 1) & 3) < 2) ? 32 : 0;
+			int pos = i.RType.shamt;
+			int size = i.RType.rd - pos + 1;
+			size += (((i.RType.func & 3) == 1) ? 32 : 0);
+			pos  += (((i.RType.func & 3) == 2) ? 32 : 0);
+
 			db_printf("%s\t%s,%s,%d,%d",
 				spec3_name[i.RType.func],
 				reg_name[i.RType.rt],
 				reg_name[i.RType.rs],
-				lsb, msb - lsb + 1);
+				pos, size);
 			break;
 		}
 		if (i.RType.func == OP_RDHWR) {
@@ -700,6 +732,7 @@ db_disasm_insn(int insn, db_addr_t loc, bool altfmt)
 
 	case OP_J:
 	case OP_JAL:
+	case OP_JALX:
 		db_printf("%s\t", op_name[i.JType.op]);
 		print_addr((loc & ~0x0FFFFFFFL) | (i.JType.target << 2));
 		bdslot = true;
@@ -820,7 +853,7 @@ print_addr(db_addr_t loc)
 		if (diff == 0)
 			db_printf("%s", symname);
 		else
-			db_printf("<%s+%lx>", symname, diff);
+			db_printf("<%s+%"DDB_EXPR_FMT"x>", symname, diff);
 		db_printf("\t[addr:%#"PRIxVADDR"]", loc);
 	} else {
 		db_printf("%#"PRIxVADDR, loc);

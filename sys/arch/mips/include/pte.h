@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.20 2011/02/20 07:45:47 matt Exp $	*/
+/*	$NetBSD: pte.h,v 1.20.32.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -56,8 +56,10 @@
 
 typedef union pt_entry {
 	uint32_t	 pt_entry;	/* for copying, etc. */
+#if 0
 	struct mips1_pte pt_mips1_pte;	/* for getting to bits by name */
 	struct mips3_pte pt_mips3_pte;
+#endif
 } pt_entry_t;
 
 /*
@@ -268,5 +270,19 @@ mips_paddr_to_tlbpfn(paddr_t pa)
 
 extern	pt_entry_t *Sysmap;		/* kernel pte table */
 extern	u_int Sysmapsize;		/* number of pte's in Sysmap */
+
+static inline bool
+pte_zero_p(pt_entry_t pte)
+{
+	return pte.pt_entry == 0;
+}
+
+#define PRIxPTE		PRIx32
+static inline uint32_t
+pte_value(pt_entry_t pte)
+{
+	return pte.pt_entry;
+}
+
 #endif	/* defined(_KERNEL) && !defined(_LOCORE) */
 #endif /* __MIPS_PTE_H__ */

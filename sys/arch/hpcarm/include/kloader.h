@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.h,v 1.1 2012/03/31 14:02:54 nonaka Exp $	*/
+/*	$NetBSD: kloader.h,v 1.1.20.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2004 The NetBSD Foundation, Inc.
@@ -38,12 +38,11 @@
 
 #include <sys/lock.h>
 
-#include <uvm/uvm.h>
-
-#include <machine/pmap.h>
+#include <uvm/uvm_extern.h>
 
 #define PG_VADDR(pg)	kloader_phystov(VM_PAGE_TO_PHYS(pg))
 vaddr_t kloader_phystov(paddr_t pa);
+extern paddr_t avail_start, avail_end;
 
 #include <dev/kloader.h>
 

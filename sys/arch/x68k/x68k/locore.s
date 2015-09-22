@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.118 2014/07/31 14:41:19 isaki Exp $	*/
+/*	$NetBSD: locore.s,v 1.118.4.1 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -362,7 +362,7 @@ Lenab2:
 	movc	%d0,%cacr		| clear cache(s)
 	jra	Lenab3
 Ltbia040:
-	.word	0xf518
+	.word	0xf518			| pflusha
 Lenab3:
 /* final setup for C code */
 	movl	%d7,_C_LABEL(boothowto)	| save reboot flags

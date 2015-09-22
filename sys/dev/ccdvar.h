@@ -1,4 +1,4 @@
-/*	$NetBSD: ccdvar.h,v 1.34 2014/08/16 19:27:27 sborrill Exp $	*/
+/*	$NetBSD: ccdvar.h,v 1.34.2.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -71,6 +71,7 @@
 #define	_DEV_CCDVAR_H_
 
 #include <sys/buf.h>
+#include <sys/ioccom.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/condvar.h>

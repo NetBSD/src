@@ -1,9 +1,10 @@
-#	$NetBSD: files.nitrogen6,v 1.1 2014/09/25 05:05:28 ryo Exp $
+#	$NetBSD: files.nitrogen6,v 1.1.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 # Nitrogen6X
 #
 
 file	arch/evbarm/nitrogen6/nitrogen6_machdep.c
+file	arch/evbarm/nitrogen6/nitrogen6_iomux.c
 
 # Kernel boot arguments
 defparam opt_machdep.h				BOOT_ARGS

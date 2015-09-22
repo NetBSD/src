@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2014/08/05 15:40:59 apb Exp $
+#	$NetBSD: Makefile,v 1.29.4.1 2015/09/22 12:05:39 skrll Exp $
 
 NOMAN= # defined
 
@@ -53,10 +53,12 @@ CPPFLAGS+=	-DSUPPORT_DHCP -DSUPPORT_BOOTP
 #CPPFLAGS+=	-DRPC_DEBUG -DRARP_DEBUG -DNET_DEBUG -DDEBUG -DPARANOID
 
 # compiler flags for smallest code size
-CFLAGS=		-O2 -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+CFLAGS=		-Os -mmemcpy -ffreestanding -mno-abicalls -msoft-float -G 128
+AFLAGS+=	-mips3
+CFLAGS+=	-mips3
 .if ${MACHINE_ARCH} == "mips64el"
-AFLAGS+=	-mips3 -mabi=32
-CFLAGS+=	-mips3 -mabi=32
+AFLAGS+=	-mabi=32
+CFLAGS+=	-mabi=32
 LINKFORMAT=	-m elf32ltsmip
 .endif
 

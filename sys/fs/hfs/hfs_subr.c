@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_subr.c,v 1.17.28.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: hfs_subr.c,v 1.17.28.2 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -27,10 +27,10 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */                                     
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.17.28.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_subr.c,v 1.17.28.2 2015/09/22 12:06:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -173,9 +173,9 @@ hfs_libcb_opendev(
 		goto error;
 	}
 	vol->cbdata = cbdata;
-	
+
 	cbdata->devvp = NULL;
-	
+
 	/* Open the device node. */
 	mode = vol->readonly ? FREAD : FREAD|FWRITE;
 	vn_lock(args->devvp, LK_EXCLUSIVE | LK_RETRY);
@@ -200,7 +200,7 @@ hfs_libcb_opendev(
 		cbdata->devblksz = DEV_BSIZE;
 	else
 		cbdata->devblksz = secsize;
-		
+
 	return 0;
 
 error:
@@ -222,10 +222,10 @@ void
 hfs_libcb_closedev(hfs_volume* in_vol, hfs_callback_args* cbargs)
 {
 	struct vnode *devvp;
-	
+
 	if (in_vol == NULL)
 		return;
-	
+
 	if (in_vol->cbdata != NULL) {
 		devvp = ((hfs_libcb_data*)in_vol->cbdata)->devvp;
 		if (devvp != NULL) {
@@ -252,10 +252,10 @@ hfs_libcb_read(
 	hfs_libcb_argsread* argsread;
 	kauth_cred_t cred;
 	uint64_t physoffset; /* physical offset from start of device(?) */
-	
+
 	if (vol == NULL || outbytes == NULL)
 		return -1;
-	
+
 	cbdata = (hfs_libcb_data*)vol->cbdata;
 
 	if (cbargs != NULL
@@ -264,7 +264,7 @@ hfs_libcb_read(
 		cred = argsread->cred;
 	else
 		cred = NOCRED;
-		
+
 	/*
 	 * Since bread() only reads data in terms of integral blocks, it may have
 	 * read some data before and/or after our desired offset & length. So when
@@ -293,18 +293,18 @@ hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 	uint64_t curoff; /* relative to 'start' variable */
 	uint64_t start;
 	int error;
-	
+
 	if (vp == NULL || buf == NULL)
 		return EINVAL;
-	
+
 	if (len == 0)
 		return 0;
-		
+
 	curoff = 0;
 	error = 0;
 
 /* align offset to highest preceding sector boundary */
-#define ABSZ(x, bsz) (((x)/(bsz))*(bsz)) 
+#define ABSZ(x, bsz) (((x)/(bsz))*(bsz))
 
 /* round size up to integral # of block sizes */
 #define RBSZ(x, bsz) (((x) + (bsz) - 1) & ~((bsz) - 1))
@@ -314,7 +314,7 @@ hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 	{
 		bp = NULL;
 
-		/* XXX  Does the algorithm always do what's intended here when 
+		/* XXX  Does the algorithm always do what's intended here when
 		 * XXX  start != off? Need to test this. */
 
 		error = bread(vp, (start + curoff) / DEV_BSIZE,/* no rounding involved*/
@@ -324,12 +324,12 @@ hfs_pread(struct vnode *vp, void *buf, size_t secsz, uint64_t off,
 		if (error == 0)
 			memcpy((uint8_t*)buf + curoff, (uint8_t*)bp->b_data +
 				(off - start), min(len - curoff, MAXBSIZE - (off - start)));
-		
+
 		if (bp != NULL)
 			brelse(bp, 0);
 		if (error != 0)
 			return error;
-			
+
 		curoff += MAXBSIZE;
 	}
 #undef ABSZ
@@ -352,37 +352,36 @@ hfs_time_to_timespec(uint32_t hfstime, struct timespec *unixtime)
 	 * precisely a 66 year difference between them, which is equal to
 	 * 2,082,844,800 seconds. No, I didn't count them by hand.
 	 */
-	
+
 	if (hfstime < 2082844800)
 		unixtime->tv_sec = 0; /* dates before 1970 are bs anyway, so use epoch*/
 	else
 		unixtime->tv_sec = hfstime - 2082844800;
-	
+
 	unixtime->tv_nsec = 0; /* we don't have nanosecond resolution */
 }
 
 /*
  * Endian conversion with automatic pointer incrementation.
  */
- 
+
 uint16_t be16tohp(void** inout_ptr)
 {
 	uint16_t	result;
-	
-	if(inout_ptr == NULL)
+
+	if (inout_ptr == NULL)
 		return 0;
-		
+
 	memcpy(&result, *inout_ptr, sizeof(result));
 	*inout_ptr = (char *)*inout_ptr + sizeof(result);
-	
 	return be16toh(result);
 }
 
 uint32_t be32tohp(void** inout_ptr)
 {
 	uint32_t	result;
-	
-	if(inout_ptr == NULL)
+
+	if (inout_ptr == NULL)
 		return 0;
 
 	memcpy(&result, *inout_ptr, sizeof(result));
@@ -393,8 +392,8 @@ uint32_t be32tohp(void** inout_ptr)
 uint64_t be64tohp(void** inout_ptr)
 {
 	uint64_t	result;
-	
-	if(inout_ptr == NULL)
+
+	if (inout_ptr == NULL)
 		return 0;
 
 	memcpy(&result, *inout_ptr, sizeof(result));
@@ -405,7 +404,7 @@ uint64_t be64tohp(void** inout_ptr)
 enum vtype
 hfs_catalog_keyed_record_vtype(const hfs_catalog_keyed_record_t *rec)
 {
-    	if (rec->type == HFS_REC_FILE) {
+	if (rec->type == HFS_REC_FILE) {
 		uint32_t mode;
 
 		mode = ((const hfs_file_record_t *)rec)->bsd.file_mode;
@@ -413,7 +412,6 @@ hfs_catalog_keyed_record_vtype(const hfs_catalog_keyed_record_t *rec)
 			return IFTOVT(mode);
 		else
 			return VREG;
-	}
-	else
+	} else
 		return VDIR;
 }

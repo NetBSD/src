@@ -1,8 +1,8 @@
 /*	$KAME: dccp_cc_sw.c,v 1.9 2005/10/21 05:33:51 nishida Exp $	*/
-/*	$NetBSD: dccp_cc_sw.c,v 1.1.2.2 2015/04/06 15:18:22 skrll Exp $ */
+/*	$NetBSD: dccp_cc_sw.c,v 1.1.2.3 2015/09/22 12:06:11 skrll Exp $ */
 
 /*
- * Copyright (c) 2003  Nils-Erik Mattsson 
+ * Copyright (c) 2003  Nils-Erik Mattsson
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,9 +32,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_cc_sw.c,v 1.1.2.2 2015/04/06 15:18:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_cc_sw.c,v 1.1.2.3 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_dccp.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

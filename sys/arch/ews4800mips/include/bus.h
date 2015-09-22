@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.h,v 1.6 2008/04/28 20:23:18 martin Exp $	*/
+/*	$NetBSD: bus.h,v 1.6.64.1 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000, 2001, 2005 The NetBSD Foundation, Inc.
@@ -230,9 +230,6 @@ struct ews4800mips_bus_space {
 };
 
 #ifdef _KERNEL
-/* Don't use locore.h wbflush */
-#undef wbflush
-#define	wbflush()	platform.wbflush()
 #ifdef _EWS4800MIPS_BUS_SPACE_PRIVATE
 
 #ifndef __read_1

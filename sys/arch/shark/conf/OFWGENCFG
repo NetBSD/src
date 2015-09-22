@@ -1,4 +1,4 @@
-#	$NetBSD: OFWGENCFG,v 1.44 2014/08/23 20:26:59 dholland Exp $
+#	$NetBSD: OFWGENCFG,v 1.44.2.1 2015/09/22 12:05:51 skrll Exp $
 #
 #	OFWGENCFG: 'generic' configuration for Open Firmware boards.
 #
@@ -93,7 +93,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-options 	KMEMSTATS	# kernel memory statistics
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
@@ -104,6 +103,7 @@ options 	USERCONF	# userconf(4) support
 #options 	PORTMASTER	# Enable PortMaster only options
 options 	DIAGNOSTIC	# internal consistency checks
 options 	DDB		# in-kernel debugger
+pseudo-device	ksyms
 #makeoptions	DEBUG="-g"	# compile full symbol table
 
 config		netbsd	root on ofnet0 type nfs

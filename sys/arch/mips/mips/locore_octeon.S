@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_octeon.S,v 1.3.2.2 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: locore_octeon.S,v 1.3.2.3 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -27,9 +27,11 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: locore_octeon.S,v 1.3.2.2 2015/06/06 14:40:02 skrll Exp $")
+RCSID("$NetBSD: locore_octeon.S,v 1.3.2.3 2015/09/22 12:05:47 skrll Exp $")
 
+#include "cpunode.h"			/* for NWDOG */
 #include "opt_cputype.h"
+#include "opt_ddb.h"
 #include "opt_multiprocessor.h"
 
 #include <mips/cpuregs.h>
@@ -40,14 +42,15 @@ RCSID("$NetBSD: locore_octeon.S,v 1.3.2.2 2015/06/06 14:40:02 skrll Exp $")
 #define	_CP0_READ64(_cp0)				\
 	dmfc0	v0, _cp0;				\
 	j	ra;					\
-	nop
+	 nop
 
 #define	_CP0_WRITE64(_cp0)				\
 	dmtc0	a0, _cp0;				\
 	j	ra;					\
-	nop
+	 nop
 
 	.set	noreorder
+	.set	noat
 	.set	arch=octeon
 
 	.text
@@ -116,12 +119,12 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	// must has its own exception vector page.  The exceptions will be
 	// modified to refer to that CPU's cpu_info structure.
 	//
-	mfc0	s1, MIPS_COP_0_PRID, 1	# get EBASE
+	mfc0	s1, MIPS_COP_0_EBASE	# get EBASE
 	ext	s0, s1, 0, 10		# fetch cpunum (MIPSNNR2)
 	ins	s1, zero, 0, 10		# clear it (MIPSNNR2)
 	ins	s1, s0, 12, 10		# insert cpunum as exception address
 	ehb
-	mtc0	s1, MIPS_COP_0_PRID, 1	# set EBASE
+	mtc0	s1, MIPS_COP_0_EBASE	# set EBASE
 	COP0_SYNC
 
 	// we only can deal with 2 cores
@@ -133,22 +136,63 @@ NESTED_NOPROFILE(octeon_cpu_spinup, 0, ra)
 	b	1b
 	 nop
 
-	// Indicate we've gotten this far
-2:	PTR_LA	a0, _C_LABEL(cpus_booted)
-	li	a1, 1
-	jal	_C_LABEL(atomic_or_64)
-	 sllv	a1, a1, s0
+	// Indicate this CPU was started by u-boot
+2:	PTR_LA	t0, _C_LABEL(cpus_booted) # get addr for kcpuset
+3:	sync
+	PTR_L	a0, (t0)		# get kcpuset
+	beqz	a0, 3b			# loop until not NULL
+	 nop
+	jal	_C_LABEL(kcpuset_atomic_set)
+	 move	a1, s1			# pass it our cpu number
 
 	// Wait until cpuid_infos[cpunum] is not NULL.
 	PTR_LA	a1, _C_LABEL(cpuid_infos)
 	dsll	v0, s0, PTR_SCALESHIFT	# cpunum -> array index
 	PTR_ADD	t0, a1, v0		# add to array start
-3:	sync
+4:	sync
 	PTR_L	a1, (t0)		# get cpu_info pointer
-	beqz	a1, 3b			# loop until non-NULL
+	beqz	a1, 4b			# loop until non-NULL
 	 nop
 
 	j	_C_LABEL(cpu_trampoline)
 	 nop
 END(octeon_cpu_spinup)
 #endif /* MULTIPROCESSOR */
+
+#if NWDOG > 0 || defined(DDB)
+
+#define	UINT64_C(x)	(x)
+
+#include <mips/cavium/dev/octeon_ciureg.h>
+
+NESTED_NOPROFILE(octeon_reset_vector, 0, ra)
+	mfc0	k0, MIPS_COP_0_STATUS	# get cp0 status
+	bbit1	k0, V_MIPS3_SR_SR, 1f	# MIPS3_SR_SR
+	 ins	k0, zero, V_MIPS_SR_BEV, 1 # clear boot exception vectors
+	mtc0	k0, MIPS_COP_0_STATUS	# write cp0 status
+	ehb				# hazard barrier
+#ifdef MULTIPROCESSOR
+	mfc0	k0, MIPS_COP_0_EBASE	# get EBASE
+	ext	k0, k0, 0, 10		# select cpunum
+	dsll	k0, k0, PTR_SCALESHIFT	# cpunum -> array index
+	PTR_LA	k1, _C_LABEL(cpuid_infos)
+	PTR_ADDU k1, k1, k0		# add to array start
+	PTR_L	k0, (k1)		# get cpu_info
+#else
+	PTR_LA	k0, _C_LABEL(cpu_info_store) # get cpu_info
+#endif
+	PTR_LA	k1, CIU_BASE		# CIU base
+	j	_C_LABEL(mips64r2_kern_nonmaskable_intr)
+	 sd	zero, CIU_NMI_OFFSET(k1)# clear NMI
+1:
+	PTR_LA	k1, CIU_BASE		# CIU base
+	ld	k0, CIU_FUSE_OFFSET(k1)	# get mask of CPUs
+	sd	k0, CIU_SOFT_RST_OFFSET(k1)	# reset them
+	ld	v0, CIU_SOFT_RST_OFFSET(k1)	# force a load
+	sd	k0, CIU_SOFT_RST_OFFSET(k1)	# do it again.
+2:
+	wait				# wait forever
+	b	2b			# and loop until reset
+	 nop
+END(octeon_reset_vector)
+#endif

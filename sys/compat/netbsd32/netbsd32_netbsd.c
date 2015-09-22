@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.193 2014/07/31 12:35:33 maxv Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.193.4.1 2015/09/22 12:05:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.193 2014/07/31 12:35:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.193.4.1 2015/09/22 12:05:55 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -1417,7 +1417,7 @@ int
 netbsd32_pathconf(struct lwp *l, const struct netbsd32_pathconf_args *uap, register_t *retval)
 {
 	/* {
-		syscallarg(int) fd;
+		syscallarg(netbsd32_charp) path;
 		syscallarg(int) name;
 	} */
 	struct sys_pathconf_args ua;
@@ -1747,11 +1747,16 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 
 	if (count < 0)
 		return EINVAL;
-	if (count == 0 || uvmexp.nswapdev == 0)
-		return 0;
-	/* Make sure userland cannot exhaust kernel memory */
+
+	swapsys_lock(RW_WRITER);
+
 	if ((size_t)count > (size_t)uvmexp.nswapdev)
 		count = uvmexp.nswapdev;
+	if (count == 0) {
+		/* No swap device */
+		swapsys_unlock();
+		return 0;
+	}
 
 	ksep_len = sizeof(*ksep) * count;
 	ksep = kmem_alloc(ksep_len, KM_SLEEP);
@@ -1759,6 +1764,8 @@ netbsd32_swapctl_stats(struct lwp *l, struct sys_swapctl_args *uap, register_t *
 
 	uvm_swap_stats(SWAP_STATS, ksep, count, retval);
 	count = *retval;
+
+	swapsys_unlock();
 
 	for (i = 0; i < count; i++) {
 		se32.se_dev = ksep[i].se_dev;
@@ -2761,6 +2768,105 @@ netbsd32_paccept(struct lwp *l, const struct netbsd32_paccept_args *uap,
 
 	return sys_paccept(l, &ua, retval);
 }
+
+int
+netbsd32_fdiscard(struct lwp *l, const struct netbsd32_fdiscard_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_off_t) pos;
+		syscallarg(netbsd32_off_t) len;
+	} */
+	struct sys_fdiscard_args ua;
+
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TO64_UAP(pos);
+	NETBSD32TO64_UAP(len);
+
+	return sys_fdiscard(l, &ua, retval);
+}
+
+int
+netbsd32_posix_fallocate(struct lwp *l, const struct netbsd32_posix_fallocate_args *uap,
+	register_t *retval)
+{
+	/* {
+		syscallarg(int) fd;
+		syscallarg(netbsd32_off_t) pos;
+		syscallarg(netbsd32_off_t) len;
+	} */
+	struct sys_posix_fallocate_args ua;
+
+	NETBSD32TO64_UAP(fd);
+	NETBSD32TO64_UAP(pos);
+	NETBSD32TO64_UAP(len);
+
+	return sys_posix_fallocate(l, &ua, retval);
+}
+
+int
+netbsd32_pset_create(struct lwp *l,
+    const struct netbsd32_pset_create_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(netbsd32_psetidp_t) psid;
+	}; */
+
+	return sys_pset_create(l, (const void *)uap, retval);
+}
+
+int
+netbsd32_pset_destroy(struct lwp *l,
+     const struct netbsd32_pset_destroy_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(psetid_t) psid;
+	}; */
+
+	return sys_pset_destroy(l, (const void *)uap, retval);
+}
+
+int
+netbsd32_pset_assign(struct lwp *l,
+     const struct netbsd32_pset_assign_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(psetid_t) psid;
+		syscallarg(cpuid_t) cpuid;
+		syscallarg(netbsd32_psetidp_t) opsid;
+	}; */
+	struct sys_pset_assign_args ua;
+
+	SCARG(&ua, psid) = SCARG(uap, psid);
+	NETBSD32TO64_UAP(cpuid);
+	NETBSD32TOP_UAP(opsid, psetid_t);
+
+	return sys_pset_assign(l, &ua, retval);
+}
+
+int
+netbsd32__pset_bind(struct lwp *l,
+     const struct netbsd32__pset_bind_args *uap, register_t *retval)
+{
+	/* {
+		syscallarg(idtype_t) idtype;
+		syscallarg(id_t) first_id;
+		syscallarg(id_t) second_id;
+		syscallarg(psetid_t) psid;
+		syscallarg(netbsd32_psetidp_t) opsid;
+	}; */
+	struct sys__pset_bind_args ua;
+
+	SCARG(&ua, idtype) = SCARG(uap, idtype);
+	SCARG(&ua, first_id) = SCARG(uap, first_id);
+	SCARG(&ua, second_id) = SCARG(uap, second_id);
+	SCARG(&ua, psid) = SCARG(uap, psid);
+	NETBSD32TOP_UAP(opsid, psetid_t);
+
+	return sys__pset_bind(l, &ua, retval);
+}
+
 
 /*
  * MI indirect system call support.

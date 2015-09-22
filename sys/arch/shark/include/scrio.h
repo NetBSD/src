@@ -1,4 +1,4 @@
-/*	$NetBSD: scrio.h,v 1.1 2002/02/10 01:57:40 thorpej Exp $	*/
+/*	$NetBSD: scrio.h,v 1.1.192.1 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*
  * Copyright 1997
@@ -39,6 +39,8 @@
 
 #ifndef _ARM32_SCRIO_H_
 #define _ARM32_SCRIO_H_
+
+#include <sys/ioccom.h>
 
 #define ATR_BUF_MAX	1 + 1 + 4 * 10 + 15 + 1 /* TS + T0 + 4 * TABCD + 15 * TK + TCK */
 #define CMD_BUF_LEN	5

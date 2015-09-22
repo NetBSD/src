@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91.2.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91.2.3 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.3 2015/09/22 12:06:10 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -142,6 +142,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.2 2015/06/06 14:40:25 skrll Exp
 #include <netinet/in_var.h>
 #include <netinet/ip_carp.h>
 #endif
+
+#include "ioconf.h"
 
 __CTASSERT(sizeof(struct ifbifconf) == sizeof(struct ifbaconf));
 __CTASSERT(offsetof(struct ifbifconf, ifbic_len) == offsetof(struct ifbaconf, ifbac_len));
@@ -216,8 +218,6 @@ int	bridge_rtable_prune_period = BRIDGE_RTABLE_PRUNE_PERIOD;
 
 static struct pool bridge_rtnode_pool;
 static struct work bridge_rtage_wk;
-
-void	bridgeattach(int);
 
 static int	bridge_clone_create(struct if_clone *, int);
 static int	bridge_clone_destroy(struct ifnet *);
@@ -1512,7 +1512,6 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 #endif /* ALTQ */
 
 	len = m->m_pkthdr.len;
-	m->m_flags |= M_PROTO1;
 	mflags = m->m_flags;
 
 	IFQ_ENQUEUE(&dst_ifp->if_snd, m, &pktattr, error);
@@ -1942,9 +1941,10 @@ out:
 
 		if (_bif != NULL) {
 			bridge_release_member(sc, bif);
-			if (_ifp != NULL)
+			if (_ifp != NULL) {
+				m->m_flags &= ~M_PROMISC;
 				ether_input(_ifp, m);
-			else
+			} else
 				m_freem(m);
 			return;
 		}
@@ -1989,10 +1989,10 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 	struct bridge_iflist *bif;
 	struct mbuf *mc;
 	struct ifnet *dst_if;
-	bool used, bmcast;
+	bool bmcast;
 	int s;
 
-	used = bmcast = m->m_flags & (M_BCAST|M_MCAST);
+	bmcast = m->m_flags & (M_BCAST|M_MCAST);
 
 	BRIDGE_PSZ_RENTER(s);
 	LIST_FOREACH(bif, &sc->sc_iflist, bif_next) {
@@ -2002,8 +2002,6 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		BRIDGE_PSZ_REXIT(s);
 
 		dst_if = bif->bif_ifp;
-		if (dst_if == src_if)
-			goto next;
 
 		if (bif->bif_flags & IFBIF_STP) {
 			switch (bif->bif_state) {
@@ -2019,28 +2017,33 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		if ((dst_if->if_flags & IFF_RUNNING) == 0)
 			goto next;
 
-		if (!used && LIST_NEXT(bif, bif_next) == NULL) {
-			mc = m;
-			used = true;
-		} else {
+		if (dst_if != src_if) {
 			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
 			if (mc == NULL) {
 				sc->sc_if.if_oerrors++;
 				goto next;
 			}
+			bridge_enqueue(sc, dst_if, mc, 1);
 		}
 
-		bridge_enqueue(sc, dst_if, mc, 1);
+		if (bmcast) {
+			mc = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
+			if (mc == NULL) {
+				sc->sc_if.if_oerrors++;
+				goto next;
+			}
+
+			mc->m_pkthdr.rcvif = dst_if;
+			mc->m_flags &= ~M_PROMISC;
+			ether_input(dst_if, mc);
+		}
 next:
 		bridge_release_member(sc, bif);
 		BRIDGE_PSZ_RENTER(s);
 	}
 	BRIDGE_PSZ_REXIT(s);
 
-	if (bmcast)
-		ether_input(src_if, m);
-	else if (!used)
-		m_freem(m);
+	m_freem(m);
 }
 
 static int

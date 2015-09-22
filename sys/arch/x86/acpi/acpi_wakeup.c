@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_wakeup.c,v 1.38 2014/02/25 18:30:08 pooka Exp $	*/
+/*	$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2014/02/25 18:30:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll Exp $");
 
 /*-
  * Copyright (c) 2001 Takanori Watanabe <takawata@jp.freebsd.org>
@@ -62,7 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2014/02/25 18:30:08 pooka Exp $
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38 2014/02/25 18:30:08 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_wakeup.c,v 1.38.6.1 2015/09/22 12:05:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -300,7 +300,7 @@ acpi_md_sleep(int state)
 		return -1;
 	}
 
-	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr);
+	AcpiSetFirmwareWakingVector(acpi_wakeup_paddr, acpi_wakeup_paddr);
 
 	s = splhigh();
 	fpusave_cpu(true);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rockchip_dwctwo.c,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp $	*/
+/*	$NetBSD: rockchip_dwctwo.c,v 1.2.2.3 2015/09/22 12:05:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.2.2.2 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rockchip_dwctwo.c,v 1.2.2.3 2015/09/22 12:05:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ static struct dwc2_core_params rkdwc2_params = {
 	.reload_ctl			= 0,	/* 0 - No (default for core < 2.92a) */
 	.ahbcfg				= 0x7,	/* INCR16 */
 	.uframe_sched			= 1,	/* True to enable microframe scheduler */
+	.external_id_pin_ctl		= -1,
+	.hibernation			= -1,
 };
 
 static int rkdwc2_match(device_t, struct cfdata *, void *);
@@ -125,8 +127,8 @@ rkdwc2_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
 
-	sc->sc_ih = intr_establish(obio->obio_intr, IPL_SCHED,
-	   IST_LEVEL, dwc2_intr, &sc->sc_dwc2);
+	sc->sc_ih = intr_establish(obio->obio_intr, IPL_VM,
+	   IST_LEVEL | IST_MPSAFE, dwc2_intr, &sc->sc_dwc2);
 #if 0
 	   IST_EDGE, dwc2_intr, &sc->sc_dwc2);
 #endif

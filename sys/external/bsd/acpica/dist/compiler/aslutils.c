@@ -77,13 +77,11 @@ UtAttachNameseg (
  *
  ******************************************************************************/
 
-#define ACPI_TABLE_HELP_FORMAT  "%8u) %s    %s\n"
-
 void
 UtDisplaySupportedTables (
     void)
 {
-    ACPI_DMTABLE_DATA       *TableData;
+    const AH_TABLE          *TableData;
     UINT32                  i;
 
 
@@ -91,20 +89,14 @@ UtDisplaySupportedTables (
         "  (Compiler, Disassembler, Template Generator)\n\n",
         ACPI_CA_VERSION);
 
-    /* Special tables */
+    /* All ACPI tables with the common table header */
 
-    printf ("  Special tables and AML tables:\n");
-    printf (ACPI_TABLE_HELP_FORMAT, 1, ACPI_RSDP_NAME, "Root System Description Pointer");
-    printf (ACPI_TABLE_HELP_FORMAT, 2, ACPI_SIG_FACS, "Firmware ACPI Control Structure");
-    printf (ACPI_TABLE_HELP_FORMAT, 3, ACPI_SIG_DSDT, "Differentiated System Description Table");
-    printf (ACPI_TABLE_HELP_FORMAT, 4, ACPI_SIG_SSDT, "Secondary System Description Table");
-
-    /* All data tables with common table header */
-
-    printf ("\n  Standard ACPI data tables:\n");
-    for (TableData = AcpiDmTableData, i = 5; TableData->Signature; TableData++, i++)
+    printf ("\n  Supported ACPI tables:\n");
+    for (TableData = AcpiSupportedTables, i = 1;
+         TableData->Signature; TableData++, i++)
     {
-        printf (ACPI_TABLE_HELP_FORMAT, i, TableData->Signature, TableData->Name);
+        printf ("%8u) %s    %s\n", i,
+            TableData->Signature, TableData->Description);
     }
 }
 
@@ -469,17 +461,20 @@ UtDisplaySummary (
             "%-14s %s - %u lines, %u bytes, %u keywords\n",
             "ASL Input:",
             Gbl_Files[ASL_FILE_INPUT].Filename, Gbl_CurrentLineNumber,
-            Gbl_InputByteCount, TotalKeywords);
+            Gbl_OriginalInputFileSize, TotalKeywords);
 
         /* AML summary */
 
         if ((Gbl_ExceptionCount[ASL_ERROR] == 0) || (Gbl_IgnoreErrors))
         {
-            FlPrintFile (FileId,
-                "%-14s %s - %u bytes, %u named objects, %u executable opcodes\n",
-                "AML Output:",
-                Gbl_Files[ASL_FILE_AML_OUTPUT].Filename, Gbl_TableLength,
-                TotalNamedObjects, TotalExecutableOpcodes);
+            if (Gbl_Files[ASL_FILE_AML_OUTPUT].Handle)
+            {
+                FlPrintFile (FileId,
+                    "%-14s %s - %u bytes, %u named objects, %u executable opcodes\n",
+                    "AML Output:",
+                    Gbl_Files[ASL_FILE_AML_OUTPUT].Filename, Gbl_TableLength,
+                    TotalNamedObjects, TotalExecutableOpcodes);
+            }
         }
     }
 
@@ -499,9 +494,9 @@ UtDisplaySummary (
             continue;
         }
 
-        /* .I is a temp file unless specifically requested */
+        /* .PRE is the preprocessor intermediate file */
 
-        if ((i == ASL_FILE_PREPROCESSOR) && (!Gbl_PreprocessorOutputFlag))
+        if ((i == ASL_FILE_PREPROCESSOR)  && (!Gbl_KeepPreprocessorTempFile))
         {
             continue;
         }
@@ -960,7 +955,7 @@ UtDoConstant (
     char                    ErrBuf[64];
 
 
-    Status = UtStrtoul64 (String, 0, &Converted);
+    Status = stroul64 (String, 0, &Converted);
     if (ACPI_FAILURE (Status))
     {
         snprintf (ErrBuf, sizeof(ErrBuf), "%s %s\n", "Conversion error:",
@@ -976,7 +971,7 @@ UtDoConstant (
 
 /*******************************************************************************
  *
- * FUNCTION:    UtStrtoul64
+ * FUNCTION:    stroul64
  *
  * PARAMETERS:  String              - Null terminated string
  *              Terminater          - Where a pointer to the terminating byte
@@ -990,7 +985,7 @@ UtDoConstant (
  ******************************************************************************/
 
 ACPI_STATUS
-UtStrtoul64 (
+stroul64 (
     char                    *String,
     UINT32                  Base,
     UINT64                  *RetInteger)
@@ -1033,17 +1028,17 @@ UtStrtoul64 (
      */
     if (*String == '-')
     {
-        Sign = NEGATIVE;
+        Sign = ACPI_SIGN_NEGATIVE;
         ++String;
     }
     else if (*String == '+')
     {
         ++String;
-        Sign = POSITIVE;
+        Sign = ACPI_SIGN_POSITIVE;
     }
     else
     {
-        Sign = POSITIVE;
+        Sign = ACPI_SIGN_POSITIVE;
     }
 
     /*
@@ -1131,7 +1126,7 @@ UtStrtoul64 (
 
     /* If a minus sign was present, then "the conversion is negated": */
 
-    if (Sign == NEGATIVE)
+    if (Sign == ACPI_SIGN_NEGATIVE)
     {
         ReturnValue = (ACPI_UINT32_MAX - ReturnValue) + 1;
     }

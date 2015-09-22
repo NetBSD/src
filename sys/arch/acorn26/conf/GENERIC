@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.81 2014/11/16 16:01:39 manu Exp $
+# $NetBSD: GENERIC,v 1.81.2.1 2015/09/22 12:05:35 skrll Exp $
 #
 # GENERIC machine description file
 # 
@@ -121,7 +121,6 @@ options 	SYSVSHM		# System V-like shared memory
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 #options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	NTP		# Kernel PLL for ntpd(8).
 options 	USERCONF	# userconf(4) support

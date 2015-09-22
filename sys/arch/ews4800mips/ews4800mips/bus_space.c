@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.5 2012/01/27 18:52:55 para Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.5.24.1 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2004, 2005 The NetBSD Foundation, Inc.
@@ -27,15 +27,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5 2012/01/27 18:52:55 para Exp $");
-
-#include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/extent.h>
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.5.24.1 2015/09/22 12:05:42 skrll Exp $");
 
 #define	_EWS4800MIPS_BUS_SPACE_PRIVATE
-#include <machine/bus.h>
+
+#include <sys/param.h>
+#include <sys/bus.h>
+#include <sys/extent.h>
+#include <sys/malloc.h>
+#include <sys/systm.h>
+
+#include <mips/locore.h>
+
 #include <machine/sbdvar.h>
 
 #ifdef BUS_SPACE_DEBUG

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.254.2.1 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.254.2.2 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,9 +68,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.254.2.1 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.254.2.2 2015/09/22 12:06:07 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
+#endif
+
 #include "ksyms.h"
 
 #include <sys/param.h>
@@ -193,7 +196,7 @@ sysctl_copyout(struct lwp *l, const void *kaddr, void *uaddr, size_t len)
 	} else {
 		error = kcopy(kaddr, uaddr, len);
 	}
-	
+
 	return error;
 }
 
@@ -2136,7 +2139,7 @@ sysctl_createv(struct sysctllog **log, int cflags,
 				/*
 				 * allow first caller to *set* a
 				 * description actually to set it
-				 * 
+				 *
 				 * discard const here so we can attach
 				 * the description
 				 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.48.2.2 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.48.2.3 2015/09/22 12:06:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,9 +69,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.48.2.2 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.48.2.3 2015/09/22 12:06:01 skrll Exp $");
 
-#ifndef _LKM
+#ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #endif
 

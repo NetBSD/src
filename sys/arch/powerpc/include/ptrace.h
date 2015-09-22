@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.11 2011/01/18 01:02:54 matt Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.11.34.1 2015/09/22 12:05:49 skrll Exp $	*/
 
 #ifndef _POWERPC_PTRACE_H
 #define	_POWERPC_PTRACE_H
@@ -16,6 +16,12 @@
 	"PT_GETREGS",		"PT_SETREGS",		\
 	"PT_GETFPREGS",		"PT_SETFPREGS",		\
 	"PT_GETVECREGS",	"PT_SETVECREGS",
+
+#include <machine/reg.h>
+#define PTRACE_REG_PC(r)	(r)->pc
+#define PTRACE_REG_SET_PC(r, v)	(r)->pc = (v)
+#define PTRACE_REG_SP(r)	(r)->fixreg[1]
+#define PTRACE_REG_INTRV(r)	(r)->fixreg[3]
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT

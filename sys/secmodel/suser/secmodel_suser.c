@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.41 2014/02/25 18:30:13 pooka Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.41.6.1 2015/09/22 12:06:16 skrll Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.41 2014/02/25 18:30:13 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.41.6.1 2015/09/22 12:06:16 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -436,6 +436,20 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 		case KAUTH_REQ_SYSTEM_LFS_FCNTL:
 			if (isroot)
 				result = KAUTH_RESULT_ALLOW;
+
+		default:
+			break;
+		}
+
+		break;
+
+	case KAUTH_SYSTEM_INTR:
+		switch (req) {
+		case KAUTH_REQ_SYSTEM_INTR_AFFINITY:
+			if (isroot)
+				result = KAUTH_RESULT_ALLOW;
+
+			break;
 
 		default:
 			break;

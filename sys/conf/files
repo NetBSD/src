@@ -1,7 +1,7 @@
-#	$NetBSD: files,v 1.1121.2.3 2015/04/06 15:18:07 skrll Exp $
+#	$NetBSD: files,v 1.1121.2.4 2015/09/22 12:05:56 skrll Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
-version 	20141030
+version 	20150846
 
 #
 # device classes
@@ -17,6 +17,7 @@ devclass bus
 # options understood by the machine-independent part of the kernel
 # (note, these are case-sensitive)
 #
+defparam opt_param.h		MAXUSERS
 defflag				INSECURE
 defflag				KMEMSTATS
 defflag				KTRACE
@@ -26,6 +27,10 @@ defflag				COREDUMP
 defflag	opt_modular.h		MODULAR
 defflag	opt_modular.h		MODULAR_DEFAULT_AUTOLOAD
 defflag				KEYLOCK
+defparam opt_syslimits.h	CHILD_MAX OPEN_MAX
+defflag opt_diagnostic.h	_DIAGNOSTIC
+
+defparam opt_copy_symtab.h	makeoptions_COPY_SYMTAB
 
 defparam			DEFCORENAME
 defparam			HZ
@@ -286,6 +291,7 @@ defflag	opt_md.h		MEMORY_DISK_HOOKS MEMORY_DISK_IS_ROOT
 				MEMORY_DISK_DYNAMIC
 defparam opt_md.h		MEMORY_DISK_SERVER=1 MEMORY_DISK_ROOT_SIZE
 				MEMORY_DISK_RBFLAGS
+defparam opt_memory_disk_image.h	makeoptions_MEMORY_DISK_IMAGE
 
 defflag opt_tftproot.h		TFTPROOT TFTPROOT_DEBUG
 
@@ -333,6 +339,10 @@ attach	video at videobus
 # DTV subsystem
 #
 include "dev/dtv/files.dtv"
+
+# HDMI CEC
+#
+include "dev/hdmicec/files.hdmicec"
 
 # National Semiconductor LM7[89]
 #
@@ -1426,9 +1436,6 @@ defpseudo veriexec
 file	kern/kern_veriexec.c	veriexec
 file	dev/verified_exec.c		veriexec	needs-flag
 
-# isochronous pseudo device for IEEE 1394, i.LINK or FireWire
-defpseudo fwiso:	ieee1394
-
 # driver attach / detach user interface
 defpseudo drvctl
 file	kern/kern_drvctl.c		drvctl		needs-flag
@@ -1489,6 +1496,8 @@ include "uvm/files.uvm"
 include "secmodel/files.secmodel"
 
 include "kern/files.kern"
+
+include "dev/files.dev"
 
 include "net/files.net"
 

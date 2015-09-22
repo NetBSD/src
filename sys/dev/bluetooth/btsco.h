@@ -1,4 +1,4 @@
-/*	$NetBSD: btsco.h,v 1.2 2006/09/10 15:45:56 plunky Exp $	*/
+/*	$NetBSD: btsco.h,v 1.2.122.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -34,6 +34,7 @@
 #ifndef _DEV_BLUETOOTH_BTSCO_H_
 #define _DEV_BLUETOOTH_BTSCO_H_
 
+#include <sys/ioccom.h>
 #include <netbt/bluetooth.h>
 
 /* btsco(4) properties */

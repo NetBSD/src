@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.49 2014/07/26 17:34:31 tsutsui Exp $
+# $NetBSD: INSTALL,v 1.49.4.1 2015/09/22 12:05:52 skrll Exp $
 
 # INSTALL Sun2 (2/120, 2/170, 2/50, ...)
 
@@ -6,7 +6,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.49 $"
+#ident 		"INSTALL-$Revision: 1.49.4.1 $"
 
 makeoptions	COPTS="-Os"	# optimize for size
 
@@ -37,7 +37,6 @@ options		PIPE_SOCKETPAIR		# smaller, but slower pipe(2)
 #options 	DEBUG		# kernel debugging code
 #options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	USERCONF	# userconf(4) support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors

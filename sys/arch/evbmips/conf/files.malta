@@ -1,4 +1,4 @@
-#	$NetBSD: files.malta,v 1.19 2014/07/20 10:22:54 alnsn Exp $
+#	$NetBSD: files.malta,v 1.19.4.1 2015/09/22 12:05:41 skrll Exp $
 
 file	arch/evbmips/malta/malta_bus_io.c
 file	arch/evbmips/malta/malta_bus_mem.c
@@ -40,6 +40,9 @@ include "dev/ata/files.ata"
 
 # Machine-independent PC-style keyboard controller drivers
 include "dev/pckbport/files.pckbport"
+
+# Machine-independent bluetooth device support
+include "dev/bluetooth/files.bluetooth"
 
 # Machine-independent USB device support
 include "dev/usb/files.usb"

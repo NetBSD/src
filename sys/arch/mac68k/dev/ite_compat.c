@@ -1,4 +1,4 @@
-/*	$NetBSD: ite_compat.c,v 1.12 2014/07/25 08:10:33 dholland Exp $	*/
+/*	$NetBSD: ite_compat.c,v 1.12.4.1 2015/09/22 12:05:45 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000 Scott Reynolds
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.12 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.12.4.1 2015/09/22 12:05:45 skrll Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: ite_compat.c,v 1.12 2014/07/25 08:10:33 dholland Exp
 
 #include <machine/cpu.h>
 #include <machine/iteioctl.h>
+
+#include "ioconf.h"
 
 dev_type_open(iteopen);
 dev_type_close(iteclose);
@@ -80,8 +82,6 @@ const struct cdevsw ite_cdevsw = {
 #if NWSDISPLAY > 0
 extern const struct cdevsw wsdisplay_cdevsw;
 #endif
-
-void		iteattach(int);
 
 static int	ite_initted = 0;
 static int	ite_bell_freq = 1880;

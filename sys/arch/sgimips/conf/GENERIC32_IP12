@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.28 2014/11/16 16:01:43 manu Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.28.2.1 2015/09/22 12:05:51 skrll Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.28 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.28.2.1 $"
 
 maxusers	32
 
@@ -67,7 +67,6 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# expensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KGDB		# remote debugger

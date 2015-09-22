@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.62 2012/11/02 00:01:19 chs Exp $ */
+/*	$NetBSD: types.h,v 1.62.14.1 2015/09/22 12:05:52 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -107,7 +107,7 @@ typedef paddr_t			psize_t;
 #define	PRIxPSIZE		PRIxPADDR
 #endif
 
-typedef	volatile unsigned char		__cpu_simple_lock_t;
+typedef	unsigned char		__cpu_simple_lock_nv_t;
 
 /* __cpu_simple_lock_t used to be a full word. */
 #define	__CPU_SIMPLE_LOCK_PAD

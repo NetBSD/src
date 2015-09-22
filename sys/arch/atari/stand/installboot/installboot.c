@@ -1,4 +1,4 @@
-/*	$NetBSD: installboot.c,v 1.34 2014/11/24 08:08:23 tsutsui Exp $	*/
+/*	$NetBSD: installboot.c,v 1.34.2.1 2015/09/22 12:05:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -73,23 +73,26 @@ static struct ahdi_root ahdiboot;
 static const char	mdecpath[] = PATH_MDEC;
 static const char	stdpath[] = PATH_STD;
 static const char	milanpath[] = PATH_MILAN;
-static int		nowrite = 0;
-static int		verbose = 0;
-static int		trackpercyl = 0;
-static int		secpertrack = 0;
-static int		milan = 0;
+static bool		nowrite;
+static bool		verbose;
+static int		trackpercyl;
+static int		secpertrack;
+static bool		milan;
 
 static void
 usage(void)
 {
 	fprintf(stderr,
 		"usage: installboot [options] device\n"
+#ifndef NO_USAGE
 		"where options are:\n"
 		"\t-N  do not actually write anything on the disk\n"
 		"\t-m  use Milan boot blocks\n"
 		"\t-t  number of tracks per cylinder (IDE disk)\n"
 		"\t-u  number of sectors per track (IDE disk)\n"
-		"\t-v  verbose mode\n");
+		"\t-v  verbose mode\n"
+#endif
+		);
 	exit(EXIT_FAILURE);
 }
 
@@ -110,10 +113,10 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "Nmt:u:v")) != -1) {
 		switch (c) {
 		  case 'N':
-			nowrite = 1;
+			nowrite = true;
 			break;
 		  case 'm':
-			milan = 1;
+			milan = true;
 			break;
 		  case 't':
 			trackpercyl = atoi(optarg);
@@ -122,7 +125,7 @@ main(int argc, char *argv[])
 			secpertrack = atoi(optarg);
 			break;
 		  case 'v':
-			verbose = 1;
+			verbose = true;
 			break;
 		  default:
 			usage();

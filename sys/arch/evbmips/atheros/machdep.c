@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.29 2014/03/24 20:06:31 christos Exp $ */
+/* $NetBSD: machdep.c,v 1.29.6.1 2015/09/22 12:05:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2014/03/24 20:06:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29.6.1 2015/09/22 12:05:41 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -306,41 +306,7 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	char pbuf[9];
-	vaddr_t minaddr, maxaddr;
-#ifdef DEBUG
-	extern int pmapdebug;		/* XXX */
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;		/* Shut up pmap debug during bootstrap */
-#endif
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	printf("%s\n", cpu_getmodel());
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	/*
-	 * No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use KSEG to
-	 * map those pages.
-	 */
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 }
 
 void

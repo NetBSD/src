@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_param.h,v 1.34 2013/05/23 21:39:49 christos Exp $	*/
+/*	$NetBSD: mips_param.h,v 1.34.10.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -25,10 +25,6 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
-#ifdef _KERNEL
-#include <machine/cpu.h>
-#endif
-
 /*
  * No reason this can't be common
  */
@@ -111,7 +107,7 @@
 
 #ifdef _LP64
 #define	NSEGPG		(NBPG/8)
-#define NBXSEG		(NSEGPG*NBSEG)	/* bytes/xsegment */
+#define NBXSEG		((uint64_t)NSEGPG*NBSEG) /* bytes/xsegment */
 #define	XSEGOFSET	(NBSEG-1)	/* byte offset into segment */
 #define	XSEGSHIFT	(SEGSHIFT+(PGSHIFT-3))	/* LOG2(NBXSEG) */
 #endif

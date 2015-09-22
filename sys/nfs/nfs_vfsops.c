@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.229 2014/05/30 08:47:45 hannken Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.229.4.1 2015/09/22 12:06:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.229 2014/05/30 08:47:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.229.4.1 2015/09/22 12:06:12 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -841,13 +841,18 @@ bad:
 int
 nfs_unmount(struct mount *mp, int mntflags)
 {
-	struct nfsmount *nmp;
+	struct nfsmount *nmp = VFSTONFS(mp);
 	struct vnode *vp;
 	int error, flags = 0;
 
-	if (mntflags & MNT_FORCE)
+	if (mntflags & MNT_FORCE) {
+		mutex_enter(&nmp->nm_lock);
 		flags |= FORCECLOSE;
-	nmp = VFSTONFS(mp);
+		nmp->nm_iflag |= NFSMNT_DISMNTFORCE;
+		mutex_exit(&nmp->nm_lock);
+
+	}
+
 	/*
 	 * Goes something like this..
 	 * - Check for activity on the root vnode (other than ourselves).
@@ -864,17 +869,18 @@ nfs_unmount(struct mount *mp, int mntflags)
 	vp = nmp->nm_vnode;
 	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	if (error != 0)
-		return error;
+		goto err;
 
 	if ((mntflags & MNT_FORCE) == 0 && vp->v_usecount > 1) {
 		VOP_UNLOCK(vp);
-		return (EBUSY);
+		error = EBUSY;
+		goto err;
 	}
 
 	error = vflush(mp, vp, flags);
 	if (error) {
 		VOP_UNLOCK(vp);
-		return (error);
+		goto err;
 	}
 
 	/*
@@ -883,6 +889,13 @@ nfs_unmount(struct mount *mp, int mntflags)
 	 * will go away cleanly.
 	 */
 	nmp->nm_iflag |= NFSMNT_DISMNT;
+
+	/*
+	 * No new async I/O will be added, but await for pending
+	 * ones to drain.
+	 */
+	while (nfs_iodbusy(nmp))
+		kpause("nfsumnt", false, hz, NULL);
 
 	/*
 	 * Clean up the stats... note that we carefully avoid decrementing
@@ -908,6 +921,15 @@ nfs_unmount(struct mount *mp, int mntflags)
 	cv_destroy(&nmp->nm_disconcv);
 	kmem_free(nmp, sizeof(*nmp));
 	return (0);
+
+err:
+	if (mntflags & MNT_FORCE) {
+		mutex_enter(&nmp->nm_lock);
+		nmp->nm_iflag &= ~NFSMNT_DISMNTFORCE;	
+		mutex_exit(&nmp->nm_lock);
+	}
+
+	return error;
 }
 
 /*

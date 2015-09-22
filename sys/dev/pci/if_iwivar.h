@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwivar.h,v 1.16.40.1 2015/04/06 15:18:10 skrll Exp $ */
+/*	$NetBSD: if_iwivar.h,v 1.16.40.2 2015/09/22 12:05:59 skrll Exp $ */
 
 /*-
  * Copyright (c) 2004, 2005
@@ -26,6 +26,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+#include <sys/ioccom.h>
 
 struct iwi_firmware {
 	void	*boot;

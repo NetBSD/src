@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.12 2014/03/11 20:22:47 pooka Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.12.6.1 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,9 +37,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.12 2014/03/11 20:22:47 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.12.6.1 2015/09/22 12:06:17 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_ddb.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/mutex.h>

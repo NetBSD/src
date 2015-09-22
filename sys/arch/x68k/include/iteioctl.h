@@ -34,12 +34,13 @@
  * from: Utah $Hdr: iteioctl.h 1.1 90/07/09$
  *
  *	@(#)iteioctl.h	7.2 (Berkeley) 11/4/90
- *	$NetBSD: iteioctl.h,v 1.8 2011/02/08 20:20:26 rmind Exp $
+ *	$NetBSD: iteioctl.h,v 1.8.32.1 2015/09/22 12:05:53 skrll Exp $
  */
 
 #ifndef _X68K_ITEIOCTL_H_
 #define _X68K_ITEIOCTL_H_
 
+#include <sys/ioccom.h>
 #include <machine/kbdmap.h>
 
 struct itewinsize {

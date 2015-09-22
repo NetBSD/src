@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_proto.c,v 1.30 2013/01/10 17:40:10 christos Exp $	*/
+/*	$NetBSD: ieee80211_proto.c,v 1.30.14.1 2015/09/22 12:06:11 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,14 +36,16 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_proto.c,v 1.23 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.30 2013/01/10 17:40:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_proto.c,v 1.30.14.1 2015/09/22 12:06:11 skrll Exp $");
 #endif
 
 /*
  * IEEE 802.11 protocol support.
  */
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: flash_cfi.c,v 1.3 2012/01/30 15:47:01 phx Exp $ */
+/* $NetBSD: flash_cfi.c,v 1.3.28.1 2015/09/22 12:05:50 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -32,7 +32,7 @@
  * NOR CFI driver support for sandpoint
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: flash_cfi.c,v 1.3 2012/01/30 15:47:01 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_cfi.c,v 1.3.28.1 2015/09/22 12:05:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,7 +63,7 @@ sandpointcfi_probe(device_t parent, cfdata_t cf, void *aux)
 {
 	extern struct cfdriver cfi_cd;
 	struct mainbus_attach_args *ma = aux;
-	const bus_size_t tmpsize = CFI_QRY_MIN_MAP_SIZE;
+	const bus_size_t qrysize = CFI_QRY_MIN_MAP_SIZE;
 	struct cfi cfi;
 	int error, rv;
 
@@ -74,11 +74,12 @@ sandpointcfi_probe(device_t parent, cfdata_t cf, void *aux)
 
 	cfi.cfi_bst = ma->ma_bst;
 
-	error = bus_space_map(cfi.cfi_bst, ma->ma_addr, tmpsize, 0,
+	/* flash should be at least 2 MiB in size at 0xffe00000 */
+	error = bus_space_map(cfi.cfi_bst, 0xffe00000, qrysize, 0,
 	    &cfi.cfi_bsh);
 	if (error != 0) {
 		aprint_error("%s: cannot map %d at offset %#x, error %d\n",
-		    __func__, tmpsize, ma->ma_addr, error);
+		    __func__, qrysize, ma->ma_addr, error);
 		return 0;
 	}
 
@@ -90,7 +91,7 @@ sandpointcfi_probe(device_t parent, cfdata_t cf, void *aux)
 	} else
 		rv = 1;
 
-	bus_space_unmap(cfi.cfi_bst, cfi.cfi_bsh, tmpsize);
+	bus_space_unmap(cfi.cfi_bst, cfi.cfi_bsh, qrysize);
 	return rv;
 }
 
@@ -99,7 +100,7 @@ sandpointcfi_attach(device_t parent, device_t self, void *aux)
 {
 	struct mainbus_attach_args *ma = aux;
 	struct sandpointcfi_softc *sc;
-	const bus_size_t tmpsize = CFI_QRY_MIN_MAP_SIZE;
+	const bus_size_t qrysize = CFI_QRY_MIN_MAP_SIZE;
 	bus_addr_t addr;
 	bool found;
 	int error;
@@ -112,7 +113,7 @@ sandpointcfi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_cfi.cfi_bst = ma->ma_bst;
 
 	/* map enough to identify, remap later when size is known */
-	error = bus_space_map(sc->sc_cfi.cfi_bst, ma->ma_addr, tmpsize, 0,
+	error = bus_space_map(sc->sc_cfi.cfi_bst, 0xffe00000, qrysize, 0,
 	    &sc->sc_cfi.cfi_bsh);
 	if (error != 0) {
 		aprint_error_dev(self, "could not map error %d\n", error);
@@ -122,7 +123,7 @@ sandpointcfi_attach(device_t parent, device_t self, void *aux)
 	/* identify the NOR flash */
 	found = cfi_identify(&sc->sc_cfi);
 
-	bus_space_unmap(sc->sc_cfi.cfi_bst, sc->sc_cfi.cfi_bsh, tmpsize);
+	bus_space_unmap(sc->sc_cfi.cfi_bst, sc->sc_cfi.cfi_bsh, qrysize);
 	if (!found) {
 		/* should not happen, we already probed OK in match */
 		aprint_error_dev(self, "could not map error %d\n", error);
@@ -132,7 +133,7 @@ sandpointcfi_attach(device_t parent, device_t self, void *aux)
 	/* get size of flash in bytes */
 	sc->sc_size = 1 << sc->sc_cfi.cfi_qry_data.device_size;
 
-	/* real base address */
+	/* determine real base address */
 	addr = (0xffffffff - sc->sc_size) + 1;
 
 	sc->sc_nor_if = nor_interface_cfi;

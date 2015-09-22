@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.7 2012/10/27 17:17:51 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.7.14.1 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7 2012/10/27 17:17:51 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.7.14.1 2015/09/22 12:05:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,17 +83,19 @@ extern int	netboot;
 static void
 findroot(void)
 {
-	device_t dv;
-	deviter_t di;
-
 	if (booted_device)
 		return;
 
 	if ((booted_device == NULL) && netboot == 0) {
+		device_t dv;
+		deviter_t di;
+
 		for (dv = deviter_first(&di, DEVITER_F_ROOT_FIRST); dv != NULL;
 		    dv = deviter_next(&di)) {
-			if (device_class(dv) == DV_DISK &&
-			    device_is_a(dv, "wd"))
+			if (device_class(dv) == DV_DISK
+			    && (device_is_a(dv, "wd")
+				|| device_is_a(dv, "sd")
+				|| device_is_a(dv, "ld")))
 				booted_device = dv;
 		}
 		deviter_release(&di);

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcbus.c,v 1.29 2012/10/13 06:51:23 tsutsui Exp $	*/
+/*	$NetBSD: tcbus.c,v 1.29.14.1 2015/09/22 12:05:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29 2012/10/13 06:51:23 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29.14.1 2015/09/22 12:05:49 skrll Exp $");
 
 #define	_PMAX_BUS_DMA_PRIVATE
 /*
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: tcbus.c,v 1.29 2012/10/13 06:51:23 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 

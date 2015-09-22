@@ -1,9 +1,9 @@
-/* $NetBSD: udf_allocation.c,v 1.36.6.1 2015/04/06 15:18:19 skrll Exp $ */
+/* $NetBSD: udf_allocation.c,v 1.36.6.2 2015/09/22 12:06:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
  * All rights reserved.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,7 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -23,12 +23,12 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- * 
+ *
  */
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.36.6.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_allocation.c,v 1.36.6.2 2015/09/22 12:06:06 skrll Exp $");
 #endif /* not lint */
 
 
@@ -739,7 +739,7 @@ udf_translate_file_extent(struct udf_node *udf_node,
 			UDF_UNLOCK_NODE(udf_node, 0);
 			return EINVAL;
 		}
-	
+
 		len    = udf_rw32(s_ad.len);
 		flags  = UDF_EXT_FLAGS(len);
 		len    = UDF_EXT_LEN(len);
@@ -759,7 +759,7 @@ udf_translate_file_extent(struct udf_node *udf_node,
 		 * the udf_translate_vtop() returns doens't have to span the
 		 * whole extent.
 		 */
-	
+
 		overlap = MIN(overlap, num_lb);
 		while (overlap && (flags != UDF_EXT_REDIRECT)) {
 			switch (flags) {
@@ -1084,11 +1084,8 @@ udf_reserve_space(struct udf_mount *ump, struct udf_node *udf_node,
 		DPRINTF(RESERVE, ("udf_reserve_space: issuing sync\n"));
 		mutex_exit(&ump->allocate_mutex);
 		udf_do_sync(ump, FSCRED, 0);
-		mutex_enter(&mntvnode_lock);
 		/* 1/8 second wait */
-		cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,
-			hz/8);
-		mutex_exit(&mntvnode_lock);
+		kpause("udfsync2", false, hz/8, NULL);
 		mutex_enter(&ump->allocate_mutex);
 	}
 
@@ -1285,7 +1282,7 @@ udf_allocate_space(struct udf_mount *ump, struct udf_node *udf_node,
 		lmappos = lmapping;
 		printf("udf_allocate_space, allocated logical lba :\n");
 		for (lb_num = 0; lb_num < num_lb; lb_num++) {
-			printf("%s %"PRIu64, (lb_num > 0)?",":"", 
+			printf("%s %"PRIu64, (lb_num > 0)?",":"",
 				*lmappos++);
 		}
 		printf("\n");
@@ -2684,7 +2681,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 			ubc_zerorange(&vp->v_uobj, old_size,
 			    new_size - old_size, UBC_UNMAP_FLAG(vp));
 #endif
-	
+
 			udf_node_sanity_check(udf_node, &new_inflen, &new_lbrec);
 
 			/* unlock */
@@ -2708,7 +2705,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 
 			/* read in using the `normal' vn_rdwr() */
 			error = vn_rdwr(UIO_READ, udf_node->vnode,
-					evacuated_data, old_size, 0, 
+					evacuated_data, old_size, 0,
 					UIO_SYSSPACE, IO_ALTSEMANTICS | IO_NODELOCKED,
 					FSCRED, NULL, NULL);
 
@@ -2844,7 +2841,7 @@ udf_grow_node(struct udf_node *udf_node, uint64_t new_size)
 
 		/* write out evacuated data */
 		error = vn_rdwr(UIO_WRITE, udf_node->vnode,
-				evacuated_data, old_size, 0, 
+				evacuated_data, old_size, 0,
 				UIO_SYSSPACE, IO_ALTSEMANTICS | IO_NODELOCKED,
 				FSCRED, NULL, NULL);
 		uvm_vnp_setsize(vp, old_size);

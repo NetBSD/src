@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.46.4.2 2015/06/06 14:40:29 skrll Exp $	*/
+/*	$NetBSD: intr.c,v 1.46.4.3 2015/09/22 12:06:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46.4.2 2015/06/06 14:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.46.4.3 2015/09/22 12:06:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -127,7 +127,10 @@ doclock(void *noarg)
 
 		error = rumpuser_clock_sleep(RUMPUSER_CLOCK_ABSMONO,
 		    curclock.tv_sec, curclock.tv_nsec);
-		KASSERT(!error);
+		if (error) {
+			panic("rumpuser_clock_sleep failed with error %d",
+			    error);
+		}
 		timespecadd(&curclock, &thetick, &curclock);
 	}
 }

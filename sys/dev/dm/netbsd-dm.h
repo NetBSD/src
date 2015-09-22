@@ -1,4 +1,4 @@
-/*        $NetBSD: netbsd-dm.h,v 1.6 2009/12/05 11:30:26 haad Exp $      */
+/*        $NetBSD: netbsd-dm.h,v 1.6.40.1 2015/09/22 12:05:57 skrll Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #ifndef __NETBSD_DM_H__
 #define __NETBSD_DM_H__
 
+#include <sys/ioccom.h>
 #include <prop/proplib.h>
 
 #define DM_CMD_LEN 16

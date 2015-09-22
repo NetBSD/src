@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.196 2014/08/10 16:44:37 tls Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.196.4.1 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.196 2014/08/10 16:44:37 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.196.4.1 2015/09/22 12:06:17 skrll Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -806,7 +806,7 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 
 	UVMHIST_FUNC("uvm_fault"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(map=0x%x, vaddr=0x%x, at=%d, ff=%d)",
+	UVMHIST_LOG(maphist, "(map=%p, vaddr=%#lx, at=%d, ff=%d)",
 	      orig_map, vaddr, access_type, fault_flag);
 
 	cd = &(curcpu()->ci_data);
@@ -947,7 +947,7 @@ uvm_fault_check(
 	    ufi->entry->max_protection : ufi->entry->protection;
 	if ((check_prot & flt->access_type) != flt->access_type) {
 		UVMHIST_LOG(maphist,
-		    "<- protection failure (prot=0x%x, access=0x%x)",
+		    "<- protection failure (prot=%#x, access=%#x)",
 		    ufi->entry->protection, flt->access_type, 0, 0);
 		uvmfault_unlockmaps(ufi, false);
 		return EACCES;
@@ -1060,9 +1060,9 @@ uvm_fault_check(
 	const voff_t eoff = flt->startva - ufi->entry->start;
 
 	/* locked: maps(read) */
-	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=0x%x",
+	UVMHIST_LOG(maphist, "  narrow=%d, back=%d, forw=%d, startva=%#lx",
 		    flt->narrow, nback, nforw, flt->startva);
-	UVMHIST_LOG(maphist, "  entry=0x%x, amap=0x%x, obj=0x%x", ufi->entry,
+	UVMHIST_LOG(maphist, "  entry=%p, amap=%p, obj=%p", ufi->entry,
 		    amap, uobj, 0);
 
 	/*
@@ -1229,7 +1229,7 @@ uvm_fault_upper_neighbor(
 	uvm_pageenqueue(pg);
 	mutex_exit(&uvm_pageqlock);
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: n anon: pm=0x%x, va=0x%x, pg=0x%x",
+	    "  MAPPING: n anon: pm=%p, va=%#lx, pg=%p",
 	    ufi->orig_map->pmap, currva, pg, 0);
 	uvmexp.fltnamap++;
 
@@ -1276,7 +1276,7 @@ uvm_fault_upper(
 	 * handle case 1: fault on an anon in our amap
 	 */
 
-	UVMHIST_LOG(maphist, "  case 1 fault: anon=0x%x", anon, 0,0,0);
+	UVMHIST_LOG(maphist, "  case 1 fault: anon=%p", anon, 0,0,0);
 
 	/*
 	 * no matter if we have case 1A or case 1B we are going to need to
@@ -1506,7 +1506,7 @@ uvm_fault_upper_enter(
 	 */
 
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: anon: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
+	    "  MAPPING: anon: pm=%p, va=%#lx, pg=%p, promote=%d",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, flt->promote);
 	if (pmap_enter(ufi->orig_map->pmap, ufi->orig_rvaddr,
 	    VM_PAGE_TO_PHYS(pg),
@@ -1803,7 +1803,7 @@ uvm_fault_lower_neighbor(
 	uvm_pageenqueue(pg);
 	mutex_exit(&uvm_pageqlock);
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: n obj: pm=0x%x, va=0x%x, pg=0x%x",
+	    "  MAPPING: n obj: pm=%p, va=%#lx, pg=%p",
 	    ufi->orig_map->pmap, currva, pg, 0);
 	uvmexp.fltnomap++;
 
@@ -2186,7 +2186,7 @@ uvm_fault_lower_enter(
 	 */
 
 	UVMHIST_LOG(maphist,
-	    "  MAPPING: case2: pm=0x%x, va=0x%x, pg=0x%x, promote=%d",
+	    "  MAPPING: case2: pm=%p, va=%#lx, pg=%#x, promote=%d",
 	    ufi->orig_map->pmap, ufi->orig_rvaddr, pg, flt->promote);
 	KASSERT((flt->access_type & VM_PROT_WRITE) == 0 ||
 		(pg->flags & PG_RDONLY) == 0);

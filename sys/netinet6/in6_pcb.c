@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_pcb.c,v 1.134.2.2 2015/06/06 14:40:26 skrll Exp $	*/
+/*	$NetBSD: in6_pcb.c,v 1.134.2.3 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: in6_pcb.c,v 1.84 2001/02/08 18:02:08 itojun Exp $	*/
 
 /*
@@ -62,10 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.2 2015/06/06 14:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_pcb.c,v 1.134.2.3 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.38 2014/09/05 09:21:54 matt Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.38.2.1 2015/09/22 12:05:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.38 2014/09/05 09:21:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.38.2.1 2015/09/22 12:05:55 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -90,7 +90,7 @@ static int
 vfs2fs(struct statfs12 *bfs, const struct statvfs *fs)
 {
 	struct statfs12 ofs;
-	int i = 0;
+	int i;
 	ofs.f_type = 0;
 	ofs.f_oflags = (short)fs->f_flag;
 
@@ -139,7 +139,7 @@ compat_20_sys_statfs(struct lwp *l, const struct compat_20_sys_statfs_args *uap,
 	} */
 	struct mount *mp;
 	struct statvfs *sbuf;
-	int error = 0;
+	int error;
 	struct vnode *vp;
 
 	error = namei_simple_user(SCARG(uap, path),

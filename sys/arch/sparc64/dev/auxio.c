@@ -1,7 +1,7 @@
-/*	$NetBSD: auxio.c,v 1.22 2011/06/02 00:24:23 christos Exp $	*/
+/*	$NetBSD: auxio.c,v 1.22.30.1 2015/09/22 12:05:52 skrll Exp $	*/
 
 /*
- * Copyright (c) 2000, 2001 Matthew R. Green
+ * Copyright (c) 2000, 2001, 2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.22 2011/06/02 00:24:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.22.30.1 2015/09/22 12:05:52 skrll Exp $");
 
 #include "opt_auxio.h"
 
@@ -62,10 +62,12 @@ __KERNEL_RCSID(0, "$NetBSD: auxio.c,v 1.22 2011/06/02 00:24:23 christos Exp $");
 struct auxio_softc {
 	device_t		sc_dev;
 
+	kmutex_t		sc_lock;
+
 	/* parent's tag */
 	bus_space_tag_t		sc_tag;
 
-	/* handles to the various auxio regsiter sets */
+	/* handles to the various auxio register sets */
 	bus_space_handle_t	sc_led;
 	bus_space_handle_t	sc_pci;
 	bus_space_handle_t	sc_freq;
@@ -73,18 +75,20 @@ struct auxio_softc {
 	bus_space_handle_t	sc_temp;
 
 	int			sc_flags;
-#define	AUXIO_LEDONLY		0x1
+#define	AUXIO_LEDONLY		0x1	// only sc_led is valid
 #define	AUXIO_EBUS		0x2
-#define	AUXIO_SBUS		0x4
 };
 
 #define	AUXIO_ROM_NAME		"auxio"
 
-void	auxio_attach_common(struct auxio_softc *);
-int	auxio_ebus_match(device_t, cfdata_t, void *);
-void	auxio_ebus_attach(device_t, device_t, void *);
-int	auxio_sbus_match(device_t, cfdata_t, void *);
-void	auxio_sbus_attach(device_t, device_t, void *);
+
+static uint32_t	auxio_read_led(struct auxio_softc *);
+static void	auxio_write_led(struct auxio_softc *, uint32_t);
+static void	auxio_attach_common(struct auxio_softc *);
+static int	auxio_ebus_match(device_t, cfdata_t, void *);
+static void	auxio_ebus_attach(device_t, device_t, void *);
+static int	auxio_sbus_match(device_t, cfdata_t, void *);
+static void	auxio_sbus_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(auxio_ebus, sizeof(struct auxio_softc),
     auxio_ebus_match, auxio_ebus_attach, NULL, NULL);
@@ -93,6 +97,29 @@ CFATTACH_DECL_NEW(auxio_sbus, sizeof(struct auxio_softc),
     auxio_sbus_match, auxio_sbus_attach, NULL, NULL);
 
 extern struct cfdriver auxio_cd;
+
+static __inline__ uint32_t
+auxio_read_led(struct auxio_softc *sc)
+{
+	uint32_t led;
+
+	if (sc->sc_flags & AUXIO_EBUS)
+		led = le32toh(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
+	else
+		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
+
+	return led;
+}
+
+static __inline__ void
+auxio_write_led(struct auxio_softc *sc, uint32_t led)
+{
+
+	if (sc->sc_flags & AUXIO_EBUS)
+		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
+	else
+		bus_space_write_1(sc->sc_tag, sc->sc_led, 0, led);
+}
 
 #ifdef BLINK
 static callout_t blink_ch;
@@ -111,18 +138,11 @@ auxio_blink(void *x)
 	if (do_blink == 0)
 		return;
 
-	s = splhigh();
-	if (sc->sc_flags & AUXIO_EBUS)
-		led = le32toh(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
-	else
-		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
-
+	mutex_enter(&sc->sc_lock);
+	led = auxio_read_led(sc);
 	led = led ^ AUXIO_LED_LED;
-	if (sc->sc_flags & AUXIO_EBUS)
-		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
-	else
-		bus_space_write_1(sc->sc_tag, sc->sc_led, 0, led);
-	splx(s);
+	auxio_write_led(sc, led);
+	mutex_exit(&sc->sc_lock);
 
 	/*
 	 * Blink rate is:
@@ -136,7 +156,7 @@ auxio_blink(void *x)
 }
 #endif
 
-void
+static void
 auxio_attach_common(struct auxio_softc *sc)
 {
 #ifdef BLINK
@@ -144,7 +164,8 @@ auxio_attach_common(struct auxio_softc *sc)
 
 	/* only start one blinker */
 	if (do_once) {
-		callout_init(&blink_ch, 0);
+		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
+		callout_init(&blink_ch, CALLOUT_MPSAFE);
 		auxio_blink(sc);
 		do_once = 0;
 	}
@@ -152,7 +173,7 @@ auxio_attach_common(struct auxio_softc *sc)
 	printf("\n");
 }
 
-int
+static int
 auxio_ebus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct ebus_attach_args *ea = aux;
@@ -160,7 +181,7 @@ auxio_ebus_match(device_t parent, cfdata_t cf, void *aux)
 	return (strcmp(AUXIO_ROM_NAME, ea->ea_name) == 0);
 }
 
-void
+static void
 auxio_ebus_attach(device_t parent, device_t self, void *aux)
 {
 	struct auxio_softc *sc = device_private(self);
@@ -174,13 +195,12 @@ auxio_ebus_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_flags = AUXIO_EBUS;
 	if (ea->ea_nreg != 5) {
 		printf(": not 5 (%d) registers, only setting led",
 		    ea->ea_nreg);
-		sc->sc_flags = AUXIO_LEDONLY|AUXIO_EBUS;
+		sc->sc_flags |= AUXIO_LEDONLY;
 	} else if (ea->ea_nvaddr == 5) {
-		sc->sc_flags = AUXIO_EBUS;
-
 		sparc_promaddr_to_handle(sc->sc_tag, 
 			ea->ea_vaddr[1], &sc->sc_pci);
 		sparc_promaddr_to_handle(sc->sc_tag, 
@@ -190,7 +210,6 @@ auxio_ebus_attach(device_t parent, device_t self, void *aux)
 		sparc_promaddr_to_handle(sc->sc_tag, 
 			ea->ea_vaddr[4], &sc->sc_temp);
 	} else {
-		sc->sc_flags = AUXIO_EBUS;
 		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[1]),
 			ea->ea_reg[1].size, 0, &sc->sc_pci);
 		bus_space_map(sc->sc_tag, EBUS_ADDR_FROM_REG(&ea->ea_reg[2]),
@@ -212,7 +231,7 @@ auxio_ebus_attach(device_t parent, device_t self, void *aux)
 	auxio_attach_common(sc);
 }
 
-int
+static int
 auxio_sbus_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
@@ -220,7 +239,7 @@ auxio_sbus_match(device_t parent, cfdata_t cf, void *aux)
 	return strcmp(AUXIO_ROM_NAME, sa->sa_name) == 0;
 }
 
-void
+static void
 auxio_sbus_attach(device_t parent, device_t self, void *aux)
 {
 	struct auxio_softc *sc = device_private(self);
@@ -241,7 +260,7 @@ auxio_sbus_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* sbus auxio only has one set of registers */
-	sc->sc_flags = AUXIO_LEDONLY|AUXIO_SBUS;
+	sc->sc_flags = AUXIO_LEDONLY;
 	if (sa->sa_npromvaddrs > 0) {
 		sbus_promaddr_to_handle(sc->sc_tag,
 			sa->sa_promvaddr, &sc->sc_led);
@@ -268,17 +287,15 @@ auxio_fd_control(u_int32_t bits)
 	 * We'll assume the floppy drive is tied to first auxio found.
 	 */
 	sc = device_lookup_private(&auxio_cd, 0);
-	if (sc->sc_flags & AUXIO_EBUS)
-		led = le32toh(bus_space_read_4(sc->sc_tag, sc->sc_led, 0));
-	else
-		led = bus_space_read_1(sc->sc_tag, sc->sc_led, 0);
+	if (!sc) {
+		return ENXIO;
+	}
 
+	mutex_enter(&sc->sc_lock);
+	led = auxio_read_led(sc);
 	led = (led & ~AUXIO_LED_FLOPPY_MASK) | bits;
-
-	if (sc->sc_flags & AUXIO_EBUS)
-		bus_space_write_4(sc->sc_tag, sc->sc_led, 0, htole32(led));
-	else
-		bus_space_write_1(sc->sc_tag, sc->sc_led, 0, led);
+	auxio_write_led(sc, led);
+	mutex_exit(&sc->sc_lock);
 
 	return 0;
 }

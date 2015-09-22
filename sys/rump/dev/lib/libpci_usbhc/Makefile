@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2015/06/06 14:40:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2015/09/22 12:06:13 skrll Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -15,7 +15,6 @@ SRCS+=	ehci_pci.c ehci.c
 SRCS+=	usb_pci.c
 
 CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/../dev
-CPPFLAGS+= -I${.CURDIR}/../libusb/opt
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>

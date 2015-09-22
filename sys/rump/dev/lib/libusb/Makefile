@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6.32.2 2015/06/06 14:40:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.32.3 2015/09/22 12:06:14 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -16,8 +16,6 @@ SRCS=	dummy.c
 .endif
 
 #CPPFLAGS+= -DUHUB_DEBUG
-
-CPPFLAGS+=	-I${.CURDIR}/opt
 
 .include <bsd.lib.mk>
 .include <bsd.klinks.mk>

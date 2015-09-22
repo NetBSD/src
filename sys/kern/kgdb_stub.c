@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb_stub.c,v 1.28 2014/09/21 17:17:15 christos Exp $	*/
+/*	$NetBSD: kgdb_stub.c,v 1.28.2.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.28 2014/09/21 17:17:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kgdb_stub.c,v 1.28.2.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -85,8 +85,17 @@ static void *kgdb_ioarg;
 static u_char buffer[KGDB_BUFLEN];
 static kgdb_reg_t gdb_regs[KGDB_NUMREGS];
 
-#define GETC()	((*kgdb_getc)(kgdb_ioarg))
-#define PUTC(c)	((*kgdb_putc)(kgdb_ioarg, c))
+#define GETC()	kgdb_waitc(kgdb_ioarg)
+#define PUTC(c)	(*kgdb_putc)(kgdb_ioarg, c)
+
+static int
+kgdb_waitc(void *arg)
+{
+	int c;
+	while ((c = (*kgdb_getc)(arg)) == -1)
+		continue;
+	return c;
+}
 
 /*
  * db_trap_callback can be hooked by MD port code to handle special

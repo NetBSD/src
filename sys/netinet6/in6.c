@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.179.2.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: in6.c,v 1.179.2.3 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,10 +62,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.3 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -507,6 +509,9 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_expire = ia->ia6_updatetime +
 				    ia->ia6_lifetime.ia6t_vltime;
+				retlt->ia6t_expire = retlt->ia6t_expire ?
+				    time_mono_to_wall(retlt->ia6t_expire) :
+				    0;
 			} else
 				retlt->ia6t_expire = maxexpire;
 		}
@@ -525,6 +530,9 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_preferred = ia->ia6_updatetime +
 				    ia->ia6_lifetime.ia6t_pltime;
+				retlt->ia6t_preferred = retlt->ia6t_preferred ?
+				    time_mono_to_wall(retlt->ia6t_preferred) :
+				    0;
 			} else
 				retlt->ia6t_preferred = maxexpire;
 		}
@@ -545,6 +553,7 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		int i;
 		struct nd_prefixctl prc0;
 		struct nd_prefix *pr;
+		struct in6_addrlifetime *lt;
 
 		/* reject read-only flags */
 		if ((ifra->ifra_flags & IN6_IFF_DUPLICATED) != 0 ||
@@ -554,6 +563,16 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 		    (ifra->ifra_flags & IN6_IFF_AUTOCONF) != 0) {
 			return EINVAL;
 		}
+		/*
+		 * ia6t_expire and ia6t_preferred won't be used for now,
+		 * so just in case.
+		 */
+		lt = &ifra->ifra_lifetime;
+		if (lt->ia6t_expire != 0)
+			lt->ia6t_expire = time_wall_to_mono(lt->ia6t_expire);
+		if (lt->ia6t_preferred != 0)
+			lt->ia6t_preferred =
+			    time_wall_to_mono(lt->ia6t_preferred);
 		/*
 		 * first, make or update the interface address structure,
 		 * and link it to the list.
@@ -878,7 +897,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 		ia->ia_ifa.ifa_addr = (struct sockaddr *)&ia->ia_addr;
 		ia->ia_addr.sin6_family = AF_INET6;
 		ia->ia_addr.sin6_len = sizeof(ia->ia_addr);
-		ia->ia6_createtime = time_second;
+		ia->ia6_createtime = time_uptime;
 		if ((ifp->if_flags & (IFF_POINTOPOINT | IFF_LOOPBACK)) != 0) {
 			/*
 			 * XXX: some functions expect that ifa_dstaddr is not
@@ -906,7 +925,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	}
 
 	/* update timestamp */
-	ia->ia6_updatetime = time_second;
+	ia->ia6_updatetime = time_uptime;
 
 	/* set prefix mask */
 	if (ifra->ifra_prefixmask.sin6_len) {
@@ -953,12 +972,12 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	ia->ia6_lifetime = ifra->ifra_lifetime;
 	if (ia->ia6_lifetime.ia6t_vltime != ND6_INFINITE_LIFETIME) {
 		ia->ia6_lifetime.ia6t_expire =
-		    time_second + ia->ia6_lifetime.ia6t_vltime;
+		    time_uptime + ia->ia6_lifetime.ia6t_vltime;
 	} else
 		ia->ia6_lifetime.ia6t_expire = 0;
 	if (ia->ia6_lifetime.ia6t_pltime != ND6_INFINITE_LIFETIME) {
 		ia->ia6_lifetime.ia6t_preferred =
-		    time_second + ia->ia6_lifetime.ia6t_pltime;
+		    time_uptime + ia->ia6_lifetime.ia6t_pltime;
 	} else
 		ia->ia6_lifetime.ia6t_preferred = 0;
 
@@ -988,7 +1007,7 @@ in6_update_ifa1(struct ifnet *ifp, struct in6_aliasreq *ifra,
 	 */
 	if ((ifra->ifra_flags & IN6_IFF_DEPRECATED) != 0) {
 		ia->ia6_lifetime.ia6t_pltime = 0;
-		ia->ia6_lifetime.ia6t_preferred = time_second;
+		ia->ia6_lifetime.ia6t_preferred = time_uptime;
 	}
 
 	/* reset the interface and routing table appropriately. */

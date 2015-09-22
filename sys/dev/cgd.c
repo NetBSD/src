@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.91.2.2 2015/06/06 14:40:06 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.91.2.3 2015/09/22 12:05:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91.2.2 2015/06/06 14:40:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91.2.3 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -57,9 +57,9 @@ __KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91.2.2 2015/06/06 14:40:06 skrll Exp $");
 
 #include <miscfs/specfs/specdev.h> /* for v_rdev */
 
-/* Entry Point Functions */
+#include "ioconf.h"
 
-void	cgdattach(int);
+/* Entry Point Functions */
 
 static dev_type_open(cgdopen);
 static dev_type_close(cgdclose);
@@ -104,7 +104,7 @@ static int cgd_destroy(device_t);
 
 /* Internal Functions */
 
-static void	cgd_start(device_t);
+static int	cgd_diskstart(device_t, struct buf *);
 static void	cgdiodone(struct buf *);
 
 static int	cgd_ioctl_set(struct cgd_softc *, void *, struct lwp *);
@@ -121,7 +121,7 @@ static struct dkdriver cgddkdriver = {
         .d_close = cgdclose,
         .d_strategy = cgdstrategy,
         .d_iosize = NULL,
-        .d_diskstart = cgd_start,
+        .d_diskstart = cgd_diskstart,
         .d_dumpblocks = NULL,
         .d_lastclose = NULL
 };
@@ -379,79 +379,65 @@ cgd_putdata(struct dk_softc *dksc, void *data)
 	}
 }
 
-static void
-cgd_start(device_t dev)
+static int
+cgd_diskstart(device_t dev, struct buf *bp)
 {
 	struct	cgd_softc *cs = device_private(dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
-	struct	buf *bp, *nbp;
-#ifdef DIAGNOSTIC
-	struct	buf *qbp;
-#endif
+	struct	buf *nbp;
 	void *	addr;
 	void *	newaddr;
 	daddr_t	bn;
 	struct	vnode *vp;
 
-	while ((bp = bufq_peek(dksc->sc_bufq)) != NULL) {
+	DPRINTF_FOLLOW(("cgd_diskstart(%p, %p)\n", dksc, bp));
 
-		DPRINTF_FOLLOW(("cgd_start(%p, %p)\n", dksc, bp));
-		disk_busy(&dksc->sc_dkdev);
+	bn = bp->b_rawblkno;
 
-		bn = bp->b_rawblkno;
+	/*
+	 * We attempt to allocate all of our resources up front, so that
+	 * we can fail quickly if they are unavailable.
+	 */
+	nbp = getiobuf(cs->sc_tvn, false);
+	if (nbp == NULL)
+		return EAGAIN;
 
-		/*
-		 * We attempt to allocate all of our resources up front, so that
-		 * we can fail quickly if they are unavailable.
-		 */
-		nbp = getiobuf(cs->sc_tvn, false);
-		if (nbp == NULL) {
-			disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-			break;
+	/*
+	 * If we are writing, then we need to encrypt the outgoing
+	 * block into a new block of memory.
+	 */
+	newaddr = addr = bp->b_data;
+	if ((bp->b_flags & B_READ) == 0) {
+		newaddr = cgd_getdata(dksc, bp->b_bcount);
+		if (!newaddr) {
+			putiobuf(nbp);
+			return EAGAIN;
 		}
-
-		/*
-		 * If we are writing, then we need to encrypt the outgoing
-		 * block into a new block of memory.
-		 */
-		newaddr = addr = bp->b_data;
-		if ((bp->b_flags & B_READ) == 0) {
-			newaddr = cgd_getdata(dksc, bp->b_bcount);
-			if (!newaddr) {
-				putiobuf(nbp);
-				disk_unbusy(&dksc->sc_dkdev, 0, (bp->b_flags & B_READ));
-				break;
-			}
-			cgd_cipher(cs, newaddr, addr, bp->b_bcount, bn,
-			    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
-		}
-		/* we now have all needed resources to process this buf */
-#ifdef DIAGNOSTIC
-		qbp = bufq_get(dksc->sc_bufq);
-		KASSERT(bp == qbp);
-#else
-		(void)bufq_get(dksc->sc_bufq);
-#endif
-		nbp->b_data = newaddr;
-		nbp->b_flags = bp->b_flags;
-		nbp->b_oflags = bp->b_oflags;
-		nbp->b_cflags = bp->b_cflags;
-		nbp->b_iodone = cgdiodone;
-		nbp->b_proc = bp->b_proc;
-		nbp->b_blkno = bn;
-		nbp->b_bcount = bp->b_bcount;
-		nbp->b_private = bp;
-
-		BIO_COPYPRIO(nbp, bp);
-
-		if ((nbp->b_flags & B_READ) == 0) {
-			vp = nbp->b_vp;
-			mutex_enter(vp->v_interlock);
-			vp->v_numoutput++;
-			mutex_exit(vp->v_interlock);
-		}
-		VOP_STRATEGY(cs->sc_tvn, nbp);
+		cgd_cipher(cs, newaddr, addr, bp->b_bcount, bn,
+		    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
 	}
+
+	nbp->b_data = newaddr;
+	nbp->b_flags = bp->b_flags;
+	nbp->b_oflags = bp->b_oflags;
+	nbp->b_cflags = bp->b_cflags;
+	nbp->b_iodone = cgdiodone;
+	nbp->b_proc = bp->b_proc;
+	nbp->b_blkno = bn;
+	nbp->b_bcount = bp->b_bcount;
+	nbp->b_private = bp;
+
+	BIO_COPYPRIO(nbp, bp);
+
+	if ((nbp->b_flags & B_READ) == 0) {
+		vp = nbp->b_vp;
+		mutex_enter(vp->v_interlock);
+		vp->v_numoutput++;
+		mutex_exit(vp->v_interlock);
+	}
+	VOP_STRATEGY(cs->sc_tvn, nbp);
+
+	return 0;
 }
 
 static void
@@ -460,7 +446,6 @@ cgdiodone(struct buf *nbp)
 	struct	buf *obp = nbp->b_private;
 	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
-	int s;
 
 	KDASSERT(cs);
 
@@ -496,12 +481,9 @@ cgdiodone(struct buf *nbp)
 	obp->b_resid = 0;
 	if (obp->b_error != 0)
 		obp->b_resid = obp->b_bcount;
-	s = splbio();
-	disk_unbusy(&dksc->sc_dkdev, obp->b_bcount - obp->b_resid,
-	    (obp->b_flags & B_READ));
-	biodone(obp);
-	cgd_start(dksc->sc_dev);
-	splx(s);
+
+	dk_done(dksc, obp);
+	dk_start(dksc, NULL);
 }
 
 /* XXX: we should probably put these into dksubr.c, mostly */
@@ -581,6 +563,11 @@ cgdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		 * We pass this call down to the underlying disk.
 		 */
 		return VOP_IOCTL(cs->sc_tvn, cmd, data, flag, l->l_cred);
+	case DIOCGSTRATEGY:
+	case DIOCSSTRATEGY:
+		if (!DK_ATTACHED(dksc))
+			return ENOENT;
+		/*FALLTHROUGH*/
 	default:
 		return dk_ioctl(dksc, dev, cmd, data, flag, l);
 	case CGDIOCGET:
@@ -735,7 +722,6 @@ bail:
 static int
 cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 {
-	int	s;
 	struct	dk_softc *dksc = &cs->sc_dksc;
 
 	if (!DK_ATTACHED(dksc))
@@ -745,9 +731,7 @@ cgd_ioctl_clr(struct cgd_softc *cs, struct lwp *l)
 	dkwedge_delall(&dksc->sc_dkdev);
 
 	/* Kill off any queued buffers. */
-	s = splbio();
-	bufq_drain(dksc->sc_bufq);
-	splx(s);
+	dk_drain(dksc);
 	bufq_free(dksc->sc_bufq);
 
 	(void)vn_close(cs->sc_tvn, FREAD|FWRITE, l->l_cred);

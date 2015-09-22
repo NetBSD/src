@@ -1,4 +1,4 @@
-/*	$NetBSD: biconsdev.c,v 1.22 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: biconsdev.c,v 1.22.4.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999-2001
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.22 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.22.4.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include "biconsdev.h"
 #include <sys/param.h>
@@ -83,8 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: biconsdev.c,v 1.22 2014/07/25 08:10:37 dholland Exp 
 #include <dev/hpc/bicons.h>
 #include <dev/hpc/biconsvar.h>
 
+#include "ioconf.h"
+
 struct tty biconsdev_tty[NBICONSDEV];
-void	biconsdevattach(int);
 static	void biconsdev_output(struct tty *);
 
 dev_type_open(biconsdevopen);

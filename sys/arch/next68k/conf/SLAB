@@ -1,4 +1,4 @@
-# $NetBSD: SLAB,v 1.53 2014/08/23 20:26:59 dholland Exp $
+# $NetBSD: SLAB,v 1.53.2.1 2015/09/22 12:05:48 skrll Exp $
 #
 # deberg's development machine
 #
@@ -28,6 +28,7 @@ options 	DIAGNOSTIC	# extra kernel sanity checking
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
 options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
+pseudo-device	ksyms
 
 # ... or these for KGDB (gdb remote target)
 makeoptions	DEBUG="-g"		# debugging symbols for gdb
@@ -36,7 +37,6 @@ makeoptions	DEBUG="-g"		# debugging symbols for gdb
 #options 	KGDB_DEVRATE=9600	# baud rate
 
 # Other debugging options
-options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 options 	SCSIDEBUG
 options 	SCSIVERBOSE		# Verbose SCSI errors

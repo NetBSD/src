@@ -72,7 +72,7 @@ static bool igp_read_bios_from_vram(struct radeon_device *rdev)
 	    (size < 256 * 1024) ||
 	    (bus_space_read_1(bst, bsh, 0) != 0x55) ||
 	    (bus_space_read_1(bst, bsh, 1) != 0xaa) ||
-	    ((rdev = kmalloc(size, GFP_KERNEL)) != NULL)) {
+	    ((rdev->bios = kmalloc(size, GFP_KERNEL)) == NULL)) {
 		bus_space_unmap(bst, bsh, size);
 		return false;
 	}
@@ -116,6 +116,31 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 		return false;
 	}
 
+#ifdef __NetBSD__
+	/*
+	 * Using kmemdup results in >4-byte memory access on 64-bit
+	 * systems, which yields bogus answers on some devices.  So we
+	 * use bus_space(9) to do guaranteed byte access with
+	 * bus_space_read_region_1 which seems to work better.
+	 */
+    {
+	const bus_space_tag_t bst = rdev->pdev->pd_rom_bst;
+	const bus_space_handle_t bsh = rdev->pdev->pd_rom_found_bsh;
+
+	if (size == 0 ||
+	    bus_space_read_1(bst, bsh, 0) != 0x55 ||
+	    bus_space_read_1(bst, bsh, 1) != 0xaa) {
+		pci_unmap_rom(rdev->pdev, bios);
+		return false;
+	}
+	rdev->bios = kmalloc(size, GFP_KERNEL);
+	if (rdev->bios == NULL) {
+		pci_unmap_rom(rdev->pdev, bios);
+		return false;
+	}
+	bus_space_read_region_1(bst, bsh, 0, rdev->bios, size);
+    }
+#else
 	if (size == 0 || bios[0] != 0x55 || bios[1] != 0xaa) {
 		pci_unmap_rom(rdev->pdev, bios);
 		return false;
@@ -125,6 +150,7 @@ static bool radeon_read_bios(struct radeon_device *rdev)
 		pci_unmap_rom(rdev->pdev, bios);
 		return false;
 	}
+#endif
 	pci_unmap_rom(rdev->pdev, bios);
 	return true;
 }

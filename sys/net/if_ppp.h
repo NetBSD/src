@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.h,v 1.25 2008/11/29 23:15:20 cube Exp $	*/
+/*	$NetBSD: if_ppp.h,v 1.25.44.1 2015/09/22 12:06:10 skrll Exp $	*/
 /*	Id: if_ppp.h,v 1.16 1997/04/30 05:46:04 paulus Exp 	*/
 
 /*
@@ -45,6 +45,8 @@
 
 #ifndef _NET_IF_PPP_H_
 #define _NET_IF_PPP_H_
+
+#include <sys/ioccom.h>
 
 /*
  * Bit definitions for flags.
@@ -172,8 +174,6 @@ struct ppp_rawin {
 #endif
 
 #if defined(_KERNEL) || defined(KERNEL)
-void	pppattach(void);
-
 struct compressor;
 int	ppp_register_compressor(struct compressor *, size_t);
 int	ppp_unregister_compressor(struct compressor *, size_t);

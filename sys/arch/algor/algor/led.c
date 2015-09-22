@@ -1,4 +1,4 @@
-/*	$NetBSD: led.c,v 1.7 2011/07/09 16:03:00 matt Exp $	*/
+/*	$NetBSD: led.c,v 1.7.30.1 2015/09/22 12:05:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,13 +30,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.7 2011/07/09 16:03:00 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: led.c,v 1.7.30.1 2015/09/22 12:05:35 skrll Exp $");
 
 #include "opt_algor_p4032.h"
 #include "opt_algor_p5064.h" 
 #include "opt_algor_p6032.h"
 
 #include <sys/param.h>
+
+#include <mips/cpuregs.h>
 
 #include <algor/autoconf.h>
 

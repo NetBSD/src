@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.10 2014/04/30 01:01:47 matt Exp $	*/
+/*	$NetBSD: machdep.c,v 1.10.4.1 2015/09/22 12:05:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10 2014/04/30 01:01:47 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.10.4.1 2015/09/22 12:05:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -217,17 +217,7 @@ mach_init(void)
 void
 cpu_startup(void)
 {
-#ifdef DEBUG
-	extern int pmapdebug;
-	const int opmapdebug = pmapdebug;
-	pmapdebug = 0;		/* Shut up pmap debug during bootstrap */
-#endif
-
 	cpu_startup_common();
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
 }
 
 void

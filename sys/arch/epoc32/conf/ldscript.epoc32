@@ -1,32 +1,23 @@
-/*	$NetBSD: ldscript.epoc32,v 1.2 2014/01/30 15:36:43 matt Exp $	*/
+/*	$NetBSD: ldscript.epoc32,v 1.2.8.1 2015/09/22 12:05:40 skrll Exp $	*/
 
-OUTPUT_ARCH(arm)
 ENTRY(KERNEL_BASE_phys)
 SECTIONS
 {
-  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
-  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
-
   /* Kernel start: */
-  .start (KERNEL_BASE_phys) :
+  .start :
   {
     *(.start)
-  } =0
+  }
 
   /* Read-only sections, merged into text segment: */
-  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
-  AT (LOADADDR(.start) + SIZEOF(.start))
+  .text :
   {
     *(.text)
     *(.text.*)
     *(.stub)
     *(.glue_7t) *(.glue_7)
     *(.rodata) *(.rodata.*)
-  } =0
-  .ARM.extab   : { *(.ARM.extab* .gnu.linkonce.armextab.*) }
-  PROVIDE (__exidx_start = .);
-  .ARM.exidx   : { *(.ARM.exidx* .gnu.linkonce.armexidx.*) }
-  PROVIDE (__exidx_end = .);
+  }
   PROVIDE (__etext = .);
   PROVIDE (_etext = .);
   PROVIDE (etext = .);
@@ -34,16 +25,14 @@ SECTIONS
      boundary.  */
   . = ALIGN(0x8000);
   .data    :
-  AT (LOADADDR(.text) + (ADDR(.data) - ADDR(.text)))
   {
     __data_start = . ;
     *(.data)
     *(.data.*)
   }
-  .sdata     : 
-  AT (LOADADDR(.data) + (ADDR(.sdata) - ADDR(.data)))
+  .sdata     :
   {
-    *(.sdata) 
+    *(.sdata)
     *(.sdata.*)
   }
   _edata = .;
@@ -63,14 +52,14 @@ SECTIONS
   }
   .bss       :
   {
-   *(.dynbss)
-   *(.bss)
-   *(.bss.*)
-   *(COMMON)
-   /* Align here to ensure that the .bss section occupies space up to
-      _end.  Align after .bss to ensure correct alignment even if the
-      .bss section disappears because there are no input sections.  */
-   . = ALIGN(32 / 8);
+    *(.dynbss)
+    *(.bss)
+    *(.bss.*)
+    *(COMMON)
+    /* Align here to ensure that the .bss section occupies space up to
+       _end.  Align after .bss to ensure correct alignment even if the
+       .bss section disappears because there are no input sections.  */
+    . = ALIGN(32 / 8);
   }
   . = ALIGN(32 / 8);
   _end = .;
@@ -80,4 +69,20 @@ SECTIONS
   {
     KEEP(*(.note.netbsd.ident));
   }
+}
+SECTIONS
+{
+  KERNEL_BASE_phys = @KERNEL_BASE_PHYS@;
+  KERNEL_BASE_virt = @KERNEL_BASE_VIRT@;
+
+  .start (KERNEL_BASE_phys) :
+  {
+    *(.start)
+  } =0
+
+  .text (KERNEL_BASE_virt + SIZEOF(.start)) :
+  AT (LOADADDR(.start) + SIZEOF(.start))
+  {
+    *(.text)
+  } =0
 }

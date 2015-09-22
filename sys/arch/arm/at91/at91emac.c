@@ -1,5 +1,5 @@
-/*	$Id: at91emac.c,v 1.13.14.1 2015/06/06 14:39:55 skrll Exp $	*/
-/*	$NetBSD: at91emac.c,v 1.13.14.1 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$Id: at91emac.c,v 1.13.14.2 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.13.14.2 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.13.14.1 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.13.14.2 2015/09/22 12:05:37 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -224,7 +224,7 @@ emac_intr(void *arg)
 {
 	struct emac_softc *sc = (struct emac_softc *)arg;
 	struct ifnet * ifp = &sc->sc_ec.ec_if;
-	uint32_t imr, isr, rsr, ctl;
+	uint32_t imr, isr, ctl;
 	int bi;
 
 	imr = ~EMAC_READ(ETH_IMR);
@@ -234,7 +234,10 @@ emac_intr(void *arg)
 	}
 
 	isr = EMAC_READ(ETH_ISR) & imr;
-	rsr = EMAC_READ(ETH_RSR);		// get receive status register
+#ifdef EMAC_DEBUG
+	uint32_t rsr =
+#endif
+	EMAC_READ(ETH_RSR);		// get receive status register
 
 	DPRINTFN(2, ("%s: isr=0x%08X rsr=0x%08X imr=0x%08X\n", __FUNCTION__, isr, rsr, imr));
 
@@ -254,7 +257,7 @@ emac_intr(void *arg)
 		ifp->if_ipackets++;
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
-	
+
 	if (isr & ETH_ISR_RCOM) {			// packet has been received!
 		uint32_t nfo;
 		// @@@ if memory is NOT coherent, then we're in trouble @@@@
@@ -274,10 +277,10 @@ emac_intr(void *arg)
 			if (m != NULL && (m->m_flags & M_EXT)) {
 				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
 						MCLBYTES, BUS_DMASYNC_POSTREAD);
-				bus_dmamap_unload(sc->sc_dmat, 
+				bus_dmamap_unload(sc->sc_dmat,
 					sc->rxq[bi].m_dmamap);
 				sc->rxq[bi].m->m_pkthdr.rcvif = ifp;
-				sc->rxq[bi].m->m_pkthdr.len = 
+				sc->rxq[bi].m->m_pkthdr.len =
 					sc->rxq[bi].m->m_len = fl;
 				bpf_mtap(ifp, sc->rxq[bi].m);
 				DPRINTFN(2,("received %u bytes packet\n", fl));
@@ -286,8 +289,8 @@ emac_intr(void *arg)
 					m_adj(m, mtod(m, intptr_t) & 3);
 				}
 				sc->rxq[bi].m = m;
-				bus_dmamap_load(sc->sc_dmat, 
-					sc->rxq[bi].m_dmamap, 
+				bus_dmamap_load(sc->sc_dmat,
+					sc->rxq[bi].m_dmamap,
 					m->m_ext.ext_buf, MCLBYTES,
 					NULL, BUS_DMA_NOWAIT);
 				bus_dmamap_sync(sc->sc_dmat, sc->rxq[bi].m_dmamap, 0,
@@ -304,7 +307,7 @@ emac_intr(void *arg)
 					m_freem(m);
 				}
 				ifp->if_ierrors++;
-			} 
+			}
 			sc->rxqi++;
 		}
 //		bus_dmamap_sync(sc->sc_dmat, sc->rbqpage_dmamap, 0, sc->rbqlen, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -312,7 +315,7 @@ emac_intr(void *arg)
 
 	if (emac_gctx(sc) > 0 && IFQ_IS_EMPTY(&ifp->if_snd) == 0) {
 		emac_ifstart(ifp);
-	} 
+	}
 #if 0 // reloop
 	irq = EMAC_READ(IntStsC);
 	if ((irq & (IntSts_RxSQ|IntSts_ECI)) != 0)
@@ -423,8 +426,8 @@ emac_init(struct emac_softc *sc)
 		if (mtod(m, intptr_t) & 3) {
 			m_adj(m, mtod(m, intptr_t) & 3);
 		}
-		err = bus_dmamap_load(sc->sc_dmat, sc->rxq[i].m_dmamap, 
-			m->m_ext.ext_buf, MCLBYTES, NULL, 
+		err = bus_dmamap_load(sc->sc_dmat, sc->rxq[i].m_dmamap,
+			m->m_ext.ext_buf, MCLBYTES, NULL,
 			BUS_DMA_WAITOK);
 		if (err) {
 			panic("%s: dmamap_load failed: %i\n", __FUNCTION__, err);
@@ -447,7 +450,7 @@ emac_init(struct emac_softc *sc)
 	}
 
 	/* Program each queue's start addr, cur addr, and len registers
-	 * with the physical addresses. 
+	 * with the physical addresses.
 	 */
 	bus_dmamap_sync(sc->sc_dmat, sc->rbqpage_dmamap, 0, sc->rbqlen,
 			 BUS_DMASYNC_PREREAD);
@@ -519,9 +522,9 @@ emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 emac_mii_readreg(device_t self, int phy, int reg)
 {
-	struct emac_softc *sc;
-
-	sc = device_private(self);
+#ifndef EMAC_FAST
+	struct emac_softc *sc = device_private(self);
+#endif
 
 	EMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_RD
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
@@ -534,9 +537,9 @@ emac_mii_readreg(device_t self, int phy, int reg)
 void
 emac_mii_writereg(device_t self, int phy, int reg, int val)
 {
-	struct emac_softc *sc;
-
-	sc = device_private(self);
+#ifndef EMAC_FAST
+	struct emac_softc *sc = device_private(self);
+#endif
 
 	EMAC_WRITE(ETH_MAN, (ETH_MAN_HIGH | ETH_MAN_RW_WR
 			     | ((phy << ETH_MAN_PHYA_SHIFT) & ETH_MAN_PHYA)
@@ -546,7 +549,7 @@ emac_mii_writereg(device_t self, int phy, int reg, int val)
 	while (!(EMAC_READ(ETH_SR) & ETH_SR_IDLE)) ;
 }
 
-	
+
 void
 emac_statchg(struct ifnet *ifp)
 {
@@ -576,7 +579,7 @@ emac_tick(void *arg)
 	ifp->if_collisions += EMAC_READ(ETH_SCOL) + EMAC_READ(ETH_MCOL);
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	misses = EMAC_READ(ETH_DRFC);
-	if (misses > 0) 
+	if (misses > 0)
 		printf("%s: %d rx misses\n", device_xname(sc->sc_dev), misses);
 
 	s = splnet();
@@ -623,7 +626,7 @@ emac_ifstart(struct ifnet *ifp)
 	bus_dma_segment_t *segs;
 	int s, bi, err, nsegs;
 
-	s = splnet();	
+	s = splnet();
 start:
 	if (emac_gctx(sc) == 0) {
 		/* Enable transmit-buffer-free interrupt */
@@ -644,13 +647,13 @@ start:
 //more:
 	bi = (sc->txqi + sc->txqc) % TX_QLEN;
 	if ((err = bus_dmamap_load_mbuf(sc->sc_dmat, sc->txq[bi].m_dmamap, m,
-		BUS_DMA_NOWAIT)) || 
+		BUS_DMA_NOWAIT)) ||
 		sc->txq[bi].m_dmamap->dm_segs[0].ds_addr & 0x3 ||
 		sc->txq[bi].m_dmamap->dm_nsegs > 1) {
 		/* Copy entire mbuf chain to new single */
 		struct mbuf *mn;
 
-		if (err == 0) 
+		if (err == 0)
 			bus_dmamap_unload(sc->sc_dmat, sc->txq[bi].m_dmamap);
 
 		MGETHDR(mn, M_DONTWAIT, MT_DATA);
@@ -692,8 +695,8 @@ start:
 	}
 #endif
 
-	bus_dmamap_sync(sc->sc_dmat, sc->txq[bi].m_dmamap, 0, 
-		sc->txq[bi].m_dmamap->dm_mapsize, 
+	bus_dmamap_sync(sc->sc_dmat, sc->txq[bi].m_dmamap, 0,
+		sc->txq[bi].m_dmamap->dm_mapsize,
 		BUS_DMASYNC_PREWRITE);
 
 	EMAC_WRITE(ETH_TAR, segs->ds_addr);

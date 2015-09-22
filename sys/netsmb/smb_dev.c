@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_dev.c,v 1.43 2014/09/05 09:26:16 matt Exp $	*/
+/*	$NetBSD: smb_dev.c,v 1.43.2.1 2015/09/22 12:06:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.43 2014/09/05 09:26:16 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.43.2.1 2015/09/22 12:06:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -67,6 +67,8 @@ __KERNEL_RCSID(0, "$NetBSD: smb_dev.c,v 1.43 2014/09/05 09:26:16 matt Exp $");
 #include <netsmb/smb_subr.h>
 #include <netsmb/smb_dev.h>
 #include <netsmb/smb_rq.h>
+
+#include "ioconf.h"
 
 static struct smb_dev **smb_devtbl; /* indexed by minor */
 #define SMB_GETDEV(dev) (smb_devtbl[minor(dev)])
@@ -100,7 +102,6 @@ const struct cdevsw nsmb_cdevsw = {
 };
 
 
-void nsmbattach(int);
 static bool nsmb_inited = false;
 
 void

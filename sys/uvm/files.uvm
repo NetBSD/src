@@ -1,8 +1,8 @@
-#	$NetBSD: files.uvm,v 1.22.2.1 2015/06/06 14:40:31 skrll Exp $
+#	$NetBSD: files.uvm,v 1.22.2.2 2015/09/22 12:06:17 skrll Exp $
 
 #
 # UVM options
-# 
+#
 defflag opt_uvmhist.h		UVMHIST UVMHIST_PRINT: KERNHIST
 defflag opt_uvm.h		USE_TOPDOWN_VM UVMMAP_COUNTERS
 defparam opt_uvm.h		UVM_RESERVED_PAGES_PER_CPU
@@ -28,7 +28,6 @@ file	uvm/uvm_glue.c			uvm
 file	uvm/uvm_init.c			uvm
 file	uvm/uvm_io.c			uvm
 file	uvm/uvm_km.c			uvm
-file	uvm/uvm_kmguard.c		debug
 file	uvm/uvm_loan.c			uvm
 file	uvm/uvm_map.c			uvm
 file	uvm/uvm_meter.c			uvm

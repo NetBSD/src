@@ -1,4 +1,4 @@
-/*	$NetBSD: ne.c,v 1.2 2012/11/01 14:46:26 isaki Exp $	*/
+/*	$NetBSD: ne.c,v 1.2.18.1 2015/09/22 12:05:53 skrll Exp $	*/
 
 /*
  * This file is derived from sys/arch/i386/stand/lib/netif/ne.c
@@ -76,7 +76,7 @@
 #define DELAY(x) delay(x)
 
 /*
- * NE2000 on Neptune-X and Nereid has the following regsiter mappings:
+ * NE2000 on Neptune-X and Nereid has the following register mappings:
  *  - 8bit NIC registers are mapped at sparse even addresses
  *  - 16bit data registers on NE2000 ASIC are used to transfer stream data
  *    so no software byte swap ops are necessary even on word access

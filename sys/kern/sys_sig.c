@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.43 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.43.2.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.43 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.43.2.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -211,8 +211,7 @@ sys___sigaltstack14(struct lwp *l, const struct sys___sigaltstack14_args *uap,
 	return 0;
 }
 
-
-static int
+int
 kill1(struct lwp *l, pid_t pid, ksiginfo_t *ksi, register_t *retval)
 {
 	int error;

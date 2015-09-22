@@ -1,4 +1,4 @@
-/*	$NetBSD: vrdsu.c,v 1.11 2012/10/27 17:17:56 chs Exp $	*/
+/*	$NetBSD: vrdsu.c,v 1.11.14.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999 Shin Takemura All rights reserved.
@@ -27,14 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrdsu.c,v 1.11 2012/10/27 17:17:56 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrdsu.c,v 1.11.14.1 2015/09/22 12:05:43 skrll Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/bus.h>
 #include <sys/device.h>
-#include <uvm/uvm_param.h>
+#include <sys/systm.h>
 
-#include <machine/bus.h>
+#include <uvm/uvm_extern.h>
+
+#include <mips/cpuregs.h>
 
 #include <hpcmips/vr/vripif.h>
 #include <hpcmips/vr/dsureg.h>

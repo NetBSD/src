@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.269.4.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.269.4.3 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.269.4.2 2015/06/06 14:40:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.269.4.3 2015/09/22 12:06:17 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -164,6 +164,7 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.269.4.2 2015/06/06 14:40:30 skrll Ex
 #include <uvm/uvm_pager.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/lfs_kernel.h>
 #include <ufs/lfs/lfs_extern.h>
 
@@ -176,14 +177,6 @@ static int lfs_getextattr(void *v);
 static int lfs_setextattr(void *v);
 static int lfs_listextattr(void *v);
 static int lfs_deleteextattr(void *v);
-
-/*
- * A virgin directory (no blushing please).
- */
-static const struct lfs_dirtemplate mastertemplate = {
-	0,	12,			LFS_DT_DIR,	1,	".",
-	0,	LFS_DIRBLKSIZ - 12,	LFS_DT_DIR,	2,	".."
-};
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -420,8 +413,8 @@ lfs_fsync(void *v)
 				     PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));
 		if (error == EAGAIN) {
 			mutex_enter(&lfs_lock);
-			mtsleep(&fs->lfs_avail, PCATCH | PUSER, "lfs_fsync",
-				hz / 100 + 1, &lfs_lock);
+			mtsleep(&fs->lfs_availsleep, PCATCH | PUSER,
+				"lfs_fsync", hz / 100 + 1, &lfs_lock);
 			mutex_exit(&lfs_lock);
 		}
 	} while (error == EAGAIN);
@@ -686,12 +679,8 @@ out:
 	UNMARK_VNODE(dvp);
 	/* XXX: is it even possible for the symlink to get MARK'd? */
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
+	if (error) {
 		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
 	}
 	lfs_unset_dirop(fs, dvp, "symlink");
 
@@ -743,13 +732,6 @@ lfs_mknod(void *v)
 	/* Either way we're done with the dirop at this point */
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
-		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
-	}
 	lfs_unset_dirop(fs, dvp, "mknod");
 	/*
 	 * XXX this is where this used to be (though inside some evil
@@ -784,10 +766,7 @@ lfs_mknod(void *v)
 	}
 
 	fstrans_done(ap->a_dvp->v_mount);
-	if (error != 0) {
-		*vpp = NULL;
-		return (error);
-	}
+	KASSERT(error == 0);
 	VOP_UNLOCK(*vpp);
 	return (0);
 }
@@ -845,12 +824,8 @@ out:
 
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
+	if (error) {
 		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
 	}
 	lfs_unset_dirop(fs, dvp, "create");
 
@@ -874,8 +849,7 @@ lfs_mkdir(void *v)
 	struct vattr *vap;
 	struct ulfs_lookup_results *ulr;
 	struct buf *bp;
-	struct lfs_dirtemplate dirtemplate;
-	struct lfs_direct *newdir;
+	LFS_DIRHEADER *dirp;
 	int dirblksiz;
 	int error;
 
@@ -902,6 +876,8 @@ lfs_mkdir(void *v)
 		return EROFS;
 	}
 	dirblksiz = fs->um_dirblksiz;
+	/* XXX dholland 20150911 I believe this to be true, but... */
+	//KASSERT(dirblksiz == LFS_DIRBLKSIZ);
 
 	error = lfs_set_dirop(dvp, NULL);
 	if (error)
@@ -951,29 +927,10 @@ lfs_mkdir(void *v)
 		goto bad;
 
 	/*
-	 * Initialize directory with "." and ".." from static template.
+	 * Initialize directory with "." and "..". This used to use a
+	 * static template but that adds moving parts for very little
+	 * benefit.
 	 */
-	dirtemplate = mastertemplate;
-	dirtemplate.dotdot_reclen = dirblksiz - dirtemplate.dot_reclen;
-	dirtemplate.dot_ino = ulfs_rw32(ip->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_ino = ulfs_rw32(dp->i_number, ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dot_reclen = ulfs_rw16(dirtemplate.dot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	dirtemplate.dotdot_reclen = ulfs_rw16(dirtemplate.dotdot_reclen,
-	    ULFS_MPNEEDSWAP(fs));
-	if (fs->um_maxsymlinklen <= 0) {
-#if BYTE_ORDER == LITTLE_ENDIAN
-		if (ULFS_MPNEEDSWAP(fs) == 0)
-#else
-		if (ULFS_MPNEEDSWAP(fs) != 0)
-#endif
-		{
-			dirtemplate.dot_type = dirtemplate.dot_namlen;
-			dirtemplate.dotdot_type = dirtemplate.dotdot_namlen;
-			dirtemplate.dot_namlen = dirtemplate.dotdot_namlen = 0;
-		} else
-			dirtemplate.dot_type = dirtemplate.dotdot_type = 0;
-	}
 	if ((error = lfs_balloc(tvp, (off_t)0, dirblksiz, cnp->cn_cred,
 	    B_CLRBUF, &bp)) != 0)
 		goto bad;
@@ -981,7 +938,23 @@ lfs_mkdir(void *v)
 	DIP_ASSIGN(ip, size, dirblksiz);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	uvm_vnp_setsize(tvp, ip->i_size);
-	memcpy((void *)bp->b_data, (void *)&dirtemplate, sizeof dirtemplate);
+	dirp = bp->b_data;
+
+	/* . */
+	lfs_dir_setino(fs, dirp, ip->i_number);
+	lfs_dir_setreclen(fs, dirp, LFS_DIRECTSIZ(fs, 1));
+	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, dirp, 1);
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), ".", 1,
+			LFS_DIRECTSIZ(fs, 1));
+	dirp = LFS_NEXTDIR(fs, dirp);
+	/* .. */
+	lfs_dir_setino(fs, dirp, dp->i_number);
+	lfs_dir_setreclen(fs, dirp, dirblksiz - LFS_DIRECTSIZ(fs, 1));
+	lfs_dir_settype(fs, dirp, LFS_DT_DIR);
+	lfs_dir_setnamlen(fs, dirp, 2);
+	lfs_copydirname(fs, lfs_dir_nameptr(fs, dirp), "..", 2,
+			dirblksiz - LFS_DIRECTSIZ(fs, 1));
 
 	/*
 	 * Directory set up; now install its entry in the parent directory.
@@ -991,10 +964,8 @@ lfs_mkdir(void *v)
 	if ((error = lfs_update(tvp, NULL, NULL, UPDATE_DIROP)) != 0) {
 		goto bad;
 	}
-	newdir = pool_cache_get(ulfs_direct_cache, PR_WAITOK);
-	ulfs_makedirentry(ip, cnp, newdir);
-	error = ulfs_direnter(dvp, ulr, tvp, newdir, cnp, bp);
-	pool_cache_put(ulfs_direct_cache, newdir);
+	error = ulfs_direnter(dvp, ulr, tvp,
+			      cnp, ip->i_number, LFS_IFTODT(ip->i_mode), bp);
  bad:
 	if (error == 0) {
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
@@ -1017,18 +988,11 @@ lfs_mkdir(void *v)
 
 out:
 	fstrans_done(dvp->v_mount);
-#if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
-out2:
-#endif
 
 	UNMARK_VNODE(dvp);
 	UNMARK_VNODE(*vpp);
-	if (!((*vpp)->v_uflag & VU_DIROP)) {
-		KASSERT(error != 0);
+	if (error) {
 		*vpp = NULL;
-	}
-	else {
-		KASSERT(error == 0);
 	}
 	lfs_unset_dirop(fs, dvp, "mkdir");
 
@@ -1174,14 +1138,22 @@ lfs_getattr(void *v)
 	vap->va_nlink = ip->i_nlink;
 	vap->va_uid = ip->i_uid;
 	vap->va_gid = ip->i_gid;
-	vap->va_rdev = (dev_t)ip->i_ffs1_rdev;
+	switch (vp->v_type) {
+	    case VBLK:
+	    case VCHR:
+		vap->va_rdev = (dev_t)lfs_dino_getrdev(fs, ip->i_din);
+		break;
+	    default:
+		vap->va_rdev = NODEV;
+		break;
+	}
 	vap->va_size = vp->v_size;
-	vap->va_atime.tv_sec = ip->i_ffs1_atime;
-	vap->va_atime.tv_nsec = ip->i_ffs1_atimensec;
-	vap->va_mtime.tv_sec = ip->i_ffs1_mtime;
-	vap->va_mtime.tv_nsec = ip->i_ffs1_mtimensec;
-	vap->va_ctime.tv_sec = ip->i_ffs1_ctime;
-	vap->va_ctime.tv_nsec = ip->i_ffs1_ctimensec;
+	vap->va_atime.tv_sec = lfs_dino_getatime(fs, ip->i_din);
+	vap->va_atime.tv_nsec = lfs_dino_getatimensec(fs, ip->i_din);
+	vap->va_mtime.tv_sec = lfs_dino_getmtime(fs, ip->i_din);
+	vap->va_mtime.tv_nsec = lfs_dino_getmtimensec(fs, ip->i_din);
+	vap->va_ctime.tv_sec = lfs_dino_getctime(fs, ip->i_din);
+	vap->va_ctime.tv_nsec = lfs_dino_getctimensec(fs, ip->i_din);
 	vap->va_flags = ip->i_flags;
 	vap->va_gen = ip->i_gen;
 	/* this doesn't belong here */
@@ -1191,7 +1163,7 @@ lfs_getattr(void *v)
 		vap->va_blocksize = MAXBSIZE;
 	else
 		vap->va_blocksize = vp->v_mount->mnt_stat.f_iosize;
-	vap->va_bytes = lfs_fsbtob(fs, (u_quad_t)ip->i_lfs_effnblks);
+	vap->va_bytes = lfs_fsbtob(fs, ip->i_lfs_effnblks);
 	vap->va_type = vp->v_type;
 	vap->va_filerev = ip->i_modrev;
 	fstrans_done(vp->v_mount);
@@ -1235,12 +1207,13 @@ lfs_wrapgo(struct lfs *fs, struct inode *ip, int waitfor)
 	}
 
 	if (--fs->lfs_nowrap == 0) {
-		log(LOG_NOTICE, "%s: re-enabled log wrap\n", fs->lfs_fsmnt);
+		log(LOG_NOTICE, "%s: re-enabled log wrap\n",
+		    lfs_sb_getfsmnt(fs));
 		wakeup(&fs->lfs_wrappass);
 		lfs_wakeup_cleaner(fs);
 	}
 	if (waitfor) {
-		mtsleep(&fs->lfs_nextseg, PCATCH | PUSER, "segment",
+		mtsleep(&fs->lfs_nextsegsleep, PCATCH | PUSER, "segment",
 		    0, &lfs_lock);
 	}
 
@@ -1369,7 +1342,7 @@ lfs_reclaim(void *v)
 	mutex_enter(&lfs_lock);
 	if (ip->i_flags & IN_PAGING) {
 		log(LOG_WARNING, "%s: reclaimed vnode is IN_PAGING\n",
-		    fs->lfs_fsmnt);
+		    lfs_sb_getfsmnt(fs));
 		ip->i_flags &= ~IN_PAGING;
 		TAILQ_REMOVE(&fs->lfs_pchainhd, ip, i_lfs_pchain);
 	}
@@ -1380,7 +1353,7 @@ lfs_reclaim(void *v)
 	}
 	mutex_exit(&lfs_lock);
 
-	pool_put(&lfs_dinode_pool, ip->i_din.ffs1_din);
+	pool_put(&lfs_dinode_pool, ip->i_din);
 	lfs_deregister_all(vp);
 	pool_put(&lfs_inoext_pool, ip->inode_ext.lfs);
 	ip->inode_ext.lfs = NULL;
@@ -1470,7 +1443,7 @@ lfs_strategy(void *v)
 			    tbn >= fs->lfs_cleanint[i]) {
 				DLOG((DLOG_CLEAN,
 				      "lfs_strategy: ino %d lbn %" PRId64
-				      " ind %d sn %d fsb %" PRIx32
+				      " ind %d sn %d fsb %" PRIx64
 				      " given sn %d fsb %" PRIx64 "\n",
 				      ip->i_number, bp->b_lblkno, i,
 				      lfs_dtosn(fs, fs->lfs_cleanint[i]),
@@ -1527,8 +1500,9 @@ lfs_flush_dirops(struct lfs *fs)
 {
 	struct inode *ip, *nip;
 	struct vnode *vp;
-	extern int lfs_dostats;
+	extern int lfs_dostats; /* XXX this does not belong here */
 	struct segment *sp;
+	SEGSUM *ssp;
 	int flags = 0;
 	int error = 0;
 
@@ -1628,7 +1602,8 @@ lfs_flush_dirops(struct lfs *fs)
 	}
 	mutex_exit(&lfs_lock);
 	/* We've written all the dirops there are */
-	((SEGSUM *)(sp->segsum))->ss_flags &= ~(SS_CONT);
+	ssp = (SEGSUM *)sp->segsum;
+	lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) & ~(SS_CONT));
 	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
@@ -1687,31 +1662,34 @@ lfs_flush_pchain(struct lfs *fs)
 	mutex_enter(&lfs_lock);
     top:
 	for (ip = TAILQ_FIRST(&fs->lfs_pchainhd); ip != NULL; ip = nip) {
+		struct mount *mp = ITOV(ip)->v_mount;
+		ino_t ino = ip->i_number;
+
 		nip = TAILQ_NEXT(ip, i_lfs_pchain);
-		vp = ITOV(ip);
 
 		if (!(ip->i_flags & IN_PAGING))
 			goto top;
 
-		mutex_enter(vp->v_interlock);
-		if (vdead_check(vp, VDEAD_NOWAIT) != 0 ||
-		    (vp->v_uflag & VU_DIROP) != 0) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		if (vp->v_type != VREG) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-		if (vget(vp, LK_NOWAIT, false /* !wait */))
-			continue;
 		mutex_exit(&lfs_lock);
-
-		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT | LK_RETRY) != 0) {
+		if (vcache_get(mp, &ino, sizeof(ino), &vp) != 0) {
+			mutex_enter(&lfs_lock);
+			continue;
+		};
+		if (vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT) != 0) {
 			vrele(vp);
 			mutex_enter(&lfs_lock);
 			continue;
 		}
+		ip = VTOI(vp);
+		mutex_enter(&lfs_lock);
+		if ((vp->v_uflag & VU_DIROP) != 0 || vp->v_type != VREG ||
+		    !(ip->i_flags & IN_PAGING)) {
+			mutex_exit(&lfs_lock);
+			vput(vp);
+			mutex_enter(&lfs_lock);
+			goto top;
+		}
+		mutex_exit(&lfs_lock);
 
 		error = lfs_writefile(fs, sp, vp);
 		if (!VPISEMPTY(vp) && !WRITEINPROG(vp) &&
@@ -1741,6 +1719,33 @@ lfs_flush_pchain(struct lfs *fs)
 }
 
 /*
+ * Conversion for compat.
+ */
+static void
+block_info_from_70(BLOCK_INFO *bi, const BLOCK_INFO_70 *bi70)
+{
+	bi->bi_inode = bi70->bi_inode;
+	bi->bi_lbn = bi70->bi_lbn;
+	bi->bi_daddr = bi70->bi_daddr;
+	bi->bi_segcreate = bi70->bi_segcreate;
+	bi->bi_version = bi70->bi_version;
+	bi->bi_bp = bi70->bi_bp;
+	bi->bi_size = bi70->bi_size;
+}
+
+static void
+block_info_to_70(BLOCK_INFO_70 *bi70, const BLOCK_INFO *bi)
+{
+	bi70->bi_inode = bi->bi_inode;
+	bi70->bi_lbn = bi->bi_lbn;
+	bi70->bi_daddr = bi->bi_daddr;
+	bi70->bi_segcreate = bi->bi_segcreate;
+	bi70->bi_version = bi->bi_version;
+	bi70->bi_bp = bi->bi_bp;
+	bi70->bi_size = bi->bi_size;
+}
+
+/*
  * Provide a fcntl interface to sys_lfs_{segwait,bmapv,markv}.
  */
 int
@@ -1756,11 +1761,13 @@ lfs_fcntl(void *v)
 	struct timeval tv;
 	struct timeval *tvp;
 	BLOCK_INFO *blkiov;
+	BLOCK_INFO_70 *blkiov70;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
-	int blkcnt, error;
+	int blkcnt, i, error;
 	size_t fh_size;
 	struct lfs_fcntl_markv blkvp;
+	struct lfs_fcntl_markv_70 blkvp70;
 	struct lwp *l;
 	fsid_t *fsidp;
 	struct lfs *fs;
@@ -1795,7 +1802,7 @@ lfs_fcntl(void *v)
 	    case LFCNSEGWAITALL_COMPAT_50:
 	    case LFCNSEGWAITALL_COMPAT:
 		fsidp = NULL;
-		/* FALLSTHROUGH */
+		/* FALLTHROUGH */
 	    case LFCNSEGWAIT_COMPAT_50:
 	    case LFCNSEGWAIT_COMPAT:
 		{
@@ -1807,7 +1814,7 @@ lfs_fcntl(void *v)
 		goto segwait_common;
 	    case LFCNSEGWAITALL:
 		fsidp = NULL;
-		/* FALLSTHROUGH */
+		/* FALLTHROUGH */
 	    case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
 segwait_common:
@@ -1821,6 +1828,50 @@ segwait_common:
 		if (--fs->lfs_sleepers == 0)
 			wakeup(&fs->lfs_sleepers);
 		mutex_exit(&lfs_lock);
+		return error;
+
+	    case LFCNBMAPV_COMPAT_70:
+	    case LFCNMARKV_COMPAT_70:
+		blkvp70 = *(struct lfs_fcntl_markv_70 *)ap->a_data;
+
+		blkcnt = blkvp70.blkcnt;
+		if ((u_int) blkcnt > LFS_MARKV_MAXBLKCNT)
+			return (EINVAL);
+		blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
+		blkiov70 = lfs_malloc(fs, sizeof(BLOCK_INFO_70), LFS_NB_BLKIOV);
+		for (i = 0; i < blkcnt; i++) {
+			error = copyin(&blkvp70.blkiov[i], blkiov70,
+				       sizeof(*blkiov70));
+			if (error) {
+				lfs_free(fs, blkiov70, LFS_NB_BLKIOV);
+				lfs_free(fs, blkiov, LFS_NB_BLKIOV);
+				return error;
+			}
+			block_info_from_70(&blkiov[i], blkiov70);
+		}
+
+		mutex_enter(&lfs_lock);
+		++fs->lfs_sleepers;
+		mutex_exit(&lfs_lock);
+		if (ap->a_command == LFCNBMAPV)
+			error = lfs_bmapv(l, fsidp, blkiov, blkcnt);
+		else /* LFCNMARKV */
+			error = lfs_markv(l, fsidp, blkiov, blkcnt);
+		if (error == 0) {
+			for (i = 0; i < blkcnt; i++) {
+				block_info_to_70(blkiov70, &blkiov[i]);
+				error = copyout(blkiov70, &blkvp70.blkiov[i],
+						sizeof(*blkiov70));
+				if (error) {
+					break;
+				}
+			}
+		}
+		mutex_enter(&lfs_lock);
+		if (--fs->lfs_sleepers == 0)
+			wakeup(&fs->lfs_sleepers);
+		mutex_exit(&lfs_lock);
+		lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 		return error;
 
 	    case LFCNBMAPV:
@@ -1841,9 +1892,9 @@ segwait_common:
 		++fs->lfs_sleepers;
 		mutex_exit(&lfs_lock);
 		if (ap->a_command == LFCNBMAPV)
-			error = lfs_bmapv(l->l_proc, fsidp, blkiov, blkcnt);
+			error = lfs_bmapv(l, fsidp, blkiov, blkcnt);
 		else /* LFCNMARKV */
-			error = lfs_markv(l->l_proc, fsidp, blkiov, blkcnt);
+			error = lfs_markv(l, fsidp, blkiov, blkcnt);
 		if (error == 0)
 			error = copyout(blkiov, blkvp.blkiov,
 					blkcnt * sizeof(BLOCK_INFO));
@@ -1860,11 +1911,11 @@ segwait_common:
 		 * to be immediately reclaimed.
 		 */
 		lfs_writer_enter(fs, "pndirop");
-		off = fs->lfs_offset;
+		off = lfs_sb_getoffset(fs);
 		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
 		lfs_flush_dirops(fs);
 		LFS_CLEANERINFO(cip, fs, bp);
-		oclean = cip->clean;
+		oclean = lfs_ci_getclean(fs, cip);
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
 		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
 		fs->lfs_sp->seg_flags |= SEGM_PROT;
@@ -1875,7 +1926,8 @@ segwait_common:
 		LFS_CLEANERINFO(cip, fs, bp);
 		DLOG((DLOG_CLEAN, "lfs_fcntl: reclaim wrote %" PRId64
 		      " blocks, cleaned %" PRId32 " segments (activesb %d)\n",
-		      fs->lfs_offset - off, cip->clean - oclean,
+		      lfs_sb_getoffset(fs) - off,
+		      lfs_ci_getclean(fs, cip) - oclean,
 		      fs->lfs_activesb));
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 0);
 #else
@@ -1941,7 +1993,8 @@ segwait_common:
 			cv_wait(&fs->lfs_stopcv, &lfs_lock);
 		fs->lfs_stoplwp = curlwp;
 		if (fs->lfs_nowrap == 0)
-			log(LOG_NOTICE, "%s: disabled log wrap\n", fs->lfs_fsmnt);
+			log(LOG_NOTICE, "%s: disabled log wrap\n",
+			    lfs_sb_getfsmnt(fs));
 		++fs->lfs_nowrap;
 		if (*(int *)ap->a_data == 1
 		    || ap->a_command == LFCNWRAPSTOP_COMPAT) {
@@ -2045,10 +2098,13 @@ lfs_dump_vop(void *v)
 		int a_flags;
 	} */ *ap = v;
 
+	struct inode *ip = VTOI(ap->a_vp);
+	struct lfs *fs = ip->i_lfs;
+
 #ifdef DDB
 	vfs_vnode_print(ap->a_vp, 0, printf);
 #endif
-	lfs_dump_dinode(VTOI(ap->a_vp)->i_din.ffs1_din);
+	lfs_dump_dinode(fs, ip->i_din);
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.3 2012/01/04 13:45:55 apb Exp $ */
+/*      $NetBSD: clockctl.h,v 1.3.24.1 2015/09/22 12:05:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #ifndef _COMPAT_SYS_CLOCKCTL_H_
 #define _COMPAT_SYS_CLOCKCTL_H_
 
+#include <sys/ioccom.h>
 #include <sys/time.h>
 #include <sys/timex.h>
 

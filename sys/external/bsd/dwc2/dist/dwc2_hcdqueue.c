@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcdqueue.c,v 1.11.2.1 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*
  * hcd_queue.c - DesignWare HS OTG Controller host queuing routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.11 2014/09/03 10:00:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcdqueue.c,v 1.11.2.1 2015/09/22 12:06:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -206,7 +206,7 @@ static void dwc2_qh_init(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh,
  *
  * Return: Pointer to the newly allocated QH, or NULL on error
  */
-static struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
+struct dwc2_qh *dwc2_hcd_qh_create(struct dwc2_hsotg *hsotg,
 					  struct dwc2_hcd_urb *urb,
 					  gfp_t mem_flags)
 {
@@ -251,8 +251,8 @@ void dwc2_hcd_qh_free(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 	if (hsotg->core_params->dma_desc_enable > 0) {
 		dwc2_hcd_qh_free_ddma(hsotg, qh);
 	} else if (qh->dw_align_buf) {
-		/* XXXNH */
-		usb_freemem(&hsotg->hsotg_sc->sc_bus, &qh->dw_align_buf_usbdma);
+		usb_freemem(&sc->sc_bus, &qh->dw_align_buf_usbdma);
+ 		qh->dw_align_buf_dma = (dma_addr_t)0;
 	}
 
 	pool_cache_put(sc->sc_qhpool, qh);
@@ -609,6 +609,7 @@ int dwc2_hcd_qh_add(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 			      &hsotg->non_periodic_sched_inactive);
 		return 0;
 	}
+
 	status = dwc2_schedule_periodic(hsotg, qh);
 	if (status)
 		return status;
@@ -646,6 +647,7 @@ void dwc2_hcd_qh_unlink(struct dwc2_hsotg *hsotg, struct dwc2_qh *qh)
 		list_del_init(&qh->qh_list_entry);
 		return;
 	}
+
 	dwc2_deschedule_periodic(hsotg, qh);
 	hsotg->periodic_qh_count--;
 	if (!hsotg->periodic_qh_count) {
@@ -780,63 +782,39 @@ void dwc2_hcd_qtd_init(struct dwc2_qtd *qtd, struct dwc2_hcd_urb *urb)
 
 /**
  * dwc2_hcd_qtd_add() - Adds a QTD to the QTD-list of a QH
+ *			Caller must hold driver lock.
  *
- * @hsotg:     The DWC HCD structure
- * @qtd:       The QTD to add
- * @qh:        Out parameter to return queue head
- * @mem_flags: Flag to do atomic alloc if needed
+ * @hsotg:        The DWC HCD structure
+ * @qtd:          The QTD to add
+ * @qh:           Queue head to add qtd to
  *
  * Return: 0 if successful, negative error code otherwise
  *
- * Finds the correct QH to place the QTD into. If it does not find a QH, it
- * will create a new QH. If the QH to which the QTD is added is not currently
- * scheduled, it is placed into the proper schedule based on its EP type.
- *
- * HCD lock must be held and interrupts must be disabled on entry
+ * If the QH to which the QTD is added is not currently scheduled, it is placed
+ * into the proper schedule based on its EP type.
  */
 int dwc2_hcd_qtd_add(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
-		     struct dwc2_qh **qh, gfp_t mem_flags)
+		     struct dwc2_qh *qh)
 {
-	struct dwc2_hcd_urb *urb = qtd->urb;
-	int allocated = 0;
+
+	KASSERT(mutex_owned(&hsotg->lock));
 	int retval;
 
-	/*
-	 * Get the QH which holds the QTD-list to insert to. Create QH if it
-	 * doesn't exist.
-	 */
-	if (*qh == NULL) {
-		*qh = dwc2_hcd_qh_create(hsotg, urb, mem_flags);
-		if (*qh == NULL)
-			return -ENOMEM;
-		allocated = 1;
+	if (unlikely(!qh)) {
+		dev_err(hsotg->dev, "%s: Invalid QH\n", __func__);
+		retval = -EINVAL;
+		goto fail;
 	}
 
-	retval = dwc2_hcd_qh_add(hsotg, *qh);
+	retval = dwc2_hcd_qh_add(hsotg, qh);
 	if (retval)
 		goto fail;
 
-	qtd->qh = *qh;
-	list_add_tail(&qtd->qtd_list_entry, &(*qh)->qtd_list);
+	qtd->qh = qh;
+	list_add_tail(&qtd->qtd_list_entry, &qh->qtd_list);
 
 	return 0;
-
 fail:
-	if (allocated) {
-		struct dwc2_qtd *qtd2, *qtd2_tmp;
-		struct dwc2_qh *qh_tmp = *qh;
-
-		*qh = NULL;
-		dwc2_hcd_qh_unlink(hsotg, qh_tmp);
-
-		/* Free each QTD in the QH's QTD list */
-		list_for_each_entry_safe(qtd2, qtd2_tmp, &qh_tmp->qtd_list,
-					 qtd_list_entry)
-			dwc2_hcd_qtd_unlink_and_free(hsotg, qtd2, qh_tmp);
-
-		dwc2_hcd_qh_free(hsotg, qh_tmp);
-	}
-
 	return retval;
 }
 

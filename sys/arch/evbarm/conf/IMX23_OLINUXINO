@@ -1,4 +1,4 @@
-# $Id: IMX23_OLINUXINO,v 1.10.2.1 2015/04/06 15:17:55 skrll Exp $
+# $Id: IMX23_OLINUXINO,v 1.10.2.2 2015/09/22 12:05:40 skrll Exp $
 #
 # IMX23_OLINUXINO -- Olimex i.MX23 OLinuXino kernel configuration file.
 #
@@ -92,6 +92,7 @@ ukphy*		at mii? phy ?
 options		MEMSIZE=64
 options		DDB
 options		HZ=100
+pseudo-device	ksyms
 options		INET		# IP + ICMP + TCP + UDP
 options		INET6		# IPv6
 options		COMPAT_NETBSD32	# allow running arm (e.g. non-earm) binaries

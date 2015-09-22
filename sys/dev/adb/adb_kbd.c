@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_kbd.c,v 1.24 2014/11/08 17:21:51 macallan Exp $	*/
+/*	$NetBSD: adb_kbd.c,v 1.24.2.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.24 2014/11/08 17:21:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_kbd.c,v 1.24.2.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -88,6 +88,7 @@ struct adbkbd_softc {
 	int sc_rawkbd;
 #endif
 	bool sc_emul_usb;
+	bool sc_power_dbg;
 
 	uint32_t sc_power;
 	uint8_t sc_buffer[16];
@@ -231,6 +232,7 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 	sc->sc_power = 0xffff;
 	sc->sc_timestamp = 0;
 	sc->sc_emul_usb = FALSE;
+	sc->sc_power_dbg = FALSE;
 
 	aprint_normal(" addr %d: ", sc->sc_adbdev->current_addr);
 
@@ -354,6 +356,14 @@ adbkbd_attach(device_t parent, device_t self, void *aux)
 		aprint_verbose_dev(sc->sc_dev, "extended protocol enabled\n");
 	}
 
+#ifdef ADBKBD_DEBUG
+	cmd = ADBTALK(sc->sc_adbdev->current_addr, 1);
+	sc->sc_msg_len = 0;
+	sc->sc_ops->send(sc->sc_ops->cookie, sc->sc_poll, cmd, 0, NULL);
+	adbkbd_wait(sc, 10);
+	printf("buffer: %02x %02x\n", sc->sc_buffer[0], sc->sc_buffer[1]);
+#endif
+
 	if (adbkbd_is_console && (adbkbd_console_attached == 0)) {
 		wskbd_cnattach(&adbkbd_consops, sc, &adbkbd_keymapdata);
 		adbkbd_console_attached = 1;
@@ -469,9 +479,17 @@ adbkbd_powerbutton(void *cookie)
 {
 	struct adbkbd_softc *sc = cookie;
 
-	sysmon_pswitch_event(&sc->sc_sm_pbutton, 
-	    ADBK_PRESS(sc->sc_pe) ? PSWITCH_EVENT_PRESSED :
-	    PSWITCH_EVENT_RELEASED);
+	if (sc->sc_power_dbg) {
+#ifdef DDB
+		Debugger();
+#else
+		printf("kernel is not compiled with DDB support\n");
+#endif
+	} else {
+		sysmon_pswitch_event(&sc->sc_sm_pbutton, 
+		    ADBK_PRESS(sc->sc_pe) ? PSWITCH_EVENT_PRESSED :
+		    PSWITCH_EVENT_RELEASED);
+	}
 }
 
 static inline void
@@ -800,6 +818,32 @@ adbkbd_sysctl_usb(SYSCTLFN_ARGS)
 	}
 }
 
+static int
+adbkbd_sysctl_dbg(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	struct adbkbd_softc *sc=(struct adbkbd_softc *)node.sysctl_data;
+	const int *np = newp;
+	bool reg;
+
+	DPRINTF("%s\n", __func__);
+	reg = sc->sc_power_dbg;
+	if (np) {
+		/* we're asked to write */	
+		node.sysctl_data = &reg;
+		if (sysctl_lookup(SYSCTLFN_CALL(&node)) == 0) {
+			
+			sc->sc_power_dbg = *(bool *)node.sysctl_data;
+			return 0;
+		}
+		return EINVAL;
+	} else {
+		node.sysctl_data = &reg;
+		node.sysctl_size = sizeof(reg);
+		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
+	}
+}
+
 static void
 adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 {
@@ -817,6 +861,12 @@ adbkbd_setup_sysctl(struct adbkbd_softc *sc)
 	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
 	    CTLTYPE_BOOL, "emulate_usb", "USB keyboard emulation", 
 	    adbkbd_sysctl_usb, 1, (void *)sc, 0, CTL_MACHDEP, 
+	    me->sysctl_num, CTL_CREATE, CTL_EOL);
+	ret = sysctl_createv(NULL, 0, NULL,
+	    (void *)&node, 
+	    CTLFLAG_READWRITE | CTLFLAG_OWNDESC,
+	    CTLTYPE_BOOL, "power_ddb", "power button triggers ddb", 
+	    adbkbd_sysctl_dbg, 1, (void *)sc, 0, CTL_MACHDEP, 
 	    me->sysctl_num, CTL_CREATE, CTL_EOL);
 #if NWSMOUSE > 0
 	if (sc->sc_wsmousedev != NULL) {

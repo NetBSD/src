@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.48.26.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: cache.c,v 1.48.26.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.48.26.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.48.26.2 2015/09/22 12:05:47 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -178,7 +178,7 @@ mips_config_cache(void)
 	struct mips_cache_ops * const mco = &mips_cache_ops;
 #endif
 	const mips_prid_t cpu_id = mips_options.mips_cpu_id;
-	
+
 #if defined(MIPS1) || defined(MIPS3) || defined(MIPS4)
 	if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_PREHISTORIC)
 		mips_config_cache_prehistoric();
@@ -598,7 +598,7 @@ primary_cache_is_2way:
 
 		if (mci->mci_picache_size / mci->mci_picache_ways > PAGE_SIZE ||
 		    mci->mci_pdcache_size / mci->mci_pdcache_ways > PAGE_SIZE)
-			mci->mci_cache_virtual_alias = 1;
+			mci->mci_cache_virtual_alias = true;
 
 		mco->mco_icache_sync_all =
 		    ls2_icache_sync_all;
@@ -677,7 +677,7 @@ primary_cache_is_2way:
 		    (MIPS3_MAX_PCACHE_SIZE - 1) & ~PAGE_MASK;	/* va[14:12] */
 		mci->mci_cache_prefer_mask = MIPS3_MAX_PCACHE_SIZE - 1;
 
-		mci->mci_cache_virtual_alias = 0;
+		mci->mci_cache_virtual_alias = false;
 		/* FALLTHROUGH */
 	case MIPS_R4600:
 #ifdef ENABLE_MIPS_R4700
@@ -963,7 +963,7 @@ mips3_get_cache_config(int csizebase)
 		break;
 	}
 
-	/* 
+	/*
  	 * If CPU has a software-enabled L2 cache, check both if it's
 	 * present and if it's enabled before making assumptions the
 	 * L2 is usable.  If the L2 is disabled, we treat it the same
@@ -972,7 +972,7 @@ mips3_get_cache_config(int csizebase)
 	if ((config & MIPS3_CONFIG_SC) == 0) {
 		if (has_sdcache_enable == 0 ||
 		    (has_sdcache_enable && (config & MIPS3_CONFIG_SE))) {
-			mci->mci_sdcache_line_size = 
+			mci->mci_sdcache_line_size =
 				MIPS3_CONFIG_CACHE_L2_LSIZE(config);
 			if ((config & MIPS3_CONFIG_SS) == 0)
 				mci->mci_scache_unified = true;

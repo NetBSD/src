@@ -1,0 +1,90 @@
+/* $NetBSD: tegra_cecreg.h,v 1.1.2.2 2015/09/22 12:05:38 skrll Exp $ */
+
+/*-
+ * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ * BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ * LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ * OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+#ifndef _ARM_TEGRA_CECREG_H
+#define _ARM_TEGRA_CECREG_H
+
+#define CEC_SW_CONTROL_REG			0x00
+#define CEC_SW_CONTROL_MODE			__BIT(31)
+#define CEC_SW_CONTROL_FILTERED_RX_DATA_PIN	__BIT(4)
+#define CEC_SW_CONTROL_RAW_INPUT_DATA_PIN	__BIT(0)
+
+#define CEC_HW_CONTROL_REG			0x04
+#define CEC_HW_CONTROL_TX_RX_MODE		__BIT(31)
+#define CEC_HW_CONTROL_FAST_SIM_MODE		__BIT(30)
+#define CEC_HW_CONTROL_TX_NAK_MODE		__BIT(24)
+#define CEC_HW_CONTROL_RX_NAK_MODE		__BIT(16)
+#define CEC_HW_CONTROL_RX_SNOOP			__BIT(15)
+#define CEC_HW_CONTROL_RX_LOGICAL_ADDRS		__BITS(14,0)
+
+#define CEC_INPUT_FILTER_REG			0x08
+#define CEC_INPUT_FILTER_MODE			__BIT(31)
+#define CEC_INPUT_FILTER_FIFO_LENGTH		__BITS(5,0)
+
+#define CEC_SPARE_REG				0x0c
+
+#define CEC_TX_REGISTER_REG			0x10
+#define CEC_TX_REGISTER_RETRY_FRAME		__BIT(17)
+#define CEC_TX_REGISTER_GENERATE_START_BIT	__BIT(16)
+#define CEC_TX_REGISTER_ADDRESS_MODE		__BIT(12)
+#define CEC_TX_REGISTER_EOM			__BIT(8)
+#define CEC_TX_REGISTER_DATA			__BITS(7,0)
+
+#define CEC_RX_REGISTER_REG			0x14
+#define CEC_RX_REGISTER_ACK			__BIT(9)
+#define CEC_RX_REGISTER_EOM			__BIT(8)
+#define CEC_RX_REGISTER_DATA			__BITS(7,0)
+
+#define CEC_RX_TIMING_0_REG			0x18
+#define CEC_RX_TIMING_1_REG			0x1c
+#define CEC_RX_TIMING_2_REG			0x20
+#define CEC_TX_TIMING_0_REG			0x24
+#define CEC_TX_TIMING_1_REG			0x28
+#define CEC_TX_TIMING_2_REG			0x2c
+
+#define CEC_INT_STAT_REG			0x30
+#define CEC_INT_MASK_REG			0x34
+#define CEC_INT_FILTERED_RX_DATA_PIN_TRANSITION_L2H __BIT(14)
+#define CEC_INT_FILTERED_RX_DATA_PIN_TRANSITION_H2L __BIT(13)
+#define CEC_INT_RX_BUS_ERROR_DETECTED		__BIT(12)
+#define CEC_INT_RX_BUS_ANOMALY_DETECTED		__BIT(11)
+#define CEC_INT_RX_START_BIT_DETECTED		__BIT(10)
+#define CEC_INT_RX_REGISTER_OVERRUN		__BIT(9)
+#define CEC_INT_RX_REGISTER_FULL		__BIT(8)
+#define CEC_INT_TX_FRAME_TRANSMITTED		__BIT(5)
+#define CEC_INT_TX_BUS_ANOMALY_DETECTED		__BIT(4)
+#define CEC_INT_TX_ARBITRATION_FAILED		__BIT(3)
+#define CEC_INT_TX_FRAME_OR_BLOCK_NAKD		__BIT(2)
+#define CEC_INT_TX_REGISTER_UNDERRUN		__BIT(1)
+#define CEC_INT_TX_REGISTER_EMPTY		__BIT(0)
+
+#define CEC_HW_DEBUG_RX_REG			0x38
+#define CEC_HW_DEBUG_TX_REG			0x3c
+#define CEC_HW_SPARE_0_REG			0x40
+
+#endif /* _ARM_TEGRA_CECREG_H */

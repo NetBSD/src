@@ -1,4 +1,4 @@
-/*	$NetBSD: satlinkio.h,v 1.3 2008/04/28 20:23:52 martin Exp $	*/
+/*	$NetBSD: satlinkio.h,v 1.3.64.1 2015/09/22 12:05:58 skrll Exp $	*/
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,6 +34,8 @@
 /*
  * ioctl definitions for SatLink interface.
  */
+
+#include <sys/ioccom.h>
 
 struct satlink_id {
 	u_int16_t	sid_mfrid;	/* manufacturer ID */

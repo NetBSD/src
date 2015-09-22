@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.19.66.2 2015/04/04 06:22:06 skrll Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.19.66.3 2015/09/22 12:06:01 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -146,48 +146,60 @@ typedef uint32_t uhci_physaddr_t;
 typedef struct {
 	volatile uhci_physaddr_t td_link;
 	volatile uint32_t td_status;
-#define UHCI_TD_GET_ACTLEN(s)	(((s) + 1) & 0x3ff)
+#define UHCI_TD_ACTLEN_MASK	__BITS(10,0)
+#define UHCI_TD_GET_ACTLEN(s)	\
+    ((__SHIFTOUT((s), UHCI_TD_ACTLEN_MASK) + 1) & __SHIFTOUT_MASK(UHCI_TD_ACTLEN_MASK))
 #define UHCI_TD_ZERO_ACTLEN(t)	((t) | 0x3ff)
-#define UHCI_TD_BITSTUFF	0x00020000
-#define UHCI_TD_CRCTO		0x00040000
-#define UHCI_TD_NAK		0x00080000
-#define UHCI_TD_BABBLE		0x00100000
-#define UHCI_TD_DBUFFER		0x00200000
-#define UHCI_TD_STALLED		0x00400000
-#define UHCI_TD_ACTIVE		0x00800000
-#define UHCI_TD_IOC		0x01000000
-#define UHCI_TD_IOS		0x02000000
-#define UHCI_TD_LS		0x04000000
-#define UHCI_TD_GET_ERRCNT(s)	(((s) >> 27) & 3)
-#define UHCI_TD_SET_ERRCNT(n)	((n) << 27)
-#define UHCI_TD_SPD		0x20000000
+#define UHCI_TD_BITSTUFF	__BIT(17)
+#define UHCI_TD_CRCTO		__BIT(18)
+#define UHCI_TD_NAK		__BIT(19)
+#define UHCI_TD_BABBLE		__BIT(20)
+#define UHCI_TD_DBUFFER		__BIT(21)
+#define UHCI_TD_STALLED		__BIT(22)
+#define UHCI_TD_ACTIVE		__BIT(23)
+#define UHCI_TD_IOC		__BIT(24)
+#define UHCI_TD_IOS		__BIT(25)
+#define UHCI_TD_LS		__BIT(26)
+#define UHCI_TD_ERRCNT_MASK	__BITS(28,27)
+#define UHCI_TD_GET_ERRCNT(s)	__SHIFTOUT((s), UHCI_TD_ERRCNT_MASK)
+#define UHCI_TD_SET_ERRCNT(n)	__SHIFTIN((n), UHCI_TD_ERRCNT_MASK)
+#define UHCI_TD_SPD		__BIT(29)
 	volatile uint32_t td_token;
-#define UHCI_TD_PID_IN		0x00000069
-#define UHCI_TD_PID_OUT		0x000000e1
-#define UHCI_TD_PID_SETUP	0x0000002d
-#define UHCI_TD_GET_PID(s)	((s) & 0xff)
-#define UHCI_TD_SET_DEVADDR(a)	((a) << 8)
-#define UHCI_TD_GET_DEVADDR(s)	(((s) >> 8) & 0x7f)
-#define UHCI_TD_SET_ENDPT(e)	(((e)&0xf) << 15)
-#define UHCI_TD_GET_ENDPT(s)	(((s) >> 15) & 0xf)
-#define UHCI_TD_SET_DT(t)	((t) << 19)
-#define UHCI_TD_GET_DT(s)	(((s) >> 19) & 1)
-#define UHCI_TD_SET_MAXLEN(l)	(((l)-1) << 21)
-#define UHCI_TD_GET_MAXLEN(s)	((((s) >> 21) + 1) & 0x7ff)
-#define UHCI_TD_MAXLEN_MASK	0xffe00000
+#define UHCI_TD_PID_IN		0x69
+#define UHCI_TD_PID_OUT		0xe1
+#define UHCI_TD_PID_SETUP	0x2d
+#define UHCI_TD_PID_MASK	__BITS(7,0)
+#define UHCI_TD_SET_PID(p)	__SHIFTIN((p), UHCI_TD_PID_MASK)
+#define UHCI_TD_GET_PID(s)	__SHIFTOUT((s), UHCI_TD_PID_MASK)
+#define UHCI_TD_DEVADDR_MASK	__BITS(14,8)
+#define UHCI_TD_SET_DEVADDR(a)	__SHIFTIN((a), UHCI_TD_DEVADDR_MASK)
+#define UHCI_TD_GET_DEVADDR(s)	__SHIFTOUT((s), UHCI_TD_DEVADDR_MASK)
+#define UHCI_TD_ENDPT_MASK	__BITS(18,15)
+#define UHCI_TD_SET_ENDPT(e)	__SHIFTIN((e), UHCI_TD_ENDPT_MASK)
+#define UHCI_TD_GET_ENDPT(s)	__SHIFTOUT((s), UHCI_TD_ENDPT_MASK)
+#define UHCI_TD_DT_MASK		__BIT(19)
+#define UHCI_TD_SET_DT(t)	__SHIFTIN((t), UHCI_TD_DT_MASK)
+#define UHCI_TD_GET_DT(s)	__SHIFTOUT((s), UHCI_TD_DT_MASK)
+#define UHCI_TD_MAXLEN_MASK	__BITS(31,21)
+#define UHCI_TD_SET_MAXLEN(l)	\
+    __SHIFTIN((((l)-1) & __SHIFTOUT_MASK(UHCI_TD_MAXLEN_MASK)), UHCI_TD_MAXLEN_MASK)
+#define UHCI_TD_GET_MAXLEN(s)	\
+    (__SHIFTOUT((s), UHCI_TD_MAXLEN_MASK) + 1)
 	volatile uint32_t td_buffer;
 } uhci_td_t;
 
-#define UHCI_TD_ERROR (UHCI_TD_BITSTUFF|UHCI_TD_CRCTO|UHCI_TD_BABBLE|UHCI_TD_DBUFFER|UHCI_TD_STALLED)
+#define UHCI_TD_ERROR \
+    (UHCI_TD_BITSTUFF|UHCI_TD_CRCTO|UHCI_TD_BABBLE|UHCI_TD_DBUFFER|UHCI_TD_STALLED)
 
-#define UHCI_TD_SETUP(len, endp, dev) (UHCI_TD_SET_MAXLEN(len) | \
-     UHCI_TD_SET_ENDPT(endp) | UHCI_TD_SET_DEVADDR(dev) | UHCI_TD_PID_SETUP)
-#define UHCI_TD_OUT(len, endp, dev, dt) (UHCI_TD_SET_MAXLEN(len) | \
-     UHCI_TD_SET_ENDPT(endp) | UHCI_TD_SET_DEVADDR(dev) | \
-     UHCI_TD_PID_OUT | UHCI_TD_SET_DT(dt))
-#define UHCI_TD_IN(len, endp, dev, dt) (UHCI_TD_SET_MAXLEN(len) | \
-     UHCI_TD_SET_ENDPT(endp) | UHCI_TD_SET_DEVADDR(dev) | UHCI_TD_PID_IN | \
-     UHCI_TD_SET_DT(dt))
+#define UHCI_TD_SETUP(len, endp, dev) \
+    (UHCI_TD_SET_MAXLEN(len) | UHCI_TD_SET_ENDPT(endp) | \
+    UHCI_TD_SET_DEVADDR(dev) | UHCI_TD_PID_SETUP)
+#define UHCI_TD_OUT(len, endp, dev, dt) \
+    (UHCI_TD_SET_MAXLEN(len) | UHCI_TD_SET_ENDPT(endp) | \
+    UHCI_TD_SET_DEVADDR(dev) | UHCI_TD_PID_OUT | UHCI_TD_SET_DT(dt))
+#define UHCI_TD_IN(len, endp, dev, dt) \
+    (UHCI_TD_SET_MAXLEN(len) | UHCI_TD_SET_ENDPT(endp) | \
+    UHCI_TD_SET_DEVADDR(dev) | UHCI_TD_PID_IN | UHCI_TD_SET_DT(dt))
 
 typedef struct {
 	volatile uhci_physaddr_t qh_hlink;

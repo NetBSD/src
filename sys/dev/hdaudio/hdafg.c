@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.2.2.2 2015/04/06 15:18:08 skrll Exp $ */
+/* $NetBSD: hdafg.c,v 1.2.2.3 2015/09/22 12:05:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.2.2.2 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.2.2.3 2015/09/22 12:05:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -327,6 +327,8 @@ struct hdafg_softc {
 	} sc_p;
 
 	struct hdaudio_audiodev		sc_audiodev;
+
+	uint16_t			sc_fixed_rate;
 };
 
 static int	hdafg_match(device_t, cfdata_t, void *);
@@ -513,7 +515,7 @@ hdafg_widget_connection_parse(struct hdaudio_widget *w)
 					hda_error(sc,
 					    "max connections reached\n");
 					goto getconns_out;
-				} 
+				}
 				w->w_connsenable[w->w_nconns] = true;
 				w->w_conns[w->w_nconns++] = addcnid++;
 				hda_trace(sc, "add connection %02X->%02X\n",
@@ -1661,7 +1663,7 @@ hdafg_assoc_trace_dac(struct hdafg_softc *sc, int as, int seq,
 	return m;
 }
 
-static int 
+static int
 hdafg_assoc_trace_out(struct hdafg_softc *sc, int as, int seq)
 {
 	struct hdaudio_assoc *assocs = sc->sc_assocs;
@@ -2915,7 +2917,7 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 			break;
 		}
 		strcpy(mx[index].mx_di.un.v.units.name, AudioNvolume);
-		
+
 		++index;
 
 		if (ctl->ctl_mute) {
@@ -3041,7 +3043,7 @@ hdafg_commit(struct hdafg_softc *sc)
 
 static void
 hdafg_stream_connect_hdmi(struct hdafg_softc *sc, struct hdaudio_assoc *as,
-    struct hdaudio_widget *w, int maxchan)
+    struct hdaudio_widget *w, const audio_params_t *params)
 {
 	struct hdmi_audio_infoframe hdmi;
 	/* TODO struct displayport_audio_infoframe dp; */
@@ -3069,7 +3071,12 @@ hdafg_stream_connect_hdmi(struct hdafg_softc *sc, struct hdaudio_assoc *as,
 		hdmi.header.packet_type = HDMI_AI_PACKET_TYPE;
 		hdmi.header.version = HDMI_AI_VERSION;
 		hdmi.header.length = HDMI_AI_LENGTH;
-		hdmi.ct_cc = maxchan - 1;
+		hdmi.ct_cc = params->channels - 1;
+		if (params->channels > 2) {
+			hdmi.ca = 0x1f;
+		} else {
+			hdmi.ca = 0x00;
+		}
 		hdafg_dd_hdmi_ai_cksum(&hdmi);
 	}
 	/* update data island with new audio infoframe */
@@ -3092,19 +3099,22 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 {
 	struct hdaudio_assoc *as = sc->sc_assocs;
 	struct hdaudio_widget *w;
+	const audio_params_t *params;
 	uint16_t fmt, dfmt;
 	int tag, chn, maxchan, c;
 	int i, j, k;
 
 	KASSERT(mode == AUMODE_PLAY || mode == AUMODE_RECORD);
 
-	if (mode == AUMODE_PLAY)
+	if (mode == AUMODE_PLAY) {
 		fmt = hdaudio_stream_param(sc->sc_audiodev.ad_playback,
 		    &sc->sc_pparam);
-	else
+		params = &sc->sc_pparam;
+	} else {
 		fmt = hdaudio_stream_param(sc->sc_audiodev.ad_capture,
 		    &sc->sc_rparam);
-
+		params = &sc->sc_rparam;
+	}
 
 	for (i = 0; i < sc->sc_nassocs; i++) {
 		if (as[i].as_enable == false)
@@ -3177,6 +3187,8 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 					dfmt |= COP_DIGITAL_CONVCTRL1_NAUDIO;
 				else
 					dfmt &= ~COP_DIGITAL_CONVCTRL1_NAUDIO;
+				if (sc->sc_vendor == HDAUDIO_VENDOR_NVIDIA)
+					dfmt |= COP_DIGITAL_CONVCTRL1_COPY;
 				hdaudio_command(sc->sc_codec, w->w_nid,
 				    CORB_SET_DIGITAL_CONVERTER_CONTROL_1, dfmt);
 			}
@@ -3203,7 +3215,7 @@ hdafg_stream_connect(struct hdafg_softc *sc, int mode)
 				continue;
 			if (w->w_pin.cap & (COP_PINCAP_HDMI|COP_PINCAP_DP))
 				hdafg_stream_connect_hdmi(sc, &as[i],
-				    w, maxchan);
+				    w, params);
 		}
 	}
 }
@@ -3237,6 +3249,9 @@ hdafg_rate_supported(struct hdafg_softc *sc, u_int frequency)
 {
 	uint32_t caps = sc->sc_p.pcm_size_rate;
 
+	if (sc->sc_fixed_rate)
+		return frequency == sc->sc_fixed_rate;
+
 #define ISFREQOK(shift)	((caps & (1 << (shift))) ? true : false)
 	switch (frequency) {
 	case 8000:
@@ -3251,6 +3266,7 @@ hdafg_rate_supported(struct hdafg_softc *sc, u_int frequency)
 		return ISFREQOK(4);
 	case 44100:
 		return ISFREQOK(5);
+		return true;
 	case 48000:
 		return true;	/* Must be supported by all codecs */
 	case 88200:
@@ -3433,7 +3449,8 @@ hdafg_configure_encodings(struct hdafg_softc *sc)
 		f.channels = 2;
 		f.channel_mask = AUFMT_STEREO;
 		f.frequency_type = 0;
-		f.frequency[0] = f.frequency[1] = 48000;
+		f.frequency[0] = f.frequency[1] = sc->sc_fixed_rate ?
+		    sc->sc_fixed_rate : 48000;
 		f.mode = AUMODE_PLAY|AUMODE_RECORD;
 		hdafg_append_formats(&sc->sc_audiodev, &f);
 	}
@@ -3625,6 +3642,16 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	hda_print1(sc, ": %s %s%s\n", vendor, product,
 	    sc->sc_config ? " (custom configuration)" : "");
 
+	switch (sc->sc_vendor) {
+	case HDAUDIO_VENDOR_NVIDIA:
+		switch (sc->sc_product) {
+		case HDAUDIO_PRODUCT_NVIDIA_TEGRA124_HDMI:
+			sc->sc_fixed_rate = 44100;
+			break;
+		}
+		break;
+	}
+
 	rv = prop_dictionary_get_uint64(args, "function-group", &fgptr);
 	if (rv == false || fgptr == 0) {
 		hda_error(sc, "missing function-group property\n");
@@ -3715,7 +3742,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 
 	hda_debug(sc, "connecting streams\n");
 	defparams.channels = 2;
-	defparams.sample_rate = 48000;
+	defparams.sample_rate = sc->sc_fixed_rate ? sc->sc_fixed_rate : 48000;
 	defparams.precision = defparams.validbits = 16;
 	defparams.encoding = AUDIO_ENCODING_SLINEAR_LE;
 	sc->sc_pparam = sc->sc_rparam = defparams;
@@ -3768,7 +3795,7 @@ hdafg_detach(device_t self, int flags)
 
 	/* restore bios pin widget configuration */
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
-		wl = hdafg_widget_lookup(sc, nid);		
+		wl = hdafg_widget_lookup(sc, nid);
 		if (wl == NULL || wl->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
 			continue;
 		hdafg_widget_setconfig(wl, wl->w_pin.biosconfig);
@@ -3823,7 +3850,7 @@ hdafg_resume(device_t self, const pmf_qual_t *qual)
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
 		hdaudio_command(sc->sc_codec, nid,
 		    CORB_SET_POWER_STATE, COP_POWER_STATE_D0);
-		w = hdafg_widget_lookup(sc, nid);		
+		w = hdafg_widget_lookup(sc, nid);
 
 		/* restore pin widget configuration */
 		if (w == NULL || w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
@@ -3862,7 +3889,8 @@ hdafg_set_params(void *opaque, int setmode, int usemode,
 		    AUMODE_PLAY, play, TRUE, pfil);
 		if (index < 0)
 			return EINVAL;
-		ad->ad_sc->sc_pparam = *play;
+		ad->ad_sc->sc_pparam = pfil->req_size > 0 ?
+		    pfil->filters[0].param : *play;
 		hdafg_stream_connect(ad->ad_sc, AUMODE_PLAY);
 	}
 	if (rec && (setmode & AUMODE_RECORD)) {
@@ -3870,7 +3898,8 @@ hdafg_set_params(void *opaque, int setmode, int usemode,
 		    AUMODE_RECORD, rec, TRUE, rfil);
 		if (index < 0)
 			return EINVAL;
-		ad->ad_sc->sc_rparam = *rec;
+		ad->ad_sc->sc_rparam = rfil->req_size > 0 ?
+		    rfil->filters[0].param : *rec;
 		hdafg_stream_connect(ad->ad_sc, AUMODE_RECORD);
 	}
 	return 0;
@@ -4037,7 +4066,7 @@ hdafg_set_port(void *opaque, mixer_ctrl_t *mc)
 	default:
 		return ENXIO;
 	}
-	    
+
 	return 0;
 }
 
@@ -4125,7 +4154,7 @@ hdafg_allocm(void *opaque, int direction, size_t size)
 
 	if (st->st_data.dma_valid == true)
 		hda_error(ad->ad_sc, "WARNING: allocm leak\n");
-	
+
 	st->st_data.dma_size = size;
 	err = hdaudio_dma_alloc(st->st_host, &st->st_data,
 	    BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
@@ -4215,9 +4244,9 @@ hdafg_trigger_output(void *opaque, void *start, void *end, int blksize,
 	ad->ad_playbackintrarg = intrarg;
 
 	dmasize = (char *)end - (char *)start;
-	ad->ad_sc->sc_pparam = *param;
 	hdafg_stream_connect(ad->ad_sc, AUMODE_PLAY);
-	hdaudio_stream_start(ad->ad_playback, blksize, dmasize, param);
+	hdaudio_stream_start(ad->ad_playback, blksize, dmasize,
+	    &ad->ad_sc->sc_pparam);
 
 	return 0;
 }
@@ -4238,9 +4267,9 @@ hdafg_trigger_input(void *opaque, void *start, void *end, int blksize,
 	ad->ad_captureintrarg = intrarg;
 
 	dmasize = (char *)end - (char *)start;
-	ad->ad_sc->sc_rparam = *param;
 	hdafg_stream_connect(ad->ad_sc, AUMODE_RECORD);
-	hdaudio_stream_start(ad->ad_capture, blksize, dmasize, param);
+	hdaudio_stream_start(ad->ad_capture, blksize, dmasize,
+	    &ad->ad_sc->sc_rparam);
 
 	return 0;
 }
@@ -4381,7 +4410,7 @@ hdafg_enable_analog_beep(struct hdafg_softc *sc)
 {
 	int nid;
 	uint32_t response;
-	
+
 	switch (sc->sc_vendor) {
 	case HDAUDIO_VENDOR_SIGMATEL:
 		switch (sc->sc_product) {

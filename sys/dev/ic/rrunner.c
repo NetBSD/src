@@ -1,4 +1,4 @@
-/*	$NetBSD: rrunner.c,v 1.78 2014/07/25 08:10:37 dholland Exp $	*/
+/*	$NetBSD: rrunner.c,v 1.78.4.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78 2014/07/25 08:10:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rrunner.c,v 1.78.4.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -724,8 +724,10 @@ esh_fpopen(dev_t dev, int oflags, int devtype,
 
 	if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0) {
 		eshinit(sc);
-		if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0)
+		if ((sc->sc_flags & ESH_FL_INITIALIZED) == 0) {
+			splx(s);
 			return EIO;
+		}
 	}
 
 	if ((sc->sc_flags & ESH_FL_RUNCODE_UP) == 0) {
@@ -867,7 +869,6 @@ esh_fpopen(dev_t dev, int oflags, int devtype,
 		error = tsleep((void *) &recv->ec_ulp, PCATCH | PRIBIO,
 			       "eshfpopen", 0);
 		if (error != 0 || recv->ec_index == -1) {
-			splx(s);
 			goto bad_fp_ring_create;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.1 2012/10/03 00:51:46 christos Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.1.16.1 2015/09/22 12:06:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1 2012/10/03 00:51:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.1.16.1 2015/09/22 12:06:18 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -135,7 +135,7 @@ pmap_pte_pagealloc(void)
 {
 	struct vm_page *pg;
 
-	pg = pmap_md_alloc_poolpage(UVM_PGA_ZERO|UVM_PGA_USERESERVE);
+	pg = PMAP_ALLOC_POOLPAGE(UVM_PGA_ZERO|UVM_PGA_USERESERVE);
 	if (pg) {
 #ifdef UVM_PAGE_TRKOWN
 		pg->owner_tag = NULL;
@@ -216,14 +216,14 @@ pmap_segtab_release(pmap_t pmap, pmap_segtab_t **stp_p, bool free_stp,
 		}
 #ifdef DEBUG
 		for (size_t j = 0; j < NPTEPG; j++) {
-			if (pte[j])
-				panic("%s: pte entry %p not 0 (%#x)",
-				    __func__, &pte[j], pte[j]);
+			if (!pte_zero_p(pte[j]))
+				panic("%s: pte entry %p not 0 (%#"PRIxPTE")",
+				    __func__, &pte[j], pte_value(pte[j]));
 		}
 #endif
+		// PMAP_UNMAP_POOLPAGE should handle any VCA issues itself
 		paddr_t pa = PMAP_UNMAP_POOLPAGE((vaddr_t)pte);
 		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
-		pmap_md_vca_clean(pg, (vaddr_t)pte, 0);
 #ifdef PMAP_PTP_CACHE
 		mutex_spin_enter(&pmap_segtab_lock);
 		LIST_INSERT_HEAD(&pmap_segtab_info.ptp_pgflist, pg, listq.list);
@@ -300,10 +300,10 @@ pmap_segtab_alloc(void)
 		}
 	}
 
-#ifdef PARANOIADIAG
-	for (i = 0; i < PMAP_SEGTABSIZE; i++) {
+#ifdef DEBUG
+	for (size_t i = 0; i < PMAP_SEGTABSIZE; i++) {
 		if (stp->seg_tab[i] != 0)
-			panic("pmap_create: pm_segtab.seg_tab[%zu] != 0");
+			panic("%s: pm_segtab.seg_tab[%zu] != 0", __func__, i);
 	}
 #endif
 	return stp;
@@ -448,7 +448,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 		}
 
 		const paddr_t pa = VM_PAGE_TO_PHYS(pg);
-		pte = (pt_entry_t *)POOL_PHYSTOV(pa);
+		pte = (pt_entry_t *)PMAP_MAP_POOLPAGE(pa);
 		pt_entry_t ** const pte_p =
 		    &stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)];
 #ifdef MULTIPROCESSOR
@@ -464,6 +464,7 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 			    pg, listq.list);
 			mutex_spin_exit(&pmap_segtab_lock);
 #else
+			PMAP_UNMAP_POOLPAGE((vaddr_t)pte);
 			uvm_pagefree(pg);
 #endif
 			pte = opte;
@@ -473,13 +474,14 @@ pmap_pte_reserve(pmap_t pmap, vaddr_t va, int flags)
 #endif
 		KASSERT(pte == stp->seg_tab[(va >> SEGSHIFT) & (PMAP_SEGTABSIZE - 1)]);
 
-		pte += (va >> PGSHIFT) & (NPTEPG - 1);
-#ifdef PARANOIADIAG
+#ifdef DEBUG
 		for (size_t i = 0; i < NPTEPG; i++) {
-			if ((pte+i)->pt_entry)
-				panic("pmap_enter: new segmap not empty");
+			if (!pte_zero_p(pte[i]))
+				panic("%s: new segmap %p not empty @ %zu",
+				    __func__, pte, i);
 		}
 #endif
+		pte += (va >> PGSHIFT) & (NPTEPG - 1);
 	}
 
 	return pte;

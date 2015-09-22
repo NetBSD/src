@@ -1,4 +1,4 @@
-/*	$NetBSD: kloader.c,v 1.26 2014/01/25 10:14:29 skrll Exp $	*/
+/*	$NetBSD: kloader.c,v 1.26.6.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.26 2014/01/25 10:14:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kloader.c,v 1.26.6.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include "debug_kloader.h"
 
@@ -426,7 +426,6 @@ kloader_load(void)
 int
 kloader_alloc_memory(size_t sz)
 {
-	extern paddr_t avail_start, avail_end;
 	int n, error;
 
 	n = (sz + BUCKET_SIZE - 1) / BUCKET_SIZE	/* kernel &co */

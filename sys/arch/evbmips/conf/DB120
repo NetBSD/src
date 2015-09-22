@@ -1,4 +1,4 @@
-#	$NetBSD: DB120,v 1.15 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: DB120,v 1.15.2.1 2015/09/22 12:05:41 skrll Exp $
 #
 # Qualcomm Atheros AR9344 DB120 evaluation board.
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"DB120-$Revision: 1.15 $"
+#ident 		"DB120-$Revision: 1.15.2.1 $"
 
 maxusers	32
 
@@ -46,7 +46,6 @@ options 	NTP		# network time protocol
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DEBUG		# extra kernel debugging support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger

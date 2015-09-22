@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.29 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: altivec.c,v 1.29.4.1 2015/09/22 12:05:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.29 2014/05/16 00:48:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.29.4.1 2015/09/22 12:05:50 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -82,29 +82,31 @@ vec_state_load(lwp_t *l, u_int flags)
 		vec_mark_used(l);
 	}
 
-	/*
-	 * Enable AltiVec temporarily (and disable interrupts).
-	 */
-	const register_t msr = mfmsr();
-	mtmsr((msr & ~PSL_EE) | PSL_VEC);
-	__asm volatile ("isync");
+	if ((flags & PCU_REENABLE) == 0) {
+		/*
+		 * Enable AltiVec temporarily (and disable interrupts).
+		 */
+		const register_t msr = mfmsr();
+		mtmsr((msr & ~PSL_EE) | PSL_VEC);
+		__asm volatile ("isync");
 
-	/*
-	 * Load the vector unit from vreg which is best done in
-	 * assembly.
-	 */
-	vec_load_from_vreg(&pcb->pcb_vr);
+		/*
+		 * Load the vector unit from vreg which is best done in
+		 * assembly.
+		 */
+		vec_load_from_vreg(&pcb->pcb_vr);
+
+		/*
+		 * Restore MSR (turn off AltiVec)
+		 */
+		mtmsr(msr);
+		__asm volatile ("isync");
+	}
 
 	/*
 	 * VRSAVE will be restored when trap frame returns
 	 */
 	l->l_md.md_utf->tf_vrsave = pcb->pcb_vr.vrsave;
-
-	/*
-	 * Restore MSR (turn off AltiVec)
-	 */
-	mtmsr(msr);
-	__asm volatile ("isync");
 
 	/*
 	 * Mark vector registers as modified.

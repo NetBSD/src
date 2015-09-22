@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.4 2009/01/12 07:01:00 tsutsui Exp $	*/
+/*	$NetBSD: conf.c,v 1.4.42.1 2015/09/22 12:05:53 skrll Exp $	*/
 
 #include <sys/types.h>
 #include <netinet/in.h>

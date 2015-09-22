@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: LCARD,v 1.15 2014/07/20 10:06:11 alnsn Exp $
+# 	$NetBSD: LCARD,v 1.15.4.1 2015/09/22 12:05:43 skrll Exp $
 #
 include		"arch/hpcmips/conf/std.lcard"
 
@@ -24,12 +24,12 @@ options 	MEMORY_DISK_ROOT_SIZE=8192	# Size in blocks
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 options 	DDB			# in-kernel debugger
+pseudo-device	ksyms
 
 #options 	WINCE_DEFAULT_SETTING	# Debugging use
 options 	DUMP_GIU_LEVEL2_INTR	# Debugging use
 #options 	DEBUG_FIND_PCIC		# Debugging use XXX harmful don't define until read source.
 #options 	DEBUG_FIND_PCIC_I82365SL_ONLY
-#makeoptions	DEFWARNINGS=no	# override DEFWARNINGS?=yes
 
 file-system 	FFS		# fast filesystem with user and group quotas
 options 	FFS_NO_SNAPSHOT	# No FFS snapshot support

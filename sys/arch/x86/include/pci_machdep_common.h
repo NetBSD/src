@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.13.6.1 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.13.6.2 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -118,7 +118,15 @@ const struct evcnt *pci_intr_evcnt(pci_chipset_tag_t, pci_intr_handle_t);
 void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
-int		pci_intr_distribute(void *, const kcpuset_t *, kcpuset_t *);
+
+typedef enum {
+	PCI_INTR_TYPE_INTX = 0,
+	PCI_INTR_TYPE_MSI,
+	PCI_INTR_TYPE_MSIX,
+	PCI_INTR_TYPE_SIZE,
+} pci_intr_type_t;
+
+pci_intr_type_t	pci_intr_type(pci_intr_handle_t);
 
 /*
  * If device drivers use MSI/MSI-X, they should use these API for INTx
@@ -128,15 +136,20 @@ int		pci_intr_distribute(void *, const kcpuset_t *, kcpuset_t *);
 int		pci_intx_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **);
 
+/*
+ * Wrapper function for generally unitied allocation to fallback MSI-X/MSI/INTx
+ * automatically.
+ */
+int		pci_intr_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *, pci_intr_type_t);
+
 /* experimental MSI support */
-int		pci_msi_count(const struct pci_attach_args *);
 int		pci_msi_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int *);
 int		pci_msi_alloc_exact(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int);
 
 /* experimental MSI-X support */
-int		pci_msix_count(const struct pci_attach_args *);
 int		pci_msix_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int *);
 int		pci_msix_alloc_exact(const struct pci_attach_args *,

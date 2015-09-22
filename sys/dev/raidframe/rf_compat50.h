@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat50.h,v 1.1 2009/01/18 16:37:19 christos Exp $	*/
+/*	$NetBSD: rf_compat50.h,v 1.1.46.1 2015/09/22 12:06:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -38,6 +38,8 @@
 
 #ifndef _RF_COMPAT50_H_
 #define _RF_COMPAT50_H_
+
+#include <sys/ioccom.h>
 
 #define RAIDFRAME_CONFIGURE50	_IOW ('r',  1, void *)
 #define RAIDFRAME_GET_INFO50	_IOWR('r', 15, void *)

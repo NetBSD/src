@@ -1,13 +1,9 @@
-/*	$NetBSD: qv.c,v 1.30 2014/07/25 08:10:35 dholland Exp $	*/
-
-/*-
- * Copyright (c) 1988
- *	The Regents of the University of California.  All rights reserved.
- * (c) UNIX System Laboratories, Inc.
- * All or some portions of this file are derived from material licensed
- * to the University of California by American Telephone and Telegraph
- * Co. or Unix System Laboratories, Inc. and are reproduced herein with
- * the permission of UNIX System Laboratories, Inc.
+/*$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.30.4.1 2015/09/22 12:05:53 skrll Exp $*/
+/*
+ * Copyright (c) 2015 Charles H. Dickman. All rights reserved.
+ * Derived from smg.c
+ * Copyright (c) 1998 Ludd, University of Lule}, Sweden.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -17,1316 +13,1023 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed at Ludd, University of 
+ *	Lule}, Sweden and its contributors.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
- *
- *	@(#)qv.c	7.2 (Berkeley) 1/21/94
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-
-/*
- *	derived from: @(#)qv.c	1.8 (ULTRIX) 8/21/85
- */
-
-/************************************************************************
- *									*
- *			Copyright (c) 1985 by				*
- *		Digital Equipment Corporation, Maynard, MA		*
- *			All rights reserved.				*
- *									*
- *   This software is furnished under a license and may be used and	*
- *   copied  only  in accordance with the terms of such license and	*
- *   with the  inclusion  of  the  above  copyright  notice.   This	*
- *   software  or  any  other copies thereof may not be provided or	*
- *   otherwise made available to any other person.  No title to and	*
- *   ownership of the software is hereby transferred.			*
- *									*
- *   This software is  derived  from  software  received  from  the	*
- *   University    of   California,   Berkeley,   and   from   Bell	*
- *   Laboratories.  Use, duplication, or disclosure is  subject  to	*
- *   restrictions  under  license  agreements  with  University  of	*
- *   California and with AT&T.						*
- *									*
- *   The information in this software is subject to change  without	*
- *   notice  and should not be construed as a commitment by Digital	*
- *   Equipment Corporation.						*
- *									*
- *   Digital assumes no responsibility for the use  or  reliability	*
- *   of its software on equipment which is not supplied by Digital.	*
- *									*
- ************************************************************************
- *
- * This driver provides glass tty functionality to the qvss. It is a strange
- * device in that it supports three subchannels. The first being the asr,
- * the second being a channel that intercepts the chars headed for the screen
- * ( like a pseudo tty ) and the third being a source of mouse state changes.
- * NOTE: the second is conditional on #ifdef CONS_HACK in this version
- * of the driver, as it's a total crock.
- *
- * There may be one and only one qvss in the system.  This restriction is based
- * on the inability to map more than one at a time.  This restriction will
- * exist until the kernel has shared memory services. This driver therefore
- * support a single unit. No attempt was made to have it service more.
- *
- * (this belongs in sccs - not here)
- *
- * 02 Aug 85 -- rjl
- *	Changed the names of the special setup routines so that the system
- *	can have a qvss or a qdss system console.
- *
- * 03 Jul 85 -- rjl
- *	Added a check for virtual mode in qvputc so that the driver
- *	doesn't crash while in a dump which is done in physical mode.
- *
- * 10 Apr 85 -- jg
- *	Well, our theory about keyboard handling was wrong; most of the 
- *	keyboard is in autorepeat, down mode.  These changes are to make
- *	the qvss work the same as the Vs100, which is not necessarily
- *	completely correct, as some chord usage may fail.  But since we
- *	can't easily change the Vs100, we might as well propagate the
- *	problem to another device.  There are also changes for screen and
- *	mouse accellaration.
- *
- * 27 Mar 85 -- rjl
- *	MicroVAX-II systems have interval timers that interrupt at ipl4.
- *	Everything else is higher and thus causes us to miss clock ticks. The
- *	problem isn't severe except in the case of a device like this one that
- *	generates lots of interrupts. We aren't willing to make this change to
- *	all device drivers but it seems acceptable in this case.
- *
- *  3 Dec 84 -- jg
- *	To continue the tradition of building a better mouse trap,  this
- * 	driver has been extended to form Vs100 style event queues.  If the
- *	mouse device is open, the keyboard events are intercepted and put
- *	into the shared memory queue.  Unfortunately, we are ending up with
- *	one of the longest Unix device drivers.  Sigh....
- *
- * 20 Nov 84 -- rjl
- *      As a further complication this driver is required to function as the
- *      virtual system console. This code runs before and during auto-
- *      configuration and therefore is require to have a second path for setup.
- *      It is futher constrained to have a character output routine that
- *      is not dependent on the interrupt system.
- *
- */
+/*       1         2         3         4         5         6         7        */
+/*3456789012345678901234567890123456789012345678901234567890123456789012345678*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qv.c,v 1.30 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$Header: /cvsroot/src/sys/arch/vax/uba/qv.c,v 1.30.4.1 2015/09/22 12:05:53 skrll Exp $");
 
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/callout.h>
+#include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/extent.h>		/***/
+#include <sys/time.h>
+#include <sys/bus.h>
+#include <vax/include/pte.h>                /* temporary */
+#include <machine/sid.h>
+#include <dev/cons.h>
+#include <dev/qbus/ubavar.h>
+#include <dev/wscons/wsdisplayvar.h>
+#include <dev/wscons/wsconsio.h>
+#include <dev/wscons/wscons_callbacks.h>
+#include <dev/wsfont/wsfont.h>
+#include <dev/wsfb/genfbvar.h>
+#include <vax/include/sgmap.h> /***/
+
+#include "uba_common.h"		/***/
 #include "qv.h"
-#if NQV > 0
+#include "qv_ic.h"
+#include "qvaux.h"
+#include "opt_wsfont.h"
 
-#include "../include/pte.h"
+#define QMEMBASE        0x30000000      
+#define QVSIZE          0x40000
+#define QV_SCANMAP      0x3F800
+#define QV_CURSRAM      0x3FFE0
 
-#include "sys/param.h"
-#include "sys/conf.h"
-#include "qvioctl.h"
-#include "sys/tty.h"
-#include "sys/buf.h"
-#include "sys/vm.h"
-#include "sys/file.h"
-#include "sys/uio.h"
-#include "sys/kernel.h"
-#include "sys/syslog.h"
-#include "../include/cpu.h"
-#include "../include/mtpr.h"
-#include "ubareg.h"
-#include "ubavar.h"
+#define QV_CSR          0
+#define QV_CSR_1        (1 << 2)
+#define QV_CSR_2        (1 << 3)
+#define QV_CSR_BANK     (15 << 11)
+#define QV_CUR_X        2
+#define QV_CRTC_AR      8
+#define QV_CRTC_DR      10
+#define QV_IC           12
+#define QV_ICDR         QV_ICDR
+#define QV_ICSR         (QV_ICDR + 2)
 
-#define CONS_HACK
+/* Screen hardware defs */
+#define QV_COLS		128	/* char width of screen */
+#define QV_ROWS		57	/* rows of char on screen */
+#define QV_CHEIGHT	15	/* lines a char consists of */
+#define QV_NEXTROW	(QV_COLS * QV_CHEIGHT)
+#define	QV_YWIDTH	864
+#define QV_XWIDTH	1024
 
-struct	uba_device *qvinfo[NQV];
+/* hardware cursor */
+#define CUR_BLINKN      0x00
+#define CUR_BLANK       0x20
+#define CUR_BLINKS      0x40
+#define CUR_BLINKF      0x60
+#define CUR_BLINKM      0x60
+#define CUR_OFF         CUR_BLANK
+#define CUR_ON          CUR_BLINKS
+#define CUR_START       10
+#define CUR_END         11
+#define CUR_HI          14
+#define CUR_LO          15
 
-struct	tty qv_tty[NQV*4];
+//static	uint16_t curcmd, curx, cury, hotX, hotY;
+static	int     bgmask, fgmask; 
 
-#define	nNQV  NQV
-int	nqv = NQV*4;
+static	int     qv_match(device_t, cfdata_t, void *);
+static	void    qv_attach(device_t, device_t, void *);
 
-/*
- * Definition of the driver for the auto-configuration program.
- */
-int	qvprobe(), qvattach(), qvkint(), qvvint();
-u_short	qvstd[] = { 0 };
-struct	uba_driver qvdriver =
-	{ qvprobe, 0, qvattach, 0, qvstd, "qv", qvinfo };
+static void	qv_cursor(void *, int, int, int);
+static int	qv_mapchar(void *, int, unsigned int *);
+static void	qv_putchar(void *, int, int, u_int, long);
+static void	qv_copycols(void *, int, int, int,int);
+static void	qv_erasecols(void *, int, int, int, long);
+static void	qv_copyrows(void *, int, int, int);
+static void	qv_eraserows(void *, int, int, long);
+static int	qv_allocattr(void *, int, int, int, long *);
 
-extern	char qvmem[][512*VAX_NBPG];
-extern	struct pte QVmap[][512];
+const struct wsdisplay_emulops qv_emulops = {
+	.cursor = qv_cursor,
+	.mapchar = qv_mapchar,
+	.putchar = qv_putchar,
+	.copycols = qv_copycols,
+	.erasecols = qv_erasecols,
+	.copyrows = qv_copyrows,
+	.eraserows = qv_eraserows,
+	.allocattr = qv_allocattr
+};
 
-/*
- * Local variables for the driver. Initialized for 15' screen
- * so that it can be used during the boot process.
- */
-
-#define QVWAITPRI 	(PZERO+1)
-
-#define QVKEYBOARD 	0	/* minor 0, keyboard/glass tty */
-#define QVPCONS 	1	/* minor 1, console interceptor XXX */
-#define QVMOUSECHAN 	2	/* minor 2, mouse */
-#define	QVSPARE		3	/* unused */
-#define QVCHAN(unit)	((unit) & 03)
-/*
- * v_putc is the switch that is used to redirect the console cnputc to the
- * virtual console vputc.  consops is used to redirect the console
- * device to the qvss console.
- */
-extern int (*v_putc)();
-extern const struct cdevsw *consops;
-/*
- * qv_def_scrn is used to select the appropriate tables. 0=15 inch 1=19 inch,
- * 2 = uVAXII.
- */
-int qv_def_scrn = 2;
-
-#define QVMAXEVQ	64	/* must be power of 2 */
-#define EVROUND(x)	((x) & (QVMAXEVQ - 1))
-
-/*
- * Screen parameters 15 & 19 inch monitors. These determine the max size in
- * pixel and character units for the display and cursor positions.
- * Notice that the mouse defaults to original square algorithm, but X
- * will change to its defaults once implemented.
- */
-struct qv_info *qv_scn;
-struct qv_info qv_scn_defaults[] = {
-	{0, {0, 0}, 0, {0, 0}, 0, 0, 30, 80, 768, 480, 768-16, 480-16,
-	 0, 0, 0, 0, 0, QVMAXEVQ, 0, 0, {0, 0}, {0, 0, 0, 0}, 2, 4},
-	{0, {0, 0}, 0, {0, 0}, 0, 0, 55, 120, 960, 864, 960-16, 864-16,
-	 0, 0, 0, 0, 0, QVMAXEVQ, 0, 0, {0, 0}, {0, 0, 0, 0}, 2, 4},
-	{0, {0, 0}, 0, {0, 0}, 0, 0, 56, 120,1024, 864,1024-16, 864-16,
-	 0, 0, 0, 0, 0, QVMAXEVQ, 0, 0, {0, 0}, {0, 0, 0, 0}, 2, 4}
+struct _wsscreen_descr {
+        const struct wsscreen_descr qv_stdscreen;       /* MUST BE FIRST */
+        const uint16_t qv_crtc_param[16];
 };
 
 /*
- * Screen controller initialization parameters. The definations and use
- * of these parameters can be found in the Motorola 68045 crtc specs. In
+ * Notes from the original Ultrix drivers
+ *
+ * Screen controller initialization parameters. The definations [sic] and use
+ * of these parameters can be found in the Motorola 68045 [sic] crtc specs. In
  * essence they set the display parameters for the chip. The first set is
  * for the 15" screen and the second is for the 19" separate sync. There
  * is also a third set for a 19" composite sync monitor which we have not
  * tested and which is not supported.
  */
-static short qv_crt_parms[][16] = {
-           { 31, 25, 27, 0142, 31, 13, 30, 31, 4, 15, 040, 0, 0, 0, 0, 0 },
-/* VR100*/ { 39, 30, 32, 0262, 55, 5, 54, 54, 4, 15, 040, 0, 0, 0, 0, 0 },
-/* VR260*/ { 39, 32, 33, 0264, 56, 5, 54, 54, 4, 15, 040, 0, 0, 0, 0, 0},
+
+const struct _wsscreen_descr qv_stdscreen[] = {
+        { { "80x30", 80, 30, &qv_emulops, 8, 
+                QV_CHEIGHT, WSSCREEN_UNDERLINE|WSSCREEN_REVERSE },
+            { 31, 25, 27, 0142, 31, 13, 30, 31, 4, 15, 040, 0, 0, 0, 0, 0 } },
+        { { "120x55", 120, 55, &qv_emulops, 8, 
+                QV_CHEIGHT, WSSCREEN_UNDERLINE|WSSCREEN_REVERSE },
+            { 39, 30, 32, 0262, 55, 5, 54, 54, 4, 15, 040, 0, 0, 0, 0, 0 } },
+        { { "128x57", QV_COLS, QV_ROWS, &qv_emulops, 8, 
+                QV_CHEIGHT, WSSCREEN_UNDERLINE|WSSCREEN_REVERSE },
+            { 39, 32, 33, 0264, 56, 5, 54, 54, 4, 15, 040, 0, 0, 0, 0, 0 } },
 };
 
+const struct wsscreen_descr *_qv_scrlist[] = {
+	&qv_stdscreen[2].qv_stdscreen,	/* default */
+	&qv_stdscreen[1].qv_stdscreen,
+	&qv_stdscreen[0].qv_stdscreen, 
+};
+
+const struct wsscreen_list qv_screenlist = {
+	.nscreens = __arraycount(_qv_scrlist),
+	.screens = _qv_scrlist,
+};
+
+struct qv_softc {
+        device_t sc_dev;                /* device pointer */
+        bus_space_tag_t sc_iot;         /* register base */
+        bus_space_handle_t sc_ioh;
+        bus_space_tag_t sc_fbt;         /* frame buffer base */
+        bus_space_handle_t sc_fbh;
+        paddr_t sc_fbphys;              /* frame buffer phys addr */
+        char *sc_fb;                    /* frame buffer virt addr */
+	uint16_t *sc_scanmap;		/* scan map virt addr */
+        char *sc_font;                  /* font glyph table */
+        
+        uint8_t sc_curon;               /* cursor on */
+        uint16_t sc_curx;               /* cursor x position */
+        uint16_t sc_cury;               /* cursor y position */
+        uint16_t sc_curhotX;            /* cursor x hot spot */
+        uint16_t sc_curhotY;            /* cursor y hot spot */
+
+        struct qv_screen *sc_curscr;    /* current screen */
+};
+
+#if 0
+struct genfb_qv_softc {
+	struct genfb_softc      sc_gen;
+	bus_space_tag_t         sc_iot;
+	bus_space_handle_t	sc_ioh;
+	uint32_t		sc_wstype;
+};
+#endif
+
+static void     qv_crtc_wr(struct qv_softc *, uint16_t, uint16_t);
+static void     qv_setcrtc(struct qv_softc *, const uint16_t *);
+
+static int	qv_ioctl(void *, void *, u_long, void *, int, struct lwp *);
+static paddr_t	qv_mmap(void *, void *, off_t, int);
+static int	qv_alloc_screen(void *, const struct wsscreen_descr *,
+                         void **, int *, int *, long *);
+static void	qv_free_screen(void *, void *);
+static int	qv_show_screen(void *, void *, int,
+				     void (*) (void *, int, int), void *);
+//static void	qv_crsr_blink(void *);
+
+int             qvauxprint(void *, const char *);
+
+const struct wsdisplay_accessops qv_accessops = {
+	.ioctl = qv_ioctl,
+	.mmap = qv_mmap,
+	.alloc_screen = qv_alloc_screen,
+	.free_screen = qv_free_screen,
+	.show_screen = qv_show_screen,
+};
+
+struct	qv_screen {
+        struct qv_softc *ss_sc;
+        const struct wsscreen_descr *ss_type;
+	int	        ss_curx;
+	int	        ss_cury;
+	u_char	        ss_image[QV_ROWS][QV_COLS];	/* Image of screen */
+	u_char	        ss_attr[QV_ROWS][QV_COLS];	/* Reversed etc... */
+};
+
+static	struct qv_screen qv_conscreen; /* XXX no console support */
+
+static	callout_t qv_cursor_ch;
+
+CFATTACH_DECL_NEW(qv, sizeof(struct qv_softc),
+    qv_match, qv_attach, NULL, NULL);
+#if 0
+static int	genfb_match_qv(device_t, cfdata_t, void *);
+static void	genfb_attach_qv(device_t, device_t, void *);
+static int	genfb_ioctl_qv(void *, void *, u_long, void *, int, struct lwp*);
+static paddr_t	genfb_mmap_qv(void *, void *, off_t, int);
+static int      genfb_borrow_qv(void *, bus_addr_t, bus_space_handle_t *);
+
+CFATTACH_DECL_NEW(genfb_qv, sizeof(struct genfb_qv_softc),
+    genfb_match_qv, genfb_attach_qv, NULL, NULL);
+#endif
+
 /*
- * Screen parameters
+ * autoconf match function
  */
-struct qv_info  *qv_scn;
-int maxqvmem = 254*1024 - sizeof(struct qv_info) - QVMAXEVQ*sizeof(vsEvent);
+int
+qv_match(device_t parent, cfdata_t match, void *aux)
+{
+        struct uba_attach_args *ua = aux;
+        struct uba_softc *uh = device_private(parent);
+
+        /* set up interrupts so the vector can be detected */
+
+ 	/* initialize qv interrupt controller */
+ 	qv_ic_init(ua, QV_IC);
+ 	
+        /* set vertical retrace interrupt */ 	
+        qv_ic_setvec(ua, QV_IC, QV_SYNC_VEC, uh->uh_lastiv - 4);
+        qv_ic_enable(ua, QV_IC, QV_SYNC_VEC, QV_IC_ENA);
+        qv_ic_arm(ua, QV_IC, QV_SYNC_VEC);
+
+        /* enable interrupts */
+	bus_space_write_2(ua->ua_iot, ua->ua_ioh, QV_CSR,
+	        bus_space_read_2(ua->ua_iot, ua->ua_ioh, QV_CSR) | (1 << 6));
+
+        qv_ic_force(ua, QV_IC, QV_SYNC_VEC);
+
+	DELAY(20000);
 	
-/*
- * Keyboard state
- */
-struct qv_keyboard {
-	int shift;			/* state variables	*/
-	int cntrl;
-	int lock;
-	char last;			/* last character	*/
-} qv_keyboard;
+        /* disable interrupts */
+        qv_ic_enable(ua, QV_IC, QV_SYNC_VEC, QV_IC_DIS);
 
-short divdefaults[15] = { LK_DOWN,	/* 0 doesn't exist */
-	LK_AUTODOWN, LK_AUTODOWN, LK_AUTODOWN, LK_DOWN,
-	LK_UPDOWN,   LK_UPDOWN,   LK_AUTODOWN, LK_AUTODOWN, 
-	LK_AUTODOWN, LK_AUTODOWN, LK_AUTODOWN, LK_AUTODOWN, 
-	LK_DOWN, LK_AUTODOWN };
+        return 1;
+}
 
-short kbdinitstring[] = {		/* reset any random keyboard stuff */
-	LK_AR_ENABLE,			/* we want autorepeat by default */
-	LK_CL_ENABLE,			/* keyclick */
-	0x84,				/* keyclick volume */
-	LK_KBD_ENABLE,			/* the keyboard itself */
-	LK_BELL_ENABLE,			/* keyboard bell */
-	0x84,				/* bell volume */
-	LK_LED_DISABLE,			/* keyboard leds */
-	LED_ALL };
-#define KBD_INIT_LENGTH	sizeof(kbdinitstring)/sizeof(short)
-
-#define TOY ((time.tv_sec * 100) + (time.tv_usec / 10000))
-
-int	qv_ipl_lo = 1;			/* IPL low flag			*/
-int	mouseon = 0;			/* mouse channel is enabled when 1*/
-struct proc *qvrsel;			/* process waiting for select */
-
-int	qvstart(), qvputc(),  ttrstrt();
-
-/*
- * Keyboard translation and font tables
- */
-extern u_short q_key[], q_shift_key[], q_cursor[];
-extern char *q_special[], q_font[];
-
-dev_type_open(qvopen);
-dev_type_close(qvclose);
-dev_type_read(qvread);
-dev_type_write(qvwrite);
-dev_type_ioctl(qvioctl);
-dev_type_stop(qvstop);
-dev_type_poll(qvpoll);
-dev_type_kqfilter(qvkqfilter);
-
-const struct cdevsw qv_cdevsw = {
-	.d_open = qvopen,
-	.d_close = qvclose,
-	.d_read = qvread,
-	.d_write = qvwrite,
-	.d_ioctl = qvioctl,
-	.d_stop = qvstop,
-	.d_tty = notty,
-	.d_poll = qvpoll,
-	.d_mmap = nommap,
-	.d_kqfilter = qvkqfilter,
-	.d_discard = nodiscard,
-	.d_flag = 0
-};
-
-/*
- * See if the qvss will interrupt.
- */
-
-/*ARGSUSED*/
-qvprobe(void *reg, int ctlr)
+/* controller register write helper function */
+static inline void
+qv_reg_wr(struct qv_softc *sc, uint16_t addr, uint16_t data)
 {
-	register int br, cvec;		/* these are ``value-result'' */
-	register struct qvdevice *qvaddr = (struct qvdevice *)reg;
-	static int tvec, ovec;
+        bus_space_write_2(sc->sc_iot, sc->sc_ioh, addr, data);       
+}
 
-#ifdef lint
-	br = 0; cvec = br; br = cvec;
-	qvkint(0); qvvint(0);
-#endif
-	/*
-	 * Allocate the next two vectors
-	 */
-	tvec = 0360;
-	ovec = cvec;
-	/*
-	 * Turn on the keyboard and vertical interrupt vectors.
-	 */
-	qvaddr->qv_intcsr = 0;		/* init the interrupt controller */
-	qvaddr->qv_intcsr = 0x40;	/* reset irr			*/
-	qvaddr->qv_intcsr = 0x80;	/* specify individual vectors	*/
-	qvaddr->qv_intcsr = 0xc0;	/* preset autoclear data	*/
-	qvaddr->qv_intdata = 0xff;	/* all setup as autoclear	*/
-
-	qvaddr->qv_intcsr = 0xe0;	/* preset vector address 1	*/
-	qvaddr->qv_intdata = tvec;	/* give it the keyboard vector	*/
-	qvaddr->qv_intcsr = 0x28;	/* enable tx/rx interrupt	*/
-
-	qvaddr->qv_intcsr = 0xe1;	/* preset vector address 2	*/
-	qvaddr->qv_intdata = tvec+4;	/* give it the vertical sysnc	*/
-	qvaddr->qv_intcsr = 0x29;	/* enable 			*/
-
-	qvaddr->qv_intcsr = 0xa1;	/* arm the interrupt ctrl	*/
-
-	qvaddr->qv_uartcmd = 0x15;	/* set mode pntr/enable rx/tx	*/
-	qvaddr->qv_uartmode = 0x17;	/* noparity, 8-bit		*/
-	qvaddr->qv_uartmode = 0x07;	/* 1 stop bit			*/
-	qvaddr->qv_uartstatus = 0x99;	/* 4800 baud xmit/recv 		*/
-	qvaddr->qv_uartintstatus = 2;	/* enable recv interrupts	*/
-
-	qvaddr->qv_csr |= QV_INT_ENABLE | QV_CUR_MODE;
-
-	DELAY(10000);
-
-	qvaddr->qv_csr &= ~QV_INT_ENABLE;
-
-	/*
-	 * If the qvss did interrupt it was the second vector not
-	 * the first so we have to return the first so that they
-	 * will be setup properly
-	 */
-	if( ovec == cvec ) {
-		return 0;
-	} else
-		cvec -= 4;
-	return (sizeof (struct qvdevice));
+/* controller register read helper function */
+static inline uint16_t
+qv_reg_rd(struct qv_softc *sc, uint16_t addr)
+{
+        return bus_space_read_2(sc->sc_iot, sc->sc_ioh, addr);       
 }
 
 /*
- * Routine called to attach a qv.
+ * write a 6845 CRT controller register
  */
-qvattach(struct uba_device *ui)
+static  void
+qv_crtc_wr(struct qv_softc *sc, uint16_t addr, uint16_t data)
 {
-
-        /*
-         * If not the console then we have to setup the screen
-         */
-        if (v_putc != qvputc || ui->ui_unit != 0)
-                (void)qv_setup((struct qvdevice *)ui->ui_addr, ui->ui_unit, 1);
-	else
-		qv_scn->qvaddr = (struct qvdevice *)ui->ui_addr;
-}
-
-
-/*ARGSUSED*/
-int
-qvopen(dev_t dev, int flag, int mode, struct proc *p)
-{
-	register struct tty *tp;
-	register int unit, qv;
-	register struct qvdevice *qvaddr;
-	register struct uba_device *ui;
-	register struct qv_info *qp = qv_scn;
-
-	unit = minor(dev);
-	qv = unit >> 2;
-	if (unit >= nqv || (ui = qvinfo[qv])== 0 || ui->ui_alive == 0)
-		return (ENXIO);
-	if (QVCHAN(unit) == QVSPARE
-#ifndef CONS_HACK
-	   || QVCHAN(unit) == QVPCONS
-#endif
-	   )
-		return (ENODEV);
-	tp = &qv_tty[unit];
-	if (tp->t_state&TS_XCLUDE && u.u_uid!=0)
-		return (EBUSY);
-	qvaddr = (struct qvdevice *)ui->ui_addr;
-        qv_scn->qvaddr = qvaddr;
-	tp->t_addr = (void *)qvaddr;
-	tp->t_oproc = qvstart;
-
-	if ((tp->t_state&TS_ISOPEN) == 0) {
-		ttychars(tp);
-		tp->t_state = TS_ISOPEN|TS_CARR_ON;
-		tp->t_ispeed = B9600;
-		tp->t_ospeed = B9600;
-		if( QVCHAN(unit) == QVKEYBOARD ) {
-			/* make sure keyboard is always back to default */
-			qvkbdreset();
-			qvaddr->qv_csr |= QV_INT_ENABLE;
-			tp->t_iflag = TTYDEF_IFLAG;
-			tp->t_oflag = TTYDEF_OFLAG;
-			tp->t_lflag = TTYDEF_LFLAG;
-			tp->t_cflag = TTYDEF_CFLAG;
-		}
-		/* XXX ?why?  else 
-			tp->t_flags = RAW;
-		*/
-	}
-	/*
-	 * Process line discipline specific open if its not the
-	 * mouse channel. For the mouse we init the ring ptr's.
-	 */
-	if( QVCHAN(unit) != QVMOUSECHAN )
-		return ((*tp->t_linesw->l_open)(dev, tp));
-	else {
-		mouseon = 1;
-		/* set up event queue for later */
-		qp->ibuff = (vsEvent *)qp - QVMAXEVQ;
-		qp->iqsize = QVMAXEVQ;
-		qp->ihead = qp->itail = 0;
-		return 0;
-	}
-
-	return (0);
+        qv_reg_wr(sc, QV_CRTC_AR, addr);
+        qv_reg_wr(sc, QV_CRTC_DR, data);        
 }
 
 /*
- * Close a QVSS line.
+ * write a set of a set of video timing parameters to the CRTC
  */
-/*ARGSUSED*/
-int
-qvclose(dev_t dev, int flag, int mode, struct proc *p)
+static void
+qv_setcrtc(struct qv_softc *sc, const uint16_t *pp)
 {
-	register struct tty *tp;
-	register unit;
-	register struct qvdevice *qvaddr;
-	int error;
+        int i;
 
-	unit = minor(dev);
-	tp = &qv_tty[unit];
-
-	/*
-	 * If this is the keyboard unit (0) shutdown the
-	 * interface.
-	 */
-	qvaddr = (struct qvdevice *)tp->t_addr;
-	if (QVCHAN(unit) == QVKEYBOARD )
-		qvaddr->qv_csr &= ~QV_INT_ENABLE;
-
-	/*
-	 * If unit is not the mouse channel call the line disc.
-	 * otherwise clear the state flag, and put the keyboard into down/up.
-	 */
-	if (QVCHAN(unit) != QVMOUSECHAN) {
-		(*tp->t_linesw->l_close)(tp, flag);
-		error = ttyclose(tp);
-	} else {
-		mouseon = 0;
-		qv_init( qvaddr );
-		error = 0;
-	}
-	tp->t_state = 0;
-	return (error);
+        for (i = 0; i < 14; i++)
+                qv_crtc_wr(sc, i, pp[i]);
 }
 
-int
-qvread(dev_t dev, struct uio *uio, int flag)
+static void inline
+qv_ic_write(struct uba_attach_args *ua, bus_size_t offs, uint16_t value)
 {
-	register struct tty *tp;
-	int unit = minor( dev );
-
-	if (QVCHAN(unit) != QVMOUSECHAN) {
-		tp = &qv_tty[unit];
-		return ((*tp->t_linesw->l_read)(tp, uio));
-	}
-	return (ENXIO);
+        bus_space_write_2(ua->ua_iot, ua->ua_ioh, offs, value);
 }
 
-int
-qvwrite(dev_t dev, struct uio *uio, int flag)
-{
-	register struct tty *tp;
-	int unit = minor( dev );
-
-	/*
-	 * If this is the mouse we simply fake the i/o, otherwise
-	 * we let the line disp. handle it.
-	 */
-	if (QVCHAN(unit) == QVMOUSECHAN) {
-		uio->uio_offset = uio->uio_resid;
-		uio->uio_resid = 0;
-		return 0;
-	}
-	tp = &qv_tty[unit];
-	return ((*tp->t_linesw->l_write)(tp, uio));
-}
-
-int
-qvpoll(dev_t dev, int events, struct proc *p)
-{
-	register struct tty *tp;
-	int unit = minor( dev );
-
-	/*
-	 * XXX Should perform similar checks to deprecated `qvselect()'
-	 */
-	tp = &qv_tty[unit];
-	return ((*tp->t_linesw->l_poll)(tp, events, p));
-}
-
-/*
- * XXX Is qvselect() even useful now?
- * This driver looks to have suffered some serious bit-rot...
- */
-
-/*
- * Mouse activity select routine
- */
-qvselect(dev_t dev, rw)
-{
-	register int s = spl5();
-	register struct qv_info *qp = qv_scn;
-
-	if( QVCHAN(minor(dev)) == QVMOUSECHAN )
-		switch(rw) {
-		case FREAD:			/* if events okay */
-			if(qp->ihead != qp->itail) {
-				splx(s);
-				return(1);
-			}
-			qvrsel = u.u_procp;
-			splx(s);
-			return(0);
-		default:			/* can never write */
-			splx(s);
-			return(0);
-		}
-	else {
-		splx(s);
-		return( ttselect(dev, rw) );
-	}
-	/*NOTREACHED*/
-}
-		
-/*
- * QVSS keyboard interrupt.
- */
-qvkint(int qv)
-{
-	struct tty *tp;
-	register c;
-	struct uba_device *ui;
-	register int key;
-	register int i;
-
-	ui = qvinfo[qv];
-	if (ui == 0 || ui->ui_alive == 0)
-		return;
-	tp = &qv_tty[qv<<2];
-	/*
-	 * Get a character from the keyboard.
-	 */
-	key = ((struct qvdevice *)ui->ui_addr)->qv_uartdata & 0xff;
-	if( mouseon == 0) {
-		/*
-		 * Check for various keyboard errors
-		 */
-		if( key == LK_POWER_ERROR || key == LK_KDOWN_ERROR ||
-		    key == LK_INPUT_ERROR || key == LK_OUTPUT_ERROR) {
-			log(LOG_ERR,
-			    "qv%d: Keyboard error, code = %x\n",qv,key);
-			return;
-		}
-		if( key < LK_LOWEST ) return;
-		/*
-		 * See if its a state change key
-		 */
-		switch ( key ) {
-		case LOCK:
-			qv_keyboard.lock ^= 0xffff;	/* toggle */
-			if( qv_keyboard.lock )
-				qv_key_out( LK_LED_ENABLE );
-			else
-				qv_key_out( LK_LED_DISABLE );
-			qv_key_out( LED_3 );
-			return;
-		case SHIFT:
-			qv_keyboard.shift ^= 0xffff;
-			return;	
-		case CNTRL:
-			qv_keyboard.cntrl ^= 0xffff;
-			return;
-		case ALLUP:
-			qv_keyboard.cntrl = qv_keyboard.shift = 0;
-			return;
-		case REPEAT:
-			c = qv_keyboard.last;
-			break;
-		default:
-		/*
-		 * Test for control characters. If set, see if the character
-		 * is elligible to become a control character.
-		 */
-			if( qv_keyboard.cntrl ) {
-				c = q_key[ key ];
-				if( c >= ' ' && c <= '~' )
-					c &= 0x1f;
-			} else if( qv_keyboard.lock || qv_keyboard.shift )
-				c = q_shift_key[ key ];
-				else
-				c = q_key[ key ];
-			break;	
-		}
-
-		qv_keyboard.last = c;
-
-		/*
-		 * Check for special function keys
-		 */
-		if( c & 0x80 ) {
-			register char *string;
-			string = q_special[ c & 0x7f ];
-			while( *string )
-			(*tp->t_linesw->l_rint)(*string++, tp);
-		} else
-			(*tp->t_linesw->l_rint)(c, tp);
-	} else {
-		/*
-		 * Mouse channel is open put it into the event queue
-		 * instead.
-		 */
-		register struct qv_info *qp = qv_scn;
-		register vsEvent *vep;
-
-		if ((i = EVROUND(qp->itail+1)) == qp->ihead) 
-			return;
-		vep = &qp->ibuff[qp->itail];
-		vep->vse_direction = VSE_KBTRAW;
-		vep->vse_type = VSE_BUTTON;
-		vep->vse_device = VSE_DKB;
-		vep->vse_x = qp->mouse.x;
-		vep->vse_y = qp->mouse.y;
-		vep->vse_time = TOY;
-		vep->vse_key = key;
-		qp->itail = i;
-		if(qvrsel) {
-			selnotify(qvrsel, 0, 0);
-			qvrsel = 0;
-		}
-	}
-}
-
-/*
- * Ioctl for QVSS.
- */
-/*ARGSUSED*/
-int
-qvioctl(dev_t dev, u_long cmd, register void *data, int flag, struct proc *p)
-{
-	register struct tty *tp;
-	register int unit = minor(dev);
-	register struct qv_info *qp = qv_scn;
-	register struct qv_kpcmd *qk;
-	register unsigned char *cp;
-	int error;
- 
-	/*
-	 * Check for and process qvss specific ioctl's
-	 */
-	switch( cmd ) {
-	case QIOCGINFO:					/* return screen info */
-		memcpy(data, (void *)qp, sizeof (struct qv_info));
-		break;
-
-	case QIOCSMSTATE:				/* set mouse state */
-		qp->mouse = *((vsCursor *)data);
-		qv_pos_cur( qp->mouse.x, qp->mouse.y );
-		break;
-
-	case QIOCINIT:					/* init screen	*/
-		qv_init( qp->qvaddr );
-		break;
-
-	case QIOCKPCMD:
-		qk = (struct qv_kpcmd *)data;
-		if(qk->nbytes == 0) qk->cmd |= 0200;
-		if(mouseon == 0) qk->cmd |= 1;	/* no mode changes */
-		qv_key_out(qk->cmd);
-		cp = &qk->par[0];
-		while(qk->nbytes-- > 0) {	/* terminate parameters */
-			if(qk->nbytes <= 0) *cp |= 0200;
-			qv_key_out(*cp++);
-		}
-		break;
-	case QIOCADDR:					/* get struct addr */
-		*(struct qv_info **) data = qp;
-		break;
-	default:					/* not ours ??  */
-		tp = &qv_tty[unit];
-		error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag);
-		if (error != EPASSTHROUGH)
-			return (error);
-		return ttioctl(tp, cmd, data, flag);
-		break;
-	}
-	return (0);
-}
-/*
- * Initialize the screen and the scanmap
- */
-qv_init(struct qvdevice *qvaddr)
-{
-	register short *scanline;
-	register int i;
-	register short scan;
-	register char *ptr;
-	register struct qv_info *qp = qv_scn;
-
-	/*
-	 * Clear the bit map
-	 */
-	for( i=0 , ptr = qp->bitmap ; i<240 ; i += 2 , ptr += 2048)
-		memset( ptr, 0, 2048 );
-	/*
-	 * Reinitialize the scanmap
-	 */
-        scan = qvaddr->qv_csr & QV_MEM_BANK;
-        scanline = qp->scanmap;
-        for(i = 0 ; i < qp->max_y ; i++ )
-                *scanline++ = scan++;
-
-	/*
-	 * Home the cursor
-	 */
-	qp->row = qp->col = 0;
-
-	/*
-	 * Reset the cursor to the default type.
-	 */
-	for( i=0 ; i<16 ; i++ )
-		qp->cursorbits[i] = q_cursor[i];
-	qvaddr->qv_csr |= QV_CUR_MODE;
-	/*
-	 * Reset keyboard to default state.
-	 */
-	qvkbdreset();
-}
-
-qvreset(void)
-{
-}
-qvkbdreset(void)
-{
-	register int i;
-	qv_key_out(LK_DEFAULTS);
-	for( i=1 ; i < 15 ; i++ )
-		qv_key_out( divdefaults[i] | (i<<3));
-	for (i = 0; i < KBD_INIT_LENGTH; i++)
-		qv_key_out(kbdinitstring[i]);
-}
-
-#define abs(x) (((x) > 0) ? (x) : (-(x)))
-/*
- * QVSS vertical sync interrupt
- */
-qvvint(int qv)
-{
-	extern int selwait;
-	register struct qvdevice *qvaddr;
-	struct uba_device *ui;
-	register struct qv_info *qp = qv_scn;
-	int unit;
-	struct tty *tp0;
-	int i;
-	register int j;
-	/*
-	 * Mouse state info
-	 */
-	static ushort omouse = 0, nmouse = 0;
-	static char omx=0, omy=0, mx=0, my=0, om_switch=0, m_switch=0;
-	register int dx, dy;
-
-	/*
-	 * Test and set the qv_ipl_lo flag. If the result is not zero then
-	 * someone else must have already gotten here.
-	 */
-	if( --qv_ipl_lo )
-		return;
-	(void)spl4();
-	ui = qvinfo[qv];
-	unit = qv<<2;
-	qvaddr = (struct qvdevice *)ui->ui_addr;
-	tp0 = &qv_tty[QVCHAN(unit) + QVMOUSECHAN];
-	/*
-	 * See if the mouse has moved.
-	 */
-	if( omouse != (nmouse = qvaddr->qv_mouse) ) {
-		omouse = nmouse;
-		mx = nmouse & 0xff;
-		my = nmouse >> 8;
-		dy = my - omy; omy = my;
-		dx = mx - omx; omx = mx;
-		if( dy < 50 && dy > -50 && dx < 50 && dx > -50 ) {
-			register vsEvent *vep;
-			if( qp->mscale < 0 ) {	/* Ray Lanza's original */
-				if( dy < 0 )
-					dy = -( dy * dy );
-				else
-					dy *= dy;
-				if( dx < 0 )
-					dx = -( dx * dx );
-				else
-					dx *= dx;
-			}
-			else {			/* Vs100 style, see WGA spec */
-			    int thresh = qp->mthreshold;
-			    int scale  = qp->mscale;
-			    if( abs(dx) > thresh ) {
-				if ( dx < 0 )
-				    dx = (dx + thresh)*scale - thresh;
-				else
-				    dx = (dx - thresh)*scale + thresh;
-			    }
-			    if( abs(dy) > thresh ) {
-				if ( dy < 0 )
-				    dy = (dy + thresh)*scale - thresh;
-				else
-				    dy = (dy - thresh)*scale + thresh;
-			    }
-			}
-			qp->mouse.x += dx;
-			qp->mouse.y -= dy;
-			if( qp->mouse.x < 0 )
-				qp->mouse.x = 0;
-			if( qp->mouse.y < 0 )
-				qp->mouse.y = 0;
-			if( qp->mouse.x > qp->max_cur_x )
-				qp->mouse.x = qp->max_cur_x;
-			if( qp->mouse.y > qp->max_cur_y )
-				qp->mouse.y = qp->max_cur_y;
-			if( tp0->t_state & TS_ISOPEN )
-				qv_pos_cur( qp->mouse.x, qp->mouse.y );
-			if (qp->mouse.y < qp->mbox.bottom &&
-			    qp->mouse.y >=  qp->mbox.top &&
-			    qp->mouse.x < qp->mbox.right &&
-			    qp->mouse.x >=  qp->mbox.left) goto switches;
-			qp->mbox.bottom = 0;	/* trash box */
-			if (EVROUND(qp->itail+1) == qp->ihead)
-				goto switches;
-			i = EVROUND(qp->itail - 1);
-			if ((qp->itail != qp->ihead) &&	(i != qp->ihead)) {
-				vep = & qp->ibuff[i];
-				if(vep->vse_type == VSE_MMOTION) {
-					vep->vse_x = qp->mouse.x;
-					vep->vse_y = qp->mouse.y;
-					goto switches;
-				}
-			}
-			/* put event into queue and do select */
-			vep = & qp->ibuff[qp->itail];
-			vep->vse_type = VSE_MMOTION;
-			vep->vse_time = TOY;
-			vep->vse_x = qp->mouse.x;
-			vep->vse_y = qp->mouse.y;
-			qp->itail = EVROUND(qp->itail+1);
-		}
-	}
-	/*
-	 * See if mouse switches have changed.
-	 */
-switches:if( om_switch != ( m_switch = (qvaddr->qv_csr & QV_MOUSE_ANY) >> 8 ) ) {
-		qp->mswitches = ~m_switch & 0x7;
-		for (j = 0; j < 3; j++) {	/* check each switch */
-			register vsEvent *vep;
-			if ( ((om_switch>>j) & 1) == ((m_switch>>j) & 1) )
-				continue;
-			/* check for room in the queue */
-			if ((i = EVROUND(qp->itail+1)) == qp->ihead) return;
-			/* put event into queue and do select */
-			vep = &qp->ibuff[qp->itail];
-			vep->vse_type = VSE_BUTTON;
-			vep->vse_key = 2 - j;
-			vep->vse_direction = VSE_KBTDOWN;
-			if ( (m_switch >> j) & 1)
-				vep->vse_direction = VSE_KBTUP;
-			vep->vse_device = VSE_MOUSE;
-			vep->vse_time = TOY;
-			vep->vse_x = qp->mouse.x;
-			vep->vse_y = qp->mouse.y;
-		}
-		qp->itail =  i;
-		om_switch = m_switch;
-		qp->mswitches = m_switch;
-	}
-	/* if we have proc waiting, and event has happened, wake him up */
-	if(qvrsel && (qp->ihead != qp->itail)) {
-		selnotify(qvrsel, 0, 0);
-		qvrsel = 0;
-	}
-	/*
-	 * Okay we can take another hit now
-	 */
-	qv_ipl_lo = 1;
-}
-
-/*
- * Start  transmission
- */
-qvstart(register struct tty *tp)
-{
-	register int unit, c;
-	register struct tty *tp0;
-	int s;
-
-	unit = minor(tp->t_dev);
-#ifdef CONS_HACK
-	tp0 = &qv_tty[(unit&0xfc)+QVPCONS];
-#endif
-	unit = QVCHAN(unit);
-
-	s = spl5();
-	/*
-	 * If it's currently active, or delaying, no need to do anything.
-	 */
-	if (tp->t_state&(TS_TIMEOUT|TS_BUSY|TS_TTSTOP))
-		goto out;
-	/*
-	 * Display chars until the queue is empty, if the second subchannel
-	 * is open direct them there. Drop characters from subchannels other
-	 * than 0 on the floor.
-	 */
-
-	while( tp->t_outq.c_cc ) {
-		c = getc(&tp->t_outq);
-		if (unit == QVKEYBOARD)
-#ifdef CONS_HACK
-			if( tp0->t_state & TS_ISOPEN ){
-				(*tp0->t_linesw->l_rint)(c, tp0);
-			} else
-#endif
-				qvputchar( c & 0xff );
-	}
-	/*
-	 * Position the cursor to the next character location.
-	 */
-	qv_pos_cur( qv_scn->col*8, qv_scn->row*15 );
-
-	/*
-	 * If there are sleepers, and output has drained below low
-	 * water mark, wake up the sleepers.
-	 */
-	ttypull(tp);
-	tp->t_state &= ~TS_BUSY;
-out:
-	splx(s);
-}
-
-/*
- * Stop output on a line, e.g. for ^S/^Q or output flush.
- */
-/*ARGSUSED*/
 void
-qvstop(register struct tty *tp, int flag)
+qv_ic_init(struct uba_attach_args *ua, bus_size_t offs)
 {
-	register int s;
-
-	/*
-	 * Block input/output interrupts while messing with state.
-	 */
-	s = spl5();
-	if (tp->t_state & TS_BUSY) {
-		if ((tp->t_state&TS_TTSTOP)==0) {
-			tp->t_state |= TS_FLUSH;
-		} else
-			tp->t_state &= ~TS_BUSY;
-	}
-	splx(s);
+        static int initted;
+        int i;
+        
+        if (!initted) {
+		/* init the interrupt controller */
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_RESET);  
+		/* reset irr			 */
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_CLRIRR); 
+		/* specify individual vectors	 */
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_MODE);   
+		/* preset autoclear data	 */
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_ACREG);  
+		/* all setup as autoclear	 */
+	        qv_ic_write(ua, QV_IC_DR + offs, 0xff);         
+        
+		/* clear all vector addresses */
+                for (i = 0; i < 8; i++)                         
+                        qv_ic_setvec(ua, offs, i, 0);
+        
+                initted = 1;
+        }
 }
 
-qvputc(char c)
+void
+qv_ic_setvec(struct uba_attach_args *ua, bus_size_t offs, int ic_vec, int vecnum)
 {
-	qvputchar(c);
-	if (c == '\n')
-		qvputchar('\r');
+	/* preset vector address	*/
+	qv_ic_write(ua, QV_IC_SR + offs, QV_IC_RMEM | RMEM_BC_1 | ic_vec);      
+	/* give it the vector number	*/
+	qv_ic_write(ua, QV_IC_DR + offs, vecnum);	                        
+}
+
+void
+qv_ic_enable(struct uba_attach_args *ua, bus_size_t offs, int ic_vec, int enable)
+{
+        if (enable)
+		/* enable the interrupt */        
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_CIMR | ic_vec);          
+        else
+		/* disable the interrupt */        
+	        qv_ic_write(ua, QV_IC_SR + offs, QV_IC_SIMR | ic_vec);          
+}
+
+void
+qv_ic_arm(struct uba_attach_args *ua, bus_size_t offs, int arm)
+{
+        if (arm) 
+		/* arm the interrupt ctrl	*/
+                qv_ic_write(ua, QV_IC_SR + offs, QV_IC_ARM);	                
+        else
+		/* disarm the interrupt ctrl	*/
+                qv_ic_write(ua, QV_IC_SR + offs, QV_IC_DISARM);	                
+}
+
+void
+qv_ic_force(struct uba_attach_args *ua, bus_size_t offs, int ic_vec)
+{
+	/* force an interrupt	*/
+	qv_ic_write(ua, QV_IC_SR + offs, QV_IC_SIRR | ic_vec);	                
 }
 
 /*
- * Routine to display a character on the screen.  The model used is a 
- * glass tty.  It is assummed that the user will only use this emulation
- * during system boot and that the screen will be eventually controlled
- * by a window manager.
- *
+ * print attachment message
  */
-qvputchar( c )
-register char c;
+int
+qvauxprint(void *aux, const char *pnp)
 {
+        if (pnp) {
+                aprint_normal("qvaux at %s", pnp);
+                return (UNCONF);
+        }
+        return 0;
+}
 
-	register char *b_row, *f_row;
-	register int i;
-	register short *scanline;
-	register int ote = 128;
-	register struct qv_info *qp = qv_scn;
+/*
+ * autoconf attach function
+ */
+void
+qv_attach(device_t parent, device_t self, void *aux)
+{
+        struct qv_softc *sc = device_private(self);
+        struct uba_softc *uh = device_private(parent);
+        struct uba_attach_args *ua = aux;
+        struct uba_attach_args aa;
+	int fcookie;
+        struct wsemuldisplaydev_attach_args emulaa;
+//        struct wsdisplaydev_attach_args dispaa;
+        struct wsdisplay_font *console_font;
+	int line;
 
-	/*
-	 * This routine may be called in physical mode by the dump code
-	 * so we check and punt if that's the case.
-	 */
-	if( (mfpr(MAPEN) & 1) == 0 )
+        sc->sc_dev = self;
+        sc->sc_iot = ua->ua_iot;
+        sc->sc_ioh = ua->ua_ioh;
+        sc->sc_fbt = sc->sc_iot;
+        sc->sc_fbphys = QMEMBASE + ((qv_reg_rd(sc, QV_CSR) & QV_CSR_BANK) << 7);
+	if (bus_space_map(sc->sc_fbt, sc->sc_fbphys, QVSIZE, 
+			BUS_SPACE_MAP_LINEAR, &sc->sc_fbh)) {
+		aprint_error_dev(self, "Couldn't alloc graphics memory.\n");
+		return;
+	}
+	
+	aprint_normal(": fb %8lo", sc->sc_fbphys & 0x3fffff);
+	sc->sc_fb = bus_space_vaddr(sc->sc_fbt, sc->sc_fbh);
+	sc->sc_scanmap = (uint16_t *)&sc->sc_fb[QV_SCANMAP];
+#if 0
+	if (extent_alloc_region(((struct uba_vsoftc*)uh)->uv_sgmap.aps_ex,
+			sc->sc_fbphys & 0x3fffff, QVSIZE, EX_NOWAIT)) {
+		aprint_error_dev(self, 
+			"Couldn't alloc graphics memory in sgmap.\n");
+		return;
+	}
+#endif
+	//aprint_normal(": fb 0x%08lx", sc->sc_fbphys & 0x3fffff);
+
+	bzero(sc->sc_fb, QVSIZE);
+	
+	for (line = 0; line < QV_YWIDTH; line++) {
+	        sc->sc_scanmap[line] = line;
+	}
+
+        /* program crtc */
+        qv_setcrtc(sc, qv_stdscreen[2].qv_crtc_param);
+                
+        /* enable video output */
+        qv_reg_wr(sc, QV_CSR, qv_reg_rd(sc, QV_CSR) | (1 << 2) | (1 << 3));
+#if 0
+	if (sc->sc_curscr == NULL)
+		callout_init(&qv_cursor_ch, 0);
+	sc->sc_curscr = &qv_conscreen;
+
+	callout_reset(&qv_cursor_ch, hz / 2, qv_crsr_blink, sc);
+#endif
+        /* interrupt handlers - XXX */
+
+        uh->uh_lastiv -= 4;
+
+        wsfont_init();
+	if ((fcookie = wsfont_find(NULL, 8, 15, 0, WSDISPLAY_FONTORDER_R2L,
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP)) < 0) {
+		aprint_error_dev(self, "could not find 8x15 font\n");
+		return;
+	}
+	if (wsfont_lock(fcookie, &console_font) != 0) {
+		aprint_error_dev(self, "could not lock 8x15 font\n");
+		return;
+	}
+	sc->sc_font = console_font->data;
+
+        aprint_normal("\n");
+
+	aa.ua_iot = ua->ua_iot;
+	aa.ua_ioh = ua->ua_ioh + 32; // offset
+	aa.ua_cvec = ua->ua_cvec - 4;
+	if (config_search_ia(NULL, self, "qv", &aa) != NULL) {
+	        config_found_ia(self, "qv", &aa, qvauxprint);
+                uh->uh_lastiv -= 4;
+	}
+
+	emulaa.console = 0; /* Not console */ 
+	emulaa.scrdata = &qv_screenlist;
+	emulaa.accessops = &qv_accessops;
+	emulaa.accesscookie = self;
+	if (config_search_ia(NULL, self, "wsemuldisplaydev", &emulaa) != NULL) {
+	        config_found_ia(self, "wsemuldisplaydev", &emulaa,
+	            wsemuldisplaydevprint);
+	}
+
+        //console_debugger();
+	return;
+}
+
+/* QVSS frame buffer */
+
+/*      uint_32 is stored little endian in frame buffer */
+/*      bits are stored little endian in frame buffer   */
+
+/*      uint_32 *fb;                                     */
+/*      fb = (int *)phystova(0x303c0000);                */
+/*      *fb = 0x00000001; */ /* sets bit in first column */
+
+/* Frame Buffer Usage */
+
+/* characters are 8 bits wide and QVHEIGHT high */
+/* the scan map is allocated in terms of character height, */
+/* so a pointer to the top line of a character can step to the */
+/* next row without looking up the memory location in the scan map */
+
+static	char *cursor;
+static	int cur_on;
+
+/*
+ * return pointer to line in character glyph
+ */
+static inline char *
+qv_font(struct qv_softc *sc, int c, int line)
+{
+        /* map char to font table offset */
+        if (c < 32)
+                c = 32;
+        else if (c > 127)
+                c -= 66;
+        else
+                c -= 32;
+        
+        /* return pointer line in font glyph */        
+        return &sc->sc_font[c*QV_CHEIGHT + line];        
+}
+
+/*
+ * return pointer to character line in frame buffer
+ */
+static inline char *
+qv_fbp(struct qv_softc *sc, int row, int col, int line)
+{
+        return &sc->sc_fb[col + sc->sc_scanmap[row*QV_CHEIGHT + line]*QV_COLS];
+}
+
+/*
+ * callout callback function to blink cursor
+ */
+#if 0
+static void
+qv_crsr_blink(void *arg)
+{
+        struct qv_softc *sc = arg;
+        
+	if (cur_on)
+		*cursor ^= 255;
+	callout_reset(&qv_cursor_ch, hz / 2, qv_crsr_blink, sc);
+}
+#endif
+/*
+ * emulop cursor
+ */
+void
+qv_cursor(void *id, int on, int row, int col)
+{
+	struct qv_screen * const ss = id;
+
+	if (ss == ss->ss_sc->sc_curscr) {
+		*qv_fbp(ss->ss_sc, ss->ss_cury, ss->ss_curx, 14)
+		    = *qv_font(ss->ss_sc, 
+		        ss->ss_image[ss->ss_cury][ss->ss_curx], 14);
+		cursor = qv_fbp(ss->ss_sc, row, col, 14);
+		if ((cur_on = on))
+			*cursor ^= 255;
+	}
+	ss->ss_curx = col;
+	ss->ss_cury = row;
+}
+
+/*
+ * emulop mapchar
+ */
+int
+qv_mapchar(void *id, int uni, unsigned int *index)
+{
+	if (uni < 256) {
+		*index = uni;
+		return (5);
+	}
+	*index = ' ';
+	return (0);
+}
+
+/*
+ * emulop putchar
+ */
+static void
+qv_putchar(void *id, int row, int col, u_int c, long attr)
+{
+	struct qv_screen * const ss = id;
+	int i;
+        char *gp;
+        char *fp;
+        char rvid;
+        
+	c &= 0xff;
+
+	ss->ss_image[row][col] = c;
+	ss->ss_attr[row][col] = attr;
+	if (ss != ss->ss_sc->sc_curscr)
 		return;
 
-	c &= 0x7f;
+        gp = qv_font(ss->ss_sc, c, 0);
+        fp = qv_fbp(ss->ss_sc, row, col, 0);
+        rvid = (attr & WSATTR_REVERSE) ? 0xff : 0x00;
+        for (i = 0; i < QV_CHEIGHT; i++) {
+                *fp = *gp++ ^ rvid;
+                fp += QV_COLS;
+        }
 
-	switch ( c ) {
-	case '\t':				/* tab		*/
-		for( i = 8 - (qp->col & 0x7) ; i > 0 ; i-- )
-			qvputchar( ' ' );
-		break;
+	if (attr & WSATTR_UNDERLINE)
+	        *qv_fbp(ss->ss_sc, row, col, 14) 
+	            ^= *qv_fbp(ss->ss_sc, row, col, 14);
+}
 
-	case '\r':				/* return	*/
-		qp->col = 0;
-		break;
+/*
+ * emulop copy columns - copies columns inside a row
+ */
+static void
+qv_copycols(void *id, int row, int srccol, int dstcol, int ncols)
+{
+	struct qv_screen * const ss = id;
+	int i;
 
-	case '\010':				/* backspace	*/
-		if( --qp->col < 0 )
-			qp->col = 0;
-		break;
+	memcpy(&ss->ss_image[row][dstcol], &ss->ss_image[row][srccol], ncols);
+	memcpy(&ss->ss_attr[row][dstcol], &ss->ss_attr[row][srccol], ncols);
+	if (ss != ss->ss_sc->sc_curscr)
+		return;
+	for (i = 0; i < QV_CHEIGHT; i++)
+	        memcpy(qv_fbp(ss->ss_sc, row, dstcol, i),
+	            qv_fbp(ss->ss_sc, row, srccol, i), ncols);
+}
 
-	case '\n':				/* linefeed	*/
-		if( qp->row+1 >= qp->max_row )
-			qvscroll();
+/*
+ * emulop erase columns - erases a bunch of chars inside one row
+ */
+static void
+qv_erasecols(void *id, int row, int startcol, int ncols, long fillattr)
+{
+	struct qv_screen * const ss = id;
+	int i;
+
+	memset(&ss->ss_image[row][startcol], 0, ncols);
+	memset(&ss->ss_attr[row][startcol], 0, ncols);
+	if (ss != ss->ss_sc->sc_curscr)
+		return;
+	for (i = 0; i < QV_CHEIGHT; i++)
+	        memset(qv_fbp(ss->ss_sc, row, startcol, i), 0, ncols);
+}
+
+/*
+ * overlap check
+ * return 0 if no overlap
+ *        -1 if overlap and dst is less than src (move up)
+ * 	  +1 if overlap and src is less than dst (move down)
+ */
+static inline int
+qv_rows_overlap(int srcrow, int dstrow, int nrows)
+{
+	if (dstrow < srcrow) {
+		if (dstrow + nrows <= srcrow)
+			return 0;
 		else
-			qp->row++;
-		/*
-		* Position the cursor to the next character location.
-		*/
-		qv_pos_cur( qp->col*8, qp->row*15 );
+			return -1;
+	}
+	else {
+		if (srcrow + nrows <= dstrow)
+			return 0;
+		else
+			return 1;
+	}
+}
+
+/*
+ * emulop copyrows - copy entire rows
+ */
+static void
+qv_copyrows(void *id, int srcrow, int dstrow, int nrows)
+{
+	struct qv_screen * const ss = id;
+	int ol;
+	int n;
+	int line;
+	int tmp;
+	uint16_t *sp;
+	uint16_t *dp;
+
+	memcpy(&ss->ss_image[dstrow][0], &ss->ss_image[srcrow][0],
+	    nrows * QV_COLS);
+	memcpy(&ss->ss_attr[dstrow][0], &ss->ss_attr[srcrow][0],
+	    nrows * QV_COLS);
+	if (ss != ss->ss_sc->sc_curscr)
+		return;
+	
+	ol = qv_rows_overlap(srcrow, dstrow, nrows);
+	if (ol == 0)
+		for (n = 0; n < nrows; n++)
+			bcopy(qv_fbp(ss->ss_sc, srcrow + n, 0, 0),
+	    		    qv_fbp(ss->ss_sc, dstrow + n, 0, 0), QV_NEXTROW);
+	else if (ol < 0) {
+	 	for (n = 0; n < nrows; n++) {
+			dp = &ss->ss_sc->sc_scanmap[(dstrow + n)*QV_CHEIGHT];  
+			sp = &ss->ss_sc->sc_scanmap[(srcrow + n)*QV_CHEIGHT];
+			for (line = 0; line < QV_CHEIGHT; line++) {
+				tmp = *dp; 
+				*dp = *sp;
+				*sp = tmp;
+				dp++;
+				sp++;
+			}
+		}	
+		qv_copyrows(id, dstrow + nrows - srcrow + dstrow, 
+		    dstrow + nrows, srcrow - dstrow);
+	}
+	else {
+	 	for (n = nrows - 1; n >= 0; n--) {
+			dp = &ss->ss_sc->sc_scanmap[(dstrow + n)*QV_CHEIGHT];  
+			sp = &ss->ss_sc->sc_scanmap[(srcrow + n)*QV_CHEIGHT];
+			for (line = 0; line < QV_CHEIGHT; line++) {
+				tmp = *dp; 
+				*dp = *sp;
+				*sp = tmp;
+				dp++;
+				sp++;
+			}
+		}	
+		qv_copyrows(id, srcrow, dstrow, dstrow - srcrow);
+	}
+}
+
+/*
+ * emulop eraserows - erase a number of entire rows
+ */
+static void
+qv_eraserows(void *id, int startrow, int nrows, long fillattr)
+{
+	struct qv_screen * const ss = id;
+	int row;
+
+	memset(&ss->ss_image[startrow][0], 0, nrows * QV_COLS);
+	memset(&ss->ss_attr[startrow][0], 0, nrows * QV_COLS);
+	if (ss != ss->ss_sc->sc_curscr)
+		return;
+        
+	for (row = startrow; row < startrow + nrows; row++) {
+	        memset(qv_fbp(ss->ss_sc, row, 0, 0), 0, QV_NEXTROW);
+	}
+}
+
+/*
+ * emulop allocattr
+ */
+static int
+qv_allocattr(void *id, int fg, int bg, int flags, long *attrp)
+{
+	*attrp = flags;
+	return 0;
+}
+
+/*
+ * emulop setcursor
+ */
+static void
+qv_setcursor(struct qv_softc *sc, struct wsdisplay_cursor *v)
+{
+	uint16_t red, green, blue;
+	uint32_t curfg[16], curmask[16];
+	uint16_t *curp;
+	int i;
+
+	/* Enable cursor */
+	if (v->which & WSDISPLAY_CURSOR_DOCUR) {
+	        sc->sc_curon = (v->enable) ? CUR_ON : CUR_OFF;
+	        qv_crtc_wr(sc, CUR_START, sc->sc_curon | (sc->sc_cury & 0x0f));
+	}
+	if (v->which & WSDISPLAY_CURSOR_DOHOT) {
+		sc->sc_curhotX = v->hot.x;
+		sc->sc_curhotY = v->hot.y;
+	}
+	if (v->which & WSDISPLAY_CURSOR_DOCMAP) {
+		/* First background */
+		red = fusword(v->cmap.red);
+		green = fusword(v->cmap.green);
+		blue = fusword(v->cmap.blue);
+		bgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
+		    (((1<<8)-1)*50)) ? ~0 : 0;
+		red = fusword(v->cmap.red+2);
+		green = fusword(v->cmap.green+2);
+		blue = fusword(v->cmap.blue+2);
+		fgmask = (((30L * red + 59L * green + 11L * blue) >> 8) >=
+		    (((1<<8)-1)*50)) ? ~0 : 0;
+	}
+	if (v->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		copyin(v->image, curfg, sizeof(curfg));
+		copyin(v->mask, curmask, sizeof(curmask));      /* not used */
+	        curp = (uint16_t *) &(sc->sc_fb)[QV_CURSRAM];
+		for (i = 0; i < sizeof(curfg)/sizeof(curfg[0]); i++) {
+		        curp[i] = (uint16_t)curfg[i];
+		}
+	}
+}
+
+/*
+ * emulop ioctl
+ */
+int
+qv_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct wsdisplay_fbinfo *fb = (void *)data;
+	//static uint16_t curc;
+        struct qv_softc *sc = device_private(v);
+
+	switch (cmd) {
+	case WSDISPLAYIO_GTYPE:
+		*(u_int *)data = WSDISPLAY_TYPE_VAX_MONO;
 		break;
 
-	case '\007':				/* bell		*/
-                /*
-                 * We don't do anything to the keyboard until after
-                 * autoconfigure.
-                 */
-		if( qp->qvaddr )
-			qv_key_out( LK_RING_BELL );
-		return;
+	case WSDISPLAYIO_GINFO:
+		fb->height = QV_YWIDTH;
+		fb->width = QV_XWIDTH;
+		fb->depth = 1;
+		fb->cmsize = 2;
+		break;
+
+	case WSDISPLAYIO_SVIDEO:
+		if (*(u_int *)data == WSDISPLAYIO_VIDEO_ON) {
+                        /* enable video output */
+  		        qv_reg_wr(sc, QV_CSR, 
+  		            qv_reg_rd(sc, QV_CSR) | (1 << 2));
+		} else {
+                        /* disable video output */
+                        qv_reg_wr(sc, QV_CSR, 
+                            qv_reg_rd(sc, QV_CSR) & ~(1 << 2));
+		}
+		break;
+
+	case WSDISPLAYIO_GVIDEO:
+		*(u_int *)data = (qv_reg_rd(sc, QV_CSR) & (1 << 2))
+		    ? WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
+		break;
+
+	case WSDISPLAYIO_SCURSOR:
+		qv_setcursor(sc, (struct wsdisplay_cursor *)data);
+		break;
+
+	case WSDISPLAYIO_SCURPOS:
+	        sc->sc_curx = ((struct wsdisplay_curpos *)data)->x;
+		sc->sc_cury = ((struct wsdisplay_curpos *)data)->y;
+                qv_crtc_wr(sc, CUR_START, CUR_OFF | (sc->sc_cury & 0x0f));
+                qv_crtc_wr(sc, CUR_HI, sc->sc_cury >> 4);
+                qv_reg_wr(sc, QV_CUR_X, sc->sc_curx);
+                qv_crtc_wr(sc, CUR_START, 
+                    sc->sc_curon | (sc->sc_cury & 0x0f));		
+		break;
+
+	case WSDISPLAYIO_GCURPOS:
+		((struct wsdisplay_curpos *)data)->x = sc->sc_curx;
+		((struct wsdisplay_curpos *)data)->y = sc->sc_cury;
+		break;
+
+	case WSDISPLAYIO_GCURMAX:
+		((struct wsdisplay_curpos *)data)->x = 16;
+		((struct wsdisplay_curpos *)data)->y = 16;
+		break;
 
 	default:
-		if( c >= ' ' && c <= '~' ) {
-                        scanline = qp->scanmap;
-                        b_row = qp->bitmap+(scanline[qp->row*15]&0x3ff)*128+qp->col;
-			i = c - ' ';
-			if( i < 0 || i > 95 )
-				i = 0;
-			else
-				i *= 15;
-			f_row = (char *)((int)q_font + i);
-		
-/*			for( i=0 ; i<15 ; i++ , b_row += 128, f_row++ )
-				*b_row = *f_row;*/
-			/* inline expansion for speed */
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
-			*b_row = *f_row++; b_row += ote;
+		return EPASSTHROUGH;
+	}
+	return 0;
+}
 
-			if( ++qp->col >= qp->max_col ) {
-				qp->col = 0 ;
-				if( qp->row+1 >= qp->max_row )
-					qvscroll();
-				else
-					qp->row++;
+/*
+ * emulop mmap
+ */
+static paddr_t
+qv_mmap(void *v, void *vs, off_t offset, int prot)
+{
+        struct qv_softc *sc = device_private(v);
+        
+	if (offset >= QVSIZE || offset < 0)
+		return -1;
+	return (sc->sc_fbphys) >> PGSHIFT;
+}
+
+/*
+ * emulop allocate screen
+ */
+int
+qv_alloc_screen(void *v, const struct wsscreen_descr *type, void **cookiep,
+    int *curxp, int *curyp, long *defattrp)
+{
+        struct qv_softc *sc = device_private(v);
+        struct qv_screen *ss;
+
+	ss = malloc(sizeof(struct qv_screen), M_DEVBUF, M_WAITOK|M_ZERO);
+	ss->ss_sc = sc;
+	ss->ss_type = type;
+	*cookiep = ss;
+	*curxp = *curyp = *defattrp = 0;
+        printf("qv_alloc_screen: \"%s\" %p\n", type->name, ss);
+	return 0;
+}
+
+/*
+ * emulop free screen
+ */
+void
+qv_free_screen(void *v, void *cookie)
+{
+        printf("qv_free_screen: %p\n", cookie);
+        free(cookie, M_DEVBUF);
+}
+
+/*
+ * emulop show screen
+ */
+int
+qv_show_screen(void *v, void *cookie, int waitok,
+    void (*cb)(void *, int, int), void *cbarg)
+{
+	struct qv_screen *ss = cookie;
+	const struct _wsscreen_descr *descr;
+	int row, col, line;
+        printf("qv_show_screen: %p\n", cookie);
+
+	if (ss == ss->ss_sc->sc_curscr)
+		return (0);
+
+        descr = (const struct _wsscreen_descr *)(ss->ss_type);
+        qv_setcrtc(ss->ss_sc, descr->qv_crtc_param);
+	for (row = 0; row < QV_ROWS; row++)
+		for (line = 0; line < QV_CHEIGHT; line++) {
+			for (col = 0; col < QV_COLS; col++) {
+				u_char s, c = ss->ss_image[row][col];
+
+				if (c < 32)
+					c = 32;
+				s = *qv_font(ss->ss_sc, c, line);
+				if (ss->ss_attr[row][col] & WSATTR_REVERSE)
+					s ^= 255;
+				*qv_fbp(ss->ss_sc, row, col, line) = s;
+
+				if (ss->ss_attr[row][col] & WSATTR_UNDERLINE)
+					*qv_fbp(ss->ss_sc, row, col, line)
+					    = 255;
 			}
 		}
-		break;
-	}
+        cursor = qv_fbp(ss->ss_sc, ss->ss_cury, ss->ss_curx, 14);
+	ss->ss_sc->sc_curscr = ss;
+	return (0);
 }
 
-/*
- * Position the cursor to a particular spot.
- */
-qv_pos_cur( x, y)
-register int x,y;
+#if 0
+void
+qv_reset_establish(void (*reset)(device_t), device_t dev)
 {
-	register struct qvdevice *qvaddr;
-	register struct qv_info *qp = qv_scn;
-	register index;
-
-	if( qvaddr = qp->qvaddr ) {
-		if( y < 0 || y > qp->max_cur_y )
-			y = qp->max_cur_y;
-		if( x < 0 || x > qp->max_cur_x )
-			x = qp->max_cur_x;
-		qp->cursor.x = x;		/* keep track of real cursor*/
-		qp->cursor.y = y;		/* position, indep. of mouse*/
-
-		qvaddr->qv_crtaddr = 10;	/* select cursor start reg */
-		qvaddr->qv_crtdata = y & 0xf;
-		qvaddr->qv_crtaddr = 11;	/* select cursor end reg */
-		qvaddr->qv_crtdata = y & 0xf;
-		qvaddr->qv_crtaddr = 14;	/* select cursor y pos. */
-		qvaddr->qv_crtdata = y >> 4;
-		qvaddr->qv_xcur = x;		/* pos x axis	*/
-		/*
-		 * If the mouse is being used then we change the mode of
-		 * cursor display based on the pixels under the cursor
-		 */
-		if( mouseon ) {
-			index = y*128 + x/8;
-			if( qp->bitmap[ index ] && qp->bitmap[ index+128 ] )
-				qvaddr->qv_csr &= ~QV_CUR_MODE;
-			else
-				qvaddr->qv_csr |=  QV_CUR_MODE;
-		}
-	}
-}
-/*
- * Scroll the bitmap by moving the scanline map words. This could
- * be done by moving the bitmap but it's much too slow for a full screen.
- * The only drawback is that the scanline map must be reset when the user 
- * wants to do graphics.
- */
-qvscroll(void)
-{
-	short tmpscanlines[15];
-	register char *b_row;
-	register short *scanline;
-	register struct qv_info *qp = qv_scn;
-
-	/*
-	 * If the mouse is on we don't scroll so that the bit map
-	 * remains sane.
-	 */
-	if( mouseon ) {
-		qp->row = 0;
-		return;
-	}
-	/*
-	 * Save the first 15 scanlines so that we can put them at
-	 * the bottom when done.
-	 */
-	memcpy((void *)tmpscanlines, (void *)qp->scanmap, sizeof tmpscanlines);
-
-	/*
-	 * Clear the wrapping line so that it won't flash on the bottom
-	 * of the screen.
-	 */
-        scanline = qp->scanmap;
-        b_row = qp->bitmap+(*scanline&0x3ff)*128;
-	memset( b_row, 0, 1920 );
-
-	/*
-	 * Now move the scanlines down 
-	 */
-	memcpy((void *)qp->scanmap, (void *)(qp->scanmap+15),
-	      (qp->row * 15) * sizeof (short) );
-
-	/*
-	 * Now put the other lines back
-	 */
-	memcpy((void *)(qp->scanmap+(qp->row * 15)), (void *)tmpscanlines,
-	      sizeof (tmpscanlines) );
-
-}
-
-/*
- * Output to the keyboard. This routine status polls the transmitter on the
- * keyboard to output a code. The timer is to avoid hanging on a bad device.
- */
-qv_key_out(u_short c)
-{
-	int timer = 30000;
-	register struct qv_info *qp = qv_scn;
-
-	if (qp->qvaddr) {
-		while ((qp->qvaddr->qv_uartstatus & 0x4) == 0  && timer--)
-			;
-		qp->qvaddr->qv_uartdata = c;
-	}
-}
-/*
- * Virtual console initialization. This routine sets up the qvss so that it can
- * be used as the system console. It is invoked before autoconfig and has to do
- * everything necessary to allow the device to serve as the system console. 
- * In this case it must map the q-bus and device areas and initialize the qvss 
- * screen.
- */
-qvcons_init(void)
-{
-        struct percpu *pcpu;            /* pointer to percpu structure  */
-	register struct qbus *qb;
-        struct qvdevice *qvaddr;        /* device pointer               */
-        short *devptr;                  /* virtual device space         */
-	extern cnputc();		/* standard serial console putc */
-#define QVSSCSR 017200
-
-	/*
-	 * If secondary console already configured,
-	 * don't override the previous one.
-	 */
-	if (v_putc != cnputc)
-		return 0;
-        /*
-         * find the percpu entry that matches this machine.
-         */
-        for( pcpu = percpu ; pcpu && pcpu->pc_cputype != cpu ; pcpu++ )
-                ;
-        if( pcpu == NULL )
-                return 0;
-	if (pcpu->pc_io->io_type != IO_QBUS)
-		return 0;
-
-        /*
-         * Found an entry for this CPU. Because this device is Microvax specific
-         * we assume that there is a single q-bus and don't have to worry about
-         * multiple adapters.
-         *
-         * Map the device registers.
-         */
-	qb = (struct qbus *)pcpu->pc_io->io_details;
-	ioaccess(qb->qb_iopage, UMEMmap[0] + qb->qb_memsize, UBAIOPAGES * VAX_NBPG);
-
-        /*
-         * See if the qvss is there.
-         */
-        devptr = (short *)((char *)umem[0] + (qb->qb_memsize * VAX_NBPG));
-        qvaddr = (struct qvdevice *)((u_int)devptr + ubdevreg(QVSSCSR));
-        if (badaddr((void *)qvaddr, sizeof(short)))
-                return 0;
-        /*
-         * Okay the device is there lets set it up
-         */
-        if (!qv_setup(qvaddr, 0, 0))
-		return 0;
-	v_putc = qvputc;
-        consops = &qv_cdevsw;
-	return 1;
-}
-/*
- * Do the board specific setup
- */
-qv_setup(struct qvdevice *qvaddr, int unit, int probed)
-{
-        void *qvssmem;		/* pointer to the display mem   */
-        register i;			/* simple index                 */
-	register struct qv_info *qp;
-        register int *pte;
-        struct percpu *pcpu;            /* pointer to percpu structure  */
-	register struct qbus *qb;
-
-        /*
-         * find the percpu entry that matches this machine.
-         */
-        for( pcpu = percpu ; pcpu && pcpu->pc_cputype != cpu ; pcpu++ )
-                ;
-        if( pcpu == NULL )
-                return(0);
-
-        /*
-         * Found an entry for this CPU. Because this device is Microvax specific
-         * we assume that there is a single q-bus and don't have to worry about
-         * multiple adapters.
-         *
-         * Map the device memory.
-         */
-	qb = (struct qbus *)pcpu->pc_io->io_details;
-
-        i = (u_int)(qvaddr->qv_csr & QV_MEM_BANK) << 7;
-	ioaccess(qb->qb_maddr + i, QVmap[unit], 512 * VAX_NBPG);
-	qvssmem = qvmem[unit];
-        pte = (int *)(QVmap[unit]);
-        for (i=0; i < 512; i++, pte++)
-                *pte = (*pte & ~PG_PROT) | PG_UW | PG_V;
-
-        qv_scn = (struct qv_info *)((u_int)qvssmem + 251*1024);
-	qp = qv_scn;
-        if( (qvaddr->qv_csr & QV_19INCH) && qv_def_scrn == 0)
-                qv_def_scrn = 1;
-        *qv_scn = qv_scn_defaults[ qv_def_scrn ];
-	if (probed)
-		qp->qvaddr = qvaddr;
- 	qp->bitmap = qvssmem;
-        qp->scanmap = (short *)((u_int)qvssmem + 254*1024);
-        qp->cursorbits = (short *)((u_int)qvssmem + 256*1024-32);
-	/* set up event queue for later */
-	qp->ibuff = (vsEvent *)qp - QVMAXEVQ;
-	qp->iqsize = QVMAXEVQ;
-	qp->ihead = qp->itail = 0;
-
-        /*
-         * Setup the crt controller chip.
-         */
-        for( i=0 ; i<16 ; i++ ) {
-                qvaddr->qv_crtaddr = i;
-                qvaddr->qv_crtdata = qv_crt_parms[ qv_def_scrn ][ i ];
-        }
-        /*
-         * Setup the display.
-         */
-        qv_init( qvaddr );
-
-        /*
-         * Turn on the video
-         */
-        qvaddr->qv_csr |= QV_VIDEO_ENA ;
-	return 1;
+        uba_reset_establish(reset, device_parent(dev));
 }
 #endif
+cons_decl(qv);
+
+void
+qvcninit(struct consdev *cndev)
+{
+	int fcookie;
+	struct wsdisplay_font *console_font;
+	extern void lkccninit(struct consdev *);
+	extern int lkccngetc(dev_t);
+	extern int dz_vsbus_lk201_cnattach(int);
+
+        //printf("qvcninit: \n");
+	/* Clear screen */
+	//memset(qv_addr, 0, 128*864);
+
+	callout_init(&qv_cursor_ch, 0);
+	//curscr = &qv_conscreen;
+	wsdisplay_cnattach(&qv_stdscreen[0].qv_stdscreen, 
+	    &qv_conscreen, 0, 0, 0);
+	cn_tab->cn_pri = CN_INTERNAL;
+	wsfont_init();
+	if ((fcookie = wsfont_find(NULL, 8, 15, 0, WSDISPLAY_FONTORDER_R2L,
+	    WSDISPLAY_FONTORDER_L2R, WSFONT_FIND_BITMAP)) < 0)
+	{
+		printf("qv: could not find 8x15 font\n");
+		return;
+	}
+	if (wsfont_lock(fcookie, &console_font) != 0) {
+		printf("qv: could not lock 8x15 font\n");
+		return;
+	}
+	//qf = console_font->data;
+
+#if NQVKBD > 0 && 0
+	qvkbd_cnattach(0); /* Connect keyboard and screen together */
+#endif
+}
+
+/*
+ * Called very early to setup the glass tty as console.
+ * Because it's called before the VM system is inited, virtual memory
+ * for the framebuffer can be stolen directly without disturbing anything.
+ */
+void
+qvcnprobe(struct consdev *cndev)
+{
+        printf("qvcnprobe: \n");
+#if 0
+	extern vaddr_t virtual_avail;
+	extern const struct cdevsw wsdisplay_cdevsw;
+
+	switch (vax_boardtype) {
+	case VAX_BTYP_410:
+	case VAX_BTYP_420:
+	case VAX_BTYP_43:
+		if ((vax_confdata & KA420_CFG_L3CON) ||
+		    (vax_confdata & KA420_CFG_MULTU))
+			break; /* doesn't use graphics console */
+		qv_addr = (void *)virtual_avail;
+		virtual_avail += QVSIZE;
+		ioaccess((vaddr_t)qv_addr, QVADDR, (QVSIZE/VAX_NBPG));
+		cndev->cn_pri = CN_INTERNAL;
+		cndev->cn_dev = makedev(cdevsw_lookup_major(&wsdisplay_cdevsw),
+					0);
+		break;
+	default:
+		break;
+	}
+#endif 
+}

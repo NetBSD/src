@@ -1,4 +1,4 @@
-/*	$NetBSD: audio_component.c,v 1.1 2014/03/13 01:57:52 pooka Exp $	*/
+/*	$NetBSD: audio_component.c,v 1.1.12.1 2015/09/22 12:06:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio_component.c,v 1.1 2014/03/13 01:57:52 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio_component.c,v 1.1.12.1 2015/09/22 12:06:12 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -57,13 +57,21 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/audio", '0',
 	    cmaj, AUDIO_DEVICE, 4)) !=0)
 		panic("cannot create audio device nodes: %d", error);
+	if ((error = rump_vfs_makesymlink("audio0", "/dev/audio")) != 0)
+		panic("cannot create audio symlink: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/sound", '0',
 	    cmaj, SOUND_DEVICE, 4)) !=0)
 		panic("cannot create sound device nodes: %d", error);
+	if ((error = rump_vfs_makesymlink("sound0", "/dev/sound")) != 0)
+		panic("cannot create sound symlink: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/audioctl", '0',
 	    cmaj, AUDIOCTL_DEVICE, 4)) !=0)
 		panic("cannot create audioctl device nodes: %d", error);
+	if ((error = rump_vfs_makesymlink("audioctl0", "/dev/audioctl")) != 0)
+		panic("cannot create audioctl symlink: %d", error);
 	if ((error = rump_vfs_makedevnodes(S_IFCHR, "/dev/mixer", '0',
 	    cmaj, MIXER_DEVICE, 4)) !=0)
 		panic("cannot create mixer device nodes: %d", error);
+	if ((error = rump_vfs_makesymlink("mixer0", "/dev/mixer")) != 0)
+		panic("cannot create mixer symlink: %d", error);
 }

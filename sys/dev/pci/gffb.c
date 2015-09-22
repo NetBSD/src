@@ -1,4 +1,4 @@
-/*	$NetBSD: gffb.c,v 1.9 2014/06/29 03:43:06 tsutsui Exp $	*/
+/*	$NetBSD: gffb.c,v 1.9.6.1 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.9 2014/06/29 03:43:06 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffb.c,v 1.9.6.1 2015/09/22 12:05:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -181,7 +181,7 @@ gffb_attach(device_t parent, device_t self, void *aux)
 	struct wsemuldisplaydev_attach_args aa;
 	prop_dictionary_t	dict;
 	unsigned long		defattr;
-	bool			is_console;
+	bool			is_console = FALSE;
 	int			i, j, f;
 	uint8_t			cmap[768];
 

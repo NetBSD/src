@@ -60,6 +60,7 @@
 static char         Gbl_Buffer[BUFFER_LENGTH];
 static char         Gbl_LineBuffer[LINE_BUFFER_LENGTH];
 
+
 /* Local prototypes */
 
 static BOOLEAN
@@ -101,6 +102,34 @@ AhPrintOneField (
 
 /*******************************************************************************
  *
+ * FUNCTION:    AhDisplayDirectives
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display all iASL preprocessor directives.
+ *
+ ******************************************************************************/
+
+void
+AhDisplayDirectives (
+    void)
+{
+    const AH_DIRECTIVE_INFO *Info;
+
+
+    printf ("iASL Preprocessor Directives\n\n");
+
+    for (Info = PreprocessorDirectives; Info->Name; Info++)
+    {
+        printf ("  %-36s : %s\n", Info->Name, Info->Description);
+    }
+}
+
+
+/*******************************************************************************
+ *
  * FUNCTION:    AhFindPredefinedNames (entry point for predefined name search)
  *
  * PARAMETERS:  NamePrefix          - Name or prefix to find. Must start with
@@ -125,13 +154,13 @@ AhFindPredefinedNames (
 
     if (!NamePrefix)
     {
-        Found = AhDisplayPredefinedName (Name, 0);
+        Found = AhDisplayPredefinedName (NULL, 0);
         return;
     }
 
     /* Contruct a local name or name prefix */
 
-    AhStrupr (NamePrefix);
+    AcpiUtStrupr (NamePrefix);
     if (*NamePrefix == '_')
     {
         NamePrefix++;
@@ -176,7 +205,7 @@ AhDisplayPredefinedName (
     const AH_PREDEFINED_NAME    *Info;
     BOOLEAN                     Found = FALSE;
     BOOLEAN                     Matched;
-    UINT32                      i;
+    UINT32                      i = 0;
 
 
     /* Find/display all names that match the input name prefix */
@@ -190,6 +219,7 @@ AhDisplayPredefinedName (
             printf ("%*s%s\n", 6, " ", Info->Action);
 
             AhDisplayPredefinedInfo (Info->Name);
+            i++;
             continue;
         }
 
@@ -213,6 +243,10 @@ AhDisplayPredefinedName (
         }
     }
 
+    if (!Name)
+    {
+        printf ("\nFound %d Predefined ACPI Names\n", i);
+    }
     return (Found);
 }
 
@@ -311,7 +345,7 @@ AhFindAmlOpcode (
     BOOLEAN                 Found = FALSE;
 
 
-    AhStrupr (Name);
+    AcpiUtStrupr (Name);
 
     /* Find/display all opcode names that match the input name prefix */
 
@@ -332,7 +366,7 @@ AhFindAmlOpcode (
         /* Upper case the opcode name before substring compare */
 
         strcpy (Gbl_Buffer, Op->OpcodeName);
-        AhStrupr (Gbl_Buffer);
+        AcpiUtStrupr (Gbl_Buffer);
 
         if (strstr (Gbl_Buffer, Name) == Gbl_Buffer)
         {
@@ -375,7 +409,7 @@ AhDecodeAmlOpcode (
         return;
     }
 
-    Opcode = ACPI_STRTOUL (OpcodeString, NULL, 16);
+    Opcode = strtoul (OpcodeString, NULL, 16);
     if (Opcode > ACPI_UINT16_MAX)
     {
         printf ("Invalid opcode (more than 16 bits)\n");
@@ -489,7 +523,7 @@ AhFindAslKeywords (
     BOOLEAN                 Found = FALSE;
 
 
-    AhStrupr (Name);
+    AcpiUtStrupr (Name);
 
     for (Keyword = AslKeywordInfo; Keyword->Name; Keyword++)
     {
@@ -503,7 +537,7 @@ AhFindAslKeywords (
         /* Upper case the operator name before substring compare */
 
         strcpy (Gbl_Buffer, Keyword->Name);
-        AhStrupr (Gbl_Buffer);
+        AcpiUtStrupr (Gbl_Buffer);
 
         if (strstr (Gbl_Buffer, Name) == Gbl_Buffer)
         {
@@ -604,7 +638,7 @@ AhFindAslOperators (
     BOOLEAN                 MatchCount = 0;
 
 
-    AhStrupr (Name);
+    AcpiUtStrupr (Name);
 
     /* Find/display all names that match the input name prefix */
 
@@ -620,7 +654,7 @@ AhFindAslOperators (
         /* Upper case the operator name before substring compare */
 
         strcpy (Gbl_Buffer, Operator->Name);
-        AhStrupr (Gbl_Buffer);
+        AcpiUtStrupr (Gbl_Buffer);
 
         if (strstr (Gbl_Buffer, Name) == Gbl_Buffer)
         {
@@ -844,7 +878,7 @@ AhDisplayDeviceIds (
 
     /* Find/display all names that match the input name prefix */
 
-    AhStrupr (Name);
+    AcpiUtStrupr (Name);
     for (Info = AslDeviceIds; Info->Name; Info++)
     {
         Matched = TRUE;
@@ -890,12 +924,64 @@ AhDisplayUuids (
     const AH_UUID           *Info;
 
 
-    printf ("ACPI-related UUIDs:\n\n");
+    printf ("ACPI-related UUIDs/GUIDs:\n");
+
+    /* Display entire table of known ACPI-related UUIDs/GUIDs */
 
     for (Info = AcpiUuids; Info->Description; Info++)
     {
-        printf ("%32s : %s\n", Info->Description, Info->String);
+        if (!Info->String) /* Null UUID string means group description */
+        {
+            printf ("\n%36s\n", Info->Description);
+        }
+        else
+        {
+            printf ("%32s : %s\n", Info->Description, Info->String);
+        }
     }
+
+    /* Help info on how UUIDs/GUIDs strings are encoded */
+
+    printf ("\n\nByte encoding of UUID/GUID strings"
+        " into ACPI Buffer objects (use ToUUID from ASL):\n\n");
+
+    printf ("%32s : %s\n", "Input UUID/GUID String format",
+        "aabbccdd-eeff-gghh-iijj-kkllmmnnoopp");
+
+    printf ("%32s : %s\n", "Expected output ACPI buffer",
+        "dd,cc,bb,aa, ff,ee, hh,gg, ii,jj, kk,ll,mm,nn,oo,pp");
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AhDisplayTables
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Display all known ACPI tables
+ *
+ ******************************************************************************/
+
+void
+AhDisplayTables (
+    void)
+{
+    const AH_TABLE          *Info;
+    UINT32                  i = 0;
+
+
+    printf ("Known ACPI tables:\n");
+
+    for (Info = AcpiSupportedTables; Info->Signature; Info++)
+    {
+        printf ("%8s : %s\n", Info->Signature, Info->Description);
+        i++;
+    }
+
+    printf ("\nTotal %u ACPI tables\n\n", i);
 }
 
 
@@ -951,7 +1037,7 @@ AhDecodeException (
 
     /* Decode a single user-supplied exception code */
 
-    Status = ACPI_STRTOUL (HexString, NULL, 16);
+    Status = strtoul (HexString, NULL, 16);
     if (!Status)
     {
         printf ("%s: Invalid hexadecimal exception code value\n", HexString);

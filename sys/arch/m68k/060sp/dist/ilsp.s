@@ -1,5 +1,5 @@
 #
-# $NetBSD: ilsp.s,v 1.1 2000/04/14 20:24:39 is Exp $
+# $NetBSD: ilsp.s,v 1.1.200.1 2015/09/22 12:05:45 skrll Exp $
 #
 
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -786,7 +786,7 @@ muls64_zero:
 # ALGORITHM ***********************************************************	#
 # 	In the interest of simplicity, all operands are converted to	#
 # longword size whether the operation is byte, word, or long. The	#
-# bounds are sign extended accordingly. If Rn is a data regsiter, Rn is #
+# bounds are sign extended accordingly. If Rn is a data register, Rn is #
 # also sign extended. If Rn is an address register, it need not be sign #
 # extended since the full register is always used.			#
 #	The condition codes are set correctly before the final "rts".	#

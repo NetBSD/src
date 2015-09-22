@@ -1,4 +1,4 @@
-/*	$NetBSD: cirio.h,v 1.3 2008/04/28 20:23:51 martin Exp $	*/
+/*	$NetBSD: cirio.h,v 1.3.64.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _SYS_DEV_CIRIO_H_
 #define _SYS_DEV_CIRIO_H_
+
+#include <sys/ioccom.h>
 
 struct cir_params {
 	unsigned int raw;

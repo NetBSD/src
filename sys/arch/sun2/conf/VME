@@ -1,4 +1,4 @@
-# $NetBSD: VME,v 1.47 2014/08/23 20:27:00 dholland Exp $
+# $NetBSD: VME,v 1.47.2.1 2015/09/22 12:05:52 skrll Exp $
 
 # VME Sun2 (2/50, 2/130, 2/160...)
 # Supports root on: ie0, sd*, ...
@@ -7,7 +7,7 @@ include "arch/sun2/conf/std.sun2"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"VME-$Revision: 1.47 $"
+#ident 		"VME-$Revision: 1.47.2.1 $"
 
 # Machines to be supported by this kernel
 #options 	FPU_EMULATE
@@ -32,6 +32,7 @@ options 	USERCONF	# userconf(4) support
 # Which kernel debugger?  Uncomment either this:
 options 	DDB
 # ... or these for KGDB (gdb remote target)
+pseudo-device	ksyms
 #makeoptions	DEBUG="-g"	# debugging symbols for gdb
 #options 	KGDB
 #options 	KGDB_DEV=0x0C00	# ttya=0C00 ttyb=0C01
@@ -40,7 +41,6 @@ options 	DDB
 #options 	DDB_HISTORY_SIZE=100	# enable history editing in DDB
 #options 	DEBUG		# kernel debugging code
 #options 	DIAGNOSTIC	# extra kernel sanity checking
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	PMAP_DEBUG
 #options 	SCSIDEBUG
 #options 	SCSIVERBOSE		# Verbose SCSI errors

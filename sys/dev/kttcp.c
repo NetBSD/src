@@ -1,4 +1,4 @@
-/*	$NetBSD: kttcp.c,v 1.37 2014/08/08 03:05:44 rtr Exp $	*/
+/*	$NetBSD: kttcp.c,v 1.37.4.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.37 2014/08/08 03:05:44 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.37.4.1 2015/09/22 12:05:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -63,14 +63,14 @@ __KERNEL_RCSID(0, "$NetBSD: kttcp.c,v 1.37 2014/08/08 03:05:44 rtr Exp $");
 
 #include <dev/kttcpio.h>
 
+#include "ioconf.h"
+
 static int kttcp_send(struct lwp *l, struct kttcp_io_args *);
 static int kttcp_recv(struct lwp *l, struct kttcp_io_args *);
 static int kttcp_sosend(struct socket *, unsigned long long,
 			unsigned long long *, struct lwp *, int);
 static int kttcp_soreceive(struct socket *, unsigned long long,
 			   unsigned long long *, struct lwp *, int *);
-
-void	kttcpattach(int);
 
 dev_type_ioctl(kttcpioctl);
 

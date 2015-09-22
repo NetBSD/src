@@ -1,4 +1,4 @@
-/*	$NetBSD: ldvar.h,v 1.21.16.1 2015/06/06 14:40:06 skrll Exp $	*/
+/*	$NetBSD: ldvar.h,v 1.21.16.2 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -38,29 +38,30 @@
 #include <dev/dkvar.h> /* for dk_softc */
 
 struct ld_softc {
-	struct  dk_softc sc_dksc;
-	kmutex_t sc_mutex;
-	krndsource_t	sc_rnd_source;
+	struct dk_softc	sc_dksc;
+	kmutex_t	sc_mutex;
+	kcondvar_t	sc_drain;
 
-	int	sc_queuecnt;		/* current h/w queue depth */
-	int	sc_ncylinders;		/* # cylinders */
-	int	sc_nheads;		/* # heads */
-	int	sc_nsectors;		/* # sectors per track */
+	int		sc_queuecnt;	/* current h/w queue depth */
+	int		sc_ncylinders;	/* # cylinders */
+	int		sc_nheads;	/* # heads */
+	int		sc_nsectors;	/* # sectors per track */
 	uint64_t	sc_disksize512;
 
 	/*
 	 * The following are filled by hardware specific attachment code.
 	 */
 	device_t	sc_dv;
-	int     sc_flags;               /* control flags */
-	uint64_t	sc_secperunit;		/* # sectors in total */
-	int	sc_secsize;		/* sector size in bytes */
-	int	sc_maxxfer;		/* max xfer size in bytes */
-	int	sc_maxqueuecnt;		/* maximum h/w queue depth */
+	int		sc_flags;	/* control flags */
+	uint64_t	sc_secperunit;	/* # sectors in total */
+	int		sc_secsize;	/* sector size in bytes */
+	int		sc_maxxfer;	/* max xfer size in bytes */
+	int		sc_maxqueuecnt;	/* maximum h/w queue depth */
 
-	int	(*sc_dump)(struct ld_softc *, void *, int, int);
-	int	(*sc_flush)(struct ld_softc *, int);
-	int	(*sc_start)(struct ld_softc *, struct buf *);
+	int		(*sc_dump)(struct ld_softc *, void *, int, int);
+	int		(*sc_flush)(struct ld_softc *, int);
+	int		(*sc_start)(struct ld_softc *, struct buf *);
+	int		(*sc_discard)(struct ld_softc *, off_t, off_t);
 };
 
 /* sc_flags */

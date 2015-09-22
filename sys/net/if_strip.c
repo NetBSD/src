@@ -1,4 +1,4 @@
-/*	$NetBSD: if_strip.c,v 1.97 2014/06/05 23:48:16 rmind Exp $	*/
+/*	$NetBSD: if_strip.c,v 1.97.4.1 2015/09/22 12:06:10 skrll Exp $	*/
 /*	from: NetBSD: if_sl.c,v 1.38 1996/02/13 22:00:23 christos Exp $	*/
 
 /*
@@ -87,9 +87,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97 2014/06/05 23:48:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_strip.c,v 1.97.4.1 2015/09/22 12:06:10 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -368,7 +370,6 @@ strip_clone_create(struct if_clone *ifc, int unit)
 	sc->sc_if.if_softc = sc;
 	sc->sc_if.if_mtu = SLMTU;
 	sc->sc_if.if_flags = 0;
-	sc->sc_if.if_type = IFT_OTHER;
 #if 0
 	sc->sc_if.if_flags |= SC_AUTOCOMP /* | IFF_POINTOPOINT | IFF_MULTICAST*/;
 #endif
@@ -749,26 +750,23 @@ stripoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	   	printf("stripout, rt: dst af%d gw af%d",
 		    rt_getkey(rt)->sa_family, rt->rt_gateway->sa_family);
 		if (rt_getkey(rt)->sa_family == AF_INET)
-		  printf(" dst %x",
-		      satocsin(rt_getkey(rt))->sin_addr.s_addr);
+			printf(" dst %x",
+			    satocsin(rt_getkey(rt))->sin_addr.s_addr);
 		printf("\n");
 	}
 #endif
 	switch (dst->sa_family) {
 	case AF_INET:
-                if (rt != NULL && rt->rt_gwroute != NULL)
-                        rt = rt->rt_gwroute;
-
-                /* assume rt is never NULL */
-                if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK
-                    || satocsdl(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
+		/* assume rt is never NULL */
+		if (rt == NULL || rt->rt_gateway->sa_family != AF_LINK ||
+		    satocsdl(rt->rt_gateway)->sdl_alen != ifp->if_addrlen) {
 		  	DPRINTF(("strip: could not arp starmode addr %x\n",
-			 satocsin(dst)->sin_addr.s_addr));
+			    satocsin(dst)->sin_addr.s_addr));
 			m_freem(m);
 			return (EHOSTUNREACH);
 		}
-                dldst = CLLADDR(satocsdl(rt->rt_gateway));
-                break;
+		dldst = CLLADDR(satocsdl(rt->rt_gateway));
+		break;
 
 	case AF_LINK:
 		dldst = CLLADDR(satocsdl(dst));

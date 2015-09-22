@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat6.c,v 1.7 2014/04/01 15:19:29 christos Exp $	*/
+/*	$NetBSD: ip_nat6.c,v 1.7.6.1 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -2414,12 +2414,13 @@ find_out_wild_ports:
 /*     nl_out* = destination information (translated)                       */
 /* ------------------------------------------------------------------------ */
 nat_t *
-ipf_nat6_lookupredir(natlookup_t *np)
+ipf_nat6_lookupredir(ipf_main_softc_t *softc, natlookup_t *np)
 {
 	fr_info_t fi;
 	nat_t *nat;
 
 	bzero((char *)&fi, sizeof(fi));
+	fi.fin_main_soft = softc;
 	if (np->nl_flags & IPN_IN) {
 		fi.fin_data[0] = ntohs(np->nl_realport);
 		fi.fin_data[1] = ntohs(np->nl_outport);

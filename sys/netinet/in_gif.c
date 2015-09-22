@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.64 2014/05/18 14:46:16 rmind Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.64.4.1 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.64 2014/05/18 14:46:16 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.64.4.1 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>

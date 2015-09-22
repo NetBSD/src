@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.205.2.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.205.2.3 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,8 +61,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.3 2015/09/22 12:06:10 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_atalk.h"
 #include "opt_mbuftrace.h"
@@ -70,27 +71,20 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.2 2015/06/06 14:40:25 skrll
 #include "opt_gateway.h"
 #include "opt_pppoe.h"
 #include "opt_net_mpsafe.h"
+#endif
+
 #include "vlan.h"
 #include "pppoe.h"
 #include "bridge.h"
 #include "arp.h"
 #include "agr.h"
 
-#include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/sysctl.h>
-#include <sys/kernel.h>
-#include <sys/callout.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
-#include <sys/protosw.h>
-#include <sys/socket.h>
+#include <sys/mutex.h>
 #include <sys/ioctl.h>
 #include <sys/errno.h>
-#include <sys/syslog.h>
-#include <sys/kauth.h>
-#include <sys/cpu.h>
-#include <sys/intr.h>
 #include <sys/device.h>
 #include <sys/rnd.h>
 #include <sys/rndsource.h>
@@ -101,6 +95,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.2 2015/06/06 14:40:25 skrll
 #include <net/if_llc.h>
 #include <net/if_dl.h>
 #include <net/if_types.h>
+#include <net/pktqueue.h>
 
 #include <net/if_media.h>
 #include <dev/mii/mii.h>
@@ -248,7 +243,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		else if (!arpresolve(ifp, rt, m, dst, edst))
-			return (0);	/* if not yet resolved */
+			return 0;	/* if not yet resolved */
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);

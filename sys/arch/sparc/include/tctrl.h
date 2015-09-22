@@ -1,4 +1,4 @@
-/*	$NetBSD: tctrl.h,v 1.4 2008/04/28 20:23:36 martin Exp $	*/
+/*	$NetBSD: tctrl.h,v 1.4.64.1 2015/09/22 12:05:52 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,6 +30,8 @@
  */
 #ifndef _MACHINE_TCTRL_H
 #define	_MACHINE_TCTRL_H
+
+#include <sys/ioccom.h>
 
 struct tctrl_req {
 	uint8_t        cmdbuf[16];

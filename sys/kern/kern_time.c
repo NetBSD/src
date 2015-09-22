@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.179 2013/05/22 16:00:52 christos Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.179.10.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179 2013/05/22 16:00:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.179.10.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -238,7 +238,7 @@ sys___clock_getres50(struct lwp *l, const struct sys___clock_getres50_args *uap,
 		syscallarg(struct timespec *) tp;
 	} */
 	struct timespec ts;
-	int error = 0;
+	int error;
 
 	if ((error = clock_getres1(SCARG(uap, clock_id), &ts)) != 0)
 		return error;
@@ -454,7 +454,7 @@ sys___adjtime50(struct lwp *l, const struct sys___adjtime50_args *uap,
 		syscallarg(const struct timeval *) delta;
 		syscallarg(struct timeval *) olddelta;
 	} */
-	int error = 0;
+	int error;
 	struct timeval atv, oldatv;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_TIME,

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.122.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.122.2.2 2015/09/22 12:06:17 skrll Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,6 +35,10 @@
 
 #ifndef	_SYS_CDEFS_H_
 #define	_SYS_CDEFS_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_diagnostic.h"
+#endif
 
 /*
  * Macro to test if we're using a GNU C compiler of a specific vintage
@@ -149,7 +153,7 @@
 #define	__CTASSERT99(x, a, b)	__CTASSERT0(x, __CONCAT(__ctassert,a), \
 					       __CONCAT(_,b))
 #endif
-#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z) 
+#define	__CTASSERT0(x, y, z)	__CTASSERT1(x, y, z)
 #define	__CTASSERT1(x, y, z)	typedef char y ## z[/*CONSTCOND*/(x) ? 1 : -1] __unused
 
 /*

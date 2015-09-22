@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.69.6.1 2015/06/06 14:40:05 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.69.6.2 2015/09/22 12:05:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69.6.1 2015/06/06 14:40:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.69.6.2 2015/09/22 12:05:55 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,7 +144,7 @@ netbsd32_to_if_addrprefreq(const struct netbsd32_if_addrprefreq *ifap32,
 	strlcpy(ifap->ifap_name, ifap32->ifap_name, sizeof(ifap->ifap_name));
 	ifap->ifap_preference = ifap32->ifap_preference;
 	memcpy(&ifap->ifap_addr, &ifap32->ifap_addr,
-	    max(ifap32->ifap_addr.ss_len, _SS_MAXSIZE));
+	    min(ifap32->ifap_addr.ss_len, _SS_MAXSIZE));
 }
 
 static inline void
@@ -547,7 +547,7 @@ netbsd32_from_if_addrprefreq(const struct if_addrprefreq *ifap,
 	strlcpy(ifap32->ifap_name, ifap->ifap_name, sizeof(ifap32->ifap_name));
 	ifap32->ifap_preference = ifap->ifap_preference;
 	memcpy(&ifap32->ifap_addr, &ifap->ifap_addr,
-	    max(ifap->ifap_addr.ss_len, _SS_MAXSIZE));
+	    min(ifap->ifap_addr.ss_len, _SS_MAXSIZE));
 }
 
 static inline void

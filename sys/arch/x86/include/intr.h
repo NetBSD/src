@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.45.4.1 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: intr.h,v 1.45.4.2 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
 
 struct intrstub {
 	void *ist_entry;
-	void *ist_recurse; 
+	void *ist_recurse;
 	void *ist_resume;
 };
 
@@ -86,13 +86,14 @@ struct intrsource {
 	void *is_recurse;		/* entry for spllower */
 	void *is_resume;		/* entry for doreti */
 	lwp_t *is_lwp;			/* for soft interrupts */
-	struct evcnt is_evcnt;		/* interrupt counter */
+	struct evcnt is_evcnt;		/* interrupt counter per cpu */
 	int is_flags;			/* see below */
 	int is_type;			/* level, edge */
 	int is_idtvec;
 	int is_minlevel;
 	char is_evname[32];		/* event counter name */
 	char is_intrid[INTRIDBUF];	/* intrid created by create_intrid() */
+	char is_xname[INTRDEVNAMEBUF];	/* device names */
 	cpuid_t is_active_cpu;		/* active cpuid */
 	struct percpu_evcnt *is_saved_evcnt;	/* interrupt count of deactivated cpus */
 	SIMPLEQ_ENTRY(intrsource) is_list;	/* link of intrsources */
@@ -185,6 +186,8 @@ typedef uint64_t intr_handle_t;
 
 void intr_default_setup(void);
 void x86_nmi(void);
+void *intr_establish_xname(int, struct pic *, int, int, int, int (*)(void *),
+			   void *, bool, const char *);
 void *intr_establish(int, struct pic *, int, int, int, int (*)(void *), void *, bool);
 void intr_disestablish(struct intrhand *);
 void intr_add_pcibus(struct pcibus_attach_args *);

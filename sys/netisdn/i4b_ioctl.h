@@ -27,7 +27,7 @@
  *	i4b_ioctl.h - messages kernel <--> userland
  *	-------------------------------------------
  *
- *	$Id: i4b_ioctl.h,v 1.12 2014/10/18 08:33:29 snj Exp $
+ *	$Id: i4b_ioctl.h,v 1.12.2.1 2015/09/22 12:06:12 skrll Exp $
  *
  * $FreeBSD$
  *
@@ -43,6 +43,8 @@
 #include <machine/types.h>
 #endif /* _MACHINE_TYPES_H_ */
 #endif /* __FreeBSD__ */
+
+#include <sys/ioccom.h>
 
 /*---------------------------------------------------------------------------*
  *	version and release number for isdn4bsd package

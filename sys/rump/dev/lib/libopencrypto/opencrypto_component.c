@@ -1,4 +1,4 @@
-/*	$NetBSD: opencrypto_component.c,v 1.1.12.1 2015/06/06 14:40:26 skrll Exp $ */
+/*	$NetBSD: opencrypto_component.c,v 1.1.12.2 2015/09/22 12:06:13 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.1 2015/06/06 14:40:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.2 2015/09/22 12:06:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -38,8 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.1.12.1 2015/06/06 14:40:2
 #include "rump_dev_private.h"
 #include "rump_vfs_private.h"
 
-void cryptoattach(int);
-void swcryptoattach(int);
+#include "ioconf.h"
+
 void crypto_init(void);
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)

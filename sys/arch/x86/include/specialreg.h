@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.80.2.2 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.80.2.3 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -279,16 +279,24 @@
  * Intel Digital Thermal Sensor and
  * Power Management, Fn0000_0006 - %eax.
  */
-#define CPUID_DSPM_DTS	0x00000001	/* Digital Thermal Sensor */
-#define CPUID_DSPM_IDA	0x00000002	/* Intel Dynamic Acceleration */
-#define CPUID_DSPM_ARAT	0x00000004	/* Always Running APIC Timer */
-#define CPUID_DSPM_PLN	0x00000010	/* Power Limit Notification */
-#define CPUID_DSPM_CME	0x00000020	/* Clock Modulation Extension */
-#define CPUID_DSPM_PLTM	0x00000040	/* Package Level Thermal Management */
+#define CPUID_DSPM_DTS	__BIT(0)	/* Digital Thermal Sensor */
+#define CPUID_DSPM_IDA	__BIT(1)	/* Intel Dynamic Acceleration */
+#define CPUID_DSPM_ARAT	__BIT(2)	/* Always Running APIC Timer */
+#define CPUID_DSPM_PLN	__BIT(4)	/* Power Limit Notification */
+#define CPUID_DSPM_ECMD	__BIT(5)	/* Clock Modulation Extension */
+#define CPUID_DSPM_PTM	__BIT(6)	/* Package Level Thermal Management */
+#define CPUID_DSPM_HWP	__BIT(7)	/* HWP */
+#define CPUID_DSPM_HWP_NOTIFY __BIT(8)	/* HWP Notification */
+#define CPUID_DSPM_HWP_ACTWIN  __BIT(9)	/* HWP Activity Window */
+#define CPUID_DSPM_HWP_EPP __BIT(10)	/* HWP Energy Performance Preference */
+#define CPUID_DSPM_HWP_PLR __BIT(11)	/* HWP Package Level Request */
+#define CPUID_DSPM_HDC	__BIT(13)	/* HDC */
 
 #define CPUID_DSPM_FLAGS	"\20" \
-	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" \
-	"\5" "PLN"	"\6" "CME"	"\7" "PLTM"
+	"\1" "DTS"	"\2" "IDA"	"\3" "ARAT" 			\
+	"\5" "PLN"	"\6" "ECMD"	"\7" "PTM"	"\10" "HWP"	\
+	"\11" "HWP_NOTIFY" "\12" "HWP_ACTWIN" "\13" "HWP_EPP" "\14" "HWP_PLR" \
+			"\16" "HDC"
 
 /*
  * Intel Digital Thermal Sensor and

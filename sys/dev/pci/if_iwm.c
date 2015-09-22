@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.29.2.3 2015/06/06 14:40:09 skrll Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.29.2.4 2015/09/22 12:05:59 skrll Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.3 2015/06/06 14:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.4 2015/09/22 12:05:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -437,6 +437,9 @@ static int	iwm_activate(device_t, enum devact);
 static void	iwm_wakeup(struct iwm_softc *);
 #endif
 static void	iwm_radiotap_attach(struct iwm_softc *);
+static int	iwm_sysctl_fw_loaded_handler(SYSCTLFN_PROTO);
+
+static int iwm_sysctl_root_num;
 
 static int
 iwm_firmload(struct iwm_softc *sc)
@@ -445,11 +448,19 @@ iwm_firmload(struct iwm_softc *sc)
 	firmware_handle_t fwh;
 	int error;
 
+	if (ISSET(sc->sc_flags, IWM_FLAG_FW_LOADED))
+		return 0;
+
 	/* Open firmware image. */
 	if ((error = firmware_open("if_iwm", sc->sc_fwname, &fwh)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "could not get firmware handle %s\n", sc->sc_fwname);
 		return error;
+	}
+
+	if (fw->fw_rawdata != NULL && fw->fw_rawsize > 0) {
+		kmem_free(fw->fw_rawdata, fw->fw_rawsize);
+		fw->fw_rawdata = NULL;
 	}
 
 	fw->fw_rawsize = firmware_get_size(fwh);
@@ -466,8 +477,7 @@ iwm_firmload(struct iwm_softc *sc)
 	/* some sanity */
 	if (fw->fw_rawsize > IWM_FWMAXSIZE) {
 		aprint_error_dev(sc->sc_dev,
-		    "firmware size is ridiculous: %zd bytes\n",
-		fw->fw_rawsize);
+		    "firmware size is ridiculous: %zd bytes\n", fw->fw_rawsize);
 		error = EINVAL;
 		goto out;
 	}
@@ -487,6 +497,7 @@ iwm_firmload(struct iwm_softc *sc)
 		goto out;
 	}
 
+	SET(sc->sc_flags, IWM_FLAG_FW_LOADED);
  out:
 	/* caller will release memory, if necessary */
 
@@ -816,6 +827,7 @@ iwm_read_firmware(struct iwm_softc *sc)
 	if (error && fw->fw_rawdata != NULL) {
 		kmem_free(fw->fw_rawdata, fw->fw_rawsize);
 		fw->fw_rawdata = NULL;
+		CLR(sc->sc_flags, IWM_FLAG_FW_LOADED);
 	}
 	return error;
 }
@@ -5917,17 +5929,25 @@ iwm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
+		if (!ISSET(sc->sc_flags, IWM_FLAG_ATTACHED)) {
+			error = ENXIO;
+			break;
+		}
 		sa = ifreq_getaddr(SIOCADDMULTI, (struct ifreq *)data);
 		error = (cmd == SIOCADDMULTI) ?
 		    ether_addmulti(sa, &sc->sc_ec) :
 		    ether_delmulti(sa, &sc->sc_ec);
-
 		if (error == ENETRESET)
 			error = 0;
 		break;
 
 	default:
+		if (!ISSET(sc->sc_flags, IWM_FLAG_ATTACHED)) {
+			error = ether_ioctl(ifp, cmd, data);
+			break;
+		}
 		error = ieee80211_ioctl(ic, cmd, data);
+		break;
 	}
 
 	if (error == ENETRESET) {
@@ -6523,12 +6543,8 @@ iwm_match(device_t parent, cfdata_t match __unused, void *aux)
 static int
 iwm_preinit(struct iwm_softc *sc)
 {
+	struct ieee80211com *ic = &sc->sc_ic;
 	int error;
-
-	if ((error = iwm_prepare_card_hw(sc)) != 0) {
-		aprint_error_dev(sc->sc_dev, "could not initialize hardware\n");
-		return error;
-	}
 
 	if (sc->sc_flags & IWM_FLAG_ATTACHED)
 		return 0;
@@ -6540,20 +6556,8 @@ iwm_preinit(struct iwm_softc *sc)
 
 	error = iwm_run_init_mvm_ucode(sc, 1);
 	iwm_stop_device(sc);
-	return error;
-}
-
-static void
-iwm_attach_hook(device_t dev)
-{
-	struct iwm_softc *sc = device_private(dev);
-	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifnet *ifp = &sc->sc_ec.ec_if;
-
-	KASSERT(!cold);
-
-	if (iwm_preinit(sc) != 0)
-		return;
+	if (error)
+		return error;
 
 	sc->sc_flags |= IWM_FLAG_ATTACHED;
 
@@ -6565,52 +6569,11 @@ iwm_attach_hook(device_t dev)
 	    IWM_UCODE_API(sc->sc_fwver),
 	    ether_sprintf(sc->sc_nvm.hw_addr));
 
-	ic->ic_ifp = ifp;
-	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
-	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
-	ic->ic_state = IEEE80211_S_INIT;
-
-	/* Set device capabilities. */
-	ic->ic_caps =
-	    IEEE80211_C_WEP |		/* WEP */
-	    IEEE80211_C_WPA |		/* 802.11i */
-	    IEEE80211_C_SHSLOT |	/* short slot time supported */
-	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
-
 	/* not all hardware can do 5GHz band */
 	if (sc->sc_nvm.sku_cap_band_52GHz_enable)
 		ic->ic_sup_rates[IEEE80211_MODE_11A] = ieee80211_std_rateset_11a;
-	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
-	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
 
-	for (int i = 0; i < __arraycount(sc->sc_phyctxt); i++) {
-		sc->sc_phyctxt[i].id = i;
-	}
-
-	sc->sc_amrr.amrr_min_success_threshold =  1;
-	sc->sc_amrr.amrr_max_success_threshold = 15;
-
-	/* IBSS channel undefined for now. */
-	ic->ic_ibss_chan = &ic->ic_channels[1];
-
-#if 0
-	/* Max RSSI */
-	ic->ic_max_rssi = IWM_MAX_DBM - IWM_MIN_DBM;
-#endif
-
-	ifp->if_softc = sc;
-	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_init = iwm_init;
-	ifp->if_stop = iwm_stop;
-	ifp->if_ioctl = iwm_ioctl;
-	ifp->if_start = iwm_start;
-	ifp->if_watchdog = iwm_watchdog;
-	IFQ_SET_READY(&ifp->if_snd);
-	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
-
-	if_initialize(ifp);
 	ieee80211_ifattach(ic);
-	if_register(ifp);
 
 	ic->ic_node_alloc = iwm_node_alloc;
 
@@ -6621,15 +6584,16 @@ iwm_attach_hook(device_t dev)
 	ieee80211_announce(ic);
 
 	iwm_radiotap_attach(sc);
-	callout_init(&sc->sc_calib_to, 0);
-	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);
 
-	//task_set(&sc->init_task, iwm_init_task, sc);
+	return 0;
+}
 
-	if (pmf_device_register(dev, NULL, NULL))
-		pmf_class_network_register(dev, ifp);
-	else
-		aprint_error_dev(dev, "couldn't establish power handler\n");
+static void
+iwm_attach_hook(device_t dev)
+{
+	struct iwm_softc *sc = device_private(dev);
+
+	iwm_preinit(sc);
 }
 
 static void
@@ -6637,13 +6601,17 @@ iwm_attach(device_t parent, device_t self, void *aux)
 {
 	struct iwm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 #ifndef __HAVE_PCI_MSI_MSIX
 	pci_intr_handle_t ih;
 #endif
 	pcireg_t reg, memtype;
+	char intrbuf[PCI_INTRSTR_LEN];
 	const char *intrstr;
 	int error;
 	int txq_i;
+	const struct sysctlnode *node;
 
 	sc->sc_dev = self;
 	sc->sc_pct = pa->pa_pc;
@@ -6688,29 +6656,20 @@ iwm_attach(device_t parent, device_t self, void *aux)
 
 	/* Install interrupt handler. */
 #ifdef __HAVE_PCI_MSI_MSIX
-	error = ENODEV;
-	if (pci_msi_count(pa) > 0)
-		error = pci_msi_alloc_exact(pa, &sc->sc_pihp, 1);
+	error = pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0);
 	if (error != 0) {
-		if (pci_intx_alloc(pa, &sc->sc_pihp)) {
-			aprint_error_dev(self, "can't map interrupt\n");
-			return;
-		}
-	}
-#else	/* !__HAVE_PCI_MSI_MSIX */
-	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(self, "can't map interrupt\n");
+		aprint_error_dev(self, "can't allocate interrupt\n");
 		return;
 	}
-#endif	/* __HAVE_PCI_MSI_MSIX */
-
-	char intrbuf[PCI_INTRSTR_LEN];
-#ifdef __HAVE_PCI_MSI_MSIX
 	intrstr = pci_intr_string(sc->sc_pct, sc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
 	    iwm_intr, sc);
 #else	/* !__HAVE_PCI_MSI_MSIX */
+	if (pci_intr_map(pa, &ih)) {
+		aprint_error_dev(self, "can't map interrupt\n");
+		return;
+	}
 	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwm_intr, sc);
 #endif	/* __HAVE_PCI_MSI_MSIX */
@@ -6810,6 +6769,92 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	/* Clear pending interrupts. */
 	IWM_WRITE(sc, IWM_CSR_INT, 0xffffffff);
 
+	if ((error = sysctl_createv(&sc->sc_clog, 0, NULL, &node,
+	    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
+	    SYSCTL_DESCR("iwm per-controller controls"),
+	    NULL, 0, NULL, 0,
+	    CTL_HW, iwm_sysctl_root_num, CTL_CREATE,
+	    CTL_EOL)) != 0) {
+		aprint_normal_dev(sc->sc_dev,
+		    "couldn't create iwm per-controller sysctl node\n");
+	}
+	if (error == 0) {
+		int iwm_nodenum = node->sysctl_num;
+
+		/* Reload firmware sysctl node */
+		if ((error = sysctl_createv(&sc->sc_clog, 0, NULL, &node,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "fw_loaded",
+		    SYSCTL_DESCR("Reload firmware"),
+		    iwm_sysctl_fw_loaded_handler, 0, (void *)sc, 0,
+		    CTL_HW, iwm_sysctl_root_num, iwm_nodenum, CTL_CREATE,
+		    CTL_EOL)) != 0) {
+			aprint_normal_dev(sc->sc_dev,
+			    "couldn't create load_fw sysctl node\n");
+		}
+	}
+
+	/*
+	 * Attach interface
+	 */
+	ic->ic_ifp = ifp;
+	ic->ic_phytype = IEEE80211_T_OFDM;	/* not only, but not used */
+	ic->ic_opmode = IEEE80211_M_STA;	/* default to BSS mode */
+	ic->ic_state = IEEE80211_S_INIT;
+
+	/* Set device capabilities. */
+	ic->ic_caps =
+	    IEEE80211_C_WEP |		/* WEP */
+	    IEEE80211_C_WPA |		/* 802.11i */
+	    IEEE80211_C_SHSLOT |	/* short slot time supported */
+	    IEEE80211_C_SHPREAMBLE;	/* short preamble supported */
+
+	/* all hardware can do 2.4GHz band */
+	ic->ic_sup_rates[IEEE80211_MODE_11B] = ieee80211_std_rateset_11b;
+	ic->ic_sup_rates[IEEE80211_MODE_11G] = ieee80211_std_rateset_11g;
+
+	for (int i = 0; i < __arraycount(sc->sc_phyctxt); i++) {
+		sc->sc_phyctxt[i].id = i;
+	}
+
+	sc->sc_amrr.amrr_min_success_threshold =  1;
+	sc->sc_amrr.amrr_max_success_threshold = 15;
+
+	/* IBSS channel undefined for now. */
+	ic->ic_ibss_chan = &ic->ic_channels[1];
+
+#if 0
+	/* Max RSSI */
+	ic->ic_max_rssi = IWM_MAX_DBM - IWM_MIN_DBM;
+#endif
+
+	ifp->if_softc = sc;
+	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
+	ifp->if_init = iwm_init;
+	ifp->if_stop = iwm_stop;
+	ifp->if_ioctl = iwm_ioctl;
+	ifp->if_start = iwm_start;
+	ifp->if_watchdog = iwm_watchdog;
+	IFQ_SET_READY(&ifp->if_snd);
+	memcpy(ifp->if_xname, DEVNAME(sc), IFNAMSIZ);
+
+	if_initialize(ifp);
+#if 0
+	ieee80211_ifattach(ic);
+#else
+	ether_ifattach(ifp, ic->ic_myaddr);	/* XXX */
+#endif
+	if_register(ifp);
+
+	callout_init(&sc->sc_calib_to, 0);
+	callout_setfunc(&sc->sc_calib_to, iwm_calib_timeout, sc);
+
+	//task_set(&sc->init_task, iwm_init_task, sc);
+
+	if (pmf_device_register(self, NULL, NULL))
+		pmf_class_network_register(self, ifp);
+	else
+		aprint_error_dev(self, "couldn't establish power handler\n");
+
 	/*
 	 * We can't do normal attach before the file system is mounted
 	 * because we cannot read the MAC address without loading the
@@ -6907,10 +6952,32 @@ iwm_activate(device_t self, enum devact act)
 CFATTACH_DECL_NEW(iwm, sizeof(struct iwm_softc), iwm_match, iwm_attach,
 	NULL, NULL);
 
-#ifdef IWM_DEBUG
+static int
+iwm_sysctl_fw_loaded_handler(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	struct iwm_softc *sc;
+	int error, t;
+
+	node = *rnode;
+	sc = node.sysctl_data;
+	t = ISSET(sc->sc_flags, IWM_FLAG_FW_LOADED) ? 1 : 0;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t == 0)
+		CLR(sc->sc_flags, IWM_FLAG_FW_LOADED);
+	return 0;
+}
+
 SYSCTL_SETUP(sysctl_iwm, "sysctl iwm(4) subtree setup")
 {
-	const struct sysctlnode *rnode, *cnode;
+	const struct sysctlnode *rnode;
+#ifdef IWM_DEBUG
+	const struct sysctlnode *cnode;
+#endif /* IWM_DEBUG */
 	int rc;
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &rnode,
@@ -6919,16 +6986,19 @@ SYSCTL_SETUP(sysctl_iwm, "sysctl iwm(4) subtree setup")
 	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
 
+	iwm_sysctl_root_num = rnode->sysctl_num;
+
+#ifdef IWM_DEBUG
 	/* control debugging printfs */
 	if ((rc = sysctl_createv(clog, 0, &rnode, &cnode,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
 	    "debug", SYSCTL_DESCR("Enable debugging output"),
 	    NULL, 0, &iwm_debug, 0, CTL_CREATE, CTL_EOL)) != 0)
 		goto err;
+#endif /* IWM_DEBUG */
 
 	return;
 
  err:
 	aprint_error("%s: sysctl_createv failed (rc = %d)\n", __func__, rc);
 }
-#endif /* IWM_DEBUG */

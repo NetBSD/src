@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109.6.1 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.109.6.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -55,6 +55,7 @@
 #include <sys/cpu_data.h>
 #include <sys/device_if.h>
 #include <sys/evcnt.h>
+#include <sys/kcpuset.h>
 
 typedef struct cpu_watchpoint {
 	register_t	cw_addr;
@@ -82,7 +83,7 @@ void		  cpuwatch_clr(cpu_watchpoint_t *);
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
-	void *ci_xnext;			/* unused */
+	void *ci_nmi_stack;		/* NMI exception stack */
 	struct cpu_softc *ci_softc;	/* chip-dependent hook */
 	device_t ci_dev;		/* owning device */
 	cpuid_t ci_cpuid;		/* Machine-level identifier */
@@ -114,9 +115,13 @@ struct cpu_info {
 	int ci_tlb_slot;		/* reserved tlb entry for cpu_info */
 	u_int ci_pmap_asid_cur;		/* current ASID */
 	struct pmap_tlb_info *ci_tlb_info; /* tlb information for this cpu */
-	union segtab *ci_pmap_seg0tab;
+	union pmap_segtab *ci_pmap_segtabs[2];
+#define ci_pmap_user_segtab	ci_pmap_segtabs[0]
+#define ci_pmap_kern_segtab	ci_pmap_segtabs[1]
 #ifdef _LP64
-	union segtab *ci_pmap_segtab;
+	union pmap_segtab *ci_pmap_seg0tabs[2];
+#define ci_pmap_user_seg0tab	ci_pmap_seg0tabs[0]
+#define ci_pmap_kern_seg0tab	ci_pmap_seg0tabs[1]
 #else
 	vaddr_t ci_pmap_srcbase;	/* starting VA of ephemeral src space */
 	vaddr_t ci_pmap_dstbase;	/* starting VA of ephemeral dst space */
@@ -226,11 +231,10 @@ struct cpu_info {
 #define	CPU_ARCH_MIPS64R2	(1 << 8)
 
 /* Note: must be kept in sync with -ffixed-?? Makefile.mips. */
-#define MIPS_CURLWP             $24
+//	MIPS_CURLWP moved to <mips/regdef.h>
 #define MIPS_CURLWP_QUOTED      "$24"
 #define MIPS_CURLWP_LABEL	_L_T8
 #define MIPS_CURLWP_REG		_R_T8
-#define TF_MIPS_CURLWP(x)	TF_REG_T8(x)
 
 #ifndef _LOCORE
 
@@ -461,9 +465,9 @@ extern struct mips_options mips_options;
 void cpu_broadcast_ipi(int);
 
 /*
- * Send an inter-processor interupt to CPUs in cpuset (excludes curcpu())
+ * Send an inter-processor interupt to CPUs in kcpuset (excludes curcpu())
  */
-void cpu_multicast_ipi(__cpuset_t, int);
+void cpu_multicast_ipi(const kcpuset_t *, int);
 
 /*
  * Send an inter-processor interupt to another CPU.
@@ -561,16 +565,16 @@ void	cpu_halt(void);
 void	cpu_halt_others(void);
 void	cpu_pause(struct reg *);
 void	cpu_pause_others(void);
-void	cpu_resume(int);
+void	cpu_resume(cpuid_t);
 void	cpu_resume_others(void);
-int	cpu_is_paused(int);
+bool	cpu_is_paused(cpuid_t);
 void	cpu_debug_dump(void);
 
-extern volatile __cpuset_t cpus_running;
-extern volatile __cpuset_t cpus_hatched;
-extern volatile __cpuset_t cpus_paused;
-extern volatile __cpuset_t cpus_resumed;
-extern volatile __cpuset_t cpus_halted;
+extern kcpuset_t *cpus_running;
+extern kcpuset_t *cpus_hatched;
+extern kcpuset_t *cpus_paused;
+extern kcpuset_t *cpus_resumed;
+extern kcpuset_t *cpus_halted;
 #endif
 
 /* copy.S */

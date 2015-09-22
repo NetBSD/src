@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.63 2013/04/21 15:42:12 kiyohara Exp $	*/
+/*	$NetBSD: machdep.c,v 1.63.12.1 2015/09/22 12:05:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63 2013/04/21 15:42:12 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.63.12.1 2015/09/22 12:05:50 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -450,8 +450,8 @@ struct powerpc_bus_space sandpoint_eumb_space_tag = {
 	0xfc000000, 0x00000000, 0x00100000,
 };
 struct powerpc_bus_space sandpoint_flash_space_tag = {
-	_BUS_SPACE_LITTLE_ENDIAN|_BUS_SPACE_MEM_TYPE,
-	0x00000000, 0xff000000, 0x00000000,
+	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,
+	0x00000000, 0xff000000, 0xffffffff,
 };
 struct powerpc_bus_space sandpoint_nhgpio_space_tag = {
 	_BUS_SPACE_BIG_ENDIAN|_BUS_SPACE_MEM_TYPE,

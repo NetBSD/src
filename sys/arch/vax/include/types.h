@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.47 2013/08/25 03:08:56 matt Exp $	*/
+/*	$NetBSD: types.h,v 1.47.6.1 2015/09/22 12:05:53 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -64,7 +64,7 @@ typedef int		register_t;
 /*
  * BBCCI/BBSSI can operate on bytes so let's save some space.
  */
-typedef volatile char	__cpu_simple_lock_t;
+typedef char	__cpu_simple_lock_nv_t;
 
 #define __SIMPLELOCK_LOCKED	1
 #define __SIMPLELOCK_UNLOCKED	0

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2002/03/24 15:47:26 bjh21 Exp $
+#	$NetBSD: Makefile,v 1.1.184.1 2015/09/22 12:05:35 skrll Exp $
 
 S?=	${.CURDIR}/../../../../
 
@@ -18,7 +18,8 @@ SRCS+=	riscoscalls.S riscoscons.c riscoserrors.c riscosfile.c
 .undef DESTDIR
 .include <bsd.lib.mk>
 
-lib${LIB}.o:: ${OBJS}
+lib${LIB}.o:: ${OBJS:O}
 	@echo building standard ${LIB} library
 	@rm -f lib${LIB}.o
 	@${LD} -r -o lib${LIB}.o `lorder ${OBJS} | tsort`
+	@echo done

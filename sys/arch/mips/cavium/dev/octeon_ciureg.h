@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_ciureg.h,v 1.3.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeon_ciureg.h,v 1.3.2.3 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -80,6 +80,8 @@
 #define	CIU_INT4_EN01				UINT64_C(0x0001070000000c88)
 #define	CIU_INT4_EN10				UINT64_C(0x0001070000000c90)
 #define	CIU_INT4_EN11				UINT64_C(0x0001070000000c98)
+
+#define	CIU_BASE				UINT64_C(0x0001070000000000)
 
 #define	CIU_INT0_SUM0_OFFSET			0x0000
 #define	CIU_INT1_SUM0_OFFSET			0x0008

@@ -1,4 +1,4 @@
-/*	$NetBSD: mpt_netbsd.c,v 1.31 2014/09/28 11:27:00 jmcneill Exp $	*/
+/*	$NetBSD: mpt_netbsd.c,v 1.31.2.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.31 2014/09/28 11:27:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpt_netbsd.c,v 1.31.2.1 2015/09/22 12:05:58 skrll Exp $");
 
 #include "bio.h"
 
@@ -1270,8 +1270,16 @@ mpt_ctlop(mpt_softc_t *mpt, void *vmsg, uint32_t reply)
 		break;
 
 	case MPI_FUNCTION_EVENT_ACK:
+	    {
+		MSG_EVENT_ACK_REPLY *msg = vmsg;
+		int index = le32toh(msg->MsgContext) & ~0x80000000;
 		mpt_free_reply(mpt, (reply << 1));
+		if (index >= 0 && index < MPT_MAX_REQUESTS(mpt)) {
+			request_t *req = &mpt->request_pool[index];
+			mpt_free_request(mpt, req);
+		}
 		break;
+	    }
 
 	case MPI_FUNCTION_PORT_ENABLE:
 	    {

@@ -1,4 +1,4 @@
-#	$NetBSD: IPAQ,v 1.77 2014/08/23 20:26:58 dholland Exp $
+#	$NetBSD: IPAQ,v 1.77.2.1 2015/09/22 12:05:42 skrll Exp $
 #
 #	iPAQ H3600 -- Windows-CE based PDA
 #
@@ -99,7 +99,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)

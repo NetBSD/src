@@ -1,4 +1,4 @@
-/*	$NetBSD: midiio.h,v 1.15 2008/04/28 20:24:11 martin Exp $	*/
+/*	$NetBSD: midiio.h,v 1.15.64.1 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
  */
 
 #include <machine/endian_machdep.h>
+#include <sys/ioccom.h>
 
 /*
  * ioctl() commands for /dev/midi##

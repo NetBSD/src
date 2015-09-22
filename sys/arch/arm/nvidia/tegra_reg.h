@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.1.2.4 2015/09/22 12:05:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -98,6 +98,8 @@
 #define TEGRA_KBC_SIZE		0x100
 #define TEGRA_PMC_OFFSET	0x0000e400
 #define TEGRA_PMC_SIZE		0x800
+#define TEGRA_CEC_OFFSET	0x00015000
+#define TEGRA_CEC_SIZE		0x1000
 #define TEGRA_MC_OFFSET		0x00019000
 #define TEGRA_MC_SIZE		0x1000
 #define TEGRA_SATA_OFFSET	0x00020000

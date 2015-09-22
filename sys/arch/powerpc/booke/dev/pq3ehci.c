@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3ehci.c,v 1.5.16.3 2015/04/06 12:14:22 skrll Exp $	*/
+/*	$NetBSD: pq3ehci.c,v 1.5.16.4 2015/09/22 12:05:49 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5.16.3 2015/04/06 12:14:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5.16.4 2015/09/22 12:05:49 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -54,6 +54,16 @@ __KERNEL_RCSID(0, "$NetBSD: pq3ehci.c,v 1.5.16.3 2015/04/06 12:14:22 skrll Exp $
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+/*
+ * This is relative to the start of the unreserved registers in USB contoller
+ * block and not the full USB block which would be 0x1a8.
+ */
+#define	PQ3_USBMODE		0xa8			/* USB mode */
+#define	 USBMODE_CM		__BITS(0,1)		/* Controller Mode */
+#define	 USBMODE_CM_IDLE	__SHIFTIN(0,USBMODE_CM)	/* Idle (both) */
+#define	 USBMODE_CM_DEVICE	__SHIFTIN(2,USBMODE_CM)	/* Device Controller */
+#define	 USBMODE_CM_HOST	__SHIFTIN(3,USBMODE_CM)	/* Host Controller */
+
 #ifdef EHCI_DEBUG
 #define DPRINTF(x)	if (ehcidebug) printf x
 extern int ehcidebug;
@@ -68,6 +78,8 @@ struct pq3ehci_softc {
 	ehci_softc_t		sc;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
+
+static void pq3ehci_init(struct ehci_softc *);
 
 CFATTACH_DECL_NEW(pq3ehci, sizeof(struct pq3ehci_softc),
     pq3ehci_match, pq3ehci_attach, NULL, NULL);
@@ -99,6 +111,7 @@ pq3ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_bus.ub_revision = USBREV_2_0;
 	sc->sc.sc_ncomp = 0;
 	sc->sc.sc_flags |= EHCIF_ETTF;
+	sc->sc.sc_vendor_init = pq3ehci_init;
 
 	aprint_naive(": USB controller\n");
 	aprint_normal(": USB controller\n");
@@ -160,4 +173,16 @@ fail:
 		sc->sc.sc_size = 0;
 	}
 	return;
+}
+
+static void
+pq3ehci_init(struct ehci_softc *hsc)
+{
+	uint32_t old = bus_space_read_4(hsc->iot, hsc->ioh, PQ3_USBMODE);
+	uint32_t reg = old;
+
+	reg &= ~USBMODE_CM;
+	reg |= USBMODE_CM_HOST;
+	if (reg != old)
+		bus_space_write_4(hsc->iot, hsc->ioh, PQ3_USBMODE, reg);
 }

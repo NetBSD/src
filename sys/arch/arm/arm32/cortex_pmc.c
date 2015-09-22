@@ -1,4 +1,4 @@
-/*	$NetBSD: cortex_pmc.c,v 1.2.18.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: cortex_pmc.c,v 1.2.18.2 2015/09/22 12:05:37 skrll Exp $	*/
 
 /* Copyright (c) 2007 Microsoft
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.2.18.1 2015/04/06 15:17:52 skrll Exp $"); */
+/* __KERNEL_RCSID(0, "$NetBSD: cortex_pmc.c,v 1.2.18.2 2015/09/22 12:05:37 skrll Exp $"); */
 #include "opt_perfctrs.h"
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,7 +103,7 @@ delay(u_int arg)
 		if (ctrl & CORTEX_CNTOFL_C) {
 		  /* Reset overflow flag for cycle counter in overflow register */
 			armreg_pmovsr_write(CORTEX_CNTOFL_C);
-			delta += (last + (counts_per_wrap - cur));
+			delta += (cur + (counts_per_wrap - last));
 		} else {
 			delta += (cur - last);
 		}

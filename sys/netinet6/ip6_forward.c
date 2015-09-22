@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_forward.c,v 1.74.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ip6_forward.c,v 1.74.2.2 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: ip6_forward.c,v 1.109 2002/09/11 08:10:17 sakane Exp $	*/
 
 /*
@@ -31,10 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_forward.c,v 1.74.2.2 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_gateway.h"
 #include "opt_ipsec.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,9 +95,9 @@ ip6_cantforward(const struct ip6_hdr *ip6, const struct ifnet *srcifp,
 	if (dstifp)
 		in6_ifstat_inc(dstifp, ifs6_in_discard);
 
-	if (ip6_log_time + ip6_log_interval >= time_second)
+	if (ip6_log_time + ip6_log_interval >= time_uptime)
 		return;
-	ip6_log_time = time_second;
+	ip6_log_time = time_uptime;
 
 	va_start(ap, fmt);
 	vsnprintf(reason, sizeof(reason), fmt, ap);
@@ -245,7 +247,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 	    in6_setscope(&src_in6, m->m_pkthdr.rcvif, &inzone) != 0 ||
 	    inzone != outzone) {
 		ip6_cantforward(ip6, m->m_pkthdr.rcvif, rt->rt_ifp,
-		    "src[%s] inzone %d outzone %d", 
+		    "src[%s] inzone %d outzone %d",
 		    in6_getscopename(&ip6->ip6_src), inzone, outzone);
 		if (mcopy)
 			icmp6_error(mcopy, ICMP6_DST_UNREACH,
@@ -257,7 +259,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 #ifdef IPSEC
 	/*
 	 * If we need to encapsulate the packet, do it here
-	 * ipsec6_proces_packet will send the packet using ip6_output 
+	 * ipsec6_proces_packet will send the packet using ip6_output
 	 */
 	if (needipsec) {
 		int s = splsoftnet();
@@ -266,7 +268,7 @@ ip6_forward(struct mbuf *m, int srcrt)
 		if (mcopy)
 			goto freecopy;
 	}
-#endif   
+#endif
 
 	/*
 	 * Destination scope check: if a packet is going to break the scope

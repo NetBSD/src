@@ -1,4 +1,4 @@
-/*	$NetBSD: if_il.c,v 1.27 2014/05/29 07:08:10 wiz Exp $	*/
+/*	$NetBSD: if_il.c,v 1.27.4.1 2015/09/22 12:06:00 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.27 2014/05/29 07:08:10 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_il.c,v 1.27.4.1 2015/09/22 12:06:00 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -291,8 +291,7 @@ ilinit(struct ifnet *ifp)
 	IL_WCSR(IL_CSR, ILC_RESET);
 	if (ilwait(sc, "hardware diag")) {
 		sc->sc_if.if_flags &= ~IFF_UP;
-		splx(s);
-		return 0;
+		goto out;
 	}
 	IL_WCSR(IL_CSR, ILC_CISA);
 	while ((IL_RCSR(IL_CSR) & IL_CDONE) == 0)
@@ -310,28 +309,28 @@ ilinit(struct ifnet *ifp)
 		IL_WCSR(IL_BCR, ETHER_ADDR_LEN);
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_LDPA);
 		if (ilwait(sc, "setaddr"))
-			return 0;
+			goto out;
 		IL_WCSR(IL_BAR, LOWORD(sc->sc_ui.ui_baddr));
 		IL_WCSR(IL_BCR, sizeof (struct il_stats));
 		IL_WCSR(IL_CSR, ((sc->sc_ui.ui_baddr >> 2) & IL_EUA)|ILC_STAT);
 		if (ilwait(sc, "verifying setaddr"))
-			return 0;
+			goto out;
 		if (memcmp(sc->sc_stats.ils_addr,
 		    CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN) != 0) {
 			aprint_error_dev(sc->sc_dev, "setaddr didn't work\n");
-			return 0;
+			goto out;
 		}
 	}
 #ifdef MULTICAST
 	if (is->is_if.if_flags & IFF_PROMISC) {
 		addr->il_csr = ILC_PRMSC;
 		if (ilwait(ui, "all multi"))
-			return 0;
+			goto out;
 	} else if (is->is_if.if_flags & IFF_ALLMULTI) {
 	too_many_multis:
 		addr->il_csr = ILC_ALLMC;
 		if (ilwait(ui, "all multi"))
-			return 0;
+			goto out;
 	} else {
 		int i;
 		register struct ether_addr *ep = is->is_maddrs;
@@ -360,7 +359,7 @@ ilinit(struct ifnet *ifp)
 			addr->il_csr = ((is->is_ubaddr >> 2) & IL_EUA)|
 						LC_LDGRPS;
 			if (ilwait(ui, "load multi"))
-				return;
+				goto out;
 		} else {
 		    is->is_if.if_flags |= IFF_ALLMULTI;
 		    goto too_many_multis;
@@ -388,6 +387,7 @@ ilinit(struct ifnet *ifp)
 	sc->sc_flags |= ILF_RUNNING;
 	sc->sc_lastcmd = 0;
 	ilcint(sc);
+out:
 	splx(s);
 	return 0;
 }

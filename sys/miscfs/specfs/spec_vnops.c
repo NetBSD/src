@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.145.4.2 2015/06/06 14:40:23 skrll Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.145.4.3 2015/09/22 12:06:08 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.2 2015/06/06 14:40:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.145.4.3 2015/09/22 12:06:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -101,6 +101,7 @@ const char	devcls[] = "devcls";
 #endif
 
 static vnode_t	*specfs_hash[SPECHSZ];
+extern struct mount *dead_rootmount;
 
 /*
  * This vnode operations vector is used for special device nodes
@@ -1077,11 +1078,27 @@ spec_inactive(void *v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_l;
+		struct bool *a_recycle;
 	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
 
-	VOP_UNLOCK(ap->a_vp);
-	return (0);
+	KASSERT(vp->v_mount == dead_rootmount);
+	*ap->a_recycle = true;
+	VOP_UNLOCK(vp);
+	return 0;
+}
+
+int
+spec_reclaim(void *v)
+{
+	struct vop_reclaim_args /* {
+		struct vnode *a_vp;
+	} */ *ap = v;
+	struct vnode *vp = ap->a_vp;
+
+	KASSERT(vp->v_mount == dead_rootmount);
+	vcache_remove(vp->v_mount, &vp->v_interlock, sizeof(vp->v_interlock));
+	return 0;
 }
 
 /*

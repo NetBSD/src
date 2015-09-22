@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.9.2.1 2015/04/06 15:18:17 skrll Exp $
+#	$NetBSD: files.drmkms,v 1.9.2.2 2015/09/22 12:06:05 skrll Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -25,6 +25,10 @@ makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 
 # XXX Should probably be in a header file.  opt_drmkms.h?
 makeoptions	drmkms	CPPFLAGS+="-D__KERNEL__"
+
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_FB=0"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE=0"
+makeoptions	drmkms	CPPFLAGS+="-DCONFIG_BACKLIGHT_CLASS_DEVICE_MODULE=0"
 
 file	external/bsd/drm2/dist/drm/drm_auth.c		drmkms
 file	external/bsd/drm2/dist/drm/drm_buffer.c		drmkms

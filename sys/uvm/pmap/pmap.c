@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.4.6.1 2015/04/06 15:18:33 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.4.6.2 2015/09/22 12:06:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.1 2015/04/06 15:18:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.4.6.2 2015/09/22 12:06:18 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -214,7 +214,9 @@ struct pmap_kernel kernel_pmap_store = {
 
 struct pmap * const kernel_pmap_ptr = &kernel_pmap_store.kernel_pmap;
 
-struct pmap_limits pmap_limits;
+struct pmap_limits pmap_limits = {
+	.virtual_start = VM_MIN_KERNEL_ADDRESS,
+};
 
 #ifdef UVMHIST
 static struct kern_history_ent pmapexechistbuf[10000];
@@ -351,14 +353,14 @@ void
 pmap_virtual_space(vaddr_t *vstartp, vaddr_t *vendp)
 {
 
-	*vstartp = VM_MIN_KERNEL_ADDRESS;
-	*vendp = VM_MAX_KERNEL_ADDRESS;
+	*vstartp = pmap_limits.virtual_start;
+	*vendp = pmap_limits.virtual_end;
 }
 
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	vaddr_t virtual_end = pmap_limits.virtual_end; 
+	vaddr_t virtual_end = pmap_limits.virtual_end;
 	maxkvaddr = pmap_round_seg(maxkvaddr) - 1;
 
 	/*
@@ -984,7 +986,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	const bool wired = (flags & PMAP_WIRED) != 0;
 	const bool is_kernel_pmap_p = (pmap == pmap_kernel());
 #ifdef UVMHIST
-	struct kern_history * const histp = 
+	struct kern_history * const histp =
 	    ((prot & VM_PROT_EXECUTE) ? &pmapexechist : &pmaphist);
 #endif
 
@@ -1588,7 +1590,7 @@ again:
 			/*
 			 * To allocate a PV, we have to release the PVLIST lock
 			 * so get the page generation.  We allocate the PV, and
-			 * then reacquire the lock.  
+			 * then reacquire the lock.
 			 */
 			VM_PAGEMD_PVLIST_UNLOCK(mdpg);
 

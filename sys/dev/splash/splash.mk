@@ -1,10 +1,9 @@
-# $NetBSD: splash.mk,v 1.3.2.2 2015/06/06 14:40:13 skrll Exp $
+# $NetBSD: splash.mk,v 1.3.2.3 2015/09/22 12:06:00 skrll Exp $
+
+.if defined(SPLASHSCREEN_IMAGE)
 
 # Makefile for embedding splash image into kernel.
 .include <bsd.endian.mk>
-
-MI_OBJS+=	splash_image.o
-CFLAGS+=	-DSPLASHSCREEN_IMAGE
 
 .if (${OBJECT_FMTS:Melf64})
 BFD_ELFTARGET=elf64
@@ -22,7 +21,16 @@ BFD_TARGET=${BFD_ELFTARGET}-${BFD_CPU}
 .endif
 
 splash_image.o:	${SPLASHSCREEN_IMAGE}
+	${_MKTARGET_CREATE}
 	cp ${SPLASHSCREEN_IMAGE} splash.image
 	${OBJCOPY} -I binary -B ${MACHINE_CPU:C/x86_64/i386/} \
 		-O ${BFD_TARGET} splash.image splash_image.o
 	rm splash.image
+.else
+
+# SPLASHSCREEN_IMAGE is not defined; build empty splash_image.o.
+splash_image.c:
+	${_MKTARGET_CREATE}
+	echo > $@
+
+.endif

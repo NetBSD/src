@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota1.c,v 1.8 2014/05/24 16:34:04 christos Exp $	*/
+/*	$NetBSD: ulfs_quota1.c,v 1.8.4.1 2015/09/22 12:06:17 skrll Exp $	*/
 /*  from NetBSD: ufs_quota1.c,v 1.18 2012/02/02 03:00:48 matt Exp  */
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.8 2014/05/24 16:34:04 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota1.c,v 1.8.4.1 2015/09/22 12:06:17 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -780,7 +780,6 @@ lfs_q1sync(struct mount *mp)
 			mutex_exit(&dq->dq_interlock);
 		}
 		vput(vp);
-		mutex_enter(&mntvnode_lock);
 	}
 	vfs_vnode_iterator_destroy(marker);
 	return (0);

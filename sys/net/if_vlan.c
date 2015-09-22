@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.78.2.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.78.2.3 2015/09/22 12:06:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.3 2015/09/22 12:06:10 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -110,6 +110,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.2 2015/06/06 14:40:25 skrll Exp $
 #ifdef INET6
 #include <netinet6/in6_ifattach.h>
 #endif
+
+#include "ioconf.h"
 
 struct vlan_mc_entry {
 	LIST_ENTRY(vlan_mc_entry)	mc_entries;
@@ -178,8 +180,6 @@ static int	vlan_config(struct ifvlan *, struct ifnet *);
 static int	vlan_ioctl(struct ifnet *, u_long, void *);
 static void	vlan_start(struct ifnet *);
 static void	vlan_unconfig(struct ifnet *);
-
-void		vlanattach(int);
 
 /* XXX This should be a hash table with the tag as the basis of the key. */
 static LIST_HEAD(, ifvlan) ifv_list;

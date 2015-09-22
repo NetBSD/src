@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.63 2014/05/11 07:53:28 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.63.4.1 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -78,8 +78,10 @@
 #include "opt_multiprocessor.h"
 #endif
 
+#include <sys/evcnt.h>
+#include <sys/kcpuset.h>
+
 #include <mips/cpuregs.h>	/* for KSEG0 below */
-//#include <mips/pte.h>
 
 /*
  * The user address space is 2Gb (0x0 - 0x80000000).
@@ -103,9 +105,10 @@
  * dynamically allocated at boot time.
  */
 
-#define mips_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
-#define mips_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
+#define pmap_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
+#define pmap_round_seg(x)	(((vaddr_t)(x) + SEGOFSET) & ~SEGOFSET)
 
+#define PMAP_INVALID_SEGTAB	NULL
 #ifdef _LP64
 #define PMAP_SEGTABSIZE		NSEGPG
 #else
@@ -114,12 +117,16 @@
 
 union pt_entry;
 
-union segtab {
+union pmap_segtab {
 #ifdef _LP64
-	union segtab	*seg_seg[PMAP_SEGTABSIZE];
+	union pmap_segtab	*seg_seg[PMAP_SEGTABSIZE];
+#else
+	union pmap_segtab	*seg_seg[1];
 #endif
 	union pt_entry	*seg_tab[PMAP_SEGTABSIZE];
 };
+
+typedef union pmap_segtab pmap_segtab_t;
 
 /*
  * Structure defining an tlb entry data set.
@@ -147,7 +154,7 @@ void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
 	uintptr_t);
 void pmap_segtab_activate(struct pmap *, struct lwp *);
 void pmap_segtab_init(struct pmap *);
-void pmap_segtab_destroy(struct pmap *);
+void pmap_segtab_destroy(struct pmap *, pte_callback_t, uintptr_t);
 extern kmutex_t pmap_segtab_lock;
 #endif /* _KERNEL */
 
@@ -172,15 +179,17 @@ struct pmap_asid_info {
  */
 struct pmap {
 #ifdef MULTIPROCESSOR
-	volatile uint32_t	pm_active;	/* pmap was active on ... */
-	volatile uint32_t	pm_onproc;	/* pmap is active on ... */
+	kcpuset_t		*pm_active;	/* pmap was active on ... */
+	kcpuset_t		*pm_onproc;	/* pmap is active on ... */
 	volatile u_int		pm_shootdown_pending;
 #endif
-	union segtab		*pm_segtab;	/* pointers to pages of PTEs */
+	pmap_segtab_t		*pm_segtab;	/* pointers to pages of PTEs */
 	u_int			pm_count;	/* pmap reference count */
 	u_int			pm_flags;
 #define	PMAP_DEFERRED_ACTIVATE	0x0001
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
+	vaddr_t			pm_minaddr;
+	vaddr_t			pm_maxaddr;
 	struct pmap_asid_info	pm_pai[1];
 };
 
@@ -205,7 +214,7 @@ struct pmap_tlb_info {
 #ifdef MULTIPROCESSOR
 	pmap_t ti_victim;
 	uint32_t ti_synci_page_bitmap;	/* page indices needing a syncicache */
-	uint32_t ti_cpu_mask;		/* bitmask of CPUs sharing this TLB */
+	kcpuset_t *ti_kcpuset;		/* bitmask of CPUs sharing this TLB */
 	enum tlb_invalidate_op ti_tlbinvop;
 	u_int ti_index;
 #define tlbinfo_index(ti)	((ti)->ti_index)
@@ -231,15 +240,20 @@ struct pmap_kernel {
 #endif
 };
 
+struct pmap_limits {
+	paddr_t avail_start;
+	paddr_t avail_end;
+	vaddr_t virtual_start;
+	vaddr_t virtual_end;
+};
+
 extern struct pmap_kernel kernel_pmap_store;
 extern struct pmap_tlb_info pmap_tlb0_info;
+extern struct pmap_limits pmap_limits;
 #ifdef MULTIPROCESSOR
 extern struct pmap_tlb_info *pmap_tlbs[MAXCPUS];
 extern u_int pmap_ntlbs;
 #endif
-extern paddr_t mips_avail_start;
-extern paddr_t mips_avail_end;
-extern vaddr_t mips_virtual_end;
 
 #define	pmap_wired_count(pmap) 	((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap) ((pmap)->pm_stats.resident_count)
@@ -262,7 +276,7 @@ bool	pmap_tlb_shootdown_bystanders(pmap_t pmap);
 void	pmap_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
 void	pmap_tlb_syncicache_ast(struct cpu_info *);
 void	pmap_tlb_syncicache_wanted(struct cpu_info *);
-void	pmap_tlb_syncicache(vaddr_t, uint32_t);
+void	pmap_tlb_syncicache(vaddr_t, const kcpuset_t *);
 #endif
 void	pmap_tlb_info_init(struct pmap_tlb_info *);
 void	pmap_tlb_info_evcnt_attach(struct pmap_tlb_info *);
@@ -285,6 +299,8 @@ void	pmap_prefer(vaddr_t, vaddr_t *, vsize_t, int);
 #define	PMAP_STEAL_MEMORY	/* enable pmap_steal_memory() */
 #define	PMAP_ENABLE_PMAP_KMPAGE	/* enable the PMAP_KMPAGE flag */
 
+bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
+
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
  */
@@ -302,8 +318,10 @@ struct vm_page *mips_pmap_alloc_poolpage(int);
 #define	POOL_VTOPHYS(va)	(MIPS_KSEG0_P(va) \
 				    ? MIPS_KSEG0_TO_PHYS(va) \
 				    : MIPS_XKPHYS_TO_PHYS(va))
+#define	POOL_PHYSTOV(pa)	MIPS_PHYS_TO_XKPHYS_CACHED((paddr_t)(pa))
 #else
 #define	POOL_VTOPHYS(va)	MIPS_KSEG0_TO_PHYS((vaddr_t)(va))
+#define	POOL_PHYSTOV(pa)	MIPS_PHYS_TO_KSEG0_TO_PHYS((paddr_t)(pa))
 #endif
 
 /*

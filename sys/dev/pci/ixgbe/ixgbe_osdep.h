@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_osdep.h,v 1.3.6.2 2015/06/06 14:40:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_osdep.h 251964 2013-06-18 21:28:19Z jfv $*/
+/*$NetBSD: ixgbe_osdep.h,v 1.3.6.3 2015/09/22 12:05:59 skrll Exp $*/
 
 #ifndef _IXGBE_OS_H_
 #define _IXGBE_OS_H_
@@ -71,6 +71,9 @@
 	#define DEBUGOUT5(S,A,B,C,D,E)  printf(S "\n",A,B,C,D,E)
 	#define DEBUGOUT6(S,A,B,C,D,E,F)  printf(S "\n",A,B,C,D,E,F)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)  printf(S "\n",A,B,C,D,E,F,G)
+	#define ERROR_REPORT1(S,A)      printf(S A "\n")
+	#define ERROR_REPORT2(S,A,B)    printf(S A "\n",B)
+	#define ERROR_REPORT3(S,A,B,C)  printf(S A "\n",B,C)
 #else
 	#define DEBUGOUT(S)		do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT1(S,A)		do { } while (/*CONSTCOND*/false)
@@ -82,6 +85,9 @@
 					do { } while (/*CONSTCOND*/false)
 	#define DEBUGOUT7(S,A,B,C,D,E,F,G)	\
 					do { } while (/*CONSTCOND*/false)
+	#define ERROR_REPORT1(S,A)	do { } while (/*CONSTCOND*/false)
+	#define ERROR_REPORT2(S,A,B)	do { } while (/*CONSTCOND*/false)
+	#define ERROR_REPORT3(S,A,B,C)	do { } while (/*CONSTCOND*/false)
 #endif
 
 #define FALSE               0
@@ -112,11 +118,26 @@
 typedef uint8_t		u8;
 typedef int8_t		s8;
 typedef uint16_t	u16;
+typedef int16_t		s16;
 typedef uint32_t	u32;
 typedef int32_t		s32;
 typedef uint64_t	u64;
 
 #define le16_to_cpu
+
+#ifdef __HAVE_PCI_MSI_MSIX
+#define NETBSD_MSI_OR_MSIX
+/*
+ * This device driver divides interrupt to TX, RX and link state.
+ * Each MSI-X vector indexes are below.
+ */
+#define IXG_MSIX_NINTR		2
+#define IXG_MSIX_TXRXINTR_IDX	0
+#define IXG_MSIX_LINKINTR_IDX	1
+#define IXG_MAX_NINTR		IXG_MSIX_NINTR
+#else
+#define IXG_MAX_NINTR		1
+#endif
 
 #if __FreeBSD_version < 800000
 #if defined(__i386__) || defined(__amd64__)
@@ -169,8 +190,10 @@ struct ixgbe_osdep
 	bus_size_t         mem_size;
 	bus_dma_tag_t      dmat;
 	device_t           dev;
-	pci_intr_handle_t  ih;
-	void               *intr;
+	pci_intr_handle_t  *intrs;
+	int		   nintrs;
+	void               *ihs[IXG_MAX_NINTR];
+	bool		   attached;
 };
 
 /* These routines are needed by the shared code */

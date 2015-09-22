@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.script,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: ld.script,v 1.1.12.1 2015/09/22 12:05:43 skrll Exp $	*/
 
 /* 	$OpenBSD: ld.script,v 1.7 1999/12/17 07:02:38 mickey Exp $	*/
 
@@ -49,8 +49,6 @@ SECTIONS
 		. = ALIGN(4096);
 		edata = ABSOLUTE(.);
 	} = 0
-	.ctors	: { *(.ctors) }
-	.dtors	: { *(.dtors) }
 
 	__bss_start = ABSOLUTE(.);
 	/* .sbss	: { *(.sbss) *(.scommon) } */

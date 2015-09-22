@@ -1,4 +1,4 @@
-/*	$NetBSD: syslimits.h,v 1.27 2012/12/07 07:06:39 dholland Exp $	*/
+/*	$NetBSD: syslimits.h,v 1.27.14.1 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993
@@ -35,6 +35,10 @@
 #define _SYS_SYSLIMITS_H_
 
 #include <sys/featuretest.h>
+
+#if defined(_KERNEL_OPT)
+#include "opt_syslimits.h"
+#endif
 
 #if defined(_POSIX_C_SOURCE) || defined(_XOPEN_SOURCE) || \
     defined(_NETBSD_SOURCE)

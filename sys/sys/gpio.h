@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.h,v 1.13 2011/11/13 16:56:15 mbalmer Exp $ */
+/* $NetBSD: gpio.h,v 1.13.28.1 2015/09/22 12:06:17 skrll Exp $ */
 /*	$OpenBSD: gpio.h,v 1.7 2008/11/26 14:51:20 mbalmer Exp $	*/
 /*
  * Copyright (c) 2009, 2011 Marc Balmer <marc@msys.ch>
@@ -20,6 +20,7 @@
 #ifndef _SYS_GPIO_H_
 #define _SYS_GPIO_H_
 
+#include <sys/ioccom.h>
 #include <sys/time.h>
 
 /* GPIO pin states */

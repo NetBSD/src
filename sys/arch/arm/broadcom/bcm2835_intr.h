@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.h,v 1.1.20.1 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.h,v 1.1.20.2 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -42,13 +42,6 @@ void bcm2835_irq_handler(void *);
 #define PIC_MAXMAXSOURCES 96 + (4*32) + 32
 
 #include <arm/pic/picvar.h>
-
-static __inline void *
-bcm2835_intr_establish(int irq, int ipl, int (*func)(void *), void *arg)
-{
-
-	return intr_establish(irq, ipl, IST_LEVEL, func, arg);
-}
 
 void bcm2836mp_intr_init(struct cpu_info *);
 

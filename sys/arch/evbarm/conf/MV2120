@@ -1,4 +1,4 @@
-#	$NetBSD: MV2120,v 1.25 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: MV2120,v 1.25.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 #  This configuration supports for HP MV2120/MV5140/MV5150.
 
@@ -136,7 +136,6 @@ options 	COMPAT_BSDPTY	# /dev/[pt]ty?? ptys.
 
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 options 	DDB		# in-kernel debugger
 options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	PCIVERBOSE	# Verbose PCI descriptions

@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.24 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: WGT624V3,v 1.24.2.1 2015/09/22 12:05:41 skrll Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WGT624V3-$Revision: 1.24 $"
+#ident 		"WGT624V3-$Revision: 1.24.2.1 $"
 
 maxusers	32
 
@@ -40,7 +40,6 @@ options 	NTP		# network time protocol
 # Debugging options
 options 	DIAGNOSTIC	# extra kernel sanity checking
 #options 	DEBUG		# extra kernel debugging support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger

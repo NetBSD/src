@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.70 2014/08/23 20:27:00 dholland Exp $
+#	$NetBSD: INSTALL,v 1.70.2.1 2015/09/22 12:05:53 skrll Exp $
 #
 # INSTALL kernel; all supported devices but nothing fancy.
 #
@@ -40,7 +40,7 @@ options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 #options 	DDB
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 #options 	KTRACE
-#options 	DIAGNOSTIC,DEBUG,KMEMSTATS,PMAPDEBUG,TRAPDEBUG
+#options 	DIAGNOSTIC,DEBUG,PMAPDEBUG,TRAPDEBUG
 
 #options 	SCSIVERBOSE		# Verbose SCSI errors
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.24.2.2 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.24.2.3 2015/09/22 12:05:37 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -198,8 +198,8 @@ arm_cpuinit:
 	XPUTC(#'G')
 	mrc	p15, 0, r1, c0, c0, 5	// MPIDR read
 	cmp	r1, #0
-	orrlt	r10, r10, #0x5b		// MP, cachable (Normal WB)
-	orrge	r10, r10, #0x1b		// Non-MP, cacheable, normal WB
+	orrlt	r10, r10, #TTBR_MPATTR	// MP, cachable (Normal WB)
+	orrge	r10, r10, #TTBR_UPATTR	// Non-MP, cacheable, normal WB
 	XPUTC(#'0')
 	mcr	p15, 0, r10, c2, c0, 0	// TTBR0 write
 #if defined(ARM_MMU_EXTENDED)

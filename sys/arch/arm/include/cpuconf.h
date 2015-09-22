@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuconf.h,v 1.24 2014/04/14 20:50:47 matt Exp $	*/
+/*	$NetBSD: cpuconf.h,v 1.24.4.1 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -121,7 +121,7 @@
 #define	ARM_ARCH_5	0
 #endif
 
-#if defined(CPU_ARM11) || defined(CPU_CORTEXA8) || defined(CPU_ARM11MPCORE)
+#if defined(CPU_ARM11) || defined(CPU_ARM11MPCORE)
 #define ARM_ARCH_6	1
 #else
 #define ARM_ARCH_6	0

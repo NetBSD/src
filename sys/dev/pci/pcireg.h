@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.100.2.2 2015/06/06 14:40:12 skrll Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.100.2.3 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -187,6 +187,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_MASS_STORAGE_NVM		0x08
 #define		PCI_INTERFACE_NVM_VND			0x00
 #define		PCI_INTERFACE_NVM_NVMHCI10		0x01
+#define		PCI_INTERFACE_NVM_NVME			0x02
 #define	PCI_SUBCLASS_MASS_STORAGE_MISC		0x80
 
 /* 0x02 network subclasses */

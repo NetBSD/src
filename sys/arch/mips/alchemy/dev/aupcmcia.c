@@ -1,4 +1,4 @@
-/* $NetBSD: aupcmcia.c,v 1.9 2012/01/04 02:36:26 kiyohara Exp $ */
+/* $NetBSD: aupcmcia.c,v 1.9.24.1 2015/09/22 12:05:46 skrll Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 /* #include "pci.h" */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.9 2012/01/04 02:36:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupcmcia.c,v 1.9.24.1 2015/09/22 12:05:46 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -379,6 +379,7 @@ aupcm_event_thread(void *arg)
 			 * Go figure.
 			 */
 			tsleep(&sc->sc_wake, PWAIT, "aupcm_event", hz);
+			s = splhigh();
 		}
 		sc->sc_wake = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_core.c,v 1.6.12.1 2015/06/06 14:40:20 skrll Exp $	*/
+/*	$NetBSD: dwc2_core.c,v 1.6.12.2 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*
  * core.c - DesignWare HS OTG Controller common routines
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.6.12.1 2015/06/06 14:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.6.12.2 2015/09/22 12:06:06 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -67,6 +67,364 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2_core.c,v 1.6.12.1 2015/06/06 14:40:20 skrll Exp
 #include "dwc2_core.h"
 #include "dwc2_hcd.h"
 
+#if IS_ENABLED(CONFIG_USB_DWC2_HOST) || IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+/**
+ * dwc2_backup_host_registers() - Backup controller host registers.
+ * When suspending usb bus, registers needs to be backuped
+ * if controller power is disabled once suspended.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ */
+static int dwc2_backup_host_registers(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_hregs_backup *hr;
+	int i;
+
+	dev_dbg(hsotg->dev, "%s\n", __func__);
+
+	/* Backup Host regs */
+	hr = &hsotg->hr_backup;
+	hr->hcfg = DWC2_READ_4(hsotg, HCFG);
+	hr->haintmsk = DWC2_READ_4(hsotg, HAINTMSK);
+	for (i = 0; i < hsotg->core_params->host_channels; ++i)
+		hr->hcintmsk[i] = DWC2_READ_4(hsotg, HCINTMSK(i));
+
+	hr->hprt0 = DWC2_READ_4(hsotg, HPRT0);
+	hr->hfir = DWC2_READ_4(hsotg, HFIR);
+	hr->valid = true;
+
+	return 0;
+}
+
+/**
+ * dwc2_restore_host_registers() - Restore controller host registers.
+ * When resuming usb bus, device registers needs to be restored
+ * if controller power were disabled.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ */
+static int dwc2_restore_host_registers(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_hregs_backup *hr;
+	int i;
+
+	dev_dbg(hsotg->dev, "%s\n", __func__);
+
+	/* Restore host regs */
+	hr = &hsotg->hr_backup;
+	if (!hr->valid) {
+		dev_err(hsotg->dev, "%s: no host registers to restore\n",
+				__func__);
+		return -EINVAL;
+	}
+	hr->valid = false;
+
+	DWC2_WRITE_4(hsotg, HCFG, hr->hcfg);
+	DWC2_WRITE_4(hsotg, HAINTMSK, hr->haintmsk);
+
+	for (i = 0; i < hsotg->core_params->host_channels; ++i)
+		DWC2_WRITE_4(hsotg, HCINTMSK(i), hr->hcintmsk[i]);
+
+	DWC2_WRITE_4(hsotg, HPRT0, hr->hprt0);
+	DWC2_WRITE_4(hsotg, HFIR, hr->hfir);
+
+	return 0;
+}
+#else
+static inline int dwc2_backup_host_registers(struct dwc2_hsotg *hsotg)
+{ return 0; }
+
+static inline int dwc2_restore_host_registers(struct dwc2_hsotg *hsotg)
+{ return 0; }
+#endif
+
+#if IS_ENABLED(CONFIG_USB_DWC2_PERIPHERAL) || \
+	IS_ENABLED(CONFIG_USB_DWC2_DUAL_ROLE)
+/**
+ * dwc2_backup_device_registers() - Backup controller device registers.
+ * When suspending usb bus, registers needs to be backuped
+ * if controller power is disabled once suspended.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ */
+static int dwc2_backup_device_registers(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_dregs_backup *dr;
+	int i;
+
+	dev_dbg(hsotg->dev, "%s\n", __func__);
+
+	/* Backup dev regs */
+	dr = &hsotg->dr_backup;
+
+	dr->dcfg = DWC2_READ_4(hsotg, DCFG);
+	dr->dctl = DWC2_READ_4(hsotg, DCTL);
+	dr->daintmsk = DWC2_READ_4(hsotg, DAINTMSK);
+	dr->diepmsk = DWC2_READ_4(hsotg, DIEPMSK);
+	dr->doepmsk = DWC2_READ_4(hsotg, DOEPMSK);
+
+	for (i = 0; i < hsotg->num_of_eps; i++) {
+		/* Backup IN EPs */
+		dr->diepctl[i] = DWC2_READ_4(hsotg, DIEPCTL(i));
+
+		/* Ensure DATA PID is correctly configured */
+		if (dr->diepctl[i] & DXEPCTL_DPID)
+			dr->diepctl[i] |= DXEPCTL_SETD1PID;
+		else
+			dr->diepctl[i] |= DXEPCTL_SETD0PID;
+
+		dr->dieptsiz[i] = DWC2_READ_4(hsotg, DIEPTSIZ(i));
+		dr->diepdma[i] = DWC2_READ_4(hsotg, DIEPDMA(i));
+
+		/* Backup OUT EPs */
+		dr->doepctl[i] = DWC2_READ_4(hsotg, DOEPCTL(i));
+
+		/* Ensure DATA PID is correctly configured */
+		if (dr->doepctl[i] & DXEPCTL_DPID)
+			dr->doepctl[i] |= DXEPCTL_SETD1PID;
+		else
+			dr->doepctl[i] |= DXEPCTL_SETD0PID;
+
+		dr->doeptsiz[i] = DWC2_READ_4(hsotg, DOEPTSIZ(i));
+		dr->doepdma[i] = DWC2_READ_4(hsotg, DOEPDMA(i));
+	}
+	dr->valid = true;
+	return 0;
+}
+
+/**
+ * dwc2_restore_device_registers() - Restore controller device registers.
+ * When resuming usb bus, device registers needs to be restored
+ * if controller power were disabled.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ */
+static int dwc2_restore_device_registers(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_dregs_backup *dr;
+	u32 dctl;
+	int i;
+
+	dev_dbg(hsotg->dev, "%s\n", __func__);
+
+	/* Restore dev regs */
+	dr = &hsotg->dr_backup;
+	if (!dr->valid) {
+		dev_err(hsotg->dev, "%s: no device registers to restore\n",
+				__func__);
+		return -EINVAL;
+	}
+	dr->valid = false;
+
+	DWC2_WRITE_4(hsotg, DCFG, dr->dcfg);
+	DWC2_WRITE_4(hsotg, DCTL, dr->dctl);
+	DWC2_WRITE_4(hsotg, DAINTMSK, dr->daintmsk);
+	DWC2_WRITE_4(hsotg, DIEPMSK, dr->diepmsk);
+	DWC2_WRITE_4(hsotg, DOEPMSK, dr->doepmsk);
+
+	for (i = 0; i < hsotg->num_of_eps; i++) {
+		/* Restore IN EPs */
+		DWC2_WRITE_4(hsotg, DIEPCTL(i), dr->diepctl[i]);
+		DWC2_WRITE_4(hsotg, DIEPTSIZ(i), dr->dieptsiz[i]);
+		DWC2_WRITE_4(hsotg, DIEPDMA(i), dr->diepdma[i]);
+
+		/* Restore OUT EPs */
+		DWC2_WRITE_4(hsotg, DOEPCTL(i), dr->doepctl[i]);
+		DWC2_WRITE_4(hsotg, DOEPTSIZ(i), dr->doeptsiz[i]);
+		DWC2_WRITE_4(hsotg, DOEPDMA(i), dr->doepdma[i]);
+	}
+
+	/* Set the Power-On Programming done bit */
+	dctl = DWC2_READ_4(hsotg, DCTL);
+	dctl |= DCTL_PWRONPRGDONE;
+	DWC2_WRITE_4(hsotg, DCTL, dctl);
+
+	return 0;
+}
+#else
+static inline int dwc2_backup_device_registers(struct dwc2_hsotg *hsotg)
+{ return 0; }
+
+static inline int dwc2_restore_device_registers(struct dwc2_hsotg *hsotg)
+{ return 0; }
+#endif
+
+/**
+ * dwc2_backup_global_registers() - Backup global controller registers.
+ * When suspending usb bus, registers needs to be backuped
+ * if controller power is disabled once suspended.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ */
+static int dwc2_backup_global_registers(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_gregs_backup *gr;
+	int i;
+
+	/* Backup global regs */
+	gr = &hsotg->gr_backup;
+
+	gr->gotgctl = DWC2_READ_4(hsotg, GOTGCTL);
+	gr->gintmsk = DWC2_READ_4(hsotg, GINTMSK);
+	gr->gahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
+	gr->gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
+	gr->grxfsiz = DWC2_READ_4(hsotg, GRXFSIZ);
+	gr->gnptxfsiz = DWC2_READ_4(hsotg, GNPTXFSIZ);
+	gr->hptxfsiz = DWC2_READ_4(hsotg, HPTXFSIZ);
+	gr->gdfifocfg = DWC2_READ_4(hsotg, GDFIFOCFG);
+	for (i = 0; i < MAX_EPS_CHANNELS; i++)
+		gr->dtxfsiz[i] = DWC2_READ_4(hsotg, DPTXFSIZN(i));
+
+	gr->valid = true;
+	return 0;
+}
+
+/**
+ * dwc2_restore_global_registers() - Restore controller global registers.
+ * When resuming usb bus, device registers needs to be restored
+ * if controller power were disabled.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ */
+static int dwc2_restore_global_registers(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_gregs_backup *gr;
+	int i;
+
+	dev_dbg(hsotg->dev, "%s\n", __func__);
+
+	/* Restore global regs */
+	gr = &hsotg->gr_backup;
+	if (!gr->valid) {
+		dev_err(hsotg->dev, "%s: no global registers to restore\n",
+				__func__);
+		return -EINVAL;
+	}
+	gr->valid = false;
+
+	DWC2_WRITE_4(hsotg, GINTSTS, 0xffffffff);
+	DWC2_WRITE_4(hsotg, GOTGCTL, gr->gotgctl);
+	DWC2_WRITE_4(hsotg, GINTMSK, gr->gintmsk);
+	DWC2_WRITE_4(hsotg, GUSBCFG, gr->gusbcfg);
+	DWC2_WRITE_4(hsotg, GAHBCFG, gr->gahbcfg);
+	DWC2_WRITE_4(hsotg, GRXFSIZ, gr->grxfsiz);
+	DWC2_WRITE_4(hsotg, GNPTXFSIZ, gr->gnptxfsiz);
+	DWC2_WRITE_4(hsotg, HPTXFSIZ, gr->hptxfsiz);
+	DWC2_WRITE_4(hsotg, GDFIFOCFG, gr->gdfifocfg);
+	for (i = 0; i < MAX_EPS_CHANNELS; i++)
+		DWC2_WRITE_4(hsotg, DPTXFSIZN(i), gr->dtxfsiz[i]);
+
+	return 0;
+}
+
+/**
+ * dwc2_exit_hibernation() - Exit controller from Partial Power Down.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ * @restore: Controller registers need to be restored
+ */
+int dwc2_exit_hibernation(struct dwc2_hsotg *hsotg, bool restore)
+{
+	u32 pcgcctl;
+	int ret = 0;
+
+	if (!hsotg->core_params->hibernation)
+		return -ENOTSUPP;
+
+	pcgcctl = DWC2_READ_4(hsotg, PCGCTL);
+	pcgcctl &= ~PCGCTL_STOPPCLK;
+	DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
+
+	pcgcctl = DWC2_READ_4(hsotg, PCGCTL);
+	pcgcctl &= ~PCGCTL_PWRCLMP;
+	DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
+
+	pcgcctl = DWC2_READ_4(hsotg, PCGCTL);
+	pcgcctl &= ~PCGCTL_RSTPDWNMODULE;
+	DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
+
+	udelay(100);
+	if (restore) {
+		ret = dwc2_restore_global_registers(hsotg);
+		if (ret) {
+			dev_err(hsotg->dev, "%s: failed to restore registers\n",
+					__func__);
+			return ret;
+		}
+		if (dwc2_is_host_mode(hsotg)) {
+			ret = dwc2_restore_host_registers(hsotg);
+			if (ret) {
+				dev_err(hsotg->dev, "%s: failed to restore host registers\n",
+						__func__);
+				return ret;
+			}
+		} else {
+			ret = dwc2_restore_device_registers(hsotg);
+			if (ret) {
+				dev_err(hsotg->dev, "%s: failed to restore device registers\n",
+						__func__);
+				return ret;
+			}
+		}
+	}
+
+	return ret;
+}
+
+/**
+ * dwc2_enter_hibernation() - Put controller in Partial Power Down.
+ *
+ * @hsotg: Programming view of the DWC_otg controller
+ */
+int dwc2_enter_hibernation(struct dwc2_hsotg *hsotg)
+{
+	u32 pcgcctl;
+	int ret = 0;
+
+	if (!hsotg->core_params->hibernation)
+		return -ENOTSUPP;
+
+	/* Backup all registers */
+	ret = dwc2_backup_global_registers(hsotg);
+	if (ret) {
+		dev_err(hsotg->dev, "%s: failed to backup global registers\n",
+				__func__);
+		return ret;
+	}
+
+	if (dwc2_is_host_mode(hsotg)) {
+		ret = dwc2_backup_host_registers(hsotg);
+		if (ret) {
+			dev_err(hsotg->dev, "%s: failed to backup host registers\n",
+					__func__);
+			return ret;
+		}
+	} else {
+		ret = dwc2_backup_device_registers(hsotg);
+		if (ret) {
+			dev_err(hsotg->dev, "%s: failed to backup device registers\n",
+					__func__);
+			return ret;
+		}
+	}
+
+	/* Put the controller in low power state */
+	pcgcctl = DWC2_READ_4(hsotg, PCGCTL);
+
+	pcgcctl |= PCGCTL_PWRCLMP;
+	DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
+	ndelay(20);
+
+	pcgcctl |= PCGCTL_RSTPDWNMODULE;
+	DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
+	ndelay(20);
+
+	pcgcctl |= PCGCTL_STOPPCLK;
+	DWC2_WRITE_4(hsotg, PCGCTL, pcgcctl);
+
+	return ret;
+}
+
 /**
  * dwc2_enable_common_interrupts() - Initializes the commmon interrupts,
  * used in both device and host modes
@@ -88,8 +446,10 @@ static void dwc2_enable_common_interrupts(struct dwc2_hsotg *hsotg)
 
 	if (hsotg->core_params->dma_enable <= 0)
 		intmsk |= GINTSTS_RXFLVL;
+	if (hsotg->core_params->external_id_pin_ctl <= 0)
+		intmsk |= GINTSTS_CONIDSTSCHNG;
 
-	intmsk |= GINTSTS_CONIDSTSCHNG | GINTSTS_WKUPINT | GINTSTS_USBSUSP |
+	intmsk |= GINTSTS_WKUPINT | GINTSTS_USBSUSP |
 		  GINTSTS_SESSREQINT;
 
 	DWC2_WRITE_4(hsotg, GINTMSK, intmsk);
@@ -129,6 +489,7 @@ static int dwc2_core_reset(struct dwc2_hsotg *hsotg)
 {
 	u32 greset;
 	int count = 0;
+	u32 gusbcfg;
 
 	dev_vdbg(hsotg->dev, "%s()\n", __func__);
 
@@ -158,6 +519,23 @@ static int dwc2_core_reset(struct dwc2_hsotg *hsotg)
 			return -EBUSY;
 		}
 	} while (greset & GRSTCTL_CSFTRST);
+
+	if (hsotg->dr_mode == USB_DR_MODE_HOST) {
+		gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
+		gusbcfg &= ~GUSBCFG_FORCEDEVMODE;
+		gusbcfg |= GUSBCFG_FORCEHOSTMODE;
+		DWC2_WRITE_4(hsotg, GUSBCFG, gusbcfg);
+	} else if (hsotg->dr_mode == USB_DR_MODE_PERIPHERAL) {
+		gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
+		gusbcfg &= ~GUSBCFG_FORCEHOSTMODE;
+		gusbcfg |= GUSBCFG_FORCEDEVMODE;
+		DWC2_WRITE_4(hsotg, GUSBCFG, gusbcfg);
+	} else if (hsotg->dr_mode == USB_DR_MODE_OTG) {
+		gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
+		gusbcfg &= ~GUSBCFG_FORCEHOSTMODE;
+		gusbcfg &= ~GUSBCFG_FORCEDEVMODE;
+		DWC2_WRITE_4(hsotg, GUSBCFG, gusbcfg);
+	}
 
 	/*
 	 * NOTE: This long sleep is _very_ important, otherwise the core will
@@ -308,11 +686,16 @@ static int dwc2_phy_init(struct dwc2_hsotg *hsotg, bool select_phy)
 
 static int dwc2_gahbcfg_init(struct dwc2_hsotg *hsotg)
 {
+	struct dwc2_softc *sc = hsotg->hsotg_sc;
 	u32 ahbcfg = DWC2_READ_4(hsotg, GAHBCFG);
 
 	switch (hsotg->hw_params.arch) {
 	case GHWCFG2_EXT_DMA_ARCH:
 		dev_dbg(hsotg->dev, "External DMA Mode\n");
+		if (!sc->sc_set_dma_addr) {
+			dev_err(hsotg->dev, "External DMA Mode not supported\n");
+			return -EINVAL;
+		}
 		if (hsotg->core_params->ahbcfg != -1) {
 			ahbcfg &= GAHBCFG_CTRL_MASK;
 			ahbcfg |= hsotg->core_params->ahbcfg &
@@ -460,7 +843,7 @@ int dwc2_core_init(struct dwc2_hsotg *hsotg, bool select_phy)
 	dwc2_enable_common_interrupts(hsotg);
 
 	/*
-	 * Do device or host intialization based on mode during PCD and
+	 * Do device or host initialization based on mode during PCD and
 	 * HCD initialization
 	 */
 	if (dwc2_is_host_mode(hsotg)) {
@@ -513,6 +896,72 @@ void dwc2_disable_host_interrupts(struct dwc2_hsotg *hsotg)
 	DWC2_WRITE_4(hsotg, GINTMSK, intmsk);
 }
 
+/*
+ * dwc2_calculate_dynamic_fifo() - Calculates the default fifo size
+ * For system that have a total fifo depth that is smaller than the default
+ * RX + TX fifo size.
+ *
+ * @hsotg: Programming view of DWC_otg controller
+ */
+static void dwc2_calculate_dynamic_fifo(struct dwc2_hsotg *hsotg)
+{
+	struct dwc2_core_params *params = hsotg->core_params;
+	struct dwc2_hw_params *hw = &hsotg->hw_params;
+	u32 rxfsiz, nptxfsiz, ptxfsiz, total_fifo_size;
+
+	total_fifo_size = hw->total_fifo_size;
+	rxfsiz = params->host_rx_fifo_size;
+	nptxfsiz = params->host_nperio_tx_fifo_size;
+	ptxfsiz = params->host_perio_tx_fifo_size;
+
+	/*
+	 * Will use Method 2 defined in the DWC2 spec: minimum FIFO depth
+	 * allocation with support for high bandwidth endpoints. Synopsys
+	 * defines MPS(Max Packet size) for a periodic EP=1024, and for
+	 * non-periodic as 512.
+	 */
+	if (total_fifo_size < (rxfsiz + nptxfsiz + ptxfsiz)) {
+		/*
+		 * For Buffer DMA mode/Scatter Gather DMA mode
+		 * 2 * ((Largest Packet size / 4) + 1 + 1) + n
+		 * with n = number of host channel.
+		 * 2 * ((1024/4) + 2) = 516
+		 */
+		rxfsiz = 516 + hw->host_channels;
+
+		/*
+		 * min non-periodic tx fifo depth
+		 * 2 * (largest non-periodic USB packet used / 4)
+		 * 2 * (512/4) = 256
+		 */
+		nptxfsiz = 256;
+
+		/*
+		 * min periodic tx fifo depth
+		 * (largest packet size*MC)/4
+		 * (1024 * 3)/4 = 768
+		 */
+		ptxfsiz = 768;
+
+		params->host_rx_fifo_size = rxfsiz;
+		params->host_nperio_tx_fifo_size = nptxfsiz;
+		params->host_perio_tx_fifo_size = ptxfsiz;
+	}
+
+	/*
+	 * If the summation of RX, NPTX and PTX fifo sizes is still
+	 * bigger than the total_fifo_size, then we have a problem.
+	 *
+	 * We won't be able to allocate as many endpoints. Right now,
+	 * we're just printing an error message, but ideally this FIFO
+	 * allocation algorithm would be improved in the future.
+	 *
+	 * FIXME improve this FIFO allocation algorithm.
+	 */
+	if (unlikely(total_fifo_size < (rxfsiz + nptxfsiz + ptxfsiz)))
+		dev_err(hsotg->dev, "invalid fifo sizes\n");
+}
+
 static void dwc2_config_fifos(struct dwc2_hsotg *hsotg)
 {
 	struct dwc2_core_params *params = hsotg->core_params;
@@ -520,6 +969,8 @@ static void dwc2_config_fifos(struct dwc2_hsotg *hsotg)
 
 	if (!params->enable_dynamic_fifo)
 		return;
+
+	dwc2_calculate_dynamic_fifo(hsotg);
 
 	/* Rx FIFO */
 	grxfsiz = DWC2_READ_4(hsotg, GRXFSIZ);
@@ -2539,6 +2990,40 @@ static void dwc2_set_param_uframe_sched(struct dwc2_hsotg *hsotg, int val)
 	hsotg->core_params->uframe_sched = val;
 }
 
+static void dwc2_set_param_external_id_pin_ctl(struct dwc2_hsotg *hsotg,
+		int val)
+{
+	if (DWC2_OUT_OF_BOUNDS(val, 0, 1)) {
+		if (val >= 0) {
+			dev_err(hsotg->dev,
+				"'%d' invalid for parameter external_id_pin_ctl\n",
+				val);
+			dev_err(hsotg->dev, "external_id_pin_ctl must be 0 or 1\n");
+		}
+		val = 0;
+		dev_dbg(hsotg->dev, "Setting external_id_pin_ctl to %d\n", val);
+	}
+
+	hsotg->core_params->external_id_pin_ctl = val;
+}
+
+static void dwc2_set_param_hibernation(struct dwc2_hsotg *hsotg,
+		int val)
+{
+	if (DWC2_OUT_OF_BOUNDS(val, 0, 1)) {
+		if (val >= 0) {
+			dev_err(hsotg->dev,
+				"'%d' invalid for parameter hibernation\n",
+				val);
+			dev_err(hsotg->dev, "hibernation must be 0 or 1\n");
+		}
+		val = 0;
+		dev_dbg(hsotg->dev, "Setting hibernation to %d\n", val);
+	}
+
+	hsotg->core_params->hibernation = val;
+}
+
 /*
  * This function is called during module intialization to pass module parameters
  * for the DWC_otg core.
@@ -2583,6 +3068,8 @@ void dwc2_set_parameters(struct dwc2_hsotg *hsotg,
 	dwc2_set_param_ahbcfg(hsotg, params->ahbcfg);
 	dwc2_set_param_otg_ver(hsotg, params->otg_ver);
 	dwc2_set_param_uframe_sched(hsotg, params->uframe_sched);
+	dwc2_set_param_external_id_pin_ctl(hsotg, params->external_id_pin_ctl);
+	dwc2_set_param_hibernation(hsotg, params->hibernation);
 }
 
 /**
@@ -2618,23 +3105,23 @@ int dwc2_get_hwparams(struct dwc2_hsotg *hsotg)
 	hwcfg2 = DWC2_READ_4(hsotg, GHWCFG2);
 	hwcfg3 = DWC2_READ_4(hsotg, GHWCFG3);
 	hwcfg4 = DWC2_READ_4(hsotg, GHWCFG4);
-	gnptxfsiz = DWC2_READ_4(hsotg, GNPTXFSIZ);
 	grxfsiz = DWC2_READ_4(hsotg, GRXFSIZ);
 
 	dev_dbg(hsotg->dev, "hwcfg1=%08x\n", DWC2_READ_4(hsotg, GHWCFG1));
 	dev_dbg(hsotg->dev, "hwcfg2=%08x\n", hwcfg2);
 	dev_dbg(hsotg->dev, "hwcfg3=%08x\n", hwcfg3);
 	dev_dbg(hsotg->dev, "hwcfg4=%08x\n", hwcfg4);
-	dev_dbg(hsotg->dev, "gnptxfsiz=%08x\n", gnptxfsiz);
 	dev_dbg(hsotg->dev, "grxfsiz=%08x\n", grxfsiz);
 
-	/* Force host mode to get HPTXFSIZ exact power on value */
+	/* Force host mode to get HPTXFSIZ / GNPTXFSIZ exact power on value */
 	gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 	gusbcfg |= GUSBCFG_FORCEHOSTMODE;
 	DWC2_WRITE_4(hsotg, GUSBCFG, gusbcfg);
 	usleep_range(100000, 150000);
 
+	gnptxfsiz = DWC2_READ_4(hsotg, GNPTXFSIZ);
 	hptxfsiz = DWC2_READ_4(hsotg, HPTXFSIZ);
+	dev_dbg(hsotg->dev, "gnptxfsiz=%08x\n", gnptxfsiz);
 	dev_dbg(hsotg->dev, "hptxfsiz=%08x\n", hptxfsiz);
 	gusbcfg = DWC2_READ_4(hsotg, GUSBCFG);
 	gusbcfg &= ~GUSBCFG_FORCEHOSTMODE;
@@ -2669,6 +3156,13 @@ int dwc2_get_hwparams(struct dwc2_hsotg *hsotg)
 	width = (hwcfg3 & GHWCFG3_XFER_SIZE_CNTR_WIDTH_MASK) >>
 		GHWCFG3_XFER_SIZE_CNTR_WIDTH_SHIFT;
 	hw->max_transfer_size = (1 << (width + 11)) - 1;
+	/*
+	 * Clip max_transfer_size to 65535. dwc2_hc_setup_align_buf() allocates
+	 * coherent buffers with this size, and if it's too large we can
+	 * exhaust the coherent DMA pool.
+	 */
+	if (hw->max_transfer_size > 65535)
+		hw->max_transfer_size = 65535;
 	width = (hwcfg3 & GHWCFG3_PACKET_SIZE_CNTR_WIDTH_MASK) >>
 		GHWCFG3_PACKET_SIZE_CNTR_WIDTH_SHIFT;
 	hw->max_packet_count = (1 << (width + 4)) - 1;
@@ -2742,6 +3236,22 @@ int dwc2_get_hwparams(struct dwc2_hsotg *hsotg)
 
 	return 0;
 }
+
+/*
+ * Sets all parameters to the given value.
+ *
+ * Assumes that the dwc2_core_params struct contains only integers.
+ */
+void dwc2_set_all_params(struct dwc2_core_params *params, int value)
+{
+	int *p = (int *)params;
+	size_t size = sizeof(*params) / sizeof(*p);
+	int i;
+
+	for (i = 0; i < size; i++)
+		p[i] = value;
+}
+
 
 u16 dwc2_get_otg_version(struct dwc2_hsotg *hsotg)
 {

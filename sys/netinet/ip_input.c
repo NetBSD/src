@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.319.4.2 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.319.4.3 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,8 +91,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319.4.2 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319.4.3 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_compat_netbsd.h"
 #include "opt_gateway.h"
@@ -100,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.319.4.2 2015/06/06 14:40:25 skrll Exp
 #include "opt_mrouting.h"
 #include "opt_mbuftrace.h"
 #include "opt_inet_csum.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -319,7 +321,7 @@ ip_init(void)
 	ip_reass_init();
 
 	ip_ids = ip_id_init();
-	ip_id = time_second & 0xfffff;
+	ip_id = time_uptime & 0xfffff;
 
 	ip_mtudisc_timeout_q = rt_timer_queue_create(ip_mtudisc_timeout);
 #ifdef GATEWAY

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.60.4.1 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.60.4.2 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,9 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.1 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.2 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +81,8 @@ extern LIST_HEAD(, gif_softc) gif_softc_list;
 
 extern const struct ip6protosw in6_gif_protosw;
 
-/* 
- * family - family of the packet to be encapsulate. 
+/*
+ * family - family of the packet to be encapsulate.
  */
 
 int
@@ -285,7 +287,7 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto)
  * validate outer address.
  */
 static int
-gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc, 
+gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc,
 	struct ifnet *ifp)
 {
 	const struct sockaddr_in6 *src, *dst;

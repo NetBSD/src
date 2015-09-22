@@ -1,7 +1,7 @@
 #
 # -- SCPH-18000 used by uch@NetBSD.org
 #
-# 	$NetBSD: AGATE,v 1.12 2014/03/31 11:25:49 martin Exp $
+# 	$NetBSD: AGATE,v 1.12.8.1 2015/09/22 12:05:49 skrll Exp $
 #
 
 include 	"arch/playstation2/conf/std.playstation2"
@@ -19,6 +19,7 @@ options 	KLOADER_KERNEL_PATH="\"/netbsd\""
 options 	KLOADER
 
 options 	DDB			# in-kernel debugger
+pseudo-device	ksyms
 
 options 	NMBCLUSTERS=4096 # Max. number of mbuf clusters
 

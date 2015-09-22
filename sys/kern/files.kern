@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.2.2.2 2015/06/06 14:40:21 skrll Exp $
+#	$NetBSD: files.kern,v 1.2.2.3 2015/09/22 12:06:07 skrll Exp $
 
 #
 # kernel sources
@@ -9,30 +9,7 @@ file	compat/common/compat_mod.c	compat_netbsd | compat_netbsd32
 file	compat/common/compat_sysv_mod.c	(compat_netbsd | compat_netbsd32) &
 					(sysvshm | sysvsem | sysvmsg)
 file	conf/debugsyms.c		kern
-file	dev/bio.c			bio			needs-flag
-file	dev/ccd.c			ccd
-file	dev/cgd.c			cgd
-file	dev/cgd_crypto.c		cgd
-file	dev/clock_subr.c		kern	# XXX
-file	dev/clockctl.c			clockctl
-file	dev/dksubr.c			cgd | xbd | ccd | raid | dm | ld
-file	dev/dkwedge/dk.c		kern	# XXX
-file	dev/dkwedge/dkwedge_apple.c	dkwedge_method_apple
-file	dev/dkwedge/dkwedge_bsdlabel.c	dkwedge_method_bsdlabel
-file	dev/dkwedge/dkwedge_gpt.c	dkwedge_method_gpt
-file	dev/dkwedge/dkwedge_mbr.c	dkwedge_method_mbr
-file	dev/firmload.c			firmload
-file	dev/fss.c			fss
-file	dev/keylock.c			keylock
-file	dev/lockstat.c			lockstat		needs-flag
-file	dev/md.c			md
-file	dev/mm.c			kern	# XXX
-file	dev/nullcons_subr.c		nullcons		needs-flag
-file	dev/radio.c			radio			needs-flag
-file	dev/rndpseudo.c			rnd			needs-flag
-file	dev/sequencer.c			sequencer		needs-flag
-file	dev/video.c			video			needs-flag
-file	dev/vnd.c			vnd
+file	conf/param.c			kern
 file	kern/bufq_disksort.c		bufq_disksort
 file	kern/bufq_fcfs.c		bufq_fcfs
 file	kern/bufq_priocscan.c		bufq_priocscan
@@ -131,6 +108,7 @@ file	kern/subr_exec_fd.c		kern
 file	kern/subr_extent.c		kern
 file	kern/subr_hash.c		kern
 file	kern/subr_humanize.c		kern
+file	kern/subr_interrupt.c		kern
 file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern

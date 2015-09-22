@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.154.2.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: ccd.c,v 1.154.2.2 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.154.2.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.154.2.2 2015/09/22 12:05:56 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -127,6 +127,8 @@ __KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.154.2.1 2015/04/06 15:18:08 skrll Exp $");
 
 #include <miscfs/specfs/specdev.h> /* for v_rdev */
 
+#include "ioconf.h"
+
 #if defined(CCDDEBUG) && !defined(DEBUG)
 #define DEBUG
 #endif
@@ -160,7 +162,6 @@ static pool_cache_t ccd_cache;
 	(MAKEDISKDEV(major((dev)), ccdunit((dev)), RAW_PART))
 
 /* called by main() at boot time */
-void	ccdattach(int);
 void	ccddetach(void);
 
 /* called by biodone() at interrupt time */
@@ -230,6 +231,7 @@ ccdcreate(int unit) {
 	}
 	/* Initialize per-softc structures. */
 	snprintf(sc->sc_xname, sizeof(sc->sc_xname), "ccd%d", unit);
+	sc->sc_unit = unit;
 	mutex_init(&sc->sc_dvlock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_iolock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_stop, "ccdstop");
@@ -277,7 +279,7 @@ ccdget(int unit, int make) {
 	return sc;
 }
 
-static void 
+static void
 ccdput(struct ccd_softc *sc) {
 	mutex_enter(&ccd_lock);
 	LIST_REMOVE(sc, sc_link);
@@ -452,7 +454,7 @@ ccdinit(struct ccd_softc *cs, char **cpaths, struct vnode **vpp,
 	dg->dg_nsectors = ccg->ccg_nsectors;
 	dg->dg_ntracks = ccg->ccg_ntracks;
 	dg->dg_ncylinders = ccg->ccg_ncylinders;
-	
+
 	if (cs->sc_ileave > 0)
 	        aprint_normal("%s: Interleaving %d component%s "
 	            "(%d block interleave)\n", cs->sc_xname,
@@ -1196,7 +1198,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 	}
 
-	error = disk_ioctl(&cs->sc_dkdev, dev, cmd, data, flag, l); 
+	error = disk_ioctl(&cs->sc_dkdev, dev, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
 		goto out;
 
@@ -1797,7 +1799,7 @@ ccd_components_sysctl(SYSCTLFN_ARGS)
 
 	if (size == 0)
 		return ENOENT;
-	names = kmem_zalloc(size, KM_SLEEP); 
+	names = kmem_zalloc(size, KM_SLEEP);
 	if (names == NULL)
 		return ENOMEM;
 
@@ -1808,7 +1810,7 @@ ccd_components_sysctl(SYSCTLFN_ARGS)
 		if (sc->sc_unit == unit) {
 			for (size_t i = 0; i < sc->sc_nccdisks; i++) {
 				char *d = sc->sc_cinfo[i].ci_path;
-				while (p < ep && (*p++ = *d++) != '\0') 
+				while (p < ep && (*p++ = *d++) != '\0')
 					continue;
 			}
 			break;

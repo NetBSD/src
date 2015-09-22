@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.17 2014/07/19 18:24:17 rmind Exp $
+# $NetBSD: Makefile,v 1.17.4.1 2015/09/22 12:06:10 skrll Exp $
 #
 # Public Domain.
 #
@@ -8,7 +8,7 @@
 .PATH:		${S}/net/npf
 
 KMOD=		npf
-
+IOCONF=		npf.ioconf
 SRCS=		npf.c npf_alg.c npf_conf.c npf_ctl.c npf_handler.c
 SRCS+=		npf_bpf.c npf_if.c npf_inet.c npf_mbuf.c npf_nat.c
 SRCS+=		npf_ruleset.c npf_conn.c npf_conndb.c npf_rproc.c

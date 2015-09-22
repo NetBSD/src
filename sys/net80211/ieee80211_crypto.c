@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto.c,v 1.16 2013/09/13 20:19:53 joerg Exp $	*/
+/*	$NetBSD: ieee80211_crypto.c,v 1.16.6.1 2015/09/22 12:06:11 skrll Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,10 +36,12 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto.c,v 1.12 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.16 2013/09/13 20:19:53 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto.c,v 1.16.6.1 2015/09/22 12:06:11 skrll Exp $");
 #endif
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 /*
  * IEEE 802.11 generic crypto support.

@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_reg.h,v 1.10.2.3 2015/06/06 14:39:55 skrll Exp $ */
+/* $NetBSD: amlogic_reg.h,v 1.10.2.4 2015/09/22 12:05:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -87,6 +87,7 @@
 
 #define AMLOGIC_SRAM_OFFSET	0x19000000
 
+#define AMLOGIC_BOOTINFO_OFFSET	0x1901ff00
 #define AMLOGIC_CPUCONF_OFFSET	0x1901ff80
 
 #define AMLOGIC_CBUS_CPU_CLK_CNTL_REG	0x419c

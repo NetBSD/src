@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.13 2014/07/12 14:54:32 darrenr Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.13.4.1 2015/09/22 12:06:06 skrll Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.13 2014/07/12 14:54:32 darrenr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.13.4.1 2015/09/22 12:06:06 skrll Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -1227,11 +1227,11 @@ ipf_nat_ioctl(ipf_main_softc_t *softc, void *data, ioctlcmd_t cmd, int mode,
 			switch (nl.nl_v)
 			{
 			case 4 :
-				ptr = ipf_nat_lookupredir(&nl);
+				ptr = ipf_nat_lookupredir(softc, &nl);
 				break;
 #ifdef USE_INET6
 			case 6 :
-				ptr = ipf_nat6_lookupredir(&nl);
+				ptr = ipf_nat6_lookupredir(softc, &nl);
 				break;
 #endif
 			default:
@@ -4574,12 +4574,13 @@ find_out_wild_ports:
 /*     nl_out* = destination information (translated)                       */
 /* ------------------------------------------------------------------------ */
 nat_t *
-ipf_nat_lookupredir(natlookup_t *np)
+ipf_nat_lookupredir(ipf_main_softc_t *softc, natlookup_t *np)
 {
 	fr_info_t fi;
 	nat_t *nat;
 
 	bzero((char *)&fi, sizeof(fi));
+	fi.fin_main_soft = softc;
 	if (np->nl_flags & IPN_IN) {
 		fi.fin_data[0] = ntohs(np->nl_realport);
 		fi.fin_data[1] = ntohs(np->nl_outport);

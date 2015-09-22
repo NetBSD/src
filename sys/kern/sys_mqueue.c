@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_mqueue.c,v 1.37 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: sys_mqueue.c,v 1.37.2.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.37 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_mqueue.c,v 1.37.2.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -284,7 +284,7 @@ mqueue_lookup(const char *name)
  * => locks the message queue, if found.
  * => holds a reference on the file descriptor.
  */
-static int
+int
 mqueue_get(mqd_t mqd, int fflag, mqueue_t **mqret)
 {
 	const int fd = (int)mqd;
@@ -422,13 +422,12 @@ mqueue_access(mqueue_t *mq, int access, kauth_cred_t cred)
 }
 
 static int
-mqueue_create(lwp_t *l, char *name, struct mq_attr *uattr, mode_t mode,
+mqueue_create(lwp_t *l, char *name, struct mq_attr *attr, mode_t mode,
     int oflag, mqueue_t **mqret)
 {
 	proc_t *p = l->l_proc;
 	struct cwdinfo *cwdi = p->p_cwdi;
 	mqueue_t *mq;
-	struct mq_attr attr;
 	u_int i;
 
 	/* Pre-check the limit. */
@@ -442,22 +441,13 @@ mqueue_create(lwp_t *l, char *name, struct mq_attr *uattr, mode_t mode,
 	}
 
 	/* Check for mqueue attributes. */
-	if (uattr) {
-		int error;
-
-		error = copyin(uattr, &attr, sizeof(struct mq_attr));
-		if (error) {
-			return error;
-		}
-		if (attr.mq_maxmsg <= 0 || attr.mq_maxmsg > mq_max_maxmsg ||
-		    attr.mq_msgsize <= 0 || attr.mq_msgsize > mq_max_msgsize) {
+	if (attr) {
+		if (attr->mq_maxmsg <= 0 || attr->mq_maxmsg > mq_max_maxmsg ||
+		    attr->mq_msgsize <= 0 ||
+		    attr->mq_msgsize > mq_max_msgsize) {
 			return EINVAL;
 		}
-		attr.mq_curmsgs = 0;
-	} else {
-		memset(&attr, 0, sizeof(struct mq_attr));
-		attr.mq_maxmsg = mq_def_maxmsg;
-		attr.mq_msgsize = MQ_DEF_MSGSIZE - sizeof(struct mq_msg);
+		attr->mq_curmsgs = 0;
 	}
 
 	/*
@@ -477,7 +467,13 @@ mqueue_create(lwp_t *l, char *name, struct mq_attr *uattr, mode_t mode,
 	mq->mq_name = name;
 	mq->mq_refcnt = 1;
 
-	memcpy(&mq->mq_attrib, &attr, sizeof(struct mq_attr));
+	if (attr != NULL) {
+		memcpy(&mq->mq_attrib, attr, sizeof(struct mq_attr));
+	} else {
+		memset(&mq->mq_attrib, 0, sizeof(struct mq_attr));
+		mq->mq_attrib.mq_maxmsg = mq_def_maxmsg;
+		mq->mq_attrib.mq_msgsize = MQ_DEF_MSGSIZE - sizeof(struct mq_msg);
+	}
 
 	CTASSERT((O_MASK & (MQ_UNLINKED | MQ_RECEIVE)) == 0);
 	mq->mq_attrib.mq_flags = (O_MASK & oflag);
@@ -492,28 +488,22 @@ mqueue_create(lwp_t *l, char *name, struct mq_attr *uattr, mode_t mode,
 }
 
 /*
- * General mqueue system calls.
+ * Helper function for mq_open() - note that "u_name" is a userland pointer,
+ * while "attr" is a kernel pointer!
  */
-
 int
-sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
-    register_t *retval)
+mq_handle_open(struct lwp *l, const char *u_name, int oflag, mode_t mode,
+    struct mq_attr *attr, register_t *retval)
 {
-	/* {
-		syscallarg(const char *) name;
-		syscallarg(int) oflag;
-		syscallarg(mode_t) mode;
-		syscallarg(struct mq_attr) attr;
-	} */
 	struct proc *p = l->l_proc;
 	struct mqueue *mq, *mq_new = NULL;
-	int mqd, error, oflag = SCARG(uap, oflag);
+	int mqd, error;
 	file_t *fp;
 	char *name;
 
 	/* Get the name from the user-space. */
 	name = kmem_alloc(MQ_NAMELEN, KM_SLEEP);
-	error = copyinstr(SCARG(uap, name), name, MQ_NAMELEN - 1, NULL);
+	error = copyinstr(u_name, name, MQ_NAMELEN - 1, NULL);
 	if (error) {
 		kmem_free(name, MQ_NAMELEN);
 		return error;
@@ -531,8 +521,7 @@ sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
 
 	if (oflag & O_CREAT) {
 		/* Create a new message queue. */
-		error = mqueue_create(l, name, SCARG(uap, attr),
-		    SCARG(uap, mode), oflag, &mq_new);
+		error = mqueue_create(l, name, attr, mode, oflag, &mq_new);
 		if (error) {
 			goto err;
 		}
@@ -610,6 +599,34 @@ err:
 		kmem_free(name, MQ_NAMELEN);
 	}
 	return error;
+}
+
+/*
+ * General mqueue system calls.
+ */
+
+int
+sys_mq_open(struct lwp *l, const struct sys_mq_open_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(const char *) name;
+		syscallarg(int) oflag;
+		syscallarg(mode_t) mode;
+		syscallarg(struct mq_attr) attr;
+	} */
+	struct mq_attr *attr = NULL, a;
+	int error;
+
+	if ((SCARG(uap, oflag) & O_CREAT) != 0 && SCARG(uap, attr) != NULL) {
+		error = copyin(SCARG(uap, attr), &a, sizeof(a));
+		if (error)
+			return error;
+		attr = &a;
+	}
+
+	return mq_handle_open(l, SCARG(uap, name), SCARG(uap, oflag),
+	    SCARG(uap, mode), attr, retval);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: sequencer.c,v 1.59.4.1 2015/04/06 15:18:08 skrll Exp $	*/
+/*	$NetBSD: sequencer.c,v 1.59.4.2 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.59.4.1 2015/04/06 15:18:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.59.4.2 2015/09/22 12:05:56 skrll Exp $");
 
 #include "sequencer.h"
 
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: sequencer.c,v 1.59.4.1 2015/04/06 15:18:08 skrll Exp
 #include <dev/midi_if.h>
 #include <dev/midivar.h>
 #include <dev/sequencervar.h>
+
+#include "ioconf.h"
 
 #define ADDTIMEVAL(a, b) ( \
 	(a)->tv_sec += (b)->tv_sec, \
@@ -117,7 +119,6 @@ typedef union sequencer_pcqitem {
 	char	qi_msg[4];
 } sequencer_pcqitem_t;
 
-void sequencerattach(int);
 static void seq_reset(struct sequencer_softc *);
 static int seq_do_command(struct sequencer_softc *, seq_event_t *);
 static int seq_do_chnvoice(struct sequencer_softc *, seq_event_t *);
@@ -241,7 +242,7 @@ sequencerget(int unit)
 }
 
 #ifdef notyet
-static void 
+static void
 sequencerput(struct sequencer_softc *sc)
 {
 	mutex_enter(&sequencer_lock);
@@ -639,7 +640,7 @@ sequencerwrite(dev_t dev, struct uio *uio, int ioflag)
 	int error;
 	seq_event_t cmdbuf;
 	int size;
-	
+
 	DPRINTFN(2, ("sequencerwrite: %"PRIx64", count=%d\n", dev,
 	    (int)uio->uio_resid));
 
@@ -1409,7 +1410,7 @@ midiseq_open(int unit, int flags)
 	dev_t dev;
 	vnode_t *vp;
 	int oflags;
-	
+
 	major = devsw_name2chr("midi", NULL, 0);
 	dev = makedev(major, unit);
 

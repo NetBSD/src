@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.42.32.1 2015/06/06 14:39:54 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.42.32.2 2015/09/22 12:05:36 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,8 +57,6 @@
 
 /*
  * USRSTACK is the top (end) of the user stack.
- *
- * These are a mixture of i386, sun3 and hp settings.. 
  */
 
 #ifndef USRSTACK
@@ -70,13 +68,13 @@
  */
 
 #ifndef MAXTSIZ
-#define	MAXTSIZ		(16*1024*1024)		/* max text size */
+#define	MAXTSIZ		(32*1024*1024)		/* max text size */
 #endif
 #ifndef DFLDSIZ
-#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
+#define	DFLDSIZ		(64*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(256*1024*1024)		/* max data size */
+#define	MAXDSIZ		(416*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
@@ -128,15 +126,15 @@
 
 #define	__HAVE_PMAP_PHYSSEG
 
-/* 
+/*
  * pmap-specific data stored in the vm_physmem[] array.
- */   
-struct pmap_physseg { 
+ */
+struct pmap_physseg {
 	struct pv_header *pvheader;	/* pv table for this seg */
-}; 
+};
 
 /*
  * number of kernel PT pages (initial only, can grow dynamically)
  */
-#define VM_KERNEL_PT_PAGES	((vm_size_t)8)		/* XXX: SYSPTSIZE */
+#define VM_KERNEL_PT_PAGES	((vm_size_t)10)
 #endif /* !_MACHINE_VMPARAM_H_ */

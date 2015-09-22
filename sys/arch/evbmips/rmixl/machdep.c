@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.14.6.1 2015/06/06 14:39:59 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.14.6.2 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.6.1 2015/06/06 14:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.14.6.2 2015/09/22 12:05:42 skrll Exp $");
 
 #define __INTR_PRIVATE
 
@@ -614,7 +614,7 @@ rmixl_physaddr_init(void)
 	/*
 	 * grab regions per DRAM BARs
 	 */
-	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) { 
+	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) {
 		r = RMIXL_IOREG_READ(RMIXL_SBC_DRAM_BAR(i));
 		if ((r & RMIXL_DRAM_BAR_STATUS) == 0)
 			continue;	/* not enabled */
@@ -882,7 +882,7 @@ rmixl_get_wakeup_info(struct rmixl_config *rcp)
 	__asm__ volatile(
 		".set push"				"\n"
 		".set noreorder"			"\n"
-		".set mips64"				"\n" 
+		".set mips64"				"\n"
 		"dmfc0	%0, $22, 7"			"\n"
 		".set pop"				"\n"
 			: "=r"(scratch_7));
@@ -978,37 +978,14 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	format_bytes(pbuf, sizeof(pbuf), ctob((uint64_t)physmem));
-	printf("total memory = %s\n", pbuf);
-
 	/*
 	 * Virtual memory is bootstrapped -- notify the bus spaces
 	 * that memory allocation is now safe.
 	 */
 	rmixl_configuration.rc_mallocsafe = 1;
 
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio.
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				    VM_PHYS_SIZE, 0, FALSE, NULL);
-
-	/*
-	 * (No need to allocate an mbuf cluster submap.  Mbuf clusters
-	 * are allocated via the pool allocator, and we use XKSEG to
-	 * map those pages.)
-	 */
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
-	printf("avail memory = %s\n", pbuf);
+	/* Do the usual stuff */
+	cpu_startup_common();
 }
 
 int	waittime = -1;
@@ -1018,7 +995,7 @@ cpu_reboot(int howto, char *bootstr)
 {
 
 	/* Take a snapshot before clobbering any registers. */
-	savectx(curpcb);
+	savectx(lwp_getpcb(curlwp));
 
 	if (cold) {
 		howto |= RB_HALT;

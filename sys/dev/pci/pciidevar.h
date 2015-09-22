@@ -1,4 +1,4 @@
-/*	$NetBSD: pciidevar.h,v 1.46 2012/07/31 15:50:36 bouyer Exp $	*/
+/*	$NetBSD: pciidevar.h,v 1.46.16.1 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -39,11 +39,14 @@
  * Author: Christopher G. Demetriou, March 2, 1998.
  */
 
+#ifdef _KERNEL_OPT
+#include "opt_pciide.h"
+#endif
+
 #include <dev/ata/atavar.h>
 #include <dev/ic/wdcreg.h>
 #include <dev/ic/wdcvar.h>
 #include <sys/device_if.h>
-#include "opt_pciide.h"
 
 /* options passed via the 'flags' config keyword */
 #define	PCIIDE_OPTIONS_DMA	0x01

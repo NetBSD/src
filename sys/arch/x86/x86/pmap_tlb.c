@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.6 2012/04/21 22:22:48 rmind Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.6.16.1 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008-2012 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6 2012/04/21 22:22:48 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.6.16.1 2015/09/22 12:05:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -297,7 +297,7 @@ pmap_tlb_processpacket(pmap_tlb_packet_t *tp, kcpuset_t *target)
 {
 	int err = 0;
 
-	if (!kcpuset_match(target, kcpuset_running)) {
+	if (!kcpuset_match(target, kcpuset_attached)) {
 		const struct cpu_info * const self = curcpu();
 		CPU_INFO_ITERATOR cii;
 		struct cpu_info *lci;

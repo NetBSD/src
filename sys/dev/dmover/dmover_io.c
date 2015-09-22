@@ -1,4 +1,4 @@
-/*	$NetBSD: dmover_io.c,v 1.43 2014/07/25 08:10:36 dholland Exp $	*/
+/*	$NetBSD: dmover_io.c,v 1.43.4.1 2015/09/22 12:05:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.43 2014/07/25 08:10:36 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.43.4.1 2015/09/22 12:05:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/queue.h>
@@ -80,6 +80,8 @@ __KERNEL_RCSID(0, "$NetBSD: dmover_io.c,v 1.43 2014/07/25 08:10:36 dholland Exp 
 
 #include <dev/dmover/dmovervar.h>
 #include <dev/dmover/dmover_io.h>
+
+#include "ioconf.h"
 
 struct dmio_usrreq_state {
 	union {
@@ -127,8 +129,6 @@ static void dmio_usrreq_fini1(struct work *wk, void *);
 
 struct pool dmio_state_pool;
 struct pool dmio_usrreq_state_pool;
-
-void	dmoverioattach(int);
 
 dev_type_open(dmoverioopen);
 

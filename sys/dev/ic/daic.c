@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.31 2012/10/27 17:18:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: daic.c,v 1.31.14.1 2015/09/22 12:05:58 skrll Exp $");
 
 /*
  * daic.c: MI driver for Diehl active ISDN cards (S, SX, SXn, SCOM, QUADRO)
@@ -404,7 +404,6 @@ daic_download(void *token, int count, struct isdn_dr_prot *data)
 		    	tsleep(sc, 0, "daic download", 1);
 		    }
 	    	    if (bus_space_read_1(sc->sc_iot, sc->sc_ioh, DAIC_BOOT_CTRL+off) != 0) {
-	    	    	splx(x);
 	    	    	aprint_error_dev(sc->sc_dev, "download of microcode failed\n");
 	    	    	return EIO;
 	    	    }

@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.28 2014/02/28 10:16:51 skrll Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.28.6.1 2015/09/22 12:05:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _SYS_DEV_FSSVAR_H
 #define _SYS_DEV_FSSVAR_H
+
+#include <sys/ioccom.h>
 
 #define FSS_UNCONFIG_ON_CLOSE	0x01	/* Unconfigure on last close */
 #define FSS_UNLINK_ON_CREATE	0x02	/* Unlink backing store on create */

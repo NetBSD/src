@@ -1,7 +1,7 @@
-# $NetBSD: GENERIC,v 1.193.2.1 2015/04/06 15:18:03 skrll Exp $
+# $NetBSD: GENERIC,v 1.193.2.2 2015/09/22 12:05:53 skrll Exp $
 #
 # GENERIC machine description file
-# 
+#
 # This machine description file is used to generate the default NetBSD
 # kernel.  The generic kernel does not include all options, subsystems
 # and device drivers, but should be useful for most applications.
@@ -22,7 +22,7 @@ include		"arch/vax/conf/std.vax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.193.2.1 $"
+#ident 		"GENERIC-$Revision: 1.193.2.2 $"
 
 # Here are all different supported CPU types listed.
 #options 	VAX8800		# VAX 8500, 8530, 8550, 8700, 8800
@@ -53,7 +53,6 @@ options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	KTRACE
 #options 	DIAGNOSTIC
 #options 	DEBUG
-#options 	KMEMSTATS
 #options 	PMAPDEBUG
 #options 	TRAPDEBUG
 #options 	LOCKDEBUG
@@ -159,7 +158,7 @@ options 	USERCONF	# userconf(4) support
 #options	PIPE_SOCKETPAIR	# smaller, but slower pipe(2)
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-# Enable experimental buffer queue strategy for better responsiveness under 
+# Enable experimental buffer queue strategy for better responsiveness under
 # high disk I/O load. Use it with caution - it's not proven to be stable yet.
 #options 	BUFQ_READPRIO
 #options 	BUFQ_PRIOCSCAN
@@ -212,7 +211,7 @@ audio*		at audiobus?
 tc0		at vsbus0 csr 0x36000000 # VS4000/60 or 90 TC adapter
 tcds*		at tc0 slot ? offset ?	 # TC dual SCSI controller
 asc*		at tcds? chip ?		 # PMAZB/C
-asc*		at tc? slot ? offset ?	 # PMAZ 
+asc*		at tc? slot ? offset ?	 # PMAZ
 fta*		at tc? slot ? offset ?	 # TC FDDI controller
 
 hdc0		at vsbus0 csr 0x200c0000 # HDC9224 MFM/floppy ctlr
@@ -268,7 +267,7 @@ mscpbus*	at uda?
 mscpbus*	at mtc?
 mscpbus*	at kdb?
 
-ra*		at mscpbus? drive?	# MSCP disk 
+ra*		at mscpbus? drive?	# MSCP disk
 racd*		at mscpbus? drive?	# MSCP CD-ROM (RRD40)
 rx*		at mscpbus? drive?	# MSCP floppy
 mt*		at mscpbus? drive?	# MSCP tape
@@ -300,7 +299,7 @@ wsmouse*	at lkms?
 pseudo-device   accf_data		# "dataready" accept filter
 pseudo-device   accf_http		# "httpready" accept filter
 
-pseudo-device	loop	
+pseudo-device	loop
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	bpfilter
 #pseudo-device	carp			# Common Address Redundancy Protocol
@@ -320,7 +319,7 @@ pseudo-device	bridge			# simple inter-network bridging
 pseudo-device	agr			# IEEE 802.3ad link aggregation
 pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
-pseudo-device	ccd	
+pseudo-device	ccd
 #pseudo-device	cgd			# cryptographic disk devices
 pseudo-device	raid			# RAIDframe disk driver
 options 	RAID_AUTOCONFIG		# auto-configuration of RAID components

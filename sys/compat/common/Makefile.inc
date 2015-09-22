@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.20 2009/12/14 00:47:10 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.20.40.1 2015/09/22 12:05:55 skrll Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -55,6 +55,7 @@ ${COMPATLIB}:		.NOTMAIN .MAKE __always_make_compatlib
 .else
 	@${COMPATMAKE} libcompat.o
 .endif
+	@echo done
 
 ${COMPATLIB_PROF}:	.NOTMAIN .MAKE __always_make_compatlib
 	@echo making sure the profiled compat library is up to date...
@@ -63,25 +64,30 @@ ${COMPATLIB_PROF}:	.NOTMAIN .MAKE __always_make_compatlib
 .else
 	@${COMPATMAKE} libcompat.po
 .endif
+	@echo done
 
 ${COMPATLIBLN}:		.NOTMAIN .MAKE __always_make_compatlib
 	@echo making sure the compat lint library is up to date...
 	@${COMPATMAKE} ${LIBCOMPATLNBN}
+	@echo done
 
 clean:			.NOTMAIN cleancompatlib
 cleancompatlib:		.NOTMAIN .MAKE __always_make_compatlib
 	@echo cleaning the compat library objects
 	@${COMPATMAKE} clean
+	@echo done
 
 cleandir distclean:	.NOTMAIN cleandircompatlib
 cleandircompatlib:	.NOTMAIN .MAKE  __always_make_compatlib
 	@echo cleandiring the compat library objects
 	@${COMPATMAKE} cleandir
+	@echo done
 
 depend:			.NOTMAIN dependcompatlib
 dependcompatlib:	.NOTMAIN .MAKE __always_make_compatlib
 	@echo depending the compat library objects
 	@${COMPATMAKE} depend
+	@echo done
 
 __always_make_compatlib: .NOTMAIN
 	@mkdir -p ${COMPATDST}

@@ -1,4 +1,4 @@
-/*	$NetBSD: octeonvar.h,v 1.2.2.2 2015/06/06 14:40:01 skrll Exp $	*/
+/*	$NetBSD: octeonvar.h,v 1.2.2.3 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 
 #include <sys/bus.h>
 #include <sys/evcnt.h>
+#include <sys/kcpuset.h>
 #include <mips/locore.h>
 #include <dev/pci/pcivar.h>
 
@@ -81,6 +82,7 @@ struct octeon_config {
 
 struct cpu_softc {
 	struct cpu_info *cpu_ci;
+
 	uint64_t cpu_int0_sum0;
 	uint64_t cpu_int1_sum0;
 	uint64_t cpu_int2_sum0;
@@ -100,6 +102,10 @@ struct cpu_softc {
 	uint64_t cpu_int0_enable0;
 	uint64_t cpu_int1_enable0;
 	uint64_t cpu_int2_enable0;
+
+	void *cpu_wdog_sih;		// wdog softint handler
+	uint64_t cpu_wdog;
+	uint64_t cpu_pp_poke;
 
 #ifdef MULTIPROCESSOR
 	uint64_t cpu_mbox_set;
@@ -219,6 +225,7 @@ struct octeon_fau_map {
 #ifdef _KERNEL
 extern struct octeon_config	octeon_configuration;
 #ifdef MULTIPROCESSOR
+extern kcpuset_t *cpus_booted;
 extern struct cpu_softc		octeon_cpu1_softc;
 #endif
 
@@ -245,7 +252,7 @@ void	 mips_cp0_cvmctl_write(uint64_t);
 #error unknown ABI
 #endif
 
-/* 
+/*
  * Prefetch
  *
  *	OCTEON_PREF		normal (L1 and L2)
@@ -344,7 +351,7 @@ static inline uint32_t
 octeon_disable_interrupt(uint32_t *new)
 {
 	uint32_t s, tmp;
-        
+
 	__asm __volatile (
 		_ASM_PROLOGUE
 		"	mfc0	%[s], $12		\n"
@@ -370,10 +377,10 @@ octeon_restore_status(uint32_t s)
 
 static inline uint64_t
 octeon_get_cycles(void)
-{ 
+{
 #if defined(__mips_o32)
 	uint32_t s, lo, hi;
-  
+
 	s = octeon_disable_interrupt((void *)0);
 	__asm __volatile (
 		_ASM_PROLOGUE_MIPS64

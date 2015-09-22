@@ -1,4 +1,4 @@
-/*	$NetBSD: amlogic_dwctwo.c,v 1.2.4.2 2015/04/06 15:17:51 skrll Exp $	*/
+/*	$NetBSD: amlogic_dwctwo.c,v 1.2.4.3 2015/09/22 12:05:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.2.4.2 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_dwctwo.c,v 1.2.4.3 2015/09/22 12:05:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,6 +85,8 @@ static struct dwc2_core_params amlogic_dwctwo_params = {
 	.reload_ctl			= -1,	/* 0 - No (default for core < 2.92a) */
 	.ahbcfg				= 0x3,	/* INCR4 */
 	.uframe_sched			= 1,	/* True to enable microframe scheduler */
+	.external_id_pin_ctl		= -1,
+	.hibernation			= -1,
 };
 
 static int amlogic_dwctwo_match(device_t, struct cfdata *, void *);
@@ -118,8 +120,8 @@ amlogic_dwctwo_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": USB controller\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_SCHED,
-	   IST_LEVEL, dwc2_intr, &sc->sc_dwc2);
+	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM,
+	   IST_LEVEL | IST_MPSAFE, dwc2_intr, &sc->sc_dwc2);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
 		     loc->loc_intr);

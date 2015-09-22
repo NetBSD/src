@@ -1,4 +1,4 @@
-/*	$NetBSD: opmbell.c,v 1.25 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: opmbell.c,v 1.25.4.1 2015/09/22 12:05:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 MINOURA Makoto, Takuya Harakawa.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.25 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.25.4.1 2015/09/22 12:05:53 skrll Exp $");
 
 #include "bell.h"
 #if NBELL > 0
@@ -64,6 +64,8 @@ __KERNEL_RCSID(0, "$NetBSD: opmbell.c,v 1.25 2014/07/25 08:10:35 dholland Exp $"
 #include <machine/opmbellio.h>
 
 #include <x68k/dev/opmvar.h>
+
+#include "ioconf.h"
 
 /* In opm.c. */
 void opm_set_volume(int, int);
@@ -109,8 +111,6 @@ void opm_bell_on(void);
 void opm_bell_off(void);
 int opm_bell_setup(struct bell_info *);
 int bellmstohz(int);
-
-void bellattach(int);
 
 dev_type_open(bellopen);
 dev_type_close(bellclose);

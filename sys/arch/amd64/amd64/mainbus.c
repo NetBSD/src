@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.34.6.1 2015/06/06 14:39:54 skrll Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.34.6.2 2015/09/22 12:05:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34.6.1 2015/06/06 14:39:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.34.6.2 2015/09/22 12:05:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,15 +122,19 @@ struct mp_bus *mp_busses;
 int mp_nbus;
 struct mp_intr_map *mp_intrs;
 int mp_nintr;
- 
+
 int mp_isa_bus = -1;
 int mp_eisa_bus = -1;
 
-#ifdef MPVERBOSE
+# ifdef MPVERBOSE
+#  if MPVERBOSE > 0
+int mp_verbose = MPVERBOSE;
+#  else
 int mp_verbose = 1;
-#else
+#  endif
+# else
 int mp_verbose = 0;
-#endif
+# endif
 #endif
 
 
@@ -216,12 +220,12 @@ mainbus_attach(device_t parent, device_t self, void *aux)
 #endif
 		if (numcpus == 0) {
 			struct cpu_attach_args caa;
-                        
+
 			memset(&caa, 0, sizeof(caa));
 			caa.cpu_number = 0;
 			caa.cpu_role = CPU_ROLE_SP;
 			caa.cpu_func = 0;
-                        
+
 			config_found_ia(self, "cpubus", &caa, mainbus_print);
 		}
 	}

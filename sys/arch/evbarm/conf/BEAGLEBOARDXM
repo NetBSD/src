@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBOARDXM,v 1.19 2014/10/11 03:24:19 uebayasi Exp $
+#	$NetBSD: BEAGLEBOARDXM,v 1.19.2.1 2015/09/22 12:05:40 skrll Exp $
 #
 #	BEAGLEBOARD -- TI OMAP 3530 Eval Board Kernel
 #
@@ -114,7 +114,6 @@ options 	SYSVSHM		# System V-like memory sharing
 
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 #options 	DDB_KEYCODE=0x40

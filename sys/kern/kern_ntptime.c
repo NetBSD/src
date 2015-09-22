@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ntptime.c,v 1.55 2014/02/25 18:30:11 pooka Exp $	*/
+/*	$NetBSD: kern_ntptime.c,v 1.55.6.1 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_ntptime.c,v 1.59 2005/05/28 14:34:41 rwatson Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.55 2014/02/25 18:30:11 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ntptime.c,v 1.55.6.1 2015/09/22 12:06:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -260,7 +260,7 @@ sys_ntp_adjtime(struct lwp *l, const struct sys_ntp_adjtime_args *uap, register_
 		syscallarg(struct timex *) tp;
 	} */
 	struct timex ntv;
-	int error = 0;
+	int error;
 
 	error = copyin((void *)SCARG(uap, tp), (void *)&ntv, sizeof(ntv));
 	if (error != 0)

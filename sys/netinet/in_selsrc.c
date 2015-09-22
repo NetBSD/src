@@ -1,4 +1,4 @@
-/*	$NetBSD: in_selsrc.c,v 1.11.6.1 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: in_selsrc.c,v 1.11.6.2 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005 David Young.  All rights reserved.
@@ -29,10 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.11.6.1 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_selsrc.c,v 1.11.6.2 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_inet_conf.h"
+#endif
 
 #include <lib/libkern/libkern.h>
 
@@ -309,7 +311,8 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 	}
 
 	ifp = ifa->ifa_ifp;
-	isc = (struct in_ifsysctl *)ifp->if_afdata[AF_INET];
+	KASSERT(ifp->if_afdata[AF_INET] != NULL);
+	isc = ((struct in_ifinfo *)(ifp)->if_afdata[AF_INET])->ii_selsrc;
 	if (isc != NULL && isc->isc_selsrc != NULL &&
 	    isc->isc_selsrc->iss_score_src[0] != NULL)
 		iss = isc->isc_selsrc;
@@ -369,10 +372,8 @@ in_getifa(struct ifaddr *ifa, const struct sockaddr *dst0)
 	}
 
 	ia = (struct in_ifaddr *)best_ifa;
-	if (ia->ia4_flags & IN_IFF_NOTREADY) {
-		errno = EADDRNOTAVAIL;
+	if (ia->ia4_flags & IN_IFF_NOTREADY)
 		return NULL;
-	}
 
 #ifdef GETIFA_DEBUG
 	if (in_selsrc_debug) {
@@ -544,7 +545,7 @@ err:
 }
 
 void *
-in_domifattach(struct ifnet *ifp)
+in_selsrc_domifattach(struct ifnet *ifp)
 {
 	struct in_ifsysctl *isc;
 	struct in_ifselsrc *iss;
@@ -572,7 +573,7 @@ err:
 }
 
 void
-in_domifdetach(struct ifnet *ifp, void *aux)
+in_selsrc_domifdetach(struct ifnet *ifp, void *aux)
 {
 	struct in_ifsysctl *isc;
 	struct in_ifselsrc *iss;

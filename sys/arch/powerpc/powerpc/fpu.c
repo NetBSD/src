@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.35 2014/05/16 00:48:41 rmind Exp $	*/
+/*	$NetBSD: fpu.c,v 1.35.4.1 2015/09/22 12:05:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35 2014/05/16 00:48:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.35.4.1 2015/09/22 12:05:50 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -84,15 +84,17 @@ fpu_state_load(lwp_t *l, u_int flags)
 		memset(&pcb->pcb_fpu, 0, sizeof(pcb->pcb_fpu));
 	}
 
-	const register_t msr = mfmsr();
-        mtmsr((msr & ~PSL_EE) | PSL_FP);
-	__asm volatile ("isync");
+	if ((flags & PCU_REENABLE) == 0) {
+		const register_t msr = mfmsr();
+		mtmsr((msr & ~PSL_EE) | PSL_FP);
+		__asm volatile ("isync");
 
-	fpu_load_from_fpreg(&pcb->pcb_fpu);
-	__asm volatile ("sync");
+		fpu_load_from_fpreg(&pcb->pcb_fpu);
+		__asm volatile ("sync");
 
-	mtmsr(msr);
-	__asm volatile ("isync");
+		mtmsr(msr);
+		__asm volatile ("isync");
+	}
 
 	curcpu()->ci_ev_fpusw.ev_count++;
 	l->l_md.md_utf->tf_srr1 |= PSL_FP|(pcb->pcb_flags & (PCB_FE0|PCB_FE1));

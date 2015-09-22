@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.11.14.2 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.11.14.3 2015/09/22 12:06:00 skrll Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -75,6 +75,9 @@
 #define  SDHC_CMD_INHIBIT_MASK		0x0003
 #define SDHC_HOST_CTL			0x28
 #define  SDHC_8BIT_MODE			(1<<5)
+#define  SDHC_DMA_SELECT		(3<<3)
+#define  SDHC_DMA_SELECT_SDMA		(0<<3)
+#define  SDHC_DMA_SELECT_ADMA2		(2<<3)
 #define  SDHC_HIGH_SPEED		(1<<2)
 #define  SDHC_ESDHC_8BIT_MODE		(1<<2)	/* eSDHC */
 #define  SDHC_4BIT_MODE			(1<<1)
@@ -109,6 +112,7 @@
 #define  SDHC_RESET_ALL			(1<<0)
 #define SDHC_NINTR_STATUS		0x30
 #define  SDHC_ERROR_INTERRUPT		(1<<15)
+#define  SDHC_RETUNING_EVENT		(1<<12)
 #define  SDHC_CARD_INTERRUPT		(1<<8)
 #define  SDHC_CARD_REMOVAL		(1<<7)
 #define  SDHC_CARD_INSERTION		(1<<6)
@@ -118,9 +122,10 @@
 #define  SDHC_BLOCK_GAP_EVENT		(1<<2)
 #define  SDHC_TRANSFER_COMPLETE		(1<<1)
 #define  SDHC_COMMAND_COMPLETE		(1<<0)
-#define  SDHC_NINTR_STATUS_MASK		0x81ff
+#define  SDHC_NINTR_STATUS_MASK		0x91ff
 #define SDHC_EINTR_STATUS		0x32
 #define  SDHC_DMA_ERROR			(1<<12)
+#define  SDHC_ADMA_ERROR		(1<<9)
 #define  SDHC_AUTO_CMD12_ERROR		(1<<8)
 #define  SDHC_CURRENT_LIMIT_ERROR	(1<<7)
 #define  SDHC_DATA_END_BIT_ERROR	(1<<6)
@@ -130,14 +135,25 @@
 #define  SDHC_CMD_END_BIT_ERROR		(1<<2)
 #define  SDHC_CMD_CRC_ERROR		(1<<1)
 #define  SDHC_CMD_TIMEOUT_ERROR		(1<<0)
-#define  SDHC_EINTR_STATUS_MASK		0x01ff	/* excluding vendor signals */
+#define  SDHC_EINTR_STATUS_MASK		0x03ff	/* excluding vendor signals */
 #define SDHC_NINTR_STATUS_EN		0x34
 #define SDHC_EINTR_STATUS_EN		0x36
 #define SDHC_NINTR_SIGNAL_EN		0x38
 #define  SDHC_NINTR_SIGNAL_MASK		0x01ff
 #define SDHC_EINTR_SIGNAL_EN		0x3a
-#define  SDHC_EINTR_SIGNAL_MASK		0x01ff	/* excluding vendor signals */
+#define  SDHC_EINTR_SIGNAL_MASK		0x03ff	/* excluding vendor signals */
 #define SDHC_CMD12_ERROR_STATUS		0x3c
+#define SDHC_HOST_CTL2			0x3e
+#define  SDHC_SAMPLING_CLOCK_SEL	(1<<7)
+#define  SDHC_EXECUTE_TUNING		(1<<6)
+#define  SDHC_1_8V_SIGNAL_EN		(1<<3)
+#define  SDHC_UHS_MODE_SELECT_SHIFT	0
+#define  SDHC_UHS_MODE_SELECT_MASK	0x7
+#define  SDHC_UHS_MODE_SELECT_SDR12	0
+#define  SDHC_UHS_MODE_SELECT_SDR25	1
+#define  SDHC_UHS_MODE_SELECT_SDR50	2
+#define  SDHC_UHS_MODE_SELECT_SDR104	3
+#define  SDHC_UHS_MODE_SELECT_DDR50	4
 #define SDHC_CAPABILITIES		0x40
 #define  SDHC_SHARED_BUS_SLOT		(1<<31)
 #define  SDHC_EMBEDDED_SLOT		(1<<30)
@@ -163,6 +179,27 @@
 #define  SDHC_TIMEOUT_FREQ_UNIT		(1<<7)	/* 0=KHz, 1=MHz */
 #define  SDHC_TIMEOUT_FREQ_SHIFT	0
 #define  SDHC_TIMEOUT_FREQ_MASK		0x1f
+#define SDHC_CAPABILITIES2		0x44
+#define  SDHC_SDR50_SUPP		(1<<0)
+#define  SDHC_SDR104_SUPP		(1<<1)
+#define  SDHC_DDR50_SUPP		(1<<2)
+#define  SDHC_DRIVER_TYPE_A		(1<<4)
+#define  SDHC_DRIVER_TYPE_C		(1<<5)
+#define  SDHC_DRIVER_TYPE_D		(1<<6)
+#define  SDHC_TIMER_COUNT_SHIFT		8
+#define  SDHC_TIMER_COUNT_MASK		0xf
+#define  SDHC_TUNING_SDR50		(1<<13)
+#define  SDHC_RETUNING_MODES_SHIFT	14
+#define  SDHC_RETUNING_MODES_MASK	0x3
+#define  SDHC_RETUNING_MODE_1		(0 << SDHC_RETUNING_MODES_SHIFT)
+#define  SDHC_RETUNING_MODE_2		(1 << SDHC_RETUNING_MODES_SHIFT)
+#define  SDHC_RETUNING_MODE_3		(2 << SDHC_RETUNING_MODES_SHIFT)
+#define  SDHC_CLOCK_MULTIPLIER_SHIFT	16
+#define  SDHC_CLOCK_MULTIPLIER_MASK	0xff
+#define SDHC_ADMA_ERROR_STATUS		0x54
+#define  SDHC_ADMA_LENGTH_MISMATCH	(1<<2)
+#define  SDHC_ADMA_ERROR_STATE		(3<<0)
+#define SDHC_ADMA_SYSTEM_ADDR		0x58
 #define SDHC_WATERMARK_LEVEL		0x44	/* ESDHC */
 #define  SDHC_WATERMARK_WRITE_SHIFT	16
 #define  SDHC_WATERMARK_WRITE_MASK	0xff
@@ -213,5 +250,26 @@
 	"\20\11ACMD12\10CL\7DEB\6DCRC\5DT\4CI\3CEB\2CCRC\1CT"
 #define SDHC_CAPABILITIES_BITS						\
 	"\20\33Vdd1.8V\32Vdd3.0V\31Vdd3.3V\30SUSPEND\27DMA\26HIGHSPEED"
+
+#define SDHC_ADMA2_VALID	(1<<0)
+#define SDHC_ADMA2_END		(1<<1)
+#define SDHC_ADMA2_INT		(1<<2)
+#define SDHC_ADMA2_ACT		(3<<4)
+#define SDHC_ADMA2_ACT_NOP	(0<<4)
+#define SDHC_ADMA2_ACT_TRANS	(2<<4)
+#define SDHC_ADMA2_ACT_LINK	(3<<4)
+
+struct sdhc_adma2_descriptor32 {
+	uint16_t	attribute;
+	uint16_t	length;
+	uint32_t	address;
+} __packed;
+
+struct sdhc_adma2_descriptor64 {
+	uint16_t	attribute;
+	uint16_t	length;
+	uint32_t	address;
+	uint32_t	address_hi;
+} __packed;
 
 #endif /* _SDHCREG_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.70.2.2 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.70.2.3 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.70.2.2 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.70.2.3 2015/09/22 12:06:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -646,10 +646,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		return error;
 
 	if (eh->e_type == ET_DYN)
-		/*
-		 * XXX allow for executing shared objects. It seems silly
-		 * but other ELF-based systems allow it as well.
-		 */
+		/* PIE, and some libs have an entry point */
 		is_dyn = true;
 	else if (eh->e_type != ET_EXEC)
 		return ENOEXEC;
@@ -701,7 +698,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	 *
 	 * Probe functions would normally see if the interpreter (if any)
 	 * exists. Emulation packages may possibly replace the interpreter in
-	 * interp[] with a changed path (/emul/xxx/<path>).
+	 * interp with a changed path (/emul/xxx/<path>).
 	 */
 	pos = ELFDEFNNAME(NO_ADDR);
 	if (epp->ep_esch->u.elf_probe_func) {
@@ -715,7 +712,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	}
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
-	l->l_proc->p_pax = epp->ep_pax_flags;
+	pax_setup_elf_flags(l, epp->ep_pax_flags);
 #endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 
 	if (is_dyn)

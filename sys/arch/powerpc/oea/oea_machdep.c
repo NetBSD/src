@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.71 2014/03/24 19:29:59 christos Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.71.6.1 2015/09/22 12:05:50 skrll Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.71 2014/03/24 19:29:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.71.6.1 2015/09/22 12:05:50 skrll Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -440,18 +440,15 @@ oea_init(void (*handler)(void))
 
         /*
 	 * Configure a PSL user mask matching this processor.
+	 * Don't allow to set PSL_FP/PSL_VEC, since that will affect PCU.
  	 */
 	cpu_psluserset = PSL_EE | PSL_PR | PSL_ME | PSL_IR | PSL_DR | PSL_RI;
-	cpu_pslusermod = PSL_FP | PSL_FE0 | PSL_FE1 | PSL_LE | PSL_SE | PSL_BE;
+	cpu_pslusermod = PSL_FE0 | PSL_FE1 | PSL_LE | PSL_SE | PSL_BE;
 #ifdef PPC_OEA601
 	if (cpuvers == MPC601) {
 		cpu_psluserset &= PSL_601_MASK;
 		cpu_pslusermod &= PSL_601_MASK;
 	}
-#endif
-#ifdef ALTIVEC
-	if (cpu_altivec)
-		cpu_pslusermod |= PSL_VEC;
 #endif
 #ifdef PPC_HIGH_VEC
 	cpu_psluserset |= PSL_IP;	/* XXX ok? */

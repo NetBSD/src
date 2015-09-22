@@ -1,4 +1,4 @@
-/*	$NetBSD: ksyms.h,v 1.28.14.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: ksyms.h,v 1.28.14.3 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003 Anders Magnusson (ragge@ludd.luth.se).
@@ -32,6 +32,7 @@
 
 #ifdef _KSYMS_PRIVATE
 #include <sys/exec_elf.h>
+#include <sys/ioccom.h>
 #include <sys/queue.h>
 
 struct ksyms_symtab {

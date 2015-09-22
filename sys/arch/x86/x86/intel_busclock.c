@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_busclock.c,v 1.19.4.2 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: intel_busclock.c,v 1.19.4.3 2015/09/22 12:05:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19.4.2 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_busclock.c,v 1.19.4.3 2015/09/22 12:05:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -276,7 +276,7 @@ p3_get_bus_clock(struct cpu_info *ci)
 			    "unable to determine bus speed");
 			goto print_msr;
 		}
-		bus = (msr >> 0) & 0x1f;
+		bus = (msr >> 0) & 0x0f;
 		switch (bus) {
 		case 0:
 			bus_clock =  8333;
@@ -288,33 +288,21 @@ p3_get_bus_clock(struct cpu_info *ci)
 			bus_clock = 13333;
 			break;
 		case 3:
-			bus_clock = 11650;
-			break;
-		case 4:
-			bus_clock =  8333;
-			break;
-		case 5:
-			bus_clock = 10000;
-			break;
-		case 6:
-			bus_clock = 13333;
-			break;
-		case 7:
 			bus_clock = 11666;
 			break;
-		case 12:
+		case 4:
 			bus_clock =  8000;
 			break;
-		case 13:
+		case 5:
 			bus_clock =  9333;
 			break;
-		case 14:
+		case 6:
 			bus_clock =  9000;
 			break;
-		case 15:
+		case 7:
 			bus_clock =  8888;
 			break;
-		case 20:
+		case 8:
 			bus_clock =  8750;
 			break;
 		default:

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_gpt.c,v 1.14 2014/11/04 07:43:00 mlelstv Exp $	*/
+/*	$NetBSD: dkwedge_gpt.c,v 1.14.2.1 2015/09/22 12:05:57 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.14 2014/11/04 07:43:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_gpt.c,v 1.14.2.1 2015/09/22 12:05:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,11 +178,11 @@ dkwedge_discover_gpt(struct disk *pdk, struct vnode *vp)
 	}
 	gpe_crc = le32toh(hdr->hdr_crc_table);
 
-	/* XXX Clamp entries at 128 for now. */
-	if (entries > 128) {
+	/* XXX Clamp entries at 512 for now. */
+	if (entries > 512) {
 		aprint_error("%s: WARNING: clamping number of GPT entries to "
-		    "128 (was %u)\n", pdk->dk_name, entries);
-		entries = 128;
+		    "512 (was %u)\n", pdk->dk_name, entries);
+		entries = 512;
 	}
 
 	lba_start = le64toh(hdr->hdr_lba_start);

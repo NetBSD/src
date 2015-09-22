@@ -1,4 +1,4 @@
-/*	$NetBSD: apmio.h,v 1.5 2008/04/28 20:23:47 martin Exp $	*/
+/*	$NetBSD: apmio.h,v 1.5.64.1 2015/09/22 12:05:56 skrll Exp $	*/
 /*-
  * Copyright (c) 1995 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,6 +29,8 @@
  */
 #ifndef _DEV_APM_APMIO_H_
 #define _DEV_APM_APMIO_H_
+
+#include <sys/ioccom.h>
 
 struct apm_event_info {
 	u_int type;

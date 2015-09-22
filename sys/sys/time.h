@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.67.4.1 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: time.h,v 1.67.4.2 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -46,13 +46,7 @@ struct timeval {
 	suseconds_t	tv_usec;	/* and microseconds */
 };
 
-/*
- * Structure defined by POSIX.1b to be like a timeval.
- */
-struct timespec {
-	time_t	tv_sec;		/* seconds */
-	long	tv_nsec;	/* and nanoseconds */
-};
+#include <sys/timespec.h>
 
 #if defined(_NETBSD_SOURCE)
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
@@ -179,7 +173,7 @@ timespec2bintime(const struct timespec *ts, struct bintime *bt)
 
 	bt->sec = ts->tv_sec;
 	/* 18446744073 = int(2^64 / 1000000000) */
-	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL; 
+	bt->frac = (uint64_t)ts->tv_nsec * (uint64_t)18446744073ULL;
 }
 
 static __inline void

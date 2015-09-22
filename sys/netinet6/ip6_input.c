@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.149.4.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.149.4.2 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,13 +62,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.149.4.2 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #include "opt_ipsec.h"
 #include "opt_compat_netbsd.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -419,7 +421,7 @@ ip6_input(struct mbuf *m)
 	 * to the usage conflict.
 	 * in6_setscope() then also checks and rejects the cases where src or
 	 * dst are the loopback address and the receiving interface
-	 * is not loopback. 
+	 * is not loopback.
 	 */
 	if (__predict_false(
 	    m_makewritable(&m, 0, sizeof(struct ip6_hdr), M_DONTWAIT)))
@@ -812,7 +814,7 @@ ip6_getdstifaddr(struct mbuf *m)
  * rtalertp - XXX: should be stored more smart way
  */
 int
-ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp, 
+ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
 	struct mbuf **mp, int *offp)
 {
 	struct mbuf *m = *mp;
@@ -857,7 +859,7 @@ ip6_hopopts_input(u_int32_t *plenp, u_int32_t *rtalertp,
  * opthead + hbhlen is located in continuous memory region.
  */
 static int
-ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen, 
+ip6_process_hopopts(struct mbuf *m, u_int8_t *opthead, int hbhlen,
 	u_int32_t *rtalertp, u_int32_t *plenp)
 {
 	struct ip6_hdr *ip6;
@@ -1032,7 +1034,7 @@ ip6_unknown_opt(u_int8_t *optp, struct mbuf *m, int off)
  * you are using IP6_EXTHDR_CHECK() not m_pulldown())
  */
 void
-ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp, 
+ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 	struct ip6_hdr *ip6, struct mbuf *m)
 {
 #ifdef RFC2292
@@ -1537,19 +1539,19 @@ ip6_delaux(struct mbuf *m)
 }
 
 #ifdef GATEWAY
-/* 
+/*
  * sysctl helper routine for net.inet.ip6.maxflows. Since
  * we could reduce this value, call ip6flow_reap();
  */
 static int
 sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
-{  
+{
 	int error;
-  
+
 	error = sysctl_lookup(SYSCTLFN_CALL(rnode));
 	if (error || newp == NULL)
 		return (error);
- 
+
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
 
@@ -1557,13 +1559,13 @@ sysctl_net_inet6_ip6_maxflows(SYSCTLFN_ARGS)
 
 	KERNEL_UNLOCK_ONE(NULL);
 	mutex_exit(softnet_lock);
- 
+
 	return (0);
 }
 
 static int
 sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
-{  
+{
 	int error, tmp;
 	struct sysctlnode node;
 
@@ -1590,7 +1592,7 @@ sysctl_net_inet6_ip6_hashsize(SYSCTLFN_ARGS)
 		 * EINVAL if not a power of 2
 		 */
 		error = EINVAL;
-	}	
+	}
 
 	return error;
 }
@@ -1913,7 +1915,7 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_mcast_pmtu, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
-#ifdef GATEWAY 
+#ifdef GATEWAY
 	sysctl_createv(clog, 0, NULL, NULL,
 			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 			CTLTYPE_INT, "maxflows",

@@ -10,23 +10,23 @@ SECTIONS
   {
     *(.text)
     *(.strings)
-     _etext = . ;
+    _etext = . ;
   }
   .data :
   {
     *(.data)
-     _edata = . ;
+    _edata = . ;
   }
   .bss 0x8c010000 :
   {
-     _bss_start = . ;
+    _bss_start = . ;
     *(.bss)
     *(COMMON)
-     _end = . ;
+    _end = . ;
   }
   .stack   :
   {
-     _stack = . ;
+    _stack = . ;
     *(.stack)
   }
 }

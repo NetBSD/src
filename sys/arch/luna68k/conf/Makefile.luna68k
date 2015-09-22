@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.luna68k,v 1.26 2014/11/13 16:18:38 tsutsui Exp $
+#	$NetBSD: Makefile.luna68k,v 1.26.2.1 2015/09/22 12:05:45 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -50,7 +50,8 @@ KERN_AS=	library
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 
-MD_OBJS=	locore.o ${FPSP}
+MD_OBJS=	locore.o
+MD_LIBS=	${FPSP}
 MD_CFILES=
 MD_SFILES=	
 

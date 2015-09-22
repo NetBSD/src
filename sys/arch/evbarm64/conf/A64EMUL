@@ -1,4 +1,4 @@
-# $NetBSD: A64EMUL,v 1.3 2014/08/23 20:26:57 dholland Exp $
+# $NetBSD: A64EMUL,v 1.3.2.1 2015/09/22 12:05:41 skrll Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/evbarm64/conf/std.a64emul"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"A64EMUL-$Revision: 1.3 $"
+ident		"A64EMUL-$Revision: 1.3.2.1 $"
 
 maxusers 32
 
@@ -39,7 +39,6 @@ options 	NTP			# kernel PLL for NTP
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC		# Cheap kernel consistency checks
 #options 	DEBUG			# Expensive debugging checks/support
-#options 	KMEMSTATS		# Collect kmem usage statistics
 options 	DDB			# kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 makeoptions	DEBUG="-g"

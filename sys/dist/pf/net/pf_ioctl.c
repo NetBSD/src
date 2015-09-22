@@ -1,4 +1,4 @@
-/*	$NetBSD: pf_ioctl.c,v 1.50 2014/07/25 08:10:39 dholland Exp $	*/
+/*	$NetBSD: pf_ioctl.c,v 1.50.4.1 2015/09/22 12:06:01 skrll Exp $	*/
 /*	$OpenBSD: pf_ioctl.c,v 1.182 2007/06/24 11:17:13 mcbride Exp $ */
 
 /*
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.50 2014/07/25 08:10:39 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.50.4.1 2015/09/22 12:06:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -104,7 +104,8 @@ __KERNEL_RCSID(0, "$NetBSD: pf_ioctl.c,v 1.50 2014/07/25 08:10:39 dholland Exp $
 #include <altq/altq.h>
 #endif
 
-void			 pfattach(int);
+#include "ioconf.h"
+
 #ifdef _MODULE
 void			 pfdetach(void);
 #endif /* _MODULE */

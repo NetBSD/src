@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.146.4.1 2015/06/06 14:40:25 skrll Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.146.4.2 2015/09/22 12:06:10 skrll Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,13 +102,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.1 2015/06/06 14:40:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.2 2015/09/22 12:06:10 skrll Exp $");
 
 #include "ppp.h"
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_gateway.h"
 #include "opt_ppp.h"
+#endif
 
 #ifdef INET
 #define VJC
@@ -164,6 +166,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.146.4.1 2015/06/06 14:40:25 skrll Exp $
 #define PACKETPTR	struct mbuf *
 #include <net/ppp-comp.h>
 #endif
+
+#include "ioconf.h"
 
 static int	pppsioctl(struct ifnet *, u_long, void *);
 static void	ppp_requeue(struct ppp_softc *);
@@ -224,7 +228,7 @@ static void ppp_compressor_rele(struct compressor *);
  * Called from boot code to establish ppp interfaces.
  */
 void
-pppattach(void)
+pppattach(int n __unused)
 {
 	extern struct linesw ppp_disc;
 
@@ -300,7 +304,7 @@ ppp_create(const char *name, int unit)
 	sc->sc_fastq.ifq_maxlen = IFQ_MAXLEN;
 	sc->sc_rawq.ifq_maxlen = IFQ_MAXLEN;
 	/* Ratio of 1:2 packets between the regular and the fast queue */
-	sc->sc_maxfastq = 2;	
+	sc->sc_maxfastq = 2;
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 	if_attach(&sc->sc_if);
 	if_alloc_sadl(&sc->sc_if);
@@ -1667,7 +1671,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		m->m_pkthdr.len -= PPP_HDRLEN;
 		m->m_data += PPP_HDRLEN;
 		m->m_len -= PPP_HDRLEN;
-#ifdef GATEWAY	
+#ifdef GATEWAY
 		if (ip6flow_fastforward(&m))
 			return;
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.92.2.1 2015/06/06 14:40:31 skrll Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.92.2.2 2015/09/22 12:06:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.92.2.1 2015/06/06 14:40:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.92.2.2 2015/09/22 12:06:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -84,27 +84,33 @@ ufs_inactive(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	struct inode *ip = VTOI(vp);
-	struct mount *transmp;
+	struct mount *mp = vp->v_mount;
 	mode_t mode;
-	int error = 0;
+	int allerror = 0, error;
+	bool wapbl_locked = false;
 
-	UFS_WAPBL_JUNLOCK_ASSERT(vp->v_mount);
+	UFS_WAPBL_JUNLOCK_ASSERT(mp);
 
-	transmp = vp->v_mount;
-	fstrans_start(transmp, FSTRANS_LAZY);
+	fstrans_start(mp, FSTRANS_LAZY);
 	/*
 	 * Ignore inodes related to stale file handles.
 	 */
 	if (ip->i_mode == 0)
 		goto out;
-	if (ip->i_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
+	if (ip->i_nlink <= 0 && (mp->mnt_flag & MNT_RDONLY) == 0) {
 #ifdef UFS_EXTATTR
 		ufs_extattr_vnode_inactive(vp, curlwp);
 #endif
 		if (ip->i_size != 0)
-			error = ufs_truncate(vp, 0, NOCRED);
+			allerror = ufs_truncate(vp, 0, NOCRED);
 #if defined(QUOTA) || defined(QUOTA2)
-		(void)chkiq(ip, -1, NOCRED, 0);
+		error = UFS_WAPBL_BEGIN(mp);
+		if (error) {
+			allerror = error;
+		} else {
+			wapbl_locked = true;
+			(void)chkiq(ip, -1, NOCRED, 0);
+		}
 #endif
 		DIP_ASSIGN(ip, rdev, 0);
 		mode = ip->i_mode;
@@ -118,21 +124,27 @@ ufs_inactive(void *v)
 	}
 
 	if (ip->i_flag & (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) {
-		error = UFS_WAPBL_BEGIN(vp->v_mount);
-		if (error)
-			goto out;
+		if (! wapbl_locked) {
+			error = UFS_WAPBL_BEGIN(mp);
+			if (error) {
+				allerror = error;
+				goto out;
+			}
+			wapbl_locked = true;
+		}
 		UFS_UPDATE(vp, NULL, NULL, 0);
-		UFS_WAPBL_END(vp->v_mount);
 	}
 out:
+	if (wapbl_locked)
+		UFS_WAPBL_END(mp);
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
 	*ap->a_recycle = (ip->i_mode == 0);
 	VOP_UNLOCK(vp);
-	fstrans_done(transmp);
-	return (error);
+	fstrans_done(mp);
+	return (allerror);
 }
 
 /*

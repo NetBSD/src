@@ -30,8 +30,8 @@
   POSSIBILITY OF SUCH DAMAGE.
 
 ******************************************************************************/
-/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 247822 2013-03-04 23:07:40Z jfv $*/
-/*$NetBSD: ixgbe_82599.c,v 1.3.4.2 2015/06/06 14:40:12 skrll Exp $*/
+/*$FreeBSD: head/sys/dev/ixgbe/ixgbe_82599.c 251964 2013-06-18 21:28:19Z jfv $*/
+/*$NetBSD: ixgbe_82599.c,v 1.3.4.3 2015/09/22 12:05:59 skrll Exp $*/
 
 #include "ixgbe_type.h"
 #include "ixgbe_82599.h"
@@ -78,7 +78,7 @@ void ixgbe_init_mac_link_ops_82599(struct ixgbe_hw *hw)
 	 * and MNG not enabled
 	 */
 	if ((mac->ops.get_media_type(hw) == ixgbe_media_type_fiber) &&
-	    !(ixgbe_mng_enabled(hw))) {
+	    !hw->mng_fw_enabled) {
 		mac->ops.disable_tx_laser =
 				       &ixgbe_disable_tx_laser_multispeed_fiber;
 		mac->ops.enable_tx_laser =
@@ -181,11 +181,13 @@ s32 ixgbe_setup_sfp_modules_82599(struct ixgbe_hw *hw)
 			goto setup_sfp_out;
 		}
 
-		hw->eeprom.ops.read(hw, ++data_offset, &data_value);
+		if (hw->eeprom.ops.read(hw, ++data_offset, &data_value))
+			goto setup_sfp_err;
 		while (data_value != 0xffff) {
 			IXGBE_WRITE_REG(hw, IXGBE_CORECTL, data_value);
 			IXGBE_WRITE_FLUSH(hw);
-			hw->eeprom.ops.read(hw, ++data_offset, &data_value);
+			if (hw->eeprom.ops.read(hw, ++data_offset, &data_value))
+				goto setup_sfp_err;
 		}
 
 		/* Release the semaphore */
@@ -230,6 +232,15 @@ s32 ixgbe_setup_sfp_modules_82599(struct ixgbe_hw *hw)
 
 setup_sfp_out:
 	return ret_val;
+
+setup_sfp_err:
+	/* Release the semaphore */
+	hw->mac.ops.release_swfw_sync(hw, IXGBE_GSSR_MAC_CSR_SM);
+	/* Delay obtaining semaphore again to allow FW access */
+	msec_delay(hw->eeprom.semaphore_delay);
+	ERROR_REPORT2(IXGBE_ERROR_INVALID_STATE,
+		      "eeprom read at offset %d failed", data_offset);
+	return IXGBE_ERR_PHY;
 }
 
 /**
@@ -314,6 +325,11 @@ s32 ixgbe_init_ops_82599(struct ixgbe_hw *hw)
 	/* Manageability interface */
 	mac->ops.set_fw_drv_ver = &ixgbe_set_fw_drv_ver_generic;
 
+
+	mac->ops.get_rtrup2tc = &ixgbe_dcb_get_rtrup2tc_generic;
+
+	/* Cache if MNG FW is up */
+	hw->mng_fw_enabled = ixgbe_mng_enabled(hw);
 
 	return ret_val;
 }
@@ -477,6 +493,29 @@ enum ixgbe_media_type ixgbe_get_media_type_82599(struct ixgbe_hw *hw)
 	}
 out:
 	return media_type;
+}
+
+/**
+ *  ixgbe_stop_mac_link_on_d3_82599 - Disables link on D3
+ *  @hw: pointer to hardware structure
+ *
+ *  Disables link during D3 power down sequence.
+ *
+ **/
+void ixgbe_stop_mac_link_on_d3_82599(struct ixgbe_hw *hw)
+{
+	u32 autoc2_reg;
+	u16 ee_ctrl_2 = 0;
+
+	DEBUGFUNC("ixgbe_stop_mac_link_on_d3_82599");
+	ixgbe_read_eeprom(hw, IXGBE_EEPROM_CTRL_2, &ee_ctrl_2);
+
+	if (!hw->mng_fw_enabled && !hw->wol_enabled &&
+		ee_ctrl_2 & IXGBE_EEPROM_CCD_BIT) {
+		autoc2_reg = IXGBE_READ_REG(hw, IXGBE_AUTOC2);
+		autoc2_reg |= IXGBE_AUTOC2_LINK_DISABLE_ON_D3_MASK;
+		IXGBE_WRITE_REG(hw, IXGBE_AUTOC2, autoc2_reg);
+	}
 }
 
 /**
@@ -754,8 +793,8 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 			msec_delay(100);
 
 			/* If we have link, just jump out */
-			status = ixgbe_check_link(hw, &link_speed,
-						  &link_up, FALSE);
+			status = ixgbe_check_link(hw, &link_speed, &link_up,
+			    FALSE);
 			if (status != IXGBE_SUCCESS)
 				return status;
 
@@ -1123,7 +1162,8 @@ s32 ixgbe_reset_hw_82599(struct ixgbe_hw *hw)
 {
 	ixgbe_link_speed link_speed;
 	s32 status;
-	u32 ctrl, i, autoc, autoc2;
+	u32 ctrl, i, autoc2;
+	u32 curr_lms;
 	bool link_up = FALSE;
 
 	DEBUGFUNC("ixgbe_reset_hw_82599");
@@ -1156,6 +1196,13 @@ s32 ixgbe_reset_hw_82599(struct ixgbe_hw *hw)
 	/* Reset PHY */
 	if (hw->phy.reset_disable == FALSE && hw->phy.ops.reset != NULL)
 		hw->phy.ops.reset(hw);
+
+	/* remember AUTOC from before we reset */
+	if (hw->mac.cached_autoc)
+		curr_lms = hw->mac.cached_autoc & IXGBE_AUTOC_LMS_MASK;
+	else
+		curr_lms = IXGBE_READ_REG(hw, IXGBE_AUTOC) &
+					  IXGBE_AUTOC_LMS_MASK;
 
 mac_reset_top:
 	/*
@@ -1205,7 +1252,7 @@ mac_reset_top:
 	 * stored off yet.  Otherwise restore the stored original
 	 * values since the reset operation sets back to defaults.
 	 */
-	autoc = IXGBE_READ_REG(hw, IXGBE_AUTOC);
+	hw->mac.cached_autoc = IXGBE_READ_REG(hw, IXGBE_AUTOC);
 	autoc2 = IXGBE_READ_REG(hw, IXGBE_AUTOC2);
 
 	/* Enable link if disabled in NVM */
@@ -1216,12 +1263,24 @@ mac_reset_top:
 	}
 
 	if (hw->mac.orig_link_settings_stored == FALSE) {
-		hw->mac.orig_autoc = autoc;
+		hw->mac.orig_autoc = hw->mac.cached_autoc;
 		hw->mac.orig_autoc2 = autoc2;
-		hw->mac.cached_autoc = autoc;
 		hw->mac.orig_link_settings_stored = TRUE;
 	} else {
-		if (autoc != hw->mac.orig_autoc) {
+
+		/* If MNG FW is running on a multi-speed device that
+		 * doesn't autoneg with out driver support we need to
+		 * leave LMS in the state it was before we MAC reset.
+		 * Likewise if we support WoL we don't want change the
+		 * LMS state.
+		 */
+		if ((hw->phy.multispeed_fiber && hw->mng_fw_enabled) ||
+		    hw->wol_enabled)
+			hw->mac.orig_autoc =
+				(hw->mac.orig_autoc & ~IXGBE_AUTOC_LMS_MASK) |
+				curr_lms;
+
+		if (hw->mac.cached_autoc != hw->mac.orig_autoc) {
 			/* Need SW/FW semaphore around AUTOC writes if LESM is
 			 * on, likewise reset_pipeline requires us to hold
 			 * this lock as it also writes to AUTOC.
@@ -2276,11 +2335,11 @@ s32 ixgbe_enable_rx_dma_82599(struct ixgbe_hw *hw, u32 regval)
  *  Returns IXGBE_ERR_EEPROM_VERSION if the FW is not present or
  *  if the FW version is not supported.
  **/
-s32 ixgbe_verify_fw_version_82599(struct ixgbe_hw *hw)
+static s32 ixgbe_verify_fw_version_82599(struct ixgbe_hw *hw)
 {
 	s32 status = IXGBE_ERR_EEPROM_VERSION;
 	u16 fw_offset, fw_ptp_cfg_offset;
-	u16 fw_version = 0;
+	u16 fw_version;
 
 	DEBUGFUNC("ixgbe_verify_fw_version_82599");
 
@@ -2291,22 +2350,37 @@ s32 ixgbe_verify_fw_version_82599(struct ixgbe_hw *hw)
 	}
 
 	/* get the offset to the Firmware Module block */
-	hw->eeprom.ops.read(hw, IXGBE_FW_PTR, &fw_offset);
+	if (hw->eeprom.ops.read(hw, IXGBE_FW_PTR, &fw_offset)) {
+		ERROR_REPORT2(IXGBE_ERROR_INVALID_STATE,
+			      "eeprom read at offset %d failed", IXGBE_FW_PTR);
+		return IXGBE_ERR_EEPROM_VERSION;
+	}
 
 	if ((fw_offset == 0) || (fw_offset == 0xFFFF))
 		goto fw_version_out;
 
 	/* get the offset to the Pass Through Patch Configuration block */
-	hw->eeprom.ops.read(hw, (fw_offset +
+	if (hw->eeprom.ops.read(hw, (fw_offset +
 				 IXGBE_FW_PASSTHROUGH_PATCH_CONFIG_PTR),
-				 &fw_ptp_cfg_offset);
+				 &fw_ptp_cfg_offset)) {
+		ERROR_REPORT2(IXGBE_ERROR_INVALID_STATE,
+			      "eeprom read at offset %d failed",
+			      fw_offset +
+			      IXGBE_FW_PASSTHROUGH_PATCH_CONFIG_PTR);
+		return IXGBE_ERR_EEPROM_VERSION;
+	}
 
 	if ((fw_ptp_cfg_offset == 0) || (fw_ptp_cfg_offset == 0xFFFF))
 		goto fw_version_out;
 
 	/* get the firmware version */
-	hw->eeprom.ops.read(hw, (fw_ptp_cfg_offset +
-			    IXGBE_FW_PATCH_VERSION_4), &fw_version);
+	if (hw->eeprom.ops.read(hw, (fw_ptp_cfg_offset +
+			    IXGBE_FW_PATCH_VERSION_4), &fw_version)) {
+		ERROR_REPORT2(IXGBE_ERROR_INVALID_STATE,
+			      "eeprom read at offset %d failed",
+			      fw_ptp_cfg_offset + IXGBE_FW_PATCH_VERSION_4);
+		return IXGBE_ERR_EEPROM_VERSION;
+	}
 
 	if (fw_version > 0x5)
 		status = IXGBE_SUCCESS;

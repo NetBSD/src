@@ -1,4 +1,4 @@
-#	$NetBSD: files.vax,v 1.118.30.1 2015/04/06 15:18:03 skrll Exp $
+#	$NetBSD: files.vax,v 1.118.30.2 2015/09/22 12:05:53 skrll Exp $
 #
 # new style config file for vax architecture
 #
@@ -185,6 +185,22 @@ device	smg: displaydev, wsemuldisplaydev
 attach	smg at vsbus
 file	arch/vax/vsa/smg.c		smg needs-flag
 
+# Monochrome QVSS framebuffer on qbus (VCB01)
+device	qv {}: displaydev, wsemuldisplaydev
+attach	qv at uba
+attach  genfb at qv with genfb_qv
+file	arch/vax/uba/qv.c		qv|genfb_qv needs-flag
+
+device	qvaux { line=-1 }: tty
+attach	qvaux at qv
+file	arch/vax/uba/qvaux.c		qvaux needs-flag
+
+attach	lkkbd at qvaux with qvkbd
+file	arch/vax/uba/qvkbd.c		qvkbd needs-flag
+
+attach	lkms at qvaux with qvms
+file	arch/vax/uba/qvms.c		qvms needs-flag
+
 # Color framebuffer on VS4000/60.
 device	lcg: displaydev, wsemuldisplaydev
 attach	lcg at vsbus
@@ -289,11 +305,6 @@ file	arch/vax/uba/va.c		va needs-flag
 device	vp
 attach	vp at uba
 file	arch/vax/uba/vp.c		vp needs-flag
-
-# QVSS at UBA
-device	qv
-attach	qv at uba
-file	arch/vax/uba/qv.c		qv needs-flag
 
 # ACC LH/DH IMP on UBA
 device	acc: ifnet

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.6.6.1 2015/06/06 14:40:02 skrll Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.6.6.2 2015/09/22 12:05:47 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.6.6.1 2015/06/06 14:40:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.6.6.2 2015/09/22 12:05:47 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.6.6.1 2015/06/06 14:40:02 skrll Exp 
 #include <uvm/uvm_pglist.h>
 #include <uvm/uvm_extern.h>
 #include <mips/regnum.h>
-#include <mips/asm.h> 
+#include <mips/asm.h>
 #include <mips/pmap.h>
 #include <mips/rmi/rmixlreg.h>
 #include <mips/rmi/rmixlvar.h>
@@ -88,7 +88,7 @@ struct cpu_info *
 #endif	/* DEBUG */
 
 CFATTACH_DECL_NEW(cpu_rmixl, sizeof(struct rmixl_cpu_softc),
-	cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL); 
+	cpu_rmixl_match, cpu_rmixl_attach, NULL, NULL);
 
 #ifdef MULTIPROCESSOR
 static struct rmixl_cpu_trampoline_args rmixl_cpu_trampoline_args;
@@ -118,7 +118,7 @@ cpu_rmixl_watchpoint_init(void)
  * cpu_xls616_erratum
  *
  * on the XLS616, COUNT/COMPARE clock regs seem to interact between
- * threads on a core 
+ * threads on a core
  *
  * the symptom of the error is retarded clock interrupts
  * and very slow apparent system performance
@@ -174,7 +174,7 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 	struct cpu_info *ci = NULL;
 	static bool once = false;
 	extern void rmixl_spl_init_cpu(void);
-	
+
 	if (once == false) {
 		/* first attach is the primary cpu */
 		once = true;
@@ -218,13 +218,12 @@ cpu_rmixl_attach(device_t parent, device_t self, void *aux)
 			return;
 		}
 
-		const u_long cpu_mask = 1L << cpu_index(ci);
 		for (size_t i=0; i < 10000; i++) {
-			if ((cpus_hatched & cpu_mask) != 0)
+			if (!kcpuset_isset(cpus_hatched, cpu_index(ci)))
 				 break;
 			DELAY(100);
 		}
-		if ((cpus_hatched & cpu_mask) == 0) {
+		if (!kcpuset_isset(cpus_hatched, cpu_index(ci))) {
 			aprint_error(": failed to hatch\n");
 			return;
 		}
@@ -337,7 +336,7 @@ cpu_setup_trampoline_common(struct cpu_info *ci, struct rmixl_cpu_trampoline_arg
 {
 	struct lwp *l = ci->ci_data.cpu_idlelwp;
 	uintptr_t stacktop;
- 
+
 #ifdef DIAGNOSTIC
 	/* Ensure our current stack can be used by the firmware */
 	uint64_t sp;
@@ -393,7 +392,7 @@ cpu_setup_trampoline_callback(struct cpu_info *ci)
 	struct rmixl_cpu_trampoline_args *ta = &rmixl_cpu_trampoline_args;
 	extern void rmixl_cpu_trampoline(void *);
 	extern void rmixlfw_wakeup_cpu(void *, void *, u_int64_t, void *);
- 
+
 	cpu_setup_trampoline_common(ci, ta);
 
 #if _LP64
@@ -475,9 +474,11 @@ rmixl_cpuinfo_print(u_int cpuindex)
 		printf("ci_tlb_slot %d\n", ci->ci_tlb_slot);
 		printf("ci_pmap_asid_cur %d\n", ci->ci_pmap_asid_cur);
 		printf("ci_tlb_info %p\n", ci->ci_tlb_info);
-		printf("ci_pmap_seg0tab %p\n", ci->ci_pmap_seg0tab);
+		printf("ci_pmap_kern_segtab %p\n", ci->ci_pmap_kern_segtab);
+		printf("ci_pmap_user_segtab %p\n", ci->ci_pmap_user_segtab);
 #ifdef _LP64
-		printf("ci_pmap_segtab %p\n", ci->ci_pmap_segtab);
+		printf("ci_pmap_kern_seg0tab %p\n", ci->ci_pmap_kern_seg0tab);
+		printf("ci_pmap_user_seg0tab %p\n", ci->ci_pmap_user_seg0tab);
 #else
 		printf("ci_pmap_srcbase %#"PRIxVADDR"\n", ci->ci_pmap_srcbase);
 		printf("ci_pmap_dstbase %#"PRIxVADDR"\n", ci->ci_pmap_dstbase);

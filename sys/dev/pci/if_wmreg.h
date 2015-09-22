@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.65.2.2 2015/06/06 14:40:09 skrll Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.65.2.3 2015/09/22 12:05:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -299,6 +299,7 @@ struct livengood_tcpip_ctxdesc {
 #define	EERD_DATA_SHIFT	16	/* Offset to data in EEPROM read/write registers */
 
 #define	WMREG_CTRL_EXT	0x0018	/* Extended Device Control Register */
+#define	CTRL_EXT_NSICR		__BIT(0) /* Non Interrupt clear on read */
 #define	CTRL_EXT_GPI_EN(x)	(1U << (x)) /* gpin interrupt enable */
 #define	CTRL_EXT_SWDPINS_SHIFT	4
 #define	CTRL_EXT_SWDPINS_MASK	0x0d
@@ -326,8 +327,10 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_LINK_MODE_TBI		0x00C00000
 #define	CTRL_EXT_LINK_MODE_PCIE_SERDES	0x00C00000
 #define	CTRL_EXT_PHYPDEN	0x00100000
+#define	CTRL_EXT_EIAME		__BIT(24) /* Extended Interrupt Auto Mask En */
 #define CTRL_EXT_I2C_ENA	0x02000000  /* I2C enable */
 #define	CTRL_EXT_DRV_LOAD	0x10000000
+#define	CTRL_EXT_PBA		__BIT(31) /* PBA Support */
 
 #define	WMREG_MDIC	0x0020	/* MDI Control Register */
 #define	MDIC_DATA(x)	((x) & 0xffff)
@@ -430,6 +433,11 @@ struct livengood_tcpip_ctxdesc {
 #define	ICR_MDAC	(1U << 9)	/* MDIO access complete */
 #define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
 #define	ICR_GPI(x)	(1U << (x))	/* general purpose interrupts */
+#define	ICR_RXQ0	__BIT(20)	/* 82574: Rx queue 0 interrupt */
+#define	ICR_RXQ1	__BIT(21)	/* 82574: Rx queue 1 interrupt */
+#define	ICR_TXQ0	__BIT(22)	/* 82574: Tx queue 0 interrupt */
+#define	ICR_TXQ1	__BIT(23)	/* 82574: Tx queue 1 interrupt */
+#define	ICR_OTHER	__BIT(24)	/* 82574: Other interrupt */
 #define	ICR_INT		(1U << 31)	/* device generated an interrupt */
 
 #define WMREG_ITR	0x00c4	/* Interrupt Throttling Register */
@@ -439,11 +447,39 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_ICS	0x00c8	/* Interrupt Cause Set Register */
 	/* See ICR bits. */
 
+#define WMREG_IVAR	0x00e4  /* Interrupt Vector Allocation Register */
+#define WMREG_IVAR0	0x01700 /* Interrupt Vector Allocation */
+#define IVAR_ALLOC_MASK  __BITS(0, 6)	/* Bit 5 and 6 are reserved */
+#define IVAR_VALID       __BIT(7)
+/* IVAR definitions for 82580 and newer */
+#define WMREG_IVAR_Q(x)	(WMREG_IVAR0 + ((x) % 2) * 4)
+#define IVAR_TX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 8 : 24))
+#define IVAR_RX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 0 : 16))
+/* IVAR definitions for 82576 */
+#define WMREG_IVAR_Q_82576(x)	(WMREG_IVAR0 + ((x) & 0x7) * 4)
+#define IVAR_TX_MASK_Q_82576(x) (0x000000ff << (((x) / 8) == 0 ? 8 : 24))
+#define IVAR_RX_MASK_Q_82576(x) (0x000000ff << (((x) / 8) == 0 ? 0 : 16))
+/* IVAR definitions for 82574 */
+#define IVAR_ALLOC_MASK_82574	__BITS(0, 2)
+#define IVAR_VALID_82574	__BIT(3)
+#define IVAR_TX_MASK_Q_82574(x) (0x0000000f << ((x) == 0 ? 8 : 12))
+#define IVAR_RX_MASK_Q_82574(x) (0x0000000f << ((x) == 0 ? 0 : 4))
+#define IVAR_OTHER_MASK		__BITS(16, 19)
+#define IVAR_INT_ON_ALL_WB	__BIT(31)
+
+#define WMREG_IVAR_MISC	0x01740 /* IVAR for other causes */
+#define IVAR_MISC_TCPTIMER __BITS(0, 7)
+#define IVAR_MISC_OTHER	__BITS(8, 15)
+
 #define	WMREG_IMS	0x00d0	/* Interrupt Mask Set Register */
 	/* See ICR bits. */
 
 #define	WMREG_IMC	0x00d8	/* Interrupt Mask Clear Register */
 	/* See ICR bits. */
+
+#define	WMREG_EIAC_82574 0x00dc	/* Interrupt Auto Clear Register */
+#define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ0 | ICR_RXQ1		\
+	| ICR_TXQ0 | ICR_TXQ1 | ICR_OTHER)
 
 #define	WMREG_RCTL	0x0100	/* Receive Control */
 #define	RCTL_EN		(1U << 1)	/* receiver enable */
@@ -716,6 +752,12 @@ struct livengood_tcpip_ctxdesc {
 #define	PBA_ECC_STAT_CLR	0x00000002 /* Clear ECC error counter */
 #define	PBA_ECC_INT_EN		0x00000004 /* Enable ICR bit 5 on ECC error */
 
+#define WMREG_GPIE	0x01514 /* General Purpose Interrupt Enable */
+#define GPIE_NSICR	__BIT(0)	/* Non Selective Interrupt Clear */
+#define GPIE_MULTI_MSIX	__BIT(4)	/* Multiple MSIX */
+#define GPIE_EIAME	__BIT(30)	/* Extended Interrupt Auto Mask Ena. */
+#define GPIE_PBA	__BIT(31)	/* PBA support */
+
 #define WMREG_EICS	0x01520  /* Ext. Interrupt Cause Set - WO */
 #define WMREG_EIMS	0x01524  /* Ext. Interrupt Mask Set/Read - RW */
 #define WMREG_EIMC	0x01528  /* Ext. Interrupt Mask Clear - WO */
@@ -723,6 +765,8 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_EIAM	0x01530  /* Ext. Interrupt Ack Auto Clear Mask - RW */
 
 #define WMREG_EICR	0x01580  /* Ext. Interrupt Cause Read - R/clr */
+
+#define WMREG_MSIXBM(x)	(0x1600 + (x) * 4) /* MSI-X Allocation */
 
 #define EITR_RX_QUEUE0	0x00000001 /* Rx Queue 0 Interrupt */
 #define EITR_RX_QUEUE1	0x00000002 /* Rx Queue 1 Interrupt */
@@ -1069,6 +1113,13 @@ struct livengood_tcpip_ctxdesc {
 #define INVM_DEFAULT_AL		0x202f
 #define INVM_AUTOLOAD		0x0a
 #define INVM_PLL_WO_VAL		0x0010
+
+/* Version and Image Type field */
+#define INVM_VER_1	__BITS(12,3)
+#define INVM_VER_2	__BITS(22,13)
+#define INVM_IMGTYPE	__BITS(28,23)
+#define INVM_MINOR	__BITS(3,0)
+#define INVM_MAJOR	__BITS(9,4)
 
 /* Word definitions for ID LED Settings */
 #define ID_LED_RESERVED_FFFF 0xFFFF

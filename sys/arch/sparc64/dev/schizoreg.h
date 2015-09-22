@@ -1,4 +1,4 @@
-/*	$NetBSD: schizoreg.h,v 1.9 2012/03/25 03:13:08 mrg Exp $	*/
+/*	$NetBSD: schizoreg.h,v 1.9.16.1 2015/09/22 12:05:52 skrll Exp $	*/
 /*	$OpenBSD: schizoreg.h,v 1.20 2008/07/12 13:08:04 kettenis Exp $	*/
 
 /*
@@ -32,10 +32,18 @@ struct schizo_pbm_regs {
 	volatile u_int64_t	_unused1[64];		/* 0x0000 - 0x01ff */
 	struct iommureg2	iommu;			/* 0x0200 - 0x03ff */
 	volatile u_int64_t	_unused2[384];
-	volatile u_int64_t	imap[64];
+	volatile u_int64_t	imap[64];		/* 0x1000 - 0x11ff */
 	volatile u_int64_t	_unused3[64];
-	volatile u_int64_t	iclr[64];
-	volatile u_int64_t	_unused4[320];
+	volatile u_int64_t	iclr[64];		/* 0x1400 - 0x15ff */
+	volatile u_int64_t	_unused4_0[64];
+	volatile u_int64_t	_unused4_1[64];		/* 0x1800 - 0x19ff */
+	volatile u_int64_t	intr_retry;		/* 0x1a00 */
+	volatile u_int64_t	_unused4_2;
+	volatile u_int64_t	dma_flushsync_compl;	/* 0x1a10 */
+	volatile u_int64_t	dma_flushsync_pend;	/* 0x1a18 */
+	volatile u_int64_t	_unused4_3[60];
+	volatile u_int64_t	_unused4_4[64];
+	volatile u_int64_t	_unused4_5[64];
 	volatile u_int64_t	ctrl;
 	volatile u_int64_t	__unused0;
 	volatile u_int64_t	afsr;
@@ -112,6 +120,8 @@ struct schizo_regs {
 #define	SCZ_PCI_ICLR_BASE		0x01400
 #define	SCZ_PCI_INTR_RETRY		0x01a00	/* interrupt retry */
 #define	SCZ_PCI_DMA_FLUSH		0x01a08	/* pci consistent dma flush */
+#define	TOM_PCI_DMA_FLUSH_COMPLETE	0x01a10	/* diag */
+#define	TOM_PCI_DMA_FLUSH_PENDING	0x01a18	/* Tomatillo version */
 #define	SCZ_PCI_CTRL			0x02000
 #define	SCZ_PCI_AFSR			0x02010
 #define	SCZ_PCI_AFAR			0x02018

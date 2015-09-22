@@ -1,4 +1,4 @@
-/*	$NetBSD: Locore.c,v 1.25 2014/02/26 21:42:40 macallan Exp $	*/
+/*	$NetBSD: Locore.c,v 1.25.6.1 2015/09/22 12:05:46 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -75,6 +75,7 @@ __asm(
 "       cmpi    0,1,%r0,0x02  	\n" /* 601 CPU = 0x0001 */
 "       blt     1f		\n" /* skip over non-601 BAT setup */
 	/*non PPC 601 BATs*/
+"	li	%r0,0		\n"
 "	mtibatu	0,%r0		\n"
 "	mtibatu	1,%r0		\n"
 "	mtibatu	2,%r0		\n"
@@ -93,7 +94,8 @@ __asm(
 "	b 2f			\n"
 
 	/* PPC 601 BATs*/
-"1:	mtibatu	0,%r0		\n"
+"1:	li	%r0,0		\n"
+"	mtibatu	0,%r0		\n"
 "      	mtibatu 1,%r0           \n"
 "      	mtibatu 2,%r0           \n"
 "      	mtibatu 3,%r0           \n"

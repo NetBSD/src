@@ -1,4 +1,4 @@
-/*	$NetBSD: wtreg.h,v 1.8 2005/12/11 12:22:03 christos Exp $	*/
+/*	$NetBSD: wtreg.h,v 1.8.140.1 2015/09/22 12:05:58 skrll Exp $	*/
 
 /*
  * Streamer tape driver.
@@ -49,6 +49,8 @@
 /*
  *  Copyright 1988, 1989 by Intel Corporation
  */
+
+#include <sys/ioccom.h>
 
 /* ioctl for direct QIC commands */
 #define WTQICMD         _IO('W', 0)

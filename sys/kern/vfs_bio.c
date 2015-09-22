@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.252.2.1 2015/04/06 15:18:20 skrll Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.252.2.2 2015/09/22 12:06:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,9 +123,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.1 2015/04/06 15:18:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.252.2.2 2015/09/22 12:06:07 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -978,7 +980,7 @@ brelsel(buf_t *bp, int set)
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(!cv_has_waiters(&bp->b_done));
 	KASSERT(bp->b_refcnt > 0);
-	
+
 	SET(bp->b_cflags, set);
 
 	KASSERT(ISSET(bp->b_cflags, BC_BUSY));
@@ -1894,7 +1896,7 @@ getiobuf(struct vnode *vp, bool waitok)
 		bp->b_objlock = &buffer_lock;
 	else
 		bp->b_objlock = vp->v_interlock;
-	
+
 	return bp;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mace.c,v 1.20.6.1 2015/04/06 15:18:02 skrll Exp $	*/
+/*	$NetBSD: mace.c,v 1.20.6.2 2015/09/22 12:05:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Christopher Sekiya
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.20.6.1 2015/04/06 15:18:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mace.c,v 1.20.6.2 2015/09/22 12:05:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,7 +139,7 @@ mace_init_bus(void)
 	mace_isa_bus_mem_init(&mace_isa_mbst, NULL);
 	mace_isa_memt = &mace_isa_mbst;
 }
-	
+
 static void
 mace_attach(device_t parent, device_t self, void *aux)
 {
@@ -261,7 +261,7 @@ mace_intr_establish(int intr, int level, int (*func)(void *), void *arg)
 			maceintrtab[i].intrmask = level;
 			snprintf(maceintrtab[i].evname,
 			    sizeof(maceintrtab[i].evname),
-			    "intr %d level 0x%x", intr, level);
+			    "intr %d lv 0x%x", intr, level);
 			evcnt_attach_dynamic(&maceintrtab[i].evcnt,
 			    EVCNT_TYPE_INTR, NULL,
 			    "mace", maceintrtab[i].evname);

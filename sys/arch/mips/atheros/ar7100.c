@@ -29,18 +29,19 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: ar7100.c,v 1.2 2011/07/31 23:10:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar7100.c,v 1.2.30.1 2015/09/22 12:05:46 skrll Exp $");
 
 #define	__INTR_PRIVATE
 #include "pci.h"
 #include "opt_memsize.h"
 
 #include <sys/param.h>
-
 #include <sys/device.h>
+#include <sys/cpu.h>
 
 #include <prop/proplib.h>
 
+#include <mips/cpuregs.h>
 #include <mips/atheros/include/platform.h>
 #include <mips/atheros/include/ar9344reg.h>
 

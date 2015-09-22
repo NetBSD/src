@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.1.2.3 2015/06/06 14:40:07 skrll Exp $ */
+/* $NetBSD: hdaudio.c,v 1.1.2.4 2015/09/22 12:05:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.1.2.3 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.1.2.4 2015/09/22 12:05:57 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1215,7 +1215,8 @@ hdaudio_stream_start(struct hdaudio_stream *st, int blksize,
 	KASSERT(st->st_bdl.dma_valid == true);
 
 	hdaudio_stream_stop(st);
-	hdaudio_stream_reset(st);
+	if ((sc->sc_flags & HDAUDIO_FLAG_NO_STREAM_RESET) == 0)
+		hdaudio_stream_reset(st);
 
 	/*
 	 * Configure buffer descriptor list

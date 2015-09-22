@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.61.2.1 2015/04/06 15:18:23 skrll Exp $	*/
+/*	$NetBSD: mld6.c,v 1.61.2.2 2015/09/22 12:06:11 skrll Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,9 +102,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.1 2015/04/06 15:18:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.61.2.2 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,7 +394,7 @@ mld_input(struct mbuf *m, int off)
 	 *
 	 * In Non-Listener state, we simply don't have a membership record.
 	 * In Delaying Listener state, our timer is running (in6m->in6m_timer)
-	 * In Idle Listener state, our timer is not running 
+	 * In Idle Listener state, our timer is not running
 	 * (in6m->in6m_timer==IN6M_TIMER_UNDEF)
 	 *
 	 * The flag is in6m->in6m_state, it is set to MLD_OTHERLISTENER if
@@ -499,7 +501,7 @@ mld_input(struct mbuf *m, int off)
 }
 
 static void
-mld_sendpkt(struct in6_multi *in6m, int type, 
+mld_sendpkt(struct in6_multi *in6m, int type,
 	const struct in6_addr *dst)
 {
 	struct mbuf *mh;
@@ -620,7 +622,7 @@ mld_allocbuf(struct mbuf **mh, int len, struct in6_multi *in6m,
  * Add an address to the list of IP6 multicast addresses for a given interface.
  */
 struct	in6_multi *
-in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp, 
+in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 	int *errorp, int timer)
 {
 	struct	in6_ifaddr *ia;
@@ -761,7 +763,7 @@ in6_delmulti(struct in6_multi *in6m)
 
 
 struct in6_multi_mship *
-in6_joingroup(struct ifnet *ifp, struct in6_addr *addr, 
+in6_joingroup(struct ifnet *ifp, struct in6_addr *addr,
 	int *errorp, int timer)
 {
 	struct in6_multi_mship *imm;

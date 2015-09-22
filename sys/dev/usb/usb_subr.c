@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.16 2015/06/26 16:19:28 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.17 2015/09/22 12:06:01 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.16 2015/06/26 16:19:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.17 2015/09/22 12:06:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -929,7 +929,7 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 			    loc != uiaa.uiaa_configno)
 				continue;
 			loc = locators[USBIFIFCF_INTERFACE];
-			if (loc != USBIFIFCF_INTERFACE &&
+			if (loc != USBIFIFCF_INTERFACE_DEFAULT &&
 			    loc != uiaa.uiaa_ifaceno)
 				continue;
 		}

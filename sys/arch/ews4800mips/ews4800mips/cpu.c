@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.4 2011/02/20 07:55:20 matt Exp $	*/
+/*	$NetBSD: cpu.c,v 1.4.32.1 2015/09/22 12:05:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -26,12 +26,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4 2011/02/20 07:55:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.4.32.1 2015/09/22 12:05:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/cpu.h>
+
+#include <mips/locore.h>
 
 #include <machine/autoconf.h>
 

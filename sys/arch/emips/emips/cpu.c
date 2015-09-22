@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.2 2011/02/22 08:20:20 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.2.36.1 2015/09/22 12:05:40 skrll Exp $ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -28,11 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2 2011/02/22 08:20:20 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.2.36.1 2015/09/22 12:05:40 skrll Exp $");
 
 #include "ioconf.h"
 
 #include <sys/param.h>
+#include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 

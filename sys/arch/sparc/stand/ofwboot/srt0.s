@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.s,v 1.6 2007/10/17 19:57:16 garbled Exp $	*/
+/*	$NetBSD: srt0.s,v 1.6.84.1 2015/09/22 12:05:52 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -136,7 +136,6 @@ _C_LABEL(syncicache):
  */
 	.align 8
 	.globl	_C_LABEL(openfirmware)
-	.proc 1
 	FTYPE(openfirmware)
 _C_LABEL(openfirmware):
 	andcc	%sp, 1, %g0

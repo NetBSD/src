@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.73 2013/03/18 19:35:42 plunky Exp $ */
+/* $NetBSD: kern_auth.c,v 1.73.14.1 2015/09/22 12:06:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.73 2013/03/18 19:35:42 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.73.14.1 2015/09/22 12:06:07 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -154,6 +154,8 @@ void
 kauth_cred_hold(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt > 0);
 
 	atomic_inc_uint(&cred->cr_refcnt);
@@ -165,6 +167,8 @@ kauth_cred_free(kauth_cred_t cred)
 {
 
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt > 0);
 	ASSERT_SLEEPABLE();
 
@@ -180,7 +184,11 @@ static void
 kauth_cred_clone1(kauth_cred_t from, kauth_cred_t to, bool copy_groups)
 {
 	KASSERT(from != NULL);
+	KASSERT(from != NOCRED);
+	KASSERT(from != FSCRED);
 	KASSERT(to != NULL);
+	KASSERT(to != NOCRED);
+	KASSERT(to != FSCRED);
 	KASSERT(from->cr_refcnt > 0);
 
 	to->cr_uid = from->cr_uid;
@@ -212,6 +220,8 @@ kauth_cred_dup(kauth_cred_t cred)
 	kauth_cred_t new_cred;
 
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt > 0);
 
 	new_cred = kauth_cred_alloc();
@@ -231,6 +241,8 @@ kauth_cred_copy(kauth_cred_t cred)
 	kauth_cred_t new_cred;
 
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt > 0);
 
 	/* If the provided credentials already have one reference, use them. */
@@ -270,6 +282,8 @@ uid_t
 kauth_cred_getuid(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_uid);
 }
@@ -278,6 +292,8 @@ uid_t
 kauth_cred_geteuid(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_euid);
 }
@@ -286,6 +302,8 @@ uid_t
 kauth_cred_getsvuid(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_svuid);
 }
@@ -294,6 +312,8 @@ gid_t
 kauth_cred_getgid(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_gid);
 }
@@ -302,6 +322,8 @@ gid_t
 kauth_cred_getegid(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_egid);
 }
@@ -310,6 +332,8 @@ gid_t
 kauth_cred_getsvgid(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_svgid);
 }
@@ -318,6 +342,8 @@ void
 kauth_cred_setuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_uid = uid;
@@ -327,6 +353,8 @@ void
 kauth_cred_seteuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_euid = uid;
@@ -336,6 +364,8 @@ void
 kauth_cred_setsvuid(kauth_cred_t cred, uid_t uid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_svuid = uid;
@@ -345,6 +375,8 @@ void
 kauth_cred_setgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_gid = gid;
@@ -354,6 +386,8 @@ void
 kauth_cred_setegid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_egid = gid;
@@ -363,6 +397,8 @@ void
 kauth_cred_setsvgid(kauth_cred_t cred, gid_t gid)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt == 1);
 
 	cred->cr_svgid = gid;
@@ -375,6 +411,8 @@ kauth_cred_ismember_gid(kauth_cred_t cred, gid_t gid, int *resultp)
 	uint32_t i;
 
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(resultp != NULL);
 
 	*resultp = 0;
@@ -392,6 +430,8 @@ u_int
 kauth_cred_ngroups(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_ngroups);
 }
@@ -403,6 +443,8 @@ gid_t
 kauth_cred_group(kauth_cred_t cred, u_int idx)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(idx < cred->cr_ngroups);
 
 	return (cred->cr_groups[idx]);
@@ -416,6 +458,8 @@ kauth_cred_setgroups(kauth_cred_t cred, const gid_t *grbuf, size_t len,
 	int error = 0;
 
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(cred->cr_refcnt == 1);
 
 	if (len > __arraycount(cred->cr_groups))
@@ -523,6 +567,8 @@ void *
 kauth_cred_getdata(kauth_cred_t cred, kauth_key_t key)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(key != NULL);
 
 	return (specificdata_getspecific(kauth_domain, &cred->cr_sd,
@@ -533,6 +579,8 @@ void
 kauth_cred_setdata(kauth_cred_t cred, kauth_key_t key, void *data)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(key != NULL);
 
 	specificdata_setspecific(kauth_domain, &cred->cr_sd, key->ks_key, data);
@@ -545,7 +593,11 @@ int
 kauth_cred_uidmatch(kauth_cred_t cred1, kauth_cred_t cred2)
 {
 	KASSERT(cred1 != NULL);
+	KASSERT(cred1 != NOCRED);
+	KASSERT(cred1 != FSCRED);
 	KASSERT(cred2 != NULL);
+	KASSERT(cred2 != NOCRED);
+	KASSERT(cred2 != FSCRED);
 
 	if (cred1->cr_uid == cred2->cr_uid ||
 	    cred1->cr_euid == cred2->cr_uid ||
@@ -560,6 +612,8 @@ u_int
 kauth_cred_getrefcnt(kauth_cred_t cred)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 
 	return (cred->cr_refcnt);
 }
@@ -572,6 +626,8 @@ void
 kauth_uucred_to_cred(kauth_cred_t cred, const struct uucred *uuc)
 {       
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(uuc != NULL);
  
 	cred->cr_refcnt = 1;
@@ -594,6 +650,8 @@ void
 kauth_cred_to_uucred(struct uucred *uuc, const kauth_cred_t cred)
 {       
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(uuc != NULL);
 	int ng;
 
@@ -612,6 +670,8 @@ int
 kauth_cred_uucmp(kauth_cred_t cred, const struct uucred *uuc)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(uuc != NULL);
 
 	if (cred->cr_euid == uuc->cr_uid &&
@@ -642,6 +702,8 @@ void
 kauth_cred_toucred(kauth_cred_t cred, struct ki_ucred *uc)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(uc != NULL);
 
 	uc->cr_ref = cred->cr_refcnt;
@@ -659,6 +721,8 @@ void
 kauth_cred_topcred(kauth_cred_t cred, struct ki_pcred *pc)
 {
 	KASSERT(cred != NULL);
+	KASSERT(cred != NOCRED);
+	KASSERT(cred != FSCRED);
 	KASSERT(pc != NULL);
 
 	pc->p_pad = NULL;

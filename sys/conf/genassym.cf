@@ -1,0 +1,3 @@
+#	$NetBSD: genassym.cf,v 1.1.2.2 2015/09/22 12:05:56 skrll Exp $
+
+define	COHERENCY_UNIT		COHERENCY_UNIT

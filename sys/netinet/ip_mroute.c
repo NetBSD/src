@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_mroute.c,v 1.131 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: ip_mroute.c,v 1.131.2.1 2015/09/22 12:06:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -93,11 +93,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.131 2014/10/18 08:33:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_mroute.c,v 1.131.2.1 2015/09/22 12:06:11 skrll Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_pim.h"
+#endif
 
 #ifdef PIM
 #define _PIM_VT 1

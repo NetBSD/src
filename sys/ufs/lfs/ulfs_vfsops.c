@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.8.14.1 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.8.14.2 2015/09/22 12:06:17 skrll Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.52 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.8.14.1 2015/06/06 14:40:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.8.14.2 2015/09/22 12:06:17 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.8.14.1 2015/06/06 14:40:30 skrll E
 #include <miscfs/specfs/specdev.h>
 
 #include <ufs/lfs/lfs.h>
+#include <ufs/lfs/lfs_accessors.h>
 #include <ufs/lfs/ulfs_quotacommon.h>
 #include <ufs/lfs/ulfs_inode.h>
 #include <ufs/lfs/ulfsmount.h>
@@ -68,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.8.14.1 2015/06/06 14:40:30 skrll E
 
 /* how many times ulfs_init() was called */
 static int ulfs_initcount = 0;
-
-pool_cache_t ulfs_direct_cache;
 
 /*
  * Make a filesystem operational.
@@ -127,7 +126,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	return (error);
 #endif
 }
-	
+
 #if 0
 	switch (cmd) {
 	case Q_SYNC:
@@ -246,9 +245,6 @@ ulfs_init(void)
 	if (ulfs_initcount++ > 0)
 		return;
 
-	ulfs_direct_cache = pool_cache_init(sizeof(struct lfs_direct), 0, 0, 0,
-	    "ulfsdir", NULL, IPL_NONE, NULL, NULL, NULL);
-
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	lfs_dqinit();
 #endif
@@ -281,7 +277,6 @@ ulfs_done(void)
 #if defined(LFS_QUOTA) || defined(LFS_QUOTA2)
 	lfs_dqdone();
 #endif
-	pool_cache_destroy(ulfs_direct_cache);
 #ifdef LFS_DIRHASH
 	ulfsdirhash_done();
 #endif

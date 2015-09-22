@@ -1,4 +1,4 @@
-/*	$NetBSD: ucbsnd.c,v 1.23 2014/07/25 08:10:33 dholland Exp $ */
+/*	$NetBSD: ucbsnd.c,v 1.23.4.1 2015/09/22 12:05:43 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.23 2014/07/25 08:10:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.23.4.1 2015/09/22 12:05:43 skrll Exp $");
 
 #include "opt_use_poll.h"
 
@@ -48,11 +48,11 @@ __KERNEL_RCSID(0, "$NetBSD: ucbsnd.c,v 1.23 2014/07/25 08:10:33 dholland Exp $")
 #include <sys/device.h>
 #include <sys/proc.h>
 #include <sys/endian.h>
+#include <sys/bus.h>
+#include <sys/intr.h>
 
+#include <mips/locore.h>
 #include <mips/cache.h>
-
-#include <machine/bus.h>
-#include <machine/intr.h>
 
 #include <hpcmips/tx/tx39var.h>
 #include <hpcmips/tx/tx39sibvar.h>

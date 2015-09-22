@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.127.2.2 2015/06/06 14:40:21 skrll Exp $ */
+/* $NetBSD: udf_subr.c,v 1.127.2.3 2015/09/22 12:06:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.127.2.2 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.127.2.3 2015/09/22 12:06:06 skrll Exp $");
 #endif /* not lint */
 
 
@@ -3444,29 +3444,6 @@ udf_init_nodes_tree(struct udf_mount *ump)
 }
 
 
-static void
-udf_register_node(struct udf_node *udf_node)
-{
-	struct udf_mount *ump = udf_node->ump;
-
-	/* add node to the rb tree */
-	mutex_enter(&ump->ihash_lock);
-	rb_tree_insert_node(&ump->udf_node_tree, udf_node);
-	mutex_exit(&ump->ihash_lock);
-}
-
-
-static void
-udf_deregister_node(struct udf_node *udf_node)
-{
-	struct udf_mount *ump = udf_node->ump;
-
-	/* remove node from the rb tree */
-	mutex_enter(&ump->ihash_lock);
-	rb_tree_remove_node(&ump->udf_node_tree, udf_node);
-	mutex_exit(&ump->ihash_lock);
-}
-
 /* --------------------------------------------------------------------- */
 
 static int
@@ -5310,9 +5287,6 @@ udf_loadvnode(struct mount *mp, struct vnode *vp,
 		    sizeof(struct long_ad)) == 0)
 			vp->v_vflag |= VV_ROOT;
 
-	/* insert into the hash lookup */
-	udf_register_node(udf_node);
-
 	icb_loc = node_icb_loc;
 	needs_indirect = 0;
 	strat4096 = 0;
@@ -5681,16 +5655,15 @@ udf_dispose_node(struct udf_node *udf_node)
 	/* remove dirhash if present */
 	dirhash_purge(&udf_node->dir_hash);
 
-	/* remove from our hash lookup table */
-	udf_deregister_node(udf_node);
-
 	/* destroy our lock */
 	mutex_destroy(&udf_node->node_mutex);
 	cv_destroy(&udf_node->node_lock);
 
 	/* dissociate our udf_node from the vnode */
 	genfs_node_destroy(udf_node->vnode);
+	mutex_enter(vp->v_interlock);
 	vp->v_data = NULL;
+	mutex_exit(vp->v_interlock);
 
 	/* free associated memory and the node itself */
 	for (extnr = 0; extnr < udf_node->num_extensions; extnr++) {
@@ -5827,9 +5800,6 @@ udf_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 
 	/* initialise genfs */
 	genfs_node_init(vp, &udf_genfsops);
-
-	/* insert into the hash lookup */
-	udf_register_node(udf_node);
 
 	/* get parent's unique ID for refering '..' if its a directory */
 	if (dir_node->fe) {
@@ -6316,64 +6286,27 @@ brokendir:
 /* --------------------------------------------------------------------- */
 
 static void
-udf_sync_pass(struct udf_mount *ump, kauth_cred_t cred, int waitfor,
-	int pass, int *ndirty)
+udf_sync_pass(struct udf_mount *ump, kauth_cred_t cred, int pass, int *ndirty)
 {
 	struct udf_node *udf_node, *n_udf_node;
 	struct vnode *vp;
 	int vdirty, error;
-	int on_type, on_flags, on_vnode;
 
-derailed:
-	KASSERT(mutex_owned(&mntvnode_lock));
+	KASSERT(mutex_owned(&ump->sync_lock));
 
 	DPRINTF(SYNC, ("sync_pass %d\n", pass));
 	udf_node = RB_TREE_MIN(&ump->udf_node_tree);
 	for (;udf_node; udf_node = n_udf_node) {
 		DPRINTF(SYNC, ("."));
 
-		udf_node->i_flags &= ~IN_SYNCED;
 		vp = udf_node->vnode;
 
-		mutex_enter(vp->v_interlock);
 		n_udf_node = rb_tree_iterate(&ump->udf_node_tree,
 		    udf_node, RB_DIR_RIGHT);
 
-		if (n_udf_node)
-			n_udf_node->i_flags |= IN_SYNCED;
-
-		/* system nodes are not synced this way */
-		if (vp->v_vflag & VV_SYSTEM) {
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-
-		/* check if its dirty enough to even try */
-		on_type  = (waitfor == MNT_LAZY || vp->v_type == VNON);
-		on_flags = ((udf_node->i_flags &
-			(IN_ACCESSED | IN_UPDATE | IN_MODIFIED)) == 0);
-		on_vnode = LIST_EMPTY(&vp->v_dirtyblkhd)
-			&& UVM_OBJ_IS_CLEAN(&vp->v_uobj);
-		if (on_type || (on_flags || on_vnode)) { /* XXX */
-			/* not dirty (enough?) */
-			mutex_exit(vp->v_interlock);
-			continue;
-		}
-
-		mutex_exit(&mntvnode_lock);
-		error = vget(vp, LK_NOWAIT, false /* !wait */);
-		if (error) {
-			mutex_enter(&mntvnode_lock);
-			if (error == ENOENT)
-				goto derailed;
-			*ndirty += 1;
-			continue;
-		}
 		error = vn_lock(vp, LK_EXCLUSIVE | LK_NOWAIT);
 		if (error) {
 			KASSERT(error == EBUSY);
-			vrele(vp);
-			mutex_enter(&mntvnode_lock);
 			*ndirty += 1;
 			continue;
 		}
@@ -6400,46 +6333,90 @@ derailed:
 			break;
 		}
 
-		vput(vp);
-		mutex_enter(&mntvnode_lock);
+		VOP_UNLOCK(vp);
 	}
 	DPRINTF(SYNC, ("END sync_pass %d\n", pass));
 }
 
 
+static bool
+udf_sync_selector(void *cl, struct vnode *vp)
+{
+	struct udf_node *udf_node = VTOI(vp);
+
+	if (vp->v_vflag & VV_SYSTEM)
+		return false;
+	if (vp->v_type == VNON)
+		return false;
+	if (udf_node == NULL)
+		return false;
+	if ((udf_node->i_flags & (IN_ACCESSED | IN_UPDATE | IN_MODIFIED)) == 0)
+		return false;
+	if (LIST_EMPTY(&vp->v_dirtyblkhd) && UVM_OBJ_IS_CLEAN(&vp->v_uobj))
+		return false;
+
+	return true;
+}
+
 void
 udf_do_sync(struct udf_mount *ump, kauth_cred_t cred, int waitfor)
 {
+	struct vnode_iterator *marker;
+	struct vnode *vp;
+	struct udf_node *udf_node, *udf_next_node;
 	int dummy, ndirty;
 
-	mutex_enter(&mntvnode_lock);
-recount:
+	if (waitfor == MNT_LAZY)
+		return;
+
+	mutex_enter(&ump->sync_lock);
+
+	/* Fill the rbtree with nodes to sync. */
+	vfs_vnode_iterator_init(ump->vfs_mountp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker,
+	    udf_sync_selector, NULL)) != NULL) {
+		udf_node = VTOI(vp);
+		udf_node->i_flags |= IN_SYNCED;
+		rb_tree_insert_node(&ump->udf_node_tree, udf_node);
+	}
+	vfs_vnode_iterator_destroy(marker);
+
 	dummy = 0;
 	DPRINTF(CALL, ("issue VOP_FSYNC(DATA only) on all nodes\n"));
 	DPRINTF(SYNC, ("issue VOP_FSYNC(DATA only) on all nodes\n"));
-	udf_sync_pass(ump, cred, waitfor, 1, &dummy);
+	udf_sync_pass(ump, cred, 1, &dummy);
 
 	DPRINTF(CALL, ("issue VOP_FSYNC(COMPLETE) on all finished nodes\n"));
 	DPRINTF(SYNC, ("issue VOP_FSYNC(COMPLETE) on all finished nodes\n"));
-	udf_sync_pass(ump, cred, waitfor, 2, &dummy);
+	udf_sync_pass(ump, cred, 2, &dummy);
 
 	if (waitfor == MNT_WAIT) {
+recount:
 		ndirty = ump->devvp->v_numoutput;
 		DPRINTF(SYNC, ("counting pending blocks: on devvp %d\n",
 			ndirty));
-		udf_sync_pass(ump, cred, waitfor, 3, &ndirty);
+		udf_sync_pass(ump, cred, 3, &ndirty);
 		DPRINTF(SYNC, ("counted num dirty pending blocks %d\n",
 			ndirty));
 
 		if (ndirty) {
 			/* 1/4 second wait */
-			cv_timedwait(&ump->dirtynodes_cv, &mntvnode_lock,
-				hz/4);
+			kpause("udfsync2", false, hz/4, NULL);
 			goto recount;
 		}
 	}
 
-	mutex_exit(&mntvnode_lock);
+	/* Clean the rbtree. */
+	for (udf_node = RB_TREE_MIN(&ump->udf_node_tree);
+	    udf_node; udf_node = udf_next_node) {
+		udf_next_node = rb_tree_iterate(&ump->udf_node_tree,
+		    udf_node, RB_DIR_RIGHT);
+		rb_tree_remove_node(&ump->udf_node_tree, udf_node);
+		udf_node->i_flags &= ~IN_SYNCED;
+		vrele(udf_node->vnode);
+	}
+
+	mutex_exit(&ump->sync_lock);
 }
 
 /* --------------------------------------------------------------------- */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.34.14.9 2015/04/04 06:22:06 skrll Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.34.14.10 2015/09/22 12:06:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -174,15 +174,6 @@
 #define  EHCI_PS_CLEAR		(EHCI_PS_OCC|EHCI_PS_PEC|EHCI_PS_CSC)
 
 #define EHCI_PORT_RESET_COMPLETE 2 /* ms */
-
-#define	EHCI_USBMODE		0xa8		/* USB Device mode */
-#define	  EHCI_USBMODE_SDIS	__BIT(4)	/* Stream disable mode 1=act */
-#define	  EHCI_USBMODE_SLOM	__BIT(3)	/* setup lockouts on */
-#define	  EHCI_USBMODE_ES	__BIT(2)	/* Endian Select ES=1 */
-#define	  EHCI_USBMODE_CM	__BITS(0,1)	/* Controller Mode */
-#define	  EHCI_USBMODE_CM_IDLE	0x00		/* Idle (combo host/device) */
-#define	  EHCI_USBMODE_CM_DEV	0x02		/* Device Controller */
-#define	  EHCI_USBMODE_CM_HOST	0x03		/* Host Controller */
 
 #define EHCI_FLALIGN_ALIGN	0x1000
 #define EHCI_MAX_PORTS		16 /* only 4 bits available in EHCI_HCS_N_PORTS */

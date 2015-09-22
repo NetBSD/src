@@ -1,4 +1,4 @@
-/* $NetBSD: hytp14var.h,v 1.2 2014/08/10 16:44:35 tls Exp $ */
+/* $NetBSD: hytp14var.h,v 1.2.6.1 2015/09/22 12:05:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -44,16 +44,22 @@
 
 #define HYTP14_NUM_SENSORS	2
 
+/* the default measurement interval is 50 seconds */
+#define HYTP14_MR_INTERVAL	50
+
 struct hytp14_sc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_tag;
 	i2c_addr_t	sc_addr;
 
-	int		sc_refresh; /* last refresh from hardclock_ticks */
-        int             sc_valid;   /* ENVSYS validity state for this sensor */
-        uint8_t         sc_data[4]; /* last data read */
+	int		sc_valid;   /* ENVSYS validity state for this sensor */
+	uint8_t		sc_data[4]; /* current sensor data */
+	uint8_t		sc_last[4]; /* last sensor data, before MR */
 
 	int		sc_numsensors;
+
+	callout_t	sc_mrcallout;
+	int32_t		sc_mrinterval;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensors[HYTP14_NUM_SENSORS];
@@ -66,16 +72,3 @@ struct hytp14_sensor {
 };
 
 #endif
-/*
- * $Log: hytp14var.h,v $
- * Revision 1.2  2014/08/10 16:44:35  tls
- * Merge tls-earlyentropy branch into HEAD.
- *
- * Revision 1.1.4.2  2014/08/10 06:54:51  tls
- * Rebase.
- *
- * Revision 1.1  2014/05/18 11:46:23  kardel
- * add HYT-221/271/939 humidity/temperature I2C sensor
- * extend envsys(4) framework by %rH (relative humidity)
- *
- */
