@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwnvar.h,v 1.16 2014/10/30 13:05:58 nonaka Exp $	*/
+/*	$NetBSD: if_iwnvar.h,v 1.17 2015/09/22 23:23:06 nonaka Exp $	*/
 /*	$OpenBSD: if_iwnvar.h,v 1.28 2014/09/09 18:55:08 sthen Exp $	*/
 
 /*-
@@ -221,8 +221,10 @@ struct iwn_softc {
 #define IWN_FLAG_HAS_11N	(1 << 6)
 #define IWN_FLAG_ENH_SENS	(1 << 7)
 /* Added for NetBSD */
-#define IWN_FLAG_SCANNING	(1 << 8)
-#define IWN_FLAG_HW_INITED	(1 << 9)
+#define IWN_FLAG_HW_INITED	(1 << 8)
+#define IWN_FLAG_SCANNING_2GHZ	(1 << 9)
+#define IWN_FLAG_SCANNING_5GHZ	(1 << 10)
+#define IWN_FLAG_SCANNING	(IWN_FLAG_SCANNING_2GHZ|IWN_FLAG_SCANNING_5GHZ)
 
 	uint8_t 		hw_type;
 
