@@ -1,0 +1,80 @@
+# General rules that all rs6000/ targets must have.
+#
+# Copyright (C) 1995-2013 Free Software Foundation, Inc.
+#
+# This file is part of GCC.
+#
+# GCC is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3, or (at your option)
+# any later version.
+#
+# GCC is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with GCC; see the file COPYING3.  If not see
+# <http://www.gnu.org/licenses/>.
+
+TM_H += $(srcdir)/config/rs6000/rs6000-builtin.def
+
+rs6000.o: $(CONFIG_H) $(SYSTEM_H) coretypes.h $(TM_H) \
+  $(RTL_H) $(REGS_H) hard-reg-set.h \
+  real.h insn-config.h conditions.h insn-attr.h flags.h $(RECOG_H) \
+  $(OBSTACK_H) $(TREE_H) $(EXPR_H) $(OPTABS_H) except.h function.h \
+  output.h dbxout.h $(BASIC_BLOCK_H) toplev.h $(GGC_H) $(HASHTAB_H) \
+  $(TM_P_H) $(TARGET_H) $(TARGET_DEF_H) langhooks.h reload.h gt-rs6000.h \
+  cfgloop.h $(OPTS_H) $(COMMON_TARGET_H) dumpfile.h \
+  $(srcdir)/config/rs6000/rs6000-cpus.def
+
+rs6000-c.o: $(srcdir)/config/rs6000/rs6000-c.c \
+    $(srcdir)/config/rs6000/rs6000-protos.h \
+    $(CONFIG_H) $(SYSTEM_H) $(TREE_H) $(CPPLIB_H) \
+    $(TM_P_H) $(C_PRAGMA_H) errors.h coretypes.h $(TM_H)
+	$(COMPILER) -c $(ALL_COMPILERFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) \
+		$(srcdir)/config/rs6000/rs6000-c.c
+
+$(srcdir)/config/rs6000/rs6000-tables.opt: $(srcdir)/config/rs6000/genopt.sh \
+  $(srcdir)/config/rs6000/rs6000-cpus.def
+	@echo "NOT REBUILDING $@"
+NetBSD_DISABLED_rs6000-tables.opt:
+	$(SHELL) $(srcdir)/config/rs6000/genopt.sh $(srcdir)/config/rs6000 > \
+		$(srcdir)/config/rs6000/rs6000-tables.opt
+
+# The rs6000 backend doesn't cause warnings in these files.
+insn-conditions.o-warn =
+
+MD_INCLUDES = $(srcdir)/config/rs6000/rs64.md \
+	$(srcdir)/config/rs6000/mpc.md \
+	$(srcdir)/config/rs6000/40x.md \
+	$(srcdir)/config/rs6000/440.md \
+	$(srcdir)/config/rs6000/601.md \
+	$(srcdir)/config/rs6000/603.md \
+	$(srcdir)/config/rs6000/6xx.md \
+	$(srcdir)/config/rs6000/7xx.md \
+	$(srcdir)/config/rs6000/7450.md \
+	$(srcdir)/config/rs6000/8540.md \
+	$(srcdir)/config/rs6000/e300c2c3.md \
+	$(srcdir)/config/rs6000/e500mc.md \
+	$(srcdir)/config/rs6000/power4.md \
+	$(srcdir)/config/rs6000/power5.md \
+	$(srcdir)/config/rs6000/power6.md \
+	$(srcdir)/config/rs6000/power7.md \
+	$(srcdir)/config/rs6000/power8.md \
+	$(srcdir)/config/rs6000/cell.md \
+	$(srcdir)/config/rs6000/xfpu.md \
+	$(srcdir)/config/rs6000/a2.md \
+	$(srcdir)/config/rs6000/predicates.md \
+	$(srcdir)/config/rs6000/constraints.md \
+	$(srcdir)/config/rs6000/darwin.md \
+	$(srcdir)/config/rs6000/sync.md \
+	$(srcdir)/config/rs6000/vector.md \
+	$(srcdir)/config/rs6000/vsx.md \
+	$(srcdir)/config/rs6000/altivec.md \
+	$(srcdir)/config/rs6000/crypto.md \
+	$(srcdir)/config/rs6000/htm.md \
+	$(srcdir)/config/rs6000/spe.md \
+	$(srcdir)/config/rs6000/dfp.md \
+	$(srcdir)/config/rs6000/paired.md

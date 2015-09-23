@@ -1,0 +1,2556 @@
+; Options for the language- and target-independent parts of the compiler.
+
+; Copyright (C) 2003-2013 Free Software Foundation, Inc.
+;
+; This file is part of GCC.
+;
+; GCC is free software; you can redistribute it and/or modify it under
+; the terms of the GNU General Public License as published by the Free
+; Software Foundation; either version 3, or (at your option) any later
+; version.
+;
+; GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+; WARRANTY; without even the implied warranty of MERCHANTABILITY or
+; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+; for more details.
+;
+; You should have received a copy of the GNU General Public License
+; along with GCC; see the file COPYING3.  If not see
+; <http://www.gnu.org/licenses/>.
+
+; See the GCC internals manual (options.texi) for a description of this file's format.
+
+; Please try to keep this file in ASCII collating order.
+
+Variable
+int target_flags
+
+Variable
+int optimize
+
+Variable
+int optimize_size
+
+Variable
+int optimize_debug
+
+; Not used directly to control optimizations, only to save -Ofast
+; setting for "optimize" attributes.
+Variable
+int optimize_fast
+
+; True if this is the lto front end.  This is used to disable gimple
+; generation and lowering passes that are normally run on the output
+; of a front end.  These passes must be bypassed for lto since they
+; have already been done before the gimple was written.
+Variable
+bool in_lto_p = false
+
+; 0 means straightforward implementation of complex divide acceptable.
+; 1 means wide ranges of inputs must work for complex divide.
+; 2 means C99-like requirements for complex multiply and divide.
+Variable
+int flag_complex_method = 1
+
+; Nonzero if subexpressions must be evaluated from left-to-right.
+Variable
+int flag_evaluation_order = 0
+
+; Language specific warning pass for unused results.
+Variable
+bool flag_warn_unused_result = false
+
+Variable
+int *param_values
+
+; Nonzero if we should write GIMPLE bytecode for link-time optimization.
+Variable
+int flag_generate_lto
+
+; True to warn about any objects definitions whose size is larger
+; than N bytes.  Also want about function definitions whose returned
+; values are larger than N bytes, where N is 'larger_than_size'.
+Variable
+bool warn_larger_than
+
+Variable
+HOST_WIDE_INT larger_than_size
+
+; True to warn about any function whose frame size is larger
+; than N bytes.
+Variable
+bool warn_frame_larger_than
+
+Variable
+HOST_WIDE_INT frame_larger_than_size
+
+; Nonzero means we should be saving declaration info into a .X file.
+Variable
+int flag_gen_aux_info = 0
+
+; Nonzero if we are compiling code for a shared library, zero for
+; executable.
+Variable
+int flag_shlib
+
+; These two are really VEC(char_p,heap) *.
+
+Variable
+void *flag_instrument_functions_exclude_functions
+
+Variable
+void *flag_instrument_functions_exclude_files
+
+; Generic structs (e.g. templates not explicitly specialized)
+; may not have a compilation unit associated with them, and so
+; may need to be treated differently from ordinary structs.
+;
+; Structs only handled by reference (indirectly), will also usually
+; not need as much debugging information.
+
+Variable
+enum debug_struct_file debug_struct_ordinary[DINFO_USAGE_NUM_ENUMS] = { DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY }
+
+Variable
+enum debug_struct_file debug_struct_generic[DINFO_USAGE_NUM_ENUMS] = { DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY, DINFO_STRUCT_FILE_ANY }
+
+; True if we should exit after parsing options.
+Variable
+bool exit_after_options
+
+; Type(s) of debugging information we are producing (if any).  See
+; flag-types.h for the definitions of the different possible types of
+; debugging information.
+Variable
+enum debug_info_type write_symbols = NO_DEBUG
+
+; Level of debugging information we are producing.  See flag-types.h
+; for the definitions of the different possible levels.
+Variable
+enum debug_info_levels debug_info_level = DINFO_LEVEL_NONE
+
+; Nonzero means use GNU-only extensions in the generated symbolic
+; debugging information.  Currently, this only has an effect when
+; write_symbols is set to DBX_DEBUG, XCOFF_DEBUG, or DWARF_DEBUG.
+Variable
+bool use_gnu_debug_info_extensions
+
+; Original value of maximum field alignment in bytes, specified via
+; -fpack-struct=<value>.
+Variable
+unsigned int initial_max_fld_align = TARGET_DEFAULT_PACK_STRUCT
+
+; Type of stack check.
+Variable
+enum stack_check_type flag_stack_check = NO_STACK_CHECK
+
+; True if stack usage information needs to be computed.
+Variable
+bool flag_stack_usage_info = false
+
+; -dA causes debug commentary information to be produced in
+; the generated assembly code (to make it more readable).  This option
+; is generally only of use to those who actually need to read the
+; generated assembly code (perhaps while debugging the compiler itself).
+; Currently, this switch is only used by dwarf2out.c; however, it is intended
+; to be a catchall for printing debug information in the assembler file.
+Variable
+int flag_debug_asm
+
+; -dP causes the rtl to be emitted as a comment in assembly.
+Variable
+int flag_dump_rtl_in_asm
+
+; Whether -da was passed (used only in handle_common_deferred_options).
+Variable
+bool flag_dump_all_passed
+
+; Other flags saying which kinds of debugging dump have been requested.
+
+Variable
+int rtl_dump_and_exit
+
+Variable
+int flag_print_asm_name
+
+; Name of top-level original source file (what was input to cpp).
+; This comes from the #-command at the beginning of the actual input.
+; If there isn't any there, then this is the cc1 input file name.
+Variable
+const char *main_input_filename
+
+; Pointer to base name in main_input_filename, with directories and a
+; single final extension removed, and the length of this base
+; name.
+
+Variable
+const char *main_input_basename
+
+Variable
+int main_input_baselength
+
+; Which options have been printed by --help.
+Variable
+char *help_printed
+
+; Which enums have been printed by --help.  0 = not printed, no
+; relevant options seen, 1 = relevant option seen, not yet printed, 2
+; = printed.
+Variable
+char *help_enum_printed
+
+; The number of columns for --help output.
+Variable
+unsigned int help_columns
+
+; Whether this options structure has been through finish_options
+Variable
+bool flag_opts_finished
+
+###
+Driver
+
+-assemble
+Driver Alias(S)
+
+-compile
+Driver Alias(c)
+
+-coverage
+Driver Alias(coverage)
+
+-debug
+Common Alias(g)
+
+-dump
+Common Separate Alias(d)
+
+-dump=
+Common Joined Alias(d)
+
+-dumpbase
+Common Separate Alias(dumpbase)
+
+-dumpdir
+Common Separate Alias(dumpdir)
+
+-entry
+Driver Separate Alias(e)
+
+-entry=
+Driver Joined Alias(e)
+
+-extra-warnings
+Common Warning Alias(Wextra)
+
+-for-assembler
+Driver Separate Alias(Xassembler)
+
+-for-assembler=
+Driver JoinedOrMissing Alias(Xassembler)
+
+-for-linker
+Driver Separate Alias(Xlinker)
+
+-for-linker=
+Driver JoinedOrMissing Alias(Xlinker)
+
+-force-link
+Driver Separate Alias(u)
+
+-force-link=
+Driver Joined Alias(u)
+
+-help
+Common Driver Var(help_flag)
+Display this information
+
+-help=
+Common Driver Report Joined
+--help=<class>	Display descriptions of a specific class of options.  <class> is one or more of optimizers, target, warnings, undocumented, params
+
+-language
+Driver Separate Alias(x)
+
+-language=
+Driver Joined Alias(x)
+
+-library-directory
+Driver Separate Alias(L)
+
+-library-directory=
+Driver Joined Alias(L)
+
+-no-canonical-prefixes
+Driver Alias(no-canonical-prefixes)
+
+-no-standard-libraries
+Driver Alias(nostdlib)
+
+-no-sysroot-suffix
+Driver Var(no_sysroot_suffix)
+
+-no-warnings
+Common Alias(w)
+
+-optimize
+Common Alias(O)
+
+-output
+Common Driver Separate Alias(o) MissingArgError(missing filename after %qs)
+
+-output=
+Common Driver Joined Alias(o) MissingArgError(missing filename after %qs)
+
+-pass-exit-codes
+Driver Alias(pass-exit-codes)
+
+-pedantic
+Common Alias(Wpedantic)
+
+-pedantic-errors
+Common Alias(pedantic-errors)
+
+-pie
+Driver Alias(pie)
+
+-pipe
+Driver Alias(pipe)
+
+-prefix
+Driver Separate Alias(B)
+
+-prefix=
+Driver JoinedOrMissing Alias(B)
+
+-preprocess
+Driver Alias(E)
+
+-print-file-name
+Driver Separate Alias(print-file-name=)
+
+-print-file-name=
+Driver JoinedOrMissing Alias(print-file-name=)
+
+-print-libgcc-file-name
+Driver Alias(print-libgcc-file-name)
+
+-print-multi-directory
+Driver Alias(print-multi-directory)
+
+-print-multi-lib
+Driver Alias(print-multi-lib)
+
+-print-multi-os-directory
+Driver Alias(print-multi-os-directory)
+
+-print-multiarch
+Driver Alias(print-multiarch)
+
+-print-prog-name
+Driver Separate Alias(print-prog-name=)
+
+-print-prog-name=
+Driver JoinedOrMissing Alias(print-prog-name=)
+
+-print-search-dirs
+Driver Alias(print-search-dirs)
+
+-print-sysroot
+Driver Alias(print-sysroot)
+
+-print-sysroot-headers-suffix
+Driver Alias(print-sysroot-headers-suffix)
+
+-profile
+Common Alias(p)
+
+-save-temps
+Driver Alias(save-temps)
+
+-shared
+Driver Alias(shared)
+
+-specs
+Driver Separate Alias(specs=)
+
+-specs=
+Driver Joined Alias(specs=)
+
+-static
+Driver Alias(static)
+
+-symbolic
+Driver Alias(symbolic)
+
+-target-help
+Common Driver
+Alias for --help=target
+
+-time
+Driver Alias(time)
+
+-verbose
+Driver Alias(v)
+
+;; The driver used to convert options such as --help into forms such
+;; as -fhelp; the following four entries are for compatibility with
+;; any direct uses of those (undocumented) -f forms
+fhelp
+Common Driver Alias(-help)
+
+fhelp=
+Common Driver Joined Alias(-help=)
+
+ftarget-help
+Common Driver Alias(-target-help)
+
+fversion
+Common Driver Alias(-version)
+
+-param
+Common Separate
+--param <param>=<value>	Set parameter <param> to value.  See below for a complete list of parameters
+
+-param=
+Common Joined Alias(-param)
+
+-sysroot
+Driver Separate Alias(-sysroot=)
+
+-sysroot=
+Driver JoinedOrMissing
+
+-version
+Common Driver
+
+B
+Driver Joined Separate
+
+E
+Driver
+
+L
+Driver Joined Separate
+
+N
+Driver
+
+O
+Common JoinedOrMissing Optimization
+-O<number>	Set optimization level to <number>
+
+Os
+Common Optimization
+Optimize for space rather than speed
+
+Ofast
+Common Optimization
+Optimize for speed disregarding exact standards compliance
+
+Og
+Common Optimization
+Optimize for debugging experience rather than speed or size
+
+Q
+Driver
+
+Qn
+Driver Negative(Qy)
+
+Qy
+Driver Negative(Qn)
+
+R
+Driver Joined Separate
+
+S
+Driver
+
+T
+Driver Joined Separate
+
+Tbss
+Driver Separate
+
+Tbss=
+Driver Joined
+
+Tdata
+Driver Separate
+
+Tdata=
+Driver Joined
+
+Ttext
+Driver Separate
+
+Ttext=
+Driver Joined
+
+W
+Common RejectNegative Warning Alias(Wextra)
+This switch is deprecated; use -Wextra instead
+
+Wa,
+Driver JoinedOrMissing
+
+Wl,
+Driver JoinedOrMissing
+
+Wp,
+Driver JoinedOrMissing
+
+Waggregate-return
+Common Var(warn_aggregate_return) Warning
+Warn about returning structures, unions or arrays
+
+Waggressive-loop-optimizations
+Common Var(warn_aggressive_loop_optimizations) Init(1) Warning
+Warn if a loop with constant number of iterations triggers undefined behavior
+
+Warray-bounds
+Common Var(warn_array_bounds) Warning
+Warn if an array is accessed out of bounds
+
+Wattributes
+Common Var(warn_attributes) Init(1) Warning
+Warn about inappropriate attribute usage
+
+Wcast-align
+Common Var(warn_cast_align) Warning
+Warn about pointer casts which increase alignment
+
+Wcpp
+Common Var(warn_cpp) Init(1) Warning
+Warn when a #warning directive is encountered
+
+Wdeprecated-declarations
+Common Var(warn_deprecated_decl) Init(1) Warning
+Warn about uses of __attribute__((deprecated)) declarations
+
+Wdisabled-optimization
+Common Var(warn_disabled_optimization) Warning
+Warn when an optimization pass is disabled
+
+Werror
+Common Var(warnings_are_errors)
+Treat all warnings as errors
+
+Werror=
+Common Joined
+Treat specified warning as error
+
+Wextra
+Common Var(extra_warnings) Warning
+Print extra (possibly unwanted) warnings
+
+Wfatal-errors
+Common Var(flag_fatal_errors)
+Exit on the first error occurred
+
+Wframe-larger-than=
+Common RejectNegative Joined UInteger
+-Wframe-larger-than=<number>	Warn if a function's stack frame requires more than <number> bytes
+
+Wfree-nonheap-object
+Common Var(warn_free_nonheap_object) Init(1) Warning
+Warn when attempting to free a non-heap object
+
+Winline
+Common Var(warn_inline) Warning
+Warn when an inlined function cannot be inlined
+
+Winvalid-memory-model
+Common Var(warn_invalid_memory_model) Init(1) Warning
+Warn when an atomic memory model parameter is known to be outside the valid range.
+
+Wlarger-than-
+Common RejectNegative Joined Warning Undocumented Alias(Wlarger-than=)
+
+Wlarger-than=
+Common RejectNegative Joined UInteger Warning
+-Wlarger-than=<number>	Warn if an object is larger than <number> bytes
+
+Wunsafe-loop-optimizations
+Common Var(warn_unsafe_loop_optimizations) Warning
+Warn if the loop cannot be optimized due to nontrivial assumptions.
+
+Wmissing-noreturn
+Common Alias(Wsuggest-attribute=noreturn)
+
+Woverflow
+Common Var(warn_overflow) Init(1) Warning
+Warn about overflow in arithmetic expressions
+
+Wpacked
+Common Var(warn_packed) Warning
+Warn when the packed attribute has no effect on struct layout
+
+Wpadded
+Common Var(warn_padded) Warning
+Warn when padding is required to align structure members
+
+Wpedantic
+Common Var(pedantic) Warning
+Issue warnings needed for strict compliance to the standard
+
+Wshadow
+Common Var(warn_shadow) Warning
+Warn when one local variable shadows another
+
+Wstack-protector
+Common Var(warn_stack_protect) Warning
+Warn when not issuing stack smashing protection for some reason
+
+Wstack-usage=
+Common Joined RejectNegative UInteger Var(warn_stack_usage) Init(-1) Warning
+Warn if stack usage might be larger than specified amount
+
+Wstrict-aliasing
+Common Warning
+Warn about code which might break strict aliasing rules
+
+Wstrict-aliasing=
+Common Joined RejectNegative UInteger Var(warn_strict_aliasing) Warning
+Warn about code which might break strict aliasing rules
+
+Wstrict-overflow
+Common Warning
+Warn about optimizations that assume that signed overflow is undefined
+
+Wstrict-overflow=
+Common Joined RejectNegative UInteger Var(warn_strict_overflow) Warning
+Warn about optimizations that assume that signed overflow is undefined
+
+Wsuggest-attribute=const
+Common Var(warn_suggest_attribute_const) Warning
+Warn about functions which might be candidates for __attribute__((const))
+
+Wsuggest-attribute=pure
+Common Var(warn_suggest_attribute_pure) Warning
+Warn about functions which might be candidates for __attribute__((pure))
+
+Wsuggest-attribute=noreturn
+Common Var(warn_suggest_attribute_noreturn) Warning
+Warn about functions which might be candidates for __attribute__((noreturn))
+
+Wsystem-headers
+Common Var(warn_system_headers) Warning
+Do not suppress warnings from system headers
+
+Wtrampolines
+Common Var(warn_trampolines) Warning
+Warn whenever a trampoline is generated
+
+Wtype-limits
+Common Var(warn_type_limits) Warning EnabledBy(Wextra)
+Warn if a comparison is always true or always false due to the limited range of the data type
+
+Wuninitialized
+Common Var(warn_uninitialized) Warning EnabledBy(Wextra)
+Warn about uninitialized automatic variables
+
+Wmaybe-uninitialized
+Common Var(warn_maybe_uninitialized) Warning EnabledBy(Wuninitialized)
+Warn about maybe uninitialized automatic variables
+
+Wunreachable-code
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+Wunused
+Common Var(warn_unused) Init(0) Warning
+Enable all -Wunused- warnings
+
+Wunused-but-set-parameter
+Common Var(warn_unused_but_set_parameter) Warning EnabledBy(Wunused && Wextra)
+Warn when a function parameter is only set, otherwise unused
+
+Wunused-but-set-variable
+Common Var(warn_unused_but_set_variable) Warning EnabledBy(Wunused)
+Warn when a variable is only set, otherwise unused
+
+Wunused-function
+Common Var(warn_unused_function) Warning EnabledBy(Wunused)
+Warn when a function is unused
+
+Wunused-label
+Common Var(warn_unused_label) Warning EnabledBy(Wunused)
+Warn when a label is unused
+
+Wunused-parameter
+Common Var(warn_unused_parameter) Warning EnabledBy(Wunused && Wextra)
+Warn when a function parameter is unused
+
+Wunused-value
+Common Var(warn_unused_value) Warning EnabledBy(Wunused)
+Warn when an expression value is unused
+
+Wunused-variable
+Common Var(warn_unused_variable) Warning EnabledBy(Wunused)
+Warn when a variable is unused
+
+Wcoverage-mismatch
+Common Var(warn_coverage_mismatch) Init(1) Warning
+Warn in case profiles in -fprofile-use do not match
+
+Wvector-operation-performance
+Common Var(warn_vector_operation_performance) Warning
+Warn when a vector operation is compiled outside the SIMD
+
+Xassembler
+Driver Separate
+
+Xlinker
+Driver Separate
+
+Xpreprocessor
+Driver Separate
+
+Z
+Driver
+
+aux-info
+Common Separate Var(aux_info_file_name)
+-aux-info <file>	Emit declaration information into <file>
+
+aux-info=
+Common Joined Alias(aux-info)
+
+auxbase
+Common Separate RejectDriver Var(aux_base_name)
+
+auxbase-strip
+Common Separate RejectDriver
+
+coverage
+Driver
+
+c
+Driver
+
+d
+Common Joined
+-d<letters>	Enable dumps from specific passes of the compiler
+
+dumpbase
+Common Separate Var(dump_base_name)
+-dumpbase <file>	Set the file basename to be used for dumps
+
+dumpdir
+Common Separate Var(dump_dir_name)
+-dumpdir <dir>	Set the directory name to be used for dumps
+
+dumpmachine
+Driver
+
+dumpspecs
+Driver
+
+dumpversion
+Driver
+
+e
+Driver Joined Separate
+
+; This option has historically been passed down to the linker by an
+; accident of a %{e*} spec, so ensure it continues to be passed down
+; as a single option.  The supported option for this purpose is
+; -rdynamic.  See PR 47390.
+export-dynamic
+Driver Undocumented
+
+; The version of the C++ ABI in use.  The following values are allowed:
+;
+; 0: The version of the ABI believed most conformant with the C++ ABI
+;    specification.  This ABI may change as bugs are discovered and fixed.
+;    Therefore, 0 will not necessarily indicate the same ABI in different
+;    versions of G++.
+;
+; 1: The version of the ABI first used in G++ 3.2.
+;
+; 2: The version of the ABI first used in G++ 3.4 (and current default).
+;
+; 3: The version of the ABI that fixes the missing underscore
+;    in template non-type arguments of pointer type.
+;
+; 4: The version of the ABI that introduces unambiguous mangling of
+;    vector types.  First selectable in G++ 4.5.
+;
+; 5: The version of the ABI that ignores attribute const/noreturn
+;    in function pointer mangling, and corrects mangling of decltype and
+;    function parameters used in other parameters and the return type.
+;    First selectable in G++ 4.6.
+;
+; 6: The version of the ABI that doesn't promote scoped enums to int and
+;    changes the mangling of template argument packs, const/static_cast,
+;    prefix ++ and --, and a class scope function used as a template
+;    argument.
+;    First selectable in G++ 4.7.
+;
+; 7: The version of the ABI that treats nullptr_t as a builtin type and
+;    corrects the mangling of lambdas in default argument scope.
+;    First selectable in G++ 4.8.
+; Additional positive integers will be assigned as new versions of
+; the ABI become the default version of the ABI.
+fabi-version=
+Common Joined RejectNegative UInteger Var(flag_abi_version) Init(2)
+
+faggressive-loop-optimizations
+Common Report Var(flag_aggressive_loop_optimizations) Optimization Init(1) 
+Aggressively optimize loops using language constraints
+
+falign-functions
+Common Report Var(align_functions,0) Optimization UInteger
+Align the start of functions
+
+falign-functions=
+Common RejectNegative Joined UInteger Var(align_functions)
+
+falign-jumps
+Common Report Var(align_jumps,0) Optimization UInteger
+Align labels which are only reached by jumping
+
+falign-jumps=
+Common RejectNegative Joined UInteger Var(align_jumps)
+
+falign-labels
+Common Report Var(align_labels,0) Optimization UInteger
+Align all labels
+
+falign-labels=
+Common RejectNegative Joined UInteger Var(align_labels)
+
+falign-loops
+Common Report Var(align_loops,0) Optimization UInteger
+Align the start of loops
+
+falign-loops=
+Common RejectNegative Joined UInteger Var(align_loops)
+
+fargument-alias
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+fargument-noalias
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+fargument-noalias-global
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+fargument-noalias-anything
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+fsanitize=address
+Common Report Var(flag_asan)
+Enable AddressSanitizer, a memory error detector
+
+fsanitize=thread
+Common Report Var(flag_tsan)
+Enable ThreadSanitizer, a data race detector
+
+fasynchronous-unwind-tables
+Common Report Var(flag_asynchronous_unwind_tables) Optimization
+Generate unwind tables that are exact at each instruction boundary
+
+fauto-inc-dec
+Common Report Var(flag_auto_inc_dec) Init(1)
+Generate auto-inc/dec instructions
+
+; -fcheck-bounds causes gcc to generate array bounds checks.
+; For C, C++ and ObjC: defaults off.
+; For Java: defaults to on.
+; For Fortran: defaults to off.
+fbounds-check
+Common Report Var(flag_bounds_check)
+Generate code to check bounds before indexing arrays
+
+fbranch-count-reg
+Common Report Var(flag_branch_on_count_reg) Init(1) Optimization
+Replace add, compare, branch with branch on count register
+
+fbranch-probabilities
+Common Report Var(flag_branch_probabilities) Optimization
+Use profiling information for branch probabilities
+
+fbranch-target-load-optimize
+Common Report Var(flag_branch_target_load_optimize) Optimization
+Perform branch target load optimization before prologue / epilogue threading
+
+fbranch-target-load-optimize2
+Common Report Var(flag_branch_target_load_optimize2) Optimization
+Perform branch target load optimization after prologue / epilogue threading
+
+fbtr-bb-exclusive
+Common Report Var(flag_btr_bb_exclusive) Optimization
+Restrict target load migration not to re-use registers in any basic block
+
+fcall-saved-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-fcall-saved-<register>	Mark <register> as being preserved across functions
+
+fcall-used-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-fcall-used-<register>	Mark <register> as being corrupted by function calls
+
+; Nonzero for -fcaller-saves: allocate values in regs that need to
+; be saved across function calls, if that produces overall better code.
+; Optional now, so people can test it.
+fcaller-saves
+Common Report Var(flag_caller_saves) Optimization
+Save registers around function calls
+
+fcheck-data-deps
+Common Report Var(flag_check_data_deps)
+Compare the results of several data dependence analyzers.
+
+fcombine-stack-adjustments
+Common Report Var(flag_combine_stack_adjustments) Optimization
+Looks for opportunities to reduce stack adjustments and stack references.
+
+fcommon
+Common Report Var(flag_no_common,0) Optimization
+Do not put uninitialized globals in the common section
+
+fcompare-debug
+Driver
+; Converted by the driver to -fcompare-debug= options.
+
+fcompare-debug=
+Common Driver JoinedOrMissing RejectNegative Var(flag_compare_debug_opt)
+-fcompare-debug[=<opts>]	Compile with and without e.g. -gtoggle, and compare the final-insns dump
+
+fcompare-debug-second
+Common Driver RejectNegative Var(flag_compare_debug)
+Run only the second compilation of -fcompare-debug
+
+fcompare-elim
+Common Report Var(flag_compare_elim_after_reload) Optimization
+Perform comparison elimination after register allocation has finished
+
+fconserve-stack
+Common Var(flag_conserve_stack) Optimization
+Do not perform optimizations increasing noticeably stack usage
+
+fcprop-registers
+Common Report Var(flag_cprop_registers) Optimization
+Perform a register copy-propagation optimization pass
+
+fcrossjumping
+Common Report Var(flag_crossjumping) Optimization
+Perform cross-jumping optimization
+
+fcse-follow-jumps
+Common Report Var(flag_cse_follow_jumps) Optimization
+When running CSE, follow jumps to their targets
+
+fcse-skip-blocks
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+fcx-limited-range
+Common Report Var(flag_cx_limited_range) Optimization SetByCombined
+Omit range reduction step when performing complex division
+
+fcx-fortran-rules
+Common Report Var(flag_cx_fortran_rules) Optimization
+Complex multiplication and division follow Fortran rules
+
+fdata-sections
+Common Report Var(flag_data_sections) Optimization
+Place data items into their own section
+
+fdbg-cnt-list
+Common Report Var(common_deferred_options) Defer
+List all available debugging counters with their limits and counts.
+
+fdbg-cnt=
+Common RejectNegative Joined Var(common_deferred_options) Defer
+-fdbg-cnt=<counter>:<limit>[,<counter>:<limit>,...]	Set the debug counter limit.   
+
+fdebug-prefix-map=
+Common Joined RejectNegative Var(common_deferred_options) Defer
+Map one directory name to another in debug information
+
+fdebug-types-section
+Common Report Var(flag_debug_types_section) Init(0)
+Output .debug_types section when using DWARF v4 debuginfo.
+
+; Nonzero for -fdefer-pop: don't pop args after each function call
+; instead save them up to pop many calls' args with one insns.
+fdefer-pop
+Common Report Var(flag_defer_pop) Optimization
+Defer popping functions args from stack until later
+
+fdelayed-branch
+Common Report Var(flag_delayed_branch) Optimization
+Attempt to fill delay slots of branch instructions
+
+fdelete-dead-exceptions
+Common Report Var(flag_delete_dead_exceptions) Init(0)
+Delete dead instructions that may throw exceptions
+
+fdelete-null-pointer-checks
+Common Report Var(flag_delete_null_pointer_checks) Init(1) Optimization
+Delete useless null pointer checks
+
+fdevirtualize
+Common Report Var(flag_devirtualize) Optimization
+Try to convert virtual calls to direct ones.
+
+fdiagnostics-show-location=
+Common Joined RejectNegative Enum(diagnostic_prefixing_rule)
+-fdiagnostics-show-location=[once|every-line]	How often to emit source location at the beginning of line-wrapped diagnostics
+
+; Required for these enum values.
+SourceInclude
+pretty-print.h
+
+Enum
+Name(diagnostic_prefixing_rule) Type(int)
+
+EnumValue
+Enum(diagnostic_prefixing_rule) String(once) Value(DIAGNOSTICS_SHOW_PREFIX_ONCE)
+
+EnumValue
+Enum(diagnostic_prefixing_rule) String(every-line) Value(DIAGNOSTICS_SHOW_PREFIX_EVERY_LINE)
+
+fdiagnostics-show-caret
+Common Var(flag_diagnostics_show_caret) Init(1)
+Show the source line with a caret indicating the column
+
+fdiagnostics-show-option
+Common Var(flag_diagnostics_show_option) Init(1)
+Amend appropriate diagnostic messages with the command line option that controls them
+
+fdisable-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-fdisable-[tree|rtl|ipa]-<pass>=range1+range2 disables an optimization pass
+
+fenable-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-fenable-[tree|rtl|ipa]-<pass>=range1+range2 enables an optimization pass
+
+fdump-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-fdump-<type>	Dump various compiler internals to a file
+
+fdump-final-insns
+Driver RejectNegative
+
+fdump-final-insns=
+Common RejectNegative Joined Var(flag_dump_final_insns)
+-fdump-final-insns=filename	Dump to filename the insns at the end of translation
+
+fdump-go-spec=
+Common RejectNegative Joined Var(flag_dump_go_spec)
+-fdump-go-spec=filename	Write all declarations to file as Go code
+
+fdump-noaddr
+Common Report Var(flag_dump_noaddr)
+Suppress output of addresses in debugging dumps
+
+fdump-passes
+Common Var(flag_dump_passes) Init(0)
+Dump optimization passes
+
+fdump-unnumbered
+Common Report Var(flag_dump_unnumbered)
+Suppress output of instruction numbers, line number notes and addresses in debugging dumps
+
+fdump-unnumbered-links
+Common Report Var(flag_dump_unnumbered_links)
+Suppress output of previous and next insn numbers in debugging dumps
+
+fdwarf2-cfi-asm
+Common Report Var(flag_dwarf2_cfi_asm) Init(HAVE_GAS_CFI_DIRECTIVE)
+Enable CFI tables via GAS assembler directives.
+
+fearly-inlining
+Common Report Var(flag_early_inlining) Init(1) Optimization
+Perform early inlining
+
+feliminate-dwarf2-dups
+Common Report Var(flag_eliminate_dwarf2_dups)
+Perform DWARF2 duplicate elimination
+
+fipa-sra
+Common Report Var(flag_ipa_sra) Init(0) Optimization
+Perform interprocedural reduction of aggregates
+
+feliminate-unused-debug-symbols
+Common Report Var(flag_debug_only_used_symbols)
+Perform unused type elimination in debug info
+
+feliminate-unused-debug-types
+Common Report Var(flag_eliminate_unused_debug_types) Init(1)
+Perform unused type elimination in debug info
+
+femit-class-debug-always
+Common Report Var(flag_emit_class_debug_always) Init(0)
+Do not suppress C++ class debug information.
+
+fexceptions
+Common Report Var(flag_exceptions) Optimization
+Enable exception handling
+
+fexpensive-optimizations
+Common Report Var(flag_expensive_optimizations) Optimization
+Perform a number of minor, expensive optimizations
+
+fexcess-precision=
+Common Joined RejectNegative Enum(excess_precision) Var(flag_excess_precision_cmdline) Init(EXCESS_PRECISION_DEFAULT)
+-fexcess-precision=[fast|standard]	Specify handling of excess floating-point precision
+
+Enum
+Name(excess_precision) Type(enum excess_precision) UnknownError(unknown excess precision style %qs)
+
+EnumValue
+Enum(excess_precision) String(fast) Value(EXCESS_PRECISION_FAST)
+
+EnumValue
+Enum(excess_precision) String(standard) Value(EXCESS_PRECISION_STANDARD)
+
+ffast-math
+Common
+
+ffat-lto-objects
+Common Var(flag_fat_lto_objects) Init(1)
+Output lto objects containing both the intermediate language and binary output.
+
+ffinite-math-only
+Common Report Var(flag_finite_math_only) Optimization SetByCombined
+Assume no NaNs or infinities are generated
+
+ffixed-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-ffixed-<register>	Mark <register> as being unavailable to the compiler
+
+ffloat-store
+Common Report Var(flag_float_store) Optimization
+Don't allocate floats and doubles in extended-precision registers
+
+fforce-addr
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+fforward-propagate
+Common Report Var(flag_forward_propagate) Optimization
+Perform a forward propagation pass on RTL
+
+ffp-contract=
+Common Joined RejectNegative Enum(fp_contract_mode) Var(flag_fp_contract_mode) Init(FP_CONTRACT_FAST)
+-ffp-contract=[off|on|fast] Perform floating-point expression contraction.
+
+Enum
+Name(fp_contract_mode) Type(enum fp_contract_mode) UnknownError(unknown floating point contraction style %qs)
+
+EnumValue
+Enum(fp_contract_mode) String(off) Value(FP_CONTRACT_OFF)
+
+; Not implemented, fall back to conservative FP_CONTRACT_OFF.
+EnumValue
+Enum(fp_contract_mode) String(on) Value(FP_CONTRACT_OFF)
+
+EnumValue
+Enum(fp_contract_mode) String(fast) Value(FP_CONTRACT_FAST)
+
+; Nonzero means don't put addresses of constant functions in registers.
+; Used for compiling the Unix kernel, where strange substitutions are
+; done on the assembly output.
+ffunction-cse
+Common Report Var(flag_no_function_cse,0)
+Allow function addresses to be held in registers
+
+ffunction-sections
+Common Report Var(flag_function_sections)
+Place each function into its own section
+
+fgcse
+Common Report Var(flag_gcse) Optimization
+Perform global common subexpression elimination
+
+fgcse-lm
+Common Report Var(flag_gcse_lm) Init(1) Optimization
+Perform enhanced load motion during global common subexpression elimination
+
+fgcse-sm
+Common Report Var(flag_gcse_sm) Init(0) Optimization
+Perform store motion after global common subexpression elimination
+
+fgcse-las
+Common Report Var(flag_gcse_las) Init(0) Optimization
+Perform redundant load after store elimination in global common subexpression
+elimination
+
+fgcse-after-reload
+Common Report Var(flag_gcse_after_reload) Optimization
+Perform global common subexpression elimination after register allocation
+has finished
+
+; This option is not documented yet as its semantics will change.
+fgraphite
+Common Report Var(flag_graphite)
+Enable in and out of Graphite representation
+
+fgraphite-identity
+Common Report Var(flag_graphite_identity) Optimization
+Enable Graphite Identity transformation
+
+fhoist-adjacent-loads
+Common Report Var(flag_hoist_adjacent_loads) Optimization
+Enable hoisting adjacent loads to encourage generating conditional move
+instructions
+
+floop-parallelize-all
+Common Report Var(flag_loop_parallelize_all) Optimization
+Mark all loops as parallel
+
+floop-strip-mine
+Common Report Var(flag_loop_strip_mine) Optimization
+Enable Loop Strip Mining transformation
+
+floop-interchange
+Common Report Var(flag_loop_interchange) Optimization
+Enable Loop Interchange transformation
+
+floop-block
+Common Report Var(flag_loop_block) Optimization
+Enable Loop Blocking transformation
+
+fgnu-tm
+Common Report Var(flag_tm)
+Enable support for GNU transactional memory
+
+fgnu-unique
+Common Report Var(flag_gnu_unique) Init(1)
+Use STB_GNU_UNIQUE if supported by the assembler
+
+floop-flatten
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+floop-nest-optimize
+Common Report Var(flag_loop_optimize_isl) Optimization
+Enable the ISL based loop nest optimizer
+
+fstrict-volatile-bitfields
+Common Report Var(flag_strict_volatile_bitfields) Init(-1)
+Force bitfield accesses to match their type width
+
+fguess-branch-probability
+Common Report Var(flag_guess_branch_prob) Optimization
+Enable guessing of branch probabilities
+
+; Nonzero means ignore `#ident' directives.  0 means handle them.
+; Generate position-independent code for executables if possible
+; On SVR4 targets, it also controls whether or not to emit a
+; string identifying the compiler.
+fident
+Common Report Var(flag_no_ident,0)
+Process #ident directives
+
+fif-conversion
+Common Report Var(flag_if_conversion) Optimization
+Perform conversion of conditional jumps to branchless equivalents
+
+fif-conversion2
+Common Report Var(flag_if_conversion2) Optimization
+Perform conversion of conditional jumps to conditional execution
+
+fstack-reuse=
+Common Joined RejectNegative Enum(stack_reuse_level) Var(flag_stack_reuse) Init(SR_ALL)
+-fstack-reuse=[all|named_vars|none] Set stack reuse level for local variables.
+
+Enum
+Name(stack_reuse_level) Type(enum stack_reuse_level) UnknownError(unknown Stack Reuse Level %qs)
+
+EnumValue
+Enum(stack_reuse_level) String(all) Value(SR_ALL)
+
+EnumValue
+Enum(stack_reuse_level) String(named_vars) Value(SR_NAMED_VARS)
+
+EnumValue
+Enum(stack_reuse_level) String(none) Value(SR_NONE)
+
+ftree-loop-if-convert
+Common Report Var(flag_tree_loop_if_convert) Init(-1) Optimization
+Convert conditional jumps in innermost loops to branchless equivalents
+
+ftree-loop-if-convert-stores
+Common Report Var(flag_tree_loop_if_convert_stores) Optimization
+Also if-convert conditional jumps containing memory writes
+
+; -finhibit-size-directive inhibits output of .size for ELF.
+; This is used only for compiling crtstuff.c,
+; and it may be extended to other effects
+; needed for crtstuff.c on other systems.
+finhibit-size-directive
+Common Report Var(flag_inhibit_size_directive)
+Do not generate .size directives
+
+findirect-inlining
+Common Report Var(flag_indirect_inlining)
+Perform indirect inlining
+
+; General flag to enable inlining.  Specifying -fno-inline will disable
+; all inlining apart from always-inline functions.
+finline
+Common Report Var(flag_no_inline,0) Init(0) Optimization
+Enable inlining of function declared \"inline\", disabling disables all inlining
+
+finline-small-functions
+Common Report Var(flag_inline_small_functions) Optimization
+Integrate functions into their callers when code size is known not to grow
+
+finline-functions
+Common Report Var(flag_inline_functions) Optimization
+Integrate functions not declared \"inline\" into their callers when profitable
+
+finline-functions-called-once
+Common Report Var(flag_inline_functions_called_once) Optimization
+Integrate functions only required by their single caller
+
+finline-limit-
+Common RejectNegative Joined Alias(finline-limit=)
+
+finline-limit=
+Common RejectNegative Joined UInteger
+-finline-limit=<number>	Limit the size of inlined functions to <number>
+
+finline-atomics
+Common Report Var(flag_inline_atomics) Init(1) Optimization
+Inline __atomic operations when a lock free instruction sequence is available.
+
+finstrument-functions
+Common Report Var(flag_instrument_function_entry_exit)
+Instrument function entry and exit with profiling calls
+
+finstrument-functions-exclude-function-list=
+Common RejectNegative Joined
+-finstrument-functions-exclude-function-list=name,...  Do not instrument listed functions
+
+finstrument-functions-exclude-file-list=
+Common RejectNegative Joined
+-finstrument-functions-exclude-file-list=filename,...  Do not instrument functions listed in files
+
+fipa-cp
+Common Report Var(flag_ipa_cp) Optimization
+Perform Interprocedural constant propagation
+
+fipa-cp-clone
+Common Report Var(flag_ipa_cp_clone) Optimization
+Perform cloning to make Interprocedural constant propagation stronger
+
+fipa-profile
+Common Report Var(flag_ipa_profile) Init(0) Optimization
+Perform interprocedural profile propagation
+
+fipa-pta
+Common Report Var(flag_ipa_pta) Init(0) Optimization
+Perform interprocedural points-to analysis
+
+fipa-pure-const
+Common Report Var(flag_ipa_pure_const) Init(0) Optimization
+Discover pure and const functions
+
+fipa-reference
+Common Report Var(flag_ipa_reference) Init(0) Optimization
+Discover readonly and non addressable static variables
+
+fipa-matrix-reorg
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+fipa-struct-reorg
+Common Ignore
+Does nothing. Preserved for backward compatibility.
+
+fira-algorithm=
+Common Joined RejectNegative Enum(ira_algorithm) Var(flag_ira_algorithm) Init(IRA_ALGORITHM_CB)
+-fira-algorithm=[CB|priority] Set the used IRA algorithm
+
+Enum
+Name(ira_algorithm) Type(enum ira_algorithm) UnknownError(unknown IRA algorithm %qs)
+
+EnumValue
+Enum(ira_algorithm) String(CB) Value(IRA_ALGORITHM_CB)
+
+EnumValue
+Enum(ira_algorithm) String(priority) Value(IRA_ALGORITHM_PRIORITY)
+
+fira-region=
+Common Joined RejectNegative Enum(ira_region) Var(flag_ira_region) Init(IRA_REGION_AUTODETECT)
+-fira-region=[one|all|mixed] Set regions for IRA
+
+Enum
+Name(ira_region) Type(enum ira_region) UnknownError(unknown IRA region %qs)
+
+EnumValue
+Enum(ira_region) String(one) Value(IRA_REGION_ONE)
+
+EnumValue
+Enum(ira_region) String(all) Value(IRA_REGION_ALL)
+
+EnumValue
+Enum(ira_region) String(mixed) Value(IRA_REGION_MIXED)
+
+fira-hoist-pressure
+Common Report Var(flag_ira_hoist_pressure) Init(1) Optimization
+Use IRA based register pressure calculation
+in RTL hoist optimizations.
+
+fira-loop-pressure
+Common Report Var(flag_ira_loop_pressure)
+Use IRA based register pressure calculation
+in RTL loop optimizations.
+
+fira-share-save-slots
+Common Report Var(flag_ira_share_save_slots) Init(1)
+Share slots for saving different hard registers.
+
+fira-share-spill-slots
+Common Report Var(flag_ira_share_spill_slots) Init(1)
+Share stack slots for spilled pseudo-registers.
+
+fira-verbose=
+Common RejectNegative Joined UInteger Var(flag_ira_verbose) Init(5)
+-fira-verbose=<number>	Control IRA's level of diagnostic messages.
+
+fivopts
+Common Report Var(flag_ivopts) Init(1) Optimization
+Optimize induction variables on trees
+
+fjump-tables
+Common Var(flag_jump_tables) Init(1) Optimization
+Use jump tables for sufficiently large switch statements
+
+fkeep-inline-functions
+Common Report Var(flag_keep_inline_functions)
+Generate code for functions even if they are fully inlined
+
+fkeep-static-consts
+Common Report Var(flag_keep_static_consts) Init(1)
+Emit static const variables even if they are not used
+
+fleading-underscore
+Common Report Var(flag_leading_underscore) Init(-1)
+Give external symbols a leading underscore
+
+floop-optimize
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+flto
+Common
+Enable link-time optimization.
+
+flto=
+Common RejectNegative Joined Var(flag_lto)
+Link-time optimization with number of parallel jobs or jobserver.
+
+flto-partition=1to1
+Common Var(flag_lto_partition_1to1)
+Partition symbols and vars at linktime based on object files they originate from
+
+flto-partition=balanced
+Common Var(flag_lto_partition_balanced)
+Partition functions and vars at linktime into approximately same sized buckets
+
+flto-partition=max
+Common Var(flag_lto_partition_max)
+Put every symbol into separate partition
+
+flto-partition=none
+Common Var(flag_lto_partition_none)
+Disable partioning and streaming
+
+; The initial value of -1 comes from Z_DEFAULT_COMPRESSION in zlib.h.
+flto-compression-level=
+Common Joined RejectNegative UInteger Var(flag_lto_compression_level) Init(-1)
+-flto-compression-level=<number>	Use zlib compression level <number> for IL
+
+flto-report
+Common Report Var(flag_lto_report) Init(0)
+Report various link-time optimization statistics
+
+fmath-errno
+Common Report Var(flag_errno_math) Init(1) Optimization SetByCombined
+Set errno after built-in math functions
+
+fmax-errors=
+Common Joined RejectNegative UInteger Var(flag_max_errors)
+-fmax-errors=<number>	Maximum number of errors to report
+
+fmem-report
+Common Report Var(mem_report)
+Report on permanent memory allocation
+
+fmem-report-wpa
+Common Report Var(mem_report_wpa)
+Report on permanent memory allocation in WPA only
+
+; This will attempt to merge constant section constants, if 1 only
+; string constants and constants from constant pool, if 2 also constant
+; variables.
+fmerge-all-constants
+Common Report Var(flag_merge_constants,2) Init(1) Optimization
+Attempt to merge identical constants and constant variables
+
+fmerge-constants
+Common Report Var(flag_merge_constants,1) Optimization
+Attempt to merge identical constants across compilation units
+
+fmerge-debug-strings
+Common Report Var(flag_merge_debug_strings) Init(1)
+Attempt to merge identical debug strings across compilation units
+
+fmessage-length=
+Common RejectNegative Joined UInteger
+-fmessage-length=<number>	Limit diagnostics to <number> characters per line.  0 suppresses line-wrapping
+
+fmodulo-sched
+Common Report Var(flag_modulo_sched) Optimization
+Perform SMS based modulo scheduling before the first scheduling pass
+
+fmodulo-sched-allow-regmoves
+Common Report Var(flag_modulo_sched_allow_regmoves)
+Perform SMS based modulo scheduling with register moves allowed
+
+fmove-loop-invariants
+Common Report Var(flag_move_loop_invariants) Init(1) Optimization
+Move loop invariant computations out of loops
+
+fdce
+Common Var(flag_dce) Init(1) Optimization
+Use the RTL dead code elimination pass
+
+fdse
+Common Var(flag_dse) Init(1) Optimization
+Use the RTL dead store elimination pass
+
+freschedule-modulo-scheduled-loops
+Common Report Var(flag_resched_modulo_sched) Optimization
+Enable/Disable the traditional scheduling in loops that already passed modulo scheduling
+
+fnon-call-exceptions
+Common Report Var(flag_non_call_exceptions) Optimization
+Support synchronous non-call exceptions
+
+fomit-frame-pointer
+Common Report Var(flag_omit_frame_pointer) Optimization
+When possible do not generate stack frames
+
+fopt-info
+Common Report Var(flag_opt_info) Optimization
+Enable all optimization info dumps on stderr
+
+fopt-info-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-fopt-info[-<type>=filename]	Dump compiler optimization details
+
+foptimize-register-move
+Common Report Var(flag_regmove) Optimization
+Do the full register move optimization pass
+
+foptimize-sibling-calls
+Common Report Var(flag_optimize_sibling_calls) Optimization
+Optimize sibling and tail recursive calls
+
+fpartial-inlining
+Common Report Var(flag_partial_inlining)
+Perform partial inlining
+
+fpre-ipa-mem-report
+Common Report Var(pre_ipa_mem_report)
+Report on memory allocation before interprocedural optimization
+
+fpost-ipa-mem-report
+Common Report Var(post_ipa_mem_report)
+Report on memory allocation before interprocedural optimization
+
+fpack-struct
+Common Report Var(flag_pack_struct) Optimization
+Pack structure members together without holes
+
+fpack-struct=
+Common RejectNegative Joined UInteger Optimization
+-fpack-struct=<number>	Set initial maximum structure member alignment
+
+fpcc-struct-return
+Common Report Var(flag_pcc_struct_return,1) Init(DEFAULT_PCC_STRUCT_RETURN)
+Return small aggregates in memory, not registers
+
+fpeel-loops
+Common Report Var(flag_peel_loops) Optimization
+Perform loop peeling
+
+fpeephole
+Common Report Var(flag_no_peephole,0) Optimization
+Enable machine specific peephole optimizations
+
+fpeephole2
+Common Report Var(flag_peephole2) Optimization
+Enable an RTL peephole pass before sched2
+
+fPIC
+Common Report Var(flag_pic,2) Negative(fPIE)
+Generate position-independent code if possible (large mode)
+
+fPIE
+Common Report Var(flag_pie,2) Negative(fpic)
+Generate position-independent code for executables if possible (large mode)
+
+fpic
+Common Report Var(flag_pic,1) Negative(fpie)
+Generate position-independent code if possible (small mode)
+
+fpie
+Common Report Var(flag_pie,1) Negative(fPIC)
+Generate position-independent code for executables if possible (small mode)
+
+fplugin=
+Common Joined RejectNegative Var(common_deferred_options) Defer
+Specify a plugin to load
+
+fplugin-arg-
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-fplugin-arg-<name>-<key>[=<value>]	Specify argument <key>=<value> for plugin <name>
+
+fpredictive-commoning
+Common Report Var(flag_predictive_commoning) Optimization
+Run predictive commoning optimization.
+
+fprefetch-loop-arrays
+Common Report Var(flag_prefetch_loop_arrays) Init(-1) Optimization
+Generate prefetch instructions, if available, for arrays in loops
+
+fprofile
+Common Report Var(profile_flag)
+Enable basic program profiling code
+
+fprofile-arcs
+Common Report Var(profile_arc_flag)
+Insert arc-based program profiling code
+
+fprofile-dir=
+Common Joined RejectNegative Var(profile_data_prefix)
+Set the top-level directory for storing the profile data.
+The default is 'pwd'.
+
+fprofile-correction
+Common Report Var(flag_profile_correction)
+Enable correction of flow inconsistent profile data input
+
+fprofile-generate
+Common
+Enable common options for generating profile info for profile feedback directed optimizations
+
+fprofile-generate=
+Common Joined RejectNegative
+Enable common options for generating profile info for profile feedback directed optimizations, and set -fprofile-dir=
+
+fprofile-use
+Common Var(flag_profile_use)
+Enable common options for performing profile feedback directed optimizations
+
+fprofile-use=
+Common Joined RejectNegative
+Enable common options for performing profile feedback directed optimizations, and set -fprofile-dir=
+
+fprofile-values
+Common Report Var(flag_profile_values)
+Insert code to profile values of expressions
+
+fprofile-report
+Common Report Var(profile_report)
+Report on consistency of profile
+
+frandom-seed
+Common Var(common_deferred_options) Defer
+
+frandom-seed=
+Common Joined RejectNegative Var(common_deferred_options) Defer
+-frandom-seed=<string>	Make compile reproducible using <string>
+
+; This switch causes the command line that was used to create an
+; object file to be recorded into the object file.  The exact format
+; of this recording is target and binary file format dependent.
+; It is related to the -fverbose-asm switch, but that switch only
+; records information in the assembler output file as comments, so
+; they never reach the object file.
+frecord-gcc-switches
+Common Report Var(flag_record_gcc_switches)
+Record gcc command line switches in the object file.
+
+freg-struct-return
+Common Report Var(flag_pcc_struct_return,0) Optimization
+Return small aggregates in registers
+
+fregmove
+Common Report Var(flag_regmove) Optimization
+Enables a register move optimization
+
+frename-registers
+Common Report Var(flag_rename_registers) Init(2) Optimization
+Perform a register renaming optimization pass
+
+freorder-blocks
+Common Report Var(flag_reorder_blocks) Optimization
+Reorder basic blocks to improve code placement
+
+freorder-blocks-and-partition
+Common Report Var(flag_reorder_blocks_and_partition) Optimization
+Reorder basic blocks and partition into hot and cold sections
+
+freorder-functions
+Common Report Var(flag_reorder_functions) Optimization
+Reorder functions to improve code placement
+
+frerun-cse-after-loop
+Common Report Var(flag_rerun_cse_after_loop) Optimization
+Add a common subexpression elimination pass after loop optimizations
+
+frerun-loop-opt
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+frounding-math
+Common Report Var(flag_rounding_math) Optimization SetByCombined
+Disable optimizations that assume default FP rounding behavior
+
+fsched-interblock
+Common Report Var(flag_schedule_interblock) Init(1) Optimization
+Enable scheduling across basic blocks
+
+fsched-pressure
+Common Report Var(flag_sched_pressure) Init(0) Optimization
+Enable register pressure sensitive insn scheduling
+
+fsched-spec
+Common Report Var(flag_schedule_speculative) Init(1) Optimization
+Allow speculative motion of non-loads
+
+fsched-spec-load
+Common Report Var(flag_schedule_speculative_load) Optimization
+Allow speculative motion of some loads
+
+fsched-spec-load-dangerous
+Common Report Var(flag_schedule_speculative_load_dangerous) Optimization
+Allow speculative motion of more loads
+
+fsched-verbose=
+Common RejectNegative Joined UInteger Var(sched_verbose_param)
+-fsched-verbose=<number>	Set the verbosity level of the scheduler
+
+fsched2-use-superblocks
+Common Report Var(flag_sched2_use_superblocks) Optimization
+If scheduling post reload, do superblock scheduling
+
+fsched2-use-traces
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+fschedule-insns
+Common Report Var(flag_schedule_insns) Optimization
+Reschedule instructions before register allocation
+
+fschedule-insns2
+Common Report Var(flag_schedule_insns_after_reload) Optimization
+Reschedule instructions after register allocation
+
+; This flag should be on when a target implements non-trivial
+; scheduling hooks, maybe saving some information for its own sake.
+; On IA64, for example, this is used for correct bundling. 
+fselective-scheduling
+Common Report Var(flag_selective_scheduling) Optimization
+Schedule instructions using selective scheduling algorithm
+
+fselective-scheduling2
+Common Report Var(flag_selective_scheduling2) Optimization 
+Run selective scheduling after reload
+
+fsel-sched-pipelining
+Common Report Var(flag_sel_sched_pipelining) Init(0) Optimization
+Perform software pipelining of inner loops during selective scheduling
+
+fsel-sched-pipelining-outer-loops
+Common Report Var(flag_sel_sched_pipelining_outer_loops) Init(0) Optimization
+Perform software pipelining of outer loops during selective scheduling
+
+fsel-sched-reschedule-pipelined
+Common Report Var(flag_sel_sched_reschedule_pipelined) Init(0) Optimization
+Reschedule pipelined regions without pipelining
+
+; sched_stalled_insns means that insns can be moved prematurely from the queue
+; of stalled insns into the ready list.
+fsched-stalled-insns
+Common Report Var(flag_sched_stalled_insns) Optimization UInteger
+Allow premature scheduling of queued insns
+
+fsched-stalled-insns=
+Common RejectNegative Joined UInteger
+-fsched-stalled-insns=<number>	Set number of queued insns that can be prematurely scheduled
+
+; sched_stalled_insns_dep controls how many recently scheduled cycles will
+; be examined for a dependency on a stalled insn that is candidate for
+; premature removal from the queue of stalled insns into the ready list (has
+; an effect only if the flag 'sched_stalled_insns' is set).
+fsched-stalled-insns-dep
+Common Report Var(flag_sched_stalled_insns_dep,1) Init(1) Optimization UInteger
+Set dependence distance checking in premature scheduling of queued insns
+
+fsched-stalled-insns-dep=
+Common RejectNegative Joined UInteger
+-fsched-stalled-insns-dep=<number>	Set dependence distance checking in premature scheduling of queued insns
+
+fsched-group-heuristic
+Common Report Var(flag_sched_group_heuristic) Init(1) Optimization
+Enable the group heuristic in the scheduler
+
+fsched-critical-path-heuristic
+Common Report Var(flag_sched_critical_path_heuristic) Init(1) Optimization
+Enable the critical path heuristic in the scheduler
+
+fsched-spec-insn-heuristic
+Common Report Var(flag_sched_spec_insn_heuristic) Init(1) Optimization
+Enable the speculative instruction heuristic in the scheduler
+
+fsched-rank-heuristic
+Common Report Var(flag_sched_rank_heuristic) Init(1) Optimization
+Enable the rank heuristic in the scheduler
+
+fsched-last-insn-heuristic
+Common Report Var(flag_sched_last_insn_heuristic) Init(1) Optimization
+Enable the last instruction heuristic in the scheduler
+
+fsched-dep-count-heuristic
+Common Report Var(flag_sched_dep_count_heuristic) Init(1) Optimization
+Enable the dependent count heuristic in the scheduler
+
+fsection-anchors
+Common Report Var(flag_section_anchors) Optimization
+Access data in the same section from shared anchor points
+
+fsee
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+fzee
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+free
+Common Report Var(flag_ree) Init(0)
+Turn on Redundant Extensions Elimination pass.
+
+fshow-column
+Common Report Var(flag_show_column) Init(1)
+Show column numbers in diagnostics, when available.  Default on
+
+fshrink-wrap
+Common Report Var(flag_shrink_wrap) Optimization
+Emit function prologues only before parts of the function that need it,
+rather than at the top of the function.
+
+fsignaling-nans
+Common Report Var(flag_signaling_nans) Optimization SetByCombined
+Disable optimizations observable by IEEE signaling NaNs
+
+fsigned-zeros
+Common Report Var(flag_signed_zeros) Init(1) Optimization SetByCombined
+Disable floating point optimizations that ignore the IEEE signedness of zero
+
+fsingle-precision-constant
+Common Report Var(flag_single_precision_constant) Optimization
+Convert floating point constants to single precision constants
+
+fsplit-ivs-in-unroller
+Common Report Var(flag_split_ivs_in_unroller) Init(1) Optimization
+Split lifetimes of induction variables when loops are unrolled
+
+fsplit-stack
+Common Report Var(flag_split_stack) Init(-1)
+Generate discontiguous stack frames
+
+fsplit-wide-types
+Common Report Var(flag_split_wide_types) Optimization
+Split wide types into independent registers
+
+fvariable-expansion-in-unroller
+Common Report Var(flag_variable_expansion_in_unroller) Optimization
+Apply variable expansion when loops are unrolled
+
+fstack-check=
+Common Report RejectNegative Joined
+-fstack-check=[no|generic|specific]	Insert stack checking code into the program
+
+fstack-check
+Common Alias(fstack-check=, specific, no)
+Insert stack checking code into the program.  Same as -fstack-check=specific
+
+fstack-limit
+Common Var(common_deferred_options) Defer
+
+fstack-limit-register=
+Common RejectNegative Joined Var(common_deferred_options) Defer
+-fstack-limit-register=<register>	Trap if the stack goes past <register>
+
+fstack-limit-symbol=
+Common RejectNegative Joined Var(common_deferred_options) Defer
+-fstack-limit-symbol=<name>	Trap if the stack goes past symbol <name>
+
+fstack-protector
+Common Report Var(flag_stack_protect, 1)
+Use propolice as a stack protection method
+
+fstack-protector-all
+Common Report RejectNegative Var(flag_stack_protect, 2)
+Use a stack protection method for every function
+
+fstack-usage
+Common RejectNegative Var(flag_stack_usage)
+Output stack usage information on a per-function basis
+
+fstrength-reduce
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+; Nonzero if we should do (language-dependent) alias analysis.
+; Typically, this analysis will assume that expressions of certain
+; types do not alias expressions of certain other types.  Only used
+; if alias analysis (in general) is enabled.
+fstrict-aliasing
+Common Report Var(flag_strict_aliasing) Optimization
+Assume strict aliasing rules apply
+
+fstrict-overflow
+Common Report Var(flag_strict_overflow)
+Treat signed overflow as undefined
+
+fsync-libcalls
+Common Report Var(flag_sync_libcalls) Init(1)
+Implement __atomic operations via libcalls to legacy __sync functions
+
+fsyntax-only
+Common Report Var(flag_syntax_only)
+Check for syntax errors, then stop
+
+ftest-coverage
+Common Report Var(flag_test_coverage)
+Create data files needed by \"gcov\"
+
+fthread-jumps
+Common Report Var(flag_thread_jumps) Optimization
+Perform jump threading optimizations
+
+ftime-report
+Common Report Var(time_report)
+Report the time taken by each compiler pass
+
+ftls-model=
+Common Joined RejectNegative Enum(tls_model) Var(flag_tls_default) Init(TLS_MODEL_GLOBAL_DYNAMIC)
+-ftls-model=[global-dynamic|local-dynamic|initial-exec|local-exec]	Set the default thread-local storage code generation model
+
+Enum
+Name(tls_model) Type(enum tls_model) UnknownError(unknown TLS model %qs)
+
+EnumValue
+Enum(tls_model) String(global-dynamic) Value(TLS_MODEL_GLOBAL_DYNAMIC)
+
+EnumValue
+Enum(tls_model) String(local-dynamic) Value(TLS_MODEL_LOCAL_DYNAMIC)
+
+EnumValue
+Enum(tls_model) String(initial-exec) Value(TLS_MODEL_INITIAL_EXEC)
+
+EnumValue
+Enum(tls_model) String(local-exec) Value(TLS_MODEL_LOCAL_EXEC)
+
+ftoplevel-reorder
+Common Report Var(flag_toplevel_reorder) Init(2) Optimization
+Reorder top level functions, variables, and asms
+
+ftracer
+Common Report Var(flag_tracer)
+Perform superblock formation via tail duplication
+
+; Zero means that floating-point math operations cannot generate a
+; (user-visible) trap.  This is the case, for example, in nonstop
+; IEEE 754 arithmetic.
+ftrapping-math
+Common Report Var(flag_trapping_math) Init(1) Optimization SetByCombined
+Assume floating-point operations can trap
+
+ftrapv
+Common Report Var(flag_trapv) Optimization
+Trap for signed overflow in addition, subtraction and multiplication
+
+ftree-ccp
+Common Report Var(flag_tree_ccp) Optimization
+Enable SSA-CCP optimization on trees
+
+ftree-bit-ccp
+Common Report Var(flag_tree_bit_ccp) Optimization
+Enable SSA-BIT-CCP optimization on trees
+
+ftree-store-ccp
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+ftree-ch
+Common Report Var(flag_tree_ch) Optimization
+Enable loop header copying on trees
+
+ftree-coalesce-inlined-vars
+Common Report Var(flag_ssa_coalesce_vars,1) Init(2) RejectNegative Optimization
+Enable coalescing of copy-related user variables that are inlined
+
+ftree-coalesce-vars
+Common Report Var(flag_ssa_coalesce_vars,2) Optimization
+Enable coalescing of all copy-related user variables
+
+ftree-copyrename
+Common Report Var(flag_tree_copyrename) Optimization
+Replace SSA temporaries with better names in copies
+
+ftree-copy-prop
+Common Report Var(flag_tree_copy_prop) Optimization
+Enable copy propagation on trees
+
+ftree-store-copy-prop
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+ftree-cselim
+Common Report Var(flag_tree_cselim) Init(2) Optimization
+Transform condition stores into unconditional ones
+
+ftree-switch-conversion
+Common Report Var(flag_tree_switch_conversion) Optimization
+Perform conversions of switch initializations.
+
+ftree-dce
+Common Report Var(flag_tree_dce) Optimization
+Enable SSA dead code elimination optimization on trees
+
+ftree-dominator-opts
+Common Report Var(flag_tree_dom) Optimization
+Enable dominator optimizations
+
+ftree-tail-merge
+Common Report Var(flag_tree_tail_merge) Optimization
+Enable tail merging on trees
+
+ftree-dse
+Common Report Var(flag_tree_dse) Optimization
+Enable dead store elimination
+
+ftree-forwprop
+Common Report Var(flag_tree_forwprop) Init(1) Optimization
+Enable forward propagation on trees
+
+ftree-fre
+Common Report Var(flag_tree_fre) Optimization
+Enable Full Redundancy Elimination (FRE) on trees
+
+foptimize-strlen
+Common Report Var(flag_optimize_strlen) Optimization
+Enable string length optimizations on trees
+
+ftree-loop-distribution
+Common Report Var(flag_tree_loop_distribution) Optimization
+Enable loop distribution on trees
+
+ftree-loop-distribute-patterns
+Common Report Var(flag_tree_loop_distribute_patterns) Optimization
+Enable loop distribution for patterns transformed into a library call
+
+ftree-loop-im
+Common Report Var(flag_tree_loop_im) Init(1) Optimization
+Enable loop invariant motion on trees
+
+ftree-loop-linear
+Common Alias(floop-interchange)
+Enable loop interchange transforms.  Same as -floop-interchange
+
+ftree-loop-ivcanon
+Common Report Var(flag_tree_loop_ivcanon) Init(1) Optimization
+Create canonical induction variables in loops
+
+ftree-loop-optimize
+Common Report Var(flag_tree_loop_optimize) Init(1) Optimization
+Enable loop optimizations on tree level
+
+ftree-parallelize-loops=
+Common Report Joined RejectNegative UInteger Var(flag_tree_parallelize_loops) Init(1)
+Enable automatic parallelization of loops
+
+ftree-phiprop
+Common Report Var(flag_tree_phiprop) Init(1) Optimization
+Enable hoisting loads from conditional pointers.
+
+ftree-pre
+Common Report Var(flag_tree_pre) Optimization
+Enable SSA-PRE optimization on trees
+
+ftree-partial-pre
+Common Report Var(flag_tree_partial_pre) Optimization
+In SSA-PRE optimization on trees, enable partial-partial redundancy elimination
+
+ftree-pta
+Common Report Var(flag_tree_pta) Init(1) Optimization
+Perform function-local points-to analysis on trees.
+
+ftree-reassoc
+Common Report Var(flag_tree_reassoc) Init(1) Optimization
+Enable reassociation on tree level
+
+ftree-salias
+Common Ignore
+Does nothing.  Preserved for backward compatibility.
+
+ftree-sink
+Common Report Var(flag_tree_sink) Optimization
+Enable SSA code sinking on trees
+
+ftree-slsr
+Common Report Var(flag_tree_slsr) Optimization
+Perform straight-line strength reduction
+
+ftree-sra
+Common Report Var(flag_tree_sra) Optimization
+Perform scalar replacement of aggregates
+
+ftree-ter
+Common Report Var(flag_tree_ter) Optimization
+Replace temporary expressions in the SSA->normal pass
+
+ftree-lrs
+Common Report Var(flag_tree_live_range_split) Optimization
+Perform live range splitting during the SSA->normal pass
+
+ftree-vrp
+Common Report Var(flag_tree_vrp) Init(0) Optimization
+Perform Value Range Propagation on trees
+
+funit-at-a-time
+Common Report Var(flag_unit_at_a_time) Init(1) Optimization
+Compile whole compilation unit at a time
+
+funroll-loops
+Common Report Var(flag_unroll_loops) Optimization
+Perform loop unrolling when iteration count is known
+
+funroll-all-loops
+Common Report Var(flag_unroll_all_loops) Optimization
+Perform loop unrolling for all loops
+
+; Nonzero means that loop optimizer may assume that the induction variables
+; that control loops do not overflow and that the loops with nontrivial
+; exit condition are not infinite
+funsafe-loop-optimizations
+Common Report Var(flag_unsafe_loop_optimizations) Optimization
+Allow loop optimizations to assume that the loops behave in normal way
+
+fassociative-math
+Common Report Var(flag_associative_math) SetByCombined
+Allow optimization for floating-point arithmetic which may change the
+result of the operation due to rounding.
+
+freciprocal-math
+Common Report Var(flag_reciprocal_math) SetByCombined
+Same as -fassociative-math for expressions which include division.
+
+; Nonzero means that unsafe floating-point math optimizations are allowed
+; for the sake of speed.  IEEE compliance is not guaranteed, and operations
+; are allowed to assume that their arguments and results are "normal"
+; (e.g., nonnegative for SQRT).
+funsafe-math-optimizations
+Common Report Var(flag_unsafe_math_optimizations) Optimization SetByCombined
+Allow math optimizations that may violate IEEE or ISO standards
+
+funswitch-loops
+Common Report Var(flag_unswitch_loops) Optimization
+Perform loop unswitching
+
+funwind-tables
+Common Report Var(flag_unwind_tables) Optimization
+Just generate unwind tables for exception handling
+
+fuse-ld=bfd
+Common Negative(fuse-ld=gold)
+Use the bfd linker instead of the default linker
+
+fuse-ld=gold
+Common Negative(fuse-ld=bfd)
+Use the gold linker instead of the default linker
+
+fuse-linker-plugin
+Common Undocumented
+
+; Positive if we should track variables, negative if we should run
+; the var-tracking pass only to discard debug annotations, zero if
+; we're not to run it.  When flag_var_tracking == 2 (AUTODETECT_VALUE) it
+; will be set according to optimize, debug_info_level and debug_hooks
+; in process_options ().
+fvar-tracking
+Common Report Var(flag_var_tracking) Init(2) Optimization
+Perform variable tracking
+
+; Positive if we should track variables at assignments, negative if
+; we should run the var-tracking pass only to discard debug
+; annotations.  When flag_var_tracking_assignments ==
+; AUTODETECT_VALUE it will be set according to flag_var_tracking.
+fvar-tracking-assignments
+Common Report Var(flag_var_tracking_assignments) Init(2) Optimization
+Perform variable tracking by annotating assignments
+
+; Nonzero if we should toggle flag_var_tracking_assignments after
+; processing options and computing its default.  */
+fvar-tracking-assignments-toggle
+Common Report Var(flag_var_tracking_assignments_toggle) Optimization
+Toggle -fvar-tracking-assignments
+
+; Positive if we should track uninitialized variables, negative if
+; we should run the var-tracking pass only to discard debug
+; annotations.  When flag_var_tracking_uninit == AUTODETECT_VALUE it
+; will be set according to flag_var_tracking.
+fvar-tracking-uninit
+Common Report Var(flag_var_tracking_uninit) Optimization
+Perform variable tracking and also tag variables that are uninitialized
+
+ftree-vectorize
+Common Report Var(flag_tree_vectorize) Optimization
+Enable loop vectorization on trees
+
+ftree-vectorizer-verbose=
+Common RejectNegative Joined UInteger Var(common_deferred_options) Defer
+-ftree-vectorizer-verbose=<number>	This switch is deprecated. Use -fopt-info instead.
+
+ftree-slp-vectorize
+Common Report Var(flag_tree_slp_vectorize) Init(2) Optimization
+Enable basic block vectorization (SLP) on trees
+
+fvect-cost-model
+Common Report Var(flag_vect_cost_model) Optimization
+Enable use of cost model in vectorization
+
+ftree-vect-loop-version
+Common Report Var(flag_tree_vect_loop_version) Init(1) Optimization
+Enable loop versioning when doing loop vectorization on trees
+
+ftree-scev-cprop
+Common Report Var(flag_tree_scev_cprop) Init(1) Optimization
+Enable copy propagation of scalar-evolution information.
+
+; -fverbose-asm causes extra commentary information to be produced in
+; the generated assembly code (to make it more readable).  This option
+; is generally only of use to those who actually need to read the
+; generated assembly code (perhaps while debugging the compiler itself).
+; -fno-verbose-asm, the default, causes the extra information
+; to not be added and is useful when comparing two assembler files.
+fverbose-asm
+Common Report Var(flag_verbose_asm)
+Add extra commentary to assembler output
+
+fvisibility=
+Common Joined RejectNegative Enum(symbol_visibility) Var(default_visibility) Init(VISIBILITY_DEFAULT)
+-fvisibility=[default|internal|hidden|protected]	Set the default symbol visibility
+
+Enum
+Name(symbol_visibility) Type(enum symbol_visibility) UnknownError(unrecognized visibility value %qs)
+
+EnumValue
+Enum(symbol_visibility) String(default) Value(VISIBILITY_DEFAULT)
+
+EnumValue
+Enum(symbol_visibility) String(internal) Value(VISIBILITY_INTERNAL)
+
+EnumValue
+Enum(symbol_visibility) String(hidden) Value(VISIBILITY_HIDDEN)
+
+EnumValue
+Enum(symbol_visibility) String(protected) Value(VISIBILITY_PROTECTED)
+
+fvpt
+Common Report Var(flag_value_profile_transformations) Optimization
+Use expression value profiles in optimizations
+
+fweb
+Common Report Var(flag_web) Init(2) Optimization
+Construct webs and split unrelated uses of single variable
+
+ftree-builtin-call-dce
+Common Report Var(flag_tree_builtin_call_dce) Init(0) Optimization
+Enable conditional dead code elimination for builtin calls
+
+fwhole-program
+Common Report Var(flag_whole_program) Init(0) Optimization
+Perform whole program optimizations
+
+fwrapv
+Common Report Var(flag_wrapv) Optimization
+Assume signed arithmetic overflow wraps around
+
+fzero-initialized-in-bss
+Common Report Var(flag_zero_initialized_in_bss) Init(1)
+Put zero initialized data in the bss section
+
+g
+Common JoinedOrMissing
+Generate debug information in default format
+
+gcoff
+Common JoinedOrMissing Negative(gdwarf-)
+Generate debug information in COFF format
+
+gdwarf-
+Common Joined UInteger Var(dwarf_version) Init(4) Negative(gstabs)
+Generate debug information in DWARF v2 (or later) format
+
+ggdb
+Common JoinedOrMissing
+Generate debug information in default extended format
+
+gno-pubnames
+Common RejectNegative Var(debug_generate_pub_sections, 0) Init(-1)
+Don't generate DWARF pubnames and pubtypes sections.
+
+gpubnames
+Common RejectNegative Var(debug_generate_pub_sections, 1)
+Generate DWARF pubnames and pubtypes sections.
+
+gno-record-gcc-switches
+Common RejectNegative Var(dwarf_record_gcc_switches,0) Init(1)
+Don't record gcc command line switches in DWARF DW_AT_producer.
+
+grecord-gcc-switches
+Common RejectNegative Var(dwarf_record_gcc_switches,1)
+Record gcc command line switches in DWARF DW_AT_producer.
+
+gno-split-dwarf
+Common Driver RejectNegative Var(dwarf_split_debug_info,0) Init(0)
+Don't generate debug information in separate .dwo files
+
+gsplit-dwarf
+Common Driver RejectNegative Var(dwarf_split_debug_info,1)
+Generate debug information in separate .dwo files
+
+gstabs
+Common JoinedOrMissing Negative(gstabs+)
+Generate debug information in STABS format
+
+gstabs+
+Common JoinedOrMissing Negative(gvms)
+Generate debug information in extended STABS format
+
+gno-strict-dwarf
+Common RejectNegative Var(dwarf_strict,0) Init(0)
+Emit DWARF additions beyond selected version
+
+gstrict-dwarf
+Common Report RejectNegative Var(dwarf_strict,1)
+Don't emit DWARF additions beyond selected version
+
+gtoggle
+Common Report Var(flag_gtoggle)
+Toggle debug information generation
+
+gvms
+Common JoinedOrMissing Negative(gxcoff)
+Generate debug information in VMS format
+
+gxcoff
+Common JoinedOrMissing Negative(gxcoff+)
+Generate debug information in XCOFF format
+
+gxcoff+
+Common JoinedOrMissing Negative(gcoff)
+Generate debug information in extended XCOFF format
+
+h
+Driver Joined Separate
+
+iplugindir=
+Common Joined Var(plugindir_string) Init(0)
+-iplugindir=<dir>	Set <dir> to be the default plugin directory
+
+imultiarch
+Common Joined Separate RejectDriver Var(imultiarch) Init(0)
+-imultiarch <dir>	Set <dir> to be the multiarch include subdirectory
+
+l
+Driver Joined Separate
+
+n
+Driver
+
+no-canonical-prefixes
+Driver
+
+nodefaultlibs
+Driver
+
+nostartfiles
+Driver
+
+nostdlib
+Driver
+
+o
+Common Driver Joined Separate Var(asm_file_name) MissingArgError(missing filename after %qs)
+-o <file>	Place output into <file>
+
+p
+Common Var(profile_flag)
+Enable function profiling
+
+pass-exit-codes
+Driver Var(pass_exit_codes)
+
+pedantic
+Common Alias(Wpedantic)
+
+pedantic-errors
+Common Var(flag_pedantic_errors)
+Like -pedantic but issue them as errors
+
+pg
+Driver
+
+pipe
+Driver Var(use_pipes)
+
+print-file-name=
+Driver JoinedOrMissing Var(print_file_name)
+
+print-libgcc-file-name
+Driver
+
+print-multi-directory
+Driver Var(print_multi_directory)
+
+print-multi-lib
+Driver Var(print_multi_lib)
+
+print-multi-os-directory
+Driver Var(print_multi_os_directory)
+ 
+print-multiarch
+Driver Var(print_multiarch)
+
+print-prog-name=
+Driver JoinedOrMissing Var(print_prog_name)
+
+print-search-dirs
+Driver Var(print_search_dirs)
+
+print-sysroot
+Driver Var(print_sysroot)
+
+print-sysroot-headers-suffix
+Driver Var(print_sysroot_headers_suffix)
+
+quiet
+Common Var(quiet_flag) RejectDriver
+Do not display functions compiled or elapsed time
+
+r
+Driver
+
+s
+Driver
+
+save-temps
+Driver
+
+save-temps=
+Driver Joined
+
+t
+Driver
+
+time
+Driver Var(report_times)
+
+time=
+Driver JoinedOrMissing
+
+u
+Driver Joined Separate
+
+undef
+Driver
+; C option, but driver must not handle as "-u ndef".
+
+v
+Common Driver Var(verbose_flag)
+Enable verbose output
+
+version
+Common Var(version_flag) RejectDriver
+Display the compiler's version
+
+w
+Common Var(inhibit_warnings)
+Suppress warnings
+
+wrapper
+Driver Separate Var(wrapper_string)
+
+x
+Driver Joined Separate
+
+shared
+Driver RejectNegative Negative(pie)
+Create a shared library
+
+shared-libgcc
+Driver
+
+specs
+Driver Separate Alias(specs=)
+
+specs=
+Driver Joined
+
+static
+Driver
+
+static-libgcc
+Driver
+
+static-libgfortran
+Driver
+; Documented for Fortran, but always accepted by driver.
+
+static-libstdc++
+Driver
+
+static-libgo
+Driver
+; Documented for Go, but always accepted by driver.
+
+static-libasan
+Driver
+
+static-libtsan
+Driver
+
+symbolic
+Driver
+
+pie
+Driver RejectNegative Negative(shared)
+Create a position independent executable
+
+z
+Driver Joined Separate
+
+; This comment is to ensure we retain the blank line above.
