@@ -1,5 +1,5 @@
 /* Definitions for SH running NetBSD using ELF
-   Copyright (C) 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
 This file is part of GCC.
@@ -19,26 +19,6 @@ along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#if TARGET_ENDIAN_DEFAULT == MASK_LITTLE_ENDIAN
-#define TARGET_VERSION_ENDIAN "le"
-#else
-#define TARGET_VERSION_ENDIAN ""
-#endif
-
-#if TARGET_CPU_DEFAULT & MASK_SH5
-#if TARGET_CPU_DEFAULT & MASK_SH_E
-#define TARGET_VERSION_CPU "sh5"
-#else
-#define TARGET_VERSION_CPU "sh64"
-#endif /* MASK_SH_E */
-#else
-#define TARGET_VERSION_CPU "sh"
-#endif /* MASK_SH5 */
-
-#undef TARGET_VERSION
-#define TARGET_VERSION	fprintf (stderr, " (NetBSD/%s%s ELF)",		\
-                                 TARGET_VERSION_CPU, TARGET_VERSION_ENDIAN)
-
 
 /* Extra specs needed for NetBSD SuperH ELF targets.  */
 
@@ -61,7 +41,6 @@ along with GCC; see the file COPYING3.  If not see
    NetBSD ELF LINK_SPEC.  */
 
 /* LINK_EMUL_PREFIX from sh/elf.h */
-
 #undef SUBTARGET_LINK_EMUL_SUFFIX
 #define SUBTARGET_LINK_EMUL_SUFFIX "_nbsd"
 
@@ -79,7 +58,7 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef TARGET_DEFAULT
 #define TARGET_DEFAULT \
-  (TARGET_CPU_DEFAULT | MASK_USERMODE | TARGET_ENDIAN_DEFAULT)
+  (TARGET_CPU_DEFAULT | TARGET_ENDIAN_DEFAULT)
 
 /* Define because we use the label and we do not need them.  */
 #define NO_PROFILE_COUNTERS 1
@@ -115,3 +94,13 @@ while (0)
 #define SH_DIV_STRATEGY_DEFAULT SH_DIV_CALL2
 #undef SH_DIV_STR_FOR_SIZE
 #define SH_DIV_STR_FOR_SIZE "call2"
+
+#undef SUBTARGET_OVERRIDE_OPTIONS
+#define SUBTARGET_OVERRIDE_OPTIONS					\
+  do									\
+    {									\
+      /* Set -musermode if it hasn't been specified.  */		\
+      if (global_options_set.x_TARGET_USERMODE == 0)			\
+	TARGET_USERMODE = true;						\
+    }									\
+  while (0)

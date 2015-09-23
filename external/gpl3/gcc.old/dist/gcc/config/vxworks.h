@@ -1,6 +1,5 @@
 /* Common VxWorks target definitions for GNU compiler.
-   Copyright (C) 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Contributed by Wind River Systems.
    Rewritten by CodeSourcery, LLC.
 
@@ -20,7 +19,7 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Assert that we are targetting VxWorks.  */
+/* Assert that we are targeting VxWorks.  */
 #undef TARGET_VXWORKS
 #define TARGET_VXWORKS 1
 
@@ -60,7 +59,7 @@ along with GCC; see the file COPYING3.  If not see
 "%{!mrtp:-r}						\
  %{!shared:						\
    %{mrtp:-q %{h*}					\
-          %{R*} %{!Wl,-T*: %{!T*: %(link_start) }}	\
+          %{R*} %{!T*: %(link_start) }			\
           %(link_target) %(link_os)}}			\
  %{v:-v}						\
  %{shared:-shared}					\
@@ -84,7 +83,7 @@ along with GCC; see the file COPYING3.  If not see
 #define	VXWORKS_STARTFILE_SPEC "%{mrtp:%{!shared:-l:crt0.o}}"
 #define VXWORKS_ENDFILE_SPEC ""
 
-/* Do VxWorks-specific parts of OVERRIDE_OPTIONS.  */
+/* Do VxWorks-specific parts of TARGET_OPTION_OVERRIDE.  */
 #undef VXWORKS_OVERRIDE_OPTIONS
 #define VXWORKS_OVERRIDE_OPTIONS vxworks_override_options ()
 extern void vxworks_override_options (void);
@@ -109,7 +108,6 @@ extern void vxworks_asm_out_destructor (rtx symbol, int priority);
 #undef VXWORKS_GOTT_INDEX
 #define VXWORKS_GOTT_INDEX "__GOTT_INDEX__"
 
-/* As for svr4.h (which not all VxWorks targets include). */
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "int"
 

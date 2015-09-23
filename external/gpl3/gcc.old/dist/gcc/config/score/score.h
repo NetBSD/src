@@ -1,5 +1,5 @@
 /* score.h for Sunplus S+CORE processor
-   Copyright (C) 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Sunnorth.
 
    This file is part of GCC.
@@ -20,19 +20,9 @@
 
 #include "score-conv.h"
 
-/* Controlling the Compilation Driver.  */
-#undef SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR) \
-  (DEFAULT_SWITCH_TAKES_ARG (CHAR) || (CHAR) == 'G')
-
-#undef CPP_SPEC
-#define CPP_SPEC                 "%{mscore3:-D__score3__} %{G*}"
-
 #undef CC1_SPEC
 #define CC1_SPEC                 "%{!mel:-meb} %{mel:-mel } \
 %{!mscore*:-mscore7}    \
-%{mscore3:-mscore3}     \
-%{mscore3d:-mscore3d}   \
 %{mscore7:-mscore7}     \
 %{mscore7d:-mscore7d}   \
 %{G*}"
@@ -42,14 +32,8 @@
 %{!mscore*:-march=score7}         \
 %{mscore7:-march=score7}          \
 %{mscore7d:-march=score7}         \
-%{mscore3:-march=score3}          \
-%{mscore3d:-march=score3}         \
-%{march=score5:-march=score7}     \
-%{march=score5u:-march=score7}    \
 %{march=score7:-march=score7}     \
 %{march=score7d:-march=score7}    \
-%{march=score3:-march=score3}     \
-%{march=score3d:-march=score3}    \
 %{G*}"
 
 #undef LINK_SPEC
@@ -57,14 +41,8 @@
 %{!mscore*:-mscore7_elf}          \
 %{mscore7:-mscore7_elf}           \
 %{mscore7d:-mscore7_elf}          \
-%{mscore3:-mscore3_elf}           \
-%{mscore3d:-mscore3_elf}          \
-%{march=score5:-mscore7_elf}      \
-%{march=score5u:-mscore7_elf}     \
 %{march=score7:-mscore7_elf}      \
 %{march=score7d:-mscore7_elf}     \
-%{march=score3:-mscore3_elf}      \
-%{march=score3d:-mscore3_elf}     \
 %{G*}"
 
 /* Run-time Target Specification.  */
@@ -77,44 +55,20 @@
       builtin_define ("__scorele__");           \
     else                                        \
       builtin_define ("__scorebe__");           \
-    if (TARGET_SCORE5)                          \
-      builtin_define ("__score5__");            \
-    if (TARGET_SCORE5U)                         \
-      builtin_define ("__score5u__");           \
     if (TARGET_SCORE7)                          \
       builtin_define ("__score7__");            \
     if (TARGET_SCORE7D)                         \
       builtin_define ("__score7d__");           \
-    if (TARGET_SCORE3)                          \
-      builtin_define ("__score3__");            \
-    if (TARGET_SCORE3D)                         \
-      builtin_define ("__score3d__");           \
   } while (0)
 
 #define TARGET_DEFAULT         0
 
 #define SCORE_GCC_VERSION      "1.6"
 
-#define TARGET_VERSION \
-      fprintf (stderr, "Sunplus S+core rev=%s", SCORE_GCC_VERSION);
-
-#define OVERRIDE_OPTIONS       score_override_options ()
-
-/* Show we can debug even without a frame pointer.  */
-#define CAN_DEBUG_WITHOUT_FP
-
 /* Target machine storage layout.  */
 #define BITS_BIG_ENDIAN        0
 #define BYTES_BIG_ENDIAN       (TARGET_LITTLE_ENDIAN == 0)
 #define WORDS_BIG_ENDIAN       (TARGET_LITTLE_ENDIAN == 0)
-
-/* Define this to set the endianness to use in libgcc2.c, which can
-   not depend on target_flags.  */
-#if defined(__scorele__)
-#define LIBGCC2_WORDS_BIG_ENDIAN       0
-#else
-#define LIBGCC2_WORDS_BIG_ENDIAN       1
-#endif
 
 /* Width of a word, in units (bytes).  */
 #define UNITS_PER_WORD                 4
@@ -235,8 +189,8 @@
 
    Regarding coprocessor registers: without evidence to the contrary,
    it's best to assume that each coprocessor register has a unique
-   use.  This can be overridden, in, e.g., override_options() or
-   CONDITIONAL_REGISTER_USAGE should the assumption be inappropriate
+   use.  This can be overridden, in, e.g., TARGET_OPTION_OVERRIDE or
+   TARGET_CONDITIONAL_REGISTER_USAGE should the assumption be inappropriate
    for a particular target.  */
 
 /* Control Registers, use mfcr/mtcr insn
@@ -322,13 +276,6 @@
 
 /* Macro to conditionally modify fixed_regs/call_used_regs.  */
 #define PIC_OFFSET_TABLE_REGNUM          29
-
-#define CONDITIONAL_REGISTER_USAGE                     \
-{                                                      \
-   if (!flag_pic)                                      \
-     fixed_regs[PIC_OFFSET_TABLE_REGNUM] =             \
-     call_used_regs[PIC_OFFSET_TABLE_REGNUM] = 0;      \
-}
 
 #define HARD_REGNO_NREGS(REGNO, MODE) \
   ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)
@@ -438,19 +385,7 @@ enum reg_class
    register REGNO.  In general there is more that one such class;
    choose a class which is "minimal", meaning that no smaller class
    also contains the register.  */
-#define REGNO_REG_CLASS(REGNO)         score_reg_class (REGNO)
-
-/* The following macro defines cover classes for Integrated Register
-   Allocator.  Cover classes is a set of non-intersected register
-   classes covering all hard registers used for register allocation
-   purpose.  Any move between two registers of a cover class should be
-   cheaper than load or store of the registers.  The macro value is
-   array of register classes with LIM_REG_CLASSES used as the end
-   marker.  */
-#define IRA_COVER_CLASSES					\
-{								\
-  G32_REGS, CE_REGS, SP_REGS, LIM_REG_CLASSES			\
-}
+#define REGNO_REG_CLASS(REGNO) (enum reg_class) score_reg_class (REGNO)
 
 /* A macro whose definition is the name of the class to which a
    valid base register must belong.  A base register is one used in
@@ -482,34 +417,10 @@ extern enum reg_class score_char_to_class[256];
 #define SECONDARY_OUTPUT_RELOAD_CLASS(CLASS, MODE, X) \
   score_secondary_reload_class (CLASS, MODE, X)
 
-/* Return the maximum number of consecutive registers
-   needed to represent mode MODE in a register of class CLASS.  */
-#define CLASS_MAX_NREGS(CLASS, MODE) \
-  ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)
-
 #define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS)    \
   (GET_MODE_SIZE (FROM) != GET_MODE_SIZE (TO)        \
    ? reg_classes_intersect_p (HI_REG, (CLASS)) : 0)
 
-/* The letters I, J, K, L, M, N, O, and P in a register constraint
-   string can be used to stand for particular ranges of immediate
-   operands.  This macro defines what the ranges are.  C is the
-   letter, and VALUE is a constant value.  Return 1 if VALUE is
-   in the range specified by C.  */
-#define CONST_OK_FOR_LETTER_P(VALUE, C) score_const_ok_for_letter_p (VALUE, C)
-
-/* Similar, but for floating constants, and defining letters G and H.
-   Here VALUE is the CONST_DOUBLE rtx itself.  */
-
-#define CONST_DOUBLE_OK_FOR_LETTER_P(VALUE, C)        \
-  ((C) == 'G' && (VALUE) == CONST0_RTX (GET_MODE (VALUE)))
-
-/* Letters in the range `Q' through `U' may be defined in a
-   machine-dependent fashion to stand for arbitrary operand types.
-   The machine description macro `EXTRA_CONSTRAINT' is passed the
-   operand as its first argument and the constraint letter as its
-   second operand.  */
-#define EXTRA_CONSTRAINT(VALUE, C)      score_extra_constraint (VALUE, C)
 
 /* Basic Stack Layout.  */
 /* Stack layout; function entry, exit and calling.  */
@@ -539,6 +450,7 @@ extern enum reg_class score_char_to_class[256];
 
 /* The register that holds the return address in exception handlers.  */
 #define EH_RETURN_STACKADJ_RTX          gen_rtx_REG (Pmode, EH_REGNUM)
+#define EH_RETURN_HANDLER_RTX  		gen_rtx_REG (SImode, 30)
 
 /* Registers That Address the Stack Frame.  */
 /* Register to use for pushing function arguments.  */
@@ -581,24 +493,7 @@ extern enum reg_class score_char_to_class[256];
    `crtl->outgoing_args_size'.  */
 #define OUTGOING_REG_PARM_STACK_SPACE(FNTYPE) 1
 
-#define RETURN_POPS_ARGS(FUNDECL, FUNTYPE, STACK_SIZE) 0
-
 /* Passing Arguments in Registers  */
-/* Determine where to put an argument to a function.
-   Value is zero to push the argument on the stack,
-   or a hard register in which to store the argument.
-
-   MODE is the argument's machine mode.
-   TYPE is the data type of the argument (as a tree).
-    This is null for libcalls where that information may
-    not be available.
-   CUM is a variable of type CUMULATIVE_ARGS which gives info about
-    the preceding args and about the function being called.
-   NAMED is nonzero if this argument is a named parameter
-    (otherwise it is an extra parameter matching an ellipsis).  */
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED) \
-  score_function_arg (&CUM, MODE, TYPE, NAMED)
-
 /* A C type for declaring a variable that is used as the first argument of
    `FUNCTION_ARG' and other related values.  For some target machines, the
    type `int' suffices and can hold the number of bytes of argument so far.  */
@@ -616,12 +511,6 @@ typedef struct score_args
    For a library call, FNTYPE is 0.  */
 #define INIT_CUMULATIVE_ARGS(CUM, FNTYPE, LIBNAME, INDIRECT, n_named_args) \
   score_init_cumulative_args (&CUM, FNTYPE, LIBNAME)
-
-/* Update the data in CUM to advance over an argument
-   of mode MODE and data type TYPE.
-   (TYPE is null for libcalls where that information may not be available.)  */
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED) \
-  score_function_arg_advance (&CUM, MODE, TYPE, NAMED)
 
 /* 1 if N is a possible register number for function argument passing.
    We have no FP argument registers when soft-float.  When FP registers
@@ -660,14 +549,6 @@ typedef struct score_args
         fprintf (FILE, " .set r1  \n");                               \
         fprintf (FILE, " mv   r%d,r%d \n", AT_REGNUM, RA_REGNUM);     \
         fprintf (FILE, " subi r%d, %d \n", STACK_POINTER_REGNUM, 8);  \
-        fprintf (FILE, " jl   _mcount \n");                           \
-        fprintf (FILE, " .set nor1 \n");                              \
-      }                                                               \
-    else if (TARGET_SCORE3)                                           \
-      {                                                               \
-        fprintf (FILE, " .set r1  \n");                               \
-        fprintf (FILE, " mv!   r%d,r%d \n", AT_REGNUM, RA_REGNUM);    \
-        fprintf (FILE, " addi! r%d, %d \n", STACK_POINTER_REGNUM, -8);\
         fprintf (FILE, " jl   _mcount \n");                           \
         fprintf (FILE, " .set nor1 \n");                              \
       }                                                               \
@@ -711,8 +592,6 @@ typedef struct score_args
 
 #define REG_OK_FOR_INDEX_P(X) 0
 
-#define LEGITIMATE_CONSTANT_P(X)        1
-
 /* Condition Code Status.  */
 #define SELECT_CC_MODE(OP, X, Y)        score_select_cc_mode (OP, X, Y)
 
@@ -721,14 +600,6 @@ typedef struct score_args
 #define REVERSIBLE_CC_MODE(MODE)        1
 
 /* Describing Relative Costs of Operations  */
-/* Compute extra cost of moving data between one register class and another.  */
-#define REGISTER_MOVE_COST(MODE, FROM, TO) \
-  score_register_move_cost (MODE, FROM, TO)
-
-/* Moves to and from memory are quite expensive */
-#define MEMORY_MOVE_COST(MODE, CLASS, TO_P) \
-  (4 + memory_move_secondary_cost ((MODE), (CLASS), (TO_P)))
-
 /* Try to generate sequences that don't involve branches.  */
 #define BRANCH_COST(speed_p, predictable_p) 2
 
@@ -873,9 +744,6 @@ typedef struct score_args
         fprintf (STREAM, "\tpush! %s,[%s]\n",        \
                  reg_names[REGNO],                   \
                  reg_names[STACK_POINTER_REGNUM]);   \
-    else if (TARGET_SCORE3)                          \
-        fprintf (STREAM, "\tpush!\t%s\n",            \
-                 reg_names[REGNO]);                  \
   } while (0)
 
 /* This is how to output an insn to pop a register from the stack.  */
@@ -885,9 +753,6 @@ typedef struct score_args
       fprintf (STREAM, "\tpop! %s,[%s]\n",           \
                reg_names[REGNO],                     \
                reg_names[STACK_POINTER_REGNUM]);     \
-    else if (TARGET_SCORE3)                          \
-      fprintf (STREAM, "\tpop!\t%s\n",               \
-               reg_names[REGNO]);                    \
   } while (0)
 
 /* Output of Dispatch Tables.  */
@@ -900,28 +765,6 @@ typedef struct score_args
         fprintf (STREAM, "\t.gpword %sL%d\n", LOCAL_LABEL_PREFIX, VALUE); \
       else                                                                \
         fprintf (STREAM, "\t.word %sL%d\n", LOCAL_LABEL_PREFIX, VALUE);   \
-    else if (TARGET_SCORE3)                                               \
-      {                                                                   \
-        switch (GET_MODE(BODY))                                           \
-          {                                                               \
-          case QImode: /* TBB */                                          \
-            asm_fprintf (STREAM, "\t.byte\t(%LL%d-%LL%d_tbb)/2\n",        \
-                         VALUE, REL);                                     \
-            break;                                                        \
-          case HImode: /* TBH */                                          \
-            asm_fprintf (STREAM, "\t.2byte\t(%LL%d-%LL%d_tbb)/2\n",       \
-                         VALUE, REL);                                     \
-            break;                                                        \
-          case SImode:                                                    \
-            if (flag_pic)                                                 \
-              fprintf (STREAM, "\t.gpword %sL%d\n", LOCAL_LABEL_PREFIX, VALUE); \
-            else                                                          \
-              fprintf (STREAM, "\t.word %sL%d\n", LOCAL_LABEL_PREFIX, VALUE);   \
-            break;                                                        \
-          default:                                                        \
-            gcc_unreachable();                                            \
-          }                                                               \
-      }                                                                   \
   } while (0)
 
 /* Jump table alignment is explicit in ASM_OUTPUT_CASE_LABEL.  */
@@ -941,13 +784,6 @@ typedef struct score_args
 /* Specify the machine mode that this machine uses
    for the index in the tablejump instruction.  */
 #define CASE_VECTOR_MODE                SImode
-
-#define CASE_VECTOR_PC_RELATIVE         (TARGET_SCORE3)
-
-#define CASE_VECTOR_SHORTEN_MODE(min, max, body)                \
-   ((min < 0 || max >= 0x2000 || TARGET_SCORE7) ? SImode        \
-   : (max >= 0x200) ? HImode                                    \
-   : QImode)
 
 /* This is how to output an element of a case-vector that is absolute.  */
 #define ASM_OUTPUT_ADDR_VEC_ELT(STREAM, VALUE) \

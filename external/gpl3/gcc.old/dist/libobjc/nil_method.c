@@ -1,5 +1,5 @@
 /* GNU Objective C Runtime nil receiver function
-   Copyright (C) 1993, 1995, 1996, 2002, 2009 Free Software Foundation, Inc.
+   Copyright (C) 1993-2013 Free Software Foundation, Inc.
    Contributed by Kresten Krab Thorup
 
 This file is part of GCC.
@@ -26,7 +26,8 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 /* This is the nil method, the function that is called when the receiver
    of a method is nil */
 
-#include "objc/runtime.h"
+#include "objc-private/common.h"
+#include "objc/objc.h"
 
 /* When the receiver of a method invocation is nil, the runtime
    returns nil_method() as the method implementation.  This function

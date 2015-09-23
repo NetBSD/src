@@ -1,6 +1,5 @@
 /* Help friends in C++.
-   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008  Free Software Foundation, Inc.
+   Copyright (C) 1997-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,12 +22,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
-#include "rtl.h"
-#include "expr.h"
 #include "cp-tree.h"
 #include "flags.h"
-#include "output.h"
-#include "toplev.h"
 
 /* Friend data structures are described in cp-tree.h.  */
 
@@ -170,7 +165,8 @@ add_friend (tree type, tree decl, bool complain)
 
   ctx = DECL_CONTEXT (decl);
   if (ctx && CLASS_TYPE_P (ctx) && !uses_template_parms (ctx))
-    perform_or_defer_access_check (TYPE_BINFO (ctx), decl, decl);
+    perform_or_defer_access_check (TYPE_BINFO (ctx), decl, decl,
+				   tf_warning_or_error);
 
   maybe_add_class_template_decl_list (type, decl, /*friend_p=*/1);
 
@@ -227,11 +223,24 @@ make_friend_class (tree type, tree friend_type, bool complain)
   int class_template_depth = template_class_depth (type);
   int friend_depth = processing_template_decl - class_template_depth;
 
-  if (! MAYBE_CLASS_TYPE_P (friend_type))
+  if (! MAYBE_CLASS_TYPE_P (friend_type)
+      && TREE_CODE (friend_type) != TEMPLATE_TEMPLATE_PARM)
     {
-      error ("invalid type %qT declared %<friend%>", friend_type);
+      /* N1791: If the type specifier in a friend declaration designates a
+	 (possibly cv-qualified) class type, that class is declared as a
+	 friend; otherwise, the friend declaration is ignored.
+
+         So don't complain in C++0x mode.  */
+      if (cxx_dialect < cxx0x)
+	pedwarn (input_location, complain ? 0 : OPT_Wpedantic,
+		 "invalid type %qT declared %<friend%>", friend_type);
       return;
     }
+
+  friend_type = cv_unqualified (friend_type);
+
+  if (check_for_bare_parameter_packs (friend_type))
+    return;
 
   if (friend_depth)
     /* If the TYPE is a template then it makes sense for it to be
@@ -308,7 +317,7 @@ make_friend_class (tree type, tree friend_type, bool complain)
 	    }
 	  else
 	    {
-	      decl = lookup_member (ctype, name, 0, true);
+	      decl = lookup_member (ctype, name, 0, true, tf_warning_or_error);
 	      if (!decl)
 		{
 		  error ("%qT is not a member of %qT", name, ctype);
@@ -340,6 +349,8 @@ make_friend_class (tree type, tree friend_type, bool complain)
       error ("template parameter type %qT declared %<friend%>", friend_type);
       return;
     }
+  else if (TREE_CODE (friend_type) == TEMPLATE_TEMPLATE_PARM)
+    friend_type = TYPE_NAME (friend_type);
   else if (!CLASSTYPE_TEMPLATE_INFO (friend_type))
     {
       /* template <class T> friend class A; where A is not a template */
@@ -491,7 +502,13 @@ do_friend (tree ctype, tree declarator, tree decl,
 				  ? current_template_parms
 				  : NULL_TREE);
 
-	  if (template_member_p && decl && TREE_CODE (decl) == FUNCTION_DECL)
+	  if ((template_member_p
+	       /* Always pull out the TEMPLATE_DECL if we have a friend
+		  template in a class template so that it gets tsubsted
+		  properly later on (59956).  tsubst_friend_function knows
+		  how to tell this apart from a member template.  */
+	       || (class_template_depth && friend_depth))
+	      && decl && TREE_CODE (decl) == FUNCTION_DECL)
 	    decl = DECL_TI_TEMPLATE (decl);
 
 	  if (decl)

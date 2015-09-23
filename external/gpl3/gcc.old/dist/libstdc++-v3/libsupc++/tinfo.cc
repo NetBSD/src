@@ -1,7 +1,5 @@
 // Methods for type_info for -*- C++ -*- Run Time Type Identification.
-// Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-// 2003, 2004, 2005, 2006, 2007, 2009
-// Free Software Foundation
+// Copyright (C) 1994-2013 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -36,13 +34,16 @@ std::type_info::
 
 // We can't rely on common symbols being shared between shared objects.
 bool std::type_info::
-operator== (const std::type_info& arg) const
+operator== (const std::type_info& arg) const _GLIBCXX_NOEXCEPT
 {
 #if __GXX_MERGED_TYPEINFO_NAMES
   return name () == arg.name ();
 #else
+  /* The name() method will strip any leading '*' prefix. Therefore
+     take care to look at __name rather than name() when looking for
+     the "pointer" prefix.  */
   return (&arg == this)
-    || (name ()[0] != '*' && (__builtin_strcmp (name (), arg.name ()) == 0));
+    || (__name[0] != '*' && (__builtin_strcmp (name (), arg.name ()) == 0));
 #endif
 }
 

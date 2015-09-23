@@ -1,5 +1,5 @@
 /* Definitions of target machine for GNU compiler, NetBSD/arm ELF version.
-   Copyright (C) 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GCC.
@@ -19,8 +19,6 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (NetBSD/arm ELF)", stderr);
 
 /* arm.h defaults to ARM6 CPU.  */
 
@@ -32,9 +30,12 @@
 	(ARM_DEFAULT_ABI != ARM_ABI_APCS && ARM_DEFAULT_ABI != ARM_ABI_ATPCS \
 	    ? TARGET_CPU_arm926ejs : TARGET_CPU_arm6)
 
-/* This defaults us to little-endian.  */
-#ifndef TARGET_ENDIAN_DEFAULT
-#define TARGET_ENDIAN_DEFAULT 0
+/* TARGET_BIG_ENDIAN_DEFAULT is set in
+   config.gcc for big endian configurations.  */
+#if TARGET_BIG_ENDIAN_DEFAULT
+#define TARGET_ENDIAN_DEFAULT    MASK_BIG_END
+#else
+#define TARGET_ENDIAN_DEFAULT    0
 #endif
 
 #undef MULTILIB_DEFAULTS
@@ -63,7 +64,7 @@
 #define SUBTARGET_EXTRA_ASM_SPEC	\
   "-matpcs %{mabi=aapcs*:-meabi=5} %{fpic|fpie:-k} %{fPIC|fPIE:-k}"
 
-/* Default to full VFP if -mhard-float is specified.  */
+/* Default to full VFP if -mfloat-abi=hard is specified.  */
 #undef SUBTARGET_ASM_FLOAT_SPEC
 #define SUBTARGET_ASM_FLOAT_SPEC	\
   "%{mhard-float:%{!mfpu=*:-mfpu=vfp}}   \

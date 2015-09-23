@@ -1,6 +1,5 @@
 /* Decimal floating point support.
-   Copyright (C) 2005, 2006, 2007, 2008, 2009 Free Software
-   Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,8 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
-#include "toplev.h"
-#include "real.h"
 #include "tm_p.h"
 #include "dfp.h"
 
@@ -112,7 +109,33 @@ decimal_to_decnumber (const REAL_VALUE_TYPE *r, decNumber *dn)
         decNumberFromString (dn, "nan", &set);
       break;
     case rvc_normal:
-      gcc_assert (r->decimal);
+      if (!r->decimal)
+	{
+	  /* dconst{1,2,m1,half} are used in various places in
+	     the middle-end and optimizers, allow them here
+	     as an exception by converting them to decimal.  */
+	  if (memcmp (r, &dconst1, sizeof (*r)) == 0)
+	    {
+	      decNumberFromString (dn, "1", &set);
+	      break;
+	    }
+	  if (memcmp (r, &dconst2, sizeof (*r)) == 0)
+	    {
+	      decNumberFromString (dn, "2", &set);
+	      break;
+	    }
+	  if (memcmp (r, &dconstm1, sizeof (*r)) == 0)
+	    {
+	      decNumberFromString (dn, "-1", &set);
+	      break;
+	    }
+	  if (memcmp (r, &dconsthalf, sizeof (*r)) == 0)
+	    {
+	      decNumberFromString (dn, "0.5", &set);
+	      break;
+	    }
+	  gcc_unreachable ();
+	}
       decimal128ToNumber ((const decimal128 *) r->sig, dn);
       break;
     default:

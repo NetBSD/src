@@ -1,18 +1,15 @@
-<section id="std.util.memory.allocator" xreflabel="Allocator">
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" 
+	 xml:id="std.util.memory.allocator" xreflabel="Allocator">
 <?dbhtml filename="allocator.html"?>
 
-<sectioninfo>
+<info><title>Allocators</title>
   <keywordset>
-    <keyword>
-      ISO C++
-    </keyword>
-    <keyword>
-      allocator
-    </keyword>
+    <keyword>ISO C++</keyword>
+    <keyword>allocator</keyword>
   </keywordset>
-</sectioninfo>
+</info>
 
-<title>Allocators</title>
+
 
 <para>
  Memory management for Standard Library entities is encapsulated in a
@@ -24,8 +21,8 @@
  management classes.
 </para>
 
-<section id="allocator.req">
-<title>Requirements</title>
+<section xml:id="allocator.req"><info><title>Requirements</title></info>
+
 
   <para>
     The C++ standard only gives a few directives in this area:
@@ -87,15 +84,14 @@
 
 </section>
 
-<section id="allocator.design_issues">
-<title>Design Issues</title>
+<section xml:id="allocator.design_issues"><info><title>Design Issues</title></info>
+
 
   <para>
     The easiest way of fulfilling the requirements is to call
     <function>operator new</function> each time a container needs
     memory, and to call <function>operator delete</function> each time
-    the container releases memory. This method may be <ulink
-    url="http://gcc.gnu.org/ml/libstdc++/2001-05/msg00105.html">slower</ulink>
+    the container releases memory. This method may be <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/ml/libstdc++/2001-05/msg00105.html">slower</link>
     than caching the allocations and re-using previously-allocated
     memory, but has the advantage of working correctly across a wide
     variety of hardware and operating systems, including large
@@ -103,7 +99,7 @@
     implements the simple operator new and operator delete semantics,
     while <classname>__gnu_cxx::malloc_allocator</classname>
     implements much the same thing, only with the C language functions
-    <function>std::malloc</function> and <function>free</function>.
+    <function>std::malloc</function> and <function>std::free</function>.
   </para>
 
   <para>
@@ -138,11 +134,11 @@
 
 </section>
 
-<section id="allocator.impl">
-<title>Implementation</title>
+<section xml:id="allocator.impl"><info><title>Implementation</title></info>
 
-  <section>
-    <title>Interface Design</title>
+
+  <section><info><title>Interface Design</title></info>
+    
 
    <para>
      The only allocator interface that
@@ -165,8 +161,8 @@
 
   </section>
 
-  <section>
-    <title>Selecting Default Allocation Policy</title>
+  <section><info><title>Selecting Default Allocation Policy</title></info>
+    
 
    <para>
      It's difficult to pick an allocation strategy that will provide
@@ -189,8 +185,8 @@
        Over multiple iterations, various STL container
      objects have elements inserted to some maximum amount. A variety
      of allocators are tested.
-     Test source for <ulink url="http://gcc.gnu.org/viewcvs/trunk/libstdc%2B%2B-v3/testsuite/performance/23_containers/insert/sequence.cc?view=markup">sequence</ulink>
-     and <ulink url="http://gcc.gnu.org/viewcvs/trunk/libstdc%2B%2B-v3/testsuite/performance/23_containers/insert/associative.cc?view=markup">associative</ulink>
+     Test source for <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/viewcvs/trunk/libstdc%2B%2B-v3/testsuite/performance/23_containers/insert/sequence.cc?view=markup">sequence</link>
+     and <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/viewcvs/trunk/libstdc%2B%2B-v3/testsuite/performance/23_containers/insert/associative.cc?view=markup">associative</link>
      containers.
        </para>
 
@@ -205,7 +201,7 @@
      on a per-thread basis, as well as measuring thread contention
      for memory resources.
      Test source
-    <ulink url="http://gcc.gnu.org/viewcvs/trunk/libstdc%2B%2B-v3/testsuite/performance/23_containers/insert_erase/associative.cc?view=markup">here</ulink>.
+    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/viewcvs/trunk/libstdc%2B%2B-v3/testsuite/performance/23_containers/insert_erase/associative.cc?view=markup">here</link>.
        </para>
      </listitem>
 
@@ -215,9 +211,9 @@
        </para>
        <para>
        Test source for
-     <ulink url="http://gcc.gnu.org/viewcvs/trunk/libstdc++-v3/testsuite/performance/23_containers/producer_consumer/sequence.cc?view=markup">sequence</ulink>
+     <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/viewcvs/trunk/libstdc++-v3/testsuite/performance/23_containers/producer_consumer/sequence.cc?view=markup">sequence</link>
      and
-     <ulink url="http://gcc.gnu.org/viewcvs/trunk/libstdc++-v3/testsuite/performance/23_containers/producer_consumer/associative.cc?view=markup">associative</ulink>
+     <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://gcc.gnu.org/viewcvs/trunk/libstdc++-v3/testsuite/performance/23_containers/producer_consumer/associative.cc?view=markup">associative</link>
      containers.
      </para>
      </listitem>
@@ -231,17 +227,17 @@
 
   </section>
 
-  <section>
-    <title>Disabling Memory Caching</title>
+  <section><info><title>Disabling Memory Caching</title></info>
+    
 
     <para>
       In use, <classname>allocator</classname> may allocate and
-      deallocate using implementation-specified strategies and
-      heuristics. Because of this, every call to an allocator object's
+      deallocate using implementation-specific strategies and
+      heuristics. Because of this, a given call to an allocator object's
       <function>allocate</function> member function may not actually
-      call the global operator new. This situation is also duplicated
-      for calls to the <function>deallocate</function> member
-      function.
+      call the global <code>operator new</code> and a given call to
+      to the <function>deallocate</function> member function may not
+      call <code>operator delete</code>.
     </para>
 
    <para>
@@ -250,7 +246,7 @@
 
    <para>
      In particular, this can make debugging memory errors more
-     difficult, especially when using third party tools like valgrind or
+     difficult, especially when using third-party tools like valgrind or
      debug versions of <function>new</function>.
    </para>
 
@@ -258,9 +254,9 @@
      There are various ways to solve this problem. One would be to use
      a custom allocator that just called operators
      <function>new</function> and <function>delete</function>
-     directly, for every allocation. (See
+     directly, for every allocation. (See the default allocator,
      <filename>include/ext/new_allocator.h</filename>, for instance.)
-     However, that option would involve changing source code to use
+     However, that option may involve changing source code to use
      a non-default allocator. Another option is to force the
      default allocator to remove caching and pools, and to directly
      allocate with every call of <function>allocate</function> and
@@ -271,8 +267,8 @@
 
 
    <para>
-     To globally disable memory caching within the library for the
-     default allocator, merely set
+     To globally disable memory caching within the library for some of
+     the optional non-default allocators, merely set
      <constant>GLIBCXX_FORCE_NEW</constant> (with any value) in the
      system's environment before running the program. If your program
      crashes with <constant>GLIBCXX_FORCE_NEW</constant> in the
@@ -285,8 +281,8 @@
 
 </section>
 
-<section id="allocator.using">
-<title>Using a Specific Allocator</title>
+<section xml:id="allocator.using"><info><title>Using a Specific Allocator</title></info>
+
 
    <para>
      You can specify different memory management schemes on a
@@ -305,8 +301,8 @@
       </programlisting>
 </section>
 
-<section id="allocator.custom">
-<title>Custom Allocators</title>
+<section xml:id="allocator.custom"><info><title>Custom Allocators</title></info>
+
 
   <para>
     Writing a portable C++ allocator would dictate that the interface
@@ -323,8 +319,8 @@
 
 </section>
 
-<section id="allocator.ext">
-<title>Extension Allocators</title>
+<section xml:id="allocator.ext"><info><title>Extension Allocators</title></info>
+
 
   <para>
     Several other allocators are provided as part of this
@@ -472,8 +468,8 @@
        <para>
 	 A high-performance fixed-size allocator with
 	 exponentially-increasing allocations. It has its own
-	 documentation, found <link
-	 linkend="manual.ext.allocator.mt">here</link>.
+	 <link linkend="manual.ext.allocator.mt">chapter</link> 
+         in the documentation.
        </para>
      </listitem>
 
@@ -484,21 +480,21 @@
        <para>
 	 A high-performance allocator that uses a bit-map to keep track
 	 of the used and unused memory locations. It has its own
-	 documentation, found <link
-	 linkend="manual.ext.allocator.bitmap">here</link>.
+	 <link linkend="manual.ext.allocator.bitmap">chapter</link>
+         in the documentation.
        </para>
      </listitem>
    </orderedlist>
 </section>
 
 
-<bibliography id="allocator.biblio">
-<title>Bibliography</title>
+<bibliography xml:id="allocator.biblio"><info><title>Bibliography</title></info>
+
 
   <biblioentry>
-    <title>
+    <citetitle>
     ISO/IEC 14882:1998 Programming languages - C++
-    </title>
+    </citetitle>
     <abbrev>
       isoc++_1998
     </abbrev>
@@ -506,17 +502,14 @@
   </biblioentry>
 
   <biblioentry>
-    <biblioid class="uri">
-      <ulink url="http://www.drdobbs.com/cpp/184403759">
-	<citetitle>
-	  The Standard Librarian: What Are Allocators Good For?
-	</citetitle>
-      </ulink>
-    </biblioid>
-    <author>
-      <firstname>Matt</firstname>
-      <surname>Austern</surname>
-    </author>
+      <title>
+	<link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="http://www.drdobbs.com/the-standard-librarian-what-are-allocato/184403759">
+      The Standard Librarian: What Are Allocators Good For?
+	</link>
+      </title>
+
+    <author><personname><firstname>Matt</firstname><surname>Austern</surname></personname></author>
     <publisher>
       <publishername>
 	C/C++ Users Journal
@@ -525,39 +518,27 @@
   </biblioentry>
 
   <biblioentry>
-    <biblioid class="uri">
-      <ulink url="http://www.cs.umass.edu/~emery/hoard/">
-	<citetitle>
-	  The Hoard Memory Allocator
-	</citetitle>
-      </ulink>
-    </biblioid>
-    <author>
-      <firstname>Emery</firstname>
-      <surname>Berger</surname>
-    </author>
+      <title>
+	<link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="http://www.hoard.org/">
+      The Hoard Memory Allocator
+	</link>
+      </title>
+
+    <author><personname><firstname>Emery</firstname><surname>Berger</surname></personname></author>
   </biblioentry>
 
   <biblioentry>
-    <biblioid class="uri">
-      <ulink url="http://www.cs.umass.edu/~emery/pubs/berger-oopsla2002.pdf">
-	<citetitle>
-	  Reconsidering Custom Memory Allocation
-	</citetitle>
-      </ulink>
-    </biblioid>
-    <author>
-      <firstname>Emery</firstname>
-      <surname>Berger</surname>
-    </author>
-    <author>
-      <firstname>Ben</firstname>
-      <surname>Zorn</surname>
-    </author>
-    <author>
-      <firstname>Kathryn</firstname>
-      <surname>McKinley</surname>
-    </author>
+      <title>
+	<link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="http://people.cs.umass.edu/~emery/pubs/berger-oopsla2002.pdf">
+      Reconsidering Custom Memory Allocation
+	</link>
+      </title>
+
+    <author><personname><firstname>Emery</firstname><surname>Berger</surname></personname></author>
+    <author><personname><firstname>Ben</firstname><surname>Zorn</surname></personname></author>
+    <author><personname><firstname>Kathryn</firstname><surname>McKinley</surname></personname></author>
     <copyright>
       <year>2002</year>
       <holder>OOPSLA</holder>
@@ -566,21 +547,16 @@
 
 
   <biblioentry>
-    <biblioid class="uri">
-      <ulink url="http://www.angelikalanger.com/Articles/C++Report/Allocators/Allocators.html">
-	<citetitle>
-	  Allocator Types
-	</citetitle>
-      </ulink>
-    </biblioid>
-    <author>
-      <firstname>Klaus</firstname>
-      <surname>Kreft</surname>
-    </author>
-    <author>
-      <firstname>Angelika</firstname>
-      <surname>Langer</surname>
-    </author>
+      <title>
+	<link xmlns:xlink="http://www.w3.org/1999/xlink"
+	      xlink:href="http://www.angelikalanger.com/Articles/C++Report/Allocators/Allocators.html">
+      Allocator Types
+	</link>
+      </title>
+
+
+    <author><personname><firstname>Klaus</firstname><surname>Kreft</surname></personname></author>
+    <author><personname><firstname>Angelika</firstname><surname>Langer</surname></personname></author>
     <publisher>
       <publishername>
 	C/C++ Users Journal
@@ -589,14 +565,11 @@
   </biblioentry>
 
   <biblioentry>
-    <title>The C++ Programming Language</title>
-    <author>
-      <firstname>Bjarne</firstname>
-      <surname>Stroustrup</surname>
-    </author>
+    <citetitle>The C++ Programming Language</citetitle>
+    <author><personname><firstname>Bjarne</firstname><surname>Stroustrup</surname></personname></author>
     <copyright>
       <year>2000</year>
-      <holder></holder>
+      <holder/>
     </copyright>
     <pagenums>19.4 Allocators</pagenums>
     <publisher>
@@ -607,11 +580,8 @@
   </biblioentry>
 
   <biblioentry>
-    <title>Yalloc: A Recycling C++ Allocator</title>
-    <author>
-      <firstname>Felix</firstname>
-      <surname>Yen</surname>
-    </author>
+    <citetitle>Yalloc: A Recycling C++ Allocator</citetitle>
+    <author><personname><firstname>Felix</firstname><surname>Yen</surname></personname></author>
   </biblioentry>
 </bibliography>
 

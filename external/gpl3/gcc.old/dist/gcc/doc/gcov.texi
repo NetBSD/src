@@ -1,15 +1,13 @@
-@c Copyright (C) 1996, 1997, 1999, 2000, 2001,
-@c 2002, 2003, 2004, 2005, 2008 Free Software Foundation, Inc.
+@c Copyright (C) 1996-2013 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
 @ignore
 @c man begin COPYRIGHT
-Copyright @copyright{} 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-2008  Free Software Foundation, Inc.
+Copyright @copyright{} 1996-2015 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with the
 Invariant Sections being ``GNU General Public License'' and ``Funding
 Free Software'', the Front-Cover texts being (a) (see below), and with
@@ -113,7 +111,7 @@ compatible with any other profiling or test coverage mechanism.
 @section Invoking @command{gcov}
 
 @smallexample
-gcov @r{[}@var{options}@r{]} @var{sourcefiles}
+gcov @r{[}@var{options}@r{]} @var{files}
 @end smallexample
 
 @command{gcov} accepts the following options:
@@ -124,13 +122,16 @@ gcov [@option{-v}|@option{--version}] [@option{-h}|@option{--help}]
      [@option{-a}|@option{--all-blocks}]
      [@option{-b}|@option{--branch-probabilities}]
      [@option{-c}|@option{--branch-counts}]
+     [@option{-u}|@option{--unconditional-branches}]
      [@option{-n}|@option{--no-output}]
      [@option{-l}|@option{--long-file-names}]
      [@option{-p}|@option{--preserve-paths}]
+     [@option{-r}|@option{--relative-only}]
      [@option{-f}|@option{--function-summaries}]
      [@option{-o}|@option{--object-directory} @var{directory|file}]
-     [@option{-u}|@option{--unconditional-branches}]
-     @var{sourcefiles}
+     [@option{-s}|@option{--source-prefix} @var{directory}]
+     [@option{-d}|@option{--display-progress}]
+     @var{files}
 @c man end
 @c man begin SEEALSO
 gpl(7), gfdl(7), fsf-funding(7), gcc(1) and the Info entry for @file{gcc}.
@@ -176,11 +177,12 @@ Do not create the @command{gcov} output file.
 @itemx --long-file-names
 Create long file names for included source files.  For example, if the
 header file @file{x.h} contains code, and was included in the file
-@file{a.c}, then running @command{gcov} on the file @file{a.c} will produce
-an output file called @file{a.c##x.h.gcov} instead of @file{x.h.gcov}.
-This can be useful if @file{x.h} is included in multiple source
-files.  If you use the @samp{-p} option, both the including and
-included file names will be complete path names.
+@file{a.c}, then running @command{gcov} on the file @file{a.c} will
+produce an output file called @file{a.c##x.h.gcov} instead of
+@file{x.h.gcov}.  This can be useful if @file{x.h} is included in
+multiple source files and you want to see the individual
+contributions.  If you use the @samp{-p} option, both the including
+and included file names will be complete path names.
 
 @item -p
 @itemx --preserve-paths
@@ -188,9 +190,16 @@ Preserve complete path information in the names of generated
 @file{.gcov} files.  Without this option, just the filename component is
 used.  With this option, all directories are used, with @samp{/} characters
 translated to @samp{#} characters, @file{.} directory components
-removed and @file{..}
+removed and unremoveable @file{..}
 components renamed to @samp{^}.  This is useful if sourcefiles are in several
-different directories.  It also affects the @samp{-l} option.
+different directories.
+
+@item -r
+@itemx --relative-only
+Only output information about source files with a relative pathname
+(after source prefix elision).  Absolute paths are usually system
+header files and coverage of any inline functions therein is normally
+uninteresting.
 
 @item -f
 @itemx --function-summaries
@@ -203,14 +212,25 @@ Specify either the directory containing the gcov data files, or the
 object path name.  The @file{.gcno}, and
 @file{.gcda} data files are searched for using this option.  If a directory
 is specified, the data files are in that directory and named after the
-source file name, without its extension.  If a file is specified here,
-the data files are named after that file, without its extension.  If this
-option is not supplied, it defaults to the current directory.
+input file name, without its extension.  If a file is specified here,
+the data files are named after that file, without its extension.
+
+@item -s @var{directory}
+@itemx --source-prefix @var{directory}
+A prefix for source file names to remove when generating the output
+coverage files.  This option is useful when building in a separate
+directory, and the pathname to the source directory is not wanted when
+determining the output file names.  Note that this prefix detection is
+applied before determining whether the source file is absolute.
 
 @item -u
 @itemx --unconditional-branches
 When branch probabilities are given, include those of unconditional branches.
 Unconditional branches are normally not interesting.
+
+@item -d
+@itemx --display-progress
+Display the progress on the standard output.
 
 @end table
 
@@ -219,11 +239,16 @@ when you invoked the compiler.  Otherwise it will not be able to locate
 the source files.  @command{gcov} produces files called
 @file{@var{mangledname}.gcov} in the current directory.  These contain
 the coverage information of the source file they correspond to.
-One @file{.gcov} file is produced for each source file containing code,
+One @file{.gcov} file is produced for each source (or header) file
+containing code,
 which was compiled to produce the data files.  The @var{mangledname} part
 of the output file name is usually simply the source file name, but can
 be something more complicated if the @samp{-l} or @samp{-p} options are
 given.  Refer to those options for details.
+
+If you invoke @command{gcov} with multiple input files, the
+contributions from each input file are summed.  Typically you would
+invoke it with the same list of files as the final link of your executable.
 
 The @file{.gcov} files contain the @samp{:} separated fields along with
 program source code.  The format is
@@ -234,10 +259,13 @@ program source code.  The format is
 
 Additional block information may succeed each line, when requested by
 command line option.  The @var{execution_count} is @samp{-} for lines
-containing no code and @samp{#####} for lines which were never executed.
-Some lines of information at the start have @var{line_number} of zero.
+containing no code.  Unexecuted lines are marked @samp{#####} or
+@samp{====}, depending on whether they are reachable by
+non-exceptional paths or only exceptional paths such as C++ exception
+handlers, respectively.
 
-The preamble lines are of the form
+Some lines of information at the start have @var{line_number} of zero.
+These preamble lines are of the form
 
 @smallexample
 -:0:@var{tag}:@var{value}
@@ -508,6 +536,12 @@ now be calculable at compile time in some instances.  Because the
 coverage of all the uses of the inline function will be shown for the
 same source lines, the line counts themselves might seem inconsistent.
 
+Long-running applications can use the @code{_gcov_reset} and @code{_gcov_dump}
+facilities to restrict profile collection to the program region of
+interest. Calling @code{_gcov_reset(void)} will clear all profile counters
+to zero, and calling @code{_gcov_dump(void)} will cause the profile information
+collected at that point to be dumped to @file{.gcda} output files.
+
 @c man end
 
 @node Gcov Data Files
@@ -515,20 +549,23 @@ same source lines, the line counts themselves might seem inconsistent.
 
 @command{gcov} uses two files for profiling.  The names of these files
 are derived from the original @emph{object} file by substituting the
-file suffix with either @file{.gcno}, or @file{.gcda}.  All of these files
-are placed in the same directory as the object file, and contain data
-stored in a platform-independent format.
+file suffix with either @file{.gcno}, or @file{.gcda}.  The files
+contain coverage and profile data stored in a platform-independent format.
+The @file{.gcno} files are placed in the same directory as the object
+file.  By default, the @file{.gcda} files are also stored in the same
+directory as the object file, but the GCC @option{-fprofile-dir} option
+may be used to store the @file{.gcda} files in a separate directory.
 
-The @file{.gcno} file is generated when the source file is compiled with
-the GCC @option{-ftest-coverage} option.  It contains information to
+The @file{.gcno} notes file is generated when the source file is compiled
+with the GCC @option{-ftest-coverage} option.  It contains information to
 reconstruct the basic block graphs and assign source line numbers to
 blocks.
 
-The @file{.gcda} file is generated when a program containing object files
-built with the GCC @option{-fprofile-arcs} option is executed.  A
-separate @file{.gcda} file is created for each object file compiled with
-this option.  It contains arc transition counts, and some summary
-information.
+The @file{.gcda} count data file is generated when a program containing
+object files built with the GCC @option{-fprofile-arcs} option is executed.
+A separate @file{.gcda} file is created for each object file compiled with
+this option.  It contains arc transition counts, value profile counts, and
+some summary information.
 
 The full details of the file format is specified in @file{gcov-io.h},
 and functions provided in that header file should be used to access the
@@ -537,28 +574,28 @@ coverage files.
 @node Cross-profiling
 @section Data file relocation to support cross-profiling
 
-Running the program will cause profile output to be generated.  For each 
-source file compiled with @option{-fprofile-arcs}, an accompanying @file{.gcda} 
-file will be placed in the object file directory. That implicitly requires 
-running the program on the same system as it was built or having the same 
+Running the program will cause profile output to be generated.  For each
+source file compiled with @option{-fprofile-arcs}, an accompanying @file{.gcda}
+file will be placed in the object file directory. That implicitly requires
+running the program on the same system as it was built or having the same
 absolute directory structure on the target system. The program will try
 to create the needed directory structure, if it is not already present.
 
 To support cross-profiling, a program compiled with @option{-fprofile-arcs}
-can relocate the data files based on two environment variables: 
+can relocate the data files based on two environment variables:
 
 @itemize @bullet
 @item
-GCOV_PREFIX contains the prefix to add to the absolute paths 
-in the object file. Prefix must be absolute as well, otherwise its 
-value is ignored. The default is no prefix.
+GCOV_PREFIX contains the prefix to add to the absolute paths
+in the object file. Prefix can be absolute, or relative.  The
+default is no prefix.
 
 @item
 GCOV_PREFIX_STRIP indicates the how many initial directory names to strip off
 the hardwired absolute paths. Default value is 0.
 
-@emph{Note:} GCOV_PREFIX_STRIP has no effect if GCOV_PREFIX is undefined, empty
-or non-absolute.
+@emph{Note:} If GCOV_PREFIX_STRIP is set without GCOV_PREFIX is undefined,
+ then a relative path is made out of the hardwired absolute paths.
 @end itemize
 
 For example, if the object file @file{/user/build/foo.o} was built with

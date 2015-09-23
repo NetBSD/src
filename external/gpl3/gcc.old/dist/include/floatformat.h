@@ -1,5 +1,5 @@
 /* IEEE floating point support declarations, for GDB, the GNU Debugger.
-   Copyright 1991, 1994, 1995, 1997, 2000, 2003, 2005
+   Copyright 1991, 1994, 1995, 1997, 2000, 2003, 2005, 2010
    Free Software Foundation, Inc.
 
 This file is part of GDB.
@@ -96,6 +96,8 @@ struct floatformat
 
 /* floatformats for IEEE single and double, big and little endian.  */
 
+extern const struct floatformat floatformat_ieee_half_big;
+extern const struct floatformat floatformat_ieee_half_little;
 extern const struct floatformat floatformat_ieee_single_big;
 extern const struct floatformat floatformat_ieee_single_little;
 extern const struct floatformat floatformat_ieee_double_big;

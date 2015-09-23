@@ -1,5 +1,5 @@
 ;; Predicate definitions for XSTORMY16.
-;; Copyright (C) 2005, 2007, 2008 Free Software Foundation, Inc.
+;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -140,8 +140,8 @@
 {
   /* 'Q' is for pushes, 'R' for pops.  */
   return (nonimmediate_operand (op, mode) 
-	  && ! xstormy16_extra_constraint_p (op, 'Q')
-	  && ! xstormy16_extra_constraint_p (op, 'R'));
+	  && ! satisfies_constraint_Q (op)
+	  && ! satisfies_constraint_R (op));
 })
 
 (define_predicate "xstormy16_carry_plus_operand"

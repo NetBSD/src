@@ -1,6 +1,5 @@
 /* Header file for RX ABI versions of libgcc functions.
-   Copyright (C) 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
    This file is part of GCC.
@@ -77,15 +76,6 @@
 
 #ifdef L_umoddi3
 #define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (umoddi3, MOD64u)
-#endif
-
-
-#ifdef L_si_to_sf
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatsisf, CONV32sf)
-#endif
-
-#ifdef L_usi_to_sf
-#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatunsisf, CONV32uf)
 #endif
 
 
@@ -174,6 +164,14 @@
 
 #ifdef L_negate_df
 #define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (negdf2, NEGd)
+#endif
+
+#ifdef L_si_to_sf
+#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatsisf, CONV32sf)
+#endif
+
+#ifdef L_usi_to_sf
+#define DECLARE_LIBRARY_RENAMES RENAME_LIBRARY (floatunsisf, CONV32uf)
 #endif
 
 /* The 64-bit comparison functions do not have aliases because libgcc2

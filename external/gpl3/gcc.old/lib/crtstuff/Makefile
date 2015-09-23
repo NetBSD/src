@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:30 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2015/09/23 03:03:38 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,7 +17,8 @@ GCCARCH=	${EXTERNAL_GCC_SUBDIR}/usr.bin/gcc/arch/${MACHINE_ARCH}
 GALLCFLAGS=	${G_CRTSTUFF_CFLAGS} ${G_CRTSTUFF_T_CFLAGS}
 
 CPPFLAGS+=	-I${GCCARCH} ${GALLCFLAGS:M-D*} ${GALLCFLAGS:M-I*:N-I.*}
-CPPFLAGS+=	-I.
+CPPFLAGS+=	-I. -I${DIST}/libgcc -I${DIST}/gcc -I${DIST}/include
+CPPFLAGS+=	-DIN_GCC
 COPTS+=		-finhibit-size-directive \
 		-fno-inline \
 		-fno-exceptions \
@@ -49,10 +50,10 @@ realall: ${OBJS}
 FILES=${OBJS}
 FILESDIR=${LIBDIR}
 
-.PATH: ${DIST}/gcc ${DIST}/gcc/config ${G_CONFIGDIR}
+.PATH: ${DIST}/libgcc ${DIST}/libgcc/config
 
 .include "../Makefile.tconfigh"
-EXTRA_FAKEHEADERS= options.h
+EXTRA_FAKEHEADERS= options.h libgcc_tm.h
 .include "../Makefile.hacks"
 
 ${OBJS}: ${DPSRCS}

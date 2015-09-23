@@ -1,5 +1,5 @@
 ;; Predicate definitions for DEC VAX.
-;; Copyright (C) 2007, 2009 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -79,9 +79,9 @@
 (define_predicate "indexed_memory_operand"
    (match_code "mem")
 {
-  op = XEXP (op, 0);
-  return GET_CODE (op) != PRE_DEC && GET_CODE (op) != POST_INC
-	 && mode_dependent_address_p (op);
+  rtx addr = XEXP (op, 0);
+  return GET_CODE (addr) != PRE_DEC && GET_CODE (addr) != POST_INC
+	 && mode_dependent_address_p (addr, MEM_ADDR_SPACE (op));
 })
 
 (define_predicate "illegal_blk_memory_operand"

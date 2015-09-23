@@ -1,5 +1,5 @@
 ;; builtin definitions for DEC VAX.
-;; Copyright (C) 2007, 2009 Free Software Foundation, Inc.
+;; Copyright (C) 2007-2013 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -37,17 +37,17 @@
   "
 {
   rtx label = gen_label_rtx ();
-  emit_insn (gen_ffssi2_internal (operands[0], operands[1]));
+  emit_insn (gen_ctzsi2 (operands[0], operands[1]));
   emit_jump_insn (gen_condjump (gen_rtx_NE(VOIDmode, cc0_rtx, const0_rtx), label));
-  emit_insn (gen_negsi2 (operands[0], const1_rtx));
+  emit_move_insn (operands[0], constm1_rtx);
   emit_label (label);
   emit_insn (gen_addsi3 (operands[0], operands[0], const1_rtx));
   DONE;
 }")
 
-(define_insn "ffssi2_internal"
+(define_insn "ctzsi2"
   [(set (match_operand:SI 0 "nonimmediate_operand" "=rQ")
-	(ffs:SI (match_operand:SI 1 "general_operand" "nrmT")))
+	(ctz:SI (match_operand:SI 1 "general_operand" "nrmT")))
    (set (cc0) (match_dup 0))]
   ""
   "ffs $0,$32,%1,%0")

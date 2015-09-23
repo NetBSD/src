@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "CPP 1"
-.TH CPP 1 "2012-07-02" "gcc-4.5.4" "GNU"
+.TH CPP 1 "2015-06-23" "gcc-4.8.5" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -188,7 +188,8 @@ Standard C.  In its default mode, the \s-1GNU\s0 C preprocessor does not do a
 few things required by the standard.  These are features which are
 rarely, if ever, used, and may cause surprising changes to the meaning
 of a program which does not expect them.  To get strict \s-1ISO\s0 Standard C,
-you should use the \fB\-std=c90\fR or \fB\-std=c99\fR options, depending
+you should use the \fB\-std=c90\fR, \fB\-std=c99\fR or
+\&\fB\-std=c11\fR options, depending
 on which version of the standard you want.  To get all the mandatory
 diagnostics, you must also use \fB\-pedantic\fR.
 .PP
@@ -553,6 +554,19 @@ The 1990 C standard, as amended in 1994.
 .PD
 The revised \s-1ISO\s0 C standard, published in December 1999.  Before
 publication, this was known as C9X.
+.ie n .IP """iso9899:2011""" 4
+.el .IP "\f(CWiso9899:2011\fR" 4
+.IX Item "iso9899:2011"
+.PD 0
+.ie n .IP """c11""" 4
+.el .IP "\f(CWc11\fR" 4
+.IX Item "c11"
+.ie n .IP """c1x""" 4
+.el .IP "\f(CWc1x\fR" 4
+.IX Item "c1x"
+.PD
+The revised \s-1ISO\s0 C standard, published in December 2011.  Before
+publication, this was known as C1X.
 .ie n .IP """gnu90""" 4
 .el .IP "\f(CWgnu90\fR" 4
 .IX Item "gnu90"
@@ -571,6 +585,15 @@ The 1990 C standard plus \s-1GNU\s0 extensions.  This is the default.
 .IX Item "gnu9x"
 .PD
 The 1999 C standard plus \s-1GNU\s0 extensions.
+.ie n .IP """gnu11""" 4
+.el .IP "\f(CWgnu11\fR" 4
+.IX Item "gnu11"
+.PD 0
+.ie n .IP """gnu1x""" 4
+.el .IP "\f(CWgnu1x\fR" 4
+.IX Item "gnu1x"
+.PD
+The 2011 C standard plus \s-1GNU\s0 extensions.
 .ie n .IP """c++98""" 4
 .el .IP "\f(CWc++98\fR" 4
 .IX Item "c++98"
@@ -651,7 +674,9 @@ would; \fB\-iwithprefix\fR puts it where \fB\-idirafter\fR would.
 .IP "\fB\-isysroot\fR \fIdir\fR" 4
 .IX Item "-isysroot dir"
 This option is like the \fB\-\-sysroot\fR option, but applies only to
-header files.  See the \fB\-\-sysroot\fR option for more information.
+header files (except for Darwin targets, where it applies to both header
+files and libraries).  See the \fB\-\-sysroot\fR option for more
+information.
 .IP "\fB\-imultilib\fR \fIdir\fR" 4
 .IX Item "-imultilib dir"
 Use \fIdir\fR as a subdirectory of the directory containing
@@ -703,6 +728,9 @@ Accept \fB$\fR in identifiers.
 Accept universal character names in identifiers.  This option is
 experimental; in a future version of \s-1GCC\s0, it will be enabled by
 default for C99 and \*(C+.
+.IP "\fB\-fno\-canonical\-system\-headers\fR" 4
+.IX Item "-fno-canonical-system-headers"
+When preprocessing, do not shorten system header paths with canonicalization.
 .IP "\fB\-fpreprocessed\fR" 4
 .IX Item "-fpreprocessed"
 Indicate to the preprocessor that the input file has already been
@@ -723,6 +751,38 @@ Set the distance between tab stops.  This helps the preprocessor report
 correct column numbers in warnings or errors, even if tabs appear on the
 line.  If the value is less than 1 or greater than 100, the option is
 ignored.  The default is 8.
+.IP "\fB\-fdebug\-cpp\fR" 4
+.IX Item "-fdebug-cpp"
+This option is only useful for debugging \s-1GCC\s0.  When used with
+\&\fB\-E\fR, dumps debugging information about location maps.  Every
+token in the output is preceded by the dump of the map its location
+belongs to.  The dump of the map holding the location of a token would
+be:
+.Sp
+.Vb 1
+\&        {"P":F</file/path>;"F":F</includer/path>;"L":<line_num>;"C":<col_num>;"S":<system_header_p>;"M":<map_address>;"E":<macro_expansion_p>,"loc":<location>}
+.Ve
+.Sp
+When used without \fB\-E\fR, this option has no effect.
+.IP "\fB\-ftrack\-macro\-expansion\fR[\fB=\fR\fIlevel\fR]" 4
+.IX Item "-ftrack-macro-expansion[=level]"
+Track locations of tokens across macro expansions. This allows the
+compiler to emit diagnostic about the current macro expansion stack
+when a compilation error occurs in a macro expansion. Using this
+option makes the preprocessor and the compiler consume more
+memory. The \fIlevel\fR parameter can be used to choose the level of
+precision of token location tracking thus decreasing the memory
+consumption if necessary. Value \fB0\fR of \fIlevel\fR de-activates
+this option just as if no \fB\-ftrack\-macro\-expansion\fR was present
+on the command line. Value \fB1\fR tracks tokens locations in a
+degraded mode for the sake of minimal memory overhead. In this mode
+all tokens resulting from the expansion of an argument of a
+function-like macro have the same location. Value \fB2\fR tracks
+tokens locations completely. This value is the most memory hungry.
+When this option is given no argument, the default parameter value is
+\&\fB2\fR.
+.Sp
+Note that \-ftrack\-macro\-expansion=2 is activated by default.
 .IP "\fB\-fexec\-charset=\fR\fIcharset\fR" 4
 .IX Item "-fexec-charset=charset"
 Set the execution character set, used for string and character
@@ -960,13 +1020,10 @@ main input file is omitted.
 \&\fIbinutils\fR.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1987, 1989, 1991, 1992, 1993, 1994, 1995, 1996,
-1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007,
-2008, 2009, 2010, 2011
-Free Software Foundation, Inc.
+Copyright (c) 1987\-2015 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
-under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.2 or
+under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation.  A copy of
 the license is included in the
 man page \fIgfdl\fR\|(7).

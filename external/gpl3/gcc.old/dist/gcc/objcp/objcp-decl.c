@@ -1,6 +1,6 @@
 /* Process the ObjC-specific declarations and variables for 
    the Objective-C++ compiler.
-   Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -24,20 +24,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
-#include "rtl.h"
-#include "expr.h"
 #include "cp-tree.h"
-#include "c-common.h"
-#include "flags.h"
-#include "input.h"
-#include "except.h"
-#include "output.h"
-#include "toplev.h"
-#include "cpplib.h"
-#include "debug.h"
-#include "target.h"
-#include "varray.h"
+#include "hashtab.h"
 
+#include "c-family/c-objc.h"
 #include "objc-act.h"
 #include "objcp-decl.h"
 
@@ -59,7 +49,7 @@ objcp_start_struct (location_t loc ATTRIBUTE_UNUSED,
   CLASSTYPE_DECLARED_CLASS (s) = 0;  /* this is a 'struct', not a 'class'.  */
   xref_basetypes (s, NULL_TREE);     /* no base classes here!  */
 
-  return begin_class_definition (s, NULL_TREE);
+  return begin_class_definition (s);
 }
 
 tree 
@@ -75,6 +65,13 @@ objcp_finish_struct (location_t loc ATTRIBUTE_UNUSED,
     finish_member_declaration (field);
   }
   t = finish_struct (t, attributes);
+
+  /* If we are inside an @interface and are generating the list of
+     ivars, we need to check for duplicate ivars.
+  */
+  if (fieldlist)
+    objc_detect_field_duplicates (true);
+
   pop_lang_context ();
 
   return t;

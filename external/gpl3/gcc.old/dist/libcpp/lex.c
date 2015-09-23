@@ -1,6 +1,5 @@
 /* CPP Library - lexical analysis.
-   Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
    Contributed by Per Bothner, 1994-95.
    Based on CCCP program by Paul Rubin, June 1986
    Adapted to ANSI C, Richard Stallman, Jan 1987
@@ -96,6 +95,726 @@ add_line_note (cpp_buffer *buffer, const uchar *pos, unsigned int type)
   buffer->notes_used++;
 }
 
+
+/* Fast path to find line special characters using optimized character
+   scanning algorithms.  Anything complicated falls back to the slow
+   path below.  Since this loop is very hot it's worth doing these kinds
+   of optimizations.
+
+   One of the paths through the ifdefs should provide 
+
+     const uchar *search_line_fast (const uchar *s, const uchar *end);
+
+   Between S and END, search for \n, \r, \\, ?.  Return a pointer to
+   the found character.
+
+   Note that the last character of the buffer is *always* a newline,
+   as forced by _cpp_convert_input.  This fact can be used to avoid
+   explicitly looking for the end of the buffer.  */
+
+/* Configure gives us an ifdef test.  */
+#ifndef WORDS_BIGENDIAN
+#define WORDS_BIGENDIAN 0
+#endif
+
+/* We'd like the largest integer that fits into a register.  There's nothing
+   in <stdint.h> that gives us that.  For most hosts this is unsigned long,
+   but MS decided on an LLP64 model.  Thankfully when building with GCC we
+   can get the "real" word size.  */
+#ifdef __GNUC__
+typedef unsigned int word_type __attribute__((__mode__(__word__)));
+#else
+typedef unsigned long word_type;
+#endif
+
+/* The code below is only expecting sizes 4 or 8.
+   Die at compile-time if this expectation is violated.  */
+typedef char check_word_type_size
+  [(sizeof(word_type) == 8 || sizeof(word_type) == 4) * 2 - 1];
+
+/* Return X with the first N bytes forced to values that won't match one
+   of the interesting characters.  Note that NUL is not interesting.  */
+
+static inline word_type
+acc_char_mask_misalign (word_type val, unsigned int n)
+{
+  word_type mask = -1;
+  if (WORDS_BIGENDIAN)
+    mask >>= n * 8;
+  else
+    mask <<= n * 8;
+  return val & mask;
+}
+
+/* Return X replicated to all byte positions within WORD_TYPE.  */
+
+static inline word_type
+acc_char_replicate (uchar x)
+{
+  word_type ret;
+
+  ret = (x << 24) | (x << 16) | (x << 8) | x;
+  if (sizeof(word_type) == 8)
+    ret = (ret << 16 << 16) | ret;
+  return ret;
+}
+
+/* Return non-zero if some byte of VAL is (probably) C.  */
+
+static inline word_type
+acc_char_cmp (word_type val, word_type c)
+{
+#if defined(__GNUC__) && defined(__alpha__)
+  /* We can get exact results using a compare-bytes instruction.  
+     Get (val == c) via (0 >= (val ^ c)).  */
+  return __builtin_alpha_cmpbge (0, val ^ c);
+#else
+  word_type magic = 0x7efefefeU;
+  if (sizeof(word_type) == 8)
+    magic = (magic << 16 << 16) | 0xfefefefeU;
+  magic |= 1;
+
+  val ^= c;
+  return ((val + magic) ^ ~val) & ~magic;
+#endif
+}
+
+/* Given the result of acc_char_cmp is non-zero, return the index of
+   the found character.  If this was a false positive, return -1.  */
+
+static inline int
+acc_char_index (word_type cmp ATTRIBUTE_UNUSED,
+		word_type val ATTRIBUTE_UNUSED)
+{
+#if defined(__GNUC__) && defined(__alpha__) && !WORDS_BIGENDIAN
+  /* The cmpbge instruction sets *bits* of the result corresponding to
+     matches in the bytes with no false positives.  */
+  return __builtin_ctzl (cmp);
+#else
+  unsigned int i;
+
+  /* ??? It would be nice to force unrolling here,
+     and have all of these constants folded.  */
+  for (i = 0; i < sizeof(word_type); ++i)
+    {
+      uchar c;
+      if (WORDS_BIGENDIAN)
+	c = (val >> (sizeof(word_type) - i - 1) * 8) & 0xff;
+      else
+	c = (val >> i * 8) & 0xff;
+
+      if (c == '\n' || c == '\r' || c == '\\' || c == '?')
+	return i;
+    }
+
+  return -1;
+#endif
+}
+
+/* A version of the fast scanner using bit fiddling techniques.
+ 
+   For 32-bit words, one would normally perform 16 comparisons and
+   16 branches.  With this algorithm one performs 24 arithmetic
+   operations and one branch.  Whether this is faster with a 32-bit
+   word size is going to be somewhat system dependent.
+
+   For 64-bit words, we eliminate twice the number of comparisons
+   and branches without increasing the number of arithmetic operations.
+   It's almost certainly going to be a win with 64-bit word size.  */
+
+static const uchar * search_line_acc_char (const uchar *, const uchar *)
+  ATTRIBUTE_UNUSED;
+
+static const uchar *
+search_line_acc_char (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
+{
+  const word_type repl_nl = acc_char_replicate ('\n');
+  const word_type repl_cr = acc_char_replicate ('\r');
+  const word_type repl_bs = acc_char_replicate ('\\');
+  const word_type repl_qm = acc_char_replicate ('?');
+
+  unsigned int misalign;
+  const word_type *p;
+  word_type val, t;
+  
+  /* Align the buffer.  Mask out any bytes from before the beginning.  */
+  p = (word_type *)((uintptr_t)s & -sizeof(word_type));
+  val = *p;
+  misalign = (uintptr_t)s & (sizeof(word_type) - 1);
+  if (misalign)
+    val = acc_char_mask_misalign (val, misalign);
+
+  /* Main loop.  */
+  while (1)
+    {
+      t  = acc_char_cmp (val, repl_nl);
+      t |= acc_char_cmp (val, repl_cr);
+      t |= acc_char_cmp (val, repl_bs);
+      t |= acc_char_cmp (val, repl_qm);
+
+      if (__builtin_expect (t != 0, 0))
+	{
+	  int i = acc_char_index (t, val);
+	  if (i >= 0)
+	    return (const uchar *)p + i;
+	}
+
+      val = *++p;
+    }
+}
+
+/* Disable on Solaris 2/x86 until the following problems can be properly
+   autoconfed:
+
+   The Solaris 9 assembler cannot assemble SSE4.2 insns.
+   Before Solaris 9 Update 6, SSE insns cannot be executed.
+   The Solaris 10+ assembler tags objects with the instruction set
+   extensions used, so SSE4.2 executables cannot run on machines that
+   don't support that extension.  */
+
+#if (GCC_VERSION >= 4005) && (defined(__i386__) || defined(__x86_64__)) && !(defined(__sun__) && defined(__svr4__))
+
+/* Replicated character data to be shared between implementations.
+   Recall that outside of a context with vector support we can't
+   define compatible vector types, therefore these are all defined
+   in terms of raw characters.  */
+static const char repl_chars[4][16] __attribute__((aligned(16))) = {
+  { '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n',
+    '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n' },
+  { '\r', '\r', '\r', '\r', '\r', '\r', '\r', '\r',
+    '\r', '\r', '\r', '\r', '\r', '\r', '\r', '\r' },
+  { '\\', '\\', '\\', '\\', '\\', '\\', '\\', '\\',
+    '\\', '\\', '\\', '\\', '\\', '\\', '\\', '\\' },
+  { '?', '?', '?', '?', '?', '?', '?', '?',
+    '?', '?', '?', '?', '?', '?', '?', '?' },
+};
+
+/* A version of the fast scanner using MMX vectorized byte compare insns.
+
+   This uses the PMOVMSKB instruction which was introduced with "MMX2",
+   which was packaged into SSE1; it is also present in the AMD MMX
+   extension.  Mark the function as using "sse" so that we emit a real
+   "emms" instruction, rather than the 3dNOW "femms" instruction.  */
+
+static const uchar *
+#ifndef __SSE__
+__attribute__((__target__("sse")))
+#endif
+search_line_mmx (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
+{
+  typedef char v8qi __attribute__ ((__vector_size__ (8)));
+  typedef int __m64 __attribute__ ((__vector_size__ (8), __may_alias__));
+
+  const v8qi repl_nl = *(const v8qi *)repl_chars[0];
+  const v8qi repl_cr = *(const v8qi *)repl_chars[1];
+  const v8qi repl_bs = *(const v8qi *)repl_chars[2];
+  const v8qi repl_qm = *(const v8qi *)repl_chars[3];
+
+  unsigned int misalign, found, mask;
+  const v8qi *p;
+  v8qi data, t, c;
+
+  /* Align the source pointer.  While MMX doesn't generate unaligned data
+     faults, this allows us to safely scan to the end of the buffer without
+     reading beyond the end of the last page.  */
+  misalign = (uintptr_t)s & 7;
+  p = (const v8qi *)((uintptr_t)s & -8);
+  data = *p;
+
+  /* Create a mask for the bytes that are valid within the first
+     16-byte block.  The Idea here is that the AND with the mask
+     within the loop is "free", since we need some AND or TEST
+     insn in order to set the flags for the branch anyway.  */
+  mask = -1u << misalign;
+
+  /* Main loop processing 8 bytes at a time.  */
+  goto start;
+  do
+    {
+      data = *++p;
+      mask = -1;
+
+    start:
+      t = __builtin_ia32_pcmpeqb(data, repl_nl);
+      c = __builtin_ia32_pcmpeqb(data, repl_cr);
+      t = (v8qi) __builtin_ia32_por ((__m64)t, (__m64)c);
+      c = __builtin_ia32_pcmpeqb(data, repl_bs);
+      t = (v8qi) __builtin_ia32_por ((__m64)t, (__m64)c);
+      c = __builtin_ia32_pcmpeqb(data, repl_qm);
+      t = (v8qi) __builtin_ia32_por ((__m64)t, (__m64)c);
+      found = __builtin_ia32_pmovmskb (t);
+      found &= mask;
+    }
+  while (!found);
+
+  __builtin_ia32_emms ();
+
+  /* FOUND contains 1 in bits for which we matched a relevant
+     character.  Conversion to the byte index is trivial.  */
+  found = __builtin_ctz(found);
+  return (const uchar *)p + found;
+}
+
+/* A version of the fast scanner using SSE2 vectorized byte compare insns.  */
+
+static const uchar *
+#ifndef __SSE2__
+__attribute__((__target__("sse2")))
+#endif
+search_line_sse2 (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
+{
+  typedef char v16qi __attribute__ ((__vector_size__ (16)));
+
+  const v16qi repl_nl = *(const v16qi *)repl_chars[0];
+  const v16qi repl_cr = *(const v16qi *)repl_chars[1];
+  const v16qi repl_bs = *(const v16qi *)repl_chars[2];
+  const v16qi repl_qm = *(const v16qi *)repl_chars[3];
+
+  unsigned int misalign, found, mask;
+  const v16qi *p;
+  v16qi data, t;
+
+  /* Align the source pointer.  */
+  misalign = (uintptr_t)s & 15;
+  p = (const v16qi *)((uintptr_t)s & -16);
+  data = *p;
+
+  /* Create a mask for the bytes that are valid within the first
+     16-byte block.  The Idea here is that the AND with the mask
+     within the loop is "free", since we need some AND or TEST
+     insn in order to set the flags for the branch anyway.  */
+  mask = -1u << misalign;
+
+  /* Main loop processing 16 bytes at a time.  */
+  goto start;
+  do
+    {
+      data = *++p;
+      mask = -1;
+
+    start:
+      t  = __builtin_ia32_pcmpeqb128(data, repl_nl);
+      t |= __builtin_ia32_pcmpeqb128(data, repl_cr);
+      t |= __builtin_ia32_pcmpeqb128(data, repl_bs);
+      t |= __builtin_ia32_pcmpeqb128(data, repl_qm);
+      found = __builtin_ia32_pmovmskb128 (t);
+      found &= mask;
+    }
+  while (!found);
+
+  /* FOUND contains 1 in bits for which we matched a relevant
+     character.  Conversion to the byte index is trivial.  */
+  found = __builtin_ctz(found);
+  return (const uchar *)p + found;
+}
+
+#ifdef HAVE_SSE4
+/* A version of the fast scanner using SSE 4.2 vectorized string insns.  */
+
+static const uchar *
+#ifndef __SSE4_2__
+__attribute__((__target__("sse4.2")))
+#endif
+search_line_sse42 (const uchar *s, const uchar *end)
+{
+  typedef char v16qi __attribute__ ((__vector_size__ (16)));
+  static const v16qi search = { '\n', '\r', '?', '\\' };
+
+  uintptr_t si = (uintptr_t)s;
+  uintptr_t index;
+
+  /* Check for unaligned input.  */
+  if (si & 15)
+    {
+      v16qi sv;
+
+      if (__builtin_expect (end - s < 16, 0)
+	  && __builtin_expect ((si & 0xfff) > 0xff0, 0))
+	{
+	  /* There are less than 16 bytes left in the buffer, and less
+	     than 16 bytes left on the page.  Reading 16 bytes at this
+	     point might generate a spurious page fault.  Defer to the
+	     SSE2 implementation, which already handles alignment.  */
+	  return search_line_sse2 (s, end);
+	}
+
+      /* ??? The builtin doesn't understand that the PCMPESTRI read from
+	 memory need not be aligned.  */
+      sv = __builtin_ia32_loaddqu ((const char *) s);
+      index = __builtin_ia32_pcmpestri128 (search, 4, sv, 16, 0);
+
+      if (__builtin_expect (index < 16, 0))
+	goto found;
+
+      /* Advance the pointer to an aligned address.  We will re-scan a
+	 few bytes, but we no longer need care for reading past the
+	 end of a page, since we're guaranteed a match.  */
+      s = (const uchar *)((si + 16) & -16);
+    }
+
+  /* Main loop, processing 16 bytes at a time.  By doing the whole loop
+     in inline assembly, we can make proper use of the flags set.  */
+  __asm (      "sub $16, %1\n"
+	"	.balign 16\n"
+	"0:	add $16, %1\n"
+	"	%vpcmpestri $0, (%1), %2\n"
+	"	jnc 0b"
+	: "=&c"(index), "+r"(s)
+	: "x"(search), "a"(4), "d"(16));
+
+ found:
+  return s + index;
+}
+
+#else
+/* Work around out-dated assemblers without sse4 support.  */
+#define search_line_sse42 search_line_sse2
+#endif
+
+/* Check the CPU capabilities.  */
+
+#include "../gcc/config/i386/cpuid.h"
+
+typedef const uchar * (*search_line_fast_type) (const uchar *, const uchar *);
+static search_line_fast_type search_line_fast;
+
+#define HAVE_init_vectorized_lexer 1
+static inline void
+init_vectorized_lexer (void)
+{
+  unsigned dummy, ecx = 0, edx = 0;
+  search_line_fast_type impl = search_line_acc_char;
+  int minimum = 0;
+
+#if defined(__SSE4_2__)
+  minimum = 3;
+#elif defined(__SSE2__)
+  minimum = 2;
+#elif defined(__SSE__)
+  minimum = 1;
+#endif
+
+  if (minimum == 3)
+    impl = search_line_sse42;
+  else if (__get_cpuid (1, &dummy, &dummy, &ecx, &edx) || minimum == 2)
+    {
+      if (minimum == 3 || (ecx & bit_SSE4_2))
+        impl = search_line_sse42;
+      else if (minimum == 2 || (edx & bit_SSE2))
+	impl = search_line_sse2;
+      else if (minimum == 1 || (edx & bit_SSE))
+	impl = search_line_mmx;
+    }
+  else if (__get_cpuid (0x80000001, &dummy, &dummy, &dummy, &edx))
+    {
+      if (minimum == 1
+	  || (edx & (bit_MMXEXT | bit_CMOV)) == (bit_MMXEXT | bit_CMOV))
+	impl = search_line_mmx;
+    }
+
+  search_line_fast = impl;
+}
+
+#elif defined(_ARCH_PWR8) && defined(__ALTIVEC__)
+
+/* A vection of the fast scanner using AltiVec vectorized byte compares
+   and VSX unaligned loads (when VSX is available).  This is otherwise
+   the same as the pre-GCC 5 version.  */
+
+static const uchar *
+search_line_fast (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
+{
+  typedef __attribute__((altivec(vector))) unsigned char vc;
+
+  const vc repl_nl = {
+    '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n', 
+    '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n'
+  };
+  const vc repl_cr = {
+    '\r', '\r', '\r', '\r', '\r', '\r', '\r', '\r', 
+    '\r', '\r', '\r', '\r', '\r', '\r', '\r', '\r'
+  };
+  const vc repl_bs = {
+    '\\', '\\', '\\', '\\', '\\', '\\', '\\', '\\', 
+    '\\', '\\', '\\', '\\', '\\', '\\', '\\', '\\'
+  };
+  const vc repl_qm = {
+    '?', '?', '?', '?', '?', '?', '?', '?', 
+    '?', '?', '?', '?', '?', '?', '?', '?', 
+  };
+  const vc zero = { 0 };
+
+  vc data, t;
+
+  /* Main loop processing 16 bytes at a time.  */
+  do
+    {
+      vc m_nl, m_cr, m_bs, m_qm;
+
+      data = *((const vc *)s);
+      s += 16;
+
+      m_nl = (vc) __builtin_vec_cmpeq(data, repl_nl);
+      m_cr = (vc) __builtin_vec_cmpeq(data, repl_cr);
+      m_bs = (vc) __builtin_vec_cmpeq(data, repl_bs);
+      m_qm = (vc) __builtin_vec_cmpeq(data, repl_qm);
+      t = (m_nl | m_cr) | (m_bs | m_qm);
+
+      /* T now contains 0xff in bytes for which we matched one of the relevant
+	 characters.  We want to exit the loop if any byte in T is non-zero.
+	 Below is the expansion of vec_any_ne(t, zero).  */
+    }
+  while (!__builtin_vec_vcmpeq_p(/*__CR6_LT_REV*/3, t, zero));
+
+  /* Restore s to to point to the 16 bytes we just processed.  */
+  s -= 16;
+
+  {
+#define N  (sizeof(vc) / sizeof(long))
+
+    union {
+      vc v;
+      /* Statically assert that N is 2 or 4.  */
+      unsigned long l[(N == 2 || N == 4) ? N : -1];
+    } u;
+    unsigned long l, i = 0;
+
+    u.v = t;
+
+    /* Find the first word of T that is non-zero.  */
+    switch (N)
+      {
+      case 4:
+	l = u.l[i++];
+	if (l != 0)
+	  break;
+	s += sizeof(unsigned long);
+	l = u.l[i++];
+	if (l != 0)
+	  break;
+	s += sizeof(unsigned long);
+      case 2:
+	l = u.l[i++];
+	if (l != 0)
+	  break;
+	s += sizeof(unsigned long);
+	l = u.l[i];
+      }
+
+    /* L now contains 0xff in bytes for which we matched one of the
+       relevant characters.  We can find the byte index by finding
+       its bit index and dividing by 8.  */
+#ifdef __BIG_ENDIAN__
+    l = __builtin_clzl(l) >> 3;
+#else
+    l = __builtin_ctzl(l) >> 3;
+#endif
+    return s + l;
+
+#undef N
+  }
+}
+
+#elif (GCC_VERSION >= 4005) && defined(__ALTIVEC__) && defined (__BIG_ENDIAN__)
+
+/* A vection of the fast scanner using AltiVec vectorized byte compares.
+   This cannot be used for little endian because vec_lvsl/lvsr are
+   deprecated for little endian and the code won't work properly.  */
+/* ??? Unfortunately, attribute(target("altivec")) is not yet supported,
+   so we can't compile this function without -maltivec on the command line
+   (or implied by some other switch).  */
+
+static const uchar *
+search_line_fast (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
+{
+  typedef __attribute__((altivec(vector))) unsigned char vc;
+
+  const vc repl_nl = {
+    '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n', 
+    '\n', '\n', '\n', '\n', '\n', '\n', '\n', '\n'
+  };
+  const vc repl_cr = {
+    '\r', '\r', '\r', '\r', '\r', '\r', '\r', '\r', 
+    '\r', '\r', '\r', '\r', '\r', '\r', '\r', '\r'
+  };
+  const vc repl_bs = {
+    '\\', '\\', '\\', '\\', '\\', '\\', '\\', '\\', 
+    '\\', '\\', '\\', '\\', '\\', '\\', '\\', '\\'
+  };
+  const vc repl_qm = {
+    '?', '?', '?', '?', '?', '?', '?', '?', 
+    '?', '?', '?', '?', '?', '?', '?', '?', 
+  };
+  const vc ones = {
+    -1, -1, -1, -1, -1, -1, -1, -1,
+    -1, -1, -1, -1, -1, -1, -1, -1,
+  };
+  const vc zero = { 0 };
+
+  vc data, mask, t;
+
+  /* Altivec loads automatically mask addresses with -16.  This lets us
+     issue the first load as early as possible.  */
+  data = __builtin_vec_ld(0, (const vc *)s);
+
+  /* Discard bytes before the beginning of the buffer.  Do this by
+     beginning with all ones and shifting in zeros according to the
+     mis-alignment.  The LVSR instruction pulls the exact shift we
+     want from the address.  */
+  mask = __builtin_vec_lvsr(0, s);
+  mask = __builtin_vec_perm(zero, ones, mask);
+  data &= mask;
+
+  /* While altivec loads mask addresses, we still need to align S so
+     that the offset we compute at the end is correct.  */
+  s = (const uchar *)((uintptr_t)s & -16);
+
+  /* Main loop processing 16 bytes at a time.  */
+  goto start;
+  do
+    {
+      vc m_nl, m_cr, m_bs, m_qm;
+
+      s += 16;
+      data = __builtin_vec_ld(0, (const vc *)s);
+
+    start:
+      m_nl = (vc) __builtin_vec_cmpeq(data, repl_nl);
+      m_cr = (vc) __builtin_vec_cmpeq(data, repl_cr);
+      m_bs = (vc) __builtin_vec_cmpeq(data, repl_bs);
+      m_qm = (vc) __builtin_vec_cmpeq(data, repl_qm);
+      t = (m_nl | m_cr) | (m_bs | m_qm);
+
+      /* T now contains 0xff in bytes for which we matched one of the relevant
+	 characters.  We want to exit the loop if any byte in T is non-zero.
+	 Below is the expansion of vec_any_ne(t, zero).  */
+    }
+  while (!__builtin_vec_vcmpeq_p(/*__CR6_LT_REV*/3, t, zero));
+
+  {
+#define N  (sizeof(vc) / sizeof(long))
+
+    union {
+      vc v;
+      /* Statically assert that N is 2 or 4.  */
+      unsigned long l[(N == 2 || N == 4) ? N : -1];
+    } u;
+    unsigned long l, i = 0;
+
+    u.v = t;
+
+    /* Find the first word of T that is non-zero.  */
+    switch (N)
+      {
+      case 4:
+	l = u.l[i++];
+	if (l != 0)
+	  break;
+	s += sizeof(unsigned long);
+	l = u.l[i++];
+	if (l != 0)
+	  break;
+	s += sizeof(unsigned long);
+      case 2:
+	l = u.l[i++];
+	if (l != 0)
+	  break;
+	s += sizeof(unsigned long);
+	l = u.l[i];
+      }
+
+    /* L now contains 0xff in bytes for which we matched one of the
+       relevant characters.  We can find the byte index by finding
+       its bit index and dividing by 8.  */
+    l = __builtin_clzl(l) >> 3;
+    return s + l;
+
+#undef N
+  }
+}
+
+#elif defined (__ARM_NEON__)
+#include "arm_neon.h"
+
+static const uchar *
+search_line_fast (const uchar *s, const uchar *end ATTRIBUTE_UNUSED)
+{
+  const uint8x16_t repl_nl = vdupq_n_u8 ('\n');
+  const uint8x16_t repl_cr = vdupq_n_u8 ('\r');
+  const uint8x16_t repl_bs = vdupq_n_u8 ('\\');
+  const uint8x16_t repl_qm = vdupq_n_u8 ('?');
+  const uint8x16_t xmask = (uint8x16_t) vdupq_n_u64 (0x8040201008040201ULL);
+
+  unsigned int misalign, found, mask;
+  const uint8_t *p;
+  uint8x16_t data;
+
+  /* Align the source pointer.  */
+  misalign = (uintptr_t)s & 15;
+  p = (const uint8_t *)((uintptr_t)s & -16);
+  data = vld1q_u8 (p);
+
+  /* Create a mask for the bytes that are valid within the first
+     16-byte block.  The Idea here is that the AND with the mask
+     within the loop is "free", since we need some AND or TEST
+     insn in order to set the flags for the branch anyway.  */
+  mask = (-1u << misalign) & 0xffff;
+
+  /* Main loop, processing 16 bytes at a time.  */
+  goto start;
+
+  do
+    {
+      uint8x8_t l;
+      uint16x4_t m;
+      uint32x2_t n;
+      uint8x16_t t, u, v, w;
+
+      p += 16;
+      data = vld1q_u8 (p);
+      mask = 0xffff;
+
+    start:
+      t = vceqq_u8 (data, repl_nl);
+      u = vceqq_u8 (data, repl_cr);
+      v = vorrq_u8 (t, vceqq_u8 (data, repl_bs));
+      w = vorrq_u8 (u, vceqq_u8 (data, repl_qm));
+      t = vandq_u8 (vorrq_u8 (v, w), xmask);
+      l = vpadd_u8 (vget_low_u8 (t), vget_high_u8 (t));
+      m = vpaddl_u8 (l);
+      n = vpaddl_u16 (m);
+      
+      found = vget_lane_u32 ((uint32x2_t) vorr_u64 ((uint64x1_t) n, 
+	      vshr_n_u64 ((uint64x1_t) n, 24)), 0);
+      found &= mask;
+    }
+  while (!found);
+
+  /* FOUND contains 1 in bits for which we matched a relevant
+     character.  Conversion to the byte index is trivial.  */
+  found = __builtin_ctz (found);
+  return (const uchar *)p + found;
+}
+
+#else
+
+/* We only have one accellerated alternative.  Use a direct call so that
+   we encourage inlining.  */
+
+#define search_line_fast  search_line_acc_char
+
+#endif
+
+/* Initialize the lexer if needed.  */
+
+void
+_cpp_init_lexer (void)
+{
+#ifdef HAVE_init_vectorized_lexer
+  init_vectorized_lexer ();
+#endif
+}
+
 /* Returns with a logical line that contains no escaped newlines or
    trigraphs.  This is a time-critical inner loop.  */
 void
@@ -109,82 +828,91 @@ _cpp_clean_line (cpp_reader *pfile)
   buffer->cur_note = buffer->notes_used = 0;
   buffer->cur = buffer->line_base = buffer->next_line;
   buffer->need_line = false;
-  s = buffer->next_line - 1;
+  s = buffer->next_line;
 
   if (!buffer->from_stage3)
     {
       const uchar *pbackslash = NULL;
 
-      /* Short circuit for the common case of an un-escaped line with
+      /* Fast path.  This is the common case of an un-escaped line with
 	 no trigraphs.  The primary win here is by not writing any
 	 data back to memory until we have to.  */
-      for (;;)
+      while (1)
 	{
-	  c = *++s;
-	  if (__builtin_expect (c == '\n', false)
-	      || __builtin_expect (c == '\r', false))
+	  /* Perform an optimized search for \n, \r, \\, ?.  */
+	  s = search_line_fast (s, buffer->rlimit);
+
+	  c = *s;
+	  if (c == '\\')
 	    {
-	      d = (uchar *) s;
-
-	      if (__builtin_expect (s == buffer->rlimit, false))
-		goto done;
-
-	      /* DOS line ending? */
-	      if (__builtin_expect (c == '\r', false)
-		  && s[1] == '\n')
-		{
-		  s++;
-		  if (s == buffer->rlimit)
-		    goto done;
-		}
-
-	      if (__builtin_expect (pbackslash == NULL, true))
-		goto done;
-
-	      /* Check for escaped newline.  */
-	      p = d;
-	      while (is_nvspace (p[-1]))
-		p--;
-	      if (p - 1 != pbackslash)
-		goto done;
-
-	      /* Have an escaped newline; process it and proceed to
-		 the slow path.  */
-	      add_line_note (buffer, p - 1, p != d ? ' ' : '\\');
-	      d = p - 2;
-	      buffer->next_line = p - 1;
-	      break;
+	      /* Record the location of the backslash and continue.  */
+	      pbackslash = s++;
 	    }
-	  if (__builtin_expect (c == '\\', false))
-	    pbackslash = s;
-	  else if (__builtin_expect (c == '?', false)
-		   && __builtin_expect (s[1] == '?', false)
+	  else if (__builtin_expect (c == '?', 0))
+	    {
+	      if (__builtin_expect (s[1] == '?', false)
 		   && _cpp_trigraph_map[s[2]])
-	    {
-	      /* Have a trigraph.  We may or may not have to convert
-		 it.  Add a line note regardless, for -Wtrigraphs.  */
-	      add_line_note (buffer, s, s[2]);
-	      if (CPP_OPTION (pfile, trigraphs))
 		{
-		  /* We do, and that means we have to switch to the
-		     slow path.  */
-		  d = (uchar *) s;
-		  *d = _cpp_trigraph_map[s[2]];
-		  s += 2;
-		  break;
+		  /* Have a trigraph.  We may or may not have to convert
+		     it.  Add a line note regardless, for -Wtrigraphs.  */
+		  add_line_note (buffer, s, s[2]);
+		  if (CPP_OPTION (pfile, trigraphs))
+		    {
+		      /* We do, and that means we have to switch to the
+		         slow path.  */
+		      d = (uchar *) s;
+		      *d = _cpp_trigraph_map[s[2]];
+		      s += 2;
+		      goto slow_path;
+		    }
 		}
+	      /* Not a trigraph.  Continue on fast-path.  */
+	      s++;
 	    }
+	  else
+	    break;
 	}
 
+      /* This must be \r or \n.  We're either done, or we'll be forced
+	 to write back to the buffer and continue on the slow path.  */
+      d = (uchar *) s;
 
-      for (;;)
+      if (__builtin_expect (s == buffer->rlimit, false))
+	goto done;
+
+      /* DOS line ending? */
+      if (__builtin_expect (c == '\r', false) && s[1] == '\n')
+	{
+	  s++;
+	  if (s == buffer->rlimit)
+	    goto done;
+	}
+
+      if (__builtin_expect (pbackslash == NULL, true))
+	goto done;
+
+      /* Check for escaped newline.  */
+      p = d;
+      while (is_nvspace (p[-1]))
+	p--;
+      if (p - 1 != pbackslash)
+	goto done;
+
+      /* Have an escaped newline; process it and proceed to
+	 the slow path.  */
+      add_line_note (buffer, p - 1, p != d ? ' ' : '\\');
+      d = p - 2;
+      buffer->next_line = p - 1;
+
+    slow_path:
+      while (1)
 	{
 	  c = *++s;
 	  *++d = c;
 
 	  if (c == '\n' || c == '\r')
 	    {
-		  /* Handle DOS line endings.  */
+	      /* Handle DOS line endings.  */
 	      if (c == '\r' && s != buffer->rlimit && s[1] == '\n')
 		s++;
 	      if (s == buffer->rlimit)
@@ -215,9 +943,8 @@ _cpp_clean_line (cpp_reader *pfile)
     }
   else
     {
-      do
+      while (*s != '\n' && *s != '\r')
 	s++;
-      while (*s != '\n' && *s != '\r');
       d = (uchar *) s;
 
       /* Handle DOS line endings.  */
@@ -301,14 +1028,16 @@ _cpp_process_line_notes (cpp_reader *pfile, int in_comment)
 	      && (!in_comment || warn_in_comment (pfile, note)))
 	    {
 	      if (CPP_OPTION (pfile, trigraphs))
-		cpp_error_with_line (pfile, CPP_DL_WARNING, pfile->line_table->highest_line, col,
-				     "trigraph ??%c converted to %c",
-				     note->type,
-				     (int) _cpp_trigraph_map[note->type]);
+		cpp_warning_with_line (pfile, CPP_W_TRIGRAPHS,
+                                       pfile->line_table->highest_line, col,
+				       "trigraph ??%c converted to %c",
+				       note->type,
+				       (int) _cpp_trigraph_map[note->type]);
 	      else
 		{
-		  cpp_error_with_line 
-		    (pfile, CPP_DL_WARNING, pfile->line_table->highest_line, col,
+		  cpp_warning_with_line 
+		    (pfile, CPP_W_TRIGRAPHS,
+                     pfile->line_table->highest_line, col,
 		     "trigraph ??%c ignored, use -trigraphs to enable",
 		     note->type);
 		}
@@ -355,9 +1084,10 @@ _cpp_skip_block_comment (cpp_reader *pfile)
 	      && cur[0] == '*' && cur[1] != '/')
 	    {
 	      buffer->cur = cur;
-	      cpp_error_with_line (pfile, CPP_DL_WARNING,
-				   pfile->line_table->highest_line, CPP_BUF_COL (buffer),
-				   "\"/*\" within comment");
+	      cpp_warning_with_line (pfile, CPP_W_COMMENTS,
+				     pfile->line_table->highest_line,
+				     CPP_BUF_COL (buffer),
+				     "\"/*\" within comment");
 	    }
 	}
       else if (c == '\n')
@@ -460,11 +1190,12 @@ warn_about_normalization (cpp_reader *pfile,
 
       sz = cpp_spell_token (pfile, token, buf, false) - buf;
       if (NORMALIZE_STATE_RESULT (s) == normalized_C)
-	cpp_error_with_line (pfile, CPP_DL_WARNING, token->src_loc, 0,
-			     "`%.*s' is not in NFKC", (int) sz, buf);
+	cpp_warning_with_line (pfile, CPP_W_NORMALIZE, token->src_loc, 0,
+			       "`%.*s' is not in NFKC", (int) sz, buf);
       else
-	cpp_error_with_line (pfile, CPP_DL_WARNING, token->src_loc, 0,
-			     "`%.*s' is not in NFC", (int) sz, buf);
+	cpp_warning_with_line (pfile, CPP_W_NORMALIZE, token->src_loc, 0,
+			       "`%.*s' is not in NFC", (int) sz, buf);
+      free (buf);
     }
 }
 
@@ -545,9 +1276,9 @@ lex_identifier_intern (cpp_reader *pfile, const uchar *base)
 
       /* For -Wc++-compat, warn about use of C++ named operators.  */
       if (result->flags & NODE_WARN_OPERATOR)
-	cpp_error (pfile, CPP_DL_WARNING,
-		   "identifier \"%s\" is a special operator name in C++",
-		   NODE_NAME (result));
+	cpp_warning (pfile, CPP_W_CXX_OPERATOR_NAMES,
+		     "identifier \"%s\" is a special operator name in C++",
+		     NODE_NAME (result));
     }
 
   return result;
@@ -622,9 +1353,9 @@ lex_identifier (cpp_reader *pfile, const uchar *base, bool starts_ucn,
 
       /* For -Wc++-compat, warn about use of C++ named operators.  */
       if (result->flags & NODE_WARN_OPERATOR)
-	cpp_error (pfile, CPP_DL_WARNING,
-		   "identifier \"%s\" is a special operator name in C++",
-		   NODE_NAME (result));
+	cpp_warning (pfile, CPP_W_CXX_OPERATOR_NAMES,
+		     "identifier \"%s\" is a special operator name in C++",
+		     NODE_NAME (result));
     }
 
   return result;
@@ -717,7 +1448,6 @@ static void
 lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 		const uchar *cur)
 {
-  source_location saw_NUL = 0;
   const uchar *raw_prefix;
   unsigned int raw_prefix_len = 0;
   enum cpp_ttype type;
@@ -923,15 +1653,38 @@ lex_raw_string (cpp_reader *pfile, cpp_token *token, const uchar *base,
 	  cur = base = pfile->buffer->cur;
 	  note = &pfile->buffer->notes[pfile->buffer->cur_note];
 	}
-      else if (c == '\0' && !saw_NUL)
-	LINEMAP_POSITION_FOR_COLUMN (saw_NUL, pfile->line_table,
-				     CPP_BUF_COLUMN (pfile->buffer, cur));
     }
  break_outer_loop:
 
-  if (saw_NUL && !pfile->state.skipping)
-    cpp_error_with_line (pfile, CPP_DL_WARNING, saw_NUL, 0,
-	       "null character(s) preserved in literal");
+  if (CPP_OPTION (pfile, user_literals))
+    {
+      /* According to C++11 [lex.ext]p10, a ud-suffix not starting with an
+	 underscore is ill-formed.  Since this breaks programs using macros
+	 from inttypes.h, we generate a warning and treat the ud-suffix as a
+	 separate preprocessing token.  This approach is under discussion by
+	 the standards committee, and has been adopted as a conforming
+	 extension by other front ends such as clang.
+         A special exception is made for the suffix 's' which will be
+	 standardized as a user-defined literal suffix for strings.  */
+      if (ISALPHA (*cur) && *cur != 's')
+	{
+	  /* Raise a warning, but do not consume subsequent tokens.  */
+	  if (CPP_OPTION (pfile, warn_literal_suffix))
+	    cpp_warning_with_line (pfile, CPP_W_LITERAL_SUFFIX,
+				   token->src_loc, 0,
+				   "invalid suffix on literal; C++11 requires "
+				   "a space between literal and identifier");
+	}
+      /* Grab user defined literal suffix.  */
+      else if (ISIDST (*cur))
+	{
+	  type = cpp_userdef_string_add_type (type);
+	  ++cur;
+
+	  while (ISIDNUM (*cur))
+	    ++cur;
+	}
+    }
 
   pfile->buffer->cur = cur;
   if (first_buff == NULL)
@@ -1036,6 +1789,37 @@ lex_string (cpp_reader *pfile, cpp_token *token, const uchar *base)
     cpp_error (pfile, CPP_DL_PEDWARN, "missing terminating %c character",
 	       (int) terminator);
 
+  if (CPP_OPTION (pfile, user_literals))
+    {
+      /* According to C++11 [lex.ext]p10, a ud-suffix not starting with an
+	 underscore is ill-formed.  Since this breaks programs using macros
+	 from inttypes.h, we generate a warning and treat the ud-suffix as a
+	 separate preprocessing token.  This approach is under discussion by
+	 the standards committee, and has been adopted as a conforming
+	 extension by other front ends such as clang.
+         A special exception is made for the suffix 's' which will be
+	 standardized as a user-defined literal suffix for strings.  */
+      if (ISALPHA (*cur) && *cur != 's')
+	{
+	  /* Raise a warning, but do not consume subsequent tokens.  */
+	  if (CPP_OPTION (pfile, warn_literal_suffix))
+	    cpp_warning_with_line (pfile, CPP_W_LITERAL_SUFFIX,
+				   token->src_loc, 0,
+				   "invalid suffix on literal; C++11 requires "
+				   "a space between literal and identifier");
+	}
+      /* Grab user defined literal suffix.  */
+      else if (ISIDST (*cur))
+	{
+	  type = cpp_userdef_char_add_type (type);
+	  type = cpp_userdef_string_add_type (type);
+          ++cur;
+
+	  while (ISIDNUM (*cur))
+	    ++cur;
+	}
+    }
+
   pfile->buffer->cur = cur;
   create_literal (pfile, token, base, cur - base, type);
 }
@@ -1091,8 +1875,8 @@ save_comment (cpp_reader *pfile, cpp_token *token, const unsigned char *from,
 	      cppchar_t type)
 {
   unsigned char *buffer;
-  unsigned int len, clen;
-  int convert_to_c = (pfile->state.in_directive || pfile->state.collecting_args)
+  unsigned int len, clen, i;
+  int convert_to_c = (pfile->state.in_directive || pfile->state.parsing_args)
     && type == '/';
 
   len = pfile->buffer->cur - from + 1; /* + 1 for the initial '/'.  */
@@ -1102,9 +1886,9 @@ save_comment (cpp_reader *pfile, cpp_token *token, const unsigned char *from,
   if (is_vspace (pfile->buffer->cur[-1]))
     len--;
 
-  /* If we are currently in a directive, then we need to store all
-     C++ comments as C comments internally, and so we need to
-     allocate a little extra space in that case.
+  /* If we are currently in a directive or in argument parsing, then
+     we need to store all C++ comments as C comments internally, and
+     so we need to allocate a little extra space in that case.
 
      Note that the only time we encounter a directive here is
      when we are saving comments in a "#define".  */
@@ -1125,6 +1909,11 @@ save_comment (cpp_reader *pfile, cpp_token *token, const unsigned char *from,
       buffer[1] = '*';
       buffer[clen - 2] = '*';
       buffer[clen - 1] = '/';
+      /* As there can be in a C++ comments illegal sequences for C comments
+         we need to filter them out.  */
+      for (i = 2; i < (clen - 2); i++)
+        if (buffer[i] == '/' && (buffer[i - 1] == '*' || buffer[i + 1] == '*'))
+          buffer[i] = '|';
     }
 
   /* Finally store this comment for use by clients of libcpp. */
@@ -1154,6 +1943,34 @@ next_tokenrun (tokenrun *run)
   return run->next;
 }
 
+/* Return the number of not yet processed token in a given
+   context.  */
+int
+_cpp_remaining_tokens_num_in_context (cpp_context *context)
+{
+  if (context->tokens_kind == TOKENS_KIND_DIRECT)
+    return (LAST (context).token - FIRST (context).token);
+  else if (context->tokens_kind == TOKENS_KIND_INDIRECT
+	   || context->tokens_kind == TOKENS_KIND_EXTENDED)
+    return (LAST (context).ptoken - FIRST (context).ptoken);
+  else
+      abort ();
+}
+
+/* Returns the token present at index INDEX in a given context.  If
+   INDEX is zero, the next token to be processed is returned.  */
+static const cpp_token*
+_cpp_token_from_context_at (cpp_context *context, int index)
+{
+  if (context->tokens_kind == TOKENS_KIND_DIRECT)
+    return &(FIRST (context).token[index]);
+  else if (context->tokens_kind == TOKENS_KIND_INDIRECT
+	   || context->tokens_kind == TOKENS_KIND_EXTENDED)
+    return FIRST (context).ptoken[index];
+ else
+   abort ();
+}
+
 /* Look ahead in the input stream.  */
 const cpp_token *
 cpp_peek_token (cpp_reader *pfile, int index)
@@ -1165,15 +1982,10 @@ cpp_peek_token (cpp_reader *pfile, int index)
   /* First, scan through any pending cpp_context objects.  */
   while (context->prev)
     {
-      ptrdiff_t sz = (context->direct_p
-                      ? LAST (context).token - FIRST (context).token
-                      : LAST (context).ptoken - FIRST (context).ptoken);
+      ptrdiff_t sz = _cpp_remaining_tokens_num_in_context (context);
 
       if (index < (int) sz)
-        return (context->direct_p
-                ? FIRST (context).token + index
-                : *(FIRST (context).ptoken + index));
-
+        return _cpp_token_from_context_at (context, index);
       index -= (int) sz;
       context = context->prev;
     }
@@ -1426,8 +2238,11 @@ _cpp_lex_direct (cpp_reader *pfile)
     }
   c = *buffer->cur++;
 
-  LINEMAP_POSITION_FOR_COLUMN (result->src_loc, pfile->line_table,
-			       CPP_BUF_COLUMN (buffer, buffer->cur));
+  if (pfile->forced_token_location_p)
+    result->src_loc = *pfile->forced_token_location_p;
+  else
+    result->src_loc = linemap_position_for_column (pfile->line_table,
+					  CPP_BUF_COLUMN (buffer, buffer->cur));
 
   switch (c)
     {
@@ -1458,18 +2273,20 @@ _cpp_lex_direct (cpp_reader *pfile)
     case 'R':
       /* 'L', 'u', 'U', 'u8' or 'R' may introduce wide characters,
 	 wide strings or raw strings.  */
-      if (c == 'L' || CPP_OPTION (pfile, uliterals))
+      if (c == 'L' || CPP_OPTION (pfile, rliterals)
+	  || (c != 'R' && CPP_OPTION (pfile, uliterals)))
 	{
 	  if ((*buffer->cur == '\'' && c != 'R')
 	      || *buffer->cur == '"'
 	      || (*buffer->cur == 'R'
 		  && c != 'R'
 		  && buffer->cur[1] == '"'
-		  && CPP_OPTION (pfile, uliterals))
+		  && CPP_OPTION (pfile, rliterals))
 	      || (*buffer->cur == '8'
 		  && c == 'u'
 		  && (buffer->cur[1] == '"'
-		      || (buffer->cur[1] == 'R' && buffer->cur[2] == '"'))))
+		      || (buffer->cur[1] == 'R' && buffer->cur[2] == '"'
+			  && CPP_OPTION (pfile, rliterals)))))
 	    {
 	      lex_string (pfile, result, buffer->cur - 1);
 	      break;
@@ -1535,7 +2352,7 @@ _cpp_lex_direct (cpp_reader *pfile)
 	    }
 
 	  if (skip_line_comment (pfile) && CPP_OPTION (pfile, warn_comments))
-	    cpp_error (pfile, CPP_DL_WARNING, "multi-line comment");
+	    cpp_warning (pfile, CPP_W_COMMENTS, "multi-line comment");
 	}
       else if (c == '=')
 	{
@@ -1579,6 +2396,17 @@ _cpp_lex_direct (cpp_reader *pfile)
 	{
 	  if (*buffer->cur == ':')
 	    {
+	      /* C++11 [2.5/3 lex.pptoken], "Otherwise, if the next
+		 three characters are <:: and the subsequent character
+		 is neither : nor >, the < is treated as a preprocessor
+		 token by itself".  */
+	      if (CPP_OPTION (pfile, cplusplus)
+		  && (CPP_OPTION (pfile, lang) == CLK_CXX11
+		      || CPP_OPTION (pfile, lang) == CLK_GNUCXX11)
+		  && buffer->cur[1] == ':'
+		  && buffer->cur[2] != ':' && buffer->cur[2] != '>')
+		break;
+
 	      buffer->cur++;
 	      result->flags |= DIGRAPH;
 	      result->type = CPP_OPEN_SQUARE;
@@ -2121,8 +2949,17 @@ new_buff (size_t len)
     len = MIN_BUFF_SIZE;
   len = CPP_ALIGN (len);
 
+#ifdef ENABLE_VALGRIND_CHECKING
+  /* Valgrind warns about uses of interior pointers, so put _cpp_buff
+     struct first.  */
+  size_t slen = CPP_ALIGN2 (sizeof (_cpp_buff), 2 * DEFAULT_ALIGNMENT);
+  base = XNEWVEC (unsigned char, len + slen);
+  result = (_cpp_buff *) base;
+  base += slen;
+#else
   base = XNEWVEC (unsigned char, len + sizeof (_cpp_buff));
   result = (_cpp_buff *) (base + len);
+#endif
   result->base = base;
   result->cur = base;
   result->limit = base + len;
@@ -2209,7 +3046,11 @@ _cpp_free_buff (_cpp_buff *buff)
   for (; buff; buff = next)
     {
       next = buff->next;
+#ifdef ENABLE_VALGRIND_CHECKING
+      free (buff);
+#else
       free (buff->base);
+#endif
     }
 }
 
@@ -2287,4 +3128,22 @@ cpp_token_val_index (cpp_token *tok)
     default:
       return CPP_TOKEN_FLD_NONE;
     }
+}
+
+/* All tokens lexed in R after calling this function will be forced to have
+   their source_location the same as the location referenced by P, until
+   cpp_stop_forcing_token_locations is called for R.  */
+
+void
+cpp_force_token_locations (cpp_reader *r, source_location *p)
+{
+  r->forced_token_location_p = p;
+}
+
+/* Go back to assigning locations naturally for lexed tokens.  */
+
+void
+cpp_stop_forcing_token_locations (cpp_reader *r)
+{
+  r->forced_token_location_p = NULL;
 }

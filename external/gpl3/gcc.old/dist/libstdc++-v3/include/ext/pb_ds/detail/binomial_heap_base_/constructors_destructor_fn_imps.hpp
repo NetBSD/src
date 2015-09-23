@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file constructors_destructor_fn_imps.hpp
+ * @file binomial_heap_base_/constructors_destructor_fn_imps.hpp
  * Contains an implementation class for a base of binomial heaps.
  */
 
@@ -46,52 +46,40 @@ copy_from_range(It first_it, It last_it)
 {
   while (first_it != last_it)
     push(*(first_it++));
-
-  _GLIBCXX_DEBUG_ONLY(assert_valid(false);)
-    }
-
-PB_DS_CLASS_T_DEC
-PB_DS_CLASS_C_DEC::
-binomial_heap_base_() :
-  m_p_max(NULL)
-{
-  _GLIBCXX_DEBUG_ONLY(assert_valid(false);)
-    }
+  PB_DS_ASSERT_VALID_COND((*this),false)
+}
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-binomial_heap_base_(const Cmp_Fn& r_cmp_fn) :
-  PB_DS_BASE_C_DEC(r_cmp_fn),
-  m_p_max(NULL)
+binomial_heap_base() : m_p_max(0)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid(false);)
-    }
+  PB_DS_ASSERT_VALID_COND((*this),false)
+}
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-binomial_heap_base_(const PB_DS_CLASS_C_DEC& other) :
-  PB_DS_BASE_C_DEC(other),
-  m_p_max(NULL)
-{
-  _GLIBCXX_DEBUG_ONLY(assert_valid(false);)
-    }
+binomial_heap_base(const Cmp_Fn& r_cmp_fn)
+: base_type(r_cmp_fn), m_p_max(0)
+{ PB_DS_ASSERT_VALID_COND((*this),false) }
+
+PB_DS_CLASS_T_DEC
+PB_DS_CLASS_C_DEC::
+binomial_heap_base(const PB_DS_CLASS_C_DEC& other)
+: base_type(other), m_p_max(0)
+{ PB_DS_ASSERT_VALID_COND((*this),false) }
 
 PB_DS_CLASS_T_DEC
 void
 PB_DS_CLASS_C_DEC::
 swap(PB_DS_CLASS_C_DEC& other)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid(false);)
-
-    base_type::swap(other);
-
+  PB_DS_ASSERT_VALID_COND((*this),false)
+  base_type::swap(other);
   std::swap(m_p_max, other.m_p_max);
-
-  _GLIBCXX_DEBUG_ONLY(assert_valid(false);)
-    }
+  PB_DS_ASSERT_VALID_COND((*this),false)
+}
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-~binomial_heap_base_()
+~binomial_heap_base()
 { }
-

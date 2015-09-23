@@ -1,6 +1,6 @@
 /* Definitions of target machine for GNU compiler,
    for NetBSD/vax ELF systems.
-   Copyright (C) 2002, 2007, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -52,7 +52,7 @@ along with GCC; see the file COPYING3.  If not see
    %{!shared: \
      -dc -dp \
      %{!nostdlib: \
-       %{!r*: \
+       %{!r: \
 	 %{!e*:-e %(netbsd_entry_point)}}} \
      %{!static:-static} \
      %{static:-static}}"
@@ -62,6 +62,12 @@ along with GCC; see the file COPYING3.  If not see
 
 #define EXTRA_SPECS				\
   { "netbsd_entry_point", NETBSD_ENTRY_POINT },
+
+#undef INTPTR_TYPE
+#define INTPTR_TYPE "long int"
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE "long unsigned int"
 
 /* We use gas, not the UNIX assembler.  */
 #undef TARGET_DEFAULT

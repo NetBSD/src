@@ -1,6 +1,5 @@
 /* Frv prototypes.
-   Copyright (C) 1999, 2000, 2001, 2003, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
 This file is part of GCC.
@@ -19,31 +18,13 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* CPU type.  This must be identical to the cpu enumeration in frv.md.  */
-typedef enum frv_cpu
-{
-  FRV_CPU_GENERIC,
-  FRV_CPU_FR550,
-  FRV_CPU_FR500,
-  FRV_CPU_FR450,
-  FRV_CPU_FR405,
-  FRV_CPU_FR400,
-  FRV_CPU_FR300,
-  FRV_CPU_SIMPLE,
-  FRV_CPU_TOMCAT
-} frv_cpu_t;
-
-extern frv_cpu_t frv_cpu_type;			/* value of -mcpu= */
-
 /* Define functions defined in frv.c */
 extern void frv_expand_prologue			(void);
 extern void frv_expand_epilogue			(bool);
-extern void frv_override_options		(void);
-extern void frv_optimization_options		(int, int);
-extern void frv_conditional_register_usage	(void);
 extern frv_stack_t *frv_stack_info		(void);
 extern void frv_debug_stack			(frv_stack_t *);
 extern int frv_initial_elimination_offset	(int, int);
+extern void frv_ifcvt_machdep_init		(void *);
 
 #ifdef RTX_CODE
 extern int frv_legitimate_address_p_1		(enum machine_mode, rtx,
@@ -54,14 +35,6 @@ extern rtx frv_find_base_term			(rtx);
 extern void frv_init_cumulative_args		(CUMULATIVE_ARGS *, tree,
 						 rtx, tree, int);
 
-extern int frv_function_arg_boundary		(enum machine_mode, tree);
-extern rtx frv_function_arg			(CUMULATIVE_ARGS *,
-						 enum machine_mode,
-						 tree, int, int);
-
-extern void frv_function_arg_advance		(CUMULATIVE_ARGS *,
-						 enum machine_mode,
-						 tree, int);
 extern bool frv_function_value_regno_p		(const unsigned int);
 #endif /* TREE_CODE */
 
@@ -73,8 +46,6 @@ extern rtx frv_index_memory			(rtx, enum machine_mode, int);
 extern const char *frv_asm_output_opcode
 				 	(FILE *, const char *);
 extern void frv_final_prescan_insn	(rtx, rtx *, int);
-extern void frv_print_operand		(FILE *, rtx, int);
-extern void frv_print_operand_address	(FILE *, rtx);
 extern void frv_emit_move		(enum machine_mode, rtx, rtx);
 extern int frv_emit_movsi		(rtx, rtx);
 extern const char *output_move_single	(rtx *, rtx);
@@ -100,21 +71,18 @@ extern rtx frv_ifcvt_modify_insn	(ce_if_block_t *, rtx, rtx);
 extern void frv_ifcvt_modify_final	(ce_if_block_t *);
 extern void frv_ifcvt_modify_cancel	(ce_if_block_t *);
 #endif
-extern int frv_trampoline_size		(void);
 extern enum reg_class frv_secondary_reload_class
 					(enum reg_class,
 					 enum machine_mode, rtx);
-extern int frv_class_likely_spilled_p	(enum reg_class rclass);
 extern int frv_hard_regno_mode_ok	(int, enum machine_mode);
 extern int frv_hard_regno_nregs		(int, enum machine_mode);
 extern int frv_class_max_nregs		(enum reg_class rclass,
 					 enum machine_mode mode);
-extern int frv_legitimate_constant_p	(rtx);
 extern enum machine_mode frv_select_cc_mode (enum rtx_code, rtx, rtx);
 #endif	/* RTX_CODE */
 
+extern int frv_trampoline_size		(void);
 extern int direct_return_p		(void);
-extern int frv_register_move_cost	(enum reg_class, enum reg_class);
 extern int frv_issue_rate		(void);
 extern int frv_acc_group		(rtx);
 

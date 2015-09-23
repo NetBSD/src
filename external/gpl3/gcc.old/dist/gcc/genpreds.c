@@ -2,8 +2,7 @@
    - prototype declarations for operand predicates (tm-preds.h)
    - function definitions of operand predicates, if defined new-style
      (insn-preds.c)
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,6 +27,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "errors.h"
 #include "obstack.h"
+#include "read-md.h"
 #include "gensupport.h"
 
 /* Given a predicate expression EXP, from form NAME at line LINENO,
@@ -66,9 +66,8 @@ validate_exp (rtx exp, const char *name, int lineno)
 	  {
 	    if (!ISDIGIT (*p) && !ISLOWER (*p))
 	      {
-		message_with_line (lineno, "%s: invalid character in path "
-				   "string '%s'", name, XSTR (exp, 1));
-		have_error = 1;
+		error_with_line (lineno, "%s: invalid character in path "
+				 "string '%s'", name, XSTR (exp, 1));
 		return true;
 	      }
 	  }
@@ -81,10 +80,9 @@ validate_exp (rtx exp, const char *name, int lineno)
       return false;
 
     default:
-      message_with_line (lineno,
-			 "%s: cannot use '%s' in a predicate expression",
-			 name, GET_RTX_NAME (GET_CODE (exp)));
-      have_error = 1;
+      error_with_line (lineno,
+		       "%s: cannot use '%s' in a predicate expression",
+		       name, GET_RTX_NAME (GET_CODE (exp)));
       return true;
     }
 }
@@ -94,35 +92,7 @@ validate_exp (rtx exp, const char *name, int lineno)
 static void
 process_define_predicate (rtx defn, int lineno)
 {
-  struct pred_data *pred;
-  const char *p;
-
-  if (!ISALPHA (XSTR (defn, 0)[0]) && XSTR (defn, 0)[0] != '_')
-    goto bad_name;
-  for (p = XSTR (defn, 0) + 1; *p; p++)
-    if (!ISALNUM (*p) && *p != '_')
-      goto bad_name;
-
-  if (validate_exp (XEXP (defn, 1), XSTR (defn, 0), lineno))
-    return;
-
-  pred = XCNEW (struct pred_data);
-  pred->name = XSTR (defn, 0);
-  pred->exp = XEXP (defn, 1);
-  pred->c_block = XSTR (defn, 2);
-
-  if (GET_CODE (defn) == DEFINE_SPECIAL_PREDICATE)
-    pred->special = true;
-
-  add_predicate (pred);
-  return;
-
- bad_name:
-  message_with_line (lineno,
-		     "%s: predicate name must be a valid C function name",
-		     XSTR (defn, 0));
-  have_error = 1;
-  return;
+  validate_exp (XEXP (defn, 1), XSTR (defn, 0), lineno);
 }
 
 /* Given a predicate, if it has an embedded C block, write the block
@@ -183,7 +153,7 @@ write_predicate_subfunction (struct pred_data *p)
   printf ("static inline int\n"
 	  "%s_1 (rtx op, enum machine_mode mode ATTRIBUTE_UNUSED)\n",
 	  p->name);
-  print_rtx_ptr_loc (p->c_block);
+  print_md_ptr_loc (p->c_block);
   if (p->c_block[0] == '{')
     fputs (p->c_block, stdout);
   else
@@ -764,12 +734,11 @@ add_constraint (const char *name, const char *regclass,
   if (!ISALPHA (name[0]) && name[0] != '_')
     {
       if (name[1] == '\0')
-	message_with_line (lineno, "constraint name '%s' is not "
-			   "a letter or underscore", name);
+	error_with_line (lineno, "constraint name '%s' is not "
+			 "a letter or underscore", name);
       else
-	message_with_line (lineno, "constraint name '%s' does not begin "
-			   "with a letter or underscore", name);
-      have_error = 1;
+	error_with_line (lineno, "constraint name '%s' does not begin "
+			 "with a letter or underscore", name);
       return;
     }
   for (p = name; *p; p++)
@@ -779,11 +748,10 @@ add_constraint (const char *name, const char *regclass,
 	  need_mangled_name = true;
 	else
 	  {
-	    message_with_line (lineno,
-			       "constraint name '%s' must be composed of "
-			       "letters, digits, underscores, and "
-			       "angle brackets", name);
-	    have_error = 1;
+	    error_with_line (lineno,
+			     "constraint name '%s' must be composed of "
+			     "letters, digits, underscores, and "
+			     "angle brackets", name);
 	    return;
 	  }
       }
@@ -791,13 +759,12 @@ add_constraint (const char *name, const char *regclass,
   if (strchr (generic_constraint_letters, name[0]))
     {
       if (name[1] == '\0')
-	message_with_line (lineno, "constraint letter '%s' cannot be "
-			   "redefined by the machine description", name);
+	error_with_line (lineno, "constraint letter '%s' cannot be "
+			 "redefined by the machine description", name);
       else
-	message_with_line (lineno, "constraint name '%s' cannot be defined by "
-			   "the machine description, as it begins with '%c'",
-			   name, name[0]);
-      have_error = 1;
+	error_with_line (lineno, "constraint name '%s' cannot be defined by "
+			 "the machine description, as it begins with '%c'",
+			 name, name[0]);
       return;
     }
 
@@ -816,25 +783,22 @@ add_constraint (const char *name, const char *regclass,
 
       if (!strcmp ((*iter)->name, name))
 	{
-	  message_with_line (lineno, "redefinition of constraint '%s'", name);
+	  error_with_line (lineno, "redefinition of constraint '%s'", name);
 	  message_with_line ((*iter)->lineno, "previous definition is here");
-	  have_error = 1;
 	  return;
 	}
       else if (!strncmp ((*iter)->name, name, (*iter)->namelen))
 	{
-	  message_with_line (lineno, "defining constraint '%s' here", name);
+	  error_with_line (lineno, "defining constraint '%s' here", name);
 	  message_with_line ((*iter)->lineno, "renders constraint '%s' "
 			     "(defined here) a prefix", (*iter)->name);
-	  have_error = 1;
 	  return;
 	}
       else if (!strncmp ((*iter)->name, name, namelen))
 	{
-	  message_with_line (lineno, "constraint '%s' is a prefix", name);
+	  error_with_line (lineno, "constraint '%s' is a prefix", name);
 	  message_with_line ((*iter)->lineno, "of constraint '%s' "
 			     "(defined here)", (*iter)->name);
-	  have_error = 1;
 	  return;
 	}
     }
@@ -855,43 +819,36 @@ add_constraint (const char *name, const char *regclass,
 		     GET_RTX_NAME (appropriate_code)))
 	{
 	  if (name[1] == '\0')
-	    message_with_line (lineno, "constraint letter '%c' is reserved "
-			       "for %s constraints",
-			       name[0], GET_RTX_NAME (appropriate_code));
+	    error_with_line (lineno, "constraint letter '%c' is reserved "
+			     "for %s constraints",
+			     name[0], GET_RTX_NAME (appropriate_code));
 	  else
-	    message_with_line (lineno, "constraint names beginning with '%c' "
-			       "(%s) are reserved for %s constraints",
-			       name[0], name,
-			       GET_RTX_NAME (appropriate_code));
-
-	  have_error = 1;
+	    error_with_line (lineno, "constraint names beginning with '%c' "
+			     "(%s) are reserved for %s constraints",
+			     name[0], name, GET_RTX_NAME (appropriate_code));
 	  return;
 	}
 
       if (is_memory)
 	{
 	  if (name[1] == '\0')
-	    message_with_line (lineno, "constraint letter '%c' cannot be a "
-			       "memory constraint", name[0]);
+	    error_with_line (lineno, "constraint letter '%c' cannot be a "
+			     "memory constraint", name[0]);
 	  else
-	    message_with_line (lineno, "constraint name '%s' begins with '%c', "
-			       "and therefore cannot be a memory constraint",
-			       name, name[0]);
-
-	  have_error = 1;
+	    error_with_line (lineno, "constraint name '%s' begins with '%c', "
+			     "and therefore cannot be a memory constraint",
+			     name, name[0]);
 	  return;
 	}
       else if (is_address)
 	{
 	  if (name[1] == '\0')
-	    message_with_line (lineno, "constraint letter '%c' cannot be a "
-			       "memory constraint", name[0]);
+	    error_with_line (lineno, "constraint letter '%c' cannot be a "
+			     "memory constraint", name[0]);
 	  else
-	    message_with_line (lineno, "constraint name '%s' begins with '%c', "
-			       "and therefore cannot be a memory constraint",
-			       name, name[0]);
-
-	  have_error = 1;
+	    error_with_line (lineno, "constraint name '%s' begins with '%c', "
+			     "and therefore cannot be a memory constraint",
+			     name, name[0]);
 	  return;
 	}
     }
@@ -988,9 +945,10 @@ write_lookup_constraint (void)
 	{
 	  do
 	    {
-	      printf ("      if (!strncmp (str, \"%s\", %lu))\n"
+	      printf ("      if (!strncmp (str + 1, \"%s\", %lu))\n"
 		      "        return CONSTRAINT_%s;\n",
-		      c->name, (unsigned long int) c->namelen, c->c_name);
+		      c->name + 1, (unsigned long int) c->namelen - 1,
+		      c->c_name);
 	      c = c->next_this_letter;
 	    }
 	  while (c);
@@ -1348,12 +1306,11 @@ write_insn_preds_c (void)
 #include \"function.h\"\n\
 #include \"insn-config.h\"\n\
 #include \"recog.h\"\n\
-#include \"real.h\"\n\
 #include \"output.h\"\n\
 #include \"flags.h\"\n\
 #include \"hard-reg-set.h\"\n\
 #include \"resource.h\"\n\
-#include \"toplev.h\"\n\
+#include \"diagnostic-core.h\"\n\
 #include \"reload.h\"\n\
 #include \"regs.h\"\n\
 #include \"tm-constrs.h\"\n");
@@ -1409,7 +1366,7 @@ main (int argc, char **argv)
   progname = argv[0];
   if (argc <= 1)
     fatal ("no input file name");
-  if (init_md_reader_args_cb (argc, argv, parse_option) != SUCCESS_EXIT_CODE)
+  if (!init_rtx_reader_args_cb (argc, argv, parse_option))
     return FATAL_EXIT_CODE;
 
   while ((defn = read_md_rtx (&pattern_lineno, &next_insn_code)) != 0)

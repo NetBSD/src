@@ -1,6 +1,5 @@
 ;; Machine Descriptions for R8C/M16C/M32C
-;; Copyright (C) 2005, 2007
-;; Free Software Foundation, Inc.
+;; Copyright (C) 2005-2013 Free Software Foundation, Inc.
 ;; Contributed by Red Hat.
 ;;
 ;; This file is part of GCC.
@@ -93,9 +92,17 @@
     case 1:
       return \"add.w %X2,%h0\;adcf.w %H0\";
     case 2:
-      output_asm_insn (\"add.w %X2,%h0\",operands);
-      operands[2]= GEN_INT (INTVAL (operands[2]) >> 16);
-      return \"adc.w %X2,%H0\";
+      if (GET_CODE (operands[2]) == SYMBOL_REF)
+        {
+          output_asm_insn (\"add.w #%%lo(%d2),%h0\",operands);
+          return \"adc.w #%%hi(%d2),%H0\";
+        }
+      else
+        {
+          output_asm_insn (\"add.w %X2,%h0\",operands);
+          operands[2]= GEN_INT (INTVAL (operands[2]) >> 16);
+          return \"adc.w %X2,%H0\";
+        }
     case 3:
       return \"add.w %h2,%h0\;adc.w %H2,%H0\";
     case 4:
@@ -108,6 +115,8 @@
       return \"add.w %h2,%h0\;adc.w %H2,%H0\";
     case 7:
       return \"add.w %h2,%h0\;adc.w %H2,%H0\";
+    default:
+      gcc_unreachable ();
     }"
   [(set_attr "flags" "x,x,x,x,x,x,x,x")]
 )
@@ -192,6 +201,8 @@
       return \"sub.w %h2,%h0\;sbb.w %H2,%H0\";
     case 5:
       return \"sub.w %h2,%h0\;sbb.w %H2,%H0\";
+    default:
+      gcc_unreachable ();
     }"
   [(set_attr "flags" "x,x,x,x,x,x")]
 )

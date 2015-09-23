@@ -1,6 +1,5 @@
 /* Exception Handling interface routines.
-   Copyright (C) 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005,
-   2007, 2008, 2009  Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
    Contributed by Mike Stump <mrs@cygnus.com>.
 
 This file is part of GCC.
@@ -19,8 +18,14 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#include "sbitmap.h"
-#include "vecprim.h"
+/* No include guards here, but define an include file marker anyway, so
+   that the compiler can keep track of where this file is included.  This
+   is e.g. used to avoid including this file in front-end specific files.  */
+#ifndef GCC_EXCEPT_H
+#  define GCC_EXCEPT_H
+#endif
+
+#include "hashtab.h"
 
 struct function;
 struct eh_region_d;
@@ -38,7 +43,7 @@ enum eh_region_type
 
   /* TRY regions implement catching an exception.  The list of types associated
      with the attached catch handlers is examined in order by the runtime and
-     control is transfered to the appropriate handler.  Note that a NULL type
+     control is transferred to the appropriate handler.  Note that a NULL type
      list is a catch-all handler, and that it will catch *all* exceptions
      including those originating from a different language.  */
   ERT_TRY,
@@ -72,7 +77,7 @@ struct GTY(()) eh_landing_pad_d
   /* The region with which this landing pad is associated.  */
   struct eh_region_d *region;
 
-  /* At the gimple level, the location to which control will be transfered
+  /* At the gimple level, the location to which control will be transferred
      for this landing pad.  There can be both EH and normal edges into the
      block containing the post-landing-pad label.  */
   tree post_landing_pad;
@@ -181,12 +186,7 @@ typedef struct eh_landing_pad_d *eh_landing_pad;
 typedef struct eh_catch_d *eh_catch;
 typedef struct eh_region_d *eh_region;
 
-DEF_VEC_P(eh_region);
-DEF_VEC_ALLOC_P(eh_region, gc);
-DEF_VEC_ALLOC_P(eh_region, heap);
 
-DEF_VEC_P(eh_landing_pad);
-DEF_VEC_ALLOC_P(eh_landing_pad, gc);
 
 
 /* The exception status for each function.  */
@@ -197,10 +197,10 @@ struct GTY(()) eh_status
   eh_region region_tree;
 
   /* The same information as an indexable array.  */
-  VEC(eh_region,gc) *region_array;
+  vec<eh_region, va_gc> *region_array;
 
   /* The landing pads as an indexable array.  */
-  VEC(eh_landing_pad,gc) *lp_array;
+  vec<eh_landing_pad, va_gc> *lp_array;
 
   /* At the gimple level, a mapping from gimple statement to landing pad
      or must-not-throw region.  See record_stmt_eh_region.  */
@@ -208,31 +208,28 @@ struct GTY(()) eh_status
 
   /* All of the runtime type data used by the function.  These objects
      are emitted to the lang-specific-data-area for the function.  */
-  VEC(tree,gc) *ttype_data;
+  vec<tree, va_gc> *ttype_data;
 
   /* The table of all action chains.  These encode the eh_region tree in
      a compact form for use by the runtime, and is also emitted to the
      lang-specific-data-area.  Note that the ARM EABI uses a different
      format for the encoding than all other ports.  */
   union eh_status_u {
-    VEC(tree,gc) * GTY((tag ("1"))) arm_eabi;
-    VEC(uchar,gc) * GTY((tag ("0"))) other;
+    vec<tree, va_gc> *GTY((tag ("1"))) arm_eabi;
+    vec<uchar, va_gc> *GTY((tag ("0"))) other;
   } GTY ((desc ("targetm.arm_eabi_unwinder"))) ehspec_data;
 };
 
-
-/* Test: is exception handling turned on?  */
-extern int doing_eh (int);
 
 /* Invokes CALLBACK for every exception handler label.  Only used by old
    loop hackery; should not be used by new code.  */
 extern void for_each_eh_label (void (*) (rtx));
 
-extern void init_eh (void);
 extern void init_eh_for_function (void);
 
 extern void remove_eh_landing_pad (eh_landing_pad);
 extern void remove_eh_handler (eh_region);
+extern void remove_unreachable_eh_regions (sbitmap);
 
 extern bool current_function_has_exception_handlers (void);
 extern void output_function_exception_table (const char *);
@@ -249,6 +246,7 @@ extern rtx expand_builtin_dwarf_sp_column (void);
 extern void expand_builtin_eh_return (tree, tree);
 extern void expand_eh_return (void);
 extern rtx expand_builtin_extend_pointer (tree);
+extern void expand_dw2_landing_pad_for_region (eh_region);
 
 typedef tree (*duplicate_eh_regions_map) (tree, void *);
 extern struct pointer_map_t *duplicate_eh_regions
@@ -286,60 +284,7 @@ extern void assign_filter_values (void);
 extern eh_region get_eh_region_from_rtx (const_rtx);
 extern eh_landing_pad get_eh_landing_pad_from_rtx (const_rtx);
 
-/* If non-NULL, this is a function that returns a function decl to be
-   executed if an unhandled exception is propagated out of a cleanup
-   region.  For example, in C++, an exception thrown by a destructor
-   during stack unwinding is required to result in a call to
-   `std::terminate', so the C++ version of this function returns a
-   FUNCTION_DECL for `std::terminate'.  */
-extern tree (*lang_protect_cleanup_actions) (void);
-
-/* Return true if type A catches type B.  */
-extern int (*lang_eh_type_covers) (tree a, tree b);
-
-
-/* Just because the user configured --with-sjlj-exceptions=no doesn't
-   mean that we can use call frame exceptions.  Detect that the target
-   has appropriate support.  */
-
-#ifndef MUST_USE_SJLJ_EXCEPTIONS
-# if defined (EH_RETURN_DATA_REGNO)			\
-       && (defined (TARGET_UNWIND_INFO)			\
-	   || (DWARF2_UNWIND_INFO			\
-	       && (defined (EH_RETURN_HANDLER_RTX)	\
-		   || defined (HAVE_eh_return))))
-#  define MUST_USE_SJLJ_EXCEPTIONS	0
-# else
-#  define MUST_USE_SJLJ_EXCEPTIONS	1
-# endif
-#endif
-
-#ifdef CONFIG_SJLJ_EXCEPTIONS
-# if CONFIG_SJLJ_EXCEPTIONS == 1
-#  define USING_SJLJ_EXCEPTIONS		1
-# endif
-# if CONFIG_SJLJ_EXCEPTIONS == 0
-#  define USING_SJLJ_EXCEPTIONS		0
-#  if !defined(EH_RETURN_DATA_REGNO)
-    #error "EH_RETURN_DATA_REGNO required"
-#  endif
-#  if ! (defined(TARGET_UNWIND_INFO) || DWARF2_UNWIND_INFO)
-    #error "{DWARF2,TARGET}_UNWIND_INFO required"
-#  endif
-#  if !defined(TARGET_UNWIND_INFO) \
-	&& !(defined(EH_RETURN_HANDLER_RTX) || defined(HAVE_eh_return))
-    #error "EH_RETURN_HANDLER_RTX or eh_return required"
-#  endif
-/* Usually the above error checks will have already triggered an
-   error, but backends may set MUST_USE_SJLJ_EXCEPTIONS for their own
-   reasons.  */
-#  if MUST_USE_SJLJ_EXCEPTIONS
-    #error "Must use SJLJ exceptions but configured not to"
-#  endif
-# endif
-#else
-# define USING_SJLJ_EXCEPTIONS		MUST_USE_SJLJ_EXCEPTIONS
-#endif
+extern void finish_eh_generation (void);
 
 struct GTY(()) throw_stmt_node {
   gimple stmt;

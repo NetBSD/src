@@ -5,8 +5,7 @@
    non-overloadable operators (like the `?:' ternary operator).
    Written by Mark Mitchell <mark@codesourcery.com>
 
-   Copyright (C) 2000, 2001, 2002, 2003, 2005, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2000-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -101,8 +100,10 @@ DEF_SIMPLE_OPERATOR ("__real__", REALPART_EXPR, "v18__real__", 1)
 /* The cast operator.  */
 DEF_SIMPLE_OPERATOR ("", TYPE_EXPR, "cv", 1)
 DEF_SIMPLE_OPERATOR ("", CAST_EXPR, "cv", 1)
-DEF_SIMPLE_OPERATOR ("", CONST_CAST_EXPR, "cv", 1)
-DEF_SIMPLE_OPERATOR ("", STATIC_CAST_EXPR, "cv", 1)
+DEF_SIMPLE_OPERATOR ("dynamic_cast", DYNAMIC_CAST_EXPR, "dc", 1)
+DEF_SIMPLE_OPERATOR ("reinterpret_cast", REINTERPRET_CAST_EXPR, "rc", 1)
+DEF_SIMPLE_OPERATOR ("const_cast", CONST_CAST_EXPR, "cc", 1)
+DEF_SIMPLE_OPERATOR ("static_cast", STATIC_CAST_EXPR, "sc", 1)
 
 /* Binary operators.  */
 DEF_SIMPLE_OPERATOR ("+", PLUS_EXPR, "pl", 2)
@@ -125,6 +126,7 @@ DEF_SIMPLE_OPERATOR ("&&", TRUTH_ANDIF_EXPR, "aa", 2)
 DEF_SIMPLE_OPERATOR ("||", TRUTH_ORIF_EXPR, "oo", 2)
 DEF_SIMPLE_OPERATOR (",", COMPOUND_EXPR, "cm", 2)
 DEF_SIMPLE_OPERATOR ("->*", MEMBER_REF, "pm", 2)
+DEF_SIMPLE_OPERATOR (".*", DOTSTAR_EXPR, "ds", 2)
 DEF_SIMPLE_OPERATOR ("->", COMPONENT_REF, "pt", 2)
 DEF_SIMPLE_OPERATOR ("[]", ARRAY_REF, "ix", 2)
 DEF_SIMPLE_OPERATOR ("++", POSTINCREMENT_EXPR, "pp", 2)

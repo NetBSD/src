@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file erase_fn_imps.hpp
+ * @file rc_binomial_heap_/erase_fn_imps.hpp
  * Contains an implementation for rc_binomial_heap_.
  */
 
@@ -64,10 +64,10 @@ PB_DS_CLASS_C_DEC::
 make_binomial_heap()
 {
   node_pointer p_nd = base_type::m_p_root;
-  while (p_nd != NULL)
+  while (p_nd != 0)
     {
       node_pointer p_next = p_nd->m_p_next_sibling;
-      if (p_next == NULL)
+      if (p_next == 0)
 	p_nd = p_next;
       else if (p_nd->m_metadata == p_next->m_metadata)
 	p_nd = link_with_next_sibling(p_nd);
@@ -91,7 +91,7 @@ erase_if(Pred pred)
   make_binomial_heap();
   const size_type ersd = base_type::erase_if(pred);
   base_type::find_max();
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   return ersd;
 }
 

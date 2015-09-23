@@ -1,5 +1,5 @@
 ;; ARM 926EJ-S Pipeline Description
-;; Copyright (C) 2003, 2007 Free Software Foundation, Inc.
+;; Copyright (C) 2003-2013 Free Software Foundation, Inc.
 ;; Written by CodeSourcery, LLC.
 ;;
 ;; This file is part of GCC.
@@ -58,7 +58,7 @@
 ;; ALU operations with no shifted operand
 (define_insn_reservation "9_alu_op" 1 
  (and (eq_attr "tune" "arm926ejs")
-      (eq_attr "type" "alu,alu_shift"))
+      (eq_attr "type" "alu_reg,simple_alu_imm,simple_alu_shift,alu_shift"))
  "e,m,w")
 
 ;; ALU operations with a shift-by-register operand

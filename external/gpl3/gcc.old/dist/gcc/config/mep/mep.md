@@ -1,6 +1,5 @@
 ;; Toshiba Media Processor Machine description template
-;; Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009 Free
-;; Software Foundation, Inc.
+;; Copyright (C) 2001-2013 Free Software Foundation, Inc.
 ;; Contributed by Red Hat Inc
 ;;
 ;; This file is part of GCC.
@@ -2079,7 +2078,8 @@
   [(use (match_operand 0 "register_operand" ""))
    (use (match_operand:QI 1 "const_int_operand" ""))
    (use (match_operand:QI 2 "const_int_operand" ""))
-   (use (match_operand:QI 3 "const_int_operand" ""))]
+   (use (match_operand:QI 3 "const_int_operand" ""))
+   (use (match_operand 4 "" ""))]
   "!profile_arc_flag && TARGET_OPT_REPEAT"
   "if (INTVAL (operands[3]) > 1)
      FAIL;
@@ -2115,7 +2115,8 @@
    (use (match_operand:QI 1 "const_int_operand" ""))
    (use (match_operand:QI 2 "const_int_operand" ""))
    (use (match_operand:QI 3 "const_int_operand" ""))
-   (use (label_ref (match_operand 4 "" "")))]
+   (use (label_ref (match_operand 4 "" "")))
+   (use (match_operand 5 "" ""))]
   "!profile_arc_flag && TARGET_OPT_REPEAT"
   "if (INTVAL (operands[3]) > 1)
      FAIL;

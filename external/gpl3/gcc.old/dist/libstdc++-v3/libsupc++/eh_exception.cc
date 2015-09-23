@@ -1,7 +1,5 @@
 // -*- C++ -*- std::exception implementation.
-// Copyright (C) 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002,
-// 2003, 2004, 2005, 2006, 2007, 2009
-// Free Software Foundation
+// Copyright (C) 1994-2013 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -28,16 +26,16 @@
 #include "exception"
 #include <cxxabi.h>
 
-std::exception::~exception() throw() { }
+std::exception::~exception() _GLIBCXX_USE_NOEXCEPT { }
 
-std::bad_exception::~bad_exception() throw() { }
+std::bad_exception::~bad_exception() _GLIBCXX_USE_NOEXCEPT { }
 
 abi::__forced_unwind::~__forced_unwind() throw() { }
 
 abi::__foreign_exception::~__foreign_exception() throw() { }
 
 const char* 
-std::exception::what() const throw()
+std::exception::what() const _GLIBCXX_USE_NOEXCEPT
 {
   // NB: Another elegant option would be returning typeid(*this).name()
   // and not overriding what() in bad_exception, bad_alloc, etc.  In
@@ -46,7 +44,7 @@ std::exception::what() const throw()
 }
 
 const char* 
-std::bad_exception::what() const throw()
+std::bad_exception::what() const _GLIBCXX_USE_NOEXCEPT
 {
   return "std::bad_exception";
 }

@@ -1,7 +1,7 @@
 (* Common code for ARM NEON header file, documentation and test case
    generators.
 
-   Copyright (C) 2006, 2007, 2008, 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2006-2013 Free Software Foundation, Inc.
    Contributed by CodeSourcery.
 
    This file is part of GCC.
@@ -102,6 +102,8 @@ type opcode =
   | Vmul
   | Vmla
   | Vmls
+  | Vfma
+  | Vfms
   | Vsub
   | Vceq
   | Vcge
@@ -150,6 +152,11 @@ type opcode =
   | Vqdmulh_n
   | Vqdmulh_lane
   (* Unary ops.  *)
+  | Vrintn
+  | Vrinta
+  | Vrintp
+  | Vrintm
+  | Vrintz
   | Vabs
   | Vneg
   | Vcls
@@ -201,6 +208,42 @@ type opcode =
   (* Reinterpret casts.  *)
   | Vreinterp
 
+let rev_elems revsize elsize nelts _ =
+  let mask = (revsize / elsize) - 1 in
+  let arr = Array.init nelts
+    (fun i -> i lxor mask) in
+  Array.to_list arr
+
+let permute_range i stride nelts increment =
+  let rec build i = function
+    0 -> []
+  | nelts -> i :: (i + stride) :: build (i + increment) (pred nelts) in
+  build i nelts
+
+(* Generate a list of integers suitable for vzip.  *)
+let zip_range i stride nelts = permute_range i stride nelts 1
+
+(* Generate a list of integers suitable for vunzip.  *)
+let uzip_range i stride nelts = permute_range i stride nelts 4
+
+(* Generate a list of integers suitable for trn.  *)
+let trn_range i stride nelts = permute_range i stride nelts 2
+
+let zip_elems _ nelts part =
+  match part with
+    `lo -> zip_range 0 nelts (nelts / 2)
+  | `hi -> zip_range (nelts / 2) nelts (nelts / 2)
+
+let uzip_elems _ nelts part =
+  match part with
+    `lo -> uzip_range 0 2 (nelts / 2)
+  | `hi -> uzip_range 1 2 (nelts / 2)
+
+let trn_elems _ nelts part =
+  match part with
+    `lo -> trn_range 0 nelts (nelts / 2)
+  | `hi -> trn_range 1 nelts (nelts / 2)
+
 (* Features used for documentation, to distinguish between some instruction
    variants, and to signal special requirements (e.g. swapping arguments).  *)
 
@@ -214,7 +257,10 @@ type features =
   | Flipped of string  (* Builtin name to use with flipped arguments.  *)
   | InfoWord  (* Pass an extra word for signage/rounding etc. (always passed
                  for All _, Long, Wide, Narrow shape_forms.  *)
-  | ReturnPtr  (* Pass explicit pointer to return value as first argument.  *)
+    (* Implement builtin as shuffle.  The parameter is a function which returns
+       masks suitable for __builtin_shuffle: arguments are (element size,
+       number of elements, high/low part selector).  *)
+  | Use_shuffle of (int -> int -> [`lo|`hi] -> int list)
     (* A specification as to the shape of instruction expected upon
        disassembly, used if it differs from the shape used to build the
        intrinsic prototype.  Multiple entries in the constructor's argument
@@ -234,7 +280,11 @@ type features =
        cases.  The function supplied must return the integer to be written
        into the testcase for the argument number (0-based) supplied to it.  *)
   | Const_valuator of (int -> int)
-  | Fixed_return_reg
+  | Fixed_vector_reg
+  | Fixed_core_reg
+    (* Mark that the intrinsic requires __ARM_FEATURE_string to be defined.  *)
+  | Requires_feature of string
+  | Requires_arch of int
 
 exception MixedMode of elts * elts
 
@@ -700,16 +750,21 @@ let bit_select shape elt =
 
 (* Common lists of supported element types.  *)
 
+let s_8_32 = [S8; S16; S32]
+let u_8_32 = [U8; U16; U32]
 let su_8_32 = [S8; S16; S32; U8; U16; U32]
 let su_8_64 = S64 :: U64 :: su_8_32
 let su_16_64 = [S16; S32; S64; U16; U32; U64]
+let pf_su_8_16 = [P8; P16; S8; S16; U8; U16]
 let pf_su_8_32 = P8 :: P16 :: F32 :: su_8_32
 let pf_su_8_64 = P8 :: P16 :: F32 :: su_8_64
+let suf_32 = [S32; U32; F32]
 
 let ops =
   [
     (* Addition.  *)
-    Vadd, [], All (3, Dreg), "vadd", sign_invar_2, F32 :: su_8_64;
+    Vadd, [], All (3, Dreg), "vadd", sign_invar_2, F32 :: su_8_32;
+    Vadd, [No_op], All (3, Dreg), "vadd", sign_invar_2, [S64; U64];
     Vadd, [], All (3, Qreg), "vaddQ", sign_invar_2, F32 :: su_8_64;
     Vadd, [], Long, "vaddl", elts_same_2, su_8_32;
     Vadd, [], Wide, "vaddw", elts_same_2, su_8_32;
@@ -757,8 +812,36 @@ let ops =
     Vmls, [], Long, "vmlsl", elts_same_io, su_8_32;
     Vmls, [Saturating; Doubling], Long, "vqdmlsl", elts_same_io, [S16; S32];
 
+    (* Fused-multiply-accumulate. *)
+    Vfma, [Requires_feature "FMA"], All (3, Dreg), "vfma", elts_same_io, [F32];
+    Vfma, [Requires_feature "FMA"], All (3, Qreg), "vfmaQ", elts_same_io, [F32];
+    Vfms, [Requires_feature "FMA"], All (3, Dreg), "vfms", elts_same_io, [F32];
+    Vfms, [Requires_feature "FMA"], All (3, Qreg), "vfmsQ", elts_same_io, [F32];
+
+    (* Round to integral. *)
+    Vrintn, [Builtin_name "vrintn"; Requires_arch 8], Use_operands [| Dreg; Dreg |],
+            "vrndn", elts_same_1, [F32];
+    Vrintn, [Builtin_name "vrintn"; Requires_arch 8], Use_operands [| Qreg; Qreg |],
+            "vrndqn", elts_same_1, [F32];
+    Vrinta, [Builtin_name "vrinta"; Requires_arch 8], Use_operands [| Dreg; Dreg |],
+            "vrnda", elts_same_1, [F32];
+    Vrinta, [Builtin_name "vrinta"; Requires_arch 8], Use_operands [| Qreg; Qreg |],
+            "vrndqa", elts_same_1, [F32];
+    Vrintp, [Builtin_name "vrintp"; Requires_arch 8], Use_operands [| Dreg; Dreg |],
+            "vrndp", elts_same_1, [F32];
+    Vrintp, [Builtin_name "vrintp"; Requires_arch 8], Use_operands [| Qreg; Qreg |],
+            "vrndqp", elts_same_1, [F32];
+    Vrintm, [Builtin_name "vrintm"; Requires_arch 8], Use_operands [| Dreg; Dreg |],
+            "vrndm", elts_same_1, [F32];
+    Vrintm, [Builtin_name "vrintm"; Requires_arch 8], Use_operands [| Qreg; Qreg |],
+            "vrndqm", elts_same_1, [F32];
+    Vrintz, [Builtin_name "vrintz"; Requires_arch 8], Use_operands [| Dreg; Dreg |],
+            "vrnd", elts_same_1, [F32];
+    Vrintz, [Builtin_name "vrintz"; Requires_arch 8], Use_operands [| Qreg; Qreg |],
+            "vrndq", elts_same_1, [F32];
     (* Subtraction.  *)
-    Vsub, [], All (3, Dreg), "vsub", sign_invar_2, F32 :: su_8_64;
+    Vsub, [], All (3, Dreg), "vsub", sign_invar_2, F32 :: su_8_32;
+    Vsub, [No_op], All (3, Dreg), "vsub", sign_invar_2,  [S64; U64];
     Vsub, [], All (3, Qreg), "vsubQ", sign_invar_2, F32 :: su_8_64;
     Vsub, [], Long, "vsubl", elts_same_2, su_8_32;
     Vsub, [], Wide, "vsubw", elts_same_2, su_8_32;
@@ -775,26 +858,50 @@ let ops =
     Vceq, [], All (3, Qreg), "vceqQ", cmp_sign_invar, P8 :: F32 :: su_8_32;
 
     (* Comparison, greater-than or equal.  *)
-    Vcge, [], All (3, Dreg), "vcge", cmp_sign_matters, F32 :: su_8_32;
-    Vcge, [], All (3, Qreg), "vcgeQ", cmp_sign_matters, F32 :: su_8_32;
+    Vcge, [], All (3, Dreg), "vcge", cmp_sign_matters, F32 :: s_8_32;
+    Vcge, [Instruction_name ["vcge"]; Builtin_name "vcgeu"],
+      All (3, Dreg), "vcge", cmp_sign_matters,
+      u_8_32;
+    Vcge, [], All (3, Qreg), "vcgeQ", cmp_sign_matters, F32 :: s_8_32;
+    Vcge, [Instruction_name ["vcge"]; Builtin_name "vcgeu"],
+      All (3, Qreg), "vcgeQ", cmp_sign_matters,
+      u_8_32;
 
     (* Comparison, less-than or equal.  *)
     Vcle, [Flipped "vcge"], All (3, Dreg), "vcle", cmp_sign_matters,
-      F32 :: su_8_32;
+      F32 :: s_8_32;
+    Vcle, [Instruction_name ["vcge"]; Flipped "vcgeu"],
+      All (3, Dreg), "vcle", cmp_sign_matters,
+      u_8_32;
     Vcle, [Instruction_name ["vcge"]; Flipped "vcgeQ"],
       All (3, Qreg), "vcleQ", cmp_sign_matters,
-      F32 :: su_8_32;
+      F32 :: s_8_32;
+    Vcle, [Instruction_name ["vcge"]; Flipped "vcgeuQ"],
+      All (3, Qreg), "vcleQ", cmp_sign_matters,
+      u_8_32;
 
     (* Comparison, greater-than.  *)
-    Vcgt, [], All (3, Dreg), "vcgt", cmp_sign_matters, F32 :: su_8_32;
-    Vcgt, [], All (3, Qreg), "vcgtQ", cmp_sign_matters, F32 :: su_8_32;
+    Vcgt, [], All (3, Dreg), "vcgt", cmp_sign_matters, F32 :: s_8_32;
+    Vcgt, [Instruction_name ["vcgt"]; Builtin_name "vcgtu"],
+      All (3, Dreg), "vcgt", cmp_sign_matters,
+      u_8_32;
+    Vcgt, [], All (3, Qreg), "vcgtQ", cmp_sign_matters, F32 :: s_8_32;
+    Vcgt, [Instruction_name ["vcgt"]; Builtin_name "vcgtu"],
+      All (3, Qreg), "vcgtQ", cmp_sign_matters,
+      u_8_32;
 
     (* Comparison, less-than.  *)
     Vclt, [Flipped "vcgt"], All (3, Dreg), "vclt", cmp_sign_matters,
-      F32 :: su_8_32;
+      F32 :: s_8_32;
+    Vclt, [Instruction_name ["vcgt"]; Flipped "vcgtu"],
+      All (3, Dreg), "vclt", cmp_sign_matters,
+      u_8_32;
     Vclt, [Instruction_name ["vcgt"]; Flipped "vcgtQ"],
       All (3, Qreg), "vcltQ", cmp_sign_matters,
-      F32 :: su_8_32;
+      F32 :: s_8_32;
+    Vclt, [Instruction_name ["vcgt"]; Flipped "vcgtuQ"],
+      All (3, Qreg), "vcltQ", cmp_sign_matters,
+      u_8_32;
 
     (* Compare absolute greater-than or equal.  *)
     Vcage, [Instruction_name ["vacge"]],
@@ -967,7 +1074,8 @@ let ops =
       Use_operands [| Corereg; Dreg; Immed |],
       "vget_lane", get_lane, pf_su_8_32;
     Vget_lane,
-      [InfoWord;
+      [No_op;
+       InfoWord;
        Disassembles_as [Use_operands [| Corereg; Corereg; Dreg |]];
        Instruction_name ["vmov"]; Const_valuator (fun _ -> 0)],
       Use_operands [| Corereg; Dreg; Immed |],
@@ -980,7 +1088,8 @@ let ops =
     Vget_lane,
       [InfoWord;
        Disassembles_as [Use_operands [| Corereg; Corereg; Dreg |]];
-       Instruction_name ["vmov"]; Const_valuator (fun _ -> 0)],
+       Instruction_name ["vmov"; "fmrrd"]; Const_valuator (fun _ -> 0);
+       Fixed_core_reg],
       Use_operands [| Corereg; Qreg; Immed |],
       "vgetQ_lane", notype_2, [S64; U64];
 
@@ -989,7 +1098,8 @@ let ops =
                 Instruction_name ["vmov"]],
       Use_operands [| Dreg; Corereg; Dreg; Immed |], "vset_lane",
       set_lane, pf_su_8_32;
-    Vset_lane, [Disassembles_as [Use_operands [| Dreg; Corereg; Corereg |]];
+    Vset_lane, [No_op;
+                Disassembles_as [Use_operands [| Dreg; Corereg; Corereg |]];
                 Instruction_name ["vmov"]; Const_valuator (fun _ -> 0)],
       Use_operands [| Dreg; Corereg; Dreg; Immed |], "vset_lane",
       set_lane_notype, [S64; U64];
@@ -1017,7 +1127,8 @@ let ops =
       Use_operands [| Dreg; Corereg |], "vdup_n", bits_1,
       pf_su_8_32;
     Vdup_n,
-      [Instruction_name ["vmov"];
+      [No_op;
+       Instruction_name ["vmov"];
        Disassembles_as [Use_operands [| Dreg; Corereg; Corereg |]]],
       Use_operands [| Dreg; Corereg |], "vdup_n", notype_1,
       [S64; U64];
@@ -1028,7 +1139,8 @@ let ops =
       Use_operands [| Qreg; Corereg |], "vdupQ_n", bits_1,
       pf_su_8_32;
     Vdup_n,
-      [Instruction_name ["vmov"];
+      [No_op;
+       Instruction_name ["vmov"];
        Disassembles_as [Use_operands [| Dreg; Corereg; Corereg |];
                         Use_operands [| Dreg; Corereg; Corereg |]]],
       Use_operands [| Qreg; Corereg |], "vdupQ_n", notype_1,
@@ -1043,7 +1155,8 @@ let ops =
       Use_operands [| Dreg; Corereg |],
       "vmov_n", bits_1, pf_su_8_32;
     Vmov_n,
-      [Builtin_name "vdup_n";
+      [No_op;
+       Builtin_name "vdup_n";
        Instruction_name ["vmov"];
        Disassembles_as [Use_operands [| Dreg; Corereg; Corereg |]]],
       Use_operands [| Dreg; Corereg |],
@@ -1056,7 +1169,8 @@ let ops =
       Use_operands [| Qreg; Corereg |],
       "vmovQ_n", bits_1, pf_su_8_32;
     Vmov_n,
-      [Builtin_name "vdupQ_n";
+      [No_op;
+       Builtin_name "vdupQ_n";
        Instruction_name ["vmov"];
        Disassembles_as [Use_operands [| Dreg; Corereg; Corereg |];
                         Use_operands [| Dreg; Corereg; Corereg |]]],
@@ -1091,7 +1205,7 @@ let ops =
       notype_1, pf_su_8_64;
     Vget_low, [Instruction_name ["vmov"];
                Disassembles_as [Use_operands [| Dreg; Dreg |]];
-	       Fixed_return_reg],
+	       Fixed_vector_reg],
       Use_operands [| Dreg; Qreg |], "vget_low",
       notype_1, pf_su_8_32;
      Vget_low, [No_op],
@@ -1281,12 +1395,18 @@ let ops =
       pf_su_8_64;
 
     (* Reverse elements.  *)
-    Vrev64, [], All (2, Dreg), "vrev64", bits_1, P8 :: P16 :: F32 :: su_8_32;
-    Vrev64, [], All (2, Qreg), "vrev64Q", bits_1, P8 :: P16 :: F32 :: su_8_32;
-    Vrev32, [], All (2, Dreg), "vrev32", bits_1, [P8; P16; S8; U8; S16; U16];
-    Vrev32, [], All (2, Qreg), "vrev32Q", bits_1, [P8; P16; S8; U8; S16; U16];
-    Vrev16, [], All (2, Dreg), "vrev16", bits_1, [P8; S8; U8];
-    Vrev16, [], All (2, Qreg), "vrev16Q", bits_1, [P8; S8; U8];
+    Vrev64, [Use_shuffle (rev_elems 64)], All (2, Dreg), "vrev64", bits_1,
+      P8 :: P16 :: F32 :: su_8_32;
+    Vrev64, [Use_shuffle (rev_elems 64)], All (2, Qreg), "vrev64Q", bits_1,
+      P8 :: P16 :: F32 :: su_8_32;
+    Vrev32, [Use_shuffle (rev_elems 32)], All (2, Dreg), "vrev32", bits_1,
+      [P8; P16; S8; U8; S16; U16];
+    Vrev32, [Use_shuffle (rev_elems 32)], All (2, Qreg), "vrev32Q", bits_1,
+      [P8; P16; S8; U8; S16; U16];
+    Vrev16, [Use_shuffle (rev_elems 16)], All (2, Dreg), "vrev16", bits_1,
+      [P8; S8; U8];
+    Vrev16, [Use_shuffle (rev_elems 16)], All (2, Qreg), "vrev16Q", bits_1,
+      [P8; S8; U8];
 
     (* Bit selection.  *)
     Vbsl,
@@ -1300,25 +1420,19 @@ let ops =
       Use_operands [| Qreg; Qreg; Qreg; Qreg |], "vbslQ", bit_select,
       pf_su_8_64;
 
-    (* Transpose elements.  **NOTE** ReturnPtr goes some of the way towards
-       generating good code for intrinsics which return structure types --
-       builtins work well by themselves (and understand that the values being
-       stored on e.g. the stack also reside in registers, so can optimise the
-       stores away entirely if the results are used immediately), but
-       intrinsics are very much less efficient. Maybe something can be improved
-       re: inlining, or tweaking the ABI used for intrinsics (a special call
-       attribute?).
-    *)
-    Vtrn, [ReturnPtr], Pair_result Dreg, "vtrn", bits_2, pf_su_8_32;
-    Vtrn, [ReturnPtr], Pair_result Qreg, "vtrnQ", bits_2, pf_su_8_32;
-
+    Vtrn, [Use_shuffle trn_elems], Pair_result Dreg, "vtrn", bits_2, pf_su_8_16;
+    Vtrn, [Use_shuffle trn_elems; Instruction_name ["vuzp"]], Pair_result Dreg, "vtrn", bits_2, suf_32;
+    Vtrn, [Use_shuffle trn_elems], Pair_result Qreg, "vtrnQ", bits_2, pf_su_8_32;
     (* Zip elements.  *)
-    Vzip, [ReturnPtr], Pair_result Dreg, "vzip", bits_2, pf_su_8_32;
-    Vzip, [ReturnPtr], Pair_result Qreg, "vzipQ", bits_2, pf_su_8_32;
+    Vzip, [Use_shuffle zip_elems], Pair_result Dreg, "vzip", bits_2, pf_su_8_16;
+    Vzip, [Use_shuffle zip_elems; Instruction_name ["vuzp"]], Pair_result Dreg, "vzip", bits_2, suf_32;
+    Vzip, [Use_shuffle zip_elems], Pair_result Qreg, "vzipQ", bits_2, pf_su_8_32; 
 
     (* Unzip elements.  *)
-    Vuzp, [ReturnPtr], Pair_result Dreg, "vuzp", bits_2, pf_su_8_32;
-    Vuzp, [ReturnPtr], Pair_result Qreg, "vuzpQ", bits_2, pf_su_8_32;
+    Vuzp, [Use_shuffle uzip_elems], Pair_result Dreg, "vuzp", bits_2,
+      pf_su_8_32;
+    Vuzp, [Use_shuffle uzip_elems], Pair_result Qreg, "vuzpQ", bits_2,
+      pf_su_8_32;
 
     (* Element/structure loads.  VLD1 variants.  *)
     Vldx 1,
@@ -1368,8 +1482,10 @@ let ops =
                                         CstPtrTo Corereg |]]],
       Use_operands [| Qreg; CstPtrTo Corereg |], "vld1Q_dup",
       bits_1, pf_su_8_32;
+    (* Treated identically to vld1_dup above as we now
+       do a single load followed by a duplicate.  *)
     Vldx_dup 1,
-      [Disassembles_as [Use_operands [| VecArray (2, Dreg);
+      [Disassembles_as [Use_operands [| VecArray (1, Dreg);
                                         CstPtrTo Corereg |]]],
       Use_operands [| Qreg; CstPtrTo Corereg |], "vld1Q_dup",
       bits_1, [S64; U64];
@@ -1613,23 +1729,28 @@ let ops =
       store_3, [P16; F32; U16; U32; S16; S32];
 
     (* Logical operations. And.  *)
-    Vand, [], All (3, Dreg), "vand", notype_2, su_8_64;
+    Vand, [], All (3, Dreg), "vand", notype_2, su_8_32;
+    Vand, [No_op], All (3, Dreg), "vand", notype_2, [S64; U64];
     Vand, [], All (3, Qreg), "vandQ", notype_2, su_8_64;
 
     (* Or.  *)
-    Vorr, [], All (3, Dreg), "vorr", notype_2, su_8_64;
+    Vorr, [], All (3, Dreg), "vorr", notype_2, su_8_32;
+    Vorr, [No_op], All (3, Dreg), "vorr", notype_2, [S64; U64];
     Vorr, [], All (3, Qreg), "vorrQ", notype_2, su_8_64;
 
     (* Eor.  *)
-    Veor, [], All (3, Dreg), "veor", notype_2, su_8_64;
+    Veor, [], All (3, Dreg), "veor", notype_2, su_8_32;
+    Veor, [No_op], All (3, Dreg), "veor", notype_2, [S64; U64];
     Veor, [], All (3, Qreg), "veorQ", notype_2, su_8_64;
 
     (* Bic (And-not).  *)
-    Vbic, [], All (3, Dreg), "vbic", notype_2, su_8_64;
+    Vbic, [], All (3, Dreg), "vbic", notype_2, su_8_32;
+    Vbic, [No_op], All (3, Dreg), "vbic", notype_2, [S64; U64];
     Vbic, [], All (3, Qreg), "vbicQ", notype_2, su_8_64;
 
     (* Or-not.  *)
-    Vorn, [], All (3, Dreg), "vorn", notype_2, su_8_64;
+    Vorn, [], All (3, Dreg), "vorn", notype_2, su_8_32;
+    Vorn, [No_op], All (3, Dreg), "vorn", notype_2, [S64; U64];
     Vorn, [], All (3, Qreg), "vornQ", notype_2, su_8_64;
   ]
 

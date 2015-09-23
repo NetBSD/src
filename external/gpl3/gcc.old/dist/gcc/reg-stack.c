@@ -1,7 +1,5 @@
 /* Register to Stack convert for GNU compiler.
-   Copyright (C) 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000,
-   2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 1992-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -156,26 +154,21 @@
 #include "coretypes.h"
 #include "tm.h"
 #include "tree.h"
-#include "rtl.h"
+#include "rtl-error.h"
 #include "tm_p.h"
 #include "function.h"
 #include "insn-config.h"
 #include "regs.h"
 #include "hard-reg-set.h"
 #include "flags.h"
-#include "toplev.h"
 #include "recog.h"
-#include "output.h"
 #include "basic-block.h"
-#include "cfglayout.h"
-#include "varray.h"
 #include "reload.h"
 #include "ggc.h"
-#include "timevar.h"
 #include "tree-pass.h"
 #include "target.h"
 #include "df.h"
-#include "vecprim.h"
+#include "emit-rtl.h"  /* FIXME: Can go away once crtl is moved to rtl.h.  */
 
 #ifdef STACK_REGS
 
@@ -185,7 +178,7 @@
    Indexed by insn UIDs.  A value of zero is uninitialized, one indicates
    the insn uses stack registers, two indicates the insn does not use
    stack registers.  */
-static VEC(char,heap) *stack_regs_mentioned_data;
+static vec<char> stack_regs_mentioned_data;
 
 #define REG_STACK_SIZE (LAST_STACK_REG - FIRST_STACK_REG + 1)
 
@@ -205,7 +198,7 @@ typedef struct stack_def
   int top;			/* index to top stack element */
   HARD_REG_SET reg_set;		/* set of live registers */
   unsigned char reg[REG_STACK_SIZE];/* register - stack mapping */
-} *stack;
+} *stack_ptr;
 
 /* This is used to carry information about basic blocks.  It is
    attached to the AUX field of the standard CFG block.  */
@@ -250,7 +243,7 @@ static rtx not_a_num;
 /* Forward declarations */
 
 static int stack_regs_mentioned_p (const_rtx pat);
-static void pop_stack (stack, int);
+static void pop_stack (stack_ptr, int);
 static rtx *get_true_reg (rtx *);
 
 static int check_asm_stack_operands (rtx);
@@ -258,19 +251,19 @@ static void get_asm_operands_in_out (rtx, int *, int *);
 static rtx stack_result (tree);
 static void replace_reg (rtx *, int);
 static void remove_regno_note (rtx, enum reg_note, unsigned int);
-static int get_hard_regnum (stack, rtx);
-static rtx emit_pop_insn (rtx, stack, rtx, enum emit_where);
-static void swap_to_top(rtx, stack, rtx, rtx);
-static bool move_for_stack_reg (rtx, stack, rtx);
-static bool move_nan_for_stack_reg (rtx, stack, rtx);
+static int get_hard_regnum (stack_ptr, rtx);
+static rtx emit_pop_insn (rtx, stack_ptr, rtx, enum emit_where);
+static void swap_to_top(rtx, stack_ptr, rtx, rtx);
+static bool move_for_stack_reg (rtx, stack_ptr, rtx);
+static bool move_nan_for_stack_reg (rtx, stack_ptr, rtx);
 static int swap_rtx_condition_1 (rtx);
 static int swap_rtx_condition (rtx);
-static void compare_for_stack_reg (rtx, stack, rtx);
-static bool subst_stack_regs_pat (rtx, stack, rtx);
-static void subst_asm_stack_regs (rtx, stack);
-static bool subst_stack_regs (rtx, stack);
-static void change_stack (rtx, stack, stack, enum emit_where);
-static void print_stack (FILE *, stack);
+static void compare_for_stack_reg (rtx, stack_ptr, rtx);
+static bool subst_stack_regs_pat (rtx, stack_ptr, rtx);
+static void subst_asm_stack_regs (rtx, stack_ptr);
+static bool subst_stack_regs (rtx, stack_ptr);
+static void change_stack (rtx, stack_ptr, stack_ptr, enum emit_where);
+static void print_stack (FILE *, stack_ptr);
 static rtx next_flags_user (rtx);
 
 /* Return nonzero if any stack register is mentioned somewhere within PAT.  */
@@ -310,25 +303,25 @@ stack_regs_mentioned (const_rtx insn)
   unsigned int uid, max;
   int test;
 
-  if (! INSN_P (insn) || !stack_regs_mentioned_data)
+  if (! INSN_P (insn) || !stack_regs_mentioned_data.exists ())
     return 0;
 
   uid = INSN_UID (insn);
-  max = VEC_length (char, stack_regs_mentioned_data);
+  max = stack_regs_mentioned_data.length ();
   if (uid >= max)
     {
       /* Allocate some extra size to avoid too many reallocs, but
 	 do not grow too quickly.  */
       max = uid + uid / 20 + 1;
-      VEC_safe_grow_cleared (char, heap, stack_regs_mentioned_data, max);
+      stack_regs_mentioned_data.safe_grow_cleared (max);
     }
 
-  test = VEC_index (char, stack_regs_mentioned_data, uid);
+  test = stack_regs_mentioned_data[uid];
   if (test == 0)
     {
       /* This insn has yet to be examined.  Do so now.  */
       test = stack_regs_mentioned_p (PATTERN (insn)) ? 1 : 2;
-      VEC_replace (char, stack_regs_mentioned_data, uid, test);
+      stack_regs_mentioned_data[uid] = test;
     }
 
   return test == 1;
@@ -358,7 +351,7 @@ next_flags_user (rtx insn)
 /* Reorganize the stack into ascending numbers, before this insn.  */
 
 static void
-straighten_stack (rtx insn, stack regstack)
+straighten_stack (rtx insn, stack_ptr regstack)
 {
   struct stack_def temp_stack;
   int top;
@@ -381,7 +374,7 @@ straighten_stack (rtx insn, stack regstack)
 /* Pop a register from the stack.  */
 
 static void
-pop_stack (stack regstack, int regno)
+pop_stack (stack_ptr regstack, int regno)
 {
   int top = regstack->top;
 
@@ -417,7 +410,7 @@ get_true_reg (rtx *pat)
 	   actual FP register in use.  */
 	{
 	  rtx subreg;
-	  if (FP_REG_P (subreg = SUBREG_REG (*pat)))
+	  if (STACK_REG_P (subreg = SUBREG_REG (*pat)))
 	    {
 	      int regno_off = subreg_regno_offset (REGNO (subreg),
 						   GET_MODE (subreg),
@@ -435,7 +428,8 @@ get_true_reg (rtx *pat)
 	break;
 
       case UNSPEC:
-	if (XINT (*pat, 1) == UNSPEC_TRUNC_NOOP)
+	if (XINT (*pat, 1) == UNSPEC_TRUNC_NOOP
+	    || XINT (*pat, 1) == UNSPEC_LDA)
 	  pat = & XVECEXP (*pat, 0, 0);
 	return pat;
 
@@ -724,7 +718,7 @@ remove_regno_note (rtx insn, enum reg_note note, unsigned int regno)
    returned if the register is not found.  */
 
 static int
-get_hard_regnum (stack regstack, rtx reg)
+get_hard_regnum (stack_ptr regstack, rtx reg)
 {
   int i;
 
@@ -745,7 +739,7 @@ get_hard_regnum (stack regstack, rtx reg)
    cases the movdf pattern to pop.  */
 
 static rtx
-emit_pop_insn (rtx insn, stack regstack, rtx reg, enum emit_where where)
+emit_pop_insn (rtx insn, stack_ptr regstack, rtx reg, enum emit_where where)
 {
   rtx pop_insn, pop_rtx;
   int hard_regno;
@@ -796,7 +790,7 @@ emit_pop_insn (rtx insn, stack regstack, rtx reg, enum emit_where where)
    If REG is already at the top of the stack, no insn is emitted.  */
 
 static void
-emit_swap_insn (rtx insn, stack regstack, rtx reg)
+emit_swap_insn (rtx insn, stack_ptr regstack, rtx reg)
 {
   int hard_regno;
   rtx swap_rtx;
@@ -903,7 +897,7 @@ emit_swap_insn (rtx insn, stack regstack, rtx reg)
    is emitted.  */
 
 static void
-swap_to_top (rtx insn, stack regstack, rtx src1, rtx src2)
+swap_to_top (rtx insn, stack_ptr regstack, rtx src1, rtx src2)
 {
   struct stack_def temp_stack;
   int regno, j, k, temp;
@@ -944,7 +938,7 @@ swap_to_top (rtx insn, stack regstack, rtx src1, rtx src2)
    was deleted in the process.  */
 
 static bool
-move_for_stack_reg (rtx insn, stack regstack, rtx pat)
+move_for_stack_reg (rtx insn, stack_ptr regstack, rtx pat)
 {
   rtx *psrc =  get_true_reg (&SET_SRC (pat));
   rtx *pdest = get_true_reg (&SET_DEST (pat));
@@ -1095,7 +1089,7 @@ move_for_stack_reg (rtx insn, stack regstack, rtx pat)
    a NaN into DEST, then invokes move_for_stack_reg.  */
 
 static bool
-move_nan_for_stack_reg (rtx insn, stack regstack, rtx dest)
+move_nan_for_stack_reg (rtx insn, stack_ptr regstack, rtx dest)
 {
   rtx pat;
 
@@ -1234,7 +1228,7 @@ swap_rtx_condition (rtx insn)
    set up.  */
 
 static void
-compare_for_stack_reg (rtx insn, stack regstack, rtx pat_src)
+compare_for_stack_reg (rtx insn, stack_ptr regstack, rtx pat_src)
 {
   rtx *src1, *src2;
   rtx src1_note, src2_note;
@@ -1323,17 +1317,18 @@ compare_for_stack_reg (rtx insn, stack regstack, rtx pat_src)
 static int
 subst_stack_regs_in_debug_insn (rtx *loc, void *data)
 {
-  rtx *tloc = get_true_reg (loc);
-  stack regstack = (stack)data;
+  stack_ptr regstack = (stack_ptr)data;
   int hard_regno;
 
-  if (!STACK_REG_P (*tloc))
-    return 0;
-
-  if (tloc != loc)
+  if (!STACK_REG_P (*loc))
     return 0;
 
   hard_regno = get_hard_regnum (regstack, *loc);
+
+  /* If we can't find an active register, reset this debug insn.  */
+  if (hard_regno == -1)
+    return 1;
+
   gcc_assert (hard_regno >= FIRST_STACK_REG);
 
   replace_reg (loc, hard_regno);
@@ -1341,12 +1336,29 @@ subst_stack_regs_in_debug_insn (rtx *loc, void *data)
   return -1;
 }
 
+/* Substitute hardware stack regs in debug insn INSN, using stack
+   layout REGSTACK.  If we can't find a hardware stack reg for any of
+   the REGs in it, reset the debug insn.  */
+
+static void
+subst_all_stack_regs_in_debug_insn (rtx insn, struct stack_def *regstack)
+{
+  int ret = for_each_rtx (&INSN_VAR_LOCATION_LOC (insn),
+			  subst_stack_regs_in_debug_insn,
+			  regstack);
+
+  if (ret == 1)
+    INSN_VAR_LOCATION_LOC (insn) = gen_rtx_UNKNOWN_VAR_LOC ();
+  else
+    gcc_checking_assert (ret == 0);
+}
+
 /* Substitute new registers in PAT, which is part of INSN.  REGSTACK
    is the current register layout.  Return whether a control flow insn
    was deleted in the process.  */
 
 static bool
-subst_stack_regs_pat (rtx insn, stack regstack, rtx pat)
+subst_stack_regs_pat (rtx insn, stack_ptr regstack, rtx pat)
 {
   rtx *dest, *src;
   bool control_flow_insn_deleted = false;
@@ -1451,7 +1463,7 @@ subst_stack_regs_pat (rtx insn, stack regstack, rtx pat)
 	if (STACK_REG_P (*src)
 	    || (STACK_REG_P (*dest)
 		&& (REG_P (*src) || MEM_P (*src)
-		    || GET_CODE (*src) == CONST_DOUBLE)))
+		    || CONST_DOUBLE_P (*src))))
 	  {
 	    control_flow_insn_deleted |= move_for_stack_reg (insn, regstack, pat);
 	    break;
@@ -1656,6 +1668,7 @@ subst_stack_regs_pat (rtx insn, stack regstack, rtx pat)
 	  case UNSPEC:
 	    switch (XINT (pat_src, 1))
 	      {
+	      case UNSPEC_STA:
 	      case UNSPEC_FIST:
 
 	      case UNSPEC_FIST_FLOOR:
@@ -1993,7 +2006,7 @@ subst_stack_regs_pat (rtx insn, stack regstack, rtx pat)
    requirements, since record_asm_stack_regs removes any problem asm.  */
 
 static void
-subst_asm_stack_regs (rtx insn, stack regstack)
+subst_asm_stack_regs (rtx insn, stack_ptr regstack)
 {
   rtx body = PATTERN (insn);
   int alt;
@@ -2276,7 +2289,7 @@ subst_asm_stack_regs (rtx insn, stack regstack)
    a control flow insn was deleted in the process.  */
 
 static bool
-subst_stack_regs (rtx insn, stack regstack)
+subst_stack_regs (rtx insn, stack_ptr regstack)
 {
   rtx *note_link, note;
   bool control_flow_insn_deleted = false;
@@ -2388,7 +2401,7 @@ subst_stack_regs (rtx insn, stack regstack)
    is no longer needed once this has executed.  */
 
 static void
-change_stack (rtx insn, stack old, stack new_stack, enum emit_where where)
+change_stack (rtx insn, stack_ptr old, stack_ptr new_stack, enum emit_where where)
 {
   int reg;
   int update_end = 0;
@@ -2594,7 +2607,7 @@ change_stack (rtx insn, stack old, stack new_stack, enum emit_where where)
 /* Print stack configuration.  */
 
 static void
-print_stack (FILE *file, stack s)
+print_stack (FILE *file, stack_ptr s)
 {
   if (! file)
     return;
@@ -2670,7 +2683,7 @@ static void
 convert_regs_exit (void)
 {
   int value_reg_low, value_reg_high;
-  stack output_stack;
+  stack_ptr output_stack;
   rtx retvalue;
 
   retvalue = stack_result (current_function_decl);
@@ -2703,8 +2716,8 @@ convert_regs_exit (void)
 static void
 propagate_stack (edge e)
 {
-  stack src_stack = &BLOCK_INFO (e->src)->stack_out;
-  stack dest_stack = &BLOCK_INFO (e->dest)->stack_in;
+  stack_ptr src_stack = &BLOCK_INFO (e->src)->stack_out;
+  stack_ptr dest_stack = &BLOCK_INFO (e->dest)->stack_in;
   int reg;
 
   /* Preserve the order of the original stack, but check whether
@@ -2730,8 +2743,8 @@ static bool
 compensate_edge (edge e)
 {
   basic_block source = e->src, target = e->dest;
-  stack target_stack = &BLOCK_INFO (target)->stack_in;
-  stack source_stack = &BLOCK_INFO (source)->stack_out;
+  stack_ptr target_stack = &BLOCK_INFO (target)->stack_in;
+  stack_ptr source_stack = &BLOCK_INFO (source)->stack_out;
   struct stack_def regstack;
   int reg;
 
@@ -2948,8 +2961,7 @@ convert_regs_1 (basic_block block)
 	    debug_insns_with_starting_stack++;
 	  else
 	    {
-	      for_each_rtx (&PATTERN (insn), subst_stack_regs_in_debug_insn,
-			    &regstack);
+	      subst_all_stack_regs_in_debug_insn (insn, &regstack);
 
 	      /* Nothing must ever die at a debug insn.  If something
 		 is referenced in it that becomes dead, it should have
@@ -2987,8 +2999,7 @@ convert_regs_1 (basic_block block)
 	    continue;
 
 	  debug_insns_with_starting_stack--;
-	  for_each_rtx (&PATTERN (insn), subst_stack_regs_in_debug_insn,
-			&bi->stack_in);
+	  subst_all_stack_regs_in_debug_insn (insn, &bi->stack_in);
 	}
     }
 
@@ -3151,11 +3162,14 @@ convert_regs (void)
 	cfg_altered |= convert_regs_2 (b);
     }
 
+  /* We must fix up abnormal edges before inserting compensation code
+     because both mechanisms insert insns on edges.  */
+  inserted |= fixup_abnormal_edges ();
+
   inserted |= compensate_edges ();
 
   clear_aux_for_blocks ();
 
-  fixup_abnormal_edges ();
   if (inserted)
     commit_edge_insertions ();
 
@@ -3182,8 +3196,7 @@ reg_to_stack (void)
   int max_uid;
 
   /* Clean up previous run.  */
-  if (stack_regs_mentioned_data != NULL)
-    VEC_free (char, heap, stack_regs_mentioned_data);
+  stack_regs_mentioned_data.release ();
 
   /* See if there is something to do.  Flow analysis is quite
      expensive so we might save some compilation time.  */
@@ -3262,8 +3275,8 @@ reg_to_stack (void)
 
   /* Allocate a cache for stack_regs_mentioned.  */
   max_uid = get_max_uid ();
-  stack_regs_mentioned_data = VEC_alloc (char, heap, max_uid + 1);
-  memset (VEC_address (char, stack_regs_mentioned_data),
+  stack_regs_mentioned_data.create (max_uid + 1);
+  memset (stack_regs_mentioned_data.address (),
 	  0, sizeof (char) * (max_uid + 1));
 
   convert_regs ();
@@ -3288,6 +3301,7 @@ struct rtl_opt_pass pass_stack_regs =
  {
   RTL_PASS,
   "*stack_regs",                        /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_handle_stack_regs,               /* gate */
   NULL,					/* execute */
   NULL,                                 /* sub */
@@ -3319,6 +3333,7 @@ struct rtl_opt_pass pass_stack_regs_run =
  {
   RTL_PASS,
   "stack",                              /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   NULL,                                 /* gate */
   rest_of_handle_stack_regs,            /* execute */
   NULL,                                 /* sub */
@@ -3330,7 +3345,6 @@ struct rtl_opt_pass pass_stack_regs_run =
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
-  TODO_dump_func |
   TODO_ggc_collect                      /* todo_flags_finish */
  }
 };

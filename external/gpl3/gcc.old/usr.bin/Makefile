@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2014/02/25 18:42:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:39 mrg Exp $
 
 NOOBJ=# defined
 
@@ -13,8 +13,10 @@ GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 SUBDIR+=	host-libiberty .WAIT \
 		backend .WAIT \
 		frontend .WAIT \
-		libcpp libdecnumber gcov .WAIT \
-		cc1 cc1obj cc1plus cpp g++ gcc \
+		common common-target .WAIT \
+		libcpp libdecnumber .WAIT \
+		gcov cc1 cc1obj cc1plus cpp g++ gcc \
+		lto1 lto-wrapper \
 		include
 
 .include <bsd.subdir.mk>

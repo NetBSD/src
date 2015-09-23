@@ -1,6 +1,5 @@
 /* Definitions for PA_RISC with ELF format
-   Copyright 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1999-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -23,17 +22,17 @@ along with GCC; see the file COPYING3.  If not see
 #define TARGET_OS_CPP_BUILTINS()		\
   do						\
     {						\
-	LINUX_TARGET_OS_CPP_BUILTINS();		\
+	GNU_USER_TARGET_OS_CPP_BUILTINS();	\
 	builtin_assert ("machine=bigendian");	\
     }						\
   while (0)
 
 #undef CPP_SPEC
-#define CPP_SPEC "%{posix:-D_POSIX_SOURCE}"
+#define CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_REENTRANT}"
 
 #undef ASM_SPEC
 #define ASM_SPEC \
-  "%{v:-V} %{n} %{T} %{Ym,*} %{Yd,*} %{Wa,*:%*}"
+  ""
 
 /* Define this for shared library support because it isn't in the main
    linux.h file.  */
@@ -46,7 +45,7 @@ along with GCC; see the file COPYING3.  If not see
   %{!shared: \
     %{!static: \
       %{rdynamic:-export-dynamic} \
-      %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}} \
+      -dynamic-linker " GNU_USER_DYNAMIC_LINKER "} \
       %{static:-static}}"
 
 /* glibc's profiling functions don't need gcc to allocate counters.  */
@@ -127,11 +126,13 @@ along with GCC; see the file COPYING3.  If not see
   do								\
     {								\
       if (!FUNCTION_NAME_P (XSTR (FUN, 0)))			\
-	hppa_encode_label (FUN);				\
+	pa_encode_label (FUN);					\
       (*targetm.asm_out.globalize_label) (FILE, XSTR (FUN, 0));	\
     }								\
   while (0)
 
-/* Linux always uses gas.  */
 #undef TARGET_GAS
 #define TARGET_GAS 1
+
+#undef TARGET_SYNC_LIBCALL
+#define TARGET_SYNC_LIBCALL 1

@@ -1,6 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004,
-   2007 Free Software Foundation, Inc.
+   Copyright (C) 1997-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -50,24 +49,20 @@ along with GCC; see the file COPYING3.  If not see
 #undef GPLUSPLUS_INCLUDE_DIR
 #define GPLUSPLUS_INCLUDE_DIR "/usr/include/g++"
 
+#undef GPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT
+#define GPLUSPLUS_INCLUDE_DIR_ADD_SYSROOT 1
+
 #undef GPLUSPLUS_BACKWARD_INCLUDE_DIR
 #define GPLUSPLUS_BACKWARD_INCLUDE_DIR "/usr/include/g++/backward"
+
+#undef GCC_INCLUDE_DIR_ADD_SYSROOT
+#define GCC_INCLUDE_DIR_ADD_SYSROOT 1
 
 /*
  * XXX figure out a better way to do this
  */
 #undef GCC_INCLUDE_DIR
-#define GCC_INCLUDE_DIR "/usr/include/gcc-4.5"
-
-#undef INCLUDE_DEFAULTS
-#define INCLUDE_DEFAULTS				\
-  {							\
-    { GPLUSPLUS_INCLUDE_DIR, "G++", 1, 1, 1 },		\
-    { GPLUSPLUS_BACKWARD_INCLUDE_DIR, "G++", 1, 1, 1 },	\
-    { GCC_INCLUDE_DIR, "GCC", 0, 0, 1 },		\
-    { "/usr/include", "GCC", 0, 0, 1 },			\
-    { 0, 0, 0, 0 }					\
-  }
+#define GCC_INCLUDE_DIR "/usr/include/gcc-4.8"
 
 /* Under NetBSD, the normal location of the various *crt*.o files is the
    /usr/lib directory.  */
@@ -149,6 +144,9 @@ along with GCC; see the file COPYING3.  If not see
 #undef LIB_SPEC
 #define LIB_SPEC NETBSD_LIB_SPEC
 
+#undef STATIC_LIBASAN_LIBS
+#define STATIC_LIBASAN_LIBS "-lstdc++ -lpthread"
+
 /* Pass -cxx-isystem to cc1/cc1plus.  */
 #define NETBSD_CC1_AND_CC1PLUS_SPEC		\
   "%{cxx-isystem}"
@@ -177,10 +175,6 @@ along with GCC; see the file COPYING3.  If not see
 #undef TARGET_POSIX_IO
 #define TARGET_POSIX_IO
 
-/* Handle #pragma weak and #pragma pack.  */
-
-#define HANDLE_SYSV_PRAGMA 1
-
 /* Don't assume anything about the header files.  */
 #undef  NO_IMPLICIT_EXTERN_C
 #define NO_IMPLICIT_EXTERN_C    1
@@ -196,57 +190,10 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef WINT_TYPE
 #define WINT_TYPE "int"
-
 
-/* Attempt to turn on execute permission for the stack.  This may be
-   used by TARGET_TRAMPOLINE_INIT if the target needs it (that is,
-   if the target machine can change execute permissions on a page).
+#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
 
-   There is no way to query the execute permission of the stack, so
-   we always issue the mprotect() call.
-
-   Note that we go out of our way to use namespace-non-invasive calls
-   here.  Unfortunately, there is no libc-internal name for mprotect().
-
-   Also note that no errors should be emitted by this code; it is considered
-   dangerous for library calls to send messages to stdout/stderr.  */
-
-#define NETBSD_ENABLE_EXECUTE_STACK					\
-extern void __enable_execute_stack (void *);				\
-void									\
-__enable_execute_stack (void *addr)					\
-{									\
-  extern int mprotect (void *, size_t, int);				\
-  extern int __sysctl (int *, unsigned int, void *, size_t *,		\
-		       void *, size_t);					\
-									\
-  static int size;							\
-  static long mask;							\
-									\
-  char *page, *end;							\
-									\
-  if (size == 0)							\
-    {									\
-      int mib[2];							\
-      size_t len;							\
-									\
-      mib[0] = 6; /* CTL_HW */						\
-      mib[1] = 7; /* HW_PAGESIZE */					\
-      len = sizeof (size);						\
-      (void) __sysctl (mib, 2, &size, &len, NULL, 0);			\
-      mask = ~((long) size - 1);					\
-    }									\
-									\
-  page = (char *) (((long) addr) & mask);				\
-  end  = (char *) ((((long) (addr + TRAMPOLINE_SIZE)) & mask) + size);	\
-									\
-  /* 7 == PROT_READ | PROT_WRITE | PROT_EXEC */				\
-  (void) mprotect (page, end - page, 7);				\
-}
-
-/* Define this so we can compile MS code for use with WINE.  */
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
-
-#if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "--eh-frame-hdr "
+/* Use --as-needed -lgcc_s for eh support.  */
+#ifdef HAVE_LD_AS_NEEDED
+#define USE_LD_AS_NEEDED 1
 #endif

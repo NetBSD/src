@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -105,8 +105,8 @@ namespace __gnu_parallel
 
       _DifferenceType* __es = new _DifferenceType[__num_samples + 2];
 
-      equally_split(__sd->_M_starts[__iam + 1] - __sd->_M_starts[__iam], 
-		    __num_samples + 1, __es);
+      __equally_split(__sd->_M_starts[__iam + 1] - __sd->_M_starts[__iam], 
+		      __num_samples + 1, __es);
 
       for (_DifferenceType __i = 0; __i < __num_samples; ++__i)
 	::new(&(__sd->_M_samples[__iam * __num_samples + __i]))
@@ -378,6 +378,8 @@ namespace __gnu_parallel
 
 #     pragma omp barrier
 
+      for (_DifferenceType __i = 0; __i < __length_local; ++__i)
+	__sd->_M_temporary[__iam][__i].~_ValueType();
       ::operator delete(__sd->_M_temporary[__iam]);
     }
 
@@ -385,7 +387,6 @@ namespace __gnu_parallel
    *  @param __begin Begin iterator of sequence.
    *  @param __end End iterator of sequence.
    *  @param __comp Comparator.
-   *  @param __n Length of sequence.
    *  @param __num_threads Number of threads to use.
    */
   template<bool __stable, bool __exact, typename _RAIter,
@@ -413,6 +414,7 @@ namespace __gnu_parallel
       // shared variables
       _PMWMSSortingData<_RAIter> __sd;
       _DifferenceType* __starts;
+      _DifferenceType __size;
 
 #     pragma omp parallel num_threads(__num_threads)
       {
@@ -427,14 +429,14 @@ namespace __gnu_parallel
 
 	  if (!__exact)
 	    {
-	      _DifferenceType __size =
+	      __size =
 		(_Settings::get().sort_mwms_oversampling * __num_threads - 1)
 		* __num_threads;
 	      __sd._M_samples = static_cast<_ValueType*>
 		(::operator new(__size * sizeof(_ValueType)));
 	    }
 	  else
-	    __sd._M_samples = NULL;
+	    __sd._M_samples = 0;
 
 	  __sd._M_offsets = new _DifferenceType[__num_threads - 1];
 	  __sd._M_pieces
@@ -463,7 +465,11 @@ namespace __gnu_parallel
       delete[] __sd._M_temporary;
 
       if (!__exact)
-	::operator delete(__sd._M_samples);
+	{
+	  for (_DifferenceType __i = 0; __i < __size; ++__i)
+	    __sd._M_samples[__i].~_ValueType();
+	  ::operator delete(__sd._M_samples);
+	}
 
       delete[] __sd._M_offsets;
       delete[] __sd._M_pieces;

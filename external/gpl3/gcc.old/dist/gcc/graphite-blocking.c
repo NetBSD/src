@@ -1,7 +1,7 @@
 /* Heuristics and transform for loop blocking and strip mining on
    polyhedral representation.
 
-   Copyright (C) 2009 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@amd.com> and
    Pranav Garg  <pranav.garg2107@gmail.com>.
 
@@ -20,37 +20,28 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
+
 #include "config.h"
+
+#ifdef HAVE_cloog
+#include <isl/set.h>
+#include <isl/map.h>
+#include <isl/union_map.h>
+#include <isl/constraint.h>
+#include <cloog/cloog.h>
+#include <cloog/isl/domain.h>
+#endif
+
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "ggc.h"
-#include "tree.h"
-#include "rtl.h"
-#include "output.h"
-#include "basic-block.h"
-#include "diagnostic.h"
 #include "tree-flow.h"
-#include "toplev.h"
-#include "tree-dump.h"
-#include "timevar.h"
+#include "dumpfile.h"
 #include "cfgloop.h"
 #include "tree-chrec.h"
 #include "tree-data-ref.h"
-#include "tree-scalar-evolution.h"
-#include "tree-pass.h"
-#include "domwalk.h"
-#include "value-prof.h"
-#include "pointer-set.h"
-#include "gimple.h"
-#include "params.h"
+#include "sese.h"
 
 #ifdef HAVE_cloog
-#include "cloog/cloog.h"
-#include "ppl_c.h"
-#include "sese.h"
-#include "graphite-ppl.h"
-#include "graphite.h"
 #include "graphite-poly.h"
 
 
@@ -107,176 +98,146 @@ along with GCC; see the file COPYING3.  If not see
    # }
 */
 
-static bool
+static void
 pbb_strip_mine_time_depth (poly_bb_p pbb, int time_depth, int stride)
 {
-  ppl_dimension_type iter, dim, strip;
-  ppl_Polyhedron_t res = PBB_TRANSFORMED_SCATTERING (pbb);
+  isl_space *d;
+  isl_constraint *c;
+  int iter, strip;
   /* STRIP is the dimension that iterates with stride STRIDE.  */
   /* ITER is the dimension that enumerates single iterations inside
      one strip that has at most STRIDE iterations.  */
   strip = time_depth;
   iter = strip + 2;
 
-  psct_add_scattering_dimension (pbb, strip);
-  psct_add_scattering_dimension (pbb, strip + 1);
-
-  ppl_Polyhedron_space_dimension (res, &dim);
+  pbb->transformed = isl_map_insert_dims (pbb->transformed, isl_dim_out,
+					  strip, 2);
 
   /* Lower bound of the striped loop.  */
-  {
-    ppl_Constraint_t new_cstr;
-    ppl_Linear_Expression_t expr;
-
-    ppl_new_Linear_Expression_with_dimension (&expr, dim);
-    ppl_set_coef (expr, strip, -1 * stride);
-    ppl_set_coef (expr, iter, 1);
-
-    ppl_new_Constraint (&new_cstr, expr, PPL_CONSTRAINT_TYPE_GREATER_OR_EQUAL);
-    ppl_delete_Linear_Expression (expr);
-    ppl_Polyhedron_add_constraint (res, new_cstr);
-    ppl_delete_Constraint (new_cstr);
-  }
+  d = isl_map_get_space (pbb->transformed);
+  c = isl_inequality_alloc (isl_local_space_from_space (d));
+  c = isl_constraint_set_coefficient_si (c, isl_dim_out, strip, -stride);
+  c = isl_constraint_set_coefficient_si (c, isl_dim_out, iter, 1);
+  pbb->transformed = isl_map_add_constraint (pbb->transformed, c);
 
   /* Upper bound of the striped loop.  */
-  {
-    ppl_Constraint_t new_cstr;
-    ppl_Linear_Expression_t expr;
-
-    ppl_new_Linear_Expression_with_dimension (&expr, dim);
-    ppl_set_coef (expr, strip, stride);
-    ppl_set_coef (expr, iter, -1);
-    ppl_set_inhomogeneous (expr, stride - 1);
-
-    ppl_new_Constraint (&new_cstr, expr, PPL_CONSTRAINT_TYPE_GREATER_OR_EQUAL);
-    ppl_delete_Linear_Expression (expr);
-    ppl_Polyhedron_add_constraint (res, new_cstr);
-    ppl_delete_Constraint (new_cstr);
-  }
+  d = isl_map_get_space (pbb->transformed);
+  c = isl_inequality_alloc (isl_local_space_from_space (d));
+  c = isl_constraint_set_coefficient_si (c, isl_dim_out, strip, stride);
+  c = isl_constraint_set_coefficient_si (c, isl_dim_out, iter, -1);
+  c = isl_constraint_set_constant_si (c, stride - 1);
+  pbb->transformed = isl_map_add_constraint (pbb->transformed, c);
 
   /* Static scheduling for ITER level.
      This is mandatory to keep the 2d + 1 canonical scheduling format.  */
-  {
-    ppl_Constraint_t new_cstr;
-    ppl_Linear_Expression_t expr;
-
-    ppl_new_Linear_Expression_with_dimension (&expr, dim);
-    ppl_set_coef (expr, strip + 1, 1);
-    ppl_set_inhomogeneous (expr, 0);
-
-    ppl_new_Constraint (&new_cstr, expr, PPL_CONSTRAINT_TYPE_EQUAL);
-    ppl_delete_Linear_Expression (expr);
-    ppl_Polyhedron_add_constraint (res, new_cstr);
-    ppl_delete_Constraint (new_cstr);
-  }
-
-  return true;
+  d = isl_map_get_space (pbb->transformed);
+  c = isl_equality_alloc (isl_local_space_from_space (d));
+  c = isl_constraint_set_coefficient_si (c, isl_dim_out, strip + 1, 1);
+  pbb->transformed = isl_map_add_constraint (pbb->transformed, c);
 }
 
-/* Returns true when strip mining with STRIDE of the loop around PBB
-   at DEPTH is profitable.  */
+/* Returns true when strip mining with STRIDE of the loop LST is
+   profitable.  */
 
 static bool
-pbb_strip_mine_profitable_p (poly_bb_p pbb,
-			     graphite_dim_t depth,
-			     int stride)
+lst_strip_mine_profitable_p (lst_p lst, int stride)
 {
-  Value niter, strip_stride;
+  mpz_t niter, strip_stride;
   bool res;
 
-  value_init (strip_stride);
-  value_init (niter);
-  value_set_si (strip_stride, stride);
-  pbb_number_of_iterations_at_time (pbb, psct_dynamic_dim (pbb, depth), niter);
-  res = value_gt (niter, strip_stride);
-  value_clear (strip_stride);
-  value_clear (niter);
+  gcc_assert (LST_LOOP_P (lst));
+  mpz_init (strip_stride);
+  mpz_init (niter);
 
+  mpz_set_si (strip_stride, stride);
+  lst_niter_for_loop (lst, niter);
+  res = (mpz_cmp (niter, strip_stride) > 0);
+
+  mpz_clear (strip_stride);
+  mpz_clear (niter);
   return res;
 }
 
-/* Strip-mines all the loops of LST that are considered profitable to
-   strip-mine.  Return true if it did strip-mined some loops.  */
+/* Strip-mines all the loops of LST with STRIDE.  Return the number of
+   loops strip-mined.  */
 
-static bool
-lst_do_strip_mine_loop (lst_p lst, int depth)
+static int
+lst_do_strip_mine_loop (lst_p lst, int depth, int stride)
 {
   int i;
   lst_p l;
-  int stride = PARAM_VALUE (PARAM_LOOP_BLOCK_TILE_SIZE);
   poly_bb_p pbb;
 
   if (!lst)
-    return false;
+    return 0;
 
   if (LST_LOOP_P (lst))
     {
-      bool res = false;
+      int res = 0;
 
-      for (i = 0; VEC_iterate (lst_p, LST_SEQ (lst), i, l); i++)
-	res |= lst_do_strip_mine_loop (l, depth);
+      FOR_EACH_VEC_ELT (LST_SEQ (lst), i, l)
+	res += lst_do_strip_mine_loop (l, depth, stride);
 
       return res;
     }
 
   pbb = LST_PBB (lst);
-  return pbb_strip_mine_time_depth (pbb, psct_dynamic_dim (pbb, depth),
-				    stride);
+  pbb_strip_mine_time_depth (pbb, psct_dynamic_dim (pbb, depth), stride);
+  return 1;
 }
 
-/* Strip-mines all the loops of LST that are considered profitable to
-   strip-mine.  Return true if it did strip-mined some loops.  */
+/* Strip-mines all the loops of LST with STRIDE.  When STRIDE is zero,
+   read the stride from the PARAM_LOOP_BLOCK_TILE_SIZE.  Return the
+   number of strip-mined loops.
 
-static bool
-lst_do_strip_mine (lst_p lst)
+   Strip mining transforms a loop
+
+   | for (i = 0; i < N; i++)
+   |   S (i);
+
+   into the following loop nest:
+
+   | for (k = 0; k < N; k += STRIDE)
+   |   for (j = 0; j < STRIDE; j++)
+   |     S (i = k + j);
+*/
+
+static int
+lst_do_strip_mine (lst_p lst, int stride)
 {
   int i;
   lst_p l;
-  bool res = false;
-  int stride = PARAM_VALUE (PARAM_LOOP_BLOCK_TILE_SIZE);
+  int res = 0;
   int depth;
+
+  if (!stride)
+    stride = PARAM_VALUE (PARAM_LOOP_BLOCK_TILE_SIZE);
 
   if (!lst
       || !LST_LOOP_P (lst))
     return false;
 
-  for (i = 0; VEC_iterate (lst_p, LST_SEQ (lst), i, l); i++)
-    res |= lst_do_strip_mine (l);
+  FOR_EACH_VEC_ELT (LST_SEQ (lst), i, l)
+    res += lst_do_strip_mine (l, stride);
 
   depth = lst_depth (lst);
   if (depth >= 0
-      && pbb_strip_mine_profitable_p (LST_PBB (lst_find_first_pbb (lst)),
-				      depth, stride))
+      && lst_strip_mine_profitable_p (lst, stride))
     {
-      res |= lst_do_strip_mine_loop (lst, lst_depth (lst));
+      res += lst_do_strip_mine_loop (lst, lst_depth (lst), stride);
       lst_add_loop_under_loop (lst);
     }
 
   return res;
 }
 
-/* Strip mines all the loops in SCOP.  Nothing profitable in all this:
-   this is just a driver function.  */
+/* Strip mines all the loops in SCOP.  Returns the number of
+   strip-mined loops.  */
 
-bool
-scop_do_strip_mine (scop_p scop)
+int
+scop_do_strip_mine (scop_p scop, int stride)
 {
-  bool transform_done = false;
-
-  store_scattering (scop);
-
-  transform_done = lst_do_strip_mine (SCOP_TRANSFORMED_SCHEDULE (scop));
-
-  if (!transform_done)
-    return false;
-
-  if (!graphite_legal_transform (scop))
-    {
-      restore_scattering (scop);
-      return false;
-    }
-
-  return transform_done;
+  return lst_do_strip_mine (SCOP_TRANSFORMED_SCHEDULE (scop), stride);
 }
 
 /* Loop blocks all the loops in SCOP.  Returns true when we manage to
@@ -285,27 +246,22 @@ scop_do_strip_mine (scop_p scop)
 bool
 scop_do_block (scop_p scop)
 {
-  bool strip_mined = false;
-  bool interchanged = false;
-
   store_scattering (scop);
 
-  strip_mined = lst_do_strip_mine (SCOP_TRANSFORMED_SCHEDULE (scop));
-  interchanged = scop_do_interchange (scop);
-
-  /* If we don't interchange loops, then the strip mine is not
-     profitable, and the transform is not a loop blocking.  */
-  if (!interchanged
-      || !graphite_legal_transform (scop))
+  /* If we don't strip mine at least two loops, or not interchange
+     loops, the strip mine alone will not be profitable, and the
+     transform is not a loop blocking: so revert the transform.  */
+  if (lst_do_strip_mine (SCOP_TRANSFORMED_SCHEDULE (scop), 0) < 2
+      || scop_do_interchange (scop) == 0)
     {
       restore_scattering (scop);
       return false;
     }
-  else if (strip_mined && interchanged
-	   && dump_file && (dump_flags & TDF_DETAILS))
+
+  if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file, "SCoP will be loop blocked.\n");
 
-  return strip_mined || interchanged;
+  return true;
 }
 
 #endif

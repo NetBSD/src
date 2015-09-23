@@ -1,7 +1,6 @@
 // Support routines for the -*- C++ -*- dynamic memory management.
 
-// Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2004, 2009
-// Free Software Foundation
+// Copyright (C) 1997-2013 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -26,7 +25,7 @@
 
 #include <bits/c++config.h>
 #include <cstdlib>
-#include <exception_defines.h>
+#include <bits/exception_defines.h>
 #include "new"
 
 using std::new_handler;
@@ -42,7 +41,7 @@ extern "C" void *malloc (std::size_t);
 extern new_handler __new_handler;
 
 _GLIBCXX_WEAK_DEFINITION void *
-operator new (std::size_t sz) throw (std::bad_alloc)
+operator new (std::size_t sz) _GLIBCXX_THROW (std::bad_alloc)
 {
   void *p;
 
@@ -54,11 +53,7 @@ operator new (std::size_t sz) throw (std::bad_alloc)
     {
       new_handler handler = __new_handler;
       if (! handler)
-#ifdef __EXCEPTIONS
-	throw bad_alloc();
-#else
-        std::abort();
-#endif
+	_GLIBCXX_THROW_OR_ABORT(bad_alloc());
       handler ();
       p = (void *) malloc (sz);
     }

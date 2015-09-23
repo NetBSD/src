@@ -1,4 +1,4 @@
-/* Copyright (C) 2005, 2008, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Jakub Jelinek <jakub@redhat.com>.
 
    This file is part of the GNU OpenMP Library (libgomp).
@@ -75,10 +75,4 @@ static inline void
 cpu_relax (void)
 {
   __asm volatile ("" : : : "memory");
-}
-
-static inline void
-atomic_write_barrier (void)
-{
-  __sync_synchronize ();
 }
