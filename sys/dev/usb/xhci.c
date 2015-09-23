@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.37 2015/09/13 09:27:54 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.38 2015/09/23 13:44:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.37 2015/09/13 09:27:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.38 2015/09/23 13:44:01 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2101,7 +2101,7 @@ xhci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 extern uint32_t usb_cookie_no;
 
 /*
- * Called if uhub_explore find new device (via usbd_new_device).
+ * Called if uhub_explore finds a new device (via usbd_new_device).
  * Allocate and construct dev structure of default endpoint (ep0).
  *   Determine initial MaxPacketSize (mps) by speed.
  *   Determine route string and roothub port for slot of dev.
