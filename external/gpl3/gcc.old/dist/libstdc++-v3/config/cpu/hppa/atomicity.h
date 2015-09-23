@@ -1,6 +1,6 @@
 // Low-level functions for atomic operations: PA-RISC version  -*- C++ -*-
 
-// Copyright (C) 2002, 2004, 2005, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2002-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -25,7 +25,9 @@
 #include <bits/c++config.h>
 #include <ext/atomicity.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   template<int _Inst>
     struct _Atomicity_lock
@@ -88,4 +90,5 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
 			  : : "r" (&lock), "r" (tmp) : "memory");
   }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace

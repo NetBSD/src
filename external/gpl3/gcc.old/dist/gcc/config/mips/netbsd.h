@@ -1,6 +1,5 @@
 /* Definitions of target machine for GNU compiler, for MIPS NetBSD systems.
-   Copyright (C) 1993, 1995, 1996, 1997, 1999, 2000, 2001, 2002, 2003, 2004,
-   2007 Free Software Foundation, Inc.
+   Copyright (C) 1993-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -20,13 +19,6 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* Define default target values.  */
-
-#undef MACHINE_TYPE
-#if TARGET_ENDIAN_DEFAULT != 0
-#define MACHINE_TYPE "NetBSD/mipseb ELF"
-#else
-#define MACHINE_TYPE "NetBSD/mipsel ELF"
-#endif
 
 #define TARGET_OS_CPP_BUILTINS()			\
   do							\
@@ -171,16 +163,17 @@ along with GCC; see the file COPYING3.  If not see
       else							\
 	builtin_define ("__MIPSEL__");				\
 								\
+      if (TARGET_OCTEON)					\
+	builtin_define ("__OCTEON__");				\
+								\
+      if (ISA_HAS_POP)						\
+	builtin_define ("__mips_popcount");			\
       /* No language dialect defines.  */			\
 								\
       /* ABIs handled in TARGET_OS_CPP_BUILTINS.  */		\
     }								\
   while (0)
 
-
-/* Clean up after the generic MIPS/ELF configuration.  */
-#undef MD_EXEC_PREFIX
-#undef MD_STARTFILE_PREFIX
 
 /* Extra specs we need.  */
 #undef SUBTARGET_EXTRA_SPECS
@@ -223,16 +216,6 @@ along with GCC; see the file COPYING3.  If not see
 #define MIPS_DEFAULT_GVALUE 0
 
 
-/* This defines which switch letters take arguments.  -G is a MIPS
-   special.  */
-
-#undef SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR)						\
-  (DEFAULT_SWITCH_TAKES_ARG (CHAR)					\
-   || (CHAR) == 'R'							\
-   || (CHAR) == 'G')
-
-
 #undef ASM_FINAL_SPEC
 #undef SET_ASM_OP
 
@@ -252,6 +235,12 @@ along with GCC; see the file COPYING3.  If not see
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE ((POINTER_SIZE == 64 || TARGET_NEWABI) \
 		      ? "long int" : "int")
+
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
 
 #undef WCHAR_TYPE
 #define WCHAR_TYPE "int"

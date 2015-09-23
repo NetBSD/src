@@ -1,7 +1,6 @@
 ## Linker script for GNU versioning (GNU ld 2.13.91+ only.)
 ##
-## Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-## Free Software Foundation, Inc.
+## Copyright (C) 2002-2013 Free Software Foundation, Inc.
 ##
 ## This file is part of the GNU ISO C++ Library.  This library is free
 ## software; you can redistribute it and/or modify it under the
@@ -104,7 +103,7 @@ GLIBCXX_3.4 {
       std::logic_error*;
       std::locale::[A-Za-e]*;
       std::locale::facet::[A-Za-z]*;
-      std::locale::facet::_S_get_c_locale*;	
+      std::locale::facet::_S_get_c_locale*;
       std::locale::facet::_S_clone_c_locale*;
       std::locale::facet::_S_create_c_locale*;
       std::locale::facet::_S_destroy_c_locale*;
@@ -124,7 +123,7 @@ GLIBCXX_3.4 {
       std::messages*;
       std::money*;
 #     std::n[^u]*;
-      std::n[^au]*;
+      std::n[^aue]*;
       std::nu[^m]*;
       std::num[^e]*;
       std::ostrstream*;
@@ -136,7 +135,7 @@ GLIBCXX_3.4 {
       std::r[^ae]*;
       std::range_error::r*;
 #     std::range_error::~r*;
-      std::re[^t]*;
+#     std::re[^t]*;
 #     std::rethrow_exception
       std::set_new_handler*;
       std::set_terminate*;
@@ -145,7 +144,7 @@ GLIBCXX_3.4 {
       std::strstream*;
       std::strstreambuf*;
 #     std::t[a-q]*;
-      std::t[a-g]*;      
+      std::t[a-g]*;
       std::th[a-h]*;
       std::th[j-q]*;
       std::th[s-z]*;
@@ -185,7 +184,10 @@ GLIBCXX_3.4 {
     # where it is used for size_type on LLP64 platforms.
     _ZNSsC[12][EI][PRjmvyN]*;
     _ZNSsD*;
-    _ZNSs[0-58-9][a-z]*;
+    _ZNSs[0-58-9]a*;
+    _ZNSs5beginEv;
+    _ZNSs[0-58-9][c-e]*;
+    _ZNSs[0-59][g-z]*;
 #   _ZNSs[67][a-z]*E[PRcjmvy]*;
     _ZNSs6appendE[PRcjmvy]*;
     _ZNSs6assignE[PRcjmvy]*;
@@ -219,9 +221,12 @@ GLIBCXX_3.4 {
     _ZNSsaSE[PRc]*;
     _ZNSsixE*;
     _ZNSspLE[PRc]*;
-    _ZNKSs[0-9][a-b]*;
-    _ZNKSs[0-9][d-z]*;
+    _ZNKSs[0-3][a-b]*;
+    _ZNKSs[5-9][a-b]*;
+    _ZNKSs[0-9][d-e]*;
+    _ZNKSs[0-9][g-z]*;
     _ZNKSs[0-9][0-9][a-z]*;
+    _ZNKSs4find*;
     _ZNKSs[a-z]*;
     _ZNKSs4_Rep12_M_is_leakedEv;
     _ZNKSs4_Rep12_M_is_sharedEv;
@@ -232,7 +237,7 @@ GLIBCXX_3.4 {
     _ZNKSs8_M_limit*;
     _ZNKSs9_M_ibeginEv;
     _ZStplIcSt11char_traitsIcESaIcEESbIT_T0_T1_E*;
-    _ZNKSs7compare*; 
+    _ZNKSs7compare*;
     _ZNKSs5c_strEv;
     _ZNKSs8capacityEv;
     _ZNKSs4copyEPc[jmy][jmy];
@@ -240,7 +245,10 @@ GLIBCXX_3.4 {
     # std::wstring
     _ZNSbIwSt11char_traitsIwESaIwEEC[12][EI][PRjmvyN]*;
     _ZNSbIwSt11char_traitsIwESaIwEED*;
-    _ZNSbIwSt11char_traitsIwESaIwEE[0-58-9][a-z]*;
+    _ZNSbIwSt11char_traitsIwESaIwEE[0-58-9]a*;
+    _ZNSbIwSt11char_traitsIwESaIwEE5beginEv;
+    _ZNSbIwSt11char_traitsIwESaIwEE[0-58-9][c-e]*;
+    _ZNSbIwSt11char_traitsIwESaIwEE[0-59][g-z]*;
 #   _ZNSbIwSt11char_traitsIwESaIwEE[67][a-b]*E[PRwjmvy]*;
     _ZNSbIwSt11char_traitsIwESaIwEE6appendE[PRwjmvy]*;
     _ZNSbIwSt11char_traitsIwESaIwEE6assignE[PRwjmvy]*;
@@ -274,10 +282,13 @@ GLIBCXX_3.4 {
     _ZNSbIwSt11char_traitsIwESaIwEEaSE[PRw]*;
     _ZNSbIwSt11char_traitsIwESaIwEEixE*;
     _ZNSbIwSt11char_traitsIwESaIwEEpLE[PRw]*;
-    _ZNKSbIwSt11char_traitsIwESaIwEE[0-9][a-b]*;
-    _ZNKSbIwSt11char_traitsIwESaIwEE[0-9][d-z]*;
+    _ZNKSbIwSt11char_traitsIwESaIwEE[0-3][a-b]*;
+    _ZNKSbIwSt11char_traitsIwESaIwEE[5-9][a-b]*;
+    _ZNKSbIwSt11char_traitsIwESaIwEE[0-9][d-e]*;
+    _ZNKSbIwSt11char_traitsIwESaIwEE[0-9][g-z]*;
     _ZNKSbIwSt11char_traitsIwESaIwEE[0-9][0-9][a-z]*;
     _ZNKSbIwSt11char_traitsIwESaIwEE[a-z]*;
+    _ZNKSbIwSt11char_traitsIwESaIwEE4find*;
     _ZNKSbIwSt11char_traitsIwESaIwEE4_Rep12_M_is_leakedEv;
     _ZNKSbIwSt11char_traitsIwESaIwEE4_Rep12_M_is_sharedEv;
     _ZNKSbIwSt11char_traitsIwESaIwEE6_M_repEv;
@@ -310,7 +321,8 @@ GLIBCXX_3.4 {
     _ZNSt15basic_stringbufIcSt11char_traitsIcESaIcEE3strERKSs;
     _ZNSt15basic_stringbufIwSt11char_traitsIwESaIwEE3strERKSbIwS1_S2_E;
     _ZNSt15basic_stringbufI[cw]St11char_traitsI[cw]ESaI[cw]EE[0-9][t-z]*;
-    _ZNSt15basic_stringbufI[cw]St11char_traitsI[cw]ESaI[cw]EE[0-9]_M_[a-z]*;
+    _ZNSt15basic_stringbufI[cw]St11char_traitsI[cw]ESaI[cw]EE[0-9]_M_[a-o]*;
+    _ZNSt15basic_stringbufI[cw]St11char_traitsI[cw]ESaI[cw]EE[0-9]_M_[q-z]*;
     _ZNSt15basic_stringbufI[cw]St11char_traitsI[cw]ESaI[cw]EE[0-9][0-9]_M_[a-z]*;
 
     # std::basic_iostream constructors, destructors
@@ -320,7 +332,13 @@ GLIBCXX_3.4 {
     # std::basic_filebuf
     _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EEC*;
     _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EED*;
-    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE[0-3]*;
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE0*;
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE13*;
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE15*;
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE16*;
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE19*;
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE2*;
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE3*;
     _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE4openEPKc*;
     _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE4sync*;
     _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE[5-9]*;
@@ -416,10 +434,10 @@ GLIBCXX_3.4 {
 
     # std::locale destructors
     _ZNSt6localeD*;
-	
+
     # std::locale::facet destructors
     _ZNSt6locale5facetD*;
-	 
+
     # std::locale::_Impl constructors, destructors
     _ZNSt6locale5_ImplC*;
     _ZNSt6locale5_ImplD*;
@@ -428,7 +446,7 @@ GLIBCXX_3.4 {
     _ZNSt8ios_baseD*;
     _ZNSt8ios_base4InitD*;
 
-    # bool std::has_facet 
+    # bool std::has_facet
     _ZSt9has_facetIS*;
 
     # std::use_facet
@@ -467,7 +485,7 @@ GLIBCXX_3.4 {
 
     # std::time_get_byname
     _ZNSt15time_get_byname*;
-    
+
     # std::time_put
     _ZNSt8time_put*;
     _ZNKSt8time_put*;
@@ -481,10 +499,14 @@ GLIBCXX_3.4 {
     _ZNSt21__numeric_limits_base1[0-7]mi*;
     _ZNSt21__numeric_limits_base1[0-7]max_e*;
 
-    _ZNSt14numeric_limitsI[^g]E[5-9]*;
-    _ZNSt14numeric_limitsI[^g]E1[0-7][hirt]*;
-    _ZNSt14numeric_limitsI[^g]E1[0-7]mi*;
-    _ZNSt14numeric_limitsI[^g]E1[0-7]max_e*;
+    _ZNSt14numeric_limitsI[a-m]E[5-9]*;
+    _ZNSt14numeric_limitsI[p-z]E[5-9]*;
+    _ZNSt14numeric_limitsI[a-m]E1[0-7][hirt]*;
+    _ZNSt14numeric_limitsI[p-z]E1[0-7][hirt]*;
+    _ZNSt14numeric_limitsI[a-m]E1[0-7]mi*;
+    _ZNSt14numeric_limitsI[p-z]E1[0-7]mi*;
+    _ZNSt14numeric_limitsI[a-m]E1[0-7]max_e*;
+    _ZNSt14numeric_limitsI[p-z]E1[0-7]max_e*;
 
     # std::_Rb_tree
     _ZSt18_Rb_tree_decrementPKSt18_Rb_tree_node_base;
@@ -546,7 +568,7 @@ GLIBCXX_3.4 {
     _ZNK11__gnu_debug16_Error_formatter13_M_print_word*;
     _ZNK11__gnu_debug16_Error_formatter15_M_print_string*;
     _ZNK11__gnu_debug16_Error_formatter8_M_error*;
-    
+
     # exceptions as functions
     _ZSt16__throw_bad_castv;
     _ZSt17__throw_bad_allocv;
@@ -599,7 +621,12 @@ GLIBCXX_3.4 {
     _ZTVSt[0-9][0-9][g-k]*;
     _ZTVSt11logic_error;
     _ZTVSt12length_error;
-    _ZTVSt[0-9][0-9][m-r]*;
+#   _ZTVSt[0-9][0-9][m-q]*;
+    _ZTVSt[0-9][0-9][m]*;
+    _ZTVSt[0-9][0-9]n[^e]*;
+    _ZTVSt[0-9][0-9][o-q]*;
+    _ZTVSt11range_error;
+    _ZTVSt13runtime_error;
     _ZTVSt[0-9][0-9][t-z]*;
     _ZTVSt[0-9][0-9]e[^r]*;
     _ZTVSt[0-9][0-9]s[^y]*;
@@ -627,7 +654,12 @@ GLIBCXX_3.4 {
     _ZTISt[0-9][0-9][g-k]*;
     _ZTISt11logic_error;
     _ZTISt12length_error;
-    _ZTISt[0-9][0-9][m-r]*;
+#   _ZTISt[0-9][0-9][m-q]*;
+    _ZTISt[0-9][0-9][m]*;
+    _ZTISt[0-9][0-9]n[^e]*;
+    _ZTISt[0-9][0-9][o-q]*;
+    _ZTISt11range_error;
+    _ZTISt13runtime_error;
     _ZTISt[0-9][0-9][t-z]*;
     _ZTISt[0-9][0-9]e[^r]*;
     _ZTISt[0-9][0-9]s[^y]*;
@@ -659,7 +691,12 @@ GLIBCXX_3.4 {
     _ZTSSt[0-9][0-9][g-k]*;
     _ZTSSt11logic_error;
     _ZTSSt12length_error;
-    _ZTSSt[0-9][0-9][m-r]*;
+#   _ZTSSt[0-9][0-9][m-q]*;
+    _ZTSSt[0-9][0-9][m]*;
+    _ZTSSt[0-9][0-9]n[^e]*;
+    _ZTSSt[0-9][0-9][o-q]*;
+    _ZTSSt11range_error;
+    _ZTSSt13runtime_error;
     _ZTSSt[0-9][0-9][t-z]*;
     _ZTSSt[0-9][0-9]e[^r]*;
     _ZTSSt[0-9][0-9]s[^y]*;
@@ -728,6 +765,7 @@ GLIBCXX_3.4 {
     sqrtl;
     copysignf;
 
+#ifdef HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT
    # GLIBCXX_ABI compatibility only.
     # std::string
     _ZNKSs11_M_disjunctEPKc;
@@ -755,6 +793,7 @@ GLIBCXX_3.4 {
     _ZNSt11char_traitsI[cw]E2eqERK[cw]S2_;
 
     _ZNSt19istreambuf_iteratorI[cw]St11char_traitsI[cw]EEppEv;
+#endif
 
     # std::locale::Impl _M_ members
     _ZNSt6locale5_Impl16_M_install_facetEPKNS_2idEPKNS_5facetE;
@@ -769,11 +808,11 @@ GLIBCXX_3.4 {
 };
 
 GLIBCXX_3.4.1 {
- 
+
     _ZNSt12__basic_fileIcE4fileEv;
- 
+
 } GLIBCXX_3.4;
- 
+
 GLIBCXX_3.4.2 {
 
     _ZN9__gnu_cxx18stdio_sync_filebufI[cw]St11char_traitsI[cw]EE4fileEv;
@@ -785,7 +824,7 @@ GLIBCXX_3.4.2 {
 } GLIBCXX_3.4.1;
 
 GLIBCXX_3.4.3 {
- 
+
     # stub functions from libmath
     acosf;
     acosl;
@@ -850,8 +889,12 @@ GLIBCXX_3.4.5 {
 
     _ZNSt11char_traitsI[cw]E2eqERK[cw]S2_;
 
+    # Those template instantiations weren't exported on Solaris in GCC 4.6
+    # and aren't necessary for correct operation, so don't emit them now
+    # (PR libstdc++/52188).
+#if !defined(__sun__) && !defined(__svr4__)
     _ZNSt19istreambuf_iteratorI[cw]St11char_traitsI[cw]EEppEv;
-
+#endif
 } GLIBCXX_3.4.4;
 
 GLIBCXX_3.4.6 {
@@ -863,7 +906,9 @@ GLIBCXX_3.4.6 {
 
     _ZNSt15basic_stringbufI[cw]St11char_traitsI[cw]ESaI[cw]EE9showmanycEv;
 
+#ifdef HAVE_SYMVER_SYMBOL_RENAMING_RUNTIME_SUPPORT
     _ZNKSt15basic_stringbufIwSt11char_traitsIwESaIwEE3strEv;
+#endif
 
     _ZN9__gnu_cxx6__poolILb1EE13_M_initializeEv;
 
@@ -927,7 +972,7 @@ GLIBCXX_3.4.10 {
     _ZNKSt4hashIeEclEe;
 
     _ZSt17__verify_grouping*;
-    
+
     _ZNSt8__detail12__prime_listE;
     _ZNSt3tr18__detail12__prime_listE;
 
@@ -950,7 +995,7 @@ GLIBCXX_3.4.10 {
 } GLIBCXX_3.4.9;
 
 GLIBCXX_3.4.11 {
-	 
+
     # atomic
     __atomic_flag_for_address;
     __atomic_flag_wait_explicit;
@@ -1011,7 +1056,12 @@ GLIBCXX_3.4.11 {
     _ZTISt12system_error;
     _ZTVSt12system_error;
     _ZNSt12system_errorD*Ev;
+    # Those template instantiations weren't exported on Solaris in GCC 4.6
+    # and aren't necessary for correct operation, so don't emit them now
+    # (PR libstdc++/54872).
+#if !defined(__sun__) && !defined(__svr4__)
     _ZNSt12system_errorC*;
+#endif
 
     _ZNKSt4hashISt10error_codeEclES0_;
 
@@ -1085,13 +1135,15 @@ GLIBCXX_3.4.14 {
     _ZNSt9__atomic011atomic_flag5clearESt12memory_order;
 
     # future
-    _ZSt15future_category;
     _ZNSt12future_errorD*;
     _ZNKSt12future_error4whatEv;
     _ZTSSt12future_error;
     _ZTVSt12future_error;
     _ZTISt12future_error;
     _ZSt20__throw_future_errori;
+
+    # GLIBCXX_ABI compatibility only.
+    _ZSt15future_category;
 
     # string|wstring ::cbegin member functions
     _ZNKSs6cbeginEv;
@@ -1145,11 +1197,162 @@ GLIBCXX_3.4.14 {
 
     # std::numeric_limits::max_digits10
     _ZNSt21__numeric_limits_base12max_digits10E;
-    _ZNSt14numeric_limitsI[^g]E12max_digits10E;
+    _ZNSt14numeric_limitsI[a-m]E12max_digits10E;
+    _ZNSt14numeric_limitsI[p-z]E12max_digits10E;
     _ZNSt14numeric_limitsID[is]E12max_digits10E;
 
 } GLIBCXX_3.4.13;
 
+GLIBCXX_3.4.15 {
+
+    # string|wstring front and back member functions
+    _ZNSs5frontEv;
+    _ZNKSs5frontEv;
+    _ZNSbIwSt11char_traitsIwESaIwEE5frontEv;
+    _ZNKSbIwSt11char_traitsIwESaIwEE5frontEv;
+    _ZNSs4backEv;
+    _ZNKSs4backEv;
+    _ZNSbIwSt11char_traitsIwESaIwEE4backEv;
+    _ZNKSbIwSt11char_traitsIwESaIwEE4backEv;
+
+    # string|wstring move contructor.
+    _ZNSsC2EOSs;
+    _ZNSbIwSt11char_traitsIwESaIwEEC2EOS2_;
+
+    # basic_filebuf::_M_get_ext_pos
+    _ZNSt13basic_filebufI[cw]St11char_traitsI[cw]EE14_M_get_ext_pos*;
+
+    # targets using emutls
+    __emutls_v._ZSt11__once_call;
+    __emutls_v._ZSt15__once_callable;
+
+    # std::future_category is now a function
+    _ZSt15future_categoryv;
+
+    # std::placeholders
+    _ZNSt12placeholders*;
+
+    _ZNSt8__detail15_List_node_base7_M_hook*;
+    _ZNSt8__detail15_List_node_base9_M_unhookEv;
+    _ZNSt8__detail15_List_node_base10_M_reverseEv;
+    _ZNSt8__detail15_List_node_base11_M_transfer*;
+    _ZNSt8__detail15_List_node_base4swapERS0_S1_;
+
+    _ZNSt11range_errorD2Ev;
+    _ZNSt12domain_errorD2Ev;
+    _ZNSt12length_errorD2Ev;
+    _ZNSt12out_of_rangeD2Ev;
+    _ZNSt14overflow_errorD2Ev;
+    _ZNSt15underflow_errorD2Ev;
+    _ZNSt16invalid_argumentD2Ev;
+
+    _ZNSt11regex_errorD*;
+    _ZNKSt11regex_error4whatEv;
+    _ZTVSt11regex_error;
+    _ZTISt11regex_error;
+    _ZSt19__throw_regex_errorNSt15regex_constants10error_typeE;
+
+    # std::bad_weak_ptr
+    _ZNSt12bad_weak_ptrD*;
+    _ZNKSt12bad_weak_ptr4whatEv;
+    _ZTVSt12bad_weak_ptr;
+    _ZTISt12bad_weak_ptr;
+
+    # std::bad_function_call
+    _ZNSt17bad_function_callD*;
+    _ZTISt17bad_function_call;
+    _ZTVSt17bad_function_call;
+
+    _ZNSt14error_categoryC*;
+    _ZNSt14error_categoryD*;
+
+    _ZNSt13__future_base12_Result_baseC*;
+    _ZNSt13__future_base12_Result_baseD*;
+    _ZTINSt13__future_base12_Result_baseE;
+    _ZTVNSt13__future_base12_Result_baseE;
+
+    _ZNSt13__future_base11_State_baseD*;
+    _ZTINSt13__future_base11_State_baseE;
+    _ZTVNSt13__future_base11_State_baseE;
+
+} GLIBCXX_3.4.14;
+
+GLIBCXX_3.4.16 {
+
+    # libstdc++/48465
+    _ZNSs10_S_compareE[jmy][jmy];
+    _ZNSbIwSt11char_traitsIwESaIwEE10_S_compareE[jmy][jmy];
+
+    # basic_streambuf<>::__safe_gbump, __safe_pbump
+    _ZNSt15basic_streambufI[cw]St11char_traitsI[cw]EE12__safe_gbumpE*;
+    _ZNSt15basic_streambufI[cw]St11char_traitsI[cw]EE12__safe_pbumpE*;
+
+    # basic_stringbuf<>::_M_pbump
+    _ZNSt15basic_stringbufI[cw]St11char_traitsI[cw]ESaI[cw]EE8_M_pbumpE*;
+
+} GLIBCXX_3.4.15;
+
+GLIBCXX_3.4.17 {
+
+    # std::thread::hardware_concurrency
+    _ZNSt6thread20hardware_concurrencyEv;
+
+    # __gnu_debug::_Safe_unordered_container_base and _Safe_local_iterator_base
+    _ZN11__gnu_debug30_Safe_unordered_container_base7_M_swapERS0_;
+    _ZN11__gnu_debug30_Safe_unordered_container_base13_M_detach_allEv;
+    _ZN11__gnu_debug25_Safe_local_iterator_base9_M_attachEPNS_19_Safe_sequence_baseEb;
+    _ZN11__gnu_debug25_Safe_local_iterator_base9_M_detachEv;
+
+    # std::numeric_limits<__int128> and <unsigned __int128>
+    _ZNSt14numeric_limitsInE*;
+    _ZNSt14numeric_limitsIoE*;
+
+    # std::string::pop_back()
+    _ZNSs8pop_backEv;
+    # std::wstring::pop_back()
+    _ZNSbIwSt11char_traitsIwESaIwEE8pop_backEv;
+
+    # std::_Async_state_common::~_Async_state_common
+    _ZTINSt13__future_base19_Async_state_commonE;
+    _ZTSNSt13__future_base19_Async_state_commonE;
+    _ZTVNSt13__future_base19_Async_state_commonE;
+    _ZNSt13__future_base19_Async_state_commonD0Ev;
+    _ZNSt13__future_base19_Async_state_commonD1Ev;
+    _ZNSt13__future_base19_Async_state_commonD2Ev;
+
+    # std::chrono::steady_clock::now()
+    _ZNSt6chrono12steady_clock3nowEv;
+
+} GLIBCXX_3.4.16;
+
+GLIBCXX_3.4.18 {
+
+  global:
+
+    # Names inside the 'extern' block are demangled names.
+    extern "C++"
+    {
+      std::random_device::*;
+      std::__detail::_Prime_rehash_policy::*;
+    };
+
+    # std::this_thread::__sleep_for
+    _ZNSt11this_thread11__sleep_for*;
+
+    # std::bad_function_call::what()
+    _ZNKSt17bad_function_call4whatEv;
+
+} GLIBCXX_3.4.17;
+
+GLIBCXX_3.4.19 {
+
+    # chrono second generation
+    _ZNSt6chrono3_V212steady_clock3nowEv;
+    _ZNSt6chrono3_V212steady_clock9is_steadyE;
+    _ZNSt6chrono3_V212system_clock3nowEv;
+    _ZNSt6chrono3_V212system_clock9is_steadyE;
+
+} GLIBCXX_3.4.18;
 
 # Symbols in the support library (libsupc++) have their own tag.
 CXXABI_1.3 {
@@ -1175,18 +1378,19 @@ CXXABI_1.3 {
     __cxa_rethrow;
     __cxa_throw;
     __cxa_type_match;
+    __cxa_vec_ctor;
     __cxa_vec_cctor;
     __cxa_vec_cleanup;
-    __cxa_vec_ctor;
+    __cxa_vec_delete;
     __cxa_vec_delete2;
     __cxa_vec_delete3;
-    __cxa_vec_delete;
     __cxa_vec_dtor;
+    __cxa_vec_new;
     __cxa_vec_new2;
     __cxa_vec_new3;
-    __cxa_vec_new;
     __gxx_personality_v0;
     __gxx_personality_sj0;
+    __gxx_personality_seh0;
     __dynamic_cast;
 
     # *_type_info classes, ctor and dtor
@@ -1223,9 +1427,9 @@ CXXABI_1.3 {
     _ZTVN10__cxxabiv121__vmi_class_type_infoE;
 
     # typeinfo structure (and some names)
-    _ZTI[a-fh-z];
-    _ZTIP[a-fh-z];
-    _ZTIPK[a-fh-z];
+    _ZTI[a-fh-mp-z];
+    _ZTIP[a-fh-mp-z];
+    _ZTIPK[a-fh-mp-z];
     _ZTIN10__cxxabiv117__array_type_infoE;
     _ZTIN10__cxxabiv117__class_type_infoE;
     _ZTIN10__cxxabiv116__enum_type_infoE;
@@ -1238,9 +1442,9 @@ CXXABI_1.3 {
     _ZTIN10__cxxabiv121__vmi_class_type_infoE;
 
     # typeinfo name
-    _ZTS[a-fh-z];
-    _ZTSP[a-fh-z];
-    _ZTSPK[a-fh-z];
+    _ZTS[a-fh-mp-z];
+    _ZTSP[a-fh-mp-z];
+    _ZTSPK[a-fh-mp-z];
     _ZTSN10__cxxabiv117__array_type_infoE;
     _ZTSN10__cxxabiv117__class_type_infoE;
     _ZTSN10__cxxabiv116__enum_type_infoE;
@@ -1255,8 +1459,6 @@ CXXABI_1.3 {
     # __gnu_cxx::_verbose_terminate_handler()
     _ZN9__gnu_cxx27__verbose_terminate_handlerEv;
 
-  local:
-    *;
 };
 
 CXXABI_1.3.1 {
@@ -1311,8 +1513,51 @@ CXXABI_1.3.4 {
     _ZTID[fde];
     _ZTIPD[fde];
     _ZTIPKD[fde];
-    _ZTID[fde];
-    _ZTIPD[fde];
-    _ZTIPKD[fde];
 
 } CXXABI_1.3.3;
+
+CXXABI_1.3.5 {
+
+    # typeinfo for decltype(nullptr)
+    _ZTIDn;
+    _ZTIPDn;
+    _ZTIPKDn;
+
+    # typeinfo for __int128 and unsigned __int128
+    _ZTI[no];
+    _ZTIP[no];
+    _ZTIPK[no];
+
+    # Default function.
+    _ZSt11_Hash_bytesPKv*;
+
+    # FNV hash.
+    _ZSt15_Fnv_hash_bytesPKv*;
+
+    # std::nested_exception
+    _ZNSt16nested_exceptionD*;
+    _ZTISt16nested_exception;
+    _ZTVSt16nested_exception;
+
+} CXXABI_1.3.4;
+
+CXXABI_1.3.6 {
+
+    __cxa_allocate_dependent_exception;
+    __cxa_free_dependent_exception;
+    __cxa_deleted_virtual;
+
+} CXXABI_1.3.5;
+
+CXXABI_1.3.7 {
+    __cxa_thread_atexit;
+} CXXABI_1.3.6;
+
+
+# Symbols in the support library (libsupc++) supporting transactional memory.
+CXXABI_TM_1 {
+
+  global:
+    __cxa_tm_cleanup;
+
+};

@@ -3,7 +3,7 @@
    files which are fixed to work correctly with ANSI C and placed in a
    directory that GCC will search.
 
-   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2004, 2009
+   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2004, 2009, 2012
    Free Software Foundation, Inc.
 
 This file is part of GCC.
@@ -140,7 +140,10 @@ typedef int apply_fix_p_t;  /* Apply Fix Predicate Type */
          "amount of user entertainment" )            \
                                                      \
   _ENV_( pz_find_base, BOOL_TRUE, "FIND_BASE",       \
-         "leader to trim from file names" )
+         "leader to trim from file names" )          \
+                                                     \
+  _ENV_( pz_test_mode, BOOL_FALSE, "TEST_MODE",      \
+         "run fixincludes in test mode" )
 
 #define _ENV_(v,m,n,t)   extern tCC* v;
 ENV_TABLE
@@ -210,6 +213,27 @@ typedef struct {
 } t_gnu_type_map;
 
 extern int gnu_type_map_ct;
+
+typedef enum {
+  VERB_SILENT = 0,
+  VERB_FIXES,
+  VERB_APPLIES,
+  VERB_PROGRESS,
+  VERB_TESTS,
+  VERB_EVERYTHING
+} te_verbose;
+
+extern te_verbose  verbose_level;
+
+#define VLEVEL(l)  ((unsigned int) verbose_level >= (unsigned int) l)
+#define NOT_SILENT VLEVEL(VERB_FIXES)
+
+typedef enum {
+  TESTING_OFF = 0,
+  TESTING_ON  = 1
+} fixinc_mode_t;
+
+extern fixinc_mode_t fixinc_mode;
 
 #ifdef HAVE_MMAP_FILE
 #define UNLOAD_DATA() do { if (curr_data_mapped) { \

@@ -1,11 +1,10 @@
 This is doc/gcj.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-4.5.4/gcc-4.5.4/gcc/java/gcj.texi.
+/space/rguenther/gcc-4.8.5/gcc-4.8.5/gcc/java/gcj.texi.
 
-Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Free
-Software Foundation, Inc.
+Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, the Front-Cover Texts being (a) (see below), and
 with the Back-Cover Texts being (b) (see below).  A copy of the license
@@ -46,11 +45,10 @@ START-INFO-DIR-ENTRY
                             into one system-wide database.
 END-INFO-DIR-ENTRY
 
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 Free
-Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
-under the terms of the GNU Free Documentation License, Version 1.2 or
+under the terms of the GNU Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with no
 Invariant Sections, the Front-Cover Texts being (a) (see below), and
 with the Back-Cover Texts being (b) (see below).  A copy of the license
@@ -826,10 +824,10 @@ File: gcj.info,  Node: GNU Free Documentation License,  Next: Invoking gcj,  Pre
 GNU Free Documentation License
 ******************************
 
-                      Version 1.2, November 2002
+                     Version 1.3, 3 November 2008
 
-     Copyright (C) 2000,2001,2002 Free Software Foundation, Inc.
-     51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA
+     Copyright (C) 2000, 2001, 2002, 2007, 2008 Free Software Foundation, Inc.
+     `http://fsf.org/'
 
      Everyone is permitted to copy and distribute verbatim copies
      of this license document, but changing it is not allowed.
@@ -930,6 +928,9 @@ GNU Free Documentation License
      works in formats which do not have any title page as such, "Title
      Page" means the text near the most prominent appearance of the
      work's title, preceding the beginning of the body of the text.
+
+     The "publisher" means any person or entity that distributes copies
+     of the Document to the public.
 
      A section "Entitled XYZ" means a named subunit of the Document
      whose title either is precisely XYZ or contains XYZ in parentheses
@@ -1196,12 +1197,29 @@ GNU Free Documentation License
   9. TERMINATION
 
      You may not copy, modify, sublicense, or distribute the Document
-     except as expressly provided for under this License.  Any other
-     attempt to copy, modify, sublicense or distribute the Document is
-     void, and will automatically terminate your rights under this
-     License.  However, parties who have received copies, or rights,
-     from you under this License will not have their licenses
-     terminated so long as such parties remain in full compliance.
+     except as expressly provided under this License.  Any attempt
+     otherwise to copy, modify, sublicense, or distribute it is void,
+     and will automatically terminate your rights under this License.
+
+     However, if you cease all violation of this License, then your
+     license from a particular copyright holder is reinstated (a)
+     provisionally, unless and until the copyright holder explicitly
+     and finally terminates your license, and (b) permanently, if the
+     copyright holder fails to notify you of the violation by some
+     reasonable means prior to 60 days after the cessation.
+
+     Moreover, your license from a particular copyright holder is
+     reinstated permanently if the copyright holder notifies you of the
+     violation by some reasonable means, this is the first time you have
+     received notice of violation of this License (for any work) from
+     that copyright holder, and you cure the violation prior to 30 days
+     after your receipt of the notice.
+
+     Termination of your rights under this section does not terminate
+     the licenses of parties who have received copies or rights from
+     you under this License.  If your rights have been terminated and
+     not permanently reinstated, receipt of a copy of some or all of
+     the same material does not give you any rights to use it.
 
  10. FUTURE REVISIONS OF THIS LICENSE
 
@@ -1219,7 +1237,41 @@ GNU Free Documentation License
      published (not as a draft) by the Free Software Foundation.  If
      the Document does not specify a version number of this License,
      you may choose any version ever published (not as a draft) by the
-     Free Software Foundation.
+     Free Software Foundation.  If the Document specifies that a proxy
+     can decide which future versions of this License can be used, that
+     proxy's public statement of acceptance of a version permanently
+     authorizes you to choose that version for the Document.
+
+ 11. RELICENSING
+
+     "Massive Multiauthor Collaboration Site" (or "MMC Site") means any
+     World Wide Web server that publishes copyrightable works and also
+     provides prominent facilities for anybody to edit those works.  A
+     public wiki that anybody can edit is an example of such a server.
+     A "Massive Multiauthor Collaboration" (or "MMC") contained in the
+     site means any set of copyrightable works thus published on the MMC
+     site.
+
+     "CC-BY-SA" means the Creative Commons Attribution-Share Alike 3.0
+     license published by Creative Commons Corporation, a not-for-profit
+     corporation with a principal place of business in San Francisco,
+     California, as well as future copyleft versions of that license
+     published by that same organization.
+
+     "Incorporate" means to publish or republish a Document, in whole or
+     in part, as part of another Document.
+
+     An MMC is "eligible for relicensing" if it is licensed under this
+     License, and if all works that were first published under this
+     License somewhere other than this MMC, and subsequently
+     incorporated in whole or in part into the MMC, (1) had no cover
+     texts or invariant sections, and (2) were thus incorporated prior
+     to November 1, 2008.
+
+     The operator of an MMC Site may republish an MMC contained in the
+     site under CC-BY-SA on the same site at any time before August 1,
+     2009, provided the MMC is eligible for relicensing.
+
 
 ADDENDUM: How to use this License for your documents
 ====================================================
@@ -1230,7 +1282,7 @@ notices just after the title page:
 
        Copyright (C)  YEAR  YOUR NAME.
        Permission is granted to copy, distribute and/or modify this document
-       under the terms of the GNU Free Documentation License, Version 1.2
+       under the terms of the GNU Free Documentation License, Version 1.3
        or any later version published by the Free Software Foundation;
        with no Invariant Sections, no Front-Cover Texts, and no Back-Cover
        Texts.  A copy of the license is included in the section entitled ``GNU
@@ -1701,7 +1753,7 @@ touch these options.
      by the processor.
 
 `-fuse-atomic-builtins'
-     On some systems, gcc can generate code for built-in atomic
+     On some systems, GCC can generate code for built-in atomic
      operations.  Use this option to force gcj to use these builtins
      when compiling Java code.  Where this capability is present it
      should be automatically detected, so you won't usually need to use
@@ -3539,16 +3591,15 @@ While writing `gcj' and `libgcj' we have, of course, relied heavily on
 documentation from Sun Microsystems.  In particular we have used The
 Java Language Specification (both first and second editions), the Java
 Class Libraries (volumes one and two), and the Java Virtual Machine
-Specification.  In addition we've used the online documentation at
-`http://java.sun.com/'.
+Specification.  In addition we've used Sun's online documentation.
 
    The current `gcj' home page is `http://gcc.gnu.org/java/'.
 
-   For more information on gcc, see `http://gcc.gnu.org/'.
+   For more information on GCC, see `http://gcc.gnu.org/'.
 
    Some `libgcj' testing is done using the Mauve test suite.  This is a
 free software Java class library test suite which is being written
-because the JCK is not free.  See `http://sources.redhat.com/mauve/'
+because the JCK is not free.  See `http://www.sourceware.org/mauve/'
 for more information.
 
 
@@ -3590,51 +3641,51 @@ Index
 
 
 Tag Table:
-Node: Top2803
-Node: Copying4222
-Node: GNU Free Documentation License41772
-Node: Invoking gcj64184
-Node: Input and output files64947
-Node: Input Options66473
-Node: Encodings69747
-Node: Warnings70953
-Node: Linking72066
-Node: Code Generation75005
-Node: Configure-time Options81785
-Node: Compatibility83525
-Node: Limitations84009
-Node: Extensions85591
-Node: Invoking jcf-dump88685
-Node: Invoking gij89630
-Node: Invoking gcj-dbtool92881
-Node: Invoking jv-convert95347
-Node: Invoking grmic96426
-Node: Invoking gc-analyze97812
-Node: Invoking aot-compile99253
-Node: Invoking rebuild-gcj-db100202
-Node: About CNI100512
-Node: Basic concepts101971
-Node: Packages104867
-Node: Primitive types107195
-Node: Reference types108873
-Node: Interfaces109962
-Node: Objects and Classes110873
-Node: Class Initialization113068
-Node: Object allocation115410
-Node: Memory allocation116200
-Node: Arrays116832
-Node: Methods119642
-Node: Strings122463
-Node: Mixing with C++123967
-Node: Exception Handling127438
-Node: Synchronization129072
-Node: Invocation131062
-Node: Reflection135998
-Node: System properties136459
-Node: Standard Properties137336
-Node: GNU Classpath Properties141768
-Node: libgcj Runtime Properties142815
-Node: Resources147317
-Node: Index148155
+Node: Top2729
+Node: Copying4148
+Node: GNU Free Documentation License41698
+Node: Invoking gcj66841
+Node: Input and output files67604
+Node: Input Options69130
+Node: Encodings72404
+Node: Warnings73610
+Node: Linking74723
+Node: Code Generation77662
+Node: Configure-time Options84442
+Node: Compatibility86182
+Node: Limitations86666
+Node: Extensions88248
+Node: Invoking jcf-dump91342
+Node: Invoking gij92287
+Node: Invoking gcj-dbtool95538
+Node: Invoking jv-convert98004
+Node: Invoking grmic99083
+Node: Invoking gc-analyze100469
+Node: Invoking aot-compile101910
+Node: Invoking rebuild-gcj-db102859
+Node: About CNI103169
+Node: Basic concepts104628
+Node: Packages107524
+Node: Primitive types109852
+Node: Reference types111530
+Node: Interfaces112619
+Node: Objects and Classes113530
+Node: Class Initialization115725
+Node: Object allocation118067
+Node: Memory allocation118857
+Node: Arrays119489
+Node: Methods122299
+Node: Strings125120
+Node: Mixing with C++126624
+Node: Exception Handling130095
+Node: Synchronization131729
+Node: Invocation133719
+Node: Reflection138655
+Node: System properties139116
+Node: Standard Properties139993
+Node: GNU Classpath Properties144425
+Node: libgcj Runtime Properties145472
+Node: Resources149974
+Node: Index150788
 
 End Tag Table

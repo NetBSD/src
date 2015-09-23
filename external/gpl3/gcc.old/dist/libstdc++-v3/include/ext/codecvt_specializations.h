@@ -1,7 +1,6 @@
 // Locale support (codecvt) -*- C++ -*-
 
-// Copyright (C) 2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2009
-//  Free Software Foundation, Inc.
+// Copyright (C) 2000-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -40,7 +39,9 @@
 #include <locale>
 #include <iconv.h>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   /// Extension to use iconv for dealing with character encodings.
   // This includes conversions and comparisons between various character
@@ -212,10 +213,13 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       typedef typename std::fpos<state_type>		pos_type;
     };
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 
-_GLIBCXX_BEGIN_NAMESPACE(std)
+namespace std _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   using __gnu_cxx::encoding_state;
 
@@ -381,7 +385,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
 	  // Argument list for iconv specifies a byte sequence. Thus,
 	  // all to/from arrays must be brutally casted to char*.
 	  char* __cto = reinterpret_cast<char*>(__to);
-	  size_t __conv = __iconv_adaptor(iconv,__desc, NULL, NULL,
+	  size_t __conv = __iconv_adaptor(iconv,__desc, 0, 0,
                                           &__cto, &__tlen); 
 	  
 	  if (__conv != size_t(-1))
@@ -502,6 +506,7 @@ _GLIBCXX_BEGIN_NAMESPACE(std)
     do_max_length() const throw()
     { return 1; }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
 
 #endif

@@ -1,4 +1,4 @@
-/* Copyright (C) 2005, 2008, 2009 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU OpenMP Library (libgomp).
@@ -24,7 +24,7 @@
 
 /* Provide target-specific access to the futex system call.  */
 
-#ifdef __LP64__
+#ifdef __x86_64__
 # ifndef SYS_futex
 #  define SYS_futex	202
 # endif
@@ -138,16 +138,10 @@ futex_wake (int *addr, int count)
     }
 }
 
-#endif /* __LP64__ */
+#endif /* __x86_64__ */
 
 static inline void
 cpu_relax (void)
 {
-  __asm volatile ("rep; nop" : : : "memory");
-}
-
-static inline void
-atomic_write_barrier (void)
-{
-  __sync_synchronize ();
+  __builtin_ia32_pause ();
 }

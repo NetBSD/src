@@ -1,6 +1,5 @@
 /* Rtl-level induction variable analysis.
-   Copyright (C) 2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 2004-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -59,10 +58,10 @@ along with GCC; see the file COPYING3.  If not see
 #include "cfgloop.h"
 #include "expr.h"
 #include "intl.h"
-#include "output.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
 #include "df.h"
 #include "hashtab.h"
+#include "dumpfile.h"
 
 /* Possible return values of iv_get_reaching_def.  */
 
@@ -113,6 +112,22 @@ static htab_t bivs;
 
 static bool iv_analyze_op (rtx, rtx, struct rtx_iv *);
 
+/* Return the RTX code corresponding to the IV extend code EXTEND.  */
+static inline enum rtx_code
+iv_extend_to_rtx_code (enum iv_extend_code extend)
+{
+  switch (extend)
+    {
+    case IV_SIGN_EXTEND:
+      return SIGN_EXTEND;
+    case IV_ZERO_EXTEND:
+      return ZERO_EXTEND;
+    case IV_UNKNOWN_EXTEND:
+      return UNKNOWN;
+    }
+  gcc_unreachable ();
+}
+
 /* Dumps information about IV to FILE.  */
 
 extern void dump_iv_info (FILE *, struct rtx_iv *);
@@ -140,7 +155,7 @@ dump_iv_info (FILE *file, struct rtx_iv *iv)
 
   if (iv->mode != iv->extend_mode)
     fprintf (file, " %s to %s",
-	     rtx_name[iv->extend],
+	     rtx_name[iv_extend_to_rtx_code (iv->extend)],
 	     GET_MODE_NAME (iv->extend_mode));
 
   if (iv->mult != const1_rtx)
@@ -277,6 +292,7 @@ iv_analysis_loop_init (struct loop *loop)
      the problem back.  */
   df_remove_problem (df_chain);
   df_process_deferred_rescans ();
+  df_set_flags (DF_RD_PRUNE_DEAD_DEFS);
   df_chain_add_problem (DF_UD_CHAIN);
   df_note_add_problem ();
   df_set_blocks (blocks);
@@ -304,7 +320,7 @@ latch_dominating_def (rtx reg, df_ref *def)
   for (adef = DF_REG_DEF_CHAIN (regno); adef; adef = DF_REF_NEXT_REG (adef))
     {
       if (!bitmap_bit_p (df->blocks_to_analyze, DF_REF_BBNO (adef))
-	  || !bitmap_bit_p (bb_info->out, DF_REF_ID (adef)))
+	  || !bitmap_bit_p (&bb_info->out, DF_REF_ID (adef)))
 	continue;
 
       /* More than one reaching definition.  */
@@ -391,7 +407,7 @@ iv_constant (struct rtx_iv *iv, rtx cst, enum machine_mode mode)
   iv->base = cst;
   iv->step = const0_rtx;
   iv->first_special = false;
-  iv->extend = UNKNOWN;
+  iv->extend = IV_UNKNOWN_EXTEND;
   iv->extend_mode = iv->mode;
   iv->delta = const0_rtx;
   iv->mult = const1_rtx;
@@ -409,10 +425,12 @@ iv_subreg (struct rtx_iv *iv, enum machine_mode mode)
       && !iv->first_special)
     {
       rtx val = get_iv_value (iv, const0_rtx);
-      val = lowpart_subreg (mode, val, iv->extend_mode);
+      val = lowpart_subreg (mode, val,
+			    iv->extend == IV_UNKNOWN_EXTEND
+			    ? iv->mode : iv->extend_mode);
 
       iv->base = val;
-      iv->extend = UNKNOWN;
+      iv->extend = IV_UNKNOWN_EXTEND;
       iv->mode = iv->extend_mode = mode;
       iv->delta = const0_rtx;
       iv->mult = const1_rtx;
@@ -425,7 +443,7 @@ iv_subreg (struct rtx_iv *iv, enum machine_mode mode)
   if (GET_MODE_BITSIZE (mode) > GET_MODE_BITSIZE (iv->mode))
     return false;
 
-  iv->extend = UNKNOWN;
+  iv->extend = IV_UNKNOWN_EXTEND;
   iv->mode = mode;
 
   iv->base = simplify_gen_binary (PLUS, iv->extend_mode, iv->delta,
@@ -442,17 +460,23 @@ iv_subreg (struct rtx_iv *iv, enum machine_mode mode)
 /* Evaluates application of EXTEND to MODE on IV.  */
 
 static bool
-iv_extend (struct rtx_iv *iv, enum rtx_code extend, enum machine_mode mode)
+iv_extend (struct rtx_iv *iv, enum iv_extend_code extend, enum machine_mode mode)
 {
   /* If iv is invariant, just calculate the new value.  */
   if (iv->step == const0_rtx
       && !iv->first_special)
     {
       rtx val = get_iv_value (iv, const0_rtx);
-      val = simplify_gen_unary (extend, mode, val, iv->extend_mode);
-
+      if (iv->extend_mode != iv->mode
+	  && iv->extend != IV_UNKNOWN_EXTEND
+	  && iv->extend != extend)
+	val = lowpart_subreg (iv->mode, val, iv->extend_mode);
+      val = simplify_gen_unary (iv_extend_to_rtx_code (extend), mode,
+				val,
+				iv->extend == extend
+				? iv->extend_mode : iv->mode);
       iv->base = val;
-      iv->extend = UNKNOWN;
+      iv->extend = IV_UNKNOWN_EXTEND;
       iv->mode = iv->extend_mode = mode;
       iv->delta = const0_rtx;
       iv->mult = const1_rtx;
@@ -462,7 +486,7 @@ iv_extend (struct rtx_iv *iv, enum rtx_code extend, enum machine_mode mode)
   if (mode != iv->extend_mode)
     return false;
 
-  if (iv->extend != UNKNOWN
+  if (iv->extend != IV_UNKNOWN_EXTEND
       && iv->extend != extend)
     return false;
 
@@ -476,7 +500,7 @@ iv_extend (struct rtx_iv *iv, enum rtx_code extend, enum machine_mode mode)
 static bool
 iv_neg (struct rtx_iv *iv)
 {
-  if (iv->extend == UNKNOWN)
+  if (iv->extend == IV_UNKNOWN_EXTEND)
     {
       iv->base = simplify_gen_unary (NEG, iv->extend_mode,
 				     iv->base, iv->extend_mode);
@@ -503,7 +527,7 @@ iv_add (struct rtx_iv *iv0, struct rtx_iv *iv1, enum rtx_code op)
   rtx arg;
 
   /* Extend the constant to extend_mode of the other operand if necessary.  */
-  if (iv0->extend == UNKNOWN
+  if (iv0->extend == IV_UNKNOWN_EXTEND
       && iv0->mode == iv0->extend_mode
       && iv0->step == const0_rtx
       && GET_MODE_SIZE (iv0->extend_mode) < GET_MODE_SIZE (iv1->extend_mode))
@@ -512,7 +536,7 @@ iv_add (struct rtx_iv *iv0, struct rtx_iv *iv1, enum rtx_code op)
       iv0->base = simplify_gen_unary (ZERO_EXTEND, iv0->extend_mode,
 				      iv0->base, iv0->mode);
     }
-  if (iv1->extend == UNKNOWN
+  if (iv1->extend == IV_UNKNOWN_EXTEND
       && iv1->mode == iv1->extend_mode
       && iv1->step == const0_rtx
       && GET_MODE_SIZE (iv1->extend_mode) < GET_MODE_SIZE (iv0->extend_mode))
@@ -526,7 +550,8 @@ iv_add (struct rtx_iv *iv0, struct rtx_iv *iv1, enum rtx_code op)
   if (mode != iv1->extend_mode)
     return false;
 
-  if (iv0->extend == UNKNOWN && iv1->extend == UNKNOWN)
+  if (iv0->extend == IV_UNKNOWN_EXTEND
+      && iv1->extend == IV_UNKNOWN_EXTEND)
     {
       if (iv0->mode != iv1->mode)
 	return false;
@@ -538,7 +563,7 @@ iv_add (struct rtx_iv *iv0, struct rtx_iv *iv1, enum rtx_code op)
     }
 
   /* Handle addition of constant.  */
-  if (iv1->extend == UNKNOWN
+  if (iv1->extend == IV_UNKNOWN_EXTEND
       && iv1->mode == mode
       && iv1->step == const0_rtx)
     {
@@ -546,7 +571,7 @@ iv_add (struct rtx_iv *iv0, struct rtx_iv *iv1, enum rtx_code op)
       return true;
     }
 
-  if (iv0->extend == UNKNOWN
+  if (iv0->extend == IV_UNKNOWN_EXTEND
       && iv0->mode == mode
       && iv0->step == const0_rtx)
     {
@@ -574,7 +599,7 @@ iv_mult (struct rtx_iv *iv, rtx mby)
       && GET_MODE (mby) != mode)
     return false;
 
-  if (iv->extend == UNKNOWN)
+  if (iv->extend == IV_UNKNOWN_EXTEND)
     {
       iv->base = simplify_gen_binary (MULT, mode, iv->base, mby);
       iv->step = simplify_gen_binary (MULT, mode, iv->step, mby);
@@ -599,7 +624,7 @@ iv_shift (struct rtx_iv *iv, rtx mby)
       && GET_MODE (mby) != mode)
     return false;
 
-  if (iv->extend == UNKNOWN)
+  if (iv->extend == IV_UNKNOWN_EXTEND)
     {
       iv->base = simplify_gen_binary (ASHIFT, mode, iv->base, mby);
       iv->step = simplify_gen_binary (ASHIFT, mode, iv->step, mby);
@@ -620,7 +645,7 @@ iv_shift (struct rtx_iv *iv, rtx mby)
 static bool
 get_biv_step_1 (df_ref def, rtx reg,
 		rtx *inner_step, enum machine_mode *inner_mode,
-		enum rtx_code *extend, enum machine_mode outer_mode,
+		enum iv_extend_code *extend, enum machine_mode outer_mode,
 		rtx *outer_step)
 {
   rtx set, rhs, op0 = NULL_RTX, op1 = NULL_RTX;
@@ -720,7 +745,7 @@ get_biv_step_1 (df_ref def, rtx reg,
 	return false;
 
       *inner_step = const0_rtx;
-      *extend = UNKNOWN;
+      *extend = IV_UNKNOWN_EXTEND;
       *inner_mode = outer_mode;
       *outer_step = const0_rtx;
     }
@@ -740,7 +765,7 @@ get_biv_step_1 (df_ref def, rtx reg,
       *inner_step = simplify_gen_binary (PLUS, outer_mode,
 					 *inner_step, *outer_step);
       *outer_step = const0_rtx;
-      *extend = UNKNOWN;
+      *extend = IV_UNKNOWN_EXTEND;
     }
 
   switch (code)
@@ -764,10 +789,10 @@ get_biv_step_1 (df_ref def, rtx reg,
     case SIGN_EXTEND:
     case ZERO_EXTEND:
       gcc_assert (GET_MODE (op0) == *inner_mode
-		  && *extend == UNKNOWN
+		  && *extend == IV_UNKNOWN_EXTEND
 		  && *outer_step == const0_rtx);
 
-      *extend = code;
+      *extend = (code == SIGN_EXTEND) ? IV_SIGN_EXTEND : IV_ZERO_EXTEND;
       break;
 
     default:
@@ -786,7 +811,7 @@ get_biv_step_1 (df_ref def, rtx reg,
 
 static bool
 get_biv_step (df_ref last_def, rtx reg, rtx *inner_step,
-	      enum machine_mode *inner_mode, enum rtx_code *extend,
+	      enum machine_mode *inner_mode, enum iv_extend_code *extend,
 	      enum machine_mode *outer_mode, rtx *outer_step)
 {
   *outer_mode = GET_MODE (reg);
@@ -796,7 +821,7 @@ get_biv_step (df_ref last_def, rtx reg, rtx *inner_step,
 		       outer_step))
     return false;
 
-  gcc_assert ((*inner_mode == *outer_mode) != (*extend != UNKNOWN));
+  gcc_assert ((*inner_mode == *outer_mode) != (*extend != IV_UNKNOWN_EXTEND));
   gcc_assert (*inner_mode != *outer_mode || *outer_step == const0_rtx);
 
   return true;
@@ -850,7 +875,7 @@ iv_analyze_biv (rtx def, struct rtx_iv *iv)
 {
   rtx inner_step, outer_step;
   enum machine_mode inner_mode, outer_mode;
-  enum rtx_code extend;
+  enum iv_extend_code extend;
   df_ref last_def;
 
   if (dump_file)
@@ -1007,8 +1032,12 @@ iv_analyze_expr (rtx insn, rtx rhs, enum machine_mode mode, struct rtx_iv *iv)
   switch (code)
     {
     case SIGN_EXTEND:
+      if (!iv_extend (&iv0, IV_SIGN_EXTEND, mode))
+	return false;
+      break;
+
     case ZERO_EXTEND:
-      if (!iv_extend (&iv0, code, mode))
+      if (!iv_extend (&iv0, IV_ZERO_EXTEND, mode))
 	return false;
       break;
 
@@ -1250,10 +1279,11 @@ get_iv_value (struct rtx_iv *iv, rtx iteration)
 
   val = lowpart_subreg (iv->mode, val, iv->extend_mode);
 
-  if (iv->extend == UNKNOWN)
+  if (iv->extend == IV_UNKNOWN_EXTEND)
     return val;
 
-  val = simplify_gen_unary (iv->extend, iv->extend_mode, val, iv->mode);
+  val = simplify_gen_unary (iv_extend_to_rtx_code (iv->extend),
+			    iv->extend_mode, val, iv->mode);
   val = simplify_gen_binary (PLUS, iv->extend_mode, iv->delta,
 			     simplify_gen_binary (MULT, iv->extend_mode,
 						  iv->mult, val));
@@ -1474,19 +1504,26 @@ implies_p (rtx a, rtx b)
   rtx op0, op1, opb0, opb1, r;
   enum machine_mode mode;
 
+  if (rtx_equal_p (a, b))
+    return true;
+
   if (GET_CODE (a) == EQ)
     {
       op0 = XEXP (a, 0);
       op1 = XEXP (a, 1);
 
-      if (REG_P (op0))
+      if (REG_P (op0)
+          || (GET_CODE (op0) == SUBREG
+              && REG_P (SUBREG_REG (op0))))
 	{
 	  r = simplify_replace_rtx (b, op0, op1);
 	  if (r == const_true_rtx)
 	    return true;
 	}
 
-      if (REG_P (op1))
+      if (REG_P (op1)
+          || (GET_CODE (op1) == SUBREG
+              && REG_P (SUBREG_REG (op1))))
 	{
 	  r = simplify_replace_rtx (b, op1, op0);
 	  if (r == const_true_rtx)
@@ -1941,12 +1978,12 @@ simplify_using_initial_values (struct loop *loop, enum rtx_code op, rtx *expr)
 	  note_stores (PATTERN (insn), mark_altered, this_altered);
 	  if (CALL_P (insn))
 	    {
-	      int i;
-
 	      /* Kill all call clobbered registers.  */
-	      for (i = 0; i < FIRST_PSEUDO_REGISTER; i++)
-		if (TEST_HARD_REG_BIT (regs_invalidated_by_call, i))
-		  SET_REGNO_REG_SET (this_altered, i);
+	      unsigned int i;
+	      hard_reg_set_iterator hrsi;
+	      EXECUTE_IF_SET_IN_HARD_REG_SET (regs_invalidated_by_call,
+					      0, i, hrsi)
+		SET_REGNO_REG_SET (this_altered, i);
 	    }
 
 	  if (suitable_set_for_replacement (insn, &dest, &src))
@@ -1981,11 +2018,30 @@ simplify_using_initial_values (struct loop *loop, enum rtx_code op, rtx *expr)
 		}
 	    }
 	  else
-	    /* If we did not use this insn to make a replacement, any overlap
-	       between stores in this insn and our expression will cause the
-	       expression to become invalid.  */
-	    if (for_each_rtx (expr, altered_reg_used, this_altered))
-	      goto out;
+	    {
+	      rtx *pnote, *pnote_next;
+
+	      /* If we did not use this insn to make a replacement, any overlap
+		 between stores in this insn and our expression will cause the
+		 expression to become invalid.  */
+	      if (for_each_rtx (expr, altered_reg_used, this_altered))
+		goto out;
+
+	      /* Likewise for the conditions.  */
+	      for (pnote = &cond_list; *pnote; pnote = pnote_next)
+		{
+		  rtx note = *pnote;
+		  rtx old_cond = XEXP (note, 0);
+
+		  pnote_next = &XEXP (note, 1);
+		  if (for_each_rtx (&old_cond, altered_reg_used, this_altered))
+		    {
+		      *pnote = *pnote_next;
+		      pnote_next = pnote;
+		      free_EXPR_LIST_node (note);
+		    }
+		}
+	    }
 
 	  if (CONSTANT_P (*expr))
 	    goto out;
@@ -2072,7 +2128,7 @@ shorten_into_mode (struct rtx_iv *iv, enum machine_mode mode,
     }
 
   iv->mode = mode;
-  iv->extend = signed_p ? SIGN_EXTEND : ZERO_EXTEND;
+  iv->extend = signed_p ? IV_SIGN_EXTEND : IV_ZERO_EXTEND;
 }
 
 /* Transforms IV0 and IV1 compared by COND so that they are both compared as
@@ -2098,31 +2154,31 @@ canonicalize_iv_subregs (struct rtx_iv *iv0, struct rtx_iv *iv1,
     {
       case LE:
       case LT:
-	if (iv0->extend == ZERO_EXTEND
-	    || iv1->extend == ZERO_EXTEND)
+	if (iv0->extend == IV_ZERO_EXTEND
+	    || iv1->extend == IV_ZERO_EXTEND)
 	  return false;
 	signed_p = true;
 	break;
 
       case LEU:
       case LTU:
-	if (iv0->extend == SIGN_EXTEND
-	    || iv1->extend == SIGN_EXTEND)
+	if (iv0->extend == IV_SIGN_EXTEND
+	    || iv1->extend == IV_SIGN_EXTEND)
 	  return false;
 	signed_p = false;
 	break;
 
       case NE:
-	if (iv0->extend != UNKNOWN
-	    && iv1->extend != UNKNOWN
+	if (iv0->extend != IV_UNKNOWN_EXTEND
+	    && iv1->extend != IV_UNKNOWN_EXTEND
 	    && iv0->extend != iv1->extend)
 	  return false;
 
 	signed_p = false;
-	if (iv0->extend != UNKNOWN)
-	  signed_p = iv0->extend == SIGN_EXTEND;
-	if (iv1->extend != UNKNOWN)
-	  signed_p = iv1->extend == SIGN_EXTEND;
+	if (iv0->extend != IV_UNKNOWN_EXTEND)
+	  signed_p = iv0->extend == IV_SIGN_EXTEND;
+	if (iv1->extend != IV_UNKNOWN_EXTEND)
+	  signed_p = iv1->extend == IV_SIGN_EXTEND;
 	break;
 
       default:
@@ -2190,8 +2246,8 @@ canonicalize_iv_subregs (struct rtx_iv *iv0, struct rtx_iv *iv1,
   return true;
 }
 
-/* Tries to estimate the maximum number of iterations in LOOP, and store the
-   result in DESC.  This function is called from iv_number_of_iterations with
+/* Tries to estimate the maximum number of iterations in LOOP, and return the
+   result.  This function is called from iv_number_of_iterations with
    a number of fields in DESC already filled in.  OLD_NITER is the original
    expression for the number of iterations, before we tried to simplify it.  */
 
@@ -2201,16 +2257,18 @@ determine_max_iter (struct loop *loop, struct niter_desc *desc, rtx old_niter)
   rtx niter = desc->niter_expr;
   rtx mmin, mmax, cmp;
   unsigned HOST_WIDEST_INT nmax, inc;
+  unsigned HOST_WIDEST_INT andmax = 0;
+
+  /* We used to look for constant operand 0 of AND,
+     but canonicalization should always make this impossible.  */
+  gcc_checking_assert (GET_CODE (niter) != AND
+	               || !CONST_INT_P (XEXP (niter, 0)));
 
   if (GET_CODE (niter) == AND
-      && CONST_INT_P (XEXP (niter, 0)))
+      && CONST_INT_P (XEXP (niter, 1)))
     {
-      nmax = INTVAL (XEXP (niter, 0));
-      if (!(nmax & (nmax + 1)))
-	{
-	  desc->niter_max = nmax;
-	  return nmax;
-	}
+      andmax = UINTVAL (XEXP (niter, 1));
+      niter = XEXP (niter, 0);
     }
 
   get_mode_bounds (desc->mode, desc->signed_p, desc->mode, &mmin, &mmax);
@@ -2219,10 +2277,7 @@ determine_max_iter (struct loop *loop, struct niter_desc *desc, rtx old_niter)
   if (GET_CODE (niter) == UDIV)
     {
       if (!CONST_INT_P (XEXP (niter, 1)))
-	{
-	  desc->niter_max = nmax;
-	  return nmax;
-	}
+	return nmax;
       inc = INTVAL (XEXP (niter, 1));
       niter = XEXP (niter, 0);
     }
@@ -2241,8 +2296,13 @@ determine_max_iter (struct loop *loop, struct niter_desc *desc, rtx old_niter)
       if (dump_file)
 	fprintf (dump_file, ";; improved upper bound by one.\n");
     }
-  desc->niter_max = nmax / inc;
-  return nmax / inc;
+  nmax /= inc;
+  if (andmax)
+    nmax = MIN (nmax, andmax);
+  if (dump_file)
+    fprintf (dump_file, ";; Determined upper bound "HOST_WIDEST_INT_PRINT_DEC".\n",
+	     nmax);
+  return nmax;
 }
 
 /* Computes number of iterations of the CONDITION in INSN in LOOP and stores
@@ -2259,7 +2319,7 @@ iv_number_of_iterations (struct loop *loop, rtx insn, rtx condition,
   enum rtx_code cond;
   enum machine_mode mode, comp_mode;
   rtx mmin, mmax, mode_mmin, mode_mmax;
-  unsigned HOST_WIDEST_INT s, size, d, inv;
+  unsigned HOST_WIDEST_INT s, size, d, inv, max;
   HOST_WIDEST_INT up, down, inc, step_val;
   int was_sharp = false;
   rtx old_niter;
@@ -2278,7 +2338,6 @@ iv_number_of_iterations (struct loop *loop, rtx insn, rtx condition,
 
   desc->const_iter = false;
   desc->niter_expr = NULL_RTX;
-  desc->niter_max = 0;
 
   cond = GET_CODE (condition);
   gcc_assert (COMPARISON_P (condition));
@@ -2360,6 +2419,9 @@ iv_number_of_iterations (struct loop *loop, rtx insn, rtx condition,
       iv0.step = simplify_gen_binary (MINUS, comp_mode, iv0.step, iv1.step);
       iv1.step = const0_rtx;
     }
+
+  iv0.step = lowpart_subreg (mode, iv0.step, comp_mode);
+  iv1.step = lowpart_subreg (mode, iv1.step, comp_mode);
 
   /* This is either infinite loop or the one that ends immediately, depending
      on initial values.  Unswitching should remove this kind of conditions.  */
@@ -2471,6 +2533,7 @@ iv_number_of_iterations (struct loop *loop, rtx insn, rtx condition,
 	step = simplify_gen_unary (NEG, comp_mode, iv1.step, comp_mode);
       else
 	step = iv0.step;
+      step = lowpart_subreg (mode, step, comp_mode);
       delta = simplify_gen_binary (MINUS, comp_mode, iv1.base, iv0.base);
       delta = lowpart_subreg (mode, delta, comp_mode);
       delta = simplify_gen_binary (UMOD, mode, delta, step);
@@ -2547,7 +2610,11 @@ iv_number_of_iterations (struct loop *loop, rtx insn, rtx condition,
 	  down = INTVAL (CONST_INT_P (iv0.base)
 			 ? iv0.base
 			 : mode_mmin);
-	  desc->niter_max = (up - down) / inc + 1;
+	  max = (up - down) / inc + 1;
+	  if (!desc->infinite
+	      && !desc->assumptions)
+	    record_niter_bound (loop, double_int::from_uhwi (max),
+			        false, true);
 
 	  if (iv0.step == const0_rtx)
 	    {
@@ -2758,12 +2825,21 @@ iv_number_of_iterations (struct loop *loop, rtx insn, rtx condition,
       unsigned HOST_WIDEST_INT val = INTVAL (desc->niter_expr);
 
       desc->const_iter = true;
-      desc->niter_max = desc->niter = val & GET_MODE_MASK (desc->mode);
+      desc->niter = val & GET_MODE_MASK (desc->mode);
+      if (!desc->infinite
+	  && !desc->assumptions)
+        record_niter_bound (loop, double_int::from_uhwi (desc->niter),
+			    false, true);
     }
   else
     {
-      if (!desc->niter_max)
-	desc->niter_max = determine_max_iter (loop, desc, old_niter);
+      max = determine_max_iter (loop, desc, old_niter);
+      if (!max)
+	goto zero_iter_simplify;
+      if (!desc->infinite
+	  && !desc->assumptions)
+	record_niter_bound (loop, double_int::from_uhwi (max),
+			    false, true);
 
       /* simplify_using_initial_values does a copy propagation on the registers
 	 in the expression for the number of iterations.  This prolongs life
@@ -2788,7 +2864,8 @@ zero_iter_simplify:
 zero_iter:
   desc->const_iter = true;
   desc->niter = 0;
-  desc->niter_max = 0;
+  record_niter_bound (loop, double_int_zero,
+		      true, true);
   desc->noloop_assumptions = NULL_RTX;
   desc->niter_expr = const0_rtx;
   return;
@@ -2922,9 +2999,10 @@ find_simple_exit (struct loop *loop, struct niter_desc *desc)
 	  print_rtl (dump_file, desc->niter_expr);
       	  fprintf (dump_file, "\n");
 
-	  fprintf (dump_file, "  upper bound: ");
-	  fprintf (dump_file, HOST_WIDEST_INT_PRINT_DEC, desc->niter_max);
-      	  fprintf (dump_file, "\n");
+	  fprintf (dump_file, "  upper bound: %li\n",
+		   (long)max_loop_iterations_int (loop));
+	  fprintf (dump_file, "  realistic bound: %li\n",
+		   (long)estimated_loop_iterations_int (loop));
 	}
       else
 	fprintf (dump_file, "Loop %d is not simple.\n", loop->num);

@@ -1,6 +1,6 @@
 // -*- C++ -*- compatibility header.
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -33,7 +33,7 @@
 
 #include <bits/c++config.h>
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
+#if __cplusplus >= 201103L
 
 // For 8.22.1/1 (see C99, Notes 219, 220, 222)
 # if _GLIBCXX_HAVE_STDINT_H
@@ -56,22 +56,48 @@
 #  endif
 # endif
 
-# if defined(_GLIBCXX_INCLUDE_AS_TR1)
-#  error C++0x header cannot be included from TR1 header
-# endif
-# if defined(_GLIBCXX_INCLUDE_AS_CXX0X)
-#  include <tr1_impl/cstdint>
-# else
-#  define _GLIBCXX_INCLUDE_AS_CXX0X
-#  define _GLIBCXX_BEGIN_NAMESPACE_TR1
-#  define _GLIBCXX_END_NAMESPACE_TR1
-#  define _GLIBCXX_TR1
-#  include <tr1_impl/cstdint>
-#  undef _GLIBCXX_TR1
-#  undef _GLIBCXX_END_NAMESPACE_TR1
-#  undef _GLIBCXX_BEGIN_NAMESPACE_TR1
-#  undef _GLIBCXX_INCLUDE_AS_CXX0X
-# endif
+#ifdef _GLIBCXX_USE_C99_STDINT_TR1
+
+namespace std
+{
+  using ::int8_t;
+  using ::int16_t;
+  using ::int32_t;
+  using ::int64_t;
+
+  using ::int_fast8_t;
+  using ::int_fast16_t;
+  using ::int_fast32_t;
+  using ::int_fast64_t;
+
+  using ::int_least8_t;
+  using ::int_least16_t;
+  using ::int_least32_t;
+  using ::int_least64_t;
+
+  using ::intmax_t;
+  using ::intptr_t;
+  
+  using ::uint8_t;
+  using ::uint16_t;
+  using ::uint32_t;
+  using ::uint64_t;
+
+  using ::uint_fast8_t;
+  using ::uint_fast16_t;
+  using ::uint_fast32_t;
+  using ::uint_fast64_t;
+
+  using ::uint_least8_t;
+  using ::uint_least16_t;
+  using ::uint_least32_t;
+  using ::uint_least64_t;
+
+  using ::uintmax_t;
+  using ::uintptr_t;
+} // namespace
+
+#endif // _GLIBCXX_USE_C99_STDINT_TR1
 
 #else
 
@@ -79,6 +105,6 @@
 #  include_next <stdint.h>
 # endif
 
-#endif // __GXX_EXPERIMENTAL_CXX0X__
+#endif // C++11
 
 #endif // _GLIBCXX_STDINT_H

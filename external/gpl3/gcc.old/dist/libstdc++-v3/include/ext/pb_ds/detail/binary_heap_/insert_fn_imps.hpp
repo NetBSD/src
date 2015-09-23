@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file insert_fn_imps.hpp
+ * @file binary_heap_/insert_fn_imps.hpp
  * Contains an implementation class for a binary_heap.
  */
 
@@ -43,11 +43,10 @@ inline typename PB_DS_CLASS_C_DEC::point_iterator
 PB_DS_CLASS_C_DEC::
 push(const_reference r_val)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   insert_value(r_val, s_no_throw_copies_ind);
-  std::push_heap(m_a_entries, m_a_entries + m_size, 
-		 static_cast<entry_cmp&>(*this));
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  push_heap();
+  PB_DS_ASSERT_VALID((*this))
   return point_iterator(m_a_entries);
 }
 
@@ -57,7 +56,6 @@ PB_DS_CLASS_C_DEC::
 insert_value(value_type val, true_type)
 {
   resize_for_insert_if_needed();
-
   m_a_entries[m_size++] = val;
 }
 
@@ -77,15 +75,6 @@ insert_value(const_reference r_val, false_type)
 PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
-insert_entry(entry e)
-{
-  resize_for_insert_if_needed();
-  m_a_entries[m_size++] = e;
-}
-
-PB_DS_CLASS_T_DEC
-inline void
-PB_DS_CLASS_C_DEC::
 resize_for_insert_if_needed()
 {
   if (!resize_policy::resize_needed_for_grow(m_size))
@@ -94,13 +83,15 @@ resize_for_insert_if_needed()
       return;
     }
 
-  const size_type new_actual_size = resize_policy::get_new_size_for_grow();
-  entry_pointer a_new_entries = s_entry_allocator.allocate(new_actual_size);
+  const size_type new_size = resize_policy::get_new_size_for_grow();
+  entry_pointer new_entries = s_entry_allocator.allocate(new_size);
   resize_policy::notify_grow_resize();
-  std::copy(m_a_entries, m_a_entries + m_size, a_new_entries);
+
+  std::copy(m_a_entries, m_a_entries + m_size, new_entries);
   s_entry_allocator.deallocate(m_a_entries, m_actual_size);
-  m_actual_size = new_actual_size;
-  m_a_entries = a_new_entries;
+  m_actual_size = new_size;
+  m_a_entries = new_entries;
+  make_heap();
 }
 
 PB_DS_CLASS_T_DEC
@@ -108,10 +99,11 @@ void
 PB_DS_CLASS_C_DEC::
 modify(point_iterator it, const_reference r_new_val)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   swap_value_imp(it.m_p_e, r_new_val, s_no_throw_copies_ind);
   fix(it.m_p_e);
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
+  _GLIBCXX_DEBUG_ASSERT(is_heap());
 }
 
 PB_DS_CLASS_T_DEC
@@ -123,43 +115,44 @@ fix(entry_pointer p_e)
   if (i > 0 && entry_cmp::operator()(m_a_entries[parent(i)], m_a_entries[i]))
     {
       size_type parent_i = parent(i);
-      while (i > 0 
+      while (i > 0
 	     && entry_cmp::operator()(m_a_entries[parent_i], m_a_entries[i]))
-        {
+	{
 	  std::swap(m_a_entries[i], m_a_entries[parent_i]);
 	  i = parent_i;
 	  parent_i = parent(i);
-        }
+	}
 
-      _GLIBCXX_DEBUG_ONLY(assert_valid();)
+      PB_DS_ASSERT_VALID((*this))
       return;
     }
 
   while (i < m_size)
     {
-      const size_type left_child_i = left_child(i);
-      const size_type right_child_i = right_child(i);
-      _GLIBCXX_DEBUG_ASSERT(right_child_i > left_child_i);
-      const bool smaller_than_left_child = left_child_i < m_size && 
-	entry_cmp::operator()(m_a_entries[i], m_a_entries[left_child_i]);
+      const size_type lchild_i = left_child(i);
+      const size_type rchild_i = right_child(i);
+      _GLIBCXX_DEBUG_ASSERT(rchild_i > lchild_i);
 
-      const bool smaller_than_right_child = right_child_i < m_size && 
-	entry_cmp::operator()(m_a_entries[i], m_a_entries[right_child_i]);
+      const bool smaller_than_lchild = lchild_i < m_size &&
+	entry_cmp::operator()(m_a_entries[i], m_a_entries[lchild_i]);
 
-      const bool swap_with_r_child = smaller_than_right_child && (!smaller_than_left_child || entry_cmp::operator()(m_a_entries[left_child_i], m_a_entries[right_child_i]));
+      const bool smaller_than_rchild = rchild_i < m_size &&
+	entry_cmp::operator()(m_a_entries[i], m_a_entries[rchild_i]);
 
-      const bool swap_with_l_child = !swap_with_r_child && smaller_than_left_child;
+      const bool swap_with_rchild = smaller_than_rchild && (!smaller_than_lchild || entry_cmp::operator()(m_a_entries[lchild_i], m_a_entries[rchild_i]));
 
-      if (swap_with_l_child)
-        {
-	  std::swap(m_a_entries[i], m_a_entries[left_child_i]);
-	  i = left_child_i;
-        }
-      else if (swap_with_r_child)
-        {
-	  std::swap(m_a_entries[i], m_a_entries[right_child_i]);
-	  i = right_child_i;
-        }
+      const bool swap_with_lchild = !swap_with_rchild && smaller_than_lchild;
+
+      if (swap_with_lchild)
+	{
+	  std::swap(m_a_entries[i], m_a_entries[lchild_i]);
+	  i = lchild_i;
+	}
+      else if (swap_with_rchild)
+	{
+	  std::swap(m_a_entries[i], m_a_entries[rchild_i]);
+	  i = rchild_i;
+	}
       else
 	i = m_size;
     }
@@ -169,9 +162,7 @@ PB_DS_CLASS_T_DEC
 inline void
 PB_DS_CLASS_C_DEC::
 swap_value_imp(entry_pointer p_e, value_type new_val, true_type)
-{
-  * p_e = new_val;
-}
+{ *p_e = new_val; }
 
 PB_DS_CLASS_T_DEC
 inline void

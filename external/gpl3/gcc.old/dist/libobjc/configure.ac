@@ -1,6 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-#   Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2001, 2002, 2003, 2004
-#   2005, 2006, 2009 Free Software Foundation, Inc.
+#   Copyright (C) 1994-2013 Free Software Foundation, Inc.
 #   Originally contributed by Dave Love (d.love@dl.ac.uk).
 #
 #This file is part of GCC.
@@ -27,7 +26,7 @@ GCC_TOPLEV_SUBDIRS
 # We need the following definitions because AC_PROG_LIBTOOL relies on them
 PACKAGE=libobjc
 # Version is pulled out to make it a bit easier to change using sed.
-VERSION=2:0:0
+VERSION=4:0:0
 AC_SUBST(VERSION)
 
 # This works around the fact that libtool configuration may change LD
@@ -63,15 +62,18 @@ AC_ARG_ENABLE(objc-gc,
                           the GNU Objective-C runtime.],
 [case $enable_objc_gc in
   no)
+    OBJC_GCFLAGS=''
     OBJC_BOEHM_GC=''
     OBJC_BOEHM_GC_INCLUDES=''
     ;;
   *)
-    OBJC_BOEHM_GC=libobjc_gc.la
+    OBJC_GCFLAGS='-DOBJC_WITH_GC=1'
+    OBJC_BOEHM_GC='libobjc_gc$(libsuffix).la'
     OBJC_BOEHM_GC_INCLUDES='-I$(top_srcdir)/../boehm-gc/include -I../boehm-gc/include'
     ;;
 esac],
-[OBJC_BOEHM_GC=''; OBJC_BOEHM_GC_INCLUDES=''])
+[OBJC_GCFLAGS=''; OBJC_BOEHM_GC=''; OBJC_BOEHM_GC_INCLUDES=''])
+AC_SUBST(OBJC_GCFLAGS)
 AC_SUBST(OBJC_BOEHM_GC)
 AC_SUBST(OBJC_BOEHM_GC_INCLUDES)
 
@@ -156,14 +158,15 @@ AC_PROG_CC
 m4_rename_force([real_PRECIOUS],[_AC_ARG_VAR_PRECIOUS])
 
 # extra LD Flags which are required for targets
+ACX_LT_HOST_FLAGS
 case "${host}" in
   *-darwin*)
     # Darwin needs -single_module when linking libobjc
-    extra_ldflags_libobjc=-Wl,-single_module
+    extra_ldflags_libobjc='$(lt_host_flags) -Wl,-single_module'
     ;;
   *-cygwin*|*-mingw*)
     # Tell libtool to build DLLs on Windows
-    extra_ldflags_libobjc='-no-undefined -bindir $(bindir)'
+    extra_ldflags_libobjc='$(lt_host_flags)'
     ;;
 esac
 AC_SUBST(extra_ldflags_libobjc)
@@ -206,15 +209,8 @@ AC_CHECK_HEADERS(sched.h)
 # Miscellanea
 # -----------
 
-AC_MSG_CHECKING([for thread model used by GCC])
-target_thread_file=`$CC -v 2>&1 | sed -n 's/^Thread model: //p'`
-AC_MSG_RESULT([$target_thread_file]) 
-
-if test $target_thread_file != single; then
-  AC_DEFINE(HAVE_GTHR_DEFAULT, 1,
-        [Define if the compiler has a thread header that is non single.])
-fi 
-
+# Check if we have thread-local storage
+GCC_CHECK_TLS
 
 AC_MSG_CHECKING([for exception model to use])
 AC_LANG_PUSH(C)

@@ -1,6 +1,5 @@
 /* Target definitions for GNU compiler for PowerPC running System V.4
-   Copyright (C) 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
-   2004, 2005, 2006, 2007, 2008, 2009  Free Software Foundation, Inc.
+   Copyright (C) 1995-2013 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of GCC.
@@ -41,21 +40,12 @@
 #undef	ASM_DEFAULT_SPEC
 #define	ASM_DEFAULT_SPEC "-mppc"
 
-/* Small data support types.  */
-enum rs6000_sdata_type {
-  SDATA_NONE,			/* No small data support.  */
-  SDATA_DATA,			/* Just put data in .sbss/.sdata, don't use relocs.  */
-  SDATA_SYSV,			/* Use r13 to point to .sdata/.sbss.  */
-  SDATA_EABI			/* Use r13 like above, r2 points to .sdata2/.sbss2.  */
-};
-
-extern enum rs6000_sdata_type rs6000_sdata;
-
-#define	TARGET_TOC		((target_flags & MASK_64BIT)		\
-				 || ((target_flags & (MASK_RELOCATABLE	\
-						      | MASK_MINIMAL_TOC)) \
+#define	TARGET_TOC		((rs6000_isa_flags & OPTION_MASK_64BIT)	\
+				 || ((rs6000_isa_flags			\
+				      & (OPTION_MASK_RELOCATABLE	\
+					 | OPTION_MASK_MINIMAL_TOC))	\
 				     && flag_pic > 1)			\
-				 || DEFAULT_ABI == ABI_AIX)
+				 || DEFAULT_ABI != ABI_V4)
 
 #define	TARGET_BITFIELD_TYPE	(! TARGET_NO_BITFIELD_TYPE)
 #define	TARGET_BIG_ENDIAN	(! TARGET_LITTLE_ENDIAN)
@@ -70,24 +60,14 @@ extern enum rs6000_sdata_type rs6000_sdata;
 #define TARGET_SECURE_PLT	secure_plt
 #endif
 
-extern const char *rs6000_abi_name;
-extern const char *rs6000_sdata_name;
-extern const char *rs6000_tls_size_string; /* For -mtls-size= */
-
 #define SDATA_DEFAULT_SIZE 8
 
-/* Sometimes certain combinations of command options do not make sense
-   on a particular target machine.  You can define a macro
-   `OVERRIDE_OPTIONS' to take account of this.  This macro, if
-   defined, is executed once just after all the command options have
-   been parsed.
-
-   The macro SUBTARGET_OVERRIDE_OPTIONS is provided for subtargets, to
-   get control.  */
+/* The macro SUBTARGET_OVERRIDE_OPTIONS is provided for subtargets, to
+   get control in TARGET_OPTION_OVERRIDE.  */
 
 #define SUBTARGET_OVERRIDE_OPTIONS					\
 do {									\
-  if (!g_switch_set)							\
+  if (!global_options_set.x_g_switch_value)				\
     g_switch_value = SDATA_DEFAULT_SIZE;				\
 									\
   if (rs6000_abi_name == NULL)						\
@@ -98,27 +78,24 @@ do {									\
   else if (!strcmp (rs6000_abi_name, "sysv-noeabi"))			\
     {									\
       rs6000_current_abi = ABI_V4;					\
-      target_flags &= ~ MASK_EABI;					\
+      rs6000_isa_flags &= ~ OPTION_MASK_EABI;				\
     }									\
   else if (!strcmp (rs6000_abi_name, "sysv-eabi")			\
 	   || !strcmp (rs6000_abi_name, "eabi"))			\
     {									\
       rs6000_current_abi = ABI_V4;					\
-      target_flags |= MASK_EABI;					\
+      rs6000_isa_flags |= OPTION_MASK_EABI;				\
     }									\
   else if (!strcmp (rs6000_abi_name, "aixdesc"))			\
     rs6000_current_abi = ABI_AIX;					\
-  else if (!strcmp (rs6000_abi_name, "freebsd"))			\
-    rs6000_current_abi = ABI_V4;					\
-  else if (!strcmp (rs6000_abi_name, "linux"))				\
+  else if (!strcmp (rs6000_abi_name, "freebsd")				\
+	   || !strcmp (rs6000_abi_name, "linux"))			\
     {									\
       if (TARGET_64BIT)							\
 	rs6000_current_abi = ABI_AIX;					\
       else								\
 	rs6000_current_abi = ABI_V4;					\
     }									\
-  else if (!strcmp (rs6000_abi_name, "gnu"))				\
-    rs6000_current_abi = ABI_V4;					\
   else if (!strcmp (rs6000_abi_name, "netbsd"))				\
     {									\
       if (TARGET_64BIT)							\
@@ -131,8 +108,8 @@ do {									\
   else if (!strcmp (rs6000_abi_name, "i960-old"))			\
     {									\
       rs6000_current_abi = ABI_V4;					\
-      target_flags |= (MASK_LITTLE_ENDIAN | MASK_EABI);			\
-      target_flags &= ~MASK_STRICT_ALIGN;				\
+      rs6000_isa_flags |= (OPTION_MASK_LITTLE_ENDIAN | OPTION_MASK_EABI); \
+      rs6000_isa_flags &= ~OPTION_MASK_STRICT_ALIGN;			\
       TARGET_NO_BITFIELD_WORD = 1;					\
     }									\
   else									\
@@ -175,7 +152,7 @@ do {									\
 	     rs6000_sdata_name);					\
     }									\
 									\
-  else if (flag_pic && DEFAULT_ABI != ABI_AIX				\
+  else if (flag_pic && DEFAULT_ABI == ABI_V4				\
 	   && (rs6000_sdata == SDATA_EABI				\
 	       || rs6000_sdata == SDATA_SYSV))				\
     {									\
@@ -197,28 +174,22 @@ do {									\
 									\
   if (TARGET_RELOCATABLE && !TARGET_MINIMAL_TOC)			\
     {									\
-      target_flags |= MASK_MINIMAL_TOC;					\
+      rs6000_isa_flags |= OPTION_MASK_MINIMAL_TOC;			\
       error ("-mrelocatable and -mno-minimal-toc are incompatible");	\
     }									\
 									\
-  if (TARGET_RELOCATABLE && rs6000_current_abi == ABI_AIX)		\
+  if (TARGET_RELOCATABLE && rs6000_current_abi != ABI_V4)		\
     {									\
-      target_flags &= ~MASK_RELOCATABLE;				\
+      rs6000_isa_flags &= ~OPTION_MASK_RELOCATABLE;			\
       error ("-mrelocatable and -mcall-%s are incompatible",		\
 	     rs6000_abi_name);						\
     }									\
 									\
-  if (!TARGET_64BIT && flag_pic > 1 && rs6000_current_abi == ABI_AIX)	\
+  if (!TARGET_64BIT && flag_pic > 1 && rs6000_current_abi != ABI_V4)	\
     {									\
       flag_pic = 0;							\
       error ("-fPIC and -mcall-%s are incompatible",			\
 	     rs6000_abi_name);						\
-    }									\
-									\
-  if (rs6000_current_abi == ABI_AIX && TARGET_LITTLE_ENDIAN)		\
-    {									\
-      target_flags &= ~MASK_LITTLE_ENDIAN;				\
-      error ("-mcall-aixdesc must be big endian");			\
     }									\
 									\
   if (TARGET_SECURE_PLT != secure_plt)					\
@@ -227,36 +198,33 @@ do {									\
     }									\
 									\
   /* Treat -fPIC the same as -mrelocatable.  */				\
-  if (flag_pic > 1 && DEFAULT_ABI != ABI_AIX)				\
+  if (flag_pic > 1 && DEFAULT_ABI == ABI_V4)				\
     {									\
-      target_flags |= MASK_RELOCATABLE | MASK_MINIMAL_TOC;		\
+      rs6000_isa_flags |= OPTION_MASK_RELOCATABLE | OPTION_MASK_MINIMAL_TOC; \
       TARGET_NO_FP_IN_TOC = 1;						\
     }									\
 									\
   else if (TARGET_RELOCATABLE)						\
-    flag_pic = 2;							\
+    if (!flag_pic)							\
+      flag_pic = 2;							\
 } while (0)
 
 #ifndef RS6000_BI_ARCH
 # define SUBSUBTARGET_OVERRIDE_OPTIONS					\
 do {									\
-  if ((TARGET_DEFAULT ^ target_flags) & MASK_64BIT)			\
+  if ((TARGET_DEFAULT ^ rs6000_isa_flags) & OPTION_MASK_64BIT)		\
     error ("-m%s not supported in this configuration",			\
-	   (target_flags & MASK_64BIT) ? "64" : "32");			\
+	   (rs6000_isa_flags & OPTION_MASK_64BIT) ? "64" : "32");	\
 } while (0)
 #endif
 
 /* Override rs6000.h definition.  */
 #undef	TARGET_DEFAULT
-#define	TARGET_DEFAULT (MASK_POWERPC | MASK_NEW_MNEMONICS)
+#define	TARGET_DEFAULT 0
 
 /* Override rs6000.h definition.  */
 #undef	PROCESSOR_DEFAULT
 #define	PROCESSOR_DEFAULT PROCESSOR_PPC750
-
-/* SVR4 only defined for PowerPC, so short-circuit POWER patterns.  */
-#undef  TARGET_POWER
-#define TARGET_POWER 0
 
 #define FIXED_R2 1
 /* System V.4 uses register 13 as a pointer to the small data area,
@@ -269,24 +237,6 @@ do {									\
 #define	BYTES_BIG_ENDIAN (TARGET_BIG_ENDIAN)
 #define	WORDS_BIG_ENDIAN (TARGET_BIG_ENDIAN)
 
-/* Define this to set the endianness to use in libgcc2.c, which can
-   not depend on target_flags.  */
-#if !defined(__LITTLE_ENDIAN__) && !defined(__sun__)
-#define LIBGCC2_WORDS_BIG_ENDIAN 1
-#else
-#define LIBGCC2_WORDS_BIG_ENDIAN 0
-#endif
-
-/* Define cutoff for using external functions to save floating point.
-   When optimizing for size, use external functions when profitable.  */
-#define FP_SAVE_INLINE(FIRST_REG) (optimize_size			\
-				   ? ((FIRST_REG) == 62			\
-				      || (FIRST_REG) == 63)		\
-				   : (FIRST_REG) < 64)
-/* And similarly for general purpose registers.  */
-#define GP_SAVE_INLINE(FIRST_REG) ((FIRST_REG) < 32	\
-				   && !optimize_size)
-
 /* Put jump tables in read-only memory, rather than in .text.  */
 #define JUMP_TABLES_IN_TEXT_SECTION 0
 
@@ -298,16 +248,16 @@ do {									\
 #define	RESTORE_FP_PREFIX "_restfpr_"
 #define RESTORE_FP_SUFFIX ""
 
+/* Type used for size_t, as a string used in a declaration.  */
+#undef  SIZE_TYPE
+#define SIZE_TYPE "unsigned int"
+
 /* Type used for ptrdiff_t, as a string used in a declaration.  */
 #define PTRDIFF_TYPE "int"
 
-/* Type used for wchar_t, as a string used in a declaration.  */
-/* Override svr4.h definition.  */
 #undef	WCHAR_TYPE
 #define WCHAR_TYPE "long int"
 
-/* Width of wchar_t in bits.  */
-/* Override svr4.h definition.  */
 #undef	WCHAR_TYPE_SIZE
 #define WCHAR_TYPE_SIZE 32
 
@@ -347,7 +297,7 @@ do {									\
 /* An expression for the alignment of a structure field FIELD if the
    alignment computed in the usual way is COMPUTED.  */
 #define ADJUST_FIELD_ALIGN(FIELD, COMPUTED)				      \
-	((TARGET_ALTIVEC && TREE_CODE (TREE_TYPE (FIELD)) == VECTOR_TYPE)     \
+	(rs6000_special_adjust_field_align_p ((FIELD), (COMPUTED))	      \
 	 ? 128 : COMPUTED)
 
 #undef  BIGGEST_FIELD_ALIGNMENT
@@ -372,7 +322,7 @@ do {									\
 
 /* Put PC relative got entries in .got2.  */
 #define	MINIMAL_TOC_SECTION_ASM_OP \
-  (TARGET_RELOCATABLE || (flag_pic && DEFAULT_ABI != ABI_AIX)		\
+  (TARGET_RELOCATABLE || (flag_pic && DEFAULT_ABI == ABI_V4)		\
    ? "\t.section\t\".got2\",\"aw\"" : "\t.section\t\".got1\",\"aw\"")
 
 #define	SDATA_SECTION_ASM_OP "\t.section\t\".sdata\",\"aw\""
@@ -431,8 +381,6 @@ do {									\
 
 #define	LOCAL_LABEL_PREFIX "."
 #define	USER_LABEL_PREFIX ""
-
-/* svr4.h overrides (*targetm.asm_out.internal_label).  */
 
 #define	ASM_OUTPUT_INTERNAL_LABEL_PREFIX(FILE,PREFIX)	\
   asm_fprintf (FILE, "%L%s", PREFIX)
@@ -502,7 +450,7 @@ do {									\
 do {									\
   if (DEFAULT_ABI == ABI_V4)						\
     asm_fprintf (FILE,							\
-		 "\t{stu|stwu} %s,-16(%s)\n\t{st|stw} %s,12(%s)\n",	\
+		 "\tstwu %s,-16(%s)\n\tstw %s,12(%s)\n",	\
 		 reg_names[1], reg_names[1], reg_names[REGNO],		\
 		 reg_names[1]);						\
 } while (0)
@@ -514,21 +462,10 @@ do {									\
 do {									\
   if (DEFAULT_ABI == ABI_V4)						\
     asm_fprintf (FILE,							\
-		 "\t{l|lwz} %s,12(%s)\n\t{ai|addic} %s,%s,16\n",	\
+		 "\tlwz %s,12(%s)\n\taddic %s,%s,16\n",	\
 		 reg_names[REGNO], reg_names[1], reg_names[1],		\
 		 reg_names[1]);						\
 } while (0)
-
-/* Switch  Recognition by gcc.c.  Add -G xx support.  */
-
-/* Override svr4.h definition.  */
-#undef	SWITCH_TAKES_ARG
-#define	SWITCH_TAKES_ARG(CHAR)						\
-  ((CHAR) == 'D' || (CHAR) == 'U' || (CHAR) == 'o'			\
-   || (CHAR) == 'e' || (CHAR) == 'T' || (CHAR) == 'u'			\
-   || (CHAR) == 'I' || (CHAR) == 'm' || (CHAR) == 'x'			\
-   || (CHAR) == 'L' || (CHAR) == 'A' || (CHAR) == 'V'			\
-   || (CHAR) == 'B' || (CHAR) == 'b' || (CHAR) == 'G')
 
 extern int fixuplabelno;
 
@@ -559,16 +496,12 @@ extern int fixuplabelno;
 #define	DBX_FUNCTION_FIRST
 
 /* This is the end of what might become sysv4dbx.h.  */
-
-#ifndef	TARGET_VERSION
-#define	TARGET_VERSION fprintf (stderr, " (PowerPC System V.4)");
-#endif
 
 #define TARGET_OS_SYSV_CPP_BUILTINS()		\
   do						\
     {						\
-      if (target_flags_explicit			\
-	  & MASK_RELOCATABLE)			\
+      if (rs6000_isa_flags_explicit		\
+	  & OPTION_MASK_RELOCATABLE)		\
 	builtin_define ("_RELOCATABLE");	\
     }						\
   while (0)
@@ -589,59 +522,36 @@ extern int fixuplabelno;
   while (0)
 #endif
 
-/* Pass various options to the assembler.  */
-/* Override svr4.h definition.  */
+/* Select one of BIG_OPT, LITTLE_OPT or DEFAULT_OPT depending
+   on various -mbig, -mlittle and -mcall- options.  */
+#define ENDIAN_SELECT(BIG_OPT, LITTLE_OPT, DEFAULT_OPT)	\
+"%{mlittle|mlittle-endian:"	LITTLE_OPT ";"	\
+  "mbig|mbig-endian:"		BIG_OPT    ";"	\
+  "mcall-i960-old:"		LITTLE_OPT ";"	\
+  ":"				DEFAULT_OPT "}"
+
+#define DEFAULT_ASM_ENDIAN " -mbig"
+
 #undef	ASM_SPEC
 #define	ASM_SPEC "%(asm_cpu) \
-%{,assembler|,assembler-with-cpp: %{mregnames} %{mno-regnames}}" \
-SVR4_ASM_SPEC \
-"%{mrelocatable} %{mrelocatable-lib} %{fpic|fpie|fPIC|fPIE:-K PIC} \
-%{memb|msdata=eabi: -memb} \
-%{mlittle|mlittle-endian:-mlittle; \
-  mbig|mbig-endian      :-mbig;    \
-  mcall-aixdesc |		   \
-  mcall-freebsd |		   \
-  mcall-netbsd  |		   \
-  mcall-openbsd |		   \
-  mcall-linux   |		   \
-  mcall-gnu             :-mbig;    \
-  mcall-i960-old        :-mlittle}"
-
-#define	CC1_ENDIAN_BIG_SPEC ""
-
-#define	CC1_ENDIAN_LITTLE_SPEC "\
-%{!mstrict-align: %{!mno-strict-align: \
-    %{!mcall-i960-old: \
-	-mstrict-align \
-    } \
-}}"
-
-#define	CC1_ENDIAN_DEFAULT_SPEC "%(cc1_endian_big)"
+%{,assembler|,assembler-with-cpp: %{mregnames} %{mno-regnames}} \
+%{mrelocatable} %{mrelocatable-lib} %{fpic|fpie|fPIC|fPIE:-K PIC} \
+%{memb|msdata=eabi: -memb}" \
+ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 
 #ifndef CC1_SECURE_PLT_DEFAULT_SPEC
 #define CC1_SECURE_PLT_DEFAULT_SPEC ""
 #endif
 
-/* Pass -G xxx to the compiler and set correct endian mode.  */
+/* Pass -G xxx to the compiler.  */
 #undef CC1_SPEC
-#define	CC1_SPEC "%{G*} %(cc1_cpu) \
-%{mlittle|mlittle-endian: %(cc1_endian_little);           \
-  mbig   |mbig-endian   : %(cc1_endian_big);              \
-  mcall-aixdesc |					  \
-  mcall-freebsd |					  \
-  mcall-netbsd  |					  \
-  mcall-openbsd |					  \
-  mcall-linux   |					  \
-  mcall-gnu             : -mbig %(cc1_endian_big);        \
-  mcall-i960-old        : -mlittle %(cc1_endian_little);  \
-                        : %(cc1_endian_default)}          \
-%{meabi: %{!mcall-*: -mcall-sysv }} \
+#define	CC1_SPEC "%{G*} %(cc1_cpu)" \
+"%{meabi: %{!mcall-*: -mcall-sysv }} \
 %{!meabi: %{!mno-eabi: \
     %{mrelocatable: -meabi } \
     %{mcall-freebsd: -mno-eabi } \
     %{mcall-i960-old: -meabi } \
     %{mcall-linux: -mno-eabi } \
-    %{mcall-gnu: -mno-eabi } \
     %{mcall-netbsd: -mno-eabi } \
     %{mcall-openbsd: -mno-eabi }}} \
 %{msdata: -msdata=default} \
@@ -649,23 +559,6 @@ SVR4_ASM_SPEC \
 %{!mbss-plt: %{!msecure-plt: %(cc1_secure_plt_default)}} \
 %{profile: -p} \
 %(cc1_os_netbsd)"
-
-/* Don't put -Y P,<path> for cross compilers.  */
-#ifndef CROSS_DIRECTORY_STRUCTURE
-#define LINK_PATH_SPEC "\
-%{!R*:%{L*:-R %*}} \
-%{!nostdlib: %{!YP,*: \
-    %{compat-bsd: \
-	%{p:-Y P,/usr/ucblib:/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/usr/lib} \
-	%{!p:-Y P,/usr/ucblib:/usr/ccs/lib:/usr/lib}} \
-	%{!R*: %{!L*: -R /usr/ucblib}} \
-    %{!compat-bsd: \
-	%{p:-Y P,/usr/ccs/lib/libp:/usr/lib/libp:/usr/ccs/lib:/usr/lib} \
-	%{!p:-Y P,/usr/ccs/lib:/usr/lib}}}}"
-
-#else
-#define LINK_PATH_SPEC ""
-#endif
 
 /* Default starting address if specified.  */
 #define LINK_START_SPEC "\
@@ -675,54 +568,31 @@ SVR4_ASM_SPEC \
   msim         : %(link_start_sim)         ; \
   mcall-freebsd: %(link_start_freebsd)     ; \
   mcall-linux  : %(link_start_linux)       ; \
-  mcall-gnu    : %(link_start_gnu)         ; \
   mcall-netbsd : %(link_start_netbsd)      ; \
   mcall-openbsd: %(link_start_openbsd)     ; \
                : %(link_start_default)     }"
 
 #define LINK_START_DEFAULT_SPEC ""
 
-/* Override svr4.h definition.  */
 #undef	LINK_SPEC
 #define	LINK_SPEC "\
 %{h*} %{v:-V} %{!msdata=none:%{G*}} %{msdata=none:-G0} \
-%{YP,*} %{R*} \
-%{Qy:} %{!Qn:-Qy} \
+%{R*} \
 %(link_shlib) \
-%{!Wl,-T*: %{!T*: %(link_start) }} \
+%{!T*: %(link_start) } \
 %(link_target) \
 %(link_os)"
 
-/* For now, turn off shared libraries by default.  */
-#ifndef SHARED_LIB_SUPPORT
-#define NO_SHARED_LIB_SUPPORT
-#endif
-
-#ifndef NO_SHARED_LIB_SUPPORT
-/* Shared libraries are default.  */
-#define LINK_SHLIB_SPEC "\
-%{!static: %(link_path) %{!R*:%{L*:-R %*}}} \
-%{mshlib: } \
-%{static:-dn -Bstatic} \
-%{shared:-G -dy -z text} \
-%{symbolic:-Bsymbolic -G -dy -z text}"
-
-#else
 /* Shared libraries are not default.  */
 #define LINK_SHLIB_SPEC "\
-%{mshlib: %(link_path) } \
 %{!mshlib: %{!shared: %{!symbolic: -dn -Bstatic}}} \
 %{static: } \
-%{shared:-G -dy -z text %(link_path) } \
-%{symbolic:-Bsymbolic -G -dy -z text %(link_path) }"
-#endif
+%{shared:-G -dy -z text } \
+%{symbolic:-Bsymbolic -G -dy -z text }"
 
 /* Override the default target of the linker.  */
-#define	LINK_TARGET_SPEC "\
-%{mlittle: --oformat elf32-powerpcle } %{mlittle-endian: --oformat elf32-powerpcle } \
-%{!mlittle: %{!mlittle-endian: %{!mbig: %{!mbig-endian: \
-    %{mcall-i960-old: --oformat elf32-powerpcle} \
-  }}}}"
+#define	LINK_TARGET_SPEC \
+  ENDIAN_SELECT("", " --oformat elf32-powerpcle", "")
 
 /* Any specific OS flags.  */
 #define LINK_OS_SPEC "\
@@ -732,7 +602,6 @@ SVR4_ASM_SPEC \
   msim         : %(link_os_sim)         ; \
   mcall-freebsd: %(link_os_freebsd)     ; \
   mcall-linux  : %(link_os_linux)       ; \
-  mcall-gnu    : %(link_os_gnu)         ; \
   mcall-netbsd : %(link_os_netbsd)      ; \
   mcall-openbsd: %(link_os_openbsd)     ; \
                : %(link_os_default)     }"
@@ -751,14 +620,12 @@ SVR4_ASM_SPEC \
   msim         : %(cpp_os_sim)         ; \
   mcall-freebsd: %(cpp_os_freebsd)     ; \
   mcall-linux  : %(cpp_os_linux)       ; \
-  mcall-gnu    : %(cpp_os_gnu)         ; \
   mcall-netbsd : %(cpp_os_netbsd)      ; \
   mcall-openbsd: %(cpp_os_openbsd)     ; \
                : %(cpp_os_default)     }"
 
 #define	CPP_OS_DEFAULT_SPEC ""
 
-/* Override svr4.h definition.  */
 #undef	STARTFILE_SPEC
 #define	STARTFILE_SPEC "\
 %{mads         : %(startfile_ads)         ; \
@@ -767,14 +634,12 @@ SVR4_ASM_SPEC \
   msim         : %(startfile_sim)         ; \
   mcall-freebsd: %(startfile_freebsd)     ; \
   mcall-linux  : %(startfile_linux)       ; \
-  mcall-gnu    : %(startfile_gnu)         ; \
   mcall-netbsd : %(startfile_netbsd)      ; \
   mcall-openbsd: %(startfile_openbsd)     ; \
                : %(startfile_default)     }"
 
 #define	STARTFILE_DEFAULT_SPEC "ecrti.o%s crtbegin.o%s"
 
-/* Override svr4.h definition.  */
 #undef	LIB_SPEC
 #define	LIB_SPEC "\
 %{mads         : %(lib_ads)         ; \
@@ -783,14 +648,12 @@ SVR4_ASM_SPEC \
   msim         : %(lib_sim)         ; \
   mcall-freebsd: %(lib_freebsd)     ; \
   mcall-linux  : %(lib_linux)       ; \
-  mcall-gnu    : %(lib_gnu)         ; \
   mcall-netbsd : %(lib_netbsd)      ; \
   mcall-openbsd: %(lib_openbsd)     ; \
                : %(lib_default)     }"
 
 #define LIB_DEFAULT_SPEC "-lc"
 
-/* Override svr4.h definition.  */
 #undef	ENDFILE_SPEC
 #define	ENDFILE_SPEC "\
 %{mads         : %(endfile_ads)         ; \
@@ -799,7 +662,6 @@ SVR4_ASM_SPEC \
   msim         : %(endfile_sim)         ; \
   mcall-freebsd: %(endfile_freebsd)     ; \
   mcall-linux  : %(endfile_linux)       ; \
-  mcall-gnu    : %(endfile_gnu)         ; \
   mcall-netbsd : %(endfile_netbsd)      ; \
   mcall-openbsd: %(endfile_openbsd)     ; \
                : %(crtsavres_default) %(endfile_default)     }"
@@ -872,14 +734,14 @@ SVR4_ASM_SPEC \
 #define LINK_START_FREEBSD_SPEC	""
 
 #define LINK_OS_FREEBSD_SPEC "\
-  %{p:%nconsider using `-pg' instead of `-p' with gprof(1)} \
+  %{p:%nconsider using '-pg' instead of '-p' with gprof(1)} \
   %{v:-V} \
   %{assert*} %{R*} %{rpath*} %{defsym*} \
   %{shared:-Bshareable %{h*} %{soname*}} \
   %{!shared: \
     %{!static: \
       %{rdynamic: -export-dynamic} \
-      %{!dynamic-linker:-dynamic-linker %(fbsd_dynamic_linker) }} \
+      -dynamic-linker %(fbsd_dynamic_linker) } \
     %{static:-Bstatic}} \
   %{symbolic:-Bsymbolic}"
 
@@ -908,17 +770,19 @@ SVR4_ASM_SPEC \
 
 #define GLIBC_DYNAMIC_LINKER "/lib/ld.so.1"
 #define UCLIBC_DYNAMIC_LINKER "/lib/ld-uClibc.so.0"
-#if UCLIBC_DEFAULT
-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{mglibc:%{muclibc:%e-mglibc and -muclibc used together}" G ";:" U "}"
+#if DEFAULT_LIBC == LIBC_UCLIBC
+#define CHOOSE_DYNAMIC_LINKER(G, U) "%{mglibc:" G ";:" U "}"
+#elif !defined (DEFAULT_LIBC) || DEFAULT_LIBC == LIBC_GLIBC
+#define CHOOSE_DYNAMIC_LINKER(G, U) "%{muclibc:" U ";:" G "}"
 #else
-#define CHOOSE_DYNAMIC_LINKER(G, U) "%{muclibc:%{mglibc:%e-mglibc and -muclibc used together}" U ";:" G "}"
+#error "Unsupported DEFAULT_LIBC"
 #endif
-#define LINUX_DYNAMIC_LINKER \
+#define GNU_USER_DYNAMIC_LINKER \
   CHOOSE_DYNAMIC_LINKER (GLIBC_DYNAMIC_LINKER, UCLIBC_DYNAMIC_LINKER)
 
 #define LINK_OS_LINUX_SPEC "-m elf32ppclinux %{!shared: %{!static: \
   %{rdynamic:-export-dynamic} \
-  %{!dynamic-linker:-dynamic-linker " LINUX_DYNAMIC_LINKER "}}}"
+  -dynamic-linker " GNU_USER_DYNAMIC_LINKER "}}"
 
 #if defined(HAVE_LD_EH_FRAME_HDR) && !defined(LINK_EH_SPEC)
 # define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
@@ -930,31 +794,6 @@ SVR4_ASM_SPEC \
     %{!std=*:-Dunix -D__unix -Dlinux -D__linux}			  \
     %{std=gnu*:-Dunix -D__unix -Dlinux -D__linux}}}		  \
 -Asystem=linux -Asystem=unix -Asystem=posix %{pthread:-D_REENTRANT}"
-
-/* GNU/Hurd support.  */
-#define LIB_GNU_SPEC "%{mnewlib: --start-group -lgnu -lc --end-group } \
-%{!mnewlib: %{shared:-lc} %{!shared: %{pthread:-lpthread } \
-%{profile:-lc_p} %{!profile:-lc}}}"
-
-#define	STARTFILE_GNU_SPEC "\
-%{!shared: %{!static: %{pg:gcrt1.o%s} %{!pg:%{p:gcrt1.o%s} %{!p:crt1.o%s}}}} \
-%{static: %{pg:gcrt0.o%s} %{!pg:%{p:gcrt0.o%s} %{!p:crt0.o%s}}} \
-%{mnewlib: ecrti.o%s} %{!mnewlib: crti.o%s} \
-%{!shared:crtbegin.o%s} %{shared:crtbeginS.o%s}"
-
-#define	ENDFILE_GNU_SPEC "%{!shared:crtend.o%s} %{shared:crtendS.o%s} \
-%{mnewlib: ecrtn.o%s} %{!mnewlib: crtn.o%s}"
-
-#define LINK_START_GNU_SPEC ""
-
-#define LINK_OS_GNU_SPEC "-m elf32ppclinux %{!shared: %{!static: \
-  %{rdynamic:-export-dynamic} \
-  %{!dynamic-linker:-dynamic-linker /lib/ld.so.1}}}"
-
-#define CPP_OS_GNU_SPEC "-D__unix__ -D__gnu_hurd__ -D__GNU__	\
-%{!undef:					                \
-  %{!ansi: -Dunix -D__unix}}			                \
--Asystem=gnu -Asystem=unix -Asystem=posix %{pthread:-D_REENTRANT}"
 
 /* NetBSD support.  */
 #define LIB_NETBSD_SPEC NETBSD_LIB_SPEC
@@ -1012,7 +851,6 @@ SVR4_ASM_SPEC \
   { "lib_mvme",			LIB_MVME_SPEC },			\
   { "lib_sim",			LIB_SIM_SPEC },				\
   { "lib_freebsd",		LIB_FREEBSD_SPEC },			\
-  { "lib_gnu",			LIB_GNU_SPEC },				\
   { "lib_linux",		LIB_LINUX_SPEC },			\
   { "lib_netbsd",		LIB_NETBSD_SPEC },			\
   { "lib_openbsd",		LIB_OPENBSD_SPEC },			\
@@ -1022,7 +860,6 @@ SVR4_ASM_SPEC \
   { "startfile_mvme",		STARTFILE_MVME_SPEC },			\
   { "startfile_sim",		STARTFILE_SIM_SPEC },			\
   { "startfile_freebsd",	STARTFILE_FREEBSD_SPEC },		\
-  { "startfile_gnu",		STARTFILE_GNU_SPEC },			\
   { "startfile_linux",		STARTFILE_LINUX_SPEC },			\
   { "startfile_netbsd",		STARTFILE_NETBSD_SPEC },		\
   { "startfile_openbsd",	STARTFILE_OPENBSD_SPEC },		\
@@ -1032,12 +869,10 @@ SVR4_ASM_SPEC \
   { "endfile_mvme",		ENDFILE_MVME_SPEC },			\
   { "endfile_sim",		ENDFILE_SIM_SPEC },			\
   { "endfile_freebsd",		ENDFILE_FREEBSD_SPEC },			\
-  { "endfile_gnu",		ENDFILE_GNU_SPEC },			\
   { "endfile_linux",		ENDFILE_LINUX_SPEC },			\
   { "endfile_netbsd",		ENDFILE_NETBSD_SPEC },			\
   { "endfile_openbsd",		ENDFILE_OPENBSD_SPEC },			\
   { "endfile_default",		ENDFILE_DEFAULT_SPEC },			\
-  { "link_path",		LINK_PATH_SPEC },			\
   { "link_shlib",		LINK_SHLIB_SPEC },			\
   { "link_target",		LINK_TARGET_SPEC },			\
   { "link_start",		LINK_START_SPEC },			\
@@ -1046,7 +881,6 @@ SVR4_ASM_SPEC \
   { "link_start_mvme",		LINK_START_MVME_SPEC },			\
   { "link_start_sim",		LINK_START_SIM_SPEC },			\
   { "link_start_freebsd",	LINK_START_FREEBSD_SPEC },		\
-  { "link_start_gnu",		LINK_START_GNU_SPEC },			\
   { "link_start_linux",		LINK_START_LINUX_SPEC },		\
   { "link_start_netbsd",	LINK_START_NETBSD_SPEC },		\
   { "link_start_openbsd",	LINK_START_OPENBSD_SPEC },		\
@@ -1058,13 +892,9 @@ SVR4_ASM_SPEC \
   { "link_os_sim",		LINK_OS_SIM_SPEC },			\
   { "link_os_freebsd",		LINK_OS_FREEBSD_SPEC },			\
   { "link_os_linux",		LINK_OS_LINUX_SPEC },			\
-  { "link_os_gnu",		LINK_OS_GNU_SPEC },			\
   { "link_os_netbsd",		LINK_OS_NETBSD_SPEC },			\
   { "link_os_openbsd",		LINK_OS_OPENBSD_SPEC },			\
   { "link_os_default",		LINK_OS_DEFAULT_SPEC },			\
-  { "cc1_endian_big",		CC1_ENDIAN_BIG_SPEC },			\
-  { "cc1_endian_little",	CC1_ENDIAN_LITTLE_SPEC },		\
-  { "cc1_endian_default",	CC1_ENDIAN_DEFAULT_SPEC },		\
   { "cc1_secure_plt_default",	CC1_SECURE_PLT_DEFAULT_SPEC },		\
   { "cc1_os_netbsd",		CC1_OS_NETBSD_SPEC },			\
   { "cpp_os_ads",		CPP_OS_ADS_SPEC },			\
@@ -1072,7 +902,6 @@ SVR4_ASM_SPEC \
   { "cpp_os_mvme",		CPP_OS_MVME_SPEC },			\
   { "cpp_os_sim",		CPP_OS_SIM_SPEC },			\
   { "cpp_os_freebsd",		CPP_OS_FREEBSD_SPEC },			\
-  { "cpp_os_gnu",		CPP_OS_GNU_SPEC },			\
   { "cpp_os_linux",		CPP_OS_LINUX_SPEC },			\
   { "cpp_os_netbsd",		CPP_OS_NETBSD_SPEC },			\
   { "cpp_os_openbsd",		CPP_OS_OPENBSD_SPEC },			\
@@ -1101,18 +930,6 @@ SVR4_ASM_SPEC \
 /* Function name to call to do profiling.  */
 #define RS6000_MCOUNT "_mcount"
 
-/* Define this macro (to a value of 1) if you want to support the
-   Win32 style pragmas #pragma pack(push,<n>)' and #pragma
-   pack(pop)'.  The pack(push,<n>) pragma specifies the maximum
-   alignment (in bytes) of fields within a structure, in much the
-   same way as the __aligned__' and __packed__' __attribute__'s
-   do.  A pack value of zero resets the behavior to the default.
-   Successive invocations of this pragma cause the previous values to
-   be stacked, so that invocations of #pragma pack(pop)' will return
-   to the previous value.  */
-
-#define HANDLE_PRAGMA_PACK_PUSH_POP 1
-
 /* Select a format to encode pointers in exception handling data.  CODE
    is 0 for data, 1 for code labels, 2 for function pointers.  GLOBAL is
    true if the symbol may be affected by dynamic relocations.  */
@@ -1126,5 +943,36 @@ SVR4_ASM_SPEC \
 /* Generate entries in .fixup for relocatable addresses.  */
 #define RELOCATABLE_NEEDS_FIXUP 1
 
+#define TARGET_ASM_FILE_END rs6000_elf_file_end
+
+#undef TARGET_ASAN_SHADOW_OFFSET
+#define TARGET_ASAN_SHADOW_OFFSET rs6000_asan_shadow_offset
+
 /* This target uses the sysv4.opt file.  */
 #define TARGET_USES_SYSV4_OPT 1
+
+#undef DBX_REGISTER_NUMBER
+
+/* Link -lasan early on the command line.  For -static-libasan, don't link
+   it for -shared link, the executable should be compiled with -static-libasan
+   in that case, and for executable link link with --{,no-}whole-archive around
+   it to force everything into the executable.  And similarly for -ltsan.  */
+#if defined(HAVE_LD_STATIC_DYNAMIC)
+#undef LIBASAN_EARLY_SPEC
+#define LIBASAN_EARLY_SPEC "%{!shared:libasan_preinit%O%s} " \
+  "%{static-libasan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -lasan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-libasan:-lasan}"
+#undef LIBTSAN_EARLY_SPEC
+#define LIBTSAN_EARLY_SPEC "%{static-libtsan:%{!shared:" \
+  LD_STATIC_OPTION " --whole-archive -ltsan --no-whole-archive " \
+  LD_DYNAMIC_OPTION "}}%{!static-libtsan:-ltsan}"
+#endif
+
+/* Additional libraries needed by -static-libasan.  */
+#undef STATIC_LIBASAN_LIBS
+#define STATIC_LIBASAN_LIBS "-ldl -lpthread"
+
+/* Additional libraries needed by -static-libtsan.  */
+#undef STATIC_LIBTSAN_LIBS
+#define STATIC_LIBTSAN_LIBS "-ldl -lpthread"

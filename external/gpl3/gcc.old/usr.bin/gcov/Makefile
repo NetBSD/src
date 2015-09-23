@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.1 2014/02/25 18:42:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.2 2015/09/23 03:03:40 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -11,10 +11,22 @@ BINDIR=		/usr/bin
 
 MAN=		gcov.1
 
+HOSTPROG_CXX=	1
+
 .include <bsd.prog.mk>
 
-LDADD=		-L${LIBIBERTYOBJ} -liberty -lintl
+# Force using C++ for this
+HOST_CC:=	${HOST_CXX}
+CC:=		${CXX}
+CFLAGS:=	${CXXFLAGS} -Wno-stack-protector
 
-COPTS+=		-Wno-stack-protector
+.include "../Makefile.common"
+.include "../Makefile.libcpp"
+.include "../Makefile.backtrace"
+.include "../Makefile.libiberty"
+.include "../Makefile.libdecnumber"
+
+LDADD+=		-lintl
+DPADD+=		${LIBINTL}
 
 .PATH: ${DIST}/gcc

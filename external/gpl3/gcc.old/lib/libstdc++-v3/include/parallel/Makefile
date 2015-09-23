@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2015/09/23 03:03:39 mrg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.init.mk>
@@ -10,7 +10,9 @@
 INCS=		${G_parallel_headers}
 INCSDIR=	/usr/include/g++/parallel
 
+.include "${.CURDIR}/../Makefile.includes"
+
 # Get default targets including <bsd.inc.mk>.
 .include <bsd.prog.mk>
 
-.PATH: ${DIST}/libstdc++-v3/include/parallel
+.PATH: ${DIST}/libstdc++-v3/include

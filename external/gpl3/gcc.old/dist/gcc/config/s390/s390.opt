@@ -1,6 +1,6 @@
 ; Options for the S/390 / zSeries port of the compiler.
 
-; Copyright (C) 2005, 2006, 2007 Free Software Foundation, Inc.
+; Copyright (C) 2005-2013 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -18,6 +18,22 @@
 ; along with GCC; see the file COPYING3.  If not see
 ; <http://www.gnu.org/licenses/>.
 
+HeaderInclude
+config/s390/s390-opts.h
+
+; The architecture name to use in diagnostics.
+Variable
+const char *s390_arch_string
+
+Variable
+int s390_tune_flags
+
+Variable
+int s390_arch_flags
+
+Variable
+HOST_WIDE_INT s390_warn_framesize = 0
+
 m31
 Target Report RejectNegative Negative(m64) InverseMask(64BIT)
 31 bit ABI
@@ -27,8 +43,38 @@ Target Report RejectNegative Negative(m31) Mask(64BIT)
 64 bit ABI
 
 march=
-Target RejectNegative Joined Var(s390_arch_string)
+Target RejectNegative Joined Enum(processor_type) Var(s390_arch) Init(PROCESSOR_max)
 Generate code for given CPU
+
+Enum
+Name(processor_type) Type(enum processor_type)
+
+EnumValue
+Enum(processor_type) String(g5) Value(PROCESSOR_9672_G5)
+
+EnumValue
+Enum(processor_type) String(g6) Value(PROCESSOR_9672_G6)
+
+EnumValue
+Enum(processor_type) String(z900) Value(PROCESSOR_2064_Z900)
+
+EnumValue
+Enum(processor_type) String(z990) Value(PROCESSOR_2084_Z990)
+
+EnumValue
+Enum(processor_type) String(z9-109) Value(PROCESSOR_2094_Z9_109)
+
+EnumValue
+Enum(processor_type) String(z9-ec) Value(PROCESSOR_2094_Z9_EC)
+
+EnumValue
+Enum(processor_type) String(z10) Value(PROCESSOR_2097_Z10)
+
+EnumValue
+Enum(processor_type) String(z196) Value(PROCESSOR_2817_Z196)
+
+EnumValue
+Enum(processor_type) String(zEC12) Value(PROCESSOR_2827_ZEC12)
 
 mbackchain
 Target Report Mask(BACKCHAIN)
@@ -42,10 +88,6 @@ mesa
 Target Report RejectNegative Negative(mzarch) InverseMask(ZARCH)
 ESA/390 architecture
 
-mfused-madd
-Target Report Mask(FUSED_MADD)
-Enable fused multiply/add instructions
-
 mhard-dfp
 Target Report Mask(HARD_DFP)
 Enable decimal floating point hardware support
@@ -54,6 +96,16 @@ mhard-float
 Target Report RejectNegative Negative(msoft-float) InverseMask(SOFT_FLOAT, HARD_FLOAT)
 Enable hardware floating point
 
+mhotpatch=
+Target RejectNegative Report Joined Var(s390_deferred_options) Defer
+Takes two non-negative integer numbers separated by a comma.
+Prepend the function label with the number of two-byte Nop
+instructions indicated by the first.  Append Nop instructions
+covering the number of halfwords indicated by the second after the
+label.  Nop instructions of the largest possible size are used
+(six, four or two bytes), beginning with the largest possible
+size.  Using 0 for both values disables hotpatching.
+
 mlong-double-128
 Target Report RejectNegative Negative(mlong-double-64) Mask(LONG_DOUBLE_128)
 Use 128-bit long double
@@ -61,6 +113,10 @@ Use 128-bit long double
 mlong-double-64
 Target Report RejectNegative Negative(mlong-double-128) InverseMask(LONG_DOUBLE_128)
 Use 64-bit long double
+
+mhtm
+Target Report Mask(OPT_HTM)
+Use hardware transactional execution instructions
 
 mpacked-stack
 Target Report Mask(PACKED_STACK)
@@ -75,15 +131,15 @@ Target Report RejectNegative Negative(mhard-float) Mask(SOFT_FLOAT)
 Disable hardware floating point
 
 mstack-guard=
-Target RejectNegative Joined
+Target RejectNegative Joined UInteger Var(s390_stack_guard)
 Set the max. number of bytes which has to be left to stack size before a trap instruction is triggered
 
 mstack-size=
-Target RejectNegative Joined
+Target RejectNegative Joined UInteger Var(s390_stack_size)
 Emit extra code in the function prologue in order to trap if the stack size exceeds the given limit
 
 mtune=
-Target RejectNegative Joined
+Target RejectNegative Joined Enum(processor_type) Var(s390_tune) Init(PROCESSOR_max)
 Schedule code for given CPU
 
 mmvcle
@@ -101,3 +157,9 @@ Warn if a single function's framesize exceeds the given framesize
 mzarch
 Target Report RejectNegative Negative(mesa) Mask(ZARCH)
 z/Architecture
+
+mbranch-cost=
+Target Report Joined RejectNegative UInteger Var(s390_branch_cost) Init(1)
+Set the branch costs for conditional branch instructions.  Reasonable
+values are small, non-negative integers.  The default branch cost is
+1.

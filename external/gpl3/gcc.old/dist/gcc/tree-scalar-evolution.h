@@ -1,5 +1,5 @@
 /* Scalar evolution detector.
-   Copyright (C) 2003, 2004, 2005, 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <s.pop@laposte.net>
 
 This file is part of GCC.
@@ -26,6 +26,7 @@ extern tree number_of_exit_cond_executions (struct loop *);
 extern gimple get_loop_exit_condition (const struct loop *);
 
 extern void scev_initialize (void);
+extern bool scev_initialized_p (void);
 extern void scev_reset (void);
 extern void scev_reset_htab (void);
 extern void scev_finalize (void);

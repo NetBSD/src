@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,7 +34,7 @@
 // warranty.
 
 /**
- * @file insert_fn_imps.hpp
+ * @file rb_tree_map_/insert_fn_imps.hpp
  * Contains an implementation for rb_tree_.
  */
 
@@ -43,16 +43,16 @@ inline std::pair<typename PB_DS_CLASS_C_DEC::point_iterator, bool>
 PB_DS_CLASS_C_DEC::
 insert(const_reference r_value)
 {
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   std::pair<point_iterator, bool> ins_pair = base_type::insert_leaf(r_value);
   if (ins_pair.second == true)
     {
       ins_pair.first.m_p_nd->m_red = true;
-      _GLIBCXX_DEBUG_ONLY(this->structure_only_assert_valid();)
+      PB_DS_STRUCT_ONLY_ASSERT_VALID((*this))
       insert_fixup(ins_pair.first.m_p_nd);
     }
 
-  _GLIBCXX_DEBUG_ONLY(assert_valid();)
+  PB_DS_ASSERT_VALID((*this))
   return ins_pair;
 }
 
@@ -67,7 +67,7 @@ insert_fixup(node_pointer p_nd)
       if (p_nd->m_p_parent == p_nd->m_p_parent->m_p_parent->m_p_left)
         {
 	  node_pointer p_y = p_nd->m_p_parent->m_p_parent->m_p_right;
-	  if (p_y != NULL && p_y->m_red)
+	  if (p_y != 0 && p_y->m_red)
             {
 	      p_nd->m_p_parent->m_red = false;
 	      p_y->m_red = false;
@@ -89,7 +89,7 @@ insert_fixup(node_pointer p_nd)
       else
         {
 	  node_pointer p_y = p_nd->m_p_parent->m_p_parent->m_p_left;
-	  if (p_y != NULL && p_y->m_red)
+	  if (p_y != 0 && p_y->m_red)
             {
 	      p_nd->m_p_parent->m_red = false;
 	      p_y->m_red = false;

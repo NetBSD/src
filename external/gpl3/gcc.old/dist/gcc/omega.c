@@ -5,8 +5,7 @@
    This code has no license restrictions, and is considered public
    domain.
 
-   Changes copyright (C) 2005, 2006, 2007, 2008, 2009 Free Software Foundation,
-   Inc.
+   Changes copyright (C) 2005-2013 Free Software Foundation, Inc.
    Contributed by Sebastian Pop <sebastian.pop@inria.fr>
 
 This file is part of GCC.
@@ -34,12 +33,9 @@ along with GCC; see the file COPYING3.  If not see
 #include "config.h"
 #include "system.h"
 #include "coretypes.h"
-#include "tm.h"
-#include "ggc.h"
 #include "tree.h"
-#include "diagnostic.h"
-#include "varray.h"
-#include "tree-pass.h"
+#include "diagnostic-core.h"
+#include "dumpfile.h"
 #include "omega.h"
 
 /* When set to true, keep substitution variables.  When set to false,
@@ -113,37 +109,6 @@ int_mod (int a, int b)
   return a - b * int_div (a, b);
 }
 
-/* For X and Y positive integers, return X multiplied by Y and check
-   that the result does not overflow.  */
-
-static inline int
-check_pos_mul (int x, int y)
-{
-  if (x != 0)
-    gcc_assert ((INT_MAX) / x > y);
-
-  return x * y;
-}
-
-/* Return X multiplied by Y and check that the result does not
-   overflow.  */
-
-static inline int
-check_mul (int x, int y)
-{
-  if (x >= 0)
-    {
-      if (y >= 0)
-	return check_pos_mul (x, y);
-      else
-	return -check_pos_mul (x, -y);
-    }
-  else if (y >= 0)
-    return -check_pos_mul (-x, y);
-  else
-    return check_pos_mul (-x, -y);
-}
-
 /* Test whether equation E is red.  */
 
 static inline bool
@@ -183,24 +148,6 @@ omega_no_procedure (omega_pb pb ATTRIBUTE_UNUSED)
 }
 
 void (*omega_when_reduced) (omega_pb) = omega_no_procedure;
-
-/* Compute the greatest common divisor of A and B.  */
-
-static inline int
-gcd (int b, int a)
-{
-  if (b == 1)
-    return 1;
-
-  while (b != 0)
-    {
-      int t = b;
-      b = a % b;
-      a = t;
-    }
-
-  return a;
-}
 
 /* Print to FILE from PB equation E with all its coefficients
    multiplied by C.  */
@@ -364,7 +311,7 @@ omega_print_vars (FILE *file, omega_pb pb)
 
 /* Debug problem PB.  */
 
-void
+DEBUG_FUNCTION void
 debug_omega_problem (omega_pb pb)
 {
   omega_print_problem (stderr, pb);
@@ -2214,7 +2161,6 @@ omega_eliminate_redundant (omega_pb pb, bool expensive)
 			  || pb->geqs[e3].color == omega_red)
 			goto nextE3;
 
-		      alpha3 = alpha3;
 		      /* verify alpha1*v1+alpha2*v2 = alpha3*v3 */
 		      for (k = pb->num_vars; k >= 1; k--)
 			if (alpha3 * pb->geqs[e3].coef[k]
@@ -3929,8 +3875,8 @@ omega_solve_geq (omega_pb pb, enum omega_result desired_res)
 	      max_splinters += -minC - 1;
 	    else
 	      max_splinters +=
-		check_pos_mul ((pb->geqs[e].coef[i] - 1),
-			       (-minC - 1)) / (-minC) + 1;
+		pos_mul_hwi ((pb->geqs[e].coef[i] - 1),
+			     (-minC - 1)) / (-minC) + 1;
 	  }
 
       /* #ifdef Omega3 */
@@ -4343,8 +4289,8 @@ omega_solve_geq (omega_pb pb, enum omega_result desired_res)
 
 			for (k = 0; k <= n_vars; k++)
 			  pb->geqs[Ue].coef[k] =
-			    check_mul (pb->geqs[Ue].coef[k], Lc) +
-			    check_mul (lbeqn->coef[k], Uc);
+			    mul_hwi (pb->geqs[Ue].coef[k], Lc) +
+			    mul_hwi (lbeqn->coef[k], Uc);
 
 			if (dump_file && (dump_flags & TDF_DETAILS))
 			  {
@@ -4406,8 +4352,8 @@ omega_solve_geq (omega_pb pb, enum omega_result desired_res)
 
 			      for (k = n_vars; k >= 0; k--)
 				pb->geqs[e2].coef[k] =
-				  check_mul (pb->geqs[Ue].coef[k], Lc) +
-				  check_mul (pb->geqs[Le].coef[k], Uc);
+				  mul_hwi (pb->geqs[Ue].coef[k], Lc) +
+				  mul_hwi (pb->geqs[Le].coef[k], Uc);
 
 			      pb->geqs[e2].coef[n_vars + 1] = 0;
 			      pb->geqs[e2].touched = 1;
@@ -4528,8 +4474,8 @@ omega_solve_geq (omega_pb pb, enum omega_result desired_res)
 			  {
 			    for (k = n_vars; k >= 0; k--)
 			      iS->geqs[e2].coef[k] = rS->geqs[e2].coef[k] =
-				check_mul (pb->geqs[Ue].coef[k], Lc) +
-				check_mul (pb->geqs[Le].coef[k], Uc);
+				mul_hwi (pb->geqs[Ue].coef[k], Lc) +
+				mul_hwi (pb->geqs[Le].coef[k], Uc);
 
 			    iS->geqs[e2].coef[0] -= (Uc - 1) * (Lc - 1);
 			  }

@@ -1,6 +1,6 @@
 // -*- C++ -*- compatibility header.
 
-// Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -36,23 +36,46 @@
 # include_next <fenv.h>
 #endif
 
-#ifdef __GXX_EXPERIMENTAL_CXX0X__
-#  if defined(_GLIBCXX_INCLUDE_AS_TR1)
-#    error C++0x header cannot be included from TR1 header
-#  endif
-#  if defined(_GLIBCXX_INCLUDE_AS_CXX0X)
-#    include <tr1_impl/cfenv>
-#  else
-#    define _GLIBCXX_INCLUDE_AS_CXX0X
-#    define _GLIBCXX_BEGIN_NAMESPACE_TR1
-#    define _GLIBCXX_END_NAMESPACE_TR1
-#    define _GLIBCXX_TR1
-#    include <tr1_impl/cfenv>
-#    undef _GLIBCXX_TR1
-#    undef _GLIBCXX_END_NAMESPACE_TR1
-#    undef _GLIBCXX_BEGIN_NAMESPACE_TR1
-#    undef _GLIBCXX_INCLUDE_AS_CXX0X
-#  endif
-#endif
+#if __cplusplus >= 201103L
+
+#if _GLIBCXX_USE_C99_FENV_TR1
+
+#undef feclearexcept
+#undef fegetexceptflag
+#undef feraiseexcept
+#undef fesetexceptflag
+#undef fetestexcept
+#undef fegetround
+#undef fesetround
+#undef fegetenv
+#undef feholdexcept
+#undef fesetenv
+#undef feupdateenv
+
+namespace std
+{
+  // types
+  using ::fenv_t;
+  using ::fexcept_t;
+
+  // functions
+  using ::feclearexcept;
+  using ::fegetexceptflag;
+  using ::feraiseexcept;
+  using ::fesetexceptflag;
+  using ::fetestexcept;
+
+  using ::fegetround;
+  using ::fesetround;
+
+  using ::fegetenv;
+  using ::feholdexcept;
+  using ::fesetenv;
+  using ::feupdateenv;
+} // namespace
+
+#endif // _GLIBCXX_USE_C99_FENV_TR1
+
+#endif // C++11
 
 #endif // _GLIBCXX_FENV_H

@@ -1,6 +1,6 @@
 // String Conversions -*- C++ -*-
 
-// Copyright (C) 2008, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2008-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -22,20 +22,30 @@
 // see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 // <http://www.gnu.org/licenses/>.
 
+/** @file ext/string_conversions.h
+ *  This file is a GNU extension to the Standard C++ Library.
+ */
+
 #ifndef _STRING_CONVERSIONS_H
 #define _STRING_CONVERSIONS_H 1
 
 #pragma GCC system_header
 
+#if __cplusplus < 201103L
+# include <bits/c++0x_warning.h>
+#else
+
+#include <bits/c++config.h>
 #include <ext/numeric_traits.h>
 #include <bits/functexcept.h>
-#include <cstddef>
 #include <cstdlib>
 #include <cwchar>
 #include <cstdio>
 #include <cerrno>
 
-_GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
+namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
+{
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // Helper for all the sto* functions.
   template<typename _TRet, typename _Ret = _TRet, typename _CharT,
@@ -89,6 +99,9 @@ _GLIBCXX_BEGIN_NAMESPACE(__gnu_cxx)
       return _String(__s, __s + __len);
     }
 
-_GLIBCXX_END_NAMESPACE
+_GLIBCXX_END_NAMESPACE_VERSION
+} // namespace
+
+#endif // C++11
 
 #endif // _STRING_CONVERSIONS_H

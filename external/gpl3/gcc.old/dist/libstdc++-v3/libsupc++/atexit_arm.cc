@@ -1,4 +1,4 @@
-// Copyright (C) 2007, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2007-2013 Free Software Foundation, Inc.
 //  
 // This file is part of GCC.
 //
@@ -23,7 +23,7 @@
 
 #include <cxxabi.h>
 
-#if defined(__arm__) && defined(__ARM_EABI__)
+#if defined(__arm__) && defined(__ARM_EABI__) && !defined(__NetBSD__)
 
 namespace __aeabiv1
 {

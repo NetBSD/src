@@ -1,6 +1,5 @@
 /* Functions to support a pool of allocatable objects
-   Copyright (C) 1997, 1998, 1999, 2000, 2001, 2003, 2004, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1997-2013 Free Software Foundation, Inc.
    Contributed by Daniel Berlin <dan@cgsoftware.com>
 
 This file is part of GCC.
@@ -61,7 +60,7 @@ extern alloc_pool create_alloc_pool (const char *, size_t, size_t);
 extern void free_alloc_pool (alloc_pool);
 extern void empty_alloc_pool (alloc_pool);
 extern void free_alloc_pool_if_empty (alloc_pool *);
-extern void *pool_alloc (alloc_pool);
+extern void *pool_alloc (alloc_pool) ATTRIBUTE_MALLOC;
 extern void pool_free (alloc_pool, void *);
 extern void dump_alloc_pool_statistics (void);
 #endif

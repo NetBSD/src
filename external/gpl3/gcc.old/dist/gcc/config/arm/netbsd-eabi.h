@@ -19,18 +19,8 @@
    <http://www.gnu.org/licenses/>.  */
 
 /* Run-time Target Specification.  */
-#undef TARGET_VERSION
-#define TARGET_VERSION fputs (" (NetBSD/earm ELF)", stderr);
-
 #undef MULTILIB_DEFAULTS
 #define MULTILIB_DEFAULTS { "mabi=aapcs-linux" }
-
-#undef MUST_USE_SJLJ_EXCEPTIONS
-#define MUST_USE_SJLJ_EXCEPTIONS (!TARGET_AAPCS_BASED)
-
-#undef ARM_EABI_UNWIND_TABLES
-#define ARM_EABI_UNWIND_TABLES \
-  ((!USING_SJLJ_EXCEPTIONS && flag_exceptions) || flag_unwind_tables)
 
 #define TARGET_LINKER_EABI_SUFFIX \
     (TARGET_DEFAULT_FLOAT_ABI == ARM_FLOAT_ABI_SOFT \
@@ -50,10 +40,15 @@
 #define TARGET_LINKER_EMULATION TARGET_LINKER_LITTLE_EMULATION
 #endif
 
-#undef MULTILIB_DEFAULTS
-
 #undef ARM_DEFAULT_ABI
 #define ARM_DEFAULT_ABI ARM_ABI_AAPCS_LINUX
+
+#undef ARM_EABI_UNWIND_TABLES
+#define ARM_EABI_UNWIND_TABLES 0
+#undef ARM_UNWIND_INFO
+#define ARM_UNWIND_INFO 0
+#undef ARM_DWARF_UNWIND_TABLES
+#define ARM_DWARF_UNWIND_TABLES 1
 
 #undef TARGET_OS_CPP_BUILTINS
 #define TARGET_OS_CPP_BUILTINS()		\
@@ -62,6 +57,8 @@
       if (TARGET_AAPCS_BASED)			\
 	TARGET_BPABI_CPP_BUILTINS();		\
       NETBSD_OS_CPP_BUILTINS_ELF();		\
+      if (ARM_DWARF_UNWIND_TABLES)		\
+	builtin_define ("__ARM_DWARF_EH__");	\
       if (ARM_EABI_UNWIND_TABLES)		\
 	builtin_define ("__UNWIND_TABLES__");	\
     }						\

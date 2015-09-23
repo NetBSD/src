@@ -132,7 +132,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GFORTRAN 1"
-.TH GFORTRAN 1 "2012-07-02" "gcc-4.5.4" "GNU"
+.TH GFORTRAN 1 "2015-06-23" "gcc-4.8.5" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -155,7 +155,8 @@ remainder.
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 The \fBgfortran\fR command supports all the options supported by the
-\&\fBgcc\fR command.  Only options specific to \s-1GNU\s0 Fortran are documented here.
+\&\fBgcc\fR command.  Only options specific to \s-1GNU\s0 Fortran are documented
+here.
 .PP
 All \s-1GCC\s0 and \s-1GNU\s0 Fortran options
 are accepted both by \fBgfortran\fR and by \fBgcc\fR
@@ -175,32 +176,37 @@ Here is a summary of all the options specific to \s-1GNU\s0 Fortran, grouped
 by type.  Explanations are in the following sections.
 .IP "\fIFortran Language Options\fR" 4
 .IX Item "Fortran Language Options"
-\&\fB\-fall\-intrinsics  \-ffree\-form  \-fno\-fixed\-form 
-\&\-fdollar\-ok  \-fimplicit\-none  \-fmax\-identifier\-length 
-\&\-std=\fR\fIstd\fR \fB\-fd\-lines\-as\-code  \-fd\-lines\-as\-comments 
-\&\-ffixed\-line\-length\-\fR\fIn\fR  \fB\-ffixed\-line\-length\-none 
-\&\-ffree\-line\-length\-\fR\fIn\fR  \fB\-ffree\-line\-length\-none 
-\&\-fdefault\-double\-8  \-fdefault\-integer\-8  \-fdefault\-real\-8 
-\&\-fcray\-pointer  \-fopenmp  \-fno\-range\-check \-fbackslash \-fmodule\-private\fR
+\&\fB\-fall\-intrinsics \-fbackslash \-fcray\-pointer \-fd\-lines\-as\-code 
+\&\-fd\-lines\-as\-comments \-fdefault\-double\-8 \-fdefault\-integer\-8 
+\&\-fdefault\-real\-8 \-fdollar\-ok \-ffixed\-line\-length\-\fR\fIn\fR 
+\&\fB\-ffixed\-line\-length\-none \-ffree\-form \-ffree\-line\-length\-\fR\fIn\fR 
+\&\fB\-ffree\-line\-length\-none \-fimplicit\-none \-finteger\-4\-integer\-8 
+\&\-fmax\-identifier\-length \-fmodule\-private \-fno\-fixed\-form \-fno\-range\-check 
+\&\-fopenmp \-freal\-4\-real\-10 \-freal\-4\-real\-16 \-freal\-4\-real\-8 
+\&\-freal\-8\-real\-10 \-freal\-8\-real\-16 \-freal\-8\-real\-4 \-std=\fR\fIstd\fR\fB \fR
 .IP "\fIPreprocessing Options\fR" 4
 .IX Item "Preprocessing Options"
-\&\fB\-cpp \-dD \-dI \-dM \-dN \-dU \-fworking\-directory 
-\&\-imultilib\fR \fIdir\fR \fB\-iprefix\fR \fIfile\fR \fB\-isysroot\fR \fIdir\fR 
-\&\fB\-iquote \-isystem\fR \fIdir\fR \fB\-nocpp \-nostdinc \-undef 
-\&\-A\fR\fIquestion\fR\fB=\fR\fIanswer\fR \fB\-A\-\fR\fIquestion\fR[\fB=\fR\fIanswer\fR] 
-\&\fB\-C \-CC \-D\fR\fImacro\fR[\fB=\fR\fIdefn\fR] \fB\-U\fR\fImacro\fR \fB\-H \-P\fR
+\&\fB\-A\-\fR\fIquestion\fR[\fB=\fR\fIanswer\fR]
+\&\fB\-A\fR\fIquestion\fR\fB=\fR\fIanswer\fR \fB\-C \-CC \-D\fR\fImacro\fR[\fB=\fR\fIdefn\fR]
+\&\fB\-H \-P 
+\&\-U\fR\fImacro\fR \fB\-cpp \-dD \-dI \-dM \-dN \-dU \-fworking\-directory
+\&\-imultilib\fR \fIdir\fR 
+\&\fB\-iprefix\fR \fIfile\fR \fB\-iquote \-isysroot\fR \fIdir\fR \fB\-isystem\fR \fIdir\fR \fB\-nocpp 
+\&\-nostdinc 
+\&\-undef\fR
 .IP "\fIError and Warning Options\fR" 4
 .IX Item "Error and Warning Options"
-\&\fB\-fmax\-errors=\fR\fIn\fR 
-\&\fB\-fsyntax\-only  \-pedantic  \-pedantic\-errors 
-\&\-Wall  \-Waliasing  \-Wampersand  \-Warray\-bounds \-Wcharacter\-truncation 
-\&\-Wconversion \-Wimplicit\-interface  \-Wimplicit\-procedure  \-Wline\-truncation 
-\&\-Wintrinsics\-std  \-Wsurprising  \-Wno\-tabs  \-Wunderflow  \-Wunused\-parameter 
-\&\-Wintrinsics\-shadow  \-Wno\-align\-commons\fR
+\&\fB\-Waliasing \-Wall \-Wampersand \-Warray\-bounds
+\&\-Wc\-binding\-type \-Wcharacter\-truncation 
+\&\-Wconversion \-Wfunction\-elimination \-Wimplicit\-interface 
+\&\-Wimplicit\-procedure \-Wintrinsic\-shadow \-Wintrinsics\-std 
+\&\-Wline\-truncation \-Wno\-align\-commons \-Wno\-tabs \-Wreal\-q\-constant 
+\&\-Wsurprising \-Wunderflow \-Wunused\-parameter \-Wrealloc\-lhs Wrealloc-lhs-all 
+\&\-Wtarget\-lifetime \-fmax\-errors=\fR\fIn\fR \fB\-fsyntax\-only \-pedantic \-pedantic\-errors\fR
 .IP "\fIDebugging Options\fR" 4
 .IX Item "Debugging Options"
-\&\fB\-fdump\-parse\-tree  \-ffpe\-trap=\fR\fIlist\fR 
-\&\fB\-fdump\-core \-fbacktrace\fR
+\&\fB\-fbacktrace \-fdump\-fortran\-optimized \-fdump\-fortran\-original 
+\&\-fdump\-parse\-tree \-ffpe\-trap=\fR\fIlist\fR\fB \fR
 .IP "\fIDirectory Options\fR" 4
 .IX Item "Directory Options"
 \&\fB\-I\fR\fIdir\fR  \fB\-J\fR\fIdir\fR \fB\-fintrinsic\-modules\-path\fR \fIdir\fR
@@ -209,21 +215,23 @@ by type.  Explanations are in the following sections.
 \&\fB\-static\-libgfortran\fR
 .IP "\fIRuntime Options\fR" 4
 .IX Item "Runtime Options"
-\&\fB\-fconvert=\fR\fIconversion\fR  \fB\-fno\-range\-check
-\&\-frecord\-marker=\fR\fIlength\fR   \fB\-fmax\-subrecord\-length=\fR\fIlength\fR
-\&\fB\-fsign\-zero\fR
+\&\fB\-fconvert=\fR\fIconversion\fR \fB\-fmax\-subrecord\-length=\fR\fIlength\fR 
+\&\fB\-frecord\-marker=\fR\fIlength\fR \fB\-fsign\-zero\fR
 .IP "\fICode Generation Options\fR" 4
 .IX Item "Code Generation Options"
-\&\fB\-fno\-automatic  \-ff2c  \-fno\-underscoring 
-\&\-fwhole\-file \-fsecond\-underscore 
-\&\-fbounds\-check \-fcheck\-array\-temporaries  \-fmax\-array\-constructor =\fR\fIn\fR 
-\&\fB\-fcheck=\fR\fI<all|array\-temps|bounds|do|mem|pointer|recursion>\fR
-\&\fB\-fmax\-stack\-var\-size=\fR\fIn\fR 
-\&\fB\-fpack\-derived  \-frepack\-arrays  \-fshort\-enums  \-fexternal\-blas 
-\&\-fblas\-matmul\-limit=\fR\fIn\fR \fB\-frecursive \-finit\-local\-zero 
-\&\-finit\-integer=\fR\fIn\fR \fB\-finit\-real=\fR\fI<zero|inf|\-inf|nan|snan>\fR 
-\&\fB\-finit\-logical=\fR\fI<true|false>\fR \fB\-finit\-character=\fR\fIn\fR 
-\&\fB\-fno\-align\-commons \-fno\-protect\-parens\fR
+\&\fB\-faggressive\-function\-elimination \-fblas\-matmul\-limit=\fR\fIn\fR 
+\&\fB\-fbounds\-check \-fcheck\-array\-temporaries 
+\&\-fcheck=\fR\fI<all|array\-temps|bounds|do|mem|pointer|recursion>\fR 
+\&\fB\-fcoarray=\fR\fI<none|single|lib>\fR \fB\-fexternal\-blas \-ff2c
+\&\-ffrontend\-optimize 
+\&\-finit\-character=\fR\fIn\fR \fB\-finit\-integer=\fR\fIn\fR \fB\-finit\-local\-zero 
+\&\-finit\-logical=\fR\fI<true|false>\fR
+\&\fB\-finit\-real=\fR\fI<zero|inf|\-inf|nan|snan>\fR 
+\&\fB\-fmax\-array\-constructor=\fR\fIn\fR \fB\-fmax\-stack\-var\-size=\fR\fIn\fR
+\&\fB\-fno\-align\-commons 
+\&\-fno\-automatic \-fno\-protect\-parens \-fno\-underscoring \-fno\-whole\-file 
+\&\-fsecond\-underscore \-fpack\-derived \-frealloc\-lhs \-frecursive 
+\&\-frepack\-arrays \-fshort\-enums \-fstack\-arrays\fR
 .Sh "Options controlling Fortran dialect"
 .IX Subsection "Options controlling Fortran dialect"
 The following options control the details of the Fortran dialect
@@ -331,6 +339,16 @@ Specify the maximum allowed identifier length. Typical values are
 Specify that no implicit typing is allowed, unless overridden by explicit
 \&\f(CW\*(C`IMPLICIT\*(C'\fR statements.  This is the equivalent of adding
 \&\f(CW\*(C`implicit none\*(C'\fR to the start of every procedure.
+.IP "\fB\-finteger\-4\-integer\-8\fR" 4
+.IX Item "-finteger-4-integer-8"
+Promote all \f(CW\*(C`INTEGER(KIND=4)\*(C'\fR entities to an \f(CW\*(C`INTEGER(KIND=8)\*(C'\fR
+entities.  If \f(CW\*(C`KIND=8\*(C'\fR is unavailable, then an error will be issued.
+This option should be used with care and may not be suitable for your codes.
+Areas of possible concern include calls to external procedures,
+alignment in \f(CW\*(C`EQUIVALENCE\*(C'\fR and/or \f(CW\*(C`COMMON\*(C'\fR, generic interfaces,
+\&\s-1BOZ\s0 literal constant conversion, and I/O.  Inspection of the intermediate
+representation of the translated Fortran code, produced by
+\&\fB\-fdump\-tree\-original\fR, is suggested.
 .IP "\fB\-fcray\-pointer\fR" 4
 .IX Item "-fcray-pointer"
 Enable the Cray pointer extension, which provides C\-like pointer
@@ -357,6 +375,27 @@ as appropriate.
 Similarly, \f(CW\*(C`DATA i/Z\*(AqFFFFFFFF\*(Aq/\*(C'\fR will result in an integer overflow
 on most systems, but with \fB\-fno\-range\-check\fR the value will
 \&\*(L"wrap around\*(R" and \f(CW\*(C`i\*(C'\fR will be initialized to \-1 instead.
+.IP "\fB\-freal\-4\-real\-8\fR" 4
+.IX Item "-freal-4-real-8"
+.PD 0
+.IP "\fB\-freal\-4\-real\-10\fR" 4
+.IX Item "-freal-4-real-10"
+.IP "\fB\-freal\-8\-real\-4\fR" 4
+.IX Item "-freal-8-real-4"
+.IP "\fB\-freal\-8\-real\-10\fR" 4
+.IX Item "-freal-8-real-10"
+.IP "\fB\-freal\-8\-real\-16\fR" 4
+.IX Item "-freal-8-real-16"
+.PD
+Promote all \f(CW\*(C`REAL(KIND=M)\*(C'\fR entities to \f(CW\*(C`REAL(KIND=N)\*(C'\fR entities.
+If \f(CW\*(C`REAL(KIND=N)\*(C'\fR is unavailable, then an error will be issued.
+All other real kind types are unaffected by this option.
+These options should be used with care and may not be suitable for your
+codes.  Areas of possible concern include calls to external procedures,
+alignment in \f(CW\*(C`EQUIVALENCE\*(C'\fR and/or \f(CW\*(C`COMMON\*(C'\fR, generic interfaces,
+\&\s-1BOZ\s0 literal constant conversion, and I/O.  Inspection of the intermediate
+representation of the translated Fortran code, produced by
+\&\fB\-fdump\-tree\-original\fR, is suggested.
 .IP "\fB\-std=\fR\fIstd\fR" 4
 .IX Item "-std=std"
 Specify the standard to which the program is expected to conform, which
@@ -371,7 +410,10 @@ extensions, and may be useful for old non-standard programs.  The
 conformance to the Fortran 95, Fortran 2003 and Fortran 2008 standards,
 respectively; errors are given for all extensions beyond the relevant
 language standard, and warnings are given for the Fortran 77 features
-that are permitted but obsolescent in later standards.
+that are permitted but obsolescent in later standards. \fB\-std=f2008ts\fR
+allows the Fortran 2008 standard including the additions of the 
+Technical Specification (\s-1TS\s0) 29113 on Further Interoperability of Fortran
+with C.
 .Sh "Enable and customize preprocessing"
 .IX Subsection "Enable and customize preprocessing"
 Preprocessor related options. See section 
@@ -391,9 +433,11 @@ this option to manually enable preprocessing of any kind of Fortran file.
 To disable preprocessing of files with any of the above listed extensions,
 use the negative form: \fB\-nocpp\fR.
 .Sp
-The preprocessor is run in traditional mode, be aware that any
-restrictions of the file-format, e.g. fixed-form line width,
-apply for preprocessed output as well.
+The preprocessor is run in traditional mode. Any restrictions of the
+file-format, especially the limits on line length, apply for
+preprocessed output as well, so it might be advisable to use the
+\&\fB\-ffree\-line\-length\-none\fR or \fB\-ffixed\-line\-length\-none\fR
+options.
 .IP "\fB\-dM\fR" 4
 .IX Item "-dM"
 Instead of the normal output, generate a list of \f(CW\*(Aq#define\*(Aq\fR
@@ -403,7 +447,7 @@ of finding out what is predefined in your version of the preprocessor.
 Assuming you have no file \fIfoo.f90\fR, the command
 .Sp
 .Vb 1
-\&          touch foo.f90; gfortran \-cpp \-dM foo.f90
+\&          touch foo.f90; gfortran \-cpp \-E \-dM foo.f90
 .Ve
 .Sp
 will show all the predefined macros.
@@ -433,7 +477,7 @@ let the compiler know the current working directory at the time of
 preprocessing. When this option is enabled, the preprocessor will emit,
 after the initial linemarker, a second linemarker with the current
 working directory followed by two slashes. \s-1GCC\s0 will use this directory,
-when it's present in the preprocessed input, as the directory emitted
+when it is present in the preprocessed input, as the directory emitted
 as the current working directory in some debugging information formats.
 This option is implicitly enabled if debugging information is enabled,
 but this can be inhibited with the negated form
@@ -587,7 +631,7 @@ source code.  If \fIn\fR is 0, there is no limit on the number of error
 messages produced.
 .IP "\fB\-fsyntax\-only\fR" 4
 .IX Item "-fsyntax-only"
-Check the code for syntax errors, but don't actually compile it.  This
+Check the code for syntax errors, but do not actually compile it.  This
 will generate module files for each module present in the code, but no
 other output file.
 .IP "\fB\-pedantic\fR" 4
@@ -618,9 +662,11 @@ warnings.
 .IX Item "-Wall"
 Enables commonly used warning options pertaining to usage that
 we recommend avoiding and that we believe are easy to avoid.
-This currently includes \fB\-Waliasing\fR,
-\&\fB\-Wampersand\fR, \fB\-Wsurprising\fR, \fB\-Wintrinsics\-std\fR,
-\&\fB\-Wno\-tabs\fR, \fB\-Wintrinsic\-shadow\fR and \fB\-Wline\-truncation\fR.
+This currently includes \fB\-Waliasing\fR, \fB\-Wampersand\fR,
+\&\fB\-Wconversion\fR, \fB\-Wsurprising\fR, \fB\-Wc\-binding\-type\fR,
+\&\fB\-Wintrinsics\-std\fR, \fB\-Wno\-tabs\fR, \fB\-Wintrinsic\-shadow\fR,
+\&\fB\-Wline\-truncation\fR, \fB\-Wtarget\-lifetime\fR,
+\&\fB\-Wreal\-q\-constant\fR and \fB\-Wunused\fR.
 .IP "\fB\-Waliasing\fR" 4
 .IX Item "-Waliasing"
 Warn about possible aliasing of dummy arguments. Specifically, it warns
@@ -654,15 +700,32 @@ that initiated the continuation.
 Warn about array temporaries generated by the compiler.  The information
 generated by this warning is sometimes useful in optimization, in order to
 avoid such temporaries.
+.IP "\fB\-Wc\-binding\-type\fR" 4
+.IX Item "-Wc-binding-type"
+Warn if the a variable might not be C interoperable.  In particular, warn if 
+the variable has been declared using an intrinsic type with default kind
+instead of using a kind parameter defined for C interoperability in the
+intrinsic \f(CW\*(C`ISO_C_Binding\*(C'\fR module.  This option is implied by
+\&\fB\-Wall\fR.
 .IP "\fB\-Wcharacter\-truncation\fR" 4
 .IX Item "-Wcharacter-truncation"
 Warn when a character assignment will truncate the assigned string.
 .IP "\fB\-Wline\-truncation\fR" 4
 .IX Item "-Wline-truncation"
-Warn when a source code line will be truncated.
+Warn when a source code line will be truncated.  This option is
+implied by \fB\-Wall\fR.
 .IP "\fB\-Wconversion\fR" 4
 .IX Item "-Wconversion"
-Warn about implicit conversions between different types.
+Warn about implicit conversions that are likely to change the value of 
+the expression after conversion. Implied by \fB\-Wall\fR.
+.IP "\fB\-Wconversion\-extra\fR" 4
+.IX Item "-Wconversion-extra"
+Warn about implicit conversions between different types and kinds.
+.IP "\fB\-Wextra\fR" 4
+.IX Item "-Wextra"
+Enables some warning options for usages of language features which
+may be problematic. This currently includes \fB\-Wcompare\-reals\fR
+and \fB\-Wunused\-parameter\fR.
 .IP "\fB\-Wimplicit\-interface\fR" 4
 .IX Item "-Wimplicit-interface"
 Warn if a procedure is called without an explicit interface.
@@ -679,6 +742,10 @@ available in the currently selected standard (with \fB\-std\fR) and treats
 it as \f(CW\*(C`EXTERNAL\*(C'\fR procedure because of this.  \fB\-fall\-intrinsics\fR can
 be used to never trigger this behavior and always link to the intrinsic
 regardless of the selected standard.
+.IP "\fB\-Wreal\-q\-constant\fR" 4
+.IX Item "-Wreal-q-constant"
+Produce a warning if a real-literal-constant contains a \f(CW\*(C`q\*(C'\fR
+exponent-letter.
 .IP "\fB\-Wsurprising\fR" 4
 .IX Item "-Wsurprising"
 Produce a warning when \*(L"suspicious\*(R" code constructs are encountered.
@@ -718,19 +785,49 @@ encountered, which yield an \s-1UNDERFLOW\s0 during compilation.
 Warn if a user-defined procedure or module procedure has the same name as an
 intrinsic; in this case, an explicit interface or \f(CW\*(C`EXTERNAL\*(C'\fR or
 \&\f(CW\*(C`INTRINSIC\*(C'\fR declaration might be needed to get calls later resolved to
-the desired intrinsic/procedure.
+the desired intrinsic/procedure.  This option is implied by \fB\-Wall\fR.
+.IP "\fB\-Wunused\-dummy\-argument\fR" 4
+.IX Item "-Wunused-dummy-argument"
+Warn about unused dummy arguments. This option is implied by \fB\-Wall\fR.
 .IP "\fB\-Wunused\-parameter\fR" 4
 .IX Item "-Wunused-parameter"
 Contrary to \fBgcc\fR's meaning of \fB\-Wunused\-parameter\fR,
 \&\fBgfortran\fR's implementation of this option does not warn
-about unused dummy arguments, but about unused \f(CW\*(C`PARAMETER\*(C'\fR values.
-\&\fB\-Wunused\-parameter\fR is not included in \fB\-Wall\fR but is
-implied by \fB\-Wall \-Wextra\fR.
+about unused dummy arguments (see \fB\-Wunused\-dummy\-argument\fR),
+but about unused \f(CW\*(C`PARAMETER\*(C'\fR values. \fB\-Wunused\-parameter\fR
+is not included in \fB\-Wall\fR but is implied by \fB\-Wall \-Wextra\fR.
 .IP "\fB\-Walign\-commons\fR" 4
 .IX Item "-Walign-commons"
 By default, \fBgfortran\fR warns about any occasion of variables being
-padded for proper alignment inside a \s-1COMMON\s0 block. This warning can be turned
+padded for proper alignment inside a \f(CW\*(C`COMMON\*(C'\fR block. This warning can be turned
 off via \fB\-Wno\-align\-commons\fR. See also \fB\-falign\-commons\fR.
+.IP "\fB\-Wfunction\-elimination\fR" 4
+.IX Item "-Wfunction-elimination"
+Warn if any calls to functions are eliminated by the optimizations
+enabled by the \fB\-ffrontend\-optimize\fR option.
+.IP "\fB\-Wrealloc\-lhs\fR" 4
+.IX Item "-Wrealloc-lhs"
+Warn when the compiler might insert code to for allocation or reallocation of
+an allocatable array variable of intrinsic type in intrinsic assignments.  In
+hot loops, the Fortran 2003 reallocation feature may reduce the performance.
+If the array is already allocated with the correct shape, consider using a
+whole-array array-spec (e.g. \f(CW\*(C`(:,:,:)\*(C'\fR) for the variable on the left-hand
+side to prevent the reallocation check. Note that in some cases the warning
+is shown, even if the compiler will optimize reallocation checks away.  For
+instance, when the right-hand side contains the same variable multiplied by
+a scalar.  See also \fB\-frealloc\-lhs\fR.
+.IP "\fB\-Wrealloc\-lhs\-all\fR" 4
+.IX Item "-Wrealloc-lhs-all"
+Warn when the compiler inserts code to for allocation or reallocation of an
+allocatable variable; this includes scalars and derived types.
+.IP "\fB\-Wcompare\-reals\fR" 4
+.IX Item "-Wcompare-reals"
+Warn when comparing real or complex types for equality or inequality.
+This option is implied by \fB\-Wextra\fR.
+.IP "\fB\-Wtarget\-lifetime\fR" 4
+.IX Item "-Wtarget-lifetime"
+Warn if the pointer in a pointer assignment might be longer than the its
+target. This option is implied by \fB\-Wall\fR.
 .IP "\fB\-Werror\fR" 4
 .IX Item "-Werror"
 Turns all warnings into errors.
@@ -740,39 +837,57 @@ Some of these have no effect when compiling programs written in Fortran.
 .IX Subsection "Options for debugging your program or GNU Fortran"
 \&\s-1GNU\s0 Fortran has various special options that are used for debugging
 either your program or the \s-1GNU\s0 Fortran compiler.
+.IP "\fB\-fdump\-fortran\-original\fR" 4
+.IX Item "-fdump-fortran-original"
+Output the internal parse tree after translating the source program
+into internal representation.  Only really useful for debugging the
+\&\s-1GNU\s0 Fortran compiler itself.
+.IP "\fB\-fdump\-fortran\-optimized\fR" 4
+.IX Item "-fdump-fortran-optimized"
+Output the parse tree after front-end optimization.  Only really
+useful for debugging the \s-1GNU\s0 Fortran compiler itself.
 .IP "\fB\-fdump\-parse\-tree\fR" 4
 .IX Item "-fdump-parse-tree"
-Output the internal parse tree before starting code generation.  Only
-really useful for debugging the \s-1GNU\s0 Fortran compiler itself.
+Output the internal parse tree after translating the source program
+into internal representation.  Only really useful for debugging the
+\&\s-1GNU\s0 Fortran compiler itself.  This option is deprecated; use
+\&\f(CW\*(C`\-fdump\-fortran\-original\*(C'\fR instead.
 .IP "\fB\-ffpe\-trap=\fR\fIlist\fR" 4
 .IX Item "-ffpe-trap=list"
-Specify a list of \s-1IEEE\s0 exceptions when a Floating Point Exception
-(\s-1FPE\s0) should be raised.  On most systems, this will result in a \s-1SIGFPE\s0
-signal being sent and the program being interrupted, producing a core
-file useful for debugging.  \fIlist\fR is a (possibly empty) comma-separated
-list of the following \s-1IEEE\s0 exceptions: \fBinvalid\fR (invalid floating
-point operation, such as \f(CW\*(C`SQRT(\-1.0)\*(C'\fR), \fBzero\fR (division by
-zero), \fBoverflow\fR (overflow in a floating point operation),
-\&\fBunderflow\fR (underflow in a floating point operation),
-\&\fBprecision\fR (loss of precision during operation) and \fBdenormal\fR
-(operation produced a denormal value).
+Specify a list of floating point exception traps to enable.  On most
+systems, if a floating point exception occurs and the trap for that
+exception is enabled, a \s-1SIGFPE\s0 signal will be sent and the program
+being aborted, producing a core file useful for debugging.  \fIlist\fR
+is a (possibly empty) comma-separated list of the following
+exceptions: \fBinvalid\fR (invalid floating point operation, such as
+\&\f(CW\*(C`SQRT(\-1.0)\*(C'\fR), \fBzero\fR (division by zero), \fBoverflow\fR
+(overflow in a floating point operation), \fBunderflow\fR (underflow
+in a floating point operation), \fBinexact\fR (loss of precision
+during operation), and \fBdenormal\fR (operation performed on a
+denormal value).  The first five exceptions correspond to the five
+\&\s-1IEEE\s0 754 exceptions, whereas the last one (\fBdenormal\fR) is not
+part of the \s-1IEEE\s0 754 standard but is available on some common
+architectures such as x86.
 .Sp
-Some of the routines in the Fortran runtime library, like
-\&\fB\s-1CPU_TIME\s0\fR, are likely to trigger floating point exceptions when
-\&\f(CW\*(C`ffpe\-trap=precision\*(C'\fR is used. For this reason, the use of 
-\&\f(CW\*(C`ffpe\-trap=precision\*(C'\fR is not recommended.
-.IP "\fB\-fbacktrace\fR" 4
-.IX Item "-fbacktrace"
-Specify that, when a runtime error is encountered or a deadly signal is
-emitted (segmentation fault, illegal instruction, bus error or
-floating-point exception), the Fortran runtime
-library should output a backtrace of the error.  This option
-only has influence for compilation of the Fortran main program.
-.IP "\fB\-fdump\-core\fR" 4
-.IX Item "-fdump-core"
-Request that a core-dump file is written to disk when a runtime error
-is encountered on systems that support core dumps. This option is
-only effective for the compilation of the Fortran main program.
+The first three exceptions (\fBinvalid\fR, \fBzero\fR, and
+\&\fBoverflow\fR) often indicate serious errors, and unless the program
+has provisions for dealing with these exceptions, enabling traps for
+these three exceptions is probably a good idea.
+.Sp
+Many, if not most, floating point operations incur loss of precision
+due to rounding, and hence the \f(CW\*(C`ffpe\-trap=inexact\*(C'\fR is likely to
+be uninteresting in practice.
+.Sp
+By default no exception traps are enabled.
+.IP "\fB\-fno\-backtrace\fR" 4
+.IX Item "-fno-backtrace"
+When a serious runtime error is encountered or a deadly signal is
+emitted (segmentation fault, illegal instruction, bus error,
+floating-point exception, and the other \s-1POSIX\s0 signals that have the
+action \fBcore\fR), the Fortran runtime library tries to output a
+backtrace of the error. \f(CW\*(C`\-fno\-backtrace\*(C'\fR disables the backtrace
+generation. This option only has influence for compilation of the
+Fortran main program.
 .Sh "Options for directory search"
 .IX Subsection "Options for directory search"
 These options affect how \s-1GNU\s0 Fortran searches
@@ -830,13 +945,6 @@ representation for unformatted files.
 \&\fIThis option has an effect only when used in the main program.
 The \f(CI\*(C`CONVERT\*(C'\fI specifier and the \s-1GFORTRAN_CONVERT_UNIT\s0 environment
 variable override the default specified by \f(BI\-fconvert\fI.\fR
-.IP "\fB\-fno\-range\-check\fR" 4
-.IX Item "-fno-range-check"
-Disable range checking of input values during integer \f(CW\*(C`READ\*(C'\fR operations.
-For example, \s-1GNU\s0 Fortran will give an error if an input value is
-outside of the relevant range of [\f(CW\*(C`\-HUGE()\*(C'\fR:\f(CW\*(C`HUGE()\*(C'\fR]. In other words,
-with \f(CW\*(C`INTEGER (kind=4) :: i\*(C'\fR , attempting to read \-2147483648 will
-give an error unless \fB\-fno\-range\-check\fR is given.
 .IP "\fB\-frecord\-marker=\fR\fIlength\fR" 4
 .IX Item "-frecord-marker=length"
 Specify the length of record markers for unformatted files.
@@ -854,10 +962,10 @@ really useful for use by the gfortran testsuite.
 .IX Item "-fsign-zero"
 When enabled, floating point numbers of value zero with the sign bit set
 are written as negative number in formatted output and treated as
-negative in the \f(CW\*(C`SIGN\*(C'\fR intrinsic.  \f(CW\*(C`fno\-sign\-zero\*(C'\fR does not
-print the negative sign of zero values and regards zero as positive
-number in the \f(CW\*(C`SIGN\*(C'\fR intrinsic for compatibility with F77.
-Default behavior is to show the negative sign.
+negative in the \f(CW\*(C`SIGN\*(C'\fR intrinsic.  \fB\-fno\-sign\-zero\fR does not
+print the negative sign of zero values (or values rounded to zero for I/O)
+and regards zero as positive number in the \f(CW\*(C`SIGN\*(C'\fR intrinsic for
+compatibility with Fortran 77. The default is \fB\-fsign\-zero\fR.
 .Sh "Options for code generation conventions"
 .IX Subsection "Options for code generation conventions"
 These machine-independent options control the interface conventions
@@ -923,7 +1031,7 @@ tools.
 .Sp
 Use of \fB\-fno\-underscoring\fR is not recommended unless you are
 experimenting with issues such as integration of \s-1GNU\s0 Fortran into
-existing system environments (vis\-@`{a}\-vis existing libraries, tools,
+existing system environments (vis\-a\*`\-vis existing libraries, tools,
 and so on).
 .Sp
 For example, with \fB\-funderscoring\fR, and assuming other defaults like
@@ -973,18 +1081,21 @@ issues so that debugging always involves using the names as they appear
 in the source, even if the names as seen by the linker are mangled to
 prevent accidental linking between procedures with incompatible
 interfaces.
-.IP "\fB\-fwhole\-file\fR" 4
-.IX Item "-fwhole-file"
-By default, \s-1GNU\s0 Fortran parses, resolves and translates each procedure
-in a file separately.  Using this option modifies this such that the
-whole file is parsed and placed in a single front-end tree.  During
-resolution, in addition to all the usual checks and fixups, references
+.IP "\fB\-fno\-whole\-file\fR" 4
+.IX Item "-fno-whole-file"
+This flag causes the compiler to resolve and translate each procedure in
+a file separately.
+.Sp
+By default, the whole file is parsed and placed in a single front-end tree.
+During resolution, in addition to all the usual checks and fixups, references
 to external procedures that are in the same file effect resolution of
-that procedure, if not already done, and a check of the interfaces. The
+that procedure, if not already done, and a check of the interfaces.  The
 dependences are resolved by changing the order in which the file is
 translated into the backend tree.  Thus, a procedure that is referenced
 is translated before the reference and the duplication of backend tree
 declarations eliminated.
+.Sp
+The \fB\-fno\-whole\-file\fR option is deprecated and may lead to wrong code.
 .IP "\fB\-fsecond\-underscore\fR" 4
 .IX Item "-fsecond-underscore"
 By default, \s-1GNU\s0 Fortran appends an underscore to external
@@ -1002,6 +1113,25 @@ is implemented as a reference to the link-time external symbol
 \&\f(CW\*(C`max_count_\|_\*(C'\fR, instead of \f(CW\*(C`max_count_\*(C'\fR.  This is required
 for compatibility with \fBg77\fR and \fBf2c\fR, and is implied
 by use of the \fB\-ff2c\fR option.
+.IP "\fB\-fcoarray=\fR\fI<keyword>\fR" 4
+.IX Item "-fcoarray=<keyword>"
+.RS 4
+.PD 0
+.IP "\fBnone\fR" 4
+.IX Item "none"
+.PD
+Disable coarray support; using coarray declarations and image-control
+statements will produce a compile-time error. (Default)
+.IP "\fBsingle\fR" 4
+.IX Item "single"
+Single-image mode, i.e. \f(CW\*(C`num_images()\*(C'\fR is always one.
+.IP "\fBlib\fR" 4
+.IX Item "lib"
+Library-based coarray parallelization; a suitable \s-1GNU\s0 Fortran coarray
+library needs to be linked.
+.RE
+.RS 4
+.RE
 .IP "\fB\-fcheck=\fR\fI<keyword>\fR" 4
 .IX Item "-fcheck=<keyword>"
 Enable the generation of run-time checks; the argument shall be
@@ -1065,13 +1195,13 @@ array constructors.  The code below requires this option to expand
 the array at compile time.
 .Sp
 .Vb 7
-\&        C<program test>
-\&        C<implicit none>
-\&        C<integer j>
-\&        C<integer, parameter :: n = 100000>
-\&        C<integer, parameter :: i(n) = (/ (2*j, j = 1, n) /)>
-\&        C<print \*(Aq(10(I0,1X))\*(Aq, i>
-\&        C<end program test>
+\&        program test
+\&        implicit none
+\&        integer j
+\&        integer, parameter :: n = 100000
+\&        integer, parameter :: i(n) = (/ (2*j, j = 1, n) /)
+\&        print \*(Aq(10(I0,1X))\*(Aq, i
+\&        end program test
 .Ve
 .Sp
 \&\fICaution:  This option can lead to long compile times and excessively
@@ -1091,6 +1221,13 @@ bounds, and may not apply to all character variables.
 Future versions of \s-1GNU\s0 Fortran may improve this behavior.
 .Sp
 The default value for \fIn\fR is 32768.
+.IP "\fB\-fstack\-arrays\fR" 4
+.IX Item "-fstack-arrays"
+Adding this option will make the Fortran compiler put all local arrays,
+even those of unknown size onto stack memory.  If your program uses very
+large local arrays it is possible that you will have to extend your runtime
+limits for stack memory on some operating systems. This flag is enabled
+by default at optimization level \fB\-Ofast\fR.
 .IP "\fB\-fpack\-derived\fR" 4
 .IX Item "-fpack-derived"
 This option tells \s-1GNU\s0 Fortran to pack derived type members as closely as
@@ -1140,8 +1277,8 @@ on the stack. This flag cannot be used together with
 .PD 0
 .IP "\fB\-finit\-integer=\fR\fIn\fR" 4
 .IX Item "-finit-integer=n"
-.IP "\fB\-finit\-real=\fR\fI<zero|inf|\-inf|nan|snan>\fR\fB \fR" 4
-.IX Item "-finit-real=<zero|inf|-inf|nan|snan> "
+.IP "\fB\-finit\-real=\fR\fI<zero|inf|\-inf|nan|snan>\fR" 4
+.IX Item "-finit-real=<zero|inf|-inf|nan|snan>"
 .IP "\fB\-finit\-logical=\fR\fI<true|false>\fR" 4
 .IX Item "-finit-logical=<true|false>"
 .IP "\fB\-finit\-character=\fR\fIn\fR" 4
@@ -1157,34 +1294,75 @@ initialization options are provided by the
 the real and imaginary parts of local \f(CW\*(C`COMPLEX\*(C'\fR variables),
 \&\fB\-finit\-logical=\fR\fI<true|false>\fR, and
 \&\fB\-finit\-character=\fR\fIn\fR (where \fIn\fR is an \s-1ASCII\s0 character
-value) options.  These options do not initialize components of derived
-type variables, nor do they initialize variables that appear in an
-\&\f(CW\*(C`EQUIVALENCE\*(C'\fR statement.  (This limitation may be removed in
-future releases).
+value) options.  These options do not initialize
+.RS 4
+.IP "\(bu" 4
+allocatable arrays
+.IP "\(bu" 4
+components of derived type variables
+.IP "\(bu" 4
+variables that appear in an \f(CW\*(C`EQUIVALENCE\*(C'\fR statement.
+.RE
+.RS 4
+.Sp
+(These limitations may be removed in future releases).
 .Sp
 Note that the \fB\-finit\-real=nan\fR option initializes \f(CW\*(C`REAL\*(C'\fR
 and \f(CW\*(C`COMPLEX\*(C'\fR variables with a quiet NaN. For a signalling NaN
 use \fB\-finit\-real=snan\fR; note, however, that compile-time
 optimizations may convert them into quiet NaN and that trapping
 needs to be enabled (e.g. via \fB\-ffpe\-trap\fR).
+.Sp
+Finally, note that enabling any of the \fB\-finit\-*\fR options will
+silence warnings that would have been emitted by \fB\-Wuninitialized\fR
+for the affected local variables.
+.RE
 .IP "\fB\-falign\-commons\fR" 4
 .IX Item "-falign-commons"
 By default, \fBgfortran\fR enforces proper alignment of all variables in a
-\&\s-1COMMON\s0 block by padding them as needed. On certain platforms this is mandatory,
-on others it increases performance. If a \s-1COMMON\s0 block is not declared with
+\&\f(CW\*(C`COMMON\*(C'\fR block by padding them as needed. On certain platforms this is mandatory,
+on others it increases performance. If a \f(CW\*(C`COMMON\*(C'\fR block is not declared with
 consistent data types everywhere, this padding can cause trouble, and
-\&\fB\-fno\-align\-commons\fR  can be used to disable automatic alignment. The
-same form of this option should be used for all files that share a \s-1COMMON\s0 block.
-To avoid potential alignment issues in \s-1COMMON\s0 blocks, it is recommended to order
-objects from largests to smallest.
+\&\fB\-fno\-align\-commons\fR can be used to disable automatic alignment. The
+same form of this option should be used for all files that share a \f(CW\*(C`COMMON\*(C'\fR block.
+To avoid potential alignment issues in \f(CW\*(C`COMMON\*(C'\fR blocks, it is recommended to order
+objects from largest to smallest.
 .IP "\fB\-fno\-protect\-parens\fR" 4
 .IX Item "-fno-protect-parens"
 By default the parentheses in expression are honored for all optimization
 levels such that the compiler does not do any re-association. Using
-\&\fB\-fno\-protect\-parens\fR allows the compiler to reorder \s-1REAL\s0 and
-\&\s-1COMPLEX\s0 expressions to produce faster code. Note that for the re-association
+\&\fB\-fno\-protect\-parens\fR allows the compiler to reorder \f(CW\*(C`REAL\*(C'\fR and
+\&\f(CW\*(C`COMPLEX\*(C'\fR expressions to produce faster code. Note that for the re-association
 optimization \fB\-fno\-signed\-zeros\fR and \fB\-fno\-trapping\-math\fR
-need to be in effect.
+need to be in effect. The parentheses protection is enabled by default, unless
+\&\fB\-Ofast\fR is given.
+.IP "\fB\-frealloc\-lhs\fR" 4
+.IX Item "-frealloc-lhs"
+An allocatable left-hand side of an intrinsic assignment is automatically
+(re)allocated if it is either unallocated or has a different shape. The
+option is enabled by default except when \fB\-std=f95\fR is given. See
+also \fB\-Wrealloc\-lhs\fR.
+.IP "\fB\-faggressive\-function\-elimination\fR" 4
+.IX Item "-faggressive-function-elimination"
+Functions with identical argument lists are eliminated within
+statements, regardless of whether these functions are marked
+\&\f(CW\*(C`PURE\*(C'\fR or not. For example, in
+.Sp
+.Vb 1
+\&          a = f(b,c) + f(b,c)
+.Ve
+.Sp
+there will only be a single call to \f(CW\*(C`f\*(C'\fR.  This option only works
+if \fB\-ffrontend\-optimize\fR is in effect.
+.IP "\fB\-ffrontend\-optimize\fR" 4
+.IX Item "-ffrontend-optimize"
+This option performs front-end optimization, based on manipulating
+parts the Fortran parse tree.  Enabled by default by any \fB\-O\fR
+option.  Optimizations enabled by this option include elimination of
+identical function calls within expressions, removing unnecessary
+calls to \f(CW\*(C`TRIM\*(C'\fR in comparisons and assignments and replacing
+\&\f(CWTRIM(a)\fR with \f(CW\*(C`a(1:LEN_TRIM(a))\*(C'\fR. 
+It can be deselected by specifying \fB\-fno\-frontend\-optimize\fR.
 .SH "ENVIRONMENT"
 .IX Header "ENVIRONMENT"
 The \fBgfortran\fR compiler currently does not make use of any environment
@@ -1206,11 +1384,10 @@ See the Info entry for \fBgfortran\fR for contributors to \s-1GCC\s0 and
 \&\s-1GNU\s0 Fortran.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 2004, 2005, 2006, 2007, 2008, 2009
-Free Software Foundation, Inc.
+Copyright (c) 2004\-2013 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
-under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.2 or
+under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or
 any later version published by the Free Software Foundation; with the
 Invariant Sections being \*(L"Funding Free Software\*(R", the Front-Cover
 Texts being (a) (see below), and with the Back-Cover Texts being (b)

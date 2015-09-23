@@ -1,6 +1,5 @@
 /* Definitions of target machine for gcc for Renesas / SuperH SH using ELF.
-   Copyright (C) 1996, 1997, 2000, 2001, 2002, 2004, 2005, 2007
-   Free Software Foundation, Inc.
+   Copyright (C) 1996-2013 Free Software Foundation, Inc.
    Contributed by Ian Lance Taylor <ian@cygnus.com>.
 
 This file is part of GCC.
@@ -23,19 +22,17 @@ along with GCC; see the file COPYING3.  If not see
 #undef TARGET_ELF
 #define TARGET_ELF 1
 
-/* Generate DWARF2 debugging information and make it the default */
+/* Generate DWARF2 debugging information and make it the default.  */
 #define DWARF2_DEBUGGING_INFO 1
 
 #undef PREFERRED_DEBUGGING_TYPE
 #define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
 
-/* use a more compact format for line information */
+/* Use a more compact format for line information.  */
 #define DWARF2_ASM_LINE_DEBUG_INFO 1
 
-/* WCHAR_TYPE / WCHAR_TYPE_SIZE are defined to long int / BITS_PER_WORD in
-   svr4.h, but these work out as 64 bit for shmedia64.  */
 #undef WCHAR_TYPE
-/* #define WCHAR_TYPE (TARGET_SH5 ? "int" : "long int") */
+/* #define WCHAR_TYPE (TARGET_SH5 ? "int" : "long int")  */
 #define WCHAR_TYPE SH_ELF_WCHAR_TYPE
    
 #undef WCHAR_TYPE_SIZE
@@ -43,7 +40,6 @@ along with GCC; see the file COPYING3.  If not see
 
 
 /* The prefix to add to user-visible assembler symbols.  */
-
 #undef LOCAL_LABEL_PREFIX
 #define LOCAL_LABEL_PREFIX "."
 
@@ -66,8 +62,6 @@ along with GCC; see the file COPYING3.  If not see
 #define LINK_EMUL_PREFIX "sh%{ml:l}elf"
 #endif
 
-/* svr4.h undefined DBX_REGISTER_NUMBER, so we need to define it
-   again.  */
 #define DBX_REGISTER_NUMBER(REGNO) SH_DBX_REGISTER_NUMBER (REGNO)
 
 #undef ASM_GENERATE_INTERNAL_LABEL
@@ -85,6 +79,9 @@ along with GCC; see the file COPYING3.  If not see
 #undef ENDFILE_SPEC
 #define ENDFILE_SPEC \
   "%{!shared:crtend.o%s} %{shared:crtendS.o%s} crtn.o%s"
+
+#undef LIB_SPEC
+#define LIB_SPEC "-lc"
 
 /* ASM_OUTPUT_CASE_LABEL is defined in elfos.h.  With it,
    a redundant .align was generated.  */

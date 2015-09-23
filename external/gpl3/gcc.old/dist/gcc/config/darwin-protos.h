@@ -1,6 +1,5 @@
 /* Prototypes.
-   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2007, 2008
-   Free Software Foundation, Inc.
+   Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -26,11 +25,13 @@ extern void machopic_validate_stub_or_non_lazy_ptr (const char *);
 extern void machopic_output_function_base_name (FILE *);
 extern const char *machopic_indirection_name (rtx, bool);
 extern const char *machopic_mcount_stub_name (void);
+extern bool machopic_should_output_picbase_label (void);
 
 #ifdef RTX_CODE
 
 extern rtx machopic_gen_offset (rtx);
 extern int machopic_operand_p (rtx);
+extern int machopic_symbol_defined_p (rtx sym_ref);
 extern enum machopic_addr_class machopic_classify_symbol (rtx);
 
 extern rtx machopic_indirect_data_reference (rtx, rtx);
@@ -39,6 +40,8 @@ extern rtx machopic_legitimize_pic_address (rtx, enum machine_mode, rtx);
 
 extern void machopic_asm_out_constructor (rtx, int);
 extern void machopic_asm_out_destructor (rtx, int);
+extern section *machopic_select_rtx_section (enum machine_mode, rtx,
+					     unsigned HOST_WIDE_INT);
 #endif /* RTX_CODE */
 
 #ifdef TREE_CODE
@@ -53,8 +56,10 @@ extern void machopic_finish (FILE *);
 
 extern int machopic_reloc_rw_mask (void);
 extern section *machopic_select_section (tree, int, unsigned HOST_WIDE_INT);
-extern section *machopic_select_rtx_section (enum machine_mode, rtx,
-					     unsigned HOST_WIDE_INT);
+
+extern section *darwin_function_section (tree, enum node_frequency, bool, bool); 
+extern section *darwin_tm_clone_table_section (void);
+extern void darwin_function_switched_text_sections (FILE *, tree, bool);
 
 extern void darwin_unique_section (tree decl, int reloc);
 extern void darwin_asm_named_section (const char *, unsigned int, tree);
@@ -83,13 +88,37 @@ extern tree darwin_handle_weak_import_attribute (tree *node, tree name,
 extern void machopic_output_stub (FILE *, const char *, const char *);
 extern void darwin_globalize_label (FILE *, const char *);
 extern void darwin_assemble_visibility (tree, int);
+
 extern void darwin_asm_output_dwarf_delta (FILE *, int, const char *,
 					   const char *);
 extern void darwin_asm_output_dwarf_offset (FILE *, int, const char *,
 					    section *);
+
+extern void darwin_asm_declare_object_name (FILE *, const char *, tree);
+extern void darwin_asm_declare_constant_name (FILE *, const char *,
+					      const_tree, HOST_WIDE_INT);
+
+extern void darwin_output_aligned_bss (FILE *, tree, const char *,
+				       unsigned HOST_WIDE_INT, unsigned int);
+
+extern void darwin_asm_output_aligned_decl_local (FILE *, tree, const char *, 
+						  unsigned HOST_WIDE_INT, 
+						  unsigned int);
+extern void darwin_asm_output_aligned_decl_common (FILE *, tree, const char *,
+						   unsigned HOST_WIDE_INT, 
+						   unsigned int);
+
 extern bool darwin_binds_local_p (const_tree);
 extern void darwin_cpp_builtins (struct cpp_reader *);
+
+extern tree darwin_init_cfstring_builtins (unsigned);
+extern tree darwin_fold_builtin (tree, int, tree *, bool);
+extern bool darwin_cfstring_p (tree);
+extern tree darwin_build_constant_cfstring (tree);
+extern void darwin_enter_string_into_cfstring_table (tree);
+
 extern void darwin_asm_output_anchor (rtx symbol);
+extern bool darwin_use_anchors_for_symbol_p (const_rtx symbol);
 extern bool darwin_kextabi_p (void);
 extern void darwin_override_options (void);
 extern void darwin_patch_builtins (void);

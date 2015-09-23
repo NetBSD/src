@@ -1,6 +1,5 @@
 /* Dump a gcov file, for debugging use.
-   Copyright (C) 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Nathan Sidwell <nathan@codesourcery.com>
 
 Gcov is free software; you can redistribute it and/or modify
@@ -22,12 +21,14 @@ along with Gcov; see the file COPYING3.  If not see
 #include "coretypes.h"
 #include "tm.h"
 #include "version.h"
+#include "intl.h"
+#include "diagnostic.h"
 #include <getopt.h>
 #define IN_GCOV (-1)
 #include "gcov-io.h"
 #include "gcov-io.c"
 
-static void dump_file (const char *);
+static void dump_gcov_file (const char *);
 static void print_prefix (const char *, unsigned, gcov_position_t);
 static void print_usage (void);
 static void print_version (void);
@@ -76,9 +77,21 @@ int
 main (int argc ATTRIBUTE_UNUSED, char **argv)
 {
   int opt;
+  const char *p;
+
+  p = argv[0] + strlen (argv[0]);
+  while (p != argv[0] && !IS_DIR_SEPARATOR (p[-1]))
+    --p;
+  progname = p;
+
+  xmalloc_set_program_name (progname);
 
   /* Unlock the stdio streams.  */
   unlock_std_streams ();
+
+  gcc_init_libintl ();
+
+  diagnostic_initialize (global_dc, 0);
 
   while ((opt = getopt_long (argc, argv, "hlpv", options, NULL)) != -1)
     {
@@ -102,7 +115,7 @@ main (int argc ATTRIBUTE_UNUSED, char **argv)
     }
 
   while (argv[optind])
-    dump_file (argv[optind++]);
+    dump_gcov_file (argv[optind++]);
   return 0;
 }
 
@@ -121,7 +134,7 @@ static void
 print_version (void)
 {
   printf ("gcov-dump %s%s\n", pkgversion_string, version_string);
-  printf ("Copyright (C) 2010 Free Software Foundation, Inc.\n");
+  printf ("Copyright (C) 2015 Free Software Foundation, Inc.\n");
   printf ("This is free software; see the source for copying conditions.\n"
   	  "There is NO warranty; not even for MERCHANTABILITY or \n"
 	  "FITNESS FOR A PARTICULAR PURPOSE.\n\n");
@@ -139,7 +152,7 @@ print_prefix (const char *filename, unsigned depth, gcov_position_t position)
 }
 
 static void
-dump_file (const char *filename)
+dump_gcov_file (const char *filename)
 {
   unsigned tags[4];
   unsigned depth = 0;
@@ -262,22 +275,28 @@ dump_file (const char *filename)
 
 static void
 tag_function (const char *filename ATTRIBUTE_UNUSED,
-	      unsigned tag ATTRIBUTE_UNUSED, unsigned length ATTRIBUTE_UNUSED)
+	      unsigned tag ATTRIBUTE_UNUSED, unsigned length)
 {
   unsigned long pos = gcov_position ();
 
-  printf (" ident=%u", gcov_read_unsigned ());
-  printf (", checksum=0x%08x", gcov_read_unsigned ());
-
-  if (gcov_position () - pos < length)
+  if (!length)
+    printf (" placeholder");
+  else
     {
-      const char *name;
+      printf (" ident=%u", gcov_read_unsigned ());
+      printf (", lineno_checksum=0x%08x", gcov_read_unsigned ());
+      printf (", cfg_checksum=0x%08x", gcov_read_unsigned ());
 
-      name = gcov_read_string ();
-      printf (", `%s'", name ? name : "NULL");
-      name = gcov_read_string ();
-      printf (" %s", name ? name : "NULL");
-      printf (":%u", gcov_read_unsigned ());
+      if (gcov_position () - pos < length)
+	{
+	  const char *name;
+	  
+	  name = gcov_read_string ();
+	  printf (", `%s'", name ? name : "NULL");
+	  name = gcov_read_string ();
+	  printf (" %s", name ? name : "NULL");
+	  printf (":%u", gcov_read_unsigned ());
+	}
     }
 }
 
@@ -331,6 +350,18 @@ tag_arcs (const char *filename ATTRIBUTE_UNUSED,
 	  dst = gcov_read_unsigned ();
 	  flags = gcov_read_unsigned ();
 	  printf (" %u:%04x", dst, flags);
+	  if (flags)
+	    {
+	      char c = '(';
+	      
+	      if (flags & GCOV_ARC_ON_TREE)
+		printf ("%ctree", c), c = ',';
+	      if (flags & GCOV_ARC_FAKE)
+		printf ("%cfake", c), c = ',';
+	      if (flags & GCOV_ARC_FALLTHROUGH)
+		printf ("%cfall", c), c = ',';
+	      printf (")");
+	    }
 	}
     }
 }
@@ -415,7 +446,8 @@ tag_summary (const char *filename ATTRIBUTE_UNUSED,
 	     unsigned tag ATTRIBUTE_UNUSED, unsigned length ATTRIBUTE_UNUSED)
 {
   struct gcov_summary summary;
-  unsigned ix;
+  unsigned ix, h_ix;
+  gcov_bucket_type *histo_bucket;
 
   gcov_read_summary (&summary);
   printf (" checksum=0x%08x", summary.checksum);
@@ -433,5 +465,24 @@ tag_summary (const char *filename ATTRIBUTE_UNUSED,
 	      (HOST_WIDEST_INT)summary.ctrs[ix].run_max);
       printf (", sum_max=" HOST_WIDEST_INT_PRINT_DEC,
 	      (HOST_WIDEST_INT)summary.ctrs[ix].sum_max);
+      if (ix != GCOV_COUNTER_ARCS)
+        continue;
+      printf ("\n");
+      print_prefix (filename, 0, 0);
+      printf ("\t\tcounter histogram:");
+      for (h_ix = 0; h_ix < GCOV_HISTOGRAM_SIZE; h_ix++)
+        {
+          histo_bucket = &summary.ctrs[ix].histogram[h_ix];
+          if (!histo_bucket->num_counters)
+            continue;
+          printf ("\n");
+          print_prefix (filename, 0, 0);
+          printf ("\t\t%d: num counts=%u, min counter="
+              HOST_WIDEST_INT_PRINT_DEC ", cum_counter="
+              HOST_WIDEST_INT_PRINT_DEC,
+	      h_ix, histo_bucket->num_counters,
+              (HOST_WIDEST_INT)histo_bucket->min_value,
+              (HOST_WIDEST_INT)histo_bucket->cum_value);
+        }
     }
 }

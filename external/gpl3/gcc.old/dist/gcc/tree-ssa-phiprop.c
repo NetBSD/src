@@ -1,5 +1,5 @@
 /* Backward propagation of indirect loads through PHIs.
-   Copyright (C) 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
    Contributed by Richard Guenther <rguenther@suse.de>
 
 This file is part of GCC.
@@ -22,16 +22,12 @@ along with GCC; see the file COPYING3.  If not see
 #include "system.h"
 #include "coretypes.h"
 #include "tm.h"
-#include "ggc.h"
 #include "tree.h"
-#include "rtl.h"
 #include "tm_p.h"
 #include "basic-block.h"
-#include "timevar.h"
-#include "diagnostic.h"
+#include "gimple-pretty-print.h"
 #include "tree-flow.h"
 #include "tree-pass.h"
-#include "tree-dump.h"
 #include "langhooks.h"
 #include "flags.h"
 
@@ -140,12 +136,12 @@ phiprop_insert_phi (basic_block bb, gimple phi, gimple use_stmt,
   edge e;
 
   gcc_assert (is_gimple_assign (use_stmt)
-	      && gimple_assign_rhs_code (use_stmt) == INDIRECT_REF);
+	      && gimple_assign_rhs_code (use_stmt) == MEM_REF);
 
   /* Build a new PHI node to replace the definition of
      the indirect reference lhs.  */
   res = gimple_assign_lhs (use_stmt);
-  SSA_NAME_DEF_STMT (res) = new_phi = create_phi_node (res, bb);
+  new_phi = create_phi_node (res, bb);
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     {
@@ -188,17 +184,17 @@ phiprop_insert_phi (basic_block bb, gimple phi, gimple use_stmt,
 	}
       else
 	{
+	  tree rhs = gimple_assign_rhs1 (use_stmt);
 	  gcc_assert (TREE_CODE (old_arg) == ADDR_EXPR);
-	  old_arg = TREE_OPERAND (old_arg, 0);
-	  new_var = create_tmp_var (TREE_TYPE (old_arg), NULL);
-	  tmp = gimple_build_assign (new_var, unshare_expr (old_arg));
-	  if (TREE_CODE (TREE_TYPE (old_arg)) == COMPLEX_TYPE
-	      || TREE_CODE (TREE_TYPE (old_arg)) == VECTOR_TYPE)
-	    DECL_GIMPLE_REG_P (new_var) = 1;
-	  gcc_assert (is_gimple_reg (new_var));
-	  add_referenced_var (new_var);
-	  new_var = make_ssa_name (new_var, tmp);
-	  gimple_assign_set_lhs (tmp, new_var);
+	  new_var = make_ssa_name (TREE_TYPE (rhs), NULL);
+	  if (!is_gimple_min_invariant (old_arg))
+	    old_arg = PHI_ARG_DEF_FROM_EDGE (phi, e);
+	  else
+	    old_arg = unshare_expr (old_arg);
+	  tmp = gimple_build_assign (new_var,
+				     fold_build2 (MEM_REF, TREE_TYPE (rhs),
+						  old_arg,
+						  TREE_OPERAND (rhs, 1)));
 	  gimple_set_location (tmp, locus);
 
 	  gsi_insert_on_edge (e, tmp);
@@ -250,6 +246,8 @@ propagate_with_phi (basic_block bb, gimple phi, struct phiprop_d *phivn,
   use_operand_p arg_p, use;
   ssa_op_iter i;
   bool phi_inserted;
+  tree type = NULL_TREE;
+  bool one_invariant = false;
 
   if (!POINTER_TYPE_P (TREE_TYPE (ptr))
       || !is_gimple_reg_type (TREE_TYPE (TREE_TYPE (ptr))))
@@ -272,15 +270,28 @@ propagate_with_phi (basic_block bb, gimple phi, struct phiprop_d *phivn,
 	    return false;
 	  arg = gimple_assign_rhs1 (def_stmt);
 	}
-      if ((TREE_CODE (arg) != ADDR_EXPR
-	   /* Avoid to have to decay *&a to a[0] later.  */
-	   || !is_gimple_reg_type (TREE_TYPE (TREE_OPERAND (arg, 0))))
+      if (TREE_CODE (arg) != ADDR_EXPR
 	  && !(TREE_CODE (arg) == SSA_NAME
 	       && SSA_NAME_VERSION (arg) < n
 	       && phivn[SSA_NAME_VERSION (arg)].value != NULL_TREE
+	       && (!type
+		   || types_compatible_p
+		       (type, TREE_TYPE (phivn[SSA_NAME_VERSION (arg)].value)))
 	       && phivn_valid_p (phivn, arg, bb)))
 	return false;
+      if (!type
+	  && TREE_CODE (arg) == SSA_NAME)
+	type = TREE_TYPE (phivn[SSA_NAME_VERSION (arg)].value);
+      if (TREE_CODE (arg) == ADDR_EXPR
+	  && is_gimple_min_invariant (arg))
+	one_invariant = true;
     }
+
+  /* If we neither have an address of a decl nor can reuse a previously
+     inserted load, do not hoist anything.  */
+  if (!one_invariant
+      && !type)
+    return false;
 
   /* Find a dereferencing use.  First follow (single use) ssa
      copy chains for ptr.  */
@@ -296,11 +307,21 @@ propagate_with_phi (basic_block bb, gimple phi, struct phiprop_d *phivn,
       gimple def_stmt;
       tree vuse;
 
+      /* Only replace loads in blocks that post-dominate the PHI node.  That
+         makes sure we don't end up speculating loads.  */
+      if (!dominated_by_p (CDI_POST_DOMINATORS,
+			   bb, gimple_bb (use_stmt)))
+	continue;
+         
       /* Check whether this is a load of *ptr.  */
       if (!(is_gimple_assign (use_stmt)
 	    && TREE_CODE (gimple_assign_lhs (use_stmt)) == SSA_NAME
-	    && gimple_assign_rhs_code (use_stmt) == INDIRECT_REF
+	    && gimple_assign_rhs_code (use_stmt) == MEM_REF
 	    && TREE_OPERAND (gimple_assign_rhs1 (use_stmt), 0) == ptr
+	    && integer_zerop (TREE_OPERAND (gimple_assign_rhs1 (use_stmt), 1))
+	    && (!type
+		|| types_compatible_p
+		     (TREE_TYPE (gimple_assign_lhs (use_stmt)), type))
 	    /* We cannot replace a load that may throw or is volatile.  */
 	    && !stmt_can_throw_internal (use_stmt)))
 	continue;
@@ -320,6 +341,7 @@ propagate_with_phi (basic_block bb, gimple phi, struct phiprop_d *phivn,
       if (!phi_inserted)
 	{
 	  res = phiprop_insert_phi (bb, phi, use_stmt, phivn, n);
+	  type = TREE_TYPE (res);
 
 	  /* Remember the value we created for *ptr.  */
 	  phivn[SSA_NAME_VERSION (ptr)].value = res;
@@ -329,7 +351,7 @@ propagate_with_phi (basic_block bb, gimple phi, struct phiprop_d *phivn,
 	     want to delete it here we also have to delete all intermediate
 	     copies.  */
 	  gsi = gsi_for_stmt (use_stmt);
-	  gsi_remove (&gsi, false);
+	  gsi_remove (&gsi, true);
 
 	  phi_inserted = true;
 	}
@@ -353,7 +375,7 @@ next:;
 static unsigned int
 tree_ssa_phiprop (void)
 {
-  VEC(basic_block, heap) *bbs;
+  vec<basic_block> bbs;
   struct phiprop_d *phivn;
   bool did_something = false;
   basic_block bb;
@@ -362,6 +384,7 @@ tree_ssa_phiprop (void)
   size_t n;
 
   calculate_dominance_info (CDI_DOMINATORS);
+  calculate_dominance_info (CDI_POST_DOMINATORS);
 
   n = num_ssa_names;
   phivn = XCNEWVEC (struct phiprop_d, n);
@@ -369,15 +392,17 @@ tree_ssa_phiprop (void)
   /* Walk the dominator tree in preorder.  */
   bbs = get_all_dominated_blocks (CDI_DOMINATORS,
 				  single_succ (ENTRY_BLOCK_PTR));
-  for (i = 0; VEC_iterate (basic_block, bbs, i, bb); ++i)
+  FOR_EACH_VEC_ELT (bbs, i, bb)
     for (gsi = gsi_start_phis (bb); !gsi_end_p (gsi); gsi_next (&gsi))
       did_something |= propagate_with_phi (bb, gsi_stmt (gsi), phivn, n);
 
   if (did_something)
     gsi_commit_edge_inserts ();
 
-  VEC_free (basic_block, heap, bbs);
+  bbs.release ();
   free (phivn);
+
+  free_dominance_info (CDI_POST_DOMINATORS);
 
   return 0;
 }
@@ -393,6 +418,7 @@ struct gimple_opt_pass pass_phiprop =
  {
   GIMPLE_PASS,
   "phiprop",			/* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_phiprop,			/* gate */
   tree_ssa_phiprop,		/* execute */
   NULL,				/* sub */
@@ -403,8 +429,7 @@ struct gimple_opt_pass pass_phiprop =
   0,				/* properties_provided */
   0,				/* properties_destroyed */
   0,				/* todo_flags_start */
-  TODO_dump_func
-  | TODO_ggc_collect
+  TODO_ggc_collect
   | TODO_update_ssa
   | TODO_verify_ssa		/* todo_flags_finish */
  }

@@ -1,6 +1,6 @@
 ; GNU/Linux-specific options for the CRIS port of the compiler.
 
-; Copyright (C) 2005, 2007 Free Software Foundation, Inc.
+; Copyright (C) 2005-2013 Free Software Foundation, Inc.
 ;
 ; This file is part of GCC.
 ;
@@ -23,7 +23,7 @@ mlinux
 Target Report RejectNegative Undocumented
 
 mno-gotplt
-Target Report RejectNegative Mask(AVOID_GOTPLT) MaskExists
+Target Report RejectNegative Mask(AVOID_GOTPLT)
 Together with -fpic and -fPIC, do not use GOTPLT references
 
 ; There's a small added setup cost with using GOTPLT references

@@ -1,6 +1,6 @@
 /* Definitions of target machine for GCC, for ELF on NetBSD/sparc
    and NetBSD/sparc64.
-   Copyright (C) 2002, 2003, 2004, 2005, 2007 Free Software Foundation, Inc.
+   Copyright (C) 2002-2013 Free Software Foundation, Inc.
    Contributed by Matthew Green (mrg@eterna.com.au).
 
 This file is part of GCC.
@@ -35,10 +35,6 @@ along with GCC; see the file COPYING3.  If not see
     }							\
   while (0)
 
-/* Make sure these are undefined.  */
-#undef MD_EXEC_PREFIX
-#undef MD_STARTFILE_PREFIX
-
 /* CPP defines used by all NetBSD targets.  */
 #undef CPP_SUBTARGET_SPEC
 #define CPP_SUBTARGET_SPEC "%(netbsd_cpp_spec)"
@@ -49,6 +45,37 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef PTRDIFF_TYPE
 #define PTRDIFF_TYPE "long int"
+
+/* we keep these "long" on both 32bit and 64bit targets */
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
+
+#undef INT_FAST8_TYPE
+#define INT_FAST8_TYPE   (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef UINT_FAST8_TYPE
+#define UINT_FAST8_TYPE  (LONG_TYPE_SIZE == 64 ? "unsigned char" : "unsigned int")
+
+#undef INT_FAST16_TYPE
+#define INT_FAST16_TYPE  (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef UINT_FAST16_TYPE
+#define UINT_FAST16_TYPE (LONG_TYPE_SIZE == 64 ? "short unsigned int" : "unsigned int")
+
+#undef INT_FAST32_TYPE
+#define INT_FAST32_TYPE  (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef UINT_FAST32_TYPE
+#define UINT_FAST32_TYPE "unsigned int"
+
+#undef INT_FAST64_TYPE
+#define INT_FAST64_TYPE  (LONG_TYPE_SIZE == 64 ? "long int" : "long long int")
+
+#undef UINT_FAST64_TYPE
+#define UINT_FAST64_TYPE (LONG_TYPE_SIZE == 64 ? "long unsigned int" : "long long unsigned int")
 
 /* This is the char to use for continuation (in case we need to turn
    continuation back on).  */
@@ -71,17 +98,12 @@ along with GCC; see the file COPYING3.  If not see
 #define USER_LABEL_PREFIX ""
 
 #undef ASM_SPEC
-#define ASM_SPEC "%{fpic|fPIC|fpie|fPIE:-K PIC} %{V} %{v:%{!V:-V}} \
-%{mlittle-endian:-EL} \
+#define ASM_SPEC "%{fpic|fPIC|fpie|fPIE:-K PIC} \
 %(asm_cpu) %(asm_arch) %(asm_relax)"
 
 #undef STDC_0_IN_SYSTEM_HEADERS
 
-/* Attempt to enable execute permissions on the stack.  */
-#define ENABLE_EXECUTE_STACK NETBSD_ENABLE_EXECUTE_STACK
-
-#undef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (%s)", TARGET_NAME);
+#define HAVE_ENABLE_EXECUTE_STACK
 
 /* Below here exists the merged NetBSD/sparc & NetBSD/sparc64 compiler
    description, allowing one to build 32-bit or 64-bit applications
@@ -93,10 +115,6 @@ along with GCC; see the file COPYING3.  If not see
 /* We use the default NetBSD ELF STARTFILE_SPEC and ENDFILE_SPEC
    definitions, even for the SPARC_BI_ARCH compiler, because NetBSD does
    not have a default place to find these libraries..  */
-
-/* Name the port(s).  */
-#define TARGET_NAME64     "NetBSD/sparc64 ELF"
-#define TARGET_NAME32     "NetBSD/sparc ELF"
 
 /* TARGET_CPU_DEFAULT is set in Makefile.in.  We test for 64-bit default
    platform here.  */
@@ -118,41 +136,21 @@ along with GCC; see the file COPYING3.  If not see
 
 /* CC1_SPEC for NetBSD/sparc.  */
 #define CC1_SPEC32 \
- "%{sun4:} %{target:} \
-  %{mcypress:-mcpu=cypress} \
-  %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
-  %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
-  %{m32:%{m64:%emay not use both -m32 and -m64}} \
+ "%{m32:%{m64:%emay not use both -m32 and -m64}} \
   %{m64: \
     -mptr64 -mstack-bias -mno-v8plus -mlong-double-128 \
-    %{!mcpu*: \
-      %{!mcypress: \
-        %{!msparclite: \
-	  %{!mf930: \
-	    %{!mf934: \
-	      %{!mv8*: \
-	        %{!msupersparc:-mcpu=ultrasparc}}}}}}} \
+    %{!mcpu*:%{!mv8plus:-mcpu=ultrasparc}} \
     %{!mno-vis:%{!mcpu=v9:-mvis}} \
     %{p:-mcmodel=medlow} \
     %{pg:-mcmodel=medlow}} " \
   NETBSD_CC1_AND_CC1PLUS_SPEC
 
 #define CC1_SPEC64 \
- "%{sun4:} %{target:} \
-  %{mcypress:-mcpu=cypress} \
-  %{msparclite:-mcpu=sparclite} %{mf930:-mcpu=f930} %{mf934:-mcpu=f934} \
-  %{mv8:-mcpu=v8} %{msupersparc:-mcpu=supersparc} \
-  %{m32:%{m64:%emay not use both -m32 and -m64}} \
+ "%{m32:%{m64:%emay not use both -m32 and -m64}} \
   %{m32: \
     -mptr32 -mno-stack-bias \
     %{!mlong-double-128:-mlong-double-64} \
-    %{!mcpu*: \
-      %{!mcypress: \
-	%{!msparclite: \
-	  %{!mf930: \
-	    %{!mf934: \
-	      %{!mv8*: \
-		%{!msupersparc:-mcpu=cypress}}}}}}}} \
+    %{!mcpu*:%{!mv8plus:-mcpu=cypress}}} \
   %{!m32: \
       %{p:-mcmodel=medlow} \
       %{pg:-mcmodel=medlow}} " \
@@ -242,10 +240,6 @@ along with GCC; see the file COPYING3.  If not see
 #define MULTILIB_DEFAULTS { "m64" }
 #endif
 
-/* Name the port.  */
-#undef TARGET_NAME
-#define TARGET_NAME     (DEFAULT_ARCH32_P ? TARGET_NAME32 : TARGET_NAME64)
-
 #else	/* SPARC_BI_ARCH */
 
 #if TARGET_CPU_DEFAULT == TARGET_CPU_v9 \
@@ -259,9 +253,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef  CC1_SPEC
 #define CC1_SPEC CC1_SPEC64
-
-#undef TARGET_NAME
-#define TARGET_NAME     TARGET_NAME64
 
 #else	/* TARGET_CPU_DEFAULT == TARGET_CPU_v9 \
 	|| TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc */
@@ -277,9 +268,6 @@ along with GCC; see the file COPYING3.  If not see
 
 #undef  CC1_SPEC
 #define CC1_SPEC CC1_SPEC32
-
-#undef TARGET_NAME
-#define TARGET_NAME     TARGET_NAME32
 
 #endif	/* TARGET_CPU_DEFAULT == TARGET_CPU_v9 \
 	|| TARGET_CPU_DEFAULT == TARGET_CPU_ultrasparc */

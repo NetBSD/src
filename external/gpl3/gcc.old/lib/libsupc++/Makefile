@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2014/02/26 10:57:34 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2015/09/23 03:03:39 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,7 +17,7 @@ LIB=		supc++
 .if exists(${.CURDIR}/../libstdc++-v3/arch/${GCC_MACHINE_ARCH}/defs.mk) && ${MKGCC} != "no"
 .include "${.CURDIR}/../libstdc++-v3/arch/${GCC_MACHINE_ARCH}/defs.mk"
 
-SHLIB_MAJOR=	1
+SHLIB_MAJOR=	2
 SHLIB_MINOR=	0
 
 .include "${.CURDIR}/../libsupc++/Makefile.common"
@@ -27,14 +27,20 @@ CXXFLAGS+=	${G_SECTION_FLAGS}
 
 COPTS.cp-demangle.c = -Wno-stack-protector
 
-.include <bsd.lib.mk>
+.if ${HAVE_LIBGCC_EH} == "no"
+G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
+.endif
 
-${SRCS}: unwind.h
-unwind.h: ${G_UNWIND_H}
-	${_MKTARGET_CREATE}
-	rm -f ${.TARGET}
-	ln -s ${G_UNWIND_H} ${.TARGET}
-CLEANFILES+= unwind.h
+.if ${MKGCC} != "no"
+.if defined(G_CONFIGLINKS) && !empty(G_CONFIGLINKS)
+BUILDSYMLINKS+=        ${G_CONFIGLINKS}
+.for _src _dst in ${G_CONFIGLINKS}
+DPSRCS+=       ${_dst}
+.endfor
+.endif
+.endif
+
+.include <bsd.lib.mk>
 
 .PATH:	${DIST}/libstdc++-v3/src \
 	${DIST}/libstdc++-v3/libsupc++ \

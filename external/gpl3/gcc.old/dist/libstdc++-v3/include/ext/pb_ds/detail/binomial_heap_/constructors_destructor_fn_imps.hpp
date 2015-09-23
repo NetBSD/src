@@ -1,6 +1,6 @@
 // -*- C++ -*-
 
-// Copyright (C) 2005, 2006, 2009 Free Software Foundation, Inc.
+// Copyright (C) 2005-2013 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the terms
@@ -34,28 +34,27 @@
 // warranty.
 
 /**
- * @file constructors_destructor_fn_imps.hpp
+ * @file detail/binomial_heap_/constructors_destructor_fn_imps.hpp
  * Contains an implementation for binomial_heap_.
  */
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-binomial_heap_()
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+binomial_heap()
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-binomial_heap_(const Cmp_Fn& r_cmp_fn) :
-  PB_DS_BASE_C_DEC(r_cmp_fn)
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+binomial_heap(const Cmp_Fn& r_cmp_fn)
+: base_type(r_cmp_fn)
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-binomial_heap_(const PB_DS_CLASS_C_DEC& other) :
-  PB_DS_BASE_C_DEC(other)
-{ _GLIBCXX_DEBUG_ONLY(assert_valid();) }
+binomial_heap(const PB_DS_CLASS_C_DEC& other)
+: base_type(other)
+{ PB_DS_ASSERT_VALID((*this)) }
 
 PB_DS_CLASS_T_DEC
 PB_DS_CLASS_C_DEC::
-~binomial_heap_() { }
-
+~binomial_heap() { }

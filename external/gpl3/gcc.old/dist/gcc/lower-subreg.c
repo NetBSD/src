@@ -1,5 +1,5 @@
 /* Decompose multiword subregs.
-   Copyright (C) 2007, 2008, 2009 Free Software Foundation, Inc.
+   Copyright (C) 2007-2013 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>
 		  Ian Lance Taylor <iant@google.com>
 
@@ -26,18 +26,19 @@ along with GCC; see the file COPYING3.  If not see
 #include "tm.h"
 #include "rtl.h"
 #include "tm_p.h"
-#include "timevar.h"
 #include "flags.h"
 #include "insn-config.h"
 #include "obstack.h"
 #include "basic-block.h"
 #include "recog.h"
 #include "bitmap.h"
+#include "dce.h"
 #include "expr.h"
 #include "except.h"
 #include "regs.h"
 #include "tree-pass.h"
 #include "df.h"
+#include "lower-subreg.h"
 
 #ifdef STACK_GROWS_DOWNWARD
 # undef STACK_GROWS_DOWNWARD
@@ -46,14 +47,37 @@ along with GCC; see the file COPYING3.  If not see
 # define STACK_GROWS_DOWNWARD 0
 #endif
 
-DEF_VEC_P (bitmap);
-DEF_VEC_ALLOC_P (bitmap,heap);
 
 /* Decompose multi-word pseudo-registers into individual
-   pseudo-registers when possible.  This is possible when all the uses
-   of a multi-word register are via SUBREG, or are copies of the
-   register to another location.  Breaking apart the register permits
-   more CSE and permits better register allocation.  */
+   pseudo-registers when possible and profitable.  This is possible
+   when all the uses of a multi-word register are via SUBREG, or are
+   copies of the register to another location.  Breaking apart the
+   register permits more CSE and permits better register allocation.
+   This is profitable if the machine does not have move instructions
+   to do this.
+
+   This pass only splits moves with modes that are wider than
+   word_mode and ASHIFTs, LSHIFTRTs, ASHIFTRTs and ZERO_EXTENDs with
+   integer modes that are twice the width of word_mode.  The latter
+   could be generalized if there was a need to do this, but the trend in
+   architectures is to not need this.
+
+   There are two useful preprocessor defines for use by maintainers:
+
+   #define LOG_COSTS 1
+
+   if you wish to see the actual cost estimates that are being used
+   for each mode wider than word mode and the cost estimates for zero
+   extension and the shifts.   This can be useful when port maintainers
+   are tuning insn rtx costs.
+
+   #define FORCE_LOWERING 1
+
+   if you wish to test the pass with all the transformation forced on.
+   This can be useful for finding bugs in the transformations.  */
+
+#define LOG_COSTS 0
+#define FORCE_LOWERING 0
 
 /* Bit N in this bitmap is set if regno N is used in a context in
    which we can decompose it.  */
@@ -63,12 +87,207 @@ static bitmap decomposable_context;
    which it can not be decomposed.  */
 static bitmap non_decomposable_context;
 
+/* Bit N in this bitmap is set if regno N is used in a subreg
+   which changes the mode but not the size.  This typically happens
+   when the register accessed as a floating-point value; we want to
+   avoid generating accesses to its subwords in integer modes.  */
+static bitmap subreg_context;
+
 /* Bit N in the bitmap in element M of this array is set if there is a
    copy from reg M to reg N.  */
-static VEC(bitmap,heap) *reg_copy_graph;
+static vec<bitmap> reg_copy_graph;
 
-/* Return whether X is a simple object which we can take a word_mode
-   subreg of.  */
+struct target_lower_subreg default_target_lower_subreg;
+#if SWITCHABLE_TARGET
+struct target_lower_subreg *this_target_lower_subreg
+  = &default_target_lower_subreg;
+#endif
+
+#define twice_word_mode \
+  this_target_lower_subreg->x_twice_word_mode
+#define choices \
+  this_target_lower_subreg->x_choices
+
+/* RTXes used while computing costs.  */
+struct cost_rtxes {
+  /* Source and target registers.  */
+  rtx source;
+  rtx target;
+
+  /* A twice_word_mode ZERO_EXTEND of SOURCE.  */
+  rtx zext;
+
+  /* A shift of SOURCE.  */
+  rtx shift;
+
+  /* A SET of TARGET.  */
+  rtx set;
+};
+
+/* Return the cost of a CODE shift in mode MODE by OP1 bits, using the
+   rtxes in RTXES.  SPEED_P selects between the speed and size cost.  */
+
+static int
+shift_cost (bool speed_p, struct cost_rtxes *rtxes, enum rtx_code code,
+	    enum machine_mode mode, int op1)
+{
+  PUT_CODE (rtxes->shift, code);
+  PUT_MODE (rtxes->shift, mode);
+  PUT_MODE (rtxes->source, mode);
+  XEXP (rtxes->shift, 1) = GEN_INT (op1);
+  return set_src_cost (rtxes->shift, speed_p);
+}
+
+/* For each X in the range [0, BITS_PER_WORD), set SPLITTING[X]
+   to true if it is profitable to split a double-word CODE shift
+   of X + BITS_PER_WORD bits.  SPEED_P says whether we are testing
+   for speed or size profitability.
+
+   Use the rtxes in RTXES to calculate costs.  WORD_MOVE_ZERO_COST is
+   the cost of moving zero into a word-mode register.  WORD_MOVE_COST
+   is the cost of moving between word registers.  */
+
+static void
+compute_splitting_shift (bool speed_p, struct cost_rtxes *rtxes,
+			 bool *splitting, enum rtx_code code,
+			 int word_move_zero_cost, int word_move_cost)
+{
+  int wide_cost, narrow_cost, upper_cost, i;
+
+  for (i = 0; i < BITS_PER_WORD; i++)
+    {
+      wide_cost = shift_cost (speed_p, rtxes, code, twice_word_mode,
+			      i + BITS_PER_WORD);
+      if (i == 0)
+	narrow_cost = word_move_cost;
+      else
+	narrow_cost = shift_cost (speed_p, rtxes, code, word_mode, i);
+
+      if (code != ASHIFTRT)
+	upper_cost = word_move_zero_cost;
+      else if (i == BITS_PER_WORD - 1)
+	upper_cost = word_move_cost;
+      else
+	upper_cost = shift_cost (speed_p, rtxes, code, word_mode,
+				 BITS_PER_WORD - 1);
+
+      if (LOG_COSTS)
+	fprintf (stderr, "%s %s by %d: original cost %d, split cost %d + %d\n",
+		 GET_MODE_NAME (twice_word_mode), GET_RTX_NAME (code),
+		 i + BITS_PER_WORD, wide_cost, narrow_cost, upper_cost);
+
+      if (FORCE_LOWERING || wide_cost >= narrow_cost + upper_cost)
+	splitting[i] = true;
+    }
+}
+
+/* Compute what we should do when optimizing for speed or size; SPEED_P
+   selects which.  Use RTXES for computing costs.  */
+
+static void
+compute_costs (bool speed_p, struct cost_rtxes *rtxes)
+{
+  unsigned int i;
+  int word_move_zero_cost, word_move_cost;
+
+  PUT_MODE (rtxes->target, word_mode);
+  SET_SRC (rtxes->set) = CONST0_RTX (word_mode);
+  word_move_zero_cost = set_rtx_cost (rtxes->set, speed_p);
+
+  SET_SRC (rtxes->set) = rtxes->source;
+  word_move_cost = set_rtx_cost (rtxes->set, speed_p);
+
+  if (LOG_COSTS)
+    fprintf (stderr, "%s move: from zero cost %d, from reg cost %d\n",
+	     GET_MODE_NAME (word_mode), word_move_zero_cost, word_move_cost);
+
+  for (i = 0; i < MAX_MACHINE_MODE; i++)
+    {
+      enum machine_mode mode = (enum machine_mode) i;
+      int factor = GET_MODE_SIZE (mode) / UNITS_PER_WORD;
+      if (factor > 1)
+	{
+	  int mode_move_cost;
+
+	  PUT_MODE (rtxes->target, mode);
+	  PUT_MODE (rtxes->source, mode);
+	  mode_move_cost = set_rtx_cost (rtxes->set, speed_p);
+
+	  if (LOG_COSTS)
+	    fprintf (stderr, "%s move: original cost %d, split cost %d * %d\n",
+		     GET_MODE_NAME (mode), mode_move_cost,
+		     word_move_cost, factor);
+
+	  if (FORCE_LOWERING || mode_move_cost >= word_move_cost * factor)
+	    {
+	      choices[speed_p].move_modes_to_split[i] = true;
+	      choices[speed_p].something_to_do = true;
+	    }
+	}
+    }
+
+  /* For the moves and shifts, the only case that is checked is one
+     where the mode of the target is an integer mode twice the width
+     of the word_mode.
+
+     If it is not profitable to split a double word move then do not
+     even consider the shifts or the zero extension.  */
+  if (choices[speed_p].move_modes_to_split[(int) twice_word_mode])
+    {
+      int zext_cost;
+
+      /* The only case here to check to see if moving the upper part with a
+	 zero is cheaper than doing the zext itself.  */
+      PUT_MODE (rtxes->source, word_mode);
+      zext_cost = set_src_cost (rtxes->zext, speed_p);
+
+      if (LOG_COSTS)
+	fprintf (stderr, "%s %s: original cost %d, split cost %d + %d\n",
+		 GET_MODE_NAME (twice_word_mode), GET_RTX_NAME (ZERO_EXTEND),
+		 zext_cost, word_move_cost, word_move_zero_cost);
+
+      if (FORCE_LOWERING || zext_cost >= word_move_cost + word_move_zero_cost)
+	choices[speed_p].splitting_zext = true;
+
+      compute_splitting_shift (speed_p, rtxes,
+			       choices[speed_p].splitting_ashift, ASHIFT,
+			       word_move_zero_cost, word_move_cost);
+      compute_splitting_shift (speed_p, rtxes,
+			       choices[speed_p].splitting_lshiftrt, LSHIFTRT,
+			       word_move_zero_cost, word_move_cost);
+      compute_splitting_shift (speed_p, rtxes,
+			       choices[speed_p].splitting_ashiftrt, ASHIFTRT,
+			       word_move_zero_cost, word_move_cost);
+    }
+}
+
+/* Do one-per-target initialisation.  This involves determining
+   which operations on the machine are profitable.  If none are found,
+   then the pass just returns when called.  */
+
+void
+init_lower_subreg (void)
+{
+  struct cost_rtxes rtxes;
+
+  memset (this_target_lower_subreg, 0, sizeof (*this_target_lower_subreg));
+
+  twice_word_mode = GET_MODE_2XWIDER_MODE (word_mode);
+
+  rtxes.target = gen_rtx_REG (word_mode, FIRST_PSEUDO_REGISTER);
+  rtxes.source = gen_rtx_REG (word_mode, FIRST_PSEUDO_REGISTER + 1);
+  rtxes.set = gen_rtx_SET (VOIDmode, rtxes.target, rtxes.source);
+  rtxes.zext = gen_rtx_ZERO_EXTEND (twice_word_mode, rtxes.source);
+  rtxes.shift = gen_rtx_ASHIFT (twice_word_mode, rtxes.source, const0_rtx);
+
+  if (LOG_COSTS)
+    fprintf (stderr, "\nSize costs\n==========\n\n");
+  compute_costs (false, &rtxes);
+
+  if (LOG_COSTS)
+    fprintf (stderr, "\nSpeed costs\n===========\n\n");
+  compute_costs (true, &rtxes);
+}
 
 static bool
 simple_move_operand (rtx x)
@@ -87,18 +306,21 @@ simple_move_operand (rtx x)
 
   if (MEM_P (x)
       && (MEM_VOLATILE_P (x)
-	  || mode_dependent_address_p (XEXP (x, 0))))
+	  || mode_dependent_address_p (XEXP (x, 0), MEM_ADDR_SPACE (x))))
     return false;
 
   return true;
 }
 
-/* If INSN is a single set between two objects, return the single set.
-   Such an insn can always be decomposed.  INSN should have been
-   passed to recog and extract_insn before this is called.  */
+/* If INSN is a single set between two objects that we want to split,
+   return the single set.  SPEED_P says whether we are optimizing
+   INSN for speed or size.
+
+   INSN should have been passed to recog and extract_insn before this
+   is called.  */
 
 static rtx
-simple_move (rtx insn)
+simple_move (rtx insn, bool speed_p)
 {
   rtx x;
   rtx set;
@@ -131,7 +353,7 @@ simple_move (rtx insn)
      registers.  That means that we can't decompose if this is a
      non-integer mode for which there is no integer mode of the same
      size.  */
-  mode = GET_MODE (SET_SRC (set));
+  mode = GET_MODE (SET_DEST (set));
   if (!SCALAR_INT_MODE_P (mode)
       && (mode_for_size (GET_MODE_SIZE (mode) * BITS_PER_UNIT, MODE_INT, 0)
 	  == BLKmode))
@@ -140,6 +362,9 @@ simple_move (rtx insn)
   /* Reject PARTIAL_INT modes.  They are used for processor specific
      purposes and it's probably best not to tamper with them.  */
   if (GET_MODE_CLASS (mode) == MODE_PARTIAL_INT)
+    return NULL_RTX;
+
+  if (!choices[speed_p].move_modes_to_split[(int) mode])
     return NULL_RTX;
 
   return set;
@@ -165,14 +390,11 @@ find_pseudo_copy (rtx set)
   if (HARD_REGISTER_NUM_P (rd) || HARD_REGISTER_NUM_P (rs))
     return false;
 
-  if (GET_MODE_SIZE (GET_MODE (dest)) <= UNITS_PER_WORD)
-    return false;
-
-  b = VEC_index (bitmap, reg_copy_graph, rs);
+  b = reg_copy_graph[rs];
   if (b == NULL)
     {
       b = BITMAP_ALLOC (NULL);
-      VEC_replace (bitmap, reg_copy_graph, rs, b);
+      reg_copy_graph[rs] = b;
     }
 
   bitmap_set_bit (b, rd);
@@ -204,7 +426,7 @@ propagate_pseudo_copies (void)
 
       EXECUTE_IF_SET_IN_BITMAP (queue, 0, i, iter)
 	{
-	  bitmap b = VEC_index (bitmap, reg_copy_graph, i);
+	  bitmap b = reg_copy_graph[i];
 	  if (b)
 	    bitmap_ior_and_compl_into (propagate, b, non_decomposable_context);
 	}
@@ -225,9 +447,9 @@ enum classify_move_insn
 {
   /* Not a simple move from one location to another.  */
   NOT_SIMPLE_MOVE,
-  /* A simple move from one pseudo-register to another.  */
-  SIMPLE_PSEUDO_REG_MOVE,
-  /* A simple move involving a non-pseudo-register.  */
+  /* A simple move we want to decompose.  */
+  DECOMPOSABLE_SIMPLE_MOVE,
+  /* Any other simple move.  */
   SIMPLE_MOVE
 };
 
@@ -289,6 +511,7 @@ find_decomposable_subregs (rtx *px, void *data)
 	  && !MODES_TIEABLE_P (GET_MODE (x), GET_MODE (inner)))
 	{
 	  bitmap_set_bit (non_decomposable_context, regno);
+	  bitmap_set_bit (subreg_context, regno);
 	  return -1;
 	}
     }
@@ -302,7 +525,7 @@ find_decomposable_subregs (rtx *px, void *data)
 
 	 If this is not a simple copy from one location to another,
 	 then we can not decompose this register.  If this is a simple
-	 copy from one pseudo-register to another, and the mode is right
+	 copy we want to decompose, and the mode is right,
 	 then we mark the register as decomposable.
 	 Otherwise we don't say anything about this register --
 	 it could be decomposed, but whether that would be
@@ -321,7 +544,7 @@ find_decomposable_subregs (rtx *px, void *data)
 	    case NOT_SIMPLE_MOVE:
 	      bitmap_set_bit (non_decomposable_context, regno);
 	      break;
-	    case SIMPLE_PSEUDO_REG_MOVE:
+	    case DECOMPOSABLE_SIMPLE_MOVE:
 	      if (MODES_TIEABLE_P (GET_MODE (x), word_mode))
 		bitmap_set_bit (decomposable_context, regno);
 	      break;
@@ -337,7 +560,7 @@ find_decomposable_subregs (rtx *px, void *data)
       enum classify_move_insn cmi_mem = NOT_SIMPLE_MOVE;
 
       /* Any registers used in a MEM do not participate in a
-	 SIMPLE_MOVE or SIMPLE_PSEUDO_REG_MOVE.  Do our own recursion
+	 SIMPLE_MOVE or DECOMPOSABLE_SIMPLE_MOVE.  Do our own recursion
 	 here, and return -1 to block the parent's recursion.  */
       for_each_rtx (&XEXP (x, 0), find_decomposable_subregs, &cmi_mem);
       return -1;
@@ -388,7 +611,7 @@ simplify_subreg_concatn (enum machine_mode outermode, rtx op,
 			 unsigned int byte)
 {
   unsigned int inner_size;
-  enum machine_mode innermode;
+  enum machine_mode innermode, partmode;
   rtx part;
   unsigned int final_offset;
 
@@ -401,11 +624,24 @@ simplify_subreg_concatn (enum machine_mode outermode, rtx op,
 
   inner_size = GET_MODE_SIZE (innermode) / XVECLEN (op, 0);
   part = XVECEXP (op, 0, byte / inner_size);
+  partmode = GET_MODE (part);
+
+  /* VECTOR_CSTs in debug expressions are expanded into CONCATN instead of
+     regular CONST_VECTORs.  They have vector or integer modes, depending
+     on the capabilities of the target.  Cope with them.  */
+  if (partmode == VOIDmode && VECTOR_MODE_P (innermode))
+    partmode = GET_MODE_INNER (innermode);
+  else if (partmode == VOIDmode)
+    {
+      enum mode_class mclass = GET_MODE_CLASS (innermode);
+      partmode = mode_for_size (inner_size * BITS_PER_UNIT, mclass, 0);
+    }
+
   final_offset = byte % inner_size;
   if (final_offset + GET_MODE_SIZE (outermode) > inner_size)
     return NULL_RTX;
 
-  return simplify_gen_subreg (outermode, part, GET_MODE (part), final_offset);
+  return simplify_gen_subreg (outermode, part, partmode, final_offset);
 }
 
 /* Wrapper around simplify_gen_subreg which handles CONCATN.  */
@@ -613,10 +849,17 @@ can_decompose_p (rtx x)
       unsigned int regno = REGNO (x);
 
       if (HARD_REGISTER_NUM_P (regno))
-	return (validate_subreg (word_mode, GET_MODE (x), x, UNITS_PER_WORD)
-		&& HARD_REGNO_MODE_OK (regno, word_mode));
+	{
+	  unsigned int byte, num_bytes;
+
+	  num_bytes = GET_MODE_SIZE (GET_MODE (x));
+	  for (byte = 0; byte < num_bytes; byte += UNITS_PER_WORD)
+	    if (simplify_subreg_regno (regno, GET_MODE (x), byte, word_mode) < 0)
+	      return false;
+	  return true;
+	}
       else
-	return !bitmap_bit_p (non_decomposable_context, regno);
+	return !bitmap_bit_p (subreg_context, regno);
     }
 
   return true;
@@ -639,8 +882,7 @@ resolve_simple_move (rtx set, rtx insn)
   orig_mode = GET_MODE (dest);
 
   words = (GET_MODE_SIZE (orig_mode) + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
-  if (words <= 1)
-    return insn;
+  gcc_assert (words > 1);
 
   start_sequence ();
 
@@ -902,12 +1144,13 @@ resolve_debug (rtx insn)
   resolve_reg_notes (insn);
 }
 
-/* Checks if INSN is a decomposable multiword-shift or zero-extend and
-   sets the decomposable_context bitmap accordingly.  A non-zero value
-   is returned if a decomposable insn has been found.  */
+/* Check if INSN is a decomposable multiword-shift or zero-extend and
+   set the decomposable_context bitmap accordingly.  SPEED_P is true
+   if we are optimizing INSN for speed rather than size.  Return true
+   if INSN is decomposable.  */
 
-static int
-find_decomposable_shift_zext (rtx insn)
+static bool
+find_decomposable_shift_zext (rtx insn, bool speed_p)
 {
   rtx set;
   rtx op;
@@ -915,41 +1158,47 @@ find_decomposable_shift_zext (rtx insn)
 
   set = single_set (insn);
   if (!set)
-    return 0;
+    return false;
 
   op = SET_SRC (set);
   if (GET_CODE (op) != ASHIFT
       && GET_CODE (op) != LSHIFTRT
+      && GET_CODE (op) != ASHIFTRT
       && GET_CODE (op) != ZERO_EXTEND)
-    return 0;
+    return false;
 
   op_operand = XEXP (op, 0);
   if (!REG_P (SET_DEST (set)) || !REG_P (op_operand)
       || HARD_REGISTER_NUM_P (REGNO (SET_DEST (set)))
       || HARD_REGISTER_NUM_P (REGNO (op_operand))
-      || !SCALAR_INT_MODE_P (GET_MODE (op)))
-    return 0;
+      || GET_MODE (op) != twice_word_mode)
+    return false;
 
   if (GET_CODE (op) == ZERO_EXTEND)
     {
       if (GET_MODE (op_operand) != word_mode
-	  || GET_MODE_BITSIZE (GET_MODE (op)) != 2 * BITS_PER_WORD)
-	return 0;
+	  || !choices[speed_p].splitting_zext)
+	return false;
     }
   else /* left or right shift */
     {
+      bool *splitting = (GET_CODE (op) == ASHIFT
+			 ? choices[speed_p].splitting_ashift
+			 : GET_CODE (op) == ASHIFTRT
+			 ? choices[speed_p].splitting_ashiftrt
+			 : choices[speed_p].splitting_lshiftrt);
       if (!CONST_INT_P (XEXP (op, 1))
-	  || INTVAL (XEXP (op, 1)) < BITS_PER_WORD
-	  || GET_MODE_BITSIZE (GET_MODE (op_operand)) != 2 * BITS_PER_WORD)
-	return 0;
+	  || !IN_RANGE (INTVAL (XEXP (op, 1)), BITS_PER_WORD,
+			2 * BITS_PER_WORD - 1)
+	  || !splitting[INTVAL (XEXP (op, 1)) - BITS_PER_WORD])
+	return false;
+
+      bitmap_set_bit (decomposable_context, REGNO (op_operand));
     }
 
   bitmap_set_bit (decomposable_context, REGNO (SET_DEST (set)));
 
-  if (GET_CODE (op) != ZERO_EXTEND)
-    bitmap_set_bit (decomposable_context, REGNO (op_operand));
-
-  return 1;
+  return true;
 }
 
 /* Decompose a more than word wide shift (in INSN) of a multiword
@@ -964,7 +1213,7 @@ resolve_shift_zext (rtx insn)
   rtx op;
   rtx op_operand;
   rtx insns;
-  rtx src_reg, dest_reg, dest_zero;
+  rtx src_reg, dest_reg, dest_upper, upper_src = NULL_RTX;
   int src_reg_num, dest_reg_num, offset1, offset2, src_offset;
 
   set = single_set (insn);
@@ -974,18 +1223,22 @@ resolve_shift_zext (rtx insn)
   op = SET_SRC (set);
   if (GET_CODE (op) != ASHIFT
       && GET_CODE (op) != LSHIFTRT
+      && GET_CODE (op) != ASHIFTRT
       && GET_CODE (op) != ZERO_EXTEND)
     return NULL_RTX;
 
   op_operand = XEXP (op, 0);
 
+  /* We can tear this operation apart only if the regs were already
+     torn apart.  */
   if (!resolve_reg_p (SET_DEST (set)) && !resolve_reg_p (op_operand))
     return NULL_RTX;
 
   /* src_reg_num is the number of the word mode register which we
      are operating on.  For a left shift and a zero_extend on little
      endian machines this is register 0.  */
-  src_reg_num = GET_CODE (op) == LSHIFTRT ? 1 : 0;
+  src_reg_num = (GET_CODE (op) == LSHIFTRT || GET_CODE (op) == ASHIFTRT)
+		? 1 : 0;
 
   if (WORDS_BIG_ENDIAN
       && GET_MODE_SIZE (GET_MODE (op_operand)) > UNITS_PER_WORD)
@@ -1000,24 +1253,22 @@ resolve_shift_zext (rtx insn)
   offset2 = UNITS_PER_WORD * (1 - dest_reg_num);
   src_offset = UNITS_PER_WORD * src_reg_num;
 
-  if (WORDS_BIG_ENDIAN != BYTES_BIG_ENDIAN)
-    {
-      offset1 += UNITS_PER_WORD - 1;
-      offset2 += UNITS_PER_WORD - 1;
-      src_offset += UNITS_PER_WORD - 1;
-    }
-
   start_sequence ();
 
   dest_reg = simplify_gen_subreg_concatn (word_mode, SET_DEST (set),
                                           GET_MODE (SET_DEST (set)),
                                           offset1);
-  dest_zero = simplify_gen_subreg_concatn (word_mode, SET_DEST (set),
-                                           GET_MODE (SET_DEST (set)),
-                                           offset2);
+  dest_upper = simplify_gen_subreg_concatn (word_mode, SET_DEST (set),
+					    GET_MODE (SET_DEST (set)),
+					    offset2);
   src_reg = simplify_gen_subreg_concatn (word_mode, op_operand,
                                          GET_MODE (op_operand),
                                          src_offset);
+  if (GET_CODE (op) == ASHIFTRT
+      && INTVAL (XEXP (op, 1)) != 2 * BITS_PER_WORD - 1)
+    upper_src = expand_shift (RSHIFT_EXPR, word_mode, copy_rtx (src_reg),
+			      BITS_PER_WORD - 1, NULL_RTX, 0);
+
   if (GET_CODE (op) != ZERO_EXTEND)
     {
       int shift_count = INTVAL (XEXP (op, 1));
@@ -1025,14 +1276,18 @@ resolve_shift_zext (rtx insn)
 	src_reg = expand_shift (GET_CODE (op) == ASHIFT ?
 				LSHIFT_EXPR : RSHIFT_EXPR,
 				word_mode, src_reg,
-				build_int_cst (NULL_TREE,
-					       shift_count - BITS_PER_WORD),
-				dest_reg, 1);
+				shift_count - BITS_PER_WORD,
+				dest_reg, GET_CODE (op) != ASHIFTRT);
     }
 
   if (dest_reg != src_reg)
     emit_move_insn (dest_reg, src_reg);
-  emit_move_insn (dest_zero, CONST0_RTX (word_mode));
+  if (GET_CODE (op) != ASHIFTRT)
+    emit_move_insn (dest_upper, CONST0_RTX (word_mode));
+  else if (INTVAL (XEXP (op, 1)) == 2 * BITS_PER_WORD - 1)
+    emit_move_insn (dest_upper, copy_rtx (src_reg));
+  else
+    emit_move_insn (dest_upper, upper_src);
   insns = get_insns ();
 
   end_sequence ();
@@ -1052,18 +1307,81 @@ resolve_shift_zext (rtx insn)
   return insns;
 }
 
-/* Look for registers which are always accessed via word-sized SUBREGs
-   or via copies.  Decompose these registers into several word-sized
-   pseudo-registers.  */
+/* Print to dump_file a description of what we're doing with shift code CODE.
+   SPLITTING[X] is true if we are splitting shifts by X + BITS_PER_WORD.  */
 
 static void
-decompose_multiword_subregs (void)
+dump_shift_choices (enum rtx_code code, bool *splitting)
+{
+  int i;
+  const char *sep;
+
+  fprintf (dump_file,
+	   "  Splitting mode %s for %s lowering with shift amounts = ",
+	   GET_MODE_NAME (twice_word_mode), GET_RTX_NAME (code));
+  sep = "";
+  for (i = 0; i < BITS_PER_WORD; i++)
+    if (splitting[i])
+      {
+	fprintf (dump_file, "%s%d", sep, i + BITS_PER_WORD);
+	sep = ",";
+      }
+  fprintf (dump_file, "\n");
+}
+
+/* Print to dump_file a description of what we're doing when optimizing
+   for speed or size; SPEED_P says which.  DESCRIPTION is a description
+   of the SPEED_P choice.  */
+
+static void
+dump_choices (bool speed_p, const char *description)
+{
+  unsigned int i;
+
+  fprintf (dump_file, "Choices when optimizing for %s:\n", description);
+
+  for (i = 0; i < MAX_MACHINE_MODE; i++)
+    if (GET_MODE_SIZE (i) > UNITS_PER_WORD)
+      fprintf (dump_file, "  %s mode %s for copy lowering.\n",
+	       choices[speed_p].move_modes_to_split[i]
+	       ? "Splitting"
+	       : "Skipping",
+	       GET_MODE_NAME ((enum machine_mode) i));
+
+  fprintf (dump_file, "  %s mode %s for zero_extend lowering.\n",
+	   choices[speed_p].splitting_zext ? "Splitting" : "Skipping",
+	   GET_MODE_NAME (twice_word_mode));
+
+  dump_shift_choices (ASHIFT, choices[speed_p].splitting_ashift);
+  dump_shift_choices (LSHIFTRT, choices[speed_p].splitting_lshiftrt);
+  dump_shift_choices (ASHIFTRT, choices[speed_p].splitting_ashiftrt);
+  fprintf (dump_file, "\n");
+}
+
+/* Look for registers which are always accessed via word-sized SUBREGs
+   or -if DECOMPOSE_COPIES is true- via copies.  Decompose these
+   registers into several word-sized pseudo-registers.  */
+
+static void
+decompose_multiword_subregs (bool decompose_copies)
 {
   unsigned int max;
   basic_block bb;
+  bool speed_p;
 
-  if (df)
-    df_set_flags (DF_DEFER_INSN_RESCAN);
+  if (dump_file)
+    {
+      dump_choices (false, "size");
+      dump_choices (true, "speed");
+    }
+
+  /* Check if this target even has any modes to consider lowering.   */
+  if (!choices[false].something_to_do && !choices[true].something_to_do)
+    {
+      if (dump_file)
+	fprintf (dump_file, "Nothing to do!\n");
+      return;
+    }
 
   max = max_reg_num ();
 
@@ -1073,29 +1391,48 @@ decompose_multiword_subregs (void)
      all the insns.  */
   {
     unsigned int i;
+    bool useful_modes_seen = false;
 
     for (i = FIRST_PSEUDO_REGISTER; i < max; ++i)
+      if (regno_reg_rtx[i] != NULL)
+	{
+	  enum machine_mode mode = GET_MODE (regno_reg_rtx[i]);
+	  if (choices[false].move_modes_to_split[(int) mode]
+	      || choices[true].move_modes_to_split[(int) mode])
+	    {
+	      useful_modes_seen = true;
+	      break;
+	    }
+	}
+
+    if (!useful_modes_seen)
       {
-	if (regno_reg_rtx[i] != NULL
-	    && GET_MODE_SIZE (GET_MODE (regno_reg_rtx[i])) > UNITS_PER_WORD)
-	  break;
+	if (dump_file)
+	  fprintf (dump_file, "Nothing to lower in this function.\n");
+	return;
       }
-    if (i == max)
-      return;
   }
 
-  /* FIXME: When the dataflow branch is merged, we can change this
-     code to look for each multi-word pseudo-register and to find each
-     insn which sets or uses that register.  That should be faster
-     than scanning all the insns.  */
+  if (df)
+    {
+      df_set_flags (DF_DEFER_INSN_RESCAN);
+      run_word_dce ();
+    }
+
+  /* FIXME: It may be possible to change this code to look for each
+     multi-word pseudo-register and to find each insn which sets or
+     uses that register.  That should be faster than scanning all the
+     insns.  */
 
   decomposable_context = BITMAP_ALLOC (NULL);
   non_decomposable_context = BITMAP_ALLOC (NULL);
+  subreg_context = BITMAP_ALLOC (NULL);
 
-  reg_copy_graph = VEC_alloc (bitmap, heap, max);
-  VEC_safe_grow (bitmap, heap, reg_copy_graph, max);
-  memset (VEC_address (bitmap, reg_copy_graph), 0, sizeof (bitmap) * max);
+  reg_copy_graph.create (max);
+  reg_copy_graph.safe_grow_cleared (max);
+  memset (reg_copy_graph.address (), 0, sizeof (bitmap) * max);
 
+  speed_p = optimize_function_for_speed_p (cfun);
   FOR_EACH_BB (bb)
     {
       rtx insn;
@@ -1111,20 +1448,28 @@ decompose_multiword_subregs (void)
 	      || GET_CODE (PATTERN (insn)) == USE)
 	    continue;
 
-	  if (find_decomposable_shift_zext (insn))
+	  recog_memoized (insn);
+
+	  if (find_decomposable_shift_zext (insn, speed_p))
 	    continue;
 
-	  recog_memoized (insn);
 	  extract_insn (insn);
 
-	  set = simple_move (insn);
+	  set = simple_move (insn, speed_p);
 
 	  if (!set)
 	    cmi = NOT_SIMPLE_MOVE;
 	  else
 	    {
+	      /* We mark pseudo-to-pseudo copies as decomposable during the
+		 second pass only.  The first pass is so early that there is
+		 good chance such moves will be optimized away completely by
+		 subsequent optimizations anyway.
+
+		 However, we call find_pseudo_copy even during the first pass
+		 so as to properly set up the reg_copy_graph.  */
 	      if (find_pseudo_copy (set))
-		cmi = SIMPLE_PSEUDO_REG_MOVE;
+		cmi = decompose_copies? DECOMPOSABLE_SIMPLE_MOVE : SIMPLE_MOVE;
 	      else
 		cmi = SIMPLE_MOVE;
 	    }
@@ -1163,7 +1508,7 @@ decompose_multiword_subregs (void)
       propagate_pseudo_copies ();
 
       sub_blocks = sbitmap_alloc (last_basic_block);
-      sbitmap_zero (sub_blocks);
+      bitmap_clear (sub_blocks);
 
       EXECUTE_IF_SET_IN_BITMAP (decomposable_context, 0, regno, iter)
 	decompose_register (regno);
@@ -1194,7 +1539,7 @@ decompose_multiword_subregs (void)
 		  recog_memoized (insn);
 		  extract_insn (insn);
 
-		  set = simple_move (insn);
+		  set = simple_move (insn, speed_p);
 		  if (set)
 		    {
 		      rtx orig_insn = insn;
@@ -1212,7 +1557,7 @@ decompose_multiword_subregs (void)
 			 basic block and still produce the correct control
 			 flow graph for it.  */
 		      gcc_assert (!cfi
-				  || (flag_non_call_exceptions
+				  || (cfun->can_throw_non_call_exceptions
 				      && can_throw_internal (insn)));
 
 		      insn = resolve_simple_move (set, insn);
@@ -1222,7 +1567,7 @@ decompose_multiword_subregs (void)
 			  extract_insn (insn);
 
 			  if (cfi)
-			    SET_BIT (sub_blocks, bb->index);
+			    bitmap_set_bit (sub_blocks, bb->index);
 			}
 		    }
 		  else
@@ -1267,7 +1612,7 @@ decompose_multiword_subregs (void)
 	 of a basic block, split those blocks now.  Note that we only handle
 	 the case where splitting a load has caused multiple possibly trapping
 	 loads to appear.  */
-      EXECUTE_IF_SET_IN_SBITMAP (sub_blocks, 0, i, sbi)
+      EXECUTE_IF_SET_IN_BITMAP (sub_blocks, 0, i, sbi)
 	{
 	  rtx insn, end;
 	  edge fallthru;
@@ -1300,15 +1645,16 @@ decompose_multiword_subregs (void)
     unsigned int i;
     bitmap b;
 
-    for (i = 0; VEC_iterate (bitmap, reg_copy_graph, i, b); ++i)
+    FOR_EACH_VEC_ELT (reg_copy_graph, i, b)
       if (b)
 	BITMAP_FREE (b);
   }
 
-  VEC_free (bitmap, heap, reg_copy_graph);
+  reg_copy_graph.release ();
 
   BITMAP_FREE (decomposable_context);
   BITMAP_FREE (non_decomposable_context);
+  BITMAP_FREE (subreg_context);
 }
 
 /* Gate function for lower subreg pass.  */
@@ -1324,7 +1670,7 @@ gate_handle_lower_subreg (void)
 static unsigned int
 rest_of_handle_lower_subreg (void)
 {
-  decompose_multiword_subregs ();
+  decompose_multiword_subregs (false);
   return 0;
 }
 
@@ -1333,7 +1679,7 @@ rest_of_handle_lower_subreg (void)
 static unsigned int
 rest_of_handle_lower_subreg2 (void)
 {
-  decompose_multiword_subregs ();
+  decompose_multiword_subregs (true);
   return 0;
 }
 
@@ -1342,6 +1688,7 @@ struct rtl_opt_pass pass_lower_subreg =
  {
   RTL_PASS,
   "subreg1",	                        /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_handle_lower_subreg,             /* gate */
   rest_of_handle_lower_subreg,          /* execute */
   NULL,                                 /* sub */
@@ -1352,7 +1699,6 @@ struct rtl_opt_pass pass_lower_subreg =
   0,                                    /* properties_provided */
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
-  TODO_dump_func |
   TODO_ggc_collect |
   TODO_verify_flow                      /* todo_flags_finish */
  }
@@ -1363,6 +1709,7 @@ struct rtl_opt_pass pass_lower_subreg2 =
  {
   RTL_PASS,
   "subreg2",	                        /* name */
+  OPTGROUP_NONE,                        /* optinfo_flags */
   gate_handle_lower_subreg,             /* gate */
   rest_of_handle_lower_subreg2,          /* execute */
   NULL,                                 /* sub */
@@ -1374,7 +1721,6 @@ struct rtl_opt_pass pass_lower_subreg2 =
   0,                                    /* properties_destroyed */
   0,                                    /* todo_flags_start */
   TODO_df_finish | TODO_verify_rtl_sharing |
-  TODO_dump_func |
   TODO_ggc_collect |
   TODO_verify_flow                      /* todo_flags_finish */
  }

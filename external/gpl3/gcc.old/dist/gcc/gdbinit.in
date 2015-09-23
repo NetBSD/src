@@ -1,5 +1,4 @@
-# Copyright (C) 2001, 2002, 2003, 2004, 2006,
-# 2008 Free Software Foundation, Inc.
+# Copyright (C) 2001-2013 Free Software Foundation, Inc.
 #
 # This file is part of GCC.
 #
@@ -122,6 +121,22 @@ document ptn
 Print the name of the type-node that is $.
 end
 
+define pvt
+set debug_vec_tree ($)
+end
+
+document pvt
+Print the VEC(tree) that is in $.
+end
+
+define pdd
+set debug_dwarf_die ($)
+end
+
+document pdd
+Print the dw_die_ref that is in $.
+end
+
 define prc
 output (enum rtx_code) $.code
 echo \ (
@@ -166,6 +181,13 @@ document pbm
 Dump the bitmap that is in $ as a comma-separated list of numbers.
 end
 
+# Define some macros helpful to gdb when it is expanding macros.
+macro define __FILE__ "gdb"
+macro define __LINE__ 1
+
+# Gracefully handle aborts in functions used from gdb.
+set unwindonsignal on
+
 # Put breakpoints at exit and fancy_abort in case abort is mapped
 # to either fprintf/exit or fancy_abort.
 b fancy_abort
@@ -180,3 +202,9 @@ set complaints 0
 # USE_SYSTEM_ABORT is defined, so gdb may complain and bail out.
 b exit
 b abort
+
+# Skip all inline functions in tree.h.
+# These are used in accessor macros.
+# Note that this is added at the end because older gdb versions
+# do not understand the 'skip' command.
+skip file tree.h

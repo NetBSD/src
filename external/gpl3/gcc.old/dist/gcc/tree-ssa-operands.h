@@ -1,5 +1,5 @@
 /* SSA operand management for trees.
-   Copyright (C) 2003, 2005, 2006, 2007, 2008 Free Software Foundation, Inc.
+   Copyright (C) 2003-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -33,14 +33,6 @@ typedef ssa_use_operand_t *use_operand_p;
 #define NULL_USE_OPERAND_P 		((use_operand_p)NULL)
 #define NULL_DEF_OPERAND_P 		((def_operand_p)NULL)
 
-/* This represents the DEF operands of a stmt.  */
-struct def_optype_d
-{
-  struct def_optype_d *next;
-  tree *def_ptr;
-};
-typedef struct def_optype_d *def_optype_p;
-
 /* This represents the USE operands of a stmt.  */
 struct use_optype_d
 {
@@ -53,7 +45,7 @@ typedef struct use_optype_d *use_optype_p;
    operand memory manager.  Operands are suballocated out of this block.  The
    MEM array varies in size.  */
 
-struct GTY((chain_next("%h.next"))) ssa_operand_memory_d {
+struct GTY((chain_next("%h.next"), variable_size)) ssa_operand_memory_d {
   struct ssa_operand_memory_d *next;
   char mem[1];
 };
@@ -67,7 +59,6 @@ struct GTY(()) ssa_operands {
 
    bool ops_active;
 
-   struct def_optype_d * GTY ((skip (""))) free_defs;
    struct use_optype_d * GTY ((skip (""))) free_uses;
 };
 
@@ -80,9 +71,6 @@ struct GTY(()) ssa_operands {
 
 #define USE_OP_PTR(OP)		(&((OP)->use_ptr))
 #define USE_OP(OP)		(USE_FROM_PTR (USE_OP_PTR (OP)))
-
-#define DEF_OP_PTR(OP)		((OP)->def_ptr)
-#define DEF_OP(OP)		(DEF_FROM_PTR (DEF_OP_PTR (OP)))
 
 #define PHI_RESULT_PTR(PHI)	gimple_phi_result_ptr (PHI)
 #define PHI_RESULT(PHI)		DEF_FROM_PTR (PHI_RESULT_PTR (PHI))
@@ -99,11 +87,12 @@ struct GTY(()) ssa_operands {
 #define PHI_ARG_INDEX_FROM_USE(USE)   phi_arg_index_from_use (USE)
 
 
-extern void init_ssa_operands (void);
+extern void init_ssa_operands (struct function *fn);
 extern void fini_ssa_operands (void);
 extern void update_stmt_operands (gimple);
 extern void free_stmt_operands (gimple);
 extern bool verify_imm_links (FILE *f, tree var);
+extern bool verify_ssa_operands (gimple stmt);
 
 extern void dump_immediate_uses (FILE *file);
 extern void dump_immediate_uses_for (FILE *file, tree var);
@@ -112,8 +101,9 @@ extern void debug_immediate_uses_for (tree var);
 extern void dump_decl_set (FILE *, bitmap);
 extern void debug_decl_set (bitmap);
 
-extern bool ssa_operands_active (void);
+extern bool ssa_operands_active (struct function *);
 
+extern bool virtual_operand_p (tree);
 extern void unlink_stmt_vdef (gimple);
 
 enum ssa_op_iter_type {
@@ -130,13 +120,13 @@ enum ssa_op_iter_type {
 
 typedef struct ssa_operand_iterator_d
 {
-  bool done;
   enum ssa_op_iter_type iter_type;
-  def_optype_p defs;
+  bool done;
+  int flags;
+  unsigned i;
+  unsigned numops;
   use_optype_p uses;
-  int phi_i;
-  int num_phi;
-  gimple phi_stmt;
+  gimple stmt;
 } ssa_op_iter;
 
 /* These flags are used to determine which operands are returned during
@@ -160,7 +150,7 @@ typedef struct ssa_operand_iterator_d
 #define FOR_EACH_SSA_TREE_OPERAND(TREEVAR, STMT, ITER, FLAGS)	\
   for (TREEVAR = op_iter_init_tree (&(ITER), STMT, FLAGS);	\
        !op_iter_done (&(ITER));					\
-       TREEVAR = op_iter_next_tree (&(ITER)))
+       (void) (TREEVAR = op_iter_next_tree (&(ITER))))
 
 /* This macro executes a loop over the operands of STMT specified in FLAG,
    returning each operand as a 'use_operand_p' in the variable USEVAR.

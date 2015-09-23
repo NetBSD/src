@@ -1,7 +1,5 @@
 /* Subroutines for insn-output.c for VAX.
-   Copyright (C) 1987, 1994, 1995, 1997, 1998, 1999, 2000, 2001, 2002,
-   2004, 2005, 2006, 2007, 2008, 2009
-   Free Software Foundation, Inc.
+   Copyright (C) 1987-2013 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -28,7 +26,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "regs.h"
 #include "hard-reg-set.h"
-#include "real.h"
 #include "insn-config.h"
 #include "conditions.h"
 #include "function.h"
@@ -39,33 +36,37 @@ along with GCC; see the file COPYING3.  If not see
 #include "optabs.h"
 #include "flags.h"
 #include "debug.h"
-#include "toplev.h"
+#include "diagnostic-core.h"
+#include "reload.h"
 #include "tm-preds.h"
 #include "tm-constrs.h"
 #include "tm_p.h"
 #include "target.h"
 #include "target-def.h"
 
+static void vax_option_override (void);
 static bool vax_legitimate_address_p (enum machine_mode, rtx, bool);
-static void vax_output_function_prologue (FILE *, HOST_WIDE_INT);
 static void vax_file_start (void);
 static void vax_init_libfuncs (void);
 static void vax_output_mi_thunk (FILE *, tree, HOST_WIDE_INT,
 				 HOST_WIDE_INT, tree);
 static int vax_address_cost_1 (rtx);
-static int vax_address_cost (rtx, bool);
-static bool vax_rtx_costs (rtx, int, int, int *, bool);
+static int vax_address_cost (rtx, enum machine_mode, addr_space_t, bool);
+static bool vax_rtx_costs (rtx, int, int, int, int *, bool);
+static rtx vax_function_arg (cumulative_args_t, enum machine_mode,
+			     const_tree, bool);
+static void vax_function_arg_advance (cumulative_args_t, enum machine_mode,
+				      const_tree, bool);
 static rtx vax_struct_value_rtx (tree, int);
 static rtx vax_builtin_setjmp_frame_value (void);
 static void vax_asm_trampoline_template (FILE *);
 static void vax_trampoline_init (rtx, tree, rtx);
+static int vax_return_pops_args (tree, tree, int);
+static bool vax_mode_dependent_address_p (const_rtx, addr_space_t);
 
 /* Initialize the GCC target structure.  */
 #undef TARGET_ASM_ALIGNED_HI_OP
 #define TARGET_ASM_ALIGNED_HI_OP "\t.word\t"
-
-#undef TARGET_ASM_FUNCTION_PROLOGUE
-#define TARGET_ASM_FUNCTION_PROLOGUE vax_output_function_prologue
 
 #undef TARGET_ASM_FILE_START
 #define TARGET_ASM_FILE_START vax_file_start
@@ -80,9 +81,6 @@ static void vax_trampoline_init (rtx, tree, rtx);
 #undef TARGET_ASM_CAN_OUTPUT_MI_THUNK
 #define TARGET_ASM_CAN_OUTPUT_MI_THUNK default_can_output_mi_thunk_no_vcall
 
-#undef TARGET_DEFAULT_TARGET_FLAGS
-#define TARGET_DEFAULT_TARGET_FLAGS TARGET_DEFAULT
-
 #undef TARGET_RTX_COSTS
 #define TARGET_RTX_COSTS vax_rtx_costs
 #undef TARGET_ADDRESS_COST
@@ -90,6 +88,11 @@ static void vax_trampoline_init (rtx, tree, rtx);
 
 #undef TARGET_PROMOTE_PROTOTYPES
 #define TARGET_PROMOTE_PROTOTYPES hook_bool_const_tree_true
+
+#undef TARGET_FUNCTION_ARG
+#define TARGET_FUNCTION_ARG vax_function_arg
+#undef TARGET_FUNCTION_ARG_ADVANCE
+#define TARGET_FUNCTION_ARG_ADVANCE vax_function_arg_advance
 
 #undef TARGET_STRUCT_VALUE_RTX
 #define TARGET_STRUCT_VALUE_RTX vax_struct_value_rtx
@@ -99,6 +102,8 @@ static void vax_trampoline_init (rtx, tree, rtx);
 
 #undef TARGET_LEGITIMATE_ADDRESS_P
 #define TARGET_LEGITIMATE_ADDRESS_P vax_legitimate_address_p
+#undef TARGET_MODE_DEPENDENT_ADDRESS_P
+#define TARGET_MODE_DEPENDENT_ADDRESS_P vax_mode_dependent_address_p
 
 #undef TARGET_FRAME_POINTER_REQUIRED
 #define TARGET_FRAME_POINTER_REQUIRED hook_bool_void_true
@@ -107,17 +112,37 @@ static void vax_trampoline_init (rtx, tree, rtx);
 #define TARGET_ASM_TRAMPOLINE_TEMPLATE vax_asm_trampoline_template
 #undef TARGET_TRAMPOLINE_INIT
 #define TARGET_TRAMPOLINE_INIT vax_trampoline_init
+#undef TARGET_RETURN_POPS_ARGS
+#define TARGET_RETURN_POPS_ARGS vax_return_pops_args
+
+#undef TARGET_OPTION_OVERRIDE
+#define TARGET_OPTION_OVERRIDE vax_option_override
 
 struct gcc_target targetm = TARGET_INITIALIZER;
 
 /* Set global variables as needed for the options enabled.  */
 
-void
-override_options (void)
+static void
+vax_option_override (void)
 {
   /* We're VAX floating point, not IEEE floating point.  */
   if (TARGET_G_FLOAT)
     REAL_MODE_FORMAT (DFmode) = &vax_g_format;
+
+#ifdef SUBTARGET_OVERRIDE_OPTIONS
+  SUBTARGET_OVERRIDE_OPTIONS;
+#endif
+}
+
+static void
+vax_add_reg_cfa_offset (rtx insn, int offset, rtx src)
+{
+  rtx x;
+
+  x = plus_constant (Pmode, frame_pointer_rtx, offset);
+  x = gen_rtx_MEM (SImode, x);
+  x = gen_rtx_SET (VOIDmode, x, src);
+  add_reg_note (insn, REG_CFA_OFFSET, x);
 }
 
 /* Generate the assembly code for function entry.  FILE is a stdio
@@ -129,38 +154,71 @@ override_options (void)
    used in the function.  This function is responsible for knowing
    which registers should not be saved even if used.  */
 
-static void
-vax_output_function_prologue (FILE * file, HOST_WIDE_INT size)
+void
+vax_expand_prologue (void)
 {
-  int regno;
+  int regno, offset;
   int mask = 0;
+  HOST_WIDE_INT size;
+  rtx insn;
 
+  offset = 20;
   for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
     if (df_regs_ever_live_p (regno) && !call_used_regs[regno])
-      mask |= 1 << regno;
+      {
+        mask |= 1 << regno;
+        offset += 4;
+      }
 
-  fprintf (file, "\t.word 0x%x\n", mask);
+  insn = emit_insn (gen_procedure_entry_mask (GEN_INT (mask)));
+  RTX_FRAME_RELATED_P (insn) = 1;
 
-  if (dwarf2out_do_frame ())
-    {
-      const char *label = dwarf2out_cfi_label (false);
-      int offset = 0;
+  /* The layout of the CALLG/S stack frame is follows:
 
-      for (regno = FIRST_PSEUDO_REGISTER-1; regno >= 0; --regno)
-	if (df_regs_ever_live_p (regno) && !call_used_regs[regno])
-	  dwarf2out_reg_save (label, regno, offset -= 4);
+		<- CFA, AP
+	r11
+	r10
+	...	Registers saved as specified by MASK
+	r3
+	r2
+	return-addr
+	old fp
+	old ap
+	old psw
+	zero
+		<- FP, SP
 
-      dwarf2out_reg_save (label, PC_REGNUM, offset -= 4);
-      dwarf2out_reg_save (label, FRAME_POINTER_REGNUM, offset -= 4);
-      dwarf2out_reg_save (label, ARG_POINTER_REGNUM, offset -= 4);
-      dwarf2out_def_cfa (label, FRAME_POINTER_REGNUM, -(offset - 4));
-    }
+     The rest of the prologue will adjust the SP for the local frame.  */
 
+  add_reg_note (insn, REG_CFA_DEF_CFA,
+                plus_constant (Pmode, frame_pointer_rtx, offset));
+  insn = emit_insn (gen_blockage ());
+  RTX_FRAME_RELATED_P (insn) = 1;
+
+  vax_add_reg_cfa_offset (insn, 4, gen_rtx_REG (Pmode, PSW_REGNUM));
+  vax_add_reg_cfa_offset (insn, 8, arg_pointer_rtx);
+  vax_add_reg_cfa_offset (insn, 12, frame_pointer_rtx);
+  vax_add_reg_cfa_offset (insn, 16, pc_rtx);
+
+  offset = 20;
+  for (regno = 0; regno < FIRST_PSEUDO_REGISTER; regno++)
+    if (mask & (1 << regno))
+      {
+	vax_add_reg_cfa_offset (insn, offset, gen_rtx_REG (SImode, regno));
+	offset += 4;
+      }
+
+  /* Allocate the local stack frame.  */
+  size = get_frame_size ();
   size -= STARTING_FRAME_OFFSET;
-  if (size >= 64)
-    asm_fprintf (file, "\tmovab %wd(%Rsp),%Rsp\n", -size);
-  else if (size)
-    asm_fprintf (file, "\tsubl2 $%wd,%Rsp\n", size);
+  emit_insn (gen_addsi3 (stack_pointer_rtx,
+			 stack_pointer_rtx, GEN_INT (-size)));
+
+  /* Do not allow instructions referencing local stack memory to be
+     scheduled before the frame is allocated.  This is more pedantic
+     than anything else, given that VAX does not currently have a
+     scheduling description.  */
+  emit_insn (gen_blockage ());
 }
 
 /* When debugging with stabs, we want to output an extra dummy label
@@ -322,15 +380,13 @@ print_operand_address (FILE * file, rtx addr)
 	      if (offset)
 		{
 		  if (CONST_INT_P (offset))
-		    offset = plus_constant (XEXP (addr, 0), INTVAL (offset));
-		  else if (CONST_INT_P (XEXP (addr, 0)))
-		    {
-		      offset = plus_constant (offset, INTVAL (XEXP (addr, 0)));
-		    }
+		    offset = plus_constant (Pmode, XEXP (addr, 0),
+		                            INTVAL (offset));
 		  else
 		    {
-		      debug_rtx (orig);
-		      gcc_unreachable ();
+		      gcc_assert (CONST_INT_P (XEXP (addr, 0)));
+		      offset = plus_constant (Pmode, offset,
+					      INTVAL (XEXP (addr, 0)));
 		    }
 		}
 	      offset = XEXP (addr, 0);
@@ -358,11 +414,13 @@ print_operand_address (FILE * file, rtx addr)
 	      if (offset)
 		{
 		  if (CONST_INT_P (offset))
-		    offset = plus_constant (XEXP (addr, 1), INTVAL (offset));
+		    offset = plus_constant (Pmode, XEXP (addr, 1),
+					    INTVAL (offset));
 		  else
 		    {
 		      gcc_assert (CONST_INT_P (XEXP (addr, 1)));
-		      offset = plus_constant (offset, INTVAL (XEXP (addr, 1)));
+		      offset = plus_constant (Pmode, offset,
+					      INTVAL (XEXP (addr, 1)));
 		    }
 		}
 	      offset = XEXP (addr, 1);
@@ -494,6 +552,8 @@ print_operand (FILE *file, rtx x, int code)
     fprintf (file, "$%d", (int) (0xff & - INTVAL (x)));
   else if (code == 'M' && CONST_INT_P (x))
     fprintf (file, "$%d", ~((1 << INTVAL (x)) - 1));
+  else if (code == 'x' && CONST_INT_P (x))
+    fprintf (file, HOST_WIDE_INT_PRINT_HEX, INTVAL (x));
   else if (REG_P (x))
     fprintf (file, "%s", reg_names[REGNO (x)]);
   else if (MEM_P (x))
@@ -511,6 +571,11 @@ print_operand (FILE *file, rtx x, int code)
       real_to_decimal (dstr, CONST_DOUBLE_REAL_VALUE (x),
 		       sizeof (dstr), 0, 1);
       fprintf (file, "$0%c%s", ASM_DOUBLE_CHAR, dstr);
+    }
+  else if (GET_CODE (x) == SUBREG)
+    {
+      debug_rtx (x);
+      output_operand_lossage ("SUBREG operand");
     }
   else
     {
@@ -702,7 +767,9 @@ vax_address_cost_1 (rtx addr)
 }
 
 static int
-vax_address_cost (rtx x, bool speed ATTRIBUTE_UNUSED)
+vax_address_cost (rtx x, enum machine_mode mode ATTRIBUTE_UNUSED,
+		  addr_space_t as ATTRIBUTE_UNUSED,
+		  bool speed ATTRIBUTE_UNUSED)
 {
   return (1 + (REG_P (x) ? 0 : vax_address_cost_1 (x)));
 }
@@ -716,8 +783,8 @@ vax_address_cost (rtx x, bool speed ATTRIBUTE_UNUSED)
    costs on a per cpu basis.  */
 
 static bool
-vax_rtx_costs (rtx x, int code, int outer_code, int *total,
-	       bool speed ATTRIBUTE_UNUSED)
+vax_rtx_costs (rtx x, int code, int outer_code, int opno ATTRIBUTE_UNUSED,
+	       int *total, bool speed ATTRIBUTE_UNUSED)
 {
   enum machine_mode mode = GET_MODE (x);
   int i = 0;				   /* may be modified in switch */
@@ -1050,6 +1117,7 @@ vax_notice_update_cc (rtx exp, rtx insn ATTRIBUTE_UNUSED)
 	    case IOR:
 	    case XOR:
 	    case NOT:
+	    case CTZ:
 	    case MEM:
 	    case REG:
 	      cc_status.flags = CC_NO_OVERFLOW;
@@ -1136,18 +1204,16 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 	    {
 	      lval >>= n;
 
-#if HOST_BITS_PER_WIDE_INT == 32
 	      /* On 32bit platforms, if the 6bits didn't overflow into the
 		 upper 32bit value that value better be 0.  If we have
 		 overflowed, make sure it wasn't too much.  */
-	      if (hval != 0)
+	      if (HOST_BITS_PER_WIDE_INT == 32 && hval != 0)
 		{
 		  if (n <= 26 || hval >= ((unsigned)1 << (n - 26)))
 		    n = 0;	/* failure */
 		  else
 		    lval |= hval << (32 - n);
 		}
-#endif
 	      /*  If n is 0, then ashq is not the best way to emit this.  */
 	      if (n > 0)
 		{
@@ -1227,7 +1293,7 @@ vax_output_int_move (rtx insn ATTRIBUTE_UNUSED, rtx *operands,
 
       if (operands[1] == const0_rtx)
 	{
-	  if (push_operand (operands[1], SImode))
+	  if (push_operand (operands[0], SImode))
 	    return "pushl %1";
 	  return "clrl %0";
 	}
@@ -1615,14 +1681,14 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
 	{
 	  if (off != 0)
 	    {
-	      base = gen_rtx_PLUS (Pmode, a, plus_constant(b, off));
+	      base = gen_rtx_PLUS (Pmode, a, plus_constant(Pmode, b, off));
 	      off = 0;
 	    }
 	}
       else if (REG_P (a) && GET_CODE (b) == PLUS)
 	{
           off += INTVAL (XEXP (b, 1));
-	  base = gen_rtx_PLUS (Pmode, a, plus_constant(XEXP (b, 0), off));
+	  base = gen_rtx_PLUS (Pmode, a, plus_constant(Pmode, XEXP (b, 0), off));
 	  off = 0;
 	}
       else
@@ -1636,7 +1702,7 @@ mkrtx(enum rtx_code code, enum machine_mode mode, rtx base, HOST_WIDE_INT off)
   else if (off == 0 || (REG_P (base) && code == REG))
     tmp = base;
   else
-    tmp = plus_constant (base, off);
+    tmp = plus_constant (Pmode, base, off);
   return gen_rtx_MEM (mode, tmp);
 }
 
@@ -1717,12 +1783,16 @@ legitimate_constant_address_p (rtx x)
    return true;
 }
 
-/* True if the constant value X is a legitimate general operand.
-   It is given that X satisfies CONSTANT_P or is a CONST_DOUBLE.  */
-
 bool
-legitimate_constant_p (rtx x ATTRIBUTE_UNUSED)
+legitimate_pic_operand_p (rtx x)
 {
+#ifdef NO_EXTERNAL_INDIRECT_ADDRESS
+  if (GET_CODE (x) != CONST)
+    return true;
+  if (GET_CODE (XEXP (XEXP (x, 0), 0)) == SYMBOL_REF
+      && !SYMBOL_REF_LOCAL_P (XEXP (XEXP (x, 0), 0)))
+    return false;
+#endif
   return true;
 }
 
@@ -1791,10 +1861,9 @@ nonindexed_address_p (rtx x, bool strict)
   rtx xfoo0;
   if (REG_P (x))
     {
-      extern rtx *reg_equiv_mem;
       if (! reload_in_progress
-	  || reg_equiv_mem[REGNO (x)] == 0
-	  || indirectable_address_p (reg_equiv_mem[REGNO (x)], strict, false))
+	  || reg_equiv_mem (REGNO (x)) == 0
+	  || indirectable_address_p (reg_equiv_mem (REGNO (x)), strict, false))
 	return true;
     }
   if (indirectable_constant_address_p (x, false))
@@ -1918,8 +1987,8 @@ vax_legitimate_address_p (enum machine_mode mode, rtx x, bool strict)
    increment being the length of the operand) and all indexed address depend
    thus (because the index scale factor is the length of the operand).  */
 
-bool
-vax_mode_dependent_address_p (rtx x)
+static bool
+vax_mode_dependent_address_p (const_rtx x, addr_space_t as ATTRIBUTE_UNUSED)
 {
   rtx xfoo0, xfoo1;
 
@@ -2199,7 +2268,112 @@ vax_trampoline_init (rtx m_tramp, tree fndecl, rtx cxt)
   mem = adjust_address (m_tramp, SImode, 4);
   emit_move_insn (mem, cxt);
   mem = adjust_address (m_tramp, SImode, 11);
-  emit_move_insn (mem, plus_constant (fnaddr, 2));
+  emit_move_insn (mem, plus_constant (Pmode, fnaddr, 2));
   emit_insn (gen_sync_istream ());
 }
 
+/* Value is the number of bytes of arguments automatically
+   popped when returning from a subroutine call.
+   FUNDECL is the declaration node of the function (as a tree),
+   FUNTYPE is the data type of the function (as a tree),
+   or for a library call it is an identifier node for the subroutine name.
+   SIZE is the number of bytes of arguments passed on the stack.
+
+   On the VAX, the RET insn pops a maximum of 255 args for any function.  */
+
+static int
+vax_return_pops_args (tree fundecl ATTRIBUTE_UNUSED,
+		      tree funtype ATTRIBUTE_UNUSED, int size)
+{
+  return size > 255 * 4 ? 0 : size;
+}
+
+/* Define where to put the arguments to a function.
+   Value is zero to push the argument on the stack,
+   or a hard register in which to store the argument.
+
+   MODE is the argument's machine mode.
+   TYPE is the data type of the argument (as a tree).
+    This is null for libcalls where that information may
+    not be available.
+   CUM is a variable of type CUMULATIVE_ARGS which gives info about
+    the preceding args and about the function being called.
+   NAMED is nonzero if this argument is a named parameter
+    (otherwise it is an extra parameter matching an ellipsis).  */
+
+/* On the VAX all args are pushed.  */
+
+static rtx
+vax_function_arg (cumulative_args_t cum ATTRIBUTE_UNUSED,
+		  enum machine_mode mode ATTRIBUTE_UNUSED,
+		  const_tree type ATTRIBUTE_UNUSED,
+		  bool named ATTRIBUTE_UNUSED)
+{
+  return NULL_RTX;
+}
+
+/* Update the data in CUM to advance over an argument of mode MODE and
+   data type TYPE.  (TYPE is null for libcalls where that information
+   may not be available.)  */
+
+static void
+vax_function_arg_advance (cumulative_args_t cum_v, enum machine_mode mode,
+			  const_tree type, bool named ATTRIBUTE_UNUSED)
+{
+  CUMULATIVE_ARGS *cum = get_cumulative_args (cum_v);
+
+  *cum += (mode != BLKmode
+	   ? (GET_MODE_SIZE (mode) + 3) & ~3
+	   : (int_size_in_bytes (type) + 3) & ~3);
+}
+
+bool
+vax_decomposed_dimode_operand_p (rtx lo, rtx hi)
+{
+  HOST_WIDE_INT lo_offset = 0;
+  HOST_WIDE_INT hi_offset = 0;
+
+  /* If the codes aren't the same, can't be a DImode operand.  */
+  if (GET_CODE (lo) != GET_CODE (hi))
+    return false;
+
+  /* If a register, hi regno must be one more than the lo regno.  */
+  if (REG_P (lo))
+    return REGNO (lo) + 1 == REGNO (hi);
+
+  /* If not memory, can't be a DImode operand.  */
+  if (!MEM_P (lo))
+    return false;
+
+  /* Get addresses of memory operands.  */
+  lo = XEXP(lo, 0);
+  hi = XEXP(hi, 0);
+
+  /* If POST_INC, regno must match.  */
+  if (GET_CODE (lo) == POST_INC && GET_CODE (hi) == POST_INC)
+    return REGNO (XEXP (lo, 0)) == REGNO (XEXP (hi, 0));
+
+  if (GET_CODE (lo) == PLUS)
+    {
+      /* If PLUS or MULT, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (lo, 0)) == PLUS
+	  || GET_CODE (XEXP (lo, 0)) == MULT
+	  || !CONST_INT_P (XEXP (lo, 1)))
+	return false;
+      lo_offset = INTVAL (XEXP (lo, 1));
+      lo = XEXP(lo, 0);
+    }
+
+  if (GET_CODE (hi) == PLUS)
+    {
+      /* If PLUS or MULT, this must an indexed address so fail.  */
+      if (GET_CODE (XEXP (hi, 0)) == PLUS
+	  || GET_CODE (XEXP (hi, 0)) == MULT
+	  || !CONST_INT_P (XEXP (hi, 1)))
+	return false;
+      hi_offset = INTVAL (XEXP (hi, 1));
+      hi = XEXP(hi, 0);
+    }
+
+  return rtx_equal_p(lo, hi) && lo_offset + 4 == hi_offset;
+}

@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler, Lattice Mico32 architecture.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009, 2010 Free Software Foundation, Inc.
+   Copyright (C) 2009-2013 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -22,11 +22,6 @@
 /*-------------------------------*/
 /* Run-time Target Specification */
 /*-------------------------------*/
-
-/* Print subsidiary information on the compiler version in use.  */
-#ifndef TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (LatticeMico32)")
-#endif
 
 /* Target CPU builtins.  */
 #define TARGET_CPU_CPP_BUILTINS()                       \
@@ -54,8 +49,7 @@
 %{mdivide-enabled} \
 %{mbarrel-shift-enabled} \
 %{msign-extend-enabled} \
-%{muser-extend-enabled} \
-%{v} \
+%{muser-enabled} \
 "
 
 /* Let link script define all link options. 
@@ -68,16 +62,6 @@
 #undef  LIB_SPEC
 #define LIB_SPEC "%{!T*:-T sim.ld}"
 
-#define OVERRIDE_OPTIONS lm32_override_options()
-
-extern int target_flags;
-
-/* Add -G xx support.  */
-
-#undef  SWITCH_TAKES_ARG
-#define SWITCH_TAKES_ARG(CHAR) \
-(DEFAULT_SWITCH_TAKES_ARG (CHAR) || (CHAR) == 'G')
-
 #undef  CC1_SPEC
 #define CC1_SPEC "%{G*}"
 
@@ -88,7 +72,6 @@ extern int target_flags;
 #define BITS_BIG_ENDIAN 0
 #define BYTES_BIG_ENDIAN 1
 #define WORDS_BIG_ENDIAN 1
-#define LIBGCC2_WORDS_BIG_ENDIAN 1
 
 #define BITS_PER_UNIT 8
 #define BITS_PER_WORD 32
@@ -219,9 +202,6 @@ enum reg_class
 #define REGNO_REG_CLASS(REGNO) \
     (G_REG_P(REGNO) ? GENERAL_REGS : NO_REGS)
 
-#define CLASS_MAX_NREGS(CLASS, MODE) \
-    ((GET_MODE_SIZE (MODE) + UNITS_PER_WORD - 1) / UNITS_PER_WORD)
-
 #define INDEX_REG_CLASS NO_REGS
 
 #define BASE_REG_CLASS GENERAL_REGS
@@ -230,8 +210,6 @@ enum reg_class
     (G_REG_P (REGNO) || G_REG_P ((unsigned) reg_renumber[REGNO]))
 
 #define REGNO_OK_FOR_INDEX_P(REGNO) 0
-
-#define PREFERRED_RELOAD_CLASS(X,CLASS) (CLASS)
 
 /*----------------------------------------*/
 /* Stack Layout and Calling Conventions.  */
@@ -253,6 +231,8 @@ enum reg_class
 
 #define ARG_POINTER_REGNUM FRAME_POINTER_REGNUM
 
+#define INCOMING_RETURN_ADDR_RTX gen_rtx_REG (SImode, RA_REGNUM)
+
 #define RETURN_ADDR_RTX(count, frame)                                   \
   lm32_return_addr_rtx (count, frame)
 
@@ -273,8 +253,6 @@ enum reg_class
 
 #define ACCUMULATE_OUTGOING_ARGS 1
 
-#define RETURN_POPS_ARGS(DECL, FUNTYPE, SIZE) 0
-
 /*--------------------------------*/
 /* Passing Arguments in Registers */
 /*--------------------------------*/
@@ -285,16 +263,10 @@ enum reg_class
 /* The number of (integer) argument register available.  */
 #define LM32_NUM_ARG_REGS 8
 
-#define FUNCTION_ARG(CUM, MODE, TYPE, NAMED)                            \
-  lm32_function_arg ((CUM), (MODE), (TYPE), (NAMED))
-
 #define CUMULATIVE_ARGS int
 
 #define INIT_CUMULATIVE_ARGS(CUM,FNTYPE,LIBNAME,INDIRECT,N_NAMED_ARGS)  \
   (CUM) = 0
-
-#define FUNCTION_ARG_ADVANCE(CUM, MODE, TYPE, NAMED)                    \
-  (CUM) += LM32_NUM_REGS2 (MODE, TYPE)
 
 #define FUNCTION_ARG_REGNO_P(r)                                         \
   (((r) >= LM32_FIRST_ARG_REG) && ((r) <= LM32_NUM_ARG_REGS))
@@ -371,8 +343,6 @@ enum reg_class
 #define REG_OK_FOR_BASE_P(X) NONSTRICT_REG_OK_FOR_BASE_P(X)
 #endif
 
-#define LEGITIMATE_CONSTANT_P(X) lm32_legitimate_constant_p
-
 /*-------------------------*/
 /* Condition Code Status.  */
 /*-------------------------*/
@@ -435,7 +405,7 @@ enum reg_class
 #undef  ASM_OUTPUT_ALIGNED_LOCAL
 #define ASM_OUTPUT_ALIGNED_LOCAL(FILE, NAME, SIZE, ALIGN)		\
 do {									\
-  if ((SIZE) <= g_switch_value)						\
+  if ((SIZE) <= (unsigned HOST_WIDE_INT) g_switch_value)		\
     switch_to_section (sbss_section);					\
   else									\
     switch_to_section (bss_section);					\
@@ -452,7 +422,7 @@ do {									\
 #define ASM_OUTPUT_ALIGNED_COMMON(FILE, NAME, SIZE, ALIGN)		\
 do 									\
 {									\
-  if ((SIZE) <= g_switch_value)						\
+  if ((SIZE) <= (unsigned HOST_WIDE_INT) g_switch_value)		\
     {									\
       switch_to_section (sbss_section);					\
       (*targetm.asm_out.globalize_label) (FILE, NAME);			\
@@ -543,8 +513,6 @@ do {                                                            \
 /*-------------*/
 
 #define DBX_REGISTER_NUMBER(REGNO) (REGNO)
-
-#define CAN_DEBUG_WITHOUT_FP
 
 #define DEFAULT_GDB_EXTENSIONS 1
 

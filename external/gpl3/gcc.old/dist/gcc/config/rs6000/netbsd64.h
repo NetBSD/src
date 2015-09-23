@@ -59,6 +59,15 @@ extern int dot_symbols;
 
 #define TARGET_PROFILE_KERNEL profile_kernel
 
+#define TARGET_USES_LINUX64_OPT 1
+#ifdef HAVE_LD_LARGE_TOC
+#undef TARGET_CMODEL
+#define TARGET_CMODEL rs6000_current_cmodel
+#define SET_CMODEL(opt) rs6000_current_cmodel = opt
+#else
+#define SET_CMODEL(opt) do {} while (0)
+#endif
+
 #undef  PROCESSOR_DEFAULT
 #define PROCESSOR_DEFAULT PROCESSOR_POWER4
 #undef  PROCESSOR_DEFAULT64
@@ -68,7 +77,7 @@ extern int dot_symbols;
    -mrelocatable or -mrelocatable-lib is given.  */
 #undef RELOCATABLE_NEEDS_FIXUP
 #define RELOCATABLE_NEEDS_FIXUP \
-  (target_flags & target_flags_explicit & MASK_RELOCATABLE)
+  (rs6000_isa_flags & rs6000_isa_flags_explicit & OPTION_MASK_RELOCATABLE)
 
 #undef	RS6000_ABI_NAME
 #define	RS6000_ABI_NAME "netbsd"
@@ -76,11 +85,24 @@ extern int dot_symbols;
 #define INVALID_64BIT "-m%s not supported in this configuration"
 #define INVALID_32BIT INVALID_64BIT
 
+#define ELFv2_ABI_CHECK (rs6000_elf_abi == 2)                   
+
+#undef CC1_OS_NETBSD_SPEC
+#define CC1_OS_NETBSD_SPEC \
+  NETBSD_CC1_AND_CC1PLUS_SPEC \
+  "%{!m32: %{!mrelocatable: %{!fno-pie: %{!fno-pic: \
+     %{!fpie: %{!fpic: \
+       %{!fPIE: %{!fPIC:-fPIC}}}}}}}}"
+/* %{!m32: %{!mcmodel*: -mcmodel=medium}}" */
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC CC1_OS_NETBSD_SPEC
+
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
   do								\
     {								\
-      if (!rs6000_explicit_options.alignment)			\
+      if (!global_options_set.x_rs6000_alignment_flags)		\
 	rs6000_alignment_flags = MASK_ALIGN_NATURAL;		\
       if (TARGET_64BIT)						\
 	{							\
@@ -90,14 +112,20 @@ extern int dot_symbols;
 	      error (INVALID_64BIT, "call");			\
 	    }							\
 	  dot_symbols = !strcmp (rs6000_abi_name, "aixdesc");	\
-	  if (target_flags & MASK_RELOCATABLE)			\
+	  if (ELFv2_ABI_CHECK)					\
 	    {							\
-	      target_flags &= ~MASK_RELOCATABLE;		\
+	      rs6000_current_abi = ABI_ELFv2;			\
+	      if (dot_symbols)					\
+		error ("-mcall-aixdesc incompatible with -mabi=elfv2"); \
+	    }							\
+	  if (rs6000_isa_flags & OPTION_MASK_RELOCATABLE)	\
+	    {							\
+	      rs6000_isa_flags &= ~OPTION_MASK_RELOCATABLE;	\
 	      error (INVALID_64BIT, "relocatable");		\
 	    }							\
-	  if (target_flags & MASK_EABI)				\
+	  if (rs6000_isa_flags & OPTION_MASK_EABI)		\
 	    {							\
-	      target_flags &= ~MASK_EABI;			\
+	      rs6000_isa_flags &= ~OPTION_MASK_EABI;		\
 	      error (INVALID_64BIT, "eabi");			\
 	    }							\
 	  if (TARGET_PROTOTYPE)					\
@@ -105,10 +133,27 @@ extern int dot_symbols;
 	      target_prototype = 0;				\
 	      error (INVALID_64BIT, "prototype");		\
 	    }							\
-	  if ((target_flags & MASK_POWERPC64) == 0)		\
+	  if ((rs6000_isa_flags & OPTION_MASK_POWERPC64) == 0)	\
 	    {							\
-	      target_flags |= MASK_POWERPC64;			\
+	      rs6000_isa_flags |= OPTION_MASK_POWERPC64;	\
 	      error ("-m64 requires a PowerPC64 cpu");		\
+	    }							\
+	  if ((rs6000_isa_flags_explicit			\
+	       & OPTION_MASK_MINIMAL_TOC) != 0)			\
+	    {							\
+	      if (global_options_set.x_rs6000_current_cmodel	\
+		  && rs6000_current_cmodel != CMODEL_SMALL)	\
+		error ("-mcmodel incompatible with other toc options"); \
+	      SET_CMODEL (CMODEL_SMALL);			\
+	    }							\
+	    {							\
+	      if (!global_options_set.x_rs6000_current_cmodel)	\
+		SET_CMODEL (CMODEL_MEDIUM);			\
+	      if (rs6000_current_cmodel != CMODEL_SMALL)	\
+		{						\
+		  TARGET_NO_FP_IN_TOC = 0;			\
+		  TARGET_NO_SUM_IN_TOC = 0;			\
+		}						\
 	    }							\
 	}							\
       else							\
@@ -120,16 +165,23 @@ extern int dot_symbols;
 	      TARGET_PROFILE_KERNEL = 0;			\
 	      error (INVALID_32BIT, "profile-kernel");		\
 	    }							\
+	  if (global_options_set.x_rs6000_current_cmodel)	\
+	    {							\
+	      SET_CMODEL (CMODEL_SMALL);			\
+	      error (INVALID_32BIT, "cmodel");			\
+	    }							\
 	}							\
     }								\
   while (0)
 
 #ifdef	RS6000_BI_ARCH
 
+#if 0
 #undef	OVERRIDE_OPTIONS
 #define	OVERRIDE_OPTIONS \
   rs6000_override_options (((TARGET_DEFAULT ^ target_flags) & MASK_64BIT) \
 			   ? (char *) 0 : TARGET_CPU_DEFAULT)
+#endif
 
 #endif
 
@@ -153,30 +205,22 @@ extern int dot_symbols;
 #endif
 #endif
 
-#define ASM_SPEC32 "-a32 %{n} %{T} %{Ym,*} %{Yd,*} \
-%{mrelocatable} %{mrelocatable-lib} %{fpic:-K PIC} %{fPIC:-K PIC} \
-%{memb} %{!memb: %{msdata: -memb} %{msdata=eabi: -memb}} \
-%{!mlittle: %{!mlittle-endian: %{!mbig: %{!mbig-endian: \
-    %{mcall-freebsd: -mbig} \
-    %{mcall-i960-old: -mlittle} \
-    %{mcall-linux: -mbig} \
-    %{mcall-gnu: -mbig} \
-    %{mcall-netbsd: -mbig} \
-}}}}"
+#define ASM_SPEC32 "-a32 \
+%{mrelocatable} %{mrelocatable-lib} %{fpic|fpie|fPIC|fPIE:-K PIC} \
+%{memb|msdata=eabi: -memb}"
 
 #define ASM_SPEC64 "-a64"
 
 #define ASM_SPEC_COMMON "%(asm_cpu) \
-%{.s: %{mregnames} %{mno-regnames}} %{.S: %{mregnames} %{mno-regnames}} \
-%{v:-V} %{Qy:} %{!Qn:-Qy} %{Wa,*:%*} \
-%{mlittle} %{mlittle-endian} %{mbig} %{mbig-endian}"
+%{,assembler|,assembler-with-cpp: %{mregnames} %{mno-regnames}}" \
+  ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 
 #undef	SUBSUBTARGET_EXTRA_SPECS
 #define SUBSUBTARGET_EXTRA_SPECS \
   { "asm_spec_common",		ASM_SPEC_COMMON },			\
   { "asm_spec32",		ASM_SPEC32 },				\
   { "asm_spec64",		ASM_SPEC64 },				\
-  { "link_os_netbsd_spec32",	LINK_OS_NETBSD_SPEC32 },			\
+  { "link_os_netbsd_spec32",	LINK_OS_NETBSD_SPEC32 },		\
   { "link_os_netbsd_spec64",	LINK_OS_NETBSD_SPEC64 },
 
 #undef	MULTILIB_DEFAULTS
@@ -260,10 +304,6 @@ extern int dot_symbols;
 #define BLOCK_REG_PADDING(MODE, TYPE, FIRST) \
   (!(FIRST) ? upward : FUNCTION_ARG_PADDING (MODE, TYPE))
 
-/* Override svr4.h  */
-#undef MD_EXEC_PREFIX
-#undef MD_STARTFILE_PREFIX
-
 /* NetBSD doesn't support saving and restoring 64-bit regs in a 32-bit
    process.  XXXMRG?  */
 #define OS_MISSING_POWERPC64 !TARGET_64BIT
@@ -280,6 +320,8 @@ extern int dot_symbols;
   do							\
     {							\
       NETBSD_OS_CPP_BUILTINS_ELF();			\
+      if (TARGET_ISEL)					\
+	builtin_define ("__PPC_ISEL__");		\
       if (TARGET_64BIT)					\
 	{						\
 	  builtin_define ("__PPC__");			\
@@ -328,9 +370,6 @@ extern int dot_symbols;
 #undef	ENDFILE_DEFAULT_SPEC
 #define ENDFILE_DEFAULT_SPEC "%(endfile_netbsd)"
 
-#undef CRTSAVRES_DEFAULT_SPEC
-#define CRTSAVRES_DEFAULT_SPEC ""
-
 #undef	LINK_START_DEFAULT_SPEC
 #define LINK_START_DEFAULT_SPEC "%(link_start_netbsd)"
 
@@ -359,21 +398,109 @@ extern int dot_symbols;
       ? "\t.section\t\".got2\",\"aw\""			\
       : "\t.section\t\".got1\",\"aw\""))
 
-#undef  TARGET_VERSION
-#define TARGET_VERSION fprintf (stderr, " (PowerPC64 NetBSD)");
-
 /* Make GCC agree with <machine/ansi.h>.  */
 
 #undef	SIZE_TYPE
-#define	SIZE_TYPE (TARGET_64BIT ? "long unsigned int" : "unsigned int")
+#define	SIZE_TYPE (LONG_TYPE_SIZE == 64 ? "long unsigned int" : "unsigned int")
 
 #undef	PTRDIFF_TYPE
-#define	PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
+#define	PTRDIFF_TYPE (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
 
 #undef	WCHAR_TYPE
-#define	WCHAR_TYPE (TARGET_64BIT ? "int" : "long int")
-#undef  WCHAR_TYPE_SIZE
-#define WCHAR_TYPE_SIZE 32
+#define	WCHAR_TYPE "int"
+
+#undef INT8_TYPE
+#define INT8_TYPE "signed char"
+
+#undef INT16_TYPE
+#define INT16_TYPE "short int"
+
+#undef INT32_TYPE
+#define INT32_TYPE "int"
+
+#undef INT64_TYPE
+#define INT64_TYPE "long long int"
+
+#undef UINT8_TYPE
+#define UINT8_TYPE "unsigned char"
+
+#undef UINT16_TYPE
+#define UINT16_TYPE "short unsigned int"
+
+#undef UINT32_TYPE
+#define UINT32_TYPE "unsigned int"
+
+#undef UINT64_TYPE
+#define UINT64_TYPE "long long unsigned int"
+
+#undef INT_FAST8_TYPE
+#define INT_FAST8_TYPE "int"
+
+#undef INT_FAST16_TYPE
+#define INT_FAST16_TYPE "int"
+
+#undef INT_FAST32_TYPE
+#define INT_FAST32_TYPE "int"
+
+#undef INT_FAST64_TYPE
+#define INT_FAST64_TYPE INT64_TYPE
+
+#undef UINT_FAST8_TYPE
+#define UINT_FAST8_TYPE "unsigned int"
+
+#undef UINT_FAST16_TYPE
+#define UINT_FAST16_TYPE "unsigned int"
+
+#undef UINT_FAST32_TYPE
+#define UINT_FAST32_TYPE "unsigned int"
+
+#undef UINT_FAST8_TYPE
+#define UINT_FAST8_TYPE "unsigned int"
+
+#undef UINT_FAST16_TYPE
+#define UINT_FAST16_TYPE "unsigned int"
+
+#undef UINT_FAST32_TYPE
+#define UINT_FAST32_TYPE "unsigned int"
+
+#undef UINT_FAST64_TYPE
+#define UINT_FAST64_TYPE UINT64_TYPE
+
+#undef INT_LEAST8_TYPE
+#define INT_LEAST8_TYPE INT8_TYPE
+
+#undef INT_LEAST16_TYPE
+#define INT_LEAST16_TYPE INT16_TYPE
+
+#undef INT_LEAST32_TYPE
+#define INT_LEAST32_TYPE "int"
+
+#undef INT_LEAST64_TYPE
+#define INT_LEAST64_TYPE INT64_TYPE
+
+#undef UINT_LEAST8_TYPE
+#define UINT_LEAST8_TYPE UINT8_TYPE
+
+#undef UINT_LEAST16_TYPE
+#define UINT_LEAST16_TYPE UINT16_TYPE
+
+#undef UINT_LEAST32_TYPE
+#define UINT_LEAST32_TYPE "unsigned int"
+
+#undef UINT_LEAST64_TYPE
+#define UINT_LEAST64_TYPE UINT64_TYPE
+
+#undef INTMAX_TYPE
+#define INTMAX_TYPE INT64_TYPE
+
+#undef UINTMAX_TYPE
+#define UINTMAX_TYPE UINT64_TYPE
 
 /* Override rs6000.h definition.  */
 #undef  ASM_APP_ON
@@ -471,68 +598,6 @@ extern int dot_symbols;
 		   && SCALAR_FLOAT_MODE_P (GET_MODE (X))		\
 		   && BITS_PER_WORD == HOST_BITS_PER_INT)))))
 
-/* This ABI cannot use DBX_LINES_FUNCTION_RELATIVE, nor can it use
-   dbxout_stab_value_internal_label_diff, because we must
-   use the function code label, not the function descriptor label.  */
-#define	DBX_OUTPUT_SOURCE_LINE(FILE, LINE, COUNTER)			\
-do									\
-  {									\
-    char temp[256];							\
-    const char *s;							\
-    ASM_GENERATE_INTERNAL_LABEL (temp, "LM", COUNTER);			\
-    dbxout_begin_stabn_sline (LINE);					\
-    assemble_name (FILE, temp);						\
-    putc ('-', FILE);							\
-    s = XSTR (XEXP (DECL_RTL (current_function_decl), 0), 0);		\
-    rs6000_output_function_entry (FILE, s);				\
-    putc ('\n', FILE);							\
-    targetm.asm_out.internal_label (FILE, "LM", COUNTER);		\
-    COUNTER += 1;							\
-  }									\
-while (0)
-
-/* Similarly, we want the function code label here.  Cannot use
-   dbxout_stab_value_label_diff, as we have to use
-   rs6000_output_function_entry.  FIXME.  */
-#define DBX_OUTPUT_BRAC(FILE, NAME, BRAC)				\
-  do									\
-    {									\
-      const char *s;							\
-      dbxout_begin_stabn (BRAC);					\
-      s = XSTR (XEXP (DECL_RTL (current_function_decl), 0), 0);		\
-      /* dbxout_block passes this macro the function name as NAME,	\
-	 assuming that it is the function code start label.  In our	\
-	 case, the function name is the OPD entry.  dbxout_block is	\
-	 broken, hack around it here.  */				\
-      if (NAME == s)							\
-	putc ('0', FILE);						\
-      else								\
-	{								\
-	  assemble_name (FILE, NAME);					\
-	  putc ('-', FILE);						\
-	  rs6000_output_function_entry (FILE, s);			\
-	}								\
-      putc ('\n', FILE);						\
-    }									\
-  while (0)
-
-#define DBX_OUTPUT_LBRAC(FILE, NAME) DBX_OUTPUT_BRAC (FILE, NAME, N_LBRAC)
-#define DBX_OUTPUT_RBRAC(FILE, NAME) DBX_OUTPUT_BRAC (FILE, NAME, N_RBRAC)
-
-/* Another case where we want the dot name.  */
-#define	DBX_OUTPUT_NFUN(FILE, LSCOPE, DECL)				\
-  do									\
-    {									\
-      const char *s;							\
-      dbxout_begin_empty_stabs (N_FUN);					\
-      assemble_name (FILE, LSCOPE);					\
-      putc ('-', FILE);							\
-      s = XSTR (XEXP (DECL_RTL (current_function_decl), 0), 0);		\
-      rs6000_output_function_entry (FILE, s);				\
-      putc ('\n', FILE);						\
-    }									\
-  while (0)
-
 /* Select a format to encode pointers in exception handling data.  CODE
    is 0 for data, 1 for code labels, 2 for function pointers.  GLOBAL is
    true if the symbol may be affected by dynamic relocations.  */
@@ -547,8 +612,6 @@ while (0)
    structure return convention.  */
 #undef DRAFT_V4_STRUCT_RET
 #define DRAFT_V4_STRUCT_RET (!TARGET_64BIT)
-
-#define TARGET_ASM_FILE_END rs6000_elf_end_indicate_exec_stack
 
 #define TARGET_POSIX_IO
 
