@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.2.2.3 2015/09/13 09:27:54 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.2.2.4 2015/09/23 13:44:58 skrll Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _XHCIREG_H_
-#define	_XHCIREG_H_
+#ifndef _DEV_USB_XHCIREG_H_
+#define	_DEV_USB_XHCIREG_H_
 
 /* XHCI PCI config registers */
 #define	PCI_CBMEM		0x10	/* configuration base MEM */
@@ -470,4 +470,4 @@ struct xhci_erste {
 } __packed __aligned(XHCI_ERSTE_ALIGN);
 #define XHCI_ERSTE_SIZE sizeof(struct xhci_erste)
 
-#endif	/* _XHCIREG_H_ */
+#endif	/* _DEV_USB_XHCIREG_H_ */
