@@ -1,4 +1,4 @@
-.\"	$NetBSD: midirecord.1,v 1.4 2015/06/08 06:33:35 mrg Exp $
+.\"	$NetBSD: midirecord.1,v 1.5 2015/09/23 05:31:01 mrg Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2001, 2002, 2010 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd December 30, 2014
+.Dd July 22, 2015
 .Dt MIDIRECORD 1
 .Os
 .Sh NAME
@@ -38,6 +38,7 @@
 .Op Fl d Ar devices
 .Op Fl f Ar sequencerdev
 .Op Fl n Ar notesperbeat
+.Op Fl R Ar roundbeats
 .Op Fl r Ar raw_output
 .Op Fl T Ar tempo
 .Op Fl t Ar time
@@ -87,6 +88,11 @@ Start the relative timer at process start up instead of at
 the first event.
 .It Fl q
 Be quiet.
+.It Fl R Ar roundbeats
+Round timings to
+.Ar roundbeats
+of a note.
+Output will always be aligned to this many beats.
 .It Fl r Ar raw_output
 Create the raw output of the sequencer device in
 .Ar raw_output .
