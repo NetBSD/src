@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.13 2015/06/06 15:24:18 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.14 2015/09/23 13:49:59 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.13 2015/06/06 15:24:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.14 2015/09/23 13:49:59 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -587,6 +587,13 @@ uhub_explore(struct usbd_device *dev)
 			}
 		}
 		if (change & UPS_C_PORT_RESET) {
+			/*
+			 * some xHCs set PortResetChange instead of CSC
+			 * when port is reset.
+			 */
+			if ((status & UPS_CURRENT_CONNECT_STATUS) != 0) {
+				change |= UPS_C_CONNECT_STATUS;
+			}
 			usbd_clear_port_feature(dev, port, UHF_C_PORT_RESET);
 		}
 		if (change & UPS_C_BH_PORT_RESET) {
