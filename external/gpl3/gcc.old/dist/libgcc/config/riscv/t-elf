@@ -1,0 +1,2 @@
+# Assemble startup files.
+LIB2ADD += $(srcdir)/config/riscv/riscv-fp.c
