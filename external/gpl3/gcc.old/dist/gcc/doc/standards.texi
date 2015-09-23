@@ -1,0 +1,296 @@
+@c Copyright (C) 2000-2013 Free Software Foundation, Inc.
+@c This is part of the GCC manual.
+@c For copying conditions, see the file gcc.texi.
+
+@node Standards
+@chapter Language Standards Supported by GCC
+
+For each language compiled by GCC for which there is a standard, GCC
+attempts to follow one or more versions of that standard, possibly
+with some exceptions, and possibly with some extensions.
+
+@section C language
+@cindex C standard
+@cindex C standards
+@cindex ANSI C standard
+@cindex ANSI C
+@cindex ANSI C89
+@cindex C89
+@cindex ANSI X3.159-1989
+@cindex X3.159-1989
+@cindex ISO C standard
+@cindex ISO C
+@cindex ISO C90
+@cindex ISO/IEC 9899
+@cindex ISO 9899
+@cindex C90
+@cindex ISO C94
+@cindex C94
+@cindex ISO C95
+@cindex C95
+@cindex ISO C99
+@cindex C99
+@cindex ISO C9X
+@cindex C9X
+@cindex ISO C11
+@cindex C11
+@cindex ISO C1X
+@cindex C1X
+@cindex Technical Corrigenda
+@cindex TC1
+@cindex Technical Corrigendum 1
+@cindex TC2
+@cindex Technical Corrigendum 2
+@cindex TC3
+@cindex Technical Corrigendum 3
+@cindex AMD1
+@cindex freestanding implementation
+@cindex freestanding environment
+@cindex hosted implementation
+@cindex hosted environment
+@findex __STDC_HOSTED__
+
+GCC supports three versions of the C standard, although support for
+the most recent version is not yet complete.
+
+@opindex std
+@opindex ansi
+@opindex pedantic
+@opindex pedantic-errors
+The original ANSI C standard (X3.159-1989) was ratified in 1989 and
+published in 1990.  This standard was ratified as an ISO standard
+(ISO/IEC 9899:1990) later in 1990.  There were no technical
+differences between these publications, although the sections of the
+ANSI standard were renumbered and became clauses in the ISO standard.
+This standard, in both its forms, is commonly known as @dfn{C89}, or
+occasionally as @dfn{C90}, from the dates of ratification.  The ANSI
+standard, but not the ISO standard, also came with a Rationale
+document.  To select this standard in GCC, use one of the options
+@option{-ansi}, @option{-std=c90} or @option{-std=iso9899:1990}; to obtain
+all the diagnostics required by the standard, you should also specify
+@option{-pedantic} (or @option{-pedantic-errors} if you want them to be
+errors rather than warnings).  @xref{C Dialect Options,,Options
+Controlling C Dialect}.
+
+Errors in the 1990 ISO C standard were corrected in two Technical
+Corrigenda published in 1994 and 1996.  GCC does not support the
+uncorrected version.
+
+An amendment to the 1990 standard was published in 1995.  This
+amendment added digraphs and @code{__STDC_VERSION__} to the language,
+but otherwise concerned the library.  This amendment is commonly known
+as @dfn{AMD1}; the amended standard is sometimes known as @dfn{C94} or
+@dfn{C95}.  To select this standard in GCC, use the option
+@option{-std=iso9899:199409} (with, as for other standard versions,
+@option{-pedantic} to receive all required diagnostics).
+
+A new edition of the ISO C standard was published in 1999 as ISO/IEC
+9899:1999, and is commonly known as @dfn{C99}.  GCC has incomplete
+support for this standard version; see
+@uref{http://gcc.gnu.org/c99status.html} for details.  To select this
+standard, use @option{-std=c99} or @option{-std=iso9899:1999}.  (While in
+development, drafts of this standard version were referred to as
+@dfn{C9X}.)
+
+Errors in the 1999 ISO C standard were corrected in three Technical
+Corrigenda published in 2001, 2004 and 2007.  GCC does not support the
+uncorrected version.
+
+A fourth version of the C standard, known as @dfn{C11}, was published
+in 2011 as ISO/IEC 9899:2011.  GCC has limited incomplete support for
+parts of this standard, enabled with @option{-std=c11} or
+@option{-std=iso9899:2011}.  (While in development, drafts of this
+standard version were referred to as @dfn{C1X}.)
+
+By default, GCC provides some extensions to the C language that on
+rare occasions conflict with the C standard.  @xref{C
+Extensions,,Extensions to the C Language Family}.  Use of the
+@option{-std} options listed above will disable these extensions where
+they conflict with the C standard version selected.  You may also
+select an extended version of the C language explicitly with
+@option{-std=gnu90} (for C90 with GNU extensions), @option{-std=gnu99}
+(for C99 with GNU extensions) or @option{-std=gnu11} (for C11 with GNU
+extensions).  The default, if no C language dialect
+options are given, is @option{-std=gnu90}; this will change to
+@option{-std=gnu99} or @option{-std=gnu11} in some future release when
+the C99 or C11 support is
+complete.  Some features that are part of the C99 standard are
+accepted as extensions in C90 mode, and some features that are part of
+the C11 standard are accepted as extensions in C90 and C99 modes.
+
+The ISO C standard defines (in clause 4) two classes of conforming
+implementation.  A @dfn{conforming hosted implementation} supports the
+whole standard including all the library facilities; a @dfn{conforming
+freestanding implementation} is only required to provide certain
+library facilities: those in @code{<float.h>}, @code{<limits.h>},
+@code{<stdarg.h>}, and @code{<stddef.h>}; since AMD1, also those in
+@code{<iso646.h>}; since C99, also those in @code{<stdbool.h>} and
+@code{<stdint.h>}; and since C11, also those in @code{<stdalign.h>}
+and @code{<stdnoreturn.h>}.  In addition, complex types, added in C99, are not
+required for freestanding implementations.  The standard also defines
+two environments for programs, a @dfn{freestanding environment},
+required of all implementations and which may not have library
+facilities beyond those required of freestanding implementations,
+where the handling of program startup and termination are
+implementation-defined, and a @dfn{hosted environment}, which is not
+required, in which all the library facilities are provided and startup
+is through a function @code{int main (void)} or @code{int main (int,
+char *[])}.  An OS kernel would be a freestanding environment; a
+program using the facilities of an operating system would normally be
+in a hosted implementation.
+
+@opindex ffreestanding
+GCC aims towards being usable as a conforming freestanding
+implementation, or as the compiler for a conforming hosted
+implementation.  By default, it will act as the compiler for a hosted
+implementation, defining @code{__STDC_HOSTED__} as @code{1} and
+presuming that when the names of ISO C functions are used, they have
+the semantics defined in the standard.  To make it act as a conforming
+freestanding implementation for a freestanding environment, use the
+option @option{-ffreestanding}; it will then define
+@code{__STDC_HOSTED__} to @code{0} and not make assumptions about the
+meanings of function names from the standard library, with exceptions
+noted below.  To build an OS kernel, you may well still need to make
+your own arrangements for linking and startup.
+@xref{C Dialect Options,,Options Controlling C Dialect}.
+
+GCC does not provide the library facilities required only of hosted
+implementations, nor yet all the facilities required by C99 of
+freestanding implementations; to use the facilities of a hosted
+environment, you will need to find them elsewhere (for example, in the
+GNU C library).  @xref{Standard Libraries,,Standard Libraries}.
+
+Most of the compiler support routines used by GCC are present in
+@file{libgcc}, but there are a few exceptions.  GCC requires the
+freestanding environment provide @code{memcpy}, @code{memmove},
+@code{memset} and @code{memcmp}.
+Finally, if @code{__builtin_trap} is used, and the target does
+not implement the @code{trap} pattern, then GCC will emit a call
+to @code{abort}.
+
+For references to Technical Corrigenda, Rationale documents and
+information concerning the history of C that is available online, see
+@uref{http://gcc.gnu.org/readings.html}
+
+@section C++ language
+
+GCC supports the original ISO C++ standard (1998) and contains
+experimental support for the second ISO C++ standard (2011).
+
+The original ISO C++ standard was published as the ISO standard (ISO/IEC
+14882:1998) and amended by a Technical Corrigenda published in 2003
+(ISO/IEC 14882:2003). These standards are referred to as C++98 and
+C++03, respectively. GCC implements the majority of C++98 (@code{export}
+is a notable exception) and most of the changes in C++03.  To select
+this standard in GCC, use one of the options @option{-ansi},
+@option{-std=c++98}, or @option{-std=c++03}; to obtain all the diagnostics
+required by the standard, you should also specify @option{-pedantic} (or
+@option{-pedantic-errors} if you want them to be errors rather than
+warnings).
+
+A revised ISO C++ standard was published in 2011 as ISO/IEC
+14882:2011, and is referred to as C++11; before its publication it was
+commonly referred to as C++0x.  C++11 contains several
+changes to the C++ language, most of which have been implemented in an
+experimental C++11 mode in GCC@.  For information
+regarding the C++11 features available in the experimental C++11 mode,
+see @uref{http://gcc.gnu.org/projects/@/cxx0x.html}. To select this
+standard in GCC, use the option @option{-std=c++11}; to obtain all the
+diagnostics required by the standard, you should also specify
+@option{-pedantic} (or @option{-pedantic-errors} if you want them to
+be errors rather than warnings).
+
+More information about the C++ standards is available on the ISO C++
+committee's web site at @uref{http://www.open-std.org/@/jtc1/@/sc22/@/wg21/}.
+
+By default, GCC provides some extensions to the C++ language; @xref{C++
+Dialect Options,Options Controlling C++ Dialect}.  Use of the
+@option{-std} option listed above will disable these extensions.  You
+may also select an extended version of the C++ language explicitly with
+@option{-std=gnu++98} (for C++98 with GNU extensions) or
+@option{-std=gnu++11} (for C++11 with GNU extensions).  The default, if
+no C++ language dialect options are given, is @option{-std=gnu++98}.
+
+@section Objective-C and Objective-C++ languages
+@cindex Objective-C
+@cindex Objective-C++
+
+GCC supports ``traditional'' Objective-C (also known as ``Objective-C
+1.0'') and contains support for the Objective-C exception and
+synchronization syntax.  It has also support for a number of
+``Objective-C 2.0'' language extensions, including properties, fast
+enumeration (only for Objective-C), method attributes and the
+@@optional and @@required keywords in protocols.  GCC supports
+Objective-C++ and features available in Objective-C are also available
+in Objective-C++@.
+
+GCC by default uses the GNU Objective-C runtime library, which is part
+of GCC and is not the same as the Apple/NeXT Objective-C runtime
+library used on Apple systems.  There are a number of differences
+documented in this manual.  The options @option{-fgnu-runtime} and
+@option{-fnext-runtime} allow you to switch between producing output
+that works with the GNU Objective-C runtime library and output that
+works with the Apple/NeXT Objective-C runtime library.
+
+There is no formal written standard for Objective-C or Objective-C++@.
+The authoritative manual on traditional Objective-C (1.0) is
+``Object-Oriented Programming and the Objective-C Language'',
+available at a number of web sites:
+@itemize
+@item
+@uref{http://www.gnustep.org/@/resources/@/documentation/@/ObjectivCBook.pdf}
+is the original NeXTstep document;
+@item
+@uref{http://objc.toodarkpark.net}
+is the same document in another format;
+@item
+@uref{http://developer.apple.com/@/mac/@/library/@/documentation/@/Cocoa/@/Conceptual/@/ObjectiveC/}
+has an updated version but make sure you search for ``Object Oriented Programming and the Objective-C Programming Language 1.0'',
+not documentation on the newer ``Objective-C 2.0'' language
+@end itemize
+
+The Objective-C exception and synchronization syntax (that is, the
+keywords @@try, @@throw, @@catch, @@finally and @@synchronized) is
+supported by GCC and is enabled with the option
+@option{-fobjc-exceptions}.  The syntax is briefly documented in this
+manual and in the Objective-C 2.0 manuals from Apple.
+
+The Objective-C 2.0 language extensions and features are automatically
+enabled; they include properties (via the @@property, @@synthesize and
+@@dynamic keywords), fast enumeration (not available in
+Objective-C++), attributes for methods (such as deprecated, noreturn,
+sentinel, format), the unused attribute for method arguments, the
+@@package keyword for instance variables and the @@optional and
+@@required keywords in protocols.  You can disable all these
+Objective-C 2.0 language extensions with the option
+@option{-fobjc-std=objc1}, which causes the compiler to recognize the
+same Objective-C language syntax recognized by GCC 4.0, and to produce
+an error if one of the new features is used.
+
+GCC has currently no support for non-fragile instance variables.
+
+The authoritative manual on Objective-C 2.0 is available from Apple:
+@itemize
+@item
+@uref{http://developer.apple.com/@/mac/@/library/@/documentation/@/Cocoa/@/Conceptual/@/ObjectiveC/}
+@end itemize
+
+For more information concerning the history of Objective-C that is
+available online, see @uref{http://gcc.gnu.org/readings.html}
+
+@section Go language
+
+As of the GCC 4.7.1 release, GCC supports the Go 1 language standard,
+described at @uref{http://golang.org/doc/go1.html}.
+
+@section References for other languages
+
+@xref{Top, GNAT Reference Manual, About This Guide, gnat_rm,
+GNAT Reference Manual}, for information on standard
+conformance and compatibility of the Ada compiler.
+
+@xref{Standards,,Standards, gfortran, The GNU Fortran Compiler}, for details
+of standards supported by GNU Fortran.
+
+@xref{Compatibility,,Compatibility with the Java Platform, gcj, GNU gcj},
+for details of compatibility between @command{gcj} and the Java Platform.
