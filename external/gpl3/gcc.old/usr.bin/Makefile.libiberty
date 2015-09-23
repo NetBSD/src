@@ -1,0 +1,10 @@
+#	$NetBSD: Makefile.libiberty,v 1.1.1.1 2015/09/23 03:03:39 mrg Exp $
+
+.ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBIBERTY_
+_EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_LIBIBERTY_=1
+
+LIBIBERTYOBJ!=		cd ${.CURDIR}/../../lib/libiberty && ${PRINTOBJDIR}
+DPADD+=			${LIBIBERTYOBJ}/libiberty.a
+LDADD+=			${LIBIBERTYOBJ}/libiberty.a
+
+.endif
