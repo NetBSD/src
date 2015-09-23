@@ -1,4 +1,4 @@
-/*	$NetBSD: midirecord.c,v 1.9 2015/06/21 06:04:45 mrg Exp $	*/
+/*	$NetBSD: midirecord.c,v 1.10 2015/09/23 05:31:01 mrg Exp $	*/
 
 /*
  * Copyright (c) 2014 Matthew R. Green
@@ -33,7 +33,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: midirecord.c,v 1.9 2015/06/21 06:04:45 mrg Exp $");
+__RCSID("$NetBSD: midirecord.c,v 1.10 2015/09/23 05:31:01 mrg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -72,6 +72,7 @@ static ssize_t	data_size;
 static struct timeval record_time;
 static struct timeval start_time;
 static int	tempo = 120;
+static unsigned	round_beats = 1;
 static unsigned	notes_per_beat = 24;
 static bool ignore_timer_fail = false;
 static bool stdout_mode = false;
@@ -143,6 +144,11 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			raw_output = optarg;
+			break;
+		case 'R':
+			decode_uint(optarg, &round_beats);
+			if (round_beats == 0)
+				errx(1, "-R <round_beats> must be a positive integer");
 			break;
 		case 't':
 			no_time_limit = 0;
@@ -316,6 +322,7 @@ midi_event_timer_wait_abs_to_output(
 	size_t bufsize)
 {
 	static unsigned prev_div;
+	static int prev_leftover;
 	unsigned cur_div;
 	unsigned val = 0, xdiv;
 	int vallen = 0, i;
@@ -324,7 +331,15 @@ midi_event_timer_wait_abs_to_output(
 		prev_div = e.t_WAIT_ABS.divisions;
 	cur_div = e.t_WAIT_ABS.divisions;
 
-	xdiv = cur_div - prev_div;
+	xdiv = cur_div - prev_div + prev_leftover;
+	if (round_beats != 1) {
+		// round to closest
+		prev_leftover = xdiv % round_beats;
+		xdiv -= prev_leftover;
+		if (verbose)
+			fprintf(stderr, "adjusted beat value to %x (leftover = %d)\n",
+			    xdiv, prev_leftover);
+	}
 	if (xdiv) {
 		while (xdiv) {
 			uint32_t extra = val ? 0x80 : 0;
