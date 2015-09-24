@@ -1,4 +1,4 @@
-/* $NetBSD: aoutm68k_syscalls.c,v 1.41 2015/03/07 16:41:52 christos Exp $ */
+/* $NetBSD: aoutm68k_syscalls.c,v 1.42 2015/09/24 14:40:09 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aoutm68k_syscalls.c,v 1.41 2015/03/07 16:41:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aoutm68k_syscalls.c,v 1.42 2015/09/24 14:40:09 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -26,6 +26,8 @@ __KERNEL_RCSID(0, "$NetBSD: aoutm68k_syscalls.c,v 1.41 2015/03/07 16:41:52 chris
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <compat/aoutm68k/aoutm68k_syscallargs.h>
+#else /* _KERNEL_OPT */
+#include <sys/null.h>
 #endif /* _KERNEL_OPT */
 
 const char *const aoutm68k_syscallnames[] = {
@@ -771,4 +773,751 @@ const char *const aoutm68k_syscallnames[] = {
 	/* 509 */	"# filler",
 	/* 510 */	"# filler",
 	/* 511 */	"# filler",
+};
+
+
+/* libc style syscall names */
+const char *const altaoutm68k_syscallnames[] = {
+	/*   0 */	NULL, /* syscall */
+	/*   1 */	NULL, /* exit */
+	/*   2 */	NULL, /* fork */
+	/*   3 */	NULL, /* read */
+	/*   4 */	NULL, /* write */
+	/*   5 */	NULL, /* open */
+	/*   6 */	NULL, /* close */
+	/*   7 */	NULL, /* wait4 */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*   8 */	"creat",
+#else
+	/*   8 */	NULL, /* excluded compat_43_sys_creat */
+#endif
+	/*   9 */	NULL, /* link */
+	/*  10 */	NULL, /* unlink */
+	/*  11 */	NULL, /* obsolete execv */
+	/*  12 */	NULL, /* chdir */
+	/*  13 */	NULL, /* fchdir */
+	/*  14 */	NULL, /* mknod */
+	/*  15 */	NULL, /* chmod */
+	/*  16 */	NULL, /* chown */
+	/*  17 */	"obreak",
+#if defined(COMPAT_20) || !defined(_KERNEL)
+	/*  18 */	NULL, /* getfsstat */
+#else
+	/*  18 */	NULL, /* excluded compat_20_sys_getfsstat */
+#endif
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  19 */	"lseek",
+#else
+	/*  19 */	NULL, /* excluded compat_43_sys_lseek */
+#endif
+	/*  20 */	NULL, /* getpid */
+	/*  21 */	NULL, /* mount */
+	/*  22 */	NULL, /* unmount */
+	/*  23 */	NULL, /* setuid */
+	/*  24 */	NULL, /* getuid */
+	/*  25 */	NULL, /* geteuid */
+	/*  26 */	NULL, /* ptrace */
+	/*  27 */	NULL, /* recvmsg */
+	/*  28 */	NULL, /* sendmsg */
+	/*  29 */	NULL, /* recvfrom */
+	/*  30 */	NULL, /* accept */
+	/*  31 */	NULL, /* getpeername */
+	/*  32 */	NULL, /* getsockname */
+	/*  33 */	NULL, /* access */
+	/*  34 */	NULL, /* chflags */
+	/*  35 */	NULL, /* fchflags */
+	/*  36 */	NULL, /* sync */
+	/*  37 */	NULL, /* kill */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  38 */	"stat",
+#else
+	/*  38 */	NULL, /* excluded aoutm68k_compat_43_sys_stat */
+#endif
+	/*  39 */	NULL, /* getppid */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  40 */	"lstat",
+#else
+	/*  40 */	NULL, /* excluded aoutm68k_compat_43_sys_lstat */
+#endif
+	/*  41 */	NULL, /* dup */
+	/*  42 */	NULL, /* pipe */
+	/*  43 */	NULL, /* getegid */
+	/*  44 */	NULL, /* profil */
+#if defined(KTRACE) || !defined(_KERNEL)
+	/*  45 */	NULL, /* ktrace */
+#else
+	/*  45 */	NULL, /* excluded ktrace */
+#endif
+#if defined(COMPAT_13) || !defined(_KERNEL)
+	/*  46 */	"sigaction",
+#else
+	/*  46 */	NULL, /* excluded compat_13_sys_sigaction */
+#endif
+	/*  47 */	NULL, /* getgid */
+#if defined(COMPAT_13) || !defined(_KERNEL)
+	/*  48 */	"sigprocmask",
+#else
+	/*  48 */	NULL, /* excluded compat_13_sys_sigprocmask */
+#endif
+	/*  49 */	NULL, /* __getlogin */
+	/*  50 */	NULL, /* __setlogin */
+	/*  51 */	NULL, /* acct */
+#if defined(COMPAT_13) || !defined(_KERNEL)
+	/*  52 */	"sigpending",
+	/*  53 */	"sigaltstack",
+#else
+	/*  52 */	NULL, /* excluded compat_13_sys_sigpending */
+	/*  53 */	NULL, /* excluded compat_13_sys_sigaltstack */
+#endif
+	/*  54 */	NULL, /* ioctl */
+#if defined(COMPAT_12) || !defined(_KERNEL)
+	/*  55 */	"reboot",
+#else
+	/*  55 */	NULL, /* excluded compat_12_sys_reboot */
+#endif
+	/*  56 */	NULL, /* revoke */
+	/*  57 */	NULL, /* symlink */
+	/*  58 */	NULL, /* readlink */
+	/*  59 */	NULL, /* execve */
+	/*  60 */	NULL, /* umask */
+	/*  61 */	NULL, /* chroot */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  62 */	"fstat",
+	/*  63 */	"getkerninfo",
+	/*  64 */	"getpagesize",
+#else
+	/*  62 */	NULL, /* excluded aoutm68k_compat_43_sys_fstat */
+	/*  63 */	NULL, /* excluded compat_43_sys_getkerninfo */
+	/*  64 */	NULL, /* excluded compat_43_sys_getpagesize */
+#endif
+#if defined(COMPAT_12) || !defined(_KERNEL)
+	/*  65 */	NULL, /* msync */
+#else
+	/*  65 */	NULL, /* excluded compat_12_sys_msync */
+#endif
+	/*  66 */	NULL, /* vfork */
+	/*  67 */	NULL, /* obsolete vread */
+	/*  68 */	NULL, /* obsolete vwrite */
+	/*  69 */	NULL, /* sbrk */
+	/*  70 */	NULL, /* sstk */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  71 */	"mmap",
+#else
+	/*  71 */	NULL, /* excluded compat_43_sys_mmap */
+#endif
+	/*  72 */	"ovadvise",
+	/*  73 */	NULL, /* munmap */
+	/*  74 */	NULL, /* mprotect */
+	/*  75 */	NULL, /* madvise */
+	/*  76 */	NULL, /* obsolete vhangup */
+	/*  77 */	NULL, /* obsolete vlimit */
+	/*  78 */	NULL, /* mincore */
+	/*  79 */	NULL, /* getgroups */
+	/*  80 */	NULL, /* setgroups */
+	/*  81 */	NULL, /* getpgrp */
+	/*  82 */	NULL, /* setpgid */
+	/*  83 */	NULL, /* setitimer */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  84 */	"wait",
+#else
+	/*  84 */	NULL, /* excluded compat_43_sys_wait */
+#endif
+#if defined(COMPAT_12) || !defined(_KERNEL)
+	/*  85 */	"swapon",
+#else
+	/*  85 */	NULL, /* excluded compat_12_sys_swapon */
+#endif
+	/*  86 */	NULL, /* getitimer */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  87 */	"gethostname",
+	/*  88 */	"sethostname",
+	/*  89 */	"getdtablesize",
+#else
+	/*  87 */	NULL, /* excluded compat_43_sys_gethostname */
+	/*  88 */	NULL, /* excluded compat_43_sys_sethostname */
+	/*  89 */	NULL, /* excluded compat_43_sys_getdtablesize */
+#endif
+	/*  90 */	NULL, /* dup2 */
+	/*  91 */	NULL, /* unimplemented getdopt */
+	/*  92 */	NULL, /* fcntl */
+	/*  93 */	NULL, /* select */
+	/*  94 */	NULL, /* unimplemented setdopt */
+	/*  95 */	NULL, /* fsync */
+	/*  96 */	NULL, /* setpriority */
+	/*  97 */	NULL, /* socket */
+	/*  98 */	NULL, /* connect */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/*  99 */	"accept",
+#else
+	/*  99 */	NULL, /* excluded compat_43_sys_accept */
+#endif
+	/* 100 */	NULL, /* getpriority */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 101 */	"send",
+	/* 102 */	"recv",
+#else
+	/* 101 */	NULL, /* excluded compat_43_sys_send */
+	/* 102 */	NULL, /* excluded compat_43_sys_recv */
+#endif
+#if defined(COMPAT_13) || !defined(_KERNEL)
+	/* 103 */	"sigreturn",
+#else
+	/* 103 */	NULL, /* excluded compat_13_sys_sigreturn */
+#endif
+	/* 104 */	NULL, /* bind */
+	/* 105 */	NULL, /* setsockopt */
+	/* 106 */	NULL, /* listen */
+	/* 107 */	NULL, /* obsolete vtimes */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 108 */	"sigvec",
+	/* 109 */	"sigblock",
+	/* 110 */	"sigsetmask",
+#else
+	/* 108 */	NULL, /* excluded compat_43_sys_sigvec */
+	/* 109 */	NULL, /* excluded compat_43_sys_sigblock */
+	/* 110 */	NULL, /* excluded compat_43_sys_sigsetmask */
+#endif
+#if defined(COMPAT_13) || !defined(_KERNEL)
+	/* 111 */	"sigsuspend",
+#else
+	/* 111 */	NULL, /* excluded compat_13_sys_sigsuspend */
+#endif
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 112 */	"sigstack",
+	/* 113 */	"recvmsg",
+	/* 114 */	"sendmsg",
+#else
+	/* 112 */	NULL, /* excluded compat_43_sys_sigstack */
+	/* 113 */	NULL, /* excluded compat_43_sys_recvmesg */
+	/* 114 */	NULL, /* excluded compat_43_sys_sendmesg */
+#endif
+	/* 115 */	NULL, /* obsolete vtrace */
+	/* 116 */	NULL, /* gettimeofday */
+	/* 117 */	NULL, /* getrusage */
+	/* 118 */	NULL, /* getsockopt */
+	/* 119 */	NULL, /* obsolete resuba */
+	/* 120 */	NULL, /* readv */
+	/* 121 */	NULL, /* writev */
+	/* 122 */	NULL, /* settimeofday */
+	/* 123 */	NULL, /* fchown */
+	/* 124 */	NULL, /* fchmod */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 125 */	"recvfrom",
+#else
+	/* 125 */	NULL, /* excluded compat_43_sys_recvfrom */
+#endif
+	/* 126 */	NULL, /* setreuid */
+	/* 127 */	NULL, /* setregid */
+	/* 128 */	NULL, /* rename */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 129 */	"truncate",
+	/* 130 */	"ftruncate",
+#else
+	/* 129 */	NULL, /* excluded compat_43_sys_truncate */
+	/* 130 */	NULL, /* excluded compat_43_sys_ftruncate */
+#endif
+	/* 131 */	NULL, /* flock */
+	/* 132 */	NULL, /* mkfifo */
+	/* 133 */	NULL, /* sendto */
+	/* 134 */	NULL, /* shutdown */
+	/* 135 */	NULL, /* socketpair */
+	/* 136 */	NULL, /* mkdir */
+	/* 137 */	NULL, /* rmdir */
+	/* 138 */	NULL, /* utimes */
+	/* 139 */	NULL, /* obsolete 4.2 sigreturn */
+	/* 140 */	NULL, /* adjtime */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 141 */	"getpeername",
+	/* 142 */	"gethostid",
+	/* 143 */	"sethostid",
+	/* 144 */	"getrlimit",
+	/* 145 */	"setrlimit",
+	/* 146 */	"killpg",
+#else
+	/* 141 */	NULL, /* excluded compat_43_sys_getpeername */
+	/* 142 */	NULL, /* excluded compat_43_sys_gethostid */
+	/* 143 */	NULL, /* excluded compat_43_sys_sethostid */
+	/* 144 */	NULL, /* excluded compat_43_sys_getrlimit */
+	/* 145 */	NULL, /* excluded compat_43_sys_setrlimit */
+	/* 146 */	NULL, /* excluded compat_43_sys_killpg */
+#endif
+	/* 147 */	NULL, /* setsid */
+	/* 148 */	NULL, /* quotactl */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 149 */	"quota",
+	/* 150 */	"getsockname",
+#else
+	/* 149 */	NULL, /* excluded compat_43_sys_quota */
+	/* 150 */	NULL, /* excluded compat_43_sys_getsockname */
+#endif
+	/* 151 */	NULL, /* unimplemented */
+	/* 152 */	NULL, /* unimplemented */
+	/* 153 */	NULL, /* unimplemented */
+	/* 154 */	NULL, /* unimplemented */
+	/* 155 */	NULL, /* excluded nfssvc */
+#if defined(COMPAT_43) || !defined(_KERNEL)
+	/* 156 */	"getdirentries",
+#else
+	/* 156 */	NULL, /* excluded compat_43_sys_getdirentries */
+#endif
+#if defined(COMPAT_20) || !defined(_KERNEL)
+	/* 157 */	NULL, /* statfs */
+#else
+	/* 157 */	NULL, /* excluded compat_20_sys_statfs */
+#endif
+#if defined(COMPAT_20) || !defined(_KERNEL)
+	/* 158 */	NULL, /* fstatfs */
+#else
+	/* 158 */	NULL, /* excluded compat_20_sys_statfs */
+#endif
+	/* 159 */	NULL, /* unimplemented */
+	/* 160 */	NULL, /* unimplemented */
+	/* 161 */	NULL, /* getfh */
+#if defined(COMPAT_09) || !defined(_KERNEL)
+	/* 162 */	"getdomainname",
+	/* 163 */	"setdomainname",
+	/* 164 */	"uname",
+#else
+	/* 162 */	NULL, /* excluded compat_09_sys_getdomainname */
+	/* 163 */	NULL, /* excluded compat_09_sys_setdomainname */
+	/* 164 */	NULL, /* excluded compat_09_sys_uname */
+#endif
+	/* 165 */	NULL, /* sysarch */
+	/* 166 */	NULL, /* unimplemented */
+	/* 167 */	NULL, /* unimplemented */
+	/* 168 */	NULL, /* unimplemented */
+#if (defined(SYSVSEM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
+	/* 169 */	"semsys",
+#else
+	/* 169 */	NULL, /* excluded 1.0 semsys */
+#endif
+#if (defined(SYSVMSG) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
+	/* 170 */	"msgsys",
+#else
+	/* 170 */	NULL, /* excluded 1.0 msgsys */
+#endif
+#if (defined(SYSVSHM) || !defined(_KERNEL)) && !defined(_LP64) && defined(COMPAT_10)
+	/* 171 */	"shmsys",
+#else
+	/* 171 */	NULL, /* excluded 1.0 shmsys */
+#endif
+	/* 172 */	NULL, /* unimplemented */
+	/* 173 */	NULL, /* pread */
+	/* 174 */	NULL, /* pwrite */
+	/* 175 */	NULL, /* unimplemented sys_ntp_gettime */
+#if defined(NTP) || !defined(_KERNEL)
+	/* 176 */	NULL, /* ntp_adjtime */
+#else
+	/* 176 */	NULL, /* excluded ntp_adjtime */
+#endif
+	/* 177 */	NULL, /* unimplemented */
+	/* 178 */	NULL, /* unimplemented */
+	/* 179 */	NULL, /* unimplemented */
+	/* 180 */	NULL, /* unimplemented */
+	/* 181 */	NULL, /* setgid */
+	/* 182 */	NULL, /* setegid */
+	/* 183 */	NULL, /* seteuid */
+	/* 184 */	NULL, /* excluded lfs_bmapv */
+	/* 185 */	NULL, /* excluded lfs_markv */
+	/* 186 */	NULL, /* excluded lfs_segclean */
+	/* 187 */	NULL, /* excluded lfs_segwait */
+#if defined(COMPAT_12) || !defined(_KERNEL)
+	/* 188 */	"stat",
+	/* 189 */	"fstat",
+	/* 190 */	"lstat",
+#else
+	/* 188 */	NULL, /* excluded aoutm68k_compat_12_sys_stat */
+	/* 189 */	NULL, /* excluded aoutm68k_compat_12_sys_fstat */
+	/* 190 */	NULL, /* excluded aoutm68k_compat_12_sys_lstat */
+#endif
+	/* 191 */	NULL, /* pathconf */
+	/* 192 */	NULL, /* fpathconf */
+	/* 193 */	NULL, /* unimplemented */
+	/* 194 */	NULL, /* getrlimit */
+	/* 195 */	NULL, /* setrlimit */
+#if defined(COMPAT_12) || !defined(_KERNEL)
+	/* 196 */	NULL, /* getdirentries */
+#else
+	/* 196 */	NULL, /* excluded compat_12_sys_getdirentries */
+#endif
+	/* 197 */	NULL, /* mmap */
+	/* 198 */	NULL, /* __syscall */
+	/* 199 */	NULL, /* lseek */
+	/* 200 */	NULL, /* truncate */
+	/* 201 */	NULL, /* ftruncate */
+	/* 202 */	NULL, /* __sysctl */
+	/* 203 */	NULL, /* mlock */
+	/* 204 */	NULL, /* munlock */
+	/* 205 */	NULL, /* undelete */
+	/* 206 */	NULL, /* futimes */
+	/* 207 */	NULL, /* getpgid */
+	/* 208 */	NULL, /* reboot */
+	/* 209 */	NULL, /* poll */
+	/* 210 */	NULL, /* unimplemented */
+	/* 211 */	NULL, /* unimplemented */
+	/* 212 */	NULL, /* unimplemented */
+	/* 213 */	NULL, /* unimplemented */
+	/* 214 */	NULL, /* unimplemented */
+	/* 215 */	NULL, /* unimplemented */
+	/* 216 */	NULL, /* unimplemented */
+	/* 217 */	NULL, /* unimplemented */
+	/* 218 */	NULL, /* unimplemented */
+	/* 219 */	NULL, /* unimplemented */
+#if defined(SYSVSEM) || !defined(_KERNEL)
+#if defined(COMPAT_14) || !defined(_KERNEL)
+	/* 220 */	NULL, /* __semctl */
+#else
+	/* 220 */	NULL, /* excluded compat_14_semctl */
+#endif
+	/* 221 */	NULL, /* semget */
+	/* 222 */	NULL, /* semop */
+	/* 223 */	NULL, /* semconfig */
+#else
+	/* 220 */	NULL, /* excluded compat_14_semctl */
+	/* 221 */	NULL, /* excluded semget */
+	/* 222 */	NULL, /* excluded semop */
+	/* 223 */	NULL, /* excluded semconfig */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL)
+#if defined(COMPAT_14) || !defined(_KERNEL)
+	/* 224 */	NULL, /* msgctl */
+#else
+	/* 224 */	NULL, /* excluded compat_14_sys_msgctl */
+#endif
+	/* 225 */	NULL, /* msgget */
+	/* 226 */	NULL, /* msgsnd */
+	/* 227 */	NULL, /* msgrcv */
+#else
+	/* 224 */	NULL, /* excluded compat_14_msgctl */
+	/* 225 */	NULL, /* excluded msgget */
+	/* 226 */	NULL, /* excluded msgsnd */
+	/* 227 */	NULL, /* excluded msgrcv */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL)
+	/* 228 */	NULL, /* shmat */
+#if defined(COMPAT_14) || !defined(_KERNEL)
+	/* 229 */	NULL, /* shmctl */
+#else
+	/* 229 */	NULL, /* excluded compat_14_sys_shmctl */
+#endif
+	/* 230 */	NULL, /* shmdt */
+	/* 231 */	NULL, /* shmget */
+#else
+	/* 228 */	NULL, /* excluded shmat */
+	/* 229 */	NULL, /* excluded compat_14_shmctl */
+	/* 230 */	NULL, /* excluded shmdt */
+	/* 231 */	NULL, /* excluded shmget */
+#endif
+	/* 232 */	NULL, /* clock_gettime */
+	/* 233 */	NULL, /* clock_settime */
+	/* 234 */	NULL, /* clock_getres */
+	/* 235 */	NULL, /* unimplemented timer_create */
+	/* 236 */	NULL, /* unimplemented timer_delete */
+	/* 237 */	NULL, /* unimplemented timer_settime */
+	/* 238 */	NULL, /* unimplemented timer_gettime */
+	/* 239 */	NULL, /* unimplemented timer_getoverrun */
+	/* 240 */	NULL, /* nanosleep */
+	/* 241 */	NULL, /* fdatasync */
+	/* 242 */	NULL, /* mlockall */
+	/* 243 */	NULL, /* munlockall */
+	/* 244 */	NULL, /* unimplemented */
+	/* 245 */	NULL, /* unimplemented */
+	/* 246 */	NULL, /* unimplemented */
+	/* 247 */	NULL, /* unimplemented */
+	/* 248 */	NULL, /* unimplemented */
+	/* 249 */	NULL, /* unimplemented */
+	/* 250 */	NULL, /* unimplemented */
+	/* 251 */	NULL, /* unimplemented */
+	/* 252 */	NULL, /* unimplemented */
+	/* 253 */	NULL, /* unimplemented */
+	/* 254 */	NULL, /* unimplemented */
+	/* 255 */	NULL, /* unimplemented */
+	/* 256 */	NULL, /* unimplemented */
+	/* 257 */	NULL, /* unimplemented */
+	/* 258 */	NULL, /* unimplemented */
+	/* 259 */	NULL, /* unimplemented */
+	/* 260 */	NULL, /* unimplemented */
+	/* 261 */	NULL, /* unimplemented */
+	/* 262 */	NULL, /* unimplemented */
+	/* 263 */	NULL, /* unimplemented */
+	/* 264 */	NULL, /* unimplemented */
+	/* 265 */	NULL, /* unimplemented */
+	/* 266 */	NULL, /* unimplemented */
+	/* 267 */	NULL, /* unimplemented */
+	/* 268 */	NULL, /* unimplemented */
+	/* 269 */	NULL, /* unimplemented */
+	/* 270 */	NULL, /* __posix_rename */
+	/* 271 */	NULL, /* swapctl */
+#if defined(COMPAT_30) || !defined(_KERNEL)
+	/* 272 */	NULL, /* getdents */
+#else
+	/* 272 */	NULL, /* excluded compat_30_sys_getdents */
+#endif
+	/* 273 */	NULL, /* minherit */
+	/* 274 */	NULL, /* lchmod */
+	/* 275 */	NULL, /* lchown */
+	/* 276 */	NULL, /* lutimes */
+	/* 277 */	"msync",
+	/* 278 */	"stat",
+	/* 279 */	"fstat",
+	/* 280 */	"lstat",
+	/* 281 */	"sigaltstack",
+	/* 282 */	"vfork",
+	/* 283 */	NULL, /* __posix_chown */
+	/* 284 */	NULL, /* __posix_fchown */
+	/* 285 */	NULL, /* __posix_lchown */
+	/* 286 */	NULL, /* getsid */
+	/* 287 */	NULL, /* unimplemented */
+#if defined(KTRACE) || !defined(_KERNEL)
+	/* 288 */	NULL, /* fktrace */
+#else
+	/* 288 */	NULL, /* excluded ktrace */
+#endif
+	/* 289 */	NULL, /* preadv */
+	/* 290 */	NULL, /* pwritev */
+#if defined(COMPAT_16) || !defined(_KERNEL)
+	/* 291 */	"sigaction",
+#else
+	/* 291 */	NULL, /* excluded compat_16_sys___sigaction14 */
+#endif
+	/* 292 */	"sigpending",
+	/* 293 */	"sigprocmask",
+	/* 294 */	"sigsuspend",
+#if defined(COMPAT_16) || !defined(_KERNEL)
+	/* 295 */	"sigreturn",
+#else
+	/* 295 */	NULL, /* excluded compat_16_sys___sigreturn14 */
+#endif
+	/* 296 */	NULL, /* __getcwd */
+	/* 297 */	NULL, /* fchroot */
+	/* 298 */	NULL, /* fhopen */
+	/* 299 */	NULL, /* fhstat */
+#if defined(COMPAT_20) || !defined(_KERNEL)
+	/* 300 */	NULL, /* fhstatfs */
+#else
+	/* 300 */	NULL, /* excluded compat_20_sys_fhstatfs */
+#endif
+#if defined(SYSVSEM) || !defined(_KERNEL)
+	/* 301 */	"__semctl",
+#else
+	/* 301 */	NULL, /* excluded ____semctl13 */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL)
+	/* 302 */	"msgctl",
+#else
+	/* 302 */	NULL, /* excluded __msgctl13 */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL)
+	/* 303 */	"shmctl",
+#else
+	/* 303 */	NULL, /* excluded __shmctl13 */
+#endif
+	/* 304 */	NULL, /* lchflags */
+	/* 305 */	NULL, /* issetugid */
+	/* 306 */	NULL, /* getcontext */
+	/* 307 */	NULL, /* setcontext */
+	/* 308 */	NULL, /* filler */
+	/* 309 */	NULL, /* filler */
+	/* 310 */	NULL, /* filler */
+	/* 311 */	NULL, /* filler */
+	/* 312 */	NULL, /* filler */
+	/* 313 */	NULL, /* filler */
+	/* 314 */	NULL, /* filler */
+	/* 315 */	NULL, /* filler */
+	/* 316 */	NULL, /* filler */
+	/* 317 */	NULL, /* filler */
+	/* 318 */	NULL, /* filler */
+	/* 319 */	NULL, /* filler */
+	/* 320 */	NULL, /* filler */
+	/* 321 */	NULL, /* filler */
+	/* 322 */	NULL, /* filler */
+	/* 323 */	NULL, /* filler */
+	/* 324 */	NULL, /* filler */
+	/* 325 */	NULL, /* filler */
+	/* 326 */	NULL, /* filler */
+	/* 327 */	NULL, /* filler */
+	/* 328 */	NULL, /* filler */
+	/* 329 */	NULL, /* filler */
+	/* 330 */	NULL, /* filler */
+	/* 331 */	NULL, /* filler */
+	/* 332 */	NULL, /* filler */
+	/* 333 */	NULL, /* filler */
+	/* 334 */	NULL, /* filler */
+	/* 335 */	NULL, /* filler */
+	/* 336 */	NULL, /* filler */
+	/* 337 */	NULL, /* filler */
+	/* 338 */	NULL, /* filler */
+	/* 339 */	NULL, /* filler */
+	/* 340 */	NULL, /* filler */
+	/* 341 */	NULL, /* filler */
+	/* 342 */	NULL, /* filler */
+	/* 343 */	NULL, /* filler */
+	/* 344 */	NULL, /* filler */
+	/* 345 */	NULL, /* filler */
+	/* 346 */	NULL, /* filler */
+	/* 347 */	NULL, /* filler */
+	/* 348 */	NULL, /* filler */
+	/* 349 */	NULL, /* filler */
+	/* 350 */	NULL, /* filler */
+	/* 351 */	NULL, /* filler */
+	/* 352 */	NULL, /* filler */
+	/* 353 */	NULL, /* filler */
+	/* 354 */	NULL, /* filler */
+	/* 355 */	NULL, /* filler */
+	/* 356 */	NULL, /* filler */
+	/* 357 */	NULL, /* filler */
+	/* 358 */	NULL, /* filler */
+	/* 359 */	NULL, /* filler */
+	/* 360 */	NULL, /* filler */
+	/* 361 */	NULL, /* filler */
+	/* 362 */	NULL, /* filler */
+	/* 363 */	NULL, /* filler */
+	/* 364 */	NULL, /* filler */
+	/* 365 */	NULL, /* filler */
+	/* 366 */	NULL, /* filler */
+	/* 367 */	NULL, /* filler */
+	/* 368 */	NULL, /* filler */
+	/* 369 */	NULL, /* filler */
+	/* 370 */	NULL, /* filler */
+	/* 371 */	NULL, /* filler */
+	/* 372 */	NULL, /* filler */
+	/* 373 */	NULL, /* filler */
+	/* 374 */	NULL, /* filler */
+	/* 375 */	NULL, /* filler */
+	/* 376 */	NULL, /* filler */
+	/* 377 */	NULL, /* filler */
+	/* 378 */	NULL, /* filler */
+	/* 379 */	NULL, /* filler */
+	/* 380 */	NULL, /* filler */
+	/* 381 */	NULL, /* filler */
+	/* 382 */	NULL, /* filler */
+	/* 383 */	NULL, /* filler */
+	/* 384 */	NULL, /* filler */
+	/* 385 */	NULL, /* filler */
+	/* 386 */	NULL, /* filler */
+	/* 387 */	NULL, /* filler */
+	/* 388 */	NULL, /* filler */
+	/* 389 */	NULL, /* filler */
+	/* 390 */	NULL, /* filler */
+	/* 391 */	NULL, /* filler */
+	/* 392 */	NULL, /* filler */
+	/* 393 */	NULL, /* filler */
+	/* 394 */	NULL, /* filler */
+	/* 395 */	NULL, /* filler */
+	/* 396 */	NULL, /* filler */
+	/* 397 */	NULL, /* filler */
+	/* 398 */	NULL, /* filler */
+	/* 399 */	NULL, /* filler */
+	/* 400 */	NULL, /* filler */
+	/* 401 */	NULL, /* filler */
+	/* 402 */	NULL, /* filler */
+	/* 403 */	NULL, /* filler */
+	/* 404 */	NULL, /* filler */
+	/* 405 */	NULL, /* filler */
+	/* 406 */	NULL, /* filler */
+	/* 407 */	NULL, /* filler */
+	/* 408 */	NULL, /* filler */
+	/* 409 */	NULL, /* filler */
+	/* 410 */	NULL, /* filler */
+	/* 411 */	NULL, /* filler */
+	/* 412 */	NULL, /* filler */
+	/* 413 */	NULL, /* filler */
+	/* 414 */	NULL, /* filler */
+	/* 415 */	NULL, /* filler */
+	/* 416 */	NULL, /* filler */
+	/* 417 */	NULL, /* filler */
+	/* 418 */	NULL, /* filler */
+	/* 419 */	NULL, /* filler */
+	/* 420 */	NULL, /* filler */
+	/* 421 */	NULL, /* filler */
+	/* 422 */	NULL, /* filler */
+	/* 423 */	NULL, /* filler */
+	/* 424 */	NULL, /* filler */
+	/* 425 */	NULL, /* filler */
+	/* 426 */	NULL, /* filler */
+	/* 427 */	NULL, /* filler */
+	/* 428 */	NULL, /* filler */
+	/* 429 */	NULL, /* filler */
+	/* 430 */	NULL, /* filler */
+	/* 431 */	NULL, /* filler */
+	/* 432 */	NULL, /* filler */
+	/* 433 */	NULL, /* filler */
+	/* 434 */	NULL, /* filler */
+	/* 435 */	NULL, /* filler */
+	/* 436 */	NULL, /* filler */
+	/* 437 */	NULL, /* filler */
+	/* 438 */	NULL, /* filler */
+	/* 439 */	NULL, /* filler */
+	/* 440 */	NULL, /* filler */
+	/* 441 */	NULL, /* filler */
+	/* 442 */	NULL, /* filler */
+	/* 443 */	NULL, /* filler */
+	/* 444 */	NULL, /* filler */
+	/* 445 */	NULL, /* filler */
+	/* 446 */	NULL, /* filler */
+	/* 447 */	NULL, /* filler */
+	/* 448 */	NULL, /* filler */
+	/* 449 */	NULL, /* filler */
+	/* 450 */	NULL, /* filler */
+	/* 451 */	NULL, /* filler */
+	/* 452 */	NULL, /* filler */
+	/* 453 */	NULL, /* filler */
+	/* 454 */	NULL, /* filler */
+	/* 455 */	NULL, /* filler */
+	/* 456 */	NULL, /* filler */
+	/* 457 */	NULL, /* filler */
+	/* 458 */	NULL, /* filler */
+	/* 459 */	NULL, /* filler */
+	/* 460 */	NULL, /* filler */
+	/* 461 */	NULL, /* filler */
+	/* 462 */	NULL, /* filler */
+	/* 463 */	NULL, /* filler */
+	/* 464 */	NULL, /* filler */
+	/* 465 */	NULL, /* filler */
+	/* 466 */	NULL, /* filler */
+	/* 467 */	NULL, /* filler */
+	/* 468 */	NULL, /* filler */
+	/* 469 */	NULL, /* filler */
+	/* 470 */	NULL, /* filler */
+	/* 471 */	NULL, /* filler */
+	/* 472 */	NULL, /* filler */
+	/* 473 */	NULL, /* filler */
+	/* 474 */	NULL, /* filler */
+	/* 475 */	NULL, /* filler */
+	/* 476 */	NULL, /* filler */
+	/* 477 */	NULL, /* filler */
+	/* 478 */	NULL, /* filler */
+	/* 479 */	NULL, /* filler */
+	/* 480 */	NULL, /* filler */
+	/* 481 */	NULL, /* filler */
+	/* 482 */	NULL, /* filler */
+	/* 483 */	NULL, /* filler */
+	/* 484 */	NULL, /* filler */
+	/* 485 */	NULL, /* filler */
+	/* 486 */	NULL, /* filler */
+	/* 487 */	NULL, /* filler */
+	/* 488 */	NULL, /* filler */
+	/* 489 */	NULL, /* filler */
+	/* 490 */	NULL, /* filler */
+	/* 491 */	NULL, /* filler */
+	/* 492 */	NULL, /* filler */
+	/* 493 */	NULL, /* filler */
+	/* 494 */	NULL, /* filler */
+	/* 495 */	NULL, /* filler */
+	/* 496 */	NULL, /* filler */
+	/* 497 */	NULL, /* filler */
+	/* 498 */	NULL, /* filler */
+	/* 499 */	NULL, /* filler */
+	/* 500 */	NULL, /* filler */
+	/* 501 */	NULL, /* filler */
+	/* 502 */	NULL, /* filler */
+	/* 503 */	NULL, /* filler */
+	/* 504 */	NULL, /* filler */
+	/* 505 */	NULL, /* filler */
+	/* 506 */	NULL, /* filler */
+	/* 507 */	NULL, /* filler */
+	/* 508 */	NULL, /* filler */
+	/* 509 */	NULL, /* filler */
+	/* 510 */	NULL, /* filler */
+	/* 511 */	NULL, /* filler */
 };
