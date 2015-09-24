@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.747 2015/08/13 10:36:38 christos Exp $
+# $NetBSD: shl.mi,v 1.748 2015/09/24 14:49:38 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -84,7 +84,7 @@
 ./lib/libtermlib.so.0.6				base-sys-shlib		dynamicroot
 ./lib/libutil.so				base-sys-shlib		dynamicroot
 ./lib/libutil.so.7				base-sys-shlib		dynamicroot
-./lib/libutil.so.7.22				base-sys-shlib		dynamicroot
+./lib/libutil.so.7.23				base-sys-shlib		dynamicroot
 ./lib/libz.so					base-sys-shlib		dynamicroot
 ./lib/libz.so.1					base-sys-shlib		dynamicroot
 ./lib/libz.so.1.0				base-sys-shlib		dynamicroot
@@ -431,6 +431,9 @@
 ./usr/lib/libppath.so				base-sys-shlib		compatfile
 ./usr/lib/libppath.so.0				base-sys-shlib		compatfile
 ./usr/lib/libppath.so.0.0			base-sys-shlib		compatfile
+./usr/lib/libproc.so				base-sys-shlib		compatfile
+./usr/lib/libproc.so.0				base-sys-shlib		compatfile
+./usr/lib/libproc.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/libprop.so				base-sys-shlib		compatfile
 ./usr/lib/libprop.so.1				base-sys-shlib		compatfile
 ./usr/lib/libprop.so.1.1			base-sys-shlib		compatfile
@@ -464,6 +467,9 @@
 ./usr/lib/librt.so				base-sys-shlib		compatfile
 ./usr/lib/librt.so.1				base-sys-shlib		compatfile
 ./usr/lib/librt.so.1.1				base-sys-shlib		compatfile
+./usr/lib/librtld_db.so				base-sys-shlib		compatfile
+./usr/lib/librtld_db.so.0			base-sys-shlib		compatfile
+./usr/lib/librtld_db.so.0.0			base-sys-shlib		compatfile
 ./usr/lib/librump.so				base-rump-shlib		compatfile,rump
 ./usr/lib/librump.so.0				base-rump-shlib		compatfile,rump
 ./usr/lib/librump.so.0.0			base-rump-shlib		compatfile,rump
@@ -784,7 +790,7 @@
 ./usr/lib/libusbhid.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libutil.so				base-sys-shlib		compatfile
 ./usr/lib/libutil.so.7				base-sys-shlib		compatfile
-./usr/lib/libutil.so.7.22			base-sys-shlib		compatfile
+./usr/lib/libutil.so.7.23			base-sys-shlib		compatfile
 ./usr/lib/libuutil.so				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libuutil.so.0				base-zfs-shlib		compatfile,zfs
 ./usr/lib/libuutil.so.0.0			base-zfs-shlib		compatfile,zfs
