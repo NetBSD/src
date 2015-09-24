@@ -28,7 +28,11 @@
  */ 
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_regs.c 285003 2015-07-01 13:59:26Z br $");
+#else
+__RCSID("$NetBSD: proc_regs.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
@@ -37,6 +41,7 @@ __FBSDID("$FreeBSD: head/lib/libproc/proc_regs.c 285003 2015-07-01 13:59:26Z br 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
+#include <sys/ucontext.h>
 #include "_libproc.h"
 
 int
@@ -54,6 +59,9 @@ proc_regget(struct proc_handle *phdl, proc_reg_t reg, unsigned long *regvalue)
 		return (-1);
 	switch (reg) {
 	case REG_PC:
+#ifdef PTRACE_REG_PC
+		*regvalue = PTRACE_REG_PC(&regs);
+#else
 #if defined(__aarch64__)
 		*regvalue = regs.elr;
 #elif defined(__amd64__)
@@ -67,8 +75,12 @@ proc_regget(struct proc_handle *phdl, proc_reg_t reg, unsigned long *regvalue)
 #elif defined(__powerpc__)
 		*regvalue = regs.pc;
 #endif
+#endif
 		break;
 	case REG_SP:
+#ifdef PTRACE_REG_SP
+		*regvalue = PTRACE_REG_SP(&regs);
+#else
 #if defined(__aarch64__)
 		*regvalue = regs.sp;
 #elif defined(__amd64__)
@@ -81,6 +93,7 @@ proc_regget(struct proc_handle *phdl, proc_reg_t reg, unsigned long *regvalue)
 		*regvalue = regs.r_regs[SP];
 #elif defined(__powerpc__)
 		*regvalue = regs.fixreg[1];
+#endif
 #endif
 		break;
 	default:
@@ -105,6 +118,9 @@ proc_regset(struct proc_handle *phdl, proc_reg_t reg, unsigned long regvalue)
 		return (-1);
 	switch (reg) {
 	case REG_PC:
+#ifdef PTRACE_REG_SET_PC
+		PTRACE_REG_SET_PC(&regs, regvalue);
+#else
 #if defined(__aarch64__)
 		regs.elr = regvalue;
 #elif defined(__amd64__)
@@ -118,8 +134,12 @@ proc_regset(struct proc_handle *phdl, proc_reg_t reg, unsigned long regvalue)
 #elif defined(__powerpc__)
 		regs.pc = regvalue;
 #endif
+#endif
 		break;
 	case REG_SP:
+#ifdef PTRACE_REG_SP
+		PTRACE_REG_SP(&regs) = regvalue;
+#else
 #if defined(__aarch64__)
 		regs.sp = regvalue;
 #elif defined(__amd64__)
@@ -132,6 +152,7 @@ proc_regset(struct proc_handle *phdl, proc_reg_t reg, unsigned long regvalue)
 		regs.r_regs[PC] = regvalue;
 #elif defined(__powerpc__)
 		regs.fixreg[1] = regvalue;
+#endif
 #endif
 		break;
 	default:
