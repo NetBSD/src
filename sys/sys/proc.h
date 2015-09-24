@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.322 2015/06/19 10:18:19 martin Exp $	*/
+/*	$NetBSD: proc.h,v 1.323 2015/09/24 14:33:31 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -458,6 +458,7 @@ extern const struct proclist_desc proclists[];
 
 extern struct pool	ptimer_pool;	/* Memory pool for ptimers */
 
+int		proc_find_locked(struct lwp *, struct proc **, pid_t);
 proc_t *	proc_find_raw(pid_t);
 proc_t *	proc_find(pid_t);		/* Find process by ID */
 struct pgrp *	pgrp_find(pid_t);		/* Find process group by ID */
