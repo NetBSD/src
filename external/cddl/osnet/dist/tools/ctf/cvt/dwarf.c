@@ -1672,7 +1672,7 @@ die_function_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp __un
 
 		if ((name1 = die_name(dw, arg)) == NULL) {
 			terminate("die %ju: func arg %d has no name\n",
-			    (uintptr_t)off, ii->ii_nargs + 1);
+			    (uintmax_t)off, ii->ii_nargs + 1);
 		}
 
 		if (strcmp(name1, "...") == 0) {
@@ -1688,7 +1688,7 @@ die_function_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp __un
 		int i;
 
 		debug(3, "die %ju: function has %d argument%s\n",
-		    (uintptr_t)off, ii->ii_nargs, ii->ii_nargs == 1 ? "" : "s");
+		    (uintmax_t)off, ii->ii_nargs, ii->ii_nargs == 1 ? "" : "s");
 
 		ii->ii_args = xcalloc(sizeof (tdesc_t) * ii->ii_nargs);
 
@@ -1713,7 +1713,7 @@ die_variable_create(dwarf_t *dw, Dwarf_Die die, Dwarf_Off off, tdesc_t *tdp __un
 	iidesc_t *ii;
 	char *name;
 
-	debug(3, "die %ju: creating object definition\n", (uintptr_t)off);
+	debug(3, "die %ju: creating object definition\n", (uintmax_t)off);
 
 	if (die_isdecl(dw, die) || (name = die_name(dw, die)) == NULL)
 		return; /* skip prototypes and nameless objects */
@@ -1810,18 +1810,18 @@ die_create_one(dwarf_t *dw, Dwarf_Die die)
 	Dwarf_Half tag;
 	tdesc_t *tdp;
 
-	debug(3, "die %ju <0x%jx>: create_one\n", (uintptr_t)off,
-	    (uintptr_t)off);
+	debug(3, "die %ju <0x%jx>: create_one\n", (uintmax_t)off,
+	    (uintmax_t)off);
 
 	if (off > dw->dw_maxoff) {
-		terminate("illegal die offset %ju (max %ju)\n", (uintptr_t)off,
+		terminate("illegal die offset %ju (max %ju)\n", (uintmax_t)off,
 		    dw->dw_maxoff);
 	}
 
 	tag = die_tag(dw, die);
 
 	if ((dc = die_tag2ctor(tag)) == NULL) {
-		debug(2, "die %ju: ignoring tag type %x\n", (uintptr_t)off,
+		debug(2, "die %ju: ignoring tag type %x\n", (uintmax_t)off,
 		    tag);
 		return;
 	}
@@ -2019,7 +2019,6 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 	}
 
 	if ((rc = dwarf_next_cu_header_b(dw.dw_dw, &hdrlen, &vers, &abboff,
-/*###2022 [cc] error: passing argument 4 of 'dwarf_next_cu_header_b' from incompatible pointer type [-Werror]%%%*/
 	    &addrsz, &offsz, NULL, &nxthdr, &dw.dw_err)) != DW_DLV_OK)
 		terminate("rc = %d %s\n", rc, dwarf_errmsg(dw.dw_err));
 
@@ -2029,7 +2028,7 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 	if ((child = die_child(&dw, cu)) == NULL) {
 		Dwarf_Unsigned lang;
 		if (die_unsigned(&dw, cu, DW_AT_language, &lang, 0)) {
-			debug(1, "DWARF language: %ju\n", (uintptr_t)lang);
+			debug(1, "DWARF language: %ju\n", (uintmax_t)lang);
 			/*
 			 * Assembly languages are typically that.
 			 * They have some dwarf info, but not what
@@ -2074,7 +2073,6 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 		die_create(&dw, child);
 
 	if ((rc = dwarf_next_cu_header_b(dw.dw_dw, &hdrlen, &vers, &abboff,
-/*###2076 [cc] error: passing argument 4 of 'dwarf_next_cu_header_b' from incompatible pointer type [-Werror]%%%*/
 	    &addrsz, &offsz, NULL, &nxthdr, &dw.dw_err)) != DW_DLV_NO_ENTRY)
 		terminate("multiple compilation units not supported\n");
 
