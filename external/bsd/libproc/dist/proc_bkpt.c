@@ -28,16 +28,20 @@
  */ 
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_bkpt.c 287106 2015-08-24 12:17:15Z andrew $");
+#else
+__RCSID("$NetBSD: proc_bkpt.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #include <sys/ptrace.h>
 #include <sys/wait.h>
-#include <machine/_inttypes.h>
 
 #include <assert.h>
 #include <err.h>
 #include <errno.h>
+#include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>
 #include "_libproc.h"

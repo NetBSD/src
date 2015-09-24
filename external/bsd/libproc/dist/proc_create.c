@@ -25,6 +25,8 @@
  *
  * $FreeBSD: head/lib/libproc/proc_create.c 265255 2014-05-03 04:44:03Z markj $
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: proc_create.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/sysctl.h>
@@ -54,9 +56,9 @@ proc_init(pid_t pid, int flags, int status, struct proc_handle *phdl)
 	phdl->status = status;
 
 	mib[0] = CTL_KERN;
-	mib[1] = KERN_PROC;
-	mib[2] = KERN_PROC_PATHNAME;
-	mib[3] = pid;
+	mib[1] = KERN_PROC_ARGS;
+	mib[2] = pid;
+	mib[3] = KERN_PROC_PATHNAME;
 	len = sizeof(phdl->execname);
 	if (sysctl(mib, 4, phdl->execname, &len, NULL, 0) != 0) {
 		error = errno;

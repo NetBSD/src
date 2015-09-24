@@ -208,6 +208,7 @@ proc_getlwpstatus(struct proc_handle *phdl)
 	if (ptrace(PT_LWPINFO, phdl->pid, (caddr_t)&lwpinfo,
 	    sizeof(lwpinfo)) < 0)
 		return (NULL);
+#ifdef PL_FLAG_SI
 	siginfo = &lwpinfo.pl_siginfo;
 	if (lwpinfo.pl_event == PL_EVENT_SIGNAL &&
 	    (lwpinfo.pl_flags & PL_FLAG_SI) != 0) {
@@ -225,6 +226,7 @@ proc_getlwpstatus(struct proc_handle *phdl)
 	} else if (lwpinfo.pl_flags & PL_FLAG_SCX) {
 		psp->pr_why = PR_SYSEXIT;
 	}
+#endif
 
 	return (psp);
 }

@@ -25,7 +25,10 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/tests/target_prog.c 271937 2014-09-21 21:25:41Z markj $");
+#endif
+__RCSID("$NetBSD: target_prog.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
 
 #include <err.h>
 #include <signal.h>
