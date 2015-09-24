@@ -1,4 +1,4 @@
-/*	$NetBSD: systrace.c,v 1.7 2015/03/10 12:17:50 christos Exp $	*/
+/*	$NetBSD: systrace.c,v 1.8 2015/09/24 14:26:44 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -63,19 +63,23 @@
 
 #ifndef NATIVE
 extern const char	* const CONCAT(emulname,_syscallnames)[];
+extern const char	* const CONCAT(alt,CONCAT(emulname,_syscallnames))[];
 extern 	struct sysent 	CONCAT(emulname,_sysent)[];
 #define	MODNAME		CONCAT(dtrace_syscall_,emulname)
 #define	MODDEP		"dtrace_syscall,compat_" STRING(emulname)
 #define	MAXSYSCALL	CONCAT(EMULNAME,_SYS_MAXSYSCALL)
 #define	SYSCALLNAMES	CONCAT(emulname,_syscallnames)
+#define	ALTSYSCALLNAMES	CONCAT(alt,CONCAT(emulname,_syscallnames))
 #define	SYSENT		CONCAT(emulname,_sysent)
 #define	PROVNAME	STRING(emulname) "_syscall"
 #else
 extern const char	* const syscallnames[];
+extern const char	* const altsyscallnames[];
 #define	MODNAME		dtrace_syscall
 #define	MODDEP		"dtrace"
 #define	MAXSYSCALL	SYS_MAXSYSCALL
 #define	SYSCALLNAMES	syscallnames
+#define	ALTSYSCALLNAMES	altsyscallnames
 #define	SYSENT		sysent
 #define	PROVNAME	"syscall"
 #endif
@@ -181,15 +185,16 @@ systrace_provide(void *arg, const dtrace_probedesc_t *desc)
 		return;
 
 	for (i = 0; i < MAXSYSCALL; i++) {
-		if (dtrace_probe_lookup(systrace_id, NULL,
-		    SYSCALLNAMES[i], "entry") != 0)
+		const char *name = ALTSYSCALLNAMES[i] ? ALTSYSCALLNAMES[i] :
+		    SYSCALLNAMES[i];
+		if (dtrace_probe_lookup(systrace_id, NULL, name, "entry") != 0)
 			continue;
 
 		(void) dtrace_probe_create(systrace_id, NULL,
-		    SYSCALLNAMES[i], "entry", SYSTRACE_ARTIFICIAL_FRAMES,
+		    name, "entry", SYSTRACE_ARTIFICIAL_FRAMES,
 		    (void *)(intptr_t)SYSTRACE_ENTRY(i));
 		(void) dtrace_probe_create(systrace_id, NULL,
-		    SYSCALLNAMES[i], "return", SYSTRACE_ARTIFICIAL_FRAMES,
+		    name, "return", SYSTRACE_ARTIFICIAL_FRAMES,
 		    (void *)(intptr_t)SYSTRACE_RETURN(i));
 	}
 }
