@@ -1,4 +1,4 @@
-/* $NetBSD: linux_syscalls.c,v 1.96 2015/03/07 16:41:53 christos Exp $ */
+/* $NetBSD: linux_syscalls.c,v 1.97 2015/09/24 14:42:45 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.96 2015/03/07 16:41:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.97 2015/09/24 14:42:45 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -28,6 +28,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_syscalls.c,v 1.96 2015/03/07 16:41:53 christos
 #include <compat/linux/common/linux_machdep.h>
 #include <compat/linux/common/linux_mmap.h>
 #include <compat/linux/linux_syscallargs.h>
+#else /* _KERNEL_OPT */
+#include <sys/null.h>
 #endif /* _KERNEL_OPT */
 
 const char *const linux_syscallnames[] = {
@@ -564,4 +566,542 @@ const char *const linux_syscallnames[] = {
 	/* 509 */	"# filler",
 	/* 510 */	"# filler",
 	/* 511 */	"# filler",
+};
+
+
+/* libc style syscall names */
+const char *const altlinux_syscallnames[] = {
+	/*   0 */	"nosys",
+	/*   1 */	NULL, /* exit */
+	/*   2 */	NULL, /* fork */
+	/*   3 */	NULL, /* read */
+	/*   4 */	NULL, /* write */
+	/*   5 */	NULL, /* open */
+	/*   6 */	NULL, /* close */
+	/*   7 */	NULL, /* waitpid */
+	/*   8 */	NULL, /* creat */
+	/*   9 */	NULL, /* link */
+	/*  10 */	NULL, /* unlink */
+	/*  11 */	NULL, /* execve */
+	/*  12 */	NULL, /* chdir */
+	/*  13 */	NULL, /* time */
+	/*  14 */	NULL, /* mknod */
+	/*  15 */	NULL, /* chmod */
+	/*  16 */	NULL, /* chown16 */
+	/*  17 */	NULL, /* obsolete break */
+	/*  18 */	NULL, /* obsolete ostat */
+#if !defined(_KERNEL) || defined(COMPAT_43)
+	/*  19 */	NULL, /* lseek */
+#else
+	/*  19 */	NULL, /* unimplemented compat_43_sys_lseek */
+#endif
+	/*  20 */	NULL, /* getpid */
+	/*  21 */	NULL, /* unimplemented mount */
+	/*  22 */	NULL, /* obsolete umount */
+	/*  23 */	"setuid",
+	/*  24 */	"getuid",
+	/*  25 */	NULL, /* stime */
+	/*  26 */	NULL, /* ptrace */
+	/*  27 */	NULL, /* alarm */
+	/*  28 */	NULL, /* obsolete ofstat */
+	/*  29 */	NULL, /* pause */
+	/*  30 */	NULL, /* utime */
+	/*  31 */	NULL, /* obsolete stty */
+	/*  32 */	NULL, /* obsolete gtty */
+	/*  33 */	NULL, /* access */
+	/*  34 */	NULL, /* nice */
+	/*  35 */	NULL, /* obsolete ftime */
+	/*  36 */	NULL, /* sync */
+	/*  37 */	NULL, /* kill */
+	/*  38 */	NULL, /* __posix_rename */
+	/*  39 */	NULL, /* mkdir */
+	/*  40 */	NULL, /* rmdir */
+	/*  41 */	NULL, /* dup */
+	/*  42 */	NULL, /* pipe */
+	/*  43 */	NULL, /* times */
+	/*  44 */	NULL, /* obsolete prof */
+	/*  45 */	NULL, /* brk */
+	/*  46 */	"setgid",
+	/*  47 */	"getgid",
+	/*  48 */	NULL, /* signal */
+	/*  49 */	"geteuid",
+	/*  50 */	"getegid",
+	/*  51 */	NULL, /* acct */
+	/*  52 */	NULL, /* unimplemented umount */
+	/*  53 */	NULL, /* obsolete lock */
+	/*  54 */	NULL, /* ioctl */
+	/*  55 */	NULL, /* fcntl */
+	/*  56 */	NULL, /* obsolete mpx */
+	/*  57 */	NULL, /* setpgid */
+	/*  58 */	NULL, /* obsolete ulimit */
+	/*  59 */	NULL, /* unimplemented oldolduname */
+	/*  60 */	NULL, /* umask */
+	/*  61 */	NULL, /* chroot */
+	/*  62 */	NULL, /* unimplemented ustat */
+	/*  63 */	NULL, /* dup2 */
+	/*  64 */	NULL, /* getppid */
+	/*  65 */	NULL, /* getpgrp */
+	/*  66 */	NULL, /* setsid */
+	/*  67 */	NULL, /* sigaction */
+	/*  68 */	NULL, /* siggetmask */
+	/*  69 */	NULL, /* sigsetmask */
+	/*  70 */	NULL, /* setreuid16 */
+	/*  71 */	NULL, /* setregid16 */
+	/*  72 */	NULL, /* sigsuspend */
+	/*  73 */	NULL, /* sigpending */
+#if !defined(_KERNEL) || defined(COMPAT_43)
+	/*  74 */	NULL, /* sethostname */
+#else
+	/*  74 */	NULL, /* unimplemented compat_43_sys_sethostname */
+#endif
+	/*  75 */	NULL, /* setrlimit */
+	/*  76 */	NULL, /* getrlimit */
+	/*  77 */	NULL, /* getrusage */
+	/*  78 */	NULL, /* gettimeofday */
+	/*  79 */	NULL, /* settimeofday */
+	/*  80 */	NULL, /* getgroups16 */
+	/*  81 */	NULL, /* setgroups16 */
+	/*  82 */	NULL, /* oldselect */
+	/*  83 */	NULL, /* symlink */
+#if !defined(_KERNEL) || defined(COMPAT_43)
+	/*  84 */	"lstat",
+#else
+	/*  84 */	NULL, /* unimplemented compat_43_sys_lstat */
+#endif
+	/*  85 */	NULL, /* readlink */
+#ifdef EXEC_AOUT
+	/*  86 */	NULL, /* uselib */
+#else
+	/*  86 */	NULL, /* unimplemented sys_uselib */
+#endif
+	/*  87 */	NULL, /* swapon */
+	/*  88 */	NULL, /* reboot */
+	/*  89 */	NULL, /* readdir */
+	/*  90 */	NULL, /* old_mmap */
+	/*  91 */	NULL, /* munmap */
+	/*  92 */	NULL, /* truncate */
+#if !defined(_KERNEL) || defined(COMPAT_43)
+	/*  93 */	NULL, /* ftruncate */
+#else
+	/*  93 */	NULL, /* unimplemented compat_43_sys_ftruncate */
+#endif
+	/*  94 */	NULL, /* fchmod */
+	/*  95 */	NULL, /* fchown16 */
+	/*  96 */	NULL, /* getpriority */
+	/*  97 */	NULL, /* setpriority */
+	/*  98 */	NULL, /* profil */
+	/*  99 */	NULL, /* statfs */
+	/* 100 */	NULL, /* fstatfs */
+	/* 101 */	NULL, /* unimplemented ioperm */
+	/* 102 */	NULL, /* socketcall */
+	/* 103 */	NULL, /* unimplemented syslog */
+	/* 104 */	NULL, /* setitimer */
+	/* 105 */	NULL, /* getitimer */
+	/* 106 */	NULL, /* stat */
+	/* 107 */	NULL, /* lstat */
+	/* 108 */	NULL, /* fstat */
+	/* 109 */	NULL, /* unimplemented olduname */
+	/* 110 */	NULL, /* unimplemented iopl */
+	/* 111 */	NULL, /* unimplemented vhangup */
+	/* 112 */	NULL, /* unimplemented idle */
+	/* 113 */	NULL, /* unimplemented vm86old */
+	/* 114 */	NULL, /* wait4 */
+	/* 115 */	NULL, /* swapoff */
+	/* 116 */	NULL, /* sysinfo */
+	/* 117 */	NULL, /* ipc */
+	/* 118 */	NULL, /* fsync */
+	/* 119 */	NULL, /* sigreturn */
+	/* 120 */	NULL, /* clone */
+	/* 121 */	NULL, /* setdomainname */
+	/* 122 */	NULL, /* uname */
+	/* 123 */	NULL, /* cacheflush */
+	/* 124 */	NULL, /* unimplemented adjtimex */
+	/* 125 */	NULL, /* mprotect */
+	/* 126 */	NULL, /* sigprocmask */
+	/* 127 */	NULL, /* unimplemented create_module */
+	/* 128 */	NULL, /* unimplemented init_module */
+	/* 129 */	NULL, /* unimplemented delete_module */
+	/* 130 */	NULL, /* unimplemented get_kernel_syms */
+	/* 131 */	NULL, /* unimplemented quotactl */
+	/* 132 */	NULL, /* getpgid */
+	/* 133 */	NULL, /* fchdir */
+	/* 134 */	NULL, /* unimplemented bdflush */
+	/* 135 */	NULL, /* unimplemented sysfs */
+	/* 136 */	NULL, /* personality */
+	/* 137 */	NULL, /* unimplemented afs_syscall */
+	/* 138 */	"setfsuid",
+	/* 139 */	"setfsgid",
+	/* 140 */	NULL, /* llseek */
+	/* 141 */	NULL, /* getdents */
+	/* 142 */	NULL, /* select */
+	/* 143 */	NULL, /* flock */
+	/* 144 */	"msync",
+	/* 145 */	NULL, /* readv */
+	/* 146 */	NULL, /* writev */
+	/* 147 */	NULL, /* getsid */
+	/* 148 */	NULL, /* fdatasync */
+	/* 149 */	NULL, /* __sysctl */
+	/* 150 */	NULL, /* mlock */
+	/* 151 */	NULL, /* munlock */
+	/* 152 */	NULL, /* mlockall */
+	/* 153 */	NULL, /* munlockall */
+	/* 154 */	NULL, /* sched_setparam */
+	/* 155 */	NULL, /* sched_getparam */
+	/* 156 */	NULL, /* sched_setscheduler */
+	/* 157 */	NULL, /* sched_getscheduler */
+	/* 158 */	NULL, /* sched_yield */
+	/* 159 */	NULL, /* sched_get_priority_max */
+	/* 160 */	NULL, /* sched_get_priority_min */
+	/* 161 */	NULL, /* unimplemented sched_rr_get_interval */
+	/* 162 */	NULL, /* nanosleep */
+	/* 163 */	NULL, /* mremap */
+	/* 164 */	NULL, /* setresuid16 */
+	/* 165 */	NULL, /* getresuid16 */
+	/* 166 */	NULL, /* unimplemented vm86 */
+	/* 167 */	NULL, /* unimplemented query_module */
+	/* 168 */	NULL, /* poll */
+	/* 169 */	NULL, /* unimplemented nfsservctl */
+	/* 170 */	NULL, /* setresgid16 */
+	/* 171 */	NULL, /* getresgid16 */
+	/* 172 */	NULL, /* unimplemented prctl */
+	/* 173 */	NULL, /* rt_sigreturn */
+	/* 174 */	NULL, /* rt_sigaction */
+	/* 175 */	NULL, /* rt_sigprocmask */
+	/* 176 */	NULL, /* rt_sigpending */
+	/* 177 */	NULL, /* rt_sigtimedwait */
+	/* 178 */	NULL, /* rt_queueinfo */
+	/* 179 */	NULL, /* rt_sigsuspend */
+	/* 180 */	NULL, /* pread */
+	/* 181 */	NULL, /* pwrite */
+	/* 182 */	NULL, /* lchown16 */
+	/* 183 */	NULL, /* __getcwd */
+	/* 184 */	NULL, /* unimplemented capget */
+	/* 185 */	NULL, /* unimplemented capset */
+	/* 186 */	NULL, /* sigaltstack */
+	/* 187 */	NULL, /* unimplemented sendfile */
+	/* 188 */	NULL, /* unimplemented getpmsg */
+	/* 189 */	NULL, /* unimplemented putpmsg */
+	/* 190 */	"vfork",
+	/* 191 */	NULL, /* ugetrlimit */
+#define linux_sys_mmap2_args linux_sys_mmap_args
+	/* 192 */	NULL, /* mmap2 */
+	/* 193 */	NULL, /* truncate64 */
+	/* 194 */	NULL, /* ftruncate64 */
+	/* 195 */	NULL, /* stat64 */
+	/* 196 */	NULL, /* lstat64 */
+	/* 197 */	NULL, /* fstat64 */
+	/* 198 */	NULL, /* __posix_chown */
+	/* 199 */	NULL, /* getuid */
+	/* 200 */	NULL, /* getgid */
+	/* 201 */	NULL, /* geteuid */
+	/* 202 */	NULL, /* getegid */
+	/* 203 */	NULL, /* setreuid */
+	/* 204 */	NULL, /* setregid */
+	/* 205 */	NULL, /* getgroups */
+	/* 206 */	NULL, /* setgroups */
+	/* 207 */	NULL, /* __posix_fchown */
+	/* 208 */	NULL, /* setresuid */
+	/* 209 */	NULL, /* getresuid */
+	/* 210 */	NULL, /* setresgid */
+	/* 211 */	NULL, /* getresgid */
+	/* 212 */	NULL, /* __posix_lchown */
+	/* 213 */	NULL, /* setuid */
+	/* 214 */	NULL, /* setgid */
+	/* 215 */	NULL, /* setfsuid */
+	/* 216 */	NULL, /* setfsgid */
+	/* 217 */	NULL, /* unimplemented / * unused * / */
+	/* 218 */	NULL, /* unimplemented / * unused * / */
+	/* 219 */	NULL, /* unimplemented / * unused * / */
+	/* 220 */	NULL, /* getdents64 */
+	/* 221 */	NULL, /* gettid */
+	/* 222 */	NULL, /* tkill */
+	/* 223 */	NULL, /* setxattr */
+	/* 224 */	NULL, /* lsetxattr */
+	/* 225 */	NULL, /* fsetxattr */
+	/* 226 */	NULL, /* getxattr */
+	/* 227 */	NULL, /* lgetxattr */
+	/* 228 */	NULL, /* fgetxattr */
+	/* 229 */	NULL, /* listxattr */
+	/* 230 */	NULL, /* llistxattr */
+	/* 231 */	NULL, /* flistxattr */
+	/* 232 */	NULL, /* removexattr */
+	/* 233 */	NULL, /* lremovexattr */
+	/* 234 */	NULL, /* fremovexattr */
+	/* 235 */	NULL, /* futex */
+	/* 236 */	NULL, /* unimplemented sendfile64 */
+	/* 237 */	NULL, /* mincore */
+	/* 238 */	NULL, /* madvise */
+	/* 239 */	NULL, /* fcntl64 */
+	/* 240 */	NULL, /* unimplemented readahead */
+	/* 241 */	NULL, /* unimplemented io_setup */
+	/* 242 */	NULL, /* unimplemented io_destroy */
+	/* 243 */	NULL, /* unimplemented io_getevents */
+	/* 244 */	NULL, /* unimplemented io_submit */
+	/* 245 */	NULL, /* unimplemented io_cancel */
+	/* 246 */	NULL, /* fadvise64 */
+	/* 247 */	NULL, /* unimplemented exit_group */
+	/* 248 */	NULL, /* unimplemented lookup_dcookie */
+	/* 249 */	NULL, /* unimplemented epoll_create */
+	/* 250 */	NULL, /* unimplemented epoll_ctl */
+	/* 251 */	NULL, /* unimplemented epoll_wait */
+	/* 252 */	NULL, /* unimplemented remap_file_pages */
+	/* 253 */	NULL, /* set_tid_address */
+	/* 254 */	NULL, /* unimplemented timer_create */
+	/* 255 */	NULL, /* unimplemented timer_settime */
+	/* 256 */	NULL, /* unimplemented timer_gettime */
+	/* 257 */	NULL, /* unimplemented timer_getoverrun */
+	/* 258 */	NULL, /* unimplemented timer_ delete */
+	/* 259 */	NULL, /* clock_settime */
+	/* 260 */	NULL, /* clock_gettime */
+	/* 261 */	NULL, /* clock_getres */
+	/* 262 */	NULL, /* clock_nanosleep */
+	/* 263 */	NULL, /* statfs64 */
+	/* 264 */	NULL, /* fstatfs64 */
+	/* 265 */	NULL, /* tgkill */
+	/* 266 */	NULL, /* utimes */
+	/* 267 */	NULL, /* fadvise64_64 */
+	/* 268 */	NULL, /* unimplemented mbind */
+	/* 269 */	NULL, /* unimplemented get_mempolicy */
+	/* 270 */	NULL, /* unimplemented set_mempolicy */
+	/* 271 */	NULL, /* unimplemented mq_open */
+	/* 272 */	NULL, /* unimplemented mq_unlink */
+	/* 273 */	NULL, /* unimplemented mq_timedsend */
+	/* 274 */	NULL, /* unimplemented mq_timedreceive */
+	/* 275 */	NULL, /* unimplemented mq_notify */
+	/* 276 */	NULL, /* unimplemented mq_getsetattr */
+	/* 277 */	NULL, /* unimplemented waitid */
+	/* 278 */	NULL, /* unimplemented vserver */
+	/* 279 */	NULL, /* unimplemented add_key */
+	/* 280 */	NULL, /* unimplemented request_key */
+	/* 281 */	NULL, /* unimplemented keyctl */
+	/* 282 */	NULL, /* unimplemented ioprio_set */
+	/* 283 */	NULL, /* unimplemented ioprio_get */
+	/* 284 */	NULL, /* unimplemented inotify_init */
+	/* 285 */	NULL, /* unimplemented inotify_add_watch */
+	/* 286 */	NULL, /* unimplemented inotify_rm_watch */
+	/* 287 */	NULL, /* unimplemented migrate_pages */
+	/* 288 */	NULL, /* openat */
+	/* 289 */	NULL, /* mkdirat */
+	/* 290 */	NULL, /* mknodat */
+	/* 291 */	NULL, /* fchownat */
+	/* 292 */	NULL, /* unimplemented futimesat */
+	/* 293 */	NULL, /* fstatat64 */
+	/* 294 */	NULL, /* unlinkat */
+	/* 295 */	NULL, /* renameat */
+	/* 296 */	NULL, /* linkat */
+	/* 297 */	NULL, /* symlinkat */
+	/* 298 */	NULL, /* readlinkat */
+	/* 299 */	NULL, /* fchmodat */
+	/* 300 */	NULL, /* faccessat */
+	/* 301 */	NULL, /* unimplemented pselect6 */
+	/* 302 */	NULL, /* ppoll */
+	/* 303 */	NULL, /* unimplemented unshare */
+	/* 304 */	NULL, /* set_robust_list */
+	/* 305 */	NULL, /* get_robust_list */
+	/* 306 */	NULL, /* unimplemented splice */
+	/* 307 */	NULL, /* unimplemented sync_file_range */
+	/* 308 */	NULL, /* unimplemented tee */
+	/* 309 */	NULL, /* unimplemented vmsplice */
+	/* 310 */	NULL, /* unimplemented move_pages */
+	/* 311 */	NULL, /* sched_setaffinity */
+	/* 312 */	NULL, /* sched_getaffinity */
+	/* 313 */	NULL, /* unimplemented kexec_load */
+	/* 314 */	NULL, /* unimplemented getcpu */
+	/* 315 */	NULL, /* unimplemented epoll_wait */
+	/* 316 */	NULL, /* utimensat */
+	/* 317 */	NULL, /* unimplemented signalfd */
+	/* 318 */	NULL, /* unimplemented timerfd_create */
+	/* 319 */	NULL, /* unimplemented eventfd */
+	/* 320 */	NULL, /* unimplemented fallocate */
+	/* 321 */	NULL, /* unimplemented timerfd_settime */
+	/* 322 */	NULL, /* unimplemented timerfd_gettime */
+	/* 323 */	NULL, /* unimplemented signalfd4 */
+	/* 324 */	NULL, /* unimplemented eventfd2 */
+	/* 325 */	NULL, /* unimplemented epoll_create1 */
+	/* 326 */	NULL, /* dup3 */
+	/* 327 */	NULL, /* pipe2 */
+	/* 328 */	NULL, /* unimplemented inotify_init1 */
+	/* 329 */	NULL, /* unimplemented preadv */
+	/* 330 */	NULL, /* unimplemented pwritev */
+	/* 331 */	NULL, /* unimplemented rt_tgsigqueueinfo */
+	/* 332 */	NULL, /* unimplemented perf_counter_open */
+	/* 333 */	NULL, /* unimplemented set_thread_area */
+	/* 334 */	NULL, /* unimplemented get_thread_area */
+	/* 335 */	NULL, /* unimplemented atomic_cmpxchg_32 */
+	/* 336 */	NULL, /* unimplemented atomic_barrier */
+	/* 337 */	NULL, /* filler */
+	/* 338 */	NULL, /* filler */
+	/* 339 */	NULL, /* filler */
+	/* 340 */	NULL, /* filler */
+	/* 341 */	NULL, /* filler */
+	/* 342 */	NULL, /* filler */
+	/* 343 */	NULL, /* filler */
+	/* 344 */	NULL, /* filler */
+	/* 345 */	NULL, /* filler */
+	/* 346 */	NULL, /* filler */
+	/* 347 */	NULL, /* filler */
+	/* 348 */	NULL, /* filler */
+	/* 349 */	NULL, /* filler */
+	/* 350 */	NULL, /* filler */
+	/* 351 */	NULL, /* filler */
+	/* 352 */	NULL, /* filler */
+	/* 353 */	NULL, /* filler */
+	/* 354 */	NULL, /* filler */
+	/* 355 */	NULL, /* filler */
+	/* 356 */	NULL, /* filler */
+	/* 357 */	NULL, /* filler */
+	/* 358 */	NULL, /* filler */
+	/* 359 */	NULL, /* filler */
+	/* 360 */	NULL, /* filler */
+	/* 361 */	NULL, /* filler */
+	/* 362 */	NULL, /* filler */
+	/* 363 */	NULL, /* filler */
+	/* 364 */	NULL, /* filler */
+	/* 365 */	NULL, /* filler */
+	/* 366 */	NULL, /* filler */
+	/* 367 */	NULL, /* filler */
+	/* 368 */	NULL, /* filler */
+	/* 369 */	NULL, /* filler */
+	/* 370 */	NULL, /* filler */
+	/* 371 */	NULL, /* filler */
+	/* 372 */	NULL, /* filler */
+	/* 373 */	NULL, /* filler */
+	/* 374 */	NULL, /* filler */
+	/* 375 */	NULL, /* filler */
+	/* 376 */	NULL, /* filler */
+	/* 377 */	NULL, /* filler */
+	/* 378 */	NULL, /* filler */
+	/* 379 */	NULL, /* filler */
+	/* 380 */	NULL, /* filler */
+	/* 381 */	NULL, /* filler */
+	/* 382 */	NULL, /* filler */
+	/* 383 */	NULL, /* filler */
+	/* 384 */	NULL, /* filler */
+	/* 385 */	NULL, /* filler */
+	/* 386 */	NULL, /* filler */
+	/* 387 */	NULL, /* filler */
+	/* 388 */	NULL, /* filler */
+	/* 389 */	NULL, /* filler */
+	/* 390 */	NULL, /* filler */
+	/* 391 */	NULL, /* filler */
+	/* 392 */	NULL, /* filler */
+	/* 393 */	NULL, /* filler */
+	/* 394 */	NULL, /* filler */
+	/* 395 */	NULL, /* filler */
+	/* 396 */	NULL, /* filler */
+	/* 397 */	NULL, /* filler */
+	/* 398 */	NULL, /* filler */
+	/* 399 */	NULL, /* filler */
+	/* 400 */	NULL, /* filler */
+	/* 401 */	NULL, /* filler */
+	/* 402 */	NULL, /* filler */
+	/* 403 */	NULL, /* filler */
+	/* 404 */	NULL, /* filler */
+	/* 405 */	NULL, /* filler */
+	/* 406 */	NULL, /* filler */
+	/* 407 */	NULL, /* filler */
+	/* 408 */	NULL, /* filler */
+	/* 409 */	NULL, /* filler */
+	/* 410 */	NULL, /* filler */
+	/* 411 */	NULL, /* filler */
+	/* 412 */	NULL, /* filler */
+	/* 413 */	NULL, /* filler */
+	/* 414 */	NULL, /* filler */
+	/* 415 */	NULL, /* filler */
+	/* 416 */	NULL, /* filler */
+	/* 417 */	NULL, /* filler */
+	/* 418 */	NULL, /* filler */
+	/* 419 */	NULL, /* filler */
+	/* 420 */	NULL, /* filler */
+	/* 421 */	NULL, /* filler */
+	/* 422 */	NULL, /* filler */
+	/* 423 */	NULL, /* filler */
+	/* 424 */	NULL, /* filler */
+	/* 425 */	NULL, /* filler */
+	/* 426 */	NULL, /* filler */
+	/* 427 */	NULL, /* filler */
+	/* 428 */	NULL, /* filler */
+	/* 429 */	NULL, /* filler */
+	/* 430 */	NULL, /* filler */
+	/* 431 */	NULL, /* filler */
+	/* 432 */	NULL, /* filler */
+	/* 433 */	NULL, /* filler */
+	/* 434 */	NULL, /* filler */
+	/* 435 */	NULL, /* filler */
+	/* 436 */	NULL, /* filler */
+	/* 437 */	NULL, /* filler */
+	/* 438 */	NULL, /* filler */
+	/* 439 */	NULL, /* filler */
+	/* 440 */	NULL, /* filler */
+	/* 441 */	NULL, /* filler */
+	/* 442 */	NULL, /* filler */
+	/* 443 */	NULL, /* filler */
+	/* 444 */	NULL, /* filler */
+	/* 445 */	NULL, /* filler */
+	/* 446 */	NULL, /* filler */
+	/* 447 */	NULL, /* filler */
+	/* 448 */	NULL, /* filler */
+	/* 449 */	NULL, /* filler */
+	/* 450 */	NULL, /* filler */
+	/* 451 */	NULL, /* filler */
+	/* 452 */	NULL, /* filler */
+	/* 453 */	NULL, /* filler */
+	/* 454 */	NULL, /* filler */
+	/* 455 */	NULL, /* filler */
+	/* 456 */	NULL, /* filler */
+	/* 457 */	NULL, /* filler */
+	/* 458 */	NULL, /* filler */
+	/* 459 */	NULL, /* filler */
+	/* 460 */	NULL, /* filler */
+	/* 461 */	NULL, /* filler */
+	/* 462 */	NULL, /* filler */
+	/* 463 */	NULL, /* filler */
+	/* 464 */	NULL, /* filler */
+	/* 465 */	NULL, /* filler */
+	/* 466 */	NULL, /* filler */
+	/* 467 */	NULL, /* filler */
+	/* 468 */	NULL, /* filler */
+	/* 469 */	NULL, /* filler */
+	/* 470 */	NULL, /* filler */
+	/* 471 */	NULL, /* filler */
+	/* 472 */	NULL, /* filler */
+	/* 473 */	NULL, /* filler */
+	/* 474 */	NULL, /* filler */
+	/* 475 */	NULL, /* filler */
+	/* 476 */	NULL, /* filler */
+	/* 477 */	NULL, /* filler */
+	/* 478 */	NULL, /* filler */
+	/* 479 */	NULL, /* filler */
+	/* 480 */	NULL, /* filler */
+	/* 481 */	NULL, /* filler */
+	/* 482 */	NULL, /* filler */
+	/* 483 */	NULL, /* filler */
+	/* 484 */	NULL, /* filler */
+	/* 485 */	NULL, /* filler */
+	/* 486 */	NULL, /* filler */
+	/* 487 */	NULL, /* filler */
+	/* 488 */	NULL, /* filler */
+	/* 489 */	NULL, /* filler */
+	/* 490 */	NULL, /* filler */
+	/* 491 */	NULL, /* filler */
+	/* 492 */	NULL, /* filler */
+	/* 493 */	NULL, /* filler */
+	/* 494 */	NULL, /* filler */
+	/* 495 */	NULL, /* filler */
+	/* 496 */	NULL, /* filler */
+	/* 497 */	NULL, /* filler */
+	/* 498 */	NULL, /* filler */
+	/* 499 */	NULL, /* filler */
+	/* 500 */	NULL, /* filler */
+	/* 501 */	NULL, /* filler */
+	/* 502 */	NULL, /* filler */
+	/* 503 */	NULL, /* filler */
+	/* 504 */	NULL, /* filler */
+	/* 505 */	NULL, /* filler */
+	/* 506 */	NULL, /* filler */
+	/* 507 */	NULL, /* filler */
+	/* 508 */	NULL, /* filler */
+	/* 509 */	NULL, /* filler */
+	/* 510 */	NULL, /* filler */
+	/* 511 */	NULL, /* filler */
 };
