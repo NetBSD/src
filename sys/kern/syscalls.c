@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.288 2015/08/24 16:07:10 pooka Exp $ */
+/* $NetBSD: syscalls.c,v 1.289 2015/09/24 14:34:22 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.288 2015/08/24 16:07:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.289 2015/09/24 14:34:22 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_modular.h"
@@ -21,6 +21,8 @@ __KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.288 2015/08/24 16:07:10 pooka Exp $")
 #include <sys/mount.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
+#else /* _KERNEL_OPT */
+#include <sys/null.h>
 #endif /* _KERNEL_OPT */
 
 const char *const syscallnames[] = {
@@ -568,4 +570,553 @@ const char *const syscallnames[] = {
 	/* 509 */	"# filler",
 	/* 510 */	"# filler",
 	/* 511 */	"# filler",
+};
+
+
+/* libc style syscall names */
+const char *const altsyscallnames[] = {
+	/*   0 */	NULL, /* syscall */
+	/*   1 */	NULL, /* exit */
+	/*   2 */	NULL, /* fork */
+	/*   3 */	NULL, /* read */
+	/*   4 */	NULL, /* write */
+	/*   5 */	NULL, /* open */
+	/*   6 */	NULL, /* close */
+	/*   7 */	NULL, /* compat_50_wait4 */
+	/*   8 */	NULL, /* compat_43_ocreat */
+	/*   9 */	NULL, /* link */
+	/*  10 */	NULL, /* unlink */
+	/*  11 */	NULL, /* obsolete execv */
+	/*  12 */	NULL, /* chdir */
+	/*  13 */	NULL, /* fchdir */
+	/*  14 */	NULL, /* compat_50_mknod */
+	/*  15 */	NULL, /* chmod */
+	/*  16 */	NULL, /* chown */
+	/*  17 */	"obreak",
+	/*  18 */	NULL, /* compat_20_getfsstat */
+	/*  19 */	NULL, /* compat_43_olseek */
+	/*  20 */	"getpid_with_ppid",
+	/*  21 */	NULL, /* compat_40_mount */
+	/*  22 */	NULL, /* unmount */
+	/*  23 */	NULL, /* setuid */
+	/*  24 */	"getuid_with_euid",
+	/*  25 */	NULL, /* geteuid */
+	/*  26 */	NULL, /* ptrace */
+	/*  27 */	NULL, /* recvmsg */
+	/*  28 */	NULL, /* sendmsg */
+	/*  29 */	NULL, /* recvfrom */
+	/*  30 */	NULL, /* accept */
+	/*  31 */	NULL, /* getpeername */
+	/*  32 */	NULL, /* getsockname */
+	/*  33 */	NULL, /* access */
+	/*  34 */	NULL, /* chflags */
+	/*  35 */	NULL, /* fchflags */
+	/*  36 */	NULL, /* sync */
+	/*  37 */	NULL, /* kill */
+	/*  38 */	NULL, /* compat_43_stat43 */
+	/*  39 */	NULL, /* getppid */
+	/*  40 */	NULL, /* compat_43_lstat43 */
+	/*  41 */	NULL, /* dup */
+	/*  42 */	NULL, /* pipe */
+	/*  43 */	NULL, /* getegid */
+	/*  44 */	NULL, /* profil */
+	/*  45 */	NULL, /* ktrace */
+	/*  46 */	NULL, /* compat_13_sigaction13 */
+	/*  47 */	"getgid_with_egid",
+	/*  48 */	NULL, /* compat_13_sigprocmask13 */
+	/*  49 */	NULL, /* __getlogin */
+	/*  50 */	NULL, /* __setlogin */
+	/*  51 */	NULL, /* acct */
+	/*  52 */	NULL, /* compat_13_sigpending13 */
+	/*  53 */	NULL, /* compat_13_sigaltstack13 */
+	/*  54 */	NULL, /* ioctl */
+	/*  55 */	NULL, /* compat_12_oreboot */
+	/*  56 */	NULL, /* revoke */
+	/*  57 */	NULL, /* symlink */
+	/*  58 */	NULL, /* readlink */
+	/*  59 */	NULL, /* execve */
+	/*  60 */	NULL, /* umask */
+	/*  61 */	NULL, /* chroot */
+	/*  62 */	NULL, /* compat_43_fstat43 */
+	/*  63 */	NULL, /* compat_43_ogetkerninfo */
+	/*  64 */	NULL, /* compat_43_ogetpagesize */
+	/*  65 */	NULL, /* compat_12_msync */
+	/*  66 */	NULL, /* vfork */
+	/*  67 */	NULL, /* obsolete vread */
+	/*  68 */	NULL, /* obsolete vwrite */
+	/*  69 */	NULL, /* sbrk */
+	/*  70 */	NULL, /* sstk */
+	/*  71 */	NULL, /* compat_43_ommap */
+	/*  72 */	"ovadvise",
+	/*  73 */	NULL, /* munmap */
+	/*  74 */	NULL, /* mprotect */
+	/*  75 */	NULL, /* madvise */
+	/*  76 */	NULL, /* obsolete vhangup */
+	/*  77 */	NULL, /* obsolete vlimit */
+	/*  78 */	NULL, /* mincore */
+	/*  79 */	NULL, /* getgroups */
+	/*  80 */	NULL, /* setgroups */
+	/*  81 */	NULL, /* getpgrp */
+	/*  82 */	NULL, /* setpgid */
+	/*  83 */	NULL, /* compat_50_setitimer */
+	/*  84 */	NULL, /* compat_43_owait */
+	/*  85 */	NULL, /* compat_12_oswapon */
+	/*  86 */	NULL, /* compat_50_getitimer */
+	/*  87 */	NULL, /* compat_43_ogethostname */
+	/*  88 */	NULL, /* compat_43_osethostname */
+	/*  89 */	NULL, /* compat_43_ogetdtablesize */
+	/*  90 */	NULL, /* dup2 */
+	/*  91 */	NULL, /* unimplemented getdopt */
+	/*  92 */	NULL, /* fcntl */
+	/*  93 */	NULL, /* compat_50_select */
+	/*  94 */	NULL, /* unimplemented setdopt */
+	/*  95 */	NULL, /* fsync */
+	/*  96 */	NULL, /* setpriority */
+	/*  97 */	NULL, /* compat_30_socket */
+	/*  98 */	NULL, /* connect */
+	/*  99 */	NULL, /* compat_43_oaccept */
+	/* 100 */	NULL, /* getpriority */
+	/* 101 */	NULL, /* compat_43_osend */
+	/* 102 */	NULL, /* compat_43_orecv */
+	/* 103 */	NULL, /* compat_13_sigreturn13 */
+	/* 104 */	NULL, /* bind */
+	/* 105 */	NULL, /* setsockopt */
+	/* 106 */	NULL, /* listen */
+	/* 107 */	NULL, /* obsolete vtimes */
+	/* 108 */	NULL, /* compat_43_osigvec */
+	/* 109 */	NULL, /* compat_43_osigblock */
+	/* 110 */	NULL, /* compat_43_osigsetmask */
+	/* 111 */	NULL, /* compat_13_sigsuspend13 */
+	/* 112 */	NULL, /* compat_43_osigstack */
+	/* 113 */	NULL, /* compat_43_orecvmsg */
+	/* 114 */	NULL, /* compat_43_osendmsg */
+	/* 115 */	NULL, /* obsolete vtrace */
+	/* 116 */	NULL, /* compat_50_gettimeofday */
+	/* 117 */	NULL, /* compat_50_getrusage */
+	/* 118 */	NULL, /* getsockopt */
+	/* 119 */	NULL, /* obsolete resuba */
+	/* 120 */	NULL, /* readv */
+	/* 121 */	NULL, /* writev */
+	/* 122 */	NULL, /* compat_50_settimeofday */
+	/* 123 */	NULL, /* fchown */
+	/* 124 */	NULL, /* fchmod */
+	/* 125 */	NULL, /* compat_43_orecvfrom */
+	/* 126 */	NULL, /* setreuid */
+	/* 127 */	NULL, /* setregid */
+	/* 128 */	NULL, /* rename */
+	/* 129 */	NULL, /* compat_43_otruncate */
+	/* 130 */	NULL, /* compat_43_oftruncate */
+	/* 131 */	NULL, /* flock */
+	/* 132 */	NULL, /* mkfifo */
+	/* 133 */	NULL, /* sendto */
+	/* 134 */	NULL, /* shutdown */
+	/* 135 */	NULL, /* socketpair */
+	/* 136 */	NULL, /* mkdir */
+	/* 137 */	NULL, /* rmdir */
+	/* 138 */	NULL, /* compat_50_utimes */
+	/* 139 */	NULL, /* obsolete 4.2 sigreturn */
+	/* 140 */	NULL, /* compat_50_adjtime */
+	/* 141 */	NULL, /* compat_43_ogetpeername */
+	/* 142 */	NULL, /* compat_43_ogethostid */
+	/* 143 */	NULL, /* compat_43_osethostid */
+	/* 144 */	NULL, /* compat_43_ogetrlimit */
+	/* 145 */	NULL, /* compat_43_osetrlimit */
+	/* 146 */	NULL, /* compat_43_okillpg */
+	/* 147 */	NULL, /* setsid */
+	/* 148 */	NULL, /* compat_50_quotactl */
+	/* 149 */	NULL, /* compat_43_oquota */
+	/* 150 */	NULL, /* compat_43_ogetsockname */
+	/* 151 */	NULL, /* unimplemented */
+	/* 152 */	NULL, /* unimplemented */
+	/* 153 */	NULL, /* unimplemented */
+	/* 154 */	NULL, /* unimplemented */
+	/* 155 */	NULL, /* nfssvc */
+	/* 156 */	NULL, /* compat_43_ogetdirentries */
+	/* 157 */	NULL, /* compat_20_statfs */
+	/* 158 */	NULL, /* compat_20_fstatfs */
+	/* 159 */	NULL, /* unimplemented */
+	/* 160 */	NULL, /* unimplemented */
+	/* 161 */	NULL, /* compat_30_getfh */
+	/* 162 */	NULL, /* compat_09_ogetdomainname */
+	/* 163 */	NULL, /* compat_09_osetdomainname */
+	/* 164 */	NULL, /* compat_09_ouname */
+	/* 165 */	NULL, /* sysarch */
+	/* 166 */	NULL, /* unimplemented */
+	/* 167 */	NULL, /* unimplemented */
+	/* 168 */	NULL, /* unimplemented */
+#if !defined(_LP64)
+	/* 169 */	NULL, /* compat_10_osemsys */
+#else
+	/* 169 */	NULL, /* excluded 1.0 semsys */
+#endif
+#if !defined(_LP64)
+	/* 170 */	NULL, /* compat_10_omsgsys */
+#else
+	/* 170 */	NULL, /* excluded 1.0 msgsys */
+#endif
+#if !defined(_LP64)
+	/* 171 */	NULL, /* compat_10_oshmsys */
+#else
+	/* 171 */	NULL, /* excluded 1.0 shmsys */
+#endif
+	/* 172 */	NULL, /* unimplemented */
+	/* 173 */	NULL, /* pread */
+	/* 174 */	NULL, /* pwrite */
+	/* 175 */	NULL, /* compat_30_ntp_gettime */
+#if defined(NTP) || !defined(_KERNEL_OPT)
+	/* 176 */	NULL, /* ntp_adjtime */
+#else
+	/* 176 */	NULL, /* excluded ntp_adjtime */
+#endif
+	/* 177 */	NULL, /* unimplemented */
+	/* 178 */	NULL, /* unimplemented */
+	/* 179 */	NULL, /* unimplemented */
+	/* 180 */	NULL, /* unimplemented */
+	/* 181 */	NULL, /* setgid */
+	/* 182 */	NULL, /* setegid */
+	/* 183 */	NULL, /* seteuid */
+	/* 184 */	NULL, /* lfs_bmapv */
+	/* 185 */	NULL, /* lfs_markv */
+	/* 186 */	NULL, /* lfs_segclean */
+	/* 187 */	NULL, /* compat_50_lfs_segwait */
+	/* 188 */	NULL, /* compat_12_stat12 */
+	/* 189 */	NULL, /* compat_12_fstat12 */
+	/* 190 */	NULL, /* compat_12_lstat12 */
+	/* 191 */	NULL, /* pathconf */
+	/* 192 */	NULL, /* fpathconf */
+	/* 193 */	NULL, /* unimplemented */
+	/* 194 */	NULL, /* getrlimit */
+	/* 195 */	NULL, /* setrlimit */
+	/* 196 */	NULL, /* compat_12_getdirentries */
+	/* 197 */	NULL, /* mmap */
+	/* 198 */	NULL, /* __syscall */
+	/* 199 */	NULL, /* lseek */
+	/* 200 */	NULL, /* truncate */
+	/* 201 */	NULL, /* ftruncate */
+	/* 202 */	NULL, /* __sysctl */
+	/* 203 */	NULL, /* mlock */
+	/* 204 */	NULL, /* munlock */
+	/* 205 */	NULL, /* undelete */
+	/* 206 */	NULL, /* compat_50_futimes */
+	/* 207 */	NULL, /* getpgid */
+	/* 208 */	NULL, /* reboot */
+	/* 209 */	NULL, /* poll */
+	/* 210 */	NULL, /* afssys */
+	/* 211 */	NULL, /* unimplemented */
+	/* 212 */	NULL, /* unimplemented */
+	/* 213 */	NULL, /* unimplemented */
+	/* 214 */	NULL, /* unimplemented */
+	/* 215 */	NULL, /* unimplemented */
+	/* 216 */	NULL, /* unimplemented */
+	/* 217 */	NULL, /* unimplemented */
+	/* 218 */	NULL, /* unimplemented */
+	/* 219 */	NULL, /* unimplemented */
+	/* 220 */	NULL, /* compat_14___semctl */
+	/* 221 */	NULL, /* semget */
+	/* 222 */	NULL, /* semop */
+	/* 223 */	NULL, /* semconfig */
+	/* 224 */	NULL, /* compat_14_msgctl */
+	/* 225 */	NULL, /* msgget */
+	/* 226 */	NULL, /* msgsnd */
+	/* 227 */	NULL, /* msgrcv */
+	/* 228 */	NULL, /* shmat */
+	/* 229 */	NULL, /* compat_14_shmctl */
+	/* 230 */	NULL, /* shmdt */
+	/* 231 */	NULL, /* shmget */
+	/* 232 */	NULL, /* compat_50_clock_gettime */
+	/* 233 */	NULL, /* compat_50_clock_settime */
+	/* 234 */	NULL, /* compat_50_clock_getres */
+	/* 235 */	NULL, /* timer_create */
+	/* 236 */	NULL, /* timer_delete */
+	/* 237 */	NULL, /* compat_50_timer_settime */
+	/* 238 */	NULL, /* compat_50_timer_gettime */
+	/* 239 */	NULL, /* timer_getoverrun */
+	/* 240 */	NULL, /* compat_50_nanosleep */
+	/* 241 */	NULL, /* fdatasync */
+	/* 242 */	NULL, /* mlockall */
+	/* 243 */	NULL, /* munlockall */
+	/* 244 */	NULL, /* compat_50___sigtimedwait */
+	/* 245 */	NULL, /* sigqueueinfo */
+	/* 246 */	NULL, /* modctl */
+	/* 247 */	NULL, /* _ksem_init */
+	/* 248 */	NULL, /* _ksem_open */
+	/* 249 */	NULL, /* _ksem_unlink */
+	/* 250 */	NULL, /* _ksem_close */
+	/* 251 */	NULL, /* _ksem_post */
+	/* 252 */	NULL, /* _ksem_wait */
+	/* 253 */	NULL, /* _ksem_trywait */
+	/* 254 */	NULL, /* _ksem_getvalue */
+	/* 255 */	NULL, /* _ksem_destroy */
+	/* 256 */	NULL, /* _ksem_timedwait */
+	/* 257 */	NULL, /* mq_open */
+	/* 258 */	NULL, /* mq_close */
+	/* 259 */	NULL, /* mq_unlink */
+	/* 260 */	NULL, /* mq_getattr */
+	/* 261 */	NULL, /* mq_setattr */
+	/* 262 */	NULL, /* mq_notify */
+	/* 263 */	NULL, /* mq_send */
+	/* 264 */	NULL, /* mq_receive */
+	/* 265 */	NULL, /* compat_50_mq_timedsend */
+	/* 266 */	NULL, /* compat_50_mq_timedreceive */
+	/* 267 */	NULL, /* unimplemented */
+	/* 268 */	NULL, /* unimplemented */
+	/* 269 */	NULL, /* unimplemented */
+	/* 270 */	NULL, /* __posix_rename */
+	/* 271 */	NULL, /* swapctl */
+	/* 272 */	NULL, /* compat_30_getdents */
+	/* 273 */	NULL, /* minherit */
+	/* 274 */	NULL, /* lchmod */
+	/* 275 */	NULL, /* lchown */
+	/* 276 */	NULL, /* compat_50_lutimes */
+	/* 277 */	"msync",
+	/* 278 */	NULL, /* compat_30___stat13 */
+	/* 279 */	NULL, /* compat_30___fstat13 */
+	/* 280 */	NULL, /* compat_30___lstat13 */
+	/* 281 */	"sigaltstack",
+	/* 282 */	"vfork",
+	/* 283 */	NULL, /* __posix_chown */
+	/* 284 */	NULL, /* __posix_fchown */
+	/* 285 */	NULL, /* __posix_lchown */
+	/* 286 */	NULL, /* getsid */
+	/* 287 */	NULL, /* __clone */
+	/* 288 */	NULL, /* fktrace */
+	/* 289 */	NULL, /* preadv */
+	/* 290 */	NULL, /* pwritev */
+	/* 291 */	NULL, /* compat_16___sigaction14 */
+	/* 292 */	"sigpending",
+	/* 293 */	"sigprocmask",
+	/* 294 */	"sigsuspend",
+	/* 295 */	NULL, /* compat_16___sigreturn14 */
+	/* 296 */	NULL, /* __getcwd */
+	/* 297 */	NULL, /* fchroot */
+	/* 298 */	NULL, /* compat_30_fhopen */
+	/* 299 */	NULL, /* compat_30_fhstat */
+	/* 300 */	NULL, /* compat_20_fhstatfs */
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
+	/* 301 */	NULL, /* compat_50_____semctl13 */
+#else
+	/* 301 */	NULL, /* excluded ____semctl13 */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
+	/* 302 */	NULL, /* compat_50___msgctl13 */
+#else
+	/* 302 */	NULL, /* excluded __msgctl13 */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
+	/* 303 */	NULL, /* compat_50___shmctl13 */
+#else
+	/* 303 */	NULL, /* excluded __shmctl13 */
+#endif
+	/* 304 */	NULL, /* lchflags */
+	/* 305 */	NULL, /* issetugid */
+	/* 306 */	NULL, /* utrace */
+	/* 307 */	NULL, /* getcontext */
+	/* 308 */	NULL, /* setcontext */
+	/* 309 */	NULL, /* _lwp_create */
+	/* 310 */	NULL, /* _lwp_exit */
+	/* 311 */	NULL, /* _lwp_self */
+	/* 312 */	NULL, /* _lwp_wait */
+	/* 313 */	NULL, /* _lwp_suspend */
+	/* 314 */	NULL, /* _lwp_continue */
+	/* 315 */	NULL, /* _lwp_wakeup */
+	/* 316 */	NULL, /* _lwp_getprivate */
+	/* 317 */	NULL, /* _lwp_setprivate */
+	/* 318 */	NULL, /* _lwp_kill */
+	/* 319 */	NULL, /* _lwp_detach */
+	/* 320 */	NULL, /* compat_50__lwp_park */
+	/* 321 */	NULL, /* _lwp_unpark */
+	/* 322 */	NULL, /* _lwp_unpark_all */
+	/* 323 */	NULL, /* _lwp_setname */
+	/* 324 */	NULL, /* _lwp_getname */
+	/* 325 */	NULL, /* _lwp_ctl */
+	/* 326 */	NULL, /* unimplemented */
+	/* 327 */	NULL, /* unimplemented */
+	/* 328 */	NULL, /* unimplemented */
+	/* 329 */	NULL, /* unimplemented */
+	/* 330 */	NULL, /* compat_60_sa_register */
+	/* 331 */	NULL, /* compat_60_sa_stacks */
+	/* 332 */	NULL, /* compat_60_sa_enable */
+	/* 333 */	NULL, /* compat_60_sa_setconcurrency */
+	/* 334 */	NULL, /* compat_60_sa_yield */
+	/* 335 */	NULL, /* compat_60_sa_preempt */
+	/* 336 */	NULL, /* obsolete sys_sa_unblockyield */
+	/* 337 */	NULL, /* unimplemented */
+	/* 338 */	NULL, /* unimplemented */
+	/* 339 */	NULL, /* unimplemented */
+	/* 340 */	NULL, /* __sigaction_sigtramp */
+	/* 341 */	NULL, /* pmc_get_info */
+	/* 342 */	NULL, /* pmc_control */
+	/* 343 */	NULL, /* rasctl */
+	/* 344 */	NULL, /* kqueue */
+	/* 345 */	NULL, /* compat_50_kevent */
+	/* 346 */	NULL, /* _sched_setparam */
+	/* 347 */	NULL, /* _sched_getparam */
+	/* 348 */	NULL, /* _sched_setaffinity */
+	/* 349 */	NULL, /* _sched_getaffinity */
+	/* 350 */	NULL, /* sched_yield */
+	/* 351 */	NULL, /* unimplemented */
+	/* 352 */	NULL, /* unimplemented */
+	/* 353 */	NULL, /* unimplemented */
+	/* 354 */	NULL, /* fsync_range */
+	/* 355 */	NULL, /* uuidgen */
+	/* 356 */	NULL, /* getvfsstat */
+	/* 357 */	NULL, /* statvfs1 */
+	/* 358 */	NULL, /* fstatvfs1 */
+	/* 359 */	NULL, /* compat_30_fhstatvfs1 */
+	/* 360 */	NULL, /* extattrctl */
+	/* 361 */	NULL, /* extattr_set_file */
+	/* 362 */	NULL, /* extattr_get_file */
+	/* 363 */	NULL, /* extattr_delete_file */
+	/* 364 */	NULL, /* extattr_set_fd */
+	/* 365 */	NULL, /* extattr_get_fd */
+	/* 366 */	NULL, /* extattr_delete_fd */
+	/* 367 */	NULL, /* extattr_set_link */
+	/* 368 */	NULL, /* extattr_get_link */
+	/* 369 */	NULL, /* extattr_delete_link */
+	/* 370 */	NULL, /* extattr_list_fd */
+	/* 371 */	NULL, /* extattr_list_file */
+	/* 372 */	NULL, /* extattr_list_link */
+	/* 373 */	NULL, /* compat_50_pselect */
+	/* 374 */	NULL, /* compat_50_pollts */
+	/* 375 */	NULL, /* setxattr */
+	/* 376 */	NULL, /* lsetxattr */
+	/* 377 */	NULL, /* fsetxattr */
+	/* 378 */	NULL, /* getxattr */
+	/* 379 */	NULL, /* lgetxattr */
+	/* 380 */	NULL, /* fgetxattr */
+	/* 381 */	NULL, /* listxattr */
+	/* 382 */	NULL, /* llistxattr */
+	/* 383 */	NULL, /* flistxattr */
+	/* 384 */	NULL, /* removexattr */
+	/* 385 */	NULL, /* lremovexattr */
+	/* 386 */	NULL, /* fremovexattr */
+	/* 387 */	NULL, /* compat_50___stat30 */
+	/* 388 */	NULL, /* compat_50___fstat30 */
+	/* 389 */	NULL, /* compat_50___lstat30 */
+	/* 390 */	"getdents",
+	/* 391 */	NULL, /* ignored old posix_fadvise */
+	/* 392 */	NULL, /* compat_30___fhstat30 */
+	/* 393 */	NULL, /* compat_50___ntp_gettime30 */
+	/* 394 */	"socket",
+	/* 395 */	"getfh",
+	/* 396 */	"fhopen",
+	/* 397 */	"fhstatvfs1",
+	/* 398 */	NULL, /* compat_50___fhstat40 */
+	/* 399 */	NULL, /* aio_cancel */
+	/* 400 */	NULL, /* aio_error */
+	/* 401 */	NULL, /* aio_fsync */
+	/* 402 */	NULL, /* aio_read */
+	/* 403 */	NULL, /* aio_return */
+	/* 404 */	NULL, /* compat_50_aio_suspend */
+	/* 405 */	NULL, /* aio_write */
+	/* 406 */	NULL, /* lio_listio */
+	/* 407 */	NULL, /* unimplemented */
+	/* 408 */	NULL, /* unimplemented */
+	/* 409 */	NULL, /* unimplemented */
+	/* 410 */	"mount",
+	/* 411 */	NULL, /* mremap */
+	/* 412 */	NULL, /* pset_create */
+	/* 413 */	NULL, /* pset_destroy */
+	/* 414 */	NULL, /* pset_assign */
+	/* 415 */	NULL, /* _pset_bind */
+	/* 416 */	"posix_fadvise",
+	/* 417 */	"select",
+	/* 418 */	"gettimeofday",
+	/* 419 */	"settimeofday",
+	/* 420 */	"utimes",
+	/* 421 */	"adjtime",
+	/* 422 */	"lfs_segwait",
+	/* 423 */	"futimes",
+	/* 424 */	"lutimes",
+	/* 425 */	"setitimer",
+	/* 426 */	"getitimer",
+	/* 427 */	"clock_gettime",
+	/* 428 */	"clock_settime",
+	/* 429 */	"clock_getres",
+	/* 430 */	"nanosleep",
+	/* 431 */	"__sigtimedwait",
+	/* 432 */	"mq_timedsend",
+	/* 433 */	"mq_timedreceive",
+	/* 434 */	NULL, /* compat_60__lwp_park */
+	/* 435 */	"kevent",
+	/* 436 */	"pselect",
+	/* 437 */	"pollts",
+	/* 438 */	"aio_suspend",
+	/* 439 */	"stat",
+	/* 440 */	"fstat",
+	/* 441 */	"lstat",
+	/* 442 */	"__semctl",
+	/* 443 */	"shmctl",
+	/* 444 */	"msgctl",
+	/* 445 */	"getrusage",
+	/* 446 */	"timer_settime",
+	/* 447 */	"timer_gettime",
+#if defined(NTP) || !defined(_KERNEL_OPT)
+	/* 448 */	"ntp_gettime",
+#else
+	/* 448 */	NULL, /* excluded ___ntp_gettime50 */
+#endif
+	/* 449 */	"wait4",
+	/* 450 */	"mknod",
+	/* 451 */	"fhstat",
+	/* 452 */	NULL, /* obsolete 5.99 quotactl */
+	/* 453 */	NULL, /* pipe2 */
+	/* 454 */	NULL, /* dup3 */
+	/* 455 */	NULL, /* kqueue1 */
+	/* 456 */	NULL, /* paccept */
+	/* 457 */	NULL, /* linkat */
+	/* 458 */	NULL, /* renameat */
+	/* 459 */	NULL, /* mkfifoat */
+	/* 460 */	NULL, /* mknodat */
+	/* 461 */	NULL, /* mkdirat */
+	/* 462 */	NULL, /* faccessat */
+	/* 463 */	NULL, /* fchmodat */
+	/* 464 */	NULL, /* fchownat */
+	/* 465 */	NULL, /* fexecve */
+	/* 466 */	NULL, /* fstatat */
+	/* 467 */	NULL, /* utimensat */
+	/* 468 */	NULL, /* openat */
+	/* 469 */	NULL, /* readlinkat */
+	/* 470 */	NULL, /* symlinkat */
+	/* 471 */	NULL, /* unlinkat */
+	/* 472 */	NULL, /* futimens */
+	/* 473 */	NULL, /* __quotactl */
+	/* 474 */	NULL, /* posix_spawn */
+	/* 475 */	NULL, /* recvmmsg */
+	/* 476 */	NULL, /* sendmmsg */
+	/* 477 */	NULL, /* clock_nanosleep */
+	/* 478 */	"_lwp_park",
+	/* 479 */	NULL, /* posix_fallocate */
+	/* 480 */	NULL, /* fdiscard */
+	/* 481 */	NULL, /* filler */
+	/* 482 */	NULL, /* filler */
+	/* 483 */	NULL, /* filler */
+	/* 484 */	NULL, /* filler */
+	/* 485 */	NULL, /* filler */
+	/* 486 */	NULL, /* filler */
+	/* 487 */	NULL, /* filler */
+	/* 488 */	NULL, /* filler */
+	/* 489 */	NULL, /* filler */
+	/* 490 */	NULL, /* filler */
+	/* 491 */	NULL, /* filler */
+	/* 492 */	NULL, /* filler */
+	/* 493 */	NULL, /* filler */
+	/* 494 */	NULL, /* filler */
+	/* 495 */	NULL, /* filler */
+	/* 496 */	NULL, /* filler */
+	/* 497 */	NULL, /* filler */
+	/* 498 */	NULL, /* filler */
+	/* 499 */	NULL, /* filler */
+	/* 500 */	NULL, /* filler */
+	/* 501 */	NULL, /* filler */
+	/* 502 */	NULL, /* filler */
+	/* 503 */	NULL, /* filler */
+	/* 504 */	NULL, /* filler */
+	/* 505 */	NULL, /* filler */
+	/* 506 */	NULL, /* filler */
+	/* 507 */	NULL, /* filler */
+	/* 508 */	NULL, /* filler */
+	/* 509 */	NULL, /* filler */
+	/* 510 */	NULL, /* filler */
+	/* 511 */	NULL, /* filler */
 };
