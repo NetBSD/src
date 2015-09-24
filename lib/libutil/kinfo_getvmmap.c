@@ -2,7 +2,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libutil/kinfo_getvmmap.c 186512 2008-12-27 11:12:23Z rwatson $");
 #endif
-__RCSID("$NetBSD: kinfo_getvmmap.c,v 1.1 2015/09/24 14:39:20 christos Exp $");
+__RCSID("$NetBSD: kinfo_getvmmap.c,v 1.2 2015/09/24 15:30:39 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -27,7 +27,7 @@ kinfo_getvmmap(pid_t pid, size_t *cntp)
 	mib[3] = pid;
 	mib[4] = sizeof(*kiv);
 
-	error = sysctl(mib, __arraycount(mib), NULL, &len, NULL, 0);
+	error = sysctl(mib, (u_int)__arraycount(mib), NULL, &len, NULL, 0);
 	if (error)
 		return NULL;
 
@@ -37,7 +37,7 @@ kinfo_getvmmap(pid_t pid, size_t *cntp)
 	if (kiv == NULL)
 		return NULL;
 
-	error = sysctl(mib, __arraycount(mib), kiv, &len, NULL, 0);
+	error = sysctl(mib, (u_int)__arraycount(mib), kiv, &len, NULL, 0);
 	if (error) {
 		free(kiv);
 		return NULL;
