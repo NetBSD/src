@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1509 2015/09/24 14:49:38 christos Exp $
+# $NetBSD: mi,v 1.1510 2015/09/24 20:27:11 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -7935,7 +7935,7 @@
 ./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/core.5			man-sys-man		.man
 ./usr/share/man/man5/crontab.5			man-cron-man		.man
-./usr/share/man/man5/ctf.5			man-sys-man		dcat,.man
+./usr/share/man/man5/ctf.5			man-sys-man		dtrace,.man
 ./usr/share/man/man5/daily.5			man-sys-man		.man
 ./usr/share/man/man5/daily.conf.5		man-sys-man		.man
 ./usr/share/man/man5/dhclient.conf.5		man-dhclient-man	.man
