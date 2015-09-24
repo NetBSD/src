@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1988 2015/09/15 14:57:34 pooka Exp $
+#	$NetBSD: mi,v 1.1989 2015/09/24 14:49:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2075,6 +2075,7 @@
 ./usr/include/libintl.h				comp-c-include
 ./usr/include/libmilter/mfapi.h			comp-obsolete		obsolete
 ./usr/include/libmilter/mfdef.h			comp-obsolete		obsolete
+./usr/include/libproc.h				comp-c-include
 ./usr/include/limits.h				comp-c-include
 ./usr/include/link.h				comp-c-include
 ./usr/include/link_aout.h			comp-c-include
@@ -2650,6 +2651,7 @@
 ./usr/include/rpcsvc/ypclnt.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.h			comp-c-include
 ./usr/include/rpcsvc/yppasswd.x			comp-c-include
+./usr/include/rtld_db.h				comp-c-include
 ./usr/include/rump/p2k.h			comp-puffs-include	rump
 ./usr/include/rump/rump.h			comp-c-include	rump
 ./usr/include/rump/rump_namei.h			comp-c-include	rump
@@ -3320,6 +3322,8 @@
 ./usr/lib/libposix_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libppath.a				comp-c-lib		compatfile
 ./usr/lib/libppath_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libproc.a				comp-c-lib		compatfile
+./usr/lib/libproc_p.a				comp-c-lib		compatfile
 ./usr/lib/libprop.a				comp-c-lib		compatfile
 ./usr/lib/libprop_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libpthread.a				comp-c-lib		compatfile
@@ -3343,6 +3347,8 @@
 ./usr/lib/librpcsvc_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/librt.a				comp-c-lib		compatfile
 ./usr/lib/librt_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/librtld_db.a				comp-c-lib		compatfile
+./usr/lib/librtld_db_p.a			comp-c-lib		compatfile
 ./usr/lib/librump.a				comp-c-lib		compatfile,rump
 ./usr/lib/librump_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpclient.a			comp-c-lib		compatfile,rump
@@ -6744,6 +6750,7 @@
 ./usr/share/man/cat3/keypad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/killchar.0			comp-c-catman		.cat
 ./usr/share/man/cat3/killpg.0			comp-c-catman		.cat
+./usr/share/man/cat3/kinfo_getvmmap.0		comp-c-catman		.cat
 ./usr/share/man/cat3/krb5.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/krb524_convert_creds_kdc.0 comp-krb5-catman	kerberos,.cat
 ./usr/share/man/cat3/krb524_convert_creds_kdc_ccache.0	comp-krb5-catman	kerberos,.cat
@@ -7481,6 +7488,7 @@
 ./usr/share/man/cat3/libperfuse.0		comp-perfuse-catman	.cat
 ./usr/share/man/cat3/libquota.0			comp-c-catman		.cat
 ./usr/share/man/cat3/libradius.0		comp-c-catman		.cat
+./usr/share/man/cat3/librtld_db.0		comp-c-catman		.cat
 ./usr/share/man/cat3/libsaslc.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/libusb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/libusbhid.0		comp-c-catman		.cat
@@ -13684,6 +13692,7 @@
 ./usr/share/man/html3/keypad.html		comp-c-htmlman		html
 ./usr/share/man/html3/killchar.html		comp-c-htmlman		html
 ./usr/share/man/html3/killpg.html		comp-c-htmlman		html
+./usr/share/man/html3/kinfo_getvmmap.html	comp-c-htmlman		html
 ./usr/share/man/html3/krb5.html			comp-obsolete		obsolete
 ./usr/share/man/html3/krb524_convert_creds_kdc.html	comp-krb5-htmlman	kerberos,html
 ./usr/share/man/html3/krb524_convert_creds_kdc_ccache.html	comp-krb5-htmlman	kerberos,html
@@ -14401,6 +14410,7 @@
 ./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html
 ./usr/share/man/html3/libquota.html		comp-c-htmlman		html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
+./usr/share/man/html3/librtld_db.html		comp-c-htmlman		html
 ./usr/share/man/html3/libsaslc.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
 ./usr/share/man/html3/libutil.html		comp-c-htmlman		html
@@ -20541,6 +20551,7 @@
 ./usr/share/man/man3/keypad.3			comp-c-man		.man
 ./usr/share/man/man3/killchar.3			comp-c-man		.man
 ./usr/share/man/man3/killpg.3			comp-c-man		.man
+./usr/share/man/man3/kinfo_getvmmap.3		comp-c-man		.man
 ./usr/share/man/man3/krb5.3			comp-obsolete		obsolete
 ./usr/share/man/man3/krb524_convert_creds_kdc.3 comp-krb5-man		kerberos,.man
 ./usr/share/man/man3/krb524_convert_creds_kdc_ccache.3	comp-krb5-man		kerberos,.man
@@ -21278,6 +21289,7 @@
 ./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man
 ./usr/share/man/man3/libquota.3			comp-c-man		.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
+./usr/share/man/man3/librtld_db.3		comp-c-man		.man
 ./usr/share/man/man3/libsaslc.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1508 2015/08/27 14:04:07 nonaka Exp $
+# $NetBSD: mi,v 1.1509 2015/09/24 14:49:38 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2029,6 +2029,7 @@
 ./usr/share/man/cat5/cidr_table.0		man-postfix-catman	postfix,.cat
 ./usr/share/man/cat5/core.0			man-sys-catman		.cat
 ./usr/share/man/cat5/crontab.0			man-cron-catman		.cat
+./usr/share/man/cat5/ctf.0			man-sys-catman		dtrace,.cat
 ./usr/share/man/cat5/daily.0			man-sys-catman		.cat
 ./usr/share/man/cat5/daily.conf.0		man-sys-catman		.cat
 ./usr/share/man/cat5/dhclient.conf.0		man-dhclient-catman	.cat
@@ -5014,6 +5015,7 @@
 ./usr/share/man/html5/cidr_table.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html5/core.html			man-sys-htmlman		html
 ./usr/share/man/html5/crontab.html		man-cron-htmlman	html
+./usr/share/man/html5/ctf.html			man-sys-catman		dtrace,html
 ./usr/share/man/html5/daily.conf.html		man-sys-htmlman		html
 ./usr/share/man/html5/daily.html		man-sys-htmlman		html
 ./usr/share/man/html5/dhclient.conf.html	man-dhclient-htmlman	html
@@ -7933,6 +7935,7 @@
 ./usr/share/man/man5/cidr_table.5		man-postfix-man		postfix,.man
 ./usr/share/man/man5/core.5			man-sys-man		.man
 ./usr/share/man/man5/crontab.5			man-cron-man		.man
+./usr/share/man/man5/ctf.5			man-sys-man		dcat,.man
 ./usr/share/man/man5/daily.5			man-sys-man		.man
 ./usr/share/man/man5/daily.conf.5		man-sys-man		.man
 ./usr/share/man/man5/dhclient.conf.5		man-dhclient-man	.man
