@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.229 2015/09/24 14:49:03 christos Exp $
+#	$NetBSD: Makefile,v 1.230 2015/09/24 18:37:33 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -63,10 +63,6 @@ SUBDIR+=	../external/bsd/libpcap/lib
 .if ${MKSLJIT} != "no"
 SUBDIR+=	../external/bsd/sljit/lib
 SUBDIR+=	libbpfjit
-.endif
-
-.if ${MKDTRACE} != "no"
-SUBDIR+=        ../external/cddl/osnet/lib/libdtrace
 .endif
 
 .if (${MKZFS} != "no")
@@ -220,6 +216,10 @@ SUBDIR+=	../external/bsd/openldap/lib	# depends on libcrypto, ...
 SUBDIR+=	.WAIT
 
 SUBDIR+=	../external/bsd/bind/lib	# depends on heimdal, libcrypto
+
+.if ${MKDTRACE} != "no"
+SUBDIR+=        ../external/cddl/osnet/lib/libdtrace	# depends on libproc
+.endif
 
 .if (${MKRUMP} != "no")
 SUBDIR+=	librumpdev	# depends on librump
