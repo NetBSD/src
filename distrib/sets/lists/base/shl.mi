@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.748 2015/09/24 14:49:38 christos Exp $
+# $NetBSD: shl.mi,v 1.749 2015/09/24 20:04:57 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -228,8 +228,8 @@
 ./usr/lib/libcrypto_rc5.so.7			base-crypto-shlib	compatfile,crypto,crypto_rc5
 ./usr/lib/libcrypto_rc5.so.7.0			base-crypto-shlib	compatfile,crypto,crypto_rc5
 ./usr/lib/libctf.so				base-sys-shlib		compatfile,dtrace
-./usr/lib/libctf.so.2				base-sys-shlib		compatfile,dtrace
-./usr/lib/libctf.so.2.0				base-sys-shlib		compatfile,dtrace
+./usr/lib/libctf.so.3				base-sys-shlib		compatfile,dtrace
+./usr/lib/libctf.so.3.0				base-sys-shlib		compatfile,dtrace
 ./usr/lib/libcurses.so				base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7			base-sys-shlib		compatfile
 ./usr/lib/libcurses.so.7.0			base-sys-shlib		compatfile
@@ -249,8 +249,8 @@
 ./usr/lib/libdns_sd.so.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdns_sd.so.0.0			base-mdns-shlib		compatfile,mdns
 ./usr/lib/libdtrace.so				base-sys-shlib		compatfile,dtrace
-./usr/lib/libdtrace.so.2			base-sys-shlib		compatfile,dtrace
-./usr/lib/libdtrace.so.2.0			base-sys-shlib		compatfile,dtrace
+./usr/lib/libdtrace.so.3			base-sys-shlib		compatfile,dtrace
+./usr/lib/libdtrace.so.3.0			base-sys-shlib		compatfile,dtrace
 ./usr/lib/libdwarf.so				base-sys-shlib		compatfile
 ./usr/lib/libdwarf.so.1				base-sys-shlib		compatfile
 ./usr/lib/libdwarf.so.1.0			base-sys-shlib		compatfile
