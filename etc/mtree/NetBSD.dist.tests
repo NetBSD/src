@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.119 2015/09/24 14:50:06 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.120 2015/09/24 16:02:39 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -109,6 +109,7 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2
 ./usr/libdata/debug/usr/tests/lib/libppath
+./usr/libdata/debug/usr/tests/lib/libproc
 ./usr/libdata/debug/usr/tests/lib/libprop
 ./usr/libdata/debug/usr/tests/lib/libpthread
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen
