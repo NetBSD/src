@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.110 2015/09/24 14:49:38 christos Exp $
+# $NetBSD: shl.mi,v 1.111 2015/09/24 20:04:57 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -74,14 +74,14 @@
 ./usr/libdata/debug/usr/lib/libcrypto_idea.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_mdc2.so.7.0.debug		comp-obsolete	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug		comp-crypto-debug	debug,compatfile,crypto,crypto_rc5
-./usr/libdata/debug/usr/lib/libctf.so.2.0.debug			comp-sys-debug	debug,compatfile,dtrace
+./usr/libdata/debug/usr/lib/libctf.so.3.0.debug			comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdes.so.8.2.debug			comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdns.so.8.2.debug 		comp-bind-debug debug,compatfile
 ./usr/libdata/debug/usr/lib/libdns_sd.so.0.0.debug		comp-mdns-debug	debug,compatfile,mdns
-./usr/libdata/debug/usr/lib/libdtrace.so.2.0.debug		comp-sys-debug	debug,compatfile,dtrace
+./usr/libdata/debug/usr/lib/libdtrace.so.3.0.debug		comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libdwarf.so.1.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libedit.so.3.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libelf.so.1.0.debug			comp-sys-debug	debug,compatfile
