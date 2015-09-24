@@ -28,7 +28,11 @@
  */ 
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_rtld.c 265255 2014-05-03 04:44:03Z markj $");
+#else
+__RCSID("$NetBSD: proc_rtld.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+#endif
 
 #include <stdio.h>
 #include <string.h>
@@ -44,9 +48,8 @@ map_iter(const rd_loadobj_t *lop, void *arg)
 
 	if (phdl->nobjs >= phdl->rdobjsz) {
 		phdl->rdobjsz *= 2;
-		phdl->rdobjs = reallocf(phdl->rdobjs, sizeof(*phdl->rdobjs) *
-		    phdl->rdobjsz);
-		if (phdl->rdobjs == NULL)
+		if (reallocarr(&phdl->rdobjs, sizeof(*phdl->rdobjs),
+		    phdl->rdobjsz))
 			return (-1);
 	}
 	if (strcmp(lop->rdl_path, phdl->execname) == 0 &&
