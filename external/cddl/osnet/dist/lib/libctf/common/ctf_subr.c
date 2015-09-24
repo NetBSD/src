@@ -24,6 +24,10 @@
  * Use is subject to license terms.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
 #include <ctf_impl.h>
