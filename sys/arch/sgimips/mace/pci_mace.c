@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_mace.c,v 1.18 2015/02/18 16:47:59 macallan Exp $	*/
+/*	$NetBSD: pci_mace.c,v 1.19 2015/09/24 17:56:59 macallan Exp $	*/
 
 /*
  * Copyright (c) 2001,2003 Christopher Sekiya
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.18 2015/02/18 16:47:59 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.19 2015/09/24 17:56:59 macallan Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -64,6 +64,11 @@ __KERNEL_RCSID(0, "$NetBSD: pci_mace.c,v 1.18 2015/02/18 16:47:59 macallan Exp $
 #include <sgimips/mace/macevar.h>
 
 #include <sgimips/mace/pcireg_mace.h>
+
+#ifndef __mips_o32
+#define USE_HIGH_PCI
+#endif
+
 
 struct macepci_softc {
 	struct sgimips_pci_chipset sc_pc;
@@ -156,15 +161,23 @@ macepci_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(pc->iot, pc->ioh, MACEPCI_CONTROL, control);
 
 #if NPCI > 0
+#ifdef USE_HIGH_PCI
 	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
 	    NULL, 0, EX_NOWAIT);
+	pc->pc_memext = extent_create("macepcimem", 0x80000000, 0xffffffff,
+	    NULL, 0, EX_NOWAIT);
+#else
+	pc->pc_ioext = extent_create("macepciio", 0x00001000, 0x01ffffff,
+	    NULL, 0, EX_NOWAIT);
+	/* XXX no idea why we limit ourselves to only half of the 32MB window */
 	pc->pc_memext = extent_create("macepcimem", 0x80100000, 0x81ffffff,
 	    NULL, 0, EX_NOWAIT);
+#endif /* USE_HIGH_PCI */
 	pci_configure_bus(pc, pc->pc_ioext, pc->pc_memext, NULL, 0,
 	    mips_cache_info.mci_dcache_align);
 	memset(&pba, 0, sizeof pba);
-/*XXX*/	pba.pba_iot = mace_pci_iot;
-/*XXX*/	pba.pba_memt = mace_pci_memt;
+	pba.pba_iot = mace_pci_iot;
+	pba.pba_memt = mace_pci_memt;
 	pba.pba_dmat = &pci_bus_dma_tag;
 	pba.pba_dmat64 = NULL;
 	pba.pba_bus = 0;
@@ -209,9 +222,6 @@ macepci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 macepci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
-	/* XXX O2 soren */
-	if (tag == 0)
-		return;
 
 	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_ADDR, (tag | reg));
 	bus_space_write_4(pc->iot, pc->ioh, MACE_PCI_CONFIG_DATA, data);
@@ -377,7 +387,7 @@ macepci_intr(void *arg)
  */
 #define	CHIP_W1_BUS_START(v)	0x80000000UL
 #define CHIP_W1_BUS_END(v)	0xffffffffUL
-#ifdef _LP64
+#ifdef USE_HIGH_PCI
 #define	CHIP_W1_SYS_START(v)	MACE_PCI_HI_MEMORY
 #define	CHIP_W1_SYS_END(v)	MACE_PCI_HI_MEMORY + 0x7fffffffUL
 #else
@@ -402,7 +412,7 @@ macepci_intr(void *arg)
 #define	CHIP_MEM		/* defined */
 #define	CHIP_W1_BUS_START(v)	0x00000000UL
 #define CHIP_W1_BUS_END(v)	0xffffffffUL
-#ifdef _LP64
+#ifdef USE_HIGH_PCI
 #define	CHIP_W1_SYS_START(v)	MACE_PCI_HI_IO
 #define	CHIP_W1_SYS_END(v)	MACE_PCI_HI_IO + 0xffffffffUL
 #else
