@@ -1,4 +1,4 @@
-/* $NetBSD: sunos32_syscalls.c,v 1.28 2015/03/07 16:41:54 christos Exp $ */
+/* $NetBSD: sunos32_syscalls.c,v 1.29 2015/09/24 14:43:50 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_syscalls.c,v 1.28 2015/03/07 16:41:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_syscalls.c,v 1.29 2015/09/24 14:43:50 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -27,6 +27,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunos32_syscalls.c,v 1.28 2015/03/07 16:41:54 christ
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/sunos32/sunos32.h>
 #include <compat/sunos32/sunos32_syscallargs.h>
+#else /* _KERNEL_OPT */
+#include <sys/null.h>
 #endif /* _KERNEL_OPT */
 
 const char *const sunos32_syscallnames[] = {
@@ -298,4 +300,277 @@ const char *const sunos32_syscallnames[] = {
 	/* 253 */	"# filler",
 	/* 254 */	"# filler",
 	/* 255 */	"# filler",
+};
+
+
+/* libc style syscall names */
+const char *const altsunos32_syscallnames[] = {
+	/*   0 */	"nosys",
+	/*   1 */	"exit",
+	/*   2 */	NULL, /* fork */
+	/*   3 */	"read",
+	/*   4 */	"write",
+	/*   5 */	NULL, /* open */
+	/*   6 */	"close",
+	/*   7 */	NULL, /* wait4 */
+	/*   8 */	NULL, /* creat */
+	/*   9 */	"link",
+	/*  10 */	"unlink",
+	/*  11 */	NULL, /* execv */
+	/*  12 */	"chdir",
+	/*  13 */	NULL, /* obsolete old_time */
+	/*  14 */	NULL, /* mknod */
+	/*  15 */	"chmod",
+	/*  16 */	"chown",
+	/*  17 */	"break",
+	/*  18 */	NULL, /* obsolete old_stat */
+	/*  19 */	"olseek",
+	/*  20 */	NULL, /* getpid_with_ppid */
+	/*  21 */	NULL, /* obsolete sunos_old_mount */
+	/*  22 */	NULL, /* unimplemented System V umount */
+	/*  23 */	"setuid",
+	/*  24 */	NULL, /* getuid_with_euid */
+	/*  25 */	NULL, /* stime */
+	/*  26 */	NULL, /* ptrace */
+	/*  27 */	NULL, /* unimplemented old_sunos_alarm */
+	/*  28 */	NULL, /* unimplemented old_sunos_fstat */
+	/*  29 */	NULL, /* unimplemented old_sunos_pause */
+	/*  30 */	NULL, /* unimplemented old_sunos_utime */
+	/*  31 */	NULL, /* unimplemented old_sunos_stty */
+	/*  32 */	NULL, /* unimplemented old_sunos_gtty */
+	/*  33 */	NULL, /* access */
+	/*  34 */	NULL, /* unimplemented old_sunos_nice */
+	/*  35 */	NULL, /* unimplemented old_sunos_ftime */
+	/*  36 */	NULL, /* sync */
+	/*  37 */	"kill",
+	/*  38 */	NULL, /* stat */
+	/*  39 */	NULL, /* unimplemented sunos_setpgrp */
+	/*  40 */	NULL, /* lstat */
+	/*  41 */	"dup",
+	/*  42 */	NULL, /* pipe */
+	/*  43 */	NULL, /* unimplemented sunos_times */
+	/*  44 */	"profil",
+	/*  45 */	NULL, /* unimplemented */
+	/*  46 */	"setgid",
+	/*  47 */	NULL, /* getgid_with_egid */
+	/*  48 */	NULL, /* unimplemented sunos_ssig */
+	/*  49 */	NULL, /* unimplemented reserved for USG */
+	/*  50 */	NULL, /* unimplemented reserved for USG */
+	/*  51 */	"acct",
+	/*  52 */	NULL, /* unimplemented */
+	/*  53 */	NULL, /* mctl */
+	/*  54 */	NULL, /* ioctl */
+	/*  55 */	NULL, /* reboot */
+	/*  56 */	NULL, /* obsolete sunos_owait3 */
+	/*  57 */	"symlink",
+	/*  58 */	"readlink",
+	/*  59 */	NULL, /* execve */
+	/*  60 */	"umask",
+	/*  61 */	"chroot",
+	/*  62 */	"fstat43",
+	/*  63 */	NULL, /* unimplemented */
+	/*  64 */	"getpagesize",
+	/*  65 */	NULL, /* omsync */
+	/*  66 */	NULL, /* vfork */
+	/*  67 */	NULL, /* obsolete vread */
+	/*  68 */	NULL, /* obsolete vwrite */
+	/*  69 */	"sbrk",
+	/*  70 */	"sstk",
+	/*  71 */	NULL, /* mmap */
+	/*  72 */	"ovadvise",
+	/*  73 */	"munmap",
+	/*  74 */	"mprotect",
+	/*  75 */	"madvise",
+	/*  76 */	NULL, /* vhangup */
+	/*  77 */	NULL, /* unimplemented vlimit */
+	/*  78 */	"mincore",
+	/*  79 */	"getgroups",
+	/*  80 */	"setgroups",
+	/*  81 */	NULL, /* getpgrp */
+	/*  82 */	NULL, /* setpgrp */
+	/*  83 */	"setitimer",
+	/*  84 */	NULL, /* unimplemented sunos32_sys_wait */
+	/*  85 */	"oswapon",
+	/*  86 */	"getitimer",
+	/*  87 */	"ogethostname",
+	/*  88 */	"osethostname",
+	/*  89 */	"getdtablesize",
+	/*  90 */	"dup2",
+	/*  91 */	NULL, /* unimplemented getdopt */
+	/*  92 */	NULL, /* fcntl */
+	/*  93 */	"select",
+	/*  94 */	NULL, /* unimplemented setdopt */
+	/*  95 */	"fsync",
+	/*  96 */	"setpriority",
+	/*  97 */	NULL, /* socket */
+	/*  98 */	"connect",
+	/*  99 */	"oaccept",
+	/* 100 */	"getpriority",
+	/* 101 */	"osend",
+	/* 102 */	"orecv",
+	/* 103 */	NULL, /* unimplemented old socketaddr */
+	/* 104 */	"bind",
+	/* 105 */	NULL, /* setsockopt */
+	/* 106 */	"listen",
+	/* 107 */	NULL, /* unimplemented vtimes */
+	/* 108 */	NULL, /* sigvec */
+	/* 109 */	"sigblock",
+	/* 110 */	"sigsetmask",
+	/* 111 */	NULL, /* sigsuspend */
+	/* 112 */	"osigstack",
+	/* 113 */	"orecvmsg",
+	/* 114 */	"osendmsg",
+	/* 115 */	NULL, /* obsolete vtrace */
+	/* 116 */	"gettimeofday",
+	/* 117 */	"getrusage",
+	/* 118 */	"getsockopt",
+	/* 119 */	NULL, /* unimplemented */
+	/* 120 */	"readv",
+	/* 121 */	"writev",
+	/* 122 */	"settimeofday",
+	/* 123 */	"fchown",
+	/* 124 */	"fchmod",
+	/* 125 */	"orecvfrom",
+	/* 126 */	"setreuid",
+	/* 127 */	"setregid",
+	/* 128 */	"rename",
+	/* 129 */	"otruncate",
+	/* 130 */	"oftruncate",
+	/* 131 */	"flock",
+	/* 132 */	NULL, /* unimplemented */
+	/* 133 */	"sendto",
+	/* 134 */	"shutdown",
+	/* 135 */	NULL, /* socketpair */
+	/* 136 */	"mkdir",
+	/* 137 */	"rmdir",
+	/* 138 */	"utimes",
+	/* 139 */	NULL, /* sigreturn */
+	/* 140 */	"adjtime",
+	/* 141 */	"ogetpeername",
+	/* 142 */	NULL, /* gethostid */
+	/* 143 */	NULL, /* unimplemented old sethostid */
+	/* 144 */	NULL, /* getrlimit */
+	/* 145 */	NULL, /* setrlimit */
+	/* 146 */	"killpg",
+	/* 147 */	NULL, /* unimplemented */
+	/* 148 */	NULL, /* unimplemented */
+	/* 149 */	NULL, /* unimplemented */
+	/* 150 */	"ogetsockname",
+	/* 151 */	NULL, /* unimplemented getmsg */
+	/* 152 */	NULL, /* unimplemented putmsg */
+	/* 153 */	"poll",
+	/* 154 */	NULL, /* unimplemented */
+	/* 155 */	NULL, /* unimplemented nfssvc */
+	/* 156 */	"ogetdirentries",
+	/* 157 */	NULL, /* statfs */
+	/* 158 */	NULL, /* fstatfs */
+	/* 159 */	NULL, /* unmount */
+	/* 160 */	NULL, /* unimplemented async_daemon */
+	/* 161 */	NULL, /* getfh */
+	/* 162 */	"ogetdomainname",
+	/* 163 */	"osetdomainname",
+	/* 164 */	NULL, /* unimplemented rtschedule */
+	/* 165 */	NULL, /* quotactl */
+	/* 166 */	NULL, /* exportfs */
+	/* 167 */	NULL, /* mount */
+	/* 168 */	NULL, /* ustat */
+#ifdef SYSVSEM
+	/* 169 */	"semsys",
+#else
+	/* 169 */	NULL, /* unimplemented semsys */
+#endif
+#ifdef SYSVMSG
+	/* 170 */	"msgsys",
+#else
+	/* 170 */	NULL, /* unimplemented msgsys */
+#endif
+#ifdef SYSVSHM
+	/* 171 */	"shmsys",
+#else
+	/* 171 */	NULL, /* unimplemented shmsys */
+#endif
+	/* 172 */	NULL, /* auditsys */
+	/* 173 */	NULL, /* unimplemented rfssys */
+	/* 174 */	NULL, /* getdents */
+	/* 175 */	NULL, /* setsid */
+	/* 176 */	"fchdir",
+	/* 177 */	"fchroot",
+	/* 178 */	NULL, /* unimplemented vpixsys */
+	/* 179 */	NULL, /* unimplemented aioread */
+	/* 180 */	NULL, /* unimplemented aiowrite */
+	/* 181 */	NULL, /* unimplemented aiowait */
+	/* 182 */	NULL, /* unimplemented aiocancel */
+	/* 183 */	NULL, /* sigpending */
+	/* 184 */	NULL, /* unimplemented */
+	/* 185 */	"setpgid",
+	/* 186 */	"pathconf",
+	/* 187 */	"fpathconf",
+	/* 188 */	NULL, /* sysconf */
+	/* 189 */	NULL, /* uname */
+	/* 190 */	NULL, /* filler */
+	/* 191 */	NULL, /* filler */
+	/* 192 */	NULL, /* filler */
+	/* 193 */	NULL, /* filler */
+	/* 194 */	NULL, /* filler */
+	/* 195 */	NULL, /* filler */
+	/* 196 */	NULL, /* filler */
+	/* 197 */	NULL, /* filler */
+	/* 198 */	NULL, /* filler */
+	/* 199 */	NULL, /* filler */
+	/* 200 */	NULL, /* filler */
+	/* 201 */	NULL, /* filler */
+	/* 202 */	NULL, /* filler */
+	/* 203 */	NULL, /* filler */
+	/* 204 */	NULL, /* filler */
+	/* 205 */	NULL, /* filler */
+	/* 206 */	NULL, /* filler */
+	/* 207 */	NULL, /* filler */
+	/* 208 */	NULL, /* filler */
+	/* 209 */	NULL, /* filler */
+	/* 210 */	NULL, /* filler */
+	/* 211 */	NULL, /* filler */
+	/* 212 */	NULL, /* filler */
+	/* 213 */	NULL, /* filler */
+	/* 214 */	NULL, /* filler */
+	/* 215 */	NULL, /* filler */
+	/* 216 */	NULL, /* filler */
+	/* 217 */	NULL, /* filler */
+	/* 218 */	NULL, /* filler */
+	/* 219 */	NULL, /* filler */
+	/* 220 */	NULL, /* filler */
+	/* 221 */	NULL, /* filler */
+	/* 222 */	NULL, /* filler */
+	/* 223 */	NULL, /* filler */
+	/* 224 */	NULL, /* filler */
+	/* 225 */	NULL, /* filler */
+	/* 226 */	NULL, /* filler */
+	/* 227 */	NULL, /* filler */
+	/* 228 */	NULL, /* filler */
+	/* 229 */	NULL, /* filler */
+	/* 230 */	NULL, /* filler */
+	/* 231 */	NULL, /* filler */
+	/* 232 */	NULL, /* filler */
+	/* 233 */	NULL, /* filler */
+	/* 234 */	NULL, /* filler */
+	/* 235 */	NULL, /* filler */
+	/* 236 */	NULL, /* filler */
+	/* 237 */	NULL, /* filler */
+	/* 238 */	NULL, /* filler */
+	/* 239 */	NULL, /* filler */
+	/* 240 */	NULL, /* filler */
+	/* 241 */	NULL, /* filler */
+	/* 242 */	NULL, /* filler */
+	/* 243 */	NULL, /* filler */
+	/* 244 */	NULL, /* filler */
+	/* 245 */	NULL, /* filler */
+	/* 246 */	NULL, /* filler */
+	/* 247 */	NULL, /* filler */
+	/* 248 */	NULL, /* filler */
+	/* 249 */	NULL, /* filler */
+	/* 250 */	NULL, /* filler */
+	/* 251 */	NULL, /* filler */
+	/* 252 */	NULL, /* filler */
+	/* 253 */	NULL, /* filler */
+	/* 254 */	NULL, /* filler */
+	/* 255 */	NULL, /* filler */
 };

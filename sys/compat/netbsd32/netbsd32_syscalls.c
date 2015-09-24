@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.116 2015/06/23 04:45:53 dholland Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.117 2015/09/24 14:43:06 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.116 2015/06/23 04:45:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.117 2015/09/24 14:43:06 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -25,6 +25,8 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.116 2015/06/23 04:45:53 dhol
 #include <sys/syscallargs.h>
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
+#else /* _KERNEL_OPT */
+#include <sys/null.h>
 #endif /* _KERNEL_OPT */
 
 const char *const netbsd32_syscallnames[] = {
@@ -614,4 +616,595 @@ const char *const netbsd32_syscallnames[] = {
 	/* 509 */	"# filler",
 	/* 510 */	"# filler",
 	/* 511 */	"# filler",
+};
+
+
+/* libc style syscall names */
+const char *const altnetbsd32_syscallnames[] = {
+	/*   0 */	"syscall",
+	/*   1 */	"exit",
+	/*   2 */	NULL, /* fork */
+	/*   3 */	"read",
+	/*   4 */	"write",
+	/*   5 */	"open",
+	/*   6 */	"close",
+	/*   7 */	NULL, /* compat_50_netbsd32_wait4 */
+	/*   8 */	NULL, /* compat_43_netbsd32_ocreat */
+	/*   9 */	"link",
+	/*  10 */	"unlink",
+	/*  11 */	NULL, /* obsolete execv */
+	/*  12 */	"chdir",
+	/*  13 */	"fchdir",
+	/*  14 */	NULL, /* compat_50_netbsd32_mknod */
+	/*  15 */	"chmod",
+	/*  16 */	"chown",
+	/*  17 */	"break",
+	/*  18 */	NULL, /* compat_20_netbsd32_getfsstat */
+	/*  19 */	NULL, /* compat_43_netbsd32_olseek */
+	/*  20 */	NULL, /* getpid */
+	/*  21 */	"mount",
+	/*  22 */	"unmount",
+	/*  23 */	"setuid",
+	/*  24 */	NULL, /* getuid */
+	/*  25 */	NULL, /* geteuid */
+	/*  26 */	"ptrace",
+	/*  27 */	"recvmsg",
+	/*  28 */	"sendmsg",
+	/*  29 */	"recvfrom",
+	/*  30 */	"accept",
+	/*  31 */	"getpeername",
+	/*  32 */	"getsockname",
+	/*  33 */	"access",
+	/*  34 */	"chflags",
+	/*  35 */	"fchflags",
+	/*  36 */	NULL, /* sync */
+	/*  37 */	"kill",
+	/*  38 */	NULL, /* compat_43_netbsd32_stat43 */
+	/*  39 */	NULL, /* getppid */
+	/*  40 */	NULL, /* compat_43_netbsd32_lstat43 */
+	/*  41 */	"dup",
+	/*  42 */	NULL, /* pipe */
+	/*  43 */	NULL, /* getegid */
+	/*  44 */	"profil",
+	/*  45 */	"ktrace",
+	/*  46 */	"sigaction",
+	/*  47 */	NULL, /* getgid */
+	/*  48 */	NULL, /* compat_13_sigprocmask13 */
+	/*  49 */	"__getlogin",
+	/*  50 */	"setlogin",
+	/*  51 */	"acct",
+	/*  52 */	NULL, /* compat_13_sigpending13 */
+	/*  53 */	NULL, /* compat_13_netbsd32_sigaltstack13 */
+	/*  54 */	"ioctl",
+	/*  55 */	NULL, /* compat_12_netbsd32_reboot */
+	/*  56 */	"revoke",
+	/*  57 */	"symlink",
+	/*  58 */	"readlink",
+	/*  59 */	"execve",
+	/*  60 */	"umask",
+	/*  61 */	"chroot",
+	/*  62 */	NULL, /* compat_43_netbsd32_fstat43 */
+	/*  63 */	NULL, /* compat_43_netbsd32_ogetkerninfo */
+	/*  64 */	NULL, /* compat_43_ogetpagesize */
+	/*  65 */	NULL, /* compat_12_netbsd32_msync */
+	/*  66 */	NULL, /* vfork */
+	/*  67 */	NULL, /* obsolete vread */
+	/*  68 */	NULL, /* obsolete vwrite */
+	/*  69 */	"sbrk",
+	/*  70 */	"sstk",
+	/*  71 */	NULL, /* compat_43_netbsd32_ommap */
+	/*  72 */	"ovadvise",
+	/*  73 */	"munmap",
+	/*  74 */	"mprotect",
+	/*  75 */	"madvise",
+	/*  76 */	NULL, /* obsolete vhangup */
+	/*  77 */	NULL, /* obsolete vlimit */
+	/*  78 */	"mincore",
+	/*  79 */	"getgroups",
+	/*  80 */	"setgroups",
+	/*  81 */	NULL, /* getpgrp */
+	/*  82 */	"setpgid",
+	/*  83 */	NULL, /* compat_50_netbsd32_setitimer */
+	/*  84 */	NULL, /* compat_43_owait */
+	/*  85 */	NULL, /* compat_12_netbsd32_oswapon */
+	/*  86 */	NULL, /* compat_50_netbsd32_getitimer */
+	/*  87 */	NULL, /* compat_43_netbsd32_ogethostname */
+	/*  88 */	NULL, /* compat_43_netbsd32_osethostname */
+	/*  89 */	NULL, /* compat_43_ogetdtablesize */
+	/*  90 */	"dup2",
+	/*  91 */	NULL, /* unimplemented getdopt */
+	/*  92 */	"fcntl",
+	/*  93 */	NULL, /* compat_50_netbsd32_select */
+	/*  94 */	NULL, /* unimplemented setdopt */
+	/*  95 */	"fsync",
+	/*  96 */	"setpriority",
+	/*  97 */	NULL, /* compat_30_netbsd32_socket */
+	/*  98 */	"connect",
+	/*  99 */	NULL, /* compat_43_netbsd32_oaccept */
+	/* 100 */	"getpriority",
+	/* 101 */	NULL, /* compat_43_netbsd32_osend */
+	/* 102 */	NULL, /* compat_43_netbsd32_orecv */
+	/* 103 */	NULL, /* compat_13_sigreturn13 */
+	/* 104 */	"bind",
+	/* 105 */	"setsockopt",
+	/* 106 */	"listen",
+	/* 107 */	NULL, /* obsolete vtimes */
+	/* 108 */	NULL, /* compat_43_netbsd32_osigvec */
+	/* 109 */	NULL, /* compat_43_netbsd32_sigblock */
+	/* 110 */	NULL, /* compat_43_netbsd32_sigsetmask */
+	/* 111 */	NULL, /* compat_13_sigsuspend13 */
+	/* 112 */	NULL, /* compat_43_netbsd32_osigstack */
+	/* 113 */	NULL, /* compat_43_netbsd32_orecvmsg */
+	/* 114 */	NULL, /* compat_43_netbsd32_osendmsg */
+	/* 115 */	NULL, /* obsolete vtrace */
+	/* 116 */	NULL, /* compat_50_netbsd32_gettimeofday */
+	/* 117 */	NULL, /* compat_50_netbsd32_getrusage */
+	/* 118 */	"getsockopt",
+	/* 119 */	NULL, /* obsolete resuba */
+	/* 120 */	"readv",
+	/* 121 */	"writev",
+	/* 122 */	NULL, /* compat_50_netbsd32_settimeofday */
+	/* 123 */	"fchown",
+	/* 124 */	"fchmod",
+	/* 125 */	NULL, /* compat_43_netbsd32_orecvfrom */
+	/* 126 */	"setreuid",
+	/* 127 */	"setregid",
+	/* 128 */	"rename",
+	/* 129 */	NULL, /* compat_43_netbsd32_otruncate */
+	/* 130 */	NULL, /* compat_43_netbsd32_oftruncate */
+	/* 131 */	"flock",
+	/* 132 */	"mkfifo",
+	/* 133 */	"sendto",
+	/* 134 */	"shutdown",
+	/* 135 */	"socketpair",
+	/* 136 */	"mkdir",
+	/* 137 */	"rmdir",
+	/* 138 */	NULL, /* compat_50_netbsd32_utimes */
+	/* 139 */	NULL, /* obsolete 4.2 sigreturn */
+	/* 140 */	NULL, /* compat_50_netbsd32_adjtime */
+	/* 141 */	NULL, /* compat_43_netbsd32_ogetpeername */
+	/* 142 */	NULL, /* compat_43_ogethostid */
+	/* 143 */	NULL, /* compat_43_netbsd32_sethostid */
+	/* 144 */	NULL, /* compat_43_netbsd32_ogetrlimit */
+	/* 145 */	NULL, /* compat_43_netbsd32_osetrlimit */
+	/* 146 */	NULL, /* compat_43_netbsd32_killpg */
+	/* 147 */	NULL, /* setsid */
+	/* 148 */	NULL, /* compat_50_netbsd32_quotactl */
+	/* 149 */	NULL, /* compat_43_oquota */
+	/* 150 */	NULL, /* compat_43_netbsd32_ogetsockname */
+	/* 151 */	NULL, /* unimplemented */
+	/* 152 */	NULL, /* unimplemented */
+	/* 153 */	NULL, /* unimplemented */
+	/* 154 */	NULL, /* unimplemented */
+#if defined(NFSSERVER) || !defined(_KERNEL_OPT)
+	/* 155 */	"nfssvc",
+#else
+	/* 155 */	NULL, /* excluded netbsd32_nfssvc */
+#endif
+	/* 156 */	NULL, /* compat_43_netbsd32_ogetdirentries */
+	/* 157 */	NULL, /* compat_20_netbsd32_statfs */
+	/* 158 */	NULL, /* compat_20_netbsd32_fstatfs */
+	/* 159 */	NULL, /* unimplemented */
+	/* 160 */	NULL, /* unimplemented */
+	/* 161 */	NULL, /* compat_30_netbsd32_getfh */
+	/* 162 */	NULL, /* compat_09_netbsd32_ogetdomainname */
+	/* 163 */	NULL, /* compat_09_netbsd32_osetdomainname */
+	/* 164 */	NULL, /* compat_09_netbsd32_uname */
+	/* 165 */	"sysarch",
+	/* 166 */	NULL, /* unimplemented */
+	/* 167 */	NULL, /* unimplemented */
+	/* 168 */	NULL, /* unimplemented */
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
+	/* 169 */	NULL, /* compat_10_osemsys */
+#else
+	/* 169 */	NULL, /* excluded netbsd32_semsys */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
+	/* 170 */	NULL, /* compat_10_omsgsys */
+#else
+	/* 170 */	NULL, /* excluded netbsd32_msgsys */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
+	/* 171 */	NULL, /* compat_10_oshmsys */
+#else
+	/* 171 */	NULL, /* excluded netbsd32_shmsys */
+#endif
+	/* 172 */	NULL, /* unimplemented */
+	/* 173 */	"pread",
+	/* 174 */	"pwrite",
+#if defined(NTP) || !defined(_KERNEL_OPT)
+	/* 175 */	NULL, /* compat_30_netbsd32_ntp_gettime */
+	/* 176 */	"ntp_adjtime",
+#else
+	/* 175 */	NULL, /* excluded ntp_gettime */
+	/* 176 */	NULL, /* excluded ntp_adjtime */
+#endif
+	/* 177 */	NULL, /* unimplemented */
+	/* 178 */	NULL, /* unimplemented */
+	/* 179 */	NULL, /* unimplemented */
+	/* 180 */	NULL, /* unimplemented */
+	/* 181 */	"setgid",
+	/* 182 */	"setegid",
+	/* 183 */	"seteuid",
+	/* 184 */	NULL, /* excluded netbsd32_lfs_bmapv */
+	/* 185 */	NULL, /* excluded netbsd32_lfs_markv */
+	/* 186 */	NULL, /* excluded netbsd32_lfs_segclean */
+	/* 187 */	NULL, /* excluded netbsd32_lfs_segwait */
+	/* 188 */	NULL, /* compat_12_netbsd32_stat12 */
+	/* 189 */	NULL, /* compat_12_netbsd32_fstat12 */
+	/* 190 */	NULL, /* compat_12_netbsd32_lstat12 */
+	/* 191 */	"pathconf",
+	/* 192 */	"fpathconf",
+	/* 193 */	NULL, /* unimplemented */
+	/* 194 */	"getrlimit",
+	/* 195 */	"setrlimit",
+	/* 196 */	NULL, /* compat_12_netbsd32_getdirentries */
+	/* 197 */	"mmap",
+	/* 198 */	"___syscall",
+	/* 199 */	"lseek",
+	/* 200 */	"truncate",
+	/* 201 */	"ftruncate",
+	/* 202 */	"__sysctl",
+	/* 203 */	"mlock",
+	/* 204 */	"munlock",
+	/* 205 */	"undelete",
+	/* 206 */	NULL, /* compat_50_netbsd32_futimes */
+	/* 207 */	"getpgid",
+	/* 208 */	"reboot",
+	/* 209 */	"poll",
+	/* 210 */	NULL, /* unimplemented { int | netbsd32 | | afssys ( long id , long a1 , long a2 , long a3 , long a4 , long a5 , long a6 ) ; } */
+	/* 211 */	NULL, /* unimplemented */
+	/* 212 */	NULL, /* unimplemented */
+	/* 213 */	NULL, /* unimplemented */
+	/* 214 */	NULL, /* unimplemented */
+	/* 215 */	NULL, /* unimplemented */
+	/* 216 */	NULL, /* unimplemented */
+	/* 217 */	NULL, /* unimplemented */
+	/* 218 */	NULL, /* unimplemented */
+	/* 219 */	NULL, /* unimplemented */
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
+	/* 220 */	NULL, /* compat_14_netbsd32___semctl */
+	/* 221 */	"semget",
+	/* 222 */	"semop",
+	/* 223 */	"semconfig",
+#else
+	/* 220 */	NULL, /* excluded compat_14_netbsd32_semctl */
+	/* 221 */	NULL, /* excluded netbsd32_semget */
+	/* 222 */	NULL, /* excluded netbsd32_semop */
+	/* 223 */	NULL, /* excluded netbsd32_semconfig */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
+	/* 224 */	NULL, /* compat_14_netbsd32_msgctl */
+	/* 225 */	"msgget",
+	/* 226 */	"msgsnd",
+	/* 227 */	"msgrcv",
+#else
+	/* 224 */	NULL, /* excluded compat_14_netbsd32_msgctl */
+	/* 225 */	NULL, /* excluded netbsd32_msgget */
+	/* 226 */	NULL, /* excluded netbsd32_msgsnd */
+	/* 227 */	NULL, /* excluded netbsd32_msgrcv */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
+	/* 228 */	"shmat",
+	/* 229 */	NULL, /* compat_14_netbsd32_shmctl */
+	/* 230 */	"shmdt",
+	/* 231 */	"shmget",
+#else
+	/* 228 */	NULL, /* excluded netbsd32_shmat */
+	/* 229 */	NULL, /* excluded compat_14_netbsd32_shmctl */
+	/* 230 */	NULL, /* excluded netbsd32_shmdt */
+	/* 231 */	NULL, /* excluded netbsd32_shmget */
+#endif
+	/* 232 */	NULL, /* compat_50_netbsd32_clock_gettime */
+	/* 233 */	NULL, /* compat_50_netbsd32_clock_settime */
+	/* 234 */	NULL, /* compat_50_netbsd32_clock_getres */
+	/* 235 */	"timer_create",
+	/* 236 */	"timer_delete",
+	/* 237 */	NULL, /* compat_50_netbsd32_timer_settime */
+	/* 238 */	NULL, /* compat_50_netbsd32_timer_gettime */
+	/* 239 */	"timer_getoverrun",
+	/* 240 */	NULL, /* compat_50_netbsd32_nanosleep */
+	/* 241 */	"fdatasync",
+	/* 242 */	"mlockall",
+	/* 243 */	NULL, /* munlockall */
+	/* 244 */	NULL, /* compat_50_netbsd32___sigtimedwait */
+	/* 245 */	"sigqueueinfo",
+	/* 246 */	"modctl",
+	/* 247 */	"_ksem_init",
+	/* 248 */	"_ksem_open",
+	/* 249 */	"_ksem_unlink",
+	/* 250 */	"_ksem_close",
+	/* 251 */	"_ksem_post",
+	/* 252 */	"_ksem_wait",
+	/* 253 */	"_ksem_trywait",
+	/* 254 */	"_ksem_getvalue",
+	/* 255 */	"_ksem_destroy",
+	/* 256 */	"_ksem_timedwait",
+	/* 257 */	"mq_open",
+	/* 258 */	"mq_close",
+	/* 259 */	"mq_unlink",
+	/* 260 */	"mq_getattr",
+	/* 261 */	"mq_setattr",
+	/* 262 */	"mq_notify",
+	/* 263 */	"mq_send",
+	/* 264 */	"mq_receive",
+	/* 265 */	NULL, /* compat_50_netbsd32_mq_timedsend */
+	/* 266 */	NULL, /* compat_50_netbsd32_mq_timedreceive */
+	/* 267 */	NULL, /* unimplemented */
+	/* 268 */	NULL, /* unimplemented */
+	/* 269 */	NULL, /* unimplemented */
+	/* 270 */	"__posix_rename",
+	/* 271 */	"swapctl",
+	/* 272 */	NULL, /* compat_30_netbsd32_getdents */
+	/* 273 */	"minherit",
+	/* 274 */	"lchmod",
+	/* 275 */	"lchown",
+	/* 276 */	NULL, /* compat_50_netbsd32_lutimes */
+	/* 277 */	"msync",
+	/* 278 */	NULL, /* compat_30_netbsd32___stat13 */
+	/* 279 */	NULL, /* compat_30_netbsd32___fstat13 */
+	/* 280 */	NULL, /* compat_30_netbsd32___lstat13 */
+	/* 281 */	"sigaltstack",
+	/* 282 */	"vfork",
+	/* 283 */	"__posix_chown",
+	/* 284 */	"__posix_fchown",
+	/* 285 */	"__posix_lchown",
+	/* 286 */	"getsid",
+	/* 287 */	"__clone",
+	/* 288 */	"fktrace",
+	/* 289 */	"preadv",
+	/* 290 */	"pwritev",
+	/* 291 */	"sigaction",
+	/* 292 */	"sigpending",
+	/* 293 */	"sigprocmask",
+	/* 294 */	"sigsuspend",
+	/* 295 */	NULL, /* compat_16_netbsd32___sigreturn14 */
+	/* 296 */	"__getcwd",
+	/* 297 */	"fchroot",
+	/* 298 */	NULL, /* compat_30_netbsd32_fhopen */
+	/* 299 */	NULL, /* compat_30_netbsd32_fhstat */
+	/* 300 */	NULL, /* compat_20_netbsd32_fhstatfs */
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
+	/* 301 */	NULL, /* compat_50_netbsd32___semctl14 */
+#else
+	/* 301 */	NULL, /* excluded __semctl14 */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
+	/* 302 */	NULL, /* compat_50_netbsd32___msgctl13 */
+#else
+	/* 302 */	NULL, /* excluded __msgctl13 */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
+	/* 303 */	NULL, /* compat_50_netbsd32___shmctl13 */
+#else
+	/* 303 */	NULL, /* excluded __shmctl13 */
+#endif
+	/* 304 */	"lchflags",
+	/* 305 */	NULL, /* issetugid */
+	/* 306 */	"utrace",
+	/* 307 */	"getcontext",
+	/* 308 */	"setcontext",
+	/* 309 */	"_lwp_create",
+	/* 310 */	NULL, /* _lwp_exit */
+	/* 311 */	NULL, /* _lwp_self */
+	/* 312 */	"_lwp_wait",
+	/* 313 */	"_lwp_suspend",
+	/* 314 */	"_lwp_continue",
+	/* 315 */	"_lwp_wakeup",
+	/* 316 */	NULL, /* _lwp_getprivate */
+	/* 317 */	"_lwp_setprivate",
+	/* 318 */	"_lwp_kill",
+	/* 319 */	"_lwp_detach",
+	/* 320 */	NULL, /* compat_50_netbsd32__lwp_park */
+	/* 321 */	"_lwp_unpark",
+	/* 322 */	"_lwp_unpark_all",
+	/* 323 */	"_lwp_setname",
+	/* 324 */	"_lwp_getname",
+	/* 325 */	"_lwp_ctl",
+	/* 326 */	NULL, /* unimplemented */
+	/* 327 */	NULL, /* unimplemented */
+	/* 328 */	NULL, /* unimplemented */
+	/* 329 */	NULL, /* unimplemented */
+	/* 330 */	NULL, /* obsolete netbsd32_sa_register */
+	/* 331 */	NULL, /* obsolete netbsd32_sa_stacks */
+	/* 332 */	NULL, /* obsolete sa_enable */
+	/* 333 */	NULL, /* obsolete netbsd32_sa_setconcurrency */
+	/* 334 */	NULL, /* obsolete sa_yield */
+	/* 335 */	NULL, /* obsolete netbsd32_sa_preempt */
+	/* 336 */	NULL, /* obsolete sys_sa_unblockyield */
+	/* 337 */	NULL, /* unimplemented */
+	/* 338 */	NULL, /* unimplemented */
+	/* 339 */	NULL, /* unimplemented */
+	/* 340 */	"__sigaction_sigtramp",
+	/* 341 */	NULL, /* unimplemented { int | netbsd32 | | pmc_get_info ( int ctr , int op , void * args ) ; } */
+	/* 342 */	NULL, /* unimplemented { int | netbsd32 | | pmc_control ( int ctr , int op , void * args ) ; } */
+	/* 343 */	"rasctl",
+	/* 344 */	NULL, /* kqueue */
+	/* 345 */	NULL, /* compat_50_netbsd32_kevent */
+	/* 346 */	"_sched_setparam",
+	/* 347 */	"_sched_getparam",
+	/* 348 */	"_sched_setaffinity",
+	/* 349 */	"_sched_getaffinity",
+	/* 350 */	NULL, /* sched_yield */
+	/* 351 */	NULL, /* unimplemented */
+	/* 352 */	NULL, /* unimplemented */
+	/* 353 */	NULL, /* unimplemented */
+	/* 354 */	"fsync_range",
+	/* 355 */	"uuidgen",
+	/* 356 */	"getvfsstat",
+	/* 357 */	"statvfs1",
+	/* 358 */	"fstatvfs1",
+	/* 359 */	NULL, /* compat_30_netbsd32_fhstatvfs1 */
+	/* 360 */	"extattrctl",
+	/* 361 */	"extattr_set_file",
+	/* 362 */	"extattr_get_file",
+	/* 363 */	"extattr_delete_file",
+	/* 364 */	"extattr_set_fd",
+	/* 365 */	"extattr_get_fd",
+	/* 366 */	"extattr_delete_fd",
+	/* 367 */	"extattr_set_link",
+	/* 368 */	"extattr_get_link",
+	/* 369 */	"extattr_delete_link",
+	/* 370 */	"extattr_list_fd",
+	/* 371 */	"extattr_list_file",
+	/* 372 */	"extattr_list_link",
+	/* 373 */	NULL, /* compat_50_netbsd32_pselect */
+	/* 374 */	NULL, /* compat_50_netbsd32_pollts */
+	/* 375 */	"setxattr",
+	/* 376 */	"lsetxattr",
+	/* 377 */	"fsetxattr",
+	/* 378 */	"getxattr",
+	/* 379 */	"lgetxattr",
+	/* 380 */	"fgetxattr",
+	/* 381 */	"listxattr",
+	/* 382 */	"llistxattr",
+	/* 383 */	"flistxattr",
+	/* 384 */	"removexattr",
+	/* 385 */	"lremovexattr",
+	/* 386 */	"fremovexattr",
+	/* 387 */	NULL, /* compat_50_netbsd32___stat30 */
+	/* 388 */	NULL, /* compat_50_netbsd32___fstat30 */
+	/* 389 */	NULL, /* compat_50_netbsd32___lstat30 */
+	/* 390 */	"getdents",
+	/* 391 */	NULL, /* ignored old posix fadvise */
+	/* 392 */	NULL, /* compat_30_netbsd32___fhstat30 */
+#if defined(NTP) || !defined(_KERNEL_OPT)
+	/* 393 */	NULL, /* compat_50_netbsd32_ntp_gettime */
+#else
+	/* 393 */	NULL, /* excluded __ntp_gettime30 */
+#endif
+	/* 394 */	"socket",
+	/* 395 */	"getfh",
+	/* 396 */	"fhopen",
+	/* 397 */	"fhstatvfs1",
+	/* 398 */	NULL, /* compat_50_netbsd32___fhstat40 */
+	/* 399 */	NULL, /* unimplemented sys_aio_cancel */
+	/* 400 */	NULL, /* unimplemented sys_aio_error */
+	/* 401 */	NULL, /* unimplemented sys_aio_fsync */
+	/* 402 */	NULL, /* unimplemented sys_aio_read */
+	/* 403 */	NULL, /* unimplemented sys_aio_return */
+	/* 404 */	NULL, /* unimplemented sys_aio_suspend */
+	/* 405 */	NULL, /* unimplemented sys_aio_write */
+	/* 406 */	NULL, /* unimplemented sys_lio_listio */
+	/* 407 */	NULL, /* unimplemented */
+	/* 408 */	NULL, /* unimplemented */
+	/* 409 */	NULL, /* unimplemented */
+	/* 410 */	"__mount50",
+	/* 411 */	"mremap",
+	/* 412 */	"pset_create",
+	/* 413 */	"pset_destroy",
+	/* 414 */	"pset_assign",
+	/* 415 */	"_pset_bind",
+	/* 416 */	"posix_fadvise",
+	/* 417 */	"select",
+	/* 418 */	"gettimeofday",
+	/* 419 */	"settimeofday",
+	/* 420 */	"utimes",
+	/* 421 */	"adjtime",
+	/* 422 */	NULL, /* excluded __lfs_segwait50 */
+	/* 423 */	"futimes",
+	/* 424 */	"lutimes",
+	/* 425 */	"setitimer",
+	/* 426 */	"getitimer",
+	/* 427 */	"clock_gettime",
+	/* 428 */	"clock_settime",
+	/* 429 */	"clock_getres",
+	/* 430 */	"nanosleep",
+	/* 431 */	"__sigtimedwait",
+	/* 432 */	"mq_timedsend",
+	/* 433 */	"mq_timedreceive",
+	/* 434 */	NULL, /* compat_60_netbsd32__lwp_park */
+	/* 435 */	"kevent",
+	/* 436 */	"pselect",
+	/* 437 */	"pollts",
+	/* 438 */	NULL, /* unimplemented netbsd32___aio_suspend50 */
+	/* 439 */	"stat",
+	/* 440 */	"fstat",
+	/* 441 */	"lstat",
+#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
+	/* 442 */	"__semctl",
+#else
+	/* 442 */	NULL, /* excluded ____semctl50 */
+#endif
+#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
+	/* 443 */	"shmctl",
+#else
+	/* 443 */	NULL, /* excluded ____shmctl50 */
+#endif
+#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
+	/* 444 */	"msgctl",
+#else
+	/* 444 */	NULL, /* excluded ____msgctl50 */
+#endif
+	/* 445 */	"getrusage",
+	/* 446 */	"timer_settime",
+	/* 447 */	"timer_gettime",
+#if defined(NTP) || !defined(_KERNEL_OPT)
+	/* 448 */	"ntp_gettime",
+#else
+	/* 448 */	NULL, /* excluded ___ntp_gettime50 */
+#endif
+	/* 449 */	"wait4",
+	/* 450 */	"mknod",
+	/* 451 */	"fhstat",
+	/* 452 */	NULL, /* obsolete 5.99 quotactl */
+	/* 453 */	"pipe2",
+	/* 454 */	"dup3",
+	/* 455 */	"kqueue1",
+	/* 456 */	"paccept",
+	/* 457 */	"linkat",
+	/* 458 */	"renameat",
+	/* 459 */	"mkfifoat",
+	/* 460 */	"mknodat",
+	/* 461 */	"mkdirat",
+	/* 462 */	"faccessat",
+	/* 463 */	"fchmodat",
+	/* 464 */	"fchownat",
+	/* 465 */	"fexecve",
+	/* 466 */	"fstatat",
+	/* 467 */	"utimensat",
+	/* 468 */	"openat",
+	/* 469 */	"readlinkat",
+	/* 470 */	"symlinkat",
+	/* 471 */	"unlinkat",
+	/* 472 */	"futimens",
+	/* 473 */	"__quotactl",
+	/* 474 */	"posix_spawn",
+	/* 475 */	NULL, /* unimplemented { int | netbsd32 | | recvmmsg ( int s , struct mmsghdr * mmsg , unsigned int vlen , unsigned int flags , netbsd32_timespecp_t timeout ) ; } */
+	/* 476 */	NULL, /* unimplemented { int | netbsd32 | | sendmmsg ( int s , struct mmsghdr * mmsg , unsigned int vlen , unsigned int flags ) ; } */
+	/* 477 */	"clock_nanosleep",
+	/* 478 */	"_lwp_park",
+	/* 479 */	"posix_fallocate",
+	/* 480 */	"fdiscard",
+	/* 481 */	NULL, /* filler */
+	/* 482 */	NULL, /* filler */
+	/* 483 */	NULL, /* filler */
+	/* 484 */	NULL, /* filler */
+	/* 485 */	NULL, /* filler */
+	/* 486 */	NULL, /* filler */
+	/* 487 */	NULL, /* filler */
+	/* 488 */	NULL, /* filler */
+	/* 489 */	NULL, /* filler */
+	/* 490 */	NULL, /* filler */
+	/* 491 */	NULL, /* filler */
+	/* 492 */	NULL, /* filler */
+	/* 493 */	NULL, /* filler */
+	/* 494 */	NULL, /* filler */
+	/* 495 */	NULL, /* filler */
+	/* 496 */	NULL, /* filler */
+	/* 497 */	NULL, /* filler */
+	/* 498 */	NULL, /* filler */
+	/* 499 */	NULL, /* filler */
+	/* 500 */	NULL, /* filler */
+	/* 501 */	NULL, /* filler */
+	/* 502 */	NULL, /* filler */
+	/* 503 */	NULL, /* filler */
+	/* 504 */	NULL, /* filler */
+	/* 505 */	NULL, /* filler */
+	/* 506 */	NULL, /* filler */
+	/* 507 */	NULL, /* filler */
+	/* 508 */	NULL, /* filler */
+	/* 509 */	NULL, /* filler */
+	/* 510 */	NULL, /* filler */
+	/* 511 */	NULL, /* filler */
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.117 2015/06/23 04:45:53 dholland Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.118 2015/09/24 14:43:06 christos Exp $ */
 
 /*
  * System call argument lists.
