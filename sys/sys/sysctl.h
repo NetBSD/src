@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.215 2015/01/04 22:11:40 pooka Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.216 2015/09/24 14:32:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -678,6 +678,7 @@ struct kinfo_lwp {
 #define	KERN_PROC_NARGV		2	/* number of strings in above */
 #define	KERN_PROC_ENV		3	/* environ */
 #define	KERN_PROC_NENV		4	/* number of strings in above */
+#define	KERN_PROC_PATHNAME 	5	/* path to executable */
 
 /*
  * KERN_SYSVIPC subtypes
@@ -826,6 +827,67 @@ struct evcnt_sysctl {
 
 #define	KERN_EVCNT_COUNT_ANY		0
 #define	KERN_EVCNT_COUNT_NONZERO	1
+
+/*
+ * CTL_VM identifiers
+ */
+#define VM_PROC		1		/* internal */
+#define VM_PROC_MAP	1		/* struct kinfo_vmentry */
+
+/*
+ * The vm.proc.map sysctl allows a process to dump the VM layout of
+ * another process as a series of entries.
+ */
+#define	KVME_TYPE_NONE		0
+#define	KVME_TYPE_OBJECT	1
+#define	KVME_TYPE_VNODE		2
+#define	KVME_TYPE_KERN		3
+#define	KVME_TYPE_DEVICE	4
+#define	KVME_TYPE_ANON		5
+#define	KVME_TYPE_SUBMAP	6
+#define	KVME_TYPE_UNKNOWN	255
+
+#define	KVME_PROT_READ		0x00000001
+#define	KVME_PROT_WRITE		0x00000002
+#define	KVME_PROT_EXEC		0x00000004
+
+#define	KVME_FLAG_COW		0x00000001
+#define	KVME_FLAG_NEEDS_COPY	0x00000002
+#define	KVME_FLAG_NOCOREDUMP	0x00000004
+#define	KVME_FLAG_PAGEABLE	0x00000008
+#define	KVME_FLAG_GROWS_UP	0x00000010
+#define	KVME_FLAG_GROWS_DOWN	0x00000020
+
+struct kinfo_vmentry {
+	uint64_t kve_start;			/* Starting address. */
+	uint64_t kve_end;			/* Finishing address. */
+	uint64_t kve_offset;			/* Mapping offset in object */
+
+	uint32_t kve_type;			/* Type of map entry. */
+	uint32_t kve_flags;			/* Flags on map entry. */
+
+	uint32_t kve_count;			/* Number of pages/entries */
+	uint32_t kve_wired_count;		/* Number of wired pages */
+
+	uint32_t kve_advice;			/* Advice */
+	uint32_t kve_attributes;		/* Map attribute */
+
+	uint32_t kve_protection;		/* Protection bitmask. */
+	uint32_t kve_max_protection;		/* Max protection bitmask */
+
+	uint32_t kve_ref_count;			/* VM obj ref count. */
+	uint32_t kve_inheritance;		/* Inheritance */
+
+	uint64_t kve_vn_fileid;			/* inode number if vnode */
+	uint64_t kve_vn_size;			/* File size. */
+	uint64_t kve_vn_fsid;			/* dev_t of vnode location */
+	uint64_t kve_vn_rdev;			/* Device id if device. */
+
+	uint32_t kve_vn_type;			/* Vnode type. */
+	uint32_t kve_vn_mode;			/* File mode. */
+
+	char	 kve_path[PATH_MAX];		/* Path to VM obj, if any. */
+};
 
 /*
  * CTL_HW identifiers
