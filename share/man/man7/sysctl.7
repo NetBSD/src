@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.92 2015/07/11 17:36:09 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.93 2015/09/24 14:56:41 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd July 11, 2015
+.Dd September 24, 2015
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -949,11 +949,12 @@ of a process.
 Multiple strings are returned separated by NUL characters.
 The third level name is the process ID.
 The fourth level name is as follows:
-.Bl -column "KERN_PROG_NARGV" "The number of environ strings" -offset indent
+.Bl -column "KERN_PROG_PATHNAME" "The full pathname of the executable" -offset indent
 .It Dv KERN_PROC_ARGV	The argv strings
 .It Dv KERN_PROC_ENV	The environ strings
 .It Dv KERN_PROC_NARGV	The number of argv strings
 .It Dv KERN_PROC_NENV	The number of environ strings
+.It Dv KERN_PROC_PATHNAME	The full pathname of the executable
 .El
 .It Li kern.profiling ( Dv KERN_PROF )
 Return profiling information about the kernel.
@@ -2236,6 +2237,7 @@ privilege may change the value.
 .It vm.uvmexp	struct uvmexp	no
 .It vm.uvmexp2	struct uvmexp_sysctl	no
 .It vm.vmmeter	struct vmtotal	no
+.It vm.proc.map	struct kinfo_vmentry	no
 .El
 .Bl -tag -width "123456"
 .It Li vm.anonmax ( Dv VM_ANONMAX )
@@ -2279,6 +2281,15 @@ The returned data consists of a
 .Vt struct vmtotal .
 .It vm.user_va0_disable
 A flag which controls whether user processes can map virtual address\ 0.
+.It Li vm.proc.map ( Dv VM_PROC )
+The third level is 
+.dv VM_PROC_MAP ,
+the fourth is the pid of the process to display the vm object entries for, and
+the fifth is the size of
+.Vt struct kinfo_vmentry .
+Returns an array of
+.Vt struct kinfo_vmentry
+objects.
 .It Li vm.uspace ( Dv VM_USPACE )
 The number of bytes allocated for each kernel stack.
 .It Li vm.uvmexp ( Dv VM_UVMEXP )
