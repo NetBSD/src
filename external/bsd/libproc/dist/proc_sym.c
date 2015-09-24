@@ -29,7 +29,11 @@
  */
 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_sym.c 279946 2015-03-13 04:26:48Z stas $");
+#else
+__RCSID("$NetBSD: proc_sym.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+#endif
 
 #include <sys/types.h>
 #ifndef NO_CTF
@@ -37,6 +41,7 @@ __FBSDID("$FreeBSD: head/lib/libproc/proc_sym.c 279946 2015-03-13 04:26:48Z stas
 #include <sys/ctf_api.h>
 #endif
 #include <sys/user.h>
+#include <sys/sysctl.h>
 
 #include <assert.h>
 #include <err.h>
@@ -49,7 +54,7 @@ __FBSDID("$FreeBSD: head/lib/libproc/proc_sym.c 279946 2015-03-13 04:26:48Z stas
 #ifndef NO_CTF
 #include <libctf.h>
 #endif
-#include <libutil.h>
+#include <util.h>
 
 #include "_libproc.h"
 
@@ -62,6 +67,18 @@ extern char *__cxa_demangle(const char *, char *, size_t *, int *);
 #endif /* NO_CXA_DEMANGLE */
 
 static void	proc_rdl2prmap(rd_loadobj_t *, prmap_t *);
+
+#ifdef __NetBSD__
+static char *basename_r(const char *path, char *buf)
+{
+	// We "know" this works.
+	if (path[0])
+		strlcpy(buf, strrchr(path, '/') + 1, PATH_MAX);
+	else
+		buf[0] = '\0';
+	return buf;
+}
+#endif
 
 static void
 demangle(const char *symbol, char *buf, size_t len)
@@ -197,8 +214,7 @@ proc_iter_objs(struct proc_handle *p, proc_map_f *func, void *cd)
 prmap_t *
 proc_addr2map(struct proc_handle *p, uintptr_t addr)
 {
-	size_t i;
-	int cnt, lastvn = 0;
+	size_t i, cnt, lastvn = 0;
 	prmap_t *map;
 	rd_loadobj_t *rdl;
 	struct kinfo_vmentry *kves, *kve;
@@ -370,8 +386,7 @@ err0:
 prmap_t *
 proc_name2map(struct proc_handle *p, const char *name)
 {
-	size_t i;
-	int cnt;
+	size_t i, cnt;
 	prmap_t *map = NULL;
 	char tmppath[MAXPATHLEN];
 	struct kinfo_vmentry *kves, *kve;
