@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.89 2015/08/24 16:07:11 pooka Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.90 2015/09/24 14:58:19 christos Exp $ */
 
 /*
  * System call protos in rump namespace.
@@ -16,292 +16,80 @@
 
 #include <rump/rump_syscalls_compat.h>
 
-#ifndef RUMP_SYS_RENAME_FGETXATTR
-#define RUMP_SYS_RENAME_FGETXATTR rump___sysimpl_fgetxattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_IOCTL
-#define RUMP_SYS_RENAME_IOCTL rump___sysimpl_ioctl
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETPPID
-#define RUMP_SYS_RENAME_GETPPID rump___sysimpl_getppid
-#endif
-
-#ifndef RUMP_SYS_RENAME___QUOTACTL
-#define RUMP_SYS_RENAME___QUOTACTL rump___sysimpl___quotactl
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETPGID
-#define RUMP_SYS_RENAME_GETPGID rump___sysimpl_getpgid
-#endif
-
-#ifndef RUMP_SYS_RENAME___SETLOGIN
-#define RUMP_SYS_RENAME___SETLOGIN rump___sysimpl___setlogin
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETEUID
-#define RUMP_SYS_RENAME_SETEUID rump___sysimpl_seteuid
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETPEERNAME
-#define RUMP_SYS_RENAME_GETPEERNAME rump___sysimpl_getpeername
-#endif
-
-#ifndef RUMP_SYS_RENAME_SYMLINK
-#define RUMP_SYS_RENAME_SYMLINK rump___sysimpl_symlink
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETUID_WITH_EUID
-#define RUMP_SYS_RENAME_GETUID_WITH_EUID rump___sysimpl_getuid
-#endif
-
-#ifndef RUMP_SYS_RENAME_TIMER_GETTIME
-#define RUMP_SYS_RENAME_TIMER_GETTIME rump___sysimpl_timer_gettime50
-#endif
-
-#ifndef RUMP_SYS_RENAME_READ
-#define RUMP_SYS_RENAME_READ rump___sysimpl_read
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_GET_FILE
-#define RUMP_SYS_RENAME_EXTATTR_GET_FILE rump___sysimpl_extattr_get_file
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_LIST_FD
-#define RUMP_SYS_RENAME_EXTATTR_LIST_FD rump___sysimpl_extattr_list_fd
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETRLIMIT
-#define RUMP_SYS_RENAME_SETRLIMIT rump___sysimpl_setrlimit
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETPID_WITH_PPID
-#define RUMP_SYS_RENAME_GETPID_WITH_PPID rump___sysimpl_getpid
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETGID
-#define RUMP_SYS_RENAME_SETGID rump___sysimpl_setgid
-#endif
-
-#ifndef RUMP_SYS_RENAME_LISTEN
-#define RUMP_SYS_RENAME_LISTEN rump___sysimpl_listen
-#endif
-
-#ifndef RUMP_SYS_RENAME_SYNC
-#define RUMP_SYS_RENAME_SYNC rump___sysimpl_sync
-#endif
-
-#ifndef RUMP_SYS_RENAME_FUTIMENS
-#define RUMP_SYS_RENAME_FUTIMENS rump___sysimpl_futimens
-#endif
-
-#ifndef RUMP_SYS_RENAME_MKNODAT
-#define RUMP_SYS_RENAME_MKNODAT rump___sysimpl_mknodat
-#endif
-
-#ifndef RUMP_SYS_RENAME_PIPE2
-#define RUMP_SYS_RENAME_PIPE2 rump___sysimpl_pipe2
-#endif
-
-#ifndef RUMP_SYS_RENAME_CHFLAGS
-#define RUMP_SYS_RENAME_CHFLAGS rump___sysimpl_chflags
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_GET_FD
-#define RUMP_SYS_RENAME_EXTATTR_GET_FD rump___sysimpl_extattr_get_fd
-#endif
-
-#ifndef RUMP_SYS_RENAME_LLISTXATTR
-#define RUMP_SYS_RENAME_LLISTXATTR rump___sysimpl_llistxattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_POLLTS
-#define RUMP_SYS_RENAME_POLLTS rump___sysimpl_pollts50
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_LIST_FILE
-#define RUMP_SYS_RENAME_EXTATTR_LIST_FILE rump___sysimpl_extattr_list_file
-#endif
-
-#ifndef RUMP_SYS_RENAME_CONNECT
-#define RUMP_SYS_RENAME_CONNECT rump___sysimpl_connect
-#endif
-
-#ifndef RUMP_SYS_RENAME_LUTIMES
-#define RUMP_SYS_RENAME_LUTIMES rump___sysimpl_lutimes50
-#endif
-
-#ifndef RUMP_SYS_RENAME_FSETXATTR
-#define RUMP_SYS_RENAME_FSETXATTR rump___sysimpl_fsetxattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_KQUEUE
-#define RUMP_SYS_RENAME_KQUEUE rump___sysimpl_kqueue
-#endif
-
-#ifndef RUMP_SYS_RENAME_FLISTXATTR
-#define RUMP_SYS_RENAME_FLISTXATTR rump___sysimpl_flistxattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_LCHOWN
-#define RUMP_SYS_RENAME_LCHOWN rump___sysimpl_lchown
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETUID
-#define RUMP_SYS_RENAME_SETUID rump___sysimpl_setuid
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETSOCKNAME
-#define RUMP_SYS_RENAME_GETSOCKNAME rump___sysimpl_getsockname
-#endif
-
-#ifndef RUMP_SYS_RENAME_UNLINKAT
-#define RUMP_SYS_RENAME_UNLINKAT rump___sysimpl_unlinkat
-#endif
-
-#ifndef RUMP_SYS_RENAME_SENDTO
-#define RUMP_SYS_RENAME_SENDTO rump___sysimpl_sendto
-#endif
-
-#ifndef RUMP_SYS_RENAME_FDISCARD
-#define RUMP_SYS_RENAME_FDISCARD rump___sysimpl_fdiscard
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_SET_FILE
-#define RUMP_SYS_RENAME_EXTATTR_SET_FILE rump___sysimpl_extattr_set_file
-#endif
-
-#ifndef RUMP_SYS_RENAME_PATHCONF
-#define RUMP_SYS_RENAME_PATHCONF rump___sysimpl_pathconf
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETDENTS
-#define RUMP_SYS_RENAME_GETDENTS rump___sysimpl_getdents30
-#endif
-
-#ifndef RUMP_SYS_RENAME_FTRUNCATE
-#define RUMP_SYS_RENAME_FTRUNCATE rump___sysimpl_ftruncate
-#endif
-
-#ifndef RUMP_SYS_RENAME_LREMOVEXATTR
-#define RUMP_SYS_RENAME_LREMOVEXATTR rump___sysimpl_lremovexattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_WRITEV
-#define RUMP_SYS_RENAME_WRITEV rump___sysimpl_writev
-#endif
-
-#ifndef RUMP_SYS_RENAME_FHSTAT
-#define RUMP_SYS_RENAME_FHSTAT rump___sysimpl_fhstat50
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_CLOSE
-#define RUMP_SYS_RENAME__KSEM_CLOSE rump___sysimpl__ksem_close
-#endif
-
-#ifndef RUMP_SYS_RENAME_CHROOT
-#define RUMP_SYS_RENAME_CHROOT rump___sysimpl_chroot
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETITIMER
-#define RUMP_SYS_RENAME_GETITIMER rump___sysimpl_getitimer50
-#endif
-
-#ifndef RUMP_SYS_RENAME_UTIMES
-#define RUMP_SYS_RENAME_UTIMES rump___sysimpl_utimes50
-#endif
-
-#ifndef RUMP_SYS_RENAME_STAT
-#define RUMP_SYS_RENAME_STAT rump___sysimpl_stat50
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_WAIT
-#define RUMP_SYS_RENAME__KSEM_WAIT rump___sysimpl__ksem_wait
-#endif
-
-#ifndef RUMP_SYS_RENAME_TIMER_GETOVERRUN
-#define RUMP_SYS_RENAME_TIMER_GETOVERRUN rump___sysimpl_timer_getoverrun
-#endif
-
-#ifndef RUMP_SYS_RENAME_CLOCK_NANOSLEEP
-#define RUMP_SYS_RENAME_CLOCK_NANOSLEEP rump___sysimpl_clock_nanosleep
-#endif
-
-#ifndef RUMP_SYS_RENAME_FSTATAT
-#define RUMP_SYS_RENAME_FSTATAT rump___sysimpl_fstatat
-#endif
-
-#ifndef RUMP_SYS_RENAME_RENAMEAT
-#define RUMP_SYS_RENAME_RENAMEAT rump___sysimpl_renameat
-#endif
-
-#ifndef RUMP_SYS_RENAME_ADJTIME
-#define RUMP_SYS_RENAME_ADJTIME rump___sysimpl_adjtime50
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETTIMEOFDAY
-#define RUMP_SYS_RENAME_SETTIMEOFDAY rump___sysimpl_settimeofday50
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_GET_LINK
-#define RUMP_SYS_RENAME_EXTATTR_GET_LINK rump___sysimpl_extattr_get_link
-#endif
-
-#ifndef RUMP_SYS_RENAME_TIMER_CREATE
-#define RUMP_SYS_RENAME_TIMER_CREATE rump___sysimpl_timer_create
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETGROUPS
-#define RUMP_SYS_RENAME_GETGROUPS rump___sysimpl_getgroups
+#ifndef RUMP_SYS_RENAME_FKTRACE
+#define RUMP_SYS_RENAME_FKTRACE rump___sysimpl_fktrace
 #endif
 
 #ifndef RUMP_SYS_RENAME_GETSID
 #define RUMP_SYS_RENAME_GETSID rump___sysimpl_getsid
 #endif
 
-#ifndef RUMP_SYS_RENAME_READLINK
-#define RUMP_SYS_RENAME_READLINK rump___sysimpl_readlink
+#ifndef RUMP_SYS_RENAME_RECVMMSG
+#define RUMP_SYS_RENAME_RECVMMSG rump___sysimpl_recvmmsg
 #endif
 
-#ifndef RUMP_SYS_RENAME_PSELECT
-#define RUMP_SYS_RENAME_PSELECT rump___sysimpl_pselect50
+#ifndef RUMP_SYS_RENAME_UTIMENSAT
+#define RUMP_SYS_RENAME_UTIMENSAT rump___sysimpl_utimensat
 #endif
 
-#ifndef RUMP_SYS_RENAME_POLL
-#define RUMP_SYS_RENAME_POLL rump___sysimpl_poll
+#ifndef RUMP_SYS_RENAME_CHFLAGS
+#define RUMP_SYS_RENAME_CHFLAGS rump___sysimpl_chflags
 #endif
 
-#ifndef RUMP_SYS_RENAME_ACCEPT
-#define RUMP_SYS_RENAME_ACCEPT rump___sysimpl_accept
+#ifndef RUMP_SYS_RENAME_GETGROUPS
+#define RUMP_SYS_RENAME_GETGROUPS rump___sysimpl_getgroups
 #endif
 
-#ifndef RUMP_SYS_RENAME_EXTATTR_DELETE_FILE
-#define RUMP_SYS_RENAME_EXTATTR_DELETE_FILE rump___sysimpl_extattr_delete_file
+#ifndef RUMP_SYS_RENAME_SENDTO
+#define RUMP_SYS_RENAME_SENDTO rump___sysimpl_sendto
 #endif
 
-#ifndef RUMP_SYS_RENAME_FCHROOT
-#define RUMP_SYS_RENAME_FCHROOT rump___sysimpl_fchroot
+#ifndef RUMP_SYS_RENAME_ADJTIME
+#define RUMP_SYS_RENAME_ADJTIME rump___sysimpl_adjtime50
 #endif
 
-#ifndef RUMP_SYS_RENAME_POSIX_FALLOCATE
-#define RUMP_SYS_RENAME_POSIX_FALLOCATE rump___sysimpl_posix_fallocate
+#ifndef RUMP_SYS_RENAME_FHSTATVFS1
+#define RUMP_SYS_RENAME_FHSTATVFS1 rump___sysimpl_fhstatvfs140
 #endif
 
-#ifndef RUMP_SYS_RENAME_LISTXATTR
-#define RUMP_SYS_RENAME_LISTXATTR rump___sysimpl_listxattr
+#ifndef RUMP_SYS_RENAME_TIMER_DELETE
+#define RUMP_SYS_RENAME_TIMER_DELETE rump___sysimpl_timer_delete
 #endif
 
-#ifndef RUMP_SYS_RENAME___POSIX_FCHOWN
-#define RUMP_SYS_RENAME___POSIX_FCHOWN rump___sysimpl___posix_fchown
+#ifndef RUMP_SYS_RENAME_PWRITEV
+#define RUMP_SYS_RENAME_PWRITEV rump___sysimpl_pwritev
 #endif
 
-#ifndef RUMP_SYS_RENAME_READLINKAT
-#define RUMP_SYS_RENAME_READLINKAT rump___sysimpl_readlinkat
+#ifndef RUMP_SYS_RENAME_EXTATTR_GET_LINK
+#define RUMP_SYS_RENAME_EXTATTR_GET_LINK rump___sysimpl_extattr_get_link
 #endif
 
-#ifndef RUMP_SYS_RENAME_CLOCK_GETTIME
-#define RUMP_SYS_RENAME_CLOCK_GETTIME rump___sysimpl_clock_gettime50
+#ifndef RUMP_SYS_RENAME_LIO_LISTIO
+#define RUMP_SYS_RENAME_LIO_LISTIO rump___sysimpl_lio_listio
+#endif
+
+#ifndef RUMP_SYS_RENAME_MKDIRAT
+#define RUMP_SYS_RENAME_MKDIRAT rump___sysimpl_mkdirat
+#endif
+
+#ifndef RUMP_SYS_RENAME___GETCWD
+#define RUMP_SYS_RENAME___GETCWD rump___sysimpl___getcwd
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETRLIMIT
+#define RUMP_SYS_RENAME_SETRLIMIT rump___sysimpl_setrlimit
+#endif
+
+#ifndef RUMP_SYS_RENAME_FDATASYNC
+#define RUMP_SYS_RENAME_FDATASYNC rump___sysimpl_fdatasync
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETSID
+#define RUMP_SYS_RENAME_SETSID rump___sysimpl_setsid
+#endif
+
+#ifndef RUMP_SYS_RENAME_REMOVEXATTR
+#define RUMP_SYS_RENAME_REMOVEXATTR rump___sysimpl_removexattr
 #endif
 
 #ifndef RUMP_SYS_RENAME_AIO_RETURN
@@ -312,348 +100,156 @@
 #define RUMP_SYS_RENAME_GETVFSSTAT rump___sysimpl_getvfsstat
 #endif
 
-#ifndef RUMP_SYS_RENAME_FUTIMES
-#define RUMP_SYS_RENAME_FUTIMES rump___sysimpl_futimes50
+#ifndef RUMP_SYS_RENAME_FLOCK
+#define RUMP_SYS_RENAME_FLOCK rump___sysimpl_flock
 #endif
 
-#ifndef RUMP_SYS_RENAME_FREMOVEXATTR
-#define RUMP_SYS_RENAME_FREMOVEXATTR rump___sysimpl_fremovexattr
+#ifndef RUMP_SYS_RENAME_AIO_CANCEL
+#define RUMP_SYS_RENAME_AIO_CANCEL rump___sysimpl_aio_cancel
 #endif
 
-#ifndef RUMP_SYS_RENAME_RECVMMSG
-#define RUMP_SYS_RENAME_RECVMMSG rump___sysimpl_recvmmsg
+#ifndef RUMP_SYS_RENAME___POSIX_RENAME
+#define RUMP_SYS_RENAME___POSIX_RENAME rump___sysimpl___posix_rename
 #endif
 
-#ifndef RUMP_SYS_RENAME_MOUNT
-#define RUMP_SYS_RENAME_MOUNT rump___sysimpl_mount50
+#ifndef RUMP_SYS_RENAME_LISTXATTR
+#define RUMP_SYS_RENAME_LISTXATTR rump___sysimpl_listxattr
 #endif
 
-#ifndef RUMP_SYS_RENAME_UTRACE
-#define RUMP_SYS_RENAME_UTRACE rump___sysimpl_utrace
+#ifndef RUMP_SYS_RENAME_PIPE2
+#define RUMP_SYS_RENAME_PIPE2 rump___sysimpl_pipe2
 #endif
 
-#ifndef RUMP_SYS_RENAME_RECVFROM
-#define RUMP_SYS_RENAME_RECVFROM rump___sysimpl_recvfrom
+#ifndef RUMP_SYS_RENAME_EXTATTR_GET_FD
+#define RUMP_SYS_RENAME_EXTATTR_GET_FD rump___sysimpl_extattr_get_fd
 #endif
 
-#ifndef RUMP_SYS_RENAME_GETRLIMIT
-#define RUMP_SYS_RENAME_GETRLIMIT rump___sysimpl_getrlimit
+#ifndef RUMP_SYS_RENAME_LCHOWN
+#define RUMP_SYS_RENAME_LCHOWN rump___sysimpl_lchown
 #endif
 
-#ifndef RUMP_SYS_RENAME_FCHOWN
-#define RUMP_SYS_RENAME_FCHOWN rump___sysimpl_fchown
+#ifndef RUMP_SYS_RENAME_GETSOCKNAME
+#define RUMP_SYS_RENAME_GETSOCKNAME rump___sysimpl_getsockname
 #endif
 
-#ifndef RUMP_SYS_RENAME_SOCKETPAIR
-#define RUMP_SYS_RENAME_SOCKETPAIR rump___sysimpl_socketpair
+#ifndef RUMP_SYS_RENAME_SETTIMEOFDAY
+#define RUMP_SYS_RENAME_SETTIMEOFDAY rump___sysimpl_settimeofday50
 #endif
 
-#ifndef RUMP_SYS_RENAME_CHOWN
-#define RUMP_SYS_RENAME_CHOWN rump___sysimpl_chown
+#ifndef RUMP_SYS_RENAME_CLOCK_NANOSLEEP
+#define RUMP_SYS_RENAME_CLOCK_NANOSLEEP rump___sysimpl_clock_nanosleep
 #endif
 
-#ifndef RUMP_SYS_RENAME_GETEGID
-#define RUMP_SYS_RENAME_GETEGID rump___sysimpl_getegid
+#ifndef RUMP_SYS_RENAME_UNLINK
+#define RUMP_SYS_RENAME_UNLINK rump___sysimpl_unlink
 #endif
 
-#ifndef RUMP_SYS_RENAME_STATVFS1
-#define RUMP_SYS_RENAME_STATVFS1 rump___sysimpl_statvfs1
-#endif
-
-#ifndef RUMP_SYS_RENAME_SOCKET
-#define RUMP_SYS_RENAME_SOCKET rump___sysimpl_socket30
-#endif
-
-#ifndef RUMP_SYS_RENAME_LCHMOD
-#define RUMP_SYS_RENAME_LCHMOD rump___sysimpl_lchmod
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETFH
-#define RUMP_SYS_RENAME_GETFH rump___sysimpl_getfh30
-#endif
-
-#ifndef RUMP_SYS_RENAME_KQUEUE1
-#define RUMP_SYS_RENAME_KQUEUE1 rump___sysimpl_kqueue1
-#endif
-
-#ifndef RUMP_SYS_RENAME_SHUTDOWN
-#define RUMP_SYS_RENAME_SHUTDOWN rump___sysimpl_shutdown
-#endif
-
-#ifndef RUMP_SYS_RENAME_PREADV
-#define RUMP_SYS_RENAME_PREADV rump___sysimpl_preadv
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_POST
-#define RUMP_SYS_RENAME__KSEM_POST rump___sysimpl__ksem_post
-#endif
-
-#ifndef RUMP_SYS_RENAME_TIMER_DELETE
-#define RUMP_SYS_RENAME_TIMER_DELETE rump___sysimpl_timer_delete
-#endif
-
-#ifndef RUMP_SYS_RENAME_FCHMODAT
-#define RUMP_SYS_RENAME_FCHMODAT rump___sysimpl_fchmodat
-#endif
-
-#ifndef RUMP_SYS_RENAME_AIO_WRITE
-#define RUMP_SYS_RENAME_AIO_WRITE rump___sysimpl_aio_write
-#endif
-
-#ifndef RUMP_SYS_RENAME_LSEEK
-#define RUMP_SYS_RENAME_LSEEK rump___sysimpl_lseek
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_OPEN
-#define RUMP_SYS_RENAME__KSEM_OPEN rump___sysimpl__ksem_open
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_LIST_LINK
-#define RUMP_SYS_RENAME_EXTATTR_LIST_LINK rump___sysimpl_extattr_list_link
-#endif
-
-#ifndef RUMP_SYS_RENAME_PWRITE
-#define RUMP_SYS_RENAME_PWRITE rump___sysimpl_pwrite
-#endif
-
-#ifndef RUMP_SYS_RENAME___GETCWD
-#define RUMP_SYS_RENAME___GETCWD rump___sysimpl___getcwd
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_TIMEDWAIT
-#define RUMP_SYS_RENAME__KSEM_TIMEDWAIT rump___sysimpl__ksem_timedwait
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETEUID
-#define RUMP_SYS_RENAME_GETEUID rump___sysimpl_geteuid
-#endif
-
-#ifndef RUMP_SYS_RENAME_MKDIR
-#define RUMP_SYS_RENAME_MKDIR rump___sysimpl_mkdir
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_SET_FD
-#define RUMP_SYS_RENAME_EXTATTR_SET_FD rump___sysimpl_extattr_set_fd
-#endif
-
-#ifndef RUMP_SYS_RENAME_AIO_FSYNC
-#define RUMP_SYS_RENAME_AIO_FSYNC rump___sysimpl_aio_fsync
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_SET_LINK
-#define RUMP_SYS_RENAME_EXTATTR_SET_LINK rump___sysimpl_extattr_set_link
-#endif
-
-#ifndef RUMP_SYS_RENAME_FKTRACE
-#define RUMP_SYS_RENAME_FKTRACE rump___sysimpl_fktrace
-#endif
-
-#ifndef RUMP_SYS_RENAME_FCHFLAGS
-#define RUMP_SYS_RENAME_FCHFLAGS rump___sysimpl_fchflags
-#endif
-
-#ifndef RUMP_SYS_RENAME_KTRACE
-#define RUMP_SYS_RENAME_KTRACE rump___sysimpl_ktrace
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETXATTR
-#define RUMP_SYS_RENAME_GETXATTR rump___sysimpl_getxattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_FCNTL
-#define RUMP_SYS_RENAME_FCNTL rump___sysimpl_fcntl
+#ifndef RUMP_SYS_RENAME_AIO_SUSPEND
+#define RUMP_SYS_RENAME_AIO_SUSPEND rump___sysimpl_aio_suspend50
 #endif
 
 #ifndef RUMP_SYS_RENAME_SETPGID
 #define RUMP_SYS_RENAME_SETPGID rump___sysimpl_setpgid
 #endif
 
-#ifndef RUMP_SYS_RENAME_LINK
-#define RUMP_SYS_RENAME_LINK rump___sysimpl_link
-#endif
-
-#ifndef RUMP_SYS_RENAME_TIMER_SETTIME
-#define RUMP_SYS_RENAME_TIMER_SETTIME rump___sysimpl_timer_settime50
-#endif
-
-#ifndef RUMP_SYS_RENAME_LCHFLAGS
-#define RUMP_SYS_RENAME_LCHFLAGS rump___sysimpl_lchflags
-#endif
-
-#ifndef RUMP_SYS_RENAME_FCHDIR
-#define RUMP_SYS_RENAME_FCHDIR rump___sysimpl_fchdir
-#endif
-
-#ifndef RUMP_SYS_RENAME_CHDIR
-#define RUMP_SYS_RENAME_CHDIR rump___sysimpl_chdir
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_DELETE_FD
-#define RUMP_SYS_RENAME_EXTATTR_DELETE_FD rump___sysimpl_extattr_delete_fd
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_UNLINK
-#define RUMP_SYS_RENAME__KSEM_UNLINK rump___sysimpl__ksem_unlink
-#endif
-
-#ifndef RUMP_SYS_RENAME_MODCTL
-#define RUMP_SYS_RENAME_MODCTL rump___sysimpl_modctl
-#endif
-
-#ifndef RUMP_SYS_RENAME_FPATHCONF
-#define RUMP_SYS_RENAME_FPATHCONF rump___sysimpl_fpathconf
-#endif
-
-#ifndef RUMP_SYS_RENAME_FSYNC_RANGE
-#define RUMP_SYS_RENAME_FSYNC_RANGE rump___sysimpl_fsync_range
-#endif
-
-#ifndef RUMP_SYS_RENAME_FCHMOD
-#define RUMP_SYS_RENAME_FCHMOD rump___sysimpl_fchmod
-#endif
-
-#ifndef RUMP_SYS_RENAME_READV
-#define RUMP_SYS_RENAME_READV rump___sysimpl_readv
-#endif
-
-#ifndef RUMP_SYS_RENAME_NANOSLEEP
-#define RUMP_SYS_RENAME_NANOSLEEP rump___sysimpl_nanosleep50
-#endif
-
-#ifndef RUMP_SYS_RENAME_CHMOD
-#define RUMP_SYS_RENAME_CHMOD rump___sysimpl_chmod
-#endif
-
-#ifndef RUMP_SYS_RENAME_DUP
-#define RUMP_SYS_RENAME_DUP rump___sysimpl_dup
-#endif
-
-#ifndef RUMP_SYS_RENAME_LINKAT
-#define RUMP_SYS_RENAME_LINKAT rump___sysimpl_linkat
-#endif
-
-#ifndef RUMP_SYS_RENAME_AIO_READ
-#define RUMP_SYS_RENAME_AIO_READ rump___sysimpl_aio_read
-#endif
-
-#ifndef RUMP_SYS_RENAME_SELECT
-#define RUMP_SYS_RENAME_SELECT rump___sysimpl_select50
-#endif
-
-#ifndef RUMP_SYS_RENAME_WRITE
-#define RUMP_SYS_RENAME_WRITE rump___sysimpl_write
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETREGID
-#define RUMP_SYS_RENAME_SETREGID rump___sysimpl_setregid
-#endif
-
-#ifndef RUMP_SYS_RENAME_BIND
-#define RUMP_SYS_RENAME_BIND rump___sysimpl_bind
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETXATTR
-#define RUMP_SYS_RENAME_SETXATTR rump___sysimpl_setxattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_REBOOT
-#define RUMP_SYS_RENAME_REBOOT rump___sysimpl_reboot
-#endif
-
-#ifndef RUMP_SYS_RENAME_CLOSE
-#define RUMP_SYS_RENAME_CLOSE rump___sysimpl_close
-#endif
-
-#ifndef RUMP_SYS_RENAME_EXTATTR_DELETE_LINK
-#define RUMP_SYS_RENAME_EXTATTR_DELETE_LINK rump___sysimpl_extattr_delete_link
-#endif
-
-#ifndef RUMP_SYS_RENAME___POSIX_CHOWN
-#define RUMP_SYS_RENAME___POSIX_CHOWN rump___sysimpl___posix_chown
-#endif
-
-#ifndef RUMP_SYS_RENAME_AIO_ERROR
-#define RUMP_SYS_RENAME_AIO_ERROR rump___sysimpl_aio_error
-#endif
-
-#ifndef RUMP_SYS_RENAME_FHSTATVFS1
-#define RUMP_SYS_RENAME_FHSTATVFS1 rump___sysimpl_fhstatvfs140
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETSOCKOPT
-#define RUMP_SYS_RENAME_SETSOCKOPT rump___sysimpl_setsockopt
-#endif
-
-#ifndef RUMP_SYS_RENAME_UNMOUNT
-#define RUMP_SYS_RENAME_UNMOUNT rump___sysimpl_unmount
-#endif
-
-#ifndef RUMP_SYS_RENAME_MKDIRAT
-#define RUMP_SYS_RENAME_MKDIRAT rump___sysimpl_mkdirat
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETSID
-#define RUMP_SYS_RENAME_SETSID rump___sysimpl_setsid
-#endif
-
 #ifndef RUMP_SYS_RENAME_FACCESSAT
 #define RUMP_SYS_RENAME_FACCESSAT rump___sysimpl_faccessat
+#endif
+
+#ifndef RUMP_SYS_RENAME_FSETXATTR
+#define RUMP_SYS_RENAME_FSETXATTR rump___sysimpl_fsetxattr
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_SET_FILE
+#define RUMP_SYS_RENAME_EXTATTR_SET_FILE rump___sysimpl_extattr_set_file
 #endif
 
 #ifndef RUMP_SYS_RENAME_LSTAT
 #define RUMP_SYS_RENAME_LSTAT rump___sysimpl_lstat50
 #endif
 
-#ifndef RUMP_SYS_RENAME_OPENAT
-#define RUMP_SYS_RENAME_OPENAT rump___sysimpl_openat
+#ifndef RUMP_SYS_RENAME_EXTATTR_SET_FD
+#define RUMP_SYS_RENAME_EXTATTR_SET_FD rump___sysimpl_extattr_set_fd
 #endif
 
-#ifndef RUMP_SYS_RENAME_TRUNCATE
-#define RUMP_SYS_RENAME_TRUNCATE rump___sysimpl_truncate
+#ifndef RUMP_SYS_RENAME_PREADV
+#define RUMP_SYS_RENAME_PREADV rump___sysimpl_preadv
 #endif
 
-#ifndef RUMP_SYS_RENAME_FSYNC
-#define RUMP_SYS_RENAME_FSYNC rump___sysimpl_fsync
+#ifndef RUMP_SYS_RENAME_PATHCONF
+#define RUMP_SYS_RENAME_PATHCONF rump___sysimpl_pathconf
 #endif
 
-#ifndef RUMP_SYS_RENAME_GETTIMEOFDAY
-#define RUMP_SYS_RENAME_GETTIMEOFDAY rump___sysimpl_gettimeofday50
-#endif
-
-#ifndef RUMP_SYS_RENAME_UMASK
-#define RUMP_SYS_RENAME_UMASK rump___sysimpl_umask
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_DESTROY
-#define RUMP_SYS_RENAME__KSEM_DESTROY rump___sysimpl__ksem_destroy
-#endif
-
-#ifndef RUMP_SYS_RENAME_FLOCK
-#define RUMP_SYS_RENAME_FLOCK rump___sysimpl_flock
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETREUID
-#define RUMP_SYS_RENAME_SETREUID rump___sysimpl_setreuid
+#ifndef RUMP_SYS_RENAME_MODCTL
+#define RUMP_SYS_RENAME_MODCTL rump___sysimpl_modctl
 #endif
 
 #ifndef RUMP_SYS_RENAME___GETLOGIN
 #define RUMP_SYS_RENAME___GETLOGIN rump___sysimpl___getlogin
 #endif
 
-#ifndef RUMP_SYS_RENAME_MKNOD
-#define RUMP_SYS_RENAME_MKNOD rump___sysimpl_mknod50
+#ifndef RUMP_SYS_RENAME_GETPGRP
+#define RUMP_SYS_RENAME_GETPGRP rump___sysimpl_getpgrp
 #endif
 
-#ifndef RUMP_SYS_RENAME_MKFIFOAT
-#define RUMP_SYS_RENAME_MKFIFOAT rump___sysimpl_mkfifoat
+#ifndef RUMP_SYS_RENAME_FCHFLAGS
+#define RUMP_SYS_RENAME_FCHFLAGS rump___sysimpl_fchflags
 #endif
 
-#ifndef RUMP_SYS_RENAME_POSIX_FADVISE
-#define RUMP_SYS_RENAME_POSIX_FADVISE rump___sysimpl_posix_fadvise50
+#ifndef RUMP_SYS_RENAME_OPENAT
+#define RUMP_SYS_RENAME_OPENAT rump___sysimpl_openat
 #endif
 
-#ifndef RUMP_SYS_RENAME___POSIX_RENAME
-#define RUMP_SYS_RENAME___POSIX_RENAME rump___sysimpl___posix_rename
+#ifndef RUMP_SYS_RENAME_DUP
+#define RUMP_SYS_RENAME_DUP rump___sysimpl_dup
+#endif
+
+#ifndef RUMP_SYS_RENAME_LCHMOD
+#define RUMP_SYS_RENAME_LCHMOD rump___sysimpl_lchmod
+#endif
+
+#ifndef RUMP_SYS_RENAME___QUOTACTL
+#define RUMP_SYS_RENAME___QUOTACTL rump___sysimpl___quotactl
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETPEERNAME
+#define RUMP_SYS_RENAME_GETPEERNAME rump___sysimpl_getpeername
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETEGID
+#define RUMP_SYS_RENAME_GETEGID rump___sysimpl_getegid
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_SET_LINK
+#define RUMP_SYS_RENAME_EXTATTR_SET_LINK rump___sysimpl_extattr_set_link
+#endif
+
+#ifndef RUMP_SYS_RENAME_TIMER_CREATE
+#define RUMP_SYS_RENAME_TIMER_CREATE rump___sysimpl_timer_create
+#endif
+
+#ifndef RUMP_SYS_RENAME_FDISCARD
+#define RUMP_SYS_RENAME_FDISCARD rump___sysimpl_fdiscard
+#endif
+
+#ifndef RUMP_SYS_RENAME_PACCEPT
+#define RUMP_SYS_RENAME_PACCEPT rump___sysimpl_paccept
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_LIST_FILE
+#define RUMP_SYS_RENAME_EXTATTR_LIST_FILE rump___sysimpl_extattr_list_file
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_TRYWAIT
+#define RUMP_SYS_RENAME__KSEM_TRYWAIT rump___sysimpl__ksem_trywait
+#endif
+
+#ifndef RUMP_SYS_RENAME_LINK
+#define RUMP_SYS_RENAME_LINK rump___sysimpl_link
+#endif
+
+#ifndef RUMP_SYS_RENAME_LCHFLAGS
+#define RUMP_SYS_RENAME_LCHFLAGS rump___sysimpl_lchflags
 #endif
 
 #ifndef RUMP_SYS_RENAME_DUP2
@@ -664,176 +260,580 @@
 #define RUMP_SYS_RENAME_DUP3 rump___sysimpl_dup3
 #endif
 
-#ifndef RUMP_SYS_RENAME_CLOCK_GETRES
-#define RUMP_SYS_RENAME_CLOCK_GETRES rump___sysimpl_clock_getres50
+#ifndef RUMP_SYS_RENAME_FHOPEN
+#define RUMP_SYS_RENAME_FHOPEN rump___sysimpl_fhopen40
 #endif
 
-#ifndef RUMP_SYS_RENAME_REMOVEXATTR
-#define RUMP_SYS_RENAME_REMOVEXATTR rump___sysimpl_removexattr
+#ifndef RUMP_SYS_RENAME_SELECT
+#define RUMP_SYS_RENAME_SELECT rump___sysimpl_select50
 #endif
 
-#ifndef RUMP_SYS_RENAME_GETSOCKOPT
-#define RUMP_SYS_RENAME_GETSOCKOPT rump___sysimpl_getsockopt
-#endif
-
-#ifndef RUMP_SYS_RENAME_SYMLINKAT
-#define RUMP_SYS_RENAME_SYMLINKAT rump___sysimpl_symlinkat
-#endif
-
-#ifndef RUMP_SYS_RENAME_FDATASYNC
-#define RUMP_SYS_RENAME_FDATASYNC rump___sysimpl_fdatasync
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_TRYWAIT
-#define RUMP_SYS_RENAME__KSEM_TRYWAIT rump___sysimpl__ksem_trywait
-#endif
-
-#ifndef RUMP_SYS_RENAME_RECVMSG
-#define RUMP_SYS_RENAME_RECVMSG rump___sysimpl_recvmsg
-#endif
-
-#ifndef RUMP_SYS_RENAME_RMDIR
-#define RUMP_SYS_RENAME_RMDIR rump___sysimpl_rmdir
-#endif
-
-#ifndef RUMP_SYS_RENAME_LIO_LISTIO
-#define RUMP_SYS_RENAME_LIO_LISTIO rump___sysimpl_lio_listio
-#endif
-
-#ifndef RUMP_SYS_RENAME_LGETXATTR
-#define RUMP_SYS_RENAME_LGETXATTR rump___sysimpl_lgetxattr
-#endif
-
-#ifndef RUMP_SYS_RENAME_FSTATVFS1
-#define RUMP_SYS_RENAME_FSTATVFS1 rump___sysimpl_fstatvfs1
-#endif
-
-#ifndef RUMP_SYS_RENAME_PWRITEV
-#define RUMP_SYS_RENAME_PWRITEV rump___sysimpl_pwritev
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_GETVALUE
-#define RUMP_SYS_RENAME__KSEM_GETVALUE rump___sysimpl__ksem_getvalue
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETPGRP
-#define RUMP_SYS_RENAME_GETPGRP rump___sysimpl_getpgrp
-#endif
-
-#ifndef RUMP_SYS_RENAME_SENDMMSG
-#define RUMP_SYS_RENAME_SENDMMSG rump___sysimpl_sendmmsg
-#endif
-
-#ifndef RUMP_SYS_RENAME___SYSCTL
-#define RUMP_SYS_RENAME___SYSCTL rump___sysimpl___sysctl
-#endif
-
-#ifndef RUMP_SYS_RENAME_MKFIFO
-#define RUMP_SYS_RENAME_MKFIFO rump___sysimpl_mkfifo
-#endif
-
-#ifndef RUMP_SYS_RENAME_CLOCK_SETTIME
-#define RUMP_SYS_RENAME_CLOCK_SETTIME rump___sysimpl_clock_settime50
-#endif
-
-#ifndef RUMP_SYS_RENAME_ACCESS
-#define RUMP_SYS_RENAME_ACCESS rump___sysimpl_access
-#endif
-
-#ifndef RUMP_SYS_RENAME_ISSETUGID
-#define RUMP_SYS_RENAME_ISSETUGID rump___sysimpl_issetugid
-#endif
-
-#ifndef RUMP_SYS_RENAME_PREAD
-#define RUMP_SYS_RENAME_PREAD rump___sysimpl_pread
+#ifndef RUMP_SYS_RENAME_EXTATTR_LIST_LINK
+#define RUMP_SYS_RENAME_EXTATTR_LIST_LINK rump___sysimpl_extattr_list_link
 #endif
 
 #ifndef RUMP_SYS_RENAME_REVOKE
 #define RUMP_SYS_RENAME_REVOKE rump___sysimpl_revoke
 #endif
 
-#ifndef RUMP_SYS_RENAME_FCHOWNAT
-#define RUMP_SYS_RENAME_FCHOWNAT rump___sysimpl_fchownat
+#ifndef RUMP_SYS_RENAME_FSTATVFS1
+#define RUMP_SYS_RENAME_FSTATVFS1 rump___sysimpl_fstatvfs1
 #endif
 
-#ifndef RUMP_SYS_RENAME_FSTAT
-#define RUMP_SYS_RENAME_FSTAT rump___sysimpl_fstat50
+#ifndef RUMP_SYS_RENAME_UTRACE
+#define RUMP_SYS_RENAME_UTRACE rump___sysimpl_utrace
 #endif
 
-#ifndef RUMP_SYS_RENAME_UNLINK
-#define RUMP_SYS_RENAME_UNLINK rump___sysimpl_unlink
+#ifndef RUMP_SYS_RENAME_UMASK
+#define RUMP_SYS_RENAME_UMASK rump___sysimpl_umask
 #endif
 
-#ifndef RUMP_SYS_RENAME_UTIMENSAT
-#define RUMP_SYS_RENAME_UTIMENSAT rump___sysimpl_utimensat
+#ifndef RUMP_SYS_RENAME_FCNTL
+#define RUMP_SYS_RENAME_FCNTL rump___sysimpl_fcntl
 #endif
 
-#ifndef RUMP_SYS_RENAME_SETITIMER
-#define RUMP_SYS_RENAME_SETITIMER rump___sysimpl_setitimer50
+#ifndef RUMP_SYS_RENAME_MKFIFO
+#define RUMP_SYS_RENAME_MKFIFO rump___sysimpl_mkfifo
 #endif
 
-#ifndef RUMP_SYS_RENAME_FHOPEN
-#define RUMP_SYS_RENAME_FHOPEN rump___sysimpl_fhopen40
-#endif
-
-#ifndef RUMP_SYS_RENAME__KSEM_INIT
-#define RUMP_SYS_RENAME__KSEM_INIT rump___sysimpl__ksem_init
-#endif
-
-#ifndef RUMP_SYS_RENAME_AIO_CANCEL
-#define RUMP_SYS_RENAME_AIO_CANCEL rump___sysimpl_aio_cancel
-#endif
-
-#ifndef RUMP_SYS_RENAME_SETEGID
-#define RUMP_SYS_RENAME_SETEGID rump___sysimpl_setegid
-#endif
-
-#ifndef RUMP_SYS_RENAME_RENAME
-#define RUMP_SYS_RENAME_RENAME rump___sysimpl_rename
-#endif
-
-#ifndef RUMP_SYS_RENAME_AIO_SUSPEND
-#define RUMP_SYS_RENAME_AIO_SUSPEND rump___sysimpl_aio_suspend50
-#endif
-
-#ifndef RUMP_SYS_RENAME_KEVENT
-#define RUMP_SYS_RENAME_KEVENT rump___sysimpl_kevent50
-#endif
-
-#ifndef RUMP_SYS_RENAME_GETGID_WITH_EGID
-#define RUMP_SYS_RENAME_GETGID_WITH_EGID rump___sysimpl_getgid
+#ifndef RUMP_SYS_RENAME_POLLTS
+#define RUMP_SYS_RENAME_POLLTS rump___sysimpl_pollts50
 #endif
 
 #ifndef RUMP_SYS_RENAME_OPEN
 #define RUMP_SYS_RENAME_OPEN rump___sysimpl_open
 #endif
 
-#ifndef RUMP_SYS_RENAME_PACCEPT
-#define RUMP_SYS_RENAME_PACCEPT rump___sysimpl_paccept
+#ifndef RUMP_SYS_RENAME_ACCESS
+#define RUMP_SYS_RENAME_ACCESS rump___sysimpl_access
 #endif
 
-#ifndef RUMP_SYS_RENAME_LSETXATTR
-#define RUMP_SYS_RENAME_LSETXATTR rump___sysimpl_lsetxattr
+#ifndef RUMP_SYS_RENAME_MKNOD
+#define RUMP_SYS_RENAME_MKNOD rump___sysimpl_mknod50
 #endif
 
-#ifndef RUMP_SYS_RENAME_SETGROUPS
-#define RUMP_SYS_RENAME_SETGROUPS rump___sysimpl_setgroups
+#ifndef RUMP_SYS_RENAME_TRUNCATE
+#define RUMP_SYS_RENAME_TRUNCATE rump___sysimpl_truncate
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETGID
+#define RUMP_SYS_RENAME_SETGID rump___sysimpl_setgid
+#endif
+
+#ifndef RUMP_SYS_RENAME_LREMOVEXATTR
+#define RUMP_SYS_RENAME_LREMOVEXATTR rump___sysimpl_lremovexattr
+#endif
+
+#ifndef RUMP_SYS_RENAME_RMDIR
+#define RUMP_SYS_RENAME_RMDIR rump___sysimpl_rmdir
+#endif
+
+#ifndef RUMP_SYS_RENAME_KQUEUE1
+#define RUMP_SYS_RENAME_KQUEUE1 rump___sysimpl_kqueue1
+#endif
+
+#ifndef RUMP_SYS_RENAME_CLOCK_GETRES
+#define RUMP_SYS_RENAME_CLOCK_GETRES rump___sysimpl_clock_getres50
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETGID_WITH_EGID
+#define RUMP_SYS_RENAME_GETGID_WITH_EGID rump___sysimpl_getgid
+#endif
+
+#ifndef RUMP_SYS_RENAME_SYMLINKAT
+#define RUMP_SYS_RENAME_SYMLINKAT rump___sysimpl_symlinkat
+#endif
+
+#ifndef RUMP_SYS_RENAME_FSYNC_RANGE
+#define RUMP_SYS_RENAME_FSYNC_RANGE rump___sysimpl_fsync_range
+#endif
+
+#ifndef RUMP_SYS_RENAME_PWRITE
+#define RUMP_SYS_RENAME_PWRITE rump___sysimpl_pwrite
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETRLIMIT
+#define RUMP_SYS_RENAME_GETRLIMIT rump___sysimpl_getrlimit
+#endif
+
+#ifndef RUMP_SYS_RENAME_RENAMEAT
+#define RUMP_SYS_RENAME_RENAMEAT rump___sysimpl_renameat
+#endif
+
+#ifndef RUMP_SYS_RENAME_TIMER_GETTIME
+#define RUMP_SYS_RENAME_TIMER_GETTIME rump___sysimpl_timer_gettime50
+#endif
+
+#ifndef RUMP_SYS_RENAME_FGETXATTR
+#define RUMP_SYS_RENAME_FGETXATTR rump___sysimpl_fgetxattr
 #endif
 
 #ifndef RUMP_SYS_RENAME_SENDMSG
 #define RUMP_SYS_RENAME_SENDMSG rump___sysimpl_sendmsg
 #endif
 
+#ifndef RUMP_SYS_RENAME__KSEM_OPEN
+#define RUMP_SYS_RENAME__KSEM_OPEN rump___sysimpl__ksem_open
+#endif
+
+#ifndef RUMP_SYS_RENAME_FLISTXATTR
+#define RUMP_SYS_RENAME_FLISTXATTR rump___sysimpl_flistxattr
+#endif
+
+#ifndef RUMP_SYS_RENAME_LUTIMES
+#define RUMP_SYS_RENAME_LUTIMES rump___sysimpl_lutimes50
+#endif
+
+#ifndef RUMP_SYS_RENAME_CLOCK_SETTIME
+#define RUMP_SYS_RENAME_CLOCK_SETTIME rump___sysimpl_clock_settime50
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETITIMER
+#define RUMP_SYS_RENAME_SETITIMER rump___sysimpl_setitimer50
+#endif
+
+#ifndef RUMP_SYS_RENAME_SHUTDOWN
+#define RUMP_SYS_RENAME_SHUTDOWN rump___sysimpl_shutdown
+#endif
+
+#ifndef RUMP_SYS_RENAME_PREAD
+#define RUMP_SYS_RENAME_PREAD rump___sysimpl_pread
+#endif
+
+#ifndef RUMP_SYS_RENAME_LISTEN
+#define RUMP_SYS_RENAME_LISTEN rump___sysimpl_listen
+#endif
+
+#ifndef RUMP_SYS_RENAME_MKDIR
+#define RUMP_SYS_RENAME_MKDIR rump___sysimpl_mkdir
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETFH
+#define RUMP_SYS_RENAME_GETFH rump___sysimpl_getfh30
+#endif
+
+#ifndef RUMP_SYS_RENAME_AIO_FSYNC
+#define RUMP_SYS_RENAME_AIO_FSYNC rump___sysimpl_aio_fsync
+#endif
+
+#ifndef RUMP_SYS_RENAME___POSIX_LCHOWN
+#define RUMP_SYS_RENAME___POSIX_LCHOWN rump___sysimpl___posix_lchown
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETEUID
+#define RUMP_SYS_RENAME_GETEUID rump___sysimpl_geteuid
+#endif
+
+#ifndef RUMP_SYS_RENAME_FSYNC
+#define RUMP_SYS_RENAME_FSYNC rump___sysimpl_fsync
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_DELETE_FILE
+#define RUMP_SYS_RENAME_EXTATTR_DELETE_FILE rump___sysimpl_extattr_delete_file
+#endif
+
+#ifndef RUMP_SYS_RENAME_ISSETUGID
+#define RUMP_SYS_RENAME_ISSETUGID rump___sysimpl_issetugid
+#endif
+
+#ifndef RUMP_SYS_RENAME_LGETXATTR
+#define RUMP_SYS_RENAME_LGETXATTR rump___sysimpl_lgetxattr
+#endif
+
+#ifndef RUMP_SYS_RENAME_KEVENT
+#define RUMP_SYS_RENAME_KEVENT rump___sysimpl_kevent50
+#endif
+
+#ifndef RUMP_SYS_RENAME_AIO_ERROR
+#define RUMP_SYS_RENAME_AIO_ERROR rump___sysimpl_aio_error
+#endif
+
+#ifndef RUMP_SYS_RENAME_POSIX_FADVISE
+#define RUMP_SYS_RENAME_POSIX_FADVISE rump___sysimpl_posix_fadvise50
+#endif
+
+#ifndef RUMP_SYS_RENAME_FSTAT
+#define RUMP_SYS_RENAME_FSTAT rump___sysimpl_fstat50
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_DESTROY
+#define RUMP_SYS_RENAME__KSEM_DESTROY rump___sysimpl__ksem_destroy
+#endif
+
+#ifndef RUMP_SYS_RENAME_MKNODAT
+#define RUMP_SYS_RENAME_MKNODAT rump___sysimpl_mknodat
+#endif
+
+#ifndef RUMP_SYS_RENAME_CHDIR
+#define RUMP_SYS_RENAME_CHDIR rump___sysimpl_chdir
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_DELETE_LINK
+#define RUMP_SYS_RENAME_EXTATTR_DELETE_LINK rump___sysimpl_extattr_delete_link
+#endif
+
+#ifndef RUMP_SYS_RENAME_CHOWN
+#define RUMP_SYS_RENAME_CHOWN rump___sysimpl_chown
+#endif
+
+#ifndef RUMP_SYS_RENAME_CLOCK_GETTIME
+#define RUMP_SYS_RENAME_CLOCK_GETTIME rump___sysimpl_clock_gettime50
+#endif
+
+#ifndef RUMP_SYS_RENAME_FCHDIR
+#define RUMP_SYS_RENAME_FCHDIR rump___sysimpl_fchdir
+#endif
+
+#ifndef RUMP_SYS_RENAME_RECVMSG
+#define RUMP_SYS_RENAME_RECVMSG rump___sysimpl_recvmsg
+#endif
+
+#ifndef RUMP_SYS_RENAME_FCHOWN
+#define RUMP_SYS_RENAME_FCHOWN rump___sysimpl_fchown
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETREGID
+#define RUMP_SYS_RENAME_SETREGID rump___sysimpl_setregid
+#endif
+
+#ifndef RUMP_SYS_RENAME_POLL
+#define RUMP_SYS_RENAME_POLL rump___sysimpl_poll
+#endif
+
+#ifndef RUMP_SYS_RENAME_READV
+#define RUMP_SYS_RENAME_READV rump___sysimpl_readv
+#endif
+
+#ifndef RUMP_SYS_RENAME_SYMLINK
+#define RUMP_SYS_RENAME_SYMLINK rump___sysimpl_symlink
+#endif
+
+#ifndef RUMP_SYS_RENAME_SENDMMSG
+#define RUMP_SYS_RENAME_SENDMMSG rump___sysimpl_sendmmsg
+#endif
+
+#ifndef RUMP_SYS_RENAME_PSELECT
+#define RUMP_SYS_RENAME_PSELECT rump___sysimpl_pselect50
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETGROUPS
+#define RUMP_SYS_RENAME_SETGROUPS rump___sysimpl_setgroups
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETXATTR
+#define RUMP_SYS_RENAME_SETXATTR rump___sysimpl_setxattr
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETEGID
+#define RUMP_SYS_RENAME_SETEGID rump___sysimpl_setegid
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETSOCKOPT
+#define RUMP_SYS_RENAME_GETSOCKOPT rump___sysimpl_getsockopt
+#endif
+
+#ifndef RUMP_SYS_RENAME_CONNECT
+#define RUMP_SYS_RENAME_CONNECT rump___sysimpl_connect
+#endif
+
+#ifndef RUMP_SYS_RENAME_LSEEK
+#define RUMP_SYS_RENAME_LSEEK rump___sysimpl_lseek
+#endif
+
+#ifndef RUMP_SYS_RENAME_MKFIFOAT
+#define RUMP_SYS_RENAME_MKFIFOAT rump___sysimpl_mkfifoat
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_DELETE_FD
+#define RUMP_SYS_RENAME_EXTATTR_DELETE_FD rump___sysimpl_extattr_delete_fd
+#endif
+
+#ifndef RUMP_SYS_RENAME_CHMOD
+#define RUMP_SYS_RENAME_CHMOD rump___sysimpl_chmod
+#endif
+
+#ifndef RUMP_SYS_RENAME_BIND
+#define RUMP_SYS_RENAME_BIND rump___sysimpl_bind
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_WAIT
+#define RUMP_SYS_RENAME__KSEM_WAIT rump___sysimpl__ksem_wait
+#endif
+
+#ifndef RUMP_SYS_RENAME_FCHOWNAT
+#define RUMP_SYS_RENAME_FCHOWNAT rump___sysimpl_fchownat
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETUID
+#define RUMP_SYS_RENAME_SETUID rump___sysimpl_setuid
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETUID_WITH_EUID
+#define RUMP_SYS_RENAME_GETUID_WITH_EUID rump___sysimpl_getuid
+#endif
+
+#ifndef RUMP_SYS_RENAME_CHROOT
+#define RUMP_SYS_RENAME_CHROOT rump___sysimpl_chroot
+#endif
+
+#ifndef RUMP_SYS_RENAME_FCHMOD
+#define RUMP_SYS_RENAME_FCHMOD rump___sysimpl_fchmod
+#endif
+
+#ifndef RUMP_SYS_RENAME_FPATHCONF
+#define RUMP_SYS_RENAME_FPATHCONF rump___sysimpl_fpathconf
+#endif
+
+#ifndef RUMP_SYS_RENAME_UNMOUNT
+#define RUMP_SYS_RENAME_UNMOUNT rump___sysimpl_unmount
+#endif
+
+#ifndef RUMP_SYS_RENAME_READLINK
+#define RUMP_SYS_RENAME_READLINK rump___sysimpl_readlink
+#endif
+
+#ifndef RUMP_SYS_RENAME_FUTIMENS
+#define RUMP_SYS_RENAME_FUTIMENS rump___sysimpl_futimens
+#endif
+
+#ifndef RUMP_SYS_RENAME_LSETXATTR
+#define RUMP_SYS_RENAME_LSETXATTR rump___sysimpl_lsetxattr
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_GETVALUE
+#define RUMP_SYS_RENAME__KSEM_GETVALUE rump___sysimpl__ksem_getvalue
+#endif
+
+#ifndef RUMP_SYS_RENAME___POSIX_CHOWN
+#define RUMP_SYS_RENAME___POSIX_CHOWN rump___sysimpl___posix_chown
+#endif
+
+#ifndef RUMP_SYS_RENAME_AIO_READ
+#define RUMP_SYS_RENAME_AIO_READ rump___sysimpl_aio_read
+#endif
+
+#ifndef RUMP_SYS_RENAME_READ
+#define RUMP_SYS_RENAME_READ rump___sysimpl_read
+#endif
+
+#ifndef RUMP_SYS_RENAME_RENAME
+#define RUMP_SYS_RENAME_RENAME rump___sysimpl_rename
+#endif
+
+#ifndef RUMP_SYS_RENAME_WRITEV
+#define RUMP_SYS_RENAME_WRITEV rump___sysimpl_writev
+#endif
+
+#ifndef RUMP_SYS_RENAME_CLOSE
+#define RUMP_SYS_RENAME_CLOSE rump___sysimpl_close
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETPGID
+#define RUMP_SYS_RENAME_GETPGID rump___sysimpl_getpgid
+#endif
+
+#ifndef RUMP_SYS_RENAME_NANOSLEEP
+#define RUMP_SYS_RENAME_NANOSLEEP rump___sysimpl_nanosleep50
+#endif
+
+#ifndef RUMP_SYS_RENAME_IOCTL
+#define RUMP_SYS_RENAME_IOCTL rump___sysimpl_ioctl
+#endif
+
+#ifndef RUMP_SYS_RENAME_FHSTAT
+#define RUMP_SYS_RENAME_FHSTAT rump___sysimpl_fhstat50
+#endif
+
+#ifndef RUMP_SYS_RENAME_RECVFROM
+#define RUMP_SYS_RENAME_RECVFROM rump___sysimpl_recvfrom
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_INIT
+#define RUMP_SYS_RENAME__KSEM_INIT rump___sysimpl__ksem_init
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_CLOSE
+#define RUMP_SYS_RENAME__KSEM_CLOSE rump___sysimpl__ksem_close
+#endif
+
+#ifndef RUMP_SYS_RENAME_MOUNT
+#define RUMP_SYS_RENAME_MOUNT rump___sysimpl_mount50
+#endif
+
+#ifndef RUMP_SYS_RENAME_UTIMES
+#define RUMP_SYS_RENAME_UTIMES rump___sysimpl_utimes50
+#endif
+
+#ifndef RUMP_SYS_RENAME_FCHMODAT
+#define RUMP_SYS_RENAME_FCHMODAT rump___sysimpl_fchmodat
+#endif
+
+#ifndef RUMP_SYS_RENAME_KTRACE
+#define RUMP_SYS_RENAME_KTRACE rump___sysimpl_ktrace
+#endif
+
+#ifndef RUMP_SYS_RENAME_SYNC
+#define RUMP_SYS_RENAME_SYNC rump___sysimpl_sync
+#endif
+
+#ifndef RUMP_SYS_RENAME_UNLINKAT
+#define RUMP_SYS_RENAME_UNLINKAT rump___sysimpl_unlinkat
+#endif
+
+#ifndef RUMP_SYS_RENAME_LLISTXATTR
+#define RUMP_SYS_RENAME_LLISTXATTR rump___sysimpl_llistxattr
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_POST
+#define RUMP_SYS_RENAME__KSEM_POST rump___sysimpl__ksem_post
+#endif
+
+#ifndef RUMP_SYS_RENAME_STATVFS1
+#define RUMP_SYS_RENAME_STATVFS1 rump___sysimpl_statvfs1
+#endif
+
+#ifndef RUMP_SYS_RENAME_STAT
+#define RUMP_SYS_RENAME_STAT rump___sysimpl_stat50
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETSOCKOPT
+#define RUMP_SYS_RENAME_SETSOCKOPT rump___sysimpl_setsockopt
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETDENTS
+#define RUMP_SYS_RENAME_GETDENTS rump___sysimpl_getdents30
+#endif
+
+#ifndef RUMP_SYS_RENAME_KQUEUE
+#define RUMP_SYS_RENAME_KQUEUE rump___sysimpl_kqueue
+#endif
+
+#ifndef RUMP_SYS_RENAME___SYSCTL
+#define RUMP_SYS_RENAME___SYSCTL rump___sysimpl___sysctl
+#endif
+
+#ifndef RUMP_SYS_RENAME_FREMOVEXATTR
+#define RUMP_SYS_RENAME_FREMOVEXATTR rump___sysimpl_fremovexattr
+#endif
+
 #ifndef RUMP_SYS_RENAME_EXTATTRCTL
 #define RUMP_SYS_RENAME_EXTATTRCTL rump___sysimpl_extattrctl
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETITIMER
+#define RUMP_SYS_RENAME_GETITIMER rump___sysimpl_getitimer50
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETPID_WITH_PPID
+#define RUMP_SYS_RENAME_GETPID_WITH_PPID rump___sysimpl_getpid
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETREUID
+#define RUMP_SYS_RENAME_SETREUID rump___sysimpl_setreuid
+#endif
+
+#ifndef RUMP_SYS_RENAME_FSTATAT
+#define RUMP_SYS_RENAME_FSTATAT rump___sysimpl_fstatat
+#endif
+
+#ifndef RUMP_SYS_RENAME_LINKAT
+#define RUMP_SYS_RENAME_LINKAT rump___sysimpl_linkat
+#endif
+
+#ifndef RUMP_SYS_RENAME_TIMER_SETTIME
+#define RUMP_SYS_RENAME_TIMER_SETTIME rump___sysimpl_timer_settime50
+#endif
+
+#ifndef RUMP_SYS_RENAME_SOCKETPAIR
+#define RUMP_SYS_RENAME_SOCKETPAIR rump___sysimpl_socketpair
+#endif
+
+#ifndef RUMP_SYS_RENAME_AIO_WRITE
+#define RUMP_SYS_RENAME_AIO_WRITE rump___sysimpl_aio_write
+#endif
+
+#ifndef RUMP_SYS_RENAME_WRITE
+#define RUMP_SYS_RENAME_WRITE rump___sysimpl_write
+#endif
+
+#ifndef RUMP_SYS_RENAME___SETLOGIN
+#define RUMP_SYS_RENAME___SETLOGIN rump___sysimpl___setlogin
+#endif
+
+#ifndef RUMP_SYS_RENAME_SOCKET
+#define RUMP_SYS_RENAME_SOCKET rump___sysimpl_socket30
+#endif
+
+#ifndef RUMP_SYS_RENAME_TIMER_GETOVERRUN
+#define RUMP_SYS_RENAME_TIMER_GETOVERRUN rump___sysimpl_timer_getoverrun
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_TIMEDWAIT
+#define RUMP_SYS_RENAME__KSEM_TIMEDWAIT rump___sysimpl__ksem_timedwait
+#endif
+
+#ifndef RUMP_SYS_RENAME_FTRUNCATE
+#define RUMP_SYS_RENAME_FTRUNCATE rump___sysimpl_ftruncate
+#endif
+
+#ifndef RUMP_SYS_RENAME_FCHROOT
+#define RUMP_SYS_RENAME_FCHROOT rump___sysimpl_fchroot
+#endif
+
+#ifndef RUMP_SYS_RENAME_SETEUID
+#define RUMP_SYS_RENAME_SETEUID rump___sysimpl_seteuid
+#endif
+
+#ifndef RUMP_SYS_RENAME_REBOOT
+#define RUMP_SYS_RENAME_REBOOT rump___sysimpl_reboot
+#endif
+
+#ifndef RUMP_SYS_RENAME_ACCEPT
+#define RUMP_SYS_RENAME_ACCEPT rump___sysimpl_accept
+#endif
+
+#ifndef RUMP_SYS_RENAME_READLINKAT
+#define RUMP_SYS_RENAME_READLINKAT rump___sysimpl_readlinkat
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETXATTR
+#define RUMP_SYS_RENAME_GETXATTR rump___sysimpl_getxattr
+#endif
+
+#ifndef RUMP_SYS_RENAME__KSEM_UNLINK
+#define RUMP_SYS_RENAME__KSEM_UNLINK rump___sysimpl__ksem_unlink
 #endif
 
 #ifndef RUMP_SYS_RENAME_NFSSVC
 #define RUMP_SYS_RENAME_NFSSVC rump___sysimpl_nfssvc
 #endif
 
-#ifndef RUMP_SYS_RENAME___POSIX_LCHOWN
-#define RUMP_SYS_RENAME___POSIX_LCHOWN rump___sysimpl___posix_lchown
+#ifndef RUMP_SYS_RENAME_POSIX_FALLOCATE
+#define RUMP_SYS_RENAME_POSIX_FALLOCATE rump___sysimpl_posix_fallocate
+#endif
+
+#ifndef RUMP_SYS_RENAME___POSIX_FCHOWN
+#define RUMP_SYS_RENAME___POSIX_FCHOWN rump___sysimpl___posix_fchown
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETPPID
+#define RUMP_SYS_RENAME_GETPPID rump___sysimpl_getppid
+#endif
+
+#ifndef RUMP_SYS_RENAME_GETTIMEOFDAY
+#define RUMP_SYS_RENAME_GETTIMEOFDAY rump___sysimpl_gettimeofday50
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_LIST_FD
+#define RUMP_SYS_RENAME_EXTATTR_LIST_FD rump___sysimpl_extattr_list_fd
+#endif
+
+#ifndef RUMP_SYS_RENAME_EXTATTR_GET_FILE
+#define RUMP_SYS_RENAME_EXTATTR_GET_FILE rump___sysimpl_extattr_get_file
+#endif
+
+#ifndef RUMP_SYS_RENAME_FUTIMES
+#define RUMP_SYS_RENAME_FUTIMES rump___sysimpl_futimes50
 #endif
 
 struct msghdr;
