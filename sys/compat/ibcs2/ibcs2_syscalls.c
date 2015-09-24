@@ -1,4 +1,4 @@
-/* $NetBSD: ibcs2_syscalls.c,v 1.52 2015/03/07 16:41:53 christos Exp $ */
+/* $NetBSD: ibcs2_syscalls.c,v 1.53 2015/09/24 14:41:39 christos Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscalls.c,v 1.52 2015/03/07 16:41:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibcs2_syscalls.c,v 1.53 2015/09/24 14:41:39 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -25,6 +25,8 @@ __KERNEL_RCSID(0, "$NetBSD: ibcs2_syscalls.c,v 1.52 2015/03/07 16:41:53 christos
 #include <compat/ibcs2/ibcs2_signal.h>
 #include <compat/ibcs2/ibcs2_syscallargs.h>
 #include <compat/ibcs2/ibcs2_statfs.h>
+#else /* _KERNEL_OPT */
+#include <sys/null.h>
 #endif /* _KERNEL_OPT */
 
 const char *const ibcs2_syscallnames[] = {
@@ -552,4 +554,533 @@ const char *const ibcs2_syscallnames[] = {
 	/* 509 */	"# filler",
 	/* 510 */	"# filler",
 	/* 511 */	"# filler",
+};
+
+
+/* libc style syscall names */
+const char *const altibcs2_syscallnames[] = {
+	/*   0 */	"nosys",
+	/*   1 */	NULL, /* exit */
+	/*   2 */	NULL, /* fork */
+	/*   3 */	NULL, /* read */
+	/*   4 */	NULL, /* write */
+	/*   5 */	NULL, /* open */
+	/*   6 */	NULL, /* close */
+	/*   7 */	NULL, /* waitsys */
+	/*   8 */	NULL, /* creat */
+	/*   9 */	NULL, /* link */
+	/*  10 */	NULL, /* unlink */
+	/*  11 */	NULL, /* execv */
+	/*  12 */	NULL, /* chdir */
+	/*  13 */	NULL, /* time */
+	/*  14 */	NULL, /* mknod */
+	/*  15 */	NULL, /* chmod */
+	/*  16 */	NULL, /* __posix_chown */
+	/*  17 */	NULL, /* obreak */
+	/*  18 */	NULL, /* stat */
+	/*  19 */	NULL, /* lseek */
+	/*  20 */	NULL, /* getpid_with_ppid */
+	/*  21 */	NULL, /* mount */
+	/*  22 */	NULL, /* umount */
+	/*  23 */	NULL, /* setuid */
+	/*  24 */	NULL, /* getuid_with_euid */
+	/*  25 */	NULL, /* stime */
+	/*  26 */	NULL, /* unimplemented ibcs2_ptrace */
+	/*  27 */	NULL, /* alarm */
+	/*  28 */	NULL, /* fstat */
+	/*  29 */	NULL, /* pause */
+	/*  30 */	NULL, /* utime */
+	/*  31 */	NULL, /* unimplemented was stty */
+	/*  32 */	NULL, /* gtty */
+	/*  33 */	NULL, /* access */
+	/*  34 */	NULL, /* nice */
+	/*  35 */	NULL, /* statfs */
+	/*  36 */	NULL, /* sync */
+	/*  37 */	NULL, /* kill */
+	/*  38 */	NULL, /* fstatfs */
+	/*  39 */	NULL, /* pgrpsys */
+	/*  40 */	NULL, /* unimplemented ibcs2_xenix */
+	/*  41 */	NULL, /* dup */
+	/*  42 */	NULL, /* pipe */
+	/*  43 */	NULL, /* times */
+	/*  44 */	NULL, /* unimplemented profil */
+	/*  45 */	NULL, /* plock */
+	/*  46 */	NULL, /* setgid */
+	/*  47 */	NULL, /* getgid_with_egid */
+	/*  48 */	NULL, /* sigsys */
+#ifdef SYSVMSG
+	/*  49 */	NULL, /* msgsys */
+#else
+	/*  49 */	NULL, /* unimplemented msgsys */
+#endif
+	/*  50 */	NULL, /* sysmachine */
+	/*  51 */	NULL, /* unimplemented ibcs2_acct */
+#ifdef SYSVSHM
+	/*  52 */	NULL, /* shmsys */
+#else
+	/*  52 */	NULL, /* unimplemented shmsys */
+#endif
+#ifdef SYSVSEM
+	/*  53 */	NULL, /* semsys */
+#else
+	/*  53 */	NULL, /* unimplemented semsys */
+#endif
+	/*  54 */	NULL, /* ioctl */
+	/*  55 */	NULL, /* uadmin */
+	/*  56 */	NULL, /* unimplemented */
+	/*  57 */	NULL, /* utssys */
+	/*  58 */	NULL, /* fsync */
+	/*  59 */	NULL, /* execve */
+	/*  60 */	NULL, /* umask */
+	/*  61 */	NULL, /* chroot */
+	/*  62 */	NULL, /* fcntl */
+	/*  63 */	NULL, /* ulimit */
+	/*  64 */	NULL, /* unimplemented reserved for unix/pc */
+	/*  65 */	NULL, /* unimplemented reserved for unix/pc */
+	/*  66 */	NULL, /* unimplemented reserved for unix/pc */
+	/*  67 */	NULL, /* unimplemented reserved for unix/pc */
+	/*  68 */	NULL, /* unimplemented reserved for unix/pc */
+	/*  69 */	NULL, /* unimplemented reserved for unix/pc */
+	/*  70 */	NULL, /* obsolete rfs_advfs */
+	/*  71 */	NULL, /* obsolete rfs_unadvfs */
+	/*  72 */	NULL, /* obsolete rfs_rmount */
+	/*  73 */	NULL, /* obsolete rfs_rumount */
+	/*  74 */	NULL, /* obsolete rfs_rfstart */
+	/*  75 */	NULL, /* obsolete rfs_sigret */
+	/*  76 */	NULL, /* obsolete rfs_rdebug */
+	/*  77 */	NULL, /* obsolete rfs_rfstop */
+	/*  78 */	NULL, /* unimplemented rfs_rfsys */
+	/*  79 */	NULL, /* rmdir */
+	/*  80 */	NULL, /* mkdir */
+	/*  81 */	NULL, /* getdents */
+	/*  82 */	NULL, /* unimplemented libattach */
+	/*  83 */	NULL, /* unimplemented libdetach */
+	/*  84 */	NULL, /* sysfs */
+	/*  85 */	NULL, /* getmsg */
+	/*  86 */	NULL, /* putmsg */
+	/*  87 */	NULL, /* poll */
+	/*  88 */	NULL, /* unimplemented unknown */
+	/*  89 */	NULL, /* unimplemented secure */
+	/*  90 */	NULL, /* symlink */
+	/*  91 */	NULL, /* lstat */
+	/*  92 */	NULL, /* readlink */
+	/*  93 */	NULL, /* fchmod */
+	/*  94 */	"__posix_fchown",
+	/*  95 */	NULL, /* unimplemented sigprocmask */
+	/*  96 */	NULL, /* sigreturn */
+	/*  97 */	NULL, /* sigaltstack */
+	/*  98 */	NULL, /* unimplemented sigaction */
+	/*  99 */	NULL, /* unimplemented sigpending */
+	/* 100 */	NULL, /* unimplemented getcontext/setcontext/sigsetjmp */
+	/* 101 */	NULL, /* unimplemented envsys */
+	/* 102 */	NULL, /* unimplemented evtrapret */
+	/* 103 */	NULL, /* statvfs */
+	/* 104 */	NULL, /* fstatvfs */
+	/* 105 */	NULL, /* unimplemented isc */
+	/* 106 */	NULL, /* unimplemented nfssys */
+	/* 107 */	NULL, /* unimplemented waitsys */
+	/* 108 */	NULL, /* unimplemented sigsendsys */
+	/* 109 */	NULL, /* unimplemented hrtsys */
+	/* 110 */	NULL, /* unimplemented acancel */
+	/* 111 */	NULL, /* unimplemented async */
+	/* 112 */	NULL, /* unimplemented priocntlsys */
+	/* 113 */	NULL, /* unimplemented pathconf */
+	/* 114 */	NULL, /* unimplemented mincore */
+	/* 115 */	NULL, /* mmap */
+	/* 116 */	NULL, /* mprotect */
+	/* 117 */	NULL, /* munmap */
+	/* 118 */	NULL, /* unimplemented fpathconf */
+	/* 119 */	NULL, /* unimplemented vfork */
+	/* 120 */	NULL, /* fchdir */
+	/* 121 */	NULL, /* readv */
+	/* 122 */	NULL, /* writev */
+	/* 123 */	NULL, /* unimplemented xstat */
+	/* 124 */	NULL, /* unimplemented lxstat */
+	/* 125 */	NULL, /* unimplemented fxstat */
+	/* 126 */	NULL, /* unimplemented xmknod */
+	/* 127 */	NULL, /* unimplemented clocal */
+	/* 128 */	NULL, /* unimplemented setrlimit */
+	/* 129 */	NULL, /* unimplemented getrlimit */
+	/* 130 */	NULL, /* unimplemented lchown */
+	/* 131 */	NULL, /* memcntl */
+	/* 132 */	NULL, /* unimplemented getpmsg */
+	/* 133 */	NULL, /* unimplemented putpmsg */
+	/* 134 */	NULL, /* unimplemented rename */
+	/* 135 */	NULL, /* unimplemented uname */
+	/* 136 */	NULL, /* unimplemented setegid */
+	/* 137 */	NULL, /* unimplemented sysconfig */
+	/* 138 */	NULL, /* unimplemented adjtime */
+	/* 139 */	NULL, /* unimplemented systeminfo */
+	/* 140 */	NULL, /* unimplemented */
+	/* 141 */	NULL, /* unimplemented seteuid */
+	/* 142 */	NULL, /* unimplemented */
+	/* 143 */	NULL, /* unimplemented */
+	/* 144 */	NULL, /* unimplemented */
+	/* 145 */	NULL, /* unimplemented */
+	/* 146 */	NULL, /* unimplemented */
+	/* 147 */	NULL, /* unimplemented */
+	/* 148 */	NULL, /* unimplemented */
+	/* 149 */	NULL, /* unimplemented */
+	/* 150 */	NULL, /* unimplemented */
+	/* 151 */	NULL, /* unimplemented */
+	/* 152 */	NULL, /* unimplemented */
+	/* 153 */	NULL, /* unimplemented */
+	/* 154 */	NULL, /* unimplemented */
+	/* 155 */	NULL, /* unimplemented */
+	/* 156 */	NULL, /* unimplemented */
+	/* 157 */	NULL, /* unimplemented */
+	/* 158 */	NULL, /* unimplemented */
+	/* 159 */	NULL, /* unimplemented */
+	/* 160 */	NULL, /* unimplemented */
+	/* 161 */	NULL, /* unimplemented */
+	/* 162 */	NULL, /* unimplemented */
+	/* 163 */	NULL, /* unimplemented */
+	/* 164 */	NULL, /* unimplemented */
+	/* 165 */	NULL, /* unimplemented */
+	/* 166 */	NULL, /* unimplemented */
+	/* 167 */	NULL, /* unimplemented */
+	/* 168 */	NULL, /* unimplemented */
+	/* 169 */	NULL, /* unimplemented */
+	/* 170 */	NULL, /* unimplemented */
+	/* 171 */	NULL, /* gettimeofday */
+	/* 172 */	NULL, /* settimeofday */
+	/* 173 */	NULL, /* unimplemented */
+	/* 174 */	NULL, /* unimplemented */
+	/* 175 */	NULL, /* unimplemented */
+	/* 176 */	NULL, /* unimplemented */
+	/* 177 */	NULL, /* unimplemented */
+	/* 178 */	NULL, /* unimplemented */
+	/* 179 */	NULL, /* unimplemented */
+	/* 180 */	NULL, /* unimplemented */
+	/* 181 */	NULL, /* unimplemented */
+	/* 182 */	NULL, /* unimplemented */
+	/* 183 */	NULL, /* unimplemented */
+	/* 184 */	NULL, /* unimplemented */
+	/* 185 */	NULL, /* unimplemented */
+	/* 186 */	NULL, /* unimplemented */
+	/* 187 */	NULL, /* unimplemented */
+	/* 188 */	NULL, /* unimplemented */
+	/* 189 */	NULL, /* unimplemented */
+	/* 190 */	NULL, /* unimplemented */
+	/* 191 */	NULL, /* truncate */
+	/* 192 */	NULL, /* ftruncate */
+	/* 193 */	NULL, /* unimplemented */
+	/* 194 */	NULL, /* unimplemented */
+	/* 195 */	NULL, /* unimplemented */
+	/* 196 */	NULL, /* unimplemented */
+	/* 197 */	NULL, /* unimplemented */
+	/* 198 */	NULL, /* unimplemented */
+	/* 199 */	NULL, /* unimplemented */
+	/* 200 */	NULL, /* unimplemented */
+	/* 201 */	NULL, /* locking */
+	/* 202 */	NULL, /* unimplemented xenix_creatsem */
+	/* 203 */	NULL, /* unimplemented xenix_opensem */
+	/* 204 */	NULL, /* unimplemented xenix_sigsem */
+	/* 205 */	NULL, /* unimplemented xenix_waitsem */
+	/* 206 */	NULL, /* unimplemented xenix_nbwaitsem */
+	/* 207 */	NULL, /* rdchk */
+	/* 208 */	NULL, /* unimplemented */
+	/* 209 */	NULL, /* unimplemented */
+	/* 210 */	NULL, /* chsize */
+	/* 211 */	NULL, /* ftime */
+	/* 212 */	NULL, /* nap */
+	/* 213 */	NULL, /* unimplemented xenix_sdget */
+	/* 214 */	NULL, /* unimplemented xenix_sdfree */
+	/* 215 */	NULL, /* unimplemented xenix_sdenter */
+	/* 216 */	NULL, /* unimplemented xenix_sdleave */
+	/* 217 */	NULL, /* unimplemented xenix_sdgetv */
+	/* 218 */	NULL, /* unimplemented xenix_sdwaitv */
+	/* 219 */	NULL, /* unimplemented */
+	/* 220 */	NULL, /* unimplemented */
+	/* 221 */	NULL, /* unimplemented */
+	/* 222 */	NULL, /* unimplemented */
+	/* 223 */	NULL, /* unimplemented */
+	/* 224 */	NULL, /* unimplemented */
+	/* 225 */	NULL, /* unimplemented */
+	/* 226 */	NULL, /* unimplemented */
+	/* 227 */	NULL, /* unimplemented */
+	/* 228 */	NULL, /* unimplemented */
+	/* 229 */	NULL, /* unimplemented */
+	/* 230 */	NULL, /* unimplemented */
+	/* 231 */	NULL, /* unimplemented */
+	/* 232 */	NULL, /* unimplemented xenix_proctl */
+	/* 233 */	NULL, /* unimplemented xenix_execseg */
+	/* 234 */	NULL, /* unimplemented xenix_unexecseg */
+	/* 235 */	NULL, /* unimplemented */
+	/* 236 */	NULL, /* select */
+	/* 237 */	NULL, /* eaccess */
+	/* 238 */	NULL, /* unimplemented xenix_paccess */
+	/* 239 */	NULL, /* sigaction */
+	/* 240 */	NULL, /* sigprocmask */
+	/* 241 */	NULL, /* sigpending */
+	/* 242 */	NULL, /* sigsuspend */
+	/* 243 */	NULL, /* getgroups */
+	/* 244 */	NULL, /* setgroups */
+	/* 245 */	NULL, /* sysconf */
+	/* 246 */	NULL, /* pathconf */
+	/* 247 */	NULL, /* fpathconf */
+	/* 248 */	NULL, /* __posix_rename */
+	/* 249 */	NULL, /* unimplemented */
+	/* 250 */	NULL, /* scoinfo */
+	/* 251 */	NULL, /* unimplemented */
+	/* 252 */	NULL, /* unimplemented */
+	/* 253 */	NULL, /* unimplemented */
+	/* 254 */	NULL, /* unimplemented */
+	/* 255 */	NULL, /* unimplemented getitimer */
+	/* 256 */	NULL, /* unimplemented setitimer */
+	/* 257 */	NULL, /* unimplemented */
+	/* 258 */	NULL, /* unimplemented setreuid */
+	/* 259 */	NULL, /* unimplemented setregid */
+	/* 260 */	NULL, /* filler */
+	/* 261 */	NULL, /* filler */
+	/* 262 */	NULL, /* filler */
+	/* 263 */	NULL, /* filler */
+	/* 264 */	NULL, /* filler */
+	/* 265 */	NULL, /* filler */
+	/* 266 */	NULL, /* filler */
+	/* 267 */	NULL, /* filler */
+	/* 268 */	NULL, /* filler */
+	/* 269 */	NULL, /* filler */
+	/* 270 */	NULL, /* filler */
+	/* 271 */	NULL, /* filler */
+	/* 272 */	NULL, /* filler */
+	/* 273 */	NULL, /* filler */
+	/* 274 */	NULL, /* filler */
+	/* 275 */	NULL, /* filler */
+	/* 276 */	NULL, /* filler */
+	/* 277 */	NULL, /* filler */
+	/* 278 */	NULL, /* filler */
+	/* 279 */	NULL, /* filler */
+	/* 280 */	NULL, /* filler */
+	/* 281 */	NULL, /* filler */
+	/* 282 */	NULL, /* filler */
+	/* 283 */	NULL, /* filler */
+	/* 284 */	NULL, /* filler */
+	/* 285 */	NULL, /* filler */
+	/* 286 */	NULL, /* filler */
+	/* 287 */	NULL, /* filler */
+	/* 288 */	NULL, /* filler */
+	/* 289 */	NULL, /* filler */
+	/* 290 */	NULL, /* filler */
+	/* 291 */	NULL, /* filler */
+	/* 292 */	NULL, /* filler */
+	/* 293 */	NULL, /* filler */
+	/* 294 */	NULL, /* filler */
+	/* 295 */	NULL, /* filler */
+	/* 296 */	NULL, /* filler */
+	/* 297 */	NULL, /* filler */
+	/* 298 */	NULL, /* filler */
+	/* 299 */	NULL, /* filler */
+	/* 300 */	NULL, /* filler */
+	/* 301 */	NULL, /* filler */
+	/* 302 */	NULL, /* filler */
+	/* 303 */	NULL, /* filler */
+	/* 304 */	NULL, /* filler */
+	/* 305 */	NULL, /* filler */
+	/* 306 */	NULL, /* filler */
+	/* 307 */	NULL, /* filler */
+	/* 308 */	NULL, /* filler */
+	/* 309 */	NULL, /* filler */
+	/* 310 */	NULL, /* filler */
+	/* 311 */	NULL, /* filler */
+	/* 312 */	NULL, /* filler */
+	/* 313 */	NULL, /* filler */
+	/* 314 */	NULL, /* filler */
+	/* 315 */	NULL, /* filler */
+	/* 316 */	NULL, /* filler */
+	/* 317 */	NULL, /* filler */
+	/* 318 */	NULL, /* filler */
+	/* 319 */	NULL, /* filler */
+	/* 320 */	NULL, /* filler */
+	/* 321 */	NULL, /* filler */
+	/* 322 */	NULL, /* filler */
+	/* 323 */	NULL, /* filler */
+	/* 324 */	NULL, /* filler */
+	/* 325 */	NULL, /* filler */
+	/* 326 */	NULL, /* filler */
+	/* 327 */	NULL, /* filler */
+	/* 328 */	NULL, /* filler */
+	/* 329 */	NULL, /* filler */
+	/* 330 */	NULL, /* filler */
+	/* 331 */	NULL, /* filler */
+	/* 332 */	NULL, /* filler */
+	/* 333 */	NULL, /* filler */
+	/* 334 */	NULL, /* filler */
+	/* 335 */	NULL, /* filler */
+	/* 336 */	NULL, /* filler */
+	/* 337 */	NULL, /* filler */
+	/* 338 */	NULL, /* filler */
+	/* 339 */	NULL, /* filler */
+	/* 340 */	NULL, /* filler */
+	/* 341 */	NULL, /* filler */
+	/* 342 */	NULL, /* filler */
+	/* 343 */	NULL, /* filler */
+	/* 344 */	NULL, /* filler */
+	/* 345 */	NULL, /* filler */
+	/* 346 */	NULL, /* filler */
+	/* 347 */	NULL, /* filler */
+	/* 348 */	NULL, /* filler */
+	/* 349 */	NULL, /* filler */
+	/* 350 */	NULL, /* filler */
+	/* 351 */	NULL, /* filler */
+	/* 352 */	NULL, /* filler */
+	/* 353 */	NULL, /* filler */
+	/* 354 */	NULL, /* filler */
+	/* 355 */	NULL, /* filler */
+	/* 356 */	NULL, /* filler */
+	/* 357 */	NULL, /* filler */
+	/* 358 */	NULL, /* filler */
+	/* 359 */	NULL, /* filler */
+	/* 360 */	NULL, /* filler */
+	/* 361 */	NULL, /* filler */
+	/* 362 */	NULL, /* filler */
+	/* 363 */	NULL, /* filler */
+	/* 364 */	NULL, /* filler */
+	/* 365 */	NULL, /* filler */
+	/* 366 */	NULL, /* filler */
+	/* 367 */	NULL, /* filler */
+	/* 368 */	NULL, /* filler */
+	/* 369 */	NULL, /* filler */
+	/* 370 */	NULL, /* filler */
+	/* 371 */	NULL, /* filler */
+	/* 372 */	NULL, /* filler */
+	/* 373 */	NULL, /* filler */
+	/* 374 */	NULL, /* filler */
+	/* 375 */	NULL, /* filler */
+	/* 376 */	NULL, /* filler */
+	/* 377 */	NULL, /* filler */
+	/* 378 */	NULL, /* filler */
+	/* 379 */	NULL, /* filler */
+	/* 380 */	NULL, /* filler */
+	/* 381 */	NULL, /* filler */
+	/* 382 */	NULL, /* filler */
+	/* 383 */	NULL, /* filler */
+	/* 384 */	NULL, /* filler */
+	/* 385 */	NULL, /* filler */
+	/* 386 */	NULL, /* filler */
+	/* 387 */	NULL, /* filler */
+	/* 388 */	NULL, /* filler */
+	/* 389 */	NULL, /* filler */
+	/* 390 */	NULL, /* filler */
+	/* 391 */	NULL, /* filler */
+	/* 392 */	NULL, /* filler */
+	/* 393 */	NULL, /* filler */
+	/* 394 */	NULL, /* filler */
+	/* 395 */	NULL, /* filler */
+	/* 396 */	NULL, /* filler */
+	/* 397 */	NULL, /* filler */
+	/* 398 */	NULL, /* filler */
+	/* 399 */	NULL, /* filler */
+	/* 400 */	NULL, /* filler */
+	/* 401 */	NULL, /* filler */
+	/* 402 */	NULL, /* filler */
+	/* 403 */	NULL, /* filler */
+	/* 404 */	NULL, /* filler */
+	/* 405 */	NULL, /* filler */
+	/* 406 */	NULL, /* filler */
+	/* 407 */	NULL, /* filler */
+	/* 408 */	NULL, /* filler */
+	/* 409 */	NULL, /* filler */
+	/* 410 */	NULL, /* filler */
+	/* 411 */	NULL, /* filler */
+	/* 412 */	NULL, /* filler */
+	/* 413 */	NULL, /* filler */
+	/* 414 */	NULL, /* filler */
+	/* 415 */	NULL, /* filler */
+	/* 416 */	NULL, /* filler */
+	/* 417 */	NULL, /* filler */
+	/* 418 */	NULL, /* filler */
+	/* 419 */	NULL, /* filler */
+	/* 420 */	NULL, /* filler */
+	/* 421 */	NULL, /* filler */
+	/* 422 */	NULL, /* filler */
+	/* 423 */	NULL, /* filler */
+	/* 424 */	NULL, /* filler */
+	/* 425 */	NULL, /* filler */
+	/* 426 */	NULL, /* filler */
+	/* 427 */	NULL, /* filler */
+	/* 428 */	NULL, /* filler */
+	/* 429 */	NULL, /* filler */
+	/* 430 */	NULL, /* filler */
+	/* 431 */	NULL, /* filler */
+	/* 432 */	NULL, /* filler */
+	/* 433 */	NULL, /* filler */
+	/* 434 */	NULL, /* filler */
+	/* 435 */	NULL, /* filler */
+	/* 436 */	NULL, /* filler */
+	/* 437 */	NULL, /* filler */
+	/* 438 */	NULL, /* filler */
+	/* 439 */	NULL, /* filler */
+	/* 440 */	NULL, /* filler */
+	/* 441 */	NULL, /* filler */
+	/* 442 */	NULL, /* filler */
+	/* 443 */	NULL, /* filler */
+	/* 444 */	NULL, /* filler */
+	/* 445 */	NULL, /* filler */
+	/* 446 */	NULL, /* filler */
+	/* 447 */	NULL, /* filler */
+	/* 448 */	NULL, /* filler */
+	/* 449 */	NULL, /* filler */
+	/* 450 */	NULL, /* filler */
+	/* 451 */	NULL, /* filler */
+	/* 452 */	NULL, /* filler */
+	/* 453 */	NULL, /* filler */
+	/* 454 */	NULL, /* filler */
+	/* 455 */	NULL, /* filler */
+	/* 456 */	NULL, /* filler */
+	/* 457 */	NULL, /* filler */
+	/* 458 */	NULL, /* filler */
+	/* 459 */	NULL, /* filler */
+	/* 460 */	NULL, /* filler */
+	/* 461 */	NULL, /* filler */
+	/* 462 */	NULL, /* filler */
+	/* 463 */	NULL, /* filler */
+	/* 464 */	NULL, /* filler */
+	/* 465 */	NULL, /* filler */
+	/* 466 */	NULL, /* filler */
+	/* 467 */	NULL, /* filler */
+	/* 468 */	NULL, /* filler */
+	/* 469 */	NULL, /* filler */
+	/* 470 */	NULL, /* filler */
+	/* 471 */	NULL, /* filler */
+	/* 472 */	NULL, /* filler */
+	/* 473 */	NULL, /* filler */
+	/* 474 */	NULL, /* filler */
+	/* 475 */	NULL, /* filler */
+	/* 476 */	NULL, /* filler */
+	/* 477 */	NULL, /* filler */
+	/* 478 */	NULL, /* filler */
+	/* 479 */	NULL, /* filler */
+	/* 480 */	NULL, /* filler */
+	/* 481 */	NULL, /* filler */
+	/* 482 */	NULL, /* filler */
+	/* 483 */	NULL, /* filler */
+	/* 484 */	NULL, /* filler */
+	/* 485 */	NULL, /* filler */
+	/* 486 */	NULL, /* filler */
+	/* 487 */	NULL, /* filler */
+	/* 488 */	NULL, /* filler */
+	/* 489 */	NULL, /* filler */
+	/* 490 */	NULL, /* filler */
+	/* 491 */	NULL, /* filler */
+	/* 492 */	NULL, /* filler */
+	/* 493 */	NULL, /* filler */
+	/* 494 */	NULL, /* filler */
+	/* 495 */	NULL, /* filler */
+	/* 496 */	NULL, /* filler */
+	/* 497 */	NULL, /* filler */
+	/* 498 */	NULL, /* filler */
+	/* 499 */	NULL, /* filler */
+	/* 500 */	NULL, /* filler */
+	/* 501 */	NULL, /* filler */
+	/* 502 */	NULL, /* filler */
+	/* 503 */	NULL, /* filler */
+	/* 504 */	NULL, /* filler */
+	/* 505 */	NULL, /* filler */
+	/* 506 */	NULL, /* filler */
+	/* 507 */	NULL, /* filler */
+	/* 508 */	NULL, /* filler */
+	/* 509 */	NULL, /* filler */
+	/* 510 */	NULL, /* filler */
+	/* 511 */	NULL, /* filler */
 };
