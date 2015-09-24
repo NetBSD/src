@@ -1,4 +1,4 @@
-/*	$NetBSD: libproc.h,v 1.2 2010/02/21 01:46:34 darran Exp $	*/
+/*	$NetBSD: libproc.h,v 1.3 2015/09/24 14:17:20 christos Exp $	*/
 
 /*
  * Copyright (C) 2008 John Birrell <jb@freebsd.org>
@@ -54,13 +54,6 @@ typedef void (*proc_child_func)(void *);
 #define PS_DEAD         5
 #define PS_LOST         6
 
-
-typedef struct prmap {
-	uintptr_t	pr_vaddr;       /* Virtual address. */
-} prmap_t;
-
-#if 0
 #include_next <libproc.h>
-#endif
 
 #endif
