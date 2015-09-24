@@ -1,4 +1,4 @@
-/* $NetBSD: osf1_sysent.c,v 1.63 2015/03/07 16:41:54 christos Exp $ */
+/* $NetBSD: osf1_sysent.c,v 1.64 2015/09/24 14:43:22 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: osf1_sysent.c,v 1.63 2015/03/07 16:41:54 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: osf1_sysent.c,v 1.64 2015/09/24 14:43:22 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -24,1031 +24,1756 @@ __KERNEL_RCSID(0, "$NetBSD: osf1_sysent.c,v 1.63 2015/03/07 16:41:54 christos Ex
 
 #define	s(type)	sizeof(type)
 #define	n(type)	(sizeof(type)/sizeof (register_t))
-#define	ns(type)	n(type), s(type)
+#define	ns(type)	.sy_narg = n(type), .sy_argsize = s(type)
 
 struct sysent osf1_sysent[] = {
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_nosys, 0, 0 },		/* 0 = syscall */
-	{ ns(struct sys_exit_args), 0,
-	    (sy_call_t *)sys_exit, 0, 0 },		/* 1 = exit */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_fork, 0, 0 },		/* 2 = fork */
-	{ ns(struct sys_read_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_read, 0, 0 },		/* 3 = read */
-	{ ns(struct sys_write_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_write, 0, 0 },		/* 4 = write */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 5 = unimplemented old open */
-	{ ns(struct sys_close_args), 0,
-	    (sy_call_t *)sys_close, 0, 0 },		/* 6 = close */
-	{ ns(struct osf1_sys_wait4_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_wait4, 0, 0 },	/* 7 = wait4 */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 8 = unimplemented old creat */
-	{ ns(struct sys_link_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_link, 0, 0 },		/* 9 = link */
-	{ ns(struct sys_unlink_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_unlink, 0, 0 },		/* 10 = unlink */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 11 = unimplemented execv */
-	{ ns(struct sys_chdir_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_chdir, 0, 0 },		/* 12 = chdir */
-	{ ns(struct sys_fchdir_args), 0,
-	    (sy_call_t *)sys_fchdir, 0, 0 },		/* 13 = fchdir */
-	{ ns(struct osf1_sys_mknod_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_mknod, 0, 0 },	/* 14 = mknod */
-	{ ns(struct sys_chmod_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_chmod, 0, 0 },		/* 15 = chmod */
-	{ ns(struct sys___posix_chown_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys___posix_chown, 0, 0 },	/* 16 = __posix_chown */
-	{ ns(struct sys_obreak_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_obreak, 0, 0 },		/* 17 = obreak */
-	{ ns(struct osf1_sys_getfsstat_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_getfsstat, 0, 0 },	/* 18 = getfsstat */
-	{ ns(struct osf1_sys_lseek_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64 | SYCALL_RET_64,
-	    (sy_call_t *)osf1_sys_lseek, 0, 0 },	/* 19 = lseek */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_getpid_with_ppid, 0, 0 },/* 20 = getpid_with_ppid */
-	{ ns(struct osf1_sys_mount_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_mount, 0, 0 },	/* 21 = mount */
-	{ ns(struct osf1_sys_unmount_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_unmount, 0, 0 },	/* 22 = unmount */
-	{ ns(struct osf1_sys_setuid_args), 0,
-	    (sy_call_t *)osf1_sys_setuid, 0, 0 },	/* 23 = setuid */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_getuid_with_euid, 0, 0 },/* 24 = getuid_with_euid */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 25 = unimplemented exec_with_loader */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 26 = unimplemented ptrace */
-	{ ns(struct osf1_sys_recvmsg_xopen_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_recvmsg_xopen, 0, 0 },/* 27 = recvmsg_xopen */
-	{ ns(struct osf1_sys_sendmsg_xopen_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_sendmsg_xopen, 0, 0 },/* 28 = sendmsg_xopen */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 29 = unimplemented recvfrom */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 30 = unimplemented accept */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 31 = unimplemented getpeername */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 32 = unimplemented getsockname */
-	{ ns(struct osf1_sys_access_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_access, 0, 0 },	/* 33 = access */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 34 = unimplemented chflags */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 35 = unimplemented fchflags */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_sync, 0, 0 },		/* 36 = sync */
-	{ ns(struct sys_kill_args), 0,
-	    (sy_call_t *)sys_kill, 0, 0 },		/* 37 = kill */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 38 = unimplemented old stat */
-	{ ns(struct sys_setpgid_args), 0,
-	    (sy_call_t *)sys_setpgid, 0, 0 },		/* 39 = setpgid */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 40 = unimplemented old lstat */
-	{ ns(struct sys_dup_args), 0,
-	    (sy_call_t *)sys_dup, 0, 0 },		/* 41 = dup */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_pipe, 0, 0 },		/* 42 = pipe */
-	{ ns(struct osf1_sys_set_program_attributes_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_set_program_attributes, 0, 0 },/* 43 = set_program_attributes */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 44 = unimplemented profil */
-	{ ns(struct osf1_sys_open_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_open, 0, 0 },	/* 45 = open */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 46 = obsolete sigaction */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_getgid_with_egid, 0, 0 },/* 47 = getgid_with_egid */
-	{ ns(struct compat_13_sys_sigprocmask_args), 0,
-	    (sy_call_t *)compat_13_sys_sigprocmask, 0, 0 },/* 48 = sigprocmask */
-	{ ns(struct sys___getlogin_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys___getlogin, 0, 0 },	/* 49 = __getlogin */
-	{ ns(struct sys___setlogin_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys___setlogin, 0, 0 },	/* 50 = __setlogin */
-	{ ns(struct sys_acct_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_acct, 0, 0 },		/* 51 = acct */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 52 = unimplemented sigpending */
-	{ ns(struct osf1_sys_classcntl_args), 0,
-	    (sy_call_t *)osf1_sys_classcntl, 0, 0 },	/* 53 = classcntl */
-	{ ns(struct osf1_sys_ioctl_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_ioctl, 0, 0 },	/* 54 = ioctl */
-	{ ns(struct osf1_sys_reboot_args), 0,
-	    (sy_call_t *)osf1_sys_reboot, 0, 0 },	/* 55 = reboot */
-	{ ns(struct sys_revoke_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_revoke, 0, 0 },		/* 56 = revoke */
-	{ ns(struct sys_symlink_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_symlink, 0, 0 },		/* 57 = symlink */
-	{ ns(struct sys_readlink_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_readlink, 0, 0 },	/* 58 = readlink */
-	{ ns(struct osf1_sys_execve_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_execve, 0, 0 },	/* 59 = execve */
-	{ ns(struct sys_umask_args), 0,
-	    (sy_call_t *)sys_umask, 0, 0 },		/* 60 = umask */
-	{ ns(struct sys_chroot_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_chroot, 0, 0 },		/* 61 = chroot */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 62 = unimplemented old fstat */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_getpgrp, 0, 0 },		/* 63 = getpgrp */
-	{ 0, 0, 0,
-	    (sy_call_t *)compat_43_sys_getpagesize, 0, 0 },/* 64 = getpagesize */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 65 = unimplemented mremap */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_vfork, 0, 0 },		/* 66 = vfork */
-	{ ns(struct osf1_sys_stat_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_stat, 0, 0 },	/* 67 = stat */
-	{ ns(struct osf1_sys_lstat_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_lstat, 0, 0 },	/* 68 = lstat */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 69 = unimplemented sbrk */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 70 = unimplemented sstk */
-	{ ns(struct osf1_sys_mmap_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG5_64 | SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_mmap, 0, 0 },	/* 71 = mmap */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 72 = unimplemented ovadvise */
-	{ ns(struct sys_munmap_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_munmap, 0, 0 },		/* 73 = munmap */
-	{ ns(struct osf1_sys_mprotect_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_mprotect, 0, 0 },	/* 74 = mprotect */
-	{ ns(struct osf1_sys_madvise_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_madvise, 0, 0 },	/* 75 = madvise */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 76 = unimplemented old vhangup */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 77 = unimplemented kmodcall */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 78 = unimplemented mincore */
-	{ ns(struct sys_getgroups_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_getgroups, 0, 0 },	/* 79 = getgroups */
-	{ ns(struct sys_setgroups_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_setgroups, 0, 0 },	/* 80 = setgroups */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 81 = unimplemented old getpgrp */
-	{ ns(struct sys_setpgid_args), 0,
-	    (sy_call_t *)sys_setpgid, 0, 0 },		/* 82 = setpgrp */
-	{ ns(struct osf1_sys_setitimer_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_setitimer, 0, 0 },	/* 83 = setitimer */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 84 = unimplemented old wait */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 85 = unimplemented table */
-	{ ns(struct osf1_sys_getitimer_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_getitimer, 0, 0 },	/* 86 = getitimer */
-	{ ns(struct compat_43_sys_gethostname_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_gethostname, 0, 0 },/* 87 = gethostname */
-	{ ns(struct compat_43_sys_sethostname_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_sethostname, 0, 0 },/* 88 = sethostname */
-	{ 0, 0, 0,
-	    (sy_call_t *)compat_43_sys_getdtablesize, 0, 0 },/* 89 = getdtablesize */
-	{ ns(struct sys_dup2_args), 0,
-	    (sy_call_t *)sys_dup2, 0, 0 },		/* 90 = dup2 */
-	{ ns(struct osf1_sys_fstat_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_fstat, 0, 0 },	/* 91 = fstat */
-	{ ns(struct osf1_sys_fcntl_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_fcntl, 0, 0 },	/* 92 = fcntl */
-	{ ns(struct osf1_sys_select_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_select, 0, 0 },	/* 93 = select */
-	{ ns(struct sys_poll_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_poll, 0, 0 },		/* 94 = poll */
-	{ ns(struct sys_fsync_args), 0,
-	    (sy_call_t *)sys_fsync, 0, 0 },		/* 95 = fsync */
-	{ ns(struct sys_setpriority_args), 0,
-	    (sy_call_t *)sys_setpriority, 0, 0 },	/* 96 = setpriority */
-	{ ns(struct osf1_sys_socket_args), 0,
-	    (sy_call_t *)osf1_sys_socket, 0, 0 },	/* 97 = socket */
-	{ ns(struct sys_connect_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_connect, 0, 0 },		/* 98 = connect */
-	{ ns(struct compat_43_sys_accept_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_accept, 0, 0 },/* 99 = accept */
-	{ ns(struct sys_getpriority_args), 0,
-	    (sy_call_t *)sys_getpriority, 0, 0 },	/* 100 = getpriority */
-	{ ns(struct compat_43_sys_send_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_send, 0, 0 },	/* 101 = send */
-	{ ns(struct compat_43_sys_recv_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_recv, 0, 0 },	/* 102 = recv */
-	{ ns(struct compat_13_sys_sigreturn_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_13_sys_sigreturn, 0, 0 },/* 103 = sigreturn */
-	{ ns(struct sys_bind_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_bind, 0, 0 },		/* 104 = bind */
-	{ ns(struct sys_setsockopt_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_setsockopt, 0, 0 },	/* 105 = setsockopt */
-	{ ns(struct sys_listen_args), 0,
-	    (sy_call_t *)sys_listen, 0, 0 },		/* 106 = listen */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 107 = unimplemented plock */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 108 = unimplemented old sigvec */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 109 = unimplemented old sigblock */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 110 = unimplemented old sigsetmask */
-	{ ns(struct compat_13_sys_sigsuspend_args), 0,
-	    (sy_call_t *)compat_13_sys_sigsuspend, 0, 0 },/* 111 = sigsuspend */
-	{ ns(struct compat_43_sys_sigstack_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_sigstack, 0, 0 },/* 112 = sigstack */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 113 = unimplemented old recvmsg */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 114 = unimplemented old sendmsg */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 115 = obsolete vtrace */
-	{ ns(struct osf1_sys_gettimeofday_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_gettimeofday, 0, 0 },/* 116 = gettimeofday */
-	{ ns(struct osf1_sys_getrusage_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_getrusage, 0, 0 },	/* 117 = getrusage */
-	{ ns(struct sys_getsockopt_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_getsockopt, 0, 0 },	/* 118 = getsockopt */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 119 = unimplemented */
-	{ ns(struct osf1_sys_readv_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_readv, 0, 0 },	/* 120 = readv */
-	{ ns(struct osf1_sys_writev_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_writev, 0, 0 },	/* 121 = writev */
-	{ ns(struct osf1_sys_settimeofday_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_settimeofday, 0, 0 },/* 122 = settimeofday */
-	{ ns(struct sys___posix_fchown_args), 0,
-	    (sy_call_t *)sys___posix_fchown, 0, 0 },	/* 123 = __posix_fchown */
-	{ ns(struct sys_fchmod_args), 0,
-	    (sy_call_t *)sys_fchmod, 0, 0 },		/* 124 = fchmod */
-	{ ns(struct compat_43_sys_recvfrom_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_recvfrom, 0, 0 },/* 125 = recvfrom */
-	{ ns(struct sys_setreuid_args), 0,
-	    (sy_call_t *)sys_setreuid, 0, 0 },	/* 126 = setreuid */
-	{ ns(struct sys_setregid_args), 0,
-	    (sy_call_t *)sys_setregid, 0, 0 },	/* 127 = setregid */
-	{ ns(struct sys___posix_rename_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys___posix_rename, 0, 0 },	/* 128 = __posix_rename */
-	{ ns(struct osf1_sys_truncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64 | SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_truncate, 0, 0 },	/* 129 = truncate */
-	{ ns(struct osf1_sys_ftruncate_args), SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
-	    (sy_call_t *)osf1_sys_ftruncate, 0, 0 },	/* 130 = ftruncate */
-	{ ns(struct sys_flock_args), 0,
-	    (sy_call_t *)sys_flock, 0, 0 },		/* 131 = flock */
-	{ ns(struct osf1_sys_setgid_args), 0,
-	    (sy_call_t *)osf1_sys_setgid, 0, 0 },	/* 132 = setgid */
-	{ ns(struct osf1_sys_sendto_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_sendto, 0, 0 },	/* 133 = sendto */
-	{ ns(struct sys_shutdown_args), 0,
-	    (sy_call_t *)sys_shutdown, 0, 0 },	/* 134 = shutdown */
-	{ ns(struct osf1_sys_socketpair_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_socketpair, 0, 0 },	/* 135 = socketpair */
-	{ ns(struct sys_mkdir_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_mkdir, 0, 0 },		/* 136 = mkdir */
-	{ ns(struct sys_rmdir_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys_rmdir, 0, 0 },		/* 137 = rmdir */
-	{ ns(struct osf1_sys_utimes_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_utimes, 0, 0 },	/* 138 = utimes */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 139 = obsolete 4.2 sigreturn */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 140 = unimplemented adjtime */
-	{ ns(struct compat_43_sys_getpeername_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_getpeername, 0, 0 },/* 141 = getpeername */
-	{ 0, 0, 0,
-	    (sy_call_t *)compat_43_sys_gethostid, 0, 0 },/* 142 = gethostid */
-	{ ns(struct compat_43_sys_sethostid_args), 0,
-	    (sy_call_t *)compat_43_sys_sethostid, 0, 0 },/* 143 = sethostid */
-	{ ns(struct osf1_sys_getrlimit_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_getrlimit, 0, 0 },	/* 144 = getrlimit */
-	{ ns(struct osf1_sys_setrlimit_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_setrlimit, 0, 0 },	/* 145 = setrlimit */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 146 = unimplemented old killpg */
-	{ 0, 0, 0,
-	    (sy_call_t *)sys_setsid, 0, 0 },		/* 147 = setsid */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 148 = unimplemented quotactl */
-	{ 0, 0, 0,
-	    (sy_call_t *)compat_43_sys_quota, 0, 0 },	/* 149 = quota */
-	{ ns(struct compat_43_sys_getsockname_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_43_sys_getsockname, 0, 0 },/* 150 = getsockname */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 151 = unimplemented pread */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 152 = unimplemented pwrite */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 153 = unimplemented pid_block */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 154 = unimplemented pid_unblock */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 155 = unimplemented signal_urti */
-	{ ns(struct osf1_sys_sigaction_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_sigaction, 0, 0 },	/* 156 = sigaction */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 157 = unimplemented sigwaitprim */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 158 = unimplemented nfssvc */
-	{ ns(struct osf1_sys_getdirentries_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_getdirentries, 0, 0 },/* 159 = getdirentries */
-	{ ns(struct osf1_sys_statfs_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_statfs, 0, 0 },	/* 160 = statfs */
-	{ ns(struct osf1_sys_fstatfs_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_fstatfs, 0, 0 },	/* 161 = fstatfs */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 162 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 163 = unimplemented async_daemon */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 164 = unimplemented getfh */
-	{ ns(struct compat_09_sys_getdomainname_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_09_sys_getdomainname, 0, 0 },/* 165 = getdomainname */
-	{ ns(struct compat_09_sys_setdomainname_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)compat_09_sys_setdomainname, 0, 0 },/* 166 = setdomainname */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 167 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 168 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 169 = unimplemented exportfs */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 170 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 171 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 172 = unimplemented alt msgctl */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 173 = unimplemented alt msgget */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 174 = unimplemented alt msgrcv */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 175 = unimplemented alt msgsnd */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 176 = unimplemented alt semctl */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 177 = unimplemented alt semget */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 178 = unimplemented alt semop */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 179 = unimplemented alt uname */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 180 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 181 = unimplemented alt plock */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 182 = unimplemented lockf */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 183 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 184 = unimplemented getmnt */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 185 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 186 = unimplemented unmount */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 187 = unimplemented alt sigpending */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 188 = unimplemented alt setsid */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 189 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 190 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 191 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 192 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 193 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 194 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 195 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 196 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 197 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 198 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 199 = unimplemented swapon */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 200 = unimplemented msgctl */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 201 = unimplemented msgget */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 202 = unimplemented msgrcv */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 203 = unimplemented msgsnd */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 204 = unimplemented semctl */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 205 = unimplemented semget */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 206 = unimplemented semop */
-	{ ns(struct osf1_sys_uname_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_uname, 0, 0 },	/* 207 = uname */
-	{ ns(struct sys___posix_lchown_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)sys___posix_lchown, 0, 0 },	/* 208 = __posix_lchown */
-	{ ns(struct osf1_sys_shmat_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_shmat, 0, 0 },	/* 209 = shmat */
-	{ ns(struct osf1_sys_shmctl_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_shmctl, 0, 0 },	/* 210 = shmctl */
-	{ ns(struct osf1_sys_shmdt_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_shmdt, 0, 0 },	/* 211 = shmdt */
-	{ ns(struct osf1_sys_shmget_args), 0,
-	    (sy_call_t *)osf1_sys_shmget, 0, 0 },	/* 212 = shmget */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 213 = unimplemented mvalid */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 214 = unimplemented getaddressconf */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 215 = unimplemented msleep */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 216 = unimplemented mwakeup */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 217 = unimplemented msync */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 218 = unimplemented signal */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 219 = unimplemented utc gettime */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 220 = unimplemented utc adjtime */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 221 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 222 = unimplemented security */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 223 = unimplemented kloadcall */
-	{ ns(struct osf1_sys_stat2_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_stat2, 0, 0 },	/* 224 = stat2 */
-	{ ns(struct osf1_sys_lstat2_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_lstat2, 0, 0 },	/* 225 = lstat2 */
-	{ ns(struct osf1_sys_fstat2_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_fstat2, 0, 0 },	/* 226 = fstat2 */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 227 = unimplemented statfs2 */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 228 = unimplemented fstatfs2 */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 229 = unimplemented getfsstat2 */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 230 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 231 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 232 = unimplemented */
-	{ ns(struct sys_getpgid_args), 0,
-	    (sy_call_t *)sys_getpgid, 0, 0 },		/* 233 = getpgid */
-	{ ns(struct sys_getsid_args), 0,
-	    (sy_call_t *)sys_getsid, 0, 0 },		/* 234 = getsid */
-	{ ns(struct osf1_sys_sigaltstack_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_sigaltstack, 0, 0 },/* 235 = sigaltstack */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 236 = unimplemented waitid */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 237 = unimplemented priocntlset */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 238 = unimplemented sigsendset */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 239 = unimplemented set_speculative */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 240 = unimplemented msfs_syscall */
-	{ ns(struct osf1_sys_sysinfo_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_sysinfo, 0, 0 },	/* 241 = sysinfo */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 242 = unimplemented uadmin */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 243 = unimplemented fuser */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 244 = unimplemented proplist_syscall */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 245 = unimplemented ntp_adjtime */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 246 = unimplemented ntp_gettime */
-	{ ns(struct osf1_sys_pathconf_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_pathconf, 0, 0 },	/* 247 = pathconf */
-	{ ns(struct osf1_sys_fpathconf_args), 0,
-	    (sy_call_t *)osf1_sys_fpathconf, 0, 0 },	/* 248 = fpathconf */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 249 = unimplemented */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 250 = unimplemented uswitch */
-	{ ns(struct osf1_sys_usleep_thread_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_usleep_thread, 0, 0 },/* 251 = usleep_thread */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 252 = unimplemented audcntl */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 253 = unimplemented audgen */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 254 = unimplemented sysfs */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 255 = unimplemented subsys_info */
-	{ ns(struct osf1_sys_getsysinfo_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_getsysinfo, 0, 0 },	/* 256 = getsysinfo */
-	{ ns(struct osf1_sys_setsysinfo_args), SYCALL_ARG_PTR,
-	    (sy_call_t *)osf1_sys_setsysinfo, 0, 0 },	/* 257 = setsysinfo */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 258 = unimplemented afs_syscall */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 259 = unimplemented swapctl */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 260 = unimplemented memcntl */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 261 = unimplemented fdatasync */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 262 = unimplemented oflock */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 263 = unimplemented _F64_readv */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 264 = unimplemented _F64_writev */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 265 = unimplemented cdslxlate */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 266 = unimplemented sendfile */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 267 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 268 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 269 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 270 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 271 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 272 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 273 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 274 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 275 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 276 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 277 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 278 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 279 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 280 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 281 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 282 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 283 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 284 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 285 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 286 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 287 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 288 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 289 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 290 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 291 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 292 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 293 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 294 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 295 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 296 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 297 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 298 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 299 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 300 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 301 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 302 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 303 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 304 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 305 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 306 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 307 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 308 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 309 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 310 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 311 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 312 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 313 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 314 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 315 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 316 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 317 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 318 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 319 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 320 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 321 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 322 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 323 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 324 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 325 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 326 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 327 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 328 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 329 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 330 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 331 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 332 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 333 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 334 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 335 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 336 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 337 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 338 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 339 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 340 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 341 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 342 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 343 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 344 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 345 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 346 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 347 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 348 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 349 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 350 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 351 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 352 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 353 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 354 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 355 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 356 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 357 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 358 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 359 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 360 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 361 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 362 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 363 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 364 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 365 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 366 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 367 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 368 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 369 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 370 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 371 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 372 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 373 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 374 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 375 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 376 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 377 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 378 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 379 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 380 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 381 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 382 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 383 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 384 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 385 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 386 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 387 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 388 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 389 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 390 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 391 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 392 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 393 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 394 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 395 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 396 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 397 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 398 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 399 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 400 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 401 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 402 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 403 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 404 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 405 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 406 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 407 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 408 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 409 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 410 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 411 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 412 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 413 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 414 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 415 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 416 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 417 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 418 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 419 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 420 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 421 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 422 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 423 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 424 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 425 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 426 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 427 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 428 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 429 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 430 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 431 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 432 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 433 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 434 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 435 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 436 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 437 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 438 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 439 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 440 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 441 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 442 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 443 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 444 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 445 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 446 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 447 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 448 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 449 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 450 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 451 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 452 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 453 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 454 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 455 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 456 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 457 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 458 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 459 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 460 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 461 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 462 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 463 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 464 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 465 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 466 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 467 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 468 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 469 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 470 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 471 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 472 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 473 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 474 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 475 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 476 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 477 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 478 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 479 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 480 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 481 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 482 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 483 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 484 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 485 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 486 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 487 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 488 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 489 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 490 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 491 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 492 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 493 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 494 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 495 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 496 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 497 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 498 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 499 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 500 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 501 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 502 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 503 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 504 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 505 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 506 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 507 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 508 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 509 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 510 = filler */
-	{ 0, 0, 0,
-	    sys_nosys, 0, 0 },			/* 511 = filler */
+	{
+		.sy_call = (sy_call_t *)sys_nosys
+	},		/* 0 = syscall */
+	{
+		ns(struct sys_exit_args),
+		.sy_call = (sy_call_t *)sys_exit
+	},		/* 1 = exit */
+	{
+		.sy_call = (sy_call_t *)sys_fork
+	},		/* 2 = fork */
+	{
+		ns(struct sys_read_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_read
+	},		/* 3 = read */
+	{
+		ns(struct sys_write_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_write
+	},		/* 4 = write */
+	{
+		.sy_call = sys_nosys,
+	},		/* 5 = filler */
+	{
+		ns(struct sys_close_args),
+		.sy_call = (sy_call_t *)sys_close
+	},		/* 6 = close */
+	{
+		ns(struct osf1_sys_wait4_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_wait4
+	},		/* 7 = wait4 */
+	{
+		.sy_call = sys_nosys,
+	},		/* 8 = filler */
+	{
+		ns(struct sys_link_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_link
+	},		/* 9 = link */
+	{
+		ns(struct sys_unlink_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_unlink
+	},		/* 10 = unlink */
+	{
+		.sy_call = sys_nosys,
+	},		/* 11 = filler */
+	{
+		ns(struct sys_chdir_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_chdir
+	},		/* 12 = chdir */
+	{
+		ns(struct sys_fchdir_args),
+		.sy_call = (sy_call_t *)sys_fchdir
+	},		/* 13 = fchdir */
+	{
+		ns(struct osf1_sys_mknod_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_mknod
+	},		/* 14 = mknod */
+	{
+		ns(struct sys_chmod_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_chmod
+	},		/* 15 = chmod */
+	{
+		ns(struct sys___posix_chown_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___posix_chown
+	},		/* 16 = __posix_chown */
+	{
+		ns(struct sys_obreak_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_obreak
+	},		/* 17 = obreak */
+	{
+		ns(struct osf1_sys_getfsstat_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_getfsstat
+	},		/* 18 = getfsstat */
+	{
+		ns(struct osf1_sys_lseek_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64 | SYCALL_RET_64,
+		.sy_call = (sy_call_t *)osf1_sys_lseek
+	},		/* 19 = lseek */
+	{
+		.sy_call = (sy_call_t *)sys_getpid_with_ppid
+	},		/* 20 = getpid_with_ppid */
+	{
+		ns(struct osf1_sys_mount_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_mount
+	},		/* 21 = mount */
+	{
+		ns(struct osf1_sys_unmount_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_unmount
+	},		/* 22 = unmount */
+	{
+		ns(struct osf1_sys_setuid_args),
+		.sy_call = (sy_call_t *)osf1_sys_setuid
+	},		/* 23 = setuid */
+	{
+		.sy_call = (sy_call_t *)sys_getuid_with_euid
+	},		/* 24 = getuid_with_euid */
+	{
+		.sy_call = sys_nosys,
+	},		/* 25 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 26 = filler */
+	{
+		ns(struct osf1_sys_recvmsg_xopen_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_recvmsg_xopen
+	},		/* 27 = recvmsg_xopen */
+	{
+		ns(struct osf1_sys_sendmsg_xopen_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_sendmsg_xopen
+	},		/* 28 = sendmsg_xopen */
+	{
+		.sy_call = sys_nosys,
+	},		/* 29 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 30 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 31 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 32 = filler */
+	{
+		ns(struct osf1_sys_access_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_access
+	},		/* 33 = access */
+	{
+		.sy_call = sys_nosys,
+	},		/* 34 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 35 = filler */
+	{
+		.sy_call = (sy_call_t *)sys_sync
+	},		/* 36 = sync */
+	{
+		ns(struct sys_kill_args),
+		.sy_call = (sy_call_t *)sys_kill
+	},		/* 37 = kill */
+	{
+		.sy_call = sys_nosys,
+	},		/* 38 = filler */
+	{
+		ns(struct sys_setpgid_args),
+		.sy_call = (sy_call_t *)sys_setpgid
+	},		/* 39 = setpgid */
+	{
+		.sy_call = sys_nosys,
+	},		/* 40 = filler */
+	{
+		ns(struct sys_dup_args),
+		.sy_call = (sy_call_t *)sys_dup
+	},		/* 41 = dup */
+	{
+		.sy_call = (sy_call_t *)sys_pipe
+	},		/* 42 = pipe */
+	{
+		ns(struct osf1_sys_set_program_attributes_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_set_program_attributes
+	},		/* 43 = set_program_attributes */
+	{
+		.sy_call = sys_nosys,
+	},		/* 44 = filler */
+	{
+		ns(struct osf1_sys_open_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_open
+	},		/* 45 = open */
+	{
+		.sy_call = sys_nosys,
+	},		/* 46 = filler */
+	{
+		.sy_call = (sy_call_t *)sys_getgid_with_egid
+	},		/* 47 = getgid_with_egid */
+	{
+		ns(struct compat_13_sys_sigprocmask_args),
+		.sy_call = (sy_call_t *)compat_13_sys_sigprocmask
+	},		/* 48 = sigprocmask */
+	{
+		ns(struct sys___getlogin_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___getlogin
+	},		/* 49 = __getlogin */
+	{
+		ns(struct sys___setlogin_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___setlogin
+	},		/* 50 = __setlogin */
+	{
+		ns(struct sys_acct_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_acct
+	},		/* 51 = acct */
+	{
+		.sy_call = sys_nosys,
+	},		/* 52 = filler */
+	{
+		ns(struct osf1_sys_classcntl_args),
+		.sy_call = (sy_call_t *)osf1_sys_classcntl
+	},		/* 53 = classcntl */
+	{
+		ns(struct osf1_sys_ioctl_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_ioctl
+	},		/* 54 = ioctl */
+	{
+		ns(struct osf1_sys_reboot_args),
+		.sy_call = (sy_call_t *)osf1_sys_reboot
+	},		/* 55 = reboot */
+	{
+		ns(struct sys_revoke_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_revoke
+	},		/* 56 = revoke */
+	{
+		ns(struct sys_symlink_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_symlink
+	},		/* 57 = symlink */
+	{
+		ns(struct sys_readlink_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_readlink
+	},		/* 58 = readlink */
+	{
+		ns(struct osf1_sys_execve_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_execve
+	},		/* 59 = execve */
+	{
+		ns(struct sys_umask_args),
+		.sy_call = (sy_call_t *)sys_umask
+	},		/* 60 = umask */
+	{
+		ns(struct sys_chroot_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_chroot
+	},		/* 61 = chroot */
+	{
+		.sy_call = sys_nosys,
+	},		/* 62 = filler */
+	{
+		.sy_call = (sy_call_t *)sys_getpgrp
+	},		/* 63 = getpgrp */
+	{
+		.sy_call = (sy_call_t *)compat_43_sys_getpagesize
+	},		/* 64 = getpagesize */
+	{
+		.sy_call = sys_nosys,
+	},		/* 65 = filler */
+	{
+		.sy_call = (sy_call_t *)sys_vfork
+	},		/* 66 = vfork */
+	{
+		ns(struct osf1_sys_stat_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_stat
+	},		/* 67 = stat */
+	{
+		ns(struct osf1_sys_lstat_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_lstat
+	},		/* 68 = lstat */
+	{
+		.sy_call = sys_nosys,
+	},		/* 69 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 70 = filler */
+	{
+		ns(struct osf1_sys_mmap_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG5_64 | SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_mmap
+	},		/* 71 = mmap */
+	{
+		.sy_call = sys_nosys,
+	},		/* 72 = filler */
+	{
+		ns(struct sys_munmap_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_munmap
+	},		/* 73 = munmap */
+	{
+		ns(struct osf1_sys_mprotect_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_mprotect
+	},		/* 74 = mprotect */
+	{
+		ns(struct osf1_sys_madvise_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_madvise
+	},		/* 75 = madvise */
+	{
+		.sy_call = sys_nosys,
+	},		/* 76 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 77 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 78 = filler */
+	{
+		ns(struct sys_getgroups_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_getgroups
+	},		/* 79 = getgroups */
+	{
+		ns(struct sys_setgroups_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_setgroups
+	},		/* 80 = setgroups */
+	{
+		.sy_call = sys_nosys,
+	},		/* 81 = filler */
+	{
+		ns(struct sys_setpgid_args),
+		.sy_call = (sy_call_t *)sys_setpgid
+	},		/* 82 = setpgrp */
+	{
+		ns(struct osf1_sys_setitimer_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_setitimer
+	},		/* 83 = setitimer */
+	{
+		.sy_call = sys_nosys,
+	},		/* 84 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 85 = filler */
+	{
+		ns(struct osf1_sys_getitimer_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_getitimer
+	},		/* 86 = getitimer */
+	{
+		ns(struct compat_43_sys_gethostname_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_gethostname
+	},		/* 87 = gethostname */
+	{
+		ns(struct compat_43_sys_sethostname_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_sethostname
+	},		/* 88 = sethostname */
+	{
+		.sy_call = (sy_call_t *)compat_43_sys_getdtablesize
+	},		/* 89 = getdtablesize */
+	{
+		ns(struct sys_dup2_args),
+		.sy_call = (sy_call_t *)sys_dup2
+	},		/* 90 = dup2 */
+	{
+		ns(struct osf1_sys_fstat_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_fstat
+	},		/* 91 = fstat */
+	{
+		ns(struct osf1_sys_fcntl_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_fcntl
+	},		/* 92 = fcntl */
+	{
+		ns(struct osf1_sys_select_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_select
+	},		/* 93 = select */
+	{
+		ns(struct sys_poll_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_poll
+	},		/* 94 = poll */
+	{
+		ns(struct sys_fsync_args),
+		.sy_call = (sy_call_t *)sys_fsync
+	},		/* 95 = fsync */
+	{
+		ns(struct sys_setpriority_args),
+		.sy_call = (sy_call_t *)sys_setpriority
+	},		/* 96 = setpriority */
+	{
+		ns(struct osf1_sys_socket_args),
+		.sy_call = (sy_call_t *)osf1_sys_socket
+	},		/* 97 = socket */
+	{
+		ns(struct sys_connect_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_connect
+	},		/* 98 = connect */
+	{
+		ns(struct compat_43_sys_accept_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_accept
+	},		/* 99 = accept */
+	{
+		ns(struct sys_getpriority_args),
+		.sy_call = (sy_call_t *)sys_getpriority
+	},		/* 100 = getpriority */
+	{
+		ns(struct compat_43_sys_send_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_send
+	},		/* 101 = send */
+	{
+		ns(struct compat_43_sys_recv_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_recv
+	},		/* 102 = recv */
+	{
+		ns(struct compat_13_sys_sigreturn_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_13_sys_sigreturn
+	},		/* 103 = sigreturn */
+	{
+		ns(struct sys_bind_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_bind
+	},		/* 104 = bind */
+	{
+		ns(struct sys_setsockopt_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_setsockopt
+	},		/* 105 = setsockopt */
+	{
+		ns(struct sys_listen_args),
+		.sy_call = (sy_call_t *)sys_listen
+	},		/* 106 = listen */
+	{
+		.sy_call = sys_nosys,
+	},		/* 107 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 108 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 109 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 110 = filler */
+	{
+		ns(struct compat_13_sys_sigsuspend_args),
+		.sy_call = (sy_call_t *)compat_13_sys_sigsuspend
+	},		/* 111 = sigsuspend */
+	{
+		ns(struct compat_43_sys_sigstack_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_sigstack
+	},		/* 112 = sigstack */
+	{
+		.sy_call = sys_nosys,
+	},		/* 113 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 114 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 115 = filler */
+	{
+		ns(struct osf1_sys_gettimeofday_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_gettimeofday
+	},		/* 116 = gettimeofday */
+	{
+		ns(struct osf1_sys_getrusage_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_getrusage
+	},		/* 117 = getrusage */
+	{
+		ns(struct sys_getsockopt_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_getsockopt
+	},		/* 118 = getsockopt */
+	{
+		.sy_call = sys_nosys,
+	},		/* 119 = filler */
+	{
+		ns(struct osf1_sys_readv_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_readv
+	},		/* 120 = readv */
+	{
+		ns(struct osf1_sys_writev_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_writev
+	},		/* 121 = writev */
+	{
+		ns(struct osf1_sys_settimeofday_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_settimeofday
+	},		/* 122 = settimeofday */
+	{
+		ns(struct sys___posix_fchown_args),
+		.sy_call = (sy_call_t *)sys___posix_fchown
+	},		/* 123 = __posix_fchown */
+	{
+		ns(struct sys_fchmod_args),
+		.sy_call = (sy_call_t *)sys_fchmod
+	},		/* 124 = fchmod */
+	{
+		ns(struct compat_43_sys_recvfrom_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_recvfrom
+	},		/* 125 = recvfrom */
+	{
+		ns(struct sys_setreuid_args),
+		.sy_call = (sy_call_t *)sys_setreuid
+	},		/* 126 = setreuid */
+	{
+		ns(struct sys_setregid_args),
+		.sy_call = (sy_call_t *)sys_setregid
+	},		/* 127 = setregid */
+	{
+		ns(struct sys___posix_rename_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___posix_rename
+	},		/* 128 = __posix_rename */
+	{
+		ns(struct osf1_sys_truncate_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64 | SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_truncate
+	},		/* 129 = truncate */
+	{
+		ns(struct osf1_sys_ftruncate_args),
+		.sy_flags = SYCALL_NARGS64_VAL(1) | SYCALL_ARG1_64,
+		.sy_call = (sy_call_t *)osf1_sys_ftruncate
+	},		/* 130 = ftruncate */
+	{
+		ns(struct sys_flock_args),
+		.sy_call = (sy_call_t *)sys_flock
+	},		/* 131 = flock */
+	{
+		ns(struct osf1_sys_setgid_args),
+		.sy_call = (sy_call_t *)osf1_sys_setgid
+	},		/* 132 = setgid */
+	{
+		ns(struct osf1_sys_sendto_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_sendto
+	},		/* 133 = sendto */
+	{
+		ns(struct sys_shutdown_args),
+		.sy_call = (sy_call_t *)sys_shutdown
+	},		/* 134 = shutdown */
+	{
+		ns(struct osf1_sys_socketpair_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_socketpair
+	},		/* 135 = socketpair */
+	{
+		ns(struct sys_mkdir_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_mkdir
+	},		/* 136 = mkdir */
+	{
+		ns(struct sys_rmdir_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys_rmdir
+	},		/* 137 = rmdir */
+	{
+		ns(struct osf1_sys_utimes_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_utimes
+	},		/* 138 = utimes */
+	{
+		.sy_call = sys_nosys,
+	},		/* 139 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 140 = filler */
+	{
+		ns(struct compat_43_sys_getpeername_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_getpeername
+	},		/* 141 = getpeername */
+	{
+		.sy_call = (sy_call_t *)compat_43_sys_gethostid
+	},		/* 142 = gethostid */
+	{
+		ns(struct compat_43_sys_sethostid_args),
+		.sy_call = (sy_call_t *)compat_43_sys_sethostid
+	},		/* 143 = sethostid */
+	{
+		ns(struct osf1_sys_getrlimit_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_getrlimit
+	},		/* 144 = getrlimit */
+	{
+		ns(struct osf1_sys_setrlimit_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_setrlimit
+	},		/* 145 = setrlimit */
+	{
+		.sy_call = sys_nosys,
+	},		/* 146 = filler */
+	{
+		.sy_call = (sy_call_t *)sys_setsid
+	},		/* 147 = setsid */
+	{
+		.sy_call = sys_nosys,
+	},		/* 148 = filler */
+	{
+		.sy_call = (sy_call_t *)compat_43_sys_quota
+	},		/* 149 = quota */
+	{
+		ns(struct compat_43_sys_getsockname_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_43_sys_getsockname
+	},		/* 150 = getsockname */
+	{
+		.sy_call = sys_nosys,
+	},		/* 151 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 152 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 153 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 154 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 155 = filler */
+	{
+		ns(struct osf1_sys_sigaction_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_sigaction
+	},		/* 156 = sigaction */
+	{
+		.sy_call = sys_nosys,
+	},		/* 157 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 158 = filler */
+	{
+		ns(struct osf1_sys_getdirentries_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_getdirentries
+	},		/* 159 = getdirentries */
+	{
+		ns(struct osf1_sys_statfs_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_statfs
+	},		/* 160 = statfs */
+	{
+		ns(struct osf1_sys_fstatfs_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_fstatfs
+	},		/* 161 = fstatfs */
+	{
+		.sy_call = sys_nosys,
+	},		/* 162 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 163 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 164 = filler */
+	{
+		ns(struct compat_09_sys_getdomainname_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_09_sys_getdomainname
+	},		/* 165 = getdomainname */
+	{
+		ns(struct compat_09_sys_setdomainname_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)compat_09_sys_setdomainname
+	},		/* 166 = setdomainname */
+	{
+		.sy_call = sys_nosys,
+	},		/* 167 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 168 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 169 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 170 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 171 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 172 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 173 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 174 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 175 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 176 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 177 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 178 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 179 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 180 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 181 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 182 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 183 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 184 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 185 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 186 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 187 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 188 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 189 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 190 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 191 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 192 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 193 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 194 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 195 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 196 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 197 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 198 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 199 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 200 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 201 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 202 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 203 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 204 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 205 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 206 = filler */
+	{
+		ns(struct osf1_sys_uname_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_uname
+	},		/* 207 = uname */
+	{
+		ns(struct sys___posix_lchown_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)sys___posix_lchown
+	},		/* 208 = __posix_lchown */
+	{
+		ns(struct osf1_sys_shmat_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_shmat
+	},		/* 209 = shmat */
+	{
+		ns(struct osf1_sys_shmctl_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_shmctl
+	},		/* 210 = shmctl */
+	{
+		ns(struct osf1_sys_shmdt_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_shmdt
+	},		/* 211 = shmdt */
+	{
+		ns(struct osf1_sys_shmget_args),
+		.sy_call = (sy_call_t *)osf1_sys_shmget
+	},		/* 212 = shmget */
+	{
+		.sy_call = sys_nosys,
+	},		/* 213 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 214 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 215 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 216 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 217 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 218 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 219 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 220 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 221 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 222 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 223 = filler */
+	{
+		ns(struct osf1_sys_stat2_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_stat2
+	},		/* 224 = stat2 */
+	{
+		ns(struct osf1_sys_lstat2_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_lstat2
+	},		/* 225 = lstat2 */
+	{
+		ns(struct osf1_sys_fstat2_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_fstat2
+	},		/* 226 = fstat2 */
+	{
+		.sy_call = sys_nosys,
+	},		/* 227 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 228 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 229 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 230 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 231 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 232 = filler */
+	{
+		ns(struct sys_getpgid_args),
+		.sy_call = (sy_call_t *)sys_getpgid
+	},		/* 233 = getpgid */
+	{
+		ns(struct sys_getsid_args),
+		.sy_call = (sy_call_t *)sys_getsid
+	},		/* 234 = getsid */
+	{
+		ns(struct osf1_sys_sigaltstack_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_sigaltstack
+	},		/* 235 = sigaltstack */
+	{
+		.sy_call = sys_nosys,
+	},		/* 236 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 237 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 238 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 239 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 240 = filler */
+	{
+		ns(struct osf1_sys_sysinfo_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_sysinfo
+	},		/* 241 = sysinfo */
+	{
+		.sy_call = sys_nosys,
+	},		/* 242 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 243 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 244 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 245 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 246 = filler */
+	{
+		ns(struct osf1_sys_pathconf_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_pathconf
+	},		/* 247 = pathconf */
+	{
+		ns(struct osf1_sys_fpathconf_args),
+		.sy_call = (sy_call_t *)osf1_sys_fpathconf
+	},		/* 248 = fpathconf */
+	{
+		.sy_call = sys_nosys,
+	},		/* 249 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 250 = filler */
+	{
+		ns(struct osf1_sys_usleep_thread_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_usleep_thread
+	},		/* 251 = usleep_thread */
+	{
+		.sy_call = sys_nosys,
+	},		/* 252 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 253 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 254 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 255 = filler */
+	{
+		ns(struct osf1_sys_getsysinfo_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_getsysinfo
+	},		/* 256 = getsysinfo */
+	{
+		ns(struct osf1_sys_setsysinfo_args),
+		.sy_flags = SYCALL_ARG_PTR,
+		.sy_call = (sy_call_t *)osf1_sys_setsysinfo
+	},		/* 257 = setsysinfo */
+	{
+		.sy_call = sys_nosys,
+	},		/* 258 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 259 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 260 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 261 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 262 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 263 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 264 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 265 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 266 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 267 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 268 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 269 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 270 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 271 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 272 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 273 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 274 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 275 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 276 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 277 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 278 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 279 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 280 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 281 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 282 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 283 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 284 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 285 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 286 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 287 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 288 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 289 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 290 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 291 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 292 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 293 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 294 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 295 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 296 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 297 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 298 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 299 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 300 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 301 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 302 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 303 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 304 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 305 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 306 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 307 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 308 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 309 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 310 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 311 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 312 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 313 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 314 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 315 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 316 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 317 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 318 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 319 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 320 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 321 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 322 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 323 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 324 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 325 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 326 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 327 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 328 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 329 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 330 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 331 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 332 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 333 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 334 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 335 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 336 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 337 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 338 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 339 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 340 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 341 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 342 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 343 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 344 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 345 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 346 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 347 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 348 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 349 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 350 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 351 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 352 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 353 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 354 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 355 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 356 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 357 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 358 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 359 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 360 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 361 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 362 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 363 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 364 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 365 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 366 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 367 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 368 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 369 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 370 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 371 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 372 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 373 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 374 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 375 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 376 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 377 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 378 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 379 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 380 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 381 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 382 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 383 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 384 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 385 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 386 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 387 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 388 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 389 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 390 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 391 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 392 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 393 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 394 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 395 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 396 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 397 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 398 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 399 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 400 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 401 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 402 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 403 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 404 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 405 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 406 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 407 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 408 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 409 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 410 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 411 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 412 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 413 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 414 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 415 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 416 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 417 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 418 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 419 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 420 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 421 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 422 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 423 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 424 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 425 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 426 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 427 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 428 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 429 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 430 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 431 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 432 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 433 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 434 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 435 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 436 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 437 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 438 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 439 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 440 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 441 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 442 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 443 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 444 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 445 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 446 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 447 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 448 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 449 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 450 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 451 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 452 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 453 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 454 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 455 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 456 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 457 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 458 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 459 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 460 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 461 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 462 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 463 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 464 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 465 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 466 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 467 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 468 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 469 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 470 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 471 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 472 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 473 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 474 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 475 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 476 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 477 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 478 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 479 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 480 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 481 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 482 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 483 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 484 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 485 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 486 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 487 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 488 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 489 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 490 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 491 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 492 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 493 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 494 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 495 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 496 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 497 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 498 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 499 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 500 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 501 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 502 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 503 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 504 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 505 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 506 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 507 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 508 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 509 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 510 = filler */
+	{
+		.sy_call = sys_nosys,
+	},		/* 511 = filler */
 };
