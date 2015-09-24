@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.109 2015/09/01 19:58:57 christos Exp $
+# $NetBSD: shl.mi,v 1.110 2015/09/24 14:49:38 christos Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -21,7 +21,8 @@
 ./usr/libdata/debug/lib/libradius.so.4.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/librumpclient.so.0.0.debug		comp-sys-debug	debug,dynamicroot,rump
 ./usr/libdata/debug/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,dynamicroot
-./usr/libdata/debug/lib/libutil.so.7.22.debug			comp-sys-debug	debug,dynamicroot
+./usr/libdata/debug/lib/libutil.so.7.23.debug			comp-sys-debug	debug
+./usr/libdata/debug/lib/libutil.so.7.23.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libz.so.1.0.debug			comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/npf/ext_log.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
 ./usr/libdata/debug/lib/npf/ext_normalize.so.0.0.debug		comp-sys-debug	debug,compatfile,npf
@@ -150,6 +151,7 @@
 ./usr/libdata/debug/usr/lib/libperfuse.so.0.0.debug		comp-perfuse-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libposix.so.0.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libppath.so.0.0.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libproc.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/libprop.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpthread.so.1.2.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libpthread_dbg.so.2.0.debug		comp-sys-debug	debug,compatfile
@@ -161,6 +163,7 @@
 ./usr/libdata/debug/usr/lib/libroken.so.19.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug		comp-net-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/librt.so.1.1.debug			comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/librtld_db.so.0.0.debug		comp-sys-debug	debug
 ./usr/libdata/debug/usr/lib/librump.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
@@ -260,7 +263,7 @@
 ./usr/libdata/debug/usr/lib/libukfs.so.1.0.debug		comp-sys-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libumem.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libusbhid.so.1.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libutil.so.7.22.debug		comp-sys-debug	debug,compatfile
+./usr/libdata/debug/usr/lib/libutil.so.7.23.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libuutil.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libwind.so.0.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/libwrap.so.1.0.debug		comp-net-debug	debug,compatfile

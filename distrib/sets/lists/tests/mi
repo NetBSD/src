@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.645 2015/09/14 05:22:56 ozaki-r Exp $
+# $NetBSD: mi,v 1.646 2015/09/24 14:49:39 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2917,6 +2917,10 @@
 ./usr/tests/lib/libppath/Atffile		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libppath/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libppath/t_ppath		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libproc						tests-lib-debug	compattestdir
+./usr/tests/lib/libproc/Atffile					tests-lib-debug	compattestfile,atf
+./usr/tests/lib/libproc/proc_test				tests-lib-debug	compattestfile,atf
+./usr/tests/lib/libproc/target_prog				tests-lib-debug	compattestfile,atf
 ./usr/tests/lib/libprop				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libprop/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libprop/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
@@ -3134,8 +3138,8 @@
 ./usr/tests/net/icmp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/icmp/t_forward			tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_forward			tests-net-tests		atf,rump
-./usr/tests/net/icmp/t_icmp_redirect		tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_icmp6_redirect		tests-net-tests		atf,rump
+./usr/tests/net/icmp/t_icmp_redirect		tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_ping			tests-net-tests		atf,rump
 ./usr/tests/net/icmp/t_ping2			tests-net-tests		atf,rump
 ./usr/tests/net/if				tests-net-tests		compattestfile,atf
@@ -3156,8 +3160,8 @@
 ./usr/tests/net/in_cksum			tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Atffile		tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/Kyuafile		tests-net-tests		compattestfile,atf,kyua
-./usr/tests/net/in_cksum/t_in_cksum		tests-net-tests		compattestfile,atf
 ./usr/tests/net/in_cksum/in_cksum		tests-net-tests		compattestfile,atf
+./usr/tests/net/in_cksum/t_in_cksum		tests-net-tests		compattestfile,atf
 ./usr/tests/net/mcast				tests-net-tests		compattestfile,atf
 ./usr/tests/net/mcast/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/mcast/Kyuafile			tests-net-tests		atf,rump,kyua
@@ -3172,21 +3176,21 @@
 ./usr/tests/net/mpls/t_mpls_fw6			tests-net-tests		atf,rump
 ./usr/tests/net/mpls/t_mpls_fw64		tests-net-tests		atf,rump
 ./usr/tests/net/mpls/t_rfc4182			tests-net-tests		atf,rump
+./usr/tests/net/ndp				tests-net-tests		compattestfile,atf
+./usr/tests/net/ndp/Atffile			tests-net-tests		atf,rump
+./usr/tests/net/ndp/Kyuafile			tests-net-tests		atf,rump,kyua
+./usr/tests/net/ndp/t_dad			tests-net-tests		atf,rump
+./usr/tests/net/ndp/t_ndp			tests-net-tests		atf,rump
 ./usr/tests/net/net				tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/Atffile			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/Kyuafile			tests-net-tests		compattestfile,atf,kyua
-./usr/tests/net/net/t_ipv6_lifetime		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_forwarding		tests-net-tests		atf,rump
+./usr/tests/net/net/t_ipv6_lifetime		tests-net-tests		atf,rump
 ./usr/tests/net/net/t_pktinfo			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_raw			tests-net-tests		atf,rump
 ./usr/tests/net/net/t_tcp			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_udp			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/t_unix			tests-net-tests		compattestfile,atf
-./usr/tests/net/ndp				tests-net-tests		compattestfile,atf
-./usr/tests/net/ndp/Atffile			tests-net-tests		atf,rump
-./usr/tests/net/ndp/Kyuafile			tests-net-tests		atf,rump,kyua
-./usr/tests/net/ndp/t_ndp			tests-net-tests		atf,rump
-./usr/tests/net/ndp/t_dad			tests-net-tests		atf,rump
 ./usr/tests/net/npf				tests-net-tests		compattestfile,atf
 ./usr/tests/net/npf/Atffile			tests-net-tests		atf,rump
 ./usr/tests/net/npf/Kyuafile			tests-net-tests		atf,rump,kyua
@@ -4100,4 +4104,4 @@
 ./usr/tests/util/xlint/lint1/d_typename_as_var.c		tests-obsolete	obsolete
 ./usr/tests/util/xlint/lint1/d_zero_sized_arrays.c		tests-obsolete	obsolete
 ./usr/tests/util/xlint/lint1/t_integration			tests-obsolete	obsolete
-./var/db/obsolete/tests				base-sys-root		atf
+./var/db/obsolete/tests						base-sys-root		atf

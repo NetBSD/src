@@ -1,5 +1,4 @@
-# $NetBSD: mi,v 1.128 2015/08/23 18:28:40 mrg Exp $
-
+# $NetBSD: mi,v 1.129 2015/09/24 14:49:38 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -121,6 +120,8 @@
 ./usr/lib/libperfuse_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libposix_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libppath_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libproc_g.a				comp-c-libdebug		debuglib,compatfile
+./usr/lib/libproc_p.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libprop_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpthread_dbg_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpthread_g.a			comp-c-debuglib		debuglib,compatfile
@@ -133,6 +134,7 @@
 ./usr/lib/libroken_g.a				comp-c-debuglib		debuglib,kerberos,compatfile
 ./usr/lib/librpcsvc_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/librt_g.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/librtld_db_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/librump_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpclient_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpcrypto_g.a			comp-obsolete		obsolete,compatfile
@@ -1199,8 +1201,8 @@
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rtsold.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/rump.arp.debug	comp-netutil-debug	debug,rump
-./usr/libdata/debug/usr/sbin/rump.ndp.debug	comp-netutil-debug	inet6,debug,rump
 ./usr/libdata/debug/usr/sbin/rump.envstat.debug	comp-sysutil-debug	debug,rump
+./usr/libdata/debug/usr/sbin/rump.ndp.debug	comp-netutil-debug	inet6,debug,rump
 ./usr/libdata/debug/usr/sbin/rump.powerd.debug	comp-sysutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump.traceroute.debug	comp-netutil-debug	debug,rump
 ./usr/libdata/debug/usr/sbin/rump_cd9660.debug	comp-puffs-debug	debug,rump
@@ -2095,6 +2097,8 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libppath/t_ppath.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libproc/proc_test.debug		tests-lib-debugq	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libproc/target_prog.debug		tests-lib-debugq	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so.1.debug	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dlopen.debug	tests-lib-debug	debug,atf,pic,compattestfile
