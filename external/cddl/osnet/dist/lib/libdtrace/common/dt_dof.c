@@ -20,19 +20,18 @@
  */
 
 /*
- * Copyright 2006 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2011 by Delphix. All rights reserved.
+ * Copyright (c) 2013, Joyent, Inc. All rights reserved.
  */
 
-#pragma ident	"%Z%%M%	%I%	%E% SMI"
-
 #include <sys/types.h>
-#if defined(sun)
+#ifdef illumos
 #include <sys/sysmacros.h>
 #endif
 
 #include <strings.h>
-#if defined(sun)
+#ifdef illumos
 #include <alloca.h>
 #endif
 #include <assert.h>
@@ -470,7 +469,7 @@ dof_add_probe(dt_idhash_t *dhp, dt_ident_t *idp, void *data)
 		 * locally so an alternate symbol is added for the purpose
 		 * of this relocation.
 		 */
-		if (pip->pi_rname[0] == '\0')
+		if (pip->pi_rname == NULL)
 			dofr.dofr_name = dofpr.dofpr_func;
 		else
 			dofr.dofr_name = dof_add_string(ddo, pip->pi_rname);
@@ -488,7 +487,7 @@ dof_add_probe(dt_idhash_t *dhp, dt_ident_t *idp, void *data)
 	return (0);
 }
 
-static void
+static int
 dof_add_provider(dt_dof_t *ddo, const dt_provider_t *pvp)
 {
 	dtrace_hdl_t *dtp = ddo->ddo_hdl;
@@ -499,8 +498,12 @@ dof_add_provider(dt_dof_t *ddo, const dt_provider_t *pvp)
 	size_t sz;
 	id_t i;
 
-	if (pvp->pv_flags & DT_PROVIDER_IMPL)
-		return; /* ignore providers that are exported by dtrace(7D) */
+	if (pvp->pv_flags & DT_PROVIDER_IMPL) {
+		/*
+		 * ignore providers that are exported by dtrace(7D)
+		 */
+		return (0);
+	}
 
 	nxr = dt_popcb(pvp->pv_xrefs, pvp->pv_xrmax);
 	dofs = alloca(sizeof (dof_secidx_t) * (nxr + 1));
@@ -526,6 +529,9 @@ dof_add_provider(dt_dof_t *ddo, const dt_provider_t *pvp)
 	dt_buf_reset(dtp, &ddo->ddo_rels);
 
 	(void) dt_idhash_iter(pvp->pv_probes, dof_add_probe, ddo);
+
+	if (dt_buf_len(&ddo->ddo_probes) == 0)
+		return (dt_set_errno(dtp, EDT_NOPROBES));
 
 	dofpv.dofpv_probes = dof_add_lsect(ddo, NULL, DOF_SECT_PROBES,
 	    sizeof (uint64_t), 0, sizeof (dof_probe_t),
@@ -581,6 +587,8 @@ dof_add_provider(dt_dof_t *ddo, const dt_provider_t *pvp)
 		    sizeof (dof_secidx_t), 0, sizeof (dof_secidx_t),
 		    sizeof (dof_secidx_t) * (nxr + 1));
 	}
+
+	return (0);
 }
 
 static int
@@ -666,7 +674,7 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 	    stp != NULL; stp = dt_list_next(stp), last = edp) {
 
 		dtrace_stmtdesc_t *sdp = stp->ds_desc;
-		dtrace_actdesc_t *ap1 = sdp->dtsd_action;
+		dtrace_actdesc_t *ap = sdp->dtsd_action;
 
 		if (sdp->dtsd_fmtdata != NULL) {
 			i = dtrace_printf_format(dtp,
@@ -677,7 +685,7 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 		if ((edp = sdp->dtsd_ecbdesc) == last)
 			continue; /* same ecb as previous statement */
 
-		for (i = 0, ap1 = edp->dted_action; ap1; ap1 = ap1->dtad_next)
+		for (i = 0, ap = edp->dted_action; ap; ap = ap->dtad_next)
 			i++;
 
 		maxacts = MAX(maxacts, i);
@@ -718,7 +726,7 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 		dof_stridx_t strndx = 0;
 		dof_probedesc_t dofp;
 		dof_ecbdesc_t dofe;
-		uint_t i1;
+		uint_t i;
 
 		if ((edp = stp->ds_desc->dtsd_ecbdesc) == last)
 			continue; /* same ecb as previous statement */
@@ -751,26 +759,33 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 		 * Now iterate through the action list generating DIFOs as
 		 * referenced therein and adding action descriptions to 'dofa'.
 		 */
-		for (i1 = 0, ap = edp->dted_action;
-		    ap != NULL; ap = ap->dtad_next, i1++) {
+		for (i = 0, ap = edp->dted_action;
+		    ap != NULL; ap = ap->dtad_next, i++) {
 
 			if (ap->dtad_difo != NULL) {
-				dofa[i1].dofa_difo =
+				dofa[i].dofa_difo =
 				    dof_add_difo(ddo, ap->dtad_difo);
 			} else
-				dofa[i1].dofa_difo = DOF_SECIDX_NONE;
+				dofa[i].dofa_difo = DOF_SECIDX_NONE;
 
 			/*
-			 * If the first action in a statement has format data,
-			 * add the format string to the global string table.
+			 * If the first action in a statement has string data,
+			 * add the string to the global string table.  This can
+			 * be due either to a printf() format string
+			 * (dtsd_fmtdata) or a print() type string
+			 * (dtsd_strdata).
 			 */
 			if (sdp != NULL && ap == sdp->dtsd_action) {
 				if (sdp->dtsd_fmtdata != NULL) {
 					(void) dtrace_printf_format(dtp,
 					    sdp->dtsd_fmtdata, fmt, maxfmt + 1);
 					strndx = dof_add_string(ddo, fmt);
-				} else
+				} else if (sdp->dtsd_strdata != NULL) {
+					strndx = dof_add_string(ddo,
+					    sdp->dtsd_strdata);
+				} else {
 					strndx = 0; /* use dtad_arg instead */
+				}
 
 				if ((next = dt_list_next(next)) != NULL)
 					sdp = next->ds_desc;
@@ -779,22 +794,22 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 			}
 
 			if (strndx != 0) {
-				dofa[i1].dofa_arg = strndx;
-				dofa[i1].dofa_strtab = ddo->ddo_strsec;
+				dofa[i].dofa_arg = strndx;
+				dofa[i].dofa_strtab = ddo->ddo_strsec;
 			} else {
-				dofa[i1].dofa_arg = ap->dtad_arg;
-				dofa[i1].dofa_strtab = DOF_SECIDX_NONE;
+				dofa[i].dofa_arg = ap->dtad_arg;
+				dofa[i].dofa_strtab = DOF_SECIDX_NONE;
 			}
 
-			dofa[i1].dofa_kind = ap->dtad_kind;
-			dofa[i1].dofa_ntuple = ap->dtad_ntuple;
-			dofa[i1].dofa_uarg = ap->dtad_uarg;
+			dofa[i].dofa_kind = ap->dtad_kind;
+			dofa[i].dofa_ntuple = ap->dtad_ntuple;
+			dofa[i].dofa_uarg = ap->dtad_uarg;
 		}
 
-		if (i1 > 0) {
+		if (i > 0) {
 			actsec = dof_add_lsect(ddo, dofa, DOF_SECT_ACTDESC,
 			    sizeof (uint64_t), 0, sizeof (dof_actdesc_t),
-			    sizeof (dof_actdesc_t) * i1);
+			    sizeof (dof_actdesc_t) * i);
 		}
 
 		/*
@@ -817,8 +832,10 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 	 */
 	if (flags & DTRACE_D_PROBES) {
 		for (pvp = dt_list_next(&dtp->dt_provlist);
-		    pvp != NULL; pvp = dt_list_next(pvp))
-			dof_add_provider(ddo, pvp);
+		    pvp != NULL; pvp = dt_list_next(pvp)) {
+			if (dof_add_provider(ddo, pvp) != 0)
+				return (NULL);
+		}
 	}
 
 	/*
@@ -838,7 +855,6 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 	 */
 	h.dofh_secnum = ddo->ddo_nsecs;
 	ssize = sizeof (h) + dt_buf_len(&ddo->ddo_secs);
-	assert(ssize == sizeof (h) + sizeof (dof_sec_t) * ddo->ddo_nsecs);
 
 	h.dofh_loadsz = ssize +
 	    dt_buf_len(&ddo->ddo_ldata) +
@@ -864,6 +880,7 @@ dtrace_dof_create(dtrace_hdl_t *dtp, dtrace_prog_t *pgp, uint_t flags)
 
 	sp = dt_buf_ptr(&ddo->ddo_secs);
 	assert(sp[ddo->ddo_strsec].dofs_type == DOF_SECT_STRTAB);
+	assert(ssize == sizeof (h) + sizeof (dof_sec_t) * ddo->ddo_nsecs);
 
 	sp[ddo->ddo_strsec].dofs_offset = ssize + dt_buf_len(&ddo->ddo_ldata);
 	sp[ddo->ddo_strsec].dofs_size = dt_buf_len(&ddo->ddo_strs);

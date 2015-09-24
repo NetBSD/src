@@ -82,7 +82,7 @@ dtrace_sleep(dtrace_hdl_t *dtp)
 		return; /* sleep duration has already past */
 	}
 
-#if defined(sun)
+#ifdef illumos
 	tv.tv_sec = (earliest - now) / NANOSEC;
 	tv.tv_nsec = (earliest - now) % NANOSEC;
 
@@ -184,7 +184,7 @@ dtrace_go(dtrace_hdl_t *dtp)
 {
 	dtrace_enable_io_t args;
 	void *dof;
-	int err;
+	int error, r;
 
 	if (dtp->dt_active)
 		return (dt_set_errno(dtp, EINVAL));
@@ -206,11 +206,12 @@ dtrace_go(dtrace_hdl_t *dtp)
 
 	args.dof = dof;
 	args.n_matched = 0;
-	err = dt_ioctl(dtp, DTRACEIOC_ENABLE, &args);
+	r = dt_ioctl(dtp, DTRACEIOC_ENABLE, &args);
+	error = errno;
 	dtrace_dof_destroy(dtp, dof);
 
-	if (err == -1 && (errno != ENOTTY || dtp->dt_vector == NULL))
-		return (dt_set_errno(dtp, errno));
+	if (r == -1 && (error != ENOTTY || dtp->dt_vector == NULL))
+		return (dt_set_errno(dtp, error));
 
 	if (dt_ioctl(dtp, DTRACEIOC_GO, &dtp->dt_beganon) == -1) {
 		if (errno == EACCES)
@@ -272,7 +273,7 @@ dtrace_work(dtrace_hdl_t *dtp, FILE *fp,
 {
 	int status = dtrace_status(dtp);
 	dtrace_optval_t policy = dtp->dt_options[DTRACEOPT_BUFPOLICY];
-	dtrace_workstatus_t rval;
+	dtrace_workstatus_t rval = 0;	// XXX: gcc
 
 	switch (status) {
 	case DTRACE_STATUS_EXITED:
@@ -294,7 +295,6 @@ dtrace_work(dtrace_hdl_t *dtp, FILE *fp,
 		break;
 
 	case -1:
-	default:
 		return (DTRACE_WORKSTATUS_ERROR);
 	}
 
