@@ -54,9 +54,9 @@ extract_label_info(ctf_file_t *fp, const ctf_lblent_t **ctl, uint_t *num_labels)
 const char *
 ctf_label_topmost(ctf_file_t *fp)
 {
-	const ctf_lblent_t *ctlp = NULL;
+	const ctf_lblent_t *ctlp = NULL;	// XXX: gcc
 	const char *s;
-	uint_t num_labels = 0;
+	uint_t num_labels = 0;			// XXX: gcc
 
 	if (extract_label_info(fp, &ctlp, &num_labels) == CTF_ERR)
 		return (NULL); /* errno is set */
@@ -79,8 +79,8 @@ ctf_label_topmost(ctf_file_t *fp)
 int
 ctf_label_iter(ctf_file_t *fp, ctf_label_f *func, void *arg)
 {
-	const ctf_lblent_t *ctlp = NULL;
-	uint_t i, num_labels = 0;
+	const ctf_lblent_t *ctlp = NULL;	// XXX: gcc
+	uint_t i, num_labels = 0;		// XXX: gcc
 	ctf_lblinfo_t linfo;
 	const char *lname;
 	int rc;
