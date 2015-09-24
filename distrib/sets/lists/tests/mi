@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.646 2015/09/24 14:49:39 christos Exp $
+# $NetBSD: mi,v 1.647 2015/09/24 16:36:58 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -121,6 +121,7 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1			tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2			tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libppath				tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libproc				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libprop				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen			tests-lib-debug		compattestfile,atf
