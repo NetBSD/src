@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.153 2015/05/09 10:57:04 pooka Exp $
+#	$NetBSD: makesyscalls.sh,v 1.154 2015/09/24 14:30:52 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -82,13 +82,17 @@ sysdcl="sysent.dcl"
 sysprotos="sys.protos"
 syscompat_pref="sysent."
 sysent="sysent.switch"
-sysnamesbottom="sysnames.bottom"
+sysnamesbottom="$sysnames.bottom"
+sysnamesfriendly="$sysnames.friendly"
 rumptypes="rumphdr.types"
 rumpprotos="rumphdr.protos"
 systracetmp="systrace.$$"
 systraceret="systraceret.$$"
 
-trap "rm $sysdcl $sysprotos $sysent $sysnamesbottom $rumpsysent $rumptypes $rumpprotos $systracetmp $systraceret" 0
+cleanup() {
+    rm $sysdcl $sysprotos $sysent $sysnamesbottom $sysnamesfriendly $rumpsysent $rumptypes $rumpprotos $systracetmp $systraceret
+}
+trap "cleanup" 0
 
 # Awk program (must support nawk extensions)
 # Use "awk" at Berkeley, "nawk" or "gawk" elsewhere.
@@ -171,7 +175,8 @@ BEGIN {
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
 	sysent = \"$sysent\"
-	sysnamesbottom = \"$sysnamesbottom\"
+	sysnamesbottom = \"${sysnames}.bottom\"
+	sysnamesfriendly = \"${sysnames}.friendly\"
 	rumpprotos = \"$rumpprotos\"
 	rumptypes = \"$rumptypes\"
 	sys_nosys = \"$sys_nosys\"
@@ -311,8 +316,12 @@ NR == 1 {
 	# hide the include files from it.
 	printf "#if defined(_KERNEL_OPT)\n" > sysnames
 
+	printf "#else /* _KERNEL_OPT */\n" > sysnamesbottom
+	printf "#include <sys/null.h>\n" > sysnamesbottom
 	printf "#endif /* _KERNEL_OPT */\n\n" > sysnamesbottom
 	printf "const char *const %s[] = {\n",namesname > sysnamesbottom
+	printf "\n\n/* libc style syscall names */\n" > sysnamesfriendly
+	printf "const char *const alt%s[] = {\n", namesname > sysnamesfriendly
 
 	printf " * created from%s\n */\n\n", $0 > sysnumhdr
 	printf "#ifndef _" constprefix "SYSCALL_H_\n" > sysnumhdr
@@ -442,6 +451,7 @@ $1 ~ /^#/ && intable {
 	print > sysnumhdr
 	print > sysprotos
 	print > sysnamesbottom
+	print > sysnamesfriendly
 	print > systrace
 	print > systracetmp
 	print > systraceret
@@ -852,6 +862,12 @@ function putent(type, compatwrap) {
 	# output syscall name for names table
 	printf("\t/* %3d */\t\"%s%s\",\n", syscall, compatwrap_, funcalias) \
 	    > sysnamesbottom
+	if (compatwrap_ != "" || fbase == funcalias)
+		printf("\t/* %3d */\tNULL, /* %s%s */\n", syscall, \
+		    compatwrap_, funcalias) > sysnamesfriendly
+	else
+		printf("\t/* %3d */\t\"%s%s\",\n", syscall, compatwrap_, \
+		    fbase) > sysnamesfriendly
 
 	# output syscall number of header, if appropriate
 	if (type == "STD" || type == "NOARGS" || type == "INDIR" || \
@@ -1041,6 +1057,8 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 	print fillerpsysent(syscall, rumpnoflags, rumpnosys, comment) > rumpsysent
 	printf("\t/* %3d */\t\"#%d (%s)\",\n", syscall, syscall, comment) \
 	    > sysnamesbottom
+	printf("\t/* %3d */\tNULL, /* %s */\n", syscall, comment) \
+	    > sysnamesfriendly
 	if ($2 != "UNIMPL")
 		printf("\t\t\t\t/* %d is %s */\n", syscall, comment) > sysnumhdr
 	syscall++
@@ -1106,6 +1124,8 @@ END {
 			print fillerpsysent(syscall, rumpnoflags, rumpnosys, "filler") > rumpsysent
 			printf("\t/* %3d */\t\"# filler\",\n", syscall) \
 			    > sysnamesbottom
+			printf("\t/* %3d */\tNULL, /* filler */\n", syscall) \
+			    > sysnamesfriendly
 			syscall++
 		}
 	}
@@ -1117,6 +1137,7 @@ END {
 	if (haverumpcalls)
 		printf("#endif /* !RUMP_CLIENT */\n") > sysprotos
 	printf("};\n") > sysnamesbottom
+	printf("};\n") > sysnamesfriendly
 	printf("#define\t%sMAXSYSCALL\t%d\n", constprefix, maxsyscall) > sysnumhdr
 	if (nsysent)
 		printf("#define\t%sNSYSENT\t%d\n", constprefix, nsysent) > sysnumhdr
@@ -1132,6 +1153,7 @@ echo "};" >> $sysautoload
 printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpprotos
 cat $sysdcl $sysent > $syssw
 cat $sysnamesbottom >> $sysnames
+cat $sysnamesfriendly >> $sysnames
 cat $rumpsysent >> $rumpcalls
 
 touch $rumptypes
