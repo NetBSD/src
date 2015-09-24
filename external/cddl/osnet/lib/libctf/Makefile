@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2015/09/17 01:53:48 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2015/09/24 14:36:54 christos Exp $
 
 # $FreeBSD: src/cddl/lib/libctf/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
 .include	"../../Makefile.inc"
 
 LIB=		ctf
+MAN=		ctf.5
 
 SRCS=		ctf_create.c \
 		ctf_decl.c \
