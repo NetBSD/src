@@ -58,6 +58,7 @@ extern "C" {
 #include <sys/systm.h>
 #else
 #include <sys/cpuvar.h>
+#include <sys/proc.h>
 #include <sys/param.h>
 #include <sys/linker.h>
 #include <sys/ioccom.h>
