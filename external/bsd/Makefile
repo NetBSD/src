@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.48 2015/01/25 15:47:19 christos Exp $
+#	$NetBSD: Makefile,v 1.49 2015/09/24 14:48:36 christos Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	acpica am-utils bind byacc cron dhcpcd ekermit elftosb \
 	fetch file flex less \
-	libarchive libevent liblzf libpcap mdocml ntp openresolv tcpdump \
-	tmux top tre wpa
+	libarchive libevent liblzf libpcap libproc librtld_db mdocml \
+	ntp openresolv tcpdump tmux top tre wpa
 
 .if (${MKATF} != "no")
 SUBDIR+= atf
