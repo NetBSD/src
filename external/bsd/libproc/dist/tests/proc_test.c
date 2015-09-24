@@ -28,7 +28,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/tests/proc_test.c 286863 2015-08-17 23:19:36Z emaste $");
 #endif
-__RCSID("$NetBSD: proc_test.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+__RCSID("$NetBSD: proc_test.c,v 1.3 2015/09/24 19:25:37 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -309,15 +309,15 @@ ATF_TC_BODY(symbol_lookup, tc)
 	    &r_debug_state_sym, NULL);
 	ATF_REQUIRE_EQ_MSG(error, 0, "failed to look up '%s'", r_debug_state);
 
-	set_bkpt(phdl, r_debug_state_sym.st_value, &saved);
+	set_bkpt(phdl, (uintptr_t)r_debug_state_sym.st_value, &saved);
 	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
 	verify_bkpt(phdl, &r_debug_state_sym, r_debug_state, ldelf_object);
-	remove_bkpt(phdl, r_debug_state_sym.st_value, saved);
+	remove_bkpt(phdl, (uintptr_t)r_debug_state_sym.st_value, saved);
 
-	set_bkpt(phdl, main_sym.st_value, &saved);
+	set_bkpt(phdl, (uintptr_t)main_sym.st_value, &saved);
 	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
 	verify_bkpt(phdl, &main_sym, "main", target_prog_file);
-	remove_bkpt(phdl, main_sym.st_value, saved);
+	remove_bkpt(phdl, (uintptr_t)main_sym.st_value, saved);
 
 	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
 
