@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1254 2015/09/12 09:49:21 tron Exp $
+#	$NetBSD: 3RDPARTY,v 1.1255 2015/09/24 14:37:56 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1571,3 +1571,25 @@ Mailing List:	none
 Responsible:	christos
 License:	BSD-like (2-clause)
 Location:	usr.bin/timeout
+
+Package:        libproc
+Version:        FreeBSD-2015-09-24
+Current Vers:   FreeBSD-XXXX-YY-ZZ
+Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
+Archive Site:   none
+Home Page:      none
+Mailing List:   none
+Responsible:    christos
+License:        BSD-like (2-clause)
+Location:       external/bsd/libproc/dist
+
+Package:        librtld_db
+Version:        FreeBSD-2015-09-24
+Current Vers:   FreeBSD-XXXX-YY-ZZ
+Maintainer:     Rui Paulo <rpaulo@FreeBSD.org>
+Archive Site:   none
+Home Page:      none
+Mailing List:   none
+Responsible:    christos
+License:        BSD-like (2-clause)
+Location:       external/bsd/librtld_db/dist

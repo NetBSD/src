@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2103 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2104 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -199,3 +199,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd: Import dhcpcd 6.9.3. [roy 20150904]
 	ftp(1): SNI support for https.  [wiz 20150912]
 	netstat(1): Now knows how tall the display is.  [mrg 20150919]
+	libproc, librtld_db: Added from FreeBSD [christos 20150924]
+	dtrace: Updated from FreeBSD [christos 20150924]
