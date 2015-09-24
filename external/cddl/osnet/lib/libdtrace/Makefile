@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/02/07 20:30:03 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2015/09/24 14:36:54 christos Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -37,7 +37,9 @@ SRCS=		dt_aggregate.c \
 		dt_parser.c \
 		dt_pcb.c \
 		dt_pid.c \
+		dt_pq.c \
 		dt_pragma.c \
+		dt_print.c \
 		dt_printf.c \
 		dt_proc.c \
 		dt_program.c \
@@ -59,6 +61,7 @@ DSRCS=		errno.d			\
 .PATH:		${.CURDIR}/../../dist/lib/libdtrace/common
 
 CPPFLAGS+=	-I${.OBJDIR} \
+		-I${.CURDIR} \
 		-I${OSNETDIR}/sys \
 		-I${OSNETDIR}/include \
 		-I${OPENSOLARIS_USR_DISTDIR}/head \
@@ -87,6 +90,9 @@ COPTS.dt_subr.c		+= -Wno-stack-protector
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/intel
+CPPFLAGS+=	-I${.CURDIR}/../../dev/dtrace/i386
+.PATH:		${.CURDIR}/../../dist/lib/libdtrace/i386 ${.CURDIR}/../../dev/dtrace/i386
+SRCS+=	dt_isadep.c # dis_tables.c
 .elif ${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
 .elif ${MACHINE_CPU} == "arm"
@@ -118,5 +124,7 @@ foo:
 #	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${NOBINMODE} ${.CURDIR}/${file} ${DESTDIR}/usr/lib/dtrace
 #.endfor
 #.endif
+
+LIBDPLIBS=	proc	${NETBSDSRCDIR}/external/bsd/libproc/lib
 
 .include <bsd.lib.mk>
