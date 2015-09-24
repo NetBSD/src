@@ -18,17 +18,16 @@
  *
  * CDDL HEADER END
  */
+
 /*
- * Copyright 2009 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright (c) 2003, 2010, Oracle and/or its affiliates. All rights reserved.
+ */
+/*
+ * Copyright (c) 2013, Joyent, Inc.  All rights reserved.
  */
 
-#ifndef ELFSIZE
-#define ELFSIZE ARCH_ELFSIZE
-#endif
-
 #include <sys/types.h>
-#if defined(sun)
+#ifdef illumos
 #include <sys/modctl.h>
 #include <sys/kobj.h>
 #include <sys/kobj_impl.h>
@@ -38,12 +37,12 @@
 #else
 #include <sys/param.h>
 #include <sys/linker.h>
+#include <sys/module.h>
 #include <sys/stat.h>
-#include <sys/sysctl.h>
 #endif
 
 #include <unistd.h>
-#if defined(sun)
+#ifdef illumos
 #include <project.h>
 #endif
 #include <strings.h>
@@ -53,8 +52,9 @@
 #include <assert.h>
 #include <errno.h>
 #include <dirent.h>
-#if !defined(sun)
+#ifndef illumos
 #include <fcntl.h>
+#include <libproc_compat.h>
 #endif
 
 #include <dt_strtab.h>
@@ -83,11 +83,20 @@ dt_module_syminit32(dt_module_t *dmp)
 #if STT_NUM != (STT_TLS + 1)
 #error "STT_NUM has grown. update dt_module_syminit32()"
 #endif
+
 	Elf32_Sym *sym = dmp->dm_symtab.cts_data;
 	const char *base = dmp->dm_strtab.cts_data;
 	size_t ss_size = dmp->dm_strtab.cts_size;
 	uint_t i, n = dmp->dm_nsymelems;
 	uint_t asrsv = 0;
+
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+	GElf_Ehdr ehdr;
+	int is_elf_obj;
+
+	gelf_getehdr(dmp->dm_elf, &ehdr);
+	is_elf_obj = (ehdr.e_type == ET_REL);
+#endif
 
 	for (i = 0; i < n; i++, sym++) {
 		const char *name = base + sym->st_name;
@@ -103,8 +112,12 @@ dt_module_syminit32(dt_module_t *dmp)
 		    (ELF32_ST_BIND(sym->st_info) != STB_LOCAL || sym->st_size)) {
 			asrsv++; /* reserve space in the address map */
 
-#if !defined(sun)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
+			if (is_elf_obj && sym->st_shndx != SHN_UNDEF &&
+			    sym->st_shndx < ehdr.e_shnum)
+				sym->st_value +=
+				    dmp->dm_sec_offsets[sym->st_shndx];
 #endif
 		}
 
@@ -120,11 +133,20 @@ dt_module_syminit64(dt_module_t *dmp)
 #if STT_NUM != (STT_TLS + 1)
 #error "STT_NUM has grown. update dt_module_syminit64()"
 #endif
+
 	Elf64_Sym *sym = dmp->dm_symtab.cts_data;
 	const char *base = dmp->dm_strtab.cts_data;
 	size_t ss_size = dmp->dm_strtab.cts_size;
 	uint_t i, n = dmp->dm_nsymelems;
 	uint_t asrsv = 0;
+
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+	GElf_Ehdr ehdr;
+	int is_elf_obj;
+
+	gelf_getehdr(dmp->dm_elf, &ehdr);
+	is_elf_obj = (ehdr.e_type == ET_REL);
+#endif
 
 	for (i = 0; i < n; i++, sym++) {
 		const char *name = base + sym->st_name;
@@ -139,9 +161,12 @@ dt_module_syminit64(dt_module_t *dmp)
 		if (sym->st_value != 0 &&
 		    (ELF64_ST_BIND(sym->st_info) != STB_LOCAL || sym->st_size)) {
 			asrsv++; /* reserve space in the address map */
-
-#if !defined(sun)
+#if defined(__FreeBSD__) || defined(__NetBSD__)
 			sym->st_value += (Elf_Addr) dmp->dm_reloc_offset;
+			if (is_elf_obj && sym->st_shndx != SHN_UNDEF &&
+			    sym->st_shndx < ehdr.e_shnum)
+				sym->st_value +=
+				    dmp->dm_sec_offsets[sym->st_shndx];
 #endif
 		}
 
@@ -442,6 +467,9 @@ static const dt_modops_t dt_modops_64 = {
 dt_module_t *
 dt_module_create(dtrace_hdl_t *dtp, const char *name)
 {
+	long pid;
+	char *eptr;
+	dt_ident_t *idp;
 	uint_t h = dt_strtab_hash(name, NULL) % dtp->dt_modbuckets;
 	dt_module_t *dmp;
 
@@ -464,6 +492,32 @@ dt_module_create(dtrace_hdl_t *dtp, const char *name)
 		dmp->dm_ops = &dt_modops_64;
 	else
 		dmp->dm_ops = &dt_modops_32;
+
+	/*
+	 * Modules for userland processes are special. They always refer to a
+	 * specific process and have a copy of their CTF data from a specific
+	 * instant in time. Any dt_module_t that begins with 'pid' is a module
+	 * for a specific process, much like how any probe description that
+	 * begins with 'pid' is special. pid123 refers to process 123. A module
+	 * that is just 'pid' refers specifically to pid$target. This is
+	 * generally done as D does not currently allow for macros to be
+	 * evaluated when working with types.
+	 */
+	if (strncmp(dmp->dm_name, "pid", 3) == 0) {
+		errno = 0;
+		if (dmp->dm_name[3] == '\0') {
+			idp = dt_idhash_lookup(dtp->dt_macros, "target");
+			if (idp != NULL && idp->di_id != 0)
+				dmp->dm_pid = idp->di_id;
+		} else {
+			pid = strtol(dmp->dm_name + 3, &eptr, 10);
+			if (errno == 0 && *eptr == '\0')
+				dmp->dm_pid = (pid_t)pid;
+			else
+				dt_dprintf("encountered malformed pid "
+				    "module: %s\n", dmp->dm_name);
+		}
+	}
 
 	return (dmp);
 }
@@ -489,6 +543,22 @@ dt_module_lookup_by_ctf(dtrace_hdl_t *dtp, ctf_file_t *ctfp)
 	return (ctfp ? ctf_getspecific(ctfp) : NULL);
 }
 
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+dt_kmodule_t *
+dt_kmodule_lookup(dtrace_hdl_t *dtp, const char *name)
+{
+	uint_t h = dt_strtab_hash(name, NULL) % dtp->dt_modbuckets;
+	dt_kmodule_t *dkmp;
+
+	for (dkmp = dtp->dt_kmods[h]; dkmp != NULL; dkmp = dkmp->dkm_next) {
+		if (strcmp(dkmp->dkm_name, name) == 0)
+			return (dkmp);
+	}
+
+	return (NULL);
+}
+#endif
+
 static int
 dt_module_load_sect(dtrace_hdl_t *dtp, dt_module_t *dmp, ctf_sect_t *ctsp)
 {
@@ -498,7 +568,7 @@ dt_module_load_sect(dtrace_hdl_t *dtp, dt_module_t *dmp, ctf_sect_t *ctsp)
 	Elf_Data *dp;
 	Elf_Scn *sp;
 
-	if (elf_getshstrndx(dmp->dm_elf, &shstrs) == 0)
+	if (elf_getshdrstrndx(dmp->dm_elf, &shstrs) == -1)
 		return (dt_set_errno(dtp, EDT_NOTLOADED));
 
 	for (sp = NULL; (sp = elf_nextscn(dmp->dm_elf, sp)) != NULL; ) {
@@ -519,7 +589,7 @@ dt_module_load_sect(dtrace_hdl_t *dtp, dt_module_t *dmp, ctf_sect_t *ctsp)
 	if (sp == NULL || (dp = elf_getdata(sp, NULL)) == NULL)
 		return (0);
 
-#if defined(sun)
+#ifdef illumos
 	ctsp->cts_data = dp->d_buf;
 #else
 	if ((ctsp->cts_data = malloc(dp->d_size)) == NULL)
@@ -534,11 +604,168 @@ dt_module_load_sect(dtrace_hdl_t *dtp, dt_module_t *dmp, ctf_sect_t *ctsp)
 	return (0);
 }
 
+typedef struct dt_module_cb_arg {
+	struct ps_prochandle *dpa_proc;
+	dtrace_hdl_t *dpa_dtp;
+	dt_module_t *dpa_dmp;
+	uint_t dpa_count;
+} dt_module_cb_arg_t;
+
+/* ARGSUSED */
+static int
+dt_module_load_proc_count(void *arg, const prmap_t *prmap, const char *obj)
+{
+	ctf_file_t *fp;
+	dt_module_cb_arg_t *dcp = arg;
+
+	/* Try to grab a ctf container if it exists */
+	fp = Pname_to_ctf(dcp->dpa_proc, obj);
+	if (fp != NULL)
+		dcp->dpa_count++;
+	return (0);
+}
+
+/* ARGSUSED */
+static int
+dt_module_load_proc_build(void *arg, const prmap_t *prmap, const char *obj)
+{
+	ctf_file_t *fp;
+	char buf[MAXPATHLEN], *p;
+	dt_module_cb_arg_t *dcp = arg;
+	int count = dcp->dpa_count;
+	Lmid_t lmid;
+
+	fp = Pname_to_ctf(dcp->dpa_proc, obj);
+	if (fp == NULL)
+		return (0);
+	fp = ctf_dup(fp);
+	if (fp == NULL)
+		return (0);
+	dcp->dpa_dmp->dm_libctfp[count] = fp;
+	/*
+	 * While it'd be nice to simply use objname here, because of our prior
+	 * actions we'll always get a resolved object name to its on disk file.
+	 * Like the pid provider, we need to tell a bit of a lie here. The type
+	 * that the user thinks of is in terms of the libraries they requested,
+	 * eg. libc.so.1, they don't care about the fact that it's
+	 * libc_hwcap.so.1.
+	 */
+	(void) Pobjname(dcp->dpa_proc, prmap->pr_vaddr, buf, sizeof (buf));
+	if ((p = strrchr(buf, '/')) == NULL)
+		p = buf;
+	else
+		p++;
+
+	/*
+	 * If for some reason we can't find a link map id for this module, which
+	 * would be really quite weird. We instead just say the link map id is
+	 * zero.
+	 */
+	if (Plmid(dcp->dpa_proc, prmap->pr_vaddr, &lmid) != 0)
+		lmid = 0;
+
+	if (lmid == 0)
+		dcp->dpa_dmp->dm_libctfn[count] = strdup(p);
+	else
+		(void) asprintf(&dcp->dpa_dmp->dm_libctfn[count],
+		    "LM%x`%s", lmid, p);
+	if (dcp->dpa_dmp->dm_libctfn[count] == NULL)
+		return (1);
+	ctf_setspecific(fp, dcp->dpa_dmp);
+	dcp->dpa_count++;
+	return (0);
+}
+
+/*
+ * We've been asked to load data that belongs to another process. As such we're
+ * going to pgrab it at this instant, load everything that we might ever care
+ * about, and then drive on. The reason for this is that the process that we're
+ * interested in might be changing. As long as we have grabbed it, then this
+ * can't be a problem for us.
+ *
+ * For now, we're actually going to punt on most things and just try to get CTF
+ * data, nothing else. Basically this is only useful as a source of type
+ * information, we can't go and do the stacktrace lookups, etc.
+ */
+static int
+dt_module_load_proc(dtrace_hdl_t *dtp, dt_module_t *dmp)
+{
+	struct ps_prochandle *p;
+	dt_module_cb_arg_t arg;
+
+	/*
+	 * Note that on success we do not release this hold. We must hold this
+	 * for our life time.
+	 */
+	p = dt_proc_grab(dtp, dmp->dm_pid, 0, PGRAB_RDONLY | PGRAB_FORCE);
+	if (p == NULL) {
+		dt_dprintf("failed to grab pid: %d\n", (int)dmp->dm_pid);
+		return (dt_set_errno(dtp, EDT_CANTLOAD));
+	}
+	dt_proc_lock(dtp, p);
+
+	arg.dpa_proc = p;
+	arg.dpa_dtp = dtp;
+	arg.dpa_dmp = dmp;
+	arg.dpa_count = 0;
+	if (Pobject_iter_resolved(p, dt_module_load_proc_count, &arg) != 0) {
+		dt_dprintf("failed to iterate objects\n");
+		dt_proc_release(dtp, p);
+		return (dt_set_errno(dtp, EDT_CANTLOAD));
+	}
+
+	if (arg.dpa_count == 0) {
+		dt_dprintf("no ctf data present\n");
+		dt_proc_unlock(dtp, p);
+		dt_proc_release(dtp, p);
+		return (dt_set_errno(dtp, EDT_CANTLOAD));
+	}
+
+	dmp->dm_libctfp = malloc(sizeof (ctf_file_t *) * arg.dpa_count);
+	if (dmp->dm_libctfp == NULL) {
+		dt_proc_unlock(dtp, p);
+		dt_proc_release(dtp, p);
+		return (dt_set_errno(dtp, EDT_NOMEM));
+	}
+	bzero(dmp->dm_libctfp, sizeof (ctf_file_t *) * arg.dpa_count);
+
+	dmp->dm_libctfn = malloc(sizeof (char *) * arg.dpa_count);
+	if (dmp->dm_libctfn == NULL) {
+		free(dmp->dm_libctfp);
+		dt_proc_unlock(dtp, p);
+		dt_proc_release(dtp, p);
+		return (dt_set_errno(dtp, EDT_NOMEM));
+	}
+	bzero(dmp->dm_libctfn, sizeof (char *) * arg.dpa_count);
+
+	dmp->dm_nctflibs = arg.dpa_count;
+
+	arg.dpa_count = 0;
+	if (Pobject_iter_resolved(p, dt_module_load_proc_build, &arg) != 0) {
+		dt_proc_unlock(dtp, p);
+		dt_module_unload(dtp, dmp);
+		dt_proc_release(dtp, p);
+		return (dt_set_errno(dtp, EDT_CANTLOAD));
+	}
+	assert(arg.dpa_count == dmp->dm_nctflibs);
+	dt_dprintf("loaded %d ctf modules for pid %d\n", arg.dpa_count,
+	    (int)dmp->dm_pid);
+
+	dt_proc_unlock(dtp, p);
+	dt_proc_release(dtp, p);
+	dmp->dm_flags |= DT_DM_LOADED;
+
+	return (0);
+}
+
 int
 dt_module_load(dtrace_hdl_t *dtp, dt_module_t *dmp)
 {
 	if (dmp->dm_flags & DT_DM_LOADED)
 		return (0); /* module is already loaded */
+
+	if (dmp->dm_pid != 0)
+		return (dt_module_load_proc(dtp, dmp));
 
 	dmp->dm_ctdata.cts_name = ".SUNW_ctf";
 	dmp->dm_ctdata.cts_type = SHT_PROGBITS;
@@ -625,6 +852,14 @@ dt_module_load(dtrace_hdl_t *dtp, dt_module_t *dmp)
 	return (0);
 }
 
+int
+dt_module_hasctf(dtrace_hdl_t *dtp, dt_module_t *dmp)
+{
+	if (dmp->dm_pid != 0 && dmp->dm_nctflibs > 0)
+		return (1);
+	return (dt_module_getctf(dtp, dmp) != NULL);
+}
+
 ctf_file_t *
 dt_module_getctf(dtrace_hdl_t *dtp, dt_module_t *dmp)
 {
@@ -698,10 +933,12 @@ err:
 void
 dt_module_unload(dtrace_hdl_t *dtp, dt_module_t *dmp)
 {
+	int i;
+
 	ctf_close(dmp->dm_ctfp);
 	dmp->dm_ctfp = NULL;
 
-#if !defined(sun)
+#ifndef illumos
 	if (dmp->dm_ctdata.cts_data != NULL) {
 		free(dmp->dm_ctdata.cts_data);
 	}
@@ -712,6 +949,17 @@ dt_module_unload(dtrace_hdl_t *dtp, dt_module_t *dmp)
 		free(dmp->dm_strtab.cts_data);
 	}
 #endif
+
+	if (dmp->dm_libctfp != NULL) {
+		for (i = 0; i < dmp->dm_nctflibs; i++) {
+			ctf_close(dmp->dm_libctfp[i]);
+			free(dmp->dm_libctfn[i]);
+		}
+		free(dmp->dm_libctfp);
+		free(dmp->dm_libctfn);
+		dmp->dm_libctfp = NULL;
+		dmp->dm_nctflibs = 0;
+	}
 
 	bzero(&dmp->dm_ctdata, sizeof (ctf_sect_t));
 	bzero(&dmp->dm_symtab, sizeof (ctf_sect_t));
@@ -731,7 +979,12 @@ dt_module_unload(dtrace_hdl_t *dtp, dt_module_t *dmp)
 		free(dmp->dm_asmap);
 		dmp->dm_asmap = NULL;
 	}
-
+#if defined(__FreeBSD__) || defined(__NetBSD__)
+	if (dmp->dm_sec_offsets != NULL) {
+		free(dmp->dm_sec_offsets);
+		dmp->dm_sec_offsets = NULL;
+	}
+#endif
 	dmp->dm_symfree = 0;
 	dmp->dm_nsymbuckets = 0;
 	dmp->dm_nsymelems = 0;
@@ -753,15 +1006,32 @@ dt_module_unload(dtrace_hdl_t *dtp, dt_module_t *dmp)
 	(void) elf_end(dmp->dm_elf);
 	dmp->dm_elf = NULL;
 
+	dmp->dm_pid = 0;
+
 	dmp->dm_flags &= ~DT_DM_LOADED;
 }
 
 void
 dt_module_destroy(dtrace_hdl_t *dtp, dt_module_t *dmp)
 {
+	uint_t h = dt_strtab_hash(dmp->dm_name, NULL) % dtp->dt_modbuckets;
+	dt_module_t **dmpp = &dtp->dt_mods[h];
+
 	dt_list_delete(&dtp->dt_modlist, dmp);
 	assert(dtp->dt_nmods != 0);
 	dtp->dt_nmods--;
+
+	/*
+	 * Now remove this module from its hash chain.  We expect to always
+	 * find the module on its hash chain, so in this loop we assert that
+	 * we don't run off the end of the list.
+	 */
+	while (*dmpp != dmp) {
+		dmpp = &((*dmpp)->dm_next);
+		assert(*dmpp != NULL);
+	}
+
+	*dmpp = dmp->dm_next;
 
 	dt_module_unload(dtp, dmp);
 	free(dmp);
@@ -826,6 +1096,34 @@ dt_module_modelname(dt_module_t *dmp)
 		return ("32-bit");
 }
 
+/* ARGSUSED */
+int
+dt_module_getlibid(dtrace_hdl_t *dtp, dt_module_t *dmp, const ctf_file_t *fp)
+{
+	int i;
+
+	for (i = 0; i < dmp->dm_nctflibs; i++) {
+		if (dmp->dm_libctfp[i] == fp)
+			return (i);
+	}
+
+	return (-1);
+}
+
+/* ARGSUSED */
+ctf_file_t *
+dt_module_getctflib(dtrace_hdl_t *dtp, dt_module_t *dmp, const char *name)
+{
+	int i;
+
+	for (i = 0; i < dmp->dm_nctflibs; i++) {
+		if (strcmp(dmp->dm_libctfn[i], name) == 0)
+			return (dmp->dm_libctfp[i]);
+	}
+
+	return (NULL);
+}
+
 /*
  * Update our module cache by adding an entry for the specified module 'name'.
  * We create the dt_module_t and populate it using /system/object/<name>/.
@@ -833,12 +1131,23 @@ dt_module_modelname(dt_module_t *dmp)
  * On FreeBSD, the module name is passed as the full module file name, 
  * including the path.
  */
+#ifndef __NetBSD__
 static void
+#ifdef illumos
 dt_module_update(dtrace_hdl_t *dtp, const char *name)
+#elif defined(__FreeBSD__)
+dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
+#endif
 {
 	char fname[MAXPATHLEN];
 	struct stat64 st;
 	int fd, err, bits;
+#if defined(__FreeBSD__) 
+	struct module_stat ms;
+	dt_kmodule_t *dkmp;
+	uint_t h;
+	int modid;
+#endif
 
 	dt_module_t *dmp;
 	const char *s;
@@ -847,43 +1156,19 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 	Elf_Data *dp;
 	Elf_Scn *sp;
 
-#if defined(sun)
+#ifdef illumos
 	(void) snprintf(fname, sizeof (fname),
 	    "%s/%s/object", OBJFS_ROOT, name);
-#else
-#if 0
+#elif defined(__FreeBSD__)
+	GElf_Ehdr ehdr;
 	GElf_Phdr ph;
-	int i;
-#endif
-	int mib_osrel[2] = { CTL_KERN, KERN_OSRELEASE };
-	int mib_mach[2] = { CTL_HW, HW_MACHINE };
-	char osrel[64];
-	char machine[64];
-	size_t len;
+	char name[MAXPATHLEN];
+	uintptr_t mapbase, alignmask;
+	int i = 0;
+	int is_elf_obj;
 
-	if (strcmp("netbsd",name) == 0) {
-		/* want the kernel */
-		strncpy(fname, "/netbsd", sizeof(fname));
-	} else {
-
-		/* build stand module path from system */
-		len = sizeof(osrel);
-		if (sysctl(mib_osrel, 2, osrel, &len, NULL, 0) == -1) {
-			dt_dprintf("sysctl osrel failed: %s\n",
-				strerror(errno));
-		    return;
-		}
-
-		len = sizeof(machine);
-		if (sysctl(mib_mach, 2, machine, &len, NULL, 0) == -1) {
-			dt_dprintf("sysctl machine failed: %s\n",
-				strerror(errno));
-		    return;
-		}
-
-		(void) snprintf(fname, sizeof (fname),
-		    "/stand/%s/%s/modules/%s/%s.kmod", machine, osrel, name, name);
-	}
+	(void) strlcpy(name, k_stat->name, sizeof(name));
+	(void) strlcpy(fname, k_stat->pathname, sizeof(fname));
 #endif
 
 	if ((fd = open(fname, O_RDONLY)) == -1 || fstat64(fd, &st) == -1 ||
@@ -904,7 +1189,7 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 	(void) close(fd);
 
 	if (dmp->dm_elf == NULL || err == -1 ||
-	    elf_getshstrndx(dmp->dm_elf, &shstrs) == 0) {
+	    elf_getshdrstrndx(dmp->dm_elf, &shstrs) == -1) {
 		dt_dprintf("failed to load %s: %s\n",
 		    fname, elf_errmsg(elf_errno()));
 		dt_module_destroy(dtp, dmp);
@@ -925,7 +1210,20 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 		dt_module_destroy(dtp, dmp);
 		return;
 	}
-
+#if defined(__FreeBSD__)
+	mapbase = (uintptr_t)k_stat->address;
+	gelf_getehdr(dmp->dm_elf, &ehdr);
+	is_elf_obj = (ehdr.e_type == ET_REL);
+	if (is_elf_obj) {
+		dmp->dm_sec_offsets =
+		    malloc(ehdr.e_shnum * sizeof(*dmp->dm_sec_offsets));
+		if (dmp->dm_sec_offsets == NULL) {
+			dt_dprintf("failed to allocate memory\n");
+			dt_module_destroy(dtp, dmp);
+			return;
+		}
+	}
+#endif
 	/*
 	 * Iterate over the section headers locating various sections of
 	 * interest and use their attributes to flesh out the dt_module_t.
@@ -934,7 +1232,19 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 		if (gelf_getshdr(sp, &sh) == NULL || sh.sh_type == SHT_NULL ||
 		    (s = elf_strptr(dmp->dm_elf, shstrs, sh.sh_name)) == NULL)
 			continue; /* skip any malformed sections */
-
+#if defined(__FreeBSD__)
+		if (sh.sh_size == 0)
+			continue;
+		if (sh.sh_type == SHT_PROGBITS || sh.sh_type == SHT_NOBITS) {
+			alignmask = sh.sh_addralign - 1;
+			mapbase += alignmask;
+			mapbase &= ~alignmask;
+			sh.sh_addr = mapbase;
+			if (is_elf_obj)
+				dmp->dm_sec_offsets[elf_ndxscn(sp)] = sh.sh_addr;
+			mapbase += sh.sh_size;
+		}
+#endif
 		if (strcmp(s, ".text") == 0) {
 			dmp->dm_text_size = sh.sh_size;
 			dmp->dm_text_va = sh.sh_addr;
@@ -956,11 +1266,17 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 	}
 
 	dmp->dm_flags |= DT_DM_KERNEL;
-#if defined(sun)
+#ifdef illumos
 	dmp->dm_modid = (int)OBJFS_MODID(st.st_ino);
 #else
+	/*
+	 * Include .rodata and special sections into .text.
+	 * This depends on default section layout produced by GNU ld
+	 * for ELF objects and libraries:
+	 * [Text][R/O data][R/W data][Dynamic][BSS][Non loadable]
+	 */
+	dmp->dm_text_size = dmp->dm_data_va - dmp->dm_text_va;
 #if defined(__i386__)
-#if 0	/* XXX TBD needs module support */
 	/*
 	 * Find the first load section and figure out the relocation
 	 * offset for the symbols. The kernel module will not need
@@ -973,15 +1289,42 @@ dt_module_update(dtrace_hdl_t *dtp, const char *name)
 		}
 	}
 #endif
-#endif
-#endif
+#endif /* illumos */
 
 	if (dmp->dm_info.objfs_info_primary)
 		dmp->dm_flags |= DT_DM_PRIMARY;
 
+#if defined(__FreeBSD__)
+	ms.version = sizeof(ms);
+	for (modid = kldfirstmod(k_stat->id); modid > 0;
+	    modid = modnext(modid)) {
+		if (modstat(modid, &ms) != 0) {
+			dt_dprintf("modstat failed for id %d in %s: %s\n",
+			    modid, k_stat->name, strerror(errno));
+			continue;
+		}
+		if (dt_kmodule_lookup(dtp, ms.name) != NULL)
+			continue;
+
+		dkmp = malloc(sizeof (*dkmp));
+		if (dkmp == NULL) {
+			dt_dprintf("failed to allocate memory\n");
+			dt_module_destroy(dtp, dmp);
+			return;
+		}
+
+		h = dt_strtab_hash(ms.name, NULL) % dtp->dt_modbuckets;
+		dkmp->dkm_next = dtp->dt_kmods[h];
+		dkmp->dkm_name = strdup(ms.name);
+		dkmp->dkm_module = dmp;
+		dtp->dt_kmods[h] = dkmp;
+	}
+#endif
+
 	dt_dprintf("opened %d-bit module %s (%s) [%d]\n",
 	    bits, dmp->dm_name, dmp->dm_file, dmp->dm_modid);
 }
+#endif
 
 /*
  * Unload all the loaded modules and then refresh the module cache with the
@@ -991,10 +1334,9 @@ void
 dtrace_update(dtrace_hdl_t *dtp)
 {
 	dt_module_t *dmp;
-#if defined(sun)
+#ifdef illumos
 	DIR *dirp;
-#endif
-#if defined(__FreeBSD__)
+#elif defined(__FreeBSD__)
 	int fileid;
 #endif
 
@@ -1002,7 +1344,7 @@ dtrace_update(dtrace_hdl_t *dtp)
 	    dmp != NULL; dmp = dt_list_next(dmp))
 		dt_module_unload(dtp, dmp);
 
-#if defined(sun)
+#ifdef illumos
 	/*
 	 * Open /system/object and attempt to create a libdtrace module for
 	 * each kernel module that is loaded on the current system.
@@ -1029,9 +1371,6 @@ dtrace_update(dtrace_hdl_t *dtp)
 		if (kldstat(fileid, &k_stat) == 0)
 			dt_module_update(dtp, &k_stat);
 	}
-#else
-	/* XXX just the kernel for now */
-	dt_module_update(dtp, "netbsd");
 #endif
 
 	/*
@@ -1045,11 +1384,11 @@ dtrace_update(dtrace_hdl_t *dtp)
 	dt_idhash_lookup(dtp->dt_macros, "pid")->di_id = getpid();
 	dt_idhash_lookup(dtp->dt_macros, "pgid")->di_id = getpgid(0);
 	dt_idhash_lookup(dtp->dt_macros, "ppid")->di_id = getppid();
-#if defined(sun)
+#ifdef illumos
 	dt_idhash_lookup(dtp->dt_macros, "projid")->di_id = getprojid();
 #endif
 	dt_idhash_lookup(dtp->dt_macros, "sid")->di_id = getsid(0);
-#if defined(sun)
+#ifdef illumos
 	dt_idhash_lookup(dtp->dt_macros, "taskid")->di_id = gettaskid();
 #endif
 	dt_idhash_lookup(dtp->dt_macros, "uid")->di_id = getuid();
@@ -1248,9 +1587,11 @@ dtrace_lookup_by_type(dtrace_hdl_t *dtp, const char *object, const char *name,
 	dtrace_typeinfo_t ti;
 	dt_module_t *dmp;
 	int found = 0;
-	ctf_id_t id;
-	uint_t n;
+	ctf_id_t id = CTF_ERR;	// XXX: gcc
+	uint_t n, i;
 	int justone;
+	ctf_file_t *fp = NULL;	// XXX: gcc
+	char *buf, *p, *q;
 
 	uint_t mask = 0; /* mask of dt_module flags to match */
 	uint_t bits = 0; /* flag bits that must be present */
@@ -1265,7 +1606,6 @@ dtrace_lookup_by_type(dtrace_hdl_t *dtp, const char *object, const char *name,
 			return (-1); /* dt_errno is set for us */
 		n = 1;
 		justone = 1;
-
 	} else {
 		if (object == DTRACE_OBJ_KMODS)
 			mask = bits = DT_DM_KERNEL;
@@ -1289,7 +1629,7 @@ dtrace_lookup_by_type(dtrace_hdl_t *dtp, const char *object, const char *name,
 		 * module.  If our search was scoped to only one module then
 		 * return immediately leaving dt_errno unmodified.
 		 */
-		if (dt_module_getctf(dtp, dmp) == NULL) {
+		if (dt_module_hasctf(dtp, dmp) == 0) {
 			if (justone)
 				return (-1);
 			continue;
@@ -1301,13 +1641,38 @@ dtrace_lookup_by_type(dtrace_hdl_t *dtp, const char *object, const char *name,
 		 * 'tip' and keep going in the hope that we will locate the
 		 * underlying structure definition.  Otherwise just return.
 		 */
-		if ((id = ctf_lookup_by_name(dmp->dm_ctfp, name)) != CTF_ERR) {
+		if (dmp->dm_pid == 0) {
+			id = ctf_lookup_by_name(dmp->dm_ctfp, name);
+			fp = dmp->dm_ctfp;
+		} else {
+			if ((p = strchr(name, '`')) != NULL) {
+				buf = strdup(name);
+				if (buf == NULL)
+					return (dt_set_errno(dtp, EDT_NOMEM));
+				p = strchr(buf, '`');
+				if ((q = strchr(p + 1, '`')) != NULL)
+					p = q;
+				*p = '\0';
+				fp = dt_module_getctflib(dtp, dmp, buf);
+				if (fp == NULL || (id = ctf_lookup_by_name(fp,
+				    p + 1)) == CTF_ERR)
+					id = CTF_ERR;
+				free(buf);
+			} else {
+				for (i = 0; i < dmp->dm_nctflibs; i++) {
+					fp = dmp->dm_libctfp[i];
+					id = ctf_lookup_by_name(fp, name);
+					if (id != CTF_ERR)
+						break;
+				}
+			}
+		}
+		if (id != CTF_ERR) {
 			tip->dtt_object = dmp->dm_name;
-			tip->dtt_ctfp = dmp->dm_ctfp;
+			tip->dtt_ctfp = fp;
 			tip->dtt_type = id;
-
-			if (ctf_type_kind(dmp->dm_ctfp, ctf_type_resolve(
-			    dmp->dm_ctfp, id)) != CTF_K_FORWARD)
+			if (ctf_type_kind(fp, ctf_type_resolve(fp, id)) !=
+			    CTF_K_FORWARD)
 				return (0);
 
 			found++;
@@ -1329,6 +1694,7 @@ dtrace_symbol_type(dtrace_hdl_t *dtp, const GElf_Sym *symp,
 	tip->dtt_object = NULL;
 	tip->dtt_ctfp = NULL;
 	tip->dtt_type = CTF_ERR;
+	tip->dtt_flags = 0;
 
 	if ((dmp = dt_module_lookup_by_name(dtp, sip->dts_object)) == NULL)
 		return (dt_set_errno(dtp, EDT_NOMOD));
