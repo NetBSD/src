@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls_autoload.c,v 1.6 2015/08/24 16:07:10 pooka Exp $ */
+/* $NetBSD: syscalls_autoload.c,v 1.7 2015/09/24 14:34:22 christos Exp $ */
 
 /*
  * System call autoload table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.6 2015/08/24 16:07:10 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.7 2015/09/24 14:34:22 christos Exp $");
 
 static struct {
 	u_int		al_code;
