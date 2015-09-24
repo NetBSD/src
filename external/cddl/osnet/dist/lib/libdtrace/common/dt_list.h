@@ -38,8 +38,8 @@ typedef struct dt_list {
 	struct dt_list *dl_next;
 } dt_list_t;
 
-#define	dt_list_prev(elem)	((void *)(((dt_list_t *)__UNCONST(elem))->dl_prev))
-#define	dt_list_next(elem)	((void *)(((dt_list_t *)__UNCONST(elem))->dl_next))
+#define	dt_list_prev(elem)	((void *)(((dt_list_t *)(elem))->dl_prev))
+#define	dt_list_next(elem)	((void *)(((dt_list_t *)(elem))->dl_next))
 
 extern void dt_list_append(dt_list_t *, void *);
 extern void dt_list_prepend(dt_list_t *, void *);
