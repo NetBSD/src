@@ -27,19 +27,23 @@
  * SUCH DAMAGE. 
  */ 
 #include <sys/cdefs.h>
+#ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/librtld_db/rtld_db.c 272488 2014-10-03 23:20:37Z markj $");
+#else
+__RCSID("$NetBSD: rtld_db.c,v 1.2 2015/09/24 14:15:58 christos Exp $");
+#endif
 
-#include <machine/_inttypes.h>
 #include <sys/types.h>
-#include <sys/user.h>
+#include <sys/sysctl.h>
 
+#include <inttypes.h>
 #include <err.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
 #include <libproc.h>
-#include <libutil.h>
+#include <util.h>
 
 #include "rtld_db.h"
 
@@ -146,7 +150,7 @@ rd_init(int version)
 rd_err_e
 rd_loadobj_iter(rd_agent_t *rdap, rl_iter_f *cb, void *clnt_data)
 {
-	int cnt, i, lastvn = 0;
+	size_t cnt, i, lastvn = 0;
 	rd_loadobj_t rdl;
 	struct kinfo_vmentry *kves, *kve;
 
