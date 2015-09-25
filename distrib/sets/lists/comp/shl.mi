@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.279 2015/09/25 09:55:49 martin Exp $
+# $NetBSD: shl.mi,v 1.280 2015/09/25 10:30:36 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -139,9 +139,9 @@
 ./usr/lib/libroken_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/librpcsvc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/librt_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/librtld_db.so				comp-c-shlib		compatfile
-./usr/lib/librtld_db.so.0			comp-c-shlib		compatfile
-./usr/lib/librtld_db_pic.a			comp-c-piclib		compatfile
+./usr/lib/librtld_db.so				comp-c-shlib		compatfile,dtrace
+./usr/lib/librtld_db.so.0			comp-c-shlib		compatfile,dtrace
+./usr/lib/librtld_db_pic.a			comp-c-piclib		compatfile,dtrace
 ./usr/lib/librump_pic.a				comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpclient_pic.a			comp-c-piclib		compatfile,picinstall,rump
 ./usr/lib/librumpcrypto_pic.a			comp-obsolete		obsolete

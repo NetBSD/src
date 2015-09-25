@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.130 2015/09/25 09:55:49 martin Exp $
+# $NetBSD: mi,v 1.131 2015/09/25 10:30:37 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -134,7 +134,7 @@
 ./usr/lib/libroken_g.a				comp-c-debuglib		debuglib,kerberos,compatfile
 ./usr/lib/librpcsvc_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/librt_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/librtld_db_g.a			comp-c-debuglib		debuglib,compatfile
+./usr/lib/librtld_db_g.a			comp-c-debuglib		debuglib,compatfile,dtrace
 ./usr/lib/librump_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpclient_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpcrypto_g.a			comp-obsolete		obsolete,compatfile

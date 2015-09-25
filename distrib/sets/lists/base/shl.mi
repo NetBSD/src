@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.750 2015/09/25 09:55:49 martin Exp $
+# $NetBSD: shl.mi,v 1.751 2015/09/25 10:30:36 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -467,9 +467,9 @@
 ./usr/lib/librt.so				base-sys-shlib		compatfile
 ./usr/lib/librt.so.1				base-sys-shlib		compatfile
 ./usr/lib/librt.so.1.1				base-sys-shlib		compatfile
-./usr/lib/librtld_db.so				base-sys-shlib		compatfile
-./usr/lib/librtld_db.so.0			base-sys-shlib		compatfile
-./usr/lib/librtld_db.so.0.0			base-sys-shlib		compatfile
+./usr/lib/librtld_db.so				base-sys-shlib		compatfile,dtrace
+./usr/lib/librtld_db.so.0			base-sys-shlib		compatfile,dtrace
+./usr/lib/librtld_db.so.0.0			base-sys-shlib		compatfile,dtrace
 ./usr/lib/librump.so				base-rump-shlib		compatfile,rump
 ./usr/lib/librump.so.0				base-rump-shlib		compatfile,rump
 ./usr/lib/librump.so.0.0			base-rump-shlib		compatfile,rump
