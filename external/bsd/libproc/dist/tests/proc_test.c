@@ -28,7 +28,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/tests/proc_test.c 286863 2015-08-17 23:19:36Z emaste $");
 #endif
-__RCSID("$NetBSD: proc_test.c,v 1.3 2015/09/24 19:25:37 christos Exp $");
+__RCSID("$NetBSD: proc_test.c,v 1.4 2015/09/25 16:07:32 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -102,7 +102,7 @@ start_prog(const struct atf_tc *tc, bool sig)
 
 #if !defined(__aarch64__)
 static void
-set_bkpt(struct proc_handle *phdl, uintptr_t addr, u_long *saved)
+set_bkpt(struct proc_handle *phdl, uintptr_t addr, proc_breakpoint_t *saved)
 {
 	int error;
 
@@ -112,7 +112,7 @@ set_bkpt(struct proc_handle *phdl, uintptr_t addr, u_long *saved)
 }
 
 static void
-remove_bkpt(struct proc_handle *phdl, uintptr_t addr, u_long val)
+remove_bkpt(struct proc_handle *phdl, uintptr_t addr, proc_breakpoint_t *val)
 {
 	int error;
 
@@ -297,7 +297,7 @@ ATF_TC_BODY(symbol_lookup, tc)
 {
 	GElf_Sym main_sym, r_debug_state_sym;
 	struct proc_handle *phdl;
-	u_long saved;
+	proc_breakpoint_t saved;
 	int error;
 
 	phdl = start_prog(tc, false);
@@ -312,12 +312,12 @@ ATF_TC_BODY(symbol_lookup, tc)
 	set_bkpt(phdl, (uintptr_t)r_debug_state_sym.st_value, &saved);
 	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
 	verify_bkpt(phdl, &r_debug_state_sym, r_debug_state, ldelf_object);
-	remove_bkpt(phdl, (uintptr_t)r_debug_state_sym.st_value, saved);
+	remove_bkpt(phdl, (uintptr_t)r_debug_state_sym.st_value, &saved);
 
 	set_bkpt(phdl, (uintptr_t)main_sym.st_value, &saved);
 	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
 	verify_bkpt(phdl, &main_sym, "main", target_prog_file);
-	remove_bkpt(phdl, (uintptr_t)main_sym.st_value, saved);
+	remove_bkpt(phdl, (uintptr_t)main_sym.st_value, &saved);
 
 	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
 
