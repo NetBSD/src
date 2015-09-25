@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.50 2015/09/25 08:22:02 martin Exp $
+#	$NetBSD: Makefile,v 1.51 2015/09/25 10:08:35 martin Exp $
 
 .include <bsd.own.mk>
 
 SUBDIR=	acpica am-utils bind byacc cron dhcpcd ekermit elftosb \
 	fetch file flex less \
-	libarchive libevent liblzf libpcap librtld_db mdocml \
+	libarchive libevent liblzf libpcap mdocml \
 	ntp openresolv tcpdump tmux top tre wpa
 
 .if (${MKATF} != "no")
@@ -37,6 +37,7 @@ SUBDIR+= pcc
 .endif
 .if (${MKDTRACE} != "no" || ${MKCTF} != "no")
 SUBDIR+= libproc
+SUBDIR+= librtld_db
 .endif
 
 SUBDIR+= blacklist pdisk dhcp nvi ppp smbfs
