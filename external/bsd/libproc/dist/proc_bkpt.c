@@ -31,7 +31,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_bkpt.c 287106 2015-08-24 12:17:15Z andrew $");
 #else
-__RCSID("$NetBSD: proc_bkpt.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+__RCSID("$NetBSD: proc_bkpt.c,v 1.3 2015/09/25 16:07:32 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: proc_bkpt.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
 #include <sys/wait.h>
 
 #include <assert.h>
+#include <string.h>
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -46,26 +47,7 @@ __RCSID("$NetBSD: proc_bkpt.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
 #include <stdio.h>
 #include "_libproc.h"
 
-#if defined(__aarch64__)
-#define	AARCH64_BRK		0xd4200000
-#define	AARCH64_BRK_IMM16_SHIFT	5
-#define	AARCH64_BRK_IMM16_VAL	(0xd << AARCH64_BRK_IMM16_SHIFT)
-#define	BREAKPOINT_INSTR	(AARCH64_BRK | AARCH64_BRK_IMM16_VAL)
-#define	BREAKPOINT_INSTR_SZ	4
-#elif defined(__amd64__) || defined(__i386__)
-#define	BREAKPOINT_INSTR	0xcc	/* int 0x3 */
-#define	BREAKPOINT_INSTR_SZ	1
-#define	BREAKPOINT_ADJUST_SZ	BREAKPOINT_INSTR_SZ
-#elif defined(__arm__)
-#define	BREAKPOINT_INSTR	0xe7ffffff	/* bkpt */
-#define	BREAKPOINT_INSTR_SZ	4
-#elif defined(__mips__)
-#define	BREAKPOINT_INSTR	0xd	/* break */
-#define	BREAKPOINT_INSTR_SZ	4
-#elif defined(__powerpc__)
-#define	BREAKPOINT_INSTR	0x7fe00008	/* trap */
-#define	BREAKPOINT_INSTR_SZ	4
-#else
+#ifndef PTRACE_BREAKPOINT
 #error "Add support for your architecture"
 #endif
 
@@ -90,13 +72,13 @@ proc_stop(struct proc_handle *phdl)
 
 int
 proc_bkptset(struct proc_handle *phdl, uintptr_t address,
-    unsigned long *saved)
+    proc_breakpoint_t *saved)
 {
 	struct ptrace_io_desc piod;
 	unsigned long paddr, caddr;
 	int ret = 0, stopped;
+	proc_breakpoint_t copy;
 
-	*saved = 0;
 	if (phdl->status == PS_DEAD || phdl->status == PS_UNDEAD ||
 	    phdl->status == PS_IDLE) {
 		errno = ENOENT;
@@ -119,24 +101,22 @@ proc_bkptset(struct proc_handle *phdl, uintptr_t address,
 	paddr = 0;
 	piod.piod_op = PIOD_READ_I;
 	piod.piod_offs = (void *)caddr;
-	piod.piod_addr = &paddr;
-	piod.piod_len  = BREAKPOINT_INSTR_SZ;
+	piod.piod_addr = (void *)saved->data;
+	piod.piod_len  = sizeof(saved->data);
 	if (ptrace(PT_IO, proc_getpid(phdl), (caddr_t)&piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't read instruction at address 0x%"
 		    PRIuPTR, address);
 		ret = -1;
 		goto done;
 	}
-	*saved = paddr;
 	/*
 	 * Write a breakpoint instruction to that address.
 	 */
 	caddr = address;
-	paddr = BREAKPOINT_INSTR;
 	piod.piod_op = PIOD_WRITE_I;
 	piod.piod_offs = (void *)caddr;
-	piod.piod_addr = &paddr;
-	piod.piod_len  = BREAKPOINT_INSTR_SZ;
+	piod.piod_addr = (void *)PTRACE_BREAKPOINT;
+	piod.piod_len  = sizeof(PTRACE_BREAKPOINT);
 	if (ptrace(PT_IO, proc_getpid(phdl), (caddr_t)&piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't write instruction at address 0x%"
 		    PRIuPTR, address);
@@ -154,7 +134,7 @@ done:
 
 int
 proc_bkptdel(struct proc_handle *phdl, uintptr_t address,
-    unsigned long saved)
+    proc_breakpoint_t *saved)
 {
 	struct ptrace_io_desc piod;
 	unsigned long paddr, caddr;
@@ -179,11 +159,10 @@ proc_bkptdel(struct proc_handle *phdl, uintptr_t address,
 	 * Overwrite the breakpoint instruction that we setup previously.
 	 */
 	caddr = address;
-	paddr = saved;
 	piod.piod_op = PIOD_WRITE_I;
 	piod.piod_offs = (void *)caddr;
-	piod.piod_addr = &paddr;
-	piod.piod_len  = BREAKPOINT_INSTR_SZ;
+	piod.piod_addr = (void *)saved->data;
+	piod.piod_len  = sizeof(saved->data);
 	if (ptrace(PT_IO, proc_getpid(phdl), (caddr_t)&piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't write instruction at address 0x%"
 		    PRIuPTR, address);
@@ -199,7 +178,7 @@ proc_bkptdel(struct proc_handle *phdl, uintptr_t address,
 
 /*
  * Decrement pc so that we delete the breakpoint at the correct
- * address, i.e. at the BREAKPOINT_INSTR address.
+ * address, i.e. at the breakpoint instruction address.
  *
  * This is only needed on some architectures where the pc value
  * when reading registers points at the instruction after the
@@ -210,8 +189,8 @@ proc_bkptregadj(unsigned long *pc)
 {
 
 	(void)pc;
-#ifdef BREAKPOINT_ADJUST_SZ
-	*pc = *pc - BREAKPOINT_ADJUST_SZ;
+#ifdef PTRACE_BREAKPOINT_ADJ
+	*pc = *pc - PTRACE_BREAKPOINT_ADJ;
 #endif
 }
 
@@ -219,10 +198,10 @@ proc_bkptregadj(unsigned long *pc)
  * Step over the breakpoint.
  */
 int
-proc_bkptexec(struct proc_handle *phdl, unsigned long saved)
+proc_bkptexec(struct proc_handle *phdl, proc_breakpoint_t *saved)
 {
 	unsigned long pc;
-	unsigned long samesaved;
+	proc_breakpoint_t samesaved;
 	int status;
 
 	if (proc_regget(phdl, REG_PC, &pc) < 0) {
@@ -257,7 +236,8 @@ proc_bkptexec(struct proc_handle *phdl, unsigned long saved)
 		DPRINTFX("ERROR: couldn't restore breakpoint");
 		return (-1);
 	}
-	assert(samesaved == saved);
+
+	assert(memcmp(saved, &samesaved, sizeof(samesaved)) == 0);
 
 	return (0);
 }
