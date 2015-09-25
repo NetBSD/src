@@ -31,7 +31,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_regs.c 285003 2015-07-01 13:59:26Z br $");
 #else
-__RCSID("$NetBSD: proc_regs.c,v 1.2 2015/09/24 14:12:48 christos Exp $");
+__RCSID("$NetBSD: proc_regs.c,v 1.3 2015/09/25 16:07:32 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,38 +62,14 @@ proc_regget(struct proc_handle *phdl, proc_reg_t reg, unsigned long *regvalue)
 #ifdef PTRACE_REG_PC
 		*regvalue = PTRACE_REG_PC(&regs);
 #else
-#if defined(__aarch64__)
-		*regvalue = regs.elr;
-#elif defined(__amd64__)
-		*regvalue = regs.r_rip;
-#elif defined(__arm__)
-		*regvalue = regs.r_pc;
-#elif defined(__i386__)
-		*regvalue = regs.r_eip;
-#elif defined(__mips__)
-		*regvalue = regs.r_regs[PC];
-#elif defined(__powerpc__)
-		*regvalue = regs.pc;
-#endif
+#	error "Add support for your architecture"
 #endif
 		break;
 	case REG_SP:
 #ifdef PTRACE_REG_SP
 		*regvalue = PTRACE_REG_SP(&regs);
 #else
-#if defined(__aarch64__)
-		*regvalue = regs.sp;
-#elif defined(__amd64__)
-		*regvalue = regs.r_rsp;
-#elif defined(__arm__)
-		*regvalue = regs.r_sp;
-#elif defined(__i386__)
-		*regvalue = regs.r_esp;
-#elif defined(__mips__)
-		*regvalue = regs.r_regs[SP];
-#elif defined(__powerpc__)
-		*regvalue = regs.fixreg[1];
-#endif
+#	error "Add support for your architecture"
 #endif
 		break;
 	default:
@@ -121,38 +97,14 @@ proc_regset(struct proc_handle *phdl, proc_reg_t reg, unsigned long regvalue)
 #ifdef PTRACE_REG_SET_PC
 		PTRACE_REG_SET_PC(&regs, regvalue);
 #else
-#if defined(__aarch64__)
-		regs.elr = regvalue;
-#elif defined(__amd64__)
-		regs.r_rip = regvalue;
-#elif defined(__arm__)
-		regs.r_pc = regvalue;
-#elif defined(__i386__)
-		regs.r_eip = regvalue;
-#elif defined(__mips__)
-		regs.r_regs[PC] = regvalue;
-#elif defined(__powerpc__)
-		regs.pc = regvalue;
-#endif
+#	error "Add support for your architecture"
 #endif
 		break;
 	case REG_SP:
 #ifdef PTRACE_REG_SP
 		PTRACE_REG_SP(&regs) = regvalue;
 #else
-#if defined(__aarch64__)
-		regs.sp = regvalue;
-#elif defined(__amd64__)
-		regs.r_rsp = regvalue;
-#elif defined(__arm__)
-		regs.r_sp = regvalue;
-#elif defined(__i386__)
-		regs.r_esp = regvalue;
-#elif defined(__mips__)
-		regs.r_regs[PC] = regvalue;
-#elif defined(__powerpc__)
-		regs.fixreg[1] = regvalue;
-#endif
+#	error "Add support for your architecture"
 #endif
 		break;
 	default:
