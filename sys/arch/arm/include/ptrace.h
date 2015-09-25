@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.7 2015/09/15 15:49:02 christos Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.8 2015/09/25 16:05:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank Lancaster
@@ -57,3 +57,6 @@
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_pc = (v)
 #define PTRACE_REG_SP(r)	(r)->r_sp
 #define PTRACE_REG_INTRV(r)	(r)->r[0]
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xe7, 0xff, 0xff, 0xff })
+#define PTRACE_BREAKPOINT_SIZE	4
