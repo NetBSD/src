@@ -31,7 +31,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_bkpt.c 287106 2015-08-24 12:17:15Z andrew $");
 #else
-__RCSID("$NetBSD: proc_bkpt.c,v 1.3 2015/09/25 16:07:32 christos Exp $");
+__RCSID("$NetBSD: proc_bkpt.c,v 1.4 2015/09/25 19:09:38 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -103,7 +103,7 @@ proc_bkptset(struct proc_handle *phdl, uintptr_t address,
 	piod.piod_offs = (void *)caddr;
 	piod.piod_addr = (void *)saved->data;
 	piod.piod_len  = sizeof(saved->data);
-	if (ptrace(PT_IO, proc_getpid(phdl), (caddr_t)&piod, 0) < 0) {
+	if (ptrace(PT_IO, proc_getpid(phdl), &piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't read instruction at address 0x%"
 		    PRIuPTR, address);
 		ret = -1;
@@ -117,7 +117,7 @@ proc_bkptset(struct proc_handle *phdl, uintptr_t address,
 	piod.piod_offs = (void *)caddr;
 	piod.piod_addr = (void *)PTRACE_BREAKPOINT;
 	piod.piod_len  = sizeof(PTRACE_BREAKPOINT);
-	if (ptrace(PT_IO, proc_getpid(phdl), (caddr_t)&piod, 0) < 0) {
+	if (ptrace(PT_IO, proc_getpid(phdl), &piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't write instruction at address 0x%"
 		    PRIuPTR, address);
 		ret = -1;
@@ -163,7 +163,7 @@ proc_bkptdel(struct proc_handle *phdl, uintptr_t address,
 	piod.piod_offs = (void *)caddr;
 	piod.piod_addr = (void *)saved->data;
 	piod.piod_len  = sizeof(saved->data);
-	if (ptrace(PT_IO, proc_getpid(phdl), (caddr_t)&piod, 0) < 0) {
+	if (ptrace(PT_IO, proc_getpid(phdl), &piod, 0) < 0) {
 		DPRINTF("ERROR: couldn't write instruction at address 0x%"
 		    PRIuPTR, address);
 		ret = -1;
@@ -218,7 +218,7 @@ proc_bkptexec(struct proc_handle *phdl, proc_breakpoint_t *saved)
 	 * set up by proc_bkptdel().
 	 */
 	proc_regset(phdl, REG_PC, pc);
-	if (ptrace(PT_STEP, proc_getpid(phdl), (caddr_t)1, 0) < 0) {
+	if (ptrace(PT_STEP, proc_getpid(phdl), (void *)(intptr_t)1, 0) < 0) {
 		DPRINTFX("ERROR: ptrace step failed");
 		return (-1);
 	}
