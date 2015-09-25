@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.647 2015/09/24 16:36:58 christos Exp $
+# $NetBSD: mi,v 1.648 2015/09/25 09:55:49 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2919,9 +2919,9 @@
 ./usr/tests/lib/libppath/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libppath/t_ppath		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libproc						tests-lib-debug	compattestdir
-./usr/tests/lib/libproc/Atffile					tests-lib-debug	compattestfile,atf
-./usr/tests/lib/libproc/proc_test				tests-lib-debug	compattestfile,atf
-./usr/tests/lib/libproc/target_prog				tests-lib-debug	compattestfile,atf
+./usr/tests/lib/libproc/Atffile					tests-lib-debug	compattestfile,atf,dtrace
+./usr/tests/lib/libproc/proc_test				tests-lib-debug	compattestfile,atf,dtrace
+./usr/tests/lib/libproc/target_prog				tests-lib-debug	compattestfile,atf,dtrace
 ./usr/tests/lib/libprop				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libprop/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libprop/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
