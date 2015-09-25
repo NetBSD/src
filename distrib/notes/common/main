@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.510.4.6 2015/08/11 05:37:41 snj Exp $
+.\"	$NetBSD: main,v 1.510.4.7 2015/09/25 04:34:17 snj Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -50,7 +50,7 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k xen zaurus .
 .so \*[.CURDIR]/../common/macros
 .
-.Dd August 11, 2015
+.Dd September 25, 2015
 .Dt INSTALL 8
 .Os NetBSD
 .Sh NAME
@@ -495,7 +495,11 @@ It is impossible to completely summarize the massive development that
 went into the
 .Nx
 \*V release.
-The complete list of changes can be found in the
+See
+.Lk http://www.NetBSD.org/releases/formal-7/NetBSD-7.0.html
+for some of the more noteworthy changes in this release.
+.Pp
+A more extensive list of changes can be found in the
 CHANGES:
 .Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES
 and
@@ -503,8 +507,6 @@ CHANGES-7.0:
 .Lk http://ftp.NetBSD.org/pub/NetBSD/NetBSD-7.0/CHANGES-7.0
 files in the top level directory of the NetBSD 7.0 release tree.
 .Pp
-.\" fill in with changes.mdoc
-.
 .\} \" \n[FOR_RELEASE]
 .
 .Ss "Features to be removed in a later release"
@@ -570,7 +572,7 @@ The root directory of the
 .It Li CHANGES
 Changes between the 6.0 and 7.0 releases.
 .It Li CHANGES-7.0
-Changes between the initial 7.0 branch and final release of 7.0.
+Changes between the initial 7.0 branch and the final release of 7.0.
 .It Li CHANGES.prev
 Changes in previous
 .Nx
