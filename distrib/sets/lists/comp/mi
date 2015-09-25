@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1993 2015/09/25 10:30:36 martin Exp $
+#	$NetBSD: mi,v 1.1994 2015/09/25 10:43:18 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -14411,7 +14411,7 @@
 ./usr/share/man/html3/libperfuse.html		comp-perfuse-htmlman	html
 ./usr/share/man/html3/libquota.html		comp-c-htmlman		html
 ./usr/share/man/html3/libradius.html		comp-c-htmlman		html
-./usr/share/man/html3/librtld_db.html		comp-c-htmlman		html
+./usr/share/man/html3/librtld_db.html		comp-c-htmlman		html,dtrace
 ./usr/share/man/html3/libsaslc.html		comp-c-htmlman		crypto,html
 ./usr/share/man/html3/libusbhid.html		comp-c-htmlman		html
 ./usr/share/man/html3/libutil.html		comp-c-htmlman		html
@@ -21290,7 +21290,7 @@
 ./usr/share/man/man3/libperfuse.3		comp-perfuse-man	.man
 ./usr/share/man/man3/libquota.3			comp-c-man		.man
 ./usr/share/man/man3/libradius.3		comp-c-man		.man
-./usr/share/man/man3/librtld_db.3		comp-c-man		.man
+./usr/share/man/man3/librtld_db.3		comp-c-man		dtrace,.man
 ./usr/share/man/man3/libsaslc.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/libusb.3			comp-obsolete		obsolete
 ./usr/share/man/man3/libusbhid.3		comp-c-man		.man
