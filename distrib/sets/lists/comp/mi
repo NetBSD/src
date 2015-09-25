@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1991 2015/09/24 18:03:22 christos Exp $
+#	$NetBSD: mi,v 1.1992 2015/09/25 09:55:49 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3322,8 +3322,8 @@
 ./usr/lib/libposix_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libppath.a				comp-c-lib		compatfile
 ./usr/lib/libppath_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/libproc.a				comp-c-lib		compatfile
-./usr/lib/libproc_p.a				comp-c-lib		compatfile
+./usr/lib/libproc.a				comp-c-lib		compatfile,dtrace
+./usr/lib/libproc_p.a				comp-c-lib		compatfile,dtrace
 ./usr/lib/libprop.a				comp-c-lib		compatfile
 ./usr/lib/libprop_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libpthread.a				comp-c-lib		compatfile
