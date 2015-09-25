@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.231 2015/09/25 07:41:53 martin Exp $
+#	$NetBSD: Makefile,v 1.232 2015/09/25 10:08:35 martin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -100,7 +100,9 @@ SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+.if ${MKDTRACE} != "no" || ${MKCTF} != "no"
 SUBDIR+=	../external/bsd/librtld_db/lib		# depends on libutil
+.endif
 
 .if ${MKDTRACE} != "no" || ${MKCTF} != "no"
 SUBDIR+=        ../external/cddl/osnet/lib/libctf
