@@ -1,4 +1,4 @@
-/*	$NetBSD: backtrace.c,v 1.4 2013/11/21 16:02:21 christos Exp $	*/
+/*	$NetBSD: backtrace.c,v 1.5 2015/09/25 19:18:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: backtrace.c,v 1.4 2013/11/21 16:02:21 christos Exp $");
+__RCSID("$NetBSD: backtrace.c,v 1.5 2015/09/25 19:18:28 christos Exp $");
 
 #include <sys/param.h>
 #include <assert.h>
@@ -60,7 +60,7 @@ open_self(int flags)
 	const char *pathname = SELF;
 #ifdef KERN_PROC_PATHNAME
 	static const int name[] = {
-		CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1,
+		CTL_KERN, KERN_PROC_ARGS, KERN_PROC_PATHNAME, -1,
 	};
 	char path[MAXPATHLEN];
 	size_t len;
