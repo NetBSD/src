@@ -36,6 +36,7 @@
 #include <gelf.h>
 #include <rtld_db.h>
 #include <limits.h>
+#include <sys/ptrace.h>
 
 struct ctf_file;
 struct proc_handle;
@@ -113,6 +114,12 @@ typedef struct lwpstatus {
 #define FLTBPT		-1
 } lwpstatus_t;
 
+typedef struct {
+	uint8_t data[PTRACE_BREAKPOINT_SIZE];
+} proc_breakpoint_t;
+
+typedef unsigned long proc_regvalue_t;
+
 /* Function prototype definitions. */
 __BEGIN_DECLS
 
@@ -145,12 +152,12 @@ const lwpstatus_t *proc_getlwpstatus(struct proc_handle *);
 void	proc_free(struct proc_handle *);
 rd_agent_t *proc_rdagent(struct proc_handle *);
 void	proc_updatesyms(struct proc_handle *);
-int	proc_bkptset(struct proc_handle *, uintptr_t, unsigned long *);
-int	proc_bkptdel(struct proc_handle *, uintptr_t, unsigned long);
+int	proc_bkptset(struct proc_handle *, uintptr_t, proc_breakpoint_t *);
+int	proc_bkptdel(struct proc_handle *, uintptr_t, proc_breakpoint_t *);
 void	proc_bkptregadj(unsigned long *);
-int	proc_bkptexec(struct proc_handle *, unsigned long);
-int	proc_regget(struct proc_handle *, proc_reg_t, unsigned long *);
-int	proc_regset(struct proc_handle *, proc_reg_t, unsigned long);
+int	proc_bkptexec(struct proc_handle *, proc_breakpoint_t *);
+int	proc_regget(struct proc_handle *, proc_reg_t, proc_regvalue_t *);
+int	proc_regset(struct proc_handle *, proc_reg_t, proc_regvalue_t);
 
 __END_DECLS
 
