@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.232 2015/09/25 10:08:35 martin Exp $
+#	$NetBSD: Makefile,v 1.233 2015/09/25 11:35:05 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -100,9 +100,7 @@ SUBDIR+=	../external/lgpl3/mpc/lib/libmpc
 #==================== 1st library dependency barrier ====================
 SUBDIR+=	.WAIT
 
-.if ${MKDTRACE} != "no" || ${MKCTF} != "no"
 SUBDIR+=	../external/bsd/librtld_db/lib		# depends on libutil
-.endif
 
 .if ${MKDTRACE} != "no" || ${MKCTF} != "no"
 SUBDIR+=        ../external/cddl/osnet/lib/libctf
@@ -207,9 +205,8 @@ SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 .endif
 
 SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
-.if ${MKDTRACE} != "no" && ${MKCTF} != "no"
-SUBDIR+=	../external/bsd/libproc/lib	# depends on libstdc++, libctf
-.endif
+SUBDIR+=	../external/bsd/libproc/lib	# depends on libstdc++,
+						# optionally libctf
 SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 
 .if (${MKLDAP} != "no")
