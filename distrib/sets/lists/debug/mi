@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.129 2015/09/24 14:49:38 christos Exp $
+# $NetBSD: mi,v 1.130 2015/09/25 09:55:49 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -120,8 +120,8 @@
 ./usr/lib/libperfuse_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libposix_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libppath_g.a				comp-c-debuglib		debuglib,compatfile
-./usr/lib/libproc_g.a				comp-c-libdebug		debuglib,compatfile
-./usr/lib/libproc_p.a				comp-c-debuglib		debuglib,compatfile
+./usr/lib/libproc_g.a				comp-c-libdebug		debuglib,compatfile,dtrace
+./usr/lib/libproc_p.a				comp-c-debuglib		debuglib,compatfile,dtrace
 ./usr/lib/libprop_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpthread_dbg_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpthread_g.a			comp-c-debuglib		debuglib,compatfile
@@ -2097,8 +2097,8 @@
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1/t_rename.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libposix/posix2/t_rename.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libppath/t_ppath.debug			tests-lib-debug		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libproc/proc_test.debug		tests-lib-debugq	debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libproc/target_prog.debug		tests-lib-debugq	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libproc/proc_test.debug		tests-lib-debugq	debug,atf,compattestfile,dtrace
+./usr/libdata/debug/usr/tests/lib/libproc/target_prog.debug		tests-lib-debugq	debug,atf,compattestfile,dtrace
 ./usr/libdata/debug/usr/tests/lib/libprop/t_basic.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/h_pthread_dlopen.so.1.debug	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dlopen.debug	tests-lib-debug	debug,atf,pic,compattestfile

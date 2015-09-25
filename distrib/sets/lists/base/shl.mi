@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.749 2015/09/24 20:04:57 christos Exp $
+# $NetBSD: shl.mi,v 1.750 2015/09/25 09:55:49 martin Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -431,9 +431,9 @@
 ./usr/lib/libppath.so				base-sys-shlib		compatfile
 ./usr/lib/libppath.so.0				base-sys-shlib		compatfile
 ./usr/lib/libppath.so.0.0			base-sys-shlib		compatfile
-./usr/lib/libproc.so				base-sys-shlib		compatfile
-./usr/lib/libproc.so.0				base-sys-shlib		compatfile
-./usr/lib/libproc.so.0.0			base-sys-shlib		compatfile
+./usr/lib/libproc.so				base-sys-shlib		compatfile,dtrace
+./usr/lib/libproc.so.0				base-sys-shlib		compatfile,dtrace
+./usr/lib/libproc.so.0.0			base-sys-shlib		compatfile,dtrace
 ./usr/lib/libprop.so				base-sys-shlib		compatfile
 ./usr/lib/libprop.so.1				base-sys-shlib		compatfile
 ./usr/lib/libprop.so.1.1			base-sys-shlib		compatfile
