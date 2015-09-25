@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.112 2015/09/25 09:55:49 martin Exp $
+# $NetBSD: shl.mi,v 1.113 2015/09/25 10:30:37 martin Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.197.debug			comp-sys-debug	debug,dynamicroot
@@ -163,7 +163,7 @@
 ./usr/libdata/debug/usr/lib/libroken.so.19.0.debug		comp-krb5-debug	debug,compatfile,kerberos
 ./usr/libdata/debug/usr/lib/librpcsvc.so.1.0.debug		comp-net-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/librt.so.1.1.debug			comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/librtld_db.so.0.0.debug		comp-sys-debug	debug
+./usr/libdata/debug/usr/lib/librtld_db.so.0.0.debug		comp-sys-debug	debug,dtrace
 ./usr/libdata/debug/usr/lib/librump.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpclient.so.0.0.debug		comp-rump-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/librumpdev.so.0.0.debug		comp-rump-debug	debug,compatfile,rump

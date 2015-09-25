@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1992 2015/09/25 09:55:49 martin Exp $
+#	$NetBSD: mi,v 1.1993 2015/09/25 10:30:36 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2075,7 +2075,7 @@
 ./usr/include/libintl.h				comp-c-include
 ./usr/include/libmilter/mfapi.h			comp-obsolete		obsolete
 ./usr/include/libmilter/mfdef.h			comp-obsolete		obsolete
-./usr/include/libproc.h				comp-c-include
+./usr/include/libproc.h				comp-c-include		dtrace
 ./usr/include/limits.h				comp-c-include
 ./usr/include/link.h				comp-c-include
 ./usr/include/link_aout.h			comp-c-include
@@ -3347,8 +3347,8 @@
 ./usr/lib/librpcsvc_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/librt.a				comp-c-lib		compatfile
 ./usr/lib/librt_p.a				comp-c-proflib		compatfile,profile
-./usr/lib/librtld_db.a				comp-c-lib		compatfile
-./usr/lib/librtld_db_p.a			comp-c-lib		compatfile
+./usr/lib/librtld_db.a				comp-c-lib		compatfile,dtrace
+./usr/lib/librtld_db_p.a			comp-c-lib		compatfile,dtrace
 ./usr/lib/librump.a				comp-c-lib		compatfile,rump
 ./usr/lib/librump_p.a				comp-c-proflib		compatfile,rump,profile
 ./usr/lib/librumpclient.a			comp-c-lib		compatfile,rump
