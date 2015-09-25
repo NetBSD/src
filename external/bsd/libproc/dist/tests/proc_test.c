@@ -28,7 +28,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/tests/proc_test.c 286863 2015-08-17 23:19:36Z emaste $");
 #endif
-__RCSID("$NetBSD: proc_test.c,v 1.4 2015/09/25 16:07:32 christos Exp $");
+__RCSID("$NetBSD: proc_test.c,v 1.5 2015/09/25 19:08:33 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -207,7 +207,7 @@ ATF_TC_BODY(map_alias_obj2map, tc)
 	    aout_object);
 	ATF_CHECK_EQ(strcmp(map1->pr_mapname, map2->pr_mapname), 0);
 
-	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
+	ATF_CHECK_EQ_MSG(proc_detach(phdl, PRELEASE_HANG), 0, "failed to detach");
 
 	proc_free(phdl);
 }
@@ -239,7 +239,7 @@ ATF_TC_BODY(map_alias_name2map, tc)
 	    aout_object);
 	ATF_CHECK_EQ(strcmp(map1->pr_mapname, map2->pr_mapname), 0);
 
-	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
+	ATF_CHECK_EQ_MSG(proc_detach(phdl, PRELEASE_HANG), 0, "failed to detach");
 
 	proc_free(phdl);
 }
@@ -278,7 +278,7 @@ ATF_TC_BODY(map_alias_name2sym, tc)
 	ATF_CHECK_EQ(memcmp(&sym1, &sym2, sizeof(sym1)), 0);
 	ATF_CHECK_EQ(si1.prs_id, si2.prs_id);
 
-	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
+	ATF_CHECK_EQ_MSG(proc_detach(phdl, PRELEASE_HANG), 0, "failed to detach");
 
 	proc_free(phdl);
 }
@@ -319,7 +319,7 @@ ATF_TC_BODY(symbol_lookup, tc)
 	verify_bkpt(phdl, &main_sym, "main", target_prog_file);
 	remove_bkpt(phdl, (uintptr_t)main_sym.st_value, &saved);
 
-	ATF_CHECK_EQ_MSG(proc_continue(phdl), 0, "failed to resume execution");
+	ATF_CHECK_EQ_MSG(proc_detach(phdl, PRELEASE_HANG), 0, "failed to detach");
 
 	proc_free(phdl);
 }
