@@ -65,7 +65,7 @@ proc_continue(struct proc_handle *phdl)
 
 	if (phdl->status == PS_STOP && WSTOPSIG(phdl->wstat) != SIGTRAP)
 		pending = WSTOPSIG(phdl->wstat);
-	if (ptrace(PT_CONTINUE, phdl->pid, (caddr_t)(uintptr_t)1, pending) != 0)
+	if (ptrace(PT_CONTINUE, phdl->pid, (void *)(uintptr_t)1, pending) != 0)
 		return (-1);
 
 	phdl->status = PS_RUN;
@@ -79,22 +79,36 @@ proc_detach(struct proc_handle *phdl, int reason)
 	int status;
 
 	if (phdl == NULL)
-		return (EINVAL);
+		return EINVAL;
 	if (reason == PRELEASE_KILL) {
+		ptrace(PT_DETACH, phdl->pid, (void *)(uintptr_t)1, 0);
 		kill(phdl->pid, SIGKILL);
-		return (0);
+		return 0;
 	}
-	if (ptrace(PT_DETACH, phdl->pid, 0, 0) != 0 && errno == ESRCH)
-		return (0);
-	if (errno == EBUSY) {
-		kill(phdl->pid, SIGSTOP);
-		waitpid(phdl->pid, &status, WUNTRACED);
-		ptrace(PT_DETACH, phdl->pid, 0, 0);
-		kill(phdl->pid, SIGCONT);
-		return (0);
+	if (ptrace(PT_DETACH, phdl->pid, (void *)(uintptr_t)1, 0) == 0)
+		return 0;
+
+	switch (errno) {
+	case ESRCH:
+		return 0;
+	case EBUSY:
+		break;
+	default:
+		return -1;
 	}
 
-	return (0);
+	if (kill(phdl->pid, SIGSTOP) == -1)
+		return -1;
+
+	waitpid(phdl->pid, &status, WUNTRACED);
+
+	if (ptrace(PT_DETACH, phdl->pid, (void *)(uintptr_t)1, 0) == -1)
+		return -1;
+
+	if (kill(phdl->pid, SIGCONT) == -1)
+		return -1;
+
+	return 0;
 }
 
 int
@@ -191,7 +205,7 @@ proc_read(struct proc_handle *phdl, void *buf, size_t size, size_t addr)
 	piod.piod_addr = (void *)buf;
 	piod.piod_offs = (void *)addr;
 
-	if (ptrace(PT_IO, phdl->pid, (caddr_t)&piod, 0) < 0)
+	if (ptrace(PT_IO, phdl->pid, (void *)&piod, 0) < 0)
 		return (-1);
 	return (piod.piod_len);
 }
@@ -205,7 +219,7 @@ proc_getlwpstatus(struct proc_handle *phdl)
 
 	if (phdl == NULL)
 		return (NULL);
-	if (ptrace(PT_LWPINFO, phdl->pid, (caddr_t)&lwpinfo,
+	if (ptrace(PT_LWPINFO, phdl->pid, (void *)&lwpinfo,
 	    sizeof(lwpinfo)) < 0)
 		return (NULL);
 #ifdef PL_FLAG_SI
