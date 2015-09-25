@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.230 2015/09/24 18:37:33 christos Exp $
+#	$NetBSD: Makefile,v 1.231 2015/09/25 07:41:53 martin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -205,7 +205,9 @@ SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 .endif
 
 SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
+.if ${MKDTRACE} != "no" && ${MKCTF} != "no"
 SUBDIR+=	../external/bsd/libproc/lib	# depends on libstdc++, libctf
+.endif
 SUBDIR+=	../external/bsd/fetch/lib	# depends on libssl
 
 .if (${MKLDAP} != "no")
