@@ -31,7 +31,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libproc/proc_regs.c 285003 2015-07-01 13:59:26Z br $");
 #else
-__RCSID("$NetBSD: proc_regs.c,v 1.3 2015/09/25 16:07:32 christos Exp $");
+__RCSID("$NetBSD: proc_regs.c,v 1.4 2015/09/25 19:09:38 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,7 +55,7 @@ proc_regget(struct proc_handle *phdl, proc_reg_t reg, unsigned long *regvalue)
 		return (-1);
 	}
 	memset(&regs, 0, sizeof(regs));
-	if (ptrace(PT_GETREGS, proc_getpid(phdl), (caddr_t)&regs, 0) < 0)
+	if (ptrace(PT_GETREGS, proc_getpid(phdl), &regs, 0) < 0)
 		return (-1);
 	switch (reg) {
 	case REG_PC:
@@ -90,7 +90,7 @@ proc_regset(struct proc_handle *phdl, proc_reg_t reg, unsigned long regvalue)
 		errno = ENOENT;
 		return (-1);
 	}
-	if (ptrace(PT_GETREGS, proc_getpid(phdl), (caddr_t)&regs, 0) < 0)
+	if (ptrace(PT_GETREGS, proc_getpid(phdl), &regs, 0) < 0)
 		return (-1);
 	switch (reg) {
 	case REG_PC:
@@ -111,7 +111,7 @@ proc_regset(struct proc_handle *phdl, proc_reg_t reg, unsigned long regvalue)
 		DPRINTFX("ERROR: no support for reg number %d", reg);
 		return (-1);
 	}
-	if (ptrace(PT_SETREGS, proc_getpid(phdl), (caddr_t)&regs, 0) < 0)
+	if (ptrace(PT_SETREGS, proc_getpid(phdl), &regs, 0) < 0)
 		return (-1);
 
 	return (0);
