@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.71 2014/03/29 09:31:11 maxv Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.72 2015/09/26 16:12:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.71 2014/03/29 09:31:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.72 2015/09/26 16:12:24 maxv Exp $");
 
 #include "opt_pax.h"
 
@@ -408,7 +408,7 @@ exec_setup_stack(struct lwp *l, struct exec_package *epp)
 	    max_stack_size);
 
 #ifdef PAX_ASLR
-	pax_aslr_stack(l, epp, &max_stack_size);
+	pax_aslr_stack(epp, &max_stack_size);
 #endif /* PAX_ASLR */
 
 	l->l_proc->p_stackbase = epp->ep_minsaddr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.31 2015/08/04 18:28:09 maxv Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.32 2015/09/26 16:12:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.31 2015/08/04 18:28:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.32 2015/09/26 16:12:24 maxv Exp $");
 
 #include "opt_pax.h"
 
@@ -285,7 +285,7 @@ pax_init(void)
 }
 
 void
-pax_setup_elf_flags(struct lwp *l, uint32_t elf_flags)
+pax_setup_elf_flags(struct exec_package *epp, uint32_t elf_flags)
 {
 	uint32_t flags = 0;
 
@@ -305,7 +305,7 @@ pax_setup_elf_flags(struct lwp *l, uint32_t elf_flags)
 	}
 #endif
 
-	l->l_proc->p_pax = flags;
+	epp->ep_pax_flags = flags;
 }
 
 #if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
@@ -372,6 +372,12 @@ pax_aslr_elf_flags_active(uint32_t flags)
 }
 
 bool
+pax_aslr_epp_active(struct exec_package *epp)
+{
+	return pax_flags_active(epp->ep_pax_flags, P_PAX_ASLR);
+}
+
+bool
 pax_aslr_active(struct lwp *l)
 {
 	return pax_flags_active(l->l_proc->p_pax, P_PAX_ASLR);
@@ -408,9 +414,9 @@ pax_aslr_mmap(struct lwp *l, vaddr_t *addr, vaddr_t orig_addr, int f)
 }
 
 void
-pax_aslr_stack(struct lwp *l, struct exec_package *epp, u_long *max_stack_size)
+pax_aslr_stack(struct exec_package *epp, u_long *max_stack_size)
 {
-	if (!pax_aslr_active(l))
+	if (!pax_aslr_epp_active(epp))
 		return;
 
 	u_long d = PAX_ASLR_DELTA(cprng_fast32(),

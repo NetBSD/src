@@ -1,4 +1,4 @@
-/* $NetBSD: pax.h,v 1.15 2015/08/15 10:24:29 maxv Exp $ */
+/* $NetBSD: pax.h,v 1.16 2015/09/26 16:12:24 maxv Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -50,15 +50,17 @@ struct vmspace;
 #endif /* PAX_ASLR */
 
 void pax_init(void);
-void pax_setup_elf_flags(struct lwp *, uint32_t);
+void pax_setup_elf_flags(struct exec_package *, uint32_t);
 void pax_mprotect(struct lwp *, vm_prot_t *, vm_prot_t *);
 int pax_segvguard(struct lwp *, struct vnode *, const char *, bool);
 
 #define	PAX_ASLR_DELTA(delta, lsb, len)	\
     (((delta) & ((1UL << (len)) - 1)) << (lsb))
+
+bool pax_aslr_epp_active(struct exec_package *);
 bool pax_aslr_active(struct lwp *);
 void pax_aslr_init_vm(struct lwp *, struct vmspace *);
-void pax_aslr_stack(struct lwp *, struct exec_package *, u_long *);
+void pax_aslr_stack(struct exec_package *, u_long *);
 void pax_aslr_mmap(struct lwp *, vaddr_t *, vaddr_t, int);
 
 #endif /* !_SYS_PAX_H_ */

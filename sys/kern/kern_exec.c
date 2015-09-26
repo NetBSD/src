@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.416 2015/09/12 18:30:46 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.417 2015/09/26 16:12:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.416 2015/09/12 18:30:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.417 2015/09/26 16:12:24 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -753,9 +753,9 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 */
 
 #ifdef PAX_ASLR
-#define	ASLR_GAP(l)	(pax_aslr_active(l) ? (cprng_fast32() % PAGE_SIZE) : 0)
+#define	ASLR_GAP(epp)	(pax_aslr_epp_active(epp) ? (cprng_fast32() % PAGE_SIZE) : 0)
 #else
-#define	ASLR_GAP(l)	0
+#define	ASLR_GAP(epp)	0
 #endif
 
 #ifdef __MACHINE_STACK_GROWS_UP
@@ -773,7 +773,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	data->ed_argslen = calcargs(data, argenvstrlen);
 
-	const size_t len = calcstack(data, ASLR_GAP(l) + RTLD_GAP);
+	const size_t len = calcstack(data, ASLR_GAP(epp) + RTLD_GAP);
 
 	if (len > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
@@ -1124,6 +1124,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
+
+	/* Set the PaX flags. */
+	p->p_pax = epp->ep_pax_flags;
 
 	/*
 	 * Do whatever is necessary to prepare the address space
