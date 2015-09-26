@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ioctl-c,v 1.28 2015/02/07 14:37:42 christos Exp $
+#	$NetBSD: Makefile.ioctl-c,v 1.29 2015/09/26 03:31:11 christos Exp $
 
 # NOTE: <bsd.own.mk> needs to be previously .included for NETBSDSRCDIR
 
@@ -20,10 +20,13 @@ SETFILES:= ${SETFILES} ${sb}/${md}
 .endif
 .endfor
 .endfor
+.if ${MKDTRACE} != 'no"
+EXTRAS=	${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common/sys/dtrace.h
+.endif
 
 .if !make(cleandir) && !make(obj) && !make(includes) && !make(install)
 DEPFILEGLOB = ${TOOL_SED} -ne '/\/usr\/.*include\/.*\.h[ 	]/{s/[ 	]obsolete$$//;t' -e 's/xenio//;t' -e 's,\.\([^ 	]*\).*,${DESTDIR}\1,;p;}' ${SETFILES}
-DEPFILES != ${DEPFILEGLOB} | xargs egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' 2>/dev/null || :
+DEPFILES != (${DEPFILEGLOB}; echo ${EXTRAS}) | xargs egrep -l '(_IO\(|_IOR\(|_IOW\(|_IOWR\()' 2>/dev/null || :
 .endif
 
 ${PROG}-ioctl.c: mkioctls Makefile ${DEPFILES} ${SETFILES}
@@ -38,6 +41,10 @@ DPSRCS+=	${PROG}-ioctl.c
 CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include/libdrm
 CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include/pixman-1
 CPPFLAGS+=	-I${DESTDIR}/usr/X11R7/include
+.if ${MKDTRACE} != 'no"
+CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/sys
+CPPFLAGS+=	-I${NETBSDSRCDIR}/external/cddl/osnet/dist/uts/common
+.endif
 CPPFLAGS+=	-D_ALTQ_ALTQ_JOBS_H_	# redefinition of inline
 # De-select one, dup ioctls
 CPPFLAGS+=	-D_VIA_DRM_H_		# Missing header
