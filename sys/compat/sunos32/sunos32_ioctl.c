@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.31 2014/09/05 22:37:09 nakayama Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.32 2015/09/26 04:13:39 christos Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.31 2014/09/05 22:37:09 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.32 2015/09/26 04:13:39 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -866,7 +866,7 @@ sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap, regis
 	 * (which was from the old sparc/scsi/sun_disklabel.c), and
 	 * modified to suite.
 	 */
-	case DKIOCGGEOM:
+	case SUN_DKIOCGGEOM:
             {
 		struct disklabel dl;
 
@@ -890,13 +890,13 @@ sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap, regis
 		break;
 	    }
 
-	case DKIOCINFO:
+	case SUN_DKIOCINFO:
 		/* Homey don't do DKIOCINFO */
 		/* XXX can't do memset() on a user address (dsl) */
 		memset(SCARG_P32(uap, data), 0, sizeof(struct sun_dkctlr));
 		break;
 
-	case DKIOCGPART:
+	case SUN_DKIOCGPART:
             {
 		struct partinfo pi;
 
