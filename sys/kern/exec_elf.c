@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.76 2015/08/08 06:24:40 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.77 2015/09/26 16:12:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.76 2015/08/08 06:24:40 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.77 2015/09/26 16:12:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -116,8 +116,7 @@ static void	elf_free_emul_arg(void *);
 #define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
 static void
-elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
-    Elf_Phdr *ph)
+elf_placedynexec(struct exec_package *epp, Elf_Ehdr *eh, Elf_Phdr *ph)
 {
 	Elf_Addr align, offset;
 	int i;
@@ -127,7 +126,7 @@ elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 			align = ph[i].p_align;
 
 #ifdef PAX_ASLR
-	if (pax_aslr_active(l)) {
+	if (pax_aslr_epp_active(epp)) {
 		size_t pax_align, l2, delta;
 		uint32_t r;
 
@@ -711,12 +710,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		pos = (Elf_Addr)startp;
 	}
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
-	pax_setup_elf_flags(l, epp->ep_pax_flags);
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
-
 	if (is_dyn)
-		elf_placedynexec(l, epp, eh, ph);
+		elf_placedynexec(epp, eh, ph);
 
 	/*
 	 * Load all the necessary sections
@@ -941,8 +936,15 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    np->n_descsz == ELF_NOTE_PAX_DESCSZ &&
 			    memcmp(ndata, ELF_NOTE_PAX_NAME,
 			    ELF_NOTE_PAX_NAMESZ) == 0) {
-				memcpy(&epp->ep_pax_flags, ndesc,
-				    sizeof(epp->ep_pax_flags));
+				uint32_t flags;
+				memcpy(&flags, ndesc, sizeof(flags));
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
+				/* Convert the flags and insert them into
+				 * the exec package. */
+				pax_setup_elf_flags(epp, flags);
+#else
+				(void)flags; /* UNUSED */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 				break;
 			}
 			BADNOTE("PaX tag");
