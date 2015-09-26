@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.90 2014/08/23 20:26:59 dholland Exp $
+#	$NetBSD: INSTALL,v 1.91 2015/09/26 11:16:13 maxv Exp $
 #
 # from: NetBSD: GENERIC,v 1.84 1999/06/06 13:00:03 mrg Exp
 #
@@ -71,11 +71,6 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 #options 	KTRACE
-
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
 
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 #options 	SYSVMSG		# System V message queues

@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.143 2014/08/23 21:10:20 dholland Exp $
+#	$NetBSD: INSTALL_TINY,v 1.144 2015/09/26 11:16:12 maxv Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -58,7 +58,6 @@ no options 	EXEC_AOUT	# we don't a.out support
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 #options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 #options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB

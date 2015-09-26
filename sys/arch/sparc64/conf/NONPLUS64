@@ -1,8 +1,8 @@
-# 	$NetBSD: NONPLUS64,v 1.45 2015/08/21 01:52:09 uebayasi Exp $
+# 	$NetBSD: NONPLUS64,v 1.46 2015/09/26 11:16:13 maxv Exp $
 
 include "arch/sparc64/conf/std.sparc64"
 
-#ident		"NONPLUS64-$Revision: 1.45 $"
+#ident		"NONPLUS64-$Revision: 1.46 $"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
@@ -34,11 +34,6 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
 
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues

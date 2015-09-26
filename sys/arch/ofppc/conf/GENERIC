@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.157 2014/11/16 16:01:42 manu Exp $
+# $NetBSD: GENERIC,v 1.158 2015/09/26 11:16:12 maxv Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/ofppc/conf/std.ofppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.157 $"
+#ident 		"GENERIC-$Revision: 1.158 $"
 
 maxusers	32
 
@@ -51,7 +51,6 @@ options 	RDB_PART	# Rigid Disk Block partition support
 # Diagnostic/debugging support options
 #options 	DIAGNOSTIC	# cheap kernel consistency checks
 #options 	DEBUG		# expensive debugging checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
 options 	DDB_VERBOSE_HELP
