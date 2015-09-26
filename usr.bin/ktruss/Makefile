@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2009/12/14 05:23:39 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2015/09/26 13:31:27 christos Exp $
 
 NOMAN=		# defined
 
@@ -6,8 +6,6 @@ NOMAN=		# defined
 
 PROG=		ktruss
 SRCS=		ktrace.c dump.c subr.c misc.c setemul.c
-CPPFLAGS+=	-I. -I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys \
-		-I${NETBSDSRCDIR}/usr.bin/kdump -DKTRUSS
 CLEANFILES+=	misc.c misc.h
 
 .if (${MKDYNAMICROOT} == "no")
@@ -30,6 +28,10 @@ misc.c misc.h: ${DESTDIR}/usr/include/sys/errno.h makeerrnos.sh \
 	    ${DESTDIR}/usr/include/sys/signal.h misc
 
 .include "${NETBSDSRCDIR}/usr.bin/kdump/Makefile.ioctl-c"
+
+CPPFLAGS+=	-I. -I${NETBSDSRCDIR}/usr.bin/ktrace -I${NETBSDSRCDIR}/sys \
+		-I${NETBSDSRCDIR}/usr.bin/kdump -DKTRUSS
+
 .include <bsd.prog.mk>
 
 .PATH: ${NETBSDSRCDIR}/usr.bin/ktrace ${NETBSDSRCDIR}/usr.bin/kdump
