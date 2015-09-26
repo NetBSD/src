@@ -136,7 +136,7 @@ dt_proc_bpdestroy(dt_proc_t *dpr, int delbkpts)
 		if (delbkpts && dbp->dbp_active &&
 		    state != PS_LOST && state != PS_UNDEAD) {
 			(void) Pdelbkpt(dpr->dpr_proc,
-			    dbp->dbp_addr, dbp->dbp_instr);
+			    dbp->dbp_addr, &dbp->dbp_instr);
 		}
 		nbp = dt_list_next(dbp);
 		dt_list_delete(&dpr->dpr_bps, dbp);
@@ -186,7 +186,7 @@ dt_proc_bpmatch(dtrace_hdl_t *dtp, dt_proc_t *dpr)
 	    (int)dpr->dpr_pid, (ulong_t)dbp->dbp_addr, ++dbp->dbp_hits);
 
 	dbp->dbp_func(dtp, dpr, dbp->dbp_data);
-	(void) Pxecbkpt(dpr->dpr_proc, dbp->dbp_instr);
+	(void) Pxecbkpt(dpr->dpr_proc, &dbp->dbp_instr);
 }
 
 static void
@@ -216,7 +216,7 @@ dt_proc_bpdisable(dt_proc_t *dpr)
 	for (dbp = dt_list_next(&dpr->dpr_bps);
 	    dbp != NULL; dbp = dt_list_next(dbp)) {
 		if (dbp->dbp_active && Pdelbkpt(dpr->dpr_proc,
-		    dbp->dbp_addr, dbp->dbp_instr) == 0)
+		    dbp->dbp_addr, &dbp->dbp_instr) == 0)
 			dbp->dbp_active = B_FALSE;
 	}
 
