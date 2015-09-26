@@ -1,4 +1,4 @@
-/*	$NetBSD: valz_acpi.c,v 1.5 2015/09/21 12:32:06 nonaka Exp $	*/
+/*	$NetBSD: valz_acpi.c,v 1.6 2015/09/26 13:04:10 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.5 2015/09/21 12:32:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: valz_acpi.c,v 1.6 2015/09/26 13:04:10 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -420,13 +420,13 @@ hci_op(struct valz_acpi_softc *sc, uint32_t *input, uint32_t *output)
 	param = (ACPI_OBJECT *)buf.Pointer;
 	PrtElement = param->Package.Elements;
 	for (i = 0; i < HCI_WORDS; i++) {
-		if (PrtElement->Type == ACPI_TYPE_INTEGER)
+		if (PrtElement->Type == ACPI_TYPE_INTEGER) {
 			output[i] = PrtElement->Integer.Value;
 			PrtElement++;
+		}
 	}
 
-	if (buf.Pointer)
-		ACPI_FREE(buf.Pointer);
+	ACPI_FREE(buf.Pointer);
 
 	return rv;
 }
