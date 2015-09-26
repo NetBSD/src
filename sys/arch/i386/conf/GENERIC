@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1127 2015/09/21 12:32:06 nonaka Exp $
+# $NetBSD: GENERIC,v 1.1128 2015/09/26 11:16:12 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.1127 $"
+#ident 		"GENERIC-$Revision: 1.1128 $"
 
 maxusers	64		# estimated number of users
 
@@ -112,7 +112,6 @@ options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	DDB		# in-kernel debugger
 #options 	DDB_ONPANIC=1	# see also sysctl(7): `ddb.onpanic'
 options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
