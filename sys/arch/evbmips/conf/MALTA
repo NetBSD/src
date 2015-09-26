@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.81 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: MALTA,v 1.82 2015/09/26 11:16:12 maxv Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.81 $"
+#ident 		"MALTA-$Revision: 1.82 $"
 
 maxusers	32
 
@@ -31,7 +31,6 @@ options 	NTP		# network time protocol
 options 	DIAGNOSTIC	# extra kernel sanity checking
 options 	DEBUG		# extra kernel debugging support
 #options 	SYSCALL_DEBUG	# symbolic syscall names
-#options 	KMEMSTATS	# kernel memory statistics (vmstat -m)
 options 	USERCONF	# userconf(4) support
 #options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	DDB		# kernel dynamic debugger

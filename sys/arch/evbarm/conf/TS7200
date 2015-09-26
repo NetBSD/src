@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.62 2014/08/23 20:26:57 dholland Exp $
+#	$NetBSD: TS7200,v 1.63 2015/09/26 11:16:12 maxv Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -116,7 +116,6 @@ options 	SYSVSHM		# System V-like memory sharing
 # Miscellaneous kernel options
 options 	KTRACE		# system call tracing, a la ktrace(1)
 options 	IRQSTATS	# manage IRQ statistics
-#options 	KMEMSTATS	# kernel memory statistics
 #options 	SCSIVERBOSE	# Verbose SCSI errors
 #options 	PCIVERBOSE	# Verbose PCI descriptions
 #options 	MIIVERBOSE	# Verbose MII autoconfuration messages
