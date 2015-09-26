@@ -2,7 +2,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libutil/kinfo_getvmmap.c 186512 2008-12-27 11:12:23Z rwatson $");
 #endif
-__RCSID("$NetBSD: kinfo_getvmmap.c,v 1.2 2015/09/24 15:30:39 christos Exp $");
+__RCSID("$NetBSD: kinfo_getvmmap.c,v 1.3 2015/09/26 20:28:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/user.h>
@@ -10,6 +10,7 @@ __RCSID("$NetBSD: kinfo_getvmmap.c,v 1.2 2015/09/24 15:30:39 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <util.h>
+#include <uvm/uvm_param.h>
 
 struct kinfo_vmentry *
 kinfo_getvmmap(pid_t pid, size_t *cntp)
