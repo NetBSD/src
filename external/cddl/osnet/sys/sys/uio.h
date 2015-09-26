@@ -1,4 +1,4 @@
-/*	$NetBSD: uio.h,v 1.8 2015/04/21 13:15:28 riastradh Exp $	*/
+/*	$NetBSD: uio.h,v 1.9 2015/09/26 03:32:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -127,18 +127,18 @@ zfs_uiocopy(void *cp, size_t n, enum uio_rw dir, uio_t *uio, size_t *cbytes)
 static __inline void
 zfs_uioskip(uio_t *uiop, size_t n)
 {
-	if (n > uiop->uio_resid)
+	if (n > (size_t)uiop->uio_resid)
 		return;
 	while (n != 0) {
-		register iovec_t        *iovp = uiop->uio_iov;
-		register size_t         niovb = MIN(iovp->iov_len, n);
+		iovec_t        *iovp = uiop->uio_iov;
+		size_t         niovb = MIN(iovp->iov_len, n);
 
 		if (niovb == 0) {
 			uiop->uio_iov++;
 			uiop->uio_iovcnt--;
 			continue;
 		}
-		iovp->iov_base += niovb;
+		iovp->iov_base = (char *)iovp->iov_base + niovb;
 		uiop->uio_offset += niovb;
 		iovp->iov_len -= niovb;
 		uiop->uio_resid -= niovb;
