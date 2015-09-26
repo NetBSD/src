@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.122 2015/08/08 06:36:26 maxv Exp $
+#	$NetBSD: GENERIC,v 1.123 2015/09/26 16:33:16 maxv Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.122 $"
+#ident		"GENERIC-$Revision: 1.123 $"
 
 # estimated number of users
 maxusers	32
@@ -330,5 +330,4 @@ pseudo-device	putter			# for puffs and pud
 #options VERIFIED_EXEC_FP_MD5
 
 options PAX_MPROTECT=0			# PaX mprotect(2) restrictions
-#options PAX_SEGVGUARD=0			# PaX Segmentation fault guard
 options PAX_ASLR=0			# PaX Address Space Layout Randomization
