@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.216 2015/09/24 14:32:15 christos Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.217 2015/09/26 20:28:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -829,10 +829,8 @@ struct evcnt_sysctl {
 #define	KERN_EVCNT_COUNT_NONZERO	1
 
 /*
- * CTL_VM identifiers
+ * CTL_VM identifiers in <uvm/uvm_param.h>
  */
-#define VM_PROC		1		/* internal */
-#define VM_PROC_MAP	1		/* struct kinfo_vmentry */
 
 /*
  * The vm.proc.map sysctl allows a process to dump the VM layout of
