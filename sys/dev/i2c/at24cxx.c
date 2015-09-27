@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.19 2015/05/10 22:54:06 jmcneill Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.20 2015/09/27 13:02:21 phx Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.19 2015/05/10 22:54:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.20 2015/09/27 13:02:21 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,8 +122,13 @@ seeprom_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_name) {
-		if (iic_compat_match(ia, seeprom_compats))
-			return (1);
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, seeprom_compats))
+				return (1);
+		} else {
+			if (strcmp(ia->ia_name, "seeprom") == 0)
+				return (1);
+		}
 	} else {
 		if ((ia->ia_addr & AT24CXX_ADDRMASK) == AT24CXX_ADDR)
 			return (1);

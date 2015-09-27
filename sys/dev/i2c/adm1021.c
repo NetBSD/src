@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.8 2012/10/27 17:18:17 chs Exp $ */
+/*	$NetBSD: adm1021.c,v 1.9 2015/09/27 13:02:21 phx Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.8 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.9 2015/09/27 13:02:21 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,15 @@ admtemp_match(device_t parent, cfdata_t match, void *aux)
 	} else {
 		/*
 		 * Direct config - match via the list of compatible
-		 * hardware.
+		 * hardware or simply match the device name.
 		 */
-		if (iic_compat_match(ia, admtemp_compats))
-			return 1;
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, admtemp_compats))
+				return 1;
+		} else {
+			if (strcmp(ia->ia_name, "admtemp") == 0)
+				return 1;
+		}
 	}
 
 	return 0;
