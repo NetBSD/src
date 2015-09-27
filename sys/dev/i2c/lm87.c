@@ -1,4 +1,4 @@
-/*	$NetBSD: lm87.c,v 1.4 2013/11/04 15:06:26 jdc Exp $	*/
+/*	$NetBSD: lm87.c,v 1.5 2015/09/27 13:02:21 phx Exp $	*/
 /*	$OpenBSD: lm87.c,v 1.20 2008/11/10 05:19:48 cnst Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.4 2013/11/04 15:06:26 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lm87.c,v 1.5 2015/09/27 13:02:21 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -132,10 +132,15 @@ lmenv_match(device_t parent, cfdata_t match, void *aux)
 	} else {
 		/*
 		 * Direct config - match via the list of compatible
-		 * hardware.
+		 * hardware or simply match the device name.
 		 */
-		if (iic_compat_match(ia, lmenv_compats))
-			return 1;
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, lmenv_compats))
+				return 1;
+		} else {
+			if (strcmp(ia->ia_name, "lmenv") == 0)
+				return 1;
+		}
 	}
 
 	return 0;
