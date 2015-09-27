@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.14 2015/09/26 09:48:27 mlelstv Exp $
+# $NetBSD: Makefile.inc,v 1.15 2015/09/27 21:01:27 mlelstv Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -31,12 +31,27 @@ CPPFLAGS+= -I${BIND}/lib/${dir}/pthreads/include
 CPPFLAGS+= -DLOCALSTATEDIR='"/var"'
 LDADD+= ${COBJDIR}/libdhcp.a
 LDADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
-.if (${MKCRYPTO} != "no")
-LDADD+= -lcrypto -lcrypt
-DPADD+= ${LIBCRYPTO} ${LIBCRYPT}
+.if defined(PROG) && ${PROG} == "dhclient"
+LDADD+=-Wl,-Bstatic
 .endif
-LDADD+=-lirs -lisccfg -ldns -lisc
+LDADD+= -lirs -lisccfg -ldns -lisc
 LDADD+=-lpthread
+.if (${MKCRYPTO} != "no")
+.if (${MKKERBEROS} != "no")
+LDADD+= -lgssapi -lkrb5 -lhx509 -lheimntlm -lheimbase \
+	-lcom_err  -lroken -lasn1 -lwind
+DPADD+= ${LIBGSSAPI} ${LIBKRB5} ${LIBHX509} ${LIBHEIMNTLM} ${LIBHEIMBASE} \
+	${LIBCOM_ERR} ${LIBROKEN} ${LIBASN1} ${LIBWIND}
+.endif
+.if defined(PROG) && ${PROG} == "dhclient"
+LDADD+=-Wl,-Bdynamic
+.endif
+LDADD+= -lcrypto -lipsec -lcrypt
+DPADD+= ${LIBCRYPTO} ${LIBIPSEC} ${LIBCRYPT}
+.endif
+.if defined(PROG) && ${PROG} == "dhclient"
+LDADD+=-Wl,-Bdynamic
+.endif
 DPADD+= ${COBJDIR}/libdhcp.a
 DPADD+= ${OMOBJDIR}/libomapi.a ${DSTOBJDIR}/libdst.a
 DPADD+=	${LIBDNS} ${LIBISC}
