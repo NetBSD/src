@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.76 2014/08/11 09:12:59 riz Exp $
+.\" $NetBSD: mdoc.local,v 1.77 2015/09/28 21:07:47 christos Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -99,10 +99,12 @@
 .ds doc-str-Lb-libnpf           NPF Packet Filter Library (libnpf, \-lnpf)
 .ds doc-str-Lb-libperfuse       PUFFS-enabled Relay to FUSE Library (libperfuse, \-lperfuse)
 .ds doc-str-Lb-libppath         Property-List Paths Library (libppath, \-lppath)
+.ds doc-str-Lb-libproc          Process manipulation Library (libproc, \-lproc)
 .ds doc-str-Lb-libprop          Property Container Object Library (libprop, \-lprop)
 .ds doc-str-Lb-libpuffs         puffs Convenience Library (libpuffs, \-lpuffs)
 .ds doc-str-Lb-libquota		Disk Quota Access and Control Library (libquota, \-lquota)
 .ds doc-str-Lb-librefuse        File System in Userspace Convenience Library (librefuse, \-lrefuse)
+.ds doc-str-Lb-librtld_db       Debugging interface to the runtime linker Library (librtld_db, \-lrtld_db)
 .ds doc-str-Lb-librumpclient	Clientside Stubs for rump Kernel Remote Protocols (librumpclient, \-lrumpclient)
 .ds doc-str-Lb-libsaslc         Simple Authentication and Security Layer client library (libsaslc, \-lsaslc)
 .ds doc-str-Lb-libssp           Buffer Overflow Protection Library (libssp, \-lssp)
