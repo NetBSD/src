@@ -1,3 +1,4 @@
+.\" $NetBSD: librtld_db.3,v 1.2 2015/09/28 21:50:48 wiz Exp $
 .\"-
 .\" Copyright (c) 2010 The FreeBSD Foundation
 .\" All rights reserved.
@@ -165,7 +166,7 @@ You can get the error string using
 .Fn rd_errstr .
 .Sh SEE ALSO
 .Xr ld 1 ,
-.Xr ld-elf.so.1 1 ,
+.Xr ld.elf_so 1 ,
 .Xr ld.so 1 ,
 .Xr rtld 1 ,
 .Xr libproc 3
@@ -180,12 +181,14 @@ The
 .Nm librtld_db
 library and this manual page were written by
 .An Rui Paulo Aq Mt rpaulo@FreeBSD.org
-under sponsorship from the FreeBSD Foundation.
+under sponsorship from the
+.Fx
+Foundation.
 .Sh CAVEATS
 The functions
 .Fn rd_event_enable ,
 .Fn rd_log ,
-.Fn rd_objpad_enable
+.Fn rd_objpad_enable ,
 and
 .Fn rd_plt_resolution
 are not yet implemented.
