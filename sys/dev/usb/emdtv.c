@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.9.14.3 2015/04/06 15:18:13 skrll Exp $ */
+/* $NetBSD: emdtv.c,v 1.9.14.4 2015/09/28 16:24:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.9.14.3 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.9.14.4 2015/09/28 16:24:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -82,7 +82,7 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 {
 	struct emdtv_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = opaque;
-	struct usbd_device * dev = uaa->uaa_device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usbd_status status;
 	char *devinfo;
 
