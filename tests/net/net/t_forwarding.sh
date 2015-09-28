@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.7 2015/09/04 05:24:57 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.8 2015/09/28 01:54:14 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,12 +39,15 @@ IP6SRC=fc00:0:0:1::2
 IP6SRCGW=fc00:0:0:1::1
 IP6DSTGW=fc00:0:0:2::1
 IP6DST=fc00:0:0:2::2
+HTTPD_PID=httpd.pid
+HTML_FILE=index.html
 
 DEBUG=false
 TIMEOUT=5
 
 atf_test_case basic cleanup
 atf_test_case basic6 cleanup
+atf_test_case fastforward cleanup
 
 basic_head()
 {
@@ -154,6 +157,32 @@ setup6()
 	setup_forwarder ipv6
 }
 
+setup_bozo()
+{
+
+	export RUMP_SERVER=$SOCKDST
+
+	touch $HTML_FILE
+	# start bozo in daemon mode
+	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
+	    /usr/libexec/httpd -P $HTTPD_PID -i $IP4DST -b -s $(pwd)
+
+	$DEBUG && rump.netstat -a
+}
+
+test_http_get()
+{
+
+	export RUMP_SERVER=$SOCKFWD
+	atf_check -s exit:0 rump.arp -d -a
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# get the webpage
+	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so 	\
+	    ftp -q $TIMEOUT http://$IP4DST/$HTML_FILE
+}
+
 test_setup()
 {
 	test_endpoint $SOCKSRC $IP4SRC bus1 ipv4
@@ -235,6 +264,16 @@ cleanup()
 	env RUMP_SERVER=$SOCKSRC rump.halt
 	env RUMP_SERVER=$SOCKFWD rump.halt
 	env RUMP_SERVER=$SOCKDST rump.halt
+}
+
+cleanup_bozo()
+{
+
+	if [ -f $HTTPD_PID ]; then
+		kill -9 "$(cat $HTTPD_PID)"
+		rm -f $HTTPD_PID
+	fi
+	rm -f $HTML_FILE
 }
 
 dump()
@@ -363,6 +402,18 @@ basic6_body()
 	test_ping6_failure
 }
 
+fastforward_body()
+{
+	setup
+	test_setup
+
+	setup_forwarding
+	test_setup_forwarding
+
+	setup_bozo
+	test_http_get
+}
+
 basic_cleanup()
 {
 	dump
@@ -375,8 +426,16 @@ basic6_cleanup()
 	cleanup
 }
 
+fastforward_cleanup()
+{
+	dump
+	cleanup_bozo
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
 	atf_add_test_case basic6
+	atf_add_test_case fastforward
 }
