@@ -1,4 +1,4 @@
-/*	$NetBSD: uark.c,v 1.6.14.3 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uark.c,v 1.6.14.4 2015/09/28 16:24:19 skrll Exp $	*/
 /*	$OpenBSD: uark.c,v 1.13 2009/10/13 19:33:17 pirofti Exp $	*/
 
 /*
@@ -113,7 +113,7 @@ uark_attach(device_t parent, device_t self, void *aux)
 {
 	struct uark_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device * dev = uaa->uaa_device;
+	struct usbd_device *dev = uaa->uaa_device;
 	char *devinfop;
 	struct ucom_attach_args uca;
 	usb_interface_descriptor_t *id;

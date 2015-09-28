@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.3 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.4 2015/09/28 16:24:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.3 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.4 2015/09/28 16:24:19 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -577,7 +577,7 @@ uhso_detach(device_t self, int flags)
  * Send SCSI REZERO_UNIT command to switch device into modem mode
  */
 Static int
-uhso_switch_mode(struct usbd_device * udev)
+uhso_switch_mode(struct usbd_device *udev)
 {
 	umass_bbb_cbw_t	cmd;
 	usb_endpoint_descriptor_t *ed;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa.c,v 1.30.16.4 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: ubsa.c,v 1.30.16.5 2015/09/28 16:24:19 skrll Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.4 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa.c,v 1.30.16.5 2015/09/28 16:24:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -150,7 +150,7 @@ ubsa_attach(device_t parent, device_t self, void *aux)
 {
 	struct ubsa_softc *sc = device_private(self);
 	struct usb_attach_arg *uaa = aux;
-	struct usbd_device * dev = uaa->uaa_device;
+	struct usbd_device *dev = uaa->uaa_device;
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
