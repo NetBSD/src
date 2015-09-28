@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.348 2015/09/28 06:04:04 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.349 2015/09/28 07:02:57 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.348 2015/09/28 06:04:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.349 2015/09/28 07:02:57 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4631,9 +4631,21 @@ wm_init_locked(struct ifnet *ifp)
 		 * XXX 82574 has both ITR and EITR. SET EITR when we use
 		 * the multi queue function with MSI-X.
 		 */
-		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
-			CSR_WRITE(sc, WMREG_EITR(0), sc->sc_itr);
-		else
+		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+			if (sc->sc_nintrs > 1) {
+				CSR_WRITE(sc, WMREG_EITR(WM_MSIX_RXINTR_IDX),
+				    sc->sc_itr);
+				CSR_WRITE(sc, WMREG_EITR(WM_MSIX_TXINTR_IDX),
+				    sc->sc_itr);
+				/*
+				 * Link interrupts occur much less than TX
+				 * interrupts and RX interrupts. So, we don't
+				 * tune EINTR(WM_MSIX_LINKINTR_IDX) value like
+				 * FreeBSD's if_igb.
+				 */
+			} else
+				CSR_WRITE(sc, WMREG_EITR(0), sc->sc_itr);
+		} else
 			CSR_WRITE(sc, WMREG_ITR, sc->sc_itr);
 	}
 
