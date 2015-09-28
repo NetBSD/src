@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.53 2015/09/25 11:38:12 christos Exp $
+#	$NetBSD: Makefile,v 1.54 2015/09/28 17:12:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -35,7 +35,7 @@ SUBDIR+= llvm
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
 .endif
-.if (${MKDTRACE} != "no" || ${MKCTF} != "no")
+.if (${MKDTRACE} != "no")
 SUBDIR+= libproc
 SUBDIR+= librtld_db
 .endif
