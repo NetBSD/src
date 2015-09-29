@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2015/09/24 14:36:54 christos Exp $
+#	$NetBSD: Makefile,v 1.12 2015/09/29 23:50:17 christos Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -107,11 +107,17 @@ YFLAGS+=-d
 
 CLEANFILES=	dt_errtags.c dt_names.c dt_grammar.h
 
-dt_errtags.c:
-	sh ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mkerrtags.sh < ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/dt_errtags.h > dt_errtags.c
+.if ${_HOST_OSNAME} == "Darwin"
+COPTS.dt_print.c+=	-fno-stack-protector
+.endif
 
-dt_names.c:
-	sh ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mknames.sh < ${OPENSOLARIS_SYS_DISTDIR}/uts/common/sys/dtrace.h > dt_names.c
+MKERRTAGS=${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mkerrtags.sh 
+dt_errtags.c: ${MKERRTAGS} ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/dt_errtags.h 
+	sh ${MKERRTAGS} < ${.ALLSRC:M*.h} > ${.TARGET}
+
+MKNAMES=${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mknames.sh
+dt_names.c: ${MKNAMES} ${OPENSOLARIS_SYS_DISTDIR}/uts/common/sys/dtrace.h
+	sh ${MKNAMES} < ${.ALLSRC:M*.h} > ${.TARGET}
 
 beforedepend:	dt_errtags.c dt_names.c
 
