@@ -2674,6 +2674,8 @@ dt_consume_cpu(dtrace_hdl_t *dtp, FILE *fp, int cpu,
 				case DTRACEACT_FREOPEN:
 					func = dtrace_freopen;
 					break;
+				default:
+					return (dt_set_errno(dtp, EDT_BADAGG));
 				}
 
 				n = (*func)(dtp, fp, fmtdata, &data,
