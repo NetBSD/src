@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.19 2012/04/26 19:59:37 phx Exp $ */
+/* $NetBSD: globals.h,v 1.20 2015/09/29 15:12:52 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -172,6 +172,7 @@ NIF_DECL(stg);
 struct disk {
 	char xname[8];
 	void *dvops;
+	unsigned unitchan;
 	unsigned unittag;
 	uint16_t ident[128];
 	uint64_t nsect;
