@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.45.24.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.45.24.6 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.45.24.6 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -466,7 +466,7 @@ uvisor_init(struct uvisor_softc *sc, struct uvisor_connection_info *ci,
 	req.bRequest = UVISOR_REQUEST_BYTES_AVAILABLE;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 5);
-	USETW(req.wLength, sizeof avail);
+	USETW(req.wLength, sizeof(avail));
 	err = usbd_do_request(sc->sc_udev, &req, &avail);
 	if (err)
 		return err;

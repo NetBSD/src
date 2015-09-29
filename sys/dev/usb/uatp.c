@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.10.4.5 2015/09/28 16:24:19 skrll Exp $	*/
+/*	$NetBSD: uatp.c,v 1.10.4.6 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.4.5 2015/09/28 16:24:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.4.6 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1823,8 +1823,8 @@ interpret_dimension(struct uatp_softc *sc, const int *acc,
 	 */
 
 	n_fingers = 0;
-	memset(weighted, 0, sizeof weighted);
-	memset(total, 0, sizeof total);
+	memset(weighted, 0, sizeof(weighted));
+	memset(total, 0, sizeof(total));
 
 	for (i = 0; i < n_sensors; i++) {
 		CHECK_(0 <= acc[i]);
@@ -1990,7 +1990,7 @@ tap_debug(struct uatp_softc *sc, const char *caller, const char *prefix)
 	case TAP_STATE_DRAGGING_UP:	state = "dragging-up";		break;
 	case TAP_STATE_TAPPING_IN_DRAG:	state = "tapping-in-drag";	break;
 	default:
-		snprintf(buffer, sizeof buffer, "unknown (%d)",
+		snprintf(buffer, sizeof(buffer), "unknown (%d)",
 		    sc->sc_tap_state);
 		state = buffer;
 		break;
