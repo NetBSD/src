@@ -952,7 +952,7 @@ die_sou_create(dwarf_t *dw, Dwarf_Die str, Dwarf_Off off, tdesc_t *tdp,
     int type, const char *typename)
 {
 	Dwarf_Unsigned sz, bitsz, bitoff, maxsz=0;
-#if BYTE_ORDER == _LITTLE_ENDIAN
+#if BYTE_ORDER == LITTLE_ENDIAN
 	Dwarf_Unsigned bysz;
 #endif
 	Dwarf_Die mem;
@@ -1027,7 +1027,7 @@ die_sou_create(dwarf_t *dw, Dwarf_Die str, Dwarf_Off off, tdesc_t *tdp,
 			ml->ml_size = tdesc_bitsize(ml->ml_type);
 
 		if (die_unsigned(dw, mem, DW_AT_bit_offset, &bitoff, 0)) {
-#if BYTE_ORDER == _BIG_ENDIAN
+#if BYTE_ORDER == BIG_ENDIAN
 			ml->ml_offset += bitoff;
 #else
 			/*
