@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: libelf.h,v 1.3 2015/09/29 19:43:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -35,12 +35,16 @@
 # include "nbtool_config.h"
 #endif
 
-#include <sys/types.h>
-#ifdef __NetBSD__
-#include <sys/exec_elf.h>
+
+#if HAVE_NBTOOL_CONFIG_H
+# include <nbinclude/sys/exec_elf.h>
+#elif defined(__NetBSD__)
+# include <sys/exec_elf.h>
+#elif defined(__FreeBSD__)
+# include <sys/elf32.h>
+# include <sys/elf64.h>
 #else
-#include <sys/elf32.h>
-#include <sys/elf64.h>
+# error "Unsupported platform"
 #endif
 
 /* Library private data structures */
