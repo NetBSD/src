@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.6 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.7 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.6 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.7 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1289,7 +1289,7 @@ open_out_jack(struct umidi_jack *jack, void *arg, void (*intr)(void *))
 	jack->arg = arg;
 	jack->u.out.intr = intr;
 	jack->midiman_ppkt = NULL;
-	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
+	end = ep->buffer + ep->buffer_size / sizeof(*ep->buffer);
 	jack->opened = 1;
 	ep->num_open++;
 	/*
@@ -1554,19 +1554,19 @@ describe_mididev(struct umidi_mididev *md)
 	if (NULL == md->in_jack)
 		in_label[0] = '\0';
 	else if (show_ep_in)
-		snprintf(in_label, sizeof in_label, "<%d(%x) ",
+		snprintf(in_label, sizeof(in_label), "<%d(%x) ",
 		    md->in_jack->cable_number, md->in_jack->endpoint->addr);
 	else
-		snprintf(in_label, sizeof in_label, "<%d ",
+		snprintf(in_label, sizeof(in_label), "<%d ",
 		    md->in_jack->cable_number);
 
 	if (NULL == md->out_jack)
 		out_label[0] = '\0';
 	else if (show_ep_out)
-		snprintf(out_label, sizeof out_label, ">%d(%x) ",
+		snprintf(out_label, sizeof(out_label), ">%d(%x) ",
 		    md->out_jack->cable_number, md->out_jack->endpoint->addr);
 	else
-		snprintf(out_label, sizeof out_label, ">%d ",
+		snprintf(out_label, sizeof(out_label), ">%d ",
 		    md->out_jack->cable_number);
 
 	unit_label = device_xname(sc->sc_dev);
@@ -1668,7 +1668,7 @@ start_output_transfer(struct umidi_endpoint *ep)
 	uint32_t length;
 	int i;
 
-	length = (ep->next_slot - ep->buffer) * sizeof *ep->buffer;
+	length = (ep->next_slot - ep->buffer) * sizeof(*ep->buffer);
 	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
 	    ep->buffer, ep->next_slot, length));
 	usbd_setup_xfer(ep->xfer, ep->pipe,
@@ -1751,7 +1751,7 @@ out_jack_output(struct umidi_jack *out_jack, u_char *src, int len, int cin)
 
 	packet = *ep->next_slot++;
 	KASSERT(ep->buffer_size >=
-	    (ep->next_slot - ep->buffer) * sizeof *ep->buffer);
+	    (ep->next_slot - ep->buffer) * sizeof(*ep->buffer));
 	memset(packet, 0, UMIDI_PACKET_SIZE);
 	if (UMQ_ISTYPE(sc, UMQ_TYPE_MIDIMAN_GARBLE)) {
 		if (NULL != out_jack->midiman_ppkt) { /* fill out a prev pkt */
@@ -1831,7 +1831,7 @@ in_intr(struct usbd_xfer *xfer, void *priv,
 	}
 
 	slot = ep->buffer;
-	end = slot + count / sizeof *slot;
+	end = slot + count / sizeof(*slot);
 
 	for (packet = *slot; slot < end; packet = *++slot) {
 
@@ -1954,7 +1954,7 @@ out_solicit_locked(void *arg)
 
 	KASSERT(mutex_owned(&ep->sc->sc_lock));
 
-	end = ep->buffer + ep->buffer_size / sizeof *ep->buffer;
+	end = ep->buffer + ep->buffer_size / sizeof(*ep->buffer);
 
 	for ( ;; ) {
 		if (end - ep->next_slot <= ep->num_open - ep->num_scheduled)

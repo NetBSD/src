@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.7.16.2 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.7.16.3 2015/09/29 11:38:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1084,14 +1084,14 @@ struct zyd_notif_retry {
 #define ZYD_TX_TIMEOUT		10000
 
 #define ZYD_MAX_TXBUFSZ	\
-	(sizeof (struct zyd_tx_desc) + MCLBYTES)
+	(sizeof(struct zyd_tx_desc) + MCLBYTES)
 
 #define ZYD_MIN_FRAGSZ							\
-	(sizeof (struct zyd_plcphdr) + IEEE80211_MIN_LEN + 		\
-	 sizeof (struct zyd_rx_stat))
+	(sizeof(struct zyd_plcphdr) + IEEE80211_MIN_LEN + 		\
+	 sizeof(struct zyd_rx_stat))
 #define ZYD_MIN_RXBUFSZ	ZYD_MIN_FRAGSZ
 #define ZYX_MAX_RXBUFSZ	\
-	(sizeof (struct zyd_plcphdr) + MCLBYTES + sizeof (struct zyd_rx_desc))
+	(sizeof(struct zyd_plcphdr) + MCLBYTES + sizeof(struct zyd_rx_desc))
 
 #define ZYD_CMD_FLAG_READ	(1 << 0)
 

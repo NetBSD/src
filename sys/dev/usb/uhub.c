@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.14 2015/09/23 13:49:59 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.15 2015/09/29 11:38:29 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.14 2015/09/23 13:49:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.15 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -412,7 +412,7 @@ uhub_attach(device_t parent, device_t self, void *aux)
 #if 0
 	if (UHUB_IS_HIGH_SPEED(sc) && nports > 0) {
 		tts = kmem_alloc((UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
-			     sizeof (struct usbd_tt), KM_SLEEP);
+			     sizeof(struct usbd_tt), KM_SLEEP);
 		if (!tts)
 			goto bad;
 	}
@@ -824,7 +824,7 @@ uhub_detach(device_t self, int flags)
 	if (hub->ports[0].tt)
 		kmem_free(hub->ports[0].tt,
 		    (UHUB_IS_SINGLE_TT(sc) ? 1 : nports) *
-		    sizeof (struct usbd_tt));
+		    sizeof(struct usbd_tt));
 #endif
 	kmem_free(hub,
 	    sizeof(*hub) + (nports-1) * sizeof(struct usbd_port));

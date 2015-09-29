@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.6.5 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.6 2015/09/29 11:38:28 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.5 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.6 2015/09/29 11:38:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -796,8 +796,8 @@ run_alloc_tx_ring(struct run_softc *sc, int qid)
 			goto fail;
 		}
 		/* zeroize the TXD + TXWI part */
-		memset(data->buf, 0, sizeof (struct rt2870_txd) +
-		    sizeof (struct rt2860_txwi));
+		memset(data->buf, 0, sizeof(struct rt2870_txd) +
+		    sizeof(struct rt2860_txwi));
 	}
 	if (error != 0)
 fail:		run_free_tx_ring(sc, qid);
@@ -911,7 +911,7 @@ run_read(struct run_softc *sc, uint16_t reg, uint32_t *val)
 	uint32_t tmp;
 	int error;
 
-	error = run_read_region_1(sc, reg, (uint8_t *)&tmp, sizeof tmp);
+	error = run_read_region_1(sc, reg, (uint8_t *)&tmp, sizeof(tmp));
 	if (error == 0)
 		*val = le32toh(tmp);
 	else
@@ -1048,7 +1048,7 @@ run_eeprom_read_2(struct run_softc *sc, uint16_t addr, uint16_t *val)
 	req.bRequest = RT2870_EEPROM_READ;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, addr);
-	USETW(req.wLength, sizeof tmp);
+	USETW(req.wLength, sizeof(tmp));
 	error = usbd_do_request(sc->sc_udev, &req, &tmp);
 	if (error == 0)
 		*val = le16toh(tmp);
@@ -1507,7 +1507,7 @@ static struct ieee80211_node *
 run_node_alloc(struct ieee80211_node_table *nt)
 {
 	struct run_node *rn =
-	    malloc(sizeof (struct run_node), M_DEVBUF, M_NOWAIT | M_ZERO);
+	    malloc(sizeof(struct run_node), M_DEVBUF, M_NOWAIT | M_ZERO);
 	return rn ? &rn->ni : NULL;
 }
 
@@ -1584,7 +1584,7 @@ run_do_async(struct run_softc *sc, void (*cb)(struct run_softc *, void *),
 	s = splusb();
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
-	KASSERT(len <= sizeof (cmd->data));
+	KASSERT(len <= sizeof(cmd->data));
 	memcpy(cmd->data, arg, len);
 	ring->cur = (ring->cur + 1) % RUN_HOST_CMD_RING_COUNT;
 
@@ -1606,7 +1606,7 @@ run_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	/* do it in a process context */
 	cmd.state = nstate;
 	cmd.arg = arg;
-	run_do_async(sc, run_newstate_cb, &cmd, sizeof cmd);
+	run_do_async(sc, run_newstate_cb, &cmd, sizeof(cmd));
 	return 0;
 }
 
@@ -1682,7 +1682,7 @@ run_newstate_cb(struct run_softc *sc, void *arg)
 
 			/* clear statistic registers used by AMRR */
 			run_read_region_1(sc, RT2860_TX_STA_CNT0,
-			    (uint8_t *)sta, sizeof sta);
+			    (uint8_t *)sta, sizeof(sta));
 			/* start calibration timer */
 			callout_schedule(&sc->calib_to, hz);
 		}
@@ -1760,7 +1760,7 @@ run_set_key(struct ieee80211com *ic, const struct ieee80211_key *k,
 	/* do it in a process context */
 	cmd.key = *k;
 	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
-	run_do_async(sc, run_set_key_cb, &cmd, sizeof cmd);
+	run_do_async(sc, run_set_key_cb, &cmd, sizeof(cmd));
 	return 1;
 }
 
@@ -1825,7 +1825,7 @@ run_set_key_cb(struct run_softc *sc, void *arg)
 	    (k->wk_flags & IEEE80211_KEY_XMIT)) {
 		/* set initial packet number in IV+EIV */
 		if (k->wk_cipher->ic_cipher == IEEE80211_CIPHER_WEP) {
-			memset(iv, 0, sizeof iv);
+			memset(iv, 0, sizeof(iv));
 			iv[3] = sc->sc_ic.ic_crypto.cs_def_txkey << 6;
 		} else {
 			if (k->wk_cipher->ic_cipher == IEEE80211_CIPHER_TKIP) {
@@ -1870,7 +1870,7 @@ run_delete_key(struct ieee80211com *ic, const struct ieee80211_key *k)
 	/* do it in a process context */
 	cmd.key = *k;
 	cmd.associd = (ni != NULL) ? ni->ni_associd : 0;
-	run_do_async(sc, run_delete_key_cb, &cmd, sizeof cmd);
+	run_do_async(sc, run_delete_key_cb, &cmd, sizeof(cmd));
 	return 1;
 }
 
@@ -1920,7 +1920,7 @@ run_calibrate_cb(struct run_softc *sc, void *arg)
 
 	/* read statistic counters (clear on read) and update AMRR state */
 	error = run_read_region_1(sc, RT2860_TX_STA_CNT0, (uint8_t *)sta,
-	    sizeof sta);
+	    sizeof(sta));
 	if (error != 0)
 		goto skip;
 
@@ -2184,7 +2184,7 @@ run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 			    dmalen + 8, xferlen));
 			break;
 		}
-		run_rx_frame(sc, buf + sizeof (uint32_t), dmalen);
+		run_rx_frame(sc, buf + sizeof(uint32_t), dmalen);
 		buf += dmalen + 8;
 		xferlen -= dmalen + 8;
 	}
@@ -2284,7 +2284,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	/* get MCS code from rate index */
 	mcs = rt2860_rates[ridx].mcs;
 
-	xferlen = sizeof (*txwi) + m->m_pkthdr.len;
+	xferlen = sizeof(*txwi) + m->m_pkthdr.len;
 	/* roundup to 32-bit alignment */
 	xferlen = (xferlen + 3) & ~3;
 
@@ -2347,7 +2347,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 	m_copydata(m, 0, m->m_pkthdr.len, (void *)(txwi + 1));
 	m_freem(m);
 
-	xferlen += sizeof (*txd) + 4;
+	xferlen += sizeof(*txd) + 4;
 
 	usbd_setup_xfer(data->xfer, ring->pipeh, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, RUN_TX_TIMEOUT, run_txeof);
@@ -3710,7 +3710,7 @@ run_setup_beacon(struct run_softc *sc)
 	if ((m = ieee80211_beacon_alloc(ic, ic->ic_bss, &sc->sc_bo)) == NULL)
 		return ENOBUFS;
 
-	memset(&txwi, 0, sizeof txwi);
+	memset(&txwi, 0, sizeof(txwi));
 	txwi.wcid = 0xff;
 	txwi.len = htole16(m->m_pkthdr.len);
 	/* send beacons at the lowest available rate */
@@ -3723,8 +3723,8 @@ run_setup_beacon(struct run_softc *sc)
 	txwi.flags = RT2860_TX_TS;
 
 	run_write_region_1(sc, RT2860_BCN_BASE(0),
-	    (uint8_t *)&txwi, sizeof txwi);
-	run_write_region_1(sc, RT2860_BCN_BASE(0) + sizeof txwi,
+	    (uint8_t *)&txwi, sizeof(txwi));
+	run_write_region_1(sc, RT2860_BCN_BASE(0) + sizeof(txwi),
 	    mtod(m, uint8_t *), m->m_pkthdr.len);
 
 	m_freem(m);

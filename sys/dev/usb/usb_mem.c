@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.9 2015/03/21 15:30:11 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.10 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.9 2015/03/21 15:30:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.10 2015/09/29 11:38:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -137,7 +137,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	}
 
 	DPRINTFN(6, "no free", 0, 0, 0, 0);
-	b = kmem_zalloc(sizeof *b, KM_SLEEP);
+	b = kmem_zalloc(sizeof(*b), KM_SLEEP);
 	if (b == NULL)
 		return USBD_NOMEM;
 
@@ -153,7 +153,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	b->segs = kmem_alloc(b->nsegs * sizeof(*b->segs), KM_SLEEP);
 	if (b->segs == NULL) {
-		kmem_free(b, sizeof *b);
+		kmem_free(b, sizeof(*b));
 		return USBD_NOMEM;
 	}
 	b->nsegs_alloc = b->nsegs;
@@ -194,7 +194,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	bus_dmamem_free(tag, b->segs, b->nsegs);
  free0:
 	kmem_free(b->segs, b->nsegs_alloc * sizeof(*b->segs));
-	kmem_free(b, sizeof *b);
+	kmem_free(b, sizeof(*b));
 	return USBD_NOMEM;
 }
 
@@ -213,7 +213,7 @@ usb_block_real_freemem(usb_dma_block_t *b)
 	bus_dmamem_unmap(b->tag, b->kaddr, b->size);
 	bus_dmamem_free(b->tag, b->segs, b->nsegs);
 	kmem_free(b->segs, b->nsegs_alloc * sizeof(*b->segs));
-	kmem_free(b, sizeof *b);
+	kmem_free(b, sizeof(*b));
 }
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.14.5 2015/06/06 14:40:14 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.14.6 2015/09/29 11:38:28 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.5 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.6 2015/09/29 11:38:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -508,13 +508,13 @@ ural_attach(device_t parent, device_t self, void *aux)
 	ieee80211_media_init(ic, ural_media_change, ieee80211_media_status);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + 64, &sc->sc_drvbpf);
+	    sizeof(struct ieee80211_frame) + 64, &sc->sc_drvbpf);
 
-	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
 	sc->sc_rxtap.wr_ihdr.it_present = htole32(RAL_RX_RADIOTAP_PRESENT);
 
-	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RAL_TX_RADIOTAP_PRESENT);
 
@@ -1114,7 +1114,7 @@ ural_setup_tx_desc(struct ural_softc *sc, struct ural_tx_desc *desc,
 	desc->flags |= htole32(len << 16);
 
 	desc->wme = htole16(RAL_AIFSN(2) | RAL_LOGCWMIN(3) | RAL_LOGCWMAX(5));
-	desc->wme |= htole16(RAL_IVOFFSET(sizeof (struct ieee80211_frame)));
+	desc->wme |= htole16(RAL_IVOFFSET(sizeof(struct ieee80211_frame)));
 
 	/* setup PLCP fields */
 	desc->plcp_signal  = ural_plcp_signal(rate);
@@ -1172,7 +1172,7 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		return ENOMEM;
 	}
 
-	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, &cmd, sizeof cmd,
+	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, &cmd, sizeof(cmd),
 	    USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT, NULL);
 
 	error = usbd_sync_transfer(xfer);
@@ -1414,8 +1414,8 @@ ural_start(struct ifnet *ifp)
 				break;
 			}
 
-			if (m0->m_len < sizeof (struct ether_header) &&
-			    !(m0 = m_pullup(m0, sizeof (struct ether_header))))
+			if (m0->m_len < sizeof(struct ether_header) &&
+			    !(m0 = m_pullup(m0, sizeof(struct ether_header))))
 				continue;
 
 			eh = mtod(m0, struct ether_header *);
@@ -1588,7 +1588,7 @@ ural_read(struct ural_softc *sc, uint16_t reg)
 	req.bRequest = RAL_READ_MAC;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, reg);
-	USETW(req.wLength, sizeof (uint16_t));
+	USETW(req.wLength, sizeof(uint16_t));
 
 	error = usbd_do_request(sc->sc_udev, &req, &val);
 	if (error != 0) {
@@ -2157,7 +2157,7 @@ ural_init(struct ifnet *ifp)
 	ural_set_chan(sc, ic->ic_curchan);
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
-	ural_read_multi(sc, RAL_STA_CSR0, sc->sta, sizeof sc->sta);
+	ural_read_multi(sc, RAL_STA_CSR0, sc->sta, sizeof(sc->sta));
 
 	ural_set_txantenna(sc, sc->tx_ant);
 	ural_set_rxantenna(sc, sc->rx_ant);
@@ -2318,7 +2318,7 @@ ural_amrr_start(struct ural_softc *sc, struct ieee80211_node *ni)
 	int i;
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR10) */
-	ural_read_multi(sc, RAL_STA_CSR0, sc->sta, sizeof sc->sta);
+	ural_read_multi(sc, RAL_STA_CSR0, sc->sta, sizeof(sc->sta));
 
 	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
 
@@ -2347,10 +2347,10 @@ ural_amrr_timeout(void *arg)
 	req.bRequest = RAL_READ_MULTI_MAC;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, RAL_STA_CSR0);
-	USETW(req.wLength, sizeof sc->sta);
+	USETW(req.wLength, sizeof(sc->sta));
 
 	usbd_setup_default_xfer(sc->amrr_xfer, sc->sc_udev, sc,
-	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof sc->sta, 0,
+	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof(sc->sta), 0,
 	    ural_amrr_update);
 	(void)usbd_transfer(sc->amrr_xfer);
 

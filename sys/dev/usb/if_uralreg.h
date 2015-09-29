@@ -1,4 +1,4 @@
-/*	$NetBSD: if_uralreg.h,v 1.3 2006/07/05 18:46:42 perry Exp $ */
+/*	$NetBSD: if_uralreg.h,v 1.3.128.1 2015/09/29 11:38:28 skrll Exp $ */
 /*	$OpenBSD: if_ralreg.h,v 1.5 2005/04/01 13:13:43 damien Exp $  */
 
 /*-
@@ -18,8 +18,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#define RAL_RX_DESC_SIZE	(sizeof (struct ural_rx_desc))
-#define RAL_TX_DESC_SIZE	(sizeof (struct ural_tx_desc))
+#define RAL_RX_DESC_SIZE	(sizeof(struct ural_rx_desc))
+#define RAL_TX_DESC_SIZE	(sizeof(struct ural_tx_desc))
 
 #define RAL_CONFIG_NO	1
 #define RAL_IFACE_INDEX 0

@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.5.10.6 2015/06/23 12:07:20 skrll Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.5.10.7 2015/09/29 11:38:28 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.6 2015/06/23 12:07:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.7 2015/09/29 11:38:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -119,7 +119,7 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 	size_t fwo = 0;
 	uint32_t n;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	error = firmware_open("ubt", name, &fwh);
 	if (error != 0) {
@@ -218,13 +218,13 @@ aubtfwl_get_state(struct aubtfwl_softc *sc, uint8_t *state) {
 	usb_device_request_t req;
 	int error = 0;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	req.bRequest = AR3K_GET_STATE;
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
-	USETW(req.wLength, sizeof *state);
+	USETW(req.wLength, sizeof(*state));
 
 	error = usbd_do_request(sc->sc_udev, &req, state);
 
@@ -236,13 +236,13 @@ aubtfwl_get_version(struct aubtfwl_softc *sc, struct ar3k_version *ver) {
 	usb_device_request_t req;
 	int error = 0;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	req.bRequest = AR3K_GET_VERSION;
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
-	USETW(req.wLength, sizeof *ver);
+	USETW(req.wLength, sizeof(*ver));
 
 	error = usbd_do_request(sc->sc_udev, &req, ver);
 
@@ -261,7 +261,7 @@ aubtfwl_send_command(struct aubtfwl_softc *sc, uByte cmd) {
 	usb_device_request_t req;
 	int error = 0;
 
-	memset(&req, 0, sizeof req);
+	memset(&req, 0, sizeof(req));
 
 	req.bRequest = cmd;
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -298,7 +298,7 @@ aubtfwl_attach_hook(device_t self)
 		aprint_verbose_dev(self, "state is 0x%02x\n", state);
 
 		if (!(state & AR3K_STATE_IS_PATCHED)) {
-			snprintf(firmware_name, sizeof firmware_name,
+			snprintf(firmware_name, sizeof(firmware_name),
 				"ar3k/AthrBT_0x%08x.dfu", ver.rom);
 			error = aubtfwl_firmware_load(self, firmware_name);
 
@@ -318,7 +318,7 @@ aubtfwl_attach_hook(device_t self)
 			break;
 		}
 
-		snprintf(firmware_name, sizeof firmware_name,
+		snprintf(firmware_name, sizeof(firmware_name),
 			"ar3k/ramps_0x%08x_%d.dfu", ver.rom, clock);
 		aubtfwl_firmware_load(self, firmware_name);
 

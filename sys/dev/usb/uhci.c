@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.34 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.35 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.34 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.35 2015/09/29 11:38:29 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2522,14 +2522,14 @@ uhci_device_request(struct usbd_xfer *xfer)
 	}
 	upipe->ctrl.length = len;
 
-	memcpy(KERNADDR(&upipe->ctrl.reqdma, 0), req, sizeof *req);
-	usb_syncmem(&upipe->ctrl.reqdma, 0, sizeof *req, BUS_DMASYNC_PREWRITE);
+	memcpy(KERNADDR(&upipe->ctrl.reqdma, 0), req, sizeof(*req));
+	usb_syncmem(&upipe->ctrl.reqdma, 0, sizeof(*req), BUS_DMASYNC_PREWRITE);
 
 	setup->link.std = next;
 	setup->td.td_link = htole32(next->physaddr | UHCI_PTR_TD);
 	setup->td.td_status = htole32(UHCI_TD_SET_ERRCNT(3) | ls |
 		UHCI_TD_ACTIVE);
-	setup->td.td_token = htole32(UHCI_TD_SETUP(sizeof *req, endpt, addr));
+	setup->td.td_token = htole32(UHCI_TD_SETUP(sizeof(*req), endpt, addr));
 	setup->td.td_buffer = htole32(DMAADDR(&upipe->ctrl.reqdma, 0));
 	usb_syncmem(&setup->dma, setup->offs, sizeof(setup->td),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
@@ -2885,7 +2885,7 @@ uhci_device_isoc_close(struct usbd_pipe *pipe)
 		uhci_free_std(sc, std);
 	}
 
-	kmem_free(isoc->stds, UHCI_VFRAMELIST_COUNT * sizeof (uhci_soft_td_t *));
+	kmem_free(isoc->stds, UHCI_VFRAMELIST_COUNT * sizeof(uhci_soft_td_t *));
 }
 
 usbd_status
@@ -2904,7 +2904,7 @@ uhci_setup_isoc(struct usbd_pipe *pipe)
 
 	isoc = &upipe->isoc;
 	isoc->stds = kmem_alloc(UHCI_VFRAMELIST_COUNT *
-				 sizeof (uhci_soft_td_t *),
+				 sizeof(uhci_soft_td_t *),
 			       KM_SLEEP);
 	if (isoc->stds == NULL)
 		return USBD_NOMEM;
@@ -2958,7 +2958,7 @@ uhci_setup_isoc(struct usbd_pipe *pipe)
 	while (--i >= 0)
 		uhci_free_std(sc, isoc->stds[i]);
 	mutex_exit(&sc->sc_lock);
-	kmem_free(isoc->stds, UHCI_VFRAMELIST_COUNT * sizeof (uhci_soft_td_t *));
+	kmem_free(isoc->stds, UHCI_VFRAMELIST_COUNT * sizeof(uhci_soft_td_t *));
 	return USBD_NOMEM;
 }
 

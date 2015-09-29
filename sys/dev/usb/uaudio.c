@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.9 2015/05/09 09:35:20 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.10 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.9 2015/05/09 09:35:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.10 2015/09/29 11:38:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -744,7 +744,7 @@ uaudio_get_cluster(int id, const struct io_terminal *iot)
 	}
  bad:
 	aprint_error("uaudio_get_cluster: bad data\n");
-	memset(&r, 0, sizeof r);
+	memset(&r, 0, sizeof(r));
 	return r;
 
 }
@@ -1917,7 +1917,7 @@ uaudio_identify_ac(struct uaudio_softc *sc, const usb_config_descriptor_t *cdesc
 	id = uaudio_find_iface(tbuf, size, &offs, UISUBCLASS_AUDIOCONTROL);
 	if (id == NULL)
 		return USBD_INVAL;
-	if (offs + sizeof *acdp > size)
+	if (offs + sizeof(*acdp) > size)
 		return USBD_INVAL;
 	sc->sc_ac_iface = id->bInterfaceNumber;
 	DPRINTFN(2,"AC interface is %d\n", sc->sc_ac_iface);

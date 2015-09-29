@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.156.2.9 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.156.2.10 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.9 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.156.2.10 2015/09/29 11:38:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -634,10 +634,10 @@ usbread(dev_t dev, struct uio *uio, int flag)
 					;
 			}
 
-			error = uiomove((void *)ueo, sizeof *ueo, uio);
+			error = uiomove((void *)ueo, sizeof(*ueo), uio);
 		} else
 #endif
-			error = uiomove((void *)ue, sizeof *ue, uio);
+			error = uiomove((void *)ue, sizeof(*ue), uio);
 	}
 	usb_free_event(ue);
 #ifdef COMPAT_30
@@ -971,7 +971,7 @@ usbd_add_drv_event(int type, struct usbd_device *udev, device_t dev)
 
 	ue->u.ue_driver.ue_cookie = udev->ud_cookie;
 	strncpy(ue->u.ue_driver.ue_devname, device_xname(dev),
-	    sizeof ue->u.ue_driver.ue_devname);
+	    sizeof(ue->u.ue_driver.ue_devname));
 	usb_add_event(type, ue);
 }
 

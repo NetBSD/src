@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.6 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.7 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.6 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.7 2015/09/29 11:38:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -572,7 +572,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	case USB_GET_REPORT_DESC:
 		uhidev_get_report_desc(sc->sc_hdev.sc_parent, &desc, &size);
 		rd = (struct usb_ctl_report_desc *)addr;
-		size = min(size, sizeof rd->ucrd_data);
+		size = min(size, sizeof(rd->ucrd_data));
 		rd->ucrd_size = size;
 		memcpy(rd->ucrd_data, desc, size);
 		break;

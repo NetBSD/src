@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.10 2015/06/07 08:04:36 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.11 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.10 2015/06/07 08:04:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.11 2015/09/29 11:38:29 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -186,7 +186,7 @@ usbd_get_port_status(struct usbd_device *dev, int port, usb_port_status_t *ps)
 	req.bRequest = UR_GET_STATUS;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, port);
-	USETW(req.wLength, sizeof *ps);
+	USETW(req.wLength, sizeof(*ps));
 	return usbd_do_request(dev, &req, ps);
 }
 
@@ -201,7 +201,7 @@ usbd_get_port_status_ext(struct usbd_device *dev, int port,
 	req.bRequest = UR_GET_STATUS;
 	USETW2(req.wValue, 0, UR_PST_EXT_PORT_STATUS);
 	USETW(req.wIndex, port);
-	USETW(req.wLength, sizeof *pse);
+	USETW(req.wLength, sizeof(*pse));
 	return (usbd_do_request(dev, &req, pse));
 }
 

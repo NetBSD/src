@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.1.20.1 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.1.20.2 2015/09/29 11:38:28 skrll Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -20,16 +20,16 @@
 #define RUN_MAX_RXSZ			\
 	4096
 #if 0
-	(sizeof (uint32_t) +		\
-	 sizeof (struct rt2860_rxwi) +	\
-	 sizeof (uint16_t) +		\
+	(sizeof(uint32_t) +		\
+	 sizeof(struct rt2860_rxwi) +	\
+	 sizeof(uint16_t) +		\
 	 MCLBYTES +			\
-	 sizeof (struct rt2870_rxd))
+	 sizeof(struct rt2870_rxd))
 #endif
 /* NB: "11" is the maximum number of padding bytes needed for Tx */
 #define RUN_MAX_TXSZ			\
-	(sizeof (struct rt2870_txd) +	\
-	 sizeof (struct rt2860_rxwi) +	\
+	(sizeof(struct rt2870_txd) +	\
+	 sizeof(struct rt2860_rxwi) +	\
 	 MCLBYTES + 11)
 
 #define RUN_TX_TIMEOUT	5000	/* ms */

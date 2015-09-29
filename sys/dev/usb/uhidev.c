@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.8 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.9 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.8 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.9 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -217,9 +217,9 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 			 * returning digitizer data.
 			 */
 			usbd_set_report(uiaa->uiaa_iface, UHID_FEATURE_REPORT, 2,
-			    &reportbuf, sizeof reportbuf);
+			    &reportbuf, sizeof(reportbuf));
 
-			size = sizeof uhid_graphire3_4x5_report_descr;
+			size = sizeof(uhid_graphire3_4x5_report_descr);
 			descptr = uhid_graphire3_4x5_report_descr;
 			break;
 		default:
@@ -228,12 +228,12 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	if (USBIF_IS_XINPUT(uiaa)) {
-		size = sizeof uhid_xinput_report_descr;
+		size = sizeof(uhid_xinput_report_descr);
 		descptr = uhid_xinput_report_descr;
 	}
 	if (USBIF_IS_X1INPUT(uiaa)) {
 		sc->sc_flags |= UHIDEV_F_XB1;
-		size = sizeof uhid_x1input_report_descr;
+		size = sizeof(uhid_x1input_report_descr);
 		descptr = uhid_x1input_report_descr;
 	}
 
@@ -265,7 +265,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		 */
 
 		usbd_set_report(uiaa->uiaa_iface, UHID_FEATURE_REPORT, 0,
-		    &reportbuf, sizeof reportbuf);
+		    &reportbuf, sizeof(reportbuf));
 	}
 
 	if (uiaa->uiaa_vendor == USB_VENDOR_LOGITECH &&
@@ -296,7 +296,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 		req.bRequest = 1;
 		USETW(req.wValue, 0x3f2);
 		USETW(req.wIndex, 0);
-		USETW(req.wLength, sizeof data);
+		USETW(req.wLength, sizeof(data));
 
 		usbd_do_request_flags(sc->sc_udev, &req, data,
 			USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);

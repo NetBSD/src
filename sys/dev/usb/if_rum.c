@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.8 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.9 2015/09/29 11:38:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.8 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.9 2015/09/29 11:38:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -466,14 +466,14 @@ rum_attach(device_t parent, device_t self, void *aux)
 	ieee80211_media_init(ic, rum_media_change, ieee80211_media_status);
 
 	bpf_attach2(ifp, DLT_IEEE802_11_RADIO,
-	    sizeof (struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
+	    sizeof(struct ieee80211_frame) + IEEE80211_RADIOTAP_HDRLEN,
 	    &sc->sc_drvbpf);
 
-	sc->sc_rxtap_len = sizeof sc->sc_rxtapu;
+	sc->sc_rxtap_len = sizeof(sc->sc_rxtapu);
 	sc->sc_rxtap.wr_ihdr.it_len = htole16(sc->sc_rxtap_len);
 	sc->sc_rxtap.wr_ihdr.it_present = htole32(RT2573_RX_RADIOTAP_PRESENT);
 
-	sc->sc_txtap_len = sizeof sc->sc_txtapu;
+	sc->sc_txtap_len = sizeof(sc->sc_txtapu);
 	sc->sc_txtap.wt_ihdr.it_len = htole16(sc->sc_txtap_len);
 	sc->sc_txtap.wt_ihdr.it_present = htole32(RT2573_TX_RADIOTAP_PRESENT);
 
@@ -1443,7 +1443,7 @@ rum_read(struct rum_softc *sc, uint16_t reg)
 {
 	uint32_t val;
 
-	rum_read_multi(sc, reg, &val, sizeof val);
+	rum_read_multi(sc, reg, &val, sizeof(val));
 
 	return le32toh(val);
 }
@@ -1472,7 +1472,7 @@ rum_write(struct rum_softc *sc, uint16_t reg, uint32_t val)
 {
 	uint32_t tmp = htole32(val);
 
-	rum_write_multi(sc, reg, &tmp, sizeof tmp);
+	rum_write_multi(sc, reg, &tmp, sizeof(tmp));
 }
 
 static void
@@ -1923,7 +1923,7 @@ rum_read_eeprom(struct rum_softc *sc)
 	/* read Tx power for all a/b/g channels */
 	rum_eeprom_read(sc, RT2573_EEPROM_TXPOWER, sc->txpow, 14);
 	/* XXX default Tx power for 802.11a channels */
-	memset(sc->txpow + 14, 24, sizeof (sc->txpow) - 14);
+	memset(sc->txpow + 14, 24, sizeof(sc->txpow) - 14);
 #ifdef RUM_DEBUG
 	for (i = 0; i < 14; i++)
 		DPRINTF(("Channel=%d Tx power=%d\n", i + 1,  sc->txpow[i]));
@@ -2024,7 +2024,7 @@ rum_init(struct ifnet *ifp)
 	rum_set_chan(sc, ic->ic_curchan);
 
 	/* clear STA registers */
-	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof sc->sta);
+	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof(sc->sta));
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, CLLADDR(ifp->if_sadl));
 	rum_set_macaddr(sc, ic->ic_myaddr);
@@ -2237,7 +2237,7 @@ rum_amrr_start(struct rum_softc *sc, struct ieee80211_node *ni)
 	int i;
 
 	/* clear statistic registers (STA_CSR0 to STA_CSR5) */
-	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof sc->sta);
+	rum_read_multi(sc, RT2573_STA_CSR0, sc->sta, sizeof(sc->sta));
 
 	ieee80211_amrr_node_init(&sc->amrr, &sc->amn);
 
@@ -2263,10 +2263,10 @@ rum_amrr_timeout(void *arg)
 	req.bRequest = RT2573_READ_MULTI_MAC;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, RT2573_STA_CSR0);
-	USETW(req.wLength, sizeof sc->sta);
+	USETW(req.wLength, sizeof(sc->sta));
 
 	usbd_setup_default_xfer(sc->amrr_xfer, sc->sc_udev, sc,
-	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof sc->sta, 0,
+	    USBD_DEFAULT_TIMEOUT, &req, sc->sta, sizeof(sc->sta), 0,
 	    rum_amrr_update);
 	(void)usbd_transfer(sc->amrr_xfer);
 }

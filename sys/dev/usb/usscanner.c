@@ -1,4 +1,4 @@
-/*	$NetBSD: usscanner.c,v 1.38.6.8 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: usscanner.c,v 1.38.6.9 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.8 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usscanner.c,v 1.38.6.9 2015/09/29 11:38:29 skrll Exp $");
 
 #include "scsibus.h"
 #include <sys/param.h>
@@ -446,12 +446,12 @@ usscanner_sense(struct usscanner_softc *sc)
 	memset(&sense_cmd, 0, sizeof(sense_cmd));
 	sense_cmd.opcode = SCSI_REQUEST_SENSE;
 	sense_cmd.byte2 = periph->periph_lun << SCSI_CMD_LUN_SHIFT;
-	sense_cmd.length = sizeof xs->sense;
+	sense_cmd.length = sizeof(xs->sense);
 
 	sc->sc_state = UAS_SENSECMD;
-	memcpy(sc->sc_cmd_buffer, &sense_cmd, sizeof sense_cmd);
+	memcpy(sc->sc_cmd_buffer, &sense_cmd, sizeof(sense_cmd));
 	usbd_setup_xfer(sc->sc_cmd_xfer, sc->sc_out_pipe, sc, sc->sc_cmd_buffer,
-	    sizeof sense_cmd, 0, USSCANNER_TIMEOUT,
+	    sizeof(sense_cmd), 0, USSCANNER_TIMEOUT,
 	    usscanner_sensecmd_cb);
 	err = usbd_transfer(sc->sc_cmd_xfer);
 	if (err == USBD_IN_PROGRESS)
@@ -552,7 +552,7 @@ usscanner_sensedata_cb(struct usbd_xfer *xfer, void *priv,
 	switch (status) {
 	case USBD_NORMAL_COMPLETION:
 		memcpy(&xs->sense, sc->sc_data_buffer, len);
-		if (len < sizeof xs->sense)
+		if (len < sizeof(xs->sense))
 			xs->error = XS_SHORTSENSE;
 		break;
 	case USBD_TIMEOUT:
@@ -621,7 +621,7 @@ usscanner_sensecmd_cb(struct usbd_xfer *xfer, void *priv,
 	sc->sc_state = UAS_SENSEDATA;
 	usbd_setup_xfer(sc->sc_data_xfer, sc->sc_in_pipe, sc,
 	    sc->sc_data_buffer,
-	    sizeof xs->sense, USBD_SHORT_XFER_OK,
+	    sizeof(xs->sense), USBD_SHORT_XFER_OK,
 	    USSCANNER_TIMEOUT, usscanner_sensedata_cb);
 	err = usbd_transfer(sc->sc_data_xfer);
 	if (err == USBD_IN_PROGRESS)

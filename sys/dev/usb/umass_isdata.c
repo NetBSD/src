@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_isdata.c,v 1.30.2.4 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: umass_isdata.c,v 1.30.2.5 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * TODO:
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.4 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_isdata.c,v 1.30.2.5 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	struct uisdata_softc *scbus;
 	struct isd200_config *cf;
 
-	scbus = malloc(sizeof *scbus, M_DEVBUF, M_WAITOK | M_ZERO);
+	scbus = malloc(sizeof(*scbus), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->bus = &scbus->base;
 	cf = &scbus->sc_isd_config;
 
@@ -192,7 +192,7 @@ umass_isdata_attach(struct umass_softc *sc)
 	req.bRequest = 0x02;
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 2);
-	USETW(req.wLength, sizeof *cf);
+	USETW(req.wLength, sizeof(*cf));
 
 	err = usbd_do_request(sc->sc_udev, &req, cf);
 	if (err) {
@@ -325,7 +325,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 	ata_bio->nblks = nblks;
 	ata_bio->nbytes = nbytes;
 
-	memset(&ata, 0, sizeof ata);
+	memset(&ata, 0, sizeof(ata));
 	ata.ac_signature0 = cf->ATAMajorCommand;
 	ata.ac_signature1 = cf->ATAMinorCommand;
 	ata.ac_transfer_blocksize = 1;
@@ -358,7 +358,7 @@ uisdata_bio1(struct ata_drive_datas *drv, struct ata_bio *ata_bio)
 		 ata.ac_sector_count, ata_bio->multi));
 	DPRINTF(("    data=%p bcount=%ld, drive=%d\n", ata_bio->databuf,
 		 ata_bio->bcount, drv->drive));
-	sc->sc_methods->wire_xfer(sc, drv->drive, &ata, sizeof ata,
+	sc->sc_methods->wire_xfer(sc, drv->drive, &ata, sizeof(ata),
 				  ata_bio->databuf + scbus->sc_skip, nbytes,
 				  dir, ATA_DELAY, 0, uisdata_bio_cb, ata_bio);
 
@@ -434,7 +434,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 		goto done;
 	}
 
-	memset(&ata, 0, sizeof ata);
+	memset(&ata, 0, sizeof(ata));
 	ata.ac_signature0 = cf->ATAMajorCommand;
 	ata.ac_signature1 = cf->ATAMinorCommand;
 	ata.ac_transfer_blocksize = 1;
@@ -454,7 +454,7 @@ uisdata_exec_command(struct ata_drive_datas *drv, struct ata_command *cmd)
 	DPRINTF(("%s: execute ATA command 0x%02x, drive=%d\n", __func__,
 		 ata.ac_command, drv->drive));
 	sc->sc_methods->wire_xfer(sc, drv->drive, &ata,
-				  sizeof ata, cmd->data, cmd->bcount, dir,
+				  sizeof(ata), cmd->data, cmd->bcount, dir,
 				  cmd->timeout, 0, uisdata_exec_cb, cmd);
 	if (cmd->flags & (AT_POLL | AT_WAIT)) {
 #if 0
