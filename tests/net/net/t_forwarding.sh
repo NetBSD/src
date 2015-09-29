@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.8 2015/09/28 01:54:14 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.9 2015/09/29 08:27:24 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -180,7 +180,7 @@ test_http_get()
 
 	# get the webpage
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so 	\
-	    ftp -q $TIMEOUT http://$IP4DST/$HTML_FILE
+	    ftp -q $TIMEOUT -o out http://$IP4DST/$HTML_FILE
 }
 
 test_setup()
