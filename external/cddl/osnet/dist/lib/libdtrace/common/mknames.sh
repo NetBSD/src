@@ -26,7 +26,9 @@
 #
 #ident	"%Z%%M%	%I%	%E% SMI"
 
-BSDECHO=-e
+if [ "x$(echo -e)" != "x-e" ]; then
+	BSDECHO=-e
+fi
 
 echo ${BSDECHO} "\
 /*\n\
