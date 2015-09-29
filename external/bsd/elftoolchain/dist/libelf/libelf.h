@@ -1,4 +1,4 @@
-/*	$NetBSD: libelf.h,v 1.3 2015/09/29 19:43:39 christos Exp $	*/
+/*	$NetBSD: libelf.h,v 1.4 2015/09/29 22:14:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006,2008-2010 Joseph Koshy
@@ -39,8 +39,10 @@
 #if HAVE_NBTOOL_CONFIG_H
 # include <nbinclude/sys/exec_elf.h>
 #elif defined(__NetBSD__)
+# include <sys/types.h>
 # include <sys/exec_elf.h>
 #elif defined(__FreeBSD__)
+# include <sys/types.h>
 # include <sys/elf32.h>
 # include <sys/elf64.h>
 #else
