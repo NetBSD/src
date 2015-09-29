@@ -1,4 +1,4 @@
-/*	$NetBSD: _libelf_config.h,v 1.2 2014/03/09 16:58:04 christos Exp $	*/
+/*	$NetBSD: _libelf_config.h,v 1.3 2015/09/29 19:43:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008-2011 Joseph Koshy
@@ -115,7 +115,7 @@
 
 #endif	/* __minix */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(HAVE_NBTOOL_CONFIG_H)
 
 #include <machine/elf_machdep.h>
 
@@ -135,7 +135,7 @@
 #define	Elf_Note		Elf64_Nhdr
 #endif
 
-#endif	/* __NetBSD__ */
+#endif	/* __NetBSD__ || HAVE_NBTOOL_CONFIG_H */
 
 #if defined(__OpenBSD__)
 
