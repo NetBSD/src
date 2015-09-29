@@ -1,4 +1,4 @@
-/*	$NetBSD: _elftc.h,v 1.2 2014/03/09 16:58:03 christos Exp $	*/
+/*	$NetBSD: _elftc.h,v 1.3 2015/09/29 19:43:39 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joseph Koshy
@@ -315,6 +315,10 @@ struct name {							\
 #else
 #define	ELFTC_VCSID(ID)		/**/
 #endif	/* __GNUC__ */
+#endif
+
+#ifndef ELFTC_VCSID
+#define	ELFTC_VCSID(ID)		/**/
 #endif
 
 #endif	/* ELFTC_VCSID */
