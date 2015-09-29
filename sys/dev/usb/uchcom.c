@@ -1,4 +1,4 @@
-/*	$NetBSD: uchcom.c,v 1.13.6.5 2015/09/29 09:48:20 skrll Exp $	*/
+/*	$NetBSD: uchcom.c,v 1.13.6.6 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.5 2015/09/29 09:48:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uchcom.c,v 1.13.6.6 2015/09/29 11:38:29 skrll Exp $");
 
 /*
  * driver for WinChipHead CH341/340, the worst USB-serial chip in the world.
@@ -505,7 +505,7 @@ read_reg(struct uchcom_softc *sc,
 
 	err = generic_control_in(
 		sc, UCHCOM_REQ_READ_REG,
-		reg1|((uint16_t)reg2<<8), 0, buf, sizeof buf, &actin);
+		reg1|((uint16_t)reg2<<8), 0, buf, sizeof(buf), &actin);
 	if (err)
 		return err;
 
@@ -527,7 +527,7 @@ get_version(struct uchcom_softc *sc, uint8_t *rver)
 	int actin;
 
 	err = generic_control_in(
-		sc, UCHCOM_REQ_GET_VERSION, 0, 0, buf, sizeof buf, &actin);
+		sc, UCHCOM_REQ_GET_VERSION, 0, 0, buf, sizeof(buf), &actin);
 	if (err)
 		return err;
 

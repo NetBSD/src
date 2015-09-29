@@ -1,4 +1,4 @@
-/*	$NetBSD: ukyopon.c,v 1.16.16.4 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: ukyopon.c,v 1.16.16.5 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.4 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukyopon.c,v 1.16.16.5 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -160,7 +160,7 @@ ukyopon_ioctl(void *addr, int portno, u_long cmd, void *data, int flag,
 
 	switch (cmd) {
 	case UKYOPON_IDENTIFY:
-		strncpy(arg_id->ui_name, UKYOPON_NAME, sizeof arg_id->ui_name);
+		strncpy(arg_id->ui_name, UKYOPON_NAME, sizeof(arg_id->ui_name));
 		arg_id->ui_busno =
 		    device_unit(sc->sc_umodem.sc_udev->ud_bus->ub_usbctl);
 		arg_id->ui_address = sc->sc_umodem.sc_udev->ud_addr;

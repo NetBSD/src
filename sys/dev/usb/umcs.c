@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.8.2.4 2015/03/21 11:33:37 skrll Exp $ */
+/* $NetBSD: umcs.c,v 1.8.2.5 2015/09/29 11:38:29 skrll Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.4 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.8.2.5 2015/09/29 11:38:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,7 +285,7 @@ umcs7840_attach(device_t parent, device_t self, void *aux)
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 	    sc->sc_dev);
 
-	memset(&uca, 0, sizeof uca);
+	memset(&uca, 0, sizeof(uca));
 	uca.ibufsize = 256;
 	uca.obufsize = 256;
 	uca.ibufsizepad = 256;

@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.38 2015/09/23 13:44:01 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.39 2015/09/29 11:38:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.38 2015/09/23 13:44:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.39 2015/09/29 11:38:29 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -702,7 +702,7 @@ xhci_init(struct xhci_softc *sc)
 	if (hciversion < XHCI_HCIVERSION_1_0)
 		snprintb(sbuf, sizeof(sbuf), XHCI_HCCPREV1_BITS, hcc);
 	else
-		snprintb(sbuf, sizeof sbuf, XHCI_HCCV1_x_BITS, hcc);
+		snprintb(sbuf, sizeof(sbuf), XHCI_HCCV1_x_BITS, hcc);
 	aprint_debug_dev(sc->sc_dev, "hcc=%s\n", sbuf);
 	aprint_debug_dev(sc->sc_dev, "xECP %x\n", XHCI_HCC_XECP(hcc) * 4);
 
