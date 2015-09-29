@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.280 2015/09/25 10:30:36 martin Exp $
+# $NetBSD: shl.mi,v 1.281 2015/09/29 08:00:22 hannken Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -126,7 +126,7 @@
 ./usr/lib/libposix_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libppath_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libproc.so				comp-c-shlib		compatfile,dtrace
-./usr/lib/libproc.so.0				comp-c-shlib		compatfile,dtrace,
+./usr/lib/libproc.so.0				comp-c-shlib		compatfile,dtrace
 ./usr/lib/libproc_pic.a				comp-c-piclib		compatfile,dtrace
 ./usr/lib/libprop_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpthread_dbg_pic.a			comp-c-piclib		compatfile,picinstall
