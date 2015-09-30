@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.c,v 1.11 2015/02/26 10:31:52 ozaki-r Exp $	*/
+/*	$NetBSD: sdt.c,v 1.12 2015/09/30 20:59:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -95,6 +95,7 @@ static struct cdev		*sdt_cdev;
 /* declare all probes belonging to the provider */
 SDT_PROBE_DECLARE(proc,,,create);
 SDT_PROBE_DECLARE(proc,,,exec);
+SDT_PROBE_DECLARE(proc,,,exit);
 SDT_PROBE_DECLARE(proc,,,exec_success);
 SDT_PROBE_DECLARE(proc,,,exec_failure);
 SDT_PROBE_DECLARE(proc,,,signal_send);
@@ -121,6 +122,7 @@ static sdt_provider_t proc_provider = {
 	{ 
 		&SDT_NAME(proc,,,create),
 		&SDT_NAME(proc,,,exec),
+		&SDT_NAME(proc,,,exit),
 		&SDT_NAME(proc,,,exec_success),
 		&SDT_NAME(proc,,,exec_failure),
 		&SDT_NAME(proc,,,signal_send),
