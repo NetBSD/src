@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.93 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.94 2015/09/30 06:25:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.93 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.94 2015/09/30 06:25:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -132,7 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.93 2015/08/24 22:21:26 pooka Exp $
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
-#include "opt_gateway.h"
 #endif
 #include <net/if_fddi.h>
 
