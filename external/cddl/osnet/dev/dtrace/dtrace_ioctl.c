@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_ioctl.c,v 1.5 2015/06/19 02:33:00 riastradh Exp $	*/
+/*	$NetBSD: dtrace_ioctl.c,v 1.6 2015/09/30 20:59:13 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -660,9 +660,14 @@ again:
 
 		if (pvp == NULL && error == 0) {
 			char name[NAME_MAX];
+			const char *provider;
+			if (strcmp(pvd->dtvd_name, "proc") == 0)
+				provider = "sdt";
+			else
+				provider = pvd->dtvd_name;
 
 			if (snprintf(name, sizeof name, "dtrace_%s",
-			    pvd->dtvd_name) < sizeof name) {
+			    provider) < sizeof name) {
 				error = module_autoload(name,
 				    MODULE_CLASS_MISC);
 				if (error == 0)
