@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.80 2015/09/30 04:28:04 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.81 2015/09/30 08:42:04 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -452,7 +452,7 @@ struct livengood_tcpip_ctxdesc {
 #define IVAR_ALLOC_MASK  __BITS(0, 6)	/* Bit 5 and 6 are reserved */
 #define IVAR_VALID       __BIT(7)
 /* IVAR definitions for 82580 and newer */
-#define WMREG_IVAR_Q(x)	(WMREG_IVAR0 + ((x) % 2) * 4)
+#define WMREG_IVAR_Q(x)	(WMREG_IVAR0 + ((x) / 2) * 4)
 #define IVAR_TX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 8 : 24))
 #define IVAR_RX_MASK_Q(x) (0x000000ff << (((x) % 2) == 0 ? 0 : 16))
 /* IVAR definitions for 82576 */
