@@ -1,4 +1,4 @@
-/* $NetBSD: globals.h,v 1.20 2015/09/29 15:12:52 phx Exp $ */
+/* $NetBSD: globals.h,v 1.21 2015/09/30 14:14:32 phx Exp $ */
 
 #ifdef DEBUG
 #define	DPRINTF(x)	printf x
@@ -196,6 +196,8 @@ struct fs_ops *dsk_fsops(struct open_file *);
 
 DSK_DECL(pciide);
 DSK_DECL(siisata);
+
+extern int sata_delay[4];
 
 /* status */
 #define ATA_STS_BUSY		0x80
