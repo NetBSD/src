@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.12 2015/09/29 23:50:17 christos Exp $
+#	$NetBSD: Makefile,v 1.13 2015/09/30 00:17:09 christos Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -83,6 +83,7 @@ COPTS.dt_link.c		+= -Wno-stack-protector
 COPTS.dt_options.c	+= -Wno-stack-protector
 COPTS.dt_parser.c	+= -Wno-stack-protector
 COPTS.dt_pragma.c	+= -Wno-stack-protector
+COPTS.dt_print.c	+= -Wno-stack-protector
 COPTS.dt_printf.c	+= -Wno-stack-protector
 COPTS.dt_program.c	+= -Wno-stack-protector
 COPTS.dt_provider.c	+= -Wno-stack-protector
@@ -106,10 +107,6 @@ LFLAGS+=-l
 YFLAGS+=-d
 
 CLEANFILES=	dt_errtags.c dt_names.c dt_grammar.h
-
-.if ${_HOST_OSNAME} == "Darwin"
-COPTS.dt_print.c+=	-fno-stack-protector
-.endif
 
 MKERRTAGS=${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mkerrtags.sh 
 dt_errtags.c: ${MKERRTAGS} ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/dt_errtags.h 
