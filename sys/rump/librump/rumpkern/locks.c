@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.69 2014/04/25 18:13:59 pooka Exp $	*/
+/*	$NetBSD: locks.c,v 1.70 2015/09/30 01:31:56 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.69 2014/04/25 18:13:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.70 2015/09/30 01:31:56 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -368,7 +368,6 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 	if (__predict_false(l->l_flag & LW_RUMP_QEXIT)) {
 		struct proc *p = l->l_proc;
 
-		UNLOCKED(mtx, false);
 		mutex_exit(mtx); /* drop and retake later */
 
 		mutex_enter(p->p_lock);
@@ -383,7 +382,6 @@ docvwait(kcondvar_t *cv, kmutex_t *mtx, struct timespec *ts)
 		/* ok, we can exit and remove "reference" to l->private */
 
 		mutex_enter(mtx);
-		LOCKED(mtx, false);
 		rv = EINTR;
 	}
 	l->l_private = NULL;
