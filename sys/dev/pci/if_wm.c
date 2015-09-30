@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.349 2015/09/28 07:02:57 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.350 2015/09/30 04:28:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.349 2015/09/28 07:02:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.350 2015/09/30 04:28:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -334,6 +334,7 @@ struct wm_softc {
 
 	int sc_nvm_ver_major;
 	int sc_nvm_ver_minor;
+	int sc_nvm_ver_build;
 	int sc_nvm_addrbits;		/* NVM address bits */
 	unsigned int sc_nvm_wordsize;	/* NVM word size */
 	int sc_ich8_flash_base;
@@ -3580,6 +3581,17 @@ wm_initialize_hardware_bits(struct wm_softc *sc)
 			CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 			/* PCIe Control Register */
+			/*
+			 * 82573 Errata (unknown).
+			 *
+			 * 82574 Errata 25 and 82583 Errata 12
+			 * "Dropped Rx Packets":
+			 *   NVM Image Version 2.1.4 and newer has no this bug.
+			 */
+			reg = CSR_READ(sc, WMREG_GCR);
+			reg |= GCR_L1_ACT_WITHOUT_L0S_RX;
+			CSR_WRITE(sc, WMREG_GCR, reg);
+
 			if ((sc->sc_type == WM_T_82574)
 			    || (sc->sc_type == WM_T_82583)) {
 				/*
@@ -9822,6 +9834,7 @@ wm_nvm_version(struct wm_softc *sc)
 	case WM_T_82571:
 	case WM_T_82572:
 	case WM_T_82574:
+	case WM_T_82583:
 		check_version = true;
 		check_optionrom = true;
 		have_build = true;
@@ -9867,8 +9880,10 @@ wm_nvm_version(struct wm_softc *sc)
 printver:
 		aprint_verbose(", version %d.%d", sc->sc_nvm_ver_major,
 		    sc->sc_nvm_ver_minor);
-		if (have_build)
+		if (have_build) {
+			sc->sc_nvm_ver_build = build;
 			aprint_verbose(".%d", build);
+		}
 	}
 	if (check_optionrom) {
 		wm_nvm_read(sc, NVM_OFF_COMB_VER_PTR, 1, &off);
