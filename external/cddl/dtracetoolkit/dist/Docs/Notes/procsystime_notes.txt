@@ -1,0 +1,14 @@
+**************************************************************************
+* The following are extra notes on the procsystime command.
+*
+* $Id: procsystime_notes.txt,v 1.1.1.1 2015/09/30 22:01:08 christos Exp $
+*
+* COPYRIGHT: Copyright (c) 2007 Brendan Gregg.
+**************************************************************************
+
+
+* Can I trust the elapsed and on-cpu times?
+
+See the documentation for this point in the dtruss_notes.txt file.
+
+
