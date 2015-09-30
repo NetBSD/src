@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.2 2015/08/31 08:05:20 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.3 2015/09/30 07:12:32 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -32,7 +32,15 @@
 #ifndef	_NET_IF_LLATBL_H_
 #define	_NET_IF_LLATBL_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_gateway.h"
+#endif
+
 #include <sys/rwlock.h>
+#ifdef GATEWAY
+#include <sys/mutex.h>
+#endif
+
 #include <netinet/in.h>
 
 struct ifnet;
@@ -85,7 +93,11 @@ struct llentry {
 
 	LIST_ENTRY(llentry)	lle_chain;	/* chain of deleted items */
 	struct callout		lle_timer;
+#ifdef GATEWAY
+	kmutex_t		lle_lock;
+#else
 	krwlock_t		lle_lock;
+#endif
 
 #ifdef __NetBSD__
 #define	la_timer	lle_timer
@@ -101,6 +113,31 @@ struct llentry {
 #define LLE_LOCK_TRACE(n)
 #endif
 
+#ifdef GATEWAY
+#define	LLE_WLOCK(lle)		do { \
+					LLE_LOCK_TRACE(WL); \
+					mutex_enter(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_RLOCK(lle)		do { \
+					LLE_LOCK_TRACE(RL); \
+					mutex_enter(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_WUNLOCK(lle)	do { \
+					LLE_LOCK_TRACE(WU); \
+					mutex_exit(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_RUNLOCK(lle)	do { \
+					LLE_LOCK_TRACE(RU); \
+					mutex_exit(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_DOWNGRADE(lle)	do {} while (0)
+#define	LLE_TRY_UPGRADE(lle)	do {} while (0)
+#define	LLE_LOCK_INIT(lle)	mutex_init(&(lle)->lle_lock, MUTEX_DEFAULT, \
+				    IPL_NET)
+#define	LLE_LOCK_DESTROY(lle)	mutex_destroy(&(lle)->lle_lock)
+#define	LLE_WLOCK_ASSERT(lle)	KASSERT(mutex_owned(&(lle)->lle_lock))
+
+#else /* GATEWAY */
 #define	LLE_WLOCK(lle)		do { \
 					LLE_LOCK_TRACE(WL); \
 					rw_enter(&(lle)->lle_lock, RW_WRITER); \
@@ -126,6 +163,7 @@ struct llentry {
 #endif
 #define	LLE_LOCK_DESTROY(lle)	rw_destroy(&(lle)->lle_lock)
 #define	LLE_WLOCK_ASSERT(lle)	KASSERT(rw_write_held(&(lle)->lle_lock))
+#endif /* GATEWAY */
 
 #define LLE_IS_VALID(lle)	(((lle) != NULL) && ((lle) != (void *)-1))
 

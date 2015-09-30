@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.5 2015/09/28 07:55:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.6 2015/09/30 07:12:32 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -377,8 +377,20 @@ lltable_free(struct lltable *llt)
 			LLE_REMREF(lle);
 #if defined(__NetBSD__)
 		/* XXX should have callback? */
-		if (lle->la_rt != NULL)
-			rtfree(lle->la_rt);
+		if (lle->la_rt != NULL) {
+			struct rtentry *rt = lle->la_rt;
+			lle->la_rt = NULL;
+#ifdef GATEWAY
+			/* XXX cannot call rtfree with holding mutex(IPL_NET) */
+			LLE_ADDREF(lle);
+			LLE_WUNLOCK(lle);
+#endif
+			rtfree(rt);
+#ifdef GATEWAY
+			LLE_WLOCK(lle);
+			LLE_REMREF(lle);
+#endif
+		}
 #endif
 		llentry_free(lle);
 	}
