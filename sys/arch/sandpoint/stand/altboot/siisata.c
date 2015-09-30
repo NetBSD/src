@@ -1,4 +1,4 @@
-/* $NetBSD: siisata.c,v 1.5 2012/01/22 13:08:17 phx Exp $ */
+/* $NetBSD: siisata.c,v 1.6 2015/09/30 14:14:32 phx Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,6 +44,8 @@
 static int satapresense(struct dkdev_ata *, int);
 
 static uint32_t pciiobase = PCI_XIOBASE;
+
+int sata_delay[4] = { 3, 3, 3, 3 };	/* drive power-up delay per channel */
 
 int
 siisata_match(unsigned tag, void *data)
@@ -110,13 +112,24 @@ siisata_init(unsigned tag, void *data)
 	for (n = 0; n < nchan; n++) {
 		l->presense[n] = satapresense(l, n);
 		if (l->presense[n] == 0) {
-			DPRINTF(("port %d not present\n", n));
-			l->presense[n] = 0;
-			continue;
+			/* wait some seconds to power-up the drive */
+			for (retries = 0; retries < sata_delay[n]; retries++) {
+				wakeup_drive(l, n);
+				printf("Waiting %2d seconds for powering up "
+				    "port %d.\r", sata_delay[n] - retries, n);
+				delay(1000 * 1000);
+				if ((l->presense[n] = satapresense(l, n)) != 0)
+					break;
+			}
+			putchar('\n');
+			if (l->presense[n] == 0) {
+				DPRINTF(("port %d not present\n", n));
+				continue;
+			}
 		}
 		if (atachkpwr(l, n) != ATA_PWR_ACTIVE) {
 			/* drive is probably sleeping, wake it up */
-			for (retries = 0; retries < 10; retries++) {
+			for (retries = 0; retries < 20; retries++) {
 				wakeup_drive(l, n);
 				DPRINTF(("port %d spinning up...\n", n));
 				delay(1000 * 1000);
@@ -127,10 +140,11 @@ siisata_init(unsigned tag, void *data)
 		} else {
 			/* check to see whether soft reset works */
 			DPRINTF(("port %d active\n", n));
-			for (retries = 0; retries < 10; retries++) {
+			for (retries = 0; retries < 20; retries++) {
 				l->presense[n] = perform_atareset(l, n);
 				if (l->presense[n] != 0)
 					break;
+				wakeup_drive(l, n);
 				DPRINTF(("port %d cold-starting...\n", n));
 				delay(1000 * 1000);
 			}
