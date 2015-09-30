@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.90 2015/09/21 23:31:41 phx Exp $
+# $NetBSD: GENERIC,v 1.91 2015/09/30 14:22:02 phx Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.90 $"
+#ident 		"GENERIC-$Revision: 1.91 $"
 
 maxusers	32
 
@@ -173,9 +173,9 @@ config		netbsd	root on ? type ?
 mainbus0	at root
 cpu*		at mainbus0
 
-cfi0		at mainbus0
-nor*		at cfi?
-flash*		at nor?
+#cfi0		at mainbus0
+#nor*		at cfi?
+#flash*		at nor?
 
 nhpow0		at mainbus0			# NH230/231 power,LED,buttons
 
@@ -189,6 +189,7 @@ com0		at eumb? unit 0			# console at 0x4500
 satmgr0 	at eumb? unit 1 		# satmgr at 0x4600
 ociic*		at eumb?
 iic*		at ociic?
+lmtemp*		at iic? addr 0x48		# LM75 temperature sensor
 rs5c372rtc*	at iic? addr 0x32
 s390rtc*	at iic? addr 0x30
 pcf8563rtc*	at iic? addr 0x51
