@@ -1,4 +1,4 @@
-/*	$NetBSD: locks.c,v 1.70 2015/09/30 01:31:56 ozaki-r Exp $	*/
+/*	$NetBSD: locks.c,v 1.71 2015/09/30 02:45:33 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.70 2015/09/30 01:31:56 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks.c,v 1.71 2015/09/30 02:45:33 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -71,12 +71,15 @@ static lockops_t rw_lockops = {
     lockdebug_locked(lock, NULL, (uintptr_t)__builtin_return_address(0), shar)
 #define UNLOCKED(lock, shar)		\
     lockdebug_unlocked(lock, (uintptr_t)__builtin_return_address(0), shar)
+#define BARRIER(lock, slp)		\
+    lockdebug_barrier(lock, slp)
 #else
 #define ALLOCK(a, b)
 #define FREELOCK(a)
 #define WANTLOCK(a, b)
 #define LOCKED(a, b)
 #define UNLOCKED(a, b)
+#define BARRIER(a, b)
 #endif
 
 /*
@@ -138,6 +141,7 @@ mutex_enter(kmutex_t *mtx)
 {
 
 	WANTLOCK(mtx, 0);
+	BARRIER(mtx, 1);
 	rumpuser_mutex_enter(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -147,6 +151,7 @@ mutex_spin_enter(kmutex_t *mtx)
 {
 
 	WANTLOCK(mtx, 0);
+	BARRIER(mtx, 1);
 	rumpuser_mutex_enter_nowrap(RUMPMTX(mtx));
 	LOCKED(mtx, false);
 }
@@ -229,8 +234,8 @@ void
 rw_enter(krwlock_t *rw, const krw_t op)
 {
 
-
 	WANTLOCK(rw, op == RW_READER);
+	BARRIER(rw, 1);
 	rumpuser_rw_enter(krw2rumprw(op), RUMPRW(rw));
 	LOCKED(rw, op == RW_READER);
 }
