@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2015/07/22 16:37:33 mrg Exp $
+#	$NetBSD: Makefile,v 1.69 2015/09/30 22:58:02 rjs Exp $
 
 # xf86-input drivers
 
@@ -181,6 +181,11 @@ SUBDIR+= \
 SUBDIR+= \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "luna68k"
+
+.if ${MACHINE} == "mac68k"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "mac68k"
 
 .if ${MACHINE} == "macppc"
 SUBDIR+= \
