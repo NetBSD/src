@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.79 2015/09/07 15:19:05 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.80 2015/09/30 04:28:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -918,6 +918,7 @@ struct livengood_tcpip_ctxdesc {
 #define GCR_CMPL_TMOUT_10MS	0x00001000
 #define GCR_CMPL_TMOUT_RESEND	0x00010000
 #define GCR_CAP_VER2		0x00040000
+#define GCR_L1_ACT_WITHOUT_L0S_RX 0x08000000
 
 #define WMREG_FACTPS	0x5b30	/* Function Active and Power State to MNG */
 #define FACTPS_MNGCG		0x20000000
