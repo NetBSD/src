@@ -301,7 +301,6 @@ pfprint_fp(dtrace_hdl_t *dtp, FILE *fp, const char *format,
     const dt_pfargd_t *pfd, const void *addr, size_t size, uint64_t normal)
 {
 	double n = (double)normal;
-	long double ldn = (long double)normal;
 
 	switch (size) {
 	case sizeof (float):
@@ -312,6 +311,7 @@ pfprint_fp(dtrace_hdl_t *dtp, FILE *fp, const char *format,
 		    *((double *)addr) / n));
 #if !defined(__arm__) && !defined(__powerpc__) && !defined(__mips__)
 	case sizeof (long double):
+		long double ldn = (long double)normal;
 		return (dt_printf(dtp, fp, format,
 		    *((long double *)addr) / ldn));
 #endif
