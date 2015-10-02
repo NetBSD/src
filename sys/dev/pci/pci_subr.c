@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.135 2015/10/02 05:22:53 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.136 2015/10/02 07:04:17 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.135 2015/10/02 05:22:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.136 2015/10/02 07:04:17 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2710,7 +2710,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	for (i = 0; i < size ; i += 2) {
 		reg = regs[o2i(extcapoff + PCI_TPH_REQ_STTBL + i / 2)];
 		for (j = 0; j < 2 ; j++) {
-			uint16_t entry = reg;
+			uint32_t entry = reg;
 
 			if (j != 0)
 				entry >>= 16;
