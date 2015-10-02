@@ -225,7 +225,7 @@ dtrace_getstackdepth(int aframes)
 }
 
 ulong_t
-dtrace_getreg(struct regs *regs, uint_t reg)
+dtrace_getreg(struct trapframe *rp, uint_t reg)
 {
 
 	return (0);
