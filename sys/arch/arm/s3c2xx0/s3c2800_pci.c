@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.21 2014/03/29 19:28:26 christos Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.22 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.21 2014/03/29 19:28:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.22 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -445,6 +445,10 @@ s3c2800_pci_decompose_tag(void *v, pcitag_t tag, int *bp, int *dp, int *fp)
 static vaddr_t
 make_pci_conf_va(struct sspci_softc * sc, pcitag_t tag, int offset)
 {
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (vaddr_t) -1;
+
 	if ((tag & BUSNO_MASK) == 0) {
 		/* configuration type 0 */
 		int devno = tag_to_devno(tag);

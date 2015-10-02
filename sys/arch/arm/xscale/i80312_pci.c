@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312_pci.c,v 1.15 2014/01/28 12:02:48 martin Exp $	*/
+/*	$NetBSD: i80312_pci.c,v 1.16 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.15 2014/01/28 12:02:48 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80312_pci.c,v 1.16 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -179,6 +179,9 @@ i80312_pci_conf_setup(struct i80312_softc *sc, pcitag_t tag, int offset,
 {
 	pcireg_t binfo;
 	int pbus, sbus;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (1);
 
 	i80312_pci_decompose_tag(sc, tag, &ps->ps_b, &ps->ps_d, &ps->ps_f);
 

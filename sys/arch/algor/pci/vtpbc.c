@@ -1,4 +1,4 @@
-/*	$NetBSD: vtpbc.c,v 1.9 2012/10/27 17:17:25 chs Exp $	*/
+/*	$NetBSD: vtpbc.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vtpbc.c,v 1.9 2012/10/27 17:17:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vtpbc.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,9 @@ vtpbc_conf_addr(struct vtpbc_config *vt, pcitag_t tag, int offset,
     u_int32_t *cfgoff, u_int32_t *ad_low)
 {
 	int b, d, f;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (1);
 
 	vtpbc_decompose_tag(vt, tag, &b, &d, &f);
 
