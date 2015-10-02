@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.59 2015/09/13 09:21:51 mbalmer Exp $
+#	$NetBSD: airport,v 1.60 2015/10/02 09:01:23 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -7304,7 +7304,7 @@ STK:Sterling (Crosson Field), CO, USA
 STL:St. Louis/Lambert International, Missouri, USA
 STM:Santarem, PA, Brazil
 STN:London (Stansted), UK
-STO:All Airports around Stockholm, Sweden
+STO:All airports around Stockholm, Sweden
 STP:St. Paul (Holman Field), MN, USA
 STQ:St. Marys Municipal Airport, PA, USA
 STR:Stuttgart (Echterdingen), Germany
