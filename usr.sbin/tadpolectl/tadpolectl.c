@@ -1,4 +1,4 @@
-/* $NetBSD: tadpolectl.c,v 1.8 2009/04/30 16:10:10 nakayama Exp $ */
+/* $NetBSD: tadpolectl.c,v 1.9 2015/10/02 20:42:15 joerg Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
 int aflag, nflag, wflag, dev;
 
 #define PROTO(x) int x __P((int, int, int));
-void usage __P((void));
+static void usage __P((void)) __dead;
 static void parse __P((char *));
 char *dashdot __P((const char *));
 int main __P((int, char *[]));
@@ -663,8 +663,8 @@ FUNC(hw_serial_power)
 	return(1);
 }
 
-void
-usage()
+static void
+usage(void)
 {
 	(void)fprintf(stderr,
 	    "usage: tadpolectl [-n] name ...\n"
