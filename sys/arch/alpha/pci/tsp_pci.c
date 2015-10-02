@@ -1,4 +1,4 @@
-/* $NetBSD: tsp_pci.c,v 1.9 2011/06/14 15:34:22 matt Exp $ */
+/* $NetBSD: tsp_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.9 2011/06/14 15:34:22 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsp_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,9 @@ tsp_conf_read(void *cpv, pcitag_t tag, int offset)
 	pcireg_t *datap, data;
 	struct tsp_config *pcp = cpv;
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	datap = S_PAGE(pcp->pc_iobase | P_PCI_CONFIG | tag | (offset & ~3));
 	alpha_mb();
 	data = *datap;
@@ -122,6 +125,9 @@ tsp_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 {
 	pcireg_t *datap;
 	struct tsp_config *pcp = cpv;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
 
 	datap = S_PAGE(pcp->pc_iobase | P_PCI_CONFIG | tag | (offset & ~3));
 	alpha_mb();

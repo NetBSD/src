@@ -1,4 +1,4 @@
-/*	$NetBSD: bonito_pci.c,v 1.11 2014/03/11 08:19:45 mrg Exp $	*/
+/*	$NetBSD: bonito_pci.c,v 1.12 2015/10/02 05:22:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.11 2014/03/11 08:19:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bonito_pci.c,v 1.12 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,6 +118,9 @@ bonito_conf_addr(struct bonito_config *bc, pcitag_t tag, int offset,
     u_int32_t *cfgoff, u_int32_t *pcimap_cfg)
 {
 	int b, d, f;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return true;
 
 	bonito_decompose_tag(bc, tag, &b, &d, &f);
 

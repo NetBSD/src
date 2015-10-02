@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3pci.c,v 1.20 2014/12/27 16:19:33 nonaka Exp $	*/
+/*	$NetBSD: pq3pci.c,v 1.21 2015/10/02 05:22:51 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.20 2014/12/27 16:19:33 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3pci.c,v 1.21 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1058,8 +1058,10 @@ pq3pci_conf_read(void *v, pcitag_t tag, int reg)
 	struct pq3pci_softc * const sc = v;
 	struct genppc_pci_chipset * const pc = &sc->sc_pc;
 
-	if (reg >= 256) {
-		if (!sc->sc_pcie)
+	if (reg < 0)
+		return 0xffffffff;
+	if (reg >= PCI_CONF_SIZE) {
+		if (!sc->sc_pcie || reg >= PCI_EXTCONF_SIZE)
 			return 0xffffffff;
 		reg = (reg & 0xff) | ((reg & 0xf00) << 16);
 	}
@@ -1096,8 +1098,10 @@ pq3pci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	struct pq3pci_softc * const sc = v;
 	struct genppc_pci_chipset * const pc = &sc->sc_pc;
 
-	if (reg >= 256) {
-		if (!sc->sc_pcie)
+	if (reg < 0)
+		return;
+	if (reg >= PCI_CONF_SIZE) {
+		if (!sc->sc_pcie || reg >= PCI_EXTCONF_SIZE)
 			return;
 		reg = (reg & 0xff) | ((reg & 0xf00) << 16);
 	}

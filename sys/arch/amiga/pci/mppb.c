@@ -1,4 +1,4 @@
-/*	$NetBSD: mppb.c,v 1.7 2012/10/27 17:17:34 chs Exp $ */
+/*	$NetBSD: mppb.c,v 1.8 2015/10/02 05:22:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -197,6 +197,9 @@ mppb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	uint32_t data;
 	uint32_t bus, dev, func;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	
@@ -215,6 +218,9 @@ mppb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 {
 	uint32_t bus, dev, func;
 	
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	
 	bus_space_write_4(pc->pci_conf_datat, pc->pci_conf_datah,

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.70 2015/04/27 07:03:58 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.71 2015/10/02 05:22:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.70 2015/04/27 07:03:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.71 2015/10/02 05:22:52 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,6 +137,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.70 2015/04/27 07:03:58 knakahara E
 
 #if NACPICA > 0
 #include <machine/mpacpi.h>
+#if !defined(NO_PCI_EXTENDED_CONFIG)
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_mcfg.h>
+#endif
 #endif
 
 #include <machine/mpconfig.h>
@@ -509,6 +513,10 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
 	}
 #endif /* __HAVE_PCI_MSI_MSIX */
+
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+	acpimcfg_map_bus(self, pba->pba_pc, pba->pba_bus);
+#endif
 }
 
 int
@@ -604,6 +612,7 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pci_chipset_tag_t ipc;
 	pcireg_t data;
 	struct pci_conf_lock ocl;
+	int dev;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -611,6 +620,23 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		if ((ipc->pc_present & PCI_OVERRIDE_CONF_READ) == 0)
 			continue;
 		return (*ipc->pc_ov->ov_conf_read)(ipc->pc_ctx, pc, tag, reg);
+	}
+
+	pci_decompose_tag(pc, tag, NULL, &dev, NULL);
+	if (__predict_false(pci_mode == 2 && dev >= 16))
+		return (pcireg_t) -1;
+
+	if (reg < 0)
+		return (pcireg_t) -1;
+	if (reg >= PCI_CONF_SIZE) {
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+		if (reg >= PCI_EXTCONF_SIZE)
+			return (pcireg_t) -1;
+		acpimcfg_conf_read(pc, tag, reg, &data);
+		return data;
+#else
+		return (pcireg_t) -1;
+#endif
 	}
 
 	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
@@ -624,6 +650,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	pci_chipset_tag_t ipc;
 	struct pci_conf_lock ocl;
+	int dev;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -632,6 +659,22 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 			continue;
 		(*ipc->pc_ov->ov_conf_write)(ipc->pc_ctx, pc, tag, reg,
 		    data);
+		return;
+	}
+
+	pci_decompose_tag(pc, tag, NULL, &dev, NULL);
+	if (__predict_false(pci_mode == 2 && dev >= 16)) {
+		return;
+	}
+
+	if (reg < 0)
+		return;
+	if (reg >= PCI_CONF_SIZE) {
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+		if (reg >= PCI_EXTCONF_SIZE)
+			return;
+		acpimcfg_conf_write(pc, tag, reg, data);
+#endif
 		return;
 	}
 

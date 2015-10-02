@@ -1,4 +1,4 @@
-/* $NetBSD: irongate_pci.c,v 1.9 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: irongate_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.9 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irongate_pci.c,v 1.10 2015/10/02 05:22:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,6 +116,9 @@ irongate_conf_read(void *ipv, pcitag_t tag, int offset)
 {
 	int d;
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	/*
 	 * The AMD 751 appears in PCI configuration space, but
 	 * that is ... counter-intuitive to the way we normally
@@ -136,6 +139,9 @@ irongate_conf_read0(void *ipv, pcitag_t tag, int offset)
 	pcireg_t data;
 	int s;
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	PCI_CONF_LOCK(s);
 	REGVAL(PCI_CONF_ADDR) = (CONFADDR_ENABLE | tag | (offset & 0xff));
 	alpha_mb();
@@ -151,6 +157,9 @@ void
 irongate_conf_write(void *ipv, pcitag_t tag, int offset, pcireg_t data)
 {
 	int s;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
 
 	PCI_CONF_LOCK(s);
 	REGVAL(PCI_CONF_ADDR) = (CONFADDR_ENABLE | tag | (offset & 0xff));
