@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.192 2015/09/30 07:12:32 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.193 2015/10/02 03:08:26 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -490,7 +490,7 @@ typedef struct ifnet {
 #define	IF_AFDATA_WLOCK_ASSERT(ifp)	\
 	KASSERT(rw_write_held((ifp)->if_afdata_lock))
 #define	IF_AFDATA_UNLOCK_ASSERT(ifp)	\
-	KASSERT(!rw_lock_head((ifp)->if_afdata_lock))
+	KASSERT(!rw_lock_held((ifp)->if_afdata_lock))
 #endif /* GATEWAY */
 
 #define IFQ_LOCK(_ifq)		if ((_ifq)->ifq_lock) mutex_enter((_ifq)->ifq_lock)
