@@ -57,7 +57,6 @@ extern "C" {
 #ifdef illumos
 #include <sys/systm.h>
 #else
-#include <sys/cpuvar.h>
 #include <sys/proc.h>
 #include <sys/param.h>
 #include <sys/linker.h>
@@ -2449,6 +2448,18 @@ extern void dtrace_helpers_destroy(proc_t *);
 #define DTRACE_INVOP_PUSHM	1
 #define DTRACE_INVOP_POPM	2
 #define DTRACE_INVOP_B		3
+
+#define	DTRACE_INVOP_MOV_IP_SP		1
+#define	DTRACE_INVOP_BX_LR		2
+#define	DTRACE_INVOP_MOV_PC_LR		3
+#define	DTRACE_INVOP_LDM		4
+#define	DTRACE_INVOP_LDMIB		5
+#define	DTRACE_INVOP_LDR_IMM		6
+#define	DTRACE_INVOP_MOVW		7
+#define	DTRACE_INVOP_MOV_IMM		8
+#define	DTRACE_INVOP_CMP_IMM		9
+#define	DTRACE_INVOP_B_LABEL		10
+#define	DTRACE_INVOP_PUSH		11
 
 #elif defined(__aarch64__)
 
