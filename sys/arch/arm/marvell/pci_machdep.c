@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.8 2014/03/30 01:19:20 christos Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.9 2015/10/02 05:22:50 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.8 2014/03/30 01:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.9 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include "opt_mvsoc.h"
 #include "gtpci.h"
@@ -266,6 +266,9 @@ gtpci_mbus_conf_read(void *v, pcitag_t tag, int reg)
 	struct gtpci_softc *sc = v;
 	const pcireg_t addr = tag | reg;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
+
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTPCI_MBUS_CA,
 	    addr | GTPCI_CA_CONFIGEN);
 	if ((addr | GTPCI_CA_CONFIGEN) !=
@@ -280,6 +283,9 @@ gtpci_mbus_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct gtpci_softc *sc = v;
 	pcireg_t addr = tag | (reg & 0xfc);
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, GTPCI_MBUS_CA,
 	    addr | GTPCI_CA_CONFIGEN);
@@ -373,6 +379,9 @@ mvpex_mbus_conf_read(void *v, pcitag_t tag, int reg)
 	pcireg_t addr, data, pci_cs;
 	uint32_t stat;
 	int bus, dev, func, pexbus, pexdev;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
 
 	mvpex_decompose_tag(v, tag, &bus, &dev, &func);
 

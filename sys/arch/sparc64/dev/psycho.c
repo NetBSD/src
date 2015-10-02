@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.120 2014/10/18 08:33:27 snj Exp $	*/
+/*	$NetBSD: psycho.c,v 1.121 2015/10/02 05:22:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.120 2014/10/18 08:33:27 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.121 2015/10/02 05:22:52 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -1405,7 +1405,7 @@ psycho_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 
 	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__,
 		(long)tag, reg));
-	if (PCITAG_NODE(tag) != -1) {
+	if (PCITAG_NODE(tag) != -1 && (unsigned int)reg < PCI_CONF_SIZE) {
 
 		DPRINTF(PDB_CONF, ("asi=%x addr=%qx (offset=%x) ...",
 			sc->sc_configaddr._asi,
@@ -1451,7 +1451,10 @@ psycho_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data
 		DPRINTF(PDB_CONF, ("%s: bad addr", __func__));
 		return;
 	}
-		
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	bus_space_write_4(sc->sc_configtag, sc->sc_configaddr,
 		PCITAG_OFFSET(tag) + reg, data);
 }

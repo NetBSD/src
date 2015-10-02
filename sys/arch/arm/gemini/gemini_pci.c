@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.17 2014/03/30 01:19:20 christos Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.17 2014/03/30 01:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include "opt_gemini.h"
 #include "opt_pci.h"
@@ -285,6 +285,10 @@ static int
 gemini_pci_conf_setup(struct obio_softc *sc, pcitag_t tag, int offset,
 	struct pciconf_state *ps)
 {
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (1);
+
 	gemini_pci_decompose_tag(sc, tag, &ps->ps_b, &ps->ps_d, &ps->ps_f);
 
 	ps->ps_addr_val =
