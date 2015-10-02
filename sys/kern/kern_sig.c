@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.319 2013/11/22 21:04:11 christos Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.320 2015/10/02 16:54:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,9 +70,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.319 2013/11/22 21:04:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.320 2015/10/02 16:54:15 christos Exp $");
 
 #include "opt_ptrace.h"
+#include "opt_dtrace.h"
 #include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -131,25 +132,19 @@ int (*coredump_vec)(struct lwp *, const char *) =
 /*
  * DTrace SDT provider definitions
  */
-SDT_PROBE_DEFINE(proc,,,signal_send,signal-send,
-	    "struct lwp *", NULL,	/* target thread */
-	    "struct proc *", NULL,	/* target process */
-	    "int", NULL, 		/* signal */
-	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,signal_discard,signal-discard,
-	    "struct lwp *", NULL,	/* target thread */
-	    "struct proc *", NULL,	/* target process */
-	    "int", NULL, 		/* signal */
-	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,signal_clear,signal-clear,
-	    "int", NULL,		/* signal */
-	    NULL, NULL, NULL, NULL,
-	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,signal_handle,signal-handle,
-	    "int", NULL,		/* signal */
-	    "ksiginfo_t *", NULL,
-	    "void (*)(void)", NULL,	/* handler address */
-	    NULL, NULL, NULL, NULL);
+SDT_PROVIDER_DECLARE(proc);
+SDT_PROBE_DEFINE3(proc, kernel, , signal__send,
+    "struct lwp *", 	/* target thread */
+    "struct proc *", 	/* target process */
+    "int");		/* signal */
+SDT_PROBE_DEFINE3(proc, kernel, , signal__discard,
+    "struct lwp *",	/* target thread */
+    "struct proc *",	/* target process */
+    "int");  		/* signal */
+SDT_PROBE_DEFINE3(proc, kernel, , signal__handle,
+    "int", 		/* signal */
+    "ksiginfo_t *", 	/* signal info */
+    "void (*)(void)");	/* handler address */
 
 
 static struct pool_allocator sigactspool_allocator = {
@@ -1032,7 +1027,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	if (l->l_refcnt == 0)
 		return 0;
 
-	SDT_PROBE(proc,,,signal_send, l, p, sig,  0, 0);
+	SDT_PROBE(proc, kernel, , signal__send, l, p, sig, 0, 0);
 
 	/*
 	 * Have the LWP check for signals.  This ensures that even if no LWP
@@ -1202,7 +1197,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 {
 	int prop, signo = ksi->ksi_signo;
 	struct sigacts *sa;
-	struct lwp *l;
+	struct lwp *l = NULL;
 	ksiginfo_t *kp;
 	lwpid_t lid;
 	sig_t action;
@@ -1246,7 +1241,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 * is being caught, make sure to save any ksiginfo.
 			 */
 			if ((kp = ksiginfo_alloc(p, ksi, PR_NOWAIT)) == NULL)
-				return;
+				goto discard;
 			sigput(&p->p_sigpend, p, kp);
 		}
 	} else {
@@ -1271,7 +1266,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 		 * SIG_IGN, action will be SIG_DFL here.
 		 */
 		if (sigismember(&p->p_sigctx.ps_sigignore, signo))
-			return;
+			goto discard;
 
 		else if (sigismember(&p->p_sigctx.ps_sigcatch, signo))
 			action = SIG_CATCH;
@@ -1285,7 +1280,7 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 			 * if sleeping, and don't clear any pending SIGCONT.
 			 */
 			if (prop & SA_TTYSTOP && p->p_pgrp->pg_jobc == 0)
-				return;
+				goto discard;
 
 			if (prop & SA_KILL && p->p_nice > NZERO)
 				p->p_nice = NZERO;
@@ -1315,14 +1310,14 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	if ((prop & SA_CANTMASK) == 0 && !LIST_EMPTY(&p->p_sigwaiters) &&
 	    p->p_stat == SACTIVE && (p->p_sflag & PS_STOPPING) == 0 &&
 	    sigunwait(p, ksi))
-		return;
+		goto discard;
 
 	/*
 	 * XXXSMP Should be allocated by the caller, we're holding locks
 	 * here.
 	 */
 	if (kp == NULL && (kp = ksiginfo_alloc(p, ksi, PR_NOWAIT)) == NULL)
-		return;
+		goto discard;
 
 	/*
 	 * LWP private signals are easy - just find the LWP and post
@@ -1416,12 +1411,17 @@ deliver:
 		if (sigpost(l, action, prop, kp->ksi_signo) && !toall)
 			break;
 	}
+	signo = -1;
 out:
 	/*
 	 * If the ksiginfo wasn't used, then bin it.  XXXSMP freeing memory
 	 * with locks held.  The caller should take care of this.
 	 */
 	ksiginfo_free(kp);
+	if (signo == -1)
+		return;
+discard:
+	SDT_PROBE(proc, kernel, , signal__discard, l, p, signo, 0, 0);
 }
 
 void
@@ -1704,10 +1704,6 @@ issignal(struct lwp *l)
 
 		prop = sigprop[signo];
 
-		/* XXX no siginfo? */
-		SDT_PROBE(proc,,,signal_handle, signo, 0, 
-			SIGACTION(p, signo).sa_handler, 0, 0);
-
 		/*
 		 * Decide whether the signal should be returned.
 		 */
@@ -1839,6 +1835,8 @@ postsig(int signo)
 		ktrpsig(signo, action, returnmask, &ksi);
 		mutex_enter(p->p_lock);
 	}
+
+	SDT_PROBE(proc, kernel, , signal__handle, signo, &ksi, action, 0, 0);
 
 	if (action == SIG_DFL) {
 		/*
