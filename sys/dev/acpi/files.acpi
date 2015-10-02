@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.96 2015/09/21 12:32:06 nonaka Exp $
+#	$NetBSD: files.acpi,v 1.97 2015/10/02 05:22:52 msaitoh Exp $
 
 include "dev/acpi/acpica/files.acpica"
 
@@ -18,6 +18,7 @@ device	acpi: acpica, acpiapmbus, acpinodebus, acpiecdtbus, acpihpetbus, acpiwdrt
 attach	acpi at acpibus
 file	dev/acpi/acpi.c			acpi
 file	dev/acpi/acpi_debug.c		acpi
+file	dev/acpi/acpi_mcfg.c		acpi
 file	dev/acpi/acpi_pci.c		acpi
 file	dev/acpi/acpi_pci_link.c	acpi
 file	dev/acpi/acpi_power.c		acpi

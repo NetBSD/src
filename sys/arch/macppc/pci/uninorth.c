@@ -1,4 +1,4 @@
-/*	$NetBSD: uninorth.c,v 1.17 2013/05/01 14:24:48 macallan Exp $	*/
+/*	$NetBSD: uninorth.c,v 1.18 2015/10/02 05:22:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.17 2013/05/01 14:24:48 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uninorth.c,v 1.18 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -194,6 +194,9 @@ uninorth_conf_read(void *cookie, pcitag_t tag, int reg)
 	int bus, dev, func, s;
 	uint32_t x;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)
 		daddr++;
@@ -236,6 +239,9 @@ uninorth_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 	int bus, dev, func, s;
 	uint32_t x;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)
 		daddr++;
@@ -272,6 +278,9 @@ uninorth_conf_read_v3(void *cookie, pcitag_t tag, int reg)
 	int bus, dev, func, s;
 	uint32_t x;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)
 		daddr++;
@@ -303,6 +312,9 @@ uninorth_conf_write_v3(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 	int32_t *daddr = pc->pc_data;
 	int bus, dev, func, s;
 	uint32_t x;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	/* UniNorth seems to have a 64bit data port */
 	if (reg & 0x04)

@@ -1,4 +1,4 @@
-/*	$NetBSD: footbridge_pci.c,v 1.27 2014/03/30 01:19:20 christos Exp $	*/
+/*	$NetBSD: footbridge_pci.c,v 1.28 2015/10/02 05:22:49 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.27 2014/03/30 01:19:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: footbridge_pci.c,v 1.28 2015/10/02 05:22:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +180,9 @@ footbridge_pci_conf_read(void *pcv, pcitag_t tag, int reg)
 	u_int address;
 	pcireg_t data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return ((pcireg_t) -1);
+
 	footbridge_pci_decompose_tag(pcv, tag, &bus, &device, &function);
 	if (bus == 0)
 		/* Limited to 12 devices or we exceed type 0 config space */
@@ -203,6 +206,9 @@ footbridge_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 {
 	int bus, device, function;
 	u_int address;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	footbridge_pci_decompose_tag(pcv, tag, &bus, &device, &function);
 	if (bus == 0)

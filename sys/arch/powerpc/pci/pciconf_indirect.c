@@ -1,4 +1,4 @@
-/* $NetBSD: pciconf_indirect.c,v 1.5 2011/06/18 06:41:43 matt Exp $ */
+/* $NetBSD: pciconf_indirect.c,v 1.6 2015/10/02 05:22:52 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.5 2011/06/18 06:41:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf_indirect.c,v 1.6 2015/10/02 05:22:52 msaitoh Exp $");
 
 #define _POWERPC_BUS_DMA_PRIVATE
 
@@ -107,6 +107,9 @@ genppc_pci_indirect_conf_read(void *v, pcitag_t tag, int reg)
 	pcireg_t data;
 	int s;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	s = splhigh();
 	out32rb(pc->pc_addr, tag | reg);
 	data = in32rb(pc->pc_data);
@@ -121,6 +124,9 @@ genppc_pci_indirect_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	pci_chipset_tag_t pc = (pci_chipset_tag_t)v;
 	int s;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	s = splhigh();
 	out32rb(pc->pc_addr, tag | reg);

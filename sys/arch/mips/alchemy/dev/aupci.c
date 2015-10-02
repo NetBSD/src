@@ -1,4 +1,4 @@
-/* $NetBSD: aupci.c,v 1.16 2015/06/27 03:33:18 matt Exp $ */
+/* $NetBSD: aupci.c,v 1.17 2015/10/02 05:22:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -35,7 +35,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.16 2015/06/27 03:33:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aupci.c,v 1.17 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -333,6 +333,9 @@ aupci_conf_access(void *v, int dir, pcitag_t tag, int reg, pcireg_t *datap)
 	bus_addr_t		addr;
 	int			b, d, f;
 	bus_space_handle_t	h;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return false;
 
 	aupci_decompose_tag(v, tag, &b, &d, &f);
 	if (b) {

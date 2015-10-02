@@ -1,4 +1,4 @@
-/*	$NetBSD: gapspci_pci.c,v 1.15 2014/03/31 13:12:55 christos Exp $	*/
+/*	$NetBSD: gapspci_pci.c,v 1.16 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Marcus Comstedt.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.15 2014/03/31 13:12:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gapspci_pci.c,v 1.16 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +162,9 @@ gaps_conf_read(void *v, pcitag_t tag, int reg)
 	if (tag != GAPS_PCITAG_MAGIC)
 		return -1;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
+
 	if (reg == (PCI_MAPREG_START + 4)) {
 		/*
 		 * We fake the BAR -- just return the physical address
@@ -179,6 +182,9 @@ gaps_conf_write(void *v, pcitag_t tag, int reg, pcireg_t val)
 	struct gaps_softc *sc = v;
 
 	if (tag != GAPS_PCITAG_MAGIC)
+		return;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
 		return;
 
 	/* Disallow writing to the "BAR" ... it doesn't actually exist. */

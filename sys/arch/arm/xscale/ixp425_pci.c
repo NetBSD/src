@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_pci.c,v 1.11 2012/11/12 18:00:38 skrll Exp $ */
+/*	$NetBSD: ixp425_pci.c,v 1.12 2015/10/02 05:22:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.11 2012/11/12 18:00:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_pci.c,v 1.12 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -187,6 +187,9 @@ ixp425_pci_conf_read(void *v, pcitag_t tag, int offset)
 	int i;
 #endif
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	PCI_CONF_LOCK(s);
 	ixp425_pci_conf_setup(v, sc, tag, offset);
 
@@ -225,6 +228,9 @@ ixp425_pci_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	struct ixp425_softc *sc = v;
 	uint32_t data;
 	int s;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
 
 	PCI_CONF_LOCK(s);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_pci.c,v 1.17 2014/03/30 21:52:09 htodd Exp $	*/
+/*	$NetBSD: becc_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.17 2014/03/30 21:52:09 htodd Exp $");
+__KERNEL_RCSID(0, "$NetBSD: becc_pci.c,v 1.18 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -193,6 +193,9 @@ static int
 becc_pci_conf_setup(struct becc_softc *sc, pcitag_t tag, int offset,
     struct pciconf_state *ps)
 {
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (1);
 
 	becc_pci_decompose_tag(sc, tag, &ps->ps_b, &ps->ps_d, &ps->ps_f);
 

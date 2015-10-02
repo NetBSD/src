@@ -1,4 +1,4 @@
-/*	$NetBSD: elroy.c,v 1.1 2014/02/24 07:23:42 skrll Exp $	*/
+/*	$NetBSD: elroy.c,v 1.2 2015/10/02 05:22:51 msaitoh Exp $	*/
 
 /*	$OpenBSD: elroy.c,v 1.5 2009/03/30 21:24:57 kettenis Exp $	*/
 
@@ -257,6 +257,10 @@ elroy_conf_read(void *v, pcitag_t tag, int reg)
 	pcireg_t data;
 
 /* printf("elroy_conf_read(%p, 0x%08x, 0x%x)", v, tag, reg); */
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return ((pcireg_t) -1);
+
 	arb_mask = elroy_read32(&r->arb_mask);
 	err_cfg = elroy_read32(&r->err_cfg);
 	control = elroy_read32(&r->control);
@@ -291,6 +295,10 @@ elroy_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 	uint32_t arb_mask, err_cfg, control;
 
 /* printf("elroy_conf_write(%p, 0x%08x, 0x%x, 0x%x)\n", v, tag, reg, data); */
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	arb_mask = elroy_read32(&r->arb_mask);
 	err_cfg = elroy_read32(&r->err_cfg);
 	control = elroy_read32(&r->control);

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_milan.c,v 1.13 2012/08/12 20:50:39 martin Exp $	*/
+/*	$NetBSD: pci_milan.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.13 2012/08/12 20:50:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_milan.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -67,6 +67,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	u_long		data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return 0xffffffff;
+
 	data = bswap32(milan_pci_confread(tag | reg));
 	if ((plx_status) & 0xf9000000) {
 		/*
@@ -81,6 +84,10 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	milan_pci_confwrite(tag | reg, bswap32(data));
 }
 

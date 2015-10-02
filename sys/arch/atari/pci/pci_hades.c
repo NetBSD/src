@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_hades.c,v 1.13 2012/02/13 20:00:00 jdc Exp $	*/
+/*	$NetBSD: pci_hades.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Leo Weppelman.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.13 2012/02/13 20:00:00 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_hades.c,v 1.14 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -79,6 +79,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	u_long	data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return ((pcireg_t) -1);
+
 	data = *(u_long *)(pci_conf_addr + pci_config_offset(tag) + reg);
 	return (bswap32(data));
 }
@@ -86,6 +89,10 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	*((u_long *)(pci_conf_addr + pci_config_offset(tag) + reg))
 		= bswap32(data);
 }

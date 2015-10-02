@@ -1,4 +1,4 @@
-/* $NetBSD: admpci.c,v 1.12 2015/06/26 22:20:58 matt Exp $ */
+/* $NetBSD: admpci.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 David Young.  All rights reserved.
@@ -61,7 +61,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.12 2015/06/26 22:20:58 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: admpci.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -324,6 +324,10 @@ admpci_tag_to_addr(void *v, pcitag_t tag, int reg, bus_addr_t *addrp)
 	int bus, device, function;
 
 	KASSERT(addrp != NULL);
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
+
 	/* panics if tag is not well-formed */
 	admpci_decompose_tag(v, tag, &bus, &device, &function);
 	if (reg > __SHIFTOUT_MASK(ADMPCI_TAG_REGISTER_MASK))

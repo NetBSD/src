@@ -1,4 +1,4 @@
-.\"     $NetBSD: pci.9,v 1.41 2015/08/15 16:39:58 wiz Exp $
+.\"     $NetBSD: pci.9,v 1.42 2015/10/02 05:22:49 msaitoh Exp $
 .\"
 .\" Copyright (c) 2001, 2003 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,6 +44,7 @@
 .Nm pci_find_device ,
 .Nm pci_get_capability ,
 .Nm pci_get_ht_capability ,
+.Nm pci_get_ext_capability ,
 .Nm pci_mapreg_type ,
 .Nm pci_mapreg_map ,
 .Nm pci_mapreg_info ,
@@ -102,6 +103,9 @@
 "int capid" "int *offsetp" "pcireg_t *valuep"
 .Ft int
 .Fn pci_get_ht_capability "pci_chipset_tag_t pc" "pcitag_t tag" \
+"int capid" "int *offsetp" "pcireg_t *valuep"
+.Ft int
+.Fn pci_get_ext_capability "pci_chipset_tag_t pc" "pcitag_t tag" \
 "int capid" "int *offsetp" "pcireg_t *valuep"
 .Ft pcireg_t
 .Fn pci_mapreg_type "pci_chipset_tag_t pc" "pcitag_t tag" "int reg"
@@ -479,6 +483,32 @@ If
 is not
 .Dv NULL ,
 the register offset in configuration space is returned in
+.Fa offsetp .
+If
+.Fa valuep
+is not
+.Dv NULL ,
+the value of the capability is returned in
+.Fa valuep .
+The argument
+.Fa tag
+is the PCI tag for the current device attached to PCI chipset
+.Fa pc .
+This function returns 1 if the capability was found.
+If the capability was not found, it returns zero, and
+.Fa offsetp
+and
+.Fa valuep
+remain unchanged.
+.It Fn pci_get_ext_capability "pc" "tag" "capid" "offsetp" "valuep"
+Parse the device capability list in extended configuration space looking for
+capability
+.Fa capid .
+If
+.Fa offsetp
+is not
+.Dv NULL ,
+the register offset in extended configuration space is returned in
 .Fa offsetp .
 If
 .Fa valuep

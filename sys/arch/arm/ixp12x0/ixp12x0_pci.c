@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_pci.c,v 1.14 2013/08/18 15:58:19 matt Exp $ */
+/* $NetBSD: ixp12x0_pci.c,v 1.15 2015/10/02 05:22:50 msaitoh Exp $ */
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.14 2013/08/18 15:58:19 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_pci.c,v 1.15 2015/10/02 05:22:50 msaitoh Exp $");
 
 /*
  * PCI configuration support for IXP12x0 Network Processor chip.
@@ -163,6 +163,9 @@ ixp12x0_pci_conf_setup(void *v, struct ixp12x0_softc *sc, pcitag_t tag, int offs
 {
 	int bus, device, function;
 	vaddr_t addr;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return 0;
 
 	ixp12x0_pci_decompose_tag(v, tag, &bus, &device, &function);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_pcix.c,v 1.12 2014/04/04 16:41:55 ozaki-r Exp $	*/
+/*	$NetBSD: rmixl_pcix.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.12 2014/04/04 16:41:55 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_pcix.c,v 1.13 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -693,9 +693,6 @@ rmixl_pcix_conf_setup(rmixl_pcix_softc_t *sc,
 		}
 		bsh = cfg_bsh;
 	} else  {
-#ifdef DEBUG
-		panic("%s: offset %#x: unknown", __func__, *offp);
-#endif
 		return -1;
 	}
 

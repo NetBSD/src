@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.104 2015/08/17 06:16:03 knakahara Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.105 2015/10/02 05:22:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -278,14 +278,22 @@ int pci_find_rom(const struct pci_attach_args *, bus_space_tag_t,
 	    bus_space_handle_t, bus_size_t,
 	    int, bus_space_handle_t *, bus_size_t *);
 
-int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
-int pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
+int	pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
+int	pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int, int *,
+	    pcireg_t *);
+int	pci_get_ext_capability(pci_chipset_tag_t, pcitag_t, int, int *,
+	    pcireg_t *);
+
 int	pci_msi_count(pci_chipset_tag_t, pcitag_t);
 int	pci_msix_count(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Helper functions for autoconfiguration.
  */
+#ifndef PCI_MACHDEP_ENUMERATE_BUS
+int	pci_enumerate_bus(struct pci_softc *, const int *,
+	    int (*)(const struct pci_attach_args *), struct pci_attach_args *);
+#endif
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(const struct pci_attach_args *),
 	    struct pci_attach_args *);

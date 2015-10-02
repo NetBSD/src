@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.8 2014/05/12 11:51:34 joerg Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.9 2015/10/02 05:22:52 msaitoh Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2014/05/12 11:51:34 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9 2015/10/02 05:22:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.8 2014/05/12 11:51:34 joerg Exp $
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpufunc.h>
+#include <machine/bootinfo.h>
 
 #include <dev/acpi/acpica.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_mcfg.h>
 
 #include <machine/acpi_machdep.h>
 #include <machine/mpbiosvar.h>
@@ -338,6 +340,94 @@ acpi_md_ncpus(void)
 	return kcpuset_countset(kcpuset_attached);
 }
 
+static bool
+acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
+{
+	struct btinfo_memmap *bim;
+	uint64_t size, mapaddr, mapsize;
+	uint32_t type;
+	int i, n;
+
+	bim = lookup_bootinfo(BTINFO_MEMMAP);
+	if (bim == NULL)
+		return false;
+
+	size = (*bus_end - bus_start + 1) * ACPIMCFG_SIZE_PER_BUS;
+	for (i = 0; i < bim->num; i++) {
+		mapaddr = bim->entry[i].addr;
+		mapsize = bim->entry[i].size;
+		type = bim->entry[i].type;
+
+		aprint_debug("MCFG: MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
+		    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+		    mapaddr, mapaddr + mapsize - 1, mapsize, type,
+		    (type == BIM_Memory) ?  "Memory" :
+		    (type == BIM_Reserved) ?  "Reserved" :
+		    (type == BIM_ACPI) ? "ACPI" :
+		    (type == BIM_NVS) ? "NVS" :
+		    "unknown");
+
+		switch (type) {
+		case BIM_ACPI:
+		case BIM_Reserved:
+			if (addr < mapaddr || addr >= mapaddr + mapsize)
+				break;
+
+			/* full map */
+			if (addr + size <= mapaddr + mapsize)
+				return true;
+
+			/* partial map */
+			n = (mapsize - (addr - mapaddr)) /
+			    ACPIMCFG_SIZE_PER_BUS;
+			/* bus_start == bus_end is not allowed. */
+			if (n > 1) {
+				*bus_end = bus_start + n - 1;
+				return true;
+			}
+			aprint_debug("MCFG: bus %d-%d, address 0x%016" PRIx64
+			    ": invalid size: request 0x%016" PRIx64 ", "
+			    "actual 0x%016" PRIx64 "\n",
+			    bus_start, *bus_end, addr, size, mapsize);
+			break;
+		}
+	}
+	aprint_debug("MCFG: bus %d-%d, address 0x%016" PRIx64 ": "
+	    "no valid region\n", bus_start, *bus_end, addr);
+	return false;
+}
+
+static uint32_t
+acpi_md_mcfg_read(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t addr)
+{
+	vaddr_t va = bsh + addr;
+	uint32_t data = (uint32_t) -1;
+
+	KASSERT(bst == x86_bus_space_mem);
+
+	__asm("movl %1, %0" : "=a" (data) : "m" (*(volatile uint32_t *)va));
+
+	return data;
+}
+
+static void
+acpi_md_mcfg_write(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t addr,
+    uint32_t data)
+{
+	vaddr_t va = bsh + addr;
+
+	KASSERT(bst == x86_bus_space_mem);
+
+	__asm("movl %1, %0" : "=m" (*(volatile uint32_t *)va) : "a" (data));
+}
+
+static const struct acpimcfg_ops acpi_md_mcfg_ops = {
+	.ao_validate = acpi_md_mcfg_validate,
+
+	.ao_read = acpi_md_mcfg_read,
+	.ao_write = acpi_md_mcfg_write,
+};
+
 void
 acpi_md_callback(struct acpi_softc *sc)
 {
@@ -349,4 +439,6 @@ acpi_md_callback(struct acpi_softc *sc)
 #ifndef XEN
 	acpi_md_sleep_init();
 #endif
+
+	acpimcfg_init(x86_bus_space_mem, &acpi_md_mcfg_ops);
 }

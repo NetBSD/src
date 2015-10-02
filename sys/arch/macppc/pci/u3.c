@@ -1,4 +1,4 @@
-/* $NetBSD: u3.c,v 1.7 2013/04/30 10:16:25 macallan Exp $ */
+/* $NetBSD: u3.c,v 1.8 2015/10/02 05:22:51 msaitoh Exp $ */
 
 /*
  * Copyright 2006 Kyma Systems LLC.
@@ -171,6 +171,9 @@ ibmcpc_conf_read(void *cookie, pcitag_t tag, int reg)
 	pcireg_t data;
 	u_int32_t bus, dev, func, x, devfn;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	devfn = PCI_DEVFN(dev, func);
@@ -200,6 +203,9 @@ ibmcpc_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 	int32_t *daddr = pc->pc_data;
 	u_int32_t bus, dev, func;
 	u_int32_t x, devfn;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 

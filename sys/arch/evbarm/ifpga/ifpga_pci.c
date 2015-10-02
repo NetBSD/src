@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_pci.c,v 1.18 2014/03/29 19:28:27 christos Exp $	*/
+/*	$NetBSD: ifpga_pci.c,v 1.19 2015/10/02 05:22:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 ARM Ltd
@@ -64,7 +64,7 @@
 #define _ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.18 2014/03/29 19:28:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ifpga_pci.c,v 1.19 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,9 @@ ifpga_pci_conf_read(void *pcv, pcitag_t tag, int reg)
 	int bus, device, function;
 	u_int address;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	ifpga_pci_decompose_tag(pcv, tag, &bus, &device, &function);
 
 	/* Reset the appertures so that we can talk to the register space.  */
@@ -263,6 +266,9 @@ ifpga_pci_conf_write(void *pcv, pcitag_t tag, int reg, pcireg_t data)
 	printf("ifpga_pci_conf_write(pcv=%p tag=0x%08lx reg=0x%02x, 0x%08x)\n",
 	    pcv, tag, reg, data);
 #endif
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	ifpga_pci_decompose_tag(pcv, tag, &bus, &device, &function);
 

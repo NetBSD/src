@@ -1,4 +1,4 @@
-/*	$NetBSD: pyro.c,v 1.15 2013/08/10 00:48:04 mrg Exp $	*/
+/*	$NetBSD: pyro.c,v 1.16 2015/10/02 05:22:52 msaitoh Exp $	*/
 /*	from: $OpenBSD: pyro.c,v 1.20 2010/12/05 15:15:14 kettenis Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.15 2013/08/10 00:48:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pyro.c,v 1.16 2015/10/02 05:22:52 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -295,7 +295,7 @@ pyro_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	int s;
 
 	DPRINTF(PDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
-	if (PCITAG_NODE(tag) != -1) {
+	if (PCITAG_NODE(tag) != -1 && (unsigned int)reg < PCI_CONF_SIZE) {
 		s = splhigh();
 		ci->ci_pci_probe = true;
 		membar_Sync();
@@ -324,6 +324,9 @@ pyro_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 		DPRINTF(PDB_CONF, (" .. bad addr\n"));
 		return;
 	}
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
         bus_space_write_4(pp->pp_cfgt, pp->pp_cfgh,
 	    (PCITAG_OFFSET(tag) << 4) + reg, data);

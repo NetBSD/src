@@ -1,4 +1,4 @@
-/*	$NetBSD: plum.c,v 1.14 2012/10/27 17:17:52 chs Exp $ */
+/*	$NetBSD: plum.c,v 1.15 2015/10/02 05:22:50 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.14 2012/10/27 17:17:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plum.c,v 1.15 2015/10/02 05:22:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -172,6 +172,9 @@ plum_conf_read(bus_space_tag_t t, bus_space_handle_t h, int o)
 {
 	plumreg_t reg;
 
+	if ((unsigned int)o >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	reg = bus_space_read_4(t, h, o);
 
 	return (reg);
@@ -180,6 +183,9 @@ plum_conf_read(bus_space_tag_t t, bus_space_handle_t h, int o)
 void
 plum_conf_write(bus_space_tag_t t, bus_space_handle_t h, int o, plumreg_t v)
 {
+
+	if ((unsigned int)o >= PCI_CONF_SIZE)
+		return;
 
 	bus_space_write_4(t, h, o, v);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.10 2011/06/22 18:06:34 matt Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.11 2015/10/02 05:22:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.10 2011/06/22 18:06:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.11 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -131,6 +131,9 @@ ibm4xx_pci_conf_read(void *v, pcitag_t tag, int reg)
 {
 	pcireg_t data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	/* 405GT BIOS disables interrupts here. Should we? --Art */
 	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
 	data = bus_space_read_4(&pci_iot, pci_ioh, PCIC_CFGDATA);
@@ -142,6 +145,9 @@ ibm4xx_pci_conf_read(void *v, pcitag_t tag, int reg)
 void
 ibm4xx_pci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGADDR, tag | reg);
 	bus_space_write_4(&pci_iot, pci_ioh, PCIC_CFGDATA, data);
