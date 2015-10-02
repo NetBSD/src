@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.180 2015/07/24 13:02:52 maxv Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.181 2015/10/02 19:47:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.180 2015/07/24 13:02:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.181 2015/10/02 19:47:08 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -310,15 +310,19 @@ sys_clock_nanosleep(struct lwp *l, const struct sys_clock_nanosleep_args *uap,
 
 	error = copyin(SCARG(uap, rqtp), &rqt, sizeof(struct timespec));
 	if (error)
-		return (error);
+		goto out;
 
 	error = nanosleep1(l, SCARG(uap, clock_id), SCARG(uap, flags), &rqt,
 	    SCARG(uap, rmtp) ? &rmt : NULL);
 	if (SCARG(uap, rmtp) == NULL || (error != 0 && error != EINTR))
+		goto out;
 		return error;
 
-	error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt));
-	return error1 ? error1 : error;
+	if ((error1 = copyout(&rmt, SCARG(uap, rmtp), sizeof(rmt))) != 0)
+		error = error1;
+out:
+	*retval = error;
+	return 0;
 }
 
 int
