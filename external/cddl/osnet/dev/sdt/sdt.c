@@ -1,74 +1,91 @@
-/*	$NetBSD: sdt.c,v 1.12 2015/09/30 20:59:44 christos Exp $	*/
-
-/*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
- * All rights reserved.
+/*
+ * CDDL HEADER START
  *
- * This code is derived from software contributed to The NetBSD Foundation
- * by CoyotePoint Systems, Inc. It was developed under contract to 
- * CoyotePoint by Darran Hunt.
+ * The contents of this file are subject to the terms of the
+ * Common Development and Distribution License (the "License").
+ * You may not use this file except in compliance with the License.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
+ * You can obtain a copy of the license at usr/src/OPENSOLARIS.LICENSE
+ * or http://www.opensolaris.org/os/licensing.
+ * See the License for the specific language governing permissions
+ * and limitations under the License.
  *
+ * When distributing Covered Code, include this CDDL HEADER in each
+ * file and include the License file at usr/src/OPENSOLARIS.LICENSE.
+ * If applicable, add the following below this CDDL HEADER, with the
+ * fields enclosed by brackets "[]" replaced with your own identifying
+ * information: Portions Copyright [yyyy] [name of copyright owner]
  *
- * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+ * CDDL HEADER END
+ *
+ * Portions Copyright 2006-2008 John Birrell jb@freebsd.org
+ *
+ * $FreeBSD: head/sys/cddl/dev/sdt/sdt.c 285703 2015-07-19 22:14:09Z markj $
+ *
  */
 
-#ifdef _KERNEL_OPT
-#include "opt_dtrace.h"
-#endif
+/*
+ * This file contains a reimplementation of the statically-defined tracing (SDT)
+ * framework for DTrace. Probes and SDT providers are defined using the macros
+ * in sys/sdt.h, which append all the needed structures to linker sets. When
+ * this module is loaded, it iterates over all of the loaded modules and
+ * registers probes and providers with the DTrace framework based on the
+ * contents of these linker sets.
+ *
+ * A list of SDT providers is maintained here since a provider may span multiple
+ * modules. When a kernel module is unloaded, a provider defined in that module
+ * is unregistered only if no other modules refer to it. The DTrace framework is
+ * responsible for destroying individual probes when a kernel module is
+ * unloaded; in particular, probes may not span multiple kernel modules.
+ */
 
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/systm.h>
+
 #include <sys/conf.h>
+#include <sys/eventhandler.h>
 #include <sys/kernel.h>
-#include <sys/kmem.h>
+#include <sys/limits.h>
+#include <sys/linker.h>
+#include <sys/linker_set.h>
+#include <sys/lock.h>
+#include <sys/lockstat.h>
+#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
-
-#include <sys/dtrace.h>
-
-#define KDTRACE_HOOKS
+#include <sys/queue.h>
 #include <sys/sdt.h>
 
-#undef SDT_DEBUG
+#include <sys/dtrace.h>
+#include <sys/dtrace_bsd.h>
 
-static dev_type_open(sdt_open);
-
-static int	sdt_unload(void);
+/* DTrace methods. */
 static void	sdt_getargdesc(void *, dtrace_id_t, void *, dtrace_argdesc_t *);
-static void	sdt_provide(void *, const dtrace_probedesc_t *);
+static void	sdt_provide_probes(void *, dtrace_probedesc_t *);
 static void	sdt_destroy(void *, dtrace_id_t, void *);
-static int	sdt_enable(void *, dtrace_id_t, void *);
+static void	sdt_enable(void *, dtrace_id_t, void *);
 static void	sdt_disable(void *, dtrace_id_t, void *);
-static void	sdt_load(void *);
 
-static const struct cdevsw sdt_cdevsw = {
-	sdt_open, noclose, noread, nowrite, noioctl,
-	nostop, notty, nopoll, nommap, nokqfilter, nodiscard,
-	D_OTHER
+static void	sdt_load(void);
+static int	sdt_unload(void);
+static void	sdt_create_provider(struct sdt_provider *);
+static void	sdt_create_probe(struct sdt_probe *);
+static void	sdt_kld_load(void *, struct linker_file *);
+static void	sdt_kld_unload_try(void *, struct linker_file *, int *);
+
+static MALLOC_DEFINE(M_SDT, "SDT", "DTrace SDT providers");
+
+static dtrace_pattr_t sdt_attr = {
+{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
+{ DTRACE_STABILITY_PRIVATE, DTRACE_STABILITY_PRIVATE, DTRACE_CLASS_UNKNOWN },
+{ DTRACE_STABILITY_PRIVATE, DTRACE_STABILITY_PRIVATE, DTRACE_CLASS_ISA },
+{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
+{ DTRACE_STABILITY_PRIVATE, DTRACE_STABILITY_PRIVATE, DTRACE_CLASS_ISA },
 };
 
 static dtrace_pops_t sdt_pops = {
-	sdt_provide,
+	sdt_provide_probes,
 	NULL,
 	sdt_enable,
 	sdt_disable,
@@ -77,407 +94,311 @@ static dtrace_pops_t sdt_pops = {
 	sdt_getargdesc,
 	NULL,
 	NULL,
-	sdt_destroy
+	sdt_destroy,
 };
 
-#ifdef notyet
-static struct cdev		*sdt_cdev;
-#endif
+static TAILQ_HEAD(, sdt_provider) sdt_prov_list;
 
-/*
- * Provider and probe definitions 
- */
+eventhandler_tag	sdt_kld_load_tag;
+eventhandler_tag	sdt_kld_unload_try_tag;
 
-/*
- * proc provider
- */
+static void
+sdt_create_provider(struct sdt_provider *prov)
+{
+	struct sdt_provider *curr, *newprov;
 
-/* declare all probes belonging to the provider */
-SDT_PROBE_DECLARE(proc,,,create);
-SDT_PROBE_DECLARE(proc,,,exec);
-SDT_PROBE_DECLARE(proc,,,exit);
-SDT_PROBE_DECLARE(proc,,,exec_success);
-SDT_PROBE_DECLARE(proc,,,exec_failure);
-SDT_PROBE_DECLARE(proc,,,signal_send);
-SDT_PROBE_DECLARE(proc,,,signal_discard);
-SDT_PROBE_DECLARE(proc,,,signal_clear);
-SDT_PROBE_DECLARE(proc,,,signal_handle);
-SDT_PROBE_DECLARE(proc,,,lwp_create);
-SDT_PROBE_DECLARE(proc,,,lwp_start);
-SDT_PROBE_DECLARE(proc,,,lwp_exit);
+	TAILQ_FOREACH(curr, &sdt_prov_list, prov_entry)
+		if (strcmp(prov->name, curr->name) == 0) {
+			/* The provider has already been defined. */
+			curr->sdt_refs++;
+			return;
+		}
 
-/* define the provider */
-static sdt_provider_t proc_provider = {
-	"proc",		/* provider name */
-	0,		/* registered ID - leave as 0 */
-	{
-		{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
-		{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_UNKNOWN },
-		{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_ISA },
-		{ DTRACE_STABILITY_EVOLVING, DTRACE_STABILITY_EVOLVING, DTRACE_CLASS_COMMON },
-		{ DTRACE_STABILITY_PRIVATE,  DTRACE_STABILITY_PRIVATE,  DTRACE_CLASS_ISA },
-	},
+	/*
+	 * Make a copy of prov so that we don't lose fields if its module is
+	 * unloaded but the provider isn't destroyed. This could happen with
+	 * a provider that spans multiple modules.
+	 */
+	newprov = malloc(sizeof(*newprov), M_SDT, M_WAITOK | M_ZERO);
+	newprov->name = strdup(prov->name, M_SDT);
+	prov->sdt_refs = newprov->sdt_refs = 1;
 
-	/* list all probes belonging to the provider */
-	{ 
-		&SDT_NAME(proc,,,create),
-		&SDT_NAME(proc,,,exec),
-		&SDT_NAME(proc,,,exit),
-		&SDT_NAME(proc,,,exec_success),
-		&SDT_NAME(proc,,,exec_failure),
-		&SDT_NAME(proc,,,signal_send),
-		&SDT_NAME(proc,,,signal_discard),
-		&SDT_NAME(proc,,,signal_clear),
-		&SDT_NAME(proc,,,signal_handle),
-		&SDT_NAME(proc,,,lwp_create),
-		&SDT_NAME(proc,,,lwp_start),
-		&SDT_NAME(proc,,,lwp_exit),
-		NULL				/* NULL terminated list */
+	TAILQ_INSERT_TAIL(&sdt_prov_list, newprov, prov_entry);
+
+	(void)dtrace_register(newprov->name, &sdt_attr, DTRACE_PRIV_USER, NULL,
+	    &sdt_pops, NULL, (dtrace_provider_id_t *)&newprov->id);
+	prov->id = newprov->id;
+}
+
+static void
+sdt_create_probe(struct sdt_probe *probe)
+{
+	struct sdt_provider *prov;
+	char mod[DTRACE_MODNAMELEN];
+	char func[DTRACE_FUNCNAMELEN];
+	char name[DTRACE_NAMELEN];
+	const char *from;
+	char *to;
+	size_t len;
+
+	TAILQ_FOREACH(prov, &sdt_prov_list, prov_entry)
+		if (strcmp(prov->name, probe->prov->name) == 0)
+			break;
+
+	KASSERT(prov != NULL, ("probe defined without a provider"));
+
+	/* If no module name was specified, use the module filename. */
+	if (*probe->mod == 0) {
+		len = strlcpy(mod, probe->sdtp_lf->filename, sizeof(mod));
+		if (len > 3 && strcmp(mod + len - 3, ".ko") == 0)
+			mod[len - 3] = '\0';
+	} else
+		strlcpy(mod, probe->mod, sizeof(mod));
+
+	/*
+	 * Unfortunately this is necessary because the Solaris DTrace
+	 * code mixes consts and non-consts with casts to override
+	 * the incompatibilies. On FreeBSD, we use strict warnings
+	 * in the C compiler, so we have to respect const vs non-const.
+	 */
+	strlcpy(func, probe->func, sizeof(func));
+
+	from = probe->name;
+	to = name;
+	for (len = 0; len < (sizeof(name) - 1) && *from != '\0';
+	    len++, from++, to++) {
+		if (from[0] == '_' && from[1] == '_') {
+			*to = '-';
+			from++;
+		} else
+			*to = *from;
 	}
-};
+	*to = '\0';
 
-/* list of local providers to register with DTrace */
-static sdt_provider_t *sdt_providers[] = {
-	&proc_provider,
-	NULL		/* NULL terminated list */
-};
+	if (dtrace_probe_lookup(prov->id, mod, func, name) != DTRACE_IDNONE)
+		return;
 
-static sdt_provider_t **sdt_list = NULL;	/* registered provider list */
-static kmutex_t sdt_mutex;
-static int sdt_count = 0;	/* number of registered providers */
+	(void)dtrace_probe_create(prov->id, mod, func, name, 1, probe);
+}
+
+/*
+ * Probes are created through the SDT module load/unload hook, so this function
+ * has nothing to do. It only exists because the DTrace provider framework
+ * requires one of provide_probes and provide_module to be defined.
+ */
+static void
+sdt_provide_probes(void *arg, dtrace_probedesc_t *desc)
+{
+}
+
+static void
+sdt_enable(void *arg __unused, dtrace_id_t id, void *parg)
+{
+	struct sdt_probe *probe = parg;
+
+	probe->id = id;
+	probe->sdtp_lf->nenabled++;
+	if (strcmp(probe->prov->name, "lockstat") == 0)
+		lockstat_enabled++;
+}
+
+static void
+sdt_disable(void *arg __unused, dtrace_id_t id, void *parg)
+{
+	struct sdt_probe *probe = parg;
+
+	KASSERT(probe->sdtp_lf->nenabled > 0, ("no probes enabled"));
+
+	if (strcmp(probe->prov->name, "lockstat") == 0)
+		lockstat_enabled--;
+	probe->id = 0;
+	probe->sdtp_lf->nenabled--;
+}
 
 static void
 sdt_getargdesc(void *arg, dtrace_id_t id, void *parg, dtrace_argdesc_t *desc)
 {
-	sdt_probe_t *sprobe = parg;
+	struct sdt_argtype *argtype;
+	struct sdt_probe *probe = parg;
 
-#ifdef SDT_DEBUG
-	printf("sdt: %s probe %d\n", __func__, id);
-	printf("%s: probe %d (%s:%s:%s:%s).%d\n",
-		__func__, id,
-		sprobe->provider,
-		sprobe->module,
-		sprobe->function,
-		sprobe->name,
-		desc->dtargd_ndx);
-#endif
-
-	/* provide up to 5 arguments  */
-	if ((desc->dtargd_ndx < SDT_MAX_ARGS) &&
-		(sprobe->argv[desc->dtargd_ndx] != NULL)) {
-		strncpy(desc->dtargd_native, sprobe->argv[desc->dtargd_ndx],
-			sizeof(desc->dtargd_native));
-		desc->dtargd_mapping = desc->dtargd_ndx;
-		if (sprobe->argx[desc->dtargd_ndx] != NULL) {
-			strncpy(desc->dtargd_xlate, sprobe->argx[desc->dtargd_ndx],
-			    sizeof(desc->dtargd_xlate));
-		}
-#ifdef SDT_DEBUG
-		printf("%s: probe %d (%s:%s:%s:%s).%d = %s\n",
-			__func__, id,
-			sprobe->provider,
-			sprobe->module,
-			sprobe->function,
-			sprobe->name,
-			desc->dtargd_ndx,
-			sprobe->argv[desc->dtargd_ndx]);
-#endif
-	} else {
-#ifdef SDT_DEBUG
-		printf("%s: probe %d (%s:%s:%s:%s).%d = NULL\n",
-			__func__, id,
-			sprobe->provider,
-			sprobe->module,
-			sprobe->function,
-			sprobe->name,
-			desc->dtargd_ndx);
+	if (desc->dtargd_ndx >= probe->n_args) {
 		desc->dtargd_ndx = DTRACE_ARGNONE;
-#endif
+		return;
 	}
-}
 
-static void
-sdt_provide(void *arg, const dtrace_probedesc_t *desc)
-{
-	sdt_provider_t *sprov = arg;
-	int res;
-	int ind;
-	int num_probes = 0;
-
-#ifdef SDT_DEBUG
-	if (desc == NULL) {
-		printf("sdt: provide null\n");
-	} else {
-		printf("sdt: provide %d %02x:%02x:%02x:%02x\n",
-		    desc->dtpd_id,
-		    desc->dtpd_provider[0],
-		    desc->dtpd_mod[0],
-		    desc->dtpd_func[0],
-		    desc->dtpd_name[0]);
-	}
-#endif
-
-	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
-	    	if (sprov->probes[ind]->created == 0) {
-			res = dtrace_probe_create(sprov->id,
-				sprov->probes[ind]->module,
-				sprov->probes[ind]->function,
-				sprov->probes[ind]->name,
-				0, sprov->probes[ind]);
-			sprov->probes[ind]->id = res;
-#ifdef SDT_DEBUG
-			printf("%s: dtrace_probe_create[%d] res=%d\n",
-				__func__, ind, res);
-#endif
-			sprov->probes[ind]->created = 1;
-			num_probes++;
+	TAILQ_FOREACH(argtype, &probe->argtype_list, argtype_entry) {
+		if (desc->dtargd_ndx == argtype->ndx) {
+			desc->dtargd_mapping = desc->dtargd_ndx;
+			if (argtype->type == NULL) {
+				desc->dtargd_native[0] = '\0';
+				desc->dtargd_xlate[0] = '\0';
+				continue;
+			}
+			strlcpy(desc->dtargd_native, argtype->type,
+			    sizeof(desc->dtargd_native));
+			if (argtype->xtype != NULL)
+				strlcpy(desc->dtargd_xlate, argtype->xtype,
+				    sizeof(desc->dtargd_xlate));
 		}
 	}
-
-#ifdef SDT_DEBUG
-	printf("sdt: %s num_probes %d\n", __func__, ind);
-#endif
-
 }
 
 static void
 sdt_destroy(void *arg, dtrace_id_t id, void *parg)
 {
-	sdt_provider_t *sprov = arg;
-	int ind;
-
-#ifdef SDT_DEBUG
-	printf("sdt: %s\n", __func__);
-#endif
-
-	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
-	    	if (sprov->probes[ind]->id == id) {
-#ifdef SDT_DEBUG
-		    	printf("%s: destroying probe %d (%s:%s:%s:%s)\n",
-				__func__, id,
-				sprov->probes[ind]->provider,
-				sprov->probes[ind]->module,
-				sprov->probes[ind]->function,
-				sprov->probes[ind]->name);
-#endif
-			sprov->probes[ind]->enabled = 0;
-			sprov->probes[ind]->created = 0;
-			sprov->probes[ind]->id = 0;
-			break;
-		}
-	}
 }
 
-static int
-sdt_enable(void *arg, dtrace_id_t id, void *parg)
+/*
+ * Called from the kernel linker when a module is loaded, before
+ * dtrace_module_loaded() is called. This is done so that it's possible to
+ * register new providers when modules are loaded. The DTrace framework
+ * explicitly disallows calling into the framework from the provide_module
+ * provider method, so we cannot do this there.
+ */
+static void
+sdt_kld_load(void *arg __unused, struct linker_file *lf)
 {
-	sdt_provider_t *sprov = arg;
-	int ind;
+	struct sdt_provider **prov, **begin, **end;
+	struct sdt_probe **probe, **p_begin, **p_end;
+	struct sdt_argtype **argtype, **a_begin, **a_end;
 
-#ifdef SDT_DEBUG
-	printf("sdt: %s\n", __func__);
-#endif
+	if (linker_file_lookup_set(lf, "sdt_providers_set", &begin, &end,
+	    NULL) == 0) {
+		for (prov = begin; prov < end; prov++)
+			sdt_create_provider(*prov);
+	}
 
-	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
-	    	if (sprov->probes[ind]->id == id) {
-#ifdef SDT_DEBUG
-		    	printf("%s: enabling probe %d (%s:%s:%s:%s)\n",
-				__func__, id,
-				sprov->probes[ind]->provider,
-				sprov->probes[ind]->module,
-				sprov->probes[ind]->function,
-				sprov->probes[ind]->name);
-#endif
-			sprov->probes[ind]->enabled = 1;
-			break;
+	if (linker_file_lookup_set(lf, "sdt_probes_set", &p_begin, &p_end,
+	    NULL) == 0) {
+		for (probe = p_begin; probe < p_end; probe++) {
+			(*probe)->sdtp_lf = lf;
+			sdt_create_probe(*probe);
+			TAILQ_INIT(&(*probe)->argtype_list);
 		}
 	}
 
-	return 0;
+	if (linker_file_lookup_set(lf, "sdt_argtypes_set", &a_begin, &a_end,
+	    NULL) == 0) {
+		for (argtype = a_begin; argtype < a_end; argtype++) {
+			(*argtype)->probe->n_args++;
+			TAILQ_INSERT_TAIL(&(*argtype)->probe->argtype_list,
+			    *argtype, argtype_entry);
+		}
+	}
 }
 
 static void
-sdt_disable(void *arg, dtrace_id_t id, void *parg)
+sdt_kld_unload_try(void *arg __unused, struct linker_file *lf, int *error)
 {
-	sdt_provider_t *sprov = arg;
-	int ind;
+	struct sdt_provider *prov, **curr, **begin, **end, *tmp;
 
-#ifdef SDT_DEBUG
-	printf("sdt: %s\n", __func__);
-#endif
-
-	for (ind = 0; sprov->probes[ind] != NULL; ind++) {
-	    	if (sprov->probes[ind]->id == id) {
-#ifdef SDT_DEBUG
-		    	printf("%s: disabling probe %d (%s:%s:%s:%s)\n",
-				__func__, id,
-				sprov->probes[ind]->provider,
-				sprov->probes[ind]->module,
-				sprov->probes[ind]->function,
-				sprov->probes[ind]->name);
-#endif
-			sprov->probes[ind]->enabled = 0;
-			break;
-		}
-	}
-}
-
-int
-sdt_register(sdt_provider_t *prov)
-{
-	int ind;
-	int res;
-
-	/* make sure the provider is not already registered */
-	for (ind = 0; ind < sdt_count; ind++) {
-		if (strncmp(sdt_list[ind]->name, prov->name,
-		    SDT_MAX_NAME_SIZE) == 0) {
-			printf("sdt: provider %s already registered\n", prov->name);
-			return -1;
-		}
-	}
-
-	/* register the new provider */
-	if ((res = dtrace_register(prov->name, 
-			    &prov->attr, DTRACE_PRIV_USER,
-			    NULL, &sdt_pops, prov,
-			    &(prov->id))) != 0) {
-		printf("sdt: failed to register %s res = %d\n",
-			prov->name, res);
-		return -1;
-	}
-
-	sdt_list[sdt_count++] = prov;
-
-	return 0;
-}
-
-int
-sdt_unregister(sdt_provider_t *prov)
-{
-	int ind;
-	int res;
-
-	/* find the provider reference */
-	for (ind = 0; ind < sdt_count; ind++) {
-		if (sdt_list[ind] == prov) {
-			res = dtrace_unregister(sdt_list[ind]->id);
-			if (res != 0) {
-				printf(
-				    "sdt: failed to unregister provider %s\n",
-				    sdt_list[ind]->name);
-			}
-			/* remove provider from list */
-			sdt_list[ind] = sdt_list[--sdt_count];
-			return 0;
-		}
-	}
-
-	/* provider not found */
-	printf("sdt: provider %s not found\n", prov->name);
-
-	return 0;
-}
-
-static void
-sdt_load(void *dummy)
-{
-	int ind;
-
-#ifdef SDT_DEBUG
-	printf("sdt: %s\n", __func__);
-#endif
-
-	sdt_init(dtrace_probe);
-
-	sdt_list = kmem_alloc(sizeof(sdt_provider_t *) * SDT_MAX_PROVIDER,
-	    KM_SLEEP);
-
-	mutex_init(&sdt_mutex, "sdt_mutex", MUTEX_DEFAULT, NULL);
-
-	sdt_count = 0;
-
-	if (sdt_list == NULL) {
-		printf("sdt: failed to alloc provider list\n");
+	if (*error != 0)
+		/* We already have an error, so don't do anything. */
 		return;
-	}
+	else if (linker_file_lookup_set(lf, "sdt_providers_set", &begin, &end,
+	    NULL))
+		/* No DTrace providers are declared in this file. */
+		return;
 
-	for (ind = 0; sdt_providers[ind] != NULL; ind++) {
-	    	if (sdt_count >= SDT_MAX_PROVIDER) {
-			printf("sdt: too many providers\n");
+	/*
+	 * Go through all the providers declared in this linker file and
+	 * unregister any that aren't declared in another loaded file.
+	 */
+	for (curr = begin; curr < end; curr++) {
+		TAILQ_FOREACH_SAFE(prov, &sdt_prov_list, prov_entry, tmp) {
+			if (strcmp(prov->name, (*curr)->name) != 0)
+				continue;
+
+			if (prov->sdt_refs == 1) {
+				if (dtrace_unregister(prov->id) != 0) {
+					*error = 1;
+					return;
+				}
+				TAILQ_REMOVE(&sdt_prov_list, prov, prov_entry);
+				free(prov->name, M_SDT);
+				free(prov, M_SDT);
+			} else
+				prov->sdt_refs--;
 			break;
 		}
-		sdt_register(sdt_providers[ind]);
-
-#ifdef SDT_DEBUG
-		printf("sdt: registered %s id = 0x%x\n",
-			sdt_providers[ind]->name,
-			sdt_providers[ind]->id);
-#endif
-	}
-}
-
-
-static int
-sdt_unload(void)
-{
-	int error = 0;
-	int res = 0;
-	int ind;
-
-#ifdef SDT_DEBUG
-	printf("sdt: %s\n", __func__);
-#endif
-
-	for (ind = 0; ind < sdt_count; ind++) {
-		if ((res = dtrace_unregister(sdt_list[ind]->id)) != 0) {
-#ifdef SDT_DEBUG
-			printf("%s: failed to unregister %s error = %d\n",
-			    sdt_list[ind]->name, res);
-#endif
-			return res;
-		} else {
-#ifdef SDT_DEBUG
-			printf("sdt: unregistered %s id = %d\n",
-			    sdt_list[ind]->name,
-			    sdt_list[ind]->id);
-#endif
-		}
-	}
-
-	kmem_free(sdt_list, sizeof(sdt_provider_t *) * SDT_MAX_PROVIDER);
-	mutex_destroy(&sdt_mutex);
-	sdt_exit();
-	return (error);
-}
-
-static int
-dtrace_sdt_modcmd(modcmd_t cmd, void *data)
-{
-	int bmajor = -1, cmajor = -1;
-	int error;
-
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		sdt_load(NULL);
-		return devsw_attach("sdt", NULL, &bmajor,
-		    &sdt_cdevsw, &cmajor);
-	case MODULE_CMD_FINI:
-		error = sdt_unload();
-		if (error != 0)
-			return error;
-		return devsw_detach(NULL, &sdt_cdevsw);
-	case MODULE_CMD_AUTOUNLOAD:
-		return EBUSY;
-	default:
-		return ENOTTY;
 	}
 }
 
 static int
-sdt_open(dev_t dev, int flags, int mode, struct lwp *l)
+sdt_linker_file_cb(linker_file_t lf, void *arg __unused)
 {
+
+	sdt_kld_load(NULL, lf);
+
 	return (0);
 }
 
-MODULE(MODULE_CLASS_MISC, dtrace_sdt, "dtrace");
+static void
+sdt_load()
+{
+
+	TAILQ_INIT(&sdt_prov_list);
+
+	sdt_probe_func = dtrace_probe;
+
+	sdt_kld_load_tag = EVENTHANDLER_REGISTER(kld_load, sdt_kld_load, NULL,
+	    EVENTHANDLER_PRI_ANY);
+	sdt_kld_unload_try_tag = EVENTHANDLER_REGISTER(kld_unload_try,
+	    sdt_kld_unload_try, NULL, EVENTHANDLER_PRI_ANY);
+
+	/* Pick up probes from the kernel and already-loaded linker files. */
+	linker_file_foreach(sdt_linker_file_cb, NULL);
+}
+
+static int
+sdt_unload()
+{
+	struct sdt_provider *prov, *tmp;
+	int ret;
+
+	EVENTHANDLER_DEREGISTER(kld_load, sdt_kld_load_tag);
+	EVENTHANDLER_DEREGISTER(kld_unload_try, sdt_kld_unload_try_tag);
+
+	sdt_probe_func = sdt_probe_stub;
+
+	TAILQ_FOREACH_SAFE(prov, &sdt_prov_list, prov_entry, tmp) {
+		ret = dtrace_unregister(prov->id);
+		if (ret != 0)
+			return (ret);
+		TAILQ_REMOVE(&sdt_prov_list, prov, prov_entry);
+		free(prov->name, M_SDT);
+		free(prov, M_SDT);
+	}
+
+	return (0);
+}
+
+static int
+sdt_modevent(module_t mod __unused, int type, void *data __unused)
+{
+	int error = 0;
+
+	switch (type) {
+	case MOD_LOAD:
+		sdt_load();
+		break;
+
+	case MOD_UNLOAD:
+		error = sdt_unload();
+		break;
+
+	case MOD_SHUTDOWN:
+		break;
+
+	default:
+		error = EOPNOTSUPP;
+		break;
+	}
+
+	return (error);
+}
+
+DEV_MODULE(sdt, sdt_modevent, NULL);
+MODULE_VERSION(sdt, 1);
+MODULE_DEPEND(sdt, dtrace, 1, 1, 1);
+MODULE_DEPEND(sdt, opensolaris, 1, 1, 1);
