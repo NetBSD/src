@@ -1,4 +1,4 @@
-/*	$NetBSD: vrpciu.c,v 1.21 2014/03/31 20:46:41 christos Exp $	*/
+/*	$NetBSD: vrpciu.c,v 1.22 2015/10/02 05:22:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 Enami Tsugutomo.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.21 2014/03/31 20:46:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vrpciu.c,v 1.22 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -424,6 +424,9 @@ vrpciu_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	u_int32_t val;
 	int bus, device, function;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return ((pcireg_t) -1);
+
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
 	if (bus == 0) {
 		if (device > 21)
@@ -452,6 +455,10 @@ vrpciu_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	printf("%s: conf_write: tag = 0x%08x, reg = 0x%x, val = 0x%08x\n",
 	    device_xname(sc->sc_dev), (u_int32_t)tag, reg, (u_int32_t)data);
 #endif
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
+
 	vrpciu_decompose_tag(pc, tag, &bus, &device, &function);
 	if (bus == 0) {
 		if (device > 21)

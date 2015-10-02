@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.3 2013/01/12 08:40:51 kiyohara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.4 2015/10/02 05:22:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2009, 2010 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.3 2013/01/12 08:40:51 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.4 2015/10/02 05:22:51 msaitoh Exp $");
 
 #include <machine/bus.h>
 #include <machine/sal.h>
@@ -78,6 +78,9 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 {
 	struct ia64_sal_result res;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return -1;
+
 	res = ia64_sal_entry(SAL_PCI_CONFIG_READ,
 	    tag | reg, sizeof(pcireg_t), 0, 0, 0, 0, 0);
 	if (res.sal_status < 0)
@@ -90,6 +93,9 @@ void
 pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 {
 	struct ia64_sal_result res;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	res = ia64_sal_entry(SAL_PCI_CONFIG_WRITE,
 	    tag | reg, sizeof(pcireg_t), val, 0, 0, 0, 0);

@@ -1,4 +1,4 @@
-/*	$NetBSD: empb.c,v 1.10 2013/01/29 00:49:43 rkujawa Exp $ */
+/*	$NetBSD: empb.c,v 1.11 2015/10/02 05:22:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -394,6 +394,9 @@ empb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	struct empb_softc *sc;
 	int s;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	sc = pc->cookie;
 	
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
@@ -423,6 +426,9 @@ empb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 	uint32_t bus, dev, func;
 	struct empb_softc *sc;
 	int s;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	sc = pc->cookie;
 	

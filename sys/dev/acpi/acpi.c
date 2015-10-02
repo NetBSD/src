@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.260 2015/08/18 10:41:28 christos Exp $	*/
+/*	$NetBSD: acpi.c,v 1.261 2015/10/02 05:22:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.260 2015/08/18 10:41:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.261 2015/10/02 05:22:52 msaitoh Exp $");
 
 #include "opt_acpi.h"
 #include "opt_pcifixup.h"
@@ -118,6 +118,7 @@ __KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.260 2015/08/18 10:41:28 christos Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_mcfg.h>
 #include <dev/acpi/acpi_osd.h>
 #include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_power.h>
@@ -482,6 +483,11 @@ acpi_attach(device_t parent, device_t self, void *aux)
 	 * Scan the namespace and build our device tree.
 	 */
 	acpi_build_tree(sc);
+
+	/*
+	 * Probe MCFG table
+	 */
+	acpimcfg_probe(sc);
 
 	acpi_md_callback(sc);
 
