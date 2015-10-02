@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2015/01/11 22:59:25 martin Exp $
+#	$NetBSD: Makefile,v 1.34 2015/10/02 20:36:54 joerg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -123,7 +123,7 @@ CEXTRAFLAGS?=		-D_LP64
 AFLAGS+=		-x assembler-with-cpp -D_LOCORE -D__ELF__ ${CEXTRAFLAGS}
 .endif
 
-NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
+NORMAL_S=	${CC} ${AFLAGS} ${AFLAGS.${<:T}}  ${CPPFLAGS} -c $<
 srt0.o: srt0.s
 	${NORMAL_S}
 
