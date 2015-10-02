@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.103 2015/07/27 15:46:03 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.104 2015/10/02 05:22:53 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1319,7 +1319,7 @@ struct pci_rom {
 #define PCI32_DMA_BOUNCE_THRESHOLD	0x100000000ULL
 
 /*
- * PCI-X 2.0 Extended Capability List
+ * PCI-X 2.0/ PCI-express Extended Capability List
  */
 
 #define	PCI_EXTCAPLIST_BASE		0x100
@@ -1327,6 +1327,502 @@ struct pci_rom {
 #define	PCI_EXTCAPLIST_CAP(ecr)		((ecr) & 0xffff)
 #define	PCI_EXTCAPLIST_VERSION(ecr)	(((ecr) >> 16) & 0xf)
 #define	PCI_EXTCAPLIST_NEXT(ecr)	(((ecr) >> 20) & 0xfff)
+
+/* Extended Capability Identification Numbers */
+
+#define	PCI_EXTCAP_AER		0x0001	/* Advanced Error Reporting */
+#define	PCI_EXTCAP_VC		0x0002	/* Virtual Channel if MFVC Ext Cap not set */
+#define	PCI_EXTCAP_SERNUM	0x0003	/* Device Serial Number */
+#define	PCI_EXTCAP_PWRBDGT	0x0004	/* Power Budgeting */
+#define	PCI_EXTCAP_RCLINK_DCL	0x0005	/* Root Complex Link Declaration */
+#define	PCI_EXTCAP_RCLINK_CTL	0x0006	/* Root Complex Internal Link Control */
+#define	PCI_EXTCAP_RCEC_ASSOC	0x0007	/* Root Complex Event Collector Association */
+#define	PCI_EXTCAP_MFVC		0x0008	/* Multi-Function Virtual Channel */
+#define	PCI_EXTCAP_VC2		0x0009	/* Virtual Channel if MFVC Ext Cap set */
+#define	PCI_EXTCAP_RCRB		0x000a	/* RCRB Header */
+#define	PCI_EXTCAP_VENDOR	0x000b	/* Vendor Unique */
+#define	PCI_EXTCAP_CAC		0x000c	/* Configuration Access Correction -- obsolete */
+#define	PCI_EXTCAP_ACS		0x000d	/* Access Control Services */
+#define	PCI_EXTCAP_ARI		0x000e	/* Alternative Routing-ID Interpretation */
+#define	PCI_EXTCAP_ATS		0x000f	/* Address Translation Services */
+#define	PCI_EXTCAP_SRIOV	0x0010	/* Single Root IO Virtualization */
+#define	PCI_EXTCAP_MRIOV	0x0011	/* Multiple Root IO Virtualization */
+#define	PCI_EXTCAP_MULTICAST	0x0012	/* Multicast */
+#define	PCI_EXTCAP_PAGE_REQ	0x0013	/* Page Request */
+#define	PCI_EXTCAP_AMD		0x0014	/* Reserved for AMD */
+#define	PCI_EXTCAP_RESIZE_BAR	0x0015	/* Resizable BAR */
+#define	PCI_EXTCAP_DPA		0x0016	/* Dynamic Power Allocation */
+#define	PCI_EXTCAP_TPH_REQ	0x0017	/* TPH Requester */
+#define	PCI_EXTCAP_LTR		0x0018	/* Latency Tolerance Reporting */
+#define	PCI_EXTCAP_SEC_PCIE	0x0019	/* Secondary PCI Express */
+#define	PCI_EXTCAP_PMUX		0x001a	/* Protocol Multiplexing */
+#define	PCI_EXTCAP_PASID	0x001b	/* Process Address Space ID */
+#define	PCI_EXTCAP_LN_REQ	0x001c	/* LN Requester */
+#define	PCI_EXTCAP_DPC		0x001d	/* Downstream Port Containment */
+#define	PCI_EXTCAP_L1PM		0x001e	/* L1 PM Substates */
+#define	PCI_EXTCAP_PTM		0x001f	/* Precision Time Management */
+#define	PCI_EXTCAP_MPCIE	0x0020	/* M-PCIe */
+#define	PCI_EXTCAP_FRSQ		0x0021	/* Function Reading Status Queueing */
+#define	PCI_EXTCAP_RTR		0x0022	/* Readiness Time Reporting */
+#define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
+
+/*
+ * Extended capability ID: 0x0001
+ * Advanced Error Reporting
+ */
+#define	PCI_AER_UC_STATUS	0x04	/* Uncorrectable Error Status Register */
+#define	  PCI_AER_UC_UNDEFINED			__BIT(0)
+#define	  PCI_AER_UC_DL_PROTOCOL_ERROR		__BIT(4)
+#define	  PCI_AER_UC_SURPRISE_DOWN_ERROR	__BIT(5)
+#define	  PCI_AER_UC_POISONED_TLP		__BIT(12)
+#define	  PCI_AER_UC_FC_PROTOCOL_ERROR		__BIT(13)
+#define	  PCI_AER_UC_COMPLETION_TIMEOUT		__BIT(14)
+#define	  PCI_AER_UC_COMPLETER_ABORT		__BIT(15)
+#define	  PCI_AER_UC_UNEXPECTED_COMPLETION	__BIT(16)
+#define	  PCI_AER_UC_RECEIVER_OVERFLOW		__BIT(17)
+#define	  PCI_AER_UC_MALFORMED_TLP		__BIT(18)
+#define	  PCI_AER_UC_ECRC_ERROR			__BIT(19)
+#define	  PCI_AER_UC_UNSUPPORTED_REQUEST_ERROR	__BIT(20)
+#define	  PCI_AER_UC_ACS_VIOLATION		__BIT(21)
+#define	  PCI_AER_UC_INTERNAL_ERROR		__BIT(22)
+#define	  PCI_AER_UC_MC_BLOCKED_TLP		__BIT(23)
+#define	  PCI_AER_UC_ATOMIC_OP_EGRESS_BLOCKED	__BIT(24)
+#define	  PCI_AER_UC_TLP_PREFIX_BLOCKED_ERROR	__BIT(25)
+#define	PCI_AER_UC_MASK		0x08	/* Uncorrectable Error Mask Register */
+	  /* Shares bits with UC_STATUS */
+#define	PCI_AER_UC_SEVERITY	0x0c	/* Uncorrectable Error Severity Register */
+	  /* Shares bits with UC_STATUS */
+#define	PCI_AER_COR_STATUS	0x10	/* Correctable Error Status Register */
+#define	  PCI_AER_COR_RECEIVER_ERROR		__BIT(0)
+#define	  PCI_AER_COR_BAD_TLP			__BIT(6)
+#define	  PCI_AER_COR_BAD_DLLP			__BIT(7)
+#define	  PCI_AER_COR_REPLAY_NUM_ROLLOVER	__BIT(8)
+#define	  PCI_AER_COR_REPLAY_TIMER_TIMEOUT	__BIT(12)
+#define	  PCI_AER_COR_ADVISORY_NF_ERROR		__BIT(13)
+#define	  PCI_AER_COR_INTERNAL_ERROR		__BIT(14)
+#define	  PCI_AER_COR_HEADER_LOG_OVERFLOW	__BIT(15)
+#define	PCI_AER_COR_MASK	0x14	/* Correctable Error Mask Register */
+	  /* Shares bits with COR_STATUS */
+#define	PCI_AER_CAP_CONTROL	0x18	/* Advanced Error Capabilities and Control Register */
+#define	  PCI_AER_FIRST_ERROR_PTR		__BITS(4, 0)
+#define	  PCI_AER_FIRST_ERROR_PTR_S		0
+#define	  PCI_AER_FIRST_ERROR_PTR_M		0x1f
+#define	  PCI_AER_ECRC_GEN_CAPABLE		__BIT(5)
+#define	  PCI_AER_ECRC_GEN_ENABLE		__BIT(6)
+#define	  PCI_AER_ECRC_CHECK_CAPABLE		__BIT(7)
+#define	  PCI_AER_ECRC_CHECK_ENABLE		__BIT(8)
+#define	  PCI_AER_MULT_HDR_CAPABLE		__BIT(9)
+#define	  PCI_AER_MULT_HDR_ENABLE		__BIT(10)
+#define	  PCI_AER_TLP_PREFIX_LOG_PRESENT	__BIT(11)
+#define	PCI_AER_HEADER_LOG	0x1c	/* Header Log Register */
+#define	PCI_AER_ROOTERR_CMD	0x2c	/* Root Error Command Register */
+					/* Only for root complex ports */
+#define	  PCI_AER_ROOTERR_COR_ENABLE		__BIT(0)
+#define	  PCI_AER_ROOTERR_NF_ENABLE		__BIT(1)
+#define	  PCI_AER_ROOTERR_F_ENABLE		__BIT(2)
+#define	PCI_AER_ROOTERR_STATUS	0x30	/* Root Error Status Register */
+					/* Only for root complex ports */
+#define	  PCI_AER_ROOTERR_COR_ERR		__BIT(0)
+#define	  PCI_AER_ROOTERR_MULTI_COR_ERR		__BIT(1)
+#define	  PCI_AER_ROOTERR_UC_ERR		__BIT(2)
+#define	  PCI_AER_ROOTERR_MULTI_UC_ERR		__BIT(3)
+#define	  PCI_AER_ROOTERR_FIRST_UC_FATAL	__BIT(4)
+#define	  PCI_AER_ROOTERR_NF_ERR		__BIT(5)
+#define	  PCI_AER_ROOTERR_F_ERR			__BIT(6)
+#define	  PCI_AER_ROOTERR_INT_MESSAGE		__BITS(31, 27)
+#define	  PCI_AER_ROOTERR_INT_MESSAGE_S		27
+#define	  PCI_AER_ROOTERR_INT_MESSAGE_M		0x1f
+#define	PCI_AER_ERRSRC_ID	0x34	/* Error Source Identification Register */
+#define	  PCI_AER_ERRSRC_ID_ERR_COR		__BITS(15, 0)
+#define	  PCI_AER_ERRSRC_ID_ERR_COR_S		0
+#define	  PCI_AER_ERRSRC_ID_ERR_COR_M		0xffff
+#define	  PCI_AER_ERRSRC_ID_ERR_UC		__BITS(31, 16)
+#define	  PCI_AER_ERRSRC_ID_ERR_UC_S		16
+#define	  PCI_AER_ERRSRC_ID_ERR_UC_M		0xffff
+					/* Only for root complex ports */
+#define	PCI_AER_TLP_PREFIX_LOG	0x38	/*TLP Prefix Log Register */
+					/* Only for TLP prefix functions */
+
+/*
+ * Extended capability ID: 0x0002, 0x0009
+ * Virtual Channel
+ */
+#define	PCI_VC_CAP1		0x04	/* Port VC Capability Register 1 */
+#define	  PCI_VC_CAP1_EXT_COUNT			__BITS(2, 0)
+#define	  PCI_VC_CAP1_EXT_COUNT_S		0
+#define	  PCI_VC_CAP1_EXT_COUNT_M		0x7
+#define	  PCI_VC_CAP1_LOWPRI_EXT_COUNT		__BITS(6, 4)
+#define	  PCI_VC_CAP1_LOWPRI_EXT_COUNT_S	4
+#define	  PCI_VC_CAP1_LOWPRI_EXT_COUNT_M	0x7
+#define	  PCI_VC_CAP1_REFCLK			__BITS(9, 8)
+#define	  PCI_VC_CAP1_REFCLK_S			8
+#define	  PCI_VC_CAP1_REFCLK_M			0x3
+#define	  PCI_VC_CAP1_REFCLK_100NS		0x0
+#define	  PCI_VC_CAP1_PORT_ARB_TABLE_SIZE	__BITS(11, 10)
+#define	  PCI_VC_CAP1_PORT_ARB_TABLE_SIZE_S	10
+#define	  PCI_VC_CAP1_PORT_ARB_TABLE_SIZE_M	0x3
+#define	PCI_VC_CAP2		0x08	/* Port VC Capability Register 2 */
+#define	  PCI_VC_CAP2_ARB_CAP_HW_FIXED_SCHEME	__BIT(0)
+#define	  PCI_VC_CAP2_ARB_CAP_WRR_32		__BIT(1)
+#define	  PCI_VC_CAP2_ARB_CAP_WRR_64		__BIT(2)
+#define	  PCI_VC_CAP2_ARB_CAP_WRR_128		__BIT(3)
+#define	  PCI_VC_CAP2_ARB_TABLE_OFFSET		__BITS(31, 24)
+#define	  PCI_VC_CAP2_ARB_TABLE_OFFSET_S	24
+#define	  PCI_VC_CAP2_ARB_TABLE_OFFSET_M	0xff
+#define	PCI_VC_CONTROL		0x0c	/* Port VC Control Register (16bit) */
+#define	  PCI_VC_CONTROL_LOAD_VC_ARB_TABLE	__BIT(0)
+#define	  PCI_VC_CONTROL_VC_ARB_SELECT		__BITS(3, 1)
+#define	  PCI_VC_CONTROL_VC_ARB_SELECT_S	1
+#define	  PCI_VC_CONTROL_VC_ARB_SELECT_M	0x7
+#define	PCI_VC_STATUS		0x0e	/* Port VC Status Register (16bit) */
+#define	  PCI_VC_STATUS_LOAD_VC_ARB_TABLE	__BIT(0)
+#define	PCI_VC_RESOURCE_CAP(n)	(0x10 + ((n) * 0x0c))	/* VC Resource Capability Register */
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_CAP_HW_FIXED_SCHEME __BIT(0)
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_CAP_WRR_32          __BIT(1)
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_CAP_WRR_64          __BIT(2)
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_CAP_WRR_128         __BIT(3)
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_CAP_TWRR_128        __BIT(4)
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_CAP_WRR_256         __BIT(5)
+#define	  PCI_VC_RESOURCE_CAP_ADV_PKT_SWITCH	__BIT(14)
+#define	  PCI_VC_RESOURCE_CAP_REJCT_SNOOP_TRANS	__BIT(15)
+#define	  PCI_VC_RESOURCE_CAP_MAX_TIME_SLOTS	__BITS(22, 16)
+#define	  PCI_VC_RESOURCE_CAP_MAX_TIME_SLOTS_S	16
+#define	  PCI_VC_RESOURCE_CAP_MAX_TIME_SLOTS_M	0x7f
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET   __BITS(31, 24)
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET_S 24
+#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET_M 0xff
+#define	PCI_VC_RESOURCE_CTL(n)	(0x14 + ((n) * 0x0c))	/* VC Resource Control Register */
+#define	  PCI_VC_RESOURCE_CTL_TCVC_MAP		__BITS(7, 0)
+#define	  PCI_VC_RESOURCE_CTL_TCVC_MAP_S	0
+#define	  PCI_VC_RESOURCE_CTL_TCVC_MAP_M	0xff
+#define	  PCI_VC_RESOURCE_CTL_LOAD_PORT_ARB_TABLE __BIT(16)
+#define	  PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT	__BITS(19, 17)
+#define	  PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT_S	17
+#define	  PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT_M	0x7
+#define	  PCI_VC_RESOURCE_CTL_VC_ID		__BITS(26, 24)
+#define	  PCI_VC_RESOURCE_CTL_VC_ID_S		24
+#define	  PCI_VC_RESOURCE_CTL_VC_ID_M		0x7
+#define	  PCI_VC_RESOURCE_CTL_VC_ENABLE		__BIT(31)
+#define	PCI_VC_RESOURCE_STA(n)	(0x18 + ((n) * 0x0c))	/* VC Resource Status Register */
+#define	  PCI_VC_RESOURCE_STA_PORT_ARB_TABLE	__BIT(0)
+#define	  PCI_VC_RESOURCE_STA_VC_NEG_PENDING	__BIT(1)
+
+/*
+ * Extended capability ID: 0x0003
+ * Serial Number
+ */
+#define	PCI_SERIAL_LOW		0x04
+#define	PCI_SERIAL_HIGH		0x08
+
+/*
+ * Extended capability ID: 0x0004
+ * Power Budgeting
+ */
+#define	PCI_PWRBDGT_DSEL	0x04	/* Data Select */
+#define	PCI_PWRBDGT_DATA	0x08	/* Data */
+#define	PCI_PWRBDGT_DATA_BASEPWR	__BITS(7, 0)	/* Base Power */
+#define	PCI_PWRBDGT_DATA_SCALE		__BITS(9, 8)	/* Data Scale */
+#define	PCI_PWRBDGT_PM_SUBSTAT		__BITS(12, 10)	/* PM Sub State */
+#define	PCI_PWRBDGT_PM_STAT		__BITS(14, 13)	/* PM State */
+#define	PCI_PWRBDGT_TYPE		__BITS(17, 15)	/* Type */
+#define	PCI_PWRBDGT_PWRRAIL		__BITS(20, 18)	/* Power Rail */
+#define	PCI_PWRBDGT_CAP		0x0c	/* Capability */
+#define	PCI_PWRBDGT_CAP_SYSALLOC	__BIT(0)	/* System Allocated */
+
+/*
+ * Extended capability ID: 0x0005
+ * Root Complex Link Declaration
+ */
+#define	PCI_RCLINK_DCL_ESDESC	0x04	/* Element Self Description */
+#define	PCI_RCLINK_DCL_ESDESC_ELMTYPE __BITS(3, 0)	/* Element Type */
+#define	PCI_RCLINK_DCL_ESDESC_NUMLINKENT __BITS(15, 8) /* Num of Link Entries*/
+#define	PCI_RCLINK_DCL_ESDESC_COMPID  __BITS(23, 16)	/* Component ID */
+#define	PCI_RCLINK_DCL_ESDESC_PORTNUM __BITS(31, 24)	/* Port Number */
+#define	PCI_RCLINK_DCL_LINKENTS	0x10	/* Link Entries */
+#define	PCI_RCLINK_DCL_LINKDESC(x)	/* Link Description */	\
+	(PCI_RCLINK_DCL_LINKENTS + ((x) * 16))
+#define	PCI_RCLINK_DCL_LINKDESC_LVALID	__BIT(0)	/* Link Valid */
+#define	PCI_RCLINK_DCL_LINKDESC_LTYPE	__BIT(1)	/* Link Type */
+#define	PCI_RCLINK_DCL_LINKDESC_ARCRBH	__BIT(2)    /* Associate RCRB Header */
+#define	PCI_RCLINK_DCL_LINKDESC_TCOMPID	__BITS(23, 16) /* Target Component ID*/
+#define	PCI_RCLINK_DCL_LINKDESC_TPNUM	__BITS(31, 24) /* Target Port Number */
+#define	PCI_RCLINK_DCL_LINKADDR_LT0_LO(x) /* LT0: Link Address Low */	\
+	(PCI_RCLINK_DCL_LINKENTS + ((x) * 16) + 0x08)
+#define	PCI_RCLINK_DCL_LINKADDR_LT0_HI(x) /* LT0: Link Address High */	\
+	(PCI_RCLINK_DCL_LINKENTS + ((x) * 16) + 0x0c)
+#define	PCI_RCLINK_DCL_LINKADDR_LT1_LO(x) /* LT1: Config Space (low) */	\
+	(PCI_RCLINK_DCL_LINKENTS + ((x) * 16) + 0x08)
+#define	PCI_RCLINK_DCL_LINKADDR_LT1_N	__BITS(2, 0)	/* N */
+#define	PCI_RCLINK_DCL_LINKADDR_LT1_FUNC __BITS(14, 12)	/* Function Number */
+#define	PCI_RCLINK_DCL_LINKADDR_LT1_DEV	__BITS(19, 15)	/* Device Number */
+#define	PCI_RCLINK_DCL_LINKADDR_LT1_BUS(N) __BITS(19 + (N), 20) /* Bus Number*/
+#define	PCI_RCLINK_DCL_LINKADDR_LT1_BAL(N) __BITS(31, 20 + (N)) /* BAddr(L) */
+#define	PCI_RCLINK_DCL_LINKADDR_LT1_HI(x) /* LT1: Config Space Base Addr(H) */\
+	(PCI_RCLINK_DCL_LINKENTS + ((x) * 16) + 0x0c)
+
+/*
+ * Extended capability ID: 0x0006
+ * Root Complex Internal Link Control
+ */
+
+/*
+ * Extended capability ID: 0x0007
+ * Root Complex Event Collector Association
+ */
+#define	PCI_RCEC_ASSOC_ASSOCBITMAP 0x04
+
+/*
+ * Extended capability ID: 0x0008
+ * Multi-Function Virtual Channel
+ */
+
+/*
+ * Extended capability ID: 0x0009
+ * Virtual Channel if MFVC Ext Cap set
+ */
+
+/*
+ * Extended capability ID: 0x000a
+ * RCRB Header
+ */
+
+/*
+ * Extended capability ID: 0x000b
+ * Vendor Unique
+ */
+
+/*
+ * Extended capability ID: 0x000c
+ * Configuration Access Correction
+ */
+
+/*
+ * Extended capability ID: 0x000d
+ * Access Control Services
+ */
+#define	PCI_ACS_CAP	0x04	/* Capability Register */
+#define PCI_ACS_CAP_V	__BIT(0)	/* Source Validation */
+#define PCI_ACS_CAP_B	__BIT(1)	/* Transaction Blocking */
+#define PCI_ACS_CAP_R	__BIT(2)	/* P2P Request Redirect */
+#define PCI_ACS_CAP_C	__BIT(3)	/* P2P Completion Redirect */
+#define PCI_ACS_CAP_U	__BIT(4)	/* Upstream Forwarding */
+#define PCI_ACS_CAP_E	__BIT(5)	/* Egress Control */
+#define PCI_ACS_CAP_T	__BIT(6)	/* Direct Translated P2P */
+#define PCI_ACS_CAP_ECVSIZE __BITS(15, 8) /* Egress Control Vector Size */
+#define	PCI_ACS_CTL	0x04	/* Control Register */
+#define PCI_ACS_CTL_V	__BIT(0 + 16)	/* Source Validation Enable */
+#define PCI_ACS_CTL_B	__BIT(1 + 16)	/* Transaction Blocking Enable */
+#define PCI_ACS_CTL_R	__BIT(2 + 16)	/* P2P Request Redirect Enable */
+#define PCI_ACS_CTL_C	__BIT(3 + 16)	/* P2P Completion Redirect Enable */
+#define PCI_ACS_CTL_U	__BIT(4 + 16)	/* Upstream Forwarding Enable */
+#define PCI_ACS_CTL_E	__BIT(5 + 16)	/* Egress Control Enable */
+#define PCI_ACS_CTL_T	__BIT(6 + 16)	/* Direct Translated P2P Enable */
+#define	PCI_ACS_ECV	0x08	/* Egress Control Vector */
+
+/*
+ * Extended capability ID: 0x000e
+ * ARI
+ */
+#define PCI_ARI_CAP	0x04	/* Capability Register */
+#define PCI_ARI_CAP_M		__BIT(0)	/* MFVC Function Groups Cap. */
+#define PCI_ARI_CAP_A		__BIT(1)	/* ACS Function Groups Cap. */
+#define PCI_ARI_CAP_NXTFN	__BITS(15, 8)	/* Next Function Number */
+#define PCI_ARI_CTL	0x04	/* Control Register */
+#define PCI_ARI_CTL_M		__BIT(16)	/* MFVC Function Groups Ena. */
+#define PCI_ARI_CTL_A		__BIT(17)	/* ACS Function Groups Ena. */
+#define PCI_ARI_CTL_FUNCGRP	__BITS(31, 24)	/* Function Group */
+
+/*
+ * Extended capability ID: 0x000f
+ * Address Translation Services
+ */
+#define	PCI_ATS_CAP	0x04	/* Capability Register */
+#define	PCI_ATS_CAP_INVQDEPTH	__BITS(4, 0)	/* Invalidate Queue Depth */
+#define	PCI_ATS_CAP_PALIGNREQ	__BIT(5)	/* Page Aligned Request */
+#define	PCI_ATS_CTL	0x04	/* Control Register */
+#define	PCI_ATS_CTL_STU		__BITS(20, 16)	/* Smallest Translation Unit */
+#define	PCI_ATS_CTL_EN		__BIT(31)	/* Enable */
+
+/*
+ * Extended capability ID: 0x0010
+ * SR-IOV
+ */
+#define	PCI_SRIOV_CAP		0x04	/* SR-IOV Capabilities */
+#define	  PCI_SRIOV_CAP_VF_MIGRATION		__BIT(0)
+#define	  PCI_SRIOV_CAP_ARI_CAP_HIER_PRESERVED	__BIT(1)
+#define	  PCI_SRIOV_CAP_VF_MIGRATION_INTMSG_N	__BITS(31, 21)
+#define	  PCI_SRIOV_CAP_VF_MIGRATION_INTMSG_N_S	21
+#define	  PCI_SRIOV_CAP_VF_MIGRATION_INTMSG_N_M	0x7ff
+#define	PCI_SRIOV_CTL		0x08	/* SR-IOV Control (16bit) */
+#define	  PCI_SRIOV_CTL_VF_ENABLE		__BIT(0)
+#define	  PCI_SRIOV_CTL_VF_MIGRATION_SUPPORT	__BIT(1)
+#define	  PCI_SRIOV_CTL_VF_MIGRATION_INT_ENABLE	__BIT(2)
+#define	  PCI_SRIOV_CTL_VF_MSE			__BIT(3)
+#define	  PCI_SRIOV_CTL_ARI_CAP_HIER		__BIT(4)
+#define	PCI_SRIOV_STA		0x0a	/* SR-IOV Status (16bit) */
+#define	  PCI_SRIOV_STA_VF_MIGRATION		__BIT(0)
+#define	PCI_SRIOV_INITIAL_VFS	0x0c	/* InitialVFs (16bit) */
+#define	PCI_SRIOV_TOTAL_VFS	0x0e	/* TotalVFs (16bit) */
+#define	PCI_SRIOV_NUM_VFS	0x10	/* NumVFs (16bit) */
+#define	PCI_SRIOV_FUNC_DEP_LINK	0x12	/* Function Dependency Link (16bit) */
+#define	PCI_SRIOV_VF_OFF	0x14	/* First VF Offset (16bit) */
+#define	PCI_SRIOV_VF_STRIDE	0x16	/* VF Stride (16bit) */
+#define	PCI_SRIOV_VF_DID	0x1a	/* VF Device ID (16bit) */
+#define	PCI_SRIOV_PAGE_CAP	0x1c	/* Supported Page Sizes */
+#define	PCI_SRIOV_PAGE_SIZE	0x20	/* System Page Size */
+#define	  PCI_SRIOV_BASE_PAGE_SHIFT	12
+#define	PCI_SRIOV_BARS		0x24	/* VF BAR0-5 */
+#define	PCI_SRIOV_BAR(x)	(PCI_SRIOV_BARS + ((x) * 4))
+#define	PCI_SRIOV_VF_MIG_STA_AR	0x3c	/* VF Migration State Array Offset */
+#define	  PCI_SRIOV_VF_MIG_STA_OFFSET	__BITS(31, 3)
+#define	  PCI_SRIOV_VF_MIG_STA_OFFSET_S	3
+#define	  PCI_SRIOV_VF_MIG_STA_OFFSET_M	0x1fffffff
+#define	  PCI_SRIOV_VF_MIG_STA_BIR		__BITS(2, 0)
+#define	  PCI_SRIOV_VF_MIG_STA_BIR_S		0
+#define	  PCI_SRIOV_VF_MIG_STA_BIR_M		0x7
+
+/*
+ * Extended capability ID: 0x0011
+ * Multiple Root IO Virtualization
+ */
+
+/*
+ * Extended capability ID: 0x0012
+ * Multicast
+ */
+
+/*
+ * Extended capability ID: 0x0013
+ * Page Request
+ */
+#define	PCI_PAGE_REQ_CTL	0x04	/* Control Register */
+#define	PCI_PAGE_REQ_CTL_E	__BIT(0)	/* Enalbe */
+#define	PCI_PAGE_REQ_CTL_R	__BIT(1)	/* Reset */
+#define	PCI_PAGE_REQ_STA	0x04	/* Status Register */
+#define	PCI_PAGE_REQ_STA_RF	__BIT(0+16)	/* Response Failure */
+#define	PCI_PAGE_REQ_STA_UPRGI	__BIT(1+16)   /* Unexpected Page Req Grp Idx */
+#define	PCI_PAGE_REQ_STA_S	__BIT(8+16)	/* Stopped */
+#define	PCI_PAGE_REQ_OUTSTCAPA	0x08	/* Outstanding Page Request Capacity */
+#define	PCI_PAGE_REQ_OUTSTALLOC	0x0c  /* Outstanding Page Request Allocation */
+
+/*
+ * Extended capability ID: 0x0014
+ * (Reserved for AMD)
+ */
+
+/*
+ * Extended capability ID: 0x0015
+ * Resizable BAR
+ */
+
+/*
+ * Extended capability ID: 0x0016
+ * Dynamic Power Allocation
+ */
+
+/*
+ * Extended capability ID: 0x0017
+ * TPH Requester
+ */
+#define	PCI_TPH_REQ_CAP	0x04	/* TPH Requester Capability */
+#define	PCI_TPH_REQ_CAP_NOST	__BIT(0)	/* No ST Mode Supported */
+#define	PCI_TPH_REQ_CAP_INTVEC	__BIT(1)	/* Intr Vec Mode Supported */
+#define	PCI_TPH_REQ_CAP_DEVSPEC	__BIT(2)   /* Device Specific Mode Supported */
+#define	PCI_TPH_REQ_CAP_XTPHREQ	__BIT(8)    /* Extend TPH Reqester Supported */
+#define	PCI_TPH_REQ_CAP_STTBLLOC __BITS(10, 9)	/* ST Table Location */
+#define	PCI_TPH_REQ_CAP_STTBLSIZ __BITS(26, 16)	/* ST Table Size */
+#define	PCI_TPH_REQ_CTL	0x08	/* TPH Requester Control */
+#define	PCI_TPH_REQ_CTL_STSEL	_BITS(2, 0)	/* ST Mode Select */
+#define	PCI_TPH_REQ_CTL_TPHREQEN _BITS(9, 8)	/* TPH Requester Enable */
+#define	PCI_TPH_REQ_STTBL 0x0c	/* TPH ST Table */
+
+/*
+ * Extended capability ID: 0x0018
+ * Latency Tolerance Reporting
+ */
+#define	PCI_LTR_MAXSNOOPLAT	0x04	/* Max Snoop Latency */
+#define	PCI_LTR_MAXSNOOPLAT_VAL	__BITS(9, 0)	/* Max Snoop LatencyValue */
+#define	PCI_LTR_MAXSNOOPLAT_SCALE __BITS(12, 10) /* Max Snoop LatencyScale */
+#define	PCI_LTR_MAXNOSNOOPLAT	0x04	/* Max No-Snoop Latency */
+#define	PCI_LTR_MAXNOSNOOPLAT_VAL __BITS(25, 16) /* Max No-Snoop LatencyValue*/
+#define	PCI_LTR_MAXNOSNOOPLAT_SCALE __BITS(28, 26) /*Max NoSnoop LatencyScale*/
+#define	PCI_LTR_SCALETONS(x) ((32 << (x)) / 32)
+
+/*
+ * Extended capability ID: 0x0019
+ * Seconday PCI Express Extended Capability
+ */
+#define PCI_SECPCIE_LCTL3	0x04	/* Link Control 3 */
+#define PCI_SECPCIE_LCTL3_PERFEQ	__BIT(0) /* Perform Equalization */
+#define PCI_SECPCIE_LCTL3_LINKEQREQ_IE	__BIT(1) /* Link Eq. Req. Int. Ena. */
+#define PCI_SECPCIE_LANEERR_STA 0x08	/* Lane Error Status */
+#define PCI_SECPCIE_EQCTLS	0x0c	/* Equalization Control [0-maxlane] */
+#define	PCI_SECPCIE_EQCTL(x)	(PCI_SECPCIE_EQCTLS + ((x) * 2))
+#define	PCI_SECPCIE_EQCTL_DP_XMIT_PRESET __BITS(3, 0) /* DwnStPort Xmit Pres */
+#define	PCI_SECPCIE_EQCTL_DP_RCV_HINT	__BITS(6, 4) /* DwnStPort Rcv PreHnt */
+#define	PCI_SECPCIE_EQCTL_UP_XMIT_PRESET __BITS(11, 8) /* UpStPort Xmit Pres */
+#define	PCI_SECPCIE_EQCTL_UP_RCV_HINT	__BITS(14, 12) /* UpStPort Rcv PreHnt*/
+
+/*
+ * Extended capability ID: 0x001a
+ * Protocol Multiplexing
+ */
+
+/*
+ * Extended capability ID: 0x001b
+ * Process Address Space ID
+ */
+#define	PCI_PASID_CAP	0x04	/* Capability Register */
+#define	PCI_PASID_CAP_XPERM	__BIT(1)     /* Execute Permission Supported */
+#define	PCI_PASID_CAP_PRIVMODE	__BIT(2)	/* Privileged Mode Supported */
+#define	PCI_PASID_CAP_MAXPASIDW	__BITS(12, 8)	/* Max PASID Width */
+#define	PCI_PASID_CTL	0x04	/* Control Register */
+#define	PCI_PASID_CTL_PASID_EN	__BIT(0)	/* PASID Enable */
+#define	PCI_PASID_CTL_XPERM_EN	__BIT(1)	/* Execute Permission Enable */
+#define	PCI_PASID_CTL_PRIVMODE_EN __BIT(2)	/* Privileged Mode Enable */
+
+/*
+ * Extended capability ID: 0x001c
+ * LN Requester
+ */
+#define	PCI_LNR_CAP	0x04	/* Capability Register */
+#define	PCI_LNR_CAP_64		__BIT(0)	/* LNR-64 Supported */
+#define	PCI_LNR_CAP_128		__BIT(1)	/* LNR-128 Supported */
+#define	PCI_LNR_CAP_REGISTMAX	__BITS(12, 8)	/* LNR Registration MAX */
+#define	PCI_LNR_CTL	0x04	/* Control Register */
+#define	PCI_LNR_CTL_EN		__BIT(0+16)	/* LNR Enable */
+#define	PCI_LNR_CTL_CLS		__BIT(1+16)	/* LNR CLS */
+#define	PCI_LNR_CTL_REGISTLIM	__BITS(28, 24)	/* LNR Registration Limit */
+
+/*
+ * Extended capability ID: 0x001d
+ * Downstream Port Containment
+ */
+
+/*
+ * Extended capability ID: 0x001e
+ * L1 PM Substates
+ */
+#define	PCI_L1PM_CAP	0x04	/* Capabilities Register */
+#define	PCI_L1PM_CAP_PCIPM12	__BIT(0)	/* PCI-PM L1.2 Supported */
+#define	PCI_L1PM_CAP_PCIPM11	__BIT(1)	/* PCI-PM L1.1 Supported */
+#define	PCI_L1PM_CAP_ASPM12	__BIT(2)	/* ASPM L1.2 Supported */
+#define	PCI_L1PM_CAP_ASPM11	__BIT(3)	/* ASPM L1.1 Supported */
+#define	PCI_L1PM_CAP_L1PM	__BIT(4)	/* L1 PM Substates Supported */
+#define	PCI_L1PM_CAP_PCMRT	__BITS(15, 8) /*Port Common Mode Restore Time*/
+#define	PCI_L1PM_CAP_PTPOSCALE	__BITS(17, 16)	/* Port T_POWER_ON Scale */
+#define	PCI_L1PM_CAP_PTPOVAL	__BITS(23, 19)	/* Port T_POWER_ON Value */
+#define	PCI_L1PM_CTL1	0x08	/* Control Register 1 */
+#define	PCI_L1PM_CTL1_PCIPM12_EN __BIT(0)	/* PCI-PM L1.2 Enable */
+#define	PCI_L1PM_CTL1_PCIPM11_EN __BIT(1)	/* PCI-PM L1.1 Enable */
+#define	PCI_L1PM_CTL1_ASPM12_EN	__BIT(2)	/* ASPM L1.2 Enable */
+#define	PCI_L1PM_CTL1_ASPM11_EN	__BIT(3)	/* ASPM L1.1 Enable */
+#define	PCI_L1PM_CTL1_CMRT	__BITS(15, 8)	/* Common Mode Restore Time */
+#define	PCI_L1PM_CTL1_LTRTHVAL	__BITS(25, 16)	/* LTR L1.2 THRESHOLD Value */
+#define	PCI_L1PM_CTL1_LTRTHSCALE __BITS(31, 29)	/* LTR L1.2 THRESHOLD Scale */
+#define	PCI_L1PM_CTL2	0x0c	/* Control Register 2 */
+#define	PCI_L1PM_CTL2_TPOSCALE	__BITS(1, 0)	/* T_POWER_ON Scale */
+#define	PCI_L1PM_CTL2_TPOVAL	__BITS(7, 3)	/* T_POWER_ON Value */
 
 /*
  * Local constants
