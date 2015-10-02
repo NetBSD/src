@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2105 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2106 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -202,3 +202,6 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	libproc, librtld_db: Added from FreeBSD [christos 20150924]
 	dtrace: Updated from FreeBSD [christos 20150924]
 	resolvconf: Import openresolv-3.7.1 [roy 20150929]
+	x86: Add PCI Extended Configuration Space support [nonaka 20151002]
+	pci(3): Decode Extended Capability in PCI Extended Configuration Space.
+		[nonaka 20151002]
