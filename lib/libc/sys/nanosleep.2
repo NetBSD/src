@@ -1,4 +1,4 @@
-.\"	$NetBSD: nanosleep.2,v 1.16 2014/02/02 08:31:49 wiz Exp $
+.\"	$NetBSD: nanosleep.2,v 1.17 2015/10/02 19:52:49 christos Exp $
 .\"
 .\" Copyright (c) 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)sleep.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd February 1, 2014
+.Dd October 2, 2015
 .Dt NANOSLEEP 2
 .Os
 .Sh NAME
@@ -111,8 +111,11 @@ If the
 .Fn clock_nanosleep
 or the
 .Fn nanosleep
-functions return due to the delivery of a signal, the value returned
-will be \-1, and the global variable
+functions return due to the delivery of a signal, then
+.Fn clock_nanosleep
+will return directly the error number, and
+.Fn nanosleep
+will return \-1, and the global variable
 .Va errno
 will be set to indicate the interruption.
 If
@@ -123,10 +126,12 @@ the timespec structure it references is updated to contain the
 unslept amount (the request time minus the time actually slept).
 .Sh ERRORS
 If any of the following conditions occur, the
-.Nm
+.Fn nanosleep
 function shall return \-1 and set
 .Va errno
-to the corresponding value.
+to the corresponding value, and the
+.Fn clock_nanosleep
+function shall return the errnor number directly.
 .Bl -tag -width Er
 .It Bq Er EFAULT
 Either
