@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.107 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.108 2015/10/02 16:54:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,11 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.107 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.108 2015/10/02 16:54:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_revcache.h"
+#include "opt_dtrace.h"
 #endif
 
 #include <sys/param.h>
@@ -80,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.107 2015/08/24 22:50:32 pooka Exp $"
 #include <sys/kernel.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
+#include <sys/sdt.h>
 
 #define NAMECACHE_ENTER_REVERSE
 /*
@@ -263,6 +265,29 @@ static void cache_dtor(void *, void *);
 static struct sysctllog *sysctllog;
 static void sysctl_cache_stat_setup(void);
 
+SDT_PROVIDER_DEFINE(vfs);
+
+SDT_PROBE_DEFINE1(vfs, namecache, invalidate, done, "struct vnode *");
+SDT_PROBE_DEFINE1(vfs, namecache, purge, parents, "struct vnode *");
+SDT_PROBE_DEFINE1(vfs, namecache, purge, children, "struct vnode *");
+SDT_PROBE_DEFINE2(vfs, namecache, purge, name, "char *", "size_t");
+SDT_PROBE_DEFINE1(vfs, namecache, purge, vfs, "struct mount *");
+SDT_PROBE_DEFINE3(vfs, namecache, lookup, hit, "struct vnode *",
+    "char *", "size_t");
+SDT_PROBE_DEFINE3(vfs, namecache, lookup, miss, "struct vnode *",
+    "char *", "size_t");
+SDT_PROBE_DEFINE3(vfs, namecache, lookup, toolong, "struct vnode *",
+    "char *", "size_t");
+SDT_PROBE_DEFINE2(vfs, namecache, revlookup, success, "struct vnode *",
+     "struct vnode *");
+SDT_PROBE_DEFINE2(vfs, namecache, revlookup, fail, "struct vnode *",
+     "int");
+SDT_PROBE_DEFINE2(vfs, namecache, prune, done, "int", "int");
+SDT_PROBE_DEFINE3(vfs, namecache, enter, toolong, "struct vnode *",
+    "char *", "size_t");
+SDT_PROBE_DEFINE3(vfs, namecache, enter, done, "struct vnode *",
+    "char *", "size_t");
+
 /*
  * Compute the hash for an entry.
  *
@@ -291,6 +316,9 @@ cache_invalidate(struct namecache *ncp)
 	KASSERT(mutex_owned(&ncp->nc_lock));
 
 	if (ncp->nc_dvp != NULL) {
+		SDT_PROBE(vfs, namecache, invalidate, done, ncp->nc_dvp,
+		    0, 0, 0, 0);
+
 		ncp->nc_vp = NULL;
 		ncp->nc_dvp = NULL;
 		do {
@@ -407,12 +435,16 @@ cache_lookup_entry(const struct vnode *dvp, const char *name, size_t namelen)
 	    	mutex_enter(&ncp->nc_lock);
 		if (__predict_true(ncp->nc_dvp == dvp)) {
 			ncp->nc_hittime = hardclock_ticks;
+			SDT_PROBE(vfs, namecache, lookup, hit, dvp,
+			    name, namelen, 0, 0);
 			return ncp;
 		}
 		/* Raced: entry has been nullified. */
 		mutex_exit(&ncp->nc_lock);
 	}
 
+	SDT_PROBE(vfs, namecache, lookup, miss, dvp,
+	    name, namelen, 0, 0);
 	return NULL;
 }
 
@@ -490,6 +522,8 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 	cpup = curcpu()->ci_data.cpu_nch;
 	mutex_enter(&cpup->cpu_lock);
 	if (__predict_false(namelen > NCHNAMLEN)) {
+		SDT_PROBE(vfs, namecache, lookup, toolong, dvp,
+		    name, namelen, 0, 0);
 		COUNT(cpup, ncs_long);
 		mutex_exit(&cpup->cpu_lock);
 		/* found nothing */
@@ -717,6 +751,8 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 					*dvpp = NULL;
 					mutex_exit(&ncp->nc_lock);
 					mutex_exit(namecache_lock);
+					SDT_PROBE(vfs, namecache, revlookup,
+					    fail, vp, ERANGE, 0, 0, 0);
 					return (ERANGE);
 				}
 				memcpy(bp, ncp->nc_name, nlen);
@@ -732,9 +768,13 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 				if (bufp)
 					(*bpp) += nlen;
 				*dvpp = NULL;
+				SDT_PROBE(vfs, namecache, revlookup, fail, vp,
+				    error, 0, 0, 0);
 				return -1;
 			}
 			*dvpp = dvp;
+			SDT_PROBE(vfs, namecache, revlookup, success, vp, dvp,
+			    0, 0, 0);
 			return (0);
 		}
 		mutex_exit(&ncp->nc_lock);
@@ -762,9 +802,12 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	/* First, check whether we can/should add a cache entry. */
 	if ((cnflags & MAKEENTRY) == 0 ||
 	    __predict_false(namelen > NCHNAMLEN || !doingcache)) {
+		SDT_PROBE(vfs, namecache, enter, toolong, vp, name, namelen,
+		    0, 0);
 		return;
 	}
 
+	SDT_PROBE(vfs, namecache, enter, done, vp, name, namelen, 0, 0);
 	if (numcache > desiredvnodes) {
 		mutex_enter(namecache_lock);
 		cache_ev_forced.ev_count++;
@@ -987,6 +1030,8 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 
 	mutex_enter(namecache_lock);
 	if (flags & PURGE_PARENTS) {
+		SDT_PROBE(vfs, namecache, purge, parents, vp, 0, 0, 0, 0);
+
 		for (ncp = LIST_FIRST(&vp->v_nclist); ncp != NULL;
 		    ncp = ncnext) {
 			ncnext = LIST_NEXT(ncp, nc_vlist);
@@ -997,6 +1042,7 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 		}
 	}
 	if (flags & PURGE_CHILDREN) {
+		SDT_PROBE(vfs, namecache, purge, children, vp, 0, 0, 0, 0);
 		for (ncp = LIST_FIRST(&vp->v_dnclist); ncp != NULL;
 		    ncp = ncnext) {
 			ncnext = LIST_NEXT(ncp, nc_dvlist);
@@ -1007,6 +1053,7 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 		}
 	}
 	if (name != NULL) {
+		SDT_PROBE(vfs, namecache, purge, name, name, namelen, 0, 0, 0);
 		ncp = cache_lookup_entry(vp, name, namelen);
 		if (ncp) {
 			cache_invalidate(ncp);
@@ -1026,6 +1073,7 @@ cache_purgevfs(struct mount *mp)
 {
 	struct namecache *ncp, *nxtcp;
 
+	SDT_PROBE(vfs, namecache, purge, vfs, mp, 0, 0, 0, 0);
 	mutex_enter(namecache_lock);
 	for (ncp = TAILQ_FIRST(&nclruhead); ncp != NULL; ncp = nxtcp) {
 		nxtcp = TAILQ_NEXT(ncp, nc_lru);
@@ -1055,6 +1103,7 @@ cache_prune(int incache, int target)
 
 	KASSERT(mutex_owned(namecache_lock));
 
+	SDT_PROBE(vfs, namecache, prune, done, incache, target, 0, 0, 0);
 	items = 0;
 	tryharder = 0;
 	recent = hardclock_ticks - hz * cache_hottime;
