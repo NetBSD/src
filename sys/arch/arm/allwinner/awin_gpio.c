@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.18 2015/04/20 01:33:22 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.19 2015/10/02 14:06:02 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -298,6 +298,7 @@ awin_gpio_config_pins(device_t self)
 	for (u_int i = 0; i < __arraycount(pin_groups); i++) {
 		struct awin_gpio_pin_group * const grp = &pin_groups[i];
 		uint32_t mask = grp->grp_pin_mask & ~grp->grp_pin_inuse_mask;
+		device_t gpio;
 
 		/* 
 		 * If this group has no bits to provide, skip it.
@@ -323,7 +324,8 @@ awin_gpio_config_pins(device_t self)
 		}
 
 		gba.gba_npins = pin - gba.gba_pins;
-		config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+		gpio = config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+		aprint_normal_dev(gpio, "port %c\n", 'A' + i);
 	}
 }
 #endif /* NGPIO > 0 */
