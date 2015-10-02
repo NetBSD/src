@@ -1,4 +1,4 @@
-/*	$NetBSD: sdt.h,v 1.6 2015/10/02 17:13:58 christos Exp $	*/
+/*	$NetBSD: sdt.h,v 1.7 2015/10/02 17:28:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 2007 Pawel Jakub Dawidek <pjd@FreeBSD.org>
@@ -33,5 +33,26 @@
 
 #include_next <sys/sdt.h>
 #include <sys/dtrace.h>
+ 
+#undef	DTRACE_PROBE
+#undef	DTRACE_PROBE1
+#undef	DTRACE_PROBE2
+#undef	DTRACE_PROBE3
+#undef	DTRACE_PROBE4
+#undef	DTRACE_PROBE5
+#undef	DTRACE_PROBE6
+#undef	DTRACE_PROBE7
+
+#define	DTRACE_PROBE(name)
+#define	DTRACE_PROBE1(name, type1, arg1)
+#define	DTRACE_PROBE2(name, type1, arg1, type2, arg2)
+#define	DTRACE_PROBE3(name, type1, arg1, type2, arg2, type3, arg3)
+#define	DTRACE_PROBE4(name, type1, arg1, type2, arg2, type3, arg3, type4, arg4) 
+#define	DTRACE_PROBE5(name, type1, arg1, type2, arg2, type3, arg3, \
+	type4, arg4, type5, arg5)
+#define	DTRACE_PROBE6(name, type1, arg1, type2, arg2, type3, arg3, \
+	type4, arg4, type5, arg5, type6, arg6)
+#define	DTRACE_PROBE7(name, type1, arg1, type2, arg2, type3, arg3, \
+	type4, arg4, type5, arg5, type6, arg6, type7, arg7)
 
 #endif	/* _OPENSOLARIS_SYS_SDT_H_ */
