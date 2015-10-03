@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.64 2015/10/03 08:28:46 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.65 2015/10/03 08:29:21 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1137,12 +1137,12 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 				 * If that is the case mark it UNWRITTEN to
                                  * keep the accounting straight.
 				 */
-				/* XXX ondisk32 */
-				if (((int32_t *)ibp->b_data)[indirs[i].in_off] == 0)
-					((int32_t *)ibp->b_data)[indirs[i].in_off] =
-						UNWRITTEN;
-				/* XXX ondisk32 */
-				idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
+				if (lfs_iblock_get(fs, ibp->b_data,
+						indirs[i].in_off) == 0)
+					lfs_iblock_set(fs, ibp->b_data,
+						indirs[i].in_off, UNWRITTEN);
+				idaddr = lfs_iblock_get(fs, ibp->b_data,
+						indirs[i].in_off);
 				if ((error = VOP_BWRITE(ibp)))
 					return error;
 			}
@@ -1183,7 +1183,6 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 			if (bread(vp, idp->in_lbn, lfs_sb_getbsize(fs), 0, &ibp))
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
-			/* XXX ondisk32 */
 			lfs_iblock_set(fs, ibp->b_data, idp->in_off,
 				       UNWRITTEN);
 			VOP_BWRITE(ibp);
