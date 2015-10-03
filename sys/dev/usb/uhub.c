@@ -1,5 +1,6 @@
-/*	$NetBSD: uhub.c,v 1.126.2.15 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.16 2015/10/03 16:32:25 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
+/*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -36,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.15 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.16 2015/10/03 16:32:25 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -546,10 +547,6 @@ uhub_explore(struct usbd_device *dev)
 			}
 			status = UGETW(up->up_status.wPortStatus);
 			change = UGETW(up->up_status.wPortChange);
-			if (USB_IS_SS(dev->ud_speed)) {
-				status |= UPS_OTHER_SPEED;
-				USETW(up->up_status.wPortStatus, status);
-			}
 
 			DPRINTF("uhub %d port %d: s/c=%x/%x",
 			    device_unit(sc->sc_dev), port, status, change);
@@ -661,23 +658,6 @@ uhub_explore(struct usbd_device *dev)
 		DPRINTF("unit %d dev->speed=%u dev->depth=%u",
 		    device_unit(sc->sc_dev), dev->ud_speed, dev->ud_depth, 0);
 
-		/*
-		 * To check whether port has power,
-		 *  check UPS_PORT_POWER bit if port speed is HS/FS/LS and
-		 *  check UPS_PORT_POWER_SS bit if port speed is SS.
-		 */
-		if (status & UPS_OTHER_SPEED) {
-			if (!(status & UPS_PORT_POWER_SS))
-				aprint_normal_dev(sc->sc_dev,
-				    "strange, connected port %d has no power\n",
-				    port);
-		} else {
-			if (!(status & UPS_PORT_POWER))
-				aprint_normal_dev(sc->sc_dev,
-				    "strange, connected port %d has no power\n",
-				    port);
-		}
-
 		/* Wait for maximum device power up time. */
 		usbd_delay_ms(dev, USB_PORT_POWERUP_DELAY);
 
@@ -696,10 +676,6 @@ uhub_explore(struct usbd_device *dev)
 		}
 		status = UGETW(up->up_status.wPortStatus);
 		change = UGETW(up->up_status.wPortChange);
-		if (USB_IS_SS(dev->ud_speed)) {
-			status |= UPS_OTHER_SPEED;
-			USETW(up->up_status.wPortStatus, status);
-		}
 		DPRINTF("hub %d port %d after reset: s/c=%x/%x",
 		    device_unit(sc->sc_dev), port, status, change);
 
@@ -724,18 +700,59 @@ uhub_explore(struct usbd_device *dev)
 			usbd_clear_port_feature(dev, port,
 			    UHF_C_BH_PORT_RESET);
 
-		/* Figure out device speed */
-		if (status & UPS_OTHER_SPEED) {
-			speed = USB_SPEED_SUPER;
-		} else if (status & UPS_HIGH_SPEED)
+		/*
+		 * Figure out device speed from power bit of port status.
+		 *  USB 2.0 ch 11.24.2.7.1
+		 *  USB 3.1 ch 10.16.2.6.1
+		 */
+		int sts = status;
+		if ((sts & UPS_PORT_POWER) == 0)
+			sts &= ~UPS_PORT_POWER_SS;
+
+		if (sts & UPS_HIGH_SPEED)
 			speed = USB_SPEED_HIGH;
-		else if (status & UPS_LOW_SPEED)
+		else if (sts & UPS_LOW_SPEED)
 			speed = USB_SPEED_LOW;
-		else
-			speed = USB_SPEED_FULL;
+		else {
+			/*
+			 * If there is no power bit set, it is certainly
+			 * a Super Speed device, so use the speed of its
+			 * parent hub.
+			 */
+			if (sts & UPS_PORT_POWER)
+				speed = USB_SPEED_FULL;
+			else
+				speed = dev->ud_speed;
+		}
+
+		/*
+		 * Reduce the speed, otherwise we won't setup the proper
+		 * transfer methods.
+		 */
+		if (speed > dev->ud_speed)
+			speed = dev->ud_speed;
 
 		DPRINTF("uhub %d speed %u", device_unit(sc->sc_dev), speed, 0,
 		    0);
+
+		/*
+		 * To check whether port has power,
+		 *  check UPS_PORT_POWER_SS bit if port speed is SS, and
+		 *  check UPS_PORT_POWER bit if port speed is HS/FS/LS.
+		 */
+		if (USB_IS_SS(speed)) {
+			/* SS hub port */
+			if (!(status & UPS_PORT_POWER_SS))
+				aprint_normal_dev(sc->sc_dev,
+				    "strange, connected port %d has no power\n",
+				    port);
+		} else {
+			/* HS/FS/LS hub port */
+			if (!(status & UPS_PORT_POWER))
+				aprint_normal_dev(sc->sc_dev,
+				    "strange, connected port %d has no power\n",
+				    port);
+		}
 
 		/* Get device info and set its address. */
 		err = usbd_new_device(sc->sc_dev, dev->ud_bus,
