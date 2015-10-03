@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.193 2015/10/03 08:27:38 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.194 2015/10/03 08:29:34 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -694,6 +694,9 @@ typedef union _cleanerinfo {
 #define	SS_CLEAN	0x04		/* written by the cleaner */
 #define	SS_RFW		0x08		/* written by the roll-forward agent */
 #define	SS_RECLAIM	0x10		/* written by the roll-forward agent */
+
+/* type used for reading checksum signatures from metadata structures */
+typedef uint32_t lfs_checkword;
 
 typedef struct segsum_v1 SEGSUM_V1;
 struct segsum_v1 {

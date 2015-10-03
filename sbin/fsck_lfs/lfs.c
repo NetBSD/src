@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.65 2015/10/03 08:29:21 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.66 2015/10/03 08:29:34 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -764,7 +764,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 	IINFO *iibase, *iip;
 	struct ubuf *bp;
 	int i, j, k, datac, len;
-	u_int32_t *datap;
+	lfs_checkword *datap;
 	u_int32_t ccksum;
 
 	/* We've already checked the sumsum, just do the data bounds and sum */
@@ -808,7 +808,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 		while (j < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)) && lfs_ii_getblock(fs, iip) == daddr) {
 			bread(devvp, LFS_FSBTODB(fs, daddr), lfs_sb_getibsize(fs),
 			    0, &bp);
-			datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
+			datap[datac++] = ((lfs_checkword *)bp->b_data)[0];
 			brelse(bp, 0);
 
 			++j;
@@ -824,7 +824,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 				       : lfs_sb_getbsize(fs));
 				bread(devvp, LFS_FSBTODB(fs, daddr), len,
 				    0, &bp);
-				datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
+				datap[datac++] = ((lfs_checkword *)bp->b_data)[0];
 				brelse(bp, 0);
 				daddr += lfs_btofsb(fs, len);
 			}
@@ -836,8 +836,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 		pwarn("Partial segment at 0x%jx expected %d blocks counted %d\n",
 		    (intmax_t)pseg_addr, nblocks, datac);
 	}
-	/* XXX ondisk32 */
-	ccksum = cksum(datap, nblocks * sizeof(u_int32_t));
+	ccksum = cksum(datap, nblocks * sizeof(datap[0]));
 	/* Check the data checksum */
 	if (ccksum != lfs_ss_getdatasum(fs, sp)) {
 		pwarn("Partial segment at 0x%jx data checksum"
