@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.58 2015/10/03 08:28:46 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.59 2015/10/03 08:28:56 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.58 2015/10/03 08:28:46 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.59 2015/10/03 08:28:56 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -277,8 +277,9 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 	char *ipage;
 	char *dpage;
 	union lfs_dinode *dip = NULL;
-	/* XXX ondisk32 */
-	int32_t *addrp, *dindir, *iaddrp, *indir;
+	void *dindir, *indir;
+	unsigned offset;
+	daddr_t thisblock;
 	daddr_t pdb;
 	int block_limit, i, inum, j, nblocks, psize;
 
@@ -346,10 +347,11 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 		err(1, "malloc");
 	get(fd, fsbtobyte(lfsp, lfs_dino_getib(lfsp, dip, 0)), indir, psize);
 	block_limit = MIN(i + lfs_sb_getnindir(lfsp), nblocks);
-	for (addrp = indir; i < block_limit; i++, addrp++) {
-		if (*addrp == LFS_UNUSED_DADDR)
+	for (offset = 0; i < block_limit; i++, offset++) {
+		thisblock = lfs_iblock_get(lfsp, indir, offset);
+		if (thisblock == LFS_UNUSED_DADDR)
 			break;
-		get(fd, fsbtobyte(lfsp, *addrp), ipage, psize);
+		get(fd, fsbtobyte(lfsp, thisblock), ipage, psize);
 		if (i < lfs_sb_getcleansz(lfsp)) {
 			dump_cleaner_info(lfsp, ipage);
 			continue;
@@ -378,15 +380,17 @@ dump_ifile(int fd, struct lfs *lfsp, int do_ientries, int do_segentries, daddr_t
 	if (!(dindir = malloc(psize)))
 		err(1, "malloc");
 	get(fd, fsbtobyte(lfsp, lfs_dino_getib(lfsp, dip, 1)), dindir, psize);
-	for (iaddrp = dindir, j = 0; j < lfs_sb_getnindir(lfsp); j++, iaddrp++) {
-		if (*iaddrp == LFS_UNUSED_DADDR)
+	for (j = 0; j < lfs_sb_getnindir(lfsp); j++) {
+		thisblock = lfs_iblock_get(lfsp, dindir, j);
+		if (thisblock == LFS_UNUSED_DADDR)
 			break;
-		get(fd, fsbtobyte(lfsp, *iaddrp), indir, psize);
+		get(fd, fsbtobyte(lfsp, thisblock), indir, psize);
 		block_limit = MIN(i + lfs_sb_getnindir(lfsp), nblocks);
-		for (addrp = indir; i < block_limit; i++, addrp++) {
-			if (*addrp == LFS_UNUSED_DADDR)
+		for (offset = 0; i < block_limit; i++, offset++) {
+			thisblock = lfs_iblock_get(lfsp, indir, offset);
+			if (thisblock == LFS_UNUSED_DADDR)
 				break;
-			get(fd, fsbtobyte(lfsp, *addrp), ipage, psize);
+			get(fd, fsbtobyte(lfsp, thisblock), ipage, psize);
 			if (i < lfs_sb_getcleansz(lfsp)) {
 				dump_cleaner_info(lfsp, ipage);
 				continue;
