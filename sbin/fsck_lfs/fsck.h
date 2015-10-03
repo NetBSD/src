@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.24 2015/10/03 08:29:06 dholland Exp $	 */
+/* $NetBSD: fsck.h,v 1.25 2015/10/03 08:30:02 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -150,8 +150,7 @@ struct inoinfo {
 	ino_t i_dotdot;		/* inode number of `..' */
 	size_t i_isize;		/* size of inode */
 	u_int i_numblks;	/* size of block array in bytes */
-	/* XXX ondisk32 */
-	int32_t i_blks[1];	/* actually longer */
+	daddr_t i_blks[1];	/* actually longer */
 }     **inphead, **inpsort;
 
 #ifndef VERBOSE_BLOCKMAP
