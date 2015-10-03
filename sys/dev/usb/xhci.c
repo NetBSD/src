@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.39 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.40 2015/10/03 16:33:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.39 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.40 2015/10/03 16:33:33 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -661,8 +661,7 @@ xhci_init(struct xhci_softc *sc)
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
-	/* XXX Low/Full/High speeds for now */
-	sc->sc_bus.ub_revision = USBREV_2_0;
+	sc->sc_bus.ub_revision = USBREV_3_0;
 	sc->sc_bus.ub_usedma = true;
 
 	cap = xhci_read_4(sc, XHCI_CAPLENGTH);
