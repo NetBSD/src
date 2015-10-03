@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.34 2015/10/03 08:27:38 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.35 2015/10/03 08:28:16 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -778,6 +778,9 @@ lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
 
 #define NEXTLOWER_IINFO(fs, iip) \
 	((IINFO *)((char *)(iip) - IINFOSIZE(fs)))
+
+#define NTH_IINFO(fs, buf, n) \
+	((IINFO *)((char *)SEGSUM_IINFOSTART(fs, buf) - (n)*IINFOSIZE(fs)))
 
 static __unused inline uint64_t
 lfs_ii_getblock(STRUCT_LFS *fs, IINFO *iip)

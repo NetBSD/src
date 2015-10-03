@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.44 2015/09/01 06:15:02 dholland Exp $ */
+/* $NetBSD: segwrite.c,v 1.45 2015/10/03 08:28:15 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -254,7 +254,8 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 	SEGSUM *ssp;
 	daddr_t daddr;
 	ino_t ino;
-	int i, ndx, fsb = 0;
+	IINFO *iip;
+	int i, fsb = 0;
 	int redo_ifile = 0;
 	struct timespec ts;
 	int gotblk = 0;
@@ -289,10 +290,10 @@ lfs_writeinode(struct lfs * fs, struct segment * sp, struct inode * ip)
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= lfs_sb_getibsize(fs);
 		sp->sum_bytes_left -= LFS_BLKPTRSIZE(fs);
-		ndx = lfs_sb_getsumsize(fs) / sizeof(uint32_t) -
-		    sp->ninodes / LFS_INOPB(fs) - 1;
-		/* XXX ondisk32 */
-		((uint32_t *) (sp->segsum))[ndx] = daddr;
+
+		/* Store the address in the segment summary. */
+		iip = NTH_IINFO(fs, sp->segsum, sp->ninodes / LFS_INOPB(fs));
+		lfs_ii_setblock(fs, iip, daddr);
 	}
 	/* Update the inode times and copy the inode onto the inode page. */
 	ts.tv_nsec = 0;

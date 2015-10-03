@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.259 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.260 2015/10/03 08:28:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.259 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.260 2015/10/03 08:28:16 dholland Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1032,7 +1032,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	union lfs_dinode *cdp;
 	struct vnode *vp = ITOV(ip);
 	daddr_t daddr;
-	int i, ndx;
+	IINFO *iip;
+	int i;
 	int redo_ifile = 0;
 	int gotblk = 0;
 	int count;
@@ -1116,10 +1117,10 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= lfs_sb_getibsize(fs);
 		sp->sum_bytes_left -= sizeof(int32_t);
-		ndx = lfs_sb_getsumsize(fs) / sizeof(int32_t) -
-			sp->ninodes / LFS_INOPB(fs) - 1;
-		/* XXX ondisk32 */
-		((int32_t *)(sp->segsum))[ndx] = daddr;
+
+		/* Store the address in the segment summary. */
+		iip = NTH_IINFO(fs, sp->segsum, sp->ninodes / LFS_INOPB(fs));
+		lfs_ii_setblock(fs, iip, daddr);
 	}
 
 	/* Check VU_DIROP in case there is a new file with no data blocks */
