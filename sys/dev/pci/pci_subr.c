@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.136 2015/10/02 07:04:17 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.137 2015/10/03 15:22:14 joerg Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.136 2015/10/02 07:04:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.137 2015/10/03 15:22:14 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2715,7 +2715,7 @@ pci_conf_print_tph_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 			if (j != 0)
 				entry >>= 16;
 			entry &= 0xffff;
-			printf("    TPH ST Table Entry (%d): 0x%04hx\n",
+			printf("    TPH ST Table Entry (%d): 0x%04"PRIx32"\n",
 			    i + j, entry);
 		}
 	}
