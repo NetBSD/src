@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.53 2015/09/01 06:16:58 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.54 2015/10/03 08:28:30 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -419,9 +419,9 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	SEGSUM *ssp;
 	IFILE *ifp;
 	BLOCK_INFO *bip, *nbip;
-	int32_t *iaddrp;
 	daddr_t idaddr, odaddr;
 	FINFO *fip;
+	IINFO *iip;
 	struct ubuf *ifbp;
 	union lfs_dinode *dip;
 	u_int32_t ck, vers;
@@ -440,8 +440,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 	 */
 	cp = fd_ptrget(fs->clfs_devvp, daddr);
 	ssp = (SEGSUM *)cp;
-	/* XXX ondisk32 */
-	iaddrp = ((int32_t *)(cp + lfs_sb_getibsize(fs))) - 1;
+	iip = SEGSUM_IINFOSTART(fs, cp);
 	fip = SEGSUM_FINFOBASE(fs, cp);
 
 	/*
@@ -479,7 +478,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		 * We must have either a file block or an inode block.
 		 * If we don't have either one, it's an error.
 		 */
-		if (fic >= lfs_ss_getnfinfo(fs, ssp) && *iaddrp != daddr) {
+		if (fic >= lfs_ss_getnfinfo(fs, ssp) && lfs_ii_getblock(fs, iip) != daddr) {
 			syslog(LOG_WARNING, "%s: bad pseg at %jx (seg %d)",
 			       lfs_sb_getfsmnt(fs), (intmax_t)odaddr, lfs_dtosn(fs, odaddr));
 			*bipp = bip;
@@ -489,7 +488,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 		/*
 		 * Note each inode from the inode blocks
 		 */
-		if (inoc < lfs_ss_getninos(fs, ssp) && *iaddrp == daddr) {
+		if (inoc < lfs_ss_getninos(fs, ssp) && lfs_ii_getblock(fs, iip) == daddr) {
 			cp = fd_ptrget(fs->clfs_devvp, daddr);
 			ck = lfs_cksum_part(cp, sizeof(u_int32_t), ck);
 			for (i = 0; i < lfs_sb_getinopb(fs); i++) {
@@ -531,7 +530,7 @@ parse_pseg(struct clfs *fs, daddr_t daddr, BLOCK_INFO **bipp, int *bic)
 			}
 			inoc += i;
 			daddr += lfs_btofsb(fs, lfs_sb_getibsize(fs));
-			--iaddrp;
+			iip = NEXTLOWER_IINFO(fs, iip);
 			continue;
 		}
 
