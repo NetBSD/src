@@ -1,4 +1,4 @@
-/* $NetBSD: pass6.c,v 1.48 2015/09/01 06:15:02 dholland Exp $	 */
+/* $NetBSD: pass6.c,v 1.49 2015/10/03 08:29:21 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -547,7 +547,7 @@ void
 pass6(void)
 {
 	daddr_t daddr, ibdaddr, odaddr, lastgood;
-	uint32_t *idaddrp; /* XXX ondisk32 */
+	IINFO *iip;
 	struct uvnode *vp, *devvp;
 	CLEANERINFO *cip;
 	SEGUSE *sup;
@@ -649,13 +649,13 @@ pass6(void)
 							    LFS_INOPB(fs)) *
 						lfs_sb_getibsize(fs)));
 		}
-		// XXX ondisk32
-		idaddrp = ((uint32_t *)((char *)bp->b_data + lfs_sb_getsumsize(fs)));
+		iip = SEGSUM_IINFOSTART(fs, bp->b_data);
 		for (i = 0; i < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)); i++) {
 			ino_t *inums;
 			
 			inums = ecalloc(LFS_INOPB(fs) + 1, sizeof(*inums));
-			ibdaddr = *--idaddrp;
+			ibdaddr = lfs_ii_getblock(fs, iip);
+			iip = NEXTLOWER_IINFO(fs, iip);
 			lfs_sb_subbfree(fs, lfs_btofsb(fs, lfs_sb_getibsize(fs)));
 			sbdirty();
 			bread(devvp, LFS_FSBTODB(fs, ibdaddr),
