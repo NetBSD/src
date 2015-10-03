@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.192 2015/09/21 01:24:39 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.193 2015/10/03 08:27:38 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -575,6 +575,27 @@ typedef union finfo {
 	struct finfo64 u_64;
 	struct finfo32 u_32;
 } FINFO;
+
+/*
+ * inode info (part of the segment summary)
+ *
+ * Each one of these is just a block number; wrapping the structure
+ * around it gives more contextual information in the code about
+ * what's going on.
+ */
+
+typedef struct iinfo64 {
+	uint64_t ii_block;		/* block number */
+} IINFO64;
+
+typedef struct iinfo32 {
+	uint32_t ii_block;		/* block number */
+} IINFO32;
+
+typedef union iinfo {
+	struct iinfo64 u_64;
+	struct iinfo32 u_32;
+} IINFO;
 
 /*
  * Index file inode entries.
