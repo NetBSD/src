@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_rfw.c,v 1.31 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_rfw.c,v 1.32 2015/10/03 08:27:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.31 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_rfw.c,v 1.32 2015/10/03 08:27:55 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -411,7 +411,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	SEGSUM *ssp;
 	u_long *dp = NULL, *datap = NULL; /* XXX u_int32_t */
 	daddr_t oldoffset;
-	int32_t *iaddr;	/* XXX ondisk32 */
+	IINFO *iip;
 	FINFO *fip;
 	SEGUSE *sup;
 	size_t size;
@@ -481,8 +481,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	offset += lfs_btofsb(fs, lfs_sb_getsumsize(fs));
 
 	ninos = howmany(lfs_ss_getninos(fs, ssp), LFS_INOPB(fs));
-	/* XXX ondisk32 */
-	iaddr = (int32_t *)((char*)bp->b_data + lfs_sb_getsumsize(fs) - sizeof(int32_t));
+	iip = SEGSUM_IINFOSTART(fs, bp->b_data);
 	if (flags & CHECK_CKSUM) {
 		/* Count blocks */
 		nblocks = 0;
@@ -503,7 +502,7 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 	fip = SEGSUM_FINFOBASE(fs, (SEGSUM *)bp->b_data);
 	for (i = 0; i < lfs_ss_getnfinfo(fs, ssp) || ninos; ++i) {
 		/* Inode block? */
-		if (ninos && *iaddr == offset) {
+		if (ninos && lfs_ii_getblock(fs, iip) == offset) {
 			if (flags & CHECK_CKSUM) {
 				/* Read in the head and add to the buffer */
 				error = bread(devvp, LFS_FSBTODB(fs, offset), lfs_sb_getbsize(fs),
@@ -524,9 +523,9 @@ check_segsum(struct lfs *fs, daddr_t offset, u_int64_t nextserial,
 				}
 			}
 			offset += lfs_btofsb(fs, lfs_sb_getibsize(fs));
-			--iaddr;
+			iip = NEXTLOWER_IINFO(fs, iip);
 			--ninos;
-			--i; /* compensate */
+			--i; /* compensate for ++i in loop header */
 			continue;
 		}
 		size = lfs_sb_getbsize(fs);
