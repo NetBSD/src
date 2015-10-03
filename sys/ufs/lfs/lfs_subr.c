@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.85 2015/08/12 18:25:04 dholland Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.85 2015/08/12 18:25:04 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.86 2015/10/03 08:28:16 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,6 +145,7 @@ lfs_setup_resblks(struct lfs *fs)
 		"lfsclpl", &pool_allocator_nointr, IPL_NONE);
 	pool_init(&fs->lfs_segpool, sizeof(struct segment), 0, 0, 0,
 		"lfssegpool", &pool_allocator_nointr, IPL_NONE);
+	/* XXX: should this int32 be 32/64? */
 	maxbpp = ((lfs_sb_getsumsize(fs) - SEGSUM_SIZE(fs)) / sizeof(int32_t) + 2);
 	maxbpp = MIN(maxbpp, lfs_segsize(fs) / lfs_sb_getfsize(fs) + 2);
 	pool_init(&fs->lfs_bpppool, maxbpp * sizeof(struct buf *), 0, 0, 0,
