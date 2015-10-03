@@ -1,4 +1,4 @@
-/* $NetBSD: pass1.c,v 1.44 2015/09/01 06:15:02 dholland Exp $	 */
+/* $NetBSD: pass1.c,v 1.45 2015/10/03 08:30:13 dholland Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -325,7 +325,7 @@ checkinode(ino_t inumber, struct inodesc * idesc)
 	idesc->id_number = inumber;
 	(void) ckinode(VTOD(vp), idesc);
 	if (lfs_dino_getblocks(fs, dp) != idesc->id_entryno) {
-		pwarn("INCORRECT BLOCK COUNT I=%llu (%ju SHOULD BE %d)",
+		pwarn("INCORRECT BLOCK COUNT I=%llu (%ju SHOULD BE %lld)",
 		    (unsigned long long)inumber, lfs_dino_getblocks(fs, dp),
 		    idesc->id_entryno);
 		if (preen)
