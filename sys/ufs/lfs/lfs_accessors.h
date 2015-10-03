@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.33 2015/09/21 01:24:58 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.34 2015/10/03 08:27:38 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -763,6 +763,39 @@ lfs_fi_setblock(STRUCT_LFS *fs, FINFO *fip, unsigned index, daddr_t blk)
 		((int64_t *)firstblock)[index] = blk;
 	} else {
 		((int32_t *)firstblock)[index] = blk;
+	}
+}
+
+/*
+ * inode info entries (in the segment summary)
+ */
+
+#define IINFOSIZE(fs)	((fs)->lfs_is64 ? sizeof(IINFO64) : sizeof(IINFO32))
+
+/* iinfos scroll backward from the end of the segment summary block */
+#define SEGSUM_IINFOSTART(fs, buf) \
+	((IINFO *)((char *)buf + lfs_sb_getsumsize(fs) - IINFOSIZE(fs)))
+
+#define NEXTLOWER_IINFO(fs, iip) \
+	((IINFO *)((char *)(iip) - IINFOSIZE(fs)))
+
+static __unused inline uint64_t
+lfs_ii_getblock(STRUCT_LFS *fs, IINFO *iip)
+{
+	if (fs->lfs_is64) {
+		return iip->u_64.ii_block;
+	} else {
+		return iip->u_32.ii_block;
+	}
+}
+
+static __unused inline void
+lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
+{
+	if (fs->lfs_is64) {
+		iip->u_64.ii_block = block;
+	} else {
+		iip->u_32.ii_block = block;
 	}
 }
 
