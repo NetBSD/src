@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.63 2015/09/01 06:15:02 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.64 2015/10/03 08:28:46 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -761,7 +761,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 	int bc;			/* Bytes in partial segment */
 	int nblocks;
 	daddr_t daddr;
-	uint32_t *dp, *idp; // XXX ondisk32
+	IINFO *iibase, *iip;
 	struct ubuf *bp;
 	int i, j, k, datac, len;
 	u_int32_t *datap;
@@ -787,26 +787,25 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 	datap = emalloc(nblocks * sizeof(*datap));
 	datac = 0;
 
-	dp = (uint32_t *) sp; /* XXX ondisk32 */
-	dp += lfs_sb_getsumsize(fs) / sizeof(*dp);
-	dp--;
+	iibase = SEGSUM_IINFOSTART(fs, sp);
 
-	idp = dp;
+	iip = iibase;
 	daddr = pseg_addr + lfs_btofsb(fs, lfs_sb_getsumsize(fs));
 	fp = (FINFO *) (sp + 1);
 	for (i = 0, j = 0;
 	     i < lfs_ss_getnfinfo(fs, sp) || j < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)); i++) {
-		if (i >= lfs_ss_getnfinfo(fs, sp) && *idp != daddr) {
+		if (i >= lfs_ss_getnfinfo(fs, sp) && lfs_ii_getblock(fs, iip) != daddr) {
 			pwarn("Not enough inode blocks in pseg at 0x%jx: "
 			      "found %d, wanted %d\n",
 			      pseg_addr, j, howmany(lfs_ss_getninos(fs, sp),
 						    LFS_INOPB(fs)));
 			if (debug)
-				pwarn("*idp=0x%jx, daddr=0x%jx\n",
-				    (uintmax_t)*idp, (intmax_t)daddr);
+				pwarn("iip=0x%jx, daddr=0x%jx\n",
+				    (uintmax_t)lfs_ii_getblock(fs, iip),
+				    (intmax_t)daddr);
 			break;
 		}
-		while (j < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)) && *idp == daddr) {
+		while (j < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)) && lfs_ii_getblock(fs, iip) == daddr) {
 			bread(devvp, LFS_FSBTODB(fs, daddr), lfs_sb_getibsize(fs),
 			    0, &bp);
 			datap[datac++] = ((u_int32_t *) (bp->b_data))[0];
@@ -814,7 +813,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 
 			++j;
 			daddr += lfs_btofsb(fs, lfs_sb_getibsize(fs));
-			--idp;
+			iip = NEXTLOWER_IINFO(fs, iip);
 		}
 		if (i < lfs_ss_getnfinfo(fs, sp)) {
 			if (func)
