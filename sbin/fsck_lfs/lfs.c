@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.66 2015/10/03 08:29:34 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.67 2015/10/03 08:29:48 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -1089,8 +1089,6 @@ lfs_balloc(struct uvnode *vp, off_t startoffset, int iosize, struct ubuf **bpp)
 	error = ulfs_bmaparray(fs, vp, lbn, &daddr, &indirs[0], &num);
 	if (error)
 		return (error);
-
-	daddr = (daddr_t)((int32_t)daddr); /* XXX ondisk32 */
 
 	/*
 	 * Do byte accounting all at once, so we can gracefully fail *before*
