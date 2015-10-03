@@ -1,4 +1,4 @@
-/* $NetBSD: setup.c,v 1.59 2015/09/01 06:15:02 dholland Exp $ */
+/* $NetBSD: setup.c,v 1.60 2015/10/03 08:29:21 dholland Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -123,8 +123,7 @@ calcmaxfilesize(unsigned bshift)
 	uint64_t nptr; /* number of block pointers per block */
 	uint64_t maxblock;
 
-	/* XXX ondisk32 */
-	nptr = (1 << bshift) / sizeof(uint32_t);
+	nptr = (1 << bshift) / LFS_BLKPTRSIZE(fs);
 	maxblock = ULFS_NDADDR + nptr + nptr * nptr + nptr * nptr * nptr;
 
 	return maxblock << bshift;
