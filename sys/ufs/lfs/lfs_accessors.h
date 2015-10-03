@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.35 2015/10/03 08:28:16 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.36 2015/10/03 08:29:48 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -501,6 +501,7 @@ lfs_dino_getdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 	if (fs->lfs_is64) {
 		return dip->u_64.di_db[ix];
 	} else {
+		/* note: this must sign-extend or UNWRITTEN gets trashed */
 		return dip->u_32.di_db[ix];
 	}
 }
@@ -512,6 +513,7 @@ lfs_dino_getib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 	if (fs->lfs_is64) {
 		return dip->u_64.di_ib[ix];
 	} else {
+		/* note: this must sign-extend or UNWRITTEN gets trashed */
 		return dip->u_32.di_ib[ix];
 	}
 }
