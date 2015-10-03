@@ -1,4 +1,4 @@
-/* $NetBSD: extern.h,v 1.14 2015/09/21 01:24:23 dholland Exp $	 */
+/* $NetBSD: extern.h,v 1.15 2015/10/03 08:29:06 dholland Exp $	 */
 
 /*
  * Copyright (c) 1994 James A. Jegers
@@ -43,7 +43,6 @@ int dofix(struct inodesc *, const char *);
 void fileerror(ino_t, ino_t, const char *);
 int findino(struct inodesc *);
 int findname(struct inodesc *);
-void flush(int, struct ubufarea *);
 void freeblk(daddr_t, long);
 void freeino(ino_t);
 void freeinodebuf(void);

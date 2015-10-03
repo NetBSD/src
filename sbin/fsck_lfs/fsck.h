@@ -1,4 +1,4 @@
-/* $NetBSD: fsck.h,v 1.23 2015/09/21 01:24:23 dholland Exp $	 */
+/* $NetBSD: fsck.h,v 1.24 2015/10/03 08:29:06 dholland Exp $	 */
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -69,8 +69,6 @@
 
 #define	MAXDUP		10	/* limit on dup blks (per inode) */
 #define	MAXBAD		10	/* limit on bad blks (per inode) */
-#define	MAXBUFSPACE	40*1024	/* maximum space to allocate to buffers */
-#define	INOBUFSIZE	56*1024	/* size of buffer to read inodes in pass1 */
 
 #ifndef BUFSIZ
 #define BUFSIZ 1024
@@ -84,37 +82,6 @@
 #define	FCLEAR	06		/* file is to be cleared */
 
 #define EEXIT	8		/* Standard error exit */
-
-/*
- * buffer cache structure.
- */
-struct ubufarea {
-	struct ubufarea *b_next;	/* free list queue */
-	struct ubufarea *b_prev;	/* free list queue */
-	daddr_t b_bno;
-	int b_size;
-	int b_errs;
-	int b_flags;
-	union {
-		char *b_buf;	/* buffer space */
-		/* XXX ondisk32 */
-		int32_t *b_indir;	/* indirect block */
-		struct lfs *b_fs;	/* super block */
-		struct cg *b_cg;/* cylinder group */
-		struct lfs32_dinode *b_dinode32;	/* inode block */
-		struct lfs64_dinode *b_dinode64;	/* inode block */
-	}     b_un;
-	char b_dirty;
-};
-#define	B_INUSE 1
-
-#define	MINBUFS		5	/* minimum number of buffers required */
-
-#define	dirty(bp)	(bp)->b_dirty = 1
-#define	initbarea(bp) \
-	(bp)->b_dirty = 0; \
-	(bp)->b_bno = (daddr_t)-1; \
-	(bp)->b_flags = 0;
 
 enum fixstate {
 	DONTKNOW, NOFIX, FIX, IGNORE
