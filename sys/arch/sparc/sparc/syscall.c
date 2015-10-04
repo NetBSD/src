@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.28 2013/06/26 16:53:34 matt Exp $ */
+/*	$NetBSD: syscall.c,v 1.29 2015/10/04 08:19:13 joerg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.28 2013/06/26 16:53:34 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.29 2015/10/04 08:19:13 joerg Exp $");
 
 #include "opt_sparc_arch.h"
 #include "opt_multiprocessor.h"
@@ -143,7 +143,7 @@ getargs(struct proc *p, struct trapframe *tf, register_t *code,
 		break;
 	}
 
-	if (*code < 0 || *code >= p->p_emul->e_nsysent)
+	if (*code >= p->p_emul->e_nsysent)
 		return ENOSYS;
 
 	*callp += *code;
