@@ -1,4 +1,4 @@
-# $NetBSD: t_config.sh,v 1.6 2014/11/20 09:02:00 uebayasi Exp $
+# $NetBSD: t_config.sh,v 1.7 2015/10/04 07:59:47 uebayasi Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -147,9 +147,9 @@ check_select()
 {
 	local f=Makefile
 
-	grep -q '^a\.o:' $f &&
-	grep -q '^b\.o:' $f &&
-	grep -q '^c\.o:' $f &&
+	grep -q '^	a\.c ' $f &&
+	grep -q '^	b\.c ' $f &&
+	grep -q '^	c\.c ' $f &&
 	:
 }
 select_body() {
