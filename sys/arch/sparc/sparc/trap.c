@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.192 2015/03/02 13:53:19 martin Exp $ */
+/*	$NetBSD: trap.c,v 1.193 2015/10/04 08:19:40 joerg Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.192 2015/03/02 13:53:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.193 2015/10/04 08:19:40 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -296,7 +296,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 		write_all_windows();
 		(void) kdb_trap(type, tf);
 #endif
-		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+		panic("%s", type < N_TRAP_TYPES ? trap_type[type] : T);
 		/* NOTREACHED */
 	}
 	if ((l = curlwp) == NULL)
