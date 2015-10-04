@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.11 2015/09/22 12:06:06 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.12 2015/10/04 10:45:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.11 2015/09/22 12:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.12 2015/10/04 10:45:37 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -604,6 +604,18 @@ dwc2_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			return buflen;
 		}
 		break;
+
+	case C(UR_GET_CONFIG, UT_READ_DEVICE):
+	case C(UR_GET_INTERFACE, UT_READ_INTERFACE):
+	case C(UR_GET_STATUS, UT_READ_INTERFACE):
+	case C(UR_GET_STATUS, UT_READ_ENDPOINT):
+	case C(UR_SET_ADDRESS, UT_WRITE_DEVICE):
+	case C(UR_SET_CONFIG, UT_WRITE_DEVICE):
+		/* default from usbroothub */
+		DPRINTFN(4, "returning %d (usbroothub default)", buflen);
+
+		return buflen;
+
 	default:
 		/* Hub requests */
 		err = dwc2_hcd_hub_control(sc->sc_hsotg,
