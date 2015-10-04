@@ -1,5 +1,5 @@
 #
-#	$NetBSD: RPI,v 1.64 2015/08/18 15:54:20 phx Exp $
+#	$NetBSD: RPI,v 1.65 2015/10/04 10:16:39 skrll Exp $
 #
 #	RPi -- Raspberry Pi
 #
@@ -26,8 +26,7 @@ options 	PLCONSOLE
 
 ## USB Debugging options
 options USB_DEBUG
-#options EHCI_DEBUG
-#options OHCI_DEBUG
+#options DWC2_DEBUG
 #options UHUB_DEBUG
 
 
