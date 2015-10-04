@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_intel.c,v 1.9 2015/10/04 17:52:50 mrg Exp $ */
+/* $NetBSD: cpu_ucode_intel.c,v 1.10 2015/10/04 21:08:30 jym Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.9 2015/10/04 17:52:50 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_intel.c,v 1.10 2015/10/04 21:08:30 jym Exp $");
 
 #include "opt_xen.h"
 #include "opt_cpu_ucode.h"
@@ -109,7 +109,7 @@ int
 cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 {
 	uint32_t ucodetarget, oucodeversion, nucodeversion;
-	int platformid;
+	int platformid, cpuid;
 	struct intel1_ucode_header *uh;
 	void *uha;
 	size_t newbufsize = 0;
@@ -147,6 +147,7 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 	}
 	wrmsr(MSR_BIOS_UPDT_TRIG, (uintptr_t)uh + 48);
 	intel_getcurrentucode(&nucodeversion, &platformid);
+	cpuid = curcpu()->ci_index;
 
 	kpreempt_enable();
 
@@ -155,7 +156,7 @@ cpu_ucode_intel_apply(struct cpu_ucode_softc *sc, int cpuno)
 		goto out;
 	}
 
-	printf("cpu %d: ucode 0x%x->0x%x\n", curcpu()->ci_index,
+	printf("cpu %d: ucode 0x%x->0x%x\n", cpuid,
 	       oucodeversion, nucodeversion);
 out:
 	if (newbufsize != 0)
