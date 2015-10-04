@@ -1169,6 +1169,36 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 
 	(void) strlcpy(name, k_stat->name, sizeof(name));
 	(void) strlcpy(fname, k_stat->pathname, sizeof(fname));
+#elif defined(__NetBSD__)
+	int mib_osrel[2] = { CTL_KERN, KERN_OSRELEASE };
+	int mib_mach[2] = { CTL_HW, HW_MACHINE };
+	char osrel[64];
+	char machine[64];
+	size_t len;
+
+	if (strcmp("netbsd", name) == 0) {
+		/* want the kernel */
+		strncpy(fname, "/netbsd", sizeof(fname));
+	} else {
+
+		/* build stand module path from system */
+		len = sizeof(osrel);
+		if (sysctl(mib_osrel, 2, osrel, &len, NULL, 0) == -1) {
+			dt_dprintf("sysctl osrel failed: %s\n",
+				strerror(errno));
+		    return;
+		}
+
+		len = sizeof(machine);
+		if (sysctl(mib_mach, 2, machine, &len, NULL, 0) == -1) {
+			dt_dprintf("sysctl machine failed: %s\n",
+				strerror(errno));
+		    return;
+		}
+
+		(void) snprintf(fname, sizeof (fname),
+		    "/stand/%s/%s/modules/%s/%s.kmod", machine, osrel, name, name);
+	}
 #endif
 
 	if ((fd = open(fname, O_RDONLY)) == -1 || fstat64(fd, &st) == -1 ||
