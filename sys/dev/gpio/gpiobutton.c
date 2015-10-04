@@ -1,4 +1,4 @@
-/* $NetBSD: gpiobutton.c,v 1.2 2015/05/30 17:12:16 jmcneill Exp $ */
+/* $NetBSD: gpiobutton.c,v 1.3 2015/10/04 18:35:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiobutton.c,v 1.2 2015/05/30 17:12:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiobutton.c,v 1.3 2015/10/04 18:35:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,10 +37,10 @@ __KERNEL_RCSID(0, "$NetBSD: gpiobutton.c,v 1.2 2015/05/30 17:12:16 jmcneill Exp 
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/workqueue.h>
 #include <sys/gpio.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <dev/gpio/gpiovar.h>
 
@@ -65,15 +65,13 @@ struct gpiobutton_softc {
 
 	struct sysmon_pswitch	sc_smpsw;
 
-	struct workqueue	*sc_wq;
 	callout_t		sc_tick;
 	bool			sc_state;
-	struct work		sc_work;
 };
 
 static bool	gpiobutton_is_pressed(struct gpiobutton_softc *);
 static void	gpiobutton_tick(void *);
-static void	gpiobutton_task(struct work *, void *);
+static void	gpiobutton_task(void *);
 
 CFATTACH_DECL_NEW(gpiobutton, sizeof(struct gpiobutton_softc),
 	gpiobutton_match, gpiobutton_attach, NULL, NULL);
@@ -106,7 +104,7 @@ gpiobutton_attach(device_t parent, device_t self, void *aux)
 	struct gpiobutton_softc * const sc = device_private(self);
 	struct gpio_attach_args * const ga = aux;
 	const char *desc;
-	int caps, error;
+	int caps;
 
 	const u_int type = __SHIFTOUT(ga->ga_flags, GPIOBUTTON_TYPE_MASK);
 	const u_int pol = __SHIFTOUT(ga->ga_flags, GPIOBUTTON_POLARITY_MASK);
@@ -151,15 +149,7 @@ gpiobutton_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_tick, gpiobutton_tick, sc);
 
-	error = workqueue_create(&sc->sc_wq, device_xname(self),
-	    gpiobutton_task, sc, PRI_NONE, IPL_VM, WQ_MPSAFE);
-	if (error) {
-		aprint_error_dev(self, "couldn't create workqueue: %d\n",
-		    error);
-		return;
-	}
-
-	gpiobutton_task(&sc->sc_work, sc);
+	gpiobutton_tick(sc);
 }
 
 static bool
@@ -179,20 +169,19 @@ gpiobutton_tick(void *priv)
 {
 	struct gpiobutton_softc * const sc = priv;
 
-	workqueue_enqueue(sc->sc_wq, &sc->sc_work, NULL);
+	const bool new_state = gpiobutton_is_pressed(sc);
+	if (new_state != sc->sc_state) {
+		sc->sc_state = new_state;
+		sysmon_task_queue_sched(0, gpiobutton_task, sc);
+	}
+	callout_schedule(&sc->sc_tick, GPIOBUTTON_POLL_INTERVAL);
 }
 
 static void
-gpiobutton_task(struct work *wk, void *priv)
+gpiobutton_task(void *priv)
 {
 	struct gpiobutton_softc * const sc = priv;
 
-	const bool new_state = gpiobutton_is_pressed(sc);
-	if (new_state != sc->sc_state) {
-		aprint_debug_dev(sc->sc_dev, "button pressed\n");
-		sysmon_pswitch_event(&sc->sc_smpsw, PSWITCH_EVENT_PRESSED);
-		sc->sc_state = new_state;
-	}
-
-	callout_schedule(&sc->sc_tick, GPIOBUTTON_POLL_INTERVAL);
+	sysmon_pswitch_event(&sc->sc_smpsw,
+	    sc->sc_state ? PSWITCH_EVENT_PRESSED : PSWITCH_EVENT_RELEASED);
 }
