@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.20 2011/04/14 08:59:09 mrg Exp $ */
+/*	$NetBSD: db_disasm.c,v 1.21 2015/10/04 08:16:13 joerg Exp $ */
 
 /*
  * Copyright (c) 1994 David S. Miller, davem@nadzieja.rutgers.edu
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.20 2011/04/14 08:59:09 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.21 2015/10/04 08:16:13 joerg Exp $");
 
 #include <sys/param.h>
 #include <machine/db_machdep.h>
@@ -900,7 +900,7 @@ db_disasm(vaddr_t loc, bool altfmt)
 
 		if (((bitmask>>30) & 0x3) == 0x1) {
 			/* Call */
-			you_lose = ((~0x1)<<30);
+			you_lose = ((~0x1U)<<30);
 		} else if (((bitmask>>30) & 0x3) == 0x0) {
 			if (((bitmask>>22) & 0x7) == 0x4) {
 				/* Sethi */
