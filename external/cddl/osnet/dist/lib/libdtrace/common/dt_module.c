@@ -40,6 +40,9 @@
 #include <sys/module.h>
 #include <sys/stat.h>
 #endif
+#ifdef __NetBSD__
+#include <sys/sysctl.h>
+#endif
 
 #include <unistd.h>
 #ifdef illumos
@@ -1131,9 +1134,8 @@ dt_module_getctflib(dtrace_hdl_t *dtp, dt_module_t *dmp, const char *name)
  * On FreeBSD, the module name is passed as the full module file name, 
  * including the path.
  */
-#ifndef __NetBSD__
 static void
-#ifdef illumos
+#if defined(illumos) || defined(__NetBSD__)
 dt_module_update(dtrace_hdl_t *dtp, const char *name)
 #elif defined(__FreeBSD__)
 dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
@@ -1354,7 +1356,6 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	dt_dprintf("opened %d-bit module %s (%s) [%d]\n",
 	    bits, dmp->dm_name, dmp->dm_file, dmp->dm_modid);
 }
-#endif
 
 /*
  * Unload all the loaded modules and then refresh the module cache with the
@@ -1401,6 +1402,9 @@ dtrace_update(dtrace_hdl_t *dtp)
 		if (kldstat(fileid, &k_stat) == 0)
 			dt_module_update(dtp, &k_stat);
 	}
+#elif defined(__NetBSD__)
+	/* XXX just the kernel for now */
+	dt_module_update(dtp, "netbsd");
 #endif
 
 	/*
