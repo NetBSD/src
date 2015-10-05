@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2015/09/30 00:17:09 christos Exp $
+#	$NetBSD: Makefile,v 1.14 2015/10/05 17:49:10 christos Exp $
 
 # $FreeBSD: src/cddl/lib/libdtrace/Makefile,v 1.2.2.1 2009/08/03 08:13:06 kensmith Exp $
 
@@ -121,12 +121,8 @@ beforedepend:	dt_errtags.c dt_names.c
 foo:
 	echo ${OPENSOLARIS_USR_DISTDIR}
 
-#beforeinstall:
-#.if exists(${DESTDIR}/usr/lib/dtrace)
-#.for file in ${DSRCS}
-#	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m ${NOBINMODE} ${.CURDIR}/${file} ${DESTDIR}/usr/lib/dtrace
-#.endfor
-#.endif
+FILES=		${DSRCS}
+FILESDIR=	/usr/lib/dtrace
 
 LIBDPLIBS=	proc	${NETBSDSRCDIR}/external/bsd/libproc/lib
 
