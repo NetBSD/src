@@ -1,4 +1,4 @@
-/*	$NetBSD: psinfo.d,v 1.2 2010/02/21 01:46:35 darran Exp $	*/
+/*	$NetBSD: psinfo.d,v 1.3 2015/10/05 17:49:40 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -48,15 +48,17 @@ typedef struct psinfo {
 
 #pragma D binding "1.0" translator
 translator psinfo_t < struct proc *T > {
-	pr_nlwp = T->p_numthreads;
+	pr_nlwp = T->p_nlwps;
 	pr_pid = T->p_pid;
 	pr_ppid = (T->p_pptr == 0) ? 0 : T->p_pptr->p_pid;
-	pr_pgid = (T->p_leader == 0) ? 0 : T->p_leader->p_pid;
+	pr_pgid = (T->p_pgrp->pg_session->s_leader == 0) ? 0 : T->p_pgrp->pg_session->s_leader->p_pid;
 	pr_sid = (T->p_pgrp == 0) ? 0 : ((T->p_pgrp->pg_session == 0) ? 0 : T->p_pgrp->pg_session->s_sid);
-	pr_uid = T->p_ucred->cr_ruid;
-	pr_euid = T->p_ucred->cr_uid;
-	pr_gid = T->p_ucred->cr_rgid;
-	pr_egid = T->p_ucred->cr_groups[0];
+/* XXX: struct kauth_cred is not public
+	pr_uid = T->p_cred->cr_ruid;
+	pr_euid = T->p_cred->cr_uid;
+	pr_gid = T->p_cred->cr_rgid;
+	pr_egid = T->p_cred->cr_groups[0];
+ */
 	pr_addr = 0;
 	pr_psargs = stringof(T->p_args->ar_args);
 	pr_arglen = T->p_args->ar_length;
