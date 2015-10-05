@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.181 2015/09/11 10:33:32 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.182 2015/10/05 08:17:31 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.181 2015/09/11 10:33:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.182 2015/10/05 08:17:31 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1471,14 +1471,14 @@ arplookup(struct ifnet *ifp, struct mbuf *m, const struct in_addr *addr,
 		struct llentry *la;
 		int flags = wlock ? LLE_EXCLUSIVE : 0;
 
-		if (create) {
+		IF_AFDATA_RLOCK(ifp);
+		la = lla_lookup(LLTABLE(ifp), flags, rt_getkey(rt));
+		IF_AFDATA_RUNLOCK(ifp);
+
+		if (la == NULL && create) {
 			IF_AFDATA_WLOCK(ifp);
 			la = lla_create(LLTABLE(ifp), flags, rt_getkey(rt));
 			IF_AFDATA_WUNLOCK(ifp);
-		} else {
-			IF_AFDATA_RLOCK(ifp);
-			la = lla_lookup(LLTABLE(ifp), flags, rt_getkey(rt));
-			IF_AFDATA_RUNLOCK(ifp);
 		}
 
 		return la;
