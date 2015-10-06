@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.83 2015/08/25 11:08:59 pooka Exp $	*/
+/*	$NetBSD: dk.c,v 1.84 2015/10/06 11:22:40 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.83 2015/08/25 11:08:59 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.84 2015/10/06 11:22:40 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -464,10 +464,12 @@ dkwedge_add(struct dkwedge_info *dkw)
 	sc->sc_state = DKW_STATE_RUNNING;
 
 	/* Announce our arrival. */
-	aprint_normal("%s at %s: %s\n", device_xname(sc->sc_dev), pdk->dk_name,
-	    sc->sc_wname);	/* XXX Unicode */
-	aprint_normal("%s: %"PRIu64" blocks at %"PRId64", type: %s\n",
-	    device_xname(sc->sc_dev), sc->sc_size, sc->sc_offset, sc->sc_ptype);
+	aprint_normal(
+	    "%s at %s: \"%s\", %"PRIu64" blocks at %"PRId64", type: %s\n",
+	    device_xname(sc->sc_dev), pdk->dk_name,
+	    sc->sc_wname,	/* XXX Unicode */
+	    sc->sc_size, sc->sc_offset,
+	    sc->sc_ptype[0] == '\0' ? "<unknown>" : sc->sc_ptype);
 
 	return (0);
 }
