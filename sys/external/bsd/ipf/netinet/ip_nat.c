@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.14 2015/08/07 17:31:12 prlw1 Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.15 2015/10/06 10:21:08 prlw1 Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -113,7 +113,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.14 2015/08/07 17:31:12 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.15 2015/10/06 10:21:08 prlw1 Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -4558,8 +4558,9 @@ find_out_wild_ports:
 /* Function:    ipf_nat_lookupredir                                         */
 /* Returns:     nat_t* - NULL == no match,                                  */
 /*                       else pointer to matching NAT entry                 */
-/* Parameters:  np(I) - pointer to description of packet to find NAT table  */
-/*                      entry for.                                          */
+/* Parameters:  softc(I) - pointer to soft context main structure           */
+/*              np(I)    - pointer to description of packet to find NAT     */
+/*                         table entry for.                                 */
 /*                                                                          */
 /* Lookup the NAT tables to search for a matching redirect                  */
 /* The contents of natlookup_t should imitate those found in a packet that  */
