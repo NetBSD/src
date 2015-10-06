@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.11 2015/08/05 07:34:56 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.12 2015/10/06 14:32:51 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.11 2015/08/05 07:34:56 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.12 2015/10/06 14:32:51 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -566,7 +566,7 @@ sdmmc_io_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr, u_int32_t *ocrp)
 		memset(&cmd, 0, sizeof cmd);
 		cmd.c_opcode = SD_IO_SEND_OP_COND;
 		cmd.c_arg = ocr;
-		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R4;
+		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R4 | SCF_TOUT_OK;
 
 		error = sdmmc_mmc_command(sc, &cmd);
 		if (error)

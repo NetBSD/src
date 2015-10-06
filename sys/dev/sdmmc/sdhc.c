@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.87 2015/09/09 08:09:28 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.88 2015/10/06 14:32:51 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.87 2015/09/09 08:09:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.88 2015/10/06 14:32:51 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -195,7 +195,7 @@ static void	sdhc_tuning_timer(void *);
 static int	sdhc_start_command(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_wait_state(struct sdhc_host *, uint32_t, uint32_t);
 static int	sdhc_soft_reset(struct sdhc_host *, int);
-static int	sdhc_wait_intr(struct sdhc_host *, int, int);
+static int	sdhc_wait_intr(struct sdhc_host *, int, int, bool);
 static void	sdhc_transfer_data(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_transfer_data_dma(struct sdhc_host *, struct sdmmc_command *);
 static int	sdhc_transfer_data_pio(struct sdhc_host *, struct sdmmc_command *);
@@ -1331,7 +1331,7 @@ sdhc_execute_tuning1(struct sdhc_host *hp, int timing)
 			break;
 
 		if (!sdhc_wait_intr(hp, SDHC_BUFFER_READ_READY,
-		    SDHC_TUNING_TIMEOUT)) {
+		    SDHC_TUNING_TIMEOUT, false)) {
 			break;
 		}
 
@@ -1409,6 +1409,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 	int error;
+	bool probing;
 
 	mutex_enter(&hp->intr_lock);
 
@@ -1451,7 +1452,8 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	 * Wait until the command phase is done, or until the command
 	 * is marked done for any other reason.
 	 */
-	if (!sdhc_wait_intr(hp, SDHC_COMMAND_COMPLETE, SDHC_COMMAND_TIMEOUT)) {
+	probing = (cmd->c_flags & SCF_TOUT_OK) != 0;
+	if (!sdhc_wait_intr(hp, SDHC_COMMAND_COMPLETE, SDHC_COMMAND_TIMEOUT, probing)) {
 		DPRINTF(1,("%s: timeout for command\n", __func__));
 		cmd->c_error = ETIMEDOUT;
 		goto out;
@@ -1488,7 +1490,7 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_error == 0 && cmd->c_data != NULL)
 		sdhc_transfer_data(hp, cmd);
 	else if (ISSET(cmd->c_flags, SCF_RSP_BSY)) {
-		if (!sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10)) {
+		if (!sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE, hz * 10, false)) {
 			DPRINTF(1,("%s: sdhc_exec_command: RSP_BSY\n",
 			    HDEVNAME(hp)));
 			cmd->c_error = ETIMEDOUT;
@@ -1707,7 +1709,7 @@ sdhc_transfer_data(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		if (hp->sc->sc_vendor_transfer_data_dma != NULL) {
 			error = hp->sc->sc_vendor_transfer_data_dma(sc, cmd);
 			if (error == 0 && !sdhc_wait_intr(hp,
-			    SDHC_TRANSFER_COMPLETE, SDHC_DMA_TIMEOUT)) {
+			    SDHC_TRANSFER_COMPLETE, SDHC_DMA_TIMEOUT, false)) {
 				DPRINTF(1,("%s: timeout\n", __func__));
 				error = ETIMEDOUT;
 			}
@@ -1744,7 +1746,7 @@ sdhc_transfer_data_dma(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	for (;;) {
 		status = sdhc_wait_intr(hp,
 		    SDHC_DMA_INTERRUPT|SDHC_TRANSFER_COMPLETE,
-		    SDHC_DMA_TIMEOUT);
+		    SDHC_DMA_TIMEOUT, false);
 
 		if (status & SDHC_TRANSFER_COMPLETE) {
 			break;
@@ -1830,7 +1832,7 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 			} else {
 				HSET2(hp, SDHC_NINTR_SIGNAL_EN, imask);
 			}
-			if (!sdhc_wait_intr(hp, imask, SDHC_BUFFER_TIMEOUT)) {
+			if (!sdhc_wait_intr(hp, imask, SDHC_BUFFER_TIMEOUT, false)) {
 				DPRINTF(1,("%s: timeout\n", __func__));
 				error = ETIMEDOUT;
 				break;
@@ -1851,7 +1853,7 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 
 	if (error == 0 && !sdhc_wait_intr(hp, SDHC_TRANSFER_COMPLETE,
-	    SDHC_TRANSFER_TIMEOUT)) {
+	    SDHC_TRANSFER_TIMEOUT, false)) {
 		DPRINTF(1,("%s: timeout for transfer\n", __func__));
 		error = ETIMEDOUT;
 	}
@@ -2063,7 +2065,7 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 }
 
 static int
-sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
+sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo, bool probing)
 {
 	int status, error, nointr;
 
@@ -2110,8 +2112,14 @@ sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo)
 			device_printf(hp->sc->sc_dev,"cmd end bit error\n");
 		if (ISSET(error, SDHC_CMD_CRC_ERROR))
 			device_printf(hp->sc->sc_dev,"cmd crc error\n");
-		if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR))
-			device_printf(hp->sc->sc_dev,"cmd timeout error\n");
+		if (ISSET(error, SDHC_CMD_TIMEOUT_ERROR)) {
+			if (!probing)
+				device_printf(hp->sc->sc_dev,"cmd timeout error\n");
+#ifdef SDHC_DEBUG
+			else if (sdhcdebug > 0)
+				device_printf(hp->sc->sc_dev,"cmd timeout (expected)\n");
+#endif
+		}
 		if ((error & ~SDHC_EINTR_STATUS_MASK) != 0)
 			device_printf(hp->sc->sc_dev,"vendor error %#x\n",
 				(error & ~SDHC_EINTR_STATUS_MASK));
