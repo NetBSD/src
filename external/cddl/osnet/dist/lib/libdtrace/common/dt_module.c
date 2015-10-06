@@ -1308,7 +1308,7 @@ dt_module_update(dtrace_hdl_t *dtp, struct kld_file_stat *k_stat)
 	 * [Text][R/O data][R/W data][Dynamic][BSS][Non loadable]
 	 */
 	dmp->dm_text_size = dmp->dm_data_va - dmp->dm_text_va;
-#if defined(__i386__)
+#if defined(__i386__) && !defined(__NetBSD__)
 	/*
 	 * Find the first load section and figure out the relocation
 	 * offset for the symbols. The kernel module will not need
