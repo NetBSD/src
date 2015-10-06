@@ -1,4 +1,4 @@
-/* $NetBSD: kern_auth.c,v 1.74 2015/08/08 07:53:51 mlelstv Exp $ */
+/* $NetBSD: kern_auth.c,v 1.75 2015/10/06 22:13:39 christos Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.74 2015/08/08 07:53:51 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.75 2015/10/06 22:13:39 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_auth.c,v 1.74 2015/08/08 07:53:51 mlelstv Exp $
 #include <sys/proc.h>
 #include <sys/ucred.h>
 #include <sys/pool.h>
+#define __KAUTH_PRIVATE
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/rwlock.h>
@@ -54,35 +55,6 @@ struct kauth_key {
 	specificdata_key_t ks_key;	/* key */
 };
 
-/* 
- * Credentials.
- *
- * A subset of this structure is used in kvm(3) (src/lib/libkvm/kvm_proc.c)
- * and should be synchronized with this structure when the update is
- * relevant.
- */
-struct kauth_cred {
-	/*
-	 * Ensure that the first part of the credential resides in its own
-	 * cache line.  Due to sharing there aren't many kauth_creds in a
-	 * typical system, but the reference counts change very often.
-	 * Keeping it separate from the rest of the data prevents false
-	 * sharing between CPUs.
-	 */
-	u_int cr_refcnt;		/* reference count */
-#if COHERENCY_UNIT > 4
-	uint8_t cr_pad[COHERENCY_UNIT - 4];
-#endif
-	uid_t cr_uid;			/* user id */
-	uid_t cr_euid;			/* effective user id */
-	uid_t cr_svuid;			/* saved effective user id */
-	gid_t cr_gid;			/* group id */
-	gid_t cr_egid;			/* effective group id */
-	gid_t cr_svgid;			/* saved effective group id */
-	u_int cr_ngroups;		/* number of groups */
-	gid_t cr_groups[NGROUPS];	/* group memberships */
-	specificdata_reference cr_sd;	/* specific data */
-};
 
 /*
  * Listener.
