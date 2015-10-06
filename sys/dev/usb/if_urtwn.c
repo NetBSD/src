@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.8 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.9 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.8 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.9 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -254,6 +254,8 @@ static void	urtwn_rxeof(struct usbd_xfer *, void *, usbd_status);
 static void	urtwn_txeof(struct usbd_xfer *, void *, usbd_status);
 static int	urtwn_tx(struct urtwn_softc *, struct mbuf *,
 		    struct ieee80211_node *, struct urtwn_tx_data *);
+static struct urtwn_tx_data *
+		urtwn_get_tx_data(struct urtwn_softc *, size_t);
 static void	urtwn_start(struct ifnet *);
 static void	urtwn_watchdog(struct ifnet *);
 static int	urtwn_ioctl(struct ifnet *, u_long, void *);
@@ -642,21 +644,15 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 
 		data->sc = sc;	/* Backpointer for callbacks. */
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->rx_pipe, URTWN_RXBUFSZ,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate xfer\n");
-			error = ENOMEM;
 			break;
 		}
 
-		data->buf = usbd_alloc_buffer(data->xfer, URTWN_RXBUFSZ);
-		if (data->buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not allocate xfer buffer\n");
-			error = ENOMEM;
-			break;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 	}
 	if (error != 0)
 		urtwn_free_rx_list(sc);
@@ -676,7 +672,7 @@ urtwn_free_rx_list(struct urtwn_softc *sc)
 		CTASSERT(sizeof(xfer) == sizeof(void *));
 		xfer = atomic_swap_ptr(&sc->rx_data[i].xfer, NULL);
 		if (xfer != NULL)
-			usbd_free_xfer(xfer);
+			usbd_destroy_xfer(xfer);
 	}
 }
 
@@ -690,30 +686,28 @@ urtwn_alloc_tx_list(struct urtwn_softc *sc)
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	mutex_enter(&sc->sc_tx_mtx);
-	TAILQ_INIT(&sc->tx_free_list);
-	for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
-		data = &sc->tx_data[i];
+	for (size_t j = 0; j < sc->tx_npipe; j++) {
+		TAILQ_INIT(&sc->tx_free_list[j]);
+		for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
+			data = &sc->tx_data[j][i];
 
-		data->sc = sc;	/* Backpointer for callbacks. */
+			data->sc = sc;	/* Backpointer for callbacks. */
+			data->pidx = j;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not allocate xfer\n");
-			error = ENOMEM;
-			goto fail;
+			error = usbd_create_xfer(sc->tx_pipe[j],
+			    URTWN_TXBUFSZ, USBD_FORCE_SHORT_XFER, 0,
+			    &data->xfer);
+			if (error) {
+				aprint_error_dev(sc->sc_dev,
+				    "could not allocate xfer\n");
+				goto fail;
+			}
+
+			data->buf = usbd_get_buffer(data->xfer);
+
+			/* Append this Tx buffer to our free list. */
+			TAILQ_INSERT_TAIL(&sc->tx_free_list[j], data, next);
 		}
-
-		data->buf = usbd_alloc_buffer(data->xfer, URTWN_TXBUFSZ);
-		if (data->buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not allocate xfer buffer\n");
-			error = ENOMEM;
-			goto fail;
-		}
-
-		/* Append this Tx buffer to our free list. */
-		TAILQ_INSERT_TAIL(&sc->tx_free_list, data, next);
 	}
 	mutex_exit(&sc->sc_tx_mtx);
 	return 0;
@@ -733,11 +727,13 @@ urtwn_free_tx_list(struct urtwn_softc *sc)
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
 
 	/* NB: Caller must abort pipe first. */
-	for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
-		CTASSERT(sizeof(xfer) == sizeof(void *));
-		xfer = atomic_swap_ptr(&sc->tx_data[i].xfer, NULL);
-		if (xfer != NULL)
-			usbd_free_xfer(xfer);
+	for (size_t j = 0; j < sc->tx_npipe; j++) {
+		for (i = 0; i < URTWN_TX_LIST_COUNT; i++) {
+			CTASSERT(sizeof(xfer) == sizeof(void *));
+			xfer = atomic_swap_ptr(&sc->tx_data[j][i].xfer, NULL);
+			if (xfer != NULL)
+				usbd_destroy_xfer(xfer);
+		}
 	}
 }
 
@@ -2394,7 +2390,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
  resubmit:
 	/* Setup a new transfer. */
-	usbd_setup_xfer(xfer, sc->rx_pipe, data, data->buf, URTWN_RXBUFSZ,
+	usbd_setup_xfer(xfer, data, data->buf, URTWN_RXBUFSZ,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urtwn_rxeof);
 	(void)usbd_transfer(xfer);
 }
@@ -2405,7 +2401,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	struct urtwn_tx_data *data = priv;
 	struct urtwn_softc *sc = data->sc;
 	struct ifnet *ifp = &sc->sc_if;
-	struct usbd_pipe *pipe = data->pipe;
+	size_t pidx = data->pidx;
 	int s;
 
 	DPRINTFN(DBG_FN|DBG_TX, ("%s: %s: status=%d\n",
@@ -2413,7 +2409,7 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	mutex_enter(&sc->sc_tx_mtx);
 	/* Put this Tx buffer back to our free list. */
-	TAILQ_INSERT_TAIL(&sc->tx_free_list, data, next);
+	TAILQ_INSERT_TAIL(&sc->tx_free_list[pidx], data, next);
 	mutex_exit(&sc->sc_tx_mtx);
 
 	s = splnet();
@@ -2422,8 +2418,10 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status != USBD_NOT_STARTED && status != USBD_CANCELLED) {
-			if (status == USBD_STALLED)
+			if (status == USBD_STALLED) {
+				struct usbd_pipe *pipe = sc->tx_pipe[pidx];
 				usbd_clear_endpoint_stall_async(pipe);
+			}
 			ifp->if_oerrors++;
 		}
 		splx(s);
@@ -2444,10 +2442,9 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	struct ieee80211_frame *wh;
 	struct ieee80211_key *k = NULL;
 	struct r92c_tx_desc *txd;
-	struct usbd_pipe *pipe;
 	size_t i, padsize, xferlen;
 	uint16_t seq, sum;
-	uint8_t raid, type, tid, qid;
+	uint8_t raid, type, tid;
 	int s, hasqos, error;
 
 	DPRINTFN(DBG_FN, ("%s: %s\n", device_xname(sc->sc_dev), __func__));
@@ -2478,23 +2475,15 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 		bpf_mtap2(sc->sc_drvbpf, tap, sc->sc_txtap_len, m);
 	}
 
+	/* non-qos data frames */
+	tid = R92C_TXDW1_QSEL_BE;
 	if ((hasqos = ieee80211_has_qos(wh))) {
 		/* data frames in 11n mode */
 		struct ieee80211_qosframe *qwh = (void *)wh;
 		tid = qwh->i_qos[0] & IEEE80211_QOS_TID;
-		qid = TID_TO_WME_AC(tid);
 	} else if (type != IEEE80211_FC0_TYPE_DATA) {
-		/* Use AC_VO for management frames. */
-		qid = WME_AC_VO;
-		tid = 0;	/* compiler happy */
-	} else {
-		/* non-qos data frames */
-		tid = R92C_TXDW1_QSEL_BE;
-		qid = WME_AC_BE;
+		tid = R92C_TXDW1_QSEL_MGNT;
 	}
-
-	/* Get the USB pipe to use for this AC. */
-	pipe = sc->tx_pipe[sc->ac2idx[qid]];
 
 	if (((sizeof(*txd) + m->m_pkthdr.len) % 64) == 0) /* XXX: 64 */
 		padsize = 8;
@@ -2612,8 +2601,7 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	m_copydata(m, 0, m->m_pkthdr.len, (char *)&txd[1] + padsize);
 
 	s = splnet();
-	data->pipe = pipe;
-	usbd_setup_xfer(data->xfer, pipe, data, data->buf, xferlen,
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, URTWN_TX_TIMEOUT,
 	    urtwn_txeof);
 	error = usbd_transfer(data->xfer);
@@ -2626,6 +2614,21 @@ urtwn_tx(struct urtwn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	}
 	splx(s);
 	return 0;
+}
+
+struct urtwn_tx_data *
+urtwn_get_tx_data(struct urtwn_softc *sc, size_t pidx)
+{
+	struct urtwn_tx_data *data = NULL;
+
+	mutex_enter(&sc->sc_tx_mtx);
+	if (!TAILQ_EMPTY(&sc->tx_free_list[pidx])) {
+		data = TAILQ_FIRST(&sc->tx_free_list[pidx]);
+		TAILQ_REMOVE(&sc->tx_free_list[pidx], data, next);
+	}
+	mutex_exit(&sc->sc_tx_mtx);
+
+	return data;
 }
 
 static void
@@ -2645,23 +2648,20 @@ urtwn_start(struct ifnet *ifp)
 
 	data = NULL;
 	for (;;) {
-		mutex_enter(&sc->sc_tx_mtx);
-		if (data == NULL && !TAILQ_EMPTY(&sc->tx_free_list)) {
-			data = TAILQ_FIRST(&sc->tx_free_list);
-			TAILQ_REMOVE(&sc->tx_free_list, data, next);
-		}
-		mutex_exit(&sc->sc_tx_mtx);
-
-		if (data == NULL) {
-			ifp->if_flags |= IFF_OACTIVE;
-			DPRINTFN(DBG_TX, ("%s: empty tx_free_list\n",
-				     device_xname(sc->sc_dev)));
-			return;
-		}
-
 		/* Send pending management frames first. */
-		IF_DEQUEUE(&ic->ic_mgtq, m);
+		IF_POLL(&ic->ic_mgtq, m);
 		if (m != NULL) {
+			/* Use AC_VO for management frames. */
+
+			data = urtwn_get_tx_data(sc, sc->ac2idx[WME_AC_VO]);
+
+			if (data == NULL) {
+				ifp->if_flags |= IFF_OACTIVE;
+				DPRINTFN(DBG_TX, ("%s: empty tx_free_list\n",
+					    device_xname(sc->sc_dev)));
+				return;
+			}
+			IF_DEQUEUE(&ic->ic_mgtq, m);
 			ni = (void *)m->m_pkthdr.rcvif;
 			m->m_pkthdr.rcvif = NULL;
 			goto sendit;
@@ -2670,9 +2670,30 @@ urtwn_start(struct ifnet *ifp)
 			break;
 
 		/* Encapsulate and send data frames. */
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+
+		struct ieee80211_frame *wh = mtod(m, struct ieee80211_frame *);
+		uint8_t type = wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
+		uint8_t qid = WME_AC_BE;
+		if (ieee80211_has_qos(wh)) {
+			/* data frames in 11n mode */
+			struct ieee80211_qosframe *qwh = (void *)wh;
+			uint8_t tid = qwh->i_qos[0] & IEEE80211_QOS_TID;
+			qid = TID_TO_WME_AC(tid);
+		} else if (type != IEEE80211_FC0_TYPE_DATA) {
+			qid = WME_AC_VO;
+		}
+		data = urtwn_get_tx_data(sc, sc->ac2idx[qid]);
+
+		if (data == NULL) {
+			ifp->if_flags |= IFF_OACTIVE;
+			DPRINTFN(DBG_TX, ("%s: empty tx_free_list\n",
+				    device_xname(sc->sc_dev)));
+			return;
+		}
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
@@ -2703,17 +2724,11 @@ urtwn_start(struct ifnet *ifp)
 			ifp->if_oerrors++;
 			continue;
 		}
-		data = NULL;
 		m_freem(m);
 		ieee80211_free_node(ni);
 		sc->tx_timer = 5;
 		ifp->if_timer = 1;
 	}
-
-	/* Return the Tx buffer to the free list */
-	mutex_enter(&sc->sc_tx_mtx);
-	TAILQ_INSERT_TAIL(&sc->tx_free_list, data, next);
-	mutex_exit(&sc->sc_tx_mtx);
 }
 
 static void
@@ -4400,9 +4415,8 @@ urtwn_init(struct ifnet *ifp)
 	/* Queue Rx xfers. */
 	for (i = 0; i < URTWN_RX_LIST_COUNT; i++) {
 		data = &sc->rx_data[i];
-		usbd_setup_xfer(data->xfer, sc->rx_pipe, data, data->buf,
-		    URTWN_RXBUFSZ, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, urtwn_rxeof);
+		usbd_setup_xfer(data->xfer, data, data->buf, URTWN_RXBUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urtwn_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (__predict_false(error != USBD_NORMAL_COMPLETION &&
 		    error != USBD_IN_PROGRESS))

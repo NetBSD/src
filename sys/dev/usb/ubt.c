@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.6 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.6 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -775,32 +775,32 @@ ubt_abortdealloc(struct ubt_softc *sc)
 
 	/* Free all xfers and xfer buffers (implicit) */
 	if (sc->sc_cmd_xfer != NULL) {
-		usbd_free_xfer(sc->sc_cmd_xfer);
+		usbd_destroy_xfer(sc->sc_cmd_xfer);
 		sc->sc_cmd_xfer = NULL;
 		sc->sc_cmd_buf = NULL;
 	}
 
 	if (sc->sc_aclrd_xfer != NULL) {
-		usbd_free_xfer(sc->sc_aclrd_xfer);
+		usbd_destroy_xfer(sc->sc_aclrd_xfer);
 		sc->sc_aclrd_xfer = NULL;
 		sc->sc_aclrd_buf = NULL;
 	}
 
 	if (sc->sc_aclwr_xfer != NULL) {
-		usbd_free_xfer(sc->sc_aclwr_xfer);
+		usbd_destroy_xfer(sc->sc_aclwr_xfer);
 		sc->sc_aclwr_xfer = NULL;
 		sc->sc_aclwr_buf = NULL;
 	}
 
 	for (i = 0 ; i < UBT_NXFERS ; i++) {
 		if (sc->sc_scord[i].xfer != NULL) {
-			usbd_free_xfer(sc->sc_scord[i].xfer);
+			usbd_destroy_xfer(sc->sc_scord[i].xfer);
 			sc->sc_scord[i].xfer = NULL;
 			sc->sc_scord[i].buf = NULL;
 		}
 
 		if (sc->sc_scowr[i].xfer != NULL) {
-			usbd_free_xfer(sc->sc_scowr[i].xfer);
+			usbd_destroy_xfer(sc->sc_scowr[i].xfer);
 			sc->sc_scowr[i].xfer = NULL;
 			sc->sc_scowr[i].buf = NULL;
 		}
@@ -863,16 +863,12 @@ ubt_enable(device_t self)
 	}
 
 	/* Commands */
-	sc->sc_cmd_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_cmd_xfer == NULL) {
-		error = ENOMEM;
+	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->sc_udev);
+	error = usbd_create_xfer(pipe0, UBT_BUFSIZ_CMD, 0, 0,
+	    &sc->sc_cmd_xfer);
+	if (error)
 		goto bad;
-	}
-	sc->sc_cmd_buf = usbd_alloc_buffer(sc->sc_cmd_xfer, UBT_BUFSIZ_CMD);
-	if (sc->sc_cmd_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
+	sc->sc_cmd_buf = usbd_get_buffer(sc->sc_cmd_xfer);
 	sc->sc_cmd_busy = 0;
 
 	/* ACL read */
@@ -882,16 +878,11 @@ ubt_enable(device_t self)
 		error = EIO;
 		goto bad;
 	}
-	sc->sc_aclrd_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_aclrd_xfer == NULL) {
-		error = ENOMEM;
+	error = usbd_create_xfer(sc->sc_aclrd_pipe, UBT_BUFSIZ_ACL,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_aclrd_xfer);
+	if (error)
 		goto bad;
-	}
-	sc->sc_aclrd_buf = usbd_alloc_buffer(sc->sc_aclrd_xfer, UBT_BUFSIZ_ACL);
-	if (sc->sc_aclrd_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
+	sc->sc_aclrd_buf = usbd_get_buffer(sc->sc_aclrd_xfer);
 	sc->sc_aclrd_busy = 0;
 	ubt_recv_acl_start(sc);
 
@@ -902,16 +893,11 @@ ubt_enable(device_t self)
 		error = EIO;
 		goto bad;
 	}
-	sc->sc_aclwr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_aclwr_xfer == NULL) {
-		error = ENOMEM;
+	error = usbd_create_xfer(sc->sc_aclwr_pipe, UBT_BUFSIZ_ACL,
+	    USBD_FORCE_SHORT_XFER, 0, &sc->sc_aclwr_xfer);
+	if (error)
 		goto bad;
-	}
-	sc->sc_aclwr_buf = usbd_alloc_buffer(sc->sc_aclwr_xfer, UBT_BUFSIZ_ACL);
-	if (sc->sc_aclwr_buf == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
+	sc->sc_aclwr_buf = usbd_get_buffer(sc->sc_aclwr_xfer);
 	sc->sc_aclwr_busy = 0;
 
 	/* SCO read */
@@ -924,17 +910,15 @@ ubt_enable(device_t self)
 		}
 
 		for (i = 0 ; i < UBT_NXFERS ; i++) {
-			sc->sc_scord[i].xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (sc->sc_scord[i].xfer == NULL) {
-				error = ENOMEM;
+		        error = usbd_create_xfer(sc->sc_scord_pipe,
+			    sc->sc_scord_size * UBT_NFRAMES,
+			    USBD_SHORT_XFER_OK, UBT_NFRAMES,
+			    &sc->sc_scord[i].xfer);
+			if (error)
 				goto bad;
-			}
-			sc->sc_scord[i].buf = usbd_alloc_buffer(sc->sc_scord[i].xfer,
-						sc->sc_scord_size * UBT_NFRAMES);
-			if (sc->sc_scord[i].buf == NULL) {
-				error = ENOMEM;
-				goto bad;
-			}
+
+			sc->sc_scord[i].buf =
+			    usbd_get_buffer(sc->sc_scord[i].xfer);
 			sc->sc_scord[i].softc = sc;
 			sc->sc_scord[i].busy = 0;
 			ubt_recv_sco_start1(sc, &sc->sc_scord[i]);
@@ -951,17 +935,14 @@ ubt_enable(device_t self)
 		}
 
 		for (i = 0 ; i < UBT_NXFERS ; i++) {
-			sc->sc_scowr[i].xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (sc->sc_scowr[i].xfer == NULL) {
-				error = ENOMEM;
+			error = usbd_create_xfer(sc->sc_scowr_pipe,
+			    sc->sc_scowr_size * UBT_NFRAMES,
+			    USBD_FORCE_SHORT_XFER, UBT_NFRAMES,
+			    &sc->sc_scowr[i].xfer);
+			if (error)
 				goto bad;
-			}
-			sc->sc_scowr[i].buf = usbd_alloc_buffer(sc->sc_scowr[i].xfer,
-						sc->sc_scowr_size * UBT_NFRAMES);
-			if (sc->sc_scowr[i].buf == NULL) {
-				error = ENOMEM;
-				goto bad;
-			}
+			sc->sc_scowr[i].buf =
+			    usbd_get_buffer(sc->sc_scowr[i].xfer);
 			sc->sc_scowr[i].softc = sc;
 			sc->sc_scowr[i].busy = 0;
 		}
@@ -1160,7 +1141,6 @@ ubt_xmit_acl_start(struct ubt_softc *sc)
 	sc->sc_stats.byte_tx += len;
 
 	usbd_setup_xfer(sc->sc_aclwr_xfer,
-			sc->sc_aclwr_pipe,
 			sc,
 			sc->sc_aclwr_buf,
 			len,
@@ -1321,7 +1301,6 @@ ubt_xmit_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 	}
 
 	usbd_setup_isoc_xfer(isoc->xfer,
-			     sc->sc_scowr_pipe,
 			     isoc,
 			     isoc->size,
 			     num,
@@ -1456,7 +1435,6 @@ ubt_recv_acl_start(struct ubt_softc *sc)
 	sc->sc_aclrd_busy = 1;
 
 	usbd_setup_xfer(sc->sc_aclrd_xfer,
-			sc->sc_aclrd_pipe,
 			sc,
 			sc->sc_aclrd_buf,
 			UBT_BUFSIZ_ACL,
@@ -1555,7 +1533,6 @@ ubt_recv_sco_start1(struct ubt_softc *sc, struct ubt_isoc_xfer *isoc)
 		isoc->size[i] = sc->sc_scord_size;
 
 	usbd_setup_isoc_xfer(isoc->xfer,
-			     sc->sc_scord_pipe,
 			     isoc,
 			     isoc->size,
 			     UBT_NFRAMES,

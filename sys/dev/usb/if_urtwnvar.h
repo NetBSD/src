@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.8.4.1 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.8.4.2 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ struct urtwn_rx_data {
 
 struct urtwn_tx_data {
 	struct urtwn_softc		*sc;
-	struct usbd_pipe *		pipe;
+	size_t				pidx;
 	struct usbd_xfer *		xfer;
 	uint8_t				*buf;
 	TAILQ_ENTRY(urtwn_tx_data)	next;
@@ -165,8 +165,8 @@ struct urtwn_softc {
 	struct urtwn_host_cmd_ring	cmdq;
 	int				fwcur;
 	struct urtwn_rx_data		rx_data[URTWN_RX_LIST_COUNT];
-	struct urtwn_tx_data		tx_data[URTWN_TX_LIST_COUNT];
-	TAILQ_HEAD(, urtwn_tx_data)	tx_free_list;
+	struct urtwn_tx_data		tx_data[R92C_MAX_EPOUT][URTWN_TX_LIST_COUNT];
+	TAILQ_HEAD(, urtwn_tx_data)	tx_free_list[R92C_MAX_EPOUT];
 
 	struct r92c_rom			rom;
 	uint8_t				r88e_rom[512];

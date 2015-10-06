@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.6.6.9 2015/09/29 11:38:28 skrll Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.6.6.10 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.9 2015/09/29 11:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.6.6.10 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -895,16 +895,11 @@ urtw_alloc_rx_data_list(struct urtw_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
-			printf("%s: could not allocate rx xfer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
+		error = usbd_create_xfer(sc->sc_rxpipe, MCLBYTES,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 
-		if (usbd_alloc_buffer(data->xfer, URTW_RX_MAXSIZE) == NULL) {
-			printf("%s: could not allocate rx buffer\n",
+			printf("%s: could not allocate rx xfer\n",
 			    device_xname(sc->sc_dev));
 			error = ENOMEM;
 			goto fail;
@@ -947,7 +942,7 @@ urtw_free_rx_data_list(struct urtw_softc *sc)
 		struct urtw_rx_data *data = &sc->sc_rx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 		if (data->m != NULL) {
@@ -962,31 +957,29 @@ urtw_alloc_tx_data_list(struct urtw_softc *sc)
 {
 	int i, error;
 
-	for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
-		struct urtw_tx_data *data = &sc->sc_tx_data[i];
+	for (size_t j = 0; j < URTW_PRIORITY_MAX; j++) {
+		for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
+			struct urtw_tx_data *data = &sc->sc_tx_data[j][i];
 
-		data->sc = sc;
-		data->ni = NULL;
+			data->sc = sc;
+			data->ni = NULL;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
-			printf("%s: could not allocate tx xfer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
+			error = usbd_create_xfer((j == URTW_PRIORITY_LOW) ?
+			    sc->sc_txpipe_low : sc->sc_txpipe_normal,
+			    URTW_TX_MAXSIZE, USBD_FORCE_SHORT_XFER, 0,
+			    &data->xfer);
+			if (error) {
+				printf("%s: could not allocate tx xfer\n",
+				    device_xname(sc->sc_dev));
+				goto fail;
+			}
+
+			data->buf = usbd_get_buffer(data->xfer);
+
+			if (((unsigned long)data->buf) % 4)
+				printf("%s: warn: unaligned buffer %p\n",
+				    device_xname(sc->sc_dev), data->buf);
 		}
-
-		data->buf = usbd_alloc_buffer(data->xfer, URTW_TX_MAXSIZE);
-		if (data->buf == NULL) {
-			printf("%s: could not allocate tx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
-
-		if (((unsigned long)data->buf) % 4)
-			printf("%s: warn: unaligned buffer %p\n",
-			    device_xname(sc->sc_dev), data->buf);
 	}
 
 	return 0;
@@ -1007,16 +1000,18 @@ urtw_free_tx_data_list(struct urtw_softc *sc)
 	if (sc->sc_txpipe_normal != NULL)
 		usbd_abort_pipe(sc->sc_txpipe_normal);
 
-	for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
-		struct urtw_tx_data *data = &sc->sc_tx_data[i];
+	for (size_t j = 0; j < URTW_PRIORITY_MAX; j++) {
+		for (i = 0; i < URTW_TX_DATA_LIST_COUNT; i++) {
+			struct urtw_tx_data *data = &sc->sc_tx_data[j][i];
 
-		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
-			data->xfer = NULL;
-		}
-		if (data->ni != NULL) {
-			ieee80211_free_node(data->ni);
-			data->ni = NULL;
+			if (data->xfer != NULL) {
+				usbd_destroy_xfer(data->xfer);
+				data->xfer = NULL;
+			}
+			if (data->ni != NULL) {
+				ieee80211_free_node(data->ni);
+				data->ni = NULL;
+			}
 		}
 	}
 }
@@ -2175,9 +2170,8 @@ urtw_rx_enable(struct urtw_softc *sc)
 	for (i = 0; i < URTW_RX_DATA_LIST_COUNT; i++) {
 		rx_data = &sc->sc_rx_data[i];
 
-		usbd_setup_xfer(rx_data->xfer, sc->sc_rxpipe, rx_data,
-		    rx_data->buf, MCLBYTES, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, urtw_rxeof);
+		usbd_setup_xfer(rx_data->xfer, rx_data, rx_data->buf, MCLBYTES,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urtw_rxeof);
 		error = usbd_transfer(rx_data->xfer);
 		if (error != USBD_IN_PROGRESS && error != 0) {
 			printf("%s: could not queue Rx transfer\n",
@@ -2304,7 +2298,9 @@ urtw_init(struct ifnet *ifp)
 		goto fail;
 
 	/* reset softc variables */
-	sc->sc_txidx = sc->sc_tx_low_queued = sc->sc_tx_normal_queued = 0;
+	for (size_t j = 0; j < URTW_PRIORITY_MAX; j++) {
+		sc->sc_txidx[j] = sc->sc_tx_queued[j] = 0;
+	}
 	sc->sc_txtimer = 0;
 
 	if (!(sc->sc_flags & URTW_INIT_ONCE)) {
@@ -2430,8 +2426,8 @@ urtw_start(struct ifnet *ifp)
 	for (;;) {
 		IF_POLL(&ic->ic_mgtq, m0);
 		if (m0 != NULL) {
-			if (sc->sc_tx_low_queued >= URTW_TX_DATA_LIST_COUNT ||
-			    sc->sc_tx_normal_queued >=
+
+			if (sc->sc_tx_queued[URTW_PRIORITY_NORMAL] >=
 			    URTW_TX_DATA_LIST_COUNT) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
@@ -2449,8 +2445,7 @@ urtw_start(struct ifnet *ifp)
 			IFQ_POLL(&ifp->if_snd, m0);
 			if (m0 == NULL)
 				break;
-			if (sc->sc_tx_low_queued >= URTW_TX_DATA_LIST_COUNT ||
-			    sc->sc_tx_normal_queued >=
+			if (sc->sc_tx_queued[URTW_PRIORITY_NORMAL] >=
 			    URTW_TX_DATA_LIST_COUNT) {
 				ifp->if_flags |= IFF_OACTIVE;
 				break;
@@ -2536,7 +2531,7 @@ urtw_txeof_low(struct usbd_xfer *xfer, void *priv,
 	sc->sc_txtimer = 0;
 	ifp->if_opackets++;
 
-	sc->sc_tx_low_queued--;
+	sc->sc_tx_queued[URTW_PRIORITY_LOW]--;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	urtw_start(ifp);
 
@@ -2575,7 +2570,7 @@ urtw_txeof_normal(struct usbd_xfer *xfer, void *priv,
 	sc->sc_txtimer = 0;
 	ifp->if_opackets++;
 
-	sc->sc_tx_normal_queued--;
+	sc->sc_tx_queued[URTW_PRIORITY_NORMAL]--;
 	ifp->if_flags &= ~IFF_OACTIVE;
 	urtw_start(ifp);
 
@@ -2624,8 +2619,9 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	if ((0 == xferlen % 64) || (0 == xferlen % 512))
 		xferlen += 1;
 
-	data = &sc->sc_tx_data[sc->sc_txidx];
-	sc->sc_txidx = (sc->sc_txidx + 1) % URTW_TX_DATA_LIST_COUNT;
+	data = &sc->sc_tx_data[prior][sc->sc_txidx[prior]];
+	sc->sc_txidx[prior] =
+	    (sc->sc_txidx[prior] + 1) % URTW_TX_DATA_LIST_COUNT;
 
 	memset(data->buf, 0, URTW_TX_MAXSIZE);
 	data->buf[0] = m0->m_pkthdr.len & 0xff;
@@ -2672,9 +2668,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 	/* mbuf is no longer needed. */
 	m_freem(m0);
 
-	usbd_setup_xfer(data->xfer,
-	    (prior == URTW_PRIORITY_LOW) ? sc->sc_txpipe_low :
-	    sc->sc_txpipe_normal, data, data->buf, xferlen,
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, URTW_DATA_TIMEOUT,
 	    (prior == URTW_PRIORITY_LOW) ? urtw_txeof_low : urtw_txeof_normal);
 	error = usbd_transfer(data->xfer);
@@ -2689,10 +2683,7 @@ urtw_tx_start(struct urtw_softc *sc, struct ieee80211_node *ni, struct mbuf *m0,
 		printf("%s: could not control LED (%d)\n",
 		    device_xname(sc->sc_dev), error);
 
-	if (prior == URTW_PRIORITY_LOW)
-		sc->sc_tx_low_queued++;
-	else
-		sc->sc_tx_normal_queued++;
+	sc->sc_tx_queued[prior]++;
 
 	return 0;
 }
@@ -3167,7 +3158,7 @@ urtw_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	splx(s);
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->sc_rxpipe, data, data->buf, MCLBYTES,
+	usbd_setup_xfer(xfer, data, data->buf, MCLBYTES,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urtw_rxeof);
 	(void)usbd_transfer(xfer);
 }
@@ -3670,7 +3661,9 @@ urtw_8187b_init(struct ifnet *ifp)
 	urtw_write8_m(sc, URTW_ACM_CONTROL, 0);
 
 	/* Reset softc variables. */
-	sc->sc_txidx = sc->sc_tx_low_queued = sc->sc_tx_normal_queued = 0;
+	for (size_t j = 0; j < URTW_PRIORITY_MAX; j++) {
+		sc->sc_txidx[j] = sc->sc_tx_queued[j] = 0;
+	}
 	sc->sc_txtimer = 0;
 
 	if (!(sc->sc_flags & URTW_INIT_ONCE)) {

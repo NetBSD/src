@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.6.32.3 2015/03/19 17:26:42 skrll Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.6.32.4 2015/10/06 21:32:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6.32.3 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6.32.4 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -584,20 +584,15 @@ auvitek_start_xfer(struct auvitek_softc *sc)
 	for (i = 0; i < AUVITEK_NISOC_XFERS; i++) {
 		struct auvitek_isoc *isoc = &ax->ax_i[i];
 
-		isoc->i_xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (isoc->i_xfer == NULL) {
+		int error = usbd_create_xfer(ax->ax_pipe,
+		    nframes * uframe_len, 0, ax->ax_nframes, &isoc->i_xfer);
+		if (error) {
 			aprint_error_dev(sc->sc_dev,
-			    "couldn't allocate usb xfer\n");
-			return ENOMEM;
+			    "couldn't create usb xfer\n");
+			return error;
 		}
 
-		isoc->i_buf = usbd_alloc_buffer(isoc->i_xfer,
-						nframes * uframe_len);
-		if (isoc->i_buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "couldn't allocate usb xfer buffer\n");
-			return ENOMEM;
-		}
+		isoc->i_buf = usbd_get_buffer(isoc->i_xfer);
 	}
 
 	return auvitek_isoc_start(sc);
@@ -619,8 +614,7 @@ auvitek_stop_xfer(struct auvitek_softc *sc)
 	for (i = 0; i < AUVITEK_NISOC_XFERS; i++) {
 		struct auvitek_isoc *isoc = &ax->ax_i[i];
 		if (isoc->i_xfer != NULL) {
-			usbd_free_buffer(isoc->i_xfer);
-			usbd_free_xfer(isoc->i_xfer);
+			usbd_destroy_xfer(isoc->i_xfer);
 			isoc->i_xfer = NULL;
 		}
 		if (isoc->i_frlengths != NULL) {
@@ -675,7 +669,6 @@ auvitek_isoc_start1(struct auvitek_isoc *isoc)
 		isoc->i_frlengths[i] = ax->ax_uframe_len;
 
 	usbd_setup_isoc_xfer(isoc->i_xfer,
-			     ax->ax_pipe,
 			     isoc,
 			     isoc->i_frlengths,
 			     ax->ax_nframes,

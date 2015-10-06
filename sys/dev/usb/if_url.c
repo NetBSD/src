@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.48.4.6 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: if_url.c,v 1.48.4.7 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.6 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.48.4.7 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -547,20 +547,6 @@ url_init(struct ifnet *ifp)
 		URL_CLRBIT2(sc, URL_RCR, URL_RCR_AAM|URL_RCR_AAP);
 
 
-	/* Initialize transmit ring */
-	if (url_tx_list_init(sc) == ENOBUFS) {
-		printf("%s: tx list init failed\n", device_xname(sc->sc_dev));
-		splx(s);
-		return EIO;
-	}
-
-	/* Initialize receive ring */
-	if (url_rx_list_init(sc) == ENOBUFS) {
-		printf("%s: rx list init failed\n", device_xname(sc->sc_dev));
-		splx(s);
-		return EIO;
-	}
-
 	/* Load the multicast filter */
 	url_setmulti(sc);
 
@@ -577,6 +563,29 @@ url_init(struct ifnet *ifp)
 			splx(s);
 			return EIO;
 		}
+	}
+	/* Initialize transmit ring */
+	if (url_tx_list_init(sc)) {
+		printf("%s: tx list init failed\n", device_xname(sc->sc_dev));
+		splx(s);
+		return EIO;
+	}
+
+	/* Initialize receive ring */
+	if (url_rx_list_init(sc)) {
+		printf("%s: rx list init failed\n", device_xname(sc->sc_dev));
+		splx(s);
+		return EIO;
+	}
+	/* Start up the receive pipe. */
+	for (i = 0; i < URL_RX_LIST_CNT; i++) {
+		struct url_chain *c = &sc->sc_cdata.url_rx_chain[i];
+
+		usbd_setup_xfer(c->url_xfer, c, c->url_buf, URL_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, url_rxeof);
+		(void)usbd_transfer(c->url_xfer);
+		DPRINTF(("%s: %s: start read\n", device_xname(sc->sc_dev),
+			 __func__));
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -695,9 +704,7 @@ url_setmulti(struct url_softc *sc)
 Static int
 url_openpipes(struct url_softc *sc)
 {
-	struct url_chain *c;
 	usbd_status err;
-	int i;
 	int error = 0;
 
 	if (sc->sc_dying)
@@ -739,19 +746,6 @@ url_openpipes(struct url_softc *sc)
 		goto done;
 	}
 #endif
-
-
-	/* Start up the receive pipe. */
-	for (i = 0; i < URL_RX_LIST_CNT; i++) {
-		c = &sc->sc_cdata.url_rx_chain[i];
-		usbd_setup_xfer(c->url_xfer, sc->sc_pipe_rx,
-				c, c->url_buf, URL_BUFSZ,
-				USBD_SHORT_XFER_OK,
-				USBD_NO_TIMEOUT, url_rxeof);
-		(void)usbd_transfer(c->url_xfer);
-		DPRINTF(("%s: %s: start read\n", device_xname(sc->sc_dev),
-			 __func__));
-	}
 
  done:
 	if (--sc->sc_refcnt < 0)
@@ -812,14 +806,11 @@ url_rx_list_init(struct url_softc *sc)
 		if (url_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->url_xfer == NULL) {
-			c->url_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->url_xfer == NULL)
-				return ENOBUFS;
-			c->url_buf = usbd_alloc_buffer(c->url_xfer, URL_BUFSZ);
-			if (c->url_buf == NULL) {
-				usbd_free_xfer(c->url_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_pipe_rx, URL_BUFSZ,
+			    USBD_SHORT_XFER_OK, 0, &c->url_xfer);
+			if (error)
+				return error;
+			c->url_buf = usbd_get_buffer(c->url_xfer);
 		}
 	}
 
@@ -842,14 +833,11 @@ url_tx_list_init(struct url_softc *sc)
 		c->url_idx = i;
 		c->url_mbuf = NULL;
 		if (c->url_xfer == NULL) {
-			c->url_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->url_xfer == NULL)
-				return ENOBUFS;
-			c->url_buf = usbd_alloc_buffer(c->url_xfer, URL_BUFSZ);
-			if (c->url_buf == NULL) {
-				usbd_free_xfer(c->url_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_pipe_tx, URL_BUFSZ,
+			    USBD_FORCE_SHORT_XFER, 0, &c->url_xfer);
+			if (error)
+				return error;
+			c->url_buf = usbd_get_buffer(c->url_xfer);
 		}
 	}
 
@@ -914,9 +902,8 @@ url_send(struct url_softc *sc, struct mbuf *m, int idx)
 		    URL_MIN_FRAME_LEN - total_len);
 		total_len = URL_MIN_FRAME_LEN;
 	}
-	usbd_setup_xfer(c->url_xfer, sc->sc_pipe_tx, c, c->url_buf, total_len,
-			USBD_FORCE_SHORT_XFER,
-			URL_TX_TIMEOUT, url_txeof);
+	usbd_setup_xfer(c->url_xfer,c, c->url_buf, total_len,
+	    USBD_FORCE_SHORT_XFER, URL_TX_TIMEOUT, url_txeof);
 
 	/* Transmit */
 	sc->sc_refcnt++;
@@ -1072,9 +1059,8 @@ url_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
  done:
 	/* Setup new transfer */
-	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, c->url_buf, URL_BUFSZ,
-			USBD_SHORT_XFER_OK,
-			USBD_NO_TIMEOUT, url_rxeof);
+	usbd_setup_xfer(xfer, c, c->url_buf, URL_BUFSZ, USBD_SHORT_XFER_OK,
+	    USBD_NO_TIMEOUT, url_rxeof);
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);
 	if (--sc->sc_refcnt < 0)
@@ -1209,7 +1195,7 @@ url_stop(struct ifnet *ifp, int disable)
 			sc->sc_cdata.url_rx_chain[i].url_mbuf = NULL;
 		}
 		if (sc->sc_cdata.url_rx_chain[i].url_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.url_rx_chain[i].url_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.url_rx_chain[i].url_xfer);
 			sc->sc_cdata.url_rx_chain[i].url_xfer = NULL;
 		}
 	}
@@ -1221,7 +1207,7 @@ url_stop(struct ifnet *ifp, int disable)
 			sc->sc_cdata.url_tx_chain[i].url_mbuf = NULL;
 		}
 		if (sc->sc_cdata.url_tx_chain[i].url_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.url_tx_chain[i].url_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.url_tx_chain[i].url_xfer);
 			sc->sc_cdata.url_tx_chain[i].url_xfer = NULL;
 		}
 	}

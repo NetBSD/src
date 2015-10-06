@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.31.2.9 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: u3g.c,v 1.31.2.10 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.9 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.31.2.10 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -311,9 +311,10 @@ send_bulkmsg(struct usbd_device *dev, void *cmd, size_t cmdlen)
 		return UMATCH_NONE;
 	}
 
-	xfer = usbd_alloc_xfer(dev);
-	if (xfer != NULL) {
-		usbd_setup_xfer(xfer, pipe, NULL, cmd, cmdlen,
+	int error = usbd_create_xfer(pipe, cmdlen, 0, 0, &xfer);
+	if (!error) {
+
+		usbd_setup_xfer(xfer, NULL, cmd, cmdlen,
 		    USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
 
 		err = usbd_transfer(xfer);
@@ -324,7 +325,7 @@ send_bulkmsg(struct usbd_device *dev, void *cmd, size_t cmdlen)
 #else
 		err = 0;
 #endif
-		usbd_free_xfer(xfer);
+		usbd_destroy_xfer(xfer);
 	} else {
 		aprint_error("u3ginit: failed to allocate xfer\n");
 		err = USBD_NOMEM;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.8 2015/09/19 07:39:51 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.9 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.8 2015/09/19 07:39:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.9 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,6 +287,59 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_opencv, "ucomopen");
 	cv_init(&sc->sc_detachcv, "ucomdtch");
 
+	SIMPLEQ_INIT(&sc->sc_ibuff_empty);
+	SIMPLEQ_INIT(&sc->sc_ibuff_full);
+	SIMPLEQ_INIT(&sc->sc_obuff_free);
+	SIMPLEQ_INIT(&sc->sc_obuff_full);
+
+	memset(sc->sc_ibuff, 0, sizeof(sc->sc_ibuff));
+	memset(sc->sc_obuff, 0, sizeof(sc->sc_obuff));
+
+	DPRINTF("open pipes in=%d out=%d", sc->sc_bulkin_no, sc->sc_bulkout_no,
+	    0, 0);
+
+	struct ucom_buffer *ub;
+	usbd_status err;
+	int error;
+
+	/* Open the bulk pipes */
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
+	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
+	if (err) {
+		DPRINTF("open bulk in error (addr %d), err=%d",
+		    sc->sc_bulkin_no, err, 0, 0);
+		error = EIO;
+		goto fail_0;
+	}
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
+	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+	if (err) {
+		DPRINTF("open bulk out error (addr %d), err=%d",
+		    sc->sc_bulkout_no, err, 0, 0);
+		error = EIO;
+		goto fail_1;
+	}
+
+	/* Allocate input buffers */
+	for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
+	    ub++) {
+		error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_ibufsizepad,
+		    USBD_SHORT_XFER_OK, 0, &ub->ub_xfer);
+		if (error)
+			goto fail_2;
+		ub->ub_data = usbd_get_buffer(ub->ub_xfer);
+	}
+
+	for (ub = &sc->sc_obuff[0]; ub != &sc->sc_obuff[UCOM_OUT_BUFFS];
+	    ub++) {
+		error = usbd_create_xfer(sc->sc_bulkout_pipe, sc->sc_obufsize,
+		    0, 0, &ub->ub_xfer);
+		if (error)
+			goto fail_2;
+		ub->ub_data = usbd_get_buffer(ub->ub_xfer);
+		SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_free, ub, ub_link);
+	}
+
 	tp = tty_alloc();
 	tp->t_oproc = ucomstart;
 	tp->t_param = ucomparam;
@@ -301,6 +354,26 @@ ucom_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
+	return;
+
+fail_2:
+	for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
+	    ub++) {
+		if (ub->ub_xfer)
+			usbd_destroy_xfer(ub->ub_xfer);
+	}
+	for (ub = &sc->sc_obuff[0]; ub != &sc->sc_obuff[UCOM_OUT_BUFFS];
+	    ub++) {
+		if (ub->ub_xfer)
+			usbd_destroy_xfer(ub->ub_xfer);
+	}
+
+fail_1:
+	usbd_close_pipe(sc->sc_bulkin_pipe);
+
+fail_0:
+	aprint_error_dev(self, "attach failed, error=%d\n", error);
+
 	return;
 }
 
@@ -364,12 +437,12 @@ ucom_detach(device_t self, int flags)
 
 	for (i = 0; i < UCOM_IN_BUFFS; i++) {
 		if (sc->sc_ibuff[i].ub_xfer != NULL)
-			usbd_free_xfer(sc->sc_ibuff[i].ub_xfer);
+			usbd_destroy_xfer(sc->sc_ibuff[i].ub_xfer);
 	}
 
 	for (i = 0; i < UCOM_OUT_BUFFS; i++) {
 		if (sc->sc_obuff[i].ub_xfer != NULL)
-			usbd_free_xfer(sc->sc_obuff[i].ub_xfer);
+			usbd_destroy_xfer(sc->sc_obuff[i].ub_xfer);
 	}
 
 	/* Detach the random source */
@@ -425,11 +498,9 @@ int
 ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	int unit = UCOMUNIT(dev);
-	usbd_status err;
 	struct ucom_softc *sc = device_lookup_private(&ucom_cd, unit);
 	struct ucom_buffer *ub;
 	struct tty *tp;
-	int i;
 	int error;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
@@ -529,77 +600,17 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ucom_dtr(sc, 1);
 		ucom_rts(sc, 1);
 
-		DPRINTF("open pipes in=%d out=%d", sc->sc_bulkin_no,
-		    sc->sc_bulkout_no, 0, 0);
-
-		/* Open the bulk pipes */
-		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_no,
-				     USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
-		if (err) {
-			DPRINTF("open bulk in error (addr %d), err=%d",
-			    sc->sc_bulkin_no, err, 0, 0);
-			error = EIO;
-			goto fail_0;
-		}
-		err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_no,
-				     USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-		if (err) {
-			DPRINTF("open bulk out error (addr %d), err=%d",
-			    sc->sc_bulkout_no, err, 0, 0);
-			error = EIO;
-			goto fail_1;
-		}
-
 		sc->sc_rx_unblock = 0;
 		sc->sc_rx_stopped = 0;
 		sc->sc_tx_stopped = 0;
 
-		memset(sc->sc_ibuff, 0, sizeof(sc->sc_ibuff));
-		memset(sc->sc_obuff, 0, sizeof(sc->sc_obuff));
-
-		SIMPLEQ_INIT(&sc->sc_ibuff_empty);
-		SIMPLEQ_INIT(&sc->sc_ibuff_full);
-		SIMPLEQ_INIT(&sc->sc_obuff_free);
-		SIMPLEQ_INIT(&sc->sc_obuff_full);
-
-		/* Allocate input buffers */
 		for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS];
 		    ub++) {
-			ub->ub_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (ub->ub_xfer == NULL) {
-				error = ENOMEM;
-				goto fail_2;
-			}
-			ub->ub_data = usbd_alloc_buffer(ub->ub_xfer,
-			    sc->sc_ibufsizepad);
-			if (ub->ub_data == NULL) {
-				error = ENOMEM;
-				goto fail_2;
-			}
-
 			if (ucomsubmitread(sc, ub) != USBD_NORMAL_COMPLETION) {
 				error = EIO;
 				goto fail_2;
 			}
 		}
-
-		for (ub = &sc->sc_obuff[0]; ub != &sc->sc_obuff[UCOM_OUT_BUFFS];
-		    ub++) {
-			ub->ub_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (ub->ub_xfer == NULL) {
-				error = ENOMEM;
-				goto fail_2;
-			}
-			ub->ub_data = usbd_alloc_buffer(ub->ub_xfer,
-			    sc->sc_obufsize);
-			if (ub->ub_data == NULL) {
-				error = ENOMEM;
-				goto fail_2;
-			}
-
-			SIMPLEQ_INSERT_TAIL(&sc->sc_obuff_free, ub, ub_link);
-		}
-
 	}
 	sc->sc_opening = 0;
 	cv_signal(&sc->sc_opencv);
@@ -617,28 +628,8 @@ ucomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 fail_2:
 	usbd_abort_pipe(sc->sc_bulkin_pipe);
-	for (i = 0; i < UCOM_IN_BUFFS; i++) {
-		if (sc->sc_ibuff[i].ub_xfer != NULL) {
-			usbd_free_xfer(sc->sc_ibuff[i].ub_xfer);
-			sc->sc_ibuff[i].ub_xfer = NULL;
-			sc->sc_ibuff[i].ub_data = NULL;
-		}
-	}
 	usbd_abort_pipe(sc->sc_bulkout_pipe);
-	for (i = 0; i < UCOM_OUT_BUFFS; i++) {
-		if (sc->sc_obuff[i].ub_xfer != NULL) {
-			usbd_free_xfer(sc->sc_obuff[i].ub_xfer);
-			sc->sc_obuff[i].ub_xfer = NULL;
-			sc->sc_obuff[i].ub_data = NULL;
-		}
-	}
 
-	usbd_close_pipe(sc->sc_bulkout_pipe);
-	sc->sc_bulkout_pipe = NULL;
-fail_1:
-	usbd_close_pipe(sc->sc_bulkin_pipe);
-	sc->sc_bulkin_pipe = NULL;
-fail_0:
 	mutex_enter(sc->sc_lock);
 	sc->sc_opening = 0;
 	cv_signal(&sc->sc_opencv);
@@ -1281,8 +1272,7 @@ ucom_submit_write(struct ucom_softc *sc, struct ucom_buffer *ub)
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	usbd_setup_xfer(ub->ub_xfer, sc->sc_bulkout_pipe,
-	    (void *)sc, ub->ub_data, ub->ub_len,
+	usbd_setup_xfer(ub->ub_xfer, sc, ub->ub_data, ub->ub_len,
 	    0, USBD_NO_TIMEOUT, ucomwritecb);
 
 	ucom_write_status(sc, ub, usbd_transfer(ub->ub_xfer));
@@ -1368,8 +1358,7 @@ ucomsubmitread(struct ucom_softc *sc, struct ucom_buffer *ub)
 {
 	usbd_status err;
 
-	usbd_setup_xfer(ub->ub_xfer, sc->sc_bulkin_pipe,
-	    (void *)sc, ub->ub_data, sc->sc_ibufsize,
+	usbd_setup_xfer(ub->ub_xfer, sc, ub->ub_data, sc->sc_ibufsize,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ucomreadcb);
 
 	if ((err = usbd_transfer(ub->ub_xfer)) != USBD_IN_PROGRESS) {
@@ -1463,11 +1452,10 @@ ucomreadcb(struct usbd_xfer *xfer, void *p, usbd_status status)
 static void
 ucom_cleanup(struct ucom_softc *sc)
 {
-	struct ucom_buffer *ub;
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("closing pipes", 0, 0, 0, 0);
+	DPRINTF("aborting pipes", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
@@ -1477,7 +1465,6 @@ ucom_cleanup(struct ucom_softc *sc)
 		sc->sc_bulkin_pipe = NULL;
 		mutex_exit(sc->sc_lock);
 		usbd_abort_pipe(bulkin_pipe);
-		usbd_close_pipe(bulkin_pipe);
 		mutex_enter(sc->sc_lock);
 	}
 	if (sc->sc_bulkout_pipe != NULL) {
@@ -1485,22 +1472,7 @@ ucom_cleanup(struct ucom_softc *sc)
 		sc->sc_bulkout_pipe = NULL;
 		mutex_exit(sc->sc_lock);
 		usbd_abort_pipe(bulkout_pipe);
-		usbd_close_pipe(bulkout_pipe);
 		mutex_enter(sc->sc_lock);
-	}
-	for (ub = &sc->sc_ibuff[0]; ub != &sc->sc_ibuff[UCOM_IN_BUFFS]; ub++) {
-		if (ub->ub_xfer != NULL) {
-			usbd_free_xfer(ub->ub_xfer);
-			ub->ub_xfer = NULL;
-			ub->ub_data = NULL;
-		}
-	}
-	for (ub = &sc->sc_obuff[0]; ub != &sc->sc_obuff[UCOM_OUT_BUFFS]; ub++){
-		if (ub->ub_xfer != NULL) {
-			usbd_free_xfer(ub->ub_xfer);
-			ub->ub_xfer = NULL;
-			ub->ub_data = NULL;
-		}
 	}
 }
 

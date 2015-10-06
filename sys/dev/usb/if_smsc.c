@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.22.2.7 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.22.2.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -560,20 +560,6 @@ smsc_init(struct ifnet *ifp)
 	/* Reset the ethernet interface. */
 	smsc_reset(sc);
 
-	/* Init RX ring. */
-	if (smsc_rx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->sc_dev, "rx list init failed\n");
-		splx(s);
-		return EIO;
-	}
-
-	/* Init TX ring. */
-	if (smsc_tx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->sc_dev, "tx list init failed\n");
-		splx(s);
-		return EIO;
-	}
-
 	/* Load the multicast filter. */
 	smsc_setmulti(sc);
 
@@ -599,13 +585,25 @@ smsc_init(struct ifnet *ifp)
 		return EIO;
 	}
 
+	/* Init RX ring. */
+	if (smsc_rx_list_init(sc)) {
+		aprint_error_dev(sc->sc_dev, "rx list init failed\n");
+		splx(s);
+		return EIO;
+	}
+
+	/* Init TX ring. */
+	if (smsc_tx_list_init(sc)) {
+		aprint_error_dev(sc->sc_dev, "tx list init failed\n");
+		splx(s);
+		return EIO;
+	}
+
 	/* Start up the receive pipe. */
 	for (i = 0; i < SMSC_RX_LIST_CNT; i++) {
 		c = &sc->sc_cdata.rx_chain[i];
-		usbd_setup_xfer(c->sc_xfer, sc->sc_ep[SMSC_ENDPT_RX],
-		    c, c->sc_buf, sc->sc_bufsz,
-		    USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, smsc_rxeof);
+		usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, sc->sc_bufsz,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, smsc_rxeof);
 		usbd_transfer(c->sc_xfer);
 	}
 
@@ -733,7 +731,7 @@ smsc_stop(struct ifnet *ifp, int disable)
 			sc->sc_cdata.rx_chain[i].sc_mbuf = NULL;
 		}
 		if (sc->sc_cdata.rx_chain[i].sc_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.rx_chain[i].sc_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.rx_chain[i].sc_xfer);
 			sc->sc_cdata.rx_chain[i].sc_xfer = NULL;
 		}
 	}
@@ -745,7 +743,7 @@ smsc_stop(struct ifnet *ifp, int disable)
 			sc->sc_cdata.tx_chain[i].sc_mbuf = NULL;
 		}
 		if (sc->sc_cdata.tx_chain[i].sc_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.tx_chain[i].sc_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.tx_chain[i].sc_xfer);
 			sc->sc_cdata.tx_chain[i].sc_xfer = NULL;
 		}
 	}
@@ -1416,9 +1414,7 @@ smsc_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
 done:
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, sc->sc_ep[SMSC_ENDPT_RX],
-	    c, c->sc_buf, sc->sc_bufsz,
-	    USBD_SHORT_XFER_OK,
+	usbd_setup_xfer(xfer, c, c->sc_buf, sc->sc_bufsz, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, smsc_rxeof);
 	usbd_transfer(xfer);
 
@@ -1483,15 +1479,12 @@ smsc_tx_list_init(struct smsc_softc *sc)
 		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
-			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->sc_xfer == NULL)
-				return ENOBUFS;
-			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    sc->sc_bufsz);
-			if (c->sc_buf == NULL) {
-				usbd_free_xfer(c->sc_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_ep[SMSC_ENDPT_TX],
+			    sc->sc_bufsz, USBD_FORCE_SHORT_XFER, 0,
+			    &c->sc_xfer);
+			if (error)
+				;
+			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}
 
@@ -1512,15 +1505,11 @@ smsc_rx_list_init(struct smsc_softc *sc)
 		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
-			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->sc_xfer == NULL)
-				return ENOBUFS;
-			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    sc->sc_bufsz);
-			if (c->sc_buf == NULL) {
-				usbd_free_xfer(c->sc_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_ep[SMSC_ENDPT_RX],
+			    sc->sc_bufsz, USBD_SHORT_XFER_OK, 0, &c->sc_xfer);
+			if (error)
+				return error;
+			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}
 
@@ -1577,9 +1566,8 @@ smsc_encap(struct smsc_softc *sc, struct mbuf *m, int idx)
 
 	c->sc_mbuf = m;
 
-	usbd_setup_xfer(c->sc_xfer, sc->sc_ep[SMSC_ENDPT_TX],
-	    c, c->sc_buf, frm_len, USBD_FORCE_SHORT_XFER,
-	    10000, smsc_txeof);
+	usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, frm_len,
+	    USBD_FORCE_SHORT_XFER, 10000, smsc_txeof);
 
 	err = usbd_transfer(c->sc_xfer);
 	/* XXXNH get task to stop interface */

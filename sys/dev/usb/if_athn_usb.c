@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.5 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.6 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.5 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.6 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -293,12 +293,23 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	if (athn_usb_alloc_tx_cmd(usc) != 0)
 		goto fail;
 
+	/* Allocate Tx/Rx buffers. */
+	error = athn_usb_alloc_rx_list(usc);
+	if (error != 0)
+		goto fail;
+	error = athn_usb_alloc_tx_list(usc);
+	if (error != 0)
+		goto fail;
+
 	config_mountroot(self, athn_usb_attachhook);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, usc->usc_udev, sc->sc_dev);
 	return;
 
  fail:
+	/* Free Tx/Rx buffers. */
+	athn_usb_free_tx_list(usc);
+	athn_usb_free_rx_list(usc);
 	athn_usb_free_tx_cmd(usc);
 	athn_usb_close_pipes(usc);
 	usb_rem_task(usc->usc_udev, &usc->usc_task);
@@ -585,20 +596,14 @@ athn_usb_alloc_rx_list(struct athn_usb_softc *usc)
 
 		data->sc = usc;	/* Backpointer for callbacks. */
 
-		data->xfer = usbd_alloc_xfer(usc->usc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(usc->usc_rx_data_pipe,
+		    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 			aprint_error_dev(usc->usc_dev,
 			    "could not allocate xfer\n");
-			error = ENOMEM;
 			break;
 		}
-		data->buf = usbd_alloc_buffer(data->xfer, ATHN_USB_RXBUFSZ);
-		if (data->buf == NULL) {
-			aprint_error_dev(usc->usc_dev,
-			    "could not allocate xfer buffer\n");
-			error = ENOMEM;
-			break;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 	}
 	if (error != 0)
 		athn_usb_free_rx_list(usc);
@@ -618,7 +623,7 @@ athn_usb_free_rx_list(struct athn_usb_softc *usc)
 		CTASSERT(sizeof(xfer) == sizeof(void *));
 		xfer = atomic_swap_ptr(&usc->usc_rx_data[i].xfer, NULL);
 		if (xfer != NULL)
-			usbd_free_xfer(xfer);
+			usbd_destroy_xfer(xfer);
 	}
 }
 
@@ -638,20 +643,15 @@ athn_usb_alloc_tx_list(struct athn_usb_softc *usc)
 
 		data->sc = usc;	/* Backpointer for callbacks. */
 
-		data->xfer = usbd_alloc_xfer(usc->usc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(usc->usc_tx_data_pipe,
+		    ATHN_USB_TXBUFSZ, USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 			aprint_error_dev(usc->usc_dev,
-			    "could not allocate xfer\n");
-			error = ENOMEM;
+			    "could not create xfer on TX pipe\n");
 			break;
 		}
-		data->buf = usbd_alloc_buffer(data->xfer, ATHN_USB_TXBUFSZ);
-		if (data->buf == NULL) {
-			aprint_error_dev(usc->usc_dev,
-			    "could not allocate xfer buffer\n");
-			error = ENOMEM;
-			break;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
+
 		/* Append this Tx buffer to our free list. */
 		TAILQ_INSERT_TAIL(&usc->usc_tx_free_list, data, next);
 	}
@@ -674,7 +674,7 @@ athn_usb_free_tx_list(struct athn_usb_softc *usc)
 		CTASSERT(sizeof(xfer) == sizeof(void *));
 		xfer = atomic_swap_ptr(&usc->usc_tx_data[i].xfer, NULL);
 		if (xfer != NULL)
-			usbd_free_xfer(xfer);
+			usbd_destroy_xfer(xfer);
 	}
 }
 
@@ -687,17 +687,14 @@ athn_usb_alloc_tx_cmd(struct athn_usb_softc *usc)
 
 	data->sc = usc;	/* Backpointer for callbacks. */
 
-	data->xfer = usbd_alloc_xfer(usc->usc_udev);
-	if (data->xfer == NULL) {
-		aprint_error_dev(usc->usc_dev, "could not allocate xfer\n");
-		return ENOMEM;
-	}
-	data->buf = usbd_alloc_buffer(data->xfer, ATHN_USB_TXCMDSZ);
-	if (data->buf == NULL) {
+	int err = usbd_create_xfer(usc->usc_tx_intr_pipe, ATHN_USB_TXCMDSZ,
+	    0, 0, &data->xfer);
+	if (err) {
 		aprint_error_dev(usc->usc_dev,
-		    "could not allocate xfer buffer\n");
-		return ENOMEM;
+		    "could not allocate command xfer\n");
+		return err;
 	}
+
 	return 0;
 }
 
@@ -711,7 +708,7 @@ athn_usb_free_tx_cmd(struct athn_usb_softc *usc)
 	CTASSERT(sizeof(xfer) == sizeof(void *));
 	xfer = atomic_swap_ptr(&usc->usc_tx_cmd.xfer, NULL);
 	if (xfer != NULL)
-		usbd_free_xfer(xfer);
+		usbd_destroy_xfer(xfer);
 }
 
 Static void
@@ -905,7 +902,7 @@ athn_usb_htc_msg(struct athn_usb_softc *usc, uint16_t msg_id, void *buf,
 
 	memcpy(&msg[1], buf, len);
 
-	usbd_setup_xfer(data->xfer, usc->usc_tx_intr_pipe, NULL, data->buf,
+	usbd_setup_xfer(data->xfer, NULL, data->buf,
 	    sizeof(*htc) + sizeof(*msg) + len,
 	    USBD_SHORT_XFER_OK, ATHN_USB_CMD_TIMEOUT, NULL);
 	return usbd_sync_transfer(data->xfer);
@@ -1091,7 +1088,7 @@ athn_usb_wmi_xcmd(struct athn_usb_softc *usc, uint16_t cmd_id, void *ibuf,
 
 	memcpy(&wmi[1], ibuf, ilen);
 
-	usbd_setup_xfer(data->xfer, usc->usc_tx_intr_pipe, usc, data->buf,
+	usbd_setup_xfer(data->xfer, usc, data->buf,
 	    sizeof(*htc) + sizeof(*wmi) + ilen,
 	    USBD_SHORT_XFER_OK, ATHN_USB_CMD_TIMEOUT,
 	    athn_usb_wmieof);
@@ -1822,7 +1819,7 @@ athn_usb_swba(struct athn_usb_softc *usc)
 
 	m_copydata(m, 0, m->m_pkthdr.len, (void *)&bcn[1]);
 
-	usbd_setup_xfer(data->xfer, usc->usc_tx_data_pipe, data, data->buf,
+	usbd_setup_xfer(data->xfer, data, data->buf,
 	    sizeof(*hdr) + sizeof(*htc) + sizeof(*bcn) + m->m_pkthdr.len,
 	    USBD_SHORT_XFER_OK, ATHN_USB_TX_TIMEOUT,
 	    athn_usb_bcneof);
@@ -2209,9 +2206,8 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void * priv,
 
  resubmit:
 	/* Setup a new transfer. */
-	usbd_setup_xfer(xfer, usc->usc_rx_data_pipe, data, data->buf,
-	    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, athn_usb_rxeof);
+	usbd_setup_xfer(xfer, data, data->buf, ATHN_USB_RXBUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, athn_usb_rxeof);
 	(void)usbd_transfer(xfer);
 }
 
@@ -2360,9 +2356,8 @@ athn_usb_tx(struct athn_softc *sc, struct mbuf *m, struct ieee80211_node *ni,
 	xferlen = frm - data->buf;
 
 	s = splnet();
-	usbd_setup_xfer(data->xfer, usc->usc_tx_data_pipe, data, data->buf,
-	    xferlen, USBD_FORCE_SHORT_XFER, ATHN_USB_TX_TIMEOUT,
-	    athn_usb_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, ATHN_USB_TX_TIMEOUT, athn_usb_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS && error != 0)) {
 		splx(s);
@@ -2578,13 +2573,6 @@ athn_usb_init(struct ifnet *ifp)
 	usc->usc_cmdq.cur = usc->usc_cmdq.next = usc->usc_cmdq.queued = 0;
 	mutex_spin_exit(&usc->usc_task_mtx);
 
-	/* Allocate Tx/Rx buffers. */
-	error = athn_usb_alloc_rx_list(usc);
-	if (error != 0)
-		goto fail;
-	error = athn_usb_alloc_tx_list(usc);
-	if (error != 0)
-		goto fail;
 	/* Steal one buffer for beacons. */
 	mutex_enter(&usc->usc_tx_mtx);
 	usc->usc_tx_bcn = TAILQ_FIRST(&usc->usc_tx_free_list);
@@ -2691,7 +2679,7 @@ athn_usb_init(struct ifnet *ifp)
 	for (i = 0; i < ATHN_USB_RX_LIST_COUNT; i++) {
 		data = &usc->usc_rx_data[i];
 
-		usbd_setup_xfer(data->xfer, usc->usc_rx_data_pipe, data, data->buf,
+		usbd_setup_xfer(data->xfer, data, data->buf,
 		    ATHN_USB_RXBUFSZ, USBD_SHORT_XFER_OK,
 		    USBD_NO_TIMEOUT, athn_usb_rxeof);
 		error = usbd_transfer(data->xfer);

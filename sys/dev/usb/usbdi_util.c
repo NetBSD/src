@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.63.2.11 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.63.2.12 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.11 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.63.2.12 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -476,14 +476,13 @@ usbd_get_config(struct usbd_device *dev, uint8_t *conf)
 
 usbd_status
 usbd_bulk_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
-		   uint16_t flags, uint32_t timeout, void *buf,
-		   uint32_t *size)
+    uint16_t flags, uint32_t timeout, void *buf, uint32_t *size)
 {
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout, NULL);
+	usbd_setup_xfer(xfer, 0, buf, *size, flags, timeout, NULL);
 	DPRINTFN(1, "start transfer %d bytes", *size, 0, 0, 0);
 	err = usbd_sync_transfer_sig(xfer);
 
@@ -499,14 +498,13 @@ usbd_bulk_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
 
 usbd_status
 usbd_intr_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
-		   uint16_t flags, uint32_t timeout, void *buf,
-		   uint32_t *size)
+    uint16_t flags, uint32_t timeout, void *buf, uint32_t *size)
 {
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout, NULL);
+	usbd_setup_xfer(xfer, 0, buf, *size, flags, timeout, NULL);
 
 	DPRINTFN(1, "start transfer %d bytes", *size, 0, 0, 0);
 	err = usbd_sync_transfer_sig(xfer);

@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.1.32.4 2015/03/21 11:33:37 skrll Exp $ */
+/* $NetBSD: irmce.c,v 1.1.32.5 2015/10/06 21:32:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.4 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.5 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -203,23 +203,49 @@ irmce_attach(device_t parent, device_t self, void *opaque)
 		aprint_error_dev(self, "bad maxpktsize\n");
 		return;
 	}
+	usbd_status err;
 
-	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
-	sc->sc_bulkout_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkin_xfer == NULL || sc->sc_bulkout_xfer == NULL) {
-		aprint_error_dev(self, "couldn't alloc xfer\n");
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_ep,
+	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
+	if (err) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't open bulk-in pipe: %s\n", usbd_errstr(err));
 		return;
 	}
-	sc->sc_bulkin_buffer = usbd_alloc_buffer(sc->sc_bulkin_xfer,
-	    sc->sc_bulkin_maxpktsize);
-	sc->sc_bulkout_buffer = usbd_alloc_buffer(sc->sc_bulkout_xfer,
-	    sc->sc_bulkout_maxpktsize);
-	if (sc->sc_bulkin_buffer == NULL || sc->sc_bulkout_buffer == NULL) {
-		aprint_error_dev(self, "couldn't alloc xfer buffer\n");
+	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_ep,
+	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
+	if (err) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't open bulk-out pipe: %s\n", usbd_errstr(err));
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
 		return;
 	}
+
+	int error;
+	error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_bulkin_maxpktsize,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	if (error) {
+		goto fail;
+	}
+
+	error = usbd_create_xfer(sc->sc_bulkout_pipe,
+	    sc->sc_bulkout_maxpktsize, USBD_FORCE_SHORT_XFER, 0,
+	    &sc->sc_bulkout_xfer);
+	if (error) {
+		goto fail;
+	}
+	sc->sc_bulkin_buffer = usbd_get_buffer(sc->sc_bulkin_xfer);
+	sc->sc_bulkout_buffer = usbd_get_buffer(sc->sc_bulkout_xfer);
 
 	irmce_rescan(self, NULL, NULL);
+	return;
+
+fail:
+	if (sc->sc_bulkin_xfer)
+		usbd_destroy_xfer(sc->sc_bulkin_xfer);
+	if (sc->sc_bulkout_xfer)
+		usbd_destroy_xfer(sc->sc_bulkout_xfer);
 }
 
 static int
@@ -235,12 +261,12 @@ irmce_detach(device_t self, int flags)
 	}
 
 	if (sc->sc_bulkin_xfer) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
+		usbd_destroy_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_buffer = NULL;
 		sc->sc_bulkin_xfer = NULL;
 	}
 	if (sc->sc_bulkout_xfer) {
-		usbd_free_xfer(sc->sc_bulkout_xfer);
+		usbd_destroy_xfer(sc->sc_bulkout_xfer);
 		sc->sc_bulkout_buffer = NULL;
 		sc->sc_bulkout_xfer = NULL;
 	}
@@ -304,9 +330,9 @@ irmce_reset(struct irmce_softc *sc)
 		*p++ = reset_cmd[n];
 
 	wlen = sizeof(reset_cmd);
-	err = usbd_bulk_transfer(sc->sc_bulkin_xfer,
-	    sc->sc_bulkout_pipe, USBD_FORCE_SHORT_XFER,
-	    USBD_DEFAULT_TIMEOUT, sc->sc_bulkout_buffer, &wlen);
+	err = usbd_bulk_transfer(sc->sc_bulkout_xfer, sc->sc_bulkout_pipe,
+	    USBD_FORCE_SHORT_XFER, USBD_DEFAULT_TIMEOUT,
+	    sc->sc_bulkout_buffer, &wlen);
 	if (err != USBD_NORMAL_COMPLETION) {
 		if (err == USBD_INTERRUPTED)
 			return EINTR;
@@ -323,26 +349,7 @@ static int
 irmce_open(void *priv, int flag, int mode, struct proc *p)
 {
 	struct irmce_softc *sc = priv;
-	usbd_status err;
-
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkin_ep,
-	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
-	if (err) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't open bulk-in pipe: %s\n", usbd_errstr(err));
-		return ENXIO;
-	}
-	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulkout_ep,
-	    USBD_EXCLUSIVE_USE, &sc->sc_bulkout_pipe);
-	if (err) {
-		aprint_error_dev(sc->sc_dev,
-		    "couldn't open bulk-out pipe: %s\n", usbd_errstr(err));
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
-		return ENXIO;
-	}
-
-	err = irmce_reset(sc);
+	int err = irmce_reset(sc);
 	if (err) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't reset device: %s\n", usbd_errstr(err));
