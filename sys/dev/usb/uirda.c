@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.38.6.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uirda.c,v 1.38.6.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.38.6.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,29 +378,21 @@ uirda_open(void *h, int flag, int mode,
 		error = EIO;
 		goto bad2;
 	}
-	sc->sc_rd_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_rd_xfer == NULL) {
-		error = ENOMEM;
+	error = usbd_create_xfer(sc->sc_rd_pipe,
+	    IRDA_MAX_FRAME_SIZE + sc->sc_hdszi, USBD_SHORT_XFER_OK, 0,
+	    &sc->sc_rd_xfer);
+	if (error)
 		goto bad3;
-	}
-	sc->sc_wr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_wr_xfer == NULL) {
-		error = ENOMEM;
+	sc->sc_rd_buf = usbd_get_buffer(sc->sc_rd_xfer);
+
+	/* worst case ST-UIRDA length */
+	error = usbd_create_xfer(sc->sc_wr_pipe,
+	    IRDA_MAX_FRAME_SIZE + UIRDA_OUTPUT_HEADER_SIZE + 2 + 1,
+	    USBD_FORCE_SHORT_XFER, 0, &sc->sc_wr_xfer);
+	if (error)
 		goto bad4;
-	}
-	sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer,
-			    IRDA_MAX_FRAME_SIZE + sc->sc_hdszi);
-	if (sc->sc_rd_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
-	sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer,
-			    IRDA_MAX_FRAME_SIZE + UIRDA_OUTPUT_HEADER_SIZE +
-				2 + 1 /* worst case ST-UIRDA */);
-	if (sc->sc_wr_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
+	sc->sc_wr_buf = usbd_get_buffer(sc->sc_wr_xfer);
+
 	sc->sc_rd_count = 0;
 	sc->sc_rd_err = 0;
 	sc->sc_params.speed = 0;
@@ -413,11 +405,8 @@ uirda_open(void *h, int flag, int mode,
 
 	return 0;
 
-bad5:
-	usbd_free_xfer(sc->sc_wr_xfer);
-	sc->sc_wr_xfer = NULL;
 bad4:
-	usbd_free_xfer(sc->sc_rd_xfer);
+	usbd_destroy_xfer(sc->sc_rd_xfer);
 	sc->sc_rd_xfer = NULL;
 bad3:
 	usbd_close_pipe(sc->sc_wr_pipe);
@@ -448,12 +437,12 @@ uirda_close(void *h, int flag, int mode,
 		sc->sc_wr_pipe = NULL;
 	}
 	if (sc->sc_rd_xfer != NULL) {
-		usbd_free_xfer(sc->sc_rd_xfer);
+		usbd_destroy_xfer(sc->sc_rd_xfer);
 		sc->sc_rd_xfer = NULL;
 		sc->sc_rd_buf = NULL;
 	}
 	if (sc->sc_wr_xfer != NULL) {
-		usbd_free_xfer(sc->sc_wr_xfer);
+		usbd_destroy_xfer(sc->sc_wr_xfer);
 		sc->sc_wr_xfer = NULL;
 		sc->sc_wr_buf = NULL;
 	}
@@ -548,25 +537,24 @@ uirda_write(void *h, struct uio *uio, int flag)
 
 	sc->sc_wr_buf[0] = UIRDA_EB_NO_CHANGE | UIRDA_NO_SPEED;
 	error = uiomove(sc->sc_wr_buf + UIRDA_OUTPUT_HEADER_SIZE, n, uio);
-	if (!error) {
-		DPRINTFN(1, ("uirdawrite: transfer %d bytes\n", n));
+	if (error)
+		goto done;
 
-		n += UIRDA_OUTPUT_HEADER_SIZE;
-		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-			  USBD_FORCE_SHORT_XFER,
-			  UIRDA_WR_TIMEOUT,
-			  sc->sc_wr_buf, &n);
-		DPRINTFN(2, ("uirdawrite: err=%d\n", err));
-		if (err) {
-			if (err == USBD_INTERRUPTED)
-				error = EINTR;
-			else if (err == USBD_TIMEOUT)
-				error = ETIMEDOUT;
-			else
-				error = EIO;
-		}
+	DPRINTFN(1, ("uirdawrite: transfer %d bytes\n", n));
+
+	n += UIRDA_OUTPUT_HEADER_SIZE;
+	err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
+	    USBD_FORCE_SHORT_XFER, UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n);
+	DPRINTFN(2, ("uirdawrite: err=%d\n", err));
+	if (err) {
+		if (err == USBD_INTERRUPTED)
+			error = EINTR;
+		else if (err == USBD_TIMEOUT)
+			error = ETIMEDOUT;
+		else
+			error = EIO;
 	}
-
+done:
 	mutex_exit(&sc->sc_wr_buf_lk);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
@@ -742,7 +730,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		mutex_enter(&sc->sc_wr_buf_lk);
 		if (sc->sc_wr_buf != NULL)
 			usbd_free_buffer(sc->sc_wr_xfer);
-		sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer, p->maxsize+1);
+		sc->sc_wr_buf = usbd_get_buffer(sc->sc_wr_xfer, p->maxsize+1);
 		mutex_exit(&sc->sc_wr_buf_lk);
 		if (sc->sc_wr_buf == NULL)
 			return ENOMEM;
@@ -752,7 +740,7 @@ uirda_set_params(void *h, struct irda_params *p)
 		usbd_abort_pipe(sc->sc_rd_pipe);
 		if (sc->sc_rd_buf != NULL)
 			usbd_free_buffer(sc->sc_rd_xfer);
-		sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer, p->maxsize+1);
+		sc->sc_rd_buf = usbd_get_buffer(sc->sc_rd_xfer, p->maxsize+1);
 		sc->sc_rd_count = 0;
 		if (sc->sc_rd_buf == NULL) {
 			mutex_exit(&sc->sc_rd_buf_lk);
@@ -776,8 +764,8 @@ uirda_set_params(void *h, struct irda_params *p)
 		sc->sc_wr_buf[0] = hdr;
 		n = UIRDA_OUTPUT_HEADER_SIZE;
 		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-			  USBD_FORCE_SHORT_XFER, UIRDA_WR_TIMEOUT,
-			  sc->sc_wr_buf, &n);
+		    USBD_FORCE_SHORT_XFER, UIRDA_WR_TIMEOUT,
+		    sc->sc_wr_buf, &n);
 		if (err) {
 			aprint_error_dev(sc->sc_dev, "set failed, err=%d\n",
 			    err);
@@ -886,10 +874,9 @@ uirda_start_read(struct uirda_softc *sc)
 		usbd_clear_endpoint_stall(sc->sc_rd_pipe);
 	}
 
-	usbd_setup_xfer(sc->sc_rd_xfer, sc->sc_rd_pipe, sc, sc->sc_rd_buf,
-			sc->sc_params.maxsize + sc->sc_hdszi,
-			USBD_SHORT_XFER_OK,
-			USBD_NO_TIMEOUT, uirda_rd_cb);
+	usbd_setup_xfer(sc->sc_rd_xfer, sc, sc->sc_rd_buf,
+	    sc->sc_params.maxsize + sc->sc_hdszi, USBD_SHORT_XFER_OK,
+	    USBD_NO_TIMEOUT, uirda_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		DPRINTF(("uirda_start_read: err=%d\n", err));

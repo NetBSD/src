@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.8 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.9 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.8 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.9 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1467,6 +1467,7 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 	uint32_t uframe_len;	/* bytes per usb frame (TODO: or microframe?) */
 	uint32_t nframes;	/* number of usb frames (TODO: or microframs?) */
 	int i, ret;
+	int error;
 
 	struct uvideo_alternate *alt, *alt_maybe;
 	usbd_status err;
@@ -1476,23 +1477,6 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 		ret = 0;
 		bx = &vs->vs_xfer.bulk;
 
-		bx->bx_xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (bx->bx_xfer == NULL) {
-			DPRINTF(("uvideo: couldn't allocate xfer\n"));
-			return ENOMEM;
-		}
-		DPRINTF(("uvideo: xfer %p\n", bx->bx_xfer));
-
-		bx->bx_buflen = vs->vs_max_payload_size;
-
-		DPRINTF(("uvideo: allocating %u byte buffer\n", bx->bx_buflen));
-		bx->bx_buffer = usbd_alloc_buffer(bx->bx_xfer, bx->bx_buflen);
-
-		if (bx->bx_buffer == NULL) {
-			DPRINTF(("uvideo: couldn't allocate buffer\n"));
-			return ENOMEM;
-		}
-
 		err = usbd_open_pipe(vs->vs_iface, bx->bx_endpt, 0,
 		    &bx->bx_pipe);
 		if (err != USBD_NORMAL_COMPLETION) {
@@ -1501,6 +1485,17 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 			return EIO;
 		}
 		DPRINTF(("uvideo: pipe %p\n", bx->bx_pipe));
+
+		error = usbd_create_xfer(bx->bx_pipe, vs->vs_max_payload_size,
+		    USBD_SHORT_XFER_OK, 0, &bx->bx_xfer);
+		if (error) {
+			DPRINTF(("uvideo: couldn't allocate xfer\n"));
+			return error;
+		}
+		DPRINTF(("uvideo: xfer %p\n", bx->bx_xfer));
+
+		bx->bx_buflen = vs->vs_max_payload_size;
+		bx->bx_buffer = usbd_get_buffer(bx->bx_xfer);
 
 		mutex_enter(&bx->bx_lock);
 		if (bx->bx_running == false) {
@@ -1602,23 +1597,16 @@ uvideo_stream_start_xfer(struct uvideo_stream *vs)
 
 		for (i = 0; i < UVIDEO_NXFERS; i++) {
 			struct uvideo_isoc *isoc = &ix->ix_i[i];
-			isoc->i_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (isoc->i_xfer == NULL) {
-				DPRINTF(("uvideo: failed to alloc xfer: %s"
-				 " (%d)\n",
-				 usbd_errstr(err), err));
-				return ENOMEM;
+			error = usbd_create_xfer(ix->ix_pipe,
+			    nframes * uframe_len, 0, ix->ix_nframes,
+			    &isoc->i_xfer);
+			if (error) {
+				DPRINTF(("uvideo: "
+				    "couldn't allocate xfer (%d)\n", error));
+				return error;
 			}
 
-			isoc->i_buf = usbd_alloc_buffer(isoc->i_xfer,
-					       nframes * uframe_len);
-
-			if (isoc->i_buf == NULL) {
-				DPRINTF(("uvideo: failed to alloc buf: %s"
-				 " (%d)\n",
-				 usbd_errstr(err), err));
-				return ENOMEM;
-			}
+			isoc->i_buf = usbd_get_buffer(isoc->i_xfer);
 		}
 
 		uvideo_stream_recv_isoc_start(vs);
@@ -1662,7 +1650,7 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 		}
 
 		if (bx->bx_xfer) {
-			usbd_free_xfer(bx->bx_xfer);
+			usbd_destroy_xfer(bx->bx_xfer);
 			bx->bx_xfer = NULL;
 		}
 
@@ -1680,8 +1668,7 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 		for (i = 0; i < UVIDEO_NXFERS; i++) {
 			struct uvideo_isoc *isoc = &ix->ix_i[i];
 			if (isoc->i_xfer != NULL) {
-				usbd_free_buffer(isoc->i_xfer);
-				usbd_free_xfer(isoc->i_xfer);
+				usbd_destroy_xfer(isoc->i_xfer);
 				isoc->i_xfer = NULL;
 			}
 
@@ -1740,7 +1727,6 @@ uvideo_stream_recv_isoc_start1(struct uvideo_isoc *isoc)
 		isoc->i_frlengths[i] = ix->ix_uframe_len;
 
 	usbd_setup_isoc_xfer(isoc->i_xfer,
-			     ix->ix_pipe,
 			     isoc,
 			     isoc->i_frlengths,
 			     ix->ix_nframes,
@@ -1852,8 +1838,7 @@ uvideo_stream_recv_bulk_transfer(void *addr)
 	while (bx->bx_running) {
 		len = bx->bx_buflen;
 		err = usbd_bulk_transfer(bx->bx_xfer, bx->bx_pipe,
-		    USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
 		    bx->bx_buffer, &len);
 
 		if (err == USBD_NORMAL_COMPLETION) {

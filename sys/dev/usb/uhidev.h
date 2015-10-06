@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.h,v 1.15.4.6 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: uhidev.h,v 1.15.4.7 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -87,3 +87,5 @@ void uhidev_close(struct uhidev *);
 usbd_status uhidev_set_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_get_report(struct uhidev *, int, void *, int);
 usbd_status uhidev_write(struct uhidev_softc *, void *, int);
+
+#define	UHIDEV_OSIZE	64

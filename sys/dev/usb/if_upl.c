@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.7 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.8 2015/10/06 21:32:15 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.7 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.8 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -434,14 +434,11 @@ upl_rx_list_init(struct upl_softc *sc)
 		if (upl_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->upl_xfer == NULL) {
-			c->upl_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->upl_xfer == NULL)
-				return ENOBUFS;
-			c->upl_buf = usbd_alloc_buffer(c->upl_xfer, UPL_BUFSZ);
-			if (c->upl_buf == NULL) {
-				usbd_free_xfer(c->upl_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_ep[UPL_ENDPT_RX],
+			    UPL_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->upl_xfer);
+			if (error)
+				return error;
+			c->upl_buf = usbd_get_buffer(c->upl_xfer);
 		}
 	}
 
@@ -464,14 +461,11 @@ upl_tx_list_init(struct upl_softc *sc)
 		c->upl_idx = i;
 		c->upl_mbuf = NULL;
 		if (c->upl_xfer == NULL) {
-			c->upl_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->upl_xfer == NULL)
-				return ENOBUFS;
-			c->upl_buf = usbd_alloc_buffer(c->upl_xfer, UPL_BUFSZ);
-			if (c->upl_buf == NULL) {
-				usbd_free_xfer(c->upl_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_ep[UPL_ENDPT_TX],
+			    UPL_BUFSZ, 0, 0, &c->upl_xfer);
+			if (error)
+				return error;
+			c->upl_buf = usbd_get_buffer(c->upl_xfer);
 		}
 	}
 
@@ -553,9 +547,8 @@ upl_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
  done:
 #if 1
 	/* Setup new transfer. */
-	usbd_setup_xfer(c->upl_xfer, sc->sc_ep[UPL_ENDPT_RX],
-	    c, c->upl_buf, UPL_BUFSZ, USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, upl_rxeof);
+	usbd_setup_xfer(c->upl_xfer, c, c->upl_buf, UPL_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, upl_rxeof);
 	usbd_transfer(c->upl_xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", device_xname(sc->sc_dev),
@@ -633,9 +626,8 @@ upl_send(struct upl_softc *sc, struct mbuf *m, int idx)
 	DPRINTFN(10,("%s: %s: total_len=%d\n",
 		     device_xname(sc->sc_dev), __func__, total_len));
 
-	usbd_setup_xfer(c->upl_xfer, sc->sc_ep[UPL_ENDPT_TX],
-	    c, c->upl_buf, total_len, 0, USBD_DEFAULT_TIMEOUT,
-	    upl_txeof);
+	usbd_setup_xfer(c->upl_xfer, c, c->upl_buf, total_len, 0,
+	    USBD_DEFAULT_TIMEOUT, upl_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->upl_xfer);
@@ -707,25 +699,33 @@ upl_init(void *xsc)
 
 	s = splnet();
 
+	if (sc->sc_ep[UPL_ENDPT_RX] == NULL) {
+		if (upl_openpipes(sc)) {
+			splx(s);
+			return;
+		}
+	}
 	/* Init TX ring. */
-	if (upl_tx_list_init(sc) == ENOBUFS) {
+	if (upl_tx_list_init(sc)) {
 		printf("%s: tx list init failed\n", device_xname(sc->sc_dev));
 		splx(s);
 		return;
 	}
 
 	/* Init RX ring. */
-	if (upl_rx_list_init(sc) == ENOBUFS) {
+	if (upl_rx_list_init(sc)) {
 		printf("%s: rx list init failed\n", device_xname(sc->sc_dev));
 		splx(s);
 		return;
 	}
 
-	if (sc->sc_ep[UPL_ENDPT_RX] == NULL) {
-		if (upl_openpipes(sc)) {
-			splx(s);
-			return;
-		}
+	/* Start up the receive pipe. */
+	for (int i = 0; i < UPL_RX_LIST_CNT; i++) {
+		struct upl_chain *c = &sc->sc_cdata.upl_rx_chain[i];
+		usbd_setup_xfer(c->upl_xfer, c, c->upl_buf, UPL_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
+		    upl_rxeof);
+		usbd_transfer(c->upl_xfer);
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -737,9 +737,7 @@ upl_init(void *xsc)
 Static int
 upl_openpipes(struct upl_softc *sc)
 {
-	struct upl_chain	*c;
 	usbd_status		err;
-	int			i;
 
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_ed[UPL_ENDPT_RX],
@@ -765,19 +763,6 @@ upl_openpipes(struct upl_softc *sc)
 		    device_xname(sc->sc_dev), usbd_errstr(err));
 		return EIO;
 	}
-
-
-#if 1
-	/* Start up the receive pipe. */
-	for (i = 0; i < UPL_RX_LIST_CNT; i++) {
-		c = &sc->sc_cdata.upl_rx_chain[i];
-		usbd_setup_xfer(c->upl_xfer, sc->sc_ep[UPL_ENDPT_RX],
-		    c, c->upl_buf, UPL_BUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-		    upl_rxeof);
-		usbd_transfer(c->upl_xfer);
-	}
-#endif
 
 	return 0;
 }
@@ -971,7 +956,7 @@ upl_stop(struct upl_softc *sc)
 			sc->sc_cdata.upl_rx_chain[i].upl_mbuf = NULL;
 		}
 		if (sc->sc_cdata.upl_rx_chain[i].upl_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.upl_rx_chain[i].upl_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.upl_rx_chain[i].upl_xfer);
 			sc->sc_cdata.upl_rx_chain[i].upl_xfer = NULL;
 		}
 	}
@@ -983,7 +968,7 @@ upl_stop(struct upl_softc *sc)
 			sc->sc_cdata.upl_tx_chain[i].upl_mbuf = NULL;
 		}
 		if (sc->sc_cdata.upl_tx_chain[i].upl_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.upl_tx_chain[i].upl_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.upl_tx_chain[i].upl_xfer);
 			sc->sc_cdata.upl_tx_chain[i].upl_xfer = NULL;
 		}
 	}

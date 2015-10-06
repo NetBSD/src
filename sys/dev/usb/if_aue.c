@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.8 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.9 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.8 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.9 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1011,12 +1011,12 @@ aue_rx_list_init(struct aue_softc *sc)
 		if (aue_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->aue_xfer == NULL) {
-			c->aue_xfer = usbd_alloc_xfer(sc->aue_udev);
-			if (c->aue_xfer == NULL)
-				return ENOBUFS;
-			c->aue_buf = usbd_alloc_buffer(c->aue_xfer, AUE_BUFSZ);
-			if (c->aue_buf == NULL)
-				return ENOBUFS; /* XXX free xfer */
+			int err = usbd_create_xfer(sc->aue_ep[AUE_ENDPT_RX],
+			    AUE_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->aue_xfer);
+			if (err) {
+				return err;
+			}
+			c->aue_buf = usbd_get_buffer(c->aue_xfer);
 		}
 	}
 
@@ -1039,12 +1039,12 @@ aue_tx_list_init(struct aue_softc *sc)
 		c->aue_idx = i;
 		c->aue_mbuf = NULL;
 		if (c->aue_xfer == NULL) {
-			c->aue_xfer = usbd_alloc_xfer(sc->aue_udev);
-			if (c->aue_xfer == NULL)
-				return ENOBUFS;
-			c->aue_buf = usbd_alloc_buffer(c->aue_xfer, AUE_BUFSZ);
-			if (c->aue_buf == NULL)
-				return ENOBUFS;
+			int err = usbd_create_xfer(sc->aue_ep[AUE_ENDPT_TX],
+			    AUE_BUFSZ, USBD_FORCE_SHORT_XFER, 0, &c->aue_xfer);
+			if (err) {
+				return err;
+			}
+			c->aue_buf = usbd_get_buffer(c->aue_xfer);
 		}
 	}
 
@@ -1179,10 +1179,8 @@ aue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
  done:
 
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, sc->aue_ep[AUE_ENDPT_RX],
-	    c, c->aue_buf, AUE_BUFSZ,
-	    USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, aue_rxeof);
+	usbd_setup_xfer(xfer, c, c->aue_buf, AUE_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, aue_rxeof);
 	usbd_transfer(xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", device_xname(sc->aue_dev),
@@ -1322,9 +1320,8 @@ aue_send(struct aue_softc *sc, struct mbuf *m, int idx)
 	c->aue_buf[1] = (uint8_t)(m->m_pkthdr.len >> 8);
 	total_len = m->m_pkthdr.len + 2;
 
-	usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_TX],
-	    c, c->aue_buf, total_len, USBD_FORCE_SHORT_XFER,
-	    AUE_TX_TIMEOUT, aue_txeof);
+	usbd_setup_xfer(c->aue_xfer, c, c->aue_buf, total_len,
+	    USBD_FORCE_SHORT_XFER, AUE_TX_TIMEOUT, aue_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->aue_xfer);
@@ -1421,18 +1418,36 @@ aue_init(void *xsc)
 	else
 		AUE_CLRBIT(sc, AUE_CTL2, AUE_CTL2_RX_PROMISC);
 
+	if (sc->aue_ep[AUE_ENDPT_RX] == NULL) {
+		if (aue_openpipes(sc)) {
+			splx(s);
+			return;
+		}
+	}
 	/* Init TX ring. */
-	if (aue_tx_list_init(sc) == ENOBUFS) {
+	if (aue_tx_list_init(sc)) {
 		aprint_error_dev(sc->aue_dev, "tx list init failed\n");
 		splx(s);
 		return;
 	}
 
 	/* Init RX ring. */
-	if (aue_rx_list_init(sc) == ENOBUFS) {
+	if (aue_rx_list_init(sc)) {
 		aprint_error_dev(sc->aue_dev, "rx list init failed\n");
 		splx(s);
 		return;
+	}
+
+	/* Start up the receive pipe. */
+	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
+		struct aue_chain *c = &sc->aue_cdata.aue_rx_chain[i];
+
+		usbd_setup_xfer(c->aue_xfer, c, c->aue_buf, AUE_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, aue_rxeof);
+		(void)usbd_transfer(c->aue_xfer); /* XXX */
+		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->aue_dev),
+			    __func__));
+
 	}
 
 	/* Load the multicast filter. */
@@ -1445,13 +1460,6 @@ aue_init(void *xsc)
 
 	mii_mediachg(mii);
 
-	if (sc->aue_ep[AUE_ENDPT_RX] == NULL) {
-		if (aue_openpipes(sc)) {
-			splx(s);
-			return;
-		}
-	}
-
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
@@ -1463,9 +1471,7 @@ aue_init(void *xsc)
 Static int
 aue_openpipes(struct aue_softc *sc)
 {
-	struct aue_chain	*c;
 	usbd_status		err;
-	int i;
 
 	/* Open RX and TX pipes. */
 	err = usbd_open_pipe(sc->aue_iface, sc->aue_ed[AUE_ENDPT_RX],
@@ -1492,18 +1498,6 @@ aue_openpipes(struct aue_softc *sc)
 		return EIO;
 	}
 
-	/* Start up the receive pipe. */
-	for (i = 0; i < AUE_RX_LIST_CNT; i++) {
-		c = &sc->aue_cdata.aue_rx_chain[i];
-		usbd_setup_xfer(c->aue_xfer, sc->aue_ep[AUE_ENDPT_RX],
-		    c, c->aue_buf, AUE_BUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-		    aue_rxeof);
-		(void)usbd_transfer(c->aue_xfer); /* XXX */
-		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->aue_dev),
-			    __func__));
-
-	}
 	return 0;
 }
 
@@ -1699,7 +1693,7 @@ aue_stop(struct aue_softc *sc)
 			sc->aue_cdata.aue_rx_chain[i].aue_mbuf = NULL;
 		}
 		if (sc->aue_cdata.aue_rx_chain[i].aue_xfer != NULL) {
-			usbd_free_xfer(sc->aue_cdata.aue_rx_chain[i].aue_xfer);
+			usbd_destroy_xfer(sc->aue_cdata.aue_rx_chain[i].aue_xfer);
 			sc->aue_cdata.aue_rx_chain[i].aue_xfer = NULL;
 		}
 	}
@@ -1711,7 +1705,7 @@ aue_stop(struct aue_softc *sc)
 			sc->aue_cdata.aue_tx_chain[i].aue_mbuf = NULL;
 		}
 		if (sc->aue_cdata.aue_tx_chain[i].aue_xfer != NULL) {
-			usbd_free_xfer(sc->aue_cdata.aue_tx_chain[i].aue_xfer);
+			usbd_destroy_xfer(sc->aue_cdata.aue_tx_chain[i].aue_xfer);
 			sc->aue_cdata.aue_tx_chain[i].aue_xfer = NULL;
 		}
 	}

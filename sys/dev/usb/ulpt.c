@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -482,16 +482,11 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 		error = EIO;
 		goto err0;
 	}
-	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_out_xfer == NULL) {
-		error = ENOMEM;
-		goto err1;
-	}
-	sc->sc_out_buf = usbd_alloc_buffer(sc->sc_out_xfer, ULPT_BSIZE);
-	if (sc->sc_out_buf == NULL) {
-		error = ENOMEM;
+	error = usbd_create_xfer(sc->sc_out_pipe, ULPT_BSIZE, 0, 0,
+	    &sc->sc_out_xfer);
+	if (error)
 		goto err2;
-	}
+	sc->sc_out_buf = usbd_get_buffer(sc->sc_out_xfer);
 
 	if (ulptusein && sc->sc_in != -1) {
 		DPRINTFN(2, ("ulpt_open: opening input pipe %d\n", sc->sc_in));
@@ -500,17 +495,11 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 			error = EIO;
 			goto err2;
 		}
-		sc->sc_in_xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (sc->sc_in_xfer == NULL) {
-			error = ENOMEM;
+		error = usbd_create_xfer(sc->sc_in_pipe, ULPT_BSIZE,
+		    USBD_SHORT_XFER_OK, 0, &sc->sc_in_xfer);
+		if (error)
 			goto err3;
-		}
-		sc->sc_in_buf = usbd_alloc_buffer(sc->sc_in_xfer, ULPT_BSIZE);
-		if (sc->sc_in_buf == NULL) {
-			error = ENOMEM;
-			goto err4;
-		}
-
+		sc->sc_in_buf = usbd_get_buffer(sc->sc_in_xfer);
 		/* If it's not opened for read then set up a reader. */
 		if (!(flag & FREAD)) {
 			DPRINTFN(2, ("ulpt_open: start read callout\n"));
@@ -523,16 +512,13 @@ ulptopen(dev_t dev, int flag, int mode, struct lwp *l)
 	sc->sc_state = ULPT_OPEN;
 	goto done;
 
- err4:
-	usbd_free_xfer(sc->sc_in_xfer);
-	sc->sc_in_xfer = NULL;
  err3:
 	usbd_close_pipe(sc->sc_in_pipe);
 	sc->sc_in_pipe = NULL;
  err2:
-	usbd_free_xfer(sc->sc_out_xfer);
+	usbd_destroy_xfer(sc->sc_out_xfer);
 	sc->sc_out_xfer = NULL;
- err1:
+
 	usbd_close_pipe(sc->sc_out_pipe);
 	sc->sc_out_pipe = NULL;
  err0:
@@ -593,7 +579,7 @@ ulptclose(dev_t dev, int flag, int mode,
 		sc->sc_out_pipe = NULL;
 	}
 	if (sc->sc_out_xfer != NULL) {
-		usbd_free_xfer(sc->sc_out_xfer);
+		usbd_destroy_xfer(sc->sc_out_xfer);
 		sc->sc_out_xfer = NULL;
 	}
 
@@ -603,7 +589,7 @@ ulptclose(dev_t dev, int flag, int mode,
 		sc->sc_in_pipe = NULL;
 	}
 	if (sc->sc_in_xfer != NULL) {
-		usbd_free_xfer(sc->sc_in_xfer);
+		usbd_destroy_xfer(sc->sc_in_xfer);
 		sc->sc_in_xfer = NULL;
 	}
 
@@ -632,7 +618,7 @@ ulpt_do_write(struct ulpt_softc *sc, struct uio *uio, int flags)
 			break;
 		DPRINTFN(4, ("ulptwrite: transfer %d bytes\n", n));
 		err = usbd_bulk_transfer(xfer, sc->sc_out_pipe, 0,
-			  USBD_NO_TIMEOUT, bufp, &n);
+		    USBD_NO_TIMEOUT, bufp, &n);
 		if (err) {
 			DPRINTFN(3, ("ulptwrite: error=%d\n", err));
 			error = EIO;
@@ -721,7 +707,7 @@ ulpt_do_read(struct ulpt_softc *sc, struct uio *uio, int flags)
 		DPRINTFN(4, ("ulptread: transfer %d bytes, nonblocking=%d timeout=%d\n",
 			     n, nonblocking, timeout));
 		err = usbd_bulk_transfer(xfer, sc->sc_in_pipe,
-			  USBD_SHORT_XFER_OK, timeout, bufp, &n);
+		    USBD_SHORT_XFER_OK, timeout, bufp, &n);
 
 		DPRINTFN(4, ("ulptread: transfer complete nreq %d n %d nread %d err %d\n",
 			     nreq, n, nread, err));
@@ -883,9 +869,8 @@ ulpt_tick(void *xsc)
 	if (sc == NULL || sc->sc_dying)
 		return;
 
-	usbd_setup_xfer(sc->sc_in_xfer, sc->sc_in_pipe, sc, sc->sc_in_buf,
-			ULPT_BSIZE, USBD_SHORT_XFER_OK,
-			ULPT_READ_TIMO, ulpt_read_cb);
+	usbd_setup_xfer(sc->sc_in_xfer, sc, sc->sc_in_buf, ULPT_BSIZE,
+	    USBD_SHORT_XFER_OK, ULPT_READ_TIMO, ulpt_read_cb);
 	err = usbd_transfer(sc->sc_in_xfer);
 	DPRINTFN(3, ("ulpt_tick: sc=%p err=%d\n", sc, err));
 }

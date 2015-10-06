@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.38.14.5 2015/06/06 14:40:13 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.38.14.6 2015/10/06 21:32:15 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.5 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.6 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -376,9 +376,8 @@ cdce_encap(struct cdce_softc *sc, struct mbuf *m, int idx)
 	}
 	c->cdce_mbuf = m;
 
-	usbd_setup_xfer(c->cdce_xfer, sc->cdce_bulkout_pipe, c, c->cdce_buf,
-	    m->m_pkthdr.len + extra, USBD_FORCE_SHORT_XFER,
-	    10000, cdce_txeof);
+	usbd_setup_xfer(c->cdce_xfer, c, c->cdce_buf, m->m_pkthdr.len + extra,
+	    USBD_FORCE_SHORT_XFER, 10000, cdce_txeof);
 	err = usbd_transfer(c->cdce_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		cdce_stop(sc);
@@ -429,7 +428,7 @@ cdce_stop(struct cdce_softc *sc)
 			sc->cdce_cdata.cdce_rx_chain[i].cdce_mbuf = NULL;
 		}
 		if (sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer != NULL) {
-			usbd_free_xfer
+			usbd_destroy_xfer
 			    (sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer);
 			sc->cdce_cdata.cdce_rx_chain[i].cdce_xfer = NULL;
 		}
@@ -441,7 +440,7 @@ cdce_stop(struct cdce_softc *sc)
 			sc->cdce_cdata.cdce_tx_chain[i].cdce_mbuf = NULL;
 		}
 		if (sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer != NULL) {
-			usbd_free_xfer(
+			usbd_destroy_xfer(
 				sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer);
 			sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer = NULL;
 		}
@@ -538,18 +537,6 @@ cdce_init(void *xsc)
 
 	s = splnet();
 
-	if (cdce_tx_list_init(sc) == ENOBUFS) {
-		printf("%s: tx list init failed\n", device_xname(sc->cdce_dev));
-		splx(s);
-		return;
-	}
-
-	if (cdce_rx_list_init(sc) == ENOBUFS) {
-		printf("%s: rx list init failed\n", device_xname(sc->cdce_dev));
-		splx(s);
-		return;
-	}
-
 	/* Maybe set multicast / broadcast here??? */
 
 	err = usbd_open_pipe(sc->cdce_data_iface, sc->cdce_bulkin_no,
@@ -570,11 +557,23 @@ cdce_init(void *xsc)
 		return;
 	}
 
+	if (cdce_tx_list_init(sc)) {
+		printf("%s: tx list init failed\n", device_xname(sc->cdce_dev));
+		splx(s);
+		return;
+	}
+
+	if (cdce_rx_list_init(sc)) {
+		printf("%s: rx list init failed\n", device_xname(sc->cdce_dev));
+		splx(s);
+		return;
+	}
+
 	for (i = 0; i < CDCE_RX_LIST_CNT; i++) {
 		c = &sc->cdce_cdata.cdce_rx_chain[i];
-		usbd_setup_xfer(c->cdce_xfer, sc->cdce_bulkin_pipe, c,
-		    c->cdce_buf, CDCE_BUFSZ, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, cdce_rxeof);
+
+		usbd_setup_xfer(c->cdce_xfer, c, c->cdce_buf, CDCE_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, cdce_rxeof);
 		usbd_transfer(c->cdce_xfer);
 	}
 
@@ -628,13 +627,11 @@ cdce_rx_list_init(struct cdce_softc *sc)
 		if (cdce_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->cdce_xfer == NULL) {
-			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev);
-			if (c->cdce_xfer == NULL)
-				return ENOBUFS;
-			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer,
-			    CDCE_BUFSZ);
-			if (c->cdce_buf == NULL)
-				return ENOBUFS;
+			int err = usbd_create_xfer(sc->cdce_bulkin_pipe,
+			    CDCE_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->cdce_xfer);
+			if (err)
+				return err;
+			c->cdce_buf = usbd_get_buffer(c->cdce_xfer);
 		}
 	}
 
@@ -655,12 +652,12 @@ cdce_tx_list_init(struct cdce_softc *sc)
 		c->cdce_idx = i;
 		c->cdce_mbuf = NULL;
 		if (c->cdce_xfer == NULL) {
-			c->cdce_xfer = usbd_alloc_xfer(sc->cdce_udev);
-			if (c->cdce_xfer == NULL)
-				return ENOBUFS;
-			c->cdce_buf = usbd_alloc_buffer(c->cdce_xfer, CDCE_BUFSZ);
-			if (c->cdce_buf == NULL)
-				return ENOBUFS;
+			int err = usbd_create_xfer(sc->cdce_bulkout_pipe,
+			    CDCE_BUFSZ, USBD_FORCE_SHORT_XFER, 0,
+			    &c->cdce_xfer);
+			if (err)
+				return err;
+			c->cdce_buf = usbd_get_buffer(c->cdce_xfer);
 		}
 	}
 
@@ -729,9 +726,8 @@ done1:
 
 done:
 	/* Setup new transfer. */
-	usbd_setup_xfer(c->cdce_xfer, sc->cdce_bulkin_pipe, c, c->cdce_buf,
-	    CDCE_BUFSZ, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-	    cdce_rxeof);
+	usbd_setup_xfer(c->cdce_xfer, c, c->cdce_buf, CDCE_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, cdce_rxeof);
 	usbd_transfer(c->cdce_xfer);
 }
 

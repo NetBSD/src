@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.4 2015/09/28 16:24:19 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.5 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.4 2015/09/28 16:24:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.5 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -598,9 +598,9 @@ uhso_switch_mode(struct usbd_device *udev)
 	if (status != USBD_NORMAL_COMPLETION)
 		return EIO;
 
-	xfer = usbd_alloc_xfer(udev);
-	if (xfer == NULL)
-		return ENOMEM;
+	int error = usbd_create_xfer(pipe, sizeof(cmd), 0, 0, &xfer);
+	if (error)
+		return error;
 
 	USETDW(cmd.dCBWSignature, CBWSIGNATURE);
 	USETDW(cmd.dCBWTag, 1);
@@ -612,14 +612,14 @@ uhso_switch_mode(struct usbd_device *udev)
 	memset(&cmd.CBWCDB, 0, CBWCDBLENGTH);
 	cmd.CBWCDB[0] = SCSI_REZERO_UNIT;
 
-	usbd_setup_xfer(xfer, pipe, NULL, &cmd, sizeof(cmd),
+	usbd_setup_xfer(xfer, NULL, &cmd, sizeof(cmd),
 		USBD_SYNCHRONOUS, USBD_DEFAULT_TIMEOUT, NULL);
 
 	status = usbd_transfer(xfer);
 
 	usbd_abort_pipe(pipe);
 	usbd_close_pipe(pipe);
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 
 	return (status == USBD_NORMAL_COMPLETION ? 0 : EIO);
 }
@@ -877,6 +877,23 @@ uhso_mux_init(struct uhso_port *hp)
 
 	CLR(hp->hp_flags, UHSO_PORT_MUXBUSY | UHSO_PORT_MUXREADY);
 	SET(hp->hp_status, TIOCM_DSR | TIOCM_CAR);
+
+	struct uhso_softc *sc = hp->hp_sc;
+	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->sc_udev);
+	int error;
+
+	error = usbd_create_xfer(pipe0, hp->hp_rsize, 0, 0, &hp->hp_rxfer);
+	if (error)
+		return error;
+
+	hp->hp_rbuf = usbd_get_buffer(hp->hp_rxfer);
+
+	error = usbd_create_xfer(pipe0, hp->hp_wsize, 0, 0, &hp->hp_wxfer);
+	if (error)
+		return error;
+
+	hp->hp_wbuf = usbd_get_buffer(hp->hp_wxfer);
+
 	return 0;
 }
 
@@ -1139,6 +1156,19 @@ uhso_bulk_init(struct uhso_port *hp)
 		return EIO;
 	}
 
+	int error = usbd_create_xfer(hp->hp_rpipe, hp->hp_rsize,
+	    USBD_SHORT_XFER_OK, 0, &hp->hp_rxfer);
+	if (error)
+		return error;
+
+	hp->hp_rbuf = usbd_get_buffer(hp->hp_rxfer);
+
+	error = usbd_create_xfer(hp->hp_wpipe, hp->hp_wsize, 0, 0,
+	    &hp->hp_wxfer);
+	if (error)
+		return error;
+	hp->hp_wbuf = usbd_get_buffer(hp->hp_wxfer);
+
 	return 0;
 }
 
@@ -1182,8 +1212,8 @@ uhso_bulk_write(struct uhso_port *hp)
 
 	DPRINTF(5, "hp=%p, wlen=%zd\n", hp, hp->hp_wlen);
 
-	usbd_setup_xfer(hp->hp_wxfer, hp->hp_wpipe, hp, hp->hp_wbuf,
-	    hp->hp_wlen, 0, USBD_NO_TIMEOUT, hp->hp_write_cb);
+	usbd_setup_xfer(hp->hp_wxfer, hp, hp->hp_wbuf, hp->hp_wlen, 0,
+	     USBD_NO_TIMEOUT, hp->hp_write_cb);
 
 	status = usbd_transfer(hp->hp_wxfer);
 	if (status != USBD_IN_PROGRESS) {
@@ -1203,9 +1233,8 @@ uhso_bulk_read(struct uhso_port *hp)
 
 	DPRINTF(5, "hp=%p\n", hp);
 
-	usbd_setup_xfer(hp->hp_rxfer, hp->hp_rpipe, hp, hp->hp_rbuf,
-	    hp->hp_rsize, USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, hp->hp_read_cb);
+	usbd_setup_xfer(hp->hp_rxfer, hp, hp->hp_rbuf, hp->hp_rsize,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, hp->hp_read_cb);
 
 	status = usbd_transfer(hp->hp_rxfer);
 	if (status != USBD_IN_PROGRESS) {
@@ -1473,7 +1502,6 @@ uhso_tty_open(dev_t dev, int flag, int mode, struct lwp *l)
 Static int
 uhso_tty_init(struct uhso_port *hp)
 {
-	struct uhso_softc *sc = hp->hp_sc;
 	struct tty *tp = hp->hp_tp;
 	struct termios t;
 	int error;
@@ -1508,22 +1536,6 @@ uhso_tty_init(struct uhso_port *hp)
 	error = (*hp->hp_init)(hp);
 	if (error != 0)
 		return error;
-
-	hp->hp_rxfer = usbd_alloc_xfer(sc->sc_udev);
-	if (hp->hp_rxfer == NULL)
-		return ENOMEM;
-
-	hp->hp_rbuf = usbd_alloc_buffer(hp->hp_rxfer, hp->hp_rsize);
-	if (hp->hp_rbuf == NULL)
-		return ENOMEM;
-
-	hp->hp_wxfer = usbd_alloc_xfer(sc->sc_udev);
-	if (hp->hp_wxfer == NULL)
-		return ENOMEM;
-
-	hp->hp_wbuf = usbd_alloc_buffer(hp->hp_wxfer, hp->hp_wsize);
-	if (hp->hp_wbuf == NULL)
-		return ENOMEM;
 
 	/*
 	 * Turn on DTR.  We must always do this, even if carrier is not
@@ -1581,13 +1593,13 @@ uhso_tty_clean(struct uhso_port *hp)
 	(*hp->hp_clean)(hp);
 
 	if (hp->hp_rxfer != NULL) {
-		usbd_free_xfer(hp->hp_rxfer);
+		usbd_destroy_xfer(hp->hp_rxfer);
 		hp->hp_rxfer = NULL;
 		hp->hp_rbuf = NULL;
 	}
 
 	if (hp->hp_wxfer != NULL) {
-		usbd_free_xfer(hp->hp_wxfer);
+		usbd_destroy_xfer(hp->hp_wxfer);
 		hp->hp_wxfer = NULL;
 		hp->hp_wbuf = NULL;
 	}
@@ -2253,22 +2265,6 @@ uhso_ifnet_init(struct uhso_port *hp)
 	if (error != 0)
 		return error;
 
-	hp->hp_rxfer = usbd_alloc_xfer(sc->sc_udev);
-	if (hp->hp_rxfer == NULL)
-		return ENOMEM;
-
-	hp->hp_rbuf = usbd_alloc_buffer(hp->hp_rxfer, hp->hp_rsize);
-	if (hp->hp_rbuf == NULL)
-		return ENOMEM;
-
-	hp->hp_wxfer = usbd_alloc_xfer(sc->sc_udev);
-	if (hp->hp_wxfer == NULL)
-		return ENOMEM;
-
-	hp->hp_wbuf = usbd_alloc_buffer(hp->hp_wxfer, hp->hp_wsize);
-	if (hp->hp_wbuf == NULL)
-		return ENOMEM;
-
 	error = (*hp->hp_read)(hp);
 	if (error != 0)
 		return error;
@@ -2285,13 +2281,13 @@ uhso_ifnet_clean(struct uhso_port *hp)
 	(*hp->hp_clean)(hp);
 
 	if (hp->hp_rxfer != NULL) {
-		usbd_free_xfer(hp->hp_rxfer);
+		usbd_destroy_xfer(hp->hp_rxfer);
 		hp->hp_rxfer = NULL;
 		hp->hp_rbuf = NULL;
 	}
 
 	if (hp->hp_wxfer != NULL) {
-		usbd_free_xfer(hp->hp_wxfer);
+		usbd_destroy_xfer(hp->hp_wxfer);
 		hp->hp_wxfer = NULL;
 		hp->hp_wbuf = NULL;
 	}

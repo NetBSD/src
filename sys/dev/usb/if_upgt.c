@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.6 2015/06/26 15:39:11 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.7 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.6 2015/06/26 15:39:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.7 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -399,7 +399,7 @@ upgt_attach_hook(device_t arg)
 	 */
 	struct upgt_data *data_rx = &sc->rx_data;
 
-	usbd_setup_xfer(data_rx->xfer, sc->sc_rx_pipeh, data_rx, data_rx->buf,
+	usbd_setup_xfer(data_rx->xfer, data_rx, data_rx->buf,
 	    MCLBYTES, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, upgt_rx_cb);
 	error = usbd_transfer(data_rx->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
@@ -1660,9 +1660,8 @@ upgt_tx_task(void *arg)
 		DPRINTF(2, "%s: TX start data sending\n",
 		    device_xname(sc->sc_dev));
 
-		usbd_setup_xfer(data_tx->xfer, sc->sc_tx_pipeh, data_tx,
-		    data_tx->buf, len, USBD_FORCE_SHORT_XFER,
-		    UPGT_USB_TIMEOUT, NULL);
+		usbd_setup_xfer(data_tx->xfer, data_tx, data_tx->buf, len,
+		    USBD_FORCE_SHORT_XFER, UPGT_USB_TIMEOUT, NULL);
 		error = usbd_transfer(data_tx->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
 		    error != USBD_IN_PROGRESS) {
@@ -1802,7 +1801,7 @@ upgt_rx_cb(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	}
 
 skip:	/* setup new transfer */
-	usbd_setup_xfer(xfer, sc->sc_rx_pipeh, data_rx, data_rx->buf, MCLBYTES,
+	usbd_setup_xfer(xfer, data_rx, data_rx->buf, MCLBYTES,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, upgt_rx_cb);
 	(void)usbd_transfer(xfer);
 }
@@ -2250,19 +2249,15 @@ upgt_alloc_tx(struct upgt_softc *sc)
 
 		data_tx->sc = sc;
 
-		data_tx->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data_tx->xfer == NULL) {
+		int err = usbd_create_xfer(sc->sc_tx_pipeh, MCLBYTES, 0, 0,
+		    &data_tx->xfer);
+		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not allocate TX xfer\n");
-			return ENOMEM;
+			return err;
 		}
 
-		data_tx->buf = usbd_alloc_buffer(data_tx->xfer, MCLBYTES);
-		if (data_tx->buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "could not allocate TX buffer\n");
-			return ENOMEM;
-		}
+		data_tx->buf = usbd_get_buffer(data_tx->xfer);
 	}
 
 	return 0;
@@ -2275,18 +2270,14 @@ upgt_alloc_rx(struct upgt_softc *sc)
 
 	data_rx->sc = sc;
 
-	data_rx->xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (data_rx->xfer == NULL) {
+	int err = usbd_create_xfer(sc->sc_rx_pipeh, MCLBYTES,
+	    USBD_SHORT_XFER_OK, 0, &data_rx->xfer);
+	if (err) {
 		aprint_error_dev(sc->sc_dev, "could not allocate RX xfer\n");
-		return ENOMEM;
+		return err;
 	}
 
-	data_rx->buf = usbd_alloc_buffer(data_rx->xfer, MCLBYTES);
-	if (data_rx->buf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate RX buffer\n");
-		return ENOMEM;
-	}
+	data_rx->buf = usbd_get_buffer(data_rx->xfer);
 
 	return 0;
 }
@@ -2298,18 +2289,14 @@ upgt_alloc_cmd(struct upgt_softc *sc)
 
 	data_cmd->sc = sc;
 
-	data_cmd->xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (data_cmd->xfer == NULL) {
+	int err = usbd_create_xfer(sc->sc_tx_pipeh, MCLBYTES,
+	    USBD_FORCE_SHORT_XFER, 0, &data_cmd->xfer);
+	if (err) {
 		aprint_error_dev(sc->sc_dev, "could not allocate RX xfer\n");
-		return ENOMEM;
+		return err;
 	}
 
-	data_cmd->buf = usbd_alloc_buffer(data_cmd->xfer, MCLBYTES);
-	if (data_cmd->buf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate RX buffer\n");
-		return ENOMEM;
-	}
+	data_cmd->buf = usbd_get_buffer(data_cmd->xfer);
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
 
@@ -2325,7 +2312,7 @@ upgt_free_tx(struct upgt_softc *sc)
 		struct upgt_data *data_tx = &sc->tx_data[i];
 
 		if (data_tx->xfer != NULL) {
-			usbd_free_xfer(data_tx->xfer);
+			usbd_destroy_xfer(data_tx->xfer);
 			data_tx->xfer = NULL;
 		}
 
@@ -2339,7 +2326,7 @@ upgt_free_rx(struct upgt_softc *sc)
 	struct upgt_data *data_rx = &sc->rx_data;
 
 	if (data_rx->xfer != NULL) {
-		usbd_free_xfer(data_rx->xfer);
+		usbd_destroy_xfer(data_rx->xfer);
 		data_rx->xfer = NULL;
 	}
 
@@ -2352,7 +2339,7 @@ upgt_free_cmd(struct upgt_softc *sc)
 	struct upgt_data *data_cmd = &sc->cmd_data;
 
 	if (data_cmd->xfer != NULL) {
-		usbd_free_xfer(data_cmd->xfer);
+		usbd_destroy_xfer(data_cmd->xfer);
 		data_cmd->xfer = NULL;
 	}
 
@@ -2365,8 +2352,8 @@ upgt_bulk_xmit(struct upgt_softc *sc, struct upgt_data *data,
 {
         usbd_status status;
 
-	status = usbd_bulk_transfer(data->xfer, pipeh,
-	    flags, UPGT_USB_TIMEOUT, data->buf, size);
+	status = usbd_bulk_transfer(data->xfer, pipeh, flags, UPGT_USB_TIMEOUT,
+	    data->buf, size);
 	if (status != USBD_NORMAL_COMPLETION) {
 		aprint_error_dev(sc->sc_dev, "%s: error %s\n", __func__,
 		    usbd_errstr(status));

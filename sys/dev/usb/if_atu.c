@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.8 2015/03/21 11:33:37 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.9 2015/10/06 21:32:15 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.8 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.9 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -312,7 +312,13 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 
 	s = splnet();
 
-	xfer = usbd_alloc_xfer(sc->atu_udev);
+	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->atu_udev);
+	int error = usbd_create_xfer(pipe0, length, USBD_SHORT_XFER_OK, 0,
+	    &xfer);
+	if (error) {
+		splx(s);
+		return USBD_IOERROR;
+	}
 	usbd_setup_default_xfer(xfer, sc->atu_udev, 0, 500000, &req, data,
 	    length, USBD_SHORT_XFER_OK, 0);
 
@@ -333,7 +339,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 	}
 #endif /* ATU_DEBUG */
 
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 
 	splx(s);
 	return(err);
@@ -1549,13 +1555,11 @@ atu_rx_list_init(struct atu_softc *sc)
 		c->atu_sc = sc;
 		c->atu_idx = i;
 		if (c->atu_xfer == NULL) {
-			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
-			if (c->atu_xfer == NULL)
-				return ENOBUFS;
-			c->atu_buf = usbd_alloc_buffer(c->atu_xfer,
-			    ATU_RX_BUFSZ);
-			if (c->atu_buf == NULL) /* XXX free xfer */
-				return ENOBUFS;
+			int err = usbd_create_xfer(sc->atu_ep[ATU_ENDPT_RX],
+			    ATU_RX_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->atu_xfer);
+			if (err)
+				return err;
+			c->atu_buf = usbd_get_buffer(c->atu_xfer);
 			if (atu_newbuf(sc, c, NULL) == ENOBUFS) /* XXX free? */
 				return(ENOBUFS);
 		}
@@ -1581,14 +1585,12 @@ atu_tx_list_init(struct atu_softc *sc)
 		c->atu_sc = sc;
 		c->atu_idx = i;
 		if (c->atu_xfer == NULL) {
-			c->atu_xfer = usbd_alloc_xfer(sc->atu_udev);
-			if (c->atu_xfer == NULL)
-				return(ENOBUFS);
-			c->atu_mbuf = NULL;
-			c->atu_buf = usbd_alloc_buffer(c->atu_xfer,
-			    ATU_TX_BUFSZ);
-			if (c->atu_buf == NULL)
-				return(ENOBUFS); /* XXX free xfer */
+			int err = usbd_create_xfer(sc->atu_ep[ATU_ENDPT_TX],
+			    ATU_TX_BUFSZ, 0, 0, &c->atu_xfer);
+			if (err) {
+				return err;
+			}
+			c->atu_buf = usbd_get_buffer(c->atu_xfer);
 			SLIST_INSERT_HEAD(&cd->atu_tx_free, c, atu_list);
 		}
 	}
@@ -1610,7 +1612,7 @@ atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 			ch[i].atu_mbuf = NULL;
 		}
 		if (ch[i].atu_xfer != NULL) {
-			usbd_free_xfer(ch[i].atu_xfer);
+			usbd_destroy_xfer(ch[i].atu_xfer);
 			ch[i].atu_xfer = NULL;
 		}
 	}
@@ -1720,9 +1722,8 @@ done1:
 	splx(s);
 done:
 	/* Setup new transfer. */
-	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_RX], c, c->atu_buf,
-	    ATU_RX_BUFSZ, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-		atu_rxeof);
+	usbd_setup_xfer(c->atu_xfer, c, c->atu_buf, ATU_RX_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, atu_rxeof);
 	usbd_transfer(c->atu_xfer);
 }
 
@@ -1827,9 +1828,8 @@ atu_tx_start(struct atu_softc *sc, struct ieee80211_node *ni,
 	c->atu_length = len;
 	c->atu_mbuf = m;
 
-	usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_TX],
-	    c, c->atu_buf, c->atu_length, 0, ATU_TX_TIMEOUT,
-	    atu_txeof);
+	usbd_setup_xfer(c->atu_xfer, c, c->atu_buf, c->atu_length, 0,
+	    ATU_TX_TIMEOUT, atu_txeof);
 
 	/* Let's get this thing into the air! */
 	c->atu_in_xfer = 1;
@@ -1981,14 +1981,6 @@ atu_init(struct ifnet *ifp)
 		return(0);
 	}
 
-	/* Init TX ring */
-	if (atu_tx_list_init(sc))
-		printf("%s: tx list init failed\n", device_xname(sc->atu_dev));
-
-	/* Init RX ring */
-	if (atu_rx_list_init(sc))
-		printf("%s: rx list init failed\n", device_xname(sc->atu_dev));
-
 	/* Load the multicast filter. */
 	/*atu_setmulti(sc); */
 
@@ -2011,13 +2003,20 @@ atu_init(struct ifnet *ifp)
 		return(EIO);
 	}
 
+	/* Init TX ring */
+	if (atu_tx_list_init(sc))
+		printf("%s: tx list init failed\n", device_xname(sc->atu_dev));
+
+	/* Init RX ring */
+	if (atu_rx_list_init(sc))
+		printf("%s: rx list init failed\n", device_xname(sc->atu_dev));
+
 	/* Start up the receive pipe. */
 	for (i = 0; i < ATU_RX_LIST_CNT; i++) {
 		c = &sc->atu_cdata.atu_rx_chain[i];
 
-		usbd_setup_xfer(c->atu_xfer, sc->atu_ep[ATU_ENDPT_RX], c,
-		    c->atu_buf, ATU_RX_BUFSZ, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, atu_rxeof);
+		usbd_setup_xfer(c->atu_xfer, c, c->atu_buf, ATU_RX_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, atu_rxeof);
 		usbd_transfer(c->atu_xfer);
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.67.4.6 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.67.4.7 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.96 2010/01/09 05:33:08 jsg Exp $ */
 
 /*
@@ -89,7 +89,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.6 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.67.4.7 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -945,15 +945,11 @@ axe_rx_list_init(struct axe_softc *sc)
 		c->axe_sc = sc;
 		c->axe_idx = i;
 		if (c->axe_xfer == NULL) {
-			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
-			if (c->axe_xfer == NULL)
-				return ENOBUFS;
-			c->axe_buf = usbd_alloc_buffer(c->axe_xfer,
-			    sc->axe_bufsz);
-			if (c->axe_buf == NULL) {
-				usbd_free_xfer(c->axe_xfer);
-				return ENOBUFS;
-			}
+			int err = usbd_create_xfer(sc->axe_ep[AXE_ENDPT_RX],
+			    sc->axe_bufsz, USBD_SHORT_XFER_OK, 0, &c->axe_xfer);
+			if (err)
+				return err;
+			c->axe_buf = usbd_get_buffer(c->axe_xfer);
 		}
 	}
 
@@ -975,15 +971,12 @@ axe_tx_list_init(struct axe_softc *sc)
 		c->axe_sc = sc;
 		c->axe_idx = i;
 		if (c->axe_xfer == NULL) {
-			c->axe_xfer = usbd_alloc_xfer(sc->axe_udev);
-			if (c->axe_xfer == NULL)
-				return ENOBUFS;
-			c->axe_buf = usbd_alloc_buffer(c->axe_xfer,
-			    sc->axe_bufsz);
-			if (c->axe_buf == NULL) {
-				usbd_free_xfer(c->axe_xfer);
-				return ENOBUFS;
-			}
+			int err = usbd_create_xfer(sc->axe_ep[AXE_ENDPT_TX],
+			    sc->axe_bufsz, USBD_FORCE_SHORT_XFER, 0,
+			    &c->axe_xfer);
+			if (err)
+				return err;
+			c->axe_buf = usbd_get_buffer(c->axe_xfer);
 		}
 	}
 
@@ -1104,10 +1097,8 @@ axe_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
  done:
 
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, sc->axe_ep[AXE_ENDPT_RX],
-	    c, c->axe_buf, sc->axe_bufsz,
-	    USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, axe_rxeof);
+	usbd_setup_xfer(xfer, c, c->axe_buf, sc->axe_bufsz,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axe_rxeof);
 	usbd_transfer(xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", device_xname(sc->axe_dev), __func__));
@@ -1254,9 +1245,8 @@ axe_encap(struct axe_softc *sc, struct mbuf *m, int idx)
 		length = m->m_pkthdr.len;
 	}
 
-	usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_TX],
-	    c, c->axe_buf, length, USBD_FORCE_SHORT_XFER, 10000,
-	    axe_txeof);
+	usbd_setup_xfer(c->axe_xfer, c, c->axe_buf, length,
+	    USBD_FORCE_SHORT_XFER, 10000, axe_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->axe_xfer);
@@ -1340,22 +1330,6 @@ axe_init(struct ifnet *ifp)
 		axe_unlock_mii(sc);
 	}
 
-	/* Enable RX logic. */
-
-	/* Init RX ring. */
-	if (axe_rx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->axe_dev, "rx list init failed\n");
-		splx(s);
-		return ENOBUFS;
-	}
-
-	/* Init TX ring. */
-	if (axe_tx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->axe_dev, "tx list init failed\n");
-		splx(s);
-		return ENOBUFS;
-	}
-
 	/* Set transmitter IPG values */
 	axe_lock_mii(sc);
 	if (sc->axe_flags & AX178 || sc->axe_flags & AX772)
@@ -1411,13 +1385,25 @@ axe_init(struct ifnet *ifp)
 		return EIO;
 	}
 
+	/* Init RX ring. */
+	if (axe_rx_list_init(sc) != 0) {
+		aprint_error_dev(sc->axe_dev, "rx list init failed\n");
+		splx(s);
+		return ENOBUFS;
+	}
+
+	/* Init TX ring. */
+	if (axe_tx_list_init(sc) != 0) {
+		aprint_error_dev(sc->axe_dev, "tx list init failed\n");
+		splx(s);
+		return ENOBUFS;
+	}
+
 	/* Start up the receive pipe. */
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
 		c = &sc->axe_cdata.axe_rx_chain[i];
-		usbd_setup_xfer(c->axe_xfer, sc->axe_ep[AXE_ENDPT_RX],
-		    c, c->axe_buf, sc->axe_bufsz,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-		    axe_rxeof);
+		usbd_setup_xfer(c->axe_xfer, c, c->axe_buf, sc->axe_bufsz,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axe_rxeof);
 		usbd_transfer(c->axe_xfer);
 	}
 
@@ -1563,7 +1549,7 @@ axe_stop(struct ifnet *ifp, int disable)
 	/* Free RX resources. */
 	for (i = 0; i < AXE_RX_LIST_CNT; i++) {
 		if (sc->axe_cdata.axe_rx_chain[i].axe_xfer != NULL) {
-			usbd_free_xfer(sc->axe_cdata.axe_rx_chain[i].axe_xfer);
+			usbd_destroy_xfer(sc->axe_cdata.axe_rx_chain[i].axe_xfer);
 			sc->axe_cdata.axe_rx_chain[i].axe_xfer = NULL;
 		}
 	}
@@ -1571,7 +1557,7 @@ axe_stop(struct ifnet *ifp, int disable)
 	/* Free TX resources. */
 	for (i = 0; i < AXE_TX_LIST_CNT; i++) {
 		if (sc->axe_cdata.axe_tx_chain[i].axe_xfer != NULL) {
-			usbd_free_xfer(sc->axe_cdata.axe_tx_chain[i].axe_xfer);
+			usbd_destroy_xfer(sc->axe_cdata.axe_tx_chain[i].axe_xfer);
 			sc->axe_cdata.axe_tx_chain[i].axe_xfer = NULL;
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.6.6 2015/09/29 11:38:28 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.7 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.6 2015/09/29 11:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.7 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -733,16 +733,12 @@ run_alloc_rx_ring(struct run_softc *sc)
 
 		data->sc = sc;	/* backpointer for callbacks */
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
-			error = ENOMEM;
+		error = usbd_create_xfer(sc->rxq.pipeh, RUN_MAX_RXSZ,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error)
 			goto fail;
-		}
-		data->buf = usbd_alloc_buffer(data->xfer, RUN_MAX_RXSZ);
-		if (data->buf == NULL) {
-			error = ENOMEM;
-			goto fail;
-		}
+
+		data->buf = usbd_get_buffer(data->xfer);
 	}
 	if (error != 0)
 fail:		run_free_rx_ring(sc);
@@ -762,7 +758,7 @@ run_free_rx_ring(struct run_softc *sc)
 	}
 	for (i = 0; i < RUN_RX_RING_COUNT; i++) {
 		if (rxq->data[i].xfer != NULL)
-			usbd_free_xfer(rxq->data[i].xfer);
+			usbd_destroy_xfer(rxq->data[i].xfer);
 		rxq->data[i].xfer = NULL;
 	}
 }
@@ -785,16 +781,12 @@ run_alloc_tx_ring(struct run_softc *sc, int qid)
 		data->sc = sc;	/* backpointer for callbacks */
 		data->qid = qid;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
-			error = ENOMEM;
+		error = usbd_create_xfer(txq->pipeh, RUN_MAX_TXSZ,
+		    USBD_FORCE_SHORT_XFER, 0, &data->xfer);
+		if (error)
 			goto fail;
-		}
-		data->buf = usbd_alloc_buffer(data->xfer, RUN_MAX_TXSZ);
-		if (data->buf == NULL) {
-			error = ENOMEM;
-			goto fail;
-		}
+
+		data->buf = usbd_get_buffer(data->xfer);
 		/* zeroize the TXD + TXWI part */
 		memset(data->buf, 0, sizeof(struct rt2870_txd) +
 		    sizeof(struct rt2860_txwi));
@@ -817,7 +809,7 @@ run_free_tx_ring(struct run_softc *sc, int qid)
 	}
 	for (i = 0; i < RUN_TX_RING_COUNT; i++) {
 		if (txq->data[i].xfer != NULL)
-			usbd_free_xfer(txq->data[i].xfer);
+			usbd_destroy_xfer(txq->data[i].xfer);
 		txq->data[i].xfer = NULL;
 	}
 }
@@ -2190,7 +2182,7 @@ run_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	}
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->rxq.pipeh, data, data->buf, RUN_MAX_RXSZ,
+	usbd_setup_xfer(xfer, data, data->buf, RUN_MAX_RXSZ,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, run_rxeof);
 	(void)usbd_transfer(data->xfer);
 }
@@ -2349,7 +2341,7 @@ run_tx(struct run_softc *sc, struct mbuf *m, struct ieee80211_node *ni)
 
 	xferlen += sizeof(*txd) + 4;
 
-	usbd_setup_xfer(data->xfer, ring->pipeh, data, data->buf, xferlen,
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, RUN_TX_TIMEOUT, run_txeof);
 	error = usbd_transfer(data->xfer);
 	if (__predict_false(error != USBD_IN_PROGRESS &&
@@ -3624,9 +3616,8 @@ run_init(struct ifnet *ifp)
 	for (i = 0; i < RUN_RX_RING_COUNT; i++) {
 		struct run_rx_data *data = &sc->rxq.data[i];
 
-		usbd_setup_xfer(data->xfer, sc->rxq.pipeh, data, data->buf,
-		    RUN_MAX_RXSZ, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, run_rxeof);
+		usbd_setup_xfer(data->xfer, data, data->buf, RUN_MAX_RXSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, run_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
 		    error != USBD_IN_PROGRESS)

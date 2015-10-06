@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.6 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.7 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.6 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.7 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -593,12 +593,11 @@ kue_rx_list_init(struct kue_softc *sc)
 		c->kue_sc = sc;
 		c->kue_idx = i;
 		if (c->kue_xfer == NULL) {
-			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev);
-			if (c->kue_xfer == NULL)
-				return ENOBUFS;
-			c->kue_buf = usbd_alloc_buffer(c->kue_xfer, KUE_BUFSZ);
-			if (c->kue_buf == NULL)
-				return ENOBUFS; /* XXX free xfer */
+			int error = usbd_create_xfer(sc->kue_ep[KUE_ENDPT_RX],
+			    KUE_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->kue_xfer);
+			if (error)
+				return error;
+			c->kue_buf = usbd_get_buffer(c->kue_xfer);
 		}
 	}
 
@@ -620,12 +619,11 @@ kue_tx_list_init(struct kue_softc *sc)
 		c->kue_sc = sc;
 		c->kue_idx = i;
 		if (c->kue_xfer == NULL) {
-			c->kue_xfer = usbd_alloc_xfer(sc->kue_udev);
-			if (c->kue_xfer == NULL)
-				return ENOBUFS;
-			c->kue_buf = usbd_alloc_buffer(c->kue_xfer, KUE_BUFSZ);
-			if (c->kue_buf == NULL)
-				return ENOBUFS;
+			int error = usbd_create_xfer(sc->kue_ep[KUE_ENDPT_TX],
+			    KUE_BUFSZ, 0, 0, &c->kue_xfer);
+			if (error)
+				return error;
+			c->kue_buf = usbd_get_buffer(c->kue_xfer);
 		}
 	}
 
@@ -731,9 +729,8 @@ kue_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
  done:
 
 	/* Setup new transfer. */
-	usbd_setup_xfer(c->kue_xfer, sc->kue_ep[KUE_ENDPT_RX],
-	    c, c->kue_buf, KUE_BUFSZ, USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, kue_rxeof);
+	usbd_setup_xfer(c->kue_xfer, c, c->kue_buf, KUE_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, kue_rxeof);
 	usbd_transfer(c->kue_xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n", device_xname(sc->kue_dev),
@@ -810,9 +807,8 @@ kue_send(struct kue_softc *sc, struct mbuf *m, int idx)
 	total_len = 2 + m->m_pkthdr.len;
 	total_len = roundup2(total_len, 64);
 
-	usbd_setup_xfer(c->kue_xfer, sc->kue_ep[KUE_ENDPT_TX],
-	    c, c->kue_buf, total_len, 0, USBD_DEFAULT_TIMEOUT,
-	    kue_txeof);
+	usbd_setup_xfer(c->kue_xfer, c, c->kue_buf, total_len, 0,
+	    USBD_DEFAULT_TIMEOUT, kue_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->kue_xfer);
@@ -905,20 +901,6 @@ kue_init(void *xsc)
 #endif
 	kue_setword(sc, KUE_CMD_SET_URB_SIZE, 64);
 
-	/* Init TX ring. */
-	if (kue_tx_list_init(sc) == ENOBUFS) {
-		printf("%s: tx list init failed\n", device_xname(sc->kue_dev));
-		splx(s);
-		return;
-	}
-
-	/* Init RX ring. */
-	if (kue_rx_list_init(sc) == ENOBUFS) {
-		printf("%s: rx list init failed\n", device_xname(sc->kue_dev));
-		splx(s);
-		return;
-	}
-
 	/* Load the multicast filter. */
 	kue_setmulti(sc);
 
@@ -927,6 +909,29 @@ kue_init(void *xsc)
 			splx(s);
 			return;
 		}
+	}
+	/* Init TX ring. */
+	if (kue_tx_list_init(sc)) {
+		printf("%s: tx list init failed\n", device_xname(sc->kue_dev));
+		splx(s);
+		return;
+	}
+
+	/* Init RX ring. */
+	if (kue_rx_list_init(sc)) {
+		printf("%s: rx list init failed\n", device_xname(sc->kue_dev));
+		splx(s);
+		return;
+	}
+
+	/* Start up the receive pipe. */
+	for (size_t i = 0; i < KUE_RX_LIST_CNT; i++) {
+		struct kue_chain *c = &sc->kue_cdata.kue_rx_chain[i];
+		usbd_setup_xfer(c->kue_xfer, c, c->kue_buf, KUE_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, kue_rxeof);
+		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->kue_dev),
+			    __func__));
+		usbd_transfer(c->kue_xfer);
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -939,8 +944,6 @@ static int
 kue_open_pipes(struct kue_softc *sc)
 {
 	usbd_status		err;
-	struct kue_chain	*c;
-	int			i;
 
 	DPRINTFN(5,("%s: %s: enter\n", device_xname(sc->kue_dev),__func__));
 
@@ -959,18 +962,6 @@ kue_open_pipes(struct kue_softc *sc)
 		printf("%s: open tx pipe failed: %s\n",
 		    device_xname(sc->kue_dev), usbd_errstr(err));
 		return EIO;
-	}
-
-	/* Start up the receive pipe. */
-	for (i = 0; i < KUE_RX_LIST_CNT; i++) {
-		c = &sc->kue_cdata.kue_rx_chain[i];
-		usbd_setup_xfer(c->kue_xfer, sc->kue_ep[KUE_ENDPT_RX],
-		    c, c->kue_buf, KUE_BUFSZ,
-		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-		    kue_rxeof);
-		DPRINTFN(5,("%s: %s: start read\n", device_xname(sc->kue_dev),
-			    __func__));
-		usbd_transfer(c->kue_xfer);
 	}
 
 	return 0;
@@ -1144,7 +1135,7 @@ kue_stop(struct kue_softc *sc)
 	/* Free RX resources. */
 	for (i = 0; i < KUE_RX_LIST_CNT; i++) {
 		if (sc->kue_cdata.kue_rx_chain[i].kue_xfer != NULL) {
-			usbd_free_xfer(sc->kue_cdata.kue_rx_chain[i].kue_xfer);
+			usbd_destroy_xfer(sc->kue_cdata.kue_rx_chain[i].kue_xfer);
 			sc->kue_cdata.kue_rx_chain[i].kue_xfer = NULL;
 		}
 	}
@@ -1152,7 +1143,7 @@ kue_stop(struct kue_softc *sc)
 	/* Free TX resources. */
 	for (i = 0; i < KUE_TX_LIST_CNT; i++) {
 		if (sc->kue_cdata.kue_tx_chain[i].kue_xfer != NULL) {
-			usbd_free_xfer(sc->kue_cdata.kue_tx_chain[i].kue_xfer);
+			usbd_destroy_xfer(sc->kue_cdata.kue_tx_chain[i].kue_xfer);
 			sc->kue_cdata.kue_tx_chain[i].kue_xfer = NULL;
 		}
 	}

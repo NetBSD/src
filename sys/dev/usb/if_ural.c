@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.44.14.6 2015/09/29 11:38:28 skrll Exp $ */
+/*	$NetBSD: if_ural.c,v 1.44.14.7 2015/10/06 21:32:15 skrll Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.6 2015/09/29 11:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.44.14.7 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -547,7 +547,7 @@ ural_detach(device_t self, int flags)
 	callout_stop(&sc->sc_amrr_ch);
 
 	if (sc->amrr_xfer != NULL) {
-		usbd_free_xfer(sc->amrr_xfer);
+		usbd_destroy_xfer(sc->amrr_xfer);
 		sc->amrr_xfer = NULL;
 	}
 
@@ -585,23 +585,16 @@ ural_alloc_tx_list(struct ural_softc *sc)
 		data = &sc->tx_data[i];
 
 		data->sc = sc;
-
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_tx_pipeh,
+		    RAL_TX_DESC_SIZE + MCLBYTES, USBD_FORCE_SHORT_XFER, 0,
+		    &data->xfer);
+		if (error) {
 			printf("%s: could not allocate tx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
 
-		data->buf = usbd_alloc_buffer(data->xfer,
-		    RAL_TX_DESC_SIZE + MCLBYTES);
-		if (data->buf == NULL) {
-			printf("%s: could not allocate tx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 	}
 
 	return 0;
@@ -620,7 +613,7 @@ ural_free_tx_list(struct ural_softc *sc)
 		data = &sc->tx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 
@@ -642,18 +635,11 @@ ural_alloc_rx_list(struct ural_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_rx_pipeh, MCLBYTES,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 			printf("%s: could not allocate rx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
-
-		if (usbd_alloc_buffer(data->xfer, MCLBYTES) == NULL) {
-			printf("%s: could not allocate rx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
 
@@ -692,7 +678,7 @@ ural_free_rx_list(struct ural_softc *sc)
 		data = &sc->rx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 
@@ -1012,7 +998,7 @@ ural_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	DPRINTFN(15, ("rx done\n"));
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->sc_rx_pipeh, data, data->buf, MCLBYTES,
+	usbd_setup_xfer(xfer, data, data->buf, MCLBYTES,
 	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ural_rxeof);
 	usbd_transfer(xfer);
 }
@@ -1159,25 +1145,22 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	rate = IEEE80211_IS_CHAN_5GHZ(ni->ni_chan) ? 12 : 2;
 
-	xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (xfer == NULL)
-		return ENOMEM;
-
 	/* xfer length needs to be a multiple of two! */
 	xferlen = (RAL_TX_DESC_SIZE + m0->m_pkthdr.len + 1) & ~1;
 
-	buf = usbd_alloc_buffer(xfer, xferlen);
-	if (buf == NULL) {
-		usbd_free_xfer(xfer);
-		return ENOMEM;
-	}
+	error = usbd_create_xfer(sc->sc_tx_pipeh, xferlen,
+	    USBD_FORCE_SHORT_XFER, 0, &xfer);
+	if (error)
+		return error;
 
-	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, &cmd, sizeof(cmd),
-	    USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT, NULL);
+	buf = usbd_get_buffer(xfer);
+
+	usbd_setup_xfer(xfer, NULL, &cmd, sizeof(cmd), USBD_FORCE_SHORT_XFER,
+	    RAL_TX_TIMEOUT, NULL);
 
 	error = usbd_sync_transfer(xfer);
 	if (error != 0) {
-		usbd_free_xfer(xfer);
+		usbd_destroy_xfer(xfer);
 		return error;
 	}
 
@@ -1190,11 +1173,11 @@ ural_tx_bcn(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	DPRINTFN(10, ("sending beacon frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
 
-	usbd_setup_xfer(xfer, sc->sc_tx_pipeh, NULL, buf, xferlen,
-	    USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT, NULL);
+	usbd_setup_xfer(xfer, NULL, buf, xferlen, USBD_FORCE_SHORT_XFER,
+	    RAL_TX_TIMEOUT, NULL);
 
 	error = usbd_sync_transfer(xfer);
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 
 	return error;
 }
@@ -1274,9 +1257,8 @@ ural_tx_mgt(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	DPRINTFN(10, ("sending mgt frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
 
-	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf,
-	    xferlen, USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT,
-	    ural_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT, ural_txeof);
 
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {
@@ -1364,10 +1346,8 @@ ural_tx_data(struct ural_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	DPRINTFN(10, ("sending data frame len=%u rate=%u xfer len=%u\n",
 	    m0->m_pkthdr.len, rate, xferlen));
-
-	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf,
-	    xferlen, USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT,
-	    ural_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, RAL_TX_TIMEOUT, ural_txeof);
 
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
@@ -2114,7 +2094,6 @@ ural_init(struct ifnet *ifp)
 	struct ural_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ieee80211_key *wk;
-	struct ural_rx_data *data;
 	uint16_t tmp;
 	usbd_status error;
 	int i, ntries;
@@ -2177,8 +2156,9 @@ ural_init(struct ifnet *ifp)
 	/*
 	 * Allocate xfer for AMRR statistics requests.
 	 */
-	sc->amrr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->amrr_xfer == NULL) {
+	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->sc_udev);
+	error = usbd_create_xfer(pipe0, sizeof(sc->sta), 0, 0, &sc->amrr_xfer);
+	if (error) {
 		printf("%s: could not allocate AMRR xfer\n",
 		    device_xname(sc->sc_dev));
 		goto fail;
@@ -2224,10 +2204,10 @@ ural_init(struct ifnet *ifp)
 	 * Start up the receive pipe.
 	 */
 	for (i = 0; i < RAL_RX_LIST_COUNT; i++) {
-		data = &sc->rx_data[i];
+		struct ural_rx_data *data = &sc->rx_data[i];
 
-		usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,
-		    MCLBYTES, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ural_rxeof);
+		usbd_setup_xfer(data->xfer, data, data->buf, MCLBYTES,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, ural_rxeof);
 		usbd_transfer(data->xfer);
 	}
 
@@ -2278,7 +2258,7 @@ ural_stop(struct ifnet *ifp, int disable)
 	ural_write(sc, RAL_MAC_CSR1, 0);
 
 	if (sc->amrr_xfer != NULL) {
-		usbd_free_xfer(sc->amrr_xfer);
+		usbd_destroy_xfer(sc->amrr_xfer);
 		sc->amrr_xfer = NULL;
 	}
 

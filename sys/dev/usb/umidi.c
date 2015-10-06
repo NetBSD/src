@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.7 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.7 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -666,7 +666,7 @@ alloc_pipe(struct umidi_endpoint *ep)
 	 * For output, an improvement would be to have a buffer bigger than
 	 * wMaxPacketSize by num_jacks-1 additional packet slots; that would
 	 * allow out_solicit to fill the buffer to the full packet size in
-	 * all cases. But to use usbd_alloc_buffer to get a slightly larger
+	 * all cases. But to use usbd_create_xfer to get a slightly larger
 	 * buffer would not be a good way to do that, because if the addition
 	 * would make the buffer exceed USB_MEM_SMALL then a substantially
 	 * larger block may be wastefully allocated. Some flavor of double
@@ -685,21 +685,17 @@ alloc_pipe(struct umidi_endpoint *ep)
 	ep->next_schedule = 0;
 	ep->soliciting = 0;
 	ep->armed = 0;
-	ep->xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (ep->xfer == NULL) {
-	    err = USBD_NOMEM;
-	    goto quit;
-	}
-	ep->buffer = usbd_alloc_buffer(ep->xfer, ep->buffer_size);
-	if (ep->buffer == NULL) {
-	    usbd_free_xfer(ep->xfer);
-	    err = USBD_NOMEM;
-	    goto quit;
-	}
-	ep->next_slot = ep->buffer;
 	err = usbd_open_pipe(sc->sc_iface, ep->addr, USBD_MPSAFE, &ep->pipe);
 	if (err)
-	    usbd_free_xfer(ep->xfer);
+		goto quit;
+	int error = usbd_create_xfer(ep->pipe, ep->buffer_size,
+	    USBD_SHORT_XFER_OK, 0, &ep->xfer);
+	if (error) {
+		usbd_close_pipe(ep->pipe);
+		return USBD_NOMEM;
+	}
+	ep->buffer = usbd_get_buffer(ep->xfer);
+	ep->next_slot = ep->buffer;
 	ep->solicit_cookie = softint_establish(SOFTINT_CLOCK | SOFTINT_MPSAFE, out_solicit, ep);
 quit:
 	return err;
@@ -711,7 +707,7 @@ free_pipe(struct umidi_endpoint *ep)
 	DPRINTF(("%s: free_pipe %p\n", device_xname(ep->sc->sc_dev), ep));
 	usbd_abort_pipe(ep->pipe);
 	usbd_close_pipe(ep->pipe);
-	usbd_free_xfer(ep->xfer);
+	usbd_destroy_xfer(ep->xfer);
 	softint_disestablish(ep->solicit_cookie);
 }
 
@@ -1653,11 +1649,8 @@ static const int packet_length[16] = {
 static usbd_status
 start_input_transfer(struct umidi_endpoint *ep)
 {
-	usbd_setup_xfer(ep->xfer, ep->pipe,
-			(void *)ep,
-			ep->buffer, ep->buffer_size,
-			USBD_SHORT_XFER_OK,
-			USBD_NO_TIMEOUT, in_intr);
+	usbd_setup_xfer(ep->xfer, ep, ep->buffer, ep->buffer_size,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, in_intr);
 	return usbd_transfer(ep->xfer);
 }
 
@@ -1671,10 +1664,9 @@ start_output_transfer(struct umidi_endpoint *ep)
 	length = (ep->next_slot - ep->buffer) * sizeof(*ep->buffer);
 	DPRINTFN(200,("umidi out transfer: start %p end %p length %u\n",
 	    ep->buffer, ep->next_slot, length));
-	usbd_setup_xfer(ep->xfer, ep->pipe,
-			(void *)ep,
-			ep->buffer, length,
-			0, USBD_NO_TIMEOUT, out_intr);
+
+	usbd_setup_xfer(ep->xfer, ep, ep->buffer, length, 0,
+	    USBD_NO_TIMEOUT, out_intr);
 	rv = usbd_transfer(ep->xfer);
 
 	/*

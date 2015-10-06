@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.7 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.8 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.7 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.8 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -919,15 +919,12 @@ axen_rx_list_init(struct axen_softc *sc)
 		c->axen_sc = sc;
 		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
-			c->axen_xfer = usbd_alloc_xfer(sc->axen_udev);
-			if (c->axen_xfer == NULL)
-				return ENOBUFS;
-			c->axen_buf = usbd_alloc_buffer(c->axen_xfer,
-			    sc->axen_bufsz);
-			if (c->axen_buf == NULL) {
-				usbd_free_xfer(c->axen_xfer);
-				return ENOBUFS;
-			}
+			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_RX],
+			    sc->axen_bufsz, USBD_SHORT_XFER_OK, 0,
+			    &c->axen_xfer);
+			if (err)
+				return err;
+			c->axen_buf = usbd_get_buffer(c->axen_xfer);
 		}
 	}
 
@@ -949,15 +946,12 @@ axen_tx_list_init(struct axen_softc *sc)
 		c->axen_sc = sc;
 		c->axen_idx = i;
 		if (c->axen_xfer == NULL) {
-			c->axen_xfer = usbd_alloc_xfer(sc->axen_udev);
-			if (c->axen_xfer == NULL)
-				return ENOBUFS;
-			c->axen_buf = usbd_alloc_buffer(c->axen_xfer,
-			    sc->axen_bufsz);
-			if (c->axen_buf == NULL) {
-				usbd_free_xfer(c->axen_xfer);
-				return ENOBUFS;
-			}
+			int err = usbd_create_xfer(sc->axen_ep[AXEN_ENDPT_TX],
+			    sc->axen_bufsz, USBD_FORCE_SHORT_XFER, 0,
+			    &c->axen_xfer);
+			if (err)
+				return err;
+			c->axen_buf = usbd_get_buffer(c->axen_xfer);
 		}
 	}
 
@@ -1132,10 +1126,8 @@ done:
 	memset(c->axen_buf, 0, sc->axen_bufsz);
 
 	/* Setup new transfer. */
-	usbd_setup_xfer(xfer, sc->axen_ep[AXEN_ENDPT_RX],
-	    c, c->axen_buf, sc->axen_bufsz,
-	    USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, axen_rxeof);
+	usbd_setup_xfer(xfer, c, c->axen_buf, sc->axen_bufsz,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axen_rxeof);
 	usbd_transfer(xfer);
 
 	DPRINTFN(10,("%s: %s: start rx\n",device_xname(sc->axen_dev),__func__));
@@ -1267,9 +1259,8 @@ axen_encap(struct axen_softc *sc, struct mbuf *m, int idx)
 		length += sizeof(hdr);
 	}
 
-	usbd_setup_xfer(c->axen_xfer, sc->axen_ep[AXEN_ENDPT_TX],
-	    c, c->axen_buf, length, USBD_FORCE_SHORT_XFER,
-	    10000, axen_txeof);
+	usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, length,
+	    USBD_FORCE_SHORT_XFER, 10000, axen_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->axen_xfer);
@@ -1349,22 +1340,6 @@ axen_init(struct ifnet *ifp)
 	axen_cmd(sc, AXEN_CMD_MAC_WRITE, 1, AXEN_UNK_28, &bval);
 	axen_unlock_mii(sc);
 
-	/* Init RX ring. */
-	if (axen_rx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->axen_dev, "rx list init failed\n");
-		axen_unlock_mii(sc);
-		splx(s);
-		return ENOBUFS;
-	}
-
-	/* Init TX ring. */
-	if (axen_tx_list_init(sc) == ENOBUFS) {
-		aprint_error_dev(sc->axen_dev, "tx list init failed\n");
-		axen_unlock_mii(sc);
-		splx(s);
-		return ENOBUFS;
-	}
-
 	/* Program promiscuous mode and multicast filters. */
 	axen_iff(sc);
 
@@ -1396,13 +1371,26 @@ axen_init(struct ifnet *ifp)
 		return EIO;
 	}
 
+	/* Init RX ring. */
+	if (axen_rx_list_init(sc)) {
+		aprint_error_dev(sc->axen_dev, "rx list init failed\n");
+		splx(s);
+		return ENOBUFS;
+	}
+
+	/* Init TX ring. */
+	if (axen_tx_list_init(sc)) {
+		aprint_error_dev(sc->axen_dev, "tx list init failed\n");
+		splx(s);
+		return ENOBUFS;
+	}
+
 	/* Start up the receive pipe. */
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
 		c = &sc->axen_cdata.axen_rx_chain[i];
-		usbd_setup_xfer(c->axen_xfer, sc->axen_ep[AXEN_ENDPT_RX],
-		    c, c->axen_buf, sc->axen_bufsz,
-		    USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, axen_rxeof);
+
+		usbd_setup_xfer(c->axen_xfer, c, c->axen_buf, sc->axen_bufsz,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, axen_rxeof);
 		usbd_transfer(c->axen_xfer);
 	}
 
@@ -1549,7 +1537,7 @@ axen_stop(struct ifnet *ifp, int disable)
 	/* Free RX resources. */
 	for (i = 0; i < AXEN_RX_LIST_CNT; i++) {
 		if (sc->axen_cdata.axen_rx_chain[i].axen_xfer != NULL) {
-			usbd_free_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
+			usbd_destroy_xfer(sc->axen_cdata.axen_rx_chain[i].axen_xfer);
 			sc->axen_cdata.axen_rx_chain[i].axen_xfer = NULL;
 		}
 	}
@@ -1557,7 +1545,7 @@ axen_stop(struct ifnet *ifp, int disable)
 	/* Free TX resources. */
 	for (i = 0; i < AXEN_TX_LIST_CNT; i++) {
 		if (sc->axen_cdata.axen_tx_chain[i].axen_xfer != NULL) {
-			usbd_free_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
+			usbd_destroy_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
 			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
 		}
 	}

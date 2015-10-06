@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.7 2015/03/21 11:33:37 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.8 2015/10/06 21:32:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -238,19 +238,21 @@ pseye_attach(device_t parent, device_t self, void *opaque)
 
 	sc->sc_bulkin = ed_bulkin->bEndpointAddress;
 
-	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkin_xfer == NULL) {
-		sc->sc_dying = 1;
+	int error = pseye_init_pipes(sc);
+	if (error) {
+		aprint_error_dev(self, "couldn't open pipes\n");
 		return;
 	}
-	sc->sc_bulkin_buffer = usbd_alloc_buffer(sc->sc_bulkin_xfer,
-	    sc->sc_bulkin_bufferlen);
-	if (sc->sc_bulkin_buffer == NULL) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
-		sc->sc_bulkin_xfer = NULL;
-		sc->sc_dying = 1;
+
+	error = usbd_create_xfer(sc->sc_bulkin_pipe, sc->sc_bulkin_bufferlen,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	if (error) {
+		aprint_error_dev(self, "couldn't create transfer\n");
+		pseye_close_pipes(sc);
 		return;
 	}
+
+	sc->sc_bulkin_buffer = usbd_get_buffer(sc->sc_bulkin_xfer);
 
 	pseye_init(sc);
 
@@ -284,7 +286,7 @@ pseye_detach(device_t self, int flags)
 	}
 
 	if (sc->sc_bulkin_xfer != NULL) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
+		usbd_destroy_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_xfer = NULL;
 	}
 
@@ -621,8 +623,7 @@ pseye_get_frame(struct pseye_softc *sc, uint32_t *plen)
 		return USBD_IOERROR;
 
 	return usbd_bulk_transfer(sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
-	    USBD_SHORT_XFER_OK, 1000,
-	    sc->sc_bulkin_buffer, plen);
+	    USBD_SHORT_XFER_OK, 1000, sc->sc_bulkin_buffer, plen);
 }
 
 static int
@@ -641,8 +642,6 @@ pseye_init_pipes(struct pseye_softc *sc)
 		return ENOMEM;
 	}
 
-	pseye_start(sc);
-
 	return 0;
 }
 
@@ -654,8 +653,6 @@ pseye_close_pipes(struct pseye_softc *sc)
 		usbd_close_pipe(sc->sc_bulkin_pipe);
 		sc->sc_bulkin_pipe = NULL;
 	}
-
-	pseye_stop(sc);
 
 	return 0;
 }
@@ -730,7 +727,9 @@ pseye_open(void *opaque, int flags)
 	if (sc->sc_dying)
 		return EIO;
 
-	return pseye_init_pipes(sc);
+	pseye_start(sc);
+
+	return 0;
 }
 
 static void
@@ -738,7 +737,7 @@ pseye_close(void *opaque)
 {
 	struct pseye_softc *sc = opaque;
 
-	pseye_close_pipes(sc);
+	pseye_stop(sc);
 }
 
 static const char *
