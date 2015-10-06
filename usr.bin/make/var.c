@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.195 2015/06/19 14:25:16 christos Exp $	*/
+/*	$NetBSD: var.c,v 1.196 2015/10/06 17:36:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.195 2015/06/19 14:25:16 christos Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.196 2015/10/06 17:36:25 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.195 2015/06/19 14:25:16 christos Exp $");
+__RCSID("$NetBSD: var.c,v 1.196 2015/10/06 17:36:25 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -982,8 +982,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
     }
 	
  out:
-    if (expanded_name != NULL)
-	free(expanded_name);
+    free(expanded_name);
     if (v != NULL)
 	VarFreeEnv(v, TRUE);
 }
@@ -1061,8 +1060,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
 	    Hash_SetValue(h, v);
 	}
     }
-    if (expanded_name != NULL)
-	free(expanded_name);
+    free(expanded_name);
 }
 
 /*-
@@ -1092,9 +1090,7 @@ Var_Exists(const char *name, GNode *ctxt)
 	cp = Var_Subst(NULL, name, ctxt, FALSE);
     }
     v = VarFind(cp ? cp : name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
-    if (cp != NULL) {
-	free(cp);
-    }
+    free(cp);
     if (v == NULL) {
 	return(FALSE);
     } else {
@@ -2192,8 +2188,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 		     */
 		    cp2 = Var_Parse(cp, ctxt, errnum, &len, &freeIt);
 		    Buf_AddBytes(&buf, strlen(cp2), cp2);
-		    if (freeIt)
-			free(freeIt);
+		    free(freeIt);
 		    cp += len - 1;
 		} else {
 		    const char *cp2 = &cp[1];
@@ -2505,8 +2500,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		(c = tstr[rlen]) != '\0' &&
 		c != ':' &&
 		c != endc) {
-		if (freeIt)
-		    free(freeIt);
+		free(freeIt);
 		goto apply_mods;
 	    }
 
@@ -2526,13 +2520,11 @@ ApplyModifiers(char *nstr, const char *tstr,
 		if (nstr == var_Error
 		    || (nstr == varNoError && errnum == 0)
 		    || strlen(rval) != (size_t) used) {
-		    if (freeIt)
-			free(freeIt);
+		    free(freeIt);
 		    goto out;		/* error already reported */
 		}
 	    }
-	    if (freeIt)
-		free(freeIt);
+	    free(freeIt);
 	    if (*tstr == ':')
 		tstr++;
 	    else if (!*tstr && endc) {
@@ -2621,8 +2613,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 			    Error(emsg, nstr);
 			else
 			    Var_Set(v->name, newStr,  v_ctxt, 0);
-			if (newStr)
-			    free(newStr);
+			free(newStr);
 			break;
 		    case '?':
 			if ((v->flags & VAR_JUNK) == 0)
@@ -2704,8 +2695,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 
 			    cp2 = Var_Parse(cp, ctxt, errnum, &len, &freeIt);
 			    Buf_AddBytes(&buf, strlen(cp2), cp2);
-			    if (freeIt)
-				free(freeIt);
+			    free(freeIt);
 			    cp += len - 1;
 			} else {
 			    Buf_AddByte(&buf, *cp);
@@ -3543,10 +3533,8 @@ ApplyModifiers(char *nstr, const char *tstr,
     if (delim != '\0')
 	Error("Unclosed substitution for %s (%c missing)",
 	      v->name, delim);
-    if (*freePtr) {
-	free(*freePtr);
-	*freePtr = NULL;
-    }
+    free(*freePtr);
+    *freePtr = NULL;
     return (var_Error);
 }
 
@@ -3689,8 +3677,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		if (rval != NULL) {
 		    Buf_AddBytes(&buf, strlen(rval), rval);
 		}
-		if (freeIt)
-		    free(freeIt);
+		free(freeIt);
 		tstr += rlen - 1;
 	    }
 	    else
@@ -3856,9 +3843,7 @@ Var_Parse(const char *str, GNode *ctxt, Boolean errnum, int *lengthPtr,
 		nstr = ApplyModifiers(nstr, tstr, startc, endc,
 				      v, ctxt, errnum, &used, freePtr);
 		tstr += used;
-		if (extraFree) {
-			free(extraFree);
-		}
+		free(extraFree);
 	} else {
 		*freePtr = extraFree;
 	}
@@ -4075,10 +4060,8 @@ Var_Subst(const char *var, const char *str, GNode *ctxt, Boolean undefErr)
 		Buf_AddBytes(&buf, length, val);
 		trailingBslash = length > 0 && val[length - 1] == '\\';
 	    }
-	    if (freeIt) {
-		free(freeIt);
-		freeIt = NULL;
-	    }
+	    free(freeIt);
+	    freeIt = NULL;
 	}
     }
 
