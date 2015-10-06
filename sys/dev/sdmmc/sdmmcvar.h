@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.19 2015/08/09 13:18:46 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.20 2015/10/06 14:32:51 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -114,6 +114,8 @@ struct sdmmc_command {
 #define SCF_RSP_SPI_S2	(1U << 11)
 #define SCF_RSP_SPI_B4	(1U << 12)
 #define SCF_RSP_SPI_BSY	(1U << 13)
+/* Probing */
+#define SCF_TOUT_OK	(1U << 14)	/* command timeout expected */
 /* response types */
 #define SCF_RSP_R0	0	/* none */
 #define SCF_RSP_R1	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
