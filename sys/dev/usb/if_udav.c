@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.43.4.6 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.43.4.7 2015/10/06 21:32:15 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.6 2015/06/06 14:40:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.43.4.7 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -662,20 +662,6 @@ udav_init(struct ifnet *ifp)
 	else
 		UDAV_CLRBIT(sc, UDAV_RCR, UDAV_RCR_ALL|UDAV_RCR_PRMSC);
 
-	/* Initialize transmit ring */
-	if (udav_tx_list_init(sc) == ENOBUFS) {
-		printf("%s: tx list init failed\n", device_xname(sc->sc_dev));
-		splx(s);
-		return EIO;
-	}
-
-	/* Initialize receive ring */
-	if (udav_rx_list_init(sc) == ENOBUFS) {
-		printf("%s: rx list init failed\n", device_xname(sc->sc_dev));
-		splx(s);
-		return EIO;
-	}
-
 	/* Load the multicast filter */
 	udav_setmulti(sc);
 
@@ -696,6 +682,30 @@ udav_init(struct ifnet *ifp)
 			splx(s);
 			return EIO;
 		}
+	}
+
+	/* Initialize transmit ring */
+	if (udav_tx_list_init(sc)) {
+		printf("%s: tx list init failed\n", device_xname(sc->sc_dev));
+		splx(s);
+		return EIO;
+	}
+
+	/* Initialize receive ring */
+	if (udav_rx_list_init(sc)) {
+		printf("%s: rx list init failed\n", device_xname(sc->sc_dev));
+		splx(s);
+		return EIO;
+	}
+
+	/* Start up the receive pipe. */
+	for (size_t i = 0; i < UDAV_RX_LIST_CNT; i++) {
+		struct udav_chain *c = &sc->sc_cdata.udav_rx_chain[i];
+		usbd_setup_xfer(c->udav_xfer, c, c->udav_buf, UDAV_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, udav_rxeof);
+		(void)usbd_transfer(c->udav_xfer);
+		DPRINTF(("%s: %s: start read\n", device_xname(sc->sc_dev),
+			 __func__));
 	}
 
 	ifp->if_flags |= IFF_RUNNING;
@@ -826,9 +836,7 @@ udav_setmulti(struct udav_softc *sc)
 Static int
 udav_openpipes(struct udav_softc *sc)
 {
-	struct udav_chain *c;
 	usbd_status err;
-	int i;
 	int error = 0;
 
 	if (sc->sc_dying)
@@ -870,20 +878,6 @@ udav_openpipes(struct udav_softc *sc)
 		goto done;
 	}
 #endif
-
-
-	/* Start up the receive pipe. */
-	for (i = 0; i < UDAV_RX_LIST_CNT; i++) {
-		c = &sc->sc_cdata.udav_rx_chain[i];
-		usbd_setup_xfer(c->udav_xfer, sc->sc_pipe_rx,
-				c, c->udav_buf, UDAV_BUFSZ,
-				USBD_SHORT_XFER_OK,
-				USBD_NO_TIMEOUT, udav_rxeof);
-		(void)usbd_transfer(c->udav_xfer);
-		DPRINTF(("%s: %s: start read\n", device_xname(sc->sc_dev),
-			 __func__));
-	}
-
  done:
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
@@ -943,14 +937,11 @@ udav_rx_list_init(struct udav_softc *sc)
 		if (udav_newbuf(sc, c, NULL) == ENOBUFS)
 			return ENOBUFS;
 		if (c->udav_xfer == NULL) {
-			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->udav_xfer == NULL)
-				return ENOBUFS;
-			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
-			if (c->udav_buf == NULL) {
-				usbd_free_xfer(c->udav_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_pipe_rx, UDAV_BUFSZ,
+			    USBD_SHORT_XFER_OK, 0, &c->udav_xfer);
+			if (error)
+				return error;
+			c->udav_buf = usbd_get_buffer(c->udav_xfer);
 		}
 	}
 
@@ -973,14 +964,11 @@ udav_tx_list_init(struct udav_softc *sc)
 		c->udav_idx = i;
 		c->udav_mbuf = NULL;
 		if (c->udav_xfer == NULL) {
-			c->udav_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->udav_xfer == NULL)
-				return ENOBUFS;
-			c->udav_buf = usbd_alloc_buffer(c->udav_xfer, UDAV_BUFSZ);
-			if (c->udav_buf == NULL) {
-				usbd_free_xfer(c->udav_xfer);
-				return ENOBUFS;
-			}
+			int error = usbd_create_xfer(sc->sc_pipe_tx, UDAV_BUFSZ,
+			    USBD_FORCE_SHORT_XFER, 0, &c->udav_xfer);
+			if (error)
+				return error;
+			c->udav_buf = usbd_get_buffer(c->udav_xfer);
 		}
 	}
 
@@ -1051,9 +1039,8 @@ udav_send(struct udav_softc *sc, struct mbuf *m, int idx)
 	c->udav_buf[1] = (uint8_t)(total_len >> 8);
 	total_len += 2;
 
-	usbd_setup_xfer(c->udav_xfer, sc->sc_pipe_tx, c, c->udav_buf, total_len,
-			USBD_FORCE_SHORT_XFER,
-			UDAV_TX_TIMEOUT, udav_txeof);
+	usbd_setup_xfer(c->udav_xfer, c, c->udav_buf, total_len,
+	    USBD_FORCE_SHORT_XFER, UDAV_TX_TIMEOUT, udav_txeof);
 
 	/* Transmit */
 	sc->sc_refcnt++;
@@ -1210,9 +1197,8 @@ udav_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 
  done:
 	/* Setup new transfer */
-	usbd_setup_xfer(xfer, sc->sc_pipe_rx, c, c->udav_buf, UDAV_BUFSZ,
-			USBD_SHORT_XFER_OK,
-			USBD_NO_TIMEOUT, udav_rxeof);
+	usbd_setup_xfer(xfer, c, c->udav_buf, UDAV_BUFSZ, USBD_SHORT_XFER_OK,
+	    USBD_NO_TIMEOUT, udav_rxeof);
 	sc->sc_refcnt++;
 	usbd_transfer(xfer);
 	if (--sc->sc_refcnt < 0)
@@ -1347,7 +1333,7 @@ udav_stop(struct ifnet *ifp, int disable)
 			sc->sc_cdata.udav_rx_chain[i].udav_mbuf = NULL;
 		}
 		if (sc->sc_cdata.udav_rx_chain[i].udav_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.udav_rx_chain[i].udav_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.udav_rx_chain[i].udav_xfer);
 			sc->sc_cdata.udav_rx_chain[i].udav_xfer = NULL;
 		}
 	}
@@ -1359,7 +1345,7 @@ udav_stop(struct ifnet *ifp, int disable)
 			sc->sc_cdata.udav_tx_chain[i].udav_mbuf = NULL;
 		}
 		if (sc->sc_cdata.udav_tx_chain[i].udav_xfer != NULL) {
-			usbd_free_xfer(sc->sc_cdata.udav_tx_chain[i].udav_xfer);
+			usbd_destroy_xfer(sc->sc_cdata.udav_tx_chain[i].udav_xfer);
 			sc->sc_cdata.udav_tx_chain[i].udav_xfer = NULL;
 		}
 	}

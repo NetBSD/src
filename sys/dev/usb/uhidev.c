@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.9 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.10 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.9 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.10 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,10 +601,10 @@ uhidev_open(struct uhidev *scd)
 		}
 		DPRINTF(("uhidev_open: sc->sc_opipe=%p\n", sc->sc_opipe));
 
-		sc->sc_oxfer = usbd_alloc_xfer(sc->sc_udev);
-		if (sc->sc_oxfer == NULL) {
+		error = usbd_create_xfer(sc->sc_opipe, UHIDEV_OSIZE, 0, 0,
+		    &sc->sc_oxfer);
+		if (error) {
 			DPRINTF(("uhidev_open: couldn't allocate an xfer\n"));
-			error = ENOMEM;
 			goto out3;
 		}
 
@@ -626,7 +626,7 @@ uhidev_open(struct uhidev *scd)
 out4:
 	/* Free output xfer */
 	if (sc->sc_oxfer != NULL)
-		usbd_free_xfer(sc->sc_oxfer);
+		usbd_destroy_xfer(sc->sc_oxfer);
 out3:
 	/* Abort output pipe */
 	usbd_close_pipe(sc->sc_opipe);
@@ -691,7 +691,7 @@ uhidev_close(struct uhidev *scd)
 	DPRINTF(("uhidev_close: close pipe\n"));
 
 	if (sc->sc_oxfer != NULL) {
-		usbd_free_xfer(sc->sc_oxfer);
+		usbd_destroy_xfer(sc->sc_oxfer);
 		sc->sc_oxfer = NULL;
 	}
 
@@ -750,6 +750,6 @@ uhidev_write(struct uhidev_softc *sc, void *data, int len)
 		DPRINTF(("\n"));
 	}
 #endif
-	return usbd_intr_transfer(sc->sc_oxfer, sc->sc_opipe, 0,
-	    USBD_NO_TIMEOUT, data, &len);
+	return usbd_intr_transfer(sc->sc_oxfer, sc->sc_opipe, 0, USBD_NO_TIMEOUT,
+	    data, &len);
 }

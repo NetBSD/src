@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.41.2.7 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.41.2.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.7 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.41.2.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -576,10 +576,8 @@ ucycomstart(struct tty *tp)
 	}
 #endif
 	DPRINTFN(4,("ucycomstart: %d chars\n", len));
-	usbd_setup_xfer(sc->sc_hdev.sc_parent->sc_oxfer,
-	    sc->sc_hdev.sc_parent->sc_opipe, (void *)sc,
-	    sc->sc_obuf, sc->sc_olen, 0 /* USBD_NO_COPY */, USBD_NO_TIMEOUT,
-	    ucycomwritecb);
+	usbd_setup_xfer(sc->sc_hdev.sc_parent->sc_oxfer, sc, sc->sc_obuf,
+	    sc->sc_olen, 0, USBD_NO_TIMEOUT, ucycomwritecb);
 
 	/* What can we do on error? */
 	err = usbd_transfer(sc->sc_hdev.sc_parent->sc_oxfer);

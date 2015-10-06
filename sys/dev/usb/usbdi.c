@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.28 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.29 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.28 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.29 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -65,6 +65,10 @@ Static usbd_status usbd_ar_pipe(struct usbd_pipe *);
 Static void usbd_start_next(struct usbd_pipe *);
 Static usbd_status usbd_open_pipe_ival
 	(struct usbd_interface *, uint8_t, uint8_t, struct usbd_pipe **, int);
+static void *usbd_alloc_buffer(struct usbd_xfer *, uint32_t);
+static void usbd_free_buffer(struct usbd_xfer *);
+static struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *);
+static usbd_status usbd_free_xfer(struct usbd_xfer *);
 
 #if defined(USB_DEBUG)
 void
@@ -206,19 +210,11 @@ usbd_open_pipe_intr(struct usbd_interface *iface, uint8_t address,
 				  &ipipe, ival);
 	if (err)
 		return err;
-	xfer = usbd_alloc_xfer(iface->ui_dev);
-	if (xfer == NULL) {
-		err = USBD_NOMEM;
+	err = usbd_create_xfer(ipipe, len, flags, 0, &xfer);
+	if (err)
 		goto bad1;
-	}
-	void *buf = usbd_alloc_buffer(xfer, len);
-	if (buf == NULL) {
-		err = USBD_NOMEM;
-		goto bad2;
-	}
 
-	usbd_setup_xfer(xfer, ipipe, priv, buffer, len, flags,
-	    USBD_NO_TIMEOUT, cb);
+	usbd_setup_xfer(xfer, priv, buffer, len, flags, USBD_NO_TIMEOUT, cb);
 	ipipe->up_intrxfer = xfer;
 	ipipe->up_repeat = 1;
 	err = usbd_transfer(xfer);
@@ -230,8 +226,8 @@ usbd_open_pipe_intr(struct usbd_interface *iface, uint8_t address,
  bad3:
 	ipipe->up_intrxfer = NULL;
 	ipipe->up_repeat = 0;
- bad2:
-	usbd_free_xfer(xfer);
+
+	usbd_destroy_xfer(xfer);
  bad1:
 	usbd_close_pipe(ipipe);
 	return err;
@@ -375,7 +371,7 @@ usbd_sync_transfer_sig(struct usbd_xfer *xfer)
 	return usbd_transfer(xfer);
 }
 
-void *
+static void *
 usbd_alloc_buffer(struct usbd_xfer *xfer, uint32_t size)
 {
 	KASSERT(xfer->ux_buf == NULL);
@@ -408,7 +404,7 @@ usbd_alloc_buffer(struct usbd_xfer *xfer, uint32_t size)
 	return xfer->ux_buf;
 }
 
-void
+static void
 usbd_free_buffer(struct usbd_xfer *xfer)
 {
 	KASSERT(xfer->ux_buf != NULL);
@@ -441,7 +437,14 @@ usbd_get_buffer(struct usbd_xfer *xfer)
 	return xfer->ux_buf;
 }
 
-struct usbd_xfer *
+struct usbd_pipe *
+usbd_get_pipe0(struct usbd_device *dev)
+{
+
+	return dev->ud_pipe0;
+}
+
+static struct usbd_xfer *
 usbd_alloc_xfer(struct usbd_device *dev)
 {
 	struct usbd_xfer *xfer;
@@ -463,7 +466,7 @@ usbd_alloc_xfer(struct usbd_device *dev)
 	return xfer;
 }
 
-usbd_status
+static usbd_status
 usbd_free_xfer(struct usbd_xfer *xfer)
 {
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -484,13 +487,42 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 	return USBD_NORMAL_COMPLETION;
 }
 
-void
-usbd_setup_xfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
-		void *priv, void *buffer, uint32_t length,
-		uint16_t flags, uint32_t timeout,
-		usbd_callback callback)
+int usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
+    unsigned int nframes, struct usbd_xfer **xp)
 {
+	KASSERT(xp != NULL);
+
+	struct usbd_xfer *xfer = usbd_alloc_xfer(pipe->up_dev);
+	if (xfer == NULL)
+		return ENOMEM;
+
+	if (len) {
+		void *buf = usbd_alloc_buffer(xfer, len);
+		if (!buf) {
+			usbd_free_xfer(xfer);
+			return ENOMEM;
+		}
+	}
 	xfer->ux_pipe = pipe;
+	xfer->ux_flags = flags;
+	xfer->ux_nframes = nframes;
+
+	*xp = xfer;
+	return 0;
+}
+
+void usbd_destroy_xfer(struct usbd_xfer *xfer)
+{
+
+	usbd_free_xfer(xfer);
+}
+
+void
+usbd_setup_xfer(struct usbd_xfer *xfer, void *priv, void *buffer,
+    uint32_t length, uint16_t flags, uint32_t timeout, usbd_callback callback)
+{
+	KASSERT(xfer->ux_pipe);
+
 	xfer->ux_priv = priv;
 	xfer->ux_buffer = buffer;
 	xfer->ux_length = length;
@@ -505,10 +537,8 @@ usbd_setup_xfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
 
 void
 usbd_setup_default_xfer(struct usbd_xfer *xfer, struct usbd_device *dev,
-			void *priv, uint32_t timeout,
-			usb_device_request_t *req, void *buffer,
-			uint32_t length, uint16_t flags,
-			usbd_callback callback)
+    void *priv, uint32_t timeout, usb_device_request_t *req, void *buffer,
+    uint32_t length, uint16_t flags, usbd_callback callback)
 {
 	xfer->ux_pipe = dev->ud_pipe0;
 	xfer->ux_priv = priv;
@@ -525,11 +555,9 @@ usbd_setup_default_xfer(struct usbd_xfer *xfer, struct usbd_device *dev,
 }
 
 void
-usbd_setup_isoc_xfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
-		     void *priv, uint16_t *frlengths,
-		     uint32_t nframes, uint16_t flags, usbd_callback callback)
+usbd_setup_isoc_xfer(struct usbd_xfer *xfer, void *priv, uint16_t *frlengths,
+    uint32_t nframes, uint16_t flags, usbd_callback callback)
 {
-	xfer->ux_pipe = pipe;
 	xfer->ux_priv = priv;
 	xfer->ux_buffer = NULL;
 	xfer->ux_length = 0;

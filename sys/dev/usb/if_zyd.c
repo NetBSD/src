@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.7 2015/09/29 11:38:28 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.7 2015/09/29 11:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -581,20 +581,14 @@ zyd_alloc_tx_list(struct zyd_softc *sc)
 
 		data->sc = sc;	/* backpointer for callbacks */
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->zyd_ep[ZYD_ENDPT_BOUT],
+		    ZYD_MAX_TXBUFSZ, USBD_FORCE_SHORT_XFER, 0, &data->xfer);
+		if (error) {
 			printf("%s: could not allocate tx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
-		data->buf = usbd_alloc_buffer(data->xfer, ZYD_MAX_TXBUFSZ);
-		if (data->buf == NULL) {
-			printf("%s: could not allocate tx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 
 		/* clear Tx descriptor */
 		memset(data->buf, 0, sizeof(struct zyd_tx_desc));
@@ -614,7 +608,7 @@ zyd_free_tx_list(struct zyd_softc *sc)
 		struct zyd_tx_data *data = &sc->tx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 		if (data->ni != NULL) {
@@ -634,20 +628,14 @@ zyd_alloc_rx_list(struct zyd_softc *sc)
 
 		data->sc = sc;	/* backpointer for callbacks */
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->zyd_ep[ZYD_ENDPT_BIN],
+		    ZYX_MAX_RXBUFSZ, USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 			printf("%s: could not allocate rx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
-		data->buf = usbd_alloc_buffer(data->xfer, ZYX_MAX_RXBUFSZ);
-		if (data->buf == NULL) {
-			printf("%s: could not allocate rx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 	}
 	return 0;
 
@@ -664,7 +652,7 @@ zyd_free_rx_list(struct zyd_softc *sc)
 		struct zyd_rx_data *data = &sc->rx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 	}
@@ -803,8 +791,10 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 	usbd_status uerror;
 	int s = 0;
 
-	if ((xfer = usbd_alloc_xfer(sc->sc_udev)) == NULL)
-		return ENOMEM;
+	error = usbd_create_xfer(sc->zyd_ep[ZYD_ENDPT_IOUT],
+	    sizeof(uint16_t) + ilen, USBD_FORCE_SHORT_XFER, 0, &xfer);
+	if (error)
+		return error;
 
 	cmd.code = htole16(code);
 	memcpy(cmd.data, idata, ilen);
@@ -820,19 +810,19 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 		SIMPLEQ_INSERT_TAIL(&sc->sc_rqh, &rq, rq);
 	}
 
-	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_IOUT], 0, &cmd,
-	    sizeof(uint16_t) + ilen, xferflags, ZYD_INTR_TIMEOUT, NULL);
+	usbd_setup_xfer(xfer, 0, &cmd, sizeof(uint16_t) + ilen, xferflags,
+	    ZYD_INTR_TIMEOUT, NULL);
 	uerror = usbd_transfer(xfer);
 	if (uerror != USBD_IN_PROGRESS && uerror != 0) {
 		if (flags & ZYD_CMD_FLAG_READ)
 			splx(s);
 		printf("%s: could not send command (error=%s)\n",
 		    device_xname(sc->sc_dev), usbd_errstr(uerror));
-		(void)usbd_free_xfer(xfer);
+		(void)usbd_destroy_xfer(xfer);
 		return EIO;
 	}
 	if (!(flags & ZYD_CMD_FLAG_READ)) {
-		(void)usbd_free_xfer(xfer);
+		(void)usbd_destroy_xfer(xfer);
 		return 0;	/* write: don't wait for reply */
 	}
 	/* wait at most one second for command reply */
@@ -842,7 +832,7 @@ zyd_cmd(struct zyd_softc *sc, uint16_t code, const void *idata, int ilen,
 	SIMPLEQ_REMOVE(&sc->sc_rqh, &rq, rq, rq);
 	splx(s);
 
-	(void)usbd_free_xfer(xfer);
+	(void)usbd_destroy_xfer(xfer);
 	return error;
 }
 
@@ -2044,8 +2034,8 @@ zyd_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	}
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->zyd_ep[ZYD_ENDPT_BIN], data, NULL,
-	    ZYX_MAX_RXBUFSZ, USBD_SHORT_XFER_OK,
+
+	usbd_setup_xfer(xfer, data, NULL, ZYX_MAX_RXBUFSZ, USBD_SHORT_XFER_OK,
 	    USBD_NO_TIMEOUT, zyd_rxeof);
 	(void)usbd_transfer(xfer);
 }
@@ -2149,9 +2139,8 @@ zyd_tx_mgt(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	m_freem(m0);	/* mbuf no longer needed */
 
-	usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BOUT], data,
-	    data->buf, xferlen, USBD_FORCE_SHORT_XFER,
-	    ZYD_TX_TIMEOUT, zyd_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, ZYD_TX_TIMEOUT, zyd_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_IN_PROGRESS && error != 0) {
 		ifp->if_oerrors++;
@@ -2307,9 +2296,8 @@ zyd_tx_data(struct zyd_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 
 	m_freem(m0);	/* mbuf no longer needed */
 
-	usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BOUT], data,
-	    data->buf, xferlen, USBD_FORCE_SHORT_XFER,
-	    ZYD_TX_TIMEOUT, zyd_txeof);
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
+	    USBD_FORCE_SHORT_XFER, ZYD_TX_TIMEOUT, zyd_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_IN_PROGRESS && error != 0) {
 		ifp->if_oerrors++;
@@ -2520,9 +2508,8 @@ zyd_init(struct ifnet *ifp)
 	for (i = 0; i < ZYD_RX_LIST_CNT; i++) {
 		struct zyd_rx_data *data = &sc->rx_data[i];
 
-		usbd_setup_xfer(data->xfer, sc->zyd_ep[ZYD_ENDPT_BIN], data,
-		    NULL, ZYX_MAX_RXBUFSZ, USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, zyd_rxeof);
+		usbd_setup_xfer(data->xfer, data, NULL, ZYX_MAX_RXBUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, zyd_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_IN_PROGRESS && error != 0) {
 			printf("%s: could not queue Rx transfer\n",

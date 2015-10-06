@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.1.14.5 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: udsir.c,v 1.1.14.6 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.5 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.1.14.6 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -329,26 +329,19 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 		error = EIO;
 		goto bad2;
 	}
-	sc->sc_rd_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_rd_xfer == NULL) {
-		error = ENOMEM;
-		goto bad3;
-	}
-	sc->sc_wr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_wr_xfer == NULL) {
-		error = ENOMEM;
+	error = usbd_create_xfer(sc->sc_rd_pipe, sc->sc_rd_maxpsz,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_rd_xfer);
+	if (error)
+		 goto bad3;
+
+	error = usbd_create_xfer(sc->sc_wr_pipe, IRDA_MAX_FRAME_SIZE,
+	    USBD_FORCE_SHORT_XFER, 0, &sc->sc_wr_xfer);
+	if (error)
 		goto bad4;
-	}
-	sc->sc_rd_buf = usbd_alloc_buffer(sc->sc_rd_xfer, sc->sc_rd_maxpsz);
-	if (sc->sc_rd_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
-	sc->sc_wr_buf = usbd_alloc_buffer(sc->sc_wr_xfer, IRDA_MAX_FRAME_SIZE);
-	if (sc->sc_wr_buf == NULL) {
-		error = ENOMEM;
-		goto bad5;
-	}
+
+	sc->sc_rd_buf = usbd_get_buffer(sc->sc_rd_xfer);
+	sc->sc_wr_buf = usbd_get_buffer(sc->sc_wr_xfer);
+
 	sc->sc_ur_buf = kmem_alloc(IRDA_MAX_FRAME_SIZE, KM_SLEEP);
 	if (sc->sc_ur_buf == NULL) {
 		error = ENOMEM;
@@ -382,10 +375,10 @@ udsir_open(void *h, int flag, int mode, struct lwp *l)
 	return 0;
 
  bad5:
-	usbd_free_xfer(sc->sc_wr_xfer);
+	usbd_destroy_xfer(sc->sc_wr_xfer);
 	sc->sc_wr_xfer = NULL;
  bad4:
-	usbd_free_xfer(sc->sc_rd_xfer);
+	usbd_destroy_xfer(sc->sc_rd_xfer);
 	sc->sc_rd_xfer = NULL;
  bad3:
 	usbd_close_pipe(sc->sc_wr_pipe);
@@ -426,12 +419,12 @@ udsir_close(void *h, int flag, int mode, struct lwp *l)
 		sc->sc_wr_pipe = NULL;
 	}
 	if (sc->sc_rd_xfer != NULL) {
-		usbd_free_xfer(sc->sc_rd_xfer);
+		usbd_destroy_xfer(sc->sc_rd_xfer);
 		sc->sc_rd_xfer = NULL;
 		sc->sc_rd_buf = NULL;
 	}
 	if (sc->sc_wr_xfer != NULL) {
-		usbd_free_xfer(sc->sc_wr_xfer);
+		usbd_destroy_xfer(sc->sc_wr_xfer);
 		sc->sc_wr_xfer = NULL;
 		sc->sc_wr_buf = NULL;
 	}
@@ -604,8 +597,8 @@ udsir_write(void *h, struct uio *uio, int flag)
 #endif
 
 		err = usbd_intr_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-				USBD_FORCE_SHORT_XFER, UDSIR_WR_TIMEOUT,
-				wrbuf, &btlen);
+		     USBD_FORCE_SHORT_XFER, UDSIR_WR_TIMEOUT,
+		     wrbuf, &btlen);
 		DPRINTFN(2, ("%s: err=%d\n", __func__, err));
 		if (err != USBD_NORMAL_COMPLETION) {
 			if (err == USBD_INTERRUPTED)
@@ -1044,9 +1037,8 @@ udsir_start_read(struct udsir_softc *sc)
 		usbd_clear_endpoint_stall(sc->sc_rd_pipe);
 	}
 
-	usbd_setup_xfer(sc->sc_rd_xfer, sc->sc_rd_pipe, sc, sc->sc_rd_buf,
-	    sc->sc_rd_maxpsz, USBD_SHORT_XFER_OK,
-	    USBD_NO_TIMEOUT, udsir_rd_cb);
+	usbd_setup_xfer(sc->sc_rd_xfer, sc, sc->sc_rd_buf, sc->sc_rd_maxpsz,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, udsir_rd_cb);
 	err = usbd_transfer(sc->sc_rd_xfer);
 	if (err != USBD_IN_PROGRESS) {
 		DPRINTFN(0, ("%s: err=%d\n", __func__, (int)err));

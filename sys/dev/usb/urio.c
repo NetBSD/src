@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.42.4.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: urio.c,v 1.42.4.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.42.4.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,14 +344,11 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return EIO;
 
-	xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (xfer == NULL)
-		return ENOMEM;
-	bufp = usbd_alloc_buffer(xfer, URIO_BSIZE);
-	if (bufp == NULL) {
-		usbd_free_xfer(xfer);
-		return ENOMEM;
+	error = usbd_create_xfer(sc->sc_in_pipe, URIO_BSIZE, 0, 0, &xfer);
+	if (error) {
+		return error;
 	}
+	bufp = usbd_get_buffer(xfer);
 
 	sc->sc_refcnt++;
 
@@ -376,7 +373,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 		if (error || tn < n)
 			break;
 	}
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
@@ -402,15 +399,11 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 	if (sc->sc_dying)
 		return EIO;
 
-	xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (xfer == NULL)
-		return ENOMEM;
-	bufp = usbd_alloc_buffer(xfer, URIO_BSIZE);
-	if (bufp == NULL) {
-		usbd_free_xfer(xfer);
-		return ENOMEM;
+	error = usbd_create_xfer(sc->sc_out_pipe, URIO_BSIZE, 0, 0, &xfer);
+	if (error) {
+		return error;
 	}
-
+	bufp = usbd_get_buffer(xfer);
 	sc->sc_refcnt++;
 
 	while ((n = min(URIO_BSIZE, uio->uio_resid)) != 0) {
@@ -434,7 +427,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 		}
 	}
 
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);

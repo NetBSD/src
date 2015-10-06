@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.5.10.7 2015/09/29 11:38:28 skrll Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.5.10.8 2015/10/06 21:32:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.7 2015/09/29 11:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.5.10.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -149,19 +149,13 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 		goto out_firmware;
 	}
 
-	xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (xfer == NULL) {
-		aprint_error_dev(self, "failed to alloc xfer\n");
-		error = 1;
+	error = usbd_create_xfer(pipe, AR3K_FIRMWARE_CHUNK_SIZE, 0, 0, &xfer);
+	if (error) {
+		aprint_verbose_dev(self, "cannot create xfer(%d)\n",
+		    error);
 		goto out_pipe;
 	}
-
-	buf = usbd_alloc_buffer(xfer, AR3K_FIRMWARE_CHUNK_SIZE);
-	if (buf == NULL) {
-		aprint_error_dev(self, "failed to alloc buffer\n");
-		error = 1;
-		goto out_xfer;
-	}
+	buf = usbd_get_buffer(xfer);
 
 	error = firmware_read(fwh, fwo, buf, AR3K_FIRMWARE_HEADER_SIZE);
 	if (error != 0) {
@@ -204,7 +198,7 @@ aubtfwl_firmware_load(device_t self, const char *name) {
 		aprint_verbose_dev(self, "firmware load complete\n");
 
 out_xfer:
-	usbd_free_xfer(xfer);
+	usbd_destroy_xfer(xfer);
 out_pipe:
 	usbd_close_pipe(pipe);
 out_firmware:

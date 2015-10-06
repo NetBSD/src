@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.7 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.8 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.7 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.8 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,10 +384,6 @@ uscanneropen(dev_t dev, int flag, int mode,
 
 	sc->sc_state |= USCANNER_OPEN;
 
-	sc->sc_bulkin_buffer = kmem_alloc(USCANNER_BUFFERSIZE, KM_SLEEP);
-	sc->sc_bulkout_buffer = kmem_alloc(USCANNER_BUFFERSIZE, KM_SLEEP);
-	/* No need to check buffers for NULL since we have WAITOK */
-
 	sc->sc_bulkin_bufferlen = USCANNER_BUFFERSIZE;
 	sc->sc_bulkout_bufferlen = USCANNER_BUFFERSIZE;
 
@@ -413,16 +409,21 @@ uscanneropen(dev_t dev, int flag, int mode,
 		}
 	}
 
-	sc->sc_bulkin_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkin_xfer == NULL) {
+	int error = usbd_create_xfer(sc->sc_bulkin_pipe, USCANNER_BUFFERSIZE,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_bulkin_xfer);
+	if (error) {
 		uscanner_do_close(sc);
-		return ENOMEM;
+		return error;
 	}
-	sc->sc_bulkout_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_bulkout_xfer == NULL) {
+	sc->sc_bulkin_buffer = usbd_get_buffer(sc->sc_bulkin_xfer);
+
+	error = usbd_create_xfer(sc->sc_bulkout_pipe, USCANNER_BUFFERSIZE, 0,
+	    0, &sc->sc_bulkout_xfer);
+	if (error) {
 		uscanner_do_close(sc);
-		return ENOMEM;
+		return error;
 	}
+	sc->sc_bulkout_buffer = usbd_get_buffer(sc->sc_bulkout_xfer);
 
 	return 0;	/* success */
 }
@@ -454,11 +455,11 @@ void
 uscanner_do_close(struct uscanner_softc *sc)
 {
 	if (sc->sc_bulkin_xfer) {
-		usbd_free_xfer(sc->sc_bulkin_xfer);
+		usbd_destroy_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_xfer = NULL;
 	}
 	if (sc->sc_bulkout_xfer) {
-		usbd_free_xfer(sc->sc_bulkout_xfer);
+		usbd_destroy_xfer(sc->sc_bulkout_xfer);
 		sc->sc_bulkout_xfer = NULL;
 	}
 
@@ -503,10 +504,8 @@ uscanner_do_read(struct uscanner_softc *sc, struct uio *uio, int flag)
 		DPRINTFN(1, ("uscannerread: start transfer %d bytes\n",n));
 		tn = n;
 
-		err = usbd_bulk_transfer(
-			sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
-			USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-			sc->sc_bulkin_buffer, &tn);
+		err = usbd_bulk_transfer(sc->sc_bulkin_xfer, sc->sc_bulkin_pipe,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, sc->sc_bulkin_buffer, &tn);
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;
@@ -558,10 +557,9 @@ uscanner_do_write(struct uscanner_softc *sc, struct uio *uio, int flag)
 		if (error)
 			break;
 		DPRINTFN(1, ("uscanner_do_write: transfer %d bytes\n", n));
-		err = usbd_bulk_transfer(
-			sc->sc_bulkout_xfer, sc->sc_bulkout_pipe,
-			0, USBD_NO_TIMEOUT,
-			sc->sc_bulkout_buffer, &n);
+		err = usbd_bulk_transfer(sc->sc_bulkout_xfer,
+		    sc->sc_bulkout_pipe, 0, USBD_NO_TIMEOUT,
+		    sc->sc_bulkout_buffer, &n);
 		if (err) {
 			if (err == USBD_INTERRUPTED)
 				error = EINTR;

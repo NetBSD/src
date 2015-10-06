@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.9 2015/09/29 11:38:28 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.10 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.9 2015/09/29 11:38:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.10 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -509,7 +509,7 @@ rum_detach(device_t self, int flags)
 	callout_stop(&sc->sc_amrr_ch);
 
 	if (sc->amrr_xfer != NULL) {
-		usbd_free_xfer(sc->amrr_xfer);
+		usbd_destroy_xfer(sc->amrr_xfer);
 		sc->amrr_xfer = NULL;
 	}
 
@@ -547,22 +547,15 @@ rum_alloc_tx_list(struct rum_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_tx_pipeh,
+		    RT2573_TX_DESC_SIZE + IEEE80211_MAX_LEN,
+		    USBD_FORCE_SHORT_XFER, 0, &data->xfer);
+		if (error) {
 			printf("%s: could not allocate tx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
-
-		data->buf = usbd_alloc_buffer(data->xfer,
-		    RT2573_TX_DESC_SIZE + IEEE80211_MAX_LEN);
-		if (data->buf == NULL) {
-			printf("%s: could not allocate tx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
+		data->buf = usbd_get_buffer(data->xfer);
 
 		/* clean Tx descriptor */
 		memset(data->buf, 0, RT2573_TX_DESC_SIZE);
@@ -584,7 +577,7 @@ rum_free_tx_list(struct rum_softc *sc)
 		data = &sc->tx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 
@@ -606,18 +599,11 @@ rum_alloc_rx_list(struct rum_softc *sc)
 
 		data->sc = sc;
 
-		data->xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (data->xfer == NULL) {
+		error = usbd_create_xfer(sc->sc_rx_pipeh, MCLBYTES,
+		    USBD_SHORT_XFER_OK, 0, &data->xfer);
+		if (error) {
 			printf("%s: could not allocate rx xfer\n",
 			    device_xname(sc->sc_dev));
-			error = ENOMEM;
-			goto fail;
-		}
-
-		if (usbd_alloc_buffer(data->xfer, MCLBYTES) == NULL) {
-			printf("%s: could not allocate rx buffer\n",
-			    device_xname(sc->sc_dev));
-			error = ENOMEM;
 			goto fail;
 		}
 
@@ -656,7 +642,7 @@ rum_free_rx_list(struct rum_softc *sc)
 		data = &sc->rx_data[i];
 
 		if (data->xfer != NULL) {
-			usbd_free_xfer(data->xfer);
+			usbd_destroy_xfer(data->xfer);
 			data->xfer = NULL;
 		}
 
@@ -928,8 +914,8 @@ rum_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	DPRINTFN(15, ("rx done\n"));
 
 skip:	/* setup a new transfer */
-	usbd_setup_xfer(xfer, sc->sc_rx_pipeh, data, data->buf, MCLBYTES,
-	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, rum_rxeof);
+	usbd_setup_xfer(xfer, data, data->buf, MCLBYTES, USBD_SHORT_XFER_OK,
+	    USBD_NO_TIMEOUT, rum_rxeof);
 	usbd_transfer(xfer);
 }
 
@@ -1197,7 +1183,7 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 		/* mbuf is no longer needed */
 		m_freem(mprot);
 
-		usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf,
+		usbd_setup_xfer(data->xfer, data, data->buf,
 		    xferlen, USBD_FORCE_SHORT_XFER,
 		    RUM_TX_TIMEOUT, rum_txeof);
 		error = usbd_transfer(data->xfer);
@@ -1264,7 +1250,7 @@ rum_tx_data(struct rum_softc *sc, struct mbuf *m0, struct ieee80211_node *ni)
 	/* mbuf is no longer needed */
 	m_freem(m0);
 
-	usbd_setup_xfer(data->xfer, sc->sc_tx_pipeh, data, data->buf, xferlen,
+	usbd_setup_xfer(data->xfer, data, data->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, RUM_TX_TIMEOUT, rum_txeof);
 	error = usbd_transfer(data->xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS)
@@ -1982,7 +1968,6 @@ rum_init(struct ifnet *ifp)
 #define N(a)	(sizeof (a) / sizeof ((a)[0]))
 	struct rum_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct rum_rx_data *data;
 	uint32_t tmp;
 	usbd_status error = 0;
 	unsigned int i, ntries;
@@ -2035,8 +2020,10 @@ rum_init(struct ifnet *ifp)
 	/*
 	 * Allocate xfer for AMRR statistics requests.
 	 */
-	sc->amrr_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->amrr_xfer == NULL) {
+	struct usbd_pipe *pipe0 = usbd_get_pipe0(sc->sc_udev);
+	error = usbd_create_xfer(pipe0, sizeof(sc->sta), 0, 0,
+	    &sc->amrr_xfer);
+	if (error) {
 		printf("%s: could not allocate AMRR xfer\n",
 		    device_xname(sc->sc_dev));
 		goto fail;
@@ -2082,10 +2069,12 @@ rum_init(struct ifnet *ifp)
 	 * Start up the receive pipe.
 	 */
 	for (i = 0; i < RUM_RX_LIST_COUNT; i++) {
+		struct rum_rx_data *data;
+
 		data = &sc->rx_data[i];
 
-		usbd_setup_xfer(data->xfer, sc->sc_rx_pipeh, data, data->buf,
-		    MCLBYTES, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, rum_rxeof);
+		usbd_setup_xfer(data->xfer, data, data->buf, MCLBYTES,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, rum_rxeof);
 		error = usbd_transfer(data->xfer);
 		if (error != USBD_NORMAL_COMPLETION &&
 		    error != USBD_IN_PROGRESS) {
@@ -2146,7 +2135,7 @@ rum_stop(struct ifnet *ifp, int disable)
 	rum_write(sc, RT2573_MAC_CSR1, 0);
 
 	if (sc->amrr_xfer != NULL) {
-		usbd_free_xfer(sc->amrr_xfer);
+		usbd_destroy_xfer(sc->amrr_xfer);
 		sc->amrr_xfer = NULL;
 	}
 

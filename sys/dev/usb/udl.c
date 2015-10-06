@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11.6.5 2015/04/06 15:18:13 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.6.6 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.5 2015/04/06 15:18:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.6 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -835,20 +835,15 @@ udl_cmdq_alloc(struct udl_softc *sc)
 
 		cmdq->cq_sc = sc;
 
-		cmdq->cq_xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (cmdq->cq_xfer == NULL) {
+		int err = usbd_create_xfer(sc->sc_tx_pipeh,
+		    UDL_CMD_BUFFER_SIZE, 0, 0, &cmdq->cq_xfer);
+		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "%s: can't allocate xfer handle!\n", __func__);
 			goto error;
 		}
 
-		cmdq->cq_buf =
-		    usbd_alloc_buffer(cmdq->cq_xfer, UDL_CMD_BUFFER_SIZE);
-		if (cmdq->cq_buf == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "%s: can't allocate xfer buffer!\n", __func__);
-			goto error;
-		}
+		cmdq->cq_buf = usbd_get_buffer(cmdq->cq_xfer);
 
 		TAILQ_INSERT_TAIL(&sc->sc_freecmd, cmdq, cq_chain);
 	}
@@ -870,7 +865,7 @@ udl_cmdq_free(struct udl_softc *sc)
 		cmdq = &sc->sc_cmdq[i];
 
 		if (cmdq->cq_xfer != NULL) {
-			usbd_free_xfer(cmdq->cq_xfer);
+			usbd_destroy_xfer(cmdq->cq_xfer);
 			cmdq->cq_xfer = NULL;
 			cmdq->cq_buf = NULL;
 		}
@@ -1430,8 +1425,8 @@ udl_cmd_send(struct udl_softc *sc)
 	len = UDL_CMD_BUFSIZE(sc);
 
 	/* do xfer */
-	error = usbd_bulk_transfer(cmdq->cq_xfer, sc->sc_tx_pipeh,
-	    0, USBD_NO_TIMEOUT, cmdq->cq_buf, &len);
+	error = usbd_bulk_transfer(cmdq->cq_xfer, sc->sc_tx_pipeh, 0,
+	    USBD_NO_TIMEOUT, cmdq->cq_buf, &len);
 
 	UDL_CMD_BUFINIT(sc);
 
@@ -1482,7 +1477,7 @@ udl_cmd_send_async(struct udl_softc *sc)
 
 	/* do xfer */
 	mutex_enter(&sc->sc_mtx);
-	usbd_setup_xfer(cmdq->cq_xfer, sc->sc_tx_pipeh, cmdq, cmdq->cq_buf,
+	usbd_setup_xfer(cmdq->cq_xfer, cmdq, cmdq->cq_buf,
 	    len, 0, USBD_NO_TIMEOUT, udl_cmd_send_async_cb);
 	error = usbd_transfer(cmdq->cq_xfer);
 	if (error != USBD_NORMAL_COMPLETION && error != USBD_IN_PROGRESS) {

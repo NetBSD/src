@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.10 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.11 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.10 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.11 2015/10/06 21:32:15 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2603,24 +2603,28 @@ uaudio_trigger_input(void *addr, void *start, void *end, int blksize,
 		    ch->fraction);
 
 	mutex_spin_exit(&sc->sc_intr_lock);
-	err = uaudio_chan_alloc_buffers(sc, ch);
+	err = uaudio_chan_open(sc, ch);
 	if (err) {
 		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
-	err = uaudio_chan_open(sc, ch);
+	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
-		uaudio_chan_free_buffers(sc, ch);
+		uaudio_chan_close(sc, ch);
 		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
+
 
 	ch->intr = intr;
 	ch->arg = arg;
 
-	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) /* XXX -1 shouldn't be needed */
+	 /* XXX -1 shouldn't be needed */
+	for (i = 0; i < UAUDIO_NCHANBUFS-1; i++) {
 		uaudio_chan_rtransfer(ch);
+	}
+
 	mutex_spin_enter(&sc->sc_intr_lock);
 
 	return 0;
@@ -2649,15 +2653,15 @@ uaudio_trigger_output(void *addr, void *start, void *end, int blksize,
 		    ch->fraction);
 
 	mutex_spin_exit(&sc->sc_intr_lock);
-	err = uaudio_chan_alloc_buffers(sc, ch);
+	err = uaudio_chan_open(sc, ch);
 	if (err) {
 		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
 
-	err = uaudio_chan_open(sc, ch);
+	err = uaudio_chan_alloc_buffers(sc, ch);
 	if (err) {
-		uaudio_chan_free_buffers(sc, ch);
+		uaudio_chan_close(sc, ch);
 		mutex_spin_enter(&sc->sc_intr_lock);
 		return EIO;
 	}
@@ -2744,22 +2748,19 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 Static usbd_status
 uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 {
-	struct usbd_xfer *xfer;
-	void *tbuf;
 	int i, size;
 
 	size = (ch->bytes_per_frame + ch->sample_size) * UAUDIO_NFRAMES;
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++) {
-		xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (xfer == NULL)
+		struct usbd_xfer *xfer;
+
+		int err = usbd_create_xfer(ch->pipe, size, 0, UAUDIO_NFRAMES,
+		    &xfer);
+		if (err)
 			goto bad;
+
 		ch->chanbufs[i].xfer = xfer;
-		tbuf = usbd_alloc_buffer(xfer, size);
-		if (tbuf == 0) {
-			i++;
-			goto bad;
-		}
-		ch->chanbufs[i].buffer = tbuf;
+		ch->chanbufs[i].buffer = usbd_get_buffer(xfer);
 		ch->chanbufs[i].chan = ch;
 	}
 
@@ -2768,7 +2769,7 @@ uaudio_chan_alloc_buffers(struct uaudio_softc *sc, struct chan *ch)
 bad:
 	while (--i >= 0)
 		/* implicit buffer free */
-		usbd_free_xfer(ch->chanbufs[i].xfer);
+		usbd_destroy_xfer(ch->chanbufs[i].xfer);
 	return USBD_NOMEM;
 }
 
@@ -2778,7 +2779,7 @@ uaudio_chan_free_buffers(struct uaudio_softc *sc, struct chan *ch)
 	int i;
 
 	for (i = 0; i < UAUDIO_NCHANBUFS; i++)
-		usbd_free_xfer(ch->chanbufs[i].xfer);
+		usbd_destroy_xfer(ch->chanbufs[i].xfer);
 }
 
 /* Called with USB lock held. */
@@ -2839,9 +2840,8 @@ uaudio_chan_ptransfer(struct chan *ch)
 
 	//DPRINTFN(5, "ptransfer xfer=%p\n", cb->xfer);
 	/* Fill the request */
-	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes,
-			     UAUDIO_NFRAMES, 0,
-			     uaudio_chan_pintr);
+	usbd_setup_isoc_xfer(cb->xfer, cb, cb->sizes, UAUDIO_NFRAMES, 0,
+	    uaudio_chan_pintr);
 
 	(void)usbd_transfer(cb->xfer);
 }
@@ -2922,9 +2922,8 @@ uaudio_chan_rtransfer(struct chan *ch)
 
 	DPRINTFN(5, "transfer xfer=%p\n", cb->xfer);
 	/* Fill the request */
-	usbd_setup_isoc_xfer(cb->xfer, ch->pipe, cb, cb->sizes,
-			     UAUDIO_NFRAMES, 0,
-			     uaudio_chan_rintr);
+	usbd_setup_isoc_xfer(cb->xfer, cb, cb->sizes, UAUDIO_NFRAMES, 0,
+	    uaudio_chan_rintr);
 
 	(void)usbd_transfer(cb->xfer);
 }

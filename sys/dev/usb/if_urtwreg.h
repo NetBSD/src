@@ -363,12 +363,12 @@ struct urtw_softc {
 	struct usbd_pipe *		sc_txpipe_normal;
 #define	URTW_PRIORITY_LOW		0
 #define	URTW_PRIORITY_NORMAL		1
+#define	URTW_PRIORITY_MAX		2
 #define	URTW_DATA_TIMEOUT		10000		/* 10 sec */
 	struct urtw_rx_data		sc_rx_data[URTW_RX_DATA_LIST_COUNT];
-	struct urtw_tx_data		sc_tx_data[URTW_TX_DATA_LIST_COUNT];
-	uint32_t			sc_tx_low_queued;
-	uint32_t			sc_tx_normal_queued;
-	uint32_t			sc_txidx;
+	struct urtw_tx_data		sc_tx_data[URTW_PRIORITY_MAX][URTW_TX_DATA_LIST_COUNT];
+	uint32_t			sc_tx_queued[URTW_PRIORITY_MAX];;
+	uint32_t			sc_txidx[URTW_PRIORITY_MAX];
 	uint8_t				sc_rts_retry;
 	uint8_t				sc_tx_retry;
 	uint8_t				sc_preamble_mode;

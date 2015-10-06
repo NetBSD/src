@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek.c,v 1.9.4.2 2015/03/21 11:33:37 skrll Exp $ */
+/* $NetBSD: auvitek.c,v 1.9.4.3 2015/10/06 21:32:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.9.4.2 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek.c,v 1.9.4.3 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -219,24 +219,6 @@ auvitek_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	for (i = 0; i < AUVITEK_NBULK_XFERS; i++) {
-		sc->sc_ab.ab_bx[i].bx_sc = sc;
-		sc->sc_ab.ab_bx[i].bx_xfer = usbd_alloc_xfer(sc->sc_udev);
-		if (sc->sc_ab.ab_bx[i].bx_xfer == NULL) {
-			aprint_error_dev(self, "couldn't allocate xfer\n");
-			sc->sc_dying = 1;
-			return;
-		}
-		sc->sc_ab.ab_bx[i].bx_buffer = usbd_alloc_buffer(
-		    sc->sc_ab.ab_bx[i].bx_xfer, AUVITEK_BULK_BUFLEN);
-		if (sc->sc_ab.ab_bx[i].bx_buffer == NULL) {
-			aprint_error_dev(self,
-			    "couldn't allocate xfer buffer\n");
-			sc->sc_dying = 1;
-			return;
-		}
-	}
-
 	aprint_debug_dev(self, "bulk endpoint 0x%02x size %d\n",
 	    sc->sc_ab.ab_endpt, AUVITEK_BULK_BUFLEN);
 
@@ -278,7 +260,6 @@ static int
 auvitek_detach(device_t self, int flags)
 {
 	struct auvitek_softc *sc = device_private(self);
-	unsigned int i;
 
 	sc->sc_dying = 1;
 
@@ -296,11 +277,6 @@ auvitek_detach(device_t self, int flags)
 	auvitek_i2c_detach(sc, flags);
 
 	mutex_destroy(&sc->sc_subdev_lock);
-
-	for (i = 0; i < AUVITEK_NBULK_XFERS; i++) {
-		if (sc->sc_ab.ab_bx[i].bx_xfer)
-			usbd_free_xfer(sc->sc_ab.ab_bx[i].bx_xfer);
-	}
 
 	return 0;
 }

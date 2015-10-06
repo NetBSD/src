@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.5 2015/05/26 12:02:26 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.6 2015/10/06 21:32:15 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.5 2015/05/26 12:02:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.6 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -754,9 +754,8 @@ urndis_encap(struct urndis_softc *sc, struct mbuf *m, int idx)
 
 	c->sc_mbuf = m;
 
-	usbd_setup_xfer(c->sc_xfer, sc->sc_bulkout_pipe, c, c->sc_buf,
-	    le32toh(msg->rm_len), USBD_FORCE_SHORT_XFER, 10000,
-	    urndis_txeof);
+	usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, le32toh(msg->rm_len),
+	    USBD_FORCE_SHORT_XFER, 10000, urndis_txeof);
 
 	/* Transmit */
 	err = usbd_transfer(c->sc_xfer);
@@ -925,13 +924,11 @@ urndis_rx_list_init(struct urndis_softc *sc)
 			return ENOBUFS;
 
 		if (c->sc_xfer == NULL) {
-			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->sc_xfer == NULL)
-				return ENOBUFS;
-			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    RNDIS_BUFSZ);
-			if (c->sc_buf == NULL)
-				return ENOBUFS;
+			int err = usbd_create_xfer(sc->sc_bulkin_pipe,
+			    RNDIS_BUFSZ, USBD_SHORT_XFER_OK, 0, &c->sc_xfer);
+			if (err)
+				return err;
+			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}
 
@@ -952,13 +949,11 @@ urndis_tx_list_init(struct urndis_softc *sc)
 		c->sc_idx = i;
 		c->sc_mbuf = NULL;
 		if (c->sc_xfer == NULL) {
-			c->sc_xfer = usbd_alloc_xfer(sc->sc_udev);
-			if (c->sc_xfer == NULL)
-				return ENOBUFS;
-			c->sc_buf = usbd_alloc_buffer(c->sc_xfer,
-			    RNDIS_BUFSZ);
-			if (c->sc_buf == NULL)
-				return ENOBUFS;
+			int err = usbd_create_xfer(sc->sc_bulkout_pipe,
+			    RNDIS_BUFSZ, USBD_FORCE_SHORT_XFER, 0, &c->sc_xfer);
+			if (err)
+				return err;
+			c->sc_buf = usbd_get_buffer(c->sc_xfer);
 		}
 	}
 	return 0;
@@ -1041,22 +1036,6 @@ urndis_init(struct ifnet *ifp)
 
 	s = splnet();
 
-	err = urndis_tx_list_init(sc);
-	if (err) {
-		printf("%s: tx list init failed\n",
-		    DEVNAME(sc));
-		splx(s);
-		return err;
-	}
-
-	err = urndis_rx_list_init(sc);
-	if (err) {
-		printf("%s: rx list init failed\n",
-		    DEVNAME(sc));
-		splx(s);
-		return err;
-	}
-
 	usberr = usbd_open_pipe(sc->sc_iface_data, sc->sc_bulkin_no,
 	    USBD_EXCLUSIVE_USE, &sc->sc_bulkin_pipe);
 	if (usberr) {
@@ -1075,14 +1054,29 @@ urndis_init(struct ifnet *ifp)
 		return EIO;
 	}
 
+	err = urndis_tx_list_init(sc);
+	if (err) {
+		printf("%s: tx list init failed\n",
+		    DEVNAME(sc));
+		splx(s);
+		return err;
+	}
+
+	err = urndis_rx_list_init(sc);
+	if (err) {
+		printf("%s: rx list init failed\n",
+		    DEVNAME(sc));
+		splx(s);
+		return err;
+	}
+
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
 		struct urndis_chain *c;
 
 		c = &sc->sc_data.sc_rx_chain[i];
-		usbd_setup_xfer(c->sc_xfer, sc->sc_bulkin_pipe, c,
-		    c->sc_buf, RNDIS_BUFSZ,
-		    USBD_SHORT_XFER_OK,
-		    USBD_NO_TIMEOUT, urndis_rxeof);
+
+		usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, RNDIS_BUFSZ,
+		    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urndis_rxeof);
 		usbd_transfer(c->sc_xfer);
 	}
 
@@ -1135,7 +1129,7 @@ urndis_stop(struct ifnet *ifp)
 			sc->sc_data.sc_rx_chain[i].sc_mbuf = NULL;
 		}
 		if (sc->sc_data.sc_rx_chain[i].sc_xfer != NULL) {
-			usbd_free_xfer(sc->sc_data.sc_rx_chain[i].sc_xfer);
+			usbd_destroy_xfer(sc->sc_data.sc_rx_chain[i].sc_xfer);
 			sc->sc_data.sc_rx_chain[i].sc_xfer = NULL;
 		}
 	}
@@ -1146,7 +1140,7 @@ urndis_stop(struct ifnet *ifp)
 			sc->sc_data.sc_tx_chain[i].sc_mbuf = NULL;
 		}
 		if (sc->sc_data.sc_tx_chain[i].sc_xfer != NULL) {
-			usbd_free_xfer(sc->sc_data.sc_tx_chain[i].sc_xfer);
+			usbd_destroy_xfer(sc->sc_data.sc_tx_chain[i].sc_xfer);
 			sc->sc_data.sc_tx_chain[i].sc_xfer = NULL;
 		}
 	}
@@ -1225,9 +1219,8 @@ urndis_rxeof(struct usbd_xfer *xfer,
 
 done:
 	/* Setup new transfer. */
-	usbd_setup_xfer(c->sc_xfer, sc->sc_bulkin_pipe, c, c->sc_buf,
-	    RNDIS_BUFSZ, USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT,
-	    urndis_rxeof);
+	usbd_setup_xfer(c->sc_xfer, c, c->sc_buf, RNDIS_BUFSZ,
+	    USBD_SHORT_XFER_OK, USBD_NO_TIMEOUT, urndis_rxeof);
 	usbd_transfer(c->sc_xfer);
 }
 

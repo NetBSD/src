@@ -1,4 +1,4 @@
-/*	$NetBSD: umassvar.h,v 1.35.6.2 2015/03/19 17:26:43 skrll Exp $	*/
+/*	$NetBSD: umassvar.h,v 1.35.6.3 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 MAEKAWA Masahide <bishop@rr.iij4u.or.jp>,
@@ -198,34 +198,37 @@ struct umass_softc {
 
 	/* xfer handles
 	 * Most of our operations are initiated from interrupt context, so
-	 * we need to avoid using the one that is in use. We want to avoid
+	 * we need to avoid using the one that is in use. We have to avoid
 	 * allocating them in the interrupt context as well.
 	 */
 	/* indices into array below */
 #define XFER_BBB_CBW		0	/* Bulk-Only */
-#define XFER_BBB_DATA		1
-#define XFER_BBB_DCLEAR		2
-#define XFER_BBB_CSW1		3
-#define XFER_BBB_CSW2		4
-#define XFER_BBB_SCLEAR		5
-#define XFER_BBB_RESET1		6
-#define XFER_BBB_RESET2		7
-#define XFER_BBB_RESET3		8
+#define XFER_BBB_DATAIN		1
+#define XFER_BBB_DATAOUT	2
+#define XFER_BBB_DCLEAR		3
+#define XFER_BBB_CSW1		4
+#define XFER_BBB_CSW2		5
+#define XFER_BBB_SCLEAR		6
+#define XFER_BBB_RESET1		7
+#define XFER_BBB_RESET2		8
+#define XFER_BBB_RESET3		9
 
 #define XFER_CBI_CB		0	/* CBI */
-#define XFER_CBI_DATA		1
-#define XFER_CBI_STATUS		2
-#define XFER_CBI_DCLEAR		3
-#define XFER_CBI_SCLEAR		4
-#define XFER_CBI_RESET1		5
-#define XFER_CBI_RESET2		6
-#define XFER_CBI_RESET3		7
+#define XFER_CBI_DATAIN		1
+#define XFER_CBI_DATAOUT	2
+#define XFER_CBI_STATUS		3
+#define XFER_CBI_DCLEAR		4
+#define XFER_CBI_SCLEAR		5
+#define XFER_CBI_RESET1		6
+#define XFER_CBI_RESET2		7
+#define XFER_CBI_RESET3		8
 
-#define XFER_NR			9	/* maximum number */
+#define XFER_NR			10	/* maximum number */
 
 	struct usbd_xfer *	transfer_xfer[XFER_NR]; /* for ctrl xfers */
 
-	void			*data_buffer;
+	void			*datain_buffer;
+	void			*dataout_buffer;
 	void			*cmd_buffer;
 	void			*s1_buffer;
 	void			*s2_buffer;

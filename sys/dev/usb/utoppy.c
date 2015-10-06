@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.8 2015/04/28 06:55:26 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.9 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.8 2015/04/28 06:55:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.9 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -281,39 +281,52 @@ utoppy_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iface = iface;
 	sc->sc_udev = dev;
 
-	sc->sc_out_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_out_xfer == NULL) {
+	sc->sc_out_pipe = NULL;
+	sc->sc_in_pipe = NULL;
+
+	if (usbd_open_pipe(sc->sc_iface, sc->sc_out, 0, &sc->sc_out_pipe)) {
+		DPRINTF(UTOPPY_DBG_OPEN, ("%s: usbd_open_pipe(OUT) failed\n",
+		    device_xname(sc->sc_dev)));
+		aprint_error_dev(self, "could not open OUT pipe\n");
+		sc->sc_dying = 1;
+		return;
+	}
+
+	if (usbd_open_pipe(sc->sc_iface, sc->sc_in, 0, &sc->sc_in_pipe)) {
+		DPRINTF(UTOPPY_DBG_OPEN, ("%s: usbd_open_pipe(IN) failed\n",
+		    device_xname(sc->sc_dev)));
+		aprint_error_dev(self, "could not open IN pipe\n");
+
+		usbd_close_pipe(sc->sc_out_pipe);
+		sc->sc_out_pipe = NULL;
+		sc->sc_dying = 1;
+		return;
+	}
+
+	int error;
+	error = usbd_create_xfer(sc->sc_out_pipe, UTOPPY_FRAG_SIZE, 0, 0,
+	    &sc->sc_out_xfer);
+	if (error) {
 		aprint_error_dev(self, "could not allocate bulk out xfer\n");
 		goto fail0;
 	}
 
-	sc->sc_out_buf = usbd_alloc_buffer(sc->sc_out_xfer, UTOPPY_FRAG_SIZE);
-	if (sc->sc_out_buf == NULL) {
-		aprint_error_dev(self, "could not allocate bulk out buffer\n");
-		goto fail1;
-	}
-
-	sc->sc_in_xfer = usbd_alloc_xfer(sc->sc_udev);
-	if (sc->sc_in_xfer == NULL) {
+	error = usbd_create_xfer(sc->sc_in_pipe, UTOPPY_FRAG_SIZE,
+	    USBD_SHORT_XFER_OK, 0, &sc->sc_in_xfer);
+	if (error) {
 		aprint_error_dev(self, "could not allocate bulk in xfer\n");
 		goto fail1;
 	}
 
-	sc->sc_in_buf = usbd_alloc_buffer(sc->sc_in_xfer, UTOPPY_FRAG_SIZE);
-	if (sc->sc_in_buf == NULL) {
-		aprint_error_dev(self, "could not allocate bulk in buffer\n");
-		goto fail2;
-	}
+	sc->sc_out_buf = usbd_get_buffer(sc->sc_out_xfer);
+	sc->sc_in_buf = usbd_get_buffer(sc->sc_in_xfer);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
 			   sc->sc_dev);
 
 	return;
 
- fail2:	usbd_free_xfer(sc->sc_in_xfer);
-	sc->sc_in_xfer = NULL;
-
- fail1:	usbd_free_xfer(sc->sc_out_xfer);
+ fail1:	usbd_destroy_xfer(sc->sc_out_xfer);
 	sc->sc_out_xfer = NULL;
 
  fail0:	sc->sc_dying = 1;
@@ -348,9 +361,9 @@ utoppy_detach(device_t self, int flags)
 		usbd_abort_pipe(sc->sc_in_pipe);
 
 	if (sc->sc_in_xfer != NULL)
-		usbd_free_xfer(sc->sc_in_xfer);
+		usbd_destroy_xfer(sc->sc_in_xfer);
 	if (sc->sc_out_xfer != NULL)
-		usbd_free_xfer(sc->sc_out_xfer);
+		usbd_destroy_xfer(sc->sc_out_xfer);
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0)
@@ -527,7 +540,7 @@ utoppy_bulk_transfer(struct usbd_xfer *xfer, struct usbd_pipe *pipe,
 {
 	usbd_status err;
 
-	usbd_setup_xfer(xfer, pipe, 0, buf, *size, flags, timeout, NULL);
+	usbd_setup_xfer(xfer, 0, buf, *size, flags, timeout, NULL);
 
 	err = usbd_sync_transfer_sig(xfer);
 
@@ -1346,25 +1359,6 @@ utoppyopen(dev_t dev, int flag, int mode,
 	sc->sc_refcnt++;
 	sc->sc_state = UTOPPY_STATE_OPENING;
 	sc->sc_turbo_mode = 0;
-	sc->sc_out_pipe = NULL;
-	sc->sc_in_pipe = NULL;
-
-	if (usbd_open_pipe(sc->sc_iface, sc->sc_out, 0, &sc->sc_out_pipe)) {
-		DPRINTF(UTOPPY_DBG_OPEN, ("%s: utoppyopen: usbd_open_pipe(OUT) "
-		    "failed\n", device_xname(sc->sc_dev)));
-		error = EIO;
-		goto done;
-	}
-
-	if (usbd_open_pipe(sc->sc_iface, sc->sc_in, 0, &sc->sc_in_pipe)) {
-		DPRINTF(UTOPPY_DBG_OPEN, ("%s: utoppyopen: usbd_open_pipe(IN) "
-		    "failed\n", device_xname(sc->sc_dev)));
-		error = EIO;
-		usbd_close_pipe(sc->sc_out_pipe);
-		sc->sc_out_pipe = NULL;
-		goto done;
-	}
-
 	sc->sc_out_data = kmem_alloc(UTOPPY_BSIZE + 1, KM_SLEEP);
 	if (sc->sc_out_data == NULL) {
 		error = ENOMEM;
@@ -1385,16 +1379,9 @@ utoppyopen(dev_t dev, int flag, int mode,
 	if ((error = utoppy_check_ready(sc)) != 0) {
 		DPRINTF(UTOPPY_DBG_OPEN, ("%s: utoppyopen: utoppy_check_ready()"
 		    " returned %d\n", device_xname(sc->sc_dev), error));
- error:
-		usbd_abort_pipe(sc->sc_out_pipe);
-		usbd_close_pipe(sc->sc_out_pipe);
-		sc->sc_out_pipe = NULL;
-		usbd_abort_pipe(sc->sc_in_pipe);
-		usbd_close_pipe(sc->sc_in_pipe);
-		sc->sc_in_pipe = NULL;
 	}
 
- done:
+ error:
 	sc->sc_state = error ? UTOPPY_STATE_CLOSED : UTOPPY_STATE_IDLE;
 
 	DPRINTF(UTOPPY_DBG_OPEN, ("%s: utoppyopen: done. error %d, new state "

@@ -1,4 +1,4 @@
-/*	$NetBSD: stuirda.c,v 1.16.2.6 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: stuirda.c,v 1.16.2.7 2015/10/06 21:32:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001,2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.6 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stuirda.c,v 1.16.2.7 2015/10/06 21:32:15 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -230,23 +230,20 @@ stuirda_fwload(struct uirda_softc *sc) {
 		    device_xname(sc->sc_dev), rc);
 		goto giveup3;
 	}
-	fwxfer = usbd_alloc_xfer(sc->sc_udev);
-	if (fwxfer == NULL) {
+
+	int err = usbd_create_xfer(fwpipe, 1024, USBD_FORCE_SHORT_XFER, 0,
+	    &fwxfer);
+	if (err) {
 		printf("%s: Cannot alloc xfer\n", device_xname(sc->sc_dev));
 		goto giveup4;
 	}
-	usbbuf = usbd_alloc_buffer(fwxfer, 1024);
-	if (usbbuf == NULL) {
-		printf("%s: Cannot alloc usb buf\n", device_xname(sc->sc_dev));
-		goto giveup5;
-	}
+	usbbuf = usbd_get_buffer(fwxfer);
 	n = (buffer + fwsize - p);
 	while (n > 0) {
 		if (n > 1023)
 			n = 1023;
 		memcpy(usbbuf, p, n);
-		rc = usbd_bulk_transfer(fwxfer, fwpipe,
-		    USBD_SYNCHRONOUS|USBD_FORCE_SHORT_XFER,
+		rc = usbd_bulk_transfer(fwxfer, fwpipe, USBD_FORCE_SHORT_XFER,
 		    5000, usbbuf, &n);
 		printf("%s: write: rc=%d, %d left\n",
 		    device_xname(sc->sc_dev), rc, n);
@@ -262,9 +259,8 @@ stuirda_fwload(struct uirda_softc *sc) {
 	delay(100000);
 	/* TODO: more code here */
 	rc = 0;
-	usbd_free_buffer(fwxfer);
+	usbd_destroy_xfer(fwxfer);
 
-	giveup5: usbd_free_xfer(fwxfer);
 	giveup4: usbd_close_pipe(fwpipe);
 	giveup3: firmware_free(buffer, fwsize);
 	giveup2: firmware_close(fh);
@@ -307,25 +303,25 @@ stuirda_write(void *h, struct uio *uio, int flag)
 	}
 
 	error = uiomove(sc->sc_wr_buf + STUIRDA_HEADER_SIZE, n, uio);
-	if (!error) {
-		DPRINTFN(1, ("uirdawrite: transfer %d bytes\n", n));
+	if (error)
+		goto done;
 
-		n += STUIRDA_HEADER_SIZE + sc->sc_wr_buf[1];
-		err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
-			  USBD_FORCE_SHORT_XFER,
-			  UIRDA_WR_TIMEOUT,
-			  sc->sc_wr_buf, &n);
-		DPRINTFN(2, ("uirdawrite: err=%d\n", err));
-		if (err) {
-			if (err == USBD_INTERRUPTED)
-				error = EINTR;
-			else if (err == USBD_TIMEOUT)
-				error = ETIMEDOUT;
-			else
-				error = EIO;
-		}
+	DPRINTFN(1, ("uirdawrite: transfer %d bytes\n", n));
+
+	n += STUIRDA_HEADER_SIZE + sc->sc_wr_buf[1];
+
+	err = usbd_bulk_transfer(sc->sc_wr_xfer, sc->sc_wr_pipe,
+	    USBD_FORCE_SHORT_XFER, UIRDA_WR_TIMEOUT, sc->sc_wr_buf, &n);
+	DPRINTFN(2, ("uirdawrite: err=%d\n", err));
+	if (err) {
+		if (err == USBD_INTERRUPTED)
+			error = EINTR;
+		else if (err == USBD_TIMEOUT)
+			error = ETIMEDOUT;
+		else
+			error = EIO;
 	}
-
+done:
 	mutex_exit(&sc->sc_wr_buf_lk);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeupold(sc->sc_dev);
