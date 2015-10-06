@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.9 2015/10/02 05:22:52 msaitoh Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.10 2015/10/06 15:06:05 christos Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.9 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.10 2015/10/06 15:06:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,7 +352,8 @@ acpi_md_mcfg_validate(uint64_t addr, int bus_start, int *bus_end)
 	if (bim == NULL)
 		return false;
 
-	size = (*bus_end - bus_start + 1) * ACPIMCFG_SIZE_PER_BUS;
+	size = *bus_end - bus_start + 1;
+	size *= ACPIMCFG_SIZE_PER_BUS;
 	for (i = 0; i < bim->num; i++) {
 		mapaddr = bim->entry[i].addr;
 		mapsize = bim->entry[i].size;
