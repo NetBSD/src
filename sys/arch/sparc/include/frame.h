@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.8 2011/04/12 07:54:16 mrg Exp $ */
+/*	$NetBSD: frame.h,v 1.9 2015/10/06 20:03:05 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -56,7 +56,7 @@
  * windows to the stack.
  */
 #ifndef _LOCORE
-#ifndef SUN4U
+#ifndef __sparc_v9__
 struct frame {
 	int32_t	fr_local[8];	/* space to save locals (%l0..%l7) */
 	int32_t	fr_arg[6];	/* space to save arguments (%i0..%i5) */
