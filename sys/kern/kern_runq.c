@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.43 2014/08/03 19:14:24 wiz Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.44 2015/10/07 00:32:34 christos Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.43 2014/08/03 19:14:24 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.44 2015/10/07 00:32:34 christos Exp $");
+
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -119,6 +121,10 @@ static u_int	balance_period;		/* Balance period */
 static struct cpu_info *worker_ci;	/* Victim CPU */
 #ifdef MULTIPROCESSOR
 static struct callout balance_ch;	/* Callout of balancer */
+#endif
+
+#ifdef KDTRACE_HOOKS
+struct lwp *curthread;
 #endif
 
 void
@@ -712,6 +718,9 @@ sched_lwp_stats(struct lwp *l)
 
 	/* Scheduler-specific hook */
 	sched_pstats_hook(l, batch);
+#ifdef KDTRACE_HOOKS
+	curthread = l;
+#endif
 }
 
 /*
