@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.102 2015/08/28 14:23:18 rjs Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.103 2015/10/07 08:48:04 ozaki-r Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.102 2015/08/28 14:23:18 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.103 2015/10/07 08:48:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1971,8 +1971,16 @@ out:
 	bridge_release_member(sc, bif);
 
 	/* Queue the packet for bridge forwarding. */
-	if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, 0)))
-		m_freem(m);
+	{
+		/*
+		 * Force to enqueue to curcpu's pktq (RX can run on a CPU
+		 * other than CPU#0). XXX need fundamental solution.
+		 */
+		const unsigned hash = curcpu()->ci_index;
+
+		if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, hash)))
+			m_freem(m);
+	}
 }
 
 /*
