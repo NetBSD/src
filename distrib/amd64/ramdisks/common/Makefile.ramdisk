@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.10 2012/10/16 08:23:20 apb Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.11 2015/10/07 14:09:04 martin Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -25,6 +25,7 @@ IMAGEDEPENDS+= 	${CRUNCHBIN} \
 		${DESTDIR}/usr/mdec/mbr \
 		${DESTDIR}/usr/mdec/mbr_ext \
 		${DESTDIR}/usr/mdec/mbr_bootsel \
+		${DESTDIR}/usr/mdec/gptmbr.bin \
 		${NETBSDSRCDIR}/etc/group ${NETBSDSRCDIR}/etc/master.passwd \
 		${NETBSDSRCDIR}/etc/netconfig ${DISTRIBDIR}/common/protocols \
 		${DISTRIBDIR}/common/services
