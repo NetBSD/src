@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.182 2015/10/05 08:17:31 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.183 2015/10/07 00:33:27 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.182 2015/10/05 08:17:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.183 2015/10/07 00:33:27 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -576,43 +576,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		if (rt->rt_flags & RTF_BROADCAST)
 			break;
 
-		/*
-		 * Case 2:  This route may come from cloning, or a manual route
-		 * add with a LL address.
-		 */
-		flags = LLE_EXCLUSIVE;
-		if ((rt->rt_flags & RTF_CLONED) == 0)
-			flags |= LLE_IFADDR;
-
-		IF_AFDATA_WLOCK(ifp);
-		la = lla_create(LLTABLE(ifp), flags, rt_getkey(rt));
-		IF_AFDATA_WUNLOCK(ifp);
-
-		if (la == NULL) {
-			log(LOG_DEBUG, "%s: lla_create failed\n",
-			    __func__);
-			rt->rt_llinfo = NULL;
-			break;
-		}
-		rt->rt_llinfo = la;
-		switch (ifp->if_type) {
-#if NTOKEN > 0
-		case IFT_ISO88025:
-			la->la_opaque = kmem_alloc(sizeof(struct token_rif),
-			    KM_SLEEP);
-			break;
-#endif /* NTOKEN > 0 */
-		default:
-			break;
-		}
-		la->la_rt = rt;
-		rt->rt_refcnt++;
-		rt->rt_flags |= RTF_LLINFO;
-		arp_inuse++, arp_allocated++;
-
-		LLE_WUNLOCK(la);
-		la = NULL;
-
 		INADDR_TO_IA(satocsin(rt_getkey(rt))->sin_addr, ia);
 		while (ia && ia->ia_ifp != ifp)
 			NEXT_IA_WITH_SAME_ADDR(ia);
@@ -655,6 +618,44 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			if (ifa != rt->rt_ifa)
 				rt_replace_ifa(rt, ifa);
 		}
+
+		/*
+		 * Case 2:  This route may come from cloning, or a manual route
+		 * add with a LL address.
+		 */
+		flags = LLE_EXCLUSIVE;
+		if ((rt->rt_flags & RTF_CLONED) == 0)
+			flags |= LLE_IFADDR;
+
+		IF_AFDATA_WLOCK(ifp);
+		la = lla_create(LLTABLE(ifp), flags, rt_getkey(rt));
+		IF_AFDATA_WUNLOCK(ifp);
+
+		if (la == NULL) {
+			log(LOG_DEBUG, "%s: lla_create failed\n",
+			    __func__);
+			rt->rt_llinfo = NULL;
+			break;
+		}
+		rt->rt_llinfo = la;
+		switch (ifp->if_type) {
+#if NTOKEN > 0
+		case IFT_ISO88025:
+			la->la_opaque = kmem_alloc(sizeof(struct token_rif),
+			    KM_SLEEP);
+			break;
+#endif /* NTOKEN > 0 */
+		default:
+			break;
+		}
+		la->la_rt = rt;
+		rt->rt_refcnt++;
+		rt->rt_flags |= RTF_LLINFO;
+		arp_inuse++, arp_allocated++;
+
+		LLE_WUNLOCK(la);
+		la = NULL;
+
 		break;
 
 	case RTM_DELETE:
