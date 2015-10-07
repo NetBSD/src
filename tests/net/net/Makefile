@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2015/08/06 08:23:14 ozaki-r Exp $
+# $NetBSD: Makefile,v 1.13 2015/10/07 05:24:41 ozaki-r Exp $
 #
 
 .include <bsd.own.mk>
@@ -12,6 +12,7 @@ TESTS_C+=	t_pktinfo
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 TESTS_C+=	t_raw
 TESTS_SH=	t_forwarding
+TESTS_SH+=	t_ipaddress
 TESTS_SH+=	t_ipv6_lifetime
 .endif
 
