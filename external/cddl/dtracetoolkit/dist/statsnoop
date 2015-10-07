@@ -1,9 +1,9 @@
-#!/usr/bin/sh
+#!/bin/sh
 #
 # statsnoop - snoop file stats as they occur.
 #             Written using DTrace (Solaris 10 3/05).
 #
-# $Id: statsnoop,v 1.1.1.1 2015/09/30 22:01:06 christos Exp $
+# $Id: statsnoop,v 1.2 2015/10/07 02:22:29 christos Exp $
 #
 # USAGE:	statsnoop [-a|-A|-ceghlsvxZ] [-f pathname] [-t syscall]
 #		          [-n name] [-p PID]
@@ -191,9 +191,9 @@ fi
  /*
   * Print stat event
   */
- syscall::stat:entry, syscall::stat64:entry, syscall::xstat:entry,
- syscall::lstat:entry, syscall::lstat64:entry, syscall::lxstat:entry,
- syscall::fstat:entry, syscall::fstat64:entry, syscall::fxstat:entry
+ syscall::stat:entry, 
+ syscall::lstat:entry,
+ syscall::fstat:entry
  {
 	/* default is to trace unless filtering */
 	self->ok = FILTER ? 0 : 1;
@@ -204,45 +204,30 @@ fi
 	(OPT_trace == 1 && TRACE == probefunc) ? self->ok = 1 : 1;
  }
 
- syscall::stat:entry, syscall::stat64:entry,
- syscall::lstat:entry, syscall::lstat64:entry, syscall::lxstat:entry
+ syscall::stat:entry,
+ syscall::lstat:entry
  /self->ok/
  {
 	self->pathp = arg0;
  }
 
- syscall::xstat:entry
- /self->ok/
- {
-	self->pathp = arg1;
- }
-
- syscall::stat:return, syscall::stat64:return, syscall::xstat:return,
- syscall::lstat:return, syscall::lstat64:return, syscall::lxstat:return
+ syscall::stat:return
+ syscall::lstat:return
  /self->ok/
  {
 	self->path = copyinstr(self->pathp);
-	self->pathp = 0;
  }
 
- syscall::fstat:return, syscall::fstat64:entry, syscall::fxstat:entry
+ syscall::fstat:return
  /self->ok/
  {
-	self->filep = curthread->t_procp->p_user.u_finfo.fi_list[arg0].uf_file;
+	self->path = strjoin("fd=", lltostr(arg0));
+	/* curthread->l_proc->p_fd->fd_dt->dt_ff[arg0]; */
  }
 
- syscall::fstat:return, syscall::fstat64:return, syscall::fxstat:return
- /self->ok/
- {
-        this->vnodep = self->filep != 0 ? self->filep->f_vnode : 0;
-        self->path = this->vnodep ? (this->vnodep->v_path != 0 ?
-            cleanpath(this->vnodep->v_path) : "<unknown>") : "<unknown>";
-	self->filep = 0;
- }
-
- syscall::stat:return, syscall::stat64:return, syscall::xstat:return,
- syscall::lstat:return, syscall::lstat64:return, syscall::lxstat:return,
- syscall::fstat:return, syscall::fstat64:return, syscall::fxstat:return
+ syscall::stat:return,
+ syscall::lstat:return,
+ syscall::fstat:return
  /self->ok && (! OPT_failonly || (int)arg0 < 0) && 
      ((OPT_file == 0) || (OPT_file == 1 && PATHNAME == copyinstr(self->pathp)))/
  {
@@ -264,7 +249,7 @@ fi
 	OPT_cwd ? printf("%-20s ", cwd) : 1;
 	OPT_type ? printf("%-8s ", probefunc) : 1;
 	OPT_dump == 0 ? printf("%-20s ", self->path) : 1;
-	OPT_args == 1 ? printf("%S", curpsinfo->pr_psargs) : 1;
+/*	OPT_args == 1 ? printf("%S", curpsinfo->pr_psargs) : 1; */
 	printf("\n");
 
 	/* cleanup */
@@ -275,9 +260,11 @@ fi
  /* 
   * Cleanup 
   */
- syscall::stat:return, syscall::stat64:return, syscall::xstat:return,
- syscall::lstat:return, syscall::lstat64:return, syscall::lxstat:return,
- syscall::fstat:return, syscall::fstat64:return, syscall::fxstat:return
+ syscall::stat:return,
+ syscall::lstat:return
+/*
+ syscall::fstat:return
+*/
  /self->ok/
  {
 	self->path = 0;
