@@ -1,4 +1,4 @@
-/*	$NetBSD: psinfo.d,v 1.4 2015/10/06 22:12:09 christos Exp $	*/
+/*	$NetBSD: psinfo.d,v 1.5 2015/10/07 00:35:23 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -87,13 +87,10 @@ translator lwpsinfo_t < struct lwp *T > {
 	pr_wchan = (uintptr_t)T->l_wchan;
 };
 
-/* XXX: does not work with multprocessor, since it needs curcpu() */
-/*
-inline psinfo_t *curpsinfo = xlate <psinfo_t *> (curlwp->l_proc);
+inline psinfo_t *curpsinfo = xlate <psinfo_t *> (curthread->l_proc);
 #pragma D attributes Stable/Stable/Common curpsinfo
 #pragma D binding "1.0" curpsinfo
 
-inline lwpsinfo_t *curlwpsinfo = xlate <lwpsinfo_t *> (curlwp);
+inline lwpsinfo_t *curlwpsinfo = xlate <lwpsinfo_t *> (curthread);
 #pragma D attributes Stable/Stable/Common curlwpsinfo
 #pragma D binding "1.0" curlwpsinfo
-*/
