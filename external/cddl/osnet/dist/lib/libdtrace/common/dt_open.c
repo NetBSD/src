@@ -1309,9 +1309,23 @@ alloc:
 	char *p;
 	size_t len = sizeof(bootfile);
 
+#ifdef __FreeBSD__
+#define DEFKERNEL	"kernel"
+#define BOOTFILE	"kern.bootfile"
+#define THREAD		"struct thread"
+#define MUTEX		"struct mtx"
+#define RWLOCK		"struct rwlock"
+#endif
+#ifdef __NetBSD__
+#define DEFKERNEL	"netbsd"
+#define BOOTFILE	"machdep.booted_kernel"
+#define THREAD		"struct lwp"
+#define MUTEX		"struct kmutex"
+#define RWLOCK		"struct krwlock"
+#endif
 	/* This call shouldn't fail, but use a default just in case. */
-	if (sysctlbyname("kern.bootfile", bootfile, &len, NULL, 0) != 0)
-		strlcpy(bootfile, "kernel", sizeof(bootfile));
+	if (sysctlbyname(BOOTFILE, bootfile, &len, NULL, 0) != 0)
+		strlcpy(bootfile, DEFKERNEL, sizeof(bootfile));
 
 	if ((p = strrchr(bootfile, '/')) != NULL)
 		p++;
@@ -1321,10 +1335,11 @@ alloc:
 	/*
 	 * Format the global variables based on the kernel module name.
 	 */
-	snprintf(curthread_str, sizeof(curthread_str), "%s`struct thread *",p);
-	snprintf(intmtx_str, sizeof(intmtx_str), "int(%s`struct mtx *)",p);
-	snprintf(threadmtx_str, sizeof(threadmtx_str), "struct thread *(%s`struct mtx *)",p);
-	snprintf(rwlock_str, sizeof(rwlock_str), "int(%s`struct rwlock *)",p);
+	snprintf(curthread_str, sizeof(curthread_str), "%s`%s *", p, THREAD);
+	snprintf(intmtx_str, sizeof(intmtx_str), "int(%s`%s *)", p, MUTEX);
+	snprintf(threadmtx_str, sizeof(threadmtx_str), "%s *(%s`%s *)",
+	    THREAD, p, MUTEX);
+	snprintf(rwlock_str, sizeof(rwlock_str), "int(%s`%s *)", p, RWLOCK);
 	snprintf(sxlock_str, sizeof(sxlock_str), "int(%s`struct sxlock *)",p);
 	}
 #endif
