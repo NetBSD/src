@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.h,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lvm.h,v 1.5 2015/10/08 13:40:16 mbalmer Exp $	*/
 
 /*
 ** Id: lvm.h,v 2.35 2015/02/20 14:27:53 roberto Exp 
@@ -29,7 +29,6 @@
 #endif
 
 
-#ifndef _KERNEL
 /*
 ** You can define LUA_FLOORN2I if you want to convert floats to integers
 ** by flooring them (instead of raising an error if they are not
@@ -40,6 +39,7 @@
 #endif
 
 
+#ifndef _KERNEL
 #define tonumber(o,n) \
 	(ttisfloat(o) ? (*(n) = fltvalue(o), 1) : luaV_tonumber_(o,n))
 #else /* _KERNEL */

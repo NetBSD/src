@@ -1,4 +1,4 @@
-/*	$NetBSD: llex.c,v 1.5 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: llex.c,v 1.6 2015/10/08 13:40:16 mbalmer Exp $	*/
 
 /*
 ** Id: llex.c,v 2.93 2015/05/22 17:45:56 roberto Exp 
@@ -227,7 +227,7 @@ static void buffreplace (LexState *ls, char from, char to) {
       if (p[n] == from) p[n] = to;
   }
 }
-
+#endif
 
 #define buff2num(b,o)	(luaO_str2num(luaZ_buffer(b), o) != 0)
 
