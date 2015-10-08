@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_efuse.c,v 1.1 2015/10/08 17:54:30 macallan Exp $ */
+/*	$NetBSD: ingenic_efuse.c,v 1.2 2015/10/08 18:20:31 macallan Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_efuse.c,v 1.1 2015/10/08 17:54:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_efuse.c,v 1.2 2015/10/08 18:20:31 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,7 @@ ingenic_efuse_attach(device_t parent, device_t self, void *aux)
 	ingenic_set_enaddr(&sc->sc_data[0x1a]);
 #ifdef INGENIC_DEBUG
 	{
-		int i. j;
+		int i, j;
 		for (i = 0; i < 0x20; i += 8) {
 			printf("%02x:", i);
 			for (j = 0; j < 8; j++)
