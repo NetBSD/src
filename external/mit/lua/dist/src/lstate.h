@@ -1,7 +1,7 @@
-/*	$NetBSD: lstate.h,v 1.1.1.4 2015/02/02 02:01:07 lneto Exp $	*/
+/*	$NetBSD: lstate.h,v 1.1.1.5 2015/10/08 12:25:20 mbalmer Exp $	*/
 
 /*
-** Id: lstate.h,v 2.119 2014/10/30 18:53:28 roberto Exp 
+** Id: lstate.h,v 2.122 2015/06/01 16:34:37 roberto Exp 
 ** Global State
 ** See Copyright Notice in lua.h
 */
@@ -96,6 +96,7 @@ typedef struct CallInfo {
 #define CIST_YPCALL	(1<<4)	/* call is a yieldable protected call */
 #define CIST_TAIL	(1<<5)	/* call was tail called */
 #define CIST_HOOKYIELD	(1<<6)	/* last hook called yielded */
+#define CIST_LEQ	(1<<7)  /* using __lt for __le */
 
 #define isLua(ci)	((ci)->callstatus & CIST_LUA)
 
@@ -142,6 +143,7 @@ typedef struct global_State {
   TString *memerrmsg;  /* memory-error message */
   TString *tmname[TM_N];  /* array with tag-method names */
   struct Table *mt[LUA_NUMTAGS];  /* metatables for basic types */
+  TString *strcache[STRCACHE_SIZE][1];  /* cache for strings in API */
 } global_State;
 
 

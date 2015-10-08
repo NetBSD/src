@@ -1,7 +1,7 @@
-/*	$NetBSD: lbaselib.c,v 1.1.1.4 2015/02/02 02:01:09 lneto Exp $	*/
+/*	$NetBSD: lbaselib.c,v 1.1.1.5 2015/10/08 12:25:21 mbalmer Exp $	*/
 
 /*
-** Id: lbaselib.c,v 1.309 2014/12/10 12:26:42 roberto Exp 
+** Id: lbaselib.c,v 1.310 2015/03/28 19:14:47 roberto Exp 
 ** Basic library
 ** See Copyright Notice in lua.h
 */
@@ -57,7 +57,7 @@ static const char *b_str2int (const char *s, int base, lua_Integer *pn) {
     return NULL;
   do {
     int digit = (isdigit((unsigned char)*s)) ? *s - '0'
-                   : toupper((unsigned char)*s) - 'A' + 10;
+                   : (toupper((unsigned char)*s) - 'A') + 10;
     if (digit >= base) return NULL;  /* invalid numeral */
     n = n * base + digit;
     s++;
