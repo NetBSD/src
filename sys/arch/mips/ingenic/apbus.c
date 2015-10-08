@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.17 2015/08/07 17:39:58 macallan Exp $ */
+/*	$NetBSD: apbus.c,v 1.18 2015/10/08 17:54:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.17 2015/08/07 17:39:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.18 2015/10/08 17:54:30 macallan Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -72,6 +72,7 @@ typedef struct apbus_dev {
 } apbus_dev_t;
 
 static const apbus_dev_t apbus_devs[] = {
+	{ "efuse",	JZ_EFUSE,	-1, 0, 0, 0},
 	{ "com",	JZ_UART0,	51, CLK_UART0, 0, 0},
 	{ "com",	JZ_UART1,	50, CLK_UART1, 0, 0},
 	{ "com",	JZ_UART2,	49, CLK_UART2, 0, 0},
