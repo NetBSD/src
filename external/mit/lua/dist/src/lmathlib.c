@@ -1,5 +1,7 @@
+/*	$NetBSD: lmathlib.c,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
+
 /*
-** $Id: lmathlib.c,v 1.3 2015/02/02 14:03:05 lneto Exp $
+** Id: lmathlib.c,v 1.115 2015/03/12 14:04:04 roberto Exp 
 ** Standard mathematical library
 ** See Copyright Notice in lua.h
 */
@@ -183,6 +185,9 @@ static int math_log (lua_State *L) {
     res = l_mathop(log)(x);
   else {
     lua_Number base = luaL_checknumber(L, 2);
+#if !defined(LUA_USE_C89)
+    if (base == 2.0) res = l_mathop(log2)(x); else
+#endif
     if (base == 10.0) res = l_mathop(log10)(x);
     else res = l_mathop(log)(x)/l_mathop(log)(base);
   }
