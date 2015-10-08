@@ -1,7 +1,7 @@
-/*	$NetBSD: ltablib.c,v 1.3 2015/02/02 14:03:05 lneto Exp $	*/
+/*	$NetBSD: ltablib.c,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
 
 /*
-** Id: ltablib.c,v 1.79 2014/11/02 19:19:04 roberto Exp 
+** Id: ltablib.c,v 1.80 2015/01/13 16:27:29 roberto Exp 
 ** Library for Table Manipulation
 ** See Copyright Notice in lua.h
 */
@@ -128,8 +128,6 @@ static int tmove (lua_State *L) {
   lua_Integer e = luaL_checkinteger(L, 3);
   lua_Integer t = luaL_checkinteger(L, 4);
   int tt = !lua_isnoneornil(L, 5) ? 5 : 1;  /* destination table */
-  /* the following restriction avoids several problems with overflows */
-  luaL_argcheck(L, f > 0, 2, "initial position must be positive");
   if (e >= f) {  /* otherwise, nothing to move */
     lua_Integer n, i;
     ta.geti = (luaL_getmetafield(L, 1, "__index") == LUA_TNIL)
@@ -138,7 +136,11 @@ static int tmove (lua_State *L) {
     ta.seti = (luaL_getmetafield(L, tt, "__newindex") == LUA_TNIL)
       ? (luaL_checktype(L, tt, LUA_TTABLE), lua_rawseti)
       : lua_seti;
+    luaL_argcheck(L, f > 0 || e < LUA_MAXINTEGER + f, 3,
+                  "too many elements to move");
     n = e - f + 1;  /* number of elements to move */
+    luaL_argcheck(L, t <= LUA_MAXINTEGER - n + 1, 4,
+                  "destination wrap around");
     if (t > f) {
       for (i = n - 1; i >= 0; i--) {
         (*ta.geti)(L, 1, f + i);
