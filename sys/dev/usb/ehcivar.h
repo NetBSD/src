@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.14 2015/04/10 15:25:31 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.15 2015/10/08 07:37:35 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -37,10 +37,10 @@
 typedef struct ehci_soft_qtd {
 	ehci_qtd_t qtd;
 	struct ehci_soft_qtd *nextqtd;	/* mirrors nextqtd in TD */
-	ehci_physaddr_t physaddr;
+	ehci_physaddr_t physaddr;	/* qTD's physical address */
 	usb_dma_t dma;			/* qTD's DMA infos */
 	int offs;			/* qTD's offset in usb_dma_t */
-	struct usbd_xfer *xfer;
+	struct usbd_xfer *xfer;		/* xfer back pointer */
 	LIST_ENTRY(ehci_soft_qtd) hnext;
 	uint16_t len;
 } ehci_soft_qtd_t;
