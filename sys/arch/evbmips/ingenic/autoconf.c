@@ -1,4 +1,4 @@
-/* $NetBSD: autoconf.c,v 1.1 2014/11/22 15:17:02 macallan Exp $ */
+/* $NetBSD: autoconf.c,v 1.2 2015/10/08 17:51:15 macallan Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,13 +30,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.1 2014/11/22 15:17:02 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.2 2015/10/08 17:51:15 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
+
+#include <net/if_ether.h>
+
+static uint8_t enaddr[ETHER_ADDR_LEN];
+static int have_enaddr = false;
+void ingenic_set_enaddr(uint8_t *);
 
 /*
  * Configure all devices on system
@@ -63,7 +69,24 @@ cpu_rootconf(void)
 void
 device_register(device_t dev, void *aux)
 {
+	if (device_is_a(dev, "dme") && have_enaddr) {
+		prop_dictionary_t dict;
+		prop_data_t blob;
+		
+		dict = device_properties(dev);
+
+		blob = prop_data_create_data(enaddr, ETHER_ADDR_LEN);
+		prop_dictionary_set(dict, "mac-address", blob);
+		prop_object_release(blob);
+	}
 #ifdef notyet
 	(*platformsw->apsw_device_register)(dev, aux);
 #endif
+}
+
+void
+ingenic_set_enaddr(uint8_t *goop)
+{
+	memcpy(enaddr, goop, ETHER_ADDR_LEN);
+	have_enaddr = true;
 }
