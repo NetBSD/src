@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.81 2015/09/30 08:42:04 knakahara Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.82 2015/10/08 04:30:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -875,7 +875,8 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_RFCTL	0x5008	/* Receive Filter Control */
 #define WMREG_RFCTL_NFSWDIS	__BIT(6)  /* NFS Write Disable */
 #define WMREG_RFCTL_NFSRDIS	__BIT(7)  /* NFS Read Disable */
-#define WMREG_RFCTL_ACKDIS	__BIT(13) /* ACK Accelerate Disable */
+#define WMREG_RFCTL_ACKDIS	__BIT(12) /* ACK Accelerate Disable */
+#define WMREG_RFCTL_ACKD_DIS	__BIT(13) /* ACK data Disable */
 #define WMREG_RFCTL_IPV6EXDIS	__BIT(16) /* IPv6 Extension Header Disable */
 #define WMREG_RFCTL_NEWIPV6EXDIS __BIT(17) /* New IPv6 Extension Header */
 
