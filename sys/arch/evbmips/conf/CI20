@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.16 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: CI20,v 1.17 2015/10/08 17:58:51 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.16 $"
+#ident 		"CI20-$Revision: 1.17 $"
 
 maxusers	32
 
@@ -141,6 +141,9 @@ mainbus0 	at root
 cpu0 		at mainbus?
 #wdog0		at mainbus?
 apbus0		at mainbus?
+
+# EFUSE Slave Interface
+efuse* 		at apbus?
 
 # On-chip UARTs
 com*		at apbus?
