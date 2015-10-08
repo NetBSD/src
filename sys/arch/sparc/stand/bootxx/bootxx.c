@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.25 2009/10/26 19:16:57 cegger Exp $ */
+/*	$NetBSD: bootxx.c,v 1.26 2015/10/08 20:58:13 joerg Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@ main(void)
 	io.f_flags = F_RAW;
 	if (devopen(&io, 0, &dummy1)) {
 		panic("%s: can't open device `%s'", progname,
-			prom_bootdevice != NULL ? prom_bootdevice : "unknown");
+			prom_bootdevice[0] ? prom_bootdevice : "unknown");
 	}
 
 	(void)loadboot(&io, (void *)PROM_LOADADDR);
