@@ -1,4 +1,4 @@
-/*	$NetBSD: ltable.c,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: ltable.c,v 1.5 2015/10/08 13:40:16 mbalmer Exp $	*/
 
 /*
 ** Id: ltable.c,v 2.111 2015/06/09 14:21:13 roberto Exp 
@@ -116,7 +116,7 @@ static int l_hashfloat (lua_Number n) {
   }
 }
 #endif
-
+#endif /*_KERNEL */
 
 /*
 ** returns the 'main' position of an element in a table (that is, the index

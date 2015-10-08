@@ -1,4 +1,4 @@
-/*	$NetBSD: lstrlib.c,v 1.8 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lstrlib.c,v 1.9 2015/10/08 13:40:16 mbalmer Exp $	*/
 
 /*
 ** Id: lstrlib.c,v 1.229 2015/05/20 17:39:23 roberto Exp 
@@ -886,8 +886,11 @@ static int lua_number2strx (lua_State *L, char *buff, const char *fmt,
 ** by format('%.99f', minfloat), and is equal to 99 + 2 ('-' and '.') +
 ** number of decimal digits to represent minfloat.
 */
+#ifndef _KERNEL
 #define MAX_ITEM	(120 + l_mathlim(MAX_10_EXP))
-
+#else
+#define MAX_ITEM	(120)
+#endif
 
 /* valid flags in a format specification */
 #define FLAGS	"-+ #0"

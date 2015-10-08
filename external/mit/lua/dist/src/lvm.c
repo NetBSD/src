@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.6 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lvm.c,v 1.7 2015/10/08 13:40:16 mbalmer Exp $	*/
 
 /*
 ** Id: lvm.c,v 2.245 2015/06/09 15:53:35 roberto Exp 
@@ -39,7 +39,7 @@
 #define MAXTAGLOOP	2000
 
 
-
+#ifndef _KERNEL
 /*
 ** 'l_intfitsf' checks whether a given integer can be converted to a
 ** float without rounding. Used in comparisons. Left undefined if
@@ -66,6 +66,7 @@
 #endif
 
 #endif
+#endif /*_KERNEL */
 
 #ifndef _KERNEL
 /*
@@ -126,8 +127,8 @@ int luaV_tointeger (const TValue *obj, lua_Integer *p, int mode) {
 }
 
 
-/*
 #ifndef _KERNEL
+/*
 ** Try to convert a 'for' limit to an integer, preserving the
 ** semantics of the loop.
 ** (The following explanation assumes a non-negative step; it is valid
@@ -318,9 +319,12 @@ static int LTnum (const TValue *l, const TValue *r) {
     lua_Integer li = ivalue(l);
     if (ttisinteger(r))
       return li < ivalue(r);  /* both are integers */
+#ifndef _KERNEL
     else  /* 'l' is int and 'r' is float */
       return LTintfloat(li, fltvalue(r));  /* l < r ? */
+#endif
   }
+#ifndef _KERNEL
   else {
     lua_Number lf = fltvalue(l);  /* 'l' must be float */
     if (ttisfloat(r))
@@ -330,6 +334,7 @@ static int LTnum (const TValue *l, const TValue *r) {
     else  /* without NaN, (l < r)  <-->  not(r <= l) */
       return !LEintfloat(ivalue(r), lf);  /* not (r <= l) ? */
   }
+#endif
 }
 
 
@@ -341,9 +346,12 @@ static int LEnum (const TValue *l, const TValue *r) {
     lua_Integer li = ivalue(l);
     if (ttisinteger(r))
       return li <= ivalue(r);  /* both are integers */
+#ifndef _KERNEL
     else  /* 'l' is int and 'r' is float */
       return LEintfloat(li, fltvalue(r));  /* l <= r ? */
+#endif
   }
+#ifndef _KERNEL
   else {
     lua_Number lf = fltvalue(l);  /* 'l' must be float */
     if (ttisfloat(r))
@@ -353,6 +361,7 @@ static int LEnum (const TValue *l, const TValue *r) {
     else  /* without NaN, (l <= r)  <-->  not(r < l) */
       return !LTintfloat(ivalue(r), lf);  /* not (r < l) ? */
   }
+#endif
 }
 
 
