@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_dme.c,v 1.1 2015/03/10 18:15:47 macallan Exp $ */
+/*	$NetBSD: ingenic_dme.c,v 1.2 2015/10/08 17:55:58 macallan Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.1 2015/03/10 18:15:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_dme.c,v 1.2 2015/10/08 17:55:58 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,6 +76,7 @@ ingenic_dme_attach(device_t parent, device_t self, void *aux)
 {
 	struct dme_softc *sc = device_private(self);
 	struct apbus_attach_args *aa = aux;
+	prop_data_t eaddrprop;
 	void *ih;
 	static uint8_t enaddr[ETHER_ADDR_LEN];
 	int error;
@@ -132,12 +133,21 @@ ingenic_dme_attach(device_t parent, device_t self, void *aux)
 		goto fail;
 	}
 
-	/*
-	 * XXX grab MAC address set by uboot
-	 * I'm not sure uboot will program the MAC address into the chip when
-	 * not netbooting, so this needs to go away
-	 */
-	dme_read_c(sc, DM9000_PAB0, enaddr, 6);
+	eaddrprop = prop_dictionary_get(device_properties(self), "mac-address");
+
+	if (eaddrprop != NULL && prop_data_size(eaddrprop) == ETHER_ADDR_LEN) {
+		memcpy(enaddr, prop_data_data_nocopy(eaddrprop),
+			    ETHER_ADDR_LEN);
+		aprint_debug_dev(self, "got MAC address!\n");
+	} else {
+		/*
+		 * XXX
+		 * if we don't get the MAC address as a property we hope like
+		 * hell that uboot programmed it into the network chip
+		 */
+		aprint_error_dev(self, "reading MAC address from chip\n");
+		dme_read_c(sc, DM9000_PAB0, enaddr, 6);
+	}
 	dme_attach(sc, enaddr);
 	return;
 fail:
