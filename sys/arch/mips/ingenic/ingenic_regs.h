@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_regs.h,v 1.21 2015/08/07 17:37:54 macallan Exp $ */
+/*	$NetBSD: ingenic_regs.h,v 1.22 2015/10/08 17:54:30 macallan Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -777,5 +777,43 @@ gpio_as_input(uint32_t g, int pin)
 	#define JZ_SMS_SDR25	0x00000003
 	#define JZ_SMS_SDR50	0x00000004
 #define JZ_MSC_RTCNT	0x5c /* RT FIFO count */
+
+/* EFUSE Slave Interface */
+#define JZ_EFUSE	0x134100D0
+#define JZ_EFUCTRL	0x00
+	#define JZ_EFUSE_BANK	0x40000000	/* select upper 4KBit */
+	#define JZ_EFUSE_ADDR_M	0x3fe00000	/* in bytes */
+	#define JZ_EFUSE_ADDR_SHIFT	21
+	#define JZ_EFUSE_SIZE_M	0x001f0000	/* in bytes */
+	#define JZ_EFUSE_SIZE_SHIFT	16
+	#define JZ_EFUSE_PROG	0x00008000	/* enable programming */
+	#define JZ_EFUSE_WRITE	0x00000002	/* write enable */
+	#define JZ_EFUSE_READ	0x00000001	/* read enable */
+#define JZ_EFUCFG	0x04
+	#define JZ_EFUSE_INT_E		0x80000000	/* which IRQ? */
+	#define JZ_EFUSE_RD_ADJ_M	0x00f00000
+	#define JZ_EFUSE_RD_STROBE	0x000f0000
+	#define JZ_EFUSE_WR_ADJUST	0x0000f000
+	#define JZ_EFUSE_WR_STROBE	0x00000fff
+#define JZ_EFUSTATE	0x08
+	#define JZ_EFUSE_GLOBAL_P	0x00008000	/* wr protect bits */
+	#define JZ_EFUSE_CHIPID_P	0x00004000
+	#define JZ_EFUSE_CUSTID_P	0x00002000
+	#define JZ_EFUSE_SECWR_EN	0x00001000
+	#define JZ_EFUSE_PC_P		0x00000800
+	#define JZ_EFUSE_HDMIKEY_P	0x00000400
+	#define JZ_EFUSE_SECKEY_P	0x00000200
+	#define JZ_EFUSE_SECBOOT_EN	0x00000100
+	#define JZ_EFUSE_HDMI_BUSY	0x00000004
+	#define JZ_EFUSE_WR_DONE	0x00000002
+	#define JZ_EFUSE_RD_DONE	0x00000001
+#define JZ_EFUDATA0	0x0C
+#define JZ_EFUDATA1	0x10
+#define JZ_EFUDATA2	0x14
+#define JZ_EFUDATA3	0x18
+#define JZ_EFUDATA4	0x1C
+#define JZ_EFUDATA5	0x20
+#define JZ_EFUDATA6	0x24
+#define JZ_EFUDATA7	0x28
 
 #endif /* INGENIC_REGS_H */
