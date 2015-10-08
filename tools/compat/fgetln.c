@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.10 2015/10/08 20:20:45 christos Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.11 2015/10/08 20:33:58 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
@@ -17,7 +17,7 @@
  */
 
 /*
- * portable fgetln() version, reentrant
+ * portable fgetln() version
  */
 
 #ifdef HAVE_NBTOOL_CONFIG_H
