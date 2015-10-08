@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.183 2015/10/07 00:33:27 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.184 2015/10/08 08:17:37 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.183 2015/10/07 00:33:27 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.184 2015/10/08 08:17:37 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -844,12 +844,14 @@ retry:
 		IF_AFDATA_RUNLOCK(ifp);
 	}
 
-	if ((la == NULL) && ((flags & LLE_EXCLUSIVE) == 0)
-#ifdef __FreeBSD__
-	    && ((ifp->if_flags & (IFF_NOARP | IFF_STATICARP)) == 0)) {
+#ifdef IFF_STATICARP /* FreeBSD */
+#define _IFF_NOARP (IFF_NOARP | IFF_STATICARP)
 #else
-	    && ((ifp->if_flags & IFF_NOARP) == 0)) {
+#define _IFF_NOARP IFF_NOARP
 #endif
+	if ((la == NULL) && ((flags & LLE_EXCLUSIVE) == 0)
+	    && ((ifp->if_flags & _IFF_NOARP) == 0))
+	{
 		flags |= LLE_EXCLUSIVE;
 		IF_AFDATA_WLOCK(ifp);
 		la = lla_create(LLTABLE(ifp), flags, dst);
@@ -862,6 +864,7 @@ retry:
 			    ifp->if_xname);
 		}
 	}
+#undef _IFF_NOARP
 
 	if (la == NULL) {
 		m_freem(m);
