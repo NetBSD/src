@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2015/07/23 08:03:25 mrg Exp $
+#	$NetBSD: Makefile,v 1.30 2015/10/09 19:23:18 riz Exp $
 
 .include <bsd.own.mk>
 
@@ -26,6 +26,10 @@ EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.tests
 .if defined(MKCOMPATTESTS) && ${MKCOMPATTESTS} != "no"
 EXTRA_DIST_FILES+=	NetBSD.dist.tests.compat
 .endif
+.endif
+
+.if ${MKDTRACE} != "no"
+EXTRA_DIST_FILES+=	${.CURDIR}/NetBSD.dist.dtrace
 .endif
 
 .if ${MKEXTSRC} != "no"

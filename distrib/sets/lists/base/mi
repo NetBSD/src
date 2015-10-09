@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1114 2015/09/03 22:24:02 youri Exp $
+# $NetBSD: mi,v 1.1115 2015/10/09 19:23:18 riz Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1190,6 +1190,11 @@
 ./usr/include/uvm				base-c-usr
 ./usr/include/vm				base-obsolete		obsolete
 ./usr/lib					base-sys-usr		compatdir
+./usr/lib/dtrace				base-sys-usr		dtrace
+./usr/lib/dtrace/errno.d			base-sys-usr		dtrace
+./usr/lib/dtrace/psinfo.d			base-sys-usr		dtrace
+./usr/lib/dtrace/signal.d			base-sys-usr		dtrace
+./usr/lib/dtrace/unistd.d			base-sys-usr		dtrace
 ./usr/lib/i18n					base-i18n-root		compatfile
 ./usr/lib/libntp.so				base-obsolete		obsolete
 ./usr/lib/libssp.so				base-obsolete		obsolete
