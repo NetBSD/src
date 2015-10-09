@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.3 2015/09/30 07:12:32 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.4 2015/10/09 01:50:09 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -131,7 +131,7 @@ struct llentry {
 					mutex_exit(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_DOWNGRADE(lle)	do {} while (0)
-#define	LLE_TRY_UPGRADE(lle)	do {} while (0)
+#define	LLE_TRY_UPGRADE(lle)	(1)
 #define	LLE_LOCK_INIT(lle)	mutex_init(&(lle)->lle_lock, MUTEX_DEFAULT, \
 				    IPL_NET)
 #define	LLE_LOCK_DESTROY(lle)	mutex_destroy(&(lle)->lle_lock)
