@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.88 2015/10/06 09:44:31 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.89 2015/10/09 12:56:02 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.88 2015/10/06 09:44:31 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.89 2015/10/09 12:56:02 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1005,6 +1005,21 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 		panic("%s: bad intr type %d for pic %s pin %d\n",
 		    __func__, source->is_type, pic->pic_name, pin);
 		/* NOTREACHED */
+	}
+
+        /*
+	 * If the establishing interrupt uses shared IRQ, the interrupt uses
+	 * "ci->ci_isources[slot]" instead of allocated by the establishing
+	 * device's pci_intr_alloc() or this function.
+	 */
+	if (source->is_handlers != NULL) {
+		struct intrsource *isp;
+
+		SIMPLEQ_FOREACH(isp, &io_interrupt_sources, is_list) {
+			if (strncmp(intrstr, isp->is_intrid, INTRIDBUF - 1) == 0
+			    && isp->is_handlers == NULL)
+				intr_free_io_intrsource_direct(isp);
+		}
 	}
 
 	/*
