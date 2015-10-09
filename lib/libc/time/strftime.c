@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.34 2015/08/13 11:21:18 christos Exp $	*/
+/*	$NetBSD: strftime.c,v 1.35 2015/10/09 17:21:45 christos Exp $	*/
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
@@ -6,7 +6,7 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.34 2015/08/13 11:21:18 christos Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.35 2015/10/09 17:21:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -487,9 +487,7 @@ label:
 				continue;
 			case 'Z':
 #ifdef TM_ZONE
-				if (t->TM_ZONE != NULL)
-					pt = _add(t->TM_ZONE, pt, ptlim);
-				else
+				pt = _add(t->TM_ZONE, pt, ptlim);
 #endif /* defined TM_ZONE */
 				if (t->tm_isdst >= 0)
 					pt = _add((sp ?

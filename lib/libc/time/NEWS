@@ -1,5 +1,47 @@
 News for the tz database
 
+Release 2015g - 2015-10-01 00:39:51 -0700
+
+  Changes affecting future time stamps
+
+    Turkey's 2015 fall-back transition is scheduled for Nov. 8, not Oct. 25.
+    (Thanks to Fatih.)
+
+    Norfolk moves from +1130 to +1100 on 2015-10-04 at 02:00 local time.
+    (Thanks to Alexander Krivenyshev.)
+
+    Fiji's 2016 fall-back transition is scheduled for January 17, not 24.
+    (Thanks to Ken Rylander.)
+
+    Fort Nelson, British Columbia will not fall back on 2015-11-01.  It has
+    effectively been on MST (-0700) since it advanced its clocks on 2015-03-08.
+    New zone America/Fort_Nelson.  (Thanks to Matt Johnson.)
+
+  Changes affecting past time stamps
+
+    Norfolk observed DST from 1974-10-27 02:00 to 1975-03-02 02:00.
+
+  Changes affecting code
+
+    localtime no longer mishandles America/Anchorage after 2037.
+    (Thanks to Bradley White for reporting the bug.)
+
+    The localtime module allows the variables 'timezone', 'daylight',
+    and 'altzone' to be in common storage shared with other modules,
+    and declares them in case the system <time.h> does not.
+    (Problems reported by Kees Dekker.)
+
+    On platforms with tm_zone, strftime.c now assumes it is not NULL.
+    This simplifies the code and is consistent with zdump.c.
+    (Problem reported by Christos Zoulas.)
+
+  Changes affecting documentation
+
+   The tzfile man page now documents that transition times denote the
+   starts (not the ends) of the corresponding time periods.
+   (Ambiguity reported by Bill Seymour.)
+
+
 Release 2015f - 2015-08-10 18:06:56 -0700
 
   Changes affecting future time stamps

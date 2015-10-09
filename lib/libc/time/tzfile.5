@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzfile.5,v 1.22 2014/10/07 21:51:03 christos Exp $
+.\"	$NetBSD: tzfile.5,v 1.23 2015/10/09 17:21:45 christos Exp $
 .\"
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
@@ -8,8 +8,6 @@
 .Sh NAME
 .Nm tzfile
 .Nd time zone information
-.Sh SYNOPSIS
-.In tzfile.h
 .Sh DESCRIPTION
 The time zone information files used by
 .Xr tzset 3
@@ -54,8 +52,8 @@ Next come
 .Va tzh_timecnt
 one-byte unsigned integer values;
 each one tells which of the different types of local time types
-described in the file is associated with the same-indexed
-transition time.
+described in the file is associated with the time period
+starting with the same-indexed transition time.
 These values serve as indices into an array of
 .Fa ttinfo
 structures (with
@@ -99,7 +97,8 @@ the first value of each pair gives the time
 at which a leap second occurs;
 the second gives the
 .Em total
-number of leap seconds to be applied after the given time.
+number of leap seconds to be applied during the time period
+starting at the given time.
 The pairs of values are sorted in ascending order by time.
 .Pp
 Then there are

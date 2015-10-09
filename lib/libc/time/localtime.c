@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.97 2015/08/18 16:54:27 riz Exp $	*/
+/*	$NetBSD: localtime.c,v 1.98 2015/10/09 17:21:45 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.97 2015/08/18 16:54:27 riz Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.98 2015/10/09 17:21:45 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -588,11 +588,6 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			break;
 		nread -= p - up->buf;
 		memmove(up->buf, p, (size_t)nread);
-		/*
-		** If this is a signed narrow time_t system, we're done.
-		*/
-		if (TYPE_SIGNED(time_t) && stored >= (int) sizeof(time_t))
-			break;
 	}
 	if (doextend && nread > 2 &&
 		up->buf[0] == '\n' && up->buf[nread - 1] == '\n' &&
@@ -601,31 +596,52 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 
 			up->buf[nread - 1] = '\0';
 			if (tzparse(&up->buf[1], ts, false)
-			    && ts->typecnt == 2
-			    && sp->charcnt + ts->charcnt <= TZ_MAX_CHARS) {
-					for (i = 0; i < 2; ++i)
-						ts->ttis[i].tt_abbrind +=
-							sp->charcnt;
-					for (i = 0; i < ts->charcnt; ++i)
-						sp->chars[sp->charcnt++] =
-							ts->chars[i];
-					i = 0;
-					while (i < ts->timecnt &&
-						ts->ats[i] <=
-						sp->ats[sp->timecnt - 1])
-							++i;
-					while (i < ts->timecnt &&
-					    sp->timecnt < TZ_MAX_TIMES) {
-						sp->ats[sp->timecnt] =
-							ts->ats[i];
-						sp->types[sp->timecnt] =
-							sp->typecnt +
-							ts->types[i];
-						++sp->timecnt;
-						++i;
-					}
-					sp->ttis[sp->typecnt++] = ts->ttis[0];
-					sp->ttis[sp->typecnt++] = ts->ttis[1];
+			    && ts->typecnt == 2) {
+
+			  /* Attempt to reuse existing abbreviations.
+			     Without this, America/Anchorage would stop
+			     working after 2037 when TZ_MAX_CHARS is 50, as
+			     sp->charcnt equals 42 (for LMT CAT CAWT CAPT AHST
+			     AHDT YST AKDT AKST) and ts->charcnt equals 10
+			     (for AKST AKDT).  Reusing means sp->charcnt can
+			     stay 42 in this example.  */
+			  int gotabbr = 0;
+			  int charcnt = sp->charcnt;
+			  for (i = 0; i < 2; i++) {
+			    char *tsabbr = ts->chars + ts->ttis[i].tt_abbrind;
+			    int j;
+			    for (j = 0; j < charcnt; j++)
+			      if (strcmp(sp->chars + j, tsabbr) == 0) {
+				ts->ttis[i].tt_abbrind = j;
+				gotabbr++;
+				break;
+			      }
+			    if (! (j < charcnt)) {
+			      int tsabbrlen = strlen(tsabbr);
+			      if (j + tsabbrlen < TZ_MAX_CHARS) {
+				strcpy(sp->chars + j, tsabbr);
+				charcnt = j + tsabbrlen + 1;
+				ts->ttis[i].tt_abbrind = j;
+				gotabbr++;
+			      }
+			    }
+			  }
+			  if (gotabbr == 2) {
+			    sp->charcnt = charcnt;
+			    for (i = 0; i < ts->timecnt; i++)
+			      if (sp->ats[sp->timecnt - 1] < ts->ats[i])
+				break;
+			    while (i < ts->timecnt
+				   && sp->timecnt < TZ_MAX_TIMES) {
+			      sp->ats[sp->timecnt] = ts->ats[i];
+			      sp->types[sp->timecnt] = (sp->typecnt
+							+ ts->types[i]);
+			      sp->timecnt++;
+			      i++;
+			    }
+			    sp->ttis[sp->typecnt++] = ts->ttis[0];
+			    sp->ttis[sp->typecnt++] = ts->ttis[1];
+			  }
 			}
 	}
 	if (sp->timecnt > 1) {
