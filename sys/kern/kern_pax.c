@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.32 2015/09/26 16:12:24 maxv Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.33 2015/10/09 02:00:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -57,12 +57,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.32 2015/09/26 16:12:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.33 2015/10/09 02:00:59 christos Exp $");
 
 #include "opt_pax.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
+#include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/pax.h>
 #include <sys/sysctl.h>
@@ -82,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.32 2015/09/26 16:12:24 maxv Exp $");
 
 #ifdef PAX_ASLR
 #include <sys/mman.h>
-#include <sys/exec.h>
 
 int pax_aslr_enabled = 1;
 int pax_aslr_global = PAX_ASLR;
