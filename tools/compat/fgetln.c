@@ -1,4 +1,4 @@
-/*	$NetBSD: fgetln.c,v 1.11 2015/10/08 20:33:58 christos Exp $	*/
+/*	$NetBSD: fgetln.c,v 1.12 2015/10/09 14:42:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2015 Joerg Jung <jung@openbsd.org>
@@ -54,8 +54,10 @@ fgetln(FILE *fp, size_t *len)
 	while ((c = getc(fp)) != EOF) {
 		buf[r++] = c;
 		if (r == bufsz) {
-			// Original uses reallocarray() but we don't have it
-			// in tools.
+			/*
+			 * Original uses reallocarray() but we don't have it
+			 * in tools.
+			 */
 			if (!(p = realloc(buf, 2 * bufsz))) {
 				e = errno;
 				free(buf);
