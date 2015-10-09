@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.161 2015/07/09 11:38:05 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.162 2015/10/09 19:49:25 plunky Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -1399,7 +1399,7 @@ Configure Bluetooth support, comprising the following tasks:
 .Bl -dash -compact
 .It
 attach serial Bluetooth controllers as listed in the
-.Pa /etc/bluetooth/btdevctl.conf
+.Pa /etc/bluetooth/btattach.conf
 configuration file.
 .It
 enable Bluetooth controllers with useful defaults, plus
