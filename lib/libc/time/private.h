@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.43 2015/08/13 11:21:18 christos Exp $	*/
+/*	$NetBSD: private.h,v 1.44 2015/10/09 17:21:45 christos Exp $	*/
 
 #ifndef PRIVATE_H
 #define PRIVATE_H
@@ -399,10 +399,23 @@ void tzset(void);
 ** Some time.h implementations don't declare asctime_r.
 ** Others might define it as a macro.
 ** Fix the former without affecting the latter.
+** Similarly for timezone, daylight, and altzone.
 */
 
 #ifndef asctime_r
 extern char *	asctime_r(struct tm const *restrict, char *restrict);
+#endif
+
+#if defined(USG_COMPAT) && !defined(__NetBSD__)
+# ifndef timezone
+extern long timezone;
+# endif
+# ifndef daylight
+extern int daylight;
+# endif
+#endif
+#if defined ALTZONE && !defined altzone
+extern long altzone;
 #endif
 
 /*
