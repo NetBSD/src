@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.89 2015/10/09 12:56:02 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.90 2015/10/09 13:03:55 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.89 2015/10/09 12:56:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.90 2015/10/09 13:03:55 knakahara Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1968,10 +1968,6 @@ intr_is_affinity_intrsource(struct intrsource *isp, const kcpuset_t *cpuset)
 	struct cpu_info *ci;
 
 	KASSERT(mutex_owned(&cpu_lock));
-
-	/* XXX avoid shared IRQ issue. */
-	if (isp->is_handlers == NULL)
-		return false;
 
 	ci = isp->is_handlers->ih_cpu;
 	KASSERT(ci != NULL);
