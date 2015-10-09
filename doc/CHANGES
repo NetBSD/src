@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2107 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2108 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -206,4 +206,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	pci(3): Decode Extended Capability in PCI Extended Configuration Space.
 		[nonaka 20151002]
 	lua: Updated to Lua 5.3.1 [mbalmer 20151008]
-
+	libc: Update to tzcode2015g. [christos 20151009]
