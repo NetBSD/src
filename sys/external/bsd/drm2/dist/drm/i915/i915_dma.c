@@ -1137,8 +1137,8 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	    BUS_SPACE_MAP_PREFETCHABLE,
 	    &dev_priv->dri1.gfx_hws_cpu_bsh);
 	if (ret) {
-		i915_dma_cleanup(dev);
 		ring->status_page.gfx_addr = 0;
+		i915_dma_cleanup(dev);
 		DRM_ERROR("can not ioremap virtual address for"
 				" G33 hw status page\n");
 		return ret;
