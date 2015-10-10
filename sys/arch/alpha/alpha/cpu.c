@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.95 2012/02/06 02:14:10 matt Exp $ */
+/* $NetBSD: cpu.c,v 1.96 2015/10/10 17:00:12 martin Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.95 2012/02/06 02:14:10 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.96 2015/10/10 17:00:12 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -217,7 +217,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 			s = cpunametable[i].cpu_minor_names;
 			for(i = 0; s && s[i]; ++i) {
 				if (i == minor && strlen(s[i]) != 0) {
-					aprint_normal(" (%s)\n", s[i]);
+					aprint_normal(" (%s)", s[i]);
 					goto recognized;
 				}
 			}
