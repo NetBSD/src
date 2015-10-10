@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.170 2015/09/01 06:08:37 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.171 2015/10/10 22:34:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.170 2015/09/01 06:08:37 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.171 2015/10/10 22:34:33 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -122,7 +122,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
-	if ((mntp = vfs_getvfs(fsidp)) == NULL) 
+	if ((mntp = vfs_getvfs(&fsid)) == NULL) 
 		return (ENOENT);
 	fs = VFSTOULFS(mntp)->um_lfs;
 
@@ -136,7 +136,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
 		goto out;
 
-	if ((error = lfs_markv(p, &fsid, blkiov, blkcnt)) == 0)
+	if ((error = lfs_markv(l, &fsid, blkiov, blkcnt)) == 0)
 		copyout(blkiov, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO));
     out:
@@ -551,15 +551,17 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	fs = VFSTOULFS(mntp)->um_lfs;
 
 	blkcnt = SCARG(uap, blkcnt);
+#if SIZE_T_MAX <= UINT_MAX
 	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
+#endif
 	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
 		goto out;
 
-	if ((error = lfs_bmapv(p, &fsid, blkiov, blkcnt)) == 0)
+	if ((error = lfs_bmapv(l, &fsid, blkiov, blkcnt)) == 0)
 		copyout(blkiov, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO));
     out:
