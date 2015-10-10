@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.57 2015/09/21 01:24:58 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.58 2015/10/10 22:34:19 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.57 2015/09/21 01:24:58 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.58 2015/10/10 22:34:19 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -426,7 +426,7 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * the segment table for the number of hash chains.
 	 */
 	tnseg = dkw->dkw_size / ((seg_size ? seg_size : DFL_LFSSEG) / secsize);
-	tsepb = (block_size ? block_size : DFL_LFSBLOCK) / sizeof(SEGSUM);
+	tsepb = (block_size ? block_size : DFL_LFSBLOCK) / sizeof(SEGSUM32);
 	if (tnseg == 0)
 		fatal("zero size partition");
 	bufinit(tnseg / tsepb);
