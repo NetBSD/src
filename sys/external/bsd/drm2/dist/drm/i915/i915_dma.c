@@ -1140,8 +1140,8 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 		ring->status_page.gfx_addr = 0;
 		i915_dma_cleanup(dev);
 		DRM_ERROR("can not ioremap virtual address for"
-				" G33 hw status page\n");
-		return ret;
+		    " G33 hw status page, error %d\n", ret);
+		return -ret;
 	}
 
 	__CTASSERT(PAGE_SIZE == 4096);
@@ -1151,8 +1151,8 @@ static int i915_set_status_page(struct drm_device *dev, void *data,
 	dev_priv->dri1.gfx_hws_cpu_addr =
 		ioremap_wc(dev_priv->gtt.mappable_base + hws->addr, 4096);
 	if (dev_priv->dri1.gfx_hws_cpu_addr == NULL) {
-		i915_dma_cleanup(dev);
 		ring->status_page.gfx_addr = 0;
+		i915_dma_cleanup(dev);
 		DRM_ERROR("can not ioremap virtual address for"
 				" G33 hw status page\n");
 		return -ENOMEM;
