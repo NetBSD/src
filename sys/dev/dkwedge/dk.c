@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.84 2015/10/06 11:22:40 jmcneill Exp $	*/
+/*	$NetBSD: dk.c,v 1.85 2015/10/10 23:39:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.84 2015/10/06 11:22:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.85 2015/10/10 23:39:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -684,8 +684,6 @@ dkwedge_delall1(struct disk *pdk, bool idleonly)
  * dkwedge_list:	[exported function]
  *
  *	List all of the wedges on a particular disk.
- *	If p == NULL, the buffer is in kernel space.  Otherwise, it is
- *	in user space of the specified process.
  */
 int
 dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)
