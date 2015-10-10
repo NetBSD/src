@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.36 2015/10/03 08:29:48 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.37 2015/10/10 22:33:44 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -499,10 +499,10 @@ lfs_dino_getdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 {
 	KASSERT(ix < ULFS_NDADDR);
 	if (fs->lfs_is64) {
-		return dip->u_64.di_db[ix];
+		return LFS_SWAP_uint64_t(fs, dip->u_64.di_db[ix]);
 	} else {
 		/* note: this must sign-extend or UNWRITTEN gets trashed */
-		return dip->u_32.di_db[ix];
+		return (int32_t)LFS_SWAP_uint32_t(fs, dip->u_32.di_db[ix]);
 	}
 }
 
@@ -511,10 +511,10 @@ lfs_dino_getib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix)
 {
 	KASSERT(ix < ULFS_NIADDR);
 	if (fs->lfs_is64) {
-		return dip->u_64.di_ib[ix];
+		return LFS_SWAP_uint64_t(fs, dip->u_64.di_ib[ix]);
 	} else {
 		/* note: this must sign-extend or UNWRITTEN gets trashed */
-		return dip->u_32.di_ib[ix];
+		return (int32_t)LFS_SWAP_uint32_t(fs, dip->u_32.di_ib[ix]);
 	}
 }
 
@@ -523,9 +523,9 @@ lfs_dino_setdb(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
 {
 	KASSERT(ix < ULFS_NDADDR);
 	if (fs->lfs_is64) {
-		dip->u_64.di_db[ix] = val;
+		dip->u_64.di_db[ix] = LFS_SWAP_uint64_t(fs, val);
 	} else {
-		dip->u_32.di_db[ix] = val;
+		dip->u_32.di_db[ix] = LFS_SWAP_uint32_t(fs, val);
 	}
 }
 
@@ -534,9 +534,9 @@ lfs_dino_setib(STRUCT_LFS *fs, union lfs_dinode *dip, unsigned ix, daddr_t val)
 {
 	KASSERT(ix < ULFS_NIADDR);
 	if (fs->lfs_is64) {
-		dip->u_64.di_ib[ix] = val;
+		dip->u_64.di_ib[ix] = LFS_SWAP_uint64_t(fs, val);
 	} else {
-		dip->u_32.di_ib[ix] = val;
+		dip->u_32.di_ib[ix] = LFS_SWAP_uint32_t(fs, val);
 	}
 }
 
