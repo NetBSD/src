@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.260 2015/10/03 08:28:16 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.261 2015/10/10 22:33:31 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.260 2015/10/03 08:28:16 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.261 2015/10/10 22:33:31 dholland Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2035,7 +2035,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct vnode *devvp;
 	char *p = NULL;
 	struct vnode *vp;
-	int32_t *daddrp;	/* XXX ondisk32 */
+	unsigned ibindex, iblimit;
 	int changed;
 	u_int32_t sum;
 	size_t sumstart;
@@ -2162,13 +2162,12 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			       newbp->b_bcount);
 
 			changed = 0;
-			/* XXX ondisk32 */
-			for (daddrp = (int32_t *)(newbp->b_data);
-			     daddrp < (int32_t *)((char *)newbp->b_data +
-						  newbp->b_bcount); daddrp++) {
-				if (*daddrp == UNWRITTEN) {
+			iblimit = newbp->b_bcount / LFS_BLKPTRSIZE(fs);
+			for (ibindex = 0; ibindex < iblimit; ibindex++) {
+				if (lfs_iblock_get(fs, newbp->b_data, ibindex) == UNWRITTEN) {
 					++changed;
-					*daddrp = 0;
+					lfs_iblock_set(fs, newbp->b_data,
+						       ibindex, 0);
 				}
 			}
 			/*
