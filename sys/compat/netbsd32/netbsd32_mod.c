@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.8 2015/10/10 04:59:46 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.9 2015/10/10 05:50:34 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.8 2015/10/10 04:59:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.9 2015/10/10 05:50:34 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
-# define	DEPS1	"compat,compat_sysv,nfsserver,mq"
+# define	DEPS1	"compat,compat_sysv,nfsserver,mqueue"
 #else
-# define	DEPS1	"compat,compat_sysv,nfsserver,mq,ksem"
+# define	DEPS1	"compat,compat_sysv,nfsserver,mqueue,ksem"
 #endif
 
 #ifndef ELFSIZE
