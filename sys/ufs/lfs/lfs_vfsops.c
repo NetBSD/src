@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.345 2015/09/01 06:16:59 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.346 2015/10/10 22:33:57 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.345 2015/09/01 06:16:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.346 2015/10/10 22:33:57 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1842,9 +1842,6 @@ lfs_issequential_hole(const struct lfs *fs,
     daddr_t daddr0, daddr_t daddr1)
 {
 	(void)fs; /* not used */
-
-	daddr0 = (daddr_t)((int32_t)daddr0); /* XXX ondisk32 */
-	daddr1 = (daddr_t)((int32_t)daddr1); /* XXX ondisk32 */
 
 	KASSERT(daddr0 == UNWRITTEN ||
 	    (0 <= daddr0 && daddr0 <= LFS_MAX_DADDR(fs)));
