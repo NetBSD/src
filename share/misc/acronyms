@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.240 2015/09/18 13:40:10 wiz Exp $
+$NetBSD: acronyms,v 1.241 2015/10/10 22:51:05 dholland Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -151,6 +151,7 @@ FTFY	fixed that for you
 FTHOI	for the {heck,hell} of it
 FTL	faster than light
 FTL	for the loss
+FTR	for the record
 FTTT	from time to time
 FTW	for the win
 FUD	fear, uncertainty, [and] doubt
