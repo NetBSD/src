@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.261 2015/10/10 22:33:31 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.262 2015/10/10 22:34:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.261 2015/10/10 22:33:31 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.262 2015/10/10 22:34:33 dholland Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2232,7 +2232,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				if (copyin((void *)(*bpp)->b_saveaddr +
 					   byteoffset, dp, el_size)) {
 					panic("lfs_writeseg: copyin failed [1]:"
-						" ino %d blk %" PRId64,
+						" ino %" PRIu64 " blk %" PRId64,
 						VTOI((*bpp)->b_vp)->i_number,
 						(*bpp)->b_lblkno);
 				}
