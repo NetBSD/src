@@ -1,4 +1,4 @@
-/*      $NetBSD: coalesce.c,v 1.32 2015/08/12 18:28:00 dholland Exp $  */
+/*      $NetBSD: coalesce.c,v 1.33 2015/10/10 22:34:46 dholland Exp $  */
 
 /*-
  * Copyright (c) 2002, 2005 The NetBSD Foundation, Inc.
@@ -269,7 +269,7 @@ clean_inode(struct clfs *fs, ino_t ino)
 	for (i = 1; i < nb; i++) {
 		if (bip[i].bi_daddr != bip[i - 1].bi_daddr + lfs_sb_getfrag(fs))
 			++noff;
-		toff += abs(bip[i].bi_daddr - bip[i - 1].bi_daddr
+		toff += llabs(bip[i].bi_daddr - bip[i - 1].bi_daddr
 		    - lfs_sb_getfrag(fs)) >> lfs_sb_getfbshift(fs);
 	}
 
