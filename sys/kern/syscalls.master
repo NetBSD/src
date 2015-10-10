@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.279 2015/10/02 19:47:08 christos Exp $
+	$NetBSD: syscalls.master,v 1.280 2015/10/10 03:27:30 pgoyette Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -609,25 +609,13 @@
 300	COMPAT_20 MODULAR compat	\
 		{ int|sys||fhstatfs(const struct compat_30_fhandle *fhp, \
 			    struct statfs12 *buf); }
-#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 301	COMPAT_50 MODULAR compat_sysv	\
 		{ int|sys|13|__semctl(int semid, int semnum, int cmd, \
 			    ... union __semun *arg); }
-#else
-301	EXCL		____semctl13
-#endif
-#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 302	COMPAT_50 MODULAR compat_sysv { int|sys|13|msgctl(int msqid, int cmd, \
 			    struct msqid_ds *buf); }
-#else
-302	EXCL		__msgctl13
-#endif
-#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 303	COMPAT_50 MODULAR compat_sysv { int|sys|13|shmctl(int shmid, int cmd, \
 			    struct shmid_ds13 *buf); }
-#else
-303	EXCL		__shmctl13
-#endif
 304	STD 	 RUMP	{ int|sys||lchflags(const char *path, u_long flags); }
 305	NOERR 	RUMP	{ int|sys||issetugid(void); }
 306	STD	RUMP	{ int|sys||utrace(const char *label, void *addr, \
