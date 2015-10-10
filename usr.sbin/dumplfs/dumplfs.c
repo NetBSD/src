@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.59 2015/10/03 08:28:56 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.60 2015/10/10 22:34:09 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.59 2015/10/03 08:28:56 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.60 2015/10/10 22:34:09 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -622,11 +622,10 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	 * to prevent us from continuing, but it odes merit a warning.)
 	 */
 	iip2 = SEGSUM_IINFOSTART(lfsp, sp);
+	fp = SEGSUM_FINFOBASE(lfsp, sp);
 	if (lfs_sb_getversion(lfsp) == 1) {
-		fp = (FINFO *)((SEGSUM_V1 *)sp + 1);
 		el_size = sizeof(unsigned long);
 	} else {
-		fp = (FINFO *)(sp + 1);
 		el_size = sizeof(u_int32_t);
 	}
 	datap = (char *)malloc(el_size * numblocks);
