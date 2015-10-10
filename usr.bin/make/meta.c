@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.38 2015/04/11 05:24:30 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.39 2015/10/10 03:58:59 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1207,16 +1207,6 @@ meta_oodate(GNode *gn, Boolean oodate)
 				    p);
 #endif
 			break;
-		    }
-
-		    if ((cp = strrchr(p, '/'))) {
-			cp++;
-			/*
-			 * We don't normally expect to see this,
-			 * but we do expect it to change.
-			 */
-			if (strcmp(cp, makeDependfile) == 0)
-			    break;
 		    }
 
 		    /*
