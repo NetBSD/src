@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.16 2015/10/08 07:39:43 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.17 2015/10/10 17:18:05 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -112,7 +112,16 @@ struct ehci_xfer {
 	};
 	bool ex_isdone;	/* used only when DIAGNOSTIC is defined */
 };
-#define EXFER(xfer) ((struct ehci_xfer *)(xfer))
+
+#define EHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define EHCI_PIPE2SC(pipe)	EHCI_BUS2SC((pipe)->up_dev->ud_bus)
+#define EHCI_XFER2SC(xfer)	EHCI_PIPE2SC((xfer)->ux_pipe)
+#define EHCI_DPIPE2SC(d)	EHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
+
+#define EHCI_XFER2EXFER(xfer)	((struct ehci_xfer *)(xfer))
+
+#define EHCI_XFER2EPIPE(xfer)	((struct ehci_pipe *)((xfer)->ux_pipe))
+#define EHCI_PIPE2EPIPE(pipe)	((struct ehci_pipe *)(pipe))
 
 /* Information about an entry in the interrupt list. */
 struct ehci_soft_islot {
