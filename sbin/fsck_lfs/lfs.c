@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.67 2015/10/03 08:29:48 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.68 2015/10/10 22:34:09 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -791,7 +791,7 @@ check_summary(struct lfs *fs, SEGSUM *sp, daddr_t pseg_addr, int debug,
 
 	iip = iibase;
 	daddr = pseg_addr + lfs_btofsb(fs, lfs_sb_getsumsize(fs));
-	fp = (FINFO *) (sp + 1);
+	fp = SEGSUM_FINFOBASE(fs, sp);
 	for (i = 0, j = 0;
 	     i < lfs_ss_getnfinfo(fs, sp) || j < howmany(lfs_ss_getninos(fs, sp), LFS_INOPB(fs)); i++) {
 		if (i >= lfs_ss_getnfinfo(fs, sp) && lfs_ii_getblock(fs, iip) != daddr) {
