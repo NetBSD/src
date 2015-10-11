@@ -1,14 +1,18 @@
 
 :D expanded when var set
-true,TRUE
+true
+TRUE
 :U expanded when var undef
-true,TRUE
+true
+TRUE
 :D skipped if var undef
 
 :U skipped when var set
 is set
 :? only lhs when value true
-true,TRUE
+true
+TRUE
 :? only rhs when value false
-false,FALSE
+false
+FALSE
 exit status 0
