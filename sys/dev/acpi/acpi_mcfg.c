@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.1 2015/10/02 05:22:52 msaitoh Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.2 2015/10/11 21:49:22 christos Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.1 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.2 2015/10/11 21:49:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -42,6 +42,9 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.1 2015/10/02 05:22:52 msaitoh Exp $"
 #include <dev/acpi/acpi_mcfg.h>
 
 #include "locators.h"
+
+#define _COMPONENT      ACPI_RESOURCE_COMPONENT
+ACPI_MODULE_NAME	("acpi_mcfg")
 
 #define	EXTCONF_OFFSET(d, f, r)	((((d) * 8 + (f)) * PCI_EXTCONF_SIZE) + (r))
 
