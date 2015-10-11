@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.150 2015/08/22 19:18:10 dholland Exp $
+$NetBSD: acronyms.comp,v 1.151 2015/10/11 00:58:24 dholland Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -37,6 +37,7 @@ AL	active link
 ALE	address latch enable
 ALS	ambient light sensor
 ALU	arithmetic and logical unit
+ALUA	asymmetric logical unit access
 AM	access method
 AM	alignment mask
 AM	amplitude modulation
