@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.52 2015/10/10 17:18:05 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.53 2015/10/11 08:13:11 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.52 2015/10/10 17:18:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.53 2015/10/11 08:13:11 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -131,11 +131,6 @@ struct ehci_pipe {
 	int nexttoggle;
 
 	ehci_soft_qh_t *sqh;
-	union {
-		ehci_soft_qtd_t *qtd;
-		/* ehci_soft_itd_t *itd; */
-		/* ehci_soft_sitd_t *sitd; */
-	} tail;
 	union {
 		/* Control pipe */
 		struct {
