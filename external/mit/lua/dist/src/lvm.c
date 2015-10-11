@@ -1,4 +1,4 @@
-/*	$NetBSD: lvm.c,v 1.7 2015/10/08 13:40:16 mbalmer Exp $	*/
+/*	$NetBSD: lvm.c,v 1.8 2015/10/11 09:21:15 mbalmer Exp $	*/
 
 /*
 ** Id: lvm.c,v 2.245 2015/06/09 15:53:35 roberto Exp 
@@ -315,16 +315,17 @@ static int LEintfloat (lua_Integer i, lua_Number f) {
 ** Return 'l < r', for numbers.
 */
 static int LTnum (const TValue *l, const TValue *r) {
+#ifdef _KERNEL
+    lua_Integer li = ivalue(l);
+    return li < ivalue(r);  /* both must be integers */
+#else
   if (ttisinteger(l)) {
     lua_Integer li = ivalue(l);
     if (ttisinteger(r))
       return li < ivalue(r);  /* both are integers */
-#ifndef _KERNEL
     else  /* 'l' is int and 'r' is float */
       return LTintfloat(li, fltvalue(r));  /* l < r ? */
-#endif
   }
-#ifndef _KERNEL
   else {
     lua_Number lf = fltvalue(l);  /* 'l' must be float */
     if (ttisfloat(r))
@@ -342,16 +343,17 @@ static int LTnum (const TValue *l, const TValue *r) {
 ** Return 'l <= r', for numbers.
 */
 static int LEnum (const TValue *l, const TValue *r) {
+#ifdef _KERNEL
+    lua_Integer li = ivalue(l);
+    return li <= ivalue(r);  /* both must be integers */
+#else
   if (ttisinteger(l)) {
     lua_Integer li = ivalue(l);
     if (ttisinteger(r))
       return li <= ivalue(r);  /* both are integers */
-#ifndef _KERNEL
     else  /* 'l' is int and 'r' is float */
       return LEintfloat(li, fltvalue(r));  /* l <= r ? */
-#endif
   }
-#ifndef _KERNEL
   else {
     lua_Number lf = fltvalue(l);  /* 'l' must be float */
     if (ttisfloat(r))
