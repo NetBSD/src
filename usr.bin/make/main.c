@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.233 2015/09/10 17:15:11 sjg Exp $	*/
+/*	$NetBSD: main.c,v 1.234 2015/10/11 04:51:24 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,7 +69,7 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: main.c,v 1.233 2015/09/10 17:15:11 sjg Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.234 2015/10/11 04:51:24 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
@@ -81,7 +81,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: main.c,v 1.233 2015/09/10 17:15:11 sjg Exp $");
+__RCSID("$NetBSD: main.c,v 1.234 2015/10/11 04:51:24 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -692,7 +692,7 @@ Main_SetObjdir(const char *path)
 	/* expand variable substitutions */
 	if (strchr(path, '$') != 0) {
 		snprintf(buf, MAXPATHLEN, "%s", path);
-		path = p = Var_Subst(NULL, buf, VAR_GLOBAL, 0);
+		path = p = Var_Subst(NULL, buf, VAR_GLOBAL, FALSE, TRUE);
 	}
 
 	if (path[0] != '/') {
@@ -775,7 +775,8 @@ MakeMode(const char *mode)
     char *mp = NULL;
 
     if (!mode)
-	mode = mp = Var_Subst(NULL, "${" MAKE_MODE ":tl}", VAR_GLOBAL, 0);
+	mode = mp = Var_Subst(NULL, "${" MAKE_MODE ":tl}",
+			      VAR_GLOBAL, FALSE, TRUE);
 
     if (mode && *mode) {
 	if (strstr(mode, "compat")) {
@@ -1217,7 +1218,7 @@ main(int argc, char **argv)
 			    (char *)Lst_Datum(ln));
 	} else {
 	    p1 = Var_Subst(NULL, "${" MAKEFILE_PREFERENCE "}",
-		VAR_CMD, 0);
+	        VAR_CMD, FALSE, TRUE);
 	    if (p1) {
 		(void)str2Lst_Append(makefiles, p1, NULL);
 		(void)Lst_Find(makefiles, NULL, ReadMakefile);
@@ -1228,7 +1229,7 @@ main(int argc, char **argv)
 	/* In particular suppress .depend for '-r -V .OBJDIR -f /dev/null' */
 	if (!noBuiltins || !printVars) {
 	    makeDependfile = Var_Subst(NULL, "${.MAKE.DEPENDFILE:T}",
-		VAR_CMD, 0);
+		VAR_CMD, FALSE, TRUE);
 	    doing_depend = TRUE;
 	    (void)ReadMakefile(makeDependfile, NULL);
 	    doing_depend = FALSE;
@@ -1267,7 +1268,7 @@ main(int argc, char **argv)
 		 */
 		static char VPATH[] = "${VPATH}";
 
-		vpath = Var_Subst(NULL, VPATH, VAR_CMD, FALSE);
+		vpath = Var_Subst(NULL, VPATH, VAR_CMD, FALSE, TRUE);
 		path = vpath;
 		do {
 			/* skip to end of directory */
@@ -1314,14 +1315,16 @@ main(int argc, char **argv)
 			char *value;
 			
 			if (strchr(var, '$')) {
-				value = p1 = Var_Subst(NULL, var, VAR_GLOBAL, 0);
+			    value = p1 = Var_Subst(NULL, var, VAR_GLOBAL,
+						   FALSE, TRUE);
 			} else if (expandVars) {
 				char tmp[128];
 								
 				if (snprintf(tmp, sizeof(tmp), "${%s}", var) >= (int)(sizeof(tmp)))
 					Fatal("%s: variable name too big: %s",
 					      progname, var);
-				value = p1 = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+				value = p1 = Var_Subst(NULL, tmp, VAR_GLOBAL,
+						       FALSE, TRUE);
 			} else {
 				value = Var_Value(var, VAR_GLOBAL, &p1);
 			}
@@ -1859,7 +1862,7 @@ PrintOnError(GNode *gn, const char *s)
     }
     strncpy(tmp, "${MAKE_PRINT_VAR_ON_ERROR:@v@$v='${$v}'\n@}",
 	    sizeof(tmp) - 1);
-    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE);
     if (cp) {
 	if (*cp)
 	    printf("%s", cp);
@@ -1888,7 +1891,7 @@ Main_ExportMAKEFLAGS(Boolean first)
     
     strncpy(tmp, "${.MAKEFLAGS} ${.MAKEOVERRIDES:O:u:@v@$v=${$v:Q}@}",
 	    sizeof(tmp));
-    s = Var_Subst(NULL, tmp, VAR_CMD, 0);
+    s = Var_Subst(NULL, tmp, VAR_CMD, FALSE, TRUE);
     if (s && *s) {
 #ifdef POSIX
 	setenv("MAKEFLAGS", s, 1);
@@ -1910,7 +1913,8 @@ getTmpdir(void)
 	 * Honor $TMPDIR but only if it is valid.
 	 * Ensure it ends with /.
 	 */
-	tmpdir = Var_Subst(NULL, "${TMPDIR:tA:U" _PATH_TMP "}/", VAR_GLOBAL, 0);
+	tmpdir = Var_Subst(NULL, "${TMPDIR:tA:U" _PATH_TMP "}/", VAR_GLOBAL,
+			   FALSE, TRUE);
 	if (stat(tmpdir, &st) < 0 || !S_ISDIR(st.st_mode)) {
 	    free(tmpdir);
 	    tmpdir = bmake_strdup(_PATH_TMP);
@@ -1965,7 +1969,7 @@ getBoolean(const char *name, Boolean bf)
     char *cp;
 
     if (snprintf(tmp, sizeof(tmp), "${%s:tl}", name) < (int)(sizeof(tmp))) {
-	cp = Var_Subst(NULL, tmp, VAR_GLOBAL, 0);
+	cp = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE);
 
 	if (cp) {
 	    switch(*cp) {
