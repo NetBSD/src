@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.40 2015/10/03 16:33:33 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.41 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.40 2015/10/03 16:33:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.41 2015/10/11 09:17:51 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -129,7 +129,7 @@ static void xhci_close_pipe(struct usbd_pipe *);
 static int xhci_intr1(struct xhci_softc * const);
 static void xhci_softintr(void *);
 static void xhci_poll(struct usbd_bus *);
-static struct usbd_xfer *xhci_allocx(struct usbd_bus *);
+static struct usbd_xfer *xhci_allocx(struct usbd_bus *, unsigned int);
 static void xhci_freex(struct usbd_bus *, struct usbd_xfer *);
 static void xhci_get_lock(struct usbd_bus *, kmutex_t **);
 static usbd_status xhci_new_device(device_t, struct usbd_bus *, int, int, int,
@@ -2054,7 +2054,7 @@ xhci_poll(struct usbd_bus *bus)
 }
 
 static struct usbd_xfer *
-xhci_allocx(struct usbd_bus *bus)
+xhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct xhci_softc * const sc = bus->ub_hcpriv;
 	struct usbd_xfer *xfer;

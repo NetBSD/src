@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.53 2015/10/11 08:13:11 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.54 2015/10/11 09:17:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.53 2015/10/11 08:13:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.54 2015/10/11 09:17:51 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -165,7 +165,7 @@ Static void		ehci_doorbell(void *);
 Static void		ehci_pcd(void *);
 
 Static struct usbd_xfer *
-			ehci_allocx(struct usbd_bus *);
+			ehci_allocx(struct usbd_bus *, unsigned int);
 Static void		ehci_freex(struct usbd_bus *, struct usbd_xfer *);
 Static void		ehci_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		ehci_roothub_ctrl(struct usbd_bus *,
@@ -1513,7 +1513,7 @@ ehci_shutdown(device_t self, int flags)
 }
 
 Static struct usbd_xfer *
-ehci_allocx(struct usbd_bus *bus)
+ehci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct ehci_softc *sc = bus->ub_hcpriv;
 	struct usbd_xfer *xfer;

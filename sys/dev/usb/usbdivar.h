@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.17 2015/06/06 15:26:15 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.18 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct usbd_bus_methods {
 	usbd_status	      (*ubm_open)(struct usbd_pipe *);
 	void		      (*ubm_softint)(void *);
 	void		      (*ubm_dopoll)(struct usbd_bus *);
-	struct usbd_xfer     *(*ubm_allocx)(struct usbd_bus *);
+	struct usbd_xfer     *(*ubm_allocx)(struct usbd_bus *, unsigned int);
 	void		      (*ubm_freex)(struct usbd_bus *, struct usbd_xfer *);
 	void		      (*ubm_getlock)(struct usbd_bus *, kmutex_t **);
 	usbd_status	      (*ubm_newdev)(device_t, struct usbd_bus *, int,
