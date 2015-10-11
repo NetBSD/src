@@ -1,4 +1,4 @@
-/*	$NetBSD: lobject.c,v 1.5 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lobject.c,v 1.6 2015/10/11 01:01:45 christos Exp $	*/
 
 /*
 ** Id: lobject.c,v 2.104 2015/04/11 18:30:08 roberto Exp 
@@ -358,9 +358,9 @@ void luaO_tostring (lua_State *L, StkId obj) {
   lua_assert(ttisnumber(obj));
 #ifndef _KERNEL
   if (ttisinteger(obj))
-    len = lua_integer2str(buff, ivalue(obj));
+    len = lua_integer2str(buff, sizeof(buff), ivalue(obj));
   else {
-    len = lua_number2str(buff, fltvalue(obj));
+    len = lua_number2str(buff, sizeof(buff), fltvalue(obj));
 #if !defined(LUA_COMPAT_FLOATSTRING)
     if (buff[strspn(buff, "-0123456789")] == '\0') {  /* looks like an int? */
       buff[len++] = lua_getlocaledecpoint();
@@ -424,7 +424,7 @@ const char *luaO_pushvfstring (lua_State *L, const char *fmt, va_list argp) {
 #endif
       case 'p': {
         char buff[4*sizeof(void *) + 8]; /* should be enough space for a '%p' */
-        int l = sprintf(buff, "%p", va_arg(argp, void *));
+        int l = snprintf(buff, sizeof(buff), "%p", va_arg(argp, void *));
         pushstr(L, buff, l);
         break;
       }

@@ -1,4 +1,4 @@
-/*	$NetBSD: luaconf.h,v 1.14 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: luaconf.h,v 1.15 2015/10/11 01:01:45 christos Exp $	*/
 
 /*
 ** Id: luaconf.h,v 1.251 2015/05/20 17:39:23 roberto Exp 
@@ -478,7 +478,7 @@
 
 #define l_floor(x)		(l_mathop(floor)(x))
 
-#define lua_number2str(s,n)	sprintf((s), LUA_NUMBER_FMT, (n))
+#define lua_number2str(s,l, n)	snprintf((s), (l), LUA_NUMBER_FMT, (n))
 
 
 /*
@@ -515,7 +515,7 @@
 /* The following definitions are good for most cases here */
 
 #define LUA_INTEGER_FMT		"%" LUA_INTEGER_FRMLEN "d"
-#define lua_integer2str(s,n)	sprintf((s), LUA_INTEGER_FMT, (n))
+#define lua_integer2str(s,l,n)	snprintf((s), (l), LUA_INTEGER_FMT, (n))
 
 #define LUAI_UACINT		LUA_INTEGER
 
@@ -599,12 +599,12 @@
 
 /*
 @@ lua_number2strx converts a float to an hexadecimal numeric string. 
-** In C99, 'sprintf' (with format specifiers '%a'/'%A') does that.
+** In C99, 'snprintf' (with format specifiers '%a'/'%A') does that.
 ** Otherwise, you can leave 'lua_number2strx' undefined and Lua will
 ** provide its own implementation.
 */
 #if !defined(LUA_USE_C89)
-#define lua_number2strx(L,b,f,n)	sprintf(b,f,n)
+#define lua_number2strx(L,b,l,f,n)	snprintf(b,l,f,n)
 #endif
 
 
@@ -801,8 +801,6 @@
 /* stdio.h */
 #define lua_writestring(s,l)	printf("%s", (s))
 #define lua_writeline()		printf("\n")
-
-#define sprintf(s,fmt,...)	snprintf(s, sizeof(s), fmt, __VA_ARGS__)
 
 /* string.h */
 #define strcoll strcmp

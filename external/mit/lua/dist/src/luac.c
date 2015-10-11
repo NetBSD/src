@@ -1,4 +1,4 @@
-/*	$NetBSD: luac.c,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: luac.c,v 1.5 2015/10/11 01:01:45 christos Exp $	*/
 
 /*
 ** Id: luac.c,v 1.75 2015/03/12 01:58:27 lhf Exp 
@@ -267,7 +267,7 @@ static void PrintConstant(const Proto* f, int i)
   case LUA_TNUMFLT:
 	{
 	char buff[100];
-	sprintf(buff,LUA_NUMBER_FMT,fltvalue(o));
+	snprintf(buff, sizeof(buff), LUA_NUMBER_FMT,fltvalue(o));
 	printf("%s",buff);
 	if (buff[strspn(buff,"-0123456789")]=='\0') printf(".0");
 	break;
