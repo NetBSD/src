@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.12 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.13 2015/10/11 09:17:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.12 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.13 2015/10/11 09:17:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,7 +95,8 @@ static void		ahci_softintr(void *);
 static void		ahci_poll(struct usbd_bus *);
 static void		ahci_poll_hub(void *);
 static void		ahci_poll_device(void *arg);
-static struct usbd_xfer *ahci_allocx(struct usbd_bus *);
+static struct usbd_xfer *
+			ahci_allocx(struct usbd_bus *, unsigned int);
 static void		ahci_freex(struct usbd_bus *, struct usbd_xfer *);
 
 static void		ahci_get_lock(struct usbd_bus *, kmutex_t **);
@@ -450,7 +451,7 @@ ahci_poll_hub(void *arg)
 }
 
 struct usbd_xfer *
-ahci_allocx(struct usbd_bus *bus)
+ahci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct ahci_softc *sc = (struct ahci_softc *)bus;
 	struct usbd_xfer *xfer;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.12 2015/10/11 08:35:04 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.13 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.12 2015/10/11 08:35:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.13 2015/10/11 09:17:51 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -420,7 +420,7 @@ slhci_dump_cc_times(int n) {
 typedef usbd_status (*LockCallFunc)(struct slhci_softc *, struct slhci_pipe
     *, struct usbd_xfer *);
 
-struct usbd_xfer * slhci_allocx(struct usbd_bus *);
+struct usbd_xfer * slhci_allocx(struct usbd_bus *, unsigned int);
 void slhci_freex(struct usbd_bus *, struct usbd_xfer *);
 static void slhci_get_lock(struct usbd_bus *, kmutex_t **);
 
@@ -758,7 +758,7 @@ enter_all_pipes(struct slhci_transfers *t, struct slhci_pipe *spipe)
 /* Start out of lock functions. */
 
 struct usbd_xfer *
-slhci_allocx(struct usbd_bus *bus)
+slhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct usbd_xfer *xfer;
 

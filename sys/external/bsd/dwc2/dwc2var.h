@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.3.12.5 2015/06/06 14:40:20 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.3.12.6 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 
 #include <sys/pool.h>
 
-#define DWC2_MAXISOCPACKETS	16
 struct dwc2_hsotg;
 struct dwc2_qtd;
 

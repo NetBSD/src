@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.22 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.23 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.22 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.23 2015/10/11 09:17:51 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -162,7 +162,8 @@ Static ohci_soft_itd_t  *ohci_hash_find_itd(ohci_softc_t *, ohci_physaddr_t);
 Static usbd_status	ohci_setup_isoc(struct usbd_pipe *);
 Static void		ohci_device_isoc_enter(struct usbd_xfer *);
 
-Static struct usbd_xfer *	ohci_allocx(struct usbd_bus *);
+Static struct usbd_xfer *
+			ohci_allocx(struct usbd_bus *, unsigned int);
 Static void		ohci_freex(struct usbd_bus *, struct usbd_xfer *);
 Static void		ohci_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		ohci_roothub_ctrl(struct usbd_bus *,
@@ -948,7 +949,7 @@ ohci_init(ohci_softc_t *sc)
 }
 
 struct usbd_xfer *
-ohci_allocx(struct usbd_bus *bus)
+ohci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct ohci_softc *sc = bus->ub_hcpriv;
 	struct usbd_xfer *xfer;

@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.18 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.19 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.18 2015/09/22 12:06:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.19 2015/10/11 09:17:51 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -144,7 +144,8 @@ static void		motg_root_intr_done(struct usbd_xfer *);
 static usbd_status	motg_open(struct usbd_pipe *);
 static void		motg_poll(struct usbd_bus *);
 static void		motg_softintr(void *);
-static struct usbd_xfer *	motg_allocx(struct usbd_bus *);
+static struct usbd_xfer *
+			motg_allocx(struct usbd_bus *, unsigned int);
 static void		motg_freex(struct usbd_bus *, struct usbd_xfer *);
 static void		motg_get_lock(struct usbd_bus *, kmutex_t **);
 static int		motg_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
@@ -745,7 +746,7 @@ motg_intr_vbus(struct motg_softc *sc, int vbus)
 }
 
 struct usbd_xfer *
-motg_allocx(struct usbd_bus *bus)
+motg_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct motg_softc *sc = bus->ub_hcpriv;
 	struct usbd_xfer *xfer;

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.12 2015/10/04 10:45:37 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.13 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.12 2015/10/04 10:45:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.13 2015/10/11 09:17:51 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -84,7 +84,8 @@ Static void		dwc2_poll(struct usbd_bus *);
 Static void		dwc2_softintr(void *);
 Static void		dwc2_waitintr(struct dwc2_softc *, struct usbd_xfer *);
 
-Static struct usbd_xfer *	dwc2_allocx(struct usbd_bus *);
+Static struct usbd_xfer *
+			dwc2_allocx(struct usbd_bus *, unsigned int);
 Static void		dwc2_freex(struct usbd_bus *, struct usbd_xfer *);
 Static void		dwc2_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		dwc2_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
@@ -204,7 +205,7 @@ Static const struct usbd_pipe_methods dwc2_device_isoc_methods = {
 };
 
 struct usbd_xfer *
-dwc2_allocx(struct usbd_bus *bus)
+dwc2_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct dwc2_softc *sc = DWC2_BUS2SC(bus);
 	struct dwc2_xfer *dxfer;
@@ -217,7 +218,7 @@ dwc2_allocx(struct usbd_bus *bus)
 		memset(dxfer, 0, sizeof(*dxfer));
 
 		dxfer->urb = dwc2_hcd_urb_alloc(sc->sc_hsotg,
-		    DWC2_MAXISOCPACKETS, GFP_KERNEL);
+		    nframes, GFP_KERNEL);
 
 #ifdef DIAGNOSTIC
 		dxfer->xfer.ux_state = XFER_BUSY;
@@ -241,7 +242,7 @@ dwc2_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	xfer->ux_state = XFER_FREE;
 #endif
 	DWC2_EVCNT_INCR(sc->sc_ev_xferpoolput);
-	dwc2_hcd_urb_free(sc->sc_hsotg, dxfer->urb, DWC2_MAXISOCPACKETS);
+	dwc2_hcd_urb_free(sc->sc_hsotg, dxfer->urb, dxfer->urb->packet_count);
 	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
@@ -1060,7 +1061,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		    return USBD_NOMEM;
 
 	memset(dwc2_urb, 0, sizeof(*dwc2_urb) +
-	    sizeof(dwc2_urb->iso_descs[0]) * DWC2_MAXISOCPACKETS);
+	    sizeof(dwc2_urb->iso_descs[0]) * dwc2_urb->packet_count);
 
 	dwc2_urb->priv = xfer;
 
@@ -1090,7 +1091,6 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	dwc2_urb->length = len;
  	dwc2_urb->flags = flags;
 	dwc2_urb->status = -EINPROGRESS;
-	dwc2_urb->packet_count = xfer->ux_nframes;
 
 	if (xfertype == UE_INTERRUPT ||
 	    xfertype == UE_ISOCHRONOUS) {
@@ -1131,7 +1131,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	xfer->ux_actlen = 0;
 
 	KASSERT(xfertype != UE_ISOCHRONOUS ||
-	    xfer->ux_nframes < DWC2_MAXISOCPACKETS);
+	    xfer->ux_nframes < dwc2_urb->packet_count);
 	KASSERTMSG(xfer->ux_nframes == 0 || xfertype == UE_ISOCHRONOUS,
 	    "nframes %d xfertype %d\n", xfer->ux_nframes, xfertype);
 

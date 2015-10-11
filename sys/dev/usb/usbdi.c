@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.30 2015/10/10 07:23:25 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.31 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.30 2015/10/10 07:23:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.31 2015/10/11 09:17:51 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -67,7 +67,7 @@ Static usbd_status usbd_open_pipe_ival
 	(struct usbd_interface *, uint8_t, uint8_t, struct usbd_pipe **, int);
 static void *usbd_alloc_buffer(struct usbd_xfer *, uint32_t);
 static void usbd_free_buffer(struct usbd_xfer *);
-static struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *);
+static struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *, unsigned int);
 static usbd_status usbd_free_xfer(struct usbd_xfer *);
 
 #if defined(USB_DEBUG)
@@ -445,7 +445,7 @@ usbd_get_pipe0(struct usbd_device *dev)
 }
 
 static struct usbd_xfer *
-usbd_alloc_xfer(struct usbd_device *dev)
+usbd_alloc_xfer(struct usbd_device *dev, unsigned int nframes)
 {
 	struct usbd_xfer *xfer;
 
@@ -453,7 +453,7 @@ usbd_alloc_xfer(struct usbd_device *dev)
 
 	ASSERT_SLEEPABLE();
 
-	xfer = dev->ud_bus->ub_methods->ubm_allocx(dev->ud_bus);
+	xfer = dev->ud_bus->ub_methods->ubm_allocx(dev->ud_bus, nframes);
 	if (xfer == NULL)
 		return NULL;
 	xfer->ux_dev = dev;
@@ -493,7 +493,7 @@ usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
 {
 	KASSERT(xp != NULL);
 
-	struct usbd_xfer *xfer = usbd_alloc_xfer(pipe->up_dev);
+	struct usbd_xfer *xfer = usbd_alloc_xfer(pipe->up_dev, nframes);
 	if (xfer == NULL)
 		return ENOMEM;
 
@@ -1053,7 +1053,7 @@ usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
 
 	ASSERT_SLEEPABLE();
 
-	xfer = usbd_alloc_xfer(dev);
+	xfer = usbd_alloc_xfer(dev, 0);
 	if (xfer == NULL)
 		return USBD_NOMEM;
 
