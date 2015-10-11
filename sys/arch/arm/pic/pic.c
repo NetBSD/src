@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.35 2015/04/18 14:09:32 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.36 2015/10/11 20:20:33 mlelstv Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.35 2015/04/18 14:09:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.36 2015/10/11 20:20:33 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -793,7 +793,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 		if (pic__iplsources[off] == NULL) {
 			is->is_iplidx = off - pic_ipl_offset[ipl];
 			pic__iplsources[off] = is;
-			return is;
+			goto unblock;
 		}
 	}
 
@@ -824,6 +824,7 @@ pic_establish_intr(struct pic_softc *pic, int irq, int ipl, int type,
 
 	(*pic->pic_ops->pic_establish_irq)(pic, is);
 
+unblock:
 	(*pic->pic_ops->pic_unblock_irqs)(pic, is->is_irq & ~0x1f,
 	    __BIT(is->is_irq & 0x1f));
 	
