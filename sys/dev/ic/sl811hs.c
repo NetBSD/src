@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.11 2014/12/05 09:37:49 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.12 2015/10/11 08:35:04 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.11 2014/12/05 09:37:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.12 2015/10/11 08:35:04 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -931,7 +931,7 @@ slhci_start(struct usbd_xfer *xfer)
 	 */
 	if (spipe->pflags & PF_LS) {
 		/*
-		 * Setting PREAMBLE for directly connnected LS devices will
+		 * Setting PREAMBLE for directly connected LS devices will
 		 * lock up the chip.
 		 */
 		if (spipe->pflags & PF_PREAMBLE)
