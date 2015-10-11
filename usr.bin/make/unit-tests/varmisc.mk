@@ -1,4 +1,4 @@
-# $Id: varmisc.mk,v 1.3 2015/10/11 04:51:24 sjg Exp $
+# $Id: varmisc.mk,v 1.4 2015/10/11 06:32:15 sjg Exp $
 #
 # Miscellaneous variable tests.
 
@@ -7,8 +7,8 @@ all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
 
-True = ${echo -n true,>&2:L:sh}TRUE
-False= ${echo -n false,>&2:L:sh}FALSE
+True = ${echo true >&2:L:sh}TRUE
+False= ${echo false >&2:L:sh}FALSE
 
 VSET= is set
 .undef UNDEF
