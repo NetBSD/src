@@ -1,4 +1,4 @@
-/*	$NetBSD: lobject.c,v 1.6 2015/10/11 01:01:45 christos Exp $	*/
+/*	$NetBSD: lobject.c,v 1.7 2015/10/11 09:06:21 mbalmer Exp $	*/
 
 /*
 ** Id: lobject.c,v 2.104 2015/04/11 18:30:08 roberto Exp 
@@ -370,7 +370,7 @@ void luaO_tostring (lua_State *L, StkId obj) {
   }
 #else /* _KERNEL */
   lua_assert(ttisinteger(obj));
-  len = lua_integer2str(buff, ivalue(obj));
+  len = lua_integer2str(buff, sizeof(buff), ivalue(obj));
 #endif
   setsvalue2s(L, obj, luaS_newlstr(L, buff, len));
 }
