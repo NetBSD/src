@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.9 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.10 2015/10/11 09:17:51 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.9 2015/03/19 17:26:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.10 2015/10/11 09:17:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -882,7 +882,7 @@ ugenhc_poll(struct usbd_bus *ubus)
 }
 
 static struct usbd_xfer *
-ugenhc_allocx(struct usbd_bus *bus)
+ugenhc_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
 	struct usbd_xfer *xfer;
 
