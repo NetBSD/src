@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.23 2015/10/11 09:17:51 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.24 2015/10/12 07:02:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.23 2015/10/11 09:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.24 2015/10/12 07:02:49 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -524,10 +524,7 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 				 (dataphys & (OHCI_PAGE_SIZE-1));
 			/* the length must be a multiple of the max size */
 			curlen -= curlen % UGETW(opipe->pipe.up_endpoint->ue_edesc->wMaxPacketSize);
-#ifdef DIAGNOSTIC
-			if (curlen == 0)
-				panic("ohci_alloc_std: curlen == 0");
-#endif
+			KASSERT(curlen != 0);
 		}
 		DPRINTFN(4, "dataphys=0x%08x dataphysend=0x%08x "
 		    "len=%d curlen=%d",  dataphys, dataphysend, len, curlen);
@@ -644,11 +641,8 @@ ohci_free_sitd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	DPRINTFN(10, "sitd=%p", sitd, 0, 0, 0);
 
+	KASSERT(sitd->isdone);
 #ifdef DIAGNOSTIC
-	if (!sitd->isdone) {
-		panic("ohci_free_sitd: sitd=%p not done", sitd);
-		return;
-	}
 	/* Warn double free */
 	sitd->isdone = 0;
 #endif
@@ -969,11 +963,9 @@ ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
 	struct ohci_softc *sc = bus->ub_hcpriv;
 
+	KASSERTMSG(xfer->ux_state == XFER_BUSY,
+	    "xfer=%p not busy, 0x%08x\n", xfer, xfer->ux_state);
 #ifdef DIAGNOSTIC
-	if (xfer->ux_state != XFER_BUSY) {
-		printf("ohci_freex: xfer=%p not busy, 0x%08x\n", xfer,
-		       xfer->ux_state);
-	}
 	xfer->ux_state = XFER_FREE;
 #endif
 	pool_cache_put(sc->sc_xferpool, xfer);
@@ -1134,9 +1126,7 @@ ohci_intr(void *p)
 
 	/* If we get an interrupt while polling, then just ignore it. */
 	if (sc->sc_bus.ub_usepolling) {
-#ifdef DIAGNOSTIC
 		DPRINTFN(16, "ignored interrupt while polling", 0, 0, 0, 0);
-#endif
 		/* for level triggered intrs, should do something to ack */
 		OWRITE4(sc, OHCI_INTERRUPT_STATUS,
 			OREAD4(sc, OHCI_INTERRUPT_STATUS));
@@ -1417,9 +1407,8 @@ ohci_softintr(void *v)
 			/* Handled by abort routine. */
 			continue;
 		}
+		KASSERT(!sitd->isdone);
 #ifdef DIAGNOSTIC
-		if (sitd->isdone)
-			printf("ohci_softintr: sitd=%p is done\n", sitd);
 		sitd->isdone = 1;
 #endif
 		if (sitd->flags & OHCI_CALL_DONE) {
@@ -1492,12 +1481,8 @@ ohci_device_ctrl_done(struct usbd_xfer *xfer)
 	DPRINTFN(10, "xfer=%p", xfer, 0, 0, 0);
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
+	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
-#ifdef DIAGNOSTIC
-	if (!(xfer->ux_rqflags & URQ_REQUEST)) {
-		panic("ohci_device_ctrl_done: not a request");
-	}
-#endif
 	if (len)
 		usb_syncmem(&xfer->ux_dmabuf, 0, len,
 		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
@@ -2393,13 +2378,8 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 * any of them.
 	 */
 	p = xfer->ux_hcpriv;
-#ifdef DIAGNOSTIC
-	if (p == NULL) {
-		xfer->ux_hcflags &= ~UXFER_ABORTING; /* XXX */
-		printf("ohci_abort_xfer: hcpriv is NULL\n");
-		goto done;
-	}
-#endif
+	KASSERT(p);
+
 #ifdef OHCI_DEBUG
 	DPRINTF("--- dump start ---", 0, 0, 0, 0);
 
@@ -2750,13 +2730,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-#ifdef DIAGNOSTIC
-	if (!(xfer->ux_rqflags & URQ_REQUEST)) {
-		/* XXX panic */
-		printf("ohci_device_ctrl_transfer: not a request\n");
-		return USBD_INVAL;
-	}
-#endif
+	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
 	mutex_enter(&sc->sc_lock);
 	err = ohci_device_request(xfer);
@@ -2849,13 +2823,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
-#ifdef DIAGNOSTIC
-	if (xfer->ux_rqflags & URQ_REQUEST) {
-		/* XXX panic */
-		printf("ohci_device_bulk_start: a request\n");
-		return USBD_INVAL;
-	}
-#endif
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 
 	mutex_enter(&sc->sc_lock);
 
@@ -3016,10 +2984,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	DPRINTFN(3, "xfer=%p len=%d flags=%d priv=%p", xfer, xfer->ux_length,
 	    xfer->ux_flags, xfer->ux_priv);
 
-#ifdef DIAGNOSTIC
-	if (xfer->ux_rqflags & URQ_REQUEST)
-		panic("ohci_device_intr_transfer: a request");
-#endif
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 
 	len = xfer->ux_length;
 	endpt = xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress;
@@ -3130,10 +3095,7 @@ ohci_device_intr_close(struct usbd_pipe *pipe)
 
 	for (p = sc->sc_eds[pos]; p && p->next != sed; p = p->next)
 		continue;
-#ifdef DIAGNOSTIC
-	if (p == NULL)
-		panic("ohci_device_intr_close: ED not found");
-#endif
+	KASSERT(p);
 	p->next = sed->next;
 	p->ed.ed_nexted = sed->ed.ed_nexted;
 	usb_syncmem(&p->dma, p->offs + offsetof(ohci_ed_t, ed_nexted),
@@ -3401,6 +3363,7 @@ ohci_device_isoc_start(struct usbd_xfer *xfer)
 		return USBD_IOERROR;
 	}
 
+
 #ifdef DIAGNOSTIC
 	if (xfer->ux_status != USBD_IN_PROGRESS)
 		printf("ohci_device_isoc_start: not in progress %p\n", xfer);
@@ -3445,12 +3408,8 @@ ohci_device_isoc_abort(struct usbd_xfer *xfer)
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	sitd = xfer->ux_hcpriv;
-#ifdef DIAGNOSTIC
-	if (sitd == NULL) {
-		printf("ohci_device_isoc_abort: hcpriv==0\n");
-		goto done;
-	}
-#endif
+	KASSERT(sitd);
+
 	for (; sitd->xfer == xfer; sitd = sitd->nextitd) {
 #ifdef DIAGNOSTIC
 		DPRINTFN(1, "abort sets done sitd=%p", sitd, 0, 0, 0);
