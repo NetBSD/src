@@ -1411,6 +1411,11 @@ mDNSexport mStatus mDNSPlatformTimeInit(void)
 
 mDNSexport mDNSs32  mDNSPlatformRawTime()
 	{
+#ifdef CLOCK_MONOTONIC
+	struct timespec tv;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+	return((tv.tv_sec << 10) | ((tv.tv_nsec / 1000) * 16 / 15625));
+#else
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	// tv.tv_sec is seconds since 1st January 1970 (GMT, with no adjustment for daylight savings time)
@@ -1420,6 +1425,7 @@ mDNSexport mDNSs32  mDNSPlatformRawTime()
 	// This gives us a proper modular (cyclic) counter that has a resolution of roughly 1ms (actually 1/1024 second)
 	// and correctly cycles every 2^22 seconds (4194304 seconds = approx 48 days).
 	return((tv.tv_sec << 10) | (tv.tv_usec * 16 / 15625));
+#endif
 	}
 
 mDNSexport mDNSs32 mDNSPlatformUTC(void)
