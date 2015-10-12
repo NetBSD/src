@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.197 2015/10/11 04:51:24 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.198 2015/10/12 16:48:13 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.197 2015/10/11 04:51:24 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.198 2015/10/12 16:48:13 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.197 2015/10/11 04:51:24 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.198 2015/10/12 16:48:13 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -3238,17 +3238,22 @@ ApplyModifiers(char *nstr, const char *tstr,
 		int lhs_flags, rhs_flags;
 		
 		/* find ':', and then substitute accordingly */
-		cond_rc = Cond_EvalExpression(NULL, v->name, &value, 0, FALSE);
-		if (cond_rc == COND_INVALID) {
-		    lhs_flags = rhs_flags = VAR_NOSUBST;
-		} else if (value) {
-		    lhs_flags = 0;
-		    rhs_flags = VAR_NOSUBST;
+		if (wantit) {
+		    cond_rc = Cond_EvalExpression(NULL, v->name, &value, 0, FALSE);
+		    if (cond_rc == COND_INVALID) {
+			lhs_flags = rhs_flags = VAR_NOSUBST;
+		    } else if (value) {
+			lhs_flags = 0;
+			rhs_flags = VAR_NOSUBST;
+		    } else {
+			lhs_flags = VAR_NOSUBST;
+			rhs_flags = 0;
+		    }
 		} else {
-		    lhs_flags = VAR_NOSUBST;
-		    rhs_flags = 0;
+		    /* we are just consuming and discarding */
+		    cond_rc = value = 0;
+		    lhs_flags = rhs_flags = VAR_NOSUBST;
 		}
-
 		pattern.flags = 0;
 
 		cp = ++tstr;
