@@ -15,4 +15,6 @@ TRUE
 :? only rhs when value false
 false
 FALSE
+do not evaluate or expand :? if discarding
+is set
 exit status 0

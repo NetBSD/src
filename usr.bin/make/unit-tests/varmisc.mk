@@ -1,8 +1,8 @@
-# $Id: varmisc.mk,v 1.4 2015/10/11 06:32:15 sjg Exp $
+# $Id: varmisc.mk,v 1.5 2015/10/12 17:09:29 sjg Exp $
 #
 # Miscellaneous variable tests.
 
-all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs
+all: unmatched_var_paren D_true U_true D_false U_false Q_lhs Q_rhs NQ_none
 
 unmatched_var_paren:
 	@echo ${foo::=foo-text}
@@ -36,3 +36,7 @@ Q_lhs:
 Q_rhs:
 	@echo :? only rhs when value false
 	@echo ${0:L:?${True}:${False}}
+
+NQ_none:
+	@echo do not evaluate or expand :? if discarding
+	@echo ${VSET:U${1:L:?${True}:${False}}}
