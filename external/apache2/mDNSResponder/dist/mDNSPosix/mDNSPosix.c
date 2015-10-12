@@ -921,7 +921,9 @@ mDNSlocal int SetupInterfaceList(mDNS *const m)
 	assert(m != NULL);
 	debugf("SetupInterfaceList");
 
-	if (intfList == NULL) err = ENOENT;
+	/* More interfaces, or usableable addresses to existing interfaces
+	 * could be added later. */
+	if (intfList == NULL) return 0;
 
 #if HAVE_IPV6
 	if (err == 0)		/* Link the IPv6 list to the end of the IPv4 list */
