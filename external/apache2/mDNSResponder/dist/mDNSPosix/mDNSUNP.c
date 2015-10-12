@@ -277,6 +277,8 @@ struct ifi_info *get_ifi_info(int family, int doaliases)
         flags = ifrcopy.ifr_flags;
         if ((flags & IFF_UP) == 0)
             continue;   /* ignore if interface not up */
+	if ((flags & IFF_LOOPBACK))
+	    continue;	/* ignore loopback interfaces */
 
 	/* Skip addresses we can't use */
 #ifdef SIOCGIFAFLAG_IN
