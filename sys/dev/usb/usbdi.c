@@ -1,12 +1,13 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.31 2015/10/11 09:17:51 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.32 2015/10/12 10:18:54 skrll Exp $	*/
 
 /*
- * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology and Matthew R. Green (mrg@eterna.com.au).
+ * Carlstedt Research & Technology, Matthew R. Green (mrg@eterna.com.au),
+ * and Nick Hudson.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.31 2015/10/11 09:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.32 2015/10/12 10:18:54 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -492,13 +493,14 @@ usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
     unsigned int nframes, struct usbd_xfer **xp)
 {
 	KASSERT(xp != NULL);
+	void *buf;
 
 	struct usbd_xfer *xfer = usbd_alloc_xfer(pipe->up_dev, nframes);
 	if (xfer == NULL)
 		return ENOMEM;
 
 	if (len) {
-		void *buf = usbd_alloc_buffer(xfer, len);
+		buf = usbd_alloc_buffer(xfer, len);
 		if (!buf) {
 			usbd_free_xfer(xfer);
 			return ENOMEM;
@@ -508,12 +510,26 @@ usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
 	xfer->ux_flags = flags;
 	xfer->ux_nframes = nframes;
 
+	if (xfer->ux_pipe->up_methods->upm_init) {
+		int err = xfer->ux_pipe->up_methods->upm_init(xfer);
+		if (err) {
+			if (buf)
+				usbd_free_buffer(xfer);
+			usbd_free_xfer(xfer);
+			return err;
+		}
+	}
+
 	*xp = xfer;
 	return 0;
 }
 
 void usbd_destroy_xfer(struct usbd_xfer *xfer)
 {
+
+	if (xfer->ux_pipe->up_methods->upm_fini) {
+		xfer->ux_pipe->up_methods->upm_fini(xfer);
+	}
 
 	usbd_free_xfer(xfer);
 }
@@ -1053,17 +1069,10 @@ usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
 
 	ASSERT_SLEEPABLE();
 
-	xfer = usbd_alloc_xfer(dev, 0);
-	if (xfer == NULL)
-		return USBD_NOMEM;
-
-	if (UGETW(req->wLength) != 0) {
-		void *buf = usbd_alloc_buffer(xfer, UGETW(req->wLength));
-		if (buf == NULL) {
-			err = USBD_NOMEM;
-			goto bad;
-		}
-	}
+	size_t len = UGETW(req->wLength);
+	int error = usbd_create_xfer(dev->ud_pipe0, len, 0, 0, &xfer);
+	if (error)
+		return error;
 
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
 				data, UGETW(req->wLength), flags, 0);
@@ -1084,11 +1093,11 @@ usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
 	if (actlen != NULL)
 		*actlen = xfer->ux_actlen;
 
- bad:
+	usbd_destroy_xfer(xfer);
+
 	if (err) {
 		USBHIST_LOG(usbdebug, "returning err = %d", err, 0, 0, 0);
 	}
-	usbd_free_xfer(xfer);
 	return err;
 }
 

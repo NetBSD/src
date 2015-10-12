@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.18 2015/10/11 09:17:51 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.19 2015/10/12 10:18:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -105,6 +105,8 @@ struct usbd_bus_methods {
 };
 
 struct usbd_pipe_methods {
+	int		      (*upm_init)(struct usbd_xfer *);
+	void		      (*upm_fini)(struct usbd_xfer *);
 	usbd_status	      (*upm_transfer)(struct usbd_xfer *);
 	usbd_status	      (*upm_start)(struct usbd_xfer *);
 	void		      (*upm_abort)(struct usbd_xfer *);
