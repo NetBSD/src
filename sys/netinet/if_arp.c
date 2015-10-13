@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.185 2015/10/13 09:33:35 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.186 2015/10/13 11:13:37 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.185 2015/10/13 09:33:35 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.186 2015/10/13 11:13:37 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -829,17 +829,19 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 #endif
 
 notfound:
-	if (la == NULL) {
 #ifdef IFF_STATICARP /* FreeBSD */
 #define _IFF_NOARP (IFF_NOARP | IFF_STATICARP)
 #else
 #define _IFF_NOARP IFF_NOARP
 #endif
-		if (ifp->if_flags & _IFF_NOARP) {
-			m_freem(m);
-			return 0;
-		}
+	if (ifp->if_flags & _IFF_NOARP) {
+		if (la != NULL)
+			LLE_RUNLOCK(la);
+		m_freem(m);
+		return 0;
+	}
 #undef _IFF_NOARP
+	if (la == NULL) {
 		create_lookup = "create";
 		IF_AFDATA_WLOCK(ifp);
 		la = lla_create(LLTABLE(ifp), LLE_EXCLUSIVE, dst);
