@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.20 2015/08/06 06:56:00 wiz Exp $
+.\" $NetBSD: pci_intr.9,v 1.21 2015/10/13 04:34:38 msaitoh Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 4, 2015
+.Dd October 13, 2015
 .Dt PCI_INTR 9
 .Os
 .Sh NAME
@@ -37,6 +37,7 @@
 .Nm pci_intr_evcnt ,
 .Nm pci_intr_establish ,
 .Nm pci_intr_disestablish
+.Nm pci_intr_setattr
 .Nd PCI bus interrupt manipulation functions
 .Sh SYNOPSIS
 .In dev/pci/pcivar.h
@@ -51,6 +52,7 @@
 "int ipl" "int (*intrhand)(void *)" "void *intrarg"
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *ih"
+.Fn pci_intr_setattr "pci_chipset_tag_t pc" "pci_intr_handle_t *ih" "int attr" "uint64_t data"
 .Sh DESCRIPTION
 The
 .Nm
@@ -109,6 +111,24 @@ may be saved and passed to
 .Fn pci_intr_disestablish
 to disable the interrupt handler
 when the driver is no longer interested in interrupts from the device.
+.Pp
+The
+.Fn pci_intr_setattr
+function sets an attribute
+.Fa attr
+of the interrupt handler to
+.Fa data .
+Currenty, only the following attribute is supported:
+.Bl -tag -width PCI_INTR_MPSAFE
+.It Dv PCI_INTR_MPSAFE
+If this attribute is set to
+.Dv true ,
+it specifies that the interrupt handler is multiprocessor safe and works its
+own locking; otherwise the kernel lock will be held for the call to the
+interrupt handler.
+The default is
+.Dv false .
+.El
 .Pp
 The
 .Fn pci_intr_evcnt
