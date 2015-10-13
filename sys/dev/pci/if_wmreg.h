@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.83 2015/10/13 08:23:31 knakahara Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.84 2015/10/13 08:36:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -878,6 +878,9 @@ struct livengood_tcpip_ctxdesc {
 #define	RXCSUM_IPOFL	(1U << 8)	/* IP checksum offload */
 #define	RXCSUM_TUOFL	(1U << 9)	/* TCP/UDP checksum offload */
 #define	RXCSUM_IPV6OFL	(1U << 10)	/* IPv6 checksum offload */
+#define	RXCSUM_CRCOFL	(1U << 10)	/* SCTP CRC32 checksum offload */
+#define	RXCSUM_IPPCSE	(1U << 12)	/* IP payload checksum enable */
+#define	RXCSUM_PCSD	(1U << 13)	/* packet checksum disabled */
 
 #define WMREG_RLPML	0x5004	/* Rx Long Packet Max Length */
 
@@ -901,6 +904,56 @@ struct livengood_tcpip_ctxdesc {
 #define WUFC_ARP		0x00000020 /* ARP Request Packet Wakeup En */
 #define WUFC_IPV4		0x00000040 /* Directed IPv4 Packet Wakeup En */
 #define WUFC_IPV6		0x00000080 /* Directed IPv6 Packet Wakeup En */
+
+#define WMREG_MRQC	0x5818	/* Multiple Receive Queues Command */
+#define MRQC_DISABLE_RSS	0x00000000
+#define MRQC_ENABLE_RSS_MQ_82574	__BIT(0) /* enable RSS for 82574 */
+#define MRQC_ENABLE_RSS_MQ	__BIT(1) /* enable hardware max RSS without VMDq */
+#define MRQC_ENABLE_RSS_VMDQ	__BITS(1, 0) /* enable RSS with VMDq */
+#define MRQC_DEFQ_MASK		__BITS(5, 3)
+				/*
+				 * Defines the default queue in non VMDq
+				 * mode according to value of the Multiple Receive
+				 * Queues Enable field.
+				 */
+#define MRQC_DEFQ_NOT_RSS_FLT	__SHFTIN(__BIT(1), MRQC_DEFQ_MASK)
+				/*
+				 * the destination of all packets
+				 * not forwarded by RSS or filters
+				 */
+#define MRQC_DEFQ_NOT_MAC_ETH	__SHFTIN(__BITS(1, 0), MRQC_DEFQ_MASK)
+				/*
+				 * Def_Q field is ignored. Queueing
+				 * decision of all packets not forwarded
+				 * by MAC address and Ether-type filters
+				 * is according to VT_CTL.DEF_PL field.
+				 */
+#define MRQC_DEFQ_IGNORED1	__SHFTIN(__BIT(2), MRQC_DEFQ_MASK)
+				/* Def_Q field is ignored */
+#define MRQC_DEFQ_IGNORED2	__SHFTIN(__BIT(2)|__BIT(0), MRQC_DEFQ_MASK)
+				/* Def_Q field is ignored */
+#define MRQC_DEFQ_VMDQ		__SHFTIN(__BITS(2, 1), MRQC_DEFQ_MASK)
+				/* for VMDq mode */
+#define MRQC_RSS_FIELD_IPV4_TCP		__BIT(16)
+#define MRQC_RSS_FIELD_IPV4		__BIT(17)
+#define MRQC_RSS_FIELD_IPV6_TCP_EX	__BIT(18)
+#define MRQC_RSS_FIELD_IPV6_EX		__BIT(19)
+#define MRQC_RSS_FIELD_IPV6		__BIT(20)
+#define MRQC_RSS_FIELD_IPV6_TCP		__BIT(21)
+#define MRQC_RSS_FIELD_IPV4_UDP		__BIT(22)
+#define MRQC_RSS_FIELD_IPV6_UDP		__BIT(23)
+#define MRQC_RSS_FIELD_IPV6_UDP_EX	__BIT(24)
+
+#define WMREG_RETA_Q(x)		(0x5c00 + ((x) >> 2) * 4) /* Redirection Table */
+#define RETA_NUM_ENTRIES	128
+#define RETA_ENTRY_MASK_Q(x)	(0x000000ff << (((x) % 4) * 8)) /* Redirection Table */
+#define RETA_ENT_QINDEX_MASK		__BITS(3,0) /*queue index for 82580 and newer */
+#define RETA_ENT_QINDEX0_MASK_82575	__BITS(3,2) /*queue index for pool0 */
+#define RETA_ENT_QINDEX1_MASK_82575	__BITS(7,6) /*queue index for pool1 and regular RSS */
+#define RETA_ENT_QINDEX_MASK_82574	__BIT(7) /*queue index for 82574 */
+
+#define WMREG_RSSRK(x)		(0x5c80 + (x) * 4) /* RSS Random Key Register */
+#define RSSRK_NUM_REGS		10
 
 #define	WMREG_MANC	0x5820	/* Management Control */
 #define	MANC_SMBUS_EN		0x00000001
