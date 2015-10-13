@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.369 2015/10/13 10:26:21 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.370 2015/10/13 21:28:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.369 2015/10/13 10:26:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.370 2015/10/13 21:28:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9314,7 +9314,7 @@ wm_check_for_link(struct wm_softc *sc)
 static void
 wm_tbi_tick(struct wm_softc *sc)
 {
-	struct wm_txqueue *txq = &sc->sc_txq[0];
+	struct wm_txqueue *txq __diagused = &sc->sc_txq[0];
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t status;
@@ -9522,7 +9522,7 @@ setled:
 static void
 wm_serdes_tick(struct wm_softc *sc)
 {
-	struct wm_txqueue *txq = &sc->sc_txq[0];
+	struct wm_txqueue *txq __diagused = &sc->sc_txq[0];
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
