@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.22 2015/10/13 08:44:54 wiz Exp $
+.\" $NetBSD: pci_intr.9,v 1.23 2015/10/13 09:21:56 msaitoh Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -130,6 +130,10 @@ interrupt handler.
 The default is
 .Dv false .
 .El
+.Pp
+The
+.Fn pci_intr_setattr
+function returns zero on success, and nonzero on failure.
 .Pp
 The
 .Fn pci_intr_evcnt
