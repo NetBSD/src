@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.69 2015/09/30 22:58:02 rjs Exp $
+#	$NetBSD: Makefile,v 1.70 2015/10/13 04:33:22 mrg Exp $
 
 # xf86-input drivers
 
@@ -48,6 +48,7 @@ SUBDIR+= \
 	xf86-video-mga \
 	xf86-video-neomagic \
 	xf86-video-nv \
+	xf86-video-nouveau \
 	xf86-video-openchrome \
 	xf86-video-r128 \
 	xf86-video-radeon \

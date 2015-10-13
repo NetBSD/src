@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.14 2015/07/20 02:52:57 mrg Exp $
+# $NetBSD: md.amd64,v 1.15 2015/10/13 04:33:22 mrg Exp $
 ./usr/X11R7/lib/libI810XvMC.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libI810XvMC.so.1		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libI810XvMC.so.1.0		-unknown-		xorg,compatx11file
@@ -14,4 +14,7 @@
 ./usr/X11R7/lib/libdrm_intel.so			-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/lib/libdrm_intel.so.0.1		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_nouveau.so		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_nouveau.so.2		-unknown-		xorg,compatx11file
+./usr/X11R7/lib/libdrm_nouveau.so.2.0		-unknown-		xorg,compatx11file
 ./usr/X11R7/share/pciids/pci.ids		-unknown-		obsolete
