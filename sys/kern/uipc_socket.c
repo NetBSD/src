@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.246 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.247 2015/10/13 21:28:35 rjs Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.246 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.247 2015/10/13 21:28:35 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.246 2015/08/24 22:21:26 pooka Exp 
 #include "opt_mbuftrace.h"
 #include "opt_somaxkva.h"
 #include "opt_multiprocessor.h"	/* XXX */
+#include "opt_sctp.h"
 #endif
 
 #include <sys/param.h>
@@ -644,6 +645,7 @@ int
 solisten(struct socket *so, int backlog, struct lwp *l)
 {
 	int	error;
+	short	oldopt, oldqlimit;
 
 	solock(so);
 	if ((so->so_state & (SS_ISCONNECTED | SS_ISCONNECTING | 
@@ -651,16 +653,21 @@ solisten(struct socket *so, int backlog, struct lwp *l)
 		sounlock(so);
 		return EINVAL;
 	}
-	error = (*so->so_proto->pr_usrreqs->pr_listen)(so, l);
-	if (error != 0) {
-		sounlock(so);
-		return error;
-	}
+	oldopt = so->so_options;
+	oldqlimit = so->so_qlimit;
 	if (TAILQ_EMPTY(&so->so_q))
 		so->so_options |= SO_ACCEPTCONN;
 	if (backlog < 0)
 		backlog = 0;
 	so->so_qlimit = min(backlog, somaxconn);
+
+	error = (*so->so_proto->pr_usrreqs->pr_listen)(so, l);
+	if (error != 0) {
+		so->so_options = oldopt;
+		so->so_qlimit = oldqlimit;
+		sounlock(so);
+		return error;
+	}
 	sounlock(so);
 	return 0;
 }
@@ -1323,6 +1330,31 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 			sbsync(&so->so_rcv, nextrecord);
 		}
 	}
+	if (pr->pr_flags & PR_ADDR_OPT) {
+		/*
+		 * For SCTP we may be getting a
+		 * whole message OR a partial delivery.
+		 */
+		if (m->m_type == MT_SONAME) {
+			orig_resid = 0;
+			if (flags & MSG_PEEK) {
+				if (paddr)
+					*paddr = m_copy(m, 0, m->m_len);
+				m = m->m_next;
+			} else {
+				sbfree(&so->so_rcv, m);
+				if (paddr) {
+					*paddr = m;
+					so->so_rcv.sb_mb = m->m_next;
+					m->m_next = 0;
+					m = so->so_rcv.sb_mb;
+				} else {
+					MFREE(m, so->so_rcv.sb_mb);
+					m = so->so_rcv.sb_mb;
+				}
+			}
+		}
+	}
 
 	/*
 	 * Process one or more MT_CONTROL mbufs present before any data mbufs
@@ -1457,6 +1489,10 @@ soreceive(struct socket *so, struct mbuf **paddr, struct uio *uio,
 		if (len == m->m_len - moff) {
 			if (m->m_flags & M_EOR)
 				flags |= MSG_EOR;
+#ifdef SCTP
+			if (m->m_flags & M_NOTIFICATION)
+				flags |= MSG_NOTIFICATION;
+#endif /* SCTP */
 			if (flags & MSG_PEEK) {
 				m = m->m_next;
 				moff = 0;
