@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.418 2015/10/02 16:54:15 christos Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.419 2015/10/13 00:24:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.418 2015/10/02 16:54:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.419 2015/10/13 00:24:35 pgoyette Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1282,7 +1282,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
-		p->p_pptr->p_waited = 0;
+		p->p_waited = 0;
 		mutex_enter(p->p_lock);
 		ksiginfo_queue_init(&kq);
 		sigclearall(p, &contsigmask, &kq);
