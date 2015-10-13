@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.367 2015/10/13 09:10:01 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.368 2015/10/13 10:21:21 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.367 2015/10/13 09:10:01 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.368 2015/10/13 10:21:21 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5872,8 +5872,10 @@ wm_init_rx_regs(struct wm_softc *sc, struct wm_rxqueue *rxq)
 		} else {
 			CSR_WRITE(sc, WMREG_RDH(qid), 0);
 			CSR_WRITE(sc, WMREG_RDT(qid), 0);
-			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD); /* ITR/4 */
-			CSR_WRITE(sc, WMREG_RADV, 375);	/* MUST be same */
+			/* ITR / 4 */
+			CSR_WRITE(sc, WMREG_RDTR, (sc->sc_itr / 4) | RDTR_FPD);
+			/* MUST be same */
+			CSR_WRITE(sc, WMREG_RADV, sc->sc_itr / 4);
 			CSR_WRITE(sc, WMREG_RXDCTL(qid), RXDCTL_PTHRESH(0) |
 			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
 		}
