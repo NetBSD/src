@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.73 2015/10/13 20:25:21 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.74 2015/10/13 20:49:39 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.73 2015/10/13 20:25:21 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.74 2015/10/13 20:49:39 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -706,7 +706,7 @@ member_declaration:
 		$$ = $4;
 	  }
 	| noclass_declmods deftyp {
-		symtyp = FMOS;
+		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
 			warning(49);
@@ -715,7 +715,7 @@ member_declaration:
 		anonymize($$);
 	  }
 	| noclass_declspecs deftyp {
-		symtyp = FMOS;
+		symtyp = FVFT;
 		/* struct or union member must be named */
 		if (!Sflag)
 			warning(49);
