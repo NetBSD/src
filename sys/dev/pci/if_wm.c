@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.358 2015/10/13 08:14:27 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.359 2015/10/13 08:17:15 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.358 2015/10/13 08:14:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.359 2015/10/13 08:17:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1639,6 +1639,13 @@ wm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	/* XXX Currently, Tx, Rx queue are always one. */
+	sc->sc_nrxqueues = 1;
+	sc->sc_ntxqueues = 1;
+	error = wm_alloc_txrx_queues(sc);
+	if (error)
+		return;
+
 #ifndef WM_MSI_MSIX
 	/*
 	 * Map and establish our interrupt.
@@ -1892,13 +1899,6 @@ alloc_retry:
 		    (sc->sc_flags & WM_F_BUS64) ? 64 : 32, sc->sc_bus_speed,
 		    (sc->sc_flags & WM_F_PCIX) ? "PCIX" : "PCI");
 	}
-
-	/* XXX Currently, Tx, Rx queue are always one. */
-	sc->sc_nrxqueues = 1;
-	sc->sc_ntxqueues = 1;
-	error = wm_alloc_txrx_queues(sc);
-	if (error)
-		return;
 
 	/* clear interesting stat counters */
 	CSR_READ(sc, WMREG_COLC);
