@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.82 2015/10/08 04:30:25 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.83 2015/10/13 08:23:31 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -433,10 +433,8 @@ struct livengood_tcpip_ctxdesc {
 #define	ICR_MDAC	(1U << 9)	/* MDIO access complete */
 #define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
 #define	ICR_GPI(x)	(1U << (x))	/* general purpose interrupts */
-#define	ICR_RXQ0	__BIT(20)	/* 82574: Rx queue 0 interrupt */
-#define	ICR_RXQ1	__BIT(21)	/* 82574: Rx queue 1 interrupt */
-#define	ICR_TXQ0	__BIT(22)	/* 82574: Tx queue 0 interrupt */
-#define	ICR_TXQ1	__BIT(23)	/* 82574: Tx queue 1 interrupt */
+#define	ICR_RXQ(x)	__BIT(20+(x))	/* 82574: Rx queue x interrupt x=0,1 */
+#define	ICR_TXQ(x)	__BIT(22+(x))	/* 82574: Tx queue x interrupt x=0,1 */
 #define	ICR_OTHER	__BIT(24)	/* 82574: Other interrupt */
 #define	ICR_INT		(1U << 31)	/* device generated an interrupt */
 
@@ -478,8 +476,8 @@ struct livengood_tcpip_ctxdesc {
 	/* See ICR bits. */
 
 #define	WMREG_EIAC_82574 0x00dc	/* Interrupt Auto Clear Register */
-#define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ0 | ICR_RXQ1		\
-	| ICR_TXQ0 | ICR_TXQ1 | ICR_OTHER)
+#define	WMREG_EIAC_82574_MSIX_MASK	(ICR_RXQ(0) | ICR_RXQ(1)	\
+	    | ICR_TXQ(0) | ICR_TXQ(1) | ICR_OTHER)
 
 #define	WMREG_RCTL	0x0100	/* Receive Control */
 #define	RCTL_EN		(1U << 1)	/* receiver enable */
@@ -516,19 +514,23 @@ struct livengood_tcpip_ctxdesc {
 #define WMREG_LTRC	0x01a0	/* Latency Tolerance Reportiong Control */
 
 #define	WMREG_OLD_RDBAL0 0x0110	/* Receive Descriptor Base Low (ring 0) */
-#define	WMREG_RDBAL	0x2800
-#define	WMREG_RDBAL_2	0x0c00	/* for 82576 ... */
+#define	WMREG_RDBAL(x) \
+	((x) < 4 ? (0x02800 + ((x) * 0x100)) :	\
+	    (0x0C000 + ((x) * 0x40)))
 
 #define	WMREG_OLD_RDBAH0 0x0114	/* Receive Descriptor Base High (ring 0) */
-#define	WMREG_RDBAH	0x2804
-#define	WMREG_RDBAH_2	0x0c04	/* for 82576 ... */
+#define	WMREG_RDBAH(x) \
+	((x) < 4 ? (0x02804 + ((x) * 0x100)) :	\
+	    (0x0c004 + ((x) * 0x40)))
 
 #define	WMREG_OLD_RDLEN0 0x0118	/* Receive Descriptor Length (ring 0) */
-#define	WMREG_RDLEN	0x2808
-#define	WMREG_RDLEN_2	0x0c08	/* for 82576 ... */
+#define	WMREG_RDLEN(x) \
+	((x) < 4 ? (0x02808 + ((x) * 0x100)) :  \
+	    (0x0c008 + ((x) * 0x40)))
 
-#define WMREG_SRRCTL	0x280c	/* additional recv control used in 82575 ... */
-#define WMREG_SRRCTL_2	0x0c0c	/* for 82576 ... */
+#define	WMREG_SRRCTL(x) \
+	((x) < 4 ? (0x0280c + ((x) * 0x100)) :	\
+	    (0x0c00c + ((x) * 0x40)))	/* additional recv control used in 82575 ... */
 #define SRRCTL_BSIZEPKT_MASK		0x0000007f
 #define SRRCTL_BSIZEPKT_SHIFT		10	/* Shift _right_ */
 #define SRRCTL_BSIZEHDRSIZE_MASK	0x00000f00
@@ -543,15 +545,18 @@ struct livengood_tcpip_ctxdesc {
 #define SRRCTL_DROP_EN			0x80000000
 
 #define	WMREG_OLD_RDH0	0x0120	/* Receive Descriptor Head (ring 0) */
-#define	WMREG_RDH	0x2810
-#define	WMREG_RDH_2	0x0c10	/* for 82576 ... */
+#define	WMREG_RDH(x) \
+	((x) < 4 ? (0x02810 + ((x) * 0x100)) :  \
+	    (0x0C010 + ((x) * 0x40)))
 
 #define	WMREG_OLD_RDT0	0x0128	/* Receive Descriptor Tail (ring 0) */
-#define	WMREG_RDT	0x2818
-#define	WMREG_RDT_2	0x0c18	/* for 82576 ... */
+#define	WMREG_RDT(x) \
+	((x) < 4 ? (0x02818 + ((x) * 0x100)) :	\
+	    (0x0C018 + ((x) * 0x40)))
 
-#define	WMREG_RXDCTL	0x2828	/* Receive Descriptor Control */
-#define	WMREG_RXDCTL_2	0x0c28	/* for 82576 ... */
+#define	WMREG_RXDCTL(x) \
+	((x) < 4 ? (0x02828 + ((x) * 0x100)) :	\
+	    (0x0c028 + ((x) * 0x40)))	/* Receive Descriptor Control */
 #define	RXDCTL_PTHRESH(x) ((x) << 0)	/* prefetch threshold */
 #define	RXDCTL_HTHRESH(x) ((x) << 8)	/* host threshold */
 #define	RXDCTL_WTHRESH(x) ((x) << 16)	/* write back threshold */
@@ -634,19 +639,29 @@ struct livengood_tcpip_ctxdesc {
 #define	WMREG_TQC	0x0418
 
 #define	WMREG_OLD_TDBAL	0x0420	/* Transmit Descriptor Base Lo */
-#define	WMREG_TDBAL	0x3800
+#define	WMREG_TDBAL(x) \
+	((x) < 4 ? (0x03800 + ((x) * 0x100)) :	\
+	    (0x0E000 + ((x) * 0x40)))
 
 #define	WMREG_OLD_TDBAH	0x0424	/* Transmit Descriptor Base Hi */
-#define	WMREG_TDBAH	0x3804
+#define	WMREG_TDBAH(x)\
+	((x) < 4 ? (0x03804 + ((x) * 0x100)) :	\
+	    (0x0E004 + ((x) * 0x40)))
 
 #define	WMREG_OLD_TDLEN	0x0428	/* Transmit Descriptor Length */
-#define	WMREG_TDLEN	0x3808
+#define	WMREG_TDLEN(x) \
+	((x) < 4 ? (0x03808 + ((x) * 0x100)) :	\
+	    (0x0E008 + ((x) * 0x40)))
 
 #define	WMREG_OLD_TDH	0x0430	/* Transmit Descriptor Head */
-#define	WMREG_TDH	0x3810
+#define	WMREG_TDH(x) \
+	((x) < 4 ? (0x03810 + ((x) * 0x100)) :	\
+	    (0x0E010 + ((x) * 0x40)))
 
 #define	WMREG_OLD_TDT	0x0438	/* Transmit Descriptor Tail */
-#define	WMREG_TDT	0x3818
+#define WMREG_TDT(x) \
+	((x) < 4 ? (0x03818 + ((x) * 0x100)) :	\
+	    (0x0E018 + ((x) * 0x40)))
 
 #define	WMREG_OLD_TIDV	0x0440	/* Transmit Delay Interrupt Value */
 #define	WMREG_TIDV	0x3820
@@ -768,14 +783,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define WMREG_MSIXBM(x)	(0x1600 + (x) * 4) /* MSI-X Allocation */
 
-#define EITR_RX_QUEUE0	0x00000001 /* Rx Queue 0 Interrupt */
-#define EITR_RX_QUEUE1	0x00000002 /* Rx Queue 1 Interrupt */
-#define EITR_RX_QUEUE2	0x00000004 /* Rx Queue 2 Interrupt */
-#define EITR_RX_QUEUE3	0x00000008 /* Rx Queue 3 Interrupt */
-#define EITR_TX_QUEUE0	0x00000100 /* Tx Queue 0 Interrupt */
-#define EITR_TX_QUEUE1	0x00000200 /* Tx Queue 1 Interrupt */
-#define EITR_TX_QUEUE2	0x00000400 /* Tx Queue 2 Interrupt */
-#define EITR_TX_QUEUE3	0x00000800 /* Tx Queue 3 Interrupt */
+#define EITR_RX_QUEUE(x)	__BIT(0+(x)) /* Rx Queue x Interrupt x=[0-3] */
+#define EITR_TX_QUEUE(x)	__BIT(8+(x)) /* Tx Queue x Interrupt x=[0-3] */
 #define EITR_TCP_TIMER	0x40000000 /* TCP Timer */
 #define EITR_OTHER	0x80000000 /* Interrupt Cause Active */
 
