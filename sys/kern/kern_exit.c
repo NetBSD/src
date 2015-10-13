@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.245 2015/10/02 16:54:15 christos Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.246 2015/10/13 00:27:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.245 2015/10/02 16:54:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.246 2015/10/13 00:27:19 pgoyette Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -959,7 +959,7 @@ proc_reparent(struct proc *child, struct proc *parent)
 	if (child->p_pptr == parent)
 		return;
 
-	if (child->p_stat == SZOMB ||
+	if (child->p_stat == SZOMB || child->p_stat == SDEAD ||
 	    (child->p_stat == SSTOP && !child->p_waited)) {
 		child->p_pptr->p_nstopchild--;
 		parent->p_nstopchild++;
