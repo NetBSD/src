@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.10 2015/10/13 00:42:20 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.11 2015/10/13 00:42:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 /*
  * Linux __ffs/__ffs64 is zero-based; zero input is undefined.  Our
- * ffs/ffs is one-based; zero input yields zero.
+ * ffs/ffs64 is one-based; zero input yields zero.
  */
 static inline unsigned long
 __ffs(unsigned long x)
