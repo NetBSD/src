@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.360 2015/10/13 08:20:02 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.361 2015/10/13 08:23:31 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.360 2015/10/13 08:20:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.361 2015/10/13 08:23:31 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4364,10 +4364,10 @@ wm_init_locked(struct ifnet *ifp)
 
 			/* TX */
 			CSR_WRITE(sc, WMREG_MSIXBM(WM_MSIX_TXINTR_IDX),
-			    EITR_TX_QUEUE0);
+			    EITR_TX_QUEUE(0));
 			/* RX */
 			CSR_WRITE(sc, WMREG_MSIXBM(WM_MSIX_RXINTR_IDX),
-			    EITR_RX_QUEUE0);
+			    EITR_RX_QUEUE(0));
 			/* Link status */
 			CSR_WRITE(sc, WMREG_MSIXBM(WM_MSIX_LINKINTR_IDX),
 			    EITR_OTHER);
@@ -4457,7 +4457,7 @@ wm_init_locked(struct ifnet *ifp)
 			break;
 		default:
 			if (sc->sc_type == WM_T_82575)
-				mask = EITR_RX_QUEUE0 |EITR_TX_QUEUE0
+				mask = EITR_RX_QUEUE(0) |EITR_TX_QUEUE(0)
 				    | EITR_OTHER;
 			else
 				mask = (1 << WM_MSIX_RXINTR_IDX)
@@ -4523,7 +4523,7 @@ wm_init_locked(struct ifnet *ifp)
 
 	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 		/* Write TDT after TCTL.EN is set. See the document. */
-		CSR_WRITE(sc, WMREG_TDT, 0);
+		CSR_WRITE(sc, WMREG_TDT(0), 0);
 	}
 
 	if (sc->sc_type == WM_T_80003) {
@@ -4961,7 +4961,7 @@ wm_82547_txfifo_stall(void *arg)
 		goto out;
 
 	if (txq->txq_fifo_stall) {
-		if (CSR_READ(sc, WMREG_TDT) == CSR_READ(sc, WMREG_TDH) &&
+		if (CSR_READ(sc, WMREG_TDT(0)) == CSR_READ(sc, WMREG_TDH(0)) &&
 		    CSR_READ(sc, WMREG_TDFT) == CSR_READ(sc, WMREG_TDFH) &&
 		    CSR_READ(sc, WMREG_TDFTS) == CSR_READ(sc, WMREG_TDFHS)) {
 			/*
@@ -5418,10 +5418,10 @@ wm_init_tx_regs(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
 		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
 	} else {
-		CSR_WRITE(sc, WMREG_TDBAH, WM_CDTXADDR_HI(txq, 0));
-		CSR_WRITE(sc, WMREG_TDBAL, WM_CDTXADDR_LO(txq, 0));
-		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(txq));
-		CSR_WRITE(sc, WMREG_TDH, 0);
+		CSR_WRITE(sc, WMREG_TDBAH(0), WM_CDTXADDR_HI(txq, 0));
+		CSR_WRITE(sc, WMREG_TDBAL(0), WM_CDTXADDR_LO(txq, 0));
+		CSR_WRITE(sc, WMREG_TDLEN(0), WM_TXDESCSIZE(txq));
+		CSR_WRITE(sc, WMREG_TDH(0), 0);
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
 			/*
@@ -5439,7 +5439,7 @@ wm_init_tx_regs(struct wm_softc *sc)
 				CSR_WRITE(sc, WMREG_TADV, sc->sc_itr / 4);
 			}
 
-			CSR_WRITE(sc, WMREG_TDT, 0);
+			CSR_WRITE(sc, WMREG_TDT(0), 0);
 			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
 		}
@@ -5476,7 +5476,7 @@ wm_init_tx_queue(struct wm_softc *sc)
 	if (sc->sc_type < WM_T_82543) {
 		txq->txq_tdt_reg = WMREG_OLD_TDT;
 	} else {
-		txq->txq_tdt_reg = WMREG_TDT;
+		txq->txq_tdt_reg = WMREG_TDT(0);
 	}
 
 	wm_init_tx_descs(sc);
@@ -5511,25 +5511,25 @@ wm_init_rx_regs(struct wm_softc *sc)
 		CSR_WRITE(sc, WMREG_OLD_RDT1, 0);
 		CSR_WRITE(sc, WMREG_OLD_RDTR1, 0);
 	} else {
-		CSR_WRITE(sc, WMREG_RDBAH, WM_CDRXADDR_HI(rxq, 0));
-		CSR_WRITE(sc, WMREG_RDBAL, WM_CDRXADDR_LO(rxq, 0));
-		CSR_WRITE(sc, WMREG_RDLEN,
+		CSR_WRITE(sc, WMREG_RDBAH(0), WM_CDRXADDR_HI(rxq, 0));
+		CSR_WRITE(sc, WMREG_RDBAL(0), WM_CDRXADDR_LO(rxq, 0));
+		CSR_WRITE(sc, WMREG_RDLEN(0),
 		    sizeof(wiseman_rxdesc_t) * WM_NRXDESC);
 
 		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
 			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
 				panic("%s: MCLBYTES %d unsupported for i2575 or higher\n", __func__, MCLBYTES);
-			CSR_WRITE(sc, WMREG_SRRCTL, SRRCTL_DESCTYPE_LEGACY
+			CSR_WRITE(sc, WMREG_SRRCTL(0), SRRCTL_DESCTYPE_LEGACY
 			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT));
-			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_QUEUE_ENABLE
+			CSR_WRITE(sc, WMREG_RXDCTL(0), RXDCTL_QUEUE_ENABLE
 			    | RXDCTL_PTHRESH(16) | RXDCTL_HTHRESH(8)
 			    | RXDCTL_WTHRESH(1));
 		} else {
-			CSR_WRITE(sc, WMREG_RDH, 0);
-			CSR_WRITE(sc, WMREG_RDT, 0);
+			CSR_WRITE(sc, WMREG_RDH(0), 0);
+			CSR_WRITE(sc, WMREG_RDT(0), 0);
 			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD); /* ITR/4 */
 			CSR_WRITE(sc, WMREG_RADV, 375);	/* MUST be same */
-			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
+			CSR_WRITE(sc, WMREG_RXDCTL(0), RXDCTL_PTHRESH(0) |
 			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
 		}
 	}
@@ -5589,7 +5589,7 @@ wm_init_rx_queue(struct wm_softc *sc)
 	if (sc->sc_type < WM_T_82543) {
 		rxq->rxq_rdt_reg = WMREG_OLD_RDT0;
 	} else {
-		rxq->rxq_rdt_reg = WMREG_RDT;
+		rxq->rxq_rdt_reg = WMREG_RDT(0);
 	}
 
 	wm_init_rx_regs(sc);
@@ -7079,9 +7079,9 @@ wm_txintr_msix(void *arg)
 	    ("%s: TX: got Tx intr\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMC, ICR_TXQ0); /* 82574 only */
+		CSR_WRITE(sc, WMREG_IMC, ICR_TXQ(0)); /* 82574 only */
 	else if (sc->sc_type == WM_T_82575)
-		CSR_WRITE(sc, WMREG_EIMC, EITR_TX_QUEUE0);
+		CSR_WRITE(sc, WMREG_EIMC, EITR_TX_QUEUE(0));
 	else
 		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_MSIX_TXINTR_IDX);
 
@@ -7097,9 +7097,9 @@ out:
 	WM_TX_UNLOCK(txq);
 
 	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ0); /* 82574 only */
+		CSR_WRITE(sc, WMREG_IMS, ICR_TXQ(0)); /* 82574 only */
 	else if (sc->sc_type == WM_T_82575)
-		CSR_WRITE(sc, WMREG_EIMS, EITR_TX_QUEUE0);
+		CSR_WRITE(sc, WMREG_EIMS, EITR_TX_QUEUE(0));
 	else
 		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_MSIX_TXINTR_IDX);
 
@@ -7126,9 +7126,9 @@ wm_rxintr_msix(void *arg)
 	    ("%s: RX: got Rx intr\n", device_xname(sc->sc_dev)));
 
 	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMC, ICR_RXQ0); /* 82574 only */
+		CSR_WRITE(sc, WMREG_IMC, ICR_RXQ(0)); /* 82574 only */
 	else if (sc->sc_type == WM_T_82575)
-		CSR_WRITE(sc, WMREG_EIMC, EITR_RX_QUEUE0);
+		CSR_WRITE(sc, WMREG_EIMC, EITR_RX_QUEUE(0));
 	else
 		CSR_WRITE(sc, WMREG_EIMC, 1 << WM_MSIX_RXINTR_IDX);
 
@@ -7144,9 +7144,9 @@ out:
 	WM_RX_UNLOCK(rxq);
 
 	if (sc->sc_type == WM_T_82574)
-		CSR_WRITE(sc, WMREG_IMS, ICR_RXQ0);
+		CSR_WRITE(sc, WMREG_IMS, ICR_RXQ(0));
 	else if (sc->sc_type == WM_T_82575)
-		CSR_WRITE(sc, WMREG_EIMS, EITR_RX_QUEUE0);
+		CSR_WRITE(sc, WMREG_EIMS, EITR_RX_QUEUE(0));
 	else
 		CSR_WRITE(sc, WMREG_EIMS, 1 << WM_MSIX_RXINTR_IDX);
 
