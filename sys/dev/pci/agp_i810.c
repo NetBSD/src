@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.118 2015/04/05 12:55:20 riastradh Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.119 2015/10/13 12:17:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.118 2015/04/05 12:55:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.119 2015/10/13 12:17:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -407,46 +407,90 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_naive("\n");
 
-	mmadr_type = PCI_MAPREG_TYPE_MEM;
+	/* Discriminate on the chipset to choose the relevant BARs.  */
 	switch (isc->chiptype) {
 	case CHIP_I915:
 	case CHIP_G33:
 		apbase = AGP_I915_GMADR;
 		mmadr_bar = AGP_I915_MMADR;
-		isc->size = 512*1024;
 		gtt_bar = AGP_I915_GTTADR;
 		gtt_off = ~(bus_size_t)0; /* XXXGCC */
 		break;
 	case CHIP_I965:
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
-		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
-		if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
-			AGP_I965_MMADR, mmadr_type, NULL, &isc->size, NULL))
-			isc->size = 512*1024; /* XXX */
 		gtt_bar = 0;
 		gtt_off = AGP_I965_GTT;
 		break;
 	case CHIP_G4X:
 		apbase = AGP_I965_GMADR;
 		mmadr_bar = AGP_I965_MMADR;
-		mmadr_type |= PCI_MAPREG_MEM_TYPE_64BIT;
-		if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
-			AGP_I965_MMADR, mmadr_type, NULL, &isc->size, NULL))
-			isc->size = 512*1024; /* XXX */
 		gtt_bar = 0;
 		gtt_off = AGP_G4X_GTT;
 		break;
 	default:
 		apbase = AGP_I810_GMADR;
 		mmadr_bar = AGP_I810_MMADR;
-		if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
-			AGP_I810_MMADR, mmadr_type, NULL, &isc->size, NULL))
-			isc->size = 512*1024; /* XXX */
 		gtt_bar = 0;
 		gtt_off = AGP_I810_GTT;
 		break;
 	}
+
+	/*
+	 * Ensure the MMIO BAR is, in fact, a memory BAR.
+	 *
+	 * XXX This is required because we use pa_memt below.  It is
+	 * not a priori clear to me there is any other reason to
+	 * require this.
+	 */
+	mmadr_type = pci_mapreg_type(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+	    mmadr_bar);
+	if ((mmadr_type & PCI_MAPREG_TYPE_MEM) != PCI_MAPREG_TYPE_MEM) {
+		aprint_error_dev(self, "non-memory device MMIO registers\n");
+		error = ENXIO;
+		goto fail1;
+	}
+
+	/*
+	 * Determine the size of the MMIO registers.
+	 *
+	 * XXX The size of the MMIO registers we use is statically
+	 * determined, as a function of the chipset, by the driver's
+	 * implementation.
+	 *
+	 * On some chipsets, the GTT is part of the MMIO register BAR.
+	 * We would like to map the GTT separately, so that we can map
+	 * it prefetchable, which we can't do with the MMIO registers.
+	 * Consequently, we would especially like to map a fixed size
+	 * of MMIO registers, not just whatever size the BAR says.
+	 *
+	 * However, old drm assumes that the combined GTT/MMIO register
+	 * space is a single bus space mapping, so mapping them
+	 * separately breaks that.  Once we rip out old drm, we can
+	 * replace the pci_mapreg_info call by the chipset switch.
+	 */
+#if notyet
+	switch (isc->chiptype) {
+	case CHIP_I810:
+	case CHIP_I830:
+	case CHIP_I855:
+	case CHIP_I915:
+	case CHIP_G33:
+	case CHIP_I965:
+	case CHIP_G4X:
+		isc->size = 512*1024;
+		break;
+	case CHIP_SANDYBRIDGE:
+	case CHIP_IVYBRIDGE:
+	case CHIP_HASWELL:
+		isc->size = 2*1024*1024;
+		break;
+	}
+#else
+	if (pci_mapreg_info(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
+		mmadr_bar, mmadr_type, NULL, &isc->size, NULL))
+		isc->size = 512*1024;
+#endif	/* notyet */
 
 	/* Map (or, rather, find the address and size of) the aperture.  */
 	if (isc->chiptype == CHIP_I965 || isc->chiptype == CHIP_G4X)
