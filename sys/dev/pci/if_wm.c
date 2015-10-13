@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.357 2015/10/13 08:11:31 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.358 2015/10/13 08:14:27 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.357 2015/10/13 08:11:31 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.358 2015/10/13 08:14:27 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -582,9 +582,10 @@ static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
 static int	wm_alloc_tx_descs(struct wm_softc *);
 static void	wm_free_tx_descs(struct wm_softc *);
 static void	wm_init_tx_descs(struct wm_softc *);
+static void	wm_init_tx_regs(struct wm_softc *);
 static int	wm_alloc_rx_descs(struct wm_softc *);
 static void	wm_free_rx_descs(struct wm_softc *);
-static void	wm_init_rx_descs(struct wm_softc *);
+static void	wm_init_rx_regs(struct wm_softc *);
 static int	wm_alloc_tx_buffer(struct wm_softc *);
 static void	wm_free_tx_buffer(struct wm_softc *);
 static void	wm_init_tx_buffer(struct wm_softc *);
@@ -5365,6 +5366,14 @@ wm_init_tx_descs(struct wm_softc *sc)
 	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	txq->txq_free = WM_NTXDESC(txq);
 	txq->txq_next = 0;
+}
+
+static void
+wm_init_tx_regs(struct wm_softc *sc)
+{
+	struct wm_txqueue *txq = sc->sc_txq;
+
+	KASSERT(WM_TX_LOCKED(txq));
 
 	if (sc->sc_type < WM_T_82543) {
 		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(txq, 0));
@@ -5398,8 +5407,6 @@ wm_init_tx_descs(struct wm_softc *sc)
 			CSR_WRITE(sc, WMREG_TDT, 0);
 			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_PTHRESH(0) |
 			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
-			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
-			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
 		}
 	}
 }
@@ -5438,11 +5445,12 @@ wm_init_tx_queue(struct wm_softc *sc)
 	}
 
 	wm_init_tx_descs(sc);
+	wm_init_tx_regs(sc);
 	wm_init_tx_buffer(sc);
 }
 
 static void
-wm_init_rx_descs(struct wm_softc *sc)
+wm_init_rx_regs(struct wm_softc *sc)
 {
 	struct wm_rxqueue *rxq = sc->sc_rxq;
 
@@ -5486,6 +5494,8 @@ wm_init_rx_descs(struct wm_softc *sc)
 			CSR_WRITE(sc, WMREG_RDT, 0);
 			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD); /* ITR/4 */
 			CSR_WRITE(sc, WMREG_RADV, 375);	/* MUST be same */
+			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
+			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
 		}
 	}
 }
@@ -5547,7 +5557,7 @@ wm_init_rx_queue(struct wm_softc *sc)
 		rxq->rxq_rdt_reg = WMREG_RDT;
 	}
 
-	wm_init_rx_descs(sc);
+	wm_init_rx_regs(sc);
 	return wm_init_rx_buffer(sc);
 }
 
