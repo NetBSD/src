@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.352 2015/10/13 07:47:45 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.353 2015/10/13 07:53:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.352 2015/10/13 07:47:45 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.353 2015/10/13 07:53:02 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -565,6 +565,15 @@ static int	wm_tx_offload(struct wm_softc *, struct wm_txsoft *,
 static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
 static void	wm_82547_txfifo_stall(void *);
 static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
+/* DMA related */
+static int	wm_alloc_descs(struct wm_softc *);
+static void	wm_free_descs(struct wm_softc *);
+static int	wm_alloc_tx_buffer(struct wm_softc *);
+static void	wm_free_tx_buffer(struct wm_softc *);
+static int	wm_alloc_rx_buffer(struct wm_softc *);
+static void	wm_free_rx_buffer(struct wm_softc *);
+static int	wm_alloc_txrx_queues(struct wm_softc *);
+static void	wm_free_txrx_queues(struct wm_softc *);
 /* Start */
 static void	wm_start(struct ifnet *);
 static void	wm_start_locked(struct ifnet *);
@@ -1858,79 +1867,9 @@ alloc_retry:
 		    (sc->sc_flags & WM_F_PCIX) ? "PCIX" : "PCI");
 	}
 
-	/*
-	 * Allocate the control data structures, and create and load the
-	 * DMA map for it.
-	 *
-	 * NOTE: All Tx descriptors must be in the same 4G segment of
-	 * memory.  So must Rx descriptors.  We simplify by allocating
-	 * both sets within the same 4G segment.
-	 */
-	WM_NTXDESC(sc) = sc->sc_type < WM_T_82544 ?
-	    WM_NTXDESC_82542 : WM_NTXDESC_82544;
-	sc->sc_cd_size = sc->sc_type < WM_T_82544 ?
-	    sizeof(struct wm_control_data_82542) :
-	    sizeof(struct wm_control_data_82544);
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_cd_size, PAGE_SIZE,
-		    (bus_size_t) 0x100000000ULL, &sc->sc_cd_seg, 1,
-		    &sc->sc_cd_rseg, 0)) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate control data, error = %d\n",
-		    error);
-		goto fail_0;
-	}
-
-	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cd_seg,
-		    sc->sc_cd_rseg, sc->sc_cd_size,
-		    (void **)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to map control data, error = %d\n", error);
-		goto fail_1;
-	}
-
-	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_cd_size, 1,
-		    sc->sc_cd_size, 0, 0, &sc->sc_cddmamap)) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to create control data DMA map, error = %d\n",
-		    error);
-		goto fail_2;
-	}
-
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
-		    sc->sc_control_data, sc->sc_cd_size, NULL, 0)) != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to load control data DMA map, error = %d\n",
-		    error);
-		goto fail_3;
-	}
-
-	/* Create the transmit buffer DMA maps. */
-	WM_TXQUEUELEN(sc) =
-	    (sc->sc_type == WM_T_82547 || sc->sc_type == WM_T_82547_2) ?
-	    WM_TXQUEUELEN_MAX_82547 : WM_TXQUEUELEN_MAX;
-	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, WM_MAXTXDMA,
-			    WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
-			    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to create Tx DMA map %d, error = %d\n",
-			    i, error);
-			goto fail_4;
-		}
-	}
-
-	/* Create the receive buffer DMA maps. */
-	for (i = 0; i < WM_NRXDESC; i++) {
-		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
-			    MCLBYTES, 0, 0,
-			    &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to create Rx DMA map %d error = %d\n",
-			    i, error);
-			goto fail_5;
-		}
-		sc->sc_rxsoft[i].rxs_mbuf = NULL;
-	}
+	error = wm_alloc_txrx_queues(sc);
+	if (error)
+		return;
 
 	/* clear interesting stat counters */
 	CSR_READ(sc, WMREG_COLC);
@@ -2039,7 +1978,7 @@ alloc_retry:
 		    &sc->sc_flasht, &sc->sc_flashh, NULL, &sc->sc_flashs)) {
 			aprint_error_dev(sc->sc_dev,
 			    "can't map FLASH registers\n");
-			goto fail_5;
+			goto out;
 		}
 		reg = ICH8_FLASH_READ32(sc, ICH_FLASH_GFPREG);
 		sc->sc_ich8_flash_base = (reg & ICH_GFPREG_BASE_MASK) *
@@ -2189,7 +2128,7 @@ alloc_retry:
 		if (wm_read_mac_addr(sc, enaddr) != 0) {
 			aprint_error_dev(sc->sc_dev,
 			    "unable to read Ethernet address\n");
-			goto fail_5;
+			goto out;
 		}
 	}
 
@@ -2207,7 +2146,7 @@ alloc_retry:
 	} else {
 		if (wm_nvm_read(sc, NVM_OFF_CFG1, 1, &cfg1)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG1\n");
-			goto fail_5;
+			goto out;
 		}
 	}
 
@@ -2218,7 +2157,7 @@ alloc_retry:
 	} else {
 		if (wm_nvm_read(sc, NVM_OFF_CFG2, 1, &cfg2)) {
 			aprint_error_dev(sc->sc_dev, "unable to read CFG2\n");
-			goto fail_5;
+			goto out;
 		}
 	}
 
@@ -2295,7 +2234,7 @@ alloc_retry:
 			if (wm_nvm_read(sc, NVM_OFF_SWDPIN, 1, &swdpin)) {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to read SWDPIN\n");
-				goto fail_5;
+				goto out;
 			}
 		}
 	}
@@ -2670,33 +2609,7 @@ alloc_retry:
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
 	sc->sc_flags |= WM_F_ATTACHED;
-	return;
-
-	/*
-	 * Free any resources we've allocated during the failed attach
-	 * attempt.  Do this in reverse order and fall through.
-	 */
- fail_5:
-	for (i = 0; i < WM_NRXDESC; i++) {
-		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
-			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_rxsoft[i].rxs_dmamap);
-	}
- fail_4:
-	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
-		if (sc->sc_txsoft[i].txs_dmamap != NULL)
-			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_txsoft[i].txs_dmamap);
-	}
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
- fail_3:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
- fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
-	    sc->sc_cd_size);
- fail_1:
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
- fail_0:
+ out:
 	return;
 }
 
@@ -2747,22 +2660,7 @@ wm_detach(device_t self, int flags __unused)
 	WM_RX_UNLOCK(sc);
 	/* Must unlock here */
 
-	/* Free dmamap. It's the same as the end of the wm_attach() function */
-	for (i = 0; i < WM_NRXDESC; i++) {
-		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
-			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_rxsoft[i].rxs_dmamap);
-	}
-	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
-		if (sc->sc_txsoft[i].txs_dmamap != NULL)
-			bus_dmamap_destroy(sc->sc_dmat,
-			    sc->sc_txsoft[i].txs_dmamap);
-	}
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
-	    sc->sc_cd_size);
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
+	wm_free_txrx_queues(sc);
 
 	/* Disestablish the interrupt handler */
 	for (i = 0; i < sc->sc_nintrs; i++) {
@@ -5195,6 +5093,209 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 		sc->sc_txfifo_head -= sc->sc_txfifo_size;
 
 	return 0;
+}
+
+static int
+wm_alloc_descs(struct wm_softc *sc)
+{
+	int error;
+
+	/*
+	 * Allocate the control data structures, and create and load the
+	 * DMA map for it.
+	 *
+	 * NOTE: All Tx descriptors must be in the same 4G segment of
+	 * memory.  So must Rx descriptors.  We simplify by allocating
+	 * both sets within the same 4G segment.
+	 */
+	WM_NTXDESC(sc) = sc->sc_type < WM_T_82544 ?
+	    WM_NTXDESC_82542 : WM_NTXDESC_82544;
+	sc->sc_cd_size = sc->sc_type < WM_T_82544 ?
+	    sizeof(struct wm_control_data_82542) :
+	    sizeof(struct wm_control_data_82544);
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_cd_size, PAGE_SIZE,
+		    (bus_size_t) 0x100000000ULL, &sc->sc_cd_seg, 1,
+		    &sc->sc_cd_rseg, 0)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate control data, error = %d\n",
+		    error);
+		goto fail_0;
+	}
+
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cd_seg,
+		    sc->sc_cd_rseg, sc->sc_cd_size,
+		    (void **)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map control data, error = %d\n", error);
+		goto fail_1;
+	}
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_cd_size, 1,
+		    sc->sc_cd_size, 0, 0, &sc->sc_cddmamap)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
+		goto fail_2;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
+		    sc->sc_control_data, sc->sc_cd_size, NULL, 0)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load control data DMA map, error = %d\n",
+		    error);
+		goto fail_3;
+	}
+
+	return 0;
+
+ fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+ fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
+	    sc->sc_cd_size);
+ fail_1:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
+ fail_0:
+	return error;
+}
+
+static void
+wm_free_descs(struct wm_softc *sc)
+{
+
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
+	    sc->sc_cd_size);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
+}
+
+static int
+wm_alloc_tx_buffer(struct wm_softc *sc)
+{
+	int i, error;
+
+	/* Create the transmit buffer DMA maps. */
+	WM_TXQUEUELEN(sc) =
+	    (sc->sc_type == WM_T_82547 || sc->sc_type == WM_T_82547_2) ?
+	    WM_TXQUEUELEN_MAX_82547 : WM_TXQUEUELEN_MAX;
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, WM_MAXTXDMA,
+			    WM_NTXSEGS, WTX_MAX_LEN, 0, 0,
+			    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create Tx DMA map %d, error = %d\n",
+			    i, error);
+			goto fail;
+		}
+	}
+
+	return 0;
+
+ fail:
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
+		if (sc->sc_txsoft[i].txs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_txsoft[i].txs_dmamap);
+	}
+	return error;
+}
+
+static void
+wm_free_tx_buffer(struct wm_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++) {
+		if (sc->sc_txsoft[i].txs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_txsoft[i].txs_dmamap);
+	}
+}
+
+static int
+wm_alloc_rx_buffer(struct wm_softc *sc)
+{
+	int i, error;
+
+	/* Create the receive buffer DMA maps. */
+	for (i = 0; i < WM_NRXDESC; i++) {
+		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES, 1,
+			    MCLBYTES, 0, 0,
+			    &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to create Rx DMA map %d error = %d\n",
+			    i, error);
+			goto fail;
+		}
+		sc->sc_rxsoft[i].rxs_mbuf = NULL;
+	}
+
+	return 0;
+
+ fail:
+	for (i = 0; i < WM_NRXDESC; i++) {
+		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_rxsoft[i].rxs_dmamap);
+	}
+	return error;
+}
+
+static void
+wm_free_rx_buffer(struct wm_softc *sc)
+{
+	int i;
+
+	for (i = 0; i < WM_NRXDESC; i++) {
+		if (sc->sc_rxsoft[i].rxs_dmamap != NULL)
+			bus_dmamap_destroy(sc->sc_dmat,
+			    sc->sc_rxsoft[i].rxs_dmamap);
+	}
+}
+
+/*
+ * wm_alloc_quques:
+ *	Allocate {tx,rx}descs and {tx,rx} buffers
+ */
+static int
+wm_alloc_txrx_queues(struct wm_softc *sc)
+{
+	int error;
+
+	error = wm_alloc_descs(sc);
+	if (error)
+		goto fail_0;
+
+	error = wm_alloc_tx_buffer(sc);
+	if (error)
+		goto fail_1;
+
+	error = wm_alloc_rx_buffer(sc);
+	if (error)
+		goto fail_2;
+
+	return 0;
+
+fail_2:
+	wm_free_tx_buffer(sc);
+fail_1:
+	wm_free_descs(sc);
+fail_0:
+	return error;
+}
+
+/*
+ * wm_free_quques:
+ *	Free {tx,rx}descs and {tx,rx} buffers
+ */
+static void
+wm_free_txrx_queues(struct wm_softc *sc)
+{
+
+	wm_free_rx_buffer(sc);
+	wm_free_tx_buffer(sc);
+	wm_free_descs(sc);
 }
 
 /*
