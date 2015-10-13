@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.359 2015/10/13 08:17:15 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.360 2015/10/13 08:20:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.359 2015/10/13 08:17:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.360 2015/10/13 08:20:02 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -613,6 +613,8 @@ static void	wm_linkintr_serdes(struct wm_softc *, uint32_t);
 static void	wm_linkintr(struct wm_softc *, uint32_t);
 static int	wm_intr_legacy(void *);
 #ifdef WM_MSI_MSIX
+static int	wm_setup_legacy(struct wm_softc *);
+static int	wm_setup_msix(struct wm_softc *);
 static int	wm_txintr_msix(void *);
 static int	wm_rxintr_msix(void *);
 static int	wm_linkintr_msix(void *);
@@ -760,20 +762,6 @@ static void	wm_configure_k1_ich8lan(struct wm_softc *, int);
 static void	wm_reset_init_script_82575(struct wm_softc *);
 static void	wm_reset_mdicnfg_82580(struct wm_softc *);
 static void	wm_pll_workaround_i210(struct wm_softc *);
-
-#ifdef WM_MSI_MSIX
-struct _msix_matrix {
-	const char *intrname;
-	int(*func)(void *);
-	int intridx;
-	int cpuid;
-} msix_matrix[WM_MSIX_NINTR] = {
-	{ "TX", wm_txintr_msix, WM_MSIX_TXINTR_IDX, WM_MSIX_TXINTR_CPUID },
-	{ "RX", wm_rxintr_msix, WM_MSIX_RXINTR_IDX, WM_MSIX_RXINTR_CPUID },
-	{ "LINK", wm_linkintr_msix, WM_MSIX_LINKINTR_IDX,
-	  WM_MSIX_LINKINTR_CPUID },
-};
-#endif
 
 CFATTACH_DECL3_NEW(wm, sizeof(struct wm_softc),
     wm_match, wm_attach, wm_detach, NULL, NULL, NULL, DVF_DETACH_SHUTDOWN);
@@ -1469,11 +1457,12 @@ wm_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 #ifndef WM_MSI_MSIX
 	pci_intr_handle_t ih;
+	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
 #else
 	int counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_type_t max_type;
 #endif
-	const char *intrstr = NULL;
 	const char *eetype, *xname;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
@@ -1490,7 +1479,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	bool force_clear_smbi;
 	uint32_t link_mode;
 	uint32_t reg;
-	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, CALLOUT_FLAGS);
@@ -1683,94 +1671,35 @@ alloc_retry:
 	}
 
 	if (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSIX) {
-		void *vih;
-		kcpuset_t *affinity;
-		char intr_xname[INTRDEVNAMEBUF];
+		error = wm_setup_msix(sc);
+		if (error) {
+			pci_intr_release(pc, sc->sc_intrs,
+			    counts[PCI_INTR_TYPE_MSIX]);
 
-		kcpuset_create(&affinity, false);
-
-		for (i = 0; i < WM_MSIX_NINTR; i++) {
-			intrstr = pci_intr_string(pc,
-			    sc->sc_intrs[msix_matrix[i].intridx], intrbuf,
-			    sizeof(intrbuf));
-#ifdef WM_MPSAFE
-			pci_intr_setattr(pc,
-			    &sc->sc_intrs[msix_matrix[i].intridx],
-			    PCI_INTR_MPSAFE, true);
-#endif
-			memset(intr_xname, 0, sizeof(intr_xname));
-			strlcat(intr_xname, device_xname(sc->sc_dev),
-			    sizeof(intr_xname));
-			strlcat(intr_xname, msix_matrix[i].intrname,
-			    sizeof(intr_xname));
-			vih = pci_intr_establish_xname(pc,
-			    sc->sc_intrs[msix_matrix[i].intridx], IPL_NET,
-			    msix_matrix[i].func, sc, intr_xname);
-			if (vih == NULL) {
-				aprint_error_dev(sc->sc_dev,
-				    "unable to establish MSI-X(for %s)%s%s\n",
-				    msix_matrix[i].intrname,
-				    intrstr ? " at " : "",
-				    intrstr ? intrstr : "");
-				pci_intr_release(sc->sc_pc, sc->sc_intrs,
-				    WM_MSIX_NINTR);
-				kcpuset_destroy(affinity);
-
-				/* Setup for MSI: Disable MSI-X */
-				max_type = PCI_INTR_TYPE_MSI;
-				counts[PCI_INTR_TYPE_MSI] = 1;
-				counts[PCI_INTR_TYPE_INTX] = 1;
-				goto alloc_retry;
-			}
-			kcpuset_zero(affinity);
-			/* Round-robin affinity */
-			kcpuset_set(affinity, msix_matrix[i].cpuid % ncpu);
-			error = interrupt_distribute(vih, affinity, NULL);
-			if (error == 0) {
-				aprint_normal_dev(sc->sc_dev,
-				    "for %s interrupting at %s affinity to %u\n",
-				    msix_matrix[i].intrname, intrstr,
-				    msix_matrix[i].cpuid % ncpu);
-			} else {
-				aprint_normal_dev(sc->sc_dev,
-				    "for %s interrupting at %s\n",
-				    msix_matrix[i].intrname, intrstr);
-			}
-			sc->sc_ihs[msix_matrix[i].intridx] = vih;
+			/* Setup for MSI: Disable MSI-X */
+			max_type = PCI_INTR_TYPE_MSI;
+			counts[PCI_INTR_TYPE_MSI] = 1;
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			goto alloc_retry;
 		}
+	} else 	if (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSI) {
+		error = wm_setup_legacy(sc);
+		if (error) {
+			pci_intr_release(sc->sc_pc, sc->sc_intrs,
+			    counts[PCI_INTR_TYPE_MSI]);
 
-		sc->sc_nintrs = WM_MSIX_NINTR;
-		kcpuset_destroy(affinity);
+			/* The next try is for INTx: Disable MSI */
+			max_type = PCI_INTR_TYPE_INTX;
+			counts[PCI_INTR_TYPE_INTX] = 1;
+			goto alloc_retry;
+		}
 	} else {
-		/* MSI or INTx */
-		intrstr = pci_intr_string(pc, sc->sc_intrs[0], intrbuf,
-		    sizeof(intrbuf));
-#ifdef WM_MPSAFE
-		pci_intr_setattr(pc, &sc->sc_intrs[0], PCI_INTR_MPSAFE, true);
-#endif
-		sc->sc_ihs[0] = pci_intr_establish_xname(pc, sc->sc_intrs[0],
-		    IPL_NET, wm_intr_legacy, sc, device_xname(sc->sc_dev));
-		if (sc->sc_ihs[0] == NULL) {
-			aprint_error_dev(sc->sc_dev,"unable to establish %s\n",
-			    (pci_intr_type(sc->sc_intrs[0])
-				== PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
-			pci_intr_release(sc->sc_pc, sc->sc_intrs, 1);
-			switch (pci_intr_type(sc->sc_intrs[0])) {
-			case PCI_INTR_TYPE_MSI:
-				/* The next try is for INTx: Disable MSI */
-				max_type = PCI_INTR_TYPE_INTX;
-				counts[PCI_INTR_TYPE_INTX] = 1;
-				goto alloc_retry;
-			case PCI_INTR_TYPE_INTX:
-			default:
-				return;
-			}
+		error = wm_setup_legacy(sc);
+		if (error) {
+			pci_intr_release(sc->sc_pc, sc->sc_intrs,
+			    counts[PCI_INTR_TYPE_INTX]);
+			return;
 		}
-		aprint_normal_dev(sc->sc_dev, "%s at %s\n",
-		    (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSI)
-			? "MSI" : "interrupting", intrstr);
-
-		sc->sc_nintrs = 1;
 	}
 #endif /* WM_MSI_MSIX */
 
@@ -4103,6 +4032,112 @@ wm_rxdrain(struct wm_softc *sc)
 		}
 	}
 }
+
+
+#ifdef WM_MSI_MSIX
+/*
+ * Both single interrupt MSI and INTx can use this function.
+ */
+static int
+wm_setup_legacy(struct wm_softc *sc)
+{
+	pci_chipset_tag_t pc = sc->sc_pc;
+	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
+
+	intrstr = pci_intr_string(pc, sc->sc_intrs[0], intrbuf,
+	    sizeof(intrbuf));
+#ifdef WM_MPSAFE
+	pci_intr_setattr(pc, &sc->sc_intrs[0], PCI_INTR_MPSAFE, true);
+#endif
+	sc->sc_ihs[0] = pci_intr_establish_xname(pc, sc->sc_intrs[0],
+	    IPL_NET, wm_intr_legacy, sc, device_xname(sc->sc_dev));
+	if (sc->sc_ihs[0] == NULL) {
+		aprint_error_dev(sc->sc_dev,"unable to establish %s\n",
+		    (pci_intr_type(sc->sc_intrs[0])
+			== PCI_INTR_TYPE_MSI) ? "MSI" : "INTx");
+		return ENOMEM;
+	}
+
+	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+	sc->sc_nintrs = 1;
+	return 0;
+}
+
+struct _msix_matrix {
+	const char *intrname;
+	int(*func)(void *);
+	int intridx;
+	int cpuid;
+} msix_matrix[WM_MSIX_NINTR] = {
+	{ "TX", wm_txintr_msix, WM_MSIX_TXINTR_IDX, WM_MSIX_TXINTR_CPUID },
+	{ "RX", wm_rxintr_msix, WM_MSIX_RXINTR_IDX, WM_MSIX_RXINTR_CPUID },
+	{ "LINK", wm_linkintr_msix, WM_MSIX_LINKINTR_IDX,
+	  WM_MSIX_LINKINTR_CPUID },
+};
+
+static int
+wm_setup_msix(struct wm_softc *sc)
+{
+	void *vih;
+	kcpuset_t *affinity;
+	int i, error;
+	pci_chipset_tag_t pc = sc->sc_pc;
+	const char *intrstr = NULL;
+	char intrbuf[PCI_INTRSTR_LEN];
+	char intr_xname[INTRDEVNAMEBUF];
+
+	kcpuset_create(&affinity, false);
+
+	for (i = 0; i < WM_MSIX_NINTR; i++) {
+		intrstr = pci_intr_string(pc,
+		    sc->sc_intrs[msix_matrix[i].intridx], intrbuf,
+		    sizeof(intrbuf));
+#ifdef WM_MPSAFE
+		pci_intr_setattr(pc,
+		    &sc->sc_intrs[msix_matrix[i].intridx],
+		    PCI_INTR_MPSAFE, true);
+#endif
+		memset(intr_xname, 0, sizeof(intr_xname));
+		strlcat(intr_xname, device_xname(sc->sc_dev),
+		    sizeof(intr_xname));
+		strlcat(intr_xname, msix_matrix[i].intrname,
+		    sizeof(intr_xname));
+		vih = pci_intr_establish_xname(pc,
+		    sc->sc_intrs[msix_matrix[i].intridx], IPL_NET,
+		    msix_matrix[i].func, sc, intr_xname);
+		if (vih == NULL) {
+			aprint_error_dev(sc->sc_dev,
+			    "unable to establish MSI-X(for %s)%s%s\n",
+			    msix_matrix[i].intrname,
+			    intrstr ? " at " : "",
+			    intrstr ? intrstr : "");
+			kcpuset_destroy(affinity);
+
+			return ENOMEM;
+		}
+		kcpuset_zero(affinity);
+		/* Round-robin affinity */
+		kcpuset_set(affinity, msix_matrix[i].cpuid % ncpu);
+		error = interrupt_distribute(vih, affinity, NULL);
+		if (error == 0) {
+			aprint_normal_dev(sc->sc_dev,
+			    "for %s interrupting at %s affinity to %u\n",
+			    msix_matrix[i].intrname, intrstr,
+			    msix_matrix[i].cpuid % ncpu);
+		} else {
+			aprint_normal_dev(sc->sc_dev,
+			    "for %s interrupting at %s\n",
+			    msix_matrix[i].intrname, intrstr);
+		}
+		sc->sc_ihs[msix_matrix[i].intridx] = vih;
+	}
+
+	sc->sc_nintrs = WM_MSIX_NINTR;
+	kcpuset_destroy(affinity);
+	return 0;
+}
+#endif
 
 /*
  * wm_init:		[ifnet interface function]
