@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet6,v 1.10 2015/02/10 19:11:52 rjs Exp $
+#	$NetBSD: files.netinet6,v 1.11 2015/10/13 21:28:35 rjs Exp $
 
 defflag	opt_inet6.h	RFC2292	
 
@@ -33,3 +33,5 @@ file	netinet6/udp6_output.c		inet6
 file	netinet6/udp6_usrreq.c		inet6
 
 file	netinet6/dccp6_usrreq.c		inet6 & dccp
+
+file	netinet6/sctp6_usrreq.c		inet6 & sctp
