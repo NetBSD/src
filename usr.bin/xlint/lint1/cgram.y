@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.71 2015/07/28 17:56:56 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.72 2015/10/13 16:09:33 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.71 2015/07/28 17:56:56 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.72 2015/10/13 16:09:33 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1972,7 +1972,7 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 	case EXTERN:
 		if (renaming != NULL) {
 			if (decl->s_rename != NULL)
-				LERROR("idecl()");
+				LERROR("idecl(rename)");
 
 			s = getlblk(1, renaming->sb_len + 1);
 	                (void)memcpy(s, renaming->sb_name, renaming->sb_len + 1);
@@ -2000,7 +2000,7 @@ idecl(sym_t *decl, int initflg, sbuf_t *renaming)
 		decl1loc(decl, initflg);
 		break;
 	default:
-		LERROR("idecl()");
+		LERROR("idecl(%d)", dcs->d_ctx);
 	}
 
 	if (initflg && !initerr)
