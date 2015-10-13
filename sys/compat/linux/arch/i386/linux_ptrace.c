@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ptrace.c,v 1.30 2014/11/09 17:48:07 maxv Exp $	*/
+/*	$NetBSD: linux_ptrace.c,v 1.31 2015/10/13 08:24:35 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.30 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ptrace.c,v 1.31 2015/10/13 08:24:35 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -185,7 +185,6 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 		goto out;
 	}
 	mutex_enter(t->p_lock);
-	mutex_exit(proc_lock);
 
 	/*
 	 * You cannot do what you want to the process if:
@@ -193,6 +192,7 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	 */
 	if (!ISSET(t->p_slflag, PSL_TRACED)) {
 		mutex_exit(t->p_lock);
+		mutex_exit(proc_lock);
 		error = EPERM;
 		goto out;
 	}
@@ -205,9 +205,11 @@ linux_sys_ptrace_arch(struct lwp *l, const struct linux_sys_ptrace_args *uap,
 	if (ISSET(t->p_slflag, PSL_FSTRACE) || t->p_pptr != p ||
 	    t->p_stat != SSTOP || !t->p_waited) {
 		mutex_exit(t->p_lock);
+		mutex_exit(proc_lock);
 		error = EBUSY;
 		goto out;
 	}
+	mutex_exit(proc_lock);
 	/* XXX: ptrace needs revamp for multi-threading support. */
 	if (t->p_nlwps > 1) {
 		mutex_exit(t->p_lock);
