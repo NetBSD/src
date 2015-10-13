@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.365 2015/10/13 08:36:02 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.366 2015/10/13 09:03:58 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.365 2015/10/13 08:36:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.366 2015/10/13 09:03:58 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2702,18 +2702,18 @@ wm_watchdog(struct ifnet *ifp)
 		    txq->txq_next);
 		ifp->if_oerrors++;
 #ifdef WM_DEBUG
-		for (i = txq->txq_txsdirty; i != txq->txq_txsnext ;
+		for (i = txq->txq_sdirty; i != txq->txq_snext ;
 		    i = WM_NEXTTXS(txq, i)) {
-		    txs = &txq->txq_txsoft[i];
+		    txs = &txq->txq_soft[i];
 		    printf("txs %d tx %d -> %d\n",
 			i, txs->txs_firstdesc, txs->txs_lastdesc);
 		    for (j = txs->txs_firstdesc; ;
 			j = WM_NEXTTX(txq, j)) {
 			printf("\tdesc %d: 0x%" PRIx64 "\n", j,
-			    txq->txq_nq_txdescs[j].nqtx_data.nqtxd_addr);
+			    txq->txq_nq_descs[j].nqtx_data.nqtxd_addr);
 			printf("\t %#08x%08x\n",
-			    txq->txq_nq_txdescs[j].nqtx_data.nqtxd_fields,
-			    txq->txq_nq_txdescs[j].nqtx_data.nqtxd_cmdlen);
+			    txq->txq_nq_descs[j].nqtx_data.nqtxd_fields,
+			    txq->txq_nq_descs[j].nqtx_data.nqtxd_cmdlen);
 			if (j == txs->txs_lastdesc)
 				break;
 			}
@@ -6107,7 +6107,7 @@ wm_start_locked(struct ifnet *ifp)
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
-			    segs_needed, sc->sc_txfree - 1));
+			    segs_needed, txq->txq_free - 1));
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
@@ -6242,7 +6242,7 @@ wm_start_locked(struct ifnet *ifp)
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: desc %d: cmdlen 0x%08x\n",
 		    device_xname(sc->sc_dev),
-		    lasttx, le32toh(sc->sc_txdescs[lasttx].wtx_cmdlen)));
+		    lasttx, le32toh(txq->txq_descs[lasttx].wtx_cmdlen)));
 
 		/* Sync the descriptors we're using. */
 		wm_cdtxsync(txq, txq->txq_next, txs->txs_ndesc,
@@ -6256,7 +6256,7 @@ wm_start_locked(struct ifnet *ifp)
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: finished transmitting packet, job %d\n",
-		    device_xname(sc->sc_dev), txq->txq_txsnext));
+		    device_xname(sc->sc_dev), txq->txq_snext));
 
 		/* Advance the tx pointer. */
 		txq->txq_free -= txs->txs_ndesc;
@@ -6479,7 +6479,7 @@ wm_nq_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs,
 	wm_cdtxsync(txq, txq->txq_next, 1, BUS_DMASYNC_PREWRITE);
 	DPRINTF(WM_DEBUG_TX,
 	    ("%s: TX: context desc %d 0x%08x%08x\n", device_xname(sc->sc_dev),
-	    txq->txq_txnext, 0, vl_len));
+	    txq->txq_next, 0, vl_len));
 	DPRINTF(WM_DEBUG_TX, ("\t0x%08x%08x\n", mssidx, cmdc));
 	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
 	txs->txs_ndesc++;
@@ -6601,7 +6601,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 			DPRINTF(WM_DEBUG_TX,
 			    ("%s: TX: need %d (%d) descriptors, have %d\n",
 			    device_xname(sc->sc_dev), dmamap->dm_nsegs,
-			    segs_needed, sc->sc_txfree - 1));
+			    segs_needed, txq->txq_free - 1));
 			ifp->if_flags |= IFF_OACTIVE;
 			bus_dmamap_unload(sc->sc_dmat, dmamap);
 			WM_EVCNT_INCR(&sc->sc_ev_txdstall);
@@ -6732,7 +6732,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: desc %d: cmdlen 0x%08x\n",
 		    device_xname(sc->sc_dev),
-		    lasttx, le32toh(txq->txq_txdescs[lasttx].wtx_cmdlen)));
+		    lasttx, le32toh(txq->txq_descs[lasttx].wtx_cmdlen)));
 
 		/* Sync the descriptors we're using. */
 		wm_cdtxsync(txq, txq->txq_next, txs->txs_ndesc,
@@ -6747,7 +6747,7 @@ wm_nq_start_locked(struct ifnet *ifp)
 
 		DPRINTF(WM_DEBUG_TX,
 		    ("%s: TX: finished transmitting packet, job %d\n",
-		    device_xname(sc->sc_dev), txq->txq_txsnext));
+		    device_xname(sc->sc_dev), txq->txq_snext));
 
 		/* Advance the tx pointer. */
 		txq->txq_free -= txs->txs_ndesc;
@@ -6960,7 +6960,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: Rx buffer allocation failed, "
 			    "dropping packet%s\n", device_xname(sc->sc_dev),
-			    rxq->rxq_rxdiscard ? " (discard)" : ""));
+			    rxq->rxq_discard ? " (discard)" : ""));
 			continue;
 		}
 
@@ -6975,7 +6975,7 @@ wm_rxeof(struct wm_rxqueue *rxq)
 			WM_RXCHAIN_LINK(rxq, m);
 			DPRINTF(WM_DEBUG_RX,
 			    ("%s: RX: not yet EOP, rxlen -> %d\n",
-			    device_xname(sc->sc_dev), rxq->rxq_rxlen));
+			    device_xname(sc->sc_dev), rxq->rxq_len));
 			continue;
 		}
 
