@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.213 2015/08/31 08:05:20 ozaki-r Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.214 2015/10/13 12:33:07 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.213 2015/08/31 08:05:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.214 2015/10/13 12:33:07 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -242,8 +242,8 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
-		else if (!arpresolve(ifp, rt, m, dst, edst))
-			return 0;	/* if not yet resolved */
+		else if ((error = arpresolve(ifp, rt, m, dst, edst)) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -291,7 +291,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif
 #ifdef NETATALK
     case AF_APPLETALK:
-		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
+		if (aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
 			printf("aarpresolv failed\n");
 #endif /* NETATALKDEBUG */
