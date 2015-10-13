@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.354 2015/10/13 08:00:15 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.355 2015/10/13 08:03:59 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.354 2015/10/13 08:00:15 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.355 2015/10/13 08:03:59 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -553,14 +553,21 @@ static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
 /* DMA related */
 static int	wm_alloc_tx_descs(struct wm_softc *);
 static void	wm_free_tx_descs(struct wm_softc *);
+static void	wm_init_tx_descs(struct wm_softc *);
 static int	wm_alloc_rx_descs(struct wm_softc *);
 static void	wm_free_rx_descs(struct wm_softc *);
+static void	wm_init_rx_descs(struct wm_softc *);
 static int	wm_alloc_tx_buffer(struct wm_softc *);
 static void	wm_free_tx_buffer(struct wm_softc *);
+static void	wm_init_tx_buffer(struct wm_softc *);
 static int	wm_alloc_rx_buffer(struct wm_softc *);
 static void	wm_free_rx_buffer(struct wm_softc *);
+static int	wm_init_rx_buffer(struct wm_softc *);
+static void	wm_init_tx_queue(struct wm_softc *);
+static int	wm_init_rx_queue(struct wm_softc *);
 static int	wm_alloc_txrx_queues(struct wm_softc *);
 static void	wm_free_txrx_queues(struct wm_softc *);
+static int	wm_init_txrx_queues(struct wm_softc *);
 /* Start */
 static void	wm_start(struct ifnet *);
 static void	wm_start_locked(struct ifnet *);
@@ -2284,18 +2291,6 @@ alloc_retry:
 #if 0
 	CSR_WRITE(sc, WMREG_CTRL_EXT, sc->sc_ctrl_ext);
 #endif
-
-	/*
-	 * Set up some register offsets that are different between
-	 * the i82542 and the i82543 and later chips.
-	 */
-	if (sc->sc_type < WM_T_82543) {
-		sc->sc_rdt_reg = WMREG_OLD_RDT0;
-		sc->sc_tdt_reg = WMREG_OLD_TDT;
-	} else {
-		sc->sc_rdt_reg = WMREG_RDT;
-		sc->sc_tdt_reg = WMREG_TDT;
-	}
 
 	if (sc->sc_type == WM_T_PCH) {
 		uint16_t val;
@@ -4095,7 +4090,6 @@ static int
 wm_init_locked(struct ifnet *ifp)
 {
 	struct wm_softc *sc = ifp->if_softc;
-	struct wm_rxsoft *rxs;
 	int i, j, trynum, error = 0;
 	uint32_t reg;
 
@@ -4183,124 +4177,9 @@ wm_init_locked(struct ifnet *ifp)
 		sc->sc_itr = 1500;		/* 2604 ints/sec */
 	}
 
-	/* Initialize the transmit descriptor ring. */
-	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
-	wm_cdtxsync(sc, 0, WM_NTXDESC(sc),
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
-	sc->sc_txfree = WM_NTXDESC(sc);
-	sc->sc_txnext = 0;
-
-	if (sc->sc_type < WM_T_82543) {
-		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_TDBAL, WM_CDTXADDR_LO(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCSIZE(sc));
-		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
-		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
-		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
-	} else {
-		CSR_WRITE(sc, WMREG_TDBAH, WM_CDTXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_TDBAL, WM_CDTXADDR_LO(sc, 0));
-		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
-		CSR_WRITE(sc, WMREG_TDH, 0);
-
-		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
-			/*
-			 * Don't write TDT before TCTL.EN is set.
-			 * See the document.
-			 */
-			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_QUEUE_ENABLE
-			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
-			    | TXDCTL_WTHRESH(0));
-		else {
-			/* ITR / 4 */
-			CSR_WRITE(sc, WMREG_TIDV, sc->sc_itr / 4);
-			if (sc->sc_type >= WM_T_82540) {
-				/* should be same */
-				CSR_WRITE(sc, WMREG_TADV, sc->sc_itr / 4);
-			}
-
-			CSR_WRITE(sc, WMREG_TDT, 0);
-			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_PTHRESH(0) |
-			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
-			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
-			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
-		}
-	}
-
-	/* Initialize the transmit job descriptors. */
-	for (i = 0; i < WM_TXQUEUELEN(sc); i++)
-		sc->sc_txsoft[i].txs_mbuf = NULL;
-	sc->sc_txsfree = WM_TXQUEUELEN(sc);
-	sc->sc_txsnext = 0;
-	sc->sc_txsdirty = 0;
-
-	/*
-	 * Initialize the receive descriptor and receive job
-	 * descriptor rings.
-	 */
-	if (sc->sc_type < WM_T_82543) {
-		CSR_WRITE(sc, WMREG_OLD_RDBAH0, WM_CDRXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_RDBAL0, WM_CDRXADDR_LO(sc, 0));
-		CSR_WRITE(sc, WMREG_OLD_RDLEN0, sizeof(sc->sc_rxdescs));
-		CSR_WRITE(sc, WMREG_OLD_RDH0, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDT0, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDTR0, 28 | RDTR_FPD);
-
-		CSR_WRITE(sc, WMREG_OLD_RDBA1_HI, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDBA1_LO, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDLEN1, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDH1, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDT1, 0);
-		CSR_WRITE(sc, WMREG_OLD_RDTR1, 0);
-	} else {
-		CSR_WRITE(sc, WMREG_RDBAH, WM_CDRXADDR_HI(sc, 0));
-		CSR_WRITE(sc, WMREG_RDBAL, WM_CDRXADDR_LO(sc, 0));
-		CSR_WRITE(sc, WMREG_RDLEN, sizeof(sc->sc_rxdescs));
-
-		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
-			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
-				panic("%s: MCLBYTES %d unsupported for i2575 or higher\n", __func__, MCLBYTES);
-			CSR_WRITE(sc, WMREG_SRRCTL, SRRCTL_DESCTYPE_LEGACY
-			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT));
-			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_QUEUE_ENABLE
-			    | RXDCTL_PTHRESH(16) | RXDCTL_HTHRESH(8)
-			    | RXDCTL_WTHRESH(1));
-		} else {
-			CSR_WRITE(sc, WMREG_RDH, 0);
-			CSR_WRITE(sc, WMREG_RDT, 0);
-			/* ITR/4 */
-			CSR_WRITE(sc, WMREG_RDTR, (sc->sc_itr / 4) | RDTR_FPD);
-			/* MUST be same */
-			CSR_WRITE(sc, WMREG_RADV, sc->sc_itr);
-		}
-	}
-	for (i = 0; i < WM_NRXDESC; i++) {
-		rxs = &sc->sc_rxsoft[i];
-		if (rxs->rxs_mbuf == NULL) {
-			if ((error = wm_add_rxbuf(sc, i)) != 0) {
-				log(LOG_ERR, "%s: unable to allocate or map "
-				    "rx buffer %d, error = %d\n",
-				    device_xname(sc->sc_dev), i, error);
-				/*
-				 * XXX Should attempt to run with fewer receive
-				 * XXX buffers instead of just failing.
-				 */
-				wm_rxdrain(sc);
-				goto out;
-			}
-		} else {
-			if ((sc->sc_flags & WM_F_NEWQUEUE) == 0)
-				wm_init_rxdesc(sc, i);
-			/*
-			 * For 82575 and newer device, the RX descriptors
-			 * must be initialized after the setting of RCTL.EN in
-			 * wm_set_filter()
-			 */
-		}
-	}
-	sc->sc_rxptr = 0;
-	sc->sc_rxdiscard = 0;
-	WM_RXCHAIN_RESET(sc);
+	error = wm_init_txrx_queues(sc);
+	if (error)
+		goto out;
 
 	/*
 	 * Clear out the VLAN table -- we don't use it (yet).
@@ -5371,6 +5250,216 @@ wm_free_txrx_queues(struct wm_softc *sc)
 	wm_free_rx_descs(sc);
 	wm_free_tx_buffer(sc);
 	wm_free_tx_descs(sc);
+}
+
+static void
+wm_init_tx_descs(struct wm_softc *sc)
+{
+
+	KASSERT(WM_TX_LOCKED(sc));
+
+	/* Initialize the transmit descriptor ring. */
+	memset(sc->sc_txdescs, 0, WM_TXDESCSIZE(sc));
+	wm_cdtxsync(sc, 0, WM_NTXDESC(sc),
+	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	sc->sc_txfree = WM_NTXDESC(sc);
+	sc->sc_txnext = 0;
+
+	if (sc->sc_type < WM_T_82543) {
+		CSR_WRITE(sc, WMREG_OLD_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDBAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_TDLEN, WM_TXDESCSIZE(sc));
+		CSR_WRITE(sc, WMREG_OLD_TDH, 0);
+		CSR_WRITE(sc, WMREG_OLD_TDT, 0);
+		CSR_WRITE(sc, WMREG_OLD_TIDV, 128);
+	} else {
+		CSR_WRITE(sc, WMREG_TDBAH, WM_CDTXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_TDBAL, WM_CDTXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_TDLEN, WM_TXDESCSIZE(sc));
+		CSR_WRITE(sc, WMREG_TDH, 0);
+
+		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+			/*
+			 * Don't write TDT before TCTL.EN is set.
+			 * See the document.
+			 */
+			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_QUEUE_ENABLE
+			    | TXDCTL_PTHRESH(0) | TXDCTL_HTHRESH(0)
+			    | TXDCTL_WTHRESH(0));
+		else {
+			/* ITR / 4 */
+			CSR_WRITE(sc, WMREG_TIDV, sc->sc_itr / 4);
+			if (sc->sc_type >= WM_T_82540) {
+				/* should be same */
+				CSR_WRITE(sc, WMREG_TADV, sc->sc_itr / 4);
+			}
+
+			CSR_WRITE(sc, WMREG_TDT, 0);
+			CSR_WRITE(sc, WMREG_TXDCTL(0), TXDCTL_PTHRESH(0) |
+			    TXDCTL_HTHRESH(0) | TXDCTL_WTHRESH(0));
+			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_PTHRESH(0) |
+			    RXDCTL_HTHRESH(0) | RXDCTL_WTHRESH(1));
+		}
+	}
+}
+
+static void
+wm_init_tx_buffer(struct wm_softc *sc)
+{
+	int i;
+
+	KASSERT(WM_TX_LOCKED(sc));
+
+	/* Initialize the transmit job descriptors. */
+	for (i = 0; i < WM_TXQUEUELEN(sc); i++)
+		sc->sc_txsoft[i].txs_mbuf = NULL;
+	sc->sc_txsfree = WM_TXQUEUELEN(sc);
+	sc->sc_txsnext = 0;
+	sc->sc_txsdirty = 0;
+}
+
+static void
+wm_init_tx_queue(struct wm_softc *sc)
+{
+
+	KASSERT(WM_TX_LOCKED(sc));
+
+	/*
+	 * Set up some register offsets that are different between
+	 * the i82542 and the i82543 and later chips.
+	 */
+	if (sc->sc_type < WM_T_82543) {
+		sc->sc_tdt_reg = WMREG_OLD_TDT;
+	} else {
+		sc->sc_tdt_reg = WMREG_TDT;
+	}
+
+	wm_init_tx_descs(sc);
+	wm_init_tx_buffer(sc);
+}
+
+static void
+wm_init_rx_descs(struct wm_softc *sc)
+{
+
+	KASSERT(WM_RX_LOCKED(sc));
+
+	/*
+	 * Initialize the receive descriptor and receive job
+	 * descriptor rings.
+	 */
+	if (sc->sc_type < WM_T_82543) {
+		CSR_WRITE(sc, WMREG_OLD_RDBAH0, WM_CDRXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_RDBAL0, WM_CDRXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_OLD_RDLEN0,
+		    sizeof(wiseman_rxdesc_t) * WM_NRXDESC);
+		CSR_WRITE(sc, WMREG_OLD_RDH0, 0);
+		CSR_WRITE(sc, WMREG_OLD_RDT0, 0);
+		CSR_WRITE(sc, WMREG_OLD_RDTR0, 28 | RDTR_FPD);
+
+		CSR_WRITE(sc, WMREG_OLD_RDBA1_HI, 0);
+		CSR_WRITE(sc, WMREG_OLD_RDBA1_LO, 0);
+		CSR_WRITE(sc, WMREG_OLD_RDLEN1, 0);
+		CSR_WRITE(sc, WMREG_OLD_RDH1, 0);
+		CSR_WRITE(sc, WMREG_OLD_RDT1, 0);
+		CSR_WRITE(sc, WMREG_OLD_RDTR1, 0);
+	} else {
+		CSR_WRITE(sc, WMREG_RDBAH, WM_CDRXADDR_HI(sc, 0));
+		CSR_WRITE(sc, WMREG_RDBAL, WM_CDRXADDR_LO(sc, 0));
+		CSR_WRITE(sc, WMREG_RDLEN,
+		    sizeof(wiseman_rxdesc_t) * WM_NRXDESC);
+
+		if ((sc->sc_flags & WM_F_NEWQUEUE) != 0) {
+			if (MCLBYTES & ((1 << SRRCTL_BSIZEPKT_SHIFT) - 1))
+				panic("%s: MCLBYTES %d unsupported for i2575 or higher\n", __func__, MCLBYTES);
+			CSR_WRITE(sc, WMREG_SRRCTL, SRRCTL_DESCTYPE_LEGACY
+			    | (MCLBYTES >> SRRCTL_BSIZEPKT_SHIFT));
+			CSR_WRITE(sc, WMREG_RXDCTL, RXDCTL_QUEUE_ENABLE
+			    | RXDCTL_PTHRESH(16) | RXDCTL_HTHRESH(8)
+			    | RXDCTL_WTHRESH(1));
+		} else {
+			CSR_WRITE(sc, WMREG_RDH, 0);
+			CSR_WRITE(sc, WMREG_RDT, 0);
+			CSR_WRITE(sc, WMREG_RDTR, 375 | RDTR_FPD); /* ITR/4 */
+			CSR_WRITE(sc, WMREG_RADV, 375);	/* MUST be same */
+		}
+	}
+}
+
+static int
+wm_init_rx_buffer(struct wm_softc *sc)
+{
+	struct wm_rxsoft *rxs;
+	int error, i;
+
+	KASSERT(WM_RX_LOCKED(sc));
+
+	for (i = 0; i < WM_NRXDESC; i++) {
+		rxs = &sc->sc_rxsoft[i];
+		if (rxs->rxs_mbuf == NULL) {
+			if ((error = wm_add_rxbuf(sc, i)) != 0) {
+				log(LOG_ERR, "%s: unable to allocate or map "
+				    "rx buffer %d, error = %d\n",
+				    device_xname(sc->sc_dev), i, error);
+				/*
+				 * XXX Should attempt to run with fewer receive
+				 * XXX buffers instead of just failing.
+				 */
+				wm_rxdrain(sc);
+				return ENOMEM;
+			}
+		} else {
+			if ((sc->sc_flags & WM_F_NEWQUEUE) == 0)
+				wm_init_rxdesc(sc, i);
+			/*
+			 * For 82575 and newer device, the RX descriptors
+			 * must be initialized after the setting of RCTL.EN in
+			 * wm_set_filter()
+			 */
+		}
+	}
+	sc->sc_rxptr = 0;
+	sc->sc_rxdiscard = 0;
+	WM_RXCHAIN_RESET(sc);
+
+	return 0;
+}
+
+static int
+wm_init_rx_queue(struct wm_softc *sc)
+{
+
+	KASSERT(WM_RX_LOCKED(sc));
+
+	/*
+	 * Set up some register offsets that are different between
+	 * the i82542 and the i82543 and later chips.
+	 */
+	if (sc->sc_type < WM_T_82543) {
+		sc->sc_rdt_reg = WMREG_OLD_RDT0;
+	} else {
+		sc->sc_rdt_reg = WMREG_RDT;
+	}
+
+	wm_init_rx_descs(sc);
+	return wm_init_rx_buffer(sc);
+}
+
+/*
+ * wm_init_quques:
+ *	Initialize {tx,rx}descs and {tx,rx} buffers
+ */
+static int
+wm_init_txrx_queues(struct wm_softc *sc)
+{
+	int error;
+
+	KASSERT(WM_BOTH_LOCKED(sc));
+
+	wm_init_tx_queue(sc);
+	error = wm_init_rx_queue(sc);
+
+	return error;
 }
 
 /*
