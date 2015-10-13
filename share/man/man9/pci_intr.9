@@ -1,4 +1,4 @@
-.\" $NetBSD: pci_intr.9,v 1.21 2015/10/13 04:34:38 msaitoh Exp $
+.\" $NetBSD: pci_intr.9,v 1.22 2015/10/13 08:44:54 wiz Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 .Nm pci_intr_string ,
 .Nm pci_intr_evcnt ,
 .Nm pci_intr_establish ,
-.Nm pci_intr_disestablish
+.Nm pci_intr_disestablish ,
 .Nm pci_intr_setattr
 .Nd PCI bus interrupt manipulation functions
 .Sh SYNOPSIS
@@ -52,6 +52,7 @@
 "int ipl" "int (*intrhand)(void *)" "void *intrarg"
 .Ft void
 .Fn pci_intr_disestablish "pci_chipset_tag_t pc" "void *ih"
+.Ft int
 .Fn pci_intr_setattr "pci_chipset_tag_t pc" "pci_intr_handle_t *ih" "int attr" "uint64_t data"
 .Sh DESCRIPTION
 The
