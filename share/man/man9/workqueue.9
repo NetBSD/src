@@ -1,4 +1,4 @@
-.\"	$NetBSD: workqueue.9,v 1.10 2011/10/24 07:27:09 yamt Exp $
+.\"	$NetBSD: workqueue.9,v 1.11 2015/10/13 04:22:24 riastradh Exp $
 .\"
 .\" Copyright (c)2005 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -80,8 +80,8 @@ The value of 0 indicates a standard create operation, however the following
 flags may be bitwise ORed together:
 .Bl -tag -width WQ_MPSAFE
 .It Dv WQ_MPSAFE
-Specifies that the workqueue is multiprocessor safe and does its own locking,
-otherwise the kernel lock will be held while work will be processed.
+Specifies that the workqueue is multiprocessor safe and does its own locking;
+otherwise the kernel lock will be held while processing work.
 .It Dv WQ_PERCPU
 Specifies that the workqueue should have a separate queue for each CPU,
 thus the work could be enqueued on concrete CPUs.
