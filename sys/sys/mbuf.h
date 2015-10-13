@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.158 2015/06/04 09:19:59 ozaki-r Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.159 2015/10/13 21:28:34 rjs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -360,6 +360,7 @@ MBUF_DEFINE(mbuf, MHLEN, MLEN);
 
 /* for source-level compatibility */
 #define	M_CLUSTER	M_EXT_CLUSTER
+#define	M_NOTIFICATION	M_PROTO1
 
 #define M_FLAGS_BITS \
     "\20\1EXT\2PKTHDR\3EOR\4PROTO1\5AUTHIPHDR\6DECRYPTED\7LOOP\10AUTHIPDGM" \
