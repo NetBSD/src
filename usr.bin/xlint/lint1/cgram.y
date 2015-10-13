@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.72 2015/10/13 16:09:33 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.73 2015/10/13 20:25:21 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.72 2015/10/13 16:09:33 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.73 2015/10/13 20:25:21 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -105,6 +105,14 @@ static inline void RESTORE(const char *file, size_t line)
 #define SAVE(f, l)	olwarn = lwarn
 #define RESTORE(f, l) (void)(olwarn == LWARN_BAD ? (clrwflgs(), 0) : (lwarn = olwarn))
 #endif
+
+/* unbind the anonymous struct members from the struct */
+static void
+anonymize(sym_t *s)
+{
+	for ( ; s; s = s->s_nxt)
+		s->s_styp = NULL;
+}
 %}
 
 %expect 80
@@ -698,14 +706,22 @@ member_declaration:
 		$$ = $4;
 	  }
 	| noclass_declmods deftyp {
+		symtyp = FMOS;
 		/* struct or union member must be named */
-		warning(49);
-		$$ = NULL;
+		if (!Sflag)
+			warning(49);
+		/* add all the members of the anonymous struct/union */
+		$$ = dcs->d_type->t_str->memb;
+		anonymize($$);
 	  }
 	| noclass_declspecs deftyp {
+		symtyp = FMOS;
 		/* struct or union member must be named */
-		warning(49);
-		$$ = NULL;
+		if (!Sflag)
+			warning(49);
+		$$ = dcs->d_type->t_str->memb;
+		/* add all the members of the anonymous struct/union */
+		anonymize($$);
 	  }
 	| error {
 		symtyp = FVFT;
