@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ieee1394subr.c,v 1.50 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_ieee1394subr.c,v 1.51 2015/10/13 12:33:07 roy Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.50 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ieee1394subr.c,v 1.51 2015/10/13 12:33:07 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -138,8 +138,9 @@ ieee1394_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:
-		if (unicast && (!arpresolve(ifp, rt, m0, dst, (u_char *)hwdst)))
-			return 0;	/* if not yet resolved */
+		if (unicast &&
+		    (error = arpresolve(ifp, rt, m0, dst, (u_char *)hwdst)) !=0)
+			return error == EWOULDBLOCK ? 0 : error;
 		/* if broadcasting on a simplex interface, loopback a copy */
 		if ((m0->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m0, 0, M_COPYALL);

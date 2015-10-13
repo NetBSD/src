@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.186 2015/10/13 11:13:37 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.187 2015/10/13 12:33:07 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.186 2015/10/13 11:13:37 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.187 2015/10/13 12:33:07 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -780,10 +780,11 @@ arprequest(struct ifnet *ifp,
  * desten is filled in.  If there is no entry in arptab,
  * set one up and broadcast a request for the IP address.
  * Hold onto this mbuf and resend it once the address
- * is finally resolved.  A return value of 1 indicates
+ * is finally resolved.  A return value of 0 indicates
  * that desten has been filled in and the packet should be sent
- * normally; a 0 return indicates that the packet has been
- * taken over here, either now or for later transmission.
+ * normally; a return value of EWOULDBLOCK indicates that the packet has been
+ * held pending resolution.
+ * Any other value indicates an error.
  */
 int
 arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
@@ -813,7 +814,7 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 		    min(sdl->sdl_alen, ifp->if_addrlen));
 		rt->rt_pksent = time_uptime; /* Time for last pkt sent */
 		LLE_RUNLOCK(la);
-		return 1;
+		return 0;
 	}
 
 	/*
@@ -838,7 +839,7 @@ notfound:
 		if (la != NULL)
 			LLE_RUNLOCK(la);
 		m_freem(m);
-		return 0;
+		return ENOTSUP;
 	}
 #undef _IFF_NOARP
 	if (la == NULL) {
@@ -862,17 +863,18 @@ notfound:
 		    __func__, create_lookup, inet_ntoa(satocsin(dst)->sin_addr),
 		    ifp->if_xname);
 		m_freem(m);
-		return 0;
+		return EINVAL;
 	}
 
 	/* Just in case */
 	if (la->la_rt == NULL) {
+		LLE_WUNLOCK(la);
 		log(LOG_DEBUG,
 		    "%s: valid llentry has no rtentry for %s on %s\n",
 		    __func__, inet_ntoa(satocsin(dst)->sin_addr),
 		    ifp->if_xname);
 		m_freem(m);
-		return 0;
+		return EINVAL;
 	}
 	rt = la->la_rt;
 
@@ -909,7 +911,7 @@ notfound:
 			    &satocsin(dst)->sin_addr, enaddr);
 		}
 
-		return 1;
+		return 0;
 	}
 
 	if (la->la_flags & LLE_STATIC) {   /* should not happen! */
@@ -977,12 +979,12 @@ notfound:
 
 		arprequest(ifp, &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 		    &satocsin(dst)->sin_addr, enaddr);
-		return error == 0;
+		return error;
 	}
 done:
 	LLE_RUNLOCK(la);
 
-	return error == 0;
+	return error;
 }
 
 /*
