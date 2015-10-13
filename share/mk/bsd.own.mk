@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.875 2015/10/13 03:14:16 mrg Exp $
+#	$NetBSD: bsd.own.mk,v 1.876 2015/10/13 20:12:03 rjs Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1048,6 +1048,7 @@ ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
     ${MACHINE} == "hpcmips"	|| \
     ${MACHINE} == "hpcsh"	|| \
     ${MACHINE} == "i386"	|| \
+    ${MACHINE} == "ibmnws"	|| \
     ${MACHINE} == "luna68k"	|| \
     ${MACHINE} == "mac68k"	|| \
     ${MACHINE} == "macppc"	|| \
