@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.246 2015/10/13 00:27:19 pgoyette Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.247 2015/10/13 00:28:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.246 2015/10/13 00:27:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.247 2015/10/13 00:28:22 pgoyette Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -227,8 +227,15 @@ exit1(struct lwp *l, int rv)
 	if (__predict_false(p->p_sflag & PS_STOPEXIT)) {
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		sigclearall(p, &contsigmask, &kq);
+
+		if (!mutex_tryenter(proc_lock)) {
+			mutex_exit(p->p_lock);
+			mutex_enter(proc_lock);
+			mutex_enter(p->p_lock);
+		}
 		p->p_waited = 0;
-		membar_producer();
+		p->p_pptr->p_nstopchild++;
+		mutex_exit(proc_lock);
 		p->p_stat = SSTOP;
 		lwp_lock(l);
 		p->p_nrlwps--;
