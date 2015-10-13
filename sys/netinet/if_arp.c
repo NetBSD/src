@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.184 2015/10/08 08:17:37 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.185 2015/10/13 09:33:35 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.184 2015/10/08 08:17:37 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.185 2015/10/13 09:33:35 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -791,26 +791,17 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 {
 	struct llentry *la;
 	const struct sockaddr_dl *sdl;
-	int renew;
-	int flags = 0;
+	const char *create_lookup;
+	bool renew;
 	int error;
 
 	KASSERT(m != NULL);
 
-	la = arplookup(ifp, m, &satocsin(dst)->sin_addr, 1, 0, 0, rt);
-	if (la != NULL)
-		rt = la->la_rt;
+	la = arplookup(ifp, m, &satocsin(dst)->sin_addr, 0, 0, 0, rt);
+	if (la == NULL || la->la_rt == NULL)
+		goto notfound;
 
-	if (la == NULL || rt == NULL) {
-		ARP_STATINC(ARP_STAT_ALLOCFAIL);
-		log(LOG_DEBUG,
-		    "arpresolve: can't allocate llinfo on %s for %s\n",
-		    ifp->if_xname, in_fmtaddr(satocsin(dst)->sin_addr));
-		m_freem(m);
-		if (la != NULL)
-			LLE_RUNLOCK(la);
-		return 0;
-	}
+	rt = la->la_rt;
 	sdl = satocsdl(rt->rt_gateway);
 	/*
 	 * Check the address family and length is valid, the address
@@ -837,69 +828,82 @@ arpresolve(struct ifnet *ifp, struct rtentry *rt, struct mbuf *m,
 	}
 #endif
 
-retry:
+notfound:
 	if (la == NULL) {
-		IF_AFDATA_RLOCK(ifp);
-		la = lla_lookup(LLTABLE(ifp), flags, dst);
-		IF_AFDATA_RUNLOCK(ifp);
-	}
-
 #ifdef IFF_STATICARP /* FreeBSD */
 #define _IFF_NOARP (IFF_NOARP | IFF_STATICARP)
 #else
 #define _IFF_NOARP IFF_NOARP
 #endif
-	if ((la == NULL) && ((flags & LLE_EXCLUSIVE) == 0)
-	    && ((ifp->if_flags & _IFF_NOARP) == 0))
-	{
-		flags |= LLE_EXCLUSIVE;
-		IF_AFDATA_WLOCK(ifp);
-		la = lla_create(LLTABLE(ifp), flags, dst);
-		IF_AFDATA_WUNLOCK(ifp);
-
-		if (la == NULL) {
-			log(LOG_DEBUG,
-			    "%s: failed to create llentry for %s on %s\n",
-			    __func__, inet_ntoa(satocsin(dst)->sin_addr),
-			    ifp->if_xname);
+		if (ifp->if_flags & _IFF_NOARP) {
+			m_freem(m);
+			return 0;
 		}
-	}
 #undef _IFF_NOARP
+		create_lookup = "create";
+		IF_AFDATA_WLOCK(ifp);
+		la = lla_create(LLTABLE(ifp), LLE_EXCLUSIVE, dst);
+		IF_AFDATA_WUNLOCK(ifp);
+		if (la == NULL)
+			ARP_STATINC(ARP_STAT_ALLOCFAIL);
+	} else if (LLE_TRY_UPGRADE(la) == 0) {
+		create_lookup = "lookup";
+		LLE_RUNLOCK(la);
+		IF_AFDATA_RLOCK(ifp);
+		la = lla_lookup(LLTABLE(ifp), LLE_EXCLUSIVE, dst);
+		IF_AFDATA_RUNLOCK(ifp);
+	}
 
 	if (la == NULL) {
+		log(LOG_DEBUG,
+		    "%s: failed to %s llentry for %s on %s\n",
+		    __func__, create_lookup, inet_ntoa(satocsin(dst)->sin_addr),
+		    ifp->if_xname);
 		m_freem(m);
 		return 0;
 	}
 
+	/* Just in case */
+	if (la->la_rt == NULL) {
+		log(LOG_DEBUG,
+		    "%s: valid llentry has no rtentry for %s on %s\n",
+		    __func__, inet_ntoa(satocsin(dst)->sin_addr),
+		    ifp->if_xname);
+		m_freem(m);
+		return 0;
+	}
+	rt = la->la_rt;
+
 	if ((la->la_flags & LLE_VALID) &&
-	    ((la->la_flags & LLE_STATIC) || la->la_expire > time_uptime)) {
+	    ((la->la_flags & LLE_STATIC) || la->la_expire > time_uptime))
+	{
+		sdl = satocsdl(rt->rt_gateway);
 		memcpy(desten, CLLADDR(sdl),
 		    min(sdl->sdl_alen, ifp->if_addrlen));
-		renew = 0;
+		renew = false;
 		/*
 		 * If entry has an expiry time and it is approaching,
 		 * see if we need to send an ARP request within this
 		 * arpt_down interval.
 		 */
 		if (!(la->la_flags & LLE_STATIC) &&
-		    time_uptime + la->la_preempt > la->la_expire) {
-			renew = 1;
+		    time_uptime + la->la_preempt > la->la_expire)
+		{
+			renew = true;
 			la->la_preempt--;
 		}
 
-		if (flags & LLE_EXCLUSIVE)
-			LLE_WUNLOCK(la);
-		else
-			LLE_RUNLOCK(la);
+		LLE_WUNLOCK(la);
 
-		if (renew == 1) {
+		if (renew) {
 			const u_int8_t *enaddr =
 #if NCARP > 0
 			    (rt->rt_ifp->if_type == IFT_CARP) ?
 			    CLLADDR(rt->rt_ifp->if_sadl):
 #endif
 			    CLLADDR(ifp->if_sadl);
-			arprequest(ifp, &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
+			arprequest(ifp,
+			    &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 			    &satocsin(dst)->sin_addr, enaddr);
 		}
 
@@ -915,12 +919,6 @@ retry:
 	}
 
 	renew = (la->la_asked == 0 || la->la_expire != time_uptime);
-	if (renew && (flags & LLE_EXCLUSIVE) == 0) {
-		flags |= LLE_EXCLUSIVE;
-		LLE_RUNLOCK(la);
-		la = NULL;
-		goto retry;
-	}
 
 	/*
 	 * There is an arptab entry, but no ethernet address
@@ -946,10 +944,8 @@ retry:
 	} else
 		la->la_hold = m;
 	la->la_numheld++;
-	if (renew == 0 && (flags & LLE_EXCLUSIVE)) {
-		flags &= ~LLE_EXCLUSIVE;
+	if (!renew)
 		LLE_DOWNGRADE(la);
-	}
 
 	/*
 	 * Return EWOULDBLOCK if we have tried less than arp_maxtries. It
@@ -975,19 +971,15 @@ retry:
 		callout_reset(&la->la_timer, hz * arpt_down,
 		    arptimer, la);
 		la->la_asked++;
-		if (flags & LLE_EXCLUSIVE)
-			LLE_WUNLOCK(la);
-		else
-			LLE_RUNLOCK(la);
+		LLE_WUNLOCK(la);
+
 		arprequest(ifp, &satocsin(rt->rt_ifa->ifa_addr)->sin_addr,
 		    &satocsin(dst)->sin_addr, enaddr);
 		return error == 0;
 	}
 done:
-	if (flags & LLE_EXCLUSIVE)
-		LLE_WUNLOCK(la);
-	else
-		LLE_RUNLOCK(la);
+	LLE_RUNLOCK(la);
+
 	return error == 0;
 }
 
