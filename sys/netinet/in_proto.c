@@ -1,4 +1,4 @@
-/*	$NetBSD: in_proto.c,v 1.114 2015/08/31 08:05:20 ozaki-r Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.115 2015/10/13 21:28:35 rjs Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.114 2015/08/31 08:05:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.115 2015/10/13 21:28:35 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.114 2015/08/31 08:05:20 ozaki-r Exp $
 #include "opt_pim.h"
 #include "opt_gateway.h"
 #include "opt_dccp.h"
+#include "opt_sctp.h"
 #include "opt_compat_netbsd.h"
 #endif
 
@@ -118,6 +119,11 @@ __KERNEL_RCSID(0, "$NetBSD: in_proto.c,v 1.114 2015/08/31 08:05:20 ozaki-r Exp $
 #ifdef DCCP
 #include <netinet/dccp.h>
 #include <netinet/dccp_var.h>
+#endif
+
+#ifdef SCTP
+#include <netinet/sctp.h>
+#include <netinet/sctp_var.h>
 #endif
 
 /*
@@ -173,6 +179,14 @@ PR_WRAP_CTLOUTPUT(dccp_ctloutput)
 #define dccp_ctloutput	dccp_ctloutput_wrapper
 #endif
 
+#ifdef SCTP
+PR_WRAP_CTLINPUT(sctp_ctlinput)
+PR_WRAP_CTLOUTPUT(sctp_ctloutput)
+
+#define sctp_ctlinput	sctp_ctlinput_wrapper
+#define sctp_ctloutput	sctp_ctloutput_wrapper
+#endif
+
 #if defined(IPSEC)
 PR_WRAP_CTLINPUT(ah4_ctlinput)
 
@@ -224,6 +238,39 @@ const struct protosw inetsw[] = {
 	.pr_init = dccp_init,
 },
 #endif
+#ifdef SCTP
+{	.pr_type = SOCK_DGRAM,
+	.pr_domain = &inetdomain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_ADDR_OPT|PR_WANTRCVD,
+	.pr_input = sctp_input,
+	.pr_ctlinput = sctp_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_usrreqs = &sctp_usrreqs,
+	.pr_init = sctp_init,
+	.pr_drain = sctp_drain
+},
+{	.pr_type = SOCK_SEQPACKET,
+	.pr_domain = &inetdomain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_ADDR_OPT|PR_WANTRCVD,
+	.pr_input = sctp_input,
+	.pr_ctlinput = sctp_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_usrreqs = &sctp_usrreqs,
+	.pr_drain = sctp_drain
+},
+{	.pr_type = SOCK_STREAM,
+	.pr_domain = &inetdomain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_CONNREQUIRED|PR_ADDR_OPT|PR_WANTRCVD|PR_LISTEN,
+	.pr_input = sctp_input,
+	.pr_ctlinput = sctp_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_usrreqs = &sctp_usrreqs,
+	.pr_drain = sctp_drain
+},
+#endif /* SCTP */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inetdomain,
 	.pr_protocol = IPPROTO_RAW,

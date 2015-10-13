@@ -1,4 +1,4 @@
-#	$NetBSD: files.netinet,v 1.26 2015/02/10 19:11:52 rjs Exp $
+#	$NetBSD: files.netinet,v 1.27 2015/10/13 21:28:35 rjs Exp $
 
 defflag opt_tcp_debug.h		TCP_DEBUG
 defparam opt_tcp_debug.h	TCP_NDEBUG
@@ -19,6 +19,12 @@ defparam opt_tcp_congctl.h	TCP_CONGCTL_DEFAULT
 
 defflag opt_dccp.h		DCCP DCCP_TFRC DCCPSTATES DCCPBHASHSIZE
 				DCCP_DEBUG_ON ACKDEBUG
+
+defflag opt_sctp.h		SCTP SCTP_DEBUG SCTP_WITH_NO_CSUM
+				SCTP_LOCK_LOGGING SCTP_MBUF_LOGGING
+				SCTP_MBCNT_LOGGING SCTP_PACKET_LOGGING
+				SCTP_LTRACE_CHUNKS SCTP_LTRACE_ERRORS
+				SCTP_USE_PERCPU_STAT SCTP_MCORE_INPUT
 
 file	netinet/igmp.c		inet
 file	netinet/in.c		inet
@@ -53,3 +59,15 @@ file	netinet/dccp_cc_sw.c	inet & dccp | inet6 & dccp
 file	netinet/dccp_tcplike.c	inet & dccp | inet6 & dccp
 file	netinet/dccp_tfrc.c	inet & dccp | inet6 & dccp
 file	netinet/dccp_usrreq.c	inet & dccp | inet6 & dccp
+
+file	netinet/sctp_asconf.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_crc32.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_hashdriver.c	inet & sctp | inet6 & sctp
+file	netinet/sctp_indata.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_input.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_output.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_pcb.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_peeloff.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_timer.c		inet & sctp | inet6 & sctp
+file	netinet/sctp_usrreq.c		inet & sctp | inet6 & sctp
+file	netinet/sctputil.c		inet & sctp | inet6 & sctp
