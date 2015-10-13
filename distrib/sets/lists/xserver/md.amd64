@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.85 2015/10/13 04:33:22 mrg Exp $
+# $NetBSD: md.amd64,v 1.86 2015/10/13 10:33:17 pgoyette Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -630,6 +630,7 @@
 ./usr/X11R7/man/cat4/mga.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/mousedrv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/neomagic.0				-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/nouveau.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/nsc.0				-unknown-	obsolete
 ./usr/X11R7/man/cat4/nv.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/cat4/openchrome.0			-unknown-	.cat,xorg
@@ -676,6 +677,7 @@
 ./usr/X11R7/man/html4/mga.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/mousedrv.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/neomagic.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/nouveau.html			-unknown-	html,xorg
 ./usr/X11R7/man/html4/nsc.html				-unknown-	obsolete
 ./usr/X11R7/man/html4/nv.html				-unknown-	html,xorg
 ./usr/X11R7/man/html4/openchrome.html			-unknown-	html,xorg
