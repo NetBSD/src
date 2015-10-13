@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.353 2015/10/13 07:53:02 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.354 2015/10/13 08:00:15 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.353 2015/10/13 07:53:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.354 2015/10/13 08:00:15 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -219,35 +219,13 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #define	WM_NEXTRX(x)		(((x) + 1) & WM_NRXDESC_MASK)
 #define	WM_PREVRX(x)		(((x) - 1) & WM_NRXDESC_MASK)
 
-/*
- * Control structures are DMA'd to the i82542 chip.  We allocate them in
- * a single clump that maps to a single DMA segment to make several things
- * easier.
- */
-struct wm_control_data_82544 {
-	/*
-	 * The receive descriptors.
-	 */
-	wiseman_rxdesc_t wcd_rxdescs[WM_NRXDESC];
+typedef union txdescs {
+	wiseman_txdesc_t sctxu_txdescs[WM_NTXDESC_82544];
+	nq_txdesc_t      sctxu_nq_txdescs[WM_NTXDESC_82544];
+} txdescs_t;
 
-	/*
-	 * The transmit descriptors.  Put these at the end, because
-	 * we might use a smaller number of them.
-	 */
-	union {
-		wiseman_txdesc_t wcdu_txdescs[WM_NTXDESC_82544];
-		nq_txdesc_t      wcdu_nq_txdescs[WM_NTXDESC_82544];
-	} wdc_u;
-};
-
-struct wm_control_data_82542 {
-	wiseman_rxdesc_t wcd_rxdescs[WM_NRXDESC];
-	wiseman_txdesc_t wcd_txdescs[WM_NTXDESC_82542];
-};
-
-#define	WM_CDOFF(x)	offsetof(struct wm_control_data_82544, x)
-#define	WM_CDTXOFF(x)	WM_CDOFF(wdc_u.wcdu_txdescs[(x)])
-#define	WM_CDRXOFF(x)	WM_CDOFF(wcd_rxdescs[(x)])
+#define	WM_CDTXOFF(x)	(sizeof(wiseman_txdesc_t) * x)
+#define	WM_CDRXOFF(x)	(sizeof(wiseman_rxdesc_t) * x)
 
 /*
  * Software state for transmit jobs.
@@ -346,17 +324,24 @@ struct wm_softc {
 	struct wm_txsoft sc_txsoft[WM_TXQUEUELEN_MAX];
 	struct wm_rxsoft sc_rxsoft[WM_NRXDESC];
 
-	/* Control data structures. */
+	/* TX control data structures. */
 	int sc_ntxdesc;			/* must be a power of two */
-	struct wm_control_data_82544 *sc_control_data;
-	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
-	bus_dma_segment_t sc_cd_seg;	/* control data segment */
-	int sc_cd_rseg;			/* real number of control segment */
-	size_t sc_cd_size;		/* control data size */
-#define	sc_cddma	sc_cddmamap->dm_segs[0].ds_addr
-#define	sc_txdescs	sc_control_data->wdc_u.wcdu_txdescs
-#define	sc_nq_txdescs	sc_control_data->wdc_u.wcdu_nq_txdescs
-#define	sc_rxdescs	sc_control_data->wcd_rxdescs
+	txdescs_t *sc_txdescs_u;
+	bus_dmamap_t sc_txdesc_dmamap;	/* control data DMA map */
+	bus_dma_segment_t sc_txdesc_seg;/* control data segment */
+	int sc_txdesc_rseg;		/* real number of control segment */
+	size_t sc_txdesc_size;		/* control data size */
+#define	sc_txdesc_dma	sc_txdesc_dmamap->dm_segs[0].ds_addr
+#define	sc_txdescs	sc_txdescs_u->sctxu_txdescs
+#define	sc_nq_txdescs	sc_txdescs_u->sctxu_nq_txdescs
+
+	/* RX control data structures. */
+	wiseman_rxdesc_t *sc_rxdescs;
+	bus_dmamap_t sc_rxdesc_dmamap;	/* control data DMA map */
+	bus_dma_segment_t sc_rxdesc_seg;/* control data segment */
+	int sc_rxdesc_rseg;		/* real number of control segment */
+	size_t sc_rxdesc_size;		/* control data size */
+#define	sc_rxdesc_dma	sc_rxdesc_dmamap->dm_segs[0].ds_addr
 
 #ifdef WM_EVENT_COUNTERS
 	/* Event counters. */
@@ -493,8 +478,8 @@ do {									\
 #define ICH8_FLASH_WRITE16(sc, reg, data) \
 	bus_space_write_2((sc)->sc_flasht, (sc)->sc_flashh, (reg), (data))
 
-#define	WM_CDTXADDR(sc, x)	((sc)->sc_cddma + WM_CDTXOFF((x)))
-#define	WM_CDRXADDR(sc, x)	((sc)->sc_cddma + WM_CDRXOFF((x)))
+#define	WM_CDTXADDR(sc, x)	((sc)->sc_txdesc_dma + WM_CDTXOFF((x)))
+#define	WM_CDRXADDR(sc, x)	((sc)->sc_rxdesc_dma + WM_CDRXOFF((x)))
 
 #define	WM_CDTXADDR_LO(sc, x)	(WM_CDTXADDR((sc), (x)) & 0xffffffffU)
 #define	WM_CDTXADDR_HI(sc, x)						\
@@ -566,8 +551,10 @@ static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
 static void	wm_82547_txfifo_stall(void *);
 static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
 /* DMA related */
-static int	wm_alloc_descs(struct wm_softc *);
-static void	wm_free_descs(struct wm_softc *);
+static int	wm_alloc_tx_descs(struct wm_softc *);
+static void	wm_free_tx_descs(struct wm_softc *);
+static int	wm_alloc_rx_descs(struct wm_softc *);
+static void	wm_free_rx_descs(struct wm_softc *);
 static int	wm_alloc_tx_buffer(struct wm_softc *);
 static void	wm_free_tx_buffer(struct wm_softc *);
 static int	wm_alloc_rx_buffer(struct wm_softc *);
@@ -1346,7 +1333,7 @@ wm_cdtxsync(struct wm_softc *sc, int start, int num, int ops)
 
 	/* If it will wrap around, sync to the end of the ring. */
 	if ((start + num) > WM_NTXDESC(sc)) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_cddmamap,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_txdesc_dmamap,
 		    WM_CDTXOFF(start), sizeof(wiseman_txdesc_t) *
 		    (WM_NTXDESC(sc) - start), ops);
 		num -= (WM_NTXDESC(sc) - start);
@@ -1354,7 +1341,7 @@ wm_cdtxsync(struct wm_softc *sc, int start, int num, int ops)
 	}
 
 	/* Now sync whatever is left. */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cddmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_txdesc_dmamap,
 	    WM_CDTXOFF(start), sizeof(wiseman_txdesc_t) * num, ops);
 }
 
@@ -1362,7 +1349,7 @@ static inline void
 wm_cdrxsync(struct wm_softc *sc, int start, int ops)
 {
 
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_cddmamap,
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxdesc_dmamap,
 	    WM_CDRXOFF(start), sizeof(wiseman_rxdesc_t), ops);
 }
 
@@ -5096,7 +5083,7 @@ wm_82547_txfifo_bugchk(struct wm_softc *sc, struct mbuf *m0)
 }
 
 static int
-wm_alloc_descs(struct wm_softc *sc)
+wm_alloc_tx_descs(struct wm_softc *sc)
 {
 	int error;
 
@@ -5108,40 +5095,43 @@ wm_alloc_descs(struct wm_softc *sc)
 	 * memory.  So must Rx descriptors.  We simplify by allocating
 	 * both sets within the same 4G segment.
 	 */
-	WM_NTXDESC(sc) = sc->sc_type < WM_T_82544 ?
-	    WM_NTXDESC_82542 : WM_NTXDESC_82544;
-	sc->sc_cd_size = sc->sc_type < WM_T_82544 ?
-	    sizeof(struct wm_control_data_82542) :
-	    sizeof(struct wm_control_data_82544);
-	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_cd_size, PAGE_SIZE,
-		    (bus_size_t) 0x100000000ULL, &sc->sc_cd_seg, 1,
-		    &sc->sc_cd_rseg, 0)) != 0) {
+	if (sc->sc_type < WM_T_82544) {
+		WM_NTXDESC(sc) = WM_NTXDESC_82542;
+		sc->sc_txdesc_size = sizeof(wiseman_txdesc_t) * WM_NTXDESC(sc);
+	} else {
+		WM_NTXDESC(sc) = WM_NTXDESC_82544;
+		sc->sc_txdesc_size = sizeof(txdescs_t);
+	}
+
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_txdesc_size, PAGE_SIZE,
+		    (bus_size_t) 0x100000000ULL, &sc->sc_txdesc_seg, 1,
+		    &sc->sc_txdesc_rseg, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate control data, error = %d\n",
+		    "unable to allocate TX control data, error = %d\n",
 		    error);
 		goto fail_0;
 	}
 
-	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cd_seg,
-		    sc->sc_cd_rseg, sc->sc_cd_size,
-		    (void **)&sc->sc_control_data, BUS_DMA_COHERENT)) != 0) {
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_txdesc_seg,
+		    sc->sc_txdesc_rseg, sc->sc_txdesc_size,
+		    (void **)&sc->sc_txdescs_u, BUS_DMA_COHERENT)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to map control data, error = %d\n", error);
+		    "unable to map TX control data, error = %d\n", error);
 		goto fail_1;
 	}
 
-	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_cd_size, 1,
-		    sc->sc_cd_size, 0, 0, &sc->sc_cddmamap)) != 0) {
+	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_txdesc_size, 1,
+		    sc->sc_txdesc_size, 0, 0, &sc->sc_txdesc_dmamap)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create control data DMA map, error = %d\n",
+		    "unable to create TX control data DMA map, error = %d\n",
 		    error);
 		goto fail_2;
 	}
 
-	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
-		    sc->sc_control_data, sc->sc_cd_size, NULL, 0)) != 0) {
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_txdesc_dmamap,
+		    sc->sc_txdescs_u, sc->sc_txdesc_size, NULL, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to load control data DMA map, error = %d\n",
+		    "unable to load TX control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
 	}
@@ -5149,26 +5139,98 @@ wm_alloc_descs(struct wm_softc *sc)
 	return 0;
 
  fail_3:
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_txdesc_dmamap);
  fail_2:
-	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
-	    sc->sc_cd_size);
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_txdescs_u,
+	    sc->sc_txdesc_size);
  fail_1:
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_txdesc_seg, sc->sc_txdesc_rseg);
  fail_0:
 	return error;
 }
 
 static void
-wm_free_descs(struct wm_softc *sc)
+wm_free_tx_descs(struct wm_softc *sc)
 {
 
-	bus_dmamap_unload(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamap_destroy(sc->sc_dmat, sc->sc_cddmamap);
-	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_control_data,
-	    sc->sc_cd_size);
-	bus_dmamem_free(sc->sc_dmat, &sc->sc_cd_seg, sc->sc_cd_rseg);
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_txdesc_dmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_txdesc_dmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_txdescs_u,
+	    sc->sc_txdesc_size);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_txdesc_seg, sc->sc_txdesc_rseg);
 }
+
+static int
+wm_alloc_rx_descs(struct wm_softc *sc)
+{
+	int error;
+
+	/*
+	 * Allocate the control data structures, and create and load the
+	 * DMA map for it.
+	 *
+	 * NOTE: All Tx descriptors must be in the same 4G segment of
+	 * memory.  So must Rx descriptors.  We simplify by allocating
+	 * both sets within the same 4G segment.
+	 */
+	sc->sc_rxdesc_size = sizeof(wiseman_rxdesc_t) * WM_NRXDESC;
+	if ((error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_rxdesc_size, PAGE_SIZE,
+		    (bus_size_t) 0x100000000ULL, &sc->sc_rxdesc_seg, 1,
+		    &sc->sc_rxdesc_rseg, 0)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to allocate RX control data, error = %d\n",
+		    error);
+		goto fail_0;
+	}
+
+	if ((error = bus_dmamem_map(sc->sc_dmat, &sc->sc_rxdesc_seg,
+		    sc->sc_rxdesc_rseg, sc->sc_rxdesc_size,
+		    (void **)&sc->sc_rxdescs, BUS_DMA_COHERENT)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to map RX control data, error = %d\n", error);
+		goto fail_1;
+	}
+
+	if ((error = bus_dmamap_create(sc->sc_dmat, sc->sc_rxdesc_size, 1,
+		    sc->sc_rxdesc_size, 0, 0, &sc->sc_rxdesc_dmamap)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create RX control data DMA map, error = %d\n",
+		    error);
+		goto fail_2;
+	}
+
+	if ((error = bus_dmamap_load(sc->sc_dmat, sc->sc_rxdesc_dmamap,
+		    sc->sc_rxdescs, sc->sc_rxdesc_size, NULL, 0)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to load RX control data DMA map, error = %d\n",
+		    error);
+		goto fail_3;
+	}
+
+	return 0;
+
+ fail_3:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxdesc_dmamap);
+ fail_2:
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_rxdescs,
+	    sc->sc_rxdesc_size);
+ fail_1:
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_rxdesc_seg, sc->sc_rxdesc_rseg);
+ fail_0:
+	return error;
+}
+
+static void
+wm_free_rx_descs(struct wm_softc *sc)
+{
+
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_rxdesc_dmamap);
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_rxdesc_dmamap);
+	bus_dmamem_unmap(sc->sc_dmat, (void *)sc->sc_rxdescs,
+	    sc->sc_rxdesc_size);
+	bus_dmamem_free(sc->sc_dmat, &sc->sc_rxdesc_seg, sc->sc_rxdesc_rseg);
+}
+
 
 static int
 wm_alloc_tx_buffer(struct wm_softc *sc)
@@ -5263,7 +5325,10 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 {
 	int error;
 
-	error = wm_alloc_descs(sc);
+	/*
+	 * For transmission
+	 */
+	error = wm_alloc_tx_descs(sc);
 	if (error)
 		goto fail_0;
 
@@ -5271,16 +5336,25 @@ wm_alloc_txrx_queues(struct wm_softc *sc)
 	if (error)
 		goto fail_1;
 
-	error = wm_alloc_rx_buffer(sc);
+	/*
+	 * For recieve
+	 */
+	error = wm_alloc_rx_descs(sc);
 	if (error)
 		goto fail_2;
 
+	error = wm_alloc_rx_buffer(sc);
+	if (error)
+		goto fail_3;
+
 	return 0;
 
+fail_3:
+	wm_free_rx_descs(sc);
 fail_2:
 	wm_free_tx_buffer(sc);
 fail_1:
-	wm_free_descs(sc);
+	wm_free_tx_descs(sc);
 fail_0:
 	return error;
 }
@@ -5294,8 +5368,9 @@ wm_free_txrx_queues(struct wm_softc *sc)
 {
 
 	wm_free_rx_buffer(sc);
+	wm_free_rx_descs(sc);
 	wm_free_tx_buffer(sc);
-	wm_free_descs(sc);
+	wm_free_tx_descs(sc);
 }
 
 /*
