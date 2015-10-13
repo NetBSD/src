@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.94 2015/09/30 06:25:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.95 2015/10/13 12:33:07 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.94 2015/09/30 06:25:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.95 2015/10/13 12:33:07 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -235,8 +235,8 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr,
 			    (char *)edst);
-		} else if (!arpresolve(ifp, rt, m, dst, edst))
-			return (0);	/* if not yet resolved */
+		} else if ((error = arpresolve(ifp, rt, m, dst, edst)) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
