@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.84 2015/09/19 23:00:44 wiz Exp $
+# $NetBSD: md.amd64,v 1.85 2015/10/13 04:33:22 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -439,6 +439,8 @@
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/neomagic_drv.so.1	-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nouveau_drv.so		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/nouveau_drv.so.1	-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nsc_drv.so.2		-unknown-	obsolete
 ./usr/X11R7/lib/modules/drivers/nv_drv.so		-unknown-	xorg
@@ -720,6 +722,7 @@
 ./usr/X11R7/man/man4/mga.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/mousedrv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/neomagic.4				-unknown-	.man,xorg
+./usr/X11R7/man/man4/nouveau.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/nsc.4				-unknown-	obsolete
 ./usr/X11R7/man/man4/nv.4				-unknown-	.man,xorg
 ./usr/X11R7/man/man4/openchrome.4			-unknown-	.man,xorg
