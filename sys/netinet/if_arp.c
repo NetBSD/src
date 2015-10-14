@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.188 2015/10/14 11:17:57 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.189 2015/10/14 11:22:55 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.188 2015/10/14 11:17:57 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.189 2015/10/14 11:22:55 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -840,8 +840,8 @@ notfound:
 	if (ifp->if_flags & _IFF_NOARP) {
 		if (la != NULL)
 			LLE_RUNLOCK(la);
-		m_freem(m);
-		return ENOTSUP;
+		error = ENOTSUP;
+		goto bad;
 	}
 #undef _IFF_NOARP
 	if (la == NULL) {
@@ -859,13 +859,13 @@ notfound:
 		IF_AFDATA_RUNLOCK(ifp);
 	}
 
+	error = EINVAL;
 	if (la == NULL) {
 		log(LOG_DEBUG,
 		    "%s: failed to %s llentry for %s on %s\n",
 		    __func__, create_lookup, inet_ntoa(satocsin(dst)->sin_addr),
 		    ifp->if_xname);
-		m_freem(m);
-		return EINVAL;
+		goto bad;
 	}
 
 	/* Just in case */
@@ -875,8 +875,7 @@ notfound:
 		    "%s: valid llentry has no rtentry for %s on %s\n",
 		    __func__, inet_ntoa(satocsin(dst)->sin_addr),
 		    ifp->if_xname);
-		m_freem(m);
-		return EINVAL;
+		goto bad;
 	}
 	rt = la->la_rt;
 
@@ -917,11 +916,11 @@ notfound:
 	}
 
 	if (la->la_flags & LLE_STATIC) {   /* should not happen! */
+		LLE_RUNLOCK(la);
 		log(LOG_DEBUG, "arpresolve: ouch, empty static llinfo for %s\n",
 		    inet_ntoa(satocsin(dst)->sin_addr));
-		m_freem(m);
 		error = EINVAL;
-		goto done;
+		goto bad;
 	}
 
 	renew = (la->la_asked == 0 || la->la_expire != time_uptime);
@@ -983,9 +982,16 @@ notfound:
 		    &satocsin(dst)->sin_addr, enaddr);
 		return error;
 	}
-done:
-	LLE_RUNLOCK(la);
 
+	LLE_RUNLOCK(la);
+	return error;
+
+bad:
+	m_freem(m);
+	if (rt != NULL && (rt->rt_flags & RTF_CLONED) != 0) {
+		rtrequest(RTM_DELETE, rt_getkey(rt),
+		    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
+	}
 	return error;
 }
 
