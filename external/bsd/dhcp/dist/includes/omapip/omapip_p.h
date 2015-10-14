@@ -1,4 +1,4 @@
-/*	$NetBSD: omapip_p.h,v 1.1.1.4 2014/07/12 11:57:57 spz Exp $	*/
+/*	$NetBSD: omapip_p.h,v 1.2 2015/10/14 15:58:46 christos Exp $	*/
 /* omapip_p.h
 
    Private master include file for the OMAPI library. */
@@ -283,14 +283,10 @@ extern int log_priority;
 extern int log_perror;
 extern void (*log_cleanup) (void);
 
-void log_fatal (const char *, ...)
-	__attribute__((__format__(__printf__,1,2))) ISC_DHCP_NORETURN;
-int log_error (const char *, ...)
-	__attribute__((__format__(__printf__,1,2)));
-int log_info (const char *, ...)
-	__attribute__((__format__(__printf__,1,2)));
-int log_debug (const char *, ...)
-	__attribute__((__format__(__printf__,1,2)));
+void log_fatal (const char *, ...) __sysloglike(1, 2) ISC_DHCP_NORETURN;
+int log_error (const char *, ...) __sysloglike(1, 2);
+int log_info (const char *, ...) __sysloglike(1, 2);
+int log_debug (const char *, ...) __sysloglike(1, 2);
 void do_percentm (char *obuf, const char *ibuf);
 
 isc_result_t uerr2isc (int);
