@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.187 2015/10/13 12:33:07 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.188 2015/10/14 11:17:57 roy Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.187 2015/10/13 12:33:07 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.188 2015/10/14 11:17:57 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -315,6 +315,7 @@ arptimer(void *arg)
 {
 	struct llentry *lle = arg;
 	struct ifnet *ifp;
+	struct rtentry *rt;
 
 	mutex_enter(softnet_lock);
 
@@ -345,16 +346,17 @@ arptimer(void *arg)
 		goto out;
 	}
 	ifp = lle->lle_tbl->llt_ifp;
+	rt = lle->la_rt;
+	lle->la_rt = NULL;
 
 	callout_stop(&lle->la_timer);
 
 	/* XXX: LOR avoidance. We still have ref on lle. */
 	LLE_WUNLOCK(lle);
 
-	if (lle->la_rt != NULL) {
+	if (rt != NULL) {
 		/* We have to call arptfree w/o IF_AFDATA_LOCK */
-		arptfree(lle->la_rt);
-		lle->la_rt = NULL;
+		arptfree(rt);
 	}
 
 	IF_AFDATA_LOCK(ifp);
