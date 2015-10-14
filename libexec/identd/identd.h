@@ -1,4 +1,4 @@
-/* $NetBSD: identd.h,v 1.9 2012/03/15 02:02:21 joerg Exp $ */
+/* $NetBSD: identd.h,v 1.10 2015/10/14 15:53:50 christos Exp $ */
 
 /*
  * identd.h - TCP/IP Ident protocol server.
@@ -14,7 +14,7 @@
 #define satosin6(sa)	((struct sockaddr_in6 *)(sa))
 #define in_hosteq(s,t)	((s).s_addr == (t).s_addr)
 
-void maybe_syslog(int, const char *, ...) __printflike(2, 3);
+void maybe_syslog(int, const char *, ...) __sysloglike(2, 3);
 
 #ifdef WITH_PF
 int pf_natlookup(struct sockaddr_storage *, struct sockaddr *, int *);
