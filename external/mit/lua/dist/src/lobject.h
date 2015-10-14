@@ -1,4 +1,4 @@
-/*	$NetBSD: lobject.h,v 1.4 2015/10/08 13:21:00 mbalmer Exp $	*/
+/*	$NetBSD: lobject.h,v 1.5 2015/10/14 01:49:46 christos Exp $	*/
 
 /*
 ** Id: lobject.h,v 2.111 2015/06/09 14:21:42 roberto Exp 
@@ -343,7 +343,7 @@ typedef union UTString {
 ** Get the actual string (array of bytes) from a 'TString'.
 ** (Access to 'extra' ensures that value is really a 'TString'.)
 */
-#define getaddrstr(ts)	(cast(char *, (ts)) + sizeof(UTString))
+#define getaddrstr(ts)	(/*coverity[overrun]*/cast(char *, (ts)) + sizeof(UTString))
 #define getstr(ts)  \
   check_exp(sizeof((ts)->extra), cast(const char*, getaddrstr(ts)))
 
