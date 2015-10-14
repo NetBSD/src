@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.36 2014/07/20 20:55:17 dholland Exp $	*/
+/*	$NetBSD: syslog.h,v 1.37 2015/10/14 15:52:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -201,27 +201,27 @@ __BEGIN_DECLS
 void	closelog(void);
 void	openlog(const char *, int, int);
 int	setlogmask(int);
-void	syslog(int, const char *, ...) __printflike(2, 3);
+void	syslog(int, const char *, ...) __sysloglike(2, 3);
 #if defined(_NETBSD_SOURCE)
-void	vsyslog(int, const char *, __va_list) __printflike(2, 0);
+void	vsyslog(int, const char *, __va_list) __sysloglike(2, 0);
 #ifndef __LIBC12_SOURCE__
 void	closelog_r(struct syslog_data *) __RENAME(__closelog_r60);
 void	openlog_r(const char *, int, int, struct syslog_data *)
     __RENAME(__openlog_r60);
 int	setlogmask_r(int, struct syslog_data *) __RENAME(__setlogmask_r60);
 void	syslog_r(int, struct syslog_data *, const char *, ...)
-    __RENAME(__syslog_r60) __printflike(3, 4);
+    __RENAME(__syslog_r60) __sysloglike(3, 4);
 void	vsyslog_r(int, struct syslog_data *, const char *, __va_list)
-    __RENAME(__vsyslog_r60) __printflike(3, 0);
+    __RENAME(__vsyslog_r60) __sysloglike(3, 0);
 void	syslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, ...) __RENAME(__syslogp_r60) __printflike(5, 6);
+    const char *, ...) __RENAME(__syslogp_r60) __sysloglike(5, 6);
 void	vsyslogp_r(int, struct syslog_data *, const char *, const char *,
-    const char *, __va_list) __RENAME(__vsyslogp_r60) __printflike(5, 0);
+    const char *, __va_list) __RENAME(__vsyslogp_r60) __sysloglike(5, 0);
 #endif
 void	syslogp(int, const char *, const char *, const char *, ...)
-    __printflike(4, 5);
+    __sysloglike(4, 5);
 void	vsyslogp(int, const char *, const char *, const char *, __va_list)
-    __printflike(4, 0);
+    __sysloglike(4, 0);
 #endif
 __END_DECLS
 
