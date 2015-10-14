@@ -23,6 +23,7 @@ along with GCC; see the file COPYING3.  If not see
     {						\
       builtin_define ("__NetBSD__");		\
       builtin_define ("__unix__");		\
+      builtin_define ("__syslog_attribute__");	\
       builtin_assert ("system=bsd");		\
       builtin_assert ("system=unix");		\
       builtin_assert ("system=NetBSD");		\
