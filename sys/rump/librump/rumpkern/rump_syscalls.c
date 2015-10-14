@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.116 2015/10/10 03:30:17 pgoyette Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.117 2015/10/14 01:33:32 christos Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.116 2015/10/10 03:30:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.117 2015/10/14 01:33:32 christos Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -392,7 +392,7 @@ rump___sysimpl_getpid(void )
 	register_t retval[2];
 	pid_t rv = -1;
 
-	rsys_syscall(SYS_getpid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getpid, NULL, 0, retval);
 	if (sizeof(pid_t) > sizeof(register_t))
 		rv = *(pid_t *)retval;
 	else
@@ -469,7 +469,7 @@ rump___sysimpl_getuid(void )
 	register_t retval[2];
 	uid_t rv = -1;
 
-	rsys_syscall(SYS_getuid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getuid, NULL, 0, retval);
 	if (sizeof(uid_t) > sizeof(register_t))
 		rv = *(uid_t *)retval;
 	else
@@ -489,7 +489,7 @@ rump___sysimpl_geteuid(void )
 	register_t retval[2];
 	uid_t rv = -1;
 
-	rsys_syscall(SYS_geteuid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_geteuid, NULL, 0, retval);
 	if (sizeof(uid_t) > sizeof(register_t))
 		rv = *(uid_t *)retval;
 	else
@@ -778,7 +778,7 @@ rump___sysimpl_sync(void )
 {
 	register_t retval[2];
 
-	rsys_syscall(SYS_sync, NULL, 0, retval);
+	(void)rsys_syscall(SYS_sync, NULL, 0, retval);
 }
 #ifdef RUMP_KERNEL_IS_LIBC
 __weak_alias(sync,rump___sysimpl_sync);
@@ -793,7 +793,7 @@ rump___sysimpl_getppid(void )
 	register_t retval[2];
 	pid_t rv = -1;
 
-	rsys_syscall(SYS_getppid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getppid, NULL, 0, retval);
 	if (sizeof(pid_t) > sizeof(register_t))
 		rv = *(pid_t *)retval;
 	else
@@ -841,7 +841,7 @@ rump___sysimpl_getegid(void )
 	register_t retval[2];
 	gid_t rv = -1;
 
-	rsys_syscall(SYS_getegid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getegid, NULL, 0, retval);
 	if (sizeof(gid_t) > sizeof(register_t))
 		rv = *(gid_t *)retval;
 	else
@@ -892,7 +892,7 @@ rump___sysimpl_getgid(void )
 	register_t retval[2];
 	gid_t rv = -1;
 
-	rsys_syscall(SYS_getgid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getgid, NULL, 0, retval);
 	if (sizeof(gid_t) > sizeof(register_t))
 		rv = *(gid_t *)retval;
 	else
@@ -3379,7 +3379,7 @@ rump___sysimpl_issetugid(void )
 	register_t retval[2];
 	int rv = -1;
 
-	rsys_syscall(SYS_issetugid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_issetugid, NULL, 0, retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
@@ -4977,7 +4977,7 @@ rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 	SPARG(&callarg, len) = len;
 	SPARG(&callarg, advice) = advice;
 
-	rsys_syscall(SYS___posix_fadvise50, &callarg, sizeof(callarg), retval);
+	(void)rsys_syscall(SYS___posix_fadvise50, &callarg, sizeof(callarg), retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
@@ -6417,7 +6417,8 @@ rump___sysimpl_clock_nanosleep(clockid_t clock_id, int flags, const struct times
 	SPARG(&callarg, rqtp) = rqtp;
 	SPARG(&callarg, rmtp) = rmtp;
 
-	rsys_syscall(SYS_clock_nanosleep, &callarg, sizeof(callarg), retval);
+	(void)rsys_syscall(SYS_clock_nanosleep, &callarg, sizeof(callarg),
+	    retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
@@ -6444,7 +6445,7 @@ rump___sysimpl_posix_fallocate(int fd, off_t pos, off_t len)
 	SPARG(&callarg, pos) = pos;
 	SPARG(&callarg, len) = len;
 
-	rsys_syscall(SYS_posix_fallocate, &callarg, sizeof(callarg), retval);
+	(void)rsys_syscall(SYS_posix_fallocate, &callarg, sizeof(callarg), retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
