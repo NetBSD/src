@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.10 2015/07/09 10:15:34 roy Exp $ */
+/* $NetBSD: common.h,v 1.11 2015/10/14 15:58:08 christos Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -121,8 +121,11 @@
 # ifndef __packed
 #  define __packed   __attribute__((__packed__))
 # endif
-# ifndef __printflike
-#  define __printflike(a, b) __attribute__((format(printf, a, b)))
+# ifndef __syslog_attribute__
+#  define __syslog__ __printf__
+# endif
+# ifndef __sysloglike
+#  define __sysloglike(a, b) __attribute__((__format__(__syslog__, a, b)))
 # endif
 # ifndef __unused
 #  define __unused   __attribute__((__unused__))
@@ -134,8 +137,8 @@
 # ifndef __packed
 #  define __packed
 # endif
-# ifndef __printflike
-#  define __printflike
+# ifndef __sysloglike
+#  define __sysloglike
 # endif
 # ifndef __unused
 #  define __unused
@@ -174,7 +177,7 @@ int get_monotonic(struct timespec *);
 #if USE_LOGFILE
 void logger_open(struct dhcpcd_ctx *);
 #define logger_mask(ctx, lvl) setlogmask((lvl))
-__printflike(3, 4) void logger(struct dhcpcd_ctx *, int, const char *, ...);
+__sysloglike(3, 4) void logger(struct dhcpcd_ctx *, int, const char *, ...);
 void logger_close(struct dhcpcd_ctx *);
 #else
 #define logger_open(ctx) openlog(PACKAGE, LOG_PERROR | LOG_PID, LOG_DAEMON)
