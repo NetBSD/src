@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_efuse.c,v 1.2 2015/10/08 18:20:31 macallan Exp $ */
+/*	$NetBSD: ingenic_efuse.c,v 1.3 2015/10/14 15:44:57 macallan Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -26,8 +26,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * a driver for the 'EFUSE Slave Interface' found on JZ4780
+ * more or less 8kBit of non-volatile storage containing things like MAC
+ * address, various encryption keys, boot code, serial numbers and parameters.
+ * Using it only to get the MAC address for now.
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_efuse.c,v 1.2 2015/10/08 18:20:31 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_efuse.c,v 1.3 2015/10/14 15:44:57 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,6 +121,7 @@ ingenic_efuse_read(struct efuse_softc *sc, int addr, int len, uint8_t *buf)
 	uint32_t abuf;
 	int i;
 
+	/* default, just in case */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, JZ_EFUCFG, 0x00040000);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, JZ_EFUCTRL,
 		JZ_EFUSE_READ |
