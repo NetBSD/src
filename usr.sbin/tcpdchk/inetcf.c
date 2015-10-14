@@ -1,4 +1,4 @@
-/*	$NetBSD: inetcf.c,v 1.9 2011/08/31 16:25:00 plunky Exp $	*/
+/*	$NetBSD: inetcf.c,v 1.10 2015/10/14 15:50:48 christos Exp $	*/
 
  /*
   * Routines to parse an inetd.conf or tlid.conf file. This would be a great
@@ -12,7 +12,7 @@
 #if 0
 static char sccsid[] = "@(#) inetcf.c 1.7 97/02/12 02:13:23";
 #else
-__RCSID("$NetBSD: inetcf.c,v 1.9 2011/08/31 16:25:00 plunky Exp $");
+__RCSID("$NetBSD: inetcf.c,v 1.10 2015/10/14 15:50:48 christos Exp $");
 #endif
 #endif
 
@@ -102,7 +102,7 @@ char   *conf;
      */
     if (conf != 0) {
 	if ((fp = fopen(conf, "r")) == 0) {
-	    fprintf(stderr, percent_m(buf, "open %s: %m\n"), conf);
+	    fprintf(stderr, "open %s: %s\n", conf, strerror(errno));
 	    exit(1);
 	}
     } else {
