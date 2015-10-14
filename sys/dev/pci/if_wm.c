@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.370 2015/10/13 21:28:41 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.371 2015/10/14 07:16:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -73,17 +73,17 @@
  * TODO (in order of importance):
  *
  *	- Check XXX'ed comments
- *	- EEE (Energy Efficiency Ethernet)
- *	- Multi queue
- *	- Image Unique ID
  *	- LPLU other than PCH*
+ *	- TX Multi queue
+ *	- EEE (Energy Efficiency Ethernet)
  *	- Virtual Function
  *	- Set LED correctly (based on contents in EEPROM)
  *	- Rework how parameters are loaded from the EEPROM.
+ *	- Image Unique ID
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.370 2015/10/13 21:28:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.371 2015/10/14 07:16:04 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -566,12 +566,15 @@ static void	wm_reset(struct wm_softc *);
 static int	wm_add_rxbuf(struct wm_rxqueue *, int);
 static void	wm_rxdrain(struct wm_rxqueue *);
 static void	wm_init_rss(struct wm_softc *);
+#ifdef WM_MSI_MSIX
+static void	wm_adjust_qnum(struct wm_softc *, int);
+static int	wm_setup_legacy(struct wm_softc *);
+static int	wm_setup_msix(struct wm_softc *);
+#endif
 static int	wm_init(struct ifnet *);
 static int	wm_init_locked(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
 static void	wm_stop_locked(struct ifnet *, int);
-static int	wm_tx_offload(struct wm_softc *, struct wm_txsoft *,
-    uint32_t *, uint8_t *);
 static void	wm_dump_mbuf_chain(struct wm_softc *, struct mbuf *);
 static void	wm_82547_txfifo_stall(void *);
 static int	wm_82547_txfifo_bugchk(struct wm_softc *, struct mbuf *);
@@ -595,6 +598,8 @@ static int	wm_alloc_txrx_queues(struct wm_softc *);
 static void	wm_free_txrx_queues(struct wm_softc *);
 static int	wm_init_txrx_queues(struct wm_softc *);
 /* Start */
+static int	wm_tx_offload(struct wm_softc *, struct wm_txsoft *,
+    uint32_t *, uint8_t *);
 static void	wm_start(struct ifnet *);
 static void	wm_start_locked(struct ifnet *);
 static int	wm_nq_tx_offload(struct wm_softc *, struct wm_txsoft *,
@@ -610,9 +615,6 @@ static void	wm_linkintr_serdes(struct wm_softc *, uint32_t);
 static void	wm_linkintr(struct wm_softc *, uint32_t);
 static int	wm_intr_legacy(void *);
 #ifdef WM_MSI_MSIX
-static void	wm_adjust_qnum(struct wm_softc *, int);
-static int	wm_setup_legacy(struct wm_softc *);
-static int	wm_setup_msix(struct wm_softc *);
 static int	wm_txintr_msix(void *);
 static int	wm_rxintr_msix(void *);
 static int	wm_linkintr_msix(void *);
@@ -5052,202 +5054,6 @@ wm_stop_locked(struct ifnet *ifp, int disable)
 #endif
 }
 
-/*
- * wm_tx_offload:
- *
- *	Set up TCP/IP checksumming parameters for the
- *	specified packet.
- */
-static int
-wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
-    uint8_t *fieldsp)
-{
-	struct wm_txqueue *txq = &sc->sc_txq[0];
-	struct mbuf *m0 = txs->txs_mbuf;
-	struct livengood_tcpip_ctxdesc *t;
-	uint32_t ipcs, tucs, cmd, cmdlen, seg;
-	uint32_t ipcse;
-	struct ether_header *eh;
-	int offset, iphl;
-	uint8_t fields;
-
-	/*
-	 * XXX It would be nice if the mbuf pkthdr had offset
-	 * fields for the protocol headers.
-	 */
-
-	eh = mtod(m0, struct ether_header *);
-	switch (htons(eh->ether_type)) {
-	case ETHERTYPE_IP:
-	case ETHERTYPE_IPV6:
-		offset = ETHER_HDR_LEN;
-		break;
-
-	case ETHERTYPE_VLAN:
-		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
-		break;
-
-	default:
-		/*
-		 * Don't support this protocol or encapsulation.
-		 */
-		*fieldsp = 0;
-		*cmdp = 0;
-		return 0;
-	}
-
-	if ((m0->m_pkthdr.csum_flags &
-	    (M_CSUM_TSOv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) != 0) {
-		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
-	} else {
-		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
-	}
-	ipcse = offset + iphl - 1;
-
-	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
-	cmdlen = WTX_CMD_DEXT | WTX_DTYP_C | WTX_CMD_IDE;
-	seg = 0;
-	fields = 0;
-
-	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
-		int hlen = offset + iphl;
-		bool v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
-
-		if (__predict_false(m0->m_len <
-				    (hlen + sizeof(struct tcphdr)))) {
-			/*
-			 * TCP/IP headers are not in the first mbuf; we need
-			 * to do this the slow and painful way.  Let's just
-			 * hope this doesn't happen very often.
-			 */
-			struct tcphdr th;
-
-			WM_EVCNT_INCR(&sc->sc_ev_txtsopain);
-
-			m_copydata(m0, hlen, sizeof(th), &th);
-			if (v4) {
-				struct ip ip;
-
-				m_copydata(m0, offset, sizeof(ip), &ip);
-				ip.ip_len = 0;
-				m_copyback(m0,
-				    offset + offsetof(struct ip, ip_len),
-				    sizeof(ip.ip_len), &ip.ip_len);
-				th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
-				    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
-			} else {
-				struct ip6_hdr ip6;
-
-				m_copydata(m0, offset, sizeof(ip6), &ip6);
-				ip6.ip6_plen = 0;
-				m_copyback(m0,
-				    offset + offsetof(struct ip6_hdr, ip6_plen),
-				    sizeof(ip6.ip6_plen), &ip6.ip6_plen);
-				th.th_sum = in6_cksum_phdr(&ip6.ip6_src,
-				    &ip6.ip6_dst, 0, htonl(IPPROTO_TCP));
-			}
-			m_copyback(m0, hlen + offsetof(struct tcphdr, th_sum),
-			    sizeof(th.th_sum), &th.th_sum);
-
-			hlen += th.th_off << 2;
-		} else {
-			/*
-			 * TCP/IP headers are in the first mbuf; we can do
-			 * this the easy way.
-			 */
-			struct tcphdr *th;
-
-			if (v4) {
-				struct ip *ip =
-				    (void *)(mtod(m0, char *) + offset);
-				th = (void *)(mtod(m0, char *) + hlen);
-
-				ip->ip_len = 0;
-				th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
-				    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
-			} else {
-				struct ip6_hdr *ip6 =
-				    (void *)(mtod(m0, char *) + offset);
-				th = (void *)(mtod(m0, char *) + hlen);
-
-				ip6->ip6_plen = 0;
-				th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
-				    &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
-			}
-			hlen += th->th_off << 2;
-		}
-
-		if (v4) {
-			WM_EVCNT_INCR(&sc->sc_ev_txtso);
-			cmdlen |= WTX_TCPIP_CMD_IP;
-		} else {
-			WM_EVCNT_INCR(&sc->sc_ev_txtso6);
-			ipcse = 0;
-		}
-		cmd |= WTX_TCPIP_CMD_TSE;
-		cmdlen |= WTX_TCPIP_CMD_TSE |
-		    WTX_TCPIP_CMD_TCP | (m0->m_pkthdr.len - hlen);
-		seg = WTX_TCPIP_SEG_HDRLEN(hlen) |
-		    WTX_TCPIP_SEG_MSS(m0->m_pkthdr.segsz);
-	}
-
-	/*
-	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
-	 * offload feature, if we load the context descriptor, we
-	 * MUST provide valid values for IPCSS and TUCSS fields.
-	 */
-
-	ipcs = WTX_TCPIP_IPCSS(offset) |
-	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
-	    WTX_TCPIP_IPCSE(ipcse);
-	if (m0->m_pkthdr.csum_flags & (M_CSUM_IPv4|M_CSUM_TSOv4)) {
-		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
-		fields |= WTX_IXSM;
-	}
-
-	offset += iphl;
-
-	if (m0->m_pkthdr.csum_flags &
-	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TSOv4)) {
-		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
-		fields |= WTX_TXSM;
-		tucs = WTX_TCPIP_TUCSS(offset) |
-		    WTX_TCPIP_TUCSO(offset +
-		    M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
-		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
-	} else if ((m0->m_pkthdr.csum_flags &
-	    (M_CSUM_TCPv6|M_CSUM_UDPv6|M_CSUM_TSOv6)) != 0) {
-		WM_EVCNT_INCR(&sc->sc_ev_txtusum6);
-		fields |= WTX_TXSM;
-		tucs = WTX_TCPIP_TUCSS(offset) |
-		    WTX_TCPIP_TUCSO(offset +
-		    M_CSUM_DATA_IPv6_OFFSET(m0->m_pkthdr.csum_data)) |
-		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
-	} else {
-		/* Just initialize it to a valid TCP context. */
-		tucs = WTX_TCPIP_TUCSS(offset) |
-		    WTX_TCPIP_TUCSO(offset + offsetof(struct tcphdr, th_sum)) |
-		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
-	}
-
-	/* Fill in the context descriptor. */
-	t = (struct livengood_tcpip_ctxdesc *)
-	    &txq->txq_descs[txq->txq_next];
-	t->tcpip_ipcs = htole32(ipcs);
-	t->tcpip_tucs = htole32(tucs);
-	t->tcpip_cmdlen = htole32(cmdlen);
-	t->tcpip_seg = htole32(seg);
-	wm_cdtxsync(txq, txq->txq_next, 1, BUS_DMASYNC_PREWRITE);
-
-	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
-	txs->txs_ndesc++;
-
-	*cmdp = cmd;
-	*fieldsp = fields;
-
-	return 0;
-}
-
 static void
 wm_dump_mbuf_chain(struct wm_softc *sc, struct mbuf *m0)
 {
@@ -5968,6 +5774,202 @@ wm_init_txrx_queues(struct wm_softc *sc)
 	}
 
 	return error;
+}
+
+/*
+ * wm_tx_offload:
+ *
+ *	Set up TCP/IP checksumming parameters for the
+ *	specified packet.
+ */
+static int
+wm_tx_offload(struct wm_softc *sc, struct wm_txsoft *txs, uint32_t *cmdp,
+    uint8_t *fieldsp)
+{
+	struct wm_txqueue *txq = &sc->sc_txq[0];
+	struct mbuf *m0 = txs->txs_mbuf;
+	struct livengood_tcpip_ctxdesc *t;
+	uint32_t ipcs, tucs, cmd, cmdlen, seg;
+	uint32_t ipcse;
+	struct ether_header *eh;
+	int offset, iphl;
+	uint8_t fields;
+
+	/*
+	 * XXX It would be nice if the mbuf pkthdr had offset
+	 * fields for the protocol headers.
+	 */
+
+	eh = mtod(m0, struct ether_header *);
+	switch (htons(eh->ether_type)) {
+	case ETHERTYPE_IP:
+	case ETHERTYPE_IPV6:
+		offset = ETHER_HDR_LEN;
+		break;
+
+	case ETHERTYPE_VLAN:
+		offset = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+		break;
+
+	default:
+		/*
+		 * Don't support this protocol or encapsulation.
+		 */
+		*fieldsp = 0;
+		*cmdp = 0;
+		return 0;
+	}
+
+	if ((m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4|M_CSUM_UDPv4|M_CSUM_TCPv4)) != 0) {
+		iphl = M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
+	} else {
+		iphl = M_CSUM_DATA_IPv6_HL(m0->m_pkthdr.csum_data);
+	}
+	ipcse = offset + iphl - 1;
+
+	cmd = WTX_CMD_DEXT | WTX_DTYP_D;
+	cmdlen = WTX_CMD_DEXT | WTX_DTYP_C | WTX_CMD_IDE;
+	seg = 0;
+	fields = 0;
+
+	if ((m0->m_pkthdr.csum_flags & (M_CSUM_TSOv4 | M_CSUM_TSOv6)) != 0) {
+		int hlen = offset + iphl;
+		bool v4 = (m0->m_pkthdr.csum_flags & M_CSUM_TSOv4) != 0;
+
+		if (__predict_false(m0->m_len <
+				    (hlen + sizeof(struct tcphdr)))) {
+			/*
+			 * TCP/IP headers are not in the first mbuf; we need
+			 * to do this the slow and painful way.  Let's just
+			 * hope this doesn't happen very often.
+			 */
+			struct tcphdr th;
+
+			WM_EVCNT_INCR(&sc->sc_ev_txtsopain);
+
+			m_copydata(m0, hlen, sizeof(th), &th);
+			if (v4) {
+				struct ip ip;
+
+				m_copydata(m0, offset, sizeof(ip), &ip);
+				ip.ip_len = 0;
+				m_copyback(m0,
+				    offset + offsetof(struct ip, ip_len),
+				    sizeof(ip.ip_len), &ip.ip_len);
+				th.th_sum = in_cksum_phdr(ip.ip_src.s_addr,
+				    ip.ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
+				struct ip6_hdr ip6;
+
+				m_copydata(m0, offset, sizeof(ip6), &ip6);
+				ip6.ip6_plen = 0;
+				m_copyback(m0,
+				    offset + offsetof(struct ip6_hdr, ip6_plen),
+				    sizeof(ip6.ip6_plen), &ip6.ip6_plen);
+				th.th_sum = in6_cksum_phdr(&ip6.ip6_src,
+				    &ip6.ip6_dst, 0, htonl(IPPROTO_TCP));
+			}
+			m_copyback(m0, hlen + offsetof(struct tcphdr, th_sum),
+			    sizeof(th.th_sum), &th.th_sum);
+
+			hlen += th.th_off << 2;
+		} else {
+			/*
+			 * TCP/IP headers are in the first mbuf; we can do
+			 * this the easy way.
+			 */
+			struct tcphdr *th;
+
+			if (v4) {
+				struct ip *ip =
+				    (void *)(mtod(m0, char *) + offset);
+				th = (void *)(mtod(m0, char *) + hlen);
+
+				ip->ip_len = 0;
+				th->th_sum = in_cksum_phdr(ip->ip_src.s_addr,
+				    ip->ip_dst.s_addr, htons(IPPROTO_TCP));
+			} else {
+				struct ip6_hdr *ip6 =
+				    (void *)(mtod(m0, char *) + offset);
+				th = (void *)(mtod(m0, char *) + hlen);
+
+				ip6->ip6_plen = 0;
+				th->th_sum = in6_cksum_phdr(&ip6->ip6_src,
+				    &ip6->ip6_dst, 0, htonl(IPPROTO_TCP));
+			}
+			hlen += th->th_off << 2;
+		}
+
+		if (v4) {
+			WM_EVCNT_INCR(&sc->sc_ev_txtso);
+			cmdlen |= WTX_TCPIP_CMD_IP;
+		} else {
+			WM_EVCNT_INCR(&sc->sc_ev_txtso6);
+			ipcse = 0;
+		}
+		cmd |= WTX_TCPIP_CMD_TSE;
+		cmdlen |= WTX_TCPIP_CMD_TSE |
+		    WTX_TCPIP_CMD_TCP | (m0->m_pkthdr.len - hlen);
+		seg = WTX_TCPIP_SEG_HDRLEN(hlen) |
+		    WTX_TCPIP_SEG_MSS(m0->m_pkthdr.segsz);
+	}
+
+	/*
+	 * NOTE: Even if we're not using the IP or TCP/UDP checksum
+	 * offload feature, if we load the context descriptor, we
+	 * MUST provide valid values for IPCSS and TUCSS fields.
+	 */
+
+	ipcs = WTX_TCPIP_IPCSS(offset) |
+	    WTX_TCPIP_IPCSO(offset + offsetof(struct ip, ip_sum)) |
+	    WTX_TCPIP_IPCSE(ipcse);
+	if (m0->m_pkthdr.csum_flags & (M_CSUM_IPv4|M_CSUM_TSOv4)) {
+		WM_EVCNT_INCR(&sc->sc_ev_txipsum);
+		fields |= WTX_IXSM;
+	}
+
+	offset += iphl;
+
+	if (m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv4|M_CSUM_UDPv4|M_CSUM_TSOv4)) {
+		WM_EVCNT_INCR(&sc->sc_ev_txtusum);
+		fields |= WTX_TXSM;
+		tucs = WTX_TCPIP_TUCSS(offset) |
+		    WTX_TCPIP_TUCSO(offset +
+		    M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
+	} else if ((m0->m_pkthdr.csum_flags &
+	    (M_CSUM_TCPv6|M_CSUM_UDPv6|M_CSUM_TSOv6)) != 0) {
+		WM_EVCNT_INCR(&sc->sc_ev_txtusum6);
+		fields |= WTX_TXSM;
+		tucs = WTX_TCPIP_TUCSS(offset) |
+		    WTX_TCPIP_TUCSO(offset +
+		    M_CSUM_DATA_IPv6_OFFSET(m0->m_pkthdr.csum_data)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
+	} else {
+		/* Just initialize it to a valid TCP context. */
+		tucs = WTX_TCPIP_TUCSS(offset) |
+		    WTX_TCPIP_TUCSO(offset + offsetof(struct tcphdr, th_sum)) |
+		    WTX_TCPIP_TUCSE(0) /* rest of packet */;
+	}
+
+	/* Fill in the context descriptor. */
+	t = (struct livengood_tcpip_ctxdesc *)
+	    &txq->txq_descs[txq->txq_next];
+	t->tcpip_ipcs = htole32(ipcs);
+	t->tcpip_tucs = htole32(tucs);
+	t->tcpip_cmdlen = htole32(cmdlen);
+	t->tcpip_seg = htole32(seg);
+	wm_cdtxsync(txq, txq->txq_next, 1, BUS_DMASYNC_PREWRITE);
+
+	txq->txq_next = WM_NEXTTX(txq, txq->txq_next);
+	txs->txs_ndesc++;
+
+	*cmdp = cmd;
+	*fieldsp = fields;
+
+	return 0;
 }
 
 /*
