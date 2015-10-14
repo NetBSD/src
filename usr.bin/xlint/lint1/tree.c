@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.81 2015/08/28 09:42:07 joerg Exp $	*/
+/*	$NetBSD: tree.c,v 1.82 2015/10/14 18:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: tree.c,v 1.81 2015/08/28 09:42:07 joerg Exp $");
+__RCSID("$NetBSD: tree.c,v 1.82 2015/10/14 18:31:52 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -1243,19 +1243,24 @@ asgntypok(op_t op, int arg, tnode_t *ln, tnode_t *rn)
 	}
 
 	if ((lt == PTR && isityp(rt)) || (isityp(lt) && rt == PTR)) {
+		const char *lx = lt == PTR ? "pointer" : "integer";
+		const char *rx = rt == PTR ? "pointer" : "integer";
+		tyname(lbuf, sizeof(lbuf), ltp);
+		tyname(rbuf, sizeof(rbuf), rtp);
+
 		switch (op) {
 		case INIT:
 		case RETURN:
 			/* illegal combination of pointer and integer */
-			warning(183);
+			warning(183, lx, lbuf, rx, rbuf);
 			break;
 		case FARG:
 			/* illegal comb. of ptr. and int., arg #%d */
-			warning(154, arg);
+			warning(154, lx, lbuf, rx, rbuf, arg);
 			break;
 		default:
 			/* illegal comb. of ptr. and int., op %s */
-			warning(123, mp->m_name);
+			warning(123, lx, lbuf, rx, rbuf, mp->m_name);
 			break;
 		}
 		return (1);
