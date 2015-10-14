@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_fb_nv50.c,v 1.2 2015/02/25 17:29:43 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_fb_nv50.c,v 1.3 2015/10/14 00:12:55 mrg Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_fb_nv50.c,v 1.2 2015/02/25 17:29:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_fb_nv50.c,v 1.3 2015/10/14 00:12:55 mrg Exp $");
 
 #include <core/client.h>
 #include <core/enum.h>
@@ -255,8 +255,8 @@ nv50_fb_ctor(struct nouveau_object *parent, struct nouveau_object *engine,
 
 #ifdef __NetBSD__
     {
-	/* XXX pa_dmat or pa_dmat64?  */
-	const bus_dma_tag_t dmat = device->pdev->pd_pa.pa_dmat64;
+	const bus_dma_tag_t dmat = pci_dma64_available(&device->pdev->pd_pa) ?
+	    device->pdev->pd_pa.pa_dmat64 : device->pdev->pd_pa.pa_dmat;
 	int nsegs;
 
 	priv->r100c08_map = NULL; /* paranoia */
@@ -321,7 +321,8 @@ nv50_fb_dtor(struct nouveau_object *object)
 
 #ifdef __NetBSD__
 	if (priv->r100c08_map) {
-		const bus_dma_tag_t dmat = device->pdev->pd_pa.pa_dmat64;
+		const bus_dma_tag_t dmat = pci_dma64_available(&device->pdev->pd_pa) ?
+		    device->pdev->pd_pa.pa_dmat64 : device->pdev->pd_pa.pa_dmat;
 
 		bus_dmamap_unload(dmat, priv->r100c08_map);
 		bus_dmamem_unmap(dmat, priv->r100c08_kva, PAGE_SIZE);
