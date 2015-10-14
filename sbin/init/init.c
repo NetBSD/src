@@ -1,4 +1,4 @@
-/*	$NetBSD: init.c,v 1.106 2015/06/16 23:18:55 christos Exp $	*/
+/*	$NetBSD: init.c,v 1.107 2015/10/14 15:53:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: init.c,v 1.106 2015/06/16 23:18:55 christos Exp $");
+__RCSID("$NetBSD: init.c,v 1.107 2015/10/14 15:53:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -110,9 +110,9 @@ static const struct timespec dtrtime = {.tv_sec = 0, .tv_nsec = 250000};
 static void handle(sig_t, ...);
 static void delset(sigset_t *, ...);
 
-static void stall(const char *, ...) __printflike(1, 2);
-static void warning(const char *, ...) __printflike(1, 2);
-static void emergency(const char *, ...) __printflike(1, 2);
+static void stall(const char *, ...) __sysloglike(1, 2);
+static void warning(const char *, ...) __sysloglike(1, 2);
+static void emergency(const char *, ...) __sysloglike(1, 2);
 __dead static void disaster(int);
 static void badsys(int);
 
