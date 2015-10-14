@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.8 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.9 2015/10/14 15:55:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003
@@ -136,8 +136,7 @@ static	void	jupiter_canmsg	(struct instance *, u_int);
 static	u_short	jupiter_cksum	(u_short *, u_int);
 static	int	jupiter_config	(struct instance *);
 static	void	jupiter_debug	(struct peer *, const char *,
-				 const char *, ...)
-			__attribute__ ((format (printf, 3, 4)));
+				 const char *, ...) NTP_SYSLOG(3, 4);
 static	const char *	jupiter_parse_t	(struct instance *, u_short *);
 static	const char *	jupiter_parse_gpos	(struct instance *, u_short *);
 static	void	jupiter_platform	(struct instance *, u_int);
