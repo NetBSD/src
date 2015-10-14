@@ -1,4 +1,4 @@
-/*	$NetBSD: diag.c,v 1.10 2012/03/22 22:58:15 joerg Exp $	*/
+/*	$NetBSD: diag.c,v 1.11 2015/10/14 15:54:21 christos Exp $	*/
 
  /*
   * Routines to report various classes of problems. Each report is decorated
@@ -16,7 +16,7 @@
 #if 0
 static char sccsid[] = "@(#) diag.c 1.1 94/12/28 17:42:20";
 #else
-__RCSID("$NetBSD: diag.c,v 1.10 2012/03/22 22:58:15 joerg Exp $");
+__RCSID("$NetBSD: diag.c,v 1.11 2015/10/14 15:54:21 christos Exp $");
 #endif
 #endif
 
@@ -38,7 +38,7 @@ struct tcpd_context tcpd_context;
 jmp_buf tcpd_buf;
 
 static void tcpd_diag(int, const char *, const char *, va_list)
-    __printflike(3,0);
+    __sysloglike(3,0);
 
 /* tcpd_diag - centralize error reporter */
 

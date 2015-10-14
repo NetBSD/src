@@ -1,4 +1,4 @@
-/*	$NetBSD: tcpd.h,v 1.14 2012/03/22 22:59:43 joerg Exp $	*/
+/*	$NetBSD: tcpd.h,v 1.15 2015/10/14 15:54:21 christos Exp $	*/
  /*
   * @(#) tcpd.h 1.5 96/03/19 16:22:24
   * 
@@ -168,10 +168,10 @@ extern void tli_host			/* look up endpoint addresses etc. */
   */
 
 /* Report problem and proceed */
-void tcpd_warn(const char *, ...) __printflike(1, 2);
+void tcpd_warn(const char *, ...) __sysloglike(1, 2);
 
 /* Report problem and jump */
-void tcpd_jump(const char *, ...) __dead __printflike(1, 2);
+void tcpd_jump(const char *, ...) __dead __sysloglike(1, 2);
 __END_DECLS
 
 struct tcpd_context {
