@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.48 2015/07/29 18:22:06 christos Exp $	*/
+/*	$NetBSD: err.c,v 1.49 2015/10/14 18:31:52 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: err.c,v 1.48 2015/07/29 18:22:06 christos Exp $");
+__RCSID("$NetBSD: err.c,v 1.49 2015/10/14 18:31:52 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -182,7 +182,7 @@ const	char *msgs[] = {
 	"bitwise operation on signed value nonportable",	      /* 120 */
 	"negative shift",					      /* 121 */
 	"shift greater than size of object",			      /* 122 */
-	"illegal combination of pointer and integer, op %s",	      /* 123 */
+	"illegal combination of %s (%s) and %s (%s), op %s",	      /* 123 */
 	"illegal pointer combination, op %s",			      /* 124 */
 	"ANSI C forbids ordered comparisons of pointers to functions",/* 125 */
 	"incompatible types in conditional",			      /* 126 */
@@ -213,7 +213,7 @@ const	char *msgs[] = {
 	"void expressions may not be arguments, arg #%d",	      /* 151 */
 	"argument cannot have unknown size, arg #%d",		      /* 152 */
 	"argument has incompatible pointer type, arg #%d (%s != %s)", /* 153 */
-	"illegal combination of pointer and integer, arg #%d",	      /* 154 */
+	"illegal combination of %s (%s) and %s (%s), arg #%d",	      /* 154 */
 	"argument is incompatible with prototype, arg #%d",	      /* 155 */
 	"enum type mismatch, arg #%d",			       	      /* 156 */
 	"ANSI C treats constant as unsigned",			      /* 157 */
@@ -242,7 +242,7 @@ const	char *msgs[] = {
 	"bit-field initializer does not fit",			      /* 180 */
 	"{}-enclosed initializer required",			      /* 181 */
 	"incompatible pointer types (%s != %s)",		      /* 182 */
-	"illegal combination of pointer and integer",		      /* 183 */
+	"illegal combination of %s (%s) and %s (%s)",	      	      /* 183 */
 	"illegal pointer combination",				      /* 184 */
 	"initialisation type mismatch",				      /* 185 */
 	"bit-field initialisation is illegal in traditional C",	      /* 186 */
