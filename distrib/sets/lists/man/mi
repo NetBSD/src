@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1510 2015/09/24 20:27:11 christos Exp $
+# $NetBSD: mi,v 1.1511 2015/10/14 04:22:45 nonaka Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1852,6 +1852,7 @@
 ./usr/share/man/cat4/uyap.0			man-sys-catman		.cat
 ./usr/share/man/cat4/uyurex.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vald.0			man-sys-catman		.cat
+./usr/share/man/cat4/valz.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/acc.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/ad.0			man-sys-catman		.cat
 ./usr/share/man/cat4/vax/asc.0			man-sys-catman		.cat
@@ -4843,6 +4844,7 @@
 ./usr/share/man/html4/uyap.html			man-sys-htmlman		html
 ./usr/share/man/html4/uyurex.html		man-sys-htmlman		html
 ./usr/share/man/html4/vald.html			man-sys-htmlman		html
+./usr/share/man/html4/valz.html			man-sys-htmlman		html
 ./usr/share/man/html4/vax/acc.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/ad.html		man-sys-htmlman		html
 ./usr/share/man/html4/vax/asc.html		man-sys-htmlman		html
@@ -7758,6 +7760,7 @@
 ./usr/share/man/man4/uyap.4			man-sys-man		.man
 ./usr/share/man/man4/uyurex.4			man-sys-man		.man
 ./usr/share/man/man4/vald.4			man-sys-man		.man
+./usr/share/man/man4/valz.4			man-sys-man		.man
 ./usr/share/man/man4/vax/acc.4			man-sys-man		.man
 ./usr/share/man/man4/vax/ad.4			man-sys-man		.man
 ./usr/share/man/man4/vax/asc.4			man-sys-man		.man
