@@ -860,14 +860,20 @@ static const format_kind_info format_types_orig[] =
   },
   { "gnu_strftime", NULL,                 time_char_table,  "_-0^#", "EO",
     strftime_flag_specs, strftime_flag_pairs,
-    FMT_FLAG_FANCY_PERCENT_OK, 'w', 0, 0, 0, 0, 0,
+    FMT_FLAG_FANCY_PERCENT_OK|FMT_FLAG_M_OK, 'w', 0, 0, 0, 0, 0,
     NULL, NULL
   },
   { "gnu_strfmon",  strfmon_length_specs, monetary_char_table, "=^+(!-", NULL,
     strfmon_flag_specs, strfmon_flag_pairs,
     FMT_FLAG_ARG_CONVERT, 'w', '#', 'p', 0, 'L', 0,
     NULL, NULL
-  }
+  },
+  { "gnu_syslog",   printf_length_specs,  print_char_table, " +#0-'I", NULL,
+    printf_flag_specs, printf_flag_pairs,
+    FMT_FLAG_ARG_CONVERT|FMT_FLAG_DOLLAR_MULTIPLE|FMT_FLAG_USE_DOLLAR|FMT_FLAG_EMPTY_PREC_OK|FMT_FLAG_M_OK,
+    'w', 0, 'p', 0, 'L', 0,
+    &integer_type_node, &integer_type_node
+  },
 };
 
 /* This layer of indirection allows GCC to reassign format_types with
@@ -1983,6 +1989,14 @@ check_format_info_main (format_check_results *res,
 	  warning (OPT_Wformat_, "conversion lacks type at end of format");
 	  continue;
 	}
+
+      if (format_char == 'm' && !(fki->flags & FMT_FLAG_M_OK))
+        {
+	  warning (OPT_Wformat_,
+	      "%%m is only allowed in syslog(3) like functions");
+	  continue;
+	}
+	
       format_chars++;
       fci = fki->conversion_specs;
       while (fci->format_chars != 0
@@ -2854,6 +2868,7 @@ extern const target_ovr_attr TARGET_OVERRIDES_FORMAT_ATTRIBUTES[];
 static const target_ovr_attr gnu_target_overrides_format_attributes[] =
 {
   { "gnu_printf",   "printf" },
+  { "gnu_syslog",   "syslog" },
   { "gnu_scanf",    "scanf" },
   { "gnu_strftime", "strftime" },
   { "gnu_strfmon",  "strfmon" },
