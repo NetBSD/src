@@ -1,8 +1,6 @@
-#	$NetBSD: mi,v 1.1997 2015/10/13 21:28:34 rjs Exp $
+#	$NetBSD: mi,v 1.1998 2015/10/14 15:20:44 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
-#
-#./usr/libdata/lint/llib-ldtrace.ln		comp-c-lintlib		lint,dtrace
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
 ./usr/bin/ar					comp-util-bin		binutils
@@ -3676,7 +3674,7 @@
 ./usr/libdata/lint/llib-lperfuse.ln		comp-perfuse-lintlib	lint
 ./usr/libdata/lint/llib-lposix.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lppath.ln		comp-c-lintlib		lint
-./usr/libdata/lint/llib-lproc.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lproc.ln		comp-c-lintlib		lint,dtrace
 ./usr/libdata/lint/llib-lprop.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpthread_dbg.ln		comp-c-lintlib		lint
@@ -3689,7 +3687,7 @@
 ./usr/libdata/lint/llib-lroken.ln		comp-krb5-lintlib	lint,kerberos
 ./usr/libdata/lint/llib-lrpcsvc.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lrt.ln			comp-c-lintlib		lint
-./usr/libdata/lint/llib-lrtld_db.ln		comp-c-lintlib		lint
+./usr/libdata/lint/llib-lrtld_db.ln		comp-c-lintlib		lint,dtrace
 ./usr/libdata/lint/llib-lrumpclient.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumphijack.ln		comp-c-lintlib		lint,rump
 ./usr/libdata/lint/llib-lrumpuser.ln		comp-c-lintlib		lint,rump
