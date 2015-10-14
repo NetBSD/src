@@ -75,11 +75,13 @@ enum
   FMT_FLAG_DOLLAR_GAP_POINTER_OK = 128,
   /* The format arg is an opaque object that will be parsed by an external
      facility.  */
-  FMT_FLAG_PARSE_ARG_CONVERT_EXTERNAL = 256
+  FMT_FLAG_PARSE_ARG_CONVERT_EXTERNAL = 256,
   /* Not included here: details of whether width or precision may occur
      (controlled by width_char and precision_char); details of whether
      '*' can be used for these (width_type and precision_type); details
      of whether length modifiers can occur (length_char_specs).  */
+  FMT_FLAG_M_OK = 512
+  /* %m is only allowed in syslog */
 };
 
 /* Structure describing a length modifier supported in format checking, and
