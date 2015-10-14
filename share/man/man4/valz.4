@@ -1,4 +1,4 @@
-.\" $NetBSD: valz.4,v 1.1 2015/10/14 04:22:45 nonaka Exp $
+.\" $NetBSD: valz.4,v 1.2 2015/10/14 08:32:24 wiz Exp $
 .\"
 .\" Copyright (c) 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -33,8 +33,8 @@
 .Sh SYNOPSIS
 .Cd "valz* at acpi?"
 .Sh DESCRIPTION
-Toshiba Dynabook series computers provide HCI/SCI I/O controller
-that handles various interface devices.
+Toshiba Dynabook series computers provide HCI/SCI I/O controllers
+that handle various interface devices.
 This special I/O controller is accessed by the
 .Dq GHCI
 ACPI method.
@@ -55,10 +55,10 @@ Toggle LCD backlight.
 .Pp
 The
 .Nm
-driver has only been tested on Dynabook R63/PS and some 2013 year or later
-Dynabook models.
+driver has only been tested on the Dynabook R63/PS and some Dynabook
+models from 2013 or later.
 .Sh SEE ALSO
-.Xr acpi 4
+.Xr acpi 4 ,
 .Xr vald 4
 .Sh HISTORY
 The
@@ -66,4 +66,4 @@ The
 driver appeared in
 .Nx 8.0 .
 .Sh BUGS
-Not all HCI/SCI function is not implemented.
+Not all HCI/SCI functions are implemented.
