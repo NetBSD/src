@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.37 2015/07/24 15:43:38 nonaka Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.38 2015/10/14 02:16:51 ozaki-r Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.37 2015/07/24 15:43:38 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.38 2015/10/14 02:16:51 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -930,7 +930,7 @@ iwm_nic_lock(struct iwm_softc *sc)
 	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY
 	     | IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP, 15000)) {
-	    	rv = 1;
+		rv = 1;
 	} else {
 		/* jolt */
 		IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_FORCE_NMI);
@@ -1761,7 +1761,7 @@ iwm_nic_rx_init(struct iwm_softc *sc)
 	 * Thus sayeth el jefe (iwlwifi) via a comment:
 	 *
 	 * This value should initially be 0 (before preparing any
- 	 * RBs), should be 8 after preparing the first 8 RBs (for example)
+	 * RBs), should be 8 after preparing the first 8 RBs (for example)
 	 */
 	IWM_WRITE(sc, IWM_FH_RSCSR_CHNL0_WPTR, 8);
 
@@ -1936,7 +1936,7 @@ iwm_post_alive(struct iwm_softc *sc)
 	    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
  out:
- 	iwm_nic_unlock(sc);
+	iwm_nic_unlock(sc);
 	return error;
 }
 
@@ -5754,7 +5754,7 @@ iwm_init(struct ifnet *ifp)
 	}
 
 	/*
- 	 * Ok, firmware loaded and we are jogging
+	 * Ok, firmware loaded and we are jogging
 	 */
 
 	ifp->if_flags &= ~IFF_OACTIVE;
