@@ -47,7 +47,7 @@ mDNSexport void mDNSPlatformSourceAddrForDest(mDNSAddr *const src, const mDNSAdd
 		addr.a4.sin_len         = inner_len;
 		#endif
 		addr.a4.sin_family      = AF_INET;
-		addr.a4.sin_port        = 1;	// Not important, any port will do
+		addr.a4.sin_port        = 7;	// Not important, any port will do
 		addr.a4.sin_addr.s_addr = dst->ip.v4.NotAnInteger;
 		}
 	else if (dst->type == mDNSAddrType_IPv6)
@@ -58,14 +58,26 @@ mDNSexport void mDNSPlatformSourceAddrForDest(mDNSAddr *const src, const mDNSAdd
 		#endif
 		addr.a6.sin6_family   = AF_INET6;
 		addr.a6.sin6_flowinfo = 0;
-		addr.a6.sin6_port     = 1;	// Not important, any port will do
+		addr.a6.sin6_port     = 7;	// Not important, any port will do
 		addr.a6.sin6_addr     = *(struct in6_addr*)&dst->ip.v6;
 		addr.a6.sin6_scope_id = 0;
 		}
 	else return;
 
 	if ((connect(sock, &addr.s, inner_len)) < 0)
-		{ LogMsg("mDNSPlatformSourceAddrForDest: connect %#a failed errno %d (%s)", dst, errno, strerror(errno)); goto exit; }
+		{
+		static mDNSv4Addr dummy = { 198, 51, 100, 42 };
+
+		// Don't spam if we can't connect to 198.51.100.42 to the console.
+		// That is our test address to out which interfaces/address should be primary and is also
+		// configured in mDNSPosix/PosixDaemon.c:Reconfigure()
+		// Failing to connect to it with EADDRNOTAVAIL is a common situation, especially on boot up.
+		if (dst->type == mDNSAddrType_IPv4 && dst->ip.v4.NotAnInteger == dummy.NotAnInteger && errno == EADDRNOTAVAIL)
+		    LogInfo("mDNSPlatformSourceAddrForDest: connect %#a failed errno %d (%s)", dst, errno, strerror(errno));
+		else
+		    LogMsg("mDNSPlatformSourceAddrForDest: connect %#a failed errno %d (%s)", dst, errno, strerror(errno));
+		goto exit;
+		}
 
 	if ((getsockname(sock, &addr.s, &len)) < 0)
 		{ LogMsg("mDNSPlatformSourceAddrForDest: getsockname failed errno %d (%s)", errno, strerror(errno)); goto exit; }
