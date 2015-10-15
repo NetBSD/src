@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.h,v 1.37 2015/10/14 15:52:40 christos Exp $	*/
+/*	$NetBSD: syslog.h,v 1.38 2015/10/15 06:15:22 dholland Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -33,6 +33,10 @@
 
 #ifndef _SYS_SYSLOG_H_
 #define _SYS_SYSLOG_H_
+
+#include <sys/cdefs.h>
+#include <sys/featuretest.h>
+#include <sys/ansi.h>
 
 #define	_PATH_LOG	"/var/run/log"
 
@@ -192,10 +196,6 @@ struct syslog_data {
     .log_fac = LOG_USER, \
     .log_mask = 0xff, \
 }
-
-#include <sys/cdefs.h>
-#include <sys/featuretest.h>
-#include <sys/ansi.h>
 
 __BEGIN_DECLS
 void	closelog(void);
