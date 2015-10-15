@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.9 2015/05/05 10:58:35 ozaki-r Exp $	*/
+/*	$NetBSD: virtio.c,v 1.10 2015/10/15 02:40:38 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.9 2015/05/05 10:58:35 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.10 2015/10/15 02:40:38 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,8 @@ virtio_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_flags & VIRTIO_F_PCI_INTR_MPSAFE)
 		pci_intr_setattr(pc, &ih, PCI_INTR_MPSAFE, true);
 
-	sc->sc_ih = pci_intr_establish(pc, ih, sc->sc_ipl, virtio_intr, sc);
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, sc->sc_ipl, virtio_intr, sc,
+	    device_xname(sc->sc_dev));
 
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
