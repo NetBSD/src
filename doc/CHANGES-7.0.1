@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.1 2015/10/15 20:11:33 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.2 2015/10/15 20:35:28 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -8,4 +8,12 @@ sys/sys/param.h					patched by hand
 
 	Welcome to 7.0.0_PATCH.
 	[snj]
+
+distrib/amd64/ramdisks/common/Makefile.ramdisk	1.11
+distrib/amd64/ramdisks/common/list.ramdisk	1.20
+distrib/i386/ramdisks/common/Makefile.ramdisk	1.12
+distrib/i386/ramdisks/common/list.ramdisk	1.26
+
+	PR install/50311: missing gptmbr.bin on ramdisk based installs.
+	[martin, ticket #992]
 
