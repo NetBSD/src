@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.156 2015/07/02 08:33:31 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.157 2015/10/15 07:13:50 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.156 2015/07/02 08:33:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.157 2015/10/15 07:13:50 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -3163,6 +3163,17 @@ armv7_setup(char *args)
 #ifndef ARM_HAS_VBAR
 	if (vector_page == ARM_VECTORS_HIGH)
 		cpuctrl |= CPU_CONTROL_VECRELOC;
+#endif
+
+#ifdef TEGRAK1_PMAP_WORKAROUND
+	uint32_t auxctrl = armreg_auxctl_read();
+
+	// u-boot sets this incorrectly on boot cpu
+	auxctrl &= ~CORTEXA15_ACTLR_BTB;
+	auxctrl |= CORTEXA15_ACTLR_IOBEU;
+
+	/* Update auxctlr */
+	armreg_auxctl_write(auxctrl);
 #endif
 
 	/* Clear out the cache */
