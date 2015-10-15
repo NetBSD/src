@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.171 2015/10/10 22:34:33 dholland Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.172 2015/10/15 06:15:48 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.171 2015/10/10 22:34:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.172 2015/10/15 06:15:48 dholland Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -657,17 +657,17 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
 
-	ump = VFSTOULFS(mntp);
 	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
-	if (ump->um_cleaner_thread == NULL)
-		ump->um_cleaner_thread = curlwp;
-	KASSERT(ump->um_cleaner_thread == curlwp);
+	ump = VFSTOULFS(mntp);
+	fs = ump->um_lfs;
+
+	if (fs->lfs_cleaner_thread == NULL)
+		fs->lfs_cleaner_thread = curlwp;
+	KASSERT(fs->lfs_cleaner_thread == curlwp);
 
 	cnt = blkcnt;
-
-	fs = VFSTOULFS(mntp)->um_lfs;
 
 	error = 0;
 
@@ -976,12 +976,14 @@ lfs_fastvget(struct mount *mp, ino_t ino, BLOCK_INFO *blkp, int lk_flags,
     struct vnode **vpp)
 {
 	struct ulfsmount *ump;
+	struct lfs *fs;
 	int error;
 
 	ump = VFSTOULFS(mp);
-	ump->um_cleaner_hint = blkp;
+	fs = ump->um_lfs;
+	fs->lfs_cleaner_hint = blkp;
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
-	ump->um_cleaner_hint = NULL;
+	fs->lfs_cleaner_hint = NULL;
 	if (error)
 		return error;
 	error = vn_lock(*vpp, lk_flags);
