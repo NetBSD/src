@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.194 2015/10/03 08:29:34 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.195 2015/10/15 06:15:48 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -1028,6 +1028,10 @@ struct lfs {
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 
 #ifdef _KERNEL
+	/* The block device we're mounted on. */
+	dev_t lfs_dev;
+	struct vnode *lfs_devvp;
+
 	/* ULFS-level information */
 	u_int32_t um_flags;			/* ULFS flags (below) */
 	u_long	um_nindir;			/* indirect ptrs per block */
@@ -1049,6 +1053,13 @@ struct lfs {
 	int lfs_availsleep;
 	/* This one replaces &lfs_nextseg... all ditto */
 	int lfs_nextsegsleep;
+
+	/* Cleaner lwp, set on first bmapv syscall. */
+	struct lwp *lfs_cleaner_thread;
+
+	/* Hint from cleaner, only valid if curlwp == um_cleaner_thread. */
+	/* XXX change this to BLOCK_INFO after resorting this file */
+	struct block_info *lfs_cleaner_hint;
 #endif
 };
 
