@@ -1,4 +1,4 @@
-/*	$NetBSD: armreg.h,v 1.108 2015/10/15 07:13:50 skrll Exp $	*/
+/*	$NetBSD: armreg.h,v 1.109 2015/10/15 07:14:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -459,7 +459,7 @@
 /* Cortex-A15 Auxiliary Control Register (CP15 register 1, opcode 1) */
 #define	CORTEXA15_ACTLR_BTB	__BIT(0)  /* Cache and TLB updates broadcast */
 #define	CORTEXA15_ACTLR_SMP	__BIT(6)  /* SMP */
-#define	CORTEXA15_ACTLR_IOBEU	__BIT(15) /* In order issue in Branch Exec UNIT */
+#define	CORTEXA15_ACTLR_IOBEU	__BIT(15) /* In order issue in Branch Exec Unit */
 
 /* Marvell Feroceon Extra Features Register (CP15 register 1, opcode2 0) */
 #define FC_DCACHE_REPL_LOCK	0x80000000 /* Replace DCache Lock */
