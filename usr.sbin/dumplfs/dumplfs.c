@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.60 2015/10/10 22:34:09 dholland Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.61 2015/10/15 06:24:46 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.60 2015/10/10 22:34:09 dholland Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.61 2015/10/15 06:24:46 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -134,6 +134,44 @@ print_ientry(int i, struct lfs *lfsp, IFILE *ip)
 		    nextfree == LFS_ORPHAN_NEXTFREE ? "FFFFFFFF" : "-");
 }
 
+/*
+ * Set the is64 and dobyteswap fields of struct lfs. Note that the
+ * magic number (and version) fields are necessarily at the same place
+ * in all superblock versions, so we can read it via u_32 without
+ * getting confused.
+ */
+static void
+identify(struct lfs *fs)
+{
+	unsigned magic;
+
+	magic = fs->lfs_dlfs_u.u_32.dlfs_magic;
+	switch (magic) {
+	    case LFS_MAGIC:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = false;
+		break;
+	    case LFS_MAGIC_SWAPPED:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = true;
+		break;
+	    case LFS64_MAGIC:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = false;
+		break;
+	    case LFS64_MAGIC_SWAPPED:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = true;
+		break;
+	    default:
+		warnx("Superblock magic number 0x%x not known; "
+		      "assuming 32-bit, native-endian", magic);
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = false;
+		break;
+	}
+}
+
 #define fsbtobyte(fs, b)	lfs_fsbtob((fs), (off_t)((b)))
 
 int datasum_check = 0;
@@ -196,12 +234,15 @@ main(int argc, char **argv)
 		__CTASSERT(sizeof(struct dlfs) == sizeof(struct dlfs64));
 		get(fd, LFS_LABELPAD, sbuf, LFS_SBPAD);
 		memcpy(&lfs_sb1.lfs_dlfs_u, sbuf, sizeof(struct dlfs));
+		identify(&lfs_sb1);
 
 		/* If that wasn't the real first sb, get the real first sb */
 		if (lfs_sb_getversion(&lfs_sb1) > 1 &&
-		    lfs_sb_getsboff(&lfs_sb1, 0) > lfs_btofsb(&lfs_sb1, LFS_LABELPAD))
+		    lfs_sb_getsboff(&lfs_sb1, 0) > lfs_btofsb(&lfs_sb1, LFS_LABELPAD)) {
 			get(fd, lfs_fsbtob(&lfs_sb1, lfs_sb_getsboff(&lfs_sb1, 0)),
 			    &lfs_sb1.lfs_dlfs_u, sizeof(struct dlfs));
+			identify(&lfs_sb1);
+		}
 	
 		/*
 	 	* Read the second superblock and figure out which check point is
@@ -211,6 +252,7 @@ main(int argc, char **argv)
 		    fsbtobyte(&lfs_sb1, lfs_sb_getsboff(&lfs_sb1, 1)),
 		    sbuf, LFS_SBPAD);
 		memcpy(&lfs_sb2.lfs_dlfs_u, sbuf, sizeof(struct dlfs));
+		identify(&lfs_sb2);
 	
 		lfs_master = &lfs_sb1;
 		if (lfs_sb_getversion(&lfs_sb1) > 1) {
@@ -230,6 +272,7 @@ main(int argc, char **argv)
 		/* Read the first superblock */
 		get(fd, dbtob((off_t)sbdaddr), sbuf, LFS_SBPAD);
 		memcpy(&lfs_sb1.lfs_dlfs_u, sbuf, sizeof(struct dlfs));
+		identify(&lfs_sb1);
 		lfs_master = &lfs_sb1;
 	}
 
@@ -244,7 +287,8 @@ main(int argc, char **argv)
 		lfs_sb_setfsbtodb(lfs_master, 0);
 	}
 
-	(void)printf("Master Superblock at 0x%llx:\n", (long long)sbdaddr);
+	(void)printf("Master LFS%d superblock at 0x%llx:\n",
+	    lfs_master->lfs_is64 ? 64 : 32, (long long)sbdaddr);
 	dump_super(lfs_master);
 
 	dump_ifile(fd, lfs_master, do_ientries, do_segentries, idaddr);
