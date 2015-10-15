@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.3 2015/10/15 13:41:11 bouyer Exp $ */
+/* $NetBSD: axp20x.c,v 1.4 2015/10/15 13:48:57 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.3 2015/10/15 13:41:11 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.4 2015/10/15 13:48:57 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -225,21 +225,21 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	first = 1;
 	if (sc->sc_inputstatus & AXP_INPUT_STATUS_AC_OK) {
-		aprint_normal(": AC used");
+		aprint_verbose(": AC used");
 		first = 0;
 	} else if (sc->sc_inputstatus & AXP_INPUT_STATUS_AC_PRESENT) {
-		aprint_normal(": AC present (but unused)");
+		aprint_verbose(": AC present (but unused)");
 		first = 0;
 	}
 	if (sc->sc_inputstatus & AXP_INPUT_STATUS_VBUS_OK) {
-		aprint_normal("%s VBUS used", first ? ":" : ",");
+		aprint_verbose("%s VBUS used", first ? ":" : ",");
 		first = 0;
 	} else if (sc->sc_inputstatus & AXP_INPUT_STATUS_VBUS_PRESENT) {
-		aprint_normal("%s VBUS present (but unused)", first ? ":" : ",");
+		aprint_verbose("%s VBUS present (but unused)", first ? ":" : ",");
 		first = 0;
 	}
 	if (sc->sc_powermode & AXP_POWER_MODE_BATTOK) {
-		aprint_normal("%s battery present", first ? ":" : ",");
+		aprint_verbose("%s battery present", first ? ":" : ",");
 	}
 	aprint_normal("\n");
 
@@ -325,15 +325,15 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	sysmon_envsys_register(sc->sc_sme);
 
 	if (axp20x_read(sc, AXP_DCDC2, &value, 1, I2C_F_POLL) == 0) {
-		aprint_normal_dev(sc->sc_dev, ": DCDC2 %dmV\n",
+		aprint_verbose_dev(sc->sc_dev, ": DCDC2 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC2_VOLT_MASK) * 25));
 	}
 	if (axp20x_read(sc, AXP_DCDC3, &value, 1, I2C_F_POLL) == 0) {
-		aprint_normal_dev(sc->sc_dev, ": DCDC3 %dmV\n",
+		aprint_verbose_dev(sc->sc_dev, ": DCDC3 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC3_VOLT_MASK) * 25));
 	}
 	if (axp20x_read(sc, AXP_LDO2_4, &value, 1, I2C_F_POLL) == 0) {
-		aprint_normal_dev(sc->sc_dev, ": LDO2 %dmV, LDO4 %dmV\n",
+		aprint_verbose_dev(sc->sc_dev, ": LDO2 %dmV, LDO4 %dmV\n",
 		    (int)(1800 +
 		    ((value & AXP_LDO2_VOLT_MASK) >> AXP_LDO2_VOLT_SHIFT) * 100
 		    ),
@@ -341,9 +341,9 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	}
 	if (axp20x_read(sc, AXP_LDO3, &value, 1, I2C_F_POLL) == 0) {
 		if (value & AXP_LDO3_TRACK) {
-			aprint_normal_dev(sc->sc_dev, ": LDO3: tracking\n");
+			aprint_verbose_dev(sc->sc_dev, ": LDO3: tracking\n");
 		} else {
-			aprint_normal_dev(sc->sc_dev, ": LDO3 %dmV\n",
+			aprint_verbose_dev(sc->sc_dev, ": LDO3 %dmV\n",
 			    (int)(700 + (value & AXP_LDO3_VOLT_MASK) * 25));
 		}
 	}
@@ -536,26 +536,26 @@ axp20x_set_dcdc(device_t dev, int dcdc, int mvolt, bool poll)
 			return ret;
 		if (axp20x_read(sc, AXP_DCDC2, &reg, 1, poll ? I2C_F_POLL : 0)
 		  == 0) {
-			aprint_normal_dev(sc->sc_dev,
+			aprint_verbose_dev(sc->sc_dev,
 			    ": DCDC2 changed to %dmV\n",
 			    (int)(700 + (reg & AXP_DCDC2_VOLT_MASK) * 25));
 		}
 		return 0;
 
 	case AXP20X_DCDC3:
-		value <<= AXP_DCDC2_VOLT_SHIFT;
-		if (value > AXP_DCDC2_VOLT_MASK) 
+		value <<= AXP_DCDC3_VOLT_SHIFT;
+		if (value > AXP_DCDC3_VOLT_MASK) 
 			return EINVAL;
-		reg = value & AXP_DCDC2_VOLT_MASK;
-		ret = axp20x_write(sc, AXP_DCDC2, &reg, 1,
+		reg = value & AXP_DCDC3_VOLT_MASK;
+		ret = axp20x_write(sc, AXP_DCDC3, &reg, 1,
 		    poll ? I2C_F_POLL : 0);
 		if (ret)
 			return ret;
-		if (axp20x_read(sc, AXP_DCDC2, &reg, 1, poll ? I2C_F_POLL : 0)
+		if (axp20x_read(sc, AXP_DCDC3, &reg, 1, poll ? I2C_F_POLL : 0)
 		  == 0) {
-			aprint_normal_dev(sc->sc_dev,
-			    ": DCDC2 changed to %dmV\n",
-			    (int)(700 + (reg & AXP_DCDC2_VOLT_MASK) * 25));
+			aprint_verbose_dev(sc->sc_dev,
+			    ": DCDC3 changed to %dmV\n",
+			    (int)(700 + (reg & AXP_DCDC3_VOLT_MASK) * 25));
 		}
 		return 0;
 	default:
