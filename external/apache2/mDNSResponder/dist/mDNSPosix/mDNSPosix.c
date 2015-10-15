@@ -494,10 +494,11 @@ mDNSexport int ParseDNSServers(mDNS *m, const char *filePath)
 	while (fgets(line,sizeof(line),fp))
 		{
 		struct in_addr ina;
+		struct in6_addr ina6;
 		line[255]='\0';		// just to be safe
 		if (sscanf(line,"%10s %15s", keyword, nameserver) != 2) continue;	// it will skip whitespaces
 		if (strncasecmp(keyword,"nameserver",10)) continue;
-		if (inet_aton(nameserver, (struct in_addr *)&ina) != 0)
+		if (inet_pton(AF_INET, nameserver, &ina) == 1)
 			{
 			mDNSAddr DNSAddr;
 			DNSAddr.type = mDNSAddrType_IPv4;
@@ -505,7 +506,15 @@ mDNSexport int ParseDNSServers(mDNS *m, const char *filePath)
 			mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, &DNSAddr, UnicastDNSPort, mDNSfalse, 0);
 			numOfServers++;
 			}
-		}  
+		else if (inet_pton(AF_INET6, nameserver, &ina6) == 1)
+			{
+			mDNSAddr DNSAddr;
+			DNSAddr.type = mDNSAddrType_IPv6;
+			DNSAddr.ip.v6 = *(mDNSv6Addr *)&ina6;
+			mDNS_AddDNSServer(m, NULL, mDNSInterface_Any, &DNSAddr, UnicastDNSPort, mDNSfalse, 0);
+			numOfServers++;
+			}
+		}
 	fclose(fp);
 	return (numOfServers > 0) ? 0 : -1;
 	}
