@@ -1,4 +1,4 @@
-/* $NetBSD: scan_ffs.c,v 1.31 2015/08/02 18:18:09 dholland Exp $ */
+/* $NetBSD: scan_ffs.c,v 1.32 2015/10/15 06:25:23 dholland Exp $ */
 
 /*
  * Copyright (c) 2005-2007 Juan Romero Pardines
@@ -33,7 +33,7 @@
  
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: scan_ffs.c,v 1.31 2015/08/02 18:18:09 dholland Exp $");
+__RCSID("$NetBSD: scan_ffs.c,v 1.32 2015/10/15 06:25:23 dholland Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -259,13 +259,15 @@ lfs_printpart(struct sblockinfo *sbi, int flag, int n)
                		(lfs_sb_getsize(sbi->lfs) *
                		lfs_sb_getfsize(sbi->lfs) / 512));
 		(void)printf(" %9" PRIu64, sbi->lfs_off); 
-		(void)printf(" 4.4LFS %6d %5d %7d # %s [LFSv%d]\n",
+		(void)printf(" 4.4LFS %6d %5d %7d # %s [LFS%d v%d]\n",
 			lfs_sb_getfsize(sbi->lfs), lfs_sb_getbsize(sbi->lfs),
 			lfs_sb_getnseg(sbi->lfs), sbi->lfs_path, 
+			sbi->lfs->lfs_is64 ? 64 : 32,
 			lfs_sb_getversion(sbi->lfs));
 		break;
 	case BLOCKS:
-		(void)printf("LFSv%d", lfs_sb_getversion(sbi->lfs));
+		(void)printf("LFS%d v%d", sbi->lfs->lfs_is64 ? 64 : 32,
+			lfs_sb_getversion(sbi->lfs));
 		(void)printf(" sb at %" PRIu64, sbi->lfs_off + btodb(LFS_LABELPAD));
 		(void)printf(" fsid %" PRIx32, lfs_sb_getident(sbi->lfs));
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
@@ -273,7 +275,8 @@ lfs_printpart(struct sblockinfo *sbi, int flag, int n)
 			lfs_sb_getfsize(sbi->lfs) / 512), sbi->lfs_path);
 		break;
 	default:
-		(void)printf("LFSv%d ", lfs_sb_getversion(sbi->lfs));
+		(void)printf("LFS%d v%d ", sbi->lfs->lfs_is64 ? 64 : 32,
+			lfs_sb_getversion(sbi->lfs));
 		(void)printf("at %" PRIu64, sbi->lfs_off);
 		(void)printf(" size %" PRIu64 ", last mounted on %s\n",
 			(lfs_sb_getsize(sbi->lfs) *
@@ -345,6 +348,31 @@ lfs_scan(struct sblockinfo *sbi, int n)
 }
 
 static int
+lfs_checkmagic(struct sblockinfo *sbinfo)
+{
+	switch (sbinfo->lfs->lfs_dlfs_u.u_32.dlfs_magic) {
+	case LFS_MAGIC:
+		sbinfo->lfs->lfs_is64 = false;
+		sbinfo->lfs->lfs_dobyteswap = false;
+		return 1;
+	case LFS_MAGIC_SWAPPED:
+		sbinfo->lfs->lfs_is64 = false;
+		sbinfo->lfs->lfs_dobyteswap = true;
+		return 1;
+	case LFS64_MAGIC:
+		sbinfo->lfs->lfs_is64 = true;
+		sbinfo->lfs->lfs_dobyteswap = false;
+		return 1;
+	case LFS64_MAGIC_SWAPPED:
+		sbinfo->lfs->lfs_is64 = true;
+		sbinfo->lfs->lfs_dobyteswap = true;
+		return 1;
+	default:
+		return 0;
+	}
+}
+
+static int
 scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 {
 	struct sblockinfo sbinfo;
@@ -382,7 +410,7 @@ scan_disk(int fd, daddr_t beg, daddr_t end, int fflags)
 				break;
 			case FSTYPE_NONE:
 				/* maybe LFS? */
-				if (sbinfo.lfs->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC)
+				if (lfs_checkmagic(&sbinfo))
 					lfs_scan(&sbinfo, n);
 				break;
 			default:
