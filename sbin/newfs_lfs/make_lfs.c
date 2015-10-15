@@ -1,4 +1,4 @@
-/*	$NetBSD: make_lfs.c,v 1.58 2015/10/10 22:34:19 dholland Exp $	*/
+/*	$NetBSD: make_lfs.c,v 1.59 2015/10/15 06:24:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_lfs.c,v 1.58 2015/10/10 22:34:19 dholland Exp $");
+__RCSID("$NetBSD: make_lfs.c,v 1.59 2015/10/15 06:24:33 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -389,7 +389,7 @@ int
 make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 int block_size, int frag_size, int seg_size, int minfreeseg,
 	 int resvseg, int version, daddr_t start, int ibsize, int interleave,
-	 u_int32_t roll_id)
+	 u_int32_t roll_id, int bitwidth)
 {
 	union lfs_dinode *dip;	/* Pointer to a disk inode */
 	CLEANERINFO *cip;	/* Segment cleaner information table */
@@ -418,8 +418,10 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	int dmeta, labelskew;
 	u_int64_t tsepb, tnseg;
 	time_t stamp;
-	bool is64 = false; /* XXX notyet */
+	bool is64;
 	bool dobyteswap = false; /* XXX notyet */
+
+	is64 = (bitwidth == 64);
 
 	/*
 	 * Initialize buffer cache.  Use a ballpark guess of the length of
@@ -639,10 +641,15 @@ make_lfs(int devfd, uint secsize, struct dkwedge_info *dkw, int minfree,
 	 * Now that we've determined what we're going to do, announce it
 	 * to the user.
 	 */
-        printf("Creating a version %d LFS", lfs_sb_getversion(fs));
+        printf("Creating a version %d LFS%d", lfs_sb_getversion(fs), bitwidth);
         if (lfs_sb_getversion(fs) > 1)
                 printf(" with roll-forward ident 0x%x", lfs_sb_getident(fs));
         printf("\n");   
+	if (bitwidth == 64) {
+		printf("WARNING: The LFS64 on-disk format is not final.\n");
+		printf("WARNING: 64-bit volumes should be used only for "
+		       "testing.\n");
+	}
         fssize = (double)lfs_sb_getnseg(fs);
         fssize *= (double)ssize;
         fssize /= 1048576.0;
