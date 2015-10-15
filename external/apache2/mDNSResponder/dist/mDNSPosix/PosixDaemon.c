@@ -92,7 +92,8 @@ mDNSlocal void mDNS_StatusCallback(mDNS *const m, mStatus result)
 static void Reconfigure(mDNS *m)
 	{
 	mDNSAddr DynDNSIP;
-	const mDNSAddr dummy = { mDNSAddrType_IPv4, { { { 1, 1, 1, 1 } } } };;
+	// Use a random address from TEST-NET-2	in RFC5737
+	const mDNSAddr dummy = { mDNSAddrType_IPv4, { { { 198, 51, 100, 42 } } } };;
 	mDNS_SetPrimaryInterfaceInfo(m, NULL, NULL, NULL);
         mDNS_Lock(m);
 	if (ParseDNSServers(m, uDNS_SERVERS_FILE) < 0)
