@@ -1,10 +1,11 @@
 #!/bin/sh
 #
-# $NetBSD: mdnsd,v 1.2 2010/01/23 17:44:44 drochner Exp $
+# $NetBSD: mdnsd,v 1.3 2015/10/15 16:47:28 roy Exp $
 #
 
 # PROVIDE: mdnsd
-# REQUIRE: SERVERS
+# REQUIRE: network mountcritlocal staticroute
+# BEFORE:  NETWORKING
 
 $_rc_subr_loaded . /etc/rc.subr
 
