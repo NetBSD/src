@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.42 2015/06/09 08:08:14 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.43 2015/10/15 07:13:50 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -496,6 +496,10 @@ cortex_init:
 	mrc	p15, 1, r2, c9, c0, 2		// L2CTRL read
 	ubfx	r2, r2, #25, #1			// bit 25 is set when 3+ CPUs
 	bfi	r0, r2, #31, #1			// copy it to bit 31 in ACTRL
+#endif
+
+#if defined(TEGRAK1_PMAP_WORKAROUND)
+	orr	r0, r0, #CORTEXA15_ACTLR_IOBEU
 #endif
 
 #if defined(CPU_CORTEXA5) || defined(CPU_CORTEXA9)
