@@ -1,4 +1,4 @@
-/* $NetBSD: lfs_cleanerd.c,v 1.54 2015/10/03 08:28:30 dholland Exp $	 */
+/* $NetBSD: lfs_cleanerd.c,v 1.55 2015/10/15 06:25:04 dholland Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -264,12 +264,27 @@ init_fs(struct clfs *fs, char *fsname)
 	free(sbuf);
 
 	/* If it is not LFS, complain and exit! */
-	if (fs->lfs_dlfs_u.u_32.dlfs_magic != LFS_MAGIC) {
+	switch (fs->lfs_dlfs_u.u_32.dlfs_magic) {
+	    case LFS_MAGIC:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = false;
+		break;
+	    case LFS_MAGIC_SWAPPED:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = true;
+		break;
+	    case LFS64_MAGIC:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = false;
+		break;
+	    case LFS64_MAGIC_SWAPPED:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = true;
+		break;
+	    default:
 		syslog(LOG_ERR, "%s: not LFS", fsname);
 		return -1;
 	}
-	fs->lfs_is64 = 0; /* XXX notyet */
-	fs->lfs_dobyteswap = 0; /* XXX notyet */
 	/* XXX: can this ever need to be set? does the cleaner even care? */
 	fs->lfs_hasolddirfmt = 0;
 
