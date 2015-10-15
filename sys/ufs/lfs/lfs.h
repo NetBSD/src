@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.195 2015/10/15 06:15:48 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.196 2015/10/15 06:24:08 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -776,8 +776,8 @@ union segsum {
 #define	       LFS_MAGIC       		0x070162
 #define        LFS_MAGIC_SWAPPED	0x62010700
 
-#define        LFS64_MAGIC     		0x19620701
-#define        LFS64_MAGIC_SWAPPED      0x01076219
+#define        LFS64_MAGIC     		(0x19620701 ^ 0xffffffff)
+#define        LFS64_MAGIC_SWAPPED      (0x01076219 ^ 0xffffffff)
 
 #define	       LFS_VERSION     		2
 
