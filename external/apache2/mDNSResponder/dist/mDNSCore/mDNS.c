@@ -687,14 +687,18 @@ mDNSlocal void SetNextAnnounceProbeTime(mDNS *const m, const AuthRecord *const r
 		// If (rr->LastAPTime + rr->ThisAPInterval) happens to be far in the past, we don't want to allow
 		// NextScheduledProbe to be set excessively in the past, because that can cause bad things to happen.
 		// See: <rdar://problem/7795434> mDNS: Sometimes advertising stops working and record interval is set to zero
-		if (m->NextScheduledProbe - m->timenow < 0)
-			m->NextScheduledProbe = m->timenow;
+		// A future time also needs to be set to avoid spamming logs about not all probes being sent.
+		if (m->NextScheduledProbe - m->timenow <= 0)
+			m->NextScheduledProbe = m->timenow + 1;
 		}
 	else if (rr->AnnounceCount && (ResourceRecordIsValidAnswer(rr) || rr->resrec.RecordType == kDNSRecordTypeDeregistering))
 		{
 		if (m->NextScheduledResponse - (rr->LastAPTime + rr->ThisAPInterval) >= 0)
 			m->NextScheduledResponse = (rr->LastAPTime + rr->ThisAPInterval);
 		}
+		// A future time also needs to be set to avoid spamming logs about not all responses being sent.
+		if (m->NextScheduledResponse - m->timenow <= 0)
+			m->NextScheduledResponse = m->timenow + 1;
 	}
 
 mDNSlocal void InitializeLastAPTime(mDNS *const m, AuthRecord *const rr)
