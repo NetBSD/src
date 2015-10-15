@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.2 2015/10/15 20:28:37 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.3 2015/10/15 20:35:49 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -14,4 +14,12 @@ sys/dev/bluetooth/btmagic.c			1.12, 1.14
 
 	Add support for Apple Magic Trackpad.
 	[bouyer, ticket #869]
+
+distrib/amd64/ramdisks/common/Makefile.ramdisk	1.11
+distrib/amd64/ramdisks/common/list.ramdisk	1.20
+distrib/i386/ramdisks/common/Makefile.ramdisk	1.12
+distrib/i386/ramdisks/common/list.ramdisk	1.26
+
+	PR install/50311: missing gptmbr.bin on ramdisk based installs.
+	[martin, ticket #992]
 
