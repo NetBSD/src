@@ -1,4 +1,4 @@
-.\"	$NetBSD: newfs_lfs.8,v 1.23 2014/01/04 15:35:10 wiz Exp $
+.\"	$NetBSD: newfs_lfs.8,v 1.24 2015/10/15 06:24:33 dholland Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)newlfs.8	8.1 (Berkeley) 6/19/93
 .\"
-.Dd July 12, 2001
+.Dd October 13, 2015
 .Dt NEWFS_LFS 8
 .Os
 .Sh NAME
@@ -140,7 +140,15 @@ The size of the file system in sectors.
 Make a filesystem with the specified disk layout version.
 Valid options are 1 or 2 (the default).
 .Em Note ,
-however, that LFS version 1 is deprecated.
+however, that LFS version 1 is deprecated, and 64-bit volumes may not
+be version 1.
+.It Fl w Ar bitwidth
+Create a filesystem using the specified bit width: 32 or 64.
+32-bit LFS volumes are limited to 2TB in size; 64-bit LFS volumes are
+not, but incur additional overhead from having larger metadata
+structures.
+The default is 32-bit for volumes less than 1 TB, and 64-bit for
+larger volumes.
 .El
 .Sh SEE ALSO
 .Xr disktab 5 ,
