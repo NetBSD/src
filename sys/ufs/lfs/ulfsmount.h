@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfsmount.h,v 1.13 2015/05/31 15:48:03 hannken Exp $	*/
+/*	$NetBSD: ulfsmount.h,v 1.14 2015/10/15 06:15:48 dholland Exp $	*/
 /*  from NetBSD: ufsmount.h,v 1.39 2012/10/19 17:09:08 drochner Exp  */
 
 /*
@@ -60,10 +60,6 @@ struct ulfsmount {
 	/* Abstract vfs-level filesystem structure. */
 	struct mount *um_mountp;
 
-	/* The block device we're mounted on. */
-	dev_t um_dev;
-	struct vnode *um_devvp;
-
 	/* type of fs; currently always ULFS1, theoretically also ULFS2 */
 	u_long um_fstype;
 
@@ -73,11 +69,6 @@ struct ulfsmount {
 	/* Extended attribute information. */
 	struct ulfs_extattr_per_mount um_extattr;
 
-	/* Cleaner lwp, set on first bmapv syscall. */
-	struct lwp *um_cleaner_thread;
-
-	/* Hint from cleaner, only valid if curlwp == um_cleaner_thread. */
-	BLOCK_INFO *um_cleaner_hint;
 	/* Quota-related material. */
 	struct vnode *um_quotas[ULFS_MAXQUOTAS]; /* quota files */
 	kauth_cred_t um_cred[ULFS_MAXQUOTAS];	/* quota file access cred */
