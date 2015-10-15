@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.3 2015/10/02 05:22:50 msaitoh Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.4 2015/10/15 09:06:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.3 2015/10/02 05:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.4 2015/10/15 09:06:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -193,10 +193,41 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
+tegra_pcie_legacy_intr(struct tegra_pcie_softc *sc)
+{
+	const uint32_t msg = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSG_REG);
+	struct tegra_pcie_ih *pcie_ih;
+	int rv = 0;
+
+	if (msg & (AFI_MSG_INT0|AFI_MSG_INT1)) {
+		mutex_enter(&sc->sc_lock);
+		const u_int lastgen = sc->sc_intrgen;
+		TAILQ_FOREACH(pcie_ih, &sc->sc_intrs, ih_entry) {
+			int (*callback)(void *) = pcie_ih->ih_callback;
+			void *arg = pcie_ih->ih_arg;
+			mutex_exit(&sc->sc_lock);
+			rv += callback(arg);
+			mutex_enter(&sc->sc_lock);
+			if (lastgen != sc->sc_intrgen)
+				break;
+		}
+		mutex_exit(&sc->sc_lock);
+	} else if (msg & (AFI_MSG_PM_PME0|AFI_MSG_PM_PME1)) {
+		device_printf(sc->sc_dev, "PM PME message; AFI_MSG=%08x\n",
+		    msg);
+	} else {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_MSG_REG, msg);
+		rv = 1;
+	}
+
+	return rv;
+}
+
+static int
 tegra_pcie_intr(void *priv)
 {
 	struct tegra_pcie_softc *sc = priv;
-	struct tegra_pcie_ih *pcie_ih;
 
 	const uint32_t code = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
 	    AFI_INTR_CODE_REG);
@@ -206,21 +237,7 @@ tegra_pcie_intr(void *priv)
 
 	switch (__SHIFTOUT(code, AFI_INTR_CODE_INT_CODE)) {
 	case AFI_INTR_CODE_SM_MSG:
-		mutex_enter(&sc->sc_lock);
-		const u_int lastgen = sc->sc_intrgen;
-		TAILQ_FOREACH(pcie_ih, &sc->sc_intrs, ih_entry) {
-			int (*callback)(void *) = pcie_ih->ih_callback;
-			void *arg = pcie_ih->ih_arg;
-			mutex_exit(&sc->sc_lock);
-			const int rv = callback(arg);
-			if (rv)
-				return rv;
-			mutex_enter(&sc->sc_lock);
-			if (lastgen != sc->sc_intrgen)
-				break;
-		}
-		mutex_exit(&sc->sc_lock);
-		return 0;
+		return tegra_pcie_legacy_intr(sc);
 	default:
 		device_printf(sc->sc_dev, "intr: code %#x sig %#x\n",
 		    code, sig);
@@ -231,6 +248,14 @@ tegra_pcie_intr(void *priv)
 static void
 tegra_pcie_enable(struct tegra_pcie_softc *sc)
 {
+	/* disable MSI */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSI_BAR_SZ_REG, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSI_FPCI_BAR_ST_REG, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSI_AXI_BAR_ST_REG, 0);
+
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
 	    AFI_SM_INTR_ENABLE_REG, 0xffffffff);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
