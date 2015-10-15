@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.13 2015/08/02 18:18:09 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.14 2015/10/15 06:24:33 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,7 +38,7 @@ void	fatal(const char *fmt, ...)
      __attribute__((__format__(__printf__,1,2)));
 u_int	lfs_log2(u_int);
 int	make_lfs(int, uint, struct dkwedge_info *, int,
-    int, int, int, int, int, int, daddr_t, int, int, u_int32_t);
+    int, int, int, int, int, int, daddr_t, int, int, u_int32_t, int);
 
 extern char	*progname;
 extern char	*special;
