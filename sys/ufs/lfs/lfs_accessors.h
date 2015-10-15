@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.37 2015/10/10 22:33:44 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.38 2015/10/15 06:24:21 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -1166,7 +1166,6 @@ lfs_ss_setocreate(STRUCT_LFS *fs, SEGSUM *ssp, uint32_t val)
 		}						\
 	}
 
-#define lfs_magic lfs_dlfs.dlfs_magic
 LFS_DEF_SB_ACCESSOR(u_int32_t, version);
 LFS_DEF_SB_ACCESSOR_FULL(u_int64_t, u_int32_t, size);
 LFS_DEF_SB_ACCESSOR(u_int32_t, ssize);
