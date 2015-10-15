@@ -1,4 +1,4 @@
-/* $NetBSD: lfs.c,v 1.68 2015/10/10 22:34:09 dholland Exp $ */
+/* $NetBSD: lfs.c,v 1.69 2015/10/15 06:24:55 dholland Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -437,14 +437,29 @@ check_sb(struct lfs *fs)
 	/* we can read the magic out of either the 32-bit or 64-bit dlfs */
 	magic = fs->lfs_dlfs_u.u_32.dlfs_magic;
 
-	if (magic != LFS_MAGIC) {
+	switch (magic) {
+	    case LFS_MAGIC:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = false;
+		break;
+	    case LFS_MAGIC_SWAPPED:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = true;
+		break;
+	    case LFS64_MAGIC:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = false;
+		break;
+	    case LFS64_MAGIC_SWAPPED:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = true;
+		break;
+	    default:
 		printf("Superblock magic number (0x%lx) does not match "
 		       "expected 0x%lx\n", (unsigned long) magic,
 		       (unsigned long) LFS_MAGIC);
 		return 1;
 	}
-	fs->lfs_is64 = 0; /* XXX notyet */
-	fs->lfs_dobyteswap = 0; /* XXX notyet */
 
 	/* checksum */
 	checksum = lfs_sb_cksum(fs);
