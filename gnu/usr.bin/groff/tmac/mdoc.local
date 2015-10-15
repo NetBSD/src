@@ -1,4 +1,4 @@
-.\" $NetBSD: mdoc.local,v 1.77 2015/09/28 21:07:47 christos Exp $
+.\" $NetBSD: mdoc.local,v 1.78 2015/10/15 20:02:24 snj Exp $
 .\"
 .\" Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -76,7 +76,6 @@
 .ds doc-operating-system-FreeBSD-9.0   9.0
 .\" Platforms not yet in groff distribution
 .ds doc-volume-as-amigappc              amigappc
-.ds doc-volume-as-evbsh5                evbsh5
 .ds doc-volume-as-ews4800mips           ews4800mips
 .ds doc-volume-as-ibmnws                ibmnws
 .ds doc-volume-as-iyonix                iyonix
