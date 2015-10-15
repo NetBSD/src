@@ -1,4 +1,4 @@
-#	$NetBSD: std.tegra,v 1.7 2015/05/31 20:04:44 jmcneill Exp $
+#	$NetBSD: std.tegra,v 1.8 2015/10/15 07:13:50 skrll Exp $
 #
 
 machine	evbarm arm
@@ -19,6 +19,7 @@ options 	KERNEL_BASE_EXT=0x80000000
 options 	FPU_VFP
 options 	PCI_NETBSD_CONFIGURE
 options 	__HAVE_PCI_CONF_HOOK
+options 	TEGRAK1_PMAP_WORKAROUND
 
 makeoptions	KERNEL_BASE_PHYS="0x81000000"
 makeoptions	KERNEL_BASE_VIRT="0x81000000"
