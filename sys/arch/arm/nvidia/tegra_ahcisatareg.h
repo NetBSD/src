@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisatareg.h,v 1.1 2015/05/15 17:43:35 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisatareg.h,v 1.2 2015/10/15 09:04:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,6 +52,14 @@
 #define TEGRA_T_SATA0_CFG9_REG			0x1024
 #define TEGRA_T_SATA0_CFG9_BASE_ADDRESS			__BITS(31,13) 
 #define TEGRA_T_SATA0_CFG9_SPACE_TYPE			__BIT(0)
+
+#define TEGRA_SATA_AUX_MISC_CNTL_1_REG		0x1108
+#define TEGRA_SATA_AUX_MISC_CNTL_1_AUX_OR_CORE_IDLE_STATUS_SEL	__BIT(18)
+#define TEGRA_SATA_AUX_MISC_CNTL_1_SDS_SUPPORT			__BIT(13)
+#define TEGRA_SATA_AUX_MISC_CNTL_1_OOB_ON_POR			__BIT(7)
+
+#define TEGRA_SATA_AUX_RX_STAT_INT_REG		0x110c
+#define TEGRA_SATA_AUX_RX_STAT_INT_SATA_RX_STAT_INT_DISABLE	__BIT(2)
 
 #define TEGRA_T_SATA0_BKDOOR_CC_REG		0x14a4
 #define TEGRA_T_SATA0_BKDOOR_CC_CLASS_CODE		__BITS(31,16)
