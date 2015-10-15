@@ -1,4 +1,4 @@
-#	$NetBSD: list.ramdisk,v 1.25 2014/08/10 20:07:41 riz Exp $
+#	$NetBSD: list.ramdisk,v 1.25.4.1 2015/10/15 20:31:51 snj Exp $
 
 SRCDIRS	external/bsd/less/bin
 SRCDIRS	bin sbin usr.bin usr.sbin libexec
@@ -83,6 +83,7 @@ COPY	${DESTDIR}/usr/mdec/bootxx_lfsv2	usr/mdec/bootxx_lfsv2
 COPY	${DESTDIR}/usr/mdec/mbr			usr/mdec/mbr
 COPY	${DESTDIR}/usr/mdec/mbr_ext		usr/mdec/mbr_ext
 COPY	${DESTDIR}/usr/mdec/mbr_bootsel		usr/mdec/mbr_bootsel
+COPY	${DESTDIR}/usr/mdec/gptmbr.bin		usr/mdec/gptmbr.bin
 
 # and the boot script
 COPY	${CURDIR}/../common/dot.profile		.profile
