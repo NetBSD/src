@@ -687,18 +687,16 @@ mDNSlocal void SetNextAnnounceProbeTime(mDNS *const m, const AuthRecord *const r
 		// If (rr->LastAPTime + rr->ThisAPInterval) happens to be far in the past, we don't want to allow
 		// NextScheduledProbe to be set excessively in the past, because that can cause bad things to happen.
 		// See: <rdar://problem/7795434> mDNS: Sometimes advertising stops working and record interval is set to zero
-		// A future time also needs to be set to avoid spamming logs about not all probes being sent.
-		if (m->NextScheduledProbe - m->timenow <= 0)
-			m->NextScheduledProbe = m->timenow + 1;
+		if (m->NextScheduledProbe - m->timenow < 0)
+			m->NextScheduledProbe = m->timenow;
 		}
 	else if (rr->AnnounceCount && (ResourceRecordIsValidAnswer(rr) || rr->resrec.RecordType == kDNSRecordTypeDeregistering))
 		{
 		if (m->NextScheduledResponse - (rr->LastAPTime + rr->ThisAPInterval) >= 0)
 			m->NextScheduledResponse = (rr->LastAPTime + rr->ThisAPInterval);
 		}
-		// A future time also needs to be set to avoid spamming logs about not all responses being sent.
-		if (m->NextScheduledResponse - m->timenow <= 0)
-			m->NextScheduledResponse = m->timenow + 1;
+		if (m->NextScheduledResponse - m->timenow < 0)
+			m->NextScheduledResponse = m->timenow;
 	}
 
 mDNSlocal void InitializeLastAPTime(mDNS *const m, AuthRecord *const rr)
@@ -4499,7 +4497,7 @@ mDNSexport mDNSs32 mDNS_Execute(mDNS *const m)
 				}
 			if (m->timenow - m->NextScheduledProbe >= 0)
 				{
-				LogMsg("mDNS_Execute: SendQueries didn't send all its probes (%d - %d = %d) will try again in one second",
+				debugf("mDNS_Execute: SendQueries didn't send all its probes (%d - %d = %d) will try again in one second",
 					m->timenow, m->NextScheduledProbe, m->timenow - m->NextScheduledProbe);
 				m->NextScheduledProbe = m->timenow + mDNSPlatformOneSecond;
 				}
@@ -4508,7 +4506,7 @@ mDNSexport mDNSs32 mDNS_Execute(mDNS *const m)
 			if (m->timenow - m->NextScheduledResponse >= 0) SendResponses(m);
 			if (m->timenow - m->NextScheduledResponse >= 0)
 				{
-				LogMsg("mDNS_Execute: SendResponses didn't send all its responses; will try again in one second");
+				debugf("mDNS_Execute: SendResponses didn't send all its responses; will try again in one second");
 				m->NextScheduledResponse = m->timenow + mDNSPlatformOneSecond;
 				}
 			}
