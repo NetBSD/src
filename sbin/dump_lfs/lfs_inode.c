@@ -1,4 +1,4 @@
-/*      $NetBSD: lfs_inode.c,v 1.27 2015/09/21 01:24:58 dholland Exp $ */
+/*      $NetBSD: lfs_inode.c,v 1.28 2015/10/15 06:25:12 dholland Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)main.c      8.6 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: lfs_inode.c,v 1.27 2015/09/21 01:24:58 dholland Exp $");
+__RCSID("$NetBSD: lfs_inode.c,v 1.28 2015/10/15 06:25:12 dholland Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,25 +73,41 @@ int is_ufs2 = 0;
 int
 fs_read_sblock(char *superblock)
 {
+	/*
+	 * XXX this should not be assuming that the in-memory
+	 * superblock has the on-disk superblock at the front of the
+	 * structure.
+	 */
 	union {
 		char tbuf[LFS_SBPAD];
 		struct lfs lfss;
 	} u;
 
-	int ns = 0;
 	off_t sboff = LFS_LABELPAD;
 
 	sblock = (struct lfs *)superblock;
 	while(1) {
 		rawread(sboff, (char *) sblock, LFS_SBPAD);
-		if (sblock->lfs_dlfs_u.u_32.dlfs_magic != LFS_MAGIC) {
-#ifdef notyet
-			if (sblock->lfs_magic == bswap32(LFS_MAGIC)) {
-				lfs_sb_swap(sblock, sblock, 0);
-				ns = 1;
-			} else
-#endif
-				quit("bad sblock magic number\n");
+		switch (sblock->lfs_dlfs_u.u_32.dlfs_magic) {
+		    case LFS_MAGIC:
+			sblock->lfs_is64 = false;
+			sblock->lfs_dobyteswap = false;
+			break;
+		    case LFS_MAGIC_SWAPPED:
+			sblock->lfs_is64 = false;
+			sblock->lfs_dobyteswap = true;
+			break;
+		    case LFS64_MAGIC:
+			sblock->lfs_is64 = true;
+			sblock->lfs_dobyteswap = false;
+			break;
+		    case LFS64_MAGIC_SWAPPED:
+			sblock->lfs_is64 = true;
+			sblock->lfs_dobyteswap = true;
+			break;
+		    default:
+			quit("bad sblock magic number\n");
+			break;
 		}
 		if (lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 0)) != sboff) {
 			sboff = lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 0));
@@ -105,14 +121,15 @@ fs_read_sblock(char *superblock)
 	 */
 	rawread(lfs_fsbtob(sblock, (off_t)lfs_sb_getsboff(sblock, 1)), u.tbuf,
 	    sizeof(u.tbuf));
-#ifdef notyet
-	if (ns)
-		lfs_sb_swap(u.tbuf, u.tbuf, 0);
-#endif
-	if (u.lfss.lfs_dlfs_u.u_32.dlfs_magic != LFS_MAGIC) {
-		msg("Warning: secondary superblock at 0x%" PRIx64 " bad magic\n",
+
+	if (u.lfss.lfs_dlfs_u.u_32.dlfs_magic !=
+	    sblock->lfs_dlfs_u.u_32.dlfs_magic) {
+		msg("Warning: secondary superblock at 0x%" PRIx64 " mismatched or wrong magic\n",
 			LFS_FSBTODB(sblock, (off_t)lfs_sb_getsboff(sblock, 1)));
 	} else {
+		u.lfss.lfs_is64 = sblock->lfs_is64;
+		u.lfss.lfs_dobyteswap = sblock->lfs_dobyteswap;
+
 		if (lfs_sb_getversion(sblock) > 1) {
 			if (lfs_sb_getserial(&u.lfss) < lfs_sb_getserial(sblock)) {
 				memcpy(sblock, u.tbuf, sizeof(u.tbuf));
@@ -130,7 +147,18 @@ fs_read_sblock(char *superblock)
 		    (unsigned long)(btodb(sboff)));
 	}
 
-	return ns;
+	/* ugh */
+	is_ufs2 = sblock->lfs_is64;
+
+	/*
+	 * XXX for now dump won't work on lfs64 because of the 64-bit
+	 * inodes in directories. dump needs more abstraction.
+	 */
+	if (sblock->lfs_is64) {
+		quit("LFS64 directory entries not supported yet");
+	}
+
+	return sblock->lfs_dobyteswap;
 }
 
 /*
