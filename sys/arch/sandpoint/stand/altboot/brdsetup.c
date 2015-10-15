@@ -1,4 +1,4 @@
-/* $NetBSD: brdsetup.c,v 1.36 2015/09/30 14:14:32 phx Exp $ */
+/* $NetBSD: brdsetup.c,v 1.37 2015/10/15 12:00:02 nisimura Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -260,10 +260,14 @@ brdsetup(void)
 	}
 	else if (PCI_CLASS(pcicfgread(dev11, PCI_CLASS_REG)) == PCI_CLASS_ETH) {
 		/* ADMtek AN985 (tlp) or RealTek 8169S (re) at dev 11 */
-		if (PCI_VENDOR(pcicfgread(dev12, PCI_ID_REG)) != 0x1095)
+		if (PCI_VENDOR(pcicfgread(dev11, PCI_ID_REG)) == 0x1317)
 			brdtype = BRD_KUROBOX;
-		else
-			brdtype = BRD_KUROBOXT4;
+		else if (PCI_VENDOR(pcicfgread(dev11, PCI_ID_REG)) == 0x10ec) {
+			if (PCI_PRODUCT(pcicfgread(dev12,PCI_ID_REG)) != 0x3512)
+				brdtype = BRD_KUROBOX;
+			else
+				brdtype = BRD_KUROBOXT4;
+		}
 	}
 	else if (PCI_VENDOR(pcicfgread(dev15, PCI_ID_REG)) == 0x11ab) {
 		/* SKnet/Marvell (sk) at dev 15 */
