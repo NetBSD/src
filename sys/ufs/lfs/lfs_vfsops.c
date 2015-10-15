@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.347 2015/10/15 06:15:48 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.348 2015/10/15 06:25:34 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.347 2015/10/15 06:15:48 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.348 2015/10/15 06:25:34 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -829,6 +829,38 @@ fail:
 	return (error);
 }
 
+/*
+ * Helper for mountfs. Note that the fs pointer may be a dummy one
+ * pointing into a superblock buffer. (Which is gross; see below.)
+ */
+static int
+lfs_checkmagic(struct lfs *fs)
+{
+	switch (fs->lfs_dlfs_u.u_32.dlfs_magic) {
+	    case LFS_MAGIC:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = false;
+		break;
+	    case LFS64_MAGIC:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = false;
+		break;
+#ifdef LFS_EI
+	    case LFS_MAGIC_SWAPPED:
+		fs->lfs_is64 = false;
+		fs->lfs_dobyteswap = true;
+		break;
+	    case LFS64_MAGIC_SWAPPED:
+		fs->lfs_is64 = true;
+		fs->lfs_dobyteswap = true;
+		break;
+#endif
+	    default:
+		/* XXX needs translation */
+		return EINVAL;
+	}
+	return 0;
+}
 
 /*
  * Common code for mount and mountroot
@@ -837,11 +869,11 @@ fail:
 int
 lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
-	struct dlfs *tdfs, *dfs, *adfs;
+	struct lfs *primarysb, *altsb, *thesb;
+	struct buf *primarybuf, *altbuf;
 	struct lfs *fs;
 	struct ulfsmount *ump;
 	struct vnode *vp;
-	struct buf *bp, *abp;
 	dev_t dev;
 	int error, i, ronly, fsbsize;
 	kauth_cred_t cred;
@@ -866,49 +898,65 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
 	/* Don't free random space on error. */
-	bp = NULL;
-	abp = NULL;
+	primarybuf = NULL;
+	altbuf = NULL;
 	ump = NULL;
 
 	sb_addr = LFS_LABELPAD / DEV_BSIZE;
 	while (1) {
-		/* Read in the superblock. */
-		error = bread(devvp, sb_addr, LFS_SBPAD, 0, &bp);
+		/*
+		 * Read in the superblock.
+		 *
+		 * Note that because LFS_SBPAD is substantially larger
+		 * (8K) than the actual on-disk superblock (512 bytes)
+		 * the buffer contains enough space to be used as a
+		 * whole struct lfs (in-memory superblock) - we do this
+		 * only so we can set and use the is64 and dobyteswap
+		 * members. XXX this is gross and the logic here should
+		 * be reworked.
+		 */
+		error = bread(devvp, sb_addr, LFS_SBPAD, 0, &primarybuf);
 		if (error)
 			goto out;
-		dfs = (struct dlfs *)bp->b_data;
+		primarysb = (struct lfs *)primarybuf->b_data;
 
 		/* Check the basics. */
-		if (dfs->dlfs_magic != LFS_MAGIC || dfs->dlfs_bsize > MAXBSIZE ||
-		    dfs->dlfs_version > LFS_VERSION ||
-		    dfs->dlfs_bsize < sizeof(struct dlfs)) {
-			DLOG((DLOG_MOUNT, "lfs_mountfs: primary superblock sanity failed\n"));
-			error = EINVAL;		/* XXX needs translation */
+		error = lfs_checkmagic(primarysb);
+		if (error) {
+			DLOG((DLOG_MOUNT, "lfs_mountfs: primary superblock wrong magic\n"));
 			goto out;
 		}
-		if (dfs->dlfs_inodefmt > LFS_MAXINODEFMT) {
+		if (lfs_sb_getbsize(primarysb) > MAXBSIZE ||
+		    lfs_sb_getversion(primarysb) > LFS_VERSION ||
+		    lfs_sb_getbsize(primarysb) < sizeof(struct dlfs)) {
+			DLOG((DLOG_MOUNT, "lfs_mountfs: primary superblock sanity failed\n"));
+			/* XXX needs translation */
+			error = EINVAL;
+			goto out;
+		}
+		if (lfs_sb_getinodefmt(primarysb) > LFS_MAXINODEFMT) {
 			DLOG((DLOG_MOUNT, "lfs_mountfs: unknown inode format %d\n",
-			       dfs->dlfs_inodefmt));
+			       lfs_sb_getinodefmt(primarysb)));
 			error = EINVAL;
 			goto out;
 		}
 
-		if (dfs->dlfs_version == 1)
+		if (lfs_sb_getversion(primarysb) == 1)
 			fsbsize = DEV_BSIZE;
 		else {
-			fsbsize = 1 << dfs->dlfs_ffshift;
+			fsbsize = 1 << lfs_sb_getffshift(primarysb);
 			/*
 			 * Could be, if the frag size is large enough, that we
 			 * don't have the "real" primary superblock.  If that's
 			 * the case, get the real one, and try again.
 			 */
-			if (sb_addr != (dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT))) {
+			if (sb_addr != (lfs_sb_getsboff(primarysb, 0) << (lfs_sb_getffshift(primarysb) - DEV_BSHIFT))) {
 				DLOG((DLOG_MOUNT, "lfs_mountfs: sb daddr"
 				      " 0x%llx is not right, trying 0x%llx\n",
 				      (long long)sb_addr,
-				      (long long)(dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT))));
-				sb_addr = dfs->dlfs_sboffs[0] << (dfs->dlfs_ffshift - DEV_BSHIFT);
-				brelse(bp, 0);
+				      (long long)(lfs_sb_getsboff(primarysb, 0) << (lfs_sb_getffshift(primarysb) - DEV_BSHIFT))));
+				sb_addr = lfs_sb_getsboff(primarysb, 0) << (lfs_sb_getffshift(primarysb) - DEV_BSHIFT);
+				brelse(primarybuf, BC_INVAL);
 				continue;
 			}
 		}
@@ -921,51 +969,68 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * the filesystem is valid if it was not unmounted cleanly.
 	 */
 
-	if (dfs->dlfs_sboffs[1] &&
-	    dfs->dlfs_sboffs[1] - LFS_LABELPAD / fsbsize > LFS_SBPAD / fsbsize)
+	if (lfs_sb_getsboff(primarysb, 1) &&
+	    lfs_sb_getsboff(primarysb, 1) - LFS_LABELPAD / fsbsize > LFS_SBPAD / fsbsize)
 	{
-		error = bread(devvp, dfs->dlfs_sboffs[1] * (fsbsize / DEV_BSIZE),
-			LFS_SBPAD, 0, &abp);
+		error = bread(devvp, lfs_sb_getsboff(primarysb, 1) * (fsbsize / DEV_BSIZE),
+			LFS_SBPAD, 0, &altbuf);
 		if (error)
 			goto out;
-		adfs = (struct dlfs *)abp->b_data;
+		altsb = (struct lfs *)altbuf->b_data;
 
-		if (dfs->dlfs_version == 1) {
-			/* 1s resolution comparison */
-			if (adfs->dlfs_tstamp < dfs->dlfs_tstamp)
-				tdfs = adfs;
-			else
-				tdfs = dfs;
-		} else {
-			/* monotonic infinite-resolution comparison */
-			if (adfs->dlfs_serial < dfs->dlfs_serial)
-				tdfs = adfs;
-			else
-				tdfs = dfs;
-		}
+		/*
+		 * Note: this used to do the sanity check only if the
+		 * timestamp/serial comparison required use of altsb;
+		 * this way is less tolerant, but if altsb is corrupted
+		 * enough that the magic number, version, and blocksize
+		 * are bogus, why would the timestamp or serial fields
+		 * mean anything either? If this kind of thing happens,
+		 * you need to fsck anyway.
+		 */
+
+		error = lfs_checkmagic(altsb);
+		if (error)
+			goto out;
 
 		/* Check the basics. */
-		if (tdfs->dlfs_magic != LFS_MAGIC ||
-		    tdfs->dlfs_bsize > MAXBSIZE ||
-		    tdfs->dlfs_version > LFS_VERSION ||
-		    tdfs->dlfs_bsize < sizeof(struct dlfs)) {
+		if (lfs_sb_getbsize(altsb) > MAXBSIZE ||
+		    lfs_sb_getversion(altsb) > LFS_VERSION ||
+		    lfs_sb_getbsize(altsb) < sizeof(struct dlfs)) {
 			DLOG((DLOG_MOUNT, "lfs_mountfs: alt superblock"
 			      " sanity failed\n"));
 			error = EINVAL;		/* XXX needs translation */
 			goto out;
 		}
+
+		if (lfs_sb_getversion(primarysb) == 1) {
+			/* 1s resolution comparison */
+			if (lfs_sb_gettstamp(altsb) < lfs_sb_gettstamp(primarysb))
+				thesb = altsb;
+			else
+				thesb = primarysb;
+		} else {
+			/* monotonic infinite-resolution comparison */
+			if (lfs_sb_getserial(altsb) < lfs_sb_getserial(primarysb))
+				thesb = altsb;
+			else
+				thesb = primarysb;
+		}
 	} else {
-		DLOG((DLOG_MOUNT, "lfs_mountfs: invalid alt superblock"
-		      " daddr=0x%x\n", dfs->dlfs_sboffs[1]));
+		DLOG((DLOG_MOUNT, "lfs_mountfs: invalid alt superblock location"
+		      " daddr=0x%x\n", lfs_sb_getsboff(primarysb, 1)));
 		error = EINVAL;
 		goto out;
 	}
 
-	/* Allocate the mount structure, copy the superblock into it. */
+	/*
+	 * Allocate the mount structure, copy the superblock into it.
+	 * Note that the 32-bit and 64-bit superblocks are the same size.
+	 */
 	fs = kmem_zalloc(sizeof(struct lfs), KM_SLEEP);
-	memcpy(&fs->lfs_dlfs_u.u_32, tdfs, sizeof(struct dlfs));
-	fs->lfs_is64 = false; /* XXX notyet */
-	fs->lfs_dobyteswap = false; /* XXX notyet */
+	memcpy(&fs->lfs_dlfs_u.u_32, &thesb->lfs_dlfs_u.u_32,
+	       sizeof(struct dlfs));
+	fs->lfs_is64 = thesb->lfs_is64;
+	fs->lfs_dobyteswap = thesb->lfs_dobyteswap;
 	fs->lfs_hasolddirfmt = false; /* set for real below */
 
 	/* Compatibility */
@@ -1005,15 +1070,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	ump->um_lfs = fs;
 	ump->um_fstype = ULFS1;
 	/* ump->um_cleaner_thread = NULL; */
-	if (sizeof(struct lfs) < LFS_SBPAD) {			/* XXX why? */
-		brelse(bp, BC_INVAL);
-		brelse(abp, BC_INVAL);
-	} else {
-		brelse(bp, 0);
-		brelse(abp, 0);
-	}
-	bp = NULL;
-	abp = NULL;
+	brelse(primarybuf, BC_INVAL);
+	brelse(altbuf, BC_INVAL);
+	primarybuf = NULL;
+	altbuf = NULL;
 
 
 	/* Set up the I/O information */
@@ -1122,6 +1182,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	memset(fs->lfs_suflags[1], 0, lfs_sb_getnseg(fs) * sizeof(u_int32_t));
 	for (i = 0; i < lfs_sb_getnseg(fs); i++) {
 		int changed;
+		struct buf *bp;
 
 		LFS_SEGENTRY(sup, fs, i, bp);
 		changed = 0;
@@ -1218,21 +1279,29 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * Initialize the ifile cleaner info with information from
 	 * the superblock.
 	 */
-	LFS_CLEANERINFO(cip, fs, bp);
-	lfs_ci_setclean(fs, cip, lfs_sb_getnclean(fs));
-	lfs_ci_setdirty(fs, cip, lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs));
-	lfs_ci_setavail(fs, cip, lfs_sb_getavail(fs));
-	lfs_ci_setbfree(fs, cip, lfs_sb_getbfree(fs));
-	(void) LFS_BWRITE_LOG(bp); /* Ifile */
+	{
+		struct buf *bp;
+
+		LFS_CLEANERINFO(cip, fs, bp);
+		lfs_ci_setclean(fs, cip, lfs_sb_getnclean(fs));
+		lfs_ci_setdirty(fs, cip, lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs));
+		lfs_ci_setavail(fs, cip, lfs_sb_getavail(fs));
+		lfs_ci_setbfree(fs, cip, lfs_sb_getbfree(fs));
+		(void) LFS_BWRITE_LOG(bp); /* Ifile */
+	}
 
 	/*
 	 * Mark the current segment as ACTIVE, since we're going to
 	 * be writing to it.
 	 */
-	LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, lfs_sb_getoffset(fs)), bp);
-	sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
-	fs->lfs_nactive++;
-	LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, lfs_sb_getoffset(fs)), bp);  /* Ifile */
+	{
+		struct buf *bp;
+
+		LFS_SEGENTRY(sup, fs, lfs_dtosn(fs, lfs_sb_getoffset(fs)), bp);
+		sup->su_flags |= SEGUSE_DIRTY | SEGUSE_ACTIVE;
+		fs->lfs_nactive++;
+		LFS_WRITESEGENTRY(sup, fs, lfs_dtosn(fs, lfs_sb_getoffset(fs)), bp);  /* Ifile */
+	}
 
 	/* Now that roll-forward is done, unlock the Ifile */
 	vput(vp);
@@ -1251,10 +1320,10 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	return (0);
 
 out:
-	if (bp)
-		brelse(bp, 0);
-	if (abp)
-		brelse(abp, 0);
+	if (primarybuf)
+		brelse(primarybuf, BC_INVAL);
+	if (altbuf)
+		brelse(altbuf, BC_INVAL);
 	if (ump) {
 		kmem_free(ump->um_lfs, sizeof(struct lfs));
 		kmem_free(ump, sizeof(*ump));
