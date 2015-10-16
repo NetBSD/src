@@ -1,4 +1,4 @@
-/*	$NetBSD: msdos.c,v 1.14 2013/02/03 03:21:21 christos Exp $	*/
+/*	$NetBSD: msdos.c,v 1.15 2015/10/16 16:40:02 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -15,9 +15,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
@@ -37,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: msdos.c,v 1.14 2013/02/03 03:21:21 christos Exp $");
+__RCSID("$NetBSD: msdos.c,v 1.15 2015/10/16 16:40:02 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
