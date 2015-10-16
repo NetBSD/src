@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.54 2015/10/11 09:17:51 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.55 2015/10/16 17:00:15 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.54 2015/10/11 09:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.55 2015/10/16 17:00:15 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -169,7 +169,7 @@ Static struct usbd_xfer *
 Static void		ehci_freex(struct usbd_bus *, struct usbd_xfer *);
 Static void		ehci_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		ehci_roothub_ctrl(struct usbd_bus *,
-    usb_device_request_t *, void *, int);
+			    usb_device_request_t *, void *, int);
 
 Static usbd_status	ehci_root_intr_transfer(struct usbd_xfer *);
 Static usbd_status	ehci_root_intr_start(struct usbd_xfer *);
@@ -212,10 +212,10 @@ Static void		ehci_noop(struct usbd_pipe *);
 
 Static void		ehci_disown(ehci_softc_t *, int, int);
 
-Static ehci_soft_qh_t  *ehci_alloc_sqh(ehci_softc_t *);
+Static ehci_soft_qh_t *	ehci_alloc_sqh(ehci_softc_t *);
 Static void		ehci_free_sqh(ehci_softc_t *, ehci_soft_qh_t *);
 
-Static ehci_soft_qtd_t  *ehci_alloc_sqtd(ehci_softc_t *);
+Static ehci_soft_qtd_t *ehci_alloc_sqtd(ehci_softc_t *);
 Static void		ehci_free_sqtd(ehci_softc_t *, ehci_soft_qtd_t *);
 Static usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
 			    ehci_softc_t *, int, int, struct usbd_xfer *,
@@ -223,8 +223,9 @@ Static usbd_status	ehci_alloc_sqtd_chain(struct ehci_pipe *,
 Static void		ehci_free_sqtd_chain(ehci_softc_t *, ehci_soft_qtd_t *,
 					    ehci_soft_qtd_t *);
 
-Static ehci_soft_itd_t	*ehci_alloc_itd(ehci_softc_t *);
-Static ehci_soft_sitd_t *ehci_alloc_sitd(ehci_softc_t *);
+Static ehci_soft_itd_t *ehci_alloc_itd(ehci_softc_t *);
+Static ehci_soft_sitd_t *
+			ehci_alloc_sitd(ehci_softc_t *);
 Static void		ehci_free_itd(ehci_softc_t *, ehci_soft_itd_t *);
 Static void		ehci_free_sitd(ehci_softc_t *, ehci_soft_sitd_t *);
 Static void 		ehci_rem_free_itd_chain(ehci_softc_t *,
