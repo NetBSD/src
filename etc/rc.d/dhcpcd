@@ -24,6 +24,10 @@ fi
 ifname="${myflags##* }"
 myflags="${myflags%% $ifname}"
 last_flag="${myflags##* }"
+# Address the problem of having just dhcpcd_flags=wm0
+if [ "$myflags" = "$last_flag" ]; then
+	last_flag="invalidinterfacename"
+fi
 if /sbin/ifconfig "$ifname" >/dev/null 2>&1 && 
     ! /sbin/ifconfig "$last_flag" >/dev/null 2>&1
 then
