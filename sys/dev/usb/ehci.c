@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.55 2015/10/16 17:00:15 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.56 2015/10/16 17:05:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.55 2015/10/16 17:00:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.56 2015/10/16 17:05:19 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1079,7 +1079,7 @@ ehci_idone(struct ehci_xfer *ex)
 
 			if (nframes >= xfer->ux_nframes)
 				break;
-	    	}
+		}
 
 		xfer->ux_actlen = actlen;
 		xfer->ux_status = USBD_NORMAL_COMPLETION;
