@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.4 2010/07/10 10:12:07 nakayama Exp $	*/
+/*	$NetBSD: copy.S,v 1.5 2015/10/17 19:29:48 nakayama Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -883,7 +883,7 @@ ENTRY(probeget)
 	ldxa	[%o0] %asi, %o0		!	value = *(long *)addr;
 1:	
 #ifndef _LP64
-	SPLIT(%o0, %o1)
+	SPLIT(%o0, %o0, %o1)
 #endif
 	membar	#Sync
 #ifndef _LP64
