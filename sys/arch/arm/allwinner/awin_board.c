@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.37 2015/10/17 15:00:45 bouyer Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.38 2015/10/17 15:02:55 bouyer Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.37 2015/10/17 15:00:45 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.38 2015/10/17 15:02:55 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -570,7 +570,7 @@ awin_pll6_get_rate(void)
 	} else {
 		n = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_N);
 		k = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_K) + 1;
-		m = __SHIFTOUT(cfg, AWIN_PLL_CFG_FACTOR_M) + 1;
+		m = 2;
 	}
 
 	return (AWIN_REF_FREQ * n * k) / m;
