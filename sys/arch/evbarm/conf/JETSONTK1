@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.31 2015/08/02 00:24:45 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.32 2015/10/17 21:18:47 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -148,6 +148,9 @@ pseudo-device	wsfont
 tegrahdmi0	at tegraio?		# HDMI
 tegracec0	at tegraio?		# HDMI CEC
 hdmicec*	at hdmicecbus?
+
+# GPU
+#nouveau0	at tegraio?		# GPU
 
 # USB 2.0
 ehci0		at tegraio? port 0	# USB1
