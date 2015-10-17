@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_intr.h,v 1.7 2015/08/01 21:20:11 jmcneill Exp $ */
+/* $NetBSD: tegra_intr.h,v 1.8 2015/10/17 21:16:27 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,6 +58,7 @@
 #define TEGRA_INTR_DISPLAYA	TEGRA_INTR(73)
 #define TEGRA_INTR_DISPLAYB	TEGRA_INTR(74)
 #define TEGRA_INTR_HDMI		TEGRA_INTR(75)
+#define TEGRA_INTR_SOR		TEGRA_INTR(76)
 #define TEGRA_INTR_HDA		TEGRA_INTR(81)
 #define TEGRA_INTR_I2C2		TEGRA_INTR(84)
 #define TEGRA_INTR_UARTD	TEGRA_INTR(90)
@@ -75,4 +76,6 @@
 #define TEGRA_INTR_TMR8		TEGRA_INTR(154)
 #define TEGRA_INTR_TMR9		TEGRA_INTR(155)
 #define TEGRA_INTR_TMR0		TEGRA_INTR(156)
+#define TEGRA_INTR_GPU		TEGRA_INTR(157)
+#define TEGRA_INTR_GPU_NONSTALL	TEGRA_INTR(158)
 #endif /* _ARM_TEGRA_INTR_H */
