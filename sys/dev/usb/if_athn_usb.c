@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.6 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.7 2015/10/17 10:24:59 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.6 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.7 2015/10/17 10:24:59 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -267,6 +267,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ops.write = athn_usb_write;
 	sc->sc_ops.write_barrier = athn_usb_write_barrier;
 
+	cv_init(&usc->usc_task_cv, "athntsk");
 	mutex_init(&usc->usc_task_mtx, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&usc->usc_tx_mtx, MUTEX_DEFAULT, IPL_NONE);
 
@@ -466,6 +467,7 @@ athn_usb_detach(device_t self, int flags)
 
 	mutex_destroy(&usc->usc_tx_mtx);
 	mutex_destroy(&usc->usc_task_mtx);
+	cv_destroy(&usc->usc_task_cv);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, usc->usc_udev, sc->sc_dev);
 	return 0;
@@ -781,8 +783,10 @@ athn_usb_wait_async(struct athn_usb_softc *usc)
 	DPRINTFN(DBG_FN, usc, "\n");
 
 	/* Wait for all queued asynchronous commands to complete. */
+	mutex_spin_enter(&usc->usc_task_mtx);
 	while (usc->usc_cmdq.queued > 0)
-		tsleep(&usc->usc_cmdq, 0, "cmdq", 0);
+		cv_wait(&usc->usc_task_cv, &usc->usc_task_mtx);
+	mutex_spin_exit(&usc->usc_task_mtx);
 }
 
 Static int
