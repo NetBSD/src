@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.26 2015/08/01 21:20:11 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.27 2015/10/17 21:16:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.26 2015/08/01 21:20:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.27 2015/10/17 21:16:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -830,4 +830,33 @@ tegra_car_wdt_enable(u_int timer, bool enable)
 	    CAR_RST_SOURCE_WDT_SYS_RST_EN |
 	    CAR_RST_SOURCE_WDT_SEL |
 	    CAR_RST_SOURCE_WDT_EN);
+}
+
+void
+tegra_car_gpu_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	/* Enter reset, enable clock */
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_X_SET_REG, CAR_DEV_X_GPU);
+	bus_space_write_4(bst, bsh, CAR_CLK_ENB_X_SET_REG, CAR_DEV_X_GPU);
+
+	/* Set PLLP_OUT5 to 204MHz */
+	const u_int rate = 204000000;
+	const u_int div = howmany(tegra_car_pllp0_rate() * 2, rate) - 2;
+	tegra_reg_set_clear(bst, bsh, CAR_PLLP_OUTC_REG,
+	    __SHIFTIN(div, CAR_PLLP_OUTC_OUT5_RATIO) |
+	    CAR_PLLP_OUTC_OUT5_CLKEN,
+	    CAR_PLLP_OUTC_OUT5_RATIO);
+	delay(20);
+
+	/* Remove clamping from 3D partition in the PMC */
+	tegra_pmc_remove_clamping(PMC_PARTID_TD);
+	delay(20);
+
+	/* Leave reset */
+	bus_space_write_4(bst, bsh, CAR_RST_DEV_X_CLR_REG, CAR_DEV_X_GPU);
 }
