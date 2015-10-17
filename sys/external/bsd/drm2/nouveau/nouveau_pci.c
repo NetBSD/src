@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.3 2015/03/06 15:39:28 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.4 2015/10/17 12:02:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,12 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.3 2015/03/06 15:39:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.4 2015/10/17 12:02:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
 #include <sys/queue.h>
 #include <sys/workqueue.h>
+#include <sys/module.h>
 
 #include <drm/drmP.h>
 
@@ -44,9 +45,11 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.3 2015/03/06 15:39:28 riastradh Ex
 #include "nouveau_drm.h"
 #include "nouveau_pci.h"
 
-SIMPLEQ_HEAD(nouveau_task_head, nouveau_task);
+MODULE(MODULE_CLASS_DRIVER, nouveau_pci, "nouveau,drmkms_pci");
 
-struct nouveau_softc {
+SIMPLEQ_HEAD(nouveau_pci_task_head, nouveau_pci_task);
+
+struct nouveau_pci_softc {
 	device_t		sc_dev;
 	enum {
 		NOUVEAU_TASK_ATTACH,
@@ -54,40 +57,32 @@ struct nouveau_softc {
 	}			sc_task_state;
 	union {
 		struct workqueue		*workqueue;
-		struct nouveau_task_head	attach;
+		struct nouveau_pci_task_head	attach;
 	}			sc_task_u;
 	struct drm_device	*sc_drm_dev;
 	struct pci_dev		sc_pci_dev;
 	struct nouveau_device	*sc_nv_dev;
 };
 
-static int	nouveau_match(device_t, cfdata_t, void *);
-static void	nouveau_attach(device_t, device_t, void *);
-static int	nouveau_detach(device_t, int);
+static int	nouveau_pci_match(device_t, cfdata_t, void *);
+static void	nouveau_pci_attach(device_t, device_t, void *);
+static int	nouveau_pci_detach(device_t, int);
 
-static bool	nouveau_suspend(device_t, const pmf_qual_t *);
-static bool	nouveau_resume(device_t, const pmf_qual_t *);
+static bool	nouveau_pci_suspend(device_t, const pmf_qual_t *);
+static bool	nouveau_pci_resume(device_t, const pmf_qual_t *);
 
-static void	nouveau_task_work(struct work *, void *);
+static void	nouveau_pci_task_work(struct work *, void *);
 
-CFATTACH_DECL_NEW(nouveau, sizeof(struct nouveau_softc),
-    nouveau_match, nouveau_attach, nouveau_detach, NULL);
+CFATTACH_DECL_NEW(nouveau_pci, sizeof(struct nouveau_pci_softc),
+    nouveau_pci_match, nouveau_pci_attach, nouveau_pci_detach, NULL);
 
 /* Kludge to get this from nouveau_drm.c.  */
 extern struct drm_driver *const nouveau_drm_driver;
 
 static int
-nouveau_match(device_t parent, cfdata_t match, void *aux)
+nouveau_pci_match(device_t parent, cfdata_t match, void *aux)
 {
-	extern int nouveau_guarantee_initialized(void);
 	const struct pci_attach_args *const pa = aux;
-	int error;
-
-	error = nouveau_guarantee_initialized();
-	if (error) {
-		aprint_error("nouveau: failed to initialize: %d\n", error);
-		return 0;
-	}
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NVIDIA &&
 	    PCI_VENDOR(pa->pa_id) != PCI_VENDOR_NVIDIA_SGS)
@@ -103,9 +98,9 @@ extern char *nouveau_config;
 extern char *nouveau_debug;
 
 static void
-nouveau_attach(device_t parent, device_t self, void *aux)
+nouveau_pci_attach(device_t parent, device_t self, void *aux)
 {
-	struct nouveau_softc *const sc = device_private(self);
+	struct nouveau_pci_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
 	uint64_t devname;
 	int error;
@@ -114,8 +109,8 @@ nouveau_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	if (!pmf_device_register(self, &nouveau_suspend,
-		&nouveau_resume))
+	if (!pmf_device_register(self, &nouveau_pci_suspend,
+		&nouveau_pci_resume))
 		aprint_error_dev(self, "unable to establish power handler\n");
 
 	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
@@ -142,7 +137,7 @@ nouveau_attach(device_t parent, device_t self, void *aux)
 	}
 
 	while (!SIMPLEQ_EMPTY(&sc->sc_task_u.attach)) {
-		struct nouveau_task *const task =
+		struct nouveau_pci_task *const task =
 		    SIMPLEQ_FIRST(&sc->sc_task_u.attach);
 
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_task_u.attach, nt_u.queue);
@@ -150,8 +145,8 @@ nouveau_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_task_state = NOUVEAU_TASK_WORKQUEUE;
-	error = workqueue_create(&sc->sc_task_u.workqueue, "intelfb",
-	    &nouveau_task_work, NULL, PRI_NONE, IPL_NONE, WQ_MPSAFE);
+	error = workqueue_create(&sc->sc_task_u.workqueue, "nouveau_pci",
+	    &nouveau_pci_task_work, NULL, PRI_NONE, IPL_NONE, WQ_MPSAFE);
 	if (error) {
 		aprint_error_dev(self, "unable to create workqueue: %d\n",
 		    error);
@@ -161,9 +156,9 @@ nouveau_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-nouveau_detach(device_t self, int flags)
+nouveau_pci_detach(device_t self, int flags)
 {
-	struct nouveau_softc *const sc = device_private(self);
+	struct nouveau_pci_softc *const sc = device_private(self);
 	int error;
 
 	/* XXX Check for in-use before tearing it all down...  */
@@ -199,36 +194,36 @@ out0:	pmf_device_deregister(self);
  * XXX Synchronize with nouveau_do_suspend in nouveau_drm.c.
  */
 static bool
-nouveau_suspend(device_t self, const pmf_qual_t *qual __unused)
+nouveau_pci_suspend(device_t self, const pmf_qual_t *qual __unused)
 {
-	struct nouveau_softc *const sc = device_private(self);
+	struct nouveau_pci_softc *const sc = device_private(self);
 	struct device *const dev = &sc->sc_pci_dev.dev; /* XXX KLUDGE */
 
 	return nouveau_pmops_suspend(dev) == 0;
 }
 
 static bool
-nouveau_resume(device_t self, const pmf_qual_t *qual)
+nouveau_pci_resume(device_t self, const pmf_qual_t *qual)
 {
-	struct nouveau_softc *const sc = device_private(self);
+	struct nouveau_pci_softc *const sc = device_private(self);
 	struct device *const dev = &sc->sc_pci_dev.dev; /* XXX KLUDGE */
 
 	return nouveau_pmops_resume(dev) == 0;
 }
 
 static void
-nouveau_task_work(struct work *work, void *cookie __unused)
+nouveau_pci_task_work(struct work *work, void *cookie __unused)
 {
-	struct nouveau_task *const task = container_of(work,
-	    struct nouveau_task, nt_u.work);
+	struct nouveau_pci_task *const task = container_of(work,
+	    struct nouveau_pci_task, nt_u.work);
 
 	(*task->nt_fn)(task);
 }
 
 int
-nouveau_task_schedule(device_t self, struct nouveau_task *task)
+nouveau_pci_task_schedule(device_t self, struct nouveau_pci_task *task)
 {
-	struct nouveau_softc *const sc = device_private(self);
+	struct nouveau_pci_softc *const sc = device_private(self);
 
 	switch (sc->sc_task_state) {
 	case NOUVEAU_TASK_ATTACH:
@@ -246,4 +241,34 @@ nouveau_task_schedule(device_t self, struct nouveau_task *task)
 		panic("nouveau in invalid task state: %d\n",
 		    (int)sc->sc_task_state);
 	}
+}
+
+static int
+nouveau_pci_modcmd(modcmd_t cmd, void *arg __unused)
+{
+	int error;
+
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = drm_pci_init(nouveau_drm_driver, NULL);
+		if (error) {
+			aprint_error("nouveau_pci: failed to init: %d\n",
+			    error);
+			return error;
+		}
+#if 0		/* XXX nouveau acpi */
+		nouveau_register_dsm_handler();
+#endif
+		break;
+	case MODULE_CMD_FINI:
+#if 0		/* XXX nouveau acpi */
+		nouveau_unregister_dsm_handler();
+#endif
+		drm_pci_exit(nouveau_drm_driver, NULL);
+		break;
+	default:
+		return ENOTTY;
+	}
+
+	return 0;
 }
