@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.35 2015/04/20 01:33:22 matt Exp $ */
+/* $NetBSD: awin_var.h,v 1.36 2015/10/17 15:30:14 bouyer Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -159,6 +159,8 @@ void	awin_fb_ddb_trap_callback(int);
 
 void	awin_wdog_reset(void);
 void	awin_tmr_cpu_init(struct cpu_info *);
+
+int	awin_set_mpu_volt(int, bool);
 
 static inline void
 awin_gpio_pindata_write(const struct awin_gpio_pindata *pd, int value)
