@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.h,v 1.1 2015/03/06 01:43:07 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.h,v 1.2 2015/10/17 12:02:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,21 +35,21 @@
 #include <sys/queue.h>
 #include <sys/workqueue.h>
 
-struct nouveau_task {
+struct nouveau_pci_task {
 	union {
-		SIMPLEQ_ENTRY(nouveau_task)	queue;
+		SIMPLEQ_ENTRY(nouveau_pci_task)	queue;
 		struct work			work;
 	}			nt_u;
-	void			(*nt_fn)(struct nouveau_task *);
+	void			(*nt_fn)(struct nouveau_pci_task *);
 };
 
 static inline void
-nouveau_task_init(struct nouveau_task *task, void (*fn)(struct nouveau_task *))
+nouveau_pci_task_init(struct nouveau_pci_task *task, void (*fn)(struct nouveau_pci_task *))
 {
 
 	task->nt_fn = fn;
 }
 
-int	nouveau_task_schedule(device_t, struct nouveau_task *);
+int	nouveau_pci_task_schedule(device_t, struct nouveau_pci_task *);
 
 #endif	/* _NOUVEAU_NOUVEAU_PCI_H_ */
