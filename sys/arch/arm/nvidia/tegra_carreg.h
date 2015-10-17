@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_carreg.h,v 1.20 2015/07/25 15:50:42 jmcneill Exp $ */
+/* $NetBSD: tegra_carreg.h,v 1.21 2015/10/17 21:16:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -63,6 +63,11 @@
 #define CAR_PLLP_OUTB_OUT3_OVRRIDE	__BIT(2)
 #define CAR_PLLP_OUTB_OUT3_CLKEN	__BIT(1)
 #define CAR_PLLP_OUTB_OUT3_RSTN		__BIT(0)
+#define CAR_PLLP_OUTC_REG	0x67c
+#define CAR_PLLP_OUTC_OUT5_RATIO	__BITS(31,24)
+#define CAR_PLLP_OUTC_OUT5_OVERRIDE	__BIT(18)
+#define CAR_PLLP_OUTC_OUT5_CLKEN	__BIT(17)
+#define CAR_PLLP_OUTC_OUT5_RSTN		__BIT(16)
 #define CAR_PLLP_MISC_REG	0xac
 
 #define CAR_PLLC_BASE_REG	0x80
