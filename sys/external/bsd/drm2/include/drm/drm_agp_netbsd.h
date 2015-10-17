@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agp_netbsd.h,v 1.5 2015/10/17 21:09:49 jmcneill Exp $	*/
+/*	$NetBSD: drm_agp_netbsd.h,v 1.6 2015/10/17 21:27:02 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -50,7 +50,11 @@
 #define	PCI_AGP_COMMAND_FW	AGPCMD_FWEN
 
 #if defined(__i386__) || defined(__x86_64__)
+#if defined(_KERNEL_OPT)
 #include "agp.h"
+#else
+#define NAGP 1
+#endif
 #if NAGP > 0
 #define	__OS_HAS_AGP	1
 #endif
