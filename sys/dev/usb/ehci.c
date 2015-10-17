@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.56 2015/10/16 17:05:19 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.57 2015/10/17 15:25:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.56 2015/10/16 17:05:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.57 2015/10/17 15:25:38 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -385,7 +385,7 @@ ehci_init(ehci_softc_t *sc)
 
 	vers = EREAD2(sc, EHCI_HCIVERSION);
 	aprint_verbose("%s: EHCI version %x.%x\n", device_xname(sc->sc_dev),
-	       vers >> 8, vers & 0xff);
+	    vers >> 8, vers & 0xff);
 
 	sparams = EREAD4(sc, EHCI_HCSPARAMS);
 	USBHIST_LOG(ehcidebug, "sparams=%#x", sparams, 0, 0, 0);
@@ -925,8 +925,8 @@ ehci_check_itd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	 */
 
 	usb_syncmem(&itd->dma, itd->offs + offsetof(ehci_itd_t, itd_ctl),
-		    sizeof(itd->itd.itd_ctl), BUS_DMASYNC_POSTWRITE |
-		    BUS_DMASYNC_POSTREAD);
+	    sizeof(itd->itd.itd_ctl),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	for (i = 0; i < EHCI_ITD_NUFRAMES; i++) {
 		if (le32toh(itd->itd.itd_ctl[i]) & EHCI_ITD_ACTIVE)
@@ -979,8 +979,8 @@ ehci_check_sitd_intr(ehci_softc_t *sc, struct ehci_xfer *ex)
 	 */
 
 	usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_trans),
-	    sizeof(sitd->sitd.sitd_trans), BUS_DMASYNC_POSTWRITE |
-		    BUS_DMASYNC_POSTREAD);
+	    sizeof(sitd->sitd.sitd_trans),
+	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	if (le32toh(sitd->sitd.sitd_trans) & EHCI_SITD_ACTIVE)
 		return;
@@ -1775,8 +1775,8 @@ ehci_dump_sqh(ehci_soft_qh_t *sqh)
 	USBHIST_LOGN(ehcidebug, 10, "Overlay qTD:", 0, 0, 0, 0);
 	ehci_dump_qtd(&qh->qh_qtd);
 
-	usb_syncmem(&sqh->dma, sqh->offs,
-	    sizeof(sqh->qh), BUS_DMASYNC_PREREAD);
+	usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh),
+	    BUS_DMASYNC_PREREAD);
 }
 
 Static void
@@ -3044,8 +3044,8 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 	LIST_REMOVE(sitd, free_list);
 	memset(&sitd->sitd, 0, sizeof(ehci_sitd_t));
 	usb_syncmem(&sitd->dma, sitd->offs + offsetof(ehci_sitd_t, sitd_next),
-		    sizeof(sitd->sitd.sitd_next), BUS_DMASYNC_PREWRITE |
-		    BUS_DMASYNC_PREREAD);
+	    sizeof(sitd->sitd.sitd_next),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	sitd->frame_list.next = NULL;
 	sitd->frame_list.prev = NULL;
@@ -4255,7 +4255,7 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 	stop->xfer_next = NULL;
 
 	usb_syncmem(&exfer->ex_xfer.ux_dmabuf, 0, total_length,
-		BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must
@@ -4583,7 +4583,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	stop->xfer_next = NULL;
 
 	usb_syncmem(&exfer->ex_xfer.ux_dmabuf, 0, total_length,
-		BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must
