@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.6 2015/03/06 12:24:36 riastradh Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.7 2015/10/17 15:13:19 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.6 2015/03/06 12:24:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.7 2015/10/17 15:13:19 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
-
-#include <machine/cpufunc.h>
 
 #include <linux/mm_types.h>
 
@@ -96,6 +94,8 @@ drm_clflush_virt_range(const void *vaddr, size_t nbytes)
 }
 
 #if defined(__i386__) || defined(__x86_64__)
+
+#include <machine/cpufunc.h>
 
 static bool
 drm_md_clflush_finegrained_p(void)
