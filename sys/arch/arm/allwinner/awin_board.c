@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.35 2015/04/20 01:33:22 matt Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.36 2015/10/17 14:46:01 bouyer Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.35 2015/04/20 01:33:22 matt Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.36 2015/10/17 14:46:01 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -143,8 +143,7 @@ awin_cpu_clk(void)
 				      AWIN_CPU_AHB_APB0_CFG_REG;
 	const uint32_t cpu0_cfg = bus_space_read_4(bst, awin_core_bsh,
 	    AWIN_CCM_OFFSET + reg);
-	const u_int cpu_clk_sel = __SHIFTIN(cpu0_cfg, AWIN_CPU_CLK_SRC_SEL);
-	switch (__SHIFTOUT(cpu_clk_sel, AWIN_CPU_CLK_SRC_SEL)) {
+	switch (__SHIFTOUT(cpu0_cfg, AWIN_CPU_CLK_SRC_SEL)) {
 	case AWIN_CPU_CLK_SRC_SEL_LOSC:
 		ci->ci_data.cpu_cc_freq = 32768;
 		break;
