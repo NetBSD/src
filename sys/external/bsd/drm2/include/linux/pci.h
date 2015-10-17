@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.19 2015/06/24 19:46:30 riastradh Exp $	*/
+/*	$NetBSD: pci.h,v 1.20 2015/10/17 14:54:10 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,8 +54,12 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
 
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
+#else
+struct acpi_devnode;
+#endif
 
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
