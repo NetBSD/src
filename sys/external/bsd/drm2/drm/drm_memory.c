@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_memory.c,v 1.7 2015/04/29 04:38:55 riastradh Exp $	*/
+/*	$NetBSD: drm_memory.c,v 1.8 2015/10/17 15:13:39 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,14 +30,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.7 2015/04/29 04:38:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_memory.c,v 1.8 2015/10/17 15:13:39 jmcneill Exp $");
+
+#if defined(__i386__) || defined(__x86_64__)
+#define HAS_AGP_I810	1
+#else
+#define HAS_AGP_I810	0
+#endif
 
 #ifdef _KERNEL_OPT
-#include "agp_i810.h"
-#include "genfb.h"
+# if HAS_AGP_I810 > 0
+#  include "agp_i810.h"
+# else
+#  define NAGP_I810	0
+# endif
+# include "genfb.h"
 #else
-#define	NAGP_I810	1	/* XXX WTF?  */
-#define	NGENFB		0	/* XXX WTF?  */
+# define NAGP_I810	HAS_AGP_I810	/* XXX WTF?  */
+# define NGENFB		0	/* XXX WTF?  */
 #endif
 
 #include <sys/bus.h>
