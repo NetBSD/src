@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.79 2015/08/08 23:30:16 tnn Exp $ */
+/* $NetBSD: awin_reg.h,v 1.80 2015/10/17 15:30:14 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -1001,12 +1001,20 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_PLL7_FRAC_SET		__BIT(14)
 #define AWIN_PLL7_FACTOR_M		__BITS(6,0)
 
+#define AWIN_DVFS_START			__BIT(31)
 #define AWIN_CPU_CLK_SRC_SEL		__BITS(17,16)
 #define AWIN_CPU_CLK_SRC_SEL_LOSC	0
 #define AWIN_CPU_CLK_SRC_SEL_OSC24M	1
 #define AWIN_CPU_CLK_SRC_SEL_PLL1	2
 #define AWIN_CPU_CLK_SRC_SEL_200MHZ	3
 #define AWIN_APB0_CLK_RATIO		__BITS(9,8)
+#define AWIN_AHB_CLK_SRC_SEL		__BITS(7,6)
+#define AWIN_AHB_CLK_SRC_SEL_AXI	0
+#define AWIN_AHB_CLK_SRC_SEL_PLL6_2	1
+#define AWIN_AHB_CLK_SRC_SEL_PLL6	2
+#define AWIN_AHB_CLK_RATIO		__BITS(5,4)
+#define AWIN_ATB_APB_CLK_DIV		__BITS(3,2)
+#define AWIN_AXI_CLK_DIV_RATIO		__BITS(1,0)
 
 #define AWIN_AHB_GATING0_STIMER		__BIT(28)
 #define AWIN_AHB_GATING0_SATA		__BIT(25)
