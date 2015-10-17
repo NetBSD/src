@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.h,v 1.2.16.2 2015/03/19 17:26:42 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.h,v 1.2.16.3 2015/10/17 10:24:59 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.h,v 1.3 2012/11/10 14:35:06 mikeb Exp $	*/
 
 /*-
@@ -443,6 +443,7 @@ struct athn_usb_softc {
 
 	int				usc_athn_attached;
 
+	kcondvar_t			usc_task_cv;
 	kmutex_t			usc_task_mtx;
 	kmutex_t			usc_tx_mtx;
 
