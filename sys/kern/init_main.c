@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.470 2015/09/14 01:40:03 uebayasi Exp $	*/
+/*	$NetBSD: init_main.c,v 1.471 2015/10/17 13:52:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.470 2015/09/14 01:40:03 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.471 2015/10/17 13:52:52 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -738,6 +738,9 @@ configure(void)
 #if NDRVCTL > 0
 	drvctl_init();
 #endif
+
+	/* Initialize driver modules */
+	module_init_class(MODULE_CLASS_DRIVER);
 
 	userconf_init();
 	if (boothowto & RB_USERCONF)
