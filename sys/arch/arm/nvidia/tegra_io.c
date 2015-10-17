@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_io.c,v 1.13 2015/08/01 21:20:11 jmcneill Exp $ */
+/* $NetBSD: tegra_io.c,v 1.14 2015/10/17 21:18:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.13 2015/08/01 21:20:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.14 2015/10/17 21:18:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,10 @@ static const struct tegra_locators tegra_ghost_locators[] = {
     TEGRA_HDMI_OFFSET, TEGRA_HDMI_SIZE, NOPORT, TEGRA_INTR_HDMI },
 };
 
+static const struct tegra_locators tegra_gpu_locators[] = {
+  { "nouveau", 0, TEGRA_GPU_SIZE, NOPORT, NOINTR }
+};
+
 int
 tegraio_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -170,6 +174,8 @@ tegraio_attach(device_t parent, device_t self, void *aux)
 	    tegra_host1x_locators, __arraycount(tegra_host1x_locators));
 	tegraio_scan(self, (bus_space_handle_t)NULL,
 	    tegra_ghost_locators, __arraycount(tegra_ghost_locators));
+	tegraio_scan(self, (bus_space_handle_t)NULL,
+	    tegra_gpu_locators, __arraycount(tegra_gpu_locators));
 	tegraio_scan(self, (bus_space_handle_t)NULL,
 	    tegra_pcie_locators, __arraycount(tegra_pcie_locators));
 }
