@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.38 2015/10/17 15:02:55 bouyer Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.39 2015/10/17 15:30:14 bouyer Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,12 +36,16 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.38 2015/10/17 15:02:55 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.39 2015/10/17 15:30:14 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/kmem.h>
 
 #include <prop/proplib.h>
 
@@ -129,6 +133,257 @@ static struct consdev awin_earlycons = {
 };
 #endif /* AWIN_CONSOLE_EARLY */
 
+struct awin_cpu_freq {
+	uint	freq; /* this frequency in hz */
+	int	mvolt; /* minimum millivolt for this freq */
+	int	pll_n, pll_k, pll_m, pll_p; /* pll parameters */
+	int	axi_div, ahb_div, abp0_div;
+};
+
+struct awin_cpu_freq awin_current_freq;
+const struct awin_cpu_freq *awin_freqs;
+
+#define A20_PLL1_ENTRY(n, k, m, p) \
+	.freq = (((AWIN_REF_FREQ * n * (k + 1)) / (m + 1)) >> p) / 1000000, \
+	.pll_n = (n), \
+	.pll_k = (k), \
+	.pll_m = (m), \
+	.pll_p = (p)
+
+static const struct awin_cpu_freq awin_a20_cpus_freqs[] = {
+	{
+		A20_PLL1_ENTRY(13, 0, 0, 0), /* 312 Mhz */
+		.mvolt = 1100,
+		.axi_div  = 0, /* /1, 312 Mhz */
+		.ahb_div  = 1, /* /2, 156 Mhz */
+		.abp0_div = 0, /* /2, 78 Mhz */
+	},
+	{
+		A20_PLL1_ENTRY(22, 0, 0, 0), /* 528 Mhz */
+		.mvolt = 1100,
+		.axi_div  = 1, /* /2, 264 Mhz */
+		.ahb_div  = 1, /* /2, 132 Mhz */
+		.abp0_div = 0, /* /2, 66 Mhz */
+	},
+	{
+		A20_PLL1_ENTRY(30, 0, 0, 0), /* 720 Mhz */
+		.mvolt = 1200,
+		.axi_div  = 1, /* /2, 360Mhz */
+		.ahb_div  = 1, /* /2, 180 Mhz */
+		.abp0_div = 0, /* /2, 90 Mhz */
+	},
+	{
+		A20_PLL1_ENTRY(18, 1, 0, 0), /* 864 Mhz */
+		.mvolt = 1300,
+		.axi_div  = 2, /* /3, 288 Mhz */
+		.ahb_div  = 1, /* /2, 144 Mhz */
+		.abp0_div = 0, /* /2, 72 Mhz */
+	},
+	{
+		A20_PLL1_ENTRY(19, 1, 0, 0), /* 912 Mhz */
+		.mvolt = 1400,
+		.axi_div  = 2, /* /3, 304Mhz */
+		.ahb_div  = 1, /* /2, 152 Mhz */
+		.abp0_div = 0, /* /2, 76 Mhz */
+	},
+	{
+		A20_PLL1_ENTRY(20, 1, 0, 0), /* 960 Mhz */
+		.mvolt = 1400,
+		.axi_div  = 2, /* /3, 320Mhz */
+		.ahb_div  = 1, /* /2, 160 Mhz */
+		.abp0_div = 0, /* /2, 80 Mhz */
+	},
+	{
+		A20_PLL1_ENTRY(21, 1, 0, 0), /* 1008 Mhz */
+		.mvolt = 1425,
+		.axi_div  = 2, /* /3, 336 Mhz */
+		.ahb_div  = 1, /* /2, 168 Mhz */
+		.abp0_div = 0, /* /2, 84 Mhz */
+	},
+	{
+		.freq = 0, /* end of array */
+		.mvolt = 0,
+		.pll_n = 0,
+		.pll_k = 0,
+		.pll_m = 0,
+		.pll_p = 0,
+		.axi_div  = 0,
+		.ahb_div  = 0,
+		.abp0_div = 0,
+	},
+};
+
+static kmutex_t cpufreq_lock;
+static int awin_freq_min, awin_freq_max;
+
+static int awin_set_cpu_clk(uint64_t);
+
+static int
+awin_current_frequency_sysctl_helper(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node = *rnode;
+	int freq = awin_current_freq.freq;
+	int old_freq = freq;
+	int old_mvolt;
+	struct awin_cpu_freq new_awin_freq;
+
+	KASSERTMSG(
+	    curcpu()->ci_data.cpu_cc_freq == awin_current_freq.freq * 1000000,
+	    "cc_freq %"PRIu64" mpu_freq %u000000",
+	    curcpu()->ci_data.cpu_cc_freq, awin_current_freq.freq);
+
+	node.sysctl_data = &freq;
+
+	int error = sysctl_lookup(SYSCTLFN_CALL(&node));
+
+	if (error || newp == NULL)
+		return error;
+
+	if (freq == old_freq)
+		return 0;
+	KASSERT(awin_freqs != NULL);
+	error = EINVAL;
+	if (freq < awin_freq_min || freq > awin_freq_max)
+		return error;
+	for (size_t i = 0; awin_freqs[i].freq > 0; i++) {
+		if (awin_freqs[i].freq == freq) {
+			new_awin_freq = awin_freqs[i];
+			error = 0;    
+			break;
+		}
+	}
+	if (error)
+		return error;
+	mutex_enter(&cpufreq_lock);
+	freq = awin_current_freq.freq;
+	old_mvolt = awin_current_freq.mvolt;
+
+	if (new_awin_freq.mvolt > old_mvolt) {
+		/* need to raise CPU voltage first */
+		for (old_mvolt += 25; old_mvolt <= new_awin_freq.mvolt;
+		    old_mvolt += 25) {
+			error = awin_set_mpu_volt(old_mvolt, 0);
+			if (error)
+				goto end;
+			kpause("cpuvolt", 0, max(mstohz(1), 1), NULL);
+		}
+	}
+	/* adjust ppl1. This needs to adjust the other dividers as well */
+	error = awin_set_cpu_clk(new_awin_freq.freq);
+	if (error)
+		goto end;
+	if (new_awin_freq.mvolt < old_mvolt) {
+		/*
+		 * now we can lower voltage. Ignore error if any, because
+		 * the freq has been changed.
+		 */
+		for (old_mvolt -= 25; old_mvolt >= new_awin_freq.mvolt;
+		    old_mvolt -= 25) {
+			error = awin_set_mpu_volt(old_mvolt, 0);
+			if (error) {
+				printf(
+				   "warning: failed to lower CPU voltage: %d\n",
+			    	   error);
+			}
+			error = 0;
+			kpause("cpuvolt", 0, max(mstohz(1), 1), NULL);
+		}
+	}
+
+end:
+	mutex_exit(&cpufreq_lock);
+	return error;
+}
+
+static int
+awin_available_frequency_sysctl_helper(SYSCTLFN_ARGS)
+{
+	char *available_frequencies;
+	int availfreq_size;
+	char cur_cpu_freq[6];
+	int i;
+
+	available_frequencies = oldp;
+	availfreq_size = *oldlenp;
+	if (available_frequencies == NULL) {
+		*oldlenp = __arraycount(awin_a20_cpus_freqs)*6;
+		return 0;
+	}
+
+	available_frequencies[0] = '\0';
+	for (i = 0 ; awin_freqs[i].freq > 0; i++) {
+		if (awin_freqs[i].freq < awin_freq_min ||
+		    awin_freqs[i].freq > awin_freq_max)
+			continue;
+		snprintf(cur_cpu_freq, sizeof(cur_cpu_freq), "%u",      
+		    awin_freqs[i].freq);
+		if (strlen(available_frequencies) > 0) {
+			strlcat(available_frequencies, " ", availfreq_size);
+		}
+		strlcat(available_frequencies, cur_cpu_freq, availfreq_size);
+	}
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_awin_machdep_setup, "sysctl allwinner machdep subtree setup")
+{
+	const struct sysctlnode *freqnode, *node;
+	int i;
+	int cc_freq = curcpu()->ci_data.cpu_cc_freq / 1000000;
+
+	if (awin_chip_id() == AWIN_CHIP_ID_A20) {
+		awin_freqs = awin_a20_cpus_freqs;
+		awin_freq_min = 700;
+		awin_freq_max = 960;
+	} else {
+		return;
+	}
+	mutex_init(&cpufreq_lock, MUTEX_DEFAULT, IPL_NONE);
+
+	/* locate current freq in array */
+	for (i = 0; awin_freqs[i].freq > 0; i++) {
+		if (awin_freqs[i].freq >= cc_freq) {
+			awin_current_freq = awin_freqs[i];
+			awin_current_freq.freq = cc_freq;
+			break;
+		}
+	}
+	KASSERT(awin_current_freq.mvolt > 0);
+
+	sysctl_createv(clog, 0, NULL, &node,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "machdep", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, &node, &freqnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "frequency", NULL,
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, &freqnode, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_STRING, "available", NULL,
+		       awin_available_frequency_sysctl_helper, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &freqnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "current", NULL,
+		       awin_current_frequency_sysctl_helper, 0, NULL, 0, 
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &freqnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "min", NULL,
+		       NULL, 0, &awin_freq_min, sizeof(awin_freq_min), 
+		       CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &freqnode, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "max", NULL,
+		       NULL, 0, &awin_freq_max, sizeof(awin_freq_max), 
+		       CTL_CREATE, CTL_EOL);
+}
+
 static void
 awin_cpu_clk(void)
 {
@@ -178,6 +433,134 @@ awin_cpu_clk(void)
 		break;
 	}
 #endif
+}
+
+static void
+awin_set_cpu_ahb_abp0_cfg(int reg, const struct awin_cpu_freq *awin_target_freq)
+{
+	uint32_t value = CCM_READ4(reg);
+
+	/* set up dividers */
+	value &= ~AWIN_APB0_CLK_RATIO;
+	value |= __SHIFTIN(awin_target_freq->abp0_div, AWIN_APB0_CLK_RATIO);
+	value &= ~AWIN_AHB_CLK_RATIO;
+	value |= __SHIFTIN(awin_target_freq->ahb_div, AWIN_AHB_CLK_RATIO);
+	value &= ~AWIN_AHB_CLK_SRC_SEL;
+	value |= __SHIFTIN(AWIN_AHB_CLK_SRC_SEL_AXI, AWIN_AHB_CLK_SRC_SEL);
+	value &= ~AWIN_AXI_CLK_DIV_RATIO;
+	value |= __SHIFTIN(awin_target_freq->axi_div, AWIN_AXI_CLK_DIV_RATIO);
+	CCM_WRITE4(reg, value);
+	delay(500);
+	CCM_WRITE4(reg, value | AWIN_DVFS_START);
+	delay(500);
+	while ((CCM_READ4(reg) & AWIN_DVFS_START) != 0)
+		delay(500);
+}
+
+static void
+awin_set_pll1(int pll1reg, const struct awin_cpu_freq *awin_target_freq)
+{
+	uint32_t pll1v = CCM_READ4(pll1reg);
+	int old_p = __SHIFTOUT(pll1v, AWIN_PLL_CFG_OUT_EXP_DIVP);
+
+	KASSERT(awin_target_freq->pll_n != 0);
+	if (old_p < awin_target_freq->pll_p) {
+		/* first increase P, then change others */
+		pll1v &=  ~AWIN_PLL_CFG_OUT_EXP_DIVP;
+		pll1v |= __SHIFTIN(awin_target_freq->pll_p,
+		    AWIN_PLL_CFG_OUT_EXP_DIVP);
+		CCM_WRITE4(pll1reg, pll1v);
+		delay(500);
+		pll1v &=  ~AWIN_PLL_CFG_FACTOR_N;
+		pll1v |= __SHIFTIN(awin_target_freq->pll_n,
+		    AWIN_PLL_CFG_FACTOR_N);
+		pll1v &=  ~AWIN_PLL_CFG_FACTOR_K;
+		pll1v |= __SHIFTIN(awin_target_freq->pll_k,
+		    AWIN_PLL_CFG_FACTOR_K);
+		pll1v &=  ~AWIN_PLL_CFG_FACTOR_M;
+		pll1v |= __SHIFTIN(awin_target_freq->pll_m,
+		    AWIN_PLL_CFG_FACTOR_M);
+		CCM_WRITE4(pll1reg, pll1v);
+		delay(500);
+	} else {
+		/* set other factors, then P */
+		pll1v &=  ~AWIN_PLL_CFG_FACTOR_N;
+		pll1v |= __SHIFTIN(awin_target_freq->pll_n,
+		    AWIN_PLL_CFG_FACTOR_N);
+		pll1v &=  ~AWIN_PLL_CFG_FACTOR_K;
+		pll1v |= __SHIFTIN(awin_target_freq->pll_k,
+		    AWIN_PLL_CFG_FACTOR_K);
+		pll1v &=  ~AWIN_PLL_CFG_FACTOR_M;
+		pll1v |= __SHIFTIN(awin_target_freq->pll_m,
+		    AWIN_PLL_CFG_FACTOR_M);
+		CCM_WRITE4(pll1reg, pll1v);
+		delay(500);
+		if (old_p != awin_target_freq->pll_p) {
+			pll1v &=  ~AWIN_PLL_CFG_OUT_EXP_DIVP;
+			pll1v |= __SHIFTIN(awin_target_freq->pll_p,
+			    AWIN_PLL_CFG_OUT_EXP_DIVP);
+			CCM_WRITE4(pll1reg, pll1v);
+			delay(500);
+		}
+	}
+}
+
+static int
+awin_set_cpu_clk(uint64_t new_freq)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	u_int reg = awin_chip_id() == AWIN_CHIP_ID_A31 ?
+				      AWIN_A31_CPU_AXI_CFG_REG :
+				      AWIN_CPU_AHB_APB0_CFG_REG;
+	int i;
+
+	if (awin_chip_id() != AWIN_CHIP_ID_A20)
+		return EOPNOTSUPP;
+
+	/*
+	 * we have to either increase or decrease frequencies in steps
+	 * to repect constraints on axi, ahb and abp frequencies
+	 */
+	if (new_freq > awin_current_freq.freq) {
+		/* locate first step above current freq */
+		for (i = 0;
+		    awin_freqs[i].freq <= awin_current_freq.freq;
+		    i++) {
+			KASSERT(awin_freqs[i].freq != 0);
+		}
+		/* now increase frequency */
+		for (;
+		    awin_freqs[i].freq <= new_freq && awin_freqs[i].freq != 0;
+		    i++) {
+			KASSERT(awin_freqs[i].pll_n != 0);
+			/* set up dividers */
+			awin_set_cpu_ahb_abp0_cfg(reg, &awin_freqs[i]);
+			/* set up PLL */
+			awin_set_pll1(AWIN_PLL1_CFG_REG, &awin_freqs[i]);
+			awin_current_freq = awin_freqs[i];
+		}
+	} else if (new_freq < awin_current_freq.freq) {
+		/* locate current freq */
+		for (i = 0;
+		    awin_freqs[i].freq < awin_current_freq.freq;
+		    i++) {
+			KASSERT(awin_freqs[i].freq != 0);
+		}
+		KASSERT(i > 0);
+		/* and decrease frequency */
+		for (i--; awin_freqs[i].freq >= new_freq && i >= 0; i--) {
+			/* first decrease PLL */
+			awin_set_pll1(AWIN_PLL1_CFG_REG, &awin_freqs[i]);
+			/* set up dividers */
+			awin_set_cpu_ahb_abp0_cfg(reg, &awin_freqs[i]);
+			awin_current_freq = awin_freqs[i];
+		}
+	}
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_data.cpu_cc_freq = awin_current_freq.freq * 1000000;
+	}
+	return 0;
 }
 
 void
