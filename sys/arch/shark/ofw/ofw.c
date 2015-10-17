@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw.c,v 1.63 2014/02/22 18:55:53 matt Exp $	*/
+/*	$NetBSD: ofw.c,v 1.64 2015/10/17 16:34:43 jmcneill Exp $	*/
 
 /*
  * Copyright 1997
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.63 2014/02/22 18:55:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw.c,v 1.64 2015/10/17 16:34:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1062,7 +1062,7 @@ ofw_callbackhandler(void *v)
 		}
 
 		/* Clean out tlb. */
-		tlb_flush();
+		cpu_tlb_flushID();
 
 		args_n_results[nargs + 1] = 0;
 		args->nreturns = 2;
@@ -1106,7 +1106,7 @@ ofw_callbackhandler(void *v)
 		}
 
 		/* Clean out tlb. */
-		tlb_flush();
+		cpu_tlb_flushID();
 
 		args->nreturns = 1;
 	} else if (strcmp(name, "translate") == 0) {
