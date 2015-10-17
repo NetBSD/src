@@ -53,6 +53,8 @@ int drm_agp_bind_ioctl(struct drm_device *dev, void *data,
 		       struct drm_file *file_priv);
 #else /* __OS_HAS_AGP */
 
+#if !defined(__NetBSD__)
+
 static inline void drm_free_agp(struct agp_memory * handle, int pages)
 {
 }
@@ -66,6 +68,8 @@ static inline int drm_unbind_agp(struct agp_memory * handle)
 {
 	return -ENODEV;
 }
+
+#endif
 
 static inline struct agp_memory *drm_agp_bind_pages(struct drm_device *dev,
 					      struct page **pages,
