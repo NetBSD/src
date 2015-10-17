@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveaufb.c,v 1.2 2015/04/04 15:12:39 jmcneill Exp $	*/
+/*	$NetBSD: nouveaufb.c,v 1.3 2015/10/17 12:02:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.2 2015/04/04 15:12:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveaufb.c,v 1.3 2015/10/17 12:02:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ static int	nouveaufb_match(device_t, cfdata_t, void *);
 static void	nouveaufb_attach(device_t, device_t, void *);
 static int	nouveaufb_detach(device_t, int);
 
-static void	nouveaufb_attach_task(struct nouveau_task *);
+static void	nouveaufb_attach_task(struct nouveau_pci_task *);
 
 static bool	nouveaufb_shutdown(device_t, int);
 static paddr_t	nouveaufb_drmfb_mmapfb(struct drmfb_softc *, off_t, int);
@@ -60,7 +60,7 @@ struct nouveaufb_softc {
 	struct drmfb_softc		sc_drmfb; /* XXX Must be first.  */
 	device_t			sc_dev;
 	struct nouveaufb_attach_args	sc_nfa;
-	struct nouveau_task		sc_attach_task;
+	struct nouveau_pci_task		sc_attach_task;
 	bool				sc_scheduled:1;
 	bool				sc_attached:1;
 };
@@ -97,8 +97,8 @@ nouveaufb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	nouveau_task_init(&sc->sc_attach_task, &nouveaufb_attach_task);
-	error = nouveau_task_schedule(parent, &sc->sc_attach_task);
+	nouveau_pci_task_init(&sc->sc_attach_task, &nouveaufb_attach_task);
+	error = nouveau_pci_task_schedule(parent, &sc->sc_attach_task);
 	if (error) {
 		aprint_error_dev(self, "failed to schedule mode set: %d\n",
 		    error);
@@ -137,7 +137,7 @@ nouveaufb_detach(device_t self, int flags)
 }
 
 static void
-nouveaufb_attach_task(struct nouveau_task *task)
+nouveaufb_attach_task(struct nouveau_pci_task *task)
 {
 	struct nouveaufb_softc *const sc = container_of(task,
 	    struct nouveaufb_softc, sc_attach_task);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_module.c,v 1.3 2014/11/12 03:14:00 christos Exp $	*/
+/*	$NetBSD: nouveau_module.c,v 1.4 2015/10/17 12:02:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,13 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.3 2014/11/12 03:14:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.4 2015/10/17 12:02:44 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/module.h>
-#ifndef _MODULE
-#include <sys/once.h>
-#endif
 #include <sys/systm.h>
 
 #include <drm/drmP.h>
@@ -45,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_module.c,v 1.3 2014/11/12 03:14:00 christos 
 #include <core/object.h>
 #include <engine/device.h>
 
-MODULE(MODULE_CLASS_DRIVER, nouveau, "drmkms,drmkms_pci"); /* XXX drmkms_i2c, drmkms_ttm */
+MODULE(MODULE_CLASS_DRIVER, nouveau, "drmkms"); /* XXX drmkms_i2c, drmkms_ttm */
 
 #ifdef _MODULE
 #include "ioconf.c"
@@ -58,40 +55,11 @@ extern struct drm_driver *const nouveau_drm_driver; /* XXX */
 static int
 nouveau_init(void)
 {
-	extern int drm_guarantee_initialized(void);
-	int error;
-
-	error = drm_guarantee_initialized();
-	if (error)
-		return error;
-
-	error = drm_pci_init(nouveau_drm_driver, NULL);
-	if (error) {
-		aprint_error("nouveau: failed to init pci: %d\n", error);
-		return error;
-	}
-
 	nouveau_objects_init();
 	nouveau_devices_init();
-#if 0				/* XXX nouveau acpi */
-	nouveau_register_dsm_handler();
-#endif
 	drm_sysctl_init(&nouveau_def);
 
 	return 0;
-}
-
-int	nouveau_guarantee_initialized(void); /* XXX */
-int
-nouveau_guarantee_initialized(void)
-{
-#ifdef _MODULE
-	return 0;
-#else
-	static ONCE_DECL(nouveau_init_once);
-
-	return RUN_ONCE(&nouveau_init_once, &nouveau_init);
-#endif
 }
 
 static void
@@ -99,12 +67,8 @@ nouveau_fini(void)
 {
 
 	drm_sysctl_fini(&nouveau_def);
-#if 0				/* XXX nouveau acpi */
-	nouveau_unregister_dsm_handler();
-#endif
 	nouveau_devices_fini();
 	nouveau_objects_fini();
-	drm_pci_exit(nouveau_drm_driver, NULL);
 }
 
 static int
@@ -114,11 +78,7 @@ nouveau_modcmd(modcmd_t cmd, void *arg __unused)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#ifdef _MODULE
 		error = nouveau_init();
-#else
-		error = nouveau_guarantee_initialized();
-#endif
 		if (error) {
 			aprint_error("nouveau: failed to initialize: %d\n",
 			    error);

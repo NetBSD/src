@@ -1,14 +1,15 @@
-#	$NetBSD: files.nouveau,v 1.8 2015/03/06 01:43:07 riastradh Exp $
+#	$NetBSD: files.nouveau,v 1.9 2015/10/17 12:02:44 jmcneill Exp $
 
 define	nouveaufbbus	{ }
-device	nouveau: drmkms, drmkms_pci, drmkms_ttm, nouveaufbbus
-attach	nouveau at pci
+device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
+
+attach	nouveau at pci with nouveau_pci: drmkms_pci
+file	external/bsd/drm2/nouveau/nouveau_pci.c			nouveau
 
 device	nouveaufb: nouveaufbbus, drmfb, drmfb_pci, wsemuldisplaydev
 attach	nouveaufb at nouveaufbbus
 
 # Local additions.  External sources are listd below.
-file	external/bsd/drm2/nouveau/nouveau_pci.c			nouveau
 file	external/bsd/drm2/nouveau/nouveau_sysfs.c		nouveau
 file	external/bsd/drm2/nouveau/nouveau_vga.c			nouveau
 file	external/bsd/drm2/nouveau/nouveaufb.c			nouveaufb
