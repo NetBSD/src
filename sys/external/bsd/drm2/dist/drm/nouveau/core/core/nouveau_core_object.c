@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_core_object.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_core_object.c,v 1.3 2015/10/18 14:49:24 jmcneill Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_core_object.c,v 1.2 2014/08/06 13:35:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_core_object.c,v 1.3 2015/10/18 14:49:24 jmcneill Exp $");
 
 #include <core/object.h>
 #include <core/parent.h>
@@ -47,14 +47,18 @@ void
 nouveau_objects_init(void)
 {
 
+#ifdef NOUVEAU_OBJECT_MAGIC
 	spin_lock_init(&_objlist_lock);
+#endif
 }
 
 void
 nouveau_objects_fini(void)
 {
 
+#ifdef NOUVEAU_OBJECT_MAGIC
 	spin_lock_destroy(&_objlist_lock);
+#endif
 }
 #endif
 
