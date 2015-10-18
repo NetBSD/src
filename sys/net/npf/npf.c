@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.24 2015/10/17 13:53:40 jmcneill Exp $	*/
+/*	$NetBSD: npf.c,v 1.25 2015/10/18 18:48:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.24 2015/10/17 13:53:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.25 2015/10/18 18:48:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -59,7 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.24 2015/10/17 13:53:40 jmcneill Exp $");
 /*
  * Module and device structures.
  */
-MODULE(MODULE_CLASS_MISC, npf, NULL);
+MODULE(MODULE_CLASS_DRIVER, npf, NULL);
 
 static int	npf_fini(void);
 static int	npf_dev_open(dev_t, int, int, lwp_t *);
