@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.93 2015/08/24 04:51:18 matt Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.94 2015/10/18 15:34:08 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.93 2015/08/24 04:51:18 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.94 2015/10/18 15:34:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -734,10 +734,46 @@ _bus_dmamap_load_uio(bus_dma_tag_t t, bus_dmamap_t map, struct uio *uio,
  */
 int
 _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
-    bus_dma_segment_t *segs, int nsegs, bus_size_t size, int flags)
+    bus_dma_segment_t *segs, int nsegs, bus_size_t size0, int flags)
 {
 
-	panic("_bus_dmamap_load_raw: not implemented");
+	bus_size_t size;
+	int i, error = 0;
+
+	/*
+	 * Make sure that on error conditions we return "no valid mappings."
+	 */
+	map->dm_mapsize = 0;
+	map->dm_nsegs = 0;
+	KASSERT(map->dm_maxsegsz <= map->_dm_maxmaxsegsz);
+
+	if (size0 > map->_dm_size)
+		return EINVAL;
+
+	for (i = 0, size = size0; i < nsegs && size > 0; i++) {
+		bus_dma_segment_t *ds = &segs[i];
+		bus_size_t sgsize;
+
+		sgsize = MIN(ds->ds_len, size);
+		if (sgsize == 0)
+			continue;
+		error = _bus_dmamap_load_paddr(t, map, ds->ds_addr,
+		    sgsize, false);
+		if (error != 0)
+			break;
+		size -= sgsize;
+	}
+
+	if (error != 0) {
+		map->dm_mapsize = 0;
+		map->dm_nsegs = 0;
+		return error;
+	}
+
+	/* XXX TBD bounce */
+
+	map->dm_mapsize = size0;
+	return 0;
 }
 
 /*
