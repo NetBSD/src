@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.4 2015/10/18 14:20:22 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.5 2015/10/18 14:31:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.4 2015/10/18 14:20:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.5 2015/10/18 14:31:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,6 +138,10 @@ tegra_nouveau_init(device_t self)
 		aprint_error_dev(self, "couldn't allocate DRM device\n");
 		return;
 	}
+	dev->bst = bst;
+	dev->bus_dmat = sc->sc_dmat;
+	dev->dmat = dev->bus_dmat;
+	dev->dmat_subregion_p = false;
 	dev->platformdev = &sc->sc_platform_dev;
 
 	dev->platformdev->id = -1;
