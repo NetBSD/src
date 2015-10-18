@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_or.S,v 1.7 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_or.S,v 1.8 2015/10/18 02:28:07 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,14 +52,22 @@ ATOMIC_OP_ALIAS(atomic_or_uint_nv,_atomic_or_32)
 STRONG_ALIAS(_atomic_or_uint_nv,_atomic_or_32)
 
 ENTRY(_atomic_or_64)
+#ifndef __arch64__
+	COMBINE(%o1, %o2, %o1)
+#endif
 	ldx	[%o0], %o2
 1:	or	%o1, %o2, %o3
 	casx	[%o0], %o2, %o3
 	cmp	%o2, %o3
 	bne,a,pn %xcc, 1b
 	 mov	%o3, %o2
+#ifdef __arch64__
 	retl
 	 or	%o1, %o2, %o0
+#else
+	or	%o1, %o2, %o0
+	SPLIT_RETL(%o0, %o0, %o1)
+#endif
 ATOMIC_OP_ALIAS(atomic_or_64,_atomic_or_64)
 
 ATOMIC_OP_ALIAS(atomic_or_64_nv,_atomic_or_64)
@@ -70,3 +78,19 @@ STRONG_ALIAS_SIZE(_atomic_or_ulong,_atomic_or)
 
 ATOMIC_OP_ALIAS_SIZE(atomic_or_ulong_nv,_atomic_or)
 STRONG_ALIAS_SIZE(_atomic_or_ulong_nv,_atomic_or)
+
+#if !defined(__arch64__) && defined(CRT_ALIAS)
+ENTRY(__sync_fetch_and_or_8)
+	COMBINE(%o1, %o2, %o1)
+	ldx	[%o0], %o2
+1:	or	%o1, %o2, %o3
+	casx	[%o0], %o2, %o3
+	cmp	%o2, %o3
+	bne,a,pn %xcc, 1b
+	 mov	%o3, %o2
+	SPLIT_RETL(%o2, %o0, %o1)
+CRT_ALIAS(__sync_or_and_fetch_8,_atomic_or_64_nv)
+
+CRT_ALIAS(__atomic_fetch_or_8,__sync_fetch_and_or_8)
+CRT_ALIAS(__atomic_or_fetch_8,__sync_or_and_fetch_8)
+#endif
