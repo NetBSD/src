@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.693 2015/09/14 15:51:29 nonaka Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.694 2015/10/18 09:37:14 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.701 2015/09/14 15:51:07 nonaka Exp
+ *	NetBSD: usbdevs,v 1.702 2015/10/18 09:36:11 nonaka Exp
  */
 
 /*
@@ -1456,6 +1456,7 @@
 #define	USB_PRODUCT_ELECOM_LDUSBLTX	0x4005		/* LD-USBL/TX */
 #define	USB_PRODUCT_ELECOM_WDC150SU2M	0x4008		/* WDC-150SU2M */
 #define	USB_PRODUCT_ELECOM_LDUSBTX2	0x400b		/* LD-USB/TX */
+#define	USB_PRODUCT_ELECOM_WDC433SU2M2	0x400e		/* WDC-433SU2M2 */
 #define	USB_PRODUCT_ELECOM_LDUSB20	0x4010		/* LD-USB20 */
 #define	USB_PRODUCT_ELECOM_UCSGT	0x5003		/* UC-SGT serial adapter */
 #define	USB_PRODUCT_ELECOM_UCSGT0	0x5004		/* UC-SGT0 Serial */
