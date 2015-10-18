@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.268 2015/10/18 15:14:50 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.269 2015/10/18 15:58:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.268 2015/10/18 15:14:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.269 2015/10/18 15:58:23 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1384,8 +1384,17 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		/* Handled by the driver layer */
 		return EPASSTHROUGH;
 
+	case TIOCEXT:
+	case TIOCPTSNAME:
+	case TIOCGRANTPT:
+	case TIOCPKT:
+	case TIOCUCNTL:
+	case TIOCREMOTE:
+	case TIOCSIG:
+		/* for ptys */
+		return EPASSTHROUGH;
+
 	default:
-		printf("BARF 0x%lx\n", cmd);
 #ifdef COMPAT_60
 		error = compat_60_ttioctl(tp, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)
