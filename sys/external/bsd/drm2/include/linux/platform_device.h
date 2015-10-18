@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_device.h,v 1.5 2015/10/17 21:13:38 jmcneill Exp $	*/
+/*	$NetBSD: platform_device.h,v 1.6 2015/10/18 14:04:03 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -41,6 +41,7 @@ struct platform_device {
 	struct device	dev;	/* XXX DON'T BELIEVE ME */
 	uint64_t	id;
 
+	bus_dma_tag_t	dmat;
 	unsigned int	nresource;
 	struct {
 		bus_space_tag_t	tag;
