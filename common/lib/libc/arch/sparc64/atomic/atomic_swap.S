@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.6 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.7 2015/10/18 02:28:07 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -47,17 +47,29 @@ ATOMIC_OP_ALIAS(atomic_swap_uint,_atomic_swap_32)
 STRONG_ALIAS(_atomic_swap_uint,_atomic_swap_32)
 
 ENTRY(_atomic_swap_64)
+#ifndef __arch64__
+	COMBINE(%o1, %o2, %o1)
+#endif
 	ldx	[%o0], %o2
 1:	mov	%o1, %o3
 	casx	[%o0], %o2, %o3
 	cmp	%o2, %o3
 	bne,a,pn %xcc, 1b
 	 mov	%o3, %o2
+#ifdef __arch64__
 	retl
 	 mov	%o3, %o0
+#else
+	SPLIT_RETL(%o3, %o0, %o1)
+#endif
 ATOMIC_OP_ALIAS(atomic_swap_64,_atomic_swap_64)
 
 ATOMIC_OP_ALIAS_SIZE(atomic_swap_ulong,_atomic_swap)
 STRONG_ALIAS_SIZE(_atomic_swap_ulong,_atomic_swap)
 ATOMIC_OP_ALIAS_SIZE(atomic_swap_ptr,_atomic_swap)
 STRONG_ALIAS_SIZE(_atomic_swap_ptr,_atomic_swap)
+
+#if !defined(__arch64__) && defined(CRT_ALIAS)
+CRT_ALIAS(__sync_lock_test_and_set_8,_atomic_swap_64)
+CRT_ALIAS(__atomic_exchange_8,_atomic_swap_64)
+#endif
