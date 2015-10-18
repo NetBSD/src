@@ -1,4 +1,4 @@
-#	$NetBSD: files.nouveau,v 1.10 2015/10/17 17:32:18 jmcneill Exp $
+#	$NetBSD: files.nouveau,v 1.11 2015/10/18 15:42:00 jmcneill Exp $
 
 define	nouveaufbbus	{ }
 device	nouveau: drmkms, drmkms_ttm, nouveaufbbus
@@ -321,6 +321,7 @@ file	external/bsd/drm2/dist/drm/nouveau/core/engine/dmaobj/nouveau_engine_dmaobj
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/dmaobj/nouveau_engine_dmaobj_nvc0.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/dmaobj/nouveau_engine_dmaobj_nvd0.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_base.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_gk20a.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nv04.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nv10.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nv108.c	nouveau
@@ -330,6 +331,7 @@ file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nv5
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nv84.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nvc0.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nve0.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxgk20a.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxgm107.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxnv108.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxnv40.c	nouveau
@@ -342,6 +344,7 @@ file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_c
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxnvd9.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxnve4.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_ctxnvf0.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_gk20a.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_gm107.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_nv04.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/engine/graph/nouveau_engine_graph_nv10.c	nouveau
@@ -446,6 +449,7 @@ file	external/bsd/drm2/dist/drm/nouveau/core/subdev/devinit/nouveau_subdev_devin
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/devinit/nouveau_subdev_devinit_nvc0.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_base.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_gddr5.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_gk20a.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_gm107.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nv04.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nv10.c	nouveau
@@ -469,6 +473,7 @@ file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nvaa.c	
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nvaf.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nvc0.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_nve0.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_ramgk20a.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_ramgm107.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_ramnv04.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/fb/nouveau_subdev_fb_ramnv10.c	nouveau
@@ -499,6 +504,7 @@ file	external/bsd/drm2/dist/drm/nouveau/core/subdev/i2c/nouveau_subdev_i2c_nv4e.
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/i2c/nouveau_subdev_i2c_nv50.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/i2c/nouveau_subdev_i2c_nv94.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/i2c/nouveau_subdev_i2c_nvd0.c	nouveau
+file	external/bsd/drm2/dist/drm/nouveau/core/subdev/ibus/nouveau_subdev_ibus_gk20a.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/ibus/nouveau_subdev_ibus_nvc0.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/ibus/nouveau_subdev_ibus_nve0.c	nouveau
 file	external/bsd/drm2/dist/drm/nouveau/core/subdev/instmem/nouveau_subdev_instmem_base.c	nouveau
