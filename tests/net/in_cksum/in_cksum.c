@@ -1,4 +1,4 @@
-/*	$NetBSD: in_cksum.c,v 1.4 2015/10/18 18:26:55 christos Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.5 2015/10/18 18:27:25 christos Exp $	*/
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.4 2015/10/18 18:26:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_cksum.c,v 1.5 2015/10/18 18:27:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -224,8 +224,6 @@ main(int argc, char **argv)
 		len -= off;
 		old_sum = portable_cpu_in_cksum(m, len, off, init_sum);
 #ifdef HAVE_CPU_IN_CKSUM
-		if (len == 10041)
-			m = m->m_next;
 #ifdef MBUFDUMP
 		printf("m->m_len=%d len=%d off=%d\n", m->m_len, len, off);
 		dump_mbuf(m, len, off);
