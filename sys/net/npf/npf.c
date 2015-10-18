@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.25 2015/10/18 18:48:01 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.26 2015/10/18 20:39:53 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.25 2015/10/18 18:48:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.26 2015/10/18 20:39:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -160,7 +160,12 @@ npf_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+#if defined(_MODULE)
 		return npf_init();
+#else
+		/* initialized by npfattach */
+		return 0;
+#endif
 	case MODULE_CMD_FINI:
 		return npf_fini();
 	case MODULE_CMD_AUTOUNLOAD:
@@ -177,8 +182,7 @@ npf_modcmd(modcmd_t cmd, void *arg)
 void
 npfattach(int nunits)
 {
-
-	/* Void. */
+	npf_init();
 }
 
 static int
