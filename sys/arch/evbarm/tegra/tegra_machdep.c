@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.19 2015/08/22 15:10:04 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.20 2015/10/18 17:07:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.19 2015/08/22 15:10:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.20 2015/10/18 17:07:36 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.19 2015/08/22 15:10:04 jmcneill 
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/ksyms.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
@@ -370,6 +371,29 @@ tegra_bootconf_match(const char *key, const char *val)
 	return strncmp(s, val, strlen(val)) == 0;
 }
 
+static char *
+tegra_bootconf_strdup(const char *key)
+{
+	char *s, *ret;
+	int i = 0;
+
+	if (!get_bootconf_option(boot_args, key, BOOTOPT_TYPE_STRING, &s))
+		return NULL;
+
+	for (;;) {
+		if (s[i] == ' ' || s[i] == '\t' || s[i] == '\0')
+			break;
+		++i;
+	}
+
+	ret = kmem_alloc(i + 1, KM_SLEEP);
+	if (ret == NULL)
+		return NULL;
+
+	strncpy(ret, s, i + 1);
+	return ret;
+}
+
 void
 tegra_device_register(device_t self, void *aux)
 {
@@ -401,6 +425,15 @@ tegra_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "tegracec")) {
 		prop_dictionary_set_cstring(dict, "hdmi-device", "tegrahdmi0");
+	}
+
+	if (device_is_a(self, "nouveau")) {
+		const char *config = tegra_bootconf_strdup("nouveau.config");
+		const char *debug = tegra_bootconf_strdup("nouveau.debug");
+		if (config)
+			prop_dictionary_set_cstring(dict, "config", config);
+		if (debug)
+			prop_dictionary_set_cstring(dict, "debug", debug);
 	}
 
 #ifdef BOARD_JETSONTK1
