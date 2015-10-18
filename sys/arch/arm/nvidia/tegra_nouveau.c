@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.2 2015/10/18 00:39:14 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.3 2015/10/18 14:04:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.2 2015/10/18 00:39:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.3 2015/10/18 14:04:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,7 @@ static void	tegra_nouveau_attach(device_t, device_t, void *);
 
 struct tegra_nouveau_softc {
 	device_t		sc_dev;
+	bus_dma_tag_t		sc_dmat;
 	struct drm_device	*sc_drm_dev;
 	struct platform_device	sc_platform_dev;
 	struct nouveau_device	*sc_nv_dev;
@@ -94,18 +95,14 @@ static void
 tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_nouveau_softc * const sc = device_private(self);
-#if notyet
 	struct tegraio_attach_args * const tio = aux;
+#if notyet
 	const struct tegra_locators * const loc = &tio->tio_loc;
 #endif
 	int error;
 
 	sc->sc_dev = self;
-#if notyet
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
-#endif
+	sc->sc_dmat = tio->tio_dmat;
 
 	aprint_naive("\n");
 	aprint_normal(": GPU\n");
@@ -145,6 +142,8 @@ tegra_nouveau_init(struct tegra_nouveau_softc *sc)
 	dev->platformdev = &sc->sc_platform_dev;
 
 	dev->platformdev->id = -1;
+	dev->platformdev->dev = *sc->sc_dev;	/* XXX */
+	dev->platformdev->dmat = sc->sc_dmat;
 	dev->platformdev->nresource = 2;
 	dev->platformdev->resource[0].tag = bst;
 	dev->platformdev->resource[0].start = TEGRA_GPU_BASE;
