@@ -1,4 +1,4 @@
-/*	$NetBSD: armv7_generic_space.c,v 1.1 2015/03/29 22:26:18 jmcneill Exp $	*/
+/*	$NetBSD: armv7_generic_space.c,v 1.2 2015/10/18 00:37:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.1 2015/03/29 22:26:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armv7_generic_space.c,v 1.2 2015/10/18 00:37:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,9 +259,9 @@ struct bus_space armv7_generic_a4x_bs_tag = {
 	bs_notimpl_bs_rm_8,
 
 	/* read region */
-	a4x_bs_rr_1,
-	NSWAP(a4x_bs_rr_2),
-	NSWAP(a4x_bs_rr_4),
+	bs_notimpl_bs_rr_1,
+	bs_notimpl_bs_rr_2,
+	bs_notimpl_bs_rr_4,
 	bs_notimpl_bs_rr_8,
 
 	/* write (single) */
@@ -277,9 +277,9 @@ struct bus_space armv7_generic_a4x_bs_tag = {
 	bs_notimpl_bs_wm_8,
 
 	/* write region */
-	a4x_bs_wr_1,
-	NSWAP(a4x_bs_wr_2),
-	NSWAP(a4x_bs_wr_4),
+	bs_notimpl_bs_wr_1,
+	bs_notimpl_bs_wr_2,
+	bs_notimpl_bs_wr_4,
 	bs_notimpl_bs_wr_8,
 #endif
 };
