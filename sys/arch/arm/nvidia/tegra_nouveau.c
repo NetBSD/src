@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.3 2015/10/18 14:04:32 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.4 2015/10/18 14:20:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.3 2015/10/18 14:04:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.4 2015/10/18 14:20:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,7 @@ struct tegra_nouveau_softc {
 	struct nouveau_device	*sc_nv_dev;
 };
 
-static int	tegra_nouveau_init(struct tegra_nouveau_softc *);
+static void	tegra_nouveau_init(device_t);
 
 static int	tegra_nouveau_get_irq(struct drm_device *);
 static const char *tegra_nouveau_get_name(struct drm_device *);
@@ -118,16 +118,13 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	error = tegra_nouveau_init(sc);
-	if (error) {
-		aprint_error_dev(self, "couldn't attach drm: %d\n", error);
-		return;
-	}
+	config_mountroot(self, tegra_nouveau_init);
 }
 
-static int
-tegra_nouveau_init(struct tegra_nouveau_softc *sc)
+static void
+tegra_nouveau_init(device_t self)
 {
+	struct tegra_nouveau_softc * const sc = device_private(self);
 	struct drm_driver * const driver = nouveau_drm_driver;
 	struct drm_device *dev;
 	bus_space_tag_t bst = &armv7_generic_bs_tag;
@@ -137,8 +134,10 @@ tegra_nouveau_init(struct tegra_nouveau_softc *sc)
 	driver->bus = &drm_tegra_nouveau_bus;
 
 	dev = drm_dev_alloc(driver, sc->sc_dev);
-	if (dev == NULL)
-		return ENOMEM;
+	if (dev == NULL) {
+		aprint_error_dev(self, "couldn't allocate DRM device\n");
+		return;
+	}
 	dev->platformdev = &sc->sc_platform_dev;
 
 	dev->platformdev->id = -1;
@@ -156,14 +155,14 @@ tegra_nouveau_init(struct tegra_nouveau_softc *sc)
 	error = -drm_dev_register(dev, 0);
 	if (error) {
 		drm_dev_unref(dev);
-		return error;
+		aprint_error_dev(self, "couldn't register DRM device: %d\n",
+		    error);
+		return;
 	}
 
-	device_printf(sc->sc_dev, "initialized %s %d.%d.%d %s on minor %d\n",
+	aprint_normal_dev(self, "initialized %s %d.%d.%d %s on minor %d\n",
 	    driver->name, driver->major, driver->minor, driver->patchlevel,
 	    driver->date, dev->primary->index);
-
-	return 0;
 }
 
 static int
