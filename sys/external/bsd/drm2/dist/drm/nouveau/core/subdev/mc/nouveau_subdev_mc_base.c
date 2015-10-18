@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.3 2015/03/06 13:44:18 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_mc_base.c,v 1.4 2015/10/18 14:05:58 jmcneill Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.3 2015/03/06 13:44:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_mc_base.c,v 1.4 2015/10/18 14:05:58 jmcneill Exp $");
 
 #include <subdev/mc.h>
 #include <core/option.h>
@@ -107,8 +107,10 @@ _nouveau_mc_dtor(struct nouveau_object *object)
 {
 	struct nouveau_device *device = nv_device(object);
 	struct nouveau_mc *pmc = (void *)object;
-#ifdef __NetBSD__
-	pci_intr_disestablish(device->pdev->pd_pa.pa_pc, pmc->irq_cookie);
+#ifdef __NetBSD__		/* XXX nouveau platform */
+	if (nv_device_is_pci(device)) {
+		pci_intr_disestablish(device->pdev->pd_pa.pa_pc, pmc->irq_cookie);
+	}
 #else
 	free_irq(pmc->irq, pmc);
 #endif
