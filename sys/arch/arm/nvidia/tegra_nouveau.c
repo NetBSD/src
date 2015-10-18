@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.5 2015/10/18 14:31:33 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.6 2015/10/18 17:07:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.5 2015/10/18 14:31:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.6 2015/10/18 17:07:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -99,6 +99,7 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 #if notyet
 	const struct tegra_locators * const loc = &tio->tio_loc;
 #endif
+	prop_dictionary_t prop = device_properties(self);
 	int error;
 
 	sc->sc_dev = self;
@@ -106,6 +107,9 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": GPU\n");
+
+	prop_dictionary_get_cstring(prop, "debug", &nouveau_debug);
+	prop_dictionary_get_cstring(prop, "config", &nouveau_config);
 
 	tegra_car_gpu_enable();
 
