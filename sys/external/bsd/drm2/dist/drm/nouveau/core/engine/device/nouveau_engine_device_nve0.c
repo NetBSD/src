@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_nve0.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_device_nve0.c,v 1.2 2015/10/18 15:42:00 jmcneill Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_nve0.c,v 1.1.1.1 2014/08/06 12:36:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_nve0.c,v 1.2 2015/10/18 15:42:00 jmcneill Exp $");
 
 #include <subdev/bios.h>
 #include <subdev/bus.h>
@@ -159,6 +159,23 @@ nve0_identify(struct nouveau_device *device)
 		device->oclass[NVDEV_ENGINE_BSP    ] = &nve0_bsp_oclass;
 		device->oclass[NVDEV_ENGINE_VP     ] = &nve0_vp_oclass;
 		device->oclass[NVDEV_ENGINE_PPP    ] = &nvc0_ppp_oclass;
+		device->oclass[NVDEV_ENGINE_PERFMON] = &nve0_perfmon_oclass;
+		break;
+	case 0xea:
+		device->cname = "GK20A";
+		device->oclass[NVDEV_SUBDEV_MC     ] =  nvc3_mc_oclass;
+		device->oclass[NVDEV_SUBDEV_BUS    ] =  nvc0_bus_oclass;
+		device->oclass[NVDEV_SUBDEV_TIMER  ] = &gk20a_timer_oclass;
+		device->oclass[NVDEV_SUBDEV_FB     ] =  gk20a_fb_oclass;
+		device->oclass[NVDEV_SUBDEV_IBUS   ] = &gk20a_ibus_oclass;
+		device->oclass[NVDEV_SUBDEV_INSTMEM] = nv50_instmem_oclass;
+		device->oclass[NVDEV_SUBDEV_VM     ] = &nvc0_vmmgr_oclass;
+		device->oclass[NVDEV_SUBDEV_BAR    ] = &nvc0_bar_oclass;
+		device->oclass[NVDEV_ENGINE_DMAOBJ ] = &nvd0_dmaeng_oclass;
+		device->oclass[NVDEV_ENGINE_FIFO   ] =  gk20a_fifo_oclass;
+		device->oclass[NVDEV_ENGINE_SW     ] =  nvc0_software_oclass;
+		device->oclass[NVDEV_ENGINE_GR     ] =  gk20a_graph_oclass;
+		device->oclass[NVDEV_ENGINE_COPY2  ] = &nve0_copy2_oclass;
 		device->oclass[NVDEV_ENGINE_PERFMON] = &nve0_perfmon_oclass;
 		break;
 	case 0xf0:
