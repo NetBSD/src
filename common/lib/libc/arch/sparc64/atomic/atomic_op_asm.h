@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_op_asm.h,v 1.6 2011/01/17 18:11:10 joerg Exp $	*/
+/*	$NetBSD: atomic_op_asm.h,v 1.7 2015/10/18 02:28:07 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -52,6 +52,10 @@
 #define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s ## _64)
 #else
 #define	ATOMIC_OP_ALIAS_SIZE(a,s)	WEAK_ALIAS(a,s ## _32)
+#endif
+
+#ifdef _LIBC
+#define	CRT_ALIAS(a,s)			STRONG_ALIAS(a,s)
 #endif
 
 #endif /* _KERNEL */

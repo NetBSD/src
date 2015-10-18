@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.18 2014/10/13 08:59:41 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.19 2015/10/18 02:28:07 nakayama Exp $
 
 .include <bsd.own.mk>
 
@@ -11,6 +11,12 @@ SPARC64DIR=	${.PARSEDIR}/../../sparc64/atomic
 .PATH.S: ${SPARC64DIR}
 
 .include "${SPARC64DIR}/Makefile.inc"
+
+.if defined(LIB) && (${LIB} == "kern" || ${LIB} == "c" || ${LIB} == "pthread" \
+	|| ${LIB} == "rump")
+SRCS+=	atomic_nand_64_cas.c atomic_xor_64_cas.c atomic_sub_64_cas.c \
+	atomic_cas_64_cas.c
+.endif
 
 .else
 

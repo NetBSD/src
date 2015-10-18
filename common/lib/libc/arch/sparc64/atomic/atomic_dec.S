@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec.S,v 1.7 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: atomic_dec.S,v 1.8 2015/10/18 02:28:07 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -58,8 +58,13 @@ ENTRY(_atomic_dec_64)
 	cmp	%o2, %o3
 	bne,a,pn %xcc, 1b
 	 mov	%o3, %o2
+#ifdef __arch64__
 	retl
 	 add	%o2, -1, %o0
+#else
+	add	%o2, -1, %o0
+	SPLIT_RETL(%o0, %o0, %o1)
+#endif
 ATOMIC_OP_ALIAS(atomic_dec_64,_atomic_dec_64)
 
 ATOMIC_OP_ALIAS(atomic_dec_64_nv,_atomic_dec_64)
