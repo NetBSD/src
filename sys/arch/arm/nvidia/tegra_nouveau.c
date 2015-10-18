@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.1 2015/10/17 21:18:16 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.2 2015/10/18 00:39:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.1 2015/10/17 21:18:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.2 2015/10/18 00:39:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -157,7 +157,6 @@ tegra_nouveau_init(struct tegra_nouveau_softc *sc)
 	error = -drm_dev_register(dev, 0);
 	if (error) {
 		drm_dev_unref(dev);
-		Debugger();
 		return error;
 	}
 
