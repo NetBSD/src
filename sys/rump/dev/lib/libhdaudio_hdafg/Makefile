@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/11/19 00:18:58 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:33 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -7,6 +7,7 @@ RUMPTOP=${TOPRUMP}
 .include "${NETBSDSRCDIR}/sys/modules/hdafg/Makefile.inc"
 
 LIB=	rumpdev_hdaudio_hdafg
+COMMENT=High Definition Audio (hdaudio) driver
    
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>
