@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/13 02:01:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2015/10/19 16:16:32 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net
 
 LIB=	rumpdev_bpf
+COMMENT=Berkeley Packet Filter
 
 SRCS=	bpf.c bpf_filter.c
 SRCS+=	bpf_component.c

@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.1 2010/06/21 21:43:28 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:37 pooka Exp $
 #
 
 # zlib.c is logically in sys/net
 .PATH:	${.CURDIR}/../../../../net
 
 LIB=	rumpkern_z
+COMMENT=Data compression
 
 SRCS=	zlib.c
 
