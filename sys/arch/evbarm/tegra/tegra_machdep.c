@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.20 2015/10/18 17:07:36 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.21 2015/10/19 22:00:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.20 2015/10/18 17:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.21 2015/10/19 22:00:09 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -472,6 +472,9 @@ tegra_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
 		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
 		prop_dictionary_set_cstring(dict, "display-device", "tegradc1");
+		if (tegra_bootconf_match("hdmi.forcemode", "dvi")) {
+			prop_dictionary_set_bool(dict, "force-dvi", true);
+		}
 	}
 #endif
 
