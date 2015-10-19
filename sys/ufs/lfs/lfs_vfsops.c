@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.348 2015/10/15 06:25:34 dholland Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.349 2015/10/19 04:22:18 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.348 2015/10/15 06:25:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.349 2015/10/19 04:22:18 dholland Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1068,7 +1068,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 
 	ump = kmem_zalloc(sizeof(*ump), KM_SLEEP);
 	ump->um_lfs = fs;
-	ump->um_fstype = ULFS1;
+	ump->um_fstype = fs->lfs_is64 ? ULFS2 : ULFS1;
 	/* ump->um_cleaner_thread = NULL; */
 	brelse(primarybuf, BC_INVAL);
 	brelse(altbuf, BC_INVAL);
