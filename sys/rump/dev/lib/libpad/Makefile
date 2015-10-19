@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.4 2014/11/18 04:29:06 nonaka Exp $
+#	$NetBSD: Makefile,v 1.5 2015/10/19 16:16:33 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/pad
 
 LIB=	rumpdev_pad
+COMMENT=Pseudo Audio Device
 
 SRCS=	pad.c
 SRCS+=	pad_component.c

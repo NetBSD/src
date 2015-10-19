@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2015/08/24 23:01:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.9 2015/10/19 16:16:34 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
 
 LIB=	rumpdev_usb
+COMMENT=USB support
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
 IOCONF= USB.ioconf

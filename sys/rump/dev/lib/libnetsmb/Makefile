@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.7 2015/08/20 14:27:15 christos Exp $
+#	$NetBSD: Makefile,v 1.8 2015/10/19 16:16:33 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../netsmb
 
 LIB=	rumpdev_netsmb
+COMMENT=SMB protocol communicator (required by SMB/CIFS)
+
 IOCONF=	NETSMB.ioconf
 SRCS=	iconv.c smb_conn.c smb_crypt.c smb_dev.c smb_iod.c smb_rq.c	\
 	smb_smb.c smb_subr.c smb_trantcp.c smb_usr.c subr_mchain.c
