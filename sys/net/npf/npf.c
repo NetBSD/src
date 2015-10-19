@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.27 2015/10/19 00:29:57 christos Exp $	*/
+/*	$NetBSD: npf.c,v 1.28 2015/10/19 09:28:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.27 2015/10/19 00:29:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.28 2015/10/19 09:28:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -102,6 +102,7 @@ const struct cdevsw npf_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
+#if !defined(MODULAR) || defined(_MODULE)
 static int
 npf_init(void)
 {
@@ -136,6 +137,7 @@ npf_init(void)
 	return 0;
 #endif
 }
+#endif
 
 static int
 npf_fini(void)
