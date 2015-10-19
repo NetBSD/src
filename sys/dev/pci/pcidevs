@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1235 2015/08/28 13:09:48 nonaka Exp $
+$NetBSD: pcidevs,v 1.1236 2015/10/19 09:54:21 tnn Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2968,6 +2968,8 @@ product INTEL I218_V		0x1559	I218-V Ethernet Connection
 product INTEL I218_LM		0x155a	I218-LM Ethernet Connection
 product INTEL X540_BYPASS	0x155c	X540 10 GbE Bypass
 product INTEL 82599_BYPASS	0x155d	82599 10 GbE Bypass
+product INTEL I219_LM		0x156f	I219-LM Ethernet Connection
+product INTEL I219_V		0x1570	I219-V Ethernet Connection
 product INTEL XL710_VF_HV	0x1571	XL710 Ethernet Virtual Function
 product INTEL XL710_SFP		0x1572	XL710 SFP+ Ethernet
 product INTEL I210_COPPER_WOF	0x157b	I210 Ethernet (COPPER)
@@ -2983,6 +2985,8 @@ product INTEL I218_LM2		0x15a0	I218-LM Ethernet Connection
 product INTEL I218_V2		0x15a1	I218-V Ethernet Connection
 product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
 product INTEL I218_V3		0x15a3	I218-V Ethernet Connection
+product INTEL I219_LM		0x15b7	I219-LM Ethernet Connection
+product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
 product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
