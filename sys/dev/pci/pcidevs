@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1236 2015/10/19 09:54:21 tnn Exp $
+$NetBSD: pcidevs,v 1.1237 2015/10/19 09:57:37 tnn Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2985,7 +2985,7 @@ product INTEL I218_LM2		0x15a0	I218-LM Ethernet Connection
 product INTEL I218_V2		0x15a1	I218-V Ethernet Connection
 product INTEL I218_LM3		0x15a2	I218-LM Ethernet Connection
 product INTEL I218_V3		0x15a3	I218-V Ethernet Connection
-product INTEL I219_LM		0x15b7	I219-LM Ethernet Connection
+product INTEL I219_LM2		0x15b7	I219-LM Ethernet Connection
 product INTEL I219_V2		0x15b8	I219-V Ethernet Connection
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
