@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2010/03/29 18:12:23 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:37 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/union
 
 LIB=	rumpfs_union
+COMMENT=union file system (fan-out layer)
 
 SRCS=	union_subr.c union_vfsops.c union_vnops.c
 

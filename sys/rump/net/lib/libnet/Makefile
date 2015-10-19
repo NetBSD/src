@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.26 2015/08/31 08:02:45 ozaki-r Exp $
+#	$NetBSD: Makefile,v 1.27 2015/10/19 16:16:38 pooka Exp $
 #
 
 
 .PATH:	${.CURDIR}/../../../../net ${.CURDIR}/../../../../compat/common
 
 LIB=	rumpnet_net
+COMMENT=Network interface and routing support
+
 IOCONF=	NET.ioconf
 # iffy stuff
 SRCS=	if.c if_loop.c route.c rtsock.c raw_usrreq.c			\
