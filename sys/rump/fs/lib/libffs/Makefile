@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.15 2014/05/08 08:21:53 hannken Exp $
+#	$NetBSD: Makefile,v 1.16 2015/10/19 16:16:35 pooka Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../ufs/ffs ${.CURDIR}/../../../../ufs/ufs
 
 LIB=	rumpfs_ffs
+COMMENT=Berkeley Fast File System
 
 SRCS=	ffs_alloc.c ffs_appleufs.c ffs_balloc.c ffs_bswap.c ffs_inode.c	\
 	ffs_snapshot.c ffs_subr.c ffs_tables.c ffs_vfsops.c ffs_vnops.c	\

@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2010/06/14 14:47:58 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2015/10/19 16:16:34 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb ${.CURDIR}/../../../../kern
 
 LIB=	rumpdev_ucom
+COMMENT=USB serial driver
+
 IOCONF= UCOM.ioconf
 
 SRCS=	ucom.c uplcom.c u3g.c

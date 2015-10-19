@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.9 2015/09/14 15:09:35 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2015/10/19 16:16:34 pooka Exp $
 #
 
 LIB=	rumpdev_ugenhc
+COMMENT=USB host controller using /dev/ugen
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
 IOCONF= UGENHC.ioconf

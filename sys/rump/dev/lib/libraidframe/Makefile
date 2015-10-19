@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.8 2015/08/20 11:58:26 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2015/10/19 16:16:34 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/raidframe
 
 LIB=	rumpdev_raidframe
+COMMENT=RAIDframe (software RAID)
+
 IOCONF=	RAIDFRAME.ioconf
 SRCS=   rf_acctrace.c rf_alloclist.c rf_aselect.c rf_callback.c		\
 	rf_chaindecluster.c rf_copyback.c rf_cvscan.c rf_dagdegrd.c	\

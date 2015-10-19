@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/07/23 07:16:14 alnsn Exp $
+#	$NetBSD: Makefile,v 1.4 2015/10/19 16:16:37 pooka Exp $
 #
 # Public Domain.
 #
@@ -7,6 +7,7 @@
 	${.CURDIR}/../../../../external/bsd/sljit/dist/sljit_src
 
 LIB=	rumpkern_sljit
+COMMENT=Stackless JIT compiler
 
 SRCS=	sljitLir.c sljit_mod.c
 

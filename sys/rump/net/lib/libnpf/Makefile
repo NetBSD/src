@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.15 2015/08/20 12:20:09 christos Exp $
+#	$NetBSD: Makefile,v 1.16 2015/10/19 16:16:39 pooka Exp $
 #
 # Public Domain.
 #
@@ -8,6 +8,8 @@ NOLINT=		# defined
 .PATH:	${.CURDIR}/../../../../net/npf
 
 LIB=	rumpnet_npf
+COMMENT=NPF packet filter
+
 IOCONF=	NPF.ioconf
 SRCS=	npf.c npf_alg.c npf_conf.c npf_ctl.c npf_handler.c
 SRCS+=	npf_bpf.c npf_if.c npf_inet.c npf_mbuf.c npf_nat.c

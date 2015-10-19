@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 2015/01/07 22:24:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:37 pooka Exp $
 #
 
 LIB=	rumpkern_sysproxy
+COMMENT=Remote system call support (rump kernel as a server)
 
 SRCS=	sysproxy.c
 

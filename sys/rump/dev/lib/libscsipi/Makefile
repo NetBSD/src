@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2015/08/24 23:21:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2015/10/19 16:16:34 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/scsipi
 
 LIB=	rumpdev_scsipi
+COMMENT=SCSI & ATAPI mid-layer
+
 IOCONF=	SCSIPI.ioconf
 
 SRCS+=	scsipiconf.c scsipi_base.c scsipi_ioctl.c scsi_base.c scsiconf.c

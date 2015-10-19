@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2015/08/24 23:01:59 pooka Exp $
+#	$NetBSD: Makefile,v 1.6 2015/10/19 16:16:35 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/wscons
 
 LIB=	rumpdev_wscons
+COMMENT=Workstation console support
+
 IOCONF=	WSCONS.ioconf
 
 SRCS=   wsevent.c wskbd.c wskbdutil.c wsmouse.c

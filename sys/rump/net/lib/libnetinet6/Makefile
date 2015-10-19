@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/13 02:08:44 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2015/10/19 16:16:38 pooka Exp $
 #
 
 LIB=	rumpnet_netinet6
+COMMENT=IPv6 incl. TCP and UDP (PF_INET6)
 
 SRCS=	netinet6_component.c
 

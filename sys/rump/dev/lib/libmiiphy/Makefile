@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/08/24 23:21:50 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2015/10/19 16:16:33 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -6,6 +6,8 @@ RUMPTOP=${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci ${RUMPTOP}/../dev/mii
 
 LIB=	rumpdev_miiphy
+COMMENT=MII and PHY drivers (for networking)
+
 IOCONF=	MIIPHY.ioconf
 
 SRCS=	phy_at_mii.c

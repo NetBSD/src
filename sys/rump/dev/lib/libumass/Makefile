@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2015/08/24 23:21:51 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2015/10/19 16:16:34 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
 
 LIB=	rumpdev_umass
+COMMENT=USB mass storage driver
+
 IOCONF=	UMASS.ioconf
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"

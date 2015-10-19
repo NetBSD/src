@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.9 2015/08/20 11:51:12 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2015/10/19 16:16:34 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
 
 LIB=	rumpdev_rnd
+COMMENT=/dev/{,u}random
+
 IOCONF=	RND.ioconf
 SRCS=	rndpseudo.c
 

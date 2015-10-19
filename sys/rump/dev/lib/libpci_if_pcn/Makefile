@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/08/13 15:01:32 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:33 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -6,6 +6,8 @@ RUMPTOP=${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci
 
 LIB=	rumpdev_pci_if_pcn
+COMMENT=PCnet Ethernet device driver
+
 IOCONF=	PCI_IF_PCN.ioconf
 
 SRCS=	pcn_at_pci.c
