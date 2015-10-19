@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.39 2015/10/19 04:21:48 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.40 2015/10/19 04:22:28 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -313,7 +313,7 @@ lfs_dir_getnamlen(const STRUCT_LFS *fs, const LFS_DIRHEADER *dh)
 {
 	if (fs->lfs_is64) {
 		KASSERT(fs->lfs_hasolddirfmt == 0);
-		return dh->u_64.dh_type;
+		return dh->u_64.dh_namlen;
 	} else if (fs->lfs_hasolddirfmt && LFS_LITTLE_ENDIAN_ONDISK(fs)) {
 		/* low-order byte of old 16-bit namlen field */
 		return dh->u_32.dh_type;
