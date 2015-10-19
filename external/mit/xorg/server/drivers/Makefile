@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.71 2015/10/13 19:43:44 rjs Exp $
+#	$NetBSD: Makefile,v 1.72 2015/10/19 15:09:39 macallan Exp $
 
 # xf86-input drivers
 
@@ -242,7 +242,11 @@ SUBDIR+= \
 .if ${MACHINE} == "sgimips"
 SUBDIR+= \
 	xf86-video-crime \
+	xf86-video-cirrus \
+	xf86-video-glint \
+	xf86-video-mga \
 	xf86-video-newport \
+	xf86-video-s3 \
 	xf86-video-wsfb
 .endif	# ${MACHINE} == "sgimips"
 
