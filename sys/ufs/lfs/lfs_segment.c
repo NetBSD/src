@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.262 2015/10/10 22:34:33 dholland Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.263 2015/10/19 04:21:48 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.262 2015/10/10 22:34:33 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.263 2015/10/19 04:21:48 dholland Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -680,10 +680,16 @@ lfs_segwrite(struct mount *mp, int flags)
 		segleft = lfs_sb_getnseg(fs);
 		curseg = 0;
 		for (n = 0; n < lfs_sb_getsegtabsz(fs); n++) {
+			int bread_error;
+
 			dirty = 0;
-			if (bread(fs->lfs_ivnode, lfs_sb_getcleansz(fs) + n,
-			    lfs_sb_getbsize(fs), B_MODIFY, &bp))
-				panic("lfs_segwrite: ifile read");
+			bread_error = bread(fs->lfs_ivnode,
+			    lfs_sb_getcleansz(fs) + n,
+			    lfs_sb_getbsize(fs), B_MODIFY, &bp);
+			if (bread_error)
+				panic("lfs_segwrite: ifile read: "
+				      "seguse %u: error %d\n",
+				      n, bread_error);
 			segusep = (SEGUSE *)bp->b_data;
 			maxseg = min(segleft, lfs_sb_getsepb(fs));
 			for (i = 0; i < maxseg; i++) {

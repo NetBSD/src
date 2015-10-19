@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.38 2015/10/15 06:24:21 dholland Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.39 2015/10/19 04:21:48 dholland Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
@@ -671,7 +671,8 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 	if ((_e = bread((F)->lfs_ivnode,				\
 	    ((IN) / lfs_sb_getsepb(F)) + lfs_sb_getcleansz(F),		\
 	    lfs_sb_getbsize(F), 0, &(BP))) != 0)			\
-		panic("lfs: ifile read: %d", _e);			\
+		panic("lfs: ifile read: segentry %llu: error %d\n",	\
+			 (unsigned long long)(IN), _e);			\
 	if (lfs_sb_getversion(F) == 1)					\
 		(SP) = (SEGUSE *)((SEGUSE_V1 *)(BP)->b_data +		\
 			((IN) & (lfs_sb_getsepb(F) - 1)));		\
@@ -933,11 +934,13 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 
 /* Read in the block with the cleaner info from the ifile. */
 #define LFS_CLEANERINFO(CP, F, BP) do {					\
+	int _e;								\
 	SHARE_IFLOCK(F);						\
 	VTOI((F)->lfs_ivnode)->i_flag |= IN_ACCESS;			\
-	if (bread((F)->lfs_ivnode,					\
-	    (daddr_t)0, lfs_sb_getbsize(F), 0, &(BP)))			\
-		panic("lfs: ifile read");				\
+	_e = bread((F)->lfs_ivnode,					\
+	    (daddr_t)0, lfs_sb_getbsize(F), 0, &(BP));			\
+	if (_e)								\
+		panic("lfs: ifile read: cleanerinfo: error %d\n", _e);	\
 	(CP) = (CLEANERINFO *)(BP)->b_data;				\
 	UNSHARE_IFLOCK(F);						\
 } while (0)
