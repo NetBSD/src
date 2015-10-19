@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/08/22 09:45:29 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:34 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -6,6 +6,8 @@ RUMPTOP=${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci
 
 LIB=	rumpdev_pci_virtio
+COMMENT=VirtIO bus support
+
 IOCONF=	PCI_VIRTIO.ioconf
 
 SRCS=	virtio_at_pci.c

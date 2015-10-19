@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.4 2015/05/09 12:03:10 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2015/10/19 16:16:37 pooka Exp $
 #
 
 LIB=	rumpkern_sys_cygwin
+COMMENT=Cygwin system call translation
 
 SRCS=	rump_cygwin_compat.c
 SRCS+=	sys_cygwin_component.c

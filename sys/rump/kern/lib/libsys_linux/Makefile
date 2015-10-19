@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.9 2015/05/09 12:03:10 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2015/10/19 16:16:37 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../compat/linux/common
 
 LIB=	rumpkern_sys_linux
+COMMENT=Linux system call translation
 
 SRCS=	linux_blkio.c linux_cdrom.c linux_errno.c linux_fdio.c		\
 	linux_file.c linux_hdio.c linux_ioctl.c linux_ipc.c linux_misc.c\
