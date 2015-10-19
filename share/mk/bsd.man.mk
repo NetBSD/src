@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.man.mk,v 1.117 2014/12/19 22:25:39 christos Exp $
+#	$NetBSD: bsd.man.mk,v 1.118 2015/10/19 17:08:11 dholland Exp $
 #	@(#)bsd.man.mk	8.1 (Berkeley) 6/8/93
 
 .include <bsd.init.mk>
@@ -292,6 +292,14 @@ CLEANDIRFILES+= ${HTMLPAGES}
 lintmanpages: ${MANPAGES}
 	${TOOL_MANDOC_LINT} -Tlint -fstrict -Wall,stop ${.ALLSRC}
 .endif
+
+##### describe
+describe:
+.for _M in ${MANPAGES}
+	@echo $$(basename ${_M}) - \
+		$$(${TOOL_SED} < ${${_M}:P} -n -e '/^\.Nd /{;s/^....//;p;}')
+.endfor
+
 
 ##### Pull in related .mk logic
 .include <bsd.obj.mk>
