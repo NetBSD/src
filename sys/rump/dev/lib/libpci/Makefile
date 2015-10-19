@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2015/08/24 23:21:50 pooka Exp $
+#	$NetBSD: Makefile,v 1.8 2015/10/19 16:16:33 pooka Exp $
 #
 
 RUMPTOP= ${TOPRUMP}
@@ -8,6 +8,8 @@ RUMPTOP= ${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci
 
 LIB=	rumpdev_pci
+COMMENT=PCI bus support
+
 IOCONF=	PCI.ioconf
 
 SRCS+=	pci.c pci_map.c pci_quirks.c pci_subr.c pci_stub.c pci_usrreq.c

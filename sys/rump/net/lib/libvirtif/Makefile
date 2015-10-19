@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.9 2014/03/13 18:14:13 pooka Exp $
+#	$NetBSD: Makefile,v 1.10 2015/10/19 16:16:39 pooka Exp $
 #
 
 LIB=	rumpnet_virtif
+COMMENT=Network interface which uses hypercalls for I/O
+
 VIRTIF=	virt
 
 .include "${.CURDIR}/Makefile.virtif"
