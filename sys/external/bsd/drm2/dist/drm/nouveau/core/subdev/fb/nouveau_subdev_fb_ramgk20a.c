@@ -132,7 +132,7 @@ fail1:		bus_dmamem_free(dmat, &mem->dmaseg, nsegs);
 	}
 
 	ret = -bus_dmamem_map(dmat, &mem->dmaseg, nsegs, dmasize,
-	    &mem->cpuaddr, BUS_DMA_WAITOK);
+	    &mem->cpuaddr, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (ret) {
 fail2:		bus_dmamap_destroy(dmat, mem->base.pages);
 		goto fail1;
