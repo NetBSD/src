@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.4.12.5 2015/08/31 08:33:03 skrll Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.4.12.6 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -38,6 +38,13 @@ struct xhci_xfer {
 	struct usb_task xx_abort_task;
 	struct xhci_trb xx_trb[XHCI_XFER_NTRB];
 };
+
+#define XHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define XHCI_PIPE2SC(pipe)	XHCI_BUS2SC((pipe)->up_dev->ud_bus)
+#define XHCI_XFER2SC(xfer)	XHCI_PIPE2SC((xfer)->ux_pipe)
+#define XHCI_XPIPE2SC(d)	XHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
+
+#define XHCI_XFER2XXFER(xfer)	((struct xhci_xfer *)(xfer))
 
 struct xhci_ring {
 	usb_dma_t xr_dma;
