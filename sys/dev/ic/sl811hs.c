@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.13 2015/10/11 09:17:51 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.14 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.13 2015/10/11 09:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.14 2015/10/20 15:31:21 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -291,6 +291,12 @@ struct slhci_pipe {
 	uint8_t		nerrs;		/* Current number of errors */
 	uint8_t 	ptype;		/* Pipe type */
 };
+
+#define SLHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define SLHCI_PIPE2SC(pipe)	SLHCI_BUS2SC((pipe)->up_dev->ud_bus)
+#define SLHCI_XFER2SC(xfer)	SLHCI_PIPE2SC((xfer)->ux_pipe)
+
+#define SLHCI_PIPE2SPIPE(pipe)	((struct slhci_pipe *)(pipe))
 
 #ifdef SLHCI_PROFILE_TRANSFER
 #if defined(__mips__)
@@ -786,7 +792,7 @@ slhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 #endif
 #ifdef DIAGNOSTIC
 	if (xfer->ux_state != XFER_BUSY) {
-		struct slhci_softc *sc = bus->ub_hcpriv;
+		struct slhci_softc *sc = SLHCI_BUS2SC(bus);
 		printf("%s: slhci_freex: xfer=%p not busy, %#08x halted\n",
 		    SC_NAME(sc), xfer, xfer->ux_state);
 		DDOLOG("%s: slhci_freex: xfer=%p not busy, %#08x halted\n",
@@ -803,7 +809,7 @@ slhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 static void
 slhci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct slhci_softc *sc = bus->ub_hcpriv;
+	struct slhci_softc *sc = SLHCI_BUS2SC(bus);
 
 	*lock = &sc->sc_lock;
 }
@@ -811,7 +817,7 @@ slhci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 usbd_status
 slhci_transfer(struct usbd_xfer *xfer)
 {
-	struct slhci_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct slhci_softc *sc = SLHCI_XFER2SC(xfer);
 	usbd_status error;
 
 	DLOG(D_TRACE, "%s transfer xfer %p spipe %p ",
@@ -845,9 +851,9 @@ slhci_transfer(struct usbd_xfer *xfer)
 usbd_status
 slhci_start(struct usbd_xfer *xfer)
 {
-	struct slhci_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct slhci_softc *sc = SLHCI_XFER2SC(xfer);
 	struct usbd_pipe *pipe = xfer->ux_pipe;
-	struct slhci_pipe *spipe = (struct slhci_pipe *)pipe;
+	struct slhci_pipe *spipe = SLHCI_PIPE2SPIPE(pipe);
 	struct slhci_transfers *t = &sc->sc_transfers;
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	unsigned int max_packet;
@@ -980,8 +986,8 @@ slhci_root_start(struct usbd_xfer *xfer)
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 
-	spipe = (struct slhci_pipe *)xfer->ux_pipe;
-	sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
+	sc = SLHCI_XFER2SC(xfer);
 
 	return slhci_lock_call(sc, &slhci_root, spipe, xfer);
 }
@@ -997,8 +1003,8 @@ slhci_open(struct usbd_pipe *pipe)
 	uint8_t rhaddr;
 
 	dev = pipe->up_dev;
-	sc = dev->ud_bus->ub_hcpriv;
-	spipe = (struct slhci_pipe *)pipe;
+	sc = SLHCI_PIPE2SC(pipe);
+	spipe = SLHCI_PIPE2SPIPE(pipe);
 	ed = pipe->up_endpoint->ue_edesc;
 	rhaddr = dev->ud_bus->ub_rhaddr;
 
@@ -1289,12 +1295,12 @@ slhci_abort(struct usbd_xfer *xfer)
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 
-	spipe = (struct slhci_pipe *)xfer->ux_pipe;
+	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
 
 	if (spipe == NULL)
 		goto callback;
 
-	sc = spipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	sc = SLHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -1315,8 +1321,8 @@ slhci_close(struct usbd_pipe *pipe)
 	struct slhci_softc *sc;
 	struct slhci_pipe *spipe;
 
-	sc = pipe->up_dev->ud_bus->ub_hcpriv;
-	spipe = (struct slhci_pipe *)pipe;
+	sc = SLHCI_PIPE2SC(pipe);
+	spipe = SLHCI_PIPE2SPIPE(pipe);
 
 	DLOG(D_TRACE, "%s close spipe %p spipe->xfer %p",
 	    pnames(spipe->ptype), spipe, spipe->xfer, 0);
@@ -1329,7 +1335,7 @@ slhci_clear_toggle(struct usbd_pipe *pipe)
 {
 	struct slhci_pipe *spipe;
 
-	spipe = (struct slhci_pipe *)pipe;
+	spipe = SLHCI_PIPE2SPIPE(pipe);
 
 	DLOG(D_TRACE, "%s toggle spipe %p", pnames(spipe->ptype),
 	    spipe,0,0);
@@ -1355,7 +1361,7 @@ slhci_poll(struct usbd_bus *bus) /* XXX necessary? */
 {
 	struct slhci_softc *sc;
 
-	sc = bus->ub_hcpriv;
+	sc = SLHCI_BUS2SC(bus);
 
 	DLOG(D_TRACE, "slhci_poll", 0,0,0,0);
 
@@ -1377,7 +1383,7 @@ slhci_void(void *v) {}
 void
 slhci_mem_use(struct usbd_bus *bus, int val)
 {
-	struct slhci_softc *sc = bus->ub_hcpriv;
+	struct slhci_softc *sc = SLHCI_BUS2SC(bus);
 	int s;
 
 	mutex_enter(&sc->sc_intr_lock);
@@ -2441,7 +2447,7 @@ slhci_do_repeat(struct slhci_softc *sc, struct usbd_xfer *xfer)
 	struct slhci_pipe *spipe;
 
 	t = &sc->sc_transfers;
-	spipe = (struct slhci_pipe *)xfer->ux_pipe;
+	spipe = SLHCI_PIPE2SPIPE(xfer->ux_pipe);
 
 	if (xfer == t->rootintr)
 		return;
@@ -3115,7 +3121,7 @@ static int
 slhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
-	struct slhci_softc *sc = bus->ub_hcpriv;
+	struct slhci_softc *sc = SLHCI_BUS2SC(bus);
 	struct slhci_transfers *t = &sc->sc_transfers;
 	usbd_status error = USBD_IOERROR; /* XXX should be STALL */
 	uint16_t len, value, index;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.24 2015/10/12 07:02:49 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.25 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.24 2015/10/12 07:02:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.25 2015/10/20 15:31:21 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -945,7 +945,7 @@ ohci_init(ohci_softc_t *sc)
 struct usbd_xfer *
 ohci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
-	struct ohci_softc *sc = bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
 	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
@@ -961,7 +961,7 @@ ohci_allocx(struct usbd_bus *bus, unsigned int nframes)
 void
 ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct ohci_softc *sc = bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 
 	KASSERTMSG(xfer->ux_state == XFER_BUSY,
 	    "xfer=%p not busy, 0x%08x\n", xfer, xfer->ux_state);
@@ -974,7 +974,7 @@ ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 Static void
 ohci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct ohci_softc *sc = bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 
 	*lock = &sc->sc_lock;
 }
@@ -1256,7 +1256,7 @@ void
 ohci_softintr(void *v)
 {
 	struct usbd_bus *bus = v;
-	ohci_softc_t *sc = bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 	ohci_soft_itd_t *sitd, *sidone, *sitdnext;
 	ohci_soft_td_t  *std,  *sdone,  *stdnext;
 	struct usbd_xfer *xfer;
@@ -1362,7 +1362,7 @@ ohci_softintr(void *v)
 			 * the endpoint.
 			 */
 			ohci_soft_td_t *p, *n;
-			opipe = (struct ohci_pipe *)xfer->ux_pipe;
+			opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
 
 			DPRINTFN(15, "error cc=%d",
 			    OHCI_TD_GET_CC(O32TOH(std->td.td_flags)), 0, 0, 0);
@@ -1414,7 +1414,7 @@ ohci_softintr(void *v)
 		if (sitd->flags & OHCI_CALL_DONE) {
 			ohci_soft_itd_t *next;
 
-			opipe = (struct ohci_pipe *)xfer->ux_pipe;
+			opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
 			opipe->isoc.inuse -= xfer->ux_nframes;
 			uedir = UE_GET_DIR(xfer->ux_pipe->up_endpoint->ue_edesc->
 			    bEndpointAddress);
@@ -1470,10 +1470,8 @@ ohci_softintr(void *v)
 void
 ohci_device_ctrl_done(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
-#ifdef DIAGNOSTIC
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-#endif
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
+	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
 	int len = UGETW(xfer->ux_request.wLength);
 	int isread = (xfer->ux_request.bmRequestType & UT_READ);
 
@@ -1493,8 +1491,8 @@ ohci_device_ctrl_done(struct usbd_xfer *xfer)
 void
 ohci_device_intr_done(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
-	ohci_softc_t *sc = opipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *data, *tail;
 	int isread =
@@ -1546,9 +1544,8 @@ ohci_device_intr_done(struct usbd_xfer *xfer)
 void
 ohci_device_bulk_done(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-#endif
+	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
+
 	int isread =
 	    (UE_GET_DIR(xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN);
 
@@ -1661,7 +1658,7 @@ done:
 void
 ohci_poll(struct usbd_bus *bus)
 {
-	ohci_softc_t *sc = bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
 #ifdef OHCI_DEBUG
@@ -1684,10 +1681,10 @@ ohci_poll(struct usbd_bus *bus)
 usbd_status
 ohci_device_request(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
 	usb_device_request_t *req = &xfer->ux_request;
-	struct usbd_device *dev = opipe->pipe.up_dev;
-	ohci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	struct usbd_device *dev __diagused = opipe->pipe.up_dev;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_td_t *setup, *stat, *next, *tail;
 	ohci_soft_ed_t *sed;
 	int isread;
@@ -1979,16 +1976,16 @@ ohci_hash_find_itd(ohci_softc_t *sc, ohci_physaddr_t a)
 void
 ohci_timeout(void *addr)
 {
-	struct ohci_xfer *oxfer = addr;
-	struct ohci_pipe *opipe = (struct ohci_pipe *)oxfer->xfer.ux_pipe;
-	ohci_softc_t *sc = opipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	struct usbd_xfer *xfer = addr;
+	struct ohci_xfer *oxfer = OHCI_XFER2OXFER(xfer);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	DPRINTF("oxfer=%p", oxfer, 0, 0, 0);
 
 	if (sc->sc_dying) {
 		mutex_enter(&sc->sc_lock);
-		ohci_abort_xfer(&oxfer->xfer, USBD_TIMEOUT);
+		ohci_abort_xfer(xfer, USBD_TIMEOUT);
 		mutex_exit(&sc->sc_lock);
 		return;
 	}
@@ -1996,7 +1993,7 @@ ohci_timeout(void *addr)
 	/* Execute the abort in a process context. */
 	usb_init_task(&oxfer->abort_task, ohci_timeout_task, addr,
 	    USB_TASKQ_MPSAFE);
-	usb_add_task(oxfer->xfer.ux_pipe->up_dev, &oxfer->abort_task,
+	usb_add_task(xfer->ux_pipe->up_dev, &oxfer->abort_task,
 	    USB_TASKQ_HC);
 }
 
@@ -2004,7 +2001,7 @@ void
 ohci_timeout_task(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
@@ -2119,9 +2116,9 @@ ohci_open(struct usbd_pipe *pipe)
 {
 	struct usbd_device *dev = pipe->up_dev;
 	struct usbd_bus *bus = dev->ud_bus;
-	ohci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
 	uint8_t addr = dev->ud_addr;
 	uint8_t xfertype = ed->bmAttributes & UE_XFERTYPE;
 	ohci_soft_ed_t *sed;
@@ -2251,8 +2248,8 @@ ohci_open(struct usbd_pipe *pipe)
 void
 ohci_close_pipe(struct usbd_pipe *pipe, ohci_soft_ed_t *head)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 	ohci_soft_ed_t *sed = opipe->sed;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -2303,8 +2300,8 @@ ohci_close_pipe(struct usbd_pipe *pipe, ohci_soft_ed_t *head)
 void
 ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
-	ohci_softc_t *sc = opipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *p, *n;
 	ohci_physaddr_t headp;
@@ -2441,7 +2438,7 @@ Static int
 ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
-	ohci_softc_t *sc = bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_BUS2SC(bus);
 	usb_port_status_t ps;
 	uint16_t len, value, index;
 	int l, totlen = 0;
@@ -2643,7 +2640,7 @@ ohci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 Static usbd_status
 ohci_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -2660,8 +2657,7 @@ ohci_root_intr_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ohci_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct usbd_pipe *pipe = xfer->ux_pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -2678,7 +2674,7 @@ ohci_root_intr_start(struct usbd_xfer *xfer)
 Static void
 ohci_root_intr_abort(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
@@ -2693,7 +2689,7 @@ ohci_root_intr_abort(struct usbd_xfer *xfer)
 Static void
 ohci_root_intr_close(struct usbd_pipe *pipe)
 {
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -2707,7 +2703,7 @@ ohci_root_intr_close(struct usbd_pipe *pipe)
 Static usbd_status
 ohci_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -2724,7 +2720,7 @@ ohci_device_ctrl_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ohci_device_ctrl_start(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	if (sc->sc_dying)
@@ -2747,9 +2743,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 Static void
 ohci_device_ctrl_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-#endif
+	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -2762,8 +2756,8 @@ ohci_device_ctrl_abort(struct usbd_xfer *xfer)
 Static void
 ohci_device_ctrl_close(struct usbd_pipe *pipe)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -2778,8 +2772,8 @@ ohci_device_ctrl_close(struct usbd_pipe *pipe)
 Static void
 ohci_device_clear_toggle(struct usbd_pipe *pipe)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 
 	opipe->sed->ed.ed_headp &= HTOO32(~OHCI_TOGGLECARRY);
 }
@@ -2792,7 +2786,7 @@ ohci_noop(struct usbd_pipe *pipe)
 Static usbd_status
 ohci_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -2809,9 +2803,9 @@ ohci_device_bulk_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ohci_device_bulk_start(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
 	struct usbd_device *dev = opipe->pipe.up_dev;
-	ohci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	int addr = dev->ud_addr;
 	ohci_soft_td_t *data, *tail, *tdp;
 	ohci_soft_ed_t *sed;
@@ -2918,9 +2912,8 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 Static void
 ohci_device_bulk_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-#endif
+	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
+
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -2935,8 +2928,8 @@ ohci_device_bulk_abort(struct usbd_xfer *xfer)
 Static void
 ohci_device_bulk_close(struct usbd_pipe *pipe)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -2952,7 +2945,7 @@ ohci_device_bulk_close(struct usbd_pipe *pipe)
 Static usbd_status
 ohci_device_intr_transfer(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -2969,9 +2962,8 @@ ohci_device_intr_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ohci_device_intr_start(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
-	struct usbd_device *dev = opipe->pipe.up_dev;
-	ohci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_ed_t *sed = opipe->sed;
 	ohci_soft_td_t *data, *tail;
 	int len, isread, endpt;
@@ -3057,9 +3049,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 Static void
 ohci_device_intr_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
-#endif
+	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
@@ -3071,8 +3061,8 @@ ohci_device_intr_abort(struct usbd_xfer *xfer)
 Static void
 ohci_device_intr_close(struct usbd_pipe *pipe)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 	int nslots = opipe->intr.nslots;
 	int pos = opipe->intr.pos;
 	int j;
@@ -3186,7 +3176,7 @@ ohci_device_setintr(ohci_softc_t *sc, struct ohci_pipe *opipe, int ival)
 usbd_status
 ohci_device_isoc_transfer(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
@@ -3217,9 +3207,8 @@ ohci_device_isoc_transfer(struct usbd_xfer *xfer)
 void
 ohci_device_isoc_enter(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
-	struct usbd_device *dev = opipe->pipe.up_dev;
-	ohci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_ed_t *sed = opipe->sed;
 	struct isoc *isoc = &opipe->isoc;
 	ohci_soft_itd_t *sitd, *nsitd;
@@ -3350,8 +3339,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 usbd_status
 ohci_device_isoc_start(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
-	ohci_softc_t *sc = opipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	DPRINTFN(5, "xfer=%p", xfer, 0, 0, 0);
@@ -3379,8 +3367,8 @@ ohci_device_isoc_start(struct usbd_xfer *xfer)
 void
 ohci_device_isoc_abort(struct usbd_xfer *xfer)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)xfer->ux_pipe;
-	ohci_softc_t *sc = opipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 	ohci_soft_ed_t *sed;
 	ohci_soft_itd_t *sitd;
 
@@ -3441,8 +3429,8 @@ ohci_device_isoc_done(struct usbd_xfer *xfer)
 usbd_status
 ohci_setup_isoc(struct usbd_pipe *pipe)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 	struct isoc *isoc = &opipe->isoc;
 
 	isoc->next = -1;
@@ -3458,8 +3446,8 @@ ohci_setup_isoc(struct usbd_pipe *pipe)
 void
 ohci_device_isoc_close(struct usbd_pipe *pipe)
 {
-	struct ohci_pipe *opipe = (struct ohci_pipe *)pipe;
-	ohci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(pipe);
+	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
