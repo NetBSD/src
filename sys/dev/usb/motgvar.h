@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.4.2.6 2015/10/20 15:17:54 skrll Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4.2.7 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -112,6 +112,13 @@ struct motg_softc {
 struct motg_xfer {
 	struct usbd_xfer xfer;
 };
+
+#define MOTG_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define MOTG_PIPE2SC(pipe)	MOTG_BUS2SC((pipe)->up_dev->ud_bus)
+#define MOTG_XFER2SC(xfer)	MOTG_PIPE2SC((xfer)->ux_pipe)
+#define MOTG_OTGPIPE2SC(mpipe)	MOTG_BUS2SC((mpipe)->pipe.up_dev->ud_bus)
+
+#define MOTG_XFER2MXFER(xfer)	((struct motg_xfer *)(xfer))
 
 int		motg_init(struct motg_softc *);
 int		motg_intr(struct motg_softc *, uint16_t, uint16_t, uint8_t);

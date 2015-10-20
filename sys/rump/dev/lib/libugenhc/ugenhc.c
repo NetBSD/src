@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.10 2015/10/11 09:17:51 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.11 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.10 2015/10/11 09:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.11 2015/10/20 15:31:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,6 +118,10 @@ struct rusb_xfer {
 };
 #define RUSB(x) ((struct rusb_xfer *)x)
 
+#define UGENHC_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define UGENHC_PIPE2SC(pipe)	UGENHC_BUS2SC((pipe)->up_dev->ud_bus)
+#define UGENHC_XFER2SC(pipe)	UGENHC_PIPE2SC((xfer)->ux_pipe)
+
 #define UGENDEV_BASESTR "/dev/ugen"
 #define UGENDEV_BUFSIZE 32
 static void
@@ -132,7 +136,7 @@ static int
 ugenhc_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
-	struct ugenhc_softc *sc = bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_BUS2SC(bus);
 	int totlen = 0;
 	uint16_t len, value;
 
@@ -216,7 +220,7 @@ static usbd_status
 rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 {
 	usb_device_request_t *req = &xfer->ux_request;
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	uint8_t *buf = NULL;
 	int len, totlen;
 	int value;
@@ -397,7 +401,7 @@ rumpusb_device_ctrl_start(struct usbd_xfer *xfer)
 static usbd_status
 rumpusb_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
@@ -517,7 +521,7 @@ rhscintr(void *arg)
 static usbd_status
 rumpusb_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	int error;
 
 	mutex_enter(&sc->sc_lock);
@@ -536,7 +540,7 @@ rumpusb_root_intr_start(struct usbd_xfer *xfer)
 static usbd_status
 rumpusb_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
@@ -584,7 +588,7 @@ static const struct usbd_pipe_methods rumpusb_root_intr_methods = {
 static usbd_status
 rumpusb_device_bulk_start(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	usb_endpoint_descriptor_t *ed = xfer->ux_pipe->up_endpoint->ue_edesc;
 	size_t n, done;
 	bool isread;
@@ -689,7 +693,7 @@ static void
 doxfer_kth(void *arg)
 {
 	struct usbd_pipe *pipe = arg;
-	struct ugenhc_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_PIPE2SC(pipe);
 
 	mutex_enter(&sc->sc_lock);
 	do {
@@ -705,7 +709,7 @@ doxfer_kth(void *arg)
 static usbd_status
 rumpusb_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	struct ugenhc_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_XFER2SC(xfer);
 	usbd_status err;
 
 	if (!rump_threads) {
@@ -752,7 +756,7 @@ rumpusb_device_bulk_abort(struct usbd_xfer *xfer)
 static void
 rumpusb_device_bulk_close(struct usbd_pipe *pipe)
 {
-	struct ugenhc_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_PIPE2SC(pipe);
 	int endpt = pipe->up_endpoint->ue_edesc->bEndpointAddress;
 	struct usbd_xfer *xfer;
 
@@ -793,7 +797,7 @@ static usbd_status
 ugenhc_open(struct usbd_pipe *pipe)
 {
 	struct usbd_device *dev = pipe->up_dev;
-	struct ugenhc_softc *sc = dev->ud_bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_PIPE2SC(pipe);
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	uint8_t rhaddr = dev->ud_bus->ub_rhaddr;
 	uint8_t addr = dev->ud_addr;
@@ -903,7 +907,7 @@ ugenhc_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 static void
 ugenhc_getlock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct ugenhc_softc *sc = bus->ub_hcpriv;
+	struct ugenhc_softc *sc = UGENHC_BUS2SC(bus);
 
 	*lock = &sc->sc_lock;
 }

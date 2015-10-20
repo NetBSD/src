@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.20 2015/10/20 15:17:54 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.21 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.20 2015/10/20 15:17:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.21 2015/10/20 15:31:21 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -521,7 +521,7 @@ motg_select_ep(struct motg_softc *sc, struct usbd_pipe *pipe)
 usbd_status
 motg_open(struct usbd_pipe *pipe)
 {
-	struct motg_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	uint8_t rhaddr = pipe->up_dev->ud_bus->ub_rhaddr;
@@ -592,7 +592,7 @@ void
 motg_softintr(void *v)
 {
 	struct usbd_bus *bus = v;
-	struct motg_softc *sc = bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_BUS2SC(bus);
 	uint16_t rx_status, tx_status;
 	uint8_t ctrl_status;
 	uint32_t val;
@@ -706,7 +706,7 @@ motg_softintr(void *v)
 void
 motg_poll(struct usbd_bus *bus)
 {
-	struct motg_softc *sc = bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_BUS2SC(bus);
 
 	sc->sc_intr_poll(sc->sc_intr_poll_arg);
 	mutex_enter(&sc->sc_lock);
@@ -748,7 +748,7 @@ motg_intr_vbus(struct motg_softc *sc, int vbus)
 struct usbd_xfer *
 motg_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
-	struct motg_softc *sc = bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
 	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
@@ -764,7 +764,7 @@ motg_allocx(struct usbd_bus *bus, unsigned int nframes)
 void
 motg_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_BUS2SC(bus);
 
 #ifdef DIAGNOSTIC
 	if (xfer->ux_state != XFER_BUSY) {
@@ -779,7 +779,7 @@ motg_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 static void
 motg_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct motg_softc *sc = bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_BUS2SC(bus);
 
 	*lock = &sc->sc_lock;
 }
@@ -791,7 +791,7 @@ Static int
 motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
-	struct motg_softc *sc = bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_BUS2SC(bus);
 	int status, change, totlen = 0;
 	uint16_t len, value, index;
 	usb_port_status_t ps;
@@ -994,7 +994,7 @@ motg_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 void
 motg_root_intr_abort(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
@@ -1008,7 +1008,7 @@ motg_root_intr_abort(struct usbd_xfer *xfer)
 usbd_status
 motg_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -1030,7 +1030,7 @@ usbd_status
 motg_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->ux_pipe;
-	struct motg_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
@@ -1048,7 +1048,7 @@ motg_root_intr_start(struct usbd_xfer *xfer)
 void
 motg_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct motg_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -1158,7 +1158,7 @@ motg_type(uint8_t type)
 static void
 motg_setup_endpoint_tx(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
 	struct usbd_device *dev = otgpipe->pipe.up_dev;
 	int epnumber = otgpipe->hw_ep->ep_number;
@@ -1207,7 +1207,7 @@ motg_setup_endpoint_tx(struct usbd_xfer *xfer)
 static void
 motg_setup_endpoint_rx(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct usbd_device *dev = xfer->ux_pipe->up_dev;
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
 	int epnumber = otgpipe->hw_ep->ep_number;
@@ -1256,7 +1256,7 @@ motg_setup_endpoint_rx(struct usbd_xfer *xfer)
 static usbd_status
 motg_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -1277,7 +1277,7 @@ motg_device_ctrl_transfer(struct usbd_xfer *xfer)
 static usbd_status
 motg_device_ctrl_start(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	usbd_status err;
 	mutex_enter(&sc->sc_lock);
 	err = motg_device_ctrl_start1(sc);
@@ -1384,7 +1384,7 @@ end:
 static void
 motg_device_ctrl_read(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
 	/* assume endpoint already selected */
 	motg_setup_endpoint_rx(xfer);
@@ -1663,7 +1663,7 @@ motg_device_ctrl_abort(struct usbd_xfer *xfer)
 void
 motg_device_ctrl_close(struct usbd_pipe *pipe)
 {
-	struct motg_softc *sc __diagused = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc __diagused = MOTG_PIPE2SC(pipe);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
 	struct motg_pipe *otgpipeiter;
 
@@ -1698,7 +1698,7 @@ motg_device_ctrl_done(struct usbd_xfer *xfer)
 static usbd_status
 motg_device_data_transfer(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	usbd_status err;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
@@ -1722,7 +1722,7 @@ motg_device_data_transfer(struct usbd_xfer *xfer)
 static usbd_status
 motg_device_data_start(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
 	usbd_status err;
 
@@ -1829,7 +1829,7 @@ end:
 static void
 motg_device_data_read(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
 	uint32_t val;
 
@@ -1860,7 +1860,7 @@ motg_device_data_read(struct usbd_xfer *xfer)
 static void
 motg_device_data_write(struct usbd_xfer *xfer)
 {
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
 	struct motg_hw_ep *ep = otgpipe->hw_ep;
 	int datalen;
@@ -2127,7 +2127,7 @@ void
 motg_device_data_abort(struct usbd_xfer *xfer)
 {
 #ifdef DIAGNOSTIC
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 #endif
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -2140,7 +2140,7 @@ motg_device_data_abort(struct usbd_xfer *xfer)
 void
 motg_device_data_close(struct usbd_pipe *pipe)
 {
-	struct motg_softc *sc __diagused = pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc __diagused = MOTG_PIPE2SC(pipe);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
 	struct motg_pipe *otgpipeiter;
 
@@ -2222,7 +2222,7 @@ motg_device_xfer_abort(struct usbd_xfer *xfer)
 {
 	int wake;
 	uint8_t csr;
-	struct motg_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
 	KASSERT(mutex_owned(&sc->sc_lock));
 

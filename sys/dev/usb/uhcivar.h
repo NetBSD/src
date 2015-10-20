@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.7 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.8 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -82,7 +82,12 @@ struct uhci_xfer {
 	int curframe;
 };
 
-#define UXFER(xfer) ((struct uhci_xfer *)(xfer))
+#define UHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define UHCI_PIPE2SC(pipe)	UHCI_BUS2SC((pipe)->up_dev->ud_bus)
+#define UHCI_XFER2SC(xfer)	UHCI_PIPE2SC((xfer)->ux_pipe)
+#define UHCI_UPIPE2SC(d)	UHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
+
+#define UHCI_XFER2UXFER(xfer)	((struct uhci_xfer *)(xfer))
 
 /*
  * Extra information that we need for a TD.

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.13 2015/10/11 09:17:50 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.14 2015/10/20 15:31:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.13 2015/10/11 09:17:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.14 2015/10/20 15:31:21 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -409,6 +409,11 @@ ahci_poll(struct usbd_bus *bus)
 	DPRINTF(D_TRACE, ("%s()", __func__));
 }
 
+#define AHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
+#define AHCI_PIPE2SC(pipe)	AHCI_BUS2SC((pipe)->up_dev->ud_bus)
+#define AHCI_XFER2SC(xfer)	AHCI_PIPE2SC((xfer)->ux_pipe)
+#define AHCI_APIPE2SC(ap)	AHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
+
 /*
  * Emulation of interrupt transfer for status change endpoint
  * of root hub.
@@ -417,8 +422,7 @@ void
 ahci_poll_hub(void *arg)
 {
 	struct usbd_xfer *xfer = arg;
-	struct usbd_pipe *pipe = xfer->ux_pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	u_char *p;
 	static int p0_state=0;
 	static int p1_state=0;
@@ -453,7 +457,7 @@ ahci_poll_hub(void *arg)
 struct usbd_xfer *
 ahci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)bus;
+	struct ahci_softc *sc = AHCI_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
 	DPRINTF(D_MEM, ("SLallocx"));
@@ -484,7 +488,7 @@ ahci_allocx(struct usbd_bus *bus, unsigned int nframes)
 void
 ahci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)bus;
+	struct ahci_softc *sc = AHCI_BUS2SC(bus);
 
 	DPRINTF(D_MEM, ("SLfreex"));
 
@@ -502,7 +506,7 @@ ahci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 static void
 ahci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct ahci_softc *sc = bus->ub_hcpriv;
+	struct ahci_softc *sc = AHCI_BUS2SC(bus);
 
 	*lock = &sc->sc_lock;
 }
@@ -521,7 +525,7 @@ static int
 ahci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
-	struct ahci_softc *sc = bus->ub_hcpriv;
+	struct ahci_softc *sc = AHCI_BUS2SC(bus);
 	uint16_t len, value, index;
 	usb_port_status_t ps;
 	int totlen = 0;
@@ -700,7 +704,7 @@ ahci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 static usbd_status
 ahci_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("SLRItransfer "));
@@ -722,8 +726,7 @@ ahci_root_intr_transfer(struct usbd_xfer *xfer)
 static usbd_status
 ahci_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct usbd_pipe *pipe = xfer->ux_pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
@@ -742,7 +745,7 @@ ahci_root_intr_abort(struct usbd_xfer *xfer)
 static void
 ahci_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_PIPE2SC(pipe);
 
 	DPRINTF(D_TRACE, ("SLRIclose "));
 
@@ -759,7 +762,7 @@ ahci_root_intr_done(struct usbd_xfer *xfer)
 static usbd_status
 ahci_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("C"));
@@ -783,7 +786,7 @@ ahci_device_ctrl_start(struct usbd_xfer *xfer)
 	static usb_dma_t reqdma;
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	usb_device_request_t *req = &xfer->ux_request;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	int len, isread;
 
 
@@ -946,7 +949,7 @@ ahci_device_ctrl_done(struct usbd_xfer *xfer)
 static usbd_status
 ahci_device_intr_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("INTRtrans "));
@@ -994,7 +997,7 @@ ahci_poll_device(void *arg)
 	struct ahci_xfer *sx = (struct ahci_xfer *)arg;
 	struct usbd_xfer *xfer = sx->sx_xfer;
 	struct usbd_pipe *pipe = xfer->ux_pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	void *buf;
 	int pid;
 	int r;
@@ -1090,7 +1093,7 @@ ahci_device_isoc_done(struct usbd_xfer *xfer)
 static usbd_status
 ahci_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	struct ahci_softc *sc = (struct ahci_softc *)xfer->ux_pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	usbd_status error;
 
 	DPRINTF(D_TRACE, ("B"));
@@ -1114,7 +1117,7 @@ ahci_device_bulk_start(struct usbd_xfer *xfer)
 	static struct admhcd_ed ep_v __attribute__((aligned(16))), *ep;
 	static struct admhcd_td td_v[NBULK_TDS] __attribute__((aligned(16))), *td[NBULK_TDS];
 	struct usbd_pipe *pipe = xfer->ux_pipe;
-	struct ahci_softc *sc = (struct ahci_softc *)pipe->up_dev->ud_bus;
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
 	int endpt, i, len, tlen, segs, offset, isread, toggle, short_ok;
 	struct ahci_pipe *apipe = (struct ahci_pipe *)xfer->ux_pipe;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.57 2015/10/17 15:25:38 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.58 2015/10/20 15:31:21 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.57 2015/10/17 15:25:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.58 2015/10/20 15:31:21 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -749,7 +749,7 @@ Static void
 ehci_softintr(void *v)
 {
 	struct usbd_bus *bus = v;
-	ehci_softc_t *sc = bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_BUS2SC(bus);
 	struct ehci_xfer *ex, *nextex;
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
@@ -999,7 +999,7 @@ ehci_idone(struct ehci_xfer *ex)
 {
 	struct usbd_xfer *xfer = &ex->ex_xfer;
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
-	struct ehci_softc *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	struct ehci_softc *sc = EHCI_XFER2SC(xfer);
 	ehci_soft_qtd_t *sqtd, *lsqtd;
 	uint32_t status = 0, nstatus = 0;
 	int actlen;
@@ -1292,7 +1292,7 @@ ehci_waitintr(ehci_softc_t *sc, struct usbd_xfer *xfer)
 Static void
 ehci_poll(struct usbd_bus *bus)
 {
-	ehci_softc_t *sc = bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_BUS2SC(bus);
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -1516,7 +1516,7 @@ ehci_shutdown(device_t self, int flags)
 Static struct usbd_xfer *
 ehci_allocx(struct usbd_bus *bus, unsigned int nframes)
 {
-	struct ehci_softc *sc = bus->ub_hcpriv;
+	struct ehci_softc *sc = EHCI_BUS2SC(bus);
 	struct usbd_xfer *xfer;
 
 	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
@@ -1534,7 +1534,7 @@ ehci_allocx(struct usbd_bus *bus, unsigned int nframes)
 Static void
 ehci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 {
-	struct ehci_softc *sc = bus->ub_hcpriv;
+	struct ehci_softc *sc = EHCI_BUS2SC(bus);
 
 	KASSERT(xfer->ux_state == XFER_BUSY);
 	KASSERT(EHCI_XFER2EXFER(xfer)->ex_isdone);
@@ -1547,7 +1547,7 @@ ehci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 Static void
 ehci_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
-	struct ehci_softc *sc = bus->ub_hcpriv;
+	struct ehci_softc *sc = EHCI_BUS2SC(bus);
 
 	*lock = &sc->sc_lock;
 }
@@ -1840,7 +1840,7 @@ Static usbd_status
 ehci_open(struct usbd_pipe *pipe)
 {
 	struct usbd_device *dev = pipe->up_dev;
-	ehci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	uint8_t rhaddr = dev->ud_bus->ub_rhaddr;
 	uint8_t addr = dev->ud_addr;
@@ -2259,7 +2259,7 @@ Static int
 ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
     void *buf, int buflen)
 {
-	ehci_softc_t *sc = bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_BUS2SC(bus);
 	usb_hub_descriptor_t hubd;
 	usb_port_status_t ps;
 	uint16_t len, value, index;
@@ -2598,7 +2598,7 @@ ehci_disown(ehci_softc_t *sc, int index, int lowspeed)
 Static usbd_status
 ehci_root_intr_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -2615,8 +2615,7 @@ ehci_root_intr_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_root_intr_start(struct usbd_xfer *xfer)
 {
-	struct usbd_pipe *pipe = xfer->ux_pipe;
-	ehci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 
 	if (sc->sc_dying)
 		return USBD_IOERROR;
@@ -2632,7 +2631,7 @@ ehci_root_intr_start(struct usbd_xfer *xfer)
 Static void
 ehci_root_intr_abort(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
@@ -2647,7 +2646,7 @@ ehci_root_intr_abort(struct usbd_xfer *xfer)
 Static void
 ehci_root_intr_close(struct usbd_pipe *pipe)
 {
-	ehci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -3085,7 +3084,7 @@ Static void
 ehci_close_pipe(struct usbd_pipe *pipe, ehci_soft_qh_t *head)
 {
 	struct ehci_pipe *epipe = EHCI_PIPE2EPIPE(pipe);
-	ehci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
 	ehci_soft_qh_t *sqh = epipe->sqh;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -3111,7 +3110,7 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
-	ehci_softc_t *sc = epipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	ehci_soft_qh_t *sqh = epipe->sqh;
 	ehci_soft_qtd_t *sqtd;
 	ehci_physaddr_t cur;
@@ -3256,7 +3255,6 @@ Static void
 ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 {
 	ehci_isoc_trans_t trans_status;
-	struct ehci_pipe *epipe;
 	struct ehci_xfer *exfer;
 	ehci_softc_t *sc;
 	struct ehci_soft_itd *itd;
@@ -3265,11 +3263,10 @@ ehci_abort_isoc_xfer(struct usbd_xfer *xfer, usbd_status status)
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
-	epipe = EHCI_XFER2EPIPE(xfer);
 	exfer = EHCI_XFER2EXFER(xfer);
-	sc = epipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	sc = EHCI_XFER2SC(xfer);
 
-	USBHIST_LOG(ehcidebug, "xfer %p pipe %p", xfer, epipe, 0, 0);
+	USBHIST_LOG(ehcidebug, "xfer %p pipe %p", xfer, xfer->ux_pipe, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -3363,8 +3360,7 @@ ehci_timeout(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
-	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
-	ehci_softc_t *sc = epipe->pipe.up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -3392,7 +3388,7 @@ Static void
 ehci_timeout_task(void *addr)
 {
 	struct usbd_xfer *xfer = addr;
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 
@@ -3408,7 +3404,7 @@ ehci_timeout_task(void *addr)
 Static usbd_status
 ehci_device_ctrl_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -3425,7 +3421,7 @@ ehci_device_ctrl_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_ctrl_start(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	if (sc->sc_dying)
@@ -3448,7 +3444,7 @@ Static void
 ehci_device_ctrl_done(struct usbd_xfer *xfer)
 {
 	struct ehci_xfer *ex = EHCI_XFER2EXFER(xfer);
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	usb_device_request_t *req = &xfer->ux_request;
 	int len = UGETW(req->wLength);
@@ -3488,7 +3484,7 @@ ehci_device_ctrl_abort(struct usbd_xfer *xfer)
 Static void
 ehci_device_ctrl_close(struct usbd_pipe *pipe)
 {
-	ehci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
 	/*struct ehci_pipe *epipe = EHCI_PIPE2EPIPE(pipe);*/
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
@@ -3506,8 +3502,8 @@ ehci_device_request(struct usbd_xfer *xfer)
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	usb_device_request_t *req = &xfer->ux_request;
-	struct usbd_device *dev = epipe->pipe.up_dev;
-	ehci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	struct usbd_device *dev __diagused = epipe->pipe.up_dev;
 	ehci_soft_qtd_t *setup, *stat, *next;
 	ehci_soft_qh_t *sqh;
 	int isread;
@@ -3682,7 +3678,7 @@ ehci_intrlist_timeout(void *arg)
 Static usbd_status
 ehci_device_bulk_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -3701,8 +3697,7 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 {
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
-	struct usbd_device *dev = epipe->pipe.up_dev;
-	ehci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);;
 	ehci_soft_qtd_t *data, *dataend;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
@@ -3794,7 +3789,7 @@ ehci_device_bulk_abort(struct usbd_xfer *xfer)
 Static void
 ehci_device_bulk_close(struct usbd_pipe *pipe)
 {
-	ehci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
 	struct ehci_pipe *epipe = EHCI_PIPE2EPIPE(pipe);
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
@@ -3810,7 +3805,7 @@ Static void
 ehci_device_bulk_done(struct usbd_xfer *xfer)
 {
 	struct ehci_xfer *ex = EHCI_XFER2EXFER(xfer);
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	int endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 	int rd = UE_GET_DIR(endpt) == UE_DIR_IN;
@@ -3862,7 +3857,7 @@ ehci_device_setintr(ehci_softc_t *sc, ehci_soft_qh_t *sqh, int ival)
 Static usbd_status
 ehci_device_intr_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	/* Insert last in queue. */
@@ -3884,8 +3879,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 {
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
-	struct usbd_device *dev = xfer->ux_pipe->up_dev;
-	ehci_softc_t *sc = dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);;
 	ehci_soft_qtd_t *data, *dataend;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
@@ -3979,7 +3973,7 @@ ehci_device_intr_abort(struct usbd_xfer *xfer)
 Static void
 ehci_device_intr_close(struct usbd_pipe *pipe)
 {
-	ehci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
 	struct ehci_pipe *epipe = EHCI_PIPE2EPIPE(pipe);
 	struct ehci_soft_islot *isp;
 
@@ -3992,7 +3986,7 @@ ehci_device_intr_close(struct usbd_pipe *pipe)
 Static void
 ehci_device_intr_done(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	ehci_soft_qtd_t *data, *dataend;
@@ -4056,7 +4050,7 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
@@ -4090,7 +4084,7 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 	sitd = NULL;
 	total_length = 0;
 	exfer = EHCI_XFER2EXFER(xfer);
-	sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	sc = EHCI_XFER2SC(xfer);
 	dev = xfer->ux_pipe->up_dev;
 	epipe = EHCI_XFER2EPIPE(xfer);
 
@@ -4370,7 +4364,7 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 	struct ehci_pipe *epipe;
 
 	exfer = EHCI_XFER2EXFER(xfer);
-	sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	sc = EHCI_XFER2SC(xfer);
 	epipe = EHCI_XFER2EPIPE(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
@@ -4387,7 +4381,7 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 {
-	ehci_softc_t *sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	usbd_status err;
 
 	mutex_enter(&sc->sc_lock);
@@ -4419,7 +4413,7 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	trans_count = 0;
 	total_length = 0;
 	exfer = EHCI_XFER2EXFER(xfer);
-	sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	sc = EHCI_XFER2SC(xfer);
 	epipe = EHCI_XFER2EPIPE(xfer);
 
 	/*
@@ -4698,7 +4692,7 @@ ehci_device_isoc_done(struct usbd_xfer *xfer)
 	struct ehci_pipe *epipe;
 
 	exfer = EHCI_XFER2EXFER(xfer);
-	sc = xfer->ux_pipe->up_dev->ud_bus->ub_hcpriv;
+	sc = EHCI_XFER2SC(xfer);
 	epipe = EHCI_XFER2EPIPE(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
