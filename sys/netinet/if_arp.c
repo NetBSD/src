@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.190 2015/10/20 07:35:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.191 2015/10/20 07:46:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.190 2015/10/20 07:35:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.191 2015/10/20 07:46:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -635,6 +635,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			break;
 		}
 		rt->rt_llinfo = la;
+		LLE_ADDREF(la);
 		switch (ifp->if_type) {
 #if NTOKEN > 0
 		case IFT_ISO88025:
@@ -662,17 +663,14 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		rt->rt_llinfo = NULL;
 		rt->rt_flags &= ~RTF_LLINFO;
 
+		/* Have to do before IF_AFDATA_WLOCK to avoid deadlock */
+		callout_halt(&la->la_timer, &la->lle_lock);
+		/* XXX: LOR avoidance. We still have ref on lle. */
 		LLE_RUNLOCK(la);
 
 		flags |= LLE_EXCLUSIVE;
 		IF_AFDATA_WLOCK(ifp);
-
-		la = lla_lookup(LLTABLE(ifp), flags, rt_getkey(rt));
-		/* This shouldn't happen */
-		if (la == NULL) {
-			IF_AFDATA_WUNLOCK(ifp);
-			break;
-		}
+		LLE_WLOCK(la);
 
 		if (la->la_opaque != NULL) {
 			switch (ifp->if_type) {
@@ -695,10 +693,20 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			la->la_rt->rt_refcnt--;
 			la->la_rt = NULL;
 		}
-		llentry_free(la);
+
+		/* Guard against race with other llentry_free(). */
+		if (la->la_flags & LLE_LINKED) {
+			size_t pkts_dropped;
+
+			LLE_REMREF(la);
+			pkts_dropped = llentry_free(la);
+			ARP_STATADD(ARP_STAT_DFRDROPPED, pkts_dropped);
+		} else {
+			LLE_FREE_LOCKED(la);
+		}
+		la = NULL;
 
 		IF_AFDATA_WUNLOCK(ifp);
-		la = NULL;
 	}
 
 	if (la != NULL) {
