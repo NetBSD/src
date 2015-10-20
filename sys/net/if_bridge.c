@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.103 2015/10/07 08:48:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.104 2015/10/20 14:46:45 maxv Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.103 2015/10/07 08:48:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.104 2015/10/20 14:46:45 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -2181,7 +2181,7 @@ retry:
 	count = sc->sc_brtcnt;
 	if (count == 0)
 		return;
-	brt_list = kmem_alloc(sizeof(struct bridge_rtnode *) * count, KM_SLEEP);
+	brt_list = kmem_alloc(sizeof(*brt_list) * count, KM_SLEEP);
 
 	BRIDGE_RT_LOCK(sc);
 	BRIDGE_RT_INTR_LOCK(sc);
