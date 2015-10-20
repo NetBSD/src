@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.6 2015/09/30 07:12:32 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.7 2015/10/20 07:35:15 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -364,7 +364,6 @@ lltable_free(struct lltable *llt)
 
 	lltable_unlink(llt);
 
-	mutex_enter(softnet_lock);
 	LIST_INIT(&dchain);
 	IF_AFDATA_WLOCK(llt->llt_ifp);
 	/* Push all lles to @dchain */
@@ -373,7 +372,7 @@ lltable_free(struct lltable *llt)
 	IF_AFDATA_WUNLOCK(llt->llt_ifp);
 
 	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next) {
-		if (callout_halt(&lle->la_timer, softnet_lock))
+		if (callout_halt(&lle->la_timer, &lle->lle_lock))
 			LLE_REMREF(lle);
 #if defined(__NetBSD__)
 		/* XXX should have callback? */
@@ -394,7 +393,6 @@ lltable_free(struct lltable *llt)
 #endif
 		llentry_free(lle);
 	}
-	mutex_exit(softnet_lock);
 
 	llt->llt_free_tbl(llt);
 }
