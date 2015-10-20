@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.377 2015/08/27 14:04:08 nonaka Exp $
+#	$NetBSD: files.pci,v 1.378 2015/10/20 13:27:36 tnn Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1136,7 +1136,7 @@ device	viomb
 attach	viomb at virtio
 file	dev/pci/viomb.c		viomb
 
-device	vioif
+device	vioif: ether, ifnet, arp
 attach	vioif at virtio
 file	dev/pci/if_vioif.c	vioif
 
