@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.19 2015/10/11 09:17:51 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.20 2015/10/20 15:17:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.19 2015/10/11 09:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.20 2015/10/20 15:17:54 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -754,9 +754,7 @@ motg_allocx(struct usbd_bus *bus, unsigned int nframes)
 	xfer = pool_cache_get(sc->sc_xferpool, PR_NOWAIT);
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct motg_xfer));
-		UXFER(xfer)->sc = sc;
 #ifdef DIAGNOSTIC
-		// XXX UXFER(xfer)->iinfo.isdone = 1;
 		xfer->ux_state = XFER_BUSY;
 #endif
 	}
@@ -1003,9 +1001,6 @@ motg_root_intr_abort(struct usbd_xfer *xfer)
 
 	sc->sc_intr_xfer = NULL;
 
-#ifdef DIAGNOSTIC
-	// XXX UXFER(xfer)->iinfo.isdone = 1;
-#endif
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
