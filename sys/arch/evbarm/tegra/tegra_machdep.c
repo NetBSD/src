@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.22 2015/10/21 10:43:09 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.23 2015/10/21 20:02:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.22 2015/10/21 10:43:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.23 2015/10/21 20:02:13 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -437,7 +437,7 @@ tegra_device_register(device_t self, void *aux)
 	}
 
 #ifdef SOC_TEGRA124
-	if (device_is_a(self, "ehci")) {
+	if (device_is_a(self, "tegrausbphy")) {
 		prop_dictionary_set_uint8(dict, "nvidia,hssync-start-delay", 0);
 		prop_dictionary_set_uint8(dict, "nvidia,idle-wait-delay", 17);
 		prop_dictionary_set_uint8(dict, "nvidia,elastic-limit", 16);
