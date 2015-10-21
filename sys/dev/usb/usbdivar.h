@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.19 2015/10/12 10:18:54 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.20 2015/10/21 07:36:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -260,8 +260,10 @@ struct usbd_xfer {
 	uint16_t		*ux_frlengths;
 	int			ux_nframes;
 
-	/* For memory allocation */
-	struct usbd_device     *ux_dev;
+	const struct usbd_pipe_methods *ux_methods;
+
+	/* For memory allocation and softc */
+	struct usbd_bus        *ux_bus;
 	usb_dma_t		ux_dmabuf;
 	void		       *ux_buf;
 	uint32_t		ux_bufsize;

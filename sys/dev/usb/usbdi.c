@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.32 2015/10/12 10:18:54 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.33 2015/10/21 07:36:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.32 2015/10/12 10:18:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.33 2015/10/21 07:36:31 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -380,7 +380,7 @@ usbd_alloc_buffer(struct usbd_xfer *xfer, uint32_t size)
 
 	xfer->ux_bufsize = 0;
 #if NUSB_DMA > 0
-	struct usbd_bus *bus = xfer->ux_dev->ud_bus;
+	struct usbd_bus *bus = xfer->ux_bus;
 
 	if (bus->ub_usedma) {
 		usb_dma_t *dmap = &xfer->ux_dmabuf;
@@ -395,7 +395,7 @@ usbd_alloc_buffer(struct usbd_xfer *xfer, uint32_t size)
 		return xfer->ux_buf;
 	}
 #endif
-	KASSERT(xfer->ux_dev->ud_bus->ub_usedma == false);
+	KASSERT(xfer->ux_bus->ub_usedma == false);
 	xfer->ux_buf = kmem_alloc(size, KM_SLEEP);
 
 	if (xfer->ux_buf != NULL) {
@@ -418,7 +418,7 @@ usbd_free_buffer(struct usbd_xfer *xfer)
 	xfer->ux_bufsize = 0;
 
 #if NUSB_DMA > 0
-	struct usbd_bus *bus = xfer->ux_dev->ud_bus;
+	struct usbd_bus *bus = xfer->ux_bus;
 
 	if (bus->ub_usedma) {
 		usb_dma_t *dmap = &xfer->ux_dmabuf;
@@ -427,7 +427,7 @@ usbd_free_buffer(struct usbd_xfer *xfer)
 		return;
 	}
 #endif
-	KASSERT(xfer->ux_dev->ud_bus->ub_usedma == false);
+	KASSERT(xfer->ux_bus->ub_usedma == false);
 
 	kmem_free(buf, size);
 }
@@ -457,7 +457,7 @@ usbd_alloc_xfer(struct usbd_device *dev, unsigned int nframes)
 	xfer = dev->ud_bus->ub_methods->ubm_allocx(dev->ud_bus, nframes);
 	if (xfer == NULL)
 		return NULL;
-	xfer->ux_dev = dev;
+	xfer->ux_bus = dev->ud_bus;
 	callout_init(&xfer->ux_callout, CALLOUT_MPSAFE);
 	cv_init(&xfer->ux_cv, "usbxfer");
 	cv_init(&xfer->ux_hccv, "usbhcxfer");
@@ -484,7 +484,7 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 #endif
 	cv_destroy(&xfer->ux_cv);
 	cv_destroy(&xfer->ux_hccv);
-	xfer->ux_dev->ud_bus->ub_methods->ubm_freex(xfer->ux_dev->ud_bus, xfer);
+	xfer->ux_bus->ub_methods->ubm_freex(xfer->ux_bus, xfer);
 	return USBD_NORMAL_COMPLETION;
 }
 
@@ -509,9 +509,10 @@ usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
 	xfer->ux_pipe = pipe;
 	xfer->ux_flags = flags;
 	xfer->ux_nframes = nframes;
+	xfer->ux_methods = pipe->up_methods;
 
-	if (xfer->ux_pipe->up_methods->upm_init) {
-		int err = xfer->ux_pipe->up_methods->upm_init(xfer);
+	if (xfer->ux_methods->upm_init) {
+		int err = xfer->ux_methods->upm_init(xfer);
 		if (err) {
 			if (buf)
 				usbd_free_buffer(xfer);
@@ -527,8 +528,8 @@ usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
 void usbd_destroy_xfer(struct usbd_xfer *xfer)
 {
 
-	if (xfer->ux_pipe->up_methods->upm_fini) {
-		xfer->ux_pipe->up_methods->upm_fini(xfer);
+	if (xfer->ux_methods->upm_fini) {
+		xfer->ux_methods->upm_fini(xfer);
 	}
 
 	usbd_free_xfer(xfer);
