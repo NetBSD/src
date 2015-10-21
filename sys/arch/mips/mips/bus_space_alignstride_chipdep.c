@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.23 2015/02/27 14:44:16 macallan Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.24 2015/10/21 15:47:19 macallan Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.23 2015/02/27 14:44:16 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.24 2015/10/21 15:47:19 macallan Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -685,8 +685,11 @@ __BS(read_1)(void *v, bus_space_handle_t h, bus_size_t off)
 
         shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
-        r = (uint8_t)(CHIP_SWAP_ACCESS(*ptr) >> shift);
-
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	r = (uint8_t)(CHIP_SWAP_ACCESS(mips3_ld(ptr)) >> shift);
+#else
+	r = (uint8_t)(CHIP_SWAP_ACCESS(*ptr) >> shift);
+#endif
         return r;
 }
 
@@ -705,8 +708,11 @@ __BS(read_2)(void *v, bus_space_handle_t h, bus_size_t off)
         h += CHIP_OFF16(off);
         shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	r = (uint16_t)CHIP_SWAP16(mips3_ld(ptr) >> shift);
+#else
 	r = (uint16_t)CHIP_SWAP16(*ptr >> shift);
-
+#endif
 	return r;
 }
 
@@ -725,8 +731,11 @@ __BS(read_4)(void *v, bus_space_handle_t h, bus_size_t off)
         h += CHIP_OFF32(off);
         shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	r = (uint32_t)CHIP_SWAP32(mips3_ld(ptr) >> shift);
+#else
 	r = (uint32_t)CHIP_SWAP32(*ptr >> shift);
-
+#endif
 	return r;
 }
 
@@ -798,7 +807,11 @@ __BS(write_1)(void *v, bus_space_handle_t h, bus_size_t off, uint8_t val)
 	h += CHIP_OFF8(off);
 	shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
 	ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	mips3_sd(ptr, CHIP_SWAP_ACCESS(((CHIP_TYPE)val) << shift));
+#else
 	*ptr = CHIP_SWAP_ACCESS(((CHIP_TYPE)val) << shift);
+#endif
 }
 
 static void
@@ -816,7 +829,11 @@ __BS(write_2)(void *v, bus_space_handle_t h, bus_size_t off, uint16_t val)
 	shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
 	ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
 	if (CHIP_ACCESS_SIZE > 2)
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+		mips3_sd(ptr, (CHIP_TYPE)(CHIP_SWAP16(val)) << shift);
+#else
 		*ptr = (CHIP_TYPE)(CHIP_SWAP16(val)) << shift;
+#endif
 	else
 		*ptr = CHIP_SWAP16(val);
 }
@@ -836,7 +853,11 @@ __BS(write_4)(void *v, bus_space_handle_t h, bus_size_t off, uint32_t val)
         shift = (h & (CHIP_ACCESS_SIZE - 1)) * 8;
         ptr = (void *)(h & ~((bus_space_handle_t)(CHIP_ACCESS_SIZE - 1)));
         if (CHIP_ACCESS_SIZE > 4)
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+		mips3_sd(ptr, (CHIP_TYPE)(CHIP_SWAP32(val)) << shift);
+#else
 		*ptr = (CHIP_TYPE)(CHIP_SWAP32(val)) << shift;
+#endif
         else
                 *ptr = CHIP_SWAP32(val);
 }
@@ -960,7 +981,11 @@ __BS(read_stream_1)(void *v, bus_space_handle_t h, bus_size_t off)
 #endif	/* CHIP_ACCESS_SIZE > 1 */
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF8(off));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	return mips3_ld(ptr) & 0xff;
+#else
 	return *ptr & 0xff;
+#endif
 }
 
 static uint16_t
@@ -973,7 +998,11 @@ __BS(read_stream_2)(void *v, bus_space_handle_t h, bus_size_t off)
 #endif	/* CHIP_ACCESS_SIZE > 2 */
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF16(off));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	return mips3_ld(ptr) & 0xffff;
+#else
 	return *ptr & 0xffff;
+#endif
 }
 
 static uint32_t
@@ -986,7 +1015,11 @@ __BS(read_stream_4)(void *v, bus_space_handle_t h, bus_size_t off)
 #endif
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF32(off));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	return mips3_ld(ptr) & 0xffffffff;
+#else
 	return *ptr & 0xffffffff;
+#endif
 }
 
 static uint64_t
@@ -1046,7 +1079,11 @@ __BS(write_stream_1)(void *v, bus_space_handle_t h, bus_size_t off,
 #endif	/* CHIP_ACCESS_SIZE > 1 */
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF8(off));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	mips3_sd(ptr, val);
+#else
 	*ptr = val;
+#endif
 }
 
 static void
@@ -1060,7 +1097,11 @@ __BS(write_stream_2)(void *v, bus_space_handle_t h, bus_size_t off,
 #endif	/* CHIP_ACCESS_SIZE > 2 */
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF16(off));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	mips3_sd(ptr, val);
+#else
 	*ptr = val;
+#endif
 }
 
 static void
@@ -1074,7 +1115,11 @@ __BS(write_stream_4)(void *v, bus_space_handle_t h, bus_size_t off,
 #endif	/* CHIP_ACCESS_SIZE > 4 */
 
 	ptr = (void *)(intptr_t)(h + CHIP_OFF32(off));
+#if defined(NEED_64BIT_ASM) && (CHIP_ACCESS_SIZE == 8)
+	mips3_sd(ptr, val);
+#else
 	*ptr = val;
+#endif
 }
 
 static void
