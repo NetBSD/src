@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehcireg.h,v 1.2 2015/05/18 09:56:43 skrll Exp $ */
+/* $NetBSD: tegra_usbreg.h,v 1.1 2015/10/21 20:02:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _ARM_TEGRA_EHCIREG_H
-#define _ARM_TEGRA_EHCIREG_H
+#ifndef _ARM_TEGRA_USBREG_H
+#define _ARM_TEGRA_USBREG_H
 
 #define TEGRA_EHCI_TXFILLTUNING_REG		0x154
 #define TEGRA_EHCI_TXFILLTUNING_TXFIFOTHRES	__BITS(21,16)
@@ -124,4 +124,4 @@
 #define TEGRA_EHCI_UTMIP_HSRX_CFG1_REG		0xc0c
 #define TEGRA_EHCI_UTMIP_HSRX_CFG1_SYNC_START_DLY __BITS(5,1)
 
-#endif /* _ARM_TEGRA_EHCIREG_H */
+#endif /* _ARM_TEGRA_USBREG_H */
