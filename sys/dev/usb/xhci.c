@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.42 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.43 2015/10/21 21:34:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.42 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.43 2015/10/21 21:34:11 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2872,7 +2872,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		v &= ~XHCI_PS_CLEAR;
 		switch (value) {
 		case UHF_PORT_ENABLE:
-			xhci_op_write_4(sc, port, v &~ XHCI_PS_PED);
+			xhci_op_write_4(sc, port, v & ~XHCI_PS_PED);
 			break;
 		case UHF_PORT_SUSPEND:
 			return -1;
@@ -2993,7 +2993,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			/* XXX suspend */
 			break;
 		case UHF_PORT_RESET:
-			v &= ~ (XHCI_PS_PED | XHCI_PS_PR);
+			v &= ~(XHCI_PS_PED | XHCI_PS_PR);
 			xhci_op_write_4(sc, port, v | XHCI_PS_PR);
 			/* Wait for reset to complete. */
 			usb_delay_ms(&sc->sc_bus, USB_PORT_ROOT_RESET_DELAY);
