@@ -1,4 +1,4 @@
-/*	$NetBSD: agp_i810.c,v 1.120 2015/10/21 14:11:07 christos Exp $	*/
+/*	$NetBSD: agp_i810.c,v 1.121 2015/10/21 15:37:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.120 2015/10/21 14:11:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp_i810.c,v 1.121 2015/10/21 15:37:35 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,7 +445,7 @@ agp_i810_attach(device_t parent, device_t self, void *aux)
 	 */
 	mmadr_type = pci_mapreg_type(isc->vga_pa.pa_pc, isc->vga_pa.pa_tag,
 	    mmadr_bar);
-	if (PCI_MAPREG_TYPE(mmaddr_type) != PCI_MAPREG_TYPE_MEM) {
+	if (PCI_MAPREG_TYPE(mmadr_type) != PCI_MAPREG_TYPE_MEM) {
 		aprint_error_dev(self, "non-memory device MMIO registers\n");
 		error = ENXIO;
 		goto fail1;
