@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.137 2015/10/03 15:22:14 joerg Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.138 2015/10/21 12:54:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.137 2015/10/03 15:22:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.138 2015/10/21 12:54:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1791,7 +1791,26 @@ pci_conf_print_msix_cap(const pcireg_t *regs, int capoff)
 	printf("      BIR: 0x%x\n", reg & PCI_MSIX_PBABIR_MASK);
 }
 
-/* XXX pci_conf_print_sata_cap */
+static void
+pci_conf_print_sata_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t reg;
+
+	printf("\n  Serial ATA Capability Register\n");
+
+	reg = regs[o2i(capoff + PCI_MSIX_CTL)];
+	printf("    Revision register: 0x%04x\n", (reg >> 16) & 0xff);
+	printf("      Revision: %lu.%lu\n",
+	    __SHIFTOUT(reg, PCI_SATA_REV_MAJOR),
+	    __SHIFTOUT(reg, PCI_SATA_REV_MINOR));
+
+	reg = regs[o2i(capoff + PCI_SATA_BAR)];
+
+	printf("    BAR Register: 0x%08x\n", reg);
+	printf("      BAR number: %lu\n", reg & PCI_SATA_BAR_NUM);
+	printf("      BAR offset: 0x%08lx\n", reg & PCI_SATA_BAR_OFFSET);
+}
+
 static void
 pci_conf_print_pciaf_cap(const pcireg_t *regs, int capoff)
 {
@@ -1838,7 +1857,7 @@ static struct {
 	{ PCI_CAP_SECURE,	"Secure Device", NULL },
 	{ PCI_CAP_PCIEXPRESS,	"PCI Express",	pci_conf_print_pcie_cap },
 	{ PCI_CAP_MSIX,		"MSI-X",	pci_conf_print_msix_cap },
-	{ PCI_CAP_SATA,		"SATA",		NULL },
+	{ PCI_CAP_SATA,		"SATA",		pci_conf_print_sata_cap },
 	{ PCI_CAP_PCIAF,	"Advanced Features", pci_conf_print_pciaf_cap }
 };
 
@@ -2640,7 +2659,72 @@ pci_conf_print_sriov_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 /* XXX pci_conf_print_mriov_cap */
-/* XXX pci_conf_print_multicast_cap */
+
+static void
+pci_conf_print_multicast_cap(const pcireg_t *regs, int capoff, int extcapoff)
+{
+	pcireg_t reg, cap, ctl;
+	pcireg_t regl, regh;
+	uint64_t addr;
+	int n;
+
+	printf("\n  Multicast\n");
+
+	reg = regs[o2i(extcapoff + PCI_MCAST_CTL)];
+	cap = reg & 0xffff;
+	ctl = reg >> 16;
+	printf("    Capability Register: 0x%04x\n", cap);
+	printf("      Max Group: %lu\n", (reg & PCI_MCAST_CAP_MAXGRP) + 1);
+
+	/* Endpoint Only */
+	n = __SHIFTOUT(reg, PCI_MCAST_CAP_WINSIZEREQ);
+	if (n > 0)
+		printf("      Windw Size Requested: %d\n", 1 << (n - 1));
+
+	onoff("ECRC Regeneration Supported", reg, PCI_MCAST_CAP_ECRCREGEN);
+
+	printf("    Control Register: 0x%04x\n", ctl);
+	printf("      Num Group: %lu\n",
+	    __SHIFTOUT(reg, PCI_MCAST_CTL_NUMGRP) + 1);
+	onoff("Enable", reg, PCI_MCAST_CTL_ENA);
+
+	regl = regs[o2i(extcapoff + PCI_MCAST_BARL)];
+	regh = regs[o2i(extcapoff + PCI_MCAST_BARH)];
+	printf("    Base Address Register 0: 0x%08x\n", regl);
+	printf("    Base Address Register 1: 0x%08x\n", regh);
+	printf("      Index Position: %lu\n", regl & PCI_MCAST_BARL_INDPOS);
+	addr = ((uint64_t)regh << 32) | (regl & PCI_MCAST_BARL_ADDR);
+	printf("      Base Address: 0x%016" PRIx64 "\n", addr);
+
+	regl = regs[o2i(extcapoff + PCI_MCAST_RECVL)];
+	regh = regs[o2i(extcapoff + PCI_MCAST_RECVH)];
+	printf("    Receive Register 0: 0x%08x\n", regl);
+	printf("    Receive Register 1: 0x%08x\n", regh);
+
+	regl = regs[o2i(extcapoff + PCI_MCAST_BLOCKALLL)];
+	regh = regs[o2i(extcapoff + PCI_MCAST_BLOCKALLH)];
+	printf("    Block All Register 0: 0x%08x\n", regl);
+	printf("    Block All Register 1: 0x%08x\n", regh);
+
+	regl = regs[o2i(extcapoff + PCI_MCAST_BLOCKUNTRNSL)];
+	regh = regs[o2i(extcapoff + PCI_MCAST_BLOCKUNTRNSH)];
+	printf("    Block Untranslated Register 0: 0x%08x\n", regl);
+	printf("    Block Untranslated Register 1: 0x%08x\n", regh);
+
+	regl = regs[o2i(extcapoff + PCI_MCAST_OVERLAYL)];
+	regh = regs[o2i(extcapoff + PCI_MCAST_OVERLAYH)];
+	printf("    Overlay BAR 0: 0x%08x\n", regl);
+	printf("    Overlay BAR 1: 0x%08x\n", regh);
+
+	n = regl & PCI_MCAST_OVERLAYL_SIZE;
+	printf("      Overlay Size: ");
+	if (n >= 6)
+		printf("%d\n", n);
+	else
+		printf("off\n");
+	addr = ((uint64_t)regh << 32) | (regl & PCI_MCAST_OVERLAYL_ADDR);
+	printf("      Overlay BAR: 0x%016" PRIx64 "\n", addr);
+}
 
 static void
 pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
@@ -2957,8 +3041,8 @@ static struct {
 	  pci_conf_print_sriov_cap },
 	{ PCI_EXTCAP_MRIOV,	"Multiple Root IO Virtualization",
 	  NULL },
-	{ PCI_EXTCAP_MULTICAST,	"Multicast",
-	  NULL },
+	{ PCI_EXTCAP_MCAST,	"Multicast",
+	  pci_conf_print_multicast_cap },
 	{ PCI_EXTCAP_PAGE_REQ,	"Page Request",
 	  pci_conf_print_page_req_cap },
 	{ PCI_EXTCAP_AMD,	"Reserved for AMD",
