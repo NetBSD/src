@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1229 2015/10/19 10:00:50 tnn Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1230 2015/10/21 13:06:39 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1237 2015/10/19 09:57:37 tnn Exp
+ *	NetBSD: pcidevs,v 1.1238 2015/10/21 13:06:09 nonaka Exp
  */
 
 /*
@@ -9181,6 +9181,8 @@ static const uint16_t pci_products[] = {
 	    27735, 27741, 17632, 0,
 	    PCI_VENDOR_SAMSUNGELEC3, PCI_PRODUCT_SAMSUNGELEC3_SM951, 
 	    27745, 27741, 17632, 0,
+	    PCI_VENDOR_SAMSUNGELEC3, PCI_PRODUCT_SAMSUNGELEC3_SM951_NVME, 
+	    27745, 27741, 17627, 17632, 0,
 	    PCI_VENDOR_SAMSUNGSEMI, PCI_PRODUCT_SAMSUNGSEMI_KS8920, 
 	    27751, 5611, 5509, 0,
 	    PCI_VENDOR_SANDBURST, PCI_PRODUCT_SANDBURST_QE1000, 
@@ -12936,8 +12938,8 @@ static const char pci_words[] = { "."
 	    "SPI\0" /* 3 refs @ 17611 */
 	    "HS-UART\0" /* 1 refs @ 17615 */
 	    "MAC\0" /* 1 refs @ 17623 */
-	    "NVMe\0" /* 1 refs @ 17627 */
-	    "SSD\0" /* 3 refs @ 17632 */
+	    "NVMe\0" /* 2 refs @ 17627 */
+	    "SSD\0" /* 4 refs @ 17632 */
 	    "7265\0" /* 2 refs @ 17636 */
 	    "Legacy\0" /* 2 refs @ 17641 */
 	    "i960\0" /* 5 refs @ 17648 */
@@ -14301,8 +14303,8 @@ static const char pci_words[] = { "."
 	    "SonicVibes\0" /* 1 refs @ 27715 */
 	    "SafeXcel\0" /* 1 refs @ 27726 */
 	    "XP941\0" /* 1 refs @ 27735 */
-	    "M.2\0" /* 2 refs @ 27741 */
-	    "SM951\0" /* 1 refs @ 27745 */
+	    "M.2\0" /* 3 refs @ 27741 */
+	    "SM951\0" /* 2 refs @ 27745 */
 	    "KS8920\0" /* 1 refs @ 27751 */
 	    "QE1000\0" /* 1 refs @ 27758 */
 	    "FE1000\0" /* 1 refs @ 27765 */
