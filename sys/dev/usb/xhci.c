@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.43 2015/10/21 21:34:11 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.44 2015/10/21 21:36:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.43 2015/10/21 21:34:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.44 2015/10/21 21:36:08 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2860,6 +2860,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	/* Hub requests */
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
+	/* Clear Port Feature request */
 	case C(UR_CLEAR_FEATURE, UT_WRITE_CLASS_OTHER):
 		DPRINTFN(4, "UR_CLEAR_PORT_FEATURE port=%d feature=%d",
 			     index, value, 0, 0);
@@ -2930,6 +2931,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		memset(buf, 0, len); /* ? XXX */
 		totlen = len;
 		break;
+	/* Get Port Status request */
 	case C(UR_GET_STATUS, UT_READ_CLASS_OTHER):
 		DPRINTFN(8, "get port status i=%d", index, 0, 0, 0);
 		if (index < 1 || index > sc->sc_maxports) {
@@ -2975,6 +2977,7 @@ xhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		break;
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_DEVICE):
 		break;
+	/* Set Port Feature request */
 	case C(UR_SET_FEATURE, UT_WRITE_CLASS_OTHER): {
 		int optval = (index >> 8) & 0xff;
 		index &= 0xff;
