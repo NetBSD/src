@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.7 2015/05/22 06:27:17 skrll Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.8 2015/10/21 10:43:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.7 2015/05/22 06:27:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.8 2015/10/21 10:43:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -63,8 +63,19 @@ struct tegra_ehci_softc {
 	u_int			sc_port;
 
 	struct tegra_gpio_pin	*sc_pin_vbus;
+	uint8_t			sc_hssync_start_delay;
+	uint8_t			sc_idle_wait_delay;
+	uint8_t			sc_elastic_limit;
+	uint8_t			sc_term_range_adj;
+	uint8_t			sc_xcvr_setup;
+	uint8_t			sc_xcvr_lsfslew;
+	uint8_t			sc_xcvr_lsrslew;
+	uint8_t			sc_hssquelch_level;
+	uint8_t			sc_hsdiscon_level;
+	uint8_t			sc_xcvr_hsslew;
 };
 
+static int	tegra_ehci_parse_properties(struct tegra_ehci_softc *);
 static void	tegra_ehci_utmip_init(struct tegra_ehci_softc *);
 static int	tegra_ehci_port_status(struct ehci_softc *sc, uint32_t v,
 		    int i);
@@ -113,6 +124,9 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": USB%d\n", loc->loc_port + 1);
 
+	if (tegra_ehci_parse_properties(sc) != 0)
+		return;
+
 	tegra_car_periph_usb_enable(sc->sc_port);
 	delay(2);
 
@@ -149,6 +163,33 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc.sc_child = config_found(self, &sc->sc.sc_bus, usbctlprint);
+}
+
+static int
+tegra_ehci_parse_properties(struct tegra_ehci_softc *sc)
+{
+#define PROPGET(k, v)	\
+	if (prop_dictionary_get_uint8(prop, (k), (v)) == false) {	\
+		aprint_error_dev(sc->sc.sc_dev,				\
+		    "missing property '%s'\n", (k));			\
+		return EIO;						\
+	}
+
+	prop_dictionary_t prop = device_properties(sc->sc.sc_dev);
+
+	PROPGET("nvidia,hssync-start-delay", &sc->sc_hssync_start_delay);
+	PROPGET("nvidia,idle-wait-delay", &sc->sc_idle_wait_delay);
+	PROPGET("nvidia,elastic-limit", &sc->sc_elastic_limit);
+	PROPGET("nvidia,term-range-adj", &sc->sc_term_range_adj);
+	PROPGET("nvidia,xcvr-setup", &sc->sc_xcvr_setup);
+	PROPGET("nvidia,xcvr-lsfslew", &sc->sc_xcvr_lsfslew);
+	PROPGET("nvidia,xcvr-lsrslew", &sc->sc_xcvr_lsrslew);
+	PROPGET("nvidia,hssquelch-level", &sc->sc_hssquelch_level);
+	PROPGET("nvidia,hsdiscon-level", &sc->sc_hsdiscon_level);
+	PROPGET("nvidia,xcvr-hsslew", &sc->sc_xcvr_hsslew);
+
+	return 0;
+#undef PROPGET
 }
 
 static void
@@ -215,18 +256,21 @@ tegra_ehci_utmip_init(struct tegra_ehci_softc *sc)
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_XCVR_CFG0_REG,
 	    __SHIFTIN(4, TEGRA_EHCI_UTMIP_XCVR_CFG0_SETUP) |
 	    __SHIFTIN(3, TEGRA_EHCI_UTMIP_XCVR_CFG0_SETUP_MSB) |
-	    __SHIFTIN(8, TEGRA_EHCI_UTMIP_XCVR_CFG0_HSSLEW_MSB),
+	    __SHIFTIN(sc->sc_xcvr_hsslew,
+		      TEGRA_EHCI_UTMIP_XCVR_CFG0_HSSLEW_MSB),
 	    TEGRA_EHCI_UTMIP_XCVR_CFG0_SETUP |
 	    TEGRA_EHCI_UTMIP_XCVR_CFG0_SETUP_MSB |
 	    TEGRA_EHCI_UTMIP_XCVR_CFG0_HSSLEW_MSB);
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_XCVR_CFG1_REG,
-	    __SHIFTIN(7, TEGRA_EHCI_UTMIP_XCVR_CFG1_TERM_RANGE_ADJ),
+	    __SHIFTIN(sc->sc_term_range_adj,
+		      TEGRA_EHCI_UTMIP_XCVR_CFG1_TERM_RANGE_ADJ),
 	    TEGRA_EHCI_UTMIP_XCVR_CFG1_TERM_RANGE_ADJ);
 
 	if (sc->sc_port == 0) {
 		tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG0_REG,
 		    TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL_MSB |
-		    __SHIFTIN(2, TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL),
+		    __SHIFTIN(sc->sc_hsdiscon_level,
+			      TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL),
 		    TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL); 
 	}
 
@@ -237,12 +281,12 @@ tegra_ehci_utmip_init(struct tegra_ehci_softc *sc)
 
 	/* BIAS cell power down lag */
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG1_REG,
-	    __SHIFTIN(6, TEGRA_EHCI_UTMIP_BIAS_CFG1_PDTRK_COUNT),
+	    __SHIFTIN(5, TEGRA_EHCI_UTMIP_BIAS_CFG1_PDTRK_COUNT),
 	    TEGRA_EHCI_UTMIP_BIAS_CFG1_PDTRK_COUNT);
 
 	/* Debounce config */
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_DEBOUNCE_CFG0_REG,
-	    __SHIFTIN(0x73f4, TEGRA_EHCI_UTMIP_DEBOUNCE_CFG0_A),
+	    __SHIFTIN(0x7530, TEGRA_EHCI_UTMIP_DEBOUNCE_CFG0_A),
 	    TEGRA_EHCI_UTMIP_DEBOUNCE_CFG0_A);
 
 	/* Transmit signal preamble config */
@@ -259,12 +303,15 @@ tegra_ehci_utmip_init(struct tegra_ehci_softc *sc)
 
 	/* High speed receive config */
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_HSRX_CFG0_REG,
-	    __SHIFTIN(17, TEGRA_EHCI_UTMIP_HSRX_CFG0_IDLE_WAIT) |
-	    __SHIFTIN(16, TEGRA_EHCI_UTMIP_HSRX_CFG0_ELASTIC_LIMIT),
+	    __SHIFTIN(sc->sc_idle_wait_delay,
+		      TEGRA_EHCI_UTMIP_HSRX_CFG0_IDLE_WAIT) |
+	    __SHIFTIN(sc->sc_elastic_limit,
+		      TEGRA_EHCI_UTMIP_HSRX_CFG0_ELASTIC_LIMIT),
 	    TEGRA_EHCI_UTMIP_HSRX_CFG0_IDLE_WAIT |
 	    TEGRA_EHCI_UTMIP_HSRX_CFG0_ELASTIC_LIMIT);
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_HSRX_CFG1_REG,
-	    __SHIFTIN(9, TEGRA_EHCI_UTMIP_HSRX_CFG1_SYNC_START_DLY),
+	    __SHIFTIN(sc->sc_hssync_start_delay,
+		      TEGRA_EHCI_UTMIP_HSRX_CFG1_SYNC_START_DLY),
 	    TEGRA_EHCI_UTMIP_HSRX_CFG1_SYNC_START_DLY);
 
 	/* Start crystal clock */
