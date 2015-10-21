@@ -387,8 +387,9 @@ write_type(void *arg1, void *arg2)
 			i++; /* count up struct or union members */
 
 		if (i > CTF_MAX_VLEN) {
-			terminate("sou %s has too many members: %d > %d\n",
+			warning("sou %s has too many members: %d > %d\n",
 			    tdesc_name(tp), i, CTF_MAX_VLEN);
+			i = CTF_MAX_VLEN;
 		}
 
 		if (tp->t_type == STRUCT)
@@ -399,7 +400,8 @@ write_type(void *arg1, void *arg2)
 		write_sized_type_rec(b, &ctt, tp->t_size);
 
 		if (tp->t_size < CTF_LSTRUCT_THRESH) {
-			for (mp = tp->t_members; mp != NULL; mp = mp->ml_next) {
+			for (mp = tp->t_members; mp != NULL && i > 0;
+			    mp = mp->ml_next) {
 				offset = strtab_insert(&b->ctb_strtab,
 				    mp->ml_name);
 
@@ -413,9 +415,11 @@ write_type(void *arg1, void *arg2)
 					SWAP_16(ctm.ctm_offset);
 				}
 				ctf_buf_write(b, &ctm, sizeof (ctm));
+				i--;
 			}
 		} else {
-			for (mp = tp->t_members; mp != NULL; mp = mp->ml_next) {
+			for (mp = tp->t_members; mp != NULL && i > 0;
+			    mp = mp->ml_next) {
 				offset = strtab_insert(&b->ctb_strtab,
 				    mp->ml_name);
 
@@ -435,6 +439,7 @@ write_type(void *arg1, void *arg2)
 				}
 
 				ctf_buf_write(b, &ctlm, sizeof (ctlm));
+				i--;
 			}
 		}
 		break;
