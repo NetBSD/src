@@ -1,4 +1,4 @@
-/*	$NetBSD: vi.c,v 1.46 2015/10/19 00:36:27 christos Exp $	*/
+/*	$NetBSD: vi.c,v 1.47 2015/10/21 21:45:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)vi.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: vi.c,v 1.46 2015/10/19 00:36:27 christos Exp $");
+__RCSID("$NetBSD: vi.c,v 1.47 2015/10/21 21:45:30 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1041,8 +1041,7 @@ vi_histedit(EditLine *el, Int c __attribute__((__unused__)))
 		st = read(fd, cp, TMP_BUFSIZ - 1);
 		if (st > 0) {
 			cp[st] = '\0';
-			len = (size_t)(el->el_line.lastchar -
-			    el->el_line.buffer);
+			len = (size_t)(el->el_line.limit - el->el_line.buffer);
 			len = ct_mbstowcs(el->el_line.buffer, cp, len);
 			if (len > 0 && el->el_line.buffer[len - 1] == '\n')
 				--len;
