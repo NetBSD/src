@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1230 2015/10/19 10:00:50 tnn Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1231 2015/10/21 13:06:39 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1237 2015/10/19 09:57:37 tnn Exp
+ *	NetBSD: pcidevs,v 1.1238 2015/10/21 13:06:09 nonaka Exp
  */
 
 /*
@@ -5407,6 +5407,7 @@
 /* Samsung Electronics products */
 #define	PCI_PRODUCT_SAMSUNGELEC3_XP941	0xa800		/* XP941 M.2 SSD */
 #define	PCI_PRODUCT_SAMSUNGELEC3_SM951	0xa801		/* SM951 M.2 SSD */
+#define	PCI_PRODUCT_SAMSUNGELEC3_SM951_NVME	0xa802		/* SM951 M.2 NVMe SSD */
 
 /* Samsung Semiconductor products */
 #define	PCI_PRODUCT_SAMSUNGSEMI_KS8920	0x8920		/* KS8920 10/100 Ethernet */
