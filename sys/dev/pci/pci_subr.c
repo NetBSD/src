@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.138 2015/10/21 12:54:59 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.139 2015/10/21 15:01:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.138 2015/10/21 12:54:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.139 2015/10/21 15:01:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1800,15 +1800,16 @@ pci_conf_print_sata_cap(const pcireg_t *regs, int capoff)
 
 	reg = regs[o2i(capoff + PCI_MSIX_CTL)];
 	printf("    Revision register: 0x%04x\n", (reg >> 16) & 0xff);
-	printf("      Revision: %lu.%lu\n",
-	    __SHIFTOUT(reg, PCI_SATA_REV_MAJOR),
-	    __SHIFTOUT(reg, PCI_SATA_REV_MINOR));
+	printf("      Revision: %u.%u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_SATA_REV_MAJOR),
+	    (unsigned int)__SHIFTOUT(reg, PCI_SATA_REV_MINOR));
 
 	reg = regs[o2i(capoff + PCI_SATA_BAR)];
 
 	printf("    BAR Register: 0x%08x\n", reg);
-	printf("      BAR number: %lu\n", reg & PCI_SATA_BAR_NUM);
-	printf("      BAR offset: 0x%08lx\n", reg & PCI_SATA_BAR_OFFSET);
+	printf("      BAR number: %d\n", (int)(reg & PCI_SATA_BAR_NUM));
+	printf("      BAR offset: 0x%08x\n",
+	    (pcireg_t)(reg & PCI_SATA_BAR_OFFSET));
 }
 
 static void
@@ -2674,7 +2675,8 @@ pci_conf_print_multicast_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	cap = reg & 0xffff;
 	ctl = reg >> 16;
 	printf("    Capability Register: 0x%04x\n", cap);
-	printf("      Max Group: %lu\n", (reg & PCI_MCAST_CAP_MAXGRP) + 1);
+	printf("      Max Group: %u\n",
+	    (pcireg_t)(reg & PCI_MCAST_CAP_MAXGRP) + 1);
 
 	/* Endpoint Only */
 	n = __SHIFTOUT(reg, PCI_MCAST_CAP_WINSIZEREQ);
@@ -2684,15 +2686,16 @@ pci_conf_print_multicast_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("ECRC Regeneration Supported", reg, PCI_MCAST_CAP_ECRCREGEN);
 
 	printf("    Control Register: 0x%04x\n", ctl);
-	printf("      Num Group: %lu\n",
-	    __SHIFTOUT(reg, PCI_MCAST_CTL_NUMGRP) + 1);
+	printf("      Num Group: %u\n",
+	    (unsigned int)__SHIFTOUT(reg, PCI_MCAST_CTL_NUMGRP) + 1);
 	onoff("Enable", reg, PCI_MCAST_CTL_ENA);
 
 	regl = regs[o2i(extcapoff + PCI_MCAST_BARL)];
 	regh = regs[o2i(extcapoff + PCI_MCAST_BARH)];
 	printf("    Base Address Register 0: 0x%08x\n", regl);
 	printf("    Base Address Register 1: 0x%08x\n", regh);
-	printf("      Index Position: %lu\n", regl & PCI_MCAST_BARL_INDPOS);
+	printf("      Index Position: %u\n",
+	    (unsigned int)(regl & PCI_MCAST_BARL_INDPOS));
 	addr = ((uint64_t)regh << 32) | (regl & PCI_MCAST_BARL_ADDR);
 	printf("      Base Address: 0x%016" PRIx64 "\n", addr);
 
