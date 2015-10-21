@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.42 2015/10/17 15:30:14 bouyer Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.43 2015/10/21 09:25:16 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.42 2015/10/17 15:30:14 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.43 2015/10/21 09:25:16 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -140,6 +140,7 @@ __KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.42 2015/10/17 15:30:14 bouyer Exp
 #include "ukbd.h"
 #include "genfb.h"
 #include "ether.h"
+#include "axp20x.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,7 +179,9 @@ __KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.42 2015/10/17 15:30:14 bouyer Exp
 #include <dev/ic/ns16550reg.h>
 #include <dev/ic/comreg.h>
 
+#if NAXP20X > 0
 #include <dev/i2c/axp20xvar.h>
+#endif
 
 #include <arm/allwinner/awin_reg.h>
 #include <arm/allwinner/awin_var.h>
@@ -209,8 +212,11 @@ bool cubietruck_p;
 #define cubietruck_p	false
 #endif
 
+#if NAXP20X > 0
 static device_t pmic_dev = NULL;
 static int pmic_cpu_dcdc;
+#endif
+
 #ifdef AWIN_SYSCONFIG
 bool awin_sysconfig_p;
 #else
@@ -845,13 +851,15 @@ awin_device_register(device_t self, void *aux)
 			}
 		}
 	}
+
+#if NAXP20X > 0
 	if (device_is_a(self, "axp20x")) {
 		pmic_dev = self;
 #if AWIN_board == AWIN_cubieboard || AWIN_board == AWIN_cubietruck || AWIN_board == AWIN_bpi || AWIN_board == AWIN_olimexlime2
 		pmic_cpu_dcdc = AXP20X_DCDC2;
 #endif
 	}
-
+#endif
 
 #if NGENFB > 0
 	if (device_is_a(self, "genfb")) {
@@ -875,10 +883,12 @@ awin_device_register(device_t self, void *aux)
 int
 awin_set_mpu_volt(int mvolt, bool poll)
 {
-	if (pmic_dev == NULL) {
-		return ENODEV;
+#if NAXP20X > 0
+	if (pmic_dev && device_is_a(pmic_dev, "axp20x")) {
+		return axp20x_set_dcdc(pmic_dev, pmic_cpu_dcdc, mvolt, 0);
 	}
-	return axp20x_set_dcdc(pmic_dev, pmic_cpu_dcdc, mvolt, 0);
+#endif
+	return ENODEV;
 }
 
 #ifdef AWIN_SYSCONFIG
