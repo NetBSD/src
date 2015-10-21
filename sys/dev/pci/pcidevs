@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1237 2015/10/19 09:57:37 tnn Exp $
+$NetBSD: pcidevs,v 1.1238 2015/10/21 13:06:09 nonaka Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -5398,8 +5398,9 @@ product S3 SONICVIBES	0xca00	SonicVibes
 product SAFENET SAFEXCEL	0x1141 SafeXcel
 
 /* Samsung Electronics products */
-product SAMSUNGELEC3	XP941	0xa800	XP941 M.2 SSD
-product SAMSUNGELEC3	SM951	0xa801	SM951 M.2 SSD
+product SAMSUNGELEC3	XP941		0xa800	XP941 M.2 SSD
+product SAMSUNGELEC3	SM951		0xa801	SM951 M.2 SSD
+product SAMSUNGELEC3	SM951_NVME	0xa802	SM951 M.2 NVMe SSD
 
 /* Samsung Semiconductor products */
 product SAMSUNGSEMI	KS8920	0x8920	KS8920 10/100 Ethernet
