@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.373 2015/10/22 07:00:05 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.374 2015/10/22 09:51:21 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.373 2015/10/22 07:00:05 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.374 2015/10/22 09:51:21 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -156,10 +156,6 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 
 #ifdef NET_MPSAFE
 #define WM_MPSAFE	1
-#endif
-
-#ifdef __HAVE_PCI_MSI_MSIX
-#define WM_MSI_MSIX	1 /* Enable by default */
 #endif
 
 /*
@@ -567,11 +563,9 @@ static int	wm_add_rxbuf(struct wm_rxqueue *, int);
 static void	wm_rxdrain(struct wm_rxqueue *);
 static void	wm_rss_getkey(uint8_t *);
 static void	wm_init_rss(struct wm_softc *);
-#ifdef WM_MSI_MSIX
 static void	wm_adjust_qnum(struct wm_softc *, int);
 static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
-#endif
 static int	wm_init(struct ifnet *);
 static int	wm_init_locked(struct ifnet *);
 static void	wm_stop(struct ifnet *, int);
@@ -615,11 +609,9 @@ static void	wm_linkintr_tbi(struct wm_softc *, uint32_t);
 static void	wm_linkintr_serdes(struct wm_softc *, uint32_t);
 static void	wm_linkintr(struct wm_softc *, uint32_t);
 static int	wm_intr_legacy(void *);
-#ifdef WM_MSI_MSIX
 static int	wm_txintr_msix(void *);
 static int	wm_rxintr_msix(void *);
 static int	wm_linkintr_msix(void *);
-#endif
 
 /*
  * Media related.
@@ -1456,14 +1448,8 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t dict;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	pci_chipset_tag_t pc = pa->pa_pc;
-#ifndef WM_MSI_MSIX
-	pci_intr_handle_t ih;
-	const char *intrstr = NULL;
-	char intrbuf[PCI_INTRSTR_LEN];
-#else
 	int counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_type_t max_type;
-#endif
 	const char *eetype, *xname;
 	bus_space_tag_t memt;
 	bus_space_handle_t memh;
@@ -1628,39 +1614,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#ifndef WM_MSI_MSIX
-	sc->sc_ntxqueues = 1;
-	sc->sc_nrxqueues = 1;
-	error = wm_alloc_txrx_queues(sc);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "cannot allocate queues %d\n",
-		    error);
-		return;
-	}
-
-	/*
-	 * Map and establish our interrupt.
-	 */
-	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-#ifdef WM_MPSAFE
-	pci_intr_setattr(pc, &ih, PCI_INTR_MPSAFE, true);
-#endif
-	sc->sc_ihs[0] = pci_intr_establish_xname(pc, ih, IPL_NET,
-	    wm_intr_legacy, sc, device_xname(sc->sc_dev));
-	if (sc->sc_ihs[0] == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
-		return;
-	}
-	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
-	sc->sc_nintrs = 1;
-#else /* WM_MSI_MSIX */
 	wm_adjust_qnum(sc, pci_msix_count(pa->pa_pc, pa->pa_tag));
 	error = wm_alloc_txrx_queues(sc);
 	if (error) {
@@ -1712,7 +1665,6 @@ alloc_retry:
 			return;
 		}
 	}
-#endif /* WM_MSI_MSIX */
 
 	/*
 	 * Check the function ID (unit number of the chip).
@@ -2627,9 +2579,7 @@ wm_detach(device_t self, int flags __unused)
 			sc->sc_ihs[i] = NULL;
 		}
 	}
-#ifdef WM_MSI_MSIX
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
-#endif /* WM_MSI_MSIX */
 
 	/* Unmap the registers */
 	if (sc->sc_ss) {
@@ -4143,8 +4093,6 @@ wm_init_rss(struct wm_softc *sc)
 	CSR_WRITE(sc, WMREG_MRQC, mrqc);
 }
 
-#ifdef WM_MSI_MSIX
-
 /*
  * Adjust TX and RX queue numbers which the system actulally uses.
  *
@@ -4427,7 +4375,6 @@ wm_setup_msix(struct wm_softc *sc)
 	kcpuset_destroy(affinity);
 	return ENOMEM;
 }
-#endif
 
 /*
  * wm_init:		[ifnet interface function]
@@ -7456,7 +7403,6 @@ wm_intr_legacy(void *arg)
 	return handled;
 }
 
-#ifdef WM_MSI_MSIX
 /*
  * wm_txintr_msix:
  *
@@ -7582,7 +7528,6 @@ out:
 
 	return 1;
 }
-#endif /* WM_MSI_MSIX */
 
 /*
  * Media related.
