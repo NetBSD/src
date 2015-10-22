@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.77 2015/10/21 21:43:46 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.78 2015/10/22 19:36:04 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.77 2015/10/21 21:43:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.78 2015/10/22 19:36:04 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -668,7 +668,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 	 * and that the device is configured.
 	 */
 	if (!DKFF_READYFORDUMP(dksc->sc_flags)) {
-		DPRINTF(DKF_DUMP, ("%s: bad dump flags 0x%x\n", __func__,
+		DPRINTF(DKDB_DUMP, ("%s: bad dump flags 0x%x\n", __func__,
 		    dksc->sc_flags));
 		return ENXIO;
 	}
@@ -679,7 +679,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 	dk_dumping = 1;
 
 	if (dkd->d_dumpblocks == NULL) {
-		DPRINTF(DKF_DUMP, ("%s: no dumpblocks\n", __func__));
+		DPRINTF(DKDB_DUMP, ("%s: no dumpblocks\n", __func__));
 		return ENXIO;
 	}
 
@@ -692,7 +692,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 	part = DISKPART(dev);
 	lp = dksc->sc_dkdev.dk_label;
 	if ((size % lp->d_secsize) != 0) {
-		DPRINTF(DKF_DUMP, ("%s: odd size %zu\n", __func__, size));
+		DPRINTF(DKDB_DUMP, ("%s: odd size %zu\n", __func__, size));
 		return EFAULT;
 	}
 	towrt = size / lp->d_secsize;
@@ -700,7 +700,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 
 	p = &lp->d_partitions[part];
 	if (p->p_fstype != FS_SWAP) {
-		DPRINTF(DKF_DUMP, ("%s: bad fstype %d\n", __func__,
+		DPRINTF(DKDB_DUMP, ("%s: bad fstype %d\n", __func__,
 		    p->p_fstype));
 		return ENXIO;
 	}
@@ -709,7 +709,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 
 	/* Check transfer bounds against partition size. */
 	if ((blkno < 0) || ((blkno + towrt) > nsects)) {
-		DPRINTF(DKF_DUMP, ("%s: out of bounds blkno=%d, towrt=%d, "
+		DPRINTF(DKDB_DUMP, ("%s: out of bounds blkno=%d, towrt=%d, "
 		    "nsects=%d\n", __func__, blkno, towrt, nsects));
 		return EINVAL;
 	}
@@ -724,7 +724,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 
 		if ((rv = (*dkd->d_dumpblocks)(dksc->sc_dev, va, blkno, nblk))
 		    != 0) {
-			DPRINTF(DKF_DUMP, ("%s: dumpblocks %d\n", __func__,
+			DPRINTF(DKDB_DUMP, ("%s: dumpblocks %d\n", __func__,
 			    rv));
 			return rv;
 		}
