@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.420 2015/10/13 00:29:34 pgoyette Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.421 2015/10/22 11:48:02 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.420 2015/10/13 00:29:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.421 2015/10/22 11:48:02 maxv Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -450,6 +450,11 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			return 0;
 		}
 
+		/*
+		 * Reset all the fields that may have been modified by the
+		 * loader.
+		 */
+		KASSERT(epp->ep_emul_arg == NULL);
 		if (epp->ep_emul_root != NULL) {
 			vrele(epp->ep_emul_root);
 			epp->ep_emul_root = NULL;
@@ -458,6 +463,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			vrele(epp->ep_interp);
 			epp->ep_interp = NULL;
 		}
+		epp->ep_pax_flags = 0;
 
 		/* make sure the first "interesting" error code is saved. */
 		if (error == ENOEXEC)
