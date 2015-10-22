@@ -1,11 +1,11 @@
-/*	$NetBSD: exec_elf.c,v 1.77 2015/09/26 16:12:24 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.78 2015/10/22 11:38:51 maxv Exp $	*/
 
 /*-
- * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.77 2015/09/26 16:12:24 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.78 2015/10/22 11:38:51 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -801,6 +801,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		epp->ep_entryoffset = interp_offset;
 		epp->ep_entry = ap->arg_interp + interp_offset;
 		PNBUF_PUT(interp);
+		interp = NULL;
 	} else {
 		epp->ep_entry = eh->e_entry;
 		if (epp->ep_flags & EXEC_FORCEAUX) {
@@ -824,8 +825,13 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
 	    epp->ep_vp, 0, VM_PROT_READ);
 #endif
+
+	error = (*epp->ep_esch->es_setup_stack)(l, epp);
+	if (error)
+		goto bad;
+
 	kmem_free(ph, phsize);
-	return (*epp->ep_esch->es_setup_stack)(l, epp);
+	return 0;
 
 bad:
 	if (interp)
