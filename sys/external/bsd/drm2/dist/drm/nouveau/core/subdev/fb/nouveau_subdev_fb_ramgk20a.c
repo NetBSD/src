@@ -76,8 +76,8 @@ gk20a_ram_get(struct nouveau_fb *pfb, u64 size, u32 align, u32 ncmin,
 	u32 type = memtype & 0xff;
 	u32 npages, order;
 
-	nv_debug(pfb, "%s: size: %llx align: %x, ncmin: %x\n", __func__, size,
-		 align, ncmin);
+	nv_debug(pfb, "%s: size: %llx align: %x, ncmin: %x\n", __func__,
+		 (unsigned long long)size, align, ncmin);
 
 	npages = size >> PAGE_SHIFT;
 	if (npages == 0)
