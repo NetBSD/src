@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.7 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.8 2015/10/22 11:15:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ struct ohci_xfer {
 
 #define OHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define OHCI_PIPE2SC(pipe)	OHCI_BUS2SC((pipe)->up_dev->ud_bus)
-#define OHCI_XFER2SC(xfer)	OHCI_PIPE2SC((xfer)->ux_pipe)
+#define OHCI_XFER2SC(xfer)	OHCI_BUS2SC((xfer)->ux_bus)
 
 #define OHCI_XFER2OXFER(xfer)	((struct ohci_xfer *)(xfer))
 #define OHCI_PIPE2OPIPE(pipe)	((struct ohci_pipe *)(pipe))

@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.14 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.15 2015/10/22 11:15:42 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.14 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.15 2015/10/22 11:15:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -411,7 +411,7 @@ ahci_poll(struct usbd_bus *bus)
 
 #define AHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define AHCI_PIPE2SC(pipe)	AHCI_BUS2SC((pipe)->up_dev->ud_bus)
-#define AHCI_XFER2SC(xfer)	AHCI_PIPE2SC((xfer)->ux_pipe)
+#define AHCI_XFER2SC(xfer)	AHCI_BUS2SC((xfer)->ux_bus)
 #define AHCI_APIPE2SC(ap)	AHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
 
 /*
