@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: mkioctls,v 1.44 2015/09/27 03:37:16 christos Exp $
+#	$NetBSD: mkioctls,v 1.45 2015/10/22 00:29:58 christos Exp $
 #
 # Copyright (c) 1994
 #	The Regents of the University of California.  All rights reserved.
@@ -84,13 +84,12 @@ do
 	echo "#include <$i>"
 done | ${SED} -e "s,${DESTDIR}/usr/include/,,g"
 
-grep -v "<sys/modctl.h>" ${1+"$@"} | \
 ${CC} -E -nostdinc -isystem ${DESTDIR}/usr/include \
     -I${DESTDIR}/usr/X11R7/include \
     -I${DESTDIR}/usr/X11R7/include/pixman-1 \
     -I${DESTDIR}/usr/X11R7/include/libdrm \
     -D_VIA_DRM_H_ \
-    -dM - | \
+    -dM "${@}" | \
 ${AWK} '
 BEGIN {
 	keep["SLIOCGUNIT"] = 1;	# Same as PPPIOCGASYNCMAP
