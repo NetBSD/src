@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.23 2015/10/21 20:02:13 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.24 2015/10/22 23:29:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.23 2015/10/21 20:02:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.24 2015/10/22 23:29:01 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -390,7 +390,7 @@ tegra_bootconf_strdup(const char *key)
 	if (ret == NULL)
 		return NULL;
 
-	strncpy(ret, s, i + 1);
+	strlcpy(ret, s, i + 1);
 	return ret;
 }
 
