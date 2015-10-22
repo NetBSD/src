@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.372 2015/10/22 06:01:41 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.373 2015/10/22 07:00:05 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.372 2015/10/22 06:01:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.373 2015/10/22 07:00:05 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4081,6 +4081,7 @@ static uint8_t wm_rss_key[RSS_KEYSIZE] = {
 static void
 wm_rss_getkey(uint8_t *key)
 {
+
 	memcpy(key, wm_rss_key, sizeof(wm_rss_key));
 }
 
@@ -4094,6 +4095,8 @@ wm_init_rss(struct wm_softc *sc)
 {
 	uint32_t mrqc, reta_reg, rss_key[RSSRK_NUM_REGS];
 	int i;
+
+	CTASSERT(sizeof(rss_key) == sizeof(wm_rss_key));
 
 	for (i = 0; i < RETA_NUM_ENTRIES; i++) {
 		int qid, reta_ent;
