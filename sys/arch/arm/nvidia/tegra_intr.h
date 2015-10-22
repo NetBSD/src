@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_intr.h,v 1.8 2015/10/17 21:16:27 jmcneill Exp $ */
+/* $NetBSD: tegra_intr.h,v 1.9 2015/10/22 23:30:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -78,4 +78,5 @@
 #define TEGRA_INTR_TMR0		TEGRA_INTR(156)
 #define TEGRA_INTR_GPU		TEGRA_INTR(157)
 #define TEGRA_INTR_GPU_NONSTALL	TEGRA_INTR(158)
+
 #endif /* _ARM_TEGRA_INTR_H */
