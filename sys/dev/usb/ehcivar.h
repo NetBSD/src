@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.18 2015/10/20 08:33:17 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.19 2015/10/22 11:15:42 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct ehci_xfer {
 
 #define EHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define EHCI_PIPE2SC(pipe)	EHCI_BUS2SC((pipe)->up_dev->ud_bus)
-#define EHCI_XFER2SC(xfer)	EHCI_PIPE2SC((xfer)->ux_pipe)
+#define EHCI_XFER2SC(xfer)	EHCI_BUS2SC((xfer)->ux_bus)
 #define EHCI_EPIPE2SC(epipe)	EHCI_BUS2SC((epipe)->pipe.up_dev->ud_bus)
 
 #define EHCI_XFER2EXFER(xfer)	((struct ehci_xfer *)(xfer))

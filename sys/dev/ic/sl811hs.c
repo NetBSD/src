@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.47.6.14 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.47.6.15 2015/10/22 11:15:42 skrll Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.14 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.47.6.15 2015/10/22 11:15:42 skrll Exp $");
 
 #include "opt_slhci.h"
 
@@ -294,7 +294,7 @@ struct slhci_pipe {
 
 #define SLHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define SLHCI_PIPE2SC(pipe)	SLHCI_BUS2SC((pipe)->up_dev->ud_bus)
-#define SLHCI_XFER2SC(xfer)	SLHCI_PIPE2SC((xfer)->ux_pipe)
+#define SLHCI_XFER2SC(xfer)	SLHCI_BUS2SC((xfer)->ux_bus)
 
 #define SLHCI_PIPE2SPIPE(pipe)	((struct slhci_pipe *)(pipe))
 

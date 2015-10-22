@@ -1,4 +1,4 @@
-/*	$NetBSD: motgvar.h,v 1.4.2.7 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: motgvar.h,v 1.4.2.8 2015/10/22 11:15:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ struct motg_xfer {
 
 #define MOTG_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define MOTG_PIPE2SC(pipe)	MOTG_BUS2SC((pipe)->up_dev->ud_bus)
-#define MOTG_XFER2SC(xfer)	MOTG_PIPE2SC((xfer)->ux_pipe)
+#define MOTG_XFER2SC(xfer)	MOTG_BUS2SC((xfer)->ux_bus)
 #define MOTG_OTGPIPE2SC(mpipe)	MOTG_BUS2SC((mpipe)->pipe.up_dev->ud_bus)
 
 #define MOTG_XFER2MXFER(xfer)	((struct motg_xfer *)(xfer))

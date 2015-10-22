@@ -1,4 +1,4 @@
-/*	$NetBSD: ugenhc.c,v 1.22.4.11 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: ugenhc.c,v 1.22.4.12 2015/10/22 11:15:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.11 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugenhc.c,v 1.22.4.12 2015/10/22 11:15:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,7 +120,7 @@ struct rusb_xfer {
 
 #define UGENHC_BUS2SC(bus)	((bus)->ub_hcpriv)
 #define UGENHC_PIPE2SC(pipe)	UGENHC_BUS2SC((pipe)->up_dev->ud_bus)
-#define UGENHC_XFER2SC(pipe)	UGENHC_PIPE2SC((xfer)->ux_pipe)
+#define UGENHC_XFER2SC(pipe)	UGENHC_BUS2SC((xfer)->ux_bus)
 
 #define UGENDEV_BASESTR "/dev/ugen"
 #define UGENDEV_BUFSIZE 32
