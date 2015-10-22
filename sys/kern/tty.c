@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.269 2015/10/18 15:58:23 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.270 2015/10/22 17:36:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.269 2015/10/18 15:58:23 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.270 2015/10/22 17:36:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1395,6 +1395,17 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		return EPASSTHROUGH;
 
 	default:
+		/* Pass through various console ioctls */
+		switch (IOCGROUP(cmd)) {
+		case 'c':	/* syscons console */
+		case 'v':	/* usl console, video - where one letter */
+		case 'K':	/* usl console, keyboard - aint enough */
+		case 'V':	/* pcvt compat */
+		case 'W':	/* wscons console */
+			return EPASSTHROUGH;
+		default:
+			break;
+		}
 #ifdef COMPAT_60
 		error = compat_60_ttioctl(tp, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)
