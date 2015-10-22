@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1231 2015/10/21 13:06:39 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1232 2015/10/22 13:18:25 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1238 2015/10/21 13:06:09 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1239 2015/10/22 13:17:56 msaitoh Exp
  */
 
 /*
@@ -3493,8 +3493,13 @@
 #define	PCI_PRODUCT_INTEL_82946GZ_IGD	0x2972		/* 82946GZ Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82946GZ_KT	0x2977		/* 82946GZ KT */
 #define	PCI_PRODUCT_INTEL_82G35_HB	0x2980		/* 82G35 Host Bridge */
+#define	PCI_PRODUCT_INTEL_82965_PCIE	0x2981		/* 82G35 PCIe Root Port */
 #define	PCI_PRODUCT_INTEL_82G35_IGD	0x2982		/* 82G35 Integrated Graphics Device */
 #define	PCI_PRODUCT_INTEL_82G35_IGD_1	0x2983		/* 82G35 Integrated Graphics Device */
+#define	PCI_PRODUCT_INTEL_82G35_HECI_1	0x2984		/* 82G35 HECI */
+#define	PCI_PRODUCT_INTEL_82G35_HECI_2	0x2985		/* 82G35 HECI */
+#define	PCI_PRODUCT_INTEL_82965_IDE_R	0x2986		/* 82965 IDE-R */
+#define	PCI_PRODUCT_INTEL_82965Q_KT	0x2987		/* 82965Q KT */
 #define	PCI_PRODUCT_INTEL_82965Q_HB	0x2990		/* 82965Q Host Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_EXP	0x2991		/* 82965Q PCI Express Bridge */
 #define	PCI_PRODUCT_INTEL_82965Q_IGD	0x2992		/* 82965Q Integrated Graphics Device */
