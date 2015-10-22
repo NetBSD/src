@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.105 2015/10/02 05:22:53 msaitoh Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.106 2015/10/22 09:45:32 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -350,6 +350,20 @@ void	pci_chipset_tag_destroy(pci_chipset_tag_t);
 int	pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 void	*pci_intr_establish_xname(pci_chipset_tag_t, pci_intr_handle_t,
 				  int, int (*)(void *), void *, const char *);
+#ifndef __HAVE_PCI_MSI_MSIX
+typedef enum {
+	PCI_INTR_TYPE_INTX = 0,
+	PCI_INTR_TYPE_MSI,
+	PCI_INTR_TYPE_MSIX,
+	PCI_INTR_TYPE_SIZE,
+} pci_intr_type_t;
+
+pci_intr_type_t
+	pci_intr_type(pci_intr_handle_t);
+int	pci_intr_alloc(const struct pci_attach_args *, pci_intr_handle_t **,
+		       int *, pci_intr_type_t);
+void	pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *, int);
+#endif
 
 /*
  * Device abstraction for inheritance by elanpci(4), for example.

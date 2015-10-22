@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep_common.h,v 1.21 2015/08/17 06:16:02 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep_common.h,v 1.22 2015/10/22 09:45:32 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -119,6 +119,7 @@ void		*pci_intr_establish(pci_chipset_tag_t, pci_intr_handle_t,
 		    int, int (*)(void *), void *);
 void		pci_intr_disestablish(pci_chipset_tag_t, void *);
 
+#ifdef __HAVE_PCI_MSI_MSIX
 typedef enum {
 	PCI_INTR_TYPE_INTX = 0,
 	PCI_INTR_TYPE_MSI,
@@ -127,6 +128,15 @@ typedef enum {
 } pci_intr_type_t;
 
 pci_intr_type_t	pci_intr_type(pci_intr_handle_t);
+/*
+ * Wrapper function for generally unitied allocation to fallback MSI-X/MSI/INTx
+ * automatically.
+ */
+int		pci_intr_alloc(const struct pci_attach_args *,
+		    pci_intr_handle_t **, int *, pci_intr_type_t);
+void		pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *,
+		    int);
+#endif
 
 /*
  * If device drivers use MSI/MSI-X, they should use these API for INTx
@@ -135,13 +145,6 @@ pci_intr_type_t	pci_intr_type(pci_intr_handle_t);
  */
 int		pci_intx_alloc(const struct pci_attach_args *,
 		    pci_intr_handle_t **);
-
-/*
- * Wrapper function for generally unitied allocation to fallback MSI-X/MSI/INTx
- * automatically.
- */
-int		pci_intr_alloc(const struct pci_attach_args *,
-		    pci_intr_handle_t **, int *, pci_intr_type_t);
 
 /* experimental MSI support */
 int		pci_msi_alloc(const struct pci_attach_args *,
@@ -156,9 +159,6 @@ int		pci_msix_alloc_exact(const struct pci_attach_args *,
 		    pci_intr_handle_t **, int);
 int		pci_msix_alloc_map(const struct pci_attach_args *,
 		    pci_intr_handle_t **, u_int *, int);
-
-void		pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *,
-		    int);
 
 /*
  * ALL OF THE FOLLOWING ARE MACHINE-DEPENDENT, AND SHOULD NOT BE USED
