@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.13 2015/10/11 09:17:51 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.14 2015/10/22 12:07:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.13 2015/10/11 09:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.14 2015/10/22 12:07:48 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -961,9 +961,7 @@ dwc2_device_isoc_start(struct usbd_xfer *xfer)
 void
 dwc2_device_isoc_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-#endif
+	struct dwc2_softc *sc __diagused = DWC2_XFER2SC(xfer);
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTF("xfer=%p\n", xfer);
