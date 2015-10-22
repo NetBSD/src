@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1238 2015/10/21 13:06:09 nonaka Exp $
+$NetBSD: pcidevs,v 1.1239 2015/10/22 13:17:56 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3486,8 +3486,13 @@ product INTEL 82946GZ_HB	0x2970	82946GZ Host Bridge
 product INTEL 82946GZ_IGD	0x2972	82946GZ	Integrated Graphics Device
 product INTEL 82946GZ_KT	0x2977	82946GZ	KT
 product INTEL 82G35_HB		0x2980	82G35 Host Bridge
+product INTEL 82965_PCIE	0x2981	82G35 PCIe Root Port
 product INTEL 82G35_IGD		0x2982	82G35 Integrated Graphics Device
 product INTEL 82G35_IGD_1	0x2983	82G35 Integrated Graphics Device
+product INTEL 82G35_HECI_1	0x2984	82G35 HECI
+product INTEL 82G35_HECI_2	0x2985	82G35 HECI
+product INTEL 82965_IDE_R	0x2986  82965 IDE-R
+product INTEL 82965Q_KT		0x2987  82965Q KT
 product INTEL 82965Q_HB		0x2990  82965Q Host Bridge
 product INTEL 82965Q_EXP	0x2991  82965Q PCI Express Bridge
 product INTEL 82965Q_IGD	0x2992  82965Q Integrated Graphics Device
