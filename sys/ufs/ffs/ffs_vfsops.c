@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.335 2015/07/24 13:02:52 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.336 2015/10/22 11:31:31 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.335 2015/07/24 13:02:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.336 2015/10/22 11:31:31 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -899,7 +899,7 @@ static int
 ffs_superblock_validate(struct fs *fs)
 {
 	int32_t i, fs_bshift = 0, fs_fshift = 0, fs_fragshift = 0, fs_frag;
-	int32_t fs_inopb, fs_cgsize;
+	int32_t fs_inopb;
 
 	/* Check the superblock size */
 	if (fs->fs_sbsize > SBLOCKSIZE || fs->fs_sbsize < sizeof(struct fs))
@@ -981,23 +981,9 @@ ffs_superblock_validate(struct fs *fs)
 		return 0;
 
 	/* Check the size of cylinder groups */
-	fs_cgsize = ffs_fragroundup(fs, CGSIZE(fs));
-	if (fs->fs_cgsize != fs_cgsize) {
-		if (fs->fs_cgsize+1 == CGSIZE(fs)) {
-			printf("CGSIZE(fs) miscalculated by one - this file "
-			    "system may have been created by\n"
-			    "  an old (buggy) userland, see\n"
-			    "  http://www.NetBSD.org/"
-			    "docs/ffsv1badsuperblock.html\n");
-		} else {
-			printf("ERROR: cylinder group size mismatch: "
-			    "fs_cgsize = 0x%zx, "
-			    "fs->fs_cgsize = 0x%zx, CGSIZE(fs) = 0x%zx\n",
-			    (size_t)fs_cgsize, (size_t)fs->fs_cgsize,
-			    (size_t)CGSIZE(fs));
-			return 0;
-		}
-	}
+	if ((fs->fs_cgsize < sizeof(struct cg)) ||
+	    (fs->fs_cgsize > fs->fs_bsize))
+		return 0;
 
 	return 1;
 }
