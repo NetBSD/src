@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2108 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2109 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -207,3 +207,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		[nonaka 20151002]
 	lua: Updated to Lua 5.3.1 [mbalmer 20151008]
 	libc: Update to tzcode2015g. [christos 20151009]
+	ntp: Import ntp 4.2.8p4. [christos 20151023]
