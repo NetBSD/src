@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_rfc2553.c,v 1.3 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: ntp_rfc2553.c,v 1.4 2015/10/23 18:06:19 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -223,7 +223,7 @@ copy_addrinfo_common(
 		}
 		++ai_cpy;
 	}
-	NTP_ENSURE(pcanon == ((char *)dst + octets));
+	ENSURE(pcanon == ((char *)dst + octets));
 
 	return dst;
 }
