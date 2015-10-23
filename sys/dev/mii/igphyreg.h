@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.6 2010/03/07 09:05:19 msaitoh Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.7 2015/10/23 08:40:34 msaitoh Exp $	*/
 
 /*******************************************************************************
 
@@ -42,14 +42,14 @@
  * IGP01E1000 Specific Registers
  */
 
-/* IGP01E1000 Specific Port Control Register - R/W */
+/* IGP01E1000 Specific Port Config Register - R/W */
 #define MII_IGPPHY_PORT_CONFIG		0x10 /* PHY specific config register */
-#define PSCR_AUTO_MDIX_PAR_DETECT	0x0010
-#define PSCR_PRE_EN			0x0020
-#define PSCR_SMART_SPEED		0x0080
-#define PSCR_DISABLE_TPLOOPBACK		0x0100
-#define PSCR_DISABLE_JABBER		0x0400
-#define PSCR_DISABLE_TRANSMIT		0x2000
+#define PSCFR_AUTO_MDIX_PAR_DETECT	0x0010
+#define PSCFR_PRE_EN			0x0020
+#define PSCFR_SMART_SPEED		0x0080
+#define PSCFR_DISABLE_TPLOOPBACK	0x0100
+#define PSCFR_DISABLE_JABBER		0x0400
+#define PSCFR_DISABLE_TRANSMIT		0x2000
 
 /* IGP01E1000 Specific Port Status Register - R/O */
 #define MII_IGPHY_PORT_STATUS		0x11
@@ -68,7 +68,7 @@
 
 /* IGP01E1000 Specific Port Control Register - R/W */
 #define MII_IGPHY_PORT_CTRL		0x12
-#define PSCR_TP_LOOPBACK		0x0001
+#define PSCR_TP_LOOPBACK		0x0010
 #define PSCR_CORRECT_NC_SCMBLR		0x0200
 #define PSCR_TEN_CRS_SELECT		0x0400
 #define PSCR_FLIP_CHIP			0x0800
