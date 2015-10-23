@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.169 2014/09/05 09:21:55 matt Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.170 2015/10/23 19:40:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.169 2014/09/05 09:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.170 2015/10/23 19:40:11 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -279,7 +279,7 @@ sunos_sys_mount(struct lwp *l, const struct sunos_sys_mount_args *uap, register_
 		na.retrans = sna.retrans;
 		na.hostname = /* (char *)(u_long) */ sna.hostname;
 
-		return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL,
+		return do_sys_mount(l, "nfs", UIO_SYSSPACE,
 		    SCARG(uap, dir), nflags, &na,
 		    UIO_SYSSPACE, sizeof na, &dummy);
 	}
@@ -287,7 +287,7 @@ sunos_sys_mount(struct lwp *l, const struct sunos_sys_mount_args *uap, register_
 	if (strcmp(fsname, "4.2") == 0)
 		strcpy(fsname, "ffs");
 
-	return do_sys_mount(l, vfs_getopsbyname(fsname), NULL,
+	return do_sys_mount(l, fsname, UIO_SYSSPACE,
 	    SCARG(uap, dir), nflags, SCARG(uap, data),
 	    UIO_USERSPACE, 0, &dummy);
 }
