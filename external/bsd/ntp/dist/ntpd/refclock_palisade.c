@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_palisade.c,v 1.4 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: refclock_palisade.c,v 1.5 2015/10/23 18:06:20 christos Exp $	*/
 
 /*
  * This software was developed by the Software and Component Technologies
@@ -220,7 +220,7 @@ init_thunderbolt (
 	struct packettx tx;
 	
 	tx.size = 0;
-	tx.data = (u_char *) malloc(100);
+	tx.data = (u_char *) emalloc(100);
 
 	/* set UTC time */
 	sendsupercmd (&tx, 0x8E, 0xA2);
@@ -248,7 +248,7 @@ init_acutime (
 	struct packettx tx;
 
 	tx.size = 0;
-	tx.data = (u_char *) malloc(100);
+	tx.data = (u_char *) emalloc(100);
 
 	sendsupercmd(&tx, 0x8E, 0xA5);
 	sendbyte(&tx, 0x02);
