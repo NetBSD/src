@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.85 2015/10/13 10:39:25 knakahara Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.86 2015/10/23 08:45:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -711,7 +711,7 @@ struct livengood_tcpip_ctxdesc {
 #define	PHY_CTRL_D0A_LPLU	(1 << 1)
 #define	PHY_CTRL_NOND0A_LPLU	(1 << 2)
 #define	PHY_CTRL_NOND0A_GBE_DIS	(1 << 3)
-#define	PHY_CTRL_GBE_DIS	(1 << 4)
+#define	PHY_CTRL_GBE_DIS	(1 << 6)
 
 #define	WMREG_PBA	0x1000	/* Packet Buffer Allocation */
 #define	PBA_BYTE_SHIFT	10		/* KB -> bytes */
