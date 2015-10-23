@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.72 2014/10/05 20:17:28 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.73 2015/10/23 19:40:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.72 2014/10/05 20:17:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.73 2015/10/23 19:40:10 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -958,7 +958,7 @@ netbsd32___mount50(struct lwp *l, const struct netbsd32___mount50_args *uap,
 	} else {
 		data_seg = UIO_USERSPACE;
 	}
-	error = do_sys_mount(l, NULL, type, path, flags, data, data_seg,
+	error = do_sys_mount(l, mtype, UIO_SYSSPACE, path, flags, data, data_seg,
 	    data_len, retval);
 	if (error)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.75 2014/09/05 09:21:55 matt Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.76 2015/10/23 19:40:11 maxv Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.75 2014/09/05 09:21:55 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.76 2015/10/23 19:40:11 maxv Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -522,7 +522,7 @@ sunos32_sys_mount(struct lwp *l, const struct sunos32_sys_mount_args *uap, regis
 		na.retrans = sna.retrans;
 		na.hostname = (char *)(u_long)sna.hostname;
 
-		return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL,
+		return do_sys_mount(l, "nfs", UIO_SYSSPACE,
 		    SCARG_P32(uap, path), nflags, &na, UIO_SYSSPACE, sizeof na,
 		    &dummy);
 	}
@@ -530,7 +530,7 @@ sunos32_sys_mount(struct lwp *l, const struct sunos32_sys_mount_args *uap, regis
 	if (strcmp(fsname, "4.2") == 0)
 		strcpy(fsname, "ffs");
 
-	return do_sys_mount(l, vfs_getopsbyname(fsname), NULL,
+	return do_sys_mount(l, fsname, UIO_SYSSPACE,
 	    SCARG_P32(uap, path), nflags, SCARG_P32(uap, data), UIO_USERSPACE,
 	    0, &dummy);
 }
