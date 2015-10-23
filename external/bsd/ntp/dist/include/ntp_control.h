@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.h,v 1.1.1.5 2015/07/10 13:11:03 christos Exp $	*/
+/*	$NetBSD: ntp_control.h,v 1.1.1.6 2015/10/23 17:47:39 christos Exp $	*/
 
 /*
  * ntp_control.h - definitions related to NTP mode 6 control messages
@@ -106,7 +106,7 @@ struct ntp_control {
 #define	CTL_PST_SEL_REJECT	0	/*   reject */
 #define	CTL_PST_SEL_SANE	1	/* x falsetick */
 #define	CTL_PST_SEL_CORRECT	2	/* . excess */
-#define	CTL_PST_SEL_SELCAND	3	/* - outlyer */
+#define	CTL_PST_SEL_SELCAND	3	/* - outlier */
 #define	CTL_PST_SEL_SYNCCAND	4	/* + candidate */
 #define	CTL_PST_SEL_EXCESS	5	/* # backup */
 #define	CTL_PST_SEL_SYSPEER	6	/* * sys.peer */

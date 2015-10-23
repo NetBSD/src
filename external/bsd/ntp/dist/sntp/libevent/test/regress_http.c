@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_http.c,v 1.1.1.5 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: regress_http.c,v 1.1.1.6 2015/10/23 17:47:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -369,6 +369,10 @@ http_chunked_cb(struct evhttp_request *req, void *arg)
 	struct timeval when = { 0, 0 };
 	struct chunk_req_state *state = malloc(sizeof(struct chunk_req_state));
 	event_debug(("%s: called\n", __func__));
+	if (state == NULL) {
+		fprintf(stderr, "Unable to allocate memory in http_chunked_cb()\n");
+		exit(1);
+	}
 
 	memset(state, 0, sizeof(struct chunk_req_state));
 	state->req = req;

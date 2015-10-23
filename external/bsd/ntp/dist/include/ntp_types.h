@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_types.h,v 1.1.1.5 2015/07/10 13:11:03 christos Exp $	*/
+/*	$NetBSD: ntp_types.h,v 1.1.1.6 2015/10/23 17:47:39 christos Exp $	*/
 
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
@@ -17,7 +17,8 @@
 #include <sys/types.h>
 #if defined(HAVE_INTTYPES_H)
 # include <inttypes.h>
-#elif defined(HAVE_STDINT_H)
+#endif
+#if defined(HAVE_STDINT_H)
 # include <stdint.h>
 #endif
 

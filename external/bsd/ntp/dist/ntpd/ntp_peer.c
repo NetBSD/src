@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.1.1.6 2015/07/10 13:11:05 christos Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -720,9 +720,13 @@ refresh_all_peerinterfaces(void)
 	/*
 	 * this is called when the interface list has changed
 	 * give all peers a chance to find a better interface
+	 * but only if either they don't have an address already
+	 * or if the one they have hasn't worked for a while.
 	 */
-	for (p = peer_list; p != NULL; p = p->p_link)
-		peer_refresh_interface(p);
+	for (p = peer_list; p != NULL; p = p->p_link) {
+		if (!(p->dstadr && (p->reach & 0x3)))	// Bug 2849 XOR 2043
+			peer_refresh_interface(p);
+	}
 }
 
 
@@ -748,6 +752,8 @@ newpeer(
 	struct peer *	peer;
 	u_int		hash;
 
+	DEBUG_REQUIRE(srcadr);
+
 #ifdef AUTOKEY
 	/*
 	 * If Autokey is requested but not configured, complain loudly.
@@ -766,7 +772,7 @@ newpeer(
 	/*
 	 * For now only pool associations have a hostname.
 	 */
-	NTP_INSIST(NULL == hostname || (MDF_POOL & cast_flags));
+	INSIST(NULL == hostname || (MDF_POOL & cast_flags));
 
 	/*
 	 * First search from the beginning for an association with given
@@ -819,6 +825,7 @@ newpeer(
 	if (peer_free_count == 0)
 		getmorepeermem();
 	UNLINK_HEAD_SLIST(peer, peer_free, p_link);
+	INSIST(peer != NULL);
 	peer_free_count--;
 	peer_associations++;
 	if (FLAG_PREEMPT & flags)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_restrict.c,v 1.1.1.6 2015/07/10 13:11:06 christos Exp $	*/
+/*	$NetBSD: ntp_restrict.c,v 1.1.1.7 2015/10/23 17:47:41 christos Exp $	*/
 
 /*
  * ntp_restrict.c - determine host restrictions
@@ -175,7 +175,7 @@ alloc_res4(void)
 		LINK_SLIST(resfree4, res, link);
 		res = (void *)((char *)res - cb);
 	}
-	NTP_INSIST(rl == res);
+	INSIST(rl == res);
 	/* allocate the first */
 	return res;
 }
@@ -201,7 +201,7 @@ alloc_res6(void)
 		LINK_SLIST(resfree6, res, link);
 		res = (void *)((char *)res - cb);
 	}
-	NTP_INSIST(rl == res);
+	INSIST(rl == res);
 	/* allocate the first */
 	return res;
 }
@@ -225,7 +225,7 @@ free_res(
 	else
 		plisthead = &restrictlist4;
 	UNLINK_SLIST(unlinked, *plisthead, res, link, restrict_u);
-	NTP_INSIST(unlinked == res);
+	INSIST(unlinked == res);
 
 	if (v6) {
 		zero_mem(res, V6_SIZEOF_RESTRICT_U);
@@ -293,7 +293,7 @@ match_restrict6_addr(
 
 	for (res = restrictlist6; res != NULL; res = next) {
 		next = res->link;
-		NTP_INSIST(next != res);
+		INSIST(next != res);
 		if (res->expire &&
 		    res->expire <= current_time)
 			free_res(res, v6);
@@ -437,6 +437,9 @@ restrictions(
 
 		match = match_restrict4_addr(SRCADR(srcadr),
 					     SRCPORT(srcadr));
+
+		INSIST(match != NULL);
+
 		match->count++;
 		/*
 		 * res_not_found counts only use of the final default
@@ -463,6 +466,7 @@ restrictions(
 			return (int)RES_IGNORE;
 
 		match = match_restrict6_addr(pin6, SRCPORT(srcadr));
+		INSIST(match != NULL);
 		match->count++;
 		if (&restrict_def6 == match)
 			res_not_found++;
@@ -496,8 +500,8 @@ hack_restrict(
 		    op, stoa(resaddr), stoa(resmask), mflags, flags));
 
 	if (NULL == resaddr) {
-		NTP_REQUIRE(NULL == resmask);
-		NTP_REQUIRE(RESTRICT_FLAGS == op);
+		REQUIRE(NULL == resmask);
+		REQUIRE(RESTRICT_FLAGS == op);
 		restrict_source_flags = flags;
 		restrict_source_mflags = mflags;
 		restrict_source_enabled = 1;
@@ -505,9 +509,13 @@ hack_restrict(
 	}
 
 	ZERO(match);
+
+#if 0
 	/* silence VC9 potentially uninit warnings */
+	// HMS: let's use a compiler-specific "enable" for this.
 	res = NULL;
 	v6 = 0;
+#endif
 
 	if (IS_IPV4(resaddr)) {
 		v6 = 0;
@@ -530,7 +538,7 @@ hack_restrict(
 			       &match.u.v6.mask);
 
 	} else	/* not IPv4 nor IPv6 */
-		NTP_REQUIRE(0);
+		REQUIRE(0);
 
 	match.flags = flags;
 	match.mflags = mflags;
@@ -602,7 +610,7 @@ hack_restrict(
 		break;
 
 	default:	/* unknown op */
-		NTP_INSIST(0);
+		INSIST(0);
 		break;
 	}
 
@@ -628,7 +636,7 @@ restrict_source(
 	    IS_MCAST(addr) || ISREFCLOCKADR(addr))
 		return;
 
-	NTP_REQUIRE(AF_INET == AF(addr) || AF_INET6 == AF(addr));
+	REQUIRE(AF_INET == AF(addr) || AF_INET6 == AF(addr));
 
 	SET_HOSTMASK(&onesmask, AF(addr));
 	if (farewell) {
@@ -649,10 +657,12 @@ restrict_source(
 	 */
 	if (IS_IPV4(addr)) {
 		res = match_restrict4_addr(SRCADR(addr), SRCPORT(addr));
+		INSIST(res != NULL);
 		found_specific = (SRCADR(&onesmask) == res->u.v4.mask);
 	} else {
 		res = match_restrict6_addr(&SOCK_ADDR6(addr),
 					   SRCPORT(addr));
+		INSIST(res != NULL);
 		found_specific = ADDR6_EQ(&res->u.v6.mask,
 					  &SOCK_ADDR6(&onesmask));
 	}

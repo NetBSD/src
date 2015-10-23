@@ -1,4 +1,4 @@
-/*	$NetBSD: pathfind.c,v 1.1.1.5 2015/07/10 13:11:10 christos Exp $	*/
+/*	$NetBSD: pathfind.c,v 1.1.1.6 2015/10/23 17:47:43 christos Exp $	*/
 
 /*  -*- Mode: C -*-  */
 
@@ -117,9 +117,15 @@ make_absolute( char const * string, char const * dot_path )
 
     if (!dot_path || *string == '/') {
         result = strdup( string );
+	if (result == NULL) {
+	return NULL;    /* couldn't allocate memory    */
+	}
     } else {
         if (dot_path && dot_path[0]) {
             result = malloc( 2 + strlen( dot_path ) + strlen( string ) );
+		if (result == NULL) {
+		return NULL;    /* couldn't allocate memory    */
+		}		
             strcpy( result, dot_path );
             result_len = (int)strlen(result);
             if (result[result_len - 1] != '/') {
@@ -128,6 +134,9 @@ make_absolute( char const * string, char const * dot_path )
             }
         } else {
             result = malloc( 3 + strlen( string ) );
+		if (result == NULL) {
+		return NULL;    /* couldn't allocate memory    */
+		}
             result[0] = '.'; result[1] = '/'; result[2] = '\0';
             result_len = 2;
         }
@@ -157,7 +166,9 @@ canonicalize_pathname( char *path )
 
     /* The result cannot be larger than the input PATH. */
     result = strdup( path );
-
+	if (result == NULL) {
+	return NULL;    /* couldn't allocate memory    */
+	}
     stub_char = (*path == '/') ? '/' : '.';
 
     /* Walk along RESULT looking for things to compact. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_stdlib.h,v 1.1.1.6 2015/07/10 13:11:03 christos Exp $	*/
+/*	$NetBSD: ntp_stdlib.h,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
 
 /*
  * ntp_stdlib.h - Prototypes for NTP lib.
@@ -33,6 +33,7 @@ extern	int	mvsnprintf(char *, size_t, const char *, va_list)
 extern	int	msnprintf(char *, size_t, const char *, ...)
 			NTP_PRINTF(3, 4);
 extern	void	msyslog(int, const char *, ...) NTP_PRINTF(2, 3);
+extern	void	mvsyslog(int, const char *, va_list) NTP_PRINTF(2, 0);
 extern	void	init_logging	(const char *, u_int32, int);
 extern	int	change_logfile	(const char *, int);
 extern	void	setup_logfile	(const char *);

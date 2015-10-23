@@ -1,4 +1,4 @@
-/*	$NetBSD: decodenetnum.c,v 1.1.1.5 2015/07/10 13:11:04 christos Exp $	*/
+/*	$NetBSD: decodenetnum.c,v 1.1.1.6 2015/10/23 17:47:40 christos Exp $	*/
 
 /*
  * decodenetnum - return a net number (this is crude, but careful)
@@ -37,8 +37,11 @@ decodenetnum(
 	char *np;
 	char name[80];
 
-	NTP_REQUIRE(num != NULL);
-	NTP_REQUIRE(strlen(num) < sizeof(name));
+	REQUIRE(num != NULL);
+
+	if (strlen(num) >= sizeof(name)) {
+		return 0;
+	}
 
 	port_str = NULL;
 	if ('[' != num[0]) {
@@ -74,7 +77,7 @@ decodenetnum(
 	err = getaddrinfo(cp, "ntp", &hints, &ai);
 	if (err != 0)
 		return 0;
-	NTP_INSIST(ai->ai_addrlen <= sizeof(*netnum));
+	INSIST(ai->ai_addrlen <= sizeof(*netnum));
 	ZERO(*netnum);
 	memcpy(netnum, ai->ai_addr, ai->ai_addrlen);
 	freeaddrinfo(ai);

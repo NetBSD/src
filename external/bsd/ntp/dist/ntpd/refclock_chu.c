@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.1.1.6 2015/07/10 13:11:04 christos Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
@@ -1196,7 +1196,7 @@ chu_a(
 	 * only if the maximum distance is at least MINSYNC.
 	 */
 	up->syndist = k = 0;
-	val = -16;
+	// val = -16;
 	for (i = -1; i < 2; i++) {
 		temp = up->cbuf[i + 4] & 0xf;
 		if (i >= 0)

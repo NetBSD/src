@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_arc.c,v 1.1.1.6 2015/07/10 13:11:05 christos Exp $	*/
+/*	$NetBSD: refclock_arc.c,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
 
 /*
  * refclock_arc - clock driver for ARCRON MSF/DCF/WWVB receivers
@@ -659,7 +659,7 @@ arc_start(
 		return 0;
 	}
 	close(temp_fd);
-	temp_fd = -1;
+	temp_fd = -1;		/* not used after this, at *this* time. */
 
 #ifndef SYS_WINNT
 	if (-1 == fcntl(fd, F_SETFL, 0)) /* clear the descriptor flags */

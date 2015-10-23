@@ -1,4 +1,4 @@
-/*	$NetBSD: test-time.c,v 1.1.1.4 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: test-time.c,v 1.1.1.5 2015/10/23 17:47:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
@@ -101,6 +101,7 @@ main(int argc, char **argv)
 
 	for (i = 0; i < NEVENT; i++) {
 		ev[i] = malloc(sizeof(struct event));
+		assert(ev[i] != NULL);
 
 		/* Initalize one event */
 		evtimer_set(ev[i], time_cb, ev[i]);

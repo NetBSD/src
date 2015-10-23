@@ -1,9 +1,9 @@
-/*	$NetBSD: sntp-opts.c,v 1.1.1.7 2015/07/10 13:11:08 christos Exp $	*/
+/*	$NetBSD: sntp-opts.c,v 1.1.1.8 2015/10/23 17:47:42 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.c)
  *
- *  It has been AutoGen-ed  June 29, 2015 at 04:23:20 PM by AutoGen 5.18.5
+ *  It has been AutoGen-ed  October 21, 2015 at 12:30:23 PM by AutoGen 5.18.5
  *  From the definitions    sntp-opts.def
  *  and the template file   options
  *
@@ -72,7 +72,7 @@ extern FILE * option_usage_fp;
  *  static const strings for sntp options
  */
 static char const sntp_opt_strs[2549] =
-/*     0 */ "sntp 4.2.8p3\n"
+/*     0 */ "sntp 4.2.8p4\n"
             "Copyright (C) 1992-2015 The University of Delaware and Network Time Foundation, all rights reserved.\n"
             "This is free software. It is licensed for use, modification and\n"
             "redistribution under the terms of the NTP License, copies of which\n"
@@ -157,7 +157,7 @@ static char const sntp_opt_strs[2549] =
 /*  2298 */ "LOAD_OPTS\0"
 /*  2308 */ "no-load-opts\0"
 /*  2321 */ "SNTP\0"
-/*  2326 */ "sntp - standard Simple Network Time Protocol client program - Ver. 4.2.8p3\n"
+/*  2326 */ "sntp - standard Simple Network Time Protocol client program - Ver. 4.2.8p4\n"
             "Usage:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]... \\\n"
             "\t\t[ hostname-or-IP ...]\n\0"
 /*  2485 */ "$HOME\0"
@@ -165,7 +165,7 @@ static char const sntp_opt_strs[2549] =
 /*  2493 */ ".ntprc\0"
 /*  2500 */ "http://bugs.ntp.org, bugs@ntp.org\0"
 /*  2534 */ "\n\0"
-/*  2536 */ "sntp 4.2.8p3";
+/*  2536 */ "sntp 4.2.8p4";
 
 /**
  *  ipv4 option description with
@@ -1175,7 +1175,7 @@ static void bogus_function(void) {
      translate option names.
    */
   /* referenced via sntpOptions.pzCopyright */
-  puts(_("sntp 4.2.8p3\n\
+  puts(_("sntp 4.2.8p4\n\
 Copyright (C) 1992-2015 The University of Delaware and Network Time Foundation, all rights reserved.\n\
 This is free software. It is licensed for use, modification and\n\
 redistribution under the terms of the NTP License, copies of which\n\
@@ -1265,7 +1265,7 @@ implied warranty.\n"));
   puts(_("load options from a config file"));
 
   /* referenced via sntpOptions.pzUsageTitle */
-  puts(_("sntp - standard Simple Network Time Protocol client program - Ver. 4.2.8p3\n\
+  puts(_("sntp - standard Simple Network Time Protocol client program - Ver. 4.2.8p4\n\
 Usage:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]... \\\n\
 \t\t[ hostname-or-IP ...]\n"));
 
@@ -1273,7 +1273,7 @@ Usage:  %s [ -<flag> [<val>] | --<name>[{=| }<val>] ]... \\\n\
   puts(_("\n"));
 
   /* referenced via sntpOptions.pzFullVersion */
-  puts(_("sntp 4.2.8p3"));
+  puts(_("sntp 4.2.8p4"));
 
   /* referenced via sntpOptions.pzFullUsage */
   puts(_("<<<NOT-FOUND>>>"));

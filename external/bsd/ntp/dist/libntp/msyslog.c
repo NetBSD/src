@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.1.1.5 2015/07/10 13:11:04 christos Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.1.1.6 2015/10/23 17:47:40 christos Exp $	*/
 
 /*
  * msyslog - either send a message to the terminal or print it on
@@ -40,7 +40,7 @@ char *	syslog_abs_fname;
 #define INIT_NTP_SYSLOGMASK	~(u_int32)0
 u_int32 ntp_syslogmask = INIT_NTP_SYSLOGMASK;
 
-extern	char *	progname;
+extern char const * progname;
 
 /* Declare the local functions */
 void	addto_syslog	(int, const char *);
@@ -147,8 +147,8 @@ addto_syslog(
 	const char *	msg
 	)
 {
-	static char *	prevcall_progname;
-	static char *	prog;
+	static char const *	prevcall_progname;
+	static char const *	prog;
 	const char	nl[] = "\n";
 	const char	empty[] = "";
 	FILE *		term_file;
@@ -359,6 +359,18 @@ msyslog(
 	addto_syslog(level, buf);
 }
 
+void
+mvsyslog(
+	int		level,
+	const char *	fmt,
+	va_list		ap
+	)
+{
+	char	buf[1024];
+	mvsnprintf(buf, sizeof(buf), fmt, ap);
+	addto_syslog(level, buf);
+}
+
 
 /*
  * Initialize the logging
@@ -373,7 +385,7 @@ init_logging(
 	)
 {
 	static int	was_daemon;
-	const char *	cp;
+	char *		cp;
 	const char *	pname;
 
 	/*
@@ -404,7 +416,7 @@ init_logging(
 #ifdef SYS_WINNT			/* strip ".exe" */
 	cp = strrchr(progname, '.');
 	if (NULL != cp && !strcasecmp(cp, ".exe"))
-		progname[cp - progname] = '\0';
+		*cp = '\0';
 #endif
 
 #if !defined(VMS)
@@ -456,7 +468,7 @@ change_logfile(
 	size_t		octets;
 #endif	/* POSIX */
 
-	NTP_REQUIRE(fname != NULL);
+	REQUIRE(fname != NULL);
 	log_fname = fname;
 
 	/*

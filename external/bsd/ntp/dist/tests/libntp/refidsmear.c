@@ -1,4 +1,4 @@
-/*	$NetBSD: refidsmear.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: refidsmear.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include "config.h"
 
@@ -30,7 +30,12 @@
  * 254.255.255.255
  */
 
+
+
 void rtol(uint32_t r, char *es);
+void rtoltor(uint32_t er, char *es);
+void ltor(l_fp l, char *er);
+void test_refidsmear(void);
 
 void
 rtol(uint32_t r, char *es)
@@ -55,7 +60,7 @@ rtol(uint32_t r, char *es)
 }
 
 
-void rtoltor(uint32_t er, char *es);
+
 
 void
 rtoltor(uint32_t er, char *es)
@@ -83,8 +88,6 @@ rtoltor(uint32_t er, char *es)
 	return;
 }
 
-
-void ltor(l_fp l, char *er);
 
 void
 ltor(l_fp l, char *er)

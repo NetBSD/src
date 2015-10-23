@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.1.1.7 2015/07/10 13:11:06 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.1.1.8 2015/10/23 17:47:41 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -1227,37 +1227,48 @@ misc_cmd_int_keyword
 misc_cmd_str_keyword
 	:	T_Ident
 	|	T_Leapfile
-	|	T_Pidfile
 	;
 
 misc_cmd_str_lcl_keyword
 	:	T_Logfile
+	|	T_Pidfile
 	|	T_Saveconfigdir
 	;
 
 drift_parm
 	:	T_String
 		{
-			attr_val *av;
-
-			av = create_attr_sval(T_Driftfile, $1);
-			APPEND_G_FIFO(cfgt.vars, av);
+			if (lex_from_file()) {
+				attr_val *av;
+				av = create_attr_sval(T_Driftfile, $1);
+				APPEND_G_FIFO(cfgt.vars, av);
+			} else {
+				YYFREE($1);
+				yyerror("driftfile remote configuration ignored");
+			}
 		}
 	|	T_String T_Double
 		{
-			attr_val *av;
-
-			av = create_attr_sval(T_Driftfile, $1);
-			APPEND_G_FIFO(cfgt.vars, av);
-			av = create_attr_dval(T_WanderThreshold, $2);
-			APPEND_G_FIFO(cfgt.vars, av);
+			if (lex_from_file()) {
+				attr_val *av;
+				av = create_attr_sval(T_Driftfile, $1);
+				APPEND_G_FIFO(cfgt.vars, av);
+				av = create_attr_dval(T_WanderThreshold, $2);
+				APPEND_G_FIFO(cfgt.vars, av);
+			} else {
+				YYFREE($1);
+				yyerror("driftfile remote configuration ignored");
+			}
 		}
 	|	/* Null driftfile,  indicated by empty string "" */
 		{
-			attr_val *av;
-
-			av = create_attr_sval(T_Driftfile, "");
-			APPEND_G_FIFO(cfgt.vars, av);
+			if (lex_from_file()) {
+				attr_val *av;
+				av = create_attr_sval(T_Driftfile, estrdup(""));
+				APPEND_G_FIFO(cfgt.vars, av);
+			} else {
+				yyerror("driftfile remote configuration ignored");
+			}
 		}
 	;
 

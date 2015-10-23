@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_timer.c,v 1.1.1.6 2015/07/10 13:11:05 christos Exp $	*/
+/*	$NetBSD: ntp_timer.c,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
 
 /*
  * ntp_timer.c - event timer support routines
@@ -57,6 +57,12 @@ static void check_leapsec(u_int32, const time_t*, int/*BOOL*/);
  * message.
  */
 volatile int interface_interval;     /* init_io() sets def. 300s */
+
+/*
+ * Initializing flag.  All async routines watch this and only do their
+ * thing when it is clear.
+ */
+int initializing;
 
 /*
  * Alarm flag. The mainline code imports this.

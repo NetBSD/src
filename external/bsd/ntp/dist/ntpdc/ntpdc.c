@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc.c,v 1.1.1.6 2015/07/10 13:11:07 christos Exp $	*/
+/*	$NetBSD: ntpdc.c,v 1.1.1.7 2015/10/23 17:47:42 christos Exp $	*/
 
 /*
  * ntpdc - control and monitor your ntpd daemon
@@ -242,7 +242,7 @@ static	FILE *current_output;
  */
 extern struct xcmd opcmds[];
 
-char *progname;
+char const *progname;
 
 #ifdef NO_MAIN_ALLOWED
 CALL(ntpdc,"ntpdc",ntpdcmain);
@@ -1445,7 +1445,7 @@ getnetnum(
 				    LENHOSTNAME, NULL, 0, 0);
 		return 1;
 	} else if (getaddrinfo(hname, "ntp", &hints, &ai) == 0) {
-		NTP_INSIST(sizeof(*num) >= ai->ai_addrlen);
+		INSIST(sizeof(*num) >= ai->ai_addrlen);
 		memcpy(num, ai->ai_addr, ai->ai_addrlen);
 		if (fullhost != NULL) {
 			if (ai->ai_canonname != NULL)

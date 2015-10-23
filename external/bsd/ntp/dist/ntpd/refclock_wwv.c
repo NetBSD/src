@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_wwv.c,v 1.1.1.5 2015/07/10 13:11:06 christos Exp $	*/
+/*	$NetBSD: refclock_wwv.c,v 1.1.1.6 2015/10/23 17:47:41 christos Exp $	*/
 
 /*
  * refclock_wwv - clock driver for NIST WWV/H time/frequency station
@@ -2243,6 +2243,7 @@ wwv_tsec(
 		temp = carry(&up->decvec[HR]);
 	if (temp == 0)
 		temp = carry(&up->decvec[HR + 1]);
+	// XXX: Does temp have an expected value here?
 
 	/*
 	 * Decode the current minute and day. Set leap day if the
@@ -2273,7 +2274,7 @@ wwv_tsec(
 	if (minute != 1440)
 		return;
 
-	minute = 0;
+	// minute = 0;
 	while (carry(&up->decvec[HR]) != 0); /* advance to minute 0 */
 	while (carry(&up->decvec[HR + 1]) != 0);
 	day++;
@@ -2282,6 +2283,7 @@ wwv_tsec(
 		temp = carry(&up->decvec[DA + 1]);
 	if (temp == 0)
 		temp = carry(&up->decvec[DA + 2]);
+	// XXX: Is there an expected value of temp here?
 
 	/*
 	 * Roll the year if this the first day and propagate carries
@@ -2290,7 +2292,7 @@ wwv_tsec(
 	if (day != (isleap ? 365 : 366))
 		return;
 
-	day = 1;
+	// day = 1;
 	while (carry(&up->decvec[DA]) != 1); /* advance to day 1 */
 	while (carry(&up->decvec[DA + 1]) != 0);
 	while (carry(&up->decvec[DA + 2]) != 0);

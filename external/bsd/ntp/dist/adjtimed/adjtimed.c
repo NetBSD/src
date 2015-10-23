@@ -1,4 +1,4 @@
-/*	$NetBSD: adjtimed.c,v 1.1.1.3 2015/07/10 13:11:01 christos Exp $	*/
+/*	$NetBSD: adjtimed.c,v 1.1.1.4 2015/10/23 17:47:38 christos Exp $	*/
 
 /*************************************************************************/
 /* (c) Copyright Tai Jin, 1988.  All Rights Reserved.                    */
@@ -60,7 +60,7 @@ void Exit (int);
 /* emacs cc-mode goes nuts if we split the next line... */
 #define tvtod(tv)	((double)tv.tv_sec + ((double)tv.tv_usec / (double)MILLION))
 
-char *progname = NULL;
+char const *progname = NULL;
 int verbose = 0;
 int sysdebug = 0;
 static int mqid;

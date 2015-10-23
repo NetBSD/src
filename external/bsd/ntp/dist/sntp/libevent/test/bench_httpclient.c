@@ -1,4 +1,4 @@
-/*	$NetBSD: bench_httpclient.c,v 1.1.1.3 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: bench_httpclient.c,v 1.1.1.4 2015/10/23 17:47:44 christos Exp $	*/
 
 /*
  * Copyright 2009-2012 Niels Provos and Nick Mathewson
@@ -161,6 +161,10 @@ launch_request(void)
 	}
 
 	ri = malloc(sizeof(*ri));
+	if (ri == NULL) {
+		printf("Unable to allocate memory in launch_request()\n");
+		return -1;
+	}
 	ri->n_read = 0;
 	evutil_gettimeofday(&ri->started, NULL);
 

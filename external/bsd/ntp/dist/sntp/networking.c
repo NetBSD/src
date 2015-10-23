@@ -1,4 +1,4 @@
-/*	$NetBSD: networking.c,v 1.1.1.7 2015/07/10 13:11:09 christos Exp $	*/
+/*	$NetBSD: networking.c,v 1.1.1.8 2015/10/23 17:47:43 christos Exp $	*/
 
 #include <config.h>
 #include "networking.h"
@@ -115,7 +115,7 @@ process_pkt (
 	l_fp		sent_xmt;
 	l_fp		resp_org;
 
-	key_id = 0;
+	// key_id = 0;
 	pkt_key = NULL;
 	is_authentic = (HAVE_OPT(AUTHENTICATION)) ? 0 : -1;
 
