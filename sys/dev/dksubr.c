@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.80 2015/10/23 01:06:20 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.81 2015/10/23 01:34:22 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.80 2015/10/23 01:06:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.81 2015/10/23 01:34:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -709,7 +709,7 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 
 	/* Check transfer bounds against partition size. */
 	if ((blkno < 0) || ((blkno + towrt) > nsects)) {
-		DPRINTF(DKDB_DUMP, ("%s: out of bounds blkno=%jd", towrt=%d, "
+		DPRINTF(DKDB_DUMP, ("%s: out of bounds blkno=%jd, towrt=%d, "
 		    "nsects=%d\n", __func__, (intmax_t)blkno, towrt, nsects));
 		return EINVAL;
 	}
