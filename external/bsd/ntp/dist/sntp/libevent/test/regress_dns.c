@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_dns.c,v 1.4 2015/07/10 14:20:35 christos Exp $	*/
+/*	$NetBSD: regress_dns.c,v 1.5 2015/10/23 18:06:24 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -1324,7 +1324,7 @@ test_getaddrinfo_async(void *arg)
 	int n_dns_questions = 0;
 	struct evdns_base *dns_base;
 
-	memset(a_out, 0, sizeof(a_out));
+	memset(&a_out, 0, sizeof(a_out));
 	memset(&local_outcome, 0, sizeof(local_outcome));
 
 	dns_base = evdns_base_new(data->base, 0);
@@ -1748,7 +1748,8 @@ end:
 static void
 gaic_launch(struct event_base *base, struct evdns_base *dns_base)
 {
-	struct gaic_request_status *status = calloc(1,sizeof(*status));
+	struct gaic_request_status *status = calloc(1, sizeof(*status));
+	tt_assert(status);
 	struct timeval tv = { 0, 10000 };
 	status->magic = GAIC_MAGIC;
 	status->base = base;
