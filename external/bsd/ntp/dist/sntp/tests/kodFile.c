@@ -1,12 +1,10 @@
-/*	$NetBSD: kodFile.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: kodFile.c,v 1.1.1.3 2015/10/23 17:47:43 christos Exp $	*/
 
 #include "config.h"
+
 #include "ntp_types.h"
 #include "ntp_stdlib.h" // For estrdup()
-
-
 #include "fileHandlingTest.h"
-
 #include "kod_management.h"
 
 #include "unity.h"
@@ -19,22 +17,32 @@ extern int kod_db_cnt;
 extern struct kod_entry** kod_db;
 extern char* kod_db_file;
 
-void setUp() {
-		kod_db_cnt = 0;
-		kod_db = NULL;
+void setUp(void);
+void test_ReadEmptyFile(void);
+void test_ReadCorrectFile(void);
+void test_ReadFileWithBlankLines(void);
+void test_WriteEmptyFile(void);
+void test_WriteFileWithSingleEntry(void);
+void test_WriteFileWithMultipleEntries(void);
+
+
+void
+setUp(void) {
+	kod_db_cnt = 0;
+	kod_db = NULL;
 }
 
-void tearDown() {
-}
 
-
-void test_ReadEmptyFile() {
+void
+test_ReadEmptyFile(void) {
 	kod_init_kod_db(CreatePath("kod-test-empty", INPUT_DIR), TRUE);
 
 	TEST_ASSERT_EQUAL(0, kod_db_cnt);
 }
 
-void test_ReadCorrectFile() {
+
+void
+test_ReadCorrectFile(void) {
 	kod_init_kod_db(CreatePath("kod-test-correct", INPUT_DIR), TRUE);
 	
 	TEST_ASSERT_EQUAL(2, kod_db_cnt);
@@ -52,7 +60,9 @@ void test_ReadCorrectFile() {
 	TEST_ASSERT_EQUAL(0xfff, res->timestamp);
 }
 
-void test_ReadFileWithBlankLines() {
+
+void
+test_ReadFileWithBlankLines(void) {
 	kod_init_kod_db(CreatePath("kod-test-blanks", INPUT_DIR), TRUE);
 
 	TEST_ASSERT_EQUAL(3, kod_db_cnt);
@@ -75,31 +85,30 @@ void test_ReadFileWithBlankLines() {
 	TEST_ASSERT_EQUAL(0xabcd, res->timestamp);
 }
 
-void test_WriteEmptyFile() {
-	//kod_db_file = estrdup(CreatePath("kod-output-blank", OUTPUT_DIR)); //causing issues on psp-at1, replaced
+
+void
+test_WriteEmptyFile(void) {
 	kod_db_file = estrdup("kod-output-blank");
-	//printf("kod PATH: %s\n",kod_db_file);
 	write_kod_db();
 
 	// Open file and ensure that the filesize is 0 bytes.
-	FILE * is;
-	is = fopen(kod_db_file, "rb");//std::ios::binary);
-	TEST_ASSERT_FALSE(is == NULL );//is.fail());
-	
+	FILE * is = fopen(kod_db_file, "rb");
+	TEST_ASSERT_NOT_NULL(is);
+
 	TEST_ASSERT_EQUAL(0, GetFileSize(is));
 
 	fclose(is);
 }
 
-void test_WriteFileWithSingleEntry() {
-	//kod_db_file = estrdup(CreatePath("kod-output-single", OUTPUT_DIR)); //causing issues on psp-at1, replaced
+
+void
+test_WriteFileWithSingleEntry(void) {
 	kod_db_file = estrdup("kod-output-single"); 
-    	//printf("kod PATH: %s\n",kod_db_file);
 	add_entry("host1", "DENY");
 
 	// Here we must manipulate the timestamps, so they match the one in
 	// the expected file.
-	//
+
 	kod_db[0]->timestamp = 1;
 
 	write_kod_db();
@@ -107,18 +116,19 @@ void test_WriteFileWithSingleEntry() {
 	// Open file and compare sizes.
 	FILE * actual = fopen(kod_db_file, "rb");
 	FILE * expected = fopen(CreatePath("kod-expected-single", INPUT_DIR),"rb");
-	TEST_ASSERT_TRUE(actual !=NULL);//TEST_ASSERT_TRUE(actual.good());
-	TEST_ASSERT_TRUE(expected !=NULL);//TEST_ASSERT_TRUE(expected.good());
+
+	TEST_ASSERT_NOT_NULL(actual);
+	TEST_ASSERT_NOT_NULL(expected);
 
 	TEST_ASSERT_EQUAL(GetFileSize(expected), GetFileSize(actual));
-
+	
 	TEST_ASSERT_TRUE(CompareFileContent(expected, actual));
 }
 
-void test_WriteFileWithMultipleEntries() {
-	//kod_db_file = estrdup(CreatePath("kod-output-multiple", OUTPUT_DIR)); //causing issues on psp-at1, replaced
+
+void
+test_WriteFileWithMultipleEntries(void) {
 	kod_db_file = estrdup("kod-output-multiple");
-    	//printf("kod PATH: %s\n",kod_db_file);
 	add_entry("example.com", "RATE");
 	add_entry("192.0.2.1", "DENY");
 	add_entry("192.0.2.5", "RSTR");
@@ -136,12 +146,12 @@ void test_WriteFileWithMultipleEntries() {
 	// Open file and compare sizes and content.
 	FILE * actual = fopen(kod_db_file, "rb");
 	FILE * expected = fopen(CreatePath("kod-expected-multiple", INPUT_DIR),"rb");
-	TEST_ASSERT_TRUE(actual !=NULL);//TEST_ASSERT_TRUE(actual.good());
-	TEST_ASSERT_TRUE(expected !=NULL);//TEST_ASSERT_TRUE(expected.good());
 
-	
+	TEST_ASSERT_NOT_NULL(actual);
+	TEST_ASSERT_NOT_NULL(expected);
+
+
 	TEST_ASSERT_EQUAL(GetFileSize(expected), GetFileSize(actual));
 
 	TEST_ASSERT_TRUE(CompareFileContent(expected, actual));
 }
-

@@ -1,10 +1,19 @@
-/*	$NetBSD: atoint.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+/*	$NetBSD: atoint.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include "config.h"
 
 #include "ntp_stdlib.h"
 #include "ntp_calendar.h"
 #include "unity.h"
+
+void test_RegularPositive(void);
+void test_RegularNegative(void);
+void test_PositiveOverflowBoundary(void);
+void test_NegativeOverflowBoundary(void);
+void test_PositiveOverflowBig(void); 
+void test_IllegalCharacter(void);
+
+
 
 void test_RegularPositive(void) {
         const char *str = "17";

@@ -1,4 +1,4 @@
-/*	$NetBSD: packetHandling.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: packetHandling.c,v 1.1.1.3 2015/10/23 17:47:43 christos Exp $	*/
 
 #include "config.h"
 #include "ntp_debug.h"
@@ -14,27 +14,37 @@
 
 #include "unity.h"
 
+void setUp(void);
+int LfpEquality(const l_fp expected, const l_fp actual);
+void test_GenerateUnauthenticatedPacket(void);
+void test_GenerateAuthenticatedPacket(void);
+void test_OffsetCalculationPositiveOffset(void);
+void test_OffsetCalculationNegativeOffset(void);
+void test_HandleUnusableServer(void);
+void test_HandleUnusablePacket(void);
+void test_HandleServerAuthenticationFailure(void);
+void test_HandleKodDemobilize(void);
+void test_HandleKodRate(void);
+void test_HandleCorrectPacket(void);
 
-int counter = 0;
 
-
-// old code from google test framework, moved to SetUp() for unity
-void setUp(void)
-{ 
+void
+setUp(void) { 
 	init_lib(); 
 }
 
 
-
-int LfpEquality(const l_fp expected, const l_fp actual) {
-		if (L_ISEQU(&expected, &actual)) {
-			return TRUE; 
-		} else {
-			return FALSE;
-		}
+int
+LfpEquality(const l_fp expected, const l_fp actual) {
+	if (L_ISEQU(&expected, &actual))
+		return TRUE; 
+	else
+		return FALSE;
 }
 
-void test_GenerateUnauthenticatedPacket(void) {
+
+void
+test_GenerateUnauthenticatedPacket(void) {
 	struct pkt testpkt;
 
 	struct timeval xmt;
@@ -57,7 +67,9 @@ void test_GenerateUnauthenticatedPacket(void) {
 	TEST_ASSERT_TRUE(LfpEquality(expected_xmt, actual_xmt));
 }
 
-void test_GenerateAuthenticatedPacket(void) {
+
+void
+test_GenerateAuthenticatedPacket(void) {
 	struct key testkey;
 	testkey.next = NULL;
 	testkey.key_id = 30;
@@ -93,10 +105,12 @@ void test_GenerateAuthenticatedPacket(void) {
 	char expected_mac[MAX_MD5_LEN];
 	TEST_ASSERT_EQUAL(MAX_MD5_LEN - 4, // Remove the key_id, only keep the mac.
 			  make_mac((char*)&testpkt, LEN_PKT_NOMAC, MAX_MD5_LEN, &testkey, expected_mac));
-	TEST_ASSERT_TRUE(memcmp(expected_mac, (char*)&testpkt.exten[1], MAX_MD5_LEN -4) == 0);
+	TEST_ASSERT_EQUAL_MEMORY(expected_mac, (char*)&testpkt.exten[1], MAX_MD5_LEN -4);
 }
 
-void test_OffsetCalculationPositiveOffset(void) {
+
+void
+test_OffsetCalculationPositiveOffset(void) {
 	struct pkt rpkt;
 
 	rpkt.precision = -16; // 0,000015259
@@ -134,13 +148,15 @@ void test_OffsetCalculationPositiveOffset(void) {
 	double offset, precision, synch_distance;
 	offset_calculation(&rpkt, LEN_PKT_NOMAC, &dst, &offset, &precision, &synch_distance);
 
-	TEST_ASSERT_EQUAL_FLOAT(1.25, offset);
-	TEST_ASSERT_EQUAL_FLOAT(1. / ULOGTOD(16), precision);
+	TEST_ASSERT_EQUAL_DOUBLE(1.25, offset);
+	TEST_ASSERT_EQUAL_DOUBLE(1. / ULOGTOD(16), precision);
 	// 1.1250150000000001 ?
-	TEST_ASSERT_EQUAL_FLOAT(1.125015, synch_distance);
+	TEST_ASSERT_EQUAL_DOUBLE(1.125015, synch_distance);
 }
 
-void test_OffsetCalculationNegativeOffset(void) {
+
+void
+test_OffsetCalculationNegativeOffset(void) {
 	struct pkt rpkt;
 
 	rpkt.precision = -1;
@@ -178,12 +194,14 @@ void test_OffsetCalculationNegativeOffset(void) {
 	double offset, precision, synch_distance;
 	offset_calculation(&rpkt, LEN_PKT_NOMAC, &dst, &offset, &precision, &synch_distance);
 
-	TEST_ASSERT_EQUAL_FLOAT(-1, offset);
-	TEST_ASSERT_EQUAL_FLOAT(1. / ULOGTOD(1), precision);
-	TEST_ASSERT_EQUAL_FLOAT(1.3333483333333334, synch_distance);
+	TEST_ASSERT_EQUAL_DOUBLE(-1, offset);
+	TEST_ASSERT_EQUAL_DOUBLE(1. / ULOGTOD(1), precision);
+	TEST_ASSERT_EQUAL_DOUBLE(1.3333483333333334, synch_distance);
 }
 
-void test_HandleUnusableServer(void) {
+
+void
+test_HandleUnusableServer(void) {
 	struct pkt		rpkt;
 	sockaddr_u	host;
 	int		rpktl;
@@ -194,7 +212,9 @@ void test_HandleUnusableServer(void) {
 	TEST_ASSERT_EQUAL(-1, handle_pkt(rpktl, &rpkt, &host, ""));
 }
 
-void test_HandleUnusablePacket(void) {
+
+void
+test_HandleUnusablePacket(void) {
 	struct pkt		rpkt;
 	sockaddr_u	host;
 	int		rpktl;
@@ -205,7 +225,9 @@ void test_HandleUnusablePacket(void) {
 	TEST_ASSERT_EQUAL(1, handle_pkt(rpktl, &rpkt, &host, ""));
 }
 
-void test_HandleServerAuthenticationFailure(void) {
+
+void
+test_HandleServerAuthenticationFailure(void) {
 	struct pkt		rpkt;
 	sockaddr_u	host;
 	int		rpktl;
@@ -216,7 +238,9 @@ void test_HandleServerAuthenticationFailure(void) {
 	TEST_ASSERT_EQUAL(1, handle_pkt(rpktl, &rpkt, &host, ""));
 }
 
-void test_HandleKodDemobilize(void) {
+
+void
+test_HandleKodDemobilize(void) {
 	const char *	HOSTNAME = "192.0.2.1";
 	const char *	REASON = "DENY";
 	struct pkt		rpkt;
@@ -237,10 +261,12 @@ void test_HandleKodDemobilize(void) {
 	TEST_ASSERT_EQUAL(1, handle_pkt(rpktl, &rpkt, &host, HOSTNAME));
 
 	TEST_ASSERT_EQUAL(1, search_entry(HOSTNAME, &entry));
-	TEST_ASSERT_TRUE(memcmp(REASON, entry->type, 4) == 0);
+	TEST_ASSERT_EQUAL_MEMORY(REASON, entry->type, 4);
 }
 
-void test_HandleKodRate(void) {
+
+void
+test_HandleKodRate(void) {
 	struct 	pkt		rpkt;
 	sockaddr_u	host;
 	int		rpktl;
@@ -251,7 +277,9 @@ void test_HandleKodRate(void) {
 	TEST_ASSERT_EQUAL(1, handle_pkt(rpktl, &rpkt, &host, ""));
 }
 
-void test_HandleCorrectPacket(void) {
+
+void
+test_HandleCorrectPacket(void) {
 	struct pkt		rpkt;
 	sockaddr_u	host;
 	int		rpktl;

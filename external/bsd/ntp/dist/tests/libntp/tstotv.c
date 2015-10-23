@@ -1,4 +1,4 @@
-/*	$NetBSD: tstotv.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+/*	$NetBSD: tstotv.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include "config.h"
 
@@ -7,9 +7,14 @@
 
 #include "unity.h"
 
+void test_Seconds(void);
+void test_MicrosecondsExact(void);
+void test_MicrosecondsRounding(void);
+
+
 void
 test_Seconds(void) {
-	const l_fp input = {50, 0}; // 50.0 s
+	const l_fp input = {{50}, 0}; /* 50.0 s */
 	const struct timeval expected = {50, 0};
 	struct timeval actual;
 
@@ -22,7 +27,7 @@ test_Seconds(void) {
 void
 test_MicrosecondsExact(void) {
 	const u_long HALF = 2147483648UL;
-	const l_fp input = {50, HALF}; // 50.5 s
+	const l_fp input = {{50}, HALF}; /* 50.5 s */
 	const struct timeval expected = {50, 500000};
 	struct timeval actual;
 
@@ -35,7 +40,7 @@ test_MicrosecondsExact(void) {
 
 void
 test_MicrosecondsRounding(void) {
-	const l_fp input = {50, 3865471UL}; // Should round to 50.0009
+	const l_fp input = {{50}, 3865471UL}; /* Should round to 50.0009 */
 	const struct timeval expected = {50, 900};
 	struct timeval actual;
 

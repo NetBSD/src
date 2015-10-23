@@ -1,8 +1,13 @@
-/*	$NetBSD: caltontp.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+/*	$NetBSD: caltontp.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include "config.h"
-#include "unity.h"
 #include "ntp_calendar.h"
+#include "unity.h"
+
+void test_DateGivenMonthDay(void);
+void test_DateGivenYearDay(void);
+void test_DateLeapYear(void);
+void test_WraparoundDateIn2036(void);
 
 void
 test_DateGivenMonthDay(void) {

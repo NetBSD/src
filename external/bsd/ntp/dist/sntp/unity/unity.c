@@ -1,4 +1,4 @@
-/*	$NetBSD: unity.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: unity.c,v 1.1.1.3 2015/10/23 17:47:43 christos Exp $	*/
 
 /* =========================================================================
     Unity Project - A Test Framework for C
@@ -329,16 +329,14 @@ void UnityConcludeTest(void)
 			}
 
 			printf("| ");
-			printf(Unity.XFAILMessage);
+			printf("%s", Unity.XFAILMessage);
 			Unity.XFAILMessage = NULL;
 		}
 		else
 		{
 			printf(" - EXPECTED FAIL!");
 		}
-
 	}
-
 	else
 
     if (Unity.CurrentTestIgnored)

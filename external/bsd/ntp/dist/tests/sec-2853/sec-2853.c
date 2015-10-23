@@ -1,6 +1,8 @@
-/*	$NetBSD: sec-2853.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: sec-2853.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include <config.h>
+
+#include <rc_cmdlength.h>
 
 #include "unity.h"
 
@@ -11,8 +13,6 @@ void test_main( void );
 int basic_good( void );
 int embedded_nul( void );
 int trailing_space( void );
-
-extern size_t remoteconfig_cmdlength(const char *, const char *);
 
 static int verbose = 1;        // if not 0, also print results if test passed
 static int exit_on_err = 0;    // if not 0, exit if test failed
