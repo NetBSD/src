@@ -1,4 +1,4 @@
-/*	$NetBSD: smeartest.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: smeartest.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include <config.h>
 
@@ -129,6 +129,8 @@ ltor(l_fp l)
 
 main()
 {
+	l_fp l;
+	int rc;
 
 	rtol(0xfe800000);
 	rtol(0xfe800001);
@@ -165,6 +167,16 @@ main()
 	rtoltor(0xfe700001);
 	rtoltor(0xfe7ffffe);
 	rtoltor(0xfe7fffff);
+
+	rc = atolfp("-.932087", &l);
+	ltor(l);
+	rtol(0xfec458b0);
+	printf("%x -> %d.%d.%d.%d\n",
+		0xfec458b0,
+		0xfe,
+		  0xc4,
+		    0x58,
+		      0xb0);
 
 	return 0;
 }
