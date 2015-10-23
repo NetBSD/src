@@ -1,4 +1,4 @@
-/*	$NetBSD: kodDatabase.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
+/*	$NetBSD: kodDatabase.c,v 1.1.1.3 2015/10/23 17:47:43 christos Exp $	*/
 
 #include "config.h"
 
@@ -6,24 +6,29 @@
 #include "sntptest.h"
 #include "ntp_stdlib.h"
 #include "sntp-opts.h"
-
 #include "kod_management.h"
+#include "ntp_io.h"
 
 #include "unity.h"
 
-void setUp(void)
-{
+void setUp(void);
+void test_SingleEntryHandling(void);
+void test_MultipleEntryHandling(void);
+void test_NoMatchInSearch(void);
+void test_AddDuplicate(void);
+void test_DeleteEntry(void);
+
+
+void
+setUp(void) {
 	kod_init_kod_db("/dev/null", TRUE);
 }
 
-void tearDown(void)
-{
-}
 
-
-void test_SingleEntryHandling() {
-	char HOST[] = "192.0.2.5";
-	char REASON[] = "DENY";
+void
+test_SingleEntryHandling(void) {
+	const char HOST[] = "192.0.2.5";
+	const char REASON[] = "DENY";
 
 	add_entry(HOST, REASON);
 
@@ -34,15 +39,17 @@ void test_SingleEntryHandling() {
 	TEST_ASSERT_EQUAL_STRING(REASON, result->type);
 }
 
-void test_MultipleEntryHandling() {
-	char HOST1[] = "192.0.2.3";
-	char REASON1[] = "DENY";
 
-	char HOST2[] = "192.0.5.5";
-	char REASON2[] = "RATE";
+void
+test_MultipleEntryHandling(void) {
+	const char HOST1[] = "192.0.2.3";
+	const char REASON1[] = "DENY";
 
-	char HOST3[] = "192.0.10.1";
-	char REASON3[] = "DENY";
+	const char HOST2[] = "192.0.5.5";
+	const char REASON2[] = "RATE";
+
+	const char HOST3[] = "192.0.10.1";
+	const char REASON3[] = "DENY";
 
 	add_entry(HOST1, REASON1);
 	add_entry(HOST2, REASON2);
@@ -65,10 +72,12 @@ void test_MultipleEntryHandling() {
 	free(result);
 }
 
-void test_NoMatchInSearch() {
-	char HOST_ADD[] = "192.0.2.6";
-	char HOST_NOTADD[] = "192.0.6.1";
-	char REASON[] = "DENY";
+
+void
+test_NoMatchInSearch(void) {
+	const char HOST_ADD[] = "192.0.2.6";
+	const char HOST_NOTADD[] = "192.0.6.1";
+	const char REASON[] = "DENY";
 
 	add_entry(HOST_ADD, REASON);
 
@@ -78,10 +87,12 @@ void test_NoMatchInSearch() {
 	TEST_ASSERT_TRUE(result == NULL);
 }
 
-void test_AddDuplicate() {
-	char HOST[] = "192.0.2.3";
-	char REASON1[] = "RATE";
-	char REASON2[] = "DENY";
+
+void
+test_AddDuplicate(void) {
+	const char HOST[] = "192.0.2.3";
+	const char REASON1[] = "RATE";
+	const char REASON2[] = "DENY";
 
 	add_entry(HOST, REASON1);
 	struct kod_entry* result1;
@@ -103,11 +114,13 @@ void test_AddDuplicate() {
 	free(result2);
 }
 
-void test_DeleteEntry() {
-	char HOST1[] = "192.0.2.1";
-	char HOST2[] = "192.0.2.2";
-	char HOST3[] = "192.0.2.3";
-	char REASON[] = "DENY";
+
+void
+test_DeleteEntry(void) {
+	const char HOST1[] = "192.0.2.1";
+	const char HOST2[] = "192.0.2.2";
+	const char HOST3[] = "192.0.2.3";
+	const char REASON[] = "DENY";
 
 	add_entry(HOST1, REASON);
 	add_entry(HOST2, REASON);

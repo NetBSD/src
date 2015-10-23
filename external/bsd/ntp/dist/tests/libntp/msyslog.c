@@ -1,4 +1,4 @@
-/*	$NetBSD: msyslog.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+/*	$NetBSD: msyslog.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include "config.h"
 
@@ -8,12 +8,22 @@
 
 #ifndef VSNPRINTF_PERCENT_M
 // format_errmsg() is normally private to msyslog.c
-void	format_errmsg	(char *, size_t, const char *, int);
+void format_errmsg(char *, size_t, const char *, int);
 #endif
 
 
+void test_msnprintf(void);
+void test_msnprintfLiteralPercentm(void);
+void test_msnprintfBackslashLiteralPercentm(void);
+void test_msnprintfBackslashPercent(void);
+void test_msnprintfHangingPercent(void);
+void test_format_errmsgHangingPercent(void);
+void test_msnprintfNullTarget(void);
+void test_msnprintfTruncate(void);
 
-void test_msnprintf(void) {
+
+void
+test_msnprintf(void) {
 #define FMT_PREFIX "msyslog.cpp ENOENT: "
 	char	exp_buf[512];
 	char	act_buf[512];
@@ -24,6 +34,7 @@ void test_msnprintf(void) {
 			   strerror(ENOENT));
 	errno = ENOENT;
 	act_cnt = msnprintf(act_buf, sizeof(act_buf), FMT_PREFIX "%m");
+
 	TEST_ASSERT_EQUAL(exp_cnt, act_cnt);
 	TEST_ASSERT_EQUAL_STRING(exp_buf, act_buf);
 }
@@ -39,6 +50,7 @@ test_msnprintfLiteralPercentm(void)
 	exp_cnt = snprintf(exp_buf, sizeof(exp_buf), "%%m");
 	errno = ENOENT;
 	act_cnt = msnprintf(act_buf, sizeof(act_buf), "%%m");
+
 	TEST_ASSERT_EQUAL(exp_cnt, act_cnt);
 	TEST_ASSERT_EQUAL_STRING(exp_buf, act_buf);
 }
@@ -53,6 +65,7 @@ test_msnprintfBackslashLiteralPercentm(void) {
 	exp_cnt = snprintf(exp_buf, sizeof(exp_buf), "\%%m");
 	errno = ENOENT;
 	act_cnt = msnprintf(act_buf, sizeof(act_buf), "\%%m");
+
 	TEST_ASSERT_EQUAL(exp_cnt, act_cnt);
 	TEST_ASSERT_EQUAL_STRING(exp_buf, act_buf);
 }
@@ -68,6 +81,7 @@ test_msnprintfBackslashPercent(void) {
 			   strerror(ENOENT));
 	errno = ENOENT;
 	act_cnt = msnprintf(act_buf, sizeof(act_buf), "\%m");
+
 	TEST_ASSERT_EQUAL(exp_cnt, act_cnt);
 	TEST_ASSERT_EQUAL_STRING(exp_buf, act_buf);
 }
@@ -84,6 +98,7 @@ test_msnprintfHangingPercent(void) {
 	ZERO(act_buf);
 	exp_cnt = snprintf(exp_buf, sizeof(exp_buf), "%s", fmt);
 	act_cnt = msnprintf(act_buf, sizeof(act_buf), "%s", fmt);
+
 	TEST_ASSERT_EQUAL(exp_cnt, act_cnt);
 	TEST_ASSERT_EQUAL_STRING(exp_buf, act_buf);
 	TEST_ASSERT_EQUAL_STRING("", act_buf + 1 + strlen(act_buf));
@@ -97,6 +112,7 @@ test_format_errmsgHangingPercent(void) {
 
 	ZERO(act_buf);
 	format_errmsg(act_buf, sizeof(act_buf), fmt, ENOENT);
+
 	TEST_ASSERT_EQUAL_STRING(fmt, act_buf);
 	TEST_ASSERT_EQUAL_STRING("", act_buf + 1 + strlen(act_buf));
 #else
@@ -112,6 +128,7 @@ test_msnprintfNullTarget(void) {
 	exp_cnt = snprintf(NULL, 0, "%d", 123);
 	errno = ENOENT;
 	act_cnt = msnprintf(NULL, 0, "%d", 123);
+
 	TEST_ASSERT_EQUAL(exp_cnt, act_cnt);
 }
 
@@ -128,6 +145,7 @@ test_msnprintfTruncate(void) {
 	exp_cnt = snprintf(exp_buf, 3, "%s", strerror(ENOENT));
 	errno = ENOENT;
 	act_cnt = msnprintf(act_buf, 3, "%m");
+
 	TEST_ASSERT_EQUAL('\0', exp_buf[2]);
 	TEST_ASSERT_EQUAL('\0', act_buf[2]);
 	TEST_ASSERT_TRUE(act_cnt > 0);
