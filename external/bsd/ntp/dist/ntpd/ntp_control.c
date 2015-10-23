@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.13 2015/07/10 21:31:19 kardel Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.14 2015/10/23 18:06:19 christos Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -30,11 +30,11 @@
 #include "ntp_leapsec.h"
 #include "ntp_md5.h"	/* provides OpenSSL digest API */
 #include "lib_strbuf.h"
+#include <rc_cmdlength.h>
 #ifdef KERNEL_PLL
 # include "ntp_syscall.h"
 #endif
 
-extern size_t remoteconfig_cmdlength( const char *src_buf, const char *src_end );
 
 /*
  * Structure to hold request procedure information
@@ -886,6 +886,28 @@ save_config(
 	int restrict_mask
 	)
 {
+	/* block directory traversal by searching for characters that
+	 * indicate directory components in a file path.
+	 *
+	 * Conceptually we should be searching for DIRSEP in filename,
+	 * however Windows actually recognizes both forward and
+	 * backslashes as equivalent directory separators at the API
+	 * level.  On POSIX systems we could allow '\\' but such
+	 * filenames are tricky to manipulate from a shell, so just
+	 * reject both types of slashes on all platforms.
+	 */	
+	/* TALOS-CAN-0062: block directory traversal for VMS, too */
+	static const char * illegal_in_filename =
+#if defined(VMS)
+	    ":[]"	/* do not allow drive and path components here */
+#elif defined(SYS_WINNT)
+	    ":\\/"	/* path and drive separators */
+#else
+	    "\\/"	/* separator and critical char for POSIX */
+#endif
+	    ;
+
+
 	char reply[128];
 #ifdef SAVECONFIG
 	char filespec[128];
@@ -940,15 +962,9 @@ save_config(
 			       localtime(&now)))
 		strlcpy(filename, filespec, sizeof(filename));
 
-	/*
-	 * Conceptually we should be searching for DIRSEP in filename,
-	 * however Windows actually recognizes both forward and
-	 * backslashes as equivalent directory separators at the API
-	 * level.  On POSIX systems we could allow '\\' but such
-	 * filenames are tricky to manipulate from a shell, so just
-	 * reject both types of slashes on all platforms.
-	 */
-	if (strchr(filename, '\\') || strchr(filename, '/')) {
+	/* block directory/drive traversal */
+	/* TALOS-CAN-0062: block directory traversal for VMS, too */
+	if (NULL != strpbrk(filename, illegal_in_filename)) {
 		snprintf(reply, sizeof(reply),
 			 "saveconfig does not allow directory in filename");
 		ctl_putdata(reply, strlen(reply), 0);
@@ -1403,7 +1419,7 @@ ctl_putstr(
 	memcpy(buffer, tag, tl);
 	cp = buffer + tl;
 	if (len > 0) {
-		NTP_INSIST(tl + 3 + len <= sizeof(buffer));
+		INSIST(tl + 3 + len <= sizeof(buffer));
 		*cp++ = '=';
 		*cp++ = '"';
 		memcpy(cp, data, len);
@@ -1438,7 +1454,7 @@ ctl_putunqstr(
 	memcpy(buffer, tag, tl);
 	cp = buffer + tl;
 	if (len > 0) {
-		NTP_INSIST(tl + 1 + len <= sizeof(buffer));
+		INSIST(tl + 1 + len <= sizeof(buffer));
 		*cp++ = '=';
 		memcpy(cp, data, len);
 		cp += len;
@@ -1467,7 +1483,7 @@ ctl_putdblf(
 	while (*cq != '\0')
 		*cp++ = *cq++;
 	*cp++ = '=';
-	NTP_INSIST((size_t)(cp - buffer) < sizeof(buffer));
+	INSIST((size_t)(cp - buffer) < sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), use_f ? "%.*f" : "%.*g",
 	    precision, d);
 	cp += strlen(cp);
@@ -1493,7 +1509,7 @@ ctl_putuint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%lu", uval);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
@@ -1520,7 +1536,7 @@ ctl_putcal(
 			pcal->hour,
 			pcal->minute
 			);
-	NTP_INSIST(numch < sizeof(buffer));
+	INSIST(numch < sizeof(buffer));
 	ctl_putdata(buffer, numch, 0);
 
 	return;
@@ -1551,7 +1567,7 @@ ctl_putfs(
 	tm = gmtime(&fstamp);
 	if (NULL ==  tm)
 		return;
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer),
 		 "%04d%02d%02d%02d%02d", tm->tm_year + 1900,
 		 tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
@@ -1580,7 +1596,7 @@ ctl_puthex(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%lx", uval);
 	cp += strlen(cp);
 	ctl_putdata(buffer,(unsigned)( cp - buffer ), 0);
@@ -1606,7 +1622,7 @@ ctl_putint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%ld", ival);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
@@ -1632,7 +1648,7 @@ ctl_putts(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((size_t)(cp - buffer) < sizeof(buffer));
+	INSIST((size_t)(cp - buffer) < sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%08x.%08x",
 		 (u_int)ts->l_ui, (u_int)ts->l_uf);
 	cp += strlen(cp);
@@ -1664,7 +1680,7 @@ ctl_putadr(
 		cq = numtoa(addr32);
 	else
 		cq = stoa(addr);
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%s", cq);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
@@ -1735,7 +1751,7 @@ ctl_putarray(
 		if (i == 0)
 			i = NTP_SHIFT;
 		i--;
-		NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+		INSIST((cp - buffer) < (int)sizeof(buffer));
 		snprintf(cp, sizeof(buffer) - (cp - buffer),
 			 " %.2f", arr[i] * 1e3);
 		cp += strlen(cp);
@@ -2930,7 +2946,6 @@ ctl_getitem(
 	 * Look for a first character match on the tag.  If we find
 	 * one, see if it is a full match.
 	 */
-	v = var_list;
 	cp = reqpt;
 	for (v = var_list; !(EOV & v->flags); v++) {
 		if (!(PADDING & v->flags) && *cp == *(v->text)) {
@@ -3112,7 +3127,7 @@ read_peervars(void)
 			ctl_error(CERR_UNKNOWNVAR);
 			return;
 		}
-		NTP_INSIST(v->code < COUNTOF(wants));
+		INSIST(v->code < COUNTOF(wants));
 		wants[v->code] = 1;
 		gotvar = 1;
 	}
@@ -3155,19 +3170,19 @@ read_sysvars(void)
 	gotvar = 0;
 	while (NULL != (v = ctl_getitem(sys_var, &valuep))) {
 		if (!(EOV & v->flags)) {
-			NTP_INSIST(v->code < wants_count);
+			INSIST(v->code < wants_count);
 			wants[v->code] = 1;
 			gotvar = 1;
 		} else {
 			v = ctl_getitem(ext_sys_var, &valuep);
-			NTP_INSIST(v != NULL);
+			INSIST(v != NULL);
 			if (EOV & v->flags) {
 				ctl_error(CERR_UNKNOWNVAR);
 				free(wants);
 				return;
 			}
 			n = v->code + CS_MAXCODE + 1;
-			NTP_INSIST(n < wants_count);
+			INSIST(n < wants_count);
 			wants[n] = 1;
 			gotvar = 1;
 		}
@@ -4401,7 +4416,7 @@ read_clockstatus(
 			gotvar = TRUE;
 		} else {
 			v = ctl_getitem(kv, &valuep);
-			NTP_INSIST(NULL != v);
+			INSIST(NULL != v);
 			if (EOV & v->flags) {
 				ctl_error(CERR_UNKNOWNVAR);
 				free(wants);
@@ -4797,7 +4812,7 @@ report_event(
 		for (i = 1; i <= CS_VARLIST; i++)
 			ctl_putsys(i);
 	} else {
-		NTP_INSIST(peer != NULL);
+		INSIST(peer != NULL);
 		rpkt.associd = htons(peer->associd);
 		rpkt.status = htons(ctlpeerstatus(peer));
 
@@ -4902,7 +4917,7 @@ count_var(
 	while (!(EOV & (k++)->flags))
 		c++;
 
-	NTP_ENSURE(c <= USHRT_MAX);
+	ENSURE(c <= USHRT_MAX);
 	return (u_short)c;
 }
 
