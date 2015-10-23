@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_loopfilter.c,v 1.7 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: ntp_loopfilter.c,v 1.8 2015/10/23 18:06:19 christos Exp $	*/
 
 /*
  * ntp_loopfilter.c - implements the NTP loop filter algorithm
@@ -579,7 +579,7 @@ local_clock(
 		switch (state) {
 
 		/*
-		 * In SYNC state we ignore the first outlyer and switch
+		 * In SYNC state we ignore the first outlier and switch
 		 * to SPIK state.
 		 */
 		case EVNT_SYNC:
@@ -590,8 +590,8 @@ local_clock(
 			return (0);
 
 		/*
-		 * In FREQ state we ignore outlyers and inlyers. At the
-		 * first outlyer after the stepout threshold, compute
+		 * In FREQ state we ignore outliers and inlyers. At the
+		 * first outlier after the stepout threshold, compute
 		 * the apparent frequency correction and step the phase.
 		 */
 		case EVNT_FREQ:
@@ -603,7 +603,7 @@ local_clock(
 			/* fall through to EVNT_SPIK */
 
 		/*
-		 * In SPIK state we ignore succeeding outlyers until
+		 * In SPIK state we ignore succeeding outliers until
 		 * either an inlyer is found or the stepout threshold is
 		 * exceeded.
 		 */

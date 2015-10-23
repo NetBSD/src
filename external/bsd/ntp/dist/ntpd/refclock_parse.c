@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_parse.c,v 1.16 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: refclock_parse.c,v 1.17 2015/10/23 18:06:20 christos Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/ntpd/refclock_parse.c,v 4.81 2009/05/01 10:15:29 kardel RELEASE_20090105_A
@@ -2589,6 +2589,9 @@ parsestate(
 			i++;
 		}
 		t = ap(buffer, size, t, ")");
+		/* t is unused here, but if we don't track it and
+		 * need it later, that's a bug waiting to happen.
+		 */
 	}
 	return buffer;
 }

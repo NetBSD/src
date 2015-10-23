@@ -1,4 +1,4 @@
-/*	$NetBSD: propdelay.c,v 1.3 2015/07/10 14:20:28 christos Exp $	*/
+/*	$NetBSD: propdelay.c,v 1.4 2015/10/23 18:06:19 christos Exp $	*/
 
 /* propdelay.c,v 3.1 1993/07/06 01:05:24 jbj Exp
  * propdelay - compute propagation delays
@@ -119,7 +119,7 @@ int Cflag = 0;
 int Gflag = 0;
 int height;
 
-char *progname;
+char const *progname;
 
 static	void	doit		(double, double, double, double, double, char *);
 static	double	latlong		(char *, int);
