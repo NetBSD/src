@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.28 2014/06/28 21:13:12 dholland Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.29 2015/10/23 18:53:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.28 2014/06/28 21:13:12 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.29 2015/10/23 18:53:26 christos Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_perfctrs.h"
@@ -659,7 +659,6 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 #else
 	struct pcb *pcb;
 	vaddr_t base;
-	int error;
 
 	if (l->l_proc->p_flag & PK_32) {
 		return x86_set_sdbase32(arg, which, l, direct);
@@ -668,17 +667,13 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 	if (direct) {
 		base = (vaddr_t)arg;
 	} else {
-		error = copyin(arg, &base, sizeof(base));
+		int error = copyin(arg, &base, sizeof(base));
 		if (error != 0)
 			return error;
 	}
 
 	if (base >= VM_MAXUSER_ADDRESS)
 		return EINVAL;
-
-	if (error) {
-		return error;
-	}
 
 	pcb = lwp_getpcb(l);
 
@@ -699,7 +694,7 @@ x86_set_sdbase(void *arg, char which, lwp_t *l, bool direct)
 	}
 	kpreempt_enable();
 
-	return error;
+	return 0;
 #endif
 }
 
