@@ -1,37 +1,39 @@
-/*	$NetBSD: ymd2yd.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+/*	$NetBSD: ymd2yd.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include "config.h"
 
 #include "ntp_stdlib.h"
-#include "ntp_calendar.h"
 
 #include "unity.h"
 
-void setUp(void)
-{ 
+void test_NonLeapYearFebruary(void);
+void test_NonLeapYearJune(void);
+void test_LeapYearFebruary(void);
+void test_LeapYearDecember(void);
+
+
+void
+test_NonLeapYearFebruary(void) {
+	TEST_ASSERT_EQUAL(31 + 20, ymd2yd(2010, 2, 20)); //2010-02-20
 }
 
-void tearDown(void)
-{
-}
 
-
-void test_NonLeapYearFebruary (void) {
-	TEST_ASSERT_EQUAL(31+20, ymd2yd(2010,2,20)); //2010-02-20
-}
-
-void test_NonLeapYearJune (void) {
+void
+test_NonLeapYearJune(void) {
 	int expected = 31+28+31+30+31+18; // 18 June non-leap year
-	TEST_ASSERT_EQUAL(expected, ymd2yd(2011,6,18));
+	TEST_ASSERT_EQUAL(expected, ymd2yd(2011, 6, 18));
 }
 
-void test_LeapYearFebruary (void) {
-	TEST_ASSERT_EQUAL(31+20, ymd2yd(2012,2,20)); //2012-02-20 (leap year)
+
+void
+test_LeapYearFebruary(void) {
+	TEST_ASSERT_EQUAL(31 + 20, ymd2yd(2012, 2, 20)); //2012-02-20 (leap year)
 }
 
-void test_LeapYearDecember (void) {
+
+void
+test_LeapYearDecember(void) {
 	// 2012-12-31
 	int expected = 31+29+31+30+31+30+31+31+30+31+30+31;
-	TEST_ASSERT_EQUAL(expected, ymd2yd(2012,12,31));
+	TEST_ASSERT_EQUAL(expected, ymd2yd(2012, 12, 31));
 }
-

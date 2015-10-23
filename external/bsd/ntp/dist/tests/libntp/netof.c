@@ -1,4 +1,4 @@
-/*	$NetBSD: netof.c,v 1.1.1.2 2015/07/10 13:11:14 christos Exp $	*/
+/*	$NetBSD: netof.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
 
 #include "config.h"
 
@@ -8,6 +8,14 @@
 #include "unity.h"
 
 #include "sockaddrtest.h"
+
+
+void test_ClassBAddress(void);
+void test_ClassCAddress(void);
+void test_ClassAAddress(void);
+void test_IPv6Address(void);
+
+
 
 void test_ClassBAddress(void) {
 	sockaddr_u input = CreateSockaddr4("172.16.2.1", NTP_PORT);
