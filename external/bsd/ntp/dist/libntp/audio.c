@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.8 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: audio.c,v 1.9 2015/10/23 18:06:19 christos Exp $	*/
 
 /*
  * audio.c - audio interface for reference clock audio drivers
@@ -379,7 +379,9 @@ audio_gain(
 #ifdef PCM_STYLE_SOUND
 	int l, r;
 
-	rval = 0;
+# ifdef GCC
+	rval = 0;		/* GCC thinks rval is used uninitialized */
+# endif
 
 	r = l = 100 * gain / 255;	/* Normalize to 0-100 */
 # ifdef DEBUG
@@ -394,10 +396,11 @@ audio_gain(
 	if (cf_agc[0] != '\0')
 		rval = ioctl(ctl_fd, agc, &l);
 	else
-		if (2 == port)
-			rval = ioctl(ctl_fd, SOUND_MIXER_WRITE_LINE, &l);
-		else
-			rval = ioctl(ctl_fd, SOUND_MIXER_WRITE_MIC, &l);
+		rval = ioctl(ctl_fd
+			    , (2 == port)
+				? SOUND_MIXER_WRITE_LINE
+				: SOUND_MIXER_WRITE_MIC
+			    , &l);
 	if (-1 == rval) {
 		printf("audio_gain: agc write: %s\n", strerror(errno));
 		return rval;

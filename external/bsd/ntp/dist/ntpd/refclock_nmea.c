@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_nmea.c,v 1.9 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: refclock_nmea.c,v 1.10 2015/10/23 18:06:20 christos Exp $	*/
 
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
@@ -812,9 +812,10 @@ nmea_receive(
 	ZERO(tofs);
 	ZERO(date);
 	ZERO(gpsw);
-	sentence = 0;
-	rc_date = 0;
-	rc_time = 0;
+	sentence = 0;	// Should never be needed.
+	rc_date = 0;	// Should never be needed.
+	rc_time = 0;	// Should never be needed.
+
 	/* 
 	 * Read the timecode and timestamp, then initialise field
 	 * processing. The <CR><LF> at the NMEA line end is translated

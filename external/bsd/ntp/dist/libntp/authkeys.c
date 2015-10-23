@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.6 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.7 2015/10/23 18:06:19 christos Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -536,6 +536,12 @@ MD5auth_setkey(
 	bucket = &key_hash[KEYHASH(keyno)];
 	for (sk = *bucket; sk != NULL; sk = sk->hlink) {
 		if (keyno == sk->keyid) {
+			/* TALOS-CAN-0054: make sure we have a new buffer! */
+			if (NULL != sk->secret) {
+				memset(sk->secret, 0, sk->secretsize);
+				free(sk->secret);
+			}
+			sk->secret = emalloc(len);
 			sk->type = (u_short)keytype;
 			secretsize = len;
 			sk->secretsize = (u_short)secretsize;
@@ -595,12 +601,14 @@ auth_delkeys(void)
 		}
 
 		/*
-		 * Don't lose info as to which keys are trusted.
+		 * Don't lose info as to which keys are trusted. Make
+		 * sure there are no dangling pointers!
 		 */
 		if (KEY_TRUSTED & sk->flags) {
 			if (sk->secret != NULL) {
-				memset(sk->secret, '\0', sk->secretsize);
+				memset(sk->secret, 0, sk->secretsize);
 				free(sk->secret);
+				sk->secret = NULL; /* TALOS-CAN-0054 */
 			}
 			sk->secretsize = 0;
 			sk->lifetime = 0;

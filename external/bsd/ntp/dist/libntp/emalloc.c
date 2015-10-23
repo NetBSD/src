@@ -1,4 +1,4 @@
-/*	$NetBSD: emalloc.c,v 1.5 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: emalloc.c,v 1.6 2015/10/23 18:06:19 christos Exp $	*/
 
 /*
  * emalloc - return new memory obtained from the system.  Belch if none.
@@ -77,8 +77,6 @@ ereallocz(
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-
-#include <stdint.h>
 
 /*
  * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX
