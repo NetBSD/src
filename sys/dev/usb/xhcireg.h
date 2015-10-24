@@ -1,4 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.2.2.4 2015/09/23 13:44:58 skrll Exp $ */
+/* $NetBSD: xhcireg.h,v 1.2.2.5 2015/10/24 08:24:15 skrll Exp $ */
 /* $FreeBSD$ */
 
 /*-
@@ -142,6 +142,10 @@
 #define	 XHCI_PS_PLS_SET(x)	(((x) & 0xF) << 5)	/* RW - port link state */
 #define	 XHCI_PS_PP		0x00000200	/* RW - port power */
 #define	 XHCI_PS_SPEED_GET(x)	(((x) >> 10) & 0xF)	/* RO - port speed */
+#define	 XHCI_PS_SPEED_FS	1
+#define	 XHCI_PS_SPEED_LS	2
+#define	 XHCI_PS_SPEED_HS	3
+#define	 XHCI_PS_SPEED_SS	4
 #define	 XHCI_PS_PIC_GET(x)	(((x) >> 14) & 0x3)	/* RW - port indicator */
 #define	 XHCI_PS_PIC_SET(x)	(((x) & 0x3) << 14)	/* RW - port indicator */
 #define	 XHCI_PS_LWS		0x00010000	/* RW - port link state write strobe */
