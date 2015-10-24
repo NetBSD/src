@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.60 2015/10/24 15:24:13 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.61 2015/10/24 15:32:20 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.60 2015/10/24 15:24:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.61 2015/10/24 15:32:20 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4360,13 +4360,9 @@ ehci_device_fs_isoc_close(struct usbd_pipe *pipe)
 Static void
 ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 {
-	struct ehci_xfer *exfer;
-	ehci_softc_t *sc;
-	struct ehci_pipe *epipe;
-
-	exfer = EHCI_XFER2EXFER(xfer);
-	sc = EHCI_XFER2SC(xfer);
-	epipe = EHCI_XFER2EPIPE(xfer);
+	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
@@ -4397,9 +4393,9 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_isoc_start(struct usbd_xfer *xfer)
 {
-	struct ehci_pipe *epipe;
-	ehci_softc_t *sc;
-	struct ehci_xfer *exfer;
+	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	struct ehci_xfer *exfer	= EHCI_XFER2EXFER(xfer);
 	ehci_soft_itd_t *itd, *prev, *start, *stop;
 	usb_dma_t *dma_buf;
 	int i, j, k, frames, uframes, ufrperframe;
@@ -4413,9 +4409,6 @@ ehci_device_isoc_start(struct usbd_xfer *xfer)
 	itd = NULL;
 	trans_count = 0;
 	total_length = 0;
-	exfer = EHCI_XFER2EXFER(xfer);
-	sc = EHCI_XFER2SC(xfer);
-	epipe = EHCI_XFER2EPIPE(xfer);
 
 	/*
 	 * To allow continuous transfers, above we start all transfers
@@ -4690,13 +4683,9 @@ ehci_device_isoc_close(struct usbd_pipe *pipe)
 Static void
 ehci_device_isoc_done(struct usbd_xfer *xfer)
 {
-	struct ehci_xfer *exfer;
-	ehci_softc_t *sc;
-	struct ehci_pipe *epipe;
-
-	exfer = EHCI_XFER2EXFER(xfer);
-	sc = EHCI_XFER2SC(xfer);
-	epipe = EHCI_XFER2EPIPE(xfer);
+	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
