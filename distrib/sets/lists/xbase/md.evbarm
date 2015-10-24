@@ -1,0 +1,4 @@
+# $NetBSD: md.evbarm,v 1.1 2015/10/24 14:30:28 jmcneill Exp $
+./usr/X11R7/lib/libdrm_nouveau.so		-unknown-		xorg
+./usr/X11R7/lib/libdrm_nouveau.so.2		-unknown-		xorg
+./usr/X11R7/lib/libdrm_nouveau.so.2.0		-unknown-		xorg
