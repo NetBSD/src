@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.58 2015/10/20 15:31:21 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.59 2015/10/24 15:21:51 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.58 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.59 2015/10/24 15:21:51 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4175,12 +4175,13 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 
 		huba = dev->ud_myhsport->up_parent->ud_addr;
 
-/*		if (sc->sc_flags & EHCIF_FREESCALE) {
+#if 0
+		if (sc->sc_flags & EHCIF_FREESCALE) {
 			// Set hub address to 0 if embedded TT is used.
 			if (huba == sc->sc_addr)
 				huba = 0;
 		}
-*/
+#endif
 
 		k = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
 		dir = UE_GET_DIR(k) ? 1 : 0;
