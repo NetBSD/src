@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.61 2015/10/24 15:32:20 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.62 2015/10/24 15:33:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.61 2015/10/24 15:32:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.62 2015/10/24 15:33:59 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3697,7 +3697,7 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 {
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	ehci_soft_qtd_t *data, *dataend;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
@@ -3879,7 +3879,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 {
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	ehci_soft_qtd_t *data, *dataend;
 	ehci_soft_qh_t *sqh;
 	usbd_status err;
@@ -4362,7 +4362,7 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 {
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);;
+	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
