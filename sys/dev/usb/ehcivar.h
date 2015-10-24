@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.19 2015/10/22 11:15:42 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.20 2015/10/24 10:37:22 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ struct ehci_xfer {
 			ehci_soft_itd_t *ex_itdstart;
 			ehci_soft_itd_t *ex_itdend;
 		};
-		/* split isoc */
+		/* split (aka fs) isoc */
 		struct {
 			ehci_soft_sitd_t *ex_sitdstart;
 			ehci_soft_sitd_t *ex_sitdend;
