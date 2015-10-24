@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.45 2015/10/24 08:24:15 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.46 2015/10/24 08:43:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.45 2015/10/24 08:24:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.46 2015/10/24 08:43:25 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1077,6 +1077,7 @@ xhci_speed2xspeed(int speed)
 	}
 }
 
+#if 0
 /* convert xspeed to usbdi speed */
 static int
 xhci_xspeed2speed(int xspeed)
@@ -1087,6 +1088,7 @@ xhci_xspeed2speed(int xspeed)
 	default: return xspeed;
 	}
 }
+#endif
 
 /* convert xspeed to port status speed */
 static int
