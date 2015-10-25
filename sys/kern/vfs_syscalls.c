@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.501 2015/10/23 19:40:10 maxv Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.502 2015/10/25 09:27:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.501 2015/10/23 19:40:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.502 2015/10/25 09:27:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -462,7 +462,7 @@ do_sys_mount(struct lwp *l, const char *type, enum uio_seg type_seg,
     const char *path, int flags, void *data, enum uio_seg data_seg,
     size_t data_len, register_t *retval)
 {
-	struct vfsops *vfsops;
+	struct vfsops *vfsops = NULL;	/* XXX gcc4.8 */
 	struct vnode *vp;
 	void *data_buf = data;
 	bool vfsopsrele = false;
