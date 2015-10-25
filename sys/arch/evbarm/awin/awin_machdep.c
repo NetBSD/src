@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.44 2015/10/25 20:54:19 bouyer Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.45 2015/10/25 21:21:52 bouyer Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.44 2015/10/25 20:54:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.45 2015/10/25 21:21:52 bouyer Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -859,7 +859,19 @@ awin_device_register(device_t self, void *aux)
 				    "display-mode", "dvi");
 			}
 		}
+#ifdef AWIN_SYSCONFIG
+		if (awin_sysconfig_p) {
+			awin_hdmi_sysconfig(dict);
+		}
+#endif
 	}
+#ifdef AWIN_SYSCONFIG
+	if (device_is_a(self, "awintcon")) {
+		if (awin_sysconfig_p) {
+			awin_tcon_sysconfig(self, dict);
+		}
+	}
+#endif
 
 #if NAXP20X > 0
 	if (device_is_a(self, "axp20x")) {
