@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.21 2015/09/26 11:16:12 maxv Exp $
+# $NetBSD: MMNET_GENERIC,v 1.22 2015/10/25 22:48:23 khorben Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.21 $"
+#ident 		"GENERIC-$Revision: 1.22 $"
 
 maxusers	32		# estimated number of users
 
@@ -240,7 +240,6 @@ options 	NFS_BOOT_DHCP,NFS_BOOT_BOOTPARAM
 #options 	VGA_RASTERCONSOLE
 # enable splash screen support; requires hw driver support
 #options 	SPLASHSCREEN
-#options 	SPLASHSCREEN_PROGRESS
 
 # Kernel root file system and dump configuration.
 #config		netbsd root on sd0c type ffs
