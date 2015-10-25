@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.62 2015/10/24 15:33:59 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.63 2015/10/25 09:28:41 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.62 2015/10/24 15:33:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.63 2015/10/25 09:28:41 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4066,10 +4066,10 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 Static usbd_status
 ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 {
-	struct ehci_pipe *epipe;
-	struct usbd_device *dev;
-	ehci_softc_t *sc;
-	struct ehci_xfer *exfer;
+	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
+	struct usbd_device *dev = xfer->ux_pipe->up_dev;
+	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
+	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	ehci_soft_sitd_t *sitd, *prev, *start, *stop;
 	usb_dma_t *dma_buf;
 	int i, j, k, frames;
@@ -4083,10 +4083,6 @@ ehci_device_fs_isoc_start(struct usbd_xfer *xfer)
 	prev = NULL;
 	sitd = NULL;
 	total_length = 0;
-	exfer = EHCI_XFER2EXFER(xfer);
-	sc = EHCI_XFER2SC(xfer);
-	dev = xfer->ux_pipe->up_dev;
-	epipe = EHCI_XFER2EPIPE(xfer);
 
 	/*
 	 * To allow continuous transfers, above we start all transfers
