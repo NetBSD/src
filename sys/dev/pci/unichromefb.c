@@ -1,4 +1,4 @@
-/* $NetBSD: unichromefb.c,v 1.18 2011/01/22 15:14:28 cegger Exp $ */
+/* $NetBSD: unichromefb.c,v 1.19 2015/10/25 22:48:23 khorben Exp $ */
 
 /*-
  * Copyright (c) 2006, 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.18 2011/01/22 15:14:28 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: unichromefb.c,v 1.19 2015/10/25 22:48:23 khorben Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -470,8 +470,6 @@ unichromefb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		}
 		return 0;
 	case WSDISPLAYIO_SSPLASH:
-		return ENODEV;
-	case WSDISPLAYIO_SPROGRESS:
 		return ENODEV;
 
 	/* PCI config read/write passthrough. */
