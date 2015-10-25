@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.42.14.20 2015/10/24 10:37:22 skrll Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.42.14.21 2015/10/25 09:50:06 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@ typedef struct ehci_soft_qtd {
 	usb_dma_t dma;			/* qTD's DMA infos */
 	int offs;			/* qTD's offset in usb_dma_t */
 	struct usbd_xfer *xfer;		/* xfer back pointer */
+	size_t bufoff;			/* Offset into xfer buffer */
 	uint16_t len;
+	uint16_t tdlen;
 } ehci_soft_qtd_t;
 #define EHCI_SQTD_ALIGN	MAX(EHCI_QTD_ALIGN, CACHE_LINE_SIZE)
 #define EHCI_SQTD_SIZE ((sizeof(struct ehci_soft_qtd) + EHCI_SQTD_ALIGN - 1) & -EHCI_SQTD_ALIGN)
@@ -93,8 +95,31 @@ struct ehci_xfer {
 	struct usbd_xfer ex_xfer;
 	struct usb_task	ex_aborttask;
 	TAILQ_ENTRY(ehci_xfer) ex_next; /* list of active xfers */
+	enum {
+		EX_NONE, 
+		EX_CTRL,
+		EX_BULK,
+		EX_INTR,
+		EX_ISOC,
+		EX_FS_ISOC
+	} ex_type;
 	union {
 		/* ctrl/bulk/intr */
+		struct {
+			ehci_soft_qtd_t **ex_sqtds;
+			size_t ex_nsqtd;
+		};
+		/* isoc */
+		bool ex_isrunning;
+	};
+	union {
+		/* ctrl */
+		struct {
+			ehci_soft_qtd_t *ex_setup;
+			ehci_soft_qtd_t *ex_data;
+			ehci_soft_qtd_t *ex_status;
+		};
+		/* bulk/intr */
 		struct {
 			ehci_soft_qtd_t *ex_sqtdstart;
 			ehci_soft_qtd_t *ex_sqtdend;
