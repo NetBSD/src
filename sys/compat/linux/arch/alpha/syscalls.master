@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.89 2014/11/22 13:18:45 njoly Exp $
+	$NetBSD: syscalls.master,v 1.90 2015/10/25 15:55:05 njoly Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -101,7 +101,8 @@
 14	STD		{ int|linux_sys||mknod(const char *path, linux_umode_t mode, \
 			    unsigned dev); }
 15	NOARGS		{ int|sys||chmod(const char *path, int mode); }
-16	NOARGS		{ int|sys||__posix_chown(const char *path, int uid, int gid); }
+16	NOARGS		{ int|sys||__posix_chown(const char *path, uid_t uid, \
+			    gid_t gid); }
 ;17	ALIAS		osf1_sys_brk
 17	STD		{ int|linux_sys||brk(char *nsize); }
 18	UNIMPL
@@ -254,7 +255,8 @@
 				int iovcnt); }
 122	NODEF		{ int|osf1_sys||settimeofday(struct osf1_timeval *tv, \
 			    struct osf1_timezone *tzp); }
-123	NOARGS		{ int|sys||__posix_fchown(int fd, int uid, int gid); }
+123	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
+			    gid_t gid); }
 124	NOARGS		{ int|sys||fchmod(int fd, linux_umode_t mode); }
 125	STD		{ int|linux_sys||recvfrom(int s, void *buf, int len, \
 				int flags, struct osockaddr *from, \
@@ -380,7 +382,8 @@
 #endif
 ;207	ALIAS		osf1_sys_utsname
 207	STD		{ int|linux_sys||olduname(struct linux_old_utsname *up); }
-208	NOARGS		{ int|sys||__posix_lchown(const char *path, int uid, int gid); }
+208	NOARGS		{ int|sys||__posix_lchown(const char *path, uid_t uid, \
+			    gid_t gid); }
 #ifdef SYSVSHM
 209	NOARGS		{ int|linux_sys||shmat(int shmid, void *shmaddr, \
 			    int shmflg, u_long *raddr); }
