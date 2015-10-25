@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.36 2015/10/17 15:30:14 bouyer Exp $ */
+/* $NetBSD: awin_var.h,v 1.37 2015/10/25 20:54:19 bouyer Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -108,6 +108,7 @@ void	awin_pll3_enable(void);
 void	awin_pll6_enable(void);
 void	awin_pll7_enable(void);
 void	awin_pll3_set_rate(uint32_t);
+void	awin_pll7_set_rate(uint32_t);
 uint32_t awin_pll5x_get_rate(void);
 uint32_t awin_pll6_get_rate(void);
 uint32_t awin_periph0_get_rate(void);
@@ -136,12 +137,13 @@ int	awin_dma_transfer(void *, paddr_t, paddr_t, size_t);
 void	awin_dma_halt(void *);
 
 struct videomode;
-unsigned int awin_tcon_get_clk_div(void);
-bool	awin_tcon_get_clk_dbl(void);
-void	awin_tcon_set_videomode(const struct videomode *);
-void	awin_tcon_enable(bool);
-void	awin_debe_set_videomode(const struct videomode *);
-void	awin_debe_enable(bool);
+unsigned int awin_tcon_get_clk_pll(int);
+unsigned int awin_tcon_get_clk_div(int);
+bool	awin_tcon_get_clk_dbl(int);
+void	awin_tcon_set_videomode(int, const struct videomode *);
+void	awin_tcon_enable(int, bool);
+void	awin_debe_set_videomode(int, const struct videomode *);
+void	awin_debe_enable(int, bool);
 int	awin_debe_ioctl(device_t, u_long, void *);
 int	awin_mp_ioctl(device_t, u_long, void *);
 void	awin_mp_setbase(device_t, paddr_t, size_t);

@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.80 2015/10/17 15:30:14 bouyer Exp $ */
+/* $NetBSD: awin_reg.h,v 1.81 2015/10/25 20:54:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -1161,7 +1161,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3	0
 #define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL7	1
 #define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3_2X 2
-#define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL6_2 3
+#define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL7_2X 3
 #define AWIN_LCDx_CH1_SCLK1_GATING	__BIT(15)
 #define AWIN_LCDx_CH1_SCLK1_SRC_SEL	__BIT(11)
 #define AWIN_LCDx_CH1_CLK_DIV_RATIO_M	__BITS(3,0)
@@ -1804,7 +1804,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_TCON_CMAP_ODD1_REG		0x0194
 #define AWIN_TCON_CMAP_EVEN0_REG	0x0198
 #define AWIN_TCON_CMAP_EVEN1_REG	0x019C
-#define AWIN_TCON_MUX_CTL_REG		0x0200
+#define AWIN_TCON_MUX_CTL_REG		0x0200 /* only in TCON0 */
 
 #define AWIN_TCON_GCTL_EN		__BIT(31)
 #define AWIN_TCON_GCTL_GAMMA_EN		__BIT(30)
