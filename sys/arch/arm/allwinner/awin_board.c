@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_board.c,v 1.39 2015/10/17 15:30:14 bouyer Exp $	*/
+/*	$NetBSD: awin_board.c,v 1.40 2015/10/25 20:54:19 bouyer Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.39 2015/10/17 15:30:14 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_board.c,v 1.40 2015/10/25 20:54:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -916,6 +916,43 @@ awin_pll3_set_rate(uint32_t rate)
 			do {
 				ncfg = CCM_READ4(AWIN_PLL3_CFG_REG);
 			} while ((ncfg & AWIN_A31_PLL3_CFG_LOCK) == 0);
+		}
+	}
+}
+
+void
+awin_pll7_set_rate(uint32_t rate)
+{
+	const uint32_t ocfg = CCM_READ4(AWIN_PLL7_CFG_REG);
+
+	uint32_t ncfg = ocfg;
+	if (rate == 0) {
+		ncfg &= ~AWIN_PLL_CFG_ENABLE;
+	} else {
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			unsigned int m = 8;
+			unsigned int n = rate / (AWIN_REF_FREQ / m);
+			ncfg |= AWIN_A31_PLL7_CFG_MODE_SEL;
+			ncfg &= ~AWIN_A31_PLL7_CFG_FACTOR_N;
+			ncfg |= __SHIFTIN(n - 1, AWIN_A31_PLL7_CFG_FACTOR_N);
+			ncfg &= ~AWIN_A31_PLL7_CFG_PREDIV_M;
+			ncfg |= __SHIFTIN(m - 1, AWIN_A31_PLL7_CFG_PREDIV_M);
+		} else {
+			unsigned int m = rate / 3000000;
+			ncfg |= AWIN_PLL7_MODE_SEL;
+			ncfg &= ~AWIN_PLL7_FACTOR_M;
+			ncfg |= __SHIFTIN(m, AWIN_PLL7_FACTOR_M);
+		}
+		ncfg |= AWIN_PLL_CFG_ENABLE;
+	}
+
+	if (ncfg != ocfg) {
+		CCM_WRITE4(AWIN_PLL7_CFG_REG, ncfg);
+
+		if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+			do {
+				ncfg = CCM_READ4(AWIN_PLL7_CFG_REG);
+			} while ((ncfg & AWIN_A31_PLL7_CFG_LOCK) == 0);
 		}
 	}
 }

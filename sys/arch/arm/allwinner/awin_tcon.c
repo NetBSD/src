@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.5 2014/11/14 00:31:54 jmcneill Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.6 2015/10/25 20:54:19 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.5 2014/11/14 00:31:54 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.6 2015/10/25 20:54:19 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,9 +53,14 @@ struct awin_tcon_softc {
 	bus_space_handle_t sc_bsh;
 	bus_space_handle_t sc_ch1clk_bsh;
 	unsigned int sc_port;
+	unsigned int sc_clk_pll;
 	unsigned int sc_clk_div;
 	bool sc_clk_dbl;
+	unsigned int sc_debe_unit;
 };
+
+static bus_space_handle_t tcon_mux_bsh;
+static bool tcon_mux_inited = false;
 
 #define TCON_READ(sc, reg) \
     bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
@@ -67,6 +72,25 @@ static void	awin_tcon_attach(device_t, device_t, void *);
 
 static void	awin_tcon_set_pll(struct awin_tcon_softc *,
 				  const struct videomode *);
+
+static void
+awin_tcon_clear_reset(struct awinio_attach_args * const aio, int unit)
+{
+	KASSERT(unit == 0 || unit == 1);
+	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_A31_AHB_RESET1_REG,
+		    AWIN_A31_AHB_RESET1_LCD0_RST << unit,
+		    0);
+	} else {
+		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+		    AWIN_LCD0_CH0_CLK_REG + (unit * 4),
+		    AWIN_LCDx_CH0_CLK_LCDx_RST, 0);
+	}
+
+	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
+	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_LCD0 << unit, 0);
+}
 
 CFATTACH_DECL_NEW(awin_tcon, sizeof(struct awin_tcon_softc),
 	awin_tcon_match, awin_tcon_attach, NULL, NULL);
@@ -89,6 +113,8 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 	struct awin_tcon_softc *sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
+	prop_dictionary_t cfg = device_properties(self);
+	int8_t debe_unit = -1;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
@@ -97,26 +123,44 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
 	bus_space_subregion(sc->sc_bst, aio->aio_ccm_bsh,
 	    AWIN_LCD0_CH1_CLK_REG + (loc->loc_port * 4), 4, &sc->sc_ch1clk_bsh);
+	if (!tcon_mux_inited) {
+		/* the mux register is only in LCD0 */
+		bus_space_subregion(sc->sc_bst, aio->aio_core_bsh,
+		    AWIN_LCD0_OFFSET + AWIN_TCON_MUX_CTL_REG, 4, &tcon_mux_bsh);
+		tcon_mux_inited = true;
+		/* always enable tcon0, the mux is there */
+		awin_tcon_clear_reset(aio, 0);
+	}
+
+	if (prop_dictionary_get_int8(cfg, "debe_unit", &debe_unit)) {
+		sc->sc_debe_unit = debe_unit;
+	} else {
+		sc->sc_debe_unit = 0; /* default value */
+	}
+
+		
 
 	aprint_naive("\n");
 	aprint_normal(": LCD/TV timing controller (TCON%d)\n", loc->loc_port);
-
-	awin_pll3_enable();
-
-	if (awin_chip_id() == AWIN_CHIP_ID_A31) {
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_A31_AHB_RESET1_REG,
-		    AWIN_A31_AHB_RESET1_LCD0_RST << loc->loc_port,
-		    0);
-	} else {
-		awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-		    AWIN_LCD0_CH0_CLK_REG + (loc->loc_port * 4),
-		    AWIN_LCDx_CH0_CLK_LCDx_RST, 0);
+	switch (sc->sc_port) {
+	case 0:
+		awin_pll3_enable();
+		sc->sc_clk_pll = 3;
+		break;
+	case 1:
+		awin_pll7_enable();
+		sc->sc_clk_pll = 7;
+		break;
+	default:
+		panic("awin_tcon port\n");
+	}
+	if (debe_unit >= 0) {
+		aprint_verbose_dev(self, ": using DEBE%d, pll%d\n",
+		    sc->sc_debe_unit, sc->sc_clk_pll);
 	}
 
-	awin_reg_set_clear(aio->aio_core_bst, aio->aio_ccm_bsh,
-	    AWIN_AHB_GATING1_REG, AWIN_AHB_GATING1_LCD0 << loc->loc_port, 0);
-
+	awin_tcon_clear_reset(aio, sc->sc_port);
+	
 	TCON_WRITE(sc, AWIN_TCON_GCTL_REG, 0);
 	TCON_WRITE(sc, AWIN_TCON_GINT0_REG, 0);
 	TCON_WRITE(sc, AWIN_TCON_GINT1_REG,
@@ -173,37 +217,57 @@ awin_tcon_set_pll(struct awin_tcon_softc *sc, const struct videomode *mode)
 	    dbl ? 'Y' : 'N', n * 3000000);
 #endif
 
-	awin_pll3_set_rate(n * 3000000);
-
-	awin_reg_set_clear(sc->sc_bst, sc->sc_ch1clk_bsh, 0,
-	    AWIN_CLK_OUT_ENABLE |
-	    AWIN_LCDx_CH1_SCLK1_GATING |
-	    __SHIFTIN(dbl ? AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3_2X :
-			    AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3,
-		      AWIN_LCDx_CHx_CLK_SRC_SEL) |
-	    __SHIFTIN(m - 1, AWIN_LCDx_CH1_CLK_DIV_RATIO_M),
-	    AWIN_LCDx_CH1_CLK_DIV_RATIO_M |
-	    AWIN_LCDx_CHx_CLK_SRC_SEL |
-	    AWIN_LCDx_CH1_SCLK1_SRC_SEL);
+	switch(sc->sc_clk_pll) {
+	case 3:
+		awin_pll3_set_rate(n * 3000000);
+		awin_reg_set_clear(sc->sc_bst, sc->sc_ch1clk_bsh, 0,
+		    AWIN_CLK_OUT_ENABLE |
+		    AWIN_LCDx_CH1_SCLK1_GATING |
+		    __SHIFTIN(dbl ? AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3_2X :
+				    AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3,
+			      AWIN_LCDx_CHx_CLK_SRC_SEL) |
+		    __SHIFTIN(m - 1, AWIN_LCDx_CH1_CLK_DIV_RATIO_M),
+		    AWIN_LCDx_CH1_CLK_DIV_RATIO_M |
+		    AWIN_LCDx_CHx_CLK_SRC_SEL |
+		    AWIN_LCDx_CH1_SCLK1_SRC_SEL);
+		break;
+	case 7:
+		awin_pll7_set_rate(n * 3000000);
+		awin_reg_set_clear(sc->sc_bst, sc->sc_ch1clk_bsh, 0,
+		    AWIN_CLK_OUT_ENABLE |
+		    AWIN_LCDx_CH1_SCLK1_GATING |
+		    __SHIFTIN(dbl ? AWIN_LCDx_CHx_CLK_SRC_SEL_PLL7_2X :
+				    AWIN_LCDx_CHx_CLK_SRC_SEL_PLL7,
+			      AWIN_LCDx_CHx_CLK_SRC_SEL) |
+		    __SHIFTIN(m - 1, AWIN_LCDx_CH1_CLK_DIV_RATIO_M),
+		    AWIN_LCDx_CH1_CLK_DIV_RATIO_M |
+		    AWIN_LCDx_CHx_CLK_SRC_SEL |
+		    AWIN_LCDx_CH1_SCLK1_SRC_SEL);
+		break;
+	default:
+		panic("awin_tcon pll");
+	}
 
 	sc->sc_clk_div = m;
 	sc->sc_clk_dbl = dbl;
 }
 
 void
-awin_tcon_enable(bool enable)
+awin_tcon_enable(int unit, bool enable)
 {
 	struct awin_tcon_softc *sc;
 	device_t dev;
 	uint32_t val;
 
-	dev = device_find_by_driver_unit("awintcon", 0);
+	dev = device_find_by_driver_unit("awintcon", unit);
 	if (dev == NULL) {
-		printf("TCON: no driver found\n");
+		printf("TCON%d: no driver found\n", unit);
 		return;
 	}
 	sc = device_private(dev);
 
+	awin_debe_enable(sc->sc_debe_unit, enable);
+	delay(20000);
 	val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 	if (enable) {
 		val |= AWIN_TCON_GCTL_EN;
@@ -219,22 +283,46 @@ awin_tcon_enable(bool enable)
 		val |= 0x03000000;
 	}
 	TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, val);
+
+	KASSERT(tcon_mux_inited);
+	val = bus_space_read_4(sc->sc_bst, tcon_mux_bsh, 0);
+#ifdef AWIN_TCON_DEBUG
+	printf("awin_tcon_enable(%d) val 0x%x", unit, val);
+#endif
+	val &= ~ AWIN_TCON_MUX_CTL_HDMI_OUTPUT_SRC;
+	if (unit == 0) {
+		val |= __SHIFTIN(AWIN_TCON_MUX_CTL_HDMI_OUTPUT_SRC_LCDC0_TCON1,
+		    AWIN_TCON_MUX_CTL_HDMI_OUTPUT_SRC);
+	} else if (unit == 1) {
+		val |= __SHIFTIN(AWIN_TCON_MUX_CTL_HDMI_OUTPUT_SRC_LCDC1_TCON1,
+		    AWIN_TCON_MUX_CTL_HDMI_OUTPUT_SRC);
+	} 
+#ifdef AWIN_TCON_DEBUG
+	printf(" -> 0x%x", val);
+#endif
+	bus_space_write_4(sc->sc_bst, tcon_mux_bsh, 0, val);
+#ifdef AWIN_TCON_DEBUG
+	printf(": 0x%" PRIxBSH " 0x%" PRIxBSH " 0x%x 0x%x\n", sc->sc_bsh,
+	    tcon_mux_bsh, bus_space_read_4(sc->sc_bst, tcon_mux_bsh, 0),
+	    TCON_READ(sc, AWIN_TCON_MUX_CTL_REG));
+#endif
 }
 
 void
-awin_tcon_set_videomode(const struct videomode *mode)
+awin_tcon_set_videomode(int unit, const struct videomode *mode)
 {
 	struct awin_tcon_softc *sc;
 	device_t dev;
 	uint32_t val;
 
-	dev = device_find_by_driver_unit("awintcon", 0);
+	dev = device_find_by_driver_unit("awintcon", unit);
 	if (dev == NULL) {
-		printf("TCON: no driver found\n");
+		printf("TCON%d: no driver found\n", unit);
 		return;
 	}
 	sc = device_private(dev);
 
+	awin_debe_set_videomode(sc->sc_debe_unit, mode);
 	if (mode) {
 		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
 		const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
@@ -252,17 +340,33 @@ awin_tcon_set_videomode(const struct videomode *mode)
 		val |= AWIN_TCON_GCTL_IO_MAP_SEL;
 		TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
 
+		val = TCON_READ(sc, AWIN_TCON0_CTL_REG);
+		val &= ~0x00400003;
+		if (sc->sc_debe_unit == 0) {
+			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE0,
+					 AWIN_TCON_CTL_SRC_SEL);
+		} else {
+			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE1,
+					 AWIN_TCON_CTL_SRC_SEL);
+		}
+		TCON_WRITE(sc, AWIN_TCON0_CTL_REG, val);
+
 		/* enable */
 		val = AWIN_TCON_CTL_EN;
 		if (interlace_p)
 			val |= AWIN_TCON_CTL_INTERLACE_EN;
 		val |= __SHIFTIN(start_delay, AWIN_TCON_CTL_START_DELAY);
-#ifdef AWIN_TCON_BLUEDATA
+#ifdef AWIN_TCON1_BLUEDATA
 		val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_BLUEDATA,
 				 AWIN_TCON_CTL_SRC_SEL);
 #else
-		val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE0,
-				 AWIN_TCON_CTL_SRC_SEL);
+		if (sc->sc_debe_unit == 0) {
+			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE0,
+					 AWIN_TCON_CTL_SRC_SEL);
+		} else {
+			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE1,
+					 AWIN_TCON_CTL_SRC_SEL);
+		}
 #endif
 		TCON_WRITE(sc, AWIN_TCON1_CTL_REG, val);
 
@@ -308,6 +412,14 @@ awin_tcon_set_videomode(const struct videomode *mode)
 
 		/* Setup LCDx CH1 PLL */
 		awin_tcon_set_pll(sc, mode);
+#if 0
+{
+	int i;
+	for (i = 0; i < 0x800; i += 4) {
+		printf("TCON 0x%04x: 0x%08x\n", i, TCON_READ(sc, i));
+	}
+}
+#endif
 	} else {
 		/* disable */
 		val = TCON_READ(sc, AWIN_TCON1_CTL_REG);
@@ -317,14 +429,30 @@ awin_tcon_set_videomode(const struct videomode *mode)
 }
 
 unsigned int
-awin_tcon_get_clk_div(void)
+awin_tcon_get_clk_pll(int unit)
 {
 	struct awin_tcon_softc *sc;
 	device_t dev;
 
-	dev = device_find_by_driver_unit("awintcon", 0);
+	dev = device_find_by_driver_unit("awintcon", unit);
 	if (dev == NULL) {
-		printf("TCON: no driver found\n");
+		printf("TCON%d: no driver found\n", unit);
+		return 0;
+	}
+	sc = device_private(dev);
+
+	return sc->sc_clk_pll;
+}
+
+unsigned int
+awin_tcon_get_clk_div(int unit)
+{
+	struct awin_tcon_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_driver_unit("awintcon", unit);
+	if (dev == NULL) {
+		printf("TCON%d: no driver found\n", unit);
 		return 0;
 	}
 	sc = device_private(dev);
@@ -333,14 +461,14 @@ awin_tcon_get_clk_div(void)
 }
 
 bool
-awin_tcon_get_clk_dbl(void)
+awin_tcon_get_clk_dbl(int unit)
 {
 	struct awin_tcon_softc *sc;
 	device_t dev;
 
-	dev = device_find_by_driver_unit("awintcon", 0);
+	dev = device_find_by_driver_unit("awintcon", unit);
 	if (dev == NULL) {
-		printf("TCON: no driver found\n");
+		printf("TCON%d: no driver found\n", unit);
 		return 0;
 	}
 	sc = device_private(dev);
