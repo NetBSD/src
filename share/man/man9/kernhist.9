@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernhist.9,v 1.1 2015/10/26 07:07:36 mrg Exp $
+.\"	$NetBSD: kernhist.9,v 1.2 2015/10/26 09:06:52 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Matthew R. Green
 .\" All rights reserved.
@@ -59,7 +59,7 @@ Below are the functions and macros provided by kernhist.h:
 .Sh DESCRIPTION
 The
 .Nm
-facility provides a very low-level tracing facility, that can be called
+facility provides a very low-level tracing facility that can be called
 extremely early in the kernel initialisation.
 It provides a simple restricted
 .Xr printf 3
@@ -76,10 +76,10 @@ Arguments that require additional dereferences, such as
 will not work in
 .Xr vmstat 1 ,
 but will when called from
-.Xr ddb 9 .
+.Xr ddb 4 .
 .Pp
 A kernel history is a fixed-size buffer of an either statically or dynamically
-allocated buffer, that is used and read in a cycled basis.
+allocated buffer that is used and read in a cycled basis.
 It includes the time an entry was made, the CPU that the entry was recorded
 from, the
 .Xr printf 3
@@ -89,13 +89,15 @@ for this function, and the 4 argumnts.
 These macros provide access to most kernel history functionality:
 .Bl -tag -width 4n
 .It Fn KERNHIST_DECL name
-Declares an extern struct kern_history
+Declare an extern struct kern_history
 .Fa name .
 .It Fn KERNHIST_DEFINE name
-Defines a struct kern_history
+Define a struct kern_history
 .Fa name .
 .It Fn KERNHIST_INIT name num_entries
-Dynamically initialise a kernel history called name with 
+Dynamically initialise a kernel history called name with
+.Ar num_entries
+entries.
 .It Fn KERNHIST_INITIALIZER name buffer
 Initialise a statically defined kernel history called
 .Fa name
@@ -109,7 +111,7 @@ using the statically allocated
 .Fa buffer
 for history entries.
 .It Fn KERNHIST_FUNC fname
-Declares necessary variables for
+Declare necessary variables for
 .Nm
 to be used this function.
 Callable only once per function.
@@ -118,7 +120,8 @@ For the given kernel history
 .Fa name ,
 log the format and arguments in the history as a unique event.
 .It Fn KERNHIST_CALLED name
-Declares a function as being called.  Either this or
+Declare a function as being called.
+Either this or
 .Fn KERNHIST_CALLARGS
 must be used near the function entry point.
 .It Fn KERNHIST_CALLARGS name fmt arg0 arg1 arg2 arg3
@@ -128,7 +131,7 @@ that avoids that
 .Dq called!
 log message in addition to normal arguments.
 .It Fn KERNHIST_DUMP name
-Calls
+Call
 .Fn kernhist_dump
 on the named kernel history.
 .It Fn kernhist_dump history
@@ -152,12 +155,12 @@ argument is currently ignored.
 .El
 .Sh SEE ALSO
 .Xr vmstat 1 ,
-.Xr usb 9 ,
+.Xr usb 4 ,
 .Xr uvm 9
 .\" .Sh EXAMPLES
 .\"
 .\" add example here of code usage
-.\" 
+.\"
 .Sh HISTORY
 .Nm
 was originally written by
