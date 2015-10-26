@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_fifo_nve0.c,v 1.5 2015/10/13 01:43:47 mrg Exp $	*/
+/*	$NetBSD: nouveau_engine_fifo_nve0.c,v 1.6 2015/10/26 07:12:08 mrg Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nve0.c,v 1.5 2015/10/13 01:43:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_fifo_nve0.c,v 1.6 2015/10/26 07:12:08 mrg Exp $");
 
 #include <core/client.h>
 #include <core/handle.h>
@@ -139,7 +139,8 @@ nve0_fifo_runlist_update(struct nve0_fifo_priv *priv, u32 engine)
 	if (cold) {
 		uint count = 2000;
 		while (count-- > 0) {
-			if (!(nv_rd32(priv, 0x002284 + (engine * 0x08)) & 0x00100000))
+			if (!(nv_rd32(priv, 0x002284 +
+			    (engine * 0x08)) & 0x00100000))
 				break;
 			delay(1000);
 		}
