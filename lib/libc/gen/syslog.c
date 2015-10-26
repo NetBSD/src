@@ -1,4 +1,4 @@
-/*	$NetBSD: syslog.c,v 1.54 2014/09/18 13:58:20 christos Exp $	*/
+/*	$NetBSD: syslog.c,v 1.55 2015/10/26 11:44:30 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: syslog.c,v 1.54 2014/09/18 13:58:20 christos Exp $");
+__RCSID("$NetBSD: syslog.c,v 1.55 2015/10/26 11:44:30 roy Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -378,17 +378,17 @@ vsyslogp_r(int pri, struct syslog_data *data, const char *msgid,
 	 */
 	for (t = fmt_cpy, fmt_left = FMT_LEN; (ch = *fmt) != '\0'; ++fmt) {
 		if (ch == '%' && fmt[1] == 'm') {
-			char ebuf[128];
-			++fmt;
-			if (signal_safe ||
-			    strerror_r(saved_errno, ebuf, sizeof(ebuf)))
+			const char *s;
+
+			if (signal_safe || (s = strerror(saved_errno)) == NULL)
 				prlen = snprintf_ss(t, fmt_left, "Error %d",
 				    saved_errno);
 			else
-				prlen = snprintf_ss(t, fmt_left, "%s", ebuf);
+				prlen = strlcpy(t, s, fmt_left);
 			if (prlen >= fmt_left)
 				prlen = fmt_left - 1;
 			t += prlen;
+			fmt++;
 			fmt_left -= prlen;
 		} else if (ch == '%' && fmt[1] == '%' && fmt_left > 2) {
 			*t++ = '%';
