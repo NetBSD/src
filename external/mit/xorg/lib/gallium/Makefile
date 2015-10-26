@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2015/09/23 05:28:14 mrg Exp $
+# $NetBSD: Makefile,v 1.8 2015/10/26 07:15:36 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -15,7 +15,7 @@ DRIDEBUGDIR=	${DEBUGDIR}${X11USRLIBDIR}/modules/dri
 
 DRIVERS=	kms_swrast swrast
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-DRIVERS+=	r600
+DRIVERS+=	r600 nouveau
 .endif
 
 CPPFLAGS+= \
@@ -47,6 +47,11 @@ GALLIUM_SUBDIRS= \
 	drivers/radeon \
 	drivers/r600 \
 	drivers/r600/sb \
+	drivers/nouveau \
+	drivers/nouveau/nv30 \
+	drivers/nouveau/nv50 \
+	drivers/nouveau/codegen \
+	drivers/nouveau/nvc0 \
 	drivers/softpipe \
 	winsys/radeon/drm \
 	winsys/sw/null \
@@ -338,6 +343,116 @@ GALLIUM_SOURCES.drivers/r600/sb = \
 CPPFLAGS.${_f} +=	-I${X11SRCDIR.MesaLib}/src/gallium/drivers/r600
 .endfor
 
+GALLIUM_SOURCES.drivers/nouveau = \
+	nouveau_screen.c \
+	nouveau_fence.c \
+	nouveau_mm.c \
+	nouveau_buffer.c \
+	nouveau_heap.c \
+	nouveau_video.c \
+	nouveau_vp3_video.c \
+	nouveau_vp3_video_bsp.c \
+	nouveau_vp3_video_vp.c
+
+GALLIUM_SOURCES.drivers/nouveau/nv30 = \
+	nv30_screen.c \
+	nv30_context.c \
+	nv30_format.c \
+	nv30_resource.c \
+	nv30_transfer.c \
+	nv30_miptree.c \
+	nv30_state.c \
+	nv30_state_validate.c \
+	nv30_texture.c \
+	nv30_fragtex.c \
+	nv40_verttex.c \
+	nv30_fragprog.c \
+	nv30_vertprog.c \
+	nv30_clear.c \
+	nv30_vbo.c \
+	nv30_push.c \
+	nv30_draw.c \
+	nv30_query.c \
+	nvfx_vertprog.c \
+	nvfx_fragprog.c
+
+GALLIUM_SOURCES.drivers/nouveau/nv50 = \
+	nv50_context.c \
+	nv50_formats.c \
+	nv50_miptree.c \
+	nv50_resource.c \
+	nv50_screen.c \
+	nv50_state.c \
+	nv50_state_validate.c \
+	nv50_surface.c \
+	nv50_tex.c \
+	nv50_transfer.c \
+	nv50_vbo.c \
+	nv50_program.c \
+	nv50_shader_state.c \
+	nv50_push.c \
+	nv50_query.c \
+	nv84_video.c \
+	nv84_video_bsp.c \
+	nv84_video_vp.c \
+	nv98_video.c \
+	nv98_video_bsp.c \
+	nv98_video_vp.c \
+	nv98_video_ppp.c
+
+GALLIUM_SOURCES.drivers/nouveau/codegen = \
+	nv50_ir.cpp \
+	nv50_ir_bb.cpp \
+	nv50_ir_build_util.cpp \
+	nv50_ir_emit_nv50.cpp \
+	nv50_ir_from_tgsi.cpp \
+	nv50_ir_graph.cpp \
+	nv50_ir_lowering_nv50.cpp \
+	nv50_ir_peephole.cpp \
+	nv50_ir_print.cpp \
+	nv50_ir_ra.cpp \
+	nv50_ir_ssa.cpp \
+	nv50_ir_target.cpp \
+	nv50_ir_target_nv50.cpp \
+	nv50_ir_util.cpp \
+	nv50_ir_emit_nvc0.cpp \
+	nv50_ir_emit_gk110.cpp \
+	nv50_ir_emit_gm107.cpp \
+	nv50_ir_lowering_nvc0.cpp \
+	nv50_ir_lowering_gm107.cpp \
+	nv50_ir_target_nvc0.cpp \
+	nv50_ir_target_gm107.cpp
+
+GALLIUM_SOURCES.drivers/nouveau/nvc0 = \
+	nvc0_compute.c \
+	nvc0_context.c \
+	nvc0_formats.c \
+	nvc0_miptree.c \
+	nvc0_resource.c \
+	nvc0_screen.c \
+	nvc0_state.c \
+	nvc0_state_validate.c \
+	nvc0_surface.c \
+	nvc0_tex.c \
+	nvc0_transfer.c \
+	nvc0_vbo.c \
+	nvc0_vbo_translate.c \
+	nvc0_program.c \
+	nvc0_shader_state.c \
+	nvc0_query.c \
+	nve4_compute.c \
+	nvc0_video.c \
+	nvc0_video_bsp.c \
+	nvc0_video_vp.c \
+	nvc0_video_ppp.c
+
+.for _f in ${GALLIUM_SOURCES.drivers/nouveau} \
+	   ${GALLIUM_SOURCES.drivers/nouveau/nv30} \
+	   ${GALLIUM_SOURCES.drivers/nouveau/nv50} \
+	   ${GALLIUM_SOURCES.drivers/nouveau/codegen} \
+	   ${GALLIUM_SOURCES.drivers/nouveau/nvc0}
+CPPFLAGS.${_f} +=	-I${X11SRCDIR.MesaLib}/src/gallium/drivers/nouveau
+.endfor
 
 
 GALLIUM_SOURCES.winsys/radeon/drm = \
