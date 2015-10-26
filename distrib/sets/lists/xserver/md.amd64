@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.86 2015/10/13 10:33:17 pgoyette Exp $
+# $NetBSD: md.amd64,v 1.87 2015/10/26 07:15:36 mrg Exp $
 ./usr/X11R6/bin/X					-unknown-	x11
 ./usr/X11R6/bin/XFree86					-unknown-	x11
 ./usr/X11R6/bin/gtf					-unknown-	x11
@@ -367,6 +367,8 @@
 ./usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0	-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/mga_dri.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/mga_dri.so.0		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/nouveau_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/nouveau_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/dri/r128_dri.so			-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/r128_dri.so.0		-unknown-	obsolete
 ./usr/X11R7/lib/modules/dri/r200_dri.so			-unknown-	xorg
