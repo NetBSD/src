@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1998 2015/10/14 15:20:44 christos Exp $
+#	$NetBSD: mi,v 1.1999 2015/10/26 07:07:36 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10055,6 +10055,7 @@
 ./usr/share/man/cat9/kcpuset_use.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kcpuset_zero.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kernacc.0			comp-obsolete		obsolete
+./usr/share/man/cat9/kernhist.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/kfilter_register.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/kfilter_unregister.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/killproc.0			comp-sys-catman		.cat
@@ -16877,6 +16878,7 @@
 ./usr/share/man/html9/kcpuset_unuse.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_use.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kcpuset_zero.html		comp-sys-htmlman	html
+./usr/share/man/html9/kernhist.html		comp-sys-htmlman	html
 ./usr/share/man/html9/kfilter_register.html	comp-sys-htmlman	html
 ./usr/share/man/html9/kfilter_unregister.html	comp-sys-htmlman	html
 ./usr/share/man/html9/killproc.html		comp-sys-htmlman	html
@@ -23853,6 +23855,7 @@
 ./usr/share/man/man9/kcpuset_use.9		comp-sys-man		.man
 ./usr/share/man/man9/kcpuset_zero.9		comp-sys-man		.man
 ./usr/share/man/man9/kernacc.9			comp-obsolete		obsolete
+./usr/share/man/man9/kernhist.9			comp-sys-man		.man
 ./usr/share/man/man9/kfilter_register.9		comp-sys-man		.man
 ./usr/share/man/man9/kfilter_unregister.9	comp-sys-man		.man
 ./usr/share/man/man9/killproc.9			comp-sys-man		.man
