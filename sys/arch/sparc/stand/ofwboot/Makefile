@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.35 2015/10/10 06:49:40 martin Exp $
+#	$NetBSD: Makefile,v 1.36 2015/10/26 07:11:33 mrg Exp $
 
 CURDIR=	${.CURDIR}
 S=	${CURDIR}/../../../..
@@ -26,7 +26,7 @@ LIBC=
 LIBCRTBEGIN=
 LIBCRTEND=
 
-COPTS+=		-ffreestanding
+COPTS+=		-ffreestanding -mcpu=v9
 CWARNFLAGS+=	-Wno-main
 CFLAGS+=	${COPTS}
 CPPFLAGS+=	-D_STANDALONE
