@@ -1,4 +1,4 @@
-/*	$NetBSD: traceroute.c,v 1.81 2012/08/16 00:40:28 zafer Exp $	*/
+/*	$NetBSD: traceroute.c,v 1.82 2015/10/26 08:53:45 shm Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997, 1998, 1999, 2000
@@ -30,7 +30,7 @@ static const char rcsid[] =
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1991, 1994, 1995, 1996, 1997,\
  1998, 1999, 2000\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: traceroute.c,v 1.81 2012/08/16 00:40:28 zafer Exp $");
+__RCSID("$NetBSD: traceroute.c,v 1.82 2015/10/26 08:53:45 shm Exp $");
 #endif
 #endif
 
@@ -607,6 +607,7 @@ main(int argc, char **argv)
 		case 'z':
 			pausemsecs = str2val(optarg, "pause msecs",
 			    0, 60 * 60 * 1000);
+			break;
 
 		case 'P':
 			off = IP_DF;
