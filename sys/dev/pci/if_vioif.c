@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.16 2015/05/05 10:56:13 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.17 2015/10/26 01:44:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.16 2015/05/05 10:56:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.17 2015/10/26 01:44:48 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -487,6 +487,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	uint32_t features;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int flags;
+	int r;
 
 	if (vsc->sc_child != NULL) {
 		aprint_normal(": child already attached for %s; "
@@ -511,6 +512,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 #ifdef VIOIF_SOFTINT_INTR
 	vsc->sc_flags |= VIRTIO_F_PCI_INTR_SOFTINT;
 #endif
+	vsc->sc_flags |= VIRTIO_F_PCI_INTR_MSIX;
 
 	features = virtio_negotiate_features(vsc,
 					     (VIRTIO_NET_F_MAC |
@@ -560,21 +562,6 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": Ethernet address %s\n", ether_sprintf(sc->sc_mac));
 	aprint_naive("\n");
 
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[0], 0,
-			    MCLBYTES+sizeof(struct virtio_net_hdr), 2,
-			    "rx") != 0) {
-		goto err;
-	}
-	vsc->sc_nvqs = 1;
-	sc->sc_vq[0].vq_done = vioif_rx_vq_done;
-	if (virtio_alloc_vq(vsc, &sc->sc_vq[1], 1,
-			    (sizeof(struct virtio_net_hdr)
-			     + (ETHER_MAX_LEN - ETHER_HDR_LEN)),
-			    VIRTIO_NET_TX_MAXNSEGS + 1,
-			    "tx") != 0) {
-		goto err;
-	}
-
 #ifdef VIOIF_MPSAFE
 	sc->sc_tx_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
 	sc->sc_rx_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET);
@@ -584,23 +571,51 @@ vioif_attach(device_t parent, device_t self, void *aux)
 #endif
 	sc->sc_stopping = false;
 
+	/*
+	 * Allocating a virtqueue for Rx
+	 */
+	r = virtio_alloc_vq(vsc, &sc->sc_vq[0], 0,
+	    MCLBYTES+sizeof(struct virtio_net_hdr), 2, "rx");
+	if (r != 0)
+		goto err;
+	vsc->sc_nvqs = 1;
+	sc->sc_vq[0].vq_done = vioif_rx_vq_done;
+
+	/*
+	 * Allocating a virtqueue for Tx
+	 */
+	r = virtio_alloc_vq(vsc, &sc->sc_vq[1], 1,
+	    (sizeof(struct virtio_net_hdr) + (ETHER_MAX_LEN - ETHER_HDR_LEN)),
+	    VIRTIO_NET_TX_MAXNSEGS + 1, "tx");
+	if (r != 0)
+		goto err;
 	vsc->sc_nvqs = 2;
 	sc->sc_vq[1].vq_done = vioif_tx_vq_done;
+
 	virtio_start_vq_intr(vsc, &sc->sc_vq[0]);
 	virtio_stop_vq_intr(vsc, &sc->sc_vq[1]); /* not urgent; do it later */
-	if ((features & VIRTIO_NET_F_CTRL_VQ)
-	    && (features & VIRTIO_NET_F_CTRL_RX)) {
-		if (virtio_alloc_vq(vsc, &sc->sc_vq[2], 2,
-				    NBPG, 1, "control") == 0) {
-			sc->sc_vq[2].vq_done = vioif_ctrl_vq_done;
-			cv_init(&sc->sc_ctrl_wait, "ctrl_vq");
-			mutex_init(&sc->sc_ctrl_wait_lock,
-				   MUTEX_DEFAULT, IPL_NET);
-			sc->sc_ctrl_inuse = FREE;
-			virtio_start_vq_intr(vsc, &sc->sc_vq[2]);
-			vsc->sc_nvqs = 3;
+
+	if ((features & VIRTIO_NET_F_CTRL_VQ) &&
+	    (features & VIRTIO_NET_F_CTRL_RX)) {
+		/*
+		 * Allocating a virtqueue for control channel
+		 */
+		r = virtio_alloc_vq(vsc, &sc->sc_vq[2], 2,
+		    NBPG, 1, "control");
+		if (r != 0) {
+			aprint_error_dev(self, "failed to allocate "
+			    "a virtqueue for control channel\n");
+			goto skip;
 		}
+
+		sc->sc_vq[2].vq_done = vioif_ctrl_vq_done;
+		cv_init(&sc->sc_ctrl_wait, "ctrl_vq");
+		mutex_init(&sc->sc_ctrl_wait_lock, MUTEX_DEFAULT, IPL_NET);
+		sc->sc_ctrl_inuse = FREE;
+		virtio_start_vq_intr(vsc, &sc->sc_vq[2]);
+		vsc->sc_nvqs = 3;
 	}
+skip:
 
 #ifdef VIOIF_MPSAFE
 	flags = SOFTINT_NET | SOFTINT_MPSAFE;
