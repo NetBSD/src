@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.135 2014/10/10 17:31:12 uebayasi Exp $
+#	$NetBSD: files.usb,v 1.136 2015/10/27 22:25:23 mrg Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -9,8 +9,8 @@ defparam opt_usb.h	USBHIST_SIZE
 defflag	opt_usb.h	USB_FRAG_DMA_WORKAROUND
 
 # top level usb debug defines
-defflag	opt_usb.h	USBHIST: KERNHIST
-defflag	opt_usb.h	USB_DEBUG: USBHIST
+defflag	opt_usb.h	USB_DEBUG
+defflag	opt_usb.h	USBHIST: KERNHIST, USB_DEBUG
 
 # HC controllers
 defflag	opt_usb.h	EHCI_DEBUG: USB_DEBUG
