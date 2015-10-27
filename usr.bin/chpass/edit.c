@@ -1,4 +1,4 @@
-/*	$NetBSD: edit.c,v 1.21 2011/08/31 16:24:57 plunky Exp $	*/
+/*	$NetBSD: edit.c,v 1.22 2015/10/27 14:47:45 shm Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: edit.c,v 1.21 2011/08/31 16:24:57 plunky Exp $");
+__RCSID("$NetBSD: edit.c,v 1.22 2015/10/27 14:47:45 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -139,6 +139,7 @@ display(char *tempname, int fd, struct passwd *pw)
 
 	(void)fchown(fd, getuid(), getgid());
 	(void)fclose(fp);
+	free(bp);
 }
 
 int
