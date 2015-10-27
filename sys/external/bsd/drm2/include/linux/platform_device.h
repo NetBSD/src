@@ -1,4 +1,4 @@
-/*	$NetBSD: platform_device.h,v 1.6 2015/10/18 14:04:03 jmcneill Exp $	*/
+/*	$NetBSD: platform_device.h,v 1.7 2015/10/27 13:21:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #define NUM_PLATFORM_RESOURCE	2
 
 struct platform_device {
-	struct device	dev;	/* XXX DON'T BELIEVE ME */
+	device_t	pd_dev;
 	uint64_t	id;
 
 	bus_dma_tag_t	dmat;
@@ -49,5 +49,12 @@ struct platform_device {
 		bus_size_t	len;
 	}		resource[NUM_PLATFORM_RESOURCE];
 };
+
+static inline device_t
+platform_device_dev(const struct platform_device *platformdev)
+{
+
+	return platformdev->pd_dev;
+}
 
 #endif  /* _LINUX_PLATFORM_DEVICE_H_ */
