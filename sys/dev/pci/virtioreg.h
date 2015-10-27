@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.4 2015/10/26 01:44:48 ozaki-r Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.5 2015/10/27 16:04:05 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -99,6 +99,13 @@
 /* MSI/MSI-X */
 #define VIRTIO_CONFIG_MSI_CONFIG_VECTOR		20
 #define VIRTIO_CONFIG_MSI_QUEUE_VECTOR		22
+
+#define VIRTIO_COMMON_FLAG_BITS \
+        "\20" \
+	"\x1f""BAD_FEATURE" \
+	"\x1e""EVENT_IDX" \
+	"\x1d""INDIRECT_DESC" \
+	"\x19""NOTIFY_ON_EMPTY"
 
 /* Virtqueue */
 /* This marks a buffer as continuing via the next field. */
