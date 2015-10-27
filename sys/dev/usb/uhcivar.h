@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.10 2015/10/27 08:02:31 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.11 2015/10/27 14:05:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -59,26 +59,14 @@ typedef union {
 	struct uhci_soft_td *std;
 } uhci_soft_td_qh_t;
 
-/*
- * An interrupt info struct contains the information needed to
- * execute a requested routine when the controller generates an
- * interrupt.  Since we cannot know which transfer generated
- * the interrupt all structs are linked together so they can be
- * searched at interrupt time.
- */
-typedef struct uhci_intr_info {
-	struct usbd_xfer *xfer;
-	uhci_soft_td_t *stdstart;
-	uhci_soft_td_t *stdend;
-	LIST_ENTRY(uhci_intr_info) list;
-	bool isdone;	/* used only when DIAGNOSTIC is defined */
-} uhci_intr_info_t;
-
 struct uhci_xfer {
 	struct usbd_xfer xfer;
-	uhci_intr_info_t iinfo;
 	struct usb_task	abort_task;
+	uhci_soft_td_t *stdstart;
+	uhci_soft_td_t *stdend;
+	TAILQ_ENTRY(uhci_xfer) list;
 	int curframe;
+	bool isdone;	/* used only when DIAGNOSTIC is defined */
 };
 
 #define UHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
@@ -172,7 +160,7 @@ typedef struct uhci_softc {
 	char sc_suspend;
 	char sc_dying;
 
-	LIST_HEAD(, uhci_intr_info) sc_intrhead;
+	TAILQ_HEAD(, uhci_xfer) sc_intrhead;
 
 	/* Info for the root hub interrupt "pipe". */
 	int sc_ival;			/* time between root hub intrs */
