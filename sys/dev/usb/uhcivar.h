@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.11 2015/10/27 14:05:29 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.12 2015/10/27 15:28:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -60,13 +60,13 @@ typedef union {
 } uhci_soft_td_qh_t;
 
 struct uhci_xfer {
-	struct usbd_xfer xfer;
-	struct usb_task	abort_task;
-	uhci_soft_td_t *stdstart;
-	uhci_soft_td_t *stdend;
-	TAILQ_ENTRY(uhci_xfer) list;
-	int curframe;
-	bool isdone;	/* used only when DIAGNOSTIC is defined */
+	struct usbd_xfer ux_xfer;
+	struct usb_task	ux_aborttask;
+	uhci_soft_td_t *ux_stdstart;
+	uhci_soft_td_t *ux_stdend;
+	TAILQ_ENTRY(uhci_xfer) ux_list;
+	int ux_curframe;
+	bool ux_isdone;	/* used only when DIAGNOSTIC is defined */
 };
 
 #define UHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
