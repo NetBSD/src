@@ -2971,7 +2971,7 @@ intel_sdvo_init_ddc_proxy(struct intel_sdvo *sdvo,
 	sdvo->ddc.owner = THIS_MODULE;
 	sdvo->ddc.class = I2C_CLASS_DDC;
 	snprintf(sdvo->ddc.name, I2C_NAME_SIZE, "SDVO DDC proxy");
-	sdvo->ddc.dev.parent = &dev->pdev->dev;
+	sdvo->ddc.dev.parent = dev->dev;
 	sdvo->ddc.algo_data = sdvo;
 	sdvo->ddc.algo = &intel_sdvo_ddc_proxy;
 
