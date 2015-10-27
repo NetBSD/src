@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.86 2015/10/23 08:45:14 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.87 2015/10/27 14:23:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -318,6 +318,7 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_RO_DIS		(1U << 17) /* relaxed ordering disabled */
 #define	CTRL_EXT_SDLPE		(1U << 18) /* SerDes Low Power Enable */
 #define	CTRL_EXT_DMA_DYN_CLK	(1U << 19) /* DMA Dynamic Gating Enable */
+#define	CTRL_EXT_PHYPDEN	__BIT(20)
 #define	CTRL_EXT_LINK_MODE_MASK		0x00C00000
 #define	CTRL_EXT_LINK_MODE_GMII		0x00000000
 #define	CTRL_EXT_LINK_MODE_KMRN		0x00000000
@@ -326,7 +327,6 @@ struct livengood_tcpip_ctxdesc {
 #define	CTRL_EXT_LINK_MODE_PCIX_SERDES	0x00800000
 #define	CTRL_EXT_LINK_MODE_TBI		0x00C00000
 #define	CTRL_EXT_LINK_MODE_PCIE_SERDES	0x00C00000
-#define	CTRL_EXT_PHYPDEN	0x00100000
 #define	CTRL_EXT_EIAME		__BIT(24) /* Extended Interrupt Auto Mask En */
 #define CTRL_EXT_I2C_ENA	0x02000000  /* I2C enable */
 #define	CTRL_EXT_DRV_LOAD	0x10000000
