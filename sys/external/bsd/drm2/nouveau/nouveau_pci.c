@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.5 2015/10/27 13:21:19 riastradh Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.6 2015/10/27 21:46:42 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.5 2015/10/27 13:21:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.6 2015/10/27 21:46:42 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -51,6 +51,7 @@ SIMPLEQ_HEAD(nouveau_pci_task_head, nouveau_pci_task);
 
 struct nouveau_pci_softc {
 	device_t		sc_dev;
+	struct pci_attach_args	sc_pa;
 	enum {
 		NOUVEAU_TASK_ATTACH,
 		NOUVEAU_TASK_WORKQUEUE,
@@ -66,6 +67,7 @@ struct nouveau_pci_softc {
 
 static int	nouveau_pci_match(device_t, cfdata_t, void *);
 static void	nouveau_pci_attach(device_t, device_t, void *);
+static void	nouveau_attach_real(device_t);
 static int	nouveau_pci_detach(device_t, int);
 
 static bool	nouveau_pci_suspend(device_t, const pmf_qual_t *);
@@ -102,16 +104,26 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 {
 	struct nouveau_pci_softc *const sc = device_private(self);
 	const struct pci_attach_args *const pa = aux;
-	uint64_t devname;
-	int error;
 
 	pci_aprint_devinfo(pa, NULL);
 
 	sc->sc_dev = self;
+	sc->sc_pa = *pa;
 
 	if (!pmf_device_register(self, &nouveau_pci_suspend,
 		&nouveau_pci_resume))
 		aprint_error_dev(self, "unable to establish power handler\n");
+
+	config_mountroot(self, &nouveau_attach_real);
+}
+
+static void
+nouveau_attach_real(device_t self)
+{
+	struct nouveau_pci_softc *const sc = device_private(self);
+	const struct pci_attach_args *const pa = &sc->sc_pa;
+	uint64_t devname;
+	int error;
 
 	sc->sc_task_state = NOUVEAU_TASK_ATTACH;
 	SIMPLEQ_INIT(&sc->sc_task_u.attach);
