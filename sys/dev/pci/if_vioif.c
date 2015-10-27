@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.17 2015/10/26 01:44:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.18 2015/10/27 15:56:21 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.17 2015/10/26 01:44:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.18 2015/10/27 15:56:21 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -91,6 +91,26 @@ __KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.17 2015/10/26 01:44:48 ozaki-r Exp $"
 #define VIRTIO_NET_F_CTRL_VQ	(1<<17)
 #define VIRTIO_NET_F_CTRL_RX	(1<<18)
 #define VIRTIO_NET_F_CTRL_VLAN	(1<<19)
+
+#define VIRTIO_NET_FLAG_BITS \
+	VIRTIO_COMMON_FLAG_BITS \
+	"\x14""CTRL_VLAN" \
+	"\x13""CTRL_RX" \
+	"\x12""CTRL_VQ" \
+	"\x11""STATUS" \
+	"\x10""MRG_RXBUF" \
+	"\x0f""HOST_UFO" \
+	"\x0e""HOST_ECN" \
+	"\x0d""HOST_TSO6" \
+	"\x0c""HOST_TSO4" \
+	"\x0b""GUEST_UFO" \
+	"\x0a""GUEST_ECN" \
+	"\x09""GUEST_TSO6" \
+	"\x08""GUEST_TSO4" \
+	"\x07""GSO" \
+	"\x06""MAC" \
+	"\x02""GUEST_CSUM" \
+	"\x01""CSUM"
 
 /* Status */
 #define VIRTIO_NET_S_LINK_UP	1
@@ -485,6 +505,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 	struct vioif_softc *sc = device_private(self);
 	struct virtio_softc *vsc = device_private(parent);
 	uint32_t features;
+	char buf[256];
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	u_int flags;
 	int r;
@@ -560,6 +581,8 @@ vioif_attach(device_t parent, device_t self, void *aux)
 					     sc->sc_mac[5]);
 	}
 	aprint_normal(": Ethernet address %s\n", ether_sprintf(sc->sc_mac));
+	snprintb(buf, sizeof(buf), VIRTIO_NET_FLAG_BITS, features);
+	aprint_normal_dev(self, "Features: %s\n", buf);
 	aprint_naive("\n");
 
 #ifdef VIOIF_MPSAFE
@@ -794,13 +817,14 @@ retry:
 					 m, BUS_DMA_WRITE|BUS_DMA_NOWAIT);
 		if (r != 0) {
 			virtio_enqueue_abort(vsc, vq, slot);
-			printf("%s: tx dmamap load failed, error code %d\n",
-			       device_xname(sc->sc_dev), r);
+			aprint_error_dev(sc->sc_dev,
+			    "tx dmamap load failed, error code %d\n", r);
 			break;
 		}
 		r = virtio_enqueue_reserve(vsc, vq, slot,
 					sc->sc_tx_dmamaps[slot]->dm_nsegs + 1);
 		if (r != 0) {
+			virtio_enqueue_abort(vsc, vq, slot);
 			bus_dmamap_unload(vsc->sc_dmat,
 					  sc->sc_tx_dmamaps[slot]);
 			ifp->if_flags |= IFF_OACTIVE;
