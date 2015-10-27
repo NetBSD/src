@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.73 2015/10/27 18:19:05 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.74 2015/10/27 18:49:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.73 2015/10/27 18:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.74 2015/10/27 18:49:26 christos Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -292,7 +292,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	mapsize = sizeof(struct x86_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
 	if ((mapstore = malloc(mapsize, M_DMAMAP, M_ZERO |
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
+	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK))) == NULL)
 		return (ENOMEM);
 
 	map = (struct x86_bus_dmamap *)mapstore;
@@ -331,7 +331,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	 * Allocate our cookie.
 	 */
 	if ((cookiestore = malloc(cookiesize, M_DMAMAP, M_ZERO |
-	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
+	    ((flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK))) == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
