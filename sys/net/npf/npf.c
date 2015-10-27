@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.28 2015/10/19 09:28:24 martin Exp $	*/
+/*	$NetBSD: npf.c,v 1.29 2015/10/27 19:31:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.28 2015/10/19 09:28:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.29 2015/10/27 19:31:55 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -102,7 +102,6 @@ const struct cdevsw npf_cdevsw = {
 	.d_flag = D_OTHER | D_MPSAFE
 };
 
-#if !defined(MODULAR) || defined(_MODULE)
 static int
 npf_init(void)
 {
@@ -137,7 +136,6 @@ npf_init(void)
 	return 0;
 #endif
 }
-#endif
 
 static int
 npf_fini(void)
@@ -177,7 +175,7 @@ npf_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-#if defined(_MODULE)
+#ifdef MODULAR
 		return npf_init();
 #else
 		/* initialized by npfattach */
@@ -199,14 +197,12 @@ npf_modcmd(modcmd_t cmd, void *arg)
 void
 npfattach(int nunits)
 {
-#ifdef MODULAR
+#ifndef MODULAR
 	/*   
 	 * Modular kernels will automatically load any built-in modules
 	 * and call their modcmd() routine, so we don't need to do it
 	 * again as part of pseudo-device configuration.
 	 */     
-	return;
-#else
 	(void)npf_init();
 #endif   
 }
