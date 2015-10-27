@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.9 2015/10/22 11:15:42 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.10 2015/10/27 08:02:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,6 @@ typedef union {
  * searched at interrupt time.
  */
 typedef struct uhci_intr_info {
-	struct uhci_softc *sc;
 	struct usbd_xfer *xfer;
 	uhci_soft_td_t *stdstart;
 	uhci_soft_td_t *stdend;

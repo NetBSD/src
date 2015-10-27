@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.37 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.38 2015/10/27 08:02:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.37 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.38 2015/10/27 08:02:31 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -624,7 +624,6 @@ uhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 		memset(xfer, 0, sizeof(struct uhci_xfer));
 
 		struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
-		uxfer->iinfo.sc = sc;
 #ifdef DIAGNOSTIC
 		uxfer->iinfo.isdone = true;
 		xfer->ux_state = XFER_BUSY;
@@ -3011,7 +3010,7 @@ void
 uhci_device_intr_done(struct usbd_xfer *xfer)
 {
 	uhci_intr_info_t *ii = &UHCI_XFER2UXFER(xfer)->iinfo;
-	uhci_softc_t *sc = ii->sc;
+	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->ux_pipe;
 	uhci_soft_qh_t *sqh;
 	int i, npoll, isread;
@@ -3091,7 +3090,7 @@ void
 uhci_device_ctrl_done(struct usbd_xfer *xfer)
 {
 	uhci_intr_info_t *ii = &UHCI_XFER2UXFER(xfer)->iinfo;
-	uhci_softc_t *sc = ii->sc;
+	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->ux_pipe;
 	int len = UGETW(xfer->ux_request.wLength);
 	int isread = (xfer->ux_request.bmRequestType & UT_READ);
@@ -3130,7 +3129,7 @@ void
 uhci_device_bulk_done(struct usbd_xfer *xfer)
 {
 	uhci_intr_info_t *ii = &UHCI_XFER2UXFER(xfer)->iinfo;
-	uhci_softc_t *sc = ii->sc;
+	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->ux_pipe;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
