@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.71 2013/12/24 15:42:56 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.72 2015/10/27 15:53:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.71 2013/12/24 15:42:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.72 2015/10/27 15:53:58 christos Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -291,11 +291,10 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	error = 0;
 	mapsize = sizeof(struct x86_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	if ((mapstore = malloc(mapsize, M_DMAMAP,
+	if ((mapstore = malloc(mapsize, M_DMAMAP, M_ZERO |
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL)
 		return (ENOMEM);
 
-	memset(mapstore, 0, mapsize);
 	map = (struct x86_bus_dmamap *)mapstore;
 	map->_dm_size = size;
 	map->_dm_segcnt = nsegments;
@@ -331,12 +330,11 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	/*
 	 * Allocate our cookie.
 	 */
-	if ((cookiestore = malloc(cookiesize, M_DMAMAP,
+	if ((cookiestore = malloc(cookiesize, M_DMAMAP, M_ZERO |
 	    (flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK)) == NULL) {
 		error = ENOMEM;
 		goto out;
 	}
-	memset(cookiestore, 0, cookiesize);
 	cookie = (struct x86_bus_dma_cookie *)cookiestore;
 	cookie->id_flags = cookieflags;
 	map->_dm_cookie = cookie;
@@ -399,6 +397,7 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
 	if (error == 0) {
+		cookie->id_flags &= ~X86_DMA_IS_BOUNCING;
 		map->dm_mapsize = buflen;
 		return 0;
 	}
@@ -797,7 +796,7 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	 */
 	if ((ops & (BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE)) != 0 &&
 	    (ops & (BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE)) != 0)
-		panic("_bus_dmamap_sync: mix PRE and POST");
+		panic("%s: mix PRE and POST", __func__);
 
 #ifdef DIAGNOSTIC
 	if ((ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTREAD)) != 0) {
@@ -927,16 +926,17 @@ _bus_dmamap_sync(bus_dma_tag_t t, bus_dmamap_t map, bus_addr_t offset,
 	    }
 
 	case X86_DMA_BUFTYPE_RAW:
-		panic("_bus_dmamap_sync: X86_DMA_BUFTYPE_RAW");
+		panic("%s: X86_DMA_BUFTYPE_RAW", __func__);
 		break;
 
 	case X86_DMA_BUFTYPE_INVALID:
-		panic("_bus_dmamap_sync: X86_DMA_BUFTYPE_INVALID");
+		panic("%s: X86_DMA_BUFTYPE_INVALID", __func__);
 		break;
 
 	default:
-		printf("unknown buffer type %d\n", cookie->id_buftype);
-		panic("_bus_dmamap_sync");
+		panic("%s: unknown buffer type %d", __func__,
+		    cookie->id_buftype);
+		break;
 	}
 end:
 	if (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE)) {
@@ -1244,19 +1244,20 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		curaddr = _BUS_VIRT_TO_BUS(pmap, vaddr);
 
 		/*
-		 * If we're beyond the bounce threshold, notify
-		 * the caller.
-		 */
-		if (map->_dm_bounce_thresh != 0 &&
-		    curaddr >= map->_dm_bounce_thresh)
-			return (EINVAL);
-
-		/*
 		 * Compute the segment size, and adjust counts.
 		 */
 		sgsize = PAGE_SIZE - ((u_long)vaddr & PGOFSET);
 		if (buflen < sgsize)
 			sgsize = buflen;
+
+		/*
+		 * If we're beyond the bounce threshold, notify
+		 * the caller.
+		 */
+		if (map->_dm_bounce_thresh != 0 &&
+		    curaddr + sgsize >= map->_dm_bounce_thresh)
+			return (EINVAL);
+
 
 		error = _bus_dmamap_load_busaddr(t, map, curaddr, sgsize);
 		if (error)
