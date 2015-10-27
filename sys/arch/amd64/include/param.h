@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.18 2012/04/20 22:23:24 rmind Exp $	*/
+/*	$NetBSD: param.h,v 1.19 2015/10/27 22:28:56 mrg Exp $	*/
 
 #ifdef __x86_64__
 
@@ -59,7 +59,7 @@
 #define	INTRSTACKSIZE	4096
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	8*NBPG		/* default message buffer size */
+#define MSGBUFSIZE	(8*NBPG)	/* default message buffer size */
 #endif
 
 /*
