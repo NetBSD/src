@@ -1,4 +1,4 @@
-.\"	$NetBSD: vlan.4,v 1.32 2015/10/26 22:18:57 bad Exp $
+.\"	$NetBSD: vlan.4,v 1.33 2015/10/27 08:46:13 wiz Exp $
 .\"
 .\" Copyright (c) 2000, 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -96,11 +96,11 @@ interface with a matching VID exists are dropped and counted as
 .Po
 These are displayed by the
 .Xr ifconfig 8
-.Fl -v
+.Fl v
 option.
 .Pc
 .Pp
-If the 
+If the
 .Nm
 pseudo-device is not configured in the kernel only packets tagged with a
 VID of 0 are processed.
