@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.11 2015/10/26 01:44:48 ozaki-r Exp $	*/
+/*	$NetBSD: virtio.c,v 1.12 2015/10/27 23:08:27 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.11 2015/10/26 01:44:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.12 2015/10/27 23:08:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,10 @@ virtio_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pc;
 	sc->sc_tag = tag;
 	sc->sc_iot = pa->pa_iot;
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 	sc->sc_config_offset = VIRTIO_CONFIG_DEVICE_CONFIG_NOMSI;
 
 	if (pci_mapreg_map(pa, PCI_MAPREG_START, PCI_MAPREG_TYPE_IO, 0,
