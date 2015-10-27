@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.153 2015/10/27 15:29:45 jakllsch Exp $
+$NetBSD: acronyms.comp,v 1.154 2015/10/27 15:33:07 jakllsch Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -394,7 +394,7 @@ EFM	eight to fourteen modulation
 EGA	Enhanced Graphics Adapter
 EGP	exterior gateway protocol
 EH	extension header
-EIDE	enchanced IDE
+EIDE	enhanced IDE
 EISA	extended industry standard architecture
 ELF	executable and linking format
 ELS	entry level system
