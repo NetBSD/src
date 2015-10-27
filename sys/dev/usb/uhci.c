@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.40 2015/10/27 14:22:38 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.41 2015/10/27 15:28:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.40 2015/10/27 14:22:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.41 2015/10/27 15:28:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -367,13 +367,13 @@ const struct usbd_pipe_methods uhci_device_isoc_methods = {
 };
 
 #define uhci_add_intr_info(sc, ux) \
-	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ux), list)
+	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ux), ux_list)
 #define uhci_del_intr_info(sc, ux) \
 	do { \
-		TAILQ_REMOVE(&(sc)->sc_intrhead, (ux), list); \
-		(ux)->list.tqe_prev = NULL; \
+		TAILQ_REMOVE(&(sc)->sc_intrhead, (ux), ux_list); \
+		(ux)->ux_list.tqe_prev = NULL; \
 	} while (0)
-#define uhci_active_intr_info(ux) ((ux)->list.tqe_prev != NULL)
+#define uhci_active_intr_info(ux) ((ux)->ux_list.tqe_prev != NULL)
 
 static inline uhci_soft_qh_t *
 uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
@@ -625,7 +625,7 @@ uhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 
 #ifdef DIAGNOSTIC
 		struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
-		uxfer->isdone = true;
+		uxfer->ux_isdone = true;
 		xfer->ux_state = XFER_BUSY;
 #endif
 	}
@@ -640,7 +640,7 @@ uhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 
 	KASSERTMSG(xfer->ux_state == XFER_BUSY, "xfer %p state %d\n", xfer,
 	    xfer->ux_state);
-	KASSERTMSG(uxfer->isdone, "xfer %p not done\n", xfer);
+	KASSERTMSG(uxfer->ux_isdone, "xfer %p not done\n", xfer);
 #ifdef DIAGNOSTIC
 	xfer->ux_state = XFER_FREE;
 #endif
@@ -905,25 +905,25 @@ uhci_dump_ii(struct uhci_xfer *ux)
 		printf("ux NULL\n");
 		return;
 	}
-	pipe = ux->xfer.ux_pipe;
+	pipe = ux->ux_xfer.ux_pipe;
 	if (pipe == NULL) {
-		printf("ux %p: done=%d pipe=NULL\n", ux, ux->isdone);
+		printf("ux %p: done=%d pipe=NULL\n", ux, ux->ux_isdone);
 		return;
 	}
 	if (pipe->up_endpoint == NULL) {
 		printf("ux %p: done=%d pipe=%p pipe->up_endpoint=NULL\n",
-		       ux, ux->isdone, pipe);
+		       ux, ux->ux_isdone, pipe);
 		return;
 	}
 	if (pipe->up_dev == NULL) {
 		printf("ux %p: done=%d pipe=%p pipe->up_dev=NULL\n",
-		       ux, ux->isdone, pipe);
+		       ux, ux->ux_isdone, pipe);
 		return;
 	}
 	ed = pipe->up_endpoint->ue_edesc;
 	dev = pipe->up_dev;
 	printf("ux %p: done=%d dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n",
-	       ux, ux->isdone, dev,
+	       ux, ux->ux_isdone, dev,
 	       UGETW(dev->ud_ddesc.idVendor),
 	       UGETW(dev->ud_ddesc.idProduct),
 	       dev->ud_addr, pipe,
@@ -937,7 +937,7 @@ uhci_dump_iis(struct uhci_softc *sc)
 	struct uhci_xfer *ux;
 
 	printf("interrupt list:\n");
-	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux; ux = TAILQ_NEXT(ux, list))
+	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux; ux = TAILQ_NEXT(ux, ux_list))
 		uhci_dump_ii(ux);
 }
 
@@ -1370,7 +1370,7 @@ uhci_softintr(void *v)
 	 * completed.
 	 */
 	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux; ux = nextux) {
-		nextux = TAILQ_NEXT(ux, list);
+		nextux = TAILQ_NEXT(ux, ux_list);
 		uhci_check_intr(sc, ux);
 	}
 
@@ -1392,16 +1392,16 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux)
 
 	KASSERT(ux != NULL);
 
-	struct usbd_xfer *xfer = &ux->xfer;
+	struct usbd_xfer *xfer = &ux->ux_xfer;
 	if (xfer->ux_status == USBD_CANCELLED ||
 	    xfer->ux_status == USBD_TIMEOUT) {
 		DPRINTF("aborted xfer %p", xfer, 0, 0, 0);
 		return;
 	}
 
-	if (ux->stdstart == NULL)
+	if (ux->ux_stdstart == NULL)
 		return;
-	lstd = ux->stdend;
+	lstd = ux->ux_stdend;
 
 	KASSERT(lstd != NULL);
 
@@ -1431,7 +1431,7 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux)
 	 * short packet (SPD and not ACTIVE).
 	 */
 	DPRINTFN(12, "active ux=%p", ux, 0, 0, 0);
-	for (std = ux->stdstart; std != lstd; std = std->link.std) {
+	for (std = ux->ux_stdstart; std != lstd; std = std->link.std) {
 		usb_syncmem(&std->dma,
 		    std->offs + offsetof(uhci_td_t, td_status),
 		    sizeof(std->td.td_status),
@@ -1466,7 +1466,7 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux)
 			uhci_soft_td_t *stat = upipe->ctrl.stat;
 
 			DPRINTFN(12, "ux=%p std=%p control status"
-			    "phase needs completion", ux, ux->stdstart, 0, 0);
+			    "phase needs completion", ux, ux->ux_stdstart, 0, 0);
 
 			sqh->qh.qh_elink =
 			    htole32(stat->physaddr | UHCI_PTR_TD);
@@ -1493,7 +1493,7 @@ uhci_check_intr(uhci_softc_t *sc, struct uhci_xfer *ux)
 void
 uhci_idone(struct uhci_xfer *ux)
 {
-	struct usbd_xfer *xfer = &ux->xfer;
+	struct usbd_xfer *xfer = &ux->ux_xfer;
 	uhci_softc_t *sc __diagused = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = (struct uhci_pipe *)xfer->ux_pipe;
 	uhci_soft_td_t *std;
@@ -1507,14 +1507,14 @@ uhci_idone(struct uhci_xfer *ux)
 
 #ifdef DIAGNOSTIC
 #ifdef UHCI_DEBUG
-	if (ux->isdone) {
+	if (ux->ux_isdone) {
 		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		uhci_dump_ii(ux);
 		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	KASSERT(!ux->isdone);
-	ux->isdone = true;
+	KASSERT(!ux->ux_isdone);
+	ux->ux_isdone = true;
 #endif
 
 	if (xfer->ux_nframes != 0) {
@@ -1526,7 +1526,7 @@ uhci_idone(struct uhci_xfer *ux)
 
 		nframes = xfer->ux_nframes;
 		actlen = 0;
-		n = UHCI_XFER2UXFER(xfer)->curframe;
+		n = UHCI_XFER2UXFER(xfer)->ux_curframe;
 		for (i = 0; i < nframes; i++) {
 			std = stds[n];
 #ifdef UHCI_DEBUG
@@ -1556,12 +1556,12 @@ uhci_idone(struct uhci_xfer *ux)
 	DPRINTFN(10, "ux=%p, xfer=%p, pipe=%p ready",
 	    ux, xfer, upipe, 0);
 	if (uhcidebug > 10)
-		uhci_dump_tds(ux->stdstart);
+		uhci_dump_tds(ux->ux_stdstart);
 #endif
 
 	/* The transfer is done, compute actual length and status. */
 	actlen = 0;
-	for (std = ux->stdstart; std != NULL; std = std->link.std) {
+	for (std = ux->ux_stdstart; std != NULL; std = std->link.std) {
 		usb_syncmem(&std->dma, std->offs, sizeof(std->td),
 		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 		nstatus = le32toh(std->td.td_status);
@@ -1645,9 +1645,9 @@ uhci_timeout(void *addr)
 	}
 
 	/* Execute the abort in a process context. */
-	usb_init_task(&uxfer->abort_task, uhci_timeout_task, xfer,
+	usb_init_task(&uxfer->ux_aborttask, uhci_timeout_task, xfer,
 	    USB_TASKQ_MPSAFE);
-	usb_add_task(uxfer->xfer.ux_pipe->up_dev, &uxfer->abort_task,
+	usb_add_task(uxfer->ux_xfer.ux_pipe->up_dev, &uxfer->ux_aborttask,
 	    USB_TASKQ_HC);
 }
 
@@ -1700,8 +1700,8 @@ uhci_waitintr(uhci_softc_t *sc, struct usbd_xfer *xfer)
 	/* Timeout */
 	DPRINTF("timeout", 0, 0, 0, 0);
 	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux != NULL;
-	    ux = TAILQ_NEXT(ux, list))
-		if (&ux->xfer == xfer)
+	    ux = TAILQ_NEXT(ux, ux_list))
+		if (&ux->ux_xfer == xfer)
 			break;
 
 	KASSERT(ux != NULL);
@@ -2078,12 +2078,12 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Set up interrupt info. */
-	ux->stdstart = data;
-	ux->stdend = dataend;
+	ux->ux_stdstart = data;
+	ux->ux_stdend = dataend;
 
-	KASSERT(ux->isdone);
+	KASSERT(ux->ux_isdone);
 #ifdef DIAGNOSTIC
-	ux->isdone = false;
+	ux->ux_isdone = false;
 #endif
 
 	sqh->elink = data;
@@ -2187,7 +2187,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	xfer->ux_status = status;	/* make software ignore it */
 	callout_stop(&xfer->ux_callout);
 	DPRINTF("stop ux=%p", ux, 0, 0, 0);
-	for (std = ux->stdstart; std != NULL; std = std->link.std) {
+	for (std = ux->ux_stdstart; std != NULL; std = std->link.std) {
 		usb_syncmem(&std->dma,
 		    std->offs + offsetof(uhci_td_t, td_status),
 		    sizeof(std->td.td_status),
@@ -2216,7 +2216,7 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	 */
 	DPRINTF("callback", 0, 0, 0, 0);
 #ifdef DIAGNOSTIC
-	ux->isdone = true;
+	ux->ux_isdone = true;
 #endif
 	wake = xfer->ux_hcflags & UXFER_ABORTWAIT;
 	xfer->ux_hcflags &= ~(UXFER_ABORTING | UXFER_ABORTWAIT);
@@ -2356,11 +2356,11 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
 
 	/* Set up interrupt info. */
-	ux->stdstart = data;
-	ux->stdend = dataend;
-	KASSERT(ux->isdone);
+	ux->ux_stdstart = data;
+	ux->ux_stdend = dataend;
+	KASSERT(ux->ux_isdone);
 #ifdef DIAGNOSTIC
-	ux->isdone = false;
+	ux->ux_isdone = false;
 #endif
 
 	DPRINTFN(10, "qhs[0]=%p", upipe->intr.qhs[0], 0, 0, 0);
@@ -2537,11 +2537,11 @@ uhci_device_request(struct usbd_xfer *xfer)
 	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
 
 	/* Set up interrupt info. */
-	uxfer->stdstart = setup;
-	uxfer->stdend = stat;
-	KASSERT(uxfer->isdone);
+	uxfer->ux_stdstart = setup;
+	uxfer->ux_stdend = stat;
+	KASSERT(uxfer->ux_isdone);
 #ifdef DIAGNOSTIC
-	uxfer->isdone = false;
+	uxfer->ux_isdone = false;
 #endif
 
 	sqh->elink = setup;
@@ -2658,7 +2658,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 	}
 
 	xfer->ux_status = USBD_IN_PROGRESS;
-	UHCI_XFER2UXFER(xfer)->curframe = next;
+	UHCI_XFER2UXFER(xfer)->ux_curframe = next;
 
 	buf = DMAADDR(&xfer->ux_dmabuf, 0);
 	offs = 0;
@@ -2724,7 +2724,7 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 #endif
 
 	/* Find the last TD */
-	i = UHCI_XFER2UXFER(xfer)->curframe + xfer->ux_nframes;
+	i = UHCI_XFER2UXFER(xfer)->ux_curframe + xfer->ux_nframes;
 	if (i >= UHCI_VFRAMELIST_COUNT)
 		i -= UHCI_VFRAMELIST_COUNT;
 	end = upipe->isoc.stds[i];
@@ -2732,12 +2732,12 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 	KASSERT(end != NULL);
 
 	/* Set up interrupt info. */
-	ux->stdstart = end;
-	ux->stdend = end;
+	ux->ux_stdstart = end;
+	ux->ux_stdend = end;
 
-	KASSERT(ux->isdone);
+	KASSERT(ux->ux_isdone);
 #ifdef DIAGNOSTIC
-	ux->isdone = false;
+	ux->ux_isdone = false;
 #endif
 	uhci_add_intr_info(sc, ux);
 
@@ -2768,7 +2768,7 @@ uhci_device_isoc_abort(struct usbd_xfer *xfer)
 
 	/* make hardware ignore it, */
 	nframes = xfer->ux_nframes;
-	n = UHCI_XFER2UXFER(xfer)->curframe;
+	n = UHCI_XFER2UXFER(xfer)->ux_curframe;
 	maxlen = 0;
 	for (i = 0; i < nframes; i++) {
 		std = stds[n];
@@ -2796,7 +2796,7 @@ uhci_device_isoc_abort(struct usbd_xfer *xfer)
 	delay(maxlen);
 
 #ifdef DIAGNOSTIC
-	UHCI_XFER2UXFER(xfer)->isdone = true;
+	UHCI_XFER2UXFER(xfer)->ux_isdone = true;
 #endif
 	/* Run callback and remove from interrupt list. */
 	usb_transfer_complete(xfer);
@@ -2957,7 +2957,7 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 		return;
 
 #ifdef DIAGNOSTIC
-	if (ux->stdend == NULL) {
+	if (ux->ux_stdend == NULL) {
 		printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
 #ifdef UHCI_DEBUG
 		uhci_dump_ii(ux);
@@ -2967,14 +2967,14 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 #endif
 
 	/* Turn off the interrupt since it is active even if the TD is not. */
-	usb_syncmem(&ux->stdend->dma,
-	    ux->stdend->offs + offsetof(uhci_td_t, td_status),
-	    sizeof(ux->stdend->td.td_status),
+	usb_syncmem(&ux->ux_stdend->dma,
+	    ux->ux_stdend->offs + offsetof(uhci_td_t, td_status),
+	    sizeof(ux->ux_stdend->td.td_status),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
-	ux->stdend->td.td_status &= htole32(~UHCI_TD_IOC);
-	usb_syncmem(&ux->stdend->dma,
-	    ux->stdend->offs + offsetof(uhci_td_t, td_status),
-	    sizeof(ux->stdend->td.td_status),
+	ux->ux_stdend->td.td_status &= htole32(~UHCI_TD_IOC);
+	usb_syncmem(&ux->ux_stdend->dma,
+	    ux->ux_stdend->offs + offsetof(uhci_td_t, td_status),
+	    sizeof(ux->ux_stdend->td.td_status),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 	uhci_del_intr_info(sc, ux);	/* remove from active list */
@@ -3011,7 +3011,7 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 		    sizeof(sqh->qh.qh_elink),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
-	uhci_free_std_chain(sc, ux->stdstart, NULL);
+	uhci_free_std_chain(sc, ux->ux_stdstart, NULL);
 
 	isread = UE_GET_DIR(upipe->pipe.up_endpoint->ue_edesc->bEndpointAddress) == UE_DIR_IN;
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
@@ -3042,11 +3042,11 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 #endif
 		DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
 
-		ux->stdstart = data;
-		ux->stdend = dataend;
-		KASSERT(ux->isdone);
+		ux->ux_stdstart = data;
+		ux->ux_stdend = dataend;
+		KASSERT(ux->ux_isdone);
 #ifdef DIAGNOSTIC
-		ux->isdone = false;
+		ux->ux_isdone = false;
 #endif
 		for (i = 0; i < npoll; i++) {
 			sqh = upipe->intr.qhs[i];
@@ -3093,7 +3093,7 @@ uhci_device_ctrl_done(struct usbd_xfer *xfer)
 		uhci_remove_hs_ctrl(sc, upipe->ctrl.sqh);
 
 	if (upipe->ctrl.length != 0)
-		uhci_free_std_chain(sc, ux->stdstart->link.std, ux->stdend);
+		uhci_free_std_chain(sc, ux->ux_stdstart->link.std, ux->ux_stdend);
 
 	if (len) {
 		usb_syncmem(&xfer->ux_dmabuf, 0, len,
@@ -3126,7 +3126,7 @@ uhci_device_bulk_done(struct usbd_xfer *xfer)
 
 	uhci_remove_bulk(sc, upipe->bulk.sqh);
 
-	uhci_free_std_chain(sc, ux->stdstart, NULL);
+	uhci_free_std_chain(sc, ux->ux_stdstart, NULL);
 
 	DPRINTFN(5, "length=%d", xfer->ux_actlen, 0, 0, 0);
 }
@@ -3693,7 +3693,7 @@ uhci_root_intr_abort(struct usbd_xfer *xfer)
 
 	xfer->ux_status = USBD_CANCELLED;
 #ifdef DIAGNOSTIC
-	UHCI_XFER2UXFER(xfer)->isdone = 1;
+	UHCI_XFER2UXFER(xfer)->ux_isdone = true;
 #endif
 	usb_transfer_complete(xfer);
 }
