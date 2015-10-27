@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.39 2015/10/27 14:05:29 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.40 2015/10/27 14:22:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.39 2015/10/27 14:05:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.40 2015/10/27 14:22:38 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -263,7 +263,7 @@ Static void		uhci_dump_qhs(uhci_soft_qh_t *);
 Static void		uhci_dump_qh(uhci_soft_qh_t *);
 Static void		uhci_dump_tds(uhci_soft_td_t *);
 Static void		uhci_dump_td(uhci_soft_td_t *);
-Static void		uhci_dump_ii(uhci_intr_info_t *);
+Static void		uhci_dump_ii(struct uhci_xfer *);
 void			uhci_dump(void);
 #endif
 
@@ -623,8 +623,8 @@ uhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct uhci_xfer));
 
-		struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
 #ifdef DIAGNOSTIC
+		struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
 		uxfer->isdone = true;
 		xfer->ux_state = XFER_BUSY;
 #endif
@@ -895,7 +895,7 @@ uhci_dump_tds(uhci_soft_td_t *std)
 }
 
 Static void
-uhci_dump_ii(uhci_intr_info_t *ux)
+uhci_dump_ii(struct uhci_xfer *ux)
 {
 	struct usbd_pipe *pipe;
 	usb_endpoint_descriptor_t *ed;
@@ -905,31 +905,25 @@ uhci_dump_ii(uhci_intr_info_t *ux)
 		printf("ux NULL\n");
 		return;
 	}
-	if (ux->xfer == NULL) {
-		printf("ux %p: done=%d xfer=NULL\n",
-		       ux, ux->isdone);
-		return;
-	}
-	pipe = ux->xfer->ux_pipe;
+	pipe = ux->xfer.ux_pipe;
 	if (pipe == NULL) {
-		printf("ux %p: done=%d xfer=%p pipe=NULL\n",
-		    ux, ux->isdone, ux->xfer);
+		printf("ux %p: done=%d pipe=NULL\n", ux, ux->isdone);
 		return;
 	}
 	if (pipe->up_endpoint == NULL) {
-		printf("ux %p: done=%d xfer=%p pipe=%p pipe->up_endpoint=NULL\n",
-		       ux, ux->isdone, ux->xfer, pipe);
+		printf("ux %p: done=%d pipe=%p pipe->up_endpoint=NULL\n",
+		       ux, ux->isdone, pipe);
 		return;
 	}
 	if (pipe->up_dev == NULL) {
-		printf("ux %p: done=%d xfer=%p pipe=%p pipe->up_dev=NULL\n",
-		       ux, ux->isdone, ux->xfer, pipe);
+		printf("ux %p: done=%d pipe=%p pipe->up_dev=NULL\n",
+		       ux, ux->isdone, pipe);
 		return;
 	}
 	ed = pipe->up_endpoint->ue_edesc;
 	dev = pipe->up_dev;
-	printf("ux %p: done=%d xfer=%p dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n",
-	       ux, ux->isdone, ux->xfer, dev,
+	printf("ux %p: done=%d dev=%p vid=0x%04x pid=0x%04x addr=%d pipe=%p ep=0x%02x attr=0x%02x\n",
+	       ux, ux->isdone, dev,
 	       UGETW(dev->ud_ddesc.idVendor),
 	       UGETW(dev->ud_ddesc.idProduct),
 	       dev->ud_addr, pipe,
@@ -940,7 +934,7 @@ void uhci_dump_iis(struct uhci_softc *sc);
 void
 uhci_dump_iis(struct uhci_softc *sc)
 {
-	uhci_intr_info_t *ii;
+	struct uhci_xfer *ux;
 
 	printf("interrupt list:\n");
 	for (ux = TAILQ_FIRST(&sc->sc_intrhead); ux; ux = TAILQ_NEXT(ux, list))
