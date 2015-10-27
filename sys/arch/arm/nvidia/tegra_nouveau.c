@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.6 2015/10/18 17:07:36 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.7 2015/10/27 13:21:19 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.6 2015/10/18 17:07:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.7 2015/10/27 13:21:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -149,7 +149,7 @@ tegra_nouveau_init(device_t self)
 	dev->platformdev = &sc->sc_platform_dev;
 
 	dev->platformdev->id = -1;
-	dev->platformdev->dev = *sc->sc_dev;	/* XXX */
+	dev->platformdev->pd_dev = sc->sc_dev;
 	dev->platformdev->dmat = sc->sc_dmat;
 	dev->platformdev->nresource = 2;
 	dev->platformdev->resource[0].tag = bst;
