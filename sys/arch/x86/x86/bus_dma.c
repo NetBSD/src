@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.72 2015/10/27 15:53:58 christos Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.73 2015/10/27 18:19:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2007 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.72 2015/10/27 15:53:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.73 2015/10/27 18:19:05 christos Exp $");
 
 /*
  * The following is included because _bus_dma_uiomove is derived from
@@ -397,7 +397,8 @@ _bus_dmamap_load(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 	}
 	error = _bus_dmamap_load_buffer(t, map, buf, buflen, vm, flags);
 	if (error == 0) {
-		cookie->id_flags &= ~X86_DMA_IS_BOUNCING;
+		if (cookie != NULL)
+			cookie->id_flags &= ~X86_DMA_IS_BOUNCING;
 		map->dm_mapsize = buflen;
 		return 0;
 	}
