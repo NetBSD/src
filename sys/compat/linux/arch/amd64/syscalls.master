@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.55 2015/05/31 10:49:27 njoly Exp $
+	$NetBSD: syscalls.master,v 1.56 2015/10/27 07:15:38 njoly Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -259,8 +259,8 @@
 102	NOARGS		{ uid_t|sys||getuid(void); }
 103	UNIMPL		syslog
 104	NOARGS		{ gid_t|sys||getgid(void); }
-105	NOARGS		{ void|sys||setuid(uid_t uid); }
-106	NOARGS		{ void|sys||setgid(gid_t gid); }
+105	NOARGS		{ int|sys||setuid(uid_t uid); }
+106	NOARGS		{ int|sys||setgid(gid_t gid); }
 107	NOARGS		{ uid_t|sys||geteuid(void); }
 108	NOARGS		{ gid_t|sys||getegid(void); }
 109	NOARGS		{ int|sys||setpgid(int pid, int pgid); }
