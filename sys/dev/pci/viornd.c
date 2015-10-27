@@ -1,4 +1,4 @@
-/* 	$NetBSD: viornd.c,v 1.8 2015/05/05 10:56:13 ozaki-r Exp $ */
+/* 	$NetBSD: viornd.c,v 1.9 2015/10/27 16:04:19 christos Exp $ */
 /*	$OpenBSD: viornd.c,v 1.1 2014/01/21 21:14:58 sf Exp $	*/
 
 /*
@@ -134,6 +134,8 @@ viornd_attach( device_t parent, device_t self, void *aux)
 	bus_dma_segment_t segs[1];
 	int nsegs;
 	int error;
+	uint32_t features;
+	char buf[256];
 
 	vsc->sc_vqs = &sc->sc_vq;
 	vsc->sc_nvqs = 1;
@@ -146,10 +148,11 @@ viornd_attach( device_t parent, device_t self, void *aux)
 	sc->sc_virtio = vsc;
 	sc->sc_dev = self;
 
-	aprint_normal("\n");
+	features = virtio_negotiate_features(vsc, 0);
+	snprintb(buf, sizeof(buf), VIRTIO_COMMON_FLAG_BITS, features);
+	aprint_normal(": Features: %s\n", buf);
 	aprint_naive("\n");
 
-	(void)virtio_negotiate_features(vsc, 0);
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_VM);
 
