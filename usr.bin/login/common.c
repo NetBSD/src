@@ -1,4 +1,4 @@
-/*	$NetBSD: common.c,v 1.7 2015/10/27 14:53:00 shm Exp $	*/
+/*	$NetBSD: common.c,v 1.8 2015/10/28 07:27:24 shm Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -29,7 +29,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: common.c,v 1.7 2015/10/27 14:53:00 shm Exp $");
+__RCSID("$NetBSD: common.c,v 1.8 2015/10/28 07:27:24 shm Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -390,7 +390,7 @@ decode_ss(const char *arg)
 	if (len > sizeof(*ssp) * 4 + 1 || len < sizeof(*ssp))
 		errx(EXIT_FAILURE, "Bad argument");
 
-	if ((ssp = malloc(len)) == NULL)
+	if ((ssp = malloc(len + 1)) == NULL)
 		err(EXIT_FAILURE, NULL);
 
 	if (strunvis((char *)ssp, arg) != sizeof(*ssp))
