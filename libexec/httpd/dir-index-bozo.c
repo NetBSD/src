@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.21 2015/08/27 17:12:18 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.22 2015/10/28 09:20:15 shm Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -66,7 +66,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 	DIR *dp;
 	char buf[MAXPATHLEN];
 	char spacebuf[48];
-	char *file = NULL;
+	char *file = NULL, *printname = NULL;
 	int l, k, j, i;
 
 	if (!isindex || !httpd->dir_indexing)
@@ -108,11 +108,22 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		goto done;
 	}
 
+#ifndef NO_USER_SUPPORT
+	if (request->hr_user) {
+		if (asprintf(&printname, "~%s/%s", request->hr_user,
+		  request->hr_file) < 0)
+			bozo_err(httpd, 1, "asprintf");
+	} else
+		printname = bozostrdup(httpd, request->hr_file);
+#else
+	printname = bozostrdup(httpd, request->hr_file);
+#endif /* !NO_USER_SUPPORT */
+
 	bozo_printf(httpd,
 		"<html><head><title>Index of %s</title></head>\r\n",
-		request->hr_file);
+		printname);
 	bozo_printf(httpd, "<body><h1>Index of %s</h1>\r\n",
-		request->hr_file);
+		printname);
 	bozo_printf(httpd, "<pre>\r\n");
 #define NAMELEN 40
 #define LMODLEN 19
@@ -140,7 +151,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 
 		l = 0;
 
-		urlname = bozo_escape_rfc3986(httpd, name);
+		urlname = bozo_escape_rfc3986(httpd, name, 0);
 		htmlname = bozo_escape_html(httpd, name);
 		if (htmlname == NULL)
 			htmlname = name;
@@ -206,6 +217,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 
 done:
 	free(file);
+	free(printname);
 	return 1;
 }
 #endif /* NO_DIRINDEX_SUPPORT */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.53 2015/08/13 12:30:08 wiz Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.54 2015/10/28 09:20:15 shm Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -111,9 +111,11 @@ is a valid CGI program in the
 directory.
 In other words, all CGI URL's must begin with
 .Em \%/cgi-bin/ .
-Note that the CGI/1.1 interface is not available with
+Note that the CGI/1.1 interface is available with
 .Em ~user
-translation.
+translation using
+.Fl E
+switch.
 .It Fl e
 Causes
 .Nm
@@ -223,15 +225,6 @@ translations from
 .Dq public_html
 to
 .Ar pubdir .
-.It Fl r
-Forces pages besides the
-.Dq index.html
-(see the
-.Fl X
-option) page to require that the Referrer: header be present and
-refer to this web server, otherwise a redirect to the
-.Dq index.html
-page will be returned instead.
 .It Fl S Ar server_software
 Sets the internal server version to
 .Ar server_software .
@@ -270,6 +263,12 @@ into the directory
 (but see the
 .Fl p
 option above).
+.It Fl E
+Enables CGI/1.1 interface for
+.Em ~user
+translation.
+Note that enabling this support implies that users can run
+commands as web server user, this may have security implications.
 .It Fl V
 Sets the default virtual host directory to
 .Ar slashdir .
@@ -462,12 +461,23 @@ symbolic link is found,
 .Nm
 will perform a smart redirect to the target of this symlink.
 The target is assumed to live on the same server.
+If target starts with slash then absolute redirection is performed,
+otherwise it's handled as relative.
 If a
 .Pa .bzabsredirect
 symbolic link is found,
 .Nm
 will redirect to the absolute url pointed to by this symlink.
 This is useful to redirect to different servers.
+Two forms of redirection are supported - symbolic link without schema will use
+.Em http://
+as default i.e. link to
+.Em NetBSD.org
+will redirect to
+.Em http://NetBSD.org/
+Otherwise provided schema will be used i.e. symbolic link to
+.Em ftp://NetBSD.org/
+will redirect to provided the URL.
 .Sh EXAMPLES
 To configure set of virtual hosts, one would use an
 .Xr inetd.conf 5
@@ -613,7 +623,7 @@ provided man page fixes
 .Aq Mt jmmv@NetBSD.org
 Added the
 .Fl P
-option.
+option (pidfile support) and provided some man page fixes.
 .It
 .An Luke Mewburn
 .Aq Mt lukem@NetBSD.org
@@ -666,9 +676,6 @@ provided http authorisation fixes
 provided chroot and change-to-user support, and other various fixes
 .It
 Coyote Point provided various CGI fixes.
-.It
-.An Julio Merino
-added pidfile support and provided some man page fixes.
 .El
 .Pp
 There are probably others I have forgotten (let me know if you care)
