@@ -1,4 +1,4 @@
-/*	$NetBSD: rlogin.c,v 1.43 2013/03/02 18:37:19 wiz Exp $	*/
+/*	$NetBSD: rlogin.c,v 1.44 2015/10/28 08:15:53 shm Exp $	*/
 
 /*
  * Copyright (c) 1983, 1990, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1990, 1993\
 #if 0
 static char sccsid[] = "@(#)rlogin.c	8.4 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: rlogin.c,v 1.43 2013/03/02 18:37:19 wiz Exp $");
+__RCSID("$NetBSD: rlogin.c,v 1.44 2015/10/28 08:15:53 shm Exp $");
 #endif
 #endif /* not lint */
 
@@ -741,6 +741,7 @@ lostpeer(int signo)
 	struct sigaction sa;
 	sa.sa_flags = SA_RESTART;
 	sa.sa_handler = SIG_IGN;
+	sigemptyset(&sa.sa_mask);
 	(void)sigaction(SIGPIPE, &sa, (struct sigaction *)0);
 	msg("\aconnection closed.");
 	done(1);
