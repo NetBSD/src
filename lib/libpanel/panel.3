@@ -1,4 +1,4 @@
-.\"	$NetBSD: panel.3,v 1.1 2015/10/27 23:13:18 uwe Exp $
+.\"	$NetBSD: panel.3,v 1.2 2015/10/28 10:18:43 wiz Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -38,14 +38,15 @@ Overlapping curses windows have no notion of z-order,
 what you see on the screen depends on the order of updates.
 .Nm
 library is an extension built on top of
-.Xr curses(3)
+.Xr curses 3
 that adds z-order to curses windows.
 .Pp
 Each panel has an associated curses window.
 All currently visible panels form a
 .Dq deck .
 Panels have z-order only relative to other panels in the deck and to
-.Xr stdscr(3) .
+.\".Xr stdscr 3 .
+stdscr.
 The latter doesn't have a panel of its own but implicitly lies below
 all other panels in the deck.
 If you mix plain curses windows and panels the visual results are
@@ -70,4 +71,4 @@ associated with panels.
 .It Xr update_panels 3     Ta update terminal display
 .El
 .Sh SEE ALSO
-.Xr curses(3)
+.Xr curses 3
