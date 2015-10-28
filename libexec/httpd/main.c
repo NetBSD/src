@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.8 2014/07/16 07:41:43 mrg Exp $	*/
+/*	$NetBSD: main.c,v 1.9 2015/10/28 09:20:15 shm Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -65,12 +65,15 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozo_warn(httpd, "   -d\t\t\tenable debug support");
 #endif
 	bozo_warn(httpd, "   -s\t\t\talways log to stderr");
-#ifndef NO_USER_SUPPORT
-	bozo_warn(httpd, "   -u\t\t\tenable ~user/public_html support");
-	bozo_warn(httpd, "   -p dir\t\tchange `public_html' directory name]");
-#endif
 #ifndef NO_DYNAMIC_CONTENT
 	bozo_warn(httpd, "   -M arg t c c11\tadd this mime extenstion");
+#endif
+#ifndef NO_USER_SUPPORT
+	bozo_warn(httpd, "   -u\t\t\tenable ~user/public_html support");
+	bozo_warn(httpd, "   -p dir\t\tchange `public_html' directory name");
+#ifndef NO_CGIBIN_SUPPORT
+	bozo_warn(httpd, "   -E\t\t\tenable CGI support for user dirs");
+#endif
 #endif
 #ifndef NO_CGIBIN_SUPPORT
 #ifndef NO_DYNAMIC_CONTENT
@@ -98,9 +101,6 @@ usage(bozohttpd_t *httpd, char *progname)
 	bozo_warn(httpd,
 		"   -v virtualroot\tenable virtual host support "
 		"in this directory");
-	bozo_warn(httpd,
-		"   -r\t\t\tmake sure sub-pages come from "
-		"this host via referrer");
 #ifndef NO_DIRINDEX_SUPPORT
 	bozo_warn(httpd,
 		"   -X\t\t\tenable automatic directory index support");
@@ -140,9 +140,13 @@ main(int argc, char **argv)
 
 	bozo_set_defaults(&httpd, &prefs);
 
+	/*
+	 * -r option was removed, do not reuse it for a while
+	 */
+
 	while ((c = getopt(argc, argv,
-	    "C:HI:L:M:P:S:U:VXZ:bc:defhi:np:rst:uv:x:z:")) != -1) {
-		switch(c) {
+	    "C:EHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
+		switch (c) {
 
 		case 'L':
 #ifdef NO_LUA_SUPPORT
@@ -174,10 +178,6 @@ main(int argc, char **argv)
 
 		case 'n':
 			bozo_set_pref(&prefs, "numeric", "true");
-			break;
-
-		case 'r':
-			bozo_set_pref(&prefs, "trusted referal", "true");
 			break;
 
 		case 's':
@@ -297,6 +297,7 @@ main(int argc, char **argv)
 #ifdef NO_USER_SUPPORT
 		case 'p':
 		case 'u':
+		case 'E':
 			bozo_err(&httpd, 1, "User support is not enabled");
 			/* NOTREACHED */
 #else
@@ -307,6 +308,15 @@ main(int argc, char **argv)
 		case 'u':
 			bozo_set_pref(&prefs, "enable users", "true");
 			break;
+#ifndef NO_CGIBIN_SUPPORT
+		case 'E':
+			bozo_set_pref(&prefs, "enable user cgibin", "true");
+			break;
+#else
+		case 'E':
+			bozo_err(&httpd, 1, "CGI is not enabled");
+			/* NOTREACHED */
+#endif /* NO_CGIBIN_SPPORT */
 #endif /* NO_USER_SUPPORT */
 
 #ifdef NO_DIRINDEX_SUPPORT

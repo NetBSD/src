@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.27 2015/05/02 11:35:48 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.28 2015/10/28 09:20:15 shm Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -90,7 +90,7 @@ parse_header(bozohttpd_t *httpd, const char *str, ssize_t len, char **hdr_str,
 	name = bozostrnsep(&value, ":", &len);
 
 	if (NULL == name || -1 == len) {
-		free(name);
+		free(value);
 		return -1;
 	}
 
@@ -259,6 +259,11 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	if (!httpd->cgibin && !httpd->process_cgi)
 		return 0;
+
+#ifndef NO_USER_SUPPORT
+    if (request->hr_user && !httpd->enable_cgi_users)
+		return 0;
+#endif /* !NO_USER_SUPPORT */
 
 	if (request->hr_oldfile && strcmp(request->hr_oldfile, "/") != 0)
 		uri = request->hr_oldfile;

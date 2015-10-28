@@ -1,4 +1,4 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.11 2015/07/16 12:19:23 shm Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.12 2015/10/28 09:20:15 shm Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.16 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -56,16 +56,14 @@
  * enabled.
  */
 int
-bozo_user_transform(bozo_httpreq_t *request, int *isindex)
+bozo_user_transform(bozo_httpreq_t *request)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
-	char	c, *s, *file = NULL, *user;
+	char	*s, *file = NULL, *user;
 	struct	passwd *pw;
 
-	*isindex = 0;
-
 	/* find username */
-	user = strchr(request->hr_file + 2, '~');
+	user = strchr(request->hr_file + 1, '~');
 
 	/* this shouldn't happen, but "better paranoid than sorry" */
 	assert(user != NULL);
@@ -74,17 +72,24 @@ bozo_user_transform(bozo_httpreq_t *request, int *isindex)
 
 	if ((s = strchr(user, '/')) != NULL) {
 		*s++ = '\0';
-		c = s[strlen(s)-1];
-		*isindex = (c == '/' || c == '\0');
 	}
 
 	debug((httpd, DEBUG_OBESE, "looking for user %s",
 		user));
 	pw = getpwnam(user);
+	request->hr_user = bozostrdup(httpd, user);
+
 	/* fix this up immediately */
-	if (s)
+	if (s) {
 		s[-1] = '/';
+		/* omit additional slashes at the beginning */
+		while (*s == '/')
+			s++;
+	}
+
 	if (pw == NULL) {
+		free(request->hr_user);
+		request->hr_user = NULL;
 		(void)bozo_http_error(httpd, 404, request, "no such user");
 		return 0;
 	}
@@ -108,26 +113,11 @@ bozo_user_transform(bozo_httpreq_t *request, int *isindex)
 		return 0;
 	}
 	if (s == NULL || *s == '\0') {
-		file = bozostrdup(httpd, httpd->index_html);
+		file = bozostrdup(httpd, "/");
 	} else {
-		file = bozomalloc(httpd, strlen(s) +
-		    (*isindex ? strlen(httpd->index_html) + 1 : 1));
-		strcpy(file, s);
-		if (*isindex)
-			strcat(file, httpd->index_html);
-	}
-
-	/* see transform_request() */
-	if (*file == '/' || strcmp(file, "..") == 0 ||
-	    strstr(file, "/..") || strstr(file, "../")) {
-		(void)bozo_http_error(httpd, 403, request, "illegal request");
-		free(file);
-		return 0;
-	}
-
-	if (bozo_auth_check(request, file)) {
-		free(file);
-		return 0;
+		file = bozomalloc(httpd, strlen(s) + 2);
+		strcpy(file, "/");
+		strcat(file, s);
 	}
 
 	free(request->hr_file);
