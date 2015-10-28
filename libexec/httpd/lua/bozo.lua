@@ -35,6 +35,7 @@ dofile "optparse.lua"
 opt = OptionParser{usage="%prog [options] root [vhost]", version="20091105"}                           
 
 opt.add_option{"-C", "--cgimap", action="store", dest="cgimap", help="--cgimap 's t'"}
+opt.add_option{"-E", "--enable-user-cgibin", action="store_true", dest="enableusercgibin", help="--enable-user-cgibin"}
 opt.add_option{"-H", "--hide-dots", action="store_true", dest="hidedots", help="--hide-dots"}
 opt.add_option{"-I", "--portnum", action="store", dest="portnum", help="--portnum number"}
 opt.add_option{"-M", "--dynamicmime", action="store", dest="dynmime", help="--dynamicmime 'suffix type a b'"}
@@ -50,7 +51,6 @@ opt.add_option{"-f", "--foreground", action="store_true", dest="foreground", hel
 opt.add_option{"-i", "--bindaddr", action="store", dest="bindaddress", help="--bindaddr address"}
 opt.add_option{"-n", "--numeric", action="store_true", dest="numeric", help="--numeric"}
 opt.add_option{"-p", "--public-html", action="store", dest="public_html", help="--public-html dir"}
-opt.add_option{"-r", "--trusted-referal", action="store_true", dest="trustedref", help="trusted referal"}
 opt.add_option{"-s", "--logtostderr", action="store_true", dest="logstderr", help="log to stderr"}
 opt.add_option{"-t", "--chroot", action="store", dest="chroot", help="--chroot dir"}
 opt.add_option{"-u", "--enable-users", action="store_true", dest="enableusers", help="--enable-users"}
@@ -140,6 +140,9 @@ if options.enableusers then
 end
 if options.hidedots then
         bozohttpd.set_pref(prefs, "hide dots", "true")
+end
+if options.enableusercgibin then
+        bozohttpd.set_pref(prefs, "enable user cgibin", "true")
 end
 if options.dirindex then
         bozohttpd.set_pref(prefs, "directory indexing", "true")
