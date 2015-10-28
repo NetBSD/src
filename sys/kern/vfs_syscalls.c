@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.502 2015/10/25 09:27:14 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.503 2015/10/28 14:05:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.502 2015/10/25 09:27:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.503 2015/10/28 14:05:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -371,7 +371,7 @@ mount_get_vfsops(const char *fstype, enum uio_seg type_seg,
 		error = copyinstr(fstype, fstypename, sizeof(fstypename), NULL);
 	} else {
 		error = copystr(fstype, fstypename, sizeof(fstypename), NULL);
-		KASSERT(error != 0);
+		KASSERT(error == 0);
 	}
 
 	if (error) {
