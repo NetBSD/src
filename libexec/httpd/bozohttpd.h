@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.37 2015/10/25 19:06:49 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.38 2015/10/28 09:20:15 shm Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -94,7 +94,6 @@ typedef struct bozohttpd_t {
 	int		 numeric;	/* avoid gethostby*() */
 	char		*virtbase;	/* virtual directory base */
 	int		 unknown_slash;	/* unknown vhosts go to normal slashdir */
-	int		 untrustedref;	/* make sure referrer = me unless url = / */
 	int		 logstderr;	/* log to stderr (even if not tty) */
 	int		 background;	/* drop into daemon mode */
 	int		 foreground;	/* keep daemon mode in foreground */
@@ -109,6 +108,7 @@ typedef struct bozohttpd_t {
 	const char	*index_html;	/* our home page */
 	const char	*public_html;	/* ~user/public_html page */
 	int		 enable_users;	/* enable public_html */
+	int		 enable_cgi_users;	/* use the cgi handler */
 	int		*sock;		/* bound sockets */
 	int		 nsock;		/* number of above */
 	struct pollfd	*fds;		/* current poll fd set */
@@ -151,6 +151,9 @@ typedef struct bozo_httpreq_t {
 	char	*hr_query;
 	char	*hr_host;	/* HTTP/1.1 Host: or virtual hostname,
 				   possibly including a port number */
+#ifndef NO_USER_SUPPORT
+	char	*hr_user;	/* username if we hit userdir request */
+#endif /* !NO_USER_SUPPORT */
 	const char *hr_proto;
 	const char *hr_content_type;
 	const char *hr_content_length;
@@ -225,7 +228,7 @@ int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
 char	*bozo_http_date(char *, size_t);
 void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *, const char *);
-char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url);
+char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute);
 char	*bozo_escape_html(bozohttpd_t *httpd, const char *url);
 
 char	*bozodgetln(bozohttpd_t *, int, ssize_t *, ssize_t (*)(bozohttpd_t *, int, void *, size_t));
@@ -305,9 +308,11 @@ void	bozo_daemon_closefds(bozohttpd_t *);
 
 /* tilde-luzah-bozo.c */
 #ifdef NO_USER_SUPPORT
-#define bozo_user_transform(a, c)			0
+#define bozo_user_transform(x)				0
+#define bozo_user_free(x)					0
 #else
-int	bozo_user_transform(bozo_httpreq_t *, int *);
+int	bozo_user_transform(bozo_httpreq_t *);
+#define bozo_user_free(x)					free(x)
 #endif /* NO_USER_SUPPORT */
 
 
