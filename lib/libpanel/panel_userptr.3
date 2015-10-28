@@ -1,4 +1,4 @@
-.\"	$NetBSD: panel_userptr.3,v 1.1 2015/10/27 23:42:55 uwe Exp $
+.\"	$NetBSD: panel_userptr.3,v 1.2 2015/10/28 02:23:50 uwe Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -42,6 +42,24 @@
 .Fn panel_userptr "PANEL *p"
 .\"
 .Sh DESCRIPTION
-Routines to manage user data associated with panels...
+The function
+.Fn set_panel_userptr
+can be used to associate arbitrary user data with a panel.
+.Pp
+The data associated with a panel can be obtained with
+.Fn panel_userptr .
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ".Dv ERR" -compact
+.It Dv OK
+The function completed successfully.
+.It Dv ERR
+An error occurred in the function.
+.El
 .Sh SEE ALSO
 .Xr panel 3

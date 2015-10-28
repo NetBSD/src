@@ -1,4 +1,4 @@
-.\"	$NetBSD: panel_hidden.3,v 1.1 2015/10/27 23:42:55 uwe Exp $
+.\"	$NetBSD: panel_hidden.3,v 1.2 2015/10/28 02:23:50 uwe Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -46,6 +46,53 @@
 .Fn panel_hidden "PANEL *p"
 .\"
 .Sh DESCRIPTION
-Routines to manage visibility of panels...
+Panels are initialy created visible.
+The function
+.Fn hide_panel
+can be used to hide a panel.
+The panel is removed from the deck.
+.Pp
+A panel can be made visible again with a call to
+.Fn show_panel .
+The panel is returned to the top of the deck.
+.Pp
+Current visibility status of a panel can be queried with
+.Fn panel_hidden .
+.Sh IMPLEMENTATION NOTES
+The
+.Fn show_panel
+function will return an error if the panel is already visible.
+Use
+.Xr top_panel 3
+to change z-order of an already visible panel.
+This is the behaviour specified by the original
+.At V
+panel library.
+.Pp
+In the ncurses implementation of the panel library
+.Fn show_panel
+and
+.Fn top_panel
+are identical and handle both visible and hidden panels.
+This may be a source of bugs in programs tested only against ncurses.
+.Sh RETURN VALUES
+The
+.Fn panel_hidden
+function returns
+.Dv TRUE
+or
+.Dv FALSE .
+It will return
+.Dv ERR
+if passed a null pointer.
+.Pp
+Other functions will return one of the following values:
+.Pp
+.Bl -tag -width ".Dv ERR" -compact
+.It Dv OK
+The function completed successfully.
+.It Dv ERR
+An error occurred in the function.
+.El
 .Sh SEE ALSO
 .Xr panel 3

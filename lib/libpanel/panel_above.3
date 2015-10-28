@@ -1,4 +1,4 @@
-.\"	$NetBSD: panel_above.3,v 1.1 2015/10/27 23:42:55 uwe Exp $
+.\"	$NetBSD: panel_above.3,v 1.2 2015/10/28 02:23:50 uwe Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -50,6 +50,47 @@
 .Fn panel_below "PANEL *p"
 .\"
 .Sh DESCRIPTION
-Routines to manage z-order of panels...
+Newly created panels are placed at the top of the deck.
+Z-order of a visible panel can be changed with the functions
+.Fn top_panel
+and
+.Fn bottom_panel
+that move it to the top and bottom of the deck respectively.
+.Pp
+For a visible panel its neighbors in the deck can be obtained with
+.Fn panel_above
+and
+.Fn panel_below .
+.Sh IMPLEMENTATION NOTES
+The
+.Fn top_panel
+function will return an error if the panel is currently hidden.
+Use
+.Xr show_panel 3
+to make a hidden panel visible again and put it at the top of the deck.
+This is the behaviour specified by the original
+.At V
+panel library.
+.Pp
+In the ncurses implementation of the panel library
+.Fn show_panel
+and
+.Fn top_panel
+are identical and handle both visible and hidden panels.
+This may be a source of bugs in programs tested only against ncurses.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ".Dv ERR" -compact
+.It Dv OK
+The function completed successfully.
+.It Dv ERR
+An error occurred in the function.
+.El
+
 .Sh SEE ALSO
 .Xr panel 3
