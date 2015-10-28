@@ -1,4 +1,4 @@
-.\"	$NetBSD: new_panel.3,v 1.1 2015/10/27 23:42:55 uwe Exp $
+.\"	$NetBSD: new_panel.3,v 1.2 2015/10/28 02:23:50 uwe Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -50,6 +50,33 @@
 .Fn del_panel "PANEL *p"
 .\"
 .Sh DESCRIPTION
-Routines to manage panels and associated curses windows...
+The funcion
+.Fn new_panel
+creates a new panel associated with the curses window
+.Fa win .
+The new panel is visible and is placed at the top of the deck.
+.Pp
+Curses window associated with a panel may be obtained with
+.Fn panel_window
+and changed with
+.Fn replace_panel .
+.Pp
+The funcion
+.Fn del_panel
+hides the panel and deletes it.
+Note, that the curses window associated with the panel is not deleted.
+.Sh RETURN VALUES
+Functions returning pointers will return
+.Dv NULL
+if an error is detected.
+The functions that return an int will return one of the following
+values:
+.Pp
+.Bl -tag -width ".Dv ERR" -compact
+.It Dv OK
+The function completed successfully.
+.It Dv ERR
+An error occurred in the function.
+.El
 .Sh SEE ALSO
 .Xr panel 3

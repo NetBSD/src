@@ -1,4 +1,4 @@
-.\"	$NetBSD: move_panel.3,v 1.1 2015/10/27 23:42:55 uwe Exp $
+.\"	$NetBSD: move_panel.3,v 1.2 2015/10/28 02:23:50 uwe Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -38,6 +38,32 @@
 .Fn move_panel "PANEL *p" "int y" "int x"
 .\"
 .Sh DESCRIPTION
-Change panel position on screen...
+A panel can be moved to a new position by calling the
+.Fn move_panel
+function.
+The
+.Fa y
+and
+.Fa x
+positions are the new origin of the panel on the screen. 
+.Pp
+This function is panel library counterpart of curses
+.Xr mvwin 3 .
+Curses
+.Fn mvwin
+must never be directly used on a window associated with a panel.
+.Sh RETURN VALUES
+The
+.Fn move_panel
+function will return one of the following
+values:
+.Pp
+.Bl -tag -width ".Dv ERR" -compact
+.It Dv OK
+The function completed successfully.
+.It Dv ERR
+An error occurred in the function.
+.El
 .Sh SEE ALSO
+.Xr mvwin 3 ,
 .Xr panel 3
