@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.31 2015/04/06 14:38:22 ginsbach Exp $
+.\"	$NetBSD: strptime.3,v 1.32 2015/10/29 17:54:49 christos Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -223,33 +223,56 @@ the year, including the century (i.e., 1996).
 .It Cm \&%z
 an ISO 8601 or RFC-2822 time zone specification.
 This is one of the following:
-the offset from
-Coordinated Universal Time
+.Bl -dash -offset indent -compact
+.It
+The offset from Coordinated Universal Time
 .Pq Ql UTC
 specified as:
-.Dq [+-]hhmm ,
-.Dq [+-]hh:mm ,
-or
-.Dq [+-]hh ;
+.Bl -bullet -offset indent -compact
+.It
+[+-]hhmm
+.It
+[+-]hh:mm
+.It
+[+-]hh
+.El
+.It
 .Ql UTC
 specified as:
-.Dq GMT
-.Pq Ql Greenwich Mean Time ,
-.Dq UT
-.Pq Ql Universal Time ,
-or
-.Dq Z
-.Pq Ql Zulu Time ;
-a three character US time zone specified as:
-.Dq EDT ,
-.Dq EST ,
-.Dq CDT ,
-.Dq CST ,
-.Dq MDT ,
-.Dq MST ,
-.Dq PDT ,
-or
-.Dq PST ,
+.Bl -bullet -offset indent -compact
+.It
+UTC
+.Pq Ql Coordinated Universal time
+.It
+GMT
+.Pq Ql Greenwich Mean Time
+.It
+UT
+.Pq Ql Universal Time
+.It
+Z
+.Pq Ql Zulu Time
+.El
+.It
+A three character US time zone specified as:
+.Bl -bullet -offset indent -compact
+.It
+EDT
+.It
+EST
+.It
+CDT
+.It
+CST
+.It
+MDT
+.It
+MST
+.It
+PDT
+.It
+PST
+.El
 with the first letter standing for
 .Ql Eastern
 .Pq Dq E ,
@@ -270,15 +293,22 @@ time
 or
 .Ql Standard
 .Pq Dq S
-time;
+time
+.It 
 a single letter military time zone specified as:
+.Bl -bullet -offset indent -compact
+.It
 .Dq A
 through
 .Dq I
-and
+.It
 .Dq K
 through
 .Dq Y .
+.El
+.It
+An arbirtrary timezone name that can be loaded from the database.
+.El
 .Po
 A
 .Nx
