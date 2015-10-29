@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.449 2015/08/20 11:05:06 wiz Exp $
+.\"	$NetBSD: options.4,v 1.450 2015/10/29 00:27:08 mrg Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 20, 2015
+.Dd October 28, 2015
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -668,7 +668,9 @@ These logs can be displayed by using
 from DDB.
 See the kernel source file
 .Pa sys/kern/kern_history.c
-for details.
+and the
+.Xr kernhist 9
+manual for details.
 .It Cd options KERNHIST_PRINT
 Prints the kernel history logs on the system console as entries are added.
 Note that the output is
@@ -1508,6 +1510,36 @@ See
 for details.
 .Em NOTE :
 not available on all architectures.
+.It Cd options SCDEBUG_DEFAULT
+Used with the
+.Cd options SYSCALL_DEBUG
+described below to choose which types of events are displayed.
+.Pp
+.Bl -tag -width "SCDEBUG_KERNHIST" -compact -offset indent
+.It Dv SCDEBUG_CALLS
+Show system call entry points.
+.It Dv SCDEBUG_RETURNS
+Show system call exit points.
+.It Dv SCDEBUG_ALL
+Show all system call requestes, including unimplemented calls.
+.It Dv SCDEBUG_SHOWARGS
+Show the arguments provided.
+.It Dv SCDEBUG_KERNHIST
+Store a restricted form of the system call debug in a kernel history
+instead of printing it to the console.  This option relies upon
+.Cd options KERNHIST .
+.El
+.Pp
+The default value is
+.Dv (SCDEBUG_CALLS|SCDEBUG_RETURNS|SCDEBUG_SHOWARGS) .
+.It Cd options SYSCALL_DEBUG
+Useful for debugging system call issues, usually in early single user bringup.
+By default, writes entries to the system console for most system call events.
+Can be configured with the
+.Cd options SCDEBUG_DEFAULT
+option to to use the
+.Cd options KERNHIST
+facility instead.
 .It Cd options SYSCALL_STATS
 Count the number of times each system call number is called.
 The values can be read through the sysctl interface and displayed using
@@ -2733,7 +2765,8 @@ bolded
 .Xr quotaon 8 ,
 .Xr rpc.rquotad 8 ,
 .Xr sysctl 8 ,
-.Xr in_getifa 9
+.Xr in_getifa 9 ,
+.Xr kernhist 9
 .Sh HISTORY
 The
 .Nm
