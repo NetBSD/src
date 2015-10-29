@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.374 2015/10/22 09:51:21 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.375 2015/10/29 07:24:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.374 2015/10/22 09:51:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.375 2015/10/29 07:24:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1615,12 +1615,6 @@ wm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	wm_adjust_qnum(sc, pci_msix_count(pa->pa_pc, pa->pa_tag));
-	error = wm_alloc_txrx_queues(sc);
-	if (error) {
-		aprint_error_dev(sc->sc_dev, "cannot allocate queues %d\n",
-		    error);
-		return;
-	}
 
 	/* Allocation settings */
 	max_type = PCI_INTR_TYPE_MSIX;
@@ -1647,6 +1641,7 @@ alloc_retry:
 			goto alloc_retry;
 		}
 	} else 	if (pci_intr_type(sc->sc_intrs[0]) == PCI_INTR_TYPE_MSI) {
+		wm_adjust_qnum(sc, 0);	/* must not use multiqueue */
 		error = wm_setup_legacy(sc);
 		if (error) {
 			pci_intr_release(sc->sc_pc, sc->sc_intrs,
@@ -1658,6 +1653,7 @@ alloc_retry:
 			goto alloc_retry;
 		}
 	} else {
+		wm_adjust_qnum(sc, 0);	/* must not use multiqueue */
 		error = wm_setup_legacy(sc);
 		if (error) {
 			pci_intr_release(sc->sc_pc, sc->sc_intrs,
@@ -4201,7 +4197,14 @@ wm_setup_legacy(struct wm_softc *sc)
 	pci_chipset_tag_t pc = sc->sc_pc;
 	const char *intrstr = NULL;
 	char intrbuf[PCI_INTRSTR_LEN];
+	int error;
 
+	error = wm_alloc_txrx_queues(sc);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "cannot allocate queues %d\n",
+		    error);
+		return ENOMEM;
+	}
 	intrstr = pci_intr_string(pc, sc->sc_intrs[0], intrbuf,
 	    sizeof(intrbuf));
 #ifdef WM_MPSAFE
@@ -4231,6 +4234,13 @@ wm_setup_msix(struct wm_softc *sc)
 	const char *intrstr = NULL;
 	char intrbuf[PCI_INTRSTR_LEN];
 	char intr_xname[INTRDEVNAMEBUF];
+
+	error = wm_alloc_txrx_queues(sc);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "cannot allocate queues %d\n",
+		    error);
+		return ENOMEM;
+	}
 
 	kcpuset_create(&affinity, false);
 	intr_idx = 0;
