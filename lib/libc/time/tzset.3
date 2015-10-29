@@ -1,4 +1,4 @@
-.\"	$NetBSD: tzset.3,v 1.33 2015/10/29 17:51:58 christos Exp $
+.\"	$NetBSD: tzset.3,v 1.34 2015/10/29 22:42:55 wiz Exp $
 .Dd October 29, 2015
 .Dt TZSET 3
 .Os
@@ -95,8 +95,8 @@ function acts like
 .Fn tzgetname
 only it returns the offset in seconds from GMT for the timezone.
 If there is no match, then
-.Dv \-1 
-is returned and 
+.Dv \-1
+is returned and
 .Va errno
 is set to
 .Dv ESRCH .
