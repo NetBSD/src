@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.44 2014/10/07 21:50:36 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.45 2015/10/29 17:48:55 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -211,6 +211,7 @@ time_t posix2time_z(timezone_t __restrict, time_t) __RENAME(__posix2time_z50);
 timezone_t tzalloc(const char *) __RENAME(__tzalloc50);
 void tzfree(timezone_t __restrict) __RENAME(__tzfree50);
 const char *tzgetname(timezone_t __restrict, int) __RENAME(__tzgetname50);
+long tzgetgmtoff(timezone_t __restrict, int) __RENAME(__tzgetgmtoff50);
 #endif
 
 size_t strftime_lz(timezone_t __restrict, char * __restrict, size_t,
