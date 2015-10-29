@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.24 2014/11/12 22:23:38 aymeric Exp $       */
+/*     $NetBSD: login_pam.c,v 1.25 2015/10/29 11:31:52 shm Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.24 2014/11/12 22:23:38 aymeric Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.25 2015/10/29 11:31:52 shm Exp $");
 #endif /* not lint */
 
 /*
@@ -420,7 +420,11 @@ skip_auth:
 	nsaved_gids = getgroups(NGROUPS_MAX, saved_gids);
 	
 	(void)setegid(pwd->pw_gid);
-	initgroups(username, pwd->pw_gid);
+	if (initgroups(username, pwd->pw_gid) == -1) {
+		syslog(LOG_ERR, "initgroups failed");
+		pam_end(pamh, PAM_SUCCESS);
+		exit(EXIT_FAILURE);
+	}
 	(void)seteuid(pwd->pw_uid);
 	
 	if (chdir(pwd->pw_dir) != 0) {
@@ -446,9 +450,13 @@ skip_auth:
 	}
 
 	/* regain special privileges */
-	setegid(saved_gid);
-	setgroups(nsaved_gids, saved_gids);
-	seteuid(saved_uid);
+	(void)setegid(saved_gid);
+	(void)seteuid(saved_uid);
+	if (setgroups(nsaved_gids, saved_gids) == -1) {
+		syslog(LOG_ERR, "setgroups failed: %m");
+		pam_end(pamh, PAM_SUCCESS);
+		exit(EXIT_FAILURE);
+	}
 
 	(void)getgrnam_r(TTYGRPNAME, &grs, grbuf, sizeof(grbuf), &grp);
 	(void)chown(ttyn, pwd->pw_uid,
