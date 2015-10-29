@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.49 2015/10/09 17:21:45 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.50 2015/10/29 17:54:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.49 2015/10/09 17:21:45 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.50 2015/10/29 17:54:49 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -114,6 +114,34 @@ first_wday_of(int yr)
 	    (isleap(yr) ? 6 : 0) + 1) % 7;
 }
 
+#define delim(p)	((p) == '\0' || isspace((unsigned char)(p)))
+
+static int
+fromzone(const unsigned char **bp, struct tm *tm)
+{
+	timezone_t tz;
+	char buf[512], *p;
+
+	for (p = buf; !delim(**bp) && p < &buf[sizeof(buf) - 1]; (*bp)++)
+		*p++ = **bp;
+	*p = '\0';
+
+	tz = tzalloc(buf);
+	if (tz == NULL)
+		return 0;
+
+	tm->tm_isdst = 0;	/* XXX */
+#ifdef TM_GMTOFF
+	tm->TM_GMTOFF = tzgetgmtoff(tz, tm->tm_isdst);
+#endif
+#ifdef TM_ZONE
+	// Can't use tzgetname() here because we are going to free()
+	tm->TM_ZONE = utc; /* XXX */
+#endif
+	tzfree(tz);
+	return 1;
+}
+
 char *
 strptime(const char *buf, const char *fmt, struct tm *tm)
 {
@@ -124,7 +152,7 @@ char *
 strptime_l(const char *buf, const char *fmt, struct tm *tm, locale_t loc)
 {
 	unsigned char c;
-	const unsigned char *bp, *ep;
+	const unsigned char *bp, *ep, *zname;
 	int alt_format, i, split_year = 0, neg = 0, state = 0,
 	    day_offset = -1, week_offset = 0, offs;
 	const char *new_fmt;
@@ -439,13 +467,18 @@ literal:
 				if (ep != NULL) {
 					tm->tm_isdst = i;
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = -(timezone);
+#ifdef USG_COMPAT
+					tm->TM_GMTOFF = -timezone;
+#else
+					tm->TM_GMTOFF = -timezone();
+#endif
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = tzname[i];
+					bp = ep;
 #endif
-				}
-				bp = ep;
+				} else
+					(void)fromzone(&bp, tm);
 			}
 			continue;
 
@@ -470,16 +503,21 @@ literal:
 			while (isspace(*bp))
 				bp++;
 
+			zname = bp;
 			switch (*bp++) {
 			case 'G':
 				if (*bp++ != 'M')
-					return NULL;
+					goto namedzone;
 				/*FALLTHROUGH*/
 			case 'U':
 				if (*bp++ != 'T')
-					return NULL;
+					goto namedzone;
+				else if (!delim(*bp) && *bp++ != 'C')
+					goto namedzone;
 				/*FALLTHROUGH*/
 			case 'Z':
+				if (!delim(*bp))
+					goto namedzone;
 				tm->tm_isdst = 0;
 #ifdef TM_GMTOFF
 				tm->TM_GMTOFF = 0;
@@ -495,11 +533,42 @@ literal:
 				neg = 1;
 				break;
 			default:
-				--bp;
+namedzone:
+				bp = zname;
+
+				/* Military style */
+				if (delim(bp[1]) &&
+				    ((*bp >= 'A' && *bp <= 'I') ||
+				    (*bp >= 'L' && *bp <= 'Y'))) {
+#ifdef TM_GMTOFF
+					/* Argh! No 'J'! */
+					if (*bp >= 'A' && *bp <= 'I')
+						tm->TM_GMTOFF =
+						    ('A' - 1) - (int)*bp;
+					else if (*bp >= 'L' && *bp <= 'M')
+						tm->TM_GMTOFF = 'A' - (int)*bp;
+					else if (*bp >= 'N' && *bp <= 'Y')
+						tm->TM_GMTOFF = (int)*bp - 'M';
+					tm->TM_GMTOFF *= 3600;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = utc; /* XXX */
+#endif
+					bp++;
+					continue;
+				}
+
+				/*
+				 * From our 3 letter hard-coded table
+				 * XXX: Can be removed, handled by tzload()
+				 */
+				if (delim(bp[0]) || delim(bp[1]) ||
+				    delim(bp[2]) || !delim(bp[3]))
+					goto loadzone;
 				ep = find_string(bp, &i, nast, NULL, 4);
 				if (ep != NULL) {
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = -5 - i;
+					tm->TM_GMTOFF = (-5 - i) * 3600;
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = __UNCONST(nast[i]);
@@ -511,7 +580,7 @@ literal:
 				if (ep != NULL) {
 					tm->tm_isdst = 1;
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = -4 - i;
+					tm->TM_GMTOFF = (-4 - i) * 3600;
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = __UNCONST(nadt[i]);
@@ -520,24 +589,12 @@ literal:
 					continue;
 				}
 
-				if ((*bp >= 'A' && *bp <= 'I') ||
-				    (*bp >= 'L' && *bp <= 'Y')) {
-#ifdef TM_GMTOFF
-					/* Argh! No 'J'! */
-					if (*bp >= 'A' && *bp <= 'I')
-						tm->TM_GMTOFF =
-						    ('A' - 1) - (int)*bp;
-					else if (*bp >= 'L' && *bp <= 'M')
-						tm->TM_GMTOFF = 'A' - (int)*bp;
-					else if (*bp >= 'N' && *bp <= 'Y')
-						tm->TM_GMTOFF = (int)*bp - 'M';
-#endif
-#ifdef TM_ZONE
-					tm->TM_ZONE = utc; /* XXX */
-#endif
-					bp++;
+loadzone:
+				/*
+				 * The hard way, load the zone!
+				 */
+				if (fromzone(&bp, tm))
 					continue;
-				}
 				return NULL;
 			}
 			offs = 0;
@@ -553,16 +610,18 @@ literal:
 				}
 				break;
 			}
+			if (isdigit(*bp))
+				return NULL;
 			switch (i) {
 			case 2:
-				offs *= 100;
+				offs *= 3600;
 				break;
 			case 4:
 				i = offs % 100;
 				if (i >= 60)
 					return NULL;
 				/* Convert minutes into decimal */
-				offs = (offs / 100) * 100 + (i * 50) / 30;
+				offs = (offs / 100) * 3600 + i * 60;
 				break;
 			default:
 				return NULL;
