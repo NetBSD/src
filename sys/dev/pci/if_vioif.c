@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.19 2015/10/29 02:09:02 ozaki-r Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.20 2015/10/29 02:29:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.19 2015/10/29 02:09:02 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.20 2015/10/29 02:29:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -681,19 +681,13 @@ err:
 		mutex_obj_free(sc->sc_rx_lock);
 
 	if (vsc->sc_nvqs == 3) {
-		virtio_free_vq(vsc, &sc->sc_vq[VQ_CTRL]);
 		cv_destroy(&sc->sc_ctrl_wait);
 		mutex_destroy(&sc->sc_ctrl_wait_lock);
-		vsc->sc_nvqs = 2;
 	}
-	if (vsc->sc_nvqs == 2) {
-		virtio_free_vq(vsc, &sc->sc_vq[VQ_TX]);
-		vsc->sc_nvqs = 1;
-	}
-	if (vsc->sc_nvqs == 1) {
-		virtio_free_vq(vsc, &sc->sc_vq[VQ_RX]);
-		vsc->sc_nvqs = 0;
-	}
+
+	while (vsc->sc_nvqs > 0)
+		virtio_free_vq(vsc, &sc->sc_vq[--vsc->sc_nvqs]);
+
 	vsc->sc_child = (void*)1;
 	return;
 }
