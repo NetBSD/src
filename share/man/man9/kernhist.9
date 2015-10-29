@@ -1,4 +1,4 @@
-.\"	$NetBSD: kernhist.9,v 1.3 2015/10/26 17:23:00 mrg Exp $
+.\"	$NetBSD: kernhist.9,v 1.4 2015/10/29 00:32:55 mrg Exp $
 .\"
 .\" Copyright (c) 2015 Matthew R. Green
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 25, 2015
+.Dd October 28, 2015
 .Dt KERNHIST 9
 .Os
 .Sh NAME
@@ -138,15 +138,29 @@ on the named kernel history.
 Dump the entire contents of the specified kernel history.
 .It Fn kernhist_dumpmask bitmask
 Used to dump a well known list of kernel histories.
-Currently only the 4
-.Xr uvm 9
-histories,
-.Va maphist ,
-.Va pdhist ,
-.Va ubchist ,
-and
-.Va loanhist
-are available via this mechanism.
+The following histories and their respective value (as seen in
+.Pa kernhist.h )
+are available:
+.Bl -tag
+.It KERNHIST_UVMMAPHIST
+Include events from
+.Dq maphist .
+.It KERNHIST_UVMPDHIST
+Include events from
+.Dq pdhist .
+.It KERNHIST_UVMUBCHIST
+Include events from
+.Dq ubchist .
+.It KERNHIST_UVMLOANHIST
+Include events from
+.Dq loanhist .
+.It KERNHIST_USBHIST
+Include events from
+.Dq usbhist .
+.It KERNHIST_SCDEBUGHIST
+Include events from
+.Dq scdebughist .
+.El
 .It Fn kernhist_print pr
 Print all the kernel histories to the kernel message buffer.
 The
