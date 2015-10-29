@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.47 2015/10/06 14:32:51 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.48 2015/10/29 22:37:15 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.47 2015/10/06 14:32:51 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.48 2015/10/29 22:37:15 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1414,6 +1414,7 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 {
 	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_command cmd;
+	int error;
 
 	memset(&cmd, 0, sizeof(cmd));
 	cmd.c_opcode = MMC_SWITCH;
@@ -1421,7 +1422,36 @@ sdmmc_mem_mmc_switch(struct sdmmc_function *sf, uint8_t set, uint8_t index,
 	    (index << 16) | (value << 8) | set;
 	cmd.c_flags = SCF_RSP_SPI_R1B | SCF_RSP_R1B | SCF_CMD_AC;
 
-	return sdmmc_mmc_command(sc, &cmd);
+	error = sdmmc_mmc_command(sc, &cmd);
+	if (error)
+		return error;
+
+	if (index == EXT_CSD_HS_TIMING && value >= 2) {
+		do {
+			memset(&cmd, 0, sizeof(cmd));
+			cmd.c_opcode = MMC_SEND_STATUS;
+			if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE))
+				cmd.c_arg = MMC_ARG_RCA(sf->rca);
+			cmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R2;
+			error = sdmmc_mmc_command(sc, &cmd);
+			if (error)
+				break;
+			if (ISSET(MMC_R1(cmd.c_resp), MMC_R1_SWITCH_ERROR)) {
+				aprint_error_dev(sc->sc_dev, "switch error\n");
+				return EINVAL;
+			}
+			/* XXX time out */
+		} while (!ISSET(MMC_R1(cmd.c_resp), MMC_R1_READY_FOR_DATA));
+
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "error waiting for high speed switch: %d\n",
+			    error);
+			return error;
+		}
+	}
+
+	return 0;
 }
 
 /*
