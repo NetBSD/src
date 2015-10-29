@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.99 2015/10/29 17:49:24 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.100 2015/10/29 19:18:32 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.99 2015/10/29 17:49:24 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.100 2015/10/29 19:18:32 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -639,7 +639,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 			      size_t tsabbrlen = strlen(tsabbr);
 			      if (j + tsabbrlen < TZ_MAX_CHARS) {
 				strcpy(sp->chars + j, tsabbr);
-				charcnt = j + tsabbrlen + 1;
+				charcnt = (int_fast32_t)(j + tsabbrlen + 1);
 				ts->ttis[i].tt_abbrind = j;
 				gotabbr++;
 			      }
