@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.159 2015/05/30 06:41:08 skrll Exp $	*/
+/*	$NetBSD: usb.c,v 1.160 2015/10/29 00:15:48 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.159 2015/05/30 06:41:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.160 2015/10/29 00:15:48 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -73,7 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.159 2015/05/30 06:41:08 skrll Exp $");
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/usbhist.h>
 
-#if defined(USBHIST)
+#if defined(USB_DEBUG)
 
 #ifndef USBHIST_SIZE
 #define USBHIST_SIZE 50000
