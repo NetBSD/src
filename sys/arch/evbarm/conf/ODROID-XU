@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-XU,v 1.5 2015/08/07 13:53:28 maxv Exp $
+#	$NetBSD: ODROID-XU,v 1.6 2015/10/29 00:15:48 mrg Exp $
 #
 #	ODROID-XU -- ODROID-XU Exynos5410 based kernel
 #
@@ -26,7 +26,7 @@ options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
 options 	EXYNOS_CONSOLE_EARLY
 #options 	UVMHIST
-options 	USBHIST
+options 	USB_DEBUG
 options 	USBHIST_SIZE=100000
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS

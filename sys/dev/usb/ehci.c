@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.245 2015/09/11 06:51:43 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.246 2015/10/29 00:15:48 mrg Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.245 2015/09/11 06:51:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.246 2015/10/29 00:15:48 mrg Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1610,10 +1610,7 @@ Static void
 ehci_dump_qtd(ehci_qtd_t *qtd)
 {
 	USBHIST_FUNC();	USBHIST_CALLED(ehcidebug);
-
-#ifdef USBHIST
 	uint32_t s = le32toh(qtd->qtd_status);
-#endif
 
 	USBHIST_LOGN(ehcidebug, 10,
 	    "     next = 0x%08x  altnext = 0x%08x  status = 0x%08x",
@@ -1650,10 +1647,8 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 Static void
 ehci_dump_sqh(ehci_soft_qh_t *sqh)
 {
-#ifdef USBHIST
 	ehci_qh_t *qh = &sqh->qh;
 	ehci_link_t link;
-#endif
 	u_int32_t endp, endphub;
 	USBHIST_FUNC();	USBHIST_CALLED(ehcidebug);
 

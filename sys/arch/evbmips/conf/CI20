@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.17 2015/10/08 17:58:51 macallan Exp $
+#	$NetBSD: CI20,v 1.18 2015/10/29 00:15:48 mrg Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.17 $"
+#ident 		"CI20-$Revision: 1.18 $"
 
 maxusers	32
 
@@ -161,7 +161,7 @@ usb* 		at ohci?
 #options 	INGENIC_EHCI_DEBUG
 #options 	EHCI_DEBUG
 #options 	USBVERBOSE
-#options 	USBHIST
+#options 	USB_DEBUG
 #usb* 		at ehci?
 
 # onboard ethernet
