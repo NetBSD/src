@@ -1,4 +1,4 @@
-# $NetBSD: md.evbarm,v 1.9 2015/07/18 08:56:05 mrg Exp $
+# $NetBSD: md.evbarm,v 1.10 2015/10/29 10:12:28 jmcneill Exp $
 ./usr/X11R7/bin/X					-unknown-	xorg
 ./usr/X11R7/bin/Xorg					-unknown-	xorg
 ./usr/X11R7/bin/cvt					-unknown-	xorg
@@ -6,6 +6,8 @@
 ./usr/X11R7/lib/X11/doc/README.DRI			-unknown-	obsolete
 ./usr/X11R7/lib/X11/doc/README.modes			-unknown-	xorg
 ./usr/X11R7/lib/X11/doc/README.rapidaccess		-unknown-	obsolete
+./usr/X11R7/lib/modules/dri/nouveau_dri.so		-unknown-	xorg
+./usr/X11R7/lib/modules/dri/nouveau_dri.so.0		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/kbd_drv.so.1		-unknown-	xorg
 ./usr/X11R7/lib/modules/drivers/mouse_drv.so		-unknown-	xorg
