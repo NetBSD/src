@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 2015/09/06 15:34:55 uebayasi Exp $
+#	$NetBSD: Makefile.inc,v 1.44 2015/10/29 00:18:55 mrg Exp $
 #
 #	Configuration variables (default values are below):
 #
@@ -58,7 +58,6 @@ ${KERNLIB}:		.NOTMAIN .MAKE __always_make_kernlib
 .else
 	@${KERNMAKE} libkern.o
 .endif
-	@echo done
 
 ${KERNLIB_PROF}:	.NOTMAIN .MAKE __always_make_kernlib
 	@echo making sure the profiled kern library is up to date...
@@ -67,30 +66,25 @@ ${KERNLIB_PROF}:	.NOTMAIN .MAKE __always_make_kernlib
 .else
 	@${KERNMAKE} libkern.po
 .endif
-	@echo done
 
 ${KERNLIBLN}:		.NOTMAIN .MAKE __always_make_kernlib
 	@echo making sure the kern lint library is up to date...
 	@${KERNMAKE} ${LIBKERNLNBN}
-	@echo done
 
 clean:			.NOTMAIN cleankernlib
 cleankernlib:		.NOTMAIN
 	@echo cleaning the kern library objects
 	@if [ -d "${KERNDST}" ]; then ${KERNMAKE} clean; fi
-	@echo done
 
 cleandir distclean:	.NOTMAIN cleandirkernlib
 cleandirkernlib:	.NOTMAIN
 	@echo cleandiring the kern library objects
 	@if [ -d "${KERNDST}" ]; then ${KERNMAKE} cleandir; fi
-	@echo done
 
 dependall depend:	.NOTMAIN dependkernlib
 dependkernlib:		.NOTMAIN .MAKE __always_make_kernlib
 	@echo depending the kern library objects
 	@${KERNMAKE} depend
-	@echo done
 
 __always_make_kernlib:	.NOTMAIN
 	@(mkdir -p ${KERNDST})
