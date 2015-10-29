@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2015/10/26 07:15:36 mrg Exp $
+# $NetBSD: Makefile,v 1.9 2015/10/29 08:09:55 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -54,6 +54,7 @@ GALLIUM_SUBDIRS= \
 	drivers/nouveau/nvc0 \
 	drivers/softpipe \
 	winsys/radeon/drm \
+	winsys/nouveau/drm \
 	winsys/sw/null \
 	winsys/sw/dri \
 	winsys/sw/kms-dri \
@@ -461,6 +462,9 @@ GALLIUM_SOURCES.winsys/radeon/drm = \
         radeon_drm_cs_dump.c \
         radeon_drm_winsys.c
 
+GALLIUM_SOURCES.winsys/nouveau/drm = \
+        nouveau_drm_winsys.c
+
 GALLIUM_SOURCES.drivers/softpipe = \
         sp_fs_exec.c \
         sp_clear.c \
@@ -532,6 +536,7 @@ SRCS+=	${GALLIUM_SOURCES.${_d}}
 LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
 LIBDPLIBS+= 	drm_radeon	${.CURDIR}/../libdrm_radeon
+LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
 LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 
@@ -571,6 +576,7 @@ CPPFLAGS.target.c += \
 	-DGALLIUM_TRACE \
 	-DGALLIUM_R200 \
 	-DGALLIUM_R600 \
+	-DGALLIUM_NOUVEAU \
 	-DGALLIUM_SOFTPIPE \
 	-I${X11SRCDIR.MesaLib}/src/gallium/state_trackers/dri \
 	-I${X11SRCDIR.MesaLib}/src/loader \
