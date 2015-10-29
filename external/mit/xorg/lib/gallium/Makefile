@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2015/10/29 08:09:55 mrg Exp $
+# $NetBSD: Makefile,v 1.10 2015/10/29 10:10:09 jmcneill Exp $
 
 # Link the gallium mega driver.
 
@@ -15,7 +15,10 @@ DRIDEBUGDIR=	${DEBUGDIR}${X11USRLIBDIR}/modules/dri
 
 DRIVERS=	kms_swrast swrast
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-DRIVERS+=	r600 nouveau
+DRIVERS+=	r600
+.endif
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
+DRIVERS+=	nouveau
 .endif
 
 CPPFLAGS+= \
