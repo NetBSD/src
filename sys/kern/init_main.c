@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.471 2015/10/17 13:52:52 jmcneill Exp $	*/
+/*	$NetBSD: init_main.c,v 1.472 2015/10/29 00:27:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.471 2015/10/17 13:52:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.472 2015/10/29 00:27:08 mrg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -600,6 +600,8 @@ main(void)
 	machdep_init();
 
 	procinit_sysctl();
+
+	scdebug_init();
 
 	/*
 	 * Create process 1 (init(8)).  We do this now, as Unix has
