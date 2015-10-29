@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.5 2015/10/27 16:04:05 christos Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.6 2015/10/29 01:56:12 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -73,7 +73,11 @@
 #define PCI_PRODUCT_VIRTIO_CONSOLE	3
 #define PCI_PRODUCT_VIRTIO_ENTROPY	4
 #define PCI_PRODUCT_VIRTIO_BALLOON	5
+#define	PCI_PRODUCT_VIRTIO_IOMEM	6
+#define PCI_PRODUCT_VIRTIO_RPMSG	7
+#define PCI_PRODUCT_VIRTIO_SCSI		8
 #define PCI_PRODUCT_VIRTIO_9P		9
+#define PCI_PRODUCT_VIRTIO_MAC80211	10
 
 /* Virtio header */
 #define VIRTIO_CONFIG_DEVICE_FEATURES	0 /* 32bit */

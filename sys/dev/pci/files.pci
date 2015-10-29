@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.378 2015/10/20 13:27:36 tnn Exp $
+#	$NetBSD: files.pci,v 1.379 2015/10/29 01:56:12 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1142,7 +1142,11 @@ file	dev/pci/if_vioif.c	vioif
 
 device	viornd
 attach	viornd at virtio
-file dev/pci/viornd.c		viornd
+file	dev/pci/viornd.c	viornd
+
+device	vioscsi: scsi
+attach	vioscsi at virtio
+file	dev/pci/vioscsi.c	vioscsi
 
 # Silicon Motion SM712(LynxEM+) frame buffer
 device	lynxfb: wsemuldisplaydev, rasops16
