@@ -1,4 +1,4 @@
-/*	$NetBSD: localtime.c,v 1.98 2015/10/09 17:21:45 christos Exp $	*/
+/*	$NetBSD: localtime.c,v 1.99 2015/10/29 17:49:24 christos Exp $	*/
 
 /*
 ** This file is in the public domain, so clarified as of
@@ -10,7 +10,7 @@
 #if 0
 static char	elsieid[] = "@(#)localtime.c	8.17";
 #else
-__RCSID("$NetBSD: localtime.c,v 1.98 2015/10/09 17:21:45 christos Exp $");
+__RCSID("$NetBSD: localtime.c,v 1.99 2015/10/29 17:49:24 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -287,6 +287,25 @@ tzgetname(const timezone_t sp, int isdst)
 	}
 	errno = ESRCH;
 	return NULL;
+}
+
+long
+tzgetgmtoff(const timezone_t sp, int isdst)
+{
+	int i;
+	long l = -1;
+	for (i = 0; i < sp->timecnt; ++i) {
+		const struct ttinfo *const ttisp = &sp->ttis[sp->types[i]];
+
+		if (ttisp->tt_isdst == isdst) {
+			l = ttisp->tt_gmtoff;
+			if (sp->types[i] != 0)
+				return l;
+		}
+	}
+	if (l == -1)
+		errno = ESRCH;
+	return l;
 }
 
 static void
@@ -617,7 +636,7 @@ tzloadbody(char const *name, struct state *sp, bool doextend,
 				break;
 			      }
 			    if (! (j < charcnt)) {
-			      int tsabbrlen = strlen(tsabbr);
+			      size_t tsabbrlen = strlen(tsabbr);
 			      if (j + tsabbrlen < TZ_MAX_CHARS) {
 				strcpy(sp->chars + j, tsabbr);
 				charcnt = j + tsabbrlen + 1;
@@ -1253,7 +1272,7 @@ tzparse(const char *name, struct state *sp, bool lastditch)
 		init_ttinfo(&sp->ttis[1], 0, false, 0);
 		sp->defaulttype = 0;
 	}
-	sp->charcnt = charcnt;
+	sp->charcnt = (int)charcnt;
 	cp = sp->chars;
 	(void) memcpy(cp, stdname, stdlen);
 	cp += stdlen;
