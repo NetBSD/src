@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_sdhc.c,v 1.11 2015/08/08 15:36:39 jmcneill Exp $ */
+/* $NetBSD: amlogic_sdhc.c,v 1.12 2015/10/29 21:07:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.11 2015/08/08 15:36:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_sdhc.c,v 1.12 2015/10/29 21:07:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -205,13 +205,16 @@ amlogic_sdhc_attach_i(device_t self)
 	saa.saa_clkmax = pll_freq;
 	/* Do not advertise DMA capabilities, we handle DMA ourselves */
 	saa.saa_caps = SMC_CAPS_4BIT_MODE|
-		       SMC_CAPS_8BIT_MODE|
 		       SMC_CAPS_SD_HIGHSPEED|
 		       SMC_CAPS_MMC_HIGHSPEED|
 		       SMC_CAPS_UHS_SDR50|
 		       SMC_CAPS_UHS_SDR104|
-		       SMC_CAPS_MMC_HS200|
 		       SMC_CAPS_AUTO_STOP;
+
+	if (sc->sc_port == AMLOGIC_SDHC_PORT_C) {
+		saa.saa_caps |= SMC_CAPS_MMC_HS200;
+		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
+	}
 
 	sc->sc_sdmmc_dev = config_found(self, &saa, NULL);
 }
