@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.50 2015/10/29 17:54:49 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.51 2015/10/29 19:18:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.50 2015/10/29 17:54:49 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.51 2015/10/29 19:18:19 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -136,7 +136,7 @@ fromzone(const unsigned char **bp, struct tm *tm)
 #endif
 #ifdef TM_ZONE
 	// Can't use tzgetname() here because we are going to free()
-	tm->TM_ZONE = utc; /* XXX */
+	tm->TM_ZONE = NULL; /* XXX */
 #endif
 	tzfree(tz);
 	return 1;
@@ -549,10 +549,10 @@ namedzone:
 						tm->TM_GMTOFF = 'A' - (int)*bp;
 					else if (*bp >= 'N' && *bp <= 'Y')
 						tm->TM_GMTOFF = (int)*bp - 'M';
-					tm->TM_GMTOFF *= 3600;
+					tm->TM_GMTOFF *= SECSPERHOUR;
 #endif
 #ifdef TM_ZONE
-					tm->TM_ZONE = utc; /* XXX */
+					tm->TM_ZONE = NULL; /* XXX */
 #endif
 					bp++;
 					continue;
@@ -568,7 +568,7 @@ namedzone:
 				ep = find_string(bp, &i, nast, NULL, 4);
 				if (ep != NULL) {
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = (-5 - i) * 3600;
+					tm->TM_GMTOFF = (-5 - i) * SECSPERHOUR;
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = __UNCONST(nast[i]);
@@ -580,7 +580,7 @@ namedzone:
 				if (ep != NULL) {
 					tm->tm_isdst = 1;
 #ifdef TM_GMTOFF
-					tm->TM_GMTOFF = (-4 - i) * 3600;
+					tm->TM_GMTOFF = (-4 - i) * SECSPERHOUR;
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = __UNCONST(nadt[i]);
@@ -614,14 +614,14 @@ loadzone:
 				return NULL;
 			switch (i) {
 			case 2:
-				offs *= 3600;
+				offs *= SECSPERHOUR;
 				break;
 			case 4:
 				i = offs % 100;
-				if (i >= 60)
+				if (i >= SECSPERMIN)
 					return NULL;
 				/* Convert minutes into decimal */
-				offs = (offs / 100) * 3600 + i * 60;
+				offs = (offs / 100) * SECSPERHOUR + i * SECSPERMIN;
 				break;
 			default:
 				return NULL;
@@ -633,7 +633,7 @@ loadzone:
 			tm->TM_GMTOFF = offs;
 #endif
 #ifdef TM_ZONE
-			tm->TM_ZONE = utc;	/* XXX */
+			tm->TM_ZONE = NULL;	/* XXX */
 #endif
 			continue;
 
