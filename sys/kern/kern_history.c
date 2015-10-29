@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.1 2011/05/17 04:18:06 mrg Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.2 2015/10/29 00:27:08 mrg Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,18 +33,30 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.1 2011/05/17 04:18:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.2 2015/10/29 00:27:08 mrg Exp $");
 
 #include "opt_kernhist.h"
-#include "opt_uvmhist.h"
 #include "opt_ddb.h"
+#include "opt_uvmhist.h"
+#include "opt_usb.h"
+#include "opt_syscall_debug.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/kernhist.h>
 
+#ifdef UVMHIST
 #include <uvm/uvm.h>
+#endif
+
+#ifdef USB_DEBUG
+#include <dev/usb/usbhist.h>
+#endif
+
+#ifdef SYSCALL_DEBUG
+KERNHIST_DECL(scdebughist);
+#endif
 
 /*
  * globals
@@ -112,6 +124,8 @@ kernhist_dump_histories(struct kern_history *hists[])
 restart:
 			if (cur[lcv] == -1)
 				continue;
+			if (!hists[lcv]->e)
+				continue;
 
 			/*
 			 * if the format is empty, go to the next entry
@@ -172,6 +186,16 @@ kernhist_dumpmask(u_int32_t bitmask)	/* XXX only support 32 hists */
 
 	if ((bitmask & KERNHIST_UVMLOANHIST) || bitmask == 0)
 		hists[i++] = &loanhist;
+#endif
+
+#ifdef USB_DEBUG
+	if ((bitmask & KERNHIST_USBHIST) || bitmask == 0)
+		hists[i++] = &usbhist;
+#endif
+
+#ifdef SYSCALL_DEBUG
+	if ((bitmask & KERNHIST_SCDEBUGHIST) || bitmask == 0)
+		hists[i++] = &scdebughist;
 #endif
 
 	hists[i] = NULL;
