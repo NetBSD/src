@@ -1,4 +1,4 @@
-.\"	$NetBSD: update_panels.3,v 1.1 2015/10/27 23:42:55 uwe Exp $
+.\"	$NetBSD: update_panels.3,v 1.2 2015/10/29 02:36:01 uwe Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -38,6 +38,29 @@
 .Fn update_panels "void"
 .\"
 .Sh DESCRIPTION
-Update terminal display...
+The
+.Fn update_panels
+function performs the internal processing required by the panel
+library to determine what changes need to be made to synchronise
+curses internal screen buffer and the terminal but does not modify the
+terminal display.
+.Pp
+This function will inernally perform required calls to
+.Xr touchoverlap 3
+and
+.Xr wnoutrefresh 3
+in the correct order.
+You should never directly call curses functions like
+.Xr wnoutrefresh 3
+on panel windows yourself.
+Remember, that
+.Dv stdscr
+is below all panels and any changes to it also require calling
+.Fn update_panels .
+.Pp
+Finally, call curses function
+.Xr doupdate 3
+to update the terminal display.
 .Sh SEE ALSO
+.Xr doupdate 3 ,
 .Xr panel 3
