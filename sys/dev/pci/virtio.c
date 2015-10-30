@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.12 2015/10/27 23:08:27 christos Exp $	*/
+/*	$NetBSD: virtio.c,v 1.13 2015/10/30 20:38:31 christos Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.12 2015/10/27 23:08:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.13 2015/10/30 20:38:31 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,18 +100,19 @@ virtio_match(device_t parent, cfdata_t match, void *aux)
 }
 
 static const char *virtio_device_name[] = {
-	"Unknown (0)",		/* 0 */
-	"Network",		/* 1 */
-	"Block",		/* 2 */
-	"Console",		/* 3 */
-	"Entropy",		/* 4 */
-	"Memory Balloon",	/* 5 */
-	"Unknown (6)",		/* 6 */
-	"Unknown (7)",		/* 7 */
-	"Unknown (8)",		/* 8 */
-	"9P Transport"		/* 9 */
+	"Unknown (0)",			/* 0 */
+	"Network",			/* 1 */
+	"Block",			/* 2 */
+	"Console",			/* 3 */
+	"Entropy",			/* 4 */
+	"Memory Balloon",		/* 5 */
+	"I/O Memory",			/* 6 */
+	"Remote Processor Messaging",	/* 7 */
+	"SCSI",				/* 8 */
+	"9P Transport",			/* 9 */
+	"mac80211 wlan",		/* 10 */
 };
-#define NDEVNAMES	(sizeof(virtio_device_name)/sizeof(char*))
+#define NDEVNAMES	__arraycount(virtio_device_name)
 
 #define VIRTIO_MSIX_CONFIG_VECTOR_INDEX	0
 #define VIRTIO_MSIX_QUEUE_VECTOR_INDEX	1
