@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.3 2015/10/30 21:18:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.4 2015/10/30 21:59:25 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,6 +350,8 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
     struct vioscsi_req *vr)
 {
 	struct scsipi_xfer *xs = vr->vr_xs;
+	struct scsi_sense_data *sense = &xs->sense.scsi_sense;
+	size_t sense_len;
 
 	DPRINTF(("%s: enter\n", __func__));
 
@@ -364,24 +366,34 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 	bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
 	    XS2DMAPOST(xs));
 
-	if (vr->vr_res.response != VIRTIO_SCSI_S_OK) {
+	switch (vr->vr_res.response) {
+	case VIRTIO_SCSI_S_OK:
+		sense_len = MIN(sizeof(xs->sense), vr->vr_res.sense_len);
+		memcpy(&xs->sense, vr->vr_res.sense, sense_len);
+		xs->error = (sense_len == 0) ? XS_NOERROR : XS_SENSE;
+		break;
+	case VIRTIO_SCSI_S_BAD_TARGET:
+		DPRINTF(("%s: bad target\n", __func__));
+		memset(sense, 0, sizeof(*sense));
+		sense->response_code = 0x70;
+		sense->flags = SKEY_ILLEGAL_REQUEST;
+		xs->error = XS_SENSE;
+		xs->status = 0;
+		xs->resid = 0;
+		break;
+	default:
+		DPRINTF(("%s: stuffup: %d\n", __func__, vr->vr_res.response));
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->resid = xs->datalen;
-		DPRINTF(("%s: stuffup: %d\n", __func__, vr->vr_res.response));
-		goto done;
+		xs->status = vr->vr_res.status;
+		xs->resid = vr->vr_res.residual;
+		break;
 	}
 
-	size_t sense_len = MIN(sizeof(xs->sense), vr->vr_res.sense_len);
-	memcpy(&xs->sense, vr->vr_res.sense, sense_len);
-	xs->error = (sense_len == 0) ? XS_NOERROR : XS_SENSE;
-
-	xs->status = vr->vr_res.status;
-	xs->resid = vr->vr_res.residual;
 
 	DPRINTF(("%s: done %d, %d, %d\n", __func__,
 	    xs->error, xs->status, xs->resid));
 
-done:
 	vr->vr_xs = NULL;
 	vioscsi_req_put(sc, vr);
 	scsipi_done(xs);
