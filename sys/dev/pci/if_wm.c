@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.377 2015/10/30 07:44:52 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.378 2015/10/30 18:23:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.377 2015/10/30 07:44:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.378 2015/10/30 18:23:37 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -720,10 +720,12 @@ static void	wm_put_hw_semaphore_82573(struct wm_softc *);
  * Management mode and power management related subroutines.
  * BMC, AMT, suspend/resume and EEE.
  */
+#ifdef WM_WOL
 static int	wm_check_mng_mode(struct wm_softc *);
 static int	wm_check_mng_mode_ich8lan(struct wm_softc *);
 static int	wm_check_mng_mode_82574(struct wm_softc *);
 static int	wm_check_mng_mode_generic(struct wm_softc *);
+#endif
 static int	wm_enable_mng_pass_thru(struct wm_softc *);
 static int	wm_check_reset_block(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
@@ -2028,7 +2030,8 @@ alloc_retry:
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
-		if (wm_check_mng_mode(sc) != 0)
+		/* Non-AMT based hardware can now take control from firmware */
+		if ((sc->sc_flags & WM_F_HAS_AMT) == 0)
 			wm_get_hw_control(sc);
 		break;
 	default:
@@ -4458,7 +4461,8 @@ wm_init_locked(struct ifnet *ifp)
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
-		if (wm_check_mng_mode(sc) != 0)
+		/* AMT based hardware can now take control from firmware */
+		if ((sc->sc_flags & WM_F_HAS_AMT) != 0)
 			wm_get_hw_control(sc);
 		break;
 	default:
@@ -10917,6 +10921,7 @@ wm_put_hw_semaphore_82573(struct wm_softc *sc)
  * BMC, AMT, suspend/resume and EEE.
  */
 
+#ifdef WM_WOL
 static int
 wm_check_mng_mode(struct wm_softc *sc)
 {
@@ -10988,6 +10993,7 @@ wm_check_mng_mode_generic(struct wm_softc *sc)
 
 	return 0;
 }
+#endif /* WM_WOL */
 
 static int
 wm_enable_mng_pass_thru(struct wm_softc *sc)
