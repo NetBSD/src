@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.14 2015/10/02 05:22:49 msaitoh Exp $ */
+/*	$NetBSD: p5pb.c,v 1.15 2015/10/30 12:14:32 phx Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 
 #include "opt_p5pb.h"
 #include "opt_pci.h"
+#include "genfb.h"
 
 /* Initial CVPPC/BVPPC resolution as configured by the firmware */
 #define P5GFX_WIDTH		640
@@ -692,7 +693,7 @@ p5pb_device_register(device_t dev, void *aux)
 				prop_dictionary_set_uint32(dict, "depth",
 				    P5GFX_DEPTH);
 
-#if (NGENFB > 0)
+#if NGENFB > 0
 				prop_dictionary_set_uint32(dict, "linebytes",
 				    P5GFX_LINEBYTES);
 
