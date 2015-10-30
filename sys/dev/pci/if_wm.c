@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.378 2015/10/30 18:23:37 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.379 2015/10/30 18:29:08 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.378 2015/10/30 18:23:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.379 2015/10/30 18:29:08 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2017,6 +2017,7 @@ alloc_retry:
 	if ((sc->sc_flags & WM_F_PLL_WA_I210) != 0)
 		wm_pll_workaround_i210(sc);
 
+	wm_get_wakeup(sc);
 	switch (sc->sc_type) {
 	case WM_T_82571:
 	case WM_T_82572:
@@ -2037,7 +2038,7 @@ alloc_retry:
 	default:
 		break;
 	}
-	wm_get_wakeup(sc);
+
 	/*
 	 * Read the Ethernet address from the EEPROM, if not first found
 	 * in device properties.
