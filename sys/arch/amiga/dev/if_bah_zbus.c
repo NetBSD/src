@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bah_zbus.c,v 1.15 2012/10/27 17:17:29 chs Exp $ */
+/*	$NetBSD: if_bah_zbus.c,v 1.16 2015/10/30 12:19:08 phx Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.15 2012/10/27 17:17:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bah_zbus.c,v 1.16 2015/10/30 12:19:08 phx Exp $");
 
 /*
  * Driver frontend for the Commodore Busines Machines and the
@@ -101,7 +101,7 @@ bah_zbus_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 #if (defined(BAH_DEBUG) && (BAH_DEBUG > 2))
-	printf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
+	printf("\n%s: attach(0x%p, 0x%p, 0x%p)\n",
 	    device_xname(self), parent, self, aux);
 #endif
 	bsc->sc_bst.base = (bus_addr_t)zap->va;
