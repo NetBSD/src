@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.68 2015/10/30 23:21:05 christos Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.69 2015/10/30 23:27:47 christos Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1928,7 +1928,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 
 	if (request && request->hr_file) {
 		char *file = NULL, *user = NULL, *user_escaped = NULL;
-		int file_alloc = 0, user_alloc = 0;
+		int file_alloc = 0;
 		const char *hostname = BOZOHOST(httpd, request);
 
 		/* bozo_escape_html() failure here is just too bad. */
@@ -1943,16 +1943,9 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 			user_escaped = bozo_escape_html(NULL, request->hr_user);
 			if (user_escaped == NULL)
 				user_escaped = request->hr_user;
-			else
-				user_alloc = 1;
 			/* expand username to ~user/ */
-			user = malloc(strlen(user_escaped) + 3);
-			if (user != NULL) {
-				strcpy(user, "~");
-				strcat(user, user_escaped);
-				strcat(user, "/");
-			}
-			if (user_alloc == 1)
+			asprintf(&user, "~%s/", user);
+			if (user_escaped != request->hr_user)
 				free(user_escaped);
 		}
 #endif /* !NO_USER_SUPPORT */
@@ -1966,6 +1959,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		    header, header,
 		    user ? user : "", file,
 		    reason, hostname, portbuf, hostname, portbuf);
+		free(user);
 		if (size >= (int)BUFSIZ) {
 			bozo_warn(httpd,
 				"bozo_http_error buffer too small, truncated");
