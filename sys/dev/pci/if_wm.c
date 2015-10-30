@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.380 2015/10/30 18:52:15 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.381 2015/10/30 19:22:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.380 2015/10/30 18:52:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.381 2015/10/30 19:22:01 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -7119,8 +7119,12 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 		__func__));
 
 	if (icr & ICR_LSC) {
-		DPRINTF(WM_DEBUG_LINK,
-		    ("%s: LINK: LSC -> mii_pollstat\n",
+		uint32_t status = CSR_READ(sc, WMREG_STATUS);
+
+		if ((sc->sc_type == WM_T_ICH8) && ((status & STATUS_LU) == 0))
+			wm_gig_downshift_workaround_ich8lan(sc);
+
+		DPRINTF(WM_DEBUG_LINK, ("%s: LINK: LSC -> mii_pollstat\n",
 			device_xname(sc->sc_dev)));
 		mii_pollstat(&sc->sc_mii);
 		if (sc->sc_type == WM_T_82543) {
@@ -11421,7 +11425,7 @@ wm_lplu_d0_disable(struct wm_softc *sc)
 	uint32_t reg;
 
 	reg = CSR_READ(sc, WMREG_PHY_CTRL);
-	reg &= ~PHY_CTRL_D0A_LPLU;
+	reg &= ~(PHY_CTRL_GBE_DIS | PHY_CTRL_D0A_LPLU);
 	CSR_WRITE(sc, WMREG_PHY_CTRL, reg);
 }
 
@@ -11472,13 +11476,14 @@ wm_set_eee_i350(struct wm_softc *sc)
 static void
 wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 {
+#if 0
 	int miistatus, active, i;
 	int reg;
 
 	miistatus = sc->sc_mii.mii_media_status;
 
 	/* If the link is not up, do nothing */
-	if ((miistatus & IFM_ACTIVE) != 0)
+	if ((miistatus & IFM_ACTIVE) == 0)
 		return;
 
 	active = sc->sc_mii.mii_media_active;
@@ -11491,7 +11496,7 @@ wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 		/* read twice */
 		reg = wm_gmii_i80003_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
 		reg = wm_gmii_i80003_readreg(sc->sc_dev, 1, IGP3_KMRN_DIAG);
-		if ((reg & IGP3_KMRN_DIAG_PCS_LOCK_LOSS) != 0)
+		if ((reg & IGP3_KMRN_DIAG_PCS_LOCK_LOSS) == 0)
 			goto out;	/* GOOD! */
 
 		/* Reset the PHY */
@@ -11512,6 +11517,7 @@ wm_kmrn_lock_loss_workaround_ich8lan(struct wm_softc *sc)
 
 out:
 	return;
+#endif
 }
 
 /* WOL from S5 stops working */
