@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.9 2015/10/30 03:18:10 ginsbach Exp $ */
+/* $NetBSD: t_strptime.c,v 1.10 2015/10/30 18:25:49 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,9 +32,10 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.9 2015/10/30 03:18:10 ginsbach Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.10 2015/10/30 18:25:49 christos Exp $");
 
 #include <time.h>
+#include <stdlib.h>
 
 #include <atf-c.h>
 
@@ -78,6 +79,96 @@ h_fail(const char *buf, const char *fmt)
 
 	ATF_REQUIRE_MSG(strptime(buf, fmt, &tm) == NULL, "strptime(\"%s\", "
 	    "\"%s\", &tm) should fail, but it didn't", buf, fmt);
+}
+
+static struct {
+	const char *name;
+	long offs;
+} zt[] = {
+	{ "Z",				0 },
+	{ "UT",				0 },
+	{ "UTC",			0 },
+	{ "GMT",			0 },
+	{ "EST",			-18000 },
+	{ "EDT",			-14400 },
+	{ "CST",			-21600 },
+	{ "CDT",			-18000 },
+	{ "MST",			-25200 },
+	{ "MDT",			-21600 },
+	{ "PST",			-28800 },
+	{ "PDT",			-25200 },
+
+	{ "VST",			-1 },
+	{ "VDT",			-1 },
+
+	{ "+03",			10800 },
+	{ "-03",			-10800 },
+	{ "+0403",			14580 },
+	{ "-0403",			-14580 },
+	{ "+04:03",			14580 },
+	{ "-04:03",			-14580 },
+	{ "+14:00",			50400 },
+	{ "-14:00",			-50400 },
+	{ "+23:59",			86340 },
+	{ "-23:59",			-86340 },
+
+	{ "1",				-1 },
+	{ "03",				-1 },
+	{ "0304",			-1 },
+	{ "+1",				-1 },
+	{ "-203",			-1 },
+	{ "+12345",			-1 },
+	{ "+12:345",			-1 },
+	{ "+123:45",			-1 },
+	{ "+2400",			-1 },
+	{ "-2400",			-1 },
+	{ "+1060",			-1 },
+	{ "-1060",			-1 },
+
+	{ "A",				-3600 },
+	{ "B",				-7200 },
+	{ "C",				-10800 },
+	{ "D",				-14400 },
+	{ "E",				-18000 },
+	{ "F",				-21600 },
+	{ "G",				-25200 },
+	{ "H",				-28800 },
+	{ "I",				-32400 },
+	{ "L",				-39600 },
+	{ "M",				-43200 },
+	{ "N",				3600 },
+	{ "O",				7200 },
+	{ "P",				10800 },
+	{ "Q",				14400 },
+	{ "R",				18000 },
+	{ "T",				25200 },
+	{ "U",				28800 },
+	{ "V",				32400 },
+	{ "W",				36000 },
+	{ "X",				39600 },
+	{ "Y",				43200 },
+
+	{ "J",				-1 },
+
+	{ "America/Los_Angeles",	-28800 },
+	{ "America/New_York",		-18000 },
+	{ "EST4EDT",			-14400 },
+
+	{ "Bogus",			-1 },
+};
+
+static void
+ztest(const char *name, const char *fmt, long value)
+{
+	struct tm tm;
+
+	memset(&tm, 0, sizeof(tm));
+	if (strptime(name, fmt, &tm) == NULL) 
+		tm.tm_gmtoff = -1;
+	ATF_REQUIRE_MSG(tm.tm_gmtoff == value,
+	    "strptime(\"%s\", \"%s\", &tm): "
+	    "expected: tm.tm_gmtoff=%ld, got: tm.tm_gmtoff=%ld",
+	    name, fmt, value, tm.tm_gmtoff);
 }
 
 ATF_TC(common);
@@ -300,94 +391,34 @@ ATF_TC_HEAD(zone, tc)
 			  "Checks strptime(3) timezone conversion [z]");
 }
 
-static struct {
-	const char *name;
-	long offs;
-} zt[] = {
-	{ "Z",				0 },
-	{ "UT",				0 },
-	{ "UTC",			0 },
-	{ "GMT",			0 },
-	{ "EST",			-18000 },
-	{ "EDT",			-14400 },
-	{ "CST",			-21600 },
-	{ "CDT",			-18000 },
-	{ "MST",			-25200 },
-	{ "MDT",			-21600 },
-	{ "PST",			-28800 },
-	{ "PDT",			-25200 },
-
-	{ "VST",			-1 },
-	{ "VDT",			-1 },
-
-	{ "+03",			10800 },
-	{ "-03",			-10800 },
-	{ "+0403",			14580 },
-	{ "-0403",			-14580 },
-	{ "+04:03",			14580 },
-	{ "-04:03",			-14580 },
-	{ "+14:00",			50400 },
-	{ "-14:00",			-50400 },
-	{ "+23:59",			86340 },
-	{ "-23:59",			-86340 },
-
-	{ "1",				-1 },
-	{ "03",				-1 },
-	{ "0304",			-1 },
-	{ "+1",				-1 },
-	{ "-203",			-1 },
-	{ "+12345",			-1 },
-	{ "+12:345",			-1 },
-	{ "+123:45",			-1 },
-	{ "+2400",			-1 },
-	{ "-2400",			-1 },
-	{ "+1060",			-1 },
-	{ "-1060",			-1 },
-
-	{ "A",				-3600 },
-	{ "B",				-7200 },
-	{ "C",				-10800 },
-	{ "D",				-14400 },
-	{ "E",				-18000 },
-	{ "F",				-21600 },
-	{ "G",				-25200 },
-	{ "H",				-28800 },
-	{ "I",				-32400 },
-	{ "L",				-39600 },
-	{ "M",				-43200 },
-	{ "N",				3600 },
-	{ "O",				7200 },
-	{ "P",				10800 },
-	{ "Q",				14400 },
-	{ "R",				18000 },
-	{ "T",				25200 },
-	{ "U",				28800 },
-	{ "V",				32400 },
-	{ "W",				36000 },
-	{ "X",				39600 },
-	{ "Y",				43200 },
-
-	{ "J",				-1 },
-
-	{ "America/Los_Angeles",	-28800 },
-	{ "America/New_York",		-18000 },
-	{ "EST4EDT",			-14400 },
-
-	{ "Bogus",			-1 },
-};
 
 ATF_TC_BODY(zone, tc)
 {
-	struct tm tm;
+	for (size_t i = 0; i < __arraycount(zt); i++)
+		ztest(zt[i].name, "%z", zt[i].offs);
+}
 
-	for (size_t i = 0; i < __arraycount(zt); i++) {
-		if (strptime(zt[i].name, "%z", &tm) == NULL)
-			tm.tm_gmtoff = -1;
-		ATF_REQUIRE_MSG(tm.tm_gmtoff == zt[i].offs,
-		    "strptime(\"%s\", \"%%z\", &tm): "
-		    "expected: tm.tm_gmtoff=%ld, got: tm.tm_gmtoff=%ld",
-		    zt[i].name, zt[i].offs, tm.tm_gmtoff);
-	}
+ATF_TC(Zone);
+
+ATF_TC_HEAD(Zone, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr",
+			  "Checks strptime(3) timezone conversion [Z]");
+}
+
+
+ATF_TC_BODY(Zone, tc)
+{
+	/* Test the hard-coded stuff */
+	setenv("TZ", "US/Eastern", 1);
+	ztest("GMT", "%Z", 0);
+	ztest("UTC", "%Z", 0);
+	ztest("US/Eastern", "%Z", -18000);
+
+	/* This is all handled by tzalloc for %Z */
+	for (size_t i = 0; i < __arraycount(zt); i++)
+		ztest(zt[i].name, "%z", zt[i].offs);
 }
 
 ATF_TP_ADD_TCS(tp)
@@ -400,6 +431,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, seconds);
 	ATF_TP_ADD_TC(tp, year);
 	ATF_TP_ADD_TC(tp, zone);
+	ATF_TP_ADD_TC(tp, Zone);
 
 	return atf_no_error();
 }
