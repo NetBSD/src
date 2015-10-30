@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.3 2010/12/16 18:38:06 christos Exp $	*/
+/*	$NetBSD: time.h,v 1.4 2015/10/30 03:08:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -102,5 +102,6 @@ int32_t posix2time_z(const timezone_t, int32_t);
 timezone_t tzalloc(const char *);
 void tzfree(const timezone_t);
 const char *tzgetname(const timezone_t, int);
+long tzgetgmtoff(const timezone_t, int);
 
 #endif /* !_COMPAT_TIME_H_ */
