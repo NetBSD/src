@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.69 2015/10/30 23:27:47 christos Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.70 2015/10/30 23:45:31 christos Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1944,7 +1944,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 			if (user_escaped == NULL)
 				user_escaped = request->hr_user;
 			/* expand username to ~user/ */
-			asprintf(&user, "~%s/", user);
+			asprintf(&user, "~%s/", user_escaped);
 			if (user_escaped != request->hr_user)
 				free(user_escaped);
 		}
