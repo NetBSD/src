@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.106 2015/10/22 09:45:32 knakahara Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.107 2015/10/30 20:03:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -380,6 +380,11 @@ int pcirescan(device_t, const char *, const int *);
 #define	PCI_INTR_MPSAFE		1
 
 int	pci_intr_setattr(pci_chipset_tag_t, pci_intr_handle_t *, int, uint64_t);
+
+/*
+ * Local constants
+ */
+#define PCI_INTRSTR_LEN			64
 
 #endif /* _KERNEL */
 

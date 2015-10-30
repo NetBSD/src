@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.105 2015/10/21 12:54:59 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.106 2015/10/30 20:03:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1084,7 +1084,9 @@ struct pci_msix_table_entry {
 #define	PCI_SATA_REV_MINOR	__BITS(19, 16)	/* Minor Revision */
 #define	PCI_SATA_REV_MAJOR	__BITS(23, 20)	/* Major Revision */
 #define	PCI_SATA_BAR	0x04	/* BAR Register */
-#define	PCI_SATA_BAR_NUM	__BITS(3, 0)	/* BAR Specifier */
+#define	PCI_SATA_BAR_SPEC	__BITS(3, 0)	/* BAR Specifier */
+#define	PCI_SATA_BAR_INCONF	__BITS(3, 0)	/* All 1 = in config space */
+#define	PCI_SATA_BAR_NUM(x)	(__SHIFTOUT((x), PCI_SATA_BAR_SPEC) - 4)
 #define	PCI_SATA_BAR_OFFSET	__BITS(23, 4)	/* BAR Offset */
 
 /*
@@ -1850,10 +1852,5 @@ struct pci_rom {
 #define	PCI_L1PM_CTL2	0x0c	/* Control Register 2 */
 #define	PCI_L1PM_CTL2_TPOSCALE	__BITS(1, 0)	/* T_POWER_ON Scale */
 #define	PCI_L1PM_CTL2_TPOVAL	__BITS(7, 3)	/* T_POWER_ON Value */
-
-/*
- * Local constants
- */
-#define PCI_INTRSTR_LEN			64
 
 #endif /* _DEV_PCI_PCIREG_H_ */

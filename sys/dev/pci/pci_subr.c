@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.139 2015/10/21 15:01:01 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.140 2015/10/30 20:03:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.139 2015/10/21 15:01:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.140 2015/10/30 20:03:45 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1111,6 +1111,43 @@ pcix_split_trans(unsigned int idx)
 }
 
 static void
+pci_conf_print_pcix_cap_2ndbusmode(int num)
+{
+	const char *maxfreq, *maxperiod;
+
+	printf("      Mode: ");
+	if (num <= 0x07)
+		printf("PCI-X Mode 1\n");
+	else if (num <= 0x0b)
+		printf("PCI-X 266 (Mode 2)\n");
+	else
+		printf("PCI-X 533 (Mode 2)\n");
+	
+	printf("      Error protection: %s\n", (num <= 3) ? "parity" : "ECC");
+	switch (num & 0x03) {
+	default:
+	case 0:
+		maxfreq = "N/A";
+		maxperiod = "N/A";
+		break;
+	case 1:
+		maxfreq = "66MHz";
+		maxperiod = "15ns";
+		break;
+	case 2:
+		maxfreq = "100MHz";
+		maxperiod = "10ns";
+		break;
+	case 3:
+		maxfreq = "133MHz";
+		maxperiod = "7.5ns";
+		break;
+	}
+	printf("      Max Clock Freq: %s\n", maxfreq);
+	printf("      Min Clock Period: %s\n", maxperiod);
+}
+
+static void
 pci_conf_print_pcix_cap(const pcireg_t *regs, int capoff)
 {
 	pcireg_t reg;
@@ -1132,9 +1169,8 @@ pci_conf_print_pcix_cap(const pcireg_t *regs, int capoff)
 		onoff("Unexpected split completion", reg, PCIX_STATUS_SPLUNEX);
 		onoff("Split completion overrun", reg, PCIX_BRIDGE_ST_SPLOVRN);
 		onoff("Split request delayed", reg, PCIX_BRIDGE_ST_SPLRQDL);
-		printf("      Secondary clock frequency: 0x%x\n",
-		    (reg & PCIX_BRIDGE_2NDST_CLKF)
-		    >> PCIX_BRIDGE_2NDST_CLKF_SHIFT);
+		pci_conf_print_pcix_cap_2ndbusmode(
+			__SHIFTOUT(reg, PCIX_BRIDGE_2NDST_CLKF));
 		printf("      Version: 0x%x\n",
 		    (reg & PCIX_BRIDGE_2NDST_VER_MASK)
 		    >> PCIX_BRIDGE_2NDST_VER_SHIFT);
@@ -1807,9 +1843,14 @@ pci_conf_print_sata_cap(const pcireg_t *regs, int capoff)
 	reg = regs[o2i(capoff + PCI_SATA_BAR)];
 
 	printf("    BAR Register: 0x%08x\n", reg);
-	printf("      BAR number: %d\n", (int)(reg & PCI_SATA_BAR_NUM));
-	printf("      BAR offset: 0x%08x\n",
-	    (pcireg_t)(reg & PCI_SATA_BAR_OFFSET));
+	printf("      Register location: ");
+	if ((reg & PCI_SATA_BAR_SPEC) == PCI_SATA_BAR_INCONF)
+		printf("in config space\n");
+	else {
+		printf("BAR %d\n", (int)PCI_SATA_BAR_NUM(reg));
+		printf("      BAR offset: 0x%08x\n",
+		    (pcireg_t)__SHIFTOUT(reg, PCI_SATA_BAR_OFFSET) * 4);
+	}
 }
 
 static void
@@ -2149,7 +2190,7 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	printf("      Low Priority Extended VC Count: %u\n", n);
 	n = __SHIFTOUT(reg, PCI_VC_CAP1_REFCLK);
 	printf("      Reference Clock: %s\n",
-	    (n == PCI_VC_CAP1_REFCLK_100NS) ? "100" : "unknown");
+	    (n == PCI_VC_CAP1_REFCLK_100NS) ? "100ns" : "unknown");
 	parbsize = 1 << __SHIFTOUT(reg, PCI_VC_CAP1_PORT_ARB_TABLE_SIZE);
 	printf("      Port Arbitration Table Entry Size: %dbit\n", parbsize);
 
@@ -2378,17 +2419,18 @@ pci_conf_print_rclink_dcl_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	    (uint8_t)__SHIFTOUT(reg, PCI_RCLINK_DCL_ESDESC_PORTNUM));
 	for (i = 0; i < nent; i++) {
 		reg = regs[o2i(extcapoff + PCI_RCLINK_DCL_LINKDESC(i))];
-		printf("    Link Description Register: 0x%08x\n", reg);
-		onoff("Link Valid", reg,PCI_RCLINK_DCL_LINKDESC_LVALID);
+		printf("    Link Entry %d:\n", i + 1);
+		printf("      Link Description Register: 0x%08x\n", reg);
+		onoff("  Link Valid", reg,PCI_RCLINK_DCL_LINKDESC_LVALID);
 		linktype = reg & PCI_RCLINK_DCL_LINKDESC_LTYPE;
-		onoff2("Link Type", reg, PCI_RCLINK_DCL_LINKDESC_LTYPE,
+		onoff2("  Link Type", reg, PCI_RCLINK_DCL_LINKDESC_LTYPE,
 		    "Configuration Space", "Memory-Mapped Space");
-		onoff("Associated RCRB Header", reg,
+		onoff("  Associated RCRB Header", reg,
 		    PCI_RCLINK_DCL_LINKDESC_ARCRBH);
-		printf("      Target Component ID: %hhu\n",
+		printf("        Target Component ID: %hhu\n",
 		    (unsigned char)__SHIFTOUT(reg,
 			PCI_RCLINK_DCL_LINKDESC_TCOMPID));
-		printf("      Target Port Number: %hhu\n",
+		printf("        Target Port Number: %hhu\n",
 		    (unsigned char)__SHIFTOUT(reg,
 			PCI_RCLINK_DCL_LINKDESC_TPNUM));
 
@@ -2396,10 +2438,12 @@ pci_conf_print_rclink_dcl_cap(const pcireg_t *regs, int capoff, int extcapoff)
 			/* Memory-Mapped Space */
 			reg = regs[o2i(extcapoff
 				    + PCI_RCLINK_DCL_LINKADDR_LT0_LO(i))];
-			printf("    Link Address Low Register: 0x%08x\n", reg);
+			printf("      Link Address Low Register: 0x%08x\n",
+			    reg);
 			reg = regs[o2i(extcapoff
 				    + PCI_RCLINK_DCL_LINKADDR_LT0_HI(i))];
-			printf("    Link Address High Register: 0x%08x\n",reg);
+			printf("      Link Address High Register: 0x%08x\n",
+			    reg);
 		} else {
 			unsigned int nb;
 			pcireg_t lo, hi;
@@ -2407,26 +2451,26 @@ pci_conf_print_rclink_dcl_cap(const pcireg_t *regs, int capoff, int extcapoff)
 			/* Configuration Space */
 			lo = regs[o2i(extcapoff
 				    + PCI_RCLINK_DCL_LINKADDR_LT1_LO(i))];
-			printf("    Configuration Space Low Register: 0x%08x"
-			    "\n", lo);
+			printf("      Configuration Space Low Register: "
+			    "0x%08x\n", lo);
 			hi = regs[o2i(extcapoff
 				    + PCI_RCLINK_DCL_LINKADDR_LT1_HI(i))];
-			printf("    Configuration Space High Register: 0x%08x"
-			    "\n", hi);
+			printf("      Configuration Space High Register: "
+			    "0x%08x\n", hi);
 			nb = __SHIFTOUT(lo, PCI_RCLINK_DCL_LINKADDR_LT1_N);
-			printf("      N: %u\n", nb);
-			printf("      Func: %hhu\n",
+			printf("        N: %u\n", nb);
+			printf("        Func: %hhu\n",
 			    (unsigned char)__SHIFTOUT(lo,
 				PCI_RCLINK_DCL_LINKADDR_LT1_FUNC));
-			printf("      Dev: %hhu\n",
+			printf("        Dev: %hhu\n",
 			    (unsigned char)__SHIFTOUT(lo,
 				PCI_RCLINK_DCL_LINKADDR_LT1_DEV));
-			printf("      Bus: %hhu\n",
+			printf("        Bus: %hhu\n",
 			    (unsigned char)__SHIFTOUT(lo,
 				PCI_RCLINK_DCL_LINKADDR_LT1_BUS(nb)));
 			lo &= PCI_RCLINK_DCL_LINKADDR_LT1_BAL(i);
-			printf("      Configuration Space Base Address: 0x%016"
-			    PRIx64 "\n", ((uint64_t)hi << 32) + lo);
+			printf("        Configuration Space Base Address: "
+			    "0x%016" PRIx64 "\n", ((uint64_t)hi << 32) + lo);
 		}
 	}
 }
