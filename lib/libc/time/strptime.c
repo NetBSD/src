@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.55 2015/10/30 18:20:16 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.56 2015/10/30 21:36:25 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.55 2015/10/30 18:20:16 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.56 2015/10/30 21:36:25 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -492,9 +492,11 @@ literal:
 			 * C[DS]T = Central : -5 | -6
 			 * M[DS]T = Mountain: -6 | -7
 			 * P[DS]T = Pacific : -7 | -8
-			 *          Military
+			 *          Nautical/Military
 			 * [A-IL-M] = -1 ... -9 (J not used)
 			 * [N-Y]  = +1 ... +12
+			 * Note: J maybe used to denote non-nautical
+			 *       local time
 			 */
 			while (isspace(*bp))
 				bp++;
@@ -532,7 +534,7 @@ literal:
 namedzone:
 				bp = zname;
 
-				/* Military style */
+				/* Nautical / Military style */
 				if (delim(bp[1]) &&
 				    ((*bp >= 'A' && *bp <= 'I') ||
 				    (*bp >= 'L' && *bp <= 'Y'))) {
@@ -549,6 +551,17 @@ namedzone:
 #endif
 #ifdef TM_ZONE
 					tm->TM_ZONE = NULL; /* XXX */
+#endif
+					bp++;
+					continue;
+				}
+				/* 'J' is local time */
+				if (delim(bp[1]) && *bp == 'J') {
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -timezone;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = tzname[i];
 #endif
 					bp++;
 					continue;
