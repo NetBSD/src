@@ -1,4 +1,4 @@
-/*	$NetBSD: smc90cx6.c,v 1.64 2012/10/27 17:18:22 chs Exp $ */
+/*	$NetBSD: smc90cx6.c,v 1.65 2015/10/30 12:19:08 phx Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.64 2012/10/27 17:18:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc90cx6.c,v 1.65 2015/10/30 12:19:08 phx Exp $");
 
 /* #define BAHSOFTCOPY */
 #define BAHRETRANSMIT /**/
@@ -152,10 +152,6 @@ bah_attach_subr(struct bah_softc *sc)
 	bus_space_handle_t regs = sc->sc_regs;
 	bus_space_handle_t mem = sc->sc_mem;
 
-#if (defined(BAH_DEBUG) && (BAH_DEBUG > 2))
-	printf("\n%s: attach(0x%x, 0x%x, 0x%x)\n",
-	    device_xname(sc->sc_dev), parent, self, aux);
-#endif
 	s = splhigh();
 
 	/*
@@ -265,7 +261,7 @@ bah_reset(struct bah_softc *sc)
 	linkaddress = GETMEM(BAHMACOFF);
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
-	printf("%s: reset: card reset, link addr = 0x%02x (%ld)\n",
+	printf("%s: reset: card reset, link addr = 0x%02x (%u)\n",
 	    device_xname(sc->sc_dev), linkaddress, linkaddress);
 #endif
 
@@ -393,7 +389,7 @@ bah_start(struct ifnet *ifp)
 #ifdef BAH_DEBUG
 	if (m->m_len < ARC_HDRLEN)
 		m = m_pullup(m, ARC_HDRLEN);/* gcc does structure padding */
-	printf("%s: start: filling %ld from %ld to %ld type %ld\n",
+	printf("%s: start: filling %d from %u to %u type %u\n",
 	    device_xname(sc->sc_dev), buffer, mtod(m, u_char *)[0],
 	    mtod(m, u_char *)[1], mtod(m, u_char *)[2]);
 #else
@@ -627,7 +623,7 @@ cleanup:
 		PUTREG(BAHSTAT, sc->sc_intmask);
 
 #ifdef BAH_DEBUG
-		printf("%s: srint: restarted rx on buf %ld\n",
+		printf("%s: srint: restarted rx on buf %d\n",
 		    device_xname(sc->sc_dev), buffer);
 #endif
 	}
@@ -797,7 +793,7 @@ bahintr(void *arg)
 
 		if (maskedisr & BAH_RI) {
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 1)
-			printf("%s: intr: hard rint, act %ld\n",
+			printf("%s: intr: hard rint, act %d\n",
 			    device_xname(sc->sc_dev), sc->sc_rx_act);
 #endif
 
@@ -833,7 +829,7 @@ bahintr(void *arg)
 					/* in RX intr, so mask is ok for RX */
 
 #ifdef BAH_DEBUG
-					printf("%s: strt rx for buf %ld, "
+					printf("%s: strt rx for buf %u, "
 					    "stat 0x%02x\n",
 					    device_xname(sc->sc_dev), sc->sc_rx_act,
 					    GETREG(BAHSTAT));
@@ -895,7 +891,7 @@ bah_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	s = splnet();
 
 #if defined(BAH_DEBUG) && (BAH_DEBUG > 2)
-	printf("%s: ioctl() called, cmd = 0x%x\n",
+	printf("%s: ioctl() called, cmd = 0x%lx\n",
 	    device_xname(sc->sc_dev), cmd);
 #endif
 
