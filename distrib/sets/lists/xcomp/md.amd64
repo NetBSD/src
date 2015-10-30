@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.44 2015/10/17 19:20:51 christos Exp $
+# $NetBSD: md.amd64,v 1.45 2015/10/30 19:04:21 christos Exp $
 ./usr/X11R6/include/xf86Optrec.h			-unknown-	x11
 ./usr/X11R6/include/xf86Parser.h			-unknown-	x11
 ./usr/X11R6/man/cat3/XF86VidMode.0			-unknown-	.cat,x11
@@ -94,5 +94,19 @@
 ./usr/libdata/lint/llib-lI810XvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMC.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-lchromeXvMCPro.ln		-unknown-	lint,xorg
+./usr/libdata/lint/llib-ldbe.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-ldri.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-ldri2.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_intel.ln			-unknown-	lint,xorg
 ./usr/libdata/lint/llib-ldrm_nouveau.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lexa.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-lextmod.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lfb.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-lglx.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-lint10.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lrecord.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lshadow.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lshadowfb.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lvbe.ln				-unknown-	lint,xorg
+./usr/libdata/lint/llib-lvgahw.ln			-unknown-	lint,xorg
+./usr/libdata/lint/llib-lxaa.ln				-unknown-	lint,xorg
