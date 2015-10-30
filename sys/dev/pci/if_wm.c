@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.379 2015/10/30 18:29:08 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.380 2015/10/30 18:52:15 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.379 2015/10/30 18:29:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.380 2015/10/30 18:52:15 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3734,9 +3734,8 @@ wm_reset(struct wm_softc *sc)
 			 */
 			if ((sc->sc_type == WM_T_PCH2)
 			    && ((CSR_READ(sc, WMREG_FWSM) & FWSM_FW_VALID)
-				!= 0))
+				== 0))
 				wm_gate_hw_phy_config_ich8lan(sc, 1);
-
 
 			reg |= CTRL_PHY_RESET;
 			phy_reset = 1;
@@ -3915,7 +3914,7 @@ wm_reset(struct wm_softc *sc)
 	if (sc->sc_type == WM_T_PCH)
 		CSR_WRITE(sc, WMREG_CRC_OFFSET, 0x65656565);
 
-	if ((sc->sc_flags & WM_F_NEWQUEUE) != 0)
+	if (sc->sc_type >= WM_T_82544)
 		CSR_WRITE(sc, WMREG_WUC, 0);
 
 	wm_reset_mdicnfg_82580(sc);
@@ -10963,7 +10962,8 @@ wm_check_mng_mode_ich8lan(struct wm_softc *sc)
 
 	fwsm = CSR_READ(sc, WMREG_FWSM);
 
-	if ((fwsm & FWSM_MODE_MASK) == (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT))
+	if (((fwsm & FWSM_FW_VALID) != 0) &&
+	    (fwsm & FWSM_MODE_MASK) == (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT))
 		return 1;
 
 	return 0;
@@ -11039,7 +11039,9 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 static int
 wm_check_reset_block(struct wm_softc *sc)
 {
+	bool blocked = false;
 	uint32_t reg;
+	int i = 0;
 
 	switch (sc->sc_type) {
 	case WM_T_ICH8:
@@ -11048,11 +11050,16 @@ wm_check_reset_block(struct wm_softc *sc)
 	case WM_T_PCH:
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
-		reg = CSR_READ(sc, WMREG_FWSM);
-		if ((reg & FWSM_RSPCIPHY) != 0)
-			return 0;
-		else
-			return -1;
+		do {
+			reg = CSR_READ(sc, WMREG_FWSM);
+			if ((reg & FWSM_RSPCIPHY) == 0) {
+				blocked = true;
+				delay(10*1000);
+				continue;
+			}
+			blocked = false;
+		} while (blocked && (i++ < 10));
+		return blocked ? 1 : 0;
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
@@ -11424,7 +11431,7 @@ wm_lplu_d0_disable_pch(struct wm_softc *sc)
 	uint32_t reg;
 
 	reg = wm_gmii_hv_readreg(sc->sc_dev, 1, HV_OEM_BITS);
-	reg &= ~(HV_OEM_BITS_A1KDIS| HV_OEM_BITS_LPLU);
+	reg &= ~(HV_OEM_BITS_A1KDIS | HV_OEM_BITS_LPLU);
 	reg |= HV_OEM_BITS_ANEGNOW;
 	wm_gmii_hv_writereg(sc->sc_dev, 1, HV_OEM_BITS, reg);
 }
