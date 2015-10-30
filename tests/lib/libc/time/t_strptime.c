@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.8 2015/10/30 01:51:15 ginsbach Exp $ */
+/* $NetBSD: t_strptime.c,v 1.9 2015/10/30 03:18:10 ginsbach Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.8 2015/10/30 01:51:15 ginsbach Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.9 2015/10/30 03:18:10 ginsbach Exp $");
 
 #include <time.h>
 
@@ -326,6 +326,10 @@ static struct {
 	{ "-0403",			-14580 },
 	{ "+04:03",			14580 },
 	{ "-04:03",			-14580 },
+	{ "+14:00",			50400 },
+	{ "-14:00",			-50400 },
+	{ "+23:59",			86340 },
+	{ "-23:59",			-86340 },
 
 	{ "1",				-1 },
 	{ "03",				-1 },
@@ -335,8 +339,8 @@ static struct {
 	{ "+12345",			-1 },
 	{ "+12:345",			-1 },
 	{ "+123:45",			-1 },
-	{ "+1430",			-1 },
-	{ "-1430",			-1 },
+	{ "+2400",			-1 },
+	{ "-2400",			-1 },
 	{ "+1060",			-1 },
 	{ "-1060",			-1 },
 
