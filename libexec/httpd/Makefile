@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2015/10/30 18:53:26 tron Exp $
+#	$NetBSD: Makefile,v 1.26 2015/10/30 23:21:05 christos Exp $
 #
 #	$eterna: Makefile,v 1.30 2010/07/11 00:34:27 mrg Exp $
 #
@@ -47,9 +47,6 @@ OPSYS:=	${:!uname -s!:S/-//g:S/\///g}
 CPPFLAGS+=	-DHAVE_NBUTIL_H
 LDADD+=		-lnbutil
 .endif
-
-COPTS.bozohttpd.c=	-Wno-stack-protector
-
 
 .include <bsd.own.mk>
 

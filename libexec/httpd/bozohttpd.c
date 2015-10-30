@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.67 2015/10/28 09:20:15 shm Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.68 2015/10/30 23:21:05 christos Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -1946,7 +1946,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 			else
 				user_alloc = 1;
 			/* expand username to ~user/ */
-			user = alloca(strlen(user_escaped) + 3);
+			user = malloc(strlen(user_escaped) + 3);
 			if (user != NULL) {
 				strcpy(user, "~");
 				strcat(user, user_escaped);
