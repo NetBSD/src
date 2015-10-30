@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.51 2015/10/29 19:18:19 christos Exp $	*/
+/*	$NetBSD: strptime.c,v 1.52 2015/10/30 01:49:36 ginsbach Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.51 2015/10/29 19:18:19 christos Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.52 2015/10/30 01:49:36 ginsbach Exp $");
 #endif
 
 #include "namespace.h"
@@ -626,6 +626,8 @@ loadzone:
 			default:
 				return NULL;
 			}
+			if (offs > (12 * SECSPERHOUR))
+				return NULL;
 			if (neg)
 				offs = -offs;
 			tm->tm_isdst = 0;	/* XXX */
