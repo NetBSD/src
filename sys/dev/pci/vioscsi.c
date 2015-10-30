@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.1 2015/10/29 01:56:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.2 2015/10/30 21:15:05 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -34,8 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.1 2015/10/29 01:56:12 christos Exp $")
 
 #include <dev/scsipi/scsi_all.h>
 #include <dev/scsipi/scsiconf.h>
-
-#define VIOSCSI_DEBUG
 
 #ifdef VIOSCSI_DEBUG
 static int vioscsi_debug = 1;
@@ -63,6 +61,12 @@ struct vioscsi_softc {
 
 	u_int32_t		 sc_seg_max;
 };
+
+/*      
+ * Each block request uses at least two segments - one for the header
+ * and one for the status.
+*/
+#define VIRTIO_SCSI_MIN_SEGMENTS 2
 
 static int	 vioscsi_match(device_t, cfdata_t, void *);
 static void	 vioscsi_attach(device_t, device_t, void *);
@@ -179,9 +183,11 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = max_target;
-	chan->chan_nluns = max_lun;
+	chan->chan_ntargets = 2; // max_target;
+	chan->chan_nluns = 1; // max_lun;
 	chan->chan_id = 0; /*XXX*/
+	(void)max_target;
+	(void)max_lun;
 
 	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 }
@@ -217,12 +223,9 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 		DPRINTF(("%s: unhandled %d\n", __func__, request));
 		return;
 	}
-
 	
 	xs = arg;
 	periph = xs->xs_periph;
-
-        KASSERT((xs->xs_control & (XS_CTL_DATA_IN|XS_CTL_DATA_OUT)) != 0);
 
 	vr = vioscsi_req_get(sc);
 #ifdef DIAGNOSTIC
@@ -251,13 +254,19 @@ vioscsi_scsipi_request(struct scsipi_channel *chan, scsipi_adapter_req_t
 		goto stuffup;
 	}
 	req->lun[0] = 1;
-	req->lun[1] = periph->periph_target;
+	req->lun[1] = periph->periph_target - 1;
 	req->lun[2] = 0x40 | (periph->periph_lun >> 8);
 	req->lun[3] = periph->periph_lun;
 	memset(req->lun + 4, 0, 4);
+	DPRINTF(("%s: command for %u:%u at slot %d\n", __func__,
+	    periph->periph_target - 1, periph->periph_lun, slot));
 
-	if ((size_t)xs->cmdlen > sizeof(req->cdb))
+	if ((size_t)xs->cmdlen > sizeof(req->cdb)) {
+		DPRINTF(("%s: bad cmdlen %zu > %zu\n", __func__,
+		    (size_t)xs->cmdlen, sizeof(req->cdb)));
 		goto stuffup;
+	}
+
 	memset(req->cdb, 0, sizeof(req->cdb));
 	memcpy(req->cdb, xs->cmd, xs->cmdlen);
 
@@ -281,8 +290,11 @@ nomore:
 		return;
 	}
 
-	error = virtio_enqueue_reserve(vsc, vq, slot,
-	    vr->vr_data->dm_nsegs + 2);
+	int nsegs = VIRTIO_SCSI_MIN_SEGMENTS;
+	if ((xs->xs_control & (XS_CTL_DATA_IN|XS_CTL_DATA_OUT)) != 0)
+		nsegs += vr->vr_data->dm_nsegs;
+
+	error = virtio_enqueue_reserve(vsc, vq, slot, nsegs);
 	if (error) {
 		DPRINTF(("%s: error reserving %d\n", __func__, error));
 		goto stuffup;
@@ -296,8 +308,9 @@ nomore:
 	    offsetof(struct vioscsi_req, vr_res),
             sizeof(struct virtio_scsi_res_hdr),
 	    BUS_DMASYNC_PREREAD);
-	bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
-	    XS2DMAPRE(xs));
+	if ((xs->xs_control & (XS_CTL_DATA_IN|XS_CTL_DATA_OUT)) != 0)
+		bus_dmamap_sync(vsc->sc_dmat, vr->vr_data, 0, xs->datalen,
+		    XS2DMAPRE(xs));
 
 	virtio_enqueue_p(vsc, vq, slot, vr->vr_control,
 	    offsetof(struct vioscsi_req, vr_req),
