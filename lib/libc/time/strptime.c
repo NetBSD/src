@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.53 2015/10/30 03:18:10 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.54 2015/10/30 18:04:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.53 2015/10/30 03:18:10 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.54 2015/10/30 18:04:42 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -467,10 +467,7 @@ literal:
 				if (ep != NULL) {
 					tm->tm_isdst = i;
 #ifdef TM_GMTOFF
-#ifdef USG_COMPAT
 					tm->TM_GMTOFF = -timezone;
-#else
-					tm->TM_GMTOFF = -timezone();
 #endif
 #endif
 #ifdef TM_ZONE
