@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.2 2015/10/30 21:15:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.3 2015/10/30 21:18:16 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,11 +183,9 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_adapter = adapt;
 	chan->chan_bustype = &scsi_bustype;
 	chan->chan_channel = 0;
-	chan->chan_ntargets = 2; // max_target;
-	chan->chan_nluns = 1; // max_lun;
-	chan->chan_id = 0; /*XXX*/
-	(void)max_target;
-	(void)max_lun;
+	chan->chan_ntargets = max_target;
+	chan->chan_nluns = max_lun;
+	chan->chan_id = 0;
 
 	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 }
