@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.103 2014/03/07 22:51:27 nakayama Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.104 2015/10/31 02:36:17 nakayama Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.103 2014/03/07 22:51:27 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.104 2015/10/31 02:36:17 nakayama Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -76,9 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.103 2014/03/07 22:51:27 nakay
 #include <compat/sys/siginfo.h>
 #include <compat/sys/ucontext.h>
 
-#ifndef SUN4U
-#define SUN4U	/* see .../sparc/include/frame.h for the reason */
-#endif
 #include <machine/frame.h>
 #include <machine/pcb.h>
 #include <machine/reg.h>
