@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.30 2015/07/23 05:46:39 mrg Exp $
+# $NetBSD: shl.mi,v 1.31 2015/10/31 12:41:25 htodd Exp $
 ./usr/libdata/debug/usr/X11R6/lib/libFS.so.6.0.debug			-unknown-		x11,debug
 ./usr/libdata/debug/usr/X11R6/lib/libGL.so.1.2.debug			-unknown-		x11,debug
 ./usr/libdata/debug/usr/X11R6/lib/libGLU.so.1.3.debug			-unknown-		x11,debug
@@ -152,5 +152,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=i386
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libmesa_dri.so.0.debug	obsolete	obsolete,xorg,debug,!machine=i386,!machine=amd64
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-	xorg,debug,machine=amd64
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	-unknown-	xorg,debug,machine=i386
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/libswrast_dri.so.0.debug	obsolete	obsolete,xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/swrast_dri.so.0.debug	-unknown-	xorg,debug
