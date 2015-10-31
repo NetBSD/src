@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2015/10/29 10:10:09 jmcneill Exp $
+# $NetBSD: Makefile,v 1.11 2015/10/31 20:13:45 mrg Exp $
 
 # Link the gallium mega driver.
 
@@ -539,7 +539,9 @@ SRCS+=	${GALLIUM_SOURCES.${_d}}
 LIBDPLIBS+=	m		${.CURDIR}/../../../../../lib/libm
 LIBDPLIBS+= 	drm		${.CURDIR}/../libdrm
 LIBDPLIBS+= 	drm_radeon	${.CURDIR}/../libdrm_radeon
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
 LIBDPLIBS+= 	drm_nouveau	${.CURDIR}/../libdrm_nouveau
+.endif
 LIBDPLIBS+= 	glapi		${.CURDIR}/../libglapi
 LIBDPLIBS+=	expat		${.CURDIR}/../../../../../external/mit/expat/lib/libexpat
 
