@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.4 2015/10/30 21:59:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.5 2015/10/31 00:41:19 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -385,11 +385,11 @@ vioscsi_req_done(struct vioscsi_softc *sc, struct virtio_softc *vsc,
 		DPRINTF(("%s: stuffup: %d\n", __func__, vr->vr_res.response));
 		xs->error = XS_DRIVER_STUFFUP;
 		xs->resid = xs->datalen;
-		xs->status = vr->vr_res.status;
-		xs->resid = vr->vr_res.residual;
 		break;
 	}
 
+	xs->status = vr->vr_res.status;
+	xs->resid = vr->vr_res.residual;
 
 	DPRINTF(("%s: done %d, %d, %d\n", __func__,
 	    xs->error, xs->status, xs->resid));
