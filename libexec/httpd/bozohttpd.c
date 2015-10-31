@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.70 2015/10/30 23:45:31 christos Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.71 2015/10/31 00:55:17 christos Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -936,7 +936,7 @@ handle_redirect(bozo_httpreq_t *request,
 			   * eg. https:// */
 
 	if (url == NULL) {
-		if (asprintf(&urlbuf, "/%s/", request->hr_file) < 0)
+		if (asprintf(&urlbuf, "/%s/", request->hr_file) == -1)
 			bozo_err(httpd, 1, "asprintf");
 		url = urlbuf;
 	} else
@@ -944,7 +944,7 @@ handle_redirect(bozo_httpreq_t *request,
 
 #ifndef NO_USER_SUPPORT
 	if (request->hr_user && !absolute) {
-		if (asprintf(&userbuf, "/~%s%s", request->hr_user, url) < 0)
+		if (asprintf(&userbuf, "/~%s%s", request->hr_user, url) == -1)
 			bozo_err(httpd, 1, "asprintf");
 		url = userbuf;
 	} else
@@ -1144,7 +1144,7 @@ check_virtual(bozo_httpreq_t *request)
 					request->hr_virthostname =
 					    bozostrdup(httpd, d->d_name);
 					if (asprintf(&s, "%s/%s", httpd->virtbase,
-					    request->hr_virthostname) < 0)
+					    request->hr_virthostname) == -1)
 						bozo_err(httpd, 1, "asprintf");
 					break;
 				}
@@ -1397,7 +1397,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 		}
 		if (strchr(file + 2, '/') == NULL) {
 			char *userredirecturl;
-			if (asprintf(&userredirecturl, "%s/", file) < 0)
+			if (asprintf(&userredirecturl, "%s/", file) == -1)
 				bozo_err(httpd, 1, "asprintf");
 			handle_redirect(request, userredirecturl, 0);
 			free(userredirecturl);
@@ -1559,7 +1559,8 @@ bozo_process_request(bozo_httpreq_t *request)
 	fd = -1;
 	encoding = NULL;
 	if (can_gzip(request)) {
-		asprintf(&file, "%s.gz", request->hr_file);
+		if (asprintf(&file, "%s.gz", request->hr_file) == -1)
+			bozo_err(httpd, 1, "asprintf");
 		fd = open(file, O_RDONLY);
 		if (fd >= 0)
 			encoding = "gzip";
@@ -1944,7 +1945,8 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 			if (user_escaped == NULL)
 				user_escaped = request->hr_user;
 			/* expand username to ~user/ */
-			asprintf(&user, "~%s/", user_escaped);
+			if (asprintf(&user, "~%s/", user_escaped) == -1)
+				bozo_err(httpd, 1, "asprintf");
 			if (user_escaped != request->hr_user)
 				free(user_escaped);
 		}
