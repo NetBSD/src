@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_therm_base.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_therm_base.c,v 1.2 2015/10/31 09:14:27 mrg Exp $	*/
 
 /*
  * Copyright 2012 The Nouveau community
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_therm_base.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_therm_base.c,v 1.2 2015/10/31 09:14:27 mrg Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -141,7 +141,9 @@ nouveau_therm_update(struct nouveau_therm *therm, int mode)
 	spin_unlock_irqrestore(&priv->lock, flags);
 
 	if (duty >= 0) {
+#if 0 /* XXXMRG one log per second is a little excessive */
 		nv_debug(therm, "FAN target request: %d%%\n", duty);
+#endif
 		nouveau_therm_fan_set(therm, immd, duty);
 	}
 }
