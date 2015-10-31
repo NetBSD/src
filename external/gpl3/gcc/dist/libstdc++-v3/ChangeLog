@@ -1,3 +1,48 @@
+2015-06-23  Release Manager
+
+	* GCC 4.8.5 released.
+
+2015-06-17  Matthias Klose  <doko@ubuntu.com>
+
+	Backported from mainline
+	2015-06-01  Jonathan Wakely  <jwakely@redhat.com>
+
+	* testsuite/lib/libstdc++.exp (libstdc++_init): Unset LANGUAGE
+	environment variable.
+
+2015-06-04  Renlin Li  <renlin.li@arm.com>
+
+	Backported from mainline
+	2015-06-02  Renlin Li  <renlin.li@arm.com>
+
+	* testsuite/27_io/fpos/14775.cc: Add _GLIBCXX_HAVE_LIMIT_FSIZE check.
+
+2015-03-25  Jonathan Wakely  <jwakely@redhat.com>
+
+	Backport from mainline
+	2015-03-02  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/65279
+	* include/std/scoped_allocator (__inner_type_impl,
+	scoped_allocator_adaptor): Add defaulted copy assignment and move
+	assignment operators.
+	* testsuite/20_util/scoped_allocator/65279.cc: New.
+
+2015-03-25  Paolo Carlini  <paolo.carlini@oracle.com>
+
+	PR libstdc++/65543
+	* include/std/istream (operator>>(basic_istream<>&&, _Tp&): Revert
+	thinko in r150387.
+	* include/std/ostream (operator<<(basic_ostream<>&&, const _Tp&):
+	Likewise.
+	* testsuite/27_io/rvalue_streams-2.cc: New.
+
+2015-01-09  Jonathan Wakely  <jwakely@redhat.com>
+
+	PR libstdc++/60966
+	* include/std/future (packaged_task::operator()): Increment the
+	reference count on the shared state until the function returns.
+
 2014-12-19  Release Manager
 
 	* GCC 4.8.4 released.

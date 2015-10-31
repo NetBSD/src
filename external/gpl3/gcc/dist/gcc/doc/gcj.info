@@ -1,5 +1,5 @@
 This is doc/gcj.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-4.8.3/gcc-4.8.3/gcc/java/gcj.texi.
+/space/rguenther/gcc-4.8.5/gcc-4.8.5/gcc/java/gcj.texi.
 
 Copyright (C) 2001-2013 Free Software Foundation, Inc.
 
@@ -3608,84 +3608,3 @@ File: gcj.info,  Node: Index,  Prev: Resources,  Up: Top
 Index
 *****
 
- [index ]
-* Menu:
-
-* class path:                            Input Options.        (line  6)
-* class$:                                Reference types.      (line 20)
-* elements on template<class T>:         Arrays.               (line 46)
-* FDL, GNU Free Documentation License:   GNU Free Documentation License.
-                                                               (line  6)
-* GCJ_PROPERTIES:                        Extensions.           (line 56)
-* jclass:                                Reference types.      (line 16)
-* jobject:                               Reference types.      (line 16)
-* jstring:                               Reference types.      (line 16)
-* JvAllocBytes:                          Mixing with C++.      (line 99)
-* JvAttachCurrentThread:                 Invocation.           (line 55)
-* JvCreateJavaVM:                        Invocation.           (line 11)
-* JvDetachCurrentThread:                 Invocation.           (line 68)
-* JvFree:                                Memory allocation.    (line 19)
-* JvGetArrayLength:                      Arrays.               (line 86)
-* JvGetStringChars:                      Strings.              (line 25)
-* JvGetStringUTFLength:                  Strings.              (line 29)
-* JvGetStringUTFRegion:                  Strings.              (line 34)
-* JvMalloc:                              Memory allocation.    (line 11)
-* JvNewBooleanArray:                     Arrays.               (line 83)
-* JvNewObjectArray:                      Arrays.               (line 57)
-* JvNewString:                           Strings.              (line 11)
-* JvNewStringLatin1:                     Strings.              (line 15)
-* JvNewStringUTF:                        Strings.              (line 21)
-* JvPrimClass:                           Primitive types.      (line 36)
-* JvRealloc:                             Memory allocation.    (line 15)
-
-
-
-Tag Table:
-Node: Top2729
-Node: Copying4148
-Node: GNU Free Documentation License41698
-Node: Invoking gcj66841
-Node: Input and output files67604
-Node: Input Options69130
-Node: Encodings72404
-Node: Warnings73610
-Node: Linking74723
-Node: Code Generation77662
-Node: Configure-time Options84442
-Node: Compatibility86182
-Node: Limitations86666
-Node: Extensions88248
-Node: Invoking jcf-dump91342
-Node: Invoking gij92287
-Node: Invoking gcj-dbtool95538
-Node: Invoking jv-convert98004
-Node: Invoking grmic99083
-Node: Invoking gc-analyze100469
-Node: Invoking aot-compile101910
-Node: Invoking rebuild-gcj-db102859
-Node: About CNI103169
-Node: Basic concepts104628
-Node: Packages107524
-Node: Primitive types109852
-Node: Reference types111530
-Node: Interfaces112619
-Node: Objects and Classes113530
-Node: Class Initialization115725
-Node: Object allocation118067
-Node: Memory allocation118857
-Node: Arrays119489
-Node: Methods122299
-Node: Strings125120
-Node: Mixing with C++126624
-Node: Exception Handling130095
-Node: Synchronization131729
-Node: Invocation133719
-Node: Reflection138655
-Node: System properties139116
-Node: Standard Properties139993
-Node: GNU Classpath Properties144425
-Node: libgcj Runtime Properties145472
-Node: Resources149974
-Node: Index150788
-
-End Tag Table

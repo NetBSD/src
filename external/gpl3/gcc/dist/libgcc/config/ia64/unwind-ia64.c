@@ -1718,7 +1718,7 @@ _Unwind_SetIP (struct _Unwind_Context *context, _Unwind_Ptr val)
 _Unwind_Ptr
 _Unwind_GetLanguageSpecificData (struct _Unwind_Context *context)
 {
-  return context->lsda;
+  return (_Unwind_Ptr)context->lsda;
 }
 
 _Unwind_Ptr
@@ -2444,6 +2444,16 @@ uw_identify_context (struct _Unwind_Context *context)
 {
   return _Unwind_GetIP (context);
 }
+
+#ifdef __NetBSD__
+/* dummy for bootstrapping purposes */
+struct unw_table_entry *
+_Unwind_FindTableEntry (void *pc, unw_word *segment_base,
+			unw_word *gp, struct unw_table_entry *ent)
+{
+	return NULL;
+}
+#endif
 
 #include "unwind.inc"
 

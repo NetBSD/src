@@ -6811,7 +6811,7 @@ vrp_evaluate_conditional (enum tree_code code, tree op0, tree op1, gimple stmt)
       tree type = TREE_TYPE (op0);
       value_range_t *vr0 = get_value_range (op0);
 
-      if (vr0->type != VR_VARYING
+      if (vr0->type == VR_RANGE
 	  && INTEGRAL_TYPE_P (type)
 	  && vrp_val_is_min (vr0->min)
 	  && vrp_val_is_max (vr0->max)
@@ -9211,7 +9211,7 @@ vrp_finalize (void)
   substitute_and_fold (op_with_constant_singleton_value_range,
 		       vrp_fold_stmt, false);
 
-  if (warn_array_bounds)
+  if (warn_array_bounds && first_pass_instance)
     check_all_array_refs ();
 
   /* We must identify jump threading opportunities before we release
