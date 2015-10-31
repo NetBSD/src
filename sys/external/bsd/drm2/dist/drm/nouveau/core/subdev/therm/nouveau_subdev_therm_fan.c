@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_subdev_therm_fan.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $	*/
+/*	$NetBSD: nouveau_subdev_therm_fan.c,v 1.2 2015/10/31 09:14:27 mrg Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_therm_fan.c,v 1.1.1.1 2014/08/06 12:36:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_subdev_therm_fan.c,v 1.2 2015/10/31 09:14:27 mrg Exp $");
 
 #include "priv.h"
 
@@ -53,7 +53,9 @@ nouveau_fan_update(struct nouveau_fan *fan, bool immediate, int target)
 	target = max_t(u8, target, fan->bios.min_duty);
 	target = min_t(u8, target, fan->bios.max_duty);
 	if (fan->percent != target) {
+#if 0 /* XXXMRG one log per second is a little excessive */
 		nv_debug(therm, "FAN target: %d\n", target);
+#endif
 		fan->percent = target;
 	}
 
@@ -78,7 +80,9 @@ nouveau_fan_update(struct nouveau_fan *fan, bool immediate, int target)
 		duty = target;
 	}
 
+#if 0 /* XXXMRG one log per second is a little excessive */
 	nv_debug(therm, "FAN update: %d\n", duty);
+#endif
 	ret = fan->set(therm, duty);
 	if (ret) {
 		spin_unlock_irqrestore(&fan->lock, flags);
