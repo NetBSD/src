@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.11 2015/10/31 02:13:41 christos Exp $ */
+/* $NetBSD: t_strptime.c,v 1.12 2015/10/31 02:25:11 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.11 2015/10/31 02:13:41 christos Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.12 2015/10/31 02:25:11 christos Exp $");
 
 #include <time.h>
 #include <stdlib.h>
@@ -159,7 +159,7 @@ static struct {
 };
 
 static void
-ztest(const char *name, const char *fmt, long value)
+ztest1(const char *name, const char *fmt, long value)
 {
 	struct tm tm;
 	char *rv;
@@ -187,6 +187,17 @@ ztest(const char *name, const char *fmt, long value)
 	    "expected: tm.tm_gmtoff=%ld, got: tm.tm_gmtoff=%ld",
 	    name, fmt, value, tm.tm_gmtoff);
 	printf("%s %s %ld\n", name, fmt, tm.tm_gmtoff);
+}
+
+static void
+ztest(const char *fmt)
+{
+	setenv("TZ", "US/Eastern", 1);
+	ztest1("GMT", fmt, 0);
+	ztest1("UTC", fmt, 0);
+	ztest1("US/Eastern", fmt, -18000);
+	for (size_t i = 0; i < __arraycount(zt); i++)
+		ztest1(zt[i].name, fmt, zt[i].offs);
 }
 
 ATF_TC(common);
@@ -412,8 +423,7 @@ ATF_TC_HEAD(zone, tc)
 
 ATF_TC_BODY(zone, tc)
 {
-	for (size_t i = 0; i < __arraycount(zt); i++)
-		ztest(zt[i].name, "%z", zt[i].offs);
+	ztest("%z");
 }
 
 ATF_TC(Zone);
@@ -428,15 +438,7 @@ ATF_TC_HEAD(Zone, tc)
 
 ATF_TC_BODY(Zone, tc)
 {
-	/* Test the hard-coded stuff */
-	setenv("TZ", "US/Eastern", 1);
-	ztest("GMT", "%Z", 0);
-	ztest("UTC", "%Z", 0);
-	ztest("US/Eastern", "%Z", -18000);
-
-	/* This is all handled by tzalloc for %Z */
-	for (size_t i = 0; i < __arraycount(zt); i++)
-		ztest(zt[i].name, "%Z", zt[i].offs);
+	ztest("%z");
 }
 
 ATF_TP_ADD_TCS(tp)
