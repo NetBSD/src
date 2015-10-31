@@ -1,4 +1,4 @@
-.\"	$NetBSD: strptime.3,v 1.33 2015/10/29 22:42:55 wiz Exp $
+.\"	$NetBSD: strptime.3,v 1.34 2015/10/31 02:09:06 ginsbach Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -221,7 +221,7 @@ with \&%C, specifies the year [0,99] within that century.
 .It Cm \&%Y
 the year, including the century (i.e., 1996).
 .It Cm \&%z
-an ISO 8601 or RFC-2822 time zone specification.
+an ISO 8601, RFC-2822, or RFC-3339 time zone specification.
 This is one of the following:
 .Bl -dash -offset indent -compact
 .It
@@ -295,7 +295,7 @@ or
 .Pq Dq S
 time
 .It
-a single letter military time zone specified as:
+a single letter military or nautical time zone specified as:
 .Bl -bullet -offset indent -compact
 .It
 .Dq A
@@ -304,7 +304,10 @@ through
 .It
 .Dq K
 through
-.Dq Y .
+.Dq Y
+.It
+.Dq J
+.Pq non-nautical local time zone
 .El
 .It
 An arbirtrary timezone name that can be loaded from the database.
