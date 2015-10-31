@@ -1,4 +1,4 @@
-/*	$NetBSD: strptime.c,v 1.56 2015/10/30 21:36:25 ginsbach Exp $	*/
+/*	$NetBSD: strptime.c,v 1.57 2015/10/31 02:14:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2005, 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: strptime.c,v 1.56 2015/10/30 21:36:25 ginsbach Exp $");
+__RCSID("$NetBSD: strptime.c,v 1.57 2015/10/31 02:14:08 christos Exp $");
 #endif
 
 #include "namespace.h"
@@ -79,7 +79,6 @@ static const u_char *find_string(const u_char *, int *, const char * const *,
 #define HAVE_YEAR(s)		(s & S_YEAR)
 #define HAVE_HOUR(s)		(s & S_HOUR)
 
-static char gmt[] = { "GMT" };
 static char utc[] = { "UTC" };
 /* RFC-822/RFC-2822 */
 static const char * const nast[5] = {
@@ -117,19 +116,23 @@ first_wday_of(int yr)
 #define delim(p)	((p) == '\0' || isspace((unsigned char)(p)))
 
 static int
-fromzone(const unsigned char **bp, struct tm *tm)
+fromzone(const unsigned char **bp, struct tm *tm, int mandatory)
 {
 	timezone_t tz;
 	char buf[512], *p;
+	const unsigned char *rp;
 
-	for (p = buf; !delim(**bp) && p < &buf[sizeof(buf) - 1]; (*bp)++)
-		*p++ = **bp;
+	for (p = buf, rp = *bp; !delim(*rp) && p < &buf[sizeof(buf) - 1]; rp++)
+		*p++ = *rp;
 	*p = '\0';
 
+	if (mandatory)
+		*bp = rp;
 	tz = tzalloc(buf);
 	if (tz == NULL)
 		return 0;
 
+	*bp = rp;
 	tm->tm_isdst = 0;	/* XXX */
 #ifdef TM_GMTOFF
 	tm->TM_GMTOFF = tzgetgmtoff(tz, tm->tm_isdst);
@@ -154,7 +157,7 @@ strptime_l(const char *buf, const char *fmt, struct tm *tm, locale_t loc)
 	unsigned char c;
 	const unsigned char *bp, *ep, *zname;
 	int alt_format, i, split_year = 0, neg = 0, state = 0,
-	    day_offset = -1, week_offset = 0, offs;
+	    day_offset = -1, week_offset = 0, offs, mandatory;
 	const char *new_fmt;
 
 	bp = (const u_char *)buf;
@@ -449,36 +452,9 @@ literal:
 			continue;
 
 		case 'Z':
-			tzset();
-			if (strncmp((const char *)bp, gmt, 3) == 0 ||
-			    strncmp((const char *)bp, utc, 3) == 0) {
-				tm->tm_isdst = 0;
-#ifdef TM_GMTOFF
-				tm->TM_GMTOFF = 0;
-#endif
-#ifdef TM_ZONE
-				tm->TM_ZONE = gmt;
-#endif
-				bp += 3;
-			} else {
-				ep = find_string(bp, &i,
-					       	 (const char * const *)tzname,
-					       	  NULL, 2);
-				if (ep != NULL) {
-					tm->tm_isdst = i;
-#ifdef TM_GMTOFF
-					tm->TM_GMTOFF = -timezone;
-#endif
-#ifdef TM_ZONE
-					tm->TM_ZONE = tzname[i];
-					bp = ep;
-#endif
-				} else
-					(void)fromzone(&bp, tm);
-			}
-			continue;
-
 		case 'z':
+			tzset();
+			mandatory = c == 'z';
 			/*
 			 * We recognize all ISO 8601 formats:
 			 * Z	= Zulu time/UTC
@@ -498,8 +474,9 @@ literal:
 			 * Note: J maybe used to denote non-nautical
 			 *       local time
 			 */
-			while (isspace(*bp))
-				bp++;
+			if (mandatory)
+				while (isspace(*bp))
+					bp++;
 
 			zname = bp;
 			switch (*bp++) {
@@ -597,14 +574,30 @@ namedzone:
 					bp = ep;
 					continue;
 				}
-
+				/*
+				 * Our current timezone
+				 */
+				ep = find_string(bp, &i,
+					       	 (const char * const *)tzname,
+					       	  NULL, 2);
+				if (ep != NULL) {
+					tm->tm_isdst = i;
+#ifdef TM_GMTOFF
+					tm->TM_GMTOFF = -timezone;
+#endif
+#ifdef TM_ZONE
+					tm->TM_ZONE = tzname[i];
+#endif
+					bp = ep;
+					continue;
+				}
 loadzone:
 				/*
 				 * The hard way, load the zone!
 				 */
-				if (fromzone(&bp, tm))
+				if (fromzone(&bp, tm, mandatory))
 					continue;
-				return NULL;
+				goto out;
 			}
 			offs = 0;
 			for (i = 0; i < 4; ) {
@@ -620,23 +613,28 @@ loadzone:
 				break;
 			}
 			if (isdigit(*bp))
-				return NULL;
+				goto out;
 			switch (i) {
 			case 2:
 				offs *= SECSPERHOUR;
 				break;
 			case 4:
 				i = offs % 100;
+				offs /= 100;
 				if (i >= SECSPERMIN)
-					return NULL;
+					goto out;
 				/* Convert minutes into decimal */
-				offs = (offs / 100) * SECSPERHOUR + i * SECSPERMIN;
+				offs = offs * SECSPERHOUR + i * SECSPERMIN;
 				break;
 			default:
-				return NULL;
+			out:
+				if (mandatory)
+					return NULL;
+				bp = zname;
+				continue;
 			}
 			if (offs >= (HOURSPERDAY * SECSPERHOUR))
-				return NULL;
+				goto out;
 			if (neg)
 				offs = -offs;
 			tm->tm_isdst = 0;	/* XXX */
