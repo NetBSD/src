@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_sparc.c,v 1.34 2015/10/07 11:56:41 martin Exp $	*/
+/*	$NetBSD: kvm_sparc.c,v 1.35 2015/10/31 02:40:44 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_sparc.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: kvm_sparc.c,v 1.34 2015/10/07 11:56:41 martin Exp $");
+__RCSID("$NetBSD: kvm_sparc.c,v 1.35 2015/10/31 02:40:44 nakayama Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -363,7 +363,7 @@ _kvm_pa2off(kvm_t *kd, paddr_t pa)
 		off += mp->size;
 	}
 	if (nmem < 0) {
-		_kvm_err(kd, 0, "invalid address (%lx)", (unsigned long)pa);
+		_kvm_err(kd, 0, "invalid address (%#"PRIxPADDR")", pa);
 		return (-1);
 	}
 
