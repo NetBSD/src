@@ -1,4 +1,4 @@
-/* $NetBSD: t_strptime.c,v 1.10 2015/10/30 18:25:49 christos Exp $ */
+/* $NetBSD: t_strptime.c,v 1.11 2015/10/31 02:13:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -32,10 +32,11 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_strptime.c,v 1.10 2015/10/30 18:25:49 christos Exp $");
+__RCSID("$NetBSD: t_strptime.c,v 1.11 2015/10/31 02:13:41 christos Exp $");
 
 #include <time.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include <atf-c.h>
 
@@ -148,7 +149,7 @@ static struct {
 	{ "X",				39600 },
 	{ "Y",				43200 },
 
-	{ "J",				-1 },
+	{ "J",				-2 },
 
 	{ "America/Los_Angeles",	-28800 },
 	{ "America/New_York",		-18000 },
@@ -161,14 +162,31 @@ static void
 ztest(const char *name, const char *fmt, long value)
 {
 	struct tm tm;
+	char *rv;
 
 	memset(&tm, 0, sizeof(tm));
-	if (strptime(name, fmt, &tm) == NULL) 
+	if ((rv = strptime(name, fmt, &tm)) == NULL) 
 		tm.tm_gmtoff = -1;
+	else if (rv == name && fmt[1] == 'Z')
+		value = 0;
+
+	switch (value) {
+	case -2:
+		value = -timezone;
+		break;
+	case -1:
+		if (fmt[1] == 'Z')
+			value = 0;
+		break;
+	default:
+		break;
+	}
+
 	ATF_REQUIRE_MSG(tm.tm_gmtoff == value,
 	    "strptime(\"%s\", \"%s\", &tm): "
 	    "expected: tm.tm_gmtoff=%ld, got: tm.tm_gmtoff=%ld",
 	    name, fmt, value, tm.tm_gmtoff);
+	printf("%s %s %ld\n", name, fmt, tm.tm_gmtoff);
 }
 
 ATF_TC(common);
@@ -418,7 +436,7 @@ ATF_TC_BODY(Zone, tc)
 
 	/* This is all handled by tzalloc for %Z */
 	for (size_t i = 0; i < __arraycount(zt); i++)
-		ztest(zt[i].name, "%z", zt[i].offs);
+		ztest(zt[i].name, "%Z", zt[i].offs);
 }
 
 ATF_TP_ADD_TCS(tp)
