@@ -1,4 +1,4 @@
-@c Copyright (C) 1988-2013 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2015 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
@@ -8,7 +8,7 @@
 @c man end
 
 @c man begin COPYRIGHT
-Copyright @copyright{} 1988-2013 Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2015 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -895,7 +895,7 @@ See RS/6000 and PowerPC Options.
 -m64  -m31  -mdebug  -mno-debug  -mesa  -mzarch @gol
 -mtpf-trace -mno-tpf-trace  -mfused-madd  -mno-fused-madd @gol
 -mwarn-framesize  -mwarn-dynamicstack  -mstack-size -mstack-guard @gol
--mhotpatch[=@var{halfwords}] -mno-hotpatch}
+-mhotpatch=@var{halfwords},@var{halfwords}}
 
 @emph{Score Options}
 @gccoptlist{-meb -mel @gol
@@ -14192,7 +14192,7 @@ suffer significant run time performance penalties.  On Pentium III, the
 Streaming SIMD Extension (SSE) data type @code{__m128} may not work
 properly if it is not 16-byte aligned.
 
-To ensure proper alignment of this values on the stack, the stack boundary
+To ensure proper alignment of these values on the stack, the stack boundary
 must be as aligned as that required by any value stored on the stack.
 Further, every function must be generated such that it keeps the stack
 aligned.  Thus calling a function compiled with a higher preferred
@@ -17253,12 +17253,13 @@ Supported values for @var{cpu_type} are @samp{401}, @samp{403},
 @samp{e6500}, @samp{ec603e}, @samp{G3}, @samp{G4}, @samp{G5},
 @samp{titan}, @samp{power3}, @samp{power4}, @samp{power5}, @samp{power5+},
 @samp{power6}, @samp{power6x}, @samp{power7}, @samp{power8}, @samp{powerpc},
-@samp{powerpc64}, and @samp{rs64}.
+@samp{powerpc64}, @samp{powerpc64le}, and @samp{rs64}.
 
-@option{-mcpu=powerpc}, and @option{-mcpu=powerpc64} specify pure 32-bit
-PowerPC and 64-bit PowerPC architecture machine
-types, with an appropriate, generic processor model assumed for
-scheduling purposes.
+@option{-mcpu=powerpc}, @option{-mcpu=powerpc64}, and
+@option{-mcpu=powerpc64le} specify pure 32-bit PowerPC (either
+endian), 64-bit big endian PowerPC and 64-bit little endian PowerPC
+architecture machine types, with an appropriate, generic processor
+model assumed for scheduling purposes.
 
 The other options specify a specific processor.  Code generated under
 those options runs best on that processor, and may not run at all on
@@ -18550,7 +18551,7 @@ The default is to not print debug information.
 Generate code that runs on @var{cpu-type}, which is the name of a system
 representing a certain processor type.  Possible values for
 @var{cpu-type} are @samp{g5}, @samp{g6}, @samp{z900}, @samp{z990},
-@samp{z9-109}, @samp{z9-ec} and @samp{z10}.
+@samp{z9-109}, @samp{z9-ec}, @samp{z10}, @samp{z196}, and @samp{zEC12}.
 When generating code using the instructions available on z/Architecture,
 the default is @option{-march=z900}.  Otherwise, the default is
 @option{-march=g5}.
@@ -18609,17 +18610,17 @@ In order to be efficient the extra code makes the assumption that the stack star
 at an address aligned to the value given by @var{stack-size}.
 The @var{stack-guard} option can only be used in conjunction with @var{stack-size}.
 
-@item -mhotpatch[=@var{halfwords}]
-@itemx -mno-hotpatch
+@item -mhotpatch=@var{pre-halfwords},@var{post-halfwords}
 @opindex mhotpatch
 If the hotpatch option is enabled, a ``hot-patching'' function
 prologue is generated for all functions in the compilation unit.
 The funtion label is prepended with the given number of two-byte
-Nop instructions (@var{halfwords}, maximum 1000000) or 12 Nop
-instructions if no argument is present.  Functions with a
-hot-patching prologue are never inlined automatically, and a
-hot-patching prologue is never generated for functions functions
-that are explicitly inline.
+NOP instructions (@var{pre-halfwords}, maximum 1000000).  After
+the label, 2 * @var{post-halfwords} bytes are appended, using the
+largest NOP like instructions the architecture allows (maximum
+1000000).
+
+If both arguments are zero, hotpatching is disabled.
 
 This option can be overridden for individual functions with the
 @code{hotpatch} attribute.

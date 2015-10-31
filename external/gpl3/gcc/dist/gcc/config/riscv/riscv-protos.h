@@ -27,9 +27,17 @@ enum riscv_symbol_type {
   SYMBOL_GOT_DISP,
   SYMBOL_TLS,
   SYMBOL_TLS_LE,
-  SYMBOL_TLS_IE
+  SYMBOL_TLS_IE,
+  SYMBOL_TLS_GD
 };
-#define NUM_SYMBOL_TYPES (SYMBOL_TLS_IE + 1)
+#define NUM_SYMBOL_TYPES (SYMBOL_TLS_GD + 1)
+
+enum riscv_code_model {
+  CM_MEDLOW,
+  CM_MEDANY,
+  CM_PIC
+};
+extern enum riscv_code_model riscv_cmodel;
 
 extern bool riscv_symbolic_constant_p (rtx, enum riscv_symbol_type *);
 extern int riscv_regno_mode_ok_for_base_p (int, enum machine_mode, bool);
@@ -84,7 +92,5 @@ extern const char *current_section_name (void);
 extern unsigned int current_section_flags (void);
 
 extern void riscv_expand_vector_init (rtx, rtx);
-
-extern bool riscv_size_ok_for_small_data_p (int size);
 
 #endif /* ! GCC_RISCV_PROTOS_H */

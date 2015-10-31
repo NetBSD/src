@@ -1,6 +1,7 @@
-/* Target macros for riscv*-elf targets.
-   Copyright (C) 1994, 1997, 1999, 2000, 2002, 2003, 2004, 2007, 2010
-   Free Software Foundation, Inc.
+/* Definitions of target machine for GCC, for RISC-V,
+   defaulting to 32-bit code generation.
+
+   Copyright (C) 1999-2014 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,14 +19,4 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Leave the linker script to choose the appropriate libraries.  */
-#undef  LIB_SPEC
-#define LIB_SPEC ""
-
-#undef  STARTFILE_SPEC
-#define STARTFILE_SPEC "crt0%O%s crtbegin%O%s"
-
-#undef  ENDFILE_SPEC
-#define ENDFILE_SPEC "crtend%O%s"
-
-#define NO_IMPLICIT_EXTERN_C 1
+#define TARGET_64BIT_DEFAULT 0

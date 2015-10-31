@@ -19,10 +19,6 @@
 ;; along with GCC; see the file COPYING3.  If not see
 ;; <http://www.gnu.org/licenses/>.
 
-(define_enum "processor" [
-  rocket
-])
-
 (define_c_enum "unspec" [
   ;; Floating-point moves.
   UNSPEC_LOAD_LOW
@@ -33,13 +29,12 @@
   UNSPEC_EH_RETURN
 
   ;; Symbolic accesses.
+  UNSPEC_ADDRESS_FIRST
   UNSPEC_LOAD_GOT
-  UNSPEC_TLS_LE_ADD
-  UNSPEC_TLS_IE_ADD
-  UNSPEC_TLS_GD
+  UNSPEC_TLS
+  UNSPEC_TLS_LE
   UNSPEC_TLS_IE
-  UNSPEC_TLS_IE_HI
-  UNSPEC_TLS_IE_LO
+  UNSPEC_TLS_GD
 
   ;; Blockage and synchronisation.
   UNSPEC_BLOCKAGE
@@ -241,10 +236,6 @@
 	  (symbol_ref "riscv_load_store_insns (operands[0], insn) * 4")
 	  ] (const_int 4)))
 
-;; Attribute describing the processor.
-(define_enum_attr "cpu" "processor"
-  (const (symbol_ref "riscv_tune")))
-
 ;; Describe a user's asm statement.
 (define_asm_attributes
   [(set_attr "type" "multi")])
@@ -346,9 +337,6 @@
 ;; from the same template.
 (define_code_iterator any_mod [mod umod])
 
-;; Equality operators.
-(define_code_iterator equality_op [eq ne])
-
 ;; These code iterators allow the signed and unsigned scc operations to use
 ;; the same template.
 (define_code_iterator any_gt [gt gtu])
@@ -388,13 +376,6 @@
 			(and "and")
 			(plus "add")
 			(minus "sub")])
-
-;; The value of the bit when the branch is taken for branch_bit patterns.
-;; Comparison is always against zero so this depends on the operator.
-(define_code_attr bbv [(eq "0") (ne "1")])
-
-;; This is the inverse value of bbv.
-(define_code_attr bbinv [(eq "1") (ne "0")])
 
 ;; Pipeline descriptions.
 ;;
@@ -607,13 +588,13 @@
   [(set (match_operand:GPR 0 "register_operand")
 	(mult:GPR (match_operand:GPR 1 "reg_or_0_operand")
 		   (match_operand:GPR 2 "register_operand")))]
-  "")
+  "TARGET_MULDIV")
 
 (define_insn "*mulsi3"
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(mult:SI (match_operand:GPR 1 "register_operand" "r")
 		  (match_operand:GPR2 2 "register_operand" "r")))]
-  ""
+  "TARGET_MULDIV"
   { return TARGET_64BIT ? "mulw\t%0,%1,%2" : "mul\t%0,%1,%2"; }
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")])
@@ -622,7 +603,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
 	     (mult:SI (truncate:SI (match_operand:DI 1 "register_operand" "r"))
 		      (truncate:SI (match_operand:DI 2 "register_operand" "r"))))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "mulw\t%0,%1,%2"
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")])
@@ -632,7 +613,7 @@
           (truncate:SI
 	     (mult:DI (match_operand:DI 1 "register_operand" "r")
 		      (match_operand:DI 2 "register_operand" "r"))))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "mulw\t%0,%1,%2"
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")])
@@ -641,7 +622,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(mult:DI (match_operand:DI 1 "register_operand" "r")
 		  (match_operand:DI 2 "register_operand" "r")))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "mul\t%0,%1,%2"
   [(set_attr "type" "imul")
    (set_attr "mode" "DI")])
@@ -663,7 +644,7 @@
 		 (any_extend:TI
 		   (match_operand:DI 2 "register_operand" "r"))))
   (clobber (match_scratch:DI 3 "=r"))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "#"
   "reload_completed"
   [
@@ -690,7 +671,7 @@
 		     (any_extend:TI
 		       (match_operand:DI 2 "register_operand" "r")))
 	    (const_int 64))))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "mulh<u>\t%0,%1,%2"
   [(set_attr "type" "imul")
    (set_attr "mode" "DI")])
@@ -703,7 +684,7 @@
 		 (sign_extend:TI
 		   (match_operand:DI 2 "register_operand" "r"))))
   (clobber (match_scratch:DI 3 "=r"))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "#"
   "reload_completed"
   [
@@ -730,33 +711,26 @@
 		     (sign_extend:TI
 		       (match_operand:DI 2 "register_operand" "r")))
 	    (const_int 64))))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "mulhsu\t%0,%2,%1"
   [(set_attr "type" "imul")
    (set_attr "mode" "DI")])
 
-(define_insn_and_split "<u>mulsidi3"
+(define_expand "<u>mulsidi3"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(mult:DI (any_extend:DI
 		   (match_operand:SI 1 "register_operand" "r"))
 		 (any_extend:DI
 		   (match_operand:SI 2 "register_operand" "r"))))
   (clobber (match_scratch:SI 3 "=r"))]
-  "!TARGET_64BIT"
-  "#"
-  "reload_completed"
-  [
-   (set (match_dup 3) (mult:SI (match_dup 1) (match_dup 2)))
-   (set (match_dup 4) (truncate:SI
-			(lshiftrt:DI
-			  (mult:DI (any_extend:DI (match_dup 1))
-				   (any_extend:DI (match_dup 2)))
-			  (const_int 32))))
-   (set (match_dup 5) (match_dup 3))
-  ]
+  "TARGET_MULDIV && !TARGET_64BIT"
 {
-  operands[4] = riscv_subword (operands[0], true);
-  operands[5] = riscv_subword (operands[0], false);
+  rtx temp = gen_reg_rtx (SImode);
+  emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
+  emit_insn (gen_<u>mulsi3_highpart (riscv_subword (operands[0], true),
+				     operands[1], operands[2]));
+  emit_insn (gen_movsi (riscv_subword (operands[0], false), temp));
+  DONE;
 }
   )
 
@@ -769,34 +743,27 @@
 		     (any_extend:DI
 		       (match_operand:SI 2 "register_operand" "r")))
 	    (const_int 32))))]
-  "!TARGET_64BIT"
+  "TARGET_MULDIV && !TARGET_64BIT"
   "mulh<u>\t%0,%1,%2"
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")])
 
 
-(define_insn_and_split "usmulsidi3"
+(define_expand "usmulsidi3"
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(mult:DI (zero_extend:DI
 		   (match_operand:SI 1 "register_operand" "r"))
 		 (sign_extend:DI
 		   (match_operand:SI 2 "register_operand" "r"))))
   (clobber (match_scratch:SI 3 "=r"))]
-  "!TARGET_64BIT"
-  "#"
-  "reload_completed"
-  [
-   (set (match_dup 3) (mult:SI (match_dup 1) (match_dup 2)))
-   (set (match_dup 4) (truncate:SI
-			(lshiftrt:DI
-			  (mult:DI (zero_extend:DI (match_dup 1))
-				   (sign_extend:DI (match_dup 2)))
-			  (const_int 32))))
-   (set (match_dup 5) (match_dup 3))
-  ]
+  "TARGET_MULDIV && !TARGET_64BIT"
 {
-  operands[4] = riscv_subword (operands[0], true);
-  operands[5] = riscv_subword (operands[0], false);
+  rtx temp = gen_reg_rtx (SImode);
+  emit_insn (gen_mulsi3 (temp, operands[1], operands[2]));
+  emit_insn (gen_usmulsi3_highpart (riscv_subword (operands[0], true),
+				     operands[1], operands[2]));
+  emit_insn (gen_movsi (riscv_subword (operands[0], false), temp));
+  DONE;
 }
   )
 
@@ -809,7 +776,7 @@
 		     (sign_extend:DI
 		       (match_operand:SI 2 "register_operand" "r")))
 	    (const_int 32))))]
-  "!TARGET_64BIT"
+  "TARGET_MULDIV && !TARGET_64BIT"
   "mulhsu\t%0,%2,%1"
   [(set_attr "type" "imul")
    (set_attr "mode" "SI")])
@@ -826,7 +793,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(any_div:SI (match_operand:SI 1 "register_operand" "r")
 		  (match_operand:SI 2 "register_operand" "r")))]
-  ""
+  "TARGET_MULDIV"
   { return TARGET_64BIT ? "div<u>w\t%0,%1,%2" : "div<u>\t%0,%1,%2"; }
   [(set_attr "type" "idiv")
    (set_attr "mode" "SI")])
@@ -835,7 +802,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(any_div:DI (match_operand:DI 1 "register_operand" "r")
 		  (match_operand:DI 2 "register_operand" "r")))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "div<u>\t%0,%1,%2"
   [(set_attr "type" "idiv")
    (set_attr "mode" "DI")])
@@ -844,7 +811,7 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
 	(any_mod:SI (match_operand:SI 1 "register_operand" "r")
 		  (match_operand:SI 2 "register_operand" "r")))]
-  ""
+  "TARGET_MULDIV"
   { return TARGET_64BIT ? "rem<u>w\t%0,%1,%2" : "rem<u>\t%0,%1,%2"; }
   [(set_attr "type" "idiv")
    (set_attr "mode" "SI")])
@@ -853,7 +820,7 @@
   [(set (match_operand:DI 0 "register_operand" "=r")
 	(any_mod:DI (match_operand:DI 1 "register_operand" "r")
 		  (match_operand:DI 2 "register_operand" "r")))]
-  "TARGET_64BIT"
+  "TARGET_MULDIV && TARGET_64BIT"
   "rem<u>\t%0,%1,%2"
   [(set_attr "type" "idiv")
    (set_attr "mode" "DI")])
@@ -1210,16 +1177,20 @@
 ;; the register alternative needs a reload.
 (define_insn_and_split "extendsidi2"
   [(set (match_operand:DI 0 "register_operand" "=r,r")
-        (sign_extend:DI (match_operand:SI 1 "nonimmediate_operand" "0,m")))]
+        (sign_extend:DI (match_operand:SI 1 "nonimmediate_operand" "r,m")))]
   "TARGET_64BIT"
   "@
    #
    lw\t%0,%1"
   "&& reload_completed && register_operand (operands[1], VOIDmode)"
-  [(const_int 0)]
+  [(set (match_dup 0) (match_dup 1))]
 {
-  emit_note (NOTE_INSN_DELETED);
-  DONE;
+  if (REGNO (operands[0]) == REGNO (operands[1]))
+    {
+      emit_note (NOTE_INSN_DELETED);
+      DONE;
+    }
+  operands[1] = gen_rtx_REG (DImode, REGNO (operands[1]));
 }
   [(set_attr "move_type" "move,load")
    (set_attr "mode" "DI")])
@@ -1444,20 +1415,9 @@
 	(unspec:P [(match_operand:P 1 "register_operand" "r")
 		   (match_operand:P 2 "register_operand" "r")
 		   (match_operand:P 3 "symbolic_operand" "")]
-		  UNSPEC_TLS_LE_ADD))]
-  "!flag_pic"
+		  UNSPEC_TLS_LE))]
+  "!flag_pic || flag_pie"
   "add\t%0,%1,%2,%%tprel_add(%3)"
-  [(set_attr "type" "arith")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "tls_add_tp_ie<mode>"
-  [(set (match_operand:P 0 "register_operand" "=r")
-	(unspec:P [(match_operand:P 1 "register_operand" "r")
-		   (match_operand:P 2 "register_operand" "r")
-		   (match_operand:P 3 "symbolic_operand" "")]
-		  UNSPEC_TLS_IE_ADD))]
-  "!flag_pic"
-  "add\t%0,%1,%2,%%tls_ie_add(%3)"
   [(set_attr "type" "arith")
    (set_attr "mode" "<MODE>")])
 
@@ -1477,25 +1437,6 @@
   "flag_pic"
   "la.tls.ie\t%0,%1"
   [(set_attr "got" "load")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "got_load_tls_ie_hi<mode>"
-  [(set (match_operand:P 0 "register_operand" "=r")
-       (unspec:P [(match_operand:P 1 "symbolic_operand" "")]
-                 UNSPEC_TLS_IE_HI))]
-  "!flag_pic"
-  "lui\t%0,%%tls_ie_hi(%1)"
-  [(set_attr "type" "arith")
-   (set_attr "mode" "<MODE>")])
-
-(define_insn "got_load_tls_ie_lo<mode>"
-  [(set (match_operand:P 0 "register_operand" "=r")
-	(unspec:P [(match_operand:P 1 "register_operand" "r")
-		   (match_operand:P 2 "symbolic_operand" "")]
-		  UNSPEC_TLS_IE_LO))]
-  "!flag_pic"
-  "<load>\t%0,%%tls_ie_lo(%2)(%1)"
-  [(set_attr "type" "load")
    (set_attr "mode" "<MODE>")])
 
 ;; Instructions for adding the low 16 bits of an address to a register.
@@ -1615,12 +1556,12 @@
 })
 
 (define_insn "*movhi_internal"
-  [(set (match_operand:HI 0 "nonimmediate_operand" "=r,r,r,m")
-	(match_operand:HI 1 "move_operand"         "r,T,m,rJ"))]
+  [(set (match_operand:HI 0 "nonimmediate_operand" "=r,r,r,m,*f,*r")
+	(match_operand:HI 1 "move_operand"         "r,T,m,rJ,*r*J,*f"))]
   "(register_operand (operands[0], HImode)
     || reg_or_0_operand (operands[1], HImode))"
   { return riscv_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,const,load,store")
+  [(set_attr "move_type" "move,const,load,store,mtc,mfc")
    (set_attr "mode" "HI")])
 
 ;; HImode constant generation; see riscv_move_integer for details.
@@ -1656,12 +1597,12 @@
 })
 
 (define_insn "*movqi_internal"
-  [(set (match_operand:QI 0 "nonimmediate_operand" "=r,r,r,m")
-	(match_operand:QI 1 "move_operand"         "r,I,m,rJ"))]
+  [(set (match_operand:QI 0 "nonimmediate_operand" "=r,r,r,m,*f,*r")
+	(match_operand:QI 1 "move_operand"         "r,I,m,rJ,*r*J,*f"))]
   "(register_operand (operands[0], QImode)
     || reg_or_0_operand (operands[1], QImode))"
   { return riscv_output_move (operands[0], operands[1]); }
-  [(set_attr "move_type" "move,const,load,store")
+  [(set_attr "move_type" "move,const,load,store,mtc,mfc")
    (set_attr "mode" "QI")])
 
 ;; 32-bit floating point moves
@@ -1847,7 +1788,7 @@
   ""
   "fence.i")
 
-;; Block moves, see mips.c for more details.
+;; Block moves, see riscv.c for more details.
 ;; Argument 0 is the destination
 ;; Argument 1 is the source
 ;; Argument 2 is the length
@@ -1901,8 +1842,8 @@
   [(set (match_operand:SI 0 "register_operand" "=r")
           (truncate:SI
 	     (ashift:DI (match_operand:DI 1 "register_operand" "r")
-		      (match_operand:DI 2 "arith_operand" "rI"))))]
-  "TARGET_64BIT && (GET_CODE (operands[2]) == CONST_INT ? INTVAL (operands[2]) < 32 : 1)"
+		      (match_operand:DI 2 "const_arith_operand" "I"))))]
+  "TARGET_64BIT && INTVAL (operands[2]) < 32"
   "sllw\t%0,%1,%2"
   [(set_attr "type" "shift")
    (set_attr "mode" "SI")])
@@ -1964,7 +1905,11 @@
 	 (label_ref (match_operand 0 "" ""))
 	 (pc)))]
   ""
-  "b%C1\t%2,%z3,%0"
+{
+  if (GET_CODE (operands[3]) == CONST_INT)
+    return "b%C1z\t%2,%0";
+  return "b%C1\t%2,%3,%0";
+}
   [(set_attr "type" "branch")
    (set_attr "mode" "none")])
 
@@ -1999,6 +1944,62 @@
 {
   riscv_expand_conditional_branch (operands);
   DONE;
+})
+
+(define_insn_and_split "*branch_on_bit<GPR:mode>"
+  [(set (pc)
+	(if_then_else
+	 (match_operator 0 "equality_operator"
+	  [(zero_extract:GPR (match_operand:GPR 2 "register_operand" "r")
+		 (const_int 1)
+		 (match_operand 3 "const_int_operand"))
+		 (const_int 0)])
+	 (label_ref (match_operand 1))
+	 (pc)))
+   (clobber (match_scratch:GPR 4 "=&r"))]
+  ""
+  "#"
+  "reload_completed"
+  [(set (match_dup 4)
+        (ashift:GPR (match_dup 2) (match_dup 3)))
+   (set (pc)
+	(if_then_else
+	 (match_op_dup 0 [(match_dup 4) (const_int 0)])
+	 (label_ref (match_operand 1))
+	 (pc)))]
+{
+  int shift = GET_MODE_BITSIZE (<MODE>mode) - 1 - INTVAL (operands[3]);
+  operands[3] = GEN_INT (shift);
+
+  if (GET_CODE (operands[0]) == EQ)
+    operands[0] = gen_rtx_GE (<MODE>mode, operands[4], const0_rtx);
+  else
+    operands[0] = gen_rtx_LT (<MODE>mode, operands[4], const0_rtx);
+})
+
+(define_insn_and_split "*branch_on_bit_range<GPR:mode>"
+  [(set (pc)
+	(if_then_else
+	 (match_operator 0 "equality_operator"
+	  [(zero_extract:GPR (match_operand:GPR 2 "register_operand" "r")
+		 (match_operand 3 "const_int_operand")
+		 (const_int 0))
+		 (const_int 0)])
+	 (label_ref (match_operand 1))
+	 (pc)))
+   (clobber (match_scratch:GPR 4 "=&r"))]
+  ""
+  "#"
+  "reload_completed"
+  [(set (match_dup 4)
+        (ashift:GPR (match_dup 2) (match_dup 3)))
+   (set (pc)
+	(if_then_else
+	 (match_op_dup 0 [(match_dup 4) (const_int 0)])
+	 (label_ref (match_operand 1))
+	 (pc)))]
+{
+  operands[3] = GEN_INT (GET_MODE_BITSIZE (<MODE>mode) - INTVAL (operands[3]));
 })
 
 ;;
@@ -2129,12 +2130,12 @@
 	      (use (label_ref (match_operand 1 "" "")))]
   ""
 {
-  if (flag_pic)
+  if (CASE_VECTOR_PC_RELATIVE)
       operands[0] = expand_simple_binop (Pmode, PLUS, operands[0],
 					 gen_rtx_LABEL_REF (Pmode, operands[1]),
 					 NULL_RTX, 0, OPTAB_DIRECT);
 
-  if (flag_pic && Pmode == DImode)
+  if (CASE_VECTOR_PC_RELATIVE && Pmode == DImode)
     emit_jump_insn (gen_tablejumpdi (operands[0], operands[1]));
   else
     emit_jump_insn (gen_tablejumpsi (operands[0], operands[1]));
@@ -2195,17 +2196,22 @@
 ;; Trivial return.  Make it look like a normal return insn as that
 ;; allows jump optimizations to work better.
 
-(define_insn "return"
-  [(return)]
+(define_expand "return"
+  [(simple_return)]
   "riscv_can_use_return_insn ()"
+  "")
+
+(define_insn "simple_return"
+  [(simple_return)]
+  ""
   "ret"
   [(set_attr "type"	"jump")
    (set_attr "mode"	"none")])
 
 ;; Normal return.
 
-(define_insn "return_internal"
-  [(return)
+(define_insn "simple_return_internal"
+  [(simple_return)
    (use (match_operand 0 "pmode_register_operand" ""))]
   ""
   "jr\t%0"
@@ -2284,8 +2290,8 @@
 	 (match_operand 1 "" ""))]
   "SIBLING_CALL_P (insn)"
   { return REG_P (operands[0]) ? "jr\t%0"
-	   : absolute_symbolic_operand (operands[0], VOIDmode) ? "jump\t%0"
-	   : "jump\t%0@"; }
+	   : absolute_symbolic_operand (operands[0], VOIDmode) ? "tail\t%0"
+	   : "tail\t%0@"; }
   [(set_attr "type" "call")])
 
 (define_expand "sibcall_value"
@@ -2305,8 +2311,8 @@
               (match_operand 2 "" "")))]
   "SIBLING_CALL_P (insn)"
   { return REG_P (operands[1]) ? "jr\t%1"
-	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "jump\t%1"
-	   : "jump\t%1@"; }
+	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "tail\t%1"
+	   : "tail\t%1@"; }
   [(set_attr "type" "call")])
 
 (define_insn "sibcall_value_multiple_internal"
@@ -2319,8 +2325,8 @@
    (clobber (match_scratch:SI 4 "=j,j"))]
   "SIBLING_CALL_P (insn)"
   { return REG_P (operands[1]) ? "jr\t%1"
-	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "jump\t%1"
-	   : "jump\t%1@"; }
+	   : absolute_symbolic_operand (operands[1], VOIDmode) ? "tail\t%1"
+	   : "tail\t%1@"; }
   [(set_attr "type" "call")])
 
 (define_expand "call"
@@ -2419,7 +2425,3 @@
 
 (include "sync.md")
 (include "peephole.md")
-
-(define_c_enum "unspec" [
-  UNSPEC_ADDRESS_FIRST
-])

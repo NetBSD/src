@@ -87,6 +87,17 @@ extern int dot_symbols;
 
 #define ELFv2_ABI_CHECK (rs6000_elf_abi == 2)                   
 
+#undef CC1_OS_NETBSD_SPEC
+#define CC1_OS_NETBSD_SPEC \
+  NETBSD_CC1_AND_CC1PLUS_SPEC \
+  "%{!m32: %{!mrelocatable: %{!fno-pie: %{!fno-pic: \
+     %{!fpie: %{!fpic: \
+       %{!fPIE: %{!fPIC:-fPIC}}}}}}}}"
+/* %{!m32: %{!mcmodel*: -mcmodel=medium}}" */
+
+#undef CC1PLUS_SPEC
+#define CC1PLUS_SPEC CC1_OS_NETBSD_SPEC
+
 #undef	SUBSUBTARGET_OVERRIDE_OPTIONS
 #define	SUBSUBTARGET_OVERRIDE_OPTIONS				\
   do								\
@@ -390,13 +401,106 @@ extern int dot_symbols;
 /* Make GCC agree with <machine/ansi.h>.  */
 
 #undef	SIZE_TYPE
-#define	SIZE_TYPE (TARGET_64BIT ? "long unsigned int" : "unsigned int")
+#define	SIZE_TYPE (LONG_TYPE_SIZE == 64 ? "long unsigned int" : "unsigned int")
 
 #undef	PTRDIFF_TYPE
-#define	PTRDIFF_TYPE (TARGET_64BIT ? "long int" : "int")
+#define	PTRDIFF_TYPE (LONG_TYPE_SIZE == 64 ? "long int" : "int")
+
+#undef INTPTR_TYPE
+#define INTPTR_TYPE PTRDIFF_TYPE
+
+#undef UINTPTR_TYPE
+#define UINTPTR_TYPE SIZE_TYPE
 
 #undef	WCHAR_TYPE
 #define	WCHAR_TYPE "int"
+
+#undef INT8_TYPE
+#define INT8_TYPE "signed char"
+
+#undef INT16_TYPE
+#define INT16_TYPE "short int"
+
+#undef INT32_TYPE
+#define INT32_TYPE "int"
+
+#undef INT64_TYPE
+#define INT64_TYPE "long long int"
+
+#undef UINT8_TYPE
+#define UINT8_TYPE "unsigned char"
+
+#undef UINT16_TYPE
+#define UINT16_TYPE "short unsigned int"
+
+#undef UINT32_TYPE
+#define UINT32_TYPE "unsigned int"
+
+#undef UINT64_TYPE
+#define UINT64_TYPE "long long unsigned int"
+
+#undef INT_FAST8_TYPE
+#define INT_FAST8_TYPE "int"
+
+#undef INT_FAST16_TYPE
+#define INT_FAST16_TYPE "int"
+
+#undef INT_FAST32_TYPE
+#define INT_FAST32_TYPE "int"
+
+#undef INT_FAST64_TYPE
+#define INT_FAST64_TYPE INT64_TYPE
+
+#undef UINT_FAST8_TYPE
+#define UINT_FAST8_TYPE "unsigned int"
+
+#undef UINT_FAST16_TYPE
+#define UINT_FAST16_TYPE "unsigned int"
+
+#undef UINT_FAST32_TYPE
+#define UINT_FAST32_TYPE "unsigned int"
+
+#undef UINT_FAST8_TYPE
+#define UINT_FAST8_TYPE "unsigned int"
+
+#undef UINT_FAST16_TYPE
+#define UINT_FAST16_TYPE "unsigned int"
+
+#undef UINT_FAST32_TYPE
+#define UINT_FAST32_TYPE "unsigned int"
+
+#undef UINT_FAST64_TYPE
+#define UINT_FAST64_TYPE UINT64_TYPE
+
+#undef INT_LEAST8_TYPE
+#define INT_LEAST8_TYPE INT8_TYPE
+
+#undef INT_LEAST16_TYPE
+#define INT_LEAST16_TYPE INT16_TYPE
+
+#undef INT_LEAST32_TYPE
+#define INT_LEAST32_TYPE "int"
+
+#undef INT_LEAST64_TYPE
+#define INT_LEAST64_TYPE INT64_TYPE
+
+#undef UINT_LEAST8_TYPE
+#define UINT_LEAST8_TYPE UINT8_TYPE
+
+#undef UINT_LEAST16_TYPE
+#define UINT_LEAST16_TYPE UINT16_TYPE
+
+#undef UINT_LEAST32_TYPE
+#define UINT_LEAST32_TYPE "unsigned int"
+
+#undef UINT_LEAST64_TYPE
+#define UINT_LEAST64_TYPE UINT64_TYPE
+
+#undef INTMAX_TYPE
+#define INTMAX_TYPE INT64_TYPE
+
+#undef UINTMAX_TYPE
+#define UINTMAX_TYPE UINT64_TYPE
 
 /* Override rs6000.h definition.  */
 #undef  ASM_APP_ON

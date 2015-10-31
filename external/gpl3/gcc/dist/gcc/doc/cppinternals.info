@@ -1,5 +1,5 @@
 This is doc/cppinternals.info, produced by makeinfo version 4.12 from
-/space/rguenther/gcc-4.8.3/gcc-4.8.3/gcc/doc/cppinternals.texi.
+/space/rguenther/gcc-4.8.5/gcc-4.8.5/gcc/doc/cppinternals.texi.
 
 INFO-DIR-SECTION Software development
 START-INFO-DIR-ENTRY
@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the internals of the GNU C Preprocessor.
 
-   Copyright (C) 2000-2013 Free Software Foundation, Inc.
+   Copyright (C) 2000-2015 Free Software Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -991,45 +991,3 @@ File: cppinternals.info,  Node: Concept Index,  Prev: Files,  Up: Top
 Concept Index
 *************
 
- [index ]
-* Menu:
-
-* assertions:                            Hash Nodes.          (line   6)
-* controlling macros:                    Guard Macros.        (line   6)
-* escaped newlines:                      Lexer.               (line   6)
-* files:                                 Files.               (line   6)
-* guard macros:                          Guard Macros.        (line   6)
-* hash table:                            Hash Nodes.          (line   6)
-* header files:                          Conventions.         (line   6)
-* identifiers:                           Hash Nodes.          (line   6)
-* interface:                             Conventions.         (line   6)
-* lexer:                                 Lexer.               (line   6)
-* line numbers:                          Line Numbering.      (line   6)
-* macro expansion:                       Macro Expansion.     (line   6)
-* macro representation (internal):       Macro Expansion.     (line  19)
-* macros:                                Hash Nodes.          (line   6)
-* multiple-include optimization:         Guard Macros.        (line   6)
-* named operators:                       Hash Nodes.          (line   6)
-* newlines:                              Lexer.               (line   6)
-* paste avoidance:                       Token Spacing.       (line   6)
-* spacing:                               Token Spacing.       (line   6)
-* token run:                             Lexer.               (line 192)
-* token spacing:                         Token Spacing.       (line   6)
-
-
-
-Tag Table:
-Node: Top958
-Node: Conventions2643
-Node: Lexer3585
-Ref: Invalid identifiers11498
-Ref: Lexing a line13447
-Node: Hash Nodes18220
-Node: Macro Expansion21099
-Node: Token Spacing30046
-Node: Line Numbering35906
-Node: Guard Macros39991
-Node: Files44782
-Node: Concept Index48248
-
-End Tag Table

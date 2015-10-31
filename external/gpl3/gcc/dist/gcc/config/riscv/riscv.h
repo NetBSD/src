@@ -19,28 +19,6 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-#if !defined(IN_LIBGCC2) && !defined(IN_TARGET_LIBS)
-/* Information about one recognized processor.  Defined here for the
-   benefit of TARGET_CPU_CPP_BUILTINS.  */
-struct riscv_cpu_info {
-  /* The 'canonical' name of the processor as far as GCC is concerned.
-     It's typically a manufacturer's prefix followed by a numerical
-     designation.  It should be lowercase.  */
-  const char *name;
-
-  /* The internal processor number that most closely matches this
-     entry.  Several processors can have the same value, if there's no
-     difference between them from GCC's point of view.  */
-  enum processor cpu;
-
-  /* A mask of PTF_* values.  */
-  unsigned int tune_flags;
-};
-#endif
-
-/* True if a global pointer can be used to access small data. */
-#define TARGET_USE_GP (!flag_pic)
-
 /* TARGET_HARD_FLOAT and TARGET_SOFT_FLOAT reflect whether the FPU is
    directly accessible, while the command-line options select
    TARGET_HARD_FLOAT_ABI and TARGET_SOFT_FLOAT_ABI to reflect the ABI
@@ -120,6 +98,8 @@ struct riscv_cpu_info {
 	  builtin_define_std ("LANGUAGE_C");				\
 	  builtin_define ("_LANGUAGE_C");				\
 	}								\
+      if (riscv_cmodel == CM_MEDANY)					\
+	builtin_define ("_RISCV_CMODEL_MEDANY");			\
     }									\
   while (0)
 
@@ -129,12 +109,12 @@ struct riscv_cpu_info {
 #define TARGET_DEFAULT 0
 #endif
 
-#ifndef TARGET_CPU_DEFAULT
-#define TARGET_CPU_DEFAULT 0
+#ifndef RISCV_ARCH_STRING_DEFAULT
+#define RISCV_ARCH_STRING_DEFAULT "IMAFD"
 #endif
 
-#ifndef RISCV_CPU_STRING_DEFAULT
-#define RISCV_CPU_STRING_DEFAULT "rocket"
+#ifndef RISCV_TUNE_STRING_DEFAULT
+#define RISCV_TUNE_STRING_DEFAULT "rocket"
 #endif
 
 #ifndef TARGET_64BIT_DEFAULT
@@ -184,15 +164,9 @@ struct riscv_cpu_info {
 #define NM_FLAGS "-Bn"
 #endif
 
-/* SUBTARGET_ASM_SPEC is always passed to the assembler.  It may be
-   overridden by subtargets.  */
-
-#ifndef SUBTARGET_ASM_SPEC
-#define SUBTARGET_ASM_SPEC ""
-#endif
-
 #undef ASM_SPEC
 #define ASM_SPEC "\
+%(subtarget_asm_debugging_spec) \
 %{m32} %{m64} %{!m32:%{!m64: %(asm_abi_default_spec)}} \
 %{fPIC|fpic|fPIE|fpie:-fpic} \
 %{march=*} \
@@ -208,31 +182,6 @@ struct riscv_cpu_info {
 %{shared}"
 #endif  /* LINK_SPEC defined */
 
-
-/* Specs for the compiler proper */
-
-/* SUBTARGET_CC1_SPEC is passed to the compiler proper.  It may be
-   overridden by subtargets.  */
-#ifndef SUBTARGET_CC1_SPEC
-#define SUBTARGET_CC1_SPEC ""
-#endif
-
-/* CC1_SPEC is the set of arguments to pass to the compiler proper.  */
-
-#undef CC1_SPEC
-#define CC1_SPEC "\
-%(subtarget_cc1_spec)"
-
-/* Preprocessor specs.  */
-
-/* SUBTARGET_CPP_SPEC is passed to the preprocessor.  It may be
-   overridden by subtargets.  */
-#ifndef SUBTARGET_CPP_SPEC
-#define SUBTARGET_CPP_SPEC ""
-#endif
-
-#define CPP_SPEC "%(subtarget_cpp_spec)"
-
 /* This macro defines names of additional specifications to put in the specs
    that can be used in various specifications like CC1_SPEC.  Its definition
    is an initializer with a subgrouping for each command option.
@@ -244,9 +193,6 @@ struct riscv_cpu_info {
    Do not define this macro if it does not need to do anything.  */
 
 #define EXTRA_SPECS							\
-  { "subtarget_cc1_spec", SUBTARGET_CC1_SPEC },				\
-  { "subtarget_cpp_spec", SUBTARGET_CPP_SPEC },				\
-  { "subtarget_asm_spec", SUBTARGET_ASM_SPEC },				\
   { "asm_abi_default_spec", "-" MULTILIB_ARCH_DEFAULT },		\
   SUBTARGET_EXTRA_SPECS
 
@@ -254,17 +200,16 @@ struct riscv_cpu_info {
 #define SUBTARGET_EXTRA_SPECS
 #endif
 
-#ifndef PREFERRED_DEBUGGING_TYPE
-#define PREFERRED_DEBUGGING_TYPE DWARF2_DEBUG
-#endif
-
-#define DWARF2_ADDR_SIZE UNITS_PER_WORD
+#define TARGET_DEFAULT_CMODEL CM_MEDLOW
 
 /* By default, turn on GDB extensions.  */
 #define DEFAULT_GDB_EXTENSIONS 1
 
 #define LOCAL_LABEL_PREFIX	"."
 #define USER_LABEL_PREFIX	""
+
+#define DWARF2_DEBUGGING_INFO 1
+#define DWARF2_ASM_LINE_DEBUG_INFO 0
 
 /* The mapping from gcc register number to DWARF 2 CFA column number.  */
 #define DWARF_FRAME_REGNUM(REGNO) \
@@ -285,11 +230,6 @@ struct riscv_cpu_info {
   ((N) < 4 ? (N) + GP_ARG_FIRST : INVALID_REGNUM)
 
 #define EH_RETURN_STACKADJ_RTX  gen_rtx_REG (Pmode, GP_ARG_FIRST + 4)
-
-/* Offsets recorded in opcodes are a multiple of this alignment factor.
-   The default for this in 64-bit mode is 8, which causes problems with
-   SFmode register saves.  */
-#define DWARF_CIE_DATA_ALIGNMENT -4
 
 /* Target machine storage layout */
 
@@ -467,12 +407,12 @@ struct riscv_cpu_info {
 
 #define FIRST_PSEUDO_REGISTER 66
 
-/* x0, sp, tp, and gp are fixed. */
+/* x0, sp, gp, and tp are fixed. */
 
 #define FIXED_REGISTERS							\
 { /* General registers.  */                                             \
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,			\
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1,			\
+  1, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
+  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   /* Floating-point registers.  */                                      \
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
@@ -481,27 +421,27 @@ struct riscv_cpu_info {
 }
 
 
-/* Function calls clobber x16-30 (v0-1, a0-7, t0-4) and f16-31
-   (fv0-1, fa0-7, ft0-5).  The call RTLs themselves clobber x1 (ra). */
+/* a0-a7, t0-a6, fa0-fa7, and ft0-ft11 are volatile across calls.
+   The call RTLs themselves clobber ra.  */
 
 #define CALL_USED_REGISTERS						\
 { /* General registers.  */                                             \
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,			\
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
   /* Floating-point registers.  */                                      \
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
   /* Others.  */                                                        \
   1, 1 \
 }
 
 #define CALL_REALLY_USED_REGISTERS                                      \
 { /* General registers.  */                                             \
-  1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1,			\
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 0, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
   /* Floating-point registers.  */                                      \
-  0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,			\
-  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1,			\
+  1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1,			\
   /* Others.  */                                                        \
   1, 1 \
 }
@@ -516,17 +456,11 @@ struct riscv_cpu_info {
 #define FP_REG_LAST  63
 #define FP_REG_NUM   (FP_REG_LAST - FP_REG_FIRST + 1)
 
-#define CALLEE_SAVED_GP_REG_FIRST (GP_REG_FIRST + 2)
-#define CALLEE_SAVED_GP_REG_LAST (CALLEE_SAVED_GP_REG_FIRST + 12 - 1)
-
-#define CALLEE_SAVED_FP_REG_FIRST (FP_REG_FIRST + 0)
-#define CALLEE_SAVED_FP_REG_LAST (CALLEE_SAVED_FP_REG_FIRST + 16 - 1)
-
 /* The DWARF 2 CFA column which tracks the return address from a
    signal handler context.  This means that to maintain backwards
    compatibility, no hard register can be assigned this column if it
    would need to be handled by the DWARF unwinder.  */
-#define DWARF_ALT_FRAME_RETURN_COLUMN 66
+#define DWARF_ALT_FRAME_RETURN_COLUMN 64
 
 #define GP_REG_P(REGNO)	\
   ((unsigned int) ((int) (REGNO) - GP_REG_FIRST) < GP_REG_NUM)
@@ -552,10 +486,9 @@ struct riscv_cpu_info {
 			  && GET_MODE_CLASS (MODE2) == MODE_INT))
 
 /* Use s0 as the frame pointer if it is so requested. */
-#define HARD_FRAME_POINTER_REGNUM 2
-#define STACK_POINTER_REGNUM 14
-#define THREAD_POINTER_REGNUM 15
-#define GP_REGNUM 31
+#define HARD_FRAME_POINTER_REGNUM 8
+#define STACK_POINTER_REGNUM 2
+#define THREAD_POINTER_REGNUM 4
 
 /* These two registers don't really exist: they get eliminated to either
    the stack or hard frame pointer.  */
@@ -566,7 +499,7 @@ struct riscv_cpu_info {
 #define HARD_FRAME_POINTER_IS_ARG_POINTER 0
 
 /* Register in which static-chain is passed to a function.  */
-#define STATIC_CHAIN_REGNUM GP_RETURN
+#define STATIC_CHAIN_REGNUM GP_TEMP_FIRST
 
 /* Registers used as temporaries in prologue/epilogue code.
 
@@ -575,8 +508,8 @@ struct riscv_cpu_info {
    The epilogue temporary mustn't conflict with the return registers,
    the frame pointer, the EH stack adjustment, or the EH data registers. */
 
-#define RISCV_PROLOGUE_TEMP_REGNUM GP_TEMP_FIRST
-#define RISCV_EPILOGUE_TEMP_REGNUM GP_TEMP_FIRST
+#define RISCV_PROLOGUE_TEMP_REGNUM (GP_TEMP_FIRST + 1)
+#define RISCV_EPILOGUE_TEMP_REGNUM RISCV_PROLOGUE_TEMP_REGNUM
 
 #define RISCV_PROLOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_PROLOGUE_TEMP_REGNUM)
 #define RISCV_EPILOGUE_TEMP(MODE) gen_rtx_REG (MODE, RISCV_EPILOGUE_TEMP_REGNUM)
@@ -653,7 +586,7 @@ enum reg_class
 #define REG_CLASS_CONTENTS									\
 {												\
   { 0x00000000, 0x00000000, 0x00000000 },	/* NO_REGS */		\
-  { 0x7c000000, 0x00000000, 0x00000000 },	/* T_REGS */		\
+  { 0xf00000e0, 0x00000000, 0x00000000 },	/* T_REGS */		\
   { 0xffffffff, 0x00000000, 0x00000000 },	/* GR_REGS */		\
   { 0x00000000, 0xffffffff, 0x00000000 },	/* FP_REGS */		\
   { 0x00000000, 0x00000000, 0x00000003 },	/* FRAME_REGS */	\
@@ -687,15 +620,16 @@ enum reg_class
 #define REG_ALLOC_ORDER							\
 { \
   /* Call-clobbered GPRs.  */						\
-  16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 1,	\
+  15, 14, 13, 12, 11, 10, 16, 17, 5, 6, 7, 28, 29, 30, 31, 1,		\
   /* Call-saved GPRs.  */						\
-  2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,	       			\
+  8, 9, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,	       			\
   /* GPRs that can never be exposed to the register allocator.  */	\
-  0,  14, 15,								\
+  0, 2, 3, 4,								\
   /* Call-clobbered FPRs.  */						\
-  48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63,	\
+  32, 33, 34, 35, 36, 37, 38, 39, 42, 43, 44, 45, 46, 47, 48, 49,	\
+  60, 61, 62, 63,							\
   /* Call-saved FPRs.  */						\
-  32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47,	\
+  40, 41, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59,			\
   /* None of the remaining classes have defined call-saved		\
      registers.  */							\
   64, 65								\
@@ -778,17 +712,17 @@ enum reg_class
 /* Symbolic macros for the registers used to return integer and floating
    point values.  */
 
-#define GP_RETURN (GP_REG_FIRST + 16)
-#define FP_RETURN ((TARGET_SOFT_FLOAT) ? GP_RETURN : (FP_REG_FIRST + 16))
+#define GP_RETURN GP_ARG_FIRST
+#define FP_RETURN ((TARGET_SOFT_FLOAT) ? GP_RETURN : FP_ARG_FIRST)
 
 #define MAX_ARGS_IN_REGISTERS 8
 
 /* Symbolic macros for the first/last argument registers.  */
 
-#define GP_ARG_FIRST (GP_REG_FIRST + 18)
+#define GP_ARG_FIRST (GP_REG_FIRST + 10)
 #define GP_ARG_LAST  (GP_ARG_FIRST + MAX_ARGS_IN_REGISTERS - 1)
-#define GP_TEMP_FIRST (GP_ARG_LAST + 1)
-#define FP_ARG_FIRST (FP_REG_FIRST + 18)
+#define GP_TEMP_FIRST (GP_REG_FIRST + 5)
+#define FP_ARG_FIRST (FP_REG_FIRST + 10)
 #define FP_ARG_LAST  (FP_ARG_FIRST + MAX_ARGS_IN_REGISTERS - 1)
 
 #define LIBCALL_VALUE(MODE) \
@@ -796,8 +730,6 @@ enum reg_class
 
 #define FUNCTION_VALUE(VALTYPE, FUNC) \
   riscv_function_value (VALTYPE, FUNC, VOIDmode)
-
-/* Return scalar values in v0 or fv0. */
 
 #define FUNCTION_VALUE_REGNO_P(N) ((N) == GP_RETURN || (N) == FP_RETURN)
 
@@ -909,6 +841,7 @@ typedef struct {
 
 #define JUMP_TABLES_IN_TEXT_SECTION 0
 #define CASE_VECTOR_MODE SImode
+#define CASE_VECTOR_PC_RELATIVE (riscv_cmodel != CM_MEDLOW)
 
 /* Define this as 1 if `char' should by default be signed; else as 0.  */
 #define DEFAULT_SIGNED_CHAR 0
@@ -939,10 +872,12 @@ typedef struct {
 
 #define FUNCTION_MODE SImode
 
-/* A C expression for the cost of a branch instruction.  A value of
-   1 is the default; other values are interpreted relative to that.  */
+/* A C expression for the cost of a branch instruction.  A value of 2
+   seems to minimize code size.  */
 
-#define BRANCH_COST(speed_p, predictable_p) riscv_branch_cost
+#define BRANCH_COST(speed_p, predictable_p) \
+  ((!(speed_p) || (predictable_p)) ? 2 : riscv_branch_cost)
+
 #define LOGICAL_OP_NON_SHORT_CIRCUIT 0
 
 /* Control the assembler format that we output.  */
@@ -962,14 +897,14 @@ typedef struct {
 #endif
 
 #define REGISTER_NAMES						\
-{ "zero","ra",  "s0",  "s1",  "s2",  "s3",  "s4",  "s5",	\
-  "s6",  "s7",  "s8",  "s9",  "s10", "s11", "sp",  "tp",	\
-  "v0",  "v1",  "a0",  "a1",  "a2",  "a3",  "a4",  "a5",	\
-  "a6",  "a7",  "t0",  "t1",  "t2",  "t3",  "t4",  "gp",	\
-  "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",	\
-  "f8",  "f9",  "f10", "f11", "f12", "f13", "f14", "f15",	\
-  "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",	\
-  "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",	\
+{ "zero","ra",  "sp",  "gp",  "tp",  "t0",  "t1",  "t2",	\
+  "s0",  "s1",  "a0",  "a1",  "a2",  "a3",  "a4",  "a5",	\
+  "a6",  "a7",  "s2",  "s3",  "s4",  "s5",  "s6",  "s7",	\
+  "s8",  "s9",  "s10", "s11", "t3",  "t4",  "t5",  "t6",	\
+  "ft0", "ft1", "ft2", "ft3", "ft4", "ft5", "ft6", "ft7",	\
+  "fs0", "fs1", "fa0", "fa1", "fa2", "fa3", "fa4", "fa5",	\
+  "fa6", "fa7", "fs2", "fs3", "fs4", "fs5", "fs6", "fs7",	\
+  "fs8", "fs9", "fs10","fs11","ft8", "ft9", "ft10","ft11",	\
   "arg", "frame", }
 
 #define ADDITIONAL_REGISTER_NAMES					\
@@ -1006,38 +941,38 @@ typedef struct {
   { "x29",	29 + GP_REG_FIRST },					\
   { "x30",	30 + GP_REG_FIRST },					\
   { "x31",	31 + GP_REG_FIRST },					\
-  { "fs0",	 0 + FP_REG_FIRST },					\
-  { "fs1",	 1 + FP_REG_FIRST },					\
-  { "fs2",	 2 + FP_REG_FIRST },					\
-  { "fs3",	 3 + FP_REG_FIRST },					\
-  { "fs4",	 4 + FP_REG_FIRST },					\
-  { "fs5",	 5 + FP_REG_FIRST },					\
-  { "fs6",	 6 + FP_REG_FIRST },					\
-  { "fs7",	 7 + FP_REG_FIRST },					\
-  { "fs8",	 8 + FP_REG_FIRST },					\
-  { "fs9",	 9 + FP_REG_FIRST },					\
-  { "fs10",	10 + FP_REG_FIRST },					\
-  { "fs11",	11 + FP_REG_FIRST },					\
-  { "fs12",	12 + FP_REG_FIRST },					\
-  { "fs13",	13 + FP_REG_FIRST },					\
-  { "fs14",	14 + FP_REG_FIRST },					\
-  { "fs15",	15 + FP_REG_FIRST },					\
-  { "fv0",	16 + FP_REG_FIRST },					\
-  { "fv1",	17 + FP_REG_FIRST },					\
-  { "fa0",	18 + FP_REG_FIRST },					\
-  { "fa1",	19 + FP_REG_FIRST },					\
-  { "fa2",	20 + FP_REG_FIRST },					\
-  { "fa3",	21 + FP_REG_FIRST },					\
-  { "fa4",	22 + FP_REG_FIRST },					\
-  { "fa5",	23 + FP_REG_FIRST },					\
-  { "fa6",	24 + FP_REG_FIRST },					\
-  { "fa7",	25 + FP_REG_FIRST },					\
-  { "ft0",	26 + FP_REG_FIRST },					\
-  { "ft1",	27 + FP_REG_FIRST },					\
-  { "ft2",	28 + FP_REG_FIRST },					\
-  { "ft3",	29 + FP_REG_FIRST },					\
-  { "ft4",	30 + FP_REG_FIRST },					\
-  { "ft5",	31 + FP_REG_FIRST },					\
+  { "f0",	 0 + FP_REG_FIRST },					\
+  { "f1",	 1 + FP_REG_FIRST },					\
+  { "f2",	 2 + FP_REG_FIRST },					\
+  { "f3",	 3 + FP_REG_FIRST },					\
+  { "f4",	 4 + FP_REG_FIRST },					\
+  { "f5",	 5 + FP_REG_FIRST },					\
+  { "f6",	 6 + FP_REG_FIRST },					\
+  { "f7",	 7 + FP_REG_FIRST },					\
+  { "f8",	 8 + FP_REG_FIRST },					\
+  { "f9",	 9 + FP_REG_FIRST },					\
+  { "f10",	10 + FP_REG_FIRST },					\
+  { "f11",	11 + FP_REG_FIRST },					\
+  { "f12",	12 + FP_REG_FIRST },					\
+  { "f13",	13 + FP_REG_FIRST },					\
+  { "f14",	14 + FP_REG_FIRST },					\
+  { "f15",	15 + FP_REG_FIRST },					\
+  { "f16",	16 + FP_REG_FIRST },					\
+  { "f17",	17 + FP_REG_FIRST },					\
+  { "f18",	18 + FP_REG_FIRST },					\
+  { "f19",	19 + FP_REG_FIRST },					\
+  { "f20",	20 + FP_REG_FIRST },					\
+  { "f21",	21 + FP_REG_FIRST },					\
+  { "f22",	22 + FP_REG_FIRST },					\
+  { "f23",	23 + FP_REG_FIRST },					\
+  { "f24",	24 + FP_REG_FIRST },					\
+  { "f25",	25 + FP_REG_FIRST },					\
+  { "f26",	26 + FP_REG_FIRST },					\
+  { "f27",	27 + FP_REG_FIRST },					\
+  { "f28",	28 + FP_REG_FIRST },					\
+  { "f29",	29 + FP_REG_FIRST },					\
+  { "f30",	30 + FP_REG_FIRST },					\
+  { "f31",	31 + FP_REG_FIRST },					\
 }
 
 /* Globalizing directive for a label.  */
@@ -1191,8 +1126,7 @@ while (0)
 extern const enum reg_class riscv_regno_to_class[];
 extern bool riscv_hard_regno_mode_ok[][FIRST_PSEUDO_REGISTER];
 extern const char* riscv_hi_relocs[];
-extern enum processor riscv_tune;        /* which cpu to schedule for */
 #endif
 
 #define ASM_PREFERRED_EH_DATA_FORMAT(CODE,GLOBAL) \
-  (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_absptr)
+  (((GLOBAL) ? DW_EH_PE_indirect : 0) | DW_EH_PE_pcrel | DW_EH_PE_sdata4)
