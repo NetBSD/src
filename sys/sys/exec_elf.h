@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.149 2015/07/30 15:28:18 maxv Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.150 2015/11/01 15:21:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -894,6 +894,18 @@ typedef struct {
 #define ELF_NOTE_SUSE_VERSION_DESCSZ	8
 /* SuSE-specific note name */
 #define ELF_NOTE_SUSE_VERSION_NAME		"SuSE\0\0\0\0"
+
+/* Go-specific note type: buildid
+ * name: Go\0\0
+ * namesz: 4
+ * desc: 
+ *	words[10]
+ * descsz: 40
+ */
+#define ELF_NOTE_TYPE_GO_BUILDID_TAG	4
+#define ELF_NOTE_GO_BUILDID_NAMESZ	4
+#define ELF_NOTE_GO_BUILDID_DESCSZ	40
+#define ELF_NOTE_GO_BUILDID_NAME	"Go\0\0"
 
 /* NetBSD-specific note type: Emulation name.
  * name: NetBSD\0\0
