@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.43 2015/11/01 10:18:43 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.44 2015/11/01 10:36:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.43 2015/11/01 10:18:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.44 2015/11/01 10:36:52 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -766,7 +766,7 @@ uhci_dump_td(uhci_soft_td_t *p)
 	usb_syncmem(&p->dma, p->offs, sizeof(p->td),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	DPRINTF("TD(%p) at %08x", p, p->physaddr, 0, 0);
+	DPRINTF("TD(%p) at 0x%08x", p, p->physaddr, 0, 0);
  	DPRINTF("   link=0x%08x status=0x%08x "
 	    "token=0x%08x buffer=0x%08x",
 	     le32toh(p->td.td_link),
@@ -807,7 +807,7 @@ uhci_dump_qh(uhci_soft_qh_t *sqh)
 	usb_syncmem(&sqh->dma, sqh->offs, sizeof(sqh->qh),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
-	DPRINTF("QH(%p) at %08x: hlink=%08x elink=%08x", sqh,
+	DPRINTF("QH(%p) at 0x%08x: hlink=%08x elink=%08x", sqh,
 	    (int)sqh->physaddr, le32toh(sqh->qh.qh_hlink),
 	    le32toh(sqh->qh.qh_elink));
 
