@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.75 2015/05/30 16:44:28 riastradh Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.76 2015/11/01 21:31:40 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.75 2015/05/30 16:44:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.76 2015/11/01 21:31:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,21 +499,20 @@ struct pl2303x_init {
 	uint8_t		request;
 	uint16_t	value;
 	uint16_t	index;
-	uint16_t	length;
 };
 
 static const struct pl2303x_init pl2303x[] = {
-	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
-	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST, 0x0404,    0, 0 },
-	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
-	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8383,    0, 0 },
-	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
-	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST, 0x0404,    1, 0 },
-	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0, 0 },
-	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8383,    0, 0 },
-	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      0,    1, 0 },
-	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      1,    0, 0 },
-	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      2, 0x44, 0 }
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST, 0x0404,    0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8383,    0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST, 0x0404,    1 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8484,    0 },
+	{ UT_READ_VENDOR_DEVICE,  UPLCOM_SET_REQUEST, 0x8383,    0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      0,    1 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      1,    0 },
+	{ UT_WRITE_VENDOR_DEVICE, UPLCOM_SET_REQUEST,      2, 0x44 }
 };
 #define N_PL2302X_INIT  (sizeof(pl2303x)/sizeof(pl2303x[0]))
 
@@ -525,13 +524,22 @@ uplcom_pl2303x_init(struct uplcom_softc *sc)
 	int i;
 
 	for (i = 0; i < N_PL2302X_INIT; i++) {
+		char buf[1];
+		void *b;
+
 		req.bmRequestType = pl2303x[i].req_type;
 		req.bRequest = pl2303x[i].request;
 		USETW(req.wValue, pl2303x[i].value);
 		USETW(req.wIndex, pl2303x[i].index);
-		USETW(req.wLength, pl2303x[i].length);
+		if (UT_GET_DIR(req.bmRequestType) == UT_READ) {
+			b = buf;
+			USETW(req.wLength, sizeof(buf));
+		} else {
+			b = NULL;
+			USETW(req.wLength, 0);
+		}
 
-		err = usbd_do_request(sc->sc_udev, &req, 0);
+		err = usbd_do_request(sc->sc_udev, &req, b);
 		if (err) {
 			aprint_error_dev(sc->sc_dev,
 			    "uplcom_pl2303x_init failed: %s\n",
