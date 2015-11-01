@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.12 2015/10/27 15:28:22 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.13 2015/11/01 12:03:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@ typedef union {
 
 struct uhci_xfer {
 	struct usbd_xfer ux_xfer;
-	struct usb_task	ux_aborttask;
+	struct usb_task ux_aborttask;
 	uhci_soft_td_t *ux_stdstart;
 	uhci_soft_td_t *ux_stdend;
 	TAILQ_ENTRY(uhci_xfer) ux_list;
