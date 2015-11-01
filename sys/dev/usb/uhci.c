@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.41 2015/10/27 15:28:22 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.42 2015/11/01 10:14:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.41 2015/10/27 15:28:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.42 2015/11/01 10:14:18 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -207,7 +207,7 @@ Static struct usbd_xfer *
 Static void		uhci_freex(struct usbd_bus *, struct usbd_xfer *);
 Static void		uhci_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		uhci_roothub_ctrl(struct usbd_bus *,
-    usb_device_request_t *, void *, int);
+			    usb_device_request_t *, void *, int);
 
 Static usbd_status	uhci_device_ctrl_transfer(struct usbd_xfer *);
 Static usbd_status	uhci_device_ctrl_start(struct usbd_xfer *);
@@ -253,8 +253,8 @@ Static usbd_status	uhci_device_setintr(uhci_softc_t *,
 Static void		uhci_device_clear_toggle(struct usbd_pipe *);
 Static void		uhci_noop(struct usbd_pipe *);
 
-static inline uhci_soft_qh_t *uhci_find_prev_qh(uhci_soft_qh_t *,
-						    uhci_soft_qh_t *);
+static inline uhci_soft_qh_t *
+			uhci_find_prev_qh(uhci_soft_qh_t *, uhci_soft_qh_t *);
 
 #ifdef UHCI_DEBUG
 Static void		uhci_dump_all(uhci_softc_t *);
@@ -278,6 +278,7 @@ void			uhci_dump(void);
 #define UWRITE4(sc, r, x) \
  do { UBARR(sc); bus_space_write_4((sc)->iot, (sc)->ioh, (r), (x)); \
  } while (/*CONSTCOND*/0)
+
 static __inline uint8_t
 UREAD1(uhci_softc_t *sc, bus_size_t r)
 {
