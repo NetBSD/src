@@ -1,4 +1,4 @@
-/*	$NetBSD: below.c,v 1.1 2015/10/26 23:09:49 uwe Exp $ */
+/*	$NetBSD: below.c,v 1.2 2015/11/01 01:40:23 uwe Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: below.c,v 1.1 2015/10/26 23:09:49 uwe Exp $");
+__RCSID("$NetBSD: below.c,v 1.2 2015/11/01 01:40:23 uwe Exp $");
 
 #include "panel_impl.h"
 
@@ -36,13 +36,13 @@ panel_below(PANEL *p)
 {
 	PANEL *below;
 
-	if (__predict_false(p == NULL))
+	if (p == NULL)
+		below = TAILQ_LAST(&_deck, deck);
+	else if (__predict_true(!PANEL_HIDDEN(p)))
+		below = PANEL_BELOW(p);
+	else
 		return NULL;
 
-	if (__predict_false(PANEL_HIDDEN(p)))
-		return NULL;
-
-	below = PANEL_BELOW(p);
 	if (below == &_stdscr_panel)
 		return NULL;
 	else
