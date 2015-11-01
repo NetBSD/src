@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.42 2015/11/01 10:14:18 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.43 2015/11/01 10:18:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.42 2015/11/01 10:14:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.43 2015/11/01 10:18:43 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -418,7 +418,7 @@ uhci_init(uhci_softc_t *sc)
 #ifdef UHCI_DEBUG
 	thesc = sc;
 
-	if (uhcidebug > 2)
+	if (uhcidebug >= 2)
 		uhci_dumpregs(sc);
 #endif
 
@@ -698,7 +698,7 @@ uhci_resume(device_t dv, const pmf_qual_t *qual)
 		callout_reset(&sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub,
 		    sc->sc_intr_xfer);
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 2)
+	if (uhcidebug >= 2)
 		uhci_dumpregs(sc);
 #endif
 
@@ -719,7 +719,7 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 	cmd = UREAD2(sc, UHCI_CMD);
 
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 2)
+	if (uhcidebug >= 2)
 		uhci_dumpregs(sc);
 #endif
 	if (sc->sc_intr_xfer != NULL)
@@ -1531,7 +1531,7 @@ uhci_idone(struct uhci_xfer *ux)
 		for (i = 0; i < nframes; i++) {
 			std = stds[n];
 #ifdef UHCI_DEBUG
-			if (uhcidebug > 5) {
+			if (uhcidebug >= 5) {
 				DPRINTF("isoc TD %d", i, 0, 0, 0);
 				uhci_dump_td(std);
 			}
@@ -1556,7 +1556,7 @@ uhci_idone(struct uhci_xfer *ux)
 #ifdef UHCI_DEBUG
 	DPRINTFN(10, "ux=%p, xfer=%p, pipe=%p ready",
 	    ux, xfer, upipe, 0);
-	if (uhcidebug > 10)
+	if (uhcidebug >= 10)
 		uhci_dump_tds(ux->ux_stdstart);
 #endif
 
@@ -2072,7 +2072,7 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 
 
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 8) {
+	if (uhcidebug >= 8) {
 		DPRINTFN(8, "data(1)", 0, 0, 0, 0);
 		uhci_dump_tds(data);
 	}
@@ -2101,7 +2101,7 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 10) {
+	if (uhcidebug >= 10) {
 		DPRINTFN(10, "data(2)", 0, 0, 0, 0);
 		uhci_dump_tds(data);
 	}
@@ -2349,7 +2349,7 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 
 	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 10) {
+	if (uhcidebug >= 10) {
 		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->intr.qhs[0]);
 	}
@@ -2380,7 +2380,7 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 
 	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 10) {
+	if (uhcidebug >= 10) {
 		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->intr.qhs[0]);
 	}
@@ -2530,7 +2530,7 @@ uhci_device_request(struct usbd_xfer *xfer)
 
 	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 10) {
+	if (uhcidebug >= 10) {
 		DPRINTFN(10, "before transfer", 0, 0, 0, 0);
 		uhci_dump_tds(setup);
 	}
@@ -2556,7 +2556,7 @@ uhci_device_request(struct usbd_xfer *xfer)
 	uhci_add_intr_info(sc, uxfer);
 	DPRINTFN(12, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 12) {
+	if (uhcidebug >= 12) {
 		uhci_soft_td_t *std;
 		uhci_soft_qh_t *xqh;
 		uhci_soft_qh_t *sxqh;
@@ -2685,7 +2685,7 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 		DPRINTFN(5, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
-		if (uhcidebug > 5) {
+		if (uhcidebug >= 5) {
 			DPRINTF("TD %d", i, 0, 0, 0);
 			uhci_dump_td(std);
 		}
@@ -3036,7 +3036,7 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 
 		DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
-		if (uhcidebug > 10) {
+		if (uhcidebug >= 10) {
 			uhci_dump_tds(data);
 			uhci_dump_qh(upipe->intr.qhs[0]);
 		}
