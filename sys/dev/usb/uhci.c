@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.44 2015/11/01 10:36:52 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.45 2015/11/01 10:45:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.44 2015/11/01 10:36:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.45 2015/11/01 10:45:42 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1599,15 +1599,15 @@ uhci_idone(struct uhci_xfer *ux)
 		    0, 0);
 		DPRINTFN((status == UHCI_TD_STALLED) * 10,
 		    "bitstuff=%d crcto   =%d nak     =%d babble  =%d",
-		    status & UHCI_TD_BITSTUFF,
-		    status & UHCI_TD_CRCTO,
-		    status & UHCI_TD_NAK,
-		    status & UHCI_TD_BABBLE);
+		    !!(status & UHCI_TD_BITSTUFF),
+		    !!(status & UHCI_TD_CRCTO),
+		    !!(status & UHCI_TD_NAK),
+		    !!(status & UHCI_TD_BABBLE));
 		DPRINTFN((status == UHCI_TD_STALLED) * 10,
 		    "dbuffer =%d stalled =%d active  =%d",
-		    status & UHCI_TD_DBUFFER,
-		    status & UHCI_TD_STALLED,
-		    status & UHCI_TD_ACTIVE,
+		    !!(status & UHCI_TD_DBUFFER),
+		    !!(status & UHCI_TD_STALLED),
+		    !!(status & UHCI_TD_ACTIVE),
 		    0);
 
 		if (status == UHCI_TD_STALLED)
