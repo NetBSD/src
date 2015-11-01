@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.45 2015/11/01 10:45:42 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.46 2015/11/01 12:09:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.45 2015/11/01 10:45:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.46 2015/11/01 12:09:48 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1281,7 +1281,7 @@ uhci_intr1(uhci_softc_t *sc)
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
 #ifdef UHCI_DEBUG
-	if (uhcidebug > 15) {
+	if (uhcidebug >= 15) {
 		DPRINTF("sc %p", sc, 0, 0, 0);
 		uhci_dumpregs(sc);
 	}
