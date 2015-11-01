@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.78 2015/10/22 11:38:51 maxv Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.79 2015/11/01 15:21:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.78 2015/10/22 11:38:51 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.79 2015/11/01 15:21:42 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -997,6 +997,9 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			break;
 
 		case ELF_NOTE_TYPE_SUSE_VERSION_TAG:
+			break;
+
+		case ELF_NOTE_TYPE_GO_BUILDID_TAG:
 			break;
 
 		default:
