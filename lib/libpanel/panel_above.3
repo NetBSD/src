@@ -1,4 +1,4 @@
-.\"	$NetBSD: panel_above.3,v 1.4 2015/10/28 10:22:40 wiz Exp $
+.\"	$NetBSD: panel_above.3,v 1.5 2015/11/01 01:40:23 uwe Exp $
 .\"
 .\" Copyright (c) 2015 Valery Ushakov
 .\" All rights reserved.
@@ -61,6 +61,9 @@ For a visible panel its neighbors in the deck can be obtained with
 .Fn panel_above
 and
 .Fn panel_below .
+The bottom and the top panels can be obtained by passing them
+.Dv NULL
+argument.
 .Sh IMPLEMENTATION NOTES
 The
 .Fn top_panel
