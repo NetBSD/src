@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.5 2015/10/31 00:41:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vioscsi.c,v 1.6 2015/11/01 08:55:05 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -186,6 +186,7 @@ vioscsi_attach(device_t parent, device_t self, void *aux)
 	chan->chan_ntargets = max_target;
 	chan->chan_nluns = max_lun;
 	chan->chan_id = 0;
+	chan->chan_flags = SCSIPI_CHAN_NOSETTLE;
 
 	config_found(sc->sc_dev, &sc->sc_channel, scsiprint);
 }
