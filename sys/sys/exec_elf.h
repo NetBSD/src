@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.150 2015/11/01 15:21:42 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.151 2015/11/01 17:44:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -835,6 +835,11 @@ typedef struct {
 #define ELF_NOTE_ABI_OS_SOLARIS		2
 #define ELF_NOTE_ABI_OS_KFREEBSD	3
 #define ELF_NOTE_ABI_OS_KNETBSD		4
+
+/* Old gcc style, under the ABI tag */
+#define ELF_NOTE_OGCC_NAMESZ		8
+#define ELF_NOTE_OGCC_NAME		"01.01\0\0\0\0"
+#define ELF_NOTE_OGCC_DESCSZ		0
 
 /*
  * GNU-specific note type: Hardware capabilities
