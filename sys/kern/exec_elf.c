@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.79 2015/11/01 15:21:42 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.80 2015/11/01 17:44:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.79 2015/11/01 15:21:42 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.80 2015/11/01 17:44:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -927,12 +927,19 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			}
 
 			/*
-			 * Ignore SuSE tags; SuSE's n_type is the same as NetBSD's
-			 * one.
+			 * Ignore SuSE tags; SuSE's n_type is the same the
+			 * NetBSD one.
 			 */
 			if (np->n_namesz == ELF_NOTE_SUSE_NAMESZ &&
 			    memcmp(ndata, ELF_NOTE_SUSE_NAME,
 			    ELF_NOTE_SUSE_NAMESZ) == 0)
+				break;
+			/*
+			 * Ignore old GCC
+			 */
+			if (np->n_namesz == ELF_NOTE_OGCC_NAMESZ &&
+			    memcmp(ndata, ELF_NOTE_OGCC_NAME,
+			    ELF_NOTE_OGCC_NAMESZ) == 0)
 				break;
 			BADNOTE("NetBSD tag");
 			goto bad;
