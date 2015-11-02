@@ -1,4 +1,4 @@
-#	$NetBSD: list,v 1.26 2013/08/03 21:35:59 matt Exp $
+#	$NetBSD: list,v 1.27 2015/11/02 17:40:20 riz Exp $
 
 SRCDIRS	bin sbin external/bsd/less/bin usr.bin usr.sbin
 
@@ -22,6 +22,7 @@ PROG	bin/sync
 
 PROG	sbin/chown	bin/chgrp
 PROG	sbin/disklabel
+PROG	sbin/dkctl
 PROG	sbin/drvctl
 PROG	sbin/fdisk
 PROG	sbin/fsck
