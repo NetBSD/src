@@ -1902,10 +1902,10 @@ gcc-nm.o: gcc-nm.c $(CONFIG_H) $(SYSTEM_H) $(LIBIBERTY_H)
 # ??? the implicit rules dont trigger if the source file has a different name
 # so copy instead
 gcc-ranlib.c: gcc-ar.c
-	cp $^ $@
+	cp -f $^ $@
 
 gcc-nm.c: gcc-ar.c
-	cp $^ $@
+	cp -f $^ $@
 
 COLLECT2_OBJS = collect2.o collect2-aix.o tlink.o vec.o ggc-none.o file-find.o
 COLLECT2_LIBS = @COLLECT2_LIBS@
