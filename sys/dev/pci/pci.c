@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.149 2015/10/02 05:22:53 msaitoh Exp $	*/
+/*	$NetBSD: pci.c,v 1.150 2015/11/02 09:29:08 knakahara Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.149 2015/10/02 05:22:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.150 2015/11/02 09:29:08 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -432,7 +432,9 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			if (addr == PCI_HT_MSI_FIXED_ADDR) {
 				pa.pa_flags |= PCI_FLAGS_MSI_OKAY;
 				pa.pa_flags |= PCI_FLAGS_MSIX_OKAY;
-			}
+			} else
+				aprint_verbose_dev(sc->sc_dev,
+				    "HyperTransport MSI mapping is not supported yet. Disable MSI/MSI-X.\n");
 		}
 	}
 #endif
