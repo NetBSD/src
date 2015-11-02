@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32 2011/12/23 00:51:47 jakllsch Exp $	*/
+/*	$NetBSD: umct.c,v 1.33 2015/11/02 08:37:28 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32 2011/12/23 00:51:47 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.33 2015/11/02 08:37:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,7 +156,7 @@ extern struct cfdriver umct_cd;
 CFATTACH_DECL2_NEW(umct, sizeof(struct umct_softc), umct_match,
     umct_attach, umct_detach, umct_activate, NULL, umct_childdet);
 
-int 
+int
 umct_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -165,7 +165,7 @@ umct_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void 
+void
 umct_attach(device_t parent, device_t self, void *aux)
 {
 	struct umct_softc *sc = device_private(self);
@@ -273,7 +273,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (sc->sc_intr_number== -1) {
+	if (sc->sc_intr_number == -1) {
 		aprint_error_dev(self, "Could not find interrupt in\n");
 		sc->sc_dying = 1;
 		return;
@@ -317,7 +317,7 @@ umct_childdet(device_t self, device_t child)
 	sc->sc_subdev = NULL;
 }
 
-int 
+int
 umct_detach(device_t self, int flags)
 {
 	struct umct_softc *sc = device_private(self);
