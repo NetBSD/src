@@ -1,4 +1,4 @@
-/*	$NetBSD: bottom.c,v 1.2 2015/11/02 01:06:15 kamil Exp $ */
+/*	$NetBSD: bottom.c,v 1.3 2015/11/02 02:45:25 kamil Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bottom.c,v 1.2 2015/11/02 01:06:15 kamil Exp $");
+__RCSID("$NetBSD: bottom.c,v 1.3 2015/11/02 02:45:25 kamil Exp $");
 
 #include "panel_impl.h"
 
@@ -34,6 +34,7 @@ __RCSID("$NetBSD: bottom.c,v 1.2 2015/11/02 01:06:15 kamil Exp $");
 int
 bottom_panel(PANEL *p)
 {
+
 	if (__predict_false(p == NULL))
 		return ERR;
 
