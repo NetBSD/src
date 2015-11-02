@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.68 2014/11/19 08:10:01 uebayasi Exp $	*/
+/*	$NetBSD: queue.h,v 1.69 2015/11/02 14:49:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -421,9 +421,9 @@ struct {								\
 #define	TAILQ_END(head)			(NULL)
 #define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
 #define	TAILQ_LAST(head, headname) \
-	(*(((struct headname *)((head)->tqh_last))->tqh_last))
+	(*(((struct headname *)(void *)((head)->tqh_last))->tqh_last))
 #define	TAILQ_PREV(elm, headname, field) \
-	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
+	(*(((struct headname *)(void *)((elm)->field.tqe_prev))->tqh_last))
 #define	TAILQ_EMPTY(head)		(TAILQ_FIRST(head) == TAILQ_END(head))
 
 
@@ -438,9 +438,9 @@ struct {								\
 	    ((next) = TAILQ_NEXT(var, field), 1); (var) = (next))
 
 #define	TAILQ_FOREACH_REVERSE(var, head, headname, field)		\
-	for ((var) = (*(((struct headname *)((head)->tqh_last))->tqh_last));\
+	for ((var) = TAILQ_LAST((head), headname);			\
 	    (var) != TAILQ_END(head);					\
-	    (var) = (*(((struct headname *)((var)->field.tqe_prev))->tqh_last)))
+	    (var) = TAILQ_PREV((var), headname, field)
 
 #define	TAILQ_FOREACH_REVERSE_SAFE(var, head, headname, field, prev)	\
 	for ((var) = TAILQ_LAST((head), headname);			\
