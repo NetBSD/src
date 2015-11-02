@@ -1,4 +1,4 @@
-/*	$NetBSD: new.c,v 1.1 2015/10/26 23:09:49 uwe Exp $ */
+/*	$NetBSD: new.c,v 1.2 2015/11/02 01:06:15 kamil Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: new.c,v 1.1 2015/10/26 23:09:49 uwe Exp $");
+__RCSID("$NetBSD: new.c,v 1.2 2015/11/02 01:06:15 kamil Exp $");
 
 #include "panel_impl.h"
 
@@ -37,17 +37,17 @@ __RCSID("$NetBSD: new.c,v 1.1 2015/10/26 23:09:49 uwe Exp $");
 static PANEL *
 _new_panel(WINDOW *w)
 {
-    PANEL *p;
+	PANEL *p;
 
-    p = (PANEL *)malloc(sizeof(PANEL));
-    if (p == NULL)
-	return NULL;
+	p = (PANEL *)malloc(sizeof(PANEL));
+	if (__predict_false(p == NULL))
+		return NULL;
 
-    p->win = w;
-    p->user = NULL;
+	p->win = w;
+	p->user = NULL;
 
-    DECK_INSERT_TOP(p);
-    return p;
+	DECK_INSERT_TOP(p);
+	return p;
 }
 
 
