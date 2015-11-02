@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.230 2015/07/15 03:28:55 manu Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.231 2015/11/02 09:57:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.230 2015/07/15 03:28:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.231 2015/11/02 09:57:43 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -1169,4 +1169,5 @@ nfs_vfs_done(void)
 	nfs_node_done();
 	nfs_kqfini();
 	nfs_iodfini();
+	nfs_fini();
 }
