@@ -1,4 +1,4 @@
-/*	$NetBSD: above.c,v 1.2 2015/11/01 01:40:23 uwe Exp $ */
+/*	$NetBSD: above.c,v 1.3 2015/11/02 01:06:15 kamil Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: above.c,v 1.2 2015/11/01 01:40:23 uwe Exp $");
+__RCSID("$NetBSD: above.c,v 1.3 2015/11/02 01:06:15 kamil Exp $");
 
 #include "panel_impl.h"
 
@@ -34,7 +34,6 @@ __RCSID("$NetBSD: above.c,v 1.2 2015/11/01 01:40:23 uwe Exp $");
 PANEL *
 panel_above(PANEL *p)
 {
-
 	if (p == NULL) {
 		if (TAILQ_EMPTY(&_deck))
 			return NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: panel.h,v 1.1 2015/10/26 23:09:49 uwe Exp $ */
+/*	$NetBSD: panel.h,v 1.2 2015/11/02 01:06:15 kamil Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -34,7 +34,6 @@
 typedef struct __panel PANEL;
 
 __BEGIN_DECLS
-
 PANEL  *new_panel(WINDOW *);
 int     del_panel(PANEL *);
 
