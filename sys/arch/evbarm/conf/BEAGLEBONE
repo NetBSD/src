@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BEAGLEBONE,v 1.33 2015/08/12 07:53:57 maxv Exp $
+#	$NetBSD: BEAGLEBONE,v 1.34 2015/11/02 00:49:24 jmcneill Exp $
 #
 #	BEAGLEBONE -- TI AM335x board Kernel
 #
@@ -217,13 +217,14 @@ ld*		at sdmmc?
 #options SDHC_DEBUG
 
 # General-purpose I/O pins
-# XXX These are the GPIO v2 in the AM335x, not v1 as in the OMAP35xx.
-#omapgpio0	at obio0 addr 0x44e07000 size 0x1000 intrbase 128 intr 29
-#omapgpio1	at obio0 addr 0x4804c000 size 0x1000 intrbase 160 intr 30
-#omapgpio2	at obio0 addr 0x481ac000 size 0x1000 intrbase 192 intr 32
-#omapgpio3	at obio0 addr 0x481ae000 size 0x1000 intrbase 224 intr 32
-
-#gpio*		at omapgpio?
+omapgpio0	at obio0 addr 0x44e07000 size 0x1000 # intrbase 128 intr 29
+gpio0		at omapgpio0
+omapgpio1	at obio0 addr 0x4804c000 size 0x1000 # intrbase 160 intr 30
+gpio1		at omapgpio1
+omapgpio2	at obio0 addr 0x481ac000 size 0x1000 # intrbase 192 intr 32
+gpio2		at omapgpio2
+omapgpio3	at obio0 addr 0x481ae000 size 0x1000 # intrbase 224 intr 32
+gpio3		at omapgpio3
 
 # I2C Controller
 tiiic0		at obio0 addr 0x44e0b000 size 0x1000 intr 70
