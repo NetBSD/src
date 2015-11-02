@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.88 2015/10/06 14:32:51 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.89 2015/11/02 22:18:45 jmcneill Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.88 2015/10/06 14:32:51 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.89 2015/11/02 22:18:45 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1180,6 +1180,12 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 		DPRINTF(0,("%s: unsupported bus width (%d)\n",
 		    HDEVNAME(hp), width));
 		return 1;
+	}
+
+	if (hp->sc->sc_vendor_bus_width) {
+		const int error = hp->sc->sc_vendor_bus_width(hp->sc, width);
+		if (error != 0)
+			return error;
 	}
 
 	mutex_enter(&hp->intr_lock);
