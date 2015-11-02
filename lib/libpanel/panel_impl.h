@@ -1,4 +1,4 @@
-/*	$NetBSD: panel_impl.h,v 1.1 2015/10/26 23:09:49 uwe Exp $ */
+/*	$NetBSD: panel_impl.h,v 1.2 2015/11/02 01:06:15 kamil Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -42,7 +42,7 @@
  */
 struct __panel {
 	WINDOW *win;
-	void *user;
+	char *user;
 	DECK_ENTRY zorder;
 };
 
