@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.336 2015/05/04 22:59:36 jmcneill Exp $ */
+/* $NetBSD: com.c,v 1.337 2015/11/02 17:45:13 christos Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.336 2015/05/04 22:59:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.337 2015/11/02 17:45:13 christos Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -377,7 +377,7 @@ com_enable_debugport(struct com_softc *sc)
 {
 
 	/* Turn on line break interrupt, set carrier. */
-	sc->sc_ier = IER_ERXRDY;
+	sc->sc_ier = IER_ERLS;
 	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 	if (sc->sc_type == COM_TYPE_INGENIC ||
@@ -812,7 +812,7 @@ com_shutdown(struct com_softc *sc)
 
 	/* Turn off interrupts. */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
+		sc->sc_ier = IER_ERLS; /* interrupt on line break */
 		if ((sc->sc_type == COM_TYPE_PXA2x0) ||
 		    (sc->sc_type == COM_TYPE_INGENIC) ||
 		    (sc->sc_type == COM_TYPE_TEGRA))
