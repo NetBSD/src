@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.61 2015/07/22 14:10:45 maxv Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.62 2015/11/02 22:21:26 jmcneill Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.61 2015/07/22 14:10:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.62 2015/11/02 22:21:26 jmcneill Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -1083,7 +1083,7 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_uint32(dict, "clkmask", 0);
 		prop_dictionary_set_bool(dict, "8bit", true);
 #endif
-#if defined(TI_AM335X) && 0	// doesn't work
+#if defined(TI_AM335X)
 		struct obio_attach_args * const obio = aux;
 		if (obio->obio_addr == SDMMC2_BASE_TIAM335X)
 			prop_dictionary_set_bool(dict, "8bit", true);
