@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.71 2015/10/02 05:22:52 msaitoh Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.72 2015/11/02 09:29:08 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.71 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.72 2015/11/02 09:29:08 knakahara Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -483,9 +483,11 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
 		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		aprint_verbose_dev(self, "This pci host supports neither MSI nor MSI-X.\n");
 	} else if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSIX)) {
 		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		aprint_verbose_dev(self, "This pci host does not support MSI-X.\n");
 	} else {
 		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
