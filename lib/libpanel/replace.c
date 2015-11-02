@@ -1,4 +1,4 @@
-/*	$NetBSD: replace.c,v 1.1 2015/10/26 23:09:49 uwe Exp $ */
+/*	$NetBSD: replace.c,v 1.2 2015/11/02 01:06:15 kamil Exp $ */
 
 /*
  * Copyright (c) 2015 Valery Ushakov
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: replace.c,v 1.1 2015/10/26 23:09:49 uwe Exp $");
+__RCSID("$NetBSD: replace.c,v 1.2 2015/11/02 01:06:15 kamil Exp $");
 
 #include "panel_impl.h"
 
@@ -34,7 +34,6 @@ __RCSID("$NetBSD: replace.c,v 1.1 2015/10/26 23:09:49 uwe Exp $");
 int
 replace_panel(PANEL *p, WINDOW *w)
 {
-
 	if (__predict_false(p == NULL || w == NULL))
 		return ERR;
 
