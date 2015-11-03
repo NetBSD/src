@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2015/10/31 20:13:45 mrg Exp $
+# $NetBSD: Makefile,v 1.12 2015/11/03 10:43:31 szptvlfn Exp $
 
 # Link the gallium mega driver.
 
@@ -523,7 +523,7 @@ CPPFLAGS.${_f} +=	-I${X11SRCDIR.MesaLib}/src/gallium/state_trackers/dri/common
 CPPFLAGS+=	\
 	-DGALLIUM_SOFTPIPE \
 	-DGALLIUM_STATIC_TARGETS=1 \
-	-DMESA_EGL_NO_X11_HEADERS \
+	-DMESA_EGL_NO_X11_HEADERS
 
 .for _d in ${GALLIUM_SUBDIRS}
 SRCS+=	${GALLIUM_SOURCES.${_d}}
