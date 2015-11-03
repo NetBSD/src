@@ -82,6 +82,7 @@ int	cmd_backup(int, char *[]);
 int	cmd_biosboot(int, char *[]);
 int	cmd_create(int, char *[]);
 int	cmd_destroy(int, char *[]);
+int	cmd_header(int, char *[]);
 int	cmd_label(int, char *[]);
 int	cmd_migrate(int, char *[]);
 int	cmd_recover(int, char *[]);
