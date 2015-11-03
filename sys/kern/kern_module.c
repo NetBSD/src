@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.107 2015/11/03 02:04:12 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.108 2015/11/03 03:33:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.107 2015/11/03 02:04:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.108 2015/11/03 03:33:43 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -1195,7 +1195,7 @@ module_do_unload(const char *name, bool load_requires_force)
 	}
 	if (mod->mod_refcnt != 0) {
 		module_print("module `%s' busy (%d refs)", name,
-		    mod->mod_refcnt));
+		    mod->mod_refcnt);
 		return EBUSY;
 	}
 
