@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.90 2015/11/03 06:49:39 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.91 2015/11/03 07:59:29 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.90 2015/11/03 06:49:39 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.91 2015/11/03 07:59:29 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1596,7 +1596,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 
 	/* Wait until command and optionally data inhibit bits are clear. (1.5) */
 	pmask = SDHC_CMD_INHIBIT_CMD;
-	if (cmd->c_flags & SCF_CMD_ADTC)
+	if (cmd->c_flags & (SCF_CMD_ADTC|SCF_RSP_BSY))
 		pmask |= SDHC_CMD_INHIBIT_DAT;
 	error = sdhc_wait_state(hp, pmask, 0);
 	if (error) {
