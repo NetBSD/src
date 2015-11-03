@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.63 2013/11/14 07:45:05 wiz Exp $
+.\"    $NetBSD: pax.1,v 1.64 2015/11/03 03:01:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd November 13, 2013
+.Dd November 3, 2015
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -958,11 +958,11 @@ Time comparisons using both file times is useful when
 is used to create a time based incremental archive (only files that were
 changed during a specified time range will be archived).
 .Pp
-A time range is made up of six different fields and each field must contain two
-digits.
+A time range is made up of seven different fields and each field must contain
+two digits.
 The format is:
 .Dl [[[[[cc]yy]mm]dd]hh]mm[\&.ss]
-Where
+where
 .Cm cc
 is the first two digits of the year (the century),
 .Cm yy
