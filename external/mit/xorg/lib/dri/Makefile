@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.26 2015/01/05 18:51:10 gson Exp $
+# $NetBSD: Makefile,v 1.27 2015/11/03 10:26:06 szptvlfn Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -55,7 +55,7 @@ DRI_SOURCES.i915 = \
 	i915_fragprog.c \
 	i915_program.c \
 	i915_state.c \
-	i915_vtbl.c \
+	i915_vtbl.c
 
 I915_INTEL_FILES = \
 	intel_render.c \
@@ -256,7 +256,7 @@ I965_INTEL_FILES = \
 	intel_tex_image.c \
 	intel_tex_subimage.c \
 	intel_tex_validate.c \
-	intel_upload.c \
+	intel_upload.c
 
 .for _f in ${I965_INTEL_FILES}
 BUILDSYMLINKS+=		${X11SRCDIR.MesaLib}/src/mesa/drivers/dri/i965/${_f} i965_${_f}
@@ -278,7 +278,7 @@ DRI_SOURCES.r200 = \
 	r200_sanity.c \
 	r200_fragshader.c \
 	r200_vertprog.c \
-	r200_blit.c \
+	r200_blit.c
 
 R200_RADEON_FILES= \
 	radeon_buffer_objects.c \
