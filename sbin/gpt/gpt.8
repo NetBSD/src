@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.36 2014/12/06 21:53:55 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.37 2015/11/03 02:19:24 jnemeth Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd December 6, 2014
+.Dd November 2, 2015
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -271,6 +271,12 @@ The
 option instructs
 .Nm
 to destroy the table in a way that it can be recovered.
+.\" ==== header ====
+.It Nm Ic header Ar device ...
+The
+.Ic header
+command displays size information about the media and information from the
+GPT header if it exists.
 .\" ==== label ====
 .It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
 .It Nm Ic label Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
