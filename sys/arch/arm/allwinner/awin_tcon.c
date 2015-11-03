@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.7 2015/11/03 18:38:03 bouyer Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.8 2015/11/03 19:28:28 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.7 2015/11/03 18:38:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.8 2015/11/03 19:28:28 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -112,7 +112,6 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 	struct awin_tcon_softc *sc = device_private(self);
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
-	prop_dictionary_t cfg = device_properties(self);
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
