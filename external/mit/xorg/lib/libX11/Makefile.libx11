@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libx11,v 1.15 2015/07/23 08:03:25 mrg Exp $
+#	$NetBSD: Makefile.libx11,v 1.16 2015/11/03 10:26:06 szptvlfn Exp $
 
 LIB=	X11
 .PATH:	${X11SRCDIR.${LIB}}/src
@@ -263,7 +263,7 @@ SRCS=	\
 	WrBitF.c \
 	XlibAsync.c \
 	XlibInt.c \
-	Xrm.c \
+	Xrm.c
 
 SRCS+=	\
 	UIThrStubs.c 
@@ -331,7 +331,7 @@ SRCS+=	\
 	cmsProp.c \
 	cmsTrig.c \
 	uvY.c \
-	xyY.c \
+	xyY.c
 
 SRCS+=	\
 	XKB.c \
@@ -354,7 +354,7 @@ SRCS+=	\
 	XKBMisc.c \
 	XKBMAlloc.c \
 	XKBGAlloc.c \
-	XKBAlloc.c \
+	XKBAlloc.c
 
 SRCS+=	\
 	XDefaultIMIF.c \
@@ -384,7 +384,7 @@ SRCS+=	\
 	mbWrap.c \
 	utf8WMProps.c \
 	utf8Wrap.c \
-	wcWrap.c \
+	wcWrap.c
 
 CPPFLAGS+=	${X11FLAGS.THREADLIB} ${X11FLAGS.CONNECTION}
 CPPFLAGS+=	-I. -DHAS_SNPRINTF -DLIBX11 -DPOSTLOCALELIBDIR=\"lib\"
