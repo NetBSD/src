@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.6 2015/10/25 20:54:19 bouyer Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.7 2015/11/03 18:38:03 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.6 2015/10/25 20:54:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.7 2015/11/03 18:38:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,7 +56,6 @@ struct awin_tcon_softc {
 	unsigned int sc_clk_pll;
 	unsigned int sc_clk_div;
 	bool sc_clk_dbl;
-	unsigned int sc_debe_unit;
 };
 
 static bus_space_handle_t tcon_mux_bsh;
@@ -114,7 +113,6 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 	struct awinio_attach_args * const aio = aux;
 	const struct awin_locators * const loc = &aio->aio_loc;
 	prop_dictionary_t cfg = device_properties(self);
-	int8_t debe_unit = -1;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aio->aio_core_bst;
@@ -132,14 +130,6 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 		awin_tcon_clear_reset(aio, 0);
 	}
 
-	if (prop_dictionary_get_int8(cfg, "debe_unit", &debe_unit)) {
-		sc->sc_debe_unit = debe_unit;
-	} else {
-		sc->sc_debe_unit = 0; /* default value */
-	}
-
-		
-
 	aprint_naive("\n");
 	aprint_normal(": LCD/TV timing controller (TCON%d)\n", loc->loc_port);
 	switch (sc->sc_port) {
@@ -154,10 +144,9 @@ awin_tcon_attach(device_t parent, device_t self, void *aux)
 	default:
 		panic("awin_tcon port\n");
 	}
-	if (debe_unit >= 0) {
-		aprint_verbose_dev(self, ": using DEBE%d, pll%d\n",
-		    sc->sc_debe_unit, sc->sc_clk_pll);
-	}
+
+	aprint_verbose_dev(self, ": using DEBE%d, pll%d\n",
+		    device_unit(self), sc->sc_clk_pll);
 
 	awin_tcon_clear_reset(aio, sc->sc_port);
 	
@@ -266,7 +255,7 @@ awin_tcon_enable(int unit, bool enable)
 	}
 	sc = device_private(dev);
 
-	awin_debe_enable(sc->sc_debe_unit, enable);
+	awin_debe_enable(device_unit(sc->sc_dev), enable);
 	delay(20000);
 	val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 	if (enable) {
@@ -322,7 +311,7 @@ awin_tcon_set_videomode(int unit, const struct videomode *mode)
 	}
 	sc = device_private(dev);
 
-	awin_debe_set_videomode(sc->sc_debe_unit, mode);
+	awin_debe_set_videomode(device_unit(sc->sc_dev), mode);
 	if (mode) {
 		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
 		const u_int phsync_p = !!(mode->flags & VID_PHSYNC);
@@ -340,17 +329,6 @@ awin_tcon_set_videomode(int unit, const struct videomode *mode)
 		val |= AWIN_TCON_GCTL_IO_MAP_SEL;
 		TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
 
-		val = TCON_READ(sc, AWIN_TCON0_CTL_REG);
-		val &= ~0x00400003;
-		if (sc->sc_debe_unit == 0) {
-			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE0,
-					 AWIN_TCON_CTL_SRC_SEL);
-		} else {
-			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE1,
-					 AWIN_TCON_CTL_SRC_SEL);
-		}
-		TCON_WRITE(sc, AWIN_TCON0_CTL_REG, val);
-
 		/* enable */
 		val = AWIN_TCON_CTL_EN;
 		if (interlace_p)
@@ -360,13 +338,12 @@ awin_tcon_set_videomode(int unit, const struct videomode *mode)
 		val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_BLUEDATA,
 				 AWIN_TCON_CTL_SRC_SEL);
 #else
-		if (sc->sc_debe_unit == 0) {
-			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE0,
-					 AWIN_TCON_CTL_SRC_SEL);
-		} else {
-			val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE1,
-					 AWIN_TCON_CTL_SRC_SEL);
-		}
+		/*
+		 * the DE selector selects the primary DEBE for this tcon:
+		 * 0 selects debe0 for tcon0 and debe1 for tcon1
+		 */
+		val |= __SHIFTIN(AWIN_TCON_CTL_SRC_SEL_DE0,
+				 AWIN_TCON_CTL_SRC_SEL);
 #endif
 		TCON_WRITE(sc, AWIN_TCON1_CTL_REG, val);
 
