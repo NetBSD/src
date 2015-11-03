@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.1 2014/12/18 06:24:28 mrg Exp $
+#	$NetBSD: libmesa.mk,v 1.2 2015/11/03 06:00:50 mrg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -122,13 +122,13 @@ SRCS.main= \
 	version.c \
 	viewport.c \
 	vtxfmt.c \
-	es1_conversion.c \
+	es1_conversion.c
 
 # Build files
 .PATH:	${X11SRCDIR.MesaLib}/../src/mesa/main
 SRCS.main+= \
 	enums.c \
-	api_exec.c \
+	api_exec.c
 
 # XXX  avoid source name clashes with glx
 .PATH:		${X11SRCDIR.MesaLib}/src/mesa/main
