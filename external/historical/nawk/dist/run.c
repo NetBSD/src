@@ -1660,7 +1660,7 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		do {
 			if ((buf = realloc(buf, (sz *= 2))) == NULL)
 				FATAL("out of memory in strftime");
-		} while(strftime(buf, sz, fmt, tm) == 0);
+		} while(strftime(buf, sz, fmt, tm) == 0 && fmt[0] != '\0');
 
 		y = gettemp();
 		setsval(y, buf);
