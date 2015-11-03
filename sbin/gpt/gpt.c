@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.40 2014/12/29 16:27:06 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.41 2015/11/03 02:19:24 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -553,6 +553,7 @@ static struct {
 	{ cmd_biosboot, "biosboot" },
 	{ cmd_create, "create" },
 	{ cmd_destroy, "destroy" },
+	{ cmd_header, "header" },
 	{ NULL, "help" },
 	{ cmd_label, "label" },
 	{ cmd_migrate, "migrate" },
@@ -576,10 +577,10 @@ __dead static void
 usage(void)
 {
 	extern const char addmsg1[], addmsg2[], biosbootmsg[];
-	extern const char createmsg[], destroymsg[], labelmsg1[], labelmsg2[];
-	extern const char labelmsg3[], migratemsg[], recovermsg[], removemsg1[];
-	extern const char removemsg2[], resizemsg[], resizediskmsg[];
-	extern const char setmsg[], showmsg[], typemsg1[];
+	extern const char createmsg[], destroymsg[], headermsg[], labelmsg1[];
+	extern const char labelmsg2[], labelmsg3[], migratemsg[], recovermsg[];
+	extern const char removemsg1[], removemsg2[], resizemsg[];
+	extern const char resizediskmsg[], setmsg[], showmsg[], typemsg1[];
 	extern const char typemsg2[], typemsg3[], unsetmsg[];
 #ifndef HAVE_NBTOOL_CONFIG_H
 	extern const char backupmsg[], restoremsg[];
@@ -615,13 +616,14 @@ usage(void)
 	    "       %s\n"
 	    "       %s\n"
 	    "       %s\n"
+	    "       %s\n"
 	    "       %s\n",
 	    addmsg1, addmsg2,
 #ifndef HAVE_NBTOOL_CONFIG_H
 	    backupmsg,
 #endif
 	    biosbootmsg, createmsg, destroymsg,
-	    labelmsg1, labelmsg2, labelmsg3,
+	    headermsg, labelmsg1, labelmsg2, labelmsg3,
 	    migratemsg, recovermsg,
 	    removemsg1, removemsg2,
 	    resizemsg, resizediskmsg,
