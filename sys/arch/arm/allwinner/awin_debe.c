@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.17 2015/10/25 20:54:19 bouyer Exp $ */
+/* $NetBSD: awin_debe.c,v 1.18 2015/11/03 18:38:03 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.17 2015/10/25 20:54:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.18 2015/11/03 18:38:03 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -451,10 +451,11 @@ awin_debe_enable(int unit, bool enable)
 
 	dev = device_find_by_driver_unit("awindebe", unit);
 	if (dev == NULL) {
-		printf("DEBE: no driver found\n");
+		printf("DEBE%d: no driver found\n", unit);
 		return;
 	}
 	sc = device_private(dev);
+	KASSERT(device_unit(sc->sc_dev) == unit);
 
 	if (enable) {
 		val = DEBE_READ(sc, AWIN_DEBE_REGBUFFCTL_REG);
@@ -469,6 +470,11 @@ awin_debe_enable(int unit, bool enable)
 		val &= ~AWIN_DEBE_MODCTL_START_CTL;
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 	}
+#if 0
+	for (int i = 0; i < 0x1000; i += 4) {
+		printf("DEBE 0x%04x: 0x%08x\n", i, DEBE_READ(sc, i));
+	}
+#endif
 }
 
 void
@@ -480,10 +486,11 @@ awin_debe_set_videomode(int unit, const struct videomode *mode)
 
 	dev = device_find_by_driver_unit("awindebe", unit);
 	if (dev == NULL) {
-		printf("DEBE: no driver found\n");
+		printf("DEBE%d: no driver found\n", unit);
 		return;
 	}
 	sc = device_private(dev);
+	KASSERT(device_unit(sc->sc_dev) == unit);
 
 	if (mode) {
 		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
@@ -544,6 +551,11 @@ awin_debe_set_videomode(int unit, const struct videomode *mode)
 			val |= AWIN_DEBE_MODCTL_ITLMOD_EN;
 		} else {
 			val &= ~AWIN_DEBE_MODCTL_ITLMOD_EN;
+		}
+		val &= ~AWIN_DEBE_MODCTL_OUT_SEL;
+		if (device_unit(sc->sc_dev) == 1) {
+			val |= __SHIFTIN(AWIN_DEBE_MODCTL_OUT_SEL_LCD1,
+			    AWIN_DEBE_MODCTL_OUT_SEL);
 		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 	} else {

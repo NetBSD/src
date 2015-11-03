@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.45 2015/10/25 21:21:52 bouyer Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.46 2015/11/03 18:38:03 bouyer Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.45 2015/10/25 21:21:52 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.46 2015/11/03 18:38:03 bouyer Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -989,7 +989,7 @@ awin_display_sysconfig(prop_dictionary_t dict)
 		break;
 	case 1:
 		/* screen1, fb0 */
-		prop_dictionary_set_bool(dict, "no-awindebe-1", true);
+		prop_dictionary_set_bool(dict, "no-awindebe-0", true);
 		prop_dictionary_set_bool(dict, "no-awintcon-0", true);
 		hdmi_used = (screen1_type == 3);
 		break;
@@ -1001,7 +1001,6 @@ awin_display_sysconfig(prop_dictionary_t dict)
 		/* xinerama */
 	case 4:
 		/* clone */
-		prop_dictionary_set_bool(dict, "no-awindebe-1", true);
 		hdmi_used = (screen0_type == 3 || screen1_type == 3);
 		break;
 	default:
@@ -1054,7 +1053,6 @@ awin_tcon_sysconfig(device_t self, prop_dictionary_t dict)
 		if (mode < 0)
 			return;
 
-		prop_dictionary_set_int8(dict, "debe_unit", 0);
 		type = awin_sysconfig_get_int("disp_init", "screen0_output_type");
 		if (type == 1) {
 			/* LCD/LVDS output */
@@ -1069,17 +1067,6 @@ awin_tcon_sysconfig(device_t self, prop_dictionary_t dict)
 		return;
 	}
 	if (device_unit(self) == 1) {
-		switch (mode) {
-		case 0:
-			/* only mode where tcon1 is not used */
-			return;
-		case 2:
-			prop_dictionary_set_int8(dict, "debe_unit", 1);
-			break;
-		default:
-			prop_dictionary_set_int8(dict, "debe_unit", 0);
-			break;
-		}
 		type = awin_sysconfig_get_int("disp_init", "screen1_output_type");
 		if (type == 1) {
 			/* LCD/LVDS output */
