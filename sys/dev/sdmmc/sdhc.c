@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.89 2015/11/02 22:18:45 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.90 2015/11/03 06:49:39 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.89 2015/11/02 22:18:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.90 2015/11/03 06:49:39 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -2043,9 +2043,10 @@ sdhc_soft_reset(struct sdhc_host *hp, int mask)
 			/* Short delay because I worry we may miss it...  */
 			sdmmc_delay(1);
 		}
-		if (timo == 0)
+		if (timo == 0) {
 			DPRINTF(1,("%s: timeout for reset on\n", __func__));
 			return ETIMEDOUT;
+		}
 	}
 
 	/*
