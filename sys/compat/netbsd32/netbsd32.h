@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32.h,v 1.102 2014/06/28 22:27:50 dholland Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.102.2.1 2015/11/04 17:46:21 riz Exp $	*/
 
 /*
- * Copyright (c) 1998, 2001, 2008 Matthew R. Green
+ * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,8 @@
 #include <compat/sys/ucontext.h>
 #include <compat/sys/mount.h>
 #include <compat/sys/signal.h>
+
+#include <nfs/rpcv2.h>
 
 /*
  * first, define the basic types we need.
@@ -928,6 +930,48 @@ struct netbsd32_mfs_args {
 	netbsd32_u_long		size;
 };
 
+/* from <nfs/nfs.h> */
+struct netbsd32_nfsd_args {
+	int		sock;
+	netbsd32_voidp	name;
+	int		namelen;
+};
+
+typedef netbsd32_pointer_t netbsd32_nfsdp;
+struct netbsd32_nfsd_srvargs {
+	netbsd32_nfsdp	nsd_nfsd;
+	uid_t		nsd_uid;
+	u_int32_t	nsd_haddr;
+	struct uucred	nsd_cr;
+	int		nsd_authlen;
+	netbsd32_u_charp nsd_authstr;
+	int		nsd_verflen;
+	netbsd32_u_charp nsd_verfstr;
+	struct netbsd32_timeval	nsd_timestamp;
+	u_int32_t	nsd_ttl;
+	NFSKERBKEY_T	nsd_key;
+};
+
+typedef netbsd32_pointer_t netbsd32_export_argsp;
+struct netbsd32_export_args {
+	int		ex_flags;
+	uid_t		ex_root;
+	struct uucred	ex_anon;
+	netbsd32_sockaddrp_t ex_addr;
+	int		ex_addrlen;
+	netbsd32_sockaddrp_t ex_mask;
+	int		ex_masklen;
+	netbsd32_charp	ex_indexfile;
+};
+
+struct netbsd32_mountd_exports_list {
+	const netbsd32_charp	mel_path;
+	netbsd32_size_t		mel_nexports;
+	netbsd32_export_argsp	mel_exports;
+};
+
+/* no struct export_args30 yet */
+
 /* from <nfs/nfsmount,h> */
 struct netbsd32_nfs_args {
 	int32_t		version;	/* args structure version number */
@@ -949,6 +993,8 @@ struct netbsd32_nfs_args {
 	int32_t		deadthresh;	/* Retrans threshold */
 	netbsd32_charp	hostname;	/* server's name */
 };
+
+/* from <msdosfs/msdosfsmount.h> */
 struct netbsd32_msdosfs_args {
 	netbsd32_charp	fspec;		/* blocks special holding the fs to mount */
 	struct	netbsd32_export_args30 _pad1; /* compat with old userland tools */

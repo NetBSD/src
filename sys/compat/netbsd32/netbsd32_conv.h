@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.28 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.28.4.1 2015/11/04 17:46:21 riz Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -39,6 +39,7 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/dirent.h>
 #include <sys/ipc.h>
 #include <sys/msg.h>
 #define msg __msg /* Don't ask me! */

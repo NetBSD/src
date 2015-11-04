@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscall.h,v 1.109.2.1 2015/03/07 05:27:53 snj Exp $ */
+/* $NetBSD: netbsd32_syscall.h,v 1.109.2.2 2015/11/04 17:46:21 riz Exp $ */
 
 /*
  * System call numbers.
@@ -440,6 +440,9 @@
 
 /* syscall: "compat_43_netbsd32_ogetsockname" ret: "int" args: "int" "netbsd32_voidp" "netbsd32_intp" */
 #define	NETBSD32_SYS_compat_43_netbsd32_ogetsockname	150
+
+/* syscall: "netbsd32_nfssvc" ret: "int" args: "int" "netbsd32_voidp" */
+#define	NETBSD32_SYS_netbsd32_nfssvc	155
 
 /* syscall: "compat_43_netbsd32_ogetdirentries" ret: "int" args: "int" "netbsd32_charp" "u_int" "netbsd32_longp" */
 #define	NETBSD32_SYS_compat_43_netbsd32_ogetdirentries	156
