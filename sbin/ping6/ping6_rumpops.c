@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6_rumpops.c,v 1.1 2015/08/06 14:45:54 ozaki-r Exp $	*/
+/*	$NetBSD: ping6_rumpops.c,v 1.2 2015/11/04 01:14:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6_rumpops.c,v 1.1 2015/08/06 14:45:54 ozaki-r Exp $");
+__RCSID("$NetBSD: ping6_rumpops.c,v 1.2 2015/11/04 01:14:02 knakahara Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ const struct prog_ops prog_ops = {
 	.op_init =	rumpclient_init,
 
 	.op_socket =	rump_sys_socket,
+	.op_bind =	rump_sys_bind,
 	.op_setsockopt=	rump_sys_setsockopt,
 	.op_getsockname=rump_sys_getsockname,
 	.op_poll =	rump_sys_poll,
