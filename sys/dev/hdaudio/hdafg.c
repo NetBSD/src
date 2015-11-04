@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.3 2015/07/26 19:06:26 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.4 2015/11/04 14:11:09 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.3 2015/07/26 19:06:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.4 2015/11/04 14:11:09 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2367,7 +2367,10 @@ hdafg_control_commit(struct hdafg_softc *sc)
 		z = ctl->ctl_offset;
 		if (z > ctl->ctl_step)
 			z = ctl->ctl_step;
-		hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE, z, z);
+		if (ctl->ctl_dir & HDAUDIO_PINDIR_IN)
+			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_ALL, z, z);
+		else
+			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE, z, z);
 	}
 }
 
