@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.88 2015/08/06 14:45:54 ozaki-r Exp $	*/
+/*	$NetBSD: ping6.c,v 1.89 2015/11/04 01:14:02 knakahara Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.88 2015/08/06 14:45:54 ozaki-r Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.89 2015/11/04 01:14:02 knakahara Exp $");
 #endif
 #endif
 
@@ -636,7 +636,7 @@ main(int argc, char *argv[])
 
 	/* set the source address if specified. */
 	if ((options & F_SRCADDR) &&
-	    bind(s, (struct sockaddr *)&src, srclen) != 0) {
+	    prog_bind(s, (struct sockaddr *)&src, srclen) != 0) {
 		err(1, "bind");
 	}
 
