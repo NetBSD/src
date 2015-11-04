@@ -1,4 +1,4 @@
-.\"	$NetBSD: modctl.2,v 1.11 2015/05/09 08:10:01 pgoyette Exp $
+.\"	$NetBSD: modctl.2,v 1.12 2015/11/04 04:31:53 pgoyette Exp $
 .\"
 .\" Copyright (c) 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 9, 2015
+.Dd November 4, 2015
 .Dt MODCTL 2
 .Os
 .Sh NAME
@@ -182,6 +182,14 @@ The load address within the kernel.
 Loaded size of the module.
 .It Fa "u_int ms_refcnt"
 Current number of live references to this module.
+.It Fa "u_int ms_flags"
+The module's flags:
+.Bl -tag -compact -width "MODFLAG_AUTO_LOADED"
+.It Dv MODFLAG_MUST_FORCE
+The "force" flag must be specified to reload this module.
+.It Dv MODFLAG_AUTO_LOADED
+The module was auto-loaded by the operating system.
+.El
 .El
 .Sh RETURN VALUES
 Upon successful completion, the value returned is 0.
