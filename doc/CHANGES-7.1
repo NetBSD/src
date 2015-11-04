@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.9 2015/11/04 17:35:06 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.10 2015/11/04 18:04:34 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -497,4 +497,46 @@ sys/nfs/nfsmount.h				1.53
 
 	Fix soft NFS force unmount.
 	[manu, ticket #882]
+
+sys/compat/netbsd32/files.netbsd32		1.36 via patch
+sys/compat/netbsd32/netbsd32.h			1.107
+sys/compat/netbsd32/netbsd32_conv.h		1.30
+sys/compat/netbsd32/netbsd32_nfssvc.c		1.1
+sys/compat/netbsd32/netbsd32_nfssvc.c		1.3
+sys/compat/netbsd32/netbsd32_syscall.h		1.116
+sys/compat/netbsd32/netbsd32_syscallargs.h	1.116
+sys/compat/netbsd32/netbsd32_syscalls.c		1.115
+sys/compat/netbsd32/netbsd32_sysent.c		1.115 via patch
+sys/compat/netbsd32/syscalls.master		1.108
+sys/nfs/nfs_syscalls.c				1.156
+sys/nfs/nfs_var.h				1.93
+
+	Add netbsd32 support for nfssvc(2).
+	[mrg, ticket #956]
+
+sys/dev/mii/rgephy.c				1.40
+sys/dev/mii/rgephyreg.h				1.9
+
+	Disable link down power save mode and energy efficient ethernet on
+	RTL8211F. Makes ODROID-C1 ethernet work correctly.
+	[jmcneill, ticket #960]
+
+sys/kern/vfs_mount.c				1.36
+
+	Do not VFS_SYNC before VFS_UNMOUNT on force unmount.
+	[manu, ticket #962]
+
+bin/sh/jobs.c					1.74-1.75
+bin/sh/trap.c					1.36-1.37
+bin/sh/trap.h					1.21-1.22
+
+	Process pending signals while waiting for a job, and
+	report the signal that wait was interrupted by, which
+	is not always SIGINT any more.
+	[christos, ticket #964]
+
+sys/kern/kern_cpu.c				1.71
+
+	Don't decrement the number of offline cpus if we fail to shut down one.
+	[maxv, ticket #965]
 
