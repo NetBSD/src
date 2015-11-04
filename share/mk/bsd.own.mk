@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.877 2015/10/19 16:17:14 pooka Exp $
+#	$NetBSD: bsd.own.mk,v 1.878 2015/11/04 17:06:23 phx Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1037,6 +1037,7 @@ ${var}?=	${${var}.${MACHINE_ARCH}:Uno}
 #
 .if ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amd64"	|| \
+    ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "bebox"	|| \
     ${MACHINE} == "cats"	|| \
     ${MACHINE} == "dreamcast"	|| \
