@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.19 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.20 2015/11/04 04:28:58 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.19 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.20 2015/11/04 04:28:58 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -184,6 +184,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 			ms->ms_class = mi->mi_class;
 			ms->ms_refcnt = mod->mod_refcnt;
 			ms->ms_source = mod->mod_source;
+			ms->ms_flags = mod->mod_flags;
 			ms++;
 		}
 		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
