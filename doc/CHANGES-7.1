@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.10 2015/11/04 18:04:34 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.11 2015/11/04 18:20:45 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -539,4 +539,14 @@ sys/kern/kern_cpu.c				1.71
 
 	Don't decrement the number of offline cpus if we fail to shut down one.
 	[maxv, ticket #965]
+
+sys/external/bsd/drm2/dist/drm/radeon/atombios_crtc.c 1.4
+
+	Avoid panic in radeon ddb(4) path.
+	[riastradh, ticket #970]
+
+sys/dev/mii/atphy.c				1.17
+
+	Fix incorrect argument of mii_anar(). Fixes PR#50206.
+	[msaitoh, ticket #971]
 
