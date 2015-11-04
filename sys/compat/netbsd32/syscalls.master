@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.101.2.1 2015/03/07 05:22:01 snj Exp $
+	$NetBSD: syscalls.master,v 1.101.2.2 2015/11/04 17:46:21 riz Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -317,7 +317,7 @@
 152	UNIMPL
 153	UNIMPL
 154	UNIMPL
-155	UNIMPL		netbsd32_nfssvc
+155	STD		{ int|netbsd32||nfssvc(int flag, netbsd32_voidp argp); }
 156	COMPAT_43	{ int|netbsd32||ogetdirentries(int fd, \
 			    netbsd32_charp buf, u_int count, \
 			    netbsd32_longp basep); }

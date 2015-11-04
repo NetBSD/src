@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscallargs.h,v 1.109.2.1 2015/03/07 05:27:54 snj Exp $ */
+/* $NetBSD: netbsd32_syscallargs.h,v 1.109.2.2 2015/11/04 17:46:21 riz Exp $ */
 
 /*
  * System call argument lists.
@@ -815,6 +815,12 @@ struct compat_43_netbsd32_ogetsockname_args {
 	syscallarg(netbsd32_intp) alen;
 };
 check_syscall_args(compat_43_netbsd32_ogetsockname)
+
+struct netbsd32_nfssvc_args {
+	syscallarg(int) flag;
+	syscallarg(netbsd32_voidp) argp;
+};
+check_syscall_args(netbsd32_nfssvc)
 
 struct compat_43_netbsd32_ogetdirentries_args {
 	syscallarg(int) fd;
@@ -2748,6 +2754,8 @@ int	compat_50_netbsd32_quotactl(struct lwp *, const struct compat_50_netbsd32_qu
 int	compat_43_sys_quota(struct lwp *, const void *, register_t *);
 
 int	compat_43_netbsd32_ogetsockname(struct lwp *, const struct compat_43_netbsd32_ogetsockname_args *, register_t *);
+
+int	netbsd32_nfssvc(struct lwp *, const struct netbsd32_nfssvc_args *, register_t *);
 
 int	compat_43_netbsd32_ogetdirentries(struct lwp *, const struct compat_43_netbsd32_ogetdirentries_args *, register_t *);
 
