@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.702 2015/10/18 09:36:11 nonaka Exp $
+$NetBSD: usbdevs,v 1.703 2015/11/04 05:05:45 buhrow Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -864,7 +864,14 @@ product APPLE IPOD_TOUCH	0x1291	iPod Touch
 product APPLE IPOD_TOUCH_4G	0x129e	iPod Touch 4G
 product APPLE IPHONE_3G		0x1292	iPhone 3G
 product APPLE IPHONE_3GS	0x1294	iPhone 3GS
+product APPLE IPHONE_4		0x1297	iPhone 4
+product APPLE IPHONE_4_VZW		0x129c	iPhone 4 (VZW)
+product APPLE IPHONE_4S		0x12a0	iPhone 4S
+product APPLE IPHONE_5		0x12a8	iPhone 5
 product APPLE IPAD		0x129a	Apple iPad
+product APPLE IPAD_2		0x12a2	Apple iPad 2
+product APPLE IPAD_3		0x12a6	Apple iPad 3
+product APPLE IPAD_MINI		0x12ab	Apple iPad Mini
 product APPLE ETHERNET		0x1402	Apple USB to Ethernet
 product APPLE BLUETOOTH2	0x8205	Bluetooth
 product APPLE BLUETOOTH_HOST_C	0x821f	Bluetooth USB Host Controller
