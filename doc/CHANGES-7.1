@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.5 2015/10/31 22:03:58 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.6 2015/11/04 15:04:52 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -434,4 +434,10 @@ external/gpl3/gcc/usr.bin/libdecnumber/arch/armeb/config.h patch
 
 	Update gcc to 4.8.5.
 	[mrg, ticket #1005]
+
+sys/ufs/ffs/ffs_bswap.c				1.38-1.39
+
+	Fix harmless array overrun, and make some simplification
+	changes to memcpy.
+	[riastradh, ticket #896]
 
