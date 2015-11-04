@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.7 2015/11/04 16:43:30 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.8 2015/11/04 17:08:38 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -474,4 +474,15 @@ share/man/man5/login.conf.5			1.29-1.31
 	Add vmemoryuse to login_cap(3). Improve login.conf(5)
 	documentation.  PR#49912.
 	[kamil, ticket #927]
+
+share/man/man4/options.4			1.446-1.447 via patch
+share/man/man9/malloc.9				1.52-1.53
+
+	Remove several references to malloc(9).
+	[maxv, ticket #940]
+
+libexec/ftpd/logwtmp.c				1.26-1.27
+
+	Don't write stack data from ftpd(8) into wtmpx files.
+	[shm, ticket #944]
 
