@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.6 2015/11/04 18:04:28 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.7 2015/11/04 18:10:49 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.6 2015/11/04 18:04:28 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.7 2015/11/04 18:10:49 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.6 2015/11/04 18:04:28 christos Exp $");
 #include "hdmireg.h"
 
 #ifndef AUFMT_SURROUND_7_1
-#define	AUFMT_SURROUND_7_1 (AUFMT_DOLBY_5_1|AUFMT_SIDE_LEFT|AUFMT_SIDE_RIGHT)
+#define AUFMT_SURROUND_7_1 (AUFMT_DOLBY_5_1|AUFMT_SIDE_LEFT|AUFMT_SIDE_RIGHT)
 #endif
 
 #if defined(HDAFG_DEBUG)
@@ -99,24 +99,24 @@ static int hdafg_debug = HDAFG_DEBUG;
 static int hdafg_debug = 0;
 #endif
 
-#define	hda_debug(sc, ...)		\
+#define hda_debug(sc, ...)		\
 	if (hdafg_debug) hda_print(sc, __VA_ARGS__)
-#define	hda_debug1(sc, ...)		\
+#define hda_debug1(sc, ...)		\
 	if (hdafg_debug) hda_print1(sc, __VA_ARGS__)
 
 #define HDAUDIO_MIXER_CLASS_OUTPUTS	0
-#define	HDAUDIO_MIXER_CLASS_INPUTS	1
-#define	HDAUDIO_MIXER_CLASS_RECORD	2
-#define	HDAUDIO_MIXER_CLASS_LAST	HDAUDIO_MIXER_CLASS_RECORD
+#define HDAUDIO_MIXER_CLASS_INPUTS	1
+#define HDAUDIO_MIXER_CLASS_RECORD	2
+#define HDAUDIO_MIXER_CLASS_LAST	HDAUDIO_MIXER_CLASS_RECORD
 
-#define	HDAUDIO_GPIO_MASK	0
-#define	HDAUDIO_GPIO_DIR	1
-#define	HDAUDIO_GPIO_DATA	2
+#define HDAUDIO_GPIO_MASK	0
+#define HDAUDIO_GPIO_DIR	1
+#define HDAUDIO_GPIO_DATA	2
 
-#define	HDAUDIO_UNSOLTAG_EVENT_HP	0x01
-#define	HDAUDIO_UNSOLTAG_EVENT_DD	0x02
+#define HDAUDIO_UNSOLTAG_EVENT_HP	0x01
+#define HDAUDIO_UNSOLTAG_EVENT_DD	0x02
 
-#define	HDAUDIO_HP_SENSE_PERIOD		hz
+#define HDAUDIO_HP_SENSE_PERIOD		hz
 
 const u_int hdafg_possible_rates[] = {
 	8000, 11025, 16000, 22050, 32000, 44100,
@@ -168,21 +168,21 @@ static const char *hdafg_color[] = {
 	"Other"
 };
 
-#define	HDAUDIO_MAXFORMATS	24
-#define	HDAUDIO_MAXCONNECTIONS	32
-#define	HDAUDIO_MAXPINS		16
-#define	HDAUDIO_PARSE_MAXDEPTH	10
+#define HDAUDIO_MAXFORMATS	24
+#define HDAUDIO_MAXCONNECTIONS	32
+#define HDAUDIO_MAXPINS		16
+#define HDAUDIO_PARSE_MAXDEPTH	10
 
-#define	HDAUDIO_AMP_VOL_DEFAULT	(-1)
-#define	HDAUDIO_AMP_MUTE_DEFAULT (0xffffffff)
-#define	HDAUDIO_AMP_MUTE_NONE	0
-#define	HDAUDIO_AMP_MUTE_LEFT	(1 << 0)
-#define	HDAUDIO_AMP_MUTE_RIGHT	(1 << 1)
-#define	HDAUDIO_AMP_MUTE_ALL	(HDAUDIO_AMP_MUTE_LEFT | HDAUDIO_AMP_MUTE_RIGHT)
-#define	HDAUDIO_AMP_LEFT_MUTED(x)	((x) & HDAUDIO_AMP_MUTE_LEFT)
-#define	HDAUDIO_AMP_RIGHT_MUTED(x)	(((x) & HDAUDIO_AMP_MUTE_RIGHT) >> 1)
+#define HDAUDIO_AMP_VOL_DEFAULT (-1)
+#define HDAUDIO_AMP_MUTE_DEFAULT (0xffffffff)
+#define HDAUDIO_AMP_MUTE_NONE	0
+#define HDAUDIO_AMP_MUTE_LEFT	(1 << 0)
+#define HDAUDIO_AMP_MUTE_RIGHT	(1 << 1)
+#define HDAUDIO_AMP_MUTE_ALL	(HDAUDIO_AMP_MUTE_LEFT | HDAUDIO_AMP_MUTE_RIGHT)
+#define HDAUDIO_AMP_LEFT_MUTED(x)	((x) & HDAUDIO_AMP_MUTE_LEFT)
+#define HDAUDIO_AMP_RIGHT_MUTED(x)	(((x) & HDAUDIO_AMP_MUTE_RIGHT) >> 1)
 
-#define	HDAUDIO_ADC_MONITOR	1
+#define HDAUDIO_ADC_MONITOR	1
 
 enum hdaudio_pindir {
 	HDAUDIO_PINDIR_NONE = 0,
@@ -191,10 +191,10 @@ enum hdaudio_pindir {
 	HDAUDIO_PINDIR_INOUT = 3,
 };
 
-#define	hda_get_param(sc, cop)					\
+#define hda_get_param(sc, cop)					\
 	hdaudio_command((sc)->sc_codec, (sc)->sc_nid,		\
 	  CORB_GET_PARAMETER, COP_##cop)
-#define	hda_get_wparam(w, cop)					\
+#define hda_get_wparam(w, cop)					\
 	hdaudio_command((w)->w_afg->sc_codec, (w)->w_nid,	\
 	  CORB_GET_PARAMETER, COP_##cop)
 
@@ -206,10 +206,10 @@ struct hdaudio_assoc {
 	u_char			as_pincnt;
 	u_char			as_fakeredir;
 	int			as_digital;
-#define	HDAFG_AS_ANALOG		0
-#define	HDAFG_AS_SPDIF		1
-#define	HDAFG_AS_HDMI		2
-#define	HDAFG_AS_DISPLAYPORT	3
+#define HDAFG_AS_ANALOG		0
+#define HDAFG_AS_SPDIF		1
+#define HDAFG_AS_HDMI		2
+#define HDAFG_AS_DISPLAYPORT	3
 	bool			as_displaydev;
 	int			as_hpredir;
 	int			as_pins[HDAUDIO_MAXPINS];
@@ -261,7 +261,7 @@ struct hdaudio_control {
 	uint32_t		ctl_audiomask, ctl_paudiomask;
 };
 
-#define	HDAUDIO_CONTROL_GIVE(ctl)	((ctl)->ctl_step ? 1 : 0)
+#define HDAUDIO_CONTROL_GIVE(ctl)	((ctl)->ctl_step ? 1 : 0)
 
 struct hdaudio_mixer {
 	struct hdaudio_control		*mx_ctl;
@@ -483,11 +483,11 @@ hdafg_widget_connection_parse(struct hdaudio_widget *w)
 	maxconns = (sizeof(w->w_conns) / sizeof(w->w_conns[0])) - 1;
 	prevcnid = 0;
 
-#define	CONN_RMASK(e)		(1 << ((32 / (e)) - 1))
-#define	CONN_NMASK(e)		(CONN_RMASK(e) - 1)
-#define	CONN_RESVAL(r, e, n)	((r) >> ((32 / (e)) * (n)))
-#define	CONN_RANGE(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_RMASK(e))
-#define	CONN_CNID(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_NMASK(e))
+#define CONN_RMASK(e)		(1 << ((32 / (e)) - 1))
+#define CONN_NMASK(e)		(CONN_RMASK(e) - 1)
+#define CONN_RESVAL(r, e, n)	((r) >> ((32 / (e)) * (n)))
+#define CONN_RANGE(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_RMASK(e))
+#define CONN_CNID(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_NMASK(e))
 
 	for (i = 0; i < ents; i += entnum) {
 		res = hdaudio_command(sc->sc_codec, w->w_nid,
@@ -515,7 +515,7 @@ hdafg_widget_connection_parse(struct hdaudio_widget *w)
 					hda_error(sc,
 					    "max connections reached\n");
 					goto getconns_out;
-				} 
+				}
 				w->w_connsenable[w->w_nconns] = true;
 				w->w_conns[w->w_nconns++] = addcnid++;
 				hda_trace(sc, "add connection %02X->%02X\n",
@@ -1430,7 +1430,7 @@ hdafg_disable_nonaudio(struct hdafg_softc *sc)
 		    w->w_type == COP_AWCAP_TYPE_VOLUME_KNOB) {
 			hda_trace(w->w_afg, "disable %02X [nonaudio]\n",
 			    w->w_nid);
-		    	w->w_enable = false;
+			w->w_enable = false;
 		}
 	}
 }
@@ -1663,7 +1663,7 @@ hdafg_assoc_trace_dac(struct hdafg_softc *sc, int as, int seq,
 	return m;
 }
 
-static int 
+static int
 hdafg_assoc_trace_out(struct hdafg_softc *sc, int as, int seq)
 {
 	struct hdaudio_assoc *assocs = sc->sc_assocs;
@@ -1917,8 +1917,8 @@ retry:
 		res = hdafg_assoc_trace_out(sc, j, 0);
 		if (res == 0 && as[j].as_hpredir >= 0 &&
 		    as[j].as_fakeredir == 0) {
-		    	/*
-		    	 * If codec can't do analog HP redirection
+			/*
+			 * If codec can't do analog HP redirection
 			 * try to make it using one more DAC
 			 */
 			as[j].as_fakeredir = 1;
@@ -2262,7 +2262,7 @@ hdafg_disable_crossassoc(struct hdafg_softc *sc)
 			if (ctl->ctl_ndir == HDAUDIO_PINDIR_IN) {
 				hda_trace(sc, "disable ctl %d:%02X:%02X "
 				    "[crossassoc]\n",
-			    	    i, ctl->ctl_widget->w_nid,
+				    i, ctl->ctl_widget->w_nid,
 				    ctl->ctl_widget->w_conns[ctl->ctl_index]);
 				ctl->ctl_widget->w_connsenable[
 				    ctl->ctl_index] = false;
@@ -2948,7 +2948,7 @@ hdafg_build_mixers(struct hdafg_softc *sc)
 			break;
 		}
 		strcpy(mx[index].mx_di.un.v.units.name, AudioNvolume);
-		
+
 		++index;
 
 		if (ctl->ctl_mute) {
@@ -3283,7 +3283,7 @@ hdafg_rate_supported(struct hdafg_softc *sc, u_int frequency)
 	if (sc->sc_fixed_rate)
 		return frequency == sc->sc_fixed_rate;
 
-#define ISFREQOK(shift)	((caps & (1 << (shift))) ? true : false)
+#define ISFREQOK(shift) ((caps & (1 << (shift))) ? true : false)
 	switch (frequency) {
 	case 8000:
 		return ISFREQOK(0);
@@ -3320,7 +3320,7 @@ static bool
 hdafg_bits_supported(struct hdafg_softc *sc, u_int bits)
 {
 	uint32_t caps = sc->sc_p.pcm_size_rate;
-#define ISBITSOK(shift)	((caps & (1 << (shift))) ? true : false)
+#define ISBITSOK(shift) ((caps & (1 << (shift))) ? true : false)
 	switch (bits) {
 	case 8:
 		return ISBITSOK(16);
@@ -3826,7 +3826,7 @@ hdafg_detach(device_t self, int flags)
 
 	/* restore bios pin widget configuration */
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
-		wl = hdafg_widget_lookup(sc, nid);		
+		wl = hdafg_widget_lookup(sc, nid);
 		if (wl == NULL || wl->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
 			continue;
 		hdafg_widget_setconfig(wl, wl->w_pin.biosconfig);
@@ -3881,7 +3881,7 @@ hdafg_resume(device_t self, const pmf_qual_t *qual)
 	for (nid = sc->sc_startnode; nid < sc->sc_endnode; nid++) {
 		hdaudio_command(sc->sc_codec, nid,
 		    CORB_SET_POWER_STATE, COP_POWER_STATE_D0);
-		w = hdafg_widget_lookup(sc, nid);		
+		w = hdafg_widget_lookup(sc, nid);
 
 		/* restore pin widget configuration */
 		if (w == NULL || w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
@@ -4097,7 +4097,7 @@ hdafg_set_port(void *opaque, mixer_ctrl_t *mc)
 	default:
 		return ENXIO;
 	}
-	    
+
 	return 0;
 }
 
@@ -4185,7 +4185,7 @@ hdafg_allocm(void *opaque, int direction, size_t size)
 
 	if (st->st_data.dma_valid == true)
 		hda_error(ad->ad_sc, "WARNING: allocm leak\n");
-	
+
 	st->st_data.dma_size = size;
 	err = hdaudio_dma_alloc(st->st_host, &st->st_data,
 	    BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
@@ -4428,20 +4428,20 @@ hdafg_modcmd(modcmd_t cmd, void *opaque)
 	}
 }
 
-#define HDAFG_GET_ANACTRL 		0xfe0
-#define HDAFG_SET_ANACTRL 		0x7e0
+#define HDAFG_GET_ANACTRL		0xfe0
+#define HDAFG_SET_ANACTRL		0x7e0
 #define HDAFG_ANALOG_BEEP_EN		__BIT(5)
-#define HDAFG_ALC231_MONO_OUT_MIXER 	0xf
+#define HDAFG_ALC231_MONO_OUT_MIXER	0xf
 #define HDAFG_STAC9200_AFG		0x1
 #define HDAFG_STAC9200_GET_ANACTRL_PAYLOAD	0x0
-#define HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE	0x7100
+#define HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE 0x7100
 
 static void
 hdafg_enable_analog_beep(struct hdafg_softc *sc)
 {
 	int nid;
 	uint32_t response;
-	
+
 	switch (sc->sc_vendor) {
 	case HDAUDIO_VENDOR_SIGMATEL:
 		switch (sc->sc_product) {
@@ -4478,7 +4478,7 @@ hdafg_enable_analog_beep(struct hdafg_softc *sc)
 			 * ALC231 that identifies as an ALC269.
 			 * This unmutes the PCBEEP on the speaker.
 			 */
- 			nid = HDAFG_ALC231_MONO_OUT_MIXER;
+			nid = HDAFG_ALC231_MONO_OUT_MIXER;
 			response = hdaudio_command(sc->sc_codec, nid,
 			    CORB_SET_AMPLIFIER_GAIN_MUTE,
 			    HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE);
