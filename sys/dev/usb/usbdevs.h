@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.694 2015/10/18 09:37:14 nonaka Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.695 2015/11/04 05:11:16 buhrow Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.702 2015/10/18 09:36:11 nonaka Exp
+ *	NetBSD: usbdevs,v 1.703 2015/11/04 05:05:45 buhrow Exp
  */
 
 /*
@@ -871,7 +871,14 @@
 #define	USB_PRODUCT_APPLE_IPOD_TOUCH_4G	0x129e		/* iPod Touch 4G */
 #define	USB_PRODUCT_APPLE_IPHONE_3G	0x1292		/* iPhone 3G */
 #define	USB_PRODUCT_APPLE_IPHONE_3GS	0x1294		/* iPhone 3GS */
+#define	USB_PRODUCT_APPLE_IPHONE_4	0x1297		/* iPhone 4 */
+#define	USB_PRODUCT_APPLE_IPHONE_4_VZW	0x129c		/* iPhone 4 (VZW) */
+#define	USB_PRODUCT_APPLE_IPHONE_4S	0x12a0		/* iPhone 4S */
+#define	USB_PRODUCT_APPLE_IPHONE_5	0x12a8		/* iPhone 5 */
 #define	USB_PRODUCT_APPLE_IPAD	0x129a		/* Apple iPad */
+#define	USB_PRODUCT_APPLE_IPAD_2	0x12a2		/* Apple iPad 2 */
+#define	USB_PRODUCT_APPLE_IPAD_3	0x12a6		/* Apple iPad 3 */
+#define	USB_PRODUCT_APPLE_IPAD_MINI	0x12ab		/* Apple iPad Mini */
 #define	USB_PRODUCT_APPLE_ETHERNET	0x1402		/* Apple USB to Ethernet */
 #define	USB_PRODUCT_APPLE_BLUETOOTH2	0x8205		/* Bluetooth */
 #define	USB_PRODUCT_APPLE_BLUETOOTH_HOST_C	0x821f		/* Bluetooth USB Host Controller */
