@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.131 2015/09/25 10:30:37 martin Exp $
+# $NetBSD: mi,v 1.132 2015/11/04 23:57:06 knakahara Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -206,6 +206,7 @@
 ./usr/lib/librumpnet_agr_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_bpfjit_g.a			comp-c-debuglib		debuglib,rump,sljit
 ./usr/lib/librumpnet_bridge_g.a			comp-c-debuglib		debuglib,rump
+./usr/lib/librumpnet_gif_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_g.a			comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/librumpnet_local_g.a			comp-c-debuglib		debuglib,rump
 ./usr/lib/librumpnet_net80211_g.a		comp-c-debuglib		debuglib,rump
