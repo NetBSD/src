@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.11 2015/11/04 18:20:45 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.12 2015/11/04 21:09:21 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -549,4 +549,28 @@ sys/dev/mii/atphy.c				1.17
 
 	Fix incorrect argument of mii_anar(). Fixes PR#50206.
 	[msaitoh, ticket #971]
+
+sys/dev/pci/hdaudio/hdaudio.c			1.2
+
+	Avoid copying uninitialized data.
+	[riastradh, ticket #898]
+
+share/man/man4/hythygtemp.4			1.3
+sys/dev/i2c/hytp14.c				1.5
+sys/dev/i2c/hytp14var.h				1.3 via patch
+
+	Fix hythygtemp(4) for reliability.
+	[phx, ticket #975]
+
+sys/arch/sandpoint/sandpoint/flash_cfi.c	1.4
+sys/arch/sandpoint/sandpoint/machdep.c		1.64
+sys/arch/sandpoint/sandpoint/mainbus.c		1.30
+
+	Fix panic in sandpoint DIAGNOSTIC kernel.
+	[phx, ticket #976]
+
+sys/dev/gpio/gpioiic.c				1.7
+
+	Fix gpioiic(4).
+	[phx, ticket #977]
 
