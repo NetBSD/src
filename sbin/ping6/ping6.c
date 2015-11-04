@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.90 2015/11/04 07:59:25 ozaki-r Exp $	*/
+/*	$NetBSD: ping6.c,v 1.91 2015/11/04 08:07:54 ozaki-r Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.90 2015/11/04 07:59:25 ozaki-r Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.91 2015/11/04 08:07:54 ozaki-r Exp $");
 #endif
 #endif
 
@@ -229,7 +229,10 @@ static long npackets;			/* max packets to transmit */
 static long nreceived;			/* # of packets we got back */
 static long nrepeats;			/* number of duplicates */
 static long ntransmitted;		/* sequence # for outbound packets = #sent */
-static struct timeval interval = {1, 0}; /* interval between packets */
+static struct timespec interval = {1, 0}; /* interval between packets */
+
+static struct timespec now, last_tx, next_tx, first_tx;
+static int lastrcvd = 1;			/* last ping sent has been received */
 
 /* timing */
 static int timing;			/* flag to do timing */
@@ -248,21 +251,20 @@ static struct msghdr smsghdr;
 static struct iovec smsgiov;
 static char *scmsg = 0;
 
-static volatile sig_atomic_t seenalrm;
 static volatile sig_atomic_t seenint;
 #ifdef SIGINFO
 static volatile sig_atomic_t seeninfo;
 #endif
 
+__dead static void	doit(u_char *, u_int);
 static void	 fill(char *, char *);
 static int	 get_hoplim(struct msghdr *);
 static int	 get_pathmtu(struct msghdr *);
 static struct in6_pktinfo *get_rcvpktinfo(struct msghdr *);
 static void	 onsignal(int);
-static void	 retransmit(void);
 __dead static void	 onsigexit(int);
 static size_t	 pingerlen(void);
-static int	 pinger(void);
+static void	 pinger(void);
 static const char *pr_addr(struct sockaddr *, int);
 static void	 pr_icmph(struct icmp6_hdr *, u_char *);
 static void	 pr_iph(struct ip6_hdr *);
@@ -283,17 +285,13 @@ static void	 tvsub(struct timeval *, struct timeval *);
 static int	 setpolicy(int, char *);
 static char	*nigroup(char *);
 static double	timespec_to_sec(const struct timespec *tp);
+static double	diffsec(struct timespec *, struct timespec *);
 __dead static void	 usage(void);
 
 int
 main(int argc, char *argv[])
 {
-	struct itimerval itimer;
-	struct sockaddr_in6 from;
-	int timeout;
 	struct addrinfo hints;
-	struct pollfd fdmaskp[1];
-	int cc;
 	u_int i, packlen;
 	int ch, hold, preload, optval, ret_ga;
 	u_char *datap, *packet;
@@ -316,8 +314,6 @@ main(int argc, char *argv[])
 #ifdef IPV6_USE_MIN_MTU
 	int mflag = 0;
 #endif
-	struct timespec now;
-	double exitat = 0.0;
 
 	/* just to be sure */
 	memset(&smsghdr, 0, sizeof(smsghdr));
@@ -415,6 +411,8 @@ main(int argc, char *argv[])
 			}
 			options |= F_FLOOD;
 			setbuf(stdout, NULL);
+			interval.tv_sec = 0;
+			interval.tv_nsec = 10 * 1000 * 1000; /* 10 ms */
 			break;
 		case 'g':
 			gateway = optarg;
@@ -446,14 +444,15 @@ main(int argc, char *argv[])
 				    strerror(EPERM));
 			}
 			interval.tv_sec = (long)intval;
-			interval.tv_usec =
-			    (long)((intval - interval.tv_sec) * 1000000);
+			interval.tv_nsec =
+			    (long)((intval - interval.tv_sec) * 1000000000);
 			if (interval.tv_sec < 0)
 				errx(1, "illegal timing interval %s", optarg);
 			/* less than 1/hz does not make sense */
-			if (interval.tv_sec == 0 && interval.tv_usec < 10000) {
+			if (interval.tv_sec == 0 &&
+			    interval.tv_nsec < 10000000) {
 				warnx("too small interval, raised to 0.01");
-				interval.tv_usec = 10000;
+				interval.tv_nsec = 10000000;
 			}
 			options |= F_INTERVAL;
 			break;
@@ -1026,50 +1025,51 @@ main(int argc, char *argv[])
 	printf("%s\n", pr_addr((struct sockaddr *)&dst, sizeof(dst)));
 
 	while (preload--)		/* Fire off them quickies. */
-		(void)pinger();
+		pinger();
 
 	(void)signal(SIGINT, onsignal);
 #ifdef SIGINFO
 	(void)signal(SIGINFO, onsignal);
 #endif
 
-	if ((options & F_FLOOD) == 0) {
-		(void)signal(SIGALRM, onsignal);
-		itimer.it_interval = interval;
-		itimer.it_value = interval;
-		(void)setitimer(ITIMER_REAL, &itimer, NULL);
-		if (ntransmitted == 0)
-			retransmit();
-	}
-
-	if (deadline > 0) {
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		exitat = timespec_to_sec(&now) + deadline;
-	}
-
-	seenalrm = seenint = 0;
+	seenint = 0;
 #ifdef SIGINFO
 	seeninfo = 0;
 #endif
+
+	doit(packet, packlen);
+	/*NOTREACHED*/
+	return 0;
+}
+
+static void
+doit(u_char *packet, u_int packlen)
+{
+	int cc;
+	struct pollfd fdmaskp[1];
+	struct sockaddr_in6 from;
+	double sec, last, d_last;
+	long orig_npackets = npackets;
+
+	if (npackets == 0)
+		npackets = LONG_MAX;
+
+	clock_gettime(CLOCK_MONOTONIC, &now);
+	if (deadline > 0) {
+		last = timespec_to_sec(&now) + deadline;
+		d_last = 0;
+	} else {
+		last = 0;
+		d_last = 365*24*60*60;
+	}
 
 	for (;;) {
 		struct msghdr m;
 		u_char buf[1024];
 		struct iovec iov[2];
 
-		/* check deadline */
-		if (exitat > 0) {
-			clock_gettime(CLOCK_MONOTONIC, &now);
-			if (exitat <= timespec_to_sec(&now))
-				break;
-		}
+		clock_gettime(CLOCK_MONOTONIC, &now);
 
-		/* signal handling */
-		if (seenalrm) {
-			retransmit();
-			seenalrm = 0;
-			continue;
-		}
 		if (seenint) {
 			onsigexit(SIGINT);
 			seenint = 0;
@@ -1082,17 +1082,37 @@ main(int argc, char *argv[])
 			continue;
 		}
 #endif
-		if (options & F_FLOOD) {
-			(void)pinger();
-			timeout = 10;
-		} else if (deadline > 0) {
-			timeout = (int)floor(deadline * 1000);
+		if (last != 0)
+			d_last = last - timespec_to_sec(&now);
+
+		if (ntransmitted < npackets && d_last > 0) {
+			/* send if within 100 usec or late for next packet */
+			sec = diffsec(&next_tx, &now);
+			if ((sec <= 0.0001 && (options & F_FLOOD) == 0) ||
+			    (lastrcvd && (options & F_FLOOD))) {
+				pinger();
+				sec = diffsec(&next_tx, &now);
+			}
+			if (sec < 0.0)
+				sec = 0.0;
+			if (d_last < sec)
+				sec = d_last;
 		} else {
-			timeout = INFTIM;
+			/* For the last response, wait twice as long as the
+			 * worst case seen, or 10 times as long as the
+			 * maximum interpacket interval, whichever is longer.
+			 */
+			sec = MAX(2 * tmax, 10 * interval.tv_sec) -
+			    diffsec(&now, &last_tx);
+			if (d_last < sec)
+				sec = d_last;
+			if (sec <= 0)
+				break;
 		}
+
 		fdmaskp[0].fd = s;
 		fdmaskp[0].events = POLLIN;
-		cc = prog_poll(fdmaskp, 1, timeout);
+		cc = prog_poll(fdmaskp, 1, (int)(sec * 1000));
 		if (cc < 0) {
 			if (errno != EINTR) {
 				warn("poll");
@@ -1145,9 +1165,11 @@ main(int argc, char *argv[])
 		if (nreceived != 0 && (options & F_ONCE))
 			break;
 	}
+
 	summary();
-	if (npackets)
-		exit(nreceived != npackets);
+
+	if (orig_npackets)
+		exit(nreceived != orig_npackets);
 	else
 		exit(nreceived == 0);
 }
@@ -1157,9 +1179,6 @@ onsignal(int sig)
 {
 
 	switch (sig) {
-	case SIGALRM:
-		seenalrm++;
-		break;
 	case SIGINT:
 		seenint++;
 		break;
@@ -1169,38 +1188,6 @@ onsignal(int sig)
 		break;
 #endif
 	}
-}
-
-/*
- * retransmit --
- *	This routine transmits another ping6.
- */
-static void
-retransmit(void)
-{
-	struct itimerval itimer;
-
-	if (pinger() == 0)
-		return;
-
-	/*
-	 * If we're not transmitting any more packets, change the timer
-	 * to wait two round-trip times if we've received any packets or
-	 * ten seconds if we haven't.
-	 */
-#define	MAXWAIT		10
-	if (nreceived) {
-		itimer.it_value.tv_sec =  2 * tmax / 1000;
-		if (itimer.it_value.tv_sec == 0)
-			itimer.it_value.tv_sec = 1;
-	} else
-		itimer.it_value.tv_sec = MAXWAIT;
-	itimer.it_interval.tv_sec = 0;
-	itimer.it_interval.tv_usec = 0;
-	itimer.it_value.tv_usec = 0;
-
-	(void)signal(SIGALRM, onsigexit);
-	(void)setitimer(ITIMER_REAL, &itimer, NULL);
 }
 
 /*
@@ -1230,7 +1217,7 @@ pingerlen(void)
 	return l;
 }
 
-static int
+static void
 pinger(void)
 {
 	struct icmp6_hdr *icp;
@@ -1240,13 +1227,14 @@ pinger(void)
 	uint16_t seq;
 
 	if (npackets && ntransmitted >= npackets)
-		return(-1);	/* no more transmission */
+		return;	/* no more transmission */
 
 	icp = (struct icmp6_hdr *)outpack;
 	nip = (struct icmp6_nodeinfo *)outpack;
 	memset(icp, 0, sizeof(*icp));
 	icp->icmp6_cksum = 0;
 	seq = ntransmitted++;
+	lastrcvd = 0;
 	CLR(seq % mx_dup_ck);
 	seq = ntohs(seq);
 
@@ -1329,7 +1317,22 @@ pinger(void)
 	if (!(options & F_QUIET) && options & F_FLOOD)
 		(void)write(STDOUT_FILENO, &DOT, 1);
 
-	return(0);
+	last_tx = now;
+	if (next_tx.tv_sec == 0) {
+		first_tx = now;
+		next_tx = now;
+	}
+
+	/* Transmit regularly, at always the same microsecond in the
+	 * second when going at one packet per second.
+	 * If we are at most 100 ms behind, send extras to get caught up.
+	 * Otherwise, skip packets we were too slow to send.
+	 */
+	if (diffsec(&next_tx, &now) <= interval.tv_sec) {
+		do {
+			timespecadd(&next_tx, &interval, &next_tx);
+		} while (diffsec(&next_tx, &now) < -0.1);
+	}
 }
 
 static int
@@ -1474,6 +1477,7 @@ pr_pack(u_char *buf, int cc, struct msghdr *mhdr)
 	if (icp->icmp6_type == ICMP6_ECHO_REPLY && myechoreply(icp)) {
 		seq = ntohs(icp->icmp6_seq);
 		++nreceived;
+		lastrcvd = 1;
 		if (timing) {
 			tpp = (struct tv32 *)(icp + 1);
 			tp.tv_sec = ntohl(tpp->tv32_sec);
@@ -2636,6 +2640,19 @@ static double
 timespec_to_sec(const struct timespec *tp)
 {
 	return tp->tv_sec + tp->tv_nsec / 1000000000.0;
+}
+
+/*
+ * compute the difference of two timespecs in seconds
+ */
+static double
+diffsec(struct timespec *timenow,
+	struct timespec *then)
+{
+	if (timenow->tv_sec == 0)
+		return -1;
+	return (timenow->tv_sec - then->tv_sec)
+	    * 1.0 + (timenow->tv_nsec - then->tv_nsec) / 1000000000.0;
 }
 
 static void
