@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.22.2.1 2015/09/04 15:07:08 martin Exp $ */
+/* $NetBSD: hdaudio.c,v 1.22.2.2 2015/11/04 20:55:48 riz Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.22.2.1 2015/09/04 15:07:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.22.2.2 2015/11/04 20:55:48 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1027,6 +1027,7 @@ hdaudio_stream_establish(struct hdaudio_softc *sc,
 	int i, err;
 
 	dma.dma_size = sizeof(struct hdaudio_bdl_entry) * HDAUDIO_BDL_MAX;
+	dma.dma_sizereg = 0;
 	err = hdaudio_dma_alloc(sc, &dma, BUS_DMA_COHERENT | BUS_DMA_NOCACHE);
 	if (err)
 		return NULL;
