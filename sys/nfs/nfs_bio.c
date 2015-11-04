@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.189 2013/08/12 17:46:38 hannken Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.189.4.1 2015/11/04 17:32:00 riz Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.189 2013/08/12 17:46:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.189.4.1 2015/11/04 17:32:00 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -624,7 +624,10 @@ nfs_vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred,
 		slptimeo = 2 * hz;
 	} else {
 		catch = false;
-		slptimeo = 0;
+		if (nmp->nm_flag & NFSMNT_SOFT)
+			slptimeo = nmp->nm_retry * nmp->nm_timeo;
+		else
+			slptimeo = 0;
 	}
 	/*
 	 * First wait for any other process doing a flush to complete.
@@ -743,6 +746,13 @@ nfs_asyncio(struct buf *bp)
 		return (EIO);
 
 	nmp = VFSTONFS(bp->b_vp->v_mount);
+
+	if (nmp->nm_flag & NFSMNT_SOFT)
+		slptimeo = nmp->nm_retry * nmp->nm_timeo;
+
+	if (nmp->nm_iflag & NFSMNT_DISMNTFORCE)
+		slptimeo = hz;
+
 again:
 	if (nmp->nm_flag & NFSMNT_INT)
 		catch = true;
@@ -804,6 +814,13 @@ again:
 				    &nmp->nm_lock, slptimeo);
 			}
 			if (error) {
+				if (error == EWOULDBLOCK &&
+				    nmp->nm_flag & NFSMNT_SOFT) {
+					mutex_exit(&nmp->nm_lock);
+					bp->b_error = EIO;
+					return (EIO);
+				}
+
 				if (nfs_sigintr(nmp, NULL, curlwp)) {
 					mutex_exit(&nmp->nm_lock);
 					return (EINTR);
