@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.2 2015/10/15 20:35:28 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.3 2015/11/04 16:43:51 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -16,4 +16,9 @@ distrib/i386/ramdisks/common/list.ramdisk	1.26
 
 	PR install/50311: missing gptmbr.bin on ramdisk based installs.
 	[martin, ticket #992]
+
+sys/dev/cgd.c					1.97
+
+	Use explicit_memset to zero key material.
+	[riastradh, ticket #899]
 
