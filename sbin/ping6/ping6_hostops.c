@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6_hostops.c,v 1.1 2015/08/06 14:45:54 ozaki-r Exp $	*/
+/*	$NetBSD: ping6_hostops.c,v 1.2 2015/11/04 01:14:02 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6_hostops.c,v 1.1 2015/08/06 14:45:54 ozaki-r Exp $");
+__RCSID("$NetBSD: ping6_hostops.c,v 1.2 2015/11/04 01:14:02 knakahara Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: ping6_hostops.c,v 1.1 2015/08/06 14:45:54 ozaki-r Exp $");
 
 const struct prog_ops prog_ops = {
 	.op_socket = socket,
+	.op_bind = bind,
 	.op_setsockopt = setsockopt,
 	.op_getsockname = getsockname,
 	.op_poll = poll,
