@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.19 2015/11/04 04:30:42 pgoyette Exp $	*/
+/*	$NetBSD: main.c,v 1.20 2015/11/04 16:04:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.19 2015/11/04 04:30:42 pgoyette Exp $");
+__RCSID("$NetBSD: main.c,v 1.20 2015/11/04 16:04:55 christos Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -64,6 +64,10 @@ static const char *sources[] = {
 	"filesys",
 };
 const unsigned int source_max = __arraycount(sources);
+
+static const char *modflags[] = {
+	"-", "f", "a", "af"
+};
 
 int
 main(int argc, char **argv)
@@ -175,8 +179,8 @@ main(int argc, char **argv)
 		if (maxnamelen < namelen)
 			maxnamelen = namelen;
 	}
-	printf("%-*s %-8s %-8s %-6s %-5s %-16s %-7s %s \n",
-	    (int)maxnamelen, "NAME", "CLASS", "SOURCE", "FLAGS", "REFS",
+	printf("%-*s %-8s %-8s %-4s %-5s %-16s %-7s %s \n",
+	    (int)maxnamelen, "NAME", "CLASS", "SOURCE", "FLAG", "REFS",
 	    "ADDRESS", "SIZE", "REQUIRES");
 	for (ms = iov.iov_base; len != 0; ms++, len--) {
 		const char *class;
@@ -204,8 +208,9 @@ main(int argc, char **argv)
 		else
 			source = "UNKNOWN";
 
-		printf("%-*s %-8s %-8s 0x%-4x %-5d %-16" PRIx64 " %-7s %s\n",
-		    (int)maxnamelen, ms->ms_name, class, source, ms->ms_flags,
+		printf("%-*s %-8s %-8s %-4s %-5d %-16" PRIx64 " %-7s %s\n",
+		    (int)maxnamelen, ms->ms_name, class, source, 
+		    modflags[ms->ms_flags & (__arraycount(modflags) - 1)],
 		    ms->ms_refcnt, ms->ms_addr, sbuf, ms->ms_required);
 	}
 
