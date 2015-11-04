@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.5 2015/11/04 15:01:56 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.6 2015/11/04 18:04:28 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.5 2015/11/04 15:01:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.6 2015/11/04 18:04:28 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2352,6 +2352,32 @@ hdafg_control_amp_set(struct hdaudio_control *ctl, uint32_t mute,
 		hdafg_control_amp_set1(ctl, lmute, rmute, left, right, 1);
 }
 
+static bool
+hdafg_widget_is_input(const struct hdafg_softc *sc,
+    const struct hdaudio_widget *w)
+{
+	const struct hdaudio_assoc *as = sc->sc_assocs;
+
+	switch (w->w_type) {
+	case COP_AWCAP_TYPE_AUDIO_INPUT:
+		return true;
+	case COP_AWCAP_TYPE_PIN_COMPLEX:
+		if (as[w->w_bindas].as_dir == HDAUDIO_PINDIR_OUT)
+			return false;
+		switch (COP_CFG_DEFAULT_DEVICE(w->w_pin.config)) {
+		case COP_DEVICE_MIC_IN:
+		case COP_DEVICE_LINE_IN:
+		case COP_DEVICE_SPDIF_IN:
+		case COP_DEVICE_DIGITAL_OTHER_IN:
+			return true;
+		default:
+			return false;
+		}
+	default:
+		return false;
+	}
+}
+
 static void
 hdafg_control_commit(struct hdafg_softc *sc)
 {
@@ -2367,8 +2393,9 @@ hdafg_control_commit(struct hdafg_softc *sc)
 		z = ctl->ctl_offset;
 		if (z > ctl->ctl_step)
 			z = ctl->ctl_step;
+
 		if ((ctl->ctl_dir & HDAUDIO_PINDIR_IN) &&
-		    ctl->ctl_widget->w_type == COP_AWCAP_TYPE_AUDIO_INPUT)
+		    hdafg_widget_is_input(sc, ctl->ctl_widget))
 			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_ALL, z, z);
 		else
 			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE, z, z);
