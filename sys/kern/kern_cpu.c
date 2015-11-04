@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.66 2014/07/25 08:10:40 dholland Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.66.2.1 2015/11/04 18:00:34 riz Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.66 2014/07/25 08:10:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.66.2.1 2015/11/04 18:00:34 riz Exp $");
 
 #include "opt_cpu_ucode.h"
 #include "opt_compat_netbsd.h"
@@ -444,7 +444,6 @@ cpu_setstate(struct cpu_info *ci, bool online)
 		if ((spc->spc_flags & SPCF_OFFLINE) == 0)
 			return 0;
 		func = (xcfunc_t)cpu_xc_online;
-		ncpuonline++;
 	} else {
 		if ((spc->spc_flags & SPCF_OFFLINE) != 0)
 			return 0;
@@ -463,16 +462,19 @@ cpu_setstate(struct cpu_info *ci, bool online)
 		if (nonline == 1)
 			return EBUSY;
 		func = (xcfunc_t)cpu_xc_offline;
-		ncpuonline--;
 	}
 
 	where = xc_unicast(0, func, ci, NULL, ci);
 	xc_wait(where);
 	if (online) {
 		KASSERT((spc->spc_flags & SPCF_OFFLINE) == 0);
-	} else if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
-		/* If was not set offline, then it is busy */
-		return EBUSY;
+		ncpuonline++;
+	} else {
+		if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
+			/* If was not set offline, then it is busy */
+			return EBUSY;
+		}
+		ncpuonline--;
 	}
 
 	spc->spc_lastmod = time_second;
