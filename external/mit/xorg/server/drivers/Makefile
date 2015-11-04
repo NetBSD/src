@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.72 2015/10/19 15:09:39 macallan Exp $
+#	$NetBSD: Makefile,v 1.73 2015/11/04 17:06:23 phx Exp $
 
 # xf86-input drivers
 
@@ -105,6 +105,11 @@ SUBDIR+= \
 	xf86-video-wsfb
 #	xf86-video-imstt
 .endif	# ${MACHINE} == "alpha"
+
+.if ${MACHINE} == "amiga"
+SUBDIR+= \
+	xf86-video-wsfb
+.endif	# ${MACHINE} == "amiga"
 
 .if ${MACHINE} == "bebox"
 SUBDIR+= \
