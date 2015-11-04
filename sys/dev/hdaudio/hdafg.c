@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.7 2015/11/04 18:10:49 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.8 2015/11/04 21:04:11 christos Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.7 2015/11/04 18:10:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.8 2015/11/04 21:04:11 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2049,32 +2049,36 @@ hdafg_prepare_pin_controls(struct hdafg_softc *sc)
 	}
 }
 
+#if defined(HDAFG_DEBUG) && HDAFG_DEBUG > 1
 static void
-hdafg_dump(struct hdafg_softc *sc)
+hdafg_dump_ctl(const struct hdafg_softc *sc, const struct hdaudio_control *ctl)
+{
+	int type = ctl->ctl_widget ? ctl->ctl_widget->w_type : -1;
+	int i = (int)(ctl - sc->sc_ctls);
+
+	hda_print(sc, "%03X: nid %02X type %d %s (%s) index %d",
+	    i, (ctl->ctl_widget ? ctl->ctl_widget->w_nid : -1), type,
+	    ctl->ctl_ndir == HDAUDIO_PINDIR_IN ? "in " : "out",
+	    ctl->ctl_dir == HDAUDIO_PINDIR_IN ? "in " : "out",
+	    ctl->ctl_index);
+
+	if (ctl->ctl_childwidget)
+		hda_print1(sc, " cnid %02X", ctl->ctl_childwidget->w_nid);
+	else
+		hda_print1(sc, "          ");
+	hda_print1(sc, "\n");
+	hda_print(sc, "     mute: %d step: %3d size: %3d off: %3d%s\n",
+	    ctl->ctl_mute, ctl->ctl_step, ctl->ctl_size,
+	    ctl->ctl_offset, ctl->ctl_enable == false ? " [DISABLED]" : "");
+}
+#endif
+
+static void
+hdafg_dump(const struct hdafg_softc *sc)
 {
 #if defined(HDAFG_DEBUG) && HDAFG_DEBUG > 1
-	struct hdaudio_control *ctl;
-	int i, type;
-
-	for (i = 0; i < sc->sc_nctls; i++) {
-		ctl = &sc->sc_ctls[i];
-		type = (ctl->ctl_widget ? ctl->ctl_widget->w_type : -1);
-		hda_print(sc, "%03X: nid %02X type %d %s (%s) index %d",
-		    i, (ctl->ctl_widget ? ctl->ctl_widget->w_nid : -1), type,
-		    (ctl->ctl_ndir == HDAUDIO_PINDIR_IN) ? "in " : "out",
-		    (ctl->ctl_dir == HDAUDIO_PINDIR_IN) ? "in " : "out",
-		    ctl->ctl_index);
-		if (ctl->ctl_childwidget)
-			hda_print1(sc, " cnid %02X",
-			    ctl->ctl_childwidget->w_nid);
-		else
-			hda_print1(sc, "          ");
-		hda_print1(sc, "\n");
-		hda_print(sc, "     mute: %d step: %3d size: %3d off: %3d%s\n",
-		    ctl->ctl_mute, ctl->ctl_step, ctl->ctl_size,
-		    ctl->ctl_offset,
-		    (ctl->ctl_enable == false) ? " [DISABLED]" : "");
-	}
+	for (int i = 0; i < sc->sc_nctls; i++)
+		hdafg_dump_ctl(sc, &sc->sc_ctls[i]);
 #endif
 }
 
@@ -2352,18 +2356,32 @@ hdafg_control_amp_set(struct hdaudio_control *ctl, uint32_t mute,
 		hdafg_control_amp_set1(ctl, lmute, rmute, left, right, 1);
 }
 
+/*
+ * Muting the input pins directly does not work, we mute the mixers which
+ * are parents to them
+ */
 static bool
-hdafg_widget_is_input(const struct hdafg_softc *sc,
-    const struct hdaudio_widget *w)
+hdafg_mixer_child_is_input(const struct hdafg_softc *sc,
+    const struct hdaudio_control *ctl)
 {
+	const struct hdaudio_widget *w;
 	const struct hdaudio_assoc *as = sc->sc_assocs;
 
-	switch (w->w_type) {
+	switch (ctl->ctl_widget->w_type) {
 	case COP_AWCAP_TYPE_AUDIO_INPUT:
 		return true;
-	case COP_AWCAP_TYPE_PIN_COMPLEX:
+
+	case COP_AWCAP_TYPE_AUDIO_MIXER:
+		w = ctl->ctl_childwidget;
+		if (w == NULL)
+			return false;
+
+		if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+			return false;
+
 		if (as[w->w_bindas].as_dir == HDAUDIO_PINDIR_OUT)
 			return false;
+
 		switch (COP_CFG_DEFAULT_DEVICE(w->w_pin.config)) {
 		case COP_DEVICE_MIC_IN:
 		case COP_DEVICE_LINE_IN:
@@ -2373,6 +2391,7 @@ hdafg_widget_is_input(const struct hdafg_softc *sc,
 		default:
 			return false;
 		}
+
 	default:
 		return false;
 	}
@@ -2394,8 +2413,7 @@ hdafg_control_commit(struct hdafg_softc *sc)
 		if (z > ctl->ctl_step)
 			z = ctl->ctl_step;
 
-		if ((ctl->ctl_dir & HDAUDIO_PINDIR_IN) &&
-		    hdafg_widget_is_input(sc, ctl->ctl_widget))
+		if (hdafg_mixer_child_is_input(sc, ctl))
 			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_ALL, z, z);
 		else
 			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE, z, z);
