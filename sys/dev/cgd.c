@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.90 2014/07/25 08:10:35 dholland Exp $ */
+/* $NetBSD: cgd.c,v 1.90.2.1 2015/11/04 16:25:17 riz Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.90 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.90.2.1 2015/11/04 16:25:17 riz Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -706,7 +706,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	 * and encblkno8.
 	 */
 	cs->sc_cdata.cf_blocksize /= encblkno[i].d;
-	(void)memset(inbuf, 0, MAX_KEYSIZE);
+	(void)explicit_memset(inbuf, 0, MAX_KEYSIZE);
 	if (!cs->sc_cdata.cf_priv) {
 		ret = EINVAL;		/* XXX is this the right error? */
 		goto bail;
