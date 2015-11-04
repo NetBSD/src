@@ -1,4 +1,4 @@
-/*	$NetBSD: ping6.c,v 1.89 2015/11/04 01:14:02 knakahara Exp $	*/
+/*	$NetBSD: ping6.c,v 1.90 2015/11/04 07:59:25 ozaki-r Exp $	*/
 /*	$KAME: ping6.c,v 1.164 2002/11/16 14:05:37 itojun Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ping6.c,v 1.89 2015/11/04 01:14:02 knakahara Exp $");
+__RCSID("$NetBSD: ping6.c,v 1.90 2015/11/04 07:59:25 ozaki-r Exp $");
 #endif
 #endif
 
@@ -1146,7 +1146,10 @@ main(int argc, char *argv[])
 			break;
 	}
 	summary();
-	exit(nreceived == 0);
+	if (npackets)
+		exit(nreceived != npackets);
+	else
+		exit(nreceived == 0);
 }
 
 static void
