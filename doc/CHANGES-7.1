@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.14 2015/11/05 09:34:23 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.15 2015/11/05 20:34:26 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -654,4 +654,15 @@ sys/kern/kern_exit.c				1.248
 
 	Update value of p_stat before we release the proc_lock.
 	[pgoyette, ticket #999]
+
+sys/arch/mips/atheros/dev/athflash.c		1.9
+sys/arch/mips/atheros/dev/if_ae.c		1.25
+
+	Remove unused variables which break AP30 and MERAKI kernel builds.
+	[nisimura, ticket #978]
+
+sys/arch/mips/mips/bus_space_alignstride_chipdep.c	patch
+
+	Mark variable as used to fix ADM5120* kernel builds.
+	[nisimura, ticket #979]
 
