@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.15 2015/11/05 20:34:26 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.16 2015/11/05 20:41:17 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -665,4 +665,15 @@ sys/arch/mips/mips/bus_space_alignstride_chipdep.c	patch
 
 	Mark variable as used to fix ADM5120* kernel builds.
 	[nisimura, ticket #979]
+
+sys/netinet6/icmp6.c				1.177
+
+	Update icmp6_redirect_timeout_q when changing
+	net.inet6.icmp6.redirtimeout.  PR#50240
+	[ozaki-r, ticket #982]
+
+sys/arch/x68k/x68k/machdep.c			1.192
+
+	Fix poweroff for x68k.
+	[isaki, ticket #983]
 
