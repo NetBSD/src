@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.27 2013/11/21 15:40:17 christos Exp $	*/
+/*	$NetBSD: field.c,v 1.27.4.1 2015/11/05 05:24:11 riz Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.27 2013/11/21 15:40:17 christos Exp $");
+__RCSID("$NetBSD: field.c,v 1.27.4.1 2015/11/05 05:24:11 riz Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -409,7 +409,7 @@ set_field_printf(FIELD *field, int buffer, char *fmt, ...)
  */
 
 int
-set_field_buffer(FIELD *field, int buffer, char *value)
+set_field_buffer(FIELD *field, int buffer, const char *value)
 {
 	unsigned int len;
 	int status;
