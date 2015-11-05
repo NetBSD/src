@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.12 2015/11/04 21:09:21 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.13 2015/11/05 05:27:45 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -573,4 +573,20 @@ sys/dev/gpio/gpioiic.c				1.7
 
 	Fix gpioiic(4).
 	[phx, ticket #977]
+
+lib/libform/field.c				1.29
+lib/libform/form.h				1.23
+
+	API fix: Constify set_field_buffer.
+	[joerg, ticket #980]
+
+usr.bin/ftp/fetch.c				1.207
+usr.bin/ftp/ftp.1				1.135
+usr.bin/ftp/main.c				1.123
+usr.bin/ftp/ssl.c				1.3-1.4
+usr.bin/ftp/ssl.h				1.3
+usr.bin/ftp/version.h				1.86-1.87
+
+	Add Server Name Indication (SNI) support for https.
+	[wiz, ticket #981]
 
