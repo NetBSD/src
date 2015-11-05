@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.19 2012/01/27 18:52:58 para Exp $ */
+/* $NetBSD: bus_space_alignstride_chipdep.c,v 1.19.22.1 2015/11/05 20:32:31 riz Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.19 2012/01/27 18:52:58 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space_alignstride_chipdep.c,v 1.19.22.1 2015/11/05 20:32:31 riz Exp $");
 
 #ifdef CHIP_EXTENT
 #include <sys/extent.h>
@@ -505,6 +505,9 @@ __BS(unmap)(void *v, bus_space_handle_t h, bus_size_t size, int acct)
 #endif
 	}	
 #endif /* CHIP_EXTENT */
+#if !defined(_LP64) || defined(CHIP_EXTENT)
+      __USE(addr);
+#endif
 }
 
 static int
