@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.12 2015/06/11 05:27:07 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.13 2015/11/05 00:12:28 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2015/06/11 05:27:07 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.13 2015/11/05 00:12:28 pgoyette Exp $");
 
 /*
  *	Manages physical address maps.
@@ -109,9 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.12 2015/06/11 05:27:07 matt Exp $");
 #include <sys/atomic.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 #include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
