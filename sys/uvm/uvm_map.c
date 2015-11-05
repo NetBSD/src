@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.335 2015/09/24 14:35:15 christos Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.336 2015/11/05 00:10:48 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.335 2015/09/24 14:35:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.336 2015/11/05 00:10:48 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvmhist.h"
@@ -90,9 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.335 2015/09/24 14:35:15 christos Exp $
 #include "opt_user_va0_disable_default.h"
 #endif
 
-#ifdef SYSVSHM
 #include <sys/shm.h>
-#endif
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
@@ -298,6 +296,15 @@ static vsize_t uvm_rb_maxgap(const struct vm_map_entry *);
 #define	PARENT_ENTRY(map, entry) \
 	(ROOT_ENTRY(map) == (entry) \
 	    ? NULL : (struct vm_map_entry *)RB_FATHER(&(entry)->rb_node))
+
+/*
+ * These get filled in if/when SYSVSHM shared memory code is loaded
+ *
+ * We do this with function pointers rather the #ifdef SYSVSHM so the
+ * SYSVSHM code can be loaded and unloaded
+ */
+void (*uvm_shmexit)(struct vmspace *) = NULL;
+void (*uvm_shmfork)(struct vmspace *, struct vmspace *) = NULL;
 
 static int
 uvm_map_compare_nodes(void *ctx, const void *nparent, const void *nkey)
@@ -4071,14 +4078,11 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 		 * vm space!
 		 */
 
-#ifdef SYSVSHM
 		/*
 		 * SYSV SHM semantics require us to kill all segments on an exec
 		 */
-
-		if (ovm->vm_shm)
-			shmexit(ovm);
-#endif
+		if (uvm_shmexit && ovm->vm_shm)
+			(*uvm_shmexit)(ovm);
 
 		/*
 		 * POSIX 1003.1b -- "lock future mappings" is revoked
@@ -4170,11 +4174,10 @@ uvmspace_free(struct vmspace *vm)
 
 	map->flags |= VM_MAP_DYING;
 	pmap_remove_all(map->pmap);
-#ifdef SYSVSHM
+
 	/* Get rid of any SYSV shared memory segments. */
-	if (vm->vm_shm != NULL)
-		shmexit(vm);
-#endif
+	if (uvm_shmexit && vm->vm_shm != NULL)
+		(*uvm_shmexit)(vm);
 
 	if (map->nentries) {
 		uvm_unmap_remove(map, vm_map_min(map), vm_map_max(map),
@@ -4456,10 +4459,8 @@ uvmspace_fork(struct vmspace *vm1)
 	pmap_update(old_map->pmap);
 	vm_map_unlock(old_map);
 
-#ifdef SYSVSHM
-	if (vm1->vm_shm)
-		shmfork(vm1, vm2);
-#endif
+	if (uvm_shmfork && vm1->vm_shm)
+		(*uvm_shmfork)(vm1, vm2);
 
 #ifdef PMAP_FORK
 	pmap_fork(vm1->vm_map.pmap, vm2->vm_map.pmap);
