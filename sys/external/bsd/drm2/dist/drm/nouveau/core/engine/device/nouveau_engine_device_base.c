@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_base.c,v 1.7 2015/11/05 20:31:26 riastradh Exp $	*/
+/*	$NetBSD: nouveau_engine_device_base.c,v 1.8 2015/11/05 20:32:39 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.7 2015/11/05 20:31:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.8 2015/11/05 20:32:39 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -177,6 +177,8 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 	if (!(args->disable & NV_DEVICE_DISABLE_IDENTIFY) &&
 	    !device->card_type) {
 #ifdef __NetBSD__
+		if (mmio_size < 0x102000)
+			return -ENOMEM;
 		/* XXX errno NetBSD->Linux */
 		ret = -bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh);
 		if (ret)
