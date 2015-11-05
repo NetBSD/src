@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.169 2014/06/06 01:02:47 rmind Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.169.2.1 2015/11/05 20:36:03 riz Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.169 2014/06/06 01:02:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.169.2.1 2015/11/05 20:36:03 riz Exp $");
 
 #include "opt_inet.h"
 #include "opt_ipsec.h"
@@ -2756,6 +2756,38 @@ sysctl_net_inet6_icmp6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(icmp6stat_percpu, ICMP6_NSTATS));
 }
 
+static int
+sysctl_net_inet6_icmp6_redirtimeout(SYSCTLFN_ARGS)
+{
+	int error, tmp;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &tmp;
+	tmp = icmp6_redirtimeout;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (tmp < 0)
+		return EINVAL;
+	icmp6_redirtimeout = tmp;
+
+	if (icmp6_redirect_timeout_q != NULL) {
+		if (icmp6_redirtimeout == 0) {
+			rt_timer_queue_destroy(icmp6_redirect_timeout_q,
+			    true);
+		} else {
+			rt_timer_queue_change(icmp6_redirect_timeout_q,
+			    icmp6_redirtimeout);
+		}
+	} else if (icmp6_redirtimeout > 0) {
+		icmp6_redirect_timeout_q =
+		    rt_timer_queue_create(icmp6_redirtimeout);
+	}
+
+	return 0;
+}
+
 static void
 sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 {
@@ -2791,7 +2823,8 @@ sysctl_net_inet6_icmp6_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "redirtimeout",
 		       SYSCTL_DESCR("Redirect generated route lifetime"),
-		       NULL, 0, &icmp6_redirtimeout, 0,
+		       sysctl_net_inet6_icmp6_redirtimeout, 0,
+		       &icmp6_redirtimeout, 0,
 		       CTL_NET, PF_INET6, IPPROTO_ICMPV6,
 		       ICMPV6CTL_REDIRTIMEOUT, CTL_EOL);
 #if 0 /* obsoleted */
