@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.120 2015/09/24 16:02:39 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.121 2015/11/05 00:02:59 knakahara Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -318,6 +318,7 @@
 ./usr/tests/net/icmp
 ./usr/tests/net/if
 ./usr/tests/net/if_bridge
+./usr/tests/net/if_gif
 ./usr/tests/net/if_loop
 ./usr/tests/net/in_cksum
 ./usr/tests/net/mcast
