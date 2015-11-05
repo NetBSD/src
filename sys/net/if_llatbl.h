@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.4 2015/10/09 01:50:09 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.5 2015/11/05 06:50:51 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -108,26 +108,28 @@ struct llentry {
 
 
 #if 0
-#define LLE_LOCK_TRACE(n)	aprint_normal("%s: " #n " line %d\n", __func__, __LINE__)
+#define LLE_LOCK_TRACE(t, lle)	aprint_normal( \
+				    "%s:%d: LOCK(" #t "): lle=%p\n", \
+				    __func__, __LINE__, (lle))
 #else
-#define LLE_LOCK_TRACE(n)
+#define LLE_LOCK_TRACE(t, lle)	do {} while (0)
 #endif
 
 #ifdef GATEWAY
 #define	LLE_WLOCK(lle)		do { \
-					LLE_LOCK_TRACE(WL); \
+					LLE_LOCK_TRACE(WL, (lle)); \
 					mutex_enter(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_RLOCK(lle)		do { \
-					LLE_LOCK_TRACE(RL); \
+					LLE_LOCK_TRACE(RL, (lle)); \
 					mutex_enter(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_WUNLOCK(lle)	do { \
-					LLE_LOCK_TRACE(WU); \
+					LLE_LOCK_TRACE(WU, (lle)); \
 					mutex_exit(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_RUNLOCK(lle)	do { \
-					LLE_LOCK_TRACE(RU); \
+					LLE_LOCK_TRACE(RU, (lle)); \
 					mutex_exit(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_DOWNGRADE(lle)	do {} while (0)
@@ -139,19 +141,19 @@ struct llentry {
 
 #else /* GATEWAY */
 #define	LLE_WLOCK(lle)		do { \
-					LLE_LOCK_TRACE(WL); \
+					LLE_LOCK_TRACE(WL, (lle)); \
 					rw_enter(&(lle)->lle_lock, RW_WRITER); \
 				} while (0)
 #define	LLE_RLOCK(lle)		do { \
-					LLE_LOCK_TRACE(RL); \
+					LLE_LOCK_TRACE(RL, (lle)); \
 					rw_enter(&(lle)->lle_lock, RW_READER); \
 				} while (0)
 #define	LLE_WUNLOCK(lle)	do { \
-					LLE_LOCK_TRACE(WU); \
+					LLE_LOCK_TRACE(WU, (lle)); \
 					rw_exit(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_RUNLOCK(lle)	do { \
-					LLE_LOCK_TRACE(RU); \
+					LLE_LOCK_TRACE(RU, (lle)); \
 					rw_exit(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_DOWNGRADE(lle)	rw_downgrade(&(lle)->lle_lock)
@@ -167,8 +169,16 @@ struct llentry {
 
 #define LLE_IS_VALID(lle)	(((lle) != NULL) && ((lle) != (void *)-1))
 
+#if 0
+#define LLE_REF_TRACE(t, n)	aprint_normal("%s:%d: REF(" #t "): refcnt=%d\n", \
+				    __func__, __LINE__, (n))
+#else
+#define LLE_REF_TRACE(t, n)	do {} while (0)
+#endif
+
 #define	LLE_ADDREF(lle) do {					\
 	LLE_WLOCK_ASSERT(lle);					\
+	LLE_REF_TRACE(ADD, (lle)->lle_refcnt);			\
 	KASSERTMSG((lle)->lle_refcnt >= 0,				\
 	    "negative refcnt %d on lle %p",			\
 	    (lle)->lle_refcnt, (lle));				\
@@ -177,10 +187,13 @@ struct llentry {
 
 #define	LLE_REMREF(lle)	do {					\
 	LLE_WLOCK_ASSERT(lle);					\
+	LLE_REF_TRACE(REM, (lle)->lle_refcnt);			\
 	KASSERTMSG((lle)->lle_refcnt > 0,				\
 	    "bogus refcnt %d on lle %p",			\
 	    (lle)->lle_refcnt, (lle));				\
 	(lle)->lle_refcnt--;					\
+	if ((lle)->lle_refcnt == 0)				\
+		LLE_REF_TRACE(ZERO, (lle)->lle_refcnt);		\
 } while (0)
 
 #define	LLE_FREE_LOCKED(lle) do {				\
