@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.65 2014/03/24 18:56:43 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.66 2015/11/05 03:48:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2014/03/24 18:56:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.66 2015/11/05 03:48:51 pgoyette Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -72,15 +72,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.65 2014/03/24 18:56:43 christos Exp $"
 #include <sys/ksyms.h>
 #include <sys/module.h>
 #include <sys/cpu.h>
-#ifdef SYSVMSG
-#include <sys/msg.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 #include <sys/kgdb.h>
 
 #include <machine/db_machdep.h>
