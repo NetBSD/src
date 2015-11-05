@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.128 2015/05/13 01:16:15 pgoyette Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.129 2015/11/05 00:10:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.128 2015/05/13 01:16:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.129 2015/11/05 00:10:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -990,6 +990,10 @@ shminit(void)
 
 	kern_has_sysvshm = 1;
 
+	/* Load the callback function pointers for the uvm subsystem */
+	uvm_shmexit = shmexit;
+	uvm_shmfork = shmfork;
+
 	sysvipcinit();
 }
 
@@ -1005,6 +1009,10 @@ shmfini(void)
 		mutex_exit(&shm_lock);
 		return 1;
 	}
+
+	/* Clear the callback function pointers for the uvm subsystem */
+	uvm_shmexit = NULL;
+	uvm_shmfork = NULL;
 
 	/* Destroy all condvars */
 	for (i = 0; i < shminfo.shmmni; i++)
