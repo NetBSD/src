@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.13 2015/11/05 05:27:45 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.14 2015/11/05 09:34:23 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -589,4 +589,69 @@ usr.bin/ftp/version.h				1.86-1.87
 
 	Add Server Name Indication (SNI) support for https.
 	[wiz, ticket #981]
+
+sys/kern/kern_exec.c				1.419, 1.420
+sys/kern/kern_exit.c				1.246, 1.247
+sys/kern/kern_synch.c				1.309
+
+	In execve_runproc(), update the p_waited entry for the process
+	being moved to SSTOP state, not for its parent.  If the value is
+	not already zero, it could prevent its parent from waiting for
+	the process.  Fixes PR kern/50298
+	--
+	When clearing out the scheduler queues during system shutdown,
+	we move all processes to the SSTOP state.  Make sure we update
+	each process's p_waited and the parents' p_nstopchild counters
+	to maintain consistent values.  Fixes PR kern/50318
+	--
+	Currently, if a process is exiting and its parent has indicated
+	no intent of reaping the process (nor any other children), the
+	process will get reparented to init.  Since the state of the
+	exiting process at this point is SDEAD, proc_reparent() will not
+	update either the old or new parent's p_nstopchild counters.
+	This change causes both old and new parents to be properly
+	updated.  Fixes PR kern/50300
+	--
+	For processes marked with PS_STOPEXIT, update the process's
+	p_waited value, and update its parent's p_nstopchild value when
+	marking the process's p_stat to SSTOP.  The process needed to be
+	SACTIVE to get here, so this transition represents an additional
+	process for which the parent needs to wait.  Fixes PR kern/50308
+	--
+	In spawn_return() we temporarily move the process state to SSTOP,
+	but without updating its p_waited value or its parent's
+	p_nstopchild counter.  Later, we restore the original state,
+	again without any adjustment of the related values.  This leaves
+	a relatively short window when the values are inconsistent and
+	could interfere with the proper operation of sys_wait() for the
+	parent.  If during this window, any of the checks being made
+	result in an error, we call exit1() which will eventually migrate
+	the process's state to SDEAD (with an intermediate transition to
+	SDYING).  At this point the other variables get updated, and we
+	finally restore a consistent state.
+	This change updates the p_waited and parent's p_nstopchild at each
+	step to eliminate any windows during which the values could lead
+	to incorrect decisions.  Fixes PR kern/50330
+	[pgoyette, ticket #996]
+
+sys/kern/kern_sig.c				1.321
+
+	When delivering a signal, it's possible that the process's state
+	in p_stat is SACTIVE yet p_sflag is PS_STOPPING (while waiting
+	for other LWPs to stop).  In that case, we don't want to adjust
+	the parent's p_nstopchild count.
+	[pgoyette, ticket #997]
+
+sys/compat/linux/arch/arm/linux_ptrace.c	1.19
+sys/compat/linux/arch/i386/linux_ptrace.c	1.31
+sys/compat/linux/arch/powerpc/linux_ptrace.c	1.29
+
+	Don't release proc_lock until we're done looking at things that
+	are protected by the lock, particularly p_stat and p_waited.
+	[pgoyette, ticket #998]
+
+sys/kern/kern_exit.c				1.248
+
+	Update value of p_stat before we release the proc_lock.
+	[pgoyette, ticket #999]
 
