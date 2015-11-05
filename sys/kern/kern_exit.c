@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.244.2.1 2015/11/05 09:04:55 snj Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.244.2.2 2015/11/05 09:30:10 snj Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.244.2.1 2015/11/05 09:04:55 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.244.2.2 2015/11/05 09:30:10 snj Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -235,8 +235,8 @@ exit1(struct lwp *l, int rv)
 		}
 		p->p_waited = 0;
 		p->p_pptr->p_nstopchild++;
-		mutex_exit(proc_lock);
 		p->p_stat = SSTOP;
+		mutex_exit(proc_lock);
 		lwp_lock(l);
 		p->p_nrlwps--;
 		l->l_stat = LSSTOP;
