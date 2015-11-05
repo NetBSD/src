@@ -1,4 +1,4 @@
-.\"	$NetBSD: rump_allserver.1,v 1.21 2014/01/16 00:32:48 pooka Exp $
+.\"	$NetBSD: rump_allserver.1,v 1.22 2015/11/05 09:28:30 ozaki-r Exp $
 .\"
 .\" Copyright (c) 2010 Antti Kantee.  All rights reserved.
 .\"
@@ -32,11 +32,13 @@
 .Nd rump kernel server
 .Sh SYNOPSIS
 .Nm
-.Op Fl s
 .Op Fl c Ar ncpu
 .Op Fl d Ar drivespec
 .Op Fl l Ar library
 .Op Fl m Ar module
+.Op Fl r Ar total_ram
+.Op Fl s
+.Op Fl v
 .Ar url
 .Sh DESCRIPTION
 The
