@@ -1,4 +1,4 @@
-.\"	$NetBSD: vnconfig.8,v 1.39 2013/06/09 18:39:31 christos Exp $
+.\"	$NetBSD: vnconfig.8,v 1.40 2015/11/05 22:35:24 pgoyette Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -61,7 +61,7 @@
 .\"
 .\"	@(#)vnconfig.8	8.1 (Berkeley) 6/5/93
 .\"
-.Dd June 9, 2013
+.Dd November 6, 2015
 .Dt VNDCONFIG 8
 .Os
 .Sh NAME
@@ -221,9 +221,12 @@ device.
 .Xr umount 8
 .Sh HISTORY
 The
-.Nm
+.Nm vnconfig
 command appeared in
 .Nx 1.0 .
-.Sh BUGS
-This command should really be named
-.Nm vndconfig .
+It was renamed to
+.Nm
+in
+.Nx 7.0
+for consistency with other similar commands.
+(The original name was also retained for backwards compatability.)
