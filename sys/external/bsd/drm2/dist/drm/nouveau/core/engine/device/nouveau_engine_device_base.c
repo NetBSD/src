@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_base.c,v 1.5 2015/10/17 21:13:38 jmcneill Exp $	*/
+/*	$NetBSD: nouveau_engine_device_base.c,v 1.6 2015/11/05 20:26:10 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.5 2015/10/17 21:13:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.6 2015/11/05 20:26:10 riastradh Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -293,8 +293,8 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 #ifdef __NetBSD__
 	if (!(args->disable & NV_DEVICE_DISABLE_MMIO) &&
 	    !nv_subdev(device)->mmiosz) {
-		if (bus_space_map(mmiot, mmio_base, mmio_size, 0,
-			&nv_subdev(device)->mmioh) != 0) {
+		if (bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh)
+		    != 0) {
 			nv_error(device, "unable to map device registers\n");
 			return -ENOMEM;
 		}
