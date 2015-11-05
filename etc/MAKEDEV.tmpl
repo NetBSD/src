@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.174 2015/08/01 21:30:09 jmcneill Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.175 2015/11/05 16:46:22 macallan Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1007,11 +1007,17 @@ ugen[0-9]*)
 
 wscons)
 	makedev ttyE0 ttyE1 ttyE2 ttyE3 ttyE4 ttyE5 ttyE6 ttyE7
+	makedev ttyF0 ttyF1 ttyF2 ttyF3 ttyF4 ttyF5 ttyF6 ttyF7
+	makedev ttyG0 ttyG1 ttyG2 ttyG3 ttyG4 ttyG5 ttyG6 ttyG7
+	makedev ttyH0 ttyH1 ttyH2 ttyH3 ttyH4 ttyH5 ttyH6 ttyH7
 	makedev wsmouse0 wsmouse1 wsmouse2 wsmouse3
 	makedev wskbd0 wskbd1 wskbd2 wskbd3
 	makedev wsmux0 wsmux1 wsmux2 wsmux3
 	makedev wsmouse wskbd
 	makedev ttyEcfg ttyEstat
+	makedev ttyFcfg ttyFstat
+	makedev ttyGcfg ttyGstat
+	makedev ttyHcfg ttyHstat
 	makedev wsfont
 	;;
 
@@ -1052,6 +1058,45 @@ ttyEcfg)
 ttyE[0-9]*)
 	unit=${i#ttyE}
 	mkdev ttyE$unit c %wsdisplay_chr% $unit
+	;;
+
+ttyFstat)
+	mkdev ttyFstat c %wsdisplay_chr% 510
+	;;
+
+ttyFcfg)
+	mkdev ttyFcfg c %wsdisplay_chr% 511
+	;;
+
+ttyF[0-9]*)
+	unit=${i#ttyF}
+	mkdev ttyF$unit c %wsdisplay_chr% $(($unit + 256))
+	;;
+
+ttyGstat)
+	mkdev ttyGstat c %wsdisplay_chr% 766
+	;;
+
+ttyGcfg)
+	mkdev ttyGcfg c %wsdisplay_chr% 767
+	;;
+
+ttyG[0-9]*)
+	unit=${i#ttyG}
+	mkdev ttyG$unit c %wsdisplay_chr% $(($unit + 512))
+	;;
+
+ttyHstat)
+	mkdev ttyHstat c %wsdisplay_chr% 1022
+	;;
+
+ttyHcfg)
+	mkdev ttyHcfg c %wsdisplay_chr% 1023
+	;;
+
+ttyH[0-9]*)
+	unit=${i#ttyH}
+	mkdev ttyH$unit c %wsdisplay_chr% $(($unit + 768))
 	;;
 
 wsmouse[0-9]*)
