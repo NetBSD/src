@@ -1,5 +1,5 @@
 rdr le0 inet6 9:8:7::6/128 port 0 -> 1:1:1::1/128 port 0 tcp
-rdr le0 inet6 9:8:7::6/128 -> 1:1:1::1/128 255
+rdr le0 inet6 9:8:7::6/128 -> 1:1:1::1/128 reserved
 rdr le0 inet6 9:8:7::6/128 port 80 -> 1:1:1::1/128 port 80 tcp
 rdr le0 inet6 9:8:7::6/128 -> 1:1:1::1/128 ip
 rdr le0 inet6 9:8::/32 -> 1:1:1::1/128 ip
