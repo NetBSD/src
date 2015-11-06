@@ -1,12 +1,12 @@
-/*	$NetBSD: t_rpc.c,v 1.4 2015/11/06 15:23:23 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.5 2015/11/06 15:30:47 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.4 2015/11/06 15:23:23 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.5 2015/11/06 15:30:47 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
-#include <rpc/raw.h>
+// #include <rpc/raw.h>
 #include <stdlib.h>
 #include <err.h>
 #include <netdb.h>
@@ -99,7 +99,7 @@ server(struct svc_req *rqstp, SVCXPRT *transp)
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
 		if (!svc_sendreply(transp, (xdrproc_t)xdr_void, NULL))
-			ERRX(EXIT_FAILURE, "svc_sendreply failed");
+			ERRX(EXIT_FAILURE, "svc_sendreply failed %d", 0);
 		return;
 	case PLUSONE:
 		break;
@@ -115,11 +115,11 @@ server(struct svc_req *rqstp, SVCXPRT *transp)
 	DPRINTF("About to increment\n");
 	num++;
 	if (!svc_sendreply(transp, (xdrproc_t)xdr_int, (void *)&num))
-		ERRX(EXIT_FAILURE, "svc_sendreply failed");
+		ERRX(EXIT_FAILURE, "svc_sendreply failed %d", 1);
 	DPRINTF("Leaving server procedure.\n");
 }
 
-int
+static int
 rawtest(const char *arg)
 {
 	CLIENT         *clnt;
@@ -134,9 +134,9 @@ rawtest(const char *arg)
 
 	svc = svc_raw_create();
 	if (svc == NULL)
-		ERRX(EXIT_FAILURE, "Can't not create server");
+		ERRX(EXIT_FAILURE, "Can't not create server %d", num);
 	if (!svc_reg(svc, PROGNUM, VERSNUM, server, NULL))
-		ERRX(EXIT_FAILURE, "Can't not register server");
+		ERRX(EXIT_FAILURE, "Can't not register server %d", num);
 
 	clnt = clnt_raw_create(PROGNUM, VERSNUM);
 	if (clnt == NULL)
