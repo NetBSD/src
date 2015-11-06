@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.26 2015/11/06 19:35:40 christos Exp $	*/
+/*	$NetBSD: svc.h,v 1.27 2015/11/06 19:42:57 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -290,14 +290,15 @@ __END_DECLS
  * Global keeper of rpc service descriptors in use
  * dynamic; must be inspected before each call to select
  */
+#ifdef SVC_LEGACY
 extern int svc_maxfd;
-#ifdef FD_SETSIZE
 extern fd_set svc_fdset;
-#define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
 #else
-extern int svc_fds;
-#endif /* def FD_SETSIZE */
+#define svc_maxfd (*svc_fdset_getmax())
+#define svc_fdset (*svc_fdset_get())
+#endif
 
+#define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
 
 /*
  * a small program implemented by the svc_rpc implementation itself;
