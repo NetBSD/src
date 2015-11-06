@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.4 2015/11/05 02:57:36 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.5 2015/11/06 02:54:37 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -192,6 +192,8 @@ parameters_head()
 
 parameters_body()
 {
+	local interval=
+
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${RUMP_SERVER1}
 	atf_check -s exit:0 rump_server ${RUMP_FLAGS} ${RUMP_SERVER2}
 
@@ -276,6 +278,9 @@ parameters_body()
 
 	# deprecated
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::3 deprecated
+	# Not deprecated immediately. Need to wait nd6_timer that does it is scheduled.
+	interval=$(sysctl -n net.inet6.icmp6.nd6_prune)
+	atf_check -s exit:0 sleep $((interval + 1))
 	atf_check -s exit:0 -o match:'fc00::3.+deprecated' rump.ifconfig shmif0 inet6
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 fc00::3 -deprecated
 	atf_check -s exit:0 -o not-match:'fc00::3.+deprecated' rump.ifconfig shmif0 inet6
