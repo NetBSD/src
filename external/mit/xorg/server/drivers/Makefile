@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.74 2015/11/06 01:17:08 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.75 2015/11/06 21:32:22 szptvlfn Exp $
 
 # xf86-input drivers
 
@@ -36,7 +36,7 @@ SUBDIR+= \
 	xf86-video-cirrus_laguna \
 	xf86-video-glint \
 	xf86-video-i128 \
-	xf86-video-i740 \
+	xf86-video-i740
 
 # needs porting for xorg-server 1.6
 #	xf86-video-imstt \
