@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_raw.c,v 1.24 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_raw.c,v 1.25 2015/11/06 19:32:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)svc_raw.c 1.25 89/01/31 Copyr 1984 Sun Micro";
 #else
-__RCSID("$NetBSD: svc_raw.c,v 1.24 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_raw.c,v 1.25 2015/11/06 19:32:08 christos Exp $");
 #endif
 #endif
 
@@ -113,7 +113,7 @@ svc_raw_create(void)
 		srp->raw_buf = __rpc_rawcombuf; /* Share it with the client */
 		svc_raw_private = srp;
 	}
-	srp->server.xp_fd = FD_SETSIZE;
+	srp->server.xp_fd = -1;
 	srp->server.xp_port = 0;
 	srp->server.xp_p3 = NULL;
 	svc_raw_ops(&srp->server);
