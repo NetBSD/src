@@ -1,11 +1,12 @@
-/*	$NetBSD: t_rpc.c,v 1.3 2013/02/28 15:56:53 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.4 2015/11/06 15:23:23 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.3 2013/02/28 15:56:53 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.4 2015/11/06 15:23:23 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <rpc/rpc.h>
+#include <rpc/raw.h>
 #include <stdlib.h>
 #include <err.h>
 #include <netdb.h>
@@ -28,6 +29,12 @@ __RCSID("$NetBSD: t_rpc.c,v 1.3 2013/02/28 15:56:53 christos Exp $");
 #define SKIPX(ev, msg, ...)	errx(ev, msg, __VA_ARGS__)
 #endif
 
+#ifdef DEBUG
+#define DPRINTF(...)	printf(__VA_ARGS__)
+#else
+#define DPRINTF(...)
+#endif
+
 
 #define RPCBPROC_NULL 0
 
@@ -47,7 +54,7 @@ reply(caddr_t replyp, struct netbuf * raddrp, struct netconfig * nconf)
 	return 0;
 }
 
-extern bool __rpc_control(int, void *);
+extern bool_t __rpc_control(int, void *);
 
 static void
 onehost(const char *host, const char *transp)
@@ -76,9 +83,82 @@ onehost(const char *host, const char *transp)
 	reply(NULL, &addr, NULL);
 }
 
+#define PROGNUM 0x81
+#define VERSNUM 0x01
+#define PLUSONE 1
+
+static struct timeval 	tout = {0, 0};
+
+static void
+server(struct svc_req *rqstp, SVCXPRT *transp)
+{
+	int num;
+
+	DPRINTF("Starting server\n");
+
+	switch (rqstp->rq_proc) {
+	case NULLPROC:
+		if (!svc_sendreply(transp, (xdrproc_t)xdr_void, NULL))
+			ERRX(EXIT_FAILURE, "svc_sendreply failed");
+		return;
+	case PLUSONE:
+		break;
+	default:
+		svcerr_noproc(transp);
+		return;
+	}
+
+	if (!svc_getargs(transp, (xdrproc_t)xdr_int, (void *)&num)) {
+		svcerr_decode(transp);
+		return;
+	}
+	DPRINTF("About to increment\n");
+	num++;
+	if (!svc_sendreply(transp, (xdrproc_t)xdr_int, (void *)&num))
+		ERRX(EXIT_FAILURE, "svc_sendreply failed");
+	DPRINTF("Leaving server procedure.\n");
+}
+
+int
+rawtest(const char *arg)
+{
+	CLIENT         *clnt;
+	SVCXPRT        *svc;
+	int 		num, resp;
+	enum clnt_stat  rv;
+
+	if (arg)
+		num = atoi(arg);
+	else
+		num = 0;
+
+	svc = svc_raw_create();
+	if (svc == NULL)
+		ERRX(EXIT_FAILURE, "Can't not create server");
+	if (!svc_reg(svc, PROGNUM, VERSNUM, server, NULL))
+		ERRX(EXIT_FAILURE, "Can't not register server");
+
+	clnt = clnt_raw_create(PROGNUM, VERSNUM);
+	if (clnt == NULL)
+		ERRX(EXIT_FAILURE, "%s",
+		    clnt_spcreateerror("clnt_raw_create"));
+	rv = clnt_call(clnt, PLUSONE, (xdrproc_t)xdr_int, (void *)&num,
+	    (xdrproc_t)xdr_int, (void *)&resp, tout);
+	if (rv != RPC_SUCCESS)
+		ERRX(EXIT_FAILURE, "clnt_call: %s", clnt_sperrno(rv));
+	DPRINTF("Got %d\n", resp);
+	clnt_destroy(clnt);
+	svc_destroy(svc);
+	if (++num != resp)
+		ERRX(EXIT_FAILURE, "expected %d got %d", num, resp);
+
+	return EXIT_SUCCESS;
+}
+
+
 #ifdef TEST
 static void
-allhosts(void)
+allhosts(const char *transp)
 {
 	enum clnt_stat  clnt_stat;
 
@@ -96,7 +176,7 @@ main(int argc, char *argv[])
 	const char     *transp = "udp";
 
 
-	while ((ch = getopt(argc, argv, "ut")) != -1)
+	while ((ch = getopt(argc, argv, "rtu")) != -1)
 		switch (ch) {
 		case 't':
 			transp = "tcp";
@@ -104,17 +184,28 @@ main(int argc, char *argv[])
 		case 'u':
 			transp = "udp";
 			break;
+		case 'r':
+			transp = NULL;
+			break;
 		default:
-			fprintf(stderr, "Usage: %s -[t|u] [<hostname>...]\n",
+			fprintf(stderr, "Usage: %s -[r|t|u] [<hostname>...]\n",
 			    getprogname());
 			return EXIT_FAILURE;
 		}
 
-	if (argc == optind)
-		allhosts();
-	else
-		for (; optind < argc; optind++)
-			onehost(argv[optind], transp);
+	if (argc == optind) {
+		if  (transp)
+			allhosts(transp);
+		else
+			rawtest(NULL);
+	} else {
+		for (; optind < argc; optind++) {
+			if (transp)
+				onehost(argv[optind], transp);
+			else
+				rawtest(argv[optind]);
+		}
+	}
 
 	return EXIT_SUCCESS;
 }
@@ -146,10 +237,22 @@ ATF_TC_BODY(get_svc_addr_udp, tc)
 
 }
 
+ATF_TC(raw);
+ATF_TC_HEAD(raw, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Checks svc raw");
+}
+
+ATF_TC_BODY(raw, tc)
+{
+	rawtest(NULL);
+
+}
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, get_svc_addr_udp);
 	ATF_TP_ADD_TC(tp, get_svc_addr_tcp);
+	ATF_TP_ADD_TC(tp, raw);
 
 	return atf_no_error();
 }
