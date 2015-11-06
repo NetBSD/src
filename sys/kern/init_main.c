@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.472 2015/10/29 00:27:08 mrg Exp $	*/
+/*	$NetBSD: init_main.c,v 1.473 2015/11/06 02:26:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.472 2015/10/29 00:27:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.473 2015/11/06 02:26:42 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -178,15 +178,6 @@ extern void *_binary_splash_image_end;
 #include <sys/kprintf.h>
 #ifdef IPSEC
 #include <netipsec/ipsec.h>
-#endif
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
-#ifdef SYSVSEM
-#include <sys/sem.h>
-#endif
-#ifdef SYSVMSG
-#include <sys/msg.h>
 #endif
 #include <sys/domain.h>
 #include <sys/namei.h>
@@ -525,25 +516,10 @@ main(void)
 	kprintf_init_callout();
 #endif
 
-#ifdef SYSVSHM
-	/* Initialize System V style shared memory. */
-	shminit();
-#endif
-
 	vmem_rehash_start();	/* must be before exec_init */
 
 	/* Initialize exec structures */
 	exec_init(1);		/* seminit calls exithook_establish() */
-
-#ifdef SYSVSEM
-	/* Initialize System V style semaphores. */
-	seminit();
-#endif
-
-#ifdef SYSVMSG
-	/* Initialize System V style message queues. */
-	msginit();
-#endif
 
 #if NVERIEXEC > 0
 	/*
