@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.129 2015/11/05 00:10:47 pgoyette Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.130 2015/11/06 02:26:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.129 2015/11/05 00:10:47 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.130 2015/11/06 02:26:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -109,6 +109,8 @@ struct shmmap_state {
 };
 
 extern int kern_has_sysvshm;
+
+SYSCTL_SETUP_PROTO(sysctl_ipc_shm_setup);
 
 #ifdef SHMDEBUG
 #define SHMPRINTF(a) printf a
@@ -951,7 +953,7 @@ shmrealloc(int newshmni)
 }
 
 void
-shminit(void)
+shminit(struct sysctllog **clog)
 {
 	vaddr_t v;
 	size_t sz;
@@ -994,7 +996,10 @@ shminit(void)
 	uvm_shmexit = shmexit;
 	uvm_shmfork = shmfork;
 
-	sysvipcinit();
+#ifdef _MODULE
+	if (clog)
+		sysctl_ipc_shm_setup(clog);
+#endif
 }
 
 int
