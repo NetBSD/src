@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.28 2015/05/13 02:06:25 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.29 2015/11/06 01:00:41 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.28 2015/05/13 02:06:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.29 2015/11/06 01:00:41 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -137,18 +137,24 @@ static struct sysctllog *sysctl_sysvipc_clog = NULL;
 #endif
 
 static const struct syscall_package sysvipc_syscalls[] = {
+#ifdef SYSVSHM
 	{ SYS___shmctl50, 0, (sy_call_t *)sys___shmctl50 },
 	{ SYS_shmat, 0, (sy_call_t *)sys_shmat },
 	{ SYS_shmdt, 0, (sy_call_t *)sys_shmdt },
 	{ SYS_shmget, 0, (sy_call_t *)sys_shmget },
+#endif
+#ifdef SYSVSEM
 	{ SYS_____semctl50, 0, (sy_call_t *)sys_____semctl50 },
 	{ SYS_semget, 0, (sy_call_t *)sys_semget },
 	{ SYS_semop, 0, (sy_call_t *)sys_semop },
 	{ SYS_semconfig, 0, (sy_call_t *)sys_semconfig },
+#endif
+#ifdef SYSVMSG
 	{ SYS___msgctl50, 0, (sy_call_t *)sys___msgctl50 },
 	{ SYS_msgget, 0, (sy_call_t *)sys_msgget },
 	{ SYS_msgsnd, 0, (sy_call_t *)sys_msgsnd },
 	{ SYS_msgrcv, 0, (sy_call_t *)sys_msgrcv },
+#endif
 	{ 0, 0, NULL }
 };
 
