@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.16 2015/11/05 20:41:17 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.17 2015/11/06 00:55:26 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -676,4 +676,38 @@ sys/arch/x68k/x68k/machdep.c			1.192
 
 	Fix poweroff for x68k.
 	[isaki, ticket #983]
+
+sys/arch/x86/x86/cpu.c				1.116
+
+	Don't disable/re-enable interrupts if they are already disabled.
+	Fixes i386 PAE kernels. PR#48196.
+	[nat, ticket #984]
+
+sys/netinet/if_arp.c				1.160
+
+	Add sysctl to selectively log arp packets from unknown network.
+	[ozaki-r, ticket #985]
+
+sys/arch/amiga/include/vmparam.h		1.44
+
+	Maximize virtual memory space for amiga; tested on a 400MB
+	model.
+	[phx, ticket #986]
+
+sys/dev/pci/if_iwn.c				1.76
+sys/dev/pci/if_iwnvar.h				1.17
+
+	PR/50187: Don't use DS parameter set when 5GHz channel is scanning.
+	[nonaka, ticket #987]
+
+usr.bin/calendar/calendars/calendar.birthday	1.25
+usr.bin/calendar/calendars/calendar.christian	1.5
+usr.bin/calendar/calendars/calendar.history	1.31-1.32
+usr.bin/calendar/calendars/calendar.holiday	1.24-1.25
+usr.bin/calendar/calendars/calendar.judaic	1.5
+usr.bin/calendar/calendars/calendar.netbsd	1.33-1.35
+usr.bin/calendar/calendars/calendar.usholiday	1.6
+
+	Add some dates to various calendars.
+	[jnemeth, ticket #988]
 
