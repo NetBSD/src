@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.326 2015/07/26 00:15:53 matt Exp $	*/
+/*	$NetBSD: pmap.c,v 1.327 2015/11/06 08:44:35 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -216,7 +216,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.326 2015/07/26 00:15:53 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.327 2015/11/06 08:44:35 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -4027,7 +4027,7 @@ pmap_protect(pmap_t pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 
 					pmap_acquire_page_lock(md);
 #ifndef ARM_MMU_EXTENDED
-					f = 
+					f =
 #endif
 					    pmap_modify_pv(md, pa, pm, sva,
 					       clr_mask, 0);
