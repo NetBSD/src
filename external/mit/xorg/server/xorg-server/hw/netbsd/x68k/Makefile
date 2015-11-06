@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/03/01 19:39:03 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.2 2015/11/06 21:32:22 szptvlfn Exp $
 
 .include <bsd.own.mk>
 
@@ -36,7 +36,7 @@ CPPFLAGS+=	-I${X11SRCDIR.xorg-server}/include \
 		-I${X11SRCDIR.xorg-server}/fb \
 		-I${X11SRCDIR.xorg-server}/mi \
 		-I${X11SRCDIR.xorg-server}/render \
-		-I${DESTDIR}${X11INCDIR}/X11 \
+		-I${DESTDIR}${X11INCDIR}/X11
 
 CPPFLAGS+=	-UXFree86LOADER -UXF86VIDMODE -UXFreeXDGA -UXF86MISC \
 		-UXF86DRI -UXF86BIGFONT

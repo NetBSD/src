@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2015/05/02 14:54:18 macallan Exp $
+#	$NetBSD: Makefile,v 1.33 2015/11/06 21:32:22 szptvlfn Exp $
 
 NOLINT=	1	# defined
 
@@ -41,7 +41,7 @@ SRCS+=					\
 	pixman-x86.c			\
 	pixman-mips.c			\
 	pixman-arm.c			\
-	pixman-ppc.c			\
+	pixman-ppc.c
 
 # XXX
 
