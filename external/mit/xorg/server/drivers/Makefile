@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.73 2015/11/04 17:06:23 phx Exp $
+#	$NetBSD: Makefile,v 1.74 2015/11/06 01:17:08 jmcneill Exp $
 
 # xf86-input drivers
 
@@ -156,6 +156,7 @@ SUBDIR+= \
 
 .if ${MACHINE} == "evbarm"
 SUBDIR+= \
+	xf86-video-modesetting \
 	xf86-video-wsfb
 .endif # ${MACHINE} == "evbarm"
 
