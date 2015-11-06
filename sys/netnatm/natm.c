@@ -1,4 +1,4 @@
-/*	$NetBSD: natm.c,v 1.49 2015/05/02 17:18:04 rtr Exp $	*/
+/*	$NetBSD: natm.c,v 1.50 2015/11/06 21:33:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.49 2015/05/02 17:18:04 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: natm.c,v 1.50 2015/11/06 21:33:07 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -125,7 +125,7 @@ static int
 natm_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 {
 	int error = 0, s2;
-	struct natmpcb *npcb;
+	struct natmpcb *npcb = (struct natmpcb *)so->so_pcb;
 	struct sockaddr_natm *snatm = (struct sockaddr_natm *)nam;
 	struct atm_pseudoioctl api;
 	struct atm_pseudohdr *aph;
@@ -135,7 +135,7 @@ natm_connect(struct socket *so, struct sockaddr *nam, struct lwp *l)
 	KASSERT(solocked(so));
 
 	/*
-	 * validate nam and npcb
+	 * validate snatm and npcb
 	 */
 
 	if (snatm->snatm_len != sizeof(*snatm) ||
