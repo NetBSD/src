@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.192 2015/11/06 08:38:43 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.193 2015/11/06 08:55:49 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.192 2015/11/06 08:38:43 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.193 2015/11/06 08:55:49 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -202,7 +202,7 @@ static struct	ifnet *myip_ifp = NULL;
 #ifdef DDB
 static void db_print_sa(const struct sockaddr *);
 static void db_print_ifa(struct ifaddr *);
-static void db_print_llinfo(void *);
+static void db_print_llinfo(struct llentry *);
 static int db_show_rtentry(struct rtentry *, void *);
 #endif
 
@@ -2069,15 +2069,13 @@ db_print_ifa(struct ifaddr *ifa)
 }
 
 static void
-db_print_llinfo(void *li)
+db_print_llinfo(struct llentry *la)
 {
-	struct llinfo_arp *la;
-
-	if (li == NULL)
+	if (la == NULL)
 		return;
-	la = (struct llinfo_arp *)li;
-	db_printf("  la_rt=%p la_hold=%p, la_asked=0x%lx\n",
+	db_printf("  la_rt=%p la_hold=%p, la_asked=%d\n",
 			  la->la_rt, la->la_hold, la->la_asked);
+	db_printf("  la_flags=0x%x\n", la->la_flags);
 }
 
 /*
