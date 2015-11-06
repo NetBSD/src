@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.158 2014/06/03 01:24:32 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.158.2.1 2015/11/06 00:46:50 riz Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.158 2014/06/03 01:24:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.158.2.1 2015/11/06 00:46:50 riz Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -194,6 +194,7 @@ static int arp_drainwanted;
 static int log_movements = 1;
 static int log_permanent_modify = 1;
 static int log_wrong_iface = 1;
+static int log_unknown_network = 1;
 
 /*
  * this should be elsewhere.
@@ -1305,17 +1306,20 @@ arplookup1(struct mbuf *m, const struct in_addr *addr, int create, int proxy,
 		return (struct llinfo_arp *)rt->rt_llinfo;
 
 	if (create) {
-		if (rt->rt_flags & RTF_GATEWAY)
-			why = "host is not on local network";
-		else if ((rt->rt_flags & RTF_LLINFO) == 0) {
+		if (rt->rt_flags & RTF_GATEWAY) {
+			if (log_unknown_network)
+				why = "host is not on local network";
+		} else if ((rt->rt_flags & RTF_LLINFO) == 0) {
 			ARP_STATINC(ARP_STAT_ALLOCFAIL);
 			why = "could not allocate llinfo";
 		} else
 			why = "gateway route is not ours";
-		log(LOG_DEBUG, "arplookup: unable to enter address"
-		    " for %s@%s on %s (%s)\n",
-		    in_fmtaddr(*addr), lla_snprintf(ar_sha(ah), ah->ar_hln),
-		    (ifp) ? ifp->if_xname : "null", why);
+		if (why) {
+			log(LOG_DEBUG, "arplookup: unable to enter address"
+			    " for %s@%s on %s (%s)\n", in_fmtaddr(*addr),
+			    lla_snprintf(ar_sha(ah), ah->ar_hln),
+			    (ifp) ? ifp->if_xname : "null", why);
+		}
 		if (rt->rt_refcnt <= 0 && (rt->rt_flags & RTF_CLONED) != 0) {
 			rtrequest(RTM_DELETE, rt_getkey(rt),
 		    	    rt->rt_gateway, rt_mask(rt), rt->rt_flags, NULL);
@@ -1703,6 +1707,13 @@ sysctl_net_inet_arp_setup(struct sysctllog **clog)
 			SYSCTL_DESCR("log ARP packets arriving on the wrong"
 			    " interface"),
 			NULL, 0, &log_wrong_iface, 0,
+			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+			CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+			CTLTYPE_INT, "log_unknown_network",
+			SYSCTL_DESCR("log ARP packets from non-local network"),
+			NULL, 0, &log_unknown_network, 0,
 			CTL_NET,PF_INET, node->sysctl_num, CTL_CREATE, CTL_EOL);
 }
 
