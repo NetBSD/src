@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.22 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.23 2015/11/06 19:34:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.22 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.23 2015/11/06 19:34:13 christos Exp $");
 #endif
 #endif
 
@@ -50,6 +50,7 @@ __RCSID("$NetBSD: svc_run.c,v 1.22 2013/03/11 20:19:29 tron Exp $");
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 
@@ -66,9 +67,9 @@ __weak_alias(svc_exit,_svc_exit)
 void
 svc_run(void)
 {
-	fd_set readfds, cleanfds;
+	fd_set *readfds, *cleanfds;
 	struct timeval timeout;
-	int maxfd;
+	int maxfd, fdsize;
 #ifndef RUMP_RPC		
 	int probs = 0;
 #endif
@@ -76,16 +77,24 @@ svc_run(void)
 	extern rwlock_t svc_fd_lock;
 #endif
 
+	readfds = NULL;
+	cleanfds = NULL;
+	fdsize = 0;
 	timeout.tv_sec = 30;
 	timeout.tv_usec = 0;
 
 	for (;;) {
 		rwlock_rdlock(&svc_fd_lock);
-		readfds = *get_fdset();
-		cleanfds = *get_fdset();
-		maxfd = *get_fdsetmax();
+		if (fdsize != svc_fdset_getsize(0)) {
+			fdsize = svc_fdset_getsize(0);
+			free(readfds);
+			readfds = svc_fdset_copy(svc_fdset_get());
+			free(cleanfds);
+			cleanfds = svc_fdset_copy(svc_fdset_get());
+		}
+		maxfd = *svc_fdset_getmax();
 		rwlock_unlock(&svc_fd_lock);
-		switch (select(maxfd + 1, &readfds, NULL, NULL, &timeout)) {
+		switch (select(maxfd + 1, readfds, NULL, NULL, &timeout)) {
 		case -1:
 #ifndef RUMP_RPC		
 			if ((errno == EINTR || errno == EBADF) && probs < 100) {
@@ -97,17 +106,20 @@ svc_run(void)
 				continue;
 			}
 			warn("%s: select failed", __func__);
-			return;
+			goto out;
 		case 0:
-			__svc_clean_idle(&cleanfds, 30, FALSE);
+			__svc_clean_idle(cleanfds, 30, FALSE);
 			continue;
 		default:
-			svc_getreqset(&readfds);
+			svc_getreqset2(readfds, fdsize);
 #ifndef RUMP_RPC
 			probs = 0;
 #endif
 		}
 	}
+out:
+	free(readfds);
+	free(cleanfds);
 }
 
 /*
@@ -122,6 +134,6 @@ svc_exit(void)
 #endif
 
 	rwlock_wrlock(&svc_fd_lock);
-	FD_ZERO(get_fdset());
+	svc_fdset_zero();
 	rwlock_unlock(&svc_fd_lock);
 }
