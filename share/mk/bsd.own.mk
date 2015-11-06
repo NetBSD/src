@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.878 2015/11/04 17:06:23 phx Exp $
+#	$NetBSD: bsd.own.mk,v 1.879 2015/11/06 01:17:08 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1299,7 +1299,8 @@ X11SRCDIR.xf86-input-${_i}?=	${X11SRCDIRMIT}/xf86-input-${_i}/dist
 
 .for _v in \
 	ag10e apm ark ast ati ati-kms chips cirrus crime \
-	geode glint i128 i740 igs imstt intel intel-old mach64 mga \
+	geode glint i128 i740 igs imstt intel intel-old \
+	modesetting mach64 mga \
 	neomagic newport nouveau nsc nv nvxbox openchrome pnozz \
 	r128 radeonhd rendition \
 	s3 s3virge savage siliconmotion sis suncg14 \
