@@ -1,4 +1,4 @@
-/*	$NetBSD: tetris.c,v 1.30 2015/06/13 04:53:13 dholland Exp $	*/
+/*	$NetBSD: tetris.c,v 1.31 2015/11/06 19:53:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -116,6 +116,8 @@ elide(void)
 				tsleep();
 				while (--base != 0)
 					board[base + B_COLS] = board[base];
+				/* don't forget to clear 0th row */
+				memset(&board[1], 0, B_COLS - 2);
 				scr_update();
 				tsleep();
 				break;
