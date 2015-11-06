@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.19 2015/11/06 20:29:03 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.20 2015/11/06 23:04:30 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -729,4 +729,32 @@ sbin/dump/tape.c				1.54
 
 	Fix tape usage report for large filesystems.
 	[bouyer, ticket #991]
+
+sys/arch/x86/x86/cpu_ucode_intel.c		1.9-1.10
+
+	Fixes to cpu microcode updater.
+	[jym, ticket #994]
+
+sys/dev/pci/viornd.c				1.3
+
+	Disable viornd(4) debug print by default.
+	[riastradh, ticket #995]
+
+sys/dev/pci/agp_i810.c				1.119
+
+	Fix mapping Intel graphics device registers. Fixes main part
+	of PR#50060.
+	[riastradh, ticket #1000]
+
+sys/external/bsd/drm2/include/linux/bitops.h	1.10-1.11
+
+	Fix indexing convention of Linux __ffs/__ffs64 shims,
+	fixing infinite loop on boot with nouveau(4).
+	[riastradh, ticket #1001]
+
+sys/external/bsd/drm2/dist/drm/nouveau/core/engine/fifo/nouveau_engine_fifo_nve0.c 1.5
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c 1.6
+
+	Get nouveaudrm text console working.
+	[riastradh, ticket #1002]
 
