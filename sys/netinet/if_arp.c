@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.191 2015/10/20 07:46:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.192 2015/11/06 08:38:43 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.191 2015/10/20 07:46:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.192 2015/11/06 08:38:43 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -621,7 +621,7 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 * add with a LL address.
 		 */
 		flags = LLE_EXCLUSIVE;
-		if ((rt->rt_flags & RTF_CLONED) == 0)
+		if ((rt->rt_flags & RTF_CLONING) != 0)
 			flags |= LLE_IFADDR;
 
 		IF_AFDATA_WLOCK(ifp);
