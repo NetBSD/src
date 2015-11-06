@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.25 2013/03/04 17:29:03 christos Exp $	*/
+/*	$NetBSD: svc.h,v 1.26 2015/11/06 19:35:40 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -298,6 +298,7 @@ extern fd_set svc_fdset;
 extern int svc_fds;
 #endif /* def FD_SETSIZE */
 
+
 /*
  * a small program implemented by the svc_rpc implementation itself;
  * also see clnt.h for protocol numbers.
@@ -307,8 +308,23 @@ extern void rpctest_service(void);
 __END_DECLS
 
 __BEGIN_DECLS
+
+#define SVC_FDSET_MT	1
+extern void	svc_fdset_init(int);
+extern fd_set  *svc_fdset_copy(const fd_set *);
+
+extern void	svc_fdset_zero(void);
+extern int	svc_fdset_isset(int);
+extern void	svc_fdset_clr(int);
+extern void	svc_fdset_set(int);
+
+extern fd_set  *svc_fdset_get(void);
+extern int	svc_fdset_getsize(int);
+extern int     *svc_fdset_getmax(void);
+
 extern void	svc_getreq	(int);
 extern void	svc_getreqset	(fd_set *);
+extern void	svc_getreqset2	(fd_set *, int);
 extern void	svc_getreq_common	(int);
 struct pollfd;
 extern void	svc_getreq_poll(struct pollfd *, int);
