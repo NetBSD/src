@@ -1,4 +1,4 @@
-/*	$NetBSD: clnt_raw.c,v 1.32 2013/03/11 20:19:29 tron Exp $	*/
+/*	$NetBSD: clnt_raw.c,v 1.33 2015/11/06 19:32:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)clnt_raw.c 1.22 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)clnt_raw.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: clnt_raw.c,v 1.32 2013/03/11 20:19:29 tron Exp $");
+__RCSID("$NetBSD: clnt_raw.c,v 1.33 2015/11/06 19:32:08 christos Exp $");
 #endif
 #endif
 
@@ -102,13 +102,13 @@ static struct clnt_ops *clnt_raw_ops(void);
 CLIENT *
 clnt_raw_create(rpcprog_t prog, rpcvers_t vers)
 {
-	struct clntraw_private *clp = clntraw_private;
+	struct clntraw_private *clp;
 	struct rpc_msg call_msg;
-	XDR *xdrs = &clp->xdr_stream;
-	CLIENT	*client = &clp->client_object;
+	XDR *xdrs;
+	CLIENT *client;
 
 	mutex_lock(&clntraw_lock);
-	if (clp == NULL) {
+	if ((clp = clntraw_private) == NULL) {
 		clp = calloc((size_t)1, sizeof (*clp));
 		if (clp == NULL)
 			goto out;
@@ -120,6 +120,10 @@ clnt_raw_create(rpcprog_t prog, rpcvers_t vers)
 		clp->_raw_buf = __rpc_rawcombuf;
 		clntraw_private = clp;
 	}
+
+	xdrs = &clp->xdr_stream;
+	client = &clp->client_object;
+
 	/*
 	 * pre-serialize the static part of the call msg and stash it away
 	 */
@@ -193,7 +197,7 @@ call_again:
 	 * We have to call server input routine here because this is
 	 * all going on in one process. Yuk.
 	 */
-	svc_getreq_common(FD_SETSIZE);
+	svc_getreq_common(-1);
 
 	/*
 	 * get results
