@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.42.30.2 2015/11/06 00:49:14 riz Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.42.30.3 2015/11/06 20:23:56 riz Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,7 +76,7 @@
 #define	DFLDSIZ		(64*1024*1024)		/* initial data size limit */
 #endif
 #ifndef MAXDSIZ
-#define	MAXDSIZ		(416*1024*1024)		/* max data size */
+#define	MAXDSIZ		(224*1024*1024)		/* max data size */
 #endif
 #ifndef	DFLSSIZ
 #define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
