@@ -1,7 +1,7 @@
-/*	$NetBSD: svc_fdset.c,v 1.2 2015/11/06 19:34:13 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.3 2015/11/06 23:05:09 joerg Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.2 2015/11/06 19:34:13 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.3 2015/11/06 23:05:09 joerg Exp $");
 
 
 #include "reentrant.h"
@@ -13,7 +13,7 @@ __RCSID("$NetBSD: svc_fdset.c,v 1.2 2015/11/06 19:34:13 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 
-struct svc_fdset {
+struct my_svc_fdset {
 	fd_set *fdset;
 	int	fdmax;
 	int	fdsize;
@@ -96,7 +96,7 @@ svc_print(const char *func, size_t line, const char *fmt, ...)
 static void
 svc_fdset_free(void *v)
 {
-	struct svc_fdset *rv = v;
+	struct my_svc_fdset *rv = v;
 	DPRINTF_FDSET(rv->fdset, 0, "free");
 
 	free(rv->fdset);
@@ -133,10 +133,10 @@ svc_fdset_resize(int fd, fd_set **fdset, int *fdsize)
 	return *fdset;
 }
 
-static struct svc_fdset *
+static struct my_svc_fdset *
 svc_fdset_alloc(int fd)
 {
-	struct svc_fdset *rv;
+	struct my_svc_fdset *rv;
 
 	if (fdsetkey == -1)
 		thr_keycreate(&fdsetkey, svc_fdset_free);
@@ -172,7 +172,7 @@ svc_fdset_alloc(int fd)
 static fd_set *
 svc_fdset_get_internal(int fd)
 {
-	struct svc_fdset *rv;
+	struct my_svc_fdset *rv;
 
 	if (!__isthreaded || fdsetkey == -2)
 		return svc_fdset_resize(fd, &__svc_fdset, &svc_fdsize);
@@ -270,7 +270,7 @@ svc_fdset_get(void)
 int *
 svc_fdset_getmax(void)
 {
-	struct svc_fdset *rv;
+	struct my_svc_fdset *rv;
 
 	if (!__isthreaded || fdsetkey == -2)
 		return &svc_maxfd;
@@ -284,7 +284,7 @@ svc_fdset_getmax(void)
 int
 svc_fdset_getsize(int fd)
 {
-	struct svc_fdset *rv;
+	struct my_svc_fdset *rv;
 
 	if (!__isthreaded || fdsetkey == -2) {
 		if (svc_fdset_resize(fd, &__svc_fdset, &svc_fdsize) == NULL)
