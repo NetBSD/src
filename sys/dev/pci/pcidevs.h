@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1232 2015/10/22 13:18:25 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1233 2015/11/06 12:05:49 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1239 2015/10/22 13:17:56 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1240 2015/11/06 12:05:18 nonaka Exp
  */
 
 /*
@@ -962,7 +962,26 @@
 #define	PCI_PRODUCT_AMD_AMD64_F11_DRAM	0x1302		/* AMD64 Family11h DRAM Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_MISC	0x1303		/* AMD64 Family11h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_AMD64_F11_LINK	0x1304		/* AMD64 Family11h Link Configuration */
+#define	PCI_PRODUCT_AMD_F16_GPPB	0x1439		/* Family16h GPP Bridge */
 #define	PCI_PRODUCT_AMD_F14_RC	0x1510		/* Family14h Root Complex */
+#define	PCI_PRODUCT_AMD_F16_HT	0x1530		/* Family16h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F16_ADDR	0x1531		/* Family16h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F16_DRAM	0x1532		/* Family16h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F16_NB	0x1533		/* Family16h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F16_CSTATE	0x1534		/* Family16h CPU C-state Configuration */
+#define	PCI_PRODUCT_AMD_F16_MISC	0x1535		/* Family16h Miscellaneous Configuration */
+#define	PCI_PRODUCT_AMD_F16_RC	0x1536		/* Family16h Root Complex */
+#define	PCI_PRODUCT_AMD_CRYPTO_COP	0x1537		/* Cryptographic Coprocessor */
+#define	PCI_PRODUCT_AMD_F16_HB	0x1568		/* Family16h Host Bridge */
+#define	PCI_PRODUCT_AMD_F16_30_RC	0x1566		/* Family16h Root Complex */
+#define	PCI_PRODUCT_AMD_F16_30_IOMMU	0x1567		/* Family16h IOMMU */
+#define	PCI_PRODUCT_AMD_F16_30_HB	0x156b		/* Family16h Host Bridge */
+#define	PCI_PRODUCT_AMD_F16_30_HT	0x1580		/* Family16h HyperTransport Configuration */
+#define	PCI_PRODUCT_AMD_F16_30_ADDR	0x1581		/* Family16h Address Map Configuration */
+#define	PCI_PRODUCT_AMD_F16_30_DRAM	0x1582		/* Family16h DRAM Configuration */
+#define	PCI_PRODUCT_AMD_F16_30_NB	0x1583		/* Family16h North Bridge Configuration */
+#define	PCI_PRODUCT_AMD_F16_30_CSTATE	0x1584		/* Family16h CPU C-state Configuration */
+#define	PCI_PRODUCT_AMD_F16_30_MISC	0x1585		/* Family16h Miscellaneous Configuration */
 #define	PCI_PRODUCT_AMD_F15_HT	0x1600		/* Family15h HyperTransport Configuration */
 #define	PCI_PRODUCT_AMD_F15_ADDR	0x1601		/* Family15h Address Map Configuration */
 #define	PCI_PRODUCT_AMD_F15_DRAM	0x1602		/* Family15h DRAM Configuration */
@@ -1052,6 +1071,8 @@
 #define	PCI_PRODUCT_AMD_HUDSON_LPC	0x780e		/* Hudson LPC Bridge */
 #define	PCI_PRODUCT_AMD_HUDSON_PCI	0x780f		/* Hudson PCI Bridge */
 #define	PCI_PRODUCT_AMD_HUDSON_XHCI	0x7812		/* Hudson USB xHCI Controller */
+#define	PCI_PRODUCT_AMD_FCH_SDHC	0x7813		/* FCH SD Flash Controller */
+#define	PCI_PRODUCT_AMD_FCH_XHCI	0x7814		/* FCH USB xHCI Controller */
 #define	PCI_PRODUCT_AMD_RS780_HB	0x9600		/* RS780 Host Bridge */
 #define	PCI_PRODUCT_AMD_RS880_HB	0x9601		/* RS785/RS880 Host Bridge */
 #define	PCI_PRODUCT_AMD_RS780_PPB_GFX	0x9602		/* RS780/RS880 PCI-PCI Bridge (int gfx) */
@@ -1529,6 +1550,8 @@
 #define	PCI_PRODUCT_ATI_RADEON_HD6310	0x9802		/* Radeon HD6310 Graphics */
 #define	PCI_PRODUCT_ATI_RADEON_HD6320	0x9806		/* Radeon HD6320 Graphics */
 #define	PCI_PRODUCT_ATI_RADEON_HD7340	0x9808		/* Radeon HD7340 Graphics */
+#define	PCI_PRODUCT_ATI_RADEON_HDMI_DP_AUDIO	0x9840		/* HDMI/DP Audio */
+#define	PCI_PRODUCT_ATI_RADEON_R2_R3_R3E_R4	0x9854		/* Radeon R2/R3/R4 Graphics */
 #define	PCI_PRODUCT_ATI_RADEON_HD2600_HD	0xaa08		/* Radeon HD2600 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD4350_HD	0xaa38		/* Radeon HD4350 HD Audio Controller */
 #define	PCI_PRODUCT_ATI_RADEON_HD5600_HDMI	0xaa60		/* Redwood HDMI Audio */
