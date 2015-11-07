@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_assert.h,v 1.1.1.2.16.1 2014/12/25 02:13:01 snj Exp $	*/
+/*	$NetBSD: ntp_assert.h,v 1.1.1.2.16.2 2015/11/07 22:46:14 snj Exp $	*/
 
 /*
  * ntp_assert.h - design by contract stuff
@@ -90,10 +90,6 @@ extern void calysto_assert(unsigned char cnd); /* check whether this holds */
  * We initially used NTP_REQUIRE() instead of REQUIRE() etc, but that
  * is unneccesarily verbose, as libisc use of REQUIRE() etc shows.
  */
-#define	NTP_REQUIRE(x)		REQUIRE(x)
-#define	NTP_INSIST(x)		INSIST(x)
-#define	NTP_INVARIANT(x)	INVARIANT(x)
-#define	NTP_ENSURE(x)		ENSURE(x)
 
 # ifdef DEBUG
 #define	DEBUG_REQUIRE(x)	REQUIRE(x)

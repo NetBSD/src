@@ -1,4 +1,4 @@
-/*	$NetBSD: listener.c,v 1.2.2.2 2014/12/25 02:13:12 snj Exp $	*/
+/*	$NetBSD: listener.c,v 1.2.2.3 2015/11/07 22:46:22 snj Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
@@ -237,6 +237,11 @@ evconnlistener_new_bind(struct event_base *base, evconnlistener_cb cb,
 			goto err;
 	}
 
+	if (flags & LEV_OPT_REUSEABLE_PORT) {
+		if (evutil_make_listen_socket_reuseable_port(fd) < 0)
+			goto err;
+	}
+
 	if (flags & LEV_OPT_DEFERRED_ACCEPT) {
 		if (evutil_make_tcp_listen_socket_deferred(fd) < 0)
 			goto err;
@@ -418,6 +423,8 @@ listener_read_cb(evutil_socket_t fd, short what, void *p)
 		if (lev->refcnt == 1) {
 			int freed = listener_decref_and_unlock(lev);
 			EVUTIL_ASSERT(freed);
+
+			evutil_closesocket(new_fd);
 			return;
 		}
 		--lev->refcnt;

@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.3.16.1 2014/12/25 02:13:11 snj Exp $	*/
+/*	$NetBSD: log.h,v 1.3.16.2 2015/11/07 22:46:21 snj Exp $	*/
 
 #ifndef LOG_H
 #define LOG_H
@@ -24,6 +24,6 @@
 void sntp_init_logging(const char *program);
 void open_logfile(const char *logfile);
 
-extern char *progname;		/* for msyslog use too */
+extern char const *progname;		/* for msyslog use too */
 
 #endif

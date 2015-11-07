@@ -327,8 +327,14 @@
    */
 #undef HAVE_ALLOCA_H
 
+/* Define to 1 if you have the `arc4random_buf' function. */
+#undef HAVE_ARC4RANDOM_BUF
+
 /* Define to 1 if you have the <arpa/nameser.h> header file. */
 #undef HAVE_ARPA_NAMESER_H
+
+/* Define to 1 if you have the `atomic_thread_fence' function. */
+#undef HAVE_ATOMIC_THREAD_FENCE
 
 /* Do we have audio support? */
 #undef HAVE_AUDIO
@@ -382,6 +388,9 @@
 
 /* Define to 1 if you have the <errno.h> header file. */
 #undef HAVE_ERRNO_H
+
+/* Define to 1 if you have the `EVP_MD_do_all_sorted' function. */
+#undef HAVE_EVP_MD_DO_ALL_SORTED
 
 /* Define to 1 if you have the `fchmod' function. */
 #undef HAVE_FCHMOD
@@ -817,6 +826,9 @@
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #undef HAVE_STDARG_H
+
+/* Define to 1 if you have the <stdatomic.h> header file. */
+#undef HAVE_STDATOMIC_H
 
 /* Define to 1 if you have the <stdbool.h> header file. */
 #undef HAVE_STDBOOL_H
@@ -1312,6 +1324,9 @@
 /* define to 1 if library is thread safe */
 #undef LDAP_API_FEATURE_X_OPENLDAP_THREAD_SAFE
 
+/* leap smear mechanism */
+#undef LEAP_SMEAR
+
 /* Define to any value to include libseccomp sandboxing. */
 #undef LIBSECCOMP
 
@@ -1327,6 +1342,10 @@
 
 /* Should we recommend a minimum value for tickadj? */
 #undef MIN_REC_TICKADJ
+
+/* Define to 1 if the compiler does not support C99's structure
+   initialization. */
+#undef MISSING_C99_STRUCT_INIT
 
 /* Do we need HPUX adjtime() library support? */
 #undef NEED_HPUX_ADJTIME
@@ -1466,8 +1485,8 @@
 /* Do we want the SCO clock hacks? */
 #undef SCO5_CLOCK
 
-/* The size of `char*', as computed by sizeof. */
-#undef SIZEOF_CHARP
+/* The size of `char *', as computed by sizeof. */
+#undef SIZEOF_CHAR_P
 
 /* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
@@ -1557,6 +1576,9 @@ typedef unsigned int	uintptr_t;
 
 /* Use OpenSSL's crypto random functions */
 #undef USE_OPENSSL_CRYPTO_RAND
+
+/* OK to use snprintb()? */
+#undef USE_SNPRINTB
 
 /* Can we use SIGPOLL for tty IO? */
 #undef USE_TTY_SIGPOLL

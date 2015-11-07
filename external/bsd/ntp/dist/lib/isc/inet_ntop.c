@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_ntop.c,v 1.2.22.1 2014/12/25 02:13:02 snj Exp $	*/
+/*	$NetBSD: inet_ntop.c,v 1.2.22.2 2015/11/07 22:46:15 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
@@ -140,6 +140,7 @@ inet_ntop6(const unsigned char *src, char *dst, size_t size)
 		words[i / 2] |= (src[i] << ((1 - (i % 2)) << 3));
 	best.base = -1;
 	cur.base = -1;
+	best.len = cur.len = 0;
 	for (i = 0; i < (NS_IN6ADDRSZ / NS_INT16SZ); i++) {
 		if (words[i] == 0) {
 			if (cur.base == -1)

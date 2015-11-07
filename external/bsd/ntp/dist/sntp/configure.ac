@@ -11,6 +11,7 @@ AC_INIT(
 )
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_AUX_DIR([libevent/build-aux])
+AC_LANG([C])
 
 # Bump sntp_configure_cache_version for each change to configure.ac or
 # .m4 files which invalidates cached values from previous configure 
@@ -97,11 +98,14 @@ esac
 enable_nls=no
 LIBOPTS_CHECK
 
-AM_COND_IF(
-    [BUILD_SNTP],
-    [NTP_LIBEVENT_CHECK],
-    [NTP_LIBEVENT_CHECK_NOBUILD]
-)
+# From when we only used libevent for sntp:
+#AM_COND_IF(
+#    [BUILD_SNTP],
+#    [NTP_LIBEVENT_CHECK],
+#    [NTP_LIBEVENT_CHECK_NOBUILD]
+#)
+
+NTP_LIBEVENT_CHECK([2])
 
 # Checks for libraries.
 
@@ -134,6 +138,7 @@ AC_DEFINE([HAVE_TERMIOS], 1, [sntp does not care about TTY stuff])
 # Checks for library functions.
 AC_CHECK_FUNCS([socket])
 
+NTP_UNITYBUILD
 # HMS: if we don't find c++ we should not look for gtest.
 AC_PROG_CXX
 NTP_GOOGLETEST
@@ -147,5 +152,7 @@ AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([include/Makefile])
 AC_CONFIG_FILES([scripts/Makefile])
 AC_CONFIG_FILES([tests/Makefile])
+AC_CONFIG_FILES([tests/fileHandlingTest.h])
+AC_CONFIG_FILES([unity/Makefile])
 
 AC_OUTPUT

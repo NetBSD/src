@@ -1,4 +1,4 @@
-/*	$NetBSD: sort.c,v 1.1.1.2.16.1 2014/12/25 02:13:14 snj Exp $	*/
+/*	$NetBSD: sort.c,v 1.1.1.2.16.2 2015/11/07 22:46:24 snj Exp $	*/
 
 
 /*
@@ -12,7 +12,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -200,11 +200,11 @@ optionSort(tOptions * opts)
     /*
      *  Make sure we can allocate two full-sized arg vectors.
      */
-    opt_txt = malloc(opts->origArgCt * sizeof(char*));
+    opt_txt = malloc(opts->origArgCt * sizeof(char *));
     if (opt_txt == NULL)
         goto exit_no_mem;
 
-    ppzOpds = malloc(opts->origArgCt * sizeof(char*));
+    ppzOpds = malloc(opts->origArgCt * sizeof(char *));
     if (ppzOpds == NULL) {
         free(opt_txt);
         goto exit_no_mem;
@@ -317,10 +317,10 @@ optionSort(tOptions * opts)
  joinLists:
     if (optsIdx > 0)
         memcpy(opts->origArgVect + 1, opt_txt,
-               (size_t)optsIdx * sizeof(char*));
+               (size_t)optsIdx * sizeof(char *));
     if (opdsIdx > 0)
         memcpy(opts->origArgVect + 1 + optsIdx, ppzOpds,
-               (size_t)opdsIdx * sizeof(char*));
+               (size_t)opdsIdx * sizeof(char *));
 
  freeTemps:
     free(opt_txt);

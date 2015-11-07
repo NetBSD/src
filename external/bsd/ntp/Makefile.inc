@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.11.16.1 2014/12/25 02:12:50 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.11.16.2 2015/11/07 22:46:07 snj Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -15,14 +15,14 @@ WARNS?=	4
 
 .include <bsd.own.mk>
 
-IDIST=		${NETBSDSRCDIR}/external/bsd/ntp/dist
-NTP_SRCDIR=	${NETBSDSRCDIR}/external/bsd/ntp
-NTP_HTMLDIR=	/usr/share/doc/html/ntp
+IDIST:=		${NETBSDSRCDIR}/external/bsd/ntp/dist
+NTP_SRCDIR:=	${NETBSDSRCDIR}/external/bsd/ntp
+NTP_HTMLDIR=	/usr/share/doc/html
 
 SYSCONFDIR=/etc
 LOCALSTATEDIR=/var
 
-CPPFLAGS+=-DHAVE_CONFIG_H
+CPPFLAGS+=-DHAVE_CONFIG_H -D__syslog__=__printf__
 CPPFLAGS+=-I${NTP_SRCDIR}/include \
 	  -I${IDIST}/include \
 	  -I${IDIST}/lib/isc/include \

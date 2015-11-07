@@ -1,4 +1,4 @@
-/*	$NetBSD: ht-internal.h,v 1.2.2.2 2014/12/25 02:13:12 snj Exp $	*/
+/*	$NetBSD: ht-internal.h,v 1.2.2.3 2015/11/07 22:46:22 snj Exp $	*/
 
 /* Copyright 2002 Christopher Clark */
 /* Copyright 2005-2012 Nick Mathewson */
@@ -382,7 +382,6 @@ ht_string_hash_(const char *s)
   {                                                                     \
     if (head->hth_table)                                                \
       freefn(head->hth_table);                                          \
-    head->hth_table_length = 0;                                         \
     name##_HT_INIT(head);                                               \
   }                                                                     \
   /* Debugging helper: return false iff the representation of 'head' is \
