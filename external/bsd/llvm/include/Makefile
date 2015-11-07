@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2015/05/29 17:40:41 joerg Exp $
+#	$NetBSD: Makefile,v 1.38 2015/11/07 00:12:57 joerg Exp $
 
 .include <bsd.init.mk>
 
@@ -49,7 +49,7 @@ INCS=	altivec.h
 INCS=	arm_acle.h \
 	arm_neon.h
 .endif
-INCS+=	stdatomic.h
+INCS+=	stdalign.h stdatomic.h stdnoreturn.h
 INCSDIR=	/usr/include/clang-${CLANG_VERSION:R}
 
 .PATH:	${LLVM_SRCDIR}/include/llvm/IR \
