@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.28 2015/11/07 16:58:24 christos Exp $	*/
+/*	$NetBSD: svc.h,v 1.29 2015/11/07 23:10:37 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -296,6 +296,8 @@ extern fd_set svc_fdset;
 #else
 #define svc_maxfd (*svc_fdset_getmax())
 #define svc_fdset (*svc_fdset_get())
+#define svc_pollfd svc_pollfd_get()
+#define svc_max_pollfd (*svc_fdset_getmax())
 #endif
 
 #define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
@@ -310,9 +312,10 @@ __END_DECLS
 
 __BEGIN_DECLS
 
-#define SVC_FDSET_MT	1
+#define SVC_FDSET_MT	1	/* each thread gets own fd_set/pollfd */
+#define SVC_FDSET_POLL	2	/* use poll in svc_run */
 extern void	svc_fdset_init(int);
-extern fd_set  *svc_fdset_copy(const fd_set *);
+
 
 extern void	svc_fdset_zero(void);
 extern int	svc_fdset_isset(int);
@@ -322,6 +325,12 @@ extern int	svc_fdset_set(int);
 extern fd_set  *svc_fdset_get(void);
 extern int	svc_fdset_getsize(int);
 extern int     *svc_fdset_getmax(void);
+extern fd_set  *svc_fdset_copy(const fd_set *);
+
+extern struct pollfd *svc_pollfd_get(void);
+extern int	svc_pollfd_getsize(int);
+extern int     *svc_pollfd_getmax(void);
+extern struct pollfd *svc_pollfd_copy(const struct pollfd *);
 
 extern void	svc_getreq	(int);
 extern void	svc_getreqset	(fd_set *);
