@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.35 2015/11/06 19:34:13 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.36 2015/11/07 17:34:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.35 2015/11/06 19:34:13 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.36 2015/11/07 17:34:33 christos Exp $");
 #endif
 #endif
 
@@ -179,7 +179,8 @@ xprt_register(SVCXPRT *xprt)
 
 	__svc_xports[sock] = xprt;
 	if (sock != -1) {
-		svc_fdset_set(sock);
+		if (svc_fdset_set(sock) == -1)
+			return FALSE;
 	}
 	rwlock_unlock(&svc_fd_lock);
 	return (TRUE);
@@ -222,7 +223,7 @@ __xprt_do_unregister(SVCXPRT *xprt, bool_t dolock)
 	if (sock == -1)
 		goto out;
 	fdmax = svc_fdset_getmax();
-	if (sock < *fdmax)
+	if (fdmax == NULL || sock < *fdmax)
 		goto clr;
 
 	for ((*fdmax)--; *fdmax >= 0; (*fdmax)--)
@@ -634,6 +635,8 @@ void
 svc_getreq(int rdfds)
 {
 	fd_set *readfds = svc_fdset_copy(NULL);
+	if (readfds == NULL)
+		return;
 
 	readfds->fds_bits[0] = (unsigned int)rdfds;
 	svc_getreqset(readfds);
@@ -771,7 +774,7 @@ svc_getreq_poll(struct pollfd *pfdp, int pollretval)
 			 *	via someone select()ing from svc_fdset or
 			 *	pollts()ing from svc_pollset[].  Thus it's safe
 			 *	to handle the POLLNVAL event by simply turning
-			 *	the corresponding bit off in svc_fdset.  The
+			 *	the corresponding bit off in the fdset.  The
 			 *	svc_pollset[] array is derived from svc_fdset
 			 *	and so will also be updated eventually.
 			 *
