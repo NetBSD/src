@@ -107,6 +107,6 @@ GTM_longjmp:
 	ret
 .end GTM_longjmp
 
-#ifdef __linux__
+#if defined(__ELF__) && defined(__linux__)
 .section .note.GNU-stack, "", @progbits
 #endif
