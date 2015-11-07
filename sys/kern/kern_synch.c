@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.254.2.6 2009/04/23 17:47:13 snj Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.254.2.7 2015/11/07 20:43:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.254.2.6 2009/04/23 17:47:13 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.254.2.7 2015/11/07 20:43:23 snj Exp $");
 
 #include "opt_kstack.h"
 #include "opt_perfctrs.h"
@@ -1028,7 +1028,13 @@ suspendsched(void)
 			continue;
 		}
 
-		p->p_stat = SSTOP;
+		if (p->p_stat != SSTOP) {
+			if (p->p_stat != SZOMB && p->p_stat != SDEAD) {
+				p->p_pptr->p_nstopchild++;
+				p->p_waited = 0;
+			}
+			p->p_stat = SSTOP;
+		}
 
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			if (l == curlwp)
