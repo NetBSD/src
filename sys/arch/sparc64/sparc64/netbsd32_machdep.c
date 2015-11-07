@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.105 2015/11/07 11:47:09 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.106 2015/11/07 21:07:18 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105 2015/11/07 11:47:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.106 2015/11/07 21:07:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -316,6 +316,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	int sig = ksi->ksi_signo;
 	ucontext32_t uc;
 	struct sparc32_sigframe_siginfo *fp;
+	siginfo32_t si32;	
 	netbsd32_intptr_t catcher;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct rwindow32 *oldsp, *newsp;
@@ -336,15 +337,16 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	else
 		fp = (struct sparc32_sigframe_siginfo *)oldsp;
 	fp = (struct sparc32_sigframe_siginfo*)((u_long)(fp - 1) & ~7);
+
 	/*
 	 * Build the signal context to be used by sigreturn.
 	 */
+	memset(&uc, 0, sizeof uc);
 	uc.uc_flags = _UC_SIGMASK |
 		((l->l_sigstk.ss_flags & SS_ONSTACK)
 			? _UC_SETSTACK : _UC_CLRSTACK);
 	uc.uc_sigmask = *mask;
 	uc.uc_link = (uint32_t)(uintptr_t)l->l_ctxlink;
-	memset(&uc.uc_stack, 0, sizeof(uc.uc_stack));
 
 	sendsig_reset(l, sig);
 
@@ -359,9 +361,10 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 */
 	mutex_exit(p->p_lock);
 	cpu_getmcontext32(l, &uc.uc_mcontext, &uc.uc_flags);
+	netbsd32_si_to_si32(&si32, (const siginfo_t *)&ksi->ksi_info);
 	ucsz = (int)(intptr_t)&uc.__uc_pad - (int)(intptr_t)&uc;
 	newsp = (struct rwindow32*)((intptr_t)fp - sizeof(struct frame32));
-	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof ksi->ksi_info) ||
+	error = (copyout(&si32, &fp->sf_si, sizeof si32) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
 	    suword(&newsp->rw_in[6], (intptr_t)oldsp));
 	mutex_enter(p->p_lock);
