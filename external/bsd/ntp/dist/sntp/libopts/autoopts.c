@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.c,v 1.2.16.1 2014/12/25 02:13:14 snj Exp $	*/
+/*	$NetBSD: autoopts.c,v 1.2.16.2 2015/11/07 22:46:24 snj Exp $	*/
 
 
 /**
@@ -15,7 +15,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -301,9 +301,9 @@ regular_opts(tOptions * opts)
  *
  * what: this is the main option processing routine
  *
- * arg:  + tOptions* + opts  + program options descriptor +
- * arg:  + int       + a_ct  + program arg count  +
- * arg:  + char**    + a_v   + program arg vector +
+ * arg:  + tOptions * + opts  + program options descriptor +
+ * arg:  + int        + a_ct  + program arg count  +
+ * arg:  + char **    + a_v   + program arg vector +
  *
  * ret_type:  int
  * ret_desc:  the count of the arguments processed

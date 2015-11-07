@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdate.c,v 1.3.16.1 2014/12/25 02:13:07 snj Exp $	*/
+/*	$NetBSD: ntpdate.c,v 1.3.16.2 2015/11/07 22:46:17 snj Exp $	*/
 
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
@@ -151,7 +151,7 @@ int unpriv_port = 0;
 /*
  * Program name.
  */
-char *progname;
+char const *progname;
 
 /*
  * Systemwide parameters and flags

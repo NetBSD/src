@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_calendar.h,v 1.1.1.1.22.1 2014/12/25 02:13:01 snj Exp $	*/
+/*	$NetBSD: ntp_calendar.h,v 1.1.1.1.22.2 2015/11/07 22:46:14 snj Exp $	*/
 
 /*
  * ntp_calendar.h - definitions for the calendar time-of-day routine
@@ -85,13 +85,15 @@ extern systime_func_ptr ntpcal_set_timefunc(systime_func_ptr);
 #define	SECSPERMIN	(60)			/* seconds per minute */
 #define	MINSPERHR	(60)			/* minutes per hour */
 #define	HRSPERDAY	(24)			/* hours per day */
+#define	DAYSPERWEEK	(7)			/* days per week */
 #define	DAYSPERYEAR	(365)			/* days per year */
 
 #define	SECSPERHR	(SECSPERMIN * MINSPERHR)
 #define	SECSPERDAY	(SECSPERHR * HRSPERDAY)
+#define	SECSPERWEEK	(DAYSPERWEEK * SECSPERDAY)
 #define	SECSPERYEAR	(365 * SECSPERDAY)	/* regular year */
 #define	SECSPERLEAPYEAR	(366 * SECSPERDAY)	/* leap year */
-#define SECSPERAVGYEAR	31556952		/* mean year length over 400yrs */
+#define	SECSPERAVGYEAR	31556952		/* mean year length over 400yrs */
 
 /*
  * Gross hacks.	 I have illicit knowlege that there won't be overflows
@@ -115,7 +117,7 @@ extern	uint32_t caltontp	(const struct calendar *);
  * Convert between 'time_t' and 'vint64'
  */
 extern vint64 time_to_vint64(const time_t *);
-extern time_t vint64_to_time(const vint64 *); 
+extern time_t vint64_to_time(const vint64 *);
 
 /*
  * Get the build date & time. ATTENTION: The time zone is not specified!
@@ -156,6 +158,12 @@ ntpcal_daysplit(const vint64 *);
  */
 extern vint64
 ntpcal_dayjoin(int32_t /* days */, int32_t /* seconds */);
+
+/* Get the number of leap years since epoch for the number of elapsed
+ * full years
+ */
+extern int32_t
+ntpcal_leapyears_in_years(int32_t /* years */);
 
 /*
  * Convert elapsed years in Era into elapsed days in Era.
@@ -220,6 +228,9 @@ ntpcal_date_to_rd(const struct calendar * /* jt */);
  *
  * if 'isleapyear' is not NULL, it will receive an integer that is 0
  * for regular years and a non-zero value for leap years.
+ *
+ * The input is limited to [-2^30, 2^30-1]. If the days exceed this
+ * range, errno is set to EDOM and the result is saturated.
  */
 extern ntpcal_split
 ntpcal_split_eradays(int32_t /* days */, int/*BOOL*/ * /* isleapyear */);
@@ -330,6 +341,10 @@ ntpcal_date_to_time(const struct calendar * /* jd */);
 extern int32_t
 isocal_weeks_in_years(int32_t  /* years */);
 
+/*
+ * The input is limited to [-2^30, 2^30-1]. If the weeks exceed this
+ * range, errno is set to EDOM and the result is saturated.
+ */
 extern ntpcal_split
 isocal_split_eraweeks(int32_t /* weeks */);
 

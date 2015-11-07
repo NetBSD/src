@@ -1,4 +1,4 @@
-/*	$NetBSD: tinytest.h,v 1.2.2.2 2014/12/25 02:13:14 snj Exp $	*/
+/*	$NetBSD: tinytest.h,v 1.2.2.3 2015/11/07 22:46:24 snj Exp $	*/
 
 /* tinytest.h -- Copyright 2009-2012 Nick Mathewson
  *
@@ -83,6 +83,8 @@ int tinytest_get_verbosity_(void);
 /** Implementation: Set a flag on tests matching a name; returns number
  * of tests that matched. */
 int tinytest_set_flag_(struct testgroup_t *, const char *, int set, unsigned long);
+/** Implementation: Put a chunk of memory into hex. */
+char *tinytest_format_hex_(const void *, unsigned long);
 
 /** Set all tests in 'groups' matching the name 'named' to be skipped. */
 #define tinytest_skip(groups, named) \

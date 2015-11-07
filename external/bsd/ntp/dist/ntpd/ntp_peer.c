@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_peer.c,v 1.3.16.1 2014/12/25 02:13:06 snj Exp $	*/
+/*	$NetBSD: ntp_peer.c,v 1.3.16.2 2015/11/07 22:46:17 snj Exp $	*/
 
 /*
  * ntp_peer.c - management of data maintained for peer associations
@@ -94,6 +94,7 @@ int	peer_free_count;		/* count of free structures */
  * value every time an association is mobilized.
  */
 static associd_t current_association_ID; /* association ID */
+static associd_t initial_association_ID; /* association ID */
 
 /*
  * Memory allocation watermarks.
@@ -149,6 +150,7 @@ init_peer(void)
 	do
 		current_association_ID = ntp_random() & ASSOCID_MAX;
 	while (!current_association_ID);
+	initial_association_ID = current_association_ID;
 }
 
 
@@ -718,9 +720,13 @@ refresh_all_peerinterfaces(void)
 	/*
 	 * this is called when the interface list has changed
 	 * give all peers a chance to find a better interface
+	 * but only if either they don't have an address already
+	 * or if the one they have hasn't worked for a while.
 	 */
-	for (p = peer_list; p != NULL; p = p->p_link)
-		peer_refresh_interface(p);
+	for (p = peer_list; p != NULL; p = p->p_link) {
+		if (!(p->dstadr && (p->reach & 0x3)))	// Bug 2849 XOR 2043
+			peer_refresh_interface(p);
+	}
 }
 
 
@@ -746,6 +752,8 @@ newpeer(
 	struct peer *	peer;
 	u_int		hash;
 
+	DEBUG_REQUIRE(srcadr);
+
 #ifdef AUTOKEY
 	/*
 	 * If Autokey is requested but not configured, complain loudly.
@@ -764,7 +772,7 @@ newpeer(
 	/*
 	 * For now only pool associations have a hostname.
 	 */
-	NTP_INSIST(NULL == hostname || (MDF_POOL & cast_flags));
+	INSIST(NULL == hostname || (MDF_POOL & cast_flags));
 
 	/*
 	 * First search from the beginning for an association with given
@@ -817,6 +825,7 @@ newpeer(
 	if (peer_free_count == 0)
 		getmorepeermem();
 	UNLINK_HEAD_SLIST(peer, peer_free, p_link);
+	INSIST(peer != NULL);
 	peer_free_count--;
 	peer_associations++;
 	if (FLAG_PREEMPT & flags)
@@ -1037,4 +1046,22 @@ findmanycastpeer(
 		}
 
 	return peer;
+}
+
+/* peer_cleanup - clean peer list prior to shutdown */
+void peer_cleanup(void)
+{
+        struct peer *peer;
+        associd_t assoc;
+
+        for (assoc = initial_association_ID; assoc != current_association_ID; assoc++) {
+            if (assoc != 0U) {
+                peer = findpeerbyassoc(assoc);
+                if (peer != NULL)
+                    unpeer(peer);
+            }
+        }
+        peer = findpeerbyassoc(current_association_ID);
+        if (peer != NULL)
+            unpeer(peer);
 }

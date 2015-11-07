@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.4.16.1 2014/12/25 02:13:05 snj Exp $	*/
+/*	$NetBSD: audio.c,v 1.4.16.2 2015/11/07 22:46:15 snj Exp $	*/
 
 /*
  * audio.c - audio interface for reference clock audio drivers
@@ -69,7 +69,7 @@ static struct audio_info info;	/* audio device info */
 static int ctl_fd;		/* audio control file descriptor */
 
 #ifdef PCM_STYLE_SOUND
-static void audio_config_read (int, char **, char **);
+static void audio_config_read (int, const char **, const char **);
 static int  mixer_name (const char *, int);
 
 
@@ -116,8 +116,8 @@ mixer_name(
 static void
 audio_config_read(
 	int unit,
-	char **c_dev,	/* Control device */
-	char **i_dev	/* input device */
+	const char **c_dev,	/* Control device */
+	const char **i_dev	/* input device */
 	)
 {
 	FILE *fd;
@@ -379,7 +379,9 @@ audio_gain(
 #ifdef PCM_STYLE_SOUND
 	int l, r;
 
-	rval = 0;
+# ifdef GCC
+	rval = 0;		/* GCC thinks rval is used uninitialized */
+# endif
 
 	r = l = 100 * gain / 255;	/* Normalize to 0-100 */
 # ifdef DEBUG
@@ -394,10 +396,11 @@ audio_gain(
 	if (cf_agc[0] != '\0')
 		rval = ioctl(ctl_fd, agc, &l);
 	else
-		if (2 == port)
-			rval = ioctl(ctl_fd, SOUND_MIXER_WRITE_LINE, &l);
-		else
-			rval = ioctl(ctl_fd, SOUND_MIXER_WRITE_MIC, &l);
+		rval = ioctl(ctl_fd
+			    , (2 == port)
+				? SOUND_MIXER_WRITE_LINE
+				: SOUND_MIXER_WRITE_MIC
+			    , &l);
 	if (-1 == rval) {
 		printf("audio_gain: agc write: %s\n", strerror(errno));
 		return rval;

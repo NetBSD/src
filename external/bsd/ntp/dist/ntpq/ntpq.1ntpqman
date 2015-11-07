@@ -10,11 +10,11 @@
 .ds B-Font B
 .ds I-Font I
 .ds R-Font R
-.TH ntpq 1ntpqman "19 Dec 2014" "4.2.8" "User Commands"
+.TH ntpq 1ntpqman "21 Oct 2015" "4.2.8p4" "User Commands"
 .\"
-.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-XYaGog/ag-9Yayng)
+.\" EDIT THIS FILE WITH CAUTION (/tmp/.ag-joa4fN/ag-voaWeN)
 .\"
-.\" It has been AutoGen-ed December 19, 2014 at 07:50:13 AM by AutoGen 5.18.5pre4
+.\" It has been AutoGen-ed October 21, 2015 at 12:39:23 PM by AutoGen 5.18.5
 .\" From the definitions ntpq-opts.def
 .\" and the template file agman-cmd.tpl
 .SH NAME
@@ -267,7 +267,9 @@ switch.
 This command allows the specification of a key number to be
 used to authenticate configuration requests.
 This must correspond
-to a key number the server has been configured to use for this
+to the
+\f\*[B-Font]controlkey\f[]
+key number the server has been configured to use for this
 purpose.
 .br
 .ns
@@ -665,6 +667,17 @@ jitter
 .br
 .ns
 .TP 10
+.NOP \f\*[B-Font]apeers\f[]
+Display a list of peers in the form:
+.Dl [tally]remote refid assid st t when pool reach delay offset jitter
+where the output is just like the
+\f\*[B-Font]peers\f[]
+command except that the
+\f\*[B-Font]refid\f[]
+is displayed in hex format and the association number is also displayed.
+.br
+.ns
+.TP 10
 .NOP \f\*[B-Font]pstats\f[] \f\*[I-Font]assocID\f[]
 Show the statistics for the peer with the given
 \f\*[I-Font]assocID\f[].
@@ -735,7 +748,7 @@ appears in the
 configuration file.
 \f\*[I-Font]filename\f[]
 can use
-\fCstrftime\fR()\f[]
+\fCstrftime\f[]\fR()\f[]
 format specifies to substitute the current date and time, for example,
 \f\*[B-Font]q]saveconfig\f[] \f\*[B-Font]ntp-%Y%m%d-%H%M%S.confq]\f[].
 The filename used is stored in system variable
@@ -1397,9 +1410,9 @@ libopts had an internal operational error.  Please report
 it to autogen-users@lists.sourceforge.net.  Thank you.
 .PP
 .SH "AUTHORS"
-The University of Delaware
+The University of Delaware and Network Time Foundation
 .SH "COPYRIGHT"
-Copyright (C) 1970-2014 The University of Delaware all rights reserved.
+Copyright (C) 1992-2015 The University of Delaware and Network Time Foundation all rights reserved.
 This program is released under the terms of the NTP license, <http://ntp.org/license>.
 .SH "BUGS"
 Please send bug reports to: http://bugs.ntp.org, bugs@ntp.org
