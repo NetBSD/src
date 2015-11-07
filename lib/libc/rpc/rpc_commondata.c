@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_commondata.c,v 1.11 2015/11/06 23:11:09 christos Exp $	*/
+/*	$NetBSD: rpc_commondata.c,v 1.12 2015/11/07 00:42:04 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -38,11 +38,12 @@
 #if 0
 static char *sccsid = "@(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_commondata.c,v 1.11 2015/11/06 23:11:09 christos Exp $");
+__RCSID("$NetBSD: rpc_commondata.c,v 1.12 2015/11/07 00:42:04 christos Exp $");
 #endif
 #endif
 
 #include <rpc/rpc.h>
+#include "svc_fdset.h"
 
 /*
  * This file should only contain common data (global data) that is exported
@@ -50,7 +51,7 @@ __RCSID("$NetBSD: rpc_commondata.c,v 1.11 2015/11/06 23:11:09 christos Exp $");
  */
 struct opaque_auth _null_auth;
 #undef svc_fdset
-fd_set svc_fdset;
+__fd_set_256 svc_fdset;
 #undef svc_maxfd
 int svc_maxfd = -1;
 #ifndef _REENTRANT
