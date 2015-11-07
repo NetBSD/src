@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.5 2015/11/05 09:35:43 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.6 2015/11/07 16:37:03 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -91,4 +91,9 @@ sys/kern/kern_exit.c				1.248
 
 	Update value of p_stat before we release the proc_lock.
 	[pgoyette, ticket #999]
+
+sys/arch/arm/allwinner/awin_mmc.c		1.22
+
+	Avoid a divide by 0 when unplugging a sd card.
+	[bouyer, ticket #1006]
 
