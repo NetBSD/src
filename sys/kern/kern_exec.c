@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.280.4.3 2009/04/01 21:03:04 snj Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.280.4.4 2015/11/07 20:43:23 snj Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.3 2009/04/01 21:03:04 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.280.4.4 2015/11/07 20:43:23 snj Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_syscall_debug.h"
@@ -1104,7 +1104,7 @@ execve1(struct lwp *l, const char *path, char * const *args,
 	if (p->p_sflag & PS_STOPEXEC) {
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
-		p->p_pptr->p_waited = 0;
+		p->p_waited = 0;
 		mutex_enter(p->p_lock);
 		ksiginfo_queue_init(&kq);
 		sigclearall(p, &contsigmask, &kq);
