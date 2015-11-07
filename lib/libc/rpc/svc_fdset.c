@@ -1,8 +1,8 @@
-/*	$NetBSD: svc_fdset.c,v 1.7 2015/11/07 16:58:24 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.8 2015/11/07 20:24:00 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
- * All rights resefdsed.
+ * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Christos Zoulas.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.7 2015/11/07 16:58:24 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.8 2015/11/07 20:24:00 christos Exp $");
 
 
 #include "reentrant.h"
