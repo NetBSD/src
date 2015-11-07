@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.32 2015/11/07 17:34:33 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.33 2015/11/07 23:09:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.32 2015/11/07 17:34:33 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.33 2015/11/07 23:09:20 christos Exp $");
 #endif
 #endif
 
@@ -328,12 +328,7 @@ again:
 		 * running out.
 		 */
 		if (errno == EMFILE || errno == ENFILE) {
-			fd_set *cleanfds = svc_fdset_copy(svc_fdset_get());
-			int rv = 0;
-			if (cleanfds)
-				rv = __svc_clean_idle(cleanfds, 0, FALSE);
-			free(cleanfds);
-			if (rv)
+			if (__svc_clean_idle(NULL, 0, FALSE))
 				goto again;
 		}
 		return FALSE;
@@ -761,7 +756,7 @@ svc_vc_rendezvous_ops(SVCXPRT *xprt)
  * cleaned. If timeout is 0, the least active connection is picked.
  */
 bool_t
-__svc_clean_idle(fd_set *fds, int timeout, bool_t cleanblock)
+__svc_clean_idle(fd_set *fds __unused, int timeout, bool_t cleanblock)
 {
 	int i, ncleaned, *fdmax;
 	SVCXPRT *xprt, *least_active;

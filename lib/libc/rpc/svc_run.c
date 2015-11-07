@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.24 2015/11/07 17:34:33 christos Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.25 2015/11/07 23:09:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.24 2015/11/07 17:34:33 christos Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.25 2015/11/07 23:09:20 christos Exp $");
 #endif
 #endif
 
@@ -53,6 +53,7 @@ __RCSID("$NetBSD: svc_run.c,v 1.24 2015/11/07 17:34:33 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include <rpc/rpc.h>
 
@@ -64,10 +65,10 @@ __weak_alias(svc_run,_svc_run)
 __weak_alias(svc_exit,_svc_exit)
 #endif
 
-void
-svc_run(void)
+static void
+svc_run_select(void)
 {
-	fd_set *readfds, *cleanfds;
+	fd_set *readfds;
 	struct timeval timeout;
 	int *maxfd, fdsize;
 #ifndef RUMP_RPC		
@@ -78,26 +79,32 @@ svc_run(void)
 #endif
 
 	readfds = NULL;
-	cleanfds = NULL;
 	fdsize = 0;
 	timeout.tv_sec = 30;
 	timeout.tv_usec = 0;
 
 	for (;;) {
 		rwlock_rdlock(&svc_fd_lock);
+
+		maxfd = svc_fdset_getmax();
+		if (maxfd == NULL) {
+			warn("%s: can't get maxfd", __func__);
+			goto out;
+		}
+
 		if (fdsize != svc_fdset_getsize(0)) {
 			fdsize = svc_fdset_getsize(0);
 			free(readfds);
 			readfds = svc_fdset_copy(svc_fdset_get());
-			free(cleanfds);
-			cleanfds = svc_fdset_copy(svc_fdset_get());
-		}
-		maxfd = svc_fdset_getmax();
-		if (maxfd == NULL) {
-			warn("can't get maxfd");
-			continue;
-		}
+			if (readfds == NULL) {
+				warn("%s: can't copy fdset", __func__);
+				goto out;
+			}
+		} else
+			memcpy(readfds, svc_fdset_get(), __NFD_BYTES(fdsize));
+
 		rwlock_unlock(&svc_fd_lock);
+
 		switch (select(*maxfd + 1, readfds, NULL, NULL, &timeout)) {
 		case -1:
 #ifndef RUMP_RPC		
@@ -112,12 +119,10 @@ svc_run(void)
 			warn("%s: select failed", __func__);
 			goto out;
 		case 0:
-			if (cleanfds)
-				__svc_clean_idle(cleanfds, 30, FALSE);
+			__svc_clean_idle(NULL, 30, FALSE);
 			continue;
 		default:
-			if (readfds)
-				svc_getreqset2(readfds, fdsize);
+			svc_getreqset2(readfds, fdsize);
 #ifndef RUMP_RPC
 			probs = 0;
 #endif
@@ -125,7 +130,76 @@ svc_run(void)
 	}
 out:
 	free(readfds);
-	free(cleanfds);
+}
+
+static void
+svc_run_poll(void)
+{
+	struct pollfd *pfd;
+	int *maxfd, fdsize, i;
+#ifndef RUMP_RPC		
+	int probs = 0;
+#endif
+#ifdef _REENTRANT
+	extern rwlock_t svc_fd_lock;
+#endif
+
+	fdsize = 0;
+	pfd = NULL;
+
+	for (;;) {
+		rwlock_rdlock(&svc_fd_lock);
+
+		maxfd = svc_pollfd_getmax();
+		if (maxfd == NULL) {
+			warn("can't get maxfd");
+			goto out;
+		}
+
+		if (fdsize != svc_pollfd_getsize(0)) {
+			fdsize = svc_fdset_getsize(0);
+			free(pfd);
+			pfd = svc_pollfd_copy(svc_pollfd_get());
+			if (pfd == NULL) {
+				warn("can't get pollfd");
+				goto out;
+			}
+		} else
+			memcpy(pfd, svc_pollfd_get(), *maxfd * sizeof(*pfd));
+
+		rwlock_unlock(&svc_fd_lock);
+
+		switch ((i = poll(pfd, *maxfd, 30 * 1000))) {
+		case -1:
+#ifndef RUMP_RPC		
+			if ((errno == EINTR || errno == EBADF) && probs < 100) {
+				probs++;
+				continue;
+			}
+#endif
+			if (errno == EINTR) {
+				continue;
+			}
+			warn("%s: poll failed", __func__);
+			goto out;
+		case 0:
+			__svc_clean_idle(NULL, 30, FALSE);
+			continue;
+		default:
+			svc_getreq_poll(pfd, i);
+#ifndef RUMP_RPC
+			probs = 0;
+#endif
+		}
+	}
+out:
+	free(pfd);
+}
+
+void
+svc_run(void)
+{
+	(__svc_flags & SVC_FDSET_POLL) ? svc_run_poll() : svc_run_select();
 }
 
 /*

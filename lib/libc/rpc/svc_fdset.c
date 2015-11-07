@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.8 2015/11/07 20:24:00 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.9 2015/11/07 23:09:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.8 2015/11/07 20:24:00 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.9 2015/11/07 23:09:20 christos Exp $");
 
 
 #include "reentrant.h"
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: svc_fdset.c,v 1.8 2015/11/07 20:24:00 christos Exp $");
 #endif
 #include <stdlib.h>
 #include <string.h>
+#include <poll.h>
 
 #include "svc_fdset.h"
 
@@ -54,11 +55,17 @@ __RCSID("$NetBSD: svc_fdset.c,v 1.8 2015/11/07 20:24:00 christos Exp $");
 #undef svc_maxfd
 extern __fd_set_256 svc_fdset;
 extern int svc_maxfd;
+int __svc_flags;
 
 struct svc_fdset {
+	/* select */
 	fd_set *fdset;
 	int	fdmax;
 	int	fdsize;
+	/* poll */
+	struct pollfd *fdp;
+	int	fdnum;
+	int	fdused;
 };
 
 /* The single threaded, one global fd_set version */
@@ -138,8 +145,83 @@ svc_fdset_free(void *v)
 	struct svc_fdset *fds = v;
 	DPRINTF_FDSET(fds, "free");
 
+	free(fds->fdp);
 	free(fds->fdset);
 	free(fds);
+}
+
+static void
+svc_pollfd_init(struct pollfd *pfd, int nfd)
+{
+	for (int i = 0; i < nfd; i++) {
+		pfd[i].fd = -1;
+		pfd[i].events = POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND;
+	}
+}
+
+static struct pollfd *
+svc_pollfd_alloc(struct svc_fdset *fds)
+{
+	fds->fdnum = FD_SETSIZE;
+	fds->fdp = calloc(fds->fdnum, sizeof(*fds->fdp));
+	if (fds->fdp == NULL)
+		return NULL;
+	svc_pollfd_init(fds->fdp, fds->fdnum);
+	return fds->fdp;
+}
+
+
+static struct svc_fdset *
+svc_pollfd_add(int fd, struct svc_fdset *fds)
+{
+	struct pollfd *pfd;
+
+	if ((pfd = svc_pollfd_alloc(fds)) == NULL)
+		return NULL;
+
+	for (int i = 0; i < fds->fdnum; i++)
+		if (pfd[i].fd == -1) {
+			if (i > fds->fdused)
+				fds->fdused = i + 1;
+			pfd[i].fd = fd;
+			return fds;
+		}
+
+	pfd = realloc(fds->fdp, (fds->fdnum + FD_SETSIZE) * sizeof(*fds->fdp));
+	if (pfd == NULL)
+		return NULL;
+
+	svc_pollfd_init(pfd + fds->fdnum, FD_SETSIZE);
+	pfd[fds->fdnum].fd = fd;
+	fds->fdused = fds->fdnum + 1;
+	fds->fdnum += FD_SETSIZE;
+	return fds;
+}
+
+static struct svc_fdset *
+svc_pollfd_del(int fd, struct svc_fdset *fds)
+{
+	struct pollfd *pfd;
+
+	if ((pfd = svc_pollfd_alloc(fds)) == NULL)
+		return NULL;
+
+	for (int i = 0; i < fds->fdnum; i++) {
+		if (pfd[i].fd != fd)
+			continue;
+
+		pfd[i].fd = -1;
+		if (i != fds->fdused - 1)
+			return fds;
+
+		do
+			if (pfd[i].fd != -1) 
+				break;
+		while (--i >= 0);
+		fds->fdused = i + 1;
+		return fds;
+	}
+	return NULL;
 }
 
 static struct svc_fdset *
@@ -206,6 +288,7 @@ void
 svc_fdset_init(int flags)
 {
 	DPRINTF("%x", flags);
+	__svc_flags = flags;
 	if ((flags & SVC_FDSET_MT) && fdsetkey == -2)
 		fdsetkey = -1;
 }
@@ -214,9 +297,14 @@ void
 svc_fdset_zero(void)
 {
 	DPRINTF("zero");
+
 	struct svc_fdset *fds = svc_fdset_alloc(0);
 	memset(fds->fdset, 0, fds->fdsize);
 	fds->fdmax = -1;
+
+	free(fds->fdp);
+	fds->fdp = NULL;
+	fds->fdnum = fds->fdused = 0;
 }
 
 int
@@ -234,7 +322,7 @@ svc_fdset_set(int fd)
 	DPRINTF_FDSET(fds, "%d", fd);
 
 	svc_fdset_sanitize(fds);
-	return 0;
+	return svc_pollfd_add(fd, fds) ? 0 : -1;
 }
 
 int
@@ -262,7 +350,7 @@ svc_fdset_clr(int fd)
 	DPRINTF_FDSET(fds, "%d", fd);
 
 	svc_fdset_sanitize(fds);
-	return 0;
+	return svc_pollfd_del(fd, fds) ? 0 : -1;
 }
 
 fd_set *
@@ -313,4 +401,50 @@ svc_fdset_getsize(int fd)
 
 	DPRINTF_FDSET(fds, "getsize");
 	return fds->fdsize;
+}
+
+struct pollfd *
+svc_pollfd_copy(const struct pollfd *orig)
+{
+	int size = svc_fdset_getsize(0);
+	struct pollfd *copy = calloc(size, sizeof(*orig));
+	if (copy == NULL)
+		return NULL;
+	if (orig)
+		memcpy(copy, orig, size * sizeof(*orig));
+	return copy;
+}
+
+struct pollfd *
+svc_pollfd_get(void)
+{
+	struct svc_fdset *fds = svc_fdset_alloc(0);
+
+	if (fds == NULL)
+		return NULL;
+
+	DPRINTF_FDSET(fds, "getpoll");
+	return fds->fdp;
+}
+
+int *
+svc_pollfd_getmax(void)
+{
+	struct svc_fdset *fds = svc_fdset_alloc(0);
+
+	if (fds == NULL)
+		return NULL;
+	return &fds->fdused;
+}
+
+int
+svc_pollfd_getsize(int fd)
+{
+	struct svc_fdset *fds = svc_fdset_alloc(fd);
+
+	if (fds == NULL)
+		return -1;
+
+	DPRINTF_FDSET(fds, "getsize");
+	return fds->fdnum;
 }
