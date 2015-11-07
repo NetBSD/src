@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.9 2015/11/07 23:09:20 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.10 2015/11/07 23:17:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.9 2015/11/07 23:09:20 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.10 2015/11/07 23:17:09 christos Exp $");
 
 
 #include "reentrant.h"
@@ -156,6 +156,7 @@ svc_pollfd_init(struct pollfd *pfd, int nfd)
 	for (int i = 0; i < nfd; i++) {
 		pfd[i].fd = -1;
 		pfd[i].events = POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND;
+		pfd[i].revents = 0;
 	}
 }
 
