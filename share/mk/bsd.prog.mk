@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.292 2015/06/07 15:04:28 matt Exp $
+#	$NetBSD: bsd.prog.mk,v 1.293 2015/11/07 23:41:58 joerg Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -124,6 +124,7 @@ LIBCRTI=	${DESTDIR}/usr/lib/${MLIBDIR:D${MLIBDIR}/}crti.o
 	edit \
 	event \
 	expat \
+	execinfo \
 	fetch \
 	fl \
 	form \
