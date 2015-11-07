@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.5.2.2 2009/05/03 23:45:47 snj Exp $ */
+/*	$NetBSD: atphy.c,v 1.5.2.3 2015/11/07 20:35:52 snj Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.5.2.2 2009/05/03 23:45:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.5.2.3 2015/11/07 20:35:52 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return EINVAL;
 		}
 
-		anar = mii_anar(ife->ifm_media);
+		anar = mii_anar(IFM_SUBTYPE(ife->ifm_media));
 		if (((ife->ifm_media & IFM_GMASK) & IFM_FDX) != 0) {
 			bmcr |= BMCR_FDX;
 			/* Enable pause. */
