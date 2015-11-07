@@ -853,7 +853,7 @@ __morestack_make_guard:
 	.quad	__morestack_load_mmap
 #endif
 
-#ifdef __ELF__
+#if defined(__ELF__) && defined(__linux__)
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.GNU-split-stack,"",@progbits
 	.section	.note.GNU-no-split-stack,"",@progbits

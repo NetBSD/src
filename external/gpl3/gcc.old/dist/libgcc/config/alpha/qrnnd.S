@@ -22,8 +22,9 @@
  # see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
  # <http://www.gnu.org/licenses/>.
 
-#ifdef __ELF__
+#if defined(__ELF__) && defined(__linux__)
 .section .note.GNU-stack,""
+.previous
 #endif
 
         .set noreorder
