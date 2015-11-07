@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_io.h,v 1.1.1.2.2.1 2014/12/25 02:34:32 snj Exp $	*/
+/*	$NetBSD: ntp_io.h,v 1.1.1.2.2.2 2015/11/07 22:26:34 snj Exp $	*/
 
 #ifndef NTP_IO_H
 #define NTP_IO_H
@@ -82,6 +82,7 @@ typedef enum {
 } nic_rule_action;
 
 
+extern int	qos;
 SOCKET		move_fd(SOCKET fd);
 isc_boolean_t	get_broadcastclient_flag(void);
 extern int	is_ip_address(const char *, u_short, sockaddr_u *);

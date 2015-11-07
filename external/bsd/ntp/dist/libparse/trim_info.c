@@ -1,4 +1,4 @@
-/*	$NetBSD: trim_info.c,v 1.1.1.1.8.1 2014/12/25 02:34:36 snj Exp $	*/
+/*	$NetBSD: trim_info.c,v 1.1.1.1.8.2 2015/11/07 22:26:36 snj Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libparse/trim_info.c,v 4.5 2005/04/16 17:32:10 kardel RELEASE_20050508_A
@@ -8,7 +8,7 @@
  * $Created: Sun Aug  2 20:20:34 1998 $
  *
  * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
- * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universität Erlangen-Nürnberg, Germany
+ * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

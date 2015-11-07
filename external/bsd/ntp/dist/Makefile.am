@@ -2,7 +2,10 @@ ACLOCAL_AMFLAGS = -I sntp/m4 -I sntp/libevent/m4 -I sntp/libopts/m4
 
 NULL =
 
+# moved sntp first to get libtool and libevent built.
+
 SUBDIRS =		\
+	sntp		\
 	scripts		\
 	include		\
 	libntp		\
@@ -17,11 +20,10 @@ SUBDIRS =		\
 	clockstuff	\
 	kernel		\
 	util		\
-	sntp		\
 	tests		\
 	$(NULL)
 
-DISTCHECK_CONFIGURE_FLAGS = -C --with-sntp
+DISTCHECK_CONFIGURE_FLAGS = -C --with-sntp --enable-local-libevent $(NTP_DCF)
 
 EXTRA_DIST =			\
 	$(srcdir)/COPYRIGHT	\
@@ -32,6 +34,7 @@ EXTRA_DIST =			\
 	NOTES.y2kfixes		\
 	README.bk		\
 	README.hackers		\
+	README.leapsmear	\
 	README.patches		\
 	README.refclocks	\
 	README.versions		\
@@ -64,7 +67,6 @@ BUILT_SOURCES =				\
 	.gcc-warning			\
 	libtool				\
 	html/.datecheck			\
-	sntp/built-sources-only		\
 	$(srcdir)/COPYRIGHT		\
 	$(srcdir)/.checkChangeLog	\
 	$(NULL)
@@ -112,10 +114,13 @@ dist-hook:
 	@find $(distdir) -type d -name SCCS -print | xargs rm -rf
 
 install-data-local:
-	( cd $(srcdir) && find html -name SCCS -prune -o -type d \
-		-exec $(INSTALL) -d $(DESTDIR)$(htmldir)/{} ";" )
-	( cd $(srcdir) && find html -name SCCS -prune -o -type f \
-		-exec $(INSTALL_DATA) {} $(DESTDIR)$(htmldir)/{} ";" )
+	@echo "Installing stand-alone HTML documentation"
+	@( cd $(srcdir) && \
+		for i in `find html -type d | grep -v SCCS` ; \
+		do $(INSTALL) -d $(DESTDIR)$(htmldir)/$$i ; done )
+	@( cd $(srcdir) && \
+		for i in `find html -type f | grep -v SCCS` ; \
+		do $(INSTALL_DATA) $$i $(DESTDIR)$(htmldir)/$$i ; done )
 
 uninstall-local:
 		rm -rf $(DESTDIR)$(htmldir)/html

@@ -1,4 +1,4 @@
-/*	$NetBSD: socktohost.c,v 1.1.1.2.2.1 2014/12/25 02:34:36 snj Exp $	*/
+/*	$NetBSD: socktohost.c,v 1.1.1.2.2.2 2015/11/07 22:26:35 snj Exp $	*/
 
 /*
  * socktoa - return a numeric host name from a sockaddr_storage structure
@@ -81,7 +81,7 @@ socktohost(
 	if (a_info)
 		goto forward_fail;
 
-	NTP_INSIST(alist != NULL);
+	INSIST(alist != NULL);
 
 	for (ai = alist; ai != NULL; ai = ai->ai_next) {
 		/*
