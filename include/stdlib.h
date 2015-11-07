@@ -1,4 +1,4 @@
-/*	$NetBSD: stdlib.h,v 1.115 2015/02/17 20:33:40 joerg Exp $	*/
+/*	$NetBSD: stdlib.h,v 1.116 2015/11/07 16:21:42 nros Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -234,6 +234,7 @@ long double	strtold(const char * __restrict, char ** __restrict);
 
 #if defined(_ISOC11_SOURCE) || (__STDC_VERSION__ - 0) >= 201101L || \
     defined(_NETBSD_SOURCE) || (__cplusplus - 0) >= 201103L
+void	*aligned_alloc(size_t, size_t);
 int	at_quick_exit(void (*)(void));
 __dead void quick_exit(int);
 #endif

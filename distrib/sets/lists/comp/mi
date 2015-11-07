@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2003 2015/11/07 13:28:05 joerg Exp $
+#	$NetBSD: mi,v 1.2004 2015/11/07 16:21:42 nros Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11894,6 +11894,7 @@
 ./usr/share/man/html3/aio_suspend.html		comp-c-htmlman		html
 ./usr/share/man/html3/aio_write.html		comp-c-htmlman		html
 ./usr/share/man/html3/alarm.html		comp-c-htmlman		html
+./usr/share/man/html3/aligned_alloc.html	comp-c-htmlman		html
 ./usr/share/man/html3/alloca.html		comp-c-htmlman		html
 ./usr/share/man/html3/allocaddrinfo.html	comp-c-htmlman		html
 ./usr/share/man/html3/alphasort.html		comp-c-htmlman		html
@@ -18697,6 +18698,7 @@
 ./usr/share/man/man3/aio_suspend.3		comp-c-man		.man
 ./usr/share/man/man3/aio_write.3		comp-c-man		.man
 ./usr/share/man/man3/alarm.3			comp-c-man		.man
+./usr/share/man/man3/aligned_alloc.3		comp-c-man		.man
 ./usr/share/man/man3/alloca.3			comp-c-man		.man
 ./usr/share/man/man3/allocaddrinfo.3		comp-c-man		.man
 ./usr/share/man/man3/alphasort.3		comp-c-man		.man

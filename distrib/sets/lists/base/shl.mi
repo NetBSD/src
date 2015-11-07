@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.753 2015/11/04 23:57:05 knakahara Exp $
+# $NetBSD: shl.mi,v 1.754 2015/11/07 16:21:42 nros Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -18,7 +18,7 @@
 ./lib/libblacklist.so.0.0			base-sys-shlib		dynamicroot
 ./lib/libc.so					base-sys-shlib		dynamicroot
 ./lib/libc.so.12				base-sys-shlib		dynamicroot
-./lib/libc.so.12.198				base-sys-shlib		dynamicroot
+./lib/libc.so.12.199				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1				base-sys-shlib		dynamicroot
 ./lib/libcrypt.so.1.0				base-sys-shlib		dynamicroot
@@ -209,7 +209,7 @@
 ./usr/lib/libc++.so.1.0				base-sys-shlib		compatfile,libcxx
 ./usr/lib/libc.so				base-sys-shlib		compatfile
 ./usr/lib/libc.so.12				base-sys-shlib		compatfile
-./usr/lib/libc.so.12.198			base-sys-shlib		compatfile
+./usr/lib/libc.so.12.199			base-sys-shlib		compatfile
 ./usr/lib/libcdk.so				base-obsolete		compatfile,obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libcom_err.so.7			base-krb5-shlib		compatfile,kerberos
