@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcireg.h,v 1.19.66.3 2015/09/22 12:06:01 skrll Exp $	*/
+/*	$NetBSD: uhcireg.h,v 1.19.66.4 2015/11/07 08:10:40 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhcireg.h,v 1.12 1999/11/17 22:33:42 n_hibma Exp $ */
 
 /*
@@ -157,6 +157,7 @@ typedef struct {
 #define UHCI_TD_DBUFFER		__BIT(21)
 #define UHCI_TD_STALLED		__BIT(22)
 #define UHCI_TD_ACTIVE		__BIT(23)
+#define UHCI_TD_STATUS_MASK	__BITS(16,23)
 #define UHCI_TD_IOC		__BIT(24)
 #define UHCI_TD_IOS		__BIT(25)
 #define UHCI_TD_LS		__BIT(26)
