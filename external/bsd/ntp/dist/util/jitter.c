@@ -1,4 +1,4 @@
-/*	$NetBSD: jitter.c,v 1.1.1.1.22.1 2014/12/25 02:13:16 snj Exp $	*/
+/*	$NetBSD: jitter.c,v 1.1.1.1.22.2 2015/11/07 22:46:29 snj Exp $	*/
 
 /*
  * This program can be used to calibrate the clock reading jitter of a
@@ -16,10 +16,9 @@
 #include <stdio.h>
 #include <sys/time.h>
 #include <stdlib.h>
-#include "jitter.h"
+#include "ntp_fp.h"
 
 #define NBUF	800002
-#define FRAC	4294967296.		/* a bbbbillion */
 #define JAN_1970 2208988800UL		/* Unix base epoch */
 #define CLOCK_GETTIME			/* Solaris hires clock */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.6.16.1 2014/12/25 02:13:06 snj Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.6.16.2 2015/11/07 22:46:16 snj Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -30,6 +30,7 @@
 #include "ntp_leapsec.h"
 #include "ntp_md5.h"	/* provides OpenSSL digest API */
 #include "lib_strbuf.h"
+#include <rc_cmdlength.h>
 #ifdef KERNEL_PLL
 # include "ntp_syscall.h"
 #endif
@@ -222,7 +223,10 @@ static const struct ctl_proc control_codes[] = {
 #define	CS_TIMER_OVERRUNS	86
 #define	CS_TIMER_XMTS		87
 #define	CS_FUZZ			88
-#define	CS_MAX_NOAUTOKEY	CS_FUZZ
+#define	CS_WANDER_THRESH	89
+#define	CS_LEAPSMEARINTV	90
+#define	CS_LEAPSMEAROFFS	91
+#define	CS_MAX_NOAUTOKEY	CS_LEAPSMEAROFFS
 #ifdef AUTOKEY
 #define	CS_FLAGS		(1 + CS_MAX_NOAUTOKEY)
 #define	CS_HOST			(2 + CS_MAX_NOAUTOKEY)
@@ -417,6 +421,11 @@ static const struct ctl_var sys_var[] = {
 	{ CS_TIMER_OVERRUNS,	RO, "timer_overruns" },	/* 86 */
 	{ CS_TIMER_XMTS,	RO, "timer_xmts" },	/* 87 */
 	{ CS_FUZZ,		RO, "fuzz" },		/* 88 */
+	{ CS_WANDER_THRESH,	RO, "clk_wander_threshold" }, /* 89 */
+
+	{ CS_LEAPSMEARINTV,	RO, "leapsmearinterval" },    /* 90 */
+	{ CS_LEAPSMEAROFFS,	RO, "leapsmearoffset" },      /* 91 */
+
 #ifdef AUTOKEY
 	{ CS_FLAGS,	RO, "flags" },		/* 1 + CS_MAX_NOAUTOKEY */
 	{ CS_HOST,	RO, "host" },		/* 2 + CS_MAX_NOAUTOKEY */
@@ -459,6 +468,8 @@ static const u_char def_sys_var[] = {
 	CS_TAI,
 	CS_LEAPTAB,
 	CS_LEAPEND,
+	CS_LEAPSMEARINTV,
+	CS_LEAPSMEAROFFS,
 #ifdef AUTOKEY
 	CS_HOST,
 	CS_IDENT,
@@ -479,7 +490,7 @@ static const struct ctl_var peer_var[] = {
 	{ 0,		PADDING, "" },		/* 0 */
 	{ CP_CONFIG,	RO, "config" },		/* 1 */
 	{ CP_AUTHENABLE, RO,	"authenable" },	/* 2 */
-	{ CP_AUTHENTIC, RO, "authentic" }, 	/* 3 */
+	{ CP_AUTHENTIC, RO, "authentic" },	/* 3 */
 	{ CP_SRCADR,	RO, "srcadr" },		/* 4 */
 	{ CP_SRCPORT,	RO, "srcport" },	/* 5 */
 	{ CP_DSTADR,	RO, "dstadr" },		/* 6 */
@@ -531,7 +542,7 @@ static const struct ctl_var peer_var[] = {
 	{ CP_FLAGS,	RO, "flags" },		/* 1 + CP_MAX_NOAUTOKEY */
 	{ CP_HOST,	RO, "host" },		/* 2 + CP_MAX_NOAUTOKEY */
 	{ CP_VALID,	RO, "valid" },		/* 3 + CP_MAX_NOAUTOKEY */
-	{ CP_INITSEQ,	RO, "initsequence" },   /* 4 + CP_MAX_NOAUTOKEY */
+	{ CP_INITSEQ,	RO, "initsequence" },	/* 4 + CP_MAX_NOAUTOKEY */
 	{ CP_INITKEY,	RO, "initkey" },	/* 5 + CP_MAX_NOAUTOKEY */
 	{ CP_INITTSP,	RO, "timestamp" },	/* 6 + CP_MAX_NOAUTOKEY */
 	{ CP_SIGNATURE,	RO, "signature" },	/* 7 + CP_MAX_NOAUTOKEY */
@@ -684,37 +695,37 @@ int num_ctl_traps;
  */
 #ifdef REFCLOCK
 static const u_char clocktypes[] = {
-	CTL_SST_TS_NTP, 	/* REFCLK_NONE (0) */
+	CTL_SST_TS_NTP,		/* REFCLK_NONE (0) */
 	CTL_SST_TS_LOCAL,	/* REFCLK_LOCALCLOCK (1) */
-	CTL_SST_TS_UHF, 	/* deprecated REFCLK_GPS_TRAK (2) */
+	CTL_SST_TS_UHF,		/* deprecated REFCLK_GPS_TRAK (2) */
 	CTL_SST_TS_HF,		/* REFCLK_WWV_PST (3) */
 	CTL_SST_TS_LF,		/* REFCLK_WWVB_SPECTRACOM (4) */
-	CTL_SST_TS_UHF, 	/* REFCLK_TRUETIME (5) */
-	CTL_SST_TS_UHF, 	/* REFCLK_IRIG_AUDIO (6) */
+	CTL_SST_TS_UHF,		/* REFCLK_TRUETIME (5) */
+	CTL_SST_TS_UHF,		/* REFCLK_IRIG_AUDIO (6) */
 	CTL_SST_TS_HF,		/* REFCLK_CHU (7) */
 	CTL_SST_TS_LF,		/* REFCLOCK_PARSE (default) (8) */
 	CTL_SST_TS_LF,		/* REFCLK_GPS_MX4200 (9) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GPS_AS2201 (10) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GPS_ARBITER (11) */
-	CTL_SST_TS_UHF, 	/* REFCLK_IRIG_TPRO (12) */
+	CTL_SST_TS_UHF,		/* REFCLK_GPS_AS2201 (10) */
+	CTL_SST_TS_UHF,		/* REFCLK_GPS_ARBITER (11) */
+	CTL_SST_TS_UHF,		/* REFCLK_IRIG_TPRO (12) */
 	CTL_SST_TS_ATOM,	/* REFCLK_ATOM_LEITCH (13) */
 	CTL_SST_TS_LF,		/* deprecated REFCLK_MSF_EES (14) */
-	CTL_SST_TS_NTP, 	/* not used (15) */
-	CTL_SST_TS_UHF, 	/* REFCLK_IRIG_BANCOMM (16) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GPS_DATU (17) */
+	CTL_SST_TS_NTP,		/* not used (15) */
+	CTL_SST_TS_UHF,		/* REFCLK_IRIG_BANCOMM (16) */
+	CTL_SST_TS_UHF,		/* REFCLK_GPS_DATU (17) */
 	CTL_SST_TS_TELEPHONE,	/* REFCLK_NIST_ACTS (18) */
 	CTL_SST_TS_HF,		/* REFCLK_WWV_HEATH (19) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GPS_NMEA (20) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GPS_VME (21) */
+	CTL_SST_TS_UHF,		/* REFCLK_GPS_NMEA (20) */
+	CTL_SST_TS_UHF,		/* REFCLK_GPS_VME (21) */
 	CTL_SST_TS_ATOM,	/* REFCLK_ATOM_PPS (22) */
 	CTL_SST_TS_NTP,		/* not used (23) */
 	CTL_SST_TS_NTP,		/* not used (24) */
-	CTL_SST_TS_NTP, 	/* not used (25) */
-	CTL_SST_TS_UHF, 	/* REFCLK_GPS_HP (26) */
+	CTL_SST_TS_NTP,		/* not used (25) */
+	CTL_SST_TS_UHF,		/* REFCLK_GPS_HP (26) */
 	CTL_SST_TS_LF,		/* REFCLK_ARCRON_MSF (27) */
 	CTL_SST_TS_UHF,		/* REFCLK_SHM (28) */
-	CTL_SST_TS_UHF, 	/* REFCLK_PALISADE (29) */
-	CTL_SST_TS_UHF, 	/* REFCLK_ONCORE (30) */
+	CTL_SST_TS_UHF,		/* REFCLK_PALISADE (29) */
+	CTL_SST_TS_UHF,		/* REFCLK_ONCORE (30) */
 	CTL_SST_TS_UHF,		/* REFCLK_JUPITER (31) */
 	CTL_SST_TS_LF,		/* REFCLK_CHRONOLOG (32) */
 	CTL_SST_TS_LF,		/* REFCLK_DUMBCLOCK (33) */
@@ -722,7 +733,7 @@ static const u_char clocktypes[] = {
 	CTL_SST_TS_LF,		/* REFCLK_PCF (35) */
 	CTL_SST_TS_HF,		/* REFCLK_WWV (36) */
 	CTL_SST_TS_LF,		/* REFCLK_FG (37) */
-	CTL_SST_TS_UHF, 	/* REFCLK_HOPF_SERIAL (38) */
+	CTL_SST_TS_UHF,		/* REFCLK_HOPF_SERIAL (38) */
 	CTL_SST_TS_UHF,		/* REFCLK_HOPF_PCI (39) */
 	CTL_SST_TS_LF,		/* REFCLK_JJY (40) */
 	CTL_SST_TS_UHF,		/* REFCLK_TT560 (41) */
@@ -753,17 +764,17 @@ static	u_char ctl_sys_num_events;
 u_long ctltimereset;		/* time stats reset */
 u_long numctlreq;		/* number of requests we've received */
 u_long numctlbadpkts;		/* number of bad control packets */
-u_long numctlresponses; 	/* number of resp packets sent with data */
-u_long numctlfrags; 		/* number of fragments sent */
+u_long numctlresponses;		/* number of resp packets sent with data */
+u_long numctlfrags;		/* number of fragments sent */
 u_long numctlerrors;		/* number of error responses sent */
 u_long numctltooshort;		/* number of too short input packets */
-u_long numctlinputresp; 	/* number of responses on input */
-u_long numctlinputfrag; 	/* number of fragments on input */
+u_long numctlinputresp;		/* number of responses on input */
+u_long numctlinputfrag;		/* number of fragments on input */
 u_long numctlinputerr;		/* number of input pkts with err bit set */
-u_long numctlbadoffset; 	/* number of input pkts with nonzero offset */
+u_long numctlbadoffset;		/* number of input pkts with nonzero offset */
 u_long numctlbadversion;	/* number of input pkts with unknown version */
 u_long numctldatatooshort;	/* data too short for count */
-u_long numctlbadop; 		/* bad op code found in packet */
+u_long numctlbadop;		/* bad op code found in packet */
 u_long numasyncmsgs;		/* number of async messages we've sent */
 
 /*
@@ -782,6 +793,7 @@ static int	res_offset;	/* offset of payload in response */
 static u_char * datapt;
 static u_char * dataend;
 static int	datalinelen;
+static int	datasent;	/* flag to avoid initial ", " */
 static int	datanotbinflag;
 static sockaddr_u *rmt_addr;
 static struct interface *lcl_inter;
@@ -845,7 +857,7 @@ ctl_error(
 	 * Fill in the fields. We assume rpkt.sequence and rpkt.associd
 	 * have already been filled in.
 	 */
-	rpkt.r_m_e_op = (u_char)CTL_RESPONSE | CTL_ERROR | 
+	rpkt.r_m_e_op = (u_char)CTL_RESPONSE | CTL_ERROR |
 			(res_opcode & CTL_OP_MASK);
 	rpkt.status = htons((u_short)(errcode << 8) & 0xff00);
 	rpkt.count = 0;
@@ -863,7 +875,7 @@ ctl_error(
 			CTL_HEADER_LEN);
 }
 
-/* 
+/*
  * save_config - Implements ntpq -c "saveconfig <filename>"
  *		 Writes current configuration including any runtime
  *		 changes by ntpq's :config or config-from-file
@@ -874,6 +886,28 @@ save_config(
 	int restrict_mask
 	)
 {
+	/* block directory traversal by searching for characters that
+	 * indicate directory components in a file path.
+	 *
+	 * Conceptually we should be searching for DIRSEP in filename,
+	 * however Windows actually recognizes both forward and
+	 * backslashes as equivalent directory separators at the API
+	 * level.  On POSIX systems we could allow '\\' but such
+	 * filenames are tricky to manipulate from a shell, so just
+	 * reject both types of slashes on all platforms.
+	 */	
+	/* TALOS-CAN-0062: block directory traversal for VMS, too */
+	static const char * illegal_in_filename =
+#if defined(VMS)
+	    ":[]"	/* do not allow drive and path components here */
+#elif defined(SYS_WINNT)
+	    ":\\/"	/* path and drive separators */
+#else
+	    "\\/"	/* separator and critical char for POSIX */
+#endif
+	    ;
+
+
 	char reply[128];
 #ifdef SAVECONFIG
 	char filespec[128];
@@ -927,16 +961,10 @@ save_config(
 	if (0 == strftime(filename, sizeof(filename), filespec,
 			       localtime(&now)))
 		strlcpy(filename, filespec, sizeof(filename));
-	
-	/*
-	 * Conceptually we should be searching for DIRSEP in filename,
-	 * however Windows actually recognizes both forward and
-	 * backslashes as equivalent directory separators at the API
-	 * level.  On POSIX systems we could allow '\\' but such
-	 * filenames are tricky to manipulate from a shell, so just
-	 * reject both types of slashes on all platforms.
-	 */
-	if (strchr(filename, '\\') || strchr(filename, '/')) {
+
+	/* block directory/drive traversal */
+	/* TALOS-CAN-0062: block directory traversal for VMS, too */
+	if (NULL != strpbrk(filename, illegal_in_filename)) {
 		snprintf(reply, sizeof(reply),
 			 "saveconfig does not allow directory in filename");
 		ctl_putdata(reply, strlen(reply), 0);
@@ -1067,6 +1095,7 @@ process_control(
 	req_count = (int)ntohs(pkt->count);
 	datanotbinflag = FALSE;
 	datalinelen = 0;
+	datasent = 0;
 	datapt = rpkt.u.data;
 	dataend = &rpkt.u.data[CTL_MAX_DATA_LEN];
 
@@ -1316,7 +1345,7 @@ static void
 ctl_putdata(
 	const char *dp,
 	unsigned int dlen,
-	int bin 		/* set to 1 when data is binary */
+	int bin			/* set to 1 when data is binary */
 	)
 {
 	int overhead;
@@ -1326,7 +1355,7 @@ ctl_putdata(
 	if (!bin) {
 		datanotbinflag = TRUE;
 		overhead = 3;
-		if (datapt != rpkt.u.data) {
+		if (datasent) {
 			*datapt++ = ',';
 			datalinelen++;
 			if ((dlen + datalinelen + 1) >= MAXDATALINELEN) {
@@ -1362,6 +1391,7 @@ ctl_putdata(
 	memcpy(datapt, dp, dlen);
 	datapt += dlen;
 	datalinelen += dlen;
+	datasent = TRUE;
 }
 
 
@@ -1389,7 +1419,7 @@ ctl_putstr(
 	memcpy(buffer, tag, tl);
 	cp = buffer + tl;
 	if (len > 0) {
-		NTP_INSIST(tl + 3 + len <= sizeof(buffer));
+		INSIST(tl + 3 + len <= sizeof(buffer));
 		*cp++ = '=';
 		*cp++ = '"';
 		memcpy(cp, data, len);
@@ -1424,7 +1454,7 @@ ctl_putunqstr(
 	memcpy(buffer, tag, tl);
 	cp = buffer + tl;
 	if (len > 0) {
-		NTP_INSIST(tl + 1 + len <= sizeof(buffer));
+		INSIST(tl + 1 + len <= sizeof(buffer));
 		*cp++ = '=';
 		memcpy(cp, data, len);
 		cp += len;
@@ -1453,7 +1483,7 @@ ctl_putdblf(
 	while (*cq != '\0')
 		*cp++ = *cq++;
 	*cp++ = '=';
-	NTP_INSIST((size_t)(cp - buffer) < sizeof(buffer));
+	INSIST((size_t)(cp - buffer) < sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), use_f ? "%.*f" : "%.*g",
 	    precision, d);
 	cp += strlen(cp);
@@ -1479,10 +1509,37 @@ ctl_putuint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%lu", uval);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
+}
+
+/*
+ * ctl_putcal - write a decoded calendar data into the response
+ */
+static void
+ctl_putcal(
+	const char *tag,
+	const struct calendar *pcal
+	)
+{
+	char buffer[100];
+	unsigned numch;
+
+	numch = snprintf(buffer, sizeof(buffer),
+			"%s=%04d%02d%02d%02d%02d",
+			tag,
+			pcal->year,
+			pcal->month,
+			pcal->monthday,
+			pcal->hour,
+			pcal->minute
+			);
+	INSIST(numch < sizeof(buffer));
+	ctl_putdata(buffer, numch, 0);
+
+	return;
 }
 
 /*
@@ -1510,7 +1567,7 @@ ctl_putfs(
 	tm = gmtime(&fstamp);
 	if (NULL ==  tm)
 		return;
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer),
 		 "%04d%02d%02d%02d%02d", tm->tm_year + 1900,
 		 tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min);
@@ -1539,7 +1596,7 @@ ctl_puthex(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%lx", uval);
 	cp += strlen(cp);
 	ctl_putdata(buffer,(unsigned)( cp - buffer ), 0);
@@ -1565,7 +1622,7 @@ ctl_putint(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%ld", ival);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)( cp - buffer ), 0);
@@ -1591,7 +1648,7 @@ ctl_putts(
 		*cp++ = *cq++;
 
 	*cp++ = '=';
-	NTP_INSIST((size_t)(cp - buffer) < sizeof(buffer));
+	INSIST((size_t)(cp - buffer) < sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "0x%08x.%08x",
 		 (u_int)ts->l_ui, (u_int)ts->l_uf);
 	cp += strlen(cp);
@@ -1623,7 +1680,7 @@ ctl_putadr(
 		cq = numtoa(addr32);
 	else
 		cq = stoa(addr);
-	NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+	INSIST((cp - buffer) < (int)sizeof(buffer));
 	snprintf(cp, sizeof(buffer) - (cp - buffer), "%s", cq);
 	cp += strlen(cp);
 	ctl_putdata(buffer, (unsigned)(cp - buffer), 0);
@@ -1658,7 +1715,7 @@ ctl_putrefid(
 		return;
 	iptr = (char *)&refid;
 	iplim = iptr + sizeof(refid);
-	for ( ; optr < oplim && iptr < iplim && '\0' != *iptr; 
+	for ( ; optr < oplim && iptr < iplim && '\0' != *iptr;
 	     iptr++, optr++)
 		if (isprint((int)*iptr))
 			*optr = *iptr;
@@ -1694,7 +1751,7 @@ ctl_putarray(
 		if (i == 0)
 			i = NTP_SHIFT;
 		i--;
-		NTP_INSIST((cp - buffer) < (int)sizeof(buffer));
+		INSIST((cp - buffer) < (int)sizeof(buffer));
 		snprintf(cp, sizeof(buffer) - (cp - buffer),
 			 " %.2f", arr[i] * 1e3);
 		cp += strlen(cp);
@@ -1726,7 +1783,7 @@ ctl_putsys(
 
 	static const double to_ms =
 # ifdef STA_NANO
-	    	1.0e-6; /* nsec to msec */
+		1.0e-6; /* nsec to msec */
 # else
 		1.0e-3; /* usec to msec */
 # endif
@@ -1918,12 +1975,12 @@ ctl_putsys(
 		ctl_putdata(buf, (unsigned)( buffp - buf ), 0);
 		break;
 	}
-    
+
 	case CS_TAI:
 		if (sys_tai > 0)
 			ctl_putuint(sys_var[CS_TAI].text, sys_tai);
 		break;
-		
+
 	case CS_LEAPTAB:
 	{
 		leap_signature_t lsig;
@@ -1932,7 +1989,7 @@ ctl_putsys(
 			ctl_putfs(sys_var[CS_LEAPTAB].text, lsig.ttime);
 		break;
 	}
-		
+
 	case CS_LEAPEND:
 	{
 		leap_signature_t lsig;
@@ -1941,6 +1998,19 @@ ctl_putsys(
 			ctl_putfs(sys_var[CS_LEAPEND].text, lsig.etime);
 		break;
 	}
+
+#ifdef LEAP_SMEAR
+	case CS_LEAPSMEARINTV:
+		if (leap_smear_intv > 0)
+			ctl_putuint(sys_var[CS_LEAPSMEARINTV].text, leap_smear_intv);
+		break;
+
+	case CS_LEAPSMEAROFFS:
+		if (leap_smear_intv > 0)
+			ctl_putdbl(sys_var[CS_LEAPSMEAROFFS].text,
+				   leap_smear.doffset * 1e3);
+		break;
+#endif	/* LEAP_SMEAR */
 
 	case CS_RATE:
 		ctl_putuint(sys_var[CS_RATE].text, ntp_minpoll);
@@ -2077,7 +2147,7 @@ ctl_putsys(
 		break;
 
 	case CS_AUTHRESET:
-		ctl_putuint(sys_var[varid].text, 
+		ctl_putuint(sys_var[varid].text,
 			    current_time - auth_timereset);
 		break;
 
@@ -2111,7 +2181,7 @@ ctl_putsys(
 
 	case CS_K_OFFSET:
 		CTL_IF_KERNLOOP(
-			ctl_putdblf, 
+			ctl_putdblf,
 			(sys_var[varid].text, 0, -1, to_ms * ntx.offset)
 		);
 		break;
@@ -2291,6 +2361,9 @@ ctl_putsys(
 	case CS_FUZZ:
 		ctl_putdbl(sys_var[varid].text, sys_fuzz * 1e3);
 		break;
+	case CS_WANDER_THRESH:
+		ctl_putdbl(sys_var[varid].text, wander_threshold * 1e6);
+		break;
 #ifdef AUTOKEY
 	case CS_FLAGS:
 		if (crypto_flags)
@@ -2333,14 +2406,11 @@ ctl_putsys(
 
 	case CS_CERTIF:
 		for (cp = cinfo; cp != NULL; cp = cp->link) {
-			tstamp_t tstamp;
-
 			snprintf(str, sizeof(str), "%s %s 0x%x",
 			    cp->subject, cp->issuer, cp->flags);
 			ctl_putstr(sys_var[CS_CERTIF].text, str,
 			    strlen(str));
-			tstamp = caltontp(&(cp->last)); /* XXX too small to hold some values, but that's what ctl_putfs requires */
-			ctl_putfs(sys_var[CS_REVTIME].text, tstamp);
+			ctl_putcal(sys_var[CS_REVTIME].text, &(cp->last));
 		}
 		break;
 
@@ -2350,6 +2420,9 @@ ctl_putsys(
 			    ntohl(hostval.tstamp));
 		break;
 #endif	/* AUTOKEY */
+
+	default:
+		break;
 	}
 }
 
@@ -2600,7 +2673,7 @@ ctl_putpeer(
 			memcpy(s, k->text, i);
 			s += i;
 		}
-		if (s + 2 < be) { 
+		if (s + 2 < be) {
 			*s++ = '"';
 			*s = '\0';
 			ctl_putdata(buf, (u_int)(s - buf), 0);
@@ -2679,7 +2752,7 @@ ctl_putpeer(
 			    strlen(p->ident));
 		break;
 
-		
+
 #endif	/* AUTOKEY */
 	}
 }
@@ -2788,7 +2861,7 @@ ctl_putclock(
 		    sizeof(buf))
 			break;	/* really long var name */
 
-		snprintf(s, sizeof(buf), "%s=\"", 
+		snprintf(s, sizeof(buf), "%s=\"",
 			 clock_var[CC_VARLIST].text);
 		s += strlen(s);
 		t = s;
@@ -2873,7 +2946,6 @@ ctl_getitem(
 	 * Look for a first character match on the tag.  If we find
 	 * one, see if it is a full match.
 	 */
-	v = var_list;
 	cp = reqpt;
 	for (v = var_list; !(EOV & v->flags); v++) {
 		if (!(PADDING & v->flags) && *cp == *(v->text)) {
@@ -3055,7 +3127,7 @@ read_peervars(void)
 			ctl_error(CERR_UNKNOWNVAR);
 			return;
 		}
-		NTP_INSIST(v->code < COUNTOF(wants));
+		INSIST(v->code < COUNTOF(wants));
 		wants[v->code] = 1;
 		gotvar = 1;
 	}
@@ -3098,19 +3170,19 @@ read_sysvars(void)
 	gotvar = 0;
 	while (NULL != (v = ctl_getitem(sys_var, &valuep))) {
 		if (!(EOV & v->flags)) {
-			NTP_INSIST(v->code < wants_count);
+			INSIST(v->code < wants_count);
 			wants[v->code] = 1;
 			gotvar = 1;
 		} else {
 			v = ctl_getitem(ext_sys_var, &valuep);
-			NTP_INSIST(v != NULL);
+			INSIST(v != NULL);
 			if (EOV & v->flags) {
 				ctl_error(CERR_UNKNOWNVAR);
 				free(wants);
 				return;
 			}
 			n = v->code + CS_MAXCODE + 1;
-			NTP_INSIST(n < wants_count);
+			INSIST(n < wants_count);
 			wants[n] = 1;
 			gotvar = 1;
 		}
@@ -3251,6 +3323,7 @@ write_variables(
 	ctl_flushpkt(0);
 }
 
+
 /*
  * configure() processes ntpq :config/config-from-file, allowing
  *		generic runtime reconfiguration.
@@ -3262,7 +3335,6 @@ static void configure(
 {
 	size_t data_count;
 	int retval;
-	int replace_nl;
 
 	/* I haven't yet implemented changes to an existing association.
 	 * Hence check if the association id is 0
@@ -3276,7 +3348,7 @@ static void configure(
 		snprintf(remote_config.err_msg,
 			 sizeof(remote_config.err_msg),
 			 "runtime configuration prohibited by restrict ... nomodify");
-		ctl_putdata(remote_config.err_msg, 
+		ctl_putdata(remote_config.err_msg,
 			    strlen(remote_config.err_msg), 0);
 		ctl_flushpkt(0);
 		NLOG(NLOG_SYSINFO)
@@ -3288,7 +3360,7 @@ static void configure(
 	}
 
 	/* Initialize the remote config buffer */
-	data_count = reqend - reqpt;
+	data_count = remoteconfig_cmdlength(reqpt, reqend);
 
 	if (data_count > sizeof(remote_config.buffer) - 2) {
 		snprintf(remote_config.err_msg,
@@ -3302,37 +3374,44 @@ static void configure(
 			stoa(&rbufp->recv_srcadr));
 		return;
 	}
-
-	memcpy(remote_config.buffer, reqpt, data_count);
-	if (data_count > 0
-	    && '\n' != remote_config.buffer[data_count - 1])
-		remote_config.buffer[data_count++] = '\n';
-	remote_config.buffer[data_count] = '\0';
-	remote_config.pos = 0;
-	remote_config.err_pos = 0;
-	remote_config.no_errors = 0;
-
-	/* do not include terminating newline in log */
-	if (data_count > 0
-	    && '\n' == remote_config.buffer[data_count - 1]) {
-		remote_config.buffer[data_count - 1] = '\0';
-		replace_nl = TRUE;
-	} else {
-		replace_nl = FALSE;
+	/* Bug 2853 -- check if all characters were acceptable */
+	if (data_count != (size_t)(reqend - reqpt)) {
+		snprintf(remote_config.err_msg,
+			 sizeof(remote_config.err_msg),
+			 "runtime configuration failed: request contains an unprintable character");
+		ctl_putdata(remote_config.err_msg,
+			    strlen(remote_config.err_msg), 0);
+		ctl_flushpkt(0);
+		msyslog(LOG_NOTICE,
+			"runtime config from %s rejected: request contains an unprintable character: %0x",
+			stoa(&rbufp->recv_srcadr),
+			reqpt[data_count]);
+		return;
 	}
 
+	memcpy(remote_config.buffer, reqpt, data_count);
+	/* The buffer has no trailing linefeed or NUL right now. For
+	 * logging, we do not want a newline, so we do that first after
+	 * adding the necessary NUL byte.
+	 */
+	remote_config.buffer[data_count] = '\0';
 	DPRINTF(1, ("Got Remote Configuration Command: %s\n",
 		remote_config.buffer));
 	msyslog(LOG_NOTICE, "%s config: %s",
 		stoa(&rbufp->recv_srcadr),
 		remote_config.buffer);
 
-	if (replace_nl)
-		remote_config.buffer[data_count - 1] = '\n';
-
+	/* Now we have to make sure there is a NL/NUL sequence at the
+	 * end of the buffer before we parse it.
+	 */
+	remote_config.buffer[data_count++] = '\n';
+	remote_config.buffer[data_count] = '\0';
+	remote_config.pos = 0;
+	remote_config.err_pos = 0;
+	remote_config.no_errors = 0;
 	config_remotely(&rbufp->recv_srcadr);
 
-	/* 
+	/*
 	 * Check if errors were reported. If not, output 'Config
 	 * Succeeded'.  Else output the error count.  It would be nice
 	 * to output any parser error messages.
@@ -3341,10 +3420,10 @@ static void configure(
 		retval = snprintf(remote_config.err_msg,
 				  sizeof(remote_config.err_msg),
 				  "Config Succeeded");
-		if (retval > 0) 
+		if (retval > 0)
 			remote_config.err_pos += retval;
 	}
-	
+
 	ctl_putdata(remote_config.err_msg, remote_config.err_pos, 0);
 	ctl_flushpkt(0);
 
@@ -3757,7 +3836,7 @@ static void read_mru_list(
 
 	while (NULL != (v = ctl_getitem(in_parms, &val)) &&
 	       !(EOV & v->flags)) {
-	        int si;
+		int si;
 
 		if (!strcmp(nonce_text, v->text)) {
 			if (NULL != pnonce)
@@ -3854,7 +3933,7 @@ static void read_mru_list(
 		pch = sptoa(&mon->rmtadr);
 		ctl_putunqstr("addr.older", pch, strlen(pch));
 
-		/* 
+		/*
 		 * Move on to the first entry the client doesn't have,
 		 * except in the special case of a limit of one.  In
 		 * that case return the starting point entry.
@@ -3864,7 +3943,7 @@ static void read_mru_list(
 	} else {	/* start with the oldest */
 		mon = TAIL_DLIST(mon_mru_list, mru);
 	}
-	
+
 	/*
 	 * send up to limit= entries in up to frags= datagrams
 	 */
@@ -4337,7 +4416,7 @@ read_clockstatus(
 			gotvar = TRUE;
 		} else {
 			v = ctl_getitem(kv, &valuep);
-			NTP_INSIST(NULL != v);
+			INSIST(NULL != v);
 			if (EOV & v->flags) {
 				ctl_error(CERR_UNKNOWNVAR);
 				free(wants);
@@ -4623,7 +4702,7 @@ ctlfindtrap(
 	for (n = 0; n < COUNTOF(ctl_traps); n++)
 		if ((ctl_traps[n].tr_flags & TRAP_INUSE)
 		    && ADDR_PORT_EQ(raddr, &ctl_traps[n].tr_addr)
-	 	    && (linter == ctl_traps[n].tr_localaddr))
+		    && (linter == ctl_traps[n].tr_localaddr))
 			return &ctl_traps[n];
 
 	return NULL;
@@ -4680,7 +4759,7 @@ report_event(
 		const char *	src;
 		u_char		errlast;
 
-		errlast = (u_char)err & ~PEER_EVENT; 
+		errlast = (u_char)err & ~PEER_EVENT;
 		if (peer->last_event == errlast)
 			peer->num_events = 0;
 		if (peer->num_events >= CTL_PEER_MAXEVENTS)
@@ -4733,7 +4812,7 @@ report_event(
 		for (i = 1; i <= CS_VARLIST; i++)
 			ctl_putsys(i);
 	} else {
-		NTP_INSIST(peer != NULL);
+		INSIST(peer != NULL);
 		rpkt.associd = htons(peer->associd);
 		rpkt.status = htons(ctlpeerstatus(peer));
 
@@ -4838,7 +4917,7 @@ count_var(
 	while (!(EOV & (k++)->flags))
 		c++;
 
-	NTP_ENSURE(c <= USHRT_MAX);
+	ENSURE(c <= USHRT_MAX);
 	return (u_short)c;
 }
 
@@ -4952,7 +5031,7 @@ get_ext_sys_var(const char *tag)
 			}
 		}
 	}
-	
+
 	return val;
 }
 

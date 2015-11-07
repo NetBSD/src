@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_util.c,v 1.3.16.1 2014/12/25 02:13:06 snj Exp $	*/
+/*	$NetBSD: ntp_util.c,v 1.3.16.2 2015/11/07 22:46:17 snj Exp $	*/
 
 /*
  * ntp_util.c - stuff I didn't have any other place for
@@ -681,7 +681,7 @@ record_raw_stats(
 	int	version,
 	int	mode,
 	int	stratum,
-	int	poll,
+	int	ppoll,
 	int	precision,
 	double	root_delay,	/* seconds */
 	double	root_dispersion,/* seconds */
@@ -704,7 +704,7 @@ record_raw_stats(
 		    stoa(srcadr), dstadr ?  stoa(dstadr) : "-",
 		    ulfptoa(t1, 9), ulfptoa(t2, 9),
 		    ulfptoa(t3, 9), ulfptoa(t4, 9),
-		    leap, version, mode, stratum, poll, precision,
+		    leap, version, mode, stratum, ppoll, precision,
 		    root_delay, root_dispersion, refid_str(refid, stratum));
 		fflush(rawstats.fp);
 	}

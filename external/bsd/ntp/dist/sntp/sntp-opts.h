@@ -1,9 +1,9 @@
-/*	$NetBSD: sntp-opts.h,v 1.1.1.2.16.1 2014/12/25 02:13:11 snj Exp $	*/
+/*	$NetBSD: sntp-opts.h,v 1.1.1.2.16.2 2015/11/07 22:46:21 snj Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.h)
  *
- *  It has been AutoGen-ed  December 19, 2014 at 07:51:00 AM by AutoGen 5.18.5pre4
+ *  It has been AutoGen-ed  October 21, 2015 at 12:30:22 PM by AutoGen 5.18.5
  *  From the definitions    sntp-opts.def
  *  and the template file   options
  *
@@ -20,7 +20,7 @@
  * The sntp program is copyrighted and licensed
  * under the following terms:
  *
- *  Copyright (C) 1970-2014 The University of Delaware, all rights reserved.
+ *  Copyright (C) 1992-2015 The University of Delaware and Network Time Foundation, all rights reserved.
  *  This is free software. It is licensed for use, modification and
  *  redistribution under the terms of the NTP License, copies of which
  *  can be seen at:
@@ -33,7 +33,7 @@
  *  both the copyright notice and this permission notice appear in
  *  supporting documentation, and that the name The University of Delaware not be used in
  *  advertising or publicity pertaining to distribution of the software
- *  without specific, written prior permission. The University of Delaware makes no
+ *  without specific, written prior permission. The University of Delaware and Network Time Foundation makes no
  *  representations about the suitability this software for any purpose. It
  *  is provided "as is" without express or implied warranty.
  */
@@ -93,9 +93,9 @@ typedef enum {
 /** count of all options for sntp */
 #define OPTION_CT    23
 /** sntp version */
-#define SNTP_VERSION       "4.2.8"
+#define SNTP_VERSION       "4.2.8p4"
 /** Full sntp version text */
-#define SNTP_FULL_VERSION  "sntp 4.2.8"
+#define SNTP_FULL_VERSION  "sntp 4.2.8p4"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED

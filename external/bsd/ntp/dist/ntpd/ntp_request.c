@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.7.16.2 2014/12/25 02:13:06 snj Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.7.16.3 2015/11/07 22:46:17 snj Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -1759,10 +1759,12 @@ do_restrict(
 	}
 
 	/*
-	 * Looks okay, try it out
+	 * Looks okay, try it out.  Needs to reload data pointer and
+	 * item counter. (Talos-CAN-0052)
 	 */
 	ZERO_SOCK(&matchaddr);
 	ZERO_SOCK(&matchmask);
+	items = INFO_NITEMS(inpkt->err_nitems);
 	datap = inpkt->u.data;
 
 	while (items-- > 0) {
@@ -1919,9 +1921,11 @@ reset_peer(
 	}
 
 	/*
-	 * Now do it in earnest.
+	 * Now do it in earnest. Needs to reload data pointer and item
+	 * counter. (Talos-CAN-0052)
 	 */
-
+	
+	items = INFO_NITEMS(inpkt->err_nitems);
 	datap = inpkt->u.data;
 	while (items-- > 0) {
 		ZERO(cp);

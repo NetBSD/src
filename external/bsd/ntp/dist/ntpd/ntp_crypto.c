@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.4.16.1 2014/12/25 02:13:06 snj Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.4.16.2 2015/11/07 22:46:16 snj Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -141,6 +141,7 @@ static int calcomp(struct calendar *pjd1, struct calendar *pjd2)
 #define TAI_1972	10	/* initial TAI offset (s) */
 #define MAX_LEAP	100	/* max UTC leapseconds (s) */
 #define VALUE_LEN	(6 * 4) /* min response field length */
+#define MAX_VALLEN	(65535 - VALUE_LEN)
 #define YEAR		(60 * 60 * 24 * 365) /* seconds in year */
 
 /*
@@ -181,8 +182,8 @@ static char *rand_file = NULL;	/* random seed file */
  */
 static	int	crypto_verify	(struct exten *, struct value *,
 				    struct peer *);
-static	int	crypto_encrypt	(struct exten *, struct value *,
-				    keyid_t *);
+static	int	crypto_encrypt	(const u_char *, u_int, keyid_t *,
+				    struct value *);
 static	int	crypto_alice	(struct peer *, struct value *);
 static	int	crypto_alice2	(struct peer *, struct value *);
 static	int	crypto_alice3	(struct peer *, struct value *);
@@ -203,6 +204,7 @@ static	void	cert_free	(struct cert_info *);
 static	struct pkey_info *crypto_key (char *, char *, sockaddr_u *);
 static	void	bighash		(BIGNUM *, BIGNUM *);
 static	struct cert_info *crypto_cert (char *);
+static	u_int	exten_payload_size(const struct exten *);
 
 #ifdef SYS_WINNT
 int
@@ -317,8 +319,8 @@ make_keylist(
 	 */
 	tstamp = crypto_time();
 	if (peer->keylist == NULL)
-		peer->keylist = emalloc(sizeof(keyid_t) *
-		    NTP_MAXSESSION);
+		peer->keylist = eallocarray(NTP_MAXSESSION,
+					    sizeof(keyid_t));
 
 	/*
 	 * Generate an initial key ID which is unique and greater than
@@ -381,16 +383,14 @@ make_keylist(
 		EVP_SignUpdate(&ctx, (u_char *)vp, 12);
 		EVP_SignUpdate(&ctx, vp->ptr, sizeof(struct autokey));
 		if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
-			vp->siglen = htonl(sign_siglen);
+			INSIST(len <= sign_siglen);
+			vp->siglen = htonl(len);
 			peer->flags |= FLAG_ASSOC;
 		}
 	}
-#ifdef DEBUG
-	if (debug)
-		printf("make_keys: %d %08x %08x ts %u fs %u poll %d\n",
+	DPRINTF(1, ("make_keys: %d %08x %08x ts %u fs %u poll %d\n",
 		    peer->keynumber, keyid, cookie, ntohl(vp->tstamp),
-		    ntohl(vp->fstamp), peer->hpoll);
-#endif
+		    ntohl(vp->fstamp), peer->hpoll));
 	return (XEVNT_OK);
 }
 
@@ -422,7 +422,7 @@ crypto_recv(
 	struct autokey *ap, *bp; /* autokey pointer */
 	struct exten *ep, *fp;	/* extension pointers */
 	struct cert_info *xinfo; /* certificate info pointer */
-	int	has_mac;	/* length of MAC field */
+	int	macbytes;	/* length of MAC field, signed by intention */
 	int	authlen;	/* offset of MAC field */
 	associd_t associd;	/* association ID */
 	tstamp_t fstamp = 0;	/* filestamp */
@@ -449,7 +449,11 @@ crypto_recv(
 	 */
 	authlen = LEN_PKT_NOMAC;
 	hismode = (int)PKT_MODE((&rbufp->recv_pkt)->li_vn_mode);
-	while ((has_mac = rbufp->recv_length - authlen) > (int)MAX_MAC_LEN) {
+	while ((macbytes = rbufp->recv_length - authlen) > (int)MAX_MAC_LEN) {
+		/* We can be reasonably sure that we can read at least
+		 * the opcode and the size field here. More stringent
+		 * checks follow up shortly.
+		 */
 		pkt = (u_int32 *)&rbufp->recv_pkt + authlen / 4;
 		ep = (struct exten *)pkt;
 		code = ntohl(ep->opcode) & 0xffff0000;
@@ -457,13 +461,9 @@ crypto_recv(
 		// HMS: Why pkt[1] instead of ep->associd ?
 		associd = (associd_t)ntohl(pkt[1]);
 		rval = XEVNT_OK;
-#ifdef DEBUG
-		if (debug)
-			printf(
-			    "crypto_recv: flags 0x%x ext offset %d len %u code 0x%x associd %d\n",
+		DPRINTF(1, ("crypto_recv: flags 0x%x ext offset %d len %u code 0x%x associd %d\n",
 			    peer->crypto, authlen, len, code >> 16,
-			    associd);
-#endif
+			    associd));
 
 		/*
 		 * Check version number and field length. If bad,
@@ -474,9 +474,27 @@ crypto_recv(
 			code |= CRYPTO_ERROR;
 		}
 
+		/* Check if the declared size fits into the remaining
+		 * buffer.
+		 */
+		if (len > (u_int)macbytes) {
+			DPRINTF(1, ("crypto_recv: possible attack detected, associd %d\n",
+				    associd));
+			return XEVNT_LEN;
+		}
+
+		/* Check if the paylod of the extension fits into the
+		 * declared frame.
+		 */
 		if (len >= VALUE_LEN) {
 			fstamp = ntohl(ep->fstamp);
 			vallen = ntohl(ep->vallen);
+			/*
+			 * Bug 2761: I hope this isn't too early...
+			 */
+			if (   vallen == 0
+			    || len - VALUE_LEN < vallen)
+				return XEVNT_LEN;
 		}
 		switch (code) {
 
@@ -509,6 +527,7 @@ crypto_recv(
 					rval = XEVNT_ERR;
 					break;
 				}
+				free(peer->cmmd); /* will be set again! */
 			}
 			fp = emalloc(len);
 			memcpy(fp, ep, len);
@@ -527,18 +546,15 @@ crypto_recv(
 					rval = XEVNT_ERR;
 				break;
 			}
+			INSIST(len >= VALUE_LEN);
 			if (vallen == 0 || vallen > MAXHOSTNAME ||
-			    len < VALUE_LEN + vallen) {
+			    len - VALUE_LEN < vallen) {
 				rval = XEVNT_LEN;
 				break;
 			}
-#ifdef DEBUG
-			if (debug)
-				printf(
-				    "crypto_recv: ident host 0x%x %d server 0x%x %d\n",
+			DPRINTF(1, ("crypto_recv: ident host 0x%x %d server 0x%x %d\n",
 				    crypto_flags, peer->associd, fstamp,
-				    peer->assoc);
-#endif
+				    peer->assoc));
 			temp32 = crypto_flags & CRYPTO_FLAG_MASK;
 
 			/*
@@ -611,10 +627,7 @@ crypto_recv(
 			    peer->assoc, peer->subject,
 			    OBJ_nid2ln(temp32));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 		/*
@@ -672,10 +685,7 @@ crypto_recv(
 			    OBJ_nid2ln(temp32), temp32,
 			    ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 		/*
@@ -712,10 +722,7 @@ crypto_recv(
 			snprintf(statstr, sizeof(statstr), "iff %s fs %u",
 			    peer->issuer, ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 		/*
@@ -753,10 +760,7 @@ crypto_recv(
 			snprintf(statstr, sizeof(statstr), "gq %s fs %u",
 			    peer->issuer, ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 		/*
@@ -793,10 +797,7 @@ crypto_recv(
 			snprintf(statstr, sizeof(statstr), "mv %s fs %u",
 			    peer->issuer, ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 
@@ -862,10 +863,7 @@ crypto_recv(
 			    "cook %x ts %u fs %u", peer->pcookie,
 			    ntohl(ep->tstamp), ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 		/*
@@ -924,10 +922,7 @@ crypto_recv(
 			    bp->key, ntohl(ep->tstamp),
 			    ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 	
 		/*
@@ -964,10 +959,7 @@ crypto_recv(
 			    OBJ_nid2ln(temp32), temp32,
 			    ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 		/*
@@ -982,43 +974,32 @@ crypto_recv(
 			 * compare the value timestamps here, as they
 			 * can be updated by different servers.
 			 */
-			if ((rval = crypto_verify(ep, NULL, peer)) !=
-			    XEVNT_OK)
+			rval = crypto_verify(ep, NULL, peer);
+			if ((rval   != XEVNT_OK          ) ||
+			    (vallen != 3*sizeof(uint32_t))  )
 				break;
 
-			/*
-			 * If the packet leap values are more recent
-			 * than the stored ones, install the new leap
-			 * values and recompute the signatures.
+			/* Check if we can update the basic TAI offset
+			 * for our current leap frame. This is a hack
+			 * and ignores the time stamps in the autokey
+			 * message.
 			 */
-			if (leapsec_add_fix(ntohl(ep->pkt[0]),
-					    ntohl(ep->pkt[1]),
-					    ntohl(ep->pkt[2]),
-					    NULL))
-			{
-				leap_signature_t lsig;
-
-				leapsec_getsig(&lsig);
-				tai_leap.tstamp = ep->tstamp;
-				tai_leap.fstamp = ep->fstamp;
-				tai_leap.vallen = ep->vallen;
-				crypto_update();
-				mprintf_event(EVNT_TAI, peer,
-				    "%d leap %s expire %s", lsig.taiof,
-				    fstostr(lsig.ttime),
-				    fstostr(lsig.etime));
-			}
+			if (sys_leap != LEAP_NOTINSYNC)
+				leapsec_autokey_tai(ntohl(ep->pkt[0]),
+						    rbufp->recv_time.l_ui, NULL);
+			tai_leap.tstamp = ep->tstamp;
+			tai_leap.fstamp = ep->fstamp;
+			crypto_update();
+			mprintf_event(EVNT_TAI, peer,
+				      "%d seconds", ntohl(ep->pkt[0]));
 			peer->crypto |= CRYPTO_FLAG_LEAP;
 			peer->flash &= ~TEST8;
 			snprintf(statstr, sizeof(statstr),
-			    "leap TAI offset %d at %u expire %u fs %u",
-			    ntohl(ep->pkt[0]), ntohl(ep->pkt[1]),
-			    ntohl(ep->pkt[2]), ntohl(ep->fstamp));
+				 "leap TAI offset %d at %u expire %u fs %u",
+				 ntohl(ep->pkt[0]), ntohl(ep->pkt[1]),
+				 ntohl(ep->pkt[2]), ntohl(ep->fstamp));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			break;
 
 		/*
@@ -1067,10 +1048,7 @@ crypto_recv(
 			    "%04x %d %02x %s", htonl(ep->opcode),
 			    associd, rval, eventstr(rval));
 			record_crypto_stats(&peer->srcadr, statstr);
-#ifdef DEBUG
-			if (debug)
-				printf("crypto_recv: %s\n", statstr);
-#endif
+			DPRINTF(1, ("crypto_recv: %s\n", statstr));
 			return (rval);
 		}
 		authlen += (len + 3) / 4 * 4;
@@ -1195,8 +1173,8 @@ crypto_xmit(
 	 * choice. 
 	 */
 	case CRYPTO_CERT | CRYPTO_RESP:
-		vallen = ntohl(ep->vallen);
-		if (vallen == 0 || vallen > MAXHOSTNAME) {
+		vallen = exten_payload_size(ep); /* Must be <64k */
+		if (vallen == 0 || vallen >= sizeof(certname) ) {
 			rval = XEVNT_LEN;
 			break;
 		}
@@ -1346,7 +1324,10 @@ crypto_xmit(
 	 * anything goes wrong.
 	 */
 	case CRYPTO_COOK | CRYPTO_RESP:
-		if ((opcode & 0xffff) < VALUE_LEN) {
+		vallen = ntohl(ep->vallen);	/* Must be <64k */
+		if (   vallen == 0
+		    || (vallen >= MAX_VALLEN)
+		    || (opcode & 0x0000ffff)  < VALUE_LEN + vallen) {
 			rval = XEVNT_LEN;
 			break;
 		}
@@ -1354,8 +1335,8 @@ crypto_xmit(
 			tcookie = cookie;
 		else
 			tcookie = peer->hcookie;
-		if ((rval = crypto_encrypt(ep, &vtemp, &tcookie)) ==
-		    XEVNT_OK) {
+		if ((rval = crypto_encrypt((const u_char *)ep->pkt, vallen, &tcookie, &vtemp))
+		    == XEVNT_OK) {
 			len = crypto_send(fp, &vtemp, start);
 			value_free(&vtemp);
 		}
@@ -1411,19 +1392,12 @@ crypto_xmit(
 		    "%04x %d %02x %s", opcode, associd, rval,
 		    eventstr(rval));
 		record_crypto_stats(srcadr_sin, statstr);
-#ifdef DEBUG
-		if (debug)
-			printf("crypto_xmit: %s\n", statstr);
-#endif
+		DPRINTF(1, ("crypto_xmit: %s\n", statstr));
 		if (!(opcode & CRYPTO_RESP))
 			return (0);
 	}
-#ifdef DEBUG
-	if (debug)
-		printf(
-		    "crypto_xmit: flags 0x%x offset %d len %d code 0x%x associd %d\n",
-		    crypto_flags, start, len, opcode >> 16, associd);
-#endif
+	DPRINTF(1, ("crypto_xmit: flags 0x%x offset %d len %d code 0x%x associd %d\n",
+		    crypto_flags, start, len, opcode >> 16, associd));
 	return (len);
 }
 
@@ -1495,13 +1469,16 @@ crypto_verify(
 	 * up to the next word (4 octets).
 	 */
 	vallen = ntohl(ep->vallen);
-	if (vallen == 0)
+	if (   vallen == 0
+	    || vallen > MAX_VALLEN)
 		return (XEVNT_LEN);
 
 	i = (vallen + 3) / 4;
 	siglen = ntohl(ep->pkt[i++]);
-	if (len < VALUE_LEN + ((vallen + 3) / 4) * 4 + ((siglen + 3) /
-	    4) * 4)
+	if (   siglen > MAX_VALLEN
+	    || len - VALUE_LEN < ((vallen + 3) / 4) * 4
+	    || len - VALUE_LEN - ((vallen + 3) / 4) * 4
+	      < ((siglen + 3) / 4) * 4)
 		return (XEVNT_LEN);
 
 	/*
@@ -1559,6 +1536,7 @@ crypto_verify(
 	 * proventic bit. What a relief.
 	 */
 	EVP_VerifyInit(&ctx, peer->digest);
+	/* XXX: the "+ 12" needs to be at least documented... */
 	EVP_VerifyUpdate(&ctx, (u_char *)&ep->tstamp, vallen + 12);
 	if (EVP_VerifyFinal(&ctx, (u_char *)&ep->pkt[i], siglen,
 	    pkey) <= 0)
@@ -1571,35 +1549,32 @@ crypto_verify(
 
 
 /*
- * crypto_encrypt - construct encrypted cookie and signature from
- * extension field and cookie
+ * crypto_encrypt - construct vp (encrypted cookie and signature) from
+ * the public key and cookie.
  *
- * Returns
+ * Returns:
  * XEVNT_OK	success
  * XEVNT_CKY	bad or missing cookie
  * XEVNT_PUB	bad or missing public key
  */
 static int
 crypto_encrypt(
-	struct exten *ep,	/* extension pointer */
-	struct value *vp,	/* value pointer */
-	keyid_t	*cookie		/* server cookie */
+	const u_char *ptr,	/* Public Key */
+	u_int	vallen,		/* Length of Public Key */
+	keyid_t	*cookie,	/* server cookie */
+	struct value *vp	/* value pointer */
 	)
 {
 	EVP_PKEY *pkey;		/* public key */
 	EVP_MD_CTX ctx;		/* signature context */
 	tstamp_t tstamp;	/* NTP timestamp */
 	u_int32	temp32;
-	u_int	len;
-	const u_char *ptr;
 	u_char *puch;
 
 	/*
 	 * Extract the public key from the request.
 	 */
-	len = ntohl(ep->vallen);
-	ptr = (void *)ep->pkt;
-	pkey = d2i_PublicKey(EVP_PKEY_RSA, NULL, &ptr, len);
+	pkey = d2i_PublicKey(EVP_PKEY_RSA, NULL, &ptr, vallen);
 	if (pkey == NULL) {
 		msyslog(LOG_ERR, "crypto_encrypt: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
@@ -1613,9 +1588,9 @@ crypto_encrypt(
 	tstamp = crypto_time();
 	vp->tstamp = htonl(tstamp);
 	vp->fstamp = hostval.tstamp;
-	len = EVP_PKEY_size(pkey);
-	vp->vallen = htonl(len);
-	vp->ptr = emalloc(len);
+	vallen = EVP_PKEY_size(pkey);
+	vp->vallen = htonl(vallen);
+	vp->ptr = emalloc(vallen);
 	puch = vp->ptr;
 	temp32 = htonl(*cookie);
 	if (RSA_public_encrypt(4, (u_char *)&temp32, puch,
@@ -1633,9 +1608,11 @@ crypto_encrypt(
 	vp->sig = emalloc(sign_siglen);
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&vp->tstamp, 12);
-	EVP_SignUpdate(&ctx, vp->ptr, len);
-	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-		vp->siglen = htonl(sign_siglen);
+	EVP_SignUpdate(&ctx, vp->ptr, vallen);
+	if (EVP_SignFinal(&ctx, vp->sig, &vallen, sign_pkey)) {
+		INSIST(vallen <= sign_siglen);
+		vp->siglen = htonl(vallen);
+	}
 	return (XEVNT_OK);
 }
 
@@ -1705,6 +1682,9 @@ crypto_ident(
  * call in the protocol module.
  *
  * Returns extension field pointer (no errors)
+ *
+ * XXX: opcode and len should really be 32-bit quantities and
+ * we should make sure that str is not too big.
  */
 struct exten *
 crypto_args(
@@ -1717,14 +1697,21 @@ crypto_args(
 	tstamp_t tstamp;	/* NTP timestamp */
 	struct exten *ep;	/* extension field pointer */
 	u_int	len;		/* extension field length */
+	size_t	slen = 0;
 
 	tstamp = crypto_time();
 	len = sizeof(struct exten);
-	if (str != NULL)
-		len += strlen(str);
+	if (str != NULL) {
+		slen = strlen(str);
+		INSIST(slen < MAX_VALLEN);
+		len += slen;
+	}
 	ep = emalloc_zero(len);
 	if (opcode == 0)
 		return (ep);
+
+	REQUIRE(0 == (len    & ~0x0000ffff));
+	REQUIRE(0 == (opcode & ~0xffff0000));
 
 	ep->opcode = htonl(opcode + len);
 	ep->associd = htonl(associd);
@@ -1732,8 +1719,8 @@ crypto_args(
 	ep->fstamp = hostval.tstamp;
 	ep->vallen = 0;
 	if (str != NULL) {
-		ep->vallen = htonl(strlen(str));
-		memcpy((char *)ep->pkt, str, strlen(str));
+		ep->vallen = htonl(slen);
+		memcpy((char *)ep->pkt, str, slen);
 	}
 	return (ep);
 }
@@ -1746,6 +1733,8 @@ crypto_args(
  * Note: it is not polite to send a nonempty signature with zero
  * timestamp or a nonzero timestamp with an empty signature, but those
  * rules are not enforced here.
+ *
+ * XXX This code won't work on a box with 16-bit ints.
  */
 int
 crypto_send(
@@ -1761,8 +1750,9 @@ crypto_send(
 	 * Calculate extension field length and check for buffer
 	 * overflow. Leave room for the MAC.
 	 */
-	len = 16;
+	len = 16;				/* XXX Document! */
 	vallen = ntohl(vp->vallen);
+	INSIST(vallen <= MAX_VALLEN);
 	len += ((vallen + 3) / 4 + 1) * 4; 
 	siglen = ntohl(vp->siglen);
 	len += ((siglen + 3) / 4 + 1) * 4; 
@@ -1799,10 +1789,11 @@ crypto_send(
 		if (j * 4 < siglen)
 			ep->pkt[i + j++] = 0;
 		memcpy(&ep->pkt[i], vp->sig, siglen);
-		i += j;
+		/* i += j; */	/* We don't use i after this */
 	}
 	opcode = ntohl(ep->opcode);
 	ep->opcode = htonl((opcode & 0xffff0000) | len); 
+	ENSURE(len <= MAX_VALLEN);
 	return (len);
 }
 
@@ -1833,12 +1824,11 @@ crypto_update(void)
 	char	statstr[NTP_MAXSTRLEN]; /* statistics for filegen */
 	u_int32	*ptr;
 	u_int	len;
-	leap_signature_t lsig;
+	leap_result_t leap_data;
 
 	hostval.tstamp = htonl(crypto_time());
 	if (hostval.tstamp == 0)
 		return;
-
 
 	/*
 	 * Sign public key and timestamps. The filestamp is derived from
@@ -1853,8 +1843,10 @@ crypto_update(void)
 		EVP_SignInit(&ctx, sign_digest);
 		EVP_SignUpdate(&ctx, (u_char *)&pubkey, 12);
 		EVP_SignUpdate(&ctx, pubkey.ptr, ntohl(pubkey.vallen));
-		if (EVP_SignFinal(&ctx, pubkey.sig, &len, sign_pkey))
-			pubkey.siglen = htonl(sign_siglen);
+		if (EVP_SignFinal(&ctx, pubkey.sig, &len, sign_pkey)) {
+			INSIST(len <= sign_siglen);
+			pubkey.siglen = htonl(len);
+		}
 	}
 
 	/*
@@ -1872,8 +1864,10 @@ crypto_update(void)
 		EVP_SignUpdate(&ctx, (u_char *)&cp->cert, 12);
 		EVP_SignUpdate(&ctx, cp->cert.ptr,
 		    ntohl(cp->cert.vallen));
-		if (EVP_SignFinal(&ctx, cp->cert.sig, &len, sign_pkey))
-			cp->cert.siglen = htonl(sign_siglen);
+		if (EVP_SignFinal(&ctx, cp->cert.sig, &len, sign_pkey)) {
+			INSIST(len <= sign_siglen);
+			cp->cert.siglen = htonl(len);
+		}
 	}
 
 	/*
@@ -1882,33 +1876,86 @@ crypto_update(void)
 	 */
 	tai_leap.tstamp = hostval.tstamp;
 	tai_leap.fstamp = hostval.fstamp;
+
+	/* Get the leap second era. We might need a full lookup early
+	 * after start, when the cache is not yet loaded.
+	 */
+	leapsec_frame(&leap_data);
+	if ( ! memcmp(&leap_data.ebase, &leap_data.ttime, sizeof(vint64))) {
+		time_t   now    = time(NULL);
+		uint32_t nowntp = (uint32_t)now + JAN_1970;
+		leapsec_query(&leap_data, nowntp, &now);
+	}
+
+	/* Create the data block. The protocol does not work without. */
 	len = 3 * sizeof(u_int32);
-	if (tai_leap.ptr == NULL)
+	if (tai_leap.ptr == NULL || ntohl(tai_leap.vallen) != len) {
+		free(tai_leap.ptr);
 		tai_leap.ptr = emalloc(len);
-	tai_leap.vallen = htonl(len);
+		tai_leap.vallen = htonl(len);
+	}
 	ptr = (u_int32 *)tai_leap.ptr;
-	leapsec_getsig(&lsig);
-	ptr[0] = htonl(lsig.taiof);
-	ptr[1] = htonl(lsig.ttime);
-	ptr[2] = htonl(lsig.etime);
+	if (leap_data.tai_offs > 10) {
+		/* create a TAI / leap era block. The end time is a
+		 * fake -- maybe we can do better.
+		 */
+		ptr[0] = htonl(leap_data.tai_offs);
+		ptr[1] = htonl(leap_data.ebase.d_s.lo);
+		if (leap_data.ttime.d_s.hi >= 0)
+			ptr[2] = htonl(leap_data.ttime.D_s.lo +  7*86400);
+		else
+			ptr[2] = htonl(leap_data.ebase.D_s.lo + 25*86400);
+	} else {
+		/* no leap era available */
+		memset(ptr, 0, len);
+	}
 	if (tai_leap.sig == NULL)
 		tai_leap.sig = emalloc(sign_siglen);
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&tai_leap, 12);
 	EVP_SignUpdate(&ctx, tai_leap.ptr, len);
-	if (EVP_SignFinal(&ctx, tai_leap.sig, &len, sign_pkey))
-		tai_leap.siglen = htonl(sign_siglen);
-	if (lsig.ttime > 0)
-		crypto_flags |= CRYPTO_FLAG_TAI;
+	if (EVP_SignFinal(&ctx, tai_leap.sig, &len, sign_pkey)) {
+		INSIST(len <= sign_siglen);
+		tai_leap.siglen = htonl(len);
+	}
+	crypto_flags |= CRYPTO_FLAG_TAI;
+
 	snprintf(statstr, sizeof(statstr), "signature update ts %u",
 	    ntohl(hostval.tstamp)); 
 	record_crypto_stats(NULL, statstr);
-#ifdef DEBUG
-	if (debug)
-		printf("crypto_update: %s\n", statstr);
-#endif
+	DPRINTF(1, ("crypto_update: %s\n", statstr));
 }
 
+/*
+ * crypto_update_taichange - eventually trigger crypto_update
+ *
+ * This is called when a change in 'sys_tai' is detected. This will
+ * happen shortly after a leap second is detected, but unhappily also
+ * early after system start; also, the crypto stuff might be unused and
+ * an unguarded call to crypto_update() causes a crash.
+ *
+ * This function makes sure that there already *is* a valid crypto block
+ * for the use with autokey, and only calls 'crypto_update()' if it can
+ * succeed.
+ *
+ * Returns void (no errors)
+ */
+void
+crypto_update_taichange(void)
+{
+	static const u_int len = 3 * sizeof(u_int32);
+
+	/* check if the signing digest algo is available */
+	if (sign_digest == NULL || sign_pkey == NULL)
+		return;
+
+	/* check size of TAI extension block */
+	if (tai_leap.ptr == NULL || ntohl(tai_leap.vallen) != len)
+		return;
+
+	/* crypto_update should at least not crash here! */
+	crypto_update();
+}
 
 /*
  * value_free - free value structure components.
@@ -1969,9 +2016,9 @@ asn_to_calendar	(
 	 * 100. Dontcha love ASN.1? Better than MIL-188.
 	 */
 	len = asn1time->length;
-	NTP_REQUIRE(len < sizeof(v));
+	REQUIRE(len < sizeof(v));
 	(void)strncpy(v, (char *)(asn1time->data), len);
-	NTP_REQUIRE(len >= 13);
+	REQUIRE(len >= 13);
 	temp = strtoul(v+len-3, NULL, 10);
 	pjd->second = temp;
 	v[len-3] = '\0';
@@ -2140,8 +2187,10 @@ crypto_alice(
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&vp->tstamp, 12);
 	EVP_SignUpdate(&ctx, vp->ptr, len);
-	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-		vp->siglen = htonl(sign_siglen);
+	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
+		INSIST(len <= sign_siglen);
+		vp->siglen = htonl(len);
+	}
 	return (XEVNT_OK);
 }
 
@@ -2167,7 +2216,7 @@ crypto_bob(
 	tstamp_t tstamp;	/* NTP timestamp */
 	BIGNUM	*bn, *bk, *r;
 	u_char	*ptr;
-	u_int	len;
+	u_int	len;		/* extension field value length */
 
 	/*
 	 * If the IFF parameters are not valid, something awful
@@ -2182,7 +2231,9 @@ crypto_bob(
 	/*
 	 * Extract r from the challenge.
 	 */
-	len = ntohl(ep->vallen);
+	len = exten_payload_size(ep);
+	if (len == 0 || len > MAX_VALLEN)
+		return (XEVNT_LEN);
 	if ((r = BN_bin2bn((u_char *)ep->pkt, len, NULL)) == NULL) {
 		msyslog(LOG_ERR, "crypto_bob: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
@@ -2221,6 +2272,12 @@ crypto_bob(
 		DSA_SIG_free(sdsa);
 		return (XEVNT_ERR);
 	}
+	if (len > MAX_VALLEN) {
+		msyslog(LOG_ERR, "crypto_bob: signature is too big: %u",
+		    len);
+		DSA_SIG_free(sdsa);
+		return (XEVNT_LEN);
+	}
 	memset(vp, 0, sizeof(struct value));
 	tstamp = crypto_time();
 	vp->tstamp = htonl(tstamp);
@@ -2233,12 +2290,15 @@ crypto_bob(
 	if (tstamp == 0)
 		return (XEVNT_OK);
 
+	/* XXX: more validation to make sure the sign fits... */
 	vp->sig = emalloc(sign_siglen);
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&vp->tstamp, 12);
 	EVP_SignUpdate(&ctx, vp->ptr, len);
-	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-		vp->siglen = htonl(sign_siglen);
+	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
+		INSIST(len <= sign_siglen);
+		vp->siglen = htonl(len);
+	}
 	return (XEVNT_OK);
 }
 
@@ -2442,8 +2502,10 @@ crypto_alice2(
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&vp->tstamp, 12);
 	EVP_SignUpdate(&ctx, vp->ptr, len);
-	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-		vp->siglen = htonl(sign_siglen);
+	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
+		INSIST(len <= sign_siglen);
+		vp->siglen = htonl(len);
+	}
 	return (XEVNT_OK);
 }
 
@@ -2485,7 +2547,9 @@ crypto_bob2(
 	/*
 	 * Extract r from the challenge.
 	 */
-	len = ntohl(ep->vallen);
+	len = exten_payload_size(ep);
+	if (len == 0 || len > MAX_VALLEN)
+		return (XEVNT_LEN);
 	if ((r = BN_bin2bn((u_char *)ep->pkt, len, NULL)) == NULL) {
 		msyslog(LOG_ERR, "crypto_bob2: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
@@ -2540,8 +2604,10 @@ crypto_bob2(
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&vp->tstamp, 12);
 	EVP_SignUpdate(&ctx, vp->ptr, len);
-	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-		vp->siglen = htonl(sign_siglen);
+	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
+		INSIST(len <= sign_siglen);
+		vp->siglen = htonl(len);
+	}
 	return (XEVNT_OK);
 }
 
@@ -2769,8 +2835,10 @@ crypto_alice3(
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&vp->tstamp, 12);
 	EVP_SignUpdate(&ctx, vp->ptr, len);
-	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-		vp->siglen = htonl(sign_siglen);
+	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
+		INSIST(len <= sign_siglen);
+		vp->siglen = htonl(len);
+	}
 	return (XEVNT_OK);
 }
 
@@ -2810,7 +2878,9 @@ crypto_bob3(
 	/*
 	 * Extract r from the challenge.
 	 */
-	len = ntohl(ep->vallen);
+	len = exten_payload_size(ep);
+	if (len == 0 || len > MAX_VALLEN)
+		return (XEVNT_LEN);
 	if ((r = BN_bin2bn((u_char *)ep->pkt, len, NULL)) == NULL) {
 		msyslog(LOG_ERR, "crypto_bob3: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
@@ -2869,8 +2939,10 @@ crypto_bob3(
 	EVP_SignInit(&ctx, sign_digest);
 	EVP_SignUpdate(&ctx, (u_char *)&vp->tstamp, 12);
 	EVP_SignUpdate(&ctx, vp->ptr, len);
-	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-		vp->siglen = htonl(sign_siglen);
+	if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
+		INSIST(len <= sign_siglen);
+		vp->siglen = htonl(len);
+	}
 	return (XEVNT_OK);
 }
 
@@ -3027,8 +3099,11 @@ cert_sign(
 	if (tstamp == 0)
 		return (XEVNT_TSP);
 
+	len = exten_payload_size(ep);
+	if (len == 0 || len > MAX_VALLEN)
+		return (XEVNT_LEN);
 	cptr = (void *)ep->pkt;
-	if ((req = d2i_X509(NULL, &cptr, ntohl(ep->vallen))) == NULL) {
+	if ((req = d2i_X509(NULL, &cptr, len)) == NULL) {
 		msyslog(LOG_ERR, "cert_sign: %s",
 		    ERR_error_string(ERR_get_error(), NULL));
 		return (XEVNT_CRT);
@@ -3106,8 +3181,10 @@ cert_sign(
 		EVP_SignInit(&ctx, sign_digest);
 		EVP_SignUpdate(&ctx, (u_char *)vp, 12);
 		EVP_SignUpdate(&ctx, vp->ptr, len);
-		if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey))
-			vp->siglen = htonl(sign_siglen);
+		if (EVP_SignFinal(&ctx, vp->sig, &len, sign_pkey)) {
+			INSIST(len <= sign_siglen);
+			vp->siglen = htonl(len);
+		}
 	}
 #ifdef DEBUG
 	if (debug > 1)
@@ -3390,11 +3467,8 @@ cert_parse(
 				ret->flags |= CERT_TRUST;
 			else if (strcmp(pathbuf, "Private") == 0)
 				ret->flags |= CERT_PRIV;
-#if DEBUG
-			if (debug)
-				printf("cert_parse: %s: %s\n",
-				    OBJ_nid2ln(temp), pathbuf);
-#endif
+			DPRINTF(1, ("cert_parse: %s: %s\n",
+				    OBJ_nid2ln(temp), pathbuf));
 			break;
 
 		/*
@@ -3405,12 +3479,10 @@ cert_parse(
 			ret->grpkey = BN_bin2bn(&ext->value->data[2],
 			    ext->value->length - 2, NULL);
 			/* fall through */
-#if DEBUG
 		default:
-			if (debug)
-				printf("cert_parse: %s\n",
-				    OBJ_nid2ln(temp));
-#endif
+			DPRINTF(1, ("cert_parse: %s\n",
+				    OBJ_nid2ln(temp)));
+			break;
 		}
 	}
 	if (strcmp(ret->subject, ret->issuer) == 0) {
@@ -3595,9 +3667,9 @@ crypto_key(
 	snprintf(statstr, sizeof(statstr), "%s mod %d", &linkname[2],
 	    EVP_PKEY_size(pkey) * 8);
 	record_crypto_stats(addr, statstr);
+	
+	DPRINTF(1, ("crypto_key: %s\n", statstr));
 #ifdef DEBUG
-	if (debug)
-		printf("crypto_key: %s\n", statstr);
 	if (debug > 1) {
 		if (pkey->type == EVP_PKEY_DSA)
 			DSA_print_fp(stdout, pkey->pkey.dsa, 0);
@@ -3712,10 +3784,7 @@ crypto_cert(
 	snprintf(statstr, sizeof(statstr), "%s 0x%x len %lu",
 	    &linkname[2], ret->flags, len);
 	record_crypto_stats(NULL, statstr);
-#ifdef DEBUG
-	if (debug)
-		printf("crypto_cert: %s\n", statstr);
-#endif
+	DPRINTF(1, ("crypto_cert: %s\n", statstr));
 	return (ret);
 }
 
@@ -3785,12 +3854,8 @@ crypto_setup(void)
 		get_systime(&seed);
 		RAND_seed(&seed, sizeof(l_fp));
 		RAND_write_file(randfile);
-#ifdef DEBUG
-		if (debug)
-			printf(
-			    "crypto_setup: OpenSSL version %lx random seed file %s bytes read %d\n",
-			    SSLeay(), randfile, bytes);
-#endif
+		DPRINTF(1, ("crypto_setup: OpenSSL version %lx random seed file %s bytes read %d\n",
+			    SSLeay(), randfile, bytes));
 	}
 
 	/*
@@ -3919,10 +3984,7 @@ crypto_setup(void)
 	snprintf(statstr, sizeof(statstr), "setup 0x%x host %s %s",
 	    crypto_flags, hostname, OBJ_nid2ln(cinfo->nid));
 	record_crypto_stats(NULL, statstr);
-#ifdef DEBUG
-	if (debug)
-		printf("crypto_setup: %s\n", statstr);
-#endif
+	DPRINTF(1, ("crypto_setup: %s\n", statstr));
 }
 
 
@@ -3937,10 +3999,8 @@ crypto_config(
 {
 	int	nid;
 
-#ifdef DEBUG
-	if (debug > 1)
-		printf("crypto_config: item %d %s\n", item, cp);
-#endif
+	DPRINTF(1, ("crypto_config: item %d %s\n", item, cp));
+
 	switch (item) {
 
 	/*
@@ -3991,6 +4051,36 @@ crypto_config(
 			crypto_nid = nid;
 		break;
 	}
+}
+
+/*
+ * Get the  payload size (internal value length) of an extension packet.
+ * If the inner value size does not match the outer packet size (that
+ * is, the value would end behind the frame given by the opcode/size
+ * field) the function will effectively return UINT_MAX. If the frame is
+ * too short to hold a variable-sized value, the return value is zero.
+ */
+static u_int
+exten_payload_size(
+	const struct exten * ep)
+{
+	typedef const u_char *BPTR;
+	
+	size_t extn_size;
+	size_t data_size;
+	size_t head_size;
+
+	data_size = 0;
+	if (NULL != ep) {
+		head_size = (BPTR)(&ep->vallen + 1) - (BPTR)ep;
+		extn_size = (uint16_t)(ntohl(ep->opcode) & 0x0000ffff);
+		if (extn_size >= head_size) {
+			data_size = (uint32_t)ntohl(ep->vallen);
+			if (data_size > extn_size - head_size)
+				data_size = ~(size_t)0u;
+		}
+	}
+	return (u_int)data_size;
 }
 # else	/* !AUTOKEY follows */
 int ntp_crypto_bs_pubkey;

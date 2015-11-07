@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lists.h,v 1.1.1.2.16.1 2014/12/25 02:13:01 snj Exp $	*/
+/*	$NetBSD: ntp_lists.h,v 1.1.1.2.16.2 2015/11/07 22:46:14 snj Exp $	*/
 
 /*
  * ntp_lists.h - linked lists common code
@@ -217,9 +217,9 @@ do {								\
 								\
 	for (pentry = (listhead);				\
 	     pentry != NULL;					\
-	     pentry = pentry->nextlink){			\
-		NTP_INSIST(pentry != pentry->nextlink);		\
-		NTP_INSIST((listhead) != pentry->nextlink);	\
+	     pentry = pentry->nextlink) {			\
+		INSIST(pentry != pentry->nextlink);		\
+		INSIST((listhead) != pentry->nextlink);		\
 	}							\
 } while (FALSE)
 

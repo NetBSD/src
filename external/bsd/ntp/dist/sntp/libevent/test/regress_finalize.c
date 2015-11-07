@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_finalize.c,v 1.2.4.2 2014/12/25 02:13:14 snj Exp $	*/
+/*	$NetBSD: regress_finalize.c,v 1.2.4.3 2015/11/07 22:46:23 snj Exp $	*/
 
 /*
  * Copyright (c) 2013 Niels Provos and Nick Mathewson
@@ -27,6 +27,7 @@
  */
 
 #include "event2/event-config.h"
+#include "evconfig-private.h"
 #include "tinytest.h"
 #include "tinytest_macros.h"
 #include <stdlib.h>

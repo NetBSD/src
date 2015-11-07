@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lineedit.c,v 1.3.16.1 2014/12/25 02:13:05 snj Exp $	*/
+/*	$NetBSD: ntp_lineedit.c,v 1.3.16.2 2015/11/07 22:46:16 snj Exp $	*/
 
 /*
  * ntp_lineedit.c - generic interface to various line editing libs
@@ -38,7 +38,7 @@
  * external references
  */
 
-extern char *	progname;
+extern char const *	progname;
 
 /*
  * globals, private prototypes

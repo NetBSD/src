@@ -1,4 +1,4 @@
-/*	$NetBSD: timepps-Solaris.h,v 1.1.1.1.22.1 2014/12/25 02:13:01 snj Exp $	*/
+/*	$NetBSD: timepps-Solaris.h,v 1.1.1.1.22.2 2015/11/07 22:46:14 snj Exp $	*/
 
 /***********************************************************************
  *								       *
@@ -415,7 +415,7 @@ time_pps_getparams(
 	}
 
 	punit = (pps_unit_t *)handle;
-	memcpy(params, &punit->params, sizeof(params));
+	memcpy(params, &punit->params, sizeof(*params));
 	return (0);
 }
 

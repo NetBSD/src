@@ -1,4 +1,4 @@
-/*	$NetBSD: chutest.c,v 1.1.1.1.22.1 2014/12/25 02:13:00 snj Exp $	*/
+/*	$NetBSD: chutest.c,v 1.1.1.1.22.2 2015/11/07 22:46:14 snj Exp $	*/
 
 /* chutest.c,v 3.1 1993/07/06 01:05:21 jbj Exp
  * chutest - test the CHU clock
@@ -58,7 +58,7 @@ struct chucode {
 
 #define	STREQ(a, b)	(*(a) == *(b) && strcmp((a), (b)) == 0)
 
-char *progname;
+char const *progname;
 
 int dofilter = 0;	/* set to 1 when we should run filter algorithm */
 int showtimes = 0;	/* set to 1 when we should show char arrival times */
