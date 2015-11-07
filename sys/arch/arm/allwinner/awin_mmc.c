@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.3.10.3 2014/12/04 11:08:38 martin Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.3.10.4 2015/11/07 16:15:03 riz Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3.10.3 2014/12/04 11:08:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3.10.4 2015/11/07 16:15:03 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -510,7 +510,10 @@ awin_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		sdly = awin_chip_id() == AWIN_CHIP_ID_A31 ? 0 : 7;
 		clksrc = AWIN_SD_CLK_SRC_SEL_OSC24M;
 		n = 2;
-		m = ((osc24m_freq / (1 << n)) / freq) - 1;
+		if (freq > 0)
+			m = ((osc24m_freq / (1 << n)) / freq) - 1;
+		else
+			m = 15;
 	} else if (freq <= 25000) {
 		odly = 0;
 		sdly = 5;
