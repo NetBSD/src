@@ -1,4 +1,4 @@
-/*	$NetBSD: t_posix_memalign.c,v 1.3 2015/11/07 16:21:42 nros Exp $ */
+/*	$NetBSD: t_posix_memalign.c,v 1.4 2015/11/07 17:35:31 nros Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_posix_memalign.c,v 1.3 2015/11/07 16:21:42 nros Exp $");
+__RCSID("$NetBSD: t_posix_memalign.c,v 1.4 2015/11/07 17:35:31 nros Exp $");
 
 #include <atf-c.h>
 
@@ -50,10 +50,10 @@ ATF_TC_HEAD(posix_memalign_basic, tc)
 }
 ATF_TC_BODY(posix_memalign_basic, tc)
 {
-	size_t size[] = {
+	static const size_t size[] = {
 		1, 2, 3, 4, 10, 100, 16384, 32768, 65536
 	};
-	size_t align[] = {
+	static const size_t align[] = {
 		512, 1024, 16, 32, 64, 4, 2048, 16, 2
 	};
 
@@ -64,7 +64,7 @@ ATF_TC_BODY(posix_memalign_basic, tc)
 		int ret;
 		p = (void*)0x1;
 
-		(void)printf("Checking posix_memalign(&p, %zd, %zd)...\n",
+		(void)printf("Checking posix_memalign(&p, %zu, %zu)...\n",
 			align[i], size[i]);
 		ret = posix_memalign(&p, align[i], size[i]);
 
@@ -104,7 +104,7 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 		    align[i], size[i]);
 		p = aligned_alloc(align[i], size[i]);
                 if (p == NULL) {
-			if (align[i] == 0 || ((align[i]-1) & align[i]) != 0 ||
+			if (align[i] == 0 || ((align[i] - 1) & align[i]) != 0 ||
 			    size[i] % align[i] != 0) {
 				ATF_REQUIRE_EQ_MSG(errno, EINVAL,
 				    "aligned_alloc: %s", strerror(errno));
@@ -118,7 +118,7 @@ ATF_TC_BODY(aligned_alloc_basic, tc)
 			ATF_REQUIRE_EQ_MSG(align[i] == 0, false,
 			    "aligned_alloc: success when alignment was not "
 			    "a power of 2");
-			ATF_REQUIRE_EQ_MSG((align[i]-1) & align[i], 0,
+			ATF_REQUIRE_EQ_MSG((align[i] - 1) & align[i], 0,
 			    "aligned_alloc: success when alignment was not "
 			    "a power of 2");
 			ATF_REQUIRE_EQ_MSG(size[i] % align[i], 0,
