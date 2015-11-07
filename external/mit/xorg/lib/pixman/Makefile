@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2015/11/06 21:32:22 szptvlfn Exp $
+#	$NetBSD: Makefile,v 1.34 2015/11/07 20:45:03 szptvlfn Exp $
 
 NOLINT=	1	# defined
 
@@ -61,7 +61,7 @@ SRCS+=	pixman-sse2.c pixman-ssse3.c
 COPTS.pixman-sse2.c=	-msse2 -fvisibility=hidden
 COPTS.pixman-ssse3.c=	-msse3 -mssse3 -fvisibility=hidden
 CPPFLAGS+=		-DUSE_SSE2 -DUSE_SSSE3
-MKDEPFLAGS+=		-msse2 -mssse3 -mssse3 -fvisibility=hidden
+MKDEPFLAGS+=		-msse2 -msse3 -mssse3 -fvisibility=hidden
 .endif
 
 .if ${MACHINE_ARCH} == "powerpc"
