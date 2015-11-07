@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_commondata.c,v 1.12 2015/11/07 00:42:04 christos Exp $	*/
+/*	$NetBSD: rpc_commondata.c,v 1.13 2015/11/07 14:21:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -31,14 +31,12 @@
  *   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define SVC_LEGACY
-
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
 static char *sccsid = "@(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_commondata.c,v 1.12 2015/11/07 00:42:04 christos Exp $");
+__RCSID("$NetBSD: rpc_commondata.c,v 1.13 2015/11/07 14:21:32 christos Exp $");
 #endif
 #endif
 
