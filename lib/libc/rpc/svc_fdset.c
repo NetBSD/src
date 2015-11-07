@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.6 2015/11/07 03:06:32 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.7 2015/11/07 16:58:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.6 2015/11/07 03:06:32 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.7 2015/11/07 16:58:24 christos Exp $");
 
 
 #include "reentrant.h"
@@ -219,10 +219,13 @@ svc_fdset_zero(void)
 	fds->fdmax = -1;
 }
 
-void
+int
 svc_fdset_set(int fd)
 {
 	struct svc_fdset *fds = svc_fdset_alloc(fd);
+
+	if (fds == NULL)
+		return -1;
 
 	FD_SET(fd, fds->fdset);
 	if (fd > fds->fdmax)
@@ -231,6 +234,7 @@ svc_fdset_set(int fd)
 	DPRINTF_FDSET(fds, "%d", fd);
 
 	svc_fdset_sanitize(fds);
+	return 0;
 }
 
 int
@@ -238,20 +242,27 @@ svc_fdset_isset(int fd)
 {
 	struct svc_fdset *fds = svc_fdset_alloc(fd);
 
+	if (fds == NULL)
+		return -1;
+
 	DPRINTF_FDSET(fds, "%d", fd);
 
-	return FD_ISSET(fd, fds->fdset);
+	return FD_ISSET(fd, fds->fdset) != 0;
 }
 
-void
+int
 svc_fdset_clr(int fd)
 {
 	struct svc_fdset *fds = svc_fdset_alloc(fd);
+
+	if (fds == NULL)
+		return -1;
 
 	FD_CLR(fd, fds->fdset);
 	DPRINTF_FDSET(fds, "%d", fd);
 
 	svc_fdset_sanitize(fds);
+	return 0;
 }
 
 fd_set *
@@ -271,6 +282,9 @@ svc_fdset_get(void)
 {
 	struct svc_fdset *fds = svc_fdset_alloc(0);
 
+	if (fds == NULL)
+		return NULL;
+
 	DPRINTF_FDSET(fds, "get");
 	svc_fdset_sanitize(fds);
 	return fds->fdset;
@@ -281,6 +295,9 @@ svc_fdset_getmax(void)
 {
 	struct svc_fdset *fds = svc_fdset_alloc(0);
 
+	if (fds == NULL)
+		return NULL;
+
 	DPRINTF_FDSET(fds, "getmax");
 	svc_fdset_sanitize(fds);
 	return &fds->fdmax;
@@ -290,6 +307,9 @@ int
 svc_fdset_getsize(int fd)
 {
 	struct svc_fdset *fds = svc_fdset_alloc(fd);
+
+	if (fds == NULL)
+		return -1;
 
 	DPRINTF_FDSET(fds, "getsize");
 	return fds->fdsize;
