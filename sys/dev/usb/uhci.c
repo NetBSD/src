@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.46 2015/11/01 12:09:48 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.47 2015/11/07 08:05:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.46 2015/11/01 12:09:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.47 2015/11/07 08:05:30 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1554,10 +1554,12 @@ uhci_idone(struct uhci_xfer *ux)
 	}
 
 #ifdef UHCI_DEBUG
-	DPRINTFN(10, "ux=%p, xfer=%p, pipe=%p ready",
-	    ux, xfer, upipe, 0);
-	if (uhcidebug >= 10)
+	DPRINTFN(10, "ux=%p, xfer=%p, pipe=%p ready", ux, xfer, upipe, 0);
+	if (uhcidebug >= 10) {
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		uhci_dump_tds(ux->ux_stdstart);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
+	}
 #endif
 
 	/* The transfer is done, compute actual length and status. */
@@ -2073,8 +2075,10 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 8) {
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		DPRINTFN(8, "data(1)", 0, 0, 0, 0);
 		uhci_dump_tds(data);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
 
@@ -2102,8 +2106,10 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 10) {
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		DPRINTFN(10, "data(2)", 0, 0, 0, 0);
 		uhci_dump_tds(data);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
 
@@ -2347,14 +2353,14 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	    sizeof(dataend->td.td_status),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 10) {
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->intr.qhs[0]);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
 
 	/* Set up interrupt info. */
 	ux->ux_stdstart = data;
@@ -2378,14 +2384,14 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_lock);
 
-	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 10) {
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		uhci_dump_tds(data);
 		uhci_dump_qh(upipe->intr.qhs[0]);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
 
 	return USBD_IN_PROGRESS;
 }
@@ -2528,14 +2534,14 @@ uhci_device_request(struct usbd_xfer *xfer)
 	usb_syncmem(&stat->dma, stat->offs, sizeof(stat->td),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 10) {
-		DPRINTFN(10, "before transfer", 0, 0, 0, 0);
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
+		DPRINTF("before transfer", 0, 0, 0, 0);
 		uhci_dump_tds(setup);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
 
 	/* Set up interrupt info. */
 	uxfer->ux_stdstart = setup;
@@ -2554,7 +2560,6 @@ uhci_device_request(struct usbd_xfer *xfer)
 	else
 		uhci_add_hs_ctrl(sc, sqh);
 	uhci_add_intr_info(sc, uxfer);
-	DPRINTFN(12, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 12) {
 		uhci_soft_td_t *std;
@@ -2562,6 +2567,8 @@ uhci_device_request(struct usbd_xfer *xfer)
 		uhci_soft_qh_t *sxqh;
 		int maxqh = 0;
 		uhci_physaddr_t link;
+
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		DPRINTFN(12, "follow from [0]", 0, 0, 0, 0);
 		for (std = sc->sc_vframes[0].htd, link = 0;
 		     (link & UHCI_PTR_QH) == 0;
@@ -2580,9 +2587,9 @@ uhci_device_request(struct usbd_xfer *xfer)
 		DPRINTFN(12, "Enqueued QH:", 0, 0, 0, 0);
 		uhci_dump_qh(sqh);
 		uhci_dump_tds(sqh->elink);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	DPRINTFN(12, "--- dump end ---", 0, 0, 0, 0);
 	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 			    uhci_timeout, xfer);
@@ -2683,14 +2690,14 @@ uhci_device_isoc_enter(struct usbd_xfer *xfer)
 		std->td.td_token |= htole32(UHCI_TD_SET_MAXLEN(len));
 		usb_syncmem(&std->dma, std->offs, sizeof(std->td),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-		DPRINTFN(5, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
 		if (uhcidebug >= 5) {
+			DPRINTF("--- dump start ---", 0, 0, 0, 0);
 			DPRINTF("TD %d", i, 0, 0, 0);
 			uhci_dump_td(std);
+			DPRINTF("--- dump end ---", 0, 0, 0, 0);
 		}
 #endif
-		DPRINTFN(5, "--- dump end ---", 0, 0, 0, 0);
 		buf += len;
 		offs += len;
 	}
@@ -2961,7 +2968,9 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	if (ux->ux_stdend == NULL) {
 		printf("uhci_device_isoc_done: xfer=%p stdend==NULL\n", xfer);
 #ifdef UHCI_DEBUG
+		DPRINTF("--- dump start ---", 0, 0, 0, 0);
 		uhci_dump_ii(ux);
+		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 #endif
 		return;
 	}
@@ -3034,14 +3043,14 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 		    sizeof(dataend->td.td_status),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-		DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef UHCI_DEBUG
 		if (uhcidebug >= 10) {
+			DPRINTF("--- dump start ---", 0, 0, 0, 0);
 			uhci_dump_tds(data);
 			uhci_dump_qh(upipe->intr.qhs[0]);
+			DPRINTF("--- dump end ---", 0, 0, 0, 0);
 		}
 #endif
-		DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
 
 		ux->ux_stdstart = data;
 		ux->ux_stdend = dataend;
