@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.56 2014/01/22 00:25:16 christos Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.57 2015/11/07 14:29:10 phx Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.56 2014/01/22 00:25:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.57 2015/11/07 14:29:10 phx Exp $");
 
 #include "grfcv.h"
 #include "ite.h"
@@ -75,7 +75,6 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.56 2014/01/22 00:25:16 christos Exp $")
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/isr.h>
 #include <amiga/dev/grfioctl.h>
-#include <amiga/dev/grfws.h>
 #include <amiga/dev/grfvar.h>
 #include <amiga/dev/grf_cvreg.h>
 #include <amiga/dev/zbusvar.h>
@@ -90,7 +89,8 @@ static unsigned short cv_compute_clock(unsigned long);
 void	cv_boardinit(struct grf_softc *);
 int	cv_getvmode(struct grf_softc *, struct grfvideo_mode *);
 int	cv_setvmode(struct grf_softc *, unsigned int);
-int	cv_blank(struct grf_softc *, int *);
+int	cv_blank(struct grf_softc *, int);
+int	cv_isblank(struct grf_softc *);
 int	cv_mode(register struct grf_softc *, u_long, void *, u_long, int);
 int	cv_ioctl(register struct grf_softc *gp, u_long cmd, void *data);
 int	cv_setmonitor(struct grf_softc *, struct grfvideo_mode *);
@@ -270,6 +270,8 @@ long cv_memclk = 50000000;
 
 #if NWSDISPLAY > 0
 /* wsdisplay acessops, emulops */
+static int	cv_wsioctl(void *, void *, u_long, void *, int, struct lwp *);
+
 static void	cv_wscursor(void *, int, int, int);
 static void	cv_wsputchar(void *, int, int, u_int, long);
 static void	cv_wscopycols(void *, int, int, int, int);
@@ -280,7 +282,7 @@ static int	cv_wsallocattr(void *, int, int, int, long *);
 static int	cv_wsmapchar(void *, int, unsigned int *);
 
 static struct wsdisplay_accessops cv_accessops = {
-	.ioctl		= grf_wsioctl,
+	.ioctl		= cv_wsioctl,
 	.mmap		= grf_wsmmap
 };
 
@@ -295,24 +297,21 @@ static struct wsdisplay_emulops cv_textops = {
 	.allocattr	= cv_wsallocattr
 };
 
-static struct ws_ao_ioctl cv_wsioctl = {
-	grf_wsaoginfo,
-	grf_wsaogetcmap,
-	grf_wsaoputcmap,
-	grf_wsaogvideo,
-	grf_wsaosvideo,
-	grf_wsaogmode,
-	grf_wsaosmode,
-	grf_wsaogtype
-};
-
-static struct wsscreen_descr cv_screen = {
+static struct wsscreen_descr cv_defaultscreen = {
 	.name		= "default",
 	.textops	= &cv_textops,
 	.fontwidth	= 8,
 	.fontheight	= S3FONTY,
 	.capabilities	= WSSCREEN_HILIT | WSSCREEN_BLINK |
 			  WSSCREEN_REVERSE | WSSCREEN_UNDERLINE
+};
+
+static const struct wsscreen_descr *cv_screens[] = {
+	&cv_defaultscreen,
+};
+
+static struct wsscreen_list cv_screenlist = {
+	sizeof(cv_screens) / sizeof(struct wsscreen_descr *), cv_screens
 };
 #endif  /* NWSDISPLAY > 0 */
 
@@ -540,9 +539,8 @@ grfcvattach(device_t parent, device_t self, void *aux)
 #if NWSDISPLAY > 0
 		gp->g_accessops = &cv_accessops;
 		gp->g_emulops = &cv_textops;
-		gp->g_defaultscreen = cv_screen;
-		gp->g_screens[0] = &gp->g_defaultscreen;
-		gp->g_wsioctl = &cv_wsioctl;
+		gp->g_defaultscr = &cv_defaultscreen;
+		gp->g_scrlist = &cv_screenlist;
 #else
 		grfcv_iteinit(gp);
 #endif
@@ -946,13 +944,25 @@ cv_setvmode(struct grf_softc *gp, unsigned mode)
 
 
 int
-cv_blank(struct grf_softc *gp, int *on)
+cv_blank(struct grf_softc *gp, int on)
 {
 	volatile void *ba;
 
 	ba = gp->g_regkva;
-	gfx_on_off(*on > 0 ? 0 : 1, ba);
+	gfx_on_off(on > 0 ? 0 : 1, ba);
 	return (0);
+}
+
+
+int
+cv_isblank(struct grf_softc *gp)
+{
+	volatile void *ba;
+	int r;
+
+	ba = gp->g_regkva;
+	r = RSeq(ba, SEQ_ID_CLOCKING_MODE);
+	return (r & 0x20) != 0;
 }
 
 
@@ -1055,7 +1065,7 @@ cv_ioctl(register struct grf_softc *gp, u_long cmd, void *data)
 		return (cv_setmonitor (gp, (struct grfvideo_mode *)data));
 
 	    case GRFIOCBLANK:
-		return (cv_blank (gp, (int *)data));
+		return (cv_blank (gp, *(int *)data));
 	}
 	return (EPASSTHROUGH);
 }
@@ -2442,6 +2452,43 @@ cv_wsmapchar(void *c, int ch, unsigned int *cp)
 	}
 	*cp = ' ';
 	return 0;
+}
+
+static int
+cv_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
+{
+	struct vcons_data *vd;
+	struct grf_softc *gp;
+
+	vd = v;
+	gp = vd->cookie;
+
+	switch (cmd) {
+	case WSDISPLAYIO_GETCMAP:
+		/* Note: wsdisplay_cmap and grf_colormap have same format */
+		if (gp->g_display.gd_planes == 8)
+			return cv_getcmap(gp, (struct grf_colormap *)data);
+		return EINVAL;
+
+	case WSDISPLAYIO_PUTCMAP:
+		/* Note: wsdisplay_cmap and grf_colormap have same format */
+		if (gp->g_display.gd_planes == 8)
+			return cv_putcmap(gp, (struct grf_colormap *)data);
+		return EINVAL;
+
+	case WSDISPLAYIO_GVIDEO:
+		if (cv_isblank(gp))
+			*(u_int *)data = WSDISPLAYIO_VIDEO_OFF;
+		else
+			*(u_int *)data = WSDISPLAYIO_VIDEO_ON;
+		return 0;
+
+	case WSDISPLAYIO_SVIDEO:
+		return cv_blank(gp, *(u_int *)data == WSDISPLAYIO_VIDEO_OFF);
+	}
+
+	/* handle this command hw-independant in grf(4) */
+	return grf_wsioctl(v, vs, cmd, data, flag, l);
 }
 
 #endif  /* NWSDISPLAY > 0 */
