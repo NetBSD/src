@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11.2.1 2014/12/25 02:34:20 snj Exp $
+#	$NetBSD: Makefile,v 1.11.2.2 2015/11/07 22:26:23 snj Exp $
 
 .include <bsd.own.mk>
 
@@ -29,6 +29,7 @@ SRCS=	cmd_args.c				\
 	ntpd-opts.c				\
 	ntpd.c					\
 	ntpsim.c				\
+	rc_cmdlength.c				\
 	refclock_acts.c				\
 	refclock_arbiter.c			\
 	refclock_arc.c				\
@@ -83,9 +84,9 @@ DIST=${IDIST}/ntpd
 CPPFLAGS+=-I${IDIST}/include -I${IDIST}/sntp/libopts -I${IDIST}/ntpd -I${.CURDIR}
 
 .PATH: ${DIST}
+YHEADER=1
 
 .include <bsd.prog.mk>
 
 # kill default .y.c rule - to rebuild ntp_parser.c we need bison which is not part of the toolchain
 .y.c:
-

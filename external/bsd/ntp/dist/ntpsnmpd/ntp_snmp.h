@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_snmp.h,v 1.1.1.1.2.1 2014/12/25 02:34:39 snj Exp $	*/
+/*	$NetBSD: ntp_snmp.h,v 1.1.1.1.2.2 2015/11/07 22:26:38 snj Exp $	*/
 
 /*
  * ntp_snmp.h -- common net-snmp header includes and workaround
@@ -27,6 +27,9 @@
 #endif
 #ifdef PACKAGE_TARNAME
 # undef PACKAGE_TARNAME
+#endif
+#ifdef PACKAGE_URL
+# undef PACKAGE_URL
 #endif
 #ifdef PACKAGE_VERSION
 # undef PACKAGE_VERSION

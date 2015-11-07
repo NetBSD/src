@@ -1,4 +1,25 @@
-dnl NTP_ENABLE_LOCAL_LIBEVENT				     -*- Autoconf -*-
+# SYNOPSIS						-*- Autoconf -*-
+#
+#  NTP_ENABLE_LOCAL_LIBEVENT
+#  NTP_LIBEVENT_CHECK([MINVERSION [, DIR]])
+#  NTP_LIBEVENT_CHECK_NOBUILD([MINVERSION [, DIR]])
+#
+# DESCRIPTION
+#
+# AUTHOR
+#
+#  Harlan Stenn
+#
+# LICENSE
+#
+#  This file is Copyright (c) 2014 Network Time Foundation
+# 
+#  Copying and distribution of this file, with or without modification, are
+#  permitted in any medium without royalty provided the copyright notice,
+#  author attribution and this notice are preserved.  This file is offered
+#  as-is, without any warranty.
+
+dnl NTP_ENABLE_LOCAL_LIBEVENT
 dnl
 dnl Provide only the --enable-local-libevent command-line option.
 dnl
@@ -29,7 +50,7 @@ dnl If NOBUILD is provided as the 3rd argument, do all of the above,
 dnl but DO NOT invoke DIR/configure if we are going to use our bundled
 dnl version.  This may be the case for nested packages.
 dnl
-dnl provide --enable-local-libevent .
+dnl provides: --enable-local-libevent 
 dnl
 dnl Examples:
 dnl
@@ -43,6 +64,7 @@ AC_REQUIRE([NTP_ENABLE_LOCAL_LIBEVENT])dnl
 ntp_libevent_min_version=m4_default([$1], [2.0.9])
 ntp_libevent_tearoff=m4_default([$2], [libevent])
 
+AC_SUBST([CFLAGS_LIBEVENT])
 AC_SUBST([CPPFLAGS_LIBEVENT])
 AC_SUBST([LDADD_LIBEVENT])
 
@@ -57,6 +79,7 @@ case "$ntp_use_local_libevent" in
 	then
 	    ntp_use_local_libevent=no
 	    AC_MSG_NOTICE([Using the installed libevent])
+	    CFLAGS_LIBEVENT=`$PKG_CONFIG --cflags libevent_pthreads`
 	    CPPFLAGS_LIBEVENT=`$PKG_CONFIG --cflags-only-I libevent`
 	    # HMS: I hope the following is accurate.
 	    # We don't need -levent, we only need  -levent_core.
@@ -85,6 +108,9 @@ case "$ntp_use_local_libevent" in
 	    AC_MSG_RESULT([yes])
 	else
 	    ntp_use_local_libevent=yes
+	    # HMS: do we only need to do this if LIBISC_PTHREADS_NOTHREADS
+	    # is "pthreads"?
+	    CFLAGS_LIBEVENT=`$PKG_CONFIG --cflags libevent_pthreads`
 	    AC_MSG_RESULT([no])
 	fi
 	;;
@@ -107,6 +133,22 @@ case "$ntp_use_local_libevent" in
 	LDADD_LIBEVENT="\$(top_builddir)/$ntp_libevent_tearoff/libevent_core.la"
     esac
 esac
+
+dnl AC_ARG_ENABLE(
+dnl     [cflags-libevent],
+dnl     [AC_HELP_STRING(
+dnl 	[--enable-cflags-libevent=-pthread],
+dnl 	[CFLAGS value to build with pthreads]
+dnl     )],
+dnl     [CFLAGS_LIBEVENT=$enableval],
+dnl     [# See above about LIBISC_PTHREADS_NOTHREADS
+dnl     case "$CFLAGS_LIBEVENT" in
+dnl      '') CFLAGS_LIBEVENT="-pthread" ;;	
+dnl      *) ;;
+dnl     esac]
+dnl )
+dnl AC_MSG_NOTICE([LIBISC_PTHREADS_NOTHREADS is <$LIBISC_PTHREADS_NOTHREADS>])
+dnl AC_MSG_NOTICE([CFLAGS_LIBEVENT is <$CFLAGS_LIBEVENT>])
 
 AM_CONDITIONAL([BUILD_LIBEVENT], [test "x$ntp_use_local_libevent" = "xyes"])
 

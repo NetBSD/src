@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5.2.1 2014/12/25 02:34:21 snj Exp $
+# $NetBSD: Makefile,v 1.5.2.2 2015/11/07 22:26:23 snj Exp $
 
 USE_FORT?= yes	# network client/server
 
@@ -35,15 +35,15 @@ WARNS=1
 LIBEVENTDIR=${.CURDIR}/../../dist/sntp/libevent
 CPPFLAGS+=-I${LIBEVENTDIR}/include -I${.CURDIR}
 .PATH: ${LIBEVENTDIR}
-SRCS+=	\
-	event.c \
-	evmap.c \
-	evthread.c \
-	evutil.c \
-	evutil_rand.c \
-	evutil_time.c \
-	evlog.c \
-	kqueue.c \
-	signal.c \
+SRCS+= \
+       event.c \
+       evmap.c \
+       evthread.c \
+       evutil.c \
+       evutil_rand.c \
+       evutil_time.c \
+       evlog.c \
+       kqueue.c \
+       signal.c \
 
 .include <bsd.prog.mk>

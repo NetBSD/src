@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_oncore.c,v 1.6.2.1 2014/12/25 02:34:38 snj Exp $	*/
+/*	$NetBSD: refclock_oncore.c,v 1.6.2.2 2015/11/07 22:26:37 snj Exp $	*/
 
 /*
  * ----------------------------------------------------------------------------
@@ -380,7 +380,7 @@ static	void	oncore_compute_dH     (struct instance *);
 static	void	oncore_load_almanac   (struct instance *);
 static	void	oncore_log	      (struct instance *, int, const char *);
 static	int	oncore_log_f	      (struct instance *, int, const char *, ...)
-		NTP_PRINTF(3, 4);
+		NTP_SYSLOG(3, 4);
 static	void	oncore_print_Cb       (struct instance *, u_char *);
 /* static  void    oncore_print_array	 (u_char *, int);	*/
 static	void	oncore_print_posn     (struct instance *);
