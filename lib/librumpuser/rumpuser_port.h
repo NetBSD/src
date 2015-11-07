@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpuser_port.h,v 1.46 2015/09/21 21:50:16 pooka Exp $	*/
+/*	$NetBSD: rumpuser_port.h,v 1.47 2015/11/07 16:21:42 nros Exp $	*/
 
 #ifndef _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
 #define _LIB_LIBRUMPUSER_RUMPUSER_PORT_H_
@@ -12,6 +12,7 @@
  */
 #if !defined(RUMPUSER_CONFIG)
 
+#define HAVE_ALIGNED_ALLOC 1
 #define HAVE_ARC4RANDOM_BUF 1
 #define HAVE_CHFLAGS 1
 #define HAVE_CLOCKID_T 1
