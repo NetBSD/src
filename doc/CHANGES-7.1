@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.20 2015/11/06 23:04:30 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.21 2015/11/07 01:56:08 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -757,4 +757,15 @@ sys/external/bsd/drm2/dist/drm/nouveau/nouveau_drm.c 1.6
 
 	Get nouveaudrm text console working.
 	[riastradh, ticket #1002]
+
+external/cddl/osnet/dev/dtrace/dtrace_ioctl.c	1.5
+
+	Fix dtrace module autoload.
+	[riastradh, ticket #1003]
+
+sys/arch/arm/allwinner/awin_gpio.c		1.19-1.20
+
+	Print the port name when gpio(4) attaches, making it easier
+	to find which port is connected to which gpio instance.
+	[bouyer, ticket #1004]
 
