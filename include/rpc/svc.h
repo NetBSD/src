@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.h,v 1.27 2015/11/06 19:42:57 christos Exp $	*/
+/*	$NetBSD: svc.h,v 1.28 2015/11/07 16:58:24 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -316,8 +316,8 @@ extern fd_set  *svc_fdset_copy(const fd_set *);
 
 extern void	svc_fdset_zero(void);
 extern int	svc_fdset_isset(int);
-extern void	svc_fdset_clr(int);
-extern void	svc_fdset_set(int);
+extern int	svc_fdset_clr(int);
+extern int	svc_fdset_set(int);
 
 extern fd_set  *svc_fdset_get(void);
 extern int	svc_fdset_getsize(int);
