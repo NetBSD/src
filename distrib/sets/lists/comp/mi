@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2002 2015/11/07 00:12:57 joerg Exp $
+#	$NetBSD: mi,v 1.2003 2015/11/07 13:28:05 joerg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -348,7 +348,6 @@
 ./usr/include/cdk/swindow.h			comp-obsolete		obsolete
 ./usr/include/cdk/template.h			comp-obsolete		obsolete
 ./usr/include/cdk/viewer.h			comp-obsolete		obsolete
-./usr/include/clang-3.6/stdatomic.h	comp-c-include		llvm
 ./usr/include/clang-3.6/stdalign.h		comp-c-include		llvm
 ./usr/include/clang-3.6/stdatomic.h		comp-c-include		llvm
 ./usr/include/clang-3.6/stdnoreturn.h		comp-c-include		llvm
