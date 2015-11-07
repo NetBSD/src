@@ -105,4 +105,6 @@ GTM_longjmp:
 
 	.size GTM_longjmp, .-GTM_longjmp
 
+#if defined(__ELF__) && defined(__linux__)
 	.section .note.GNU-stack, "", @progbits
+#endif
