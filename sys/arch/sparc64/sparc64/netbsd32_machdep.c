@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.104 2015/10/31 02:36:17 nakayama Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.105 2015/11/07 11:47:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.104 2015/10/31 02:36:17 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.105 2015/11/07 11:47:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1324,7 +1324,8 @@ startlwp32(void *arg)
 	error = cpu_setmcontext32(l, &uc->uc_mcontext, uc->uc_flags);
 	KASSERT(error == 0);
 
-	kmem_free(uc, sizeof(ucontext32_t));
+	/* Note: we are freeing ucontext_t, not ucontext32_t. */
+	kmem_free(arg, sizeof(ucontext_t));
 	userret(l, 0, 0);
 }
 
