@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.21 2015/11/07 01:56:08 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.22 2015/11/07 16:43:38 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -768,4 +768,14 @@ sys/arch/arm/allwinner/awin_gpio.c		1.19-1.20
 	Print the port name when gpio(4) attaches, making it easier
 	to find which port is connected to which gpio instance.
 	[bouyer, ticket #1004]
+
+sys/arch/arm/allwinner/awin_mmc.c		1.22
+
+	Avoid a divide by 0 when unplugging a sd card.
+	[bouyer, ticket #1006]
+
+lib/libcurses/toucholap.c			1.16
+
+	Fix x/y editing error.
+	[uwe, ticket #1007]
 
