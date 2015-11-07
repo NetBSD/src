@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.346 2015/07/23 08:03:26 mrg Exp $
+#	$NetBSD: bsd.README,v 1.347 2015/11/07 23:53:28 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1540,6 +1540,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBEVENT?=	${DESTDIR}/usr/lib/libevent.a
 		LIBEVENT_OPENSSL?=	${DESTDIR}/usr/lib/libevent_openssl.a
 		LIBEVENT_PTHREADS?=	${DESTDIR}/usr/lib/libevent_pthreads.a
+		LIBEXECINFO?=	${DESTDIR}/usr/lib/libexecinfo.a
 		LIBEXPAT?=	${DESTDIR}/usr/lib/libexpat.a
 		LIBFETCH?=	${DESTDIR}/usr/lib/libfetch.a
 		LIBFORM?=	${DESTDIR}/usr/lib/libform.a
