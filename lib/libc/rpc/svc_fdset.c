@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.4 2015/11/06 23:11:09 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.5 2015/11/07 00:42:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.4 2015/11/06 23:11:09 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.5 2015/11/07 00:42:04 christos Exp $");
 
 
 #include "reentrant.h"
@@ -39,12 +39,20 @@ __RCSID("$NetBSD: svc_fdset.c,v 1.4 2015/11/06 23:11:09 christos Exp $");
 
 #include <rpc/rpc.h>
 
+#ifdef FDSET_DEBUG
+#include <stdio.h>
+#include <stdarg.h>
+#include <unistd.h>
+#include <lwp.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
 
+#include "svc_fdset.h"
+
 #undef svc_fdset
 #undef svc_maxfd
-extern fd_set svc_fdset;
+extern __fd_set_256 svc_fdset;
 extern int svc_maxfd;
 
 struct svc_fdset {
@@ -59,10 +67,6 @@ static struct svc_fdset __svc_fdset;
 static thread_key_t fdsetkey = -2;
 
 #ifdef FDSET_DEBUG
-#include <stdio.h>
-#include <stdarg.h>
-#include <unistd.h>
-#include <lwp.h>
 
 static void  __printflike(3, 0)
 svc_header(const char *func, size_t line, const char *fmt, va_list ap)
@@ -123,7 +127,7 @@ svc_fdset_sanitize(struct svc_fdset *fds)
 		fds->fdmax--;
 	/* Compat update */
 	if (fds == &__svc_fdset) {
-		svc_fdset = *__svc_fdset.fdset;
+		svc_fdset = *(__fd_set_256 *)__svc_fdset.fdset;
 		svc_maxfd = __svc_fdset.fdmax;
 	}
 }
