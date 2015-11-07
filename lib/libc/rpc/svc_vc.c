@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_vc.c,v 1.31 2015/11/06 19:34:13 christos Exp $	*/
+/*	$NetBSD: svc_vc.c,v 1.32 2015/11/07 17:34:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_tcp.c 1.21 87/08/11 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_tcp.c	2.2 88/08/01 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_vc.c,v 1.31 2015/11/06 19:34:13 christos Exp $");
+__RCSID("$NetBSD: svc_vc.c,v 1.32 2015/11/07 17:34:33 christos Exp $");
 #endif
 #endif
 
@@ -329,7 +329,9 @@ again:
 		 */
 		if (errno == EMFILE || errno == ENFILE) {
 			fd_set *cleanfds = svc_fdset_copy(svc_fdset_get());
-			int rv = __svc_clean_idle(cleanfds, 0, FALSE);
+			int rv = 0;
+			if (cleanfds)
+				rv = __svc_clean_idle(cleanfds, 0, FALSE);
 			free(cleanfds);
 			if (rv)
 				goto again;
@@ -761,7 +763,7 @@ svc_vc_rendezvous_ops(SVCXPRT *xprt)
 bool_t
 __svc_clean_idle(fd_set *fds, int timeout, bool_t cleanblock)
 {
-	int i, ncleaned, fdmax;
+	int i, ncleaned, *fdmax;
 	SVCXPRT *xprt, *least_active;
 	struct timeval tv, tdiff, tmax;
 	struct cf_conn *cd;
@@ -770,10 +772,17 @@ __svc_clean_idle(fd_set *fds, int timeout, bool_t cleanblock)
 	tmax.tv_sec = tmax.tv_usec = 0;
 	least_active = NULL;
 	rwlock_wrlock(&svc_fd_lock);
-	fdmax = *svc_fdset_getmax();
-	for (i = ncleaned = 0; i <= fdmax; i++) {
-		if (!svc_fdset_isset(i))
+	fdmax = svc_fdset_getmax();
+	if (fdmax == NULL)
+		return FALSE;
+	for (i = ncleaned = 0; i <= *fdmax; i++) {
+		switch (svc_fdset_isset(i)) {
+		case 0:
+		case -1:
 			continue;
+		default:
+			break;
+		}
 
 		xprt = __svc_xports[i];
 		if (xprt == NULL || xprt->xp_ops == NULL ||

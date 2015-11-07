@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_run.c,v 1.23 2015/11/06 19:34:13 christos Exp $	*/
+/*	$NetBSD: svc_run.c,v 1.24 2015/11/07 17:34:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc_run.c 1.1 87/10/13 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc_run.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc_run.c,v 1.23 2015/11/06 19:34:13 christos Exp $");
+__RCSID("$NetBSD: svc_run.c,v 1.24 2015/11/07 17:34:33 christos Exp $");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ svc_run(void)
 {
 	fd_set *readfds, *cleanfds;
 	struct timeval timeout;
-	int maxfd, fdsize;
+	int *maxfd, fdsize;
 #ifndef RUMP_RPC		
 	int probs = 0;
 #endif
@@ -92,9 +92,13 @@ svc_run(void)
 			free(cleanfds);
 			cleanfds = svc_fdset_copy(svc_fdset_get());
 		}
-		maxfd = *svc_fdset_getmax();
+		maxfd = svc_fdset_getmax();
+		if (maxfd == NULL) {
+			warn("can't get maxfd");
+			continue;
+		}
 		rwlock_unlock(&svc_fd_lock);
-		switch (select(maxfd + 1, readfds, NULL, NULL, &timeout)) {
+		switch (select(*maxfd + 1, readfds, NULL, NULL, &timeout)) {
 		case -1:
 #ifndef RUMP_RPC		
 			if ((errno == EINTR || errno == EBADF) && probs < 100) {
@@ -108,10 +112,12 @@ svc_run(void)
 			warn("%s: select failed", __func__);
 			goto out;
 		case 0:
-			__svc_clean_idle(cleanfds, 30, FALSE);
+			if (cleanfds)
+				__svc_clean_idle(cleanfds, 30, FALSE);
 			continue;
 		default:
-			svc_getreqset2(readfds, fdsize);
+			if (readfds)
+				svc_getreqset2(readfds, fdsize);
 #ifndef RUMP_RPC
 			probs = 0;
 #endif
