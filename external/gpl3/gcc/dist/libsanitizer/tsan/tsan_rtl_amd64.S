@@ -166,7 +166,7 @@ __tsan_report_race_thunk:
   ret
   .cfi_endproc
 
-#ifdef __linux__
+#if defined(__ELF__) && defined(__linux__)
 /* We do not need executable stack.  */
 .section        .note.GNU-stack,"",@progbits
 #endif
