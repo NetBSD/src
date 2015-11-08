@@ -1,7 +1,7 @@
-/*	$NetBSD: gettext.h,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
+/*	$NetBSD: gettext.h,v 1.1.1.1.6.2 2015/11/08 01:51:13 riz Exp $	*/
 
 /* Convenience header for conditional use of GNU <libintl.h>.
-   Copyright (C) 1995-1998, 2000-2002, 2004-2006, 2009-2014 Free Software
+   Copyright (C) 1995-1998, 2000-2002, 2004-2006, 2009-2015 Free Software
    Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify

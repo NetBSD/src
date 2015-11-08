@@ -1,4 +1,4 @@
-/*	$NetBSD: env.c,v 1.1.1.1.6.1 2014/12/24 00:05:26 riz Exp $	*/
+/*	$NetBSD: env.c,v 1.1.1.1.6.2 2015/11/08 01:51:12 riz Exp $	*/
 
 
 /**
@@ -15,7 +15,7 @@
 /*
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -50,7 +50,7 @@ LOCAL void
 doPrognameEnv(tOptions * pOpts, teEnvPresetType type)
 {
     char const *        env_opts = getenv(pOpts->pzPROGNAME);
-    token_list_t*       pTL;
+    token_list_t *      pTL;
     int                 sv_argc;
     proc_state_mask_t   sv_flag;
     char **             sv_argv;
@@ -84,7 +84,7 @@ doPrognameEnv(tOptions * pOpts, teEnvPresetType type)
      */
     {
         uintptr_t v = (uintptr_t)(pTL->tkn_list);
-        pOpts->origArgVect = (void *)(v - sizeof(char *));
+        pOpts->origArgVect = VOIDP(v - sizeof(char *));
     }
     pOpts->origArgCt   = (unsigned int)pTL->tkn_ct   + 1;
     pOpts->fOptSet    &= ~OPTPROC_ERRSTOP;
@@ -194,7 +194,7 @@ env_presets(tOptions * pOpts, teEnvPresetType type)
 {
     int        ct;
     tOptState  st;
-    char*      pzFlagName;
+    char *     pzFlagName;
     size_t     spaceLeft;
     char       zEnvName[ AO_NAME_SIZE ];
 

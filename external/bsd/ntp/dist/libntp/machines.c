@@ -1,4 +1,4 @@
-/*	$NetBSD: machines.c,v 1.1.1.3.4.1 2014/12/24 00:05:20 riz Exp $	*/
+/*	$NetBSD: machines.c,v 1.1.1.3.4.2 2015/11/08 01:51:07 riz Exp $	*/
 
 /* machines.c - provide special support for peculiar architectures
  *
@@ -42,7 +42,7 @@ struct hostent *gethostbyname(char *name)
 	{
 	struct hostent *host1;
 	h_errno = 0;					/* we are always successful!!! */
-	host1 = (struct hostent *) malloc (sizeof(struct hostent));
+	host1 = (struct hostent *) emalloc (sizeof(struct hostent));
 	host1->h_name = name;
 	host1->h_addrtype = AF_INET;
 	host1->h_aliases = name;
@@ -56,7 +56,7 @@ struct hostent *gethostbyaddr(char *name, int size, int addr_type)
 	{
 	struct hostent *host1;
 	h_errno = 0;  /* we are always successful!!! */
-	host1 = (struct hostent *) malloc (sizeof(struct hostent));
+	host1 = (struct hostent *) emalloc (sizeof(struct hostent));
 	host1->h_name = name;
 	host1->h_addrtype = AF_INET;
 	host1->h_aliases = name;
@@ -68,7 +68,7 @@ struct hostent *gethostbyaddr(char *name, int size, int addr_type)
 struct servent *getservbyname (char *name, char *type)
 	{
 	struct servent *serv1;
-	serv1 = (struct servent *) malloc (sizeof(struct servent));
+	serv1 = (struct servent *) emalloc (sizeof(struct servent));
 	serv1->s_name = "ntp";      /* official service name */
 	serv1->s_aliases = NULL;	/* alias list */
 	serv1->s_port = 123;		/* port # */

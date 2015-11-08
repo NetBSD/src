@@ -1,4 +1,4 @@
-/*	$NetBSD: libntpq.h,v 1.1.1.3.4.1 2014/12/24 00:05:22 riz Exp $	*/
+/*	$NetBSD: libntpq.h,v 1.1.1.3.4.2 2015/11/08 01:51:09 riz Exp $	*/
 
 /*****************************************************************************
  *
@@ -38,7 +38,7 @@
 #define NTP_STATUS_INVALID      0
 #define NTP_STATUS_FALSETICKER  1
 #define NTP_STATUS_EXCESS       2
-#define NTP_STATUS_OUTLYER      3
+#define NTP_STATUS_OUTLIER      3
 #define NTP_STATUS_CANDIDATE    4
 #define NTP_STATUS_SELECTED     5
 #define NTP_STATUS_SYSPEER      6
