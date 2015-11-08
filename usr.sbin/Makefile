@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.271 2015/08/17 06:42:46 knakahara Exp $
+#	$NetBSD: Makefile,v 1.272 2015/11/08 20:00:22 christos Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -20,7 +20,7 @@ SUBDIR=	ac accton acpitools altq apm apmd arp \
 	ndbootd ndiscvt netgroup_mkdb nfsd \
 	ofctl \
 	paxctl pcictl perfused psrset pstat pwd_mkdb postinstall \
-	powerd \
+	powerd puffs \
 	quot quotacheck quotaon quotarestore \
 	rarpd rbootd rdate repquota rmt rpc.bootparamd rpc.lockd \
 	rpc.pcnfsd rpc.statd rpcbind rwhod \
@@ -39,10 +39,6 @@ SUBDIR+= makemandb
 
 .if (${MKYP} != "no")
 SUBDIR+= rpc.yppasswdd ypbind yppoll ypserv ypset
-.endif
-
-.if (${MKRUMP} != "no")
-SUBDIR+= puffs
 .endif
 
 .if ${TOOLCHAIN_MISSING} != "no"
