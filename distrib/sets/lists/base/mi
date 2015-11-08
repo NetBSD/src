@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1115 2015/10/09 19:23:18 riz Exp $
+# $NetBSD: mi,v 1.1116 2015/11/08 20:00:22 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1719,10 +1719,10 @@
 ./usr/sbin/mopd					base-bootserver-bin
 ./usr/sbin/mopprobe				base-bootserver-bin
 ./usr/sbin/moptrace				base-bootserver-bin
-./usr/sbin/mount_9p				base-puffs-bin		rump
-./usr/sbin/mount_psshfs				base-puffs-bin		rump
+./usr/sbin/mount_9p				base-puffs-bin
+./usr/sbin/mount_psshfs				base-puffs-bin
 ./usr/sbin/mount_puffsportal			base-obsolete		obsolete
-./usr/sbin/mount_sysctlfs			base-puffs-bin		rump
+./usr/sbin/mount_sysctlfs			base-puffs-bin
 ./usr/sbin/mountd				base-nfsserver-bin
 ./usr/sbin/moused				base-sysutil-bin
 ./usr/sbin/mrinfo				base-router-bin
