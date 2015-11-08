@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.51 2015/11/08 15:15:50 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.52 2015/11/08 15:19:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.51 2015/11/08 15:15:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.52 2015/11/08 15:19:29 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1805,7 +1805,7 @@ uhci_alloc_std(uhci_softc_t *sc)
 		err = usb_allocmem(&sc->sc_bus, UHCI_STD_SIZE * UHCI_STD_CHUNK,
 			  UHCI_TD_ALIGN, &dma);
 		if (err)
-			return 0;
+			return NULL;
 		for (i = 0; i < UHCI_STD_CHUNK; i++) {
 			offs = i * UHCI_STD_SIZE;
 			std = KERNADDR(&dma, offs);
@@ -1852,7 +1852,7 @@ uhci_alloc_sqh(uhci_softc_t *sc)
 		err = usb_allocmem(&sc->sc_bus, UHCI_SQH_SIZE * UHCI_SQH_CHUNK,
 			  UHCI_QH_ALIGN, &dma);
 		if (err)
-			return 0;
+			return NULL;
 		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
