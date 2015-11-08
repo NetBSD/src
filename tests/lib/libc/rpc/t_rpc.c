@@ -1,7 +1,7 @@
-/*	$NetBSD: t_rpc.c,v 1.6 2015/11/08 19:38:04 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.7 2015/11/08 19:40:06 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.6 2015/11/08 19:38:04 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.7 2015/11/08 19:40:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -14,8 +14,6 @@ __RCSID("$NetBSD: t_rpc.c,v 1.6 2015/11/08 19:38:04 christos Exp $");
 #include <errno.h>
 #include <unistd.h>
 
-#define DEBUG
-#define TEST
 #ifndef TEST
 #include <atf-c.h>
 
@@ -324,7 +322,7 @@ ATF_TC_HEAD(tcp, tc)
 
 ATF_TC_BODY(tcp, tc)
 {
-	regtest("localhost", "tcp", 1, 0);
+	regtest("localhost", "tcp", "1", 0);
 
 }
 
@@ -336,7 +334,7 @@ ATF_TC_HEAD(udp, tc)
 
 ATF_TC_BODY(udp, tc)
 {
-	regtest("localhost", "udp", 1, 0);
+	regtest("localhost", "udp", "1", 0);
 
 }
 
@@ -348,7 +346,7 @@ ATF_TC_HEAD(tcp_poll, tc)
 
 ATF_TC_BODY(tcp_poll, tc)
 {
-	regtest("localhost", "tcp", 1, 1);
+	regtest("localhost", "tcp", "1", 1);
 
 }
 
@@ -360,7 +358,7 @@ ATF_TC_HEAD(udp_poll, tc)
 
 ATF_TC_BODY(udp_poll, tc)
 {
-	regtest("localhost", "udp", 1, 1);
+	regtest("localhost", "udp", "1", 1);
 
 }
 
