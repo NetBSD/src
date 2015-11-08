@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.47 2015/11/07 08:05:30 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.48 2015/11/08 13:33:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.47 2015/11/07 08:05:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.48 2015/11/08 13:33:49 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -172,12 +172,12 @@ Static uhci_soft_qh_t  *uhci_alloc_sqh(uhci_softc_t *);
 Static void		uhci_free_sqh(uhci_softc_t *, uhci_soft_qh_t *);
 #if 0
 Static void		uhci_enter_ctl_q(uhci_softc_t *, uhci_soft_qh_t *,
-					 uhci_intr_info_t *);
+			    uhci_intr_info_t *);
 Static void		uhci_exit_ctl_q(uhci_softc_t *, uhci_soft_qh_t *);
 #endif
 
 Static void		uhci_free_std_chain(uhci_softc_t *,
-					    uhci_soft_td_t *, uhci_soft_td_t *);
+			    uhci_soft_td_t *, uhci_soft_td_t *);
 Static usbd_status	uhci_alloc_std_chain(struct uhci_pipe *,
 			    uhci_softc_t *, int, int, uint16_t, usb_dma_t *,
 			    uhci_soft_td_t **, uhci_soft_td_t **);
