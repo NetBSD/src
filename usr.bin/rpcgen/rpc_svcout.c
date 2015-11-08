@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_svcout.c,v 1.30 2015/09/20 15:52:11 kamil Exp $	*/
+/*	$NetBSD: rpc_svcout.c,v 1.31 2015/11/08 01:59:31 christos Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
  * unrestricted use provided that this legend is included on all tape
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_svcout.c 1.29 89/03/30 (C) 1987 SMI";
 #else
-__RCSID("$NetBSD: rpc_svcout.c,v 1.30 2015/09/20 15:52:11 kamil Exp $");
+__RCSID("$NetBSD: rpc_svcout.c,v 1.31 2015/11/08 01:59:31 christos Exp $");
 #endif
 #endif
 
@@ -652,7 +652,6 @@ write_timeout_func(void)
 	f_print(fout, "closedown(void)\n");
 	f_print(fout, "{\n");
 	f_print(fout, "\tif (_rpcsvcdirty == 0) {\n");
-	f_print(fout, "\t\textern fd_set svc_fdset;\n");
 	f_print(fout, "\t\tstatic int size;\n");
 	f_print(fout, "\t\tint i, openfd;\n");
 	if (tirpcflag && pmflag) {
@@ -738,8 +737,6 @@ write_pm_most(char *infile, int netflag)
 	}
 	if (timerflag)
 		f_print(fout, "\t\tint pmclose;\n");
-/* not necessary, defined in /usr/include/stdlib */
-/*	f_print(fout, "\t\textern char *getenv();\n");*/
 	f_print(fout, "\n");
 	f_print(fout, "\t\t_rpcpmstart = 1;\n");
 	if (logflag)
