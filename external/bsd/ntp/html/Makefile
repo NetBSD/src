@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.14.1 2014/12/25 02:28:19 snj Exp $
+#	$NetBSD: Makefile,v 1.1.14.2 2015/11/08 00:16:11 snj Exp $
 
 .include <bsd.own.mk>
 .include "${.CURDIR}/../Makefile.inc"
@@ -112,7 +112,7 @@ NTP_DOCFILES= \
 _FDIR:=		ntp/${F:H}				# subdir
 _FDIR:=		${_FDIR:S,/.$,,}			# remove trivial directory
 _FNAME:=	${F:T}					# name override
-_F:=		${DESTDIR}${HTMLDOCDIR}/${_FDIR}/${_FNAME}		# installed path
+_F:=		${DESTDIR}${NTP_HTMLDIR}/${_FDIR}/${_FNAME}		# installed path
 _FILE:=		${F}
 
 .if ${MKUPDATE} == "no"

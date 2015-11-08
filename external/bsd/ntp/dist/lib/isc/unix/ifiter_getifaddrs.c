@@ -1,4 +1,4 @@
-/*	$NetBSD: ifiter_getifaddrs.c,v 1.2.10.1 2014/12/25 02:28:07 snj Exp $	*/
+/*	$NetBSD: ifiter_getifaddrs.c,v 1.2.10.2 2015/11/08 00:15:57 snj Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009  Internet Systems Consortium, Inc. ("ISC")
@@ -149,12 +149,31 @@ internal_current(isc_interfaceiter_t *iter) {
 	ifa = iter->pos;
 
 #ifdef __linux
+	/*
+	 * [Bug 2792]
+	 * burnicki: iter->pos is usually never NULL here (anymore?),
+	 * so linux_if_inet6_current(iter) is never called here.
+	 * However, that routine would check (under Linux), if the
+	 * interface is in a tentative state, e.g. if there's no link
+	 * yet but an IPv6 address has already be assigned.
+	 */
 	if (iter->pos == NULL)
 		return (linux_if_inet6_current(iter));
 #endif
 
 	INSIST(ifa != NULL);
 	INSIST(ifa->ifa_name != NULL);
+
+
+#ifdef IFF_RUNNING
+	/*
+	 * [Bug 2792]
+	 * burnicki: if the interface is not running then
+	 * it may be in a tentative state. See above.
+	 */
+	if ((ifa->ifa_flags & IFF_RUNNING) == 0)
+		return (ISC_R_IGNORE);
+#endif
 
 	if (ifa->ifa_addr == NULL)
 		return (ISC_R_IGNORE);
@@ -214,6 +233,9 @@ internal_current(isc_interfaceiter_t *iter) {
 		get_addr(family, &iter->current.broadcast, ifa->ifa_broadaddr,
 			 ifa->ifa_name);
 
+#ifdef ISC_PLATFORM_HAVEIFNAMETOINDEX
+	iter->current.ifindex = if_nametoindex(iter->current.name);
+#endif
 	return (ISC_R_SUCCESS);
 }
 

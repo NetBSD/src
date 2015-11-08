@@ -62,8 +62,10 @@ noinst_HEADERS =	\
 	ntpsim.h	\
 	parse.h		\
 	parse_conf.h	\
+	rc_cmdlength.h	\
 	recvbuff.h	\
 	refclock_atom.h	\
+	refidsmear.h	\
 	ssl_applink.c	\
 	timepps-SCO.h	\
 	timepps-Solaris.h	\

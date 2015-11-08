@@ -93,18 +93,27 @@ sub do_dns {
 sub ntp_peers {
     my ($host) = @_;
 
-    my $cmd = "$ntpq_path -np $host |";
+    $host ||= '';
+    my $cmd = "$ntpq_path -npw $host |";
 
     open my $fh, $cmd or croak "Could not start ntpq: $!";
 
     <$fh> for 1 .. 2;
 
-    my @columns = qw(remote refid st t when poll reach delay offset jitter);
+    my @columns = qw(tally host refid st t when poll reach delay offset jitter);
     my @peers;
     while (<$fh>) {
-        if (/(?:[\w\.\*-]+\s*){10}/) {
+        if (/^([ x+#*o-])((?:[\w.*:-]+\s+){10}|([\w.*:-]+\s+))$/) {
             my $col = 0;
-            push @peers, { map {; $columns[ $col++ ] => $_ } split /(?<=.)\s+/ };
+	    my @line = ($1, split /\s+/, $2);
+	    if( @line == 2 ) {
+		defined ($_ = <$fh>) or last;
+		s/^\s+//;
+		push @line, split /\s+/;
+	    }
+	    my $r = { map {; $columns[ $col++ ] => $_ } @line };
+	    $r->{remote} = $r->{tally} . $r->{host};
+            push @peers, $r;
         }
         else {
             #TODO return error (but not needed anywhere now)
@@ -130,8 +139,17 @@ sub ntp_sntp_line {
         my @output = split / /;
 
         $offset = $output[3];
-        ($stratum = pop @output) =~ s/s(\d{1,2})/$1/;
+	if (0) {
+	} elsif ($output[7] =~ /s(\d{1,2})/) {
+		$stratum = $1;
+		# warn "Found stratum at #7\n";
+	} elsif ($output[8] =~ /s(\d{1,2})/) {
+		$stratum = $1;
+		# warn "Found stratum at #8\n";
+	}
     }
     close $fh or croak "running sntp failed: $! (exit status $?)";
     return ($offset, $stratum);
 }
+
+1;
