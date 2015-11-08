@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.132 2015/11/04 23:57:06 knakahara Exp $
+# $NetBSD: mi,v 1.133 2015/11/08 20:00:22 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1114,10 +1114,10 @@
 ./usr/libdata/debug/usr/sbin/mopd.debug		comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/mopprobe.debug	comp-bootserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moptrace.debug	comp-bootserver-debug	debug
-./usr/libdata/debug/usr/sbin/mount_9p.debug	comp-puffs-debug	debug,rump
-./usr/libdata/debug/usr/sbin/mount_psshfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/mount_9p.debug	comp-puffs-debug	debug
+./usr/libdata/debug/usr/sbin/mount_psshfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/mount_puffsportal.debug	comp-obsolete	obsolete
-./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-puffs-debug	debug,rump
+./usr/libdata/debug/usr/sbin/mount_sysctlfs.debug	comp-puffs-debug	debug
 ./usr/libdata/debug/usr/sbin/mountd.debug	comp-nfsserver-debug	debug
 ./usr/libdata/debug/usr/sbin/moused.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/mrinfo.debug	comp-router-debug	debug
