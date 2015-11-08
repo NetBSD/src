@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_commondata.c,v 1.13 2015/11/07 14:21:32 christos Exp $	*/
+/*	$NetBSD: rpc_commondata.c,v 1.14 2015/11/08 02:46:53 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -36,7 +36,7 @@
 #if 0
 static char *sccsid = "@(#)rpc_commondata.c	2.1 88/07/29 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: rpc_commondata.c,v 1.13 2015/11/07 14:21:32 christos Exp $");
+__RCSID("$NetBSD: rpc_commondata.c,v 1.14 2015/11/08 02:46:53 christos Exp $");
 #endif
 #endif
 
@@ -48,10 +48,12 @@ __RCSID("$NetBSD: rpc_commondata.c,v 1.13 2015/11/07 14:21:32 christos Exp $");
  * by public interfaces 
  */
 struct opaque_auth _null_auth;
+#ifdef _LIBC
 #undef svc_fdset
 __fd_set_256 svc_fdset;
 #undef svc_maxfd
 int svc_maxfd = -1;
+#endif
 #ifndef _REENTRANT
 #undef rpc_createerr
 struct rpc_createerr rpc_createerr;

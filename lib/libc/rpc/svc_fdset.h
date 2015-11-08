@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.h,v 1.3 2015/11/07 00:42:04 christos Exp $	*/
+/*	$NetBSD: svc_fdset.h,v 1.4 2015/11/08 02:46:53 christos Exp $	*/
 
 # ifdef RUMP_RPC
 #  include <rump/rump.h>
@@ -17,6 +17,8 @@
 #  define	select(a, b, c, d, e)	rump_sys_select(a, b, c, d, e)
 # endif
 
+#ifdef _LIBC
 typedef struct __fd_set_256 {
 	__fd_mask fds_bits[__NFD_LEN(256)];
 } __fd_set_256;
+#endif
