@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.26 2015/11/08 01:56:46 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.27 2015/11/08 02:08:18 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1471,4 +1471,15 @@ external/bsd/ntp/scripts/mkver                  up to 1.7
 
 	Update ntp to 4.2.8p4.
 	[christos, ticket #1024]
+
+sys/compat/linux/common/linux_mod.c		1.5
+sys/compat/netbsd32/netbsd32_mod.c		1.6-1.9
+
+	Fixes for compat modules.
+	[pgoyette, ticket #1020]
+
+usr.sbin/vnconfig/vnconfig.8			1.40
+
+	In NetBSD 7, the vnconfig command was renamed.
+	[pgoyette, ticket #1025]
 
