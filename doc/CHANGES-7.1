@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.27 2015/11/08 02:08:18 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.28 2015/11/08 05:18:34 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1482,4 +1482,13 @@ usr.sbin/vnconfig/vnconfig.8			1.40
 
 	In NetBSD 7, the vnconfig command was renamed.
 	[pgoyette, ticket #1025]
+
+sys/dev/usb/uplcom.c				1.76
+
+	Don't pretend to do zero length IN control transfers as dwctwo(4)
+	(correctly according to usb 2.0 specification 8.5.3) uses IN
+	status stage when no (zero length) data stage.  Instead read
+	into a 1 byte array.
+	My uplcom(4) now works on RPI.
+	[skrll, ticket #1027]
 
