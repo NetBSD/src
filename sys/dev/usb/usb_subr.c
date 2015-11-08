@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.203 2015/10/26 15:07:07 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.204 2015/11/08 23:25:17 joerg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.203 2015/10/26 15:07:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.204 2015/11/08 23:25:17 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -791,6 +791,24 @@ usbd_attach_roothub(device_t parent, usbd_device_handle dev)
 	return (USBD_NORMAL_COMPLETION);
 }
 
+static void
+usbd_serialnumber(device_t dv, usbd_device_handle dev)
+{
+	usb_device_descriptor_t *dd = &dev->ddesc;
+	char *serialnumber;
+
+	serialnumber = malloc(USB_MAX_ENCODED_STRING_LEN, M_USB, M_NOWAIT);
+	if (serialnumber == NULL)
+		return;
+	serialnumber[0] = '\0';
+	(void)usbd_get_string(dev, dd->iSerialNumber, serialnumber);
+	if (serialnumber[0]) {
+		prop_dictionary_set_cstring(device_properties(dv),
+		    "serialnumber", serialnumber);
+	}
+	free(serialnumber, M_USB);
+}
+
 static usbd_status
 usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
 	int usegeneric)
@@ -827,6 +845,7 @@ usbd_attachwholedevice(device_t parent, usbd_device_handle dev, int port,
 		dev->subdevs[0] = dv;
 		dev->subdevlen = 1;
 		dev->nifaces_claimed = 1; /* XXX */
+		usbd_serialnumber(dv, dev);
 	}
 	return (USBD_NORMAL_COMPLETION);
 }
@@ -897,6 +916,9 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 					 usbd_ifprint, config_stdsubmatch);
 		if (!dv)
 			continue;
+
+		usbd_serialnumber(dv, dev);
+
 		/* claim */
 		ifaces[i] = NULL;
 		/* account for ifaces claimed by the driver behind our back */
