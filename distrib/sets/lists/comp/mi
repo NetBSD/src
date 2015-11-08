@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.1906.2.8 2015/06/04 20:29:49 snj Exp $
+#	$NetBSD: mi,v 1.1906.2.9 2015/11/08 00:24:25 riz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -6382,7 +6382,9 @@
 ./usr/share/man/cat3/erf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erfc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erfcf.0			comp-c-catman		.cat
+./usr/share/man/cat3/erfcl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/erff.0			comp-c-catman		.cat
+./usr/share/man/cat3/erfl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/err.0			comp-c-catman		.cat
 ./usr/share/man/cat3/errc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/error_message.0		comp-krb5-catman	kerberos,.cat
@@ -13245,7 +13247,9 @@
 ./usr/share/man/html3/erf.html			comp-c-htmlman		html
 ./usr/share/man/html3/erfc.html			comp-c-htmlman		html
 ./usr/share/man/html3/erfcf.html		comp-c-htmlman		html
+./usr/share/man/html3/erfcl.html		comp-c-htmlman		html
 ./usr/share/man/html3/erff.html			comp-c-htmlman		html
+./usr/share/man/html3/erfl.html			comp-c-htmlman		html
 ./usr/share/man/html3/err.html			comp-c-htmlman		html
 ./usr/share/man/html3/errc.html			comp-c-htmlman		html
 ./usr/share/man/html3/error_message.html	comp-krb5-htmlman	kerberos,html
@@ -20021,7 +20025,9 @@
 ./usr/share/man/man3/erf.3			comp-c-man		.man
 ./usr/share/man/man3/erfc.3			comp-c-man		.man
 ./usr/share/man/man3/erfcf.3			comp-c-man		.man
+./usr/share/man/man3/erfcl.3			comp-c-man		.man
 ./usr/share/man/man3/erff.3			comp-c-man		.man
+./usr/share/man/man3/erfl.3			comp-c-man		.man
 ./usr/share/man/man3/err.3			comp-c-man		.man
 ./usr/share/man/man3/errc.3			comp-c-man		.man
 ./usr/share/man/man3/error_message.3		comp-krb5-man		kerberos,.man
