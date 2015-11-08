@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.14 2015/11/08 14:56:21 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.15 2015/11/08 14:59:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@ struct uhci_xfer {
 #define UHCI_UPIPE2SC(d)	UHCI_BUS2SC((d)->pipe.up_dev->ud_bus)
 
 #define UHCI_XFER2UXFER(xfer)	((struct uhci_xfer *)(xfer))
-#define UHCI_PIPE2UPIPE(xfer)	((struct uhci_pipe *)(pipe))
+#define UHCI_PIPE2UPIPE(pipe)	((struct uhci_pipe *)(pipe))
 
 /*
  * Extra information that we need for a TD.
