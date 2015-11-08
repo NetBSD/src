@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.19 2015/05/09 18:32:04 dholland Exp $	*/
+/*	$NetBSD: util.c,v 1.20 2015/11/08 16:36:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -47,6 +47,11 @@
 #include <stdio.h>
 #include <arpa/inet.h>
 #include <err.h>
+
+#ifdef RPCBIND_RUMP
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+#endif
 
 #include "rpcbind.h"
 

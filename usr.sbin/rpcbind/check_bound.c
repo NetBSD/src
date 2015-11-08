@@ -1,4 +1,4 @@
-/*	$NetBSD: check_bound.c,v 1.5 2007/08/27 19:53:33 dsl Exp $	*/
+/*	$NetBSD: check_bound.c,v 1.6 2015/11/08 16:36:28 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -57,6 +57,11 @@ static	char sccsid[] = "@(#)check_bound.c 1.11 89/04/21 Copyr 1989 Sun Micro";
 #include <unistd.h>
 #include <stdlib.h>
 
+#ifdef RPCBIND_RUMP
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+#endif
+
 #include "rpcbind.h"
 
 struct fdlist {
@@ -99,7 +104,11 @@ check_bound(struct fdlist *fdl, const char *uaddr)
 
 	ans = bind(fd, (struct sockaddr *)na->buf, na->len);
 
+#ifdef RPCBIND_RUMP
+	rump_sys_close(fd);
+#else
 	close(fd);
+#endif
 	free(na);
 
 	return (ans == 0 ? FALSE : TRUE);

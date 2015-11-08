@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.22 2015/05/09 21:22:18 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.23 2015/11/08 16:36:28 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -72,8 +72,22 @@ static	char sccsid[] = "@(#)rpcbind.c 1.35 89/04/21 Copyr 1984 Sun Micro";
 #include <errno.h>
 #include "rpcbind.h"
 
+#ifdef RPCBIND_RUMP
+#include <semaphore.h>
+
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+
+#include "svc_fdset.h"
+
+extern sem_t gensem;
+#define DEBUGGING 1
+#else
+#define DEBUGGING 0
+#endif
+
 /* Global variables */
-int debugging = 0;	/* Tell me what's going on */
+int debugging = DEBUGGING;	/* Tell me what's going on */
 int doabort = 0;	/* When debugging, do an abort on errors */
 rpcblist_ptr list_rbl;	/* A list of version 3/4 rpcbind services */
 
@@ -106,17 +120,27 @@ static int init_transport(struct netconfig *);
 static void rbllist_add(rpcprog_t, rpcvers_t, struct netconfig *,
     struct netbuf *);
 __dead static void terminate(int);
+#ifndef RPCBIND_RUMP
 static void parseargs(int, char *[]);
 
 int
 main(int argc, char *argv[])
+#else
+int rpcbind_main(void *);
+int
+rpcbind_main(void *arg)
+#endif
 {
 	struct netconfig *nconf;
 	void *nc_handle;	/* Net config handle */
 	struct rlimit rl;
 	int maxrec = RPC_MAXDATASIZE;
 
+#ifdef RPCBIND_RUMP
+	svc_fdset_init(SVC_FDSET_MT);
+#else
 	parseargs(argc, argv);
+#endif
 
 	if (getrlimit(RLIMIT_NOFILE, &rl) == -1)
 		err(EXIT_FAILURE, "getrlimit(RLIMIT_NOFILE)");
@@ -158,7 +182,9 @@ main(int argc, char *argv[])
 	(void) signal(SIGQUIT, terminate);
 	/* ignore others that could get sent */
 	(void) signal(SIGPIPE, SIG_IGN);
+#ifndef RPCBIND_RUMP
 	(void) signal(SIGHUP, SIG_IGN);
+#endif
 	(void) signal(SIGUSR1, SIG_IGN);
 	(void) signal(SIGUSR2, SIG_IGN);
 #ifdef WARMSTART
@@ -196,6 +222,9 @@ main(int argc, char *argv[])
 
 	network_init();
 
+#ifdef RPCBIND_RUMP
+	sem_post(&gensem);
+#endif
 	my_svc_run();
 	syslog(LOG_ERR, "svc_run returned unexpectedly");
 	rpcbind_abort();
@@ -272,7 +301,11 @@ init_transport(struct netconfig *nconf)
 	if (!strcmp(nconf->nc_netid, "local")) {
 		(void)memset(&sun, 0, sizeof sun);
 		sun.sun_family = AF_LOCAL;
+#ifdef RPCBIND_RUMP
+		(void)rump_sys_unlink(_PATH_RPCBINDSOCK);
+#else
 		(void)unlink(_PATH_RPCBINDSOCK);
+#endif
 		(void)strlcpy(sun.sun_path, _PATH_RPCBINDSOCK,
 		    sizeof(sun.sun_path));
 		sun.sun_len = SUN_LEN(&sun);
@@ -301,9 +334,11 @@ init_transport(struct netconfig *nconf)
 			freeaddrinfo(res);
 		return 1;
 	}
+#ifndef RPCBIND_RUMP
 	if (sa->sa_family == AF_LOCAL)
 		if (chmod(sun.sun_path, S_IRWXU|S_IRWXG|S_IRWXO) == -1)
 			warn("Cannot chmod `%s'", sun.sun_path);
+#endif
 
 	/* Copy the address */
 	taddr.addr.len = taddr.addr.maxlen = addrlen;
@@ -325,7 +360,8 @@ init_transport(struct netconfig *nconf)
 		nb.buf = sa;
 		nb.len = nb.maxlen = sa->sa_len;
 		uaddr = taddr2uaddr(nconf, &nb);
-		(void)fprintf(stderr, "rpcbind: my address is %s\n", uaddr);
+		(void)fprintf(stderr, "rpcbind: my address is %s fd=%d\n",
+		    uaddr, fd);
 		(void)free(uaddr);
 	}
 #endif
@@ -486,7 +522,11 @@ init_transport(struct netconfig *nconf)
 	}
 	return (0);
 error:
+#ifdef RPCBIND_RUMP
+	(void)rump_sys_close(fd);
+#else
 	(void)close(fd);
+#endif
 	return (1);
 }
 
@@ -522,7 +562,11 @@ terminate(int dummy)
 		"rpcbind terminating on signal. Restart with \"rpcbind -w\"");
 	write_warmstart();	/* Dump yourself */
 #endif
+#ifdef RPCBIND_RUMP
+	exit(2);
+#else
 	exit(EXIT_FAILURE);
+#endif
 }
 
 void
@@ -534,6 +578,7 @@ rpcbind_abort()
 	abort();
 }
 
+#ifndef RPCBIND_RUMP
 /* get command line options */
 static void
 parseargs(int argc, char *argv[])
@@ -577,6 +622,7 @@ parseargs(int argc, char *argv[])
 	    doabort = 0;
 	}
 }
+#endif
 
 void
 reap(int dummy)
