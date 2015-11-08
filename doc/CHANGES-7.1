@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.24 2015/11/08 01:24:53 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.25 2015/11/08 01:29:28 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -857,4 +857,10 @@ sys/dev/sdmmc/sdhcvar.h				1.25
 
 	Support 8-bit eMMC for TI AM335x. 
 	[jmcneill, ticket #1022]
+
+sys/fs/tmpfs/tmpfs_subr.c			1.101
+
+	Fix crash when tmpfs fills up.  PR#50381.
+	Fixes PR kern/50381.
+	[leot, ticket #1023]
 
