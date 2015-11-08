@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.25 2015/11/08 01:29:28 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.26 2015/11/08 01:56:46 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -863,4 +863,612 @@ sys/fs/tmpfs/tmpfs_subr.c			1.101
 	Fix crash when tmpfs fills up.  PR#50381.
 	Fixes PR kern/50381.
 	[leot, ticket #1023]
+
+doc/3RDPARTY					patch
+external/bsd/ntp/dist/tests/libntp/atoint.c     up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/atouint.c    up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/authkeys.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/buftvtots.c  up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/calendar.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/caljulian.c  up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/caltontp.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/calyearstart.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/clocktime.c  up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/decodenetnum.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/lfptest.c    up to 1.1.1.1
+external/bsd/ntp/dist/tests/libntp/sockaddrtest.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/libntp/hextolfp.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/humandate.c  up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/lfpfunc.c    up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/lfptostr.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/modetoa.c    up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/msyslog.c    up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/netof.c      up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/numtoa.c     up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/numtohost.c  up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/octtoint.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/prettydate.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/recvbuff.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/refidsmear.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/refnumtoa.c  up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-a_md5encrypt.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-atoint.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/socktoa.c    up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/ssl_init.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/statestr.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/strtolfp.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/test-libntp.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/timevalops.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/tstotv.c     up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/tvtots.c     up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/uglydate.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/vi64ops.c    up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/ymd2yd.c     up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-netof.c  up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/a_md5encrypt.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-msyslog.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/hextoint.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-atouint.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-authkeys.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-buftvtots.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-calendar.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-caljulian.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-caltontp.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-calyearstart.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-clocktime.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-decodenetnum.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-hextoint.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-hextolfp.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-humandate.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-lfpfunc.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-lfptostr.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-modetoa.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-numtoa.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-numtohost.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-octtoint.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-prettydate.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-recvbuff.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-refidsmear.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-refnumtoa.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-sfptostr.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-socktoa.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-ssl_init.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-statestr.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-strtolfp.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-timespecops.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-timevalops.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-tstotv.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-tvtots.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-uglydate.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-vi64ops.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/run-ymd2yd.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/sfptostr.c   up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/test-libntp.h up to 1.1.1.3
+external/bsd/ntp/dist/tests/libntp/timespecops.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/ntpd/rc_cmdlength.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/run-leapsec.c  up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/leapsec.c      up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/ntp_prio_q.c   up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/ntp_restrict.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/run-ntp_prio_q.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/run-ntp_restrict.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/run-rc_cmdlength.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/run-t-ntp_scanner.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/run-t-ntp_signd.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/t-ntp_scanner.c up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpd/t-ntp_signd.c  up to 1.1.1.1
+external/bsd/ntp/dist/tests/bug-2803/Makefile.am up to 1.1.1.2
+external/bsd/ntp/dist/tests/bug-2803/Makefile.in up to 1.1.1.2
+external/bsd/ntp/dist/tests/bug-2803/bug-2803.c up to 1.1.1.2
+external/bsd/ntp/dist/tests/bug-2803/run-bug-2803.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/sandbox/Makefile.am up to 1.1.1.2
+external/bsd/ntp/dist/tests/sandbox/Makefile.in up to 1.1.1.2
+external/bsd/ntp/dist/tests/sandbox/bug-2803.c  up to 1.1.1.2
+external/bsd/ntp/dist/tests/sandbox/modetoa.c   up to 1.1.1.2
+external/bsd/ntp/dist/tests/sandbox/run-modetoa.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/sandbox/run-uglydate.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/sandbox/run-ut-2803.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/sandbox/smeartest.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/sandbox/uglydate.c  up to 1.1.1.2
+external/bsd/ntp/dist/tests/sandbox/ut-2803.c   up to 1.1.1.2
+external/bsd/ntp/dist/tests/sec-2853/Makefile.am up to 1.1.1.2
+external/bsd/ntp/dist/tests/sec-2853/Makefile.in up to 1.1.1.2
+external/bsd/ntp/dist/tests/sec-2853/run-sec-2853.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/sec-2853/sec-2853.c up to 1.1.1.3
+external/bsd/ntp/dist/tests/ntpq/Makefile.am    up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpq/Makefile.in    up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpq/run-t-ntpq.c   up to 1.1.1.1
+external/bsd/ntp/dist/tests/ntpq/t-ntpq.c       up to 1.1.1.1
+external/bsd/ntp/dist/libjsmn/example/jsondump.c up to 1.1.1.2
+external/bsd/ntp/dist/libjsmn/example/simple.c  up to 1.1.1.2
+external/bsd/ntp/dist/README.leapsmear          up to 1.1.1.1
+external/bsd/ntp/dist/html/drivers/driver40-ja.html up to 1.1.1.1
+external/bsd/ntp/dist/include/refidsmear.h      up to 1.1.1.2
+external/bsd/ntp/dist/include/rc_cmdlength.h    up to 1.1.1.1
+external/bsd/ntp/dist/libntp/refidsmear.c       up to 1.1.1.2
+external/bsd/ntp/dist/ntpd/rc_cmdlength.c       up to 1.3
+external/bsd/ntp/dist/scripts/update-leap/update-leap.in up to 1.1.1.1
+external/bsd/ntp/dist/scripts/update-leap/update-leap.sh up to 1.1.1.1
+external/bsd/ntp/dist/sntp/libevent/build-aux/ar-lib up to 1.1.1.1
+external/bsd/ntp/dist/sntp/libevent/build-aux/test-driver up to 1.1.1.1
+external/bsd/ntp/dist/sntp/m4/ntp_unitytest.m4  up to 1.1.1.1
+external/bsd/ntp/dist/sntp/m4/ntp_problemtests.m4 up to 1.1.1.1
+external/bsd/ntp/dist/sntp/tests/run-t-log.c    up to 1.1.1.1
+external/bsd/ntp/dist/sntp/tests/kodFile.c      up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/packetHandling.c up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/packetProcessing.c up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-crypto.c   up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-keyFile.c  up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/sntptest.c     up to 1.1.1.1
+external/bsd/ntp/dist/sntp/tests/networking.c   up to 1.1.1.2
+external/bsd/ntp/dist/sntp/tests/crypto.c       up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/fileHandlingTest.h.in up to 1.1.1.2
+external/bsd/ntp/dist/sntp/tests/t-log.c        up to 1.1.1.1
+external/bsd/ntp/dist/sntp/tests/keyFile.c      up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/kodDatabase.c  up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-kodDatabase.c up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-kodFile.c  up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-networking.c up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-packetHandling.c up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-packetProcessing.c up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/run-utilities.c up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/utilities.c    up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/fileHandlingTest.c up to 1.1.1.1
+external/bsd/ntp/dist/sntp/libpkgver/colcomp.c  up to 1.1.1.2
+external/bsd/ntp/dist/sntp/libpkgver/pkgver.h   up to 1.1.1.2
+external/bsd/ntp/dist/sntp/version.c            up to 1.1.1.3
+external/bsd/ntp/dist/sntp/unity/auto/colour_prompt.rb up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/auto/colour_reporter.rb up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/auto/generate_config.yml up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/auto/generate_module.rb up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/auto/generate_test_runner.rb up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/auto/runner_maybe.c up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/auto/test_file_filter.rb up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/auto/unity_test_summary.rb up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/auto/parseOutput.rb up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/auto/type_sanitizer.rb up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/auto/unity_test_summary.py up to 1.1.1.1
+external/bsd/ntp/dist/sntp/unity/Makefile.am    up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/Makefile.in    up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/unity.c        up to 1.1.1.3
+external/bsd/ntp/dist/sntp/unity/unity.h        up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/unity_fixture.c up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/unity_fixture.h up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/unity_fixture_internals.h up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/unity_fixture_malloc_overrides.h up to 1.1.1.2
+external/bsd/ntp/dist/sntp/unity/unity_internals.h up to 1.1.1.3
+external/bsd/ntp/dist/sntp/unity/unity_config.h up to 1.1.1.1
+external/bsd/ntp/dist/scripts/update-leap/update-leap delete
+external/bsd/ntp/dist/sntp/tests_main.cpp       delete
+external/bsd/ntp/dist/sntp/tests_main.h         delete
+external/bsd/ntp/dist/sntp/libevent/sample/dns-example.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/event-read-fifo.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/hello-world.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/hostcheck.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/hostcheck.h delete
+external/bsd/ntp/dist/sntp/libevent/sample/http-server.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/https-client.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/include.am delete
+external/bsd/ntp/dist/sntp/libevent/sample/le-proxy.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/openssl_hostname_validation.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/openssl_hostname_validation.h delete
+external/bsd/ntp/dist/sntp/libevent/sample/signal-test.c delete
+external/bsd/ntp/dist/sntp/libevent/sample/time-test.c delete
+external/bsd/ntp/dist/sntp/tests/crypto.cpp     delete
+external/bsd/ntp/dist/sntp/tests/fileHandlingTest.h delete
+external/bsd/ntp/dist/sntp/tests/keyFile.cpp    delete
+external/bsd/ntp/dist/sntp/tests/kodDatabase.cpp delete
+external/bsd/ntp/dist/sntp/tests/kodFile.cpp    delete
+external/bsd/ntp/dist/sntp/tests/networking.cpp delete
+external/bsd/ntp/dist/sntp/tests/packetHandling.cpp delete
+external/bsd/ntp/dist/sntp/tests/packetProcessing.cpp delete
+external/bsd/ntp/dist/sntp/tests/utilities.cpp  delete
+external/bsd/ntp/dist/tests/libntp/a_md5encrypt.cpp delete
+external/bsd/ntp/dist/tests/libntp/atoint.cpp   delete
+external/bsd/ntp/dist/tests/libntp/atouint.cpp  delete
+external/bsd/ntp/dist/tests/libntp/authkeys.cpp delete
+external/bsd/ntp/dist/tests/libntp/buftvtots.cpp delete
+external/bsd/ntp/dist/tests/libntp/calendar.cpp delete
+external/bsd/ntp/dist/tests/libntp/caljulian.cpp delete
+external/bsd/ntp/dist/tests/libntp/caltontp.cpp delete
+external/bsd/ntp/dist/tests/libntp/calyearstart.cpp delete
+external/bsd/ntp/dist/tests/libntp/clocktime.cpp delete
+external/bsd/ntp/dist/tests/libntp/decodenetnum.cpp delete
+external/bsd/ntp/dist/tests/libntp/hextoint.cpp delete
+external/bsd/ntp/dist/tests/libntp/hextolfp.cpp delete
+external/bsd/ntp/dist/tests/libntp/humandate.cpp delete
+external/bsd/ntp/dist/tests/libntp/lfpfunc.cpp  delete
+external/bsd/ntp/dist/tests/libntp/lfptostr.cpp delete
+external/bsd/ntp/dist/tests/libntp/libntptest.cpp delete
+external/bsd/ntp/dist/tests/libntp/libntptest.h delete
+external/bsd/ntp/dist/tests/libntp/modetoa.cpp  delete
+external/bsd/ntp/dist/tests/libntp/msyslog.cpp  delete
+external/bsd/ntp/dist/tests/libntp/netof.cpp    delete
+external/bsd/ntp/dist/tests/libntp/numtoa.cpp   delete
+external/bsd/ntp/dist/tests/libntp/numtohost.cpp delete
+external/bsd/ntp/dist/tests/libntp/octtoint.cpp delete
+external/bsd/ntp/dist/tests/libntp/prettydate.cpp delete
+external/bsd/ntp/dist/tests/libntp/recvbuff.cpp delete
+external/bsd/ntp/dist/tests/libntp/refnumtoa.cpp delete
+external/bsd/ntp/dist/tests/libntp/sfptostr.cpp delete
+external/bsd/ntp/dist/tests/libntp/socktoa.cpp  delete
+external/bsd/ntp/dist/tests/libntp/ssl_init.cpp delete
+external/bsd/ntp/dist/tests/libntp/statestr.cpp delete
+external/bsd/ntp/dist/tests/libntp/strtolfp.cpp delete
+external/bsd/ntp/dist/tests/libntp/timespecops.cpp delete
+external/bsd/ntp/dist/tests/libntp/timestructs.cpp delete
+external/bsd/ntp/dist/tests/libntp/timestructs.h delete
+external/bsd/ntp/dist/tests/libntp/timevalops.cpp delete
+external/bsd/ntp/dist/tests/libntp/tstotv.cpp   delete
+external/bsd/ntp/dist/tests/libntp/tvtots.cpp   delete
+external/bsd/ntp/dist/tests/libntp/uglydate.cpp delete
+external/bsd/ntp/dist/tests/libntp/vi64ops.cpp  delete
+external/bsd/ntp/dist/tests/libntp/ymd2yd.cpp   delete
+external/bsd/ntp/dist/tests/ntpd/leapsec.cpp    delete
+external/bsd/ntp/dist/tests/ntpd/ntpdtest.cpp   delete
+external/bsd/ntp/dist/tests/ntpd/ntpdtest.h     delete
+external/bsd/ntp/importdate                     up to 1.7
+external/bsd/ntp/bin/ntpd/Makefile              up to 1.19
+external/bsd/ntp/dist/ChangeLog                 up to 1.1.1.7
+external/bsd/ntp/dist/CommitLog                 up to 1.1.1.7
+external/bsd/ntp/dist/Makefile.am               up to 1.1.1.7
+external/bsd/ntp/dist/Makefile.in               up to 1.1.1.7
+external/bsd/ntp/dist/NEWS                      up to 1.1.1.7
+external/bsd/ntp/dist/aclocal.m4                up to 1.1.1.7
+external/bsd/ntp/dist/bootstrap                 up to 1.1.1.5
+external/bsd/ntp/dist/config.h.in               up to 1.1.1.6
+external/bsd/ntp/dist/configure                 up to 1.1.1.7
+external/bsd/ntp/dist/configure.ac              up to 1.1.1.7
+external/bsd/ntp/dist/packageinfo.sh            up to 1.1.1.7
+external/bsd/ntp/dist/adjtimed/Makefile.in      up to 1.1.1.7
+external/bsd/ntp/dist/adjtimed/adjtimed.c       up to 1.4
+external/bsd/ntp/dist/clockstuff/Makefile.in    up to 1.1.1.7
+external/bsd/ntp/dist/clockstuff/chutest.c      up to 1.4
+external/bsd/ntp/dist/clockstuff/propdelay.c    up to 1.4
+external/bsd/ntp/dist/html/decode.html          up to 1.1.1.5
+external/bsd/ntp/dist/html/miscopt.html         up to 1.1.1.6
+external/bsd/ntp/dist/html/refclock.html        up to 1.1.1.4
+external/bsd/ntp/dist/html/stats.html           up to 1.1.1.3
+external/bsd/ntp/dist/html/drivers/driver22.html up to 1.1.1.4
+external/bsd/ntp/dist/html/drivers/driver40.html up to 1.1.1.4
+external/bsd/ntp/dist/html/drivers/driver46.html up to 1.1.1.2
+external/bsd/ntp/dist/include/Makefile.am       up to 1.1.1.6
+external/bsd/ntp/dist/include/Makefile.in       up to 1.1.1.7
+external/bsd/ntp/dist/include/ntp_assert.h      up to 1.4
+external/bsd/ntp/dist/include/ntp_calendar.h    up to 1.5
+external/bsd/ntp/dist/include/ntp_config.h      up to 1.9
+external/bsd/ntp/dist/include/ntp_control.h     up to 1.4
+external/bsd/ntp/dist/include/ntp_io.h          up to 1.3
+external/bsd/ntp/dist/include/ntp_lists.h       up to 1.4
+external/bsd/ntp/dist/include/ntp_stdlib.h      up to 1.11
+external/bsd/ntp/dist/include/ntp_syslog.h      up to 1.4
+external/bsd/ntp/dist/include/ntp_types.h       up to 1.4
+external/bsd/ntp/dist/include/ntpd.h            up to 1.7
+external/bsd/ntp/dist/include/parse.h           up to 1.4
+external/bsd/ntp/dist/include/isc/Makefile.in   up to 1.1.1.7
+external/bsd/ntp/dist/kernel/Makefile.in        up to 1.1.1.7
+external/bsd/ntp/dist/kernel/sys/Makefile.in    up to 1.1.1.7
+external/bsd/ntp/dist/lib/isc/unix/ifiter_getifaddrs.c up to 1.6
+external/bsd/ntp/dist/libjsmn/Makefile          up to 1.1.1.2
+external/bsd/ntp/dist/libjsmn/README.md         up to 1.1.1.2
+external/bsd/ntp/dist/libjsmn/jsmn.c            up to 1.4
+external/bsd/ntp/dist/libjsmn/jsmn.h            up to 1.3
+external/bsd/ntp/dist/libjsmn/jsmn_test.c       up to 1.3
+external/bsd/ntp/dist/libntp/Makefile.am        up to 1.1.1.5
+external/bsd/ntp/dist/libntp/Makefile.in        up to 1.1.1.7
+external/bsd/ntp/dist/libntp/atolfp.c           up to 1.7
+external/bsd/ntp/dist/libntp/audio.c            up to 1.9
+external/bsd/ntp/dist/libntp/authkeys.c         up to 1.7
+external/bsd/ntp/dist/libntp/authreadkeys.c     up to 1.7
+external/bsd/ntp/dist/libntp/caljulian.c        up to 1.4
+external/bsd/ntp/dist/libntp/caltontp.c         up to 1.4
+external/bsd/ntp/dist/libntp/decodenetnum.c     up to 1.4
+external/bsd/ntp/dist/libntp/emalloc.c          up to 1.6
+external/bsd/ntp/dist/libntp/icom.c             up to 1.8
+external/bsd/ntp/dist/libntp/machines.c         up to 1.4
+external/bsd/ntp/dist/libntp/msyslog.c          up to 1.4
+external/bsd/ntp/dist/libntp/ntp_calendar.c     up to 1.7
+external/bsd/ntp/dist/libntp/ntp_intres.c       up to 1.7
+external/bsd/ntp/dist/libntp/ntp_lineedit.c     up to 1.8
+external/bsd/ntp/dist/libntp/ntp_rfc2553.c      up to 1.4
+external/bsd/ntp/dist/libntp/ntp_worker.c       up to 1.4
+external/bsd/ntp/dist/libntp/prettydate.c       up to 1.7
+external/bsd/ntp/dist/libntp/recvbuff.c         up to 1.4
+external/bsd/ntp/dist/libntp/socket.c           up to 1.4
+external/bsd/ntp/dist/libntp/socktohost.c       up to 1.4
+external/bsd/ntp/dist/libntp/statestr.c         up to 1.4
+external/bsd/ntp/dist/libntp/strdup.c           up to 1.3
+external/bsd/ntp/dist/libntp/work_fork.c        up to 1.7
+external/bsd/ntp/dist/libparse/Makefile.in      up to 1.1.1.7
+external/bsd/ntp/dist/libparse/clk_meinberg.c   up to 1.5
+external/bsd/ntp/dist/libparse/clk_rawdcf.c     up to 1.6
+external/bsd/ntp/dist/libparse/clk_schmid.c     up to 1.4
+external/bsd/ntp/dist/libparse/parse.c          up to 1.4
+external/bsd/ntp/dist/ntpd/Makefile.am          up to 1.1.1.7
+external/bsd/ntp/dist/ntpd/Makefile.in          up to 1.1.1.7
+external/bsd/ntp/dist/ntpd/complete.conf.in     up to 1.1.1.3
+external/bsd/ntp/dist/ntpd/invoke-ntp.conf.texi up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/invoke-ntp.keys.texi up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/invoke-ntpd.texi     up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/keyword-gen-utd      up to 1.1.1.4
+external/bsd/ntp/dist/ntpd/keyword-gen.c        up to 1.7
+external/bsd/ntp/dist/ntpd/ntp.conf.5man        up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.conf.5mdoc       up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.conf.def         up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.conf.html        up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.conf.man.in      up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.conf.mdoc.in     up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.keys.5man        up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.keys.5mdoc       up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.keys.html        up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.keys.man.in      up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp.keys.mdoc.in     up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntp_config.c         up to 1.12
+external/bsd/ntp/dist/ntpd/ntp_control.c        up to 1.14
+external/bsd/ntp/dist/ntpd/ntp_crypto.c         up to 1.10
+external/bsd/ntp/dist/ntpd/ntp_io.c             up to 1.20
+external/bsd/ntp/dist/ntpd/ntp_keyword.h        up to 1.8
+external/bsd/ntp/dist/ntpd/ntp_leapsec.c        up to 1.4
+external/bsd/ntp/dist/ntpd/ntp_leapsec.h        up to 1.3
+external/bsd/ntp/dist/ntpd/ntp_loopfilter.c     up to 1.8
+external/bsd/ntp/dist/ntpd/ntp_monitor.c        up to 1.4
+external/bsd/ntp/dist/ntpd/ntp_parser.y         up to 1.11
+external/bsd/ntp/dist/ntpd/ntp_peer.c           up to 1.8
+external/bsd/ntp/dist/ntpd/ntp_proto.c          up to 1.9
+external/bsd/ntp/dist/ntpd/ntp_refclock.c       up to 1.8
+external/bsd/ntp/dist/ntpd/ntp_request.c        up to 1.12
+external/bsd/ntp/dist/ntpd/ntp_restrict.c       up to 1.7
+external/bsd/ntp/dist/ntpd/ntp_scanner.c        up to 1.9
+external/bsd/ntp/dist/ntpd/ntp_scanner.h        up to 1.3
+external/bsd/ntp/dist/ntpd/ntp_timer.c          up to 1.5
+external/bsd/ntp/dist/ntpd/ntpd-opts.c          up to 1.5
+external/bsd/ntp/dist/ntpd/ntpd-opts.def        up to 1.1.1.4
+external/bsd/ntp/dist/ntpd/ntpd-opts.h          up to 1.8
+external/bsd/ntp/dist/ntpd/ntpd.1ntpdman        up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntpd.1ntpdmdoc       up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntpd.c               up to 1.11
+external/bsd/ntp/dist/ntpd/ntpd.html            up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntpd.man.in          up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/ntpd.mdoc.in         up to 1.1.1.5
+external/bsd/ntp/dist/ntpd/refclock_arc.c       up to 1.8
+external/bsd/ntp/dist/ntpd/refclock_chu.c       up to 1.7
+external/bsd/ntp/dist/ntpd/refclock_gpsdjson.c  up to 1.7
+external/bsd/ntp/dist/ntpd/refclock_jjy.c       up to 1.8
+external/bsd/ntp/dist/ntpd/refclock_jupiter.c   up to 1.9
+external/bsd/ntp/dist/ntpd/refclock_local.c     up to 1.4
+external/bsd/ntp/dist/ntpd/refclock_nmea.c      up to 1.10
+external/bsd/ntp/dist/ntpd/refclock_oncore.c    up to 1.12
+external/bsd/ntp/dist/ntpd/refclock_palisade.c  up to 1.5
+external/bsd/ntp/dist/ntpd/refclock_parse.c     up to 1.17
+external/bsd/ntp/dist/ntpd/refclock_shm.c       up to 1.6
+external/bsd/ntp/dist/ntpd/refclock_true.c      up to 1.5
+external/bsd/ntp/dist/ntpd/refclock_wwv.c       up to 1.6
+external/bsd/ntp/dist/ntpdate/Makefile.in       up to 1.1.1.7
+external/bsd/ntp/dist/ntpdate/ntpdate.c         up to 1.8
+external/bsd/ntp/dist/ntpdc/Makefile.in         up to 1.1.1.7
+external/bsd/ntp/dist/ntpdc/invoke-ntpdc.texi   up to 1.1.1.5
+external/bsd/ntp/dist/ntpdc/ntpdc-opts.c        up to 1.5
+external/bsd/ntp/dist/ntpdc/ntpdc-opts.h        up to 1.5
+external/bsd/ntp/dist/ntpdc/ntpdc.1ntpdcman     up to 1.1.1.5
+external/bsd/ntp/dist/ntpdc/ntpdc.1ntpdcmdoc    up to 1.1.1.5
+external/bsd/ntp/dist/ntpdc/ntpdc.c             up to 1.11
+external/bsd/ntp/dist/ntpdc/ntpdc.html          up to 1.1.1.5
+external/bsd/ntp/dist/ntpdc/ntpdc.man.in        up to 1.1.1.5
+external/bsd/ntp/dist/ntpdc/ntpdc.mdoc.in       up to 1.1.1.5
+external/bsd/ntp/dist/ntpq/Makefile.in          up to 1.1.1.7
+external/bsd/ntp/dist/ntpq/invoke-ntpq.texi     up to 1.1.1.5
+external/bsd/ntp/dist/ntpq/libntpq.h            up to 1.4
+external/bsd/ntp/dist/ntpq/ntpq-opts.c          up to 1.5
+external/bsd/ntp/dist/ntpq/ntpq-opts.def        up to 1.1.1.4
+external/bsd/ntp/dist/ntpq/ntpq-opts.h          up to 1.5
+external/bsd/ntp/dist/ntpq/ntpq-subs.c          up to 1.12
+external/bsd/ntp/dist/ntpq/ntpq.1ntpqman        up to 1.1.1.5
+external/bsd/ntp/dist/ntpq/ntpq.1ntpqmdoc       up to 1.1.1.5
+external/bsd/ntp/dist/ntpq/ntpq.c               up to 1.13
+external/bsd/ntp/dist/ntpq/ntpq.html            up to 1.1.1.5
+external/bsd/ntp/dist/ntpq/ntpq.man.in          up to 1.1.1.5
+external/bsd/ntp/dist/ntpq/ntpq.mdoc.in         up to 1.1.1.5
+external/bsd/ntp/dist/ntpsnmpd/Makefile.in      up to 1.1.1.7
+external/bsd/ntp/dist/ntpsnmpd/invoke-ntpsnmpd.texi up to 1.1.1.5
+external/bsd/ntp/dist/ntpsnmpd/ntpsnmpd-opts.c  up to 1.5
+external/bsd/ntp/dist/ntpsnmpd/ntpsnmpd-opts.h  up to 1.5
+external/bsd/ntp/dist/ntpsnmpd/ntpsnmpd.1ntpsnmpdman up to 1.1.1.5
+external/bsd/ntp/dist/ntpsnmpd/ntpsnmpd.1ntpsnmpdmdoc up to 1.1.1.5
+external/bsd/ntp/dist/ntpsnmpd/ntpsnmpd.html    up to 1.1.1.5
+external/bsd/ntp/dist/ntpsnmpd/ntpsnmpd.man.in  up to 1.1.1.5
+external/bsd/ntp/dist/ntpsnmpd/ntpsnmpd.mdoc.in up to 1.1.1.5
+external/bsd/ntp/dist/parseutil/Makefile.in     up to 1.1.1.7
+external/bsd/ntp/dist/parseutil/dcfd.c          up to 1.4
+external/bsd/ntp/dist/parseutil/testdcf.c       up to 1.4
+external/bsd/ntp/dist/scripts/Makefile.in       up to 1.1.1.7
+external/bsd/ntp/dist/scripts/invoke-plot_summary.texi up to 1.1.1.5
+external/bsd/ntp/dist/scripts/invoke-summary.texi up to 1.1.1.5
+external/bsd/ntp/dist/scripts/plot_summary-opts up to 1.1.1.5
+external/bsd/ntp/dist/scripts/plot_summary.1plot_summaryman up to 1.1.1.5
+external/bsd/ntp/dist/scripts/plot_summary.1plot_summarymdoc up to 1.1.1.5
+external/bsd/ntp/dist/scripts/plot_summary.html up to 1.1.1.5
+external/bsd/ntp/dist/scripts/plot_summary.man.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/plot_summary.mdoc.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/summary-opts      up to 1.1.1.5
+external/bsd/ntp/dist/scripts/summary.1summaryman up to 1.1.1.5
+external/bsd/ntp/dist/scripts/summary.1summarymdoc up to 1.1.1.5
+external/bsd/ntp/dist/scripts/summary.html      up to 1.1.1.5
+external/bsd/ntp/dist/scripts/summary.man.in    up to 1.1.1.5
+external/bsd/ntp/dist/scripts/summary.mdoc.in   up to 1.1.1.5
+external/bsd/ntp/dist/scripts/build/Makefile.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/calc_tickadj/Makefile.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/calc_tickadj/calc_tickadj.1calc_tickadjman up to 1.1.1.5
+external/bsd/ntp/dist/scripts/calc_tickadj/calc_tickadj.1calc_tickadjmdoc up to 1.1.1.5
+external/bsd/ntp/dist/scripts/calc_tickadj/calc_tickadj.html up to 1.1.1.5
+external/bsd/ntp/dist/scripts/calc_tickadj/calc_tickadj.man.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/calc_tickadj/calc_tickadj.mdoc.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/calc_tickadj/invoke-calc_tickadj.texi up to 1.1.1.5
+external/bsd/ntp/dist/scripts/lib/Makefile.in   up to 1.1.1.5
+external/bsd/ntp/dist/scripts/lib/NTP/Util.pm   up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/Makefile.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/invoke-ntp-wait.texi up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/ntp-wait-opts up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/ntp-wait.1ntp-waitman up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/ntp-wait.1ntp-waitmdoc up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/ntp-wait.html up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/ntp-wait.man.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntp-wait/ntp-wait.mdoc.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/Makefile.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/invoke-ntpsweep.texi up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/ntpsweep-opts up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/ntpsweep.1ntpsweepman up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/ntpsweep.1ntpsweepmdoc up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/ntpsweep.html up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/ntpsweep.in up to 1.1.1.4
+external/bsd/ntp/dist/scripts/ntpsweep/ntpsweep.man.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntpsweep/ntpsweep.mdoc.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/Makefile.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/invoke-ntptrace.texi up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/ntptrace-opts up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/ntptrace.1ntptraceman up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/ntptrace.1ntptracemdoc up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/ntptrace.html up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/ntptrace.man.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/ntptrace/ntptrace.mdoc.in up to 1.1.1.5
+external/bsd/ntp/dist/scripts/update-leap/Makefile.am up to 1.1.1.2
+external/bsd/ntp/dist/scripts/update-leap/Makefile.in up to 1.1.1.3
+external/bsd/ntp/dist/scripts/update-leap/invoke-update-leap.texi up to 1.1.1.3
+external/bsd/ntp/dist/scripts/update-leap/update-leap-opts up to 1.1.1.3
+external/bsd/ntp/dist/scripts/update-leap/update-leap.1update-leapman up to 1.1.1.3
+external/bsd/ntp/dist/scripts/update-leap/update-leap.1update-leapmdoc up to 1.1.1.3
+external/bsd/ntp/dist/scripts/update-leap/update-leap.html up to 1.1.1.3
+external/bsd/ntp/dist/scripts/update-leap/update-leap.man.in up to 1.1.1.3
+external/bsd/ntp/dist/scripts/update-leap/update-leap.mdoc.in up to 1.1.1.3
+external/bsd/ntp/dist/sntp/Makefile.am          up to 1.1.1.7
+external/bsd/ntp/dist/sntp/Makefile.in          up to 1.1.1.7
+external/bsd/ntp/dist/sntp/aclocal.m4           up to 1.1.1.6
+external/bsd/ntp/dist/sntp/config.h.in          up to 1.1.1.5
+external/bsd/ntp/dist/sntp/configure            up to 1.1.1.7
+external/bsd/ntp/dist/sntp/configure.ac         up to 1.1.1.6
+external/bsd/ntp/dist/sntp/invoke-sntp.texi     up to 1.1.1.5
+external/bsd/ntp/dist/sntp/kod_management.c     up to 1.6
+external/bsd/ntp/dist/sntp/log.c                up to 1.9
+external/bsd/ntp/dist/sntp/log.h                up to 1.7
+external/bsd/ntp/dist/sntp/networking.c         up to 1.12
+external/bsd/ntp/dist/sntp/sntp-opts.c          up to 1.6
+external/bsd/ntp/dist/sntp/sntp-opts.h          up to 1.5
+external/bsd/ntp/dist/sntp/sntp.1sntpman        up to 1.1.1.5
+external/bsd/ntp/dist/sntp/sntp.1sntpmdoc       up to 1.1.1.5
+external/bsd/ntp/dist/sntp/sntp.html            up to 1.1.1.7
+external/bsd/ntp/dist/sntp/sntp.man.in          up to 1.1.1.5
+external/bsd/ntp/dist/sntp/sntp.mdoc.in         up to 1.1.1.5
+external/bsd/ntp/dist/sntp/include/Makefile.in  up to 1.1.1.5
+external/bsd/ntp/dist/sntp/include/autogen-version.def up to 1.1.1.3
+external/bsd/ntp/dist/sntp/include/version.def  up to 1.1.1.5
+external/bsd/ntp/dist/sntp/include/version.texi up to 1.1.1.5
+external/bsd/ntp/dist/sntp/libevent/Makefile.am up to 1.1.1.4
+external/bsd/ntp/dist/sntp/libevent/Makefile.in up to 1.1.1.5
+external/bsd/ntp/dist/sntp/libevent/aclocal.m4  up to 1.1.1.3
+external/bsd/ntp/dist/sntp/libevent/config.h.in up to 1.1.1.4
+external/bsd/ntp/dist/sntp/libevent/configure   up to 1.1.1.4
+external/bsd/ntp/dist/sntp/libevent/listener.c  up to 1.4
+external/bsd/ntp/dist/sntp/libevent/build-aux/ltmain.sh up to 1.1.1.2
+external/bsd/ntp/dist/sntp/libevent/m4/ltversion.m4 up to 1.1.1.2
+external/bsd/ntp/dist/sntp/libevent/test/bench_httpclient.c up to 1.4
+external/bsd/ntp/dist/sntp/libevent/test/regress.c up to 1.5
+external/bsd/ntp/dist/sntp/libevent/test/regress_dns.c up to 1.5
+external/bsd/ntp/dist/sntp/libevent/test/regress_http.c up to 1.5
+external/bsd/ntp/dist/sntp/libevent/test/regress_minheap.c up to 1.5
+external/bsd/ntp/dist/sntp/libevent/test/test-ratelim.c up to 1.5
+external/bsd/ntp/dist/sntp/libevent/test/test-time.c up to 1.5
+external/bsd/ntp/dist/sntp/libopts/COPYING.gplv3 up to 1.1.1.5
+external/bsd/ntp/dist/sntp/libopts/COPYING.lgplv3 up to 1.1.1.5
+external/bsd/ntp/dist/sntp/libopts/COPYING.mbsd up to 1.1.1.2
+external/bsd/ntp/dist/sntp/libopts/Makefile.in  up to 1.1.1.7
+external/bsd/ntp/dist/sntp/libopts/README       up to 1.1.1.5
+external/bsd/ntp/dist/sntp/libopts/ag-char-map.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/alias.c      up to 1.3
+external/bsd/ntp/dist/sntp/libopts/ao-strs.c    up to 1.3
+external/bsd/ntp/dist/sntp/libopts/ao-strs.h    up to 1.3
+external/bsd/ntp/dist/sntp/libopts/autoopts.c   up to 1.5
+external/bsd/ntp/dist/sntp/libopts/autoopts.h   up to 1.9
+external/bsd/ntp/dist/sntp/libopts/boolean.c    up to 1.3
+external/bsd/ntp/dist/sntp/libopts/check.c      up to 1.3
+external/bsd/ntp/dist/sntp/libopts/configfile.c up to 1.6
+external/bsd/ntp/dist/sntp/libopts/cook.c       up to 1.3
+external/bsd/ntp/dist/sntp/libopts/enum.c       up to 1.5
+external/bsd/ntp/dist/sntp/libopts/env.c        up to 1.3
+external/bsd/ntp/dist/sntp/libopts/file.c       up to 1.6
+external/bsd/ntp/dist/sntp/libopts/find.c       up to 1.5
+external/bsd/ntp/dist/sntp/libopts/genshell.c   up to 1.3
+external/bsd/ntp/dist/sntp/libopts/gettext.h    up to 1.3
+external/bsd/ntp/dist/sntp/libopts/init.c       up to 1.6
+external/bsd/ntp/dist/sntp/libopts/intprops.h   up to 1.3
+external/bsd/ntp/dist/sntp/libopts/libopts.c    up to 1.3
+external/bsd/ntp/dist/sntp/libopts/load.c       up to 1.6
+external/bsd/ntp/dist/sntp/libopts/makeshell.c  up to 1.6
+external/bsd/ntp/dist/sntp/libopts/nested.c     up to 1.8
+external/bsd/ntp/dist/sntp/libopts/numeric.c    up to 1.6
+external/bsd/ntp/dist/sntp/libopts/option-value-type.c up to 1.3
+external/bsd/ntp/dist/sntp/libopts/option-value-type.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/option-xat-attribute.c up to 1.3
+external/bsd/ntp/dist/sntp/libopts/option-xat-attribute.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/parse-duration.c up to 1.7
+external/bsd/ntp/dist/sntp/libopts/parse-duration.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/pgusage.c    up to 1.5
+external/bsd/ntp/dist/sntp/libopts/proto.h      up to 1.3
+external/bsd/ntp/dist/sntp/libopts/putshell.c   up to 1.5
+external/bsd/ntp/dist/sntp/libopts/reset.c      up to 1.6
+external/bsd/ntp/dist/sntp/libopts/restore.c    up to 1.3
+external/bsd/ntp/dist/sntp/libopts/save.c       up to 1.8
+external/bsd/ntp/dist/sntp/libopts/sort.c       up to 1.3
+external/bsd/ntp/dist/sntp/libopts/stack.c      up to 1.6
+external/bsd/ntp/dist/sntp/libopts/stdnoreturn.in.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/streqvcmp.c  up to 1.5
+external/bsd/ntp/dist/sntp/libopts/text_mmap.c  up to 1.3
+external/bsd/ntp/dist/sntp/libopts/time.c       up to 1.3
+external/bsd/ntp/dist/sntp/libopts/tokenize.c   up to 1.6
+external/bsd/ntp/dist/sntp/libopts/usage.c      up to 1.5
+external/bsd/ntp/dist/sntp/libopts/version.c    up to 1.3
+external/bsd/ntp/dist/sntp/libopts/autoopts/options.h up to 1.10
+external/bsd/ntp/dist/sntp/libopts/autoopts/project.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/autoopts/usage-txt.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/compat/compat.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/compat/pathfind.c up to 1.6
+external/bsd/ntp/dist/sntp/libopts/compat/windows-config.h up to 1.3
+external/bsd/ntp/dist/sntp/libopts/m4/libopts.m4 up to 1.1.1.6
+external/bsd/ntp/dist/sntp/libopts/m4/liboptschk.m4 up to 1.1.1.5
+external/bsd/ntp/dist/sntp/libopts/m4/stdnoreturn.m4 up to 1.1.1.2
+external/bsd/ntp/dist/sntp/m4/ltversion.m4      up to 1.1.1.2
+external/bsd/ntp/dist/sntp/m4/ntp_libevent.m4   up to 1.1.1.4
+external/bsd/ntp/dist/sntp/m4/ntp_libntp.m4     up to 1.1.1.5
+external/bsd/ntp/dist/sntp/m4/ntp_openssl.m4    up to 1.1.1.2
+external/bsd/ntp/dist/sntp/m4/ntp_rlimit.m4     up to 1.1.1.2
+external/bsd/ntp/dist/sntp/m4/openldap-thread-check.m4 up to 1.1.1.2
+external/bsd/ntp/dist/sntp/m4/os_cflags.m4      up to 1.1.1.3
+external/bsd/ntp/dist/sntp/m4/version.m4        up to 1.1.1.5
+external/bsd/ntp/dist/sntp/scripts/Makefile.in  up to 1.1.1.5
+external/bsd/ntp/dist/sntp/scripts/genLocInfo   up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/Makefile.am    up to 1.1.1.3
+external/bsd/ntp/dist/sntp/tests/Makefile.in    up to 1.1.1.5
+external/bsd/ntp/dist/sntp/tests/sntptest.h     up to 1.4
+external/bsd/ntp/dist/tests/Makefile.am         up to 1.1.1.3
+external/bsd/ntp/dist/tests/Makefile.in         up to 1.1.1.5
+external/bsd/ntp/dist/tests/libntp/Makefile.am  up to 1.1.1.4
+external/bsd/ntp/dist/tests/libntp/Makefile.in  up to 1.1.1.5
+external/bsd/ntp/dist/tests/libntp/lfptest.h    up to 1.4
+external/bsd/ntp/dist/tests/libntp/sockaddrtest.h up to 1.4
+external/bsd/ntp/dist/tests/ntpd/Makefile.am    up to 1.1.1.2
+external/bsd/ntp/dist/tests/ntpd/Makefile.in    up to 1.1.1.5
+external/bsd/ntp/dist/util/Makefile.in          up to 1.1.1.7
+external/bsd/ntp/dist/util/invoke-ntp-keygen.texi up to 1.1.1.5
+external/bsd/ntp/dist/util/ntp-keygen-opts.c    up to 1.10
+external/bsd/ntp/dist/util/ntp-keygen-opts.h    up to 1.5
+external/bsd/ntp/dist/util/ntp-keygen.1ntp-keygenman up to 1.1.1.5
+external/bsd/ntp/dist/util/ntp-keygen.1ntp-keygenmdoc up to 1.1.1.5
+external/bsd/ntp/dist/util/ntp-keygen.c         up to 1.9
+external/bsd/ntp/dist/util/ntp-keygen.html      up to 1.1.1.5
+external/bsd/ntp/dist/util/ntp-keygen.man.in    up to 1.1.1.5
+external/bsd/ntp/dist/util/ntp-keygen.mdoc.in   up to 1.1.1.5
+external/bsd/ntp/dist/util/ntptime.c            up to 1.7
+external/bsd/ntp/include/config.h               up to 1.13
+external/bsd/ntp/scripts/mkver                  up to 1.7
+
+	Update ntp to 4.2.8p4.
+	[christos, ticket #1024]
 
