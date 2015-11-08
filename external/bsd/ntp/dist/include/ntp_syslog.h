@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_syslog.h,v 1.1.1.2.8.1 2014/12/25 02:28:04 snj Exp $	*/
+/*	$NetBSD: ntp_syslog.h,v 1.1.1.2.8.2 2015/11/08 00:15:57 snj Exp $	*/
 
 /*
  * A hack for platforms which require specially built syslog facilities
@@ -11,6 +11,7 @@
 
 #ifdef VMS
 extern void msyslog();
+extern void mvsyslog();
 #else
 # ifndef SYS_VXWORKS
 #  include <syslog.h>

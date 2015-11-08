@@ -1,4 +1,4 @@
-/*	$NetBSD: regress_minheap.c,v 1.2.4.2 2014/12/25 02:28:16 snj Exp $	*/
+/*	$NetBSD: regress_minheap.c,v 1.2.4.3 2015/11/08 00:16:05 snj Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -32,12 +32,13 @@
 
 #include "tinytest.h"
 #include "tinytest_macros.h"
+#include "regress.h"
 
 static void
 set_random_timeout(struct event *ev)
 {
-	ev->ev_timeout.tv_sec = rand();
-	ev->ev_timeout.tv_usec = rand() & 0xfffff;
+	ev->ev_timeout.tv_sec = test_weakrand();
+	ev->ev_timeout.tv_usec = test_weakrand() & 0xfffff;
 	ev->ev_timeout_pos.min_heap_idx = -1;
 }
 
@@ -64,6 +65,7 @@ test_heap_randomized(void *ptr)
 
 	for (i = 0; i < 1024; ++i) {
 		inserted[i] = malloc(sizeof(struct event));
+		assert(inserted[i] != NULL);
 		set_random_timeout(inserted[i]);
 		min_heap_push_(&heap, inserted[i]);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto_rnd.c,v 1.2.6.2 2014/12/25 02:28:08 snj Exp $	*/
+/*	$NetBSD: ntp_crypto_rnd.c,v 1.2.6.3 2015/11/08 00:15:58 snj Exp $	*/
 
 /*
  * Crypto-quality random number functions
@@ -24,6 +24,22 @@
 #include <openssl/rand.h>
 
 int crypto_rand_init = 0;
+#else
+
+# ifndef HAVE_ARC4RANDOM_BUF
+static void
+arc4random_buf(void *buf, size_t nbytes);
+
+void
+evutil_secure_rng_get_bytes(void *buf, size_t nbytes);
+
+static void
+arc4random_buf(void *buf, size_t nbytes)
+{
+	evutil_secure_rng_get_bytes(buf, nbytes);
+	return;
+}
+# endif
 #endif
 
 /*

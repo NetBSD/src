@@ -1,4 +1,4 @@
-/*	$NetBSD: statestr.c,v 1.1.1.1.14.1 2014/12/25 02:28:08 snj Exp $	*/
+/*	$NetBSD: statestr.c,v 1.1.1.1.14.2 2015/11/08 00:15:58 snj Exp $	*/
 
 /*
  * pretty printing of status information
@@ -62,7 +62,7 @@ static const struct codestring select_codes[] = {
 	{ CTL_PST_SEL_REJECT,	"sel_reject" },
 	{ CTL_PST_SEL_SANE,	"sel_falsetick" },
 	{ CTL_PST_SEL_CORRECT,	"sel_excess" },
-	{ CTL_PST_SEL_SELCAND,	"sel_outlyer" },
+	{ CTL_PST_SEL_SELCAND,	"sel_outlier" },
 	{ CTL_PST_SEL_SYNCCAND,	"sel_candidate" },
 	{ CTL_PST_SEL_EXCESS,	"sel_backup" },
 	{ CTL_PST_SEL_SYSPEER,	"sel_sys.peer" },

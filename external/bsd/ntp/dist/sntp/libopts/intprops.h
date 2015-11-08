@@ -1,8 +1,8 @@
-/*	$NetBSD: intprops.h,v 1.2.6.2 2014/12/25 02:28:17 snj Exp $	*/
+/*	$NetBSD: intprops.h,v 1.2.6.3 2015/11/08 00:16:06 snj Exp $	*/
 
 /* intprops.h -- properties of integer types
 
-   Copyright (C) 2001-2005, 2009-2014 Free Software Foundation, Inc.
+   Copyright (C) 2001-2005, 2009-2015 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU Lesser General Public License as published by

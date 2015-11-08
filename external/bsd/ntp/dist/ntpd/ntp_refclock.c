@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.c,v 1.4.8.1 2014/12/25 02:28:09 snj Exp $	*/
+/*	$NetBSD: ntp_refclock.c,v 1.4.8.2 2015/11/08 00:15:59 snj Exp $	*/
 
 /*
  * ntp_refclock - processing support for reference clocks
@@ -1051,7 +1051,7 @@ refclock_control(
 	if (NULL == peer)
 		return;
 
-	NTP_INSIST(peer->procptr != NULL);
+	INSIST(peer->procptr != NULL);
 	pp = peer->procptr;
 
 	/*

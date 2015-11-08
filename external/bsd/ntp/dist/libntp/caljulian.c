@@ -1,4 +1,4 @@
-/*	$NetBSD: caljulian.c,v 1.1.1.1.14.1 2014/12/25 02:28:08 snj Exp $	*/
+/*	$NetBSD: caljulian.c,v 1.1.1.1.14.2 2015/11/08 00:15:58 snj Exp $	*/
 
 /*
  * caljulian - determine the Julian date from an NTP time.
@@ -30,7 +30,7 @@ caljulian(
 	ntpcal_split	split;
 	
 	
-	NTP_INSIST(NULL != jt);
+	INSIST(NULL != jt);
 
 	/*
 	 * Unfold ntp time around current time into NTP domain. Split
