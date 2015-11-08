@@ -328,7 +328,8 @@ AC_ARG_ENABLE(
     )
 have_pthreads=no
 case "$enable_thread_support" in
- yes)
+ no) ;;
+ *)
     ol_found_pthreads=no
     OL_THREAD_CHECK([ol_found_pthreads=yes])
     case "$ol_found_pthreads" in
@@ -346,18 +347,6 @@ case "$enable_thread_support" in
 	 yes)
 	    PTHREAD_LIBS="$LTHREAD_LIBS"
 	    have_pthreads=yes
-	    # Bug 2332: With GCC we need to force a reference to libgcc_s
-	    # (if libgcc_s exists) or the combination of
-	    # threads + setuid + mlockall does not work on linux because
-	    # thread cancellation fails to load libgcc_s with dlopen().
-	    # We have to pass this all as linker options to avoid argument
-	    # reordering by libtool.
-	    case "$GCC$with_gnu_ld" in
-	    yesyes)
-		AC_CHECK_LIB([gcc_s], [exit],
-			[PTHREAD_LIBS="$LTHREAD_LIBS -Wl,--no-as-needed,-lgcc_s,--as-needed"])
-		;;
-	    esac
 	esac
     esac
 esac
@@ -912,6 +901,9 @@ case "$ntp_cv_hdr_def_sigio" in
      *-sni-sysv*)
 	ans=no
 	;;
+     *-stratus-vos)
+	ans=no
+	;;
      *-univel-sysv*)
 	ans=no
 	;;
@@ -976,6 +968,9 @@ case "$ntp_cv_hdr_def_sigpoll" in
      *-sni-sysv*)
 	ans=no
 	;;
+     *-stratus-vos)
+	ans=no
+	;;
      *-*-aix[[4-9]]*)
 	# XXX Only verified thru AIX6
 	ans=no
@@ -1033,6 +1028,9 @@ case "$ntp_cv_hdr_def_sigpoll" in
 	ans=no
 	;;
      *-sni-sysv*)
+	ans=no
+	;;
+     *-stratus-vos)
 	ans=no
 	;;
      *-*-aix[[4-9]]*)

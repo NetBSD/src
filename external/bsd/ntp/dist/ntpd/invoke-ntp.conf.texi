@@ -6,7 +6,7 @@
 #
 # EDIT THIS FILE WITH CAUTION  (invoke-ntp.conf.texi)
 #
-# It has been AutoGen-ed  April  7, 2015 at 04:25:50 AM by AutoGen 5.18.5pre4
+# It has been AutoGen-ed  October 21, 2015 at 12:38:16 PM by AutoGen 5.18.5
 # From the definitions    ntp.conf.def
 # and the template file   agtexi-file.tpl
 @end ignore
@@ -1837,7 +1837,7 @@ re-associate accordingly.
 Some administrators prefer to avoid running
 @code{ntpd(1ntpdmdoc)}
 continuously and run either
-@code{ntpdate(8)}
+@code{sntp(1sntpmdoc)}
 or
 @code{ntpd(1ntpdmdoc)}
 @code{-q}
@@ -1921,7 +1921,7 @@ peers remaining.
 This value defaults to 1, but can be changed
 to any number from 1 to 15.
 @item @code{minclock} @kbd{minclock}
-The clustering algorithm repeatedly casts out outlyer
+The clustering algorithm repeatedly casts out outlier
 associations until no more than
 @code{minclock}
 associations remain.
@@ -2291,6 +2291,9 @@ This implies that
 must have write permission for the directory the
 drift file is located in, and that file system links, symbolic or
 otherwise, should be avoided.
+@item @code{dscp} @kbd{value}
+This option specifies the Differentiated Services Control Point (DSCP) value,
+a 6-bit code.  The default value is 46, signifying Expedited Forwarding.
 @item @code{enable} @code{[@code{auth} | @code{bclient} | @code{calibrate} | @code{kernel} | @code{mode7} | @code{monitor} | @code{ntp} | @code{stats}]}
 @item @code{disable} @code{[@code{auth} | @code{bclient} | @code{calibrate} | @code{kernel} | @code{mode7} | @code{monitor} | @code{ntp} | @code{stats}]}
 Provides a way to enable or disable various server options.
@@ -2376,6 +2379,19 @@ This option is useful for sites that run
 @code{ntpd(1ntpdmdoc)}
 on multiple hosts, with (mostly) common options (e.g., a
 restriction list).
+@item @code{leapsmearinterval} @kbd{seconds}
+This EXPERIMENTAL option is only available if
+@code{ntpd(1ntpdmdoc)}
+was built with the
+@code{--enable-leap-smear}
+option to the
+@code{configure}
+script.
+It specifies the interval over which a leap second correction will be applied.
+Recommended values for this option are between
+7200 (2 hours) and 86400 (24 hours).
+.Sy DO NOT USE THIS OPTION ON PUBLIC-ACCESS SERVERS!
+See http://bugs.ntp.org/2855 for more information.
 @item @code{logconfig} @kbd{configkeyword}
 This command controls the amount and type of output written to
 the system
@@ -2562,19 +2578,22 @@ pulses will not be suppressed.
 @item @code{rlimit} @code{[@code{memlock} @kbd{Nmegabytes} | @code{stacksize} @kbd{N4kPages} @code{filenum} @kbd{Nfiledescriptors}]}
 @table @asis
 @item @code{memlock} @kbd{Nmegabytes}
-Specify the number of megabytes of memory that can be allocated.
-Probably only available under Linux, this option is useful
+Specify the number of megabytes of memory that should be
+allocated and locked.
+Probably only available under Linux, this option may be useful
 when dropping root (the
 @code{-i}
 option).
-The default is 32 megabytes. Setting this to zero will prevent any attemp to lock memory.
+The default is 32 megabytes on non-Linux machines, and -1 under Linux.
+-1 means "do not lock the process into memory".
+0 means "lock whatever memory the process wants into memory".
 @item @code{stacksize} @kbd{N4kPages}
 Specifies the maximum size of the process stack on systems with the
-@item @code{filenum} @kbd{Nfiledescriptors}
-Specifies the maximum number of file descriptors ntpd may have open at once. Defaults to the system default.
 @code{mlockall()}
 function.
 Defaults to 50 4k pages (200 4k pages in OpenBSD).
+@item @code{filenum} @kbd{Nfiledescriptors}
+Specifies the maximum number of file descriptors ntpd may have open at once. Defaults to the system default.
 @end table
 @item @code{trap} @kbd{host_address} @code{[@code{port} @kbd{port_number}]} @code{[@code{interface} @kbd{interface_address}]}
 This command configures a trap receiver at the given host
