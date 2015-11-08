@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.50 2015/11/08 14:56:21 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.51 2015/11/08 15:15:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.50 2015/11/08 14:56:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.51 2015/11/08 15:15:50 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -3122,6 +3122,9 @@ uhci_device_bulk_done(struct usbd_xfer *xfer)
 	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	struct uhci_pipe *upipe = UHCI_PIPE2UPIPE(xfer->ux_pipe);
+	usb_endpoint_descriptor_t *ed = xfer->ux_pipe->up_endpoint->ue_edesc;
+	int endpt = ed->bEndpointAddress;
+	int isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTFN(5, "xfer=%p ux=%p sc=%p upipe=%p", xfer, ux, sc,
@@ -3137,6 +3140,10 @@ uhci_device_bulk_done(struct usbd_xfer *xfer)
 	uhci_remove_bulk(sc, upipe->bulk.sqh);
 
 	uhci_free_std_chain(sc, ux->ux_stdstart, NULL);
+	if (xfer->ux_length) {
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	}
 
 	DPRINTFN(5, "length=%d", xfer->ux_actlen, 0, 0, 0);
 }
