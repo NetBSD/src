@@ -1,4 +1,4 @@
-/*	$NetBSD: clk_meinberg.c,v 1.2.26.2 2015/04/23 18:53:02 snj Exp $	*/
+/*	$NetBSD: clk_meinberg.c,v 1.2.26.3 2015/11/08 01:51:07 riz Exp $	*/
 
 /*
  * /src/NTP/REPOSITORY/ntp4-dev/libparse/clk_meinberg.c,v 4.12.2.1 2005/09/25 10:22:35 kardel RELEASE_20050925_A
@@ -7,7 +7,7 @@
  *
  * Meinberg clock support
  *
- * Copyright (c) 1995-2005 by Frank Kardel <kardel <AT> ntp.org>
+ * Copyright (c) 1995-2015 by Frank Kardel <kardel <AT> ntp.org>
  * Copyright (c) 1989-1994 by Frank Kardel, Friedrich-Alexander Universitaet Erlangen-Nuernberg, Germany
  *
  * Redistribution and use in source and binary forms, with or without
@@ -402,7 +402,7 @@ cvt_meinberg(
 
 		if (format->flags & MBG_EXTENDED)
 		{
-			clock_time->flags |= PARSEB_S_ANTENNA;
+			clock_time->flags |= PARSEB_S_CALLBIT;
 
 			/*
 			 * DCF77 does not encode the direction -

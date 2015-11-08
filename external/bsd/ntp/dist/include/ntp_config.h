@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_config.h,v 1.5.4.1 2014/12/24 00:05:16 riz Exp $	*/
+/*	$NetBSD: ntp_config.h,v 1.5.4.2 2015/11/08 01:51:06 riz Exp $	*/
 
 #ifndef NTP_CONFIG_H
 #define NTP_CONFIG_H
@@ -48,8 +48,8 @@
 extern	int	cmdline_server_count;
 extern	char **	cmdline_servers;
 
-/* set to zero if admin doesn't want memory locked */
-extern	int	do_memlock;
+/* set to zero if we're not locking memory */
+extern	int	cur_memlock;
 
 typedef struct int_range_tag {
 	int	first;

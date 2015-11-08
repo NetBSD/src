@@ -1,4 +1,4 @@
-/*	$NetBSD: listener.c,v 1.1.1.1.6.2 2015/04/23 18:53:06 snj Exp $	*/
+/*	$NetBSD: listener.c,v 1.1.1.1.6.3 2015/11/08 01:51:11 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson
@@ -423,6 +423,8 @@ listener_read_cb(evutil_socket_t fd, short what, void *p)
 		if (lev->refcnt == 1) {
 			int freed = listener_decref_and_unlock(lev);
 			EVUTIL_ASSERT(freed);
+
+			evutil_closesocket(new_fd);
 			return;
 		}
 		--lev->refcnt;

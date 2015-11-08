@@ -1,4 +1,4 @@
-/*	$NetBSD: test-ratelim.c,v 1.1.1.1.6.2 2015/04/23 18:53:06 snj Exp $	*/
+/*	$NetBSD: test-ratelim.c,v 1.1.1.1.6.3 2015/11/08 01:51:12 riz Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
@@ -342,6 +342,10 @@ test_ratelimiting(void)
 
 	bevs = calloc(cfg_n_connections, sizeof(struct bufferevent *));
 	states = calloc(cfg_n_connections, sizeof(struct client_state));
+	if (bevs == NULL || states == NULL) {
+		printf("Unable to allocate memory...\n");
+		return 1;
+	}
 
 	for (i = 0; i < cfg_n_connections; ++i) {
 		bevs[i] = bufferevent_socket_new(base, -1,

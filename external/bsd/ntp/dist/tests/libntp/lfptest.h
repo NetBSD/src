@@ -1,33 +1,18 @@
-/*	$NetBSD: lfptest.h,v 1.1.1.1.6.1 2014/12/24 00:05:28 riz Exp $	*/
+/*	$NetBSD: lfptest.h,v 1.1.1.1.6.2 2015/11/08 01:51:15 riz Exp $	*/
 
 #ifndef NTP_TESTS_LFPTEST_H
 #define NTP_TESTS_LFPTEST_H
 
-#include "libntptest.h"
-
-extern "C" {
+#include "config.h"
 #include "ntp_fp.h"
-};
 
-class lfptest : public libntptest {
-protected:
-	::testing::AssertionResult IsEqual(const l_fp &expected, const l_fp &actual) {
-		if (L_ISEQU(&expected, &actual)) {
-			return ::testing::AssertionSuccess();
-		} else {
-			return ::testing::AssertionFailure()
-				<< " expected: " << lfptoa(&expected, FRACTION_PREC)
-				<< " (" << expected.l_ui << "." << expected.l_uf << ")"
-				<< " but was: " << lfptoa(&actual, FRACTION_PREC)
-				<< " (" << actual.l_ui << "." << actual.l_uf << ")";
-		}
-	}
 
-	static const int32 HALF = -2147483647L - 1L;
-	static const int32 HALF_PROMILLE_UP = 2147484; // slightly more than 0.0005
-	static const int32 HALF_PROMILLE_DOWN = 2147483; // slightly less than 0.0005
-	static const int32 QUARTER = 1073741824L;
-	static const int32 QUARTER_PROMILLE_APPRX = 1073742L;
-};
+static const int32 HALF = -2147483647L - 1L;
+static const int32 HALF_PROMILLE_UP = 2147484; // slightly more than 0.0005
+static const int32 HALF_PROMILLE_DOWN = 2147483; // slightly less than 0.0005
+static const int32 QUARTER = 1073741824L;
+static const int32 QUARTER_PROMILLE_APPRX = 1073742L;
 
-#endif /* NTP_TESTS_LFPTEST_H */
+int IsEqual(const l_fp expected, const l_fp actual);
+
+#endif

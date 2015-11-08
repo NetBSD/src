@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.2.6.2 2015/04/23 18:53:02 snj Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.2.6.3 2015/11/08 01:51:07 riz Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <signal.h>
+#include <sys/wait.h>
 
 #include "iosignal.h"
 #include "ntp_stdlib.h"
@@ -114,6 +115,30 @@ interrupt_worker_sleep(void)
 
 
 /*
+ * harvest_child_status() runs in the parent.
+ */
+static void
+harvest_child_status(
+	blocking_child *	c
+	)
+{
+	if (c->pid)
+	{
+		/* Wait on the child so it can finish terminating */
+		if (waitpid(c->pid, NULL, 0) == c->pid)
+			TRACE(4, ("harvested child %d\n", c->pid));
+		else if (errno != ECHILD) {
+			/*
+			 * SIG_IGN on SIGCHLD on some os's means do not wait
+			 * but reap automaticallyi
+			 */
+			msyslog(LOG_ERR, "error waiting on child %d: %m", c->pid);
+		}
+		c->pid = 0;
+	}
+}
+
+/*
  * req_child_exit() runs in the parent.
  */
 int
@@ -126,6 +151,8 @@ req_child_exit(
 		c->req_write_pipe = -1;
 		return 0;
 	}
+	/* Closing the pipe forces the child to exit */
+	harvest_child_status(c);
 	return -1;
 }
 
@@ -138,16 +165,12 @@ cleanup_after_child(
 	blocking_child *	c
 	)
 {
-	if (-1 != c->req_write_pipe) {
-		close(c->req_write_pipe);
-		c->req_write_pipe = -1;
-	}
+	harvest_child_status(c);
 	if (-1 != c->resp_read_pipe) {
 		(*addremove_io_fd)(c->resp_read_pipe, c->ispipe, TRUE);
 		close(c->resp_read_pipe);
 		c->resp_read_pipe = -1;
 	}
-	c->pid = 0;
 	c->resp_read_ctx = NULL;
 	DEBUG_INSIST(-1 == c->req_read_pipe);
 	DEBUG_INSIST(-1 == c->resp_write_pipe);
@@ -211,6 +234,8 @@ send_blocking_req_internal(
 			"send_blocking_req_internal: short write %d of %d",
 			rc, octets);
 
+	/* Fatal error.  Clean up the child process.  */
+	req_child_exit(c);
 	exit(1);	/* otherwise would be return -1 */
 }
 

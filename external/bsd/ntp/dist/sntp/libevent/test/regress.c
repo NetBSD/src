@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.c,v 1.1.1.1.6.2 2015/04/23 18:53:06 snj Exp $	*/
+/*	$NetBSD: regress.c,v 1.1.1.1.6.3 2015/11/08 01:51:12 riz Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>
@@ -2825,6 +2825,10 @@ static void *
 dummy_malloc(size_t len)
 {
 	char *mem = malloc(len+16);
+	if (mem == NULL) {
+		fprintf(stderr, "Unable to allocate memory in dummy_malloc()\n");
+		return NULL;
+	}
 	memcpy(mem, "{[<guardedram>]}", 16);
 	return mem+16;
 }

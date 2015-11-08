@@ -1,4 +1,4 @@
-/*	$NetBSD: boolean.c,v 1.1.1.3.4.1 2014/12/24 00:05:26 riz Exp $	*/
+/*	$NetBSD: boolean.c,v 1.1.1.3.4.2 2015/11/08 01:51:12 riz Exp $	*/
 
 
 /**
@@ -15,7 +15,7 @@
  *
  *  This file is part of AutoOpts, a companion to AutoGen.
  *  AutoOpts is free software.
- *  AutoOpts is Copyright (C) 1992-2014 by Bruce Korb - all rights reserved
+ *  AutoOpts is Copyright (C) 1992-2015 by Bruce Korb - all rights reserved
  *
  *  AutoOpts is available under any one of two licenses.  The license
  *  in use must be one of these two and the choice is under the control
@@ -38,8 +38,8 @@
  * private:
  *
  * what:  Decipher a boolean value
- * arg:   + tOptions* + opts + program options descriptor +
- * arg:   + tOptDesc* + od  + the descriptor for this arg +
+ * arg:   + tOptions * + opts + program options descriptor +
+ * arg:   + tOptDesc * + od  + the descriptor for this arg +
  *
  * doc:
  *  Decipher a true or false value for a boolean valued option argument.
@@ -49,8 +49,8 @@
 void
 optionBooleanVal(tOptions * opts, tOptDesc * od)
 {
-    char* pz;
-    bool  res = true;
+    char * pz;
+    bool   res = true;
 
     if (INQUERY_CALL(opts, od))
         return;

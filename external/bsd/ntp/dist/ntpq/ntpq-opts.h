@@ -1,9 +1,9 @@
-/*	$NetBSD: ntpq-opts.h,v 1.1.1.3.4.2 2015/04/23 18:53:03 snj Exp $	*/
+/*	$NetBSD: ntpq-opts.h,v 1.1.1.3.4.3 2015/11/08 01:51:09 riz Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpq-opts.h)
  *
- *  It has been AutoGen-ed  April  7, 2015 at 04:26:37 AM by AutoGen 5.18.5pre4
+ *  It has been AutoGen-ed  October 21, 2015 at 12:39:00 PM by AutoGen 5.18.5
  *  From the definitions    ntpq-opts.def
  *  and the template file   options
  *
@@ -85,9 +85,9 @@ typedef enum {
 /** count of all options for ntpq */
 #define OPTION_CT    15
 /** ntpq version */
-#define NTPQ_VERSION       "4.2.8p2"
+#define NTPQ_VERSION       "4.2.8p4"
 /** Full ntpq version text */
-#define NTPQ_FULL_VERSION  "ntpq 4.2.8p2"
+#define NTPQ_FULL_VERSION  "ntpq 4.2.8p4"
 
 /**
  *  Interface defines for all options.  Replace "n" with the UPPER_CASED
