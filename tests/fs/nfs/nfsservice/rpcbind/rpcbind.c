@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcbind.c,v 1.5 2015/08/21 14:19:10 christos Exp $	*/
+/*	$NetBSD: rpcbind.c,v 1.6 2015/11/08 02:45:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -130,7 +130,7 @@ rpcbind_main(void *arg)
 	parseargs(argc, argv);
 #endif
 
-	alloc_fdset();
+	svc_fdset_init(SVC_FDSET_MT);
 
 	getrlimit(RLIMIT_NOFILE, &rl);
 	if (rl.rlim_cur < 128) {
@@ -343,7 +343,8 @@ init_transport(struct netconfig *nconf)
 		nb.buf = sa;
 		nb.len = nb.maxlen = sa->sa_len;
 		uaddr = taddr2uaddr(nconf, &nb);
-		(void)fprintf(stderr, "rpcbind: my address is %s\n", uaddr);
+		(void)fprintf(stderr, "rpcbind: my address is %s fd=%d\n",
+		    uaddr, fd);
 		(void)free(uaddr);
 	}
 #endif

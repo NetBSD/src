@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.2 2011/09/16 16:13:18 plunky Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.3 2015/11/08 02:45:16 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -291,7 +291,7 @@ void
 delete_prog(int prog)
 {
 	RPCB reg;
-	register rpcblist_ptr rbl;
+	rpcblist_ptr rbl;
 
 	for (rbl = list_rbl; rbl != NULL; rbl = rbl->rpcb_next) {
 		if ((rbl->rpcb_map.r_prog != prog))
@@ -514,10 +514,7 @@ create_rmtcall_fd(struct netconfig *nconf)
 		rmttail->next = rmt;
 		rmttail = rmt;
 	}
-	/* XXX not threadsafe */
-	if (fd > *get_fdsetmax())
-		*get_fdsetmax() = fd;
-	FD_SET(fd, get_fdset());
+	svc_fdset_set(fd);
 	return (fd);
 }
 
@@ -590,7 +587,7 @@ void
 rpcbproc_callit_com(struct svc_req *rqstp, SVCXPRT *transp,
 		    rpcproc_t reply_type, rpcvers_t versnum)
 {
-	register rpcblist_ptr rbl;
+	rpcblist_ptr rbl;
 	struct netconfig *nconf;
 	struct netbuf *caller;
 	struct r_rmtcall_args a;
@@ -1024,8 +1021,8 @@ free_slot_by_index(int idx)
 	if (fi->flag & FINFO_ACTIVE) {
 		netbuffree(fi->caller_addr);
 		/* XXX may be too big, but can't access xprt array here */
-		if (fi->forward_fd >= *get_fdsetmax())
-			(*get_fdsetmax())--;
+		if (fi->forward_fd >= *svc_fdset_getmax())
+			(*svc_fdset_getmax())--;
 		free((void *) fi->uaddr);
 		fi->flag &= ~FINFO_ACTIVE;
 		rpcb_rmtcalls--;
@@ -1065,22 +1062,30 @@ netbuffree(struct netbuf *ap)
 extern bool_t __svc_clean_idle(fd_set *, int, bool_t);
 
 void
-my_svc_run()
+my_svc_run(void)
 {
 	size_t nfds;
-	struct pollfd pollfds[FD_SETSIZE];
+	struct pollfd *pollfds = NULL;
+	int npollfds = 0;
 	int poll_ret, check_ret;
-	int n;
+	int n, m;
 #ifdef SVC_RUN_DEBUG
 	int i;
 #endif
-	register struct pollfd	*p;
-	fd_set cleanfds;
+	struct pollfd	*p;
+	fd_set *cleanfds = NULL;
 
 	for (;;) {
+		if (svc_fdset_getsize(0) != npollfds) {
+			npollfds = svc_fdset_getsize(0);
+			pollfds = realloc(pollfds, npollfds * sizeof(*pollfds));
+			free(cleanfds);
+			cleanfds = svc_fdset_copy(svc_fdset_get());
+		}
 		p = pollfds;
-		for (n = 0; n <= *get_fdsetmax(); n++) {
-			if (FD_ISSET(n, get_fdset())) {
+		m = *svc_fdset_getmax();
+		for (n = 0; n <= m; n++) {
+			if (svc_fdset_isset(n)) {
 				p->fd = n;
 				p->events = MASKVAL;
 				p++;
@@ -1107,8 +1112,7 @@ my_svc_run()
 			 * other outside event) and not caused by poll().
 			 */
 		case 0:
-			cleanfds = *get_fdset();
-			__svc_clean_idle(&cleanfds, 30, FALSE);
+			__svc_clean_idle(cleanfds, 30, FALSE);
 			continue;
 		default:
 #ifdef SVC_RUN_DEBUG
@@ -1134,7 +1138,8 @@ my_svc_run()
 		}
 #ifdef SVC_RUN_DEBUG
 		if (debugging) {
-			fprintf(stderr, "svc_maxfd now %u\n", *get_fdsetmax());
+			fprintf(stderr, "svc_maxfd now %u\n",
+			    *svc_fdset_getmax());
 		}
 #endif
 	}
@@ -1292,7 +1297,7 @@ done:
 static void
 find_versions(rpcprog_t prog, char *netid, rpcvers_t *lowvp, rpcvers_t *highvp)
 {
-	register rpcblist_ptr rbl;
+	rpcblist_ptr rbl;
 	int lowv = 0;
 	int highv = 0;
 
@@ -1329,8 +1334,8 @@ find_versions(rpcprog_t prog, char *netid, rpcvers_t *lowvp, rpcvers_t *highvp)
 static rpcblist_ptr
 find_service(rpcprog_t prog, rpcvers_t vers, char *netid)
 {
-	register rpcblist_ptr hit = NULL;
-	register rpcblist_ptr rbl;
+	rpcblist_ptr hit = NULL;
+	rpcblist_ptr rbl;
 
 	for (rbl = list_rbl; rbl != NULL; rbl = rbl->rpcb_next) {
 		if ((rbl->rpcb_map.r_prog != prog) ||

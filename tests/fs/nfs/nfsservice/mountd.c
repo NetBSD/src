@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.9 2015/08/21 14:19:10 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.10 2015/11/08 02:45:16 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.9 2015/08/21 14:19:10 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.10 2015/11/08 02:45:16 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -353,7 +353,7 @@ mountd_main(void *arg)
 	extern sem_t gensem;
 	pthread_t ptdummy;
 
-	alloc_fdset();
+	svc_fdset_init(SVC_FDSET_MT | SVC_FDSET_POLL);
 
 #if 0
 	while ((c = getopt(argc, argv, "dNnrp:" ADDOPTS)) != -1)
