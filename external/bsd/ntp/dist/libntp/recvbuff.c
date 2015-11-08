@@ -1,4 +1,4 @@
-/*	$NetBSD: recvbuff.c,v 1.1.1.1.14.1 2014/12/25 02:28:08 snj Exp $	*/
+/*	$NetBSD: recvbuff.c,v 1.1.1.1.14.2 2015/11/08 00:15:58 snj Exp $	*/
 
 #ifdef HAVE_CONFIG_H
 # include <config.h>
@@ -218,7 +218,7 @@ get_free_recv_buffer_alloc(void)
 		create_buffers(RECV_INC);
 		buffer = get_free_recv_buffer();
 	}
-	NTP_ENSURE(buffer != NULL);
+	ENSURE(buffer != NULL);
 	return (buffer);
 }
 #endif

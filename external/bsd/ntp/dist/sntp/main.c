@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6.8.1 2014/12/25 02:28:14 snj Exp $	*/
+/*	$NetBSD: main.c,v 1.6.8.2 2015/11/08 00:16:03 snj Exp $	*/
 
 #include <config.h>
 
@@ -1163,6 +1163,7 @@ handle_pkt(
 	int		stratum;
 	char *		ref;
 	char *		ts_str;
+	const char *	leaptxt;
 	double		offset;
 	double		precision;
 	double		synch_distance;
@@ -1258,9 +1259,28 @@ handle_pkt(
 			disptxt[0] = '\0';
 		}
 
-		msyslog(LOG_INFO, "%s %+.*f%s %s s%d%s", ts_str,
+		switch (PKT_LEAP(rpkt->li_vn_mode)) {
+		    case LEAP_NOWARNING:
+		    	leaptxt = "no-leap";
+			break;
+		    case LEAP_ADDSECOND:
+		    	leaptxt = "add-leap";
+			break;
+		    case LEAP_DELSECOND:
+		    	leaptxt = "del-leap";
+			break;
+		    case LEAP_NOTINSYNC:
+		    	leaptxt = "unsync";
+			break;
+		    default:
+		    	leaptxt = "LEAP-ERROR";
+			break;
+		}
+
+		msyslog(LOG_INFO, "%s %+.*f%s %s s%d %s%s", ts_str,
 			digits, offset, disptxt,
 			hostnameaddr(hostname, host), stratum,
+			leaptxt,
 			(time_adjusted)
 			    ? " [excess]"
 			    : "");

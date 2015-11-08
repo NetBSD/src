@@ -1,4 +1,4 @@
-/*	$NetBSD: caltontp.c,v 1.1.1.1.14.1 2014/12/25 02:28:08 snj Exp $	*/
+/*	$NetBSD: caltontp.c,v 1.1.1.1.14.2 2015/11/08 00:15:58 snj Exp $	*/
 
 /*
  * caltontp - convert a date to an NTP time
@@ -42,14 +42,14 @@ caltontp(
 	int32_t eraday;	/* CE Rata Die number	*/
 	vint64  ntptime;/* resulting NTP time	*/
 
-	NTP_INSIST(jt != NULL);
+	REQUIRE(jt != NULL);
 
-	NTP_REQUIRE(jt->month <= 13);	/* permit month 0..13! */
-	NTP_REQUIRE(jt->monthday <= 32);
-	NTP_REQUIRE(jt->yearday <= 366);
-	NTP_REQUIRE(jt->hour <= 24);
-	NTP_REQUIRE(jt->minute <= MINSPERHR);
-	NTP_REQUIRE(jt->second <= SECSPERMIN);
+	REQUIRE(jt->month <= 13);	/* permit month 0..13! */
+	REQUIRE(jt->monthday <= 32);
+	REQUIRE(jt->yearday <= 366);
+	REQUIRE(jt->hour <= 24);
+	REQUIRE(jt->minute <= MINSPERHR);
+	REQUIRE(jt->second <= SECSPERMIN);
 
 	/*
 	 * First convert the date to he corresponding RataDie

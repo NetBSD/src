@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_worker.c,v 1.2.4.2 2014/12/25 02:28:08 snj Exp $	*/
+/*	$NetBSD: ntp_worker.c,v 1.2.4.3 2015/11/08 00:15:58 snj Exp $	*/
 
 /*
  * ntp_worker.c
@@ -280,7 +280,7 @@ blocking_child_common(
 		req = receive_blocking_req_internal(c);
 		if (NULL == req) {
 			say_bye = TRUE;
-			break;
+			continue;
 		}
 
 		DEBUG_REQUIRE(BLOCKING_REQ_MAGIC == req->magic_sig);

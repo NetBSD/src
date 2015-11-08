@@ -1,4 +1,4 @@
-/*	$NetBSD: event-config.h,v 1.2.6.2 2014/12/25 02:28:15 snj Exp $	*/
+/*	$NetBSD: event-config.h,v 1.2.6.3 2015/11/08 00:16:04 snj Exp $	*/
 
 /* event2/event-config.h
  *
@@ -276,7 +276,7 @@
 /* #undef EVENT__HAVE_WORKING_KQUEUE */
 
 /* Numeric representation of the version */
-#define EVENT__NUMERIC_VERSION 0x02010301
+#define EVENT__NUMERIC_VERSION 0x02010500
 
 /* Name of package */
 #define EVENT__PACKAGE "libevent"
@@ -333,7 +333,7 @@
 #define EVENT__TIME_WITH_SYS_TIME 1
 
 /* Version number of package */
-#define EVENT__VERSION "2.1.3-alpha-dev"
+#define EVENT__VERSION "2.1.5-beta"
 
 /* Define to appropriate substitue if compiler doesnt have __func__ */
 #define EVENT____func__ __FUNCTION__
