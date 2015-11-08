@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.23 2015/11/08 00:42:27 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.24 2015/11/08 01:24:53 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -815,4 +815,46 @@ sys/arch/x86/x86/sys_machdep.c			1.29
 	Fix broken error handling leading to random crashes in 
 	threaded programs.
 	[christos, ticket #1013]
+
+etc/rc.subr					1.97
+
+	Speed up multiuser boot time on slow machines.  PR#50046.
+	[phx, ticket #1015]
+
+usr.sbin/iostat/iostat.8			1.24
+usr.sbin/iostat/iostat.c			1.62-1.63
+
+	Support fnmatch(3) patterns for disknames.  eg, "iostat wd*" works
+	now. Update the default disk number selection to note that it uses
+	the current terminal size to fit disks, not hard coded 4.
+	Extend the "tout" column to 5 characters, it's really common on a
+	modern machine to have eg, build output way more than 9999 chars/sec.
+	This doesn't affect the default disk list on an 80-char wide screen.
+	[mrg, ticket #1016]
+
+sys/kern/uipc_syscalls.c			1.181
+
+	Don't overwrite the user iov pointer in sendmmsg. Make the send
+	and receive code look the same.
+	[christos, ticket #1018]
+
+sys/kern/exec_elf.c				1.79-1.80
+sys/sys/exec_elf.h				1.150-1.151
+
+	Recognize additional ELF notes.
+	[christos, ticket #1019]
+
+sys/nfs/nfs_vfsops.c				1.231
+
+	Don't forget to call nfs_fini() when we're finished.  Without this,
+	we leave a dangling pool nfsrvdescpl around.
+	[pgoyette, ticket #1021]
+
+sys/arch/arm/omap/omap3_sdhc.c			1.19
+sys/arch/evbarm/beagle/beagle_machdep.c		1.62
+sys/dev/sdmmc/sdhc.c				1.89 via patch
+sys/dev/sdmmc/sdhcvar.h				1.25
+
+	Support 8-bit eMMC for TI AM335x. 
+	[jmcneill, ticket #1022]
 
