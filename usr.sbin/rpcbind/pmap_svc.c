@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_svc.c,v 1.7 2013/10/19 17:16:38 christos Exp $	*/
+/*	$NetBSD: pmap_svc.c,v 1.8 2015/11/08 16:36:28 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -173,17 +173,17 @@ pmapproc_change(struct svc_req *rqstp, SVCXPRT *xprt, unsigned long op)
 	struct sockcred *sc;
 	char uidbuf[32];
 
+	if (!svc_getargs(xprt, (xdrproc_t) xdr_pmap, (char *)&reg)) {
+		svcerr_decode(xprt);
+		return (FALSE);
+	}
+
 #ifdef RPCBIND_DEBUG
 	if (debugging)
 		fprintf(stderr, "%s request for (%lu, %lu) : ",
 		    op == PMAPPROC_SET ? "PMAP_SET" : "PMAP_UNSET",
 		    reg.pm_prog, reg.pm_vers);
 #endif
-
-	if (!svc_getargs(xprt, (xdrproc_t) xdr_pmap, (char *)&reg)) {
-		svcerr_decode(xprt);
-		return (FALSE);
-	}
 
 	if (!check_access(xprt, op, &reg, PMAPVERS)) {
 		svcerr_weakauth(xprt);
