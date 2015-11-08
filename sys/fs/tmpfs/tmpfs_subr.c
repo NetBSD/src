@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.96.4.1 2014/12/22 02:05:08 msaitoh Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.96.4.2 2015/11/08 01:26:56 riz Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.96.4.1 2014/12/22 02:05:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.96.4.2 2015/11/08 01:26:56 riz Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -451,6 +451,7 @@ tmpfs_alloc_dirent(tmpfs_mount_t *tmp, const char *name, uint16_t len,
 	nde->td_namelen = len;
 	memcpy(nde->td_name, name, len);
 	nde->td_seq = TMPFS_DIRSEQ_NONE;
+	nde->td_node = NULL; /* for asserts */
 
 	*de = nde;
 	return 0;
