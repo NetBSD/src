@@ -1,4 +1,4 @@
-# $NetBSD: rc.subr,v 1.94 2014/07/27 07:46:46 apb Exp $
+# $NetBSD: rc.subr,v 1.94.2.1 2015/11/08 00:45:22 riz Exp $
 #
 # Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -796,19 +796,9 @@ $command $rc_flags $command_args"
 _have_rc_postprocessor()
 {
 	# Cheap tests that fd and pid are set, fd is writable.
-	[ -n "${_rc_postprocessor_fd}" ] || return 1
-	[ -n "${_rc_pid}" ] || return 1
-	eval ": >&${_rc_postprocessor_fd}" 2>/dev/null || return 1
-
-	# More expensive test that pid is running.
-	# Unset _rc_pid if this fails.
-	kill -0 "${_rc_pid}" 2>/dev/null \
-	|| { unset _rc_pid; return 1; }
-
-	# More expensive test that pid appears to be
-	# a shell running an rc script.
-	# Unset _rc_pid if this fails.
-	expr "$(ps -p "${_rc_pid}" -o command=)" : ".*sh .*/rc.*" >/dev/null \
+	[ -n "${_rc_pid}" ] || { unset _rc_pid; return 1; }
+	[ -n "${_rc_postprocessor_fd}" ] || { unset _rc_pid; return 1; }
+	eval ": >&${_rc_postprocessor_fd}" 2>/dev/null \
 	|| { unset _rc_pid; return 1; }
 
 	return 0
