@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls.c,v 1.172.2.1 2015/08/08 15:45:47 martin Exp $	*/
+/*	$NetBSD: uipc_syscalls.c,v 1.172.2.2 2015/11/08 00:55:11 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.172.2.1 2015/08/08 15:45:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls.c,v 1.172.2.2 2015/11/08 00:55:11 riz Exp $");
 
 #include "opt_pipe.h"
 
@@ -568,10 +568,10 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 			if (error)
 				goto bad;
 		}
-		mp->msg_iov = iov;
-	}
+		auio.uio_iov = iov;
+	} else
+		auio.uio_iov = mp->msg_iov;
 
-	auio.uio_iov = mp->msg_iov;
 	auio.uio_iovcnt = mp->msg_iovlen;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_offset = 0;			/* XXX */
@@ -579,7 +579,8 @@ do_sys_sendmsg_so(struct lwp *l, int s, struct socket *so, file_t *fp,
 	KASSERT(l == curlwp);
 	auio.uio_vmspace = l->l_proc->p_vmspace;
 
-	for (i = 0, tiov = mp->msg_iov; i < mp->msg_iovlen; i++, tiov++) {
+	tiov = auio.uio_iov;
+	for (i = 0; i < auio.uio_iovcnt; i++, tiov++) {
 		/*
 		 * Writes return ssize_t because -1 is returned on error.
 		 * Therefore, we must restrict the length to SSIZE_MAX to
@@ -955,7 +956,7 @@ do_sys_recvmsg_so(struct lwp *l, int s, struct socket *so, struct msghdr *mp,
 	auio.uio_vmspace = l->l_proc->p_vmspace;
 
 	tiov = auio.uio_iov;
-	for (i = 0; i < mp->msg_iovlen; i++, tiov++) {
+	for (i = 0; i < auio.uio_iovcnt; i++, tiov++) {
 		/*
 		 * Reads return ssize_t because -1 is returned on error.
 		 * Therefore we must restrict the length to SSIZE_MAX to
