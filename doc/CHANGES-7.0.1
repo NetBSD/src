@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.6 2015/11/07 16:37:03 riz Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.7 2015/11/08 00:16:39 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -96,4 +96,10 @@ sys/arch/arm/allwinner/awin_mmc.c		1.22
 
 	Avoid a divide by 0 when unplugging a sd card.
 	[bouyer, ticket #1006]
+
+sys/arch/x86/x86/cpu.c				1.116
+
+	Don't disable/re-enable interrupts if they are already disabled.
+	Fixes i386 PAE kernels. PR#48196.
+	[nat, ticket #984]
 
