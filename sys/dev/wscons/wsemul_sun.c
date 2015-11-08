@@ -1,4 +1,4 @@
-/* $NetBSD: wsemul_sun.c,v 1.28 2010/03/12 08:40:50 jdc Exp $ */
+/* $NetBSD: wsemul_sun.c,v 1.29 2015/11/08 16:49:41 christos Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -33,7 +33,7 @@
 /* XXX DESCRIPTION/SOURCE OF INFORMATION */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.28 2010/03/12 08:40:50 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsemul_sun.c,v 1.29 2015/11/08 16:49:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -151,11 +151,11 @@ wsemul_sun_cnattach(const struct wsscreen_descr *type, void *cookie,
 		res = (*edp->emulops->allocattr)(cookie, 0, 0,
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
-	if (res)
 #else
-	res = 0; /* XXX gcc */
+	res = EINVAL;
 #endif
-	edp->kernattr = defattr;
+	if (res)
+		edp->kernattr = defattr;
 
 	edp->cbcookie = NULL;
 
