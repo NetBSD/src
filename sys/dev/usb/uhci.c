@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.52 2015/11/08 15:19:29 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.53 2015/11/08 21:02:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.52 2015/11/08 15:19:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.53 2015/11/08 21:02:31 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1533,7 +1533,9 @@ uhci_idone(struct uhci_xfer *ux)
 #ifdef UHCI_DEBUG
 			if (uhcidebug >= 5) {
 				DPRINTF("isoc TD %d", i, 0, 0, 0);
+				DPRINTF("--- dump start ---", 0, 0, 0, 0);
 				uhci_dump_td(std);
+				DPRINTF("--- dump end ---", 0, 0, 0, 0);
 			}
 #endif
 			if (++n >= UHCI_VFRAMELIST_COUNT)
