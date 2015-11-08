@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.48 2015/11/08 13:33:49 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.49 2015/11/08 14:38:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.48 2015/11/08 13:33:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.49 2015/11/08 14:38:38 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -430,8 +430,8 @@ uhci_init(uhci_softc_t *sc)
 
 	/* Allocate and initialize real frame array. */
 	err = usb_allocmem(&sc->sc_bus,
-		  UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
-		  UHCI_FRAMELIST_ALIGN, &sc->sc_dma);
+	    UHCI_FRAMELIST_COUNT * sizeof(uhci_physaddr_t),
+	    UHCI_FRAMELIST_ALIGN, &sc->sc_dma);
 	if (err)
 		return err;
 	sc->sc_pframes = KERNADDR(&sc->sc_dma, 0);
