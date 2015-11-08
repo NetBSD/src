@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.260 2015/11/07 16:21:42 nros Exp $
+#	$NetBSD: shlib_version,v 1.261 2015/11/08 02:20:26 joerg Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -41,5 +41,7 @@
 # - redo stdin/stdout/stderr to not require copy relocations
 # - move gethostbyname to a compat library
 # - remove arc4random(3) API
+# - decide whether soft-float should support fenv.h, including thread-local contett
+# - stop all math functions from setting errno
 major=12
 minor=199
