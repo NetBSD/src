@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1511 2015/10/14 04:22:45 nonaka Exp $
+# $NetBSD: mi,v 1.1512 2015/11/08 20:00:22 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2669,7 +2669,7 @@
 ./usr/share/man/cat8/modunload.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mopd.0			man-bootserver-catman	.cat
 ./usr/share/man/cat8/mount.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/mount_9p.0			man-puffs-catman	.cat,rump
+./usr/share/man/cat8/mount_9p.0			man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_ados.0		man-adosfs-catman	.cat
 ./usr/share/man/cat8/mount_cd9660.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_chfs.0		man-sysutil-catman	.cat
@@ -2691,11 +2691,11 @@
 ./usr/share/man/cat8/mount_overlay.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_portal.0		man-miscfs-catman	.cat
 ./usr/share/man/cat8/mount_procfs.0		man-sysutil-catman	.cat
-./usr/share/man/cat8/mount_psshfs.0		man-puffs-catman	.cat,rump
+./usr/share/man/cat8/mount_psshfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_ptyfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_puffs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_smbfs.0		man-smbfs-catman	.cat
-./usr/share/man/cat8/mount_sysctlfs.0		man-puffs-catman	.cat,rump
+./usr/share/man/cat8/mount_sysctlfs.0		man-puffs-catman	.cat
 ./usr/share/man/cat8/mount_sysvbfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_tmpfs.0		man-sysutil-catman	.cat
 ./usr/share/man/cat8/mount_udf.0		man-sysutil-catman	.cat
@@ -5533,7 +5533,7 @@
 ./usr/share/man/html8/modunload.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mopd.html			man-bootserver-htmlman	html
 ./usr/share/man/html8/mount.html		man-sysutil-htmlman	html
-./usr/share/man/html8/mount_9p.html		man-puffs-htmlman	html,rump
+./usr/share/man/html8/mount_9p.html		man-puffs-htmlman	html
 ./usr/share/man/html8/mount_ados.html		man-adosfs-htmlman	html
 ./usr/share/man/html8/mount_cd9660.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_chfs.html		man-sysutil-htmlman	html
@@ -8577,7 +8577,7 @@
 ./usr/share/man/man8/modunload.8		man-sysutil-man		.man
 ./usr/share/man/man8/mopd.8			man-bootserver-man	.man
 ./usr/share/man/man8/mount.8			man-sysutil-man		.man
-./usr/share/man/man8/mount_9p.8			man-puffs-man		.man,rump
+./usr/share/man/man8/mount_9p.8			man-puffs-man		.man
 ./usr/share/man/man8/mount_ados.8		man-adosfs-man		.man
 ./usr/share/man/man8/mount_cd9660.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_chfs.8		man-sysutil-man		.man
@@ -8599,11 +8599,11 @@
 ./usr/share/man/man8/mount_overlay.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_portal.8		man-miscfs-man		.man
 ./usr/share/man/man8/mount_procfs.8		man-sysutil-man		.man
-./usr/share/man/man8/mount_psshfs.8		man-puffs-man		.man,rump
+./usr/share/man/man8/mount_psshfs.8		man-puffs-man		.man
 ./usr/share/man/man8/mount_ptyfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_puffs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_smbfs.8		man-smbfs-man		.man
-./usr/share/man/man8/mount_sysctlfs.8		man-puffs-man		.man,rump
+./usr/share/man/man8/mount_sysctlfs.8		man-puffs-man		.man
 ./usr/share/man/man8/mount_sysvbfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_tmpfs.8		man-sysutil-man		.man
 ./usr/share/man/man8/mount_udf.8		man-sysutil-man		.man
