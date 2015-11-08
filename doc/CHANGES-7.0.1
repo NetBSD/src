@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.8 2015/11/08 00:31:15 riz Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.9 2015/11/08 00:38:34 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -114,4 +114,16 @@ sys/arch/x86/x86/bus_dma.c			1.72-1.74
 	- When checking for the bounce buffer boundary,
 	  check addr + len < limit, not addr < limit.
 	[christos, ticket #1011]
+
+external/gpl3/binutils/dist/binutils/arsup.c	1.2
+lib/libc/net/getnetnamadr.c			1.43-1.44
+
+	Resolve hostnames with "_".  PR#50367.
+	[christos, ticket #1012]
+
+sys/arch/x86/x86/sys_machdep.c			1.29
+
+	Fix broken error handling leading to random crashes in 
+	threaded programs.
+	[christos, ticket #1013]
 
