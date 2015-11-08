@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.175 2015/11/05 16:46:22 macallan Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.176 2015/11/08 23:23:30 joerg Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -988,6 +988,10 @@ ttyY[0-9]*)
 	mkdev ttyY$unit c %ucycom_chr% $(($unit + $dialin  )) "" "" $u_uucp
 	mkdev dtyY$unit c %ucycom_chr% $(($unit + $dialout )) "" "" $u_uucp
 	mkdev ctyY$unit c %ucycom_chr% $(($unit + $callunit)) "" "" $u_uucp
+	;;
+
+ucom[0-9]*)
+	makedev ttyU${i#ucom}
 	;;
 
 ttyU[0-9]*)
