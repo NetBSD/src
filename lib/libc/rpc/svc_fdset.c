@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.11 2015/11/08 02:46:53 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.12 2015/11/08 19:30:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.11 2015/11/08 02:46:53 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.12 2015/11/08 19:30:53 christos Exp $");
 
 
 #include "reentrant.h"
@@ -97,11 +97,20 @@ svc_fdset_print(const char *func, size_t line, struct svc_fdset *fds,
 	svc_header(func, line, fmt, ap);
 	va_end(ap);
 
-	fprintf(stderr, "%p[%d] <", fds->fdset, fds->fdmax);
+	fprintf(stderr, "%p[%d] fd_set<", fds->fdset, fds->fdmax);
 	for (int i = 0; i <= fds->fdmax; i++) {
 		if (!FD_ISSET(i, fds->fdset))
 			continue;
 		fprintf(stderr, "%s%d", did, i);
+		did = ", ";
+	}
+	did = "";
+	fprintf(stderr, "> poll<");
+	for (int i = 0; i < fds->fdused; i++) {
+		int fd = fds->fdp[i].fd;
+		if (fd == -1)
+			continue;
+		fprintf(stderr, "%s%d", did, fd);
 		did = ", ";
 	}
 	fprintf(stderr, ">\n");
@@ -167,6 +176,9 @@ svc_pollfd_init(struct pollfd *pfd, int nfd)
 static struct pollfd *
 svc_pollfd_alloc(struct svc_fdset *fds)
 {
+	if (fds->fdp != NULL)
+		return fds->fdp;
+		
 	fds->fdnum = FD_SETSIZE;
 	fds->fdp = calloc(fds->fdnum, sizeof(*fds->fdp));
 	if (fds->fdp == NULL)
@@ -186,8 +198,10 @@ svc_pollfd_add(int fd, struct svc_fdset *fds)
 
 	for (int i = 0; i < fds->fdnum; i++)
 		if (pfd[i].fd == -1) {
-			if (i > fds->fdused)
+			if (i >= fds->fdused)
 				fds->fdused = i + 1;
+			DPRINTF("add fd=%d slot=%d fdused=%d",
+			    fd, i, fds->fdused);
 			pfd[i].fd = fd;
 			return fds;
 		}
@@ -199,6 +213,7 @@ svc_pollfd_add(int fd, struct svc_fdset *fds)
 	svc_pollfd_init(pfd + fds->fdnum, FD_SETSIZE);
 	pfd[fds->fdnum].fd = fd;
 	fds->fdused = fds->fdnum + 1;
+	DPRINTF("add fd=%d slot=%d fdused=%d", fd, fds->fdnum, fds->fdused);
 	fds->fdnum += FD_SETSIZE;
 	return fds;
 }
@@ -216,6 +231,7 @@ svc_pollfd_del(int fd, struct svc_fdset *fds)
 			continue;
 
 		pfd[i].fd = -1;
+		DPRINTF("del fd=%d slot=%d", fd, fds->fdused);
 		if (i != fds->fdused - 1)
 			return fds;
 
@@ -223,9 +239,12 @@ svc_pollfd_del(int fd, struct svc_fdset *fds)
 			if (pfd[i].fd != -1) 
 				break;
 		while (--i >= 0);
+
 		fds->fdused = i + 1;
+		DPRINTF("del fd=%d fdused=%d", fd, fds->fdused);
 		return fds;
 	}
+	DPRINTF("del fd=%d not found", fd);
 	return NULL;
 }
 
@@ -324,10 +343,11 @@ svc_fdset_set(int fd)
 	if (fd > fds->fdmax)
 		fds->fdmax = fd;
 
+	int rv = svc_pollfd_add(fd, fds) ? 0 : -1;
 	DPRINTF_FDSET(fds, "%d", fd);
 
 	svc_fdset_sanitize(fds);
-	return svc_pollfd_add(fd, fds) ? 0 : -1;
+	return rv;
 }
 
 int
@@ -352,10 +372,12 @@ svc_fdset_clr(int fd)
 		return -1;
 
 	FD_CLR(fd, fds->fdset);
+
+	int rv = svc_pollfd_del(fd, fds) ? 0 : -1;
 	DPRINTF_FDSET(fds, "%d", fd);
 
 	svc_fdset_sanitize(fds);
-	return svc_pollfd_del(fd, fds) ? 0 : -1;
+	return rv;
 }
 
 fd_set *
