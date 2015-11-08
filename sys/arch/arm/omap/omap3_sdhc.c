@@ -1,4 +1,4 @@
-/*	$NetBSD: omap3_sdhc.c,v 1.14.4.1 2015/04/19 04:37:17 msaitoh Exp $	*/
+/*	$NetBSD: omap3_sdhc.c,v 1.14.4.2 2015/11/08 01:22:54 riz Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.4.1 2015/04/19 04:37:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.4.2 2015/11/08 01:22:54 riz Exp $");
 
 #include "opt_omap.h"
 #include "edma.h"
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_sdhc.c,v 1.14.4.1 2015/04/19 04:37:17 msaitoh 
 #ifdef TI_AM335X
 #  include <arm/omap/am335x_prcm.h>
 #  include <arm/omap/omap2_prcm.h>
+#  include <arm/omap/sitara_cm.h>
+#  include <arm/omap/sitara_cmreg.h>
 #endif
 
 #if NEDMA > 0
@@ -84,6 +86,7 @@ static int obiosdhc_match(device_t, cfdata_t, void *);
 static void obiosdhc_attach(device_t, device_t, void *);
 static int obiosdhc_detach(device_t, int);
 
+static int obiosdhc_bus_width(struct sdhc_softc *, int);
 static int obiosdhc_bus_clock(struct sdhc_softc *, int);
 static int obiosdhc_rod(struct sdhc_softc *, int);
 static int obiosdhc_write_protect(struct sdhc_softc *);
@@ -128,6 +131,24 @@ static const struct am335x_sdhc am335x_sdhc[] = {
 	{ "MMCHS0", SDMMC1_BASE_TIAM335X, 64, { AM335X_PRCM_CM_PER, 0x3c } },
 	{ "MMC1",   SDMMC2_BASE_TIAM335X, 28, { AM335X_PRCM_CM_PER, 0xf4 } },
 	{ "MMCHS2", SDMMC3_BASE_TIAM335X, 29, { AM335X_PRCM_CM_WKUP, 0xf8 } },
+};
+
+struct am335x_padconf {
+	const char *padname;
+	const char *padmode;
+};
+const struct am335x_padconf am335x_padconf_mmc1[] = {
+	{ "GPMC_CSn1", "mmc1_clk" },
+	{ "GPMC_CSn2", "mmc1_cmd" },
+	{ "GPMC_AD0", "mmc1_dat0" },
+	{ "GPMC_AD1", "mmc1_dat1" },
+	{ "GPMC_AD2", "mmc1_dat2" },
+	{ "GPMC_AD3", "mmc1_dat3" },
+	{ "GPMC_AD4", "mmc1_dat4" },
+	{ "GPMC_AD5", "mmc1_dat5" },
+	{ "GPMC_AD6", "mmc1_dat6" },
+	{ "GPMC_AD7", "mmc1_dat7" },
+	{ NULL, NULL }
 };
 #endif
 
@@ -213,6 +234,7 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_vendor_write_protect = obiosdhc_write_protect;
 	sc->sc.sc_vendor_card_detect = obiosdhc_card_detect;
 	sc->sc.sc_vendor_bus_clock = obiosdhc_bus_clock;
+	sc->sc.sc_vendor_bus_width = obiosdhc_bus_width;
 	sc->sc_bst = oa->obio_iot;
 
 	clksft = ffs(sc->sc.sc_clkmsk) - 1;
@@ -256,6 +278,27 @@ obiosdhc_attach(device_t parent, device_t self, void *aux)
 			break;
 		}
 	KASSERT(i < __arraycount(am335x_sdhc));
+
+	if (oa->obio_addr == SDMMC2_BASE_TIAM335X) {
+		const char *mode;
+		u_int state;
+		
+		const struct am335x_padconf *padconf = am335x_padconf_mmc1;
+		for (i = 0; padconf[i].padname; i++) {
+			const char *padname = padconf[i].padname;
+			const char *padmode = padconf[i].padmode;
+			if (sitara_cm_padconf_get(padname, &mode, &state) == 0) {
+				aprint_debug_dev(self, "%s mode %s state %d\n",
+				    padname, mode, state);
+			}
+			if (sitara_cm_padconf_set(padname, padmode,
+			    (1 << 4) | (1 << 5)) != 0) {
+				aprint_error_dev(self, "can't switch %s pad from %s to %s\n",
+				    padname, mode, padmode);
+				return;
+			}
+		}
+	}
 #endif
 
 	/* XXXXXX: Turn-on regurator via I2C. */
@@ -414,6 +457,23 @@ obiosdhc_card_detect(struct sdhc_softc *sc)
 
 	/* Maybe board dependent, using GPIO. Get GPIO-pin from prop? */
 	return 1;	/* XXXXXXXX */
+}
+
+static int
+obiosdhc_bus_width(struct sdhc_softc *sc, int width)
+{
+	struct obiosdhc_softc *osc = (struct obiosdhc_softc *)sc;
+	uint32_t con;
+
+	con = bus_space_read_4(osc->sc_bst, osc->sc_bsh, MMCHS_CON);
+	if (width == 8) {
+		con |= CON_DW8;
+	} else {
+		con &= ~CON_DW8;
+	}
+	bus_space_write_4(osc->sc_bst, osc->sc_bsh, MMCHS_CON, con);
+
+	return 0;
 }
 
 static int
