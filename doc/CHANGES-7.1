@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.22 2015/11/07 16:43:38 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.23 2015/11/08 00:42:27 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -778,4 +778,41 @@ lib/libcurses/toucholap.c			1.16
 
 	Fix x/y editing error.
 	[uwe, ticket #1007]
+
+usr.sbin/sysinst/target.c			1.3
+
+	PR 50342: if there is no current partition manage, assume we are
+	running from an already installed system.
+	[martin, ticket #1008]
+
+distrib/sets/lists/comp/mi			1.1921
+lib/libm/Makefile				1.167
+lib/libm/man/erf.3				1.13
+
+	PR/49399: Henning Petersen: Add man pages for erfl(3) and erfcl(3).
+	[dholland, ticket #1009]
+
+sys/arch/x86/x86/bus_dma.c			1.72-1.74
+
+	- If we succeeded allocating a buffer that did not need bouncing
+	before, but the buffer in the previous mapping did, clear the
+	bounce bit. Fixes the ld_virtio.c bug with machines 8GB and
+	dd if=/dev/zero of=crash bs=1g count=4.
+	- Allocate with M_ZERO instead of doing memset
+	- The panic string can take a format, use it.
+	- When checking for the bounce buffer boundary,
+	  check addr + len < limit, not addr < limit.
+	[christos, ticket #1011]
+
+external/gpl3/binutils/dist/binutils/arsup.c	1.2
+lib/libc/net/getnetnamadr.c			1.43-1.44
+
+	Resolve hostnames with "_".  PR#50367.
+	[christos, ticket #1012]
+
+sys/arch/x86/x86/sys_machdep.c			1.29
+
+	Fix broken error handling leading to random crashes in 
+	threaded programs.
+	[christos, ticket #1013]
 
