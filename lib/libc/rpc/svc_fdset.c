@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.10 2015/11/07 23:17:09 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.11 2015/11/08 02:46:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.10 2015/11/07 23:17:09 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.11 2015/11/08 02:46:53 christos Exp $");
 
 
 #include "reentrant.h"
@@ -53,7 +53,9 @@ __RCSID("$NetBSD: svc_fdset.c,v 1.10 2015/11/07 23:17:09 christos Exp $");
 
 #undef svc_fdset
 #undef svc_maxfd
+#ifdef _LIBC
 extern __fd_set_256 svc_fdset;
+#endif
 extern int svc_maxfd;
 int __svc_flags;
 
@@ -132,11 +134,13 @@ svc_fdset_sanitize(struct svc_fdset *fds)
 {
 	while (fds->fdmax >= 0 && !FD_ISSET(fds->fdmax, fds->fdset))
 		fds->fdmax--;
+#ifdef _LIBC
 	/* Compat update */
 	if (fds == &__svc_fdset) {
 		svc_fdset = *(__fd_set_256 *)__svc_fdset.fdset;
 		svc_maxfd = __svc_fdset.fdmax;
 	}
+#endif
 }
 
 static void
