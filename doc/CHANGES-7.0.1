@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.7 2015/11/08 00:16:39 riz Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.8 2015/11/08 00:31:15 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -102,4 +102,16 @@ sys/arch/x86/x86/cpu.c				1.116
 	Don't disable/re-enable interrupts if they are already disabled.
 	Fixes i386 PAE kernels. PR#48196.
 	[nat, ticket #984]
+
+sys/arch/x86/x86/bus_dma.c			1.72-1.74
+
+	- If we succeeded allocating a buffer that did not need bouncing
+	before, but the buffer in the previous mapping did, clear the
+	bounce bit. Fixes the ld_virtio.c bug with machines 8GB and
+	dd if=/dev/zero of=crash bs=1g count=4.
+	- Allocate with M_ZERO instead of doing memset
+	- The panic string can take a format, use it.
+	- When checking for the bounce buffer boundary,
+	  check addr + len < limit, not addr < limit.
+	[christos, ticket #1011]
 
