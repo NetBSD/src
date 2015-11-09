@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.82 2015/11/03 18:38:03 bouyer Exp $ */
+/* $NetBSD: awin_reg.h,v 1.83 2015/11/09 10:10:39 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -1702,7 +1702,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_DEBE_MODCTL_ITLMOD_EN	__BIT(28)
 #define AWIN_DEBE_MODCTL_OUT_SEL	__BITS(22,20)
 #define AWIN_DEBE_MODCTL_OUT_SEL_LCD0	0
-#define AWIN_DEBE_MODCTL_OUT_SEL_LCD1	0
+#define AWIN_DEBE_MODCTL_OUT_SEL_LCD1	1
 #define AWIN_DEBE_MODCTL_OUT_SEL_FE0	6
 #define AWIN_DEBE_MODCTL_OUT_SEL_FE1	7
 #define AWIN_DEBE_MODCTL_OSCA_EN	__BIT(17)
