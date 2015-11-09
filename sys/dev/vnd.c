@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.251 2015/11/09 17:41:24 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.252 2015/11/09 17:52:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.251 2015/11/09 17:41:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.252 2015/11/09 17:52:59 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1068,6 +1068,7 @@ vndioctl_get(struct lwp *l, void *data, int unit, struct vattr *va)
 
 	KASSERT(l);
 
+	/* the first member is always int vnd_unit in all the versions */
 	if (*(int *)data >= vnd_cd.cd_ndevs)
 		return ENXIO;
 
