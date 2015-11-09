@@ -1,4 +1,4 @@
-/*	$NetBSD: param.c,v 1.66 2015/08/24 22:50:33 pooka Exp $	*/
+/*	$NetBSD: param.c,v 1.67 2015/11/09 01:21:18 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1989 Regents of the University of California.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.66 2015/08/24 22:50:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: param.c,v 1.67 2015/11/09 01:21:18 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_hz.h"
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: param.c,v 1.66 2015/08/24 22:50:33 pooka Exp $");
 #include <ufs/ufs/quota.h>
 #include <sys/kernel.h>
 #include <sys/utsname.h>
-#include <sys/ksem.h>
 #include <sys/lwp.h>
 #ifdef SYSVSHM
 #include <machine/vmparam.h>
@@ -218,8 +217,3 @@ struct	msginfo msginfo = {
  */
 const	int msize = MSIZE;
 const	int mclbytes = MCLBYTES;
-
-/*
- * Values in support of POSIX semaphores.
- */
-int	ksem_max = KSEM_MAX;
