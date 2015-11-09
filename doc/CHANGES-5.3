@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.127 2015/11/09 10:36:46 sborrill Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.128 2015/11/09 12:38:41 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -4100,4 +4100,132 @@ sys/dev/mii/miidevs_data.h			regen
 	- Add Relatek RTL8251
 	- Update comment.
 	[msaitoh, ticket #1982]
+
+sys/dev/pci/pcidevs			1.1079, 1.1134, 1.1148-1.1149, 1.1151
+sys/dev/pci/pcidevs.h			regen
+sys/dev/pci/pcidevs_data.h		regen
+sys/dev/pci/if_bge.c			1.183-1.185, 1.187, 1.189-1.193, 1.195-1.199, 1.202-1.226, 1.228-1.237, 1.240-1.264, 1.267-1.276, 1.278-1.280, 1.283-1.287 via patch
+sys/dev/pci/if_bgereg.h			1.57-1.74, 1.76-1.90 via patch
+sys/dev/pci/if_bgevar.h			1.6, 1.10-1.13, 1.15-1.17 via patch
+sys/dev/pci/if_bnx.c			1.32, 1.34-1.43, 1.48-1.49, 1.52
+sys/dev/pci/if_bnxreg.h			1.8, 1.11-1.14
+sys/dev/pci/if_bnxvar.h			1.1-1.3
+sys/dev/mii/brgphy.c			1.53-1.63, 1.65-69, 1.72-1.74 via patch
+sys/dev/mii/brgphyreg.h			1.5-1.8
+sys/dev/mii/miivar.h			1.61
+sys/dev/pci/pcireg.h			patch
+
+	Sync bge(4) up to if_bge.c rev. 1.287. Sync brgphy(4) up to 1.74.
+	Fix some bugs on bnx(4). Details as follows:
+	Common:
+	- Add device IDs for Broadcom BCM57710, BCM57711(E), BCM57712(E) and
+	  BCM57766 (pcidevs only).
+	- Fix BCM5709 PHY detection.
+	- Fix detection of BGEPHYF_FIBER_{MII|TBI}
+	- Add BCM5708S support in brgphy(4).
+	- Don't use the WIRESPEED function for fiber devices.
+	bge(4):
+	- Add some Fujitsu's device support from Michael Moll.
+	- Add BCM57762 support (PR#46961 from Ryo Onodera).
+	- Add Altima AC1003, APPLE BCM5701, Broadcom BCM5785F. BCM5785G,
+	  BCM5787F, BCM5719, BCM5720, BCM57766, BCM57782 and BCM57786.
+	- Fix DMA setting for read/write on conventional PCI bus devices.
+	- Fix printing "discarding oversize frame (len=-4)" message and crash
+	  by NULL pointer dereferencing.
+	- The BCM5785 is a PCIe chip but does not report PCIe capabilities.
+	  Check for this chip explicitly and enable PCIe. Fixes
+	  'firmware handshake timeout'.
+	- Allow disabling interrupt mitigation.
+	- Workaround for BCM5906 silicon bug. When auto-negotiation results in
+	  half-duplex operation, excess collision on the ethernet link may
+	  cause internal chip delays that may result in subsequent valid
+	  frames being dropped due to insufficient receive buffer resources.
+	  (FreeBSD: r214219, r214251, r214292).
+	- Allow write DMA to request larger DMA burst size to get better
+	  performance on BCM5785. (FreeBSD r213333: OpenBSD 1.294)
+	- Enable TX MAC state machine lockup fix for both BCM5755 or higher
+	  and BCM5906. Publicly available data sheet just says it may happen
+	  due to corrupted TxMbuf. (FreeBSD r214216)
+	- Follow Broadcom datasheet:
+	  Delay 100 microseconds after enabling transmit MAC.
+	  Delay 10 microseconds after enabling receive MAC. (FreeBSD r241220)
+	- Insert the completion barrier between register write and the
+	  consecutive delay(). It will fix some device timeout problems we have
+	  seen before.
+	- Add DELAY(40) after turning on write DMA state machine.
+	- Add some workarounds for 5717 A0 and 5776[56] to be stable.
+	- Check BGE_RXBDFLAG_IPV6 flag for 5717_PLUS case. Note that
+	  {tcp,udp}6csum flag is currently not added in the capability.
+	- Add delay after clearing BGE_MACMODE_TBI_SEND_CFGS for the link
+	  checking.
+	- Do not touch the jumbo replenish threshold register on chips that do
+	  not have jumbo support.
+	- Wait for the bootcode to complete initialization for 5717 and newer
+	  devices.
+	- 5718 and 57785 document say we should wait 100us in init.
+	- Fix a bug that chips which have BCM5906 ASIC touch GPIO wrongly.
+	- Fix the setting of Tx Random Backoff Register.
+	- Check the hardware config words and print them.
+	- Set BGE_MISC_CTL's byte/word swap options before using
+	  bge_readmem_ind(). Fixes PR#47716.
+	- For BGE_IS_575X_PLUS() devices, don't set
+	  BGE_RXLPSTATCONTROL_DACK_FIX bits because these bits are reserved.
+	- Document says 5717 and newer chips have no
+	  BGE_PCISTATE_INTR_NOT_ACTIVE bit, so don't use the bit on those
+	  chips. Same as OpenBSD.
+	- Fix a bug that the PHY address bits in MI_MODE register is wrongly
+	  cleared. Set the PHY address correctly.
+	- Use BGE_SETBIT() instead of CSR_WRITE_4() for the BGE_MISC_LOCAL_CTL
+	  register to not to modify some GPIO bits.
+	- Set DMA watermark depend on the PCI max payload size.
+	- Set BGE_JUMBO_CAPABLE correctly.
+	- Fix a link detect bug on non-autopoll systems.
+	- Change the TX ring size for 5717 series and 57764 series.
+	- Set maximum read byte count to 2048 for PCI-X BCM5703/5704 devices.
+	  For PCI-X BCM5704, set maximum outstanding split transactions to 0.
+	- Add 40bit DMA bug workaround(BGEF_40BIT_BUG) from FreeBSD.
+	  This workaround is for 5714/5715 controllers and is not actually a
+	  MAC controller bug but an issue with the embedded PCIe to PCI-X
+	  bridge in the device. This change uses bus_dmatag_subregion(),
+	  so this workaround won't work on some archs which doesn't support
+	  bus_dmatag_subregion().
+	- Add 2500SX support (not tested).
+	- Don't use the PHY Auto Poll Mode on many chips. This fixes a bug
+	  that MII Fiber NIC drop packet about 50%. Tested on HP Moonshot.
+	- Add workaround for PR#48451. Some BCM5717-5720 based systems get NMI
+	  on boot. This problem doesn't occur when we don't use prefetchable
+	  memory in the APE area. Tested with HP MicroServer Gen8.
+	- In the BCM5703, the DMA read watermark should be set to less than
+	  or equal to the maximum memory read byte count of the PCI-X command
+	  register.
+	- Fix a bug that BGE_PHY_TEST_CTRL_REG isn't set correctly on some
+	  PCIe devices.
+	- Use another firmware command in bge_asf_driver_up(). Same as Linux.
+	  This change fixes a bug that watchdog timeout occurs every 25-30
+	  minutes on HP ML110 G6 reported enami@ in PR#49657.
+	- Fix mbuf leak on failure.
+	- Remove PCI_PRODUCT_BROADCOM_BCM5724 and
+	  PCI_PRODUCT_BROADCOM_BCM5750M. These devices have not released to
+	  public.
+	- Add some workaround code for BGE_ASICREV_BCM5784 from Linux.
+	- Change some printf() to aprint_*().
+	- Fix typo in comments.
+	- Cleanup.
+	brgphy(4):
+	- Fix bit definition of BRGPHY_MRBE_MSG_PG5_NP_T2 from FreeBSD.
+	- Add BCM5481, BCM5709S, BCM5756, BCM5717C, BCM5720C, BCM5785,
+	  BCM57765(PR#46961), BCM57780
+	- In brgphyattach(), set sc_isbge, sc_isbnx and sc_phyflags before
+	  PHY_RESET() because brgphy_reset() refers those flags.
+	- Call brgpy specific autonego function in MII_TICK. Before this
+	  commit, only MII_MEDIACHG calls brgphy_mii_phy_auto() and MII_TICK
+	  calls MI mii_phy_auto(). That was not intended.
+	- Remove extra delay in brgphy_mii_phy_auto. Same as {Free,Open}BSD.
+	bnx(4):
+	- Add missing ifmedia_delete_instance() in bnx_detach().
+	- Fix a bug that BNX_NO_WOL_FLAG isn't correctly set on some chips.
+	  Reported by Henning Petersen in PR#44151.
+	- Fix SERDES initialization.
+	- Get out of the interrupt handler early if !IFF_RUNNING.
+	[msaitoh, #1983]
 
