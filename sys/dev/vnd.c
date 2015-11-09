@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.250 2015/11/09 16:54:26 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.251 2015/11/09 17:41:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.250 2015/11/09 16:54:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.251 2015/11/09 17:41:24 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1067,11 +1067,9 @@ vndioctl_get(struct lwp *l, void *data, int unit, struct vattr *va)
 	int error;
 
 	KASSERT(l);
-#ifdef notyet
-	/* Current userland code does not handle this */
+
 	if (*(int *)data >= vnd_cd.cd_ndevs)
 		return ENXIO;
-#endif
 
 	switch (error = vnd_cget(l, unit, (int *)data, va)) {
 	case -1:
