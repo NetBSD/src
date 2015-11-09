@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_io.c,v 1.16 2015/10/30 19:11:57 jmcneill Exp $ */
+/* $NetBSD: tegra_io.c,v 1.17 2015/11/09 23:05:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.16 2015/10/30 19:11:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.17 2015/11/09 23:05:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,12 +142,7 @@ static const struct tegra_locators tegra_host1x_locators[] = {
 };
 
 static const struct tegra_locators tegra_ghost_locators[] = {
-  { "tegradc",
-    TEGRA_DISPLAYA_OFFSET, TEGRA_DISPLAYA_SIZE, 0, TEGRA_INTR_DISPLAYA },
-  { "tegradc",
-    TEGRA_DISPLAYB_OFFSET, TEGRA_DISPLAYB_SIZE, 1, TEGRA_INTR_DISPLAYB },
-  { "tegrahdmi",
-    TEGRA_HDMI_OFFSET, TEGRA_HDMI_SIZE, NOPORT, TEGRA_INTR_HDMI },
+  { "tegradrm", 0, 0, NOPORT, NOINTR },
 };
 
 static const struct tegra_locators tegra_gpu_locators[] = {
