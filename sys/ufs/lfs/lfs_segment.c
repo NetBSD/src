@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.213.18.1 2015/11/07 20:30:56 snj Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.213.18.2 2015/11/09 22:49:50 snj Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.213.18.1 2015/11/07 20:30:56 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.213.18.2 2015/11/09 22:49:50 snj Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -1700,7 +1700,7 @@ lfs_rewind(struct lfs *fs, int newsn)
 		panic("lfs_rewind: no clean segments");
 	if (newsn >= 0 && sn >= newsn)
 		return ENOENT;
-	fs->lfs_nextseg = lfs_sntod(fs, sn);
+	fs->lfs_nextseg = sntod(fs, sn);
 	lfs_newseg(fs);
 	fs->lfs_offset = fs->lfs_curseg;
 
