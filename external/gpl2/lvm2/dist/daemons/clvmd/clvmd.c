@@ -1,4 +1,4 @@
-/*	$NetBSD: clvmd.c,v 1.1.1.3 2009/12/02 00:27:05 haad Exp $	*/
+/*	$NetBSD: clvmd.c,v 1.2 2015/11/09 00:53:57 dholland Exp $	*/
 
 /*
  * Copyright (C) 2002-2004 Sistina Software, Inc. All rights reserved.
@@ -924,12 +924,13 @@ static void be_daemon(int timeout)
 
 	if (dup2(devnull, 0) < 0 || dup2(devnull, 1) < 0
 	    || dup2(devnull, 2) < 0) {
+		int e = errno;
 		perror("Error setting terminal FDs to /dev/null");
-		log_error("Error setting terminal FDs to /dev/null: %m");
+		log_error("Error setting terminal FDs to /dev/null: %s", strerror(e));
 		exit(5);
 	}
 	if (chdir("/")) {
-		log_error("Error setting current directory to /: %m");
+		log_error("Error setting current directory to /: %s", strerror(e));
 		exit(6);
 	}
 
@@ -1492,7 +1493,7 @@ static __attribute__ ((noreturn)) void *pre_and_post_thread(void *arg)
 			if (write_status < 0 &&
 			    (errno == EINTR || errno == EAGAIN))
 				continue;
-			log_error("Error sending to pipe: %m\n");
+			log_error("Error sending to pipe: %s\n", strerror(errno));
 			break;
 		} while(1);
 
@@ -1525,7 +1526,7 @@ static __attribute__ ((noreturn)) void *pre_and_post_thread(void *arg)
 			if (write_status < 0 &&
 			    (errno == EINTR || errno == EAGAIN))
 				continue;
-			log_error("Error sending to pipe: %m\n");
+			log_error("Error sending to pipe: %s\n", strerror(errno));
 			break;
 		} while(1);
 next_pre:
@@ -1934,7 +1935,7 @@ static int open_local_sock()
 		unlink(CLVMD_SOCKNAME);
 	local_socket = socket(PF_UNIX, SOCK_STREAM, 0);
 	if (local_socket < 0) {
-		log_error("Can't create local socket: %m");
+		log_error("Can't create local socket: %s", strerror(errno));
 		return -1;
 	}
 	/* Set Close-on-exec & non-blocking */
@@ -1945,12 +1946,12 @@ static int open_local_sock()
 	memcpy(sockaddr.sun_path, CLVMD_SOCKNAME, sizeof(CLVMD_SOCKNAME));
 	sockaddr.sun_family = AF_UNIX;
 	if (bind(local_socket, (struct sockaddr *) &sockaddr, sizeof(sockaddr))) {
-		log_error("can't bind local socket: %m");
+		log_error("can't bind local socket: %s", strerror(errno));
 		close(local_socket);
 		return -1;
 	}
 	if (listen(local_socket, 1) != 0) {
-		log_error("listen local: %m");
+		log_error("listen local: %s", strerror(errno));
 		close(local_socket);
 		return -1;
 	}
