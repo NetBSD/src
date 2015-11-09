@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.249 2015/11/09 16:52:09 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.250 2015/11/09 16:54:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,14 +91,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.249 2015/11/09 16:52:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.250 2015/11/09 16:54:26 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
 #include "opt_compat_netbsd.h"
 #endif
 
-#define DEBUG
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/namei.h>
@@ -140,7 +139,7 @@ int dovndcluster = 1;
 #define VDB_INIT	0x02
 #define VDB_IO		0x04
 #define VDB_LABEL	0x08
-int vnddebug = 0xff;
+int vnddebug = 0;
 #endif
 
 #define vndunit(x)	DISKUNIT(x)
