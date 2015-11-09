@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.44 2015/11/06 15:25:42 martin Exp $ */
+/*	$NetBSD: syscall.c,v 1.45 2015/11/09 02:13:41 christos Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.44 2015/11/06 15:25:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.45 2015/11/09 02:13:41 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,14 +312,14 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 #ifdef DIAGNOSTIC
 	KASSERT(p->p_pid != 0);
 	KASSERTMSG(!(tf->tf_tstate & TSTATE_PRIV),
-	    "syscall %ld, pid %d trap frame %p tstate %lx is privileged %s\n",
-	    code, p->p_pid, tf, tf->tf_tstate,
+	    "syscall %ld, pid %d trap frame %p tstate 0x%jx is privileged %s\n",
+	    code, p->p_pid, tf, (uintmax_t)tf->tf_tstate,
 	    (tf->tf_tstate & TSTATE_PRIV)?"yes":"no");
 	if (p->p_flag & PK_32) {
 		KASSERTMSG(tf->tf_tstate & TSTATE_AM,
-		    "32bit syscall %ld, pid %d trap frame %p tstate %lx "
+		    "32bit syscall %ld, pid %d trap frame %p tstate 0x%jx "
 			"has AM %s\n",
-		    code, p->p_pid, tf, tf->tf_tstate,
+		    code, p->p_pid, tf, (uintmax_t)tf->tf_tstate,
 		    (tf->tf_tstate & TSTATE_AM)?"yes":"no");
 	}
 #endif
