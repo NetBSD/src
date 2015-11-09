@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.962.4.20 2015/04/30 20:01:45 snj Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.962.4.21 2015/11/09 12:33:32 sborrill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.962.4.20 2015/04/30 20:00:27 snj Exp
+ *	NetBSD: pcidevs,v 1.962.4.21 2015/11/09 12:33:02 sborrill Exp
  */
 
 /*
@@ -856,8 +856,12 @@ static const struct pci_vendor pci_vendors[] = {
 	    "Citicorp TTI",
 	},
 	{
+	    PCI_VENDOR_FUJITSU4,
+	    "Fujitsu (4th PCI Vendor ID)",
+	},
+	{
 	    PCI_VENDOR_FUJITSU2,
-	    "Fujitsu Limited (2nd PCI Vendor ID)",
+	    "Fujitsu (2nd PCI Vendor ID)",
 	},
 	{
 	    PCI_VENDOR_FUTUREPLUS,
@@ -2400,7 +2404,7 @@ static const struct pci_vendor pci_vendors[] = {
 	    "INVALID VENDOR ID",
 	},
 };
-const int pci_nvendors = 590;
+const int pci_nvendors = 591;
 
 static const struct pci_product pci_products[] = {
 	{
@@ -3180,6 +3184,10 @@ static const struct pci_product pci_products[] = {
 	    "AC9100 Gigabit Ethernet",
 	},
 	{
+	    PCI_VENDOR_ALTIMA, PCI_PRODUCT_ALTIMA_AC1003,
+	    "AC1003 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_AMD, PCI_PRODUCT_AMD_AMD64_HT,
 	    "K8 AMD64 HyperTransport configuration",
 	},
@@ -3734,6 +3742,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_INTREPID2_GMAC,
 	    "Intrepid 2 GMAC",
+	},
+	{
+	    PCI_VENDOR_APPLE, PCI_PRODUCT_APPLE_BCM5701,
+	    "BCM5701",
 	},
 	{
 	    PCI_VENDOR_ARC, PCI_PRODUCT_ARC_1000PV,
@@ -5136,6 +5148,18 @@ static const struct pci_product pci_products[] = {
 	    "BCM5702FE 10/100 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57710,
+	    "BCM57710 NetXtreme II 10Gb Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57711,
+	    "BCM57711 NetXtreme II 10Gb Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57711E,
+	    "BCM57711E NetXtreme II 10Gb Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705,
 	    "BCM5705 10/100/1000 Ethernet",
 	},
@@ -5152,8 +5176,8 @@ static const struct pci_product pci_products[] = {
 	    "BCM5718 10/100/1000 Ethernet",
 	},
 	{
-	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5720,
-	    "BCM5720 NetXtreme 1000baseT Ethernet",
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5719,
+	    "BCM5719 NetXtreme 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5721,
@@ -5178,6 +5202,18 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5705M_ALT,
 	    "BCM5705M 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5720,
+	    "BCM5720 NetXtreme 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57712,
+	    "BCM57712 NetXtreme II 10Gb Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57712E,
+	    "BCM57712E NetXtreme II 10Gb Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5714,
@@ -5260,8 +5296,16 @@ static const struct pci_product pci_products[] = {
 	    "BCM5761 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57762,
+	    "BCM57762 Gigabit Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5764,
 	    "BCM5764 NetXtreme 1000baseT Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57766,
+	    "BCM57766 NetXtreme 1000baseT Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5761S,
@@ -5356,6 +5400,10 @@ static const struct pci_product pci_products[] = {
 	    "BCM57791 10/100/1000 Ethernet",
 	},
 	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57786,
+	    "BCM57786 10/100/1000 Ethernet",
+	},
+	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57765,
 	    "BCM57765 Integrated Gigabit Ethernet",
 	},
@@ -5366,6 +5414,10 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57795,
 	    "BCM57795 10/100/1000 Ethernet",
+	},
+	{
+	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM57782,
+	    "BCM57782 10/100/1000 Ethernet",
 	},
 	{
 	    PCI_VENDOR_BROADCOM, PCI_PRODUCT_BROADCOM_BCM5702_ALT,
@@ -6666,6 +6718,18 @@ static const struct pci_product pci_products[] = {
 	{
 	    PCI_VENDOR_FUTUREDOMAIN, PCI_PRODUCT_FUTUREDOMAIN_TMC_18C30,
 	    "TMC-18C30 (36C70)",
+	},
+	{
+	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_PW008GE5,
+	    "PW008GE5",
+	},
+	{
+	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_PW008GE4,
+	    "PW008GE4",
+	},
+	{
+	    PCI_VENDOR_FUJITSU4, PCI_PRODUCT_FUJITSU4_PP250_450_LAN,
+	    "PRIMEPOWER250/450 LAN",
 	},
 	{
 	    PCI_VENDOR_FZJZEL, PCI_PRODUCT_FZJZEL_GIGALINK,
@@ -15400,4 +15464,4 @@ static const struct pci_product pci_products[] = {
 	    "Video Controller",
 	},
 };
-const int pci_nproducts = 3249;
+const int pci_nproducts = 3264;
