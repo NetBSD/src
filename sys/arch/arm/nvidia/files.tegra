@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.19 2015/10/21 20:02:12 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.20 2015/11/09 23:05:58 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -102,25 +102,23 @@ device	tegrahost1x
 attach	tegrahost1x at tegraio with tegra_host1x
 file	arch/arm/nvidia/tegra_host1x.c		tegra_host1x
 
-# Display controller
-device	tegradc { }
-attach	tegradc at tegraio with tegra_dc
-file	arch/arm/nvidia/tegra_dc.c		tegra_dc
-
-# Framebuffer console
-attach	genfb at tegradc with tegra_genfb
-file	arch/arm/nvidia/tegra_genfb.c		tegra_genfb
-
-# HDMI
-device	tegrahdmi: edid, ddc_read_edid, videomode
-attach	tegrahdmi at tegraio with tegra_hdmi
-file	arch/arm/nvidia/tegra_hdmi.c		tegra_hdmi
-defflag	opt_tegra.h			TEGRA_HDMI_DEBUG
-
 # HDMI CEC
 device	tegracec: hdmicecbus
 attach	tegracec at tegraio with tegra_cec
 file	arch/arm/nvidia/tegra_cec.c		tegra_cec
+
+# Display
+define	tegrafbbus { }
+device	tegradrm: drmkms, tegrafbbus
+attach	tegradrm at tegraio with tegra_drm
+file	arch/arm/nvidia/tegra_drm.c		tegra_drm
+file	arch/arm/nvidia/tegra_drm_mode.c	tegra_drm
+file	arch/arm/nvidia/tegra_drm_fb.c		tegra_drm
+
+# Framebuffer console
+device	tegrafb: tegrafbbus, drmfb, wsemuldisplaydev
+attach	tegrafb at tegrafbbus with tegra_fb
+file	arch/arm/nvidia/tegra_fb.c		tegra_fb
 
 # GPU
 attach	nouveau at tegraio with tegra_nouveau
