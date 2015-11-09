@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.43 2015/11/09 01:21:18 pgoyette Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.44 2015/11/09 01:55:03 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.43 2015/11/09 01:21:18 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.44 2015/11/09 01:55:03 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -191,7 +191,7 @@ ksem_sysinit(void)
 			NULL, 0, &ksem_max, 0,
 			CTL_CREATE, CTL_EOL);
 	sysctl_createv(&ksem_clog, 0, &rnode, NULL,
-			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			CTLFLAG_PERMANENT | CTLFLAG_READONLY,
 			CTLTYPE_INT, "semcnt",
 			SYSCTL_DESCR("Current number of semaphores"),
 			NULL, 0, &nsems, 0,
