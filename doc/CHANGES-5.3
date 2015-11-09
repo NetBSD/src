@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-5.3,v 1.1.2.126 2015/11/07 20:52:40 snj Exp $
+# $NetBSD: CHANGES-5.3,v 1.1.2.127 2015/11/09 10:36:46 sborrill Exp $
 
 A complete list of changes from the NetBSD 5.2 release to the NetBSD 5.3
 release:
@@ -4077,4 +4077,27 @@ sys/kern/kern_exit.c				1.248
 
 	Update value of p_stat before we release the proc_lock.
 	[pgoyette, ticket #1981]
+
+sys/dev/mii/miidevs				1.79-1.80, 1.84, 1.86-1.88, 1.91-1.92, 1.94-1.96, 1.98-1.99, 1.101-1.112 via patch
+sys/dev/mii/miidevs.h				regen
+sys/dev/mii/miidevs_data.h			regen
+
+	Sync miidevs up to rev. 1.112:
+	- Add Agere ET1101 (PR#39094)
+	- Add some CICADA PHYs.
+	- AddMarvell 88E1000[S], 88E1116R, 88E1118, 88E1145, 88E1149[R],
+	  88E1543, 88E3016, PHYG65G
+	- Add NS DP83849(PR#41256), DP83865.
+	- Add Broadcom BCM5325, BCM5365, BCM548[12], BCM5706, BCM570[89]S,
+	  BCM571[79]C, BCM5720C, BCM5756, BCM5785, BCM57765, BCM57780
+	- Add Atheros AR8021, AR8035
+	- Add RDC Semiconductor R6040 10/100 integrated PHY
+	- Add Vitesse VSC8221
+	- Add SMSC LAN 87[012]0
+	- Add Intel I21[07].
+	- Add IC Plus IP100, IP1000A and IP1001
+	- Add Micrel KSZ9021RN
+	- Add Relatek RTL8251
+	- Update comment.
+	[msaitoh, ticket #1982]
 
