@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.1.8.3 2010/11/19 23:58:40 riz Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.1.8.4 2015/11/09 12:33:01 sborrill Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -99,15 +99,49 @@
 #define CSR_READ_4(sc, reg)		\
 	bus_space_read_4(sc->bge_btag, sc->bge_bhandle, reg)
 
-#define BGE_SETBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | x))
-#define BGE_CLRBIT(sc, reg, x)	\
-	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~x))
+#define CSR_WRITE_4_FLUSH(sc, reg, val)		\
+	do {					\
+		CSR_WRITE_4(sc, reg, val);	\
+		CSR_READ_4(sc, reg);		\
+	} while(0)
 
-#define PCI_SETBIT(pc, tag, reg, x)	\
-	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | x))
+#define BGE_SETBIT(sc, reg, x)	\
+	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) | (x)))
+#define BGE_SETBIT_FLUSH(sc, reg, x)	\
+	do {				\
+		BGE_SETBIT(sc, reg, x);	\
+		CSR_READ_4(sc, reg);	\
+	} while(0)
+#define BGE_CLRBIT(sc, reg, x)	\
+	CSR_WRITE_4(sc, reg, (CSR_READ_4(sc, reg) & ~(x)))
+#define BGE_CLRBIT_FLUSH(sc, reg, x)	\
+	do {				\
+		BGE_CLRBIT(sc, reg, x);	\
+		CSR_READ_4(sc, reg);	\
+	} while(0)
+
+/* BAR2 APE register access macros. */
+#define	APE_WRITE_4(sc, reg, val)	\
+	bus_space_write_4(sc->bge_apetag, sc->bge_apehandle, reg, val)
+
+#define	APE_READ_4(sc, reg)		\
+	bus_space_read_4(sc->bge_apetag, sc->bge_apehandle, reg)
+
+#define	APE_WRITE_4_FLUSH(sc, reg, val)		\
+	do {					\
+		APE_WRITE_4(sc, reg, val);	\
+		APE_READ_4(sc, reg);		\
+	} while(0)
+
+#define	APE_SETBIT(sc, reg, x)						      \
+	APE_WRITE_4(sc, reg, (APE_READ_4(sc, reg) | (x)))
+#define	APE_CLRBIT(sc, reg, x)	\
+	APE_WRITE_4(sc, reg, (APE_READ_4(sc, reg) & ~(x)))
+
+#define PCI_SETBIT(pc, tag, reg, x)					      \
+	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) | (x)))
 #define PCI_CLRBIT(pc, tag, reg, x)	\
-	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~x))
+	pci_conf_write(pc, tag, reg, (pci_conf_read(pc, tag, reg) & ~(x)))
 
 /*
  * Memory management stuff. Note: the SSLOTS, MSLOTS and JSLOTS
@@ -118,7 +152,6 @@
 #define BGE_SSLOTS	256
 #define BGE_MSLOTS	256
 #define BGE_JSLOTS	384
-#define BGE_RSLOTS	256
 
 #define BGE_JRAWLEN (BGE_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define BGE_JLEN (BGE_JRAWLEN + (sizeof(uint64_t) - \
@@ -171,6 +204,7 @@ struct bge_ring_data {
 #endif
 #endif	/* TSO values */
 
+#define	BGE_STATUS_BLK_SZ	sizeof (struct bge_status_block)
 
 /*
  * Mbuf pointers. We need these to keep track of the virtual addresses
@@ -226,10 +260,13 @@ struct bge_softc {
 	struct ethercom		ethercom;	/* interface info */
 	bus_space_handle_t	bge_bhandle;
 	bus_space_tag_t		bge_btag;
+	bus_space_handle_t	bge_apehandle;
+	bus_space_tag_t		bge_apetag;
 	void			*bge_intrhand;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 
+	struct pci_attach_args	bge_pa;
 	struct mii_data		bge_mii;
 	struct ifmedia		bge_ifmedia;	/* media info */
 	uint32_t		bge_return_ring_cnt;
@@ -237,8 +274,16 @@ struct bge_softc {
 	bus_dma_tag_t		bge_dmatag;
 	uint32_t		bge_pcixcap;
 	uint32_t		bge_pciecap;
+	uint16_t		bge_mps;
+	int			bge_expmrq;
+	u_int32_t		bge_mfw_flags;  /* Management F/W flags */
+#define	BGE_MFW_ON_RXCPU	0x00000001
+#define	BGE_MFW_ON_APE		0x00000002
+#define	BGE_MFW_TYPE_NCSI	0x00000004
+#define	BGE_MFW_TYPE_DASH	0x00000008
+	int			bge_phy_ape_lock;
+	int			bge_phy_addr;
 	uint32_t		bge_chipid;
-	uint32_t		bge_local_ctrl_reg;
 	uint8_t			bge_asf_mode;
 	uint8_t			bge_asf_count;
 	struct bge_ring_data	*bge_rdata;	/* rings */
@@ -266,6 +311,7 @@ struct bge_softc {
 #define BGE_STS_CLRBIT(sc, x)	((sc)->bge_sts &= ~(x))
 	int			bge_if_flags;
 	uint32_t		bge_flags;
+	uint32_t		bge_phy_flags;
 	int			bge_flowflags;
 #ifdef BGE_EVENT_COUNTERS
 	/*
@@ -286,6 +332,8 @@ struct bge_softc {
 	int			bge_pending_rxintr_change;
 	SLIST_HEAD(, txdmamap_pool_entry) txdma_list;
 	struct txdmamap_pool_entry *txdma[BGE_TX_RING_CNT];
+
+	struct sysctllog	*bge_log;
 
 #if NRND > 0
 	rndsource_element_t	rnd_source;	/* random source */

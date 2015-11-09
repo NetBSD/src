@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.57.20.2 2013/05/11 22:34:38 riz Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.57.20.3 2015/11/09 12:33:02 sborrill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -553,7 +553,9 @@ typedef u_int8_t pci_revision_t;
 #define	 PCI_PCIE_XCAP_TYPE_PCI2PCIE	0x00800000
 #define PCI_PCIE_XCAP_SI	0x01000000
 #define PCI_PCIE_DCAP		0x04
+#define PCI_PCIE_DCAP_MAX_PAYLOAD	__BITS(2, 0)
 #define PCI_PCIE_DCSR		0x08
+#define PCI_PCIE_DCSR_ENA_RELAX_ORD	__BIT(4)
 #define PCI_PCIE_DCSR_MAX_READ_REQ	0x7000
 #define PCI_PCIE_DCSR_ENA_NO_SNOOP	0x00000800
 #define PCI_PCIE_DCSR_CED	0x00010000
