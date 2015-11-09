@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.53 2015/11/08 21:02:31 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.54 2015/11/09 08:35:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.53 2015/11/08 21:02:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.54 2015/11/09 08:35:23 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1763,7 +1763,7 @@ uhci_run(uhci_softc_t *sc, int run, int locked)
 	else
 		cmd &= ~UHCI_CMD_RS;
 	UHCICMD(sc, cmd);
-	for(n = 0; n < 10; n++) {
+	for (n = 0; n < 10; n++) {
 		running = !(UREAD2(sc, UHCI_STS) & UHCI_STS_HCH);
 		/* return when we've entered the state we want */
 		if (run == running) {
@@ -1855,7 +1855,7 @@ uhci_alloc_sqh(uhci_softc_t *sc)
 			  UHCI_QH_ALIGN, &dma);
 		if (err)
 			return NULL;
-		for(i = 0; i < UHCI_SQH_CHUNK; i++) {
+		for (i = 0; i < UHCI_SQH_CHUNK; i++) {
 			offs = i * UHCI_SQH_SIZE;
 			sqh = KERNADDR(&dma, offs);
 			sqh->physaddr = DMAADDR(&dma, offs);
@@ -2452,7 +2452,7 @@ uhci_device_intr_close(struct usbd_pipe *pipe)
 	 */
 	usb_delay_ms_locked(&sc->sc_bus, 2, &sc->sc_lock);
 
-	for(i = 0; i < npoll; i++)
+	for (i = 0; i < npoll; i++)
 		uhci_free_sqh(sc, upipe->intr.qhs[i]);
 	kmem_free(upipe->intr.qhs, npoll * sizeof(uhci_soft_qh_t *));
 
@@ -3014,7 +3014,7 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
 	npoll = upipe->intr.npoll;
-	for(i = 0; i < npoll; i++) {
+	for (i = 0; i < npoll; i++) {
 		sqh = upipe->intr.qhs[i];
 		sqh->elink = NULL;
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
@@ -3257,7 +3257,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 	}
 	DPRINTF("bw=%d offs=%d", bestbw, bestoffs, 0, 0);
 	mutex_enter(&sc->sc_lock);
-	for(i = 0; i < npoll; i++) {
+	for (i = 0; i < npoll; i++) {
 		upipe->intr.qhs[i] = sqh = uhci_alloc_sqh(sc);
 		sqh->elink = NULL;
 		sqh->qh.qh_elink = htole32(UHCI_PTR_T);
@@ -3270,7 +3270,7 @@ uhci_device_setintr(uhci_softc_t *sc, struct uhci_pipe *upipe, int ival)
 #undef MOD
 
 	/* Enter QHs into the controller data structures. */
-	for(i = 0; i < npoll; i++)
+	for (i = 0; i < npoll; i++)
 		uhci_add_intr(sc, upipe->intr.qhs[i]);
 	mutex_exit(&sc->sc_lock);
 
