@@ -1,4 +1,4 @@
-/*	$NetBSD: vnconfig.c,v 1.42 2014/05/23 20:50:16 dholland Exp $	*/
+/*	$NetBSD: vnconfig.c,v 1.43 2015/11/09 17:39:20 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -73,13 +73,11 @@
 #include <sys/buf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/bitops.h>
 
 #include <dev/vndvar.h>
 
 #include <disktab.h>
 #include <err.h>
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stddef.h>
@@ -100,7 +98,7 @@ static int	force = 0;
 static int	compressed = 0;
 static char	*tabname;
 
-static void	show(int, int);
+static int	show(int, int);
 static int	config(char *, char *, char *, int);
 static int	getgeom(struct vndgeom *, char *);
 __dead static void	usage(void);
@@ -177,26 +175,8 @@ main(int argc, char *argv[])
 		if (argc)
 			show(v, -1);
 		else {
-			DIR *dirp;
-			struct dirent *dp;
-			__BITMAP_TYPE(, uint32_t, 65536) bm;
-
-			__BITMAP_ZERO(&bm);
-
-			if ((dirp = opendir(_PATH_DEV)) == NULL)
-				err(1, "opendir: %s", _PATH_DEV);
-
-			while ((dp = readdir(dirp)) != NULL) {
-				if (strncmp(dp->d_name, "rvnd", 4) != 0)
-					continue;
-				n = atoi(dp->d_name + 4);
-				if (__BITMAP_ISSET(n, &bm))
-					continue;
-				__BITMAP_SET(n, &bm);
-				show(v, n);
-			}
-
-			closedir(dirp);
+			for (n = 0; show(v, n); n++)
+				continue;
 		}
 		close(v);
 		rv = 0;
@@ -204,7 +184,7 @@ main(int argc, char *argv[])
 	return rv;
 }
 
-static void
+static int
 show(int v, int n)
 {
 	struct vnd_user vnu;
@@ -213,12 +193,15 @@ show(int v, int n)
 	int i, nmount;
 
 	vnu.vnu_unit = n;
-	if (ioctl(v, VNDIOCGET, &vnu) == -1)
-		err(1, "VNDIOCGET");
+	if (ioctl(v, VNDIOCGET, &vnu) == -1) {
+		if (errno != ENXIO)
+			err(1, "VNDIOCGET");
+		return 0;
+	}
 
 	if (vnu.vnu_ino == 0) {
 		printf("vnd%d: not in use\n", vnu.vnu_unit);
-		return;
+		return 1;
 	}
 
 	printf("vnd%d: ", vnu.vnu_unit);
@@ -251,6 +234,7 @@ show(int v, int n)
 		    (unsigned long long)minor(vnu.vnu_dev));
 
 	printf("inode %llu\n", (unsigned long long)vnu.vnu_ino);
+	return 1;
 }
 
 static int
