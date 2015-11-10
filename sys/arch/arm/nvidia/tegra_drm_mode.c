@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.2 2015/11/10 00:04:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.2 2015/11/10 00:04:04 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -532,11 +532,7 @@ tegra_encoder_init(struct drm_device *ddev)
 	    DRM_MODE_ENCODER_TMDS);
 	drm_encoder_helper_add(&encoder->base, &tegra_encoder_helper_funcs);
 
-#if 0
 	encoder->base.possible_crtcs = (1 << 0) | (1 << 1);
-#else
-	encoder->base.possible_crtcs = (1 << 1);
-#endif
 
 	return tegra_connector_init(ddev, &encoder->base);
 }
