@@ -187,6 +187,12 @@ static void wnm_sleep_mode_exit_success(struct wpa_supplicant *wpa_s,
 	end = ptr + key_len_total;
 	wpa_hexdump_key(MSG_DEBUG, "WNM: Key Data", ptr, key_len_total);
 
+	if (key_len_total && !wpa_sm_pmf_enabled(wpa_s->wpa)) {
+		wpa_msg(wpa_s, MSG_INFO,
+			"WNM: Ignore Key Data in WNM-Sleep Mode Response - PMF not enabled");
+		return;
+	}
+
 	while (ptr + 1 < end) {
 		if (ptr + 2 + ptr[1] > end) {
 			wpa_printf(MSG_DEBUG, "WNM: Invalid Key Data element "
