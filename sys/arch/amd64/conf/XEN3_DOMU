@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOMU,v 1.63 2015/08/12 07:53:57 maxv Exp $
+# $NetBSD: XEN3_DOMU,v 1.64 2015/11/10 13:01:41 tnn Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -244,6 +244,11 @@ pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
+
+# iSCSI initiator and dependencies
+#scsibus* at scsi?
+#sd*	at scsibus? target ? lun ?
+#pseudo-device	iscsi
 
 # userland interface to drivers, including autoconf and properties retrieval
 pseudo-device	drvctl
