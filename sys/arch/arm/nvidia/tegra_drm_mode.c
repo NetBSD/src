@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.3 2015/11/10 00:33:39 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.4 2015/11/10 22:14:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.3 2015/11/10 00:33:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.4 2015/11/10 22:14:05 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -58,6 +58,7 @@ static const struct drm_framebuffer_funcs tegra_framebuffer_funcs = {
 
 static int	tegra_crtc_init(struct drm_device *, int);
 static void	tegra_crtc_destroy(struct drm_crtc *);
+static int	tegra_crtc_intr(void *);
 
 static const struct drm_crtc_funcs tegra_crtc_funcs = {
 	.set_config = drm_crtc_helper_set_config,
@@ -187,6 +188,10 @@ tegra_drm_mode_init(struct drm_device *ddev)
 	if (error)
 		return error;
 
+	error = drm_vblank_init(ddev, 2);
+	if (error)
+		return error;
+
 	return 0;
 }
 
@@ -275,8 +280,15 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	}
 	crtc->size = size;
 	crtc->intr = intr;
+	crtc->ih = intr_establish(intr, IPL_VM, IST_LEVEL | IST_MPSAFE,
+	    tegra_crtc_intr, crtc);
+	if (crtc->ih == NULL) {
+		DRM_ERROR("failed to establish interrupt for crtc %d\n", index);
+	}
 
 	tegra_car_dc_enable(crtc->index);
+
+	DC_WRITE(crtc, DC_CMD_INT_ENABLE_REG, DC_CMD_INT_V_BLANK);
 
 	drm_crtc_init(ddev, &crtc->base, &tegra_crtc_funcs);
 	drm_crtc_helper_add(&crtc->base, &tegra_crtc_helper_funcs);
@@ -289,6 +301,9 @@ tegra_crtc_destroy(struct drm_crtc *crtc)
 {
 	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
 	drm_crtc_cleanup(crtc);
+	if (tegra_crtc->ih) {
+		intr_disestablish(tegra_crtc->ih);
+	}
 	bus_space_unmap(tegra_crtc->bst, tegra_crtc->bsh, tegra_crtc->size);
 	kmem_free(tegra_crtc, sizeof(*tegra_crtc));
 }
@@ -968,4 +983,74 @@ tegra_connector_best_encoder(struct drm_connector *connector)
 	}
 
 	return encoder;
+}
+
+static int
+tegra_crtc_intr(void *priv)
+{
+	struct tegra_crtc *tegra_crtc = priv;
+	struct drm_device *ddev = tegra_crtc->base.dev;
+	struct tegra_drm_softc * const sc = tegra_drm_private(ddev);
+	int rv = 0;
+
+	const uint32_t status = DC_READ(tegra_crtc, DC_CMD_INT_STATUS_REG);
+
+	if (status & DC_CMD_INT_V_BLANK) {
+		DC_WRITE(tegra_crtc, DC_CMD_INT_STATUS_REG, DC_CMD_INT_V_BLANK);
+		atomic_inc_32(&sc->sc_vbl_received[tegra_crtc->index]);
+		drm_handle_vblank(ddev, tegra_crtc->index);
+		rv = 1;
+	}
+
+	return rv;
+}
+
+u32
+tegra_drm_get_vblank_counter(struct drm_device *ddev, int crtc)
+{
+	struct tegra_drm_softc * const sc = tegra_drm_private(ddev);
+
+	if (crtc > 1)
+		return 0;
+
+	return sc->sc_vbl_received[crtc];
+}
+
+int
+tegra_drm_enable_vblank(struct drm_device *ddev, int crtc)
+{
+	struct tegra_crtc *tegra_crtc = NULL;
+	struct drm_crtc *iter;
+
+	list_for_each_entry(iter, &ddev->mode_config.crtc_list, head) {
+		if (to_tegra_crtc(iter)->index == crtc) {
+			tegra_crtc = to_tegra_crtc(iter);
+			break;
+		}
+	}
+	if (tegra_crtc == NULL)
+		return -EINVAL;
+
+	DC_SET_CLEAR(tegra_crtc, DC_CMD_INT_MASK_REG, DC_CMD_INT_V_BLANK, 0);
+
+	return 0;
+}
+
+void
+tegra_drm_disable_vblank(struct drm_device *ddev, int crtc)
+{
+	struct tegra_crtc *tegra_crtc = NULL;
+	struct drm_crtc *iter;
+
+	list_for_each_entry(iter, &ddev->mode_config.crtc_list, head) {
+		if (to_tegra_crtc(iter)->index == crtc) {
+			tegra_crtc = to_tegra_crtc(iter);
+			break;
+		}
+	}
+	if (tegra_crtc == NULL)
+		return;
+
+	DC_SET_CLEAR(tegra_crtc, DC_CMD_INT_MASK_REG, 0, DC_CMD_INT_V_BLANK);
+	DC_WRITE(tegra_crtc, DC_CMD_INT_STATUS_REG, DC_CMD_INT_V_BLANK);
 }

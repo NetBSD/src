@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.1 2015/11/09 23:05:58 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.2 2015/11/10 22:14:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -61,6 +61,8 @@ struct tegra_drm_softc {
 	bus_size_t		sc_dmasize;
 	bus_dmamap_t		sc_dmamap;
 	void			*sc_dmap;
+
+	uint32_t		sc_vbl_received[2];
 };
 
 struct tegra_drmfb_attach_args {
@@ -78,6 +80,7 @@ struct tegra_crtc {
 	bus_size_t		size;
 	int			intr;
 	int			index;
+	void			*ih;
 };
 
 struct tegra_encoder {
@@ -129,5 +132,8 @@ struct tegra_fbdev {
 
 int	tegra_drm_mode_init(struct drm_device *);
 int	tegra_drm_fb_init(struct drm_device *);
+u32	tegra_drm_get_vblank_counter(struct drm_device *, int);
+int	tegra_drm_enable_vblank(struct drm_device *, int);
+void	tegra_drm_disable_vblank(struct drm_device *, int);
 
 #endif /* _ARM_TEGRA_DRM_H */
