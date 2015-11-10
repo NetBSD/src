@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.20 2015/11/10 18:01:16 christos Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.21 2015/11/10 20:56:20 christos Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.20 2015/11/10 18:01:16 christos Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.21 2015/11/10 20:56:20 christos Exp $");
 #endif
 #endif
 
@@ -261,7 +261,6 @@ svc_com_create(int fd, u_int sendsize, u_int recvsize, const char *netid)
 	(void) freenetconfigent(nconf);
 	if (svc == NULL)
 		goto out;
-	}
 	port = (((struct sockaddr_in *)svc->xp_ltaddr.buf)->sin_port);
 	svc->xp_port = ntohs(port);
 	return svc;
