@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.115 2015/08/08 06:36:24 maxv Exp $
+# $NetBSD: XEN3_DOM0,v 1.116 2015/11/10 13:01:41 tnn Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -834,6 +834,9 @@ pseudo-device	vcoda			# coda minicache <-> venus comm.
 
 # a pseudo device needed for SMBFS
 pseudo-device	nsmb			# experimental - SMB requester
+
+# iSCSI initiator
+#pseudo-device	iscsi
 
 # wscons pseudo-devices
 pseudo-device	wsmux			# mouse & keyboard multiplexor
