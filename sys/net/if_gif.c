@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.89 2015/11/10 17:59:37 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.90 2015/11/10 18:22:46 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.89 2015/11/10 17:59:37 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.90 2015/11/10 18:22:46 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -669,8 +669,6 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	s = splsoftnet();
 
-	osrc = sc->gif_psrc;
-	odst = sc->gif_pdst;
 	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
 		if (sc2 == sc)
 			continue;
@@ -706,22 +704,23 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 #endif
 		}
 
+	osrc = sc->gif_psrc;
+	odst = sc->gif_pdst;
 	sc->gif_psrc = sc->gif_pdst = NULL;
-
 	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
 	if (sc->gif_si == NULL) {
 		error = ENOMEM;
-		goto bad;
+		goto rollback;
 	}
 
 	if ((sc->gif_psrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
 		error = ENOMEM;
-		goto bad;
+		goto rollback;
 	}
 
 	if ((sc->gif_pdst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
 		error = ENOMEM;
-		goto bad;
+		goto rollback;
 	}
 
 	switch (sc->gif_psrc->sa_family) {
@@ -740,7 +739,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		break;
 	}
 	if (error)
-		goto bad;
+		goto rollback;
 
 	if (osrc)
 		sockaddr_free(osrc);
@@ -752,15 +751,14 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	return 0;
 
- bad:
-	/* rollback */
+rollback:
 	if (sc->gif_psrc != NULL)
 		sockaddr_free(sc->gif_psrc);
 	if (sc->gif_pdst != NULL)
 		sockaddr_free(sc->gif_pdst);
 	sc->gif_psrc = osrc;
 	sc->gif_pdst = odst;
-
+bad:
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
