@@ -1,4 +1,4 @@
-/*	$NetBSD: rpcb_svc_com.c,v 1.17 2015/11/08 16:36:28 christos Exp $	*/
+/*	$NetBSD: rpcb_svc_com.c,v 1.18 2015/11/10 18:04:51 christos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -1080,7 +1080,7 @@ my_svc_run(void)
 	struct pollfd *pollfds;
 	int npollfds;
 	int poll_ret, check_ret;
-	int n, m;
+	int n, *m;
 #ifdef SVC_RUN_DEBUG
 	int i;
 #endif
@@ -1095,8 +1095,15 @@ my_svc_run(void)
 			pollfds = realloc(pollfds, npollfds * sizeof(*pollfds));
 		}
 		p = pollfds;
-		m = *svc_fdset_getmax();
-		for (n = 0; n <= m; n++) {
+		if (p == NULL) {
+out:
+			syslog(LOG_ERR, "Cannot allocate pollfds");
+			sleep(1);
+			continue;
+		}
+		if ((m = svc_fdset_getmax()) == NULL)
+			goto out;
+		for (n = 0; n <= *m; n++) {
 			if (svc_fdset_isset(n)) {
 				p->fd = n;
 				p->events = MASKVAL;
