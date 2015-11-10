@@ -1,7 +1,7 @@
-/*	$NetBSD: t_rpc.c,v 1.7 2015/11/08 19:40:06 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.8 2015/11/10 18:13:01 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.7 2015/11/08 19:40:06 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.8 2015/11/10 18:13:01 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -182,6 +182,7 @@ regtest(const char *hostname, const char *transp, const char *arg, int p)
 	case 0:
 		DPRINTF("Calling svc_run\n");
 		svc_run();
+		ERRX(EXIT_FAILURE, "svc_run returned %d!", num);
 	case -1:
 		ERRX(EXIT_FAILURE, "Fork failed (%s)", strerror(errno));
 	default:
