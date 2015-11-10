@@ -1,4 +1,4 @@
-/*	$NetBSD: uhcivar.h,v 1.52.14.15 2015/11/08 14:59:13 skrll Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.52.14.16 2015/11/10 08:44:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -62,8 +62,32 @@ typedef union {
 struct uhci_xfer {
 	struct usbd_xfer ux_xfer;
 	struct usb_task ux_aborttask;
-	uhci_soft_td_t *ux_stdstart;
-	uhci_soft_td_t *ux_stdend;
+	enum {
+		UX_NONE, UX_CTRL, UX_BULK, UX_INTR, UX_ISOC
+	} ux_type;
+	union {
+		/* ctrl/bulk/intr */
+		struct {
+			uhci_soft_td_t **ux_stds;
+			size_t ux_nstd;
+		};
+		/* isoc */
+		bool ux_isrunning;
+	};
+	union {
+		/* ctrl */
+		struct {
+			uhci_soft_td_t *ux_setup;
+			uhci_soft_td_t *ux_data;
+			uhci_soft_td_t *ux_stat;
+		};
+		/* bulk/intr/isoc */
+		struct {
+			uhci_soft_td_t *ux_stdstart;
+			uhci_soft_td_t *ux_stdend;
+		};
+	};
+
 	TAILQ_ENTRY(uhci_xfer) ux_list;
 	int ux_curframe;
 	bool ux_isdone;	/* used only when DIAGNOSTIC is defined */
