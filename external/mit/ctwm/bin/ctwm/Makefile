@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/11/10 23:09:13 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3 2015/11/10 23:57:00 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ CPPFLAGS+=		-I. -I${CTWMDIR}/src \
 			-DNO_ALLOCA -DCSRG_BASED -DUSEM4 -DGNOME -DXPM
 
 CPPFLAGS+=		-DPIXMAP_DIRECTORY=\"${XPMDIR}\"
+CPPFLAGS+=		-DCTWM_WELCOME_FILE=\"xpm:${X11INCDIR}/X11/pixmaps/NetBSD-inv.xpm\"
 
 CPPFLAGS.parse.c=	-DSYSTEM_INIT_FILE=\"${CTWMCONFIGDIR}/system.twmrc\" \
 			-DM4CMD=\"m4\"
