@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.88 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.89 2015/11/10 17:59:37 christos Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.88 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.89 2015/11/10 17:59:37 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -669,6 +669,8 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 	s = splsoftnet();
 
+	osrc = sc->gif_psrc;
+	odst = sc->gif_pdst;
 	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
 		if (sc2 == sc)
 			continue;
@@ -704,17 +706,23 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 #endif
 		}
 
+	sc->gif_psrc = sc->gif_pdst = NULL;
+
 	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
 	if (sc->gif_si == NULL) {
 		error = ENOMEM;
 		goto bad;
 	}
 
-	osrc = sc->gif_psrc;
-	sc->gif_psrc = sockaddr_dup(src, M_WAITOK);
+	if ((sc->gif_psrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
+		error = ENOMEM;
+		goto bad;
+	}
 
-	odst = sc->gif_pdst;
-	sc->gif_pdst = sockaddr_dup(dst, M_WAITOK);
+	if ((sc->gif_pdst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
+		error = ENOMEM;
+		goto bad;
+	}
 
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
@@ -731,33 +739,33 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		error = EINVAL;
 		break;
 	}
-	if (error) {
-		/* rollback */
-		sockaddr_free(sc->gif_psrc);
-		sockaddr_free(sc->gif_pdst);
-		sc->gif_psrc = osrc;
-		sc->gif_pdst = odst;
+	if (error)
 		goto bad;
-	}
 
 	if (osrc)
 		sockaddr_free(osrc);
 	if (odst)
 		sockaddr_free(odst);
 
-	if (sc->gif_psrc && sc->gif_pdst)
-		ifp->if_flags |= IFF_RUNNING;
-	else
-		ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 	splx(s);
 
 	return 0;
 
  bad:
+	/* rollback */
+	if (sc->gif_psrc != NULL)
+		sockaddr_free(sc->gif_psrc);
+	if (sc->gif_pdst != NULL)
+		sockaddr_free(sc->gif_pdst);
+	sc->gif_psrc = osrc;
+	sc->gif_pdst = odst;
+
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
+
 	if (sc->gif_psrc && sc->gif_pdst)
 		ifp->if_flags |= IFF_RUNNING;
 	else
