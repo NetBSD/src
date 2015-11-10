@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_dcreg.h,v 1.3 2015/07/23 15:08:19 skrll Exp $ */
+/* $NetBSD: tegra_dcreg.h,v 1.4 2015/11/10 22:14:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -73,6 +73,8 @@
 #define DC_CMD_INT_STATUS_REG				0x0dc
 #define DC_CMD_INT_MASK_REG				0x0e0
 #define DC_CMD_INT_ENABLE_REG				0x0e4
+#define DC_CMD_INT_V_BLANK				__BIT(2)
+
 #define DC_CMD_INT_TYPE_REG				0x0e8
 #define DC_CMD_INT_POLARITY_REG				0x0ec
 #define DC_CMD_SIGNAL_RAISE1_REG			0x0f0
