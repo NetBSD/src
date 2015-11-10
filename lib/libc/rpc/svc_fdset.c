@@ -1,4 +1,4 @@
-/*	$NetBSD: svc_fdset.c,v 1.13 2015/11/10 18:08:05 christos Exp $	*/
+/*	$NetBSD: svc_fdset.c,v 1.14 2015/11/10 18:11:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: svc_fdset.c,v 1.13 2015/11/10 18:08:05 christos Exp $");
+__RCSID("$NetBSD: svc_fdset.c,v 1.14 2015/11/10 18:11:05 christos Exp $");
 
 
 #include "reentrant.h"
@@ -215,6 +215,7 @@ svc_pollfd_add(int fd, struct svc_fdset *fds)
 	fds->fdused = fds->fdnum + 1;
 	DPRINTF("add fd=%d slot=%d fdused=%d", fd, fds->fdnum, fds->fdused);
 	fds->fdnum += FD_SETSIZE;
+	fds->fdp = pfd;
 	return fds;
 }
 
@@ -323,6 +324,8 @@ svc_fdset_zero(void)
 	DPRINTF("zero");
 
 	struct svc_fdset *fds = svc_fdset_alloc(0);
+	if (fds == NULL)
+		return;
 	memset(fds->fdset, 0, fds->fdsize);
 	fds->fdmax = -1;
 
