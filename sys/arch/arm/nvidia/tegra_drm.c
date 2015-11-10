@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.2 2015/11/10 22:14:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.2 2015/11/10 22:14:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -78,6 +78,10 @@ static struct drm_driver tegra_drm_driver = {
 	.dumb_create = tegra_drm_dumb_create,
 	.dumb_map_offset = tegra_drm_dumb_map_offset,
 	.dumb_destroy = tegra_drm_dumb_destroy,
+
+	.get_vblank_counter = tegra_drm_get_vblank_counter,
+	.enable_vblank = tegra_drm_enable_vblank,
+	.disable_vblank = tegra_drm_disable_vblank,
 
 	.name = DRIVER_NAME,
 	.desc = DRIVER_DESC,
