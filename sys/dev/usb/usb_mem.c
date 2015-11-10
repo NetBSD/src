@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.10 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.11 2015/11/10 13:41:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.10 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.11 2015/11/10 13:41:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -137,6 +137,8 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	}
 
 	DPRINTFN(6, "no free", 0, 0, 0, 0);
+	mutex_exit(&usb_blk_lock);
+
 	b = kmem_zalloc(sizeof(*b), KM_SLEEP);
 	if (b == NULL)
 		return USBD_NOMEM;
@@ -160,22 +162,22 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 
 	error = bus_dmamem_alloc(tag, b->size, align, 0,
 				 b->segs, b->nsegs,
-				 &b->nsegs, BUS_DMA_NOWAIT);
+				 &b->nsegs, BUS_DMA_WAITOK);
 	if (error)
 		goto free0;
 
 	error = bus_dmamem_map(tag, b->segs, b->nsegs, b->size,
-			       &b->kaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+			       &b->kaddr, BUS_DMA_WAITOK|BUS_DMA_COHERENT);
 	if (error)
 		goto free1;
 
 	error = bus_dmamap_create(tag, b->size, b->nsegs, b->size,
-				  0, BUS_DMA_NOWAIT, &b->map);
+				  0, BUS_DMA_WAITOK, &b->map);
 	if (error)
 		goto unmap;
 
 	error = bus_dmamap_load(tag, b->map, b->kaddr, b->size, NULL,
-				BUS_DMA_NOWAIT);
+				BUS_DMA_WAITOK);
 	if (error)
 		goto destroy;
 
@@ -183,6 +185,7 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 #ifdef USB_FRAG_DMA_WORKAROUND
 	memset(b->kaddr, 0, b->size);
 #endif
+	mutex_enter(&usb_blk_lock);
 
 	return USBD_NORMAL_COMPLETION;
 
