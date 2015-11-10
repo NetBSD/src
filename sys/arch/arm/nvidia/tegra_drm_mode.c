@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.2 2015/11/10 00:04:04 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.3 2015/11/10 00:33:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.2 2015/11/10 00:04:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.3 2015/11/10 00:33:39 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -548,6 +548,23 @@ tegra_encoder_destroy(struct drm_encoder *encoder)
 static void
 tegra_encoder_dpms(struct drm_encoder *encoder, int mode)
 {
+	struct tegra_encoder *tegra_encoder = to_tegra_encoder(encoder);
+
+	if (encoder->crtc == NULL)
+		return;
+
+	switch (mode) {
+	case DRM_MODE_DPMS_ON:
+	case DRM_MODE_DPMS_STANDBY:
+	case DRM_MODE_DPMS_SUSPEND:
+		HDMI_SET_CLEAR(tegra_encoder, HDMI_NV_PDISP_SOR_BLANK_REG,
+		    0, HDMI_NV_PDISP_SOR_BLANK_OVERRIDE);
+		break;
+	case DRM_MODE_DPMS_OFF:
+		HDMI_SET_CLEAR(tegra_encoder, HDMI_NV_PDISP_SOR_BLANK_REG,
+		    HDMI_NV_PDISP_SOR_BLANK_OVERRIDE, 0);
+		break;
+	}
 }
 
 static bool
