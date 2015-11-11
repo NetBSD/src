@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:33 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2015/11/11 21:52:46 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -9,8 +9,7 @@ LIB=	rumpdev_pci_if_pcn
 COMMENT=PCnet Ethernet device driver
 
 IOCONF=	PCI_IF_PCN.ioconf
-
-SRCS=	pcn_at_pci.c
+COMPONENT_SIMPLE= pci_if_pcn
 
 SRCS+=	if_pcn.c
 

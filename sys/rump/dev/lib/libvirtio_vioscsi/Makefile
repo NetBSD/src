@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2015/11/01 09:03:28 pooka Exp $
+#	$NetBSD: Makefile,v 1.2 2015/11/11 21:52:47 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -10,7 +10,7 @@ COMMENT=VirtIO SCSI driver
 
 IOCONF=	VIRTIO_VIOSCSI.ioconf
 
-SRCS=	vioscsi_at_virtio.c
+COMPONENT_SIMPLE= virtio_vioscsi
 
 SRCS+=	vioscsi.c
 

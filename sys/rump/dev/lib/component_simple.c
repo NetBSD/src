@@ -1,7 +1,7 @@
-/*	$NetBSD: vioif_at_virtio.c,v 1.1 2014/08/22 09:48:54 pooka Exp $	*/
+/*	$NetBSD: component_simple.c,v 1.1 2015/11/11 21:52:45 pooka Exp $	*/
 
 /*
- * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
+ * Copyright (c) 2015 Antti Kantee.  All Rights Reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,8 +25,12 @@
  * SUCH DAMAGE.
  */
 
+#ifndef COMPONENT_NAME
+#error Internal error: COMPONENT_NAME not defined
+#endif
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vioif_at_virtio.c,v 1.1 2014/08/22 09:48:54 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component_simple.c,v 1.1 2015/11/11 21:52:45 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -37,9 +41,13 @@ __KERNEL_RCSID(0, "$NetBSD: vioif_at_virtio.c,v 1.1 2014/08/22 09:48:54 pooka Ex
 
 #include "ioconf.c"
 
+#define CONFIG_INIT_COMPONENT(a) config_init_component(			\
+    __CONCAT(cfdriver_ioconf_,a),					\
+    __CONCAT(cfattach_ioconf_,a),					\
+    __CONCAT(cfdata_ioconf_,a));
+
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 
-	config_init_component(cfdriver_ioconf_virtio_if_vioif,
-	    cfattach_ioconf_virtio_if_vioif, cfdata_ioconf_virtio_if_vioif);
+	CONFIG_INIT_COMPONENT(COMPONENT_NAME);
 }
