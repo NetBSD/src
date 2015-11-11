@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.651 2015/11/05 00:02:59 knakahara Exp $
+# $NetBSD: mi,v 1.652 2015/11/11 07:52:57 ozaki-r Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3186,6 +3186,7 @@
 ./usr/tests/net/ndp/Kyuafile			tests-net-tests		atf,rump,kyua
 ./usr/tests/net/ndp/t_dad			tests-net-tests		atf,rump
 ./usr/tests/net/ndp/t_ndp			tests-net-tests		atf,rump
+./usr/tests/net/ndp/t_ra			tests-net-tests		atf,rump
 ./usr/tests/net/net				tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/Atffile			tests-net-tests		compattestfile,atf
 ./usr/tests/net/net/Kyuafile			tests-net-tests		compattestfile,atf,kyua
