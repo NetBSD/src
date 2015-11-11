@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.327 2015/11/06 08:44:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.328 2015/11/11 17:54:17 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -213,10 +213,11 @@
 #include <sys/kernhist.h>
 
 #include <uvm/uvm.h>
+#include <uvm/pmap/pmap_pvt.h>
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.327 2015/11/06 08:44:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.328 2015/11/11 17:54:17 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -757,6 +758,7 @@ static void		pmap_flush_page(struct vm_page_md *, paddr_t, enum pmap_flush_op);
 #endif
 #endif
 static void		pmap_page_remove(struct vm_page_md *, paddr_t);
+static void		pmap_pv_remove(paddr_t);
 
 #ifndef ARM_MMU_EXTENDED
 static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
@@ -3118,15 +3120,20 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * If the physical address is different, lookup the
 		 * vm_page.
 		 */
-		if (l2pte_pa(opte) != pa)
+		if (l2pte_pa(opte) != pa) {
+			KASSERT(!pmap_pv_tracked(pa));
 			opg = PHYS_TO_VM_PAGE(l2pte_pa(opte));
-		else
+		} else
 			opg = pg;
 	} else
 		opg = NULL;
 
-	if (pg) {
-		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
+	struct pmap_page *pp = pmap_pv_tracked(pa);
+
+	if (pg || pp) {
+		KASSERT((pg != NULL) != (pp != NULL));
+		struct vm_page_md *md = (pg != NULL) ? VM_PAGE_TO_MD(pg) :
+		    PMAP_PAGE_TO_MD(pp);
 
 		/*
 		 * This is to be a managed mapping.
@@ -3180,7 +3187,7 @@ pmap_enter(pmap_t pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		} else
 			npte |= pte_l2_s_cache_mode;
 
-		if (pg == opg) {
+		if (pg != NULL && pg == opg) {
 			/*
 			 * We're changing the attrs of an existing mapping.
 			 */
@@ -3947,6 +3954,34 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 		*pap = pa;
 
 	return true;
+}
+
+/*
+ * pmap_pv_remove: remove an unmanaged pv-tracked page from all pmaps
+ *	that map it
+ */
+
+static void
+pmap_pv_remove(paddr_t pa)
+{
+	struct pmap_page *pp;
+
+	pp = pmap_pv_tracked(pa);
+	if (pp == NULL)
+		panic("pmap_pv_protect: page not pv-tracked: 0x%"PRIxPADDR,
+		    pa);
+
+	struct vm_page_md *md = PMAP_PAGE_TO_MD(pp);
+	pmap_page_remove(md, pa);
+}
+
+void
+pmap_pv_protect(paddr_t pa, vm_prot_t prot)
+{
+
+	/* the only case is remove at the moment */
+	KASSERT(prot == VM_PROT_NONE);
+	pmap_pv_remove(pa);
 }
 
 void
