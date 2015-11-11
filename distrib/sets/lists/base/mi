@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1116 2015/11/08 20:00:22 christos Exp $
+# $NetBSD: mi,v 1.1117 2015/11/11 07:48:41 ozaki-r Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1828,6 +1828,7 @@
 ./usr/sbin/rpc.yppasswdd			base-nis-bin		yp
 ./usr/sbin/rpcbind				base-rpcbind-bin
 ./usr/sbin/rtadvd				base-router-bin		use_inet6
+./usr/sbin/rump.rtadvd				base-router-bin		use_inet6,rump
 ./usr/sbin/rtquery				base-netutil-bin
 ./usr/sbin/rtsold				base-obsolete		obsolete
 ./usr/sbin/rump.arp				base-netutil-bin	rump
