@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.133 2015/11/08 20:00:22 christos Exp $
+# $NetBSD: mi,v 1.134 2015/11/11 07:48:41 ozaki-r Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1199,6 +1199,7 @@
 ./usr/libdata/debug/usr/sbin/rpc.yppasswdd.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/rpcbind.debug	comp-rpcbind-debug	debug
 ./usr/libdata/debug/usr/sbin/rtadvd.debug	comp-router-debug	use_inet6,debug
+./usr/libdata/debug/usr/sbin/rump.rtadvd.debug	comp-router-debug	use_inet6,debug,rump
 ./usr/libdata/debug/usr/sbin/rtquery.debug	comp-netutil-debug	debug
 ./usr/libdata/debug/usr/sbin/rtsold.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/rump.arp.debug	comp-netutil-debug	debug,rump
