@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.56 2015/04/03 01:04:23 riastradh Exp $	*/
+/*	$NetBSD: pmap.h,v 1.57 2015/11/11 08:20:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -109,6 +109,7 @@
 
 #if defined(_KERNEL)
 #include <sys/kcpuset.h>
+#include <uvm/pmap/pmap_pvt.h>
 
 /*
  * pmap data structures: see pmap.c for details of locking.
