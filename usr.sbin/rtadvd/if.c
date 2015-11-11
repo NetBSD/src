@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.23 2015/06/05 15:41:59 roy Exp $	*/
+/*	$NetBSD: if.c,v 1.24 2015/11/11 07:48:41 ozaki-r Exp $	*/
 /*	$KAME: if.c,v 1.36 2004/11/30 22:32:01 suz Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 
 #include "rtadvd.h"
 #include "if.h"
+#include "prog_ops.h"
 
 #ifndef RT_ROUNDUP
 #define RT_ROUNDUP(a)							       \
@@ -111,17 +112,17 @@ if_getmtu(const char *name)
 	struct ifreq ifr;
 	int s, mtu;
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
+	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0)
 		return 0;
 
 	memset(&ifr, 0, sizeof(ifr));
 	ifr.ifr_addr.sa_family = AF_INET6;
 	strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
-	if (ioctl(s, SIOCGIFMTU, &ifr) != -1)
+	if (prog_ioctl(s, SIOCGIFMTU, &ifr) != -1)
 		mtu = ifr.ifr_mtu;
 	else
 		mtu = 0;
-	close(s);
+	prog_close(s);
 
 	return mtu;
 }
@@ -133,20 +134,20 @@ if_getflags(int ifindex, int oifflags)
 	struct ifreq ifr;
 	int s;
 
-	if ((s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+	if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		return (oifflags & ~IFF_UP);
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
 	if_indextoname(ifindex, ifr.ifr_name);
-	if (ioctl(s, SIOCGIFFLAGS, &ifr) < 0) {
+	if (prog_ioctl(s, SIOCGIFFLAGS, &ifr) < 0) {
 		syslog(LOG_ERR, "<%s> ioctl:SIOCGIFFLAGS: failed for %s",
 		       __func__, ifr.ifr_name);
-		close(s);
+		prog_close(s);
 		return (oifflags & ~IFF_UP);
 	}
-	close(s);
+	prog_close(s);
 	return (ifr.ifr_flags);
 }
 
