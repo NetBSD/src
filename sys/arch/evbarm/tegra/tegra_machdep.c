@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.25 2015/11/09 23:05:58 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.26 2015/11/11 12:37:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.25 2015/11/09 23:05:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.26 2015/11/11 12:37:52 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.25 2015/11/09 23:05:58 jmcneill 
 #include "ukbd.h"
 #include "genfb.h"
 #include "ether.h"
+#include "as3722pmic.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,6 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.25 2015/11/09 23:05:58 jmcneill 
 #include <dev/usb/ukbdvar.h>
 #include <net/if_ether.h>
 
+#if NAS3722PMIC > 0
+#include <dev/i2c/as3722.h>
+#endif
+
 #ifndef TEGRA_MAX_BOOT_STRING
 #define TEGRA_MAX_BOOT_STRING 1024
 #endif
@@ -104,6 +109,7 @@ extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 
 static void tegra_device_register(device_t, void *);
+static void tegra_powerdown(void);
 
 bs_protos(bs_notimpl);
 
@@ -253,6 +259,7 @@ initarm(void *arg)
 #endif
 
 	cpu_reset_address = tegra_pmc_reset;
+	cpu_powerdown_address = tegra_powerdown;
 
 	/* Talk to the user */
 	DPRINTF("\nNetBSD/evbarm (tegra) booting ...\n");
@@ -524,6 +531,21 @@ tegra_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
 		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
 		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
+	}
+#endif
+}
+
+static void
+tegra_powerdown(void)
+{
+#if NAS3722PMIC > 0
+	device_t pmic = device_find_by_driver_unit("as3722pmic", 0);
+	if (pmic != NULL) {
+		if (as3722_poweroff(pmic) != 0) {
+			printf("WARNING: AS3722 poweroff failed\n");
+			return;
+		}
+		delay(1000000);
 	}
 #endif
 }
