@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.5 2015/05/31 14:41:59 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.6 2015/11/11 11:32:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.5 2015/05/31 14:41:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.6 2015/11/11 11:32:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,7 +70,7 @@ static int	tegra_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 
 static int	tegra_i2c_wait(struct tegra_i2c_softc *, int);
 static int	tegra_i2c_write(struct tegra_i2c_softc *, i2c_addr_t,
-				const uint8_t *, size_t, int);
+				const uint8_t *, size_t, int, bool);
 static int	tegra_i2c_read(struct tegra_i2c_softc *, i2c_addr_t, uint8_t *,
 			       size_t, int);
 
@@ -125,7 +125,7 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
 	/* Recommended setting for standard mode */
-	tegra_car_periph_i2c_enable(loc->loc_port, 20400000);
+	tegra_car_periph_i2c_enable(loc->loc_port, 204000000);
 
 	tegra_i2c_init(sc);
 
@@ -239,7 +239,7 @@ tegra_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	}
 
 	if (cmdlen > 0) {
-		error = tegra_i2c_write(sc, addr, cmdbuf, cmdlen, flags);
+		error = tegra_i2c_write(sc, addr, cmdbuf, cmdlen, flags, true);
 		if (error) {
 			goto done;
 		}
@@ -248,7 +248,7 @@ tegra_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	if (I2C_OP_READ_P(op)) {
 		error = tegra_i2c_read(sc, addr, buf, buflen, flags);
 	} else {
-		error = tegra_i2c_write(sc, addr, buf, buflen, flags);
+		error = tegra_i2c_write(sc, addr, buf, buflen, flags, false);
 	}
 
 done:
@@ -308,7 +308,7 @@ tegra_i2c_wait(struct tegra_i2c_softc *sc, int flags)
 
 static int
 tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
-    size_t buflen, int flags)
+    size_t buflen, int flags, bool repeat_start)
 {
 	const uint8_t *p = buf;
 	size_t n, resid = buflen;
@@ -334,6 +334,7 @@ tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 	/* I2C Master Transmit Packet Header */
 	I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG,
 	    I2C_IOPACKET_XMITHDR_IE |
+	    (repeat_start ? I2C_IOPACKET_XMITHDR_REPEAT_STARTSTOP : 0) |
 	    __SHIFTIN((addr << 1), I2C_IOPACKET_XMITHDR_SLAVE_ADDR));
 
 	/* Transmit data */
