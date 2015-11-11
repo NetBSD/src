@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2015/10/19 16:16:35 pooka Exp $
+#	$NetBSD: Makefile,v 1.3 2015/11/11 21:52:47 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -12,7 +12,6 @@ COMMENT=VirtIO block device driver
 IOCONF=	VIRTIO_LD.ioconf
 
 SRCS=	ld_at_virtio.c
-
 SRCS+=	ld_virtio.c
 
 # XXX: ld.c does not really belong here, but placing it in libdisk
