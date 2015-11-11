@@ -1,4 +1,4 @@
-#	$NetBSD: files.xen,v 1.137 2015/01/04 07:34:14 uebayasi Exp $
+#	$NetBSD: files.xen,v 1.138 2015/11/11 08:51:33 skrll Exp $
 #	NetBSD: files.x86,v 1.10 2003/10/08 17:30:00 bouyer Exp 
 #	NetBSD: files.i386,v 1.254 2004/03/25 23:32:10 jmc Exp 
 
@@ -80,6 +80,7 @@ file	arch/amd64/amd64/lock_stubs.S
 endif
 
 file	kern/subr_disk_mbr.c		disk
+file	uvm/pmap/pmap_pvt.c
 file	arch/x86/x86/convert_xmm_s87.c
 file	arch/x86/x86/db_memrw.c		ddb | kgdb
 file	arch/x86/x86/db_trace.c		ddb
