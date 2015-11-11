@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.2 2014/06/15 20:14:41 matt Exp $	*/
+/*	$NetBSD: platform.h,v 1.3 2015/11/11 00:58:21 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 #define CONADDR_VA		((CONADDR - EXYNOS_CORE_PBASE) + EXYNOS_CORE_VBASE)
 
-#ifdef SSCOM0CONSOLE
+#ifdef SSCOM2CONSOLE
 #define SSCON_CHANNEL 0
 #define CONADDR			(EXYNOS_CORE_PBASE + EXYNOS5_UART2_OFFSET)
 #endif
