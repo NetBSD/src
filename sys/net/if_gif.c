@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.90 2015/11/10 18:22:46 christos Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.91 2015/11/11 02:57:17 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.90 2015/11/10 18:22:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.91 2015/11/11 02:57:17 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -678,7 +678,8 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
 		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
 			error = EADDRNOTAVAIL;
-			goto bad;
+			/* continue to use the old configureation. */
+			goto out;
 		}
 
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
@@ -747,9 +748,8 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		sockaddr_free(odst);
 
 	ifp->if_flags |= IFF_RUNNING;
-	splx(s);
-
-	return 0;
+	error = 0;
+	goto out;
 
 rollback:
 	if (sc->gif_psrc != NULL)
@@ -758,7 +758,7 @@ rollback:
 		sockaddr_free(sc->gif_pdst);
 	sc->gif_psrc = osrc;
 	sc->gif_pdst = odst;
-bad:
+
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
@@ -768,8 +768,8 @@ bad:
 		ifp->if_flags |= IFF_RUNNING;
 	else
 		ifp->if_flags &= ~IFF_RUNNING;
+out:
 	splx(s);
-
 	return error;
 }
 
