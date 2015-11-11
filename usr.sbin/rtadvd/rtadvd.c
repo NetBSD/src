@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.50 2015/06/15 04:15:33 ozaki-r Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.51 2015/11/11 07:48:41 ozaki-r Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #include "if.h"
 #include "config.h"
 #include "dump.h"
+#include "prog_ops.h"
 
 struct msghdr rcvmhdr;
 static unsigned char *rcvcmsgbuf;
@@ -220,6 +221,10 @@ main(int argc, char *argv[])
 		exit(1);
 	}
 
+	if (prog_init && prog_init() == -1) {
+		err(1, "init failed");
+	}
+
 	logopt = LOG_NDELAY | LOG_PID;
 	if (fflag)
 		logopt |= LOG_PERROR;
@@ -251,7 +256,7 @@ main(int argc, char *argv[])
 		getconfig(*argv++, 1);
 
 	if (!fflag)
-		daemon(1, 0);
+		prog_daemon(1, 0);
 
 	sock_open();
 
@@ -274,17 +279,17 @@ main(int argc, char *argv[])
 		set[1].fd = -1;
 
 	syslog(LOG_INFO, "dropping privileges to %s", RTADVD_USER);
-	if (chroot(pw->pw_dir) == -1) {
+	if (prog_chroot(pw->pw_dir) == -1) {
 		syslog(LOG_ERR, "chroot: %s: %m", pw->pw_dir);
 		exit(1);
 	}
-	if (chdir("/") == -1) {
+	if (prog_chdir("/") == -1) {
 		syslog(LOG_ERR, "chdir: /: %m");
 		exit(1);
 	}
-	if (setgroups(1, &pw->pw_gid) == -1 ||
-	    setgid(pw->pw_gid) == -1 || 
-	    setuid(pw->pw_uid) == -1)
+	if (prog_setgroups(1, &pw->pw_gid) == -1 ||
+	    prog_setgid(pw->pw_gid) == -1 ||
+	    prog_setuid(pw->pw_uid) == -1)
 	{
 		syslog(LOG_ERR, "failed to drop privileges: %m");
 		exit(1);
@@ -331,7 +336,7 @@ main(int argc, char *argv[])
 			    __func__);
 		}
 
-		if ((i = poll(set, 2, timeout ? (timeout->tv_sec * 1000 +
+		if ((i = prog_poll(set, 2, timeout ? (timeout->tv_sec * 1000 +
 		    (timeout->tv_nsec + 999999) / 1000000) : INFTIM)) < 0)
 		{
 			/* EINTR would occur upon SIGUSR1 for status dump */
@@ -446,7 +451,7 @@ rtmsg_input(void)
 	int prefixchange = 0, argc;
 
 	memset(&buffer, 0, sizeof(buffer));
-	n = read(rtsock, &buffer, sizeof(buffer));
+	n = prog_read(rtsock, &buffer, sizeof(buffer));
 
 	/* We read the buffer first to clear the FD */
 	if (do_die)
@@ -716,7 +721,7 @@ rtadvd_input(void)
 	 * receive options.
 	 */
 	rcvmhdr.msg_controllen = rcvcmsgbuflen;
-	if ((i = recvmsg(sock, &rcvmhdr, 0)) < 0)
+	if ((i = prog_recvmsg(sock, &rcvmhdr, 0)) < 0)
 		return;
 
 	/* We read the buffer first to clear the FD */
@@ -1017,7 +1022,7 @@ ra_timer_set_short_delay(struct rainfo *rai)
 	 * MIN_DELAY_BETWEEN_RAS plus the random value after the
 	 * previous advertisement was sent.
 	 */
-	clock_gettime(CLOCK_MONOTONIC, &now);
+	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	timespecsub(&now, &rai->lastsent, &tm_tmp);
 	min_delay.tv_sec = MIN_DELAY_BETWEEN_RAS;
 	min_delay.tv_nsec = 0;
@@ -1245,7 +1250,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 		 * XXX: can we really expect that all routers on the link
 		 * have synchronized clocks?
 		 */
-		clock_gettime(CLOCK_MONOTONIC, &now);
+		prog_clock_gettime(CLOCK_MONOTONIC, &now);
 		preferred_time += now.tv_sec;
 
 		if (!pp->timer && rai->clockskew &&
@@ -1281,7 +1286,7 @@ prefix_check(struct nd_opt_prefix_info *pinfo,
 
 	valid_time = ntohl(pinfo->nd_opt_pi_valid_time);
 	if (pp->vltimeexpire) {
-		clock_gettime(CLOCK_MONOTONIC, &now);
+		prog_clock_gettime(CLOCK_MONOTONIC, &now);
 		valid_time += now.tv_sec;
 
 		if (!pp->timer && rai->clockskew &&
@@ -1510,14 +1515,14 @@ sock_open(void)
 		exit(1);
 	}
 
-	if ((sock = socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
+	if ((sock = prog_socket(AF_INET6, SOCK_RAW, IPPROTO_ICMPV6)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		exit(1);
 	}
 
 	/* RFC 4861 Section 4.2 */
 	on = 255;
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &on,
+	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS, &on,
 		       sizeof(on)) == -1) {
 		syslog(LOG_ERR, "<%s> IPV6_MULTICAST_HOPS: %m", __func__);
 		exit(1);
@@ -1526,13 +1531,13 @@ sock_open(void)
 	/* specify to tell receiving interface */
 	on = 1;
 #ifdef IPV6_RECVPKTINFO
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
+	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_RECVPKTINFO, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_RECVPKTINFO: %m", __func__);
 		exit(1);
 	}
 #else  /* old adv. API */
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
+	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_PKTINFO, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_PKTINFO: %m", __func__);
 		exit(1);
@@ -1542,13 +1547,13 @@ sock_open(void)
 	on = 1;
 	/* specify to tell value of hoplimit field of received IP6 hdr */
 #ifdef IPV6_RECVHOPLIMIT
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
+	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_RECVHOPLIMIT, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_RECVHOPLIMIT: %m", __func__);
 		exit(1);
 	}
 #else  /* old adv. API */
-	if (setsockopt(sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
+	if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_HOPLIMIT, &on,
 		       sizeof(on)) < 0) {
 		syslog(LOG_ERR, "<%s> IPV6_HOPLIMIT: %m", __func__);
 		exit(1);
@@ -1560,7 +1565,7 @@ sock_open(void)
 	ICMP6_FILTER_SETPASS(ND_ROUTER_ADVERT, &filt);
 	if (accept_rr)
 		ICMP6_FILTER_SETPASS(ICMP6_ROUTER_RENUMBERING, &filt);
-	if (setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
+	if (prog_setsockopt(sock, IPPROTO_ICMPV6, ICMP6_FILTER, &filt,
 		       sizeof(filt)) < 0) {
 		syslog(LOG_ERR, "<%s> IICMP6_FILTER: %m", __func__);
 		exit(1);
@@ -1578,7 +1583,7 @@ sock_open(void)
 	}
 	TAILQ_FOREACH(ra, &ralist, next) {
 		mreq.ipv6mr_interface = ra->ifindex;
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
+		if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP, &mreq,
 			       sizeof(mreq)) < 0) {
 			syslog(LOG_ERR, "<%s> IPV6_JOIN_GROUP(link) on %s: %m",
 			       __func__, ra->ifname);
@@ -1609,7 +1614,7 @@ sock_open(void)
 			}
 		} else
 			mreq.ipv6mr_interface = ra->ifindex;
-		if (setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
+		if (prog_setsockopt(sock, IPPROTO_IPV6, IPV6_JOIN_GROUP,
 			       &mreq, sizeof(mreq)) < 0) {
 			syslog(LOG_ERR,
 			       "<%s> IPV6_JOIN_GROUP(site) on %s: %m",
@@ -1643,7 +1648,7 @@ sock_open(void)
 static void
 rtsock_open(void)
 {
-	if ((rtsock = socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
+	if ((rtsock = prog_socket(PF_ROUTE, SOCK_RAW, 0)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		exit(1);
 	}
@@ -1695,7 +1700,7 @@ ra_output(struct rainfo *rai)
 	       "<%s> send RA on %s, # of waitings = %d",
 	       __func__, rai->ifname, rai->waiting); 
 
-	i = sendmsg(sock, &sndmhdr, 0);
+	i = prog_sendmsg(sock, &sndmhdr, 0);
 
 	if (i < 0 || (size_t)i != rai->ra_datalen)  {
 		if (i < 0) {
@@ -1753,7 +1758,7 @@ ra_output(struct rainfo *rai)
 	rai->raoutput++;
 
 	/* update timestamp */
-	clock_gettime(CLOCK_MONOTONIC, &rai->lastsent);
+	prog_clock_gettime(CLOCK_MONOTONIC, &rai->lastsent);
 
 	/* reset waiting conter */
 	rai->waiting = 0;

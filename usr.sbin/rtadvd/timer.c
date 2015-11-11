@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.12 2015/06/05 14:09:20 roy Exp $	*/
+/*	$NetBSD: timer.c,v 1.13 2015/11/11 07:48:41 ozaki-r Exp $	*/
 /*	$KAME: timer.c,v 1.11 2005/04/14 06:22:35 suz Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <string.h>
 #include <search.h>
 #include "timer.h"
+#include "prog_ops.h"
 
 struct rtadvd_timer_head_t ra_timer = TAILQ_HEAD_INITIALIZER(ra_timer);
 static struct timespec tm_limit = { LONG_MAX, 1000000000L - 1 };
@@ -102,7 +103,7 @@ rtadvd_set_timer(struct timespec *tm, struct rtadvd_timer *timer)
 	struct timespec now;
 
 	/* reset the timer */
-	clock_gettime(CLOCK_MONOTONIC, &now);
+	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	timespecadd(&now, tm, &timer->tm);
 
 	/* upate the next expiration time */
@@ -122,7 +123,7 @@ rtadvd_check_timer(void)
 	struct timespec now;
 	struct rtadvd_timer *tm, *tmn;
 
-	clock_gettime(CLOCK_MONOTONIC, &now);
+	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	tm_max = tm_limit;
 
 	TAILQ_FOREACH_SAFE(tm, &ra_timer, next, tmn) {
@@ -153,7 +154,7 @@ rtadvd_timer_rest(struct rtadvd_timer *timer)
 	static struct timespec returnval;
 	struct timespec now;
 
-	clock_gettime(CLOCK_MONOTONIC, &now);
+	prog_clock_gettime(CLOCK_MONOTONIC, &now);
 	if (timespeccmp(&timer->tm, &now, <=)) {
 		syslog(LOG_DEBUG,
 		       "<%s> a timer must be expired, but not yet",
