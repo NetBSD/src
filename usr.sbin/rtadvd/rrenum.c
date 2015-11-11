@@ -1,4 +1,4 @@
-/*	$NetBSD: rrenum.c,v 1.18 2015/06/05 15:41:59 roy Exp $	*/
+/*	$NetBSD: rrenum.c,v 1.19 2015/11/11 07:48:41 ozaki-r Exp $	*/
 /*	$KAME: rrenum.c,v 1.14 2004/06/14 05:36:00 itojun Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include "rtadvd.h"
 #include "rrenum.h"
 #include "if.h"
+#include "prog_ops.h"
 
 #define	RR_ISSET_SEGNUM(segnum_bits, segnum) \
 	((((segnum_bits)[(segnum) >> 5]) & (1 << ((segnum) & 31))) != 0)
@@ -163,7 +164,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 		irr->irr_useprefix.sin6_len = 0; /* let it mean, no addition */
 		irr->irr_useprefix.sin6_family = 0;
 		irr->irr_useprefix.sin6_addr = in6addr_any;
-		if (ioctl(s, rrcmd2pco[rpm->rpm_code], irr) < 0 &&
+		if (prog_ioctl(s, rrcmd2pco[rpm->rpm_code], irr) < 0 &&
 		    errno != EADDRNOTAVAIL)
 			syslog(LOG_ERR, "<%s> ioctl: %m", __func__);
 		return;
@@ -194,7 +195,7 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 		irr->irr_useprefix.sin6_family = AF_INET6;
 		irr->irr_useprefix.sin6_addr = rpu->rpu_prefix;
 
-		if (ioctl(s, rrcmd2pco[rpm->rpm_code], irr) < 0 &&
+		if (prog_ioctl(s, rrcmd2pco[rpm->rpm_code], irr) < 0 &&
 		    errno != EADDRNOTAVAIL)
 			syslog(LOG_ERR, "<%s> ioctl: %m", __func__);
 
@@ -216,14 +217,14 @@ do_use_prefix(int len, struct rr_pco_match *rpm,
 					pp->validlifetime = ntohl(rpu->rpu_vltime);
 					pp->preflifetime = ntohl(rpu->rpu_pltime);
 					if (irr->irr_rrf_decrvalid) {
-						clock_gettime(CLOCK_MONOTONIC,
+						prog_clock_gettime(CLOCK_MONOTONIC,
 						    &now);
 						pp->vltimeexpire =
 							now.tv_sec + pp->validlifetime;
 					} else
 						pp->vltimeexpire = 0;
 					if (irr->irr_rrf_decrprefd) {
-						clock_gettime(CLOCK_MONOTONIC,
+						prog_clock_gettime(CLOCK_MONOTONIC,
 						    &now);
 						pp->pltimeexpire =
 							now.tv_sec + pp->preflifetime;
@@ -249,7 +250,7 @@ do_pco(struct icmp6_router_renum *rr, int len, struct rr_pco_match *rpm)
 	if ((rr_pco_check(len, rpm) != 0))
 		return 1;
 
-	if (s == -1 && (s = socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
+	if (s == -1 && (s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
 		syslog(LOG_ERR, "<%s> socket: %m", __func__);
 		exit(1);
 	}
