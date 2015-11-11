@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.334 2015/11/11 03:14:34 snj Exp $
+#	$NetBSD: BRANCHES,v 1.335 2015/11/11 06:53:36 snj Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -289,6 +289,16 @@ Scope:		Entire tree. (src + xsrc)
 Notes:
 		Commits restricted to Release Engineering.
 
+Branch:		netbsd-7-0
+Description:	Tracking security/critical fixes for NetBSD 7.0
+Status:		Active
+Start Date:	10 Oct 2015
+End Date:
+Base Tag:	netbsd-7-0-RELEASE
+Maintainer:	7.0 Release Engineering <releng-7@NetBSD.org>
+Scope:		Entire tree. (src + xsrc)
+Notes:
+		Commits restricted to Release Engineering.
 ########################################################################
 # Individual developers' branches (Active/Dormant):
 ########################################################################
