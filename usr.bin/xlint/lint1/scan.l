@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.61 2015/08/28 09:42:07 joerg Exp $ */
+/* $NetBSD: scan.l,v 1.62 2015/11/12 17:34:01 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.61 2015/08/28 09:42:07 joerg Exp $");
+__RCSID("$NetBSD: scan.l,v 1.62 2015/11/12 17:34:01 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -86,9 +86,11 @@ static	int	wcstrg(void);
 
 %}
 
+
 L	[_A-Za-z]
 D	[0-9]
 NZD	[1-9]
+BD	[0-1]
 OD	[0-7]
 HD	[0-9A-Fa-f]
 EX	([eE][+-]?[0-9]+)
@@ -100,6 +102,7 @@ TL	([fFlL]?[i]?)
 %%
 
 {L}({L}|{D})*		 	return (name());
+0[bB]{BD}+[lLuU]*		return (icon(2));
 0{OD}*[lLuU]*			return (icon(8));
 {NZD}{D}*[lLuU]*		return (icon(10));
 0[xX]{HD}+[lLuU]*		return (icon(16));
@@ -532,8 +535,8 @@ icon(int base)
 	cp = yytext;
 	len = yyleng;
 
-	/* skip 0x */
-	if (base == 16) {
+	/* skip 0[xX] or 0[bB] */
+	if (base == 16 || base == 2) {
 		cp += 2;
 		len -= 2;
 	}
