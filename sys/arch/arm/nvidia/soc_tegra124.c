@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.7 2015/11/11 12:49:10 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.8 2015/11/12 10:31:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.7 2015/11/11 12:49:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.8 2015/11/12 10:31:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -77,7 +77,7 @@ static struct tegra124_cpufreq_rate {
 void
 tegra124_cpuinit(void)
 {
-	tegra_car_periph_i2c_enable(4, 204000000);
+	tegra_car_periph_i2c_enable(4, 20400000);
 
 	/* Set VDD_CPU voltage to 1.4V */
 	const u_int target_mv = 1400;
