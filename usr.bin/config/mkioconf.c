@@ -1,4 +1,4 @@
-/*	$NetBSD: mkioconf.c,v 1.32 2015/09/03 13:53:36 uebayasi Exp $	*/
+/*	$NetBSD: mkioconf.c,v 1.33 2015/11/12 14:38:21 pooka Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkioconf.c,v 1.32 2015/09/03 13:53:36 uebayasi Exp $");
+__RCSID("$NetBSD: mkioconf.c,v 1.33 2015/11/12 14:38:21 pooka Exp $");
 
 #include <sys/param.h>
 #include <err.h>
@@ -93,6 +93,8 @@ mkioconf(void)
 	}
 
 	fprintf(fp, "#include \"ioconf.h\"\n");
+	if (ioconfname)
+		fprintf(fp, "#define IOCONF %s\n", ioconfname);
 
 	emithdr(fp);
 	emitcfdrivers(fp);
