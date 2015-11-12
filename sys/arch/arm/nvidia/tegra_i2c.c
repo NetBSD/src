@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.7 2015/11/11 12:28:15 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.8 2015/11/12 10:31:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.7 2015/11/11 12:28:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.8 2015/11/12 10:31:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,8 +124,11 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
-	/* Recommended setting for standard mode */
-	tegra_car_periph_i2c_enable(loc->loc_port, 204000000);
+	/*
+	 * Recommended setting for standard mode is to use an I2C source div
+	 * of 20 (Tegra K1 Technical Reference Manual, Table 137)
+	 */
+	tegra_car_periph_i2c_enable(loc->loc_port, 20400000);
 
 	tegra_i2c_init(sc);
 
