@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.90 2012/01/07 18:45:13 christos Exp $ */
+/*	$NetBSD: df.c,v 1.91 2015/11/12 17:59:21 christos Exp $ */
 
 /*
  * Copyright (c) 1980, 1990, 1993, 1994
@@ -45,7 +45,7 @@ __COPYRIGHT(
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: df.c,v 1.90 2012/01/07 18:45:13 christos Exp $");
+__RCSID("$NetBSD: df.c,v 1.91 2015/11/12 17:59:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -379,13 +379,13 @@ prtstat(struct statvfs *sfsp, int maxwidth)
 		 */
 		(void)printf("%10s (%-12s): %7ld block size %12ld frag size\n",
 		    sfsp->f_mntonname, sfsp->f_mntfromname,
-		    sfsp->f_iosize,	/* On UFS/FFS systems this is
+		    sfsp->f_bsize,	/* On UFS/FFS systems this is
 					 * also called the "optimal
 					 * transfer block size" but it
 					 * is of course the file
 					 * system's block size too.
 					 */
-		    sfsp->f_bsize);	/* not so surprisingly the
+		    sfsp->f_frsize);	/* not so surprisingly the
 					 * "fundamental file system
 					 * block size" is the frag
 					 * size.
