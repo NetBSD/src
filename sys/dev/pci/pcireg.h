@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.107 2015/11/12 12:08:13 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.108 2015/11/12 12:17:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -783,8 +783,6 @@ typedef u_int8_t pci_revision_t;
 
 #define PCI_HT_CMD	0x00	/* Capability List & Command Register */
 #define	PCI_HT_CMD_MASK		__BITS(31, 16)
-#define PCI_HT_MSI_ENABLED	__BIT(16)
-#define PCI_HT_MSI_FIXED	__BIT(17)
 #define PCI_HT_CAP(cr) ((((cr) >> 27) < 0x08) ?				      \
     (((cr) >> 27) & 0x1c) : (((cr) >> 27) & 0x1f))
 #define PCI_HT_CAPMASK		__BITS(31, 27)
@@ -806,9 +804,19 @@ typedef u_int8_t pci_revision_t;
 #define PCI_HT_CAP_PM		0b11100
 #define PCI_HT_CAP_HIGHNODECNT	0b11101
 
-#define PCI_HT_MSI_ADDR_LO	0x04
-#define PCI_HT_MSI_ADDR_HI	0x08
+/*
+ * HT Cap ID: 0b10101
+ * MSI Mapping
+ */
+
+/* Command register bits (31-16)*/
+#define PCI_HT_MSI_ENABLED	__BIT(16)
+#define PCI_HT_MSI_FIXED	__BIT(17)
+
+#define PCI_HT_MSI_ADDR_LO	0x04 /* Address register (low) */
+#define PCI_HT_MSI_ADDR_LO_MASK	__BITS(31, 20)
 #define PCI_HT_MSI_FIXED_ADDR	0xfee00000UL
+#define PCI_HT_MSI_ADDR_HI	0x08 /* Address Register (high) */
 
 /*
  * Capability ID: 0x09

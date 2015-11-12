@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.140 2015/10/30 20:03:45 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.141 2015/11/12 12:17:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.140 2015/10/30 20:03:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.141 2015/11/12 12:17:59 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1232,7 +1232,96 @@ pci_conf_print_pcix_cap(const pcireg_t *regs, int capoff)
 	}
 }
 
-/* XXX pci_conf_print_ldt_cap */
+/* pci_conf_print_ht_slave_cap */
+/* pci_conf_print_ht_host_cap */
+/* pci_conf_print_ht_switch_cap */
+/* pci_conf_print_ht_intr_cap */
+/* pci_conf_print_ht_revid_cap */
+/* pci_conf_print_ht_unitid_cap */
+/* pci_conf_print_ht_extcnf_cap */
+/* pci_conf_print_ht_addrmap_cap */
+/* pci_conf_print_ht_msimap_cap */
+
+static void
+pci_conf_print_ht_msimap_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t val;
+	uint32_t lo, hi;
+
+	/*
+	 * Print the rest of the command register bits. Others are
+	 * printed in pci_conf_print_ht_cap().
+	 */
+	val = regs[o2i(capoff + PCI_HT_CMD)];
+	onoff("Enable", val, PCI_HT_MSI_ENABLED);
+	onoff("Fixed", val, PCI_HT_MSI_FIXED);
+
+	lo = regs[o2i(capoff + PCI_HT_MSI_ADDR_LO)];
+	hi = regs[o2i(capoff + PCI_HT_MSI_ADDR_HI)];
+	printf("    Address Low register: 0x%08x\n", lo);
+	printf("    Address high register: 0x%08x\n", hi);
+	printf("      Address: 0x%016" PRIx64 "\n",
+	    (uint64_t)hi << 32 | (lo & PCI_HT_MSI_ADDR_LO_MASK));
+}
+
+/* pci_conf_print_ht_droute_cap */
+/* pci_conf_print_ht_vcset_cap */
+/* pci_conf_print_ht_retry_cap */
+/* pci_conf_print_ht_x86enc_cap */
+/* pci_conf_print_ht_gen3_cap */
+/* pci_conf_print_ht_fle_cap */
+/* pci_conf_print_ht_pm_cap */
+/* pci_conf_print_ht_hnc_cap */
+
+static const struct ht_types {
+	pcireg_t cap;
+	const char *name;
+	void (*printfunc)(const pcireg_t *, int);
+} ht_captab[] = {
+	{PCI_HT_CAP_SLAVE,	"Slave or Primary Interface", NULL },
+	{PCI_HT_CAP_HOST,	"Host or Secondary Interface", NULL },
+	{PCI_HT_CAP_SWITCH,	"Switch", NULL },
+	{PCI_HT_CAP_INTERRUPT,	"Interrupt Discovery and Configuration", NULL},
+	{PCI_HT_CAP_REVID,	"Revision ID",	NULL },
+	{PCI_HT_CAP_UNITID_CLUMP, "UnitID Clumping",	NULL },
+	{PCI_HT_CAP_EXTCNFSPACE, "Extended Configuration Space Access",	NULL },
+	{PCI_HT_CAP_ADDRMAP,	"Address Mapping",	NULL },
+	{PCI_HT_CAP_MSIMAP,	"MSI Mapping",	pci_conf_print_ht_msimap_cap },
+	{PCI_HT_CAP_DIRECTROUTE, "Direct Route",	NULL },
+	{PCI_HT_CAP_VCSET,	"VCSet",	NULL },
+	{PCI_HT_CAP_RETRYMODE,	"Retry Mode",	NULL },
+	{PCI_HT_CAP_X86ENCODE,	"X86 Encoding",	NULL },
+	{PCI_HT_CAP_GEN3,	"Gen3",	NULL },
+	{PCI_HT_CAP_FLE,	"Function-Level Extension",	NULL },
+	{PCI_HT_CAP_PM,		"Power Management",	NULL },
+	{PCI_HT_CAP_HIGHNODECNT, "High Node Count",	NULL },
+};
+
+static void
+pci_conf_print_ht_cap(const pcireg_t *regs, int capoff)
+{
+	pcireg_t val, foundcap;
+	unsigned int off;
+
+	val = regs[o2i(capoff + PCI_HT_CMD)];
+
+	printf("\n  HyperTransport Capability Register at 0x%02x\n", capoff);
+
+	printf("    Command register: 0x%04x\n", val >> 16);
+	foundcap = PCI_HT_CAP(val);
+	for (off = 0; off < __arraycount(ht_captab); off++) {
+		if (ht_captab[off].cap == foundcap)
+			break;
+	}
+	printf("      Capability Type: 0x%02x ", foundcap);
+	if (off >= __arraycount(ht_captab)) {
+		printf("(unknown)\n");
+		return;
+	}
+	printf("(%s)\n", ht_captab[off].name);
+	if (ht_captab[off].printfunc != NULL)
+		ht_captab[off].printfunc(regs, off);
+}
 
 static void
 pci_conf_print_vendspec_cap(const pcireg_t *regs, int capoff)
@@ -1887,7 +1976,7 @@ static struct {
 	{ PCI_CAP_MSI,		"MSI",		pci_conf_print_msi_cap }, 
 	{ PCI_CAP_CPCI_HOTSWAP,	"CompactPCI Hot-swapping", NULL },
 	{ PCI_CAP_PCIX,		"PCI-X",	pci_conf_print_pcix_cap },
-	{ PCI_CAP_LDT,		"HyperTransport", NULL },
+	{ PCI_CAP_LDT,		"HyperTransport", pci_conf_print_ht_cap },
 	{ PCI_CAP_VENDSPEC,	"Vendor-specific",
 	  pci_conf_print_vendspec_cap },
 	{ PCI_CAP_DEBUGPORT,	"Debug Port",	pci_conf_print_debugport_cap },
@@ -1911,8 +2000,7 @@ pci_conf_find_cap(const pcireg_t *regs, int capoff, unsigned int capid,
 	int off;
 
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
-	     off != 0;
-	     off = PCI_CAPLIST_NEXT(rval)) {
+	     off != 0; off = PCI_CAPLIST_NEXT(rval)) {
 		rval = regs[o2i(off)];
 		if (capid == PCI_CAPLIST_CAP(rval)) {
 			if (offsetp != NULL)
@@ -1942,8 +2030,7 @@ pci_conf_print_caplist(
 
 	/* Print capability register's offset and the type first */
 	for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
-	     off != 0;
-	     off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
+	     off != 0; off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
 		rval = regs[o2i(off)];
 		printf("  Capability register at 0x%02x\n", off);
 
@@ -1971,11 +2058,21 @@ pci_conf_print_caplist(
 		 * the same. This is required because some capabilities
 		 * appear multiple times (e.g. HyperTransport capability).
 		 */
+#if 0
 		if (pci_conf_find_cap(regs, capoff, i, &off)) {
 			rval = regs[o2i(off)];
 			if (pci_captab[i].printfunc != NULL)
 				pci_captab[i].printfunc(regs, off);
 		}
+#else
+		for (off = PCI_CAPLIST_PTR(regs[o2i(capoff)]);
+		     off != 0; off = PCI_CAPLIST_NEXT(regs[o2i(off)])) {
+			rval = regs[o2i(off)];
+			if ((PCI_CAPLIST_CAP(rval) == i)
+			    && (pci_captab[i].printfunc != NULL))
+				pci_captab[i].printfunc(regs, off);
+		}
+#endif
 	}
 }
 
