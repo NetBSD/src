@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv3d.c,v 1.31 2015/11/07 14:29:10 phx Exp $ */
+/*	$NetBSD: grf_cv3d.c,v 1.32 2015/11/12 12:01:53 phx Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.31 2015/11/07 14:29:10 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.32 2015/11/12 12:01:53 phx Exp $");
 
 #include "ite.h"
 #include "wsdisplay.h"
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: grf_cv3d.c,v 1.31 2015/11/07 14:29:10 phx Exp $");
  * Modified for CV64/3D from Michael Teske's CV driver by Tobias Abt 10/97.
  * Bugfixes by Bernd Ernesti 10/97.
  * Many thanks to Richard Hartmann who gave us his board so we could make
- * driver.
+ * the driver.
  *
  * TODO:
  *	- ZorroII support
@@ -73,7 +73,7 @@ BOARDBASE
         +0xc0e0000      PCI Cfg Base start
         +0xc0e0fff      PCI Cfg Base end
 
-Note: IO Regbase is needed fo wakeup of the board otherwise use
+Note: IO Regbase is needed for wakeup of the board otherwise use
       MMIO Regbase
 */
 
@@ -291,6 +291,7 @@ long cv3d_memclk = 55000000;
 #if NWSDISPLAY > 0 
 /* wsdisplay accessops, emulops */
 static int	cv3d_wsioctl(void *, void *, u_long, void *, int, struct lwp *);
+static int	cv3d_get_fbinfo(struct grf_softc *, struct wsdisplayio_fbinfo *);
 
 static void	cv3d_wscursor(void *, int, int, int);
 static void	cv3d_wsputchar(void *, int, int, u_int, long);
@@ -2340,12 +2341,94 @@ cv3d_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 
 	case WSDISPLAYIO_SVIDEO:
 		return cv3d_blank(gp, *(u_int *)data == WSDISPLAYIO_VIDEO_OFF);
+
+	case WSDISPLAYIO_SMODE:
+		if ((*(int *)data) != gp->g_wsmode) {
+			if (*(int *)data == WSDISPLAYIO_MODE_EMUL) {
+				/* load console text mode, redraw screen */
+				(void)cv3d_load_mon(gp, &cv3dconsole_mode);
+				if (vd->active != NULL)
+					vcons_redraw_screen(vd->active);
+			} else {
+				/* switch to current graphics mode */
+				if (!cv3d_load_mon(gp,
+				    (struct grfcv3dtext_mode *)monitor_current))
+					return EINVAL;
+			}
+			gp->g_wsmode = *(int *)data;
+		} 
+		return 0;
+
+	case WSDISPLAYIO_GET_FBINFO:
+		return cv3d_get_fbinfo(gp, data);
 	}
 
 	/* handle this command hw-independant in grf(4) */
 	return grf_wsioctl(v, vs, cmd, data, flag, l);
 }
 
-#endif /* NWSDISPLAY > 0 */
+/*
+ * Fill the wsdisplayio_fbinfo structure with information from the current
+ * graphics mode. Even when text mode is active.
+ */
+static int
+cv3d_get_fbinfo(struct grf_softc *gp, struct wsdisplayio_fbinfo *fbi)
+{
+	struct grfvideo_mode *md;
+	uint32_t rbits, gbits, bbits, abits;
 
-#endif  /* NGRFCV3D */
+	md = monitor_current;
+	abits = 0;
+
+	fbi->fbi_width = md->disp_width;
+	fbi->fbi_height = md->disp_height;
+	fbi->fbi_bitsperpixel = md->depth;
+
+	switch (md->depth) {
+	case 8:
+		fbi->fbi_stride = md->disp_width;
+		rbits = gbits = bbits = 6;  /* keep gcc happy */
+		break;
+	case 15:
+		fbi->fbi_stride = md->disp_width * 2;
+		rbits = gbits = bbits = 5;
+		break;
+	case 16:
+		fbi->fbi_stride = md->disp_width * 2;
+		rbits = bbits = 5;
+		gbits = 6;
+		break;
+	case 32:
+		abits = 8;
+	case 24:
+		fbi->fbi_stride = md->disp_width * 4;
+		rbits = gbits = bbits = 8;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	if (md->depth > 8) {
+		fbi->fbi_pixeltype = WSFB_RGB;
+		fbi->fbi_subtype.fbi_rgbmasks.red_offset = bbits + gbits;
+		fbi->fbi_subtype.fbi_rgbmasks.red_size = rbits;
+		fbi->fbi_subtype.fbi_rgbmasks.green_offset = bbits;
+		fbi->fbi_subtype.fbi_rgbmasks.green_size = gbits;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+		fbi->fbi_subtype.fbi_rgbmasks.blue_size = bbits;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_offset =
+		    bbits + gbits + rbits;
+		fbi->fbi_subtype.fbi_rgbmasks.alpha_size = abits;
+	} else {
+		fbi->fbi_pixeltype = WSFB_CI;
+		fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 1 << md->depth;
+	}
+
+	fbi->fbi_flags = 0;
+	fbi->fbi_fbsize = fbi->fbi_stride * fbi->fbi_height;
+	fbi->fbi_fboffset = 0;
+	return 0;
+}
+#endif	/* NWSDISPLAY > 0 */
+
+#endif	/* NGRFCV3D */
