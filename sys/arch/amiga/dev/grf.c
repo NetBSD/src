@@ -1,4 +1,4 @@
-/*	$NetBSD: grf.c,v 1.63 2015/11/07 14:29:10 phx Exp $ */
+/*	$NetBSD: grf.c,v 1.64 2015/11/12 12:01:53 phx Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.63 2015/11/07 14:29:10 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf.c,v 1.64 2015/11/12 12:01:53 phx Exp $");
 
 /*
  * Graphics display driver for the Amiga
@@ -140,7 +140,6 @@ static struct vcons_screen console_vcons;
 static void grf_init_screen(void *, struct vcons_screen *, int, long *);
 static struct rasops_info *grf_setup_rasops(struct grf_softc *,
     struct vcons_screen *);
-static paddr_t grf_wsmmap_md(off_t off);
 
 cons_decl(grf);
 #endif
@@ -369,14 +368,14 @@ grfmmap(dev_t dev, off_t off, int prot)
 	 * control registers
 	 */
 	if (off >= 0 && off < gi->gd_regsize)
-		return(((paddr_t)gi->gd_regaddr + off) >> PGSHIFT);
+		return MD_BTOP((paddr_t)gi->gd_regaddr + off);
 
 	/*
 	 * frame buffer
 	 */
 	if (off >= gi->gd_regsize && off < gi->gd_regsize+gi->gd_fbsize) {
 		off -= gi->gd_regsize;
-		return(((paddr_t)gi->gd_fbaddr + off) >> PGSHIFT);
+		return MD_BTOP((paddr_t)gi->gd_fbaddr + off);
 	}
 	/* bogus */
 	return(-1);
@@ -613,8 +612,12 @@ grf_wsmmap(void *v, void *vs, off_t off, int prot)
 
 	/* Normal fb mapping */
 	if (off < gi->gd_fbsize)
-		return grf_wsmmap_md(((bus_addr_t)gp->g_fbkva) + off);
+		return MD_BTOP(((paddr_t)gi->gd_fbaddr) + off);
 
+	/*
+	 * restrict all other mappings to processes with superuser privileges
+	 * or the kernel itself
+	 */
 	if (kauth_authorize_machdep(kauth_cred_get(), KAUTH_MACHDEP_UNMANAGEDMEM,
 	    NULL, NULL, NULL, NULL) != 0) {
 		aprint_normal("%s: permission to mmap denied.\n",
@@ -622,26 +625,16 @@ grf_wsmmap(void *v, void *vs, off_t off, int prot)
 		return -1;
 	}
 
-	if ((off >= (bus_addr_t)gp->g_fbkva ) &&
-	    (off < ( (bus_addr_t)gp->g_fbkva + (size_t)gi->gd_fbsize)))
-		return grf_wsmmap_md(off);
-
 	/* Handle register mapping */
-	if ((off >= (bus_addr_t)gi->gd_regaddr) &&
-	    (off < ((bus_addr_t)gi->gd_regaddr + (size_t)gi->gd_regsize)))
-		return grf_wsmmap_md(off);
+	if ((off >= (paddr_t)gi->gd_regaddr) &&
+	    (off < ((paddr_t)gi->gd_regaddr + (size_t)gi->gd_regsize)))
+		return MD_BTOP(off);
+
+	if ((off >= (paddr_t)gi->gd_fbaddr) &&
+	    (off < ((paddr_t)gi->gd_fbaddr + (size_t)gi->gd_fbsize)))
+		return MD_BTOP(off);
 
 	return -1;
-}
-
-static paddr_t
-grf_wsmmap_md(off_t off) 
-{
-#if defined(__m68k__)
-	return (paddr_t) m68k_btop(off);
-#else
-	return -1; /* FIXME */
-#endif
 }
 
 #endif  /* NWSDISPLAY > 0 */
