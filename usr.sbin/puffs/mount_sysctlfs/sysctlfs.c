@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctlfs.c,v 1.17 2012/11/04 22:47:21 christos Exp $	*/
+/*	$NetBSD: sysctlfs.c,v 1.18 2015/11/12 16:51:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: sysctlfs.c,v 1.17 2012/11/04 22:47:21 christos Exp $");
+__RCSID("$NetBSD: sysctlfs.c,v 1.18 2015/11/12 16:51:18 christos Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -98,8 +98,8 @@ static int sysctlfs_domount(struct puffs_usermount *);
  */
 static int
 sysctlfs_pathbuild(struct puffs_usermount *pu,
-	const struct puffs_pathobj *parent, const struct puffs_pathobj *comp,
-	size_t offset, struct puffs_pathobj *res)
+    const struct puffs_pathobj *parent, const struct puffs_pathobj *comp,
+    size_t offset, struct puffs_pathobj *res)
 {
 	SfsName *sname;
 	size_t clen;
@@ -125,8 +125,8 @@ sysctlfs_pathbuild(struct puffs_usermount *pu,
 
 static int
 sysctlfs_pathtransform(struct puffs_usermount *pu,
-	const struct puffs_pathobj *p, const struct puffs_cn *pcn,
-	struct puffs_pathobj *res)
+    const struct puffs_pathobj *p, const struct puffs_cn *pcn,
+    struct puffs_pathobj *res)
 {
 
 	res->po_path = NULL;
@@ -145,7 +145,7 @@ sysctlfs_pathtransform(struct puffs_usermount *pu,
 
 static int
 sysctlfs_pathcmp(struct puffs_usermount *pu, struct puffs_pathobj *po1,
-	struct puffs_pathobj *po2, size_t clen, int checkprefix)
+    struct puffs_pathobj *po2, size_t clen, int checkprefix)
 {
 
 	if (memcmp(po1->po_path, po2->po_path, clen * sizeof(int)) == 0)
@@ -180,46 +180,55 @@ getnode(struct puffs_usermount *pu, struct puffs_pathobj *po, int nodetype)
 	else
 		pn = puffs_pn_nodewalk(pu, puffs_path_walkcmp, po);
 
-	if (pn == NULL) {
-		/*
-		 * don't know nodetype?  query...
-		 *
-		 * XXX1: nothing really guarantees 0 is an invalid nodetype
-		 * XXX2: is there really no easier way of doing this?  we
-		 *       know the whole mib path
-		 */
-		if (!nodetype) {
-			sname = po->po_path;
-			memcpy(myname, po->po_path, po->po_len * sizeof(int));
+	if (pn == NULL) 
+		return NULL;
+	/*
+	 * don't know nodetype?  query...
+	 *
+	 * XXX1: nothing really guarantees 0 is an invalid nodetype
+	 * XXX2: is there really no easier way of doing this?  we
+	 *       know the whole mib path
+	 */
+	if (!nodetype) {
+		sname = po->po_path;
+		memcpy(myname, po->po_path, po->po_len * sizeof(myname[0]));
 
-			memset(&qnode, 0, sizeof(qnode));
-			qnode.sysctl_flags = SYSCTL_VERSION;
-			myname[po->po_len-1] = CTL_QUERY;
+		memset(&qnode, 0, sizeof(qnode));
+		qnode.sysctl_flags = SYSCTL_VERSION;
+		myname[po->po_len-1] = CTL_QUERY;
 
-			sl = sizeof(sn);
-			if (sysctl(myname, po->po_len, sn, &sl,
-			    &qnode, sizeof(qnode)) == -1)
-				abort();
-			
-			for (i = 0; i < sl / sizeof(struct sysctlnode); i++) {
-				 if (sn[i].sysctl_num==(*sname)[po->po_len-1]) {
-					nodetype = sn[i].sysctl_flags;
-					break;
-				}
+		sl = sizeof(sn);
+		if (sysctl(myname, po->po_len, sn, &sl,
+		    &qnode, sizeof(qnode)) == -1)
+			abort();
+		
+		for (i = 0; i < sl / sizeof(struct sysctlnode); i++) {
+			 if (sn[i].sysctl_num == (*sname)[po->po_len-1]) {
+				nodetype = sn[i].sysctl_flags;
+				break;
 			}
-			if (!nodetype)
-				return NULL;
 		}
-
-		sfs = emalloc(sizeof(struct sfsnode));	
-		sfs->sysctl_flags = nodetype;
-		sfs->myid = nextid++;
-
-		pn = puffs_pn_new(pu, sfs);
-		assert(pn);
+		if (!nodetype)
+			return NULL;
 	}
 
+	sfs = emalloc(sizeof(*sfs));	
+	sfs->sysctl_flags = nodetype;
+	sfs->myid = nextid++;
+
+	pn = puffs_pn_new(pu, sfs);
+	assert(pn);
+
 	return pn;
+}
+
+static void __dead
+usage(void)
+{
+
+	fprintf(stderr, "Usage: %s [-o <mntopts>] sysctlfs mountpath",
+	    getprogname());
+	exit(1);
 }
 
 int
@@ -235,8 +244,7 @@ main(int argc, char *argv[])
 	setprogname(argv[0]);
 
 	if (argc < 2)
-		errx(1, "usage: %s sysctlfs [-o mntopts] mountpath",
-		    getprogname());
+		usage();
 
 	mntflags = pflags = 0;
 	detach = 1;
@@ -245,7 +253,7 @@ main(int argc, char *argv[])
 		case 'o':
 			mp = getmntopts(optarg, puffsmopts, &mntflags, &pflags);
 			if (mp == NULL)
-				err(1, "getmntopts");
+				err(EXIT_FAILURE, "getmntopts");
 			freemntopts(mp);
 			break;
 		case 'r':
@@ -264,7 +272,7 @@ main(int argc, char *argv[])
 		detach = 0;
 
 	if (argc != 2)
-		errx(1, "usage: %s [-o mntopts] mountpath", getprogname());
+		usage();
 
 	PUFFSOP_INIT(pops);
 
@@ -284,7 +292,7 @@ main(int argc, char *argv[])
 
 	pu = puffs_init(pops, _PATH_PUFFS, "sysctlfs", NULL, pflags);
 	if (pu == NULL)
-		err(1, "puffs_init");
+		err(EXIT_FAILURE, "puffs_init");
 
 	puffs_set_pathbuild(pu, sysctlfs_pathbuild);
 	puffs_set_pathtransform(pu, sysctlfs_pathtransform);
@@ -294,24 +302,24 @@ main(int argc, char *argv[])
 	puffs_setfhsize(pu, sizeof(struct sfsfid), PUFFS_FHFLAG_NFSV3);
 
 	if (sysctlfs_domount(pu) != 0)
-		errx(1, "domount");
+		errx(EXIT_FAILURE, "domount");
 
 	if (detach)
 		if (puffs_daemon(pu, 1, 1) == -1)
-			err(1, "puffs_daemon");
+			err(EXIT_FAILURE, "puffs_daemon");
 
 #ifdef RUMP_ACTION
 	{
-	extern int puffs_fakecc;
-	puffs_fakecc = 1;
-	rump_init();
+		extern int puffs_fakecc;
+		puffs_fakecc = 1;
+		rump_init();
 	}
 #endif
 
 	if (puffs_mount(pu, argv[1], mntflags, puffs_getroot(pu)) == -1)
-		err(1, "puffs_mount");
+		err(EXIT_FAILURE, "puffs_mount");
 	if (puffs_mainloop(pu) == -1)
-		err(1, "mainloop");
+		err(EXIT_FAILURE, "mainloop");
 
 	return 0;
 }
