@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.252 2015/11/09 17:52:59 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.253 2015/11/12 02:06:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.252 2015/11/09 17:52:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.253 2015/11/12 02:06:36 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1075,7 +1075,7 @@ vndioctl_get(struct lwp *l, void *data, int unit, struct vattr *va)
 	switch (error = vnd_cget(l, unit, (int *)data, va)) {
 	case -1:
 		/* unused is not an error */
-		memset(&va, 0, sizeof(va));
+		memset(va, 0, sizeof(*va));
 		/*FALLTHROUGH*/
 	case 0:
 		return 0;
