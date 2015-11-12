@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.54 2012/10/27 17:17:28 chs Exp $ */
+/*	$NetBSD: clock.c,v 1.55 2015/11/12 12:19:49 phx Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.54 2012/10/27 17:17:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.55 2015/11/12 12:19:49 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -475,7 +475,7 @@ clockioctl(dev_t dev, u_long cmd, void *data, int flag, struct proc *p)
 void
 clockmap(dev_t dev, int off, int prot)
 {
-	return((off + (INTIOBASE+CLKBASE+CLKSR-1)) >> PGSHIFT);
+	return MD_BTOP(off + (INTIOBASE+CLKBASE+CLKSR-1));
 }
 
 int

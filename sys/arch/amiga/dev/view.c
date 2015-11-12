@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.32 2015/08/20 14:40:16 christos Exp $ */
+/*	$NetBSD: view.c,v 1.33 2015/11/12 12:19:49 phx Exp $ */
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -38,7 +38,7 @@
  * a interface to graphics. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.32 2015/08/20 14:40:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: view.c,v 1.33 2015/11/12 12:19:49 phx Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -405,7 +405,7 @@ viewmmap(dev_t dev, off_t off, int prot)
 	bmd_size = bm->bytes_per_row*bm->rows*bm->depth;
 
 	if (off >= 0 && off < bmd_size)
-		return(((paddr_t)bmd_start + off) >> PGSHIFT);
+		return MD_BTOP((paddr_t)bmd_start + off);
 
 	return(-1);
 }
