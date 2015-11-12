@@ -430,7 +430,10 @@ if (yypcb->pcb_token != 0) {
 <S0>'{RGX_CHR}$	xyerror(D_CHR_NL, "newline encountered in character constant");
 
 <S0>'{RGX_CHR}'	{
-			char *s, *p, *q;
+			char *s;
+#if BYTE_ORDER == _LITTLE_ENDIAN
+			char  *p, *q;
+#endif
 			size_t nbytes;
 
 			/*
