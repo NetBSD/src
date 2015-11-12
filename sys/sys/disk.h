@@ -1,4 +1,4 @@
-/*	$NetBSD: disk.h,v 1.65 2015/08/16 18:00:03 mlelstv Exp $	*/
+/*	$NetBSD: disk.h,v 1.66 2015/11/12 15:25:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2004 The NetBSD Foundation, Inc.
@@ -519,6 +519,8 @@ struct disk_strategy {
 
 #define	DK_BSIZE2BLKSHIFT(b)	((ffs((b) / DEV_BSIZE)) - 1)
 #define	DK_BSIZE2BYTESHIFT(b)	(ffs((b)) - 1)
+#define DK_DEV_BSIZE_OK(b) \
+    ((b) >= DEV_BSIZE && ((b) & ((b) - 1)) == 0 && (b) <= MAXPHYS)
 
 #ifdef _KERNEL
 extern	int disk_count;			/* number of disks in global disklist */
