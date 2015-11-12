@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.4 2015/11/10 22:14:05 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.5 2015/11/12 00:43:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.4 2015/11/10 22:14:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.5 2015/11/12 00:43:52 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -50,9 +50,12 @@ static const struct drm_mode_config_funcs tegra_mode_config_funcs = {
 	.fb_create = tegra_fb_create
 };
 
+static int	tegra_framebuffer_create_handle(struct drm_framebuffer *,
+		    struct drm_file *, unsigned int *);
 static void	tegra_framebuffer_destroy(struct drm_framebuffer *);
 
 static const struct drm_framebuffer_funcs tegra_framebuffer_funcs = {
+	.create_handle = tegra_framebuffer_create_handle,
 	.destroy = tegra_framebuffer_destroy
 };
 
@@ -195,11 +198,19 @@ tegra_drm_mode_init(struct drm_device *ddev)
 	return 0;
 }
 
+int
+tegra_drm_framebuffer_init(struct drm_device *ddev,
+    struct tegra_framebuffer *fb)
+{
+	return drm_framebuffer_init(ddev, &fb->base, &tegra_framebuffer_funcs);
+}
+
 static struct drm_framebuffer *
 tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
     struct drm_mode_fb_cmd2 *cmd)
 {
 	struct tegra_framebuffer *fb;
+	struct drm_gem_object *gem_obj;
 	int error;
 
 	if (cmd->flags)
@@ -209,10 +220,15 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 		return NULL;
 	}
 
-	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
-	if (fb == NULL)
+	gem_obj = drm_gem_object_lookup(ddev, file, cmd->handles[0]);
+	if (gem_obj == NULL)
 		return NULL;
 
+	fb = kmem_zalloc(sizeof(*fb), KM_SLEEP);
+	if (fb == NULL)
+		goto unref;
+
+	fb->obj = to_tegra_gem_obj(gem_obj);
 	fb->base.pitches[0] = cmd->pitches[0];
 	fb->base.offsets[0] = cmd->offsets[0];
 	fb->base.width = cmd->width;
@@ -221,7 +237,7 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 	drm_fb_get_bpp_depth(cmd->pixel_format, &fb->base.depth,
 	    &fb->base.bits_per_pixel);
 
-	error = drm_framebuffer_init(ddev, &fb->base, &tegra_framebuffer_funcs);
+	error = tegra_drm_framebuffer_init(ddev, fb);
 	if (error)
 		goto dealloc;
 
@@ -230,7 +246,19 @@ tegra_fb_create(struct drm_device *ddev, struct drm_file *file,
 	drm_framebuffer_cleanup(&fb->base);
 dealloc:
 	kmem_free(fb, sizeof(*fb));
+unref:
+	drm_gem_object_unreference_unlocked(gem_obj);
+
 	return NULL;
+}
+
+static int
+tegra_framebuffer_create_handle(struct drm_framebuffer *fb,
+    struct drm_file *file, unsigned int *handle)
+{
+	struct tegra_framebuffer *tegra_fb = to_tegra_framebuffer(fb);
+
+	return drm_gem_handle_create(file, &tegra_fb->obj->base, handle);
 }
 
 static void
@@ -239,6 +267,7 @@ tegra_framebuffer_destroy(struct drm_framebuffer *fb)
 	struct tegra_framebuffer *tegra_fb = to_tegra_framebuffer(fb);
 
 	drm_framebuffer_cleanup(fb);
+	drm_gem_object_unreference_unlocked(&tegra_fb->obj->base);
 	kmem_free(tegra_fb, sizeof(*tegra_fb));
 }
 
@@ -433,17 +462,14 @@ static int
 tegra_crtc_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
     int x, int y, int atomic)
 {
-	struct tegra_drm_softc * const sc = tegra_drm_private(crtc->dev);
 	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
-#if 0
 	struct tegra_framebuffer *tegra_fb = atomic ?
 	    to_tegra_framebuffer(fb) :
 	    to_tegra_framebuffer(crtc->primary->fb);
-#endif
 
 	/* Framebuffer start address */
 	DC_WRITE(tegra_crtc, DC_WINBUF_A_START_ADDR_REG,
-	    (uint32_t)sc->sc_dmamap->dm_segs[0].ds_addr);
+	    (uint32_t)tegra_fb->obj->dmamap->dm_segs[0].ds_addr);
 
 	/* Offsets */
 	DC_WRITE(tegra_crtc, DC_WINBUF_A_ADDR_H_OFFSET_REG, x);
