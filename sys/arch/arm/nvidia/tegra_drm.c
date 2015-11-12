@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.2 2015/11/10 22:14:05 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.3 2015/11/12 00:43:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.2 2015/11/10 22:14:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.3 2015/11/12 00:43:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,27 +57,30 @@ static int	tegra_drm_set_busid(struct drm_device *, struct drm_master *);
 static int	tegra_drm_load(struct drm_device *, unsigned long);
 static int	tegra_drm_unload(struct drm_device *);
 
-static int	tegra_drm_mmap_object(struct drm_device *, off_t, size_t,
-		    vm_prot_t, struct uvm_object **, voff_t *, struct file *);
-
 static int	tegra_drm_dumb_create(struct drm_file *, struct drm_device *,
 		    struct drm_mode_create_dumb *);
 static int	tegra_drm_dumb_map_offset(struct drm_file *,
 		    struct drm_device *, uint32_t, uint64_t *);
-static int	tegra_drm_dumb_destroy(struct drm_file *, struct drm_device *,
-		    uint32_t);
+
+static const struct uvm_pagerops tegra_drm_gem_uvm_ops = {
+	.pgo_reference = drm_gem_pager_reference,
+	.pgo_detach = drm_gem_pager_detach,
+	.pgo_fault = tegra_drm_gem_fault,
+};
 
 static struct drm_driver tegra_drm_driver = {
-	.driver_features = DRIVER_MODESET,
+	.driver_features = DRIVER_MODESET | DRIVER_GEM,
 	.dev_priv_size = 0,
 	.load = tegra_drm_load,
 	.unload = tegra_drm_unload,
 
-	.mmap_object = tegra_drm_mmap_object,
+	.gem_free_object = tegra_drm_gem_free_object,
+	.mmap_object = drm_gem_or_legacy_mmap_object,
+	.gem_uvm_ops = &tegra_drm_gem_uvm_ops,
 
 	.dumb_create = tegra_drm_dumb_create,
 	.dumb_map_offset = tegra_drm_dumb_map_offset,
-	.dumb_destroy = tegra_drm_dumb_destroy,
+	.dumb_destroy = drm_gem_dumb_destroy,
 
 	.get_vblank_counter = tegra_drm_get_vblank_counter,
 	.enable_vblank = tegra_drm_enable_vblank,
@@ -114,7 +117,7 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t prop = device_properties(self);
 	struct drm_driver * const driver = &tegra_drm_driver;
 	const char *pin, *dev;
-	int error, nsegs;
+	int error;
 
 	sc->sc_dev = self;
 	sc->sc_dmat = tio->tio_dmat;
@@ -145,24 +148,6 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-        sc->sc_dmasize = 4096 * 2160 * 4;
-        error = bus_dmamem_alloc(sc->sc_dmat, sc->sc_dmasize, PAGE_SIZE, 0,
-            sc->sc_dmasegs, 1, &nsegs, BUS_DMA_WAITOK);
-        if (error)
-                goto failed;
-        error = bus_dmamem_map(sc->sc_dmat, sc->sc_dmasegs, nsegs,
-	    sc->sc_dmasize, &sc->sc_dmap, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
-        if (error)
-                goto free;
-        error = bus_dmamap_create(sc->sc_dmat, sc->sc_dmasize, 1,
-	    sc->sc_dmasize, 0, BUS_DMA_WAITOK, &sc->sc_dmamap);
-        if (error)
-                goto unmap;
-        error = bus_dmamap_load(sc->sc_dmat, sc->sc_dmamap, sc->sc_dmap,
-	    sc->sc_dmasize, NULL, BUS_DMA_WAITOK);
-        if (error)
-                goto destroy;
-
 	driver->bus = &tegra_drm_bus;
 
 	sc->sc_ddev = drm_dev_alloc(driver, sc->sc_dev);
@@ -185,16 +170,6 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	    driver->date, sc->sc_ddev->primary->index);
 
 	return;
-
-destroy:
-        bus_dmamap_destroy(sc->sc_dmat, sc->sc_dmamap);
-unmap:
-        bus_dmamem_unmap(sc->sc_dmat, sc->sc_dmap, sc->sc_dmasize);
-free:
-        bus_dmamem_free(sc->sc_dmat, sc->sc_dmasegs, nsegs);
-failed:
-
-	aprint_error_dev(sc->sc_dev, "bus_dma setup failed\n");
 }
 
 static const char *
@@ -256,34 +231,30 @@ tegra_drm_unload(struct drm_device *ddev)
 }
 
 static int
-tegra_drm_mmap_object(struct drm_device *ddev, off_t offset, size_t size,
-    vm_prot_t prot, struct uvm_object **uobjp, voff_t *uoffsetp,
-    struct file *file)
-{
-	/* XXX */
-	extern const struct cdevsw wsdisplay_cdevsw;
-	devmajor_t maj = cdevsw_lookup_major(&wsdisplay_cdevsw);
-	dev_t devno = makedev(maj, 0);
-	struct uvm_object *uobj;
-
-	KASSERT(offset == (offset & ~(PAGE_SIZE-1)));
-
-	uobj = udv_attach(devno, prot, offset, size);
-	if (uobj == NULL)
-		return -EINVAL;
-
-	*uobjp = uobj;
-	*uoffsetp = offset;
-	return 0;
-}
-
-static int
 tegra_drm_dumb_create(struct drm_file *file_priv, struct drm_device *ddev,
     struct drm_mode_create_dumb *args)
 {
+	struct tegra_gem_object *obj;
+	uint32_t handle;
+	int error;
+
 	args->pitch = args->width * ((args->bpp + 7) / 8);
 	args->size = args->pitch * args->height;
+	args->size = roundup(args->size, PAGE_SIZE);
 	args->handle = 0;
+
+	obj = tegra_drm_obj_alloc(ddev, args->size);
+	if (obj == NULL)
+		return -ENOMEM;
+
+	error = drm_gem_handle_create(file_priv, &obj->base, &handle);
+	drm_gem_object_unreference_unlocked(&obj->base);
+	if (error) {
+		tegra_drm_obj_free(obj);
+		return error;
+	}
+
+	args->handle = handle;
 
 	return 0;
 }
@@ -292,13 +263,26 @@ static int
 tegra_drm_dumb_map_offset(struct drm_file *file_priv,
     struct drm_device *ddev, uint32_t handle, uint64_t *offset)
 {
-	*offset = 0;
-	return 0;
-}
+	struct drm_gem_object *gem_obj;
+	struct tegra_gem_object *obj;
+	int error;
 
-static int
-tegra_drm_dumb_destroy(struct drm_file *file_priv, struct drm_device *ddev,
-    uint32_t handle)
-{
-	return 0;
+	gem_obj = drm_gem_object_lookup(ddev, file_priv, handle);
+	if (gem_obj == NULL)
+		return -ENOENT;
+
+	obj = to_tegra_gem_obj(gem_obj);
+
+	if (drm_vma_node_has_offset(&obj->base.vma_node) == 0) {
+		error = drm_gem_create_mmap_offset(&obj->base);
+		if (error)
+			goto done;
+	}
+
+	*offset = drm_vma_node_offset_addr(&obj->base.vma_node);
+
+done:
+	drm_gem_object_unreference_unlocked(&obj->base);
+
+	return error;
 }

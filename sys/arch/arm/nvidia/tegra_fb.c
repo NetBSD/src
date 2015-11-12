@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fb.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $ */
+/* $NetBSD: tegra_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,7 @@ struct tegra_fb_softc {
 	device_t		sc_dev;
 	struct tegra_drm_softc	*sc_drm;
 	struct tegra_drmfb_attach_args sc_tfa;
+	struct tegra_framebuffer *sc_fb;
 };
 
 static paddr_t	tegra_fb_mmapfb(struct drmfb_softc *, off_t, int);
@@ -83,6 +84,7 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_drm = drmsc;
 	sc->sc_tfa = *tfa;
+	sc->sc_fb = to_tegra_framebuffer(tfa->tfa_fb_helper->fb);
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -90,7 +92,7 @@ tegra_fb_attach(device_t parent, device_t self, void *aux)
 	da.da_dev = self;
 	da.da_fb_helper = tfa->tfa_fb_helper;
 	da.da_fb_sizes = &tfa->tfa_fb_sizes;
-	da.da_fb_vaddr = drmsc->sc_dmap;
+	da.da_fb_vaddr = sc->sc_fb->obj->dmap;
 	da.da_params = &tegrafb_drmfb_params;
 
 	error = drmfb_attach(&sc->sc_drmfb, &da);
@@ -114,12 +116,13 @@ static paddr_t
 tegra_fb_mmapfb(struct drmfb_softc *sc, off_t off, int prot)
 {
 	struct tegra_fb_softc * const tfb_sc = (struct tegra_fb_softc *)sc;
+	struct tegra_gem_object *obj = tfb_sc->sc_fb->obj;
 
 	KASSERT(off >= 0);
-	KASSERT(off < tfb_sc->sc_drm->sc_dmasize);
+	KASSERT(off < obj->dmasize);
 
-	return bus_dmamem_mmap(tfb_sc->sc_drm->sc_dmat,
-	    tfb_sc->sc_drm->sc_dmasegs, 1, off, prot, BUS_DMA_PREFETCHABLE);
+	return bus_dmamem_mmap(obj->dmat, obj->dmasegs, 1, off, prot,
+	    BUS_DMA_PREFETCHABLE);
 }
 
 static int

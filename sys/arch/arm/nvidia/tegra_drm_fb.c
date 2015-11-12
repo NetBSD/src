@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_fb.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.1 2015/11/09 23:05:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -35,6 +35,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.1 2015/11/09 23:05:58 jmcneill Ex
 #include <drm/drm_crtc_helper.h>
 
 #include <arm/nvidia/tegra_drm.h>
+
+static int	tegra_fb_init(struct drm_device *, struct drm_framebuffer *,
+		    struct drm_fb_helper_surface_size *);
 
 static int	tegra_fb_probe(struct drm_fb_helper *,
 		    struct drm_fb_helper_surface_size *);
@@ -47,8 +50,6 @@ int
 tegra_drm_fb_init(struct drm_device *ddev)
 {
 	struct tegra_fbdev *fbdev;
-	struct drm_framebuffer *fb;
-	struct drm_mode_fb_cmd2 cmd;
 	int error;
 
 	fbdev = kmem_zalloc(sizeof(*fbdev), KM_SLEEP);
@@ -62,18 +63,22 @@ tegra_drm_fb_init(struct drm_device *ddev)
 		return error;
 	}
 
-	memset(&cmd, 0, sizeof(cmd));
-	cmd.width = 4096;
-	cmd.height = 2160;
-	cmd.pixel_format = DRM_FORMAT_ARGB8888;
-	cmd.pitches[0] = cmd.width * (32 / 8);
-
-	fb = ddev->mode_config.funcs->fb_create(ddev, NULL, &cmd);
-	if (fb == NULL) {
-		DRM_ERROR("couldn't create framebuffer\n");
-		return -EIO;
+	/*
+	 * This might seem silly, but it saves us from having to allocate
+	 * enough memory for the largest possible framebuffer (around 35MB).
+	 *
+	 * Allocate the fb_helper's framebuffer here but don't initialize
+	 * it yet. The fb helper won't configure a CRTC unless this field is
+	 * set, and we don't know the preferred size at this time.
+	 *
+	 * The fb_probe callback will eventually be called with the preferred
+	 * surface size, so defer allocating the buffer object until then.
+	 */
+	fbdev->helper.fb =
+	    kmem_zalloc(sizeof(struct tegra_framebuffer), KM_SLEEP);
+	if (fbdev->helper.fb == NULL) {
+		DRM_ERROR("failed to create framebuffer\n");
 	}
-	fbdev->helper.fb = fb;
 
 	drm_fb_helper_single_add_all_connectors(&fbdev->helper);
 
@@ -92,6 +97,11 @@ tegra_fb_probe(struct drm_fb_helper *helper,
 	struct drm_device *ddev = helper->dev;
 	struct tegra_drmfb_attach_args tfa;
 
+	if (tegra_fb_init(ddev, helper->fb, sizes) != 0) {
+		DRM_ERROR("failed to initialize framebuffer\n");
+		return -ENOMEM;
+	}
+
 	memset(&tfa, 0, sizeof(tfa));
 	tfa.tfa_drm_dev = ddev;
 	tfa.tfa_fb_helper = helper;
@@ -104,6 +114,33 @@ tegra_fb_probe(struct drm_fb_helper *helper,
 		DRM_ERROR("unable to attach tegrafb\n");
 		return -ENXIO;
 	}
+
+	return 0;
+}
+
+static int
+tegra_fb_init(struct drm_device *ddev, struct drm_framebuffer *fb,
+    struct drm_fb_helper_surface_size *sizes)
+{
+	struct tegra_framebuffer *tegra_fb = to_tegra_framebuffer(fb);
+	const u_int width = sizes->surface_width;
+	const u_int height = sizes->surface_height;
+	const u_int pitch = width * (32 / 8);
+
+	const size_t size = roundup(height * pitch, PAGE_SIZE);
+
+	tegra_fb->obj = tegra_drm_obj_alloc(ddev, size);
+	if (tegra_fb->obj == NULL)
+		return -ENOMEM;
+
+        fb->pitches[0] = pitch;
+        fb->offsets[0] = 0;
+        fb->width = width;
+        fb->height = height;
+        fb->pixel_format = DRM_FORMAT_ARGB8888;
+        drm_fb_get_bpp_depth(fb->pixel_format, &fb->depth,
+            &fb->bits_per_pixel);
+	tegra_drm_framebuffer_init(ddev, tegra_fb);
 
 	return 0;
 }
