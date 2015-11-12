@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2112 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2113 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -215,3 +215,8 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 		created. Provide support for a poll based svc_run() and the
 		global variables svc_pollfd and svc_pollfd_max.
 		[christos 20151107]
+	amiga: wsdisplay(4) virtual terminals are working on CV64 and
+		CV64/3D. [phx 20151112]
+	amiga: Build the Xorg server with wsfb(4) driver.
+		Added wsfb(4) support for CV64 and CV64/3D graphics cards.
+		[phx 20151112]
