@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.253 2015/11/12 02:06:36 christos Exp $	*/
+/*	$NetBSD: vnd.c,v 1.254 2015/11/12 15:28:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.253 2015/11/12 02:06:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.254 2015/11/12 15:28:07 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -1262,8 +1262,7 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			/* note last offset is the file byte size */
 			vnd->sc_comp_numoffs = ntohl(ch->num_blocks)+1;
 			free(ch, M_TEMP);
-			if (vnd->sc_comp_blksz == 0 ||
-			    vnd->sc_comp_blksz % DEV_BSIZE !=0) {
+			if (!DK_DEV_BSIZE_OK(vnd->sc_comp_blksz)) {
 				VOP_UNLOCK(nd.ni_vp);
 				error = EINVAL;
 				goto close_and_exit;
@@ -1358,14 +1357,11 @@ vndioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 
 			/*
 			 * Sanity-check the sector size.
-			 * XXX Don't allow secsize < DEV_BSIZE.	 Should
-			 * XXX we?
 			 */
-			if (vnd->sc_geom.vng_secsize < DEV_BSIZE ||
-			    (vnd->sc_geom.vng_secsize % DEV_BSIZE) != 0 ||
+			if (!DK_DEV_BSIZE_OK(vnd->sc_geom.vng_secsize) ||
 			    vnd->sc_geom.vng_ncylinders == 0 ||
-			    (vnd->sc_geom.vng_ntracks *
-			     vnd->sc_geom.vng_nsectors) == 0) {
+			    vnd->sc_geom.vng_ntracks == 0 ||
+			    vnd->sc_geom.vng_nsectors == 0) {
 				error = EINVAL;
 				goto close_and_exit;
 			}
