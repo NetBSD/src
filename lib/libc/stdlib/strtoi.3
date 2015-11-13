@@ -1,4 +1,4 @@
-.\"	$NetBSD: strtoi.3,v 1.5 2015/11/13 09:50:31 wiz Exp $
+.\"	$NetBSD: strtoi.3,v 1.6 2015/11/13 16:00:32 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
 .\" Created by Kamil Rytarowski, based on ID:
 .\" NetBSD: strtol.3,v 1.31 2015/03/11 09:57:35 wiz Exp
 .\"
-.Dd November 12, 2015
+.Dd November 13, 2015
 .Dt STRTOI 3
 .Os
 .Sh NAME
@@ -102,15 +102,15 @@ or
 .Ql 0X
 prefix,
 and the number will be read in base 16; otherwise,
-if the
-.Fa base
-is zero or 2,
-the string may then include a
-.Ql 0b
-or
-.Ql 0B
-prefix,
-and the number will be read in base 2; otherwise,
+.\" if the
+.\" .Fa base
+.\" is zero or 2,
+.\" the string may then include a
+.\" .Ql 0b
+.\" or
+.\" .Ql 0B
+.\" prefix,
+.\" and the number will be read in base 2; otherwise,
 a zero
 .Fa base
 is taken as 10 (decimal) unless the next character is
