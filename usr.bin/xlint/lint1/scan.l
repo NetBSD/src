@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: scan.l,v 1.63 2015/11/13 16:04:58 christos Exp $ */
+/* $NetBSD: scan.l,v 1.64 2015/11/13 19:13:50 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: scan.l,v 1.63 2015/11/13 16:04:58 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.64 2015/11/13 19:13:50 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -522,7 +522,7 @@ icon(int base)
 {
 	int	l_suffix, u_suffix;
 	int	len;
-	const	char *cp, *sp;
+	const	char *cp;
 	char	c, *eptr;
 	tspec_t	typ;
 	uint64_t uq = 0;
@@ -569,14 +569,7 @@ icon(int base)
 
 	errno = 0;
 
-	if (cp[0] == '0' && (cp[1] == 'b' || cp[1] == 'B')) {
-		sp = cp + 2;
-		base = 2;
-	} else {
-		sp = cp;
-	}
-
-	uq = strtouq(sp, &eptr, base);
+	uq = strtouq(cp, &eptr, base);
 	if (eptr != cp + len)
 		LERROR("icon()");
 	if (errno != 0)
