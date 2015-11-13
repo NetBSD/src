@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.37 2015/11/13 10:43:32 tron Exp $	*/
+/*	$NetBSD: svc.c,v 1.38 2015/11/13 11:43:26 tron Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.37 2015/11/13 10:43:32 tron Exp $");
+__RCSID("$NetBSD: svc.c,v 1.38 2015/11/13 11:43:26 tron Exp $");
 #endif
 #endif
 
@@ -155,7 +155,7 @@ xprt_alloc(int sock)
 	memset(&newxports[__svc_maxxports], 0,
 	    (maxset - __svc_maxxports) * sizeof(SVCXPRT *));
 
-	__svc_xports = (void *)newxports;
+	__svc_xports = newxports;
 	__svc_xports++;
 	__svc_maxxports = maxset;
 
