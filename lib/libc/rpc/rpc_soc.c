@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_soc.c,v 1.21 2015/11/10 20:56:20 christos Exp $	*/
+/*	$NetBSD: rpc_soc.c,v 1.22 2015/11/13 11:23:08 tron Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -45,7 +45,7 @@
 #if 0
 static char sccsid[] = "@(#)rpc_soc.c 1.41 89/05/02 Copyr 1988 Sun Micro";
 #else
-__RCSID("$NetBSD: rpc_soc.c,v 1.21 2015/11/10 20:56:20 christos Exp $");
+__RCSID("$NetBSD: rpc_soc.c,v 1.22 2015/11/13 11:23:08 tron Exp $");
 #endif
 #endif
 
@@ -255,8 +255,13 @@ svc_com_create(int fd, u_int sendsize, u_int recvsize, const char *netid)
 	memset(&sccsin, 0, sizeof sccsin);
 	sccsin.sin_family = AF_INET;
 	(void)bindresvport(fd, &sccsin);
-	if (listen(fd, SOMAXCONN) == -1)
-		goto out;
+	if (strcmp(netid, "udp") != 0 && listen(fd, SOMAXCONN) == -1) {
+		(void) syslog(LOG_ERR,
+		   "svc%s_create: listen(2) failed: %s",
+		   netid, strerror(errno));
+		(void) freenetconfigent(nconf);
+ 		goto out;
+	}
 	svc = svc_tli_create(fd, nconf, NULL, sendsize, recvsize);
 	(void) freenetconfigent(nconf);
 	if (svc == NULL)
