@@ -1,4 +1,4 @@
-/*	$NetBSD: svc.c,v 1.36 2015/11/07 17:34:33 christos Exp $	*/
+/*	$NetBSD: svc.c,v 1.37 2015/11/13 10:43:32 tron Exp $	*/
 
 /*
  * Copyright (c) 2010, Oracle America, Inc.
@@ -37,7 +37,7 @@
 static char *sccsid = "@(#)svc.c 1.44 88/02/08 Copyr 1984 Sun Micro";
 static char *sccsid = "@(#)svc.c	2.4 88/08/11 4.0 RPCSRC";
 #else
-__RCSID("$NetBSD: svc.c,v 1.36 2015/11/07 17:34:33 christos Exp $");
+__RCSID("$NetBSD: svc.c,v 1.37 2015/11/13 10:43:32 tron Exp $");
 #endif
 #endif
 
@@ -131,7 +131,7 @@ static bool_t
 xprt_alloc(int sock)
 {
 	int maxset;
-	char *newxports;
+	SVCXPRT **oldxports, **newxports;
 
 	if (++sock < 0)
 		return FALSE;
@@ -143,15 +143,16 @@ xprt_alloc(int sock)
 	if (__svc_xports != NULL && maxset <= __svc_maxxports)
 		return TRUE;
 
-	if (__svc_xports != NULL)
-		--__svc_xports;
-	newxports = realloc(__svc_xports, maxset * sizeof(SVCXPRT *));
+	oldxports = __svc_xports;
+	if (oldxports != NULL)
+		--oldxports;
+	newxports = realloc(oldxports, maxset * sizeof(SVCXPRT *));
 	if (newxports == NULL) {
 		warn("%s: out of memory", __func__);
 		return FALSE;
 	}
 
-	memset(newxports + __svc_maxxports * sizeof(SVCXPRT *), 0,
+	memset(&newxports[__svc_maxxports], 0,
 	    (maxset - __svc_maxxports) * sizeof(SVCXPRT *));
 
 	__svc_xports = (void *)newxports;
