@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.141 2015/11/12 12:17:59 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.142 2015/11/13 03:56:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.141 2015/11/12 12:17:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.142 2015/11/13 03:56:44 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1320,7 +1320,7 @@ pci_conf_print_ht_cap(const pcireg_t *regs, int capoff)
 	}
 	printf("(%s)\n", ht_captab[off].name);
 	if (ht_captab[off].printfunc != NULL)
-		ht_captab[off].printfunc(regs, off);
+		ht_captab[off].printfunc(regs, capoff);
 }
 
 static void
