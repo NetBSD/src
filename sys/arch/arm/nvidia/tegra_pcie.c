@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.4 2015/10/15 09:06:04 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.5 2015/11/13 18:23:17 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.4 2015/10/15 09:06:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.5 2015/11/13 18:23:17 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -384,7 +384,7 @@ tegra_pcie_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 	*ih = pa->pa_intrpin;
 	return 0;
 }
-				    
+
 static const char *
 tegra_pcie_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
