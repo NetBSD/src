@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.5 2015/11/13 18:23:17 jakllsch Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.6 2015/11/13 18:52:16 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.5 2015/11/13 18:23:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.6 2015/11/13 18:52:16 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -329,6 +329,8 @@ tegra_pcie_conf_read(void *v, pcitag_t tag, int offset)
 	tegra_pcie_decompose_tag(v, tag, &b, &d, &f);
 
 	if (b == 0) {
+		if (d >= 2 || f != 0)
+			return (pcireg_t) -1;
 		reg = d * 0x1000 + offset;
 		bsh = sc->sc_bsh_a1;
 	} else {
@@ -353,6 +355,8 @@ tegra_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	tegra_pcie_decompose_tag(v, tag, &b, &d, &f);
 
 	if (b == 0) {
+		if (d >= 2 || f != 0)
+			return;
 		reg = d * 0x1000 + offset;
 		bsh = sc->sc_bsh_a1;
 	} else {
