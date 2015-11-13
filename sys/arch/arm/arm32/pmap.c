@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.328 2015/11/11 17:54:17 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.329 2015/11/13 07:55:18 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.328 2015/11/11 17:54:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.329 2015/11/13 07:55:18 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5009,7 +5009,11 @@ pmap_update(pmap_t pm)
 
 	if (pm->pm_remove_all) {
 #ifdef ARM_MMU_EXTENDED
-		KASSERTMSG(curcpu()->ci_pmap_cur != pm || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur, "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm, pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name, curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
+		KASSERTMSG(curcpu()->ci_pmap_cur != pm
+		    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
+		    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
+		    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
+		    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
 		/*
 		 * Finish up the pmap_remove_all() optimisation by flushing
 		 * all our ASIDs.
@@ -5038,7 +5042,12 @@ pmap_update(pmap_t pm)
 		PMAP_COUNT(shootdown_ipis);
 	}
 #endif
-	KASSERTMSG(curcpu()->ci_pmap_cur != pm || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur, "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm, pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name, curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
+
+	KASSERTMSG(curcpu()->ci_pmap_cur != pm
+	    || pm->pm_pai[0].pai_asid == curcpu()->ci_pmap_asid_cur,
+	    "pmap/asid %p/%#x != %s cur pmap/asid %p/%#x", pm,
+	    pm->pm_pai[0].pai_asid, curcpu()->ci_data.cpu_name,
+	    curcpu()->ci_pmap_cur, curcpu()->ci_pmap_asid_cur);
 #else
 	if (pmap_is_current(pm)) {
 		/*
