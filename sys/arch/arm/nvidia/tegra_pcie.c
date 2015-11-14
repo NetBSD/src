@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.7 2015/11/13 18:58:17 jakllsch Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.8 2015/11/14 01:31:08 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.7 2015/11/13 18:58:17 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.8 2015/11/14 01:31:08 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -381,7 +381,9 @@ static void
 tegra_pcie_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz,
     int *ilinep)
 {
-	*ilinep = 5;
+	const struct tegra_pcie_softc * const sc = v;
+
+	*ilinep = sc->sc_intr & PCI_INTERRUPT_LINE_MASK;
 }
 
 static int
