@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.29 2015/11/14 23:17:39 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.30 2015/11/14 23:32:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.29 2015/11/14 23:17:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.30 2015/11/14 23:32:31 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -488,8 +488,7 @@ tegra_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "power-gpio", "EE2");
 	}
 
-	if (device_is_a(self, "ehci")
-	    && device_is_a(device_parent(self), "tegraio")) {
+	if (device_is_a(self, "tegrausbphy")) {
 		struct tegraio_attach_args * const tio = aux;
 		const struct tegra_locators * const loc = &tio->tio_loc;
 
@@ -520,8 +519,7 @@ tegra_device_register(device_t self, void *aux)
 		}
 	}
 
-	if (device_is_a(self, "ehci")
-	    && device_is_a(device_parent(self), "tegraio")) {
+	if (device_is_a(self, "tegrausbphy")) {
 		struct tegraio_attach_args * const tio = aux;
 		const struct tegra_locators * const loc = &tio->tio_loc;
 
