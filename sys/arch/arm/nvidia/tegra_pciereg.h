@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pciereg.h,v 1.2 2015/10/15 09:06:04 jmcneill Exp $ */
+/* $NetBSD: tegra_pciereg.h,v 1.3 2015/11/14 01:38:58 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,6 +30,20 @@
 #define _ARM_TEGRA_PCIEREG_H
 
 /* AFI */
+#define AFI_AXI_NBAR		9
+
+#define AFI_AXI_BARi_SZ(i)	((i) < 6 ? \
+    0x000 + ((i) - 0) * 0x04 : \
+    0x134 + ((i) - 6) * 0x04)
+
+#define AFI_AXI_BARi_START(i)	((i) < 6 ? \
+    0x018 + ((i) - 0) * 0x04 : \
+    0x140 + ((i) - 6) * 0x04)
+
+#define AFI_FPCI_BARi(i)	((i) < 6 ? \
+    0x030 + ((i) - 0) * 0x04 : \
+    0x14c + ((i) - 6) * 0x04)
+
 #define AFI_MSI_BAR_SZ_REG	0x60
 #define AFI_MSI_FPCI_BAR_ST_REG	0x64
 #define AFI_MSI_AXI_BAR_ST_REG	0x68
