@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.3 2015/11/12 00:43:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.4 2015/11/14 11:55:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -43,6 +43,8 @@
 
 struct tegra_framebuffer;
 
+struct tegra_gem_object;
+
 struct tegra_drm_softc {
 	device_t		sc_dev;
 	struct drm_device	*sc_ddev;
@@ -76,6 +78,11 @@ struct tegra_crtc {
 	int			intr;
 	int			index;
 	void			*ih;
+	bool			enabled;
+
+	struct tegra_gem_object	*cursor_obj;
+	int			cursor_x;
+	int			cursor_y;
 };
 
 struct tegra_encoder {
