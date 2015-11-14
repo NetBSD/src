@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.78 2015/08/30 01:46:02 uebayasi Exp $	*/
+/*	$NetBSD: locore.S,v 1.79 2015/11/14 14:01:23 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -355,9 +355,8 @@ tmpstk:
 
 /*
  * Some hackage to deal with 64bit symbols in 32 bit mode.
- * This may not be needed it things are cleaned up a little.
+ * This may not be needed if things are cleaned up a little.
  */
-
 
 	.text
 	.globl	_C_LABEL(kernel_text)
@@ -782,7 +781,7 @@ longmode_hi:
 	/*
 	 * Xen info:
 	 * - %rsi -> start_info struct
-	 * - %rsp -> stack, *theorically* the last used page
+	 * - %rsp -> stack, *theoretically* the last used page
 	 *	by Xen bootstrap
 	 */
 	movq	%rsi, %rbx
@@ -811,7 +810,7 @@ longmode_hi:
 	 * - console
 	 * - Xen bootstrap page tables
 	 * - kernel stack. provided by Xen
-	 * - guaranted 512kB padding
+	 * - guaranteed 512kB padding
 	 *
 	 * As we want to rebuild our page tables and place our stack
 	 * in proc0 struct, all data starting from after console can be
