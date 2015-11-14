@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.11 2015/09/01 06:16:59 dholland Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.12 2015/11/14 22:03:54 pgoyette Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.89 2013/01/22 09:39:18 dholland Exp  */
 
 /*
@@ -38,12 +38,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.11 2015/09/01 06:16:59 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.12 2015/11/14 22:03:54 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
 #include "opt_quota.h"
-#include "opt_wapbl.h"
 #endif
 
 #include <sys/param.h>
@@ -54,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.11 2015/09/01 06:16:59 dholland Exp
 #include <sys/kernel.h>
 #include <sys/namei.h>
 #include <sys/kauth.h>
-#include <sys/wapbl.h>
 #include <sys/fstrans.h>
 #include <sys/kmem.h>
 
