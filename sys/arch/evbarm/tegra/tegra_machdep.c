@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.27 2015/11/14 13:28:53 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.28 2015/11/14 23:04:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.27 2015/11/14 13:28:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.28 2015/11/14 23:04:30 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -547,11 +547,11 @@ tegra_powerdown(void)
 #if NAS3722PMIC > 0
 	device_t pmic = device_find_by_driver_unit("as3722pmic", 0);
 	if (pmic != NULL) {
+		delay(1000000);
 		if (as3722_poweroff(pmic) != 0) {
 			printf("WARNING: AS3722 poweroff failed\n");
 			return;
 		}
-		delay(1000000);
 	}
 #endif
 }
