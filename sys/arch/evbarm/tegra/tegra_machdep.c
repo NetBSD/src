@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.26 2015/11/11 12:37:52 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.27 2015/11/14 13:28:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.26 2015/11/11 12:37:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.27 2015/11/14 13:28:53 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -431,8 +431,14 @@ tegra_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "tegradrm")) {
+		const char *video = tegra_bootconf_strdup("video");
+
 		if (tegra_bootconf_match("hdmi.forcemode", "dvi")) {
 			prop_dictionary_set_bool(dict, "force-dvi", true);
+		}
+
+		if (video) {
+			prop_dictionary_set_cstring(dict, "HDMI-A-1", video);
 		}
 	}
 
