@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.8 2015/11/14 01:31:08 jakllsch Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.9 2015/11/14 02:10:10 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.8 2015/11/14 01:31:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.9 2015/11/14 02:10:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,8 +67,8 @@ struct tegra_pcie_softc {
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh_afi;
-	bus_space_handle_t	sc_bsh_a1;
-	bus_space_handle_t	sc_bsh_a2;
+	bus_space_handle_t	sc_bsh_rpconf;
+	bus_space_handle_t	sc_bsh_conf;
 	int			sc_intr;
 
 	struct arm32_pci_chipset sc_pc;
@@ -134,12 +134,12 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_AFI_BASE, TEGRA_PCIE_AFI_SIZE,
 	    0, &sc->sc_bsh_afi) != 0)
 		panic("couldn't map PCIE AFI");
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_A1_BASE, TEGRA_PCIE_A1_SIZE,
-	    0, &sc->sc_bsh_a1) != 0)
-		panic("couldn't map PCIE A1");
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_A2_BASE, TEGRA_PCIE_A2_SIZE,
-	    0, &sc->sc_bsh_a2) != 0)
-		panic("couldn't map PCIE A2");
+	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_RPCONF_BASE,
+	    TEGRA_PCIE_RPCONF_SIZE, 0, &sc->sc_bsh_rpconf) != 0)
+		panic("couldn't map PCIE root ports");
+	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_CONF_BASE,
+	    TEGRA_PCIE_CONF_SIZE, 0, &sc->sc_bsh_conf) != 0)
+		panic("couldn't map PCIE configuration");
 
 	TAILQ_INIT(&sc->sc_intrs);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
@@ -332,12 +332,12 @@ tegra_pcie_conf_read(void *v, pcitag_t tag, int offset)
 		if (d >= 2 || f != 0)
 			return (pcireg_t) -1;
 		reg = d * 0x1000 + offset;
-		bsh = sc->sc_bsh_a1;
+		bsh = sc->sc_bsh_rpconf;
 	} else {
 		if ((unsigned int)offset >= PCI_CONF_SIZE)
 			return (pcireg_t) -1;
 		reg = tag | offset;
-		bsh = sc->sc_bsh_a2;
+		bsh = sc->sc_bsh_conf;
 	}
 
 	return bus_space_read_4(sc->sc_bst, bsh, reg);
@@ -360,12 +360,12 @@ tegra_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 		if (d >= 2 || f != 0)
 			return;
 		reg = d * 0x1000 + offset;
-		bsh = sc->sc_bsh_a1;
+		bsh = sc->sc_bsh_rpconf;
 	} else {
 		if ((unsigned int)offset >= PCI_CONF_SIZE)
 			return;
 		reg = tag | offset;
-		bsh = sc->sc_bsh_a2;
+		bsh = sc->sc_bsh_conf;
 	}
 
 	bus_space_write_4(sc->sc_bst, bsh, reg, val);
