@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.65 2015/11/14 10:35:38 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.66 2015/11/14 10:37:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.65 2015/11/14 10:35:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.66 2015/11/14 10:37:09 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3689,8 +3689,7 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 		/* Start toggle at 1. */
 		int toggle = 1;
 		next = exfer->ex_data;
-		KASSERTMSG(next != NULL, "Failed memory allocation, "
-		    "data %p", next);
+		KASSERTMSG(next != NULL, "Failed memory allocation");
 		ehci_reset_sqtd_chain(sc, xfer, len, isread, &toggle,
 		    next, &end);
 		end->nextqtd = status;
