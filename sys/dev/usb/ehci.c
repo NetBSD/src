@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.66 2015/11/14 10:37:09 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.67 2015/11/14 10:44:57 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.66 2015/11/14 10:37:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.67 2015/11/14 10:44:57 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3723,8 +3723,8 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	mutex_enter(&sc->sc_lock);
 
-	/* Insert qTD in QH list. */
-	ehci_set_qh_qtd(sqh, setup); /* also does usb_syncmem(sqh) */
+	/* Insert qTD in QH list - also does usb_syncmem(sqh) */
+	ehci_set_qh_qtd(sqh, setup);
 	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    ehci_timeout, xfer);
@@ -3928,7 +3928,9 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart); /* also does usb_syncmem(sqh) */
+
+	/* also does usb_syncmem(sqh) */
+	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
 	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    ehci_timeout, xfer);
@@ -4151,7 +4153,9 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 
 	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
 	    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
-	ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
+
+	/* also does usb_syncmem(sqh) */
+	ehci_set_qh_qtd(sqh, data);
 	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    ehci_timeout, xfer);
@@ -4248,7 +4252,9 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 		exfer->ex_sqtdend = end;
 
 		data = exfer->ex_sqtdstart;
-		ehci_set_qh_qtd(sqh, data); /* also does usb_syncmem(sqh) */
+
+		/* also does usb_syncmem(sqh) */
+		ehci_set_qh_qtd(sqh, data);
 		if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 			callout_reset(&xfer->ux_callout,
 			    mstohz(xfer->ux_timeout), ehci_timeout, xfer);
