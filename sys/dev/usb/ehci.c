@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.64 2015/10/25 09:50:06 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.65 2015/11/14 10:35:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.64 2015/10/25 09:50:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.65 2015/11/14 10:35:38 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2984,7 +2984,7 @@ ehci_reset_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 
 	USBHIST_FUNC(); USBHIST_CALLED(ehcidebug);
 	USBHIST_LOG(ehcidebug, "xfer=%p len %d isread %d toggle %d", xfer,
-	   len, isread, *toggle);
+	    len, isread, *toggle);
 
 	sqtd = prev = NULL;
 	for (i = 0; i < exfer->ex_nsqtd; i++, prev = sqtd) {
