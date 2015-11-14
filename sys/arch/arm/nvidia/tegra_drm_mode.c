@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.6 2015/11/14 11:55:36 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.7 2015/11/14 23:16:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.6 2015/11/14 11:55:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.7 2015/11/14 23:16:41 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -1111,6 +1111,8 @@ tegra_connector_detect(struct drm_connector *connector, bool force)
 	if (con) {
 		return connector_status_connected;
 	} else {
+		prop_dictionary_t prop = device_properties(connector->dev->dev);
+		prop_dictionary_remove(prop, "physical-address");
 		tegra_connector->has_hdmi_sink = false;
 		tegra_connector->has_audio = false;
 		return connector_status_disconnected;
@@ -1129,6 +1131,7 @@ tegra_connector_get_modes(struct drm_connector *connector)
 {
 	struct tegra_connector *tegra_connector = to_tegra_connector(connector);
 	struct tegra_drm_softc * const sc = tegra_drm_private(connector->dev);
+	prop_dictionary_t prop = device_properties(connector->dev->dev);
 	char edid[EDID_LENGTH * 4];
 	struct edid *pedid = NULL;
 	int error, block;
@@ -1159,8 +1162,13 @@ tegra_connector_get_modes(struct drm_connector *connector)
 			    drm_detect_monitor_audio(pedid);
 		}
 		drm_mode_connector_update_edid_property(connector, pedid);
-		return drm_add_edid_modes(connector, pedid);
-		    
+		error = drm_add_edid_modes(connector, pedid);
+		drm_edid_to_eld(connector, pedid);
+		if (drm_detect_hdmi_monitor(pedid)) {
+			prop_dictionary_set_uint16(prop, "physical-address",
+			    connector->physical_address);
+		}
+		return error;
 	} else {
 		drm_mode_connector_update_edid_property(connector, NULL);
 		return 0;
