@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.16 2015/11/14 02:10:10 jakllsch Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.17 2015/11/14 03:44:52 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -50,10 +50,12 @@
 
 #define TEGRA_PCIE_CONF_BASE	0x02000000
 #define TEGRA_PCIE_CONF_SIZE	0x01000000
-#define TEGRA_PCIE_IO_BASE	0x12000000
-#define TEGRA_PCIE_IO_SIZE	0x00010000
-#define TEGRA_PCIE_MEM_BASE	0x13000000
+#define TEGRA_PCIE_IO_BASE	0x01800000	/* comment in tegra_pcie.c */
+#define TEGRA_PCIE_IO_SIZE	0x00800000
+#define TEGRA_PCIE_MEM_BASE	0x03000000
 #define TEGRA_PCIE_MEM_SIZE	0x0d000000
+#define TEGRA_PCIE_EXTC_BASE	0x10000000
+#define TEGRA_PCIE_EXTC_SIZE	0x10000000
 #define TEGRA_PCIE_PMEM_BASE	0x20000000
 #define TEGRA_PCIE_PMEM_SIZE	0x20000000
 
