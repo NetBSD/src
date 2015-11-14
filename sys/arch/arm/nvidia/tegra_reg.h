@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_reg.h,v 1.14 2015/10/17 21:17:15 jmcneill Exp $ */
+/* $NetBSD: tegra_reg.h,v 1.15 2015/11/14 02:00:42 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #define TEGRA_EXTMEM_BASE	0x80000000
 
 #define TEGRA_PCIE_OFFSET	0x01000000
-#define TEGRA_PCIE_SIZE		0x3effffff
+#define TEGRA_PCIE_SIZE		0x3f000000
 #define TEGRA_PCIE_PADS_BASE	0x01003000
 #define TEGRA_PCIE_PADS_SIZE	0x00000800
 #define TEGRA_PCIE_AFI_BASE	0x01003800
