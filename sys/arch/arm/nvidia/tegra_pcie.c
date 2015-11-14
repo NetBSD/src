@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.9 2015/11/14 02:10:10 jakllsch Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.10 2015/11/14 03:44:52 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.9 2015/11/14 02:10:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.10 2015/11/14 03:44:52 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,6 +84,7 @@ struct tegra_pcie_softc {
 static int	tegra_pcie_intr(void *);
 static void	tegra_pcie_init(pci_chipset_tag_t, void *);
 static void	tegra_pcie_enable(struct tegra_pcie_softc *);
+static void	tegra_pcie_setup(struct tegra_pcie_softc * const);
 
 static void	tegra_pcie_attach_hook(device_t, device_t,
 				       struct pcibus_attach_args *);
@@ -119,7 +120,7 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	struct tegra_pcie_softc * const sc = device_private(self);
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
-	struct extent *memext, *pmemext;
+	struct extent *ioext, *memext, *pmemext;
 	struct pcibus_attach_args pba;
 	int error;
 
@@ -156,8 +157,13 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
+	tegra_pcie_setup(sc);
+
 	tegra_pcie_init(&sc->sc_pc, sc);
 
+	ioext = extent_create("pciio", TEGRA_PCIE_IO_BASE,
+	    TEGRA_PCIE_IO_BASE + TEGRA_PCIE_IO_SIZE - 1,
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", TEGRA_PCIE_MEM_BASE,
 	    TEGRA_PCIE_MEM_BASE + TEGRA_PCIE_MEM_SIZE - 1,
 	    NULL, 0, EX_NOWAIT);
@@ -165,9 +171,10 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	    TEGRA_PCIE_PMEM_BASE + TEGRA_PCIE_PMEM_SIZE - 1,
 	    NULL, 0, EX_NOWAIT);
 
-	error = pci_configure_bus(&sc->sc_pc, NULL, memext, pmemext, 0,
+	error = pci_configure_bus(&sc->sc_pc, ioext, memext, pmemext, 0,
 	    arm_dcache_align);
 
+	extent_destroy(ioext);
 	extent_destroy(memext);
 	extent_destroy(pmemext);
 
@@ -183,7 +190,9 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_MRL_OKAY |
 			PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY |
-			PCI_FLAGS_MEM_OKAY;
+			PCI_FLAGS_MEM_OKAY |
+			PCI_FLAGS_IO_OKAY;
+	pba.pba_iot = sc->sc_bst;
 	pba.pba_memt = sc->sc_bst;
 	pba.pba_dmat = sc->sc_dmat;
 	pba.pba_pc = &sc->sc_pc;
@@ -242,6 +251,65 @@ tegra_pcie_intr(void *priv)
 		device_printf(sc->sc_dev, "intr: code %#x sig %#x\n",
 		    code, sig);
 		return 1;
+	}
+}
+
+static void
+tegra_pcie_setup(struct tegra_pcie_softc * const sc)
+{
+	size_t i;
+
+	/*
+	 * Map PCI address spaces into ARM address space via
+	 * HyperTransport-like "FPCI".
+	 */
+	static const struct { uint32_t size, base, fpci; } pcie_init_table[] = {
+		/*
+		 * === BEWARE ===
+		 *
+		 * We depend on our TEGRA_PCIE_IO window overlaping the
+		 * TEGRA_PCIE_A1 window to allow us to use the same
+		 * bus_space_tag for both PCI IO and Memory spaces.
+		 *
+		 * 0xfdfc000000-0xfdfdffffff is the FPCI/HyperTransport
+		 * mapping for 0x0000000-0x1ffffff of PCI IO space.
+		 */
+		{ TEGRA_PCIE_IO_SIZE >> 12, TEGRA_PCIE_IO_BASE,
+		  (0xfdfc000000 + TEGRA_PCIE_IO_BASE) >> 8 | 0, },
+
+		/* HyperTransport Technology Type 1 Address Format */
+		{ TEGRA_PCIE_CONF_SIZE >> 12, TEGRA_PCIE_CONF_BASE,
+		  0xfdff000000 >> 8 | 0, },
+
+		/* 1:1 MMIO mapping */
+		{ TEGRA_PCIE_MEM_SIZE >> 12, TEGRA_PCIE_MEM_BASE,
+		  TEGRA_PCIE_MEM_BASE >> 8 | 1, },
+
+		/* Extended HyperTransport Technology Type 1 Address Format */
+		{ TEGRA_PCIE_EXTC_SIZE >> 12, TEGRA_PCIE_EXTC_BASE,
+		  0xfe10000000 >> 8 | 0, },
+
+		/* 1:1 prefetchable MMIO mapping */
+		{ TEGRA_PCIE_PMEM_SIZE >> 12, TEGRA_PCIE_PMEM_BASE,
+		  TEGRA_PCIE_PMEM_BASE >> 8 | 1, },
+	};
+
+	for (i = 0; i < AFI_AXI_NBAR; i++) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_SZ(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_START(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_FPCI_BARi(i), 0);
+	}
+
+	for (i = 0; i < __arraycount(pcie_init_table); i++) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_START(i), pcie_init_table[i].base);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_FPCI_BARi(i), pcie_init_table[i].fpci);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_SZ(i), pcie_init_table[i].size);
 	}
 }
 
@@ -374,7 +442,7 @@ tegra_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 static int
 tegra_pcie_conf_hook(void *v, int b, int d, int f, pcireg_t id)
 {
-	return PCI_CONF_ENABLE_MEM | PCI_CONF_MAP_MEM | PCI_CONF_ENABLE_BM;
+	return PCI_CONF_ALL;
 }
 
 static void
