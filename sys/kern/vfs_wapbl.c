@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.62 2015/08/09 07:40:59 mlelstv Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.63 2015/11/14 03:25:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.62 2015/08/09 07:40:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.63 2015/11/14 03:25:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -313,8 +313,8 @@ static int
 wapbl_fini(bool interface)
 {
 
-	if (aio_sysctl != NULL)
-		 sysctl_teardown(&aio_sysctl);
+	if (wapbl_sysctl != NULL)
+		 sysctl_teardown(&wapbl_sysctl);
 
 	pool_destroy(&wapbl_entry_pool);
 
