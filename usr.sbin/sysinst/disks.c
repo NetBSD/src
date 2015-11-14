@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.10 2015/07/25 07:12:30 isaki Exp $ */
+/*	$NetBSD: disks.c,v 1.11 2015/11/14 23:00:17 pgoyette Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1314,9 +1314,9 @@ bootxx_name(void)
 		}
 		break;
 #endif
-#ifdef BOOTXX_LFS
+#ifdef BOOTXX_LFSV2
 	case FS_BSDLFS:
-		bootxxname = BOOTXX_LFS;
+		bootxxname = BOOTXX_LFSV2;
 		break;
 #endif
 	default:
