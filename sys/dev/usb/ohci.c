@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.25 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.26 2015/11/14 07:18:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.25 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.26 2015/11/14 07:18:35 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -167,7 +167,7 @@ Static struct usbd_xfer *
 Static void		ohci_freex(struct usbd_bus *, struct usbd_xfer *);
 Static void		ohci_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		ohci_roothub_ctrl(struct usbd_bus *,
-    usb_device_request_t *, void *, int);
+			    usb_device_request_t *, void *, int);
 
 Static usbd_status	ohci_root_intr_transfer(struct usbd_xfer *);
 Static usbd_status	ohci_root_intr_start(struct usbd_xfer *);
