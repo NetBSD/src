@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.5 2015/11/12 00:43:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.6 2015/11/14 11:55:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.5 2015/11/12 00:43:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.6 2015/11/14 11:55:36 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -61,9 +61,14 @@ static const struct drm_framebuffer_funcs tegra_framebuffer_funcs = {
 
 static int	tegra_crtc_init(struct drm_device *, int);
 static void	tegra_crtc_destroy(struct drm_crtc *);
+static int	tegra_crtc_cursor_set(struct drm_crtc *, struct drm_file *,
+		    uint32_t, uint32_t, uint32_t);
+static int	tegra_crtc_cursor_move(struct drm_crtc *, int, int);
 static int	tegra_crtc_intr(void *);
 
 static const struct drm_crtc_funcs tegra_crtc_funcs = {
+	.cursor_set = tegra_crtc_cursor_set,
+	.cursor_move = tegra_crtc_cursor_move,
 	.set_config = drm_crtc_helper_set_config,
 	.destroy = tegra_crtc_destroy
 };
@@ -314,6 +319,12 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 	if (crtc->ih == NULL) {
 		DRM_ERROR("failed to establish interrupt for crtc %d\n", index);
 	}
+	const size_t cursor_size = 256 * 256 * 4;
+	crtc->cursor_obj = tegra_drm_obj_alloc(ddev, cursor_size);
+	if (crtc->cursor_obj == NULL) {
+		kmem_free(crtc, sizeof(*crtc));
+		return -ENOMEM;
+	}
 
 	tegra_car_dc_enable(crtc->index);
 
@@ -321,6 +332,166 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 
 	drm_crtc_init(ddev, &crtc->base, &tegra_crtc_funcs);
 	drm_crtc_helper_add(&crtc->base, &tegra_crtc_helper_funcs);
+
+	return 0;
+}
+
+static int
+tegra_crtc_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
+    uint32_t handle, uint32_t width, uint32_t height)
+{
+	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
+	struct drm_gem_object *gem_obj = NULL;
+	struct tegra_gem_object *obj;
+	uint32_t cfg, opt;
+	int error;
+
+	if (tegra_crtc->enabled == false)
+		return 0;
+
+	if (handle == 0) {
+		/* hide cursor */
+		opt = DC_READ(tegra_crtc, DC_DISP_DISP_WIN_OPTIONS_REG);
+		if ((opt & DC_DISP_DISP_WIN_OPTIONS_CURSOR_ENABLE) != 0) {
+			opt &= ~DC_DISP_DISP_WIN_OPTIONS_CURSOR_ENABLE;
+			DC_WRITE(tegra_crtc, DC_DISP_DISP_WIN_OPTIONS_REG, opt);
+			/* Commit settings */
+			DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+			    DC_CMD_STATE_CONTROL_GENERAL_UPDATE);
+			DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+			    DC_CMD_STATE_CONTROL_GENERAL_ACT_REQ);
+		}
+		error = 0;
+		goto done;
+	}
+
+	if ((width != height) ||
+	    (width != 32 && width != 64 && width != 128 && width != 256)) {
+		DRM_ERROR("Cursor dimension %ux%u not supported\n",
+		    width, height);
+		error = -EINVAL;
+		goto done;
+	}
+
+	gem_obj = drm_gem_object_lookup(crtc->dev, file_priv, handle);
+	if (gem_obj == NULL) {
+		DRM_ERROR("Cannot find cursor object %#x for crtc %d\n",
+		    handle, tegra_crtc->index);
+		error = -ENOENT;
+		goto done;
+	}
+	obj = to_tegra_gem_obj(gem_obj);
+
+	if (obj->base.size < width * height * 4) {
+		DRM_ERROR("Cursor buffer is too small\n");
+		error = -ENOMEM;
+		goto done;
+	}
+
+	cfg = __SHIFTIN(DC_DISP_CURSOR_START_ADDR_CLIPPING_DISPLAY,
+			DC_DISP_CURSOR_START_ADDR_CLIPPING);
+	switch (width) {
+	case 32:
+		cfg |= __SHIFTIN(DC_DISP_CURSOR_START_ADDR_SIZE_32,
+				 DC_DISP_CURSOR_START_ADDR_SIZE);
+		break;
+	case 64:
+		cfg |= __SHIFTIN(DC_DISP_CURSOR_START_ADDR_SIZE_64,
+				 DC_DISP_CURSOR_START_ADDR_SIZE);
+		break;
+	case 128:
+		cfg |= __SHIFTIN(DC_DISP_CURSOR_START_ADDR_SIZE_128,
+				 DC_DISP_CURSOR_START_ADDR_SIZE);
+		break;
+	case 256:
+		cfg |= __SHIFTIN(DC_DISP_CURSOR_START_ADDR_SIZE_256,
+				 DC_DISP_CURSOR_START_ADDR_SIZE);
+		break;
+	}
+
+	/* copy cursor (argb -> rgba) */
+	struct tegra_gem_object *cursor_obj = tegra_crtc->cursor_obj;
+	uint32_t off, *cp = obj->dmap, *crtc_cp = cursor_obj->dmap;
+	for (off = 0; off < width * height; off++) {
+		crtc_cp[off] = (cp[off] << 8) | (cp[off] >> 24);
+	}
+
+	cfg |= __SHIFTIN((cursor_obj->dmasegs[0].ds_addr >> 10) & 0x3fffff,
+			 DC_DISP_CURSOR_START_ADDR_ADDRESS_LO);
+	const uint32_t ocfg =
+	    DC_READ(tegra_crtc, DC_DISP_CURSOR_START_ADDR_REG);
+	if (cfg != ocfg) {
+		DC_WRITE(tegra_crtc, DC_DISP_CURSOR_START_ADDR_REG, cfg);
+	}
+
+	cfg = DC_READ(tegra_crtc, DC_DISP_BLEND_CURSOR_CONTROL_REG);
+	cfg &= ~DC_DISP_BLEND_CURSOR_CONTROL_DST_BLEND_FACTOR_SEL;
+	cfg |= __SHIFTIN(2, DC_DISP_BLEND_CURSOR_CONTROL_DST_BLEND_FACTOR_SEL);
+	cfg &= ~DC_DISP_BLEND_CURSOR_CONTROL_SRC_BLEND_FACTOR_SEL;
+	cfg |= __SHIFTIN(1, DC_DISP_BLEND_CURSOR_CONTROL_SRC_BLEND_FACTOR_SEL);
+	cfg &= ~DC_DISP_BLEND_CURSOR_CONTROL_ALPHA;
+	cfg |= __SHIFTIN(255, DC_DISP_BLEND_CURSOR_CONTROL_ALPHA);
+	cfg |= DC_DISP_BLEND_CURSOR_CONTROL_MODE_SEL;
+	DC_WRITE(tegra_crtc, DC_DISP_BLEND_CURSOR_CONTROL_REG, cfg);
+
+	/* set cursor position */
+	DC_WRITE(tegra_crtc, DC_DISP_CURSOR_POSITION_REG,
+	    __SHIFTIN(tegra_crtc->cursor_x, DC_DISP_CURSOR_POSITION_H) |
+	    __SHIFTIN(tegra_crtc->cursor_y, DC_DISP_CURSOR_POSITION_V));
+
+	/* Commit settings */
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_CURSOR_UPDATE);
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_CURSOR_ACT_REQ);
+
+	/* show cursor */
+	opt = DC_READ(tegra_crtc, DC_DISP_DISP_WIN_OPTIONS_REG);
+	if ((opt & DC_DISP_DISP_WIN_OPTIONS_CURSOR_ENABLE) == 0) {
+		opt |= DC_DISP_DISP_WIN_OPTIONS_CURSOR_ENABLE;
+		DC_WRITE(tegra_crtc, DC_DISP_DISP_WIN_OPTIONS_REG, opt);
+
+		/* Commit settings */
+		DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+		    DC_CMD_STATE_CONTROL_GENERAL_UPDATE);
+		DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+		    DC_CMD_STATE_CONTROL_GENERAL_ACT_REQ);
+	}
+
+	error = 0;
+
+done:
+	if (error == 0) {
+		/* Wait for activation request to complete */
+		while (DC_READ(tegra_crtc, DC_CMD_STATE_CONTROL_REG) &
+		    DC_CMD_STATE_CONTROL_GENERAL_ACT_REQ)
+			;
+	}
+
+	if (gem_obj) {
+		drm_gem_object_unreference_unlocked(gem_obj);
+	}
+
+	return error;
+}
+
+static int
+tegra_crtc_cursor_move(struct drm_crtc *crtc, int x, int y)
+{
+	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
+
+	tegra_crtc->cursor_x = x & 0x3fff;
+	tegra_crtc->cursor_y = y & 0x3fff;
+
+	DC_WRITE(tegra_crtc, DC_DISP_CURSOR_POSITION_REG,
+	    __SHIFTIN(x & 0x3fff, DC_DISP_CURSOR_POSITION_H) |
+	    __SHIFTIN(y & 0x3fff, DC_DISP_CURSOR_POSITION_V));
+
+	/* Commit settings */
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_CURSOR_UPDATE);
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_CURSOR_ACT_REQ);
 
 	return 0;
 }
@@ -333,6 +504,7 @@ tegra_crtc_destroy(struct drm_crtc *crtc)
 	if (tegra_crtc->ih) {
 		intr_disestablish(tegra_crtc->ih);
 	}
+	tegra_drm_obj_free(tegra_crtc->cursor_obj);
 	bus_space_unmap(tegra_crtc->bst, tegra_crtc->bsh, tegra_crtc->size);
 	kmem_free(tegra_crtc, sizeof(*tegra_crtc));
 }
@@ -543,6 +715,8 @@ tegra_crtc_commit(struct drm_crtc *crtc)
 	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
 	    DC_CMD_STATE_CONTROL_GENERAL_ACT_REQ |
 	    DC_CMD_STATE_CONTROL_WIN_A_ACT_REQ);
+
+	tegra_crtc->enabled = true;
 }
 
 static int
