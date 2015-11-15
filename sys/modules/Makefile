@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.156 2015/07/09 14:41:30 matt Exp $
+#	$NetBSD: Makefile,v 1.157 2015/11/15 03:12:14 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -110,6 +110,7 @@ SUBDIR+=	usbverbose
 SUBDIR+=	vcoda
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
+SUBDIR+=	wapbl
 SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
