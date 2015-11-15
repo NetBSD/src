@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.8 2015/11/04 21:04:11 christos Exp $ */
+/* $NetBSD: hdafg.c,v 1.9 2015/11/15 23:03:50 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.8 2015/11/04 21:04:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.9 2015/11/15 23:03:50 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -329,6 +329,7 @@ struct hdafg_softc {
 	struct hdaudio_audiodev		sc_audiodev;
 
 	uint16_t			sc_fixed_rate;
+	bool				sc_disable_dip;
 };
 
 static int	hdafg_match(device_t, cfdata_t, void *);
@@ -3112,6 +3113,9 @@ hdafg_stream_connect_hdmi(struct hdafg_softc *sc, struct hdaudio_assoc *as,
 	hdaudio_command(sc->sc_codec, w->w_nid,
 	    CORB_SET_HDMI_DIP_XMIT_CTRL, COP_DIP_XMIT_CTRL_DISABLE);
 
+	if (sc->sc_disable_dip)
+		return;
+
 	/* build new infoframe */
 	if (as->as_digital == HDAFG_AS_HDMI) {
 		dip = (uint8_t *)&hdmi;
@@ -3696,6 +3700,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 		switch (sc->sc_product) {
 		case HDAUDIO_PRODUCT_NVIDIA_TEGRA124_HDMI:
 			sc->sc_fixed_rate = 44100;
+			sc->sc_disable_dip = true;
 			break;
 		}
 		break;
