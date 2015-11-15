@@ -1,4 +1,4 @@
-/*	$NetBSD: gen.c,v 1.2.6.1.4.1 2014/12/31 11:58:58 msaitoh Exp $	*/
+/*	$NetBSD: gen.c,v 1.2.6.1.4.2 2015/11/15 19:12:50 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -25,9 +25,11 @@
  */
 #define _CRT_SECURE_NO_DEPRECATE 1
 /*
- * We use snprintf.
+ * We use snprintf which was defined late in Windows even it is in C99.
  */
+#if _MSC_VER < 1900
 #define snprintf _snprintf
+#endif
 #endif
 
 #include <sys/types.h>
