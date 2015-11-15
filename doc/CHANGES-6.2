@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.228 2015/11/15 16:51:39 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.229 2015/11/15 16:59:29 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -12594,4 +12594,12 @@ sys/ufs/lfs/lfs_segment.c			1.247 via patch
 	This only apparently affects dumping from a mounted fs; however, it
 	trashes the fs.
 	[dholland, ticket #1319]
+
+lib/libutil/login_cap.c				1.32
+share/man/man5/login.conf.5			1.29 - 1.31
+
+	Add vmemoryuse to login_cap(3)
+	Document vmemoryuse in login.conf(5)
+	Closes PR xsrc/49912
+	[kamil, ticket #1317]
 
