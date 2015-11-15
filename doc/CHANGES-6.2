@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.229 2015/11/15 16:59:29 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.230 2015/11/15 17:52:49 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -12602,4 +12602,44 @@ share/man/man5/login.conf.5			1.29 - 1.31
 	Document vmemoryuse in login.conf(5)
 	Closes PR xsrc/49912
 	[kamil, ticket #1317]
+
+sys/kern/sys_pset.c				1.19
+
+	Don't forget to unlock the LWP.
+	[oster, ticket #1320]
+
+libexec/ftpd/logwtmp.c				1.26, 1.27
+
+	Clear utmpx struct before writing it to wtmpx files
+	[shm, ticket #1321]
+
+bin/sh/jobs.c					1.74, 1.75
+bin/sh/trap.c					1.36, 1.37
+bin/sh/trap.h					1.21, 1.22
+
+	Process pending signals while waiting for a job, and report the
+	signal that wait was interrupted by, which is not always SIGINT
+	anymore.
+	[christos, ticket #1323]
+
+xsrc/xfree/xc/programs/xdm/access.c			1.2
+
+	Don't crash if the local hostname doesn't resolve. PR 26998
+	[dholland, ticket #1324]
+
+sys/dev/mii/atphy.c				1.17
+
+	Fix incorrect argument of mii_anar(). Fixes PR#50206.
+	[msaitoh, ticket #1325]
+
+sys/netinet6/icmp6.c				1.177
+
+	Update icmp6_redirect_timeout_q when changing
+	net.inet6.icmp6.redirtimeout. fixes PR kern/50240.
+	[ozaki-r, ticket #1327]
+
+sys/netinet/if_arp.c				1.160
+
+	Add sysctl to selectively log arp packets from unknown network.
+	[ozaki-r, ticket #1328]
 
