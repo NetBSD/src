@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.22.8.1 2012/06/13 19:44:11 riz Exp $	*/
+/*	$NetBSD: userret.h,v 1.22.8.2 2015/11/15 16:36:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,7 +58,8 @@ userret(struct lwp *l, struct trapframe *tf)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
+	/* clear SRR1 status bits */
+	tf->tf_srr1 &= (PSL_USERSRR1|PSL_FP|PSL_VEC);
 
 #ifdef ALTIVEC
 	/*

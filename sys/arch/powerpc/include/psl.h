@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18 2011/06/20 07:23:36 matt Exp $	*/
+/*	$NetBSD: psl.h,v 1.18.8.1 2015/11/15 16:36:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -111,7 +111,7 @@ extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 #elif defined(PPC_BOOKE)
 #define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IS | PSL_DS | PSL_ME | PSL_CE | PSL_DE)
 #define	PSL_USERMASK		(PSL_SPV | PSL_CE | 0xFFFF)
-#define	PSL_USERMOD		(PSL_SPV)
+#define	PSL_USERMOD		(0)
 #else /* PPC_IBM4XX */
 #ifdef PPC_IBM403
 #define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IR | PSL_DR | PSL_ME)
