@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+ - Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ -
+ - Permission to use, copy, modify, and/or distribute this software for any
+ - purpose with or without fee is hereby granted, provided that the above
+ - copyright notice and this permission notice appear in all copies.
+ -
+ - THE SOFTWARE IS PROVIDED "AS IS" AND ISC DISCLAIMS ALL WARRANTIES WITH
+ - REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY
+ - AND FITNESS.  IN NO EVENT SHALL ISC BE LIABLE FOR ANY SPECIAL, DIRECT,
+ - INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ - LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
+ - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ - PERFORMANCE OF THIS SOFTWARE.
+-->
+
+<sect1 xmlns:xi="http://www.w3.org/2001/XInclude">
+  <xi:include href="noteversion.xml"/>
+  <sect2 id="relnotes_intro">
+    <title>Introduction</title>
+    <para>
+      This document summarizes changes since BIND 9.9.7.
+    </para>
+    <para>
+      BIND 9.9.7-P2 addresses security issues described in
+      CVE-2015-5722 and CVE-2015-5986.
+    </para>
+    <para>
+      BIND 9.9.7-P2 addresses a security issue described in CVE-2015-5477.
+    </para>
+    <para>
+      BIND 9.9.7-P1 addresses a security issue described in CVE-2015-4620.
+    </para>
+  </sect2>
+  <sect2 id="relnotes_download">
+    <title>Download</title>
+    <para>
+      The latest versions of BIND 9 software can always be found at
+      <ulink url="http://www.isc.org/downloads/"
+	>http://www.isc.org/downloads/</ulink>.
+      There you will find additional information about each release,
+      source code, and pre-compiled versions for Microsoft Windows
+      operating systems.
+    </para>
+  </sect2>
+  <sect2 id="relnotes_security">
+    <title>Security Fixes</title>
+    <itemizedlist>
+      <listitem>
+	<para>
+	  An incorrect boundary check in the OPENPGPKEY rdatatype
+	  could trigger an assertion failure. This flaw is disclosed
+	  in CVE-2015-5986. [RT #40286]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  A buffer accounting error could trigger an assertion failure
+	  when parsing certain malformed DNSSEC keys.
+	</para>
+	<para>
+	  This flaw was discovered by Hanno B&#xc3b6;eck of the Fuzzing
+	  Project, and is disclosed in CVE-2015-5722. [RT #40212]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  A specially crafted query could trigger an assertion failure
+	  in message.c.
+	</para>
+	<para>
+	  This flaw was discovered by Jonathan Foote, and is disclosed
+	  in CVE-2015-5477. [RT #39795]
+	</para>
+      </listitem>
+      <listitem>
+	<para>
+	  On servers configured to perform DNSSEC validation, an
+	  assertion failure could be triggered on answers from
+	  a specially configured server.
+	</para>
+	<para>
+	  This flaw was discovered by Breno Silveira Soares, and is
+	  disclosed in CVE-2015-4620. [RT #39795]
+	</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+  <sect2 id="relnotes_features">
+    <title>New Features</title>
+    <itemizedlist>
+      <listitem>
+	<para>None</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+  <sect2 id="relnotes_changes">
+    <title>Feature Changes</title>
+    <itemizedlist>
+      <listitem>
+	<para>None</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+  <sect2 id="relnotes_bugs">
+    <title>Bug Fixes</title>
+    <itemizedlist>
+      <listitem>
+	<para>None</para>
+      </listitem>
+    </itemizedlist>
+  </sect2>
+  <sect2 id="end_of_life">
+    <title>End of Life</title>
+    <para>
+      The BIND 9.9 (Extended Support Version) will be supported until June, 2017.
+      <ulink url="https://www.isc.org/downloads/software-support-policy/"
+	>https://www.isc.org/downloads/software-support-policy/</ulink>
+    </para>
+  </sect2>
+  <sect2 id="relnotes_thanks">
+    <title>Thank You</title>
+    <para>
+      Thank you to everyone who assisted us in making this release possible.
+      If you would like to contribute to ISC to assist us in continuing to
+      make quality open source software, please visit our donations page at
+      <ulink url="http://www.isc.org/donate/"
+	>http://www.isc.org/donate/</ulink>.
+    </para>
+  </sect2>
+</sect1>
