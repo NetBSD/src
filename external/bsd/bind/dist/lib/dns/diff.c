@@ -1,7 +1,7 @@
-/*	$NetBSD: diff.c,v 1.3.4.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: diff.c,v 1.3.4.1.6.2 2015/11/15 19:18:00 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -392,9 +392,6 @@ diff_apply(dns_diff_t *diff, dns_db_t *db, dns_dbversion_t *ver,
 				 * Issue a warning and continue.
 				 */
 				if (warn) {
-					char classbuf[DNS_RDATATYPE_FORMATSIZE];
-					char namebuf[DNS_NAME_FORMATSIZE];
-
 					dns_name_format(dns_db_origin(db),
 							namebuf,
 							sizeof(namebuf));
