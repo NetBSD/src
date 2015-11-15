@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.7 2015/11/14 23:16:41 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.8 2015/11/15 14:39:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.7 2015/11/14 23:16:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.8 2015/11/15 14:39:12 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -680,8 +680,8 @@ tegra_crtc_prepare(struct drm_crtc *crtc)
 	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
 
 	/* Access control */
-	DC_WRITE(tegra_crtc, DC_CMD_STATE_ACCESS_REG,
-	    DC_CMD_STATE_ACCESS_READ_MUX);
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_ACCESS_REG, 0);
+
 	/* Enable window A programming */
 	DC_WRITE(tegra_crtc, DC_CMD_DISPLAY_WINDOW_HEADER_REG,
 	    DC_CMD_DISPLAY_WINDOW_HEADER_WINDOW_A_SELECT);
