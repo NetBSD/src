@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.22 2015/11/01 09:03:28 pooka Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.23 2015/11/15 16:54:16 pooka Exp $
 #
 
 RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb		\
@@ -24,7 +24,8 @@ RUMPDEVLDADD+=-lrumpdev_${var}
 RUMPDEVLIBS+=lib${var}
 .endfor
 
-# Currently no NetBSD host support.
-#.for var in ${RUMPPCIDEVS}
-#RUMPDEVLIBS+=lib${var}
-#.endfor
+.if make(rumpdescribe)
+.for var in ${RUMPPCIDEVS}
+RUMPDEVLIBS+=lib${var}
+.endfor
+.endif
