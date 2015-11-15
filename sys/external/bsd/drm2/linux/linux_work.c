@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.11 2015/10/17 15:57:32 jmcneill Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.12 2015/11/15 22:56:24 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.11 2015/10/17 15:57:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.12 2015/11/15 22:56:24 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -850,7 +850,7 @@ linux_worker_intr(void *arg)
 	}
 
 	/* Either way, the callout is done.  */
-	TAILQ_REMOVE(&dw->work.w_wq->wq_delayed, dw, dw_entry);
+	TAILQ_REMOVE(&wq->wq_delayed, dw, dw_entry);
 	callout_destroy(&dw->dw_callout);
 
 	mutex_exit(&wq->wq_lock);
