@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.879 2015/11/06 01:17:08 jmcneill Exp $
+#	$NetBSD: bsd.own.mk,v 1.880 2015/11/15 13:50:10 pooka Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -842,11 +842,13 @@ ARM_APCS_FLAGS+=${${ACTIVE_CC} == "clang":? -target ${MACHINE_GNU_ARCH}--netbsde
 GENASSYM_CPPFLAGS+=	${${ACTIVE_CC} == "clang":? -no-integrated-as :}
 
 TARGETS+=	all clean cleandir depend dependall includes \
-		install lint obj regress tags html analyze describe
+		install lint obj regress tags html analyze describe \
+		rumpdescribe
 PHONY_NOTMAIN =	all clean cleandir depend dependall distclean includes \
 		install lint obj regress beforedepend afterdepend \
 		beforeinstall afterinstall realinstall realdepend realall \
-		html subdir-all subdir-install subdir-depend analyze describe
+		html subdir-all subdir-install subdir-depend analyze describe \
+		rumpdescribe
 .PHONY:		${PHONY_NOTMAIN}
 .NOTMAIN:	${PHONY_NOTMAIN}
 
