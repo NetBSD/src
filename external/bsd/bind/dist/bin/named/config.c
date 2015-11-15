@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.4.4.1.4.1 2014/12/31 11:58:29 msaitoh Exp $	*/
+/*	$NetBSD: config.c,v 1.4.4.1.4.2 2015/11/15 19:12:44 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -524,6 +524,13 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 	REQUIRE(keysp != NULL && *keysp == NULL);
 	REQUIRE(countp != NULL);
 
+	/*
+	 * Get system defaults.
+	 */
+	result = ns_config_getport(config, &port);
+	if (result != ISC_R_SUCCESS)
+		goto cleanup;
+
  newlist:
 	addrlist = cfg_tuple_get(list, "addresses");
 	portobj = cfg_tuple_get(list, "port");
@@ -536,10 +543,6 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 			goto cleanup;
 		}
 		port = (in_port_t) val;
-	} else {
-		result = ns_config_getport(config, &port);
-		if (result != ISC_R_SUCCESS)
-			goto cleanup;
 	}
 
 	result = ISC_R_NOMEMORY;

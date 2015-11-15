@@ -57,7 +57,7 @@
   </xsl:template>
 
   <xsl:template name="user.footer.navigation">
-    <p style="text-align: center;">BIND Version @PACKAGE_VERSION@</p>
+    <p style="text-align: center;">@BIND9_VERSIONSTRING@</p>
   </xsl:template>
 
 </xsl:stylesheet>
