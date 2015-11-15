@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.69.4.1 2014/12/07 15:58:27 martin Exp $	*/
+/*	$NetBSD: jobs.c,v 1.69.4.2 2015/11/15 17:41:26 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.69.4.1 2014/12/07 15:58:27 martin Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.69.4.2 2015/11/15 17:41:26 bouyer Exp $");
 #endif
 #endif /* not lint */
 
@@ -619,7 +619,7 @@ waitcmd(int argc, char **argv)
 				continue;
 			}
 			if (dowait(WBLOCK, NULL) == -1)
-			       return 128 + SIGINT;
+			       return 128 + lastsig();
 			jp = jobtab;
 		}
 	}
@@ -634,7 +634,7 @@ waitcmd(int argc, char **argv)
 		/* loop until process terminated or stopped */
 		while (job->state == JOBRUNNING) {
 			if (dowait(WBLOCK|WNOFREE, job) == -1)
-			       return 128 + SIGINT;
+			       return 128 + lastsig();
 		}
 		status = job->ps[job->nprocs ? job->nprocs - 1 : 0].status;
 		if (WIFEXITED(status))
@@ -1042,13 +1042,12 @@ dowait(int flags, struct job *job)
 	struct job *thisjob;
 	int done;
 	int stopped;
-	extern volatile char gotsig[];
 
 	TRACE(("dowait(%x) called\n", flags));
 	do {
 		pid = waitproc(flags & WBLOCK, job, &status);
 		TRACE(("wait returns pid %d, status %d\n", pid, status));
-	} while (pid == -1 && errno == EINTR && gotsig[SIGINT - 1] == 0);
+	} while (pid == -1 && errno == EINTR && pendingsigs == 0);
 	if (pid <= 0)
 		return pid;
 	INTOFF;
