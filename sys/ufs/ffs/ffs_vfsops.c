@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.336 2015/10/22 11:31:31 maxv Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.337 2015/11/15 01:39:23 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.336 2015/10/22 11:31:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.337 2015/11/15 01:39:23 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -109,7 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.336 2015/10/22 11:31:31 maxv Exp $"
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
+#ifdef WAPBL
+MODULE(MODULE_CLASS_VFS, ffs, "wapbl");
+#else
 MODULE(MODULE_CLASS_VFS, ffs, NULL);
+#endif
 
 static int ffs_vfs_fsync(vnode_t *, int);
 static int ffs_superblock_validate(struct fs *);
