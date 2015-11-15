@@ -1,4 +1,4 @@
-/* $NetBSD: awin_reg.h,v 1.83 2015/11/09 10:10:39 bouyer Exp $ */
+/* $NetBSD: awin_reg.h,v 1.84 2015/11/15 21:28:54 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -1111,6 +1111,8 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_CLK_DIV_RATIO_N		__BITS(17,16)
 #define AWIN_CLK_DIV_RATIO_M		__BITS(3,0)
 
+#define AWIN_LVDS_CLK_ENABLE		__BIT(0)
+
 #define AWIN_ISS_CLK_SRC_SEL		__BITS(17,16)
 
 #define AWIN_USB_CLK_USBPHY_ENABLE	__BIT(8)
@@ -1161,7 +1163,7 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3	0
 #define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL7	1
 #define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL3_2X 2
-#define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL7_2X 3
+#define AWIN_LCDx_CHx_CLK_SRC_SEL_PLL7_2X 3 /* for lcd0ch0 this is pll6x2 */
 #define AWIN_LCDx_CH1_SCLK1_GATING	__BIT(15)
 #define AWIN_LCDx_CH1_SCLK1_SRC_SEL	__BIT(11)
 #define AWIN_LCDx_CH1_CLK_DIV_RATIO_M	__BITS(3,0)
@@ -1772,6 +1774,8 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_TCON_GINT0_REG		0x0004
 #define AWIN_TCON_GINT1_REG		0x0008
 #define AWIN_TCON0_FRM_CTL_REG		0x0010
+#define AWIN_TCON0_FRM1_CTL_REG		0x0014
+#define AWIN_TCON0_FRM2_CTL_REG		0x002c
 #define AWIN_TCON0_CTL_REG		0x0040
 #define AWIN_TCON0_DCLK_REG		0x0044
 #define AWIN_TCON0_BASIC0_REG		0x0048
@@ -1806,6 +1810,8 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_TCON_CMAP_EVEN0_REG	0x0198
 #define AWIN_TCON_CMAP_EVEN1_REG	0x019C
 #define AWIN_TCON_MUX_CTL_REG		0x0200 /* only in TCON0 */
+#define AWIN_TCON_LVDS_ANA0		0x220
+#define AWIN_TCON_LVDS_ANA1		0x224
 
 #define AWIN_TCON_GCTL_EN		__BIT(31)
 #define AWIN_TCON_GCTL_GAMMA_EN		__BIT(30)
@@ -1816,13 +1822,33 @@ struct awin_mmc_idma_descriptor {
 #define AWIN_TCON_GINT1_TCON0_LINENO	__BITS(27,16)
 #define AWIN_TCON_GINT1_TCON1_LINENO	__BITS(11,0)
 
-#define AWIN_TCON_CTL_EN		__BIT(31)
-#define AWIN_TCON_CTL_INTERLACE_EN	__BIT(20)
-#define AWIN_TCON_CTL_START_DELAY	__BITS(8,4)
-#define AWIN_TCON_CTL_SRC_SEL		__BITS(1,0)
-#define AWIN_TCON_CTL_SRC_SEL_DE0	0
-#define AWIN_TCON_CTL_SRC_SEL_DE1	1
-#define AWIN_TCON_CTL_SRC_SEL_BLUEDATA	2
+#define AWIN_TCON0_FRM_ENABLE		__BIT(31)
+#define AWIN_TCON0_FRM_R5BITS		__BIT(6)
+#define AWIN_TCON0_FRM_G5BITS		__BIT(5)
+#define AWIN_TCON0_FRM_B5BITS		__BIT(4)
+
+#define AWIN_TCONx_CTL_EN		__BIT(31)
+#define AWIN_TCON0_CTL0_IF		__BITS(25,24)
+#define AWIN_TCON0_CTL0_IF_HV		0
+#define AWIN_TCON0_CTL0_IF_8080		1
+#define AWIN_TCON0_CTL0_IF_TTL		2
+#define AWIN_TCON0_CTL_RG_SWAP		__BIT(23)
+#define AWIN_TCON0_CTL_TSTV		__BIT(22)
+#define AWIN_TCONx_CTL_INTERLACE_EN	__BIT(20)
+#define AWIN_TCONx_CTL_START_DELAY	__BITS(8,4)
+#define AWIN_TCONx_CTL_SRC_SEL		__BITS(1,0)
+#define AWIN_TCONx_CTL_SRC_SEL_DE0	0
+#define AWIN_TCONx_CTL_SRC_SEL_DE1	1
+#define AWIN_TCONx_CTL_SRC_SEL_BLUEDATA	2
+
+#define AWIN_TCON0_DCLK_DIV		__BITS(6,0)
+
+#define AWIN_TCON0_LVDS_IF_EN		__BIT(31)
+#define AWIN_TCON0_LVDS_IF_DUALCHAN	__BIT(30)
+#define AWIN_TCON0_LVDS_IF_DIR_REV	__BIT(28)
+#define AWIN_TCON0_LVDS_IF_MODE_JEIDA	__BIT(27)
+#define AWIN_TCON0_LVDS_IF_18BITS	__BIT(26)
+#define AWIN_TCON0_LVDS_IF_CORR_MODE1	__BIT(23)
 
 #define AWIN_TCON_IO_POL_IO2_INV	__BIT(26)
 #define AWIN_TCON_IO_POL_PVSYNC		__BIT(25)
