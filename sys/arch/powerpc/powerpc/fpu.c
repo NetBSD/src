@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.31 2011/06/07 01:01:43 matt Exp $	*/
+/*	$NetBSD: fpu.c,v 1.31.8.1 2015/11/15 16:36:57 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31 2011/06/07 01:01:43 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.31.8.1 2015/11/15 16:36:57 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -85,15 +85,17 @@ fpu_state_load(lwp_t *l, bool used)
 		fpu_mark_used(l);
 	}
 
-	const register_t msr = mfmsr();
-        mtmsr((msr & ~PSL_EE) | PSL_FP);
-	__asm volatile ("isync");
+	if ((flags & PCU_REENABLE) == 0) {
+		const register_t msr = mfmsr();
+		mtmsr((msr & ~PSL_EE) | PSL_FP);
+		__asm volatile ("isync");
 
-	fpu_load_from_fpreg(&pcb->pcb_fpu);
-	__asm volatile ("sync");
+		fpu_load_from_fpreg(&pcb->pcb_fpu);
+		__asm volatile ("sync");
 
-	mtmsr(msr);
-	__asm volatile ("isync");
+		mtmsr(msr);
+		__asm volatile ("isync");
+	}
 
 	curcpu()->ci_ev_fpusw.ev_count++;
 	l->l_md.md_utf->tf_srr1 |= PSL_FP|(pcb->pcb_flags & (PCB_FE0|PCB_FE1));
