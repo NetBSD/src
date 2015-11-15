@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,7 @@ ATF_TC_HEAD(isc_time_parsehttptimestamp, tc) {
 ATF_TC_BODY(isc_time_parsehttptimestamp, tc) {
 	isc_result_t result;
 	isc_time_t t, x;
-	char buf[100];
+	char buf[ISC_FORMATHTTPTIMESTAMP_SIZE];
 
 	setenv("TZ", "PST8PDT", 1);
 	result = isc_time_now(&t);
