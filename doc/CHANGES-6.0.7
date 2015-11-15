@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.0.7,v 1.1.2.51 2015/11/15 19:15:03 bouyer Exp $
+# $NetBSD: CHANGES-6.0.7,v 1.1.2.52 2015/11/15 21:13:33 bouyer Exp $
 
 A complete list of changes from the NetBSD 6.0.6 release to the NetBSD 6.0.7
 release:
@@ -7025,4 +7025,62 @@ external/bsd/bind/include			patch
 
 	Update bind to 9.9.7-P3
 	[spz, ticket #1329]
+
+sys/kern/kern_exec.c				1.419, 1.420
+sys/kern/kern_exit.c				1.246, 1.247
+sys/kern/kern_synch.c				1.309
+
+	Various fixes related to proc's SSTOP state, related to wait(2)
+	in the parent, 
+	Fixes PR kern/50298, kern/50318 kern/50300, kern/50308 and kern/50330
+	[pgoyette, ticket #1333]
+
+sys/kern/kern_sig.c				1.321
+
+	When delivering a signal, it's possible that the process's state in
+	p_stat is SACTIVE yet p_sflag is PS_STOPPING (while waiting for other
+	lwp's to stop).  In that case, we don't want to adjust the parent's
+	p_nstopchild count.
+	[pgoyette, ticket #1334]
+
+sys/compat/linux/arch/arm/linux_ptrace.c	1.19
+sys/compat/linux/arch/i386/linux_ptrace.c	1.31
+sys/compat/linux/arch/powerpc/linux_ptrace.c	1.29
+
+	Don't release proc_lock until we're done looking at things that are
+	protected by the lock, particularly p_stat and p_waited.
+	[pgoyette, ticket #1335]
+
+sys/kern/kern_exit.c				1.248
+
+	Update value of p_stat before we release the proc_lock.
+	[pgoyette, ticket #1336]
+
+sys/compat/osf1/osf1_socket.c			1.21
+
+	Prevent a kernel panic in osf1's sendmsg().
+	[maxv, ticket #1338]
+
+sys/arch/x86/x86/bus_dma.c			1.72 - 1.74
+
+	- If we succeeded allocating a buffer that did not need bouncing
+	  before, but the buffer in the previous mapping did, clear the bounce
+	  bit. Fixes the ld_virtio.c bug with machines 8GB and
+	  dd if=/dev/zero of=crash bs=1g count=4.
+	- When checking for the bounce buffer boundary check
+	  addr + len < limit, not addr < limit.
+	[christos, ticket #1339]
+
+sys/arch/x86/x86/sys_machdep.c			1.29
+
+	fix broken error handling; error was used uninitialized. Changing the
+	compilation flags broke all threaded programs for me.
+	[christos, ticket #1341]
+
+sys/arch/sparc64/sparc64/locore.s		1.386
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.105, 1.106
+sys/arch/sparc64/sparc64/vm_machdep.c		1.101
+
+	Fix various sparc64 compat_netbsd32 issues.
+	[martin, ticket #1343]
 
