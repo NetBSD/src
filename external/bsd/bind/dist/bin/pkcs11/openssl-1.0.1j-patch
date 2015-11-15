@@ -1,7 +1,7 @@
 Index: openssl/Configure
-diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Configure:1.15
---- openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1	Mon Apr 14 12:42:45 2014
-+++ openssl/Configure	Mon Apr 14 12:44:20 2014
+diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1 openssl/Configure:1.16
+--- openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1.4.1	Fri Jan  2 14:55:31 2015
++++ openssl/Configure	Fri Jan  2 14:56:42 2015
 @@ -10,7 +10,7 @@
  
  # see INSTALL for instructions.
@@ -53,7 +53,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Configure:1.15
  my $prefix="";
  my $libdir="";
  my $openssldir="";
-@@ -876,6 +886,14 @@
+@@ -877,6 +887,14 @@
  				$_ =~ s/%([0-9a-f]{1,2})/chr(hex($1))/gei;
  				$flags.=$_." ";
  				}
@@ -68,7 +68,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Configure:1.15
  			elsif (/^--prefix=(.*)$/)
  				{
  				$prefix=$1;
-@@ -1043,6 +1061,22 @@
+@@ -1044,6 +1062,22 @@
  	exit 0;
  }
  
@@ -91,7 +91,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Configure:1.15
  if ($target =~ m/^CygWin32(-.*)$/) {
  	$target = "Cygwin".$1;
  }
-@@ -1120,6 +1154,25 @@
+@@ -1121,6 +1155,25 @@
  	$exp_cflags .= " -DOPENSSL_EXPERIMENTAL_$ALGO";
  	}
  
@@ -117,7 +117,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Configure:1.15
  my $IsMK1MF=scalar grep /^$target$/,@MK1MF_Builds;
  
  $exe_ext=".exe" if ($target eq "Cygwin" || $target eq "DJGPP" || $target =~ /^mingw/);
-@@ -1209,6 +1262,8 @@
+@@ -1210,6 +1263,8 @@
  if ($flags ne "")	{ $cflags="$flags$cflags"; }
  else			{ $no_user_cflags=1;       }
  
@@ -126,7 +126,7 @@ diff -u openssl/Configure:1.9.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Configure:1.15
  # Kerberos settings.  The flavor must be provided from outside, either through
  # the script "config" or manually.
  if (!$no_krb5)
-@@ -1598,6 +1653,7 @@
+@@ -1599,6 +1654,7 @@
  	s/^VERSION=.*/VERSION=$version/;
  	s/^MAJOR=.*/MAJOR=$major/;
  	s/^MINOR=.*/MINOR=$minor/;
@@ -150,7 +150,7 @@ diff -u openssl/Makefile.org:1.5.2.1.2.1.2.1.2.1.2.1.2.1 openssl/Makefile.org:1.
  
 Index: openssl/README.pkcs11
 diff -u /dev/null openssl/README.pkcs11:1.8
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:07 2015
 +++ openssl/README.pkcs11	Fri Oct  4 14:16:43 2013
 @@ -0,0 +1,266 @@
 +ISC modified
@@ -420,10 +420,10 @@ diff -u /dev/null openssl/README.pkcs11:1.8
 +Latest version should be always available on http://blogs.sun.com/janp.
 +
 Index: openssl/crypto/opensslconf.h
-diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.7
---- openssl/crypto/opensslconf.h:1.6.2.1.4.1	Tue Jun 19 15:29:49 2012
-+++ openssl/crypto/opensslconf.h	Tue Jun 19 16:17:51 2012
-@@ -35,6 +35,9 @@
+diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1.10.1 openssl/crypto/opensslconf.h:1.8
+--- openssl/crypto/opensslconf.h:1.6.2.1.4.1.10.1	Fri Jan  2 14:55:34 2015
++++ openssl/crypto/opensslconf.h	Fri Jan  2 14:56:43 2015
+@@ -41,6 +41,9 @@
  
  #endif /* OPENSSL_DOING_MAKEDEPEND */
  
@@ -433,7 +433,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.
  #ifndef OPENSSL_NO_DYNAMIC_ENGINE
  # define OPENSSL_NO_DYNAMIC_ENGINE
  #endif
-@@ -73,6 +76,8 @@
+@@ -82,6 +85,8 @@
  # endif
  #endif
  
@@ -442,7 +442,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.
  /* crypto/opensslconf.h.in */
  
  /* Generate 80386 code? */
-@@ -119,7 +124,7 @@
+@@ -128,7 +133,7 @@
   * This enables code handling data aligned at natural CPU word
   * boundary. See crypto/rc4/rc4_enc.c for further details.
   */
@@ -451,7 +451,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.
  #endif
  #endif
  
-@@ -127,7 +132,7 @@
+@@ -136,7 +141,7 @@
  /* If this is set to 'unsigned int' on a DEC Alpha, this gives about a
   * %20 speed up (longs are 8 bytes, int's are 4). */
  #ifndef DES_LONG
@@ -460,7 +460,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.
  #endif
  #endif
  
-@@ -138,9 +143,9 @@
+@@ -147,9 +152,9 @@
  /* Should we define BN_DIV2W here? */
  
  /* Only one for the following should be defined */
@@ -472,7 +472,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.
  #endif
  
  #if defined(HEADER_RC4_LOCL_H) && !defined(CONFIG_HEADER_RC4_LOCL_H)
-@@ -152,7 +157,7 @@
+@@ -161,7 +166,7 @@
  
  #if defined(HEADER_BF_LOCL_H) && !defined(CONFIG_HEADER_BF_LOCL_H)
  #define CONFIG_HEADER_BF_LOCL_H
@@ -481,7 +481,7 @@ diff -u openssl/crypto/opensslconf.h:1.6.2.1.4.1 openssl/crypto/opensslconf.h:1.
  #endif /* HEADER_BF_LOCL_H */
  
  #if defined(HEADER_DES_LOCL_H) && !defined(CONFIG_HEADER_DES_LOCL_H)
-@@ -182,7 +187,7 @@
+@@ -191,7 +196,7 @@
  /* Unroll the inner loop, this sometimes helps, sometimes hinders.
   * Very mucy CPU dependant */
  #ifndef DES_UNROLL
@@ -611,7 +611,7 @@ diff -u openssl/crypto/engine/Makefile:1.8.2.1.4.1 openssl/crypto/engine/Makefil
  tb_asnmth.o: ../../include/openssl/crypto.h ../../include/openssl/e_os2.h
 Index: openssl/crypto/engine/cryptoki.h
 diff -u /dev/null openssl/crypto/engine/cryptoki.h:1.4
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/cryptoki.h	Thu Dec 18 00:14:12 2008
 @@ -0,0 +1,103 @@
 +/*
@@ -755,7 +755,7 @@ diff -u openssl/crypto/engine/engine.h:1.5.2.1.4.1 openssl/crypto/engine/engine.
  #endif
 Index: openssl/crypto/engine/hw_pk11.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.33
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11.c	Fri Oct  4 14:07:41 2013
 @@ -0,0 +1,4010 @@
 +/*
@@ -4770,7 +4770,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11.c:1.33
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11_err.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.5
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11_err.c	Tue Jun 14 00:43:26 2011
 @@ -0,0 +1,288 @@
 +/*
@@ -5063,7 +5063,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.c:1.5
 +}
 Index: openssl/crypto/engine/hw_pk11_err.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.13
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11_err.h	Fri Oct  4 14:04:20 2013
 @@ -0,0 +1,440 @@
 +/*
@@ -5508,7 +5508,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_err.h:1.13
 +#endif /* HW_PK11_ERR_H */
 Index: openssl/crypto/engine/hw_pk11_pub.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.42
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11_pub.c	Fri Oct  4 14:27:06 2013
 @@ -0,0 +1,3556 @@
 +/*
@@ -9069,7 +9069,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11_pub.c:1.42
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11ca.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.4
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11ca.h	Wed Jun 15 21:12:20 2011
 @@ -0,0 +1,32 @@
 +/* Redefine all pk11/PK11 external symbols to pk11ca/PK11CA */
@@ -9106,7 +9106,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11ca.h:1.4
 +#define ENGINE_load_pk11		ENGINE_load_pk11ca
 Index: openssl/crypto/engine/hw_pk11so.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.8
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11so.c	Fri Oct  4 14:05:16 2013
 @@ -0,0 +1,1775 @@
 +/*
@@ -10886,7 +10886,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.c:1.8
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/hw_pk11so.h
 diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.4
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11so.h	Wed Jun 15 21:12:20 2011
 @@ -0,0 +1,32 @@
 +/* Redefine all pk11/PK11 external symbols to pk11so/PK11SO */
@@ -10923,7 +10923,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so.h:1.4
 +#define ENGINE_load_pk11		ENGINE_load_pk11so
 Index: openssl/crypto/engine/hw_pk11so_pub.c
 diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.10
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/hw_pk11so_pub.c	Fri Oct  4 14:05:38 2013
 @@ -0,0 +1,1642 @@
 +/*
@@ -12570,7 +12570,7 @@ diff -u /dev/null openssl/crypto/engine/hw_pk11so_pub.c:1.10
 +#endif	/* OPENSSL_NO_HW */
 Index: openssl/crypto/engine/pkcs11.h
 diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/pkcs11.h	Wed Oct 24 23:27:09 2007
 @@ -0,0 +1,299 @@
 +/* pkcs11.h include file for PKCS #11. */
@@ -12874,7 +12874,7 @@ diff -u /dev/null openssl/crypto/engine/pkcs11.h:1.1.1.1
 +#endif
 Index: openssl/crypto/engine/pkcs11f.h
 diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/pkcs11f.h	Wed Oct 24 23:27:09 2007
 @@ -0,0 +1,912 @@
 +/* pkcs11f.h include file for PKCS #11. */
@@ -13791,7 +13791,7 @@ diff -u /dev/null openssl/crypto/engine/pkcs11f.h:1.1.1.1
 +#endif
 Index: openssl/crypto/engine/pkcs11t.h
 diff -u /dev/null openssl/crypto/engine/pkcs11t.h:1.2
---- /dev/null	Thu Jul  3 12:44:12 2014
+--- /dev/null	Fri Jan  2 14:59:08 2015
 +++ openssl/crypto/engine/pkcs11t.h	Sat Aug 30 11:58:07 2008
 @@ -0,0 +1,1885 @@
 +/* pkcs11t.h include file for PKCS #11. */
@@ -15690,9 +15690,9 @@ diff -u openssl/util/libeay.num:1.8.2.1.4.1.2.1.4.1 openssl/util/libeay.num:1.12
 +ENGINE_load_pk11ca                      4683	EXIST::FUNCTION:HW_PKCS11CA,ENGINE
 +ENGINE_load_pk11so                      4683	EXIST::FUNCTION:HW_PKCS11SO,ENGINE
 Index: openssl/util/mk1mf.pl
-diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1 openssl/util/mk1mf.pl:1.10
---- openssl/util/mk1mf.pl:1.9.2.1.4.1	Tue Jun 19 15:30:18 2012
-+++ openssl/util/mk1mf.pl	Tue Jun 19 16:18:10 2012
+diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1 openssl/util/mk1mf.pl:1.11
+--- openssl/util/mk1mf.pl:1.9.2.1.4.1.10.1	Fri Jan  2 14:55:51 2015
++++ openssl/util/mk1mf.pl	Fri Jan  2 14:56:55 2015
 @@ -114,6 +114,8 @@
  	no-ecdh					- No ECDH
  	no-engine				- No engine
@@ -15731,9 +15731,9 @@ diff -u openssl/util/mk1mf.pl:1.9.2.1.4.1 openssl/util/mk1mf.pl:1.10
  		"just-ssl" =>
  			[\$no_rc2, \$no_idea, \$no_des, \$no_bf, \$no_cast,
 Index: openssl/util/mkdef.pl
-diff -u openssl/util/mkdef.pl:1.7.2.1.4.1 openssl/util/mkdef.pl:1.9
---- openssl/util/mkdef.pl:1.7.2.1.4.1	Tue Jun 19 15:30:18 2012
-+++ openssl/util/mkdef.pl	Tue Jun 19 16:18:10 2012
+diff -u openssl/util/mkdef.pl:1.7.2.1.4.1.10.1 openssl/util/mkdef.pl:1.10
+--- openssl/util/mkdef.pl:1.7.2.1.4.1.10.1	Fri Jan  2 14:55:51 2015
++++ openssl/util/mkdef.pl	Fri Jan  2 14:56:55 2015
 @@ -96,7 +96,7 @@
  			 # External "algorithms"
  			 "FP_API", "STDIO", "SOCK", "KRB5", "DGRAM",
@@ -15743,7 +15743,7 @@ diff -u openssl/util/mkdef.pl:1.7.2.1.4.1 openssl/util/mkdef.pl:1.9
  			 # RFC3779
  			 "RFC3779",
  			 # TLS
-@@ -133,6 +133,7 @@
+@@ -137,6 +137,7 @@
  my $no_md2; my $no_md4; my $no_md5; my $no_sha; my $no_ripemd; my $no_mdc2;
  my $no_rsa; my $no_dsa; my $no_dh; my $no_hmac=0; my $no_aes; my $no_krb5;
  my $no_ec; my $no_ecdsa; my $no_ecdh; my $no_engine; my $no_hw;
@@ -15751,16 +15751,16 @@ diff -u openssl/util/mkdef.pl:1.7.2.1.4.1 openssl/util/mkdef.pl:1.9
  my $no_fp_api; my $no_static_engine=1; my $no_gmp; my $no_deprecated;
  my $no_rfc3779; my $no_psk; my $no_tlsext; my $no_cms; my $no_capieng;
  my $no_jpake; my $no_srp; my $no_ssl2; my $no_ec2m; my $no_nistp_gcc; 
-@@ -235,6 +236,8 @@
- 	elsif (/^no-jpake$/)	{ $no_jpake=1; }
- 	elsif (/^no-srp$/)	{ $no_srp=1; }
+@@ -242,6 +243,8 @@
  	elsif (/^no-sctp$/)	{ $no_sctp=1; }
+ 	elsif (/^no-srtp$/)	{ $no_srtp=1; }
+ 	elsif (/^no-unit-test$/){ $no_unit_test=1; }
 +	elsif (/^no-hw-pkcs11ca$/) { $no_pkcs11ca=1; }
 +	elsif (/^no-hw-pkcs11so$/) { $no_pkcs11so=1; }
  	}
  
  
-@@ -1189,6 +1192,8 @@
+@@ -1196,6 +1199,8 @@
  			if ($keyword eq "KRB5" && $no_krb5) { return 0; }
  			if ($keyword eq "ENGINE" && $no_engine) { return 0; }
  			if ($keyword eq "HW" && $no_hw) { return 0; }
