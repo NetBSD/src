@@ -1,7 +1,7 @@
-/*	$NetBSD: rbt.h,v 1.5.6.1.6.1 2014/12/26 03:08:33 msaitoh Exp $	*/
+/*	$NetBSD: rbt.h,v 1.5.6.1.6.2 2015/11/15 19:18:00 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -116,6 +116,9 @@ struct dns_rbtnode {
 	unsigned int offsetlen : 8;     /*%< range is 1..128 */
 	unsigned int oldnamelen : 8;    /*%< range is 1..255 */
 	/*@}*/
+
+	/* node needs to be cleaned from rpz */
+	unsigned int rpz : 1;
 
 #ifdef DNS_RBT_USEHASH
 	unsigned int hashval;

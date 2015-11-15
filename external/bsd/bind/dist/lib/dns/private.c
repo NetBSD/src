@@ -1,7 +1,7 @@
-/*	$NetBSD: private.c,v 1.3.4.1.6.1 2014/12/26 03:08:32 msaitoh Exp $	*/
+/*	$NetBSD: private.c,v 1.3.4.1.6.2 2015/11/15 19:18:00 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -164,7 +164,6 @@ dns_private_chains(dns_db_t *db, dns_dbversion_t *ver,
 		for (result = dns_rdataset_first(&privateset);
 		     result == ISC_R_SUCCESS;
 		     result = dns_rdataset_next(&privateset)) {
-			unsigned char buf[DNS_NSEC3PARAM_BUFFERSIZE];
 			dns_rdata_t private = DNS_RDATA_INIT;
 			dns_rdata_t rdata = DNS_RDATA_INIT;
 

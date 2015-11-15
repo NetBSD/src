@@ -1,7 +1,7 @@
-/*	$NetBSD: nsprobe.c,v 1.3.4.1.6.1 2014/12/26 03:08:35 msaitoh Exp $	*/
+/*	$NetBSD: nsprobe.c,v 1.3.4.1.6.2 2015/11/15 19:18:01 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,7 +59,7 @@ static isc_appctx_t *actx = NULL;
 static isc_mem_t *mctx = NULL;
 static unsigned int outstanding_probes = 0;
 const char *cacheserver = "127.0.0.1";
-static FILE *fp;
+static FILE *input;
 
 typedef enum {
 	none,
@@ -977,7 +977,7 @@ probe_domain(struct probe_trans *trans) {
 	REQUIRE(outstanding_probes < MAX_PROBES);
 
 	/* Construct domain */
-	cp = fgets(buf, sizeof(buf), fp);
+	cp = fgets(buf, sizeof(buf), input);
 	if (cp == NULL)
 		return (ISC_R_NOMORE);
 	if ((cp = strchr(buf, '\n')) != NULL) /* zap NL if any */
@@ -1126,10 +1126,10 @@ main(int argc, char *argv[]) {
 
 	/* Open input file */
 	if (argc == 0)
-		fp = stdin;
+		input = stdin;
 	else {
-		fp = fopen(argv[0], "r");
-		if (fp == NULL) {
+		input = fopen(argv[0], "r");
+		if (input == NULL) {
 			fprintf(stderr, "failed to open input file: %s\n",
 				argv[0]);
 			exit(1);
