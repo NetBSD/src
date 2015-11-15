@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.339.2.5.4.3 2014/04/21 10:00:35 bouyer Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.339.2.5.4.4 2015/11/15 20:38:01 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.5.4.3 2014/04/21 10:00:35 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.339.2.5.4.4 2015/11/15 20:38:01 bouyer Exp $");
 
 #include "opt_exec.h"
 #include "opt_ktrace.h"
@@ -1408,7 +1408,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	if (p->p_sflag & PS_STOPEXEC) {
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
-		p->p_pptr->p_waited = 0;
+		p->p_waited = 0;
 		mutex_enter(p->p_lock);
 		ksiginfo_queue_init(&kq);
 		sigclearall(p, &contsigmask, &kq);
@@ -1845,6 +1845,7 @@ spawn_return(void *arg)
 	struct spawn_exec_data *spawn_data = arg;
 	struct lwp *l = curlwp;
 	int error, newfd;
+	int ostat;
 	size_t i;
 	const struct posix_spawn_file_actions_entry *fae;
 	pid_t ppid;
@@ -1917,7 +1918,6 @@ spawn_return(void *arg)
 
 	/* handle posix_spawnattr */
 	if (spawn_data->sed_attrs != NULL) {
-		int ostat;
 		struct sigaction sigact;
 		sigact._sa_u._sa_handler = SIG_DFL;
 		sigact.sa_flags = 0;
@@ -1926,8 +1926,18 @@ spawn_return(void *arg)
 		 * set state to SSTOP so that this proc can be found by pid.
 		 * see proc_enterprp, do_sched_setparam below
 		 */
+		mutex_enter(proc_lock);
+		/*
+		 * p_stat should be SACTIVE, so we need to adjust the
+		 * parent's p_nstopchild here.  For safety, just make
+		 * we're on the good side of SDEAD before we adjust.
+		 */
 		ostat = l->l_proc->p_stat;
+		KASSERT(ostat < SSTOP);
 		l->l_proc->p_stat = SSTOP;
+		l->l_proc->p_waited = 0;
+		l->l_proc->p_pptr->p_nstopchild++;
+		mutex_exit(proc_lock);
 
 		/* Set process group */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
@@ -1940,7 +1950,7 @@ spawn_return(void *arg)
 			error = proc_enterpgrp(spawn_data->sed_parent,
 			    mypid, pgrp, false);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 		}
 
 		/* Set scheduler policy */
@@ -1954,7 +1964,7 @@ spawn_return(void *arg)
 			    SCHED_NONE, &spawn_data->sed_attrs->sa_schedparam);
 		}
 		if (error)
-			goto report_error;
+			goto report_error_stopped;
 
 		/* Reset user ID's */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
@@ -1962,12 +1972,12 @@ spawn_return(void *arg)
 			     kauth_cred_getgid(l->l_cred), -1,
 			     ID_E_EQ_R | ID_E_EQ_S);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 			error = do_setresuid(l, -1,
 			    kauth_cred_getuid(l->l_cred), -1,
 			    ID_E_EQ_R | ID_E_EQ_S);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 		}
 
 		/* Set signal masks/defaults */
@@ -1977,7 +1987,7 @@ spawn_return(void *arg)
 			    &spawn_data->sed_attrs->sa_sigmask, NULL);
 			mutex_exit(l->l_proc->p_lock);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 		}
 
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGDEF) {
@@ -1988,7 +1998,10 @@ spawn_return(void *arg)
 					    0);
 			}
 		}
+		mutex_enter(proc_lock);
 		l->l_proc->p_stat = ostat;
+		l->l_proc->p_pptr->p_nstopchild--;
+		mutex_exit(proc_lock);
 	}
 
 	/* now do the real exec */
@@ -2015,6 +2028,11 @@ spawn_return(void *arg)
 	/* NOTREACHED */
 	return;
 
+ report_error_stopped:
+	mutex_enter(proc_lock);
+	l->l_proc->p_stat = ostat;
+	l->l_proc->p_pptr->p_nstopchild--;
+	mutex_exit(proc_lock);
  report_error:
  	if (have_reflock) {
  		/*
