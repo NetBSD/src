@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.338.8.4.2.1 2013/12/14 19:33:54 bouyer Exp $	*/
+/*	$NetBSD: locore.s,v 1.338.8.4.2.2 2015/11/15 21:02:22 bouyer Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -5370,12 +5370,6 @@ ENTRY(lwp_trampoline)
 
 	call	%l0			! re-use current frame
 	 mov	%l1, %o0
-
-	/*
-	 * Going to userland - set proper tstate in trap frame
-	 */
-	set	(ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT)|((PSTATE_USER)<<TSTATE_PSTATE_SHIFT), %g1
-	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
 
 	/*
 	 * Here we finish up as in syscall, but simplified.
