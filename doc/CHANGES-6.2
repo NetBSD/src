@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.227 2015/11/15 16:19:16 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.228 2015/11/15 16:51:39 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -12548,4 +12548,50 @@ external/bsd/ntp/scripts/mkver			1.8
 
 	PR/50426: Dave Tyson: Fix ntp reported version.
 	[christos, ticket #1346]
+
+sbin/raidctl/raidctl.c				1.58
+
+	Better sanity check numbers given to raidctl(8)
+	[manu, ticket #1304]
+
+usr.bin/tset/set.c				1.18
+
+	Restore logic for setting the VERASE character.
+	- use terminfo _unless_ the terminal does overstrike.
+	- use terminfo data not only for an unset tty.
+	[mlelstv, ticket #1308]
+
+sys/arch/powerpc/include/psl.h			1.20
+sys/arch/powerpc/include/userret.h		1.29, 1.30
+sys/arch/powerpc/oea/altivec.c			1.30
+sys/arch/powerpc/oea/oea_machdep.c		1.72
+sys/arch/powerpc/powerpc/fpu.c			1.36
+
+	powerpc PCU fixes
+	[matt, ticket #1310]
+
+lib/libm/src/lrint.c				1.5
+lib/libm/src/lrintf.c				1.6
+
+	Return x for >= DBL_FRACBITS in lrint.c.
+	Return x for >= SNG_FRACBITS in lrintf.c
+	Addresses PR lib/49690
+	[nat, ticket #1311]
+
+usr.sbin/postinstall/postinstall		1.196 via patch
+
+	PR install/50020: postinstall does not check for mandoc in
+	/etc/man.conf.
+	[dholland, ticket #1312]
+
+sys/ufs/lfs/lfs_segment.c			1.247 via patch
+
+	Fix catastrophic bug in lfs_rewind() that changed segment numbers
+	(lfs_curseg/lfs_nextseg in the superblock) using the wrong units.
+	These fields are for whatever reason the start addresses of segments
+	(measured in frags) rather than the segment numbers 0..n.
+
+	This only apparently affects dumping from a mounted fs; however, it
+	trashes the fs.
+	[dholland, ticket #1319]
 
