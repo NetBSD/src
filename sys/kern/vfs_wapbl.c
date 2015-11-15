@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.63 2015/11/14 03:25:53 pgoyette Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.64 2015/11/15 03:09:39 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.63 2015/11/14 03:25:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.64 2015/11/15 03:09:39 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -308,7 +308,6 @@ wapbl_init(void)
 	wapbl_sysctl_init();
 }
 
-#ifdef notyet
 static int
 wapbl_fini(bool interface)
 {
@@ -320,7 +319,6 @@ wapbl_fini(bool interface)
 
 	return 0;
 }
-#endif
 
 static int
 wapbl_start_flush_inodes(struct wapbl *wl, struct wapbl_replay *wr)
@@ -2951,10 +2949,7 @@ wapbl_replay_read(struct wapbl_replay *wr, void *data, daddr_t blk, long len)
 }
 
 #ifdef _KERNEL
-/*
- * This is not really a module now, but maybe on its way to
- * being one some day.
- */
+
 MODULE(MODULE_CLASS_VFS, wapbl, NULL);
 
 static int
@@ -2966,10 +2961,7 @@ wapbl_modcmd(modcmd_t cmd, void *arg)
 		wapbl_init();
 		return 0;
 	case MODULE_CMD_FINI:
-#ifdef notyet
 		return wapbl_fini(true);
-#endif
-		return EOPNOTSUPP;
 	default:
 		return ENOTTY;
 	}
