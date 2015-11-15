@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.27 2015/11/14 10:05:47 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.28 2015/11/15 13:59:52 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.27 2015/11/14 10:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.28 2015/11/15 13:59:52 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -256,19 +256,12 @@ struct ohci_pipe {
 		/* Control pipe */
 		struct {
 			usb_dma_t reqdma;
-			u_int length;
-			ohci_soft_td_t *setup, *data, *stat;
 		} ctrl;
 		/* Interrupt pipe */
 		struct {
 			int nslots;
 			int pos;
 		} intr;
-		/* Bulk pipe */
-		struct {
-			u_int length;
-			int isread;
-		} bulk;
 		/* Isochronous pipe */
 		struct isoc {
 			int next, inuse;
@@ -2611,7 +2604,6 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	tail->xfer = NULL;
 
 	sed = opipe->sed;
-	opipe->ctrl.length = len;
 
 	KASSERTMSG(OHCI_ED_GET_FA(O32TOH(sed->ed.ed_flags)) == dev->ud_addr,
 	    "address ED %d pipe %d\n",
@@ -2819,9 +2811,6 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	DPRINTFN(4, "xfer=%p len=%d isread=%d flags=%d", xfer, len, isread,
 	    xfer->ux_flags);
 	DPRINTFN(4, "endpt=%d", endpt, 0, 0, 0);
-
-	opipe->bulk.isread = isread;
-	opipe->bulk.length = len;
 
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
