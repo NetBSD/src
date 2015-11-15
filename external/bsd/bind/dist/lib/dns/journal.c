@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.3.4.2 2014/12/25 17:54:25 msaitoh Exp $	*/
+/*	$NetBSD: journal.c,v 1.3.4.3 2015/11/15 19:09:16 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2011, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1392,6 +1392,8 @@ roll_forward(dns_journal_t *j, dns_db_t *db, unsigned int options) {
 		isc_mem_put(j->mctx, target.base, target.length);
 
 	dns_diff_clear(&diff);
+
+	INSIST(ver == NULL);
 
 	return (result);
 }

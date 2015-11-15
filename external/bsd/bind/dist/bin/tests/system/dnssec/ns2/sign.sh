@@ -26,10 +26,11 @@ zonefile=example.db
 
 ( cd ../ns3 && $SHELL sign.sh )
 
-for subdomain in secure bogus dynamic keyless nsec3 optout nsec3-unknown \
-    optout-unknown multiple rsasha256 rsasha512 kskonly update-nsec3 \
-    auto-nsec auto-nsec3 secure.below-cname ttlpatch split-dnssec \
-    split-smart expired expiring upper lower
+for subdomain in secure bogus dnskey-unknown dnskey-nsec3-unknown \
+	dynamic keyless nsec3 optout nsec3-unknown optout-unknown \
+	multiple rsasha256 rsasha512 kskonly update-nsec3 auto-nsec \
+	auto-nsec3 secure.below-cname ttlpatch split-dnssec split-smart \
+	expired expiring upper lower
 
 do
 	cp ../ns3/dsset-$subdomain.example. .
