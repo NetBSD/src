@@ -1,4 +1,4 @@
-# Copyright (C) 2005, 2007, 2010-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2005, 2007, 2010-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -55,7 +55,8 @@ done
 
 echo "I: checking that named-checkconf -z catches missing hint file"
 ret=0
-$CHECKCONF -z hint-nofile.conf > /dev/null 2>&1 && ret=1
+$CHECKCONF -z hint-nofile.conf > hint-nofile.out 2>&1 && ret=1
+grep "could not configure root hints from 'nonexistent.db': file not found" hint-nofile.out > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

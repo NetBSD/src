@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -328,6 +328,14 @@ grep "status: NXDOMAIN" dig.out.ns1.test$n > /dev/null || ret=1
 grep "100.100.100.2" dig.out.ns1.test$n > /dev/null && ret=1
 grep "2001:ffff:ffff::6464:6402" dig.out.ns1.test$n > /dev/null && ret=1
 grep "IN.NSEC3" dig.out.ns1.test$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:checking redirect works (with noerror) when qtype is not found ($n)"
+ret=0
+$DIG $DIGOPTS nonexist. @10.53.0.2 -b 10.53.0.2 txt > dig.out.ns2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns2.test$n > /dev/null || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

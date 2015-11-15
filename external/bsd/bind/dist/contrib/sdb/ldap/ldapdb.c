@@ -1,4 +1,4 @@
-/*	$NetBSD: ldapdb.c,v 1.2.6.1.6.1 2014/12/26 03:08:30 msaitoh Exp $	*/
+/*	$NetBSD: ldapdb.c,v 1.2.6.1.6.2 2015/11/15 19:17:58 bouyer Exp $	*/
 
 /*
  * ldapdb.c version 1.0-beta
@@ -135,7 +135,6 @@ ldapdb_getconn(struct ldapdb_data *data)
 			free(threaddata->index);
 			while (threaddata->data != NULL) {
 				conndata = threaddata->data;
-				free(conndata->index);
 				if (conndata->data != NULL)
 					ldap_unbind((LDAP *)conndata->data);
 				threaddata->data = conndata->next;

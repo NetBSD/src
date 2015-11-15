@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -40,9 +40,11 @@ OBJS =		dnstest.@O@
 SRCS =		db_test.c \
 		dbdiff_test.c \
 		dbiterator_test.c \
+		dh_test.c \
 		dispatch_test.c \
 		dnstest.c \
 		master_test.c \
+		name_test.c \
 		nsec3_test.c \
 		private_test.c \
 		rdata_test.c \
@@ -57,8 +59,10 @@ TARGETS =	db_test@EXEEXT@ \
 		dbdiff_test@EXEEXT@ \
 		dbiterator_test@EXEEXT@ \
 		dbversion_test@EXEEXT@ \
+		dh_test@EXEEXT@ \
 		dispatch_test@EXEEXT@ \
 		master_test@EXEEXT@ \
+		name_test@EXEEXT@ \
 		nsec3_test@EXEEXT@ \
 		private_test@EXEEXT@ \
 		rdata_test@EXEEXT@ \
@@ -123,6 +127,11 @@ zt_test@EXEEXT@: zt_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 			zt_test.@O@ dnstest.@O@ ${DNSLIBS} \
 				${ISCLIBS} ${LIBS}
 
+name_test@EXEEXT@: name_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			name_test.@O@ dnstest.@O@ ${DNSLIBS} \
+				${ISCLIBS} ${LIBS}
+
 nsec3_test@EXEEXT@: nsec3_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			nsec3_test.@O@ dnstest.@O@ ${DNSLIBS} \
@@ -145,6 +154,11 @@ dispatch_test@EXEEXT@: dispatch_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 db_test@EXEEXT@: db_test.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
 	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
 			db_test.@O@ ${DNSLIBS} \
+			${ISCLIBS} ${LIBS}
+
+dh_test@EXEEXT@: dh_test.@O@ dnstest.@O@ ${ISCDEPLIBS} ${DNSDEPLIBS}
+	${LIBTOOL_MODE_LINK} ${PURIFY} ${CC} ${CFLAGS} ${LDFLAGS} -o $@ \
+			dh_test.@O@ dnstest.@O@ ${DNSLIBS} \
 			${ISCLIBS} ${LIBS}
 
 unit::
