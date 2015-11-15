@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.17 2015/10/25 20:54:19 bouyer Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.18 2015/11/15 21:28:54 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.17 2015/10/25 20:54:19 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.18 2015/11/15 21:28:54 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -580,13 +580,13 @@ awin_hdmi_read_edid(struct awin_hdmi_softc *sc)
 
 	if (mode != NULL) {
 		awin_hdmi_video_enable(sc, false);
-		awin_tcon_enable(sc->sc_tcon_unit, false);
+		awin_tcon1_enable(sc->sc_tcon_unit, false);
 		delay(20000);
 
-		awin_tcon_set_videomode(sc->sc_tcon_unit, mode);
+		awin_tcon1_set_videomode(sc->sc_tcon_unit, mode);
 		awin_hdmi_set_videomode(sc, mode, display_mode);
 		awin_hdmi_set_audiomode(sc, mode, display_mode);
-		awin_tcon_enable(sc->sc_tcon_unit, true);
+		awin_tcon1_enable(sc->sc_tcon_unit, true);
 		delay(20000);
 		awin_hdmi_video_enable(sc, true);
 	}
@@ -928,7 +928,7 @@ awin_hdmi_hpd(struct awin_hdmi_softc *sc)
 		awin_hdmi_read_edid(sc);
 	} else {
 		device_printf(sc->sc_dev, "display disconnected\n");
-		awin_tcon_set_videomode(sc->sc_tcon_unit, NULL);
+		awin_tcon1_set_videomode(sc->sc_tcon_unit, NULL);
 	}
 
 	sc->sc_connected = con;
