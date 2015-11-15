@@ -1,4 +1,4 @@
-/*	$NetBSD: awin_machdep.c,v 1.46 2015/11/03 18:38:03 bouyer Exp $ */
+/*	$NetBSD: awin_machdep.c,v 1.47 2015/11/15 21:28:54 bouyer Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.46 2015/11/03 18:38:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_machdep.c,v 1.47 2015/11/15 21:28:54 bouyer Exp $");
 
 #include "opt_machdep.h"
 #include "opt_ddb.h"
@@ -941,6 +941,10 @@ awin_gpio_sysconfig(prop_dictionary_t dict)
 		{ "mmc0detect",		"mmc0_para", "sdc_det" },
 		{ "audiopactrl",	"audio_para", "audio_pa_ctrl" },
 		{ "gmacpwren",		"gmac_phy_power", "gmac_phy_power_en" },
+		{ "lcd0_power_en",	"lcd0_para", "lcd_power" },
+		{ "lcd0_bl_en",		"lcd0_para", "lcd_bl_en" },
+		{ "lcd1_power_en",	"lcd1_para", "lcd_power" },
+		{ "lcd1_bl_en",		"lcd1_para", "lcd_bl_en" },
 	};
 	unsigned int n;
 
@@ -1057,6 +1061,16 @@ awin_tcon_sysconfig(device_t self, prop_dictionary_t dict)
 		if (type == 1) {
 			/* LCD/LVDS output */
 			awin_tcon_lcd_sysconfig("lcd0_para", dict);
+			if (awin_sysconfig_get_int("lcd0_para",
+			    "lcd_bl_en_used") == 1) {
+				prop_dictionary_set_cstring(dict,
+				    "lcd_bl_en", "lcd0_bl_en");
+			}
+			if (awin_sysconfig_get_int("lcd0_para",
+			    "lcd_power_used") == 1) {
+				prop_dictionary_set_cstring(dict,
+				    "lcd_power_en", "lcd0_power_en");
+			}
 			return;
 		}
 		if (type == 3) {
@@ -1071,6 +1085,16 @@ awin_tcon_sysconfig(device_t self, prop_dictionary_t dict)
 		if (type == 1) {
 			/* LCD/LVDS output */
 			awin_tcon_lcd_sysconfig("lcd1_para", dict);
+			if (awin_sysconfig_get_int("lcd1_para",
+			    "lcd_bl_en_used") == 1) {
+				prop_dictionary_set_cstring(dict,
+				    "lcd_bl_en", "lcd1_bl_en");
+			}
+			if (awin_sysconfig_get_int("lcd1_para",
+			    "lcd_power_used") == 1) {
+				prop_dictionary_set_cstring(dict,
+				    "lcd_power_en", "lcd1_power_en");
+			}
 			return;
 		}
 		if (type == 3) {
@@ -1091,9 +1115,10 @@ awin_tcon_lcd_sysconfig(const char *key, prop_dictionary_t dict)
 		"lcd_dclk_freq",
 		"lcd_hbp",
 		"lcd_ht",
+		"lcd_hspw",
 		"lcd_vbp",
 		"lcd_vt",
-		"lcd_hv_hspw",
+		"lcd_vspw",
 		"lcd_io_cfg0",
 	};
 	static const char *lcdgpio[] = {
@@ -1129,22 +1154,37 @@ awin_tcon_lcd_sysconfig(const char *key, prop_dictionary_t dict)
 	unsigned int n;
 	const char *cfg;
 
+	switch(awin_sysconfig_get_int(key, "lcd_if")) {
+	case -1:
+		/* error */
+		return;
+	case 3:
+		prop_dictionary_set_cstring(dict, "output", "lvds");
+
+		if (awin_sysconfig_get_int(key, "lcd_lvds_ch") == 1)
+			prop_dictionary_set_bool(dict, "lvds_dual", true);
+		else
+			prop_dictionary_set_bool(dict, "lvds_dual", false);
+
+		if (awin_sysconfig_get_int(key, "lcd_lvds_mode") == 1)
+			prop_dictionary_set_bool(dict, "lvds_mode_jeida", true);
+		else
+			prop_dictionary_set_bool(dict, "lvds_mode_jeida", false);
+
+		if (awin_sysconfig_get_int(key, "lcd_lvds_bitwidth") == 1)
+			prop_dictionary_set_bool(dict, "lvds_18bits", true);
+		else
+			prop_dictionary_set_bool(dict, "lvds_18bits", false);
+		break;
+	default:
+		/* unsupported */
+		return;
+	}
+
 	for (n = 0; n < __arraycount(lcdtimings); n++) {
 		int value = awin_sysconfig_get_int( key, lcdtimings[n]);
 		if (value >= 0) {
 			prop_dictionary_set_int32(dict, lcdtimings[n], value);
-		}
-	}
-	if (awin_sysconfig_get_int(key, "lcd_bl_en_used") == 1) {
-		cfg = awin_sysconfig_get_gpio(key, "lcd_bl_en");
-		if (cfg != NULL) {
-			prop_dictionary_set_cstring(dict, "lcd_bl_en", cfg);
-		}
-	}
-	if (awin_sysconfig_get_int(key, "lcd_power_used") == 1) {
-		cfg = awin_sysconfig_get_gpio(key, "lcd_power");
-		if (cfg != NULL) {
-			prop_dictionary_set_cstring(dict, "lcd_bl_en", cfg);
 		}
 	}
 	for (n = 0; n < __arraycount(lcdgpio); n++) {
