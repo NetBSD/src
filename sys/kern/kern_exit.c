@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.236.2.3 2014/05/21 21:04:31 bouyer Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.236.2.4 2015/11/15 20:37:04 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.236.2.3 2014/05/21 21:04:31 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.236.2.4 2015/11/15 20:37:04 bouyer Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_perfctrs.h"
@@ -240,8 +240,15 @@ exit1(struct lwp *l, int rv)
 	if (__predict_false(p->p_sflag & PS_STOPEXIT)) {
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		sigclearall(p, &contsigmask, &kq);
+
+		if (!mutex_tryenter(proc_lock)) {
+			mutex_exit(p->p_lock);
+			mutex_enter(proc_lock);
+			mutex_enter(p->p_lock);
+		}
 		p->p_waited = 0;
-		membar_producer();
+		p->p_pptr->p_nstopchild++;
+		mutex_exit(proc_lock);
 		p->p_stat = SSTOP;
 		lwp_lock(l);
 		p->p_nrlwps--;
@@ -998,7 +1005,7 @@ proc_reparent(struct proc *child, struct proc *parent)
 	if (child->p_pptr == parent)
 		return;
 
-	if (child->p_stat == SZOMB ||
+	if (child->p_stat == SZOMB || child->p_stat == SDEAD ||
 	    (child->p_stat == SSTOP && !child->p_waited)) {
 		child->p_pptr->p_nstopchild--;
 		parent->p_nstopchild++;
