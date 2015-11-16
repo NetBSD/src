@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.51 2015/11/15 21:13:29 bouyer Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.52 2015/11/16 07:55:29 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -6805,3 +6805,10 @@ sys/arch/sparc64/sparc64/vm_machdep.c		1.101
 	Fix various sparc64 compat_netbsd32 issues.
 	[martin, ticket #1343]
 
+sys/arch/xen/xen/xbdback_xenbus.c		1.61
+
+	Fix typo which caused the kenrel thread to be created with a 0
+	priority. This would cause the thread to be almost never scheduled
+	when a userland process could use all CPU.
+	Should fix the problem reported by Torbj?rn Granlund on port-xen@
+	[bouyer, ticket #1347]
