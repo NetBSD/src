@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2015/11/11 21:52:46 pooka Exp $
+#	$NetBSD: Makefile,v 1.4 2015/11/16 23:27:08 pooka Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -9,7 +9,7 @@ LIB=	rumpdev_pci_if_wm
 COMMENT=Intel GigE device driver
 
 IOCONF=	PCI_IF_WM.ioconf
-COMPONENT_SIMPLE= pci_if_wm
+RUMP_COMPONENT=ioconf
 
 SRCS+=	if_wm.c
 

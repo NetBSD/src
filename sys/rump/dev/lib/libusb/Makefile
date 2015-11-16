@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/11/11 21:52:47 pooka Exp $
+#	$NetBSD: Makefile,v 1.11 2015/11/16 23:27:08 pooka Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
@@ -8,7 +8,7 @@ COMMENT=USB support
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
 IOCONF= USB.ioconf
-COMPONENT_SIMPLE= usb
+RUMP_COMPONENT=ioconf
 
 SRCS=	usb.c usbdi.c usbdi_util.c usb_mem.c usb_subr.c usb_quirks.c	\
 	uhub.c usbroothub_subr.c usb_verbose.c
