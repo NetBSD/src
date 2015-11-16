@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.68 2015/11/13 16:04:07 phx Exp $
+# $NetBSD: WSCONS,v 1.69 2015/11/16 21:25:34 phx Exp $
 
 # GENERIC with wscons(4)
 #
@@ -27,13 +27,11 @@ amidisplaycc0	at mainbus0		# wscons interface to custom chips
 no grfcc0	at mainbus0
 no grfrt0	at zbus0
 no grfrh0	at zbus0
-no grfcl*	at zbus0
 no grful0	at zbus0
 no grfet*	at zbus0
 no grf0		at grfcc0
 no grf1		at grfrt0
 no grf2		at grfrh0
-no grf3		at grfcl?
 no grf4		at grful0
 no grf6		at grfet?
 
