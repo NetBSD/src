@@ -1,4 +1,4 @@
-/*	$NetBSD: component_simple.c,v 1.1 2015/11/11 21:52:45 pooka Exp $	*/
+/*	$NetBSD: component_simple.c,v 1.2 2015/11/16 23:27:07 pooka Exp $	*/
 
 /*
  * Copyright (c) 2015 Antti Kantee.  All Rights Reserved.
@@ -25,12 +25,8 @@
  * SUCH DAMAGE.
  */
 
-#ifndef COMPONENT_NAME
-#error Internal error: COMPONENT_NAME not defined
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: component_simple.c,v 1.1 2015/11/11 21:52:45 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: component_simple.c,v 1.2 2015/11/16 23:27:07 pooka Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -49,5 +45,5 @@ __KERNEL_RCSID(0, "$NetBSD: component_simple.c,v 1.1 2015/11/11 21:52:45 pooka E
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
 
-	CONFIG_INIT_COMPONENT(COMPONENT_NAME);
+	CONFIG_INIT_COMPONENT(IOCONF);
 }
