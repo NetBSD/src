@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_fb.c,v 1.3 2015/11/16 21:14:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.2 2015/11/12 00:43:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_fb.c,v 1.3 2015/11/16 21:14:33 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -137,7 +137,7 @@ tegra_fb_init(struct drm_device *ddev, struct drm_framebuffer *fb,
         fb->offsets[0] = 0;
         fb->width = width;
         fb->height = height;
-        fb->pixel_format = DRM_FORMAT_ARGB8888;
+        fb->pixel_format = DRM_FORMAT_XRGB8888;
         drm_fb_get_bpp_depth(fb->pixel_format, &fb->depth,
             &fb->bits_per_pixel);
 	tegra_drm_framebuffer_init(ddev, tegra_fb);
