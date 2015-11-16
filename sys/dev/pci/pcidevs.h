@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1233 2015/11/06 12:05:49 nonaka Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1234 2015/11/16 14:20:00 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1240 2015/11/06 12:05:18 nonaka Exp
+ *	NetBSD: pcidevs,v 1.1241 2015/11/16 14:19:39 msaitoh Exp
  */
 
 /*
@@ -3195,6 +3195,38 @@
 #define	PCI_PRODUCT_INTEL_C2000_SGMII	0x1f41		/* C2000 Ethernet(SGMII) */
 #define	PCI_PRODUCT_INTEL_C2000_DUMMYGBE	0x1f42		/* C2000 Ethernet(Dummy function) */
 #define	PCI_PRODUCT_INTEL_C2000_25GBE	0x1f45		/* C2000 Ethernet(2.5Gbe) */
+#define	PCI_PRODUCT_INTEL_BSW_HB	0x2280		/* Braswell Soc Transaction Router */
+#define	PCI_PRODUCT_INTEL_BSW_HDA	0x2284		/* Braswell HD Audio */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_DMA_2	0x2286		/* Braswell SIO DMA */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_1	0x228a		/* Braswell Serial */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_2	0x228c		/* Braswell Serial */
+#define	PCI_PRODUCT_INTEL_BSW_SMB	0x2292		/* Braswell PCU SMBus */
+#define	PCI_PRODUCT_INTEL_BSW_SSC_MMC	0x2294		/* Braswell SCC MMC Port */
+#define	PCI_PRODUCT_INTEL_BSW_SSC_SDIO	0x2295		/* Braswell SCC SDIO Port */
+#define	PCI_PRODUCT_INTEL_BSW_SSC_SD	0x2296		/* Braswell SCC SD Port */
+#define	PCI_PRODUCT_INTEL_BSW_TXE	0x2298		/* Braswell TXE */
+#define	PCI_PRODUCT_INTEL_BSW_PCU_LPC	0x229c		/* Braswell PCU LPC */
+#define	PCI_PRODUCT_INTEL_BSW_AHCI	0x22a3		/* Braswell AHCI */
+#define	PCI_PRODUCT_INTEL_BSW_LPE_AUDIO	0x22a8		/* Braswell Low Power Engine Audio */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_1	0x22b0		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_2	0x22b1		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_3	0x22b2		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_CHV_IGD_4	0x22b3		/* HD Graphics */
+#define	PCI_PRODUCT_INTEL_BSW_XHCI	0x22b5		/* Braswell xHCI */
+#define	PCI_PRODUCT_INTEL_BSW_ISP_CAMERA	0x22b8		/* Braswell ISP Camera */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_DMA_1	0x22c0		/* Braswell SIO DMA */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_1	0x22c1		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_2	0x22c2		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_3	0x22c3		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_4	0x22c4		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_5	0x22c5		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_6	0x22c6		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_SIO_I2C_7	0x22c7		/* Braswell SIO I2C */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_1	0x22c8		/* Braswell PCIe */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_2	0x22ca		/* Braswell PCIe */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_3	0x22cc		/* Braswell PCIe */
+#define	PCI_PRODUCT_INTEL_BSW_PCIE_4	0x22ce		/* Braswell PCIe */
+#define	PCI_PRODUCT_INTEL_BSW_PUINT	0x22dc		/* Braswell Power Management */
 #define	PCI_PRODUCT_INTEL_DH89XXCC_LPC	0x2310		/* DH89xxCC LPC Controller */
 #define	PCI_PRODUCT_INTEL_DH89XXCC_SATA_1	0x2323		/* DH89xxCC SATA Controller */
 #define	PCI_PRODUCT_INTEL_DH89XXCC_SATA_2	0x2326		/* DH89xxCC SATA Controller */
