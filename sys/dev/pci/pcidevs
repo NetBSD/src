@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1241 2015/11/16 14:19:39 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1242 2015/11/16 14:59:45 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3193,7 +3193,7 @@ product INTEL BSW_HDA		0x2284	Braswell HD Audio
 product INTEL BSW_SIO_DMA_2	0x2286	Braswell SIO DMA
 product INTEL BSW_SIO_HSUART_1	0x228a	Braswell Serial
 product INTEL BSW_SIO_HSUART_2	0x228c	Braswell Serial
-product INTEL BSW_SMB		0x2292	Braswell PCU SMBus
+product INTEL BSW_PCU_SMB	0x2292	Braswell PCU SMBus
 product INTEL BSW_SSC_MMC	0x2294	Braswell SCC MMC Port
 product INTEL BSW_SSC_SDIO	0x2295	Braswell SCC SDIO Port
 product INTEL BSW_SSC_SD	0x2296	Braswell SCC SD Port
