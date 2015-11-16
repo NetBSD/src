@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs_data.h,v 1.1233 2015/11/16 14:20:00 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs_data.h,v 1.1234 2015/11/16 15:00:13 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1241 2015/11/16 14:19:39 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1242 2015/11/16 14:59:45 msaitoh Exp
  */
 
 /*
@@ -5153,7 +5153,7 @@ static const uint16_t pci_products[] = {
 	    19998, 10684, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_SIO_HSUART_2, 
 	    19998, 10684, 0,
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_SMB, 
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_PCU_SMB, 
 	    19998, 17979, 8294, 0,
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_BSW_SSC_MMC, 
 	    19998, 16999, 20015, 7955, 0,

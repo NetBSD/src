@@ -1,10 +1,10 @@
-/*	$NetBSD: pcidevs.h,v 1.1234 2015/11/16 14:20:00 msaitoh Exp $	*/
+/*	$NetBSD: pcidevs.h,v 1.1235 2015/11/16 15:00:13 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: pcidevs,v 1.1241 2015/11/16 14:19:39 msaitoh Exp
+ *	NetBSD: pcidevs,v 1.1242 2015/11/16 14:59:45 msaitoh Exp
  */
 
 /*
@@ -3200,7 +3200,7 @@
 #define	PCI_PRODUCT_INTEL_BSW_SIO_DMA_2	0x2286		/* Braswell SIO DMA */
 #define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_1	0x228a		/* Braswell Serial */
 #define	PCI_PRODUCT_INTEL_BSW_SIO_HSUART_2	0x228c		/* Braswell Serial */
-#define	PCI_PRODUCT_INTEL_BSW_SMB	0x2292		/* Braswell PCU SMBus */
+#define	PCI_PRODUCT_INTEL_BSW_PCU_SMB	0x2292		/* Braswell PCU SMBus */
 #define	PCI_PRODUCT_INTEL_BSW_SSC_MMC	0x2294		/* Braswell SCC MMC Port */
 #define	PCI_PRODUCT_INTEL_BSW_SSC_SDIO	0x2295		/* Braswell SCC SDIO Port */
 #define	PCI_PRODUCT_INTEL_BSW_SSC_SD	0x2296		/* Braswell SCC SD Port */
