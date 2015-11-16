@@ -1,5 +1,7 @@
+/*	$NetBSD: luac.c,v 1.2.2.2 2015/11/16 11:14:48 msaitoh Exp $	*/
+
 /*
-** $Id: luac.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
+** Id: luac.c,v 1.75 2015/03/12 01:58:27 lhf Exp 
 ** Lua compiler (saves bytecodes to files; also lists bytecodes)
 ** See Copyright Notice in lua.h
 */
@@ -206,7 +208,7 @@ int main(int argc, char* argv[])
 }
 
 /*
-** $Id: luac.c,v 1.2.2.1 2015/02/04 21:32:46 martin Exp $
+** Id: luac.c,v 1.75 2015/03/12 01:58:27 lhf Exp 
 ** print bytecodes
 ** See Copyright Notice in lua.h
 */
@@ -226,7 +228,7 @@ int main(int argc, char* argv[])
 static void PrintString(const TString* ts)
 {
  const char* s=getstr(ts);
- size_t i,n=ts->len;
+ size_t i,n=tsslen(ts);
  printf("%c",'"');
  for (i=0; i<n; i++)
  {
