@@ -1,4 +1,4 @@
-/*	$NetBSD: grf_cv.c,v 1.58 2015/11/12 12:01:53 phx Exp $ */
+/*	$NetBSD: grf_cv.c,v 1.59 2015/11/16 21:24:06 phx Exp $ */
 
 /*
  * Copyright (c) 1995 Michael Teske
@@ -33,7 +33,7 @@
 #include "opt_amigacons.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.58 2015/11/12 12:01:53 phx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grf_cv.c,v 1.59 2015/11/16 21:24:06 phx Exp $");
 
 #include "grfcv.h"
 #include "ite.h"
@@ -543,8 +543,10 @@ grfcvattach(device_t parent, device_t self, void *aux)
 		gp->g_defaultscr = &cv_defaultscreen;
 		gp->g_scrlist = &cv_screenlist;
 #else
+#if NITE > 0
 		grfcv_iteinit(gp);
 #endif
+#endif /* NWSDISPLAY > 0 */
 		(void)cv_load_mon(gp, &cvconsole_mode);
 #endif
 	}
@@ -2387,7 +2389,7 @@ cv_wscopyrows(void *c, int srcrow, int dstrow, int nrows)
 	gp = scr->scr_cookie;
 	src = dst = gp->g_fbkva;
 	n = ri->ri_cols * nrows;
-	if (src < dst) {
+	if (srcrow < dstrow) {
 		/* need to copy backwards */
 		src += gp->g_rowoffset[srcrow + nrows] << 1;
 		dst += gp->g_rowoffset[dstrow + nrows] << 1;
@@ -2485,7 +2487,7 @@ cv_wsioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 		return 0;
 
 	case WSDISPLAYIO_SVIDEO:
-		return cv_blank(gp, *(u_int *)data == WSDISPLAYIO_VIDEO_OFF);
+		return cv_blank(gp, *(u_int *)data == WSDISPLAYIO_VIDEO_ON);
 
 	case WSDISPLAYIO_SMODE:
 		if ((*(int *)data) != gp->g_wsmode) {
@@ -2525,33 +2527,33 @@ cv_get_fbinfo(struct grf_softc *gp, struct wsdisplayio_fbinfo *fbi)
 	md = monitor_current;
 	abits = 0;
 
-	fbi->fbi_width = md->disp_width;
-	fbi->fbi_height = md->disp_height;
-	fbi->fbi_bitsperpixel = md->depth;
-
 	switch (md->depth) {
 	case 8:
-		fbi->fbi_stride = md->disp_width;
+		fbi->fbi_bitsperpixel = 8;
 		rbits = gbits = bbits = 6;  /* keep gcc happy */
 		break;
 	case 15:
-		fbi->fbi_stride = md->disp_width * 2;
+		fbi->fbi_bitsperpixel = 16;
 		rbits = gbits = bbits = 5;
 		break;
 	case 16:
-		fbi->fbi_stride = md->disp_width * 2;
+		fbi->fbi_bitsperpixel = 16;
 		rbits = bbits = 5;
 		gbits = 6;
 		break;
 	case 32:
 		abits = 8;
 	case 24:
-		fbi->fbi_stride = md->disp_width * 4;
+		fbi->fbi_bitsperpixel = 32;
 		rbits = gbits = bbits = 8;
 		break;
 	default:
 		return EINVAL;
 	}
+
+	fbi->fbi_stride = (fbi->fbi_bitsperpixel / 8) * md->disp_width;
+	fbi->fbi_width = md->disp_width;
+	fbi->fbi_height = md->disp_height;
 
 	if (md->depth > 8) {
 		fbi->fbi_pixeltype = WSFB_RGB;
