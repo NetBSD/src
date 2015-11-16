@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.107 2014/08/10 16:44:36 tls Exp $	*/
+/*	$NetBSD: ucom.c,v 1.107.2.1 2015/11/16 14:41:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.107 2014/08/10 16:44:36 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.107.2.1 2015/11/16 14:41:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -218,6 +218,8 @@ ucom_attach(device_t parent, device_t self, void *aux)
 	if (uca->info != NULL)
 		aprint_normal(": %s", uca->info);
 	aprint_normal("\n");
+
+	prop_dictionary_set_int32(device_properties(self), "port", uca->portno);
 
 	sc->sc_dev = self;
 	sc->sc_udev = uca->device;
