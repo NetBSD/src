@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.231.2.1 2015/03/09 08:56:01 snj Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.231.2.2 2015/11/16 14:40:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.231.2.1 2015/03/09 08:56:01 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.231.2.2 2015/11/16 14:40:41 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1434,6 +1434,10 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	    "device-driver", dev->dv_cfdriver->cd_name);
 	prop_dictionary_set_uint16(dev->dv_properties,
 	    "device-unit", dev->dv_unit);
+	if (parent != NULL) {
+		prop_dictionary_set_cstring(dev->dv_properties,
+		    "device-parent", device_xname(parent));
+	}
 
 	if (dev->dv_cfdriver->cd_attrs != NULL)
 		config_add_attrib_dict(dev);
