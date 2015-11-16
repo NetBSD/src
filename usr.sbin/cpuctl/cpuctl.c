@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.26 2015/11/16 02:02:41 mrg Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.27 2015/11/16 02:04:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.26 2015/11/16 02:02:41 mrg Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.27 2015/11/16 02:04:32 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: cpuctl.c,v 1.26 2015/11/16 02:02:41 mrg Exp $");
 
 #include "cpuctl.h"
 
-static u_int	getcpuid(char **);
+static u_int	getcpuid(char *);
 __dead static void	usage(void);
 
 static void	cpu_identify(char **);
@@ -148,7 +148,7 @@ cpu_online(char **argv)
 {
 	cpustate_t cs;
 
-	cs.cs_id = getcpuid(argv);
+	cs.cs_id = getcpuid(*argv);
 	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETSTATE");
 	cs.cs_online = true;
@@ -161,7 +161,7 @@ cpu_offline(char **argv)
 {
 	cpustate_t cs;
 
-	cs.cs_id = getcpuid(argv);
+	cs.cs_id = getcpuid(*argv);
 	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETSTATE");
 	cs.cs_online = false;
@@ -174,7 +174,7 @@ cpu_intr(char **argv)
 {
 	cpustate_t cs;
 
-	cs.cs_id = getcpuid(argv);
+	cs.cs_id = getcpuid(*argv);
 	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETSTATE");
 	cs.cs_intr = true;
@@ -187,7 +187,7 @@ cpu_nointr(char **argv)
 {
 	cpustate_t cs;
 
-	cs.cs_id = getcpuid(argv);
+	cs.cs_id = getcpuid(*argv);
 	if (ioctl(fd, IOC_CPU_GETSTATE, &cs) < 0)
 		err(EXIT_FAILURE, "IOC_CPU_GETSTATE");
 	cs.cs_intr = false;
@@ -255,7 +255,7 @@ cpu_identify(char **argv)
 	cpuset_t *cpuset;
 
 	np = sysconf(_SC_NPROCESSORS_CONF);
-	id = getcpuid(argv);
+	id = getcpuid(*argv);
 	snprintf(name, sizeof(name), "cpu%u", id);
 
 	if (np != 1) {
@@ -279,13 +279,13 @@ cpu_identify(char **argv)
 }
 
 static u_int
-getcpuid(char **argv)
+getcpuid(char *arg)
 {
 	char *argp;
 	u_int id;
 	long np;
 
-	id = (u_int)strtoul(argv[0], &argp, 0);
+	id = (u_int)strtoul(arg, &argp, 0);
 	if (*argp != '\0')
 		usage();
 
