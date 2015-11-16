@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_gem.c,v 1.1 2015/11/12 00:43:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_gem.c,v 1.2 2015/11/16 21:41:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_gem.c,v 1.1 2015/11/12 00:43:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_gem.c,v 1.2 2015/11/16 21:41:29 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <uvm/uvm.h>
@@ -64,6 +64,8 @@ tegra_drm_obj_alloc(struct drm_device *ddev, size_t size)
 	    obj->dmasize, NULL, BUS_DMA_WAITOK);
 	if (error)
 		goto destroy;
+
+	memset(obj->dmap, 0, obj->dmasize);
 
 	drm_gem_private_object_init(ddev, &obj->base, size);
 
