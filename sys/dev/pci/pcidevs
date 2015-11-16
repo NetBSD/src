@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1240 2015/11/06 12:05:18 nonaka Exp $
+$NetBSD: pcidevs,v 1.1241 2015/11/16 14:19:39 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3188,6 +3188,38 @@ product INTEL C2000_1000KX	0x1f40	C2000 Ethernet(1000BASE-KX)
 product INTEL C2000_SGMII	0x1f41	C2000 Ethernet(SGMII)
 product INTEL C2000_DUMMYGBE	0x1f42	C2000 Ethernet(Dummy function)
 product INTEL C2000_25GBE	0x1f45	C2000 Ethernet(2.5Gbe)
+product INTEL BSW_HB		0x2280	Braswell Soc Transaction Router
+product INTEL BSW_HDA		0x2284	Braswell HD Audio
+product INTEL BSW_SIO_DMA_2	0x2286	Braswell SIO DMA
+product INTEL BSW_SIO_HSUART_1	0x228a	Braswell Serial
+product INTEL BSW_SIO_HSUART_2	0x228c	Braswell Serial
+product INTEL BSW_SMB		0x2292	Braswell PCU SMBus
+product INTEL BSW_SSC_MMC	0x2294	Braswell SCC MMC Port
+product INTEL BSW_SSC_SDIO	0x2295	Braswell SCC SDIO Port
+product INTEL BSW_SSC_SD	0x2296	Braswell SCC SD Port
+product INTEL BSW_TXE		0x2298	Braswell TXE
+product INTEL BSW_PCU_LPC	0x229c	Braswell PCU LPC
+product INTEL BSW_AHCI		0x22a3	Braswell AHCI
+product INTEL BSW_LPE_AUDIO	0x22a8	Braswell Low Power Engine Audio
+product INTEL CHV_IGD_1		0x22b0	HD Graphics
+product INTEL CHV_IGD_2		0x22b1	HD Graphics
+product INTEL CHV_IGD_3		0x22b2	HD Graphics
+product INTEL CHV_IGD_4		0x22b3	HD Graphics
+product INTEL BSW_XHCI		0x22b5	Braswell xHCI
+product INTEL BSW_ISP_CAMERA	0x22b8	Braswell ISP Camera
+product INTEL BSW_SIO_DMA_1	0x22c0	Braswell SIO DMA
+product INTEL BSW_SIO_I2C_1	0x22c1	Braswell SIO I2C
+product INTEL BSW_SIO_I2C_2	0x22c2	Braswell SIO I2C
+product INTEL BSW_SIO_I2C_3	0x22c3	Braswell SIO I2C
+product INTEL BSW_SIO_I2C_4	0x22c4	Braswell SIO I2C
+product INTEL BSW_SIO_I2C_5	0x22c5	Braswell SIO I2C
+product INTEL BSW_SIO_I2C_6	0x22c6	Braswell SIO I2C
+product INTEL BSW_SIO_I2C_7	0x22c7	Braswell SIO I2C
+product INTEL BSW_PCIE_1	0x22c8	Braswell PCIe
+product INTEL BSW_PCIE_2	0x22ca	Braswell PCIe
+product INTEL BSW_PCIE_3	0x22cc	Braswell PCIe
+product INTEL BSW_PCIE_4	0x22ce	Braswell PCIe
+product INTEL BSW_PUINT		0x22dc	Braswell Power Management
 product INTEL DH89XXCC_LPC	0x2310	DH89xxCC LPC Controller
 product INTEL DH89XXCC_SATA_1	0x2323	DH89xxCC SATA Controller
 product INTEL DH89XXCC_SATA_2	0x2326	DH89xxCC SATA Controller
