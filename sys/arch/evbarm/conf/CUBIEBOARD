@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.43 2015/11/15 21:31:29 bouyer Exp $
+#	$NetBSD: CUBIEBOARD,v 1.44 2015/11/16 12:35:54 bouyer Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -163,21 +163,6 @@ ohci*		at awinusb?
 ehci*		at awinusb?
 usb*		at ohci?
 usb*		at ehci?
-
-# USB HID device
-uhidev* at uhub? port ? configuration ? interface ?
-
-# USB Mice
-ums*	at uhidev? reportid ?
-wsmouse* at ums? mux 0
-
-# USB generic touchscreen
-uts*	at uhidev? reportid ?
-wsmouse* at uts? mux 0
-
-# USB Keyboards
-ukbd*	at uhidev? reportid ?
-wskbd*	at ukbd? console ? mux 1
 
 # USB OTG
 motg0		at awinio0
