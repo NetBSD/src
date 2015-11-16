@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.8 2015/11/15 14:39:12 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.9 2015/11/16 21:14:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.8 2015/11/15 14:39:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.9 2015/11/16 21:14:51 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -659,14 +659,34 @@ static int
 tegra_crtc_mode_set_base(struct drm_crtc *crtc, int x, int y,
     struct drm_framebuffer *old_fb)
 {
-	return tegra_crtc_do_set_base(crtc, old_fb, x, y, 0);
+	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
+	
+	tegra_crtc_do_set_base(crtc, old_fb, x, y, 0);
+
+	/* Commit settings */
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_WIN_A_UPDATE);
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_WIN_A_ACT_REQ);
+
+	return 0;
 }
 
 static int
 tegra_crtc_mode_set_base_atomic(struct drm_crtc *crtc,
     struct drm_framebuffer *fb, int x, int y, enum mode_set_atomic state)
 {
-	return tegra_crtc_do_set_base(crtc, fb, x, y, 1);
+	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
+
+	tegra_crtc_do_set_base(crtc, fb, x, y, 1);
+
+	/* Commit settings */
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_WIN_A_UPDATE);
+	DC_WRITE(tegra_crtc, DC_CMD_STATE_CONTROL_REG,
+	    DC_CMD_STATE_CONTROL_WIN_A_ACT_REQ);
+
+	return 0;
 }
 
 static void
