@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.14 2015/11/16 07:38:15 msaitoh Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.15 2015/11/16 14:47:16 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -754,3 +754,10 @@ sys/arch/xen/xen/xbdback_xenbus.c		1.61
 	when a userland process could use all CPU.
 	Should fix the problem reported by Torbj?rn Granlund on port-xen@
 	[bouyer, ticket #1040]
+
+sys/arch/sparc64/sparc64/locore.s		1.386
+sys/arch/sparc64/sparc64/netbsd32_machdep.c	1.105-1.106
+sys/arch/sparc64/sparc64/vm_machdep.c		1.101
+
+	Fix various sparc64 compat_netbsd32 issues.
+	[martin, ticket #1028]
