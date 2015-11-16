@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuctl.c,v 1.25 2014/12/16 04:07:40 msaitoh Exp $	*/
+/*	$NetBSD: cpuctl.c,v 1.26 2015/11/16 02:02:41 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #ifndef lint
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: cpuctl.c,v 1.25 2014/12/16 04:07:40 msaitoh Exp $");
+__RCSID("$NetBSD: cpuctl.c,v 1.26 2015/11/16 02:02:41 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -51,6 +51,7 @@ __RCSID("$NetBSD: cpuctl.c,v 1.25 2014/12/16 04:07:40 msaitoh Exp $");
 #include <util.h>
 #include <time.h>
 #include <sched.h>
+#include <stdbool.h>
 
 #include "cpuctl.h"
 
@@ -67,18 +68,18 @@ static void	cpu_ucode(char **);
 
 static struct cmdtab {
 	const char	*label;
-	int	takesargs;
-	int	argsoptional;
+	bool	takesargs;
+	bool	argsoptional;
 	void	(*func)(char **);
 } const cpu_cmdtab[] = {
-	{ "identify", 1, 0, cpu_identify },
-	{ "list", 0, 0, cpu_list },
-	{ "offline", 1, 0, cpu_offline },
-	{ "online", 1, 0, cpu_online },
-	{ "intr", 1, 0, cpu_intr },
-	{ "nointr", 1, 0, cpu_nointr },
-	{ "ucode", 1, 1, cpu_ucode },
-	{ NULL, 0, 0, NULL },
+	{ "identify",	true,  false, cpu_identify },
+	{ "list",	false, false, cpu_list },
+	{ "offline",	true,  false, cpu_offline },
+	{ "online",	true,  false, cpu_online },
+	{ "intr",	true,  false, cpu_intr },
+	{ "nointr",	true,  false, cpu_nointr },
+	{ "ucode",	true,  true,  cpu_ucode },
+	{ NULL,		false, false, NULL },
 };
 
 static int	fd;
