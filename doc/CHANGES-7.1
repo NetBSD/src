@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.29 2015/11/08 23:30:08 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.30 2015/11/16 07:37:55 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1493,3 +1493,10 @@ sys/dev/usb/uplcom.c				1.76
 	My uplcom(4) now works on RPI.
 	[skrll, ticket #1027]
 
+sys/arch/xen/xen/xbdback_xenbus.c		1.61
+
+	Fix typo which caused the kenrel thread to be created with a 0
+	priority. This would cause the thread to be almost never scheduled
+	when a userland process could use all CPU.
+	Should fix the problem reported by Torbj?rn Granlund on port-xen@
+	[bouyer, ticket #1040]
