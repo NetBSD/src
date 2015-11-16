@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.55.2.1.4.1 2013/11/07 20:18:50 snj Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.55.2.1.4.2 2015/11/16 07:53:01 msaitoh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.55.2.1.4.1 2013/11/07 20:18:50 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.55.2.1.4.2 2015/11/16 07:53:01 msaitoh Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -648,7 +648,7 @@ xbdback_connect(struct xbdback_instance *xbdi)
 	hypervisor_enable_event(xbdi->xbdi_evtchn);
 	hypervisor_notify_via_evtchn(xbdi->xbdi_evtchn);
 
-	if (kthread_create(IPL_NONE, KTHREAD_MPSAFE, NULL,
+	if (kthread_create(PRI_NONE, KTHREAD_MPSAFE, NULL,
 	    xbdback_thread, xbdi, NULL, "%s", xbdi->xbdi_name) == 0)
 		return 0;
 
