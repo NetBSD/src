@@ -1,4 +1,4 @@
-/*	$NetBSD: oea_machdep.c,v 1.63.2.1 2015/11/15 16:36:57 bouyer Exp $	*/
+/*	$NetBSD: oea_machdep.c,v 1.63.2.2 2015/11/16 09:00:01 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2002 Matt Thomas
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.63.2.1 2015/11/15 16:36:57 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.63.2.2 2015/11/16 09:00:01 bouyer Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: oea_machdep.c,v 1.63.2.1 2015/11/15 16:36:57 bouyer 
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -146,6 +147,14 @@ oea_init(void (*handler)(void))
 	exc_base = 0;
 #endif
 	KASSERT(mfspr(SPR_SPRG0) == (uintptr_t)ci);
+
+#if defined (PPC_OEA64_BRIDGE) && defined (PPC_OEA)
+	if (oeacpufeat & OEACPU_64_BRIDGE)
+		pmap_setup64bridge();
+	else
+		pmap_setup32();
+#endif
+
 
 	cpuvers = mfpvr() >> 16;
 
@@ -280,8 +289,8 @@ oea_init(void (*handler)(void))
 	 * Install a branch absolute to trap0 to force a panic.
 	 */
 	if ((uintptr_t)trap0 < 0x2000000) {
-		*(uint32_t *) 0 = 0x7c6802a6;
-		*(uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
+		*(volatile uint32_t *) 0 = 0x7c6802a6;
+		*(volatile uint32_t *) 4 = 0x48000002 | (uintptr_t) trap0;
 	}
 
 	/*
@@ -298,6 +307,16 @@ oea_init(void (*handler)(void))
 #define	B		0x48000000
 #define	TLBSYNC		0x7c00046c
 #define	SYNC		0x7c0004ac
+#ifdef PPC_OEA64_BRIDGE
+#define	MFMSR_MASK	0xfc1fffff
+#define	MFMSR		0x7c0000a6
+#define	MTMSRD_MASK	0xfc1effff
+#define	MTMSRD		0x7c000164
+#define RLDICL_MASK	0xfc00001c
+#define RLDICL		0x78000000
+#define	RFID		0x4c000024
+#define	RFI		0x4c000064
+#endif
 
 #ifdef ALTIVEC
 #define	MFSPR_VRSAVE	0x7c0042a6
@@ -320,9 +339,7 @@ oea_init(void (*handler)(void))
 	if (scratch & PSL_VEC) {
 		cpu_altivec = 1;
 	} else {
-		int *ip = trapstart;
-		
-		for (; ip < trapend; ip++) {
+		for (int *ip = trapstart; ip < trapend; ip++) {
 			if ((ip[0] & MxSPR_MASK) == MFSPR_VRSAVE) {
 				ip[0] = NOP;	/* mfspr */
 				ip[1] = NOP;	/* stw */
@@ -343,9 +360,7 @@ oea_init(void (*handler)(void))
 	 * sequences where we zap/restore BAT registers on kernel exit/entry.
 	 */
 	if (cpuvers != MPC601) {
-		int *ip = trapstart;
-		
-		for (; ip < trapend; ip++) {
+		for (int *ip = trapstart; ip < trapend; ip++) {
 			if ((ip[0] & MxSPR_MASK) == MFSPR_MQ) {
 				ip[0] = NOP;	/* mfspr */
 				ip[1] = NOP;	/* stw */
@@ -360,6 +375,39 @@ oea_init(void (*handler)(void))
 			}
 		}
 	}
+
+#ifdef PPC_OEA64_BRIDGE
+	if ((oeacpufeat & OEACPU_64_BRIDGE) == 0) {
+		for (int *ip = (int *)exc_base;
+		     (uintptr_t)ip <= exc_base + EXC_LAST;
+		     ip++) {
+			if ((ip[0] & MFMSR_MASK) == MFMSR
+			    && (ip[1] & RLDICL_MASK) == RLDICL
+			    && (ip[2] & MTMSRD_MASK) == MTMSRD) {
+				*ip++ = NOP;
+				*ip++ = NOP;
+				ip[0] = NOP;
+			} else if (*ip == RFID) {
+				*ip = RFI;
+			}
+		}
+
+		/*
+		 * Now replace each rfid instruction with a rfi instruction.
+		 */
+		for (int *ip = trapstart; ip < trapend; ip++) {
+			if ((ip[0] & MFMSR_MASK) == MFMSR
+			    && (ip[1] & RLDICL_MASK) == RLDICL
+			    && (ip[2] & MTMSRD_MASK) == MTMSRD) {
+				*ip++ = NOP;
+				*ip++ = NOP;
+				ip[0] = NOP;
+			} else if (*ip == RFID) {
+				*ip = RFI;
+			}
+		}
+	}
+#endif /* PPC_OEA64_BRIDGE */
 
 	/*
 	 * Sync the changed instructions.
@@ -381,10 +429,11 @@ oea_init(void (*handler)(void))
 		extern int kernel_text[], etext[];
 		int *ip;
 
-		for (ip = kernel_text; ip < etext; ip++)
+		for (ip = kernel_text; ip < etext; ip++) {
 			if (*ip == TLBSYNC) {
 				*ip = SYNC;
 				__syncicache(ip, sizeof(*ip));
+			}
 		}
 	}
 #endif /* PPC_OEA601 */
@@ -445,9 +494,16 @@ mpc601_ioseg_add(paddr_t pa, register_t len)
 	 * in pmap_bootstrap().
 	 */
 	iosrtable[i] = SR601(SR601_Ks, SR601_BUID_MEMFORCED, 0, i);
+
+	/*
+	 * XXX Setting segment register 0xf on my powermac 7200
+	 * wedges machine so set later in pmap.c
+	 */
+	/*
 	__asm volatile ("mtsrin %0,%1"
 	    ::	"r"(iosrtable[i]),
 		"r"(pa));
+	*/
 }
 #endif /* PPC_OEA601 */
 
@@ -470,11 +526,24 @@ void
 oea_iobat_add(paddr_t pa, register_t len)
 {
 	static int z = 1;
-	const u_int n = __SHIFTOUT(len, (BAT_XBL|BAT_BL) & ~BAT_BL_8M);
+	const u_int n = BAT_BL_TO_SIZE(len) / BAT_BL_TO_SIZE(BAT_BL_8M);
 	const u_int i = BAT_VA2IDX(pa) & -n; /* in case pa was in the middle */
 	const int after_bat3 = (oeacpufeat & OEACPU_HIGHBAT) ? 4 : 8;
 
 	KASSERT(len >= BAT_BL_8M);
+
+	/*
+	 * If the caller wanted a bigger BAT than the hardware supports,
+	 * split it into smaller BATs.
+	 */
+	if (len > BAT_BL_256M && (oeacpufeat & OEACPU_XBSEN) == 0) {
+		u_int xn = BAT_BL_TO_SIZE(len) >> 28;
+		while (xn-- > 0) {
+			oea_iobat_add(pa, BAT_BL_256M);
+			pa += 0x10000000;
+		}
+		return;
+	} 
 
 	const register_t batl = BATL(pa, BAT_I|BAT_G, BAT_PP_RW);
 	const register_t batu = BATU(pa, len, BAT_Vs);
@@ -592,11 +661,14 @@ void
 oea_batinit(paddr_t pa, ...)
 {
 	struct mem_region *allmem, *availmem, *mp;
-	unsigned int cpuvers;
 	register_t msr = mfmsr();
 	va_list ap;
+#ifdef PPC_OEA601
+	unsigned int cpuvers;
 
 	cpuvers = mfpvr() >> 16;
+#endif /* PPC_OEA601 */
+
 	/*
 	 * we need to call this before zapping BATs so OF calls work
 	 */
@@ -813,6 +885,11 @@ oea_install_extint(void (*handler)(void))
 	extern int extint[], extsize[];
 	extern int extint_call[];
 	uintptr_t offset = (uintptr_t)handler - (uintptr_t)extint_call;
+#ifdef PPC_HIGH_VEC
+	const uintptr_t exc_exi_base = EXC_HIGHVEC + EXC_EXI;
+#else
+	const uintptr_t exc_exi_base = EXC_EXI;
+#endif
 	int omsr, msr;
 
 #ifdef	DIAGNOSTIC
@@ -825,13 +902,26 @@ oea_install_extint(void (*handler)(void))
 	    :	"K" ((u_short)~PSL_EE));
 	extint_call[0] = (extint_call[0] & 0xfc000003) | offset;
 	__syncicache((void *)extint_call, sizeof extint_call[0]);
-#ifdef PPC_HIGH_VEC
-	memcpy((void *)(EXC_HIGHVEC + EXC_EXI), extint, (size_t)extsize);
-	__syncicache((void *)(EXC_HIGHVEC + EXC_EXI), (int)extsize);
-#else
-	memcpy((void *)EXC_EXI, extint, (size_t)extsize);
-	__syncicache((void *)EXC_EXI, (int)extsize);
+	memcpy((void *)exc_exi_base, extint, (size_t)extsize);
+#ifdef PPC_OEA64_BRIDGE
+	if ((oeacpufeat & OEACPU_64_BRIDGE) == 0) {
+		for (int *ip = (int *)exc_exi_base;
+		     (uintptr_t)ip <= exc_exi_base + (size_t)extsize;
+		     ip++) {
+			if ((ip[0] & MFMSR_MASK) == MFMSR
+			    && (ip[1] & RLDICL_MASK) == RLDICL
+			    && (ip[2] & MTMSRD_MASK) == MTMSRD) {
+				*ip++ = NOP;
+				*ip++ = NOP;
+				ip[0] = NOP;
+			} else if (*ip == RFID) {
+				*ip = RFI;
+			}
+		}
+	}
 #endif
+	__syncicache((void *)exc_exi_base, (size_t)extsize);
+
 	__asm volatile ("mtmsr %0" :: "r"(omsr));
 }
 
@@ -844,7 +934,7 @@ oea_startup(const char *model)
 	uintptr_t sz;
 	void *v;
 	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
+	char pbuf[9], mstr[128];
 
 	KASSERT(curcpu() != NULL);
 	KASSERT(lwp0.l_cpu != NULL);
@@ -881,7 +971,8 @@ oea_startup(const char *model)
 	printf("%s%s", copyright, version);
 	if (model != NULL)
 		printf("Model: %s\n", model);
-	cpu_identify(NULL, 0);
+	cpu_identify(mstr, sizeof(mstr));
+	cpu_setmodel("%s", mstr);
 
 	format_bytes(pbuf, sizeof(pbuf), ctob((u_int)physmem));
 	printf("total memory = %s\n", pbuf);
