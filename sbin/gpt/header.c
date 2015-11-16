@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.1 2015/11/03 02:19:24 jnemeth Exp $");
+__RCSID("$NetBSD: header.c,v 1.2 2015/11/16 12:24:13 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -62,6 +62,7 @@ usage_header(void)
 static void
 header(void)
 {
+	unsigned int revision;
 	map_t *gpt;
 	struct gpt_hdr *hdr;
 	char buf[128];
@@ -103,7 +104,9 @@ header(void)
 	}
 
 	hdr = gpt->map_data;
-	printf("- GPT Revision: %u\n", hdr->hdr_revision);
+	revision = le32toh(hdr->hdr_revision);
+	printf("- GPT Header Revision: %u.%u\n", revision >> 16,
+	     revision & 0xffff);
 	printf("- First Data Sector: %llu\n",
 	    (long long unsigned)hdr->hdr_lba_start);
 #ifdef HN_AUTOSCALE
