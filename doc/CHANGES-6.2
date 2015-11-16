@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.232 2015/11/15 21:11:59 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.233 2015/11/16 07:54:09 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -12731,3 +12731,10 @@ sys/net/if_gif.c				1.91, 1.92
 	fix CID 980463
 	[knakahara, ticket #1345]
 
+sys/arch/xen/xen/xbdback_xenbus.c		1.61
+
+	Fix typo which caused the kenrel thread to be created with a 0
+	priority. This would cause the thread to be almost never scheduled
+	when a userland process could use all CPU.
+	Should fix the problem reported by Torbj?rn Granlund on port-xen@
+	[bouyer, ticket #1347]
