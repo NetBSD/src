@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.142 2015/11/13 03:56:44 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.143 2015/11/16 09:10:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.142 2015/11/13 03:56:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.143 2015/11/16 09:10:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2185,7 +2185,7 @@ pci_conf_print_aer_cap(const pcireg_t *regs, int capoff, int extcapoff)
 
 	if (pci_conf_find_cap(regs, capoff, PCI_CAP_PCIEXPRESS, &pcie_capoff)) {
 		reg = regs[o2i(pcie_capoff)];
-		pcie_devtype = reg & PCIE_XCAP_TYPE_MASK;
+		pcie_devtype = PCIE_XCAP_TYPE(reg);
 		/* PCIe DW9 to DW14 is for PCIe 2.0 and newer */
 		if (__SHIFTOUT(reg, PCIE_XCAP_VER_MASK) >= 2) {
 			reg = regs[o2i(pcie_capoff + PCIE_DCAP2)];
