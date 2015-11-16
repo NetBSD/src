@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.h,v 1.53 2015/08/12 18:28:00 dholland Exp $	*/
+/*	$NetBSD: dump.h,v 1.54 2015/11/16 17:06:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -267,7 +267,7 @@ struct	fstab *fstabsearch(const char *);	/* search fs_file and fs_spec */
 struct	statvfs *mntinfosearch(const char *key);
 
 #ifndef NAME_MAX
-#define NAME_MAX 255
+#define NAME_MAX 511
 #endif
 
 /*
@@ -275,6 +275,7 @@ struct	statvfs *mntinfosearch(const char *key);
  *	a linked list, and then (eventually) arrayified.
  */
 struct dumpdates {
+	/* see DUMP{IN,OUT}FMT in <protocols/dumprestore.h> */
 	char	dd_name[NAME_MAX+3];
 	char	dd_level;
 	time_t	dd_ddate;
