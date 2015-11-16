@@ -1,4 +1,4 @@
-/*	$NetBSD: in.c,v 1.161 2015/08/31 16:46:14 ozaki-r Exp $	*/
+/*	$NetBSD: in.c,v 1.162 2015/11/16 05:39:39 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.161 2015/08/31 16:46:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in.c,v 1.162 2015/11/16 05:39:39 ozaki-r Exp $");
 
 #include "arp.h"
 #include "ether.h"
@@ -1699,6 +1699,7 @@ in_lltable_rtcheck(struct ifnet *ifp, u_int flags, const struct sockaddr *l3addr
 
 	error = 0;
 error:
+	rtfree(rt);
 	return error;
 }
 
