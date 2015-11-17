@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.90 2015/10/09 13:03:55 knakahara Exp $	*/
+/*	$NetBSD: intr.c,v 1.91 2015/11/17 10:34:04 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.90 2015/10/09 13:03:55 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.91 2015/11/17 10:34:04 hannken Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1013,9 +1013,10 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 	 * device's pci_intr_alloc() or this function.
 	 */
 	if (source->is_handlers != NULL) {
-		struct intrsource *isp;
+		struct intrsource *isp, *nisp;
 
-		SIMPLEQ_FOREACH(isp, &io_interrupt_sources, is_list) {
+		SIMPLEQ_FOREACH_SAFE(isp, &io_interrupt_sources,
+		    is_list, nisp) {
 			if (strncmp(intrstr, isp->is_intrid, INTRIDBUF - 1) == 0
 			    && isp->is_handlers == NULL)
 				intr_free_io_intrsource_direct(isp);
