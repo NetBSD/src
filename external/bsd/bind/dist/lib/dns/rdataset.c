@@ -1,7 +1,7 @@
-/*	$NetBSD: rdataset.c,v 1.4.4.1.4.2 2015/11/15 19:12:51 bouyer Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.4.4.1.4.3 2015/11/17 19:31:15 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -82,7 +82,6 @@ dns_rdataset_init(dns_rdataset_t *rdataset) {
 	rdataset->privateuint4 = 0;
 	rdataset->private5 = NULL;
 	rdataset->private6 = NULL;
-	rdataset->private7 = NULL;
 	rdataset->resign = 0;
 }
 
@@ -418,6 +417,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 			 * 'Random' order.
 			 */
 			for (i = 0; i < count; i++) {
+				dns_rdata_t rdata;
 				isc_uint32_t val;
 
 				isc_random_get(&val);
