@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.10 2015/11/14 03:44:52 jakllsch Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.11 2015/11/17 00:08:33 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.10 2015/11/14 03:44:52 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.11 2015/11/17 00:08:33 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -237,21 +237,27 @@ static int
 tegra_pcie_intr(void *priv)
 {
 	struct tegra_pcie_softc *sc = priv;
+	int rv;
 
 	const uint32_t code = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
 	    AFI_INTR_CODE_REG);
 	const uint32_t sig = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
 	    AFI_INTR_SIGNATURE_REG);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_INTR_CODE_REG, 0);
 
 	switch (__SHIFTOUT(code, AFI_INTR_CODE_INT_CODE)) {
 	case AFI_INTR_CODE_SM_MSG:
-		return tegra_pcie_legacy_intr(sc);
+		rv = tegra_pcie_legacy_intr(sc);
+		break;
 	default:
 		device_printf(sc->sc_dev, "intr: code %#x sig %#x\n",
 		    code, sig);
-		return 1;
+		rv = 1;
+		break;
 	}
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_INTR_CODE_REG, 0);
+
+	return rv;
 }
 
 static void
