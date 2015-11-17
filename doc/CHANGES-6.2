@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.234 2015/11/16 09:02:28 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.235 2015/11/17 09:28:43 bouyer Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -12729,3 +12729,11 @@ sys/arch/xen/xen/xbdback_xenbus.c		1.61
 	when a userland process could use all CPU.
 	Should fix the problem reported by Torbj?rn Granlund on port-xen@
 	[bouyer, ticket #1347]
+
+lib/libc/net/getnetnamadr.c			1.43, 1.44 via patch
+lib/libc/net/getaddrinfo.c			patch
+
+	PR/50367: Stefan Schaeckeler: Apply fix to obey RES_CHECKNAME to
+	getnetbyaddr and getnetbyname.
+	[christos, ticket #1340]
+
