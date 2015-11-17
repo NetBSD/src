@@ -1,7 +1,7 @@
-/*	$NetBSD: message.c,v 1.8.4.1.6.2 2015/11/15 19:18:00 bouyer Exp $	*/
+/*	$NetBSD: message.c,v 1.8.4.1.6.3 2015/11/17 19:55:09 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -16,6 +16,8 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+/* Id */
 
 /*! \file */
 
@@ -3268,7 +3270,7 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 				ADD_STRING(target, "; NSID");
 			} else {
 				ADD_STRING(target, "; OPT=");
-				snprintf(buf, sizeof(buf), "%u", optcode);
+				sprintf(buf, "%u", optcode);
 				ADD_STRING(target, buf);
 			}
 

@@ -60,7 +60,7 @@ digcmd () {
     # Default to +noauth and @$ns3
     # Also default to -bX where X is the @value so that OS X will choose
     #      the right IP source address.
-    digcmd_args=`echo "+noadd +time=2 +tries=1 -p 5300 $*" |   \
+    digcmd_args=`echo "+noadd +time=1 +tries=1 -p 5300 $*" |   \
 	   sed -e "/@/!s/.*/& @$ns3/"                          \
 	       -e '/-b/!s/@\([^ ]*\)/@\1 -b\1/'                \
 	       -e '/+n?o?auth/!s/.*/+noauth &/'`
