@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.33 2015/11/17 19:18:19 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.34 2015/11/17 19:22:10 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1584,4 +1584,10 @@ external/bsd/ntp/scripts/mkver			1.8
 
 	PR/50426: Dave Tyson: Fix ntp reported version.
 	[christos, ticket #1036]
+
+sys/arch/arm/omap/omap3_sdhc.c			1.18 via patch
+
+	Fix edma_errint problems with resize_ffs on beaglebone.
+	PR#50288.
+	[jmcneill, ticket #1017]
 
