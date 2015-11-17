@@ -51,26 +51,15 @@ BIND 9
         For up-to-date release notes and errata, see
         http://www.isc.org/software/bind9/releasenotes
 
-BIND 9.9.7-P3
+BIND 9.9.6-P2
 
-	BIND 9.9.7-P3 is a security release addressing the flaws
-	described in CVE-2015-5722 and CVE-2015-5986.
+	BIND 9.9.6-P2 is a security release and addresses the security
+	flaw described in CVE-2015-1349.
 
-BIND 9.9.7-P2
+BIND 9.9.6-P1
 
-       BIND 9.9.7-P2 is a security release addressing the flaw
-       described in CVE-2015-5477.
-
-BIND 9.9.7-P1
-
-       BIND 9.9.7-P1 is a security release addressing the flaw
-       described in CVE-2015-4620.
-
-BIND 9.9.7
-
-	BIND 9.9.7 is a maintenance release and addresses bugs
-	found in BIND 9.9.6 and earlier, as well as the security
-	flaws described in CVE-2014-8500 and CVE-2015-1349.
+	BIND 9.9.6-P1 is a security release and addresses the security
+	flaw described in CVE-2014-8500.
 
 BIND 9.9.6
 

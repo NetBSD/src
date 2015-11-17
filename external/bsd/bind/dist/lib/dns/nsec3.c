@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3.c,v 1.4.4.1.4.2 2015/11/15 19:12:50 bouyer Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.4.4.1.4.3 2015/11/17 19:31:14 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2006, 2008-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2006, 2008-2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -2059,6 +2059,8 @@ dns_nsec3_noexistnodata(dns_rdatatype_t type, dns_name_t* name,
 		    (scope >= 0 && (order > 0 ||
 				    memcmp(hash, nsec3.next, length) < 0)))
 		{
+			char namebuf[DNS_NAME_FORMATSIZE];
+
 			dns_name_format(qname, namebuf, sizeof(namebuf));
 			(*logit)(arg, ISC_LOG_DEBUG(3), "NSEC3 proves "
 				 "name does not exist: '%s'", namebuf);

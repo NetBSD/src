@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldh_link.c,v 1.2.6.1.4.2 2015/11/15 19:12:50 bouyer Exp $	*/
+/*	$NetBSD: openssldh_link.c,v 1.2.6.1.4.3 2015/11/17 19:31:14 bouyer Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -95,7 +95,7 @@ openssldh_computesecret(const dst_key_t *pub, const dst_key_t *priv,
 	if (r.length < len)
 		return (ISC_R_NOSPACE);
 	ret = DH_compute_key(r.base, dhpub->pub_key, dhpriv);
-	if (ret <= 0)
+	if (ret == 0)
 		return (dst__openssl_toresult2("DH_compute_key",
 					       DST_R_COMPUTESECRETFAILURE));
 	isc_buffer_add(secret, len);
@@ -268,10 +268,8 @@ openssldh_destroy(dst_key_t *key) {
 
 static void
 uint16_toregion(isc_uint16_t val, isc_region_t *region) {
-	*region->base = (val & 0xff00) >> 8;
-	isc_region_consume(region, 1);
-	*region->base = (val & 0x00ff);
-	isc_region_consume(region, 1);
+	*region->base++ = (val & 0xff00) >> 8;
+	*region->base++ = (val & 0x00ff);
 }
 
 static isc_uint16_t
@@ -282,8 +280,7 @@ uint16_fromregion(isc_region_t *region) {
 	val = ((unsigned int)(cp[0])) << 8;
 	val |= ((unsigned int)(cp[1]));
 
-	isc_region_consume(region, 2);
-
+	region->base += 2;
 	return (val);
 }
 
@@ -324,16 +321,16 @@ openssldh_todns(const dst_key_t *key, isc_buffer_t *data) {
 	}
 	else
 		BN_bn2bin(dh->p, r.base);
-	isc_region_consume(&r, plen);
+	r.base += plen;
 
 	uint16_toregion(glen, &r);
 	if (glen > 0)
 		BN_bn2bin(dh->g, r.base);
-	isc_region_consume(&r, glen);
+	r.base += glen;
 
 	uint16_toregion(publen, &r);
 	BN_bn2bin(dh->pub_key, r.base);
-	isc_region_consume(&r, publen);
+	r.base += publen;
 
 	isc_buffer_add(data, dnslen);
 
@@ -374,12 +371,10 @@ openssldh_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		return (DST_R_INVALIDPUBLICKEY);
 	}
 	if (plen == 1 || plen == 2) {
-		if (plen == 1) {
-			special = *r.base;
-			isc_region_consume(&r, 1);
-		} else {
+		if (plen == 1)
+			special = *r.base++;
+		else
 			special = uint16_fromregion(&r);
-		}
 		switch (special) {
 			case 1:
 				dh->p = &bn768;
@@ -394,9 +389,10 @@ openssldh_fromdns(dst_key_t *key, isc_buffer_t *data) {
 				DH_free(dh);
 				return (DST_R_INVALIDPUBLICKEY);
 		}
-	} else {
+	}
+	else {
 		dh->p = BN_bin2bn(r.base, plen, NULL);
-		isc_region_consume(&r, plen);
+		r.base += plen;
 	}
 
 	/*
@@ -427,14 +423,15 @@ openssldh_fromdns(dst_key_t *key, isc_buffer_t *data) {
 				return (DST_R_INVALIDPUBLICKEY);
 			}
 		}
-	} else {
+	}
+	else {
 		if (glen == 0) {
 			DH_free(dh);
 			return (DST_R_INVALIDPUBLICKEY);
 		}
 		dh->g = BN_bin2bn(r.base, glen, NULL);
 	}
-	isc_region_consume(&r, glen);
+	r.base += glen;
 
 	if (r.length < 2) {
 		DH_free(dh);
@@ -446,7 +443,7 @@ openssldh_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		return (DST_R_INVALIDPUBLICKEY);
 	}
 	dh->pub_key = BN_bin2bn(r.base, publen, NULL);
-	isc_region_consume(&r, publen);
+	r.base += publen;
 
 	key->key_size = BN_num_bits(dh->p);
 

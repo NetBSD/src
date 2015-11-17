@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.8.4.1.4.2 2015/11/15 19:12:53 bouyer Exp $	*/
+/*	$NetBSD: socket.c,v 1.8.4.1.4.3 2015/11/17 19:31:16 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1785,7 +1785,7 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 		}
 		/*
 		 * Simulate a firewall blocking UDP responses bigger than
-		 * 'maxudp' bytes.
+		 * 512 bytes.
 		 */
 		if (sock->manager->maxudp != 0 && cc > sock->manager->maxudp)
 			return (DOIO_SOFT);
@@ -1879,11 +1879,6 @@ doio_send(isc__socket_t *sock, isc_socketevent_t *dev) {
 	build_msghdr_send(sock, dev, &msghdr, iov, &write_count);
 
  resend:
-	if (sock->type == isc_sockettype_udp &&
-	    sock->manager->maxudp != 0 &&
-	    write_count > (size_t)sock->manager->maxudp)
-		cc = write_count;
-	else
 	cc = sendmsg(sock->fd, &msghdr, 0);
 	send_errno = errno;
 
