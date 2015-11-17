@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.109 2015/11/16 09:10:58 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.110 2015/11/17 17:51:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -36,8 +36,6 @@
 
 /*
  * Standardized PCI configuration information
- *
- * XXX This is not complete.
  */
 
 /*
@@ -524,8 +522,6 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_RESERVED0	0x00
 #define	PCI_CAP_PWRMGMT		0x01
 #define	PCI_CAP_AGP		0x02
-#define PCI_CAP_AGP_MAJOR(cr)	(((cr) >> 20) & 0xf)
-#define PCI_CAP_AGP_MINOR(cr)	(((cr) >> 16) & 0xf)
 #define	PCI_CAP_VPD		0x03
 #define	PCI_CAP_SLOTID		0x04
 #define	PCI_CAP_MSI		0x05
@@ -535,7 +531,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_VENDSPEC	0x09
 #define	PCI_CAP_DEBUGPORT	0x0a
 #define	PCI_CAP_CPCI_RSRCCTL	0x0b
-#define	PCI_CAP_HOTPLUG		0x0c
+#define	PCI_CAP_HOTPLUG		0x0c	/* Standard Hot-Plug Controller(SHPC)*/
 #define	PCI_CAP_SUBVENDOR	0x0d
 #define	PCI_CAP_AGP8		0x0e
 #define	PCI_CAP_SECURE		0x0f
@@ -597,6 +593,8 @@ typedef u_int8_t pci_revision_t;
  * Capability ID: 0x02
  * AGP
  */
+#define PCI_CAP_AGP_MAJOR(cr)	(((cr) >> 20) & 0xf)
+#define PCI_CAP_AGP_MINOR(cr)	(((cr) >> 16) & 0xf)
 
 /*
  * Capability ID: 0x03
@@ -1008,7 +1006,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCAP2_NO_ROPR_PASS	__BIT(10)      /* No RO-enabled PR-PR Passng */
 #define PCIE_DCAP2_LTR_MEC	__BIT(11)      /* LTR Mechanism Supported */
 #define PCIE_DCAP2_TPH_COMP	__BITS(13, 12) /* TPH Completer Supported */
-#define PCIE_DCAP2_OBFF		__BITS(19, 18) /* OBPF */
+#define PCIE_DCAP2_OBFF		__BITS(19, 18) /* Optimized Buffer Flush/Fill*/
 #define PCIE_DCAP2_EXTFMT_FLD	__BIT(20)      /* Extended Fmt Field Support */
 #define PCIE_DCAP2_EETLP_PREF	__BIT(21)      /* End-End TLP Prefix Support */
 #define PCIE_DCAP2_MAX_EETLP	__BITS(23, 22) /* Max End-End TLP Prefix Sup */
@@ -1081,10 +1079,10 @@ struct pci_msix_table_entry {
 	uint32_t pci_msix_value;
 	uint32_t pci_msix_vector_control;
 };
-#define	PCI_MSIX_VECTCTL_HWMASK_MASK	0x00000001
+#define	PCI_MSIX_VECTCTL_MASK	__BIT(0)
 
  /* Max number of MSI-X vectors. See PCI-SIG specification. */
-#define	PCI_MSIX_MAX_VECTORS		2048
+#define	PCI_MSIX_MAX_VECTORS	2048
 
 /*
  * Capability ID: 0x12
@@ -1103,11 +1101,11 @@ struct pci_msix_table_entry {
  * Capability ID: 0x13
  * Advanced Feature
  */
-#define PCI_AFCAPR		0x00	/* Capabilities */
+#define PCI_AFCAPR	0x00	/* Capabilities */
 #define	PCI_AFCAPR_MASK		__BITS(31, 24)
 #define	PCI_AF_TP_CAP		__BIT(24)	/* Transaction Pending */
 #define	PCI_AF_FLR_CAP		__BIT(25)	/* Function Level Reset */
-#define PCI_AFCSR		0x04	/* Control & Status register */
+#define PCI_AFCSR	0x04	/* Control & Status register */
 #define PCI_AFCR_INITIATE_FLR	__BIT(0)	/* Initiate Function LVL RST */
 #define PCI_AFSR_TP		__BIT(8)	/* Transaction Pending */
 
@@ -1368,7 +1366,7 @@ struct pci_rom {
 #define	PCI_EXTCAP_MCAST	0x0012	/* Multicast */
 #define	PCI_EXTCAP_PAGE_REQ	0x0013	/* Page Request */
 #define	PCI_EXTCAP_AMD		0x0014	/* Reserved for AMD */
-#define	PCI_EXTCAP_RESIZE_BAR	0x0015	/* Resizable BAR */
+#define	PCI_EXTCAP_RESIZ_BAR	0x0015	/* Resizable BAR */
 #define	PCI_EXTCAP_DPA		0x0016	/* Dynamic Power Allocation */
 #define	PCI_EXTCAP_TPH_REQ	0x0017	/* TPH Requester */
 #define	PCI_EXTCAP_LTR		0x0018	/* Latency Tolerance Reporting */
@@ -1388,7 +1386,7 @@ struct pci_rom {
  * Extended capability ID: 0x0001
  * Advanced Error Reporting
  */
-#define	PCI_AER_UC_STATUS	0x04	/* Uncorrectable Error Status Register */
+#define	PCI_AER_UC_STATUS	0x04	/* Uncorrectable Error Status Reg. */
 #define	  PCI_AER_UC_UNDEFINED			__BIT(0)
 #define	  PCI_AER_UC_DL_PROTOCOL_ERROR		__BIT(4)
 #define	  PCI_AER_UC_SURPRISE_DOWN_ERROR	__BIT(5)
@@ -1408,7 +1406,7 @@ struct pci_rom {
 #define	  PCI_AER_UC_TLP_PREFIX_BLOCKED_ERROR	__BIT(25)
 #define	PCI_AER_UC_MASK		0x08	/* Uncorrectable Error Mask Register */
 	  /* Shares bits with UC_STATUS */
-#define	PCI_AER_UC_SEVERITY	0x0c	/* Uncorrectable Error Severity Register */
+#define	PCI_AER_UC_SEVERITY	0x0c	/* Uncorrectable Error Severity Reg. */
 	  /* Shares bits with UC_STATUS */
 #define	PCI_AER_COR_STATUS	0x10	/* Correctable Error Status Register */
 #define	  PCI_AER_COR_RECEIVER_ERROR		__BIT(0)
@@ -1421,7 +1419,7 @@ struct pci_rom {
 #define	  PCI_AER_COR_HEADER_LOG_OVERFLOW	__BIT(15)
 #define	PCI_AER_COR_MASK	0x14	/* Correctable Error Mask Register */
 	  /* Shares bits with COR_STATUS */
-#define	PCI_AER_CAP_CONTROL	0x18	/* Advanced Error Capabilities and Control Register */
+#define	PCI_AER_CAP_CONTROL	0x18	/* AE Capabilities and Control Reg. */
 #define	  PCI_AER_FIRST_ERROR_PTR		__BITS(4, 0)
 #define	  PCI_AER_FIRST_ERROR_PTR_S		0
 #define	  PCI_AER_FIRST_ERROR_PTR_M		0x1f
