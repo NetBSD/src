@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.11 2015/11/17 00:08:33 jakllsch Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.12 2015/11/17 22:01:39 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.11 2015/11/17 00:08:33 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.12 2015/11/17 22:01:39 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -55,6 +55,9 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.11 2015/11/17 00:08:33 jakllsch Exp
 static int	tegra_pcie_match(device_t, cfdata_t, void *);
 static void	tegra_pcie_attach(device_t, device_t, void *);
 
+#define TEGRA_PCIE_NBUS 256
+#define TEGRA_PCIE_ECFB (1<<(12 - 8))	/* extended conf frags per bus */
+
 struct tegra_pcie_ih {
 	int			(*ih_callback)(void *);
 	void			*ih_arg;
@@ -68,7 +71,6 @@ struct tegra_pcie_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh_afi;
 	bus_space_handle_t	sc_bsh_rpconf;
-	bus_space_handle_t	sc_bsh_conf;
 	int			sc_intr;
 
 	struct arm32_pci_chipset sc_pc;
@@ -79,12 +81,18 @@ struct tegra_pcie_softc {
 
 	TAILQ_HEAD(, tegra_pcie_ih) sc_intrs;
 	u_int			sc_intrgen;
+
+	bus_space_handle_t	sc_bsh_extc[TEGRA_PCIE_NBUS-1][TEGRA_PCIE_ECFB];
 };
 
 static int	tegra_pcie_intr(void *);
 static void	tegra_pcie_init(pci_chipset_tag_t, void *);
 static void	tegra_pcie_enable(struct tegra_pcie_softc *);
 static void	tegra_pcie_setup(struct tegra_pcie_softc * const);
+static void	tegra_pcie_conf_frag_map(struct tegra_pcie_softc * const,
+					 uint, uint);
+static void	tegra_pcie_conf_map_bus(struct tegra_pcie_softc * const, uint);
+static void	tegra_pcie_conf_map_buses(struct tegra_pcie_softc * const);
 
 static void	tegra_pcie_attach_hook(device_t, device_t,
 				       struct pcibus_attach_args *);
@@ -138,9 +146,7 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_RPCONF_BASE,
 	    TEGRA_PCIE_RPCONF_SIZE, 0, &sc->sc_bsh_rpconf) != 0)
 		panic("couldn't map PCIE root ports");
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_CONF_BASE,
-	    TEGRA_PCIE_CONF_SIZE, 0, &sc->sc_bsh_conf) != 0)
-		panic("couldn't map PCIE configuration");
+	tegra_pcie_conf_map_buses(sc);
 
 	TAILQ_INIT(&sc->sc_intrs);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
@@ -339,6 +345,51 @@ tegra_pcie_enable(struct tegra_pcie_softc *sc)
 	    AFI_INTR_MASK_REG, AFI_INTR_MASK_INT);
 }
 
+static void
+tegra_pcie_conf_frag_map(struct tegra_pcie_softc * const sc, uint bus,
+    uint frg)
+{
+	bus_addr_t a;
+
+	KASSERT(bus >= 1);
+	KASSERT(bus < TEGRA_PCIE_NBUS);
+	KASSERT(frg < TEGRA_PCIE_ECFB);
+
+	if (sc->sc_bsh_extc[bus-1][frg] != 0) {
+		device_printf(sc->sc_dev, "bus %u fragment %#x already "
+		    "mapped\n", bus, frg);
+		return;
+	}
+
+	a = TEGRA_PCIE_EXTC_BASE + (bus << 16) + (frg << 24);
+	if (bus_space_map(sc->sc_bst, a, 1 << 16, 0,
+	    &sc->sc_bsh_extc[bus-1][frg]) != 0)
+		device_printf(sc->sc_dev, "couldn't map PCIE "
+		    "configuration for bus %u fragment %#x", bus, frg);
+}
+
+/* map non-non-extended configuration space for full bus range */
+static void
+tegra_pcie_conf_map_bus(struct tegra_pcie_softc * const sc, uint bus)
+{
+	uint i;
+
+	for (i = 1; i < TEGRA_PCIE_ECFB; i++) {
+		tegra_pcie_conf_frag_map(sc, bus, i);
+	}
+}
+
+/* map non-extended configuration space for full bus range */
+static void
+tegra_pcie_conf_map_buses(struct tegra_pcie_softc * const sc)
+{
+	uint b;
+
+	for (b = 1; b < TEGRA_PCIE_NBUS; b++) {
+		tegra_pcie_conf_frag_map(sc, b, 0);
+	}
+}
+
 void
 tegra_pcie_init(pci_chipset_tag_t pc, void *priv)
 {
@@ -364,6 +415,12 @@ static void
 tegra_pcie_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
+	const pci_chipset_tag_t pc = pba->pba_pc;
+	struct tegra_pcie_softc * const sc = pc->pc_conf_v;
+
+	if (pba->pba_bus >= 1) {
+		tegra_pcie_conf_map_bus(sc, pba->pba_bus);
+	}
 }
 
 static int
@@ -402,16 +459,19 @@ tegra_pcie_conf_read(void *v, pcitag_t tag, int offset)
 
 	tegra_pcie_decompose_tag(v, tag, &b, &d, &f);
 
+	if (b >= TEGRA_PCIE_NBUS)
+		return (pcireg_t) -1;
+
 	if (b == 0) {
 		if (d >= 2 || f != 0)
 			return (pcireg_t) -1;
 		reg = d * 0x1000 + offset;
 		bsh = sc->sc_bsh_rpconf;
 	} else {
-		if ((unsigned int)offset >= PCI_CONF_SIZE)
+		reg = (d << 11) | (f << 8) | (offset & 0xff);
+		bsh = sc->sc_bsh_extc[b-1][(offset >> 8) & 0xf];
+		if (bsh == 0)
 			return (pcireg_t) -1;
-		reg = tag | offset;
-		bsh = sc->sc_bsh_conf;
 	}
 
 	return bus_space_read_4(sc->sc_bst, bsh, reg);
@@ -430,16 +490,19 @@ tegra_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 
 	tegra_pcie_decompose_tag(v, tag, &b, &d, &f);
 
+	if (b >= TEGRA_PCIE_NBUS)
+		return;
+
 	if (b == 0) {
 		if (d >= 2 || f != 0)
 			return;
 		reg = d * 0x1000 + offset;
 		bsh = sc->sc_bsh_rpconf;
 	} else {
-		if ((unsigned int)offset >= PCI_CONF_SIZE)
+		reg = (d << 11) | (f << 8) | (offset & 0xff);
+		bsh = sc->sc_bsh_extc[b-1][(offset >> 8) & 0xf];
+		if (bsh == 0)
 			return;
-		reg = tag | offset;
-		bsh = sc->sc_bsh_conf;
 	}
 
 	bus_space_write_4(sc->sc_bst, bsh, reg, val);
