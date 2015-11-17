@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.143 2015/11/16 09:10:58 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.144 2015/11/17 17:51:42 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.143 2015/11/16 09:10:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.144 2015/11/17 17:51:42 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3191,7 +3191,7 @@ static struct {
 	  pci_conf_print_page_req_cap },
 	{ PCI_EXTCAP_AMD,	"Reserved for AMD",
 	  NULL },
-	{ PCI_EXTCAP_RESIZE_BAR,"Resizable BAR",
+	{ PCI_EXTCAP_RESIZ_BAR,	"Resizable BAR",
 	  NULL },
 	{ PCI_EXTCAP_DPA,	"Dynamic Power Allocation",
 	  NULL },
