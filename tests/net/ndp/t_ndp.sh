@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.6 2015/08/18 00:58:35 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.7 2015/11/17 06:44:13 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -40,6 +40,7 @@ TIMEOUT=1
 atf_test_case cache_expiration cleanup
 atf_test_case command cleanup
 atf_test_case cache_overwriting cleanup
+atf_test_case neighborgcthresh cleanup
 
 cache_expiration_head()
 {
@@ -56,6 +57,12 @@ command_head()
 cache_overwriting_head()
 {
 	atf_set "descr" "Tests for behavior of overwriting NDP caches"
+	atf_set "require.progs" "rump_server"
+}
+
+neighborgcthresh_head()
+{
+	atf_set "descr" "Tests for GC of neighbor caches"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -230,6 +237,68 @@ cache_overwriting_body()
 	return 0
 }
 
+get_n_caches()
+{
+
+	echo $(rump.ndp -a -n |grep -v -e Neighbor -e permanent |wc -l)
+}
+
+neighborgcthresh_body()
+{
+
+	atf_check -s exit:0 ${inetserver} $SOCKSRC
+	atf_check -s exit:0 ${inetserver} $SOCKDST
+
+	setup_dst_server
+	setup_src_server
+
+	export RUMP_SERVER=$SOCKDST
+	for i in $(seq 0 9); do
+		atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${IP6DST}$i
+	done
+
+	export RUMP_SERVER=$SOCKSRC
+
+	# ping to 3 destinations
+	$DEBUG && rump.ndp -n -a
+	for i in $(seq 0 2); do
+		atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 \
+		    ${IP6DST}$i
+	done
+	$DEBUG && rump.ndp -n -a
+
+	# 3 caches should be created
+	atf_check_equal $(get_n_caches) 3
+
+	# ping to additional 3 destinations
+	for i in $(seq 3 5); do
+		atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 \
+		    ${IP6DST}$i
+	done
+	$DEBUG && rump.ndp -n -a
+
+	# 6 caches should be created in total
+	atf_check_equal $(get_n_caches) 6
+
+	# Limit the number of neighbor caches to 5
+	atf_check -s exit:0 -o ignore rump.sysctl -w \
+	    net.inet6.ip6.neighborgcthresh=5
+
+	# ping to additional 4 destinations
+	for i in $(seq 6 9); do
+		atf_check -s exit:0 -o ignore rump.ping6 -n -X $TIMEOUT -c 1 \
+		    ${IP6DST}$i
+	done
+
+	# More than 5 caches should be created in total, but exceeded caches
+	# should be GC-ed
+	if [ "$(get_n_caches)" -gt 5 ]; then
+		atf_fail "Neighbor caches are not GC-ed"
+	fi
+
+	return 0
+}
+
 cleanup()
 {
 	env RUMP_SERVER=$SOCKSRC rump.halt
@@ -281,9 +350,16 @@ cache_overwriting_cleanup()
 	cleanup
 }
 
+neighborgcthresh_cleanup()
+{
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case cache_expiration
 	atf_add_test_case command
 	atf_add_test_case cache_overwriting
+	atf_add_test_case neighborgcthresh
 }
