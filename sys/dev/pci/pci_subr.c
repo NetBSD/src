@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.144 2015/11/17 17:51:42 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.145 2015/11/17 18:26:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.144 2015/11/17 17:51:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.145 2015/11/17 18:26:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1584,14 +1584,17 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("      Active State PM Support: ");
 		val = (reg & PCIE_LCAP_ASPM) >> 10;
 		switch (val) {
+		case 0x0:
+			printf("No ASPM support\n");
+			break;
 		case 0x1:
-			printf("L0s Entry supported\n");
+			printf("L0s supported\n");
+			break;
+		case 0x2:
+			printf("L1 supported\n");
 			break;
 		case 0x3:
 			printf("L0s and L1 supported\n");
-			break;
-		default:
-			printf("Reserved value\n");
 			break;
 		}
 		printf("      L0 Exit Latency: ");
@@ -1792,6 +1795,21 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("LTR Mechanism Supported", reg, PCIE_DCAP2_LTR_MEC);
 	printf("      TPH Completer Supported: %u\n",
 	    (unsigned int)(reg & PCIE_DCAP2_TPH_COMP) >> 12);
+	printf("      LN System CLS: ");
+	switch (__SHIFTOUT(reg, PCIE_DCAP2_LNSYSCLS)) {
+	case 0x0:
+		printf("Not supported or not in effect\n");
+		break;
+	case 0x1:
+		printf("64byte cachelines in effect\n");
+		break;
+	case 0x2:
+		printf("128byte cachelines in effect\n");
+		break;
+	case 0x3:
+		printf("Reserved\n");
+		break;
+	}
 	printf("      OBFF Supported: ");
 	switch ((reg & PCIE_DCAP2_OBFF) >> 18) {
 	case 0x0:
@@ -1907,13 +1925,14 @@ pci_conf_print_msix_cap(const pcireg_t *regs, int capoff)
 	onoff("MSI-X Enable", reg, PCI_MSIX_CTL_ENABLE);
 	reg = regs[o2i(capoff + PCI_MSIX_TBLOFFSET)];
 	printf("    Table offset register: 0x%08x\n", reg);
-	printf("      Table offset: %08x\n", reg & PCI_MSIX_TBLOFFSET_MASK);
-	printf("      BIR: 0x%x\n", reg & PCI_MSIX_TBLBIR_MASK);
+	printf("      Table offset: %08x\n",
+	    (pcireg_t)(reg & PCI_MSIX_TBLOFFSET_MASK));
+	printf("      BIR: 0x%x\n", (pcireg_t)(reg & PCI_MSIX_TBLBIR_MASK));
 	reg = regs[o2i(capoff + PCI_MSIX_PBAOFFSET)];
 	printf("    Pending bit array register: 0x%08x\n", reg);
 	printf("      Pending bit array offset: %08x\n",
-	    reg & PCI_MSIX_PBAOFFSET_MASK);
-	printf("      BIR: 0x%x\n", reg & PCI_MSIX_PBABIR_MASK);
+	    (pcireg_t)(reg & PCI_MSIX_PBAOFFSET_MASK));
+	printf("      BIR: 0x%x\n", (pcireg_t)(reg & PCI_MSIX_PBABIR_MASK));
 }
 
 static void
@@ -1951,6 +1970,8 @@ pci_conf_print_pciaf_cap(const pcireg_t *regs, int capoff)
 
 	reg = regs[o2i(capoff + PCI_AFCAPR)];
 	printf("    AF Capabilities register: 0x%02x\n", (reg >> 24) & 0xff);
+	printf("    AF Structure Length: 0x%02x\n",
+	    (pcireg_t)__SHIFTOUT(reg, PCI_AF_LENGTH));
 	onoff("Transaction Pending", reg, PCI_AF_TP_CAP);
 	onoff("Function Level Reset", reg, PCI_AF_FLR_CAP);
 	reg = regs[o2i(capoff + PCI_AFCSR)];
@@ -1989,7 +2010,8 @@ static struct {
 	{ PCI_CAP_PCIEXPRESS,	"PCI Express",	pci_conf_print_pcie_cap },
 	{ PCI_CAP_MSIX,		"MSI-X",	pci_conf_print_msix_cap },
 	{ PCI_CAP_SATA,		"SATA",		pci_conf_print_sata_cap },
-	{ PCI_CAP_PCIAF,	"Advanced Features", pci_conf_print_pciaf_cap }
+	{ PCI_CAP_PCIAF,	"Advanced Features", pci_conf_print_pciaf_cap},
+	{ PCI_CAP_EA,		"Enhanced Allocation", NULL }
 };
 
 static int
@@ -2674,6 +2696,7 @@ pci_conf_print_ats_cap(const pcireg_t *regs, int capoff, int extcapoff)
 		num = 32;
 	printf("      Invalidate Queue Depth: %u\n", num);
 	onoff("Page Aligned Request", reg, PCI_ATS_CAP_PALIGNREQ);
+	onoff("Global Invalidate", reg, PCI_ATS_CAP_GLOBALINVL);
 
 	printf("    Control register: 0x%04x\n", ctl);
 	printf("      Smallest Translation Unit: %u\n",
@@ -2889,6 +2912,7 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("Unexpected Page Request Group Index", reg,
 	    PCI_PAGE_REQ_STA_UPRGI);
 	onoff("Stopped", reg, PCI_PAGE_REQ_STA_S);
+	onoff("PRG Response PASID Required", reg, PCI_PAGE_REQ_STA_PASIDR);
 
 	reg = regs[o2i(extcapoff + PCI_PAGE_REQ_OUTSTCAPA)];
 	printf("    Outstanding Page Request Capacity: %u\n", reg);
@@ -2897,7 +2921,7 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int capoff, int extcapoff)
 }
 
 /* XXX pci_conf_print_amd_cap */
-/* XXX pci_conf_print_resize_bar_cap */
+/* XXX pci_conf_print_resiz_bar_cap */
 /* XXX pci_conf_print_dpa_cap */
 
 static const char *

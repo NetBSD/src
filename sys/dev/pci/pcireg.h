@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.110 2015/11/17 17:51:42 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.111 2015/11/17 18:26:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -539,6 +539,7 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_CAP_MSIX		0x11
 #define	PCI_CAP_SATA		0x12
 #define	PCI_CAP_PCIAF		0x13
+#define	PCI_CAP_EA		0x14	/* Enhanced Allocation (EA) */
 
 /*
  * Capability ID: 0x01
@@ -1006,6 +1007,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCAP2_NO_ROPR_PASS	__BIT(10)      /* No RO-enabled PR-PR Passng */
 #define PCIE_DCAP2_LTR_MEC	__BIT(11)      /* LTR Mechanism Supported */
 #define PCIE_DCAP2_TPH_COMP	__BITS(13, 12) /* TPH Completer Supported */
+#define PCIE_DCAP2_LNSYSCLS	__BITS(15, 14) /* LN System CLS */
 #define PCIE_DCAP2_OBFF		__BITS(19, 18) /* Optimized Buffer Flush/Fill*/
 #define PCIE_DCAP2_EXTFMT_FLD	__BIT(20)      /* Extended Fmt Field Support */
 #define PCIE_DCAP2_EETLP_PREF	__BIT(21)      /* End-End TLP Prefix Support */
@@ -1059,14 +1061,14 @@ typedef u_int8_t pci_revision_t;
  * 2nd DWORD is the Table Offset
  */
 #define	PCI_MSIX_TBLOFFSET	0x04
-#define	PCI_MSIX_TBLOFFSET_MASK	0xfffffff8
-#define	PCI_MSIX_TBLBIR_MASK	0x00000007
+#define	PCI_MSIX_TBLOFFSET_MASK	__BITS(31, 3)
+#define	PCI_MSIX_TBLBIR_MASK	__BITS(2, 0)
 /*
  * 3rd DWORD is the Pending Bitmap Array Offset
  */
 #define	PCI_MSIX_PBAOFFSET	0x08
-#define	PCI_MSIX_PBAOFFSET_MASK	0xfffffff8
-#define	PCI_MSIX_PBABIR_MASK	0x00000007
+#define	PCI_MSIX_PBAOFFSET_MASK	__BITS(31, 3)
+#define	PCI_MSIX_PBABIR_MASK	__BITS(2, 0)
 
 #define PCI_MSIX_TABLE_ENTRY_SIZE	16
 #define PCI_MSIX_TABLE_ENTRY_ADDR_LO	0x0
@@ -1080,6 +1082,8 @@ struct pci_msix_table_entry {
 	uint32_t pci_msix_vector_control;
 };
 #define	PCI_MSIX_VECTCTL_MASK	__BIT(0)
+#define	PCI_MSIX_VECTCTL_STLO	__BITS(23, 16)
+#define	PCI_MSIX_VECTCTL_STUP	__BITS(31, 24)
 
  /* Max number of MSI-X vectors. See PCI-SIG specification. */
 #define	PCI_MSIX_MAX_VECTORS	2048
@@ -1103,6 +1107,7 @@ struct pci_msix_table_entry {
  */
 #define PCI_AFCAPR	0x00	/* Capabilities */
 #define	PCI_AFCAPR_MASK		__BITS(31, 24)
+#define	PCI_AF_LENGTH		__BITS(23, 16)	/* Structure Length */
 #define	PCI_AF_TP_CAP		__BIT(24)	/* Transaction Pending */
 #define	PCI_AF_FLR_CAP		__BIT(25)	/* Function Level Reset */
 #define PCI_AFCSR	0x04	/* Control & Status register */
@@ -1646,7 +1651,7 @@ struct pci_rom {
 #define PCI_ARI_CTL	0x04	/* Control Register */
 #define PCI_ARI_CTL_M		__BIT(16)	/* MFVC Function Groups Ena. */
 #define PCI_ARI_CTL_A		__BIT(17)	/* ACS Function Groups Ena. */
-#define PCI_ARI_CTL_FUNCGRP	__BITS(31, 24)	/* Function Group */
+#define PCI_ARI_CTL_FUNCGRP	__BITS(22, 20)	/* Function Group */
 
 /*
  * Extended capability ID: 0x000f
@@ -1655,6 +1660,7 @@ struct pci_rom {
 #define	PCI_ATS_CAP	0x04	/* Capability Register */
 #define	PCI_ATS_CAP_INVQDEPTH	__BITS(4, 0)	/* Invalidate Queue Depth */
 #define	PCI_ATS_CAP_PALIGNREQ	__BIT(5)	/* Page Aligned Request */
+#define	PCI_ATS_CAP_GLOBALINVL	__BIT(6)	/* Global Invalidate Support */
 #define	PCI_ATS_CTL	0x04	/* Control Register */
 #define	PCI_ATS_CTL_STU		__BITS(20, 16)	/* Smallest Translation Unit */
 #define	PCI_ATS_CTL_EN		__BIT(31)	/* Enable */
@@ -1739,6 +1745,7 @@ struct pci_rom {
 #define	PCI_PAGE_REQ_STA_RF	__BIT(0+16)	/* Response Failure */
 #define	PCI_PAGE_REQ_STA_UPRGI	__BIT(1+16)   /* Unexpected Page Req Grp Idx */
 #define	PCI_PAGE_REQ_STA_S	__BIT(8+16)	/* Stopped */
+#define	PCI_PAGE_REQ_STA_PASIDR	__BIT(15+16)  /* PRG Response PASID Required */
 #define	PCI_PAGE_REQ_OUTSTCAPA	0x08	/* Outstanding Page Request Capacity */
 #define	PCI_PAGE_REQ_OUTSTALLOC	0x0c  /* Outstanding Page Request Allocation */
 
