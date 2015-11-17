@@ -1,4 +1,4 @@
-/*	$NetBSD: athn.c,v 1.11 2015/09/22 13:28:02 joerg Exp $	*/
+/*	$NetBSD: athn.c,v 1.12 2015/11/17 16:37:22 jakllsch Exp $	*/
 /*	$OpenBSD: athn.c,v 1.83 2014/07/22 13:12:11 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.11 2015/09/22 13:28:02 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: athn.c,v 1.12 2015/11/17 16:37:22 jakllsch Exp $");
 
 #ifndef _MODULE
 #include "athn_usb.h"		/* for NATHN_USB */
@@ -234,16 +234,15 @@ athn_attach(struct athn_softc *sc)
 	    ((sc->sc_rxchainmask >> 0) & 1);
 
 	if (AR_SINGLE_CHIP(sc)) {
-		aprint_normal_dev(sc->sc_dev,
-		    "Atheros %s\n", athn_get_mac_name(sc));
+		aprint_normal(": Atheros %s\n", athn_get_mac_name(sc));
 		aprint_verbose_dev(sc->sc_dev,
 		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
 		    sc->sc_mac_rev,
 		    sc->sc_ntxchains, sc->sc_nrxchains, sc->sc_eep_rev,
 		    ether_sprintf(ic->ic_myaddr));
-	} else {
-		aprint_normal_dev(sc->sc_dev,
-		    "Atheros %s, RF %s\n", athn_get_mac_name(sc),
+	}
+	else {
+		aprint_normal(": Atheros %s, RF %s\n", athn_get_mac_name(sc),
 		    athn_get_rf_name(sc));
 		aprint_verbose_dev(sc->sc_dev,
 		    "rev %d (%dT%dR), ROM rev %d, address %s\n",
@@ -2825,8 +2824,8 @@ athn_init(struct ifnet *ifp)
 		/* avoid recursion in athn_resume */
 		if (!pmf_device_subtree_resume(sc->sc_dev, &sc->sc_qual) ||
 		    !device_is_active(sc->sc_dev)) {
-			aprint_error_dev(sc->sc_dev,
-			    "failed to power up device\n");
+			printf("%s: failed to power up device\n",
+			    device_xname(sc->sc_dev));
 			return 0;
 		}
 		ifp->if_flags = flags;
