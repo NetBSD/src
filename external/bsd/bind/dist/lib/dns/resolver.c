@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.11.4.3.2.2 2015/11/15 19:18:00 bouyer Exp $	*/
+/*	$NetBSD: resolver.c,v 1.11.4.3.2.3 2015/11/17 19:55:09 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
@@ -1678,24 +1678,6 @@ add_triededns512(fetchctx_t *fctx, isc_sockaddr_t *address) {
 	ISC_LIST_INITANDAPPEND(fctx->edns512, sa, link);
 }
 
-static isc_boolean_t
-wouldvalidate(fetchctx_t *fctx) {
-	isc_boolean_t secure_domain;
-	isc_result_t result;
-
-	if (!fctx->res->view->enablevalidation)
-		return (ISC_FALSE);
-
-	if (fctx->res->view->dlv != NULL)
-		return (ISC_TRUE);
-
-	result = dns_view_issecuredomain(fctx->res->view, &fctx->name,
-					 &secure_domain);
-	if (result != ISC_R_SUCCESS)
-		return (ISC_FALSE);
-	return (secure_domain);
-}
-
 static isc_result_t
 resquery_send(resquery_t *query) {
 	fetchctx_t *fctx;
@@ -1865,12 +1847,11 @@ resquery_send(resquery_t *query) {
 		if ((triededns512(fctx, &query->addrinfo->sockaddr) ||
 		     fctx->timeouts >= (MAX_EDNS0_TIMEOUTS * 2)) &&
 		    (query->options & DNS_FETCHOPT_NOEDNS0) == 0 &&
-		    (!EDNSOK(query->addrinfo) || !wouldvalidate(fctx))) {
-			query->options |= DNS_FETCHOPT_NOEDNS0;
-			fctx->reason = "disabling EDNS";
+		    !EDNSOK(query->addrinfo)) {
 		} else if ((triededns(fctx, &query->addrinfo->sockaddr) ||
 			    fctx->timeouts >= MAX_EDNS0_TIMEOUTS) &&
-			   (query->options & DNS_FETCHOPT_NOEDNS0) == 0) {
+			   (query->options & DNS_FETCHOPT_NOEDNS0) == 0 &&
+			   !EDNSOK(query->addrinfo)) {
 			query->options |= DNS_FETCHOPT_EDNS512;
 			fctx->reason = "reducing the advertised EDNS UDP "
 				       "packet size to 512 octets";
@@ -2528,19 +2509,11 @@ findname(fetchctx_t *fctx, dns_name_t *name, in_port_t port,
 				     fctx->depth + 1, fctx->qc, &find);
 	if (result != ISC_R_SUCCESS) {
 		if (result == DNS_R_ALIAS) {
-			char namebuf[DNS_NAME_FORMATSIZE];
-
 			/*
 			 * XXXRTH  Follow the CNAME/DNAME chain?
 			 */
 			dns_adb_destroyfind(&find);
 			fctx->adberr++;
-			dns_name_format(name, namebuf, sizeof(namebuf));
-			isc_log_write(dns_lctx, DNS_LOGCATEGORY_CNAME,
-				      DNS_LOGMODULE_RESOLVER, ISC_LOG_INFO,
-				      "skipping nameserver '%s' because it "
-				      "is a CNAME, while resolving '%s'",
-				      namebuf, fctx->info);
 		}
 	} else if (!ISC_LIST_EMPTY(find->list)) {
 		/*
@@ -2757,10 +2730,6 @@ fctx_getaddresses(fetchctx_t *fctx, isc_boolean_t badcache) {
 		stdoptions |= DNS_ADBFIND_INET;
 	if (res->dispatches6 != NULL)
 		stdoptions |= DNS_ADBFIND_INET6;
-
-	if ((stdoptions & DNS_ADBFIND_ADDRESSMASK) == 0)
-		return (DNS_R_SERVFAIL);
-
 	isc_stdtime_get(&now);
 
 	INSIST(ISC_LIST_EMPTY(fctx->finds));
@@ -3091,16 +3060,6 @@ fctx_try(fetchctx_t *fctx, isc_boolean_t retrying, isc_boolean_t badcache) {
 
 	REQUIRE(!ADDRWAIT(fctx));
 
-	/* We've already exceeded maximum query count */
-	if (isc_counter_used(fctx->qc) > fctx->res->maxqueries) {
-		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
-			      DNS_LOGMODULE_RESOLVER, ISC_LOG_DEBUG(3),
-			      "exceeded max queries resolving '%s'",
-			      fctx->info);
-		fctx_done(fctx, DNS_R_SERVFAIL, __LINE__);
-		return;
-	}
-
 	addrinfo = fctx_nextaddress(fctx);
 	if (addrinfo == NULL) {
 		/*
@@ -3138,7 +3097,6 @@ fctx_try(fetchctx_t *fctx, isc_boolean_t retrying, isc_boolean_t badcache) {
 		}
 	}
 
-	if (dns_name_countlabels(&fctx->domain) > 2) {
 	result = isc_counter_increment(fctx->qc);
 	if (result != ISC_R_SUCCESS) {
 		isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
@@ -3147,7 +3105,6 @@ fctx_try(fetchctx_t *fctx, isc_boolean_t retrying, isc_boolean_t badcache) {
 			      fctx->info);
 		fctx_done(fctx, DNS_R_SERVFAIL, __LINE__);
 		return;
-	}
 	}
 
 	result = fctx_query(fctx, addrinfo, fctx->options);
@@ -4296,11 +4253,7 @@ validated(isc_task_t *task, isc_event_t *event) {
 
 		inc_stats(res, dns_resstatscounter_valnegsuccess);
 
-		/*
-		 * Cache DS NXDOMAIN seperately to other types.
-		 */
-		if (fctx->rmessage->rcode == dns_rcode_nxdomain &&
-		    fctx->type != dns_rdatatype_ds)
+		if (fctx->rmessage->rcode == dns_rcode_nxdomain)
 			covers = dns_rdatatype_any;
 		else
 			covers = fctx->type;
@@ -7533,12 +7486,7 @@ resquery_response(isc_task_t *task, isc_event_t *event) {
 	 */
 	if (WANTNCACHE(fctx)) {
 		dns_rdatatype_t covers;
-
-		/*
-		 * Cache DS NXDOMAIN seperately to other types.
-		 */
-		if (message->rcode == dns_rcode_nxdomain &&
-		    fctx->type != dns_rdatatype_ds)
+		if (message->rcode == dns_rcode_nxdomain)
 			covers = dns_rdatatype_any;
 		else
 			covers = fctx->type;
@@ -9063,12 +9011,6 @@ dns_resolver_algorithm_supported(dns_resolver_t *resolver, dns_name_t *name,
 
 	REQUIRE(VALID_RESOLVER(resolver));
 
-	/*
-	 * DH is unsupported for DNSKEYs, see RFC 4034 sec. A.1.
-	 */
-	if ((alg == DST_ALG_DH) || (alg == DST_ALG_INDIRECT))
-		return (ISC_FALSE);
-
 #if USE_ALGLOCK
 	RWLOCK(&resolver->alglock, isc_rwlocktype_read);
 #endif
@@ -9088,7 +9030,6 @@ dns_resolver_algorithm_supported(dns_resolver_t *resolver, dns_name_t *name,
 #endif
 	if (found)
 		return (ISC_FALSE);
-
 	return (dst_algorithm_supported(alg));
 }
 

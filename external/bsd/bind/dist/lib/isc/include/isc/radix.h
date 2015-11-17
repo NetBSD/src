@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.h,v 1.4.6.1.6.2 2015/11/15 19:18:02 bouyer Exp $	*/
+/*	$NetBSD: radix.h,v 1.4.6.1.6.3 2015/11/17 19:55:11 bouyer Exp $	*/
 
 /*
  * Copyright (C) 2007, 2008, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -38,9 +38,8 @@
 
 #define NETADDR_TO_PREFIX_T(na,pt,bits) \
 	do { \
-		const void *p = na; \
 		memset(&(pt), 0, sizeof(pt)); \
-		if (p != NULL) { \
+		if((na) != NULL) { \
 			(pt).family = (na)->family; \
 			(pt).bitlen = (bits); \
 			if ((pt).family == AF_INET6) { \

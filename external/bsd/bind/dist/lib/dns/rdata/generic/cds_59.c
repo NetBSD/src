@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -14,14 +14,15 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: cds_59.c,v 1.1.1.3.6.3 2015/11/15 19:18:00 bouyer Exp $ */
+/* $Id: cds_59.c,v 1.1.1.3.6.4 2015/11/17 19:55:10 bouyer Exp $ */
 
 /* draft-ietf-dnsext-delegation-signer-05.txt */
 
 #ifndef RDATA_GENERIC_CDS_59_C
 #define RDATA_GENERIC_CDS_59_C
 
-#define RRTYPE_CDS_ATTRIBUTES 0
+#define RRTYPE_CDS_ATTRIBUTES \
+	(DNS_RDATATYPEATTR_DNSSEC|DNS_RDATATYPEATTR_ATPARENT)
 
 #include <isc/sha1.h>
 #include <isc/sha2.h>

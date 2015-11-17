@@ -1,7 +1,7 @@
-/*	$NetBSD: log.c,v 1.2.6.2.2.2 2015/11/15 19:18:00 bouyer Exp $	*/
+/*	$NetBSD: log.c,v 1.2.6.2.2.3 2015/11/17 19:55:09 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2011-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -48,7 +48,6 @@ LIBDNS_EXTERNAL_DATA isc_logcategory_t dns_categories[] = {
 	{ "edns-disabled", 0 },
 	{ "rpz",	0 },
 	{ "rate-limit",	0 },
-	{ "cname",	0 },
 	{ NULL, 	0 }
 };
 
