@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.96.4.2 2013/12/23 22:56:48 riz Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.96.4.3 2015/11/17 09:28:05 bouyer Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.96.4.2 2013/12/23 22:56:48 riz Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.96.4.3 2015/11/17 09:28:05 bouyer Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -214,8 +214,8 @@ static int addrconfig(uint64_t *);
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
 
-static struct addrinfo *getanswer(const querybuf *, int, const char *, int,
-	const struct addrinfo *);
+static struct addrinfo *getanswer(res_state, const querybuf *, int,
+    const char *, int, const struct addrinfo *);
 static void aisort(struct addrinfo *s, res_state res);
 static int _dns_getaddrinfo(void *, void *, va_list);
 static void _sethtent(FILE **);
@@ -1102,9 +1102,12 @@ ip6_str2scopeid(char *scope, struct sockaddr_in6 *sin6, u_int32_t *scopeid)
 static const char AskedForGot[] =
 	"gethostby*.getanswer: asked for \"%s\", got \"%s\"";
 
+#define maybe_ok(res, nm, ok) (((res)->options & RES_NOCHECKNAME) != 0U || \
+                               (ok)(nm) != 0)
+
 static struct addrinfo *
-getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
-    const struct addrinfo *pai)
+getanswer(res_state res, const querybuf *answer, int anslen, const char *qname,
+    int qtype, const struct addrinfo *pai)
 {
 	struct addrinfo sentinel, *cur;
 	struct addrinfo ai;
@@ -1124,6 +1127,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	_DIAGASSERT(answer != NULL);
 	_DIAGASSERT(qname != NULL);
 	_DIAGASSERT(pai != NULL);
+	_DIAGASSERT(res != NULL);
 
 	memset(&sentinel, 0, sizeof(sentinel));
 	cur = &sentinel;
@@ -1153,7 +1157,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		return (NULL);
 	}
 	n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
-	if ((n < 0) || !(*name_ok)(bp)) {
+	if ((n < 0) || !maybe_ok(res, bp, name_ok)) {
 		h_errno = NO_RECOVERY;
 		return (NULL);
 	}
@@ -1177,7 +1181,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 	had_error = 0;
 	while (ancount-- > 0 && cp < eom && !had_error) {
 		n = dn_expand(answer->buf, eom, cp, bp, ep - bp);
-		if ((n < 0) || !(*name_ok)(bp)) {
+		if ((n < 0) || !maybe_ok(res, bp, name_ok)) {
 			had_error++;
 			continue;
 		}
@@ -1196,7 +1200,7 @@ getanswer(const querybuf *answer, int anslen, const char *qname, int qtype,
 		if ((qtype == T_A || qtype == T_AAAA || qtype == T_ANY) &&
 		    type == T_CNAME) {
 			n = dn_expand(answer->buf, eom, cp, tbuf, sizeof tbuf);
-			if ((n < 0) || !(*name_ok)(tbuf)) {
+			if ((n < 0) || !maybe_ok(res, tbuf, name_ok)) {
 				had_error++;
 				continue;
 			}
@@ -1407,14 +1411,14 @@ _dns_getaddrinfo(void *rv, void	*cb_data, va_list ap)
 		free(buf2);
 		return NS_NOTFOUND;
 	}
-	ai = getanswer(buf, q.n, q.name, q.qtype, pai);
+	ai = getanswer(res, buf, q.n, q.name, q.qtype, pai);
 	if (ai) {
 		cur->ai_next = ai;
 		while (cur && cur->ai_next)
 			cur = cur->ai_next;
 	}
 	if (q.next) {
-		ai = getanswer(buf2, q2.n, q2.name, q2.qtype, pai);
+		ai = getanswer(res, buf2, q2.n, q2.name, q2.qtype, pai);
 		if (ai)
 			cur->ai_next = ai;
 	}
