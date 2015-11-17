@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.35 2015/06/22 21:16:02 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.36 2015/11/17 20:19:55 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.35 2015/06/22 21:16:02 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.36 2015/11/17 20:19:55 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -770,7 +770,7 @@ next_bucket:
 				hashp->cndx = 1;
 			}
 		} else {
-			bp = (uint16_t *)(void *)hashp->cpage->page;
+			bp = (uint16_t *)(void *)bufp->page;
 			if (flag == R_NEXT || flag == 0) {
 				if (hashp->cndx > bp[0]) {
 					hashp->cpage = NULL;
@@ -802,6 +802,7 @@ next_bucket:
 	if (bp[ndx + 1] < REAL_KEY) {
 		if (__big_keydata(hashp, bufp, key, data, 1))
 			return (ERROR);
+		hashp->cndx = 1;
 	} else {
 		if (hashp->cpage == NULL)
 			return (ERROR);
@@ -809,8 +810,8 @@ next_bucket:
 		key->size = (ndx > 1 ? bp[ndx - 1] : hashp->BSIZE) - bp[ndx];
 		data->data = (uint8_t *)hashp->cpage->page + bp[ndx + 1];
 		data->size = bp[ndx] - bp[ndx + 1];
+		hashp->cndx += 2;
 	}
-	hashp->cndx += 2;
 	return (SUCCESS);
 }
 
