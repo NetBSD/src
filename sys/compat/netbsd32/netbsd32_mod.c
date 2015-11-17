@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.5.2.1 2015/11/08 02:02:36 riz Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.5.2.2 2015/11/17 19:18:19 riz Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,13 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.5.2.1 2015/11/08 02:02:36 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.5.2.2 2015/11/17 19:18:19 riz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
-# define	DEPS1	"compat,compat_sysv,nfsserver,mqueue"
+# define	DEPS1	"compat"
 #else
-# define	DEPS1	"compat,compat_sysv,nfsserver,mqueue,ksem"
+# define	DEPS1	"compat,ksem"
 #endif
 
 #ifndef ELFSIZE

@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.32 2015/11/16 14:46:54 msaitoh Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.33 2015/11/17 19:18:19 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1473,12 +1473,6 @@ external/bsd/ntp/scripts/mkver                  up to 1.7
 	Update ntp to 4.2.8p4.
 	[christos, ticket #1024]
 
-sys/compat/linux/common/linux_mod.c		1.5
-sys/compat/netbsd32/netbsd32_mod.c		1.6-1.9
-
-	Fixes for compat modules.
-	[pgoyette, ticket #1020]
-
 usr.sbin/vnconfig/vnconfig.8			1.40
 
 	In NetBSD 7, the vnconfig command was renamed.
@@ -1585,3 +1579,9 @@ sys/dev/usb/usb_subr.c				1.204
 
 	Attach serial number as property to all USB devices having one.
 	[joerg, ticket #1032]
+
+external/bsd/ntp/scripts/mkver			1.8
+
+	PR/50426: Dave Tyson: Fix ntp reported version.
+	[christos, ticket #1036]
+
