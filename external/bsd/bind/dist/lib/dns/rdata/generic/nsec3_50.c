@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec3_50.c,v 1.3.4.1.6.2 2015/11/15 19:18:00 bouyer Exp $	*/
+/*	$NetBSD: nsec3_50.c,v 1.3.4.1.6.3 2015/11/17 19:55:10 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2008, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -142,7 +142,7 @@ totext_nsec3(ARGS_TOTEXT) {
 	unsigned int window, len;
 	unsigned char hash;
 	unsigned char flags;
-	char buf[sizeof("TYPE65535")];
+	char buf[sizeof("65535 ")];
 	isc_uint32_t iterations;
 	isc_boolean_t first;
 
@@ -226,6 +226,7 @@ totext_nsec3(ARGS_TOTEXT) {
 				if (dns_rdatatype_isknown(t)) {
 					RETERR(dns_rdatatype_totext(t, target));
 				} else {
+					char buf[sizeof("TYPE65535")];
 					sprintf(buf, "TYPE%u", t);
 					RETERR(str_totext(buf, target));
 				}
