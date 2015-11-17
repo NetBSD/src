@@ -1,7 +1,7 @@
-/*	$NetBSD: request.c,v 1.4.4.1.4.2 2015/11/15 19:12:51 bouyer Exp $	*/
+/*	$NetBSD: request.c,v 1.4.4.1.4.3 2015/11/17 19:31:15 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -688,7 +688,6 @@ dns_request_createraw3(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 	dns_messageid_t	id;
 	isc_boolean_t tcp = ISC_FALSE;
 	isc_region_t r;
-	unsigned int dispopt = 0;
 
 	REQUIRE(VALID_REQUESTMGR(requestmgr));
 	REQUIRE(msgbuf != NULL);
@@ -754,14 +753,9 @@ dns_request_createraw3(dns_requestmgr_t *requestmgr, isc_buffer_t *msgbuf,
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;
 
-	if ((options & DNS_REQUESTOPT_FIXEDID) != 0) {
-		id = (r.base[0] << 8) | r.base[1];
-		dispopt |= DNS_DISPATCHOPT_FIXEDID;
-	}
-
-	result = dns_dispatch_addresponse3(request->dispatch, dispopt,
-					   destaddr, task, req_response,
-					   request, &id, &request->dispentry,
+	result = dns_dispatch_addresponse2(request->dispatch, destaddr, task,
+					   req_response, request, &id,
+					   &request->dispentry,
 					   requestmgr->socketmgr);
 	if (result != ISC_R_SUCCESS)
 		goto cleanup;

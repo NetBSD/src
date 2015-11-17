@@ -1,7 +1,7 @@
-/*	$NetBSD: spf_99.h,v 1.2.6.1.4.1 2015/11/15 19:12:51 bouyer Exp $	*/
+/*	$NetBSD: spf_99.h,v 1.2.6.1.4.2 2015/11/17 19:31:15 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -40,4 +40,14 @@ typedef struct dns_rdata_spf {
  * ISC_LANG_BEGINDECLS and ISC_LANG_ENDDECLS are already done
  * via rdatastructpre.h and rdatastructsuf.h.
  */
+
+isc_result_t
+dns_rdata_spf_first(dns_rdata_spf_t *);
+
+isc_result_t
+dns_rdata_spf_next(dns_rdata_spf_t *);
+
+isc_result_t
+dns_rdata_spf_current(dns_rdata_spf_t *, dns_rdata_spf_string_t *);
+
 #endif /* GENERIC_SPF_99_H */

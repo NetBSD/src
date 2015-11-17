@@ -1,7 +1,7 @@
-/*	$NetBSD: rndc.c,v 1.4.4.1.4.2 2015/11/15 19:12:45 bouyer Exp $	*/
+/*	$NetBSD: rndc.c,v 1.4.4.1.4.3 2015/11/17 19:31:09 bouyer Exp $	*/
 
 /*
- * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -80,7 +80,7 @@ static isccc_ccmsg_t ccmsg;
 static isccc_region_t secret;
 static isc_boolean_t failed = ISC_FALSE;
 static isc_boolean_t c_flag = ISC_FALSE;
-static isc_mem_t *rndc_mctx;
+static isc_mem_t *mctx;
 static int sends, recvs, connects;
 static char *command;
 static char *args;
@@ -407,7 +407,7 @@ rndc_connected(isc_task_t *task, isc_event_t *event) {
 	r.length = len;
 	r.base = databuf;
 
-	isccc_ccmsg_init(rndc_mctx, sock, &ccmsg);
+	isccc_ccmsg_init(mctx, sock, &ccmsg);
 	isccc_ccmsg_setmaxsize(&ccmsg, 1024 * 1024);
 
 	DO("schedule recv", isccc_ccmsg_readmessage(&ccmsg, task,
@@ -814,12 +814,12 @@ main(int argc, char **argv) {
 
 	isc_random_get(&serial);
 
-	DO("create memory context", isc_mem_create(0, 0, &rndc_mctx));
-	DO("create socket manager", isc_socketmgr_create(rndc_mctx, &socketmgr));
-	DO("create task manager", isc_taskmgr_create(rndc_mctx, 1, 0, &taskmgr));
+	DO("create memory context", isc_mem_create(0, 0, &mctx));
+	DO("create socket manager", isc_socketmgr_create(mctx, &socketmgr));
+	DO("create task manager", isc_taskmgr_create(mctx, 1, 0, &taskmgr));
 	DO("create task", isc_task_create(taskmgr, 0, &task));
 
-	DO("create logging context", isc_log_create(rndc_mctx, &log, &logconfig));
+	DO("create logging context", isc_log_create(mctx, &log, &logconfig));
 	isc_log_setcontext(log);
 	DO("setting log tag", isc_log_settag(logconfig, progname));
 	logdest.file.stream = stderr;
@@ -833,7 +833,7 @@ main(int argc, char **argv) {
 	DO("enabling log channel", isc_log_usechannel(logconfig, "stderr",
 						      NULL, NULL));
 
-	parse_config(rndc_mctx, log, keyname, &pctx, &config);
+	parse_config(mctx, log, keyname, &pctx, &config);
 
 	isccc_result_register();
 
@@ -848,7 +848,7 @@ main(int argc, char **argv) {
 	for (i = 0; i < argc; i++)
 		argslen += strlen(argv[i]) + 1;
 
-	args = isc_mem_get(rndc_mctx, argslen);
+	args = isc_mem_get(mctx, argslen);
 	if (args == NULL)
 		DO("isc_mem_get", ISC_R_NOMEMORY);
 
@@ -872,7 +872,7 @@ main(int argc, char **argv) {
 	if (nserveraddrs == 0)
 		get_addresses(servername, (in_port_t) remoteport);
 
-	DO("post event", isc_app_onrun(rndc_mctx, task, rndc_start, NULL));
+	DO("post event", isc_app_onrun(mctx, task, rndc_start, NULL));
 
 	result = isc_app_run();
 	if (result != ISC_R_SUCCESS)
@@ -890,15 +890,15 @@ main(int argc, char **argv) {
 	cfg_obj_destroy(pctx, &config);
 	cfg_parser_destroy(&pctx);
 
-	isc_mem_put(rndc_mctx, args, argslen);
+	isc_mem_put(mctx, args, argslen);
 	isccc_ccmsg_invalidate(&ccmsg);
 
 	dns_name_destroy();
 
 	if (show_final_mem)
-		isc_mem_stats(rndc_mctx, stderr);
+		isc_mem_stats(mctx, stderr);
 
-	isc_mem_destroy(&rndc_mctx);
+	isc_mem_destroy(&mctx);
 
 	if (failed)
 		return (1);
