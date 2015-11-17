@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.15 2015/11/16 14:47:16 msaitoh Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.16 2015/11/17 19:18:56 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -761,3 +761,9 @@ sys/arch/sparc64/sparc64/vm_machdep.c		1.101
 
 	Fix various sparc64 compat_netbsd32 issues.
 	[martin, ticket #1028]
+
+external/bsd/ntp/scripts/mkver			1.8
+
+	PR/50426: Dave Tyson: Fix ntp reported version.
+	[christos, ticket #1036]
+
