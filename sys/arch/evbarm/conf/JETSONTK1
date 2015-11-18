@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.37 2015/11/11 14:04:12 jakllsch Exp $
+#	$NetBSD: JETSONTK1,v 1.38 2015/11/18 18:04:45 jakllsch Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -73,6 +73,8 @@ rgephy*		at mii? phy ?
 ukphy*		at mii? phy ?
 
 # Mini-PCIe Wireless
+options 	ATHHAL_AR5212,ATHHAL_RF2425	# AR5BHB63
+ath*		at pci? dev ? function ?	# Atheros IEEE 802.11
 athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
 
 # UART
