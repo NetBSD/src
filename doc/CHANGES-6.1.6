@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.1.6,v 1.1.2.53 2015/11/17 19:58:36 bouyer Exp $
+# $NetBSD: CHANGES-6.1.6,v 1.1.2.54 2015/11/18 07:44:37 msaitoh Exp $
 
 A complete list of changes from the NetBSD 6.1.5 release to the NetBSD 6.1.6
 release:
@@ -6806,3 +6806,15 @@ sys/arch/xen/xen/xbdback_xenbus.c		1.61
 	when a userland process could use all CPU.
 	Should fix the problem reported by Torbj?rn Granlund on port-xen@
 	[bouyer, ticket #1347]
+
+sys/net/if_gif.c				1.89, 1.90
+
+	Fix "ifconfig gifX tunnel src dst" panic when sockaddr_dup() rerurns
+	null.
+	[knakahara, ticket #1344]
+
+sys/net/if_gif.c				1.91, 1.92
+
+	Fix panic after "ifconfig gifX tunnel src dst" failed because of
+	duplicate pair address.
+	[knakahara, ticket #1345]
