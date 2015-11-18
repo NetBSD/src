@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.653 2015/11/12 05:05:24 ozaki-r Exp $
+# $NetBSD: mi,v 1.654 2015/11/18 18:36:53 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2359,6 +2359,7 @@
 ./usr/tests/lib/libc/db/Kyuafile		tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libc/db/README			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/db/h_db			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/db/h_lfsr			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/db/t_db			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/db/t_db_hash_seq		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/gen			tests-lib-tests	compattestfile,atf
