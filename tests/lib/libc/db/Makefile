@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2015/06/22 19:06:05 christos Exp $
+# $NetBSD: Makefile,v 1.3 2015/11/18 18:35:35 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -12,6 +12,7 @@ BINDIR=		${TESTSDIR}
 MKMAN=		no
 
 PROGS+=		h_db
+PROGS+=		h_lfsr
 
 FILESDIR=	${TESTSDIR}
 
