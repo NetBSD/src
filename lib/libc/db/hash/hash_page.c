@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_page.c,v 1.27 2015/11/18 00:23:39 christos Exp $	*/
+/*	$NetBSD: hash_page.c,v 1.28 2015/11/18 18:22:42 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_page.c,v 1.27 2015/11/18 00:23:39 christos Exp $");
+__RCSID("$NetBSD: hash_page.c,v 1.28 2015/11/18 18:22:42 christos Exp $");
 
 /*
  * PACKAGE:  hashing
@@ -83,11 +83,9 @@ static int	 ugly_split(HTAB *, uint32_t, BUFHEAD *, BUFHEAD *, int, int);
 #define	PAGE_INIT(P) { \
 	((uint16_t *)(void *)(P))[0] = 0; \
 	temp = 3 * sizeof(uint16_t); \
-	_DIAGASSERT((size_t)hashp->BSIZE >= temp); \
-	((uint16_t *)(void *)(P))[1] = (uint16_t)(hashp->BSIZE - temp); \
-	/* we should be really storing always length - 1 here... */ \
-	((uint16_t *)(void *)(P))[2] = \
-	    hashp->BSIZE == MAX_BSIZE ? MAX_BSIZE - 1 : hashp->BSIZE; \
+	_DIAGASSERT((size_t)HASH_BSIZE(hashp) >= temp); \
+	((uint16_t *)(void *)(P))[1] = (uint16_t)(HASH_BSIZE(hashp) - temp); \
+	((uint16_t *)(void *)(P))[2] = HASH_BSIZE(hashp); \
 }
 
 /*
@@ -147,7 +145,7 @@ __delpair(HTAB *hashp, BUFHEAD *bufp, int ndx)
 	if (ndx != 1)
 		newoff = bp[ndx - 1];
 	else
-		newoff = hashp->BSIZE;
+		newoff = HASH_BSIZE(hashp);
 	pairlen = newoff - bp[ndx + 1];
 
 	if (ndx != (n - 1)) {
@@ -196,8 +194,8 @@ __split_page(HTAB *hashp, uint32_t obucket, uint32_t nbucket)
 	char *op;
 	size_t temp;
 
-	copyto = (uint16_t)hashp->BSIZE;
-	off = (uint16_t)hashp->BSIZE;
+	copyto = HASH_BSIZE(hashp);
+	off = HASH_BSIZE(hashp);
 	old_bufp = __get_buf(hashp, obucket, NULL, 0);
 	if (old_bufp == NULL)
 		return (-1);
@@ -348,7 +346,7 @@ ugly_split(
 
 			ino = (uint16_t *)(void *)bufp->page;
 			n = 1;
-			scopyto = hashp->BSIZE;
+			scopyto = HASH_BSIZE(hashp);
 			moved = 0;
 
 			if (last_bfp)
@@ -356,7 +354,7 @@ ugly_split(
 			last_bfp = bufp;
 		}
 		/* Move regular sized pairs of there are any */
-		off = hashp->BSIZE;
+		off = HASH_BSIZE(hashp);
 		for (n = 1; (n < ino[0]) && (ino[n + 1] >= REAL_KEY); n += 2) {
 			cino = (char *)(void *)ino;
 			key.data = (uint8_t *)cino + ino[n];
@@ -543,7 +541,7 @@ __get_page(HTAB *hashp, char *p, uint32_t bucket, int is_bucket, int is_disk,
 	size_t temp;
 
 	fd = hashp->fp;
-	size = hashp->BSIZE;
+	size = HASH_BSIZE(hashp);
 
 	if ((fd == -1) || !is_disk) {
 		PAGE_INIT(p);
@@ -596,7 +594,7 @@ __put_page(HTAB *hashp, char *p, uint32_t bucket, int is_bucket, int is_bitmap)
 	int fd, page, size;
 	ssize_t wsize;
 
-	size = hashp->BSIZE;
+	size = HASH_BSIZE(hashp);
 	if ((hashp->fp == -1) && (hashp->fp = __dbtemp("_hash", NULL)) == -1)
 		return (-1);
 	fd = hashp->fp;
