@@ -1,4 +1,4 @@
-#	$NetBSD: t_ndp.sh,v 1.7 2015/11/17 06:44:13 ozaki-r Exp $
+#	$NetBSD: t_ndp.sh,v 1.8 2015/11/18 04:13:01 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -68,10 +68,14 @@ neighborgcthresh_head()
 
 setup_dst_server()
 {
+	local assign_ip=$1
+
 	export RUMP_SERVER=$SOCKDST
 	atf_check -s exit:0 rump.ifconfig shmif0 create
 	atf_check -s exit:0 rump.ifconfig shmif0 linkstr bus1
-	atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6DST
+	if [ "$assign_ip" != no ]; then
+		atf_check -s exit:0 rump.ifconfig shmif0 inet6 $IP6DST
+	fi
 	atf_check -s exit:0 rump.ifconfig shmif0 up
 	atf_check -s exit:0 rump.ifconfig -w 10
 
@@ -249,7 +253,7 @@ neighborgcthresh_body()
 	atf_check -s exit:0 ${inetserver} $SOCKSRC
 	atf_check -s exit:0 ${inetserver} $SOCKDST
 
-	setup_dst_server
+	setup_dst_server no
 	setup_src_server
 
 	export RUMP_SERVER=$SOCKDST
