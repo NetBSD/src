@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_io.c,v 1.17 2015/11/09 23:05:58 jmcneill Exp $ */
+/* $NetBSD: tegra_io.c,v 1.18 2015/11/18 17:12:06 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.17 2015/11/09 23:05:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_io.c,v 1.18 2015/11/18 17:12:06 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,7 +72,7 @@ static const struct tegra_locators tegra_ppsb_locators[] = {
 
 static const struct tegra_locators tegra_apb_locators[] = {
   { "tegramc",
-    TEGRA_MC_OFFSET, TEGRA_MC_SIZE, NOPORT, NOINTR },
+    TEGRA_MC_OFFSET, TEGRA_MC_SIZE, NOPORT, TEGRA_INTR_MC },
   { "tegrapmc",
     TEGRA_PMC_OFFSET, TEGRA_PMC_SIZE, NOPORT, NOINTR },
   { "tegraxusbpad",
