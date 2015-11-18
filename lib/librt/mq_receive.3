@@ -1,4 +1,4 @@
-.\"	$NetBSD: mq_receive.3,v 1.4 2012/03/15 19:04:47 njoly Exp $
+.\"	$NetBSD: mq_receive.3,v 1.5 2015/11/18 13:19:52 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001-2003 The Open Group, All Rights Reserved
 .\"
@@ -100,7 +100,8 @@ Upon successful completion, the
 .Fn mq_receive
 and
 .Fn mq_timedreceive
-functions return a value of zero.
+functions return the length of the selected message in bytes, and the
+message is removed from the queue.
 Otherwise, no message will be removed from the queue,
 the functions return a value of
 \-1, and set the global variable
