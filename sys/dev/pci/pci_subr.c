@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.145 2015/11/17 18:26:50 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.146 2015/11/18 04:24:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.145 2015/11/17 18:26:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.146 2015/11/18 04:24:02 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -729,6 +729,7 @@ pci_conf_print_common(
 	onoff("Interrupt disable", rval, PCI_COMMAND_INTERRUPT_DISABLE);
 
 	printf("    Status register: 0x%04x\n", (rval >> 16) & 0xffff);
+	onoff("Immediate Readness", rval, PCI_STATUS_IMMD_READNESS);
 	onoff2("Interrupt status", rval, PCI_STATUS_INT_STATUS, "active",
 	    "inactive");
 	onoff("Capability List support", rval, PCI_STATUS_CAPLIST_SUPPORT);
@@ -1441,6 +1442,34 @@ pci_print_pcie_compl_timeout(uint32_t val)
 	}
 }
 
+static const char * const pcie_linkspeeds[] = {"2.5", "5.0", "8.0"};
+
+static void
+pci_print_pcie_linkspeed(pcireg_t val)
+{
+
+	/* Start from 1 */
+	if (val < 1 || val > __arraycount(pcie_linkspeeds))
+		printf("unknown value (%u)\n", val);
+	else
+		printf("%sGT/s\n", pcie_linkspeeds[val - 1]);
+}
+
+static void
+pci_print_pcie_linkspeedvector(pcireg_t val)
+{
+	unsigned int i;
+
+	/* Start from 0 */
+	for (i = 0; i < 16; i++)
+		if (((val >> i) & 0x01) != 0) {
+			if (i >= __arraycount(pcie_linkspeeds))
+				printf(" unknown vector (%x)", 1 << i);
+			else
+				printf(" %sGT/s", pcie_linkspeeds[i]);
+		}
+}
+
 static void
 pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 {
@@ -1450,8 +1479,6 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	bool check_slot = false;
 	bool check_rootport = false;
 	unsigned int pciever;
-	static const char * const linkspeeds[] = {"2.5", "5.0", "8.0"};
-	int i;
 
 	printf("\n  PCI Express Capabilities Register\n");
 	/* Capability Register */
@@ -1573,12 +1600,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		reg = regs[o2i(capoff + PCIE_LCAP)];
 		printf("    Link Capabilities Register: 0x%08x\n", reg);
 		printf("      Maximum Link Speed: ");
-		val = reg & PCIE_LCAP_MAX_SPEED;
-		if (val < 1 || val > 3) {
-			printf("unknown %u value\n", val);
-		} else {
-			printf("%sGT/s\n", linkspeeds[val - 1]);
-		}
+		pci_print_pcie_linkspeed(reg & PCIE_LCAP_MAX_SPEED);
 		printf("      Maximum Link Width: x%u lanes\n",
 		    (unsigned int)(reg & PCIE_LCAP_MAX_WIDTH) >> 4);
 		printf("      Active State PM Support: ");
@@ -1643,19 +1665,28 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		    PCIE_LCSR_LBMIE);
 		onoff("Link Autonomous Bandwidth Interrupt Enable", reg,
 		    PCIE_LCSR_LABIE);
+		printf("      DRS Signaling Control: ");
+		val = __SHIFTOUT(reg, PCIE_LCSR_DRSSGNL);
+		switch (val) {
+		case 0:
+			printf("not reported\n");
+			break;
+		case 1:
+			printf("Interrupt Enabled\n");
+			break;
+		case 2:
+			printf("DRS to FRS Signaling Enabled\n");
+			break;
+		default:
+			printf("reserved\n");
+			break;
+		}
 
 		/* Link Status Register */
 		reg = regs[o2i(capoff + PCIE_LCSR)];
 		printf("    Link Status Register: 0x%04x\n", reg >> 16);
 		printf("      Negotiated Link Speed: ");
-		if (((reg >> 16) & 0x000f) < 1 ||
-		    ((reg >> 16) & 0x000f) > 3) {
-			printf("unknown %u value\n",
-			    (unsigned int)(reg & PCIE_LCSR_LINKSPEED) >> 16);
-		} else {
-			printf("%sGT/s\n",
-			    linkspeeds[((reg & PCIE_LCSR_LINKSPEED) >> 16)-1]);
-		}
+		pci_print_pcie_linkspeed(__SHIFTOUT(reg, PCIE_LCSR_LINKSPEED));
 		printf("      Negotiated Link Width: x%u lanes\n",
 		    (reg >> 20) & 0x003f);
 		onoff("Training Error", reg, PCIE_LCSR_LINKTRAIN_ERR);
@@ -1734,6 +1765,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		    reg, PCIE_SLCSR_EIC);
 		onoff("Data Link Layer State Changed Enable", reg,
 		    PCIE_SLCSR_DLLSCE);
+		onoff("Auto Slot Power Limit Disable", reg,
+		    PCIE_SLCSR_AUTOSPLDIS);
 
 		/* Slot Status Register */
 		printf("    Slot Status Register: %04x\n", reg >> 16);
@@ -1829,6 +1862,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("End-End TLP Prefix Supported", reg, PCIE_DCAP2_EETLP_PREF);
 	printf("      Max End-End TLP Prefixes: %u\n",
 	    (unsigned int)(reg & PCIE_DCAP2_MAX_EETLP) >> 22);
+	onoff("FRS Supported", reg, PCIE_DCAP2_FRS);
 
 	/* Device Control 2 */
 	reg = regs[o2i(capoff + PCIE_DCSR2)];
@@ -1860,27 +1894,33 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("End-End TLP Prefix Blocking on", reg, PCIE_DCSR2_EETLP);
 
 	if (check_link) {
+		bool drs_supported;
+
 		/* Link Capability 2 */
 		reg = regs[o2i(capoff + PCIE_LCAP2)];
 		printf("    Link Capabilities 2: 0x%08x\n", reg);
-		val = (reg & PCIE_LCAP2_SUP_LNKSV) >> 1;
 		printf("      Supported Link Speed Vector:");
-		for (i = 0; i <= 2; i++) {
-			if (((val >> i) & 0x01) != 0)
-				printf(" %sGT/s", linkspeeds[i]);
-		}
+		pci_print_pcie_linkspeedvector(
+			__SHIFTOUT(reg, PCIE_LCAP2_SUP_LNKSV));
 		printf("\n");
 		onoff("Crosslink Supported", reg, PCIE_LCAP2_CROSSLNK);
+		printf("      Lower SKP OS Generation Supported Speed Vector:");
+		pci_print_pcie_linkspeedvector(
+			__SHIFTOUT(reg, PCIE_LCAP2_LOWSKPOS_GENSUPPSV));
+		printf("\n");
+		printf("      Lower SKP OS Reception Supported Speed Vector:");
+		pci_print_pcie_linkspeedvector(
+			__SHIFTOUT(reg, PCIE_LCAP2_LOWSKPOS_RECSUPPSV));
+		printf("\n");
+		onoff("DRS Supported", reg, PCIE_LCAP2_DRS);
+		drs_supported = (reg & PCIE_LCAP2_DRS) ? true : false;
 
 		/* Link Control 2 */
 		reg = regs[o2i(capoff + PCIE_LCSR2)];
 		printf("    Link Control 2: 0x%04x\n", reg & 0xffff);
 		printf("      Target Link Speed: ");
-		val = reg & PCIE_LCSR2_TGT_LSPEED;
-		if (val < 1 || val > 3)
-			printf("unknown %u value\n", val);
-		else
-			printf("%sGT/s\n", linkspeeds[val - 1]);
+		pci_print_pcie_linkspeed(__SHIFTOUT(reg,
+			PCIE_LCSR2_TGT_LSPEED));
 		onoff("Enter Compliance Enabled", reg, PCIE_LCSR2_ENT_COMPL);
 		onoff("HW Autonomous Speed Disabled", reg,
 		    PCIE_LCSR2_HW_AS_DIS);
@@ -1903,6 +1943,33 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		onoff("Equalization Phase 3 Successful", reg,
 		    PCIE_LCSR2_EQP3_SUC);
 		onoff("Link Equalization Request", reg, PCIE_LCSR2_LNKEQ_REQ);
+		onoff("Retimer Presence Detected", reg, PCIE_LCSR2_RETIMERPD);
+		if (drs_supported) {
+			printf("      Downstream Component Presence: ");
+			switch (__SHIFTOUT(reg, PCIE_LCSR2_DSCOMPN)) {
+			case PCIE_DSCOMPN_DOWN_NOTDETERM:
+				printf("Link Down - Presence Not"
+				    " Determined\n");
+				break;
+			case PCIE_DSCOMPN_DOWN_NOTPRES:
+				printf("Link Down - Component Not Present\n");
+				break;
+			case PCIE_DSCOMPN_DOWN_PRES:
+				printf("Link Down - Component Present\n");
+				break;
+			case PCIE_DSCOMPN_UP_PRES:
+				printf("Link Up - Component Present\n");
+				break;
+			case PCIE_DSCOMPN_UP_PRES_DRS:
+				printf("Link Up - Component Present and DRS"
+				    " received\n");
+				break;
+			default:
+				printf("reserved\n");
+				break;
+			}
+			onoff("DRS Message Received", reg, PCIE_LCSR2_DRSRCV);
+		}
 	}
 
 	/* Slot Capability 2 */
@@ -2107,7 +2174,7 @@ pci_conf_print_aer_cap_uc(pcireg_t reg)
 	onoff("Undefined", reg, PCI_AER_UC_UNDEFINED);
 	onoff("Data Link Protocol Error", reg, PCI_AER_UC_DL_PROTOCOL_ERROR);
 	onoff("Surprise Down Error", reg, PCI_AER_UC_SURPRISE_DOWN_ERROR);
-	onoff("Poisoned TLP", reg, PCI_AER_UC_POISONED_TLP);
+	onoff("Poisoned TLP Received", reg, PCI_AER_UC_POISONED_TLP);
 	onoff("Flow Control Protocol Error", reg, PCI_AER_UC_FC_PROTOCOL_ERROR);
 	onoff("Completion Timeout", reg, PCI_AER_UC_COMPLETION_TIMEOUT);
 	onoff("Completer Abort", reg, PCI_AER_UC_COMPLETER_ABORT);
@@ -2122,7 +2189,9 @@ pci_conf_print_aer_cap_uc(pcireg_t reg)
 	onoff("MC Blocked TLP", reg, PCI_AER_UC_MC_BLOCKED_TLP);
 	onoff("AtomicOp Egress BLK", reg, PCI_AER_UC_ATOMIC_OP_EGRESS_BLOCKED);
 	onoff("TLP Prefix Blocked Error", reg,
-	   PCI_AER_UC_TLP_PREFIX_BLOCKED_ERROR);
+	    PCI_AER_UC_TLP_PREFIX_BLOCKED_ERROR);
+	onoff("Poisoned TLP Egress Blocked", reg,
+	    PCI_AER_UC_POISONTLP_EGRESS_BLOCKED);
 }
 
 static void
@@ -2151,7 +2220,9 @@ pci_conf_print_aer_cap_control(pcireg_t reg, bool *tlp_prefix_log)
 	onoff("ECRC Check Enab", reg, PCI_AER_ECRC_CHECK_ENABLE);
 	onoff("Multiple Header Recording Capable", reg,
 	    PCI_AER_MULT_HDR_CAPABLE);
-	onoff("Multiple Header Recording Enable", reg, PCI_AER_MULT_HDR_ENABLE);
+	onoff("Multiple Header Recording Enable", reg,PCI_AER_MULT_HDR_ENABLE);
+	onoff("Completion Timeout Prefix/Header Log Capable", reg,
+	    PCI_AER_COMPTOUTPRFXHDRLOG_CAP);
 
 	/* This bit is RsvdP if the End-End TLP Prefix Supported bit is Clear */
 	if (!tlp_prefix_log)
@@ -3007,6 +3078,10 @@ pci_conf_print_sec_pcie_cap(const pcireg_t *regs, int capoff, int extcapoff)
 	onoff("Perform Equalization", reg, PCI_SECPCIE_LCTL3_PERFEQ);
 	onoff("Link Equalization Request Interrupt Enable",
 	    reg, PCI_SECPCIE_LCTL3_LINKEQREQ_IE);
+	printf("      Enable Lower SKP OS Generation Vector:");
+	pci_print_pcie_linkspeedvector(
+		__SHIFTOUT(reg, PCI_SECPCIE_LCTL3_ELSKPOSGENV));
+	printf("\n");
 
 	reg = regs[o2i(extcapoff + PCI_SECPCIE_LANEERR_STA)];
 	printf("    Lane Error Status register: 0x%08x\n", reg);
