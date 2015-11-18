@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.178 2015/11/18 02:51:11 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.179 2015/11/18 05:16:22 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.178 2015/11/18 02:51:11 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.179 2015/11/18 05:16:22 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -430,6 +430,32 @@ nd6_llinfo_settimer(struct llinfo_nd6 *ln, long xtick)
 	splx(s);
 }
 
+/*
+ * Gets source address of the first packet in hold queue
+ * and stores it in @src.
+ * Returns pointer to @src (if hold queue is not empty) or NULL.
+ */
+static struct in6_addr *
+nd6_llinfo_get_holdsrc(struct llinfo_nd6 *ln, struct in6_addr *src)
+{
+	struct ip6_hdr *hip6;
+
+	if (ln == NULL || ln->ln_hold == NULL)
+		return NULL;
+
+	/*
+	 * assuming every packet in ln_hold has the same IP header
+	 */
+	hip6 = mtod(ln->ln_hold, struct ip6_hdr *);
+	/* XXX pullup? */
+	if (sizeof(*hip6) < ln->ln_hold->m_len)
+		*src = hip6->ip6_src;
+	else
+		src = NULL;
+
+	return src;
+}
+
 static void
 nd6_llinfo_timer(void *arg)
 {
@@ -535,8 +561,11 @@ nd6_llinfo_timer(void *arg)
 	}
 
 	if (send_ns) {
+		struct in6_addr src, *psrc;
+
 		nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
-		nd6_ns_output(ifp, daddr6, &dst->sin6_addr, ln, 0);
+		psrc = nd6_llinfo_get_holdsrc(ln, &src);
+		nd6_ns_output(ifp, daddr6, &dst->sin6_addr, psrc, 0);
 	}
 
 	KERNEL_UNLOCK_ONE(NULL);
@@ -2384,10 +2413,13 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	 * INCOMPLETE state, send the first solicitation.
 	 */
 	if (!ND6_LLINFO_PERMANENT(ln) && ln->ln_asked == 0) {
+		struct in6_addr src, *psrc;
+
 		ln->ln_asked++;
 		nd6_llinfo_settimer(ln,
 		    (long)ND_IFINFO(ifp)->retrans * hz / 1000);
-		nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
+		psrc = nd6_llinfo_get_holdsrc(ln, &src);
+		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, 0);
 	}
 	error = 0;
 	goto exit;
