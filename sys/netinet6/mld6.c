@@ -1,4 +1,4 @@
-/*	$NetBSD: mld6.c,v 1.59.2.2 2015/01/23 09:27:15 martin Exp $	*/
+/*	$NetBSD: mld6.c,v 1.59.2.3 2015/11/18 08:33:08 msaitoh Exp $	*/
 /*	$KAME: mld6.c,v 1.25 2001/01/16 14:14:18 itojun Exp $	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.59.2.2 2015/01/23 09:27:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mld6.c,v 1.59.2.3 2015/11/18 08:33:08 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -656,8 +656,12 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		in6m->in6m_ifp = ifp;
 		in6m->in6m_refcount = 1;
 		in6m->in6m_timer = IN6M_TIMER_UNDEF;
+		callout_init(&in6m->in6m_timer_ch, CALLOUT_MPSAFE);
+		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
+
 		IFP_TO_IA6(ifp, ia);
 		if (ia == NULL) {
+			callout_destroy(&in6m->in6m_timer_ch);
 			free(in6m, M_IPMADDR);
 			splx(s);
 			*errorp = EADDRNOTAVAIL; /* appropriate? */
@@ -674,6 +678,7 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 		sockaddr_in6_init(&sin6, maddr6, 0, 0, 0);
 		*errorp = if_mcast_op(ifp, SIOCADDMULTI, sin6tosa(&sin6));
 		if (*errorp) {
+			callout_destroy(&in6m->in6m_timer_ch);
 			LIST_REMOVE(in6m, in6m_entry);
 			free(in6m, M_IPMADDR);
 			IFAFREE(&ia->ia_ifa);
@@ -681,8 +686,6 @@ in6_addmulti(struct in6_addr *maddr6, struct ifnet *ifp,
 			return (NULL);
 		}
 
-		callout_init(&in6m->in6m_timer_ch, CALLOUT_MPSAFE);
-		callout_setfunc(&in6m->in6m_timer_ch, mld_timeo, in6m);
 		in6m->in6m_timer = timer;
 		if (in6m->in6m_timer > 0) {
 			in6m->in6m_state = MLD_REPORTPENDING;
