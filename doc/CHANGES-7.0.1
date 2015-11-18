@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.16 2015/11/17 19:18:56 riz Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.17 2015/11/18 08:56:38 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -767,3 +767,20 @@ external/bsd/ntp/scripts/mkver			1.8
 	PR/50426: Dave Tyson: Fix ntp reported version.
 	[christos, ticket #1036]
 
+sys/net/if_gif.c				1.89-1.90
+
+	Fix "ifconfig gifX tunnel src dst" panic when sockaddr_dup() rerurns
+	null.
+	[knakahara, ticket #1033]
+
+sys/net/if_gif.c				1.91-1.92
+
+	Fix panic after "ifconfig gifX tunnel src dst" failed because of
+	duplicate pair address.
+	[knakahara, ticket #1034]
+
+sys/netinet6/mld6.c				1.64
+
+	Ensure that the callout of the multicast address is valid before
+	hooking it up to prevent panic.
+	[joerg, ticket #1035]
