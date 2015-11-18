@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.111 2015/11/17 18:26:50 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.112 2015/11/18 04:24:02 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -92,6 +92,7 @@ typedef u_int16_t pci_product_id_t;
 #define	PCI_COMMAND_BACKTOBACK_ENABLE		0x00000200
 #define	PCI_COMMAND_INTERRUPT_DISABLE		0x00000400
 
+#define	PCI_STATUS_IMMD_READNESS		__BIT(0+16)
 #define	PCI_STATUS_INT_STATUS			0x00080000
 #define	PCI_STATUS_CAPLIST_SUPPORT		0x00100000
 #define	PCI_STATUS_66MHZ_SUPPORT		0x00200000
@@ -943,6 +944,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCSR_HAWD		__BIT(9)       /* HW Autonomous Width Disable*/
 #define PCIE_LCSR_LBMIE		__BIT(10)      /* Link BW Management Intr En */
 #define PCIE_LCSR_LABIE		__BIT(11)      /* Link Autonomous BW Intr En */
+#define	PCIE_LCSR_DRSSGNL	__BITS(15, 14) /* DRS Signaling */
 #define	PCIE_LCSR_LINKSPEED	__BITS(19, 16) /* Link Speed */
 #define	PCIE_LCSR_NLW		__BITS(25, 20) /* Negotiated Link Width */
 #define	PCIE_LCSR_LINKTRAIN_ERR	__BIT(10 + 16) /* Link Training Error */
@@ -976,6 +978,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_SLCSR_PCC		__BIT(10)      /* Power Controller Control */
 #define PCIE_SLCSR_EIC		__BIT(11)      /* Electromechanical Interlock*/
 #define PCIE_SLCSR_DLLSCE	__BIT(12)      /* DataLinkLayer State Changed*/
+#define PCIE_SLCSR_AUTOSPLDIS	__BIT(13)      /* Auto Slot Power Limit Dis. */
 #define PCIE_SLCSR_ABP		__BIT(0 + 16)  /* Attention Button Pressed */
 #define PCIE_SLCSR_PFD		__BIT(1 + 16)  /* Power Fault Detected */
 #define PCIE_SLCSR_MSC		__BIT(2 + 16)  /* MRL Sensor Changed */
@@ -1012,6 +1015,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCAP2_EXTFMT_FLD	__BIT(20)      /* Extended Fmt Field Support */
 #define PCIE_DCAP2_EETLP_PREF	__BIT(21)      /* End-End TLP Prefix Support */
 #define PCIE_DCAP2_MAX_EETLP	__BITS(23, 22) /* Max End-End TLP Prefix Sup */
+#define PCIE_DCAP2_FRS		__BIT(31)      /* FRS Supported */
 #define PCIE_DCSR2	0x28	/* Device Control & Status 2 Register */
 #define PCIE_DCSR2_COMPT_VAL	__BITS(3, 0)   /* Completion Timeout Value */
 #define PCIE_DCSR2_COMPT_DIS	__BIT(4)       /* Completion Timeout Disable */
@@ -1026,6 +1030,12 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCAP2	0x2c	/* Link Capabilities 2 Register */
 #define PCIE_LCAP2_SUP_LNKSV	__BITS(7, 1)   /* Supported Link Speeds Vect */
 #define PCIE_LCAP2_CROSSLNK	__BIT(8)       /* Crosslink Supported */
+#define PCIE_LCAP2_LOWSKPOS_GENSUPPSV __BITS(15, 9)
+				  /* Lower SKP OS Generation Supp. Spd. Vect */
+#define PCIE_LCAP2_LOWSKPOS_RECSUPPSV __BITS(22, 16)
+				   /* Lower SKP OS Reception Supp. Spd. Vect */
+#define PCIE_LCAP2_RETIMERPD	__BIT(23)       /* Retimer Presence Detect */
+#define PCIE_LCAP2_DRS		__BIT(31)       /* DRS Supported */
 #define PCIE_LCSR2	0x30	/* Link Control & Status 2 Register */
 #define PCIE_LCSR2_TGT_LSPEED	__BITS(3, 0)   /* Target Link Speed */
 #define PCIE_LCSR2_ENT_COMPL	__BIT(4)       /* Enter Compliance */
@@ -1041,6 +1051,15 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_LCSR2_EQP2_SUC	__BIT(3 + 16)  /* Equaliz Phase 2 Successful */
 #define PCIE_LCSR2_EQP3_SUC	__BIT(4 + 16)  /* Equaliz Phase 3 Successful */
 #define PCIE_LCSR2_LNKEQ_REQ	__BIT(5 + 16)  /* Link Equalization Request */
+#define PCIE_LCSR2_RETIMERPD	__BIT(6 + 16)  /* Retimer Presence Detected */
+#define PCIE_LCSR2_DSCOMPN	__BITS(30, 28) /* Downstream Component Pres. */
+#define   PCIE_DSCOMPN_DOWN_NOTDETERM	0x00	/* LD: Presence Not Determin.*/
+#define   PCIE_DSCOMPN_DOWN_NOTPRES	0x01	/* LD: Component Not Present */
+#define   PCIE_DSCOMPN_DOWN_PRES	0x02	/* LD: Component Present */
+						/* 0x03 is reserved */
+#define   PCIE_DSCOMPN_UP_PRES		0x04	/* LU: Component Present */
+#define   PCIE_DSCOMPN_UP_PRES_DRS	0x05	/* LU: Comp Pres and DRS RCV */
+#define PCIE_LCSR2_DRSRCV	__BIT(15 + 16) /* DRS Message Received */
 
 #define PCIE_SLCAP2	0x34	/* Slot Capabilities 2 Register */
 #define PCIE_SLCSR2	0x38	/* Slot Control & Status 2 Register */
@@ -1409,6 +1428,7 @@ struct pci_rom {
 #define	  PCI_AER_UC_MC_BLOCKED_TLP		__BIT(23)
 #define	  PCI_AER_UC_ATOMIC_OP_EGRESS_BLOCKED	__BIT(24)
 #define	  PCI_AER_UC_TLP_PREFIX_BLOCKED_ERROR	__BIT(25)
+#define	  PCI_AER_UC_POISONTLP_EGRESS_BLOCKED	__BIT(26)
 #define	PCI_AER_UC_MASK		0x08	/* Uncorrectable Error Mask Register */
 	  /* Shares bits with UC_STATUS */
 #define	PCI_AER_UC_SEVERITY	0x0c	/* Uncorrectable Error Severity Reg. */
@@ -1435,6 +1455,7 @@ struct pci_rom {
 #define	  PCI_AER_MULT_HDR_CAPABLE		__BIT(9)
 #define	  PCI_AER_MULT_HDR_ENABLE		__BIT(10)
 #define	  PCI_AER_TLP_PREFIX_LOG_PRESENT	__BIT(11)
+#define	  PCI_AER_COMPTOUTPRFXHDRLOG_CAP	__BIT(12)
 #define	PCI_AER_HEADER_LOG	0x1c	/* Header Log Register */
 #define	PCI_AER_ROOTERR_CMD	0x2c	/* Root Error Command Register */
 					/* Only for root complex ports */
@@ -1453,7 +1474,7 @@ struct pci_rom {
 #define	  PCI_AER_ROOTERR_INT_MESSAGE		__BITS(31, 27)
 #define	  PCI_AER_ROOTERR_INT_MESSAGE_S		27
 #define	  PCI_AER_ROOTERR_INT_MESSAGE_M		0x1f
-#define	PCI_AER_ERRSRC_ID	0x34	/* Error Source Identification Register */
+#define	PCI_AER_ERRSRC_ID	0x34	/* Error Source Identification Reg. */
 #define	  PCI_AER_ERRSRC_ID_ERR_COR		__BITS(15, 0)
 #define	  PCI_AER_ERRSRC_ID_ERR_COR_S		0
 #define	  PCI_AER_ERRSRC_ID_ERR_COR_M		0xffff
@@ -1799,6 +1820,7 @@ struct pci_rom {
 #define PCI_SECPCIE_LCTL3	0x04	/* Link Control 3 */
 #define PCI_SECPCIE_LCTL3_PERFEQ	__BIT(0) /* Perform Equalization */
 #define PCI_SECPCIE_LCTL3_LINKEQREQ_IE	__BIT(1) /* Link Eq. Req. Int. Ena. */
+#define PCI_SECPCIE_LCTL3_ELSKPOSGENV	__BITS(15, 9) /* En. Lo. SKP OS Gen V*/
 #define PCI_SECPCIE_LANEERR_STA 0x08	/* Lane Error Status */
 #define PCI_SECPCIE_EQCTLS	0x0c	/* Equalization Control [0-maxlane] */
 #define	PCI_SECPCIE_EQCTL(x)	(PCI_SECPCIE_EQCTLS + ((x) * 2))
