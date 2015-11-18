@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.177 2015/09/11 10:33:32 roy Exp $	*/
+/*	$NetBSD: nd6.c,v 1.178 2015/11/18 02:51:11 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.177 2015/09/11 10:33:32 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.178 2015/11/18 02:51:11 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -438,6 +438,8 @@ nd6_llinfo_timer(void *arg)
 	const struct sockaddr_in6 *dst;
 	struct ifnet *ifp;
 	struct nd_ifinfo *ndi = NULL;
+	bool send_ns = false;
+	const struct in6_addr *daddr6 = NULL;
 
 	mutex_enter(softnet_lock);
 	KERNEL_LOCK(1, NULL);
@@ -470,8 +472,7 @@ nd6_llinfo_timer(void *arg)
 	case ND6_LLINFO_INCOMPLETE:
 		if (ln->ln_asked < nd6_mmaxtries) {
 			ln->ln_asked++;
-			nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
-			nd6_ns_output(ifp, NULL, &dst->sin6_addr, ln, 0);
+			send_ns = true;
 		} else {
 			struct mbuf *m = ln->ln_hold;
 			if (m) {
@@ -514,9 +515,8 @@ nd6_llinfo_timer(void *arg)
 			/* We need NUD */
 			ln->ln_asked = 1;
 			ln->ln_state = ND6_LLINFO_PROBE;
-			nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
-			nd6_ns_output(ifp, &dst->sin6_addr,
-			    &dst->sin6_addr, ln, 0);
+			daddr6 = &dst->sin6_addr;
+			send_ns = true;
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE; /* XXX */
 			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
@@ -525,14 +525,18 @@ nd6_llinfo_timer(void *arg)
 	case ND6_LLINFO_PROBE:
 		if (ln->ln_asked < nd6_umaxtries) {
 			ln->ln_asked++;
-			nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
-			nd6_ns_output(ifp, &dst->sin6_addr,
-			    &dst->sin6_addr, ln, 0);
+			daddr6 = &dst->sin6_addr;
+			send_ns = true;
 		} else {
 			(void)nd6_free(rt, 0);
 			ln = NULL;
 		}
 		break;
+	}
+
+	if (send_ns) {
+		nd6_llinfo_settimer(ln, (long)ndi->retrans * hz / 1000);
+		nd6_ns_output(ifp, daddr6, &dst->sin6_addr, ln, 0);
 	}
 
 	KERNEL_UNLOCK_ONE(NULL);
