@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.83.2.1 2015/06/04 09:44:57 msaitoh Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.83.2.2 2015/11/18 08:21:52 msaitoh Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.2.1 2015/06/04 09:44:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.2.2 2015/11/18 08:21:52 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -700,17 +700,24 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 #endif
 		}
 
+	osrc = sc->gif_psrc;
+	odst = sc->gif_pdst;
+	sc->gif_psrc = sc->gif_pdst = NULL;
 	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
 	if (sc->gif_si == NULL) {
 		error = ENOMEM;
-		goto bad;
+		goto rollback;
 	}
 
-	osrc = sc->gif_psrc;
-	sc->gif_psrc = sockaddr_dup(src, M_WAITOK);
+	if ((sc->gif_psrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
+		error = ENOMEM;
+		goto rollback;
+	}
 
-	odst = sc->gif_pdst;
-	sc->gif_pdst = sockaddr_dup(dst, M_WAITOK);
+	if ((sc->gif_pdst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
+		error = ENOMEM;
+		goto rollback;
+	}
 
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
@@ -727,33 +734,32 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		error = EINVAL;
 		break;
 	}
-	if (error) {
-		/* rollback */
-		sockaddr_free(sc->gif_psrc);
-		sockaddr_free(sc->gif_pdst);
-		sc->gif_psrc = osrc;
-		sc->gif_pdst = odst;
-		goto bad;
-	}
+	if (error)
+		goto rollback;
 
 	if (osrc)
 		sockaddr_free(osrc);
 	if (odst)
 		sockaddr_free(odst);
 
-	if (sc->gif_psrc && sc->gif_pdst)
-		ifp->if_flags |= IFF_RUNNING;
-	else
-		ifp->if_flags &= ~IFF_RUNNING;
+	ifp->if_flags |= IFF_RUNNING;
 	splx(s);
 
 	return 0;
 
- bad:
+rollback:
+	if (sc->gif_psrc != NULL)
+		sockaddr_free(sc->gif_psrc);
+	if (sc->gif_pdst != NULL)
+		sockaddr_free(sc->gif_pdst);
+	sc->gif_psrc = osrc;
+	sc->gif_pdst = odst;
+bad:
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
+
 	if (sc->gif_psrc && sc->gif_pdst)
 		ifp->if_flags |= IFF_RUNNING;
 	else
