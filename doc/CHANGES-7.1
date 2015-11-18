@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.34 2015/11/17 19:22:10 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.35 2015/11/18 08:56:05 msaitoh Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1591,3 +1591,33 @@ sys/arch/arm/omap/omap3_sdhc.c			1.18 via patch
 	PR#50288.
 	[jmcneill, ticket #1017]
 
+sys/net/if_gif.c				1.89-1.90
+
+	Fix "ifconfig gifX tunnel src dst" panic when sockaddr_dup() rerurns
+	null.
+	[knakahara, ticket #1033]
+
+sys/net/if_gif.c				1.91-1.92
+
+	Fix panic after "ifconfig gifX tunnel src dst" failed because of
+	duplicate pair address.
+	[knakahara, ticket #1034]
+
+sys/netinet6/mld6.c				1.64
+
+	Ensure that the callout of the multicast address is valid before
+	hooking it up to prevent panic.
+	[joerg, ticket #1035]
+
+sys/dev/vnd.c					1.249-1.254
+sys/sys/disk.h					1.66
+
+	Avoid netbsd-6 (and prior) vnconfig -l infinite loop with a newer
+	kernel.
+	[manu, ticket #1038]
+
+sys/external/bsd/drm2/include/linux/hdmi.h	1.6
+
+	Fix HDMI infoframe checksum calculations for the display to
+	not to ignore the packets.
+	[jmcneill, ticket #1039]
