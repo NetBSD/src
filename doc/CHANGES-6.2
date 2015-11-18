@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-6.2,v 1.1.2.235 2015/11/17 09:28:43 bouyer Exp $
+# $NetBSD: CHANGES-6.2,v 1.1.2.236 2015/11/18 06:52:21 msaitoh Exp $
 
 A complete list of changes from the 6.1 release until the 6.2 release:
 
@@ -12711,8 +12711,8 @@ sys/arch/sparc64/sparc64/vm_machdep.c		1.101
 
 sys/net/if_gif.c				1.89, 1.90
 
-	CID 980463: Provide common error path for rollback. Remove extra check
-	for success.
+	Fix "ifconfig gifX tunnel src dst" panic when sockaddr_dup() rerurns
+	null.
 	[knakahara, ticket #1344]
 
 sys/net/if_gif.c				1.91, 1.92
