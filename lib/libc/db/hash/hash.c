@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.36 2015/11/17 20:19:55 christos Exp $	*/
+/*	$NetBSD: hash.c,v 1.37 2015/11/18 13:00:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.36 2015/11/17 20:19:55 christos Exp $");
+__RCSID("$NetBSD: hash.c,v 1.37 2015/11/18 13:00:46 christos Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -585,7 +585,7 @@ hash_access(HTAB *hashp, ACTION action, DBT *key, DBT *val)
 	hash_accesses++;
 #endif
 
-	off = hashp->BSIZE;
+	off = hashp->BSIZE == MAX_BSIZE ? MAX_BSIZE - 1 : hashp->BSIZE;
 	size = key->size;
 	kp = (char *)key->data;
 	rbufp = __get_buf(hashp, __call_hash(hashp, kp, (int)size), NULL, 0);
