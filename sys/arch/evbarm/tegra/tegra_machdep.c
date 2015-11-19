@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.30 2015/11/14 23:32:31 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.31 2015/11/19 22:09:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.30 2015/11/14 23:32:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.31 2015/11/19 22:09:16 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -118,13 +118,6 @@ bs_protos(bs_notimpl);
 
 static const struct pmap_devmap devmap[] = {
 	{
-		.pd_va = _A(TEGRA_HOST1X_VBASE),
-		.pd_pa = _A(TEGRA_HOST1X_BASE),
-		.pd_size = _S(TEGRA_HOST1X_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{
 		.pd_va = _A(TEGRA_PPSB_VBASE),
 		.pd_pa = _A(TEGRA_PPSB_BASE),
 		.pd_size = _S(TEGRA_PPSB_SIZE),
@@ -135,13 +128,6 @@ static const struct pmap_devmap devmap[] = {
 		.pd_va = _A(TEGRA_APB_VBASE),
 		.pd_pa = _A(TEGRA_APB_BASE),
 		.pd_size = _S(TEGRA_APB_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{
-		.pd_va = _A(TEGRA_AHB_A2_VBASE),
-		.pd_pa = _A(TEGRA_AHB_A2_BASE),
-		.pd_size = _S(TEGRA_AHB_A2_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
