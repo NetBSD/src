@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.127 2015/10/14 15:52:40 christos Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.128 2015/11/19 17:04:01 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -560,7 +560,8 @@
 #ifndef __ASSEMBLER__
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
-    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
+    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
+    ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\
