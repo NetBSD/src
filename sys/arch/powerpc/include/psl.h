@@ -1,4 +1,4 @@
-/*	$NetBSD: psl.h,v 1.18.8.2 2015/11/16 09:00:01 bouyer Exp $	*/
+/*	$NetBSD: psl.h,v 1.18.8.3 2015/11/19 08:50:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -102,8 +102,7 @@
 #include "opt_ppcarch.h"
 #endif /* _KERNEL_OPT */
 
-#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE) || defined (PPC_OEA64) \
-    || defined(_MODULE)
+#if defined(PPC_OEA) || defined (PPC_OEA64_BRIDGE) || defined(_MODULE)
 extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 
 #define	PSL_USERSET		cpu_psluserset
@@ -112,7 +111,7 @@ extern register_t cpu_psluserset, cpu_pslusermod, cpu_pslusermask;
 #elif defined(PPC_BOOKE)
 #define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IS | PSL_DS | PSL_ME | PSL_CE | PSL_DE)
 #define	PSL_USERMASK		(PSL_SPV | PSL_CE | 0xFFFF)
-#define	PSL_USERMOD		(0)
+#define	PSL_USERMOD		(PSL_SPV)
 #else /* PPC_IBM4XX */
 #ifdef PPC_IBM403
 #define	PSL_USERSET		(PSL_EE | PSL_PR | PSL_IR | PSL_DR | PSL_ME)
