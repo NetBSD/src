@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.193 2015/11/06 08:55:49 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.194 2015/11/19 03:03:04 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.193 2015/11/06 08:55:49 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.194 2015/11/19 03:03:04 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1443,8 +1443,15 @@ out:
 static void arptfree(struct rtentry *rt)
 {
 
+	/* We still need to hold the locks */
+	mutex_enter(softnet_lock);
+	KERNEL_LOCK(1, NULL);
+
 	rtrequest(RTM_DELETE, rt_getkey(rt), NULL, rt_mask(rt), 0, NULL);
 	rtfree(rt);
+
+	KERNEL_UNLOCK_ONE(NULL);
+	mutex_exit(softnet_lock);
 }
 
 /*
