@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.22.8.3 2015/11/16 09:00:01 bouyer Exp $	*/
+/*	$NetBSD: userret.h,v 1.22.8.4 2015/11/19 08:50:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -58,16 +58,7 @@ userret(struct lwp *l, struct trapframe *tf)
 	/* Invoke MI userret code */
 	mi_userret(l);
 
-	KASSERTMSG((tf->tf_srr1 & PSL_PR) != 0,
-	    "tf=%p: srr1 (%#lx): PSL_PR isn't set!",
-	    tf, tf->tf_srr1);
-	KASSERTMSG((tf->tf_srr1 & PSL_FP) == 0
-	    || l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU] == l,
-	    "tf=%p: srr1 (%#lx): PSL_FP set but FPU curlwp %p is not curlwp %p!",
-	    tf, tf->tf_srr1, l->l_cpu->ci_data.cpu_pcu_curlwp[PCU_FPU], l);
-
-	/* clear SRR1 status bits */
-	tf->tf_srr1 &= (PSL_USERSRR1|PSL_FP|PSL_VEC);
+	tf->tf_srr1 &= PSL_USERSRR1;	/* clear SRR1 status bits */
 
 #ifdef ALTIVEC
 	/*
@@ -79,12 +70,12 @@ userret(struct lwp *l, struct trapframe *tf)
 #endif
 #ifdef PPC_BOOKE
 	/*
-	 * BookE doesn't have PSL_SE but it does have a debug instruction
-	 * completion exception but it needs PSL_DE to fire.  Instead we
-	 * use IAC1/IAC2 to match the next PC.
+	 * BookE doesn't PSL_SE but it does have a debug instruction completion
+	 * exception but it needs PSL_DE to fire.  Since we don't want it to
+	 * happen in the kernel, we must disable PSL_DE and let it get
+	 * restored by rfi/rfci.
 	 */
 	if (__predict_false(tf->tf_srr1 & PSL_SE)) {
-		tf->tf_srr1 &= ~PSL_SE;
 		extern void booke_sstep(struct trapframe *); /* ugly */
 		booke_sstep(tf);
 	}
