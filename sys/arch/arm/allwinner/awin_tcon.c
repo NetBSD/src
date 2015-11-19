@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.9 2015/11/15 21:28:54 bouyer Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.10 2015/11/19 18:48:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.9 2015/11/15 21:28:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.10 2015/11/19 18:48:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,6 +91,7 @@ static void	awin_tcon_attach(device_t, device_t, void *);
 
 static void	awin_tcon_set_pll(struct awin_tcon_softc *, int, int);
 static void	awin_tcon0_set_video(struct awin_tcon_softc *);
+static void 	awin_tcon0_enable(struct awin_tcon_softc *, bool);
 
 static void
 awin_tcon_clear_reset(struct awinio_attach_args * const aio, int unit)
@@ -537,6 +538,32 @@ awin_tcon0_set_video(struct awin_tcon_softc *sc)
 	}
 }
 
+static void 
+awin_tcon0_enable(struct awin_tcon_softc *sc, bool enable) {
+	uint32_t val;
+
+	/* turn on/off backlight */
+	if (sc->sc_lcdblk_pin_name != NULL) {
+		awin_gpio_pindata_write(&sc->sc_lcdblk_pin, enable ? 1 : 0);
+	}
+	/* turn on/off LCD */
+	if (sc->sc_lcdpwr_pin_name != NULL) {
+		awin_gpio_pindata_write(&sc->sc_lcdpwr_pin, enable ? 1 : 0);
+	}
+	/* and finally disable of enable the tcon */
+	KASSERT(sc->sc_output_type != OUTPUT_HDMI);
+
+	awin_debe_enable(device_unit(sc->sc_dev), enable);
+	delay(20000);
+	val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
+	if (enable) {
+		val |= AWIN_TCON_GCTL_EN;
+	} else {
+		val &= ~AWIN_TCON_GCTL_EN;
+	}
+	TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
+}
+
 void
 awin_tcon1_enable(int unit, bool enable)
 {
@@ -735,4 +762,24 @@ awin_tcon_get_clk_dbl(int unit)
 	sc = device_private(dev);
 
 	return sc->sc_clk_dbl;
+}
+
+void
+awin_tcon_setvideo(int unit, bool enable)
+{
+	struct awin_tcon_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_driver_unit("awintcon", unit);
+	if (dev == NULL) {
+		printf("TCON%d: no driver found\n", unit);
+		return;
+	}
+	sc = device_private(dev);
+
+	if (sc->sc_output_type == OUTPUT_HDMI)  {
+		awin_hdmi_poweron(enable);
+	} else {
+		awin_tcon0_enable(sc, enable);
+	}
 }
