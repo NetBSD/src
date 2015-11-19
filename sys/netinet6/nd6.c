@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.179 2015/11/18 05:16:22 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.180 2015/11/19 03:02:10 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.179 2015/11/18 05:16:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.180 2015/11/19 03:02:10 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -510,14 +510,14 @@ nd6_llinfo_timer(void *arg)
 				 */
 				m0 = m->m_nextpkt;
 				m->m_nextpkt = NULL;
-				icmp6_error2(m, ICMP6_DST_UNREACH,
-				    ICMP6_DST_UNREACH_ADDR, 0, rt->rt_ifp);
-
 				ln->ln_hold = m0;
 				clear_llinfo_pqueue(ln);
  			}
 			(void)nd6_free(rt, 0);
 			ln = NULL;
+			if (m != NULL)
+				icmp6_error2(m, ICMP6_DST_UNREACH,
+				    ICMP6_DST_UNREACH_ADDR, 0, ifp);
 		}
 		break;
 	case ND6_LLINFO_REACHABLE:
