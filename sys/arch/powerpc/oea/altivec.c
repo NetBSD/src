@@ -1,4 +1,4 @@
-/*	$NetBSD: altivec.c,v 1.25.8.2 2015/11/16 09:00:01 bouyer Exp $	*/
+/*	$NetBSD: altivec.c,v 1.25.8.3 2015/11/19 08:50:05 bouyer Exp $	*/
 
 /*
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.25.8.2 2015/11/16 09:00:01 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.25.8.3 2015/11/19 08:50:05 bouyer Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -49,7 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: altivec.c,v 1.25.8.2 2015/11/16 09:00:01 bouyer Exp 
 #include <powerpc/oea/spr.h>
 #include <powerpc/psl.h>
 
-static void vec_state_load(lwp_t *, u_int);
+static void vec_state_load(lwp_t *, bool);
 static void vec_state_save(lwp_t *);
 static void vec_state_release(lwp_t *);
 
@@ -63,45 +63,37 @@ const pcu_ops_t vec_ops = {
 bool
 vec_used_p(lwp_t *l)
 {
-	return pcu_valid_p(&vec_ops);
+	return (l->l_md.md_flags & MDLWP_USEDVEC) != 0;
 }
 
 void
 vec_mark_used(lwp_t *l)
 {
-	return pcu_discard(&vec_ops, true);
+	l->l_md.md_flags |= MDLWP_USEDVEC;
 }
 
 void
-vec_state_load(lwp_t *l, u_int flags)
+vec_state_load(lwp_t *l, bool used)
 {
 	struct pcb * const pcb = lwp_getpcb(l);
 
-	if ((flags & PCU_VALID) == 0) {
+	if (__predict_false(!vec_used_p(l))) {
 		memset(&pcb->pcb_vr, 0, sizeof(pcb->pcb_vr));
 		vec_mark_used(l);
 	}
 
-	if ((flags & PCU_REENABLE) == 0) {
-		/*
-		 * Enable AltiVec temporarily (and disable interrupts).
-		 */
-		const register_t msr = mfmsr();
-		mtmsr((msr & ~PSL_EE) | PSL_VEC);
-		__asm volatile ("isync");
+	/*
+	 * Enable AltiVec temporarily (and disable interrupts).
+	 */
+	const register_t msr = mfmsr();
+	mtmsr((msr & ~PSL_EE) | PSL_VEC);
+	__asm volatile ("isync");
 
-		/*
-		 * Load the vector unit from vreg which is best done in
-		 * assembly.
-		 */
-		vec_load_from_vreg(&pcb->pcb_vr);
-
-		/*
-		 * Restore MSR (turn off AltiVec)
-		 */
-		mtmsr(msr);
-		__asm volatile ("isync");
-	}
+	/*
+	 * Load the vector unit from vreg which is best done in
+	 * assembly.
+	 */
+	vec_load_from_vreg(&pcb->pcb_vr);
 
 	/*
 	 * VRSAVE will be restored when trap frame returns
@@ -109,9 +101,15 @@ vec_state_load(lwp_t *l, u_int flags)
 	l->l_md.md_utf->tf_vrsave = pcb->pcb_vr.vrsave;
 
 	/*
+	 * Restore MSR (turn off AltiVec)
+	 */
+	mtmsr(msr);
+	__asm volatile ("isync");
+
+	/*
 	 * Mark vector registers as modified.
 	 */
-	l->l_md.md_flags |= PSL_VEC;
+	l->l_md.md_flags |= MDLWP_USEDVEC|PSL_VEC;
 	l->l_md.md_utf->tf_srr1 |= PSL_VEC;
 }
 
@@ -166,7 +164,7 @@ vec_restore_from_mcontext(struct lwp *l, const mcontext_t *mcp)
 	KASSERT(l == curlwp);
 
 	/* we don't need to save the state, just drop it */
-	pcu_discard(&vec_ops, true);
+	pcu_discard(&vec_ops);
 	memcpy(pcb->pcb_vr.vreg, &mcp->__vrf.__vrs, sizeof (pcb->pcb_vr.vreg));
 	pcb->pcb_vr.vscr = mcp->__vrf.__vscr;
 	pcb->pcb_vr.vrsave = mcp->__vrf.__vrsave;
