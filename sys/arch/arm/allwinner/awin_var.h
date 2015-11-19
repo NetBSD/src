@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.38 2015/11/15 21:28:54 bouyer Exp $ */
+/* $NetBSD: awin_var.h,v 1.39 2015/11/19 18:48:22 bouyer Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -142,6 +142,7 @@ unsigned int awin_tcon_get_clk_div(int);
 bool	awin_tcon_get_clk_dbl(int);
 void	awin_tcon1_set_videomode(int, const struct videomode *);
 void	awin_tcon1_enable(int, bool);
+void	awin_tcon_setvideo(int, bool);
 void	awin_debe_set_videomode(int, const struct videomode *);
 void	awin_debe_enable(int, bool);
 int	awin_debe_ioctl(device_t, u_long, void *);
@@ -155,6 +156,7 @@ struct awin_hdmi_info {
 	bool	display_hdmimode;
 };
 void	awin_hdmi_get_info(struct awin_hdmi_info *);
+void	awin_hdmi_poweron(bool);
 
 void	awin_fb_set_videomode(device_t, u_int, u_int);
 void	awin_fb_ddb_trap_callback(int);
