@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.1 2015/11/12 05:05:25 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.2 2015/11/19 10:45:09 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -41,6 +41,7 @@ BUSSRC=bus_src
 BUSDST=bus_dst
 
 DEBUG=false
+TIMEOUT=3
 
 atf_test_case linklocal cleanup
 
@@ -227,10 +228,10 @@ linklocal_body()
 	# link local address to link local address
 
 	atf_check -s not-exit:0 -e match:"No route to host" \
-		rump.ping6 -c 1 -n ${fwd_if0_lladdr}
+	    rump.ping6 -c 1 -X $TIMEOUT -n ${fwd_if0_lladdr}
 
 	atf_check -s exit:0 -o match:"0.0% packet loss" \
-	    rump.ping6 -c 1 -n ${fwd_if0_lladdr}%shmif0
+	    rump.ping6 -c 1 -X $TIMEOUT -n ${fwd_if0_lladdr}%shmif0
 
 	atf_check -s ignore -o empty -e ignore \
 	    -x "shmif_dumpbus -p - ${BUSSRC} | tcpdump -r - -n -p icmp6"
@@ -240,7 +241,8 @@ linklocal_body()
 	cleanup_bus
 
 	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping6 -c 1 -n -S ${src_if1_lladdr}%shmif1 ${fwd_if0_lladdr}%shmif0
+	    rump.ping6 -c 1 -X $TIMEOUT -n -S ${src_if1_lladdr}%shmif1 \
+	    ${fwd_if0_lladdr}%shmif0
 	atf_check -s ignore -o not-match:"${src_if1_lladdr}" -e ignore \
 	    -x "shmif_dumpbus -p - ${BUS1} | tcpdump -r - -n -p icmp6"
 	$DEBUG && shmif_dumpbus -p - ${BUS1} | tcpdump -r - -n -p icmp6
@@ -259,15 +261,15 @@ linklocal_body()
 
 	$DEBUG && rump.ifconfig shmif0
 	atf_check -s exit:0 -o match:"0.0% packet loss" \
-	    rump.ping6 -c 1 -n -S ${src_if0_lladdr}%shmif0 ${IP6FWD0}
+	    rump.ping6 -c 1 -X $TIMEOUT -n -S ${src_if0_lladdr}%shmif0 ${IP6FWD0}
 	unset RUMP_SERVER
 
 	export RUMP_SERVER=${SOCKFWD}
 	# host address to link local address
 	atf_check -s exit:0 -o match:"0.0% packet loss" \
-	    rump.ping6 -c 1 -n ${src_if0_lladdr}%shmif0
+	    rump.ping6 -c 1 -X $TIMEOUT -n ${src_if0_lladdr}%shmif0
 	atf_check -s not-exit:0 -o match:"100.0% packet loss" \
-	    rump.ping6 -c 1 -n ${src_if1_lladdr}%shmif0
+	    rump.ping6 -c 1 -X $TIMEOUT -n ${src_if1_lladdr}%shmif0
 
 	atf_check -s exit:0 rump.ifconfig shmif0 inet6 ${IP6FWD0} delete
 
@@ -277,19 +279,19 @@ linklocal_body()
 	setup_route
 
 	export RUMP_SERVER=${SOCKSRC}
-	atf_check -s exit:0 -o match:"0.0% packet loss" rump.ping6 -c 1 -n \
-	    -S ${IP6SRC} ${IP6DST}
+	atf_check -s exit:0 -o match:"0.0% packet loss" rump.ping6 -c 1 \
+	    -X $TIMEOUT -n -S ${IP6SRC} ${IP6DST}
 
 	cleanup_bus
 	$DEBUG && rump.ifconfig shmif0
-	atf_check -s not-exit:0 -o match:"100.0% packet loss" rump.ping6 -c 1 -n \
-	    -S ${src_if0_lladdr}%shmif0 ${IP6DST}
+	atf_check -s not-exit:0 -o match:"100.0% packet loss" rump.ping6 -c 1 \
+	    -X $TIMEOUT -n -S ${src_if0_lladdr}%shmif0 ${IP6DST}
 	atf_check -s ignore -o not-match:"${src_if0_lladdr}" -e ignore \
 	    -x "shmif_dumpbus -p - ${BUS2} | tcpdump -r - -n -p icmp6"
 
 	cleanup_bus
-	atf_check -s not-exit:0 -o match:"100.0% packet loss" rump.ping6 -c 1 -n \
-	    -S ${IP6SRC} ${dst_if0_lladdr}%shmif0
+	atf_check -s not-exit:0 -o match:"100.0% packet loss" rump.ping6 -c 1 \
+	    -X $TIMEOUT -n -S ${IP6SRC} ${dst_if0_lladdr}%shmif0
 	atf_check -s ignore -o not-empty -e ignore \
 	    -x "shmif_dumpbus -p - ${BUS2} | tcpdump -r - -n -p icmp6"
 
