@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.27 2015/10/17 21:16:09 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.28 2015/11/19 22:26:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.27 2015/10/17 21:16:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.28 2015/11/19 22:26:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,12 +96,12 @@ tegra_car_attach(device_t parent, device_t self, void *aux)
 
 	tegra_car_init(sc);
 
-	aprint_verbose_dev(self, "PLLX = %u Hz\n", tegra_car_pllx_rate());
-	aprint_verbose_dev(self, "PLLC = %u Hz\n", tegra_car_pllc_rate());
-	aprint_verbose_dev(self, "PLLE = %u Hz\n", tegra_car_plle_rate());
-	aprint_verbose_dev(self, "PLLU = %u Hz\n", tegra_car_pllu_rate());
-	aprint_verbose_dev(self, "PLLP0 = %u Hz\n", tegra_car_pllp0_rate());
-	aprint_verbose_dev(self, "PLLD2 = %u Hz\n", tegra_car_plld2_rate());
+	aprint_debug_dev(self, "PLLX = %u Hz\n", tegra_car_pllx_rate());
+	aprint_debug_dev(self, "PLLC = %u Hz\n", tegra_car_pllc_rate());
+	aprint_debug_dev(self, "PLLE = %u Hz\n", tegra_car_plle_rate());
+	aprint_debug_dev(self, "PLLU = %u Hz\n", tegra_car_pllu_rate());
+	aprint_debug_dev(self, "PLLP0 = %u Hz\n", tegra_car_pllp0_rate());
+	aprint_debug_dev(self, "PLLD2 = %u Hz\n", tegra_car_plld2_rate());
 
 	config_interrupts(self, tegra_car_rnd_attach);
 }
