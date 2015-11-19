@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.18 2015/11/03 18:38:03 bouyer Exp $ */
+/* $NetBSD: awin_debe.c,v 1.19 2015/11/19 18:48:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.18 2015/11/03 18:38:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.19 2015/11/19 18:48:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -583,6 +583,10 @@ awin_debe_ioctl(device_t self, u_long cmd, void *data)
 		enable = *(int *)data;
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
 		if (enable) {
+			if (val & AWIN_DEBE_MODCTL_LAY0_EN) {
+				/* already enabled */
+				return 0;
+			}
 			val |= AWIN_DEBE_MODCTL_LAY0_EN;
 			if (sc->sc_cursor_enable) {
 				val |= AWIN_DEBE_MODCTL_HWC_EN;
@@ -590,10 +594,16 @@ awin_debe_ioctl(device_t self, u_long cmd, void *data)
 				val &= ~AWIN_DEBE_MODCTL_HWC_EN;
 			}
 		} else {
+			if ((val & AWIN_DEBE_MODCTL_LAY0_EN) == 0) {
+				/* already disabled */
+				return 0;
+			}
 			val &= ~AWIN_DEBE_MODCTL_LAY0_EN;
 			val &= ~AWIN_DEBE_MODCTL_HWC_EN;
 		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+		/* debe0 always connected to tcon0, debe1 to tcon1*/
+		awin_tcon_setvideo(device_unit(sc->sc_dev), enable);
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
