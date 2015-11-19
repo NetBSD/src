@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.21 2015/11/12 00:43:52 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.22 2015/11/19 22:09:16 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -72,12 +72,14 @@ attach	tegrartc at tegraio with tegra_rtc
 file	arch/arm/nvidia/tegra_rtc.c		tegra_rtc
 
 # USB PHY
+define	tegrausbphybus { }
 device	tegrausbphy
-attach	tegrausbphy at tegraio with tegra_usbphy
+attach	tegrausbphy at tegrausbphybus with tegra_usbphy
 file	arch/arm/nvidia/tegra_usbphy.c		tegra_usbphy
 
 # USB 2.0
-attach	ehci at tegraio with tegra_ehci
+device	tegraehci: usbus, usbroothub, usb_dma, ehci, tegrausbphybus
+attach	tegraehci at tegraio with tegra_ehci
 file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
 
 # SDMMC

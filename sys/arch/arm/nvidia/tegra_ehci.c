@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.9 2015/10/21 20:02:12 jmcneill Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.10 2015/11/19 22:09:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.9 2015/10/21 20:02:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.10 2015/11/19 22:09:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.9 2015/10/21 20:02:12 jmcneill Exp 
 #include <dev/usb/ehcireg.h>
 #include <dev/usb/ehcivar.h>
 
+#include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_usbreg.h>
 
@@ -61,6 +62,8 @@ struct tegra_ehci_softc {
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
 	u_int			sc_port;
+
+	device_t		sc_usbphydev;
 };
 
 static int	tegra_ehci_port_status(struct ehci_softc *sc, uint32_t v,
@@ -82,11 +85,16 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	struct tegra_ehci_softc * const sc = device_private(self);
 	struct tegraio_attach_args * const tio = aux;
 	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct tegrausbphy_attach_args tup;
 	int error;
 
 	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	error = bus_space_map(sc->sc_bst, TEGRA_AHB_A2_BASE + loc->loc_offset,
+	    loc->loc_size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map USB%d\n", loc->loc_port + 1);
+		return;
+	}
 	sc->sc_port = loc->loc_port;
 
 	sc->sc.sc_dev = self;
@@ -97,11 +105,10 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_flags = EHCIF_ETTF;
 	sc->sc.sc_id_vendor = 0x10de;
 	strlcpy(sc->sc.sc_vendor, "Tegra", sizeof(sc->sc.sc_vendor));
-	sc->sc.sc_size = loc->loc_size;
-	sc->sc.iot = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset + TEGRA_EHCI_REG_OFFSET,
-	    loc->loc_size - TEGRA_EHCI_REG_OFFSET, &sc->sc.ioh);
+	sc->sc.sc_size = loc->loc_size - TEGRA_EHCI_REG_OFFSET;
+	sc->sc.iot = sc->sc_bst;
+	bus_space_subregion(sc->sc_bst, sc->sc_bsh, TEGRA_EHCI_REG_OFFSET,
+	    sc->sc.sc_size, &sc->sc.ioh);
 	sc->sc.sc_vendor_init = tegra_ehci_init;
 	sc->sc.sc_vendor_port_status = tegra_ehci_port_status;
 
@@ -118,6 +125,11 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	tup.tup_bst = sc->sc_bst;
+	tup.tup_bsh = sc->sc_bsh;
+	tup.tup_port = sc->sc_port;
+	sc->sc_usbphydev = config_found_ia(self, "tegrausbphybus", &tup, NULL);
 
 	error = ehci_init(&sc->sc);
 	if (error != USBD_NORMAL_COMPLETION) {
