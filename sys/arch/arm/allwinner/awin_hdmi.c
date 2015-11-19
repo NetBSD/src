@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmi.c,v 1.18 2015/11/15 21:28:54 bouyer Exp $ */
+/* $NetBSD: awin_hdmi.c,v 1.19 2015/11/19 18:48:22 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.18 2015/11/15 21:28:54 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmi.c,v 1.19 2015/11/19 18:48:22 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,6 +73,9 @@ struct awin_hdmi_softc {
 	
 	int   sc_tcon_unit;
 	unsigned int sc_tcon_pll;
+
+	kmutex_t sc_pwr_lock;
+	int	sc_pwr_refcount; /* reference who needs HDMI */
 
 	uint32_t sc_ver;
 	unsigned int sc_i2c_blklen;
@@ -218,6 +221,9 @@ awin_hdmi_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 #endif
+
+	mutex_init(&sc->sc_pwr_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_pwr_refcount = 1; /* we start with video powered on */
 
 	awin_hdmi_i2c_init(sc);
 
@@ -988,6 +994,36 @@ awin_hdmi_get_info(struct awin_hdmi_info *info)
 		info->display_hdmimode =
 		    sc->sc_current_display_mode == DISPLAY_MODE_HDMI;
 	}
+}
+
+void
+awin_hdmi_poweron(bool enable)
+{
+	struct awin_hdmi_softc *sc;
+	device_t dev;
+
+	dev = device_find_by_driver_unit("awinhdmi", 0);
+	if (dev == NULL) {
+		return;
+	}
+	sc = device_private(dev);
+	mutex_enter(&sc->sc_pwr_lock);
+	if (enable) {
+		KASSERT(sc->sc_pwr_refcount >= 0);
+		if (sc->sc_pwr_refcount == 0) {
+			awin_tcon1_enable(sc->sc_tcon_unit, true);
+			awin_hdmi_video_enable(sc, true);
+		}
+		sc->sc_pwr_refcount++;
+	} else {
+		sc->sc_pwr_refcount--;
+		KASSERT(sc->sc_pwr_refcount >= 0);
+		if (sc->sc_pwr_refcount == 0) {
+			awin_hdmi_video_enable(sc, false);
+			awin_tcon1_enable(sc->sc_tcon_unit, false);
+		}
+	}
+	mutex_exit(&sc->sc_pwr_lock);
 }
 
 #if defined(DDB)
