@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.38 2015/11/18 18:04:45 jakllsch Exp $
+#	$NetBSD: JETSONTK1,v 1.39 2015/11/19 22:09:16 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -154,13 +154,11 @@ pseudo-device	wsfont
 #nouveau0	at tegraio?		# GPU
 
 # USB 2.0
-tegrausbphy0	at tegraio? port 0	# USB PHY1
-tegrausbphy1	at tegraio? port 1	# USB PHY2
-tegrausbphy2	at tegraio? port 2	# USB PHY3
-ehci0		at tegraio? port 0	# USB1
-ehci1		at tegraio? port 1	# USB2
-ehci2		at tegraio? port 2	# USB3
-usb*		at ehci?
+tegraehci0	at tegraio? port 0	# USB1
+tegraehci1	at tegraio? port 1	# USB2
+tegraehci2	at tegraio? port 2	# USB3
+tegrausbphy*	at tegrausbphybus?	# USB PHY
+usb*		at tegraehci?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
