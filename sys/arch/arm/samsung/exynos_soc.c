@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.27 2014/12/29 22:58:59 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.28 2015/11/19 05:44:41 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.27 2014/12/29 22:58:59 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.28 2015/11/19 05:44:41 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -634,6 +634,14 @@ exynos_device_register(device_t self, void *aux)
 			mpcaa->mpcaa_off2 = EXYNOS5_GIC_IOP_CONTROLLER_OFFSET;
 #endif
 			break;
+		case 0xe5422: {
+			struct mpcore_attach_args * const mpcaa = aux;
+
+			mpcaa->mpcaa_memh = EXYNOS_CORE_VBASE;
+			mpcaa->mpcaa_off1 = EXYNOS5_GIC_IOP_DISTRIBUTOR_OFFSET;
+			mpcaa->mpcaa_off2 = EXYNOS5_GIC_IOP_CONTROLLER_OFFSET;
+			break;
+		}
 #endif
 #ifdef EXYNOS4
 		case 0xe4410:
