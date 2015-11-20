@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.11 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.12 2015/11/20 01:12:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -344,7 +344,14 @@ filemon_load(void *dummy __unused)
 void
 filemonattach(int num)
 {
-    filemon_load(NULL);
+
+	/*
+	 * Don't call filemon_load() here - it will be called from
+	 * filemon_modcmd() during module initialization.
+	 */
+#if 0
+	filemon_load(NULL);
+#endif
 }
 
 
