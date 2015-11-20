@@ -1,4 +1,4 @@
-/*	$NetBSD: bitstring.h,v 1.10 2015/11/20 20:24:49 christos Exp $	*/
+/*	$NetBSD: bitstring.h,v 1.11 2015/11/20 20:27:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -110,7 +110,8 @@ typedef	unsigned char bitstr_t;
 				/* find first bit clear in name */
 #define	bit_ffc(name, nbits, value) do { \
 	bitstr_t *_name = name; \
-	size_t _bit, _nbits = nbits, _value = -1; \
+	size_t _bit, _nbits = nbits; \
+	int _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
 		if (!bit_test(_name, _bit)) { \
 			_value = _bit; \
@@ -122,7 +123,8 @@ typedef	unsigned char bitstr_t;
 				/* find first bit set in name */
 #define	bit_ffs(name, nbits, value) do { \
 	bitstr_t *_name = name; \
-	size_t _bit, _nbits = nbits, _value = -1; \
+	size_t _bit, _nbits = nbits; \
+	int _value = -1; \
 	for (_bit = 0; _bit < _nbits; ++_bit) \
 		if (bit_test(_name, _bit)) { \
 			_value = _bit; \
