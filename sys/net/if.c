@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.318 2015/08/31 08:02:44 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.319 2015/11/20 08:10:36 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.318 2015/08/31 08:02:44 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.319 2015/11/20 08:10:36 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -756,6 +756,9 @@ if_detach(struct ifnet *ifp)
 
 	s = splnet();
 
+	ifindex2ifnet[ifp->if_index] = NULL;
+	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
+
 	if (ifp->if_slowtimo != NULL) {
 		ifp->if_slowtimo = NULL;
 		callout_halt(ifp->if_slowtimo_ch, NULL);
@@ -889,10 +892,6 @@ again:
 
 	/* Announce that the interface is gone. */
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
-
-	ifindex2ifnet[ifp->if_index] = NULL;
-
-	TAILQ_REMOVE(&ifnet_list, ifp, if_list);
 
 	ifioctl_detach(ifp);
 
