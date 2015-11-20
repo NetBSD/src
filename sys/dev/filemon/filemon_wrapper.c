@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_wrapper.c,v 1.7 2015/06/15 19:45:31 christos Exp $	*/
+/*	$NetBSD: filemon_wrapper.c,v 1.8 2015/11/20 01:16:04 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.7 2015/06/15 19:45:31 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.8 2015/11/20 01:16:04 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -354,7 +354,7 @@ out:
 void
 filemon_wrapper_install(void)
 {
-	struct sysent *sv_table = curproc->p_emul->e_sysent;
+	struct sysent *sv_table = emul_netbsd.e_sysent;
 
 	sv_table[SYS_chdir].sy_call = (sy_call_t *) filemon_wrapper_chdir;
 	sv_table[SYS_execve].sy_call = (sy_call_t *) filemon_wrapper_execve;
@@ -372,7 +372,7 @@ filemon_wrapper_install(void)
 int
 filemon_wrapper_deinstall(void)
 {
-	struct sysent *sv_table = curproc->p_emul->e_sysent;
+	struct sysent *sv_table = emul_netbsd.e_sysent;
 
 	if (sv_table[SYS_chdir].sy_call != (sy_call_t *) filemon_wrapper_chdir)
 	    return EBUSY;
