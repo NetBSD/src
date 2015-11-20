@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.79 2015/11/14 14:01:23 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.80 2015/11/20 11:58:00 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -247,9 +247,7 @@ _C_LABEL(lapic_isr):
 END(lapic_isr)
 #endif
 
-	.globl	_C_LABEL(cpu_id)
 	.globl	_C_LABEL(cpu_vendorname)
-	.globl	_C_LABEL(cpu_brand_id)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
@@ -265,9 +263,6 @@ END(lapic_isr)
 	.type	_C_LABEL(cputype), @object
 LABEL(cputype)		.long	0	# are we 80486, Pentium, or..
 END(cputype)
-	.type	_C_LABEL(cpu_id), @object
-LABEL(cpu_id)		.long	0	# saved from `cpuid' instruction
-END(cpu_id)
 	.type	_C_LABEL(cpuid_level), @object
 LABEL(cpuid_level)	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
@@ -276,9 +271,6 @@ END(cpuid_level)
 LABEL(cpu_vendorname)	.space	16	# vendor string returned by `cpuid'
 					#   instruction
 END(cpu_vendorname)
-	.type	_C_LABEL(cpu_brand_id), @object
-LABEL(cpu_brand_id)	.long	0	# brand ID from 'cpuid' instruction
-END(cpu_brand_id)
 	.type	_C_LABEL(esym), @object
 LABEL(esym)		.quad	0	# ptr to end of syms
 END(esym)
@@ -460,14 +452,6 @@ ENTRY(start)
 	movl	%ecx,8(%ebp)
 	movl	$0, 12(%ebp)
 
-	movl	$1,%eax
-	cpuid
-	movl	%eax,RELOC(cpu_id)
-
-	/* Brand ID is bits 0-7 of %ebx */
-	andl	$255,%ebx
-	movl	%ebx,RELOC(cpu_brand_id)
-
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
 	 * can trace this code without having to worry about the trace trap
@@ -511,10 +495,19 @@ ENTRY(start)
   ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
     * PAGE_SIZE)
 
+/*
+ * fillkpt - Fill in a kernel page table
+ *	eax = pte (page frame | control | status)
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ *
+ * Each entry is 8 (PDE_SIZE) bytes long: we must set the 4 upper bytes to 0.
+ */
+
 #define fillkpt	\
 1:	movl	%eax,(%ebx)		; 	/* store phys addr */	\
-	movl	$0,4(%ebx)		; 	/* upper 32 bits 0 */	\
-	addl	$8,%ebx			; 	/* next pte/pde */	\
+	movl	$0,(PDE_SIZE-4)(%ebx)	; 	/* upper 32 bits 0 */	\
+	addl	$PDE_SIZE,%ebx		; 	/* next pte/pde */	\
 	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
 	loop	1b			;
 
@@ -567,7 +560,7 @@ ENTRY(start)
 	 */
 	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
 	movl	%eax,%ecx
-	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # pdes */
+	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # PDEs */
 	addl	%ecx,%ebx
 
 	/* Map the kernel text read-only. */
@@ -580,14 +573,14 @@ ENTRY(start)
 	/* Map the data, BSS, and bootstrap tables read-write. */
 	leal	(PG_V|PG_KW)(%edx),%eax
 	movl	$TABLESIZE,%ecx
-	addl	%esi,%ecx				# end of tables
-	subl	%edx,%ecx				# subtract end of text
+	addl	%esi,%ecx		/* end of tables */
+	subl	%edx,%ecx		/* subtract end of text */
 	shrl	$PGSHIFT,%ecx
 	fillkpt
 
 	/* Map ISA I/O mem (later atdevbase) */
-	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax	# having these bits set
-	movl	$(IOM_SIZE>>PGSHIFT),%ecx		# for this many pte s,
+	movl	$(IOM_BEGIN|PG_V|PG_KW/*|PG_N*/),%eax
+	movl	$(IOM_SIZE>>PGSHIFT),%ecx
 	fillkpt
 
 /*
