@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.14 2015/11/20 01:33:59 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.15 2015/11/20 02:58:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -278,7 +278,7 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 {
 	int error = 0;
 	struct filemon *filemon;
-	struct proc *tp;
+	struct proc *tp, *lp, *p;
 
 #ifdef DEBUG
 	log(logLevel, "filemon_ioctl(%lu)", cmd);;
@@ -313,6 +313,26 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 			error = ESRCH;
 			break;
 		}
+
+		/* Ensure that target proc is a descendant of curproc */
+		p = tp;
+		while (p) {
+			/*
+			 * make sure p cannot exit
+			 * until we have moved on to p_pptr
+			 */
+			rw_enter(&p->p_reflock, RW_READER);
+			if (p == curproc) {
+				rw_exit(&p->p_reflock);
+				break;
+			}
+			lp = p;
+			p = p->p_pptr;
+			rw_exit(&lp->p_reflock);
+		}
+		if (p == NULL)
+			return EPERM;
+
 		error = kauth_authorize_process(curproc->p_cred,
 		    KAUTH_PROCESS_CANSEE, tp,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
