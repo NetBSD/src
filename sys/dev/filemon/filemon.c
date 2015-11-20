@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.13 2015/11/20 01:21:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.14 2015/11/20 01:33:59 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -309,7 +309,7 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		tp = proc_find(*((pid_t *) data));
 		mutex_exit(proc_lock);
 		if (tp == NULL ||
-		    tp->p_emul != &emul_netbsd)) {
+		    tp->p_emul != &emul_netbsd) {
 			error = ESRCH;
 			break;
 		}
