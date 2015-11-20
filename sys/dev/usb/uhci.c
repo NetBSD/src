@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.264.4.55 2015/11/10 08:44:09 skrll Exp $	*/
+/*	$NetBSD: uhci.c,v 1.264.4.56 2015/11/20 12:49:59 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.55 2015/11/10 08:44:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.264.4.56 2015/11/20 12:49:59 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -385,14 +385,14 @@ const struct usbd_pipe_methods uhci_device_isoc_methods = {
 	.upm_done =	uhci_device_isoc_done,
 };
 
-#define uhci_add_intr_info(sc, ux) \
+#define uhci_add_intr_list(sc, ux) \
 	TAILQ_INSERT_TAIL(&(sc)->sc_intrhead, (ux), ux_list)
-#define uhci_del_intr_info(sc, ux) \
+#define uhci_del_intr_list(sc, ux) \
 	do { \
 		TAILQ_REMOVE(&(sc)->sc_intrhead, (ux), ux_list); \
 		(ux)->ux_list.tqe_prev = NULL; \
 	} while (0)
-#define uhci_active_intr_info(ux) ((ux)->ux_list.tqe_prev != NULL)
+#define uhci_active_intr_list(ux) ((ux)->ux_list.tqe_prev != NULL)
 
 static inline uhci_soft_qh_t *
 uhci_find_prev_qh(uhci_soft_qh_t *pqh, uhci_soft_qh_t *sqh)
@@ -2352,7 +2352,7 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 	/* uhci_add_bulk() will do usb_syncmem(sqh) */
 
 	uhci_add_bulk(sc, sqh);
-	uhci_add_intr_info(sc, ux);
+	uhci_add_intr_list(sc, ux);
 
 	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
@@ -2709,7 +2709,7 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 		uhci_add_ls_ctrl(sc, sqh);
 	else
 		uhci_add_hs_ctrl(sc, sqh);
-	uhci_add_intr_info(sc, uxfer);
+	uhci_add_intr_list(sc, uxfer);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 12) {
 		uhci_soft_td_t *std;
@@ -2875,7 +2875,7 @@ uhci_device_intr_start(struct usbd_xfer *xfer)
 		    sizeof(sqh->qh.qh_elink),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	}
-	uhci_add_intr_info(sc, ux);
+	uhci_add_intr_list(sc, ux);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_lock);
 
@@ -3126,7 +3126,7 @@ uhci_device_isoc_start(struct usbd_xfer *xfer)
 #ifdef DIAGNOSTIC
 	ux->ux_isdone = false;
 #endif
-	uhci_add_intr_info(sc, ux);
+	uhci_add_intr_list(sc, ux);
 
 	mutex_exit(&sc->sc_lock);
 
@@ -3339,7 +3339,7 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	DPRINTFN(4, "length=%d, ux_state=0x%08x",
 	    xfer->ux_actlen, xfer->ux_state, 0, 0);
 
-	if (!uhci_active_intr_info(ux))
+	if (!uhci_active_intr_list(ux))
 		return;
 
 #ifdef DIAGNOSTIC
@@ -3365,7 +3365,7 @@ uhci_device_isoc_done(struct usbd_xfer *xfer)
 	    sizeof(ux->ux_stdend->td.td_status),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	uhci_del_intr_info(sc, ux);	/* remove from active list */
+	uhci_del_intr_list(sc, ux);	/* remove from active list */
 
 	offs = 0;
 	for (i = 0; i < xfer->ux_nframes; i++) {
@@ -3443,8 +3443,8 @@ uhci_device_intr_done(struct usbd_xfer *xfer)
 		/* The ux is already on the examined list, just leave it. */
 	} else {
 		DPRINTFN(5, "removing", 0, 0, 0, 0);
-		if (uhci_active_intr_info(ux))
-			uhci_del_intr_info(sc, ux);
+		if (uhci_active_intr_list(ux))
+			uhci_del_intr_list(sc, ux);
 	}
 }
 
@@ -3464,10 +3464,10 @@ uhci_device_ctrl_done(struct usbd_xfer *xfer)
 
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 
-	if (!uhci_active_intr_info(ux))
+	if (!uhci_active_intr_list(ux))
 		return;
 
-	uhci_del_intr_info(sc, ux);	/* remove from active list */
+	uhci_del_intr_list(sc, ux);	/* remove from active list */
 
 	if (upipe->pipe.up_dev->ud_speed == USB_SPEED_LOW)
 		uhci_remove_ls_ctrl(sc, upipe->ctrl.sqh);
@@ -3501,10 +3501,10 @@ uhci_device_bulk_done(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	if (!uhci_active_intr_info(ux))
+	if (!uhci_active_intr_list(ux))
 		return;
 
-	uhci_del_intr_info(sc, ux);	/* remove from active list */
+	uhci_del_intr_list(sc, ux);	/* remove from active list */
 
 	uhci_remove_bulk(sc, upipe->bulk.sqh);
 
