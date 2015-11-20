@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.473 2015/11/06 02:26:42 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.474 2015/11/20 18:34:17 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.473 2015/11/06 02:26:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.474 2015/11/20 18:34:17 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ipsec.h"
@@ -909,7 +909,7 @@ start_init(void *arg)
 	register_t retval[2];
 	char flags[4], *flagsp;
 	const char *path, *slash;
-	char *ucp, **uap, *arg0, *arg1 = NULL;
+	char *ucp, **uap, *arg0, *arg1, *argv[3];
 	char ipath[129];
 	int ipx, len;
 
@@ -1015,8 +1015,10 @@ start_init(void *arg)
 #endif
 			arg1 = STACK_ALLOC(ucp, i);
 			ucp = STACK_MAX(arg1, i);
-			(void)copyout((void *)flags, arg1, i);
-		}
+			if ((error = copyout((void *)flags, arg1, i)) != 0)
+				goto copyerr;
+		} else
+			arg1 = NULL;
 
 		/*
 		 * Move out the file name (also arg 0).
@@ -1030,7 +1032,8 @@ start_init(void *arg)
 #endif
 		arg0 = STACK_ALLOC(ucp, i);
 		ucp = STACK_MAX(arg0, i);
-		(void)copyout(path, arg0, i);
+		if ((error = copyout(path, arg0, i)) != 0)
+			goto copyerr;
 
 		/*
 		 * Move out the arg pointers.
@@ -1041,14 +1044,12 @@ start_init(void *arg)
 		SCARG(&args, argp) = uap;
 		SCARG(&args, envp) = NULL;
 		slash = strrchr(path, '/');
-		if (slash)
-			(void)suword((void *)uap++,
-			    (long)arg0 + (slash + 1 - path));
-		else
-			(void)suword((void *)uap++, (long)arg0);
-		if (options != 0)
-			(void)suword((void *)uap++, (long)arg1);
-		(void)suword((void *)uap++, 0);	/* terminator */
+
+		argv[0] = slash ? arg0 + (slash + 1 - path) : arg0;
+		argv[1] = arg1;
+		argv[2] = NULL;
+		if ((error = copyout(argv, uap, sizeof(args))) != 0)
+			goto copyerr;
 
 		/*
 		 * Now try to exec the program.  If can't for any reason
@@ -1063,6 +1064,8 @@ start_init(void *arg)
 	}
 	printf("init: not found\n");
 	panic("no init");
+copyerr:
+	panic("copyout %d", error);
 }
 
 /*
