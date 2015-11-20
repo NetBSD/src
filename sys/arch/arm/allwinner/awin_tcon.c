@@ -1,4 +1,4 @@
-/* $NetBSD: awin_tcon.c,v 1.10 2015/11/19 18:48:22 bouyer Exp $ */
+/* $NetBSD: awin_tcon.c,v 1.11 2015/11/20 18:32:13 bouyer Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_allwinner.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.10 2015/11/19 18:48:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_tcon.c,v 1.11 2015/11/20 18:32:13 bouyer Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -555,13 +555,29 @@ awin_tcon0_enable(struct awin_tcon_softc *sc, bool enable) {
 
 	awin_debe_enable(device_unit(sc->sc_dev), enable);
 	delay(20000);
-	val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 	if (enable) {
+		val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 		val |= AWIN_TCON_GCTL_EN;
+		TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
+		val = TCON_READ(sc, AWIN_TCON0_CTL_REG);
+		val |= AWIN_TCONx_CTL_EN;
+		TCON_WRITE(sc, AWIN_TCON0_CTL_REG, val);
+		val = TCON_READ(sc, AWIN_TCON0_LVDS_IF_REG);
+		val |= AWIN_TCON0_LVDS_IF_EN;
+		TCON_WRITE(sc, AWIN_TCON0_LVDS_IF_REG, val);
+		TCON_WRITE(sc, AWIN_TCON0_IO_TRI_REG, 0);
 	} else {
+		TCON_WRITE(sc, AWIN_TCON0_IO_TRI_REG, 0xffffffff);
+		val = TCON_READ(sc, AWIN_TCON0_LVDS_IF_REG);
+		val &= ~AWIN_TCON0_LVDS_IF_EN;
+		TCON_WRITE(sc, AWIN_TCON0_LVDS_IF_REG, val);
+		val = TCON_READ(sc, AWIN_TCON0_CTL_REG);
+		val &= ~AWIN_TCONx_CTL_EN;
+		TCON_WRITE(sc, AWIN_TCON0_CTL_REG, val);
+		val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 		val &= ~AWIN_TCON_GCTL_EN;
+		TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
 	}
-	TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
 }
 
 void
@@ -581,15 +597,23 @@ awin_tcon1_enable(int unit, bool enable)
 
 	awin_debe_enable(device_unit(sc->sc_dev), enable);
 	delay(20000);
-	val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 	if (enable) {
+		val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 		val |= AWIN_TCON_GCTL_EN;
+		TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
+		val = TCON_READ(sc, AWIN_TCON1_CTL_REG);
+		val |= AWIN_TCONx_CTL_EN;
+		TCON_WRITE(sc, AWIN_TCON1_CTL_REG, val);
+		TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, 0);
 	} else {
+		TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, 0xffffffff);
+		val = TCON_READ(sc, AWIN_TCON1_CTL_REG);
+		val &= ~AWIN_TCONx_CTL_EN;
+		TCON_WRITE(sc, AWIN_TCON1_CTL_REG, val);
+		val = TCON_READ(sc, AWIN_TCON_GCTL_REG);
 		val &= ~AWIN_TCON_GCTL_EN;
+		TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
 	}
-	TCON_WRITE(sc, AWIN_TCON_GCTL_REG, val);
-
-	TCON_WRITE(sc, AWIN_TCON1_IO_TRI_REG, 0);
 
 	KASSERT(tcon_mux_inited);
 	val = bus_space_read_4(sc->sc_bst, tcon_mux_bsh, 0);
