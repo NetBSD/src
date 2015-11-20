@@ -1,4 +1,4 @@
-.\"	$NetBSD: bridge.4,v 1.9 2010/01/09 09:44:29 mbalmer Exp $
+.\"	$NetBSD: bridge.4,v 1.10 2015/11/20 17:00:48 christos Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 9, 2010
+.Dd November 20, 2015
 .Dt BRIDGE 4
 .Os
 .Sh NAME
@@ -93,9 +93,17 @@ enabled.
 Note that packets to and from the bridging host will be seen by the
 filter on the interface with the appropriate address configured as well
 as on the interface on which the packet arrives or departs.
+.Pp
+The
+.Nm
+will enable passing of VLAN tagged packets automatically if the underlying
+interfaces support it.
+This is to facilitate XEN network configurations with
+.Xr xennet 4 .
 .Sh SEE ALSO
 .Xr etherip 4 ,
 .Xr options 4 ,
+.Xr xennet 4 ,
 .Xr brconfig 8 ,
 .Xr ipf 8
 .Sh HISTORY
