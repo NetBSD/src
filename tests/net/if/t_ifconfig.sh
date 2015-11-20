@@ -1,4 +1,4 @@
-# $NetBSD: t_ifconfig.sh,v 1.5 2015/11/06 02:54:37 ozaki-r Exp $
+# $NetBSD: t_ifconfig.sh,v 1.6 2015/11/20 05:05:40 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,6 +30,8 @@ RUMP_SERVER2=unix://./r2
 
 RUMP_FLAGS=\
 "-lrumpnet -lrumpnet_net -lrumpnet_netinet -lrumpnet_netinet6 -lrumpnet_shmif"
+
+TIMEOUT=3
 
 atf_test_case create_destroy cleanup
 create_destroy_head()
@@ -119,7 +121,7 @@ options_body()
 	atf_check -s exit:0 -o ignore rump.ifconfig -m shmif0
 	atf_check -s exit:0 -o match:'localhost' rump.ifconfig -N lo0
 	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -v lo0
-	atf_check -s exit:0 -o ignore rump.ping -c 1 localhost
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT localhost
 	#   -z clears and shows statistics at that point
 	atf_check -s exit:0 -o match:'2 packets' rump.ifconfig -z lo0
 	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -v lo0
@@ -149,7 +151,7 @@ options_body()
 	atf_check -s exit:0 -o not-match:'shmif0' rump.ifconfig -a -u
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 up
 	atf_check -s exit:0 -o match:'0 packets' rump.ifconfig -a -v
-	atf_check -s exit:0 -o ignore rump.ping -c 1 localhost
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT localhost
 	atf_check -s exit:0 -o ignore rump.ifconfig shmif0 down
 	atf_check -s exit:0 -o match:'2 packets' rump.ifconfig -a -z
 	atf_check -s exit:0 -o not-match:'2 packets' rump.ifconfig -a -v
@@ -220,9 +222,10 @@ parameters_body()
 	    rump.ifconfig shmif0
 	# down, up
 	atf_check -s exit:0 rump.ifconfig shmif0 down
-	atf_check -s ignore -o ignore -e match:'down' rump.ping -c 1 -n 192.168.0.2
+	atf_check -s ignore -o ignore -e match:'down' rump.ping -c 1 \
+	    -w $TIMEOUT -n 192.168.0.2
 	atf_check -s exit:0 rump.ifconfig shmif0 up
-	atf_check -s exit:0 -o ignore rump.ping -c 1 -n 192.168.0.2
+	atf_check -s exit:0 -o ignore rump.ping -c 1 -w $TIMEOUT -n 192.168.0.2
 
 	# alias
 	atf_check -s exit:0 rump.ifconfig shmif0 inet 192.168.1.1/24 alias
@@ -250,7 +253,7 @@ parameters_body()
 	# arp
 	atf_check -s exit:0 rump.ifconfig shmif0 -arp
 	atf_check -s not-exit:0 -o ignore -e ignore \
-	    rump.ping -c 1 -n 192.168.0.3
+	    rump.ping -c 1 -w $TIMEOUT -n 192.168.0.3
 	atf_check -s exit:0 -o not-match:'192.168.0.3' rump.arp -an
 
 	# netmask
