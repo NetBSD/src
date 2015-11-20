@@ -1,174 +1,358 @@
-$NetBSD: storage,v 1.9 2012/01/14 22:06:16 agc Exp $
+$NetBSD: storage,v 1.10 2015/11/20 07:20:21 dholland Exp $
 
 NetBSD Storage Roadmap
 ======================
 
 This is a small roadmap document, and deals with the storage and file
-systems side of the operating system.
+systems side of the operating system. It discusses elements, projects,
+and goals that are under development or under discussion; and it is
+divided into three categories based on perceived priority.
 
-The following elements and projects are pencilled in for 6.0, but
-please do not rely on them being there.
+The following elements, projects, and goals are considered strategic
+priorities for the project:
 
-Features that will be in 6.0:
-2. logical volume management
-3. a native port of Sun's ZFS
-4. ReFUSE, perfuse and pud
-6. Support for flash devices - NAND, and flash file system
-7. rump extensions
-9. in-kernel iSCSI initiator
-10. RAIDframe parity map
-11. quota system re-work
+ 1. Improving iscsi
+ 2. nfsv4 support
+ 3. A better journaling file system solution
+ 4. Getting zfs working for real
+ 5. Seamless full-disk encryption
 
-Features that are planned for future releases:
-1. devfs/udevfsd
-5. web-based management tools for storage subsystems
-8. virtualised disks in userland
-12. lfs renovation
+The following elements, projects, and goals are not strategic
+priorities but are still important undertakings worth doing:
 
-We'll continue to update this roadmap as features and dates get firmed up.
+ 6. lfs64
+ 7. Per-process namespaces
+ 8. lvm tidyup
+ 9. Flash translation layer
+ 10. Shingled disk support
+ 11. ext3/ext4 support
+ 12. Port hammer from Dragonfly
+ 13. afs maintenance
+ 14. execute-in-place
 
-Some explanations
-=================
+The following elements, projects, and goals are perhaps less pressing;
+this doesn't mean one shouldn't work on them but the expected payoff
+is perhaps less than for other things:
 
-1. udevfsd
-----------
+ 15. coda maintenance
 
-There has always been discussion over devfs, and experience with it
-seems mixed (to be kind). At the same time, carrying around a whole
-populated /dev seems quite possible and effective, but maybe a bit
-unwieldy. jmcneill's udevfsd addresses this in a different way, and
-is currently in othersrc/external/bsd/udevfsd. Not planned for 6.0
-right now.
 
-Responsible: jmcneill
+Explanations
+============
 
-2. Logical Volume Management
-----------------------------
-
-Based on the Linux lvm2 and devmapper software, with a new kernel component
-for NetBSD written. Merged in 5.99.5 sources, will be in 6.0.
-
-Responsible: haad, martin
-
-3. Native port of Sun's ZFS
----------------------------
-
-Two Summer of Code projects have been held, concentrating on the
-provision of ZFS support for NetBSD.  Mostly completed by haad, and
-building on ver's work, this is the port of Sun's ZFS, with
-modifications to make it compile on NetBSD by ad@, and based on the
-Sun code for the block layer. Discussions are still taking place to
-get the design right for support for the openat(2) system call family,
-and the correct architecture for reclaiming vnodes.
-
-The ZFS source code has been committed to the repository.
-
-Responsible: haad, ad, ver
-
-4. ReFUSE, perfuse and pud
---------------------------
-
-FUSE has two interfaces, the normal high-level one, and a lower-level
-interface which is closer to the way standard file systems operate. 
-manu's perfuse adds the low-level functionality in the same way that
-ReFUSE adds the high-level functionality.  In addition, there is the
-"pass to userspace device" framework added by pooka as part of rump. 
-All 3 will be in 6.0.
-
-Responsible: pooka, manu, agc
-
-5. Web-based Management tools for Storage Subsystems
-----------------------------------------------------
-
-Standard tools for managing the storage subsystems that NetBSD
-provides, using a standard web-server as the basic user interface on
-the storage device, allowing remote management by a standard web
-browser.  CIM and related functinoality are interesting datapoints in
-this space, although credentials and authentication are always
-challenges in this space. Will not make it into 6.0
-
-Responsible: agc
-
-6. Support for flash devices - NAND, and flash file system
-----------------------------------------------------------
-
-ahoka has have contributed many things in this area, including
-flash(4), flash(9), flashctl(8) and nand(9).  In addition, the
-University of Szeged has contributed chfs,
-http://en.wikipedia.org/wiki/CHFS, which is described as "the first
-open source flash specific file system written for NetBSD".  All of
-these will be in 6.0.
-
-Responsible: ahoka
-
-7. RUMP Extensions
+1. Improving iscsi
 ------------------
 
-Rump support has been in NetBSD for 2 releases now, and continues to be
-developed actively. Recent additions have included cgd support, and smbfs
-client support.
+Both the existing iscsi target and initiator are fairly bad code, and
+neither works terribly well. Fixing this is fairly important as iscsi
+is where it's at for remote block devices. Note that there appears to
+be no compelling reason to move the target to the kernel or otherwise
+make major architectural changes.
 
-Responsible: pooka
+ - As of November 2015 nobody is known to be working on this.
+ - There is currently no clear timeframe or release target.
+ - Contact agc for further information.
 
 
-8. Virtualised disks in Userland
+2. nfsv4 support
+----------------
+
+nfsv4 is at this point the de facto standard for FS-level (as opposed
+to block-level) network volumes in production settings. The legacy nfs
+code currently in NetBSD only supports nfsv2 and nfsv3.
+
+The intended plan is to port FreeBSD's nfsv4 code, which also includes
+nfsv2 and nfsv3 support, and eventually transition to it completely,
+dropping our current nfs code. (Which is kind of a mess.) So far the
+only step that has been taken is to import the code from FreeBSD. The
+next step is to update that import (since it was done a while ago now)
+and then work on getting it to configure and compile.
+
+ - As of November 2015 nobody is working on this, and a volunteer to
+   take charge is urgently needed.
+ - There is no clear timeframe or release target, although having an
+   experimental version ready for -8 would be great.
+ - Contact dholland for further information.
+
+
+3. A better journaling file system solution
+-------------------------------------------
+
+WAPBL, the journaling FFS that NetBSD rolled out some time back, has a
+critical problem: it does not address the historic ffs behavior of
+allowing stale on-disk data to leak into user files in crashes. And
+because it runs faster, this happens more often and with more data.
+This situation is both a correctness and a security liability. Fixing
+it has turned out to be difficult. It is not really clear what the
+best option at this point is:
+
++ Fixing WAPBL (e.g. to flush newly allocated/newly written blocks to
+disk early) has been examined by several people who know the code base
+and judged difficult. Still, it might be the best way forward.
+
++ There is another journaling FFS; the Harvard one done by Margo
+Seltzer's group some years back. We have a copy of this, but as it was
+written in BSD/OS circa 1999 it needs a lot of merging, and then will
+undoubtedly also need a certain amount of polishing to be ready for
+production use. It does record-based rather than block-based
+journaling and does not share the stale data problem.
+
++ We could bring back softupdates (in the softupdates-with-journaling
+form found today in FreeBSD) -- this code is even more complicated
+than the softupdates code we removed back in 2009, and it's not clear
+that it's any more robust either. However, it would solve the stale
+data problem if someone wanted to port it over. It isn't clear that
+this would be any less work than getting the Harvard journaling FFS
+running... or than writing a whole new file system either.
+
++ We could write a whole new journaling file system. (That is, not
+FFS. Doing a new journaling FFS implementation is probably not
+sensible relative to merging the Harvard journaling FFS.) This is a
+big project.
+
+Right now it is not clear which of these avenues is the best way
+forward. Given the general manpower shortage, it may be that the best
+way is whatever looks best to someone who wants to work on the
+problem.
+
+ - As of November 2015 nobody is working on fixing WAPBL. There has
+   been some interest in the Harvard journaling FFS but no significant
+   progress. Nobody is known to be working on or particularly
+   interested in porting softupdates-with-journaling. And, while
+   dholland has been mumbling for some time about a plan for a
+   specific new file system to solve this problem, there isn't any
+   realistic prospect of significant progress on that in the
+   foreseeable future, and nobody else is known to have or be working
+   on even that much.
+ - There is no clear timeframe or release target; but given that WAPBL
+   has been disabled by default for new installs in -7 this problem
+   can reasonably be said to have become critical.
+ - Contact joerg or martin regarding WAPBL; contact dholland regarding
+   the Harvard journaling FFS.
+
+
+4. Getting zfs working for real
+-------------------------------
+
+ZFS has been almost working for years now. It is high time we got it
+really working. One of the things this entails is updating the ZFS
+code, as what we have is rather old. The Illumos version is probably
+what we want for this.
+
+ - There has been intermittent work on zfs, but as of November 2015
+   nobody is known to be actively working on it
+ - There is no clear timeframe or release target.
+ - Contact riastradh or ?? for further information.
+
+
+5. Seamless full-disk encryption
 --------------------------------
 
-For better support of virtualization, a library which provides a consistent 
-view of virtualized disk images has been developed by jmcneill. This will
-not make it into 6.0, although some extra functionality for reading vmdk
-images is available in othersrc/external/bsd/vmdk.
+(This is only sort of a storage issue.) We have cgd, and it is
+believed to still be cryptographically suitable, at least for the time
+being. However, we don't have any of the following things:
 
-Responsible: jmcneill, agc
++ An easy way to install a machine with full-disk encryption. It
+should really just be a checkbox item in sysinst, or not much more
+than that.
 
++ Ideally, also an easy way to turn on full-disk encryption for a
+machine that's already been installed, though this is harder.
 
-9. In-kernel iSCSI Initiator
-----------------------------
++ A good story for booting off a disk that is otherwise encrypted;
+obviously one cannot encrypt the bootblocks, but it isn't clear where
+in boot the encrypted volume should take over, or how to make a best
+effort at protecting the unencrypted elements needed to boot. (At
+least, in the absence of something like UEFI secure boot combined with
+an cryptographic oracle to sign your bootloader image so UEFI will
+accept it.) There's also the question of how one runs cgdconfig(8) and
+where the cgdconfig binary comes from.
 
-NetBSD has had a userland implementation of an iSCSI initiator since
-NetBSD 4.99.35, based on ReFUSE.  Wasabi Systems kindly contributed their
-kernel-based iSCSI initiator, and it will be in 6.0.
++ A reasonable way to handle volume passphrases. MacOS apparently uses
+login passwords for this (or as passphrases for secondary keys, or
+something) and this seems to work well enough apart from the somewhat
+surreal experience of sometimes having to log in twice. However, it
+will complicate the bootup story.
 
-Responsible: riz, agc
+Given the increasing regulatory-level importance of full-disk
+encryption, this is at least a de facto requirement for using NetBSD
+on laptops in many circumstances.
 
-
-10. RAIDframe parity map
-------------------------
-
-Jed Davis successfully completed a Summer of Code project to implement
-parity map zones for RAIDframe.  Parity mapping drastically reduces
-the amount of time spent rewriting parity after an unclean shutdown by
-keeping better track of which regions might have had outstanding
-writes.  Enabled by default; can be disabled on a per-set basis, or
-tuned, with the new raidctl(8) commands.
-
-Merged in 5.99.22 sources, and will be in 6.0.  A separate set of
-patches is available for NetBSD-5.
-
-Responsible: jld
-
-
-11. quota system re-work
-------------------------
-
-The quota system has been re-worked by bouyer, and is in -current
-right now.  dholland is updating and modifying this rework so that it
-is a more generalised solution, with better features for security. 
-This is expected to be in 6.0, although there is a lot of work to
-complete.
-
-Responsible: bouyer, dholland
+ - As of November 2015 nobody is known to be working on this.
+ - There is no clear timeframe or release target.
+ - Contact dholland for further information.
 
 
-12. LFS renovation
-------------------
+6. lfs64
+--------
 
-LFS had been de-emphasised in the time period leading up to the
-5.0 release, but is undergoing some rework by perseant, and dholland
-has some contributions in this area too.
+LFS currently only supports volumes up to 2 TB. As LFS is of interest
+for use on shingled disks (which are larger than 2 TB) and also for
+use on disk arrays (ditto) this is something of a problem. A 64-bit
+version of LFS for large volumes is in the works.
 
-Responsible: perseant, dholland
+ - As of November 2015 dholland is working on this.
+ - It is close to being ready for at least experimental use and is
+   expected to be in 8.0.
+ - Responsible: dholland
+
+
+7. Per-process namespaces
+-------------------------
+
+Support for per-process variation of the file system namespace enables
+a number of things; more flexible chroots, for example, and also
+potentially more efficient pkgsrc builds. dholland thought up a
+somewhat hackish but low-footprint way to implement this.
+
+ - As of November 2015 dholland is working on this.
+ - It is scheduled to be in 8.0.
+ - Responsible: dholland
+
+
+8. lvm tidyup
+-------------
+
+[agc says someone should look at our lvm stuff; XXX fill this in]
+
+ - As of November 2015 nobody is known to be working on this.
+ - There is no clear timeframe or release target.
+ - Contact agc for further information.
+
+
+9. Flash translation layer
+--------------------------
+
+SSDs ship with firmware called a "flash translation layer" that
+arbitrates between the block device software expects to see and the
+raw flash chips. FTLs handle wear leveling, lifetime management, and
+also internal caching, striping, and other performance concerns. While
+NetBSD has a file system for raw flash (chfs), it seems that given
+things NetBSD is often used for it ought to come with a flash
+translation layer as well.
+
+Note that this is an area where writing your own is probably a bad
+plan; it is a complicated area with a lot of prior art that's also
+reportedly full of patent mines. There are a couple of open FTL
+implementations that we might be able to import.
+
+ - As of November 2015 nobody is known to be working on this.
+ - There is no clear timeframe or release target.
+ - Contact dholland for further information.
+
+
+10. Shingled disk support
+-------------------------
+
+Shingled disks (or more technically, disks with "shingled magnetic
+recording" or SMR) can only write whole tracks at once. Thus, to
+operate effectively they require translation support similar to the
+flash translation layers found in SSDs. The nature and structure of
+shingle translation layers is still being researched; however, at some
+point we will want to support these things in NetBSD.
+
+ - As of November 2015 one of dholland's coworkers is looking at this.
+ - There is no clear timeframe or release target.
+ - Contact dholland for further information.
+
+
+11. ext3/ext4 support
+---------------------
+
+We would like to be able to read and write Linux ext3fs and ext4fs
+volumes. (We can already read clean ext3fs volumes as they're the same
+as ext2fs, modulo volume features our ext2fs code does not support;
+but we can't write them.)
+
+Ideally someone would write ext3 and/or ext4 code, whether integrated
+with or separate from the ext2 code we already have. It might also
+make sense to port or wrap the Linux ext3 or ext4 code so it can be
+loaded as a GPL'd kernel module; it isn't clear if that would be more
+or less work than doing an implementation.
+
+Note however that implementing ext3 has already defeated several
+people; this is a harder project than it looks.
+
+ - As of November 2015 nobody is known to be working on this.
+ - There is no clear timeframe or release target.
+ - Contact ?? for further information.
+
+
+12. Port hammer from Dragonfly
+------------------------------
+
+While the motivation for and role of hammer isn't perhaps super
+persuasive, it would still be good to have it. Porting it from
+Dragonfly is probably not that painful (compared to, say, zfs) but as
+the Dragonfly and NetBSD VFS layers have diverged in different
+directions from the original 4.4BSD, may not be entirely trivial
+either.
+
+ - As of November 2015 nobody is known to be working on this.
+ - There is no clear timeframe or release target.
+ - There probably isn't any particular person to contact; for VFS
+   concerns contact dholland or hannken.
+
+
+13. afs maintenance
+-------------------
+
+AFS needs periodic care and feeding to continue working as NetBSD
+changes, because the kernel-level bits aren't kept in the NetBSD tree
+and don't get updated with other things. This is an ongoing issue that
+always seems to need more manpower than it gets. It might make sense
+to import some of the kernel AFS code, or maybe even just some of the
+glue layer that it uses, in order to keep it more current.
+
+ - jakllsch sometimes works on this.
+ - We would like every release to have working AFS by the time it's
+   released.
+ - Contact jakllsch or gendalia about AFS; for VFS concerns contact
+   dholland or hannken.
+
+
+14. execute-in-place
+--------------------
+
+It is likely that the future includes non-volatile storage (so-called
+"nvram") that looks like RAM from the perspective of software. Most
+importantly: the storage is memory-mapped rather than looking like a
+disk controller. There are a number of things NetBSD ought to have to
+be ready for this, of which probably the most important is
+"execute-in-place": when an executable is run from such storage, and
+mapped into user memory with mmap, the storage hardware pages should
+be able to appear directly in user memory. Right now they get
+gratuitously copied into RAM, which is slow and wasteful. There are
+also other reasons (e.g. embedded device ROMs) to want execute-in-
+place support.
+
+Note that at the implementation level this is a UVM issue rather than
+strictly a storage issue. 
+
+Also note that one does not need access to nvram hardware to work on
+this issue; given the performance profiles touted for nvram
+technologies, a plain RAM disk like md(4) is sufficient both
+structurally and for performance analysis.
+
+ - As of November 2015 nobody is known to be working on this. Some
+   time back, uebayasi wrote some preliminary patches, but they were
+   rejected by the UVM maintainers.
+ - There is no clear timeframe or release target.
+ - Contact dholland for further information.
+
+
+15. coda maintenance
+--------------------
+
+Coda only sort of works. [And I think it's behind relative to
+upstream, or something of the sort; XXX fill this in.] Also the code
+appears to have an ugly incestuous relationship with FFS. This should
+really be cleaned up. That or maybe it's time to remove Coda.
+
+ - As of November 2015 nobody is known to be working on this.
+ - There is no clear timeframe or release target.
+ - There isn't anyone in particular to contact.
 
 
 Alistair Crooks, David Holland
-Sat Jan 14 05:52:37 PST 2012
+Fri Nov 20 02:17:53 EST 2015
