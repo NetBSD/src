@@ -1,4 +1,4 @@
-/*	$NetBSD: entry.c,v 1.6 2014/09/05 21:32:37 christos Exp $	*/
+/*	$NetBSD: entry.c,v 1.7 2015/11/20 23:43:52 christos Exp $	*/
 
 /*
  * Copyright 1988,1990,1993,1994 by Paul Vixie
@@ -26,7 +26,7 @@
 #if 0
 static char rcsid[] = "Id: entry.c,v 1.17 2004/01/23 18:56:42 vixie Exp";
 #else
-__RCSID("$NetBSD: entry.c,v 1.6 2014/09/05 21:32:37 christos Exp $");
+__RCSID("$NetBSD: entry.c,v 1.7 2015/11/20 23:43:52 christos Exp $");
 #endif
 #endif
 
@@ -420,7 +420,7 @@ get_list(bitstr_t *bits, int low, int high, const char * const names[],
 	
 	/* clear the bit string, since the default is 'off'.
 	 */
-	bit_nclear(bits, 0, (high-low+1));
+	bit_nclear(bits, 0, (size_t)(high-low+1));
 
 	/* process all ranges
 	 */
