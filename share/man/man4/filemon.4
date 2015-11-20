@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.9 2015/11/20 00:40:18 pgoyette Exp $
+.\"	$NetBSD: filemon.4,v 1.10 2015/11/20 03:13:35 pgoyette Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -30,10 +30,29 @@
 .Nm filemon
 .Nd track interesting system calls
 .Sh SYNOPSIS
-.In filemon.h
+.Cd "pseudo-device filemon"
 .Sh DESCRIPTION
+In normal situations,
 .Nm
-provides a means for tracking the successful system calls performed by a process.
+is not built-in to the kernel, and a call to open /dev/filemon will
+auto-load the
+.Nm
+module (see
+.Xr module 7
+for more details).
+.Pp
+(Although not recommended, the
+.Nm
+facility can be included in a kernel build by adding
+.Bd -literal -offset indent
+pseudo-device filemon
+.Ed
+.Pp
+to the kernel configuration file.)
+.Pp
+.Nm
+provides a means for tracking the successful system calls performed by
+a process and its descendants.
 It is used by
 .Xr make 1
 to track the activities of build scripts, for the purpose of automatically
@@ -188,3 +207,13 @@ successful, and is thus more complex to post-process.
 .Sh HISTORY
 .Nm
 was contributed by Juniper Networks.
+.Sh RESTRICTIONS
+The
+.Nm
+facility can only be used to track processes running in the system's
+native emulation.
+Neither processes using any of the COMPAT_xxx compatability layers nor
+any descendants of such processes can be tracked.
+.Pp
+Additionally, the procces_id specified with FILEMON_SET_PID must refer to
+a descendant of the calling process.
