@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.31 2015/11/19 22:09:16 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.32 2015/11/20 16:44:23 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.31 2015/11/19 22:09:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.32 2015/11/20 16:44:23 jakllsch Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -475,12 +475,11 @@ tegra_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "tegrausbphy")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
+		struct tegrausbphy_attach_args * const tup = aux;
 
-		if (loc->loc_port == 0) {
+		if (tup->tup_port == 0) {
 			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
-		} else if (loc->loc_port == 2) {
+		} else if (tup->tup_port == 2) {
 			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
 		}
 	}
@@ -506,12 +505,11 @@ tegra_device_register(device_t self, void *aux)
 	}
 
 	if (device_is_a(self, "tegrausbphy")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
+		struct tegrausbphy_attach_args * const tup = aux;
 
-		if (loc->loc_port == 0) {
+		if (tup->tup_port == 0) {
 			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
-		} else if (loc->loc_port == 2) {
+		} else if (tup->tup_port == 2) {
 			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
 		}
 	}
