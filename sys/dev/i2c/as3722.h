@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.h,v 1.1 2015/11/11 12:35:22 jmcneill Exp $ */
+/* $NetBSD: as3722.h,v 1.2 2015/11/21 12:19:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,5 +30,6 @@
 #define _DEV_I2C_AS3722_H
 
 int	as3722_poweroff(device_t);
+int	as3722_reboot(device_t);
 
 #endif /* !_DEV_I2C_AS3722_H */
