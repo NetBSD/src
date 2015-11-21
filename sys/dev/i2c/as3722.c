@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.2 2015/11/21 10:56:40 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.3 2015/11/21 12:19:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.2 2015/11/21 10:56:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.3 2015/11/21 12:19:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.2 2015/11/21 10:56:40 jmcneill Exp $");
 
 #define AS3722_RESET_CTRL_REG		0x36
 #define AS3722_RESET_CTRL_POWER_OFF	__BIT(1)
+#define AS3722_RESET_CTRL_FORCE_RESET	__BIT(0)
 
 #define AS3722_WATCHDOG_CTRL_REG	0x38
 #define AS3722_WATCHDOG_CTRL_MODE	__BITS(2,1)
@@ -247,6 +248,22 @@ as3722_poweroff(device_t dev)
 	iic_acquire_bus(sc->sc_i2c, flags);
 	error = as3722_write(sc, AS3722_RESET_CTRL_REG,
 	    AS3722_RESET_CTRL_POWER_OFF, flags);
+	iic_release_bus(sc->sc_i2c, flags);
+
+	return error;
+}
+
+int
+as3722_reboot(device_t dev)
+{
+	struct as3722_softc * const sc = device_private(dev);
+	int error;
+
+	const int flags = I2C_F_POLL;
+
+	iic_acquire_bus(sc->sc_i2c, flags);
+	error = as3722_write(sc, AS3722_RESET_CTRL_REG,
+	    AS3722_RESET_CTRL_FORCE_RESET, flags);
 	iic_release_bus(sc->sc_i2c, flags);
 
 	return error;
