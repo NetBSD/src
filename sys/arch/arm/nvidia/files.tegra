@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.23 2015/11/21 12:09:39 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.24 2015/11/21 22:55:32 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -90,6 +90,11 @@ file	arch/arm/nvidia/tegra_ehci.c		tegra_ehci
 # SDMMC
 attach	sdhc at tegraio with tegra_sdhc
 file	arch/arm/nvidia/tegra_sdhc.c		tegra_sdhc
+
+# Thermal throttling controller
+device	tegrasoctherm: sysmon_envsys
+attach	tegrasoctherm at tegraio with tegra_soctherm
+file	arch/arm/nvidia/tegra_soctherm.c	tegra_soctherm
 
 # PCIE
 device	tegrapcie: pcibus
