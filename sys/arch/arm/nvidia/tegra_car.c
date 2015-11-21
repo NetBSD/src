@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.28 2015/11/19 22:26:48 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.29 2015/11/21 12:09:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.28 2015/11/19 22:26:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.29 2015/11/21 12:09:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -859,4 +859,26 @@ tegra_car_gpu_enable(void)
 
 	/* Leave reset */
 	bus_space_write_4(bst, bsh, CAR_RST_DEV_X_CLR_REG, CAR_DEV_X_GPU);
+}
+
+void
+tegra_car_fuse_enable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	tegra_reg_set_clear(bst, bsh, CAR_CLK_ENB_H_SET_REG, CAR_DEV_H_FUSE, 0);
+}
+
+void
+tegra_car_fuse_disable(void)
+{
+	bus_space_tag_t bst;
+	bus_space_handle_t bsh;
+
+	tegra_car_get_bs(&bst, &bsh);
+
+	tegra_reg_set_clear(bst, bsh, CAR_CLK_ENB_H_SET_REG, 0, CAR_DEV_H_FUSE);
 }
