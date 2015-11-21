@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.32 2015/11/20 16:44:23 jakllsch Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.33 2015/11/21 12:22:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.32 2015/11/20 16:44:23 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.33 2015/11/21 12:22:25 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -109,6 +109,7 @@ extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 
 static void tegra_device_register(device_t, void *);
+static void tegra_reset(void);
 static void tegra_powerdown(void);
 
 bs_protos(bs_notimpl);
@@ -244,7 +245,7 @@ initarm(void *arg)
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 #endif
 
-	cpu_reset_address = tegra_pmc_reset;
+	cpu_reset_address = tegra_reset;
 	cpu_powerdown_address = tegra_powerdown;
 
 	/* Talk to the user */
@@ -521,6 +522,22 @@ tegra_device_register(device_t self, void *aux)
 		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
 	}
 #endif
+}
+
+static void
+tegra_reset(void)
+{
+#if NAS3722PMIC > 0
+	device_t pmic = device_find_by_driver_unit("as3722pmic", 0);
+	if (pmic != NULL) {
+		delay(1000000);
+		if (as3722_reboot(pmic) != 0) {
+			printf("WARNING: AS3722 reset failed\n");
+			return;
+		}
+	}
+#endif
+	tegra_pmc_reset();
 }
 
 static void
