@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fuse.c,v 1.1 2015/11/21 12:09:39 jmcneill Exp $ */
+/* $NetBSD: tegra_fuse.c,v 1.2 2015/11/21 22:52:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fuse.c,v 1.1 2015/11/21 12:09:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fuse.c,v 1.2 2015/11/21 22:52:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,7 +96,7 @@ tegra_fuse_read(u_int offset)
 	}
 
 	tegra_car_fuse_enable();
-	const uint32_t v = bus_space_read_4(bst, bsh, offset);
+	const uint32_t v = bus_space_read_4(bst, bsh, 0x100 + offset);
 	tegra_car_fuse_disable();
 
 	return v;
