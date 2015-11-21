@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac_reg.h,v 1.14 2014/11/28 09:01:05 martin Exp $ */
+/* $NetBSD: dwc_gmac_reg.h,v 1.15 2015/11/21 16:04:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -131,8 +131,13 @@
 #define	AWIN_GMAC_MII_IRQ		__BIT(0)
 
 
-#define	GMAC_DMA_OP_RXSTOREFORWARD	__BIT(24) /* start RX when a
+#define	GMAC_DMA_OP_DISABLECSDROP	__BIT(26) /* disable dropping of
+						     frames with TCP/IP
+						     checksum errors */
+#define	GMAC_DMA_OP_RXSTOREFORWARD	__BIT(25) /* start RX when a
 						    full frame is available */
+#define	GMAC_DMA_OP_DISABLERXFLUSH	__BIT(24) /* Do not drop frames
+						     when out of RX descr. */
 #define	GMAC_DMA_OP_TXSTOREFORWARD	__BIT(21) /* start TX when a
  						    full frame is available */
 #define	GMAC_DMA_OP_FLUSHTX		__BIT(20) /* flush TX fifo */
