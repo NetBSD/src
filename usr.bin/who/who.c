@@ -1,4 +1,4 @@
-/*	$NetBSD: who.c,v 1.24 2014/06/08 09:53:43 mlelstv Exp $	*/
+/*	$NetBSD: who.c,v 1.25 2015/11/21 15:01:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)who.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: who.c,v 1.24 2014/06/08 09:53:43 mlelstv Exp $");
+__RCSID("$NetBSD: who.c,v 1.25 2015/11/21 15:01:43 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -307,12 +307,12 @@ print(const char *name, const char *line, time_t t, const char *host,
 		
 	}
 
-	(void)printf("%-*.*s ", maxname, maxname, name);
+	(void)printf("%-*.*s ", (int)maxname, (int)maxname, name);
 
 	if (show_term)
 		(void)printf("%c ", state);
 
-	(void)printf("%-*.*s ", maxline, maxline, line);
+	(void)printf("%-*.*s ", (int)maxline, (int)maxline, line);
 	tstr = ctime(&t);
 	(void)printf("%.12s ", tstr ? tstr + 4 : "?");
 
@@ -339,19 +339,19 @@ print(const char *name, const char *line, time_t t, const char *host,
 	}
 	
 	if (*host)
-		(void)printf("\t(%.*s)", maxhost, host);
+		(void)printf("\t(%.*s)", (int)maxhost, host);
 	(void)putchar('\n');
 }
 
 static void
 output_labels(void)
 {
-	(void)printf("%-*.*s ", maxname, maxname, "USER");
+	(void)printf("%-*.*s ", (int)maxname, (int)maxname, "USER");
 
 	if (show_term)
 		(void)printf("S ");
 	
-	(void)printf("%-*.*s ", maxline, maxline, "LINE");
+	(void)printf("%-*.*s ", (int)maxline, (int)maxline, "LINE");
 	(void)printf("WHEN         ");
 
 	if (show_idle) {
@@ -372,7 +372,7 @@ quick(const char *fname)
 
 	(void)getutentries(fname, &ehead);
 	for (ep = ehead; ep != NULL; ep = ep->next) {
-		(void)printf("%-*s ", maxname, ep->name);
+		(void)printf("%-*s ", (int)maxname, ep->name);
 		if ((++num % 8) == 0)
 			(void)putchar('\n');
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.17 2009/05/01 14:26:10 christos Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.18 2015/11/21 15:01:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.17 2009/05/01 14:26:10 christos Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.18 2015/11/21 15:01:43 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -69,16 +69,16 @@ static int setup(const char *);
 static void adjust_size(struct utmpentry *e);
 #endif
 
-int maxname = 8, maxline = 8, maxhost = 16;
+size_t maxname = 8, maxline = 8, maxhost = 16;
 int etype = 1 << USER_PROCESS;
-static int numutmp = 0;
+static size_t numutmp = 0;
 static struct utmpentry *ehead;
 
 #if defined(SUPPORT_UTMPX) || defined(SUPPORT_UTMP)
 static void
 adjust_size(struct utmpentry *e)
 {
-	int max;
+	size_t max;
 
 	if ((max = strlen(e->name)) > maxname)
 		maxname = max;
@@ -178,7 +178,7 @@ endutentries(void)
 	numutmp = 0;
 }
 
-int
+size_t
 getutentries(const char *fname, struct utmpentry **epp)
 {
 #ifdef SUPPORT_UTMPX
