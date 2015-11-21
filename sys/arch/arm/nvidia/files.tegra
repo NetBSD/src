@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.22 2015/11/19 22:09:16 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.23 2015/11/21 12:09:39 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -31,6 +31,11 @@ file	arch/arm/nvidia/tegra_mc.c		tegra_mc
 device	tegrapmc
 attach	tegrapmc at tegraio with tegra_pmc
 file	arch/arm/nvidia/tegra_pmc.c		tegra_pmc
+
+# eFUSE
+device	tegrafuse
+attach	tegrafuse at tegraio with tegra_fuse
+file	arch/arm/nvidia/tegra_fuse.c		tegra_fuse
 
 # Clock and Reset controller
 device	tegracar
@@ -134,9 +139,6 @@ defparam opt_tegra.h			CONMODE
 
 # Memory parameters
 defparam opt_tegra.h			MEMSIZE
-
-# CPU parameters
-defparam opt_tegra.h			CPUFREQ_BOOT
 
 # SOC parameters
 defflag	opt_tegra.h			SOC_TEGRAK1
