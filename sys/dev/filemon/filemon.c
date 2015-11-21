@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.16 2015/11/21 03:34:28 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.17 2015/11/21 07:45:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -294,6 +294,12 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	switch (cmd) {
 	case FILEMON_SET_FD:
 		/* Set the output file descriptor. */
+
+		/* First, release any current output file descriptor */
+		if (filemon->fm_fp)
+			fd_putfile(filemon->fm_fd);
+
+		/* Now set up the new one */
 		filemon->fm_fd = *((int *) data);
 		if ((filemon->fm_fp = fd_getfile(filemon->fm_fd)) == NULL) {
 			rw_exit(&filemon->fm_mtx);
