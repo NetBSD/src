@@ -1,5 +1,5 @@
 #
-#	$NetBSD: JETSONTK1,v 1.39 2015/11/19 22:09:16 jmcneill Exp $
+#	$NetBSD: JETSONTK1,v 1.40 2015/11/21 12:09:39 jmcneill Exp $
 #
 #	NVIDIA Jetson TK1 - Tegra K1 development kit
 #	https://developer.nvidia.com/jetson-tk1
@@ -11,7 +11,6 @@ include	"arch/evbarm/conf/GENERIC.common"
 options 	CPU_CORTEXA15
 options 	SOC_TEGRA124
 options 	BOARD_JETSONTK1
-options 	CPUFREQ_BOOT=2292
 options 	MULTIPROCESSOR
 #options 	MEMSIZE=2048
 
@@ -39,6 +38,9 @@ tegraio0	at mainbus?
 
 # Memory controller
 tegramc0	at tegraio?		# MC
+
+# FUSE controller
+tegrafuse0	at tegraio?		# FUSE
 
 # Power management controller
 tegrapmc0	at tegraio?		# PMC
