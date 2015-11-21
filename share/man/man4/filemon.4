@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.10 2015/11/20 03:13:35 pgoyette Exp $
+.\"	$NetBSD: filemon.4,v 1.11 2015/11/21 00:35:59 pgoyette Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 20, 2015
+.Dd November 21, 2015
 .Dt FILEMON 4
 .Os
 .Sh NAME
@@ -161,7 +161,7 @@ The following example demonstrates the basic usage of
 #include <filemon.h>
 
 pid_d pid;
-int fd, tfd;
+int filemon_fd, temp_fd;
 int status;
 
 filemon_fd = open("/dev/filemon", O_RDWR);
