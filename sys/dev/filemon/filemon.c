@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.15 2015/11/20 02:58:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.16 2015/11/21 03:34:28 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -426,7 +426,7 @@ filemon_modcmd(modcmd_t cmd, void *data)
 		break;
 
 	default:
-		error = EOPNOTSUPP;
+		error = ENOTTY;
 		break;
 
 	}
