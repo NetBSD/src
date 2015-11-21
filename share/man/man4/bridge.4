@@ -1,4 +1,4 @@
-.\"	$NetBSD: bridge.4,v 1.10 2015/11/20 17:00:48 christos Exp $
+.\"	$NetBSD: bridge.4,v 1.11 2015/11/21 09:02:31 wiz Exp $
 .\"
 .\" Copyright 2001 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -96,7 +96,7 @@ as on the interface on which the packet arrives or departs.
 .Pp
 The
 .Nm
-will enable passing of VLAN tagged packets automatically if the underlying
+driver will enable passing of VLAN tagged packets automatically if the underlying
 interfaces support it.
 This is to facilitate XEN network configurations with
 .Xr xennet 4 .
