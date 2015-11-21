@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_var.h,v 1.11 2015/08/04 01:23:07 jmcneill Exp $ */
+/* $NetBSD: amlogic_var.h,v 1.12 2015/11/21 00:54:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -59,6 +59,7 @@ void	amlogic_bootstrap(void);
 void	amlogic_cpufreq_bootstrap(void);
 void	amlogic_cpufreq_init(void);
 
+void	amlogic_wdog_init(void);
 void	amlogic_usbphy_init(int);
 void	amlogic_eth_init(void);
 void	amlogic_rng_init(void);
