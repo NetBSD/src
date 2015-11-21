@@ -1,4 +1,4 @@
-/*	$NetBSD: sprint.c,v 1.17 2006/01/04 01:17:54 perry Exp $	*/
+/*	$NetBSD: sprint.c,v 1.18 2015/11/21 15:22:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sprint.c	8.3 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: sprint.c,v 1.17 2006/01/04 01:17:54 perry Exp $");
+__RCSID("$NetBSD: sprint.c,v 1.18 2015/11/21 15:22:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ sflag_print(void)
 	 *		office phone
 	 */
 #define	MAXREALNAME	18
-	(void)printf("%-*s %-*s %s %s\n", maxname, "Login", MAXREALNAME,
+	(void)printf("%-*s %-*s %s %s\n", (int)maxname, "Login", MAXREALNAME,
 	    "Name", " Tty      Idle  Login Time  ", (gflag) ? "" :
 	    (oflag) ? "Office     Office Phone" : "Where");
 
