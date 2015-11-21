@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.h,v 1.7 2008/07/13 20:07:49 dholland Exp $	*/
+/*	$NetBSD: utmpentry.h,v 1.8 2015/11/21 15:01:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@ struct utmpentry {
 	struct utmpentry *next;
 };
 
-extern int maxname, maxline, maxhost;
+extern size_t maxname, maxline, maxhost;
 extern int etype;
 
 /*
@@ -72,5 +72,5 @@ extern int etype;
  * endutentries clears and frees the cached data.
  */
 
-int getutentries(const char *, struct utmpentry **);
+size_t getutentries(const char *, struct utmpentry **);
 void endutentries(void);
