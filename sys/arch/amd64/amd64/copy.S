@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.18 2010/07/07 01:13:29 chs Exp $	*/
+/*	$NetBSD: copy.S,v 1.19 2015/11/21 12:34:48 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -359,19 +359,6 @@ ENTRY(copystr)
 
 7:	ret
 
-ENTRY(fuword)
-	DEFERRED_SWITCH_CHECK
-	movq	$VM_MAXUSER_ADDRESS-4,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusufailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
-	movl	(%rdi),%eax
-	movq	$0,PCB_ONFAULT(%rcx)
-	ret
-	DEFERRED_SWITCH_CALL
-	
 ENTRY(fusword)
 	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
@@ -411,22 +398,6 @@ ENTRY(fubyte)
 	ret
 	DEFERRED_SWITCH_CALL
 
-ENTRY(suword)
-	DEFERRED_SWITCH_CHECK
-	movq	$VM_MAXUSER_ADDRESS-4,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusufailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
-
-	movq	%rsi,(%rdi)
-	xorq	%rax,%rax
-	movq	%rax,PCB_ONFAULT(%rcx)
-	ret
-	DEFERRED_SWITCH_CALL
-	
 ENTRY(susword)
 	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-2,%r11
