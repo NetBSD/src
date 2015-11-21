@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.12 2015/11/21 00:50:15 pgoyette Exp $
+.\"	$NetBSD: filemon.4,v 1.13 2015/11/21 09:01:35 wiz Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -34,8 +34,9 @@
 .Sh DESCRIPTION
 In normal situations,
 .Nm
-is not built-in to the kernel, and a call to open /dev/filemon will
-auto-load the
+is not built-in to the kernel, and a call to open
+.Pa /dev/filemon
+will auto-load the
 .Nm
 module (see
 .Xr module 7
@@ -212,8 +213,13 @@ The
 .Nm
 facility can only be used to track processes running in the system's
 native emulation.
-Neither processes using any of the COMPAT_xxx compatability layers nor
+Neither processes using any of the
+.Dv COMPAT_xxx
+compatibility layers nor
 any descendants of such processes can be tracked.
 .Pp
-Additionally, the procces_id specified with FILEMON_SET_PID must refer to
-a descendant of the calling process.
+Additionally, the
+.Ar process_id
+specified with
+.Dv FILEMON_SET_PID
+must refer to a descendant of the calling process.
