@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.9 2015/11/21 12:09:39 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.10 2015/11/21 22:52:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.9 2015/11/21 12:09:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.10 2015/11/21 22:52:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,17 +47,17 @@ __KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.9 2015/11/21 12:09:39 jmcneill Ex
 
 #define EVP_RESET_VECTOR_0_REG	0x100
 
-#define FUSE_SKU_INFO_REG	0x110
-#define FUSE_CPU_SPEEDO_0_REG	0x114
-#define FUSE_CPU_IDDQ_REG	0x118
-#define FUSE_FT_REV_REG		0x128
-#define FUSE_CPU_SPEEDO_1_REG	0x12c
-#define FUSE_CPU_SPEEDO_2_REG	0x130
-#define FUSE_SOC_SPEEDO_0_REG	0x134
-#define FUSE_SOC_SPEEDO_1_REG	0x138
-#define FUSE_SOC_SPEEDO_2_REG	0x13c
-#define FUSE_SOC_IDDQ_REG	0x140
-#define FUSE_GPU_IDDQ_REG	0x228
+#define FUSE_SKU_INFO_REG	0x010
+#define FUSE_CPU_SPEEDO_0_REG	0x014
+#define FUSE_CPU_IDDQ_REG	0x018
+#define FUSE_FT_REV_REG		0x028
+#define FUSE_CPU_SPEEDO_1_REG	0x02c
+#define FUSE_CPU_SPEEDO_2_REG	0x030
+#define FUSE_SOC_SPEEDO_0_REG	0x034
+#define FUSE_SOC_SPEEDO_1_REG	0x038
+#define FUSE_SOC_SPEEDO_2_REG	0x03c
+#define FUSE_SOC_IDDQ_REG	0x040
+#define FUSE_GPU_IDDQ_REG	0x128
 
 static void	tegra124_speedo_init(void);
 static int	tegra124_speedo_init_ids(uint32_t);
