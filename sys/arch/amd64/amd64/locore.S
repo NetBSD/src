@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.80 2015/11/20 11:58:00 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.81 2015/11/22 10:18:59 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -357,70 +357,94 @@ tmpstk:
 ENTRY(start)
 #ifndef XEN
 	.code32
-	movw	$0x1234,0x472			# warm boot
+
+	/* Warm boot */
+	movw	$0x1234,0x472
+
 	/*
-	 * Load parameters from stack
-	 * (howto, [bootdev], bootinfo, esym, basemem, extmem).
+	 * Load parameters from the stack (32 bits):   
+	 *     boothowto, [bootdev], bootinfo, esym, basemem, extmem
+	 * We are not interested in 'bootdev'.
 	 */
+
+	/* Load 'boothowto' */
 	movl	4(%esp),%eax
 	movl	%eax,RELOC(boothowto)
+
+	/* Load 'bootinfo' */
 	movl	12(%esp),%eax
-	testl	%eax, %eax
-	jz	1f
-	movl	(%eax), %ebx		/* number of entries */
+	testl	%eax,%eax		/* bootinfo = NULL? */
+	jz	bootinfo_finished
+
+	movl	(%eax),%ebx		/* number of entries */
 	movl	$RELOC(bootinfo),%ebp
-	movl	%ebp, %edx
+	movl	%ebp,%edx
 	addl	$BOOTINFO_MAXSIZE,%ebp
-	movl	%ebx, (%edx)
-	addl	$4, %edx
-2:
-	testl	%ebx, %ebx
-	jz	1f
-	addl	$4, %eax
-	movl	(%eax), %ecx		/* address of entry */
+	movl	%ebx,(%edx)
+	addl	$4,%edx
+
+bootinfo_entryloop:
+	testl	%ebx,%ebx		/* no remaining entries? */
+	jz	bootinfo_finished
+
+	addl	$4,%eax
+	movl	(%eax),%ecx		/* address of entry */
 	pushl	%edi
 	pushl	%esi
 	pushl	%eax
 
-	movl	(%ecx),%eax	/* len */
+	movl	(%ecx),%eax		/* size of entry */
 	movl	%edx,%edi
-	addl	(%ecx), %edx		/* update dest pointer */
-	cmpl	%ebp, %edx
-	jg	2f
+	addl	(%ecx),%edx		/* update dest pointer */
+	cmpl	%ebp,%edx		/* beyond bootinfo+BOOTINFO_MAXSIZE? */
+	jg	bootinfo_overflow
+
 	movl	%ecx,%esi
 	movl	%eax,%ecx
+
 	/*
-	 * If any modules were loaded, record where they
-	 * end.  We'll need to skip over them.
+	 * If any modules were loaded, record where they end.  We'll need to
+	 * skip over them.
 	 */
-	cmpl	$BTINFO_MODULELIST, 4(%esi)
+	cmpl	$BTINFO_MODULELIST,4(%esi)
 	jne	0f
+
 	pushl	12(%esi)		/* endpa */
 	popl	RELOC(eblob)
-	addl	$KERNBASE_LO, RELOC(eblob)
-	adcl	$KERNBASE_HI, RELOC(eblob)+4
+	addl	$KERNBASE_LO,RELOC(eblob)
+	adcl	$KERNBASE_HI,RELOC(eblob)+4
+
 0:
 	rep
-	movsb
+	movsb				/* copy esi -> edi */
 	popl	%eax
 	popl	%esi
 	popl	%edi
-	subl	$1, %ebx
-	jmp	2b
-2:	/* cleanup for overflow case */
+	subl	$1,%ebx			/* decrement the # of entries */
+	jmp	bootinfo_entryloop
+
+bootinfo_overflow:
+	/*
+	 * Cleanup for overflow case. Pop the registers, and correct the number
+	 * of entries.
+	 */
 	popl	%eax
 	popl	%esi
 	popl	%edi
 	movl	$RELOC(bootinfo),%ebp
-	movl	%ebp, %edx
-	subl	%ebx, (%edx)		/* correct number of entries */
-1:
+	movl	%ebp,%edx
+	subl	%ebx,(%edx)		/* correct the number of entries */
 
+bootinfo_finished:
+	/* Load 'esym' */
 	movl	16(%esp),%eax
-	testl	%eax,%eax
+	testl	%eax,%eax		/* esym = NULL? */
 	jz	1f
+
 	addl	$KERNBASE_LO,%eax
-1: 	movl	$RELOC(esym),%ebp
+
+1:
+	movl	$RELOC(esym),%ebp
 	movl	%eax,(%ebp)
 	movl	$KERNBASE_HI,4(%ebp)
 
@@ -428,8 +452,10 @@ ENTRY(start)
 	movl	(%ebp),%eax
 	testl	%eax,%eax
 	jnz	1f
+
 	movl	20(%esp),%eax
 	movl	%eax,(%ebp)
+
 1:
 	movl	$RELOC(biosbasemem),%ebp
 	movl	(%ebp),%eax
@@ -470,7 +496,7 @@ ENTRY(start)
  * Virtual address space of kernel:
  *
  * text | data | bss | [syms] | page dir | proc0 kstack | L1 ptp | L2 ptp | L3
- *			      0          1       2      3
+ *                            0          1       2      3
  */
 
 #if L2_SLOT_KERNBASE > 0
@@ -484,7 +510,6 @@ ENTRY(start)
 #else
 #define TABLE_L3_ENTRIES NKL3_KIMG_ENTRIES
 #endif
-
 
 #define PROC0_PML4_OFF	0
 #define PROC0_STK_OFF	(PROC0_PML4_OFF + PAGE_SIZE)
@@ -507,7 +532,7 @@ ENTRY(start)
 #define fillkpt	\
 1:	movl	%eax,(%ebx)		; 	/* store phys addr */	\
 	movl	$0,(PDE_SIZE-4)(%ebx)	; 	/* upper 32 bits 0 */	\
-	addl	$PDE_SIZE,%ebx		; 	/* next pte/pde */	\
+	addl	$PDE_SIZE,%ebx		; 	/* next PTE/PDE */	\
 	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
 	loop	1b			;
 
@@ -529,12 +554,13 @@ ENTRY(start)
 	subl	$KERNBASE_LO,%eax	/* XXX */
 	movl	%eax,%edi
 1:
+
 	/* Compute sizes */
 	movl	%edi,%esi
-	addl	$PGOFSET,%esi			# page align up
+	addl	$PGOFSET,%esi		/* page align up */
 	andl	$~PGOFSET,%esi
-
 	movl	%esi,%edi
+
 	xorl	%eax,%eax
 	cld
 	movl	$TABLESIZE,%ecx
@@ -542,11 +568,17 @@ ENTRY(start)
 	rep
 	stosl
 
-	leal	(PROC0_PTP1_OFF)(%esi), %ebx
-
 /*
  * Build initial page tables.
  */
+	leal	(PROC0_PTP1_OFF)(%esi), %ebx
+
+	/* Skip the first MB */
+	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
+	movl	%eax,%ecx
+	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # PDEs */
+	addl	%ecx,%ebx
+
 	/*
 	 * Compute &__data_start - KERNBASE. This can't be > 4G,
 	 * or we can't deal with it anyway, since we can't load it in
@@ -554,14 +586,6 @@ ENTRY(start)
 	 */
 	movl	$RELOC(__data_start),%edx
 	andl	$~PGOFSET,%edx
-
-	/*
-	 * Skip the first MB.
-	 */
-	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
-	movl	%eax,%ecx
-	shrl	$(PGSHIFT-3),%ecx	/* ((n >> PGSHIFT) << 3) for # PDEs */
-	addl	%ecx,%ebx
 
 	/* Map the kernel text read-only. */
 	movl	%edx,%ecx
@@ -589,7 +613,7 @@ ENTRY(start)
 	/* Set up level 2 pages */
 	leal	(PROC0_PTP2_OFF)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 
@@ -597,7 +621,7 @@ ENTRY(start)
 	/* If needed, set up level 2 entries for actual kernel mapping */
 	leal	(PROC0_PTP2_OFF+ L2_SLOT_KERNBASE*8)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
 	fillkpt
 #endif
@@ -605,7 +629,7 @@ ENTRY(start)
 	/* Set up level 3 pages */
 	leal	(PROC0_PTP3_OFF)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 
@@ -621,7 +645,7 @@ ENTRY(start)
 	/* Set up top level entries for identity mapping */
 	leal	(PROC0_PML4_OFF)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
@@ -638,7 +662,6 @@ ENTRY(start)
 	orl	$(PG_V|PG_KW),%eax
 	movl	%eax,(%ebx)
 	movl	$0, 4(%ebx)
-
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	$RELOC(PDPpaddr),%ebp
