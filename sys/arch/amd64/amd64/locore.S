@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.81 2015/11/22 10:18:59 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.82 2015/11/22 14:06:08 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -247,7 +247,6 @@ _C_LABEL(lapic_isr):
 END(lapic_isr)
 #endif
 
-	.globl	_C_LABEL(cpu_vendorname)
 	.globl	_C_LABEL(cpuid_level)
 	.globl	_C_LABEL(esym)
 	.globl	_C_LABEL(eblob)
@@ -267,10 +266,6 @@ END(cputype)
 LABEL(cpuid_level)	.long	-1	# max. level accepted by 'cpuid'
 					#   instruction
 END(cpuid_level)
-	.type	_C_LABEL(cpu_vendorname), @object
-LABEL(cpu_vendorname)	.space	16	# vendor string returned by `cpuid'
-					#   instruction
-END(cpu_vendorname)
 	.type	_C_LABEL(esym), @object
 LABEL(esym)		.quad	0	# ptr to end of syms
 END(esym)
@@ -472,11 +467,6 @@ bootinfo_finished:
 	xorl	%eax,%eax
 	cpuid
 	movl	%eax,RELOC(cpuid_level)
-	movl	$RELOC(cpu_vendorname),%ebp
-	movl	%ebx,(%ebp)
-	movl	%edx,4(%ebp)
-	movl	%ecx,8(%ebp)
-	movl	$0, 12(%ebp)
 
 	/*
 	 * Finished with old stack; load new %esp now instead of later so we
