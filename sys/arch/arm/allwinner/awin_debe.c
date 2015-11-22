@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.19 2015/11/19 18:48:22 bouyer Exp $ */
+/* $NetBSD: awin_debe.c,v 1.20 2015/11/22 17:50:48 aymeric Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,7 @@
 #include "opt_allwinner.h"
 #include "genfb.h"
 #include "awin_mp.h"
+#include "awin_tcon.h"
 
 #ifndef AWIN_DEBE_VIDEOMEM
 #define AWIN_DEBE_VIDEOMEM	(16 * 1024 * 1024)
@@ -37,7 +38,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.19 2015/11/19 18:48:22 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.20 2015/11/22 17:50:48 aymeric Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -602,8 +603,10 @@ awin_debe_ioctl(device_t self, u_long cmd, void *data)
 			val &= ~AWIN_DEBE_MODCTL_HWC_EN;
 		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+#if NAWIN_TCON > 0
 		/* debe0 always connected to tcon0, debe1 to tcon1*/
 		awin_tcon_setvideo(device_unit(sc->sc_dev), enable);
+#endif
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);

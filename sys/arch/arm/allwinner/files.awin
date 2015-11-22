@@ -1,4 +1,4 @@
-#	$NetBSD: files.awin,v 1.32 2015/07/25 15:19:54 jmcneill Exp $
+#	$NetBSD: files.awin,v 1.33 2015/11/22 17:50:48 aymeric Exp $
 #
 # Configuration info for Allwinner ARM Peripherals
 #
@@ -152,7 +152,7 @@ file	arch/arm/allwinner/awin_hdmiaudio.c	awin_hdmiaudio
 # A10/A20/A31 LCD/TV timing controller (TCON)
 device	awintcon
 attach	awintcon at awinio with awin_tcon
-file	arch/arm/allwinner/awin_tcon.c		awin_tcon | awin_hdmi
+file	arch/arm/allwinner/awin_tcon.c		awin_tcon | awin_hdmi	needs-flag
 
 # A10/A20/A31 Display engine backend (DE-BE)
 device	awindebe { }
