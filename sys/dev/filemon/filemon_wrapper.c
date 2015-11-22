@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_wrapper.c,v 1.8 2015/11/20 01:16:04 pgoyette Exp $	*/
+/*	$NetBSD: filemon_wrapper.c,v 1.9 2015/11/22 01:20:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.8 2015/11/20 01:16:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.9 2015/11/22 01:20:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,7 +48,7 @@ filemon_wrapper_chdir(struct lwp * l, const struct sys_chdir_args * uap,
 	struct filemon *filemon;
 	
 	if ((error = sys_chdir(l, uap, retval)) != 0)
-		return 0;
+		return error;
 
 	filemon = filemon_lookup(curproc);
 	if (filemon == NULL)
@@ -76,11 +76,11 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
 	struct filemon *filemon;
 	
 	if ((error = sys_execve(l, uap, retval)) != EJUSTRETURN)
-		return 0;
+		return error;
 
 	filemon = filemon_lookup(curproc);
 	if (filemon == NULL)
-		return 0;
+		return EJUSTRETURN;
 
 	error = copyinstr(SCARG(uap, path), fname, sizeof(fname), &done);
 	if (error)
@@ -89,7 +89,7 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
 	filemon_printf(filemon, "E %d %s\n", curproc->p_pid, fname);
 out:
 	rw_exit(&filemon->fm_mtx);
-	return 0;
+	return EJUSTRETURN;
 }
 
 
