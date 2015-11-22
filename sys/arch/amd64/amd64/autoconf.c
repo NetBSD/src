@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.24 2012/11/08 02:00:44 chs Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.25 2015/11/22 13:41:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.24 2012/11/08 02:00:44 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.25 2015/11/22 13:41:24 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_intrdebug.h"
@@ -86,7 +86,6 @@ extern void platform_init(void);
 void
 cpu_configure(void)
 {
-
 	startrtclock();
 
 #if NBIOS32 > 0

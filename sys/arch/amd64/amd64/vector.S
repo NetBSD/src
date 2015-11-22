@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.44 2013/06/25 00:27:22 uebayasi Exp $	*/
+/*	$NetBSD: vector.S,v 1.45 2015/11/22 13:41:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -139,7 +139,7 @@ IDTVEC(resume_lapic_ipi)
 1:
 	incl	CPUVAR(IDEPTH)
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-        sti
+	sti
 	pushq	%rbx
 	call	_C_LABEL(x86_ipi_handler)
 	jmp	_C_LABEL(Xdoreti)
@@ -646,49 +646,49 @@ XENINTRSTUB(xenev,28,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,29,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,30,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
 XENINTRSTUB(xenev,31,voidop,voidop,voidop,hypervisor_asm_unmask,voidop)
-  
+
 LABEL(xenev_stubs)
-  	.quad _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
-  	.quad _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
-  	.quad _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
-  	.quad _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
-  	.quad _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
-  	.quad _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
-  	.quad _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
-  	.quad _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
-  	.quad _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
-  	.quad _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
-  	.quad _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
-  	.quad _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
-  	.quad _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
-  	.quad _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
-  	.quad _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
-  	.quad _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
-  	.quad _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
-  	.quad _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
-  	.quad _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
-  	.quad _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
-  	.quad _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
-  	.quad _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
-  	.quad _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
-  	.quad _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
-  	.quad _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
-  	.quad _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
-  	.quad _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
-  	.quad _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
-  	.quad _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
-  	.quad _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
-  	.quad _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
-  	.quad _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
+	.quad _C_LABEL(Xrecurse_xenev0), _C_LABEL(Xresume_xenev0)
+	.quad _C_LABEL(Xrecurse_xenev1) ,_C_LABEL(Xresume_xenev1)
+	.quad _C_LABEL(Xrecurse_xenev2) ,_C_LABEL(Xresume_xenev2)
+	.quad _C_LABEL(Xrecurse_xenev3) ,_C_LABEL(Xresume_xenev3)
+	.quad _C_LABEL(Xrecurse_xenev4) ,_C_LABEL(Xresume_xenev4)
+	.quad _C_LABEL(Xrecurse_xenev5) ,_C_LABEL(Xresume_xenev5)
+	.quad _C_LABEL(Xrecurse_xenev6) ,_C_LABEL(Xresume_xenev6)
+	.quad _C_LABEL(Xrecurse_xenev7) ,_C_LABEL(Xresume_xenev7)
+	.quad _C_LABEL(Xrecurse_xenev8) ,_C_LABEL(Xresume_xenev8)
+	.quad _C_LABEL(Xrecurse_xenev9) ,_C_LABEL(Xresume_xenev9)
+	.quad _C_LABEL(Xrecurse_xenev10), _C_LABEL(Xresume_xenev10)
+	.quad _C_LABEL(Xrecurse_xenev11), _C_LABEL(Xresume_xenev11)
+	.quad _C_LABEL(Xrecurse_xenev12), _C_LABEL(Xresume_xenev12)
+	.quad _C_LABEL(Xrecurse_xenev13), _C_LABEL(Xresume_xenev13)
+	.quad _C_LABEL(Xrecurse_xenev14), _C_LABEL(Xresume_xenev14)
+	.quad _C_LABEL(Xrecurse_xenev15), _C_LABEL(Xresume_xenev15)
+	.quad _C_LABEL(Xrecurse_xenev16), _C_LABEL(Xresume_xenev16)
+	.quad _C_LABEL(Xrecurse_xenev17), _C_LABEL(Xresume_xenev17)
+	.quad _C_LABEL(Xrecurse_xenev18), _C_LABEL(Xresume_xenev18)
+	.quad _C_LABEL(Xrecurse_xenev19), _C_LABEL(Xresume_xenev19)
+	.quad _C_LABEL(Xrecurse_xenev20), _C_LABEL(Xresume_xenev20)
+	.quad _C_LABEL(Xrecurse_xenev21), _C_LABEL(Xresume_xenev21)
+	.quad _C_LABEL(Xrecurse_xenev22), _C_LABEL(Xresume_xenev22)
+	.quad _C_LABEL(Xrecurse_xenev23), _C_LABEL(Xresume_xenev23)
+	.quad _C_LABEL(Xrecurse_xenev24), _C_LABEL(Xresume_xenev24)
+	.quad _C_LABEL(Xrecurse_xenev25), _C_LABEL(Xresume_xenev25)
+	.quad _C_LABEL(Xrecurse_xenev26), _C_LABEL(Xresume_xenev26)
+	.quad _C_LABEL(Xrecurse_xenev27), _C_LABEL(Xresume_xenev27)
+	.quad _C_LABEL(Xrecurse_xenev28), _C_LABEL(Xresume_xenev28)
+	.quad _C_LABEL(Xrecurse_xenev29), _C_LABEL(Xresume_xenev29)
+	.quad _C_LABEL(Xrecurse_xenev30), _C_LABEL(Xresume_xenev30)
+	.quad _C_LABEL(Xrecurse_xenev31), _C_LABEL(Xresume_xenev31)
 END(xenev_stubs)
 
 # Xen callbacks
 
 # Hypervisor callback
 NENTRY(hypervisor_callback)
-	movq (%rsp),%rcx
-	movq 8(%rsp),%r11
-	addq $16,%rsp
+	movq	(%rsp),%rcx
+	movq	8(%rsp),%r11
+	addq	$16,%rsp
 	pushq	$0	# Dummy error code
 	pushq	$T_ASTFLT
 	INTRENTRY
@@ -696,7 +696,7 @@ NENTRY(hypervisor_callback)
 	movq	%rsp, %rdi
 	subq	$8, %rdi; /* don't forget if_ppl */
 	call	do_hypervisor_callback
-	testb   $SEL_RPL,TF_CS(%rsp)
+	testb	$SEL_RPL,TF_CS(%rsp)
 	jnz	doreti_checkast
 1:
 	INTRFASTEXIT
@@ -704,15 +704,15 @@ END(hypervisor_callback)
 
 # Panic?
 NENTRY(failsafe_callback)
-	movq (%rsp),%rcx
-	movq 8(%rsp),%r11
-	addq $16,%rsp
+	movq	(%rsp),%rcx
+	movq	8(%rsp),%r11
+	addq	$16,%rsp
 	pushq	$0
 	pushq	$T_ASTFLT
 	INTRENTRY
 	movq	%rsp, %rdi
 	subq	$8, %rdi; /* don't forget if_ppl */
-	call xen_failsafe_handler
+	call	xen_failsafe_handler
 	INTRFASTEXIT
 #	jmp	HYPERVISOR_iret
 END(failsafe_callback)
