@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2015/11/22 04:23:32 kamil Exp $
+#	$NetBSD: Makefile,v 1.6 2015/11/22 04:26:14 kamil Exp $
 
 WARNS=	4
 
@@ -27,7 +27,7 @@ SRCS+=	top.c
 SRCS+=	update.c
 SRCS+=	window.c
 
-#LIBDPLIBS+=	curses	${.CURDIR}/../libcurses
+LIBDPLIBS+=	curses	${.CURDIR}/../libcurses
 
 MAN=	#
 MAN+=	move_panel.3
