@@ -1,4 +1,4 @@
-/*	$NetBSD: fdisk.c,v 1.152 2015/06/16 23:58:30 christos Exp $ */
+/*	$NetBSD: fdisk.c,v 1.153 2015/11/22 15:53:10 christos Exp $ */
 
 /*
  * Mach Operating System
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: fdisk.c,v 1.152 2015/06/16 23:58:30 christos Exp $");
+__RCSID("$NetBSD: fdisk.c,v 1.153 2015/11/22 15:53:10 christos Exp $");
 #endif /* not lint */
 
 #define MBRPTYPENAMES
@@ -2975,7 +2975,7 @@ string(const char *prompt, int length, char *buf)
 	int len;
 
 	for (;;) {
-		printf("%s: [%.*s] ", prompt, length, buf);
+		printf("%s: [%.*s] (space to clear)", prompt, length, buf);
 
 		if (!fgets(lbuf, LBUF, stdin))
 			errx(1, "EOF");
