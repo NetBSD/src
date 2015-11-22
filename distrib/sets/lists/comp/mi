@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2005 2015/11/22 03:31:00 kamil Exp $
+#	$NetBSD: mi,v 1.2006 2015/11/22 04:44:30 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2551,6 +2551,7 @@
 ./usr/include/openssl/x509.h			comp-c-include		crypto
 ./usr/include/openssl/x509_vfy.h		comp-c-include		crypto
 ./usr/include/openssl/x509v3.h			comp-c-include		crypto
+./usr/include/panel.h				comp-c-include
 ./usr/include/paths.h				comp-c-include
 ./usr/include/pcap-namedb.h			comp-c-include
 ./usr/include/pcap.h				comp-c-include
@@ -3312,6 +3313,8 @@
 ./usr/lib/libp2k.a				comp-puffs-lib		compatfile,rump
 ./usr/lib/libp2k_p.a				comp-puffs-proflib	compatfile,rump,profile
 ./usr/lib/libpam.a				comp-c-lib		compatfile,pam
+./usr/lib/libpanel.a				comp-c-lib		compatfile
+./usr/lib/libpanel_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libpcap.a				comp-c-lib		compatfile
 ./usr/lib/libpcap_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libpcc.a				comp-obsolete		obsolete
@@ -5264,6 +5267,7 @@
 ./usr/share/man/cat3/bn.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/bn_internal.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/border.0			comp-c-catman		.cat
+./usr/share/man/cat3/bottom_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/box.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bsearch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/bstring.0			comp-c-catman		.cat
@@ -5615,6 +5619,7 @@
 ./usr/share/man/cat3/define_key.0		comp-c-catman		.cat
 ./usr/share/man/cat3/dehumanize_number.0	comp-c-catman		.cat
 ./usr/share/man/cat3/del_curterm.0		comp-c-catman		.cat
+./usr/share/man/cat3/del_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delay_output.0		comp-c-catman		.cat
 ./usr/share/man/cat3/delch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/deleteln.0			comp-c-catman		.cat
@@ -6582,6 +6587,7 @@
 ./usr/share/man/cat3/hid_start_parse.0		comp-c-catman		.cat
 ./usr/share/man/cat3/hid_usage_in_page.0	comp-c-catman		.cat
 ./usr/share/man/cat3/hid_usage_page.0		comp-c-catman		.cat
+./usr/share/man/cat3/hide_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/history.0			comp-c-catman		.cat
 ./usr/share/man/cat3/history_end.0		comp-c-catman		.cat
 ./usr/share/man/cat3/history_init.0		comp-c-catman		.cat
@@ -7654,6 +7660,7 @@
 ./usr/share/man/cat3/monstartup.0		comp-c-catman		.cat
 ./usr/share/man/cat3/move.0			comp-c-catman		.cat
 ./usr/share/man/cat3/move_field.0		comp-c-catman		.cat
+./usr/share/man/cat3/move_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mpool.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mpool_close.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mpool_filter.0		comp-c-catman		.cat
@@ -7727,6 +7734,7 @@
 ./usr/share/man/cat3/new_item.0			comp-c-catman		.cat
 ./usr/share/man/cat3/new_menu.0			comp-c-catman		.cat
 ./usr/share/man/cat3/new_page.0			comp-c-catman		.cat
+./usr/share/man/cat3/new_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/newpad.0			comp-c-catman		.cat
 ./usr/share/man/cat3/newterm.0			comp-c-catman		.cat
 ./usr/share/man/cat3/newwin.0			comp-c-catman		.cat
@@ -7820,6 +7828,12 @@
 ./usr/share/man/cat3/p2k.0			comp-puffs-catman	.cat
 ./usr/share/man/cat3/p_query.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pair_content.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel.0			comp-c-catman		.cat
+./usr/share/man/cat3/panel_above.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_below.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_hidden.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_userptr.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pam.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_acct_mgmt.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_authenticate.0		comp-c-catman		.cat,pam
@@ -8414,6 +8428,8 @@
 ./usr/share/man/cat3/remque.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remquo.0			comp-c-catman		.cat
 ./usr/share/man/cat3/remquof.0			comp-c-catman		.cat
+./usr/share/man/cat3/replace_panel.0		comp-c-catman		.cat
+./usr/share/man/cat3/replace_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/request_init.0		comp-c-catman		.cat
 ./usr/share/man/cat3/request_set.0		comp-c-catman		.cat
 ./usr/share/man/cat3/res_close.0		comp-c-catman		.cat
@@ -8649,6 +8665,7 @@
 ./usr/share/man/cat3/set_menu_userptr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_menu_win.0		comp-c-catman		.cat
 ./usr/share/man/cat3/set_new_page.0		comp-c-catman		.cat
+./usr/share/man/cat3/set_panel_userptr.0	comp-c-catman		.cat
 ./usr/share/man/cat3/set_term.0			comp-c-catman		.cat
 ./usr/share/man/cat3/set_top_row.0		comp-c-catman		.cat
 ./usr/share/man/cat3/setbuf.0			comp-c-catman		.cat
@@ -8702,6 +8719,7 @@
 ./usr/share/man/cat3/sha2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/shm_open.0			comp-c-catman		.cat
 ./usr/share/man/cat3/shm_unlink.0		comp-c-catman		.cat
+./usr/share/man/cat3/show_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/shquote.0			comp-c-catman		.cat
 ./usr/share/man/cat3/shquotev.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sigaddset.0		comp-c-catman		.cat
@@ -9023,6 +9041,7 @@
 ./usr/share/man/cat3/tok_reset.0		comp-c-catman		.cat
 ./usr/share/man/cat3/tok_str.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tolower.0			comp-c-catman		.cat
+./usr/share/man/cat3/top_panel.0		comp-c-catman		.cat
 ./usr/share/man/cat3/top_row.0			comp-c-catman		.cat
 ./usr/share/man/cat3/touchline.0		comp-c-catman		.cat
 ./usr/share/man/cat3/touchoverlap.0		comp-c-catman		.cat
@@ -9073,6 +9092,7 @@
 ./usr/share/man/cat3/untouchwin.0		comp-c-catman		.cat
 ./usr/share/man/cat3/unvis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/updlastlogx.0		comp-c-catman		.cat
+./usr/share/man/cat3/update_panels.0		comp-c-catman		.cat
 ./usr/share/man/cat3/updwtmpx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/usb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/usbhid.0			comp-c-catman		.cat
@@ -12265,6 +12285,7 @@
 ./usr/share/man/html3/bm_comp.html		comp-c-htmlman		html
 ./usr/share/man/html3/bm_exec.html		comp-c-htmlman		html
 ./usr/share/man/html3/bm_free.html		comp-c-htmlman		html
+./usr/share/man/html3/bottom_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/border.html		comp-c-htmlman		html
 ./usr/share/man/html3/box.html			comp-c-htmlman		html
 ./usr/share/man/html3/bsearch.html		comp-c-htmlman		html
@@ -12567,6 +12588,7 @@
 ./usr/share/man/html3/define_key.html		comp-c-htmlman		html
 ./usr/share/man/html3/dehumanize_number.html	comp-c-htmlman		html
 ./usr/share/man/html3/del_curterm.html		comp-c-htmlman		html
+./usr/share/man/html3/del_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/delay_output.html		comp-c-htmlman		html
 ./usr/share/man/html3/delch.html		comp-c-htmlman		html
 ./usr/share/man/html3/deleteln.html		comp-c-htmlman		html
@@ -13529,6 +13551,7 @@
 ./usr/share/man/html3/hid_start_parse.html	comp-c-htmlman		html
 ./usr/share/man/html3/hid_usage_in_page.html	comp-c-htmlman		html
 ./usr/share/man/html3/hid_usage_page.html	comp-c-htmlman		html
+./usr/share/man/html3/hide_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/history.html		comp-c-htmlman		html
 ./usr/share/man/html3/history_end.html		comp-c-htmlman		html
 ./usr/share/man/html3/history_init.html		comp-c-htmlman		html
@@ -14567,6 +14590,7 @@
 ./usr/share/man/html3/monstartup.html		comp-c-htmlman		html
 ./usr/share/man/html3/move.html			comp-c-htmlman		html
 ./usr/share/man/html3/move_field.html		comp-c-htmlman		html
+./usr/share/man/html3/move_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/mpool.html		comp-c-htmlman		html
 ./usr/share/man/html3/mpool_close.html		comp-c-htmlman		html
 ./usr/share/man/html3/mpool_filter.html		comp-c-htmlman		html
@@ -14640,6 +14664,7 @@
 ./usr/share/man/html3/new_item.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/new_page.html		comp-c-htmlman		html
+./usr/share/man/html3/new_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/newpad.html		comp-c-htmlman		html
 ./usr/share/man/html3/newterm.html		comp-c-htmlman		html
 ./usr/share/man/html3/newwin.html		comp-c-htmlman		html
@@ -14763,6 +14788,12 @@
 ./usr/share/man/html3/pam_verror.html		comp-c-htmlman		html,pam
 ./usr/share/man/html3/pam_vinfo.html		comp-c-htmlman		html,pam
 ./usr/share/man/html3/pam_vprompt.html		comp-c-htmlman		html,pam
+./usr/share/man/html3/panel.html		comp-c-htmlman		html
+./usr/share/man/html3/panel_above.html		comp-c-htmlman		html
+./usr/share/man/html3/panel_below.html		comp-c-htmlman		html
+./usr/share/man/html3/panel_hidden.html		comp-c-htmlman		html
+./usr/share/man/html3/panel_userptr.html	comp-c-htmlman		html
+./usr/share/man/html3/panel_window.html		comp-c-htmlman		html
 ./usr/share/man/html3/param.html		comp-c-htmlman		html
 ./usr/share/man/html3/parsedate.html		comp-c-htmlman		html
 ./usr/share/man/html3/paths.html		comp-c-htmlman		html
@@ -15319,6 +15350,8 @@
 ./usr/share/man/html3/remque.html		comp-c-htmlman		html
 ./usr/share/man/html3/remquo.html		comp-c-htmlman		html
 ./usr/share/man/html3/remquof.html		comp-c-htmlman		html
+./usr/share/man/html3/replace_panel.html	comp-c-htmlman		html
+./usr/share/man/html3/replace_window.html	comp-c-htmlman		html
 ./usr/share/man/html3/request_init.html		comp-c-htmlman		html
 ./usr/share/man/html3/request_set.html		comp-c-htmlman		html
 ./usr/share/man/html3/res_close.html		comp-c-htmlman		html
@@ -15551,6 +15584,7 @@
 ./usr/share/man/html3/set_menu_userptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_menu_win.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_new_page.html		comp-c-htmlman		html
+./usr/share/man/html3/set_panel_userptr.html	comp-c-htmlman		html
 ./usr/share/man/html3/set_term.html		comp-c-htmlman		html
 ./usr/share/man/html3/set_top_row.html		comp-c-htmlman		html
 ./usr/share/man/html3/setbuf.html		comp-c-htmlman		html
@@ -15599,6 +15633,7 @@
 ./usr/share/man/html3/sha2.html			comp-c-htmlman		html
 ./usr/share/man/html3/shm_open.html		comp-c-htmlman		html
 ./usr/share/man/html3/shm_unlink.html		comp-c-htmlman		html
+./usr/share/man/html3/show_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/shquote.html		comp-c-htmlman		html
 ./usr/share/man/html3/shquotev.html		comp-c-htmlman		html
 ./usr/share/man/html3/sigaddset.html		comp-c-htmlman		html
@@ -15893,6 +15928,7 @@
 ./usr/share/man/html3/tok_reset.html		comp-c-htmlman		html
 ./usr/share/man/html3/tok_str.html		comp-c-htmlman		html
 ./usr/share/man/html3/tolower.html		comp-c-htmlman		html
+./usr/share/man/html3/top_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/top_row.html		comp-c-htmlman		html
 ./usr/share/man/html3/touchline.html		comp-c-htmlman		html
 ./usr/share/man/html3/touchoverlap.html		comp-c-htmlman		html
@@ -15942,6 +15978,7 @@
 ./usr/share/man/html3/unsetenv.html		comp-c-htmlman		html
 ./usr/share/man/html3/untouchwin.html		comp-c-htmlman		html
 ./usr/share/man/html3/unvis.html		comp-c-htmlman		html
+./usr/share/man/html3/update_panels.html	comp-c-htmlman		html
 ./usr/share/man/html3/updlastlogx.html		comp-c-htmlman		html
 ./usr/share/man/html3/updwtmpx.html		comp-c-htmlman		html
 ./usr/share/man/html3/usbhid.html		comp-c-htmlman		html
@@ -19073,6 +19110,7 @@
 ./usr/share/man/man3/bn.3			comp-obsolete		obsolete
 ./usr/share/man/man3/bn_internal.3		comp-obsolete		obsolete
 ./usr/share/man/man3/border.3			comp-c-man		.man
+./usr/share/man/man3/bottom_panel.3		comp-c-man		.man
 ./usr/share/man/man3/box.3			comp-c-man		.man
 ./usr/share/man/man3/bsearch.3			comp-c-man		.man
 ./usr/share/man/man3/bstring.3			comp-c-man		.man
@@ -19424,6 +19462,7 @@
 ./usr/share/man/man3/define_key.3		comp-c-man		.man
 ./usr/share/man/man3/dehumanize_number.3	comp-c-man		.man
 ./usr/share/man/man3/del_curterm.3		comp-c-man		.man
+./usr/share/man/man3/del_panel.3		comp-c-man		.man
 ./usr/share/man/man3/delay_output.3		comp-c-man		.man
 ./usr/share/man/man3/delch.3			comp-c-man		.man
 ./usr/share/man/man3/deleteln.3			comp-c-man		.man
@@ -20391,6 +20430,7 @@
 ./usr/share/man/man3/hid_start_parse.3		comp-c-man		.man
 ./usr/share/man/man3/hid_usage_in_page.3	comp-c-man		.man
 ./usr/share/man/man3/hid_usage_page.3		comp-c-man		.man
+./usr/share/man/man3/hide_panel.3		comp-c-man		.man
 ./usr/share/man/man3/history.3			comp-c-man		.man
 ./usr/share/man/man3/history_end.3		comp-c-man		.man
 ./usr/share/man/man3/history_init.3		comp-c-man		.man
@@ -21462,6 +21502,7 @@
 ./usr/share/man/man3/moncontrol.3		comp-c-man		.man
 ./usr/share/man/man3/monstartup.3		comp-c-man		.man
 ./usr/share/man/man3/move.3			comp-c-man		.man
+./usr/share/man/man3/move_panel.3		comp-c-man		.man
 ./usr/share/man/man3/move_field.3		comp-c-man		.man
 ./usr/share/man/man3/mpool.3			comp-c-man		.man
 ./usr/share/man/man3/mpool_close.3		comp-c-man		.man
@@ -21536,6 +21577,7 @@
 ./usr/share/man/man3/new_item.3			comp-c-man		.man
 ./usr/share/man/man3/new_menu.3			comp-c-man		.man
 ./usr/share/man/man3/new_page.3			comp-c-man		.man
+./usr/share/man/man3/new_panel.3		comp-c-man		.man
 ./usr/share/man/man3/newpad.3			comp-c-man		.man
 ./usr/share/man/man3/newterm.3			comp-c-man		.man
 ./usr/share/man/man3/newwin.3			comp-c-man		.man
@@ -21662,6 +21704,12 @@
 ./usr/share/man/man3/pam_verror.3		comp-c-man		.man,pam
 ./usr/share/man/man3/pam_vinfo.3		comp-c-man		.man,pam
 ./usr/share/man/man3/pam_vprompt.3		comp-c-man		.man,pam
+./usr/share/man/man3/panel.3			comp-c-man		.man
+./usr/share/man/man3/panel_above.3		comp-c-man		.man
+./usr/share/man/man3/panel_below.3		comp-c-man		.man
+./usr/share/man/man3/panel_hidden.3		comp-c-man		.man
+./usr/share/man/man3/panel_userptr.3		comp-c-man		.man
+./usr/share/man/man3/panel_window.3		comp-c-man		.man
 ./usr/share/man/man3/param.3			comp-c-man		.man
 ./usr/share/man/man3/parsedate.3		comp-c-man		.man
 ./usr/share/man/man3/paths.3			comp-c-man		.man
@@ -22223,6 +22271,8 @@
 ./usr/share/man/man3/remque.3			comp-c-man		.man
 ./usr/share/man/man3/remquo.3			comp-c-man		.man
 ./usr/share/man/man3/remquof.3			comp-c-man		.man
+./usr/share/man/man3/replace_panel.3		comp-c-man		.man
+./usr/share/man/man3/replace_window.3		comp-c-man		.man
 ./usr/share/man/man3/request_init.3		comp-c-man		.man
 ./usr/share/man/man3/request_set.3		comp-c-man		.man
 ./usr/share/man/man3/res_close.3		comp-c-man		.man
@@ -22458,6 +22508,7 @@
 ./usr/share/man/man3/set_menu_userptr.3		comp-c-man		.man
 ./usr/share/man/man3/set_menu_win.3		comp-c-man		.man
 ./usr/share/man/man3/set_new_page.3		comp-c-man		.man
+./usr/share/man/man3/set_panel_userptr.3	comp-c-man		.man
 ./usr/share/man/man3/set_term.3			comp-c-man		.man
 ./usr/share/man/man3/set_top_row.3		comp-c-man		.man
 ./usr/share/man/man3/setbuf.3			comp-c-man		.man
@@ -22507,6 +22558,7 @@
 ./usr/share/man/man3/sha2.3			comp-c-man		.man
 ./usr/share/man/man3/shm_open.3			comp-c-man		.man
 ./usr/share/man/man3/shm_unlink.3		comp-c-man		.man
+./usr/share/man/man3/show_panel.3		comp-c-man		.man
 ./usr/share/man/man3/shquote.3			comp-c-man		.man
 ./usr/share/man/man3/shquotev.3			comp-c-man		.man
 ./usr/share/man/man3/sigaddset.3		comp-c-man		.man
@@ -22828,6 +22880,7 @@
 ./usr/share/man/man3/tok_reset.3		comp-c-man		.man
 ./usr/share/man/man3/tok_str.3			comp-c-man		.man
 ./usr/share/man/man3/tolower.3			comp-c-man		.man
+./usr/share/man/man3/top_panel.3		comp-c-man		.man
 ./usr/share/man/man3/top_row.3			comp-c-man		.man
 ./usr/share/man/man3/touchline.3		comp-c-man		.man
 ./usr/share/man/man3/touchoverlap.3		comp-c-man		.man
@@ -22877,6 +22930,7 @@
 ./usr/share/man/man3/unsetenv.3			comp-c-man		.man
 ./usr/share/man/man3/untouchwin.3		comp-c-man		.man
 ./usr/share/man/man3/unvis.3			comp-c-man		.man
+./usr/share/man/man3/update_panels.3		comp-c-man		.man
 ./usr/share/man/man3/updlastlogx.3		comp-c-man		.man
 ./usr/share/man/man3/updwtmpx.3			comp-c-man		.man
 ./usr/share/man/man3/usb.3			comp-obsolete		obsolete

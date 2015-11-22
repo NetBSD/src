@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.135 2015/11/18 18:36:53 christos Exp $
+# $NetBSD: mi,v 1.136 2015/11/22 04:44:30 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -114,6 +114,7 @@
 ./usr/lib/libossaudio_g.a			comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libp2k_g.a				comp-c-debuglib		debuglib,compatfile,rump
 ./usr/lib/libpam_g.a				comp-c-debuglib		debuglib,compatfile,pam
+./usr/lib/libpanel_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpcap_g.a				comp-c-debuglib		debuglib,compatfile
 ./usr/lib/libpcc_g.a				comp-c-debuglib		obsolete,compatfile
 ./usr/lib/libpci_g.a				comp-c-debuglib		debuglib,compatfile
