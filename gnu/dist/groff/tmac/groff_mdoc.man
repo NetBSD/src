@@ -1706,6 +1706,8 @@ and their results are:
 .Lb libossaudio
 .It Li libpam
 .Lb libpam
+.It Li libpanel
+.Lb libpanel
 .It Li libpcap
 .Lb libpcap
 .It Li libpci
