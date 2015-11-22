@@ -1,4 +1,4 @@
-/*	$NetBSD: bios32.c,v 1.20 2012/02/25 00:13:28 joerg Exp $	*/
+/*	$NetBSD: bios32.c,v 1.21 2015/11/22 13:41:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.20 2012/02/25 00:13:28 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bios32.c,v 1.21 2015/11/22 13:41:24 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,7 +171,7 @@ bios32_init(void)
 		smbios_entry.min = sh->minrev;
 		smbios_entry.count = sh->count;
 
-    		for (; pa < end; pa+= NBPG, eva+= NBPG)
+		for (; pa < end; pa+= NBPG, eva+= NBPG)
 #ifdef XEN
 			pmap_kenter_ma(eva, pa, VM_PROT_READ, 0);
 #else
