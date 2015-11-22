@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.107 2015/11/22 09:32:34 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.108 2015/11/22 11:24:08 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.107 2015/11/22 09:32:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.108 2015/11/22 11:24:08 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -249,7 +249,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
-	sp = (register32_t)(uintptr_t)oldsp;
+	sp = NETBSD32PTR32I(oldsp);
 	error = (rwindow_save(l) || 
 	    copyout(&sf, fp, sizeof sf) || 
 	    copyout(&sp, &(((struct rwindow32 *)newsp)->rw_in[6]),
@@ -368,7 +368,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	netbsd32_si_to_si32(&si32, (const siginfo_t *)&ksi->ksi_info);
 	ucsz = (int)(intptr_t)&uc.__uc_pad - (int)(intptr_t)&uc;
 	newsp = (struct rwindow32*)((intptr_t)fp - sizeof(struct frame32));
-	sp = (register32_t)(uintptr_t)oldsp;
+	sp = NETBSD32PTR32I(oldsp);
 	error = (copyout(&si32, &fp->sf_si, sizeof si32) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
 	    copyout(&sp, &newsp->rw_in[6], sizeof(sp)));
