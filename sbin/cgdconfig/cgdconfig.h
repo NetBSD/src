@@ -1,4 +1,4 @@
-/*	$NetBSD: cgdconfig.h,v 1.1 2009/09/08 22:16:56 pooka Exp $	*/
+/*	$NetBSD: cgdconfig.h,v 1.2 2015/11/22 20:24:19 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,5 +30,7 @@
 #define _SBIN_CGDCONFIG_H_
 
 int	cgdconfig(int, char **);
+
+#define CGDCONFIG_DIR		"/etc/cgd"
 
 #endif /* _SBIN_CGDCONFIG_H_ */
