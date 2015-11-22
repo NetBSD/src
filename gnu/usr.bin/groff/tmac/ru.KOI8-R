@@ -94,6 +94,7 @@
 .ds doc-str-Lb-libnetgraph Пользовательская библиотека Netgraph (libnetgraph, \-lnetgraph)
 .ds doc-str-Lb-libossaudio Библиотека эмуляции OSS Audio (libossaudio, \-lossaudio)
 .ds doc-str-Lb-libpam      Библиотека PAM (libpam, \-lpam)
+.\" XXX ds doc-str-Lb-libpanel     Curses Panel Library (libpanel, \-lpanel)
 .ds doc-str-Lb-libposix    Библиотека \*[Px]\-совместимости (libposix, \-lposix)
 .\" XXX ds doc-str-Lb-libresolv   DNS Resolver Library (libresolv, \-lresolv)
 .ds doc-str-Lb-librpcsvc   Библиотека служб RPC (librpcsvc, \-lrpcsvc)
