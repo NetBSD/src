@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.754 2015/11/07 16:21:42 nros Exp $
+# $NetBSD: shl.mi,v 1.755 2015/11/22 04:44:30 kamil Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -416,6 +416,9 @@
 ./usr/lib/libpam.so				base-sys-shlib		compatfile,pam
 ./usr/lib/libpam.so.4				base-sys-shlib		compatfile,pam
 ./usr/lib/libpam.so.4.0				base-sys-shlib		compatfile,pam
+./usr/lib/libpanel.so				base-sys-shlib		compatfile
+./usr/lib/libpanel.so.1				base-sys-shlib		compatfile
+./usr/lib/libpanel.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libpcap.so				base-net-shlib		compatfile
 ./usr/lib/libpcap.so.5				base-net-shlib		compatfile
 ./usr/lib/libpcap.so.5.1			base-net-shlib		compatfile
