@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.65 2013/08/03 22:12:23 wiz Exp $
+.\" $NetBSD: doc2html,v 1.66 2015/11/22 05:13:00 kamil Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -590,6 +590,7 @@ Unknown .Bl list type \\$1 (#\\n(.c)
 .if "\\$1"libmagic" \&Magic Number Recognition Library (libmagic, -lmagic)
 .if "\\$1"libmenu" \&Curses Menu Library (libmenu, -lmenu)
 .if "\\$1"libossaudio" \&OSS Audio Emulation Library (libossaudio, -lossaudio)
+.if "\\$1"libpanel" \&Curses Panel Library (libpanel, -lpanel)
 .if "\\$1"libpcap" \&Packet Capture Library (libpcap, -lpcap)
 .if "\\$1"libpci" \&PCI Bus Access Library (libpci, -lpci)
 .if "\\$1"libpmc" \&Performance Counters Library (libpmc, -lpmc)
