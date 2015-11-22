@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2004 2015/11/07 16:21:42 nros Exp $
+#	$NetBSD: mi,v 1.2005 2015/11/22 03:31:00 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -4890,6 +4890,7 @@
 ./usr/share/man/cat3/aio_suspend.0		comp-c-catman		.cat
 ./usr/share/man/cat3/aio_write.0		comp-c-catman		.cat
 ./usr/share/man/cat3/alarm.0			comp-c-catman		.cat
+./usr/share/man/cat3/aligned_alloc.0		comp-c-catman		.cat
 ./usr/share/man/cat3/alloca.0			comp-c-catman		.cat
 ./usr/share/man/cat3/allocaddrinfo.0		comp-c-catman		.cat
 ./usr/share/man/cat3/alphasort.0		comp-c-catman		.cat
