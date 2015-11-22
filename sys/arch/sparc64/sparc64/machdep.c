@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.282 2015/06/11 21:00:05 palle Exp $ */
+/*	$NetBSD: machdep.c,v 1.283 2015/11/22 09:32:34 martin Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.282 2015/06/11 21:00:05 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.283 2015/11/22 09:32:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -447,6 +447,7 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct rwindow *newsp;
+	register_t sp;
 	/* Allocate an aligned sigframe */
 	fp = (void *)((u_long)(fp - 1) & ~0x0f);
 
@@ -472,9 +473,11 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	 * C stack frame.
 	 */
 	newsp = (struct rwindow *)((u_long)fp - CCFSZ);
-	error = (copyout(&ksi->ksi_info, &fp->sf_si, sizeof(ksi->ksi_info)) != 0 ||
+	sp = (register_t)(uintptr_t)tf->tf_out[6];
+	error = (copyout(&ksi->ksi_info, &fp->sf_si,
+			sizeof(ksi->ksi_info)) != 0 ||
 	    copyout(&uc, &fp->sf_uc, ucsz) != 0 ||
-	    suword(&newsp->rw_in[6], (uintptr_t)tf->tf_out[6]) != 0);
+	    copyout(&sp, &newsp->rw_in[6], sizeof(sp)) != 0);
 	mutex_enter(p->p_lock);
 
 	if (error) {
