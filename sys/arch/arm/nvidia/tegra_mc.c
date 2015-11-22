@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_mc.c,v 1.3 2015/11/21 16:50:29 jakllsch Exp $ */
+/* $NetBSD: tegra_mc.c,v 1.4 2015/11/22 12:26:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.3 2015/11/21 16:50:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.4 2015/11/22 12:26:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,18 +59,12 @@ static struct tegra_mc_softc *mc_softc = NULL;
 CFATTACH_DECL_NEW(tegra_mc, sizeof(struct tegra_mc_softc),
 	tegra_mc_match, tegra_mc_attach, NULL, NULL);
 
-static inline uint32_t
-mc_read(const struct tegra_mc_softc * const sc, const bus_size_t offset)
-{
-	return bus_space_read_4(sc->sc_bst, sc->sc_bsh, offset);
-}
-
-static inline void
-mc_write(const struct tegra_mc_softc * const sc, const bus_size_t offset,
-    const uint32_t value)
-{
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, offset, value);
-}
+#define MC_READ(sc, reg)		\
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+#define MC_WRITE(sc, reg, val)		\
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define MC_SET_CLEAR(sc, reg, set, clr)	\
+    tegra_reg_set_clear((sc)->sc_bst, (sc)->sc_bsh, (reg), (set), (clr))
 
 static int
 tegra_mc_match(device_t parent, cfdata_t cf, void *aux)
@@ -96,7 +90,7 @@ tegra_mc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": MC\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL,
+	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL|IST_MPSAFE,
 	    tegra_mc_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
@@ -105,8 +99,8 @@ tegra_mc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
-	mc_write(sc, MC_INTSTATUS_REG, MC_INT__ALL);
-	mc_write(sc, MC_INTMASK_REG, MC_INT__ALL);
+	MC_WRITE(sc, MC_INTSTATUS_REG, MC_INT__ALL);
+	MC_WRITE(sc, MC_INTMASK_REG, MC_INT__ALL);
 }
 
 int
@@ -114,19 +108,19 @@ tegra_mc_intr(void *v)
 {
 	struct tegra_mc_softc * const sc = v;
 
-	const uint32_t status = mc_read(sc, MC_INTSTATUS_REG);
+	const uint32_t status = MC_READ(sc, MC_INTSTATUS_REG);
 
 	if (status == 0) {
 		return 0;
 	}
 
-	const uint32_t err_status = mc_read(sc, MC_ERR_STATUS_REG);
-	const uint32_t err_adr = mc_read(sc, MC_ERR_ADR_REG);
+	const uint32_t err_status = MC_READ(sc, MC_ERR_STATUS_REG);
+	const uint32_t err_adr = MC_READ(sc, MC_ERR_ADR_REG);
 
 	device_printf(sc->sc_dev, "intrstatus %#x err %#x adr %#x\n",
 	    status, err_status, err_adr);
 
-	mc_write(sc, MC_INTSTATUS_REG, status);
+	MC_WRITE(sc, MC_INTSTATUS_REG, status);
 
 	return status;
 }
