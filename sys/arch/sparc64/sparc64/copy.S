@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.5 2015/10/17 19:29:48 nakayama Exp $	*/
+/*	$NetBSD: copy.S,v 1.6 2015/11/22 10:18:14 martin Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -679,23 +679,6 @@ ENTRY(ucas_64)
 /*
  * {fu,su}{,i}{byte,word}
  */
-ALTENTRY(fuiword)
-ENTRY(fuword)
-	btst	3, %o0			! has low bits set...
-	bnz	Lfsbadaddr		!	go return -1
-	 .empty
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
-	set	Lfserr, %o3
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	membar	#LoadStore
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	LDPTRA	[%o0] ASI_AIUS, %o0	! fetch the word
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! but first clear onfault
-	retl				! phew, made it, return the word
-	 membar	#StoreStore|#StoreLoad
-
 Lfserr:
 	STPTR	%g0, [%o2 + PCB_ONFAULT]! error in r/w, clear pcb_onfault
 	membar	#StoreStore|#StoreLoad
@@ -759,23 +742,6 @@ ENTRY(fubyte)
 	retl				! made it
 	 membar	#StoreStore|#StoreLoad
 
-ALTENTRY(suiword)
-ENTRY(suword)
-	btst	3, %o0			! or has low bits set ...
-	bnz	Lfsbadaddr		!	go return error
-	 .empty
-	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
-	LDPTR	[%o2 + %lo(CPCB)], %o2
-	set	Lfserr, %o3
-	STPTR	%o3, [%o2 + PCB_ONFAULT]
-	membar	#Sync
-	STPTRA	%o1, [%o0] ASI_AIUS	! store the word
-	membar	#Sync
-	STPTR	%g0, [%o2 + PCB_ONFAULT]! made it, clear onfault
-	membar	#StoreStore|#StoreLoad
-	retl				! and return 0
-	 clr	%o0
-
 ENTRY(suswintr)
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = _Lfsbail;
 	LDPTR	[%o2 + %lo(CPCB)], %o2
@@ -802,7 +768,6 @@ ENTRY(susword)
 	retl				! and return 0
 	 clr	%o0
 
-ALTENTRY(suibyte)
 ENTRY(subyte)
 	sethi	%hi(CPCB), %o2		! cpcb->pcb_onfault = Lfserr;
 	LDPTR	[%o2 + %lo(CPCB)], %o2
