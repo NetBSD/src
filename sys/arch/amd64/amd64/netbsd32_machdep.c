@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.93 2014/12/14 21:27:49 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.94 2015/11/22 13:41:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.93 2014/12/14 21:27:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.94 2015/11/22 13:41:24 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -933,10 +933,10 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 vaddr_t
 netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz)
 {
-        if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
-                return VM_DEFAULT_ADDRESS32_TOPDOWN(base, sz);
-        else
-                return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, sz);
+	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+		return VM_DEFAULT_ADDRESS32_TOPDOWN(base, sz);
+	else
+		return VM_DEFAULT_ADDRESS32_BOTTOMUP(base, sz);
 }
 
 #ifdef COMPAT_13
