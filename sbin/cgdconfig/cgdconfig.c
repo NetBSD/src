@@ -1,4 +1,4 @@
-/* $NetBSD: cgdconfig.c,v 1.39 2014/12/14 23:27:14 christos Exp $ */
+/* $NetBSD: cgdconfig.c,v 1.40 2015/11/22 20:24:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2002, 2003\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: cgdconfig.c,v 1.39 2014/12/14 23:27:14 christos Exp $");
+__RCSID("$NetBSD: cgdconfig.c,v 1.40 2015/11/22 20:24:19 christos Exp $");
 #endif
 
 #include <err.h>
@@ -68,7 +68,6 @@ __RCSID("$NetBSD: cgdconfig.c,v 1.39 2014/12/14 23:27:14 christos Exp $");
 #include "cgdconfig.h"
 #include "prog_ops.h"
 
-#define CGDCONFIG_DIR		"/etc/cgd"
 #define CGDCONFIG_CFILE		CGDCONFIG_DIR "/cgd.conf"
 
 enum action {
@@ -524,22 +523,11 @@ configure(int argc, char **argv, struct params *inparams, int flags)
 	}
 
 	if (argc == 2) {
-		char *pfile, *base;
+		char pfile[MAXPATHLEN];
 
 		/* make string writable for basename */
-		base = strdup(dev);
-		if (base == NULL)
-			return -1;
-
-		if (asprintf(&pfile, "%s/%s",
-		    CGDCONFIG_DIR, basename(base)) == -1) {
-			free(base);
-			return -1;
-		}
-
-		p = params_cget(pfile);
-		free(pfile);
-		free(base);
+		strlcpy(pfile, dev, sizeof(pfile));
+		p = params_cget(basename(pfile));
 	} else if (argc == 3) {
 		p = params_cget(argv[2]);
 	} else {
@@ -1123,10 +1111,6 @@ do_all(const char *cfile, int argc, char **argv,
 		warn("could not open config file \"%s\"", fn);
 		return -1;
 	}
-
-	ret = chdir(CGDCONFIG_DIR);
-	if (ret == -1)
-		warn("could not chdir to %s", CGDCONFIG_DIR);
 
 	ret = 0;
 	lineno = 0;
