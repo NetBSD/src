@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.hostprog.mk,v 1.74 2014/12/01 01:34:30 erh Exp $
+#	$NetBSD: bsd.hostprog.mk,v 1.75 2015/11/22 04:59:15 kamil Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .include <bsd.init.mk>
@@ -41,6 +41,7 @@ LIBMP?=		/usr/lib/libmp.a
 LIBNTP?=	/usr/lib/libntp.a
 LIBOBJC?=	/usr/lib/libobjc.a
 LIBP2K?=	/usr/lib/libp2k.a
+LIBPANEL?=	/usr/lib/libpanel.a
 LIBPC?=		/usr/lib/libpc.a
 LIBPCAP?=	/usr/lib/libpcap.a
 LIBPCI?=	/usr/lib/libpci.a

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.347 2015/11/07 23:53:28 christos Exp $
+#	$NetBSD: bsd.README,v 1.348 2015/11/22 04:59:15 kamil Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1576,6 +1576,7 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBOBJC?=	${DESTDIR}/usr/lib/libobjc.a
 		LIBOSSAUDIO?=	${DESTDIR}/usr/lib/libossaudio.a
 		LIBPAM?=	${DESTDIR}/usr/lib/libpam.a
+		LIBPANEL?=	${DESTDIR}/usr/lib/libpanel.a
 		LIBPCAP?=	${DESTDIR}/usr/lib/libpcap.a
 		LIBPCI?=	${DESTDIR}/usr/lib/libpci.a
 		LIBPMC?=	${DESTDIR}/usr/lib/libpmc.a
