@@ -1,4 +1,4 @@
-/*	$NetBSD: hash_bigkey.c,v 1.24 2012/03/13 21:13:32 christos Exp $	*/
+/*	$NetBSD: hash_bigkey.c,v 1.24.10.1 2015/11/22 14:15:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash_bigkey.c,v 1.24 2012/03/13 21:13:32 christos Exp $");
+__RCSID("$NetBSD: hash_bigkey.c,v 1.24.10.1 2015/11/22 14:15:14 bouyer Exp $");
 
 /*
  * PACKAGE: hash
@@ -274,10 +274,10 @@ __big_delete(HTAB *hashp, BUFHEAD *bufp)
 		bufp->ovfl = NULL;
 	n -= 2;
 	bp[0] = n;
-	temp = hashp->BSIZE - PAGE_META(n);
+	temp = HASH_BSIZE(hashp) - PAGE_META(n);
 	_DBFIT(temp, uint16_t);
 	FREESPACE(bp) = (uint16_t)temp;
-	OFFSET(bp) = hashp->BSIZE;
+	OFFSET(bp) = HASH_BSIZE(hashp);
 
 	bufp->flags |= BUF_MOD;
 	if (rbufp)
@@ -309,9 +309,9 @@ __find_bigpair(HTAB *hashp, BUFHEAD *bufp, int ndx, char *key, int size)
 	ksize = size;
 	kkey = key;
 
-	for (bytes = hashp->BSIZE - bp[ndx];
+	for (bytes = HASH_BSIZE(hashp) - bp[ndx];
 	    bytes <= size && bp[ndx + 1] == PARTIAL_KEY;
-	    bytes = hashp->BSIZE - bp[ndx]) {
+	    bytes = HASH_BSIZE(hashp) - bp[ndx]) {
 		if (memcmp(p + bp[ndx], kkey, (size_t)bytes))
 			return (-2);
 		kkey += bytes;
@@ -479,7 +479,7 @@ collect_data(HTAB *hashp, BUFHEAD *bufp, int len, int set)
 
 	p = bufp->page;
 	bp = (uint16_t *)(void *)p;
-	mylen = hashp->BSIZE - bp[1];
+	mylen = HASH_BSIZE(hashp) - bp[1];
 	save_addr = bufp->addr;
 
 	if (bp[2] == FULL_KEY_DATA) {		/* End of Data */
@@ -546,7 +546,7 @@ collect_key(HTAB *hashp, BUFHEAD *bufp, int len, DBT *val, int set)
 
 	p = bufp->page;
 	bp = (uint16_t *)(void *)p;
-	mylen = hashp->BSIZE - bp[1];
+	mylen = HASH_BSIZE(hashp) - bp[1];
 
 	save_addr = bufp->addr;
 	totlen = len + mylen;
