@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.282 2015/11/04 23:57:06 knakahara Exp $
+# $NetBSD: shl.mi,v 1.283 2015/11/22 04:44:30 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -119,6 +119,7 @@
 ./usr/lib/libossaudio_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libp2k_pic.a				comp-puffs-piclib	compatfile,picinstall,rump
 ./usr/lib/libpam_pic.a				comp-c-piclib		compatfile,picinstall,pam
+./usr/lib/libpanel_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpcap_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpcc_pic.a				comp-obsolete		obsolete
 ./usr/lib/libpci_pic.a				comp-c-piclib		compatfile,picinstall
