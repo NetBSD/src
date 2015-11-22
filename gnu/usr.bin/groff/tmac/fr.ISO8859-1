@@ -94,6 +94,7 @@
 .ds doc-str-Lb-libnetgraph Bibliothèque utilisateur Netgraph (libnetgraph, \-lnetgraph)
 .ds doc-str-Lb-libossaudio Bibliothèque d'émulation audio OSS (libossaudio, \-lossaudio)
 .ds doc-str-Lb-libpam      Bibliothèque PAM (libpam, \-lpam)
+.ds doc-str-Lb-libpanel    Bibliothèque de panneaux en Curses (libpanel, \-lpanel)
 .ds doc-str-Lb-libposix    Bibliothèque de compatibilité \*[Px] (libposix, \-lposix)
 .ds doc-str-Lb-libresolv   Bibliothèque du résolveur DNS (libresolv, \-lresolv)
 .ds doc-str-Lb-librpcsvc   Bibliothèque des services RPC (librpcsvc, \-lrpcsvc)
