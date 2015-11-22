@@ -6,8 +6,8 @@
 # Report bugs and new terminal descriptions to
 #	bug-ncurses@gnu.org
 #
-#	$Revision: 1.7 $
-#	$Date: 2013/10/01 09:17:41 $
+#	$Revision: 1.7.4.1 $
+#	$Date: 2015/11/22 14:20:06 $
 #
 # The original header is preserved below for reference.  It is noted that there
 # is a "newer" version which differs in some cosmetic details (but actually
@@ -2325,7 +2325,7 @@ arm100-w|arm100-wam|Arm(RiscPC) ncurses compatible (for 1024x768),
 # From Minoura Makoto <minoura@netlaputa.or.jp>, 12 May 1996
 x68k|x68k-ite|NetBSD/x68k ITE,
 	cols#96, lines#32,
-	kclr=\E[9~, khlp=\E[28~, use=vt220,
+	kbs=\177, kclr=\E[9~, khlp=\E[28~, use=vt220,
 
 # <tv@pobox.com>:
 # Entry for the DNARD OpenFirmware console, close to ANSI but not quite.
