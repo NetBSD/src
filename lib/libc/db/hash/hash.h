@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.15 2008/08/26 21:18:38 joerg Exp $	*/
+/*	$NetBSD: hash.h,v 1.15.40.1 2015/11/22 14:15:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -123,6 +123,11 @@ typedef struct htab	 {		/* Memory resident data structure */
  * Constants
  */
 #define	MAX_BSIZE		65536		/* 2^16 */
+/*
+ * Make it fit in uint16_t; a better way would be to store size - 1, but
+ * then we'd need to bump the version.
+ */
+#define HASH_BSIZE(hp)	((hp)->BSIZE == MAX_BSIZE ? MAX_BSIZE - 1 : (hp)->BSIZE)
 #define MIN_BUFFERS		6
 #define MINHDRSIZE		512
 #define DEF_BUFSIZE		65536		/* 64 K */

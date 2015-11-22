@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.c,v 1.33.4.1 2015/08/06 21:50:36 snj Exp $	*/
+/*	$NetBSD: hash.c,v 1.33.4.2 2015/11/22 14:15:14 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: hash.c,v 1.33.4.1 2015/08/06 21:50:36 snj Exp $");
+__RCSID("$NetBSD: hash.c,v 1.33.4.2 2015/11/22 14:15:14 bouyer Exp $");
 
 #include "namespace.h"
 #include <sys/param.h>
@@ -585,7 +585,7 @@ hash_access(HTAB *hashp, ACTION action, DBT *key, DBT *val)
 	hash_accesses++;
 #endif
 
-	off = hashp->BSIZE;
+	off = HASH_BSIZE(hashp);
 	size = key->size;
 	kp = (char *)key->data;
 	rbufp = __get_buf(hashp, __call_hash(hashp, kp, (int)size), NULL, 0);
@@ -617,7 +617,7 @@ hash_access(HTAB *hashp, ACTION action, DBT *key, DBT *val)
 			bp = (uint16_t *)(void *)rbufp->page;
 			n = *bp++;
 			ndx = 1;
-			off = hashp->BSIZE;
+			off = HASH_BSIZE(hashp);
 		} else if (bp[1] < REAL_KEY) {
 			if ((ndx =
 			    __find_bigpair(hashp, rbufp, ndx, kp, (int)size)) > 0)
@@ -640,7 +640,7 @@ hash_access(HTAB *hashp, ACTION action, DBT *key, DBT *val)
 				bp = (uint16_t *)(void *)rbufp->page;
 				n = *bp++;
 				ndx = 1;
-				off = hashp->BSIZE;
+				off = HASH_BSIZE(hashp);
 			} else {
 				save_bufp->flags &= ~BUF_PIN;
 				return (ERROR);
@@ -770,7 +770,7 @@ next_bucket:
 				hashp->cndx = 1;
 			}
 		} else {
-			bp = (uint16_t *)(void *)hashp->cpage->page;
+			bp = (uint16_t *)(void *)bufp->page;
 			if (flag == R_NEXT || flag == 0) {
 				if (hashp->cndx > bp[0]) {
 					hashp->cpage = NULL;
@@ -802,15 +802,16 @@ next_bucket:
 	if (bp[ndx + 1] < REAL_KEY) {
 		if (__big_keydata(hashp, bufp, key, data, 1))
 			return (ERROR);
+		hashp->cndx = 1;
 	} else {
 		if (hashp->cpage == NULL)
 			return (ERROR);
 		key->data = (uint8_t *)hashp->cpage->page + bp[ndx];
-		key->size = (ndx > 1 ? bp[ndx - 1] : hashp->BSIZE) - bp[ndx];
+		key->size = (ndx > 1 ? bp[ndx - 1] : HASH_BSIZE(hashp)) - bp[ndx];
 		data->data = (uint8_t *)hashp->cpage->page + bp[ndx + 1];
 		data->size = bp[ndx] - bp[ndx + 1];
+		hashp->cndx += 2;
 	}
-	hashp->cndx += 2;
 	return (SUCCESS);
 }
 
