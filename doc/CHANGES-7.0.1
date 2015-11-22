@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.17 2015/11/18 08:56:38 msaitoh Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.18 2015/11/22 14:21:20 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -784,3 +784,14 @@ sys/netinet6/mld6.c				1.64
 	Ensure that the callout of the multicast address is valid before
 	hooking it up to prevent panic.
 	[joerg, ticket #1035]
+sys/fs/adosfs/advfsops.c			1.75
+
+	Patch by hannken@ to fix a bug which has been introduced with 1.71.
+	The kernel crashed with uvm fault when mounting an ados file system.
+	[phx, ticket #1042]
+
+share/terminfo/terminfo				1.8
+
+	Correct the x68k's Backspace key behavior.
+	[isaki, ticket #1047]
+
