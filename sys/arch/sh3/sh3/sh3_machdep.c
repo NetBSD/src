@@ -1,4 +1,4 @@
-/*	$NetBSD: sh3_machdep.c,v 1.102 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: sh3_machdep.c,v 1.103 2015/11/22 18:44:25 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.102 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sh3_machdep.c,v 1.103 2015/11/22 18:44:25 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -277,7 +277,7 @@ sh_startup(void)
 
 	printf("%s%s", copyright, version);
 	if (*model != '\0')
-		printf("%s", model);
+		printf("%s\n", model);
 #ifdef DEBUG
 	printf("general exception handler:\t%d byte\n",
 	    sh_vector_generic_end - sh_vector_generic);
