@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.35 2015/11/18 08:56:05 msaitoh Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.36 2015/11/22 14:23:41 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1621,3 +1621,24 @@ sys/external/bsd/drm2/include/linux/hdmi.h	1.6
 	Fix HDMI infoframe checksum calculations for the display to
 	not to ignore the packets.
 	[jmcneill, ticket #1039]
+
+sys/fs/adosfs/advfsops.c			1.75
+
+	Patch by hannken@ to fix a bug which has been introduced with 1.71.
+	The kernel crashed with uvm fault when mounting an ados file system.
+	[phx, ticket #1042]
+
+lib/libc/db/hash/hash.c				1.36 - 1.38
+lib/libc/db/hash/hash.h				1.16
+lib/libc/db/hash/hash_bigkey.c			1.25
+lib/libc/db/hash/hash_page.c			1.27, 1.28
+
+	Fix handling of 64k blocksize, which overflows a uint16_t.
+	Fixes PR/50441.
+	[christos, ticket #1046]
+
+share/terminfo/terminfo				1.8
+
+	Correct the x68k's Backspace key behavior.
+	[isaki, ticket #1047]
+
