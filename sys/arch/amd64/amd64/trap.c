@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.80 2015/02/27 15:35:10 christos Exp $	*/
+/*	$NetBSD: trap.c,v 1.81 2015/11/22 13:41:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.80 2015/02/27 15:35:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2015/11/22 13:41:24 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -745,7 +745,7 @@ frame_dump(struct trapframe *tf)
 	printf("cs %lx  ds %lx  es %lx  fs %lx  gs %lx  ss %lx\n",
 		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
 		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
-	
+
 	printf("\n");
 	printf("Stack dump:\n");
 	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)

@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.25 2013/10/16 18:07:56 christos Exp $	*/
+/*	$NetBSD: gdt.c,v 1.26 2015/11/22 13:41:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.25 2013/10/16 18:07:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.26 2015/11/22 13:41:24 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.25 2013/10/16 18:07:56 christos Exp $");
 
 #ifdef XEN
 #include <xen/hypervisor.h>
-#endif 
+#endif
 
 int gdt_size;		/* size of GDT in bytes */
 int gdt_dyncount;	/* number of dyn. allocated GDT entries in use */
@@ -99,13 +99,13 @@ set_sys_gdt(int slot, void *base, size_t limit,
 	struct cpu_info *ci;
 	int idx;
 
-        set_sys_segment(&d.sd, base, limit, type, dpl, gran);
+	set_sys_segment(&d.sd, base, limit, type, dpl, gran);
 	idx = IDXSEL(GDYNSEL(slot, SEL_KPL));
-        for (CPU_INFO_FOREACH(cii, ci)) {
-                KASSERT(ci->ci_gdt != NULL);
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		KASSERT(ci->ci_gdt != NULL);
 		update_descriptor(&ci->ci_gdt[idx + 0], &d.bits[0]);
 		update_descriptor(&ci->ci_gdt[idx + 1], &d.bits[1]);
-        }
+	}
 }
 
 /*
