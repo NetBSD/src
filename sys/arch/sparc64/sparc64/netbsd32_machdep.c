@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.106 2015/11/07 21:07:18 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.107 2015/11/22 09:32:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.106 2015/11/07 21:07:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.107 2015/11/22 09:32:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -178,6 +178,7 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct trapframe64 *tf;
 	int addr, onstack, error;
 	struct rwindow32 *oldsp, *newsp;
+	register32_t sp;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct sparc32_sigframe sf;
 	extern char netbsd32_sigcode[], netbsd32_esigcode[];
@@ -248,9 +249,11 @@ netbsd32_sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	    printf("sendsig: saving sf to %p, setting stack pointer %p to %p\n",
 		   fp, &(((struct rwindow32 *)newsp)->rw_in[6]), oldsp);
 #endif
+	sp = (register32_t)(uintptr_t)oldsp;
 	error = (rwindow_save(l) || 
-	    copyout((void *)&sf, (void *)fp, sizeof sf) || 
-	    suword(&(((struct rwindow32 *)newsp)->rw_in[6]), (u_long)oldsp));
+	    copyout(&sf, fp, sizeof sf) || 
+	    copyout(&sp, &(((struct rwindow32 *)newsp)->rw_in[6]),
+	        sizeof(sp)));
 	mutex_enter(p->p_lock);
 	if (error) {
 		/*
@@ -320,6 +323,7 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	netbsd32_intptr_t catcher;
 	struct trapframe64 *tf = l->l_md.md_tf;
 	struct rwindow32 *oldsp, *newsp;
+	register32_t sp;
 	int ucsz, error;
 
 	/* Need to attempt to zero extend this 32-bit pointer */
@@ -364,9 +368,10 @@ netbsd32_sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	netbsd32_si_to_si32(&si32, (const siginfo_t *)&ksi->ksi_info);
 	ucsz = (int)(intptr_t)&uc.__uc_pad - (int)(intptr_t)&uc;
 	newsp = (struct rwindow32*)((intptr_t)fp - sizeof(struct frame32));
+	sp = (register32_t)(uintptr_t)oldsp;
 	error = (copyout(&si32, &fp->sf_si, sizeof si32) ||
 	    copyout(&uc, &fp->sf_uc, ucsz) ||
-	    suword(&newsp->rw_in[6], (intptr_t)oldsp));
+	    copyout(&sp, &newsp->rw_in[6], sizeof(sp)));
 	mutex_enter(p->p_lock);
 
 	if (error) {
