@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_wrapper.c,v 1.9 2015/11/22 01:20:52 pgoyette Exp $	*/
+/*	$NetBSD: filemon_wrapper.c,v 1.10 2015/11/23 00:47:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.9 2015/11/22 01:20:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.10 2015/11/23 00:47:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -71,10 +71,12 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
     register_t * retval)
 {
 	char fname[MAXPATHLEN];
-	int error;
+	int error, cerror;
 	size_t done;
 	struct filemon *filemon;
-	
+
+	cerror = copyinstr(SCARG(uap, path), fname, sizeof(fname), &done);
+
 	if ((error = sys_execve(l, uap, retval)) != EJUSTRETURN)
 		return error;
 
@@ -82,8 +84,7 @@ filemon_wrapper_execve(struct lwp * l, struct sys_execve_args * uap,
 	if (filemon == NULL)
 		return EJUSTRETURN;
 
-	error = copyinstr(SCARG(uap, path), fname, sizeof(fname), &done);
-	if (error)
+	if (cerror)
 		goto out;
 
 	filemon_printf(filemon, "E %d %s\n", curproc->p_pid, fname);
