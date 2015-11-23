@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.149 2015/09/03 22:24:02 youri Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.150 2015/11/23 19:56:47 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -1268,6 +1268,7 @@
 ./var/chroot/named/var/tmp	mode=01775 gname=named
 ./var/chroot/ntpd
 ./var/chroot/ntpd/dev
+./var/chroot/ntpd/etc
 ./var/chroot/ntpd/var
 ./var/chroot/ntpd/var/db	mode=0775 gname=ntpd
 ./var/chroot/ntpd/var/run	mode=0775 gname=ntpd
