@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.14 2015/11/23 23:00:29 pgoyette Exp $
+.\"	$NetBSD: filemon.4,v 1.15 2015/11/23 23:28:33 pgoyette Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -240,9 +240,3 @@ delivered only to the first instance created (when
 was opened), regardless of the order in which the monitoring processes
 called
 .Fn ioctl fd FILEMON_SET_PID pid .
-.Pp
-The
-.Ar process_id
-specified with
-.Dv FILEMON_SET_PID
-must refer to a descendant of the calling process.
