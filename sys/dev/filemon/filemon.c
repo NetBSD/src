@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.18 2015/11/23 22:20:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.19 2015/11/23 23:27:38 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -319,27 +319,6 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		if (tp == NULL ||
 		    tp->p_emul != &emul_netbsd) {
 			error = ESRCH;
-			break;
-		}
-
-		/* Ensure that target proc is a descendant of curproc */
-		p = tp;
-		while (p) {
-			/*
-			 * make sure p cannot exit
-			 * until we have moved on to p_pptr
-			 */
-			rw_enter(&p->p_reflock, RW_READER);
-			if (p == curproc) {
-				rw_exit(&p->p_reflock);
-				break;
-			}
-			lp = p;
-			p = p->p_pptr;
-			rw_exit(&lp->p_reflock);
-		}
-		if (p == NULL) {
-			error = EPERM;
 			break;
 		}
 
