@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.94 2015/09/29 07:59:15 wiz Exp $
+.\"	$NetBSD: sysctl.7,v 1.95 2015/11/23 23:23:25 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd September 24, 2015
+.Dd November 24, 2015
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2376,8 +2376,8 @@ Available settings are detailed below.
 .It Li security.curtain
 If non-zero, will filter return objects according to the user
 .Tn ID
-requesting information about them, preventing from users any
-access to objects they do not own.
+requesting information about them, preventing users from
+accessing any objects they do not own.
 .Pp
 At the moment, it affects
 .Xr ps 1 ,
