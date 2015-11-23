@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ntpd,v 1.15 2014/12/25 23:00:18 spz Exp $
+# $NetBSD: ntpd,v 1.16 2015/11/23 19:56:47 christos Exp $
 #
 
 # PROVIDE: ntpd
@@ -53,6 +53,13 @@ ntpd_precmd()
 	if [ ! -d "${ntpd_chrootdir}/etc" ]; then
 		mkdir "${ntpd_chrootdir}/etc"
 	fi
+
+	for f in resolv.conf; do
+		if ! cmp -s "/etc/$f" "${ntpd_chrootdir}/etc/$f"; then
+			cp -p "/etc/$f" "${ntpd_chrootdir}/etc/$f"
+		fi
+	done
+
 	if [ ! -f "${ntpd_chrootdir}/etc/services" ]; then
 		getent services ntp/udp ntp/tcp \
 			> "${ntpd_chrootdir}/etc/services"
