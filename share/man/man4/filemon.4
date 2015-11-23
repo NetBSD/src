@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.13 2015/11/21 09:01:35 wiz Exp $
+.\"	$NetBSD: filemon.4,v 1.14 2015/11/23 23:00:29 pgoyette Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 .\" OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 21, 2015
+.Dd November 24, 2015
 .Dt FILEMON 4
 .Os
 .Sh NAME
@@ -150,6 +150,16 @@ is the exit status.
 indicates the version of
 .Nm .
 .El
+.Pp
+A
+.Nm
+instance is created by opening
+.Dv /dev/filemon .
+Then use
+.Fn ioctl filemon_fd FILEMON_SET_PID &pid
+to identify the target process to monitor, and
+.Fn ioctl filemon_fd FILEMON_SET_FD &output_fd
+to direct the event log to an already-opened output file.
 .Sh FILES
 .Bd -literal
 /dev/filemon
@@ -208,6 +218,9 @@ successful, and is thus more complex to post-process.
 .Sh HISTORY
 .Nm
 was contributed by Juniper Networks.
+.Sh SECURITY CONSIDERATIONS
+Monitoring of a process enables the target process to write to the
+tracking process's file descriptor.
 .Sh RESTRICTIONS
 The
 .Nm
@@ -218,7 +231,17 @@ Neither processes using any of the
 compatibility layers nor
 any descendants of such processes can be tracked.
 .Pp
-Additionally, the
+If two processes are monitored, and one is a descendant of the other, events
+related to the descendant process and its further descendants are delivered
+only to the descendant process's monitor.
+If a process is being monitored by two instances of filemon, events will be
+delivered only to the first instance created (when
+.Pa /dev/filemon
+was opened), regardless of the order in which the monitoring processes
+called
+.Fn ioctl fd FILEMON_SET_PID pid .
+.Pp
+The
 .Ar process_id
 specified with
 .Dv FILEMON_SET_PID
