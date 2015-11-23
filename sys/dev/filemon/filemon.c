@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.17 2015/11/21 07:45:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.18 2015/11/23 22:20:57 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -291,6 +291,8 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	if (!filemon)
 		return EBADF;
 
+	/* filemon_fp_data() has locked the entry - make sure to unlock! */
+
 	switch (cmd) {
 	case FILEMON_SET_FD:
 		/* Set the output file descriptor. */
@@ -302,8 +304,8 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		/* Now set up the new one */
 		filemon->fm_fd = *((int *) data);
 		if ((filemon->fm_fp = fd_getfile(filemon->fm_fd)) == NULL) {
-			rw_exit(&filemon->fm_mtx);
-			return EBADF;
+			error = EBADF;
+			break;
 		}
 		/* Write the file header. */
 		filemon_comment(filemon);
@@ -336,8 +338,10 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 			p = p->p_pptr;
 			rw_exit(&lp->p_reflock);
 		}
-		if (p == NULL)
-			return EPERM;
+		if (p == NULL) {
+			error = EPERM;
+			break;
+		}
 
 		error = kauth_authorize_process(curproc->p_cred,
 		    KAUTH_PROCESS_CANSEE, tp,
