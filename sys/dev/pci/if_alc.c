@@ -1,3 +1,4 @@
+/*	$NetBSD: if_alc.c,v 1.17 2015/11/24 23:30:04 leot Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
