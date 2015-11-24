@@ -1,4 +1,4 @@
-/*	$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $	*/
+/*	$NetBSD: setterm.c,v 1.53 2015/11/24 01:59:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setterm.c	8.8 (Berkeley) 10/25/94";
 #else
-__RCSID("$NetBSD: setterm.c,v 1.52 2013/10/16 19:59:29 roy Exp $");
+__RCSID("$NetBSD: setterm.c,v 1.53 2015/11/24 01:59:32 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,8 @@ _cursesi_setterm(char *type, SCREEN *screen)
 	if (type[0] == '\0')
 		type = "xx";
 	unknown = 0;
+	if (screen->term)
+		del_curterm(screen->term);
 	(void)ti_setupterm(&screen->term, type, fileno(screen->outfd), &r);
 	if (screen->term == NULL) {
 		unknown++;
