@@ -2034,11 +2034,42 @@ static int
 alc_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct alc_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_miibus;
+	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	error = ether_ioctl(ifp, cmd, data);
+	switch (cmd) {
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		if (!(ifp->if_flags & IFF_RUNNING))
+			alc_init(ifp);
+		break;
+ 
+	case SIOCSIFFLAGS:
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING)
+				error = ENETRESET;
+			else
+				alc_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				alc_stop(ifp, 0);
+		}
+		break;
+ 
+	case SIOCSIFMEDIA:
+	case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
+		break;
+ 
+	default:
+		error = ether_ioctl(ifp, cmd, data);
+		break;
+	}
+ 
 	if (error == ENETRESET) {
 		if (ifp->if_flags & IFF_RUNNING)
 			alc_iff(sc);
