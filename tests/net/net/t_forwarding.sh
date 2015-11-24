@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.9 2015/09/29 08:27:24 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.10 2015/11/24 02:37:33 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -48,6 +48,7 @@ TIMEOUT=5
 atf_test_case basic cleanup
 atf_test_case basic6 cleanup
 atf_test_case fastforward cleanup
+atf_test_case fastforward6 cleanup
 
 basic_head()
 {
@@ -159,19 +160,21 @@ setup6()
 
 setup_bozo()
 {
+	local ip=$1
 
 	export RUMP_SERVER=$SOCKDST
 
 	touch $HTML_FILE
 	# start bozo in daemon mode
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so \
-	    /usr/libexec/httpd -P $HTTPD_PID -i $IP4DST -b -s $(pwd)
+	    /usr/libexec/httpd -P $HTTPD_PID -i $ip -b -s $(pwd)
 
 	$DEBUG && rump.netstat -a
 }
 
 test_http_get()
 {
+	local ip=$1
 
 	export RUMP_SERVER=$SOCKFWD
 	atf_check -s exit:0 rump.arp -d -a
@@ -180,7 +183,7 @@ test_http_get()
 
 	# get the webpage
 	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so 	\
-	    ftp -q $TIMEOUT -o out http://$IP4DST/$HTML_FILE
+	    ftp -q $TIMEOUT -o out http://$ip/$HTML_FILE
 }
 
 test_setup()
@@ -410,8 +413,20 @@ fastforward_body()
 	setup_forwarding
 	test_setup_forwarding
 
-	setup_bozo
-	test_http_get
+	setup_bozo $IP4DST
+	test_http_get $IP4DST
+}
+
+fastforward6_body()
+{
+	setup6
+	test_setup6
+
+	setup_forwarding6
+	test_setup_forwarding6
+
+	setup_bozo $IP6DST
+	test_http_get "[$IP6DST]"
 }
 
 basic_cleanup()
@@ -433,9 +448,17 @@ fastforward_cleanup()
 	cleanup
 }
 
+fastforward6_cleanup()
+{
+	dump
+	cleanup_bozo
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
 	atf_add_test_case basic6
 	atf_add_test_case fastforward
+	atf_add_test_case fastforward6
 }
