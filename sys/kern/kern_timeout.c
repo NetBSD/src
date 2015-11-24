@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.50 2015/02/09 20:46:55 christos Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.51 2015/11/24 15:48:23 christos Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.50 2015/02/09 20:46:55 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.51 2015/11/24 15:48:23 christos Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -763,25 +763,19 @@ callout_softclock(void *v)
 
 #ifdef DDB
 static void
-db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *bucket)
+db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *kbucket,
+    struct callout_circq *bucket)
 {
 	callout_impl_t *c, ci;
 	db_expr_t offset;
 	const char *name;
 	static char question[] = "?";
-	struct callout_circq bi;
-	struct callout_cpu cci;
 	int b;
 
-	db_read_bytes((db_addr_t)cc, sizeof(cci), (char *)&cci);
-	cc = &cci;
-
-	db_read_bytes((db_addr_t)bucket, sizeof(bi), (char *)&bi);
-
-	if (CIRCQ_EMPTY(&bi))
+	if (CIRCQ_LAST(bucket, kbucket))
 		return;
 
-	for (c = CIRCQ_FIRST(&bi); /*nothing*/; c = CIRCQ_NEXT(&c->c_list)) {
+	for (c = CIRCQ_FIRST(bucket); /*nothing*/; c = CIRCQ_NEXT(&c->c_list)) {
 		db_read_bytes((db_addr_t)c, sizeof(ci), (char *)&ci);
 		c = &ci;
 		db_find_sym_and_offset((db_addr_t)(intptr_t)c->c_func, &name,
@@ -793,7 +787,7 @@ db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *bucket)
 		db_printf("%9d %2d/%-4d %16lx  %s\n",
 		    c->c_time - cc->cc_ticks, b / WHEELSIZE, b,
 		    (u_long)c->c_arg, name);
-		if (CIRCQ_LAST(&c->c_list, bucket))
+		if (CIRCQ_LAST(&c->c_list, kbucket))
 			break;
 	}
 }
@@ -801,8 +795,8 @@ db_show_callout_bucket(struct callout_cpu *cc, struct callout_circq *bucket)
 void
 db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 {
-	struct callout_cpu *cc;
-	struct cpu_info *ci;
+	struct callout_cpu *cc, ccb;
+	struct cpu_info *ci, cib;
 	int b;
 
 #ifndef CRASH
@@ -816,15 +810,18 @@ db_show_callout(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 	 * some other CPU was paused while holding the lock.
 	 */
 	for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-		db_read_bytes((db_addr_t)&ci->ci_data.cpu_callout,
-		    sizeof(cc), (char *)&cc);
-		db_show_callout_bucket(cc, &cc->cc_todo);
+		db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
+		cc = cib.ci_data.cpu_callout;
+		db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
+		db_show_callout_bucket(&ccb, &cc->cc_todo, &ccb.cc_todo);
 	}
 	for (b = 0; b < BUCKETS; b++) {
 		for (ci = db_cpu_first(); ci != NULL; ci = db_cpu_next(ci)) {
-			db_read_bytes((db_addr_t)&ci->ci_data.cpu_callout,
-			    sizeof(cc), (char *)&cc);
-			db_show_callout_bucket(cc, &cc->cc_wheel[b]);
+			db_read_bytes((db_addr_t)ci, sizeof(cib), (char *)&cib);
+			cc = cib.ci_data.cpu_callout;
+			db_read_bytes((db_addr_t)cc, sizeof(ccb), (char *)&ccb);
+			db_show_callout_bucket(&ccb, &cc->cc_wheel[b],
+			    &ccb.cc_wheel[b]);
 		}
 	}
 }
