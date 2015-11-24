@@ -1,4 +1,4 @@
-/* $NetBSD: params.c,v 1.27 2015/11/22 20:24:19 christos Exp $ */
+/* $NetBSD: params.c,v 1.28 2015/11/24 14:07:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: params.c,v 1.27 2015/11/22 20:24:19 christos Exp $");
+__RCSID("$NetBSD: params.c,v 1.28 2015/11/24 14:07:18 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -622,15 +622,15 @@ params_cget(const char *fn)
 	struct params	*p;
 	FILE		*f;
 	char		filename[MAXPATHLEN];
-	struct stat	st;
 
-	if (fn[0] != '/' && stat(fn, &st) == -1 && errno == ENOENT) {
+	if ((f = fopen(fn, "r")) == NULL && fn[0] != '/') {
 		snprintf(filename, sizeof(filename), "%s/%s",
 		    CGDCONFIG_DIR, fn);
 		fn = filename;
+		f = fopen(fn, "r");
 	}
 
-	if ((f = fopen(fn, "r")) == NULL) {
+	if (f == NULL) {
 		warn("failed to open params file \"%s\"", fn);
 		return NULL;
 	}
