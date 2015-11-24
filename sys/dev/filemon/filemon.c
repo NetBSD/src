@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.19 2015/11/23 23:27:38 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.20 2015/11/24 01:01:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -278,7 +278,7 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 {
 	int error = 0;
 	struct filemon *filemon;
-	struct proc *tp, *lp, *p;
+	struct proc *tp;
 
 #ifdef DEBUG
 	log(logLevel, "filemon_ioctl(%lu)", cmd);;
