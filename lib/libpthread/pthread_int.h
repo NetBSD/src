@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.89 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.89.8.1 2015/11/24 17:37:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -148,16 +148,18 @@ struct	__pthread_st {
 
 	/* Thread-specific data.  Large so it sits close to the end. */
 	int		pt_havespecific;
-	struct pt_specific {
-		void *pts_value;
-		PTQ_ENTRY(pt_specific) pts_next;
-	} pt_specific[PTHREAD_KEYS_MAX];
 
 	/*
 	 * Context for thread creation.  At the end as it's cached
 	 * and then only ever passed to _lwp_create(). 
 	 */
 	ucontext_t	pt_uc;
+
+	struct pt_specific {
+		void *pts_value;
+		PTQ_ENTRY(pt_specific) pts_next;
+	} pt_specific[];
+
 };
 
 /* Thread states */
@@ -187,6 +189,7 @@ extern int	pthread__nspins;
 extern int	pthread__concurrency;
 extern int 	pthread__osrev;
 extern int 	pthread__unpark_max;
+extern int	pthread_keys_max;
 
 extern int	__uselibcstub;
 
@@ -291,6 +294,7 @@ pthread__self(void)
 	} 								\
         } while (/*CONSTCOND*/0)
 
+void 	*pthread_tsd_init(size_t *) PTHREAD_HIDE;
 void	pthread__destroy_tsd(pthread_t) PTHREAD_HIDE;
 __dead void	pthread__assertfunc(const char *, int, const char *, const char *)
 			    PTHREAD_HIDE;

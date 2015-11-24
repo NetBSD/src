@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.144 2014/01/31 20:44:01 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.144.4.1 2015/11/24 17:37:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.144 2014/01/31 20:44:01 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.144.4.1 2015/11/24 17:37:16 martin Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -115,7 +115,8 @@ int pthread__dbg;	/* set by libpthread_dbg if active */
  */
 size_t	pthread__stacksize;
 size_t	pthread__pagesize;
-static struct __pthread_st pthread__main;
+static struct __pthread_st *pthread__main;
+static size_t __pthread_st_size;
 
 int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
@@ -164,6 +165,17 @@ pthread__init(void)
 	int i;
 	extern int __isthreaded;
 
+	/*
+	 * Allocate pthread_keys descriptors before
+	 * reseting __uselibcstub because otherwise 
+	 * malloc() will call pthread_keys_create()
+	 * while pthread_keys descriptors are not 
+	 * yet allocated.
+	 */
+	pthread__main = pthread_tsd_init(&__pthread_st_size);
+	if (pthread__main == NULL)
+		err(EXIT_FAILURE, "Cannot allocate pthread storage");
+
 	__uselibcstub = 0;
 
 	pthread__pagesize = (size_t)sysconf(_SC_PAGESIZE);
@@ -178,7 +190,7 @@ pthread__init(void)
 	/* Fetch parameters. */
 	i = (int)_lwp_unpark_all(NULL, 0, NULL);
 	if (i == -1)
-		err(1, "_lwp_unpark_all");
+		err(EXIT_FAILURE, "_lwp_unpark_all");
 	if (i < pthread__unpark_max)
 		pthread__unpark_max = i;
 
@@ -199,7 +211,7 @@ pthread__init(void)
 	(void)rb_tree_insert_node(&pthread__alltree, first);
 
 	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &first->pt_lwpctl) != 0) {
-		err(1, "_lwp_ctl");
+		err(EXIT_FAILURE, "_lwp_ctl");
 	}
 
 	/* Start subsystems */
@@ -240,7 +252,7 @@ pthread__fork_callback(void)
 
 	/* lwpctl state is not copied across fork. */
 	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl)) {
-		err(1, "_lwp_ctl");
+		err(EXIT_FAILURE, "_lwp_ctl");
 	}
 	self->pt_lid = _lwp_self();
 }
@@ -298,7 +310,6 @@ pthread__initthread(pthread_t t)
 	pthread_mutex_init(&t->pt_lock, NULL);
 	PTQ_INIT(&t->pt_cleanup_stack);
 	pthread_cond_init(&t->pt_joiners, NULL);
-	memset(&t->pt_specific, 0, sizeof(t->pt_specific));
 }
 
 static void
@@ -451,7 +462,7 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	 * and initialize it.
 	 */
 	if (newthread == NULL) {
-		newthread = malloc(sizeof(*newthread));
+		newthread = calloc(1, __pthread_st_size);
 		if (newthread == NULL) {
 			free(name);
 			return ENOMEM;
@@ -566,7 +577,7 @@ pthread__create_tramp(void *cookie)
 	}
 
 	if (_lwp_ctl(LWPCTL_FEATURE_CURCPU, &self->pt_lwpctl)) {
-		err(1, "_lwp_ctl");
+		err(EXIT_FAILURE, "_lwp_ctl");
 	}
 
 	retval = (*self->pt_func)(self->pt_arg);
@@ -1281,17 +1292,18 @@ pthread__initmainstack(void)
 	_DIAGASSERT(_dlauxinfo() != NULL);
 
 	if (getrlimit(RLIMIT_STACK, &slimit) == -1)
-		err(1, "Couldn't get stack resource consumption limits");
+		err(EXIT_FAILURE,
+		    "Couldn't get stack resource consumption limits");
 	size = slimit.rlim_cur;
-	pthread__main.pt_stack.ss_size = size;
+	pthread__main->pt_stack.ss_size = size;
 
 	for (aux = _dlauxinfo(); aux->a_type != AT_NULL; ++aux) {
 		if (aux->a_type == AT_STACKBASE) {
-			pthread__main.pt_stack.ss_sp = (void *)aux->a_v;
+			pthread__main->pt_stack.ss_sp = (void *)aux->a_v;
 #ifdef __MACHINE_STACK_GROWS_UP
-			pthread__main.pt_stack.ss_sp = (void *)aux->a_v;
+			pthread__main->pt_stack.ss_sp = (void *)aux->a_v;
 #else
-			pthread__main.pt_stack.ss_sp = (char *)aux->a_v - size;
+			pthread__main->pt_stack.ss_sp = (char *)aux->a_v - size;
 #endif
 			break;
 		}
@@ -1313,24 +1325,24 @@ pthread__initmain(pthread_t *newt)
 	value = pthread__getenv("PTHREAD_STACKSIZE");
 	if (value != NULL) {
 		pthread__stacksize = atoi(value) * 1024;
-		if (pthread__stacksize > pthread__main.pt_stack.ss_size)
-			pthread__stacksize = pthread__main.pt_stack.ss_size;
+		if (pthread__stacksize > pthread__main->pt_stack.ss_size)
+			pthread__stacksize = pthread__main->pt_stack.ss_size;
 	}
 	if (pthread__stacksize == 0)
-		pthread__stacksize = pthread__main.pt_stack.ss_size;
+		pthread__stacksize = pthread__main->pt_stack.ss_size;
 	pthread__stacksize += pthread__pagesize - 1;
 	pthread__stacksize &= ~(pthread__pagesize - 1);
 	if (pthread__stacksize < 4 * pthread__pagesize)
 		errx(1, "Stacksize limit is too low, minimum %zd kbyte.",
 		    4 * pthread__pagesize / 1024);
 
-	*newt = &pthread__main;
+	*newt = pthread__main;
 #ifdef __HAVE___LWP_GETTCB_FAST
-	pthread__main.pt_tls = __lwp_gettcb_fast();
+	pthread__main->pt_tls = __lwp_gettcb_fast();
 #else
-	pthread__main.pt_tls = _lwp_getprivate();
+	pthread__main->pt_tls = _lwp_getprivate();
 #endif
-	pthread__main.pt_tls->tcb_pthread = &pthread__main;
+	pthread__main->pt_tls->tcb_pthread = pthread__main;
 }
 
 static signed int
