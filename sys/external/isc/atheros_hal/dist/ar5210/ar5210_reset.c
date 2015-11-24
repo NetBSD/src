@@ -14,7 +14,7 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * $Id: ar5210_reset.c,v 1.6 2015/11/23 23:46:33 joerg Exp $
+ * $Id: ar5210_reset.c,v 1.7 2015/11/24 08:48:25 jklos Exp $
  */
 #include "opt_ah.h"
 
@@ -504,7 +504,7 @@ ar5210PerCalibrationN(struct ath_hal *ah,  HAL_CHANNEL *chan, u_int chainMask,
 	OS_REG_WRITE(ah, 0x985c,
 		 (reg985c & ~(KCOARSEHIGH_M | KCOARSELOW_M)) |
 		 ((~0U << KCOARSEHIGH_S) & KCOARSEHIGH_M) |
-		 ((((~0U << 7) + 1) << KCOARSELOW_S)) & KCOARSELOW_M));
+		 ((((~0U << 7) + 1) << KCOARSELOW_S) & KCOARSELOW_M));
 	OS_REG_WRITE(ah, 0x9868,
 		 (reg9868 & ~(ADCSAT_ICOUNT_M | ADCSAT_THRESH_M)) |
 		 ((2 << ADCSAT_ICOUNT_S) & ADCSAT_ICOUNT_M) |
