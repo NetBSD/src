@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.1 2009/05/12 10:05:06 plunky Exp $	*/
+/*	$NetBSD: db.c,v 1.2 2015/11/24 21:11:39 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.1 2009/05/12 10:05:06 plunky Exp $");
+__RCSID("$NetBSD: db.c,v 1.2 2015/11/24 21:11:39 plunky Exp $");
 
 #include <bluetooth.h>
 #include <sdp.h>
@@ -96,8 +96,8 @@ static uint8_t sds_data[] = {
 /* BrowseGroupDescriptor service record */
 static uint8_t bgd_data[] = {
 	0x09, 0x00, 0x00,	//  uint16	ServiceRecordHandle
-	0x0a, 0x00, 0x00, 0x00,	//  uint32	0x00000001
-	0x01,
+	0x0a, 0x00, 0x01, 0x00,	//  uint32	0x00010000
+	0x00,
 
 	0x09, 0x00, 0x01,	//  uint16	ServiceClassIDList
 	0x35, 0x03,		//  seq8(3)
@@ -130,11 +130,11 @@ db_init(server_t *srv)
 	sdp_data_t d;
 
 	LIST_INIT(&srv->rlist);
-	srv->handle = 0;
+	srv->handle = 0x00010000; /* values 0x00000001->0x0000FFFF are reserved */
 
 	d.next = sds_data;
 	d.end = sds_data + sizeof(sds_data);
-	if (!db_create(srv, -1, BDADDR_ANY, srv->handle++, &d))
+	if (!db_create(srv, -1, BDADDR_ANY, 0x00000000, &d))
 		return false;
 
 	d.next = bgd_data;
