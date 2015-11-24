@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2006 2015/11/22 04:44:30 kamil Exp $
+#	$NetBSD: mi,v 1.2007 2015/11/24 23:33:46 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3675,6 +3675,7 @@
 ./usr/libdata/lint/llib-lossaudio.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lp2k.ln			comp-puffs-lintlib	lint,rump
 ./usr/libdata/lint/llib-lpam.ln			comp-c-lintlib		lint,pam
+./usr/libdata/lint/llib-lpanel.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpcap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lpcc.ln			comp-obsolete		obsolete
 ./usr/libdata/lint/llib-lpci.ln			comp-c-lintlib		lint
