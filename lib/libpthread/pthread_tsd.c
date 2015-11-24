@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.11 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.11.8.1 2015/11/24 17:37:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,22 +30,22 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.11 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.11.8.1 2015/11/24 17:37:16 martin Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
+#include <sys/mman.h>
 
 #include "pthread.h"
 #include "pthread_int.h"
 #include "reentrant.h"
 
-
+int pthread_keys_max;
 static pthread_mutex_t tsd_mutex = PTHREAD_MUTEX_INITIALIZER;
 static int nextkey;
 
-PTQ_HEAD(pthread__tsd_list, pt_specific)
-    pthread__tsd_list[PTHREAD_KEYS_MAX];
-void (*pthread__tsd_destructors[PTHREAD_KEYS_MAX])(void *);
+PTQ_HEAD(pthread__tsd_list, pt_specific) *pthread__tsd_list = NULL;
+void (**pthread__tsd_destructors)(void *) = NULL;
 
 __strong_alias(__libc_thr_keycreate,pthread_key_create)
 __strong_alias(__libc_thr_keydelete,pthread_key_delete)
@@ -58,6 +58,49 @@ null_destructor(void *p)
 
 #include <err.h>
 #include <stdlib.h>
+#include <stdio.h>
+
+/* Can't use mmap directly so early in the process because rump hijacks it */
+void *_mmap(void *, size_t, int, int, int, off_t);
+
+void *
+pthread_tsd_init(size_t *tlen)
+{
+	char *pkm;
+	size_t alen;
+	char *arena;
+
+	if ((pkm = pthread__getenv("PTHREAD_KEYS_MAX")) != NULL) {
+		pthread_keys_max = (int)strtol(pkm, NULL, 0);
+		if (pthread_keys_max < _POSIX_THREAD_KEYS_MAX)
+			pthread_keys_max = _POSIX_THREAD_KEYS_MAX;
+	} else {
+		pthread_keys_max = PTHREAD_KEYS_MAX;
+	}
+
+	/*
+	 * Can't use malloc here yet, because malloc will use the fake
+	 * libc thread functions to initialize itself, so mmap the space.
+	 */
+	*tlen = sizeof(struct __pthread_st)
+	    + pthread_keys_max * sizeof(struct pt_specific);
+	alen = *tlen
+	    + sizeof(*pthread__tsd_list) * pthread_keys_max
+	    + sizeof(*pthread__tsd_destructors) * pthread_keys_max;
+
+	arena = _mmap(NULL, alen, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
+	if (arena == MAP_FAILED) {
+		pthread_keys_max = 0;
+		return NULL;
+	}
+
+	pthread__tsd_list = (void *)arena;
+	arena += sizeof(*pthread__tsd_list) * pthread_keys_max;
+	pthread__tsd_destructors = (void *)arena;
+	arena += sizeof(*pthread__tsd_destructors) * pthread_keys_max;
+	return arena;
+}
+
 int
 pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 {
@@ -75,11 +118,11 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	 * our own internal destructor to satisfy the non NULL condition.
 	 */
 	/* 1. Search from "nextkey" to the end of the list. */
-	for (i = nextkey; i < PTHREAD_KEYS_MAX; i++)
+	for (i = nextkey; i < pthread_keys_max; i++)
 		if (pthread__tsd_destructors[i] == NULL)
 			break;
 
-	if (i == PTHREAD_KEYS_MAX) {
+	if (i == pthread_keys_max) {
 		/* 2. If that didn't work, search from the start
 		 *    of the list back to "nextkey".
 		 */
@@ -100,7 +143,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 	pthread__assert(PTQ_EMPTY(&pthread__tsd_list[i]));
 	pthread__tsd_destructors[i] = destructor ? destructor : null_destructor;
 
-	nextkey = (i + 1) % PTHREAD_KEYS_MAX;
+	nextkey = (i + 1) % pthread_keys_max;
 	pthread_mutex_unlock(&tsd_mutex);
 	*key = i;
 
@@ -108,7 +151,7 @@ pthread_key_create(pthread_key_t *key, void (*destructor)(void *))
 }
 
 /*
- * Each thread holds an array of PTHREAD_KEYS_MAX pt_specific list
+ * Each thread holds an array of pthread_keys_max pt_specific list
  * elements. When an element is used it is inserted into the appropriate
  * key bucket of pthread__tsd_list. This means that ptqe_prev == NULL,
  * means that the element is not threaded, ptqe_prev != NULL it is
@@ -130,7 +173,7 @@ pthread__add_specific(pthread_t self, pthread_key_t key, const void *value)
 {
 	struct pt_specific *pt;
 
-	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
+	pthread__assert(key >= 0 && key < pthread_keys_max);
 
 	pthread_mutex_lock(&tsd_mutex);
 	pthread__assert(pthread__tsd_destructors[key] != NULL);
@@ -237,7 +280,7 @@ pthread_key_delete(pthread_key_t key)
 	if (__predict_false(__uselibcstub))
 		return __libc_thr_keydelete_stub(key);
 
-	pthread__assert(key >= 0 && key < PTHREAD_KEYS_MAX);
+	pthread__assert(key >= 0 && key < pthread_keys_max);
 
 	pthread_mutex_lock(&tsd_mutex);
 
@@ -295,7 +338,7 @@ pthread__destroy_tsd(pthread_t self)
 	iterations = 4; /* We're not required to try very hard */
 	do {
 		done = 1;
-		for (i = 0; i < PTHREAD_KEYS_MAX; i++) {
+		for (i = 0; i < pthread_keys_max; i++) {
 			struct pt_specific *pt = &self->pt_specific[i];
 			if (pt->pts_next.ptqe_prev == NULL)
 				continue;

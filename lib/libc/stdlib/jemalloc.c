@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc.c,v 1.34 2014/08/10 05:57:31 matt Exp $	*/
+/*	$NetBSD: jemalloc.c,v 1.34.2.1 2015/11/24 17:37:16 martin Exp $	*/
 
 /*-
  * Copyright (C) 2006,2007 Jason Evans <jasone@FreeBSD.org>.
@@ -118,7 +118,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/lib/libc/stdlib/malloc.c,v 1.147 2007/06/15 22:00:16 jasone Exp $"); */ 
-__RCSID("$NetBSD: jemalloc.c,v 1.34 2014/08/10 05:57:31 matt Exp $");
+__RCSID("$NetBSD: jemalloc.c,v 1.34.2.1 2015/11/24 17:37:16 martin Exp $");
 
 #ifdef __FreeBSD__
 #include "libc_private.h"
@@ -382,8 +382,10 @@ static malloc_mutex_t init_lock = {_SPINLOCK_INITIALIZER};
 /* Set to true once the allocator has been initialized. */
 static bool malloc_initialized = false;
 
+#ifdef _REENTRANT
 /* Used to avoid initialization races. */
 static mutex_t init_lock = MUTEX_INITIALIZER;
+#endif
 #endif
 
 /******************************************************************************/
@@ -694,8 +696,10 @@ static size_t		arena_maxclass; /* Max size class for arenas. */
  * Chunks.
  */
 
+#ifdef _REENTRANT
 /* Protects chunk-related data structures. */
 static malloc_mutex_t	chunks_mtx;
+#endif
 
 /* Tree of chunks that are stand-alone huge allocations. */
 static chunk_tree_t	huge;
@@ -746,7 +750,9 @@ static void		*base_pages;
 static void		*base_next_addr;
 static void		*base_past_addr; /* Addr immediately past base_pages. */
 static chunk_node_t	*base_chunk_nodes; /* LIFO cache of chunk nodes. */
+#ifdef _REENTRANT
 static malloc_mutex_t	base_mtx;
+#endif
 #ifdef MALLOC_STATS
 static size_t		base_mapped;
 #endif
@@ -763,20 +769,62 @@ static size_t		base_mapped;
 static arena_t		**arenas;
 static unsigned		narenas;
 static unsigned		next_arena;
+#ifdef _REENTRANT
 static malloc_mutex_t	arenas_mtx; /* Protects arenas initialization. */
+#endif
 
-#ifndef NO_TLS
 /*
  * Map of pthread_self() --> arenas[???], used for selecting an arena to use
  * for allocations.
  */
-static __thread arena_t	*arenas_map;
-#define	get_arenas_map()	(arenas_map)
-#define	set_arenas_map(x)	(arenas_map = x)
+#ifndef NO_TLS
+static __thread arena_t	**arenas_map;
 #else
-static thread_key_t arenas_map_key;
-#define	get_arenas_map()	thr_getspecific(arenas_map_key)
-#define	set_arenas_map(x)	thr_setspecific(arenas_map_key, x)
+static arena_t	**arenas_map;
+#endif
+
+#if !defined(NO_TLS) || !defined(_REENTRANT)
+# define	get_arenas_map()	(arenas_map)
+# define	set_arenas_map(x)	(arenas_map = x)
+#else
+
+static thread_key_t arenas_map_key = -1;
+
+static inline arena_t **
+get_arenas_map(void)
+{
+	if (!__isthreaded)
+		return arenas_map;
+
+	if (arenas_map_key == -1) {
+		(void)thr_keycreate(&arenas_map_key, NULL);
+		if (arenas_map != NULL) {
+			thr_setspecific(arenas_map_key, arenas_map);
+			arenas_map = NULL;
+		}
+	}
+
+	return thr_getspecific(arenas_map_key);
+}
+
+static __inline void
+set_arenas_map(arena_t **a)
+{
+	if (!__isthreaded) {
+		arenas_map = a;
+		return;
+	}
+
+	if (arenas_map_key == -1) {
+		(void)thr_keycreate(&arenas_map_key, NULL);
+		if (arenas_map != NULL) {
+			_DIAGASSERT(arenas_map == a);
+			arenas_map = NULL;
+		}
+	}
+
+	thr_setspecific(arenas_map_key, a);
+}
 #endif
 
 #ifdef MALLOC_STATS
@@ -3633,11 +3681,6 @@ malloc_init_hard(void)
 		 */
 		opt_narenas_lshift += 2;
 	}
-
-#ifdef NO_TLS
-	/* Initialize arena key. */
-	(void)thr_keycreate(&arenas_map_key, NULL);
-#endif
 
 	/* Determine how many arenas to use. */
 	narenas = ncpus;
