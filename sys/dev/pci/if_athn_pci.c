@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.11 2015/11/17 17:15:29 jakllsch Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.12 2015/11/24 18:17:37 jakllsch Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.11 2015/11/17 17:15:29 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.12 2015/11/24 18:17:37 jakllsch Exp $");
 
 #include "opt_inet.h"
 
@@ -66,7 +66,7 @@ struct athn_pci_softc {
 	/* PCI specific goo. */
 	pci_chipset_tag_t	psc_pc;
 	pcitag_t		psc_tag;
-	pci_intr_handle_t	*psc_pihp;
+	pci_intr_handle_t	psc_pih;
 	void			*psc_ih;
 	bus_space_tag_t		psc_iot;
 	bus_space_handle_t	psc_ioh;
@@ -200,15 +200,14 @@ athn_pci_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Arrange interrupt line.
 	 */
-	if (pci_intr_alloc(pa, &psc->psc_pihp, NULL, 0) != 0) {
+	if (pci_intr_map(pa, &psc->psc_pih) != 0) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		goto fail1;
 	}
 
-	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pihp[0], intrbuf,
-	    sizeof(intrbuf));
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pihp[0],
-	    IPL_NET, athn_intr, sc);
+	intrstr = pci_intr_string(psc->psc_pc, psc->psc_pih, intrbuf, sizeof(intrbuf));
+	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
+	    athn_intr, sc);
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		goto fail1;
@@ -250,10 +249,6 @@ athn_pci_detach(device_t self, int flags)
 		athn_detach(sc);
 		pci_intr_disestablish(psc->psc_pc, psc->psc_ih);
 		psc->psc_ih = NULL;
-	}
-	if (psc->psc_pihp != NULL) {
-		pci_intr_release(psc->psc_pc, psc->psc_pihp, 1);
-		psc->psc_pihp = NULL;
 	}
 	if (psc->psc_mapsz > 0) {
 		bus_space_unmap(psc->psc_iot, psc->psc_ioh, psc->psc_mapsz);
@@ -304,8 +299,8 @@ athn_pci_resume(device_t self, const pmf_qual_t *qual)
 	if (reg & 0xff00)
 		pci_conf_write(psc->psc_pc, psc->psc_tag, 0x40, reg & ~0xff00);
 
-	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pihp[0],
-	    IPL_NET, athn_intr, sc);
+	psc->psc_ih = pci_intr_establish(psc->psc_pc, psc->psc_pih, IPL_NET,
+	    athn_intr, sc);
 	if (psc->psc_ih == NULL) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return false;
