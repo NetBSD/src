@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_term.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: cl_term.c,v 1.5 2015/11/25 20:25:20 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_term.c,v 10.31 2001/07/08 13:06:56 skimo Exp  (Berkeley) Date: 2001/07/08 13:06:56 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_term.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: cl_term.c,v 1.5 2015/11/25 20:25:20 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -268,9 +268,12 @@ cl_optchange(SCR *sp, int opt, const char *str, u_long *valp)
 	clp = CLP(sp);
 
 	switch (opt) {
+	case O_TERM:
+		if (F_ISSET(sp, SC_SCR_EX))
+			F_SET(clp, CL_CHANGE_TERM);
+		/* FALLTHROUGH */
 	case O_COLUMNS:
 	case O_LINES:
-	case O_TERM:
 		/*
 		 * Changing the columns, lines or terminal require that
 		 * we restart the screen.
@@ -417,7 +420,6 @@ cl_ssize(SCR *sp, int sigwinch, size_t *rowp, size_t *colp, int *changedp)
 			*rowp = row;
 		if (colp != NULL)
 			*colp = col;
-		resizeterm(row, col);
 		return (0);
 	}
 
