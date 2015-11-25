@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.330 2015/11/13 08:04:21 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.331 2015/11/25 08:36:50 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.330 2015/11/13 08:04:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.331 2015/11/25 08:36:50 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6730,10 +6730,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		if (L1_SS_PROTO && L1_SS_MAPPABLE_P(va, pa, resid)) {
 			/* Supersection are always domain 0 */
 			const pd_entry_t npde = L1_SS_PROTO | pa
-#ifdef ARM_MMU_EXTENDED_XXX
-			    | ((prot & VM_PROT_EXECUTE) ? 0 : L1_S_V6_XN)
-#endif
 #ifdef ARM_MMU_EXTENDED
+			    | ((prot & VM_PROT_EXECUTE) ? 0 : L1_S_V6_XN)
 			    | (va & 0x80000000 ? 0 : L1_S_V6_nG)
 #endif
 			    | L1_S_PROT(PTE_KERNEL, prot) | f1;
@@ -6751,10 +6749,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		/* See if we can use a section mapping. */
 		if (L1_S_MAPPABLE_P(va, pa, resid)) {
 			const pd_entry_t npde = L1_S_PROTO | pa
-#ifdef ARM_MMU_EXTENDED_XXX
-			    | ((prot & VM_PROT_EXECUTE) ? 0 : L1_S_V6_XN)
-#endif
 #ifdef ARM_MMU_EXTENDED
+			    | ((prot & VM_PROT_EXECUTE) ? 0 : L1_S_V6_XN)
 			    | (va & 0x80000000 ? 0 : L1_S_V6_nG)
 #endif
 			    | L1_S_PROT(PTE_KERNEL, prot) | f1
@@ -6788,10 +6784,8 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		/* See if we can use a L2 large page mapping. */
 		if (L2_L_MAPPABLE_P(va, pa, resid)) {
 			const pt_entry_t npte = L2_L_PROTO | pa
-#ifdef ARM_MMU_EXTENDED_XXX
-			    | ((prot & VM_PROT_EXECUTE) ? 0 : L2_XS_L_XN)
-#endif
 #ifdef ARM_MMU_EXTENDED
+			    | ((prot & VM_PROT_EXECUTE) ? 0 : L2_XS_L_XN)
 			    | (va & 0x80000000 ? 0 : L2_XS_nG)
 #endif
 			    | L2_L_PROT(PTE_KERNEL, prot) | f2l;
@@ -6806,18 +6800,19 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 			continue;
 		}
 
-		/* Use a small page mapping. */
 #ifdef VERBOSE_INIT_ARM
 		printf("P");
 #endif
-		const pt_entry_t npte = L2_S_PROTO | pa
-#ifdef ARM_MMU_EXTENDED_XXX
-		    | ((prot & VM_PROT_EXECUTE) ? 0 : L2_XS_XN)
-#endif
+		/* Use a small page mapping. */
+		pt_entry_t npte = L2_S_PROTO | pa
 #ifdef ARM_MMU_EXTENDED
+		    | ((prot & VM_PROT_EXECUTE) ? 0 : L2_XS_XN)
 		    | (va & 0x80000000 ? 0 : L2_XS_nG)
 #endif
 		    | L2_S_PROT(PTE_KERNEL, prot) | f2s;
+#ifdef ARM_MMU_EXTENDED
+		npte &= ((prot & VM_PROT_EXECUTE) ? ~L2_XS_XN : ~0);
+#endif
 		l2pte_set(ptep, npte, 0);
 		PTE_SYNC(ptep);
 		va += PAGE_SIZE;
