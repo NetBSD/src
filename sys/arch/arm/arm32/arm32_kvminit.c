@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.35 2015/06/01 19:16:44 matt Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.36 2015/11/25 08:32:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.35 2015/06/01 19:16:44 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.36 2015/11/25 08:32:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -240,7 +240,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	}
 
 	bmi->bmi_nfreeblocks = pv - bmi->bmi_freeblocks;
-	
+
 	SLIST_INIT(&bmi->bmi_freechunks);
 	SLIST_INIT(&bmi->bmi_chunks);
 }
@@ -596,7 +596,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if ARM_MMU_XSCALE == 1
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
-#endif          
+#endif
 		valloc_pages(bmi, &minidataclean, 1,
 		    VM_PROT_READ|VM_PROT_WRITE, 0, true);
 #endif
@@ -845,13 +845,13 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
 	}
 
-	/* Map the Mini-Data cache clean area. */ 
+	/* Map the Mini-Data cache clean area. */
 #if ARM_MMU_XSCALE == 1
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
-#endif          
+#endif
 		xscale_setup_minidata(l1pt_va, minidataclean.pv_va,
-		    minidataclean.pv_pa);      
+		    minidataclean.pv_pa);
 #endif
 
 	/*
