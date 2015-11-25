@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.11 2015/05/08 17:46:03 riastradh Exp $
+#	$NetBSD: Makefile.bootimage,v 1.12 2015/11/25 00:50:57 christos Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -126,6 +126,10 @@
 .include <bsd.endian.mk>	# for TARGET_ENDIANNESS
 
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
+
+.if ${MKREPRO:Uno} == "yes"
+TIMESTAMP=-T ${NETBSDSRCDIR}/sys/sys/param.h
+.endif
 
 .if empty(IMGBASE)
 .BEGIN:
@@ -292,6 +296,7 @@ ${TARGETFS}: prepare_md_post
 	${TOOL_MAKEFS} -M ${FSSIZE} -m ${FSSIZE}			\
 	    -B ${TARGET_ENDIANNESS}					\
 	    -F ${WORKSPEC} -N ${WORKDIR}/etc				\
+	    ${TIMESTAMP}						\
 	    ${IMGMAKEFSOPTIONS}						\
 	    ${WORKFS} ${WORKDIR}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} == "no"
