@@ -1,4 +1,4 @@
-/*	$NetBSD: cl.h,v 1.2 2013/11/22 15:52:05 christos Exp $ */
+/*	$NetBSD: cl.h,v 1.3 2015/11/25 20:25:20 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -42,6 +42,8 @@ typedef struct _cl_private {
 	struct termios ex_enter;/* Terminal values to enter ex. */
 	struct termios vi_enter;/* Terminal values to enter vi. */
 
+	SCREEN	*screen;	/* Curses screen. */
+
 	char	*el;		/* Clear to EOL terminal string. */
 	char	*cup;		/* Cursor movement terminal string. */
 	char	*cuu1;		/* Cursor up terminal string. */
@@ -77,6 +79,8 @@ typedef struct _cl_private {
 #define	CL_SIGTERM	0x0100	/* SIGTERM arrived. */
 #define	CL_SIGWINCH	0x0200	/* SIGWINCH arrived. */
 #define	CL_STDIN_TTY	0x0400	/* Talking to a terminal. */
+#define	CL_SETUPTERM	0x0800	/* Terminal initialized. */
+#define	CL_CHANGE_TERM	0x1000	/* Terminal changed. */
 	u_int32_t flags;
 } CL_PRIVATE;
 
