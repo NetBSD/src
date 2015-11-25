@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_screen.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: cl_screen.c,v 1.5 2015/11/25 20:25:20 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_screen.c,v 10.56 2002/05/03 19:59:44 skimo Exp  (Berkeley) Date: 2002/05/03 19:59:44 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_screen.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: cl_screen.c,v 1.5 2015/11/25 20:25:20 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -33,6 +33,10 @@ __RCSID("$NetBSD: cl_screen.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
 
 #include "../common/common.h"
 #include "cl.h"
+
+#ifndef BLOCK_SIGNALS
+extern sigset_t __sigblockset;
+#endif
 
 static int	cl_ex_end __P((GS *));
 static int	cl_ex_init __P((SCR *));
@@ -53,10 +57,20 @@ cl_screen(SCR *sp, u_int32_t flags)
 	CL_PRIVATE *clp;
 	WINDOW *win;
 	GS *gp;
+	int ret, error;
+	sigset_t oset;
 
 	gp = sp->gp;
 	clp = CLP(sp);
 	win = CLSP(sp) ? CLSP(sp) : stdscr;
+
+	ret = 0;
+
+	/*
+	 * During initialization of the screen, block signals to make sure that
+	 * curses/terminfo routines are not interrupted.
+	 */
+	error = sigprocmask(SIG_BLOCK, &__sigblockset, &oset);
 
 	/* See if the current information is incorrect. */
 	if (F_ISSET(gp, G_SRESTART)) {
@@ -64,15 +78,17 @@ cl_screen(SCR *sp, u_int32_t flags)
 		    delwin(CLSP(sp));
 		    sp->cl_private = NULL;
 		}
-		if (cl_quit(gp))
-			return (1);
+		if (cl_quit(gp)) {
+			ret = 1;
+			goto end;
+		}
 		F_CLR(gp, G_SRESTART);
 	}
 	
 	/* See if we're already in the right mode. */
 	if ((LF_ISSET(SC_EX) && F_ISSET(sp, SC_SCR_EX)) ||
 	    (LF_ISSET(SC_VI) && F_ISSET(sp, SC_SCR_VI)))
-		return (0);
+		goto end;
 
 	/*
 	 * Fake leaving ex mode.
@@ -109,8 +125,10 @@ cl_screen(SCR *sp, u_int32_t flags)
 
 	/* Enter the requested mode. */
 	if (LF_ISSET(SC_EX)) {
-		if (cl_ex_init(sp))
-			return (1);
+		if (cl_ex_init(sp)) {
+			ret = 1;
+			goto end;
+		}
 		F_SET(clp, CL_IN_EX | CL_SCR_EX_INIT);
 
 		/*
@@ -121,12 +139,18 @@ cl_screen(SCR *sp, u_int32_t flags)
 			tputs(tgoto(clp->cup,
 			    0, O_VAL(sp, O_LINES) - 1), 1, cl_putchar);
 	} else {
-		if (cl_vi_init(sp))
-			return (1);
+		if (cl_vi_init(sp)) {
+			ret = 1;
+			goto end;
+		}
 		F_CLR(clp, CL_IN_EX);
 		F_SET(clp, CL_SCR_VI_INIT);
 	}
-	return (0);
+end:
+	/* Unblock signals. */
+	if (error == 0)
+		(void)sigprocmask(SIG_SETMASK, &oset, NULL);
+	return ret;
 }
 
 /*
@@ -234,10 +258,14 @@ cl_vi_init(SCR *sp)
 	o_cols = getenv("COLUMNS");
 	cl_putenv(sp, "COLUMNS", NULL, (u_long)O_VAL(sp, O_COLUMNS));
 
+	/* Delete cur_term if exists. */
+	if (F_ISSET(clp, CL_SETUPTERM)) {
+		if (del_curterm(cur_term))
+			return (1);
+		F_CLR(clp, CL_SETUPTERM);
+	}
+
 	/*
-	 * We don't care about the SCREEN reference returned by newterm, we
-	 * never have more than one SCREEN at a time.
-	 *
 	 * XXX
 	 * The SunOS initscr() can't be called twice.  Don't even think about
 	 * using it.  It fails in subtle ways (e.g. select(2) on fileno(stdin)
@@ -249,7 +277,7 @@ cl_vi_init(SCR *sp)
 	 * have to specify the terminal type.
 	 */
 	errno = 0;
-	if (newterm(__UNCONST(ttype), stdout, stdin) == NULL) {
+	if ((clp->screen = newterm(__UNCONST(ttype), stdout, stdin)) == NULL) {
 		if (errno)
 			msgq(sp, M_SYSERR, "%s", ttype);
 		else
@@ -374,8 +402,6 @@ cl_vi_init(SCR *sp)
 
 fast:	/* Set the terminal modes. */
 	if (tcsetattr(STDIN_FILENO, TCSASOFT | TCSADRAIN, &clp->vi_enter)) {
-		if (errno == EINTR)
-			goto fast;
 		msgq(sp, M_SYSERR, "tcsetattr");
 err:		(void)cl_vi_end(sp->gp);
 		return (1);
@@ -416,6 +442,9 @@ cl_vi_end(GS *gp)
 	/* End curses window. */
 	(void)endwin();
 
+	/* Delete curses screen. */
+	delscreen(clp->screen);
+
 	/*
 	 * XXX
 	 * The screen TE sequence just got sent.  See the comment in
@@ -434,6 +463,8 @@ static int
 cl_ex_init(SCR *sp)
 {
 	CL_PRIVATE *clp;
+	int error;
+	const char *ttype;
 
 	clp = CLP(sp);
 
@@ -444,6 +475,22 @@ cl_ex_init(SCR *sp)
 	/* If not reading from a file, we're done. */
 	if (!F_ISSET(clp, CL_STDIN_TTY))
 		return (0);
+
+	if (F_ISSET(clp, CL_CHANGE_TERM)) {
+		if (F_ISSET(clp, CL_SETUPTERM) && del_curterm(cur_term))
+			return (1);
+		F_CLR(clp, CL_SETUPTERM | CL_CHANGE_TERM);
+	}
+
+	if (!F_ISSET(clp, CL_SETUPTERM)) {
+		/* We'll need a terminal type. */
+		if (opts_empty(sp, O_TERM, 0))
+			return (1);
+		ttype = O_STR(sp, O_TERM);
+		(void)setupterm(ttype, STDOUT_FILENO, &error);
+		if (error == 0 || error == -1)
+			return (1);
+	}
 
 	/* Get the ex termcap/terminfo strings. */
 	(void)cl_getcap(sp, "cup", &clp->cup);
