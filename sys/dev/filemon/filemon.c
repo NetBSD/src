@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.21 2015/11/24 01:05:50 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.22 2015/11/25 07:34:49 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.21 2015/11/24 01:05:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.22 2015/11/25 07:34:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -340,13 +340,13 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	return (error);
 }
 
-static void
+static int
 filemon_load(void *dummy __unused)
 {
 	rw_init(&filemon_mtx);
 
 	/* Install the syscall wrappers. */
-	filemon_wrapper_install();
+	return filemon_wrapper_install();
 }
 
 /*
@@ -400,9 +400,10 @@ filemon_modcmd(modcmd_t cmd, void *data)
 		logLevel = LOG_INFO;
 #endif
 
-		filemon_load(data);
-		error = devsw_attach("filemon", NULL, &bmajor,
-		    &filemon_cdevsw, &cmajor);
+		error = filemon_load(data);
+		if (!error)
+			error = devsw_attach("filemon", NULL, &bmajor,
+			    &filemon_cdevsw, &cmajor);
 		break;
 
 	case MODULE_CMD_FINI:
