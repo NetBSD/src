@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootcd,v 1.32 2015/05/29 06:28:50 martin Exp $
+#	$NetBSD: Makefile.bootcd,v 1.33 2015/11/25 00:50:57 christos Exp $
 #
 # Makefile snipped to create a CD/DVD ISO
 #
@@ -72,6 +72,10 @@ PUBLISHER?= The_NetBSD_Project
 _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER},${CDMAKEFSOPTIONS}
 .else
 _CDMAKEFSOPTIONS=	rockridge,label=${ISO_VOLID},publisher=${PUBLISHER}
+.endif
+
+.if ${MKREPRO:Uno} == "yes"
+TIMESTAMP=-T ${NETBSDSRCDIR}/sys/sys/param.h
 .endif
 
 .if ${MKUNPRIVED} == "no"
@@ -281,7 +285,7 @@ image:
 .endif
 	if [ -s ${WORKSPEC} ]; then specarg="-F ${WORKSPEC}"; fi;	\
 	${TOOL_MAKEFS} -N ${NETBSDSRCDIR}/etc -t cd9660 $${specarg} 	\
-		${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
+		${TIMESTAMP} ${CDMAKEFSEXTRAOPTS} -o ${_CDMAKEFSOPTIONS:Q} ${CDIMAGE} cdrom
 
 .if ${CDRELEASE} == false
 release: prepare .WAIT prepare_md_post .WAIT copy-releasedir .WAIT image_md_pre .WAIT image .WAIT image_md_post
