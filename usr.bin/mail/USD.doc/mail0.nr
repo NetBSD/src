@@ -1,4 +1,4 @@
-.\"	$NetBSD: mail0.nr,v 1.3 2003/08/07 11:14:43 agc Exp $
+.\"	$NetBSD: mail0.nr,v 1.4 2015/11/25 01:12:03 christos Exp $
 .\"
 .\" Copyright (c) 1980, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,9 @@ Mark Andrews
 .(l C
 Version 5.5
 
-
+.if \nR==0 \
+\{
 \*(td
 .)l
+.\}
 .pn 2
