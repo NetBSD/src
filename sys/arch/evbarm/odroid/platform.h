@@ -1,4 +1,4 @@
-/*	$NetBSD: platform.h,v 1.3 2015/11/11 00:58:21 marty Exp $	*/
+/*	$NetBSD: platform.h,v 1.4 2015/11/25 04:04:13 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,34 +32,20 @@
 #ifndef _ARM_ODROID_PLATFORM_H
 #define _ARM_ODROID_PLATFORM_H
 
-#include "opt_exynos.h"
-
 /*
  * Kernel VM space 16Mb behind KERNEL_BASE upto 0xeff00000
  */
 #define KERNEL_VM_BASE		0xc0000000
-#define KERNEL_VM_SIZE		(EXYNOS_CORE_VBASE - KERNEL_VM_BASE)
+#define KERNEL_VM_SIZE		0x24000000
 
 /*
  * IO space
  */
 
-#define EXYNOS_CORE_VBASE	0xf0000000
-
-/*
- * Serial consoles
+/* MJF:  This should be 0xF0000000 --- why doesn't that work? */
+/*       With this set to 0x10000000 we boot to the point where
+ *       uvm_init is called and die during it.
  */
-#define CONADDR_VA		((CONADDR - EXYNOS_CORE_PBASE) + EXYNOS_CORE_VBASE)
-
-#ifdef SSCOM2CONSOLE
-#define SSCON_CHANNEL 0
-#define CONADDR			(EXYNOS_CORE_PBASE + EXYNOS5_UART2_OFFSET)
-#endif
-#if 0
-#ifdef SSCOM1CONSOLE
-#define SSCON_CHANNEL 1
-#define CONADDR			(EXYNOS_CORE_PBASE + EXYNOS_UART1_OFFSET)
-#endif
-#endif
+#define EXYNOS_CORE_VBASE	0x10000000
 
 #endif /* _ARM_ODROID_PLATFORM_H */
