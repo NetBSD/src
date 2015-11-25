@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.5 2015/11/05 06:50:51 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.6 2015/11/25 06:21:26 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -101,7 +101,12 @@ struct llentry {
 
 #ifdef __NetBSD__
 #define	la_timer	lle_timer
+#define	ln_timer_ch	lle_timer
+#define	ln_expire	la_expire
+#define	ln_asked	la_asked
+#define	ln_hold		la_hold
 	struct rtentry		*la_rt;
+#define	ln_rt		la_rt
 	void			*la_opaque;	/* For tokenring */
 #endif
 };
@@ -240,6 +245,7 @@ struct lltable {
 	int			llt_af;
 	int			llt_hsize;
 	struct llentries	*lle_head;
+	unsigned int		llt_lle_count;
 	struct ifnet		*llt_ifp;
 
 	llt_lookup_t		*llt_lookup;
@@ -282,6 +288,7 @@ void		lltable_link(struct lltable *llt);
 void		lltable_prefix_free(int, struct sockaddr *,
 		    struct sockaddr *, u_int);
 void		lltable_drain(int);
+void		lltable_purge_entries(struct lltable *);
 int		lltable_sysctl_dumparp(int, struct sysctl_req *);
 
 size_t		llentry_free(struct llentry *);
@@ -298,6 +305,12 @@ void lltable_unlink_entry(struct lltable *llt, struct llentry *lle);
 void lltable_fill_sa_entry(const struct llentry *lle, struct sockaddr *sa);
 struct ifnet *lltable_get_ifp(const struct lltable *llt);
 int lltable_get_af(const struct lltable *llt);
+
+static inline unsigned int
+lltable_get_entry_count(struct lltable *llt)
+{
+	return llt->llt_lle_count;
+}
 
 int lltable_foreach_lle(struct lltable *llt, llt_foreach_cb_t *f,
     void *farg);

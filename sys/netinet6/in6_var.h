@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.74 2015/09/06 06:01:01 dholland Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.75 2015/11/25 06:21:26 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct in6_addrlifetime {
 	u_int32_t ia6t_pltime;	/* prefix lifetime */
 };
 
+struct lltable;
 struct nd_ifinfo;
 struct in6_ifextra {
 	struct in6_ifstat *in6_ifstat;
@@ -97,6 +98,7 @@ struct in6_ifextra {
 	struct scope6_id *scope6_id;
 	int nprefixes;
 	int ndefrouters;
+	struct lltable *lltable;
 };
 
 LIST_HEAD(in6_multihead, in6_multi);
@@ -700,6 +702,7 @@ void	in6_purgemkludge(struct ifnet *);
 struct in6_ifaddr *in6ifa_ifpforlinklocal(const struct ifnet *, int);
 struct in6_ifaddr *in6ifa_ifpwithaddr(const struct ifnet *,
     const struct in6_addr *);
+struct in6_ifaddr *in6ifa_ifwithaddr(const struct in6_addr *, uint32_t);
 char	*ip6_sprintf(const struct in6_addr *);
 int	in6_matchlen(struct in6_addr *, struct in6_addr *);
 int	in6_are_prefix_equal(struct in6_addr *, struct in6_addr *, int);
@@ -711,6 +714,9 @@ int	ip6flow_fastforward(struct mbuf **); /* IPv6 fast forward routine */
 int in6_src_ioctl(u_long, void *);
 int	in6_is_addr_deprecated(struct sockaddr_in6 *);
 struct in6pcb;
+
+#define	LLTABLE6(ifp)	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->lltable)
+
 #endif /* _KERNEL */
 
 #endif /* !_NETINET6_IN6_VAR_H_ */
