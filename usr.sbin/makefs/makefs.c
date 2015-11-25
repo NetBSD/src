@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.51 2015/11/25 00:48:49 christos Exp $	*/
+/*	$NetBSD: makefs.c,v 1.52 2015/11/25 16:32:20 wiz Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.51 2015/11/25 00:48:49 christos Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.52 2015/11/25 16:32:20 wiz Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -462,7 +462,7 @@ usage(fstype_t *fstype, fsinfo_t *fsoptions)
 "Usage: %s [-rxZ] [-B endian] [-b free-blocks] [-d debug-mask]\n"
 "\t[-F mtree-specfile] [-f free-files] [-M minimum-size] [-m maximum-size]\n"
 "\t[-N userdb-dir] [-O offset] [-o fs-options] [-S sector-size]\n"
-"\t[-s image-size] [-t fs-type] [-T <timestamp/file>]"
+"\t[-s image-size] [-T <timestamp/file>] [-t fs-type]"
 " image-file directory [extra-directory ...]\n",
 	    prog);
 
