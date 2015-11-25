@@ -1,4 +1,4 @@
-/* $NetBSD: termcap.c,v 1.17 2011/11/13 15:24:04 christos Exp $ */
+/* $NetBSD: termcap.c,v 1.18 2015/11/25 18:46:24 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: termcap.c,v 1.17 2011/11/13 15:24:04 christos Exp $");
+__RCSID("$NetBSD: termcap.c,v 1.18 2015/11/25 18:46:24 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -553,8 +553,11 @@ captoinfo(char *cap)
 			else
 				len += rl;
 			p = realloc(info, len);
-			if (p == NULL)
+			if (p == NULL) {
+				if (fv == 1)
+					free(val);
 				return NULL;
+			}
 			info = p;
 		}
 
