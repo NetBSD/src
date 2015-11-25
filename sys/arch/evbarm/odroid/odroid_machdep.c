@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_machdep.c,v 1.39 2014/09/30 14:24:26 reinoud Exp $ */
+/*	$NetBSD: odroid_machdep.c,v 1.40 2015/11/25 04:04:13 marty Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.39 2014/09/30 14:24:26 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: odroid_machdep.c,v 1.40 2015/11/25 04:04:13 marty Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -128,10 +128,6 @@ extern const struct sscom_uart_info exynos_uarts[];
 #define CONMODE ((TTYDEF_CFLAG & ~(CSIZE | CSTOPB | PARENB | HUPCL)) | CS8) /* 8N1 */
 #endif	/* CONMODE */
 
-// __CTASSERT(EXYNOS_CORE_PBASE + EXYNOS_UART0_OFFSET <= CONADDR);
-// __CTASSERT(CONADDR <= EXYNOS_CORE_PBASE + EXYNOS_UART4_OFFSET);
-// __CTASSERT(CONADDR % EXYNOS_BLOCK_SIZE == 0);
-//static const bus_addr_t conaddr = CONADDR;
 static const int conspeed = CONSPEED;
 static const int conmode = CONMODE;
 #endif /*defined(KGDB) || defined(SSCOM*CONSOLE) */
@@ -152,7 +148,7 @@ uintptr_t uboot_args[4] = { 0 };
  * argument and boot configure storage
  */
 BootConfig bootconfig;				/* for pmap's sake */
-char bootargs[MAX_BOOT_STRING] = "";		/* copied string from uboot */
+char bootargs[MAX_BOOT_STRING];			/* copied string from uboot */
 char *boot_args = NULL;				/* MI bootargs */
 char *boot_file = NULL;				/* MI bootfile */
 uint8_t uboot_enaddr[ETHER_ADDR_LEN] = {};
@@ -181,6 +177,9 @@ static void exynos_usb_powercycle_lan9730(device_t self);
 static void exynos_extract_mac_adress(void);
 void odroid_device_register(device_t self, void *aux);
 void odroid_device_register_post_config(device_t self, void *aux);
+#ifdef MULTIPROCESSOR
+extern void exynos_cpu_hatch(struct cpu_info *ci);
+#endif
 
 
 /*
@@ -238,10 +237,19 @@ static const struct pmap_devmap e5_devmap[] = {
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 static struct boot_physmem bp_highgig = {
+	.bp_start = EXYNOS5_SDRAM_PBASE / NBPG,
 	.bp_pages = (KERNEL_VM_BASE - KERNEL_BASE) / NBPG,
-	.bp_freelist = VM_FREELIST_ISADMA,
+	.bp_freelist = VM_FREELIST_DEFAULT,
 	.bp_flags = 0,
 };
+#endif
+
+#ifdef MULTIPROCESSOR
+void
+exynos_cpu_hatch(struct cpu_info *ci)
+{
+	/* MJF: WRITE ME */
+}
 #endif
 
 /*
@@ -252,6 +260,7 @@ static struct boot_physmem bp_highgig = {
  * - init the physical console
  * - setting up page tables for the kernel
  */
+extern void xputc(int);
 
 u_int
 initarm(void *arg)
@@ -261,6 +270,7 @@ initarm(void *arg)
 	const psize_t ram_reserve = 0x200000;
 	psize_t ram_size;
 
+#if 0
 	/* allocate/map our basic memory mapping */
     	switch (EXYNOS_PRODUCT_FAMILY(exynos_soc_id)) {
 #if defined(EXYNOS4)
@@ -280,12 +290,24 @@ initarm(void *arg)
 		panic("Unknown product family %llx",
 		   EXYNOS_PRODUCT_FAMILY(exynos_soc_id));
 	}
+#else
+	devmap = e5_devmap;
+	rambase = EXYNOS5_SDRAM_PBASE;
+#endif
+	xputc('<');
 	pmap_devmap_register(devmap);
+	xputc('>');
 
+#if 0
 	/* bootstrap soc. uart_address is determined in odroid_start */
 	paddr_t uart_address = armreg_tpidruro_read();
 	exynos_bootstrap(EXYNOS_CORE_VBASE, EXYNOS_IOPHYSTOVIRT(uart_address));
-
+#else
+	xputc('[');
+	exynos_bootstrap(EXYNOS_CORE_VBASE,
+		EXYNOS_CORE_VBASE + EXYNOS5_UART2_OFFSET);
+	xputc(']');
+#endif
 	/* set up CPU / MMU / TLB functions */
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
@@ -301,7 +323,6 @@ initarm(void *arg)
 	printf("\nuboot arg = %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR", %#"PRIxPTR"\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
 	printf("Exynos SoC ID %08x\n", exynos_soc_id);
-
 	printf("initarm: cbar=%#x\n", armreg_cbar_read());
 #endif
 
@@ -418,14 +439,15 @@ consinit(void)
 #if NSSCOM > 0
 	bus_space_tag_t bst = &exynos_bs_tag;
 	bus_addr_t iobase = armreg_tpidruro_read();
-	bus_space_handle_t bsh = EXYNOS_IOPHYSTOVIRT(iobase);
 	u_int i;
+
 	/*	
 	 * No need to guess at the UART frequency since we can calculate it.
 	 */
-	uint32_t freq = conspeed
-	   * (16 * (bus_space_read_4(bst, bsh, SSCOM_UBRDIV) + 1)
-		 + bus_space_read_4(bst, bsh, SSCOM_UFRACVAL));
+	bus_space_handle_t bsh = EXYNOS_IOPHYSTOVIRT(iobase);
+	uint32_t br0 = bus_space_read_4(bst, bsh, SSCOM_UBRDIV);
+	uint32_t br1 = bus_space_read_4(bst, bsh, SSCOM_UFRACVAL);
+	uint32_t freq = conspeed * (16 * (br0 + 1) + br1);
 	freq = (freq + conspeed / 2) / 1000;
 	freq *= 1000;
 
@@ -436,11 +458,12 @@ consinit(void)
 			break;
 	}
 	KASSERT(i < num_exynos_uarts_entries);
-	printf("%s: attaching console @ %#"PRIxPTR" (%u HZ, %u bps)\n",
-	    __func__, iobase, freq, conspeed);
+
 	if (sscom_cnattach(bst, exynos_core_bsh, &exynos_uarts[i],
 			   conspeed, freq, conmode))
 		panic("Serial console can not be initialized");
+	printf("%s: attached console @ %#"PRIxPTR" (%u HZ, %u bps)\n",
+	    __func__, iobase, freq, conspeed);
 #ifdef VERBOSE_INIT_ARM
 	printf("Console initialized\n");
 #endif
