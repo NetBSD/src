@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.17 2013/06/07 13:16:18 roy Exp $ */
+/* $NetBSD: term.c,v 1.18 2015/11/25 19:13:49 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.17 2013/06/07 13:16:18 roy Exp $");
+__RCSID("$NetBSD: term.c,v 1.18 2015/11/25 19:13:49 christos Exp $");
 
 #include <sys/stat.h>
 
@@ -54,6 +54,23 @@ const char *_ti_database;
 #include "compiled_terms.c"
 
 static int
+allocset(void *pp, int init, size_t nelem, size_t elemsize)
+{
+	void **p = pp;
+	if (*p) {
+		memset(*p, init, nelem * elemsize);
+		return 0;
+	}
+
+	if ((*p = calloc(nelem, elemsize)) == NULL)
+		return -1;
+
+	if (init != 0)
+		memset(*p, init, nelem * elemsize);
+	return 0;
+}
+
+static int
 _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 {
 	uint8_t ver;
@@ -68,21 +85,23 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 		return -1;
 	}
 
-	term->flags = calloc(TIFLAGMAX + 1, sizeof(char));
-	if (term->flags == NULL)
+
+	if (allocset(&term->flags, 0, TIFLAGMAX + 1, sizeof(*term->flags)) == -1)
 		return -1;
-	term->nums = malloc((TINUMMAX + 1) * sizeof(short));
-	if (term->nums == NULL)
+
+	if (allocset(&term->nums, -1, TINUMMAX + 1, sizeof(*term->nums)) == -1)
 		return -1;
-	memset(term->nums, (short)-1, (TINUMMAX + 1) * sizeof(short));
-	term->strs = calloc(TISTRMAX + 1, sizeof(char *));
-	if (term->strs == NULL)
+
+	if (allocset(&term->strs, 0, TISTRMAX + 1, sizeof(*term->strs)) == -1)
 		return -1;
-	term->_arealen = caplen;
-	term->_area = malloc(term->_arealen);
-	if (term->_area == NULL)
-		return -1;
-	memcpy(term->_area, cap, term->_arealen);
+
+	if (term->_arealen != caplen) {
+		term->_arealen = caplen;
+		term->_area = realloc(term->_area, term->_arealen);
+		if (term->_area == NULL)
+			return -1;
+		memcpy(term->_area, cap, term->_arealen);
+	}
 
 	cap = term->_area;
 	len = le16dec(cap);
@@ -158,9 +177,16 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 	num = le16dec(cap);
 	cap += sizeof(uint16_t);
 	if (num != 0) {
-		term->_nuserdefs = le16dec(cap);
-		term->_userdefs = malloc(sizeof(*term->_userdefs) * num);
+		num = le16dec(cap);
 		cap += sizeof(uint16_t);
+		if (num != term->_nuserdefs) {
+			free(term->_userdefs);
+			term->_userdefs = NULL;
+			term->_nuserdefs = num;
+		}
+		if (allocset(&term->_userdefs, 0, term->_nuserdefs,
+		    sizeof(*term->_userdefs)) == -1)
+			return -1;
 		for (num = 0; num < term->_nuserdefs; num++) {
 			ud = &term->_userdefs[num];
 			len = le16dec(cap);
@@ -204,7 +230,14 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 				return -1;
 			}
 		}
+	} else {
+		term->_nuserdefs = 0;
+		if (term->_userdefs) {
+			free(term->_userdefs);
+			term->_userdefs = NULL;
+		}
 	}
+
 	return 1;
 }
 
@@ -350,13 +383,13 @@ _ti_findterm(TERMINAL *term, const char *name, int flags)
 	if (e != NULL) {
 		if (c == NULL)
 			e = strdup(e); /* So we don't destroy env */
-		if (e  == NULL)
+		if (e == NULL)
 			tic = NULL;
-		else
+		else {
 			tic = _ti_compile(e, TIC_WARNING |
 			    TIC_ALIAS | TIC_DESCRIPTION | TIC_EXTRA);
-		if (c == NULL && e != NULL)
 			free(e);
+		}
 		if (tic != NULL && ticcmp(tic, name) == 0) {
 			len = _ti_flatten(&f, tic);
 			if (len != -1) {
