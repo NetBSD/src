@@ -1,4 +1,4 @@
-/*	$NetBSD: cl_main.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: cl_main.c,v 1.5 2015/11/25 20:25:20 christos Exp $ */
 /*-
  * Copyright (c) 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -16,7 +16,7 @@
 static const char sccsid[] = "Id: cl_main.c,v 10.54 2001/07/29 19:07:27 skimo Exp  (Berkeley) Date: 2001/07/29 19:07:27 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: cl_main.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: cl_main.c,v 1.5 2015/11/25 20:25:20 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -109,6 +109,7 @@ main(int argc, char **argv)
 		ttype = "unknown";
 	}
 	term_init(gp->progname, ttype);
+	F_SET(clp, CL_SETUPTERM);
 
 	/* Add the terminal type to the global structure. */
 	if ((OG_D_STR(gp, GO_TERM) =
@@ -292,6 +293,22 @@ static void
 h_winch(int signo)
 {
 	GLOBAL_CLP;
+	sigset_t sigset;
+	struct timespec timeout;
+
+	/*
+	 * Some window managers continuously change the screen size of terminal
+	 * emulators, by which a lot of SIGWINCH signals are to be received. In
+	 * such a case, we only need to respond the final signal; the remaining
+	 * signals are meaningless.  Thus, we wait here up to 1/10 of a second
+	 * for a succeeding signal received.
+	 */
+	(void)sigemptyset(&sigset);
+	(void)sigaddset(&sigset, SIGWINCH);
+	timeout.tv_sec = 0;
+	timeout.tv_nsec = 100 * 1000 * 1000;
+	while (sigtimedwait(&sigset, NULL, &timeout) != -1)
+		continue;
 
 	F_SET(clp, CL_SIGWINCH);
 }
