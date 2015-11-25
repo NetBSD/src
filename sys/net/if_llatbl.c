@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.7 2015/10/20 07:35:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.8 2015/11/25 06:21:26 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -162,6 +162,8 @@ htable_link_entry(struct lltable *llt, struct llentry *lle)
 	lle->lle_head = lleh;
 	lle->la_flags |= LLE_LINKED;
 	LIST_INSERT_HEAD(lleh, lle, lle_next);
+
+	llt->llt_lle_count++;
 }
 
 static void
@@ -176,6 +178,8 @@ htable_unlink_entry(struct llentry *lle)
 		lle->lle_tbl = NULL;
 		lle->lle_head = NULL;
 #endif
+		KASSERT(lle->lle_tbl->llt_lle_count != 0);
+		lle->lle_tbl->llt_lle_count--;
 	}
 }
 
@@ -352,17 +356,15 @@ lltable_free_cb(struct lltable *llt, struct llentry *lle, void *farg)
 }
 
 /*
- * Free all entries from given table and free itself.
+ * Free all entries from given table.
  */
 void
-lltable_free(struct lltable *llt)
+lltable_purge_entries(struct lltable *llt)
 {
 	struct llentry *lle, *next;
 	struct llentries dchain;
 
 	KASSERTMSG(llt != NULL, "llt is NULL");
-
-	lltable_unlink(llt);
 
 	LIST_INIT(&dchain);
 	IF_AFDATA_WLOCK(llt->llt_ifp);
@@ -394,6 +396,19 @@ lltable_free(struct lltable *llt)
 		llentry_free(lle);
 	}
 
+}
+
+/*
+ * Free all entries from given table and free itself.
+ */
+void
+lltable_free(struct lltable *llt)
+{
+
+	KASSERTMSG(llt != NULL, "llt is NULL");
+
+	lltable_unlink(llt);
+	lltable_purge_entries(llt);
 	llt->llt_free_tbl(llt);
 }
 
