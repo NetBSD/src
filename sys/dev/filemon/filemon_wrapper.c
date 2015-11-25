@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_wrapper.c,v 1.10 2015/11/23 00:47:43 pgoyette Exp $	*/
+/*	$NetBSD: filemon_wrapper.c,v 1.11 2015/11/25 07:34:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.10 2015/11/23 00:47:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.11 2015/11/25 07:34:49 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -38,6 +38,83 @@ __KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.10 2015/11/23 00:47:43 pgoyett
 #include <sys/syscallargs.h>
 
 #include "filemon.h"
+
+static int filemon_wrapper_chdir(struct lwp *, const struct sys_chdir_args *,
+				register_t *);
+static int filemon_wrapper_execve(struct lwp *, struct sys_execve_args *,
+				register_t *);
+static void filemon_wrapper_sys_exit(struct lwp *, struct sys_exit_args *,
+				register_t *);
+static int filemon_wrapper_fork(struct lwp *, const void *, register_t *);
+static int filemon_wrapper_link(struct lwp *, struct sys_link_args *,
+				register_t *);
+static int filemon_wrapper_open(struct lwp *, struct sys_open_args *,
+				register_t *);
+static int filemon_wrapper_openat(struct lwp *, struct sys_openat_args *,
+				register_t *);
+static int filemon_wrapper_rename(struct lwp *, struct sys_rename_args *,
+				register_t *);
+static int filemon_wrapper_symlink(struct lwp *, struct sys_symlink_args *,
+				register_t *);
+static int filemon_wrapper_unlink(struct lwp *, struct sys_unlink_args *,
+				register_t *);
+static int filemon_wrapper_vfork(struct lwp *, const void *, register_t *);
+
+const struct hijack filemon_hijack[] = {
+	{ SYS_chdir,
+	   { (sy_call_t *)sys_chdir,   (sy_call_t *)filemon_wrapper_chdir   } },
+	{ SYS_execve,
+	   { (sy_call_t *)sys_execve,  (sy_call_t *)filemon_wrapper_execve  } },
+	{ SYS_exit,
+	   { (sy_call_t *)sys_exit,    (sy_call_t *)filemon_wrapper_sys_exit } },
+	{ SYS_fork,
+	   { (sy_call_t *)sys_fork,    (sy_call_t *)filemon_wrapper_fork    } },
+	{ SYS_link,
+	   { (sy_call_t *)sys_link,    (sy_call_t *)filemon_wrapper_link    } },
+	{ SYS_open,
+	   { (sy_call_t *)sys_open,    (sy_call_t *)filemon_wrapper_open    } },
+	{ SYS_openat,
+	   { (sy_call_t *)sys_openat,  (sy_call_t *)filemon_wrapper_openat  } },
+	{ SYS_rename,
+	   { (sy_call_t *)sys_rename,  (sy_call_t *)filemon_wrapper_rename  } },
+	{ SYS_symlink,
+	   { (sy_call_t *)sys_symlink, (sy_call_t *)filemon_wrapper_symlink } },
+	{ SYS_unlink,
+	   { (sy_call_t *)sys_unlink,  (sy_call_t *)filemon_wrapper_unlink  } },
+	{ SYS_vfork,
+	   { (sy_call_t *)sys_vfork,   (sy_call_t *)filemon_wrapper_vfork   } },
+	{ -1, {NULL, NULL } }
+};
+
+int
+syscall_hijack(struct sysent *sv_table, const struct hijack *hj_pkg,
+		bool restore)
+{
+	int from, to;
+	const struct hijack *entry;
+
+	if (restore)		/* Which entry should currently match? */
+		from = 1;
+	else
+		from = 0;
+	to = 1 - from;		/* Which entry will we replace with? */
+
+	KASSERT(kernconfig_is_held());
+
+	/* First, make sure that all of the old values match */
+	for (entry = hj_pkg; entry->hj_index >= 0; entry++)
+		if (sv_table[entry->hj_index].sy_call != entry->hj_funcs[from])
+			break;
+
+	if (entry->hj_index >= 0)
+		return EBUSY;
+
+	/* Now replace the old values with the new ones */
+	for (entry = hj_pkg; entry->hj_index >= 0; entry++)
+		sv_table[entry->hj_index].sy_call = entry->hj_funcs[to];
+
+	return 0;
+}
 
 static int
 filemon_wrapper_chdir(struct lwp * l, const struct sys_chdir_args * uap,
@@ -322,6 +399,7 @@ filemon_wrapper_sys_exit(struct lwp * l, struct sys_exit_args * uap,
 		rw_exit(&filemon->fm_mtx);
 	}
 	sys_exit(l, uap, retval);
+	/* NOT REACHED */
 }
 
 static int
@@ -352,41 +430,28 @@ out:
 }
 
 
-void
+int
 filemon_wrapper_install(void)
 {
+	int error;
 	struct sysent *sv_table = emul_netbsd.e_sysent;
 
-	sv_table[SYS_chdir].sy_call = (sy_call_t *) filemon_wrapper_chdir;
-	sv_table[SYS_execve].sy_call = (sy_call_t *) filemon_wrapper_execve;
-	sv_table[SYS_exit].sy_call = (sy_call_t *) filemon_wrapper_sys_exit;
-	sv_table[SYS_fork].sy_call = (sy_call_t *) filemon_wrapper_fork;
-	sv_table[SYS_link].sy_call = (sy_call_t *) filemon_wrapper_link;
-	sv_table[SYS_open].sy_call = (sy_call_t *) filemon_wrapper_open;
-	sv_table[SYS_openat].sy_call = (sy_call_t *) filemon_wrapper_openat;
-	sv_table[SYS_rename].sy_call = (sy_call_t *) filemon_wrapper_rename;
-	sv_table[SYS_symlink].sy_call = (sy_call_t *) filemon_wrapper_symlink;
-	sv_table[SYS_unlink].sy_call = (sy_call_t *) filemon_wrapper_unlink;
-	sv_table[SYS_vfork].sy_call = (sy_call_t *) filemon_wrapper_vfork;
+	kernconfig_lock();
+	error = syscall_hijack(sv_table, filemon_hijack, false);
+	kernconfig_unlock();
+
+	return error;
 }
 
 int
 filemon_wrapper_deinstall(void)
 {
+	int error;
 	struct sysent *sv_table = emul_netbsd.e_sysent;
 
-	if (sv_table[SYS_chdir].sy_call != (sy_call_t *) filemon_wrapper_chdir)
-	    return EBUSY;
-	sv_table[SYS_chdir].sy_call = (sy_call_t *) sys_chdir;
-	sv_table[SYS_execve].sy_call = (sy_call_t *) sys_execve;
-	sv_table[SYS_exit].sy_call = (sy_call_t *) sys_exit;
-	sv_table[SYS_fork].sy_call = (sy_call_t *) sys_fork;
-	sv_table[SYS_link].sy_call = (sy_call_t *) sys_link;
-	sv_table[SYS_open].sy_call = (sy_call_t *) sys_open;
-	sv_table[SYS_openat].sy_call = (sy_call_t *) sys_openat;
-	sv_table[SYS_rename].sy_call = (sy_call_t *) sys_rename;
-	sv_table[SYS_symlink].sy_call = (sy_call_t *) sys_symlink;
-	sv_table[SYS_unlink].sy_call = (sy_call_t *) sys_unlink;
-	sv_table[SYS_vfork].sy_call = (sy_call_t *) sys_vfork;
-	return 0;
+	kernconfig_lock();
+	error = syscall_hijack(sv_table, filemon_hijack, true);
+	kernconfig_unlock();
+
+	return error;
 }
