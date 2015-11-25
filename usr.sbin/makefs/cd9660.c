@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.49 2015/06/17 01:05:41 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.50 2015/11/25 00:48:49 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.49 2015/06/17 01:05:41 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.50 2015/11/25 00:48:49 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -1281,6 +1281,8 @@ cd9660_rrip_move_directory(iso9660_disk *diskStructure, cd9660node *dir)
 		    diskStructure->rootNode, dir);
 		if (diskStructure->rr_moved_dir == NULL)
 			return 0;
+		cd9660_time_915(diskStructure->rr_moved_dir->isoDirRecord->date,
+		    stampst.st_ino ? stampst.st_mtime : start_time.tv_sec);
 	}
 
 	/* Create a file with the same ORIGINAL name */
