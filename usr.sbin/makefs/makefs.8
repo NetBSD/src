@@ -1,4 +1,4 @@
-.\"	$NetBSD: makefs.8,v 1.54 2015/11/25 00:48:49 christos Exp $
+.\"	$NetBSD: makefs.8,v 1.55 2015/11/25 16:32:00 wiz Exp $
 .\"
 .\" Copyright (c) 2001-2003 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -179,7 +179,7 @@ and
 .Xr getgrnam 3
 (and related) library calls.
 .It Fl O Ar offset
-Instead of creating the filesystem at the beginning of the file, start
+Instead of creating the file system at the beginning of the file, start
 at offset.
 Valid only for
 .Sy ffs
@@ -201,7 +201,7 @@ Defaults to 512.
 Set the size of the file system image to
 .Ar image-size .
 .It Fl T Ar timestamp
-Specify a timestamp to be set for all filesystem files and directories
+Specify a timestamp to be set for all file system files and directories
 created so that repeatable builds are possible.
 The
 .Ar timestamp
