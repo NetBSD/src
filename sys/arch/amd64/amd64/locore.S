@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.82 2015/11/22 14:06:08 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.83 2015/11/25 16:00:09 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -191,6 +191,43 @@
 #define	_RELOC(x)	((x) - KERNBASE)
 #define	RELOC(x)	_RELOC(_C_LABEL(x))
 
+#if L2_SLOT_KERNBASE > 0
+#define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
+#else
+#define TABLE_L2_ENTRIES (NKL2_KIMG_ENTRIES + 1)
+#endif
+
+#if L3_SLOT_KERNBASE > 0
+#define TABLE_L3_ENTRIES (2 * NKL3_KIMG_ENTRIES)
+#else
+#define TABLE_L3_ENTRIES NKL3_KIMG_ENTRIES
+#endif
+
+#define PROC0_PML4_OFF	0
+#define PROC0_STK_OFF	(PROC0_PML4_OFF + PAGE_SIZE)
+#define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
+#define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * PAGE_SIZE)
+#define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * PAGE_SIZE)
+#define TABLESIZE \
+  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
+    * PAGE_SIZE)
+
+/*
+ * fillkpt - Fill in a kernel page table
+ *	eax = pte (page frame | control | status)
+ *	ebx = page table address
+ *	ecx = number of pages to map
+ *
+ * Each entry is 8 (PDE_SIZE) bytes long: we must set the 4 upper bytes to 0.
+ */
+#define fillkpt	\
+1:	movl	%eax,(%ebx)		; 	/* store phys addr */	\
+	movl	$0,(PDE_SIZE-4)(%ebx)	; 	/* upper 32 bits 0 */	\
+	addl	$PDE_SIZE,%ebx		; 	/* next PTE/PDE */	\
+	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
+	loop	1b			;
+
+
 #ifdef XEN
 
 /*
@@ -358,7 +395,7 @@ ENTRY(start)
 
 	/*
 	 * Load parameters from the stack (32 bits):   
-	 *     boothowto, [bootdev], bootinfo, esym, basemem, extmem
+	 *     boothowto, [bootdev], bootinfo, esym, biosbasemem, biosextmem
 	 * We are not interested in 'bootdev'.
 	 */
 
@@ -443,24 +480,29 @@ bootinfo_finished:
 	movl	%eax,(%ebp)
 	movl	$KERNBASE_HI,4(%ebp)
 
+	/* Load 'biosextmem' */
 	movl	$RELOC(biosextmem),%ebp
 	movl	(%ebp),%eax
-	testl	%eax,%eax
-	jnz	1f
+	testl	%eax,%eax		/* already set? */
+	jnz	biosextmem_finished
 
 	movl	20(%esp),%eax
 	movl	%eax,(%ebp)
 
-1:
+biosextmem_finished:
+	/* Load 'biosbasemem' */
 	movl	$RELOC(biosbasemem),%ebp
 	movl	(%ebp),%eax
-	testl	%eax,%eax
-	jnz	1f
+	testl	%eax,%eax		/* already set? */
+	jnz	biosbasemem_finished
+
 	movl	24(%esp),%eax
 	movl	%eax,(%ebp)
-1:
 
-	/* First, reset the PSL. */
+biosbasemem_finished:
+	/*
+	 * Done with the parameters. First, reset the PSL.
+	 */
 	pushl	$PSL_MBO
 	popfl
 
@@ -489,45 +531,9 @@ bootinfo_finished:
  *                            0          1       2      3
  */
 
-#if L2_SLOT_KERNBASE > 0
-#define TABLE_L2_ENTRIES (2 * (NKL2_KIMG_ENTRIES + 1))
-#else
-#define TABLE_L2_ENTRIES (NKL2_KIMG_ENTRIES + 1)
-#endif
-
-#if L3_SLOT_KERNBASE > 0
-#define TABLE_L3_ENTRIES (2 * NKL3_KIMG_ENTRIES)
-#else
-#define TABLE_L3_ENTRIES NKL3_KIMG_ENTRIES
-#endif
-
-#define PROC0_PML4_OFF	0
-#define PROC0_STK_OFF	(PROC0_PML4_OFF + PAGE_SIZE)
-#define PROC0_PTP3_OFF	(PROC0_STK_OFF + UPAGES * PAGE_SIZE)
-#define PROC0_PTP2_OFF	(PROC0_PTP3_OFF + NKL4_KIMG_ENTRIES * PAGE_SIZE)
-#define PROC0_PTP1_OFF	(PROC0_PTP2_OFF + TABLE_L3_ENTRIES * PAGE_SIZE)
-#define TABLESIZE \
-  ((NKL4_KIMG_ENTRIES + TABLE_L3_ENTRIES + TABLE_L2_ENTRIES + 1 + UPAGES) \
-    * PAGE_SIZE)
-
-/*
- * fillkpt - Fill in a kernel page table
- *	eax = pte (page frame | control | status)
- *	ebx = page table address
- *	ecx = number of pages to map
- *
- * Each entry is 8 (PDE_SIZE) bytes long: we must set the 4 upper bytes to 0.
- */
-
-#define fillkpt	\
-1:	movl	%eax,(%ebx)		; 	/* store phys addr */	\
-	movl	$0,(PDE_SIZE-4)(%ebx)	; 	/* upper 32 bits 0 */	\
-	addl	$PDE_SIZE,%ebx		; 	/* next PTE/PDE */	\
-	addl	$PAGE_SIZE,%eax		; 	/* next phys page */	\
-	loop	1b			;
-
 	/* Find end of kernel image. */
 	movl	$RELOC(end),%edi
+
 #if (NKSYMS || defined(DDB) || defined(MODULAR)) && !defined(makeoptions_COPY_SYMTAB)
 	/* Save the symbols (if loaded). */
 	movl	RELOC(esym),%eax
@@ -551,17 +557,18 @@ bootinfo_finished:
 	andl	$~PGOFSET,%esi
 	movl	%esi,%edi
 
+	/* Clear the tables */
 	xorl	%eax,%eax
 	cld
 	movl	$TABLESIZE,%ecx
 	shrl	$2,%ecx
 	rep
-	stosl
+	stosl				/* copy eax -> edi */
 
 /*
  * Build initial page tables.
  */
-	leal	(PROC0_PTP1_OFF)(%esi), %ebx
+	leal	(PROC0_PTP1_OFF)(%esi),%ebx
 
 	/* Skip the first MB */
 	movl	$(KERNTEXTOFF_LO - KERNBASE_LO),%eax
@@ -570,9 +577,9 @@ bootinfo_finished:
 	addl	%ecx,%ebx
 
 	/*
-	 * Compute &__data_start - KERNBASE. This can't be > 4G,
-	 * or we can't deal with it anyway, since we can't load it in
-	 * 32 bit mode. So use the bottom 32 bits.
+	 * Compute &__data_start - KERNBASE. This can't be > 4G, or we can't
+	 * deal with it anyway, since we can't load it in 32 bit mode. So use
+	 * the bottom 32 bits.
 	 */
 	movl	$RELOC(__data_start),%edx
 	andl	$~PGOFSET,%edx
@@ -609,7 +616,7 @@ bootinfo_finished:
 
 #if L2_SLOT_KERNBASE > 0
 	/* If needed, set up level 2 entries for actual kernel mapping */
-	leal	(PROC0_PTP2_OFF+ L2_SLOT_KERNBASE*8)(%esi),%ebx
+	leal	(PROC0_PTP2_OFF + L2_SLOT_KERNBASE*8)(%esi),%ebx
 	leal	(PROC0_PTP1_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	$(NKL2_KIMG_ENTRIES+1),%ecx
@@ -625,9 +632,9 @@ bootinfo_finished:
 
 #if L3_SLOT_KERNBASE > 0
 	/* If needed, set up level 3 entries for actual kernel mapping */
-	leal	(PROC0_PTP3_OFF+ L3_SLOT_KERNBASE*8)(%esi),%ebx
+	leal	(PROC0_PTP3_OFF + L3_SLOT_KERNBASE*8)(%esi),%ebx
 	leal	(PROC0_PTP2_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$NKL3_KIMG_ENTRIES,%ecx
 	fillkpt
 #endif
@@ -642,7 +649,7 @@ bootinfo_finished:
 	/* Set up top level entries for actual kernel mapping */
 	leal	(PROC0_PML4_OFF + L4_SLOT_KERNBASE*8)(%esi),%ebx
 	leal	(PROC0_PTP3_OFF)(%esi),%eax
-	orl	$(PG_V|PG_KW), %eax
+	orl	$(PG_V|PG_KW),%eax
 	movl	$NKL4_KIMG_ENTRIES,%ecx
 	fillkpt
 
@@ -651,7 +658,7 @@ bootinfo_finished:
 	leal	(PROC0_PML4_OFF)(%esi),%eax
 	orl	$(PG_V|PG_KW),%eax
 	movl	%eax,(%ebx)
-	movl	$0, 4(%ebx)
+	movl	$0,4(%ebx)
 
 	/* Save phys. addr of PTD, for libkvm. */
 	movl	$RELOC(PDPpaddr),%ebp
@@ -692,26 +699,21 @@ bootinfo_finished:
 compat:
 
 	/*
-	 * 5.
-	 * Not quite done yet, we're now in a compatibility segment,
-	 * in legacy mode. We must jump to a long mode segment.
-	 * Need to set up a temporary GDT with a long mode segment
-	 * in it to do that.
+	 * 5. Not quite done yet, we're now in a compatibility segment, in
+	 *    legacy mode. We must jump to a long mode segment. Need to set up
+	 *    a temporary GDT with a long mode segment in it to do that.
 	 */
-
 	movl	$RELOC(gdt64_lo),%eax
 	lgdt	(%eax)
 	movl	$RELOC(farjmp64),%eax
 	ljmp	*(%eax)
 
-.code64
+	.code64
 longmode:
 	/*
-	 * 6.
-	 * Finally, we're in long mode. However, we're still
-	 * in the identity mapped area (could not jump out
-	 * of that earlier because it would have been a > 32bit
-	 * jump). We can do that now, so here we go.
+	 * 6. Finally, we're in long mode. However, we're still in the identity
+	 *    mapped area (could not jump out of that earlier because it would
+	 *    have been a > 32bit jump). We can do that now, so here we go.
 	 */
 	movabsq	$longmode_hi,%rax
 	jmp	*%rax
@@ -726,16 +728,15 @@ longmode_hi:
 	lgdt	(%rax)
 
 	/*
-	 * We have arrived.
-	 * There's no need anymore for the identity mapping in low
-	 * memory, remove it.
+	 * We have arrived. There's no need anymore for the identity mapping in
+	 * low memory, remove it.
 	 */
 	movq	$KERNBASE,%r8
 
 #if L2_SLOT_KERNBASE > 0
 	movq	$(NKL2_KIMG_ENTRIES+1),%rcx
 	leaq	(PROC0_PTP2_OFF)(%rsi),%rbx
-	addq	%r8, %rbx
+	addq	%r8,%rbx
 1:	movq	$0,(%rbx)
 	addq	$8,%rbx
 	loop	1b
@@ -744,15 +745,15 @@ longmode_hi:
 #if L3_SLOT_KERNBASE > 0
 	movq	$NKL3_KIMG_ENTRIES,%rcx
 	leaq	(PROC0_PTP3_OFF)(%rsi),%rbx
-	addq	%r8, %rbx
+	addq	%r8,%rbx
 1:	movq	$0,(%rbx)
 	addq	$8,%rbx
 	loop	1b
 #endif
 
 	movq	$NKL4_KIMG_ENTRIES,%rcx
-	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys  address of PML4
-	addq	%r8, %rbx			# new, virtual address of PML4
+	leaq	(PROC0_PML4_OFF)(%rsi),%rbx	# old, phys address of PML4
+	addq	%r8,%rbx			# new, virtual address of PML4
 1:	movq	$0,(%rbx)
 	addq	$8,%rbx
 	loop	1b
