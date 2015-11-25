@@ -1,4 +1,4 @@
-/* $NetBSD: curterm.c,v 1.10 2013/11/18 20:51:03 joerg Exp $ */
+/* $NetBSD: curterm.c,v 1.11 2015/11/25 18:38:21 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: curterm.c,v 1.10 2013/11/18 20:51:03 joerg Exp $");
+__RCSID("$NetBSD: curterm.c,v 1.11 2015/11/25 18:38:21 christos Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -139,6 +139,7 @@ del_curterm(TERMINAL *oterm)
 	free(oterm->nums);
 	free(oterm->flags);
 	free(oterm->_userdefs);
+	free(oterm->_buf);
 	free(oterm);
 	return OK;
 }
