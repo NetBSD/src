@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.111 2015/11/18 05:16:22 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.112 2015/11/25 06:21:26 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.111 2015/11/18 05:16:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.112 2015/11/25 06:21:26 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -548,7 +548,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	char *lladdr = NULL;
 	int lladdrlen = 0;
 	struct ifaddr *ifa;
-	struct llinfo_nd6 *ln;
+	struct llentry *ln;
 	struct rtentry *rt = NULL;
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
@@ -652,7 +652,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 */
 	rt = nd6_lookup(&taddr6, 0, ifp);
 	if ((rt == NULL) ||
-	   ((ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) ||
+	   ((ln = rt->rt_llinfo) == NULL) ||
 	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
 		goto freeit;
 
@@ -676,7 +676,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			ln->ln_byhint = 0;
 			if (!ND6_LLINFO_PERMANENT(ln)) {
 				nd6_llinfo_settimer(ln,
-				    (long)ND_IFINFO(rt->rt_ifp)->reachable * hz);
+				    (long)ND_IFINFO(ln->lle_tbl->llt_ifp)->reachable * hz);
 			}
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
