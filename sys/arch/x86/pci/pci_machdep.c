@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.72 2015/11/02 09:29:08 knakahara Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.73 2015/11/26 16:27:05 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.72 2015/11/02 09:29:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.73 2015/11/26 16:27:05 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -461,6 +461,9 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #if NACPICA > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+	acpimcfg_map_bus(self, pba->pba_pc, pba->pba_bus);
+#endif
 
 #ifdef __HAVE_PCI_MSI_MSIX
 	/*
@@ -515,10 +518,6 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
 	}
 #endif /* __HAVE_PCI_MSI_MSIX */
-
-#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
-	acpimcfg_map_bus(self, pba->pba_pc, pba->pba_bus);
-#endif
 }
 
 int
