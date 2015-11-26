@@ -1,4 +1,4 @@
-/* $NetBSD: term.c,v 1.18 2015/11/25 19:13:49 christos Exp $ */
+/* $NetBSD: term.c,v 1.19 2015/11/26 01:03:22 christos Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: term.c,v 1.18 2015/11/25 19:13:49 christos Exp $");
+__RCSID("$NetBSD: term.c,v 1.19 2015/11/26 01:03:22 christos Exp $");
 
 #include <sys/stat.h>
 
@@ -100,8 +100,8 @@ _ti_readterm(TERMINAL *term, const char *cap, size_t caplen, int flags)
 		term->_area = realloc(term->_area, term->_arealen);
 		if (term->_area == NULL)
 			return -1;
-		memcpy(term->_area, cap, term->_arealen);
 	}
+	memcpy(term->_area, cap, term->_arealen);
 
 	cap = term->_area;
 	len = le16dec(cap);
