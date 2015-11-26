@@ -1,4 +1,4 @@
-.\"	$NetBSD: i2cscan.8,v 1.3 2013/07/10 15:18:54 tcort Exp $
+.\"	$NetBSD: i2cscan.8,v 1.4 2015/11/26 16:56:52 hubertf Exp $
 .\"
 .\" Copyright (c) 2011, 2013 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -62,5 +62,9 @@ Don't use this utility unless you know what you're doing and can
 accept all sorts of unforeseen consequences.
 .Sh EXIT STATUS
 .Ex -std i2cscan
+.Sh EXAMPLES
+Scan the first IIC bus found on the system for devices:
+.Pp
+.Dl "i2cscan /dev/iic0"
 .Sh SEE ALSO
 .Xr iic 4
