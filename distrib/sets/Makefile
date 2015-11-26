@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2014/08/22 10:51:18 apb Exp $
+#	$NetBSD: Makefile,v 1.99 2015/11/26 15:41:58 joerg Exp $
 
 # Experimental RCS METALOG versioning
 # (Needs host's rcs(1) commands)
@@ -24,6 +24,7 @@ SETSENV=	DESTDIR=${DESTDIR:Q} \
 		AWK=${TOOL_AWK:Q} \
 		CKSUM=${TOOL_CKSUM:Q} \
 		DB=${TOOL_DB:Q} \
+		EGREP=${TOOL_GREP:Q}\ -E \
 		HOST_SH=${HOST_SH:Q} \
 		MAKE=${MAKE:Q} \
 		MKTEMP=${TOOL_MKTEMP:Q} \
