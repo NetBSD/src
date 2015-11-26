@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.108 2015/08/10 04:48:53 mrg Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.109 2015/11/26 13:15:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1100,7 +1100,7 @@ int	coredump_netbsd32(struct lwp *, struct coredump_iostate *);
 #include <compat/common/compat_util.h>
 #include <compat/sys/siginfo.h>
 
-vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t);
+vaddr_t netbsd32_vm_default_addr(struct proc *, vaddr_t, vsize_t, int);
 void netbsd32_adjust_limits(struct proc *);
 
 void	netbsd32_si_to_si32(siginfo32_t *, const siginfo_t *);

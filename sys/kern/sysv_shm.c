@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.130 2015/11/06 02:26:42 pgoyette Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.131 2015/11/26 13:15:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.130 2015/11/06 02:26:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.131 2015/11/26 13:15:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -436,7 +436,8 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	} else {
 		/* This is just a hint to uvm_map() about where to put it. */
 		attach_va = p->p_emul->e_vm_default_addr(p,
-		    (vaddr_t)vm->vm_daddr, size);
+		    (vaddr_t)vm->vm_daddr, size,
+		    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 	}
 
 	/*

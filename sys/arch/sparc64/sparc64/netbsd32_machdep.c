@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.108 2015/11/22 11:24:08 martin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.109 2015/11/26 13:15:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.108 2015/11/22 11:24:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.109 2015/11/26 13:15:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1338,7 +1338,8 @@ startlwp32(void *arg)
 }
 
 vaddr_t
-netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size)
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t size,
+     int topdown)
 {
 	return round_page((vaddr_t)(base) + (vsize_t)MAXDSIZ32);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.421 2015/10/22 11:48:02 maxv Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.422 2015/11/26 13:15:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.421 2015/10/22 11:48:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.422 2015/11/26 13:15:34 martin Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1919,7 +1919,7 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 
 	/* Just a hint to uvm_map where to put it. */
 	va = e->e_vm_default_addr(p, (vaddr_t)p->p_vmspace->vm_daddr,
-	    round_page(sz));
+	    round_page(sz), p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 
 #ifdef __alpha__
 	/*

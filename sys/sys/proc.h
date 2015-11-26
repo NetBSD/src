@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.323 2015/09/24 14:33:31 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.324 2015/11/26 13:15:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,8 @@ struct emul {
 	struct sysctlnode *e_sysctlovly;
 	int		(*e_fault)(struct proc *, vaddr_t, int);
 
-	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t);
+	vaddr_t		(*e_vm_default_addr)(struct proc *, vaddr_t, vsize_t,
+			     int);
 
 	/* Emulation-specific hook for userspace page faults */
 	int		(*e_usertrap)(struct lwp *, vaddr_t, void *);
