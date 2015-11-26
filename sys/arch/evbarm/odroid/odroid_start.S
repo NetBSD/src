@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.9 2015/11/26 21:27:31 marty Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.10 2015/11/26 22:22:44 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,16 +46,13 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.9 2015/11/26 21:27:31 marty Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.10 2015/11/26 22:22:44 marty Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
+
 #define	XPUTC(n)	mov r0, n; bl xputc
-#if KERNEL_BASE_VOFFSET == 0
-#define	XPUTC2(n)	mov r0, n; bl xputc
-#else
 #define	XPUTC2(n)	mov r0, n; blx r11
-#endif
 #ifdef __ARMEB__
 #define COM_BSWAP
 #endif
@@ -65,7 +62,8 @@ RCSID("$NetBSD: odroid_start.S,v 1.9 2015/11/26 21:27:31 marty Exp $")
 #endif
 
 #define INIT_MEMSIZE	128
-#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
+
+#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
 
 #define	MD_CPU_HATCH	_C_LABEL(exynos_cpu_hatch)
 
@@ -74,12 +72,8 @@ RCSID("$NetBSD: odroid_start.S,v 1.9 2015/11/26 21:27:31 marty Exp $")
  * At this point, this code has been loaded into SDRAM
  * and the MMU is off
  */
-#ifdef KERNEL_BASES_EQUAL
-	.text
-#else
 	.section .start,"ax",%progbits
-#endif
-	
+
 	.global	_C_LABEL(odroid_start)
 _C_LABEL(odroid_start):
 #ifdef __ARMEB__
@@ -97,16 +91,75 @@ _C_LABEL(odroid_start):
 	 */
 	movw	r4, #:lower16:uboot_args
 	movt	r4, #:upper16:uboot_args
-#if KERNEL_BASE_VOFFSET != 0
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
-#endif
 	stmia	r4, {r0-r3}			// Save the arguments
+
+	/*
+	 * Rescue passed "bootargs" env variable. This is not trivial
+	 * since we can be booted using either `go' or trough `bootm'.
+	 *
+	 * 'go' passes R0 = argc, R1 = argv
+	 * 'bootm' passes R0 = uboot_bootinfo, R3 = bootargs
+	 */
+
+	movw	r4, #:lower16:bootargs
+	movt	r4, #:upper16:bootargs
+	sub	r4, r4, #KERNEL_BASE_VOFFSET
+
+	cmp	r0, #0
+	beq	1f
+	cmp	r0, #MAX_BOOT_STRING
+	bge	1f
+
+	/* `go' method */
+	cmp	r0, #1					// extra argument?
+	beq	3f
+	ldr	r5, [r1, #4]				// load argv[1]
+2:
+	ldrb	r0, [r5], #1
+	strb	r0, [r4], #1
+	teq	r0, #0
+	bne	2b
+
+	b	3f
+1:
+	/* `bootm' method */
+	mov	r6, r0					// save binfo pointer
+
+	cmp	r3, #0
+	beq	1f
+2:
+	ldrb	r0, [r3], #1
+	strb	r0, [r4], #1
+	teq	r0, #0
+	bne	2b
+
+1:
+	cmp	r6, #0					// binfo passed?
+	beq	3f
+
+	add	r6, r6, #0x250				// to eth addr
+
+	movw	r4, #:lower16:uboot_enaddr
+	movt	r4, #:upper16:uboot_enaddr
+	mov	r2, #6
+2:
+	ldrb	r0, [r6], #1
+	strb	r0, [r4], #1
+	subs	r2, r2, #1
+	bne	2b
+	
+3:
 
 	/*
 	 * For easy and early SoC / PoP dependency, retrieve the IDs
 	 */
+#if 1
+	mov	r6, #EXYNOS_CORE_PBASE
+#else
 	movw	r6, #:lower16:EXYNOS_CORE_PBASE
 	movt	r6, #:upper16:EXYNOS_CORE_PBASE
+#endif
 
 	ldr	r0, [r6, #EXYNOS_PROD_ID_OFFSET]	// load soc_id
 
@@ -152,53 +205,49 @@ _C_LABEL(odroid_start):
 	 */
 	bl	cortex_init
 
-	XPUTC(#'C')
+	XPUTC(#67)
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
 	 * at KERNEL_BASE with caches on.
 	 */
+	adr	r1, .Lmmu_init_table
 	movw	r0, #:lower16:TEMP_L1_TABLE
 	movt	r0, #:upper16:TEMP_L1_TABLE
-	movw	r1, #:lower16:.Lmmu_init_table
-	movt	r1, #:upper16:.Lmmu_init_table
 	bl	arm_boot_l1pt_init
 
-	XPUTC(#'D')
+	XPUTC(#68)
 
 	/*
 	 * Turn on the MMU, Caches, etc.
 	 */
-	movw	r0, #:lower16:TEMP_L1_TABLE
-	movt	r0, #:upper16:TEMP_L1_TABLE
-#if KERNEL_BASE_VOFFSET == 0
-	bl	arm_cpuinit
-#else
-#if defined(VERBOSE_INIT_ARM)
-	adr	r11, xputc		@ for XPUTC2
+#ifdef VERBOSE_INIT_ARM
+	adr	r11, xputc
 #endif
 	movw	lr, #:lower16:1f
 	movt	lr, #:upper16:1f
+	movw	r0, #:lower16:TEMP_L1_TABLE
+	movt	r0, #:upper16:TEMP_L1_TABLE
 	b	arm_cpuinit
-	.pushsection .text,"ax",%progbits
+
+	.pushsection .text, "ax", %progbits
+	.align	0
 1:
-#endif
-	XPUTC2(#'Z')
+	XPUTC2(#90)
 
 #if defined(MULTIPROCESSOR)
 #endif /* MULTIPROCESSOR */
 
-	XPUTC2(#13)		/* CR */
-	XPUTC2(#10)		/* LF */
+	XPUTC2(#13)
+	XPUTC2(#10)
 
 	/*
 	 * Jump to start in locore.S, which in turn will call initarm and main.
 	 */
 	b	start
 
-#ifndef KERNEL_BASES_EQUAL
 	.popsection				// back to .start
-#endif
+
 	/* NOTREACHED */
 
 	.align 0
@@ -231,11 +280,9 @@ _C_LABEL(exynos_uarts):
 #if defined(VERBOSE_INIT_ARM)
 	.align 0
 	.global xputc
-	.global _xputc		// for C
 	.type	xputc,%function
 
-	#define TIMO		0x25000
-_xputc:
+#define TIMO		0x25000
 xputc:
 	mov	r2, #TIMO
 	mrc	p15, 0, r3, c13, c0, 3		// TPIDRURO get (uart address)
