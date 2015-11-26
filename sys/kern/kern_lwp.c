@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.181 2015/11/12 10:47:30 skrll Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.182 2015/11/26 13:15:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.181 2015/11/12 10:47:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.182 2015/11/26 13:15:34 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1743,7 +1743,8 @@ lwp_ctl_alloc(vaddr_t *uaddr)
 		lp->lp_cur = 0;
 		lp->lp_max = LWPCTL_UAREA_SZ;
 		lp->lp_uva = p->p_emul->e_vm_default_addr(p,
-		     (vaddr_t)p->p_vmspace->vm_daddr, LWPCTL_UAREA_SZ);
+		     (vaddr_t)p->p_vmspace->vm_daddr, LWPCTL_UAREA_SZ,
+		     p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 		error = uvm_map(&p->p_vmspace->vm_map, &lp->lp_uva,
 		    LWPCTL_UAREA_SZ, lp->lp_uao, 0, 0, UVM_MAPFLAG(UVM_PROT_RW,
 		    UVM_PROT_RW, UVM_INH_NONE, UVM_ADV_NORMAL, 0));
