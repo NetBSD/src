@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.15 2015/11/21 00:54:57 jmcneill Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.16 2015/11/26 00:06:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.15 2015/11/21 00:54:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.16 2015/11/26 00:06:59 jmcneill Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -242,6 +242,10 @@ amlogic_rng_init(void)
 void
 amlogic_wdog_init(void)
 {
+	/* Disable watchdog */
+	CBUS_WRITE(WATCHDOG_RESET_REG, 0);
+	CBUS_SET_CLEAR(WATCHDOG_TC_REG, 0, WATCHDOG_TC_ENABLE);
+
 	sysmon_wdog_register(&amlogic_ee_wdog);
 }
 
