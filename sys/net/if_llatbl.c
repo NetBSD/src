@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.8 2015/11/25 06:21:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.9 2015/11/26 01:41:20 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -34,6 +34,8 @@
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #endif
+
+#include "arp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -615,13 +617,15 @@ lla_rt_output(struct rt_msghdr *rtm, struct rt_addrinfo *info)
 		laflags = lle->la_flags;
 		LLE_WUNLOCK(lle);
 		IF_AFDATA_WUNLOCK(ifp);
-#ifdef INET
+#if defined(INET) && NARP > 0
 		/* gratuitous ARP */
 		if ((laflags & LLE_PUB) && dst->sa_family == AF_INET)
 			arprequest(ifp,
 			    &((const struct sockaddr_in *)dst)->sin_addr,
 			    &((const struct sockaddr_in *)dst)->sin_addr,
 			    CLLADDR(dl));
+#else
+		(void)laflags;
 #endif
 
 		break;
