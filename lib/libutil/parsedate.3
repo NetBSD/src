@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.16 2015/11/26 01:00:54 christos Exp $
+.\"     $NetBSD: parsedate.3,v 1.17 2015/11/26 09:48:21 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -291,17 +291,6 @@ There is no escape character in comments,
 always ends
 (or decreases the nesting level of)
 the comment.
-.Sh ENVIRONMENT
-If the
-.Ar tzoff
-parameter is given as NULL,
-then:
-.Bl -tag -width iTZ
-.It Ev TZ
-The timezone to which the input is relative,
-when no zone information is otherwise specified in the
-.Ar datestr
-input.
 .Sh RETURN VALUES
 .Fn parsedate
 returns the number of seconds passed since,
@@ -320,6 +309,19 @@ before calling
 and checking the value of
 .Va errno
 afterwards.
+.Sh ENVIRONMENT
+If the
+.Ar tzoff
+parameter is given as
+.Dv NULL ,
+then:
+.Bl -tag -width iTZ
+.It Ev TZ
+The timezone to which the input is relative,
+when no zone information is otherwise specified in the
+.Ar datestr
+input.
+.El
 .Sh SEE ALSO
 .Xr date 1 ,
 .Xr touch 1 ,
