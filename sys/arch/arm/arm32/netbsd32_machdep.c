@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.6 2014/05/05 17:45:24 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: netbsd32_machdep.c,v 1.7 2015/11/26 13:15:34 martin Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -93,9 +93,10 @@ netbsd32_sysarch(struct lwp *l, const struct netbsd32_sysarch_args *uap,
 }
 
 vaddr_t
-netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz)
+netbsd32_vm_default_addr(struct proc *p, vaddr_t base, vsize_t sz,
+    int topdown)
 {
-	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+	if (topdown)
 		return VM_DEFAULT_ADDRESS_TOPDOWN(base, sz);
 	else    
 		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);

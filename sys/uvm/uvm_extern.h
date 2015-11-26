@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.194 2015/03/20 15:41:43 riastradh Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.195 2015/11/26 13:15:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -675,7 +675,8 @@ int			uvm_pctparam_createsysctlnode(struct uvm_pctparam *,
 int			uvm_mmap_dev(struct proc *, void **, size_t, dev_t,
 			    off_t);
 int			uvm_mmap_anon(struct proc *, void **, size_t);
-vaddr_t			uvm_default_mapaddr(struct proc *, vaddr_t, vsize_t);
+vaddr_t			uvm_default_mapaddr(struct proc *, vaddr_t, vsize_t,
+			    int);
 
 /* uvm_mremap.c */
 int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
