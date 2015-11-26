@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.15 2014/10/08 22:10:04 wiz Exp $
+.\"     $NetBSD: parsedate.3,v 1.16 2015/11/26 01:00:54 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 8, 2014
+.Dd November 25, 2015
 .Dt PARSEDATE 3
 .Os
 .Sh NAME
@@ -118,23 +118,20 @@ The months:
 .Dv july ,
 .Dv august ,
 .Dv september ,
-.Dv sept ,
 .Dv october ,
 .Dv november ,
 .Dv december ,
+and common abbreviations for them.
 .Pp
 The days of the week:
 .Dv sunday ,
 .Dv monday ,
 .Dv tuesday ,
-.Dv tues ,
 .Dv wednesday ,
-.Dv wednes ,
 .Dv thursday ,
-.Dv thur ,
-.Dv thurs ,
 .Dv friday ,
 .Dv saturday .
+and common abbreviations for them.
 .Pp
 Time units:
 .Dv year ,
@@ -151,60 +148,80 @@ Time units:
 .Dv yesterday .
 .Pp
 Timezone names:
-.Dv gmt ,
-.Dv ut ,
-.Dv utc ,
-.Dv wet ,
-.Dv bst ,
-.Dv wat ,
-.Dv at ,
-.Dv ast ,
-.Dv adt ,
-.Dv est ,
-.Dv edt ,
-.Dv cst ,
-.Dv cdt ,
-.Dv mst ,
-.Dv mdt ,
-.Dv pst ,
-.Dv pdt ,
-.Dv yst ,
-.Dv ydt ,
-.Dv hst ,
-.Dv hdt ,
-.Dv cat ,
-.Dv ahst ,
-.Dv nt ,
-.Dv idlw ,
-.Dv cet ,
-.Dv met ,
-.Dv mewt ,
-.Dv mest ,
-.Dv swt ,
-.Dv sst ,
-.Dv fwt ,
-.Dv fst ,
-.Dv eet ,
-.Dv bt ,
-.Dv zp4 ,
-.Dv zp5 ,
-.Dv zp6 ,
-.Dv wast ,
-.Dv wadt ,
-.Dv cct ,
-.Dv jst ,
-.Dv east ,
-.Dv eadt ,
-.Dv gst ,
-.Dv nzt ,
-.Dv nzst ,
-.Dv nzdt ,
-.Dv idle .
+.Dv gmt (+0000) ,
+.Dv ut (+0000) ,
+.Dv utc (+0000) ,
+.Dv wet (+0000) ,
+.Dv bst (+0100) ,
+.Dv wat (-0100) ,
+.Dv at (-0200) ,
+.Dv nft (-0330) ,
+.Dv nst (-0330) ,
+.Dv ndt (-0230) ,
+.Dv ast (-0400) ,
+.Dv adt (-0300) ,
+.Dv est (-0500) ,
+.Dv edt (-0400) ,
+.Dv cst (-0600) ,
+.Dv cdt (-0500) ,
+.Dv mst (-0700) ,
+.Dv mdt (-0600) ,
+.Dv pst (-0800) ,
+.Dv pdt (-0700) ,
+.Dv yst (-0900) ,
+.Dv ydt (-0800) ,
+.Dv hst (-1000) ,
+.Dv hdt (-0900) ,
+.Dv cat (-1000) ,
+.Dv ahst (-1000) ,
+.Dv nt (-1100) ,
+.Dv idlw (-1200) ,
+.Dv cet (+0100) ,
+.Dv met (+0100) ,
+.Dv mewt (+0100) ,
+.Dv mest (+0200) ,
+.Dv swt (+0100) ,
+.Dv sst (+0200) ,
+.Dv fwt (+0100) ,
+.Dv fst (+0200) ,
+.Dv eet (+0200) ,
+.Dv bt (+0300) ,
+.Dv it (+0330) ,
+.Dv zp4 (+0400) ,
+.Dv zp5 (+0500) ,
+.Dv ist (+0550) ,
+.Dv zp6 (+0600) ,
+.Dv wast (+0700) ,
+.Dv wadt (+0800) ,
+.Dv awst (+0700) ,
+.Dv awdt (+0800) ,
+.Dv ict (+0700) ,
+.Dv cct (+0800) ,
+.Dv sgt (+0800) ,
+.Dv hkt (+0800) ,
+.Dv jst (+0900) ,
+.Dv cast (+0930) ,
+.Dv cadt (+1030) ,
+.Dv acst (+0930) ,
+.Dv acst (+1030) ,
+.Dv east (+1000) ,
+.Dv eadt (+1100) ,
+.Dv aest (+1000) ,
+.Dv aedt (+1100) ,
+.Dv gst (+1000) ,
+.Dv nzt (+1200) ,
+.Dv nzst (+1200) ,
+.Dv nzdt (+1300) ,
+.Dv idle (+1200) .
+.Pp
+The timezone names specify an offset from Coordinated Universal Time (UTC)
+and do not imply validating the time/date to be reasonable in any zone
+that happens to use the abbreviation specified.
 .Pp
 A variety of unambiguous dates are recognized:
 .Bl -tag -compact -width "20 Jun 1994"
 .It 9/10/69
-For years between 69-99 we assume 1900+ and for years between 0-68
+For years between 70-99 we assume 1900+ and for years between 0-69
 we assume 2000+.
 .It 2006-11-17
 An ISO-8601 date.
@@ -221,6 +238,13 @@ Other common abbreviations.
 The year can be omitted.
 This is the US month/day format.
 .El
+.Pp
+Standard e-mail (RFC822, RFC2822, etc)
+formats and the output from
+.Xr date 1 ,
+and
+.Xr asctime 3
+are all supported as input.
 .Pp
 As well as times:
 .Bl -tag -compact -width 12:11:01.000012
@@ -240,14 +264,49 @@ Relative items are also supported:
 .It +2 years
 .El
 .Pp
-Seconds since epoch (also known as UNIX time) are also supported:
+Seconds since epoch, UTC, (also known as UNIX time) are also supported:
 .Bl -tag -compact -width "@735275209"
 .It @735275209
 Tue Apr 20 03:06:49 UTC 1993
 .El
+provided that the value given is within the range
+that can be represented as a
+.Va "struct tm" .
+Negative values
+(times before the epoch)
+are permitted, but no other significant data.
+.Pp
+Text in
+.Ar datestr
+enclosed in parentheses
+.Ql \&(
+and
+.Ql \&)
+is treated as a comment, and ignored.
+Parentheses nest (the comment ends when there have
+been the same number of closing parentheses as there
+were opening parentheses.)
+There is no escape character in comments,
+.Ql \&)
+always ends
+(or decreases the nesting level of)
+the comment.
+.Sh ENVIRONMENT
+If the
+.Ar tzoff
+parameter is given as NULL,
+then:
+.Bl -tag -width iTZ
+.It Ev TZ
+The timezone to which the input is relative,
+when no zone information is otherwise specified in the
+.Ar datestr
+input.
 .Sh RETURN VALUES
 .Fn parsedate
-returns the number of seconds passed since the Epoch, or
+returns the number of seconds passed since,
+or before (if negative,)
+the Epoch, or
 .Dv \-1
 if the date could not be parsed properly.
 A non-error result of
@@ -263,7 +322,10 @@ and checking the value of
 afterwards.
 .Sh SEE ALSO
 .Xr date 1 ,
+.Xr touch 1 ,
 .Xr errno 2 ,
+.Xr ctime 3 ,
+.\" WTF ????  eeprom(8)!!  Why?  Just because it calls this function?  Weird!
 .Xr eeprom 8
 .Sh HISTORY
 The parser used in
@@ -286,14 +348,25 @@ function is not re-entrant or thread-safe.
 .It 2
 The
 .Fn parsedate
-function cannot compute days before the unix epoch (19700101).
-.It 3
-The
-.Fn parsedate
-function assumes years less than 0 mean -
+function assumes years less than 0 mean \(mi
 .Fa year ,
-years less than 70 mean 2000 +
+and in non ISO formats,
+that years less than 70 mean 2000 +
 .Fa year ,
+otherwise
 years less than 100 mean 1900 +
 .Fa year .
+.It 3
+There are various weird cases that are hard to explain,
+but are nevertheless considered correct.
+.It 4
+It is very hard to specify years BC,
+and in any case,
+conversions of times before the
+commencement of the modern Gregorian calendar
+(when that occurred depends upon location,
+but late 16th century is a rough guide)
+are suspicious at best,
+and depending upon context,
+often just plain wrong.
 .El
