@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.8 2015/11/25 04:04:13 marty Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.9 2015/11/26 21:27:31 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.8 2015/11/25 04:04:13 marty Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.9 2015/11/26 21:27:31 marty Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -90,9 +90,9 @@ _C_LABEL(odroid_start):
 	cpsid	if, #PSR_SVC32_MODE
 
 	/*
-	 * Save any arguments passed to us.  If .start is not at
-	 * 0x80000000 but .text is, we can't directly use the address that
-	 * the linker gave us.  Convert the virtual address to the
+	 * Save any arguments passed to us.  But since .start is not at
+	 * 0x80000000 * but .text is, we can't directly use the address that
+	 * the linker gave us directly.  Convert the virtual address to the
 	 * physical address by using KERNEL_BASE_VOFFSET.
 	 */
 	movw	r4, #:lower16:uboot_args
@@ -112,9 +112,7 @@ _C_LABEL(odroid_start):
 
 	movw	r4, #:lower16:exynos_soc_id
 	movt	r4, #:upper16:exynos_soc_id
-#if KERNEL_BASE_VOFFSET != 0
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
-#endif
 	str	r0, [r4]				// save soc_id
 	mov	r5, r0					// save soc_id
 
@@ -154,7 +152,7 @@ _C_LABEL(odroid_start):
 	 */
 	bl	cortex_init
 
-	XPUTC(#'@')
+	XPUTC(#'C')
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
@@ -188,7 +186,6 @@ _C_LABEL(odroid_start):
 	XPUTC2(#'Z')
 
 #if defined(MULTIPROCESSOR)
-	/* MJF: HA HA (There's no there here) */
 #endif /* MULTIPROCESSOR */
 
 	XPUTC2(#13)		/* CR */
@@ -211,23 +208,23 @@ _C_LABEL(num_exynos_uarts_entries):
 	.global _C_LABEL(exynos_uarts)
 _C_LABEL(exynos_uarts):
 .Lsscom_exynos4_table:
-	.word   0
+	.word	0
 	.word	EXYNOS4_UART0_OFFSET
-	.word   1
+	.word	1
 	.word	EXYNOS4_UART1_OFFSET
-	.word   2
+	.word	2
 	.word	EXYNOS4_UART2_OFFSET
-	.word   3
+	.word	3
 	.word	EXYNOS4_UART3_OFFSET
 
 .Lsscom_exynos5_table:
-	.word   0
+	.word	0
 	.word	EXYNOS5_UART0_OFFSET
-	.word   1
+	.word	1
 	.word	EXYNOS5_UART1_OFFSET
-	.word   2
+	.word	2
 	.word	EXYNOS5_UART2_OFFSET
-	.word   3
+	.word	3
 	.word	EXYNOS5_UART3_OFFSET
 
 
@@ -271,7 +268,7 @@ xputc:
 	bx	lr
 #endif
 
-#include <arm/cortex/cortex_init.S>
+#include <arm/cortex/a9_mpsubr.S>
 
 #if EXYNOS_CORE_SIZE < EXYNOS4_CORE_SIZE
 #error EXYNOS_CORE_SIZE smaller than EXYNOS4_CORE_SIZE
@@ -298,6 +295,7 @@ xputc:
 		EXYNOS_CORE_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
 
+	/* Map EXYNOS CORE (so console will work) */
 	MMU_INIT(EXYNOS_CORE_PBASE, EXYNOS_CORE_PBASE,
 		EXYNOS_CORE_SIZE / L1_S_SIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_V6_XN)
