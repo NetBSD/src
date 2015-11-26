@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.80 2015/11/01 17:44:41 christos Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.81 2015/11/26 13:15:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.80 2015/11/01 17:44:41 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.81 2015/11/26 13:15:34 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -413,15 +413,13 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	p = l->l_proc;
 
 	KASSERT(p->p_vmspace);
-	if (__predict_true(p->p_vmspace != proc0.p_vmspace)) {
-		use_topdown = p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN;
-	} else {
+	KASSERT(p->p_vmspace != proc0.p_vmspace);
+
 #ifdef __USE_TOPDOWN_VM
-		use_topdown = epp->ep_flags & EXEC_TOPDOWN_VM;
+	use_topdown = epp->ep_flags & EXEC_TOPDOWN_VM;
 #else
-		use_topdown = false;
+	use_topdown = false;
 #endif
-	}
 
 	/*
 	 * 1. open file
@@ -531,9 +529,11 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 		 */
 		addr = (*epp->ep_esch->es_emul->e_vm_default_addr)(p,
 		    epp->ep_daddr,
-		    round_page(limit) - trunc_page(base_ph->p_vaddr));
-	} else
+		    round_page(limit) - trunc_page(base_ph->p_vaddr),
+		    use_topdown);
+	} else {
 		addr = *last; /* may be ELF_LINK_ADDR */
+	}
 
 	/*
 	 * Load all the necessary sections
