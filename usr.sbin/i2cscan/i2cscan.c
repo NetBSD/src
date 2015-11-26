@@ -1,4 +1,4 @@
-/* $NetBSD: i2cscan.c,v 1.4 2013/07/10 15:18:54 tcort Exp $ */
+/* $NetBSD: i2cscan.c,v 1.5 2015/11/26 17:31:56 hubertf Exp $ */
 
 /*-
  * Copyright (c) 2011, 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: i2cscan.c,v 1.4 2013/07/10 15:18:54 tcort Exp $");
+__RCSID("$NetBSD: i2cscan.c,v 1.5 2015/11/26 17:31:56 hubertf Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -38,8 +38,10 @@ __RCSID("$NetBSD: i2cscan.c,v 1.4 2013/07/10 15:18:54 tcort Exp $");
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <dev/i2c/i2c_io.h>
@@ -50,7 +52,7 @@ __RCSID("$NetBSD: i2cscan.c,v 1.4 2013/07/10 15:18:54 tcort Exp $");
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-r] <i2cdev>\n", getprogname());
+	fprintf(stderr, "usage: %s [-r] i2cdev\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -159,6 +161,8 @@ main(int argc, char *argv[])
 	int fd;
 	int ch, rflag;
 	int mode;
+	char *dev;
+	char devn[32];
 
 	setprogname(*argv);
 
@@ -182,8 +186,14 @@ main(int argc, char *argv[])
 
 	if (*argv == NULL)
 		usage();
+	dev = argv[0];
 
-	fd = open(*argv, O_RDWR);
+	if (strncmp(_PATH_DEV, dev, sizeof(_PATH_DEV) - 1)) {
+		(void)snprintf(devn, sizeof(devn), "%s%s", _PATH_DEV, dev);
+		dev = devn;
+	}
+
+	fd = open(dev, O_RDWR);
 	if (fd == -1)
 		err(EXIT_FAILURE, "couldn't open %s", *argv);
 
