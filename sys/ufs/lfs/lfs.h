@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.196 2015/10/15 06:24:08 dholland Exp $	*/
+/*	$NetBSD: lfs.h,v 1.197 2015/11/26 19:25:54 dholland Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -766,7 +766,7 @@ union segsum {
  * 64-bit inode structure we got from ffsv2.
  *
  * In lfs64:
- *   - inode numbers are still 32 bit
+ *   - inode numbers are 64 bit now
  *   - segments may not be larger than 4G (counted in bytes)
  *   - there may not be more than 2^32 (or perhaps 2^31) segments
  *   - the total volume size is limited to 2^63 frags and/or 2^63
