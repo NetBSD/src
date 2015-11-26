@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.20 2014/10/08 17:38:28 apb Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.21 2015/11/26 01:00:02 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -39,7 +39,7 @@ __RCSID("$NetBSD: parsedate.y,v 1.20 2014/10/08 17:38:28 apb Exp $");
    as it solves.  */
 
 #define EPOCH		1970
-#define HOUR(x)		((time_t)(x) * 60)
+#define HOUR(x)		((time_t)((x) * 60))
 #define SECSPERDAY	(24L * 60L * 60L)
 
 #define USE_LOCAL_TIME	99999 /* special case for Convert() and yyTimezone */
@@ -400,16 +400,24 @@ static const TABLE MonthDayTable[] = {
     { "november",	tMONTH, 11 },
     { "december",	tMONTH, 12 },
     { "sunday",		tDAY, 0 },
+    { "su",		tDAY, 0 },
     { "monday",		tDAY, 1 },
+    { "mo",		tDAY, 1 },
     { "tuesday",	tDAY, 2 },
     { "tues",		tDAY, 2 },
+    { "tu",		tDAY, 2 },
     { "wednesday",	tDAY, 3 },
     { "wednes",		tDAY, 3 },
+    { "weds",		tDAY, 3 },
+    { "we",		tDAY, 3 },
     { "thursday",	tDAY, 4 },
-    { "thur",		tDAY, 4 },
     { "thurs",		tDAY, 4 },
+    { "thur",		tDAY, 4 },
+    { "th",		tDAY, 4 },
     { "friday",		tDAY, 5 },
+    { "fr",		tDAY, 5 },
     { "saturday",	tDAY, 6 },
+    { "sa",		tDAY, 6 },
     { NULL,		0,    0 }
 };
 
@@ -481,11 +489,9 @@ static const TABLE TimezoneTable[] = {
     { "bst",	tZONE,     HOUR( 3) },	/* Brazil Standard */
     { "gst",	tZONE,     HOUR( 3) },	/* Greenland Standard */
 #endif
-#if 0
     { "nft",	tZONE,     HOUR(3.5) },	/* Newfoundland */
     { "nst",	tZONE,     HOUR(3.5) },	/* Newfoundland Standard */
     { "ndt",	tDAYZONE,  HOUR(3.5) },	/* Newfoundland Daylight */
-#endif
     { "ast",	tZONE,     HOUR( 4) },	/* Atlantic Standard */
     { "adt",	tDAYZONE,  HOUR( 4) },	/* Atlantic Daylight */
     { "est",	tZONE,     HOUR( 5) },	/* Eastern Standard */
@@ -514,14 +520,10 @@ static const TABLE TimezoneTable[] = {
     { "fst",	tDAYZONE,  -HOUR(1) },	/* French Summer */
     { "eet",	tZONE,     -HOUR(2) },	/* Eastern Europe, USSR Zone 1 */
     { "bt",	tZONE,     -HOUR(3) },	/* Baghdad, USSR Zone 2 */
-#if 0
     { "it",	tZONE,     -HOUR(3.5) },/* Iran */
-#endif
     { "zp4",	tZONE,     -HOUR(4) },	/* USSR Zone 3 */
     { "zp5",	tZONE,     -HOUR(5) },	/* USSR Zone 4 */
-#if 0
     { "ist",	tZONE,     -HOUR(5.5) },/* Indian Standard */
-#endif
     { "zp6",	tZONE,     -HOUR(6) },	/* USSR Zone 5 */
 #if	0
     /* For completeness.  NST is also Newfoundland Stanard, and SST is
@@ -530,18 +532,25 @@ static const TABLE TimezoneTable[] = {
     { "sst",	tZONE,     -HOUR(7) },	/* South Sumatra, USSR Zone 6 */
 #endif	/* 0 */
     { "wast",	tZONE,     -HOUR(7) },	/* West Australian Standard */
+    { "awst",	tZONE,     -HOUR(7) },	/* West Australian Standard */
     { "wadt",	tDAYZONE,  -HOUR(7) },	/* West Australian Daylight */
-#if 0
+    { "awdt",	tDAYZONE,  -HOUR(7) },	/* West Australian Daylight */
+    { "ict",	tZONE,     -HOUR(7) },	/* Indo China Time (Thai) */
+#if 0	/* this one looks to be bogus */
     { "jt",	tZONE,     -HOUR(7.5) },/* Java (3pm in Cronusland!) */
 #endif
     { "cct",	tZONE,     -HOUR(8) },	/* China Coast, USSR Zone 7 */
+    { "sgt",	tZONE,     -HOUR(8) },	/* Singapore */
+    { "hkt",	tZONE,     -HOUR(8) },	/* Hong Kong */
     { "jst",	tZONE,     -HOUR(9) },	/* Japan Standard, USSR Zone 8 */
-#if 0
     { "cast",	tZONE,     -HOUR(9.5) },/* Central Australian Standard */
+    { "acst",	tZONE,     -HOUR(9.5) },/* Central Australian Standard */
     { "cadt",	tDAYZONE,  -HOUR(9.5) },/* Central Australian Daylight */
-#endif
+    { "acdt",	tDAYZONE,  -HOUR(9.5) },/* Central Australian Daylight */
     { "east",	tZONE,     -HOUR(10) },	/* Eastern Australian Standard */
+    { "aest",	tZONE,     -HOUR(10) },	/* Eastern Australian Standard */
     { "eadt",	tDAYZONE,  -HOUR(10) },	/* Eastern Australian Daylight */
+    { "aedt",	tDAYZONE,  -HOUR(10) },	/* Eastern Australian Daylight */
     { "gst",	tZONE,     -HOUR(10) },	/* Guam Standard, USSR Zone 9 */
     { "nzt",	tZONE,     -HOUR(12) },	/* New Zealand */
     { "nzst",	tZONE,     -HOUR(12) },	/* New Zealand Standard */
@@ -634,18 +643,23 @@ Convert(
     tm.tm_mday = Day;
     tm.tm_mon = Month - 1;
     tm.tm_year = Year - 1900;
-    switch (DSTmode) {
-    case DSTon:  tm.tm_isdst = 1; break;
-    case DSToff: tm.tm_isdst = 0; break;
-    default:     tm.tm_isdst = -1; break;
-    }
-
     if (Timezone == USE_LOCAL_TIME) {
+	    switch (DSTmode) {
+	    case DSTon:  tm.tm_isdst = 1; break;
+	    case DSToff: tm.tm_isdst = 0; break;
+	    default:     tm.tm_isdst = -1; break;
+	    }
 	    result = mktime(&tm);
     } else {
 	    /* We rely on mktime_z(NULL, ...) working in UTC */
+	    tm.tm_isdst = 0;	/* hence cannot be summer time */
+	    errno = 0;
 	    result = mktime_z(NULL, &tm);
-	    result += Timezone * 60;
+	    if (result != -1 || errno == 0) {
+		    result += Timezone * 60;
+		    if (DSTmode == DSTon)	/* if specified sumer time */
+			result -= 3600;		/* UTC is 1 hour earlier XXX */
+	    }
     }
 
 #if PARSEDATE_DEBUG
@@ -697,6 +711,8 @@ RelativeDate(
 
     now = Start;
     tm = localtime(&now);
+    if (tm == NULL)
+	return -1;
     now += SECSPERDAY * ((DayNumber - tm->tm_wday + 7) % 7);
     now += 7 * SECSPERDAY * (DayOrdinal <= 0 ? DayOrdinal : DayOrdinal - 1);
     return DSTcorrect(Start, now);
@@ -959,6 +975,7 @@ parsedate(const char *p, const time_t *now, const int *zone)
 		param.yyYear = AdjustYear(param.yyYear);
 		param.yyHaveFullYear = 1;
 	}
+	errno = 0;
 	Start = Convert(param.yyMonth, param.yyDay, param.yyYear, param.yyHour,
 	    param.yyMinutes, param.yySeconds, param.yyTimezone,
 	    param.yyMeridian, param.yyDSTmode);
@@ -972,18 +989,21 @@ parsedate(const char *p, const time_t *now, const int *zone)
     }
 
     Start += param.yyRelSeconds;
+    errno = 0;
     rm = RelativeMonth(Start, param.yyRelMonth, param.yyTimezone);
     if (rm == -1 && errno != 0)
 	return -1;
     Start += rm;
 
     if (param.yyHaveDay && !param.yyHaveDate) {
+	errno = 0;
 	tod = RelativeDate(Start, param.yyDayOrdinal, param.yyDayNumber);
+	if (tod == -1 && errno != 0)
+	    return -1;
 	Start += tod;
     }
 
-    if (errno == 0)
-	errno = saved_errno;
+    errno = saved_errno;
     return Start;
 }
 
