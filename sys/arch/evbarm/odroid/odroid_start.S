@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.10 2015/11/26 22:22:44 marty Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.11 2015/11/27 07:44:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.10 2015/11/26 22:22:44 marty Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.11 2015/11/27 07:44:39 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -205,7 +205,7 @@ _C_LABEL(odroid_start):
 	 */
 	bl	cortex_init
 
-	XPUTC(#67)
+	XPUTC(#'C')
 
 	/*
 	 * Set up a preliminary mapping in the MMU to allow us to run
@@ -216,7 +216,7 @@ _C_LABEL(odroid_start):
 	movt	r0, #:upper16:TEMP_L1_TABLE
 	bl	arm_boot_l1pt_init
 
-	XPUTC(#68)
+	XPUTC(#'D')
 
 	/*
 	 * Turn on the MMU, Caches, etc.
@@ -233,7 +233,7 @@ _C_LABEL(odroid_start):
 	.pushsection .text, "ax", %progbits
 	.align	0
 1:
-	XPUTC2(#90)
+	XPUTC2(#'Z')
 
 #if defined(MULTIPROCESSOR)
 #endif /* MULTIPROCESSOR */
