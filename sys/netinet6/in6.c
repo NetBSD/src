@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.192 2015/11/25 07:06:19 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.193 2015/11/27 02:54:22 ozaki-r Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.192 2015/11/25 07:06:19 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.193 2015/11/27 02:54:22 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2284,7 +2284,7 @@ in6_lltable_match_prefix(const struct sockaddr *prefix,
 static void
 in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
 {
-	struct ifnet *ifp __debugused;
+	struct ifnet *ifp __diagused;
 
 	LLE_WLOCK_ASSERT(lle);
 	KASSERT(llt != NULL);
