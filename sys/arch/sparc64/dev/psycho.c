@@ -1,4 +1,4 @@
-/*	$NetBSD: psycho.c,v 1.122 2015/11/26 23:44:57 mrg Exp $	*/
+/*	$NetBSD: psycho.c,v 1.123 2015/11/27 00:36:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.122 2015/11/26 23:44:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psycho.c,v 1.123 2015/11/27 00:36:58 mrg Exp $");
 
 #include "opt_ddb.h"
 
@@ -1203,7 +1203,7 @@ psycho_bus_mmap(bus_space_tag_t t, bus_addr_t paddr, off_t off, int prot,
 
 	ss = sparc_pci_childspace(t->type);
 
-	DPRINTF(PDB_BUSMAP, ("%s: prot %x flags %d pa %qx\n",
+	DPRINTF(PDB_BUSMAP, ("%s: prot %x flags %d busaddr %qx\n",
 		__func__, prot, flags, (unsigned long long)paddr));
 
 	pr = get_psychorange(pp, ss);
