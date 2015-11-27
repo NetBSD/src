@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.12 2015/11/27 07:45:58 skrll Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.13 2015/11/27 07:47:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.12 2015/11/27 07:45:58 skrll Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.13 2015/11/27 07:47:45 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -63,7 +63,7 @@ RCSID("$NetBSD: odroid_start.S,v 1.12 2015/11/27 07:45:58 skrll Exp $")
 
 #define INIT_MEMSIZE	128
 
-#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * 0x100000 - L1_TABLE_SIZE)
+#define	TEMP_L1_TABLE	(KERNEL_BASE - KERNEL_BASE_VOFFSET + INIT_MEMSIZE * L1_S_SIZE - L1_TABLE_SIZE)
 
 #define	MD_CPU_HATCH	_C_LABEL(exynos_cpu_hatch)
 
