@@ -1,7 +1,7 @@
-/*	$NetBSD: t_rpc.c,v 1.8 2015/11/10 18:13:01 christos Exp $	*/
+/*	$NetBSD: t_rpc.c,v 1.9 2015/11/27 13:59:40 christos Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_rpc.c,v 1.8 2015/11/10 18:13:01 christos Exp $");
+__RCSID("$NetBSD: t_rpc.c,v 1.9 2015/11/27 13:59:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -140,9 +140,9 @@ rawtest(const char *arg)
 
 	svc = svc_raw_create();
 	if (svc == NULL)
-		ERRX(EXIT_FAILURE, "Can't not create server %d", num);
+		ERRX(EXIT_FAILURE, "Cannot create server %d", num);
 	if (!svc_reg(svc, PROGNUM, VERSNUM, server, NULL))
-		ERRX(EXIT_FAILURE, "Can't not register server %d", num);
+		ERRX(EXIT_FAILURE, "Cannot register server %d", num);
 
 	clnt = clnt_raw_create(PROGNUM, VERSNUM);
 	if (clnt == NULL)
@@ -176,7 +176,7 @@ regtest(const char *hostname, const char *transp, const char *arg, int p)
 
 	svc_fdset_init(p ? SVC_FDSET_POLL : 0);
 	if (!svc_create(server, PROGNUM, VERSNUM, transp))
-		ERRX(EXIT_FAILURE, "Can't not create server %d", num);
+		ERRX(EXIT_FAILURE, "Cannot create server %d", num);
 
 	switch ((pid = fork())) {
 	case 0:
