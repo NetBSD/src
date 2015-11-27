@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.299 2015/09/08 13:18:06 nakayama Exp $	*/
+/*	$NetBSD: pmap.c,v 1.300 2015/11/27 13:51:24 joerg Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.299 2015/09/08 13:18:06 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.300 2015/11/27 13:51:24 joerg Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1418,7 +1418,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	}
 	DPRINTF(PDB_GROW, ("pmap_growkernel(%lx...%lx)\n", kbreak, maxkvaddr));
 	/* Align with the start of a page table */
-	for (kbreak &= (-1 << PDSHIFT); kbreak < maxkvaddr;
+	for (kbreak &= ((~0ULL) << PDSHIFT); kbreak < maxkvaddr;
 	     kbreak += (1 << PDSHIFT)) {
 		if (pseg_get(pm, kbreak) & TLB_V)
 			continue;
