@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.15 2015/11/27 08:48:24 skrll Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.16 2015/11/27 09:43:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.15 2015/11/27 08:48:24 skrll Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.16 2015/11/27 09:43:18 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -92,8 +92,8 @@ _C_LABEL(odroid_start):
 	cpsid	if, #PSR_SVC32_MODE
 
 	/*
-	 * Save any arguments passed to us.  But since .start is not at
-	 * 0x80000000 * but .text is, we can't directly use the address that
+	 * Save any arguments passed to us.  If .start is not at
+	 * 0x80000000 but .text is, we can't directly use the address that
 	 * the linker gave us directly.  Convert the virtual address to the
 	 * physical address by using KERNEL_BASE_VOFFSET.
 	 */
