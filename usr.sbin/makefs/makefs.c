@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.52 2015/11/25 16:32:20 wiz Exp $	*/
+/*	$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.52 2015/11/25 16:32:20 wiz Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.53 2015/11/27 15:10:32 joerg Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -434,7 +434,7 @@ get_tstamp(const char *b, struct stat *st)
 
 #ifndef HAVE_NBTOOL_CONFIG_H
 	errno = 0;
-	if (parsedate(b, &when, NULL) == -1 && errno != 0)
+	if ((when = parsedate(b, NULL, NULL)) == -1 && errno != 0)
 #endif
 	{
 		errno = 0;
