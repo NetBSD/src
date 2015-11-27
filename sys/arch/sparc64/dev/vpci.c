@@ -1,4 +1,4 @@
-/*	$NetBSD: vpci.c,v 1.5 2015/09/09 03:47:58 palle Exp $	*/
+/*	$NetBSD: vpci.c,v 1.6 2015/11/27 13:51:57 joerg Exp $	*/
 /*
  * Copyright (c) 2015 Palle Lyckegaard
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.5 2015/09/09 03:47:58 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vpci.c,v 1.6 2015/11/27 13:51:57 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -300,7 +300,8 @@ vpci_init_iommu(struct vpci_softc *sc, struct vpci_pbm *pbm)
 		    vdma[0], vdma[1]));
 		iobase = vdma[0];
 		iolen = vdma[1];
-		for (tsbsize = 8; (1 << (tsbsize+23)) > iolen; tsbsize--) ;
+		for (tsbsize = 8; (1 << (tsbsize+23)) > iolen;)
+			tsbsize--;
 		DPRINTF(VDB_BUSMAP, ("vpci_init_iommu: iobase=0x%x  iolen = 0x%x  tsbsize=0x%x\n",
 		    iobase, iolen, tsbsize));
 		free(vdma, M_DEVBUF);
