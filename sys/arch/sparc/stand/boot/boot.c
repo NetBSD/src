@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.28 2012/05/28 19:24:29 martin Exp $ */
+/*	$NetBSD: boot.c,v 1.29 2015/11/27 16:52:32 joerg Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -348,7 +348,7 @@ main(void)
 	if (i < BOOTINFO_SIZE / 2) {
 		union {
 			struct btinfo_kernelfile bi_file;
-			char x[i];
+			char x[BOOTINFO_SIZE / 2];
 		} U;
 		strcpy(U.bi_file.name, kernel);
 		bi_add(&U.bi_file, BTINFO_KERNELFILE, i);
