@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.16 2015/11/27 09:43:18 skrll Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.17 2015/11/27 09:45:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.16 2015/11/27 09:43:18 skrll Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.17 2015/11/27 09:45:03 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -99,7 +99,9 @@ _C_LABEL(odroid_start):
 	 */
 	movw	r4, #:lower16:uboot_args
 	movt	r4, #:upper16:uboot_args
+#if KERNEL_BASE_VOFFSET != 0
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
+#endif
 	stmia	r4, {r0-r3}			// Save the arguments
 
 	/*
