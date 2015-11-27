@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.14 2015/11/27 08:43:10 skrll Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.15 2015/11/27 08:48:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,13 +46,17 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.14 2015/11/27 08:43:10 skrll Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.15 2015/11/27 08:48:24 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
 
 #define	XPUTC(n)	mov r0, n; bl xputc
+#if KERNEL_BASE_VOFFSET == 0
+#define	XPUTC2(n)	mov r0, n; bl xputc
+#else
 #define	XPUTC2(n)	mov r0, n; blx r11
+#endif
 #ifdef __ARMEB__
 #define COM_BSWAP
 #endif
@@ -72,7 +76,11 @@ RCSID("$NetBSD: odroid_start.S,v 1.14 2015/11/27 08:43:10 skrll Exp $")
  * At this point, this code has been loaded into SDRAM
  * and the MMU is off
  */
+#ifdef KERNEL_BASES_EQUAL
+	.text
+#else
 	.section .start,"ax",%progbits
+#endif
 
 	.global	_C_LABEL(odroid_start)
 _C_LABEL(odroid_start):
@@ -148,7 +156,7 @@ _C_LABEL(odroid_start):
 	strb	r0, [r4], #1
 	subs	r2, r2, #1
 	bne	2b
-	
+
 3:
 
 	/*
@@ -207,28 +215,35 @@ _C_LABEL(odroid_start):
 	 * Set up a preliminary mapping in the MMU to allow us to run
 	 * at KERNEL_BASE with caches on.
 	 */
-	adr	r1, .Lmmu_init_table
 	movw	r0, #:lower16:TEMP_L1_TABLE
 	movt	r0, #:upper16:TEMP_L1_TABLE
+	movw	r1, #:lower16:mmu_init_table
+	movt	r1, #:upper16:mmu_init_table
 	bl	arm_boot_l1pt_init
-
 	XPUTC(#'D')
 
 	/*
-	 * Turn on the MMU, Caches, etc.
+	 * Turn on the MMU, Caches, etc.  Return to new enabled address space.
+	 */
+	movw	r0, #:lower16:TEMP_L1_TABLE
+	movt	r0, #:upper16:TEMP_L1_TABLE
+#if KERNEL_BASE_VOFFSET == 0
+	bl	arm_cpuinit
+#else
+	/*
+	 * After the MMU is on, we can execute in the normal .text segment
+	 * so setup the lr to be in .text.  Cache the address for xputc
+	 * before we go.
 	 */
 #if defined(VERBOSE_INIT_ARM)
-	adr	r11, xputc
+	adr	r11, xputc		@ for XPUTC2
 #endif
 	movw	lr, #:lower16:1f
 	movt	lr, #:upper16:1f
-	movw	r0, #:lower16:TEMP_L1_TABLE
-	movt	r0, #:upper16:TEMP_L1_TABLE
 	b	arm_cpuinit
-
 	.pushsection .text, "ax", %progbits
-	.align	0
 1:
+#endif
 	XPUTC2(#'Z')
 
 #if defined(MULTIPROCESSOR)
@@ -242,9 +257,10 @@ _C_LABEL(odroid_start):
 	 */
 	b	start
 
-	.popsection				// back to .start
-
 	/* NOTREACHED */
+#ifndef KERNEL_BASES_EQUAL
+	.popsection
+#endif
 
 	.align 0
 	.global _C_LABEL(num_exynos_uarts_entries)
@@ -321,7 +337,7 @@ xputc:
 #endif
 
 	.align	0
-.Lmmu_init_table:
+mmu_init_table:
 	/* Map KERNEL_BASE VA to SDRAM PA, write-back cacheable, shareable */
 	MMU_INIT(KERNEL_BASE, KERNEL_BASE - KERNEL_BASE_VOFFSET, INIT_MEMSIZE,
 		L1_S_PROTO_armv7 | L1_S_APv7_KRW | L1_S_CACHEABLE)
