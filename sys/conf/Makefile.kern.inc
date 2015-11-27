@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.248 2015/11/27 20:33:55 christos Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.249 2015/11/27 20:59:47 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -367,7 +367,7 @@ DEPS+=	${SRCS:R:S/$/.d/g}
 
 .if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${SSRCS}
-.if !target(${_s:T:R}.d)
+.if !commands(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET}.tmp -- ${MKDEP_AFLAGS} \
@@ -377,7 +377,7 @@ ${_s:T:R}.d: ${_s}
 .endfor
 
 .for _s in ${CSRCS}
-.if !target(${_s:T:R}.d)
+.if !commands(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET}.tmp -- ${MKDEP_CFLAGS} \
