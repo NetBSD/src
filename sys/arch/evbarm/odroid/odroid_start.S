@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.13 2015/11/27 07:47:45 skrll Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.14 2015/11/27 08:43:10 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.13 2015/11/27 07:47:45 skrll Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.14 2015/11/27 08:43:10 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -217,7 +217,7 @@ _C_LABEL(odroid_start):
 	/*
 	 * Turn on the MMU, Caches, etc.
 	 */
-#ifdef VERBOSE_INIT_ARM
+#if defined(VERBOSE_INIT_ARM)
 	adr	r11, xputc
 #endif
 	movw	lr, #:lower16:1f
