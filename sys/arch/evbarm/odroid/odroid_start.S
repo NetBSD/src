@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.11 2015/11/27 07:44:39 skrll Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.12 2015/11/27 07:45:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.11 2015/11/27 07:44:39 skrll Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.12 2015/11/27 07:45:58 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -154,12 +154,8 @@ _C_LABEL(odroid_start):
 	/*
 	 * For easy and early SoC / PoP dependency, retrieve the IDs
 	 */
-#if 1
-	mov	r6, #EXYNOS_CORE_PBASE
-#else
 	movw	r6, #:lower16:EXYNOS_CORE_PBASE
 	movt	r6, #:upper16:EXYNOS_CORE_PBASE
-#endif
 
 	ldr	r0, [r6, #EXYNOS_PROD_ID_OFFSET]	// load soc_id
 
