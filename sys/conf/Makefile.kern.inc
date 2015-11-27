@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.247 2015/09/15 02:22:43 uebayasi Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.248 2015/11/27 20:33:55 christos Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -305,6 +305,16 @@ ${_s:T:R}.o: ${_s}
 .endfor
 .endif # !___USE_SUFFIX_RULES___
 
+.include "${S}/conf/ldscript.mk"
+.include "${S}/conf/assym.mk"
+.include "${S}/conf/newvers.mk"
+.include "${S}/dev/splash/splash.mk"
+.include "${S}/conf/mdroot.mk"
+.include "${S}/conf/lint.mk"
+.include "${S}/conf/cscope.mk"
+.include "${S}/conf/gdbinit.mk"
+.include "${S}/conf/ssp.mk"
+
 ##
 ## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
 ##                   cscope, mkid
@@ -350,9 +360,9 @@ dependall: depend .WAIT all
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 .if !defined(___USE_SUFFIX_RULES___)
-DEPS=	${SRCS:T:R:S/$/.d/g}
+DEPS+=	${SRCS:T:R:S/$/.d/g}
 .else
-DEPS=	${SRCS:R:S/$/.d/g}
+DEPS+=	${SRCS:R:S/$/.d/g}
 .endif
 
 .if !defined(___USE_SUFFIX_RULES___)
@@ -406,16 +416,6 @@ install-kernel-${MACHINE_NAME}:
 .endfor
 .endif
 .endif
-
-.include "${S}/conf/ldscript.mk"
-.include "${S}/conf/assym.mk"
-.include "${S}/conf/newvers.mk"
-.include "${S}/dev/splash/splash.mk"
-.include "${S}/conf/mdroot.mk"
-.include "${S}/conf/lint.mk"
-.include "${S}/conf/cscope.mk"
-.include "${S}/conf/gdbinit.mk"
-.include "${S}/conf/ssp.mk"
 
 ##
 ## the kernel
