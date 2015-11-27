@@ -1,4 +1,4 @@
-/*	$NetBSD: mvpex.c,v 1.15 2015/10/02 05:22:52 msaitoh Exp $	*/
+/*	$NetBSD: mvpex.c,v 1.16 2015/11/27 00:08:43 nonaka Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.15 2015/10/02 05:22:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvpex.c,v 1.16 2015/11/27 00:08:43 nonaka Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -680,8 +680,8 @@ mvpex_intr_establish(void *v, pci_intr_handle_t pin, int ipl,
 	pexih->ih_type = ipl;
 	pexih->ih_intrtab = intrtab;
 	mvpex_intr_string(v, pin, pexih->ih_evname, sizeof(pexih->ih_evname));
-	evcnt_attach_dynamic(&pexih->ih_evcnt, EVCNT_TYPE_INTR, NULL, "mvpex",
-	    pexih->ih_evname);
+	evcnt_attach_dynamic(&pexih->ih_evcnt, EVCNT_TYPE_INTR, NULL,
+	    device_xname(sc->sc_dev), pexih->ih_evname);
 
 	s = splhigh();
 
