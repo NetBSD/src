@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.34 2015/11/23 21:40:14 jdc Exp $	*/
+/*	$NetBSD: schizo.c,v 1.35 2015/11/27 09:34:36 martin Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.34 2015/11/23 21:40:14 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.35 2015/11/27 09:34:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -329,28 +329,28 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	    (void **)&ino_bitmaps)) {
 		/* No property - set defaults (double map UE, CE, SERR). */
 		if (pbm->sp_bus_a)
-			ino_bitmap = 1UL << SCZ_PCIERR_A_INO;
+			ino_bitmap = __BIT(SCZ_PCIERR_A_INO);
 		else
-			ino_bitmap = 1UL << SCZ_PCIERR_B_INO;
-		ino_bitmap |= (1UL << SCZ_UE_INO) | (1UL << SCZ_CE_INO) |
-		    (1UL << SCZ_SERR_INO);
+			ino_bitmap = __BIT(SCZ_PCIERR_B_INO);
+		ino_bitmap |= __BIT(SCZ_UE_INO) | __BIT(SCZ_CE_INO) |
+		    __BIT(SCZ_SERR_INO);
 	} else
 		ino_bitmap = (uint64_t) ino_bitmaps[1] << 32 | ino_bitmaps[0];
 	DPRINTF(SDB_INTR, ("ino_bitmap=0x%016" PRIx64 "\n", ino_bitmap));
 
-	if (ino_bitmap & (1UL << SCZ_PCIERR_A_INO))
+	if (ino_bitmap & __BIT(SCZ_PCIERR_A_INO))
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
 		   pbm, SCZ_PCIERR_A_INO, "pci_a");
-	if (ino_bitmap & (1UL << SCZ_PCIERR_B_INO))
+	if (ino_bitmap & __BIT(SCZ_PCIERR_B_INO))
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
 		   pbm, SCZ_PCIERR_B_INO, "pci_b");
-	if (ino_bitmap & (1UL << SCZ_UE_INO))
+	if (ino_bitmap & __BIT(SCZ_UE_INO))
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, SCZ_UE_INO,
 		    "ue");
-	if (ino_bitmap & (1UL << SCZ_CE_INO))
+	if (ino_bitmap & __BIT(SCZ_CE_INO))
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, SCZ_CE_INO,
 		    "ce");
-	if (ino_bitmap & (1UL << SCZ_SERR_INO))
+	if (ino_bitmap & __BIT(SCZ_SERR_INO))
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
 		    SCZ_SERR_INO, "safari");
 
