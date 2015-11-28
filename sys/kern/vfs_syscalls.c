@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.503 2015/10/28 14:05:04 martin Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.504 2015/11/28 15:26:29 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.503 2015/10/28 14:05:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.504 2015/11/28 15:26:29 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2761,15 +2761,16 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 		goto out;
 	}
 
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+
 	switch (SCARG(uap, whence)) {
 	case SEEK_CUR:
 		newoff = fp->f_offset + SCARG(uap, offset);
 		break;
 	case SEEK_END:
-		vn_lock(vp, LK_SHARED | LK_RETRY);
 		error = VOP_GETATTR(vp, &vattr, cred);
-		VOP_UNLOCK(vp);
 		if (error) {
+			VOP_UNLOCK(vp);
 			goto out;
 		}
 		newoff = SCARG(uap, offset) + vattr.va_size;
@@ -2779,8 +2780,10 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 		break;
 	default:
 		error = EINVAL;
+		VOP_UNLOCK(vp);
 		goto out;
 	}
+	VOP_UNLOCK(vp);
 	if ((error = VOP_SEEK(vp, fp->f_offset, newoff, cred)) == 0) {
 		*(off_t *)retval = fp->f_offset = newoff;
 	}
