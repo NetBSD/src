@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.16 2013/02/09 01:19:05 christos Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.17 2015/11/28 08:57:33 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.16 2013/02/09 01:19:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.17 2015/11/28 08:57:33 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -974,6 +974,8 @@ l2cap_recv_info_req(struct mbuf *m, struct hci_link *link)
 		 *   0   1   0x0001 L2CAP Signalling Channel (SET)
 		 *   0   2   0x0002 Connectionless Reception
 		 *   0   3   0x0003 AMP Manager Protocol Channel
+		 *   0   7   0x0007 BR/EDR Security Manager
+		 *   7   7   0x003f AMP Test Manager
 		 */
 		le16enc(rsp + 0, cp.type);
 		le16enc(rsp + 2, L2CAP_SUCCESS);
