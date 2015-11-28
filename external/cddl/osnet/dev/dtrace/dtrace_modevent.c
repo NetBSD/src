@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_modevent.c,v 1.4 2015/02/26 09:10:52 ozaki-r Exp $	*/
+/*	$NetBSD: dtrace_modevent.c,v 1.5 2015/11/28 22:41:36 pgoyette Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -34,13 +34,26 @@ dtrace_modcmd(modcmd_t cmd, void *data)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		dtrace_load(NULL);
-		return devsw_attach("dtrace", NULL, &bmajor,
+		error = devsw_attach("dtrace", NULL, &bmajor,
 		    &dtrace_cdevsw, &cmajor);
+		if (error != 0)
+			if (dtrace_unload() != 0)
+				panic("failed to unload dtrace");
+		return error;
+
 	case MODULE_CMD_FINI:
-		error = dtrace_unload();
+		error = devsw_detach(NULL, &dtrace_cdevsw);
 		if (error != 0)
 			return error;
-		return devsw_detach(NULL, &dtrace_cdevsw);
+
+		error = dtrace_unload();
+		if (error != 0) {
+			if (devsw_attach("dtrace", NULL, &bmajor,
+					 &dtrace_cdevsw, &cmajor) != 0)
+				panic("failed to reattach dtrace_devsw");
+		}
+		return error;
+
 	case MODULE_CMD_AUTOUNLOAD:
 		return EBUSY;
 	default:
