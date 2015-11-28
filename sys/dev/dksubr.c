@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.81 2015/10/23 01:34:22 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.82 2015/11/28 14:37:49 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.81 2015/10/23 01:34:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.82 2015/11/28 14:37:49 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -246,7 +246,8 @@ dk_translate(struct dk_softc *dksc, struct buf *bp)
 
 	wlabel = dksc->sc_flags & (DKF_WLABEL|DKF_LABELLING);
 	if (part == RAW_PART) {
-		if (bounds_check_with_mediasize(bp, DEV_BSIZE, numsecs) <= 0)
+		uint64_t numblocks = btodb(numsecs * secsize);
+		if (bounds_check_with_mediasize(bp, DEV_BSIZE, numblocks) <= 0)
 			goto done;
 	} else {
 		if (bounds_check_with_label(&dksc->sc_dkdev, bp, wlabel) <= 0)
