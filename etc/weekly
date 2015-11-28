@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: weekly,v 1.30 2015/03/04 14:54:38 christos Exp $
+#	$NetBSD: weekly,v 1.31 2015/11/28 14:20:32 darcy Exp $
 #	from: @(#)weekly	8.2 (Berkeley) 1/2/94
 #
 
@@ -31,7 +31,7 @@ WEEKLYDIR=$(mktemp -d -t _weekly) || exit 1
 trap "/bin/rm -rf $WEEKLYDIR ; exit 0" EXIT INT QUIT PIPE
 
 if ! cd "$WEEKLYDIR"; then
-	echo "Can not cd to $WEEKLYDIR".
+	echo "Can't cd to $WEEKLYDIR; aborting."
 	exit 1
 fi
 
