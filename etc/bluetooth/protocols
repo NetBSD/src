@@ -1,22 +1,47 @@
-# $NetBSD: protocols,v 1.1 2006/06/19 15:44:35 gdamore Exp $
-# $Id: protocols,v 1.1 2006/06/19 15:44:35 gdamore Exp $
-# $FreeBSD: /repoman/r/ncvs/src/etc/bluetooth/protocols,v 1.2 2005/11/10 19:09:22 emax Exp $
+# $NetBSD: protocols,v 1.2 2015/11/28 07:46:33 plunky Exp $
 #
-# Bluetooth Protocol/Service Multiplexor (PSM) names and numbers
+# Bluetooth Protocol/Service Multiplexer (PSM) names and values
 #
 # See also
-# https://www.bluetooth.org/foundry/assignnumb/document/assigned_numbers
+# https://www.bluetooth.org/en-us/specification/assigned-numbers
+# https://www.bluetooth.org/en-us/specification/adopted-specifications
 #
-# Protocol       PSM Alias         Reference
+# Protocol		PSM   [	Alias ... ]
 
-sdp              1   SDP           # Service Discovery Protocol
-rfcomm           3   RFCOMM        # RFCOMM with TS 07.10
-tcs-bin          5   TCS-BIN       # Telephony Control Specification
-tcs-bin-cordless 7   TCS-BIN-CORDLESS # Telephony Control Specification
-bnep             15  BNEP          # Bluetooth Network Encapsulation Protocol
-hid-control      17  HID-Control   # Human Interface Device (control)
-hid-interrupt    19  HID-Interrupt # Human Interface Device (interrupt)
-upnp             21  UPnP          # See ESDP, Bluetooth SIG
-avctp            23  AVCTP         # Audio/Video Control Transport Protocol
-avdtp            25  AVDTP         # Audio/Video Distribution Transport Protocol
-udi-c-plane      29  UDI-C-Plane   # Unrestricted Digital Information Profile
+# Service Discovery Protocol, Bluetooth Core Specification
+sdp			0x0001	SDP
+
+# RFCOMM with TS 07.10, Bluetooth SIG
+rfcomm	i		0x0003	RFCOMM
+
+# Telephony Control Specification, Bluetooth SIG
+tcs-bin			0x0005	TCS-BIN TCS_BIN
+tcs-bin-cordless	0x0007	TCS-BIN-CORDLESS TCS_BIN_CORDLESS
+
+# Bluetooth Network Encapsulation Protocol, Bluetooth SIG
+bnep			0x000f	BNEP
+
+# Human Interface Device Profile, Bluetooth SIG
+hid-control		0x0011	HID-Control HID_Control
+hid-interrupt		0x0013	HID-Interrupt HID_Interrupt
+
+# Extended Service Discovery Profile [ESDP] for Universal Plug and Play(tm), Bluetooth SIG
+upnp			0x0015	UPnP ESDP
+
+# Audio/Video Control Transport Protocol, Bluetooth SIG
+avctp			0x0017	AVCTP
+
+# Audio/Video Distribution Transport Protocol, Bluetooth SIG
+avdtp			0x0019	AVDTP
+
+# Unrestricted Digital Information Profile, Bluetooth SIG
+udi-c-plane		0x001d	UDI-C-Plane UDI_C_Plane
+
+# Attribute Protocol, Bluetooth Core Specification
+att			0x001f	ATT
+
+# 3D Synchronization Profile, Bluetooth SIG
+3dsp			0x0021	3DSP
+
+# Internet Protocol Support Profile [IPSP], Bluetooth SIG
+le_psm_ipsp		0x0023	LE_PSM_IPSP
