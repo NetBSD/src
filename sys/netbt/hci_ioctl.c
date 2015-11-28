@@ -1,4 +1,4 @@
-/*	$NetBSD: hci_ioctl.c,v 1.12 2014/07/01 05:49:18 rtr Exp $	*/
+/*	$NetBSD: hci_ioctl.c,v 1.13 2015/11/28 09:04:34 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.12 2014/07/01 05:49:18 rtr Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hci_ioctl.c,v 1.13 2015/11/28 09:04:34 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/domain.h>
@@ -311,6 +311,7 @@ hci_ioctl_pcb(unsigned long cmd, void *data)
 		strlcpy(btr->btr_name, device_xname(unit->hci_dev), HCI_DEVNAME_SIZE);
 		memcpy(btr->btr_features0, unit->hci_feat0, HCI_FEATURES_SIZE);
 		memcpy(btr->btr_features1, unit->hci_feat1, HCI_FEATURES_SIZE);
+		memcpy(btr->btr_features2, unit->hci_feat2, HCI_FEATURES_SIZE);
 		break;
 
 	default:
