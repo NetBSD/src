@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.4 2014/01/26 21:43:45 christos Exp $ */
+/*	$NetBSD: ex_script.c,v 1.5 2015/11/28 13:20:03 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 static const char sccsid[] = "Id: ex_script.c,v 10.38 2001/06/25 15:19:19 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:19 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_script.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: ex_script.c,v 1.5 2015/11/28 13:20:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -29,7 +29,7 @@ __RCSID("$NetBSD: ex_script.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
 #include <sys/select.h>
 #endif
 #include <sys/stat.h>
-#if defined(HAVE_SYS5_PTY) && !defined(__NetBSD__)
+#if defined(HAVE_SYS5_PTY)
 #include <sys/stropts.h>
 #endif
 #include <sys/time.h>
@@ -45,6 +45,9 @@ __RCSID("$NetBSD: ex_script.c,v 1.4 2014/01/26 21:43:45 christos Exp $");
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
+#ifdef __NetBSD__
+#include <util.h>
+#endif
 
 #include "../common/common.h"
 #include "../vi/vi.h"
@@ -55,9 +58,12 @@ static void	sscr_check __P((SCR *));
 static int	sscr_getprompt __P((SCR *));
 static int	sscr_init __P((SCR *));
 static int	sscr_insert __P((SCR *));
-static int	sscr_matchprompt __P((SCR *, CHAR_T *, size_t, size_t *));
+#ifdef __NetBSD__
+#define	sscr_pty openpty
+#else
 static int	sscr_pty __P((int *, int *, char *, struct termios *, void *));
-static int	sscr_setprompt __P((SCR *, CHAR_T *, size_t));
+#endif
+static int	sscr_setprompt __P((SCR *, char *, size_t));
 
 /*
  * ex_script -- : sc[ript][!] [file]
@@ -74,6 +80,17 @@ ex_script(SCR *sp, EXCMD *cmdp)
 		    "150|The script command is only available in vi mode");
 		return (1);
 	}
+
+	/* Avoid double run. */
+	if (F_ISSET(sp, SC_SCRIPT)) {
+		msgq(sp, M_ERR,
+		    "The script command is already runninng");
+		return (1);
+	}
+
+	/* We're going to need a shell. */
+	if (opts_empty(sp, O_SHELL, 0))
+		return (1);
 
 	/* Switch to the new file. */
 	if (cmdp->argc != 0 && ex_edit(sp, cmdp))
@@ -95,10 +112,6 @@ sscr_init(SCR *sp)
 {
 	SCRIPT *sc;
 	const char *sh, *sh_path;
-
-	/* We're going to need a shell. */
-	if (opts_empty(sp, O_SHELL, 0))
-		return (1);
 
 	MALLOC_RET(sp, sc, SCRIPT *, sizeof(SCRIPT));
 	sp->script = sc;
@@ -209,89 +222,28 @@ static int
 sscr_getprompt(SCR *sp)
 {
 	struct timeval tv;
-	CHAR_T *endp, *p, *t, buf[1024];
-	SCRIPT *sc;
 	fd_set fdset;
-	db_recno_t lline;
-	size_t llen, len;
-	e_key_t value;
-	int nr;
-
-	FD_ZERO(&fdset);
-	endp = buf;
-	len = sizeof(buf);
+	int master;
 
 	/* Wait up to a second for characters to read. */
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
-	sc = sp->script;
-	FD_SET(sc->sh_master, &fdset);
-	switch (select(sc->sh_master + 1, &fdset, NULL, NULL, &tv)) {
+	master = sp->script->sh_master;
+	FD_ZERO(&fdset);
+	FD_SET(master, &fdset);
+	switch (select(master + 1, &fdset, NULL, NULL, &tv)) {
 	case -1:		/* Error or interrupt. */
 		msgq(sp, M_SYSERR, "select");
-		goto prompterr;
+		break;
 	case  0:		/* Timeout */
 		msgq(sp, M_ERR, "Error: timed out");
-		goto prompterr;
-	case  1:		/* Characters to read. */
-		break;
-	}
-
-	/* Read the characters. */
-more:	len = sizeof(buf) - (endp - buf);
-	switch (nr = read(sc->sh_master, endp, len)) {
-	case  0:			/* EOF. */
-		msgq(sp, M_ERR, "Error: shell: EOF");
-		goto prompterr;
-	case -1:			/* Error or interrupt. */
-		msgq(sp, M_SYSERR, "shell");
-		goto prompterr;
-	default:
-		endp += nr;
-		break;
-	}
-
-	/* If any complete lines, push them into the file. */
-	for (p = t = buf; p < endp; ++p) {
-		value = KEY_VAL(sp, *p);
-		if (value == K_CR || value == K_NL) {
-			if (db_last(sp, &lline) ||
-			    db_append(sp, 0, lline, t, p - t))
-				goto prompterr;
-			t = p + 1;
-		}
-	}
-	if (p > buf) {
-		MEMMOVE(buf, t, endp - t);
-		endp = buf + (endp - t);
-	}
-	if (endp == buf)
-		goto more;
-
-	/* Wait up 1/10 of a second to make sure that we got it all. */
-	tv.tv_sec = 0;
-	tv.tv_usec = 100000;
-	switch (select(sc->sh_master + 1, &fdset, NULL, NULL, &tv)) {
-	case -1:		/* Error or interrupt. */
-		msgq(sp, M_SYSERR, "select");
-		goto prompterr;
-	case  0:		/* Timeout */
 		break;
 	case  1:		/* Characters to read. */
-		goto more;
+		return (sscr_insert(sp) || sp->script == NULL);
 	}
 
-	/* Timed out, so theoretically we have a prompt. */
-	llen = endp - buf;
-	endp = buf;
-
-	/* Append the line into the file. */
-	if (db_last(sp, &lline) || db_append(sp, 0, lline, buf, llen)) {
-prompterr:	sscr_end(sp);
-		return (1);
-	}
-
-	return (sscr_setprompt(sp, buf, llen));
+	sscr_end(sp);
+	return (1);
 }
 
 /*
@@ -305,47 +257,53 @@ sscr_exec(SCR *sp, db_recno_t lno)
 {
 	SCRIPT *sc;
 	db_recno_t last_lno;
-	size_t blen, len, last_len, tlen;
+	size_t blen, len, last_len;
 	int isempty, matchprompt, rval;
 	ssize_t nw;
-	CHAR_T *bp = NULL;
-	CHAR_T *p;
+	char *bp = NULL;
+	const char *p;
+	const CHAR_T *ip;
+	size_t ilen;
+
+	sc = sp->script;
 
 	/* If there's a prompt on the last line, append the command. */
 	if (db_last(sp, &last_lno))
 		return (1);
-	if (db_get(sp, last_lno, DBG_FATAL, &p, &last_len))
+	if (db_get(sp, last_lno, DBG_FATAL, __UNCONST(&ip), &ilen))
 		return (1);
-	if (sscr_matchprompt(sp, p, last_len, &tlen) && tlen == 0) {
+	INT2CHAR(sp, ip, ilen, p, last_len);
+	if (last_len == sc->sh_prompt_len &&
+	    strnstr(p, sc->sh_prompt, last_len) == p) {
 		matchprompt = 1;
-		GET_SPACE_RETW(sp, bp, blen, last_len + 128);
-		MEMMOVEW(bp, p, last_len);
+		GET_SPACE_RETC(sp, bp, blen, last_len + 128);
+		memmove(bp, p, last_len);
 	} else
 		matchprompt = 0;
 
 	/* Get something to execute. */
-	if (db_eget(sp, lno, &p, &len, &isempty)) {
+	if (db_eget(sp, lno, __UNCONST(&ip), &ilen, &isempty)) {
 		if (isempty)
 			goto empty;
 		goto err1;
 	}
 
 	/* Empty lines aren't interesting. */
-	if (len == 0)
+	if (ilen == 0)
 		goto empty;
+	INT2CHAR(sp, ip, ilen, p, len);
 
 	/* Delete any prompt. */
-	if (sscr_matchprompt(sp, p, len, &tlen)) {
-		if (tlen == len) {
+	if (sc->sh_prompt != NULL && strnstr(p, sc->sh_prompt, len) == p) {
+		len -= sc->sh_prompt_len;
+		if (len == 0) {
 empty:			msgq(sp, M_BERR, "151|No command to execute");
 			goto err1;
 		}
-		p += (len - tlen);
-		len = tlen;
+		p += sc->sh_prompt_len;
 	}
 
 	/* Push the line to the shell. */
-	sc = sp->script;
 	if ((size_t)(nw = write(sc->sh_master, p, len)) != len)
 		goto err2;
 	rval = 0;
@@ -357,13 +315,14 @@ err2:		if (nw == 0)
 	}
 
 	if (matchprompt) {
-		ADD_SPACE_RETW(sp, bp, blen, last_len + len);
-		MEMMOVEW(bp + last_len, p, len);
-		if (db_set(sp, last_lno, bp, last_len + len))
+		ADD_SPACE_GOTO(sp, char, bp, blen, last_len + len);
+		memmove(bp + last_len, p, len);
+		CHAR2INT(sp, bp, last_len + len, ip, ilen);
+		if (db_set(sp, last_lno, ip, ilen))
 err1:			rval = 1;
 	}
 	if (matchprompt)
-		FREE_SPACEW(sp, bp, blen);
+alloc_err:	FREE_SPACE(sp, bp, blen);
 	return (rval);
 }
 
@@ -465,34 +424,31 @@ static int
 sscr_insert(SCR *sp)
 {
 	struct timeval tv;
-	CHAR_T *endp, *p, *t;
+	char *endp, *p, *t;
 	SCRIPT *sc;
 	fd_set rdfd;
 	db_recno_t lno;
-	size_t blen, len = 0, tlen;
-	e_key_t value;
-	int nr, rval;
-	CHAR_T *bp;
+	size_t len;
+	ssize_t nr;
+	char bp[1024];
+	const CHAR_T *ip;
+	size_t ilen = 0;
 
 	/* Find out where the end of the file is. */
 	if (db_last(sp, &lno))
 		return (1);
 
-#define	MINREAD	1024
-	GET_SPACE_RETW(sp, bp, blen, MINREAD);
 	endp = bp;
 
 	/* Read the characters. */
-	rval = 1;
 	sc = sp->script;
-more:	switch (nr = read(sc->sh_master, endp, MINREAD)) {
+more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 	case  0:			/* EOF; shell just exited. */
 		sscr_end(sp);
-		rval = 0;
-		goto ret;
+		return (0);
 	case -1:			/* Error or interrupt. */
 		msgq(sp, M_SYSERR, "shell");
-		goto ret;
+		return (1);
 	default:
 		endp += nr;
 		break;
@@ -500,11 +456,11 @@ more:	switch (nr = read(sc->sh_master, endp, MINREAD)) {
 
 	/* Append the lines into the file. */
 	for (p = t = bp; p < endp; ++p) {
-		value = KEY_VAL(sp, *p);
-		if (value == K_CR || value == K_NL) {
+		if (p == bp + sizeof(bp) - 1 || *p == '\r' || *p == '\n') {
 			len = p - t;
-			if (db_append(sp, 1, lno++, t, len))
-				goto ret;
+			if (CHAR2INT(sp, t, len, ip, ilen) ||
+			    db_append(sp, 1, lno++, ip, ilen))
+				return (1);
 			t = p + 1;
 		}
 	}
@@ -517,31 +473,29 @@ more:	switch (nr = read(sc->sh_master, endp, MINREAD)) {
 		 * want to hang indefinitely because some program is hanging,
 		 * confused the shell, or whatever.
 		 */
-		if (!sscr_matchprompt(sp, t, len, &tlen) || tlen != 0) {
+		if (len != sc->sh_prompt_len ||
+		    strnstr(t, sc->sh_prompt, len) == NULL) {
 			tv.tv_sec = 0;
 			tv.tv_usec = 100000;
 			FD_ZERO(&rdfd);
 			FD_SET(sc->sh_master, &rdfd);
 			if (select(sc->sh_master + 1,
 			    &rdfd, NULL, NULL, &tv) == 1) {
-				MEMMOVE(bp, t, len);
+				memmove(bp, t, len);
 				endp = bp + len;
 				goto more;
 			}
 		}
-		if (sscr_setprompt(sp, t, len))
+		if (sscr_setprompt(sp, t, len) ||
+		    CHAR2INT(sp, t, len, ip, ilen) ||
+		    db_append(sp, 1, lno++, ip, ilen))
 			return (1);
-		if (db_append(sp, 1, lno++, t, len))
-			goto ret;
 	}
 
 	/* The cursor moves to EOF. */
 	sp->lno = lno;
-	sp->cno = len ? len - 1 : 0;
-	rval = vs_refresh(sp, 1);
-
-ret:	FREE_SPACEW(sp, bp, blen);
-	return (rval);
+	sp->cno = ilen ? ilen - 1 : 0;
+	return (vs_refresh(sp, 1));
 }
 
 /*
@@ -551,11 +505,9 @@ ret:	FREE_SPACEW(sp, bp, blen);
  *
  */
 static int
-sscr_setprompt(SCR *sp, CHAR_T *buf, size_t len)
+sscr_setprompt(SCR *sp, char *buf, size_t len)
 {
 	SCRIPT *sc;
-	const char *np;
-	size_t nlen;
 
 	sc = sp->script;
 	if (sc->sh_prompt)
@@ -565,48 +517,10 @@ sscr_setprompt(SCR *sp, CHAR_T *buf, size_t len)
 		sscr_end(sp);
 		return (1);
 	}
-	INT2CHAR(sp, buf, len, np, nlen);
-	memmove(sc->sh_prompt, np, nlen);
+	memmove(sc->sh_prompt, buf, len);
 	sc->sh_prompt_len = len;
 	sc->sh_prompt[len] = '\0';
 	return (0);
-}
-
-/*
- * sscr_matchprompt --
- *	Check to see if a line matches the prompt.  Nul's indicate
- *	parts that can change, in both content and size.
- */
-static int
-sscr_matchprompt(SCR *sp, CHAR_T *lp, size_t line_len, size_t *lenp)
-{
-	SCRIPT *sc;
-	size_t prompt_len;
-	char *pp;
-
-	sc = sp->script;
-	if (line_len < (prompt_len = sc->sh_prompt_len))
-		return (0);
-
-	for (pp = sc->sh_prompt;
-	    prompt_len && line_len; --prompt_len, --line_len) {
-		if (*pp == '\0') {
-			for (; prompt_len && *pp == '\0'; --prompt_len, ++pp);
-			if (!prompt_len)
-				return (0);
-			for (; line_len && *lp != *pp; --line_len, ++lp);
-			if (!line_len)
-				return (0);
-		}
-		if (*pp++ != *lp++)
-			break;
-	}
-
-	if (prompt_len)
-		return (0);
-	if (lenp != NULL)
-		*lenp = line_len;
-	return (1);
 }
 
 /*
@@ -664,6 +578,7 @@ sscr_check(SCR *sp)
 	F_CLR(gp, G_SCRWIN);
 }
 
+#ifndef __NetBSD__
 #ifdef HAVE_SYS5_PTY
 static int ptys_open __P((int, char *));
 static int ptym_open __P((char *));
@@ -829,4 +744,6 @@ sscr_pty(amaster, aslave, name, termp, winp)
 	errno = ENOENT;	/* out of ptys */
 	return (-1);
 }
+
 #endif /* HAVE_SYS5_PTY */
+#endif /* !__NetBSD__ */
