@@ -1,4 +1,4 @@
-/* $NetBSD: btconfig.c,v 1.26 2011/10/17 16:37:50 mbalmer Exp $ */
+/* $NetBSD: btconfig.c,v 1.27 2015/11/28 09:25:45 plunky Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btconfig.c,v 1.26 2011/10/17 16:37:50 mbalmer Exp $");
+__RCSID("$NetBSD: btconfig.c,v 1.27 2015/11/28 09:25:45 plunky Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/param.h>
@@ -64,6 +64,7 @@ static void print_voice(int);
 static void tag(const char *);
 static void print_features0(uint8_t *);
 static void print_features1(uint8_t *);
+static void print_features2(uint8_t *);
 static void print_result(int, struct bt_devinquiry *);
 static void do_inquiry(void);
 
@@ -659,7 +660,10 @@ print_info(int level)
 	case HCI_SPEC_V20:	printf("2.0 + EDR\n");	break;
 	case HCI_SPEC_V21:	printf("2.1 + EDR\n");	break;
 	case HCI_SPEC_V30:	printf("3.0 + HS\n");	break;
-	default:		printf("unknown\n");	break;
+	case HCI_SPEC_V40:	printf("4.0\n");	break;
+	case HCI_SPEC_V41:	printf("4.1\n");	break;
+	case HCI_SPEC_V42:	printf("4.2\n");	break;
+	default:		printf("[%d]\n", version);	break;
 	}
 
 	load_value(HCI_CMD_READ_UNIT_CLASS, buf, HCI_CLASS_SIZE);
@@ -741,6 +745,7 @@ print_info(int level)
 	width = printf("\tfeatures:");
 	print_features0(btr.btr_features0);
 	print_features1(btr.btr_features1);
+	print_features2(btr.btr_features2);
 	tag(NULL);
 }
 
@@ -802,9 +807,9 @@ print_features0(uint8_t *f)
 	if (*f & HCI_LMP_PAGISCHEME)	    tag("<paging parameter>");
 	if (*f & HCI_LMP_POWER_CONTROL)	    tag("<power control>");
 	if (*f & HCI_LMP_TRANSPARENT_SCO)   tag("<transparent SCO>");
-	if (*f & HCI_LMP_FLOW_CONTROL_LAG0) tag("<flow control lag 0>");
-	if (*f & HCI_LMP_FLOW_CONTROL_LAG1) tag("<flow control lag 1>");
-	if (*f & HCI_LMP_FLOW_CONTROL_LAG2) tag("<flow control lag 2>");
+	if (*f & HCI_LMP_FLOW_CONTROL_LAG0) tag("<flow control lag lsb>");
+	if (*f & HCI_LMP_FLOW_CONTROL_LAG1) tag("<flow control lag mb>");
+	if (*f & HCI_LMP_FLOW_CONTROL_LAG2) tag("<flow control lag msb>");
 	if (*f & HCI_LMP_BC_ENCRYPTION)	    tag("<broadcast encryption>");
 	f++;
 
@@ -823,6 +828,8 @@ print_features0(uint8_t *f)
 	if (*f & HCI_LMP_EV5_PKT)	    tag("<EV5 packets>");
 	if (*f & HCI_LMP_AFH_CAPABLE_SLAVE) tag("<AFH capable slave>");
 	if (*f & HCI_LMP_AFH_CLASS_SLAVE)   tag("<AFH class slave>");
+	if (*f & HCI_LMP_BR_EDR_UNSUPPORTED)tag("<BR/EDR not supported>");
+	if (*f & HCI_LMP_LE_CONTROLLER)     tag("<LE (controller)>");
 	if (*f & HCI_LMP_3SLOT_EDR_ACL)	    tag("<3 slot EDR ACL>");
 	f++;
 
@@ -839,6 +846,7 @@ print_features0(uint8_t *f)
 
 	/* ------------------- byte 6 --------------------*/
 	if (*f & HCI_LMP_EXTENDED_INQUIRY)  tag("<extended inquiry>");
+	if (*f & HCI_LMP_LE_BR_EDR_CONTROLLER)tag("<simultaneous LE & BR/EDR (controller)>");
 	if (*f & HCI_LMP_SIMPLE_PAIRING)    tag("<secure simple pairing>");
 	if (*f & HCI_LMP_ENCAPSULATED_PDU)  tag("<encapsulated PDU>");
 	if (*f & HCI_LMP_ERRDATA_REPORTING) tag("<errdata reporting>");
@@ -857,7 +865,28 @@ print_features1(uint8_t *f)
 {
 
 	/* ------------------- byte 0 --------------------*/
-	if (*f & HCI_LMP_SSP)		    tag("<secure simple pairing>");
+	if (*f & HCI_LMP_SSP)		    tag("<secure simple pairing (host)>");
+	if (*f & HCI_LMP_LE_HOST)	    tag("<LE (host)>");
+	if (*f & HCI_LMP_LE_BR_EDR_HOST)    tag("<simultaneous LE & BR/EDR (host)>");
+	if (*f & HCI_LMP_SECURE_CONN_HOST)  tag("<secure connections (host)>");
+}
+
+static void
+print_features2(uint8_t *f)
+{
+	/* ------------------- byte 0 --------------------*/
+	if (*f & HCI_LMP_CONNLESS_MASTER)   tag("<connectionless master>");
+	if (*f & HCI_LMP_CONNLESS_SLAVE)    tag("<connectionless slave>");
+	if (*f & HCI_LMP_SYNC_TRAIN)	    tag("<synchronization train>");
+	if (*f & HCI_LMP_SYNC_SCAN)	    tag("<synchronization scan>");
+	if (*f & HCI_LMP_INQ_RSP_NOTIFY)    tag("<inquiry response notification>");
+	if (*f & HCI_LMP_INTERLACE_SCAN)    tag("<generalized interlace scan>");
+	if (*f & HCI_LMP_COARSE_CLOCK)	    tag("<coarse clock adjustment>");
+
+	/* ------------------- byte 1 --------------------*/
+	if (*f & HCI_LMP_SECURE_CONN_CONTROLLER)tag("<secure connections (controller)>");
+	if (*f & HCI_LMP_PING)		    tag("<ping>");
+	if (*f & HCI_LMP_TRAIN_NUDGING)	    tag("<train nudging>");
 }
 
 static void
