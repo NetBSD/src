@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.81 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: trap.c,v 1.82 2015/11/28 15:06:55 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.81 2015/11/22 13:41:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2015/11/28 15:06:55 dholland Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -342,6 +342,16 @@ kernelfault:
 		/* Get %rsp value before fault - there may be a pad word
 		 * below the trap frame. */
 		vframe = (void *)frame->tf_rsp;
+		if (frame->tf_rip == 0) {
+			/*
+			 * Assume that if we jumped to null we
+			 * probably did it via a null function
+			 * pointer, so print the return address.
+			 */
+			printf("kernel jumped to null; return addr was %p\n",
+			       *(void **)frame->tf_rsp);
+			goto we_re_toast;
+		}
 		switch (*(uint16_t *)frame->tf_rip) {
 		case 0xcf48:	/* iretq */
 			/*
