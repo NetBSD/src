@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.45 2014/02/25 18:30:12 pooka Exp $ */
+/*	$NetBSD: crypto.c,v 1.46 2015/11/28 03:06:45 pgoyette Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.45 2014/02/25 18:30:12 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.46 2015/11/28 03:06:45 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -97,6 +97,7 @@ int crypto_ret_q_check(struct cryptop *);
 static	struct cryptocap *crypto_drivers;
 static	int crypto_drivers_num;
 static	void *softintr_cookie;
+static	int crypto_exit_flag;
 
 /*
  * There are two queues for crypto requests; one for symmetric (e.g.
@@ -236,7 +237,7 @@ MALLOC_DEFINE(M_CRYPTO_DATA, "crypto", "crypto session records");
 static	void cryptointr(void);		/* swi thread to dispatch ops */
 static	void cryptoret(void);		/* kernel thread for callbacks*/
 static	struct lwp *cryptothread;
-static	void crypto_destroy(void);
+static	int crypto_destroy(bool);
 static	int crypto_invoke(struct cryptop *crp, int hint);
 static	int crypto_kinvoke(struct cryptkop *krp, int hint);
 
@@ -269,7 +270,7 @@ crypto_init0(void)
 	    sizeof(struct cryptocap), M_CRYPTO_DATA, M_NOWAIT | M_ZERO);
 	if (crypto_drivers == NULL) {
 		printf("crypto_init: cannot malloc driver table\n");
-		return 0;
+		return ENOMEM;
 	}
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
@@ -279,7 +280,7 @@ crypto_init0(void)
 	if (error) {
 		printf("crypto_init: cannot start cryptoret thread; error %d",
 			error);
-		crypto_destroy();
+		return crypto_destroy(false);
 	}
 
 #ifdef _MODULE
@@ -288,21 +289,60 @@ crypto_init0(void)
 	return 0;
 }
 
-void
+int
 crypto_init(void)
 {
 	static ONCE_DECL(crypto_init_once);
 
-	RUN_ONCE(&crypto_init_once, crypto_init0);
+	return RUN_ONCE(&crypto_init_once, crypto_init0);
 }
 
-static void
-crypto_destroy(void)
+static int
+crypto_destroy(bool exit_kthread)
 {
-	/* XXX no wait to reclaim zones */
+	int i;
+
+	if (exit_kthread) {
+		mutex_spin_enter(&crypto_ret_q_mtx);
+
+		/* if we have any in-progress requests, don't unload */
+		if (!TAILQ_EMPTY(&crp_q) || !TAILQ_EMPTY(&crp_kq))
+			return EBUSY;
+
+		for (i = 0; i < crypto_drivers_num; i++)
+			if (crypto_drivers[i].cc_sessions != 0)
+				break;
+		if (i < crypto_drivers_num)
+			return EBUSY;
+
+		/* kick the cryptoret thread and wait for it to exit */
+		crypto_exit_flag = 1;
+		cv_signal(&cryptoret_cv);
+
+		while (crypto_exit_flag != 0)
+			cv_wait(&cryptoret_cv, &crypto_ret_q_mtx);
+		mutex_spin_exit(&crypto_ret_q_mtx);
+	}
+
+	if (sysctl_opencrypto_clog != NULL)
+		sysctl_teardown(&sysctl_opencrypto_clog);
+
+	unregister_swi(SWI_CRYPTO, cryptointr);
+
 	if (crypto_drivers != NULL)
 		free(crypto_drivers, M_CRYPTO_DATA);
-	unregister_swi(SWI_CRYPTO, cryptointr);
+
+	pool_destroy(&cryptop_pool);
+	pool_destroy(&cryptodesc_pool);
+	pool_destroy(&cryptkop_pool);
+
+	cv_destroy(&cryptoret_cv);
+
+	mutex_destroy(&crypto_ret_q_mtx);
+	mutex_destroy(&crypto_q_mtx);
+	mutex_destroy(&crypto_mtx);
+
+	return 0;
 }
 
 /*
@@ -441,7 +481,7 @@ crypto_get_driverid(u_int32_t flags)
 	struct cryptocap *newdrv;
 	int i;
 
-	crypto_init();		/* XXX oh, this is foul! */
+	(void)crypto_init();		/* XXX oh, this is foul! */
 
 	mutex_enter(&crypto_mtx);
 	for (i = 0; i < crypto_drivers_num; i++)
@@ -1306,6 +1346,17 @@ cryptoret(void)
 
 		/* drop before calling any callbacks. */
 		if (crp == NULL && krp == NULL) {
+
+                        /* Check for the exit condition. */
+			if (crypto_exit_flag != 0) {
+
+        			/* Time to die. */
+				crypto_exit_flag = 0;
+        			cv_broadcast(&cryptoret_cv);
+				mutex_spin_exit(&crypto_ret_q_mtx);
+        			kthread_exit(0);
+			}
+
 			cryptostats.cs_rets++;
 			cv_wait(&cryptoret_cv, &crypto_ret_q_mtx);
 			continue;
@@ -1345,19 +1396,21 @@ MODULE(MODULE_CLASS_MISC, opencrypto, NULL);
 static int
 opencrypto_modcmd(modcmd_t cmd, void *opaque)
 {
+	int error = 0;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		crypto_init();
+		error = crypto_init();
 #endif
-		return 0;
+		break;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		sysctl_teardown(&sysctl_opencrypto_clog);
+		error = crypto_destroy(true);
 #endif
-		return 0;
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
 	}
+	return error;
 }
