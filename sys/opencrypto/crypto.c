@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.46 2015/11/28 03:06:45 pgoyette Exp $ */
+/*	$NetBSD: crypto.c,v 1.47 2015/11/28 03:40:43 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.46 2015/11/28 03:06:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.47 2015/11/28 03:40:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -247,7 +247,7 @@ static	int crypto_timing = 0;
 #endif
 
 #ifdef _MODULE
-	static struct sysctllog *sysctl_opencrypto_clog;
+static struct sysctllog *sysctl_opencrypto_clog;
 #endif
 
 static int
@@ -324,8 +324,10 @@ crypto_destroy(bool exit_kthread)
 		mutex_spin_exit(&crypto_ret_q_mtx);
 	}
 
+#ifdef _MODULE
 	if (sysctl_opencrypto_clog != NULL)
 		sysctl_teardown(&sysctl_opencrypto_clog);
+#endif
 
 	unregister_swi(SWI_CRYPTO, cryptointr);
 
