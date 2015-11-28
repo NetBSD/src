@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.85 2015/10/10 23:39:43 christos Exp $	*/
+/*	$NetBSD: dk.c,v 1.86 2015/11/28 13:41:31 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.85 2015/10/10 23:39:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.86 2015/11/28 13:41:31 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -267,7 +267,7 @@ dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 
 	memset(dg, 0, sizeof(*dg));
 
-	dg->dg_secperunit = sc->sc_size >> pdk->dk_blkshift;
+	dg->dg_secperunit = sc->sc_size;
 	dg->dg_secsize = DEV_BSIZE << pdk->dk_blkshift;
 
 	/* fake numbers, 1 cylinder is 1 MB with default sector size */
