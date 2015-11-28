@@ -15,7 +15,7 @@
 static const char sccsid[] = "Id: db1.c,v 10.1 2002/03/09 12:53:57 skimo Exp  (Berkeley) Date: 2002/03/09 12:53:57 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: vi_db1.c,v 1.7 2014/01/26 21:43:45 christos Exp $");
+__RCSID("$NetBSD: vi_db1.c,v 1.8 2015/11/28 13:20:03 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -421,10 +421,10 @@ db_insert(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
  * db_set --
  *	Store a line in the file.
  *
- * PUBLIC: int db_set __P((SCR *, db_recno_t, CHAR_T *, size_t));
+ * PUBLIC: int db_set __P((SCR *, db_recno_t, const CHAR_T *, size_t));
  */
 int
-db_set(SCR *sp, db_recno_t lno, CHAR_T *p, size_t len)
+db_set(SCR *sp, db_recno_t lno, const CHAR_T *p, size_t len)
 {
 	DBT data, key;
 	EXF *ep;
