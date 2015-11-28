@@ -1,4 +1,4 @@
-.\" $NetBSD: bluetooth.3,v 1.7 2014/03/18 18:20:37 riastradh Exp $
+.\" $NetBSD: bluetooth.3,v 1.8 2015/11/28 07:47:30 plunky Exp $
 .\"
 .\" Copyright (c) 2003 Maksim Yevmenkin <m_evmenkin@yahoo.com>
 .\" All rights reserved.
@@ -134,7 +134,7 @@ and
 .Fn bt_getprotobynumber
 functions each return a pointer to an object with the
 .Vt protoent
-structure describing a Bluetooth Protocol Service Multiplexor referenced
+structure describing a Bluetooth Protocol Service Multiplexer referenced
 by name or number, respectively.
 .Pp
 The
@@ -143,13 +143,13 @@ argument passed to
 .Fn bt_getprotobyname
 should point to a
 .Dv NUL Ns -terminated
-Bluetooth Protocol Service Multiplexor name.
+Bluetooth Protocol Service Multiplexer name.
 The
 .Fa proto
 argument passed to
 .Fn bt_getprotobynumber
 should have numeric value of the desired Bluetooth Protocol Service
-Multiplexor.
+Multiplexer.
 .Pp
 The structure returned contains the information obtained from a line in
 .Pa /etc/bluetooth/protocols
