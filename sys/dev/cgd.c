@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.105 2015/11/28 14:45:24 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.106 2015/11/28 21:06:30 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.105 2015/11/28 14:45:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.106 2015/11/28 21:06:30 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -710,9 +710,6 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	disk_attach(&dksc->sc_dkdev);
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
-
-	/* Try and read the disklabel. */
-	dk_getdisklabel(dksc, 0 /* XXX ? (cause of PR 41704) */);
 
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&dksc->sc_dkdev);
