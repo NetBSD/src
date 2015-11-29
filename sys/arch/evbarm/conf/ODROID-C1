@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-C1,v 1.20 2015/08/08 14:01:44 jmcneill Exp $
+#	$NetBSD: ODROID-C1,v 1.21 2015/11/29 16:52:00 jmcneill Exp $
 #
 #	Hardkernel ODROID-C1 (Amlogic S805) based SBC (Single Board Computer)
 #
@@ -9,7 +9,6 @@ include	"arch/evbarm/conf/GENERIC.common"
 
 options 	CPU_CORTEXA5
 options 	MULTIPROCESSOR
-options 	CPUFREQ=1512
 
 options 	DIAGNOSTIC
 #options 	DEBUG
