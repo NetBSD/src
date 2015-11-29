@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_crureg.h,v 1.12 2015/11/29 16:52:00 jmcneill Exp $ */
+/* $NetBSD: amlogic_crureg.h,v 1.13 2015/11/29 19:16:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,7 @@
 #define HHI_SYS_PLL_CNTL_MUL		__BITS(8,0)
 #define HHI_SYS_PLL_CNTL_DIV		__BITS(14,9)
 #define HHI_SYS_PLL_CNTL_OD		__BITS(17,16)
+#define HHI_SYS_PLL_CNTL_LOCK		__BIT(31)
 
 #define HHI_MPLL_CNTL_REG		CBUS_REG(0x10a0)
 #define HHI_MPLL_CNTL_MUL		__BITS(8,0)
