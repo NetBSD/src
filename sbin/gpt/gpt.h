@@ -65,14 +65,15 @@ extern const char *device_name;
 extern off_t mediasz;
 extern u_int parts;
 extern u_int secsz;
-extern int readonly, verbose;
+extern int readonly, verbose, quiet;
 
 uint32_t crc32(const void *, size_t);
 void	gpt_close(int);
 int	gpt_gpt(int, off_t, int);
-int	gpt_open(const char *);
+int	gpt_open(const char *, int);
 void*	gpt_read(int, off_t, size_t);
 int	gpt_write(int, map_t *);
+void	gpt_msg(const char *, ...) __printflike(1, 2);
 
 uint8_t *utf16_to_utf8(uint16_t *);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
@@ -104,5 +105,7 @@ int	getdisksize(const char *, u_int *, off_t *);
 #else
 # define getdisksize(a, b, c) 0
 #endif
+
+#define GPT_FORCE 1
 
 #endif /* _GPT_H_ */

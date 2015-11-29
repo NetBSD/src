@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.41 2015/11/03 02:19:24 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.42 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: gpt.c,v 1.41 2015/11/03 02:19:24 jnemeth Exp $");
 #include <fcntl.h>
 #include <paths.h>
 #include <stddef.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -67,7 +68,7 @@ off_t	mediasz;
 u_int	parts;
 u_int	secsz;
 
-int	readonly, verbose;
+int	readonly, verbose, quiet;
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -283,13 +284,15 @@ gpt_mbr(int fd, off_t lba)
 	unsigned int i, pmbr;
 
 	mbr = gpt_read(fd, lba, 1);
-	if (mbr == NULL)
+	if (mbr == NULL) {
+		if (!quiet)
+			warn("%s: read failed", device_name);
 		return (-1);
+	}
 
 	if (mbr->mbr_sig != htole16(MBR_SIG)) {
 		if (verbose)
-			warnx("%s: MBR not found at sector %llu", device_name,
-			    (long long)lba);
+			gpt_msg("MBR not found at sector %ju", (uintmax_t)lba);
 		free(mbr);
 		return (0);
 	}
@@ -309,20 +312,19 @@ gpt_mbr(int fd, off_t lba)
 			break;
 	}
 	if (pmbr && i == 4 && lba == 0) {
-		if (pmbr != 1)
-			warnx("%s: Suspicious PMBR at sector %llu",
-			    device_name, (long long)lba);
+		if (pmbr != 1 && !quiet)
+			warnx("%s: Suspicious PMBR at sector %ju",
+			    device_name, (uintmax_t)lba);
 		else if (verbose > 1)
-			warnx("%s: PMBR at sector %llu", device_name,
-			    (long long)lba);
+			gpt_msg("PMBR at sector %ju", (uintmax_t)lba);
 		p = map_add(lba, 1LL, MAP_TYPE_PMBR, mbr);
 		return ((p == NULL) ? -1 : 0);
 	}
-	if (pmbr)
-		warnx("%s: Suspicious MBR at sector %llu", device_name,
-		    (long long)lba);
+	if (pmbr && !quiet)
+		warnx("%s: Suspicious MBR at sector %ju", device_name,
+		    (uintmax_t)lba);
 	else if (verbose > 1)
-		warnx("%s: MBR at sector %llu", device_name, (long long)lba);
+		gpt_msg("MBR at sector %ju", (uintmax_t)lba);
 
 	p = map_add(lba, 1LL, MAP_TYPE_MBR, mbr);
 	if (p == NULL)
@@ -343,9 +345,9 @@ gpt_mbr(int fd, off_t lba)
 		/* start is relative to the offset of the MBR itself. */
 		start += lba;
 		if (verbose > 2)
-			warnx("%s: MBR part: type=%d, start=%llu, size=%llu",
-			    device_name, mbr->mbr_part[i].part_typ,
-			    (long long)start, (long long)size);
+			gpt_msg("MBR part: type=%d, start=%ju, size=%ju",
+			    mbr->mbr_part[i].part_typ,
+			    (uintmax_t)start, (uintmax_t)size);
 		if (mbr->mbr_part[i].part_typ != MBR_PTYPE_EXT_LBA) {
 			m = map_add(start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
@@ -461,7 +463,7 @@ gpt_gpt(int fd, off_t lba, int found)
 }
 
 int
-gpt_open(const char *dev)
+gpt_open(const char *dev, int flags)
 {
 	struct stat sb;
 	int fd, mode, found;
@@ -470,27 +472,48 @@ gpt_open(const char *dev)
 
 	device_arg = device_name = dev;
 	fd = opendisk(dev, mode, device_path, sizeof(device_path), 0);
-	if (fd == -1)
+	if (fd == -1) {
+		if (!quiet)
+			warn("Cannot open `%s'", device_name);
 		return -1;
-	if (strncmp(device_path, _PATH_DEV, strlen(_PATH_DEV)) == 0)
-		device_name = device_path + strlen(_PATH_DEV);
-	else
-		device_name = device_path;
+	}
+	device_name = device_path;
 
-	if (fstat(fd, &sb) == -1)
+	if (fstat(fd, &sb) == -1) {
+		if (!quiet)
+			warn("Cannot stat `%s'", device_name);
 		goto close;
+	}
 
 	if ((sb.st_mode & S_IFMT) != S_IFREG) {
-#ifdef DIOCGSECTORSIZE
-		if ((secsz == 0 && ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1) ||
-		    (mediasz == 0 && ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1))
-			goto close;
-#else
-		if (getdisksize(device_name, &secsz, &mediasz) == -1)
-			goto close;
-#endif
-		if (secsz == 0 || mediasz == 0)
-			errx(1, "Please specify sector/media size");
+		if (secsz == 0) {
+			if (ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1) {
+				if (!quiet)
+					warn("Cannot get sector size for `%s'",
+					    device_name);
+				goto close;
+			}
+			if (secsz == 0) {
+				if (!quiet)
+					warnx("Sector size for `%s' can't be 0",
+					    device_name);
+				goto close;
+			}
+		}
+		if (mediasz == 0) {
+			if (ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1) {
+				if (!quiet)
+					warn("Cannot get media size for `%s'",
+					device_name);
+				goto close;
+			}
+			if (mediasz == 0) {
+				if (!quiet)
+					warnx("Media size for `%s' can't be 0",
+					    device_name);
+				goto close;
+			}
+		}
 	} else {
 		if (secsz == 0)
 			secsz = 512;	/* Fixed size for files. */
@@ -510,14 +533,16 @@ gpt_open(const char *dev)
 	 * we don't have to worry about it later.
 	 */
 	if (mediasz / secsz < 6) {
-		errno = ENODEV;
+		if (!quiet)
+			warnx("Need 6 sectors on '%s' we have %llu",
+			    device_name, (unsigned long long)(mediasz / secsz));
 		goto close;
 	}
 
-	if (verbose)
-		warnx("%s: mediasize=%llu; sectorsize=%u; blocks=%llu",
-		    device_name, (long long)mediasz, secsz,
-		    (long long)(mediasz / secsz));
+	if (verbose) {
+		gpt_msg("mediasize=%ju; sectorsize=%u; blocks=%ju",
+		    (uintmax_t)mediasz, secsz, (uintmax_t)(mediasz / secsz));
+	}
 
 	map_init(mediasz / secsz);
 
@@ -540,6 +565,17 @@ gpt_close(int fd)
 {
 	/* XXX post processing? */
 	close(fd);
+}
+
+void
+gpt_msg(const char *fmt, ...)
+{
+	va_list ap;
+	printf("%s: ", device_name);
+	va_start(ap, fmt);
+	vprintf(fmt, ap);
+	va_end(ap);
+	printf("\n");
 }
 
 static struct {
@@ -659,7 +695,7 @@ main(int argc, char *argv[])
 	int ch, i;
 
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, "m:p:rs:v")) != -1) {
+	while ((ch = getopt(argc, argv, "m:p:qrs:v")) != -1) {
 		switch(ch) {
 		case 'm':
 			if (mediasz > 0)
@@ -677,6 +713,9 @@ main(int argc, char *argv[])
 			break;
 		case 'r':
 			readonly = 1;
+			break;
+		case 'q':
+			quiet = 1;
 			break;
 		case 's':
 			if (secsz > 0)
