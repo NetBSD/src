@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.48 2015/10/29 22:37:15 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.49 2015/11/29 23:38:47 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.48 2015/10/29 22:37:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.49 2015/11/29 23:38:47 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.48 2015/10/29 22:37:15 jmcneill Exp 
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/device.h>
+#include <sys/bitops.h>
+#include <sys/evcnt.h>
 
 #include <dev/sdmmc/sdmmcchip.h>
 #include <dev/sdmmc/sdmmcreg.h>
@@ -1595,9 +1597,20 @@ sdmmc_mem_read_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
 		cmd.c_dmamap = dmap;
 
+	sc->sc_ev_xfer.ev_count++;
+
 	error = sdmmc_mmc_command(sc, &cmd);
-	if (error)
+	if (error) {
+		sc->sc_ev_xfer_error.ev_count++;
 		goto out;
+	}
+
+	const u_int counter = __builtin_ctz(cmd.c_datalen);
+	if (counter >= 9 && counter <= 16) {
+		sc->sc_ev_xfer_aligned[counter - 9].ev_count++;
+	} else {
+		sc->sc_ev_xfer_unaligned.ev_count++;
+	}
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_AUTO_STOP)) {
 		if (cmd.c_opcode == MMC_READ_BLOCK_MULTIPLE) {
@@ -1809,9 +1822,20 @@ sdmmc_mem_write_block_subr(struct sdmmc_function *sf, bus_dmamap_t dmap,
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
 		cmd.c_dmamap = dmap;
 
+	sc->sc_ev_xfer.ev_count++;
+
 	error = sdmmc_mmc_command(sc, &cmd);
-	if (error)
+	if (error) {
+		sc->sc_ev_xfer_error.ev_count++;
 		goto out;
+	}
+
+	const u_int counter = __builtin_ctz(cmd.c_datalen);
+	if (counter >= 9 && counter <= 16) {
+		sc->sc_ev_xfer_aligned[counter - 9].ev_count++;
+	} else {
+		sc->sc_ev_xfer_unaligned.ev_count++;
+	}
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_AUTO_STOP)) {
 		if (cmd.c_opcode == MMC_WRITE_BLOCK_MULTIPLE) {
