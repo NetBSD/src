@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.14 2014/10/03 20:30:06 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.15 2015/11/29 00:14:46 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.14 2014/10/03 20:30:06 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.15 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -335,12 +335,10 @@ cmd_biosboot(int argc, char *argv[])
 	close:
 		close(fd);
 
-		fd = gpt_open(dev);
+		fd = gpt_open(dev, 0);
 	next:
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		if (fd == -1)
 			continue;
-		}
 
 		biosboot(fd);
 

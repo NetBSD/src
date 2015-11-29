@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.11 2014/09/30 17:59:59 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.12 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -236,11 +236,9 @@ cmd_resize(int argc, char *argv[])
 		usage_resize();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		fd = gpt_open(argv[optind++], 0);
+		if (fd == -1)
 			continue;
-		}
 
 		if (alignment % secsz != 0) {
 			warnx("Alignment must be a multiple of sector size;");
