@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_crureg.h,v 1.11 2015/05/29 12:41:14 jmcneill Exp $ */
+/* $NetBSD: amlogic_crureg.h,v 1.12 2015/11/29 16:52:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -166,5 +166,15 @@
 
 #define WATCHDOG_RESET_REG		CBUS_REG(0x2641)
 #define WATCHDOG_RESET_COUNT		__BITS(15,0)
+
+#define ISA_TIMER_MUX_REG		CBUS_REG(0x2650)
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL	__BITS(10,8)
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_SYS	0
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_1US	1
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_10US	2
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_100US	3
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_1MS	4
+
+#define ISA_TIMERE_REG			CBUS_REG(0x2655)
 
 #endif /* _ARM_AMLOGIC_CRUREG_H */

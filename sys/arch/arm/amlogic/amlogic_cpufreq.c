@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_cpufreq.c,v 1.3 2015/03/29 22:49:44 jmcneill Exp $ */
+/* $NetBSD: amlogic_cpufreq.c,v 1.4 2015/11/29 16:52:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.3 2015/03/29 22:49:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.4 2015/11/29 16:52:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,7 +57,7 @@ static u_int (*cpufreq_set_rate)(u_int);
 static u_int (*cpufreq_get_rate)(void);
 static size_t (*cpufreq_get_available)(u_int *, size_t);
 
-#define AMLOGIC_CPUFREQ_MAX	8
+#define AMLOGIC_CPUFREQ_MAX	16
 
 static void	amlogic_cpufreq_cb(void *, void *);
 static int	amlogic_cpufreq_freq_helper(SYSCTLFN_PROTO);
@@ -77,15 +77,17 @@ static size_t	meson8b_cpu_get_available(u_int *, size_t);
 void
 amlogic_cpufreq_bootstrap(void)
 {
+	u_int availfreq[AMLOGIC_CPUFREQ_MAX];
+
 	cpufreq_set_rate = &meson8b_cpu_set_rate;
 	cpufreq_get_rate = &meson8b_cpu_get_rate;
 	cpufreq_get_available = &meson8b_cpu_get_available;
 
-#ifdef CPUFREQ
-	if (cpufreq_set_rate(CPUFREQ) == 0) {
-		amlogic_cpufreq_cb(NULL, NULL);
+	if (cpufreq_get_available(availfreq, AMLOGIC_CPUFREQ_MAX) > 0) {
+		if (cpufreq_set_rate(availfreq[0]) == 0) {
+			amlogic_cpufreq_cb(NULL, NULL);
+		}
 	}
-#endif
 }
 
 void
@@ -204,7 +206,7 @@ amlogic_cpufreq_freq_helper(SYSCTLFN_ARGS)
  * meson8b
  */
 static const u_int meson8b_rates[] = {
-	1512, 1416, 1320, 1200
+	1536, 1488, 1320, 1200, 1008, 816, 720, 600, 504, 408, 312, 192, 96
 };
 
 static size_t
@@ -230,10 +232,8 @@ meson8b_cpu_set_rate(u_int rate)
 	const u_int old_rate = meson8b_cpu_get_rate();
 	u_int new_rate = 0;
 
-	/* Pick the closest rate (nearest 100MHz increment) */
 	for (int i = 0; i < __arraycount(meson8b_rates); i++) {
-		u_int arate = (meson8b_rates[i] + 50) / 100 * 100;
-		if (arate <= rate) {
+		if (meson8b_rates[i] == rate) {
 			new_rate = meson8b_rates[i] * 1000000;
 			break;
 		}
