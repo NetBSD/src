@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.12 2014/10/03 20:30:06 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.13 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -235,11 +235,9 @@ cmd_create(int argc, char *argv[])
 		usage_create();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		fd = gpt_open(argv[optind++], force);
+		if (fd == -1)
 			continue;
-		}
 
 		create(fd);
 

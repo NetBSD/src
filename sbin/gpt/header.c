@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.2 2015/11/16 12:24:13 jnemeth Exp $");
+__RCSID("$NetBSD: header.c,v 1.3 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -134,11 +134,9 @@ cmd_header(int argc, char *argv[])
 		usage_header();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		fd = gpt_open(argv[optind++], 0);
+		if (fd == -1)
 			continue;
-		}
 		header();
 
 		gpt_close(fd);

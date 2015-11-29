@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.8 2014/09/30 17:59:59 christos Exp $");
+__RCSID("$NetBSD: backup.c,v 1.9 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -296,11 +296,9 @@ cmd_backup(int argc, char *argv[])
 		usage_backup();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		fd = gpt_open(argv[optind++], 0);
+		if (fd == -1)
 			continue;
-		}
 		backup();
 
 		gpt_close(fd);
