@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.8 2015/06/16 23:18:55 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.9 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -403,11 +403,9 @@ cmd_restore(int argc, char *argv[])
 		usage_restore();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		fd = gpt_open(argv[optind++], 0);
+		if (fd == -1)
 			continue;
-		}
 
 		restore(fd);
 
