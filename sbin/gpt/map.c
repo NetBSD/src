@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.7 2014/09/29 20:28:57 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.8 2015/11/29 00:15:12 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -42,6 +42,7 @@ __RCSID("$NetBSD: map.c,v 1.7 2014/09/29 20:28:57 christos Exp $");
 #include <stdlib.h>
 
 #include "map.h"
+#include "gpt.h"
 
 int lbawidth;
 
@@ -52,7 +53,7 @@ mkmap(off_t start, off_t size, int type)
 {
 	map_t *m;
 
-	m = malloc(sizeof(*m));
+	m = calloc(1, sizeof(*m));
 	if (m == NULL)
 		return (NULL);
 	m->map_start = start;
@@ -72,11 +73,15 @@ map_add(off_t start, off_t size, int type, void *data)
 	n = mediamap;
 	while (n != NULL && n->map_start + n->map_size <= start)
 		n = n->map_next;
-	if (n == NULL)
+	if (n == NULL) {
+		if (!quiet)
+			warnx("Can't find map");
 		return (NULL);
+	}
 
 	if (n->map_start + n->map_size < start + size) {
-		warnx("error: map entry doesn't fit media");
+		if (!quiet)
+			warnx("map entry doesn't fit media");
 		return (NULL);
 	}
 
@@ -84,8 +89,9 @@ map_add(off_t start, off_t size, int type, void *data)
 		if (n->map_type != MAP_TYPE_UNUSED) {
 			if (n->map_type != MAP_TYPE_MBR_PART ||
 			    type != MAP_TYPE_GPT_PART) {
-				warnx("warning: partition(%llu,%llu) mirrored",
-				    (long long)start, (long long)size);
+				if (!quiet)
+					warnx("partition(%ju,%ju) mirrored",
+					    (uintmax_t)start, (uintmax_t)size);
 			}
 		}
 		n->map_type = type;
@@ -93,13 +99,17 @@ map_add(off_t start, off_t size, int type, void *data)
 		return (n);
 	}
 
-	if (n->map_type != MAP_TYPE_UNUSED) {
-		if (n->map_type != MAP_TYPE_MBR_PART ||
-		    type != MAP_TYPE_GPT_PART) {
-			warnx("error: bogus map");
-			return (0);
-		}
+	
+	switch (n->map_type) {
+	case MAP_TYPE_MBR_PART:
+	case MAP_TYPE_GPT_PART:
 		n->map_type = MAP_TYPE_UNUSED;
+		break;
+	case MAP_TYPE_UNUSED:
+		break;
+	default:
+		warnx("bogus map %#x", n->map_type);
+		return (NULL);
 	}
 
 	m = mkmap(start, size, type);
@@ -334,7 +344,7 @@ map_init(off_t size)
 	char buf[32];
 
 	mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
-	lbawidth = sprintf(buf, "%llu", (long long)size);
+	lbawidth = snprintf(buf, sizeof(buf), "%ju", (uintmax_t)size);
 	if (lbawidth < 5)
 		lbawidth = 5;
 }
