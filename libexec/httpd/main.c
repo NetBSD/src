@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.9 2015/10/28 09:20:15 shm Exp $	*/
+/*	$NetBSD: main.c,v 1.10 2015/11/29 15:26:10 kamil Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -145,7 +145,7 @@ main(int argc, char **argv)
 	 */
 
 	while ((c = getopt(argc, argv,
-	    "C:EHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
+	    "C:EHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:")) != -1) {
 		switch (c) {
 
 		case 'L':
