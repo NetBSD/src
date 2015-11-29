@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_cpufreq.c,v 1.4 2015/11/29 16:52:00 jmcneill Exp $ */
+/* $NetBSD: amlogic_cpufreq.c,v 1.5 2015/11/29 19:16:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.4 2015/11/29 16:52:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.5 2015/11/29 19:16:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,6 +73,9 @@ static size_t	meson8b_cpu_get_available(u_int *, size_t);
 #define CBUS_WRITE(x, v)	\
 	bus_space_write_4(&armv7_generic_bs_tag, amlogic_core_bsh, \
 			  AMLOGIC_CBUS_OFFSET + (x), (v))
+#define CBUS_SET_CLEAR(x, s, c)	\
+        amlogic_reg_set_clear(&armv7_generic_bs_tag, amlogic_core_bsh, \
+                              AMLOGIC_CBUS_OFFSET + (x), (s), (c))
 
 void
 amlogic_cpufreq_bootstrap(void)
@@ -206,7 +209,7 @@ amlogic_cpufreq_freq_helper(SYSCTLFN_ARGS)
  * meson8b
  */
 static const u_int meson8b_rates[] = {
-	1536, 1488, 1320, 1200, 1008, 816, 720, 600, 504, 408, 312, 192, 96
+	1536, 1488, 1320, 1200, 1008, 816, 720, 600, 504, 408, 312
 };
 
 static size_t
@@ -248,9 +251,17 @@ meson8b_cpu_set_rate(u_int rate)
 	uint32_t cntl0 = CBUS_READ(HHI_SYS_CPU_CLK_CNTL0_REG);
 	uint32_t cntl = CBUS_READ(HHI_SYS_PLL_CNTL_REG);
 
-	const u_int new_mul = new_rate / xtal_rate;
-	const u_int new_div = 1;
-	const u_int new_od = 0;
+	u_int new_mul = new_rate / xtal_rate;
+	u_int new_div = 1;
+	u_int new_od = 0;
+
+	if (new_rate < 600 * 1000000) {
+		new_od = 2;
+		new_mul *= 4;
+	} else if (new_rate < 1200 * 1000000) {
+		new_od = 1;
+		new_mul *= 2;
+	}
 
 	/*
 	 * XXX make some assumptions about the state of cpu clk cntl regs
@@ -269,7 +280,22 @@ meson8b_cpu_set_rate(u_int rate)
 	cntl &= ~HHI_SYS_PLL_CNTL_OD;
 	cntl |= __SHIFTIN(new_od, HHI_SYS_PLL_CNTL_OD);
 
-	CBUS_WRITE(HHI_SYS_PLL_CNTL_REG, cntl);
+	/* Switch CPU to XTAL clock */
+	CBUS_SET_CLEAR(HHI_SYS_CPU_CLK_CNTL0_REG, 0,
+	    HHI_SYS_CPU_CLK_CNTL0_CLKSEL);
+
+	delay((100 * old_rate) / xtal_rate);
+
+	/* Update multiplier */
+	do {
+		CBUS_WRITE(HHI_SYS_PLL_CNTL_REG, cntl);
+
+		/* Switch CPU to sys pll */
+		CBUS_SET_CLEAR(HHI_SYS_CPU_CLK_CNTL0_REG,
+		    HHI_SYS_CPU_CLK_CNTL0_CLKSEL, 0);
+
+		delay((500 * old_rate) / new_rate);
+	} while (!(CBUS_READ(HHI_SYS_PLL_CNTL_REG) & HHI_SYS_PLL_CNTL_LOCK));
 
 	if (!cold) {
 		a9tmr_update_freq(amlogic_get_rate_a9periph());
