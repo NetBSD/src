@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.43 2015/11/29 13:24:28 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.44 2015/11/29 13:46:23 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -486,24 +486,38 @@ gpt_open(const char *dev, int flags)
 	}
 
 	if ((sb.st_mode & S_IFMT) != S_IFREG) {
+		if (secsz == 0) {
 #ifdef DIOCGSECTORSIZE
-		if ((secsz == 0 && ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1) ||
-		  (mediasz == 0 && ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1)) {
-			if (!quiet)
-				warn("Cannot get sector/media size for `%s'",
-				    device_name);
-			goto close;
-		}
-#else
-		if (getdisksize(device_name, &secsz, &mediasz) == -1) {
-			if (!quiet)
-				warn("Cannot get sector/media size for `%s'",
-				    device_name);
-			goto close;
-		}
+			if (ioctl(fd, DIOCGSECTORSIZE, &secsz) == -1) {
+				if (!quiet)
+					warn("Cannot get sector size for `%s'",
+					    device_name);
+				goto close;
+			}
 #endif
-		if (secsz == 0 || mediasz == 0)
-			errx(1, "Please specify sector/media size");
+			if (secsz == 0) {
+				if (!quiet)
+					warnx("Sector size for `%s' can't be 0",
+					    device_name);
+				goto close;
+			}
+		}
+		if (mediasz == 0) {
+#ifdef DIOCGMEDIASIZE
+			if (ioctl(fd, DIOCGMEDIASIZE, &mediasz) == -1) {
+				if (!quiet)
+					warn("Cannot get media size for `%s'",
+					device_name);
+				goto close;
+			}
+#endif
+			if (mediasz == 0) {
+				if (!quiet)
+					warnx("Media size for `%s' can't be 0",
+					    device_name);
+				goto close;
+			}
+		}
 	} else {
 		if (secsz == 0)
 			secsz = 512;	/* Fixed size for files. */
