@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.8 2015/11/29 00:15:12 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.9 2015/11/29 00:34:39 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -63,6 +63,26 @@ mkmap(off_t start, off_t size, int type)
 	m->map_index = 0;
 	m->map_data = NULL;
 	return (m);
+}
+
+static const char *maptypes[]  = {
+	"unused",
+	"mbr",
+	"mbr partition",
+	"primary gpt header",
+	"secondary gpt header",
+	"primary gpt table",
+	"secondary gpt table",
+	"gpt partition",
+	"protective mbr",
+};
+
+static const char *
+map_type(int t)
+{
+	if ((size_t)t >= __arraycount(maptypes))
+		return "*unknown*";
+	return maptypes[t];
 }
 
 map_t *
@@ -99,17 +119,14 @@ map_add(off_t start, off_t size, int type, void *data)
 		return (n);
 	}
 
-	
-	switch (n->map_type) {
-	case MAP_TYPE_MBR_PART:
-	case MAP_TYPE_GPT_PART:
+	if (n->map_type != MAP_TYPE_UNUSED) {
+		if (n->map_type != MAP_TYPE_MBR_PART ||
+		    type != MAP_TYPE_GPT_PART) {
+			warnx("bogus map current=%s new=%s",
+			    map_type(n->map_type), map_type(type));
+			return (NULL);
+		}
 		n->map_type = MAP_TYPE_UNUSED;
-		break;
-	case MAP_TYPE_UNUSED:
-		break;
-	default:
-		warnx("bogus map %#x", n->map_type);
-		return (NULL);
 	}
 
 	m = mkmap(start, size, type);
