@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.20 2015/10/06 14:32:51 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.21 2015/11/29 23:38:47 jmcneill Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -27,6 +27,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/callout.h>
+#include <sys/evcnt.h>
 
 #include <sys/bus.h>
 
@@ -266,6 +267,12 @@ struct sdmmc_softc {
 	const char *sc_transfer_mode;	/* current transfer mode */
 
 	callout_t sc_card_detect_ch;	/* polling card insert/remove */
+
+	/* event counters */
+	struct evcnt sc_ev_xfer;	/* xfer count */
+	struct evcnt sc_ev_xfer_aligned[8]; /* aligned xfer counts */
+	struct evcnt sc_ev_xfer_unaligned; /* unaligned xfer count */
+	struct evcnt sc_ev_xfer_error;	/* error xfer count */
 };
 
 /*
