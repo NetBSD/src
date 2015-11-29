@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.22 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.23 2015/11/29 14:12:56 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -90,6 +90,9 @@ show(void)
 		putchar(' ');
 		putchar(' ');
 		switch (m->map_type) {
+		case MAP_TYPE_UNUSED:
+			printf("Unused");
+			break;
 		case MAP_TYPE_MBR:
 			if (m->map_start != 0)
 				printf("Extended ");
@@ -144,6 +147,9 @@ show(void)
 			break;
 		case MAP_TYPE_PMBR:
 			printf("PMBR");
+			break;
+		default:
+			printf("Unknown %#x", m->map_type);
 			break;
 		}
 		putchar('\n');
