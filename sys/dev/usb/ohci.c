@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.28 2015/11/15 13:59:52 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.29 2015/11/29 11:49:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.28 2015/11/15 13:59:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.29 2015/11/29 11:49:47 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2874,17 +2874,6 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	}
 	mutex_exit(&sc->sc_lock);
 
-#if 0
-/* This goes wrong if we are too slow. */
-	if (ohcidebug > 10) {
-		delay(10000);
-		DPRINTF("status=%x", OREAD4(sc, OHCI_COMMAND_STATUS),
-		    0, 0, 0);
-		ohci_dump_ed(sc, sed);
-		ohci_dump_tds(sc, data);
-	}
-#endif
-
 	return USBD_IN_PROGRESS;
 }
 
@@ -3005,20 +2994,6 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-#if 0
-/*
- * This goes horribly wrong, printing thousands of descriptors,
- * because false references are followed due to the fact that the
- * TD is gone.
- */
-	if (ohcidebug > 5) {
-		usb_delay_ms_locked(&sc->sc_bus, 5, &sc->sc_lock);
-		DPRINTF("status=%x", OREAD4(sc, OHCI_COMMAND_STATUS),
-		    0, 0, 0);
-		ohci_dump_ed(sc, sed);
-		ohci_dump_tds(sc, data);
-	}
-#endif
 	mutex_exit(&sc->sc_lock);
 
 	return USBD_IN_PROGRESS;
