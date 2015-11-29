@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.227 2015/01/31 23:10:56 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.228 2015/11/29 06:10:01 pgoyette Exp $
 #	@(#)Makefile.inc	8.3 (Berkeley) 10/24/94
 
 # sys sources
@@ -249,7 +249,7 @@ MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 \
 	getitimer.2 getlogin.2 getpeername.2 getpgrp.2 getpid.2 \
 	getpriority.2 getrlimit.2 getrusage.2 getsid.2 getsockname.2 \
 	getsockopt.2 gettimeofday.2 getuid.2 intro.2 ioctl.2 issetugid.2 \
-	kill.2 kqueue.2 ktrace.2 \
+	kill.2 kqueue.2 ktrace.2 _ksem.2 \
 	lfs_bmapv.2 lfs_markv.2 lfs_segclean.2 lfs_segwait.2 \
 	link.2 listen.2 lseek.2 \
 	_lwp_create.2 _lwp_ctl.2 _lwp_detach.2 _lwp_exit.2 \
@@ -321,6 +321,16 @@ MLINKS+=gettimeofday.2 settimeofday.2
 MLINKS+=getuid.2 geteuid.2
 MLINKS+=intro.2 errno.2
 MLINKS+=kqueue.2 kevent.2
+MLINKS+=_ksem.2 _ksem_open.2
+MLINKS+=_ksem.2 _ksem_close.2
+MLINKS+=_ksem.2 _ksem_init.2
+MLINKS+=_ksem.2 _ksem_destroy.2
+MLINKS+=_ksem.2 _ksem_getvalue.2
+MLINKS+=_ksem.2 _ksem_post.2
+MLINKS+=_ksem.2 _ksem_wait.2
+MLINKS+=_ksem.2 _ksem_timedwait.2
+MLINKS+=_ksem.2 _ksem_trywait.2
+MLINKS+=_ksem.2 _ksem_unlink.2
 MLINKS+=ktrace.2 fktrace.2
 MLINKS+=lseek.2 seek.2
 MLINKS+=link.2 linkat.2

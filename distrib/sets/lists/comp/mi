@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2007 2015/11/24 23:33:46 christos Exp $
+#	$NetBSD: mi,v 1.2008 2015/11/29 06:10:01 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3946,6 +3946,17 @@
 ./usr/share/man/cat2/__quotactl.0		comp-c-catman		.cat
 ./usr/share/man/cat2/__syscall.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_exit.0			comp-c-catman		.cat
+./usr/share/man/cat2/_ksem.0			comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_close.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_destroy.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_getvalue.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_init.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_open.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_post.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_timedwait.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_trywait.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_unlink.0		comp-c-catman		.cat
+./usr/share/man/cat2/_ksem_wait.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_continue.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_create.0		comp-c-catman		.cat
 ./usr/share/man/cat2/_lwp_ctl.0			comp-c-catman		.cat
@@ -10987,6 +10998,17 @@
 ./usr/share/man/html2/__quotactl.html		comp-c-htmlman		html
 ./usr/share/man/html2/__syscall.html		comp-c-htmlman		html
 ./usr/share/man/html2/_exit.html		comp-c-htmlman		html
+./usr/share/man/html2/_ksem.html		comp-c-htmlman		html
+./usr/share/man/html2/_ksem_close.html		comp-c-htmlman		html
+./usr/share/man/html2/_ksem_destroy.html	comp-c-htmlman		html
+./usr/share/man/html2/_ksem_getvalue.html	comp-c-htmlman		html
+./usr/share/man/html2/_ksem_init.html		comp-c-htmlman		html
+./usr/share/man/html2/_ksem_open.html		comp-c-htmlman		html
+./usr/share/man/html2/_ksem_post.html		comp-c-htmlman		html
+./usr/share/man/html2/_ksem_timedwait.html	comp-c-htmlman		html
+./usr/share/man/html2/_ksem_trywait.html	comp-c-htmlman		html
+./usr/share/man/html2/_ksem_unlink.html		comp-c-htmlman		html
+./usr/share/man/html2/_ksem_wait.html		comp-c-htmlman		html
 ./usr/share/man/html2/_lwp_continue.html	comp-c-htmlman		html
 ./usr/share/man/html2/_lwp_create.html		comp-c-htmlman		html
 ./usr/share/man/html2/_lwp_ctl.html		comp-c-htmlman		html
@@ -17791,6 +17813,17 @@
 ./usr/share/man/man2/__quotactl.2		comp-c-man		.man
 ./usr/share/man/man2/__syscall.2		comp-c-man		.man
 ./usr/share/man/man2/_exit.2			comp-c-man		.man
+./usr/share/man/man2/_ksem.2			comp-c-man		.man
+./usr/share/man/man2/_ksem_close.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_destroy.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_getvalue.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_init.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_open.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_post.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_timedwait.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_trywait.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_unlink.2		comp-c-man		.man
+./usr/share/man/man2/_ksem_wait.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_continue.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_create.2		comp-c-man		.man
 ./usr/share/man/man2/_lwp_ctl.2			comp-c-man		.man
