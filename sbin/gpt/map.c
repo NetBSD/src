@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.9 2015/11/29 00:34:39 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.10 2015/11/29 14:12:35 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -65,7 +65,7 @@ mkmap(off_t start, off_t size, int type)
 	return (m);
 }
 
-static const char *maptypes[]  = {
+static const char *maptypes[] = {
 	"unused",
 	"mbr",
 	"mbr partition",
@@ -89,6 +89,14 @@ map_t *
 map_add(off_t start, off_t size, int type, void *data)
 {
 	map_t *m, *n, *p;
+
+#ifdef DEBUG
+	printf("add: %s %#jx %#jx\n", map_type(type), (uintmax_t)start,
+	    (uintmax_t)size);
+	for (n = mediamap; n; n = n->map_next)
+		printf("have: %s %#jx %#jx\n", map_type(n->map_type),
+		    (uintmax_t)n->map_start, (uintmax_t)n->map_size);
+#endif
 
 	n = mediamap;
 	while (n != NULL && n->map_start + n->map_size <= start)
