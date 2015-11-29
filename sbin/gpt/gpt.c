@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.44 2015/11/29 13:46:23 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.45 2015/11/29 14:03:35 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -467,6 +467,7 @@ gpt_open(const char *dev, int flags)
 {
 	struct stat sb;
 	int fd, mode, found;
+	off_t devsz;
 
 	mode = readonly ? O_RDONLY : O_RDWR|O_EXCL;
 
@@ -536,25 +537,26 @@ gpt_open(const char *dev, int flags)
 	 * user data. Let's catch this extreme border case here so that
 	 * we don't have to worry about it later.
 	 */
-	if (mediasz / secsz < 6) {
+	devsz = mediasz / secsz;
+	if (devsz < 6) {
 		if (!quiet)
-			warnx("Need 6 sectors on '%s' we have %llu",
-			    device_name, (unsigned long long)(mediasz / secsz));
+			warnx("Need 6 sectors on '%s' we have %ju",
+			    device_name, (uintmax_t)devsz);
 		goto close;
 	}
 
 	if (verbose) {
 		gpt_msg("mediasize=%ju; sectorsize=%u; blocks=%ju",
-		    (uintmax_t)mediasz, secsz, (uintmax_t)(mediasz / secsz));
+		    (uintmax_t)mediasz, secsz, (uintmax_t)devsz);
 	}
 
-	map_init(mediasz / secsz);
+	map_init(devsz);
 
 	if (gpt_mbr(fd, 0LL) == -1)
 		goto close;
 	if ((found = gpt_gpt(fd, 1LL, 1)) == -1)
 		goto close;
-	if (gpt_gpt(fd, mediasz / secsz - 1LL, found) == -1)
+	if (gpt_gpt(fd, devsz - 1LL, found) == -1)
 		goto close;
 
 	return (fd);
