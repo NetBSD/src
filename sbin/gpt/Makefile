@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.14 2015/11/03 02:19:24 jnemeth Exp $
+# $NetBSD: Makefile,v 1.15 2015/11/29 15:32:46 christos Exp $
 # $FreeBSD: src/sbin/gpt/Makefile,v 1.7 2005/09/01 02:49:20 marcel Exp $
 
 PROG=	gpt
@@ -11,16 +11,6 @@ MAN=	gpt.8
 SRCS+= backup.c restore.c
 LDADD+=	-lprop -lutil
 DPADD+= ${LIBPROP} ${LIBUTIL}
-
-.if ${USE_DRVCTL:Uno} == "yes"
-CPPFLAGS+=-DUSE_DRVCTL
-SRCS+=drvctl.c
-.else
-.PATH: ${.CURDIR}/../fsck
-CPPFLAGS+=-I${.CURDIR}/../fsck
-SRCS+=partutil.c
 .endif
-.endif
-
 
 .include <bsd.prog.mk>
