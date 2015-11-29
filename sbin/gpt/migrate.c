@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.21 2014/10/03 20:30:06 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.22 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -459,11 +459,9 @@ cmd_migrate(int argc, char *argv[])
 		usage_migrate();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		fd = gpt_open(argv[optind++], 0);
+		if (fd == -1)
 			continue;
-		}
 
 		migrate(fd);
 
