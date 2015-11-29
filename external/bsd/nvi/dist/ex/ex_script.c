@@ -1,4 +1,4 @@
-/*	$NetBSD: ex_script.c,v 1.5 2015/11/28 13:20:03 christos Exp $ */
+/*	$NetBSD: ex_script.c,v 1.6 2015/11/29 17:09:33 christos Exp $ */
 /*-
  * Copyright (c) 1992, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -19,7 +19,7 @@
 static const char sccsid[] = "Id: ex_script.c,v 10.38 2001/06/25 15:19:19 skimo Exp  (Berkeley) Date: 2001/06/25 15:19:19 ";
 #endif /* not lint */
 #else
-__RCSID("$NetBSD: ex_script.c,v 1.5 2015/11/28 13:20:03 christos Exp $");
+__RCSID("$NetBSD: ex_script.c,v 1.6 2015/11/29 17:09:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -294,7 +294,7 @@ sscr_exec(SCR *sp, db_recno_t lno)
 	INT2CHAR(sp, ip, ilen, p, len);
 
 	/* Delete any prompt. */
-	if (sc->sh_prompt != NULL && strnstr(p, sc->sh_prompt, len) == p) {
+	if (strnstr(p, sc->sh_prompt, len) == p) {
 		len -= sc->sh_prompt_len;
 		if (len == 0) {
 empty:			msgq(sp, M_BERR, "151|No command to execute");
@@ -456,7 +456,7 @@ more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 
 	/* Append the lines into the file. */
 	for (p = t = bp; p < endp; ++p) {
-		if (p == bp + sizeof(bp) - 1 || *p == '\r' || *p == '\n') {
+		if (*p == '\r' || *p == '\n') {
 			len = p - t;
 			if (CHAR2INT(sp, t, len, ip, ilen) ||
 			    db_append(sp, 1, lno++, ip, ilen))
@@ -464,37 +464,45 @@ more:	switch (nr = read(sc->sh_master, endp, bp + sizeof(bp) - endp)) {
 			t = p + 1;
 		}
 	}
-	if (p > t) {
-		len = p - t;
-		/*
-		 * If the last thing from the shell isn't another prompt, wait
-		 * up to 1/10 of a second for more stuff to show up, so that
-		 * we don't break the output into two separate lines.  Don't
-		 * want to hang indefinitely because some program is hanging,
-		 * confused the shell, or whatever.
-		 */
-		if (len != sc->sh_prompt_len ||
-		    strnstr(t, sc->sh_prompt, len) == NULL) {
-			tv.tv_sec = 0;
-			tv.tv_usec = 100000;
-			FD_ZERO(&rdfd);
-			FD_SET(sc->sh_master, &rdfd);
-			if (select(sc->sh_master + 1,
-			    &rdfd, NULL, NULL, &tv) == 1) {
+	/*
+	 * If the last thing from the shell isn't another prompt, wait up to
+	 * 1/10 of a second for more stuff to show up, so that we don't break
+	 * the output into two separate lines.  Don't want to hang indefinitely
+	 * because some program is hanging, confused the shell, or whatever.
+	 * Note that sc->sh_prompt can be NULL here.
+	 */
+	len = p - t;
+	if (sc->sh_prompt == NULL || len != sc->sh_prompt_len ||
+	    strnstr(p, sc->sh_prompt, len) == NULL) {
+		tv.tv_sec = 0;
+		tv.tv_usec = 100000;
+		FD_ZERO(&rdfd);
+		FD_SET(sc->sh_master, &rdfd);
+		if (select(sc->sh_master + 1, &rdfd, NULL, NULL, &tv) == 1) {
+			if (len == sizeof(bp)) {
+				if (CHAR2INT(sp, t, len, ip, ilen) ||
+				    db_append(sp, 1, lno++, ip, ilen))
+					return (1);
+				endp = bp;
+			} else {
 				memmove(bp, t, len);
 				endp = bp + len;
-				goto more;
 			}
+			goto more;
 		}
-		if (sscr_setprompt(sp, t, len) ||
-		    CHAR2INT(sp, t, len, ip, ilen) ||
-		    db_append(sp, 1, lno++, ip, ilen))
+		if (sscr_setprompt(sp, t, len))
 			return (1);
 	}
 
-	/* The cursor moves to EOF. */
+	/* Append the remains into the file, and the cursor moves to EOF. */
+	if (len > 0) {
+		if (CHAR2INT(sp, t, len, ip, ilen) ||
+		    db_append(sp, 1, lno++, ip, ilen))
+			return (1);
+		sp->cno = ilen - 1;
+	} else
+		sp->cno = 0;
 	sp->lno = lno;
-	sp->cno = ilen ? ilen - 1 : 0;
 	return (vs_refresh(sp, 1));
 }
 
