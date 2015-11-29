@@ -1,4 +1,4 @@
-.\"	$NetBSD: _ksem.2,v 1.1 2015/11/29 06:10:01 pgoyette Exp $
+.\"	$NetBSD: _ksem.2,v 1.2 2015/11/29 21:38:10 wiz Exp $
 .\"
 .\" Copyright (c) 2015 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -44,7 +44,7 @@
 .In sys/ksem.h
 .Ft int
 .Fn _ksem_init "int value" "intptr_t *idp"
-.Ft int     
+.Ft int
 .Fn _ksem_open "const char *name" "int oflag" "mode_t mode" "unsigned int value" "intptr_t *idp"
 .Ft int
 .Fn _ksem_close "intptr_t id"
