@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.6 2014/09/29 21:04:34 christos Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.7 2015/11/29 00:14:46 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,8 +49,9 @@ __RCSID("$NetBSD: destroy.c,v 1.6 2014/09/29 21:04:34 christos Exp $");
 #include "gpt.h"
 
 static int recoverable;
+static int force;
 
-const char destroymsg[] = "destroy [-r] device ...";
+const char destroymsg[] = "destroy [-rf] device ...";
 
 __dead static void
 usage_destroy(void)
@@ -95,8 +96,11 @@ cmd_destroy(int argc, char *argv[])
 {
 	int ch, fd;
 
-	while ((ch = getopt(argc, argv, "r")) != -1) {
+	while ((ch = getopt(argc, argv, "fr")) != -1) {
 		switch(ch) {
+		case 'f':
+			force = 1;
+			break;
 		case 'r':
 			recoverable = 1;
 			break;
@@ -109,11 +113,9 @@ cmd_destroy(int argc, char *argv[])
 		usage_destroy();
 
 	while (optind < argc) {
-		fd = gpt_open(argv[optind++]);
-		if (fd == -1) {
-			warn("unable to open device '%s'", device_name);
+		fd = gpt_open(argv[optind++], force);
+		if (fd == -1)
 			continue;
-		}
 
 		destroy(fd);
 
