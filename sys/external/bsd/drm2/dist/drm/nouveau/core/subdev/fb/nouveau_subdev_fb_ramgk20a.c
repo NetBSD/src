@@ -146,8 +146,9 @@ fail3: __unused	bus_dmamem_unmap(dmat, mem->cpuaddr, dmasize);
 		goto fail2;
 	}
 
-	nv_debug(pfb, "alloc size: 0x%x, align: 0x%x, paddr: %p, vaddr: %p\n",
-		 npages << PAGE_SHIFT, align, &mem->handle, mem->cpuaddr);
+	nv_debug(pfb, "alloc size: 0x%x, align: 0x%x, paddr: %"PRIxPADDR
+	   ", vaddr: %p\n", npages << PAGE_SHIFT, align,
+	   mem->base.pages->dm_segs[0].ds_addr, mem->cpuaddr);
 
 	mem->dmasize = dmasize;
 	mem->base.offset = (u64)mem->base.pages->dm_segs[0].ds_addr;
