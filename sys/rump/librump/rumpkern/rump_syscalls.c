@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.c,v 1.118 2015/11/30 22:48:54 pgoyette Exp $ */
+/* $NetBSD: rump_syscalls.c,v 1.119 2015/11/30 23:28:31 pgoyette Exp $ */
 
 /*
  * System call vector and marshalling for rump.
@@ -15,7 +15,7 @@
 
 #ifdef __NetBSD__
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.118 2015/11/30 22:48:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_syscalls.c,v 1.119 2015/11/30 23:28:31 pgoyette Exp $");
 
 #include <sys/fstypes.h>
 #include <sys/proc.h>
@@ -77,7 +77,7 @@ rump___sysimpl_read(int fd, void * buf, size_t nbyte)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, nbyte) = nbyte;
 
-	error = rsys_syscall(SYS_read, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_read, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -107,7 +107,7 @@ rump___sysimpl_write(int fd, const void * buf, size_t nbyte)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, nbyte) = nbyte;
 
-	error = rsys_syscall(SYS_write, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_write, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -137,7 +137,7 @@ rump___sysimpl_open(const char * path, int flags, mode_t mode)
 	SPARG(&callarg, flags) = flags;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_open, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_open, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -165,7 +165,7 @@ rump___sysimpl_close(int fd)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
-	error = rsys_syscall(SYS_close, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_close, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -194,7 +194,7 @@ rump___sysimpl_link(const char * path, const char * link)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, link) = link;
 
-	error = rsys_syscall(SYS_link, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_link, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -222,7 +222,7 @@ rump___sysimpl_unlink(const char * path)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
-	error = rsys_syscall(SYS_unlink, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_unlink, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -250,7 +250,7 @@ rump___sysimpl_chdir(const char * path)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
-	error = rsys_syscall(SYS_chdir, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_chdir, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -278,7 +278,7 @@ rump___sysimpl_fchdir(int fd)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
-	error = rsys_syscall(SYS_fchdir, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fchdir, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -309,7 +309,7 @@ rump___sysimpl_mknod(const char * path, mode_t mode, uint32_t dev)
 	SPARG(&callarg, mode) = mode;
 	SPARG(&callarg, dev) = dev;
 
-	error = rsys_syscall(SYS_compat_50_mknod, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_mknod, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -339,7 +339,7 @@ rump___sysimpl_chmod(const char * path, mode_t mode)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_chmod, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_chmod, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -369,7 +369,7 @@ rump___sysimpl_chown(const char * path, uid_t uid, gid_t gid)
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
 
-	error = rsys_syscall(SYS_chown, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_chown, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -392,7 +392,7 @@ rump___sysimpl_getpid(void )
 	register_t retval[2];
 	pid_t rv = -1;
 
-	rsys_syscall(SYS_getpid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getpid, NULL, 0, retval);
 	if (sizeof(pid_t) > sizeof(register_t))
 		rv = *(pid_t *)retval;
 	else
@@ -418,7 +418,7 @@ rump___sysimpl_unmount(const char * path, int flags)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_unmount, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_unmount, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -446,7 +446,7 @@ rump___sysimpl_setuid(uid_t uid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, uid) = uid;
 
-	error = rsys_syscall(SYS_setuid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setuid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -469,7 +469,7 @@ rump___sysimpl_getuid(void )
 	register_t retval[2];
 	uid_t rv = -1;
 
-	rsys_syscall(SYS_getuid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getuid, NULL, 0, retval);
 	if (sizeof(uid_t) > sizeof(register_t))
 		rv = *(uid_t *)retval;
 	else
@@ -489,7 +489,7 @@ rump___sysimpl_geteuid(void )
 	register_t retval[2];
 	uid_t rv = -1;
 
-	rsys_syscall(SYS_geteuid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_geteuid, NULL, 0, retval);
 	if (sizeof(uid_t) > sizeof(register_t))
 		rv = *(uid_t *)retval;
 	else
@@ -516,7 +516,7 @@ rump___sysimpl_recvmsg(int s, struct msghdr * msg, int flags)
 	SPARG(&callarg, msg) = msg;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_recvmsg, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_recvmsg, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -546,7 +546,7 @@ rump___sysimpl_sendmsg(int s, const struct msghdr * msg, int flags)
 	SPARG(&callarg, msg) = msg;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_sendmsg, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_sendmsg, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -579,7 +579,7 @@ rump___sysimpl_recvfrom(int s, void * buf, size_t len, int flags, struct sockadd
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, fromlenaddr) = fromlenaddr;
 
-	error = rsys_syscall(SYS_recvfrom, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_recvfrom, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -609,7 +609,7 @@ rump___sysimpl_accept(int s, struct sockaddr * name, socklen_t * anamelen)
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, anamelen) = anamelen;
 
-	error = rsys_syscall(SYS_accept, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_accept, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -639,7 +639,7 @@ rump___sysimpl_getpeername(int fdes, struct sockaddr * asa, socklen_t * alen)
 	SPARG(&callarg, asa) = asa;
 	SPARG(&callarg, alen) = alen;
 
-	error = rsys_syscall(SYS_getpeername, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getpeername, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -669,7 +669,7 @@ rump___sysimpl_getsockname(int fdes, struct sockaddr * asa, socklen_t * alen)
 	SPARG(&callarg, asa) = asa;
 	SPARG(&callarg, alen) = alen;
 
-	error = rsys_syscall(SYS_getsockname, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getsockname, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -698,7 +698,7 @@ rump___sysimpl_access(const char * path, int flags)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_access, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_access, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -727,7 +727,7 @@ rump___sysimpl_chflags(const char * path, u_long flags)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_chflags, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_chflags, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -756,7 +756,7 @@ rump___sysimpl_fchflags(int fd, u_long flags)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_fchflags, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fchflags, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -778,7 +778,7 @@ rump___sysimpl_sync(void )
 {
 	register_t retval[2];
 
-	rsys_syscall(SYS_sync, NULL, 0, retval);
+	(void)rsys_syscall(SYS_sync, NULL, 0, retval);
 }
 #ifdef RUMP_KERNEL_IS_LIBC
 __weak_alias(sync,rump___sysimpl_sync);
@@ -793,7 +793,7 @@ rump___sysimpl_getppid(void )
 	register_t retval[2];
 	pid_t rv = -1;
 
-	rsys_syscall(SYS_getppid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getppid, NULL, 0, retval);
 	if (sizeof(pid_t) > sizeof(register_t))
 		rv = *(pid_t *)retval;
 	else
@@ -818,7 +818,7 @@ rump___sysimpl_dup(int fd)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
-	error = rsys_syscall(SYS_dup, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_dup, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -841,7 +841,7 @@ rump___sysimpl_getegid(void )
 	register_t retval[2];
 	gid_t rv = -1;
 
-	rsys_syscall(SYS_getegid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getegid, NULL, 0, retval);
 	if (sizeof(gid_t) > sizeof(register_t))
 		rv = *(gid_t *)retval;
 	else
@@ -869,7 +869,7 @@ rump___sysimpl_ktrace(const char * fname, int ops, int facs, pid_t pid)
 	SPARG(&callarg, facs) = facs;
 	SPARG(&callarg, pid) = pid;
 
-	error = rsys_syscall(SYS_ktrace, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_ktrace, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -892,7 +892,7 @@ rump___sysimpl_getgid(void )
 	register_t retval[2];
 	gid_t rv = -1;
 
-	rsys_syscall(SYS_getgid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_getgid, NULL, 0, retval);
 	if (sizeof(gid_t) > sizeof(register_t))
 		rv = *(gid_t *)retval;
 	else
@@ -918,7 +918,7 @@ rump___sysimpl___getlogin(char * namebuf, size_t namelen)
 	SPARG(&callarg, namebuf) = namebuf;
 	SPARG(&callarg, namelen) = namelen;
 
-	error = rsys_syscall(SYS___getlogin, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___getlogin, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -946,7 +946,7 @@ rump___sysimpl___setlogin(const char * namebuf)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, namebuf) = namebuf;
 
-	error = rsys_syscall(SYS___setlogin, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___setlogin, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -976,7 +976,7 @@ rump___sysimpl_ioctl(int fd, u_long com, void * data)
 	SPARG(&callarg, com) = com;
 	SPARG(&callarg, data) = data;
 
-	error = rsys_syscall(SYS_ioctl, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_ioctl, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1004,7 +1004,7 @@ rump___sysimpl_revoke(const char * path)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
-	error = rsys_syscall(SYS_revoke, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_revoke, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1033,7 +1033,7 @@ rump___sysimpl_symlink(const char * path, const char * link)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, link) = link;
 
-	error = rsys_syscall(SYS_symlink, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_symlink, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1063,7 +1063,7 @@ rump___sysimpl_readlink(const char * path, char * buf, size_t count)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, count) = count;
 
-	error = rsys_syscall(SYS_readlink, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_readlink, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -1091,7 +1091,7 @@ rump___sysimpl_umask(mode_t newmask)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, newmask) = newmask;
 
-	error = rsys_syscall(SYS_umask, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_umask, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(mode_t) > sizeof(register_t))
@@ -1119,7 +1119,7 @@ rump___sysimpl_chroot(const char * path)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
-	error = rsys_syscall(SYS_chroot, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_chroot, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1148,7 +1148,7 @@ rump___sysimpl_getgroups(int gidsetsize, gid_t * gidset)
 	SPARG(&callarg, gidsetsize) = gidsetsize;
 	SPARG(&callarg, gidset) = gidset;
 
-	error = rsys_syscall(SYS_getgroups, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getgroups, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1177,7 +1177,7 @@ rump___sysimpl_setgroups(int gidsetsize, const gid_t * gidset)
 	SPARG(&callarg, gidsetsize) = gidsetsize;
 	SPARG(&callarg, gidset) = gidset;
 
-	error = rsys_syscall(SYS_setgroups, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setgroups, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1201,7 +1201,7 @@ rump___sysimpl_getpgrp(void )
 	int error = 0;
 	int rv = -1;
 
-	error = rsys_syscall(SYS_getpgrp, NULL, 0, retval);
+	error = (void)rsys_syscall(SYS_getpgrp, NULL, 0, retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1230,7 +1230,7 @@ rump___sysimpl_setpgid(pid_t pid, pid_t pgid)
 	SPARG(&callarg, pid) = pid;
 	SPARG(&callarg, pgid) = pgid;
 
-	error = rsys_syscall(SYS_setpgid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setpgid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1259,7 +1259,7 @@ rump___sysimpl_dup2(int from, int to)
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, to) = to;
 
-	error = rsys_syscall(SYS_dup2, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_dup2, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1289,7 +1289,7 @@ rump___sysimpl_fcntl(int fd, int cmd, void * arg)
 	SPARG(&callarg, cmd) = cmd;
 	SPARG(&callarg, arg) = arg;
 
-	error = rsys_syscall(SYS_fcntl, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fcntl, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1322,7 +1322,7 @@ rump___sysimpl_select(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct time
 	SPARG(&callarg, ex) = ex;
 	SPARG(&callarg, tv) = (struct timeval50 *)tv;
 
-	error = rsys_syscall(SYS_compat_50_select, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_select, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1351,7 +1351,7 @@ rump___sysimpl_fsync(int fd)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
-	error = rsys_syscall(SYS_fsync, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fsync, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1381,7 +1381,7 @@ rump___sysimpl_connect(int s, const struct sockaddr * name, socklen_t namelen)
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, namelen) = namelen;
 
-	error = rsys_syscall(SYS_connect, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_connect, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1411,7 +1411,7 @@ rump___sysimpl_bind(int s, const struct sockaddr * name, socklen_t namelen)
 	SPARG(&callarg, name) = name;
 	SPARG(&callarg, namelen) = namelen;
 
-	error = rsys_syscall(SYS_bind, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_bind, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1443,7 +1443,7 @@ rump___sysimpl_setsockopt(int s, int level, int name, const void * val, socklen_
 	SPARG(&callarg, val) = val;
 	SPARG(&callarg, valsize) = valsize;
 
-	error = rsys_syscall(SYS_setsockopt, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setsockopt, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1472,7 +1472,7 @@ rump___sysimpl_listen(int s, int backlog)
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, backlog) = backlog;
 
-	error = rsys_syscall(SYS_listen, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_listen, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1504,7 +1504,7 @@ rump___sysimpl_getsockopt(int s, int level, int name, void * val, socklen_t * av
 	SPARG(&callarg, val) = val;
 	SPARG(&callarg, avalsize) = avalsize;
 
-	error = rsys_syscall(SYS_getsockopt, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getsockopt, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1534,7 +1534,7 @@ rump___sysimpl_readv(int fd, const struct iovec * iovp, int iovcnt)
 	SPARG(&callarg, iovp) = iovp;
 	SPARG(&callarg, iovcnt) = iovcnt;
 
-	error = rsys_syscall(SYS_readv, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_readv, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -1564,7 +1564,7 @@ rump___sysimpl_writev(int fd, const struct iovec * iovp, int iovcnt)
 	SPARG(&callarg, iovp) = iovp;
 	SPARG(&callarg, iovcnt) = iovcnt;
 
-	error = rsys_syscall(SYS_writev, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_writev, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -1594,7 +1594,7 @@ rump___sysimpl_fchown(int fd, uid_t uid, gid_t gid)
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
 
-	error = rsys_syscall(SYS_fchown, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fchown, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1623,7 +1623,7 @@ rump___sysimpl_fchmod(int fd, mode_t mode)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_fchmod, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fchmod, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1652,7 +1652,7 @@ rump___sysimpl_setreuid(uid_t ruid, uid_t euid)
 	SPARG(&callarg, ruid) = ruid;
 	SPARG(&callarg, euid) = euid;
 
-	error = rsys_syscall(SYS_setreuid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setreuid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1681,7 +1681,7 @@ rump___sysimpl_setregid(gid_t rgid, gid_t egid)
 	SPARG(&callarg, rgid) = rgid;
 	SPARG(&callarg, egid) = egid;
 
-	error = rsys_syscall(SYS_setregid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setregid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1710,7 +1710,7 @@ rump___sysimpl_rename(const char * from, const char * to)
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, to) = to;
 
-	error = rsys_syscall(SYS_rename, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_rename, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1739,7 +1739,7 @@ rump___sysimpl_flock(int fd, int how)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, how) = how;
 
-	error = rsys_syscall(SYS_flock, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_flock, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1768,7 +1768,7 @@ rump___sysimpl_mkfifo(const char * path, mode_t mode)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_mkfifo, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_mkfifo, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1801,7 +1801,7 @@ rump___sysimpl_sendto(int s, const void * buf, size_t len, int flags, const stru
 	SPARG(&callarg, to) = to;
 	SPARG(&callarg, tolen) = tolen;
 
-	error = rsys_syscall(SYS_sendto, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_sendto, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -1830,7 +1830,7 @@ rump___sysimpl_shutdown(int s, int how)
 	SPARG(&callarg, s) = s;
 	SPARG(&callarg, how) = how;
 
-	error = rsys_syscall(SYS_shutdown, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_shutdown, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1861,7 +1861,7 @@ rump___sysimpl_socketpair(int domain, int type, int protocol, int * rsv)
 	SPARG(&callarg, protocol) = protocol;
 	SPARG(&callarg, rsv) = rsv;
 
-	error = rsys_syscall(SYS_socketpair, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_socketpair, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1890,7 +1890,7 @@ rump___sysimpl_mkdir(const char * path, mode_t mode)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_mkdir, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_mkdir, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1918,7 +1918,7 @@ rump___sysimpl_rmdir(const char * path)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, path) = path;
 
-	error = rsys_syscall(SYS_rmdir, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_rmdir, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1948,7 +1948,7 @@ rump___sysimpl_utimes(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
-	error = rsys_syscall(SYS_compat_50_utimes, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_utimes, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -1973,7 +1973,7 @@ rump___sysimpl_setsid(void )
 	int error = 0;
 	int rv = -1;
 
-	error = rsys_syscall(SYS_setsid, NULL, 0, retval);
+	error = (void)rsys_syscall(SYS_setsid, NULL, 0, retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2002,7 +2002,7 @@ rump___sysimpl_nfssvc(int flag, void * argp)
 	SPARG(&callarg, flag) = flag;
 	SPARG(&callarg, argp) = argp;
 
-	error = rsys_syscall(SYS_nfssvc, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_nfssvc, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2034,7 +2034,7 @@ rump___sysimpl_pread(int fd, void * buf, size_t nbyte, off_t offset)
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, offset) = offset;
 
-	error = rsys_syscall(SYS_pread, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_pread, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -2066,7 +2066,7 @@ rump___sysimpl_pwrite(int fd, const void * buf, size_t nbyte, off_t offset)
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, offset) = offset;
 
-	error = rsys_syscall(SYS_pwrite, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_pwrite, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -2094,7 +2094,7 @@ rump___sysimpl_setgid(gid_t gid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, gid) = gid;
 
-	error = rsys_syscall(SYS_setgid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setgid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2122,7 +2122,7 @@ rump___sysimpl_setegid(gid_t egid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, egid) = egid;
 
-	error = rsys_syscall(SYS_setegid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setegid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2150,7 +2150,7 @@ rump___sysimpl_seteuid(uid_t euid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, euid) = euid;
 
-	error = rsys_syscall(SYS_seteuid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_seteuid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2179,7 +2179,7 @@ rump___sysimpl_pathconf(const char * path, int name)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 
-	error = rsys_syscall(SYS_pathconf, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_pathconf, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(long) > sizeof(register_t))
@@ -2208,7 +2208,7 @@ rump___sysimpl_fpathconf(int fd, int name)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, name) = name;
 
-	error = rsys_syscall(SYS_fpathconf, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fpathconf, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(long) > sizeof(register_t))
@@ -2237,7 +2237,7 @@ rump___sysimpl_getrlimit(int which, struct rlimit * rlp)
 	SPARG(&callarg, which) = which;
 	SPARG(&callarg, rlp) = rlp;
 
-	error = rsys_syscall(SYS_getrlimit, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getrlimit, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2266,7 +2266,7 @@ rump___sysimpl_setrlimit(int which, const struct rlimit * rlp)
 	SPARG(&callarg, which) = which;
 	SPARG(&callarg, rlp) = rlp;
 
-	error = rsys_syscall(SYS_setrlimit, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setrlimit, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2297,7 +2297,7 @@ rump___sysimpl_lseek(int fd, off_t offset, int whence)
 	SPARG(&callarg, offset) = offset;
 	SPARG(&callarg, whence) = whence;
 
-	error = rsys_syscall(SYS_lseek, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lseek, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(off_t) > sizeof(register_t))
@@ -2327,7 +2327,7 @@ rump___sysimpl_truncate(const char * path, off_t length)
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, length) = length;
 
-	error = rsys_syscall(SYS_truncate, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_truncate, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2357,7 +2357,7 @@ rump___sysimpl_ftruncate(int fd, off_t length)
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, length) = length;
 
-	error = rsys_syscall(SYS_ftruncate, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_ftruncate, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2390,7 +2390,7 @@ rump___sysimpl___sysctl(const int * name, u_int namelen, void * oldv, size_t * o
 	SPARG(&callarg, newv) = newv;
 	SPARG(&callarg, newlen) = newlen;
 
-	error = rsys_syscall(SYS___sysctl, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___sysctl, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2420,7 +2420,7 @@ rump___sysimpl_futimes(int fd, const struct timeval * tptr)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
-	error = rsys_syscall(SYS_compat_50_futimes, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_futimes, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2449,7 +2449,7 @@ rump___sysimpl_getpgid(pid_t pid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, pid) = pid;
 
-	error = rsys_syscall(SYS_getpgid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getpgid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(pid_t) > sizeof(register_t))
@@ -2478,7 +2478,7 @@ rump___sysimpl_reboot(int opt, char * bootstr)
 	SPARG(&callarg, opt) = opt;
 	SPARG(&callarg, bootstr) = bootstr;
 
-	error = rsys_syscall(SYS_reboot, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_reboot, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2508,7 +2508,7 @@ rump___sysimpl_poll(struct pollfd * fds, u_int nfds, int timeout)
 	SPARG(&callarg, nfds) = nfds;
 	SPARG(&callarg, timeout) = timeout;
 
-	error = rsys_syscall(SYS_poll, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_poll, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2538,7 +2538,7 @@ rump___sysimpl_timer_create(clockid_t clock_id, struct sigevent * evp, timer_t *
 	SPARG(&callarg, evp) = evp;
 	SPARG(&callarg, timerid) = timerid;
 
-	error = rsys_syscall(SYS_timer_create, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_timer_create, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2566,7 +2566,7 @@ rump___sysimpl_timer_delete(timer_t timerid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, timerid) = timerid;
 
-	error = rsys_syscall(SYS_timer_delete, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_timer_delete, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2594,7 +2594,7 @@ rump___sysimpl_timer_getoverrun(timer_t timerid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, timerid) = timerid;
 
-	error = rsys_syscall(SYS_timer_getoverrun, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_timer_getoverrun, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2622,7 +2622,7 @@ rump___sysimpl_fdatasync(int fd)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
-	error = rsys_syscall(SYS_fdatasync, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fdatasync, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2651,7 +2651,7 @@ rump___sysimpl_modctl(int cmd, void * arg)
 	SPARG(&callarg, cmd) = cmd;
 	SPARG(&callarg, arg) = arg;
 
-	error = rsys_syscall(SYS_modctl, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_modctl, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2680,7 +2680,7 @@ rump___sysimpl__ksem_init(unsigned int value, intptr_t * idp)
 	SPARG(&callarg, value) = value;
 	SPARG(&callarg, idp) = idp;
 
-	error = rsys_syscall(SYS__ksem_init, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_init, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2712,7 +2712,7 @@ rump___sysimpl__ksem_open(const char * name, int oflag, mode_t mode, unsigned in
 	SPARG(&callarg, value) = value;
 	SPARG(&callarg, idp) = idp;
 
-	error = rsys_syscall(SYS__ksem_open, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_open, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2740,7 +2740,7 @@ rump___sysimpl__ksem_unlink(const char * name)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, name) = name;
 
-	error = rsys_syscall(SYS__ksem_unlink, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_unlink, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2768,7 +2768,7 @@ rump___sysimpl__ksem_close(intptr_t id)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
-	error = rsys_syscall(SYS__ksem_close, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_close, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2796,7 +2796,7 @@ rump___sysimpl__ksem_post(intptr_t id)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
-	error = rsys_syscall(SYS__ksem_post, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_post, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2824,7 +2824,7 @@ rump___sysimpl__ksem_wait(intptr_t id)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
-	error = rsys_syscall(SYS__ksem_wait, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_wait, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2852,7 +2852,7 @@ rump___sysimpl__ksem_trywait(intptr_t id)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
-	error = rsys_syscall(SYS__ksem_trywait, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_trywait, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2881,7 +2881,7 @@ rump___sysimpl__ksem_getvalue(intptr_t id, unsigned int * value)
 	SPARG(&callarg, id) = id;
 	SPARG(&callarg, value) = value;
 
-	error = rsys_syscall(SYS__ksem_getvalue, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_getvalue, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2909,7 +2909,7 @@ rump___sysimpl__ksem_destroy(intptr_t id)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, id) = id;
 
-	error = rsys_syscall(SYS__ksem_destroy, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_destroy, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2938,7 +2938,7 @@ rump___sysimpl__ksem_timedwait(intptr_t id, const struct timespec * abstime)
 	SPARG(&callarg, id) = id;
 	SPARG(&callarg, abstime) = abstime;
 
-	error = rsys_syscall(SYS__ksem_timedwait, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS__ksem_timedwait, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2967,7 +2967,7 @@ rump___sysimpl___posix_rename(const char * from, const char * to)
 	SPARG(&callarg, from) = from;
 	SPARG(&callarg, to) = to;
 
-	error = rsys_syscall(SYS___posix_rename, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___posix_rename, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -2996,7 +2996,7 @@ rump___sysimpl_lchmod(const char * path, mode_t mode)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_lchmod, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lchmod, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3026,7 +3026,7 @@ rump___sysimpl_lchown(const char * path, uid_t uid, gid_t gid)
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
 
-	error = rsys_syscall(SYS_lchown, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lchown, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3056,7 +3056,7 @@ rump___sysimpl_lutimes(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = (const struct timeval50 *)tptr;
 
-	error = rsys_syscall(SYS_compat_50_lutimes, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_lutimes, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3087,7 +3087,7 @@ rump___sysimpl___posix_chown(const char * path, uid_t uid, gid_t gid)
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
 
-	error = rsys_syscall(SYS___posix_chown, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___posix_chown, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3117,7 +3117,7 @@ rump___sysimpl___posix_fchown(int fd, uid_t uid, gid_t gid)
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
 
-	error = rsys_syscall(SYS___posix_fchown, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___posix_fchown, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3147,7 +3147,7 @@ rump___sysimpl___posix_lchown(const char * path, uid_t uid, gid_t gid)
 	SPARG(&callarg, uid) = uid;
 	SPARG(&callarg, gid) = gid;
 
-	error = rsys_syscall(SYS___posix_lchown, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___posix_lchown, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3175,7 +3175,7 @@ rump___sysimpl_getsid(pid_t pid)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, pid) = pid;
 
-	error = rsys_syscall(SYS_getsid, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getsid, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(pid_t) > sizeof(register_t))
@@ -3206,7 +3206,7 @@ rump___sysimpl_fktrace(int fd, int ops, int facs, pid_t pid)
 	SPARG(&callarg, facs) = facs;
 	SPARG(&callarg, pid) = pid;
 
-	error = rsys_syscall(SYS_fktrace, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fktrace, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3238,7 +3238,7 @@ rump___sysimpl_preadv(int fd, const struct iovec * iovp, int iovcnt, off_t offse
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, offset) = offset;
 
-	error = rsys_syscall(SYS_preadv, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_preadv, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -3270,7 +3270,7 @@ rump___sysimpl_pwritev(int fd, const struct iovec * iovp, int iovcnt, off_t offs
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, offset) = offset;
 
-	error = rsys_syscall(SYS_pwritev, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_pwritev, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -3299,7 +3299,7 @@ rump___sysimpl___getcwd(char * bufp, size_t length)
 	SPARG(&callarg, bufp) = bufp;
 	SPARG(&callarg, length) = length;
 
-	error = rsys_syscall(SYS___getcwd, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___getcwd, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3327,7 +3327,7 @@ rump___sysimpl_fchroot(int fd)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, fd) = fd;
 
-	error = rsys_syscall(SYS_fchroot, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fchroot, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3356,7 +3356,7 @@ rump___sysimpl_lchflags(const char * path, u_long flags)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_lchflags, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lchflags, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3379,7 +3379,7 @@ rump___sysimpl_issetugid(void )
 	register_t retval[2];
 	int rv = -1;
 
-	rsys_syscall(SYS_issetugid, NULL, 0, retval);
+	(void)rsys_syscall(SYS_issetugid, NULL, 0, retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
@@ -3406,7 +3406,7 @@ rump___sysimpl_utrace(const char * label, void * addr, size_t len)
 	SPARG(&callarg, addr) = addr;
 	SPARG(&callarg, len) = len;
 
-	error = rsys_syscall(SYS_utrace, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_utrace, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3430,7 +3430,7 @@ rump___sysimpl_kqueue(void )
 	int error = 0;
 	int rv = -1;
 
-	error = rsys_syscall(SYS_kqueue, NULL, 0, retval);
+	error = (void)rsys_syscall(SYS_kqueue, NULL, 0, retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3464,7 +3464,7 @@ rump___sysimpl_kevent(int fd, const struct kevent * changelist, size_t nchanges,
 	SPARG(&callarg, nevents) = nevents;
 	SPARG(&callarg, timeout) = (const struct timespec50 *)timeout;
 
-	error = rsys_syscall(SYS_compat_50_kevent, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_kevent, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3496,7 +3496,7 @@ rump___sysimpl_fsync_range(int fd, int flags, off_t start, off_t length)
 	SPARG(&callarg, start) = start;
 	SPARG(&callarg, length) = length;
 
-	error = rsys_syscall(SYS_fsync_range, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fsync_range, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3526,7 +3526,7 @@ rump___sysimpl_getvfsstat(struct statvfs * buf, size_t bufsize, int flags)
 	SPARG(&callarg, bufsize) = bufsize;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_getvfsstat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getvfsstat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3556,7 +3556,7 @@ rump___sysimpl_statvfs1(const char * path, struct statvfs * buf, int flags)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_statvfs1, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_statvfs1, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3586,7 +3586,7 @@ rump___sysimpl_fstatvfs1(int fd, struct statvfs * buf, int flags)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_fstatvfs1, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fstatvfs1, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3618,7 +3618,7 @@ rump___sysimpl_extattrctl(const char * path, int cmd, const char * filename, int
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
 
-	error = rsys_syscall(SYS_extattrctl, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattrctl, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3650,7 +3650,7 @@ rump___sysimpl_extattr_set_file(const char * path, int attrnamespace, const char
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_set_file, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_set_file, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3682,7 +3682,7 @@ rump___sysimpl_extattr_get_file(const char * path, int attrnamespace, const char
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_get_file, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_get_file, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -3712,7 +3712,7 @@ rump___sysimpl_extattr_delete_file(const char * path, int attrnamespace, const c
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
 
-	error = rsys_syscall(SYS_extattr_delete_file, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_delete_file, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3744,7 +3744,7 @@ rump___sysimpl_extattr_set_fd(int fd, int attrnamespace, const char * attrname, 
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_set_fd, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_set_fd, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3776,7 +3776,7 @@ rump___sysimpl_extattr_get_fd(int fd, int attrnamespace, const char * attrname, 
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_get_fd, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_get_fd, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -3806,7 +3806,7 @@ rump___sysimpl_extattr_delete_fd(int fd, int attrnamespace, const char * attrnam
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
 
-	error = rsys_syscall(SYS_extattr_delete_fd, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_delete_fd, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3838,7 +3838,7 @@ rump___sysimpl_extattr_set_link(const char * path, int attrnamespace, const char
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_set_link, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_set_link, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3870,7 +3870,7 @@ rump___sysimpl_extattr_get_link(const char * path, int attrnamespace, const char
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_get_link, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_get_link, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -3900,7 +3900,7 @@ rump___sysimpl_extattr_delete_link(const char * path, int attrnamespace, const c
 	SPARG(&callarg, attrnamespace) = attrnamespace;
 	SPARG(&callarg, attrname) = attrname;
 
-	error = rsys_syscall(SYS_extattr_delete_link, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_delete_link, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -3931,7 +3931,7 @@ rump___sysimpl_extattr_list_fd(int fd, int attrnamespace, void * data, size_t nb
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_list_fd, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_list_fd, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -3962,7 +3962,7 @@ rump___sysimpl_extattr_list_file(const char * path, int attrnamespace, void * da
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_list_file, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_list_file, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -3993,7 +3993,7 @@ rump___sysimpl_extattr_list_link(const char * path, int attrnamespace, void * da
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, nbytes) = nbytes;
 
-	error = rsys_syscall(SYS_extattr_list_link, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_extattr_list_link, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -4027,7 +4027,7 @@ rump___sysimpl_pselect(int nd, fd_set * in, fd_set * ou, fd_set * ex, const stru
 	SPARG(&callarg, ts) = (const struct timespec50 *)ts;
 	SPARG(&callarg, mask) = mask;
 
-	error = rsys_syscall(SYS_compat_50_pselect, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_pselect, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4060,7 +4060,7 @@ rump___sysimpl_pollts(struct pollfd * fds, u_int nfds, const struct timespec * t
 	SPARG(&callarg, ts) = (const struct timespec50 *)ts;
 	SPARG(&callarg, mask) = mask;
 
-	error = rsys_syscall(SYS_compat_50_pollts, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50_pollts, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4093,7 +4093,7 @@ rump___sysimpl_setxattr(const char * path, const char * name, const void * value
 	SPARG(&callarg, size) = size;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_setxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_setxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4125,7 +4125,7 @@ rump___sysimpl_lsetxattr(const char * path, const char * name, const void * valu
 	SPARG(&callarg, size) = size;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_lsetxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lsetxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4157,7 +4157,7 @@ rump___sysimpl_fsetxattr(int fd, const char * name, const void * value, size_t s
 	SPARG(&callarg, size) = size;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_fsetxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fsetxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4188,7 +4188,7 @@ rump___sysimpl_getxattr(const char * path, const char * name, void * value, size
 	SPARG(&callarg, value) = value;
 	SPARG(&callarg, size) = size;
 
-	error = rsys_syscall(SYS_getxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_getxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4219,7 +4219,7 @@ rump___sysimpl_lgetxattr(const char * path, const char * name, void * value, siz
 	SPARG(&callarg, value) = value;
 	SPARG(&callarg, size) = size;
 
-	error = rsys_syscall(SYS_lgetxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lgetxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4250,7 +4250,7 @@ rump___sysimpl_fgetxattr(int fd, const char * name, void * value, size_t size)
 	SPARG(&callarg, value) = value;
 	SPARG(&callarg, size) = size;
 
-	error = rsys_syscall(SYS_fgetxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fgetxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4280,7 +4280,7 @@ rump___sysimpl_listxattr(const char * path, char * list, size_t size)
 	SPARG(&callarg, list) = list;
 	SPARG(&callarg, size) = size;
 
-	error = rsys_syscall(SYS_listxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_listxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4310,7 +4310,7 @@ rump___sysimpl_llistxattr(const char * path, char * list, size_t size)
 	SPARG(&callarg, list) = list;
 	SPARG(&callarg, size) = size;
 
-	error = rsys_syscall(SYS_llistxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_llistxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4340,7 +4340,7 @@ rump___sysimpl_flistxattr(int fd, char * list, size_t size)
 	SPARG(&callarg, list) = list;
 	SPARG(&callarg, size) = size;
 
-	error = rsys_syscall(SYS_flistxattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_flistxattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4369,7 +4369,7 @@ rump___sysimpl_removexattr(const char * path, const char * name)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 
-	error = rsys_syscall(SYS_removexattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_removexattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4398,7 +4398,7 @@ rump___sysimpl_lremovexattr(const char * path, const char * name)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, name) = name;
 
-	error = rsys_syscall(SYS_lremovexattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lremovexattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4427,7 +4427,7 @@ rump___sysimpl_fremovexattr(int fd, const char * name)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, name) = name;
 
-	error = rsys_syscall(SYS_fremovexattr, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fremovexattr, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4457,7 +4457,7 @@ rump___sysimpl_stat30(const char * path, struct stat * ub)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = (struct stat30 *)ub;
 
-	error = rsys_syscall(SYS_compat_50___stat30, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50___stat30, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4489,7 +4489,7 @@ rump___sysimpl_fstat30(int fd, struct stat * sb)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, sb) = (struct stat30 *)sb;
 
-	error = rsys_syscall(SYS_compat_50___fstat30, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50___fstat30, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4521,7 +4521,7 @@ rump___sysimpl_lstat30(const char * path, struct stat * ub)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = (struct stat30 *)ub;
 
-	error = rsys_syscall(SYS_compat_50___lstat30, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50___lstat30, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4553,7 +4553,7 @@ rump___sysimpl_getdents30(int fd, char * buf, size_t count)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, count) = count;
 
-	error = rsys_syscall(SYS___getdents30, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___getdents30, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4584,7 +4584,7 @@ rump___sysimpl_socket30(int domain, int type, int protocol)
 	SPARG(&callarg, type) = type;
 	SPARG(&callarg, protocol) = protocol;
 
-	error = rsys_syscall(SYS___socket30, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___socket30, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4615,7 +4615,7 @@ rump___sysimpl_getfh30(const char * fname, void * fhp, size_t * fh_size)
 	SPARG(&callarg, fhp) = fhp;
 	SPARG(&callarg, fh_size) = fh_size;
 
-	error = rsys_syscall(SYS___getfh30, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___getfh30, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4646,7 +4646,7 @@ rump___sysimpl_fhopen40(const void * fhp, size_t fh_size, int flags)
 	SPARG(&callarg, fh_size) = fh_size;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS___fhopen40, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___fhopen40, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4678,7 +4678,7 @@ rump___sysimpl_fhstatvfs140(const void * fhp, size_t fh_size, struct statvfs * b
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS___fhstatvfs140, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___fhstatvfs140, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4710,7 +4710,7 @@ rump___sysimpl_fhstat40(const void * fhp, size_t fh_size, struct stat * sb)
 	SPARG(&callarg, fh_size) = fh_size;
 	SPARG(&callarg, sb) = (struct stat30 *)sb;
 
-	error = rsys_syscall(SYS_compat_50___fhstat40, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_compat_50___fhstat40, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4741,7 +4741,7 @@ rump___sysimpl_aio_cancel(int fildes, struct aiocb * aiocbp)
 	SPARG(&callarg, fildes) = fildes;
 	SPARG(&callarg, aiocbp) = aiocbp;
 
-	error = rsys_syscall(SYS_aio_cancel, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_aio_cancel, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4769,7 +4769,7 @@ rump___sysimpl_aio_error(const struct aiocb * aiocbp)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, aiocbp) = aiocbp;
 
-	error = rsys_syscall(SYS_aio_error, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_aio_error, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4798,7 +4798,7 @@ rump___sysimpl_aio_fsync(int op, struct aiocb * aiocbp)
 	SPARG(&callarg, op) = op;
 	SPARG(&callarg, aiocbp) = aiocbp;
 
-	error = rsys_syscall(SYS_aio_fsync, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_aio_fsync, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4826,7 +4826,7 @@ rump___sysimpl_aio_read(struct aiocb * aiocbp)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, aiocbp) = aiocbp;
 
-	error = rsys_syscall(SYS_aio_read, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_aio_read, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4854,7 +4854,7 @@ rump___sysimpl_aio_return(struct aiocb * aiocbp)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, aiocbp) = aiocbp;
 
-	error = rsys_syscall(SYS_aio_return, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_aio_return, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4882,7 +4882,7 @@ rump___sysimpl_aio_write(struct aiocb * aiocbp)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, aiocbp) = aiocbp;
 
-	error = rsys_syscall(SYS_aio_write, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_aio_write, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4913,7 +4913,7 @@ rump___sysimpl_lio_listio(int mode, struct aiocb *const * list, int nent, struct
 	SPARG(&callarg, nent) = nent;
 	SPARG(&callarg, sig) = sig;
 
-	error = rsys_syscall(SYS_lio_listio, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_lio_listio, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4945,7 +4945,7 @@ rump___sysimpl_mount50(const char * type, const char * path, int flags, void * d
 	SPARG(&callarg, data) = data;
 	SPARG(&callarg, data_len) = data_len;
 
-	error = rsys_syscall(SYS___mount50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___mount50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -4977,7 +4977,7 @@ rump___sysimpl_posix_fadvise50(int fd, off_t offset, off_t len, int advice)
 	SPARG(&callarg, len) = len;
 	SPARG(&callarg, advice) = advice;
 
-	rsys_syscall(SYS___posix_fadvise50, &callarg, sizeof(callarg), retval);
+	(void)rsys_syscall(SYS___posix_fadvise50, &callarg, sizeof(callarg), retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
@@ -5007,7 +5007,7 @@ rump___sysimpl_select50(int nd, fd_set * in, fd_set * ou, fd_set * ex, struct ti
 	SPARG(&callarg, ex) = ex;
 	SPARG(&callarg, tv) = tv;
 
-	error = rsys_syscall(SYS___select50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___select50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5037,7 +5037,7 @@ rump___sysimpl_gettimeofday50(struct timeval * tp, void * tzp)
 	SPARG(&callarg, tp) = tp;
 	SPARG(&callarg, tzp) = tzp;
 
-	error = rsys_syscall(SYS___gettimeofday50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___gettimeofday50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5067,7 +5067,7 @@ rump___sysimpl_settimeofday50(const struct timeval * tv, const void * tzp)
 	SPARG(&callarg, tv) = tv;
 	SPARG(&callarg, tzp) = tzp;
 
-	error = rsys_syscall(SYS___settimeofday50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___settimeofday50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5097,7 +5097,7 @@ rump___sysimpl_utimes50(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = tptr;
 
-	error = rsys_syscall(SYS___utimes50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___utimes50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5127,7 +5127,7 @@ rump___sysimpl_adjtime50(const struct timeval * delta, struct timeval * olddelta
 	SPARG(&callarg, delta) = delta;
 	SPARG(&callarg, olddelta) = olddelta;
 
-	error = rsys_syscall(SYS___adjtime50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___adjtime50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5157,7 +5157,7 @@ rump___sysimpl_futimes50(int fd, const struct timeval * tptr)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, tptr) = tptr;
 
-	error = rsys_syscall(SYS___futimes50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___futimes50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5187,7 +5187,7 @@ rump___sysimpl_lutimes50(const char * path, const struct timeval * tptr)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, tptr) = tptr;
 
-	error = rsys_syscall(SYS___lutimes50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___lutimes50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5218,7 +5218,7 @@ rump___sysimpl_setitimer50(int which, const struct itimerval * itv, struct itime
 	SPARG(&callarg, itv) = itv;
 	SPARG(&callarg, oitv) = oitv;
 
-	error = rsys_syscall(SYS___setitimer50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___setitimer50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5248,7 +5248,7 @@ rump___sysimpl_getitimer50(int which, struct itimerval * itv)
 	SPARG(&callarg, which) = which;
 	SPARG(&callarg, itv) = itv;
 
-	error = rsys_syscall(SYS___getitimer50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___getitimer50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5278,7 +5278,7 @@ rump___sysimpl_clock_gettime50(clockid_t clock_id, struct timespec * tp)
 	SPARG(&callarg, clock_id) = clock_id;
 	SPARG(&callarg, tp) = tp;
 
-	error = rsys_syscall(SYS___clock_gettime50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___clock_gettime50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5308,7 +5308,7 @@ rump___sysimpl_clock_settime50(clockid_t clock_id, const struct timespec * tp)
 	SPARG(&callarg, clock_id) = clock_id;
 	SPARG(&callarg, tp) = tp;
 
-	error = rsys_syscall(SYS___clock_settime50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___clock_settime50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5338,7 +5338,7 @@ rump___sysimpl_clock_getres50(clockid_t clock_id, struct timespec * tp)
 	SPARG(&callarg, clock_id) = clock_id;
 	SPARG(&callarg, tp) = tp;
 
-	error = rsys_syscall(SYS___clock_getres50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___clock_getres50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5368,7 +5368,7 @@ rump___sysimpl_nanosleep50(const struct timespec * rqtp, struct timespec * rmtp)
 	SPARG(&callarg, rqtp) = rqtp;
 	SPARG(&callarg, rmtp) = rmtp;
 
-	error = rsys_syscall(SYS___nanosleep50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___nanosleep50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5402,7 +5402,7 @@ rump___sysimpl_kevent50(int fd, const struct kevent * changelist, size_t nchange
 	SPARG(&callarg, nevents) = nevents;
 	SPARG(&callarg, timeout) = timeout;
 
-	error = rsys_syscall(SYS___kevent50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___kevent50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5436,7 +5436,7 @@ rump___sysimpl_pselect50(int nd, fd_set * in, fd_set * ou, fd_set * ex, const st
 	SPARG(&callarg, ts) = ts;
 	SPARG(&callarg, mask) = mask;
 
-	error = rsys_syscall(SYS___pselect50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___pselect50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5468,7 +5468,7 @@ rump___sysimpl_pollts50(struct pollfd * fds, u_int nfds, const struct timespec *
 	SPARG(&callarg, ts) = ts;
 	SPARG(&callarg, mask) = mask;
 
-	error = rsys_syscall(SYS___pollts50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___pollts50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5499,7 +5499,7 @@ rump___sysimpl_aio_suspend50(const struct aiocb *const * list, int nent, const s
 	SPARG(&callarg, nent) = nent;
 	SPARG(&callarg, timeout) = timeout;
 
-	error = rsys_syscall(SYS___aio_suspend50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___aio_suspend50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5529,7 +5529,7 @@ rump___sysimpl_stat50(const char * path, struct stat * ub)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = ub;
 
-	error = rsys_syscall(SYS___stat50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___stat50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5559,7 +5559,7 @@ rump___sysimpl_fstat50(int fd, struct stat * sb)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, sb) = sb;
 
-	error = rsys_syscall(SYS___fstat50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___fstat50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5589,7 +5589,7 @@ rump___sysimpl_lstat50(const char * path, struct stat * ub)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, ub) = ub;
 
-	error = rsys_syscall(SYS___lstat50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___lstat50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5621,7 +5621,7 @@ rump___sysimpl_timer_settime50(timer_t timerid, int flags, const struct itimersp
 	SPARG(&callarg, value) = value;
 	SPARG(&callarg, ovalue) = ovalue;
 
-	error = rsys_syscall(SYS___timer_settime50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___timer_settime50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5651,7 +5651,7 @@ rump___sysimpl_timer_gettime50(timer_t timerid, struct itimerspec * value)
 	SPARG(&callarg, timerid) = timerid;
 	SPARG(&callarg, value) = value;
 
-	error = rsys_syscall(SYS___timer_gettime50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___timer_gettime50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5682,7 +5682,7 @@ rump___sysimpl_mknod50(const char * path, mode_t mode, dev_t dev)
 	SPARG(&callarg, mode) = mode;
 	SPARG(&callarg, dev) = dev;
 
-	error = rsys_syscall(SYS___mknod50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___mknod50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5713,7 +5713,7 @@ rump___sysimpl_fhstat50(const void * fhp, size_t fh_size, struct stat * sb)
 	SPARG(&callarg, fh_size) = fh_size;
 	SPARG(&callarg, sb) = sb;
 
-	error = rsys_syscall(SYS___fhstat50, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___fhstat50, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5743,7 +5743,7 @@ rump___sysimpl_pipe2(int * fildes, int flags)
 	SPARG(&callarg, fildes) = fildes;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_pipe2, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_pipe2, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5773,7 +5773,7 @@ rump___sysimpl_dup3(int from, int to, int flags)
 	SPARG(&callarg, to) = to;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_dup3, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_dup3, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5801,7 +5801,7 @@ rump___sysimpl_kqueue1(int flags)
 	memset(&callarg, 0, sizeof(callarg));
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_kqueue1, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_kqueue1, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5833,7 +5833,7 @@ rump___sysimpl_paccept(int s, struct sockaddr * name, socklen_t * anamelen, cons
 	SPARG(&callarg, mask) = mask;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_paccept, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_paccept, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5865,7 +5865,7 @@ rump___sysimpl_linkat(int fd1, const char * name1, int fd2, const char * name2, 
 	SPARG(&callarg, name2) = name2;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_linkat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_linkat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5896,7 +5896,7 @@ rump___sysimpl_renameat(int fromfd, const char * from, int tofd, const char * to
 	SPARG(&callarg, tofd) = tofd;
 	SPARG(&callarg, to) = to;
 
-	error = rsys_syscall(SYS_renameat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_renameat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5926,7 +5926,7 @@ rump___sysimpl_mkfifoat(int fd, const char * path, mode_t mode)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_mkfifoat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_mkfifoat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5958,7 +5958,7 @@ rump___sysimpl_mknodat(int fd, const char * path, mode_t mode, dev_t dev)
 	SPARG(&callarg, PAD) = 0;
 	SPARG(&callarg, dev) = dev;
 
-	error = rsys_syscall(SYS_mknodat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_mknodat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -5988,7 +5988,7 @@ rump___sysimpl_mkdirat(int fd, const char * path, mode_t mode)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_mkdirat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_mkdirat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6019,7 +6019,7 @@ rump___sysimpl_faccessat(int fd, const char * path, int amode, int flag)
 	SPARG(&callarg, amode) = amode;
 	SPARG(&callarg, flag) = flag;
 
-	error = rsys_syscall(SYS_faccessat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_faccessat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6050,7 +6050,7 @@ rump___sysimpl_fchmodat(int fd, const char * path, mode_t mode, int flag)
 	SPARG(&callarg, mode) = mode;
 	SPARG(&callarg, flag) = flag;
 
-	error = rsys_syscall(SYS_fchmodat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fchmodat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6082,7 +6082,7 @@ rump___sysimpl_fchownat(int fd, const char * path, uid_t owner, gid_t group, int
 	SPARG(&callarg, group) = group;
 	SPARG(&callarg, flag) = flag;
 
-	error = rsys_syscall(SYS_fchownat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fchownat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6113,7 +6113,7 @@ rump___sysimpl_fstatat(int fd, const char * path, struct stat * buf, int flag)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, flag) = flag;
 
-	error = rsys_syscall(SYS_fstatat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fstatat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6144,7 +6144,7 @@ rump___sysimpl_utimensat(int fd, const char * path, const struct timespec * tptr
 	SPARG(&callarg, tptr) = tptr;
 	SPARG(&callarg, flag) = flag;
 
-	error = rsys_syscall(SYS_utimensat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_utimensat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6175,7 +6175,7 @@ rump___sysimpl_openat(int fd, const char * path, int oflags, mode_t mode)
 	SPARG(&callarg, oflags) = oflags;
 	SPARG(&callarg, mode) = mode;
 
-	error = rsys_syscall(SYS_openat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_openat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6206,7 +6206,7 @@ rump___sysimpl_readlinkat(int fd, const char * path, char * buf, size_t bufsize)
 	SPARG(&callarg, buf) = buf;
 	SPARG(&callarg, bufsize) = bufsize;
 
-	error = rsys_syscall(SYS_readlinkat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_readlinkat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(ssize_t) > sizeof(register_t))
@@ -6236,7 +6236,7 @@ rump___sysimpl_symlinkat(const char * path1, int fd, const char * path2)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, path2) = path2;
 
-	error = rsys_syscall(SYS_symlinkat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_symlinkat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6266,7 +6266,7 @@ rump___sysimpl_unlinkat(int fd, const char * path, int flag)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, flag) = flag;
 
-	error = rsys_syscall(SYS_unlinkat, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_unlinkat, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6295,7 +6295,7 @@ rump___sysimpl_futimens(int fd, const struct timespec * tptr)
 	SPARG(&callarg, fd) = fd;
 	SPARG(&callarg, tptr) = tptr;
 
-	error = rsys_syscall(SYS_futimens, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_futimens, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6324,7 +6324,7 @@ rump___sysimpl___quotactl(const char * path, struct quotactl_args * args)
 	SPARG(&callarg, path) = path;
 	SPARG(&callarg, args) = args;
 
-	error = rsys_syscall(SYS___quotactl, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS___quotactl, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6356,7 +6356,7 @@ rump___sysimpl_recvmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	SPARG(&callarg, flags) = flags;
 	SPARG(&callarg, timeout) = timeout;
 
-	error = rsys_syscall(SYS_recvmmsg, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_recvmmsg, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6387,7 +6387,7 @@ rump___sysimpl_sendmmsg(int s, struct mmsghdr * mmsg, unsigned int vlen, unsigne
 	SPARG(&callarg, vlen) = vlen;
 	SPARG(&callarg, flags) = flags;
 
-	error = rsys_syscall(SYS_sendmmsg, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_sendmmsg, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
@@ -6417,7 +6417,7 @@ rump___sysimpl_clock_nanosleep(clockid_t clock_id, int flags, const struct times
 	SPARG(&callarg, rqtp) = rqtp;
 	SPARG(&callarg, rmtp) = rmtp;
 
-	rsys_syscall(SYS_clock_nanosleep, &callarg, sizeof(callarg), retval);
+	(void)rsys_syscall(SYS_clock_nanosleep, &callarg, sizeof(callarg), retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
@@ -6444,7 +6444,7 @@ rump___sysimpl_posix_fallocate(int fd, off_t pos, off_t len)
 	SPARG(&callarg, pos) = pos;
 	SPARG(&callarg, len) = len;
 
-	rsys_syscall(SYS_posix_fallocate, &callarg, sizeof(callarg), retval);
+	(void)rsys_syscall(SYS_posix_fallocate, &callarg, sizeof(callarg), retval);
 	if (sizeof(int) > sizeof(register_t))
 		rv = *(int *)retval;
 	else
@@ -6472,7 +6472,7 @@ rump___sysimpl_fdiscard(int fd, off_t pos, off_t len)
 	SPARG(&callarg, pos) = pos;
 	SPARG(&callarg, len) = len;
 
-	error = rsys_syscall(SYS_fdiscard, &callarg, sizeof(callarg), retval);
+	error = (void)rsys_syscall(SYS_fdiscard, &callarg, sizeof(callarg), retval);
 	rsys_seterrno(error);
 	if (error == 0) {
 		if (sizeof(int) > sizeof(register_t))
