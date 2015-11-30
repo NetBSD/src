@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.45 2015/11/29 14:03:35 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.46 2015/11/30 19:59:34 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -68,7 +68,9 @@ off_t	mediasz;
 u_int	parts;
 u_int	secsz;
 
-int	readonly, verbose, quiet;
+int	readonly, verbose, quiet, nosync;
+
+static int modified;
 
 static uint32_t crc32_tab[] = {
 	0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f,
@@ -269,10 +271,11 @@ gpt_write(int fd, map_t *map)
 
 	count = map->map_size * secsz;
 	ofs = map->map_start * secsz;
-	if (lseek(fd, ofs, SEEK_SET) == ofs &&
-	    write(fd, map->map_data, count) == (ssize_t)count)
-		return (0);
-	return (-1);
+	if (lseek(fd, ofs, SEEK_SET) != ofs ||
+	    write(fd, map->map_data, count) != (ssize_t)count)
+		return -1;
+	modified = 1;
+	return 0;
 }
 
 static int
@@ -569,6 +572,12 @@ gpt_open(const char *dev, int flags)
 void
 gpt_close(int fd)
 {
+	int bits;
+
+	if (modified && !nosync)
+		if (ioctl(fd, DIOCMWEDGES, &bits) == -1)
+			warn("Can't update wedge information");
+
 	/* XXX post processing? */
 	close(fd);
 }
@@ -582,173 +591,4 @@ gpt_msg(const char *fmt, ...)
 	vprintf(fmt, ap);
 	va_end(ap);
 	printf("\n");
-}
-
-static struct {
-	int (*fptr)(int, char *[]);
-	const char *name;
-} cmdsw[] = {
-	{ cmd_add, "add" },
-#ifndef HAVE_NBTOOL_CONFIG_H
-	{ cmd_backup, "backup" },
-#endif
-	{ cmd_biosboot, "biosboot" },
-	{ cmd_create, "create" },
-	{ cmd_destroy, "destroy" },
-	{ cmd_header, "header" },
-	{ NULL, "help" },
-	{ cmd_label, "label" },
-	{ cmd_migrate, "migrate" },
-	{ cmd_recover, "recover" },
-	{ cmd_remove, "remove" },
-	{ NULL, "rename" },
-	{ cmd_resize, "resize" },
-	{ cmd_resizedisk, "resizedisk" },
-#ifndef HAVE_NBTOOL_CONFIG_H
-	{ cmd_restore, "restore" },
-#endif
-	{ cmd_set, "set" },
-	{ cmd_show, "show" },
-	{ cmd_type, "type" },
-	{ cmd_unset, "unset" },
-	{ NULL, "verify" },
-	{ NULL, NULL }
-};
-
-__dead static void
-usage(void)
-{
-	extern const char addmsg1[], addmsg2[], biosbootmsg[];
-	extern const char createmsg[], destroymsg[], headermsg[], labelmsg1[];
-	extern const char labelmsg2[], labelmsg3[], migratemsg[], recovermsg[];
-	extern const char removemsg1[], removemsg2[], resizemsg[];
-	extern const char resizediskmsg[], setmsg[], showmsg[], typemsg1[];
-	extern const char typemsg2[], typemsg3[], unsetmsg[];
-#ifndef HAVE_NBTOOL_CONFIG_H
-	extern const char backupmsg[], restoremsg[];
-#endif
-	const char *p = getprogname();
-	const char *f =
-	    "[-rv] [-m <mediasize>] [-p <partitionnum>] [-s <sectorsize>]";
-
-	fprintf(stderr,
-	    "Usage: %s %s <command> [<args>]\n", p, f);
-	fprintf(stderr, 
-	    "Commands:\n"
-#ifndef HAVE_NBTOOL_CONFIG_H
-	    "       %s\n"
-	    "       %s\n"
-#endif
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n",
-	    addmsg1, addmsg2,
-#ifndef HAVE_NBTOOL_CONFIG_H
-	    backupmsg,
-#endif
-	    biosbootmsg, createmsg, destroymsg,
-	    headermsg, labelmsg1, labelmsg2, labelmsg3,
-	    migratemsg, recovermsg,
-	    removemsg1, removemsg2,
-	    resizemsg, resizediskmsg,
-#ifndef HAVE_NBTOOL_CONFIG_H
-	    restoremsg,
-#endif
-	    setmsg, showmsg,
-	    typemsg1, typemsg2, typemsg3,
-	    unsetmsg);
-	exit(1);
-}
-
-static void
-prefix(const char *cmd)
-{
-	char *pfx;
-	const char *prg;
-
-	prg = getprogname();
-	pfx = malloc(strlen(prg) + strlen(cmd) + 2);
-	/* Don't bother failing. It's not important */
-	if (pfx == NULL)
-		return;
-
-	sprintf(pfx, "%s %s", prg, cmd);
-	setprogname(pfx);
-}
-
-int
-main(int argc, char *argv[])
-{
-	char *cmd, *p;
-	int ch, i;
-
-	/* Get the generic options */
-	while ((ch = getopt(argc, argv, "m:p:qrs:v")) != -1) {
-		switch(ch) {
-		case 'm':
-			if (mediasz > 0)
-				usage();
-			mediasz = strtoul(optarg, &p, 10);
-			if (*p != 0 || mediasz < 1)
-				usage();
-			break;
-		case 'p':
-			if (parts > 0)
-				usage();
-			parts = strtoul(optarg, &p, 10);
-			if (*p != 0 || parts < 1)
-				usage();
-			break;
-		case 'r':
-			readonly = 1;
-			break;
-		case 'q':
-			quiet = 1;
-			break;
-		case 's':
-			if (secsz > 0)
-				usage();
-			secsz = strtoul(optarg, &p, 10);
-			if (*p != 0 || secsz < 1)
-				usage();
-			break;
-		case 'v':
-			verbose++;
-			break;
-		default:
-			usage();
-		}
-	}
-	if (!parts)
-		parts = 128;
-
-	if (argc == optind)
-		usage();
-
-	cmd = argv[optind++];
-	for (i = 0; cmdsw[i].name != NULL && strcmp(cmd, cmdsw[i].name); i++);
-
-	if (cmdsw[i].fptr == NULL)
-		errx(1, "unknown command: %s", cmd);
-
-	prefix(cmd);
-	return ((*cmdsw[i].fptr)(argc, argv));
 }

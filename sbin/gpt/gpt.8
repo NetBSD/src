@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.37 2015/11/03 02:19:24 jnemeth Exp $
+.\" $NetBSD: gpt.8,v 1.38 2015/11/30 19:59:34 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd November 2, 2015
+.Dd November 30, 2015
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -34,7 +34,10 @@
 .Nd GUID partition table maintenance utility
 .Sh SYNOPSIS
 .Nm
-.Op Ar general_options
+.Op Fl mnprqv
+.Op Fl m Ar mediasize
+.Op Fl p Ar partitions
+.Op Fl s Ar sectorsize
 .Ar command
 .Op Ar command_options
 .Ar device ...
@@ -66,44 +69,44 @@ The general options allow the user to change default settings or otherwise
 change the behaviour that is applicable to all commands.
 Not all commands use all default settings, so some general options may not
 have an effect on all commands.
-.Pp
-The
-.Fl m Ar mediasize
-option overrides the default media size for the device (obtained
+.Bl -tag -width XXXX
+.It Fl m Ar mediasize
+Override the default media size for the device (obtained
 from the kernel if possible) or defaulting to the file size for
 plain files.
-.Pp
-The
-.Fl p Ar partitions
-option allows the user to change the number of partitions the GPT can
+.It Fl n
+Don't update the wedge information that
+.Nm
+changed.
+You need to use the
+.Xr dkctl 8
+command manually update the device's wedge configuration if you do that.
+.It Fl p Ar partitions
+Change the default number of partitions the GPT can
 accommodate.
 This is used whenever a new GPT is created.
 By default, the
 .Nm
 utility will create space for 128 partitions (or 32 sectors of 512 bytes).
-.Pp
-The
-.Fl r
-option causes the
+.It Fl r
+Open the device for reading only.
 .Nm
-utility to open the device for reading only.
 Currently this option is primarily useful for the
 .Ic show
-command, but the intent
-is to use it to implement dry-run behaviour.
-.Pp
-The
-.Fl s Ar sectorsize
-option overrides the default sector size for the device (obtained
+command, but the intent is to use it to implement dry-run behaviour.
+.It Fl q
+Don't print error messages.
+This is not implemented completely yet.
+.It Fl s Ar sectorsize
+Override the default sector size for the device (obtained
 from the kernel if possible) or
 .Dv 512
 for plain files.
-.Pp
-The
-.Fl v
-option controls the verbosity level.
+.It Fl v
+Controls the verbosity level.
 The level increases with every occurrence of this option.
 There is no formalized definition of the different levels yet.
+.El
 .Ss Commands
 .Bl -tag -width indent
 .\" ==== add ====
@@ -585,9 +588,6 @@ nas# gpt show wd3
   3907029135          32         Sec GPT table
   3907029167           1         Sec GPT header
 nas# gpt add -s 10486224 -t swap -i 1 wd3
-Partition added, use:
-        dkctl rwd3d addwedge dk<N> 34 10486224 <type>
-to create a wedge for it
 nas# gpt label -i 1 -l swap_1 wd3
 parition 1 on rwd3d labeled swap_1
 nas# gpt show wd3
@@ -612,6 +612,7 @@ nas#
 .Ed
 .Sh SEE ALSO
 .Xr boot 8 ,
+.Xr dkctl 8 ,
 .Xr fdisk 8 ,
 .Xr installboot 8 ,
 .Xr mount 8 ,
