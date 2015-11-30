@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.13 2015/11/30 23:17:40 pgoyette Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.14 2015/11/30 23:34:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.13 2015/11/30 23:17:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.14 2015/11/30 23:34:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -90,7 +90,7 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 				continue;
 			}
 			if (module_autoload(auto_list->al_module,
-					    MODULE_CLASS_ANY) != 0 ||
+			    MODULE_CLASS_ANY) != 0 ||
 			    sy->sy_call == sys_nomodule) {
 			    	break;
 			}
