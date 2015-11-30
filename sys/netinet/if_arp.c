@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.194 2015/11/19 03:03:04 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.195 2015/11/30 06:45:38 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.194 2015/11/19 03:03:04 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.195 2015/11/30 06:45:38 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1250,121 +1250,122 @@ in_arpinput(struct mbuf *m)
 		if (rt != NULL)
 			sdl = satosdl(rt->rt_gateway);
 	}
-	if (sdl != NULL) {
-		if (sdl->sdl_alen &&
-		    memcmp(ar_sha(ah), CLLADDR(sdl), sdl->sdl_alen)) {
-			if (rt->rt_flags & RTF_STATIC) {
-				ARP_STATINC(ARP_STAT_RCVOVERPERM);
-				if (!log_permanent_modify)
-					goto out;
-				log(LOG_INFO,
-				    "%s tried to overwrite permanent arp info"
-				    " for %s\n",
-				    lla_snprintf(ar_sha(ah), ah->ar_hln),
-				    in_fmtaddr(isaddr));
+	if (sdl == NULL)
+		goto reply;
+
+	if (sdl->sdl_alen && memcmp(ar_sha(ah), CLLADDR(sdl), sdl->sdl_alen)) {
+		if (rt->rt_flags & RTF_STATIC) {
+			ARP_STATINC(ARP_STAT_RCVOVERPERM);
+			if (!log_permanent_modify)
 				goto out;
-			} else if (rt->rt_ifp != ifp) {
-				ARP_STATINC(ARP_STAT_RCVOVERINT);
-				if (!log_wrong_iface)
-					goto out;
-				log(LOG_INFO,
-				    "%s on %s tried to overwrite "
-				    "arp info for %s on %s\n",
-				    lla_snprintf(ar_sha(ah), ah->ar_hln),
-				    ifp->if_xname, in_fmtaddr(isaddr),
-				    rt->rt_ifp->if_xname);
-				    goto out;
-			} else {
-				ARP_STATINC(ARP_STAT_RCVOVER);
-				if (log_movements)
-					log(LOG_INFO, "arp info overwritten "
-					    "for %s by %s\n",
-					    in_fmtaddr(isaddr),
-					    lla_snprintf(ar_sha(ah),
-					    ah->ar_hln));
-			}
+			log(LOG_INFO,
+			    "%s tried to overwrite permanent arp info"
+			    " for %s\n",
+			    lla_snprintf(ar_sha(ah), ah->ar_hln),
+			    in_fmtaddr(isaddr));
+			goto out;
+		} else if (rt->rt_ifp != ifp) {
+			ARP_STATINC(ARP_STAT_RCVOVERINT);
+			if (!log_wrong_iface)
+				goto out;
+			log(LOG_INFO,
+			    "%s on %s tried to overwrite "
+			    "arp info for %s on %s\n",
+			    lla_snprintf(ar_sha(ah), ah->ar_hln),
+			    ifp->if_xname, in_fmtaddr(isaddr),
+			    rt->rt_ifp->if_xname);
+				goto out;
+		} else {
+			ARP_STATINC(ARP_STAT_RCVOVER);
+			if (log_movements)
+				log(LOG_INFO, "arp info overwritten "
+				    "for %s by %s\n",
+				    in_fmtaddr(isaddr),
+				    lla_snprintf(ar_sha(ah),
+				    ah->ar_hln));
 		}
-		/*
-		 * sanity check for the address length.
-		 * XXX this does not work for protocols with variable address
-		 * length. -is
-		 */
-		if (sdl->sdl_alen &&
-		    sdl->sdl_alen != ah->ar_hln) {
-			ARP_STATINC(ARP_STAT_RCVLENCHG);
-			log(LOG_WARNING,
-			    "arp from %s: new addr len %d, was %d\n",
-			    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
-		}
-		if (ifp->if_addrlen != ah->ar_hln) {
-			ARP_STATINC(ARP_STAT_RCVBADLEN);
-			log(LOG_WARNING,
-			    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
-			    in_fmtaddr(isaddr), ah->ar_hln,
-			    ifp->if_addrlen);
-			goto reply;
-		}
-#if NTOKEN > 0
-		/*
-		 * XXX uses m_data and assumes the complete answer including
-		 * XXX token-ring headers is in the same buf
-		 */
-		if (ifp->if_type == IFT_ISO88025) {
-			struct token_header *trh;
-
-			trh = (struct token_header *)M_TRHSTART(m);
-			if (trh->token_shost[0] & TOKEN_RI_PRESENT) {
-				struct token_rif	*rif;
-				size_t	riflen;
-
-				rif = TOKEN_RIF(trh);
-				riflen = (ntohs(rif->tr_rcf) &
-				    TOKEN_RCF_LEN_MASK) >> 8;
-
-				if (riflen > 2 &&
-				    riflen < sizeof(struct token_rif) &&
-				    (riflen & 1) == 0) {
-					rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
-					rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
-					memcpy(TOKEN_RIF(la), rif, riflen);
-				}
-			}
-		}
-#endif /* NTOKEN > 0 */
-		(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, ar_sha(ah),
-		    ah->ar_hln);
-		if (rt->rt_expire) {
-			rt->rt_expire = time_uptime + arpt_keep;
-
-			KASSERT((la->la_flags & LLE_STATIC) == 0);
-			LLE_ADDREF(la);
-			callout_reset(&la->la_timer, hz * arpt_keep, arptimer, la);
-		}
-		rt->rt_flags &= ~RTF_REJECT;
-		la->la_asked = 0;
-
-		if (la->la_hold != NULL) {
-			int n = la->la_numheld;
-			struct mbuf *m_hold, *m_hold_next;
-
-			m_hold = la->la_hold;
-			la->la_hold = NULL;
-			la->la_numheld = 0;
-			/*
-			 * We have to unlock here because if_output would call
-			 * arpresolve
-			 */
-			LLE_WUNLOCK(la);
-			ARP_STATADD(ARP_STAT_DFRSENT, n);
-			for (; m_hold != NULL; m_hold = m_hold_next) {
-				m_hold_next = m_hold->m_nextpkt;
-				m_hold->m_nextpkt = NULL;
-				(*ifp->if_output)(ifp, m_hold, rt_getkey(rt), rt);
-			}
-		} else
-			LLE_WUNLOCK(la);
-		la = NULL;
 	}
+
+	/*
+	 * sanity check for the address length.
+	 * XXX this does not work for protocols with variable address
+	 * length. -is
+	 */
+	if (sdl->sdl_alen && sdl->sdl_alen != ah->ar_hln) {
+		ARP_STATINC(ARP_STAT_RCVLENCHG);
+		log(LOG_WARNING,
+		    "arp from %s: new addr len %d, was %d\n",
+		    in_fmtaddr(isaddr), ah->ar_hln, sdl->sdl_alen);
+	}
+	if (ifp->if_addrlen != ah->ar_hln) {
+		ARP_STATINC(ARP_STAT_RCVBADLEN);
+		log(LOG_WARNING,
+		    "arp from %s: addr len: new %d, i/f %d (ignored)\n",
+		    in_fmtaddr(isaddr), ah->ar_hln,
+		    ifp->if_addrlen);
+		goto reply;
+	}
+
+#if NTOKEN > 0
+	/*
+	 * XXX uses m_data and assumes the complete answer including
+	 * XXX token-ring headers is in the same buf
+	 */
+	if (ifp->if_type == IFT_ISO88025) {
+		struct token_header *trh;
+
+		trh = (struct token_header *)M_TRHSTART(m);
+		if (trh->token_shost[0] & TOKEN_RI_PRESENT) {
+			struct token_rif *rif;
+			size_t riflen;
+
+			rif = TOKEN_RIF(trh);
+			riflen = (ntohs(rif->tr_rcf) &
+			    TOKEN_RCF_LEN_MASK) >> 8;
+
+			if (riflen > 2 &&
+			    riflen < sizeof(struct token_rif) &&
+			    (riflen & 1) == 0) {
+				rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
+				rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
+				memcpy(TOKEN_RIF(la), rif, riflen);
+			}
+		}
+	}
+#endif /* NTOKEN > 0 */
+	(void)sockaddr_dl_setaddr(sdl, sdl->sdl_len, ar_sha(ah), ah->ar_hln);
+	if (rt->rt_expire) {
+		rt->rt_expire = time_uptime + arpt_keep;
+
+		KASSERT((la->la_flags & LLE_STATIC) == 0);
+		LLE_ADDREF(la);
+		callout_reset(&la->la_timer, hz * arpt_keep, arptimer, la);
+	}
+	rt->rt_flags &= ~RTF_REJECT;
+	la->la_asked = 0;
+
+	if (la->la_hold != NULL) {
+		int n = la->la_numheld;
+		struct mbuf *m_hold, *m_hold_next;
+
+		m_hold = la->la_hold;
+		la->la_hold = NULL;
+		la->la_numheld = 0;
+		/*
+		 * We have to unlock here because if_output would call
+		 * arpresolve
+		 */
+		LLE_WUNLOCK(la);
+		ARP_STATADD(ARP_STAT_DFRSENT, n);
+		for (; m_hold != NULL; m_hold = m_hold_next) {
+			m_hold_next = m_hold->m_nextpkt;
+			m_hold->m_nextpkt = NULL;
+			(*ifp->if_output)(ifp, m_hold, rt_getkey(rt), rt);
+		}
+	} else
+		LLE_WUNLOCK(la);
+	la = NULL;
+
 reply:
 	if (la != NULL) {
 		LLE_WUNLOCK(la);
