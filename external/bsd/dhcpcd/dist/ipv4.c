@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv4.c,v 1.17 2015/08/21 10:39:00 roy Exp $");
+ __RCSID("$NetBSD: ipv4.c,v 1.18 2015/11/30 16:33:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -160,6 +160,51 @@ ipv4_findaddr(struct dhcpcd_ctx *ctx, const struct in_addr *addr)
 			return ap;
 	}
 	return NULL;
+}
+
+int
+ipv4_srcaddr(const struct rt *rt, struct in_addr *addr)
+{
+	const struct dhcp_state *dstate;
+	const struct ipv4ll_state *istate;
+
+	if (rt->iface == NULL) {
+		errno = ENOENT;
+		return -1;
+	}
+
+	/* Prefer DHCP source address if matching */
+	dstate = D_CSTATE(rt->iface);
+	if (dstate &&
+	    rt->net.s_addr == dstate->net.s_addr &&
+	    rt->dest.s_addr == (dstate->addr.s_addr & dstate->net.s_addr))
+	{
+		*addr = dstate->addr;
+		return 1;
+	}
+
+	/* Then IPv4LL source address if matching */
+	istate = IPV4LL_CSTATE(rt->iface);
+	if (istate &&
+	    rt->net.s_addr == inaddr_llmask.s_addr &&
+	    rt->dest.s_addr == (istate->addr.s_addr & inaddr_llmask.s_addr))
+	{
+		*addr = istate->addr;
+		return 1;
+	}
+
+	/* If neither match, return DHCP then IPv4LL */
+	if (dstate) {
+		*addr = dstate->addr;
+		return 0;
+	}
+	if (istate) {
+		*addr = istate->addr;
+		return 0;
+	}
+
+	errno = ESRCH;
+	return -1;
 }
 
 int
@@ -437,16 +482,21 @@ nc_route(struct rt *ort, struct rt *nrt)
 #endif
 
 	if (change) {
-		if (if_route(RTM_CHANGE, nrt) == 0)
+		if (if_route(RTM_CHANGE, nrt) != -1)
 			return 0;
 		if (errno != ESRCH)
 			logger(nrt->iface->ctx, LOG_ERR, "if_route (CHG): %m");
 	}
 
+	/* If the old route does not have an interface, give it the
+	 * interface of the new route for context. */
+	if (ort && ort->iface == NULL)
+		ort->iface = nrt->iface;
+
 #ifdef HAVE_ROUTE_METRIC
 	/* With route metrics, we can safely add the new route before
 	 * deleting the old route. */
-	if (if_route(RTM_ADD, nrt) == 0) {
+	if (if_route(RTM_ADD, nrt) != -1) {
 		if (ort && if_route(RTM_DELETE, ort) == -1 && errno != ESRCH)
 			logger(nrt->iface->ctx, LOG_ERR, "if_route (DEL): %m");
 		return 0;
@@ -462,7 +512,7 @@ nc_route(struct rt *ort, struct rt *nrt)
 	 * adding the new one. */
 	if (ort && if_route(RTM_DELETE, ort) == -1 && errno != ESRCH)
 		logger(nrt->iface->ctx, LOG_ERR, "if_route (DEL): %m");
-	if (if_route(RTM_ADD, nrt) == 0)
+	if (if_route(RTM_ADD, nrt) != -1)
 		return 0;
 #ifdef HAVE_ROUTE_METRIC
 logerr:
@@ -477,8 +527,8 @@ d_route(struct rt *rt)
 	int retval;
 
 	desc_route("deleting", rt);
-	retval = if_route(RTM_DELETE, rt);
-	if (retval != 0 && errno != ENOENT && errno != ESRCH)
+	retval = if_route(RTM_DELETE, rt) == -1 ? -1 : 0;
+	if (retval == -1 && errno != ENOENT && errno != ESRCH)
 		logger(rt->iface->ctx, LOG_ERR,
 		    "%s: if_delroute: %m", rt->iface->name);
 	return retval;
@@ -705,11 +755,11 @@ ipv4_doroute(struct rt *rt, struct rt_head *nrs)
 		if (or->state & STATE_FAKE ||
 		    or->iface != rt->iface ||
 #ifdef HAVE_ROUTE_METRIC
-		    rt->metric != or->metric ||
+		    or->metric != rt->metric ||
 #endif
-		    rt->src.s_addr != or->src.s_addr ||
-		    rt->gate.s_addr != or->gate.s_addr ||
-		    rt->mtu != or->mtu)
+		    or->src.s_addr != rt->src.s_addr ||
+		    or->gate.s_addr != rt->gate.s_addr ||
+		    or->mtu != rt->mtu)
 		{
 			if (c_route(or, rt) != 0)
 				return 0;
@@ -1119,9 +1169,10 @@ ipv4_applyaddr(void *arg)
 	 * notification right now via our link socket. */
 	if_initrt(ifp);
 	ipv4_buildroutes(ifp->ctx);
-	script_runreason(ifp, state->reason);
-
-	dhcpcd_daemonise(ifp->ctx);
+	if (state->state == DHS_BOUND) {
+		script_runreason(ifp, state->reason);
+		dhcpcd_daemonise(ifp->ctx);
+	}
 }
 
 void
@@ -1175,8 +1226,8 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 		}
 	}
 
-	dhcp_handleifa(cmd, ifp, addr, net, dst, flags);
 	arp_handleifa(cmd, ifp, addr, flags);
+	dhcp_handleifa(cmd, ifp, addr, net, dst, flags);
 }
 
 void
