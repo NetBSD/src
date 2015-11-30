@@ -1,4 +1,4 @@
-/* $NetBSD: rump_syscalls.h,v 1.92 2015/11/30 22:48:53 pgoyette Exp $ */
+/* $NetBSD: rump_syscalls.h,v 1.93 2015/11/30 23:28:31 pgoyette Exp $ */
 
 /*
  * System call protos in rump namespace.
