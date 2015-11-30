@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.14 2015/07/09 10:15:34 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.15 2015/11/30 16:33:00 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -94,15 +94,29 @@
 #  undef IPV6_POLLADDRFLAG
 #endif
 
-/* Linux-3.18 can manage temporary addresses even with RA
- * processing disabled. */
-//#undef IFA_F_MANAGETEMPADDR
-#if defined(__linux__) && defined(IFA_F_MANAGETEMPADDR)
+/*
+ * If dhcpcd handles RA processing instead of the kernel, the kernel needs
+ * to either allow userland to set temporary addresses or mark an address
+ * for the kernel to manage temporary addresses from.
+ * If the kernel allows the former, a global #define is needed, otherwise
+ * the address marking will be handled in the platform specific address handler.
+ *
+ * Some BSDs do not allow userland to set temporary addresses.
+ * Linux-3.18 allows the marking of addresses from which to manage temp addrs.
+ */
+#if defined(BSD) && defined(IN6_IFF_TEMPORARY)
 #define IPV6_MANAGETEMPADDR
 #endif
 
-/* Some BSDs do not allow userland to set temporary addresses. */
-#if defined(BSD) && defined(IN6_IFF_TEMPORARY)
+/*
+ * You could enable IPV6_MANAGETEMPADDR anyway and disable the platform
+ * specific address marking to test dhcpcd's temporary address handling as well,
+ * but this will not affect source address selection so is of very limited use.
+ */
+#if 0
+/* Pretend we have an old Linux kernel. */
+#undef IFA_F_MANAGETEMPADDR
+/* Enable dhcpcd handling temporary addresses. */
 #define IPV6_MANAGETEMPADDR
 #endif
 
