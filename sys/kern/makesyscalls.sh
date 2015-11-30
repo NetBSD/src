@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.156 2015/11/30 23:00:14 pgoyette Exp $
+#	$NetBSD: makesyscalls.sh,v 1.157 2015/11/30 23:17:40 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -258,7 +258,7 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysautoload
 	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"%s\");\n\n", tag > sysautoload
 	printf("#include <sys/proc.h>\n")		> sysautoload
-	printf("static struct sc_auto " autoloadprefix \
+	printf("static struct sc_autoload " autoloadprefix \
 		"_syscalls_autoload[] = {\n")		> sysautoload
 
 	printf " * created from%s\n */\n\n", $0 > rumpcalls
