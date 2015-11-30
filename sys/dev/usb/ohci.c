@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.256 2015/08/19 06:23:35 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.257 2015/11/30 13:26:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.256 2015/08/19 06:23:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.257 2015/11/30 13:26:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3191,7 +3191,7 @@ ohci_device_intr_start(usbd_xfer_handle xfer)
 	tail->xfer = NULL;
 
 	data->td.td_flags = HTOO32(
-		isread ? OHCI_TD_IN : OHCI_TD_OUT |
+		(isread ? OHCI_TD_IN : OHCI_TD_OUT) |
 		OHCI_TD_NOCC |
 		OHCI_TD_SET_DI(1) | OHCI_TD_TOGGLE_CARRY);
 	if (xfer->flags & USBD_SHORT_XFER_OK)
