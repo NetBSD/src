@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.422 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.423 2015/11/30 22:47:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.422 2015/11/26 13:15:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.423 2015/11/30 22:47:19 pgoyette Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -181,6 +181,11 @@ struct exec_entry {
 void	syscall(void);
 #endif
 
+/* NetBSD autoloadable syscalls */
+#ifdef MODULAR
+#include <kern/syscalls_autoload.c>
+#endif
+
 /* NetBSD emul struct */
 struct emul emul_netbsd = {
 	.e_name =		"netbsd",
@@ -194,6 +199,9 @@ struct emul emul_netbsd = {
 	.e_errno =		NULL,
 	.e_nosys =		SYS_syscall,
 	.e_nsysent =		SYS_NSYSENT,
+#endif
+#ifdef MODULAR
+	.e_sc_autoload =	netbsd_syscalls_autoload,
 #endif
 	.e_sysent =		sysent,
 #ifdef SYSCALL_DEBUG
