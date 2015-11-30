@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.257 2015/11/30 13:26:09 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.258 2015/11/30 13:27:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.257 2015/11/30 13:26:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.258 2015/11/30 13:27:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -448,7 +448,7 @@ void
 ohci_free_std(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
 	KASSERT(sc->sc_bus.use_polling || mutex_owned(&sc->sc_lock));
-	
+
 	ohci_hash_rem_td(sc, std);
 	std->nexttd = sc->sc_freetds;
 	sc->sc_freetds = std;
@@ -1312,7 +1312,7 @@ ohci_softintr(void *v)
 	if (ohcidebug > 10) {
 		DPRINTF(("ohci_process_done: TD done:\n"));
 		for (std = sdone; std; std = std->dnext)
-			ohci_dump_td(sc, std);	
+			ohci_dump_td(sc, std);
 	}
 #endif
 
@@ -1390,7 +1390,7 @@ ohci_softintr(void *v)
 	if (ohcidebug > 10) {
 		DPRINTF(("ohci_softintr: ITD done:\n"));
 		for (sitd = sidone; sitd; sitd = sitd->dnext)
-			ohci_dump_itd(sc, sitd);	
+			ohci_dump_itd(sc, sitd);
 	}
 #endif
 
@@ -3047,7 +3047,7 @@ ohci_device_bulk_start(usbd_xfer_handle xfer)
 		  data, &tail);
 	if (err)
 		return err;
-	
+
 	/* We want interrupt at the end of the transfer. */
 	tail->td.td_flags &= HTOO32(~OHCI_TD_INTR_MASK);
 	tail->td.td_flags |= HTOO32(OHCI_TD_SET_DI(1));
