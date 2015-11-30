@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.154 2015/09/24 14:30:52 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.155 2015/11/30 22:47:19 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -51,6 +51,7 @@ esac
 #	switchname	the name for the 'struct sysent' we define
 #	namesname	the name for the 'const char *[]' we define
 #	constprefix	the prefix for the system call constants
+#	autoloadprefix	the prefix for the autoload table name
 #	registertype	the type for register_t
 #	nsysent		the size of the sysent table
 #	sys_nosys	[optional] name of function called for unsupported
@@ -165,6 +166,7 @@ BEGIN {
 	switchname = \"$switchname\"
 	namesname = \"$namesname\"
 	constprefix = \"$constprefix\"
+	autoloadprefix = \"$autoloadprefix\"
 	registertype = \"$registertype\"
 	sysalign=\"$sysalign\"
 	if (!registertype) {
@@ -255,10 +257,9 @@ NR == 1 {
 
 	printf " * created from%s\n */\n\n", $0 > sysautoload
 	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"%s\");\n\n", tag > sysautoload
-	printf("static struct {\n")			> sysautoload
-	printf("\tu_int\t\tal_code;\n")			> sysautoload
-	printf("\tconst char\t*al_module;\n")		> sysautoload
-	printf("} const syscalls_autoload[] = {\n")	> sysautoload
+	printf("#include <sys/proc.h>\n")		> sysautoload
+	printf("static struct sc_auto " autoloadprefix \
+		"_syscalls_autoload[] = {\n")		> sysautoload
 
 	printf " * created from%s\n */\n\n", $0 > rumpcalls
 	printf "#ifdef RUMP_CLIENT\n" > rumpcalls
@@ -1149,6 +1150,7 @@ END {
 cat $sysprotos >> $sysarghdr
 echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
 echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
+echo "\t    { 0, NULL }" >> $sysautoload
 echo "};" >> $sysautoload
 printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpprotos
 cat $sysdcl $sysent > $syssw
