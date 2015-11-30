@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.12 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.13 2015/11/30 19:59:34 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,10 +166,8 @@ resize(int fd)
 	gpt_write(fd, lbt);
 	gpt_write(fd, tpg);
 
-	printf("Partition %d resized, use:\n", entry);
-	printf("\tdkctl %s addwedge <wedgename> %" PRIu64 " %" PRIu64
-	    " <type>\n", device_arg, map->map_start, newsize);
-	printf("to create a wedge for it\n");
+	printf("Partition %d resized on %s: ", entry, device_arg);
+	printf("%" PRIu64 " %" PRIu64 "\n", map->map_start, newsize);
 }
 
 int
