@@ -65,7 +65,7 @@ extern const char *device_name;
 extern off_t mediasz;
 extern u_int parts;
 extern u_int secsz;
-extern int readonly, verbose, quiet;
+extern int readonly, verbose, quiet, nosync;
 
 uint32_t crc32(const void *, size_t);
 void	gpt_close(int);
