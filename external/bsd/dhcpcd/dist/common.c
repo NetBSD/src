@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.14 2015/07/09 10:15:34 roy Exp $");
+ __RCSID("$NetBSD: common.c,v 1.15 2015/11/30 16:33:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -56,29 +56,6 @@
 #  define _PATH_DEVNULL "/dev/null"
 #endif
 
-const char *
-get_hostname(char *buf, size_t buflen, int short_hostname)
-{
-	char *p;
-
-	if (gethostname(buf, buflen) != 0)
-		return NULL;
-	buf[buflen - 1] = '\0';
-	if (strcmp(buf, "(none)") == 0 ||
-	    strcmp(buf, "localhost") == 0 ||
-	    strncmp(buf, "localhost.", strlen("localhost.")) == 0 ||
-	    buf[0] == '.')
-		return NULL;
-
-	if (short_hostname) {
-		p = strchr(buf, '.');
-		if (p)
-			*p = '\0';
-	}
-
-	return buf;
-}
-
 #if USE_LOGFILE
 void
 logger_open(struct dhcpcd_ctx *ctx)
@@ -115,6 +92,21 @@ logger_close(struct dhcpcd_ctx *ctx)
 	closelog();
 }
 
+/*
+ * NetBSD's gcc has been modified to check for the non standard %m in printf
+ * like functions and warn noisily about it that they should be marked as
+ * syslog like instead.
+ * This is all well and good, but our logger also goes via vfprintf and
+ * when marked as a sysloglike funcion, gcc will then warn us that the
+ * function should be printflike instead!
+ * This creates an infinte loop of gcc warnings.
+ * Until NetBSD solves this issue, we have to disable a gcc diagnostic
+ * for our fully standards compliant code in the logger function.
+ */
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-format-attribute"
+#endif
 void
 logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 {
@@ -123,9 +115,6 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 #ifndef HAVE_PRINTF_M
 	char fmt_cpy[1024];
 #endif
-
-	if (pri >= LOG_DEBUG && ctx && !(ctx->options & DHCPCD_DEBUG))
-		return;
 
 	serrno = errno;
 	va_start(va, fmt);
@@ -147,8 +136,18 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 				fmt_left -= 2;
 				p++;
 			} else if (p[0] == '%' && p[1] == 'm') {
-				if (serr == NULL)
+				if (serr == NULL) {
+					/* strerror_r isn't portable.
+					 * strerror_l isn't widely found
+					 * and also problematic to use.
+					 * Also, if strerror_l exists then
+					 * strerror could easily be made
+					 * treadsafe in the same libc.
+					 * dhcpcd is only threaded in RTEMS
+					 * where strerror is threadsafe,
+					 * so this should be fine. */
 					serr = strerror(serrno);
+				}
 				fmt_wrote = strlcpy(fp, serr, fmt_left);
 				if (fmt_wrote > fmt_left)
 					break;
@@ -165,43 +164,61 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 		*fp++ = '\0';
 		fmt = fmt_cpy;
 	}
-
 #endif
 
-	if (ctx == NULL || !(ctx->options & DHCPCD_QUIET)) {
+	if ((ctx == NULL || !(ctx->options & DHCPCD_QUIET)) &&
+	    (pri < LOG_DEBUG || (ctx->options & DHCPCD_DEBUG)))
+	{
 		va_list vac;
 
 		va_copy(vac, va);
+#ifdef HAVE_PRINTF_M
+		errno = serrno;
+#endif
 		vfprintf(pri <= LOG_ERR ? stderr : stdout, fmt, vac);
 		fputc('\n', pri <= LOG_ERR ? stderr : stdout);
 		va_end(vac);
 	}
 
-#ifdef HAVE_PRINTF_M
-	errno = serrno;
-#endif
+	/* Don't send to syslog if dumping leases or testing */
+	if (ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))
+		goto out;
+
 	if (ctx && ctx->log_fd != -1) {
-		struct timeval tv;
-		char buf[32];
+		if (pri < LOG_DEBUG || (ctx->options & DHCPCD_DEBUG)) {
+			struct timeval tv;
+			char buf[32];
 
-		/* Write the time, syslog style. month day time - */
-		if (gettimeofday(&tv, NULL) != -1) {
-			time_t now;
-			struct tm tmnow;
+			/* Write the time, syslog style. month day time - */
+			if (gettimeofday(&tv, NULL) != -1) {
+				time_t now;
+				struct tm tmnow;
 
-			tzset();
-			now = tv.tv_sec;
-			localtime_r(&now, &tmnow);
-			strftime(buf, sizeof(buf), "%b %d %T ", &tmnow);
-			dprintf(ctx->log_fd, "%s", buf);
+				tzset();
+				now = tv.tv_sec;
+				localtime_r(&now, &tmnow);
+				strftime(buf, sizeof(buf), "%b %d %T ", &tmnow);
+				dprintf(ctx->log_fd, "%s", buf);
+			}
+
+#ifdef HAVE_PRINTF_M
+			errno = serrno;
+#endif
+			vdprintf(ctx->log_fd, fmt, va);
+			dprintf(ctx->log_fd, "\n");
 		}
-
-		vdprintf(ctx->log_fd, fmt, va);
-		dprintf(ctx->log_fd, "\n");
-	} else
+	} else {
+#ifdef HAVE_PRINTF_M
+		errno = serrno;
+#endif
 		vsyslog(pri, fmt, va);
+	}
+out:
 	va_end(va);
 }
+#endif
+#if defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ > 5))
+#pragma GCC diagnostic pop
 #endif
 
 ssize_t

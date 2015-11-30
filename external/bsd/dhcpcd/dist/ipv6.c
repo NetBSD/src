@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.14 2015/08/21 10:39:00 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.15 2015/11/30 16:33:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -37,6 +37,16 @@
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
+
+#ifdef BSD
+/* Purely for the ND6_IFF_AUTO_LINKLOCAL #define which is solely used
+ * to generate our CAN_ADD_LLADDR #define. */
+#  ifdef __FreeBSD__
+#    include <net/if_var.h>
+#  endif
+#  include <netinet6/in6_var.h>
+#  include <netinet6/nd6.h>
+#endif
 
 #include <errno.h>
 #include <ifaddrs.h>
@@ -105,6 +115,16 @@
 #  endif
 #endif
 
+#if defined(HAVE_IN6_ADDR_GEN_MODE_NONE) || defined(ND6_IFF_AUTO_LINKLOCAL)
+/* If we're using a private SLAAC address on wireless,
+ * don't add it until we have associated as we randomise
+ * it based on the SSID. */
+#define CAN_ADD_LLADDR(ifp) \
+	(!((ifp)->options->options & DHCPCD_SLAACPRIVATE) || \
+	    (ifp)->carrier != LINK_DOWN)
+#else
+#define CAN_ADD_LLADDR(ifp) (1)
+#endif
 
 #ifdef IPV6_MANAGETEMPADDR
 static void ipv6_regentempifid(void *);
@@ -885,10 +905,12 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT)) !=
 		    (DHCPCD_EXITING | DHCPCD_PERSISTENT))
 		{
-			if (drop == 2)
-				TAILQ_REMOVE(addrs, ap, next);
 			/* Don't drop link-local addresses. */
-			if (!IN6_IS_ADDR_LINKLOCAL(&ap->addr)) {
+			if (!(IN6_IS_ADDR_LINKLOCAL(&ap->addr) &&
+			    CAN_ADD_LLADDR(ap->iface)))
+			{
+				if (drop == 2)
+					TAILQ_REMOVE(addrs, ap, next);
 				/* Find the same address somewhere else */
 				apf = ipv6_findaddr(ap->iface->ctx, &ap->addr,
 				    0);
@@ -903,9 +925,9 @@ ipv6_freedrop_addrs(struct ipv6_addrhead *addrs, int drop,
 						    &now);
 					ipv6_addaddr(apf, &now);
 				}
+				if (drop == 2)
+					ipv6_freeaddr(ap);
 			}
-			if (drop == 2)
-				ipv6_freeaddr(ap);
 		}
 		if (drop != 2)
 			ipv6_freeaddr(ap);
@@ -948,11 +970,13 @@ ipv6_handleifa(struct dhcpcd_ctx *ctx,
 	struct ll_callback *cb;
 
 #if 0
-	char buf[INET6_ADDRSTRLEN];
-	inet_ntop(AF_INET6, &addr->s6_addr,
-	    buf, INET6_ADDRSTRLEN);
-	logger(ctx, LOG_DEBUG, "%s: cmd %d addr %s flags %d",
-	    ifname, cmd, buf, flags);
+	char dbuf[INET6_ADDRSTRLEN];
+	const char *dbp;
+
+	dbp = inet_ntop(AF_INET6, &addr->s6_addr,
+	    dbuf, INET6_ADDRSTRLEN);
+	logger(ctx, LOG_INFO, "%s: cmd %d addr %s flags %d",
+	    ifname, cmd, dbp, flags);
 #endif
 
 	if (ifs == NULL)
@@ -1280,7 +1304,9 @@ ipv6_start(struct interface *ifp)
 	} else
 		ap = NULL;
 
-	if (ap == NULL && ipv6_addlinklocal(ifp) == -1)
+	if (ap == NULL &&
+	    CAN_ADD_LLADDR(ifp) &&
+	    ipv6_addlinklocal(ifp) == -1)
 		return -1;
 
 	/* Load existing routes */
@@ -1302,7 +1328,7 @@ ipv6_freedrop(struct interface *ifp, int drop)
 
 	ipv6_freedrop_addrs(&state->addrs, drop ? 2 : 0, NULL);
 
-	/* Becuase we need to cache the addresses we don't control,
+	/* Because we need to cache the addresses we don't control,
 	 * we only free the state on when NOT dropping addresses. */
 	if (drop == 0) {
 		while ((cb = TAILQ_FIRST(&state->ll_callbacks))) {
@@ -1898,16 +1924,21 @@ nc_route(struct rt6 *ort, struct rt6 *nrt)
 #endif
 
 	if (change) {
-		if (if_route6(RTM_CHANGE, nrt) == 0)
+		if (if_route6(RTM_CHANGE, nrt) != -1)
 			return 0;
 		if (errno != ESRCH)
 			logger(nrt->iface->ctx, LOG_ERR, "if_route6 (CHG): %m");
 	}
 
+	/* If the old route does not have an interface, give it the
+	 * interface of the new route for context. */
+	if (ort && ort->iface == NULL)
+		ort->iface = nrt->iface;
+
 #ifdef HAVE_ROUTE_METRIC
 	/* With route metrics, we can safely add the new route before
 	 * deleting the old route. */
-	if (if_route6(RTM_ADD, nrt) == 0) {
+	if (if_route6(RTM_ADD, nrt) != -1) {
 		if (ort && if_route6(RTM_DELETE, ort) == -1 &&
 		    errno != ESRCH)
 			logger(nrt->iface->ctx, LOG_ERR, "if_route6 (DEL): %m");
@@ -1924,7 +1955,7 @@ nc_route(struct rt6 *ort, struct rt6 *nrt)
 	 * adding the new one. */
 	if (ort && if_route6(RTM_DELETE, ort) == -1 && errno != ESRCH)
 		logger(nrt->iface->ctx, LOG_ERR, "if_route6: %m");
-	if (if_route6(RTM_ADD, nrt) == 0)
+	if (if_route6(RTM_ADD, nrt) != -1)
 		return 0;
 #ifdef HAVE_ROUTE_METRIC
 logerr:
@@ -1939,8 +1970,8 @@ d_route(struct rt6 *rt)
 	int retval;
 
 	desc_route("deleting", rt);
-	retval = if_route6(RTM_DELETE, rt);
-	if (retval != 0 && errno != ENOENT && errno != ESRCH)
+	retval = if_route6(RTM_DELETE, rt) == -1 ? -1 : 0;
+	if (retval == -1 && errno != ENOENT && errno != ESRCH)
 		logger(rt->iface->ctx, LOG_ERR,
 		    "%s: if_delroute6: %m", rt->iface->name);
 	return retval;
@@ -2127,7 +2158,8 @@ ipv6_buildroutes(struct dhcpcd_ctx *ctx)
 			    rt->metric != or->metric ||
 #endif
 		//	    or->src.s_addr != ifp->addr.s_addr ||
-			    !IN6_ARE_ADDR_EQUAL(&rt->gate, &or->gate))
+			    !IN6_ARE_ADDR_EQUAL(&or->gate, &rt->gate) ||
+			    or->mtu != rt->mtu)
 			{
 				if (c_route(or, rt) != 0)
 					continue;

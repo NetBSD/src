@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.8.in,v 1.44 2015/08/21 10:39:00 roy Exp $
+.\"     $NetBSD: dhcpcd.8.in,v 1.45 2015/11/30 16:33:00 roy Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 21, 2015
+.Dd November 18, 2015
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -31,7 +31,7 @@
 .Nd a DHCP client
 .Sh SYNOPSIS
 .Nm
-.Op Fl 46ABbDdEGgHJKLMpqTV
+.Op Fl 46ABbDdEGgHJKLMNpqTV
 .Op Fl C , Fl Fl nohook Ar hook
 .Op Fl c , Fl Fl script Ar script
 .Op Fl e , Fl Fl env Ar value
@@ -49,6 +49,7 @@
 .Op Fl r , Fl Fl request Ar address
 .Op Fl S , Fl Fl static Ar value
 .Op Fl s , Fl Fl inform Ar address Ns Op Ar /cidr
+.Op Fl Fl inform6
 .Op Fl t , Fl Fl timeout Ar seconds
 .Op Fl u , Fl Fl userclass Ar class
 .Op Fl v , Fl Fl vendor Ar code , Ar value
@@ -378,6 +379,22 @@ is not running, then it starts up as normal.
 This may also cause
 .Xr wpa_supplicant 8
 to reload its configuration for each interface as well.
+.It Fl N , Fl Fl renew Op Ar interface
+Notifies
+.Nm
+to renew existing addresses on the specified
+.Ar interface .
+If no interface is specified then this applies to all interfaces.
+If
+.Nm
+is not running, then it starts up as normal.
+Unlike the
+.Fl n , Fl Fl rebind
+option above, the configuration for
+.Nm
+and
+.Xr wpa_supplicant 8
+is not reloaded.
 .It Fl o , Fl Fl option Ar option
 Request the DHCP
 .Ar option
@@ -420,6 +437,15 @@ If
 .Nm
 fails to contact a DHCP server then it returns a failure instead of falling
 back on IPv4LL.
+.It Fl Fl inform6
+Performs a DHCPv6 Information Request.
+No address is requested or specified, but all other DHCPv6 options are allowed.
+This is normally performed automatically when the IPv6 Router Advertises
+that the client should perform this operation.
+This option is only needed when
+.Nm
+is not processing IPv6RA messages and the need for DHCPv6 Information Request
+exists.
 .It Fl S, Fl Fl static Ar value
 Configures a static DHCP
 .Ar value .
@@ -608,8 +634,7 @@ before starting
 Dumps the last lease for the
 .Ar interface
 to stdout.
-.Ar interface
-could also be a path to a DHCP wire formatted file.
+If omitted, standard input is used to read a DHCP wire formatted message.
 Use the
 .Fl 4
 or
