@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls_autoload.c,v 1.8 2015/10/10 03:30:17 pgoyette Exp $ */
+/* $NetBSD: syscalls_autoload.c,v 1.9 2015/11/30 22:48:53 pgoyette Exp $ */
 
 /*
  * System call autoload table.
@@ -8,12 +8,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.8 2015/10/10 03:30:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.9 2015/11/30 22:48:53 pgoyette Exp $");
 
-static struct {
-	u_int		al_code;
-	const char	*al_module;
-} const syscalls_autoload[] = {
+#include <sys/proc.h>
+static struct sc_auto netbsd_syscalls_autoload[] = {
 	    { SYS_compat_50_wait4, "compat" },
 	    { SYS_compat_43_ocreat, "compat" },
 	    { SYS_compat_50_mknod, "compat" },
@@ -178,4 +176,5 @@ static struct {
 	    { SYS_____semctl50, "sysv_ipc" },
 	    { SYS___shmctl50, "sysv_ipc" },
 	    { SYS___msgctl50, "sysv_ipc" },
+\t    { 0, NULL }
 };
