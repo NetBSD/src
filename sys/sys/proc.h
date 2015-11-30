@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.324 2015/11/26 13:15:34 martin Exp $	*/
+/*	$NetBSD: proc.h,v 1.325 2015/11/30 22:47:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -124,6 +124,14 @@ struct pgrp {
 };
 
 /*
+ * Autoloadable syscall definition
+ */
+struct sc_auto {
+	u_int		al_code;
+	const char	*al_module;
+};
+
+/*
  * One structure allocated per emulation.
  */
 struct exec_package;
@@ -143,6 +151,7 @@ struct emul {
 	struct sysent	*e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
+	struct sc_auto	*e_sc_autoload;	/* List of autoloadable syscalls */
 	void		(*e_sendsig)(const struct ksiginfo *,
 					  const sigset_t *);
 	void		(*e_trapsignal)(struct lwp *, struct ksiginfo *);
