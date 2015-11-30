@@ -1,4 +1,4 @@
-/* $NetBSD: common.h,v 1.11 2015/10/14 15:58:08 christos Exp $ */
+/* $NetBSD: common.h,v 1.12 2015/11/30 16:33:00 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -115,25 +115,19 @@
 #endif
 
 #if __GNUC__ > 2 || defined(__INTEL_COMPILER)
-# ifndef __dead
-#  define __dead __attribute__((__noreturn__))
-# endif
 # ifndef __packed
-#  define __packed   __attribute__((__packed__))
-# endif
-# ifndef __syslog_attribute__
-#  define __syslog__ __printf__
+#  define __packed __attribute__((__packed__))
 # endif
 # ifndef __sysloglike
-#  define __sysloglike(a, b) __attribute__((__format__(__syslog__, a, b)))
+#  ifndef __syslog_attribute_
+#    define __syslog__ __printf__
+#  endif
+#  define __sysloglike(a, b) __attribute__((format(__syslog__, a, b)))
 # endif
 # ifndef __unused
-#  define __unused   __attribute__((__unused__))
+#  define __unused __attribute__((__unused__))
 # endif
 #else
-# ifndef __dead
-#  define __dead
-# endif
 # ifndef __packed
 #  define __packed
 # endif
@@ -146,7 +140,7 @@
 #endif
 
 #ifndef __arraycount
-#define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
+#  define __arraycount(__x)       (sizeof(__x) / sizeof(__x[0]))
 #endif
 
 /* We don't really need this as our supported systems define __restrict
@@ -162,7 +156,6 @@
 #endif
 
 void get_line_free(void);
-const char *get_hostname(char *, size_t, int);
 extern int clock_monotonic;
 int get_monotonic(struct timespec *);
 
@@ -177,7 +170,7 @@ int get_monotonic(struct timespec *);
 #if USE_LOGFILE
 void logger_open(struct dhcpcd_ctx *);
 #define logger_mask(ctx, lvl) setlogmask((lvl))
-__sysloglike(3, 4) void logger(struct dhcpcd_ctx *, int, const char *, ...);
+void logger(struct dhcpcd_ctx *, int, const char *, ...) __sysloglike(3, 4);
 void logger_close(struct dhcpcd_ctx *);
 #else
 #define logger_open(ctx) openlog(PACKAGE, LOG_PERROR | LOG_PID, LOG_DAEMON)
