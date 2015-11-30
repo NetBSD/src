@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.2.6.3 2015/11/30 10:31:04 he Exp $	*/
+/*	$NetBSD: enum.c,v 1.2.6.4 2015/11/30 10:32:06 he Exp $	*/
 
 
 /**
@@ -217,7 +217,7 @@ find_name(char const * name, tOptions * pOpts, tOptDesc * pOD,
      *  Multiple partial matches means we have an ambiguous match.
      */
     for (idx = 0; idx < name_ct; idx++) {
-        if (strncmp(paz_names[idx], name, len) == 0) {
+        if (strncmp(paz_names[idx], (const char *)name, len) == 0) {
             if (paz_names[idx][len] == NUL)
                 return idx;  /* full match */
 
