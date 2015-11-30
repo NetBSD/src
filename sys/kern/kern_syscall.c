@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.12 2015/11/30 22:47:19 pgoyette Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.13 2015/11/30 23:17:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.12 2015/11/30 22:47:19 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.13 2015/11/30 23:17:40 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -63,8 +63,8 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 
 	const struct sysent *sy;
 	const struct emul *em;
-	const struct sc_auto *auto_list;
-	int code;
+	const struct sc_autoload *auto_list;
+	u_int code;
 
 	/*
 	 * Restart the syscall if we interrupted a module unload that
