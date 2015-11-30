@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.325 2015/11/30 22:47:19 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.326 2015/11/30 23:17:40 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ struct pgrp {
 /*
  * Autoloadable syscall definition
  */
-struct sc_auto {
+struct sc_autoload {
 	u_int		al_code;
 	const char	*al_module;
 };
