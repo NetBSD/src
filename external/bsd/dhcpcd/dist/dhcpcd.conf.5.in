@@ -1,4 +1,4 @@
-.\"     $NetBSD: dhcpcd.conf.5.in,v 1.23 2015/08/21 10:39:00 roy Exp $
+.\"     $NetBSD: dhcpcd.conf.5.in,v 1.24 2015/11/30 16:33:00 roy Exp $
 .\" Copyright (c) 2006-2015 Roy Marples
 .\" All rights reserved
 .\"
@@ -23,7 +23,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 1, 2015
+.Dd October 19, 2015
 .Dt DHCPCD.CONF 5
 .Os
 .Sh NAME
@@ -316,7 +316,7 @@ A second prefix is requested and assigned to two other interfaces.
 can be used with an empty configuration file on eth1, eth2 and eth3,
 to provide automatic
 IPv6 address configuration for the internal network.
-.Bd -literal -indent
+.Bd -literal
 noipv6rs                 # disable routing solicitation
 denyinterfaces eth2      # Don't touch eth2 at all
 interface eth0
@@ -736,6 +736,10 @@ Requests the option by default without having to be specified in user
 configuration
 .It Ic norequest
 This option cannot be requested, regardless of user configuration
+.It Ic optional
+This option is optional.
+Only makes sense for embedded options where like the client FQDN option where
+the FQDN string itself is optional.
 .It Ic index
 The option can appear more than once and will be indexed.
 .It Ic array
