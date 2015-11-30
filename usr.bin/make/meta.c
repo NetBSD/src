@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.40 2015/10/11 04:51:24 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.41 2015/11/30 23:37:56 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1183,7 +1183,8 @@ meta_oodate(GNode *gn, Boolean oodate)
 		    if ((strstr("tmp", p)))
 			break;
 
-		    if (stat(p, &fs) < 0) {
+		    if ((link_src != NULL && lstat(p, &fs) < 0) ||
+			(link_src == NULL && stat(p, &fs) < 0)) {
 			Lst_AtEnd(missingFiles, bmake_strdup(p));
 		    }
 		    break;
