@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.159 2015/11/30 23:25:54 pgoyette Exp $
+#	$NetBSD: makesyscalls.sh,v 1.160 2015/11/30 23:27:27 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -1150,7 +1150,7 @@ END {
 cat $sysprotos >> $sysarghdr
 echo "#endif /* _${constprefix}SYSCALL_H_ */" >> $sysnumhdr
 echo "#endif /* _${constprefix}SYSCALLARGS_H_ */" >> $sysarghdr
-printf("\t    { 0, NULL }\n") >> $sysautoload
+printf "\t    { 0, NULL }\n" >> $sysautoload
 echo "};" >> $sysautoload
 printf "\n#endif /* _RUMP_RUMP_SYSCALLS_H_ */\n" >> $rumpprotos
 cat $sysdcl $sysent > $syssw

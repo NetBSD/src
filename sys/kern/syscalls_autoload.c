@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls_autoload.c,v 1.11 2015/11/30 23:25:54 pgoyette Exp $ */
+/* $NetBSD: syscalls_autoload.c,v 1.12 2015/11/30 23:27:27 pgoyette Exp $ */
 
 /*
  * System call autoload table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.11 2015/11/30 23:25:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls_autoload.c,v 1.12 2015/11/30 23:27:27 pgoyette Exp $");
 
 #include <sys/proc.h>
 static struct sc_autoload netbsd_syscalls_autoload[] = {
@@ -176,3 +176,5 @@ static struct sc_autoload netbsd_syscalls_autoload[] = {
 	    { SYS_____semctl50, "sysv_ipc" },
 	    { SYS___shmctl50, "sysv_ipc" },
 	    { SYS___msgctl50, "sysv_ipc" },
+	    { 0, NULL }
+};
