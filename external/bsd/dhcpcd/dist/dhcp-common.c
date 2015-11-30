@@ -52,6 +52,36 @@
 #define NS_MAXLABEL MAXLABEL
 #endif
 
+const char *
+dhcp_get_hostname(char *buf, size_t buf_len, const struct if_options *ifo)
+{
+
+	if (ifo->hostname[0] == '\0') {
+		if (gethostname(buf, buf_len) != 0)
+			return NULL;
+		buf[buf_len - 1] = '\0';
+	} else
+		strlcpy(buf, ifo->hostname, sizeof(buf));
+
+	/* Deny sending of these local hostnames */
+	if (strcmp(buf, "(none)") == 0 ||
+	    strcmp(buf, "localhost") == 0 ||
+	    strncmp(buf, "localhost.", strlen("localhost.")) == 0 ||
+	    buf[0] == '.')
+		return NULL;
+
+	/* Shorten the hostname if required */
+	if (ifo->options & DHCPCD_HOSTNAME_SHORT) {
+		char *hp;
+
+		hp = strchr(buf, '.');
+		if (hp != NULL)
+			*hp = '\0';
+	}
+
+	return buf;
+}
+
 void
 dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 {
@@ -103,8 +133,6 @@ dhcp_print_option_encoding(const struct dhcp_opt *opt, int cols)
 		printf(" rfc3361");
 	if (opt->type & RFC3442)
 		printf(" rfc3442");
-	if (opt->type & RFC5969)
-		printf(" rfc5969");
 	if (opt->type & REQUEST)
 		printf(" request");
 	if (opt->type & NOREQ)
@@ -559,7 +587,7 @@ dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 	size_t sz;
 
 	if (opt->type == 0 ||
-	    opt->type & (STRING | BINHEX | RFC3442 | RFC5969))
+	    opt->type & (STRING | BINHEX | RFC3442))
 	{
 		if (opt->len) {
 			if ((size_t)opt->len > dl)
@@ -639,9 +667,6 @@ print_option(char *s, size_t len, const struct dhcp_opt *opt,
 
 	if (opt->type & RFC3442)
 		return decode_rfc3442(s, len, data, dl);
-
-	if (opt->type & RFC5969)
-		return decode_rfc5969(s, len, data, dl);
 #endif
 
 	if (opt->type & STRING)
@@ -903,9 +928,10 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		if (eo == -1) {
 			if (env == NULL)
 				logger(ctx, LOG_ERR,
-				    "%s: %s: malformed embedded option %d:%d",
+				    "%s: %s: malformed embedded option"
+				    " %d:%d/%zu",
 				    ifname, __func__, opt->option,
-				    eopt->option);
+				    eopt->option, i);
 			goto out;
 		}
 		if (eo == 0) {
@@ -913,15 +939,13 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 			 * data for it.
 			 * This may not be an error as some options like
 			 * DHCP FQDN in RFC4702 have a string as the last
-			 * option which is optional.
-			 * FIXME: Add an flag to the options to indicate
-			 * wether this is allowable or not. */
+			 * option which is optional. */
 			if (env == NULL &&
-			    (ol != 0 || i + 1 < opt->embopts_len))
+			    (ol != 0 || !(eopt->type & OPTIONAL)))
 				logger(ctx, LOG_ERR,
-				    "%s: %s: malformed embedded option %d:%d",
+				    "%s: %s: missing embedded option %d:%d/%zu",
 				    ifname, __func__, opt->option,
-				    eopt->option);
+				    eopt->option, i);
 			goto out;
 		}
 		/* Use the option prefix if the embedded option

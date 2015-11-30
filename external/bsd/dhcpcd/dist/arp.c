@@ -379,33 +379,33 @@ arp_free(struct arp_state *astate)
 	}
 }
 
+static void
+arp_free_but1(struct interface *ifp, struct arp_state *astate)
+{
+	struct iarp_state *state;
+
+	if ((state = ARP_STATE(ifp)) != NULL) {
+		struct arp_state *p, *n;
+
+		TAILQ_FOREACH_SAFE(p, &state->arp_states, next, n) {
+			if (p != astate)
+				arp_free(p);
+		}
+	}
+}
+
 void
 arp_free_but(struct arp_state *astate)
 {
-	struct iarp_state *state;
-	struct arp_state *p, *n;
 
-	state = ARP_STATE(astate->iface);
-	TAILQ_FOREACH_SAFE(p, &state->arp_states, next, n) {
-		if (p != astate)
-			arp_free(p);
-	}
+	arp_free_but1(astate->iface, astate);
 }
 
 void
 arp_close(struct interface *ifp)
 {
-	struct iarp_state *state;
-	struct arp_state *astate;
 
-	/* Freeing the last state will also free the main state,
-	 * so test for both. */
-	for (;;) {
-		if ((state = ARP_STATE(ifp)) == NULL ||
-		    (astate = TAILQ_FIRST(&state->arp_states)) == NULL)
-			break;
-		arp_free(astate);
-	}
+	arp_free_but1(ifp, NULL);
 }
 
 void

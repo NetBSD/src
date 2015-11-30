@@ -113,7 +113,8 @@ static const char * const dhcp6_statuses[] = {
 	"No Addresses Available",
 	"No Binding",
 	"Not On Link",
-	"Use Multicast"
+	"Use Multicast",
+	"No Prefix Available"
 };
 
 struct dhcp6_ia_addr {
@@ -558,13 +559,9 @@ dhcp6_makemessage(struct interface *ifp)
 		 * hostname and FQDN according to RFC4702 */
 		fqdn = FQDN_BOTH;
 	}
-	if (fqdn != FQDN_DISABLE) {
-		if (ifo->hostname[0] == '\0')
-			hostname = get_hostname(hbuf, sizeof(hbuf),
-			    ifo->options & DHCPCD_HOSTNAME_SHORT ? 1 : 0);
-		else
-			hostname = ifo->hostname;
-	} else
+	if (fqdn != FQDN_DISABLE)
+		hostname = dhcp_get_hostname(hbuf, sizeof(hbuf), ifo);
+	else
 		hostname = NULL; /* appearse gcc */
 
 	/* Work out option size first */
@@ -693,7 +690,6 @@ dhcp6_makemessage(struct interface *ifp)
 	unicast = NULL;
 	/* Depending on state, get the unicast address */
 	switch(state->state) {
-		break;
 	case DH6S_INIT: /* FALLTHROUGH */
 	case DH6S_DISCOVER:
 		type = DHCP6_SOLICIT;
@@ -1251,7 +1247,17 @@ dhcp6_startrenew(void *arg)
 	struct dhcp6_state *state;
 
 	ifp = arg;
-	state = D6_STATE(ifp);
+	if ((state = D6_STATE(ifp)) == NULL)
+		return;
+
+	/* Only renew in the bound or renew states */
+	if (state->state != DH6S_BOUND &&
+	    state->state != DH6S_RENEW)
+		return;
+
+	/* Remove the timeout as the renew may have been forced. */
+	eloop_timeout_delete(ifp->ctx->eloop, dhcp6_startrenew, ifp);
+
 	state->state = DH6S_RENEW;
 	state->RTC = 0;
 	state->IRT = REN_TIMEOUT;
@@ -1263,6 +1269,12 @@ dhcp6_startrenew(void *arg)
 		    "%s: dhcp6_makemessage: %m", ifp->name);
 	else
 		dhcp6_sendrenew(ifp);
+}
+
+void dhcp6_renew(struct interface *ifp)
+{
+
+	dhcp6_startrenew(ifp);
 }
 
 int
@@ -1620,9 +1632,10 @@ dhcp6_finishrelease(void *arg)
 	struct dhcp6_state *state;
 
 	ifp = (struct interface *)arg;
-	state = D6_STATE(ifp);
-	state->state = DH6S_RELEASED;
-	dhcp6_drop(ifp, "RELEASE6");
+	if ((state = D6_STATE(ifp)) != NULL) {
+		state->state = DH6S_RELEASED;
+		dhcp6_drop(ifp, "RELEASE6");
+	}
 }
 
 static void
@@ -1662,7 +1675,8 @@ dhcp6_checkstatusok(const struct interface *ifp,
 {
 	const struct dhcp6_option *o;
 	uint16_t code;
-	char *status;
+	char buf[32], *sbuf;
+	const char *status;
 
 	if (p)
 		o = dhcp6_findoption(D6_OPTION_STATUS_CODE, p, len);
@@ -1688,24 +1702,25 @@ dhcp6_checkstatusok(const struct interface *ifp,
 	len -= sizeof(code);
 
 	if (len == 0) {
-		if (code < sizeof(dhcp6_statuses) / sizeof(char *)) {
-			p = (const uint8_t *)dhcp6_statuses[code];
-			len = strlen((const char *)p);
-		} else
-			p = NULL;
-	} else
-		p += sizeof(code);
-
-	status = malloc(len + 1);
-	if (status == NULL) {
-		logger(ifp->ctx, LOG_ERR, "%s: %m", __func__);
-		return -1;
+		sbuf = NULL;
+		if (code < sizeof(dhcp6_statuses) / sizeof(char *))
+			status = dhcp6_statuses[code];
+		else {
+			snprintf(buf, sizeof(buf), "Unknown Status (%d)", code);
+			status = buf;
+		}
+	} else {
+		if ((sbuf = malloc(len + 1)) == NULL) {
+			logger(ifp->ctx, LOG_ERR, "%s: %m", __func__);
+			return -1;
+		}
+		memcpy(sbuf, p + sizeof(code), len);
+		sbuf[len] = '\0';
+		status = sbuf;
 	}
-	if (p)
-		memcpy(status, p, len);
-	status[len] = '\0';
+
 	logger(ifp->ctx, LOG_ERR, "%s: DHCPv6 REPLY: %s", ifp->name, status);
-	free(status);
+	free(sbuf);
 	return -1;
 }
 
@@ -1902,8 +1917,8 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			state->expire = a->prefix_vltime;
 		i++;
 
-		p = D6_COPTION_DATA(o) + sizeof(pdp);
-		ol = (uint16_t)(ol - sizeof(pdp));
+		p = D6_COPTION_DATA(o) + sizeof(*pdp);
+		ol = (uint16_t)(ol - sizeof(*pdp));
 		ex = dhcp6_findoption(D6_OPTION_PD_EXCLUDE, p, ol);
 		a->prefix_exclude_len = 0;
 		memset(&a->prefix_exclude, 0, sizeof(a->prefix_exclude));
@@ -2170,26 +2185,51 @@ dhcp6_readlease(struct interface *ifp, int validate)
 	struct timespec acquired;
 	time_t now;
 	int retval;
+	size_t newlen;
+	void *newnew;
 
 	state = D6_STATE(ifp);
-	if (stat(state->leasefile, &st) == -1)
-		return -1;
-	logger(ifp->ctx, LOG_DEBUG, "%s: reading lease `%s'",
-	    ifp->name, state->leasefile);
-	if (st.st_size > UINT32_MAX) {
-		errno = E2BIG;
-		return -1;
+	if (state->leasefile[0] == '\0') {
+ 		logger(ifp->ctx, LOG_DEBUG, "reading standard input");
+		fd = fileno(stdin);
+	} else {
+		logger(ifp->ctx, LOG_DEBUG, "%s: reading lease `%s'",
+		    ifp->name, state->leasefile);
+		fd = open(state->leasefile, O_RDONLY);
 	}
-	if ((fd = open(state->leasefile, O_RDONLY)) == -1)
+	if (fd == -1)
 		return -1;
-	if ((state->new = malloc((size_t)st.st_size)) == NULL)
+	state->new_len = 0;
+	if ((state->new = malloc(BUFSIZ)) == NULL)
 		return -1;
 	retval = -1;
-	state->new_len = (size_t)st.st_size;
-	bytes = read(fd, state->new, state->new_len);
+	/* DHCPv6 messages have no real maximum size.
+	 * As we could be reading from stdin, we loop like so. */
+	for (;;) {
+		bytes = read(fd, state->new + state->new_len, BUFSIZ);
+		if (bytes == -1)
+			break;
+		if (bytes < BUFSIZ) {
+			state->new_len += (size_t)bytes;
+			retval = 0;
+			break;
+		}
+		newlen = state->new_len + BUFSIZ;
+		if (newlen > UINT32_MAX || newlen < state->new_len) {
+			errno = E2BIG;
+			break;
+		}
+		if ((newnew = realloc(state->new, newlen)) == NULL)
+			break;
+		state->new = newnew;
+		state->new_len = newlen;
+	}
 	close(fd);
-	if (bytes != (ssize_t)state->new_len)
+	if (retval == -1)
 		goto ex;
+
+	if (ifp->ctx->options & DHCPCD_DUMPLEASE)
+		return 0;
 
 	/* If not validating IA's and if they have expired,
 	 * skip to the auth check. */
@@ -2198,10 +2238,12 @@ dhcp6_readlease(struct interface *ifp, int validate)
 		goto auth;
 	}
 
+	retval = -1;
+	if (stat(state->leasefile, &st) == -1)
+		goto ex;
+	clock_gettime(CLOCK_MONOTONIC, &acquired);
 	if ((now = time(NULL)) == -1)
 		goto ex;
-
-	clock_gettime(CLOCK_MONOTONIC, &acquired);
 	acquired.tv_sec -= now - st.st_mtime;
 
 	/* Check to see if the lease is still valid */
@@ -2210,8 +2252,8 @@ dhcp6_readlease(struct interface *ifp, int validate)
 	if (fd == -1)
 		goto ex;
 
-	if (!(ifp->ctx->options & DHCPCD_DUMPLEASE) &&
-	    state->expire != ND6_INFINITE_LIFETIME)
+	if (state->expire != ND6_INFINITE_LIFETIME &&
+	    state->leasefile[0] != '\0')
 	{
 		if ((time_t)state->expire < now - st.st_mtime) {
 			logger(ifp->ctx,
@@ -2223,7 +2265,6 @@ dhcp6_readlease(struct interface *ifp, int validate)
 	}
 
 auth:
-
 	retval = 0;
 	/* Authenticate the message */
 	o = dhcp6_getmoption(D6_OPTION_AUTH, state->new, state->new_len);
@@ -2891,8 +2932,6 @@ dhcp6_handledata(void *arg)
 				    ifp->name, op);
 				return;
 			}
-			eloop_timeout_delete(ifp->ctx->eloop,
-			    dhcp6_startrenew, ifp);
 			dhcp6_startrenew(ifp);
 			break;
 		case DHCP6_INFORMATION_REQ:

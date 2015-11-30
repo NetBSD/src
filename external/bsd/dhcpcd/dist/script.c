@@ -261,10 +261,10 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 			ra = 1;
 #endif
 #ifdef INET
-		else if (state->added)
-			dhcp = 1;
-		else
+		else if (istate && istate->addr.s_addr != INADDR_ANY)
 			ipv4ll = 1;
+		else
+			dhcp = 1;
 #endif
 	}
 #ifdef INET6

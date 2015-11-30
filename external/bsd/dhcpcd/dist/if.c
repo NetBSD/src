@@ -331,9 +331,11 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (ctx->ifac && i == ctx->ifac)
 			continue;
 
+#ifdef PLUGIN_DEV
 		/* Ensure that the interface name has settled */
 		if (!dev_initialized(ctx, p))
 			continue;
+#endif
 
 		/* Don't allow loopback or pointopoint unless explicit */
 		if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) {
@@ -520,7 +522,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		memset(&ifr, 0, sizeof(ifr));
 		strlcpy(ifr.ifr_name, ifp->name, sizeof(ifr.ifr_name));
 		if (ioctl(ctx->pf_inet_fd, SIOCGIFPRIORITY, &ifr) == 0)
-			ifp->metric = ifr.ifr_metric;
+			ifp->metric = (unsigned int)ifr.ifr_metric;
 #else
 		/* We reserve the 100 range for virtual interfaces, if and when
 		 * we can work them out. */
@@ -675,11 +677,11 @@ xsocket(int domain, int type, int protocol, int flags)
 
 	if ((s = socket(domain, type, protocol)) == -1)
 		return -1;
-	if ((flags & O_CLOEXEC) && (xflags = fcntl(s, F_GETFD, 0)) == -1 ||
-	    fcntl(s, F_SETFD, xflags | FD_CLOEXEC) == -1)
+	if ((flags & O_CLOEXEC) && ((xflags = fcntl(s, F_GETFD, 0)) == -1 ||
+	    fcntl(s, F_SETFD, xflags | FD_CLOEXEC) == -1))
 		goto out;
-	if ((flags & O_NONBLOCK) && (xflags = fcntl(s, F_GETFL, 0)) == -1 ||
-	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1)
+	if ((flags & O_NONBLOCK) && ((xflags = fcntl(s, F_GETFL, 0)) == -1 ||
+	    fcntl(s, F_SETFL, xflags | O_NONBLOCK) == -1))
 		goto out;
 	return s;
 out:

@@ -52,7 +52,7 @@
 #define RFC3361		(1 << 9)
 #define RFC1035		(1 << 10)
 #define RFC3442		(1 << 11)
-#define RFC5969		(1 << 12)
+#define OPTIONAL	(1 << 12)
 #define ADDRIPV6	(1 << 13)
 #define BINHEX		(1 << 14)
 #define FLAG		(1 << 15)
@@ -88,6 +88,7 @@ struct dhcp_opt {
 	size_t encopts_len;
 };
 
+const char *dhcp_get_hostname(char *, size_t, const struct if_options *);
 struct dhcp_opt *vivso_find(uint32_t, const void *);
 
 ssize_t dhcp_vendor(char *, size_t);

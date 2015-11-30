@@ -176,9 +176,12 @@ ipv4ll_probed(struct arp_state *astate)
 #endif
 		logger(ifp->ctx, LOG_INFO, "%s: using IPv4LL address %s",
 		  ifp->name, inet_ntoa(astate->addr));
-	if (ia == NULL)
+	if (ia == NULL) {
+		if (ifp->ctx->options & DHCPCD_TEST)
+			goto test;
 		ia = ipv4_addaddr(ifp, &astate->addr,
 		    &inaddr_llmask, &inaddr_llbcast);
+	}
 	if (ia == NULL)
 		return;
 #ifdef IN_IFF_NOTREADY
@@ -187,7 +190,13 @@ ipv4ll_probed(struct arp_state *astate)
 	logger(ifp->ctx, LOG_DEBUG, "%s: DAD completed for %s",
 	    ifp->name, inet_ntoa(astate->addr));
 #endif
+test:
 	state->addr = astate->addr;
+	if (ifp->ctx->options & DHCPCD_TEST) {
+		script_runreason(ifp, "TEST");
+		eloop_exit(ifp->ctx->eloop, EXIT_SUCCESS);
+		return;
+	}
 	timespecclear(&state->defend);
 	if_initrt(ifp);
 	ipv4_buildroutes(ifp->ctx);

@@ -102,6 +102,7 @@
 #define O_BOOTP			O_BASE + 42
 #define O_DEFINEND		O_BASE + 43
 #define O_NODELAY		O_BASE + 44
+#define O_INFORM6		O_BASE + 45
 
 const struct option cf_options[] = {
 	{"background",      no_argument,       NULL, 'b'},
@@ -122,6 +123,7 @@ const struct option cf_options[] = {
 	{"quiet",           no_argument,       NULL, 'q'},
 	{"request",         optional_argument, NULL, 'r'},
 	{"inform",          optional_argument, NULL, 's'},
+	{"inform6",         optional_argument, NULL, O_INFORM6},
 	{"timeout",         required_argument, NULL, 't'},
 	{"userclass",       required_argument, NULL, 'u'},
 	{"vendor",          required_argument, NULL, 'v'},
@@ -142,6 +144,7 @@ const struct option cf_options[] = {
 	{"nolink",          no_argument,       NULL, 'K'},
 	{"noipv4ll",        no_argument,       NULL, 'L'},
 	{"master",          no_argument,       NULL, 'M'},
+	{"renew",           no_argument,       NULL, 'N'},
 	{"nooption",        optional_argument, NULL, 'O'},
 	{"require",         required_argument, NULL, 'Q'},
 	{"static",          required_argument, NULL, 'S'},
@@ -682,6 +685,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case 'g': /* FALLTHROUGH */
 	case 'n': /* FALLTHROUGH */
 	case 'x': /* FALLTHROUGH */
+	case 'N': /* FALLTHROUGH */
 	case 'T': /* FALLTHROUGH */
 	case 'U': /* FALLTHROUGH */
 	case 'V': /* We need to handle non interface options */
@@ -795,12 +799,6 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		ifo->req_mask.s_addr = 0;
 		break;
 	case 's':
-		if (ifo->options & DHCPCD_IPV6 &&
-		    !(ifo->options & DHCPCD_IPV4))
-		{
-			ifo->options |= DHCPCD_INFORM;
-			break;
-		}
 		if (arg && *arg != '\0') {
 			if (parse_addr(ctx,
 			    &ifo->req_addr, &ifo->req_mask, arg) != 0)
@@ -811,6 +809,9 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		}
 		ifo->options |= DHCPCD_INFORM | DHCPCD_PERSISTENT;
 		ifo->options &= ~DHCPCD_STATIC;
+		break;
+	case O_INFORM6:
+		ifo->options |= DHCPCD_INFORM6;
 		break;
 	case 't':
 		ifo->timeout = (time_t)strtoi(arg, NULL, 0, 0, INT32_MAX, &e);
@@ -1600,6 +1601,17 @@ err_sla:
 			}
 			*fp++ = '\0';
 		}
+		if (strcasecmp(arg, "optional") == 0) {
+			t |= OPTIONAL;
+			arg = strskipwhite(fp);
+			fp = strwhite(arg);
+			if (fp == NULL) {
+				logger(ctx, LOG_ERR,
+				    "incomplete optional type");
+				return -1;
+			}
+			*fp++ = '\0';
+		}
 		if (strcasecmp(arg, "index") == 0) {
 			t |= INDEX;
 			arg = strskipwhite(fp);
@@ -1658,8 +1670,6 @@ err_sla:
 			t |= STRING | RFC3361;
 		else if (strcasecmp(arg, "rfc3442") ==0)
 			t |= STRING | RFC3442;
-		else if (strcasecmp(arg, "rfc5969") == 0)
-			t |= STRING | RFC5969;
 		else if (strcasecmp(arg, "option") == 0)
 			t |= OPTION;
 		else {
