@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: duid.c,v 1.9 2015/07/09 10:15:34 roy Exp $");
+ __RCSID("$NetBSD: duid.c,v 1.10 2015/11/30 16:33:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -39,6 +39,7 @@
 #include <net/if_arp.h>
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

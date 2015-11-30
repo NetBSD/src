@@ -1,4 +1,4 @@
-/* $NetBSD: if-options.h,v 1.14 2015/09/04 12:25:01 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.15 2015/11/30 16:33:00 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -44,7 +44,7 @@
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
 #define IF_OPTS "46bc:de:f:gh:i:j:kl:m:no:pqr:s:t:u:v:wxy:z:" \
-		"ABC:DEF:GHI:JKLMO:Q:S:TUVW:X:Z:"
+		"ABC:DEF:GHI:JKLMNO:Q:S:TUVW:X:Z:"
 
 #define DEFAULT_TIMEOUT		30
 #define DEFAULT_REBOOT		5
@@ -107,7 +107,7 @@
 #define DHCPCD_DHCP			(1ULL << 49)
 #define DHCPCD_DHCP6			(1ULL << 50)
 #define DHCPCD_IF_UP			(1ULL << 51)
-// unassigned				(1ULL << 52)
+#define DHCPCD_INFORM6			(1ULL << 52)
 // unassinged				(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
 #define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)

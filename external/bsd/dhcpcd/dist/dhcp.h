@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.11 2015/08/21 10:39:00 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.12 2015/11/30 16:33:00 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -239,7 +239,6 @@ struct dhcp_state {
 #ifdef INET
 char *decode_rfc3361(const uint8_t *, size_t);
 ssize_t decode_rfc3442(char *, size_t, const uint8_t *p, size_t);
-ssize_t decode_rfc5969(char *, size_t, const uint8_t *p, size_t);
 
 void dhcp_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
@@ -269,6 +268,7 @@ void dhcp_start(struct interface *);
 void dhcp_abort(struct interface *);
 void dhcp_discover(void *);
 void dhcp_inform(struct interface *);
+void dhcp_renew(struct interface *);
 void dhcp_bind(struct interface *);
 void dhcp_reboot_newopts(struct interface *, unsigned long long);
 void dhcp_close(struct interface *);
@@ -278,6 +278,7 @@ int dhcp_dump(struct interface *);
 #define dhcp_drop(a, b) {}
 #define dhcp_start(a) {}
 #define dhcp_abort(a) {}
+#define dhcp_renew(a) {}
 #define dhcp_reboot(a, b) (b = b)
 #define dhcp_reboot_newopts(a, b) (b = b)
 #define dhcp_close(a) {}

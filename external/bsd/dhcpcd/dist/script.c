@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: script.c,v 1.23 2015/09/04 12:25:01 roy Exp $");
+ __RCSID("$NetBSD: script.c,v 1.24 2015/11/30 16:33:00 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -264,10 +264,10 @@ make_env(const struct interface *ifp, const char *reason, char ***argv)
 			ra = 1;
 #endif
 #ifdef INET
-		else if (state->added)
-			dhcp = 1;
-		else
+		else if (istate && istate->addr.s_addr != INADDR_ANY)
 			ipv4ll = 1;
+		else
+			dhcp = 1;
 #endif
 	}
 #ifdef INET6
