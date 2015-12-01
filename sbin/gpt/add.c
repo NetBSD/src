@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.31 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.32 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,20 +55,21 @@ static gpt_uuid_t type;
 static off_t alignment, block, sectors, size;
 static unsigned int entry;
 static uint8_t *name;
+static int cmd_add(gpt_t, int, char *[]);
 
-const char addmsg1[] = "add [-a alignment] [-b blocknr] [-i index] [-l label]";
-const char addmsg2[] = "    [-s size] [-t type]";
+static const char *addhelp[] = {
+    "[-a alignment] [-b blocknr] [-i index] [-l label]",
+    "[-s size] [-t type]",
+};
 
-static int
-usage_add(void)
-{
+struct gpt_cmd c_add = {
+	"add",
+	cmd_add,
+	addhelp, __arraycount(addhelp),
+	0,
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n"
-	    "       %*s %s\n", getprogname(), addmsg1,
-	    (int)strlen(getprogname()), "", addmsg2);
-	return -1;
-}
+#define usage() gpt_usage(NULL, &c_add)
 
 static int
 add(gpt_t gpt)
@@ -145,7 +146,7 @@ add(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_add(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
@@ -156,47 +157,47 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 'a':
 			if (alignment > 0)
-				usage_add();
+				return usage();
 			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_add();
+				return usage();
 			alignment = human_num;
 			if (alignment < 1)
-				usage_add();
+				return usage();
 			break;
 		case 'b':
 			if (block > 0)
-				usage_add();
+				return usage();
 			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_add();
+				return usage();
 			block = human_num;
 			if (block < 1)
-				usage_add();
+				return usage();
 			break;
 		case 'i':
 			if (entry > 0)
-				usage_add();
+				usage();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				usage_add();
+				return usage();
 			break;
 		case 'l':
 			if (name != NULL)
-				usage_add();
+				return usage();
 			name = (uint8_t *)strdup(optarg);
 			break;
 		case 's':
 			if (sectors > 0 || size > 0)
-				usage_add();
+				return usage();
 			sectors = strtoll(optarg, &p, 10);
 			if (sectors < 1)
-				usage_add();
+				return usage();
 			if (*p == '\0')
 				break;
 			if (*p == 's' || *p == 'S') {
 				if (*(p + 1) == '\0')
 					break;
 				else
-					usage_add();
+					return usage();
 			}
 			if (*p == 'b' || *p == 'B') {
 				if (*(p + 1) == '\0') {
@@ -204,26 +205,26 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 					sectors = 0;
 					break;
 				} else
-					usage_add();
+					return usage();
 			}
 			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_add();
+				return usage();
 			size = human_num;
 			sectors = 0;
 			break;
 		case 't':
 			if (!gpt_uuid_is_nil(type))
-				usage_add();
+				return usage();
 			if (gpt_uuid_parse(optarg, type) != 0)
-				usage_add();
+				return usage();
 			break;
 		default:
-			return usage_add();
+			return usage();
 		}
 	}
 
 	if (argc == optind)
-		return usage_add();
+		return usage();
 
 	/* Create NetBSD FFS partitions by default. */
 	if (gpt_uuid_is_nil(type)) {
@@ -231,7 +232,7 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 	}
 
 	if (optind != argc)
-		return usage_add();
+		return usage();
 
 	if ((sectors = gpt_check(gpt, alignment, size)) == -1)
 		return -1;

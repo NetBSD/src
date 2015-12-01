@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.20 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.21 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -56,21 +56,21 @@ static off_t block, size;
 static unsigned int entry;
 static uint8_t *name, *xlabel;
 
-const char labelmsg1[] = "label -a <-l label | -f file>";
-const char labelmsg2[] = "label [-b blocknr] [-i index] [-L label] "
-	"[-s sectors]";
-const char labelmsg3[] = "      [-t uuid] <-l label | -f file>";
+static int cmd_label(gpt_t, int, char *[]);
 
-static int
-usage_label(void)
-{
-	fprintf(stderr,
-	    "usage: %s %s\n"
-	    "       %s %s\n"
-	    "       %*s %s\n", getprogname(), labelmsg1,
-	    getprogname(), labelmsg2, (int)strlen(getprogname()), "", labelmsg3);
-	return -1;
-}
+static const char *labelhelp[] = {
+    "-a <-l label | -f file>",
+    "[-b blocknr] [-i index] [-L label] [-s sectors] [-t uuid] <-l label | -f file>",
+};
+
+struct gpt_cmd c_label = {
+	"label",
+	cmd_label,
+	labelhelp, __arraycount(labelhelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_label)
 
 static int
 label(gpt_t gpt)
@@ -151,7 +151,7 @@ name_from_file(const char *fn)
 		*p = '\0';
 }
 
-int
+static int
 cmd_label(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
@@ -163,65 +163,65 @@ cmd_label(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 'a':
 			if (all > 0)
-				usage_label();
+				return usage();
 			all = 1;
 			break;
 		case 'b':
 			if (block > 0)
-				usage_label();
+				return usage();
 			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_label();
+				return usage();
 			block = human_num;
 			if (block < 1)
-				usage_label();
+				return usage();
 			break;
 		case 'f':
 			if (name != NULL)
-				usage_label();
+				return usage();
 			name_from_file(optarg);
 			break;
 		case 'i':
 			if (entry > 0)
-				usage_label();
+				return usage();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				usage_label();
+				return usage();
 			break;
 		case 'L':
 			if (xlabel != NULL)
-				usage_label();
+				return usage();
 			xlabel = (uint8_t *)strdup(optarg);
 			break;
 		case 'l':
 			if (name != NULL)
-				usage_label();
+				return usage();
 			name = (uint8_t *)strdup(optarg);
 			break;
 		case 's':
 			if (size > 0)
-				usage_label();
+				return usage();
 			size = strtoll(optarg, &p, 10);
 			if (*p != 0 || size < 1)
-				usage_label();
+				return usage();
 			break;
 		case 't':
 			if (!gpt_uuid_is_nil(type))
-				usage_label();
+				return usage();
 			if (gpt_uuid_parse(optarg, type) != 0)
-				usage_label();
+				return usage();
 			break;
 		default:
-			return usage_label();
+			return usage();
 		}
 	}
 
 	if (!all ^
 	    (block > 0 || entry > 0 || xlabel != NULL || size > 0 ||
 	    !gpt_uuid_is_nil(type)))
-		return usage_label();
+		return usage();
 
 	if (name == NULL || argc != optind)
-		return usage_label();
+		return usage();
 
 	return label(gpt);
 }

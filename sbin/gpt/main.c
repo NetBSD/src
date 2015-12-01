@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2015/12/01 09:05:33 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.3 2015/12/01 16:32:19 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.2 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.3 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -45,52 +45,63 @@ __RCSID("$NetBSD: main.c,v 1.2 2015/12/01 09:05:33 christos Exp $");
 #include "map.h"
 #include "gpt.h"
 
-static struct {
-	int (*fptr)(gpt_t, int, char *[]);
-	const char *name;
-} cmdsw[] = {
-	{ cmd_add, "add" },
+static const struct gpt_cmd c_null;
+
+extern const struct gpt_cmd
+	c_add,
 #ifndef HAVE_NBTOOL_CONFIG_H
-	{ cmd_backup, "backup" },
+	c_backup,
 #endif
-	{ cmd_biosboot, "biosboot" },
-	{ cmd_create, "create" },
-	{ cmd_destroy, "destroy" },
-	{ cmd_header, "header" },
-	{ NULL, "help" },
-	{ cmd_label, "label" },
-	{ cmd_migrate, "migrate" },
-	{ cmd_recover, "recover" },
-	{ cmd_remove, "remove" },
-	{ NULL, "rename" },
-	{ cmd_resize, "resize" },
-	{ cmd_resizedisk, "resizedisk" },
+	c_biosboot,
+	c_create,
+	c_destroy,
+	c_header,
+	c_label,
+	c_migrate,
+	c_recover,
+	c_remove,
+	c_resize,
+	c_resizedisk,
 #ifndef HAVE_NBTOOL_CONFIG_H
-	{ cmd_restore, "restore" },
+	c_restore,
 #endif
-	{ cmd_set, "set" },
-	{ cmd_show, "show" },
-	{ cmd_type, "type" },
-	{ cmd_unset, "unset" },
-	{ NULL, "verify" },
-	{ NULL, NULL }
+	c_set,
+	c_show,
+	c_type,
+	c_unset;
+
+static const struct gpt_cmd *cmdsw[] = {
+	&c_add,
+#ifndef HAVE_NBTOOL_CONFIG_H
+	&c_backup,
+#endif
+	&c_biosboot,
+	&c_create,
+	&c_destroy,
+	&c_header,
+	&c_label,
+	&c_migrate,
+	&c_recover,
+	&c_remove,
+	&c_resize,
+	&c_resizedisk,
+#ifndef HAVE_NBTOOL_CONFIG_H
+	&c_restore,
+#endif
+	&c_set,
+	&c_show,
+	&c_type,
+	&c_unset,
+	&c_null,
 };
 
 __dead static void
 usage(void)
 {
-	extern const char addmsg1[], addmsg2[], biosbootmsg[];
-	extern const char createmsg[], destroymsg[], headermsg[], labelmsg1[];
-	extern const char labelmsg2[], labelmsg3[], migratemsg[], recovermsg[];
-	extern const char removemsg1[], removemsg2[], resizemsg[];
-	extern const char resizediskmsg[], setmsg[], showmsg[], typemsg1[];
-	extern const char typemsg2[], typemsg3[], unsetmsg[];
-#ifndef HAVE_NBTOOL_CONFIG_H
-	extern const char backupmsg[], restoremsg[];
-#endif
 	const char *p = getprogname();
 	const char *f =
 	    "[-nrqv] [-m <mediasize>] [-s <sectorsize>]";
+	size_t i;
 
 	if (strcmp(p, "gpt") == 0)
 		fprintf(stderr,
@@ -98,49 +109,10 @@ usage(void)
 	else
 		fprintf(stderr,
 		    "Usage: %s %s <device> <command> [<args>]\n", p, f);
-	fprintf(stderr, 
-	    "Commands:\n"
-#ifndef HAVE_NBTOOL_CONFIG_H
-	    "       %s\n"
-	    "       %s\n"
-#endif
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n"
-	    "       %s\n",
-	    addmsg1, addmsg2,
-#ifndef HAVE_NBTOOL_CONFIG_H
-	    backupmsg,
-#endif
-	    biosbootmsg, createmsg, destroymsg,
-	    headermsg, labelmsg1, labelmsg2, labelmsg3,
-	    migratemsg, recovermsg,
-	    removemsg1, removemsg2,
-	    resizemsg, resizediskmsg,
-#ifndef HAVE_NBTOOL_CONFIG_H
-	    restoremsg,
-#endif
-	    setmsg, showmsg,
-	    typemsg1, typemsg2, typemsg3,
-	    unsetmsg);
-	exit(1);
+	fprintf(stderr, "Commands:\n");
+	for (i = 0; i < __arraycount(cmdsw); i++)
+		gpt_usage("\t", cmdsw[i]);
+	exit(EXIT_FAILURE);
 }
 
 static void
@@ -217,10 +189,10 @@ main(int argc, char *argv[])
 		usage();
 
 	cmd = argv[optind++];
-	for (i = 0; cmdsw[i].name != NULL && strcmp(cmd, cmdsw[i].name); i++)
+	for (i = 0; cmdsw[i]->name != NULL && strcmp(cmd, cmdsw[i]->name); i++)
 		continue;
 
-	if (cmdsw[i].fptr == NULL)
+	if (cmdsw[i]->fptr == NULL)
 		errx(EXIT_FAILURE, "Unknown command: %s", cmd);
 
 	prefix(cmd);
@@ -229,7 +201,7 @@ main(int argc, char *argv[])
 	if (gpt == NULL)
 		return EXIT_FAILURE;
 
-	if ((*cmdsw[i].fptr)(gpt, argc, argv) == -1)
+	if ((*cmdsw[i]->fptr)(gpt, argc, argv) == -1)
 		return EXIT_FAILURE;
 
 	gpt_close(gpt);

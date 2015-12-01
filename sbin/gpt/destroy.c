@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.9 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,17 +51,21 @@ __RCSID("$NetBSD: destroy.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
 
 static int recoverable;
 static int force;
+static int cmd_destroy(gpt_t, int, char *[]);
 
-const char destroymsg[] = "destroy [-rf]";
+static const char *destroyhelp[] = {
+    "[-rf]",
+};
 
-static int
-usage_destroy(void)
-{
+struct gpt_cmd c_destroy = {
+	"destroy",
+	cmd_destroy,
+	destroyhelp, __arraycount(destroyhelp),
+	0,
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), destroymsg);
-	return -1;
-}
+#define usage() gpt_usage(NULL, &c_destroy)
+
 
 static int
 destroy(gpt_t gpt)
@@ -100,7 +104,7 @@ destroy(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_destroy(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
@@ -114,12 +118,12 @@ cmd_destroy(gpt_t gpt, int argc, char *argv[])
 			recoverable = 1;
 			break;
 		default:
-			return usage_destroy();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_destroy();
+		return usage();
 
 	return destroy(gpt);
 }

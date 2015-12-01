@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.49 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.50 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -747,4 +747,26 @@ struct gpt_ent *
 gpt_ent_backup(gpt_t gpt, unsigned int i)
 {
 	return gpt_ent(gpt->tpg, gpt->lbt, i);
+}
+
+int
+gpt_usage(const char *prefix, const struct gpt_cmd *cmd)
+{
+	const char **a = cmd->help;
+	size_t hlen = cmd->hlen;
+	size_t i;
+
+	if (prefix == NULL) {
+		const char *pname = getprogname();
+		int len = (int)strlen(pname);
+		fprintf(stderr, "Usage: %s %s %s\n", pname, cmd->name, a[0]);
+		for (i = 1; i < hlen; i++) {
+			fprintf(stderr,
+			    "       %*s %s %s\n", len, "", cmd->name, a[i]);
+		}
+	} else {
+		for (i = 0; i < hlen; i++)
+		    fprintf(stderr, "%s%s %s\n", prefix, cmd->name, a[i]);
+	}
+	return -1;
 }
