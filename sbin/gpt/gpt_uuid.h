@@ -94,7 +94,8 @@ void gpt_uuid_create(gpt_type_t, gpt_uuid_t, uint16_t *, size_t);
 
 int gpt_uuid_parse(const char *, gpt_uuid_t);
 
-void gpt_uuid_generate(gpt_uuid_t);
+struct gpt;
+int gpt_uuid_generate(struct gpt *, gpt_uuid_t);
 
 __END_DECLS
 
