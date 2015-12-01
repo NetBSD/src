@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.29 2015/11/29 11:49:47 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.30 2015/12/01 06:47:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.29 2015/11/29 11:49:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.30 2015/12/01 06:47:09 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1476,8 +1476,8 @@ ohci_device_ctrl_done(struct usbd_xfer *xfer)
 	if (len)
 		usb_syncmem(&xfer->ux_dmabuf, 0, len,
 		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
-	 usb_syncmem(&opipe->ctrl.reqdma, 0,
-	     sizeof(usb_device_request_t),  BUS_DMASYNC_POSTWRITE);
+	usb_syncmem(&opipe->ctrl.reqdma, 0,
+	    sizeof(usb_device_request_t),  BUS_DMASYNC_POSTWRITE);
 }
 
 void
