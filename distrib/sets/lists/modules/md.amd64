@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.63 2015/06/22 06:02:02 matt Exp $
+# $NetBSD: md.amd64,v 1.64 2015/12/01 09:15:57 pgoyette Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -51,6 +51,8 @@
 ./@MODULEDIR@/compat_linux32/compat_linux32.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/compat_netbsd32_nfssrv		base-kernel-modules	kmod
+./@MODULEDIR@/compat_netbsd32_nfssrv/compat_netbsd32_nfssrv.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/coram				base-kernel-modules	kmod
 ./@MODULEDIR@/coram/coram.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coretemp				base-kernel-modules	kmod
