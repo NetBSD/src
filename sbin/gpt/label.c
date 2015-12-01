@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.21 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.22 2015/12/01 19:25:24 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,12 +49,6 @@ __RCSID("$NetBSD: label.c,v 1.21 2015/12/01 16:32:19 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 #include "gpt_uuid.h"
-
-static int all;
-static gpt_uuid_t type;
-static off_t block, size;
-static unsigned int entry;
-static uint8_t *name, *xlabel;
 
 static int cmd_label(gpt_t, int, char *[]);
 
@@ -72,65 +66,21 @@ struct gpt_cmd c_label = {
 
 #define usage() gpt_usage(NULL, &c_label)
 
-static int
-label(gpt_t gpt)
+static void
+change(struct gpt_ent *ent, void *v)
 {
-	map_t m;
-	struct gpt_hdr *hdr;
-	struct gpt_ent *ent;
-	unsigned int i;
-
-	if ((hdr = gpt_hdr(gpt)) == NULL)
-		return -1;
-
-	/* Relabel all matching entries in the map. */
-	for (m = map_first(gpt); m != NULL; m = m->map_next) {
-		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
-			continue;
-		if (entry > 0 && entry != m->map_index)
-			continue;
-		if (block > 0 && block != m->map_start)
-			continue;
-		if (size > 0 && size != m->map_size)
-			continue;
-
-		i = m->map_index - 1;
-
-		ent = gpt_ent_primary(gpt, i);
-		if (xlabel != NULL)
-			if (strcmp((char *)xlabel,
-			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
-				continue;
-
-		if (!gpt_uuid_is_nil(type) &&
-		    !gpt_uuid_equal(type, ent->ent_type))
-			continue;
-
-		/* Label the primary entry. */
-		utf8_to_utf16(name, ent->ent_name, 36);
-
-		if (gpt_write_primary(gpt) == -1)
-			return -1;
-
-		ent = gpt_ent_backup(gpt, i);
-		/* Label the secondary entry. */
-		utf8_to_utf16(name, ent->ent_name, 36);
-
-		if (gpt_write_backup(gpt) == -1)
-			return -1;
-
-		gpt_msg(gpt, "Partition %d labeled %s", m->map_index, name);
-	}
-	return 0;
+	uint8_t *name = v;
+	utf8_to_utf16(name, ent->ent_name, 36);
 }
 
-static void
+static char *
 name_from_file(const char *fn)
 {
 	FILE *f;
 	char *p;
 	size_t maxlen = 1024;
 	size_t len;
+	char *name;
 
 	if (strcmp(fn, "-") != 0) {
 		f = fopen(fn, "r");
@@ -149,79 +99,41 @@ name_from_file(const char *fn)
 	p = strchr((const char *)name, '\n');
 	if (p != NULL)
 		*p = '\0';
+	return name;
 }
 
 static int
 cmd_label(gpt_t gpt, int argc, char *argv[])
 {
-	char *p;
 	int ch;
-	int64_t human_num;
+	struct gpt_find find;
+	char *name = NULL;
+
+	memset(&find, 0, sizeof(find));
+	find.msg = "label changed";
 
 	/* Get the label options */
-	while ((ch = getopt(argc, argv, "ab:f:i:L:l:s:t:")) != -1) {
+	while ((ch = getopt(argc, argv, GPT_FIND "f:l:")) != -1) {
 		switch(ch) {
-		case 'a':
-			if (all > 0)
-				return usage();
-			all = 1;
-			break;
-		case 'b':
-			if (block > 0)
-				return usage();
-			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage();
-			block = human_num;
-			if (block < 1)
-				return usage();
-			break;
 		case 'f':
 			if (name != NULL)
 				return usage();
-			name_from_file(optarg);
-			break;
-		case 'i':
-			if (entry > 0)
-				return usage();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry < 1)
-				return usage();
-			break;
-		case 'L':
-			if (xlabel != NULL)
-				return usage();
-			xlabel = (uint8_t *)strdup(optarg);
+			name = name_from_file(optarg);
 			break;
 		case 'l':
 			if (name != NULL)
 				return usage();
-			name = (uint8_t *)strdup(optarg);
-			break;
-		case 's':
-			if (size > 0)
-				return usage();
-			size = strtoll(optarg, &p, 10);
-			if (*p != 0 || size < 1)
-				return usage();
-			break;
-		case 't':
-			if (!gpt_uuid_is_nil(type))
-				return usage();
-			if (gpt_uuid_parse(optarg, type) != 0)
-				return usage();
+			name = strdup(optarg);
 			break;
 		default:
-			return usage();
+			if (gpt_add_find(gpt, &find, ch) == -1)
+				return usage();
+			break;
 		}
 	}
-
-	if (!all ^
-	    (block > 0 || entry > 0 || xlabel != NULL || size > 0 ||
-	    !gpt_uuid_is_nil(type)))
-		return usage();
 
 	if (name == NULL || argc != optind)
 		return usage();
 
-	return label(gpt);
+	return gpt_change_ent(gpt, &find, change, name);
 }
