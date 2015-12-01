@@ -75,7 +75,14 @@ uint32_t crc32(const void *, size_t);
 void	gpt_close(gpt_t);
 int	gpt_gpt(gpt_t, off_t, int);
 gpt_t	gpt_open(const char *, int, int, off_t, u_int);
+#define GPT_READONLY	1
+#define GPT_MODIFIED	2
+#define GPT_QUIET	4
+#define GPT_NOSYNC	8
+
 void*	gpt_read(gpt_t, off_t, size_t);
+off_t	gpt_last(gpt_t);
+int	gpt_create(gpt_t, off_t, u_int, int);
 int	gpt_write(gpt_t, map_t);
 int	gpt_write_crc(gpt_t, map_t, map_t);
 int	gpt_write_primary(gpt_t);
@@ -85,7 +92,6 @@ void	gpt_msg(gpt_t, const char *, ...) __printflike(2, 3);
 void	gpt_warn(gpt_t, const char *, ...) __printflike(2, 3);
 void	gpt_warnx(gpt_t, const char *, ...) __printflike(2, 3);
 void	gpt_create_pmbr_part(struct mbr_part *, off_t);
-off_t	gpt_check(gpt_t, off_t, off_t);
 struct gpt_ent *gpt_ent(map_t, map_t, unsigned int);
 struct gpt_ent *gpt_ent_primary(gpt_t, unsigned int);
 struct gpt_ent *gpt_ent_backup(gpt_t, unsigned int);
@@ -94,9 +100,26 @@ int	gpt_usage(const char *, const struct gpt_cmd *);
 uint8_t *utf16_to_utf8(uint16_t *);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
-#define GPT_READONLY	1
-#define GPT_MODIFIED	2
-#define GPT_QUIET	4
-#define GPT_NOSYNC	8
+#define GPT_FIND "ab:i:L:s:t:"
+
+struct gpt_find {
+	int all;
+	gpt_uuid_t type;
+	off_t block, size;
+	unsigned int entry;
+	uint8_t *name, *label;
+	const char *msg;
+};
+int	gpt_change_ent(gpt_t, const struct gpt_find *,
+    void (*)(struct gpt_ent *, void *), void *);
+int	gpt_add_find(gpt_t, struct gpt_find *, int);
+
+#define GPT_AIS "a:i:s:"
+int	gpt_add_ais(gpt_t, off_t *, u_int *, off_t *, int);
+off_t	gpt_check_ais(gpt_t, off_t, u_int, off_t);
+
+int	gpt_attr_get(uint64_t *);
+int	gpt_attr_update(gpt_t, u_int, uint64_t, uint64_t);
+int	gpt_entry_get(u_int *);
 
 #endif /* _GPT_H_ */

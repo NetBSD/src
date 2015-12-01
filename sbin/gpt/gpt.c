@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.50 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.51 2015/12/01 19:25:24 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -712,24 +712,7 @@ gpt_create_pmbr_part(struct mbr_part *part, off_t last)
 	}
 }
 
-off_t
-gpt_check(gpt_t gpt, off_t alignment, off_t size)
-{
-	if (alignment % gpt->secsz != 0) {
-		gpt_warnx(gpt, "Alignment (%#jx) must be a multiple of "
-		    "sector size (%#x)", (uintmax_t)alignment, gpt->secsz);
-		return -1;
-	}
 
-	if (size % gpt->secsz != 0) {
-		gpt_warnx(gpt, "Size (%#jx) must be a multiple of "
-		    "sector size (%#x)", (uintmax_t)size, gpt->secsz);
-		return -1;
-	}
-	if (size > 0)
-		return size / gpt->secsz;
-	return 0;
-}
 struct gpt_ent *
 gpt_ent(map_t map, map_t tbl, unsigned int i)
 {
@@ -769,4 +752,393 @@ gpt_usage(const char *prefix, const struct gpt_cmd *cmd)
 		    fprintf(stderr, "%s%s %s\n", prefix, cmd->name, a[i]);
 	}
 	return -1;
+}
+
+off_t
+gpt_last(gpt_t gpt)
+{
+	return gpt->mediasz / gpt->secsz - 1LL;
+}
+
+int
+gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
+{
+	off_t blocks;
+	map_t map;
+	struct gpt_hdr *hdr;
+	struct gpt_ent *ent;
+	unsigned int i;
+	void *p;
+
+	if (map_find(gpt, MAP_TYPE_PRI_GPT_HDR) != NULL ||
+	    map_find(gpt, MAP_TYPE_SEC_GPT_HDR) != NULL) {
+		gpt_warnx(gpt, "Device already contains a GPT");
+		return -1;
+	}
+
+	/* Get the amount of free space after the MBR */
+	blocks = map_free(gpt, 1LL, 0LL);
+	if (blocks == 0LL) {
+		gpt_warnx(gpt, "No room for the GPT header");
+		return -1;
+	}
+
+	/* Don't create more than parts entries. */
+	if ((uint64_t)(blocks - 1) * gpt->secsz >
+	    parts * sizeof(struct gpt_ent)) {
+		blocks = (parts * sizeof(struct gpt_ent)) / gpt->secsz;
+		if ((parts * sizeof(struct gpt_ent)) % gpt->secsz)
+			blocks++;
+		blocks++;		/* Don't forget the header itself */
+	}
+
+	/* Never cross the median of the device. */
+	if ((blocks + 1LL) > ((last + 1LL) >> 1))
+		blocks = ((last + 1LL) >> 1) - 1LL;
+
+	/*
+	 * Get the amount of free space at the end of the device and
+	 * calculate the size for the GPT structures.
+	 */
+	map = map_last(gpt);
+	if (map->map_type != MAP_TYPE_UNUSED) {
+		gpt_warnx(gpt, "No room for the backup header");
+		return -1;
+	}
+
+	if (map->map_size < blocks)
+		blocks = map->map_size;
+	if (blocks == 1LL) {
+		gpt_warnx(gpt, "No room for the GPT table");
+		return -1;
+	}
+
+	blocks--;		/* Number of blocks in the GPT table. */
+
+	if ((p = calloc(1, gpt->secsz)) == NULL) {
+		gpt_warnx(gpt, "Can't allocate the primary GPT");
+		return -1;
+	}
+	if ((gpt->gpt = map_add(gpt, 1LL, 1LL,
+	    MAP_TYPE_PRI_GPT_HDR, p)) == NULL) {
+		free(p);
+		gpt_warnx(gpt, "Can't add the primary GPT");
+		return -1;
+	}
+
+	if ((p = calloc(blocks, gpt->secsz)) == NULL) {
+		gpt_warnx(gpt, "Can't allocate the primary GPT table");
+		return -1;
+	}
+	if ((gpt->tbl = map_add(gpt, 2LL, blocks,
+	    MAP_TYPE_PRI_GPT_TBL, p)) == NULL) {
+		free(p);
+		gpt_warnx(gpt, "Can't add the primary GPT table");
+		return -1;
+	}
+
+	hdr = gpt->gpt->map_data;
+	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));
+
+	/*
+	 * XXX struct gpt_hdr is not a multiple of 8 bytes in size and thus
+	 * contains padding we must not include in the size.
+	 */
+	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
+	hdr->hdr_size = htole32(GPT_HDR_SIZE);
+	hdr->hdr_lba_self = htole64(gpt->gpt->map_start);
+	hdr->hdr_lba_alt = htole64(last);
+	hdr->hdr_lba_start = htole64(gpt->tbl->map_start + blocks);
+	hdr->hdr_lba_end = htole64(last - blocks - 1LL);
+	gpt_uuid_generate(hdr->hdr_guid);
+	hdr->hdr_lba_table = htole64(gpt->tbl->map_start);
+	hdr->hdr_entries = htole32((blocks * gpt->secsz) /
+	    sizeof(struct gpt_ent));
+	if (le32toh(hdr->hdr_entries) > parts)
+		hdr->hdr_entries = htole32(parts);
+	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
+
+	ent = gpt->tbl->map_data;
+	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
+		gpt_uuid_generate(ent[i].ent_guid);
+	}
+
+	/*
+	 * Create backup GPT if the user didn't suppress it.
+	 */
+	if (primary_only)
+		return last;
+
+	if ((p = calloc(1, gpt->secsz)) == NULL) {
+		gpt_warnx(gpt, "Can't allocate the secondary GPT");
+		return -1;
+	}
+
+	if ((gpt->tpg = map_add(gpt, last, 1LL,
+	    MAP_TYPE_SEC_GPT_HDR, p)) == NULL) {
+		gpt_warnx(gpt, "Can't add the secondary GPT");
+		return -1;
+	}
+
+	if ((gpt->lbt = map_add(gpt, last - blocks, blocks,
+	    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data)) == NULL) {
+		gpt_warnx(gpt, "Can't add the secondary GPT table");
+		return -1;
+	}
+
+	memcpy(gpt->tpg->map_data, gpt->gpt->map_data, gpt->secsz);
+
+	hdr = gpt->tpg->map_data;
+	hdr->hdr_lba_self = htole64(gpt->tpg->map_start);
+	hdr->hdr_lba_alt = htole64(gpt->gpt->map_start);
+	hdr->hdr_lba_table = htole64(gpt->lbt->map_start);
+	return last;
+}
+
+int
+gpt_add_find(gpt_t gpt, struct gpt_find *find, int ch) 
+{
+	int64_t human_num;
+	char *p;
+
+	switch (ch) {
+	case 'a':
+		if (find->all > 0)
+			return -1;
+		find->all = 1;
+		break;
+	case 'b':
+		if (find->block > 0)
+			return -1;
+		if (dehumanize_number(optarg, &human_num) < 0)
+			return -1;
+		find->block = human_num;
+		if (find->block < 1)
+			return -1;
+		break;
+	case 'i':
+		if (find->entry > 0)
+			return -1;
+		find->entry = strtoul(optarg, &p, 10);
+		if (*p != 0 || find->entry < 1)
+			return -1;
+		break;
+	case 'L':
+		if (find->label != NULL)
+			return -1;
+		find->label = (uint8_t *)strdup(optarg);
+		break;
+	case 's':
+		if (find->size > 0)
+			return -1;
+		find->size = strtoll(optarg, &p, 10);
+		if (*p != 0 || find->size < 1)
+			return -1;
+		break;
+	case 't':
+		if (!gpt_uuid_is_nil(find->type))
+			return -1;
+		if (gpt_uuid_parse(optarg, find->type) != 0)
+			return -1;
+		break;
+	default:
+		return -1;
+	}
+	return 0;
+}
+
+int
+gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
+    void (*cfn)(struct gpt_ent *, void *), void *v)
+{
+	map_t m;
+	struct gpt_hdr *hdr;
+	struct gpt_ent *ent;
+	unsigned int i;
+
+	if (!find->all ^
+	    (find->block > 0 || find->entry > 0 || find->label != NULL
+	    || find->size > 0 || !gpt_uuid_is_nil(find->type)))
+		return -1;
+
+	if ((hdr = gpt_hdr(gpt)) == NULL)
+		return -1;
+
+	/* Relabel all matching entries in the map. */
+	for (m = map_first(gpt); m != NULL; m = m->map_next) {
+		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
+			continue;
+		if (find->entry > 0 && find->entry != m->map_index)
+			continue;
+		if (find->block > 0 && find->block != m->map_start)
+			continue;
+		if (find->size > 0 && find->size != m->map_size)
+			continue;
+
+		i = m->map_index - 1;
+
+		ent = gpt_ent_primary(gpt, i);
+		if (find->label != NULL)
+			if (strcmp((char *)find->label,
+			    (char *)utf16_to_utf8(ent->ent_name)) != 0)
+				continue;
+
+		if (!gpt_uuid_is_nil(find->type) &&
+		    !gpt_uuid_equal(find->type, ent->ent_type))
+			continue;
+
+		/* Change the primary entry. */
+		(*cfn)(ent, v);
+
+		if (gpt_write_primary(gpt) == -1)
+			return -1;
+
+		ent = gpt_ent_backup(gpt, i);
+		/* Change the secondary entry. */
+		(*cfn)(ent, v);
+
+		if (gpt_write_backup(gpt) == -1)
+			return -1;
+
+		gpt_msg(gpt, "Partition %d %s", m->map_index, find->msg);
+	}
+	return 0;
+}
+
+int
+gpt_add_ais(gpt_t gpt, off_t *alignment, u_int *entry, off_t *size, int ch)
+{
+	int64_t human_num;
+	off_t sectors;
+	char *p;
+
+	switch (ch) {
+	case 'a':
+		if (*alignment > 0)
+			return -1;
+		if (dehumanize_number(optarg, &human_num) < 0)
+			return -1;
+		*alignment = human_num;
+		if (*alignment < 1)
+			return -1;
+		return 0;
+	case 'i':
+		if (*entry > 0)
+			return -1;
+		*entry = strtoul(optarg, &p, 10);
+		if (*p != 0 || *entry < 1)
+			return -1;
+		return 0;
+	case 's':
+		if (*size > 0)
+			return -1;
+		sectors = strtoll(optarg, &p, 10);
+		if (sectors < 1)
+			return -1;
+		if (*p == '\0' || ((*p == 's' || *p == 'S') && p[1] == '\0')) {
+			*size = sectors * gpt->secsz;
+			return 0;
+		}
+		if ((*p == 'b' || *p == 'B') && p[1] == '\0') {
+			*size = sectors;
+			return 0;
+		}
+		if (dehumanize_number(optarg, &human_num) < 0)
+			return -1;
+		*size = human_num;
+		return 0;
+	default:
+		return -1;
+	}
+}
+
+off_t
+gpt_check_ais(gpt_t gpt, off_t alignment, u_int entry, off_t size)
+{
+	if (entry == 0) {
+		gpt_warnx(gpt, "Entry not specified");
+		return -1;
+	}
+	if (alignment % gpt->secsz != 0) {
+		gpt_warnx(gpt, "Alignment (%#jx) must be a multiple of "
+		    "sector size (%#x)", (uintmax_t)alignment, gpt->secsz);
+		return -1;
+	}
+
+	if (size % gpt->secsz != 0) {
+		gpt_warnx(gpt, "Size (%#jx) must be a multiple of "
+		    "sector size (%#x)", (uintmax_t)size, gpt->secsz);
+		return -1;
+	}
+	if (size > 0)
+		return size / gpt->secsz;
+	return 0;
+}
+int
+gpt_attr_get(uint64_t *attributes)
+{
+	if (strcmp(optarg, "biosboot") == 0)
+		*attributes |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
+	else if (strcmp(optarg, "bootme") == 0)
+		*attributes |= GPT_ENT_ATTR_BOOTME;
+	else if (strcmp(optarg, "bootonce") == 0)
+		*attributes |= GPT_ENT_ATTR_BOOTONCE;
+	else if (strcmp(optarg, "bootfailed") == 0)
+		*attributes |= GPT_ENT_ATTR_BOOTFAILED;
+	else
+		return -1;
+	return 0;
+}
+int
+gpt_attr_update(gpt_t gpt, u_int entry, uint64_t set, uint64_t clr)
+{
+	struct gpt_hdr *hdr;
+	struct gpt_ent *ent;
+	unsigned int i;
+	
+	if (entry == 0 || (set == 0 && clr == 0))
+		return -1;
+
+	if ((hdr = gpt_hdr(gpt)) == NULL)
+		return -1;
+
+	if (entry > le32toh(hdr->hdr_entries)) {
+		gpt_warnx(gpt, "Index %u out of range (%u max)",
+		    entry, le32toh(hdr->hdr_entries));
+		return -1;
+	}
+
+	i = entry - 1;
+	ent = gpt_ent_primary(gpt, i);
+	if (gpt_uuid_is_nil(ent->ent_type)) {
+		gpt_warnx(gpt, "Entry at index %u is unused", entry);
+		return -1;
+	}
+
+	ent->ent_attr &= ~clr;
+	ent->ent_attr |= set;
+
+	if (gpt_write_primary(gpt) == -1)
+		return -1;
+
+	ent = gpt_ent_backup(gpt, i);
+	ent->ent_attr &= ~clr;
+	ent->ent_attr |= set;
+
+	if (gpt_write_backup(gpt) == -1)
+		return -1;
+	gpt_msg(gpt, "Partition %d attributes updated", entry);
+	return 0;
+}
+
+int
+gpt_entry_get(u_int *entry)
+{
+	char *p;
+	if (*entry > 0)
+		return -1;
+	*entry = strtoul(optarg, &p, 10);
+	if (*p != 0 || *entry < 1)
+		return -1;
+	return 0;
 }

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.16 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.17 2015/12/01 19:25:24 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -139,67 +139,17 @@ resize(gpt_t gpt)
 static int
 cmd_resize(gpt_t gpt, int argc, char *argv[])
 {
-	char *p;
 	int ch;
-	int64_t human_num;
 
-	while ((ch = getopt(argc, argv, "a:i:s:")) != -1) {
-		switch(ch) {
-		case 'a':
-			if (alignment > 0)
-				return usage();
-			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage();
-			alignment = human_num;
-			if (alignment < 1)
-				return usage();
-			break;
-		case 'i':
-			if (entry > 0)
-				return usage();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry < 1)
-				return usage();
-			break;
-		case 's':
-			if (sectors > 0 || size > 0)
-				return usage();
-			sectors = strtoll(optarg, &p, 10);
-			if (sectors < 1)
-				return usage();
-			if (*p == '\0')
-				break;
-			if (*p == 's' || *p == 'S') {
-				if (*(p + 1) == '\0')
-					break;
-				else
-					return usage();
-			}
-			if (*p == 'b' || *p == 'B') {
-				if (*(p + 1) == '\0') {
-					size = sectors;
-					sectors = 0;
-					break;
-				} else
-					return usage();
-			}
-			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage();
-			size = human_num;
-			sectors = 0;
-			break;
-		default:
+	while ((ch = getopt(argc, argv, GPT_AIS)) != -1) {
+		if (gpt_add_ais(gpt, &alignment, &entry, &size, ch) == -1)
 			return usage();
-		}
 	}
 
 	if (argc != optind)
 		return usage();
 
-	if (entry == 0)
-		return usage();
-
-	if ((sectors = gpt_check(gpt, alignment, size)) == -1)
+	if ((sectors = gpt_check_ais(gpt, alignment, entry, size)) == -1)
 		return -1;
 
 	return resize(gpt);

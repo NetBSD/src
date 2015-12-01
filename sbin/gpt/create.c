@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.15 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.16 2015/12/01 19:25:24 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -74,21 +74,10 @@ struct gpt_cmd c_create = {
 static int
 create(gpt_t gpt)
 {
-	off_t blocks, last;
+	off_t last = gpt_last(gpt);
 	map_t map;
 	struct mbr *mbr;
-	struct gpt_hdr *hdr;
-	struct gpt_ent *ent;
-	unsigned int i;
-	void *p;
 
-	last = gpt->mediasz / gpt->secsz - 1LL;
-
-	if (map_find(gpt, MAP_TYPE_PRI_GPT_HDR) != NULL ||
-	    map_find(gpt, MAP_TYPE_SEC_GPT_HDR) != NULL) {
-		gpt_warnx(gpt, "Device already contains a GPT");
-		return -1;
-	}
 	map = map_find(gpt, MAP_TYPE_MBR);
 	if (map != NULL) {
 		if (!force) {
@@ -117,110 +106,21 @@ create(gpt_t gpt)
 		gpt_create_pmbr_part(mbr->mbr_part, last);
 
 		map = map_add(gpt, 0LL, 1LL, MAP_TYPE_PMBR, mbr);
-		gpt_write(gpt, map);
+		if (gpt_write(gpt, map) == -1) {
+			gpt_warn(gpt, "Can't write PMBR");
+			return -1;
+		}
 	}
 
-	/* Get the amount of free space after the MBR */
-	blocks = map_free(gpt, 1LL, 0LL);
-	if (blocks == 0LL) {
-		gpt_warnx(gpt, "No room for the GPT header");
+	if (gpt_create(gpt, last, parts, primary_only) == -1)
 		return -1;
-	}
-
-	/* Don't create more than parts entries. */
-	if ((uint64_t)(blocks - 1) * gpt->secsz >
-	    parts * sizeof(struct gpt_ent)) {
-		blocks = (parts * sizeof(struct gpt_ent)) / gpt->secsz;
-		if ((parts * sizeof(struct gpt_ent)) % gpt->secsz)
-			blocks++;
-		blocks++;		/* Don't forget the header itself */
-	}
-
-	/* Never cross the median of the device. */
-	if ((blocks + 1LL) > ((last + 1LL) >> 1))
-		blocks = ((last + 1LL) >> 1) - 1LL;
-
-	/*
-	 * Get the amount of free space at the end of the device and
-	 * calculate the size for the GPT structures.
-	 */
-	map = map_last(gpt);
-	if (map->map_type != MAP_TYPE_UNUSED) {
-		gpt_warnx(gpt, "No room for the backup header");
-		return -1;
-	}
-
-	if (map->map_size < blocks)
-		blocks = map->map_size;
-	if (blocks == 1LL) {
-		gpt_warnx(gpt, "No room for the GPT table");
-		return -1;
-	}
-
-	if ((p = calloc(1, gpt->secsz)) == NULL) {
-		gpt_warnx(gpt, "Can't allocate the GPT");
-		return -1;
-	}
-	if ((gpt->gpt = map_add(gpt, 1LL, 1LL,
-	    MAP_TYPE_PRI_GPT_HDR, p)) == NULL) {
-		free(p);
-		gpt_warnx(gpt, "Can't add the GPT");
-		return -1;
-	}
-
-	blocks--;		/* Number of blocks in the GPT table. */
-	if ((p = calloc(blocks, gpt->secsz)) == NULL) {
-		gpt_warnx(gpt, "Can't allocate the GPT table");
-		return -1;
-	}
-	if ((gpt->tbl = map_add(gpt, 2LL, blocks,
-	    MAP_TYPE_PRI_GPT_TBL, p)) == NULL) {
-		free(p);
-		gpt_warnx(gpt, "Can't add the GPT table");
-		return -1;
-	}
-
-	hdr = gpt->gpt->map_data;
-	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));
-	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
-	hdr->hdr_size = htole32(GPT_HDR_SIZE);
-	hdr->hdr_lba_self = htole64(gpt->gpt->map_start);
-	hdr->hdr_lba_alt = htole64(last);
-	hdr->hdr_lba_start = htole64(gpt->tbl->map_start + blocks);
-	hdr->hdr_lba_end = htole64(last - blocks - 1LL);
-	gpt_uuid_generate(hdr->hdr_guid);
-	hdr->hdr_lba_table = htole64(gpt->tbl->map_start);
-	hdr->hdr_entries = htole32((blocks * gpt->secsz) /
-	    sizeof(struct gpt_ent));
-	if (le32toh(hdr->hdr_entries) > parts)
-		hdr->hdr_entries = htole32(parts);
-	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
-
-	ent = gpt->tbl->map_data;
-	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-		gpt_uuid_generate(ent[i].ent_guid);
-	}
 
 	if (gpt_write_primary(gpt) == -1)
 		return -1;
 
-	/*
-	 * Create backup GPT if the user didn't suppress it.
-	 */
-	if (!primary_only) {
-		// XXX: error checks 
-		gpt->tpg = map_add(gpt, last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, gpt->secsz));
-		gpt->lbt = map_add(gpt, last - blocks, blocks,
-		    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data);
-		memcpy(gpt->tpg->map_data, gpt->gpt->map_data, gpt->secsz);
-		hdr = gpt->tpg->map_data;
-		hdr->hdr_lba_self = htole64(gpt->tpg->map_start);
-		hdr->hdr_lba_alt = htole64(gpt->gpt->map_start);
-		hdr->hdr_lba_table = htole64(gpt->lbt->map_start);
-		if (gpt_write_backup(gpt) == -1)
-			return -1;
-	}
+	if (!primary_only && gpt_write_backup(gpt) == -1)
+		return -1;
+
 	return 0;
 }
 
