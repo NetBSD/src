@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.158 2015/12/01 09:13:57 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.159 2015/12/01 23:58:19 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -48,6 +48,7 @@ SUBDIR+=	if_npflog
 SUBDIR+=	if_smsc
 SUBDIR+=	iic
 SUBDIR+=	kernfs
+SUBDIR+=	ksem
 SUBDIR+=	layerfs
 SUBDIR+=	lfs
 SUBDIR+=	lua
@@ -211,12 +212,14 @@ SUBDIR+=	wmimsi
     || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_mqueue
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_mqueue
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
