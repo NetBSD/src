@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.47 2015/12/01 01:49:23 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.48 2015/12/01 02:03:55 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -573,15 +573,22 @@ void
 gpt_close(int fd)
 {
 
-	if (modified && !nosync) {
+	if (!modified)
+		goto out;
+
+	if (!nosync) {
 #ifdef DIOCMWEDGES
 		int bits;
 		if (ioctl(fd, DIOCMWEDGES, &bits) == -1)
 			warn("Can't update wedge information");
+		else
+			goto out;
 #endif
 	}
+	gpt_msg("You need to run \"dkctl %s makewedges\""
+	    " for the changes to take effect\n", device_name);
 
-	/* XXX post processing? */
+out:
 	close(fd);
 }
 
@@ -589,6 +596,9 @@ void
 gpt_msg(const char *fmt, ...)
 {
 	va_list ap;
+
+	if (quiet)
+		return;
 	printf("%s: ", device_name);
 	va_start(ap, fmt);
 	vprintf(fmt, ap);

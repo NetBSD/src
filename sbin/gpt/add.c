@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.29 2015/11/30 19:59:34 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.30 2015/12/01 02:03:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -180,9 +180,8 @@ add(int fd)
 	gpt_write(fd, lbt);
 	gpt_write(fd, tpg);
 
-	printf("Partition %d added on %s: ", i + 1, device_arg);
-	printf("%s %" PRIu64 " %" PRIu64 "\n", type, map->map_start,
-	    map->map_size);
+	gpt_msg("Partition %d added: %s %" PRIu64 " %" PRIu64 "\n", i + 1,
+	    type, map->map_start, map->map_size);
 }
 
 int
