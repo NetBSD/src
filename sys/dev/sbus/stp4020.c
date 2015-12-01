@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.68 2015/10/04 08:20:24 joerg Exp $ */
+/*	$NetBSD: stp4020.c,v 1.69 2015/12/01 08:22:30 martin Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.68 2015/10/04 08:20:24 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.69 2015/12/01 08:22:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -632,7 +632,7 @@ stp4020_intr(void *arg)
 #ifndef SUN4U
 	int s;
 #endif
-	int i, r = 0, cd_change = 0;
+	int i, r = 0;
 
 
 #ifndef SUN4U
@@ -666,7 +666,6 @@ stp4020_intr(void *arg)
 			/*
 			 * Card status change detect
 			 */
-			cd_change = 1;
 			r = 1;
 			if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) == (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)){
 				if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
@@ -716,15 +715,11 @@ stp4020_intr(void *arg)
 		/* informational messages */
 		if ((v & STP4020_ISR0_BVD1CHG) != 0) {
 			/* ignore if this is caused by insert or removal */
-			if (!cd_change)
-				printf("stp4020[%d]: Battery change 1\n", h->sock);
 			r = 1;
 		}
 
 		if ((v & STP4020_ISR0_BVD2CHG) != 0) {
 			/* ignore if this is caused by insert or removal */
-			if (!cd_change)
-				printf("stp4020[%d]: Battery change 2\n", h->sock);
 			r = 1;
 		}
 
