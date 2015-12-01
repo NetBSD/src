@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: set.c,v 1.6 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.7 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,99 +47,67 @@ __RCSID("$NetBSD: set.c,v 1.6 2015/11/29 00:14:46 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static unsigned int entry;
 static uint64_t attributes;
 
-const char setmsg[] = "set -a attribute -i index device ...";
+const char setmsg[] = "set -a attribute -i index";
 
-__dead static void
+static int
 usage_set(void)
 {
 
 	fprintf(stderr,
 	    "usage: %s %s\n", getprogname(), setmsg);
-	exit(1);
+	return -1;
 }
 
-static void
-set(int fd)
+static int
+set(gpt_t gpt)
 {
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	ent = NULL;
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
-		return;
-	}
+	if ((hdr = gpt_hdr(gpt)) == NULL)
+		return -1;
 
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return;
-	}
 
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
-	}
-
-	hdr = gpt->map_data;
 	if (entry > le32toh(hdr->hdr_entries)) {
-		warnx("%s: error: index %u out of range (%u max)", device_name,
+		gpt_warnx(gpt, "Index %u out of range (%u max)",
 		    entry, le32toh(hdr->hdr_entries));
-		return;
+		return -1;
 	}
 
 	i = entry - 1;
-	ent = (void*)((char*)tbl->map_data + i *
-	    le32toh(hdr->hdr_entsz));
+	ent = gpt_ent_primary(gpt, i);
 	if (gpt_uuid_is_nil(ent->ent_type)) {
-		warnx("%s: error: entry at index %u is unused",
-		    device_name, entry);
-		return;
+		gpt_warnx(gpt, "Entry at index %u is unused", entry);
+		return -1;
 	}
 
 	ent->ent_attr |= attributes;
 
-	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+	if (gpt_write_primary(gpt) == -1)
+		return -1;
 
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
-
-	hdr = tpg->map_data;
-	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
+	ent = gpt_ent_backup(gpt, i);
 	ent->ent_attr |= attributes;
 
-	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+	if (gpt_write_backup(gpt) == -1)
+		return -1;
 
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
-
-	printf("Partition %d attributes updated\n", entry);
+	gpt_msg(gpt, "Partition %d attributes updated", entry);
+	return 0;
 }
 
 int
-cmd_set(int argc, char *argv[])
+cmd_set(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "a:i:")) != -1) {
 		switch(ch) {
@@ -163,25 +131,15 @@ cmd_set(int argc, char *argv[])
 				usage_set();
 			break;
 		default:
-			usage_set();
+			return usage_set();
 		}
 	}
 
-	if (argc == optind)
-		usage_set();
+	if (argc != optind)
+		return usage_set();
 
 	if (entry == 0 || attributes == 0)
-		usage_set();
+		return usage_set();
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], 0);
-		if (fd == -1)
-			continue;
-
-		set(fd);
-
-		gpt_close(fd);
-	}
-
-	return 0;
+	return set(gpt);
 }
