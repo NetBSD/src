@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.9 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -52,16 +52,20 @@ __RCSID("$NetBSD: resizedisk.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
 
 static off_t sector, size;
 
-const char resizediskmsg[] = "resizedisk [-s size]";
+static int cmd_resizedisk(gpt_t, int, char *[]);
 
-static int
-usage_resizedisk(void)
-{
+static const char *resizediskhelp[] = {
+    "[-s size]",
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), resizediskmsg);
-	return -1;
-}
+struct gpt_cmd c_resizedisk = {
+	"resize",
+	cmd_resizedisk,
+	resizediskhelp, __arraycount(resizediskhelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_resizedisk)
 
 /*
  * relocate the secondary GPT based on the following criteria:
@@ -216,7 +220,7 @@ resizedisk(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
@@ -227,17 +231,17 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 's':
 			if (sector > 0 || size > 0)
-				return usage_resizedisk();
+				return usage();
 			sector = strtoll(optarg, &p, 10);
 			if (sector < 1)
-				return usage_resizedisk();
+				return usage();
 			if (*p == '\0')
 				break;
 			if (*p == 's' || *p == 'S') {
 				if (*(p + 1) == '\0')
 					break;
 				else
-					return usage_resizedisk();
+					return usage();
 			}
 			if (*p == 'b' || *p == 'B') {
 				if (*(p + 1) == '\0') {
@@ -245,20 +249,20 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 					sector = 0;
 					break;
 				} else
-					return usage_resizedisk();
+					return usage();
 			}
 			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage_resizedisk();
+				return usage();
 			size = human_num;
 			sector = 0;
 			break;
 		default:
-			return usage_resizedisk();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_resizedisk();
+		return usage();
 
 	if ((sector = gpt_check(gpt, 0, size)) == -1)
 		return -1;

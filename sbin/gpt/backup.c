@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.10 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: backup.c,v 1.11 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -52,16 +52,20 @@ __RCSID("$NetBSD: backup.c,v 1.10 2015/12/01 09:05:33 christos Exp $");
 #include "gpt_private.h"
 
 
-const char backupmsg[] = "backup";
+static const char *backuphelp[] = {
+    "",
+};
 
-static int
-usage_backup(void)
-{
+static int cmd_backup(gpt_t, int, char *[]);
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), backupmsg);
-	return -1;
-}
+struct gpt_cmd c_backup = {
+	"backup",
+	cmd_backup,
+	backuphelp, __arraycount(backuphelp),
+	GPT_READONLY,
+};
+
+#define usage() gpt_usage(NULL, &c_backup)
 
 #define PROP_ERR(x)	if (!(x)) {			\
 		gpt_warnx(gpt, "proplib failure");	\
@@ -289,11 +293,11 @@ backup(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_backup(gpt_t gpt, int argc, char *argv[])
 {
 	if (argc != optind)
-		usage_backup();
+		return usage();
 
 	return backup(gpt);
 }
