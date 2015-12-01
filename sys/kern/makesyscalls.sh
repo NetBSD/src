@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.160 2015/11/30 23:27:27 pgoyette Exp $
+#	$NetBSD: makesyscalls.sh,v 1.161 2015/12/01 00:25:58 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -985,7 +985,9 @@ function putent(type, compatwrap) {
 	printf("\t") > rumpcalls
 	if (returntype != "void" && type != "NOERR")
 		printf("error = ") > rumpcalls
-	printf("(void)rsys_syscall(%s%s%s, " \
+	else if (returntype != "void")
+		printf("(void)") > rumpcalls
+	printf("rsys_syscall(%s%s%s, " \
 	    "%s, %s, retval);\n", constprefix, compatwrap_, funcalias, \
 	    argarg, argsize) > rumpcalls
 	if (type != "NOERR") {
