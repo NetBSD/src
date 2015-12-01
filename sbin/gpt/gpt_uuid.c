@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.10 2014/12/06 12:24:22 mlelstv Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.11 2015/12/01 23:29:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.10 2014/12/06 12:24:22 mlelstv Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.11 2015/12/01 23:29:07 christos Exp $");
 #endif
 
 #include <err.h>
@@ -238,8 +238,8 @@ gpt_uuid_create(gpt_type_t t, gpt_uuid_t u, uint16_t *b, size_t s)
 		utf8_to_utf16((const uint8_t *)gpt_nv[t].d, b, s / sizeof(*b));
 }
 
-void
-gpt_uuid_generate(gpt_uuid_t t)
+int
+gpt_uuid_generate(gpt_t gpt, gpt_uuid_t t)
 {
 	struct dce_uuid u;
 	int fd;
@@ -249,16 +249,24 @@ gpt_uuid_generate(gpt_uuid_t t)
 
 	/* Randomly generate the content.  */
 	fd = open("/dev/urandom", O_RDONLY | O_CLOEXEC);
-	if (fd == -1)
-		err(1, "open(/dev/urandom)");
+	if (fd == -1) {
+		gpt_warn(gpt, "Can't open `/dev/urandom'");
+		return -1;
+	}
 	for (p = (void *)&u, n = sizeof u; 0 < n; p += nread, n -= nread) {
 		nread = read(fd, p, n);
-		if (nread < 0)
-			err(1, "read(/dev/urandom)");
-		if (nread == 0)
-			errx(1, "EOF from /dev/urandom");
-		if ((size_t)nread > n)
-			errx(1, "read too much: %zd > %zu", nread, n);
+		if (nread < 0) {
+			gpt_warn(gpt, "Can't read `/dev/urandom'");
+			goto out;
+		}
+		if (nread == 0) {
+			gpt_warn(gpt, "EOF from /dev/urandom");
+			goto out;
+		}
+		if ((size_t)nread > n) {
+			gpt_warnx(gpt, "read too much: %zd > %zu", nread, n);
+			goto out;
+		}
 	}
 	(void)close(fd);
 
@@ -271,4 +279,8 @@ gpt_uuid_generate(gpt_uuid_t t)
 	u.clock_seq_hi_and_reserved |= 0x80;
 
 	gpt_dce_to_uuid(&u, t);
+	close(fd);
+	return 0;
+out:
+	return -1;
 }
