@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.10 2015/11/29 14:12:35 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.11 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -43,15 +43,12 @@ __RCSID("$NetBSD: map.c,v 1.10 2015/11/29 14:12:35 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
-int lbawidth;
-
-static map_t *mediamap;
-
-static map_t *
+static map_t
 mkmap(off_t start, off_t size, int type)
 {
-	map_t *m;
+	map_t m;
 
 	m = calloc(1, sizeof(*m));
 	if (m == NULL)
@@ -85,31 +82,31 @@ map_type(int t)
 	return maptypes[t];
 }
 
-map_t *
-map_add(off_t start, off_t size, int type, void *data)
+map_t
+map_add(gpt_t gpt, off_t start, off_t size, int type, void *data)
 {
-	map_t *m, *n, *p;
+	map_t m, n, p;
 
 #ifdef DEBUG
 	printf("add: %s %#jx %#jx\n", map_type(type), (uintmax_t)start,
 	    (uintmax_t)size);
-	for (n = mediamap; n; n = n->map_next)
+	for (n = gpt->mediamap; n; n = n->map_next)
 		printf("have: %s %#jx %#jx\n", map_type(n->map_type),
 		    (uintmax_t)n->map_start, (uintmax_t)n->map_size);
 #endif
 
-	n = mediamap;
+	n = gpt->mediamap;
 	while (n != NULL && n->map_start + n->map_size <= start)
 		n = n->map_next;
 	if (n == NULL) {
-		if (!quiet)
-			warnx("Can't find map");
+		if (!(gpt->flags & GPT_QUIET))
+			gpt_warnx(gpt, "Can't find map");
 		return (NULL);
 	}
 
 	if (n->map_start + n->map_size < start + size) {
-		if (!quiet)
-			warnx("map entry doesn't fit media");
+		if (!(gpt->flags & GPT_QUIET))
+			gpt_warnx(gpt, "map entry doesn't fit media");
 		return (NULL);
 	}
 
@@ -117,8 +114,8 @@ map_add(off_t start, off_t size, int type, void *data)
 		if (n->map_type != MAP_TYPE_UNUSED) {
 			if (n->map_type != MAP_TYPE_MBR_PART ||
 			    type != MAP_TYPE_GPT_PART) {
-				if (!quiet)
-					warnx("partition(%ju,%ju) mirrored",
+				if (!(gpt->flags & GPT_QUIET))
+					gpt_warnx(gpt, "partition(%ju,%ju) mirrored",
 					    (uintmax_t)start, (uintmax_t)size);
 			}
 		}
@@ -130,7 +127,7 @@ map_add(off_t start, off_t size, int type, void *data)
 	if (n->map_type != MAP_TYPE_UNUSED) {
 		if (n->map_type != MAP_TYPE_MBR_PART ||
 		    type != MAP_TYPE_GPT_PART) {
-			warnx("bogus map current=%s new=%s",
+			gpt_warnx(gpt, "bogus map current=%s new=%s",
 			    map_type(n->map_type), map_type(type));
 			return (NULL);
 		}
@@ -149,7 +146,7 @@ map_add(off_t start, off_t size, int type, void *data)
 		if (m->map_prev != NULL)
 			m->map_prev->map_next = m;
 		else
-			mediamap = m;
+			gpt->mediamap = m;
 		n->map_prev = m;
 		n->map_start += size;
 		n->map_size -= size;
@@ -173,17 +170,17 @@ map_add(off_t start, off_t size, int type, void *data)
 		if (p->map_prev != NULL)
 			p->map_prev->map_next = p;
 		else
-			mediamap = p;
+			gpt->mediamap = p;
 	}
 
 	return (m);
 }
 
-map_t *
-map_alloc(off_t start, off_t size, off_t alignment)
+map_t
+map_alloc(gpt_t gpt, off_t start, off_t size, off_t alignment)
 {
 	off_t delta;
-	map_t *m;
+	map_t m;
 
 	if (alignment > 0) {
 		if ((start % alignment) != 0)
@@ -192,7 +189,7 @@ map_alloc(off_t start, off_t size, off_t alignment)
 			size = (size + alignment) / alignment * alignment;
 	}
 
-	for (m = mediamap; m != NULL; m = m->map_next) {
+	for (m = gpt->mediamap; m != NULL; m = m->map_next) {
 		if (m->map_type != MAP_TYPE_UNUSED || m->map_start < 2)
 			continue;
 		if (start != 0 && m->map_start > start)
@@ -217,7 +214,7 @@ map_alloc(off_t start, off_t size, off_t alignment)
 				else
 					size = m->map_size - delta;
 			}
-			return map_add(m->map_start + delta, size,
+			return map_add(gpt, m->map_start + delta, size,
 				    MAP_TYPE_GPT_PART, NULL);
 		}
 	}
@@ -226,15 +223,15 @@ map_alloc(off_t start, off_t size, off_t alignment)
 }
 
 off_t
-map_resize(map_t *m, off_t size, off_t alignment)
+map_resize(gpt_t gpt, map_t m, off_t size, off_t alignment)
 {
-	map_t *n, *o;
+	map_t n, o;
 	off_t alignsize, prevsize;
 
 	n = m->map_next;
 
 	if (size < 0 || alignment < 0) {
-		warnx("negative size or alignment");
+		gpt_warnx(gpt, "negative size or alignment");
 		return 0;
 	}
 	if (size == 0 && alignment == 0) {
@@ -319,40 +316,40 @@ map_resize(map_t *m, off_t size, off_t alignment)
 		return alignsize;
 }
 
-map_t *
-map_find(int type)
+map_t
+map_find(gpt_t gpt, int type)
 {
-	map_t *m;
+	map_t m;
 
-	m = mediamap;
+	m = gpt->mediamap;
 	while (m != NULL && m->map_type != type)
 		m = m->map_next;
 	return (m);
 }
 
-map_t *
-map_first(void)
+map_t
+map_first(gpt_t gpt)
 {
-	return mediamap;
+	return gpt->mediamap;
 }
 
-map_t *
-map_last(void)
+map_t
+map_last(gpt_t gpt)
 {
-	map_t *m;
+	map_t m;
 
-	m = mediamap;
+	m = gpt->mediamap;
 	while (m != NULL && m->map_next != NULL)
 		m = m->map_next;
 	return (m);
 }
 
 off_t
-map_free(off_t start, off_t size)
+map_free(gpt_t gpt, off_t start, off_t size)
 {
-	map_t *m;
+	map_t m;
 
-	m = mediamap;
+	m = gpt->mediamap;
 
 	while (m != NULL && m->map_start + m->map_size <= start)
 		m = m->map_next;
@@ -364,12 +361,12 @@ map_free(off_t start, off_t size)
 }
 
 void
-map_init(off_t size)
+map_init(gpt_t gpt, off_t size)
 {
 	char buf[32];
 
-	mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
-	lbawidth = snprintf(buf, sizeof(buf), "%ju", (uintmax_t)size);
-	if (lbawidth < 5)
-		lbawidth = 5;
+	gpt->mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
+	gpt->lbawidth = snprintf(buf, sizeof(buf), "%ju", (uintmax_t)size);
+	if (gpt->lbawidth < 5)
+		gpt->lbawidth = 5;
 }
