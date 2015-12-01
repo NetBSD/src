@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.39 2015/12/01 09:05:33 christos Exp $
+.\" $NetBSD: gpt.8,v 1.40 2015/12/01 22:49:25 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -39,7 +39,7 @@
 .Op Fl s Ar sectorsize
 .Ar command
 .Op Ar command_options
-.Ar device ...
+.Ar device
 .Sh DESCRIPTION
 The
 .Nm
@@ -104,7 +104,7 @@ There is no formalized definition of the different levels yet.
 .\" ==== add ====
 .It Nm Ic add Oo Fl a Ar alignment Oc Oo Fl b Ar blocknr Oc \
 Oo Fl i Ar index Oc Oo Fl l Ar label Oc Oo Fl s Ar size Oc \
-Oo Fl t Ar type Oc Ar device ...
+Oo Fl t Ar type Oc
 The
 .Ic add
 command allows the user to add a new partition to an existing table.
@@ -199,7 +199,7 @@ NetBSD swap
 .El
 as aliases for the most commonly used partition types.
 .\" ==== backup ====
-.It Nm Ic backup Ar device ...
+.It Nm Ic backup
 The
 .Ic backup
 command dumps the MBR or (PMBR) and GPT partition tables to standard
@@ -210,7 +210,7 @@ The format is a plist.
 It should not be modified.
 .\" ==== biosboot ====
 .It Nm Ic biosboot Oo Fl c Ar bootcode Oc Oo Fl i Ar index Oc \
-Oo Fl L Ar label Oc Ar device ...
+Oo Fl L Ar label Oc
 The
 .Ic biosboot
 command allows the user to configure the partition that contains the
@@ -236,7 +236,7 @@ option selects the partition by label.
 If there are multiple partitions with the same label, it will use the
 first one found.
 .\" ==== create ====
-.It Nm Ic create Oo Fl fP Oc Oo Fl p Ar partitions Oc Ar device ...
+.It Nm Ic create Oo Fl fP Oc Oo Fl p Ar partitions Oc
 The
 .Ic create
 command allows the user to create a new (empty) GPT.
@@ -265,7 +265,7 @@ By default, the
 .Nm
 utility will create space for 128 partitions (or 32 sectors of 512 bytes).
 .\" ==== destroy ====
-.It Nm Ic destroy Oo Fl r Oc Ar device ...
+.It Nm Ic destroy Oo Fl r Oc
 The
 .Ic destroy
 command allows the user to destroy an existing, possibly not empty GPT.
@@ -276,16 +276,16 @@ option instructs
 .Nm
 to destroy the table in a way that it can be recovered.
 .\" ==== header ====
-.It Nm Ic header Ar device ...
+.It Nm Ic header
 The
 .Ic header
 command displays size information about the media and information from the
 GPT header if it exists.
 .\" ==== label ====
-.It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
+.It Nm Ic label Oo Fl a Oc Ao Fl f Ar file | Fl l Ar label Ac
 .It Nm Ic label Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
 Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
-Ao Fl f Ar file | Fl l Ar label Ac Ar device ...
+Ao Fl f Ar file | Fl l Ar label Ac
 The
 .Ic label
 command allows the user to label any partitions that match the selection.
@@ -341,7 +341,7 @@ The
 option is used to specify the label in the command line.
 The label is assumed to be encoded in UTF-8.
 .\" ==== migrate ====
-.It Nm Ic migrate Oo Fl fs Oc Oo Fl p Ar partitions Oc Ar device ...
+.It Nm Ic migrate Oo Fl fs Oc Oo Fl p Ar partitions Oc
 The
 .Ic migrate
 command allows the user to migrate an MBR-based disk partitioning into a
@@ -393,16 +393,16 @@ beginning of the device, but don't have any free space at the end.
 For the default GPT partition table size on a 512 byte sector size device,
 33 sectors at the end of the device would need to be freed.
 .\" ==== recover ====
-.It Nm Ic recover Ar device ...
+.It Nm Ic recover
 The
 .Ic recover
 command tries to restore the GPT partition label from the backup
 near the end of the disk.
 It is very useful in case the primary label was deleted.
 .\" ==== remove ====
-.It Nm Ic remove Oo Fl a Oc Ar device ...
+.It Nm Ic remove Oo Fl a Oc
 .It Nm Ic remove Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
-Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc Ar device ...
+Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc
 The
 .Ic remove
 command allows the user to remove any and all partitions that match the
@@ -415,7 +415,7 @@ Partitions are removed by clearing the partition type.
 No other information is changed.
 .\" ==== resize ====
 .It Nm Ic resize Fl i Ar index Oo Fl a Ar alignment Oc \
-Oo Fl s Ar size Oc Ar device ...
+Oo Fl s Ar size Oc
 The
 .Ic resize
 command allows the user to resize a partition.
@@ -437,7 +437,7 @@ If the
 option is specified then the size will be adjusted to be a multiple of
 alignment if possible.
 .\" ==== resizedisk ====
-.It Nm Ic resizedisk Oo Fl s Ar size Oc Ar device ...
+.It Nm Ic resizedisk Oo Fl s Ar size Oc
 The
 .Ic resizedisk
 command allows the user to resize a disk.
@@ -465,7 +465,7 @@ Using the
 option allows you to move the backup copy prior to resizing the medium.
 This is primarily useful when shrinking the medium.
 .\" ==== restore ====
-.It Nm Ic restore Oo Fl F Oc Ar device ...
+.It Nm Ic restore Oo Fl F Oc
 The
 .Ic restore
 command restores a partition table that was previously saved using the
@@ -483,7 +483,7 @@ the partitions fit, as
 will automatically adjust.
 However, the new disk must use the same sector size as the old disk.
 .\" ==== set ====
-.It Nm Ic set Fl a Ar attribute Fl i Ar index Ar device ...
+.It Nm Ic set Fl a Ar attribute Fl i Ar index
 The
 .Ic set
 command sets various partition attributes.
@@ -512,7 +512,7 @@ They may be used by
 .Nx
 code in the future.
 .\" ==== show ====
-.It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc Ar device ...
+.It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
@@ -540,10 +540,10 @@ The order of precedence for the options are:
 .Fl g ,
 .Fl u .
 .\" ==== type ====
-.It Nm Ic type Oo Fl a Oc Fl T Ar newtype Ar device ...
+.It Nm Ic type Oo Fl a Oc Fl T Ar newtype
 .It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
 Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
-Fl T Ar newtype Ar device ...
+Fl T Ar newtype
 The
 .Ic type
 command allows the user to change the type of any and all partitions
@@ -553,7 +553,7 @@ It uses the same selection options as the
 command.
 See above for a description of these options.
 .\" ==== unset ====
-.It Nm Ic unset Fl a Ar attribute Fl i Ar index Ar device ...
+.It Nm Ic unset Fl a Ar attribute Fl i Ar index
 The
 .Ic unset
 command unsets various partition attributes.
@@ -649,11 +649,6 @@ one thinks one does not make mistakes.
 It is expected that the basic usage model does not change, but it is
 possible that future versions will not be compatible in the strictest sense
 of the word.
-For example, the
-.Fl p Ar partitions
-option may be changed to a command option rather than a generic option.
-There are only two commands that use it so there is a chance that the natural
-tendency for people is to use it as a command option.
 Also, options primarily intended for diagnostic or debug purposes may be
 removed in future versions.
 .Pp
