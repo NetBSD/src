@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.7 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,54 +47,63 @@ __RCSID("$NetBSD: destroy.c,v 1.7 2015/11/29 00:14:46 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int recoverable;
 static int force;
 
-const char destroymsg[] = "destroy [-rf] device ...";
+const char destroymsg[] = "destroy [-rf]";
 
-__dead static void
+static int
 usage_destroy(void)
 {
 
 	fprintf(stderr,
 	    "usage: %s %s\n", getprogname(), destroymsg);
-	exit(1);
+	return -1;
 }
 
-static void
-destroy(int fd)
+static int
+destroy(gpt_t gpt)
 {
-	map_t *pri_hdr, *sec_hdr;
+	map_t pri_hdr, sec_hdr;
 
-	pri_hdr = map_find(MAP_TYPE_PRI_GPT_HDR);
-	sec_hdr = map_find(MAP_TYPE_SEC_GPT_HDR);
+	pri_hdr = map_find(gpt, MAP_TYPE_PRI_GPT_HDR);
+	sec_hdr = map_find(gpt, MAP_TYPE_SEC_GPT_HDR);
 
 	if (pri_hdr == NULL && sec_hdr == NULL) {
-		warnx("%s: error: device doesn't contain a GPT", device_name);
-		return;
+		gpt_warnx(gpt, "Device doesn't contain a GPT");
+		return -1;
 	}
 
 	if (recoverable && sec_hdr == NULL) {
-		warnx("%s: error: recoverability not possible", device_name);
-		return;
+		gpt_warnx(gpt, "Recoverability not possible");
+		return -1;
 	}
 
 	if (pri_hdr != NULL) {
-		memset(pri_hdr->map_data, 0, secsz);
-		gpt_write(fd, pri_hdr);
+		memset(pri_hdr->map_data, 0, gpt->secsz);
+		if (gpt_write(gpt, pri_hdr) == -1) {
+			gpt_warnx(gpt, "Error writing primary header");
+			return -1;
+		}
 	}
 
 	if (!recoverable && sec_hdr != NULL) {
-		memset(sec_hdr->map_data, 0, secsz);
-		gpt_write(fd, sec_hdr);
+		memset(sec_hdr->map_data, 0, gpt->secsz);
+		if (gpt_write(gpt, sec_hdr) == -1) {
+			gpt_warnx(gpt, "Error writing backup header");
+			return -1;
+		}
 	}
+
+	return 0;
 }
 
 int
-cmd_destroy(int argc, char *argv[])
+cmd_destroy(gpt_t gpt, int argc, char *argv[])
 {
-	int ch, fd;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "fr")) != -1) {
 		switch(ch) {
@@ -105,22 +114,12 @@ cmd_destroy(int argc, char *argv[])
 			recoverable = 1;
 			break;
 		default:
-			usage_destroy();
+			return usage_destroy();
 		}
 	}
 
-	if (argc == optind)
-		usage_destroy();
+	if (argc != optind)
+		return usage_destroy();
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], force);
-		if (fd == -1)
-			continue;
-
-		destroy(fd);
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	return destroy(gpt);
 }

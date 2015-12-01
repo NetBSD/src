@@ -33,10 +33,12 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.30 2015/12/01 02:03:55 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.31 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/param.h>
+#include <sys/stat.h>
 
 #include <err.h>
 #include <stddef.h>
@@ -47,6 +49,7 @@ __RCSID("$NetBSD: add.c,v 1.30 2015/12/01 02:03:55 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static gpt_uuid_t type;
 static off_t alignment, block, sectors, size;
@@ -54,9 +57,9 @@ static unsigned int entry;
 static uint8_t *name;
 
 const char addmsg1[] = "add [-a alignment] [-b blocknr] [-i index] [-l label]";
-const char addmsg2[] = "    [-s size] [-t type] device ...";
+const char addmsg2[] = "    [-s size] [-t type]";
 
-__dead static void
+static int
 usage_add(void)
 {
 
@@ -64,131 +67,89 @@ usage_add(void)
 	    "usage: %s %s\n"
 	    "       %*s %s\n", getprogname(), addmsg1,
 	    (int)strlen(getprogname()), "", addmsg2);
-	exit(1);
+	return -1;
 }
 
-static void
-add(int fd)
+static int
+add(gpt_t gpt)
 {
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *map;
+	map_t map;
 	struct gpt_hdr *hdr;
-	struct gpt_ent *ent;
+	struct gpt_ent *ent, e;
 	unsigned int i;
 	off_t alignsecs;
 	
+	if ((hdr = gpt_hdr(gpt)) == NULL)
+		return -1;
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
 	ent = NULL;
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
-		return;
-	}
 
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return;
-	}
-
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
-	}
-
-	hdr = gpt->map_data;
 	if (entry > le32toh(hdr->hdr_entries)) {
-		warnx("%s: error: index %u out of range (%u max)", device_name,
+		gpt_warnx(gpt, "index %u out of range (%u max)",
 		    entry, le32toh(hdr->hdr_entries));
-		return;
+		return -1;
 	}
 
 	if (entry > 0) {
 		i = entry - 1;
-		ent = (void*)((char*)tbl->map_data + i *
-		    le32toh(hdr->hdr_entsz));
+		ent = gpt_ent_primary(gpt, i);
 		if (!gpt_uuid_is_nil(ent->ent_type)) {
-			warnx("%s: error: entry at index %u is not free",
-			    device_name, entry);
-			return;
+			gpt_warnx(gpt, "Entry at index %u is not free", entry);
+			return -1;
 		}
 	} else {
 		/* Find empty slot in GPT table. */
 		for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-			ent = (void*)((char*)tbl->map_data + i *
-			    le32toh(hdr->hdr_entsz));
+			ent = gpt_ent_primary(gpt, i);
 			if (gpt_uuid_is_nil(ent->ent_type))
 				break;
 		}
 		if (i == le32toh(hdr->hdr_entries)) {
-			warnx("%s: error: no available table entries",
-			    device_name);
-			return;
+			gpt_warnx(gpt, "No available table entries");
+			return -1;
 		}
 	}
 
 	if (alignment > 0) {
-		alignsecs = alignment / secsz;
-		map = map_alloc(block, sectors, alignsecs);
+		alignsecs = alignment / gpt->secsz;
+		map = map_alloc(gpt, block, sectors, alignsecs);
 		if (map == NULL) {
-			warnx("%s: error: not enough space available on "
-			      "device for an aligned partition", device_name);
-			return;
+			gpt_warnx(gpt, "Not enough space available on "
+			      "device for an aligned partition");
+			return -1;
 		}
 	} else {
-		map = map_alloc(block, sectors, 0);
+		map = map_alloc(gpt, block, sectors, 0);
 		if (map == NULL) {
-			warnx("%s: error: not enough space available on "
-			      "device", device_name);
-			return;
+			gpt_warnx(gpt, "Not enough space available on device");
+			return -1;
 		}
 	}
 
-	gpt_uuid_copy(ent->ent_type, type);
-	ent->ent_lba_start = htole64(map->map_start);
-	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
+	memset(&e, 0, sizeof(e));
+	gpt_uuid_copy(e.ent_type, type);
+	e.ent_lba_start = htole64(map->map_start);
+	e.ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
 	if (name != NULL)
-		utf8_to_utf16(name, ent->ent_name, 36);
+		utf8_to_utf16(name, e.ent_name, 36);
 
-	hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+	memcpy(ent, &e, sizeof(e));
+	gpt_write_primary(gpt);
 
-	gpt_write(fd, gpt);
-	gpt_write(fd, tbl);
+	ent = gpt_ent_backup(gpt, i);
+	memcpy(ent, &e, sizeof(e));
+	gpt_write_backup(gpt);
 
-	hdr = tpg->map_data;
-	ent = (void*)((char*)lbt->map_data + i * le32toh(hdr->hdr_entsz));
-
-	gpt_uuid_copy(ent->ent_type, type);
-	ent->ent_lba_start = htole64(map->map_start);
-	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
-	if (name != NULL)
-		utf8_to_utf16(name, ent->ent_name, 36);
-
-	hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
-	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
-
-	gpt_msg("Partition %d added: %s %" PRIu64 " %" PRIu64 "\n", i + 1,
+	gpt_msg(gpt, "Partition %d added: %s %" PRIu64 " %" PRIu64 "\n", i + 1,
 	    type, map->map_start, map->map_size);
+	return 0;
 }
 
 int
-cmd_add(int argc, char *argv[])
+cmd_add(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
 	int64_t human_num;
 
 	while ((ch = getopt(argc, argv, "a:b:i:l:s:t:")) != -1) {
@@ -257,44 +218,23 @@ cmd_add(int argc, char *argv[])
 				usage_add();
 			break;
 		default:
-			usage_add();
+			return usage_add();
 		}
 	}
 
 	if (argc == optind)
-		usage_add();
+		return usage_add();
 
 	/* Create NetBSD FFS partitions by default. */
 	if (gpt_uuid_is_nil(type)) {
 		gpt_uuid_create(GPT_TYPE_NETBSD_FFS, type, NULL, 0);
 	}
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], 0);
-		if (fd == -1)
-			continue;
+	if (optind != argc)
+		return usage_add();
 
-		if (alignment % secsz != 0) {
-			warnx("Alignment must be a multiple of sector size;");
-			warnx("the sector size for %s is %d bytes.",
-			    device_name, secsz);
-			continue;
-		}
+	if ((sectors = gpt_check(gpt, alignment, size)) == -1)
+		return -1;
 
-		if (size % secsz != 0) {
-			warnx("Size in bytes must be a multiple of sector "
-			      "size;");
-			warnx("the sector size for %s is %d bytes.",
-			    device_name, secsz);
-			continue;
-		}
-		if (size > 0)
-			sectors = size / secsz;
-
-		add(fd);
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	return add(gpt);
 }
