@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.15 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.16 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,16 +52,20 @@ __RCSID("$NetBSD: resize.c,v 1.15 2015/12/01 09:05:33 christos Exp $");
 static off_t alignment, sectors, size;
 static unsigned int entry;
 
-const char resizemsg[] = "resize -i index [-a alignment] [-s size]";
+static int cmd_resize(gpt_t, int, char *[]);
 
-static int
-usage_resize(void)
-{
+static const char *resizehelp[] = {
+    "-i index [-a alignment] [-s size]",
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), resizemsg);
-	return -1;
-}
+struct gpt_cmd c_resize = {
+	"resize",
+	cmd_resize,
+	resizehelp, __arraycount(resizehelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_resize)
 
 static int
 resize(gpt_t gpt)
@@ -132,7 +136,7 @@ resize(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_resize(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
@@ -143,33 +147,33 @@ cmd_resize(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 'a':
 			if (alignment > 0)
-				return usage_resize();
+				return usage();
 			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage_resize();
+				return usage();
 			alignment = human_num;
 			if (alignment < 1)
-				return usage_resize();
+				return usage();
 			break;
 		case 'i':
 			if (entry > 0)
-				return usage_resize();
+				return usage();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				return usage_resize();
+				return usage();
 			break;
 		case 's':
 			if (sectors > 0 || size > 0)
-				return usage_resize();
+				return usage();
 			sectors = strtoll(optarg, &p, 10);
 			if (sectors < 1)
-				return usage_resize();
+				return usage();
 			if (*p == '\0')
 				break;
 			if (*p == 's' || *p == 'S') {
 				if (*(p + 1) == '\0')
 					break;
 				else
-					return usage_resize();
+					return usage();
 			}
 			if (*p == 'b' || *p == 'B') {
 				if (*(p + 1) == '\0') {
@@ -177,23 +181,23 @@ cmd_resize(gpt_t gpt, int argc, char *argv[])
 					sectors = 0;
 					break;
 				} else
-					return usage_resize();
+					return usage();
 			}
 			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage_resize();
+				return usage();
 			size = human_num;
 			sectors = 0;
 			break;
 		default:
-			return usage_resize();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_resize();
+		return usage();
 
 	if (entry == 0)
-		return usage_resize();
+		return usage();
 
 	if ((sectors = gpt_check(gpt, alignment, size)) == -1)
 		return -1;
