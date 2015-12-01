@@ -1,4 +1,4 @@
-#	$NetBSD: files.netbsd32,v 1.36 2015/06/22 10:35:00 mrg Exp $
+#	$NetBSD: files.netbsd32,v 1.37 2015/12/01 23:38:34 pgoyette Exp $
 #
 # config file description for machine-independent netbsd32 compat code.
 # included by ports that need it.
@@ -19,7 +19,7 @@ file	compat/netbsd32/netbsd32_ipc.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_lwp.c		compat_netbsd32
 file	compat/netbsd32/netbsd32_module.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_mod.c		compat_netbsd32
-file	compat/netbsd32/netbsd32_mqueue.c	compat_netbsd32
+file	compat/netbsd32/netbsd32_mqueue.c	compat_netbsd32 & mqueue
 file	compat/netbsd32/netbsd32_nfssvc.c	compat_netbsd32 & nfsserver
 file	compat/netbsd32/netbsd32_select.c	compat_netbsd32
 file	compat/netbsd32/netbsd32_sem.c		compat_netbsd32
