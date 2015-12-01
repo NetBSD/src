@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.9 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.10 2015/12/01 19:25:24 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -223,38 +223,13 @@ resizedisk(gpt_t gpt)
 static int
 cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 {
-	char *p;
 	int ch;
-	int64_t human_num;
 
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch(ch) {
 		case 's':
-			if (sector > 0 || size > 0)
-				return usage();
-			sector = strtoll(optarg, &p, 10);
-			if (sector < 1)
-				return usage();
-			if (*p == '\0')
-				break;
-			if (*p == 's' || *p == 'S') {
-				if (*(p + 1) == '\0')
-					break;
-				else
-					return usage();
-			}
-			if (*p == 'b' || *p == 'B') {
-				if (*(p + 1) == '\0') {
-					size = sector;
-					sector = 0;
-					break;
-				} else
-					return usage();
-			}
-			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage();
-			size = human_num;
-			sector = 0;
+			if (gpt_add_ais(gpt, NULL, NULL, &size, ch) == -1)
+				return -1;
 			break;
 		default:
 			return usage();
@@ -264,7 +239,7 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	if ((sector = gpt_check(gpt, 0, size)) == -1)
+	if ((sector = gpt_check_ais(gpt, 0, ~0, size)) == -1)
 		return -1;
 
 	return resizedisk(gpt);
