@@ -1,5 +1,7 @@
-# $NetBSD: ad.mips,v 1.5 2015/07/09 18:19:34 matt Exp $
+# $NetBSD: ad.mips,v 1.6 2015/12/01 09:15:57 pgoyette Exp $
 ./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod	base-kernel-modules	kmod,arch64,nocompatmodules
+./@MODULEDIR@/compat_netbsd32_nfssrv			base-kernel-modules	kmod,arch64,nocompatmodules
+./@MODULEDIR@/compat_netbsd32_nfssrv/compat_netbsd32_nfssrv.kmod	base-kernel-modules	kmod,arch64,nocompatmodules
 ./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
