@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.703 2015/11/04 05:05:45 buhrow Exp $
+$NetBSD: usbdevs,v 1.704 2015/12/01 17:47:37 nonaka Exp $
 
 /*
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -317,6 +317,7 @@ vendor APTIO		0x07d2	Aptio Products
 vendor ARASAN		0x07da	Arasan Chip Systems
 vendor ALLIEDCABLE	0x07e6	Allied Cable
 vendor STSN		0x07ef	STSN
+vendor CENTURY		0x07f7	CENTURY Corporation
 vendor BEWAN		0x07fa	Bewan
 vendor ZOOM		0x0803	Zoom Telephonics
 vendor BROADLOGIC	0x0827	BroadLogic
@@ -1063,6 +1064,9 @@ product BELKIN F6D4050V1	0x935a	F6D4050 ver 1
 product BELKIN F6D4050V2	0x935b	F6D4050 ver 2
 product BELKIN RTL8192SU_3	0x945a	RTL8192SU
 product BELKIN F7D1101V2	0x945b	F7D1101 v2
+
+/* CENTURY Corporation products */
+product CENTURY CTUSB1HUB	0x0023	CT-USB1HUB
 
 /* Bewan products */
 product BEWAN BWIFI_USB54AR	0x1196	BWIFI-USB54AR
