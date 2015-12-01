@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 2015/11/30 19:59:34 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.2 2015/12/01 09:05:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.1 2015/11/30 19:59:34 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.2 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: main.c,v 1.1 2015/11/30 19:59:34 christos Exp $");
 #include "gpt.h"
 
 static struct {
-	int (*fptr)(int, char *[]);
+	int (*fptr)(gpt_t, int, char *[]);
 	const char *name;
 } cmdsw[] = {
 	{ cmd_add, "add" },
@@ -90,10 +90,14 @@ usage(void)
 #endif
 	const char *p = getprogname();
 	const char *f =
-	    "[-nrqv] [-m <mediasize>] [-p <partitionnum>] [-s <sectorsize>]";
+	    "[-nrqv] [-m <mediasize>] [-s <sectorsize>]";
 
-	fprintf(stderr,
-	    "Usage: %s %s <command> [<args>]\n", p, f);
+	if (strcmp(p, "gpt") == 0)
+		fprintf(stderr,
+		    "Usage: %s %s <command> [<args>] <device>\n", p, f);
+	else
+		fprintf(stderr,
+		    "Usage: %s %s <device> <command> [<args>]\n", p, f);
 	fprintf(stderr, 
 	    "Commands:\n"
 #ifndef HAVE_NBTOOL_CONFIG_H
@@ -153,11 +157,24 @@ prefix(const char *cmd)
 int
 main(int argc, char *argv[])
 {
-	char *cmd, *p;
+	char *cmd, *p, *dev = NULL;
 	int ch, i;
+	u_int secsz = 0;
+	off_t mediasz = 0;
+	int flags = 0;
+	int verbose = 0;
+	gpt_t gpt;
+
+	setprogname(argv[0]);
+
+	if (strcmp(getprogname(), "gpt") == 0) {
+		if (argc < 3)
+			usage();
+		dev = argv[--argc];
+	}
 
 	/* Get the generic options */
-	while ((ch = getopt(argc, argv, "m:np:qrs:v")) != -1) {
+	while ((ch = getopt(argc, argv, "m:nqrs:v")) != -1) {
 		switch(ch) {
 		case 'm':
 			if (mediasz > 0)
@@ -167,20 +184,13 @@ main(int argc, char *argv[])
 				usage();
 			break;
 		case 'n':
-			nosync = 1;
-			break;
-		case 'p':
-			if (parts > 0)
-				usage();
-			parts = strtoul(optarg, &p, 10);
-			if (*p != 0 || parts < 1)
-				usage();
+			flags |= GPT_NOSYNC;
 			break;
 		case 'r':
-			readonly = 1;
+			flags |= GPT_READONLY;
 			break;
 		case 'q':
-			quiet = 1;
+			flags |= GPT_QUIET;
 			break;
 		case 's':
 			if (secsz > 0)
@@ -196,18 +206,32 @@ main(int argc, char *argv[])
 			usage();
 		}
 	}
-	if (!parts)
-		parts = 128;
+
+	if (argc == optind)
+		usage();
+
+	if (dev == NULL)
+		dev = argv[optind++];
 
 	if (argc == optind)
 		usage();
 
 	cmd = argv[optind++];
-	for (i = 0; cmdsw[i].name != NULL && strcmp(cmd, cmdsw[i].name); i++);
+	for (i = 0; cmdsw[i].name != NULL && strcmp(cmd, cmdsw[i].name); i++)
+		continue;
 
 	if (cmdsw[i].fptr == NULL)
-		errx(1, "unknown command: %s", cmd);
+		errx(EXIT_FAILURE, "Unknown command: %s", cmd);
 
 	prefix(cmd);
-	return ((*cmdsw[i].fptr)(argc, argv));
+
+	gpt = gpt_open(dev, flags, verbose, mediasz, secsz);
+	if (gpt == NULL)
+		return EXIT_FAILURE;
+
+	if ((*cmdsw[i].fptr)(gpt, argc, argv) == -1)
+		return EXIT_FAILURE;
+
+	gpt_close(gpt);
+	return EXIT_SUCCESS;
 }

@@ -60,40 +60,52 @@ struct mbr {
 #define	MBR_SIG		0xAA55
 };
 
-extern const char *device_arg;
-extern const char *device_name;
-extern off_t mediasz;
-extern u_int parts;
-extern u_int secsz;
-extern int readonly, verbose, quiet, nosync;
+typedef struct gpt *gpt_t;
+typedef struct map *map_t;
 
 uint32_t crc32(const void *, size_t);
-void	gpt_close(int);
-int	gpt_gpt(int, off_t, int);
-int	gpt_open(const char *, int);
-void*	gpt_read(int, off_t, size_t);
-int	gpt_write(int, map_t *);
-void	gpt_msg(const char *, ...) __printflike(1, 2);
+void	gpt_close(gpt_t);
+int	gpt_gpt(gpt_t, off_t, int);
+gpt_t	gpt_open(const char *, int, int, off_t, u_int);
+void*	gpt_read(gpt_t, off_t, size_t);
+int	gpt_write(gpt_t, map_t);
+int	gpt_write_crc(gpt_t, map_t, map_t);
+int	gpt_write_primary(gpt_t);
+int	gpt_write_backup(gpt_t);
+struct gpt_hdr *gpt_hdr(gpt_t);
+void	gpt_msg(gpt_t, const char *, ...) __printflike(2, 3);
+void	gpt_warn(gpt_t, const char *, ...) __printflike(2, 3);
+void	gpt_warnx(gpt_t, const char *, ...) __printflike(2, 3);
+void	gpt_create_pmbr_part(struct mbr_part *, off_t);
+off_t	gpt_check(gpt_t, off_t, off_t);
+struct gpt_ent *gpt_ent(map_t, map_t, unsigned int);
+struct gpt_ent *gpt_ent_primary(gpt_t, unsigned int);
+struct gpt_ent *gpt_ent_backup(gpt_t, unsigned int);
 
 uint8_t *utf16_to_utf8(uint16_t *);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
 
-int	cmd_add(int, char *[]);
-int	cmd_backup(int, char *[]);
-int	cmd_biosboot(int, char *[]);
-int	cmd_create(int, char *[]);
-int	cmd_destroy(int, char *[]);
-int	cmd_header(int, char *[]);
-int	cmd_label(int, char *[]);
-int	cmd_migrate(int, char *[]);
-int	cmd_recover(int, char *[]);
-int	cmd_remove(int, char *[]);
-int	cmd_resize(int, char *[]);
-int	cmd_resizedisk(int, char *[]);
-int	cmd_restore(int, char *[]);
-int	cmd_set(int, char *[]);
-int	cmd_show(int, char *[]);
-int	cmd_type(int, char *[]);
-int	cmd_unset(int, char *[]);
+int	cmd_add(gpt_t, int, char *[]);
+int	cmd_backup(gpt_t, int, char *[]);
+int	cmd_biosboot(gpt_t, int, char *[]);
+int	cmd_create(gpt_t, int, char *[]);
+int	cmd_destroy(gpt_t, int, char *[]);
+int	cmd_header(gpt_t, int, char *[]);
+int	cmd_label(gpt_t, int, char *[]);
+int	cmd_migrate(gpt_t, int, char *[]);
+int	cmd_recover(gpt_t, int, char *[]);
+int	cmd_remove(gpt_t, int, char *[]);
+int	cmd_resize(gpt_t, int, char *[]);
+int	cmd_resizedisk(gpt_t, int, char *[]);
+int	cmd_restore(gpt_t, int, char *[]);
+int	cmd_set(gpt_t, int, char *[]);
+int	cmd_show(gpt_t, int, char *[]);
+int	cmd_type(gpt_t, int, char *[]);
+int	cmd_unset(gpt_t, int, char *[]);
+
+#define GPT_READONLY	1
+#define GPT_MODIFIED	2
+#define GPT_QUIET	4
+#define GPT_NOSYNC	8
 
 #endif /* _GPT_H_ */

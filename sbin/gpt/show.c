@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.23 2015/11/29 14:12:56 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.24 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,40 +47,41 @@ __RCSID("$NetBSD: show.c,v 1.23 2015/11/29 14:12:56 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int show_label = 0;
 static int show_uuid = 0;
 static int show_guid = 0;
 static unsigned int entry = 0;
 
-const char showmsg[] = "show [-glu] [-i index] device ...";
+const char showmsg[] = "show [-glu] [-i index] device";
 
-__dead static void
+static int
 usage_show(void)
 {
 
 	fprintf(stderr,
 	    "usage: %s %s\n", getprogname(), showmsg);
-	exit(1);
+	return -1;
 }
 
-static void
-show(void)
+static int
+show(gpt_t gpt)
 {
 	off_t start;
-	map_t *m, *p;
+	map_t m, p;
 	struct mbr *mbr;
 	struct gpt_ent *ent;
 	unsigned int i;
 
-	printf("  %*s", lbawidth, "start");
-	printf("  %*s", lbawidth, "size");
+	printf("  %*s", gpt->lbawidth, "start");
+	printf("  %*s", gpt->lbawidth, "size");
 	printf("  index  contents\n");
 
-	m = map_first();
+	m = map_first(gpt);
 	while (m != NULL) {
-		printf("  %*llu", lbawidth, (long long)m->map_start);
-		printf("  %*llu", lbawidth, (long long)m->map_size);
+		printf("  %*llu", gpt->lbawidth, (long long)m->map_start);
+		printf("  %*llu", gpt->lbawidth, (long long)m->map_size);
 		putchar(' ');
 		putchar(' ');
 		if (m->map_index > 0)
@@ -155,31 +156,31 @@ show(void)
 		putchar('\n');
 		m = m->map_next;
 	}
+	return 0;
 }
 
-static void
-show_one(void)
+static int
+show_one(gpt_t gpt)
 {
-	map_t *m;
+	map_t m;
 	struct gpt_ent *ent;
 	char s1[128], s2[128];
 #ifdef HN_AUTOSCALE
 	char human_num[5];
 #endif
 
-	for (m = map_first(); m != NULL; m = m->map_next)
+	for (m = map_first(gpt); m != NULL; m = m->map_next)
 		if (entry == m->map_index)
 			break;
 	if (m == NULL) {
-		warnx("%s: error: could not find index %d",
-		    device_name, entry);
-		return;
+		gpt_warnx(gpt, "Could not find index %d", entry);
+		return -1;
 	}
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
 #ifdef HN_AUTOSCALE
-	if (humanize_number(human_num, 5, (int64_t)(m->map_start * secsz),
+	if (humanize_number(human_num, 5, (int64_t)(m->map_start * gpt->secsz),
 	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
 		human_num[0] = '\0';
 	if (human_num[0] != '\0')
@@ -189,7 +190,7 @@ show_one(void)
 #endif
 		printf("Start: %llu\n", (long long)m->map_start);
 #ifdef HN_AUTOSCALE
-	if (humanize_number(human_num, 5, (int64_t)(m->map_size * secsz),
+	if (humanize_number(human_num, 5, (int64_t)(m->map_size * gpt->secsz),
 	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
 		human_num[0] = '\0';
 	if (human_num[0] != '\0')
@@ -226,13 +227,14 @@ show_one(void)
 		if (ent->ent_attr & GPT_ENT_ATTR_BOOTFAILED)
 			printf("  partition that was marked bootonce but failed to boot\n");
 	}
+	return 0;
 }
 
 int
-cmd_show(int argc, char *argv[])
+cmd_show(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "gi:lu")) != -1) {
 		switch(ch) {
@@ -241,10 +243,10 @@ cmd_show(int argc, char *argv[])
 			break;
 		case 'i':
 			if (entry > 0)
-				usage_show();
+				return usage_show();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				usage_show();
+				return usage_show();
 			break;
 		case 'l':
 			show_label = 1;
@@ -253,25 +255,12 @@ cmd_show(int argc, char *argv[])
 			show_uuid = 1;
 			break;
 		default:
-			usage_show();
+			return usage_show();
 		}
 	}
 
-	if (argc == optind)
-		usage_show();
+	if (argc != optind)
+		return usage_show();
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], 0);
-		if (fd == -1)
-			continue;
-
-		if (entry > 0)
-			show_one();
-		else
-			show();
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	return entry > 0 ? show_one(gpt) : show(gpt);
 }

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: type.c,v 1.7 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: type.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ __RCSID("$NetBSD: type.c,v 1.7 2015/11/29 00:14:46 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int all;
 static gpt_uuid_t type, newtype;
@@ -54,12 +55,12 @@ static off_t block, size;
 static unsigned int entry;
 static uint8_t *label;
 
-const char typemsg1[] = "type -a -T newtype device ...";
+const char typemsg1[] = "type -a -T newtype";
 const char typemsg2[] = "type [-b blocknr] [-i index] [-L label] "
 	"[-s sectors] [-t type]";
-const char typemsg3[] = "     -T newtype device ...";
+const char typemsg3[] = "     -T newtype";
 
-__dead static void
+static int
 usage_type(void)
 {
 
@@ -68,42 +69,21 @@ usage_type(void)
             "       %s %s\n"
             "       %*s %s\n", getprogname(), typemsg1,
             getprogname(), typemsg2, (int)strlen(getprogname()), "", typemsg3);
-	exit(1);
+	return -1;
 }
 
-static void
-chtype(int fd)
+static int
+chtype(gpt_t gpt)
 {
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *m;
-	struct gpt_hdr *hdr;
+	map_t m;
 	struct gpt_ent *ent;
 	unsigned int i;
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
-		return;
-	}
-
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL) {
-		warnx("%s: error: no secondary GPT header; run recover",
-		    device_name);
-		return;
-	}
-
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL || lbt == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
-	}
+	if (gpt_hdr(gpt) == NULL)
+		return -1;
 
 	/* Change type of all matching entries in the map. */
-	for (m = map_first(); m != NULL; m = m->map_next) {
+	for (m = map_first(gpt); m != NULL; m = m->map_next) {
 		if (m->map_type != MAP_TYPE_GPT_PART || m->map_index < 1)
 			continue;
 		if (entry > 0 && entry != m->map_index)
@@ -115,9 +95,7 @@ chtype(int fd)
 
 		i = m->map_index - 1;
 
-		hdr = gpt->map_data;
-		ent = (void*)((char*)tbl->map_data + i *
-		    le32toh(hdr->hdr_entsz));
+		ent = gpt_ent_primary(gpt, i);
 
 		if (label != NULL)
 			if (strcmp((char *)label,
@@ -131,37 +109,27 @@ chtype(int fd)
 		/* Change the primary entry. */
 		gpt_uuid_copy(ent->ent_type, newtype);
 
-		hdr->hdr_crc_table = htole32(crc32(tbl->map_data,
-		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-		hdr->hdr_crc_self = 0;
-		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+		if (gpt_write_primary(gpt) == -1)
+			return -1;
 
-		gpt_write(fd, gpt);
-		gpt_write(fd, tbl);
-
-		hdr = tpg->map_data;
-		ent = (void*)((char*)lbt->map_data + i *
-		    le32toh(hdr->hdr_entsz));
+		ent = gpt_ent_backup(gpt, i);
 
 		/* Change the secondary entry. */
 		gpt_uuid_copy(ent->ent_type, newtype);
 
-		hdr->hdr_crc_table = htole32(crc32(lbt->map_data,
-		    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)));
-		hdr->hdr_crc_self = 0;
-		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+		if (gpt_write_backup(gpt) == -1)
+			return -1;
 
-		gpt_write(fd, lbt);
-		gpt_write(fd, tpg);
-		printf("partition %d type changed\n", m->map_index);
+		gpt_msg(gpt, "Partition %d type changed", m->map_index);
 	}
+	return 0;
 }
 
 int
-cmd_type(int argc, char *argv[])
+cmd_type(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
 	int64_t human_num;
 
 	/* Get the type options */
@@ -169,73 +137,63 @@ cmd_type(int argc, char *argv[])
 		switch(ch) {
 		case 'a':
 			if (all > 0)
-				usage_type();
+				return usage_type();
 			all = 1;
 			break;
 		case 'b':
 			if (block > 0)
-				usage_type();
+				return usage_type();
 			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_type();
+				return usage_type();
 			block = human_num;
 			if (block < 1)
-				usage_type();
+				return usage_type();
 			break;
 		case 'i':
 			if (entry > 0)
-				usage_type();
+				return usage_type();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				usage_type();
+				return usage_type();
 			break;
                 case 'L':
                         if (label != NULL)
-                                usage_type();
+                                return usage_type();
                         label = (uint8_t *)strdup(optarg);
                         break;
 		case 's':
 			if (size > 0)
-				usage_type();
+				return usage_type();
 			size = strtoll(optarg, &p, 10);
 			if (*p != 0 || size < 1)
-				usage_type();
+				return usage_type();
 			break;
 		case 't':
 			if (!gpt_uuid_is_nil(type))
-				usage_type();
+				return usage_type();
 			if (gpt_uuid_parse(optarg, type) != 0)
-				usage_type();
+				return usage_type();
 			break;
 		case 'T':
 			if (!gpt_uuid_is_nil(newtype))
-				usage_type();
+				return usage_type();
 			if (gpt_uuid_parse(optarg, newtype) != 0)
-				usage_type();
+				return usage_type();
 			break;
 		default:
-			usage_type();
+			return usage_type();
 		}
 	}
 
 	if (!all ^
 	    (block > 0 || entry > 0 || label != NULL || size > 0 ||
 	    !gpt_uuid_is_nil(type)))
-		usage_type();
+		return usage_type();
 	if (gpt_uuid_is_nil(newtype))
-		usage_type();
+		return usage_type();
 
-	if (argc == optind)
-		usage_type();
+	if (argc != optind)
+		return usage_type();
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], 0);
-		if (fd == -1)
-			continue;
-
-		chtype(fd);
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	return chtype(gpt);
 }

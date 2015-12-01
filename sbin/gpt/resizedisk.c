@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.7 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -48,18 +48,19 @@ __RCSID("$NetBSD: resizedisk.c,v 1.7 2015/11/29 00:14:46 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
-static uint64_t sector, size;
+static off_t sector, size;
 
-const char resizediskmsg[] = "resizedisk [-s size] device ...";
+const char resizediskmsg[] = "resizedisk [-s size]";
 
-__dead static void
+static int
 usage_resizedisk(void)
 {
 
 	fprintf(stderr,
 	    "usage: %s %s\n", getprogname(), resizediskmsg);
-	exit(1);
+	return -1;
 }
 
 /*
@@ -73,84 +74,78 @@ usage_resizedisk(void)
  *   - relocate or create new secondary
  * - when shrinking, verify that table fits
  */
-static void
-resizedisk(int fd)
+static int 
+resizedisk(gpt_t gpt)
 {
-	map_t *gpt, *tpg;
-	map_t *tbl, *lbt;
-	map_t *mbrmap;
+	map_t mbrmap;
 	struct gpt_hdr *hdr;
 	struct gpt_ent *ent;
 	struct mbr *mbr;
-	uint64_t last, oldloc, newloc, lastdata, gpt_size;
+	off_t last, oldloc, newloc, lastdata, gpt_size;
 	int i;
 	
-	last = mediasz / secsz - 1;
+	last = gpt->mediasz / gpt->secsz - 1;
 	lastdata = 0;
 	newloc = 0;
 
 	if (sector > last) {
-		warnx("%s: specified size is larger then the disk",
-		    device_name);
-		return;
+		gpt_warnx(gpt, "specified size is larger then the disk");
+		return -1;
 	}
 
-        mbrmap = map_find(MAP_TYPE_PMBR);
+        mbrmap = map_find(gpt, MAP_TYPE_PMBR);
         if (mbrmap == NULL || mbrmap->map_start != 0) {
-                warnx("%s: error: no valid Protective MBR found", device_name);
-                return;
+                gpt_warnx(gpt, "No valid PMBR found");
+                return -1;
         }
         mbr = mbrmap->map_data;
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
+	gpt->gpt = map_find(gpt, MAP_TYPE_PRI_GPT_HDR);
 	ent = NULL;
 	if (gpt == NULL) {
-		warnx("%s: error: no primary GPT header; run create or recover",
-		    device_name);
-		return;
+		gpt_warnx(gpt, "No primary GPT header; run create or recover");
+		return -1;
 	}
-	hdr = gpt->map_data;
+	hdr = gpt->gpt->map_data;
 	oldloc = le64toh(hdr->hdr_lba_alt);
 
-	tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
-	if (tpg == NULL)
-		if (gpt_gpt(fd, oldloc, 1))
-			tpg = map_find(MAP_TYPE_SEC_GPT_HDR);
+	gpt->tpg = map_find(gpt, MAP_TYPE_SEC_GPT_HDR);
+	if (gpt->tpg == NULL)
+		if (gpt_gpt(gpt, oldloc, 1))
+			gpt->tpg = map_find(gpt, MAP_TYPE_SEC_GPT_HDR);
 
-	tbl = map_find(MAP_TYPE_PRI_GPT_TBL);
-	lbt = map_find(MAP_TYPE_SEC_GPT_TBL);
-	if (tbl == NULL) {
-		warnx("%s: error: run recover -- trust me", device_name);
-		return;
+	gpt->tbl = map_find(gpt, MAP_TYPE_PRI_GPT_TBL);
+	if (gpt->tbl == NULL) {
+		gpt_warnx(gpt, "Run recover");
+		return -1;
 	}
 
-	gpt_size = tbl->map_size;
+	gpt_size = gpt->tbl->map_size;
 	if (sector == oldloc) {
-		warnx("%s: device is already the specified size", device_name);
-		return;
+		gpt_warnx(gpt, "Device is already the specified size");
+		return 0;
 	}
 	if (sector == 0 && last == oldloc) {
-		warnx("%s: device hasn't changed size", device_name);
-		return;
+		gpt_warnx(gpt, "Device hasn't changed size");
+		return 0;
 	}
 
-	for (ent = tbl->map_data; ent <
-	    (struct gpt_ent *)((char *)tbl->map_data +
+	for (ent = gpt->tbl->map_data; ent <
+	    (struct gpt_ent *)((char *)gpt->tbl->map_data +
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)); ent++) {
 		if (!gpt_uuid_is_nil(ent->ent_type) &&
-		    (le64toh(ent->ent_lba_end) > lastdata)) {
+		    ((off_t)le64toh(ent->ent_lba_end) > lastdata)) {
 			lastdata = le64toh(ent->ent_lba_end);
 		}
 	}
 	if (sector - gpt_size <= lastdata) {
-		warnx("%s: not enough space at %" PRIu64
-		    " for secondary GPT table", device_name, sector);
-		return;
+		gpt_warnx(gpt, "Not enough space at %" PRIu64
+		    " for secondary GPT table", sector);
+		return -1;
 	}
 	if (last - gpt_size <= lastdata) {
-		warnx("%s: not enough space for new secondary GPT table",
-		    device_name);
-		return;
+		gpt_warnx(gpt, "Not enough space for new secondary GPT table");
+		return -1;
 	}
 
 	if (sector > oldloc)
@@ -160,55 +155,51 @@ resizedisk(int fd)
 	if (sector == 0 && last > oldloc)
 		newloc = last;
 	if (newloc > 0) {
-		if (tpg == NULL) {
-			warnx("%s: error: no secondary GPT header; run recover",
-			    device_name);
-			return;
+		if (gpt->tpg == NULL) {
+			gpt_warnx(gpt, "No secondary GPT header; run recover");
+			return -1;
 		}
-		if (lbt == NULL) {
-			warnx("%s: error: run recover -- trust me",
-			    device_name);
-			return;
+		if (gpt->lbt == NULL) {
+			gpt_warnx(gpt, "Run recover");
+			return -1;
 		}
-		tpg->map_start = newloc;
-		lbt->map_start = newloc - gpt_size;
+		gpt->tpg->map_start = newloc;
+		gpt->lbt->map_start = newloc - gpt_size;
 	} else {
 		if (sector > 0)
 			newloc = sector;
 		else
 			newloc = last;
-		tpg = map_add(newloc, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, secsz));
-		lbt = map_add(newloc - gpt_size, gpt_size, MAP_TYPE_SEC_GPT_TBL,
-		    tbl->map_data);
-		memcpy(tpg->map_data, gpt->map_data, secsz);
+		gpt->tpg = map_add(gpt, newloc, 1LL, MAP_TYPE_SEC_GPT_HDR,
+		    calloc(1, gpt->secsz));
+		gpt->lbt = map_add(gpt, newloc - gpt_size, gpt_size,
+		    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data);
+		memcpy(gpt->tpg->map_data, gpt->gpt->map_data, gpt->secsz);
 	}
 
-	hdr = gpt->map_data;
-	hdr->hdr_lba_alt = tpg->map_start;
+	hdr = gpt->gpt->map_data;
+	hdr->hdr_lba_alt = gpt->tpg->map_start;
 	hdr->hdr_crc_self = 0;
-	hdr->hdr_lba_end = htole64(lbt->map_start - 1);
+	hdr->hdr_lba_end = htole64(gpt->lbt->map_start - 1);
 	hdr->hdr_crc_self =
-	    htole32(crc32(gpt->map_data, GPT_HDR_SIZE));
-	gpt_write(fd, gpt);
+	    htole32(crc32(gpt->gpt->map_data, GPT_HDR_SIZE));
+	gpt_write(gpt, gpt->gpt);
 
-	hdr = tpg->map_data;
-	hdr->hdr_lba_self = htole64(tpg->map_start);
-	hdr->hdr_lba_alt = htole64(gpt->map_start);
-	hdr->hdr_lba_end = htole64(lbt->map_start - 1);
-	hdr->hdr_lba_table = htole64(lbt->map_start);
-	hdr->hdr_crc_self = 0;
-	hdr->hdr_crc_self =
-	    htole32(crc32(tpg->map_data, GPT_HDR_SIZE));
-	gpt_write(fd, lbt);
-	gpt_write(fd, tpg);
+	hdr = gpt->tpg->map_data;
+	hdr->hdr_lba_self = htole64(gpt->tpg->map_start);
+	hdr->hdr_lba_alt = htole64(gpt->gpt->map_start);
+	hdr->hdr_lba_end = htole64(gpt->lbt->map_start - 1);
+	hdr->hdr_lba_table = htole64(gpt->lbt->map_start);
+
+	if (gpt_write_backup(gpt) == -1)
+		return -1;
 
 	for (i = 0; i < 4; i++)
 		if (mbr->mbr_part[0].part_typ == MBR_PTYPE_PMBR)
 			break;
 	if (i == 4) {
-		warnx("%s: no valid PMBR partition found", device_name);
-		return;
+		gpt_warnx(gpt, "No valid PMBR partition found");
+		return -1;
 	}
 	if (last > 0xffffffff) {
 		mbr->mbr_part[0].part_size_lo = htole16(0xffff);
@@ -217,33 +208,36 @@ resizedisk(int fd)
 		mbr->mbr_part[0].part_size_lo = htole16(last);
 		mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
 	}
-	gpt_write(fd, mbrmap);
+	if (gpt_write(gpt, mbrmap) == -1) {
+		gpt_warnx(gpt, "Error writing PMBR");
+		return -1;
+	}
 
-	return;
+	return 0;
 }
 
 int
-cmd_resizedisk(int argc, char *argv[])
+cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
-	int ch, fd;
+	int ch;
 	int64_t human_num;
 
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch(ch) {
 		case 's':
 			if (sector > 0 || size > 0)
-				usage_resizedisk();
+				return usage_resizedisk();
 			sector = strtoll(optarg, &p, 10);
 			if (sector < 1)
-				usage_resizedisk();
+				return usage_resizedisk();
 			if (*p == '\0')
 				break;
 			if (*p == 's' || *p == 'S') {
 				if (*(p + 1) == '\0')
 					break;
 				else
-					usage_resizedisk();
+					return usage_resizedisk();
 			}
 			if (*p == 'b' || *p == 'B') {
 				if (*(p + 1) == '\0') {
@@ -251,40 +245,23 @@ cmd_resizedisk(int argc, char *argv[])
 					sector = 0;
 					break;
 				} else
-					usage_resizedisk();
+					return usage_resizedisk();
 			}
 			if (dehumanize_number(optarg, &human_num) < 0)
-				usage_resizedisk();
+				return usage_resizedisk();
 			size = human_num;
 			sector = 0;
 			break;
 		default:
-			usage_resizedisk();
+			return usage_resizedisk();
 		}
 	}
 
-	if (argc == optind)
-		usage_resizedisk();
+	if (argc != optind)
+		return usage_resizedisk();
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], 0);
-		if (fd == -1)
-			continue;
+	if ((sector = gpt_check(gpt, 0, size)) == -1)
+		return -1;
 
-		if (size % secsz != 0) {
-			warnx("Size in bytes must be a multiple of sector "
-			      "size;");
-			warnx("the sector size for %s is %d bytes.",
-			    device_name, secsz);
-			continue;
-		}
-		if (size > 0)
-			sector = size / secsz - 1;
-
-		resizedisk(fd);
-
-		gpt_close(fd);
-	}
-
-	return 0;
+	return resizedisk(gpt);
 }

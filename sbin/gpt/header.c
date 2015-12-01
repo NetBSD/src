@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.3 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: header.c,v 1.4 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -47,23 +47,24 @@ __RCSID("$NetBSD: header.c,v 1.3 2015/11/29 00:14:46 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
-const char headermsg[] = "header device ...";
+const char headermsg[] = "header";
 
-__dead static void
+static int
 usage_header(void)
 {
 
 	fprintf(stderr,
 	    "usage: %s %s\n", getprogname(), headermsg);
-	exit(1);
+	return -1;
 }
 
-static void
-header(void)
+static int
+header(gpt_t gpt)
 {
 	unsigned int revision;
-	map_t *gpt;
+	map_t map;
 	struct gpt_hdr *hdr;
 	char buf[128];
 #ifdef HN_AUTOSCALE
@@ -71,76 +72,66 @@ header(void)
 #endif
 
 #ifdef HN_AUTOSCALE
-	if (humanize_number(human_num, 5, mediasz,
+	if (humanize_number(human_num, 5, gpt->mediasz,
 	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
 		human_num[0] = '\0';
 	if (human_num[0] != '\0')
-		printf("Media Size: %llu (%s)\n", (long long unsigned)mediasz,
+		printf("Media Size: %ju (%s)\n", (uintmax_t)gpt->mediasz,
 		    human_num);
 	else
 #endif
-		printf("Media Size: %llu\n", (long long unsigned)mediasz);
+		printf("Media Size: %ju\n", (uintmax_t)gpt->mediasz);
 
-	printf("Sector Size: %u\n", secsz);
+	printf("Sector Size: %u\n", gpt->secsz);
 
 #ifdef HN_AUTOSCALE
-	if (humanize_number(human_num, 5, mediasz / secsz,
+	if (humanize_number(human_num, 5, gpt->mediasz / gpt->secsz,
 	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
 		human_num[0] = '\0';
 	if (human_num[0] != '\0')
-		printf("Number of Sectors: %llu (%s)\n",
-		    (long long unsigned)(mediasz / secsz), human_num);
+		printf("Number of Sectors: %ju (%s)\n",
+		    (uintmax_t)(gpt->mediasz / gpt->secsz), human_num);
 	else
 #endif
-		printf("Number of Sectors: %llu\n",
-		    (long long unsigned)(mediasz / secsz));
+		printf("Number of Sectors: %ju\n",
+		    (uintmax_t)(gpt->mediasz / gpt->secsz));
 
 	printf("\nHeader Information:\n");
 
-	gpt = map_find(MAP_TYPE_PRI_GPT_HDR);
-	if (gpt == NULL) {
-		printf("- GPT Header not found\n");
-		return;
+	map = map_find(gpt, MAP_TYPE_PRI_GPT_HDR);
+	if (map == NULL) {
+		printf("- GPT Header not found");
+		return 0;
 	}
 
-	hdr = gpt->map_data;
+	hdr = map->map_data;
 	revision = le32toh(hdr->hdr_revision);
 	printf("- GPT Header Revision: %u.%u\n", revision >> 16,
 	     revision & 0xffff);
-	printf("- First Data Sector: %llu\n",
-	    (long long unsigned)hdr->hdr_lba_start);
+	printf("- First Data Sector: %ju\n",
+	    (uintmax_t)hdr->hdr_lba_start);
 #ifdef HN_AUTOSCALE
 	if (humanize_number(human_num, 5, hdr->hdr_lba_end,
 	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
 		human_num[0] = '\0';
 	if (human_num[0] != '\0')
-		printf("- Last Data Sector: %llu (%s)\n",
-		    (long long unsigned)hdr->hdr_lba_end, human_num);
+		printf("- Last Data Sector: %ju (%s)\n",
+		    (uintmax_t)hdr->hdr_lba_end, human_num);
 	else
 #endif
-	printf("- Last Data Sector: %llu\n",
-	    (long long unsigned)hdr->hdr_lba_end);
+	printf("- Last Data Sector: %ju\n",
+	    (uintmax_t)hdr->hdr_lba_end);
 	gpt_uuid_snprintf(buf, sizeof(buf), "%d", hdr->hdr_guid);
 	printf("- Media GUID: %s\n", buf);
 	printf("- Number of GPT Entries: %u\n", hdr->hdr_entries);
+	return 0;
 }
 
 int
-cmd_header(int argc, char *argv[])
+cmd_header(gpt_t gpt, int argc, char *argv[])
 {
-	int fd;
+	if (argc != optind)
+		return usage_header();
 
-	if (argc == optind)
-		usage_header();
-
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], 0);
-		if (fd == -1)
-			continue;
-		header();
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	return header(gpt);
 }

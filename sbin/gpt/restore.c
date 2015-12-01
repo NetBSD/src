@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.9 2015/11/29 00:14:46 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.10 2015/12/01 09:05:33 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -50,31 +50,32 @@ __RCSID("$NetBSD: restore.c,v 1.9 2015/11/29 00:14:46 christos Exp $");
 
 #include "map.h"
 #include "gpt.h"
+#include "gpt_private.h"
 
 static int force;
 
-const char restoremsg[] = "restore [-F] device ...";
+const char restoremsg[] = "restore [-F]";
 
-__dead static void
+static int
 usage_restore(void)
 {
 
 	fprintf(stderr,
 	    "usage: %s %s\n", getprogname(), restoremsg);
-	exit(1);
+	return -1;
 }
 
-#define PROP_ERR(x)     if (!(x)) {             \
-                warn("proplib failure");        \
-                return;                         \
-        }
+#define PROP_ERR(x)     if (!(x)) {		\
+	gpt_warnx(gpt, "proplib failure");	\
+	return -1;				\
+}
 
-static void
-restore(int fd)
+static int
+restore(gpt_t gpt)
 {
 	gpt_uuid_t gpt_guid, uuid;
 	off_t firstdata, last, lastdata, gpe_start, gpe_end;
-	map_t *map;
+	map_t map;
 	struct mbr *mbr;
 	struct gpt_hdr *hdr;
 	struct gpt_ent ent;
@@ -89,20 +90,20 @@ restore(int fd)
 	const char *s;
 	void *secbuf;
 
-	last = mediasz / secsz - 1LL;
+	last = gpt->mediasz / gpt->secsz - 1LL;
 
-	if (map_find(MAP_TYPE_PRI_GPT_HDR) != NULL ||
-	    map_find(MAP_TYPE_SEC_GPT_HDR) != NULL) {
+	if (map_find(gpt, MAP_TYPE_PRI_GPT_HDR) != NULL ||
+	    map_find(gpt, MAP_TYPE_SEC_GPT_HDR) != NULL) {
 		if (!force) {
-			warnx("%s: error: device contains a GPT", device_name);
-			return;
+			gpt_warnx(gpt, "Device contains a GPT");
+			return -1;
 		}
 	}
-	map = map_find(MAP_TYPE_MBR);
+	map = map_find(gpt, MAP_TYPE_MBR);
 	if (map != NULL) {
 		if (!force) {
-			warnx("%s: error: device contains a MBR", device_name);
-			return;
+			gpt_warnx(gpt, "Device contains an MBR");
+			return -1;
 		}
 		/* Nuke the MBR in our internal map. */
 		map->map_type = MAP_TYPE_UNUSED;
@@ -110,17 +111,16 @@ restore(int fd)
 
 	props = prop_dictionary_internalize_from_file("/dev/stdin");
 	if (props == NULL) {
-		warnx("error: unable to read/parse backup file");
-		return;
+		gpt_warnx(gpt, "Unable to read/parse backup file");
+		return -1;
 	}
 
 	propnum = prop_dictionary_get(props, "sector_size");
 	PROP_ERR(propnum);
-	if (!prop_number_equals_integer(propnum, secsz)) {
-		warnx("%s: error: sector size does not match backup",
-		    device_name);
+	if (!prop_number_equals_integer(propnum, gpt->secsz)) {
+		gpt_warnx(gpt, "Sector size does not match backup");
 		prop_object_release(props);
-		return;
+		return -1;
 	}
 
 	gpt_dict = prop_dictionary_get(props, "GPT_HDR");
@@ -129,25 +129,26 @@ restore(int fd)
 	propnum = prop_dictionary_get(gpt_dict, "revision");
 	PROP_ERR(propnum);
 	if (!prop_number_equals_unsigned_integer(propnum, 0x10000)) {
-		warnx("backup is not revision 1.0");
+		gpt_warnx(gpt, "backup is not revision 1.0");
 		prop_object_release(gpt_dict);
 		prop_object_release(props);
-		return;
+		return -1;
 	}
 
 	propnum = prop_dictionary_get(gpt_dict, "entries");
 	PROP_ERR(propnum);
 	entries = prop_number_integer_value(propnum);
-	gpt_size = entries * sizeof(struct gpt_ent) / secsz;
-	if (gpt_size * sizeof(struct gpt_ent) % secsz)
+	gpt_size = entries * sizeof(struct gpt_ent) / gpt->secsz;
+	if (gpt_size * sizeof(struct gpt_ent) % gpt->secsz)
 		gpt_size++;
 
 	propstr = prop_dictionary_get(gpt_dict, "guid");
 	PROP_ERR(propstr);
 	s = prop_string_cstring_nocopy(propstr);
 	if (gpt_uuid_parse(s, gpt_guid) != 0) {
-		warnx("%s: not able to convert to an UUID", s);
-		return;
+		gpt_warnx(gpt, "%s: not able to convert to an UUID", s);
+		// XXX: leak
+		return -1;
 	}
 	firstdata = gpt_size + 2;		/* PMBR and GPT header */
 	lastdata = last - gpt_size - 1;		/* alt. GPT table and header */
@@ -163,8 +164,8 @@ restore(int fd)
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
 		if (gpt_uuid_parse(s, uuid) != 0) {
-			warnx("%s: not able to convert to an UUID", s);
-			return;
+			gpt_warnx(gpt, "%s: not able to convert to an UUID", s);
+			return -1;
 		}
 		if (gpt_uuid_is_nil(uuid))
 			continue;
@@ -175,36 +176,36 @@ restore(int fd)
 		PROP_ERR(propnum);
 		gpe_end = prop_number_unsigned_integer_value(propnum);
 		if (gpe_start < firstdata || gpe_end > lastdata) {
-			warnx("%s: error: backup GPT doesn't fit", device_name);
-			return;
+			gpt_warnx(gpt, "Backup GPT doesn't fit");
+			return -1;
 		}
 	}
 	prop_object_iterator_release(propiter);
 
-	secbuf = calloc(gpt_size + 1, secsz);	/* GPT TABLE + GPT HEADER */
+	secbuf = calloc(gpt_size + 1, gpt->secsz);	/* GPT TABLE + GPT HEADER */
 	if (secbuf == NULL) {
-		warnx("not enough memory to create a sector buffer");
-		return;
+		gpt_warnx(gpt, "not enough memory to create a sector buffer");
+		return -1;
 	}
 
-	if (lseek(fd, 0LL, SEEK_SET) == -1) {
-		warnx("%s: error: can't seek to beginning", device_name);
-		return;
+	if (lseek(gpt->fd, 0LL, SEEK_SET) == -1) {
+		gpt_warnx(gpt, "Can't seek to beginning");
+		return -1;
 	}
 	for (i = 0; i < firstdata; i++) {
-		if (write(fd, secbuf, secsz) == -1) {
-			warnx("%s: error: can't write", device_name);
-			return;
+		if (write(gpt->fd, secbuf, gpt->secsz) == -1) {
+			gpt_warnx(gpt, "Error writing");
+			return -1;
 		}
 	}
-	if (lseek(fd, (lastdata + 1) * secsz, SEEK_SET) == -1) {
-		warnx("%s: error: can't seek to end", device_name);
-		return;
+	if (lseek(gpt->fd, (lastdata + 1) * gpt->secsz, SEEK_SET) == -1) {
+		gpt_warnx(gpt, "Can't seek to end");
+		return -1;
 	}
 	for (i = lastdata + 1; i <= last; i++) {
-		if (write(fd, secbuf, secsz) == -1) {
-			warnx("%s: error: can't write", device_name);
-			return;
+		if (write(gpt->fd, secbuf, gpt->secsz) == -1) {
+			gpt_warnx(gpt, "Error writing");
+			return -1;
 		}
 	}
 
@@ -287,10 +288,10 @@ restore(int fd)
 	}
 	prop_object_iterator_release(propiter);
 	mbr->mbr_sig = htole16(MBR_SIG);
-	if (lseek(fd, 0LL, SEEK_SET) == -1 ||
-	    write(fd, mbr, secsz) == -1) {
-		warnx("%s: error: unable to write MBR", device_name);
-		return;
+	if (lseek(gpt->fd, 0LL, SEEK_SET) == -1 ||
+	    write(gpt->fd, mbr, gpt->secsz) == -1) {
+		gpt_warnx(gpt, "Unable to write MBR");
+		return -1;
 	}
 	
 	propiter = prop_array_iterator(gpt_array);
@@ -301,15 +302,15 @@ restore(int fd)
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
 		if (gpt_uuid_parse(s, ent.ent_type) != 0) {
-			warnx("%s: not able to convert to an UUID", s);
-			return;
+			gpt_warnx(gpt, "%s: not able to convert to an UUID", s);
+			return -1;
 		}
 		propstr = prop_dictionary_get(gpt_dict, "guid");
 		PROP_ERR(propstr);
 		s = prop_string_cstring_nocopy(propstr);
 		if (gpt_uuid_parse(s, ent.ent_guid) != 0) {
-			warnx("%s: not able to convert to an UUID", s);
-			return;
+			gpt_warnx(gpt, "%s: not able to convert to an UUID", s);
+			return -1;
 		}
 		propnum = prop_dictionary_get(gpt_dict, "start");
 		PROP_ERR(propnum);
@@ -331,22 +332,24 @@ restore(int fd)
 		propnum = prop_dictionary_get(gpt_dict, "index");
 		PROP_ERR(propnum);
 		i = prop_number_integer_value(propnum);
-		memcpy((char *)secbuf + secsz + ((i - 1) * sizeof(ent)), &ent,
-		    sizeof(ent));
+		memcpy((char *)secbuf + gpt->secsz + ((i - 1) * sizeof(ent)),
+		    &ent, sizeof(ent));
 	}
 	prop_object_iterator_release(propiter);
-	if (lseek(fd, 2 * secsz, SEEK_SET) == -1 ||
-	    write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz) == -1) {
-		warnx("%s: error: unable to write primary GPT", device_name);
-		return;
+	if (lseek(gpt->fd, 2 * gpt->secsz, SEEK_SET) == -1 ||
+	    write(gpt->fd, (char *)secbuf + 1 * gpt->secsz,
+	    gpt_size * gpt->secsz) == -1) {
+		gpt_warnx(gpt, "Unable to write primary GPT");
+		return -1;
 	}
-	if (lseek(fd, (lastdata + 1) * secsz, SEEK_SET) == -1 ||
-	    write(fd, (char *)secbuf + 1 * secsz, gpt_size * secsz) == -1) {
-		warnx("%s: error: unable to write secondary GPT", device_name);
-		return;
+	if (lseek(gpt->fd, (lastdata + 1) * gpt->secsz, SEEK_SET) == -1 ||
+	    write(gpt->fd, (char *)secbuf + 1 * gpt->secsz,
+	    gpt_size * gpt->secsz) == -1) {
+		gpt_warnx(gpt, "Unable to write secondary GPT");
+		return -1;
 	}
 
-	memset(secbuf, 0, secsz);
+	memset(secbuf, 0, gpt->secsz);
 	hdr = (struct gpt_hdr *)secbuf;
 	memcpy(hdr->hdr_sig, GPT_HDR_SIG, sizeof(hdr->hdr_sig));
 	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
@@ -359,13 +362,13 @@ restore(int fd)
 	hdr->hdr_lba_table = htole64(2);
 	hdr->hdr_entries = htole32(entries);
 	hdr->hdr_entsz = htole32(sizeof(struct gpt_ent));
-	hdr->hdr_crc_table =
-	    htole32(crc32((char *)secbuf + 1 * secsz, gpt_size * secsz));
+	hdr->hdr_crc_table = htole32(crc32((char *)secbuf + 1 * gpt->secsz,
+	    gpt_size * gpt->secsz));
 	hdr->hdr_crc_self = htole32(crc32(hdr, GPT_HDR_SIZE));
-	if (lseek(fd, 1 * secsz, SEEK_SET) == -1 ||
-	    write(fd, hdr, secsz) == -1) {
-		warnx("%s: error: unable to write primary header", device_name);
-		return;
+	if (lseek(gpt->fd, 1 * gpt->secsz, SEEK_SET) == -1 ||
+	    write(gpt->fd, hdr, gpt->secsz) == -1) {
+		gpt_warnx(gpt, "Unable to write primary header");
+		return -1;
 	}
 
 	hdr->hdr_lba_self = htole64(last);
@@ -373,21 +376,20 @@ restore(int fd)
 	hdr->hdr_lba_table = htole64(lastdata + 1);
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, GPT_HDR_SIZE));
-	if (lseek(fd, last * secsz, SEEK_SET) == -1 ||
-	    write(fd, hdr, secsz) == -1) {
-		warnx("%s: error: unable to write secondary header",
-		    device_name);
-		return;
+	if (lseek(gpt->fd, last * gpt->secsz, SEEK_SET) == -1 ||
+	    write(gpt->fd, hdr, gpt->secsz) == -1) {
+		gpt_warnx(gpt, "Unable to write secondary header");
+		return -1;
 	}
 
 	prop_object_release(props);
-	return;
+	return 0;
 }
 
 int
-cmd_restore(int argc, char *argv[])
+cmd_restore(gpt_t gpt, int argc, char *argv[])
 {
-	int ch, fd;
+	int ch;
 
 	while ((ch = getopt(argc, argv, "F")) != -1) {
 		switch(ch) {
@@ -395,22 +397,12 @@ cmd_restore(int argc, char *argv[])
 			force = 1;
 			break;
 		default:
-			usage_restore();
+			return usage_restore();
 		}
 	}
 
-	if (argc == optind)
-		usage_restore();
+	if (argc != optind)
+		return usage_restore();
 
-	while (optind < argc) {
-		fd = gpt_open(argv[optind++], 0);
-		if (fd == -1)
-			continue;
-
-		restore(fd);
-
-		gpt_close(fd);
-	}
-
-	return (0);
+	return restore(gpt);
 }
