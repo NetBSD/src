@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: set.c,v 1.8 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.9 2015/12/01 19:25:24 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,9 +48,6 @@ __RCSID("$NetBSD: set.c,v 1.8 2015/12/01 16:32:19 christos Exp $");
 #include "map.h"
 #include "gpt.h"
 #include "gpt_private.h"
-
-static unsigned int entry;
-static uint64_t attributes;
 
 static int cmd_set(gpt_t, int, char *[]);
 
@@ -68,70 +65,20 @@ struct gpt_cmd c_set = {
 #define usage() gpt_usage(NULL, &c_set)
 
 static int
-set(gpt_t gpt)
-{
-	struct gpt_hdr *hdr;
-	struct gpt_ent *ent;
-	unsigned int i;
-	
-
-	if ((hdr = gpt_hdr(gpt)) == NULL)
-		return -1;
-
-
-	if (entry > le32toh(hdr->hdr_entries)) {
-		gpt_warnx(gpt, "Index %u out of range (%u max)",
-		    entry, le32toh(hdr->hdr_entries));
-		return -1;
-	}
-
-	i = entry - 1;
-	ent = gpt_ent_primary(gpt, i);
-	if (gpt_uuid_is_nil(ent->ent_type)) {
-		gpt_warnx(gpt, "Entry at index %u is unused", entry);
-		return -1;
-	}
-
-	ent->ent_attr |= attributes;
-
-	if (gpt_write_primary(gpt) == -1)
-		return -1;
-
-	ent = gpt_ent_backup(gpt, i);
-	ent->ent_attr |= attributes;
-
-	if (gpt_write_backup(gpt) == -1)
-		return -1;
-
-	gpt_msg(gpt, "Partition %d attributes updated", entry);
-	return 0;
-}
-
-static int
 cmd_set(gpt_t gpt, int argc, char *argv[])
 {
-	char *p;
 	int ch;
+	unsigned int entry = 0;
+	uint64_t attributes = 0;
 
 	while ((ch = getopt(argc, argv, "a:i:")) != -1) {
 		switch(ch) {
 		case 'a':
-			if (strcmp(optarg, "biosboot") == 0)
-				attributes |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
-			else if (strcmp(optarg, "bootme") == 0)
-				attributes |= GPT_ENT_ATTR_BOOTME;
-			else if (strcmp(optarg, "bootonce") == 0)
-				attributes |= GPT_ENT_ATTR_BOOTONCE;
-			else if (strcmp(optarg, "bootfailed") == 0)
-				attributes |= GPT_ENT_ATTR_BOOTFAILED;
-			else
+			if (gpt_attr_get(&attributes) == -1)
 				return usage();
 			break;
 		case 'i':
-			if (entry > 0)
-				usage();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry < 1)
+			if (gpt_entry_get(&entry) == -1)
 				return usage();
 			break;
 		default:
@@ -142,8 +89,5 @@ cmd_set(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	if (entry == 0 || attributes == 0)
-		return usage();
-
-	return set(gpt);
+	return gpt_attr_update(gpt, entry, attributes, 0);
 }
