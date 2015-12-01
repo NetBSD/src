@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.10 2015/11/21 22:52:31 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.11 2015/12/01 22:08:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.10 2015/11/21 22:52:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.11 2015/12/01 22:08:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,7 @@ static struct tegra124_cpufreq_rate {
 	u_int divn;
 	u_int divp;
 } tegra124_cpufreq_rates[] = {
-	{ 2292, 1, 191, 0 },
+	{ 2316, 1, 193, 0 },
 	{ 2100, 1, 175, 0 },
 	{ 1896, 1, 158, 0 },
 	{ 1692, 1, 141, 0 },
