@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: type.c,v 1.8 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: type.c,v 1.9 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -55,22 +55,21 @@ static off_t block, size;
 static unsigned int entry;
 static uint8_t *label;
 
-const char typemsg1[] = "type -a -T newtype";
-const char typemsg2[] = "type [-b blocknr] [-i index] [-L label] "
-	"[-s sectors] [-t type]";
-const char typemsg3[] = "     -T newtype";
+static int cmd_type(gpt_t, int, char *[]);
 
-static int
-usage_type(void)
-{
+static const char *typehelp[] = {
+"-a -T newtype",
+"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type] -T newtype",
+};
 
-	fprintf(stderr,
-            "usage: %s %s\n"
-            "       %s %s\n"
-            "       %*s %s\n", getprogname(), typemsg1,
-            getprogname(), typemsg2, (int)strlen(getprogname()), "", typemsg3);
-	return -1;
-}
+struct gpt_cmd c_type = {
+	"type",
+	cmd_type,
+	typehelp, __arraycount(typehelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_type)
 
 static int
 chtype(gpt_t gpt)
@@ -125,7 +124,7 @@ chtype(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_type(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
@@ -137,63 +136,63 @@ cmd_type(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 'a':
 			if (all > 0)
-				return usage_type();
+				return usage();
 			all = 1;
 			break;
 		case 'b':
 			if (block > 0)
-				return usage_type();
+				return usage();
 			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage_type();
+				return usage();
 			block = human_num;
 			if (block < 1)
-				return usage_type();
+				return usage();
 			break;
 		case 'i':
 			if (entry > 0)
-				return usage_type();
+				return usage();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				return usage_type();
+				return usage();
 			break;
                 case 'L':
                         if (label != NULL)
-                                return usage_type();
+                                return usage();
                         label = (uint8_t *)strdup(optarg);
                         break;
 		case 's':
 			if (size > 0)
-				return usage_type();
+				return usage();
 			size = strtoll(optarg, &p, 10);
 			if (*p != 0 || size < 1)
-				return usage_type();
+				return usage();
 			break;
 		case 't':
 			if (!gpt_uuid_is_nil(type))
-				return usage_type();
+				return usage();
 			if (gpt_uuid_parse(optarg, type) != 0)
-				return usage_type();
+				return usage();
 			break;
 		case 'T':
 			if (!gpt_uuid_is_nil(newtype))
-				return usage_type();
+				return usage();
 			if (gpt_uuid_parse(optarg, newtype) != 0)
-				return usage_type();
+				return usage();
 			break;
 		default:
-			return usage_type();
+			return usage();
 		}
 	}
 
 	if (!all ^
 	    (block > 0 || entry > 0 || label != NULL || size > 0 ||
 	    !gpt_uuid_is_nil(type)))
-		return usage_type();
+		return usage();
 	if (gpt_uuid_is_nil(newtype))
-		return usage_type();
+		return usage();
 
 	if (argc != optind)
-		return usage_type();
+		return usage();
 
 	return chtype(gpt);
 }

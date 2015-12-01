@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.10 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.11 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,16 +54,20 @@ __RCSID("$NetBSD: restore.c,v 1.10 2015/12/01 09:05:33 christos Exp $");
 
 static int force;
 
-const char restoremsg[] = "restore [-F]";
+static int cmd_restore(gpt_t, int, char *[]);
 
-static int
-usage_restore(void)
-{
+static const char *restorehelp[] = {
+    "[-F]",
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), restoremsg);
-	return -1;
-}
+struct gpt_cmd c_restore = {
+	"restore",
+	cmd_restore,
+	restorehelp, __arraycount(restorehelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_restore)
 
 #define PROP_ERR(x)     if (!(x)) {		\
 	gpt_warnx(gpt, "proplib failure");	\
@@ -386,7 +390,7 @@ restore(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_restore(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
@@ -397,12 +401,12 @@ cmd_restore(gpt_t gpt, int argc, char *argv[])
 			force = 1;
 			break;
 		default:
-			return usage_restore();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_restore();
+		return usage();
 
 	return restore(gpt);
 }

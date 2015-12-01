@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.16 2015/12/01 09:05:33 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.17 2015/12/01 16:32:19 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.16 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.17 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -72,15 +72,22 @@ static char *bootpath;
 static unsigned int entry;
 static uint8_t *label;
 
-const char biosbootmsg[] = "biosboot [-c bootcode] [-i index] "
-	"[-L label]";
+static int cmd_biosboot(gpt_t, int, char *[]);
 
-static int
-usage_biosboot(void)
-{
-	fprintf(stderr, "usage: %s %s\n", getprogname(), biosbootmsg);
-	return -1;
-}
+static const char *biosboothelp[] = {
+    "[-c bootcode] [-i index] [-L label]",
+    "[-a alignment] [-b blocknr] [-i index] [-l label]",
+    "[-s size] [-t type]",
+};
+
+struct gpt_cmd c_biosboot = {
+	"biosboot",
+	cmd_biosboot,
+	biosboothelp, __arraycount(biosboothelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_biosboot)
 
 static struct mbr*
 read_boot(gpt_t gpt)
@@ -239,7 +246,7 @@ biosboot(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 {
 #ifdef DIOCGWEDGEINFO
@@ -253,29 +260,34 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 'c':
 			if (bootpath != NULL)
-				usage_biosboot();
-			if ((bootpath = strdup(optarg)) == NULL)
-				err(1, "Malloc failed");
+				usage();
+			if ((bootpath = strdup(optarg)) == NULL) {
+				gpt_warn(gpt, "strdup failed");
+				return -1;
+			}
 			break;
 		case 'i':
 			if (entry > 0)
-				usage_biosboot();
+				usage();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				usage_biosboot();
+				return usage();
 			break;
 		case 'L':
 			if (label != NULL)
-				usage_biosboot();
-			label = (uint8_t *)strdup(optarg);
+				return usage();
+			if ((label = (uint8_t *)strdup(optarg)) == NULL) {
+				gpt_warn(gpt, "strdup failed");
+				return -1;
+			}
 			break;
 		default:
-			return usage_biosboot();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_biosboot();
+		return usage();
 
 	start = 0;
 	size = 0;
@@ -285,7 +297,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	    ioctl(gpt->fd, DIOCGWEDGEINFO, &dkw) != -1) {
 		if (entry > 0)
 			/* wedges and indexes are mutually exclusive */
-			return usage_biosboot();
+			return usage();
 		dev = dkw.dkw_parent;
 		start = dkw.dkw_offset;
 		size = dkw.dkw_size;

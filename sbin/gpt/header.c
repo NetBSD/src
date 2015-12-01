@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.4 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: header.c,v 1.5 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,16 +49,20 @@ __RCSID("$NetBSD: header.c,v 1.4 2015/12/01 09:05:33 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-const char headermsg[] = "header";
+static int cmd_header(gpt_t, int, char *[]);
 
-static int
-usage_header(void)
-{
+static const char *headerhelp[] = {
+    "",
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), headermsg);
-	return -1;
-}
+struct gpt_cmd c_header = {
+	"header",
+	cmd_header,
+	headerhelp, __arraycount(headerhelp),
+	GPT_READONLY,
+};
+
+#define usage() gpt_usage(NULL, &c_header)
 
 static int
 header(gpt_t gpt)
@@ -127,11 +131,11 @@ header(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_header(gpt_t gpt, int argc, char *argv[])
 {
 	if (argc != optind)
-		return usage_header();
+		return usage();
 
 	return header(gpt);
 }

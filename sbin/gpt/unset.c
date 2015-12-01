@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: unset.c,v 1.7 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: unset.c,v 1.8 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,16 +52,20 @@ __RCSID("$NetBSD: unset.c,v 1.7 2015/12/01 09:05:33 christos Exp $");
 static unsigned int entry;
 static uint64_t attributes;
 
-const char unsetmsg[] = "unset -a attribute -i index";
+static int cmd_unset(gpt_t, int, char *[]);
 
-static int
-usage_unset(void)
-{
+static const char *unsethelp[] = {
+    "-a attribute -i index",
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), unsetmsg);
-	return -1;
-}
+struct gpt_cmd c_unset = {
+	"unset",
+	cmd_unset,
+	unsethelp, __arraycount(unsethelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_unset)
 
 static int
 unset(gpt_t gpt)
@@ -101,7 +105,7 @@ unset(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_unset(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
@@ -119,25 +123,25 @@ cmd_unset(gpt_t gpt, int argc, char *argv[])
 			else if (strcmp(optarg, "bootfailed") == 0)
 				attributes |= GPT_ENT_ATTR_BOOTFAILED;
 			else
-				return usage_unset();
+				return usage();
 			break;
 		case 'i':
 			if (entry > 0)
-				return usage_unset();
+				return usage();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				return usage_unset();
+				return usage();
 			break;
 		default:
-			return usage_unset();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_unset();
+		return usage();
 
 	if (entry == 0 || attributes == 0)
-		return usage_unset();
+		return usage();
 
 	return unset(gpt);
 }
