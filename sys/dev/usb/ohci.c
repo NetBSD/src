@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.31 2015/12/01 07:38:58 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.32 2015/12/01 11:50:22 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.31 2015/12/01 07:38:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.32 2015/12/01 11:50:22 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1154,7 +1154,8 @@ ohci_intr1(ohci_softc_t *sc)
 	if (!intrs)
 		return 0;
 
-	OWRITE4(sc, OHCI_INTERRUPT_STATUS, intrs & ~(OHCI_MIE|OHCI_WDH)); /* Acknowledge */
+	/* Acknowledge */
+	OWRITE4(sc, OHCI_INTERRUPT_STATUS, intrs & ~(OHCI_MIE|OHCI_WDH));
 	eintrs = intrs & sc->sc_eintrs;
 	DPRINTFN(7, "sc=%p", sc, 0, 0, 0);
 	DPRINTFN(7, "intrs=%#x(%#x) eintrs=%#x(%#x)",
