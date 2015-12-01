@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.33 2015/12/01 19:25:24 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.34 2015/12/01 23:29:07 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -152,28 +152,19 @@ static int
 cmd_add(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
-	int64_t human_num;
 
 	while ((ch = getopt(argc, argv, GPT_AIS "bl:t:")) != -1) {
 		switch(ch) {
 		case 'b':
-			if (block > 0)
-				return usage();
-			if (dehumanize_number(optarg, &human_num) < 0)
-				return usage();
-			block = human_num;
-			if (block < 1)
+			if (gpt_human_get(&block) == -1)
 				return usage();
 			break;
 		case 'l':
-			if (name != NULL)
+			if (gpt_name_get(gpt, &name) == -1)
 				return usage();
-			name = (uint8_t *)strdup(optarg);
 			break;
 		case 't':
-			if (!gpt_uuid_is_nil(type))
-				return usage();
-			if (gpt_uuid_parse(optarg, type) != 0)
+			if (gpt_uuid_get(gpt, &type) == -1)
 				return usage();
 			break;
 		default:
@@ -188,9 +179,8 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 		return usage();
 
 	/* Create NetBSD FFS partitions by default. */
-	if (gpt_uuid_is_nil(type)) {
+	if (gpt_uuid_is_nil(type))
 		gpt_uuid_create(GPT_TYPE_NETBSD_FFS, type, NULL, 0);
-	}
 
 	if (optind != argc)
 		return usage();

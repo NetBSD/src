@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.25 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.26 2015/12/01 23:29:07 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -237,7 +237,6 @@ show_one(gpt_t gpt)
 static int
 cmd_show(gpt_t gpt, int argc, char *argv[])
 {
-	char *p;
 	int ch;
 
 	while ((ch = getopt(argc, argv, "gi:lu")) != -1) {
@@ -246,10 +245,7 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 			show_guid = 1;
 			break;
 		case 'i':
-			if (entry > 0)
-				return usage();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry < 1)
+			if (gpt_entry_get(&entry) == -1)
 				return usage();
 			break;
 		case 'l':

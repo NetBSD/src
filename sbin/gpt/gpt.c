@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.51 2015/12/01 19:25:24 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.52 2015/12/01 23:29:07 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -850,7 +850,8 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 	hdr->hdr_lba_alt = htole64(last);
 	hdr->hdr_lba_start = htole64(gpt->tbl->map_start + blocks);
 	hdr->hdr_lba_end = htole64(last - blocks - 1LL);
-	gpt_uuid_generate(hdr->hdr_guid);
+	if (gpt_uuid_generate(gpt, hdr->hdr_guid) == -1)
+		return -1;
 	hdr->hdr_lba_table = htole64(gpt->tbl->map_start);
 	hdr->hdr_entries = htole32((blocks * gpt->secsz) /
 	    sizeof(struct gpt_ent));
@@ -860,7 +861,8 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 
 	ent = gpt->tbl->map_data;
 	for (i = 0; i < le32toh(hdr->hdr_entries); i++) {
-		gpt_uuid_generate(ent[i].ent_guid);
+		if (gpt_uuid_generate(gpt, ent[i].ent_guid) == -1)
+			return -1;
 	}
 
 	/*
@@ -895,12 +897,50 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 	return last;
 }
 
-int
-gpt_add_find(gpt_t gpt, struct gpt_find *find, int ch) 
+static int
+gpt_size_get(gpt_t gpt, off_t *size)
 {
+	off_t sectors;
 	int64_t human_num;
 	char *p;
 
+	if (*size > 0)
+		return -1;
+	sectors = strtoll(optarg, &p, 10);
+	if (sectors < 1)
+		return -1;
+	if (*p == '\0' || ((*p == 's' || *p == 'S') && p[1] == '\0')) {
+		*size = sectors * gpt->secsz;
+		return 0;
+	}
+	if ((*p == 'b' || *p == 'B') && p[1] == '\0') {
+		*size = sectors;
+		return 0;
+	}
+	if (dehumanize_number(optarg, &human_num) < 0)
+		return -1;
+	*size = human_num;
+	return 0;
+}
+
+int
+gpt_human_get(off_t *human)
+{
+	int64_t human_num;
+
+	if (*human > 0)
+		return -1;
+	if (dehumanize_number(optarg, &human_num) < 0)
+		return -1;
+	*human = human_num;
+	if (*human < 1)
+		return -1;
+	return 0;
+}
+
+int
+gpt_add_find(gpt_t gpt, struct gpt_find *find, int ch) 
+{
 	switch (ch) {
 	case 'a':
 		if (find->all > 0)
@@ -908,31 +948,19 @@ gpt_add_find(gpt_t gpt, struct gpt_find *find, int ch)
 		find->all = 1;
 		break;
 	case 'b':
-		if (find->block > 0)
-			return -1;
-		if (dehumanize_number(optarg, &human_num) < 0)
-			return -1;
-		find->block = human_num;
-		if (find->block < 1)
+		if (gpt_human_get(&find->block) == -1)
 			return -1;
 		break;
 	case 'i':
-		if (find->entry > 0)
-			return -1;
-		find->entry = strtoul(optarg, &p, 10);
-		if (*p != 0 || find->entry < 1)
+		if (gpt_entry_get(&find->entry) == -1)
 			return -1;
 		break;
 	case 'L':
-		if (find->label != NULL)
+		if (gpt_name_get(gpt, &find->label) == -1)
 			return -1;
-		find->label = (uint8_t *)strdup(optarg);
 		break;
 	case 's':
-		if (find->size > 0)
-			return -1;
-		find->size = strtoll(optarg, &p, 10);
-		if (*p != 0 || find->size < 1)
+		if (gpt_size_get(gpt, &find->size) == -1)
 			return -1;
 		break;
 	case 't':
@@ -1008,44 +1036,18 @@ gpt_change_ent(gpt_t gpt, const struct gpt_find *find,
 int
 gpt_add_ais(gpt_t gpt, off_t *alignment, u_int *entry, off_t *size, int ch)
 {
-	int64_t human_num;
-	off_t sectors;
-	char *p;
-
 	switch (ch) {
 	case 'a':
-		if (*alignment > 0)
-			return -1;
-		if (dehumanize_number(optarg, &human_num) < 0)
-			return -1;
-		*alignment = human_num;
-		if (*alignment < 1)
+		if (gpt_human_get(alignment) == -1)
 			return -1;
 		return 0;
 	case 'i':
-		if (*entry > 0)
-			return -1;
-		*entry = strtoul(optarg, &p, 10);
-		if (*p != 0 || *entry < 1)
+		if (gpt_entry_get(entry) == -1)
 			return -1;
 		return 0;
 	case 's':
-		if (*size > 0)
+		if (gpt_size_get(gpt, size) == -1)
 			return -1;
-		sectors = strtoll(optarg, &p, 10);
-		if (sectors < 1)
-			return -1;
-		if (*p == '\0' || ((*p == 's' || *p == 'S') && p[1] == '\0')) {
-			*size = sectors * gpt->secsz;
-			return 0;
-		}
-		if ((*p == 'b' || *p == 'B') && p[1] == '\0') {
-			*size = sectors;
-			return 0;
-		}
-		if (dehumanize_number(optarg, &human_num) < 0)
-			return -1;
-		*size = human_num;
 		return 0;
 	default:
 		return -1;
@@ -1140,5 +1142,30 @@ gpt_entry_get(u_int *entry)
 	*entry = strtoul(optarg, &p, 10);
 	if (*p != 0 || *entry < 1)
 		return -1;
+	return 0;
+}
+int
+gpt_uuid_get(gpt_t gpt, gpt_uuid_t *uuid)
+{
+	if (!gpt_uuid_is_nil(*uuid))
+		return -1;
+	if (gpt_uuid_parse(optarg, *uuid) != 0) {
+		gpt_warn(gpt, "Can't parse uuid");
+		return -1;
+	}
+	return 0;
+}
+
+int
+gpt_name_get(gpt_t gpt, void *v)
+{
+	char **name = v;
+	if (*name != NULL)
+		return -1;
+	*name = strdup(optarg);
+	if (*name == NULL) {
+		gpt_warn(gpt, "Can't copy string");
+		return -1;
+	}
 	return 0;
 }

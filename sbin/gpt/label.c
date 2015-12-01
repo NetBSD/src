@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.22 2015/12/01 19:25:24 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.23 2015/12/01 23:29:07 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -73,33 +73,46 @@ change(struct gpt_ent *ent, void *v)
 	utf8_to_utf16(name, ent->ent_name, 36);
 }
 
-static char *
-name_from_file(const char *fn)
+static int
+name_from_file(gpt_t gpt, void *v)
 {
 	FILE *f;
 	char *p;
 	size_t maxlen = 1024;
 	size_t len;
-	char *name;
+	const char *fn = optarg;
+	char **name = v;
+
+	if (*name != NULL)
+		return -1;
 
 	if (strcmp(fn, "-") != 0) {
 		f = fopen(fn, "r");
-		if (f == NULL)
-			err(1, "unable to open file %s", fn);
+		if (f == NULL) {
+			gpt_warn(gpt, "Can't open `%s'", fn);
+			return -1;
+		}
 	} else
 		f = stdin;
-	name = malloc(maxlen);
-	len = fread(name, 1, maxlen - 1, f);
-	if (ferror(f))
-		err(1, "unable to read label from file %s", fn);
+
+	if ((*name = malloc(maxlen)) == NULL) {
+		gpt_warn(gpt, "Can't copy string");
+		return -1;
+	}
+	len = fread(*name, 1, maxlen - 1, f);
+	if (ferror(f)) {
+		free(*name);
+		gpt_warn(gpt, "Can't label from `%s'", fn);
+		return -1;
+	}
 	if (f != stdin)
 		fclose(f);
-	name[len] = '\0';
+	(*name)[len] = '\0';
 	/* Only keep the first line, excluding the newline character. */
-	p = strchr((const char *)name, '\n');
+	p = strchr(*name, '\n');
 	if (p != NULL)
 		*p = '\0';
-	return name;
+	return 0;
 }
 
 static int
@@ -116,14 +129,12 @@ cmd_label(gpt_t gpt, int argc, char *argv[])
 	while ((ch = getopt(argc, argv, GPT_FIND "f:l:")) != -1) {
 		switch(ch) {
 		case 'f':
-			if (name != NULL)
+			if (name_from_file(gpt, &name) == -1)
 				return usage();
-			name = name_from_file(optarg);
 			break;
 		case 'l':
-			if (name != NULL)
+			if (gpt_name_get(gpt, &name) == -1)
 				return usage();
-			name = strdup(optarg);
 			break;
 		default:
 			if (gpt_add_find(gpt, &find, ch) == -1)
