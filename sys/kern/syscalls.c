@@ -1,4 +1,4 @@
-/* $NetBSD: syscalls.c,v 1.293 2015/11/30 23:27:27 pgoyette Exp $ */
+/* $NetBSD: syscalls.c,v 1.294 2015/12/01 00:27:17 pgoyette Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.293 2015/11/30 23:27:27 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscalls.c,v 1.294 2015/12/01 00:27:17 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_modular.h"
