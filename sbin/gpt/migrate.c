@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.23 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.24 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -80,16 +80,20 @@ static int force;
 static int slice;
 static u_int parts;
 
-const char migratemsg[] = "migrate [-fs] [-p <partitions>]";
+static int cmd_migrate(gpt_t, int, char *[]);
 
-static int
-usage_migrate(void)
-{
+static const char *migratehelp[] = {
+    "[-fs] [-p <partitions>]",
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), migratemsg);
-	return -1;
-}
+struct gpt_cmd c_migrate = {
+	"migrate",
+	cmd_migrate,
+	migratehelp, __arraycount(migratehelp),
+	0,
+};
+
+#define usage() gpt_usage(NULL, &c_migrate)
 
 static struct gpt_ent *
 migrate_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
@@ -427,7 +431,7 @@ migrate(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_migrate(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
@@ -447,12 +451,12 @@ cmd_migrate(gpt_t gpt, int argc, char *argv[])
 			slice = 1;
 			break;
 		default:
-			return usage_migrate();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_migrate();
+		return usage();
 
 	return migrate(gpt);
 }

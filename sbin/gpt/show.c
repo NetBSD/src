@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.24 2015/12/01 09:05:33 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.25 2015/12/01 16:32:19 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,16 +54,20 @@ static int show_uuid = 0;
 static int show_guid = 0;
 static unsigned int entry = 0;
 
-const char showmsg[] = "show [-glu] [-i index] device";
+static int cmd_show(gpt_t, int, char *[]);
 
-static int
-usage_show(void)
-{
+static const char *showhelp[] = {
+    "[-glu] [-i index]",
+};
 
-	fprintf(stderr,
-	    "usage: %s %s\n", getprogname(), showmsg);
-	return -1;
-}
+struct gpt_cmd c_show = {
+	"show",
+	cmd_show,
+	showhelp, __arraycount(showhelp),
+	GPT_READONLY,
+};
+
+#define usage() gpt_usage(NULL, &c_show)
 
 static int
 show(gpt_t gpt)
@@ -230,7 +234,7 @@ show_one(gpt_t gpt)
 	return 0;
 }
 
-int
+static int
 cmd_show(gpt_t gpt, int argc, char *argv[])
 {
 	char *p;
@@ -243,10 +247,10 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 			break;
 		case 'i':
 			if (entry > 0)
-				return usage_show();
+				return usage();
 			entry = strtoul(optarg, &p, 10);
 			if (*p != 0 || entry < 1)
-				return usage_show();
+				return usage();
 			break;
 		case 'l':
 			show_label = 1;
@@ -255,12 +259,12 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 			show_uuid = 1;
 			break;
 		default:
-			return usage_show();
+			return usage();
 		}
 	}
 
 	if (argc != optind)
-		return usage_show();
+		return usage();
 
 	return entry > 0 ? show_one(gpt) : show(gpt);
 }
