@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.13 2015/11/30 19:59:34 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.14 2015/12/01 02:03:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -166,8 +166,8 @@ resize(int fd)
 	gpt_write(fd, lbt);
 	gpt_write(fd, tpg);
 
-	printf("Partition %d resized on %s: ", entry, device_arg);
-	printf("%" PRIu64 " %" PRIu64 "\n", map->map_start, newsize);
+	gpt_msg("Partition %d resized: %" PRIu64 " %" PRIu64 "\n", entry,
+	    map->map_start, newsize);
 }
 
 int
