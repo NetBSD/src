@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.46 2015/11/30 19:59:34 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.47 2015/12/01 01:49:23 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -572,11 +572,14 @@ gpt_open(const char *dev, int flags)
 void
 gpt_close(int fd)
 {
-	int bits;
 
-	if (modified && !nosync)
+	if (modified && !nosync) {
+#ifdef DIOCMWEDGES
+		int bits;
 		if (ioctl(fd, DIOCMWEDGES, &bits) == -1)
 			warn("Can't update wedge information");
+#endif
+	}
 
 	/* XXX post processing? */
 	close(fd);
