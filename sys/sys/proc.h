@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.326 2015/11/30 23:17:40 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.327 2015/12/01 01:19:02 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -151,7 +151,7 @@ struct emul {
 	struct sysent	*e_sysent;	/* System call array */
 	const char * const *e_syscallnames; /* System call name array */
 					/* Signal sending function */
-	struct sc_auto	*e_sc_autoload;	/* List of autoloadable syscalls */
+	struct sc_autoload *e_sc_autoload;	/* List of autoloadable syscalls */
 	void		(*e_sendsig)(const struct ksiginfo *,
 					  const sigset_t *);
 	void		(*e_trapsignal)(struct lwp *, struct ksiginfo *);
