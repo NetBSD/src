@@ -63,6 +63,14 @@ struct mbr {
 typedef struct gpt *gpt_t;
 typedef struct map *map_t;
 
+struct gpt_cmd {
+	const char *name;
+	int (*fptr)(gpt_t, int, char *[]);
+	const char **help;
+	size_t hlen;
+	int flags;
+};
+
 uint32_t crc32(const void *, size_t);
 void	gpt_close(gpt_t);
 int	gpt_gpt(gpt_t, off_t, int);
@@ -81,27 +89,10 @@ off_t	gpt_check(gpt_t, off_t, off_t);
 struct gpt_ent *gpt_ent(map_t, map_t, unsigned int);
 struct gpt_ent *gpt_ent_primary(gpt_t, unsigned int);
 struct gpt_ent *gpt_ent_backup(gpt_t, unsigned int);
+int	gpt_usage(const char *, const struct gpt_cmd *);
 
 uint8_t *utf16_to_utf8(uint16_t *);
 void	utf8_to_utf16(const uint8_t *, uint16_t *, size_t);
-
-int	cmd_add(gpt_t, int, char *[]);
-int	cmd_backup(gpt_t, int, char *[]);
-int	cmd_biosboot(gpt_t, int, char *[]);
-int	cmd_create(gpt_t, int, char *[]);
-int	cmd_destroy(gpt_t, int, char *[]);
-int	cmd_header(gpt_t, int, char *[]);
-int	cmd_label(gpt_t, int, char *[]);
-int	cmd_migrate(gpt_t, int, char *[]);
-int	cmd_recover(gpt_t, int, char *[]);
-int	cmd_remove(gpt_t, int, char *[]);
-int	cmd_resize(gpt_t, int, char *[]);
-int	cmd_resizedisk(gpt_t, int, char *[]);
-int	cmd_restore(gpt_t, int, char *[]);
-int	cmd_set(gpt_t, int, char *[]);
-int	cmd_show(gpt_t, int, char *[]);
-int	cmd_type(gpt_t, int, char *[]);
-int	cmd_unset(gpt_t, int, char *[]);
 
 #define GPT_READONLY	1
 #define GPT_MODIFIED	2
