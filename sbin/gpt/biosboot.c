@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.17 2015/12/01 16:32:19 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.18 2015/12/01 23:29:07 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.17 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.18 2015/12/01 23:29:07 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -252,34 +252,23 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 #ifdef DIOCGWEDGEINFO
 	struct dkwedge_info dkw;
 #endif
-	char *dev, *p;
+	char *dev;
 	int ch;
 	gpt_t ngpt = gpt;
 
 	while ((ch = getopt(argc, argv, "c:i:L:")) != -1) {
 		switch(ch) {
 		case 'c':
-			if (bootpath != NULL)
-				usage();
-			if ((bootpath = strdup(optarg)) == NULL) {
-				gpt_warn(gpt, "strdup failed");
-				return -1;
-			}
+			if (gpt_name_get(gpt, &bootpath) == -1)
+				return usage();
 			break;
 		case 'i':
-			if (entry > 0)
-				usage();
-			entry = strtoul(optarg, &p, 10);
-			if (*p != 0 || entry < 1)
+			if (gpt_entry_get(&entry) == -1)
 				return usage();
 			break;
 		case 'L':
-			if (label != NULL)
+			if (gpt_name_get(gpt, &label) == -1)
 				return usage();
-			if ((label = (uint8_t *)strdup(optarg)) == NULL) {
-				gpt_warn(gpt, "strdup failed");
-				return -1;
-			}
 			break;
 		default:
 			return usage();

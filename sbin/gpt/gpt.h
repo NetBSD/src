@@ -121,5 +121,8 @@ off_t	gpt_check_ais(gpt_t, off_t, u_int, off_t);
 int	gpt_attr_get(uint64_t *);
 int	gpt_attr_update(gpt_t, u_int, uint64_t, uint64_t);
 int	gpt_entry_get(u_int *);
+int	gpt_human_get(off_t *);
+int	gpt_uuid_get(gpt_t, gpt_uuid_t *);
+int	gpt_name_get(gpt_t, void *);
 
 #endif /* _GPT_H_ */
