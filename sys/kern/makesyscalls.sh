@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.161 2015/12/01 00:25:58 pgoyette Exp $
+#	$NetBSD: makesyscalls.sh,v 1.162 2015/12/01 00:58:29 pgoyette Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -51,7 +51,7 @@ esac
 #	switchname	the name for the 'struct sysent' we define
 #	namesname	the name for the 'const char *[]' we define
 #	constprefix	the prefix for the system call constants
-#	autoloadprefix	the prefix for the autoload table name
+#	emulname	the emulation name
 #	registertype	the type for register_t
 #	nsysent		the size of the sysent table
 #	sys_nosys	[optional] name of function called for unsupported
@@ -166,7 +166,7 @@ BEGIN {
 	switchname = \"$switchname\"
 	namesname = \"$namesname\"
 	constprefix = \"$constprefix\"
-	autoloadprefix = \"$autoloadprefix\"
+	emulname = \"$emulname\"
 	registertype = \"$registertype\"
 	sysalign=\"$sysalign\"
 	if (!registertype) {
@@ -258,7 +258,7 @@ NR == 1 {
 	printf " * created from%s\n */\n\n", $0 > sysautoload
 	printf "#include <sys/cdefs.h>\n__KERNEL_RCSID(0, \"%s\");\n\n", tag > sysautoload
 	printf("#include <sys/proc.h>\n")		> sysautoload
-	printf("static struct sc_autoload " autoloadprefix \
+	printf("static struct sc_autoload " emulname \
 		"_syscalls_autoload[] = {\n")		> sysautoload
 
 	printf " * created from%s\n */\n\n", $0 > rumpcalls
