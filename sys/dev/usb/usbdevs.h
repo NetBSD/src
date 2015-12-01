@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.695 2015/11/04 05:11:16 buhrow Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.696 2015/12/01 17:48:41 nonaka Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.703 2015/11/04 05:05:45 buhrow Exp
+ *	NetBSD: usbdevs,v 1.704 2015/12/01 17:47:37 nonaka Exp
  */
 
 /*
@@ -324,6 +324,7 @@
 #define	USB_VENDOR_ARASAN	0x07da		/* Arasan Chip Systems */
 #define	USB_VENDOR_ALLIEDCABLE	0x07e6		/* Allied Cable */
 #define	USB_VENDOR_STSN	0x07ef		/* STSN */
+#define	USB_VENDOR_CENTURY	0x07f7		/* CENTURY Corporation */
 #define	USB_VENDOR_BEWAN	0x07fa		/* Bewan */
 #define	USB_VENDOR_ZOOM	0x0803		/* Zoom Telephonics */
 #define	USB_VENDOR_BROADLOGIC	0x0827		/* BroadLogic */
@@ -1070,6 +1071,9 @@
 #define	USB_PRODUCT_BELKIN_F6D4050V2	0x935b		/* F6D4050 ver 2 */
 #define	USB_PRODUCT_BELKIN_RTL8192SU_3	0x945a		/* RTL8192SU */
 #define	USB_PRODUCT_BELKIN_F7D1101V2	0x945b		/* F7D1101 v2 */
+
+/* CENTURY Corporation products */
+#define	USB_PRODUCT_CENTURY_CTUSB1HUB	0x0023		/* CT-USB1HUB */
 
 /* Bewan products */
 #define	USB_PRODUCT_BEWAN_BWIFI_USB54AR	0x1196		/* BWIFI-USB54AR */
