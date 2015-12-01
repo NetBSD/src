@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.30 2015/12/01 06:47:09 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.31 2015/12/01 07:38:58 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.30 2015/12/01 06:47:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.31 2015/12/01 07:38:58 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -620,7 +620,7 @@ ohci_alloc_sitd(ohci_softc_t *sc)
 	ohci_hash_add_itd(sc, sitd);
 
 #ifdef DIAGNOSTIC
-	sitd->isdone = 0;
+	sitd->isdone = false;
 #endif
 
 	return sitd;
@@ -636,7 +636,7 @@ ohci_free_sitd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 	KASSERT(sitd->isdone);
 #ifdef DIAGNOSTIC
 	/* Warn double free */
-	sitd->isdone = 0;
+	sitd->isdone = false;
 #endif
 
 	ohci_hash_rem_itd(sc, sitd);
@@ -1401,7 +1401,7 @@ ohci_softintr(void *v)
 		}
 		KASSERT(!sitd->isdone);
 #ifdef DIAGNOSTIC
-		sitd->isdone = 1;
+		sitd->isdone = true;
 #endif
 		if (sitd->flags & OHCI_CALL_DONE) {
 			ohci_soft_itd_t *next;
@@ -3355,7 +3355,7 @@ ohci_device_isoc_abort(struct usbd_xfer *xfer)
 	for (; sitd->xfer == xfer; sitd = sitd->nextitd) {
 #ifdef DIAGNOSTIC
 		DPRINTFN(1, "abort sets done sitd=%p", sitd, 0, 0, 0);
-		sitd->isdone = 1;
+		sitd->isdone = true;
 #endif
 	}
 
@@ -3409,7 +3409,7 @@ ohci_device_isoc_close(struct usbd_pipe *pipe)
 	DPRINTF("pipe=%p", pipe, 0, 0, 0);
 	ohci_close_pipe(pipe, sc->sc_isoc_head);
 #ifdef DIAGNOSTIC
-	opipe->tail.itd->isdone = 1;
+	opipe->tail.itd->isdone = true;
 #endif
 	ohci_free_sitd(sc, opipe->tail.itd);
 }
