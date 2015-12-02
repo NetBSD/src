@@ -1,4 +1,4 @@
-/*	$NetBSD: dkwedge_mbr.c,v 1.8 2014/11/04 07:46:26 mlelstv Exp $	*/
+/*	$NetBSD: dkwedge_mbr.c,v 1.9 2015/12/02 01:09:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.8 2014/11/04 07:46:26 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dkwedge_mbr.c,v 1.9 2015/12/02 01:09:49 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,10 +103,16 @@ getparts(mbr_args_t *a, uint32_t off, uint32_t extoff)
 	dp = mbr->mbr_parts;
 
 	for (i = 0; i < MBR_PART_COUNT; i++) {
-		/* Extended partitions are handled below. */
-		if (dp[i].mbrp_type == 0 ||
-		    MBR_IS_EXTENDED(dp[i].mbrp_type))
-		    	continue;
+		switch (dp[i].mbrp_type) {
+		case 0:			/* empty */
+		case MBR_PTYPE_PMBR:	/* Handled by GPT */
+			continue;
+		default:
+		    /* Extended partitions are handled below. */
+			if (MBR_IS_EXTENDED(dp[i].mbrp_type))
+				continue;
+			break;
+		}
 
 		if ((ptype = mbr_ptype_to_str(dp[i].mbrp_type)) == NULL) {
 			/*
