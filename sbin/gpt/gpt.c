@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.55 2015/12/02 10:19:58 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.56 2015/12/02 12:20:52 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -525,8 +525,8 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz)
 				goto close;
 			}
 			gpt->mediasz = gpt->sb.st_size;
-			gpt->flags |= GPT_NOSYNC;
 		}
+		gpt->flags |= GPT_NOSYNC;
 	}
 
 	/*
