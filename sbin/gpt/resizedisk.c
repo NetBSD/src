@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.10 2015/12/01 19:25:24 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.11 2015/12/02 20:09:54 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -87,6 +87,7 @@ resizedisk(gpt_t gpt)
 	struct mbr *mbr;
 	off_t last, oldloc, newloc, lastdata, gpt_size;
 	int i;
+	void *p;
 	
 	last = gpt->mediasz / gpt->secsz - 1;
 	lastdata = 0;
@@ -174,10 +175,26 @@ resizedisk(gpt_t gpt)
 			newloc = sector;
 		else
 			newloc = last;
-		gpt->tpg = map_add(gpt, newloc, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, gpt->secsz));
+		if ((p = calloc(1, gpt->secsz)) == NULL) {
+			gpt_warn(gpt, "Error allocating secondary GPT");
+			return -1;
+		}
+		if (gpt->lbt == NULL) {
+			gpt_warn(gpt, "Error adding secondary GPT");
+			return -1;
+		}
+		gpt->tpg = map_add(gpt, newloc, 1LL, MAP_TYPE_SEC_GPT_HDR, p);
+		if (gpt->lbt == NULL) {
+			gpt_warn(gpt, "Error adding secondary GPT");
+			return -1;
+		}
+		// XXX: map add with non-allocated memory
 		gpt->lbt = map_add(gpt, newloc - gpt_size, gpt_size,
 		    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data);
+		if (gpt->lbt == NULL) {
+			gpt_warn(gpt, "Error adding secondary GPT table");
+			return -1;
+		}
 		memcpy(gpt->tpg->map_data, gpt->gpt->map_data, gpt->secsz);
 	}
 
