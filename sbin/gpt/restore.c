@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.12 2015/12/02 04:07:11 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.13 2015/12/02 12:36:53 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -57,8 +57,10 @@ static int force;
 static int cmd_restore(gpt_t, int, char *[]);
 
 static const char *restorehelp[] = {
-    "[-F]",
+    "[-F] [-i <infile>]",
 };
+
+static const char *infile = "/dev/stdin";
 
 struct gpt_cmd c_restore = {
 	"restore",
@@ -113,7 +115,7 @@ restore(gpt_t gpt)
 		map->map_type = MAP_TYPE_UNUSED;
 	}
 
-	props = prop_dictionary_internalize_from_file("/dev/stdin");
+	props = prop_dictionary_internalize_from_file(infile);
 	if (props == NULL) {
 		gpt_warnx(gpt, "Unable to read/parse backup file");
 		return -1;
@@ -396,8 +398,11 @@ cmd_restore(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, "F")) != -1) {
+	while ((ch = getopt(argc, argv, "Fi:")) != -1) {
 		switch(ch) {
+		case 'i':
+			infile = optarg;
+			break;
 		case 'F':
 			force = 1;
 			break;
