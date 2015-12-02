@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.33 2015/12/02 07:40:29 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.34 2015/12/02 20:36:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.33 2015/12/02 07:40:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.34 2015/12/02 20:36:50 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1856,8 +1856,11 @@ ohci_timeout_task(void *addr)
 void
 ohci_dump_tds(ohci_softc_t *sc, ohci_soft_td_t *std)
 {
-	for (; std; std = std->nexttd)
+	for (; std; std = std->nexttd) {
 		ohci_dump_td(sc, std);
+		KASSERTMSG(std->nexttd == NULL || std != std->nexttd,
+		    "std %p next %p", std, std->nexttd);
+	}
 }
 
 void
