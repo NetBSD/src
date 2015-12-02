@@ -1,4 +1,4 @@
-/*	$NetBSD: authkeys.c,v 1.7 2015/10/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: authkeys.c,v 1.8 2015/12/02 02:04:06 christos Exp $	*/
 
 /*
  * authkeys.c - routines to manage the storage of authentication keys
@@ -236,7 +236,7 @@ auth_resize_hashtable(void)
 	symkey *	sk;
 
 	totalkeys = authnumkeys + authnumfreekeys;
-	hashbits = auth_log2(totalkeys / 4.0) + 1;
+	hashbits = (totalkeys <= 4 ? 0 : auth_log2(totalkeys / 4.0)) + 1;
 	hashbits = max(4, hashbits);
 	hashbits = min(15, hashbits);
 
