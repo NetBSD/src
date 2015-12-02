@@ -57,6 +57,6 @@ struct map *map_first(struct gpt *);
 struct map *map_last(struct gpt *);
 off_t map_resize(struct gpt *, struct map *, off_t, off_t);
 off_t map_free(struct gpt *, off_t, off_t);
-void map_init(struct gpt *, off_t);
+int map_init(struct gpt *, off_t);
 
 #endif /* _MAP_H_ */

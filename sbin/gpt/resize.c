@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.17 2015/12/01 19:25:24 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.18 2015/12/02 20:01:44 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -110,14 +110,8 @@ resize(gpt_t gpt)
 		}
 
 	newsize = map_resize(gpt, map, sectors, alignsecs);
-	if (newsize == 0 && alignment > 0) {
-		gpt_warnx(gpt, "Could not resize partition with alignment "
-		      "constraint");
+	if (newsize == -1)
 		return -1;
-	} else if (newsize == 0) {
-		gpt_warnx(gpt, "Could not resize partition");
-		return -1;
-	}
 
 	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
 
