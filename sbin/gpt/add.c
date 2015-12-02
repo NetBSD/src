@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.34 2015/12/01 23:29:07 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.35 2015/12/02 01:01:55 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -71,12 +71,23 @@ struct gpt_cmd c_add = {
 
 #define usage() gpt_usage(NULL, &c_add)
 
+static void
+ent_set(struct gpt_ent *ent, const map_t map, const gpt_uuid_t xtype,
+    const uint8_t *xname)
+{
+	gpt_uuid_copy(ent->ent_type, xtype);
+	ent->ent_lba_start = htole64(map->map_start);
+	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
+	if (xname != NULL)
+		utf8_to_utf16(xname, ent->ent_name, sizeof(ent->ent_name));
+}
+
 static int
 add(gpt_t gpt)
 {
 	map_t map;
 	struct gpt_hdr *hdr;
-	struct gpt_ent *ent, e;
+	struct gpt_ent *ent;
 	unsigned int i;
 	off_t alignsecs;
 	char buf[128];
@@ -128,18 +139,11 @@ add(gpt_t gpt)
 		}
 	}
 
-	memset(&e, 0, sizeof(e));
-	gpt_uuid_copy(e.ent_type, type);
-	e.ent_lba_start = htole64(map->map_start);
-	e.ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
-	if (name != NULL)
-		utf8_to_utf16(name, e.ent_name, 36);
-
-	memcpy(ent, &e, sizeof(e));
+	ent_set(ent, map, type, name);
 	gpt_write_primary(gpt);
 
 	ent = gpt_ent_backup(gpt, i);
-	memcpy(ent, &e, sizeof(e));
+	ent_set(ent, map, type, name);
 	gpt_write_backup(gpt);
 
 	gpt_uuid_snprintf(buf, sizeof(buf), "%d", type);
@@ -185,7 +189,7 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 	if (optind != argc)
 		return usage();
 
-	if ((sectors = gpt_check_ais(gpt, alignment, entry, size)) == -1)
+	if ((sectors = gpt_check_ais(gpt, alignment, ~0, size)) == -1)
 		return -1;
 
 	return add(gpt);
