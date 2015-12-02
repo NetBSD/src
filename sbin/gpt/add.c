@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.36 2015/12/02 04:07:11 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.37 2015/12/02 11:20:34 jnemeth Exp $");
 #endif
 
 #include <sys/types.h>
@@ -158,7 +158,7 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
 
-	while ((ch = getopt(argc, argv, GPT_AIS "bl:t:")) != -1) {
+	while ((ch = getopt(argc, argv, GPT_AIS "b:l:t:")) != -1) {
 		switch(ch) {
 		case 'b':
 			if (gpt_human_get(&block) == -1)
