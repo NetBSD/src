@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.9 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.10 2015/12/02 20:41:10 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -67,10 +67,100 @@ struct gpt_cmd c_recover = {
 #define usage() gpt_usage(NULL, &c_recover)
 
 static int
+recover_gpt_hdr(gpt_t gpt, int type, off_t last)
+{
+	const char *name, *origname;
+	void *p;
+	map_t *dgpt, dtbl, sgpt, stbl;
+	struct gpt_hdr *hdr;
+
+	switch (type) {
+	case MAP_TYPE_PRI_GPT_HDR:
+		dgpt = &gpt->gpt;
+		dtbl = gpt->tbl;
+		sgpt = gpt->tpg;
+		stbl = gpt->lbt;
+		origname = "secondary";
+		name = "primary";
+		break;
+	case MAP_TYPE_SEC_GPT_HDR:
+		dgpt = &gpt->tpg;
+		dtbl = gpt->lbt;
+		sgpt = gpt->gpt;
+		stbl = gpt->tbl;
+		origname = "primary";
+		name = "secondary";
+		break;
+	default:
+		gpt_warn(gpt, "Bad table type %d", type);
+		return -1;
+	}
+
+	if ((p = calloc(1, gpt->secsz)) == NULL) {
+		gpt_warn(gpt, "Cannot allocate %s GPT header", name);
+		return -1;
+	}
+	if ((*dgpt = map_add(gpt, last, 1LL, type, p)) == NULL) {
+		gpt_warnx(gpt, "Cannot add %s GPT header", name);
+		return -1;
+	}
+	memcpy((*dgpt)->map_data, sgpt->map_data, gpt->secsz);
+	hdr = (*dgpt)->map_data;
+	hdr->hdr_lba_self = htole64((*dgpt)->map_start);
+	hdr->hdr_lba_alt = htole64(stbl->map_start);
+	hdr->hdr_lba_table = htole64(dtbl->map_start);
+	hdr->hdr_crc_self = 0;
+	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
+	if (gpt_write(gpt, *dgpt) == -1) {
+		gpt_warnx(gpt, "Writing %s GPT header failed", name);
+		return -1;
+	}
+	gpt_msg(gpt, "Recovered %s GPT header from %s", name, origname);
+	return 0;
+}
+
+static int
+recover_gpt_tbl(gpt_t gpt, int type, off_t start)
+{
+	const char *name, *origname;
+	map_t *dtbl, stbl;
+
+	switch (type) {
+	case MAP_TYPE_PRI_GPT_TBL:
+		dtbl = &gpt->tbl;
+		stbl = gpt->lbt;
+		origname = "secondary";
+		name = "primary";
+		break;
+	case MAP_TYPE_SEC_GPT_TBL:
+		dtbl = &gpt->lbt;
+		stbl = gpt->tbl;
+		origname = "primary";
+		name = "secondary";
+		break;
+	default:
+		gpt_warn(gpt, "Bad table type %d", type);
+		return -1;
+	}
+
+	// XXX: non allocated memory
+	*dtbl = map_add(gpt, start, stbl->map_size, type, stbl->map_data);
+	if (*dtbl == NULL) {
+		gpt_warnx(gpt, "Adding %s GPT table failed", name);
+		return -1;
+	}
+	if (gpt_write(gpt, *dtbl) == -1) {
+		gpt_warnx(gpt, "Writing %s GPT table failed", name);
+		return -1;
+	}
+	gpt_msg(gpt, "Recovered %s GPT table from %s", name, origname);
+	return 0;
+}
+
+static int
 recover(gpt_t gpt)
 {
 	uint64_t last;
-	struct gpt_hdr *hdr;
 
 	if (map_find(gpt, MAP_TYPE_MBR) != NULL) {
 		gpt_warnx(gpt, "Device contains an MBR");
@@ -103,70 +193,20 @@ recover(gpt_t gpt)
 	}
 
 	if (gpt->tbl != NULL && gpt->lbt == NULL) {
-		gpt->lbt = map_add(gpt, last - gpt->tbl->map_size,
-		    gpt->tbl->map_size, MAP_TYPE_SEC_GPT_TBL,
-		    gpt->tbl->map_data);
-		if (gpt->lbt == NULL) {
-			gpt_warnx(gpt, "Adding secondary GPT table failed");
+		if (recover_gpt_tbl(gpt, MAP_TYPE_SEC_GPT_TBL,
+		    last - gpt->tbl->map_size) == -1)
 			return -1;
-		}
-		if (gpt_write(gpt, gpt->lbt) == -1) {
-			gpt_warnx(gpt, "Writing secondary GPT table failed");
-			return -1;
-		}
-		gpt_msg(gpt, "Recovered secondary GPT table from primary");
 	} else if (gpt->tbl == NULL && gpt->lbt != NULL) {
-		gpt->tbl = map_add(gpt, 2LL, gpt->lbt->map_size,
-		    MAP_TYPE_PRI_GPT_TBL, gpt->lbt->map_data);
-		if (gpt->tbl == NULL) {
-			gpt_warnx(gpt, "Adding primary GPT table failed");
+		if (recover_gpt_tbl(gpt, MAP_TYPE_PRI_GPT_TBL, 2LL) == -1)
 			return -1;
-		}
-		if (gpt_write(gpt, gpt->tbl) == -1) {
-			gpt_warnx(gpt, "Writing primary GPT table failed");
-			return -1;
-		}
-		gpt_msg(gpt, "Recovered primary GPT table from secondary");
 	}
 
 	if (gpt->gpt != NULL && gpt->tpg == NULL) {
-		gpt->tpg = map_add(gpt, last, 1LL, MAP_TYPE_SEC_GPT_HDR,
-		    calloc(1, gpt->secsz));
-		if (gpt->tpg == NULL) {
-			gpt_warnx(gpt, "Adding secondary GPT header failed");
+		if (recover_gpt_hdr(gpt, MAP_TYPE_SEC_GPT_HDR, last) == -1)
 			return -1;
-		}
-		memcpy(gpt->tpg->map_data, gpt->gpt->map_data, gpt->secsz);
-		hdr = gpt->tpg->map_data;
-		hdr->hdr_lba_self = htole64(gpt->tpg->map_start);
-		hdr->hdr_lba_alt = htole64(gpt->gpt->map_start);
-		hdr->hdr_lba_table = htole64(gpt->lbt->map_start);
-		hdr->hdr_crc_self = 0;
-		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-		if (gpt_write(gpt, gpt->tpg) == -1) {
-			gpt_warnx(gpt, "Writing secondary GPT header failed");
-			return -1;
-		}
-		gpt_msg(gpt, "Recovered secondary GPT header from primary");
 	} else if (gpt->gpt == NULL && gpt->tpg != NULL) {
-		gpt->gpt = map_add(gpt, 1LL, 1LL, MAP_TYPE_PRI_GPT_HDR,
-		    calloc(1, gpt->secsz));
-		if (gpt->gpt == NULL) {
-			gpt_warnx(gpt, "Adding primary GPT header failed");
+		if (recover_gpt_hdr(gpt, MAP_TYPE_PRI_GPT_HDR, 1LL) == -1)
 			return -1;
-		}
-		memcpy(gpt->gpt->map_data, gpt->tpg->map_data, gpt->secsz);
-		hdr = gpt->gpt->map_data;
-		hdr->hdr_lba_self = htole64(gpt->gpt->map_start);
-		hdr->hdr_lba_alt = htole64(gpt->tpg->map_start);
-		hdr->hdr_lba_table = htole64(gpt->tbl->map_start);
-		hdr->hdr_crc_self = 0;
-		hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
-		if (gpt_write(gpt, gpt->gpt) == -1) {
-			gpt_warnx(gpt, "Writing primary GPT header failed");
-			return -1;
-		}
-		gpt_msg(gpt, "Recovered primary GPT header from secondary");
 	}
 	return 0;
 }
