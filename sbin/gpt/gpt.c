@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.54 2015/12/02 04:17:25 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.55 2015/12/02 10:19:58 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -467,7 +467,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz)
 
 
 	if ((gpt = calloc(1, sizeof(*gpt))) == NULL) {
-		if (!(gpt->flags & GPT_QUIET))
+		if (!(flags & GPT_QUIET))
 			warn("Cannot allocate `%s'", dev);
 		return NULL;
 	}
@@ -525,6 +525,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz)
 				goto close;
 			}
 			gpt->mediasz = gpt->sb.st_size;
+			gpt->flags |= GPT_NOSYNC;
 		}
 	}
 
