@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.9 2015/12/01 07:38:58 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.10 2015/12/02 20:07:08 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ typedef struct ohci_softc {
 
 struct ohci_xfer {
 	struct usbd_xfer xfer;
-	struct usb_task	abort_task;
+	struct usb_task abort_task;
 };
 
 #define OHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
