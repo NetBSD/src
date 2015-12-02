@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.11 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.12 2015/12/02 04:07:11 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -331,7 +331,8 @@ restore(gpt_t gpt)
 		propstr = prop_dictionary_get(gpt_dict, "name");
 		if (propstr != NULL) {
 			s = prop_string_cstring_nocopy(propstr);
-			utf8_to_utf16((const uint8_t *)s, ent.ent_name, 36);
+			utf8_to_utf16((const uint8_t *)s, ent.ent_name,
+				__arraycount(ent.ent_name));
 		}
 		propnum = prop_dictionary_get(gpt_dict, "index");
 		PROP_ERR(propnum);
