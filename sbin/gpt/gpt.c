@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.57 2015/12/02 20:01:44 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.58 2015/12/02 20:09:33 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -340,6 +340,7 @@ gpt_mbr(gpt_t gpt, off_t lba)
 			    mbr->mbr_part[i].part_typ,
 			    (uintmax_t)start, (uintmax_t)size);
 		if (mbr->mbr_part[i].part_typ != MBR_PTYPE_EXT_LBA) {
+			// XXX: map add with non-allocated memory
 			m = map_add(gpt, start, size, MAP_TYPE_MBR_PART, p);
 			if (m == NULL)
 				return -1;
@@ -442,6 +443,7 @@ gpt_gpt(gpt_t gpt, off_t lba, int found)
 			    (uintmax_t)le64toh(ent->ent_lba_start),
 			    (uintmax_t)size);
 		}
+		// XXX: map add with not allocated memory.
 		m = map_add(gpt, le64toh(ent->ent_lba_start), size,
 		    MAP_TYPE_GPT_PART, ent);
 		if (m == NULL)
