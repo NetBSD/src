@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.18 2015/11/29 21:36:35 wiz Exp $
+.\" $NetBSD: modstat.8,v 1.19 2015/12/02 00:56:09 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd November 4, 2015
+.Dd December 2, 2015
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -63,6 +63,8 @@ take into consideration the sysctl
 .Li kern.module.autoload .
 .It Fl e
 Tells you whether or not you may load a module at the moment.
+.It Fl k
+Display the module's kernel address (disabled by default).
 .It Fl n Ar name
 Display the status of only the module with this name.
 Please note that
@@ -107,6 +109,9 @@ Disabled builtin modules will show a count of \-1 here.
 .It Li ADDRESS
 The kernel address at which the module is loaded.
 Builtin modules will show 0 here.
+This field is only displayed if the
+.Fl k
+option is specified.
 .It Li REQUIRES
 Additional modules that must be present.
 .El

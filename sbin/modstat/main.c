@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2015/11/04 16:04:55 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2015/12/02 00:56:09 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.20 2015/11/04 16:04:55 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.21 2015/12/02 00:56:09 pgoyette Exp $");
 #endif /* !lint */
 
 #include <sys/module.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: main.c,v 1.20 2015/11/04 16:04:55 christos Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdbool.h>
 
 #include "prog_ops.h"
 
@@ -80,15 +81,19 @@ main(int argc, char **argv)
 	int ch, rc, modauto = 1;
 	size_t maxnamelen = 16, i, modautolen;
 	char loadable = '\0';
+	bool address = false;
 
 	name = NULL;
 
-	while ((ch = getopt(argc, argv, "Aaen:")) != -1) {
+	while ((ch = getopt(argc, argv, "Aaekn:")) != -1) {
 		switch (ch) {
 		case 'A':			/* FALLTHROUGH */
 		case 'a':			/* FALLTHROUGH */
 		case 'e':
 			loadable = (char)ch;
+			break;
+		case 'k':
+			address = true;
 			break;
 		case 'n':
 			name = optarg;
@@ -179,9 +184,11 @@ main(int argc, char **argv)
 		if (maxnamelen < namelen)
 			maxnamelen = namelen;
 	}
-	printf("%-*s %-8s %-8s %-4s %-5s %-16s %-7s %s \n",
-	    (int)maxnamelen, "NAME", "CLASS", "SOURCE", "FLAG", "REFS",
-	    "ADDRESS", "SIZE", "REQUIRES");
+	printf("%-*s %-8s %-8s %-4s %-5s ",
+	    (int)maxnamelen, "NAME", "CLASS", "SOURCE", "FLAG", "REFS");
+	if (address)
+		printf("%-16s ", "ADDRESS");
+	printf("%-7s %s \n", "SIZE", "REQUIRES");
 	for (ms = iov.iov_base; len != 0; ms++, len--) {
 		const char *class;
 		const char *source;
@@ -208,10 +215,13 @@ main(int argc, char **argv)
 		else
 			source = "UNKNOWN";
 
-		printf("%-*s %-8s %-8s %-4s %-5d %-16" PRIx64 " %-7s %s\n",
+		printf("%-*s %-8s %-8s %-4s %-5d ",
 		    (int)maxnamelen, ms->ms_name, class, source, 
 		    modflags[ms->ms_flags & (__arraycount(modflags) - 1)],
-		    ms->ms_refcnt, ms->ms_addr, sbuf, ms->ms_required);
+		    ms->ms_refcnt);
+		if (address)
+			printf("%-16" PRIx64 " ", ms->ms_addr);
+		printf("%-7s %s\n", sbuf, ms->ms_required);
 	}
 
 	exit(EXIT_SUCCESS);
