@@ -1,4 +1,4 @@
-/*	$NetBSD: cond.c,v 1.70 2015/11/30 23:15:43 sjg Exp $	*/
+/*	$NetBSD: cond.c,v 1.71 2015/12/02 00:28:24 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: cond.c,v 1.70 2015/11/30 23:15:43 sjg Exp $";
+static char rcsid[] = "$NetBSD: cond.c,v 1.71 2015/12/02 00:28:24 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)cond.c	8.2 (Berkeley) 1/2/94";
 #else
-__RCSID("$NetBSD: cond.c,v 1.70 2015/11/30 23:15:43 sjg Exp $");
+__RCSID("$NetBSD: cond.c,v 1.71 2015/12/02 00:28:24 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -489,11 +489,11 @@ CondCvtArg(char *str, double *value)
     unsigned long l_val;
     double d_val;
 
-    if (!*str) {
-	errno = EINVAL;
-	return FALSE;
-    }
     errno = 0;
+    if (!*str) {
+	*value = (double)0;
+	return TRUE;
+    }
     l_val = strtoul(str, &eptr, str[1] == 'x' ? 16 : 10);
     ech = *eptr;
     if (ech == 0 && errno != ERANGE) {
