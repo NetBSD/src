@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.19 2015/12/02 04:07:11 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.20 2015/12/02 12:24:02 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.19 2015/12/02 04:07:11 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.20 2015/12/02 12:24:02 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -76,8 +76,10 @@ static int cmd_biosboot(gpt_t, int, char *[]);
 
 static const char *biosboothelp[] = {
     "[-c bootcode] [-i index] [-L label]",
+#if notyet
     "[-a alignment] [-b blocknr] [-i index] [-l label]",
     "[-s size] [-t type]",
+#endif
 };
 
 struct gpt_cmd c_biosboot = {
