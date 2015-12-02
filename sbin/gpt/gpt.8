@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.40 2015/12/01 22:49:25 christos Exp $
+.\" $NetBSD: gpt.8,v 1.41 2015/12/02 12:36:53 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -199,11 +199,13 @@ NetBSD swap
 .El
 as aliases for the most commonly used partition types.
 .\" ==== backup ====
-.It Nm Ic backup
+.It Nm Ic backup Oo Fl o Ar outfile Oc
 The
 .Ic backup
 command dumps the MBR or (PMBR) and GPT partition tables to standard
-output in a format to be used by the
+output or to a file specified by the
+.Ar outfile
+argument in a format to be used by the
 .Ic restore
 command.
 The format is a plist.
@@ -465,14 +467,16 @@ Using the
 option allows you to move the backup copy prior to resizing the medium.
 This is primarily useful when shrinking the medium.
 .\" ==== restore ====
-.It Nm Ic restore Oo Fl F Oc
+.It Nm Ic restore Oo Fl F Oc Oo Fl i Ar infile Oc
 The
 .Ic restore
 command restores a partition table that was previously saved using the
 .Ic backup
 command.
-The partition table is read from standard input and is expected to be in
-the format of a plist.
+The partition table is read from standard input or a file specified in
+the
+.Ar infile
+argument and is expected to be in the format of a plist.
 It assumes an empty disk.
 The
 .Fl F
