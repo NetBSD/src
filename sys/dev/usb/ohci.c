@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.32 2015/12/01 11:50:22 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.33 2015/12/02 07:40:29 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.32 2015/12/01 11:50:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.33 2015/12/02 07:40:29 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -524,9 +524,9 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 
 		cur->td.td_flags = tdflags;
 		cur->td.td_cbp = HTOO32(dataphys);
-		cur->nexttd = next;
 		cur->td.td_nexttd = HTOO32(next->physaddr);
 		cur->td.td_be = HTOO32(dataphys + curlen - 1);
+		cur->nexttd = next;
 		cur->len = curlen;
 		cur->flags = OHCI_ADD_LEN;
 		cur->xfer = xfer;
@@ -551,9 +551,9 @@ ohci_alloc_std_chain(struct ohci_pipe *opipe, ohci_softc_t *sc,
 
 		cur->td.td_flags = tdflags;
 		cur->td.td_cbp = 0; /* indicate 0 length packet */
-		cur->nexttd = next;
 		cur->td.td_nexttd = HTOO32(next->physaddr);
 		cur->td.td_be = ~0;
+		cur->nexttd = next;
 		cur->len = 0;
 		cur->flags = 0;
 		cur->xfer = xfer;
@@ -1513,10 +1513,10 @@ ohci_device_intr_done(struct usbd_xfer *xfer)
 		if (xfer->ux_flags & USBD_SHORT_XFER_OK)
 			data->td.td_flags |= HTOO32(OHCI_TD_R);
 		data->td.td_cbp = HTOO32(DMAADDR(&xfer->ux_dmabuf, 0));
-		data->nexttd = tail;
 		data->td.td_nexttd = HTOO32(tail->physaddr);
 		data->td.td_be = HTOO32(O32TOH(data->td.td_cbp) +
 			xfer->ux_length - 1);
+		data->nexttd = tail;
 		data->len = xfer->ux_length;
 		data->xfer = xfer;
 		data->flags = OHCI_CALL_DONE | OHCI_ADD_LEN;
@@ -2644,9 +2644,9 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	setup->td.td_flags = HTOO32(OHCI_TD_SETUP | OHCI_TD_NOCC |
 				     OHCI_TD_TOGGLE_0 | OHCI_TD_NOINTR);
 	setup->td.td_cbp = HTOO32(DMAADDR(&opipe->ctrl.reqdma, 0));
-	setup->nexttd = next;
 	setup->td.td_nexttd = HTOO32(next->physaddr);
 	setup->td.td_be = HTOO32(O32TOH(setup->td.td_cbp) + sizeof(*req) - 1);
+	setup->nexttd = next;
 	setup->len = 0;
 	setup->xfer = xfer;
 	setup->flags = 0;
@@ -2658,9 +2658,9 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 		(isread ? OHCI_TD_OUT : OHCI_TD_IN) |
 		OHCI_TD_NOCC | OHCI_TD_TOGGLE_1 | OHCI_TD_SET_DI(1));
 	stat->td.td_cbp = 0;
-	stat->nexttd = tail;
 	stat->td.td_nexttd = HTOO32(tail->physaddr);
 	stat->td.td_be = 0;
+	stat->nexttd = tail;
 	stat->flags = OHCI_CALL_DONE;
 	stat->len = 0;
 	stat->xfer = xfer;
@@ -2966,9 +2966,9 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 	if (xfer->ux_flags & USBD_SHORT_XFER_OK)
 		data->td.td_flags |= HTOO32(OHCI_TD_R);
 	data->td.td_cbp = HTOO32(DMAADDR(&xfer->ux_dmabuf, 0));
-	data->nexttd = tail;
 	data->td.td_nexttd = HTOO32(tail->physaddr);
 	data->td.td_be = HTOO32(O32TOH(data->td.td_cbp) + len - 1);
+	data->nexttd = tail;
 	data->len = len;
 	data->xfer = xfer;
 	data->flags = OHCI_CALL_DONE | OHCI_ADD_LEN;
@@ -3213,9 +3213,9 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 				OHCI_ITD_SET_DI(6) | /* delay intr a little */
 				OHCI_ITD_SET_FC(ncur));
 			sitd->itd.itd_bp0 = HTOO32(bp0);
-			sitd->nextitd = nsitd;
 			sitd->itd.itd_nextitd = HTOO32(nsitd->physaddr);
 			sitd->itd.itd_be = HTOO32(bp0 + offs - 1);
+			sitd->nextitd = nsitd;
 			sitd->xfer = xfer;
 			sitd->flags = 0;
 			usb_syncmem(&sitd->dma, sitd->offs, sizeof(sitd->itd),
@@ -3245,9 +3245,9 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 		OHCI_ITD_SET_DI(0) |
 		OHCI_ITD_SET_FC(ncur));
 	sitd->itd.itd_bp0 = HTOO32(bp0);
-	sitd->nextitd = nsitd;
 	sitd->itd.itd_nextitd = HTOO32(nsitd->physaddr);
 	sitd->itd.itd_be = HTOO32(bp0 + offs - 1);
+	sitd->nextitd = nsitd;
 	sitd->xfer = xfer;
 	sitd->flags = OHCI_CALL_DONE;
 	usb_syncmem(&sitd->dma, sitd->offs, sizeof(sitd->itd),
