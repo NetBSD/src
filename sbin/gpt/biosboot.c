@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.18 2015/12/01 23:29:07 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.19 2015/12/02 04:07:11 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.18 2015/12/01 23:29:07 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.19 2015/12/02 04:07:11 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -173,6 +173,7 @@ biosboot(gpt_t gpt)
 	struct mbr *mbr, *bootcode;
 	unsigned int i;
 	struct gpt_ent *ent;
+	uint8_t utfbuf[__arraycount(ent->ent_name) * 3 + 1];
 
 	/*
 	 * Parse and validate partition maps
@@ -212,10 +213,11 @@ biosboot(gpt_t gpt)
 		if (entry > 0 && m->map_index == entry)
 			break;
 
-		if (label != NULL)
-			if (strcmp((char *)label,
-			    (char *)utf16_to_utf8(ent->ent_name)) == 0)
+		if (label != NULL) {
+			utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
+			if (strcmp((char *)label, (char *)utfbuf) == 0)
 				break;
+		}
 
 		/* next, partition as could be specified by wedge */
 		if (entry < 1 && label == NULL && size > 0 &&
