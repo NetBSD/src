@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.59 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.60 2015/12/03 02:16:00 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1199,7 +1199,7 @@ gpt_show_num(const char *prompt, uintmax_t num)
 	printf("%s: %ju", prompt, num);
 #ifdef HN_AUTOSCALE
 	if (human_num[0] != '\0')
-		printf("(%s)", human_num);
+		printf(" (%s)", human_num);
 #endif
 	printf("\n");
 }
