@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.25 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.26 2015/12/03 21:48:12 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -98,13 +98,12 @@ name_from_file(gpt_t gpt, void *v)
 
 	if ((*name = malloc(maxlen)) == NULL) {
 		gpt_warn(gpt, "Can't copy string");
-		return -1;
+		goto cleanup;
 	}
 	len = fread(*name, 1, maxlen - 1, f);
 	if (ferror(f)) {
-		free(*name);
 		gpt_warn(gpt, "Can't label from `%s'", fn);
-		return -1;
+		goto cleanup;
 	}
 	if (f != stdin)
 		fclose(f);
@@ -114,6 +113,11 @@ name_from_file(gpt_t gpt, void *v)
 	if (p != NULL)
 		*p = '\0';
 	return 0;
+cleanup:
+	free(*name);
+	if (f != stdin)
+		fclose(f);
+	return -1;
 }
 
 static int
