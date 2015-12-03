@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc_50.c,v 1.3 2015/05/10 07:41:15 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc_50.c,v 1.4 2015/12/03 00:28:55 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.3 2015/05/10 07:41:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc_50.c,v 1.4 2015/12/03 00:28:55 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -215,4 +215,4 @@ sysctl_kern_sysvipc50(SYSCTLFN_ARGS)
 		free(bf, M_TEMP);
 	return error;
 }
-#endif
+#endif /* COMPAT_50 */
