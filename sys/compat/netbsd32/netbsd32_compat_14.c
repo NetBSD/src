@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.23 2015/12/03 11:25:45 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.24 2015/12/03 11:28:35 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.23 2015/12/03 11:25:45 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.24 2015/12/03 11:28:35 pgoyette Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_sysv.h"
+#include "opt_compat_netbsd.h"
+#endif
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
