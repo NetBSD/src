@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos-utils.c,v 1.18 2015/11/23 22:34:00 christos Exp $	*/
+/*	$NetBSD: apropos-utils.c,v 1.19 2015/12/03 21:01:50 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos-utils.c,v 1.18 2015/11/23 22:34:00 christos Exp $");
+__RCSID("$NetBSD: apropos-utils.c,v 1.19 2015/12/03 21:01:50 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -909,6 +909,9 @@ term_fix_seq(TERMINAL *ti, const char *seq)
 {
 	char *res = estrdup(seq);
 	struct nv nv;
+
+	if (ti == NULL)
+	    return res;
 
 	nv.s = res;
 	nv.l = 0;
