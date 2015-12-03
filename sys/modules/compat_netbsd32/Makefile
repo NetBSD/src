@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2015/12/01 23:58:19 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.18 2015/12/03 10:38:21 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -18,7 +18,7 @@ CPPFLAGS+=	-DCOMPAT_20
 CPPFLAGS+=	-DCOMPAT_30 -DCOMPAT_40 -DCOMPAT_50
 CPPFLAGS+=	-DCOMPAT_60 -DCOMPAT_70 -DCOMPAT_80
 CPPFLAGS+=	-DCOMPAT_43
-CPPFLAGS+=	-DSYSVSHM -DSYSVSEM -DSYSVMSG -DCOMPAT_NETBSD32
+CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
 CPPFLAGS+=	-DCOREDUMP -DNTP -DVMSWAP
 CPPFLAGS+=	-DNTP
@@ -32,7 +32,7 @@ SRCS+=	netbsd32_compat_50.c netbsd32_compat_60.c
 SRCS+=	netbsd32_core.c netbsd32_event.c
 SRCS+=	netbsd32_exec_elf32.c
 SRCS+=	netbsd32_execve.c netbsd32_fs.c
-SRCS+=	netbsd32_ioctl.c netbsd32_ipc.c
+SRCS+=	netbsd32_ioctl.c
 SRCS+=	netbsd32_lwp.c netbsd32_netbsd.c
 SRCS+=	netbsd32_select.c
 SRCS+=	netbsd32_sem.c netbsd32_signal.c
