@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.21 2015/12/03 01:07:28 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.22 2015/12/03 02:02:43 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.21 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.22 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -126,7 +126,7 @@ read_boot(gpt_t gpt, const char *bootpath)
 		goto fail;
 	}
 
-	if (read(bfd, buf, st.st_size) != st.st_size) {
+	if (read(bfd, buf, (size_t)st.st_size) != (ssize_t)st.st_size) {
 		gpt_warn(gpt, "Error reading from `%s'", bp);
 		goto fail;
 	}
@@ -266,7 +266,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 				return usage();
 			break;
 		case 'i':
-			if (gpt_entry_get(&entry) == -1)
+			if (gpt_uint_get(&entry) == -1)
 				return usage();
 			break;
 		case 'L':
