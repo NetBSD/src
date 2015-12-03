@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.11 2015/12/02 20:42:07 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.12 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,12 +49,10 @@ __RCSID("$NetBSD: recover.c,v 1.11 2015/12/02 20:42:07 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static int recoverable;
-
 static int cmd_recover(gpt_t, int, char *[]);
 
 static const char *recoverhelp[] = {
-    "",
+	"",
 };
 
 struct gpt_cmd c_recover = {
@@ -158,7 +156,7 @@ recover_gpt_tbl(gpt_t gpt, int type, off_t start)
 }
 
 static int
-recover(gpt_t gpt)
+recover(gpt_t gpt, int recoverable)
 {
 	uint64_t last;
 
@@ -215,6 +213,7 @@ static int
 cmd_recover(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
+	int recoverable = 0;
 
 	while ((ch = getopt(argc, argv, "r")) != -1) {
 		switch(ch) {
@@ -229,5 +228,5 @@ cmd_recover(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return recover(gpt);
+	return recover(gpt, recoverable);
 }
