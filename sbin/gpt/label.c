@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.26 2015/12/03 21:48:12 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.27 2015/12/03 21:51:02 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -135,21 +135,24 @@ cmd_label(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 'f':
 			if (name_from_file(gpt, &name) == -1)
-				return usage();
+				goto usage;
 			break;
 		case 'l':
 			if (gpt_name_get(gpt, &name) == -1)
-				return usage();
+				goto usage;
 			break;
 		default:
 			if (gpt_add_find(gpt, &find, ch) == -1)
-				return usage();
+				goto usage;
 			break;
 		}
 	}
 
 	if (name == NULL || argc != optind)
-		return usage();
+		goto usage;
 
 	return gpt_change_ent(gpt, &find, change, name);
+usage:
+	free(name);
+	return -1;
 }
