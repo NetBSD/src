@@ -82,7 +82,7 @@ gpt_t	gpt_open(const char *, int, int, off_t, u_int);
 
 void*	gpt_read(gpt_t, off_t, size_t);
 off_t	gpt_last(gpt_t);
-int	gpt_create(gpt_t, off_t, u_int, int);
+off_t	gpt_create(gpt_t, off_t, u_int, int);
 int	gpt_write(gpt_t, map_t);
 int	gpt_write_crc(gpt_t, map_t, map_t);
 int	gpt_write_primary(gpt_t);
@@ -120,9 +120,10 @@ off_t	gpt_check_ais(gpt_t, off_t, u_int, off_t);
 
 int	gpt_attr_get(uint64_t *);
 int	gpt_attr_update(gpt_t, u_int, uint64_t, uint64_t);
-int	gpt_entry_get(u_int *);
+int	gpt_uint_get(u_int *);
 int	gpt_human_get(off_t *);
 int	gpt_uuid_get(gpt_t, gpt_uuid_t *);
 int	gpt_name_get(gpt_t, void *);
+void	gpt_show_num(const char *, uintmax_t);
 
 #endif /* _GPT_H_ */

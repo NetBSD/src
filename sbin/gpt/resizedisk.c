@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.12 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.13 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -111,7 +111,7 @@ resizedisk(gpt_t gpt, off_t sector, off_t size)
 		return -1;
 	}
 	hdr = gpt->gpt->map_data;
-	oldloc = le64toh(hdr->hdr_lba_alt);
+	oldloc = (off_t)le64toh((uint64_t)hdr->hdr_lba_alt);
 
 	gpt->tpg = map_find(gpt, MAP_TYPE_SEC_GPT_HDR);
 	if (gpt->tpg == NULL)
@@ -139,7 +139,7 @@ resizedisk(gpt_t gpt, off_t sector, off_t size)
 	    le32toh(hdr->hdr_entries) * le32toh(hdr->hdr_entsz)); ent++) {
 		if (!gpt_uuid_is_nil(ent->ent_type) &&
 		    ((off_t)le64toh(ent->ent_lba_end) > lastdata)) {
-			lastdata = le64toh(ent->ent_lba_end);
+			lastdata = (off_t)le64toh((uint64_t)ent->ent_lba_end);
 		}
 	}
 	if (sector - gpt_size <= lastdata) {
@@ -198,18 +198,18 @@ resizedisk(gpt_t gpt, off_t sector, off_t size)
 	}
 
 	hdr = gpt->gpt->map_data;
-	hdr->hdr_lba_alt = gpt->tpg->map_start;
+	hdr->hdr_lba_alt = (uint64_t)gpt->tpg->map_start;
 	hdr->hdr_crc_self = 0;
-	hdr->hdr_lba_end = htole64(gpt->lbt->map_start - 1);
+	hdr->hdr_lba_end = htole64((uint64_t)(gpt->lbt->map_start - 1));
 	hdr->hdr_crc_self =
 	    htole32(crc32(gpt->gpt->map_data, GPT_HDR_SIZE));
 	gpt_write(gpt, gpt->gpt);
 
 	hdr = gpt->tpg->map_data;
-	hdr->hdr_lba_self = htole64(gpt->tpg->map_start);
-	hdr->hdr_lba_alt = htole64(gpt->gpt->map_start);
-	hdr->hdr_lba_end = htole64(gpt->lbt->map_start - 1);
-	hdr->hdr_lba_table = htole64(gpt->lbt->map_start);
+	hdr->hdr_lba_self = htole64((uint64_t)gpt->tpg->map_start);
+	hdr->hdr_lba_alt = htole64((uint64_t)gpt->gpt->map_start);
+	hdr->hdr_lba_end = htole64((uint64_t)(gpt->lbt->map_start - 1));
+	hdr->hdr_lba_table = htole64((uint64_t)gpt->lbt->map_start);
 
 	if (gpt_write_backup(gpt) == -1)
 		return -1;
@@ -225,8 +225,8 @@ resizedisk(gpt_t gpt, off_t sector, off_t size)
 		mbr->mbr_part[0].part_size_lo = htole16(0xffff);
 		mbr->mbr_part[0].part_size_hi = htole16(0xffff);
 	} else {
-		mbr->mbr_part[0].part_size_lo = htole16(last);
-		mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
+		mbr->mbr_part[0].part_size_lo = htole16((uint16_t)last);
+		mbr->mbr_part[0].part_size_hi = htole16((uint16_t)(last >> 16));
 	}
 	if (gpt_write(gpt, mbrmap) == -1) {
 		gpt_warnx(gpt, "Error writing PMBR");
@@ -256,7 +256,7 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	if ((sector = gpt_check_ais(gpt, 0, ~0, size)) == -1)
+	if ((sector = gpt_check_ais(gpt, 0, (u_int)~0, size)) == -1)
 		return -1;
 
 	return resizedisk(gpt, sector, size);
