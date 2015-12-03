@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/map.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: map.c,v 1.12 2015/12/02 20:01:44 christos Exp $");
+__RCSID("$NetBSD: map.c,v 1.13 2015/12/03 21:30:54 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __RCSID("$NetBSD: map.c,v 1.12 2015/12/02 20:01:44 christos Exp $");
 #include "gpt_private.h"
 
 static map_t
-mkmap(off_t start, off_t size, int type)
+map_create(off_t start, off_t size, int type)
 {
 	map_t m;
 
@@ -59,7 +59,18 @@ mkmap(off_t start, off_t size, int type)
 	m->map_type = type;
 	m->map_index = 0;
 	m->map_data = NULL;
+	m->map_alloc = 0;
 	return m;
+}
+
+static void
+map_destroy(map_t m)
+{
+	if (m == NULL)
+		return;
+	if (m->map_alloc)
+		free(m->map_data);
+	free(m);
 }
 
 static const char *maptypes[] = {
@@ -83,7 +94,7 @@ map_type(int t)
 }
 
 map_t
-map_add(gpt_t gpt, off_t start, off_t size, int type, void *data)
+map_add(gpt_t gpt, off_t start, off_t size, int type, void *data, int alloc)
 {
 	map_t m, n, p;
 
@@ -122,6 +133,7 @@ map_add(gpt_t gpt, off_t start, off_t size, int type, void *data)
 		}
 		n->map_type = type;
 		n->map_data = data;
+		n->map_alloc = alloc;
 		return n;
 	}
 
@@ -135,11 +147,12 @@ map_add(gpt_t gpt, off_t start, off_t size, int type, void *data)
 		n->map_type = MAP_TYPE_UNUSED;
 	}
 
-	m = mkmap(start, size, type);
+	m = map_create(start, size, type);
 	if (m == NULL)
 		goto oomem;
 
 	m->map_data = data;
+	m->map_alloc = alloc;
 
 	if (start == n->map_start) {
 		m->map_prev = n->map_prev;
@@ -160,7 +173,7 @@ map_add(gpt_t gpt, off_t start, off_t size, int type, void *data)
 		p->map_next = m;
 		p->map_size -= size;
 	} else {
-		p = mkmap(n->map_start, start - n->map_start, n->map_type);
+		p = map_create(n->map_start, start - n->map_start, n->map_type);
 		if (p == NULL)
 			goto oomem;
 		n->map_start += p->map_size + m->map_size;
@@ -178,6 +191,7 @@ map_add(gpt_t gpt, off_t start, off_t size, int type, void *data)
 
 	return m;
 oomem:
+	map_destroy(m);
 	gpt_warn(gpt, "Can't create map");
 	return NULL;
 }
@@ -221,7 +235,7 @@ map_alloc(gpt_t gpt, off_t start, off_t size, off_t alignment)
 					size = m->map_size - delta;
 			}
 			return map_add(gpt, m->map_start + delta, size,
-				    MAP_TYPE_GPT_PART, NULL);
+			    MAP_TYPE_GPT_PART, NULL, 0);
 		}
 	}
 
@@ -257,9 +271,7 @@ map_resize(gpt_t gpt, map_t m, off_t size, off_t alignment)
 			m->map_next = n->map_next;
 			if (n->map_next != NULL)
 				n->map_next->map_prev = m;
-			if (n->map_data != NULL)
-				free(n->map_data);
-			free(n);
+			map_destroy(n);
 			return size;
 		} else { /* alignment > 0 */
 			prevsize = m->map_size;
@@ -277,9 +289,7 @@ map_resize(gpt_t gpt, map_t m, off_t size, off_t alignment)
 				m->map_next = n->map_next;
 				if (n->map_next != NULL)
 					n->map_next->map_prev = m;
-				if (n->map_data != NULL)
-					free(n->map_data);
-				free(n);
+				map_destroy(n);
 			}
 			return size;
 		}
@@ -293,7 +303,7 @@ map_resize(gpt_t gpt, map_t m, off_t size, off_t alignment)
 		prevsize = m->map_size;
 		m->map_size = alignsize;
 		if (n == NULL || n->map_type != MAP_TYPE_UNUSED) {
-			o = mkmap(m->map_start + alignsize,
+			o = map_create(m->map_start + alignsize,
 				  prevsize - alignsize, MAP_TYPE_UNUSED);
 			if (o == NULL) {
 				gpt_warn(gpt, "Can't create map");
@@ -332,9 +342,7 @@ map_resize(gpt_t gpt, map_t m, off_t size, off_t alignment)
 			m->map_next = n->map_next;
 			if (n->map_next != NULL)
 				n->map_next->map_prev = m;
-			if (n->map_data != NULL)
-				free(n->map_data);
-			free(n);
+			map_destroy(n);
 		}
 		m->map_size = alignsize;
 		return alignsize;
@@ -391,7 +399,7 @@ map_init(gpt_t gpt, off_t size)
 {
 	char buf[32];
 
-	gpt->mediamap = mkmap(0LL, size, MAP_TYPE_UNUSED);
+	gpt->mediamap = map_create(0LL, size, MAP_TYPE_UNUSED);
 	if (gpt->mediamap == NULL) {
 		gpt_warn(gpt, "Can't create map");
 		return -1;
