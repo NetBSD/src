@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.16 2015/12/01 19:25:24 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.17 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,13 +52,10 @@ __RCSID("$NetBSD: create.c,v 1.16 2015/12/01 19:25:24 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static int force;
-static u_int parts;
-static int primary_only;
 static int cmd_create(gpt_t, int, char *[]);
 
 static const char *createhelp[] = {
-    "[-fP] [-p <partitions>]",
+	"[-fP] [-p partitions]",
 };
 
 struct gpt_cmd c_create = {
@@ -72,7 +69,7 @@ struct gpt_cmd c_create = {
 
 
 static int
-create(gpt_t gpt)
+create(gpt_t gpt, u_int parts, int force, int primary_only)
 {
 	off_t last = gpt_last(gpt);
 	map_t map;
@@ -128,8 +125,9 @@ static int
 cmd_create(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
-
-	parts = 128;
+	int force = 0;
+	int primary_only = 0;
+	u_int parts = 128;
 
 	while ((ch = getopt(argc, argv, "fPp:")) != -1) {
 		switch(ch) {
@@ -150,5 +148,5 @@ cmd_create(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return create(gpt);
+	return create(gpt, parts, force, primary_only);
 }
