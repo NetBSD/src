@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.15 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.16 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,7 +72,9 @@ struct gpt_cmd c_restore = {
 	return -1;				\
 }
 
-#define prop_uint(a) prop_number_unsigned_integer_value(a)
+#define prop_uint(a) (u_int)prop_number_unsigned_integer_value(a)
+#define prop_uint16_t(a) (uint16_t)prop_number_unsigned_integer_value(a)
+#define prop_uint8_t(a) (uint8_t)prop_number_unsigned_integer_value(a)
 
 static int
 restore_mbr(gpt_t gpt, struct mbr *mbr, prop_dictionary_t mbr_dict, off_t last)
@@ -84,55 +86,56 @@ restore_mbr(gpt_t gpt, struct mbr *mbr, prop_dictionary_t mbr_dict, off_t last)
 	propnum = prop_dictionary_get(mbr_dict, "index");
 	PROP_ERR(propnum);
 
-	i = prop_number_integer_value(propnum);
+	i = prop_uint(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "flag");
 	PROP_ERR(propnum);
 	part = &mbr->mbr_part[i];
 
-	part->part_flag = prop_uint(propnum);
+	part->part_flag = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "start_head");
 	PROP_ERR(propnum);
-	part->part_shd = prop_uint(propnum);
+	part->part_shd = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "start_sector");
 	PROP_ERR(propnum);
-	part->part_ssect = prop_uint(propnum);
+	part->part_ssect = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "start_cylinder");
 	PROP_ERR(propnum);
-	part->part_scyl = prop_uint(propnum);
+	part->part_scyl = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "type");
 	PROP_ERR(propnum);
-	part->part_typ = prop_uint(propnum);
+	part->part_typ = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "end_head");
 	PROP_ERR(propnum);
-	part->part_ehd = prop_uint(propnum);
+	part->part_ehd = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "end_sector");
 	PROP_ERR(propnum);
-	part->part_esect = prop_uint(propnum);
+	part->part_esect = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "end_cylinder");
 	PROP_ERR(propnum);
-	part->part_ecyl = prop_uint(propnum);
+	part->part_ecyl = prop_uint8_t(propnum);
 	propnum = prop_dictionary_get(mbr_dict, "lba_start_low");
 	PROP_ERR(propnum);
-	part->part_start_lo = htole16(prop_uint(propnum));
+	part->part_start_lo = htole16(prop_uint16_t(propnum));
 	propnum = prop_dictionary_get(mbr_dict, "lba_start_high");
 	PROP_ERR(propnum);
-	part->part_start_hi = htole16(prop_uint(propnum));
+	part->part_start_hi = htole16(prop_uint16_t(propnum));
 	/* adjust PMBR size to size of device */
 	if (part->part_typ == MBR_PTYPE_PMBR) {
 		if (last > 0xffffffff) {
 			mbr->mbr_part[0].part_size_lo = htole16(0xffff);
 			mbr->mbr_part[0].part_size_hi = htole16(0xffff);
 		} else {
-			mbr->mbr_part[0].part_size_lo = htole16(last);
-			mbr->mbr_part[0].part_size_hi = htole16(last >> 16);
+			mbr->mbr_part[0].part_size_lo = htole16((uint16_t)last);
+			mbr->mbr_part[0].part_size_hi = htole16(
+			    (uint16_t)(last >> 16));
 		}
 	} else {
 		propnum = prop_dictionary_get(mbr_dict, "lba_size_low");
 		PROP_ERR(propnum);
-		part->part_size_lo = htole16(prop_uint(propnum));
+		part->part_size_lo = htole16(prop_uint16_t(propnum));
 		propnum = prop_dictionary_get(mbr_dict, "lba_size_high");
 		PROP_ERR(propnum);
-		part->part_size_hi = htole16(prop_uint(propnum));
+		part->part_size_hi = htole16(prop_uint16_t(propnum));
 	}
 	return 0;
 }
@@ -179,7 +182,7 @@ restore_ent(gpt_t gpt, prop_dictionary_t gpt_dict, void *secbuf, u_int gpt_size,
 	}
 	propnum = prop_dictionary_get(gpt_dict, "index");
 	PROP_ERR(propnum);
-	i = prop_number_integer_value(propnum);
+	i = prop_uint(propnum);
 	if (i > entries) {
 		gpt_warnx(gpt, "Entity index out of bounds %u > %u\n",
 		    i, entries);
@@ -259,7 +262,7 @@ restore(gpt_t gpt, const char *infile, int force)
 	propnum = prop_dictionary_get(gpt_dict, "entries");
 	PROP_ERR(propnum);
 	entries = prop_uint(propnum);
-	gpt_size = entries * sizeof(struct gpt_ent) / gpt->secsz;
+	gpt_size = (u_int)(entries * sizeof(struct gpt_ent) / gpt->secsz);
 	if (gpt_size * sizeof(struct gpt_ent) % gpt->secsz)
 		gpt_size++;
 
@@ -322,7 +325,7 @@ restore(gpt_t gpt, const char *infile, int force)
 		gpt_warn(gpt, "Can't seek to end");
 		goto out;
 	}
-	for (i = lastdata + 1; i <= last; i++) {
+	for (i = (u_int)(lastdata + 1); i <= (u_int)last; i++) {
 		if (write(gpt->fd, secbuf, gpt->secsz) != (ssize_t)gpt->secsz) {
 			gpt_warn(gpt, "Error writing");
 			goto out;
@@ -381,9 +384,9 @@ restore(gpt_t gpt, const char *infile, int force)
 	hdr->hdr_revision = htole32(GPT_HDR_REVISION);
 	hdr->hdr_size = htole32(GPT_HDR_SIZE);
 	hdr->hdr_lba_self = htole64(GPT_HDR_BLKNO);
-	hdr->hdr_lba_alt = htole64(last);
-	hdr->hdr_lba_start = htole64(firstdata);
-	hdr->hdr_lba_end = htole64(lastdata);
+	hdr->hdr_lba_alt = htole64((uint64_t)last);
+	hdr->hdr_lba_start = htole64((uint64_t)firstdata);
+	hdr->hdr_lba_end = htole64((uint64_t)lastdata);
 	gpt_uuid_copy(hdr->hdr_guid, gpt_guid);
 	hdr->hdr_lba_table = htole64(2);
 	hdr->hdr_entries = htole32(entries);
@@ -396,9 +399,9 @@ restore(gpt_t gpt, const char *infile, int force)
 		goto out;
 	}
 
-	hdr->hdr_lba_self = htole64(last);
+	hdr->hdr_lba_self = htole64((uint64_t)last);
 	hdr->hdr_lba_alt = htole64(GPT_HDR_BLKNO);
-	hdr->hdr_lba_table = htole64(lastdata + 1);
+	hdr->hdr_lba_table = htole64((uint64_t)(lastdata + 1));
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, GPT_HDR_SIZE));
 	if (lseek(gpt->fd, last * gpt->secsz, SEEK_SET) == -1 ||
