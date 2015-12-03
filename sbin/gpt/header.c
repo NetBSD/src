@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.6 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: header.c,v 1.7 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -71,34 +71,12 @@ header(gpt_t gpt)
 	map_t map;
 	struct gpt_hdr *hdr;
 	char buf[128];
-#ifdef HN_AUTOSCALE
-	char human_num[5];
-#endif
 
-#ifdef HN_AUTOSCALE
-	if (humanize_number(human_num, 5, gpt->mediasz,
-	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
-		human_num[0] = '\0';
-	if (human_num[0] != '\0')
-		printf("Media Size: %ju (%s)\n", (uintmax_t)gpt->mediasz,
-		    human_num);
-	else
-#endif
-		printf("Media Size: %ju\n", (uintmax_t)gpt->mediasz);
-
+	gpt_show_num("Media Size", (uintmax_t)gpt->mediasz);
 	printf("Sector Size: %u\n", gpt->secsz);
 
-#ifdef HN_AUTOSCALE
-	if (humanize_number(human_num, 5, gpt->mediasz / gpt->secsz,
-	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
-		human_num[0] = '\0';
-	if (human_num[0] != '\0')
-		printf("Number of Sectors: %ju (%s)\n",
-		    (uintmax_t)(gpt->mediasz / gpt->secsz), human_num);
-	else
-#endif
-		printf("Number of Sectors: %ju\n",
-		    (uintmax_t)(gpt->mediasz / gpt->secsz));
+	gpt_show_num("Number of Sectors",
+	    (uintmax_t)(gpt->mediasz / gpt->secsz));
 
 	printf("\nHeader Information:\n");
 
@@ -112,19 +90,8 @@ header(gpt_t gpt)
 	revision = le32toh(hdr->hdr_revision);
 	printf("- GPT Header Revision: %u.%u\n", revision >> 16,
 	     revision & 0xffff);
-	printf("- First Data Sector: %ju\n",
-	    (uintmax_t)hdr->hdr_lba_start);
-#ifdef HN_AUTOSCALE
-	if (humanize_number(human_num, 5, hdr->hdr_lba_end,
-	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
-		human_num[0] = '\0';
-	if (human_num[0] != '\0')
-		printf("- Last Data Sector: %ju (%s)\n",
-		    (uintmax_t)hdr->hdr_lba_end, human_num);
-	else
-#endif
-	printf("- Last Data Sector: %ju\n",
-	    (uintmax_t)hdr->hdr_lba_end);
+	gpt_show_num("- First Data Sector", hdr->hdr_lba_start);
+	gpt_show_num("- Last Data Sector", hdr->hdr_lba_end);
 	gpt_uuid_snprintf(buf, sizeof(buf), "%d", hdr->hdr_guid);
 	printf("- Media GUID: %s\n", buf);
 	printf("- Number of GPT Entries: %u\n", hdr->hdr_entries);

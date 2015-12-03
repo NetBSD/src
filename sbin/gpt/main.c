@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 2015/12/03 01:07:28 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.6 2015/12/03 02:02:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.5 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.6 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -151,7 +151,7 @@ main(int argc, char *argv[])
 		case 'm':
 			if (mediasz > 0)
 				usage();
-			mediasz = strtoul(optarg, &p, 10);
+			mediasz = strtol(optarg, &p, 10);
 			if (*p != 0 || mediasz < 1)
 				usage();
 			break;
@@ -165,10 +165,7 @@ main(int argc, char *argv[])
 			flags |= GPT_QUIET;
 			break;
 		case 's':
-			if (secsz > 0)
-				usage();
-			secsz = strtoul(optarg, &p, 10);
-			if (*p != 0 || secsz < 1)
+			if (gpt_uint_get(&secsz) == -1)
 				usage();
 			break;
 		case 'v':
