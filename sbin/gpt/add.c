@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.41 2015/12/03 21:43:25 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.42 2015/12/03 21:46:22 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -200,10 +200,9 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 		goto cleanup;
 
 	return add(gpt, alignment, block, sectors, size, entry, name, type);
+usage:
+	return usage();
 cleanup:
 	free(name);
 	return -1;
-usage:
-	free(name);
-	return usage();
 }
