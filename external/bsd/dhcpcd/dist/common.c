@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: common.c,v 1.16 2015/12/03 21:04:06 christos Exp $");
+ __RCSID("$NetBSD: common.c,v 1.17 2015/12/03 21:04:59 christos Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -181,7 +181,7 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 	}
 
 	/* Don't send to syslog if dumping leases or testing */
-	if (ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))
+	if (ctx && ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))
 		goto out;
 
 	if (ctx && ctx->log_fd != -1) {
