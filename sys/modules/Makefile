@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.160 2015/12/02 00:07:35 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.161 2015/12/03 02:51:01 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,6 @@ SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
-SUBDIR+=	compat_sysv
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	dbcool
