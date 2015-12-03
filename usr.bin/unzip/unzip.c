@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.20 2015/12/03 20:00:12 christos Exp $ */
+/* $NetBSD: unzip.c,v 1.21 2015/12/03 20:01:19 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.20 2015/12/03 20:00:12 christos Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.21 2015/12/03 20:01:19 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -531,6 +531,11 @@ recheck:
 			return;
 	}
 
+	tv[0].tv_sec = now;
+	tv[0].tv_usec = 0;
+	tv[1].tv_sec = mtime;
+	tv[1].tv_usec = 0;
+
 	/* process symlinks */
 	linkname = archive_entry_symlink(e);
 	if (linkname != NULL) {
@@ -539,10 +544,6 @@ recheck:
 		info(" extracting: %s -> %s\n", *path, linkname);
 		if (lchmod(*path, mode) == -1)
 			warning("Cannot set mode for '%s'", *path);
-		tv[0].tv_sec = now;
-		tv[0].tv_usec = 0;
-		tv[1].tv_sec = mtime;
-		tv[1].tv_usec = 0;
 		if (lutimes(*path, tv) == -1)
 			warning("utimes('%s')", *path);
 		return;
@@ -638,10 +639,6 @@ recheck:
 	info("\n");
 
 	/* set access and modification time */
-	tv[0].tv_sec = now;
-	tv[0].tv_usec = 0;
-	tv[1].tv_sec = mtime;
-	tv[1].tv_usec = 0;
 	if (futimes(fd, tv) != 0)
 		error("utimes('%s')", *path);
 	if (close(fd) != 0)
