@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.11 2015/12/02 20:09:54 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.12 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -50,12 +50,11 @@ __RCSID("$NetBSD: resizedisk.c,v 1.11 2015/12/02 20:09:54 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static off_t sector, size;
 
 static int cmd_resizedisk(gpt_t, int, char *[]);
 
 static const char *resizediskhelp[] = {
-    "[-s size]",
+	"[-s size]",
 };
 
 struct gpt_cmd c_resizedisk = {
@@ -79,7 +78,7 @@ struct gpt_cmd c_resizedisk = {
  * - when shrinking, verify that table fits
  */
 static int 
-resizedisk(gpt_t gpt)
+resizedisk(gpt_t gpt, off_t sector, off_t size)
 {
 	map_t mbrmap;
 	struct gpt_hdr *hdr;
@@ -241,6 +240,7 @@ static int
 cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
+	off_t sector, size = 0;
 
 	while ((ch = getopt(argc, argv, "s:")) != -1) {
 		switch(ch) {
@@ -259,5 +259,5 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 	if ((sector = gpt_check_ais(gpt, 0, ~0, size)) == -1)
 		return -1;
 
-	return resizedisk(gpt);
+	return resizedisk(gpt, sector, size);
 }

@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/destroy.c,v 1.6 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: destroy.c,v 1.9 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: destroy.c,v 1.10 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,12 +49,10 @@ __RCSID("$NetBSD: destroy.c,v 1.9 2015/12/01 16:32:19 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static int recoverable;
-static int force;
 static int cmd_destroy(gpt_t, int, char *[]);
 
 static const char *destroyhelp[] = {
-    "[-rf]",
+	"[-rf]",
 };
 
 struct gpt_cmd c_destroy = {
@@ -68,7 +66,7 @@ struct gpt_cmd c_destroy = {
 
 
 static int
-destroy(gpt_t gpt)
+destroy(gpt_t gpt, int force, int recoverable)
 {
 	map_t pri_hdr, sec_hdr;
 
@@ -108,6 +106,8 @@ static int
 cmd_destroy(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
+	int recoverable = 0;
+	int force = 0;
 
 	while ((ch = getopt(argc, argv, "fr")) != -1) {
 		switch(ch) {
@@ -125,5 +125,5 @@ cmd_destroy(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return destroy(gpt);
+	return destroy(gpt, force, recoverable);
 }

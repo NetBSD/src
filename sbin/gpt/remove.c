@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: remove.c,v 1.20 2015/12/01 19:25:24 christos Exp $");
+__RCSID("$NetBSD: remove.c,v 1.21 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,8 +52,8 @@ __RCSID("$NetBSD: remove.c,v 1.20 2015/12/01 19:25:24 christos Exp $");
 static int cmd_remove(gpt_t, int, char *[]);
 
 static const char *removehelp[] = {
-    "-a",
-    "[-b blocknr] [-i index] [-L label] [-s sectors] [-t type]",
+	"-a",
+	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type]",
 };
 
 struct gpt_cmd c_remove = {

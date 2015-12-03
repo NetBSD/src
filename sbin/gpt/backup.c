@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.13 2015/12/02 12:36:53 christos Exp $");
+__RCSID("$NetBSD: backup.c,v 1.14 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -51,10 +51,8 @@ __RCSID("$NetBSD: backup.c,v 1.13 2015/12/02 12:36:53 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static const char *outfile = "/dev/stdout";
-
 static const char *backuphelp[] = {
-    "[-o outfile]",
+	"[-o outfile]",
 };
 
 static int cmd_backup(gpt_t, int, char *[]);
@@ -241,7 +239,7 @@ store_tbl(gpt_t gpt, const map_t m, prop_dictionary_t *type_dict)
 }
 
 static int
-backup(gpt_t gpt)
+backup(gpt_t gpt, const char *outfile)
 {
 	map_t m;
 	struct mbr *mbr;
@@ -309,12 +307,14 @@ backup(gpt_t gpt)
 	propext = prop_dictionary_externalize(props);
 	PROP_ERR(propext);
 	prop_object_release(props);
-	if ((fp = fopen(outfile, "w")) == NULL) {
+	fp = strcmp(outfile, "-") == 0 ? stdout : fopen(outfile, "w");
+	if (fp == NULL) {
 		gpt_warn(gpt, "Can't open `%s'", outfile);
 		return -1;
 	}
 	fputs(propext, fp);
-	fclose(fp);
+	if (fp != stdin)
+		fclose(fp);
 	free(propext);
 	return 0;
 }
@@ -323,6 +323,7 @@ static int
 cmd_backup(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
+	const char *outfile = "-";
 
 	while ((ch = getopt(argc, argv, "o:")) != -1) {
 		switch(ch) {
@@ -336,5 +337,5 @@ cmd_backup(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return backup(gpt);
+	return backup(gpt, outfile);
 }

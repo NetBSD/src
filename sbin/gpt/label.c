@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/label.c,v 1.3 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: label.c,v 1.24 2015/12/02 04:07:11 christos Exp $");
+__RCSID("$NetBSD: label.c,v 1.25 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,8 +53,9 @@ __RCSID("$NetBSD: label.c,v 1.24 2015/12/02 04:07:11 christos Exp $");
 static int cmd_label(gpt_t, int, char *[]);
 
 static const char *labelhelp[] = {
-    "-a <-l label | -f file>",
-    "[-b blocknr] [-i index] [-L label] [-s sectors] [-t uuid] <-l label | -f file>",
+	"-a <-l label | -f file>",
+	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t uuid] "
+	    "<-l label | -f file>",
 };
 
 struct gpt_cmd c_label = {

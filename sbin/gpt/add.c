@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.37 2015/12/02 11:20:34 jnemeth Exp $");
+__RCSID("$NetBSD: add.c,v 1.38 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -51,15 +51,11 @@ __RCSID("$NetBSD: add.c,v 1.37 2015/12/02 11:20:34 jnemeth Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static gpt_uuid_t type;
-static off_t alignment, block, sectors, size;
-static unsigned int entry;
-static uint8_t *name;
 static int cmd_add(gpt_t, int, char *[]);
 
 static const char *addhelp[] = {
-    "[-a alignment] [-b blocknr] [-i index] [-l label]",
-    "[-s size] [-t type]",
+	"[-a alignment] [-b blocknr] [-i index] [-l label]",
+	"[-s size] [-t type]",
 };
 
 struct gpt_cmd c_add = {
@@ -84,7 +80,8 @@ ent_set(struct gpt_ent *ent, const map_t map, const gpt_uuid_t xtype,
 }
 
 static int
-add(gpt_t gpt)
+add(gpt_t gpt, off_t alignment, off_t block, off_t sectors, off_t size,
+    u_int entry, uint8_t *name, gpt_uuid_t type)
 {
 	map_t map;
 	struct gpt_hdr *hdr;
@@ -157,6 +154,12 @@ static int
 cmd_add(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
+	off_t alignment = 0, block = 0, sectors = 0, size = 0;
+	unsigned int entry = 0;
+	uint8_t *name = NULL;
+	gpt_uuid_t type;
+
+	gpt_uuid_copy(type, gpt_uuid_nil);
 
 	while ((ch = getopt(argc, argv, GPT_AIS "b:l:t:")) != -1) {
 		switch(ch) {
@@ -193,5 +196,5 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 	if ((sectors = gpt_check_ais(gpt, alignment, ~0, size)) == -1)
 		return -1;
 
-	return add(gpt);
+	return add(gpt, alignment, block, sectors, size, entry, name, type);
 }

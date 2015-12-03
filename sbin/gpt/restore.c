@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: restore.c,v 1.14 2015/12/02 22:32:04 christos Exp $");
+__RCSID("$NetBSD: restore.c,v 1.15 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,15 +52,11 @@ __RCSID("$NetBSD: restore.c,v 1.14 2015/12/02 22:32:04 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static int force;
-
 static int cmd_restore(gpt_t, int, char *[]);
 
 static const char *restorehelp[] = {
-    "[-F] [-i <infile>]",
+	"[-F] [-i infile]",
 };
-
-static const char *infile = "/dev/stdin";
 
 struct gpt_cmd c_restore = {
 	"restore",
@@ -195,7 +191,7 @@ restore_ent(gpt_t gpt, prop_dictionary_t gpt_dict, void *secbuf, u_int gpt_size,
 }
 
 static int
-restore(gpt_t gpt)
+restore(gpt_t gpt, const char *infile, int force)
 {
 	gpt_uuid_t gpt_guid, uuid;
 	off_t firstdata, last, lastdata, gpe_start, gpe_end;
@@ -233,7 +229,8 @@ restore(gpt_t gpt)
 		map->map_type = MAP_TYPE_UNUSED;
 	}
 
-	props = prop_dictionary_internalize_from_file(infile);
+	props = prop_dictionary_internalize_from_file(
+	    strcmp(infile, "-") == 0 ? "/dev/stdin" : infile);
 	if (props == NULL) {
 		gpt_warnx(gpt, "Unable to read/parse backup file");
 		return -1;
@@ -421,6 +418,8 @@ static int
 cmd_restore(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
+	int force = 0;
+	const char *infile = "-";
 
 	while ((ch = getopt(argc, argv, "Fi:")) != -1) {
 		switch(ch) {
@@ -438,5 +437,5 @@ cmd_restore(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	return restore(gpt);
+	return restore(gpt, infile, force);
 }
