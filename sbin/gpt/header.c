@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.5 2015/12/01 16:32:19 christos Exp $");
+__RCSID("$NetBSD: header.c,v 1.6 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: header.c,v 1.5 2015/12/01 16:32:19 christos Exp $");
 static int cmd_header(gpt_t, int, char *[]);
 
 static const char *headerhelp[] = {
-    "",
+	"",
 };
 
 struct gpt_cmd c_header = {
