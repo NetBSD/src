@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.26 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.27 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -158,9 +158,10 @@ migrate_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
 		ofs = (le32toh(dl->d_partitions[i].p_offset) *
 		    le32toh(dl->d_secsize)) / gpt->secsz;
 		ofs = (ofs > 0) ? ofs - rawofs : 0;
-		ent->ent_lba_start = htole64(start + ofs);
-		ent->ent_lba_end = htole64(start + ofs +
-		    le32toh(dl->d_partitions[i].p_size) - 1LL);
+		ent->ent_lba_start = htole64((uint64_t)(start + ofs));
+		ent->ent_lba_end = htole64((uint64_t)(start + ofs +
+		    (off_t)le32toh((uint64_t)dl->d_partitions[i].p_size)
+		    - 1LL));
 		ent++;
 	}
 
@@ -245,9 +246,10 @@ migrate_netbsd_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
 		ofs = (le32toh(dl->d_partitions[i].p_offset) *
 		    le32toh(dl->d_secsize)) / gpt->secsz;
 		ofs = (ofs > 0) ? ofs - rawofs : 0;
-		ent->ent_lba_start = htole64(ofs);
-		ent->ent_lba_end = htole64(ofs +
-		    le32toh(dl->d_partitions[i].p_size) - 1LL);
+		ent->ent_lba_start = htole64((uint64_t)ofs);
+		ent->ent_lba_end = htole64((uint64_t)(ofs +
+		    (off_t)le32toh((uint64_t)dl->d_partitions[i].p_size)
+		    - 1LL));
 		ent++;
 	}
 
@@ -294,7 +296,8 @@ migrate(gpt_t gpt, u_int parts, int force, int slice)
 				    ent->ent_type, ent->ent_name,
 				    sizeof(ent->ent_name));
 				ent->ent_lba_start = htole64((uint64_t)start);
-				ent->ent_lba_end = htole64(start + size - 1LL);
+				ent->ent_lba_end = htole64(
+				    (uint64_t)(start + size - 1LL));
 				ent++;
 			} else
 				ent = migrate_disklabel(gpt, start, ent);
@@ -308,7 +311,8 @@ migrate(gpt_t gpt, u_int parts, int force, int slice)
 			    ent->ent_type, ent->ent_name,
 			    sizeof(ent->ent_name));
 			ent->ent_lba_start = htole64((uint64_t)start);
-			ent->ent_lba_end = htole64(start + size - 1LL);
+			ent->ent_lba_end = htole64(
+			    (uint64_t)(start + size - 1LL));
 			ent++;
 			break;
 		}
@@ -355,7 +359,8 @@ cmd_migrate(gpt_t gpt, int argc, char *argv[])
 			force = 1;
 			break;
 		case 'p':
-			parts = atoi(optarg);
+			if (gpt_uint_get(&parts) == -1)
+				return usage();
 			break;
 		case 's':
 			slice = 1;

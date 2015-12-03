@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.38 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.39 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,8 +72,9 @@ ent_set(struct gpt_ent *ent, const map_t map, const gpt_uuid_t xtype,
     const uint8_t *xname)
 {
 	gpt_uuid_copy(ent->ent_type, xtype);
-	ent->ent_lba_start = htole64(map->map_start);
-	ent->ent_lba_end = htole64(map->map_start + map->map_size - 1LL);
+	ent->ent_lba_start = htole64((uint64_t)map->map_start);
+	ent->ent_lba_end = htole64((uint64_t)(map->map_start +
+	    map->map_size - 1LL));
 	if (xname == NULL)
 		return;
 	utf8_to_utf16(xname, ent->ent_name, __arraycount(ent->ent_name));
@@ -193,7 +194,7 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 	if (optind != argc)
 		return usage();
 
-	if ((sectors = gpt_check_ais(gpt, alignment, ~0, size)) == -1)
+	if ((sectors = gpt_check_ais(gpt, alignment, ~0U, size)) == -1)
 		return -1;
 
 	return add(gpt, alignment, block, sectors, size, entry, name, type);
