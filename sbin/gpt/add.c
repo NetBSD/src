@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.40 2015/12/03 20:58:08 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.41 2015/12/03 21:43:25 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -168,20 +168,20 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 		switch(ch) {
 		case 'b':
 			if (gpt_human_get(&block) == -1)
-				return usage();
+				goto usage;
 			break;
 		case 'l':
 			if (gpt_name_get(gpt, &name) == -1)
-				return usage();
+				goto usage;
 			break;
 		case 't':
 			if (gpt_uuid_get(gpt, &type) == -1)
-				return usage();
+				goto usage;
 			break;
 		default:
 			if (gpt_add_ais(gpt, &alignment, &entry, &size, ch)
 			    == -1)
-				return usage();
+				goto usage;
 			break;
 		}
 	}
@@ -194,10 +194,16 @@ cmd_add(gpt_t gpt, int argc, char *argv[])
 		gpt_uuid_create(GPT_TYPE_NETBSD_FFS, type, NULL, 0);
 
 	if (optind != argc)
-		return usage();
+		goto cleanup;
 
 	if ((sectors = gpt_check_ais(gpt, alignment, ~0U, size)) == -1)
-		return -1;
+		goto cleanup;
 
 	return add(gpt, alignment, block, sectors, size, entry, name, type);
+cleanup:
+	free(name);
+	return -1;
+usage:
+	free(name);
+	return usage();
 }
