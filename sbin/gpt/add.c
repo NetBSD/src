@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: add.c,v 1.39 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: add.c,v 1.40 2015/12/03 20:58:08 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -139,11 +139,13 @@ add(gpt_t gpt, off_t alignment, off_t block, off_t sectors, off_t size,
 	}
 
 	ent_set(ent, map, type, name);
-	gpt_write_primary(gpt);
+	if (gpt_write_primary(gpt) == -1)
+		return -1;
 
 	ent = gpt_ent_backup(gpt, i);
 	ent_set(ent, map, type, name);
-	gpt_write_backup(gpt);
+	if (gpt_write_backup(gpt) == -1)
+		return -1;
 
 	gpt_uuid_snprintf(buf, sizeof(buf), "%d", type);
 	gpt_msg(gpt, "Partition %d added: %s %" PRIu64 " %" PRIu64, i + 1,
