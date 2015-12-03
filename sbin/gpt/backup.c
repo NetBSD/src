@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.14 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: backup.c,v 1.15 2015/12/03 04:39:41 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -313,7 +313,7 @@ backup(gpt_t gpt, const char *outfile)
 		return -1;
 	}
 	fputs(propext, fp);
-	if (fp != stdin)
+	if (fp != stdout)
 		fclose(fp);
 	free(propext);
 	return 0;
