@@ -1,4 +1,4 @@
-/* $NetBSD: unzip.c,v 1.19 2011/09/06 18:43:41 joerg Exp $ */
+/* $NetBSD: unzip.c,v 1.20 2015/12/03 20:00:12 christos Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: unzip.c,v 1.19 2011/09/06 18:43:41 joerg Exp $");
+__RCSID("$NetBSD: unzip.c,v 1.20 2015/12/03 20:00:12 christos Exp $");
 
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -131,7 +131,6 @@ errorx(const char *fmt, ...)
 	exit(1);
 }
 
-#if 0
 /* non-fatal error message + errno */
 __printflike(1, 2) static void
 warning(const char *fmt, ...)
@@ -147,7 +146,7 @@ warning(const char *fmt, ...)
 	va_end(ap);
 	fprintf(stderr, ": %s\n", strerror(errno));
 }
-#endif
+
 /* non-fatal error message, no errno */
 __printflike(1, 2) static void
 warningx(const char *fmt, ...)
@@ -499,6 +498,7 @@ extract_file(struct archive *a, struct archive_entry *e, char **path)
 	int cr, fd, text, warn, check;
 	ssize_t len;
 	unsigned char *p, *q, *end;
+	const char *linkname;
 
 	mode = archive_entry_mode(e) & 0777;
 	if (mode == 0)
@@ -529,6 +529,32 @@ recheck:
 	} else {
 		if (f_opt)
 			return;
+	}
+
+	/* process symlinks */
+	linkname = archive_entry_symlink(e);
+	if (linkname != NULL) {
+		if (symlink(linkname, *path) == -1)
+			error("symlink('%s', '%s')", linkname, *path);
+		info(" extracting: %s -> %s\n", *path, linkname);
+		if (lchmod(*path, mode) == -1)
+			warning("Cannot set mode for '%s'", *path);
+		tv[0].tv_sec = now;
+		tv[0].tv_usec = 0;
+		tv[1].tv_sec = mtime;
+		tv[1].tv_usec = 0;
+		if (lutimes(*path, tv) == -1)
+			warning("utimes('%s')", *path);
+		return;
+	}
+
+	/* process hardlinks */
+	linkname = archive_entry_hardlink(e);
+	if (linkname != NULL) {
+		if (link(linkname, *path) == -1)
+			error("link('%s', '%s')", linkname, *path);
+		info(" extracting: %s link to %s\n", *path, linkname);
+		return;
 	}
 
 	if ((fd = open(*path, O_RDWR|O_CREAT|O_TRUNC, mode)) < 0)
@@ -658,7 +684,7 @@ extract(struct archive *a, struct archive_entry *e)
 	}
 
 	/* I don't think this can happen in a zipfile.. */
-	if (!S_ISDIR(filetype) && !S_ISREG(filetype)) {
+	if (!S_ISDIR(filetype) && !S_ISREG(filetype) && !S_ISLNK(filetype)) {
 		warningx("skipping non-regular entry '%s'", pathname);
 		ac(archive_read_data_skip(a));
 		free(pathname);
@@ -714,7 +740,7 @@ extract_stdout(struct archive *a, struct archive_entry *e)
 	filetype = archive_entry_filetype(e);
 
 	/* I don't think this can happen in a zipfile.. */
-	if (!S_ISDIR(filetype) && !S_ISREG(filetype)) {
+	if (!S_ISDIR(filetype) && !S_ISREG(filetype) && !S_ISLNK(filetype)) {
 		warningx("skipping non-regular entry '%s'", pathname);
 		ac(archive_read_data_skip(a));
 		free(pathname);
