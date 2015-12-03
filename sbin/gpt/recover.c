@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.12 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.13 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -104,9 +104,9 @@ recover_gpt_hdr(gpt_t gpt, int type, off_t last)
 	}
 	memcpy((*dgpt)->map_data, sgpt->map_data, gpt->secsz);
 	hdr = (*dgpt)->map_data;
-	hdr->hdr_lba_self = htole64((*dgpt)->map_start);
-	hdr->hdr_lba_alt = htole64(stbl->map_start);
-	hdr->hdr_lba_table = htole64(dtbl->map_start);
+	hdr->hdr_lba_self = htole64((uint64_t)(*dgpt)->map_start);
+	hdr->hdr_lba_alt = htole64((uint64_t)stbl->map_start);
+	hdr->hdr_lba_table = htole64((uint64_t)dtbl->map_start);
 	hdr->hdr_crc_self = 0;
 	hdr->hdr_crc_self = htole32(crc32(hdr, le32toh(hdr->hdr_size)));
 	if (gpt_write(gpt, *dgpt) == -1) {
@@ -181,7 +181,7 @@ recover(gpt_t gpt, int recoverable)
 		return -1;
 	}
 
-	last = gpt->mediasz / gpt->secsz - 1LL;
+	last = (uint64_t)(gpt->mediasz / gpt->secsz - 1LL);
 
 	if (gpt->gpt != NULL &&
 	    ((struct gpt_hdr *)(gpt->gpt->map_data))->hdr_lba_alt != last) {
@@ -192,7 +192,7 @@ recover(gpt_t gpt, int recoverable)
 
 	if (gpt->tbl != NULL && gpt->lbt == NULL) {
 		if (recover_gpt_tbl(gpt, MAP_TYPE_SEC_GPT_TBL,
-		    last - gpt->tbl->map_size) == -1)
+		    (off_t)last - gpt->tbl->map_size) == -1)
 			return -1;
 	} else if (gpt->tbl == NULL && gpt->lbt != NULL) {
 		if (recover_gpt_tbl(gpt, MAP_TYPE_PRI_GPT_TBL, 2LL) == -1)
@@ -200,7 +200,8 @@ recover(gpt_t gpt, int recoverable)
 	}
 
 	if (gpt->gpt != NULL && gpt->tpg == NULL) {
-		if (recover_gpt_hdr(gpt, MAP_TYPE_SEC_GPT_HDR, last) == -1)
+		if (recover_gpt_hdr(gpt, MAP_TYPE_SEC_GPT_HDR,
+		    (off_t)last) == -1)
 			return -1;
 	} else if (gpt->gpt == NULL && gpt->tpg != NULL) {
 		if (recover_gpt_hdr(gpt, MAP_TYPE_PRI_GPT_HDR, 1LL) == -1)
