@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.60 2015/12/03 02:16:00 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.61 2015/12/03 21:30:54 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -308,7 +308,7 @@ gpt_mbr(gpt_t gpt, off_t lba)
 			    (uintmax_t)lba);
 		else if (gpt->verbose > 1)
 			gpt_msg(gpt, "PMBR at sector %ju", (uintmax_t)lba);
-		p = map_add(gpt, lba, 1LL, MAP_TYPE_PMBR, mbr);
+		p = map_add(gpt, lba, 1LL, MAP_TYPE_PMBR, mbr, 1);
 		goto out;
 	}
 	if (pmbr)
@@ -316,7 +316,7 @@ gpt_mbr(gpt_t gpt, off_t lba)
 	else if (gpt->verbose > 1)
 		gpt_msg(gpt, "MBR at sector %ju", (uintmax_t)lba);
 
-	p = map_add(gpt, lba, 1LL, MAP_TYPE_MBR, mbr);
+	p = map_add(gpt, lba, 1LL, MAP_TYPE_MBR, mbr, 1);
 	if (p == NULL)
 		goto out;
 
@@ -340,8 +340,7 @@ gpt_mbr(gpt_t gpt, off_t lba)
 			    mbr->mbr_part[i].part_typ,
 			    (uintmax_t)start, (uintmax_t)size);
 		if (mbr->mbr_part[i].part_typ != MBR_PTYPE_EXT_LBA) {
-			// XXX: map add with non-allocated memory
-			m = map_add(gpt, start, size, MAP_TYPE_MBR_PART, p);
+			m = map_add(gpt, start, size, MAP_TYPE_MBR_PART, p, 0);
 			if (m == NULL)
 				return -1;
 			m->map_index = i + 1;
@@ -415,13 +414,13 @@ gpt_gpt(gpt_t gpt, off_t lba, int found)
 		    (lba == 1) ? "Pri" : "Sec", (uintmax_t)lba);
 
 	m = map_add(gpt, lba, 1, (lba == 1)
-	    ? MAP_TYPE_PRI_GPT_HDR : MAP_TYPE_SEC_GPT_HDR, hdr);
+	    ? MAP_TYPE_PRI_GPT_HDR : MAP_TYPE_SEC_GPT_HDR, hdr, 1);
 	if (m == NULL)
 		return (-1);
 
 	m = map_add(gpt, (off_t)le64toh((uint64_t)hdr->hdr_lba_table),
 	    (off_t)blocks,
-	    lba == 1 ? MAP_TYPE_PRI_GPT_TBL : MAP_TYPE_SEC_GPT_TBL, p);
+	    lba == 1 ? MAP_TYPE_PRI_GPT_TBL : MAP_TYPE_SEC_GPT_TBL, p, 1);
 	if (m == NULL)
 		return (-1);
 
@@ -444,9 +443,8 @@ gpt_gpt(gpt_t gpt, off_t lba, int found)
 			    (uintmax_t)le64toh(ent->ent_lba_start),
 			    (uintmax_t)size);
 		}
-		// XXX: map add with not allocated memory.
 		m = map_add(gpt, (off_t)le64toh((uint64_t)ent->ent_lba_start),
-		    size, MAP_TYPE_GPT_PART, ent);
+		    size, MAP_TYPE_GPT_PART, ent, 0);
 		if (m == NULL)
 			return (-1);
 		m->map_index = i + 1;
@@ -835,7 +833,7 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 		return -1;
 	}
 	if ((gpt->gpt = map_add(gpt, 1LL, 1LL,
-	    MAP_TYPE_PRI_GPT_HDR, p)) == NULL) {
+	    MAP_TYPE_PRI_GPT_HDR, p, 1)) == NULL) {
 		free(p);
 		gpt_warnx(gpt, "Can't add the primary GPT");
 		return -1;
@@ -846,7 +844,7 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 		return -1;
 	}
 	if ((gpt->tbl = map_add(gpt, 2LL, blocks,
-	    MAP_TYPE_PRI_GPT_TBL, p)) == NULL) {
+	    MAP_TYPE_PRI_GPT_TBL, p, 1)) == NULL) {
 		free(p);
 		gpt_warnx(gpt, "Can't add the primary GPT table");
 		return -1;
@@ -892,13 +890,13 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 	}
 
 	if ((gpt->tpg = map_add(gpt, last, 1LL,
-	    MAP_TYPE_SEC_GPT_HDR, p)) == NULL) {
+	    MAP_TYPE_SEC_GPT_HDR, p, 1)) == NULL) {
 		gpt_warnx(gpt, "Can't add the secondary GPT");
 		return -1;
 	}
 
 	if ((gpt->lbt = map_add(gpt, last - blocks, blocks,
-	    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data)) == NULL) {
+	    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data, 0)) == NULL) {
 		gpt_warnx(gpt, "Can't add the secondary GPT table");
 		return -1;
 	}

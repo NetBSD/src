@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.18 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.19 2015/12/03 21:30:54 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -102,7 +102,7 @@ create(gpt_t gpt, u_int parts, int force, int primary_only)
 		mbr->mbr_sig = htole16(MBR_SIG);
 		gpt_create_pmbr_part(mbr->mbr_part, last);
 
-		map = map_add(gpt, 0LL, 1LL, MAP_TYPE_PMBR, mbr);
+		map = map_add(gpt, 0LL, 1LL, MAP_TYPE_PMBR, mbr, 1);
 		if (gpt_write(gpt, map) == -1) {
 			gpt_warn(gpt, "Can't write PMBR");
 			return -1;

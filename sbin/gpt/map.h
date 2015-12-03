@@ -46,11 +46,12 @@ struct map {
 #define	MAP_TYPE_PMBR		8
 	unsigned int map_index;
 	void 	*map_data;
+	int	map_alloc;
 };
 
 struct gpt;
 
-struct map *map_add(struct gpt *, off_t, off_t, int, void *);
+struct map *map_add(struct gpt *, off_t, off_t, int, void *, int);
 struct map *map_alloc(struct gpt *, off_t, off_t, off_t);
 struct map *map_find(struct gpt *, int);
 struct map *map_first(struct gpt *);
