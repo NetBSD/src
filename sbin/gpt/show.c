@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.28 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.29 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -163,24 +163,6 @@ show(gpt_t gpt, int show)
 	return 0;
 }
 
-static void
-show_num(gpt_t gpt, const char *prompt, uintmax_t num)
-{
-#ifdef HN_AUTOSCALE
-	char human_num[5];
-	if (humanize_number(human_num, 5, (int64_t)(num * gpt->secsz),
-	    "", HN_AUTOSCALE, HN_NOSPACE|HN_B) < 0)
-		human_num[0] = '\0';
-#endif
-	printf("%s: %ju", prompt, num);
-#ifdef HN_AUTOSCALE
-	if (human_num[0] != '\0')
-		printf("(%s)", human_num);
-#endif
-
-	printf("\n");
-}
-
 static int
 show_one(gpt_t gpt, unsigned int entry)
 {
@@ -199,8 +181,8 @@ show_one(gpt_t gpt, unsigned int entry)
 	ent = m->map_data;
 
 	printf("Details for index %d:\n", entry);
-	show_num(gpt, "Start", m->map_start);
-	show_num(gpt, "Size", m->map_size);
+	gpt_show_num("Start", (uintmax_t)(m->map_start * gpt->secsz));
+	gpt_show_num("Size", (uintmax_t)(m->map_size * gpt->secsz));
 
 	gpt_uuid_snprintf(s1, sizeof(s1), "%s", ent->ent_type);
 	gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_type);
@@ -247,7 +229,7 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 			xshow |= SHOW_GUID;
 			break;
 		case 'i':
-			if (gpt_entry_get(&entry) == -1)
+			if (gpt_uint_get(&entry) == -1)
 				return usage();
 			break;
 		case 'l':

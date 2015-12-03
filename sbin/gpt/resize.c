@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.20 2015/12/03 01:16:21 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.21 2015/12/03 02:02:43 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -72,6 +72,7 @@ resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size)
 	struct gpt_ent *ent;
 	unsigned int i;
 	off_t alignsecs, newsize;
+	uint64_t end;
 	
 
 	if ((hdr = gpt_hdr(gpt)) == NULL)
@@ -108,13 +109,14 @@ resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size)
 	if (newsize == -1)
 		return -1;
 
-	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
+	end = htole64((uint64_t)(map->map_start + newsize - 1LL));
+	ent->ent_lba_end = end;
 
 	if (gpt_write_primary(gpt) == -1)
 		return -1;
 
 	ent = gpt_ent(gpt->gpt, gpt->lbt, i);
-	ent->ent_lba_end = htole64(map->map_start + newsize - 1LL);
+	ent->ent_lba_end = end;
 
 	if (gpt_write_backup(gpt) == -1)
 		return -1;
