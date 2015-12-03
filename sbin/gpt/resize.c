@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.19 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.20 2015/12/03 01:16:21 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -76,8 +76,6 @@ resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size)
 
 	if ((hdr = gpt_hdr(gpt)) == NULL)
 		return -1;
-
-	ent = NULL;
 
 	i = entry - 1;
 	ent = gpt_ent_primary(gpt, i);
