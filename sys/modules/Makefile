@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.161 2015/12/03 02:51:01 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.162 2015/12/03 10:38:21 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -211,6 +211,7 @@ SUBDIR+=	wmimsi
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
@@ -218,6 +219,7 @@ SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
 .if ${MACHINE_ARCH} == "i386"
