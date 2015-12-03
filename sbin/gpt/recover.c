@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.13 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.14 2015/12/03 21:30:54 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -98,7 +98,7 @@ recover_gpt_hdr(gpt_t gpt, int type, off_t last)
 		gpt_warn(gpt, "Cannot allocate %s GPT header", name);
 		return -1;
 	}
-	if ((*dgpt = map_add(gpt, last, 1LL, type, p)) == NULL) {
+	if ((*dgpt = map_add(gpt, last, 1LL, type, p, 1)) == NULL) {
 		gpt_warnx(gpt, "Cannot add %s GPT header", name);
 		return -1;
 	}
@@ -141,8 +141,7 @@ recover_gpt_tbl(gpt_t gpt, int type, off_t start)
 		return -1;
 	}
 
-	// XXX: non allocated memory
-	*dtbl = map_add(gpt, start, stbl->map_size, type, stbl->map_data);
+	*dtbl = map_add(gpt, start, stbl->map_size, type, stbl->map_data, 0);
 	if (*dtbl == NULL) {
 		gpt_warnx(gpt, "Adding %s GPT table failed", name);
 		return -1;
