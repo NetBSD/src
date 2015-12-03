@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.22 2015/12/03 02:02:43 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.23 2015/12/03 21:49:51 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.22 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.23 2015/12/03 21:49:51 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -257,24 +257,24 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	uint64_t size = 0;
 	unsigned int entry = 0;
 	uint8_t *label = NULL;
-	const char *bootpath = NULL;
+	char *bootpath = NULL;
 
 	while ((ch = getopt(argc, argv, "c:i:L:")) != -1) {
 		switch(ch) {
 		case 'c':
 			if (gpt_name_get(gpt, &bootpath) == -1)
-				return usage();
+				goto usage;
 			break;
 		case 'i':
 			if (gpt_uint_get(&entry) == -1)
-				return usage();
+				goto usage;
 			break;
 		case 'L':
 			if (gpt_name_get(gpt, &label) == -1)
-				return usage();
+				goto usage;
 			break;
 		default:
-			return usage();
+			goto usage;
 		}
 	}
 
@@ -286,18 +286,26 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	    ioctl(gpt->fd, DIOCGWEDGEINFO, &dkw) != -1) {
 		if (entry > 0)
 			/* wedges and indexes are mutually exclusive */
-			return usage();
+			goto usage;
 		start = dkw.dkw_offset;
 		size = dkw.dkw_size;
 		ngpt = gpt_open(dkw.dkw_parent, gpt->flags, gpt->verbose,
 		    gpt->mediasz, gpt->secsz);
 		if (ngpt == NULL)
-			return -1;
+			goto cleanup;
 	}
 #endif
-	biosboot(ngpt, start, size, entry, label, bootpath);
+	if (biosboot(ngpt, start, size, entry, label, bootpath) == -1)
+		goto cleanup;
 	if (ngpt != gpt)
 		gpt_close(ngpt);
-
 	return 0;
+usage:
+	usage();
+cleanup:
+	if (ngpt != gpt)
+		gpt_close(ngpt);
+	free(bootpath);
+	free(label);
+	return -1;
 }
