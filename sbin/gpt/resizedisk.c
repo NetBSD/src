@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.13 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.14 2015/12/03 02:09:20 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -174,19 +174,18 @@ resizedisk(gpt_t gpt, off_t sector, off_t size)
 			newloc = sector;
 		else
 			newloc = last;
+
 		if ((p = calloc(1, gpt->secsz)) == NULL) {
-			gpt_warn(gpt, "Error allocating secondary GPT");
+			gpt_warn(gpt, "Error allocating secondary GPT header");
 			return -1;
 		}
-		if (gpt->lbt == NULL) {
-			gpt_warn(gpt, "Error adding secondary GPT");
-			return -1;
-		}
+
 		gpt->tpg = map_add(gpt, newloc, 1LL, MAP_TYPE_SEC_GPT_HDR, p);
-		if (gpt->lbt == NULL) {
-			gpt_warn(gpt, "Error adding secondary GPT");
+		if (gpt->tpg == NULL) {
+			gpt_warn(gpt, "Error adding secondary GPT header");
 			return -1;
 		}
+
 		// XXX: map add with non-allocated memory
 		gpt->lbt = map_add(gpt, newloc - gpt_size, gpt_size,
 		    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data);
