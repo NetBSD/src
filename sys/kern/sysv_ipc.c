@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.30 2015/11/06 02:26:42 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.31 2015/12/03 02:51:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.30 2015/11/06 02:26:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.31 2015/12/03 02:51:00 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/syscall.h>
@@ -60,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.30 2015/11/06 02:26:42 pgoyette Exp $
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 #include <sys/kauth.h>
-
-static int (*kern_sysvipc50_sysctl_p)(SYSCTLFN_ARGS);
 
 /*
  * Values in support of System V compatible shared memory.	XXX
@@ -125,6 +124,10 @@ struct	msginfo msginfo = {
 };
 #endif
 
+#if defined(COMPAT_50)
+int sysctl_kern_sysvipc50(SYSCTLFN_PROTO);
+#endif
+
 MODULE(MODULE_CLASS_EXEC, sysv_ipc, NULL);
  
 SYSCTL_SETUP_PROTO(sysctl_ipc_setup);
@@ -132,24 +135,53 @@ SYSCTL_SETUP_PROTO(sysctl_ipc_setup);
 static struct sysctllog *sysctl_sysvipc_clog = NULL;
 
 static const struct syscall_package sysvipc_syscalls[] = {
-#ifdef SYSVSHM
+#if defined(SYSVSHM)
 	{ SYS___shmctl50, 0, (sy_call_t *)sys___shmctl50 },
 	{ SYS_shmat, 0, (sy_call_t *)sys_shmat },
 	{ SYS_shmdt, 0, (sy_call_t *)sys_shmdt },
 	{ SYS_shmget, 0, (sy_call_t *)sys_shmget },
+#if defined(COMPAT_10) && !defined(_LP64)
+	{ SYS_compat_10_oshmsys, 0, (sy_call_t *)compat_10_sys_shmsys },
 #endif
-#ifdef SYSVSEM
+#if defined(COMPAT_14)
+	{ SYS_compat_14_shmctl, 0, (sy_call_t *)compat_14_sys_shmctl },
+#endif
+#if defined(COMPAT_50)
+	{ SYS_compat_50___shmctl13, 0, (sy_call_t *)compat_50_sys___shmctl13 },
+#endif
+#endif	/* SYSVSHM */
+
+#if defined(SYSVSEM)
 	{ SYS_____semctl50, 0, (sy_call_t *)sys_____semctl50 },
 	{ SYS_semget, 0, (sy_call_t *)sys_semget },
 	{ SYS_semop, 0, (sy_call_t *)sys_semop },
 	{ SYS_semconfig, 0, (sy_call_t *)sys_semconfig },
+#if defined(COMPAT_10) && !defined(_LP64)
+	{ SYS_compat_10_osemsys, 0, (sy_call_t *)compat_10_sys_semsys },
 #endif
-#ifdef SYSVMSG
+#if defined(COMPAT_14)
+	{ SYS_compat_14___semctl, 0, (sy_call_t *)compat_14_sys___semctl },
+#endif
+#if defined(COMPAT_50)
+	{ SYS_compat_50_____semctl13, 0, (sy_call_t *)compat_50_sys_____semctl13 },
+#endif
+#endif	/* SYSVSEM */
+
+#if defined(SYSVMSG)
 	{ SYS___msgctl50, 0, (sy_call_t *)sys___msgctl50 },
 	{ SYS_msgget, 0, (sy_call_t *)sys_msgget },
 	{ SYS_msgsnd, 0, (sy_call_t *)sys_msgsnd },
 	{ SYS_msgrcv, 0, (sy_call_t *)sys_msgrcv },
+#if defined(COMPAT_10) && !defined(_LP64)
+	{ SYS_compat_10_omsgsys, 0, (sy_call_t *)compat_10_sys_msgsys },
 #endif
+#if defined(COMPAT_14)
+	{ SYS_compat_14_msgctl, 0, (sy_call_t *)compat_14_sys_msgctl },
+#endif
+#if defined(COMPAT_50)
+	{ SYS_compat_50___msgctl13, 0, (sy_call_t *)compat_50_sys___msgctl13 },
+#endif
+#endif	/* SYSVMSG */
 	{ 0, 0, NULL }
 };
 
@@ -172,9 +204,6 @@ sysv_ipc_modcmd(modcmd_t cmd, void *arg)
 		error = syscall_establish(NULL, sysvipc_syscalls);
 		if (error)
 			sysvipcfini();
-
-		/* Assume no compat sysctl routine for now */
-		kern_sysvipc50_sysctl_p = NULL;
 
 		/*
 		 * Initialize each sub-component, including their
@@ -241,13 +270,6 @@ sysv_ipc_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 	return error;
-}
-
-void
-sysvipc50_set_compat_sysctl(int (*compat_sysctl)(SYSCTLFN_PROTO))
-{
-
-	kern_sysvipc50_sysctl_p = compat_sysctl;
 }
 
 static kauth_listener_t sysvipc_listener = NULL;
@@ -367,15 +389,16 @@ sysctl_kern_sysvipc(SYSCTLFN_ARGS)
 	int i, error, ret;
 
 /*
- * If compat_sysv module has loaded the compat sysctl, call it.  If
- * it handles the request completely (either success or error), just
- * return.  Otherwise fallthrough to the non-compat_sysv sysctl code.
+ * If present, call the compat sysctl() code.  If it handles the request
+ * completely (either success or error), return.  Otherwise fallthrough
+ * to the non-compat sysctl code.
  */
-	if (kern_sysvipc50_sysctl_p != NULL) {
-		error = (*kern_sysvipc50_sysctl_p)(SYSCTLFN_CALL(rnode));
-		if (error != EPASSTHROUGH)
-			return error;
-	}
+
+#if defined(COMPAT_50)
+	error = sysctl_kern_sysvipc50(SYSCTLFN_CALL(rnode));
+	if (error != EPASSTHROUGH)
+		return error;
+#endif
 
 	if (namelen != 1)
 		return EINVAL;
