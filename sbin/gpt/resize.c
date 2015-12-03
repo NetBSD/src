@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resize.c,v 1.18 2015/12/02 20:01:44 christos Exp $");
+__RCSID("$NetBSD: resize.c,v 1.19 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -49,13 +49,10 @@ __RCSID("$NetBSD: resize.c,v 1.18 2015/12/02 20:01:44 christos Exp $");
 #include "gpt.h"
 #include "gpt_private.h"
 
-static off_t alignment, sectors, size;
-static unsigned int entry;
-
 static int cmd_resize(gpt_t, int, char *[]);
 
 static const char *resizehelp[] = {
-    "-i index [-a alignment] [-s size]",
+	"-i index [-a alignment] [-s size]",
 };
 
 struct gpt_cmd c_resize = {
@@ -68,7 +65,7 @@ struct gpt_cmd c_resize = {
 #define usage() gpt_usage(NULL, &c_resize)
 
 static int
-resize(gpt_t gpt)
+resize(gpt_t gpt, u_int entry, off_t alignment, off_t sectors, off_t size)
 {
 	map_t map;
 	struct gpt_hdr *hdr;
@@ -134,6 +131,8 @@ static int
 cmd_resize(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
+	off_t alignment = 0, sectors, size = 0;
+	unsigned int entry = 0;
 
 	while ((ch = getopt(argc, argv, GPT_AIS)) != -1) {
 		if (gpt_add_ais(gpt, &alignment, &entry, &size, ch) == -1)
@@ -146,5 +145,5 @@ cmd_resize(gpt_t gpt, int argc, char *argv[])
 	if ((sectors = gpt_check_ais(gpt, alignment, entry, size)) == -1)
 		return -1;
 
-	return resize(gpt);
+	return resize(gpt, entry, alignment, sectors, size);
 }

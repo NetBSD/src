@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.20 2015/12/02 12:24:02 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.21 2015/12/03 01:07:28 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.20 2015/12/02 12:24:02 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.21 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -65,20 +65,13 @@ __RCSID("$NetBSD: biosboot.c,v 1.20 2015/12/02 12:24:02 christos Exp $");
 #define DEFAULT_BOOTDIR		"/usr/mdec"
 #define DEFAULT_BOOTCODE	"gptmbr.bin"
 
-static daddr_t start;
-static uint64_t size;
-
-static char *bootpath;
-static unsigned int entry;
-static uint8_t *label;
-
 static int cmd_biosboot(gpt_t, int, char *[]);
 
 static const char *biosboothelp[] = {
-    "[-c bootcode] [-i index] [-L label]",
+	"[-c bootcode] [-i index] [-L label]",
 #if notyet
-    "[-a alignment] [-b blocknr] [-i index] [-l label]",
-    "[-s size] [-t type]",
+	"[-a alignment] [-b blocknr] [-i index] [-l label]",
+	"[-s size] [-t type]",
 #endif
 };
 
@@ -92,25 +85,26 @@ struct gpt_cmd c_biosboot = {
 #define usage() gpt_usage(NULL, &c_biosboot)
 
 static struct mbr*
-read_boot(gpt_t gpt)
+read_boot(gpt_t gpt, const char *bootpath)
 {
-	int bfd, ret = 0;
+	int bfd, ret = -1;
 	struct mbr *buf;
 	struct stat st;
+	char *bp;
 
 	buf = NULL;
 	bfd = -1;
 
 	if (bootpath == NULL)
-		bootpath = strdup(DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE);
+		bp = strdup(DEFAULT_BOOTDIR "/" DEFAULT_BOOTCODE);
 	else if (*bootpath == '/')
-		bootpath = strdup(bootpath);
+		bp = strdup(bootpath);
 	else {
-		if (asprintf(&bootpath, "%s/%s", DEFAULT_BOOTDIR, bootpath) < 0)
-			bootpath = NULL;
+		if (asprintf(&bp, "%s/%s", DEFAULT_BOOTDIR, bootpath) < 0)
+			bp = NULL;
 	}
 
-	if (bootpath == NULL) {
+	if (bp == NULL) {
 		gpt_warn(gpt, "Can't allocate memory for bootpath");
 		goto fail;
 	}
@@ -121,31 +115,31 @@ read_boot(gpt_t gpt)
 	}
 
 
-	if ((bfd = open(bootpath, O_RDONLY)) < 0 || fstat(bfd, &st) == -1) {
-		gpt_warn(gpt, "Can't open `%s'", bootpath);
+	if ((bfd = open(bp, O_RDONLY)) < 0 || fstat(bfd, &st) == -1) {
+		gpt_warn(gpt, "Can't open `%s'", bp);
 		goto fail;
 	}
 
 	if (st.st_size != MBR_DSN_OFFSET) {
 		gpt_warnx(gpt, "The bootcode in `%s' does not match the"
-		    " expected size %u", bootpath, MBR_DSN_OFFSET);
+		    " expected size %u", bp, MBR_DSN_OFFSET);
 		goto fail;
 	}
 
 	if (read(bfd, buf, st.st_size) != st.st_size) {
-		gpt_warn(gpt, "Error reading from `%s'", bootpath);
+		gpt_warn(gpt, "Error reading from `%s'", bp);
 		goto fail;
 	}
 
-	ret++;
-
-    fail:
+	ret = 0;
+fail:
 	if (bfd != -1)
 		close(bfd);
-	if (ret == 0) {
+	if (ret == -1) {
 		free(buf);
 		buf = NULL;
 	}
+	free(bp);
 	return buf;
 }
 
@@ -169,7 +163,8 @@ set_bootable(gpt_t gpt, map_t map, map_t tbl, unsigned int i)
 }
 
 static int
-biosboot(gpt_t gpt)
+biosboot(gpt_t gpt, daddr_t start, uint64_t size, u_int entry, uint8_t *label,
+    const char *bootpath)
 {
 	map_t mbrmap, m;
 	struct mbr *mbr, *bootcode;
@@ -194,7 +189,7 @@ biosboot(gpt_t gpt)
 	/*
 	 * Update the boot code
 	 */
-	if ((bootcode = read_boot(gpt)) == NULL) {
+	if ((bootcode = read_boot(gpt, bootpath)) == NULL) {
 		gpt_warnx(gpt, "Error reading bootcode");
 		return -1;
 	}
@@ -256,9 +251,13 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 #ifdef DIOCGWEDGEINFO
 	struct dkwedge_info dkw;
 #endif
-	char *dev;
 	int ch;
 	gpt_t ngpt = gpt;
+	daddr_t start = 0;
+	uint64_t size = 0;
+	unsigned int entry = 0;
+	uint8_t *label = NULL;
+	const char *bootpath = NULL;
 
 	while ((ch = getopt(argc, argv, "c:i:L:")) != -1) {
 		switch(ch) {
@@ -282,25 +281,21 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 	if (argc != optind)
 		return usage();
 
-	start = 0;
-	size = 0;
-
 #ifdef DIOCGWEDGEINFO
 	if ((gpt->sb.st_mode & S_IFMT) != S_IFREG &&
 	    ioctl(gpt->fd, DIOCGWEDGEINFO, &dkw) != -1) {
 		if (entry > 0)
 			/* wedges and indexes are mutually exclusive */
 			return usage();
-		dev = dkw.dkw_parent;
 		start = dkw.dkw_offset;
 		size = dkw.dkw_size;
-		ngpt = gpt_open(dev, gpt->flags, gpt->verbose,
+		ngpt = gpt_open(dkw.dkw_parent, gpt->flags, gpt->verbose,
 		    gpt->mediasz, gpt->secsz);
 		if (ngpt == NULL)
 			return -1;
 	}
 #endif
-	biosboot(ngpt);
+	biosboot(ngpt, start, size, entry, label, bootpath);
 	if (ngpt != gpt)
 		gpt_close(ngpt);
 

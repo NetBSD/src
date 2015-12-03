@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4 2015/12/01 16:33:55 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.5 2015/12/03 01:07:28 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.4 2015/12/01 16:33:55 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.5 2015/12/03 01:07:28 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -100,15 +100,15 @@ usage(void)
 {
 	const char *p = getprogname();
 	const char *f =
-	    "[-nrqv] [-m <mediasize>] [-s <sectorsize>]";
+	    "[-nrqv] [-m mediasize] [-s sectorsize]";
 	size_t i;
 
 	if (strcmp(p, "gpt") == 0)
 		fprintf(stderr,
-		    "Usage: %s %s <command> [<args>] <device>\n", p, f);
+		    "Usage: %s %s command device\n", p, f);
 	else
 		fprintf(stderr,
-		    "Usage: %s %s <device> <command> [<args>]\n", p, f);
+		    "Usage: %s %s device command\n", p, f);
 	fprintf(stderr, "Commands:\n");
 	for (i = 0; i < __arraycount(cmdsw); i++)
 		gpt_usage("\t", cmdsw[i]);
