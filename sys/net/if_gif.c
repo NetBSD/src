@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.92 2015/11/11 03:57:57 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.93 2015/12/03 02:50:49 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.92 2015/11/11 03:57:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.93 2015/12/03 02:50:49 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -162,12 +162,6 @@ gif_clone_destroy(struct ifnet *ifp)
 
 	gif_delete_tunnel(&sc->gif_if);
 	LIST_REMOVE(sc, gif_list);
-#ifdef INET6
-	encap_detach(sc->encap_cookie6);
-#endif
-#ifdef INET
-	encap_detach(sc->encap_cookie4);
-#endif
 
 	bpf_detach(ifp);
 	if_detach(ifp);
