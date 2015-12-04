@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.14 2015/12/03 21:30:54 christos Exp $");
+__RCSID("$NetBSD: recover.c,v 1.15 2015/12/04 16:46:24 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -68,9 +68,11 @@ static int
 recover_gpt_hdr(gpt_t gpt, int type, off_t last)
 {
 	const char *name, *origname;
-	void *p;
 	map_t *dgpt, dtbl, sgpt, stbl;
 	struct gpt_hdr *hdr;
+
+	if (gpt_add_hdr(gpt, type, last) == -1)
+		return -1;
 
 	switch (type) {
 	case MAP_TYPE_PRI_GPT_HDR:
@@ -94,14 +96,6 @@ recover_gpt_hdr(gpt_t gpt, int type, off_t last)
 		return -1;
 	}
 
-	if ((p = calloc(1, gpt->secsz)) == NULL) {
-		gpt_warn(gpt, "Cannot allocate %s GPT header", name);
-		return -1;
-	}
-	if ((*dgpt = map_add(gpt, last, 1LL, type, p, 1)) == NULL) {
-		gpt_warnx(gpt, "Cannot add %s GPT header", name);
-		return -1;
-	}
 	memcpy((*dgpt)->map_data, sgpt->map_data, gpt->secsz);
 	hdr = (*dgpt)->map_data;
 	hdr->hdr_lba_self = htole64((uint64_t)(*dgpt)->map_start);
