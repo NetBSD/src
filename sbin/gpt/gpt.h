@@ -75,10 +75,11 @@ uint32_t crc32(const void *, size_t);
 void	gpt_close(gpt_t);
 int	gpt_gpt(gpt_t, off_t, int);
 gpt_t	gpt_open(const char *, int, int, off_t, u_int);
-#define GPT_READONLY	1
-#define GPT_MODIFIED	2
-#define GPT_QUIET	4
-#define GPT_NOSYNC	8
+#define GPT_READONLY	0x01
+#define GPT_MODIFIED	0x02
+#define GPT_QUIET	0x04
+#define GPT_NOSYNC	0x08
+#define GPT_FILE	0x10
 
 void*	gpt_read(gpt_t, off_t, size_t);
 off_t	gpt_last(gpt_t);
