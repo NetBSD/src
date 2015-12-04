@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.68 2015/10/19 02:47:05 msaitoh Exp $	*/
+/*	$NetBSD: i386.c,v 1.69 2015/12/04 05:34:59 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.68 2015/10/19 02:47:05 msaitoh Exp $");
+__RCSID("$NetBSD: i386.c,v 1.69 2015/12/04 05:34:59 msaitoh Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -373,7 +373,7 @@ const struct cpu_cpuid_nameclass i386_cpuid_cpus[] = {
 				[0x57] = "Next gen Xeon Phi",
 				[0x5a] = "Atom E3500",
 				[0x5d] = "Atom X3-C3000 (Silvermont)",
-				[0x5e] = "Next gen Core (Skylake)",
+				[0x5e] = "6th gen Core, Xeon E3-1500 v5 (Skylake)",
 			},
 			"Pentium Pro, II or III",	/* Default */
 			NULL,
