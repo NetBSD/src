@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.29 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.30 2015/12/04 01:46:12 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -137,7 +137,7 @@ show(gpt_t gpt, int show)
 			if (show & SHOW_LABEL) {
 				utf16_to_utf8(ent->ent_name, utfbuf,
 				    sizeof(utfbuf));
-				b = (char *)buf;
+				b = (char *)utfbuf;
 			} else if (show & SHOW_GUID) {
 				gpt_uuid_snprintf( buf, sizeof(buf), "%d",
 				    ent->ent_guid);
