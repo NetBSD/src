@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.4 2015/12/04 01:42:47 christos Exp $
+# $NetBSD: t_gpt.sh,v 1.5 2015/12/04 16:59:39 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,6 +29,7 @@
 #
 
 size=10240
+newsize=20480
 shdr=34
 disk=gpt.disk
 uuid="........-....-....-....-............"
@@ -43,9 +44,9 @@ prepare() {
 prepare_2part() {
 	prepare
 	atf_check -s exit:0 -o empty -e empty gpt create $disk
-	atf_check -s exit:0 -o match:"$(partmsg 1 34 1024)" -e empty \
+	atf_check -s exit:0 -o match:"$(partaddmsg 1 34 1024)" -e empty \
 	    gpt add -t efi -s 1024 $disk
-	atf_check -s exit:0 -o match:"$(partmsg 2 1058 9150)" -e empty \
+	atf_check -s exit:0 -o match:"$(partaddmsg 2 1058 9150)" -e empty \
 	    gpt add $disk
 }
 
@@ -57,8 +58,12 @@ check_2part() {
 	    -e empty gpt show -u $disk
 }
 
-partmsg() {
+partaddmsg() {
 	echo "^$disk: Partition $1 added: $uuid $2 $3\$"
+}
+
+partresmsg() {
+	echo "^$disk: Partition $1 resized: $2 $3\$"
 }
 
 recovermsg() {
@@ -138,6 +143,23 @@ recover_primary_body() {
 	check_2part
 }
 
+atf_test_case resize_2part
+resize_2part_head() {
+	atf_set "descr" "Resize a 2 partition disk and partition"
+}
+
+resize_2part_body() {
+	prepare_2part
+	dd conv=notrunc if=/dev/zero of=$disk seek=$newsize count=1
+	atf_check -s exit:0 -o empty -e empty gpt resizedisk $disk
+	atf_check -s exit:0 -o file:"$src/gpt.resizedisk.show.normal" \
+	    gpt show $disk
+	atf_check -s exit:0 -o match:"$(partresmsg 2 1058 19390)" \
+	    -e empty gpt resize -i 2 $disk
+	atf_check -s exit:0 -o file:"$src/gpt.resizepart.show.normal" \
+	    gpt show $disk
+}
+
 atf_init_test_cases() {
 	atf_add_test_case create_empty
 	atf_add_test_case create_2part
@@ -145,4 +167,5 @@ atf_init_test_cases() {
 	atf_add_test_case restore_2part
 	atf_add_test_case recover_backup
 	atf_add_test_case recover_primary
+	atf_add_test_case resize_2part
 }
