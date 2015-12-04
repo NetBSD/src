@@ -1,0 +1,8 @@
+  start   size  index  contents
+      0      1         PMBR
+      1      1         Pri GPT header
+      2     32         Pri GPT table
+     34   1024      1  GPT part - 14a91fdb-6cc2-43a5-8921-af015f62afa2
+   1058   9150      2  GPT part - a375ee9c-e829-4980-a239-6784f039c7f1
+  10208     32         Sec GPT table
+  10240      1         Sec GPT header
