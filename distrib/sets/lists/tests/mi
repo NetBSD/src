@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.655 2015/12/04 17:19:33 christos Exp $
+# $NetBSD: mi,v 1.656 2015/12/04 19:36:53 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3265,6 +3265,7 @@
 ./usr/tests/sbin/fsck_ffs/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
 ./usr/tests/sbin/fsck_ffs/t_check_quotas	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/fsck_ffs/t_enable_quotas	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt				tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/Atffile			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/Kyuafile			tests-sbin-tests	compattestfile,atf,kyua
 ./usr/tests/sbin/gpt/t_gpt			tests-sbin-tests	compattestfile,atf
