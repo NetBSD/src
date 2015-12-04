@@ -1,4 +1,4 @@
-/*	$NetBSD: odroid_start.S,v 1.19 2015/12/04 11:01:35 skrll Exp $	*/
+/*	$NetBSD: odroid_start.S,v 1.20 2015/12/04 11:09:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include <evbarm/odroid/platform.h>
 
-RCSID("$NetBSD: odroid_start.S,v 1.19 2015/12/04 11:01:35 skrll Exp $")
+RCSID("$NetBSD: odroid_start.S,v 1.20 2015/12/04 11:09:54 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -88,26 +88,26 @@ _C_LABEL(odroid_start):
 	setend	be			/* force big endian */
 #endif
 
-//        .arch_extension virt
-        /* Leave HYP mode */
-        mrs        r0, cpsr
-        and        r0, r0, #(PSR_MODE)   /* Mode is in the low 5 bits of CPSR */
-        teq        r0, #(PSR_HYP32_MODE) /* Hyp Mode? */
-        bne        1f
-        /* Ensure that IRQ, FIQ and Aborts will be disabled after eret */
-        mrs        r0, cpsr
-        bic        r0, r0, #(PSR_MODE)
-        orr        r0, r0, #(PSR_SVC32_MODE)
-        orr        r0, r0, #(I32_bit | F32_bit)
-        msr        spsr_cxsf, r0
-        /* Exit hypervisor mode */
-        adr        lr, 1f
-        msr        elr_hyp, lr
-        eret
+//	.arch_extension virt
+	/* Leave HYP mode */
+	mrs	r0, cpsr
+	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
+	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
+	bne	1f
+	/* Ensure that IRQ, FIQ and Aborts will be disabled after eret */
+	mrs	r0, cpsr
+	bic	r0, r0, #(PSR_MODE)
+	orr	r0, r0, #(PSR_SVC32_MODE)
+	orr	r0, r0, #(I32_bit | F32_bit)
+	msr	spsr_cxsf, r0
+	/* Exit hypervisor mode */
+	adr	lr, 1f
+	msr	elr_hyp, lr
+	eret
 1:
 
-//        /* Move into supervisor mode and disable IRQs/FIQs. */
-//        cpsid        if, #PSR_SVC32_MODE
+//	/* Move into supervisor mode and disable IRQs/FIQs. */
+//	cpsid	if, #PSR_SVC32_MODE
 	/*
 	 * Save any arguments passed to us.  If .start is not at
 	 * 0x80000000 but .text is, we can't directly use the address that
