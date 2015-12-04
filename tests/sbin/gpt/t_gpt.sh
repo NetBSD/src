@@ -1,11 +1,11 @@
 #!/bin/sh
-# $NetBSD: t_gpt.sh,v 1.1 2015/12/04 01:06:17 christos Exp $
+# $NetBSD: t_gpt.sh,v 1.2 2015/12/04 01:06:43 christos Exp $
 #
-# Copyright (c) 2011 The NetBSD Foundation, Inc.
+# Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
 #
 # This code is derived from software contributed to The NetBSD Foundation
-# by Jukka Ruohonen.
+# by Christos Zoulas
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
