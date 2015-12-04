@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: resizedisk.c,v 1.16 2015/12/04 16:46:24 christos Exp $");
+__RCSID("$NetBSD: resizedisk.c,v 1.17 2015/12/04 21:39:18 christos Exp $");
 #endif
 
 #include <sys/bootblock.h>
@@ -272,7 +272,7 @@ cmd_resizedisk(gpt_t gpt, int argc, char *argv[])
 		return -1;
 
 	if (--sector == 0) {
-		gpt_warnx(gpt, "New size %ju too small", (uintptr_t)size);
+		gpt_warnx(gpt, "New size %ju too small", (uintmax_t)size);
 		return -1;
 	}
 
