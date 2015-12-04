@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.61 2015/12/03 21:30:54 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.62 2015/12/04 01:46:32 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -518,6 +518,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz)
 			}
 		}
 	} else {
+		gpt->flags |= GPT_FILE;
 		if (gpt->secsz == 0)
 			gpt->secsz = 512;	/* Fixed size for files. */
 		if (gpt->mediasz == 0) {
@@ -538,7 +539,7 @@ gpt_open(const char *dev, int flags, int verbose, off_t mediasz, u_int secsz)
 	 */
 	devsz = gpt->mediasz / gpt->secsz;
 	if (devsz < 6) {
-		gpt_warnx(gpt, "Need 6 sectorso, we have %ju",
+		gpt_warnx(gpt, "Need 6 sectors, we have %ju",
 		    (uintmax_t)devsz);
 		goto close;
 	}
@@ -583,8 +584,9 @@ gpt_close(gpt_t gpt)
 			goto out;
 #endif
 	}
-	gpt_msg(gpt, "You need to run \"dkctl %s makewedges\""
-	    " for the changes to take effect\n", gpt->device_name);
+	if (!(gpt->flags & GPT_FILE))
+		gpt_msg(gpt, "You need to run \"dkctl %s makewedges\""
+		    " for the changes to take effect\n", gpt->device_name);
 
 out:
 	close(gpt->fd);
@@ -714,7 +716,6 @@ gpt_create_pmbr_part(struct mbr_part *part, off_t last)
 		part->part_size_hi = htole16((uint16_t)(last >> 16));
 	}
 }
-
 
 struct gpt_ent *
 gpt_ent(map_t map, map_t tbl, unsigned int i)
