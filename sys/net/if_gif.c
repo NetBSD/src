@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.94 2015/12/03 03:03:58 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.95 2015/12/04 02:26:11 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.94 2015/12/03 03:03:58 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.95 2015/12/04 02:26:11 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -94,6 +94,7 @@ LIST_HEAD(, gif_softc) gif_softc_list;	/* XXX should be static */
 
 static int	gif_clone_create(struct if_clone *, int);
 static int	gif_clone_destroy(struct ifnet *);
+static int	gif_check_nesting(struct ifnet *, struct mbuf *);
 
 static struct if_clone gif_cloner =
     IF_CLONE_INITIALIZER("gif", gif_clone_create, gif_clone_destroy);
@@ -233,31 +234,56 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 }
 #endif
 
+/*
+ * gif may cause infinite recursion calls when misconfigured.
+ * We'll prevent this by introducing upper limit.
+ */
+static int
+gif_check_nesting(struct ifnet *ifp, struct mbuf *m)
+{
+	struct m_tag *mtag;
+	int *count;
+
+	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
+	if (mtag != NULL) {
+		count = (int *)(mtag + 1);
+		if (++(*count) > max_gif_nesting) {
+			log(LOG_NOTICE,
+			    "%s: recursively called too many times(%d)\n",
+			    if_name(ifp),
+			    *count);
+			return EIO;
+		}
+	} else {
+		mtag = m_tag_get(PACKET_TAG_TUNNEL_INFO, sizeof(*count),
+		    M_NOWAIT);
+		if (mtag != NULL) {
+			m_tag_prepend(m, mtag);
+			count = (int *)(mtag + 1);
+			*count = 0;
+		} else {
+			log(LOG_DEBUG,
+			    "%s: m_tag_get() failed, recursion calls are not prevented.\n",
+			    if_name(ifp));
+		}
+	}
+
+	return 0;
+}
+
 int
 gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int error = 0;
-	static int called = 0;	/* XXX: MUTEX */
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int s;
 
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
-	/*
-	 * gif may cause infinite recursion calls when misconfigured.
-	 * We'll prevent this by introducing upper limit.
-	 * XXX: this mechanism may introduce another problem about
-	 *      mutual exclusion of the variable CALLED, especially if we
-	 *      use kernel thread.
-	 */
-	if (++called > max_gif_nesting) {
-		log(LOG_NOTICE,
-		    "gif_output: recursively called too many times(%d)\n",
-		    called);
-		m_freem(m);
-		error = EIO;	/* is there better errno? */
+	if ((error = gif_check_nesting(ifp, m)) != 0) {
+		m_free(m);
 		goto end;
 	}
 
@@ -295,7 +321,6 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	error = 0;
 
   end:
-	called = 0;		/* reset recursion counter */
 	if (error)
 		ifp->if_oerrors++;
 	return error;
