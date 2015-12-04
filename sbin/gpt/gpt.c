@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.62 2015/12/04 01:46:32 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.63 2015/12/04 16:46:24 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -829,16 +829,8 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 
 	blocks--;		/* Number of blocks in the GPT table. */
 
-	if ((p = calloc(1, gpt->secsz)) == NULL) {
-		gpt_warnx(gpt, "Can't allocate the primary GPT");
+	if (gpt_add_hdr(gpt, MAP_TYPE_PRI_GPT_HDR, 1) == -1)
 		return -1;
-	}
-	if ((gpt->gpt = map_add(gpt, 1LL, 1LL,
-	    MAP_TYPE_PRI_GPT_HDR, p, 1)) == NULL) {
-		free(p);
-		gpt_warnx(gpt, "Can't add the primary GPT");
-		return -1;
-	}
 
 	if ((p = calloc((size_t)blocks, gpt->secsz)) == NULL) {
 		gpt_warnx(gpt, "Can't allocate the primary GPT table");
@@ -885,16 +877,8 @@ gpt_create(gpt_t gpt, off_t last, u_int parts, int primary_only)
 	if (primary_only)
 		return last;
 
-	if ((p = calloc(1, gpt->secsz)) == NULL) {
-		gpt_warnx(gpt, "Can't allocate the secondary GPT");
+	if (gpt_add_hdr(gpt, MAP_TYPE_SEC_GPT_HDR, last) == -1)
 		return -1;
-	}
-
-	if ((gpt->tpg = map_add(gpt, last, 1LL,
-	    MAP_TYPE_SEC_GPT_HDR, p, 1)) == NULL) {
-		gpt_warnx(gpt, "Can't add the secondary GPT");
-		return -1;
-	}
 
 	if ((gpt->lbt = map_add(gpt, last - blocks, blocks,
 	    MAP_TYPE_SEC_GPT_TBL, gpt->tbl->map_data, 0)) == NULL) {
@@ -1201,4 +1185,39 @@ gpt_show_num(const char *prompt, uintmax_t num)
 		printf(" (%s)", human_num);
 #endif
 	printf("\n");
+}
+
+int
+gpt_add_hdr(gpt_t gpt, int type, off_t loc)
+{
+	void *p;
+	map_t *t;
+	const char *msg;
+
+	switch (type) {
+	case MAP_TYPE_PRI_GPT_HDR:
+		t = &gpt->gpt;
+		msg = "primary";
+		break;
+	case MAP_TYPE_SEC_GPT_HDR:
+		t = &gpt->tpg;
+		msg = "secondary";
+		break;
+	default:
+		gpt_warnx(gpt, "Unknown GPT header type %d", type);
+		return -1;
+	}
+
+	if ((p = calloc(1, gpt->secsz)) == NULL) {
+		gpt_warn(gpt, "Error allocating %s GPT header", msg);
+		return -1;
+	}
+
+	*t = map_add(gpt, loc, 1LL, type, p, 1);
+	if (*t == NULL) {
+		gpt_warn(gpt, "Error adding %s GPT header", msg);
+		free(p);
+		return -1;
+	}
+	return 0;
 }
