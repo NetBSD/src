@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.153 2015/07/01 08:13:52 hannken Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.154 2015/12/04 23:54:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.153 2015/07/01 08:13:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.154 2015/12/04 23:54:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -480,6 +480,8 @@ spec_lookup(void *v)
 	return (ENOTDIR);
 }
 
+typedef int (*spec_ioctl_t)(dev_t, u_long, void *, int, struct lwp *);
+
 /*
  * Open a special file.
  */
@@ -496,11 +498,11 @@ spec_open(void *v)
 	struct vnode *vp;
 	dev_t dev;
 	int error;
-	struct partinfo pi;
 	enum kauth_device_req req;
 	specnode_t *sn;
 	specdev_t *sd;
-
+	spec_ioctl_t ioctl;
+	off_t off;
 	u_int gen;
 	const char *name;
 	
@@ -656,13 +658,22 @@ spec_open(void *v)
 	if (cdev_type(dev) != D_DISK || error != 0)
 		return error;
 
-	if (vp->v_type == VCHR)
-		error = cdev_ioctl(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
-	else
-		error = bdev_ioctl(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
+	
+	ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
+
+	error = (*ioctl)(vp->v_rdev, DIOCGMEDIASIZE, &off, FREAD, curlwp);
+	if (error) {
+		struct partinfo pi;
+#ifdef DIAGNOSTIC
+		printf("ioctl DIOCGMEDIASIZE failed %d\n", error);
+#endif
+		error = (*ioctl)(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
+		off = (off_t)pi.disklab->d_secsize * pi.part->p_size;
+	}
+
 	if (error == 0)
-		uvm_vnp_setsize(vp,
-		    (voff_t)pi.disklab->d_secsize * pi.part->p_size);
+		uvm_vnp_setsize(vp, (voff_t)off);
+
 	return 0;
 }
 
