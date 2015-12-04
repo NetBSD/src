@@ -359,11 +359,20 @@ execute_with_shell(char* const* argv)
 
 static
 void
+open_error(const atf::fs::path& path)
+{
+    throw std::runtime_error("Failed to open " + path.str() + " "
+	+ ::strerror(errno));
+}
+	
+
+static
+void
 cat_file(const atf::fs::path& path)
 {
     std::ifstream stream(path.c_str());
     if (!stream)
-        throw std::runtime_error("Failed to open " + path.str());
+	open_error(path);
 
     stream >> std::noskipws;
     std::istream_iterator< char > begin(stream), end;
@@ -379,7 +388,7 @@ grep_file(const atf::fs::path& path, const std::string& regexp)
 {
     std::ifstream stream(path.c_str());
     if (!stream)
-        throw std::runtime_error("Failed to open " + path.str());
+	open_error(path);
 
     bool found = false;
 
@@ -410,11 +419,11 @@ compare_files(const atf::fs::path& p1, const atf::fs::path& p2)
 
     std::ifstream f1(p1.c_str());
     if (!f1)
-        throw std::runtime_error("Failed to open " + p1.str());
+	open_error(p1);
 
     std::ifstream f2(p2.c_str());
     if (!f2)
-        throw std::runtime_error("Failed to open " + p1.str());
+	open_error(p2);
 
     for (;;) {
         char buf1[512], buf2[512];
