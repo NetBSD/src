@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.5 2015/12/04 16:59:39 christos Exp $
+# $NetBSD: t_gpt.sh,v 1.6 2015/12/04 17:15:21 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -64,6 +64,14 @@ partaddmsg() {
 
 partresmsg() {
 	echo "^$disk: Partition $1 resized: $2 $3\$"
+}
+
+partremmsg() {
+	echo "^$disk: Partition $1 removed\$"
+}
+
+partlblmsg() {
+	echo "^$disk: Partition $1 label changed\$"
 }
 
 recovermsg() {
@@ -160,12 +168,41 @@ resize_2part_body() {
 	    gpt show $disk
 }
 
+atf_test_case remove_2part
+remove_2part_head() {
+	atf_set "descr" "Remove a partition from a 2 partition disk"
+}
+
+remove_2part_body() {
+	prepare_2part
+	atf_check -s exit:0 -o match:"$(partremmsg 1)" -e empty gpt remove \
+	    -i 1 $disk
+	atf_check -s exit:0 -o file:"$src/gpt.removepart.show.normal" \
+	    gpt show $disk
+}
+
+atf_test_case label_2part
+label_2part_head() {
+	atf_set "descr" "Label partitions in 2 partition disk"
+}
+
+label_2part_body() {
+	prepare_2part
+	atf_check -s exit:0 -o match:"$(partlblmsg 1)" -e empty \
+	    gpt label -i 1 -l potato $disk
+	atf_check -s exit:0 -o match:"$(partlblmsg 2)" -e empty \
+	    gpt label -i 2 -l tomato $disk
+	atf_check -s exit:0 -o file:"$src/gpt.2part.show.label" gpt show -l $disk
+}
+
 atf_init_test_cases() {
 	atf_add_test_case create_empty
 	atf_add_test_case create_2part
 	atf_add_test_case backup_2part
+	atf_add_test_case remove_2part
 	atf_add_test_case restore_2part
 	atf_add_test_case recover_backup
 	atf_add_test_case recover_primary
 	atf_add_test_case resize_2part
+	atf_add_test_case label_2part
 }
