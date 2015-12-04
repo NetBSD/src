@@ -125,6 +125,7 @@ int	gpt_uint_get(u_int *);
 int	gpt_human_get(off_t *);
 int	gpt_uuid_get(gpt_t, gpt_uuid_t *);
 int	gpt_name_get(gpt_t, void *);
+int	gpt_add_hdr(gpt_t, int, off_t);
 void	gpt_show_num(const char *, uintmax_t);
 
 #endif /* _GPT_H_ */
