@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.654 2015/11/18 18:36:53 christos Exp $
+# $NetBSD: mi,v 1.655 2015/12/04 17:19:33 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3265,6 +3265,17 @@
 ./usr/tests/sbin/fsck_ffs/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
 ./usr/tests/sbin/fsck_ffs/t_check_quotas	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/fsck_ffs/t_enable_quotas	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/Atffile			tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/Kyuafile			tests-sbin-tests	compattestfile,atf,kyua
+./usr/tests/sbin/gpt/t_gpt			tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.2part.show.label	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.2part.show.normal	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.2part.show.uuid	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.backup			tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.empty.show.normal 	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.removepart.show.normal	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.resizedisk.show.normal	tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.resizepart.show.normal	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/ifconfig			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/ifconfig/Atffile		tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/ifconfig/Kyuafile		tests-sbin-tests	compattestfile,atf,kyua
