@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.3 2015/12/04 01:21:12 christos Exp $
+# $NetBSD: t_gpt.sh,v 1.4 2015/12/04 01:42:47 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -33,6 +33,7 @@ shdr=34
 disk=gpt.disk
 uuid="........-....-....-....-............"
 zero="00000000-0000-0000-0000-000000000000"
+src=$(atf_get_srcdir)
 
 prepare() {
 	rm -f $disk
@@ -50,10 +51,10 @@ prepare_2part() {
 
 # Calling this from tests does not work. BUG!
 check_2part() {
-#	atf_check -s exit:0 -o file:gpt.2part.show.normal \
-#	    -e empty gpt show $disk
-#	atf_check -s exit:0 -o file:gpt.2part.show.guid \
-#	    -e empty gpt show -g $disk
+	atf_check -s exit:0 -o file:"$src/gpt.2part.show.normal" \
+	    -e empty gpt show $disk
+	atf_check -s exit:0 -o file:"$src/gpt.2part.show.uuid" \
+	    -e empty gpt show -u $disk
 }
 
 partmsg() {
@@ -72,7 +73,7 @@ create_empty_head() {
 create_empty_body() {
 	prepare
 	atf_check -s exit:0 -o empty -e empty gpt create $disk
-	atf_check -s exit:0 -o file:gpt.empty.show.normal \
+	atf_check -s exit:0 -o file:"$src/gpt.empty.show.normal" \
 	    -e empty gpt show $disk
 }
 
@@ -94,8 +95,8 @@ backup_2part_head() {
 backup_2part_body() {
 	prepare_2part
 	atf_check -s exit:0 -o save:test.backup -e empty gpt backup $disk
-	atf_check -s exit:0 -o file:gpt.backup -e empty \
-	    sed -e "s/$uuid/$zero/g" test.backup
+	atf_check -s exit:0 -o file:"$src/gpt.backup" -e empty \
+	    sed -e "s/$uuid/$zero/g" "test.backup"
 }
 
 atf_test_case restore_2part
