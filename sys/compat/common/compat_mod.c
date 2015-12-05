@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_mod.c,v 1.22 2015/05/11 10:32:13 pgoyette Exp $	*/
+/*	$NetBSD: compat_mod.c,v 1.23 2015/12/05 01:59:51 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.22 2015/05/11 10:32:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_mod.c,v 1.23 2015/12/05 01:59:51 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -123,18 +123,6 @@ static const struct syscall_package compat_syscalls[] = {
 	{ SYS_compat_09_osetdomainname, 0, (sy_call_t *)compat_09_sys_setdomainname },
 	{ SYS_compat_09_ouname, 0, (sy_call_t *)compat_09_sys_uname },
 #endif
-
-#if defined(COMPAT_10) && !defined(_LP64)
-# if defined(SYSVMSG)
-	{ SYS_compat_10_omsgsys, 0, (sy_call_t *)compat_10_sys_msgsys },
-# endif
-# if defined(SYSVSEM)
-	{ SYS_compat_10_osemsys, 0, (sy_call_t *)compat_10_sys_semsys },
-# endif
-# if defined(SYSVSHM)
-	{ SYS_compat_10_oshmsys, 0, (sy_call_t *)compat_10_sys_shmsys },
-# endif
-#endif	/* defined(COMPAT_10) && !defined(_LP64) */
 
 #if defined(COMPAT_12)
 	{ SYS_compat_12_fstat12, 0, (sy_call_t *)compat_12_sys_fstat },
