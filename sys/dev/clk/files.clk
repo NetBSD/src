@@ -1,0 +1,4 @@
+# $NetBSD: files.clk,v 1.1 2015/12/05 13:31:07 jmcneill Exp $
+
+define	clk
+file	dev/clk/clk.c			clk
