@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.108 2015/10/02 16:54:15 christos Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.109 2015/12/05 05:23:35 dholland Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.108 2015/10/02 16:54:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.109 2015/12/05 05:23:35 dholland Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -569,10 +569,9 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		} else {
 			COUNT(cpup, ncs_badhits);
 			/*
-			 * Last component and we are renaming or
-			 * deleting, the cache entry is invalid,
-			 * or otherwise don't want cache entry to
-			 * exist.
+			 * Last component and we are preparing to create
+			 * the named object, so flush the negative cache
+			 * entry.
 			 */
 			cache_invalidate(ncp);
 			/* found nothing */
