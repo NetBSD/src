@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1150 2015/09/04 06:10:47 uebayasi Exp $
+#	$NetBSD: files,v 1.1151 2015/12/05 13:31:07 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20150846
@@ -1565,3 +1565,8 @@ include "dev/iscsi/files.iscsi"
 # athn
 #
 include "dev/ic/files.athn"
+
+#
+# MI clk api
+#
+include "dev/clk/files.clk"
