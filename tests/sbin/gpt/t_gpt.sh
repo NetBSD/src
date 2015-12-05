@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.7 2015/12/05 14:23:41 christos Exp $
+# $NetBSD: t_gpt.sh,v 1.8 2015/12/05 18:45:35 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -37,26 +37,54 @@ uuid="........-....-....-....-............"
 zero="00000000-0000-0000-0000-000000000000"
 src=$(atf_get_srcdir)
 
+silence() {
+	atf_check -s exit:0 -o empty -e empty "$@"
+}
+
+match() {
+	local match="$1"
+	shift
+	atf_check -s exit:0 -e empty -o match:"$match" "$@"
+}
+
+matcherr() {
+	local match="$1"
+	shift
+	atf_check -s exit:0 -o empty -e match:"$match" "$@"
+}
+
+file() {
+	local file="$1"
+	shift
+	atf_check -s exit:0 -e empty -o file:"$file" "$@"
+}
+
+save() {
+	local save="$1"
+	shift
+	atf_check -s exit:0 -e empty -o save:"$save" "$@"
+}
+
+zerodd() {
+	silence dd conv=notrunc msgfmt=quiet if=/dev/zero of="$disk" "$@"
+}
+
 prepare() {
 	rm -f "$disk"
-	dd if=/dev/zero of="$disk" seek="$size" count=1
+	zerodd seek="$size" count=1
 }
 
 prepare_2part() {
 	prepare
-	atf_check -s exit:0 -o empty -e empty gpt create "$disk"
-	atf_check -s exit:0 -o match:"$(partaddmsg 1 34 1024)" -e empty \
-	    gpt add -t efi -s 1024 "$disk"
-	atf_check -s exit:0 -o match:"$(partaddmsg 2 1058 9150)" -e empty \
-	    gpt add "$disk"
+	silence gpt create "$disk"
+	match "$(partaddmsg 1 34 1024)" gpt add -t efi -s 1024 "$disk"
+	match "$(partaddmsg 2 1058 9150)" gpt add "$disk"
 }
 
 # Calling this from tests does not work. BUG!
 check_2part() {
-	atf_check -s exit:0 -o file:"$src/gpt.2part.show.normal" \
-	    -e empty gpt show "$disk"
-	atf_check -s exit:0 -o file:"$src/gpt.2part.show.uuid" \
-	    -e empty gpt show -u "$disk"
+	file "$src/gpt.2part.show.normal" gpt show "$disk"
+	file "$src/gpt.2part.show.uuid" gpt show -u "$disk"
 }
 
 partaddmsg() {
@@ -84,6 +112,11 @@ recovermsg() {
 	echo "^$disk: Recovered $1 GPT [a-z]* from $2\$"
 }
 
+migratemsg() {
+	echo -n "^gpt: $disk: Partition $1 unknown type MSDOS, "
+	echo 'using "Microsoft Basic Data"$'
+}
+
 atf_test_case create_empty
 create_empty_head() {
 	atf_set "descr" "Create empty disk"
@@ -91,9 +124,8 @@ create_empty_head() {
 
 create_empty_body() {
 	prepare
-	atf_check -s exit:0 -o empty -e empty gpt create "$disk"
-	atf_check -s exit:0 -o file:"$src/gpt.empty.show.normal" \
-	    -e empty gpt show "$disk"
+	silence gpt create "$disk"
+	file "$src/gpt.empty.show.normal" gpt show "$disk"
 }
 
 atf_test_case create_2part
@@ -113,9 +145,8 @@ backup_2part_head() {
 
 backup_2part_body() {
 	prepare_2part
-	atf_check -s exit:0 -o save:test.backup -e empty gpt backup "$disk"
-	atf_check -s exit:0 -o file:"$src/gpt.backup" -e empty \
-	    sed -e "s/$uuid/$zero/g" "test.backup"
+	save test.backup gpt backup "$disk"
+	file "$src/gpt.backup" sed -e "s/$uuid/$zero/g" "test.backup"
 }
 
 atf_test_case restore_2part
@@ -125,9 +156,9 @@ restore_2part_head() {
 
 restore_2part_body() {
 	prepare_2part
-	atf_check -s exit:0 -o save:test.backup -e empty gpt backup "$disk"
+	save test.backup gpt backup "$disk"
 	prepare
-	atf_check -s exit:0 -o empty -e empty gpt restore -i test.backup "$disk"
+	silence gpt restore -i test.backup "$disk"
 	check_2part
 }
 
@@ -138,10 +169,8 @@ recover_backup_head() {
 
 recover_backup_body() {
 	prepare_2part
-	dd conv=notrunc if=/dev/zero of="$disk" seek="$((size - shdr))" \
-	    count="$shdr"
-	atf_check -s exit:0 -o match:"$(recovermsg secondary primary)" \
-	    -e empty gpt recover "$disk"
+	zerodd seek="$((size - shdr))" count="$shdr"
+	match "$(recovermsg secondary primary)" gpt recover "$disk"
 	check_2part
 }
 
@@ -152,9 +181,8 @@ recover_primary_head() {
 
 recover_primary_body() {
 	prepare_2part
-	dd conv=notrunc if=/dev/zero of="$disk" seek=1 count="$shdr"
-	atf_check -s exit:0 -o match:"$(recovermsg primary secondary)" \
-	    -e empty gpt recover "$disk"
+	zerodd seek=1 count="$shdr"
+	match "$(recovermsg primary secondary)" gpt recover "$disk"
 	check_2part
 }
 
@@ -165,14 +193,11 @@ resize_2part_head() {
 
 resize_2part_body() {
 	prepare_2part
-	dd conv=notrunc if=/dev/zero of="$disk" seek="$newsize" count=1
-	atf_check -s exit:0 -o empty -e empty gpt resizedisk "$disk"
-	atf_check -s exit:0 -o file:"$src/gpt.resizedisk.show.normal" \
-	    gpt show "$disk"
-	atf_check -s exit:0 -o match:"$(partresmsg 2 1058 19390)" \
-	    -e empty gpt resize -i 2 "$disk"
-	atf_check -s exit:0 -o file:"$src/gpt.resizepart.show.normal" \
-	    gpt show "$disk"
+	zerodd seek="$newsize" count=1
+	silence gpt resizedisk "$disk"
+	file "$src/gpt.resizedisk.show.normal" gpt show "$disk"
+	match "$(partresmsg 2 1058 19390)" gpt resize -i 2 "$disk"
+	file "$src/gpt.resizepart.show.normal" gpt show "$disk"
 }
 
 atf_test_case remove_2part
@@ -182,9 +207,9 @@ remove_2part_head() {
 
 remove_2part_body() {
 	prepare_2part
-	atf_check -s exit:0 -o match:"$(partremmsg 1)" -e empty gpt remove \
+	match "$(partremmsg 1)" -e empty gpt remove \
 	    -i 1 "$disk"
-	atf_check -s exit:0 -o file:"$src/gpt.removepart.show.normal" \
+	file "$src/gpt.removepart.show.normal" \
 	    gpt show "$disk"
 }
 
@@ -195,11 +220,9 @@ label_2part_head() {
 
 label_2part_body() {
 	prepare_2part
-	atf_check -s exit:0 -o match:"$(partlblmsg 1)" -e empty \
-	    gpt label -i 1 -l potato "$disk"
-	atf_check -s exit:0 -o match:"$(partlblmsg 2)" -e empty \
-	    gpt label -i 2 -l tomato "$disk"
-	atf_check -s exit:0 -o file:"$src/gpt.2part.show.label" \
+	match "$(partlblmsg 1)" gpt label -i 1 -l potato "$disk"
+	match "$(partlblmsg 2)" gpt label -i 2 -l tomato "$disk"
+	file "$src/gpt.2part.show.label" \
 	    gpt show -l "$disk"
 }
 
@@ -210,14 +233,26 @@ bootable_2part_head() {
 
 bootable_2part_body() {
 	prepare_2part
-	atf_check -s exit:0 -o match:"$(partbootmsg 2)" -e empty \
-	    gpt biosboot -i 2 "$disk"
+	match "$(partbootmsg 2)" gpt biosboot -i 2 "$disk"
 	local bootsz="$(ls -l "$bootblk" | awk '{ print $5 }')"
-	dd if="$disk" of=bootblk bs=1 count="$bootsz"
-	atf_check -s exit:0 -o empty -e empty cmp "$bootblk" bootblk
-	gpt show -i 2 "$disk" | tail -1 > bootattr
-	atf_check -s exit:0 -o match:"^  legacy BIOS boot partition\$" \
-	    -e empty cat bootattr
+	silence dd msgfmt=quiet if="$disk" of=bootblk bs=1 count="$bootsz"
+	silence cmp "$bootblk" bootblk
+	save bootattr gpt show -i 2 "$disk"
+	match "^  legacy BIOS boot partition\$" tail -1 bootattr
+}
+
+atf_test_case migrate_disklabel
+migrate_disklabel_head() {
+	atf_set "descr" "Migrate an MBR+disklabel disk to GPT"
+}
+
+migrate_disklabel_body() {
+	prepare
+	silence fdisk -fi gpt.disk
+	silence fdisk -fu0s 169/63/$((size / 10)) gpt.disk
+	silence disklabel -R gpt.disk "$src/disklabel"
+	matcherr "$(migratemsg 5)" gpt migrate "$disk"
+	file "$src/gpt.disklabel" gpt show "$disk"
 }
 
 atf_init_test_cases() {
@@ -231,4 +266,5 @@ atf_init_test_cases() {
 	atf_add_test_case resize_2part
 	atf_add_test_case label_2part
 	atf_add_test_case bootable_2part
+	atf_add_test_case migrate_disklabel
 }
