@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-XU4,v 1.1 2015/11/14 07:15:58 marty Exp $
+#	$NetBSD: ODROID-XU4,v 1.2 2015/12/05 13:32:49 jmcneill Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -197,6 +197,9 @@ armgtmr0	at armperiph?			# Generic Timer
 
 # Exynos SoC
 exyo0		at mainbus?
+
+# Clock controller
+exy5422clk0	at exyo0			# Exynos5422 clock controller
 
 # Integrated Samsung UARTs
 #sscom*		at exyo0  port ?		# UART ?
