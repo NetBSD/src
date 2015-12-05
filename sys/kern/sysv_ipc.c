@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_ipc.c,v 1.31 2015/12/03 02:51:00 pgoyette Exp $	*/
+/*	$NetBSD: sysv_ipc.c,v 1.32 2015/12/05 00:51:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.31 2015/12/03 02:51:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_ipc.c,v 1.32 2015/12/05 00:51:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -356,6 +356,7 @@ sysvipcfini(void)
 
 	KASSERT(sysvipc_listener != NULL);
 	kauth_unlisten_scope(sysvipc_listener);
+	sysvipc_listener = NULL;
 }
 
 void
