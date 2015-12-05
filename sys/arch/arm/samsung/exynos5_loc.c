@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos5_loc.c,v 1.12 2014/09/05 08:01:05 skrll Exp $	*/
+/*	$NetBSD: exynos5_loc.c,v 1.13 2015/12/05 13:32:27 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -215,6 +215,7 @@
 	EXYNOS5##p##_##n##_OFFSET, 0x10000
 
 static const struct exyo_locators exynos5_locators[] = {
+	{ "exy5422clk", OFFANDSIZE(,CMU_CORE_PART), NOPORT, NOINTR, 0 },
 	{ "exyogpio", 0, 0, NOPORT, NOINTR, 0 },
 	{ "exyoiic", 0, 0, NOPORT, NOINTR, 0 },
 	{ "exyowdt", OFFANDSIZE(,WDT), NOPORT, IRQ_WDT, 0 },
