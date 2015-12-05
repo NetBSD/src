@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.9 2015/12/05 18:52:11 christos Exp $
+# $NetBSD: t_gpt.sh,v 1.10 2015/12/05 18:53:29 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -248,9 +248,9 @@ migrate_disklabel_head() {
 
 migrate_disklabel_body() {
 	prepare
-	silence fdisk -fi gpt.disk
-	silence fdisk -fu0s 169/63/$((size / 10)) gpt.disk
-	silence disklabel -R gpt.disk "$src/gpt.disklabel"
+	silence fdisk -fi "$disk"
+	silence fdisk -fu0s "169/63/$((size / 10))" "$disk"
+	silence disklabel -R "$disk" "$src/gpt.disklabel"
 	matcherr "$(migratemsg 5)" gpt migrate "$disk"
 	file "$src/gpt.disklabel.show.normal" gpt show "$disk"
 }
