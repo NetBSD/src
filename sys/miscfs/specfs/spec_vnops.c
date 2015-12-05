@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.154 2015/12/04 23:54:06 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.155 2015/12/05 07:59:34 jnemeth Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.154 2015/12/04 23:54:06 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.155 2015/12/05 07:59:34 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -668,7 +668,8 @@ spec_open(void *v)
 		printf("ioctl DIOCGMEDIASIZE failed %d\n", error);
 #endif
 		error = (*ioctl)(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
-		off = (off_t)pi.disklab->d_secsize * pi.part->p_size;
+		if (error == 0)
+			off = (off_t)pi.disklab->d_secsize * pi.part->p_size;
 	}
 
 	if (error == 0)
