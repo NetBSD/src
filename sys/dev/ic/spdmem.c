@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.14 2015/05/15 08:44:24 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.15 2015/12/05 06:36:12 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.14 2015/05/15 08:44:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.15 2015/12/05 06:36:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,7 +230,7 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		if ((unsigned int)spd_len > __arraycount(spd_rom_sizes))
 			return 0;
 		spd_len = spd_rom_sizes[spd_len];
-		spd_crc_cover=128;
+		spd_crc_cover=125; /* For byte 0 to 125 */
 		if (spd_crc_cover > spd_len)
 			return 0;
 		crc_calc = spdcrc16(sc, spd_crc_cover);
