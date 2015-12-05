@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.1 2015/12/05 13:32:27 jmcneill Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.2 2015/12/05 18:29:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.1 2015/12/05 13:32:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.2 2015/12/05 18:29:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -402,7 +402,7 @@ static u_int
 exynos5422_clock_get_rate_div(struct exynos5422_clock_softc *sc,
     struct exynos_clk *eclk)
 {
-	struct exynos_mux_clk *emux = &eclk->u.mux;
+	struct exynos_div_clk *ediv = &eclk->u.div;
 	struct clk *clk_parent;
 
 	KASSERT(eclk->type == EXYNOS_CLK_DIV);
@@ -410,8 +410,8 @@ exynos5422_clock_get_rate_div(struct exynos5422_clock_softc *sc,
 	clk_parent = exynos5422_clock_get_parent(sc, &eclk->base);
 	const u_int parent_rate = exynos5422_clock_get_rate(sc, clk_parent);
 
-	const uint32_t v = CLOCK_READ(sc, emux->reg);
-	const u_int div = __SHIFTOUT(v, emux->bits);
+	const uint32_t v = CLOCK_READ(sc, ediv->reg);
+	const u_int div = __SHIFTOUT(v, ediv->bits);
 
 	return parent_rate / (div + 1);
 }
@@ -420,7 +420,7 @@ static int
 exynos5422_clock_set_rate_div(struct exynos5422_clock_softc *sc,
     struct exynos_clk *eclk, u_int rate)
 {
-	struct exynos_mux_clk *emux = &eclk->u.mux;
+	struct exynos_div_clk *ediv = &eclk->u.div;
 	struct clk *clk_parent;
 	int tmp_div, new_div = -1;
 	u_int tmp_rate;
@@ -430,7 +430,7 @@ exynos5422_clock_set_rate_div(struct exynos5422_clock_softc *sc,
 	clk_parent = exynos5422_clock_get_parent(sc, &eclk->base);
 	const u_int parent_rate = exynos5422_clock_get_rate(sc, clk_parent);
 
-	for (tmp_div = 0; tmp_div < popcount32(emux->bits); tmp_div++) {
+	for (tmp_div = 0; tmp_div < popcount32(ediv->bits); tmp_div++) {
 		tmp_rate = parent_rate / (tmp_div + 1);
 		if (tmp_rate <= rate) {
 			new_div = tmp_div;
@@ -440,10 +440,10 @@ exynos5422_clock_set_rate_div(struct exynos5422_clock_softc *sc,
 	if (new_div == -1)
 		return EINVAL;
 
-	uint32_t v = CLOCK_READ(sc, emux->reg);
-	v &= ~emux->bits;
-	v |= __SHIFTIN(new_div, emux->bits);
-	CLOCK_WRITE(sc, emux->reg, v);
+	uint32_t v = CLOCK_READ(sc, ediv->reg);
+	v &= ~ediv->bits;
+	v |= __SHIFTIN(new_div, ediv->bits);
+	CLOCK_WRITE(sc, ediv->reg, v);
 
 	return 0;
 }
@@ -521,6 +521,8 @@ static int
 exynos5422_clock_set_rate(void *priv, struct clk *clk, u_int rate)
 {
 	struct exynos_clk *eclk = (struct exynos_clk *)clk;
+
+	KASSERT((clk->flags & CLK_SET_RATE_PARENT) == 0);
 
 	switch (eclk->type) {
 	case EXYNOS_CLK_FIXED:
