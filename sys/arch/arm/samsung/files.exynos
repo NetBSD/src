@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.7 2014/05/21 12:19:59 reinoud Exp $
+#	$NetBSD: files.exynos,v 1.8 2015/12/05 13:32:27 jmcneill Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -86,3 +86,4 @@ device	exyoiic: i2cbus, i2c_bitbang
 attach	exyoiic at exyo with exynos_iic
 file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
 
+include "arch/arm/samsung/files.exynos5422"
