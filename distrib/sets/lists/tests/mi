@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.656 2015/12/04 19:36:53 christos Exp $
+# $NetBSD: mi,v 1.657 2015/12/05 18:47:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3269,10 +3269,12 @@
 ./usr/tests/sbin/gpt/Atffile			tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/Kyuafile			tests-sbin-tests	compattestfile,atf,kyua
 ./usr/tests/sbin/gpt/t_gpt			tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.disklabel		tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/gpt.2part.show.label	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/gpt.2part.show.normal	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/gpt.2part.show.uuid	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/gpt.backup			tests-sbin-tests	compattestfile,atf
+./usr/tests/sbin/gpt/gpt.disklabel.show.normal	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/gpt.empty.show.normal 	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/gpt.removepart.show.normal	tests-sbin-tests	compattestfile,atf
 ./usr/tests/sbin/gpt/gpt.resizedisk.show.normal	tests-sbin-tests	compattestfile,atf
