@@ -33,11 +33,13 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.27 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.28 2015/12/05 18:46:08 christos Exp $");
 #endif
 
 #include <sys/types.h>
 #include <sys/param.h>
+#define FSTYPENAMES
+#define MBRPTYPENAMES
 #ifdef HAVE_NBTOOL_CONFIG_H
 #include <nbinclude/sys/bootblock.h>
 #include <nbinclude/sys/disklabel.h>
@@ -90,6 +92,31 @@ struct gpt_cmd c_migrate = {
 };
 
 #define usage() gpt_usage(NULL, &c_migrate)
+
+static const char *
+fstypename(u_int t)
+{
+	static char buf[64];
+	if (t >= __arraycount(fstypenames)) {
+		snprintf(buf, sizeof(buf), "*%u*", t);
+		return buf;
+	}
+	return fstypenames[t];
+}
+
+static const char *
+mbrptypename(u_int t)
+{
+	static char buf[64];
+	size_t i;
+
+	for (i = 0; i < __arraycount(mbr_ptypes); i++)
+		if ((u_int)mbr_ptypes[i].id == t)
+			return mbr_ptypes[i].name;
+
+	snprintf(buf, sizeof(buf), "*%u*", t);
+	return buf;
+}
 
 static struct gpt_ent *
 migrate_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
@@ -175,7 +202,8 @@ migrate_netbsd_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
 	char *buf;
 	struct disklabel *dl;
 	off_t ofs, rawofs;
-	int i;
+	unsigned int i;
+	gpt_type_t type;
 
 	buf = gpt_read(gpt, start + LABELSECTOR, 1);
 	if (buf == NULL) {
@@ -201,47 +229,52 @@ migrate_netbsd_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
 		if (ofs < rawofs)
 			rawofs = 0;
 	}
+	if (gpt->verbose > 1)
+		gpt_msg(gpt, "rawofs=%ju", (uintmax_t)rawofs);
 	rawofs /= gpt->secsz;
 
 	for (i = 0; i < le16toh(dl->d_npartitions); i++) {
+		if (gpt->verbose > 1)
+			gpt_msg(gpt, "Disklabel partition %u type %s", i,
+			    fstypename(dl->d_partitions[i].p_fstype));
+
 		switch (dl->d_partitions[i].p_fstype) {
 		case FS_UNUSED:
 			continue;
-		case FS_SWAP: {
-			gpt_uuid_create(GPT_TYPE_NETBSD_SWAP, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
+		case FS_HFS:
+			type = GPT_TYPE_APPLE_HFS;
 			break;
-		}
-		case FS_BSDFFS: {
-			gpt_uuid_create(GPT_TYPE_NETBSD_FFS, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
+		case FS_EX2FS:
+			type = GPT_TYPE_LINUX_DATA;
 			break;
-		}
-		case FS_BSDLFS: {
-			gpt_uuid_create(GPT_TYPE_NETBSD_LFS, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
+		case FS_SWAP:
+			type = GPT_TYPE_NETBSD_SWAP;
 			break;
-		}
-		case FS_RAID: {
-			gpt_uuid_create(GPT_TYPE_NETBSD_RAIDFRAME, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
+		case FS_BSDFFS:
+			type = GPT_TYPE_NETBSD_FFS;
 			break;
-		}
-		case FS_CCD: {
-			gpt_uuid_create(GPT_TYPE_NETBSD_CCD, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
+		case FS_BSDLFS:
+			type = GPT_TYPE_NETBSD_LFS;
 			break;
-		}
-		case FS_CGD: {
-			gpt_uuid_create(GPT_TYPE_NETBSD_CGD, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
+		case FS_RAID:
+			type = GPT_TYPE_NETBSD_RAIDFRAME;
 			break;
-		}
+		case FS_CCD:
+			type = GPT_TYPE_NETBSD_CCD;
+			break;
+		case FS_CGD:
+			type = GPT_TYPE_NETBSD_CGD;
+			break;
 		default:
-			gpt_warnx(gpt, "Unknown NetBSD partition (%d)",
-			    dl->d_partitions[i].p_fstype);
-			continue;
+			gpt_warnx(gpt, "Partition %u unknown type %s, "
+			    "using \"Microsoft Basic Data\"", i,
+			    fstypename(dl->d_partitions[i].p_fstype));
+			type = GPT_TYPE_MS_BASIC_DATA;
+			break;
 		}
+
+		gpt_uuid_create(type, ent->ent_type,
+		    ent->ent_name, sizeof(ent->ent_name));
 
 		ofs = (le32toh(dl->d_partitions[i].p_offset) *
 		    le32toh(dl->d_secsize)) / gpt->secsz;
@@ -269,7 +302,7 @@ migrate(gpt_t gpt, u_int parts, int force, int slice)
 
 	map = map_find(gpt, MAP_TYPE_MBR);
 	if (map == NULL || map->map_start != 0) {
-		gpt_warnx(gpt, "No partitions to convert");
+		gpt_warnx(gpt, "No MBR in disk to convert");
 		return -1;
 	}
 
@@ -287,6 +320,9 @@ migrate(gpt_t gpt, u_int parts, int force, int slice)
 		size = le16toh(mbr->mbr_part[i].part_size_hi);
 		size = (size << 16) + le16toh(mbr->mbr_part[i].part_size_lo);
 
+		if (gpt->verbose > 1)
+			gpt_msg(gpt, "MBR partition %u type %s", i,
+			    mbrptypename(mbr->mbr_part[i].part_typ));
 		switch (mbr->mbr_part[i].part_typ) {
 		case MBR_PTYPE_UNUSED:
 			continue;
