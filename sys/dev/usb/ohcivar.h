@@ -1,4 +1,4 @@
-/*	$NetBSD: ohcivar.h,v 1.55.6.10 2015/12/02 20:07:08 skrll Exp $	*/
+/*	$NetBSD: ohcivar.h,v 1.55.6.11 2015/12/06 15:39:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -146,6 +146,28 @@ typedef struct ohci_softc {
 struct ohci_xfer {
 	struct usbd_xfer xfer;
 	struct usb_task abort_task;
+	/*
+	 * The TD/iTD that is used to terminate the chain and is borrowed
+	 * by the next transfer for its first TD
+	 */
+	union {
+		ohci_soft_td_t *ox_tdtail;
+		ohci_soft_itd_t *ox_itdtail;
+	};
+	union {
+		/* ctrl/bulk/intr */
+		struct {
+			ohci_soft_td_t **ox_stds;
+			size_t ox_nstd;
+		};
+		/* isoc */
+		struct {
+			ohci_soft_itd_t **ox_sitds;
+			size_t ox_nsitd;
+		};
+	};
+	/* ctrl */
+	ohci_soft_td_t *ox_stat;
 };
 
 #define OHCI_BUS2SC(bus)	((bus)->ub_hcpriv)
