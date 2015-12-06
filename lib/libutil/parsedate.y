@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.21 2015/11/26 01:00:02 christos Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.22 2015/12/06 14:43:59 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -531,14 +531,14 @@ static const TABLE TimezoneTable[] = {
     { "nst",	tZONE,     -HOUR(6.5) },/* North Sumatra */
     { "sst",	tZONE,     -HOUR(7) },	/* South Sumatra, USSR Zone 6 */
 #endif	/* 0 */
-    { "wast",	tZONE,     -HOUR(7) },	/* West Australian Standard */
-    { "awst",	tZONE,     -HOUR(7) },	/* West Australian Standard */
-    { "wadt",	tDAYZONE,  -HOUR(7) },	/* West Australian Daylight */
-    { "awdt",	tDAYZONE,  -HOUR(7) },	/* West Australian Daylight */
     { "ict",	tZONE,     -HOUR(7) },	/* Indo China Time (Thai) */
 #if 0	/* this one looks to be bogus */
     { "jt",	tZONE,     -HOUR(7.5) },/* Java (3pm in Cronusland!) */
 #endif
+    { "wast",	tZONE,     -HOUR(8) },	/* West Australian Standard */
+    { "awst",	tZONE,     -HOUR(8) },	/* West Australian Standard */
+    { "wadt",	tDAYZONE,  -HOUR(8) },	/* West Australian Daylight */
+    { "awdt",	tDAYZONE,  -HOUR(8) },	/* West Australian Daylight */
     { "cct",	tZONE,     -HOUR(8) },	/* China Coast, USSR Zone 7 */
     { "sgt",	tZONE,     -HOUR(8) },	/* Singapore */
     { "hkt",	tZONE,     -HOUR(8) },	/* Hong Kong */
