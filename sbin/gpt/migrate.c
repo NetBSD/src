@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.28 2015/12/05 18:46:08 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.29 2015/12/06 04:27:05 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -118,86 +118,58 @@ mbrptypename(u_int t)
 	return buf;
 }
 
-static struct gpt_ent *
-migrate_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
+static gpt_type_t
+freebsd_fstype_to_gpt_type(gpt_t gpt, u_int i, u_int fstype)
 {
-	char *buf;
-	struct disklabel *dl;
-	off_t ofs, rawofs;
-	int i;
-
-	buf = gpt_read(gpt, start + LABELSECTOR, 1);
-	if (buf == NULL) {
-		gpt_warn(gpt, "Error reading label");
-		return NULL;
+	switch (fstype) {
+	case FS_UNUSED:
+		return GPT_TYPE_INVALID;
+	case FS_SWAP:
+		return GPT_TYPE_FREEBSD_SWAP;
+	case FS_BSDFFS:
+		return GPT_TYPE_FREEBSD_UFS;
+	case FREEBSD_FS_VINUM:
+		return GPT_TYPE_FREEBSD_VINUM;
+	case FREEBSD_FS_ZFS:
+		return GPT_TYPE_FREEBSD_ZFS;
+	default:
+		gpt_warnx(gpt, "Unknown FreeBSD partition (%d)", fstype);
+		return GPT_TYPE_INVALID;
 	}
-	dl = (void*)(buf + LABELOFFSET);
-
-	if (le32toh(dl->d_magic) != DISKMAGIC ||
-	    le32toh(dl->d_magic2) != DISKMAGIC) {
-		gpt_warnx(gpt, "FreeBSD slice without disklabel");
-		free(buf);
-		return (ent);
-	}
-
-	rawofs = le32toh(dl->d_partitions[RAW_PART].p_offset) *
-	    le32toh(dl->d_secsize);
-	for (i = 0; i < le16toh(dl->d_npartitions); i++) {
-		if (dl->d_partitions[i].p_fstype == FS_UNUSED)
-			continue;
-		ofs = le32toh(dl->d_partitions[i].p_offset) *
-		    le32toh(dl->d_secsize);
-		if (ofs < rawofs)
-			rawofs = 0;
-	}
-	rawofs /= gpt->secsz;
-
-	for (i = 0; i < le16toh(dl->d_npartitions); i++) {
-		switch (dl->d_partitions[i].p_fstype) {
-		case FS_UNUSED:
-			continue;
-		case FS_SWAP: {
-			gpt_uuid_create(GPT_TYPE_FREEBSD_SWAP, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
-			break;
-		}
-		case FS_BSDFFS: {
-			gpt_uuid_create(GPT_TYPE_FREEBSD_UFS, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
-			break;
-		}
-		case FREEBSD_FS_VINUM: {
-			gpt_uuid_create(GPT_TYPE_FREEBSD_VINUM, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
-			break;
-		}
-		case FREEBSD_FS_ZFS: {
-			gpt_uuid_create(GPT_TYPE_FREEBSD_ZFS, ent->ent_type,
-			    ent->ent_name, sizeof(ent->ent_name));
-			break;
-		}
-		default:
-			gpt_warnx(gpt, "Unknown FreeBSD partition (%d)",
-			    dl->d_partitions[i].p_fstype);
-			continue;
-		}
-
-		ofs = (le32toh(dl->d_partitions[i].p_offset) *
-		    le32toh(dl->d_secsize)) / gpt->secsz;
-		ofs = (ofs > 0) ? ofs - rawofs : 0;
-		ent->ent_lba_start = htole64((uint64_t)(start + ofs));
-		ent->ent_lba_end = htole64((uint64_t)(start + ofs +
-		    (off_t)le32toh((uint64_t)dl->d_partitions[i].p_size)
-		    - 1LL));
-		ent++;
-	}
-
-	free(buf);
-	return ent;
 }
 
-static struct gpt_ent*
-migrate_netbsd_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
+static gpt_type_t
+netbsd_fstype_to_gpt_type(gpt_t gpt, u_int i, u_int fstype)
+{
+	switch (fstype) {
+	case FS_UNUSED:
+		return GPT_TYPE_INVALID;
+	case FS_HFS:
+		return GPT_TYPE_APPLE_HFS;
+	case FS_EX2FS:
+		return GPT_TYPE_LINUX_DATA;
+	case FS_SWAP:
+		return GPT_TYPE_NETBSD_SWAP;
+	case FS_BSDFFS:
+		return GPT_TYPE_NETBSD_FFS;
+	case FS_BSDLFS:
+		return GPT_TYPE_NETBSD_LFS;
+	case FS_RAID:
+		return GPT_TYPE_NETBSD_RAIDFRAME;
+	case FS_CCD:
+		return GPT_TYPE_NETBSD_CCD;
+	case FS_CGD:
+		return GPT_TYPE_NETBSD_CGD;
+	default:
+		gpt_warnx(gpt, "Partition %u unknown type %s, "
+		    "using \"Microsoft Basic Data\"", i, fstypename(fstype));
+		return GPT_TYPE_MS_BASIC_DATA;
+	}
+}
+
+static struct gpt_ent *
+migrate_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent,
+    gpt_type_t (*convert)(gpt_t, u_int, u_int))
 {
 	char *buf;
 	struct disklabel *dl;
@@ -214,7 +186,7 @@ migrate_netbsd_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
 
 	if (le32toh(dl->d_magic) != DISKMAGIC ||
 	    le32toh(dl->d_magic2) != DISKMAGIC) {
-		gpt_warnx(gpt, "NetBSD slice without disklabel");
+		gpt_warnx(gpt, "MBR partition without disklabel");
 		free(buf);
 		return ent;
 	}
@@ -229,6 +201,7 @@ migrate_netbsd_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
 		if (ofs < rawofs)
 			rawofs = 0;
 	}
+
 	if (gpt->verbose > 1)
 		gpt_msg(gpt, "rawofs=%ju", (uintmax_t)rawofs);
 	rawofs /= gpt->secsz;
@@ -238,40 +211,9 @@ migrate_netbsd_disklabel(gpt_t gpt, off_t start, struct gpt_ent *ent)
 			gpt_msg(gpt, "Disklabel partition %u type %s", i,
 			    fstypename(dl->d_partitions[i].p_fstype));
 
-		switch (dl->d_partitions[i].p_fstype) {
-		case FS_UNUSED:
+		type = (*convert)(gpt, i, dl->d_partitions[i].p_fstype);
+		if (type == GPT_TYPE_INVALID)
 			continue;
-		case FS_HFS:
-			type = GPT_TYPE_APPLE_HFS;
-			break;
-		case FS_EX2FS:
-			type = GPT_TYPE_LINUX_DATA;
-			break;
-		case FS_SWAP:
-			type = GPT_TYPE_NETBSD_SWAP;
-			break;
-		case FS_BSDFFS:
-			type = GPT_TYPE_NETBSD_FFS;
-			break;
-		case FS_BSDLFS:
-			type = GPT_TYPE_NETBSD_LFS;
-			break;
-		case FS_RAID:
-			type = GPT_TYPE_NETBSD_RAIDFRAME;
-			break;
-		case FS_CCD:
-			type = GPT_TYPE_NETBSD_CCD;
-			break;
-		case FS_CGD:
-			type = GPT_TYPE_NETBSD_CGD;
-			break;
-		default:
-			gpt_warnx(gpt, "Partition %u unknown type %s, "
-			    "using \"Microsoft Basic Data\"", i,
-			    fstypename(dl->d_partitions[i].p_fstype));
-			type = GPT_TYPE_MS_BASIC_DATA;
-			break;
-		}
 
 		gpt_uuid_create(type, ent->ent_type,
 		    ent->ent_name, sizeof(ent->ent_name));
@@ -299,6 +241,7 @@ migrate(gpt_t gpt, u_int parts, int force, int slice)
 	struct mbr *mbr;
 	uint32_t start, size;
 	unsigned int i;
+	gpt_type_t type = GPT_TYPE_INVALID;
 
 	map = map_find(gpt, MAP_TYPE_MBR);
 	if (map == NULL || map->map_start != 0) {
@@ -326,40 +269,39 @@ migrate(gpt_t gpt, u_int parts, int force, int slice)
 		switch (mbr->mbr_part[i].part_typ) {
 		case MBR_PTYPE_UNUSED:
 			continue;
-		case MBR_PTYPE_386BSD: {	/* FreeBSD */
+
+		case MBR_PTYPE_386BSD: /* FreeBSD */
 			if (slice) {
-				gpt_uuid_create(GPT_TYPE_FREEBSD,
-				    ent->ent_type, ent->ent_name,
-				    sizeof(ent->ent_name));
-				ent->ent_lba_start = htole64((uint64_t)start);
-				ent->ent_lba_end = htole64(
-				    (uint64_t)(start + size - 1LL));
-				ent++;
-			} else
-				ent = migrate_disklabel(gpt, start, ent);
+				type = GPT_TYPE_FREEBSD;
+				break;
+			} else {
+				ent = migrate_disklabel(gpt, start, ent,
+				    freebsd_fstype_to_gpt_type);
+				continue;
+			}
+
+		case MBR_PTYPE_NETBSD:	/* NetBSD */
+			ent = migrate_disklabel(gpt, start, ent,
+			    netbsd_fstype_to_gpt_type);
+			continue;
+
+		case MBR_PTYPE_EFI:
+			type = GPT_TYPE_EFI;
 			break;
-		}
-		case MBR_PTYPE_NETBSD:
-			ent = migrate_netbsd_disklabel(gpt, start, ent);
-			break;
-		case MBR_PTYPE_EFI: {
-			gpt_uuid_create(GPT_TYPE_EFI,
-			    ent->ent_type, ent->ent_name,
-			    sizeof(ent->ent_name));
-			ent->ent_lba_start = htole64((uint64_t)start);
-			ent->ent_lba_end = htole64(
-			    (uint64_t)(start + size - 1LL));
-			ent++;
-			break;
-		}
+
 		default:
 			if (!force) {
 				gpt_warnx(gpt, "unknown partition type (%d)",
 				    mbr->mbr_part[i].part_typ);
 				return -1;
 			}
-			break;
+			continue;
 		}
+		gpt_uuid_create(type, ent->ent_type, ent->ent_name,
+		    sizeof(ent->ent_name));
+		ent->ent_lba_start = htole64((uint64_t)start);
+		ent->ent_lba_end = htole64((uint64_t)(start + size - 1LL));
+		ent++;
 	}
 
 	if (gpt_write_primary(gpt) == -1)
