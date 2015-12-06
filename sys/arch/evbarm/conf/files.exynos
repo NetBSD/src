@@ -1,0 +1,12 @@
+#	$NetBSD: files.exynos,v 1.1 2015/12/06 00:31:24 marty Exp $
+#
+# EXYNOS 5422 board configuration info
+#
+
+file	arch/evbarm/exynos/exynos_machdep.c
+
+# Kernel boot arguments
+defparam opt_machdep.h				BOOT_ARGS
+
+# Pull in Exynos SoC default
+include 	"arch/arm/samsung/files.exynos"
