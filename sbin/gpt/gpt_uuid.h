@@ -97,6 +97,8 @@ int gpt_uuid_parse(const char *, gpt_uuid_t);
 struct gpt;
 int gpt_uuid_generate(struct gpt *, gpt_uuid_t);
 
+void gpt_uuid_help(const char *);
+
 __END_DECLS
 
 #endif /* _GPT_UUID_T */
