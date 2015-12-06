@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.63 2015/12/04 16:46:24 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.64 2015/12/06 00:39:26 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1076,21 +1076,90 @@ gpt_check_ais(gpt_t gpt, off_t alignment, u_int entry, off_t size)
 		return size / gpt->secsz;
 	return 0;
 }
+
+static const struct nvd {
+	const char *name;
+	uint64_t mask;
+	const char *description;
+} gpt_attr[] = {
+	{
+		"biosboot",
+		GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE,
+		"Legacy BIOS boot partition",
+	},
+	{
+		"bootme",
+		GPT_ENT_ATTR_BOOTME,
+		"Bootable partition",
+	},
+	{
+		"bootfailed",
+		GPT_ENT_ATTR_BOOTFAILED,
+		"Partition that marked bootonce failed to boot",
+	},
+	{
+		"bootonce",
+		GPT_ENT_ATTR_BOOTONCE,
+		"Attempt to boot this partition only once",
+	},
+	{
+		"noblockio",
+		GPT_ENT_ATTR_NO_BLOCK_IO_PROTOCOL,
+		"UEFI won't recognize file system for block I/O",
+	},
+	{
+		"required",
+		GPT_ENT_ATTR_REQUIRED_PARTITION,
+		"Partition required for platform to function",
+	},
+};
+
 int
-gpt_attr_get(uint64_t *attributes)
+gpt_attr_get(gpt_t gpt, uint64_t *attributes)
 {
-	if (strcmp(optarg, "biosboot") == 0)
-		*attributes |= GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE;
-	else if (strcmp(optarg, "bootme") == 0)
-		*attributes |= GPT_ENT_ATTR_BOOTME;
-	else if (strcmp(optarg, "bootonce") == 0)
-		*attributes |= GPT_ENT_ATTR_BOOTONCE;
-	else if (strcmp(optarg, "bootfailed") == 0)
-		*attributes |= GPT_ENT_ATTR_BOOTFAILED;
-	else
-		return -1;
-	return 0;
+	size_t i;
+	int rv = 0;
+	char *ptr;
+
+	*attributes = 0;
+
+	for (ptr = strtok(optarg, ","); ptr; ptr = strtok(NULL, ",")) {
+		for (i = 0; i < __arraycount(gpt_attr); i++)
+			if (strcmp(gpt_attr[i].name, ptr) == 0)
+				break;
+		if (i == __arraycount(gpt_attr)) {
+			gpt_warnx(gpt, "Unregognized attribute `%s'", ptr);
+			rv = -1;
+		} else
+			*attributes |= gpt_attr[i].mask;
+	}
+	return rv;
 }
+
+void
+gpt_attr_help(const char *prefix)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(gpt_attr); i++)
+		printf("%s%10.10s\t%s\n", prefix, gpt_attr[i].name,
+		    gpt_attr[i].description);
+}
+
+const char *
+gpt_attr_list(char *buf, size_t len, uint64_t attributes)
+{
+	size_t i;
+	strlcpy(buf, "", len);	
+
+	for (i = 0; i < __arraycount(gpt_attr); i++)
+		if (attributes & gpt_attr[i].mask) {
+			strlcat(buf, buf[0] ? "," : "", len); 
+			strlcat(buf, gpt_attr[i].name, len);
+		}
+	return buf;
+}
+
 int
 gpt_attr_update(gpt_t gpt, u_int entry, uint64_t set, uint64_t clr)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.12 2015/12/03 02:02:43 christos Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.13 2015/12/06 00:39:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.12 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.13 2015/12/06 00:39:26 christos Exp $");
 #endif
 
 #include <err.h>
@@ -228,6 +228,15 @@ gpt_uuid_parse(const char *s, gpt_uuid_t uuid)
 
 	gpt_dce_to_uuid(&u, uuid);
 	return 0;
+}
+
+void
+gpt_uuid_help(const char *prefix)
+{
+	size_t i;
+
+	for (i = 0; i < __arraycount(gpt_nv); i++)
+		printf("%s%18.18s\t%s\n", prefix, gpt_nv[i].n, gpt_nv[i].d);
 }
 
 void
