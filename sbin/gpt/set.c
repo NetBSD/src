@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: set.c,v 1.11 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.12 2015/12/06 00:39:26 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -53,6 +53,7 @@ static int cmd_set(gpt_t, int, char *[]);
 
 static const char *sethelp[] = {
 	"-a attribute -i index",
+	"-l",
 };
 
 struct gpt_cmd c_set = {
@@ -71,16 +72,19 @@ cmd_set(gpt_t gpt, int argc, char *argv[])
 	unsigned int entry = 0;
 	uint64_t attributes = 0;
 
-	while ((ch = getopt(argc, argv, "a:i:")) != -1) {
+	while ((ch = getopt(argc, argv, "a:i:l")) != -1) {
 		switch(ch) {
 		case 'a':
-			if (gpt_attr_get(&attributes) == -1)
+			if (gpt_attr_get(gpt, &attributes) == -1)
 				return usage();
 			break;
 		case 'i':
 			if (gpt_uint_get(&entry) == -1)
 				return usage();
 			break;
+		case 'l':
+			gpt_attr_help("\t");
+			return 0;
 		default:
 			return usage();
 		}
