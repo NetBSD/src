@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.16 2015/12/05 06:54:22 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.17 2015/12/06 09:44:13 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.16 2015/12/05 06:54:22 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.17 2015/12/06 09:44:13 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,7 +230,7 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		if ((unsigned int)spd_len > __arraycount(spd_rom_sizes))
 			return 0;
 		spd_len = spd_rom_sizes[spd_len];
-		spd_crc_cover=125; /* For byte 0 to 125 */
+		spd_crc_cover = 125; /* For byte 0 to 125 */
 		if (spd_crc_cover > spd_len)
 			return 0;
 		crc_calc = spdcrc16(sc, spd_crc_cover);
@@ -862,7 +862,7 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s) {
 	default:
 		dimm_size = -1;		/* flag invalid value */
 	}
-	if (dimm_size >=0) {				
+	if (dimm_size >= 0) {				
 		dimm_size = (1 << dimm_size) *
 		    (s->sm_ddr4.ddr4_package_ranks + 1); /* log.ranks/DIMM */
 		if (s->sm_ddr4.ddr4_signal_loading == 2) {
