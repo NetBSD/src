@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.30 2015/12/04 01:46:12 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.31 2015/12/06 00:39:26 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -196,23 +196,14 @@ show_one(gpt_t gpt, unsigned int entry)
 	utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
 	printf("Label: %s\n", (char *)utfbuf);
 
-	printf("Attributes:\n");
+	printf("Attributes: ");
 	if (ent->ent_attr == 0) {
-		printf("  None\n");
-		return 0;
+		printf("None\n");
+	} else  {	
+		char buf[1024];
+		printf("%s\n", gpt_attr_list(buf, sizeof(buf), ent->ent_attr));
 	}
-	if (ent->ent_attr & GPT_ENT_ATTR_REQUIRED_PARTITION)
-		printf("  required for platform to function\n");
-	if (ent->ent_attr & GPT_ENT_ATTR_NO_BLOCK_IO_PROTOCOL)
-		printf("  UEFI won't recognize file system\n");
-	if (ent->ent_attr & GPT_ENT_ATTR_LEGACY_BIOS_BOOTABLE)
-		printf("  legacy BIOS boot partition\n");
-	if (ent->ent_attr & GPT_ENT_ATTR_BOOTME)
-		printf("  indicates a bootable partition\n");
-	if (ent->ent_attr & GPT_ENT_ATTR_BOOTONCE)
-		printf("  attempt to boot this partition only once\n");
-	if (ent->ent_attr & GPT_ENT_ATTR_BOOTFAILED)
-		printf("  partition was marked bootonce but failed to boot\n");
+
 	return 0;
 }
 
