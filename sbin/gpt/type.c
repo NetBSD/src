@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/remove.c,v 1.10 2006/10/04 18:20:25 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: type.c,v 1.12 2015/12/03 01:07:28 christos Exp $");
+__RCSID("$NetBSD: type.c,v 1.13 2015/12/06 00:39:26 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -54,6 +54,7 @@ static int cmd_type(gpt_t, int, char *[]);
 static const char *typehelp[] = {
 	"-a -T newtype",
 	"[-b blocknr] [-i index] [-L label] [-s sectors] [-t type] -T newtype",
+	"-l",
 };
 
 struct gpt_cmd c_type = {
@@ -84,8 +85,11 @@ cmd_type(gpt_t gpt, int argc, char *argv[])
 	find.msg = "type changed";
 
 	/* Get the type options */
-	while ((ch = getopt(argc, argv, GPT_FIND "T:")) != -1) {
+	while ((ch = getopt(argc, argv, GPT_FIND "T:l")) != -1) {
 		switch(ch) {
+		case 'l':
+			gpt_uuid_help("\t");
+			return 0;
 		case 'T':
 			if (gpt_uuid_get(gpt, &newtype) == -1)
 				return -1;
