@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.7 2015/05/15 08:44:24 msaitoh Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.8 2015/12/06 09:31:20 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -806,8 +806,8 @@ struct spdmem_ddr4 {				/* Dual Data Rate 4 SDRAM */
 	uint8_t	ddr4_tRFC4min_lsb;
 	uint8_t	ddr4_tRFC4min_msb;
 	SPD_BITFIELD(				\
-		uint8_t	ddr4_tFAW_mtb_msb,	\
-		uint8_t	ddr4_unused14, ,	\
+		uint8_t	ddr4_tFAW_mtb_msb:4,	\
+		uint8_t	ddr4_unused14:4, ,	\
 	);
 	uint8_t	ddr4_tFAWmin_mtb_lsb;
 	uint8_t	ddr4_tRRD_Smin_mtb;
