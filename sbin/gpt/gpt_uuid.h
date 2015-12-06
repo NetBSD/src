@@ -46,6 +46,7 @@
 
 // Must match the array in gpt_uuid.c
 typedef enum {
+	GPT_TYPE_INVALID = -1,
 	GPT_TYPE_APPLE_HFS = 0,
 	GPT_TYPE_APPLE_UFS,
 	GPT_TYPE_BIOS,
