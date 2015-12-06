@@ -1,4 +1,4 @@
-/*	$NetBSD: maplevar.h,v 1.14 2012/10/27 17:17:45 chs Exp $	*/
+/*	$NetBSD: maplevar.h,v 1.15 2015/12/06 02:04:10 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -184,9 +184,13 @@ struct maple_softc {
 	uint32_t sc_txbuf_phys;	/* 29-bit physical address */
 
 	void	*sc_intrhand;
-	int	sc_dmadone;		/* wchan */
 
-	int	sc_event;		/* periodic event is active / wchan */
+	kmutex_t sc_dma_lock;
+	kcondvar_t sc_dma_cv;
+
+	int	sc_event;	/* periodic event is active */
+	kmutex_t sc_event_lock;
+	kcondvar_t sc_event_cv;
 
 	SIMPLEQ_HEAD(maple_dmaq_head, maple_unit) sc_dmaq, sc_retryq;
 	TAILQ_HEAD(maple_unitq_head, maple_unit) sc_probeq, sc_pingq;
