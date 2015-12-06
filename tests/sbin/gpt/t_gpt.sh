@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.10 2015/12/05 18:53:29 christos Exp $
+# $NetBSD: t_gpt.sh,v 1.11 2015/12/06 00:38:30 christos Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,6 +39,12 @@ src=$(atf_get_srcdir)
 
 silence() {
 	atf_check -s exit:0 -o empty -e empty "$@"
+}
+
+inline() {
+	local inline="$1"
+	shift
+	atf_check -s exit:0 -e empty -o inline:"$inline" "$@"
 }
 
 match() {
@@ -105,7 +111,6 @@ partlblmsg() {
 
 partbootmsg() {
 	echo "^$disk: Partition $1 marked as bootable\$"
-
 }
 
 recovermsg() {
@@ -115,6 +120,14 @@ recovermsg() {
 migratemsg() {
 	echo -n "^gpt: $disk: Partition $1 unknown type MSDOS, "
 	echo 'using "Microsoft Basic Data"$'
+}
+
+attrmsg() {
+	echo "^$disk: Partition $1 attributes updated\$"
+}
+
+typemsg() {
+	echo "^$disk: Partition $1 type changed\$"
 }
 
 atf_test_case create_empty
@@ -136,6 +149,38 @@ create_2part_head() {
 create_2part_body() {
 	prepare_2part
 	check_2part
+}
+
+atf_test_case change_attr_2part
+change_attr_2part_head() {
+	atf_set "descr" "Change the attribute of 2 partition disk"
+}
+
+change_attr_2part_body() {
+	prepare_2part
+	match "$(attrmsg 1)" gpt set -i 1 -a biosboot,bootme "$disk"
+	save attr gpt show -i 1 "$disk"
+	match "^Attributes: biosboot,bootme\$" tail -1 attr
+	match "$(attrmsg 1)" gpt unset -i 1 -a biosboot,bootme "$disk"
+	save attr gpt show -i 1 "$disk"
+	match "^Attributes: None\$" tail -1 attr
+}
+
+atf_test_case change_type_2part
+change_type_2part_head() {
+	atf_set "descr" "Change the partition type type of 2 partition disk"
+}
+
+change_type_2part_body() {
+	prepare_2part
+	match "$(typemsg 1)" gpt type -i 1 -T apple "$disk"
+	save type gpt show -i 1 "$disk"
+	inline "Type: apple (48465300-0000-11aa-aa11-00306543ecac)\n" \
+	    grep "^Type:" type
+	match "$(typemsg 1)" gpt type -i 1 -T efi "$disk"
+	save type gpt show -i 1 "$disk"
+	inline "Type: efi (c12a7328-f81f-11d2-ba4b-00a0c93ec93b)\n" \
+	    grep "^Type:" type
 }
 
 atf_test_case backup_2part
@@ -238,7 +283,7 @@ bootable_2part_body() {
 	silence dd msgfmt=quiet if="$disk" of=bootblk bs=1 count="$bootsz"
 	silence cmp "$bootblk" bootblk
 	save bootattr gpt show -i 2 "$disk"
-	match "^  legacy BIOS boot partition\$" tail -1 bootattr
+	match "^Attributes: biosboot\$" tail -1 bootattr
 }
 
 atf_test_case migrate_disklabel
@@ -258,6 +303,8 @@ migrate_disklabel_body() {
 atf_init_test_cases() {
 	atf_add_test_case create_empty
 	atf_add_test_case create_2part
+	atf_add_test_case change_attr_2part
+	atf_add_test_case change_type_2part
 	atf_add_test_case backup_2part
 	atf_add_test_case remove_2part
 	atf_add_test_case restore_2part
