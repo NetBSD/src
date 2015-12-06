@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.101 2015/12/06 08:53:22 mlelstv Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.102 2015/12/06 09:38:54 wiz Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.101 2015/12/06 08:53:22 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.102 2015/12/06 09:38:54 wiz Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -356,7 +356,7 @@ uvm_vnp_setsize(struct vnode *vp, voff_t newsize)
 	oldsize = vp->v_writesize;
 
 	/*
-	 * check wether size shrinks
+	 * check whether size shrinks
 	 * if old size hasn't been set, there are no pages to drop
 	 * if there was an integer overflow in pgend, then this is no shrink
 	 */
