@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.41 2015/12/02 12:36:53 christos Exp $
+.\" $NetBSD: gpt.8,v 1.42 2015/12/06 00:39:26 christos Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -488,26 +488,33 @@ will automatically adjust.
 However, the new disk must use the same sector size as the old disk.
 .\" ==== set ====
 .It Nm Ic set Fl a Ar attribute Fl i Ar index
+.It Nm Ic set Fl l
 The
 .Ic set
 command sets various partition attributes.
 The
+.Fl l
+flag lists all available attributes.
+The
 .Fl a
-option specifies which attributes to set and may be specified more than once.
+option specifies which attributes to set and may be specified more than once,
+or the attributes can be comma-separated.
 The
 .Fl i
 option specifies which entry to update.
 The possible attributes are
 .Do biosboot Dc ,
 .Do bootme Dc ,
-.Do bootonce Dc , and
-.Do bootfailed Dc .
+.Do bootonce Dc ,
+.Do bootfailed Dc ,
+.Do noblockio Dc , and
+.Do required Dc .
 The biosboot flag is used to indicate which partition should be booted
 by legacy BIOS boot code.
 See the
 .Ic biosboot
 command for more information.
-The other three attributes are for compatibility with
+The other attributes are for compatibility with
 .Fx
 and are not currently used by any
 .Nx
@@ -546,8 +553,10 @@ The order of precedence for the options are:
 .\" ==== type ====
 .It Nm Ic type Oo Fl a Oc Fl T Ar newtype
 .It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
+.It Nm Ic type Oo Fl b Ar blocknr Oc Oo Fl i Ar index Oc \
 Oo Fl L Ar label Oc Oo Fl s Ar sectors Oc Oo Fl t Ar type Oc \
 Fl T Ar newtype
+.It Nm Ic type Fl l
 The
 .Ic type
 command allows the user to change the type of any and all partitions
@@ -556,11 +565,18 @@ It uses the same selection options as the
 .Ic label
 command.
 See above for a description of these options.
+The
+.Fl l
+flag lists available types.
 .\" ==== unset ====
 .It Nm Ic unset Fl a Ar attribute Fl i Ar index
+.It Nm Ic unset Fl l 
 The
 .Ic unset
 command unsets various partition attributes.
+The
+.Fl l
+flag lists all available attributes.
 The
 .Fl a
 option specifies which attributes to unset and may be specified more than once.
@@ -570,14 +586,16 @@ option specifies which entry to update.
 The possible attributes are
 .Do biosboot Dc ,
 .Do bootme Dc ,
-.Do bootonce Dc , and
-.Do bootfailed Dc .
+.Do bootonce Dc ,
+.Do bootfailed Dc ,
+.Do noblockio Dc , and
+.Do required Dc .
 The biosboot flag is used to indicate which partition should be booted
 by legacy BIOS boot code.
 See the
 .Ic biosboot
 command for more information.
-The other three attributes are for compatibility with
+The other attributes are for compatibility with
 .Fx
 and are not currently used by any
 .Nx

@@ -119,7 +119,9 @@ int	gpt_add_find(gpt_t, struct gpt_find *, int);
 int	gpt_add_ais(gpt_t, off_t *, u_int *, off_t *, int);
 off_t	gpt_check_ais(gpt_t, off_t, u_int, off_t);
 
-int	gpt_attr_get(uint64_t *);
+int	gpt_attr_get(gpt_t, uint64_t *);
+const char *gpt_attr_list(char *, size_t, uint64_t);
+void	gpt_attr_help(const char *);
 int	gpt_attr_update(gpt_t, u_int, uint64_t, uint64_t);
 int	gpt_uint_get(u_int *);
 int	gpt_human_get(off_t *);
