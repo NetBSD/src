@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.22 2015/12/06 14:43:59 christos Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.23 2015/12/07 20:55:49 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -99,10 +99,10 @@ struct dateinfo {
 }
 
 %token	tAGO tDAY tDAYZONE tID tMERIDIAN tMINUTE_UNIT tMONTH tMONTH_UNIT
-%token	tSEC_UNIT tSNUMBER tUNUMBER tZONE tDST AT_SIGN
+%token	tSEC_UNIT tSNUMBER tUNUMBER tZONE tDST AT_SIGN tTIME
 
 %type	<Number>	tDAY tDAYZONE tMINUTE_UNIT tMONTH tMONTH_UNIT
-%type	<Number>	tSEC_UNIT tSNUMBER tUNUMBER tZONE
+%type	<Number>	tSEC_UNIT tSNUMBER tUNUMBER tZONE tTIME
 %type	<Meridian>	tMERIDIAN o_merid
 
 %parse-param	{ struct dateinfo *param }
@@ -215,6 +215,15 @@ time	: tUNUMBER tMERIDIAN {
 	    param->yyMeridian = MER24;
 /* XXX: Do nothing with millis */
 	}
+	| tTIME {
+	    param->yyHour = $1;
+	    param->yyMinutes = 0;
+	    param->yySeconds = 0;
+	    param->yyMeridian = MER24;
+	    /* Tues midnight --> Weds 00:00, midnight Tues -> Tues 00:00 */
+	    if ($1 == 0 && param->yyHaveDay)
+	        param->yyDayNumber++;
+	}
 	;
 
 time_numericzone : tUNUMBER ':' tUNUMBER tSNUMBER {
@@ -306,8 +315,13 @@ date	: tUNUMBER '/' tUNUMBER {
 	}
 	| tUNUMBER tMONTH tUNUMBER {
 	    param->yyMonth = $2;
-	    param->yyDay = $1;
-	    param->yyYear = $3;
+	    if ($1 < 35) {
+	        param->yyDay = $1;
+	        param->yyYear = $3;
+	    } else {
+	        param->yyDay = $3;
+	        param->yyYear = $1;
+	    }
 	}
 	;
 
@@ -589,6 +603,17 @@ static const TABLE MilitaryTable[] = {
     { NULL,	0,	0 }
 };
 
+static const TABLE TimeNames[] = {
+    { "midnight",	tTIME,		 0 },
+    { "mn",		tTIME,		 0 },
+    { "noon",		tTIME,		12 },
+    { "dawn",		tTIME,		 6 },
+    { "sunup",		tTIME,		 6 },
+    { "sunset",		tTIME,		18 },
+    { "sundown",	tTIME,		18 },
+    { NULL,		0,		 0 }
+};
+
 
 
 
@@ -635,6 +660,7 @@ Convert(
 )
 {
     struct tm tm = {.tm_sec = 0};
+    struct tm otm;
     time_t result;
 
     tm.tm_sec = Seconds;
@@ -672,6 +698,15 @@ Convert(
     fprintf(stderr, " -> %jd", (intmax_t)result);
     fprintf(stderr, " %s", ctime(&result));
 #endif
+
+#define	TM_NE(fld) (otm.tm_ ## fld != tm.tm_ ## fld)
+    if (TM_NE(year) || TM_NE(mon) || TM_NE(mday) ||
+	TM_NE(hour) || TM_NE(min) || TM_NE(sec)) {
+	    /* mktime() "corrected" our tm, so it must have been invalid */
+	    result = -1;
+	    errno = EAGAIN;
+    }
+#undef	TM_NE
 
     return result;
 }
@@ -799,6 +834,12 @@ LookupWord(YYSTYPE *yylval, char *buff)
 
     if (strcmp(buff, "dst") == 0) 
 	return tDST;
+
+    for (tp = TimeNames; tp->name; tp++)
+	if (strcmp(buff, tp->name) == 0) {
+	    yylval->Number = tp->value;
+	    return tp->type;
+	}
 
     for (tp = UnitsTable; tp->name; tp++)
 	if (strcmp(buff, tp->name) == 0) {
