@@ -1,4 +1,4 @@
-/* $NetBSD: drvctl.c,v 1.17 2015/02/24 18:15:29 mlelstv Exp $ */
+/* $NetBSD: drvctl.c,v 1.18 2015/12/07 03:34:00 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -55,7 +55,7 @@ usage(void)
 	fprintf(stderr, "Usage: %s -r [-a attribute] busdevice [locator ...]\n"
 	    "       %s -d device\n"
 	    "       %s [-nt] -l [device]\n"
-	    "       %s [-n] -p device [prop]\n"
+	    "       %s [-n] -p device [property]\n"
 	    "       %s -Q device\n"
 	    "       %s -R device\n"
 	    "       %s -S device\n",
