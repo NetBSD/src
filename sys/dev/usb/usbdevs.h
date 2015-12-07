@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.696 2015/12/01 17:48:41 nonaka Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.697 2015/12/07 14:40:23 christos Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.704 2015/12/01 17:47:37 nonaka Exp
+ *	NetBSD: usbdevs,v 1.705 2015/12/07 14:40:03 christos Exp
  */
 
 /*
@@ -2270,12 +2270,13 @@
 
 /* MosChip Semiconductor */
 #define	USB_PRODUCT_MOSCHIP_MCS7703	0x7703		/* MCS7703 USB Serial Adapter */
-#define	USB_PRODUCT_MOSCHIP_MCS7780	0x7780		/* Fast IrDA Adapter */
-#define	USB_PRODUCT_MOSCHIP_MCS7781	0x7781		/* Fast IrDA Adapter */
-#define	USB_PRODUCT_MOSCHIP_MCS7784	0x7784		/* Slow IrDA Adapter */
+#define	USB_PRODUCT_MOSCHIP_MCS7780	0x7780		/* MCS7780 Fast IrDA Adapter */
+#define	USB_PRODUCT_MOSCHIP_MCS7781	0x7781		/* MCS7781 Fast IrDA Adapter */
+#define	USB_PRODUCT_MOSCHIP_MCS7784	0x7784		/* MCS7784 Slow IrDA Adapter */
 #define	USB_PRODUCT_MOSCHIP_MCS7810	0x7810		/* MCS7810 USB Serial Adapter */
 #define	USB_PRODUCT_MOSCHIP_MCS7820	0x7820		/* MCS7820 USB Serial Adapter */
-#define	USB_PRODUCT_MOSCHIP_MCS7830	0x7830		/* Ethernet Adapter */
+#define	USB_PRODUCT_MOSCHIP_MCS7830	0x7830		/* MCS7830 Ethernet Adapter */
+#define	USB_PRODUCT_MOSCHIP_MCS7832	0x7832		/* MCS7832 Ethernet Adapter */
 #define	USB_PRODUCT_MOSCHIP_MCS7840	0x7840		/* MCS7840 USB Serial Adapter */
 
 /* Motorola products */
