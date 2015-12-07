@@ -1,6 +1,6 @@
-/* $NetBSD: t_parsedate.c,v 1.13 2014/10/08 17:23:03 apb Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.14 2015/12/07 20:52:46 christos Exp $ */
 /*-
- * Copyright (c) 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.13 2014/10/08 17:23:03 apb Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.14 2015/12/07 20:52:46 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -136,6 +136,8 @@ ATF_TC_BODY(dates, tc)
 		2000, 10, 1, 0, 0, 0); /* month/day/year */
 	parsecheck("20 Jun 1994", NULL, NULL, localtime_r,
 		1994, 6, 20, 0, 0, 0);
+	parsecheck("97 September 2", NULL, NULL, localtime_r,
+		1997, 9, 2, 0, 0, 0);
 	parsecheck("23jun2001", NULL, NULL, localtime_r,
 		2001, 6, 23, 0, 0, 0);
 	parsecheck("1-sep-06", NULL, NULL, localtime_r,
@@ -146,6 +148,8 @@ ATF_TC_BODY(dates, tc)
 		1500, 1, 2, 0, 0, 0);
 	parsecheck("9999-12-21", NULL, NULL, localtime_r,
 		9999, 12, 21, 0, 0, 0);
+	parsecheck("2015.12.07.08.07.35", NULL, NULL, localtime_r,
+		2015, 12, 7, 8, 7, 35);
 }
 
 ATF_TC(times);
@@ -167,6 +171,19 @@ ATF_TC_BODY(times, tc)
 		ANY, ANY, ANY, 12, 11, 1);
 	parsecheck("12:21-0500", NULL, NULL, gmtime_r,
 		ANY, ANY, ANY, 12+5, 21, 0);
+	/* numeric zones not permitted with am/pm ... */
+	parsecheck("7 a.m. ICT", NULL, NULL, gmtime_r,
+		ANY, ANY, ANY, 7-7, 0, 0);
+	parsecheck("midnight", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("mn", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 0, 0, 0);
+	parsecheck("noon", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 12, 0, 0);
+	parsecheck("dawn", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 6, 0, 0);
+	parsecheck("sunset", NULL, NULL, localtime_r,
+		ANY, ANY, ANY, 18, 0, 0);
 }
 
 ATF_TC(dsttimes);
@@ -188,7 +205,7 @@ ATF_TC_BODY(dsttimes, tc)
 	parsecheck("12:0", NULL, NULL, localtime_r,
 		ANY, ANY, ANY, 12, 0, 0);
 
-	putenv(__UNCONST("TZ=Japan"));
+	putenv(__UNCONST("TZ=Asia/Tokyo"));
 	tzset();
 	parsecheck("12:0", NULL, NULL, localtime_r,
 		ANY, ANY, ANY, 12, 0, 0);
@@ -222,6 +239,18 @@ ATF_TC_HEAD(relative, tc)
 
 ATF_TC_BODY(relative, tc)
 {
+	struct tm tm;
+	time_t now;
+
+#define REL_CHECK(s, now, tm) do {					\
+	time_t p, q;							\
+	char pb[30], qb[30];						\
+	ATF_CHECK_EQ_MSG((p = parsedate(s, &now, NULL)),		\
+	    (q = mktime(&tm)),						\
+	    "From %s Expected %jd: %24.24s Obtained %jd: %24.24s", s,	\
+	    (uintmax_t)p, ctime_r(&p, pb), (uintmax_t)q, 		\
+	    ctime_r(&q, qb));						\
+    } while (/*CONSTCOND*/0)
 
 	ATF_CHECK(parsedate("-1 month", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("last friday", NULL, NULL) != -1);
@@ -229,6 +258,140 @@ ATF_TC_BODY(relative, tc)
 	ATF_CHECK(parsedate("this thursday", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("next sunday", NULL, NULL) != -1);
 	ATF_CHECK(parsedate("+2 years", NULL, NULL) != -1);
+
+	(void)time(&now);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mday--;
+	/* "yesterday" leaves time untouched */
+	tm.tm_isdst = -1;
+	REL_CHECK("yesterday", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mday++;
+	/* as does "tomorrow" */
+	tm.tm_isdst = -1;
+	REL_CHECK("tomorrow", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	if (tm.tm_wday > 4)
+		tm.tm_mday += 7;
+	tm.tm_mday += 4 - tm.tm_wday;
+	/* if a day name is mentioned, it means midnight (by default) */
+	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	tm.tm_isdst = -1;
+	REL_CHECK("this thursday", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mday += 14 - tm.tm_wday;
+	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	tm.tm_isdst = -1;
+	REL_CHECK("next sunday", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	if (tm.tm_wday <= 5)
+		tm.tm_mday -= 7;
+	tm.tm_mday += 5 - tm.tm_wday;
+	tm.tm_sec = tm.tm_min = 0;
+	tm.tm_hour = 16;
+	tm.tm_isdst = -1;
+	REL_CHECK("last friday 4 p.m.", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mday += 14;
+	if (tm.tm_wday > 3)
+		tm.tm_mday += 7;
+	tm.tm_mday += 3 - tm.tm_wday;
+	tm.tm_sec = tm.tm_min = 0;
+	tm.tm_hour = 3;
+	tm.tm_isdst = -1;
+	REL_CHECK("we fortnight 3 a.m.", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_min -= 5;
+	tm.tm_isdst = -1;
+	REL_CHECK("5 minutes ago", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_hour++;
+	tm.tm_min += 37;
+	tm.tm_isdst = -1;
+	REL_CHECK("97 minutes", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mon++;
+	tm.tm_isdst = -1;
+	REL_CHECK("month", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mon += 2;		/* "next" means add 2 ... */
+	tm.tm_isdst = -1;
+	REL_CHECK("next month", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mon--;
+	tm.tm_isdst = -1;
+	REL_CHECK("last month", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mon += 6;
+	tm.tm_mday += 2;
+	tm.tm_isdst = -1;
+	REL_CHECK("+6 months 2 days", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_mon -= 9;
+	tm.tm_isdst = -1;
+	REL_CHECK("9 months ago", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	if (tm.tm_wday <= 2)
+		tm.tm_mday -= 7;
+	tm.tm_mday += 2 - tm.tm_wday;
+	tm.tm_isdst = -1;
+	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+	REL_CHECK("1 week ago Tu", now, tm);
+#if 0
+	REL_DEBUG("1 week ago Tu");
+#endif
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_isdst = -1;
+	tm.tm_mday++;
+	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+	REL_CHECK("midnight tomorrow", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_isdst = -1;
+	tm.tm_mday++;
+	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
+	REL_CHECK("tomorrow midnight", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	tm.tm_isdst = -1;
+	tm.tm_mday++;
+	tm.tm_hour = 12;
+	tm.tm_min = tm.tm_sec = 0;
+	REL_CHECK("noon tomorrow", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	if (tm.tm_wday > 2)
+		tm.tm_mday += 7;
+	tm.tm_mday += 2 - tm.tm_wday;
+	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	tm.tm_isdst = -1;
+	REL_CHECK("midnight Tuesday", now, tm);
+
+	ATF_CHECK(localtime_r(&now, &tm) != NULL);
+	if (tm.tm_wday > 2)
+		tm.tm_mday += 7;
+	tm.tm_mday += 2 - tm.tm_wday;
+	tm.tm_mday++;	/* xxx midnight --> the next day */
+	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
+	tm.tm_isdst = -1;
+	REL_CHECK("Tuesday midnight", now, tm);
+
+#undef	REL_DEBUG
 }
 
 ATF_TC(atsecs);
@@ -267,6 +430,114 @@ ATF_TC_BODY(atsecs, tc)
 	ATF_CHECK(parsedate("@junk", NULL, NULL) == (time_t)-1 && errno != 0);
 }
 
+ATF_TC(zones);
+
+ATF_TC_HEAD(zones, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test parsing dates with zones");
+}
+
+ATF_TC_BODY(zones, tc)
+{
+	parsecheck("2015-12-06 16:11:48 UTC", NULL, NULL, gmtime_r,
+		2015, 12, 6, 16, 11, 48);
+	parsecheck("2015-12-06 16:11:48 UT", NULL, NULL, gmtime_r,
+		2015, 12, 6, 16, 11, 48);
+	parsecheck("2015-12-06 16:11:48 GMT", NULL, NULL, gmtime_r,
+		2015, 12, 6, 16, 11, 48);
+	parsecheck("2015-12-06 16:11:48 +0000", NULL, NULL, gmtime_r,
+		2015, 12, 6, 16, 11, 48);
+
+	parsecheck("2015-12-06 16:11:48 -0500", NULL, NULL, gmtime_r,
+		2015, 12, 6, 21, 11, 48);
+	parsecheck("2015-12-06 16:11:48 EST", NULL, NULL, gmtime_r,
+		2015, 12, 6, 21, 11, 48);
+	parsecheck("2015-12-06 16:11:48 EDT", NULL, NULL, gmtime_r,
+		2015, 12, 6, 20, 11, 48);
+	parsecheck("2015-12-06 16:11:48 +0500", NULL, NULL, gmtime_r,
+		2015, 12, 6, 11, 11, 48);
+
+	parsecheck("2015-12-06 16:11:48 +1000", NULL, NULL, gmtime_r,
+		2015, 12, 6, 6, 11, 48);
+	parsecheck("2015-12-06 16:11:48 AEST", NULL, NULL, gmtime_r,
+		2015, 12, 6, 6, 11, 48);
+	parsecheck("2015-12-06 16:11:48 -1000", NULL, NULL, gmtime_r,
+		2015, 12, 7, 2, 11, 48);
+	parsecheck("2015-12-06 16:11:48 HST", NULL, NULL, gmtime_r,
+		2015, 12, 7, 2, 11, 48);
+
+	parsecheck("2015-12-06 16:11:48 AWST", NULL, NULL, gmtime_r,
+		2015, 12, 6, 8, 11, 48);
+	parsecheck("2015-12-06 16:11:48 NZDT", NULL, NULL, gmtime_r,
+		2015, 12, 6, 3, 11, 48);
+
+        parsecheck("Sun, 6 Dec 2015 09:43:16 -0500", NULL, NULL, gmtime_r,
+		2015, 12, 6, 14, 43, 16);
+	parsecheck("Mon Dec  7 03:13:31 ICT 2015", NULL, NULL, gmtime_r,
+		2015, 12, 6, 20, 13, 31);
+	/* the day name is ignored when a day of month (etc) is given... */
+	parsecheck("Sat Dec  7 03:13:31 ICT 2015", NULL, NULL, gmtime_r,
+		2015, 12, 6, 20, 13, 31);
+
+
+	parsecheck("2015-12-06 12:00:00 IDLW", NULL, NULL, gmtime_r,
+		2015, 12, 7, 0, 0, 0);
+	parsecheck("2015-12-06 12:00:00 IDLE", NULL, NULL, gmtime_r,
+		2015, 12, 6, 0, 0, 0);
+
+	parsecheck("2015-12-06 21:17:33 NFT", NULL, NULL, gmtime_r,
+		2015, 12, 7, 0, 47, 33);
+	parsecheck("2015-12-06 21:17:33 ACST", NULL, NULL, gmtime_r,
+		2015, 12, 6, 11, 47, 33);
+	parsecheck("2015-12-06 21:17:33 +0717", NULL, NULL, gmtime_r,
+		2015, 12, 6, 14, 0, 33);
+
+	parsecheck("2015-12-06 21:21:21 Z", NULL, NULL, gmtime_r,
+		2015, 12, 6, 21, 21, 21);
+	parsecheck("2015-12-06 21:21:21 A", NULL, NULL, gmtime_r,
+		2015, 12, 6, 22, 21, 21);
+	parsecheck("2015-12-06 21:21:21 G", NULL, NULL, gmtime_r,
+		2015, 12, 7, 4, 21, 21);
+	parsecheck("2015-12-06 21:21:21 M", NULL, NULL, gmtime_r,
+		2015, 12, 7, 9, 21, 21);
+	parsecheck("2015-12-06 21:21:21 N", NULL, NULL, gmtime_r,
+		2015, 12, 6, 20, 21, 21);
+	parsecheck("2015-12-06 21:21:21 T", NULL, NULL, gmtime_r,
+		2015, 12, 6, 14, 21, 21);
+	parsecheck("2015-12-06 21:21:21 Y", NULL, NULL, gmtime_r,
+		2015, 12, 6, 9, 21, 21);
+
+}
+
+ATF_TC(gibberish);
+
+ATF_TC_HEAD(gibberish, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "Test (not) parsing nonsense");
+}
+
+ATF_TC_BODY(gibberish, tc)
+{
+	errno = 0;
+	ATF_CHECK(parsedate("invalid nonsense", NULL, NULL) == (time_t)-1
+	    && errno != 0);
+	errno = 0;
+	ATF_CHECK(parsedate("12th day of Christmas", NULL, NULL) == (time_t)-1
+	    && errno != 0);
+	errno = 0;
+	ATF_CHECK(parsedate("2015-31-07 15:00", NULL, NULL) == (time_t)-1
+	    && errno != 0);
+	errno = 0;
+	ATF_CHECK(parsedate("2015-02-29 10:01", NULL, NULL) == (time_t)-1
+	    && errno != 0);
+	errno = 0;
+	ATF_CHECK(parsedate("2015-12-06 24:01", NULL, NULL) == (time_t)-1
+	    && errno != 0);
+	errno = 0;
+	ATF_CHECK(parsedate("2015-12-06 14:61", NULL, NULL) == (time_t)-1
+	    && errno != 0);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 	ATF_TP_ADD_TC(tp, dates);
@@ -274,6 +545,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, dsttimes);
 	ATF_TP_ADD_TC(tp, relative);
 	ATF_TP_ADD_TC(tp, atsecs);
+	ATF_TP_ADD_TC(tp, zones);
+	ATF_TP_ADD_TC(tp, gibberish);
 
 	return atf_no_error();
 }
+
