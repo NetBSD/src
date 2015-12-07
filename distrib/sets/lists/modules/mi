@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.80 2015/12/03 02:57:47 pgoyette Exp $
+# $NetBSD: mi,v 1.81 2015/12/07 03:25:57 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -34,6 +34,8 @@
 ./@MODULEDIR@/cgd/cgd.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/chfs				base-kernel-modules	kmod
 ./@MODULEDIR@/chfs/chfs.kmod			base-kernel-modules	kmod
+./@MODULEDIR@/clockctl				base-kernel-modules	kmod
+./@MODULEDIR@/clockctl/clockctl.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/coda				base-kernel-modules	kmod
 ./@MODULEDIR@/coda/coda.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/coda5				base-kernel-modules	kmod
