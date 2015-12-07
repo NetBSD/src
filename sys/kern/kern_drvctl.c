@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.40 2015/12/07 11:38:46 pgoyette Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.41 2015/12/07 20:01:43 christos Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.40 2015/12/07 11:38:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.41 2015/12/07 20:01:43 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -614,8 +614,8 @@ drvctl_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 		drvctl_init();
 
-#ifdef _MODULE
 		mutex_enter(&drvctl_lock);
+#ifdef _MODULE
 		bmajor = cmajor = -1;
 		error = devsw_attach("drvctl", NULL, &bmajor,
 		    &drvctl_cdevsw, &cmajor);
