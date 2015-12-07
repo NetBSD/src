@@ -1,4 +1,4 @@
--- $NetBSD: printenv.lua,v 1.2 2014/01/02 08:21:38 mrg Exp $
+-- $NetBSD: printenv.lua,v 1.3 2015/12/07 03:11:48 kamil Exp $
 
 -- this small Lua script demonstrates the use of Lua in (bozo)httpd
 -- it will simply output the "environment"
@@ -8,6 +8,10 @@
 -- the same value on each invocation.  You can not keep state between
 -- two calls.
 
+-- You can test this example by running the following command:
+-- /usr/libexec/httpd -b -f -I 8080 -L test printenv.lua .
+-- and then navigate to: http://127.0.0.1:8080/test/printenv
+
 local httpd = require 'httpd'
 
 function printenv(env, headers, query)
@@ -15,12 +19,14 @@ function printenv(env, headers, query)
 	-- we get the "environment" in the env table, the values are more
 	-- or less the same as the variable for a CGI program
 
-	if count == nil then
-		count = 1
-	end
+	-- output headers using httpd.write()
+	-- httpd.write() will not append newlines
+	httpd.write("HTTP/1.1 200 Ok\r\n")
+	httpd.write("Content-Type: text/html\r\n\r\n")
 
-	-- output a header
-	print([[
+	-- output html using httpd.print()
+	-- you can also use print() and io.write() but they will not work with SSL
+	httpd.print([[
 		<html>
 			<head>
 				<title>Bozotic Lua Environment</title>
@@ -29,54 +35,58 @@ function printenv(env, headers, query)
 				<h1>Bozotic Lua Environment</h1>
 	]])
 
-	print('module version: ' .. httpd._VERSION .. '<br>')
+	httpd.print('module version: ' .. httpd._VERSION .. '<br>')
 
-	print('<h2>Server Environment</h2>')
+	httpd.print('<h2>Server Environment</h2>')
 	-- print the list of "environment" variables
 	for k, v in pairs(env) do
-		print(k .. '=' .. v .. '<br/>')
+		httpd.print(k .. '=' .. v .. '<br/>')
 	end
 
-	print('<h2>Request Headers</h2>')
+	httpd.print('<h2>Request Headers</h2>')
 	for k, v in pairs(headers) do
-		print(k .. '=' .. v .. '<br/>')
+		httpd.print(k .. '=' .. v .. '<br/>')
 	end
 
 	if query ~= nil then
-		print('<h2>Query Variables</h2>')
+		httpd.print('<h2>Query Variables</h2>')
 		for k, v in pairs(query) do
-			print(k .. '=' .. v .. '<br/>')
+			httpd.print(k .. '=' .. v .. '<br/>')
 		end
 	end
 
-	print('<h2>Form Test</h2>')
+	httpd.print('<h2>Form Test</h2>')
 
-	print([[
-	<form method="POST" action="/rest/form?sender=me">
+	httpd.print([[
+	<form method="POST" action="form?sender=me">
 	<input type="text" name="a_value">
 	<input type="submit">
 	</form>
 	]])
 	-- output a footer
-	print([[
+	httpd.print([[
 		</body>
 	</html>
 	]])
 end
 
 function form(env, header, query)
+
+	httpd.write("HTTP/1.1 200 Ok\r\n")
+	httpd.write("Content-Type: text/html\r\n\r\n")
+
 	if query ~= nil then
-		print('<h2>Form Variables</h2>')
+		httpd.print('<h2>Form Variables</h2>')
 
 		if env.CONTENT_TYPE ~= nil then
-			print('Content-type: ' .. env.CONTENT_TYPE .. '<br>')
+			httpd.print('Content-type: ' .. env.CONTENT_TYPE .. '<br>')
 		end
 
 		for k, v in pairs(query) do
-			print(k .. '=' .. v .. '<br/>')
+			httpd.print(k .. '=' .. v .. '<br/>')
 		end
 	else
-		print('No values')
+		httpd.print('No values')
 	end
 end
 
