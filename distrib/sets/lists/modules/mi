@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.81 2015/12/07 03:25:57 pgoyette Exp $
+# $NetBSD: mi,v 1.82 2015/12/07 11:38:46 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -62,6 +62,8 @@
 ./@MODULEDIR@/dk_subr/dk_subr.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/dm				base-kernel-modules	lvm,kmod
 ./@MODULEDIR@/dm/dm.kmod			base-kernel-modules	lvm,kmod
+./@MODULEDIR@/drvctl				base-kernel-modules	lvm,kmod
+./@MODULEDIR@/drvctl/drvctl.kmod		base-kernel-modules	lvm,kmod
 ./@MODULEDIR@/dtrace				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace/dtrace.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_fbt				base-kernel-modules	kmod,dtrace
