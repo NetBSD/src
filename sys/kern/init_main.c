@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.475 2015/11/26 01:41:20 ozaki-r Exp $	*/
+/*	$NetBSD: init_main.c,v 1.476 2015/12/07 11:38:46 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.475 2015/11/26 01:41:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.476 2015/12/07 11:38:46 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -121,7 +121,6 @@ extern void *_binary_splash_image_start;
 extern void *_binary_splash_image_end;
 #endif
 
-#include "drvctl.h"
 #include "ksyms.h"
 
 #include "veriexec.h"
@@ -713,9 +712,6 @@ configure(void)
 	config_twiddle_init();
 
 	pmf_init();
-#if NDRVCTL > 0
-	drvctl_init();
-#endif
 
 	/* Initialize driver modules */
 	module_init_class(MODULE_CLASS_DRIVER);
