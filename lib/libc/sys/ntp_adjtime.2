@@ -1,4 +1,4 @@
-.\"	$NetBSD: ntp_adjtime.2,v 1.10 2009/05/18 09:28:51 wiz Exp $
+.\"	$NetBSD: ntp_adjtime.2,v 1.11 2015/12/07 23:20:57 pgoyette Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 22, 2007
+.Dd December 8, 2015
 .Dt NTP_ADJTIME 2
 .Os
 .Sh NAME
@@ -55,6 +55,21 @@ The
 .Fn ntp_adjtime
 function is used by the NTP daemon to adjust the system clock to an
 externally derived time.
+The
+.Fn ntp_adjtime
+system call is available only for the super user.
+If the system call fails, the
+.Fn ntp_adjtime
+function in the standard C library will try to use the
+.Xr clockctl 4 device if present, thus making it possible for the NTP
+daemon to run as a non-privileged user.
+If
+.X4 clockctl 4
+is not present,
+.Fn ntp_adjtime
+returns
+.Er EPERM .
+.Pp
 The time offset and related variables which are set by
 .Fn ntp_adjtime
 are used by
