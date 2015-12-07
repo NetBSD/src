@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.68 2015/11/25 06:21:26 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.h,v 1.69 2015/12/07 06:19:13 ozaki-r Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -400,8 +400,8 @@ struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
 struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *);
 void nd6_setmtu(struct ifnet *);
-void nd6_llinfo_settimer(struct llentry *, long);
-void nd6_llinfo_settimer_locked(struct llentry *, long);
+void nd6_llinfo_settimer(struct llentry *, time_t);
+void nd6_llinfo_settimer_locked(struct llentry *, time_t);
 void nd6_timer(void *);
 void nd6_purge(struct ifnet *, struct in6_ifextra *);
 void nd6_nud_hint(struct rtentry *);

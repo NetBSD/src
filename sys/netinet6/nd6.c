@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.181 2015/11/25 06:21:26 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.182 2015/12/07 06:19:13 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.181 2015/11/25 06:21:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.182 2015/12/07 06:19:13 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -391,9 +391,10 @@ skip1:
  * ND6 timer routine to handle ND6 entries
  */
 void
-nd6_llinfo_settimer_locked(struct llentry *ln, long xtick)
+nd6_llinfo_settimer_locked(struct llentry *ln, time_t xtick)
 {
 
+	CTASSERT(sizeof(time_t) > sizeof(int));
 	LLE_WLOCK_ASSERT(ln);
 
 	if (xtick < 0) {
@@ -416,7 +417,7 @@ nd6_llinfo_settimer_locked(struct llentry *ln, long xtick)
 }
 
 void
-nd6_llinfo_settimer(struct llentry *ln, long xtick)
+nd6_llinfo_settimer(struct llentry *ln, time_t xtick)
 {
 
 	LLE_WLOCK(ln);
@@ -535,7 +536,7 @@ nd6_llinfo_timer(void *arg)
 	case ND6_LLINFO_REACHABLE:
 		if (!ND6_LLINFO_PERMANENT(ln)) {
 			ln->ln_state = ND6_LLINFO_STALE;
-			nd6_llinfo_settimer_locked(ln, (long)nd6_gctimer * hz);
+			nd6_llinfo_settimer_locked(ln, nd6_gctimer * hz);
 		}
 		break;
 
@@ -557,7 +558,7 @@ nd6_llinfo_timer(void *arg)
 			send_ns = true;
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE; /* XXX */
-			nd6_llinfo_settimer_locked(ln, (long)nd6_gctimer * hz);
+			nd6_llinfo_settimer_locked(ln, nd6_gctimer * hz);
 		}
 		break;
 	case ND6_LLINFO_PROBE:
@@ -575,7 +576,7 @@ nd6_llinfo_timer(void *arg)
 	if (send_ns) {
 		struct in6_addr src, *psrc;
 
-		nd6_llinfo_settimer_locked(ln, (long)ndi->retrans * hz / 1000);
+		nd6_llinfo_settimer_locked(ln, ndi->retrans * hz / 1000);
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		LLE_FREE_LOCKED(ln);
 		ln = NULL;
@@ -1135,7 +1136,7 @@ nd6_free(struct rtentry *rt, struct llentry *ln, int gc)
 				    (dr->expire - time_uptime) * hz);
 			else
 				nd6_llinfo_settimer_locked(ln,
-				    (long)nd6_gctimer * hz);
+				    nd6_gctimer * hz);
 			splx(s);
 			return;
 		}
@@ -1230,7 +1231,7 @@ nd6_nud_hint(struct rtentry *rt)
 	ln->ln_state = ND6_LLINFO_REACHABLE;
 	if (!ND6_LLINFO_PERMANENT(ln)) {
 		nd6_llinfo_settimer(ln,
-		    (long)ND_IFINFO(rt->rt_ifp)->reachable * hz);
+		    ND_IFINFO(rt->rt_ifp)->reachable * hz);
 	}
 
 	return;
@@ -2140,7 +2141,7 @@ fail:
 			 * we must set the timer now, although it is actually
 			 * meaningless.
 			 */
-			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
 
 			nd6_llinfo_release_pkts(ln, ifp, rt);
 		} else if (ln->ln_state == ND6_LLINFO_INCOMPLETE) {
@@ -2432,7 +2433,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	if ((ifp->if_flags & IFF_POINTOPOINT) != 0 &&
 	    ln->ln_state < ND6_LLINFO_REACHABLE) {
 		ln->ln_state = ND6_LLINFO_STALE;
-		nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+		nd6_llinfo_settimer(ln, nd6_gctimer * hz);
 	}
 
 	/*
@@ -2445,7 +2446,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 	if (ln->ln_state == ND6_LLINFO_STALE) {
 		ln->ln_asked = 0;
 		ln->ln_state = ND6_LLINFO_DELAY;
-		nd6_llinfo_settimer(ln, (long)nd6_delay * hz);
+		nd6_llinfo_settimer(ln, nd6_delay * hz);
 	}
 
 	/*
@@ -2496,7 +2497,7 @@ nd6_output(struct ifnet *ifp, struct ifnet *origifp, struct mbuf *m0,
 
 		ln->ln_asked++;
 		nd6_llinfo_settimer(ln,
-		    (long)ND_IFINFO(ifp)->retrans * hz / 1000);
+		    ND_IFINFO(ifp)->retrans * hz / 1000);
 		psrc = nd6_llinfo_get_holdsrc(ln, &src);
 		nd6_ns_output(ifp, NULL, &dst->sin6_addr, psrc, 0);
 	}
