@@ -1,5 +1,4 @@
-#! /usr/bin/atf-sh
-#	$NetBSD: t_gif.sh,v 1.1 2015/11/05 00:02:59 knakahara Exp $
+#	$NetBSD: t_gif.sh,v 1.2 2015/12/07 09:59:26 knakahara Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -285,7 +284,7 @@ test_setup_tunnel()
 
 	peernet=""
 	opt=""
-	if [ ${inner} = "ipv6" ]; then
+	if [ ${mode} = "ipv6" ]; then
 		peernet=$ROUTER2_LANNET6
 		opt="-inet6"
 	else
@@ -296,7 +295,7 @@ test_setup_tunnel()
 	atf_check -s exit:0 -o match:gif0 rump.ifconfig
 	atf_check -s exit:0 -o match:gif0 rump.route -nL get ${opt} ${peernet}
 
-	if [ ${inner} = "ipv6" ]; then
+	if [ ${mode} = "ipv6" ]; then
 		peernet=$ROUTER1_LANNET6
 		opt="-inet6"
 	else
