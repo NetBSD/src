@@ -1,4 +1,4 @@
-.\" $NetBSD: clock_settime.2,v 1.22 2014/03/28 15:35:55 wiz Exp $
+.\" $NetBSD: clock_settime.2,v 1.23 2015/12/07 23:20:57 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd February 11, 1999
+.Dd December 8, 2016
 .Dt CLOCK_SETTIME 2
 .Os
 .Sh NAME
@@ -119,19 +119,20 @@ of
 identifies a clock that increments when the CPU is running in user
 or kernel mode on behalf of the calling process.
 .Pp
-If the calling user is not the super-user, then the
+If the calling user is not the super-user, the
+.Fn clock_settime
+system call will fail, and the
 .Fn clock_settime
 function in the standard C library will try to use the
 .Xr clockctl 4
-device if present, thus making possible for non privileged users to
+device if present, thus making it possible for non privileged users to
 set the system time.
 If
 .Xr clockctl 4
 is not present or not accessible, then
 .Fn clock_settime
-reverts to the
-.Fn clock_settime
-system call, which is restricted to the super user.
+returns
+.Er EPERM .
 .Sh RETURN VALUES
 A value of 0 is returned on success.
 Otherwise, a value of \-1 is returned and
