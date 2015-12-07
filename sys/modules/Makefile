@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.162 2015/12/03 10:38:21 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.163 2015/12/07 03:25:57 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -16,6 +16,7 @@ SUBDIR+=	ccd
 SUBDIR+=	cd9660
 SUBDIR+=	cgd
 SUBDIR+=	chfs
+SUBDIR+=	clockctl
 SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
