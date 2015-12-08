@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.67 2015/11/14 10:44:57 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.68 2015/12/08 12:40:12 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.67 2015/11/14 10:44:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.68 2015/12/08 12:40:12 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3571,7 +3571,8 @@ ehci_device_ctrl_fini(struct usbd_xfer *xfer)
 	ehci_free_sqtd(sc, ex->ex_status);
 	ehci_free_sqtds(sc, ex);
 	if (ex->ex_nsqtd)
-		kmem_free(ex->ex_sqtds, sizeof(ehci_soft_qtd_t *) * ex->ex_nsqtd);
+		kmem_free(ex->ex_sqtds,
+		    sizeof(ehci_soft_qtd_t *) * ex->ex_nsqtd);
 }
 
 Static usbd_status
