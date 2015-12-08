@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.18 2015/12/07 14:13:05 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.19 2015/12/08 02:09:23 pgoyette Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.18 2015/12/07 14:13:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.19 2015/12/08 02:09:23 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -875,7 +875,7 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 		dimm_size = (1 << dimm_size) *
 		    (s->sm_ddr4.ddr4_package_ranks + 1); /* log.ranks/DIMM */
 		if (s->sm_ddr4.ddr4_signal_loading == 2) {
-			dimm_size *= s->sm_ddr4.ddr4_diecount;
+			dimm_size *= (s->sm_ddr4.ddr4_diecount + 1);
 		}
 	}
 
@@ -892,7 +892,7 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	    cycle_time % 1000, 1000000 / cycle_time);
 
 	decode_size_speed(self, node, dimm_size, cycle_time, 2,
-			  1 << (s->sm_ddr4.ddr4_device_width + 3),
+			  1 << (s->sm_ddr4.ddr4_primary_bus_width + 3),
 			  TRUE, "PC4", 0);
 
 	aprint_verbose_dev(self,
