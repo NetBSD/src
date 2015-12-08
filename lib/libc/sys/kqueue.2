@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.34 2015/03/02 19:24:19 christos Exp $
+.\"	$NetBSD: kqueue.2,v 1.35 2015/12/08 14:52:06 christos Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd March 2, 2015
+.Dd December 8, 2015
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -210,10 +210,24 @@ Disable the event so
 .Fn kevent
 will not return it.
 The filter itself is not disabled.
+.It EV_DISPATCH
+Disable the event source immediately after delivery of an event.
+See
+.Dv EV_DISABLE
+above.
 .It EV_DELETE
 Removes the event from the kqueue.
 Events which are attached to file descriptors are automatically deleted
 on the last close of the descriptor.
+.It EV_RECEIPT
+This flag is useful for making bulk changes to a kqueue without draining
+any pending events.
+When passed as input, it forces
+.Dv EV_ERROR
+to always be returned.
+When a filter is successfully added the
+.Va data
+field will be zero.
 .It EV_ONESHOT
 Causes the event to return only the first occurrence of the filter
 being triggered.

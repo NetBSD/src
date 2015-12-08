@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.83 2015/03/02 19:24:53 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.84 2015/12/08 14:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.83 2015/03/02 19:24:53 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.84 2015/12/08 14:52:06 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -867,7 +867,7 @@ kevent1(register_t *retval, int fd,
 			kevp->flags &= ~EV_SYSFLAGS;
 			/* register each knote */
 			error = kqueue_register(kq, kevp);
-			if (error) {
+			if (error || (kevp->flags & EV_RECEIPT)) {
 				if (nevents != 0) {
 					kevp->flags = EV_ERROR;
 					kevp->data = error;
@@ -1229,6 +1229,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 			}
 			if ((kn->kn_flags & EV_ONESHOT) == 0) {
 				mutex_spin_exit(&kq->kq_lock);
+				KASSERT(kn->kn_fop->f_event != NULL);
 				KERNEL_LOCK(1, NULL);		/* XXXSMP */
 				rv = (*kn->kn_fop->f_event)(kn, 0);
 				KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
@@ -1258,7 +1259,10 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 				/* clear state after retrieval */
 				kn->kn_data = 0;
 				kn->kn_fflags = 0;
-				kn->kn_status &= ~KN_ACTIVE;
+				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE);
+			} else if (kn->kn_flags & EV_DISPATCH) {
+				kn->kn_status |= KN_DISABLED;
+				kn->kn_status &= ~(KN_QUEUED|KN_ACTIVE);
 			} else {
 				/* add event back on list */
 				kq_check(kq);
@@ -1510,6 +1514,7 @@ knote(struct klist *list, long hint)
 	struct knote *kn, *tmpkn;
 
 	SLIST_FOREACH_SAFE(kn, list, kn_selnext, tmpkn) {
+		KASSERT(kn->kn_fop->f_event != NULL);
 		if ((*kn->kn_fop->f_event)(kn, hint))
 			knote_activate(kn);
 	}

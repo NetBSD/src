@@ -1,4 +1,4 @@
-/*	$NetBSD: event.h,v 1.24 2015/01/14 22:21:00 christos Exp $	*/
+/*	$NetBSD: event.h,v 1.25 2015/12/08 14:52:06 christos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -74,6 +74,8 @@ struct kevent {
 /* flags */
 #define	EV_ONESHOT	0x0010U		/* only report one occurrence */
 #define	EV_CLEAR	0x0020U		/* clear event state after reporting */
+#define EV_RECEIPT	0x0040U		/* force EV_ERROR on success, data=0 */
+#define EV_DISPATCH	0x0080U		/* disable event after reporting */
 
 #define	EV_SYSFLAGS	0xF000U		/* reserved by system */
 #define	EV_FLAG1	0x2000U		/* filter-specific flag */
