@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.23 2015/12/07 20:55:49 christos Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.24 2015/12/08 12:51:04 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -675,10 +675,12 @@ Convert(
 	    case DSToff: tm.tm_isdst = 0; break;
 	    default:     tm.tm_isdst = -1; break;
 	    }
+	    otm = tm;
 	    result = mktime(&tm);
     } else {
 	    /* We rely on mktime_z(NULL, ...) working in UTC */
 	    tm.tm_isdst = 0;	/* hence cannot be summer time */
+	    otm = tm;
 	    errno = 0;
 	    result = mktime_z(NULL, &tm);
 	    if (result != -1 || errno == 0) {
