@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.155 2015/12/05 07:59:34 jnemeth Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.156 2015/12/08 01:57:13 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.155 2015/12/05 07:59:34 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.156 2015/12/08 01:57:13 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -661,15 +661,24 @@ spec_open(void *v)
 	
 	ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
 
-	error = (*ioctl)(vp->v_rdev, DIOCGMEDIASIZE, &off, FREAD, curlwp);
+	// XXX: DIOCGPART is not 64 bit friendly so we avoid it fot the
+	// raw partition
+	if (DISKPART(vp->v_rdev) == RAW_PART)
+		error = (*ioctl)(vp->v_rdev, DIOCGMEDIASIZE,
+		    &off, FREAD, curlwp);
+	else
+		error = EINVAL;
 	if (error) {
 		struct partinfo pi;
-#ifdef DIAGNOSTIC
-		printf("ioctl DIOCGMEDIASIZE failed %d\n", error);
-#endif
 		error = (*ioctl)(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
-		if (error == 0)
+		if (error == 0) {
 			off = (off_t)pi.disklab->d_secsize * pi.part->p_size;
+#ifdef DIAGNOSTIC
+			if (pi.disklab->d_secsize == UINT_MAX)
+				printf("overflow in DIOCGPART dev=%jx\n",
+				    (uintmax_t)vp->v_rdev);
+#endif
+		}
 	}
 
 	if (error == 0)
