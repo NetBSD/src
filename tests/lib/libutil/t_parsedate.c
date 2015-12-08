@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.15 2015/12/07 20:57:39 christos Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.16 2015/12/08 12:41:28 christos Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.15 2015/12/07 20:57:39 christos Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.16 2015/12/08 12:41:28 christos Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -351,9 +351,6 @@ ATF_TC_BODY(relative, tc)
 	tm.tm_isdst = -1;
 	tm.tm_hour = tm.tm_min = tm.tm_sec = 0;
 	REL_CHECK("1 week ago Tu", now, tm);
-#if 0
-	REL_DEBUG("1 week ago Tu");
-#endif
 
 	ATF_CHECK(localtime_r(&now, &tm) != NULL);
 	tm.tm_isdst = -1;
