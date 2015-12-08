@@ -1,4 +1,4 @@
-/*	$NetBSD: am335x_gpio.c,v 1.1 2015/11/02 00:48:45 jmcneill Exp $	*/
+/*	$NetBSD: am335x_gpio.c,v 1.2 2015/12/08 14:42:24 skrll Exp $	*/
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +28,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am335x_gpio.c,v 1.1 2015/11/02 00:48:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am335x_gpio.c,v 1.2 2015/12/08 14:42:24 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -54,10 +54,22 @@ __KERNEL_RCSID(0, "$NetBSD: am335x_gpio.c,v 1.1 2015/11/02 00:48:45 jmcneill Exp
 #include <arm/omap/omap2_obiovar.h>
 #include <arm/omap/omap2_gpio.h>
 
+#include <arm/omap/am335x_prcm.h>
+#include <arm/omap/omap2_prcm.h>
+#include <arm/omap/sitara_cm.h>
+#include <arm/omap/sitara_cmreg.h>
+
 #if NGPIO > 0
 #include <sys/gpio.h>
 #include <dev/gpio/gpiovar.h>
 #endif
+
+static const struct omap_module gpio_module[] = {
+	{ 0, 0 },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO1_CLKCTRL },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO2_CLKCTRL },
+	{ AM335X_PRCM_CM_PER, CM_PER_GPIO3_CLKCTRL },
+};
 
 #define AM335X_GPIO_REVISION		0x000
 #define AM335X_GPIO_SYSCONFIG		0x010
@@ -231,6 +243,22 @@ gpio_attach(device_t parent, device_t self, void *aux)
 	}
 
 	aprint_normal("\n");
+
+#ifdef TI_AM335X
+	switch (oa->obio_addr) {
+	case GPIO0_BASE_TI_AM335X:
+		break;
+	case GPIO1_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[1]);
+		break;
+	case GPIO2_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[2]);
+		break;
+	case GPIO3_BASE_TI_AM335X:
+		prcm_module_enable(&gpio_module[3]);
+		break;
+	}
+#endif
 
 #if NGPIO > 0
 	gpio_attach1(self);
