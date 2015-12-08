@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.118 2015/01/02 19:42:07 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.119 2015/12/08 20:36:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -444,8 +444,14 @@ struct format_op {
  * on a disk.
  */
 struct partinfo {
-	struct disklabel *disklab;
-	struct partition *part;
+	uint64_t pi_offset;
+	uint64_t pi_size;
+	uint32_t pi_secsize;
+	uint32_t pi_bsize;
+	uint8_t	 pi_fstype;
+	uint8_t  pi_frag;
+	uint16_t pi_cpg;
+	uint32_t pi_fsize;
 };
 
 struct disk;

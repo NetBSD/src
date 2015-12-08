@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.159 2014/11/09 17:48:07 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.160 2015/12/08 20:36:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.160 2015/12/08 20:36:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -936,7 +936,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		bip = fd2biosinfo(curproc, fp);
 		ioctlf = fp->f_ops->fo_ioctl;
 		error = ioctlf(fp, DIOCGDEFLABEL, (void *)&label);
-		error1 = ioctlf(fp, DIOCGPART, (void *)&partp);
+		error1 = ioctlf(fp, DIOCGPARTINFO, (void *)&partp);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			goto out;
