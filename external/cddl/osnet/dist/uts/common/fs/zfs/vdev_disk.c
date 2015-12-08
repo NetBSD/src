@@ -138,16 +138,16 @@ skip_open:
 	 * Determine the actual size of the device.
 	 * XXXNETBSD wedges.
 	 */
-	error = VOP_IOCTL(vp, DIOCGPART, &pinfo, FREAD|FWRITE,
+	error = VOP_IOCTL(vp, DIOCGPARTINFO, &pinfo, FREAD|FWRITE,
 	    kauth_cred_get());
 	if (error != 0) {
 		vrele(vp);
 		vd->vdev_stat.vs_aux = VDEV_AUX_OPEN_FAILED;
 		return error;
 	}
-	*psize = (uint64_t)pinfo.part->p_size * pinfo.disklab->d_secsize;
-	*ashift = highbit(MAX(pinfo.disklab->d_secsize, SPA_MINBLOCKSIZE)) - 1;
-	vd->vdev_wholedisk = (pinfo.part->p_offset == 0); /* XXXNETBSD */
+	*psize = pinfo.pi_size * pinfo.pi_secsize;
+	*ashift = highbit(MAX(pinfo.pi_secsize, SPA_MINBLOCKSIZE)) - 1;
+	vd->vdev_wholedisk = (pinfo.pi_offset == 0); /* XXXNETBSD */
 
 	/*
 	 * Create a workqueue to process cache-flushes concurrently.
