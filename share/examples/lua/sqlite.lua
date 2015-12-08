@@ -1,4 +1,4 @@
--- $NetBSD: sqlite.lua,v 1.2 2014/07/19 18:38:34 lneto Exp $
+-- $NetBSD: sqlite.lua,v 1.3 2015/12/08 23:04:40 kamil Exp $
 
 local sqlite = require 'sqlite'
 
@@ -13,8 +13,7 @@ print('this is sqlite ' .. sqlite.libversion() .. ' (' ..
     sqlite.libversion_number() .. ')')
 print('sourceid ' .. sqlite.sourceid())
 
-db, state = sqlite.open('/tmp/db.sqlite',
-    sqlite.OPEN_READWRITE + sqlite.OPEN_CREATE)
+db, state = sqlite.open('/tmp/db.sqlite', sqlite.OPEN_CREATE)
 
 if state ~= sqlite.OK then
 	print('db open failed')
@@ -33,7 +32,7 @@ else
 
 	print('statement has ' .. stmt:bind_parameter_count() .. ' parameters')
 	print('param 1 name: ' .. stmt:bind_parameter_name(1))
-	print('param name is at index ' .. stmt:bind_parameter_index('name'))
+	print('param name is at index ' .. stmt:bind_parameter_index(':name'))
 
 	stmt:bind(1, 'Hardmeier')
 	stmt:step()
@@ -49,7 +48,7 @@ else
 	end
 	s2:finalize()
 
-	stmt = db:prepare('drop table testx')
+	stmt = db:prepare('drop table test')
 	stmt:step()
 	stmt:finalize()
 	db:close()
@@ -57,4 +56,3 @@ end
 
 print('shutdown sqlite')
 sqlite.shutdown()
-
