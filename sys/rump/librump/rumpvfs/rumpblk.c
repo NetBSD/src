@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.60 2015/05/26 16:48:05 pooka Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.61 2015/12/08 20:36:15 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.60 2015/05/26 16:48:05 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.61 2015/12/08 20:36:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -421,6 +421,7 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	devminor_t dmin = minor(dev);
 	struct rblkdev *rblk = &minors[dmin];
 	struct partinfo *pi;
+	struct diskpart *dp;
 	int error = 0;
 
 	/* well, me should support a few more, but we don't for now */
@@ -429,10 +430,17 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 		*(struct disklabel *)addr = rblk->rblk_label;
 		break;
 
-	case DIOCGPART:
+	case DIOCGPARTINFO:
+		dp = &rblk->rblk_label.d_partitions[DISKPART(dmin)];
 		pi = addr;
-		pi->part = &rblk->rblk_label.d_partitions[DISKPART(dmin)];
-		pi->disklab = &rblk->rblk_label;
+		pi->pi_offset = dp->p_offset;
+		pi->pi_size = dp->p_size;
+		pi->pi_secsize = rblk->rblk_label.d_secsize;
+		pi->pi_bsize = BLKDEV_IOSIZE;
+		pi->pi_fstype = dp->p_fstype;
+		pi->pi_fsize = dp->p_fsize;
+		pi->pi_frag = dp->p_frag;
+		pi->pi_cpg = dp->p_cpg;
 		break;
 
 	/* it's synced enough along the write path */
