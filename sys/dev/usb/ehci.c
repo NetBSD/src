@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.68 2015/12/08 12:40:12 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.69 2015/12/08 12:48:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.68 2015/12/08 12:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.69 2015/12/08 12:48:55 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -233,7 +233,7 @@ Static usbd_status	ehci_alloc_sqtd_chain(ehci_softc_t *, struct usbd_xfer *,
 Static void		ehci_free_sqtds(ehci_softc_t *, struct ehci_xfer *);
 
 Static void		ehci_reset_sqtd_chain(ehci_softc_t *, struct usbd_xfer *,
-			    int, int, int *, ehci_soft_qtd_t *, ehci_soft_qtd_t **);
+			    int, int, int *, ehci_soft_qtd_t **);
 
 Static ehci_soft_itd_t *ehci_alloc_itd(ehci_softc_t *);
 Static ehci_soft_sitd_t *
@@ -2852,7 +2852,7 @@ ehci_alloc_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
 
 	size_t nsqtd = (flags & USBD_FORCE_SHORT_XFER) ? 1 : 0;
 	nsqtd += ((len + EHCI_QTD_MAXTRANSFER - 1) / EHCI_QTD_MAXTRANSFER);
-	exfer->ex_sqtds = kmem_alloc(sizeof(ehci_soft_qtd_t *) * nsqtd,
+	exfer->ex_sqtds = kmem_zalloc(sizeof(ehci_soft_qtd_t *) * nsqtd,
 	    KM_SLEEP);
 	exfer->ex_nsqtd = nsqtd;
 
@@ -2964,16 +2964,20 @@ ehci_free_sqtds(ehci_softc_t *sc, struct ehci_xfer *exfer)
 
 	mutex_enter(&sc->sc_lock);
 	for (size_t i = 0; i < exfer->ex_nsqtd; i++) {
-		exfer->ex_sqtds[i]->nextqtd = sc->sc_freeqtds;
-		sc->sc_freeqtds = exfer->ex_sqtds[i]->nextqtd;
+		ehci_soft_qtd_t *sqtd = exfer->ex_sqtds[i];
+
+		if (sqtd == NULL)
+			break;
+
+		sqtd->nextqtd = sc->sc_freeqtds;
+		sc->sc_freeqtds = sqtd->nextqtd;
 	}
 	mutex_exit(&sc->sc_lock);
 }
 
 Static void
 ehci_reset_sqtd_chain(ehci_softc_t *sc, struct usbd_xfer *xfer,
-    int length, int isread, int *toggle,
-    ehci_soft_qtd_t *fsqtd, ehci_soft_qtd_t **lsqtd)
+    int length, int isread, int *toggle, ehci_soft_qtd_t **lsqtd)
 {
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	ehci_soft_qtd_t *sqtd, *prev;
@@ -3691,8 +3695,7 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 		int toggle = 1;
 		next = exfer->ex_data;
 		KASSERTMSG(next != NULL, "Failed memory allocation");
-		ehci_reset_sqtd_chain(sc, xfer, len, isread, &toggle,
-		    next, &end);
+		ehci_reset_sqtd_chain(sc, xfer, len, isread, &toggle, &end);
 		end->nextqtd = status;
 		end->qtd.qtd_next = end->qtd.qtd_altnext =
 		    htole32(status->physaddr);
@@ -3912,8 +3915,7 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	/* Take lock here to protect nexttoggle */
 	mutex_enter(&sc->sc_lock);
 
-	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle,
-	    exfer->ex_sqtdstart, &end);
+	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle, &end);
 
 	exfer->ex_sqtdend = end;
 	end->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
@@ -4108,7 +4110,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	ehci_soft_qtd_t *data, *end;
+	ehci_soft_qtd_t *end;
 	ehci_soft_qh_t *sqh;
 	int len, isread, endpt;
 
@@ -4128,8 +4130,6 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
 	sqh = epipe->sqh;
 
-	data = exfer->ex_sqtdstart;
-
 	KASSERT(exfer->ex_isdone);
 #ifdef DIAGNOSTIC
 	exfer->ex_isdone = false;
@@ -4137,8 +4137,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 
 	/* Take lock to protect nexttoggle */
 	mutex_enter(&sc->sc_lock);
-	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle,
-	    data, &end);
+	ehci_reset_sqtd_chain(sc, xfer, len, isread, &epipe->nexttoggle, &end);
 
 	end->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
 	usb_syncmem(&end->dma, end->offs, sizeof(end->qtd),
@@ -4156,7 +4155,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* also does usb_syncmem(sqh) */
-	ehci_set_qh_qtd(sqh, data);
+	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
 	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
 		    ehci_timeout, xfer);
@@ -4173,7 +4172,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	ehci_dump_regs(sc);
 	USBHIST_LOGN(ehcidebug, 5, "sqh:", 0, 0, 0, 0);
 	ehci_dump_sqh(sqh);
-	ehci_dump_sqtds(data);
+	ehci_dump_sqtds(exfer->ex_sqtdstart);
 #endif
 #endif
 
@@ -4218,7 +4217,6 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	struct ehci_xfer *exfer = EHCI_XFER2EXFER(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
-	ehci_soft_qtd_t *data;
 	ehci_soft_qh_t *sqh;
 	int len, isread, endpt;
 
@@ -4245,17 +4243,15 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 
 		ehci_soft_qtd_t *end;
 		ehci_reset_sqtd_chain(sc, xfer, len, isread,
-		    &epipe->nexttoggle, exfer->ex_sqtdstart, &end);
+		    &epipe->nexttoggle, &end);
 		end->qtd.qtd_status |= htole32(EHCI_QTD_IOC);
 		usb_syncmem(&end->dma, end->offs, sizeof(end->qtd),
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 		exfer->ex_sqtdend = end;
 
-		data = exfer->ex_sqtdstart;
-
 		/* also does usb_syncmem(sqh) */
-		ehci_set_qh_qtd(sqh, data);
+		ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
 		if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
 			callout_reset(&xfer->ux_callout,
 			    mstohz(xfer->ux_timeout), ehci_timeout, xfer);
