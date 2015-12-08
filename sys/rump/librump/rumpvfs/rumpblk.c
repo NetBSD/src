@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpblk.c,v 1.61 2015/12/08 20:36:15 christos Exp $	*/
+/*	$NetBSD: rumpblk.c,v 1.62 2015/12/08 22:16:01 christos Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.61 2015/12/08 20:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpblk.c,v 1.62 2015/12/08 22:16:01 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -421,7 +421,7 @@ rumpblk_ioctl(dev_t dev, u_long xfer, void *addr, int flag, struct lwp *l)
 	devminor_t dmin = minor(dev);
 	struct rblkdev *rblk = &minors[dmin];
 	struct partinfo *pi;
-	struct diskpart *dp;
+	struct partition *dp;
 	int error = 0;
 
 	/* well, me should support a few more, but we don't for now */
