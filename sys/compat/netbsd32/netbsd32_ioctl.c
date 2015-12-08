@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.82 2015/08/02 07:37:57 maxv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.83 2015/12/08 20:36:14 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.82 2015/08/02 07:37:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.83 2015/12/08 20:36:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,14 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.82 2015/08/02 07:37:57 maxv Exp
 #include <dev/vndvar.h>
 
 /* convert to/from different structures */
-
-static inline void
-netbsd32_to_partinfo(struct netbsd32_partinfo *s32p, struct partinfo *p, u_long cmd)
-{
-
-	p->disklab = (struct disklabel *)NETBSD32PTR64(s32p->disklab);
-	p->part = (struct partition *)NETBSD32PTR64(s32p->part);
-}
 
 #if 0
 static inline void
@@ -486,14 +478,6 @@ netbsd32_to_npf_ioctl_table(
 /*
  * handle ioctl conversions from 64-bit kernel -> netbsd32
  */
-
-static inline void
-netbsd32_from_partinfo(struct partinfo *p, struct netbsd32_partinfo *s32p, u_long cmd)
-{
-
-	NETBSD32PTR32(s32p->disklab, p->disklab);
-	NETBSD32PTR32(s32p->part, p->part);
-}
 
 #if 0
 static inline void
@@ -1066,8 +1050,6 @@ netbsd32_ioctl(struct lwp *l, const struct netbsd32_ioctl_args *uap, register_t 
 	case AUDIO_WSEEK32:
 		IOCTL_CONV_TO(AUDIO_WSEEK, u_long);
 
-	case DIOCGPART32:
-		IOCTL_STRUCT_CONV_TO(DIOCGPART, partinfo);
 #if 0	/* not implemented by anything */
 	case DIOCRFORMAT32:
 		IOCTL_STRUCT_CONV_TO(DIOCRFORMAT, format_op);

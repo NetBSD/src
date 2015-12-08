@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.476 2015/12/07 11:38:46 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.477 2015/12/08 20:36:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.476 2015/12/07 11:38:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.477 2015/12/08 20:36:15 christos Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -794,7 +794,7 @@ configure3(void)
 static void
 rootconf_handle_wedges(void)
 {
-	struct partinfo dpart;
+	struct disklabel label;
 	struct partition *p;
 	struct vnode *vp;
 	daddr_t startblk;
@@ -827,7 +827,7 @@ rootconf_handle_wedges(void)
 		if (vp == NULL)
 			return;
 
-		error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
+		error = VOP_IOCTL(vp, DIOCGDINFO, &label, FREAD, NOCRED);
 		VOP_CLOSE(vp, FREAD, NOCRED);
 		vput(vp);
 		if (error)
@@ -836,7 +836,7 @@ rootconf_handle_wedges(void)
 		KASSERT(booted_partition >= 0
 			&& booted_partition < MAXPARTITIONS);
 
-		p = &dpart.disklab->d_partitions[booted_partition];
+		p = &label.d_partitions[booted_partition];
 
 		dev      = booted_device;
 		startblk = p->p_offset;

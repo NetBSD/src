@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.82 2015/11/28 14:37:49 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.83 2015/12/08 20:36:14 christos Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.82 2015/11/28 14:37:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.83 2015/12/08 20:36:14 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,7 +509,7 @@ dk_ioctl(struct dk_softc *dksc, dev_t dev,
 	case DIOCGDINFO:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
-	case DIOCGPART:
+	case DIOCGPARTINFO:
 	case DIOCKLABEL:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:

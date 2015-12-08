@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.114 2015/11/28 14:36:00 mlelstv Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.115 2015/12/08 20:36:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.114 2015/11/28 14:36:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.115 2015/12/08 20:36:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -502,7 +502,8 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
     struct lwp *l)
 {
 	struct dkwedge_info *dkw;
-	struct partinfo *pt;
+	struct partinfo *pi;
+	struct partition *dp;
 #ifdef __HAVE_OLD_DISKLABEL
 	struct disklabel newlabel;
 #endif
@@ -531,11 +532,15 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 	/* The following should be moved to dk_ioctl */
 	switch (cmd) {
 	case DIOCGDINFO:
+		if (dk->dk_label == NULL)
+			return EBUSY;
 		memcpy(data, dk->dk_label, sizeof (*dk->dk_label));
 		return 0;
 
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
+		if (dk->dk_label == NULL)
+			return EBUSY;
 		memcpy(&newlabel, dk->dk_label, sizeof(newlabel));
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;
@@ -543,12 +548,46 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 		return 0;
 #endif
 
-	case DIOCGPART:
+	case DIOCGPARTINFO:
+		pi = data;
+		memset(pi, 0, sizeof(*pi));
+		pi->pi_secsize = dk->dk_geom.dg_secsize;
+		pi->pi_bsize = BLKDEV_IOSIZE;
+
+		if (DISKPART(dev) == RAW_PART) {
+			pi->pi_size = dk->dk_geom.dg_secperunit;
+			return 0;
+		}
+
 		if (dk->dk_label == NULL)
 			return EBUSY;
-		pt = data;
-		pt->disklab = dk->dk_label;
-		pt->part = &dk->dk_label->d_partitions[DISKPART(dev)];
+
+		dp = &dk->dk_label->d_partitions[DISKPART(dev)];
+		pi->pi_offset = dp->p_offset;
+		pi->pi_size = dp->p_size;
+
+		pi->pi_fstype = dp->p_fstype;
+		pi->pi_frag = dp->p_frag;
+		pi->pi_fsize = dp->p_fsize;
+		pi->pi_cpg = dp->p_cpg;
+		
+		/*
+		 * dholland 20130616: XXX this logic should not be
+		 * here. It is here because the old buffer cache
+		 * demands that all accesses to the same blocks need
+		 * to be the same size; but it only works for FFS and
+		 * nowadays I think it'll fail silently if the size
+		 * info in the disklabel is wrong. (Or missing.) The
+		 * buffer cache needs to be smarter; or failing that
+		 * we need a reliable way here to get the right block
+		 * size; or a reliable way to guarantee that (a) the
+		 * fs is not mounted when we get here and (b) any
+		 * buffers generated here will get purged when the fs
+		 * does get mounted.
+		 */
+		if (dp->p_fstype == FS_BSDFFS &&
+		    dp->p_frag != 0 && dp->p_fsize != 0)
+			pi->pi_bsize = dp->p_frag * dp->p_fsize;
 		return 0;
 
 	case DIOCAWEDGE:

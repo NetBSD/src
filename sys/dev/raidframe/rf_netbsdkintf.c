@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.325 2015/08/20 14:40:18 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.326 2015/12/08 20:36:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.325 2015/08/20 14:40:18 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.326 2015/12/08 20:36:15 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1114,7 +1114,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case ODIOCSDINFO:
 	case ODIOCGDEFLABEL:
 #endif
-	case DIOCGPART:
+	case DIOCGPARTINFO:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
 	case DIOCAWEDGE:

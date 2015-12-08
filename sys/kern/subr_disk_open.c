@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_open.c,v 1.12 2014/12/31 19:50:14 christos Exp $	*/
+/*	$NetBSD: subr_disk_open.c,v 1.13 2015/12/08 20:36:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.12 2014/12/31 19:50:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_open.c,v 1.13 2015/12/08 20:36:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -91,7 +91,7 @@ opendisk(device_t dv)
 int
 getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 {
-	struct partinfo dpart;
+	struct partinfo pi;
 	struct dkwedge_info dkw;
 	struct disk *pdk;
 	unsigned int secsize;
@@ -113,10 +113,10 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 	}
 
 	if (error) {
-		error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED);
+		error = VOP_IOCTL(vp, DIOCGPARTINFO, &pi, FREAD, NOCRED);
 		if (error == 0) {
-			secsize = dpart.disklab->d_secsize;
-			numsec  = dpart.part->p_size;
+			secsize = pi.pi_secsize;
+			numsec  = pi.pi_size;
 		}
 	}
 
@@ -143,14 +143,14 @@ getdisksize(struct vnode *vp, uint64_t *numsecp, unsigned int *secsizep)
 int
 getdiskinfo(struct vnode *vp, struct dkwedge_info *dkw)
 {
-	struct partinfo dpart;
+	struct partinfo pi;
 	int error;
 	dev_t dev = vp->v_specnode->sn_rdev;
 
 	if (VOP_IOCTL(vp, DIOCGWEDGEINFO, dkw, FREAD, NOCRED) == 0)
 		return 0;
 	
-	if ((error = VOP_IOCTL(vp, DIOCGPART, &dpart, FREAD, NOCRED)) != 0)
+	if ((error = VOP_IOCTL(vp, DIOCGPARTINFO, &pi, FREAD, NOCRED)) != 0)
 		return error;
 
 	snprintf(dkw->dkw_devname, sizeof(dkw->dkw_devname), "%s%" PRId32 "%c",
@@ -161,10 +161,9 @@ getdiskinfo(struct vnode *vp, struct dkwedge_info *dkw)
 
 	strlcpy(dkw->dkw_parent, dkw->dkw_devname, sizeof(dkw->dkw_parent));
 
-	dkw->dkw_size = dpart.part->p_size;
-	dkw->dkw_offset = dpart.part->p_offset;
-
-	strlcpy(dkw->dkw_ptype, getfstypename(dpart.part->p_fstype),
+	dkw->dkw_size = pi.pi_size;
+	dkw->dkw_offset = pi.pi_offset;
+	strlcpy(dkw->dkw_ptype, getfstypename(pi.pi_fstype),
 	    sizeof(dkw->dkw_ptype));
 
 	return 0;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.165 2015/08/20 14:40:17 christos Exp $	*/
+/*	$NetBSD: ccd.c,v 1.166 2015/12/08 20:36:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.165 2015/08/20 14:40:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.166 2015/12/08 20:36:14 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1182,7 +1182,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCMWEDGES:
 	case DIOCSDINFO:
 	case DIOCWDINFO:
-	case DIOCGPART:
+	case DIOCGPARTINFO:
 	case DIOCWLABEL:
 	case DIOCKLABEL:
 	case DIOCGDEFLABEL:
