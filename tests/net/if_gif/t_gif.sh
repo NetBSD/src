@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.2 2015/12/07 09:59:26 knakahara Exp $
+#	$NetBSD: t_gif.sh,v 1.3 2015/12/08 05:56:18 knakahara Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -27,6 +27,7 @@
 
 server="rump_server -v -lrumpnet -lrumpnet_net -lrumpnet_netinet \
 		    -lrumpnet_netinet6 -lrumpnet_shmif -lrumpnet_gif"
+HIJACKING="env LD_PRELOAD=/usr/lib/librumphijack.so RUMPHIJACK=sysctl=yes"
 
 SOCK1=unix://commsock1 # for ROUTER1
 SOCK2=unix://commsock2 # for ROUTER2
@@ -34,19 +35,35 @@ ROUTER1_LANIP=192.168.1.1
 ROUTER1_LANNET=192.168.1.0/24
 ROUTER1_WANIP=10.0.0.1
 ROUTER1_GIFIP=172.16.1.1
+ROUTER1_WANIP_DUMMY=10.0.0.11
+ROUTER1_GIFIP_DUMMY=172.16.11.1
+ROUTER1_GIFIP_RECURSIVE1=172.16.101.1
+ROUTER1_GIFIP_RECURSIVE2=172.16.201.1
 ROUTER2_LANIP=192.168.2.1
 ROUTER2_LANNET=192.168.2.0/24
 ROUTER2_WANIP=10.0.0.2
 ROUTER2_GIFIP=172.16.2.1
+ROUTER2_WANIP_DUMMY=10.0.0.12
+ROUTER2_GIFIP_DUMMY=172.16.12.1
+ROUTER2_GIFIP_RECURSIVE1=172.16.102.1
+ROUTER2_GIFIP_RECURSIVE2=172.16.202.1
 
 ROUTER1_LANIP6=fc00:1::1
 ROUTER1_LANNET6=fc00:1::/64
 ROUTER1_WANIP6=fc00::1
 ROUTER1_GIFIP6=fc00:3::1
+ROUTER1_WANIP6_DUMMY=fc00::11
+ROUTER1_GIFIP6_DUMMY=fc00:13::1
+ROUTER1_GIFIP6_RECURSIVE1=fc00:103::1
+ROUTER1_GIFIP6_RECURSIVE2=fc00:203::1
 ROUTER2_LANIP6=fc00:2::1
 ROUTER2_LANNET6=fc00:2::/64
 ROUTER2_WANIP6=fc00::2
 ROUTER2_GIFIP6=fc00:4::1
+ROUTER2_WANIP6_DUMMY=fc00::12
+ROUTER2_GIFIP6_DUMMY=fc00:14::1
+ROUTER2_GIFIP6_RECURSIVE1=fc00:104::1
+ROUTER2_GIFIP6_RECURSIVE2=fc00:204::1
 
 TIMEOUT=5
 
@@ -54,28 +71,84 @@ atf_test_case basicv4overv4 cleanup
 atf_test_case basicv4overv6 cleanup
 atf_test_case basicv6overv4 cleanup
 atf_test_case basicv6overv6 cleanup
+atf_test_case ioctlv4overv4 cleanup
+atf_test_case ioctlv4overv6 cleanup
+atf_test_case ioctlv6overv4 cleanup
+atf_test_case ioctlv6overv6 cleanup
+atf_test_case recursivev4overv4 cleanup
+atf_test_case recursivev4overv6 cleanup
+atf_test_case recursivev6overv4 cleanup
+atf_test_case recursivev6overv6 cleanup
 
 basicv4overv4_head()
 {
-	atf_set "descr" "Does IPv4 over IPv4 if_gif tests"
+	atf_set "descr" "Does IPv4 over IPv4 if_gif basic tests"
 	atf_set "require.progs" "rump_server"
 }
 
 basicv4overv6_head()
 {
-	atf_set "descr" "Does IPv4 over IPv6 if_gif tests"
+	atf_set "descr" "Does IPv4 over IPv6 if_gif basic tests"
 	atf_set "require.progs" "rump_server"
 }
 
 basicv6overv4_head()
 {
-	atf_set "descr" "Does IPv6 over IPv4 if_gif tests"
+	atf_set "descr" "Does IPv6 over IPv4 if_gif basic tests"
 	atf_set "require.progs" "rump_server"
 }
 
 basicv6overv6_head()
 {
-	atf_set "descr" "Does IPv6 over IPv6 if_gif tests"
+	atf_set "descr" "Does IPv6 over IPv6 if_gif basic tests"
+	atf_set "require.progs" "rump_server"
+}
+
+ioctlv4overv4_head()
+{
+	atf_set "descr" "Does IPv4 over IPv4 if_gif ioctl tests"
+	atf_set "require.progs" "rump_server"
+}
+
+ioctlv4overv6_head()
+{
+	atf_set "descr" "Does IPv4 over IPv6 if_gif ioctl tests"
+	atf_set "require.progs" "rump_server"
+}
+
+ioctlv6overv4_head()
+{
+	atf_set "descr" "Does IPv6 over IPv4 if_gif ioctl tests"
+	atf_set "require.progs" "rump_server"
+}
+
+ioctlv6overv6_head()
+{
+	atf_set "descr" "Does IPv6 over IPv6 if_gif ioctl tests"
+	atf_set "require.progs" "rump_server"
+}
+
+recursivev4overv4_head()
+{
+	atf_set "descr" "Does IPv4 over IPv4 if_gif recursive check tests"
+	atf_set "require.progs" "rump_server"
+}
+
+recursivev4overv6_head()
+{
+	atf_set "descr" "Does IPv4 over IPv6 if_gif recursive check tests"
+	atf_set "require.progs" "rump_server"
+}
+
+recursivev6overv4_head()
+{
+	atf_set "descr" "Does IPv6 over IPv4 if_gif recursive check tests"
+	atf_set "require.progs" "rump_server"
+}
+
+recursivev6overv6_head()
+{
+	atf_set "descr" "Does IPv6 over IPv6 if_gif recursive check tests"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -318,6 +391,182 @@ teardown_tunnel()
 	atf_check -s exit:0 rump.ifconfig gif0 destroy
 }
 
+setup_dummy_if_gif()
+{
+	sock=${1}
+	addr=${2}
+	remote=${3}
+	inner=${4}
+	src=${5}
+	dst=${6}
+
+	export RUMP_SERVER=${sock}
+	atf_check -s exit:0 rump.ifconfig gif1 create
+	atf_check -s exit:0 rump.ifconfig gif1 tunnel ${src} ${dst}
+	if [ ${inner} = "ipv6" ]; then
+		atf_check -s exit:0 rump.ifconfig gif1 inet6 ${addr}/128 ${remote}
+	else
+		atf_check -s exit:0 rump.ifconfig gif1 inet ${addr}/32 ${remote}
+	fi
+
+	rump.ifconfig gif1
+}
+
+setup_dummy_tunnel()
+{
+	inner=${1}
+	outer=${2}
+
+	addr=""
+	remote=""
+	src=""
+	dst=""
+
+	if [ ${inner} = "ipv6" ]; then
+		addr=$ROUTER1_GIFIP6_DUMMY
+		remote=$ROUTER2_GIFIP6_DUMMY
+	else
+		addr=$ROUTER1_GIFIP_DUMMY
+		remote=$ROUTER2_GIFIP_DUMMY
+	fi
+	if [ ${outer} = "ipv6" ]; then
+		src=$ROUTER1_WANIP6_DUMMY
+		dst=$ROUTER2_WANIP6_DUMMY
+	else
+		src=$ROUTER1_WANIP_DUMMY
+		dst=$ROUTER2_WANIP_DUMMY
+	fi
+	setup_dummy_if_gif $SOCK1 ${addr} ${remote} ${inner} \
+			   ${src} ${dst}
+
+	if [ $inner = "ipv6" ]; then
+		addr=$ROUTER2_GIFIP6_DUMMY
+		remote=$ROUTER1_GIFIP6_DUMMY
+	else
+		addr=$ROUTER2_GIFIP_DUMMY
+		remote=$ROUTER1_GIFIP_DUMMY
+	fi
+	if [ $outer = "ipv6" ]; then
+		src=$ROUTER2_WANIP6_DUMMY
+		dst=$ROUTER1_WANIP6_DUMMY
+	else
+		src=$ROUTER2_WANIP_DUMMY
+		dst=$ROUTER1_WANIP_DUMMY
+	fi
+	setup_dummy_if_gif $SOCK2 ${addr} ${remote} ${inner} \
+			   ${src} ${dst}
+}
+
+test_setup_dummy_tunnel()
+{
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 -o match:gif1 rump.ifconfig
+
+	export RUMP_SERVER=$SOCK2
+	atf_check -s exit:0 -o match:gif1 rump.ifconfig
+}
+
+teardown_dummy_tunnel()
+{
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 rump.ifconfig gif1 deletetunnel
+	atf_check -s exit:0 rump.ifconfig gif1 destroy
+
+	export RUMP_SERVER=$SOCK2
+	atf_check -s exit:0 rump.ifconfig gif1 deletetunnel
+	atf_check -s exit:0 rump.ifconfig gif1 destroy
+}
+
+setup_recursive_if_gif()
+{
+	sock=${1}
+	gif=${2}
+	addr=${3}
+	remote=${4}
+	inner=${5}
+	src=${6}
+	dst=${7}
+
+	export RUMP_SERVER=${sock}
+	atf_check -s exit:0 rump.ifconfig ${gif} create
+	atf_check -s exit:0 rump.ifconfig ${gif} tunnel ${src} ${dst}
+	if [ ${inner} = "ipv6" ]; then
+		atf_check -s exit:0 rump.ifconfig ${gif} inet6 ${addr}/128 ${remote}
+	else
+		atf_check -s exit:0 rump.ifconfig ${gif} inet ${addr}/32 ${remote}
+	fi
+
+	rump.ifconfig ${gif}
+}
+
+# test in ROUTER1 only
+setup_recursive_tunnels()
+{
+	mode=${1}
+
+	addr=""
+	remote=""
+	src=""
+	dst=""
+
+	if [ ${mode} = "ipv6" ]; then
+		addr=$ROUTER1_GIFIP6_RECURSIVE1
+		remote=$ROUTER2_GIFIP6_RECURSIVE1
+		src=$ROUTER1_GIFIP6
+		dst=$ROUTER2_GIFIP6
+	else
+		addr=$ROUTER1_GIFIP_RECURSIVE1
+		remote=$ROUTER2_GIFIP_RECURSIVE1
+		src=$ROUTER1_GIFIP
+		dst=$ROUTER2_GIFIP
+	fi
+	setup_recursive_if_gif $SOCK1 gif1 ${addr} ${remote} ${mode} \
+		      ${src} ${dst}
+
+	if [ ${mode} = "ipv6" ]; then
+		addr=$ROUTER1_GIFIP6_RECURSIVE2
+		remote=$ROUTER2_GIFIP6_RECURSIVE2
+		src=$ROUTER1_GIFIP6_RECURSIVE1
+		dst=$ROUTER2_GIFIP6_RECURSIVE1
+	else
+		addr=$ROUTER1_GIFIP_RECURSIVE2
+		remote=$ROUTER2_GIFIP_RECURSIVE2
+		src=$ROUTER1_GIFIP_RECURSIVE1
+		dst=$ROUTER2_GIFIP_RECURSIVE1
+	fi
+	setup_recursive_if_gif $SOCK1 gif2 ${addr} ${remote} ${mode} \
+		      ${src} ${dst}
+}
+
+# test in router1 only
+test_recursive_check()
+{
+	mode=$1
+
+	export RUMP_SERVER=$SOCK1
+	if [ ${mode} = "ipv6" ]; then
+		atf_check -s not-exit:0 -o ignore -e ignore \
+			rump.ping6 -n -X $TIMEOUT -c 1 $ROUTER2_GIFIP6_RECURSIVE2
+	else
+		atf_check -s not-exit:0 -o ignore -e ignore \
+			rump.ping -n -w $TIMEOUT -c 1 $ROUTER2_GIFIP_RECURSIVE2
+	fi
+
+	atf_check -o match:'gif0: recursively called too many times' \
+		-x "$HIJACKING dmesg"
+
+	$HIJACKING dmesg
+}
+
+teardown_recursive_tunnels()
+{
+	export RUMP_SERVER=$SOCK1
+	atf_check -s exit:0 rump.ifconfig gif1 deletetunnel
+	atf_check -s exit:0 rump.ifconfig gif1 destroy
+	atf_check -s exit:0 rump.ifconfig gif2 deletetunnel
+	atf_check -s exit:0 rump.ifconfig gif2 destroy
+}
+
 cleanup()
 {
 	env RUMP_SERVER=$SOCK1 rump.halt
@@ -389,6 +638,76 @@ test_ping_success()
 			rump.ping -n -w $TIMEOUT -c 1 -I $ROUTER2_LANIP \
 			$ROUTER1_LANIP
 	fi
+	rump.ifconfig -v gif0
+}
+
+test_change_tunnel_duplicate()
+{
+	mode=$1
+
+	newsrc=""
+	newdst=""
+	if [ ${mode} = "ipv6" ]; then
+		newsrc=$ROUTER1_WANIP6_DUMMY
+		newdst=$ROUTER2_WANIP6_DUMMY
+	else
+		newsrc=$ROUTER1_WANIP_DUMMY
+		newdst=$ROUTER2_WANIP_DUMMY
+	fi
+	export RUMP_SERVER=$SOCK1
+	rump.ifconfig -v gif0
+	rump.ifconfig -v gif1
+	atf_check -s exit:0 -e match:SIOCSLIFPHYADDR \
+		rump.ifconfig gif0 tunnel ${newsrc} ${newdst}
+	rump.ifconfig -v gif0
+	rump.ifconfig -v gif1
+
+	if [ ${mode} = "ipv6" ]; then
+		newsrc=$ROUTER2_WANIP6_DUMMY
+		newdst=$ROUTER1_WANIP6_DUMMY
+	else
+		newsrc=$ROUTER2_WANIP_DUMMY
+		newdst=$ROUTER1_WANIP_DUMMY
+	fi
+	export RUMP_SERVER=$SOCK2
+	rump.ifconfig -v gif0
+	rump.ifconfig -v gif1
+	atf_check -s exit:0 -e match:SIOCSLIFPHYADDR \
+		rump.ifconfig gif0 tunnel ${newsrc} ${newdst}
+	rump.ifconfig -v gif0
+	rump.ifconfig -v gif1
+}
+
+test_change_tunnel_success()
+{
+	mode=$1
+
+	newsrc=""
+	newdst=""
+	if [ ${mode} = "ipv6" ]; then
+		newsrc=$ROUTER1_WANIP6_DUMMY
+		newdst=$ROUTER2_WANIP6_DUMMY
+	else
+		newsrc=$ROUTER1_WANIP_DUMMY
+		newdst=$ROUTER2_WANIP_DUMMY
+	fi
+	export RUMP_SERVER=$SOCK1
+	rump.ifconfig -v gif0
+	atf_check -s exit:0 \
+		rump.ifconfig gif0 tunnel ${newsrc} ${newdst}
+	rump.ifconfig -v gif0
+
+	if [ ${mode} = "ipv6" ]; then
+		newsrc=$ROUTER2_WANIP6_DUMMY
+		newdst=$ROUTER1_WANIP6_DUMMY
+	else
+		newsrc=$ROUTER2_WANIP_DUMMY
+		newdst=$ROUTER1_WANIP_DUMMY
+	fi
+	export RUMP_SERVER=$SOCK2
+	rump.ifconfig -v gif0
+	atf_check -s exit:0 \
+		rump.ifconfig gif0 tunnel ${newsrc} ${newdst}
 	rump.ifconfig -v gif0
 }
 
@@ -484,10 +803,237 @@ basicv6overv6_cleanup()
 	cleanup
 }
 
+ioctlv4overv4_body()
+{
+	setup ipv4 ipv4
+	test_setup ipv4 ipv4
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv4 ipv4
+	setup_dummy_tunnel ipv4 ipv4
+	sleep 1
+	test_setup_tunnel ipv4
+	test_setup_dummy_tunnel
+	test_ping_success ipv4
+
+	test_change_tunnel_duplicate ipv4
+
+	teardown_dummy_tunnel
+	test_change_tunnel_success ipv4
+
+	teardown_tunnel
+	test_ping_failure ipv4
+}
+
+ioctlv4overv6_body()
+{
+	setup ipv4 ipv6
+	test_setup ipv4 ipv6
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv4 ipv6
+	setup_dummy_tunnel ipv4 ipv6
+	sleep 1
+	test_setup_tunnel ipv4
+	test_setup_dummy_tunnel
+	test_ping_success ipv4
+
+	test_change_tunnel_duplicate ipv6
+
+	teardown_dummy_tunnel
+	test_change_tunnel_success ipv6
+
+	teardown_tunnel
+	test_ping_failure ipv4
+}
+
+ioctlv6overv4_body()
+{
+	setup ipv6 ipv4
+	test_setup ipv6 ipv4
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv6 ipv4
+	setup_dummy_tunnel ipv6 ipv4
+	sleep 1
+	test_setup_tunnel ipv6
+	test_setup_dummy_tunnel
+	test_ping_success ipv6
+
+	test_change_tunnel_duplicate ipv4
+
+	teardown_dummy_tunnel
+	test_change_tunnel_success ipv4
+
+	teardown_tunnel
+	test_ping_failure ipv6
+}
+
+ioctlv6overv6_body()
+{
+	setup ipv6 ipv6
+	test_setup ipv6 ipv6
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv6 ipv6
+	setup_dummy_tunnel ipv6 ipv6
+	sleep 1
+	test_setup_tunnel ipv6
+	test_setup_dummy_tunnel
+	test_ping_success ipv6
+
+	test_change_tunnel_duplicate ipv6
+
+	teardown_dummy_tunnel
+	test_change_tunnel_success ipv6
+
+	teardown_tunnel
+	test_ping_failure ipv6
+}
+
+ioctlv4overv4_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+ioctlv4overv6_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+ioctlv6overv4_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+ioctlv6overv6_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+recursivev4overv4_body()
+{
+	setup ipv4 ipv4
+	test_setup ipv4 ipv4
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv4 ipv4
+	setup_recursive_tunnels ipv4
+	sleep 1
+
+	test_recursive_check ipv4
+
+	teardown_recursive_tunnels
+	teardown_tunnel
+}
+
+recursivev4overv6_body()
+{
+	setup ipv4 ipv6
+	test_setup ipv4 ipv6
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv4 ipv6
+	setup_recursive_tunnels ipv4
+	sleep 1
+
+	test_recursive_check ipv4
+
+	teardown_recursive_tunnels
+	teardown_tunnel
+}
+
+recursivev6overv4_body()
+{
+	setup ipv6 ipv4
+	test_setup ipv6 ipv4
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv6 ipv4
+	setup_recursive_tunnels ipv6
+	sleep 1
+
+	test_recursive_check ipv6
+
+	teardown_recursive_tunnels
+	teardown_tunnel
+}
+
+recursivev6overv6_body()
+{
+	setup ipv6 ipv6
+	test_setup ipv6 ipv6
+
+	# Enable once PR kern/49219 is fixed
+	#test_ping_failure
+
+	setup_tunnel ipv6 ipv6
+	setup_recursive_tunnels ipv6
+	sleep 1
+
+	test_recursive_check ipv6
+
+	teardown_recursive_tunnels
+	teardown_tunnel
+	test_ping_failure ipv6
+}
+
+recursivev4overv4_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+recursivev4overv6_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+recursivev6overv4_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
+recursivev6overv6_cleanup()
+{
+	dump_bus
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basicv4overv4
 	atf_add_test_case basicv4overv6
 	atf_add_test_case basicv6overv4
 	atf_add_test_case basicv6overv6
+
+	atf_add_test_case ioctlv4overv4
+	atf_add_test_case ioctlv4overv6
+	atf_add_test_case ioctlv6overv4
+	atf_add_test_case ioctlv6overv6
+
+	atf_add_test_case recursivev4overv4
+	atf_add_test_case recursivev4overv6
+	atf_add_test_case recursivev6overv4
+	atf_add_test_case recursivev6overv6
 }
