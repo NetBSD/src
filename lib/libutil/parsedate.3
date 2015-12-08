@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.18 2015/12/07 20:55:49 christos Exp $
+.\"     $NetBSD: parsedate.3,v 1.19 2015/12/08 12:51:21 christos Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -198,11 +198,11 @@ Timezone names:
 .Dv zp5 (+0500) ,
 .Dv ist (+0550) ,
 .Dv zp6 (+0600) ,
-.Dv wast (+0700) ,
-.Dv wadt (+0800) ,
-.Dv awst (+0700) ,
-.Dv awdt (+0800) ,
 .Dv ict (+0700) ,
+.Dv wast (+0800) ,
+.Dv wadt (+0900) ,
+.Dv awst (+0800) ,
+.Dv awdt (+0900) ,
 .Dv cct (+0800) ,
 .Dv sgt (+0800) ,
 .Dv hkt (+0800) ,
@@ -271,6 +271,14 @@ Relative items are also supported:
 .It next sunday
 .It +2 years
 .El
+.Pp
+Note that, as a special case for
+.Dv midnight
+with the name of a day only,
+.Dv "midnight tuesday"
+implies 00:00 at the beginning of Tuesday, whereas
+.Dv "Sat mn"
+implies 00:00 at the end of Saturday (i.e. early Sunday morning.)
 .Pp
 Seconds since epoch, UTC, (also known as UNIX time) are also supported:
 .Bl -tag -compact -width "@735275209"
