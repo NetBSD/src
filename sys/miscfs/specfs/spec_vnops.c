@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.156 2015/12/08 01:57:13 christos Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.157 2015/12/08 20:36:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.156 2015/12/08 01:57:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.157 2015/12/08 20:36:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -502,9 +502,9 @@ spec_open(void *v)
 	specnode_t *sn;
 	specdev_t *sd;
 	spec_ioctl_t ioctl;
-	off_t off;
 	u_int gen;
 	const char *name;
+	struct partinfo pi;
 	
 	l = curlwp;
 	vp = ap->a_vp;
@@ -660,29 +660,9 @@ spec_open(void *v)
 
 	
 	ioctl = vp->v_type == VCHR ? cdev_ioctl : bdev_ioctl;
-
-	// XXX: DIOCGPART is not 64 bit friendly so we avoid it fot the
-	// raw partition
-	if (DISKPART(vp->v_rdev) == RAW_PART)
-		error = (*ioctl)(vp->v_rdev, DIOCGMEDIASIZE,
-		    &off, FREAD, curlwp);
-	else
-		error = EINVAL;
-	if (error) {
-		struct partinfo pi;
-		error = (*ioctl)(vp->v_rdev, DIOCGPART, &pi, FREAD, curlwp);
-		if (error == 0) {
-			off = (off_t)pi.disklab->d_secsize * pi.part->p_size;
-#ifdef DIAGNOSTIC
-			if (pi.disklab->d_secsize == UINT_MAX)
-				printf("overflow in DIOCGPART dev=%jx\n",
-				    (uintmax_t)vp->v_rdev);
-#endif
-		}
-	}
-
+	error = (*ioctl)(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, curlwp);
 	if (error == 0)
-		uvm_vnp_setsize(vp, (voff_t)off);
+		uvm_vnp_setsize(vp, (voff_t)pi.pi_secsize * pi.pi_size);
 
 	return 0;
 }
@@ -706,7 +686,7 @@ spec_read(void *v)
 	struct buf *bp;
 	daddr_t bn;
 	int bsize, bscale;
-	struct partinfo dpart;
+	struct partinfo pi;
 	int n, on;
 	int error = 0;
 
@@ -732,28 +712,11 @@ spec_read(void *v)
 		KASSERT(vp == vp->v_specnode->sn_dev->sd_bdevvp);
 		if (uio->uio_offset < 0)
 			return (EINVAL);
-		bsize = BLKDEV_IOSIZE;
 
-		/*
-		 * dholland 20130616: XXX this logic should not be
-		 * here. It is here because the old buffer cache
-		 * demands that all accesses to the same blocks need
-		 * to be the same size; but it only works for FFS and
-		 * nowadays I think it'll fail silently if the size
-		 * info in the disklabel is wrong. (Or missing.) The
-		 * buffer cache needs to be smarter; or failing that
-		 * we need a reliable way here to get the right block
-		 * size; or a reliable way to guarantee that (a) the
-		 * fs is not mounted when we get here and (b) any
-		 * buffers generated here will get purged when the fs
-		 * does get mounted.
-		 */
-		if (bdev_ioctl(vp->v_rdev, DIOCGPART, &dpart, FREAD, l) == 0) {
-			if (dpart.part->p_fstype == FS_BSDFFS &&
-			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
-				bsize = dpart.part->p_frag *
-				    dpart.part->p_fsize;
-		}
+		if (bdev_ioctl(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, l) == 0)
+			bsize = pi.pi_bsize;
+		else
+			bsize = BLKDEV_IOSIZE;
 
 		bscale = bsize >> DEV_BSHIFT;
 		do {
@@ -795,7 +758,7 @@ spec_write(void *v)
 	struct buf *bp;
 	daddr_t bn;
 	int bsize, bscale;
-	struct partinfo dpart;
+	struct partinfo pi;
 	int n, on;
 	int error = 0;
 
@@ -821,13 +784,12 @@ spec_write(void *v)
 			return (0);
 		if (uio->uio_offset < 0)
 			return (EINVAL);
-		bsize = BLKDEV_IOSIZE;
-		if (bdev_ioctl(vp->v_rdev, DIOCGPART, &dpart, FREAD, l) == 0) {
-			if (dpart.part->p_fstype == FS_BSDFFS &&
-			    dpart.part->p_frag != 0 && dpart.part->p_fsize != 0)
-				bsize = dpart.part->p_frag *
-				    dpart.part->p_fsize;
-		}
+
+		if (bdev_ioctl(vp->v_rdev, DIOCGPARTINFO, &pi, FREAD, l) == 0)
+			bsize = pi.pi_bsize;
+		else
+			bsize = BLKDEV_IOSIZE;
+
 		bscale = bsize >> DEV_BSHIFT;
 		do {
 			bn = (uio->uio_offset >> DEV_BSHIFT) &~ (bscale - 1);
