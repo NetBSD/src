@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.95 2015/12/04 02:26:11 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.96 2015/12/09 03:31:28 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.95 2015/12/04 02:26:11 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.96 2015/12/09 03:31:28 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -683,6 +683,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	struct gif_softc *sc = ifp->if_softc;
 	struct gif_softc *sc2;
 	struct sockaddr *osrc, *odst;
+	struct sockaddr *nsrc, *ndst;
 	int s;
 	int error;
 
@@ -696,19 +697,29 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		/* can't configure same pair of address onto two gifs */
 		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
 		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
-			error = EADDRNOTAVAIL;
 			/* continue to use the old configureation. */
-			goto out;
+			splx(s);
+			return EADDRNOTAVAIL;
 		}
 
 		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
 	}
 
+	if ((nsrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
+		splx(s);
+		return ENOMEM;
+	}
+	if ((ndst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
+		sockaddr_free(nsrc);
+		splx(s);
+		return ENOMEM;
+	}
+
+	/* Firstly, clear old configurations. */
 	if (sc->gif_si) {
 		softint_disestablish(sc->gif_si);
 		sc->gif_si = NULL;
 	}
-
 	/* XXX we can detach from both, but be polite just in case */
 	if (sc->gif_psrc)
 		switch (sc->gif_psrc->sa_family) {
@@ -724,65 +735,79 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 #endif
 		}
 
-	osrc = sc->gif_psrc;
-	odst = sc->gif_pdst;
-	sc->gif_psrc = sc->gif_pdst = NULL;
-	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
-	if (sc->gif_si == NULL) {
-		error = ENOMEM;
-		goto rollback;
-	}
+	/*
+	 * Secondly, try to set new configurations.
+	 * If the setup failed, rollback to old configurations.
+	 */
+	do {
+		osrc = sc->gif_psrc;
+		odst = sc->gif_pdst;
+		sc->gif_psrc = nsrc;
+		sc->gif_pdst = ndst;
 
-	if ((sc->gif_psrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
-		error = ENOMEM;
-		goto rollback;
-	}
-
-	if ((sc->gif_pdst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
-		error = ENOMEM;
-		goto rollback;
-	}
-
-	switch (sc->gif_psrc->sa_family) {
+		switch (sc->gif_psrc->sa_family) {
 #ifdef INET
-	case AF_INET:
-		error = in_gif_attach(sc);
-		break;
+		case AF_INET:
+			error = in_gif_attach(sc);
+			break;
 #endif
 #ifdef INET6
-	case AF_INET6:
-		error = in6_gif_attach(sc);
-		break;
+		case AF_INET6:
+			error = in6_gif_attach(sc);
+			break;
 #endif
-	default:
-		error = EINVAL;
-		break;
+		default:
+			error = EINVAL;
+			break;
+		}
+		if (error) {
+			/* rollback to the last configuration. */
+			nsrc = osrc;
+			ndst = odst;
+			osrc = sc->gif_psrc;
+			odst = sc->gif_pdst;
+
+			continue;
+		}
+
+		sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
+		if (sc->gif_si == NULL) {
+			switch (sc->gif_psrc->sa_family) {
+#ifdef INET
+			case AF_INET:
+				(void)in_gif_detach(sc);
+				break;
+#endif
+#ifdef INET6
+			case AF_INET6:
+				(void)in6_gif_detach(sc);
+				break;
+#endif
+			}
+
+			/* rollback to the last configuration. */
+			nsrc = osrc;
+			ndst = odst;
+			osrc = sc->gif_psrc;
+			odst = sc->gif_pdst;
+
+			error = ENOMEM;
+			continue;
+		}
+	} while (error != 0 && (nsrc != NULL && ndst != NULL));
+	/* Thirdly, even rollback failed, clear configurations. */
+	if (error) {
+		osrc = sc->gif_psrc;
+		odst = sc->gif_pdst;
+		sc->gif_psrc = NULL;
+		sc->gif_pdst = NULL;
 	}
-	if (error)
-		goto rollback;
 
 	if (osrc)
 		sockaddr_free(osrc);
 	if (odst)
 		sockaddr_free(odst);
 
-	error = 0;
-	goto out;
-
-rollback:
-	if (sc->gif_psrc != NULL)
-		sockaddr_free(sc->gif_psrc);
-	if (sc->gif_pdst != NULL)
-		sockaddr_free(sc->gif_pdst);
-	sc->gif_psrc = osrc;
-	sc->gif_pdst = odst;
-
-	if (sc->gif_si) {
-		softint_disestablish(sc->gif_si);
-		sc->gif_si = NULL;
-	}
-
-out:
 	if (sc->gif_psrc && sc->gif_pdst)
 		ifp->if_flags |= IFF_RUNNING;
 	else
