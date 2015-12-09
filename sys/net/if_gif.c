@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.97 2015/12/09 03:33:32 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.98 2015/12/09 05:56:24 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.97 2015/12/09 03:33:32 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.98 2015/12/09 05:56:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.97 2015/12/09 03:33:32 knakahara Exp $"
 #include <sys/protosw.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -129,7 +130,7 @@ gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
 
-	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc = kmem_zalloc(sizeof(struct gif_softc), KM_SLEEP);
 
 	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
@@ -171,7 +172,7 @@ gif_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 	rtcache_free(&sc->gif_ro);
 
-	free(sc, M_DEVBUF);
+	kmem_free(sc, sizeof(struct gif_softc));
 
 	return (0);
 }
