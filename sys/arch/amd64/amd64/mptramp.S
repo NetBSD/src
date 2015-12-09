@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.18 2015/11/22 13:41:24 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.19 2015/12/09 16:55:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -125,19 +125,19 @@ LABEL(cpu_spinup_trampoline)
 	movw	%ax,%es
 	movw	%ax,%ss
 #ifdef __clang__
-	lgdt (mptramp_gdt32_desc)	# load flat descriptor table
+	lgdt (mptramp_gdt32_desc)	/* load flat descriptor table */
 #else
-	data32 addr32 lgdt (mptramp_gdt32_desc)   # load flat descriptor table
+	data32 addr32 lgdt (mptramp_gdt32_desc)   /* load flat descriptor table */
 #endif
-	movl	%cr0, %eax	# get cr0
-	orl	$0x1, %eax	# enable protected mode
-	movl	%eax, %cr0	# doit
+	movl	%cr0, %eax	/* get cr0 */
+	orl	$0x1, %eax	/* enable protected mode */
+	movl	%eax, %cr0	/* doit */
 	ljmpl	$0x8, $mp_startup
 
 _TRMP_LABEL(mp_startup)
 	.code32
 
-	movl	$0x10, %eax	# data segment
+	movl	$0x10, %eax	/* data segment */
 	movw	%ax, %ds
 	movw	%ax, %ss
 	movw	%ax, %es
@@ -171,16 +171,16 @@ _TRMP_LABEL(mp_startup)
 	orl	$(EFER_LME|EFER_SCE),%eax
 	wrmsr
 
-	movl	RELOC(mp_pdirpa),%ecx	# guaranteed < 4G
-	movl	%ecx,%cr3		# load ptd addr into mmu
+	movl	RELOC(mp_pdirpa),%ecx	/* guaranteed < 4G */
+	movl	%ecx,%cr3		/* load ptd addr into mmu */
 
-	movl	%cr0,%eax		# get control word
+	movl	%cr0,%eax		/* get control word */
 	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
 	movl	%eax,%cr0
 	jmp	mptramp_compat
 mptramp_compat:
 
-	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	#switch to new segment
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	/* switch to new segment */
 	movl	%eax,%ds
 	movl	%eax,%es
 	movl	%eax,%ss
@@ -217,7 +217,7 @@ _TRMP_LABEL(mptramp_longmode)
 	jmp	*%rax
 
 
-_C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
+_C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
 	/*
 	 * If EFER_NXE is not enabled, fetching a page with a NX bit set
 	 * will raise a #GP. Avoid that by setting the NXE feature now.
