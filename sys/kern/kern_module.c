@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.108 2015/11/03 03:33:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.109 2015/12/09 16:26:16 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.108 2015/11/03 03:33:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.109 2015/12/09 16:26:16 maxv Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -950,7 +950,7 @@ module_do_load(const char *name, bool isdep, int flags,
 				depth--;
 				return 0;
 			}
-		}				
+		}
 		mod = module_newmodule(MODULE_SOURCE_FILESYS);
 		if (mod == NULL) {
 			module_error("out of memory for `%s'", name);
@@ -1050,10 +1050,10 @@ module_do_load(const char *name, bool isdep, int flags,
 			continue;
 		}
 		if (strcmp(mod2->mod_info->mi_name, mi->mi_name) == 0) {
-		    	error = EDEADLK;
+			error = EDEADLK;
 			module_error("circular dependency detected for `%s'",
 			    mi->mi_name);
-		    	goto fail;
+			goto fail;
 		}
 	}
 
