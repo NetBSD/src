@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.S,v 1.19 2015/11/21 12:34:48 maxv Exp $	*/
+/*	$NetBSD: copy.S,v 1.20 2015/12/09 16:55:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -119,7 +119,7 @@ ENTRY(do_pmap_load)
  * Also note that the setup time for 'rep movs' is horrid - especially on P4
  * netburst - but on my AMD X2 it manages one copy (read+write) per clock
  * which can be achieved with a code loop, but is probably impossible to beat.
- * Howver the use of 'rep movsb' for the final bytes should be killed.
+ * However the use of 'rep movsb' for the final bytes should be killed.
  *
  * Newer Intel cpus have a much lower setup time, and may (someday)
  * be ably to do cache-line size copies....
@@ -131,35 +131,37 @@ ENTRY(kcopy)
 .Lkcopy_start:
 	movq	%rdi,%rax
 	subq	%rsi,%rax
-	cmpq	%rcx,%rax		# overlapping?
+	cmpq	%rcx,%rax		/* overlapping? */
 	jb	1f
-	# nope, copy forward
-	shrq	$3,%rcx			# copy by 64-bit words
+	/* nope, copy forward */
+	shrq	$3,%rcx			/* copy by 64-bit words */
 	rep
 	movsq
 
 	movq	%rdx,%rcx
-	andl	$7,%ecx			# any bytes left?
+	andl	$7,%ecx			/* any bytes left? */
 	rep
 	movsb
 
 	xorq	%rax,%rax
 	ret
 
-# Using 'rep movs' to copy backwards is not as fast as for forwards copies
-# and ought not be done when the copy doesn't acually overlap.
-# However kcopy() isn't used any that looks even vaguely used often.
-# I'm also not sure it is ever asked to do overlapping copies!
+/*
+ * Using 'rep movs' to copy backwards is not as fast as for forwards copies
+ * and ought not be done when the copy doesn't acually overlap.
+ * However kcopy() isn't used any that looks even vaguely used often.
+ * I'm also not sure it is ever asked to do overlapping copies!
+ */
 
-1:	addq	%rcx,%rdi		# copy backward
+1:	addq	%rcx,%rdi		/* copy backward */
 	addq	%rcx,%rsi
 	std
-	andq	$7,%rcx			# any fractional bytes?
+	andq	$7,%rcx			/* any fractional bytes? */
 	decq	%rdi
 	decq	%rsi
 	rep
 	movsb
-	movq	%rdx,%rcx		# copy remainder by 64-bit words
+	movq	%rdx,%rcx		/* copy remainder by 64-bit words */
 	shrq	$3,%rcx
 	subq	$7,%rsi
 	subq	$7,%rdi
@@ -173,24 +175,24 @@ ENTRY(kcopy)
 ENTRY(copyout)
 	DEFERRED_SWITCH_CHECK
 
-	xchgq	%rdi,%rsi		# kernel address to %rsi, user to %rdi
-	movq	%rdx,%rax		# save transfer length (bytes)
+	xchgq	%rdi,%rsi		/* kernel address to %rsi, user to %rdi */
+	movq	%rdx,%rax		/* save transfer length (bytes) */
 
-	addq	%rdi,%rdx		# end address to %rdx
-	jc	_C_LABEL(copy_efault)	# jump if wraps
+	addq	%rdi,%rdx		/* end address to %rdx */
+	jc	_C_LABEL(copy_efault)	/* jump if wraps */
 	movq	$VM_MAXUSER_ADDRESS,%r8
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_efault)	# jump if end in kernel space
+	ja	_C_LABEL(copy_efault)	/* jump if end in kernel space */
 
 .Lcopyout_start:
-	movq	%rax,%rcx		# length
-	shrq	$3,%rcx			# count of 8-byte words
+	movq	%rax,%rcx		/* length */
+	shrq	$3,%rcx			/* count of 8-byte words */
 	rep
-	movsq				# copy from %rsi to %rdi
+	movsq				/* copy from %rsi to %rdi */
 	movb	%al,%cl
-	andb	$7,%cl			# remaining number of bytes
+	andb	$7,%cl			/* remaining number of bytes */
 	rep
-	movsb				# copy remaining bytes
+	movsb				/* copy remaining bytes */
 .Lcopyout_end:
 	xorl	%eax,%eax
 	ret
@@ -202,11 +204,11 @@ ENTRY(copyin)
 	xchgq	%rdi,%rsi
 	movq	%rdx,%rax
 
-	addq	%rsi,%rdx		# Check source address not wrapped
+	addq	%rsi,%rdx		/* check source address not wrapped */
 	jc	_C_LABEL(copy_efault)
-	movq	$VM_MAXUSER_ADDRESS,%r8	
+	movq	$VM_MAXUSER_ADDRESS,%r8
 	cmpq	%r8,%rdx
-	ja	_C_LABEL(copy_efault)	# j if end in kernel space
+	ja	_C_LABEL(copy_efault)	/* j if end in kernel space */
 
 .Lcopyin_start:
 3:	/* bcopy(%rsi, %rdi, %rax); */
@@ -359,19 +361,7 @@ ENTRY(copystr)
 
 7:	ret
 
-ENTRY(fusword)
-	DEFERRED_SWITCH_CHECK
-	movq	$VM_MAXUSER_ADDRESS-2,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusufailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
-	movzwl	(%rdi),%eax
-	movq	$0,PCB_ONFAULT(%rcx)
-	ret
-	DEFERRED_SWITCH_CALL
-	
+
 ENTRY(fuswintr)
 	cmpl	$TLBSTATE_VALID, CPUVAR(TLBSTATE)
 	jnz	_C_LABEL(fusuaddrfault)
@@ -384,7 +374,7 @@ ENTRY(fuswintr)
 	movzwl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
 	ret
-	
+
 ENTRY(fubyte)
 	DEFERRED_SWITCH_CHECK
 	movq	$VM_MAXUSER_ADDRESS-1,%r11
@@ -395,22 +385,6 @@ ENTRY(fubyte)
 	movq	%r11,PCB_ONFAULT(%rcx)
 	movzbl	(%rdi),%eax
 	movq	$0,PCB_ONFAULT(%rcx)
-	ret
-	DEFERRED_SWITCH_CALL
-
-ENTRY(susword)
-	DEFERRED_SWITCH_CHECK
-	movq	$VM_MAXUSER_ADDRESS-2,%r11
-	cmpq	%r11,%rdi
-	ja	_C_LABEL(fusuaddrfault)
-
-	GET_CURPCB(%rcx)
-	leaq	_C_LABEL(fusufailure)(%rip),%r11
-	movq	%r11,PCB_ONFAULT(%rcx)
-
-	movw	%si,(%rdi)
-	xorq	%rax,%rax
-	movq	%rax,PCB_ONFAULT(%rcx)
 	ret
 	DEFERRED_SWITCH_CALL
 
