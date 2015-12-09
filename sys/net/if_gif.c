@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.96 2015/12/09 03:31:28 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.97 2015/12/09 03:33:32 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.96 2015/12/09 03:31:28 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.97 2015/12/09 03:33:32 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -95,6 +95,9 @@ LIST_HEAD(, gif_softc) gif_softc_list;	/* XXX should be static */
 static int	gif_clone_create(struct if_clone *, int);
 static int	gif_clone_destroy(struct ifnet *);
 static int	gif_check_nesting(struct ifnet *, struct mbuf *);
+
+static int	gif_encap_attach(struct gif_softc *);
+static int	gif_encap_detach(struct gif_softc *);
 
 static struct if_clone gif_cloner =
     IF_CLONE_INITIALIZER("gif", gif_clone_create, gif_clone_destroy);
@@ -677,6 +680,60 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
+static int
+gif_encap_attach(struct gif_softc *sc)
+{
+	int error;
+
+	if (sc == NULL || sc->gif_psrc == NULL)
+		return EINVAL;
+
+	switch (sc->gif_psrc->sa_family) {
+#ifdef INET
+	case AF_INET:
+		error = in_gif_attach(sc);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		error = in6_gif_attach(sc);
+		break;
+#endif
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return error;
+}
+
+static int
+gif_encap_detach(struct gif_softc *sc)
+{
+	int error;
+
+	if (sc == NULL || sc->gif_psrc == NULL)
+		return EINVAL;
+
+	switch (sc->gif_psrc->sa_family) {
+#ifdef INET
+	case AF_INET:
+		error = in_gif_detach(sc);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		error = in6_gif_detach(sc);
+		break;
+#endif
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return error;
+}
+
 int
 gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 {
@@ -722,18 +779,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	}
 	/* XXX we can detach from both, but be polite just in case */
 	if (sc->gif_psrc)
-		switch (sc->gif_psrc->sa_family) {
-#ifdef INET
-		case AF_INET:
-			(void)in_gif_detach(sc);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			(void)in6_gif_detach(sc);
-			break;
-#endif
-		}
+		(void)gif_encap_detach(sc);
 
 	/*
 	 * Secondly, try to set new configurations.
@@ -745,21 +791,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		sc->gif_psrc = nsrc;
 		sc->gif_pdst = ndst;
 
-		switch (sc->gif_psrc->sa_family) {
-#ifdef INET
-		case AF_INET:
-			error = in_gif_attach(sc);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			error = in6_gif_attach(sc);
-			break;
-#endif
-		default:
-			error = EINVAL;
-			break;
-		}
+		error = gif_encap_attach(sc);
 		if (error) {
 			/* rollback to the last configuration. */
 			nsrc = osrc;
@@ -772,18 +804,7 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 
 		sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
 		if (sc->gif_si == NULL) {
-			switch (sc->gif_psrc->sa_family) {
-#ifdef INET
-			case AF_INET:
-				(void)in_gif_detach(sc);
-				break;
-#endif
-#ifdef INET6
-			case AF_INET6:
-				(void)in6_gif_detach(sc);
-				break;
-#endif
-			}
+			(void)gif_encap_detach(sc);
 
 			/* rollback to the last configuration. */
 			nsrc = osrc;
