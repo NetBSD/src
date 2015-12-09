@@ -1,4 +1,4 @@
-/*	$NetBSD: verified_exec.c,v 1.71 2015/04/26 09:45:40 maxv Exp $	*/
+/*	$NetBSD: veriexec.c,v 1.1 2015/12/09 18:25:32 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: verified_exec.c,v 1.71 2015/04/26 09:45:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: veriexec.c,v 1.1 2015/12/09 18:25:32 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/errno.h>
