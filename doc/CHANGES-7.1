@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.38 2015/12/02 07:30:54 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.39 2015/12/10 23:50:06 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1658,3 +1658,16 @@ lib/libpthread_dbg/pthread_dbg.c		1.43 (patch)
 	jemalloc: Fix non _REENTRANT build. Defer using pthread keys
 	until we are threaded.
 	[manu, ticket #829]
+
+sys/arch/arm/allwinner/awin_mmc.c		1.23 via patch
+
+	Wait 20ms for the PLL to stabilize after enabling it.
+	Fixes occasional bogus size report for my SD card.
+	[bouyer, ticket #1043]
+
+external/gpl3/gcc/dist/gcc/config/i386/cpuid.h	1.2
+
+	Fix logic bug that broke early i486 CPUs which don't have
+	cpuid.
+	[christos, ticket #1048]
+
