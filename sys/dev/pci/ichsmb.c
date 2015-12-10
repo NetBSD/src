@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.44 2015/12/01 10:08:03 msaitoh Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.45 2015/12/10 05:29:41 pgoyette Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.44 2015/12/01 10:08:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.45 2015/12/10 05:29:41 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -188,6 +188,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_i2c_device = NULL;
 	flags = 0;
+	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	ichsmb_rescan(self, "i2cbus", &flags);
 
 out:	if (!pmf_device_register(self, NULL, NULL))
@@ -207,7 +208,6 @@ ichsmb_rescan(device_t self, const char *ifattr, const int *flags)
 		return 0;
 
 	/* Attach I2C bus */
-	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_i2c_tag.ic_cookie = sc;
 	sc->sc_i2c_tag.ic_acquire_bus = ichsmb_i2c_acquire_bus;
 	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
