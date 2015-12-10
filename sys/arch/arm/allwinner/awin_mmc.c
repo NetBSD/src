@@ -1,4 +1,4 @@
-/* $NetBSD: awin_mmc.c,v 1.3.10.4 2015/11/07 16:15:03 riz Exp $ */
+/* $NetBSD: awin_mmc.c,v 1.3.10.5 2015/12/10 23:44:11 snj Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3.10.4 2015/11/07 16:15:03 riz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_mmc.c,v 1.3.10.5 2015/12/10 23:44:11 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -557,6 +557,7 @@ awin_mmc_bus_clock(sdmmc_chipset_handle_t sch, int freq)
 		clk |= __SHIFTIN(sdly, AWIN_SD_CLK_PHASE_CTR);
 	    	clk |= AWIN_PLL_CFG_ENABLE;
 		bus_space_write_4(sc->sc_bst, sc->sc_clk_bsh, 0, clk);
+		delay(20000);
 
 		clkcr |= AWIN_MMC_CLKCR_CARDCLKON;
 		MMC_WRITE(sc, AWIN_MMC_CLKCR, clkcr);
