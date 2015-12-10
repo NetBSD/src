@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.19 2015/11/22 14:22:16 bouyer Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.20 2015/12/10 23:48:32 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -795,4 +795,10 @@ share/terminfo/terminfo				1.8
 
 	Correct the x68k's Backspace key behavior.
 	[isaki, ticket #1047]
+
+external/gpl3/gcc/dist/gcc/config/i386/cpuid.h	1.2
+
+	Fix logic bug that broke early i486 CPUs which don't have
+	cpuid.
+	[christos, ticket #1048]
 
