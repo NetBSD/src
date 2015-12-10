@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.158 2015/11/25 08:39:45 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.159 2015/12/10 22:04:54 skrll Exp $	*/
 
 /*
  * arm7tdmi support code Copyright (c) 2001 John Fremlin
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.158 2015/11/25 08:39:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.159 2015/12/10 22:04:54 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_cpuoptions.h"
@@ -1927,7 +1927,7 @@ set_cpufuncs(void)
 	    cputype == CPU_ID_ARM1176JZS) {
 		cpufuncs = arm11_cpufuncs;
 #if defined(CPU_ARM1136)
-		if (cputype == CPU_ID_ARM1136JS &&
+		if (cputype == CPU_ID_ARM1136JS ||
 		    cputype == CPU_ID_ARM1136JSR1) {
 			cpufuncs = arm1136_cpufuncs;
 			if (cputype == CPU_ID_ARM1136JS)
