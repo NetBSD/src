@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.698 2015/12/07 14:40:23 christos Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.699 2015/12/10 14:26:40 leot Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.705 2015/12/07 14:40:03 christos Exp
+ *	NetBSD: usbdevs,v 1.706 2015/12/10 14:24:25 leot Exp
  */
 
 /*
@@ -3678,6 +3678,8 @@ static const uint16_t usb_products[] = {
 	    8445, 0,
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8187B_0, 
 	    16118, 0,
+	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8188CU_3, 
+	    5075, 0,
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8188CUS, 
 	    7124, 0,
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8187B_1, 
@@ -5380,7 +5382,7 @@ static const char usb_words[] = { "."
 	    "USB2.0\0" /* 6 refs @ 5053 */
 	    "WL54\0" /* 1 refs @ 5060 */
 	    "RTL8192CU\0" /* 24 refs @ 5065 */
-	    "RTL8188CU\0" /* 20 refs @ 5075 */
+	    "RTL8188CU\0" /* 21 refs @ 5075 */
 	    "XX10\0" /* 1 refs @ 5085 */
 	    "BWU613\0" /* 1 refs @ 5090 */
 	    "HWU54DM\0" /* 1 refs @ 5097 */
