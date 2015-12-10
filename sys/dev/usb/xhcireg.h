@@ -1,5 +1,4 @@
-/* $NetBSD: xhcireg.h,v 1.3 2015/03/28 08:19:20 skrll Exp $ */
-/* $FreeBSD$ */
+/* $NetBSD: xhcireg.h,v 1.4 2015/12/10 15:51:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Hans Petter Selasky. All rights reserved.
