@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.5 2014/09/29 14:47:52 reinoud Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.6 2015/12/10 21:56:04 marty Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.5 2014/09/29 14:47:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.6 2015/12/10 21:56:04 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -203,7 +203,7 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_wdog_wtdat = exynos_wdt_wdog_read(sc, EXYNOS_WDT_WTDAT);
 		sc->sc_wdog_period = (sc->sc_wdog_wtdat + 1) / sc->sc_freq;
 	} else {
-		sc->sc_wdog_period = EXYNOS_WDT_PERIOD_DEFAULT;
+		sc->sc_wdog_period = EXYNOS_WDT_DEFAULT_PERIOD;
 		sc->sc_wdog_prescaler = 1;
 		/*
 		 * Let's see what clock select we should use.
