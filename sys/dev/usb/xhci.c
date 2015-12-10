@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.31 2015/12/10 16:35:45 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.32 2015/12/10 17:07:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.31 2015/12/10 16:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.32 2015/12/10 17:07:07 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1923,10 +1923,8 @@ xhci_init_slot(struct xhci_softc * const sc, uint32_t slot, int depth,
 	uint32_t xspeed;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-	DPRINTFN(4, "slot %u depth %d speed %d",
-	    slot, depth, speed, 0);
-	DPRINTFN(4, " port %d rhport %d",
-	    port, rhport, 0, 0);
+	DPRINTFN(4, "slot %u depth %d speed %d", slot, depth, speed, 0);
+	DPRINTFN(4, " port %d rhport %d", port, rhport, 0, 0);
 
 	switch (speed) {
 	case USB_SPEED_LOW:
