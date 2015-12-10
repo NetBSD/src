@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.699 2015/12/10 14:26:40 leot Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.700 2015/12/10 14:31:46 leot Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.706 2015/12/10 14:24:25 leot Exp
+ *	NetBSD: usbdevs,v 1.707 2015/12/10 14:30:56 leot Exp
  */
 
 /*
@@ -3678,10 +3678,10 @@ static const uint16_t usb_products[] = {
 	    8445, 0,
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8187B_0, 
 	    16118, 0,
-	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8188CU_3, 
-	    5075, 0,
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8188CUS, 
 	    7124, 0,
+	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8188CU_3, 
+	    5075, 0,
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8187B_1, 
 	    16118, 0,
 	    USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8187B_2, 
