@@ -1,4 +1,4 @@
-.\"     $NetBSD: parsedate.3,v 1.19 2015/12/08 12:51:21 christos Exp $
+.\"     $NetBSD: parsedate.3,v 1.20 2015/12/10 21:32:35 wiz Exp $
 .\"
 .\" Copyright (c) 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,32 +74,54 @@ The following words have the indicated numeric meanings:
 \-1,
 .Dv this =
 0,
-.Dv first, next, or one =
+.Dv first , next ,
+or
+.Dv one =
 1,
 .Dv second
 is unused so that it is not confused with
 .Dq seconds ,
 .Dv two =
 2,
-.Dv third or three =
+.Dv third
+or
+.Dv three =
 3,
-.Dv fourth or four =
+.Dv fourth
+or
+.Dv four =
 4,
-.Dv fifth or five  =
+.Dv fifth
+or
+.Dv five  =
 5,
-.Dv sixth or six  =
+.Dv sixth
+or
+.Dv six  =
 6,
-.Dv seventh or seven =
+.Dv seventh
+or
+.Dv seven =
 7,
-.Dv eighth or eight =
+.Dv eighth
+or
+.Dv eight =
 8,
-.Dv ninth or nine =
+.Dv ninth
+or
+.Dv nine =
 9,
-.Dv tenth or ten =
+.Dv tenth
+or
+.Dv ten =
 10,
-.Dv eleventh or eleven =
+.Dv eleventh
+or
+.Dv eleven =
 11,
-.Dv twelfth or twelve =
+.Dv twelfth
+or
+.Dv twelve =
 12.
 .Pp
 The following words are recognized in English only:
@@ -275,9 +297,9 @@ Relative items are also supported:
 Note that, as a special case for
 .Dv midnight
 with the name of a day only,
-.Dv "midnight tuesday"
+.Dq "midnight tuesday"
 implies 00:00 at the beginning of Tuesday, whereas
-.Dv "Sat mn"
+.Dq "Sat mn"
 implies 00:00 at the end of Saturday (i.e. early Sunday morning.)
 .Pp
 Seconds since epoch, UTC, (also known as UNIX time) are also supported:
