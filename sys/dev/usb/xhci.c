@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.30 2015/12/10 15:50:17 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.31 2015/12/10 16:35:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.30 2015/12/10 15:50:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.31 2015/12/10 16:35:45 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -984,27 +984,28 @@ xhci_configure_endpoint(usbd_pipe_handle pipe)
 	cp[3] = htole32(0);
 
 	cp = xhci_slot_get_icv(sc, xs, xhci_dci_to_ici(dci));
+	uint8_t eptype = xhci_ep_get_type(pipe->endpoint->edesc);
 	if (xfertype == UE_INTERRUPT) {
-	cp[0] = htole32(
-	    XHCI_EPCTX_0_IVAL_SET(3) /* XXX */
-	    );
-	cp[1] = htole32(
-	    XHCI_EPCTX_1_CERR_SET(3) |
-	    XHCI_EPCTX_1_EPTYPE_SET(xhci_ep_get_type(pipe->endpoint->edesc)) |
-	    XHCI_EPCTX_1_MAXB_SET(0) |
-	    XHCI_EPCTX_1_MAXP_SIZE_SET(8) /* XXX */
-	    );
-	cp[4] = htole32(
-		XHCI_EPCTX_4_AVG_TRB_LEN_SET(8)
-		);
+		cp[0] = htole32(
+		    XHCI_EPCTX_0_IVAL_SET(3) /* XXX */
+		    );
+		cp[1] = htole32(
+		    XHCI_EPCTX_1_CERR_SET(3) |
+		    XHCI_EPCTX_1_EPTYPE_SET(eptype) |
+		    XHCI_EPCTX_1_MAXB_SET(0) |
+		    XHCI_EPCTX_1_MAXP_SIZE_SET(8) /* XXX */
+		    );
+		cp[4] = htole32(
+		    XHCI_EPCTX_4_AVG_TRB_LEN_SET(8)
+		    );
 	} else {
-	cp[0] = htole32(0);
-	cp[1] = htole32(
-	    XHCI_EPCTX_1_CERR_SET(3) |
-	    XHCI_EPCTX_1_EPTYPE_SET(xhci_ep_get_type(pipe->endpoint->edesc)) |
-	    XHCI_EPCTX_1_MAXB_SET(0) |
-	    XHCI_EPCTX_1_MAXP_SIZE_SET(512) /* XXX */
-	    );
+		cp[0] = htole32(0);
+		cp[1] = htole32(
+		    XHCI_EPCTX_1_CERR_SET(3) |
+		    XHCI_EPCTX_1_EPTYPE_SET(eptype) |
+		    XHCI_EPCTX_1_MAXB_SET(0) |
+		    XHCI_EPCTX_1_MAXP_SIZE_SET(512) /* XXX */
+		    );
 	}
 	*(uint64_t *)(&cp[2]) = htole64(
 	    xhci_ring_trbp(&xs->xs_ep[dci].xe_tr, 0) |
