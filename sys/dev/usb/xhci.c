@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.29 2015/08/19 06:23:35 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.30 2015/12/10 15:50:17 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.29 2015/08/19 06:23:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.30 2015/12/10 15:50:17 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -760,7 +760,7 @@ xhci_init(struct xhci_softc *sc)
 		    &sc->sc_spbufarray_dma);
 		if (err)
 			return err;
-		
+
 		sc->sc_spbuf_dma = kmem_zalloc(sizeof(*sc->sc_spbuf_dma) * sc->sc_maxspbuf, KM_SLEEP);
 		uint64_t *spbufarray = KERNADDR(&sc->sc_spbufarray_dma, 0);
 		for (i = 0; i < sc->sc_maxspbuf; i++) {
@@ -775,7 +775,7 @@ xhci_init(struct xhci_softc *sc)
 			    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 		}
 
-		usb_syncmem(&sc->sc_spbufarray_dma, 0, 
+		usb_syncmem(&sc->sc_spbufarray_dma, 0,
 		    sizeof(uint64_t) * sc->sc_maxspbuf, BUS_DMASYNC_PREWRITE);
 	}
 
