@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.205 2015/12/10 09:04:08 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.206 2015/12/10 09:19:42 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.205 2015/12/10 09:04:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.206 2015/12/10 09:19:42 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -615,7 +615,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 	selfpowered = !!(cdp->bmAttributes & UC_SELF_POWERED);
 
 	DPRINTF("addr %d cno=%d attr=0x%02x, selfpowered=%d",
-	    dev->addr, cdp->bConfigurationValue, cdp->bmAttributes,
+	    dev->address, cdp->bConfigurationValue, cdp->bmAttributes,
 	    selfpowered);
 	DPRINTF("max power=%d", cdp->bMaxPower * 2, 0, 0, 0);
 
@@ -640,7 +640,7 @@ usbd_set_config_index(usbd_device_handle dev, int index, int msg)
 #endif
 	power = cdp->bMaxPower * 2;
 	if (power > dev->powersrc->power) {
-		DPRINTF("power exceeded %d %d", power, dev->powersrc->up_power,
+		DPRINTF("power exceeded %d %d", power, dev->powersrc->power,
 		    0, 0);
 		/* XXX print nicer message. */
 		if (msg)
@@ -707,6 +707,8 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 	usbd_pipe_handle p;
 	usbd_status err;
 
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
 	p = malloc(dev->bus->pipe_size, M_USB, M_NOWAIT);
 	DPRINTFN(1, "dev=%p iface=%p ep=%p pipe=%p", dev, iface, ep, p);
 	if (p == NULL)
@@ -726,7 +728,7 @@ usbd_setup_pipe_flags(usbd_device_handle dev, usbd_interface_handle iface,
 	err = dev->bus->methods->open_pipe(p);
 	if (err) {
 		DPRINTF("endpoint=0x%x failed, error=%d",
-		    ep->ue_edesc->bEndpointAddress, err, 0, 0);
+		    ep->edesc->bEndpointAddress, err, 0, 0);
 		free(p, M_USB);
 		return (err);
 	}
@@ -858,6 +860,8 @@ usbd_attachinterfaces(device_t parent, usbd_device_handle dev,
 	usbd_interface_handle *ifaces;
 	int i, j, loc;
 	device_t dv;
+
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
 	nifaces = dev->cdesc->bNumInterface;
 	ifaces = malloc(nifaces * sizeof(*ifaces), M_USB, M_NOWAIT|M_ZERO);
@@ -1572,7 +1576,7 @@ usb_disconnect_port(struct usbd_port *up, device_t parent, int flags)
 	int i, rc;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-	DPRINTFN(3, "up=%p dev=%p port=%d", up, dev, up->up_portno, 0);
+	DPRINTFN(3, "up=%p dev=%p port=%d", up, dev, up->portno, 0);
 
 	if (dev == NULL) {
 #ifdef DIAGNOSTIC
