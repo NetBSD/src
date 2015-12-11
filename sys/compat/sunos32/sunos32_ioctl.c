@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_ioctl.c,v 1.33 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: sunos32_ioctl.c,v 1.34 2015/12/11 08:10:43 mlelstv Exp $	*/
 /* from: NetBSD: sunos_ioctl.c,v 1.35 2001/02/03 22:20:02 mrg Exp 	*/
 
 /*
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.33 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_ioctl.c,v 1.34 2015/12/11 08:10:43 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd32.h"
@@ -846,9 +846,9 @@ sunos32_sys_ioctl(struct lwp *l, const struct sunos32_sys_ioctl_args *uap, regis
 	    {
 		int tmp = 0;
 		switch ((intptr_t)SCARG_P32(uap, data)) {
-		case SUNOS_S_FLUSHR:	tmp = FREAD;
-		case SUNOS_S_FLUSHW:	tmp = FWRITE;
-		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
+		case SUNOS_S_FLUSHR:	tmp = FREAD; break;
+		case SUNOS_S_FLUSHW:	tmp = FWRITE; break;
+		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE; break;
 		}
                 return sunos32_do_ioctl(SCARG(&bsd_ua, fd), TIOCFLUSH, &tmp, l);
 	    }
