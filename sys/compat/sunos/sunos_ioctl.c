@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.65 2015/12/11 08:10:28 mlelstv Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.66 2015/12/11 08:19:07 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.65 2015/12/11 08:10:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.66 2015/12/11 08:19:07 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -880,10 +880,6 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 		if (error)
 			break;
 
-		if (pi.disklab->d_secpercyl == 0) {
-			error = ERANGE;	/* XXX */
-			break;
-		}
 		if (pi.pi_offset % label.d_secpercyl != 0) {
 			error = ERANGE;	/* XXX */
 			break;
