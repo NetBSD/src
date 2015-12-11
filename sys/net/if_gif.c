@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.100 2015/12/10 08:11:03 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.101 2015/12/11 04:29:24 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.100 2015/12/10 08:11:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.101 2015/12/11 04:29:24 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -131,7 +131,8 @@ gif_clone_create(struct if_clone *ifc, int unit)
 	struct gif_softc *sc;
 
 	sc = kmem_zalloc(sizeof(struct gif_softc), KM_SLEEP);
-	KASSERT(sc != NULL);
+	if (sc == NULL)
+		return ENOMEM;
 
 	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
