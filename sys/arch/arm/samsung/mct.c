@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.5 2014/08/28 20:29:05 snj Exp $	*/
+/*	$NetBSD: mct.c,v 1.6 2015/12/11 04:03:44 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.5 2014/08/28 20:29:05 snj Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.6 2015/12/11 04:03:44 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,12 +54,11 @@ static int  mct_match(device_t, cfdata_t, void *);
 static void mct_attach(device_t, device_t, void *);
 
 static int clockhandler(void *);
-static u_int mct_get_timecount(struct timecounter *);
-
 
 CFATTACH_DECL_NEW(exyo_mct, 0, mct_match, mct_attach, NULL, NULL);
 
 
+#if 0
 static struct timecounter mct_timecounter = {
 	.tc_get_timecount = mct_get_timecount,
 	.tc_poll_pps = 0,
@@ -70,6 +69,7 @@ static struct timecounter mct_timecounter = {
 	.tc_priv = &mct_sc,
 	.tc_next = NULL,
 };
+#endif
 
 
 static inline uint32_t
@@ -188,6 +188,7 @@ mct_attach(device_t parent, device_t self, void *aux)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n", sc->sc_irq);
 
+#if 0
 	/* blink led */
 	if (prop_dictionary_get_cstring_nocopy(dict, "heartbeat", &pin_name)) {
 		if (!exynos_gpio_pin_reserve(pin_name, &sc->sc_gpio_led)) {
@@ -200,6 +201,7 @@ mct_attach(device_t parent, device_t self, void *aux)
 			sc->sc_led_timer = hz;
 		}
 	}
+#endif
 }
 
 
@@ -212,14 +214,6 @@ mct_gettime(struct mct_softc *sc)
 		lo = mct_read_global(sc, MCT_G_CNT_L);
 	} while (hi != mct_read_global(sc, MCT_G_CNT_U));
 	return ((uint64_t) hi << 32) | lo;
-}
-
-
-static u_int
-mct_get_timecount(struct timecounter *tc)
-{
-	struct mct_softc * const sc = tc->tc_priv;
-	return (u_int) (mct_gettime(sc));
 }
 
 
@@ -299,6 +293,7 @@ mct_init_cpu_clock(struct cpu_info *ci)
 }
 
 
+#if 0
 void
 cpu_initclocks(void)
 {
@@ -331,9 +326,4 @@ cpu_initclocks(void)
 #endif
 }
 
-
-void
-setstatclockrate(int newhz)
-{
-}
-
+#endif
