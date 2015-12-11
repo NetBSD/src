@@ -1,4 +1,4 @@
-/*	$NetBSD: field.c,v 1.29 2015/09/07 15:50:49 joerg Exp $	*/
+/*	$NetBSD: field.c,v 1.30 2015/12/11 21:22:57 joerg Exp $	*/
 /*-
  * Copyright (c) 1998-1999 Brett Lymn
  *                         (blymn@baea.com.au, brett_lymn@yahoo.com.au)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: field.c,v 1.29 2015/09/07 15:50:49 joerg Exp $");
+__RCSID("$NetBSD: field.c,v 1.30 2015/12/11 21:22:57 joerg Exp $");
 
 #include <sys/param.h>
 #include <stdlib.h>
@@ -900,7 +900,7 @@ int
 free_field(FIELD *field)
 {
 	FIELD *flink;
-	int i;
+	unsigned int i;
 	_formi_tab_t *ts, *nts;
 	
 	if (field == NULL)
@@ -913,7 +913,7 @@ free_field(FIELD *field)
 		  /* no it is not - release the buffers */
 		free(field->buffers);
 		  /* free the tab structures */
-		for (i = 0; i < field->row_count - 1; i++) {
+		for (i = 0; i + 1 < field->row_count; i++) {
 			if (field->alines[i].tabs != NULL) {
 				ts = field->alines[i].tabs;
 				while (ts != NULL) {
