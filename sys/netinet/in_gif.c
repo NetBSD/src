@@ -1,4 +1,4 @@
-/*	$NetBSD: in_gif.c,v 1.65 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: in_gif.c,v 1.66 2015/12/11 07:59:14 knakahara Exp $	*/
 /*	$KAME: in_gif.c,v 1.66 2001/07/29 04:46:09 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.65 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in_gif.c,v 1.66 2015/12/11 07:59:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -223,13 +223,20 @@ in_gif_input(struct mbuf *m, ...)
 		return;
 	}
 #ifndef GIF_ENCAPCHECK
-	if (!gif_validate4(ip, gifp->if_softc, m->m_pkthdr.rcvif)) {
+	struct gif_softc *sc = (struct gif_softc *)gifp->if_softc;
+	/* other CPU do delete_tunnel */
+	if (sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+		m_freem(m);
+		ip_statinc(IP_STAT_NOGIF);
+		return;
+	}
+
+	if (!gif_validate4(ip, sc, m->m_pkthdr.rcvif)) {
 		m_freem(m);
 		ip_statinc(IP_STAT_NOGIF);
 		return;
 	}
 #endif
-
 	otos = ip->ip_tos;
 	m_adj(m, off);
 
