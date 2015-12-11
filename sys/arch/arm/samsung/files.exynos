@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.8 2015/12/05 13:32:27 jmcneill Exp $
+#	$NetBSD: files.exynos,v 1.9 2015/12/11 03:55:18 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -15,7 +15,7 @@ file	arch/arm/arm32/irq_dispatch.S
 
 file	arch/arm/samsung/exynos_soc.c
 file	arch/arm/samsung/exynos_space.c
-file	arch/arm/samsung/exynos_dma.c
+#file	arch/arm/samsung/exynos_dma.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
 
 file	arch/arm/arm/bus_space_a4x.S		exyo
@@ -70,8 +70,8 @@ defflag opt_sscom.h     SSCOM0CONSOLE SSCOM1CONSOLE
 defparam opt_sscom.h    SSCOM_FREQ 
 
 # GPIO
-device	exyogpio : gpiobus
-attach	exyogpio at exyo with exynos_gpio
+#device	exyogpio : gpiobus
+#attach	exyogpio at exyo with exynos_gpio
 file	arch/arm/samsung/exynos_gpio.c		exynos_gpio | exyo_io needs-flag
 
 # USB2 Host Controller (EHCI/OHCI)
@@ -86,4 +86,8 @@ device	exyoiic: i2cbus, i2c_bitbang
 attach	exyoiic at exyo with exynos_iic
 file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
 
-include "arch/arm/samsung/files.exynos5422"
+file	arch/arm/samsung/exynos5422_dma.c
+
+device	exy5422clk: clk
+attach	exy5422clk at exyo with exynos5422_clock
+file	arch/arm/samsung/exynos5422_clock.c	exynos5422_clock

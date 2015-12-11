@@ -1,8 +1,0 @@
-#	$NetBSD: files.exynos5422,v 1.1 2015/12/05 13:32:27 jmcneill Exp $
-#
-# Configuration info for Samsung Exynos 5422
-#
-
-device	exy5422clk: clk
-attach	exy5422clk at exyo with exynos5422_clock
-file	arch/arm/samsung/exynos5422_clock.c	exynos5422_clock
