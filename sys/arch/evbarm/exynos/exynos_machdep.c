@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_machdep.c,v 1.1 2015/12/06 00:33:44 marty Exp $ */
+/*	$NetBSD: exynos_machdep.c,v 1.2 2015/12/11 04:12:21 marty Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.1 2015/12/06 00:33:44 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.2 2015/12/11 04:12:21 marty Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -135,6 +135,9 @@ char *boot_file = NULL;				/* MI bootfile */
 uint8_t uboot_enaddr[ETHER_ADDR_LEN] = {};
 
 
+void
+odroid_device_register(device_t self, void *aux);
+
 /*
  * kernel start and end from the linker
  */
@@ -201,6 +204,40 @@ static struct boot_physmem bp_highgig = {
 };
 #endif
 
+static struct gpio_pin_entry {
+	const char *pin_name;
+	const char *pin_user;
+} gpio_pin_entries[] = {
+	/* mux@13400000 (muxa) */
+	{ "gpx3-7", "hdmi-hpd-irq"},
+	{ "gpx3-6", "hdmi_cec" },
+	{ "gpx0-7", "dp_hpd_gpio" },
+	{ "gpx0-4", "pmic-irq" },
+	{ "gpx3-2", "audio-irq" },
+	{ "gpx3-4", "b-sess1-irq" },
+	{ "gpx3-5", "b-sess0-irq" },
+	{ "gpx1-1", "id2-irq" },
+	/* mux@134100000 (muxb) */
+	{ "gpc0-0", "sd0-clk" },
+	{ "gpc0-1", "sd0-cmd" },
+	{ "gpc0-7", "sd0-rdqs" },
+	{ "gpd1-3", "sd0-qrdy" },
+	{ "gpc0-3", "sd0-bus-width1" },
+	{ "gpc0-3", "sd0-bus-width4-bit1" },
+	{ "gpc0-4", "sd0-bus-width4-bit2" },
+	{ "gpc0-5", "sd0-bus-width4-bit3" },
+	{ "gpc0-6", "sd0-bus-width4-bit4" },
+	{ "gpc1-0", "sd1-clk" },
+	{ "gpc1-1", "sd1-cmd" },
+	{ "gpc1-3", "sd1-bus-width1" },
+	{ "gpc1-3", "sd1-bus-width4-bit1" },
+	{ "gpc1-4", "sd1-bus-width4-bit2" },
+	{ "gpc1-5", "sd1-bus-width4-bit3" },
+	{ "gpc1-6", "sd1-bus-width4-bit4" },
+	/* TODO: muxc and muxd as needed */
+	{ 0, 0}
+};
+	
 #ifdef VERBOSE_INIT_ARM
 extern void exynos_putchar(int);
 
@@ -237,6 +274,20 @@ exynos_printn(u_int n, int base)
 
 extern void cortex_mpstart(void);
 
+/*
+ * void init_gpio_dictionary(...)
+ *
+ * Setup the dictionary of gpio pin names for the drivers to use
+ */
+static void init_gpio_dictionary(struct gpio_pin_entry *pins,
+				 prop_dictionary_t dict)
+{
+	while (pins->pin_name) {
+		prop_dictionary_set_cstring(dict, pins->pin_user,
+					    pins->pin_name);
+		pins++;
+	}
+}
 /*
  * u_int initarm(...)
  *
@@ -351,9 +402,8 @@ initarm(void *arg)
 	    mapallmem_p);
 
 	/* we've a specific device_register routine */
-	evbarm_device_register = exynos_device_register;
-	evbarm_device_register_post_config = exynos_device_register_post_config;
-
+	evbarm_device_register = odroid_device_register;
+//	evbarm_device_register_post_config = exynos_device_register_post_config;
 	/*
 	 * If we couldn't map all of memory via TTBR1, limit the memory the
 	 * kernel can allocate from to be from the highest available 1GB.
@@ -456,6 +506,16 @@ exynos_extract_mac_adress(void)
 #undef EXPECT_2HEX
 #undef EXPECT_HEX
 #undef EXPECT_COLON
+}
+
+void
+odroid_device_register(device_t self, void *aux)
+{
+	prop_dictionary_t dict = device_properties(self);
+	exynos_device_register(self, aux);
+	if (device_is_a(self, "exyogpio")) {
+		init_gpio_dictionary(gpio_pin_entries, dict);
+	}
 }
 
 /*
