@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.3 2014/12/29 22:34:08 skrll Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.4 2015/12/11 04:03:44 marty Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "exynos_iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.3 2014/12/29 22:34:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.4 2015/12/11 04:03:44 marty Exp $");
 
 
 #include <sys/param.h>
@@ -214,7 +214,7 @@ exynos_iic_attach_i2cbus(struct exynos_iic_dev_softc *ei2c_sc,
 
 	/* reserve our pins */
 	pinset = &ei2c_sc->isc_pinset;
-	strcpy(pinset->pinset_group, loc->loc_gpio_bus);
+	strcpy(pinset->pinset_bank, loc->loc_gpio_bus);
 	pinset->pinset_mask = __BIT(loc->loc_sda) | __BIT(loc->loc_slc);
 	pinset->pinset_func = loc->loc_func;
 
@@ -227,9 +227,11 @@ exynos_iic_attach_i2cbus(struct exynos_iic_dev_softc *ei2c_sc,
 	i2c_cntr->ic_read_byte   = exynos_iic_read_byte;
 	i2c_cntr->ic_write_byte  = exynos_iic_write_byte;
 
-	exynos_gpio_pinset_acquire(pinset);
+	/*MJF: FIX ME IN REWRITE */
+//	exynos_gpio_pinset_acquire(pinset);
 	if (ei2c_sc->isc_isgpio) {
 		/* get sda and slc pins */
+#if 0
 		exynos_gpio_pinset_to_pindata(pinset,
 			loc->loc_sda, &ei2c_sc->isc_sda);
 		exynos_gpio_pinset_to_pindata(pinset,
@@ -237,6 +239,7 @@ exynos_iic_attach_i2cbus(struct exynos_iic_dev_softc *ei2c_sc,
 		ei2c_sc->isc_sda_is_output = false;
 		exynos_gpio_pindata_ctl(&ei2c_sc->isc_sda, GPIO_PIN_INPUT);
 		exynos_gpio_pindata_ctl(&ei2c_sc->isc_slc, GPIO_PIN_OUTPUT);
+#endif
 		return 1;
 	} else {
 		/* TBD: attach hardware driver */

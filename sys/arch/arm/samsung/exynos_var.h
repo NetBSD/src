@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.18 2014/09/30 14:23:41 reinoud Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.19 2015/12/11 04:03:44 marty Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ struct exyo_attach_args {
 };
 
 struct exynos_gpio_pinset {
-	char pinset_group[10];
+	char pinset_bank[10];
 	uint8_t pinset_func;
 	uint8_t pinset_mask;
 };
