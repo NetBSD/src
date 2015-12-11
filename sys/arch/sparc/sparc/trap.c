@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.193 2015/10/04 08:19:40 joerg Exp $ */
+/*	$NetBSD: trap.c,v 1.194 2015/12/11 08:08:01 mlelstv Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.193 2015/10/04 08:19:40 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.194 2015/12/11 08:08:01 mlelstv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -1254,9 +1254,11 @@ kfault:
 		case EINVAL:
 			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_ADRERR;
+			break;
 		case EACCES:
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_ACCERR;
+			break;
 		default:
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_MAPERR;
