@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_ioctl.c,v 1.64 2015/12/08 20:36:14 christos Exp $	*/
+/*	$NetBSD: sunos_ioctl.c,v 1.65 2015/12/11 08:10:28 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1993 Markus Wild.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.64 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_ioctl.c,v 1.65 2015/12/11 08:10:28 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -817,9 +817,9 @@ sunos_sys_ioctl(struct lwp *l, const struct sunos_sys_ioctl_args *uap, register_
 	    {
 		int tmp = 0;
 		switch ((int)(u_long)SCARG(uap, data)) {
-		case SUNOS_S_FLUSHR:	tmp = FREAD;
-		case SUNOS_S_FLUSHW:	tmp = FWRITE;
-		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE;
+		case SUNOS_S_FLUSHR:	tmp = FREAD; break;
+		case SUNOS_S_FLUSHW:	tmp = FWRITE; break;
+		case SUNOS_S_FLUSHRW:	tmp = FREAD|FWRITE; break;
 		}
                 error = (*ctl)(fp, TIOCFLUSH, &tmp);
 		break;
