@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.246 2015/10/29 00:15:48 mrg Exp $ */
+/*	$NetBSD: ehci.c,v 1.247 2015/12/11 07:21:09 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.246 2015/10/29 00:15:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.247 2015/12/11 07:21:09 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1549,7 +1549,6 @@ ehci_dump_regs(ehci_softc_t *sc)
 	}
 }
 
-#ifdef EHCI_DEBUG
 #define ehci_dump_link(link, type) do {					\
 	USBHIST_LOG(ehcidebug, "    link 0x%08x (T = %d):",		\
 	    link,							\
@@ -1563,9 +1562,6 @@ ehci_dump_regs(ehci_softc_t *sc)
 		    EHCI_LINK_TYPE(link) == EHCI_LINK_FSTN ? 1 : 0);	\
 	}								\
 } while(0)
-#else
-#define ehci_dump_link(link, type)
-#endif
 
 Static void
 ehci_dump_sqtds(ehci_soft_qtd_t *sqtd)
