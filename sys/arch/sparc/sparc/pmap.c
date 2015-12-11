@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.359 2015/10/04 08:18:49 joerg Exp $ */
+/*	$NetBSD: pmap.c,v 1.360 2015/12/11 19:47:52 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.359 2015/10/04 08:18:49 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.360 2015/12/11 19:47:52 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -4265,7 +4265,7 @@ pmap_quiet_check(struct pmap *pm)
 			continue;
 		if (CPU_HAS_SUNMMU) {
 			int ctx;
-			if (mmu_has_hole && (vr >= 32 || vr < (256 - 32)))
+			if (mmu_has_hole && (vr >= 32 && vr < (256 - 32)))
 				continue;
 			ctx = getcontext4();
 			setcontext4(pm->pm_ctxnum);
