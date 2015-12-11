@@ -1,4 +1,4 @@
-.\"	$NetBSD: kmem.9,v 1.18 2015/12/11 04:11:23 christos Exp $
+.\"	$NetBSD: kmem.9,v 1.19 2015/12/11 10:05:17 wiz Exp $
 .\"
 .\" Copyright (c)2006 YAMAMOTO Takashi,
 .\" All rights reserved.
@@ -78,7 +78,7 @@ Either of the following:
 If the allocation cannot be satisfied immediately, sleep until enough
 memory is available.
 Note that this does not mean that if
-.Dv KM_SLEEP 
+.Dv KM_SLEEP
 is specified, then the allocation cannot fail.
 Under resource stress conditions, the allocation can fail and the
 function will return
