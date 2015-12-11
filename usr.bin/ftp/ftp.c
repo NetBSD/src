@@ -1,4 +1,4 @@
-/*	$NetBSD: ftp.c,v 1.164 2012/07/04 06:09:37 is Exp $	*/
+/*	$NetBSD: ftp.c,v 1.165 2015/12/11 08:37:31 tron Exp $	*/
 
 /*-
  * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
@@ -92,7 +92,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-__RCSID("$NetBSD: ftp.c,v 1.164 2012/07/04 06:09:37 is Exp $");
+__RCSID("$NetBSD: ftp.c,v 1.165 2015/12/11 08:37:31 tron Exp $");
 #endif
 #endif /* not lint */
 
@@ -200,7 +200,13 @@ hookup(const char *host, const char *port)
 		}
 		if (verbose && res0->ai_next) {
 				/* if we have multiple possibilities */
-			fprintf(ttyout, "Trying %s:%s ...\n", hname, sname);
+			if(res->ai_family == AF_INET6) {
+				fprintf(ttyout, "Trying [%s]:%s ...\n", hname,
+				    sname);
+			} else {
+				fprintf(ttyout, "Trying %s:%s ...\n", hname,
+				    sname);
+			}
 		}
 		s = socket(res->ai_family, SOCK_STREAM, res->ai_protocol);
 		if (s < 0) {
