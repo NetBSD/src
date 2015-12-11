@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.195 2015/11/30 06:45:38 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.196 2015/12/11 01:15:00 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.195 2015/11/30 06:45:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.196 2015/12/11 01:15:00 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -161,6 +161,7 @@ static	struct sockaddr *arp_setgate(struct rtentry *, struct sockaddr *,
 	    const struct sockaddr *);
 static	void arptfree(struct rtentry *);
 static	void arptimer(void *);
+static	void arp_settimer(struct llentry *, int);
 static	struct llentry *arplookup(struct ifnet *, struct mbuf *,
 	    const struct in_addr *, int, int, int, struct rtentry *);
 static	void in_arpinput(struct mbuf *);
@@ -372,6 +373,15 @@ arptimer(void *arg)
 	}
 
 	IF_AFDATA_UNLOCK(ifp);
+}
+
+static void
+arp_settimer(struct llentry *la, int sec)
+{
+
+	LLE_WLOCK_ASSERT(la);
+	LLE_ADDREF(la);
+	callout_reset(&la->la_timer, hz * sec, arptimer, la);
 }
 
 /*
@@ -974,10 +984,8 @@ notfound:
 		    CLLADDR(rt->rt_ifp->if_sadl):
 #endif
 		    CLLADDR(ifp->if_sadl);
-		LLE_ADDREF(la);
 		la->la_expire = time_uptime;
-		callout_reset(&la->la_timer, hz * arpt_down,
-		    arptimer, la);
+		arp_settimer(la, arpt_down);
 		la->la_asked++;
 		LLE_WUNLOCK(la);
 
@@ -1338,8 +1346,7 @@ in_arpinput(struct mbuf *m)
 		rt->rt_expire = time_uptime + arpt_keep;
 
 		KASSERT((la->la_flags & LLE_STATIC) == 0);
-		LLE_ADDREF(la);
-		callout_reset(&la->la_timer, hz * arpt_keep, arptimer, la);
+		arp_settimer(la, arpt_keep);
 	}
 	rt->rt_flags &= ~RTF_REJECT;
 	la->la_asked = 0;
