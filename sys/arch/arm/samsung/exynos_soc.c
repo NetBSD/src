@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.28 2015/11/19 05:44:41 marty Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.29 2015/12/11 04:03:44 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.28 2015/11/19 05:44:41 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.29 2015/12/11 04:03:44 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -690,94 +690,10 @@ exynos_device_register_post_config(device_t self, void *aux)
 	exyo_device_register_post_config(self, aux);
 }
 
-
-/*
- * USB power SoC dependent handling
- */
-
-#ifdef EXYNOS4
-static struct exynos_gpio_pinset e4_uhost_pwr_pinset = {
-	.pinset_group = "ETC6",
-	.pinset_func  = 0,
-	.pinset_mask  = __BIT(6) | __BIT(7),
-};
-#endif
-
-
-#ifdef EXYNOS5
-static struct exynos_gpio_pinset e5_uhost_pwr_pinset = {
-	.pinset_group = "ETC6",
-	.pinset_func  = 0,
-	.pinset_mask  = __BIT(5) | __BIT(6),
-};
-static struct exynos_gpio_pinset e5_usb3_bus0_pinset = {
-	.pinset_group = "GPK3",
-	.pinset_func  = 2,
-	.pinset_mask  = __BIT(0) | __BIT(1) | __BIT(3),
-};
-static struct exynos_gpio_pinset e5_usb3_bus1_pinset = {
-	.pinset_group = "GPK2",
-	.pinset_func  = 2,
-	.pinset_mask  = __BIT(4) | __BIT(5) | __BIT(7),
-};
-#endif
-
-
 void
 exynos_usb_soc_powerup(void)
 {
-	struct exynos_gpio_pindata XuhostOVERCUR;
-	struct exynos_gpio_pindata XuhostPWREN;
-
-#ifdef EXYNOS4
-		exynos_gpio_pinset_acquire(&e4_uhost_pwr_pinset);
-		exynos_gpio_pinset_to_pindata(&e4_uhost_pwr_pinset, 6, &XuhostPWREN);
-		exynos_gpio_pinset_to_pindata(&e4_uhost_pwr_pinset, 7, &XuhostOVERCUR);
-
-		/* enable power and set Xuhost OVERCUR to inactive by pulling it up */
-		exynos_gpio_pindata_ctl(&XuhostPWREN, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&XuhostOVERCUR, GPIO_PIN_PULLUP);
-		DELAY(80000);
-#endif
-#ifdef EXYNOS5
-	if (IS_EXYNOS5410_P()) {
-		struct exynos_gpio_pindata Xovercur2, Xovercur3;
-		struct exynos_gpio_pindata Xvbus;
-
-		/* BUS 0 */
-		exynos_gpio_pinset_acquire(&e5_usb3_bus0_pinset);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus0_pinset, 0, &Xovercur2);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus0_pinset, 1, &Xovercur3);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus0_pinset, 3, &Xvbus);
-
-		/* enable power and set overcur inactive by pulling them up */
-		exynos_gpio_pindata_ctl(&Xvbus, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur2, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur3, GPIO_PIN_PULLUP);
-
-		/* BUS 1 */
-		exynos_gpio_pinset_acquire(&e5_usb3_bus1_pinset);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus1_pinset, 4, &Xovercur2);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus1_pinset, 5, &Xovercur3);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus1_pinset, 7, &Xvbus);
-
-		/* enable power and set overcur inactive by pulling them up */
-		exynos_gpio_pindata_ctl(&Xvbus, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur2, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur3, GPIO_PIN_PULLUP);
-
-		/* enable power to the hub */
-		exynos_gpio_pinset_acquire(&e5_uhost_pwr_pinset);
-		exynos_gpio_pinset_to_pindata(&e5_uhost_pwr_pinset, 5, &XuhostPWREN);
-		exynos_gpio_pinset_to_pindata(&e5_uhost_pwr_pinset, 6, &XuhostOVERCUR);
-
-		/* enable power and set Xuhost OVERCUR to inactive by pulling it up */
-		exynos_gpio_pindata_ctl(&XuhostPWREN, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&XuhostOVERCUR, GPIO_PIN_PULLUP);
-		DELAY(80000);
-	}
 	/* XXX 5422 XXX */
-#endif
 }
 
 
