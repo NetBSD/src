@@ -1,4 +1,4 @@
-/*	$NetBSD: print.c,v 1.21 2015/03/16 19:10:48 plunky Exp $	*/
+/*	$NetBSD: print.c,v 1.22 2015/12/11 21:05:18 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: print.c,v 1.21 2015/03/16 19:10:48 plunky Exp $");
+__RCSID("$NetBSD: print.c,v 1.22 2015/12/11 21:05:18 plunky Exp $");
 
 #include <ctype.h>
 #include <iconv.h>
@@ -103,6 +103,9 @@ static void print_asink_features(sdp_data_t *);
 static void print_avrcp_features(sdp_data_t *);
 static void print_supported_data_stores(sdp_data_t *);
 static void print_supported_formats(sdp_data_t *);
+static void print_wap_addr(sdp_data_t *);
+static void print_wap_gateway(sdp_data_t *);
+static void print_wap_type(sdp_data_t *);
 static void print_hid_version(sdp_data_t *);
 static void print_hid_device_subclass(sdp_data_t *);
 static void print_hid_descriptor_list(sdp_data_t *);
@@ -114,15 +117,22 @@ static void print_hfag_features(sdp_data_t *);
 static void print_net_access_type(sdp_data_t *);
 static void print_pnp_source(sdp_data_t *);
 static void print_mas_types(sdp_data_t *);
-static void print_supported_repositories(sdp_data_t *);
+static void print_map_features(sdp_data_t *);
+static void print_pse_repositories(sdp_data_t *);
+static void print_pse_features(sdp_data_t *);
+static void print_hdp_features(sdp_data_t *);
+static void print_hdp_specification(sdp_data_t *);
+static void print_mcap_procedures(sdp_data_t *);
 static void print_character_repertoires(sdp_data_t *);
 static void print_bip_capabilities(sdp_data_t *);
 static void print_bip_features(sdp_data_t *);
 static void print_bip_functions(sdp_data_t *);
 static void print_bip_capacity(sdp_data_t *);
 static void print_1284id(sdp_data_t *);
+static void print_ctn_features(sdp_data_t *);
 
 static void print_rfcomm(sdp_data_t *);
+static void print_att(sdp_data_t *);
 static void print_bnep(sdp_data_t *);
 static void print_avctp(sdp_data_t *);
 static void print_avdtp(sdp_data_t *);
@@ -135,6 +145,7 @@ attr_t protocol_list[] = {
 	{ 0x0004, "TCP",				NULL },
 	{ 0x0005, "TCS_BIN",				NULL },
 	{ 0x0006, "TCS_AT",				NULL },
+	{ 0x0007, "ATT",				print_att },
 	{ 0x0008, "OBEX",				NULL },
 	{ 0x0009, "IP",					NULL },
 	{ 0x000a, "FTP",				NULL },
@@ -216,7 +227,12 @@ attr_t irmc_sync_attrs[] = { /* IrMC Sync */
 };
 
 attr_t opush_attrs[] = { /* Object Push */
+	{ 0x0200, "GeopL2capPSM",			print_uint16x },
 	{ 0x0303, "SupportedFormatsList",		print_supported_formats },
+};
+
+attr_t ft_attrs[] = { /* File Transfer */
+	{ 0x0200, "GeopL2capPSM",			print_uint16x },
 };
 
 attr_t hset_attrs[] = {	/* Headset */
@@ -230,11 +246,20 @@ attr_t fax_attrs[] = {	/* Fax */
 	{ 0x0305, "AudioFeedbackSupport",		print_bool },
 };
 
+attr_t wap_attrs[] = {	/* WAP Bearer */
+	{ 0x0306, "NetworkAddress",			print_wap_addr },
+	{ 0x0307, "WAPGateway",				print_wap_gateway },
+	{ 0x0308, "HomePageURL",			print_url },
+	{ 0x0309, "WAPStackType",			print_wap_type },
+};
+
 attr_t panu_attrs[] = {	/* Personal Area Networking User */
+	{ 0x0200, "IpSubnet",				print_string },
 	{ 0x030a, "SecurityDescription",		print_security_description },
 };
 
 attr_t nap_attrs[] = {	/* Network Access Point */
+	{ 0x0200, "IpSubnet",				print_string },
 	{ 0x030a, "SecurityDescription",		print_security_description },
 	{ 0x030b, "NetAccessType",			print_net_access_type },
 	{ 0x030c, "MaxNetAccessRate",			print_uint32d },
@@ -243,6 +268,7 @@ attr_t nap_attrs[] = {	/* Network Access Point */
 };
 
 attr_t gn_attrs[] = {	/* Group Network */
+	{ 0x0200, "IpSubnet",				print_string },
 	{ 0x030a, "SecurityDescription",		print_security_description },
 	{ 0x030d, "IPv4Subnet",				print_string },
 	{ 0x030e, "IPv6Subnet",				print_string },
@@ -270,6 +296,7 @@ attr_t bp_attrs[] = {	/* Basic Printing */
 };
 
 attr_t bi_attrs[] = {	/* Basic Imaging */
+	{ 0x0200, "GeopL2capPSM",			print_uint16x },
 	{ 0x0310, "SupportedCapabilities",		print_bip_capabilities },
 	{ 0x0311, "SupportedFeatures",			print_bip_features },
 	{ 0x0312, "SupportedFunctions",			print_bip_functions },
@@ -306,6 +333,8 @@ attr_t hid_attrs[] = {	/* Human Interface Device */
 	{ 0x020c, "HIDSupervisionTimeout",		print_uint16d },
 	{ 0x020d, "HIDNormallyConnectable",		print_bool },
 	{ 0x020e, "HIDBootDevice",			print_bool },
+	{ 0x020f, "HIDHostMaxLatency",			print_uint16d },
+	{ 0x0210, "HIDHostMinTimeout",			print_uint16d },
 };
 
 attr_t hcr_attrs[] = {	/* Hardcopy Cable Replacement */
@@ -313,6 +342,21 @@ attr_t hcr_attrs[] = {	/* Hardcopy Cable Replacement */
 	{ 0x0302, "DeviceName",				print_utf8_string },
 	{ 0x0304, "FriendlyName",			print_utf8_string },
 	{ 0x0306, "DeviceLocation",			print_utf8_string },
+};
+
+attr_t mps_attrs[] = {	/* Multi-Profile Specification */
+	{ 0x0200, "SingleDeviceSupportedScenarios",	NULL },
+	{ 0x0201, "MultiDeviceSupportedScenarios",	NULL },
+	{ 0x0202, "SupportedProfileAndProtocolDependencies", print_uint16x },
+};
+
+attr_t cas_attrs[] = { /* Calendar, Tasks & Notes Access */
+	{ 0x0315, "InstanceID",				print_uint8d },
+	{ 0x0317, "SupportedFeatures",			print_ctn_features },
+};
+
+attr_t cns_attrs[] = { /* Calendar, Tasks & Notes Notification */
+	{ 0x0317, "SupportedFeatures",			print_ctn_features },
 };
 
 attr_t pnp_attrs[] = {	/* Device ID */
@@ -325,12 +369,31 @@ attr_t pnp_attrs[] = {	/* Device ID */
 };
 
 attr_t mas_attrs[] = {	/* Message Access Server */
+	{ 0x0200, "GeopL2capPSM",			print_uint16x },
 	{ 0x0315, "InstanceID",				print_uint8d },
 	{ 0x0316, "SupportedMessageTypes",		print_mas_types },
+	{ 0x0317, "SupportedFeatures",			print_map_features },
+};
+
+attr_t mns_attrs[] = {	/* Message Notification Server */
+	{ 0x0200, "GeopL2capPSM",			print_uint16x },
+	{ 0x0317, "SupportedFeatures",			print_map_features },
+};
+
+attr_t gnss_attrs[] = {	/* Global Navigation Satellite System Server */
+	{ 0x0200, "SupportedFeatures",			print_uint16x },
 };
 
 attr_t pse_attrs[] = {	/* Phonebook Access Server */
-	{ 0x0314, "SupportedRepositories",		print_supported_repositories },
+	{ 0x0200, "GeopL2capPSM",			print_uint16x },
+	{ 0x0314, "SupportedRepositories",		print_pse_repositories },
+	{ 0x0317, "SupportedFeatures",			print_pse_features },
+};
+
+attr_t hdp_attrs[] = {	/* Health Device Profile */
+	{ 0x0200, "SupportedFeaturesList",		print_hdp_features },
+	{ 0x0301, "DataExchangeSpecification",		print_hdp_specification },
+	{ 0x0302, "MCAPSupportedProcedures",		print_mcap_procedures },
 };
 
 #define A(a)	a, __arraycount(a)
@@ -343,7 +406,7 @@ service_t service_list[] = {
 	{ 0x1103, "Dialup Networking",			A(dun_attrs) },
 	{ 0x1104, "IrMC Sync",				A(irmc_sync_attrs) },
 	{ 0x1105, "Object Push",			A(opush_attrs) },
-	{ 0x1106, "File Transfer",			NULL, 0 },
+	{ 0x1106, "File Transfer",			A(ft_attrs) },
 	{ 0x1107, "IrMC Sync Command",			NULL, 0 },
 	{ 0x1108, "Headset",				A(hset_attrs) },
 	{ 0x1109, "Cordless Telephony",			A(ct_attrs) },
@@ -356,7 +419,7 @@ service_t service_list[] = {
 	{ 0x1110, "Intercom",				NULL, 0 },
 	{ 0x1111, "Fax",				A(fax_attrs) },
 	{ 0x1112, "Headset Audio Gateway",		NULL, 0 },
-	{ 0x1113, "WAP",				NULL, 0 },
+	{ 0x1113, "WAP",				A(wap_attrs) },
 	{ 0x1114, "WAP Client",				NULL, 0 },
 	{ 0x1115, "Personal Area Networking User",	A(panu_attrs) },
 	{ 0x1116, "Network Access Point",		A(nap_attrs) },
@@ -388,8 +451,18 @@ service_t service_list[] = {
 	{ 0x1130, "Phonebook Access",			NULL, 0 },
 	{ 0x1131, "Headset HS",				NULL, 0 },
 	{ 0x1132, "Message Access Server",		A(mas_attrs) },
-	{ 0x1133, "Message Notification Server",	NULL, 0 },
+	{ 0x1133, "Message Notification Server",	A(mns_attrs) },
 	{ 0x1134, "Message Access Profile",		NULL, 0 },
+	{ 0x1135, "Global Navigation Satellite System Profile", NULL, 0 },
+	{ 0x1136, "Global Navigation Satellite System Server", A(gnss_attrs) },
+	{ 0x1137, "3D Display",				NULL, 0 },
+	{ 0x1138, "3D Glasses",				NULL, 0 },
+	{ 0x1139, "3D Synchronization",			NULL, 0 },
+	{ 0x113a, "Multi-Profile Specification Profile",NULL, 0 },
+	{ 0x113b, "Multi-Profile Specification Server", A(mps_attrs) },
+	{ 0x113c, "Calendar, Tasks & Notes Access",	A(cas_attrs) },
+	{ 0x113d, "Calendar, Tasks & Notes Notification",A(cns_attrs) },
+	{ 0x113e, "Calendar, Tasks & Notes Profile",	NULL, 0 },
 	{ 0x1200, "PNP Information",			A(pnp_attrs) },
 	{ 0x1201, "Generic Networking",			NULL, 0 },
 	{ 0x1202, "Generic File Transfer",		NULL, 0 },
@@ -404,8 +477,10 @@ service_t service_list[] = {
 	{ 0x1304, "Video Sink",				NULL, 0 },
 	{ 0x1305, "Video Distribution",			NULL, 0 },
 	{ 0x1400, "HDP",				NULL, 0 },
-	{ 0x1401, "HDP Source",				NULL, 0 },
-	{ 0x1402, "HDP Sink",				NULL, 0 },
+	{ 0x1401, "HDP Source",				A(hdp_attrs) },
+	{ 0x1402, "HDP Sink",				A(hdp_attrs) },
+	{ 0x1800, "Generic Access Profile",		NULL, 0 },
+	{ 0x1801, "Generic Attribute Server",		NULL, 0 },
 };
 #undef A
 
@@ -930,7 +1005,7 @@ print_protocol_descriptor(sdp_data_t *data)
 					(protocol_list[i].print)(data);
 
 				if (data->next != data->end)
-					printf(" [additional data ignored]");
+					printf(" [additional data]");
 
 				printf("\n");
 				return;
@@ -951,9 +1026,16 @@ print_protocol_descriptor_list(sdp_data_t *data)
 	printf("\n");
 	sdp_get_alt(data, data);	/* strip [optional] alt header */
 
-	while (sdp_get_seq(data, &seq))
+	while (sdp_get_seq(data, &seq)) {
 		while (sdp_get_seq(&seq, &proto))
 			print_protocol_descriptor(&proto);
+
+		if (seq.next != seq.end)
+			printf("    [additional protocol data]\n");
+	}
+
+	if (data->next != data->end)
+		printf("    [additional data]\n");
 }
 
 static void
@@ -1232,6 +1314,50 @@ print_supported_formats(sdp_data_t *data)
 }
 
 static void
+print_wap_addr(sdp_data_t *data)
+{
+	uint32_t v;
+
+	if (!sdp_get_uint32(data, &v))
+		return;
+
+	printf("%d.%d.%d.%d\n",
+	    ((v & 0xff000000) >> 24), ((v & 0x00ff0000) >> 16),
+	    ((v & 0x0000ff00) >> 8), (v & 0x000000ff));
+}
+
+static void
+print_wap_gateway(sdp_data_t *data)
+{
+	uint8_t v;
+
+	if (!sdp_get_uint8(data, &v))
+		return;
+
+	switch(v) {
+	case 0x01:	printf("Origin Server\n");	break;
+	case 0x02:	printf("Proxy\n");		break;
+	default:	printf("0x%02x\n", v);		break;
+	}
+}
+
+static void
+print_wap_type(sdp_data_t *data)
+{
+	uint8_t v;
+
+	if (!sdp_get_uint8(data, &v))
+		return;
+
+	switch(v) {
+	case 0x01:	printf("Connectionless\n");	break;
+	case 0x02:	printf("Connection Oriented\n");break;
+	case 0x03:	printf("Both\n");		break;
+	default:	printf("0x%02x\n", v);		break;
+	}
+}
+
+static void
 print_hid_version(sdp_data_t *data)
 {
 	uint16_t v;
@@ -1328,7 +1454,8 @@ print_hid_langid_base_list(sdp_data_t *data)
 		default:	printf("0x%04x", lang);		break;
 		}
 
-		printf(" base 0x%04x\n", base);
+		printf(" base 0x%04x%s\n", base,
+		    (seq.next == seq.end ? "" : " [additional data]"));
 	}
 }
 
@@ -1471,7 +1598,28 @@ print_mas_types(sdp_data_t *data)
 }
 
 static void
-print_supported_repositories(sdp_data_t *data)
+print_map_features(sdp_data_t *data)
+{
+	uint32_t v;
+
+	if (!sdp_get_uint32(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%08x)", v);
+
+	printf("\n");
+	if (v & (1<<0))	printf("    Notification Registration\n");
+	if (v & (1<<1))	printf("    Notification\n");
+	if (v & (1<<2))	printf("    Browsing\n");
+	if (v & (1<<3))	printf("    Uploading\n");
+	if (v & (1<<4))	printf("    Delete\n");
+	if (v & (1<<5))	printf("    Instance Information\n");
+	if (v & (1<<6))	printf("    Extended Event Report 1.1\n");
+}
+
+static void
+print_pse_repositories(sdp_data_t *data)
 {
 	uint8_t v;
 
@@ -1484,6 +1632,157 @@ print_supported_repositories(sdp_data_t *data)
 	printf("\n");
 	if (v & (1<<0))	printf("    Local Phonebook\n");
 	if (v & (1<<1))	printf("    SIM Card\n");
+	if (v & (1<<2))	printf("    Speed Dial\n");
+	if (v & (1<<3))	printf("    Favorites\n");
+}
+
+static void
+print_pse_features(sdp_data_t *data)
+{
+	uint32_t v;
+
+	if (!sdp_get_uint32(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%08x)", v);
+
+	printf("\n");
+	if (v & (1<<0))	printf("    Download\n");
+	if (v & (1<<1))	printf("    Browsing\n");
+	if (v & (1<<2))	printf("    Database Identifier\n");
+	if (v & (1<<3))	printf("    Folder Version Counters\n");
+	if (v & (1<<4))	printf("    vCard Selecting\n");
+	if (v & (1<<5))	printf("    Enhanced Missed Calls\n");
+	if (v & (1<<6))	printf("    X-BT-UCI vCard Property\n");
+	if (v & (1<<7))	printf("    X-BT-UID vCard Property\n");
+	if (v & (1<<8))	printf("    Contact Referencing\n");
+	if (v & (1<<9))	printf("    Default Contact Image Format\n");
+}
+
+static void
+print_hdp_features(sdp_data_t *data)
+{
+	sdp_data_t seq, feature;
+	char *str;
+	size_t len;
+	uint16_t type;
+	uint8_t id, role;
+
+	if (!sdp_get_seq(data, &seq))
+		return;
+
+	printf("\n");
+	while (sdp_get_seq(&seq, &feature)) {
+		if (!sdp_get_uint8(&feature, &id)
+		    || !sdp_get_uint16(&feature, &type)
+		    || !sdp_get_uint8(&feature, &role))
+			break;
+
+		printf("    # %d: ", id);
+
+		switch(type) {
+		case 0x1004:	printf("Pulse Oximeter"); break;
+		case 0x1006:	printf("Basic ECG"); break;
+		case 0x1007:	printf("Blood Pressure Monitor"); break;
+		case 0x1008:	printf("Body Thermometer"); break;
+		case 0x100F:	printf("Body Weight Scale"); break;
+		case 0x1011:	printf("Glucose Meter"); break;
+		case 0x1012:	printf("International Normalized Ratio Monitor"); break;
+		case 0x1014:	printf("Body Composition Analyzer"); break;
+		case 0x1015:	printf("Peak Flow Monitor"); break;
+		case 0x1029:	printf("Cardiovascular Fitness and Activity Monitor"); break;
+		case 0x1068:	printf("Step Counter"); break;
+		case 0x102A:	printf("Strength Fitness Equipment"); break;
+		case 0x1047:	printf("Independent Living Activity Hub"); break;
+		case 0x1075:	printf("Fall Sensor"); break;
+		case 0x1076:	printf("Personal Emergency Response Sensor"); break;
+		case 0x1077:	printf("Smoke Sensor"); break;
+		case 0x1078:	printf("Carbon Monoxide Sensor"); break;
+		case 0x1079:	printf("Water Sensor"); break;
+		case 0x107A:	printf("Gas Sensor"); break;
+		case 0x107B:	printf("Motion Sensor"); break;
+		case 0x107C:	printf("Property Exit Sensor"); break;
+		case 0x107D:	printf("Enuresis Sensor"); break;
+		case 0x107E:	printf("Contact Closure Sensor"); break;
+		case 0x107F:	printf("Usage Sensor"); break;
+		case 0x1080:	printf("Switch Sensor"); break;
+		case 0x1081:	printf("Medication Dosing Sensor"); break;
+		case 0x1082:	printf("Temperature Sensor"); break;
+		case 0x1048:	printf("Medication monitor"); break;
+		default:	printf("Type 0x%04x", type);	break;
+		}
+
+		switch(role) {
+		case 0x00:	printf(" [Source]");		break;
+		case 0x01:	printf(" [Sink]");		break;
+		default:	printf(" [Role 0x%02x]", role);	break;
+		}
+
+		printf("\n");
+
+		if (sdp_get_str(&feature, &str, &len)) {
+			int n;
+
+			/* This optional human-readable description should
+			 * be in the primary language encoding, which ought
+			 * to have a base of 0x0100 or if there isn't one,
+			 * use the first encoding listed
+			 */
+			for (n = 0; n < nlanguages; n++) {
+				if (language[n].base == 0x0100)
+					break;
+			}
+
+			printf("    # %d: ", id);
+			if (n < nlanguages)
+				print_codeset_string(str, len, language[n].codeset);
+			else if (n > 0)
+				print_codeset_string(str, len, language[0].codeset);
+			else
+				printf("%s", string_vis(str, len));
+
+			printf("\n");
+		}
+
+		if (feature.next != feature.end)
+			printf("    [additional data in feature]\n");
+	}
+
+	if (seq.next != seq.end)
+		printf("    [additional data]\n");
+}
+
+static void
+print_hdp_specification(sdp_data_t *data)
+{
+	uint8_t v;
+
+	if (!sdp_get_uint8(data, &v))
+		return;
+
+	switch(v) {
+	case 0x01:	printf("ISO/IEEE 11073-20601\n");	break;
+	default:	printf("0x%02x\n", v);			break;
+	}
+}
+
+static void
+print_mcap_procedures(sdp_data_t *data)
+{
+	uint8_t v;
+
+	if (!sdp_get_uint8(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%02x)", v);
+
+	printf("\n");
+	if (v & (1<<1))	printf("    Reconnect Initiation\n");
+	if (v & (1<<2))	printf("    Reconnect Acceptance\n");
+	if (v & (1<<3))	printf("    Clock Synchronization Protocol\n");
+	if (v & (1<<4))	printf("    Sync-Master Role\n");
 }
 
 static void
@@ -1648,12 +1947,42 @@ print_1284id(sdp_data_t *data)
 }
 
 static void
+print_ctn_features(sdp_data_t *data)
+{
+	uint32_t v;
+
+	if (!sdp_get_uint32(data, &v))
+		return;
+
+	if (Nflag)
+		printf("(0x%08x)", v);
+
+	printf("\n");
+	if (v & (1<<0))	printf("    Account Management\n");
+	if (v & (1<<1))	printf("    Notification\n");
+	if (v & (1<<2))	printf("    Browsing\n");
+	if (v & (1<<3))	printf("    Downloading\n");
+	if (v & (1<<4))	printf("    Uploading\n");
+	if (v & (1<<5))	printf("    Delete\n");
+	if (v & (1<<6))	printf("    Forward\n");
+}
+
+static void
 print_rfcomm(sdp_data_t *data)
 {
 	uint8_t v;
 
 	if (sdp_get_uint8(data, &v))
 		printf(" (channel %d)", v);
+}
+
+static void
+print_att(sdp_data_t *data)
+{
+	uint16_t s, e;
+
+	if (sdp_get_uint16(data, &s) && sdp_get_uint16(data, &e))
+		printf(" (0x%04x .. 0x%04x)", s, e);
 }
 
 static void
