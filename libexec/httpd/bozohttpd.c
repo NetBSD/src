@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.71 2015/10/31 00:55:17 christos Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.72 2015/12/12 18:06:58 christos Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -936,16 +936,14 @@ handle_redirect(bozo_httpreq_t *request,
 			   * eg. https:// */
 
 	if (url == NULL) {
-		if (asprintf(&urlbuf, "/%s/", request->hr_file) == -1)
-			bozo_err(httpd, 1, "asprintf");
+		bozo_asprintf(httpd, &urlbuf, "/%s/", request->hr_file);
 		url = urlbuf;
 	} else
 		urlbuf = NULL;
 
 #ifndef NO_USER_SUPPORT
 	if (request->hr_user && !absolute) {
-		if (asprintf(&userbuf, "/~%s%s", request->hr_user, url) == -1)
-			bozo_err(httpd, 1, "asprintf");
+		bozo_asprintf(httpd, &userbuf, "/~%s%s", request->hr_user, url);
 		url = userbuf;
 	} else
 		userbuf = NULL;
@@ -1143,9 +1141,9 @@ check_virtual(bozo_httpreq_t *request)
 					debug((httpd, DEBUG_OBESE, "found it punch it"));
 					request->hr_virthostname =
 					    bozostrdup(httpd, d->d_name);
-					if (asprintf(&s, "%s/%s", httpd->virtbase,
-					    request->hr_virthostname) == -1)
-						bozo_err(httpd, 1, "asprintf");
+					bozo_asprintf(httpd, &s, "%s/%s",
+					    httpd->virtbase,
+					    request->hr_virthostname);
 					break;
 				}
 			}
@@ -1397,8 +1395,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 		}
 		if (strchr(file + 2, '/') == NULL) {
 			char *userredirecturl;
-			if (asprintf(&userredirecturl, "%s/", file) == -1)
-				bozo_err(httpd, 1, "asprintf");
+			bozo_asprintf(httpd, &userredirecturl, "%s/", file);
 			handle_redirect(request, userredirecturl, 0);
 			free(userredirecturl);
 			return 0;
@@ -1559,8 +1556,7 @@ bozo_process_request(bozo_httpreq_t *request)
 	fd = -1;
 	encoding = NULL;
 	if (can_gzip(request)) {
-		if (asprintf(&file, "%s.gz", request->hr_file) == -1)
-			bozo_err(httpd, 1, "asprintf");
+		bozo_asprintf(httpd, &file, "%s.gz", request->hr_file);
 		fd = open(file, O_RDONLY);
 		if (fd >= 0)
 			encoding = "gzip";
@@ -1794,6 +1790,32 @@ bozo_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 	exit(code);
 }
 
+char *
+bozo_strdup(bozohttpd_t *httpd, const char *str)
+{
+	char	*p;
+
+	p = strdup(str);
+	if (p == NULL)
+		bozo_err(httpd, EXIT_FAILURE, "strdup");
+
+	return p;
+}
+
+void
+bozo_asprintf(bozohttpd_t *httpd, char **str, const char *fmt, ...)
+{
+	va_list ap;
+	int e;
+
+	va_start(ap, fmt);
+	e = vasprintf(str, fmt, ap);
+	va_end(ap);
+
+	if (e < 0)
+		bozo_err(httpd, EXIT_FAILURE, "asprintf");
+}
+
 /*
  * this escapes HTML tags.  returns allocated escaped
  * string if needed, or NULL on allocation failure or
@@ -1945,8 +1967,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 			if (user_escaped == NULL)
 				user_escaped = request->hr_user;
 			/* expand username to ~user/ */
-			if (asprintf(&user, "~%s/", user_escaped) == -1)
-				bozo_err(httpd, 1, "asprintf");
+			bozo_asprintf(httpd, &user, "~%s/", user_escaped);
 			if (user_escaped != request->hr_user)
 				free(user_escaped);
 		}
@@ -2125,7 +2146,7 @@ bozomalloc(bozohttpd_t *httpd, size_t size)
 	if (p == NULL) {
 		(void)bozo_http_error(httpd, 500, NULL,
 				"memory allocation failure");
-		exit(1);
+		exit(EXIT_FAILURE);
 	}
 	return (p);
 }
@@ -2138,8 +2159,8 @@ bozostrdup(bozohttpd_t *httpd, const char *str)
 	p = strdup(str);
 	if (p == NULL) {
 		(void)bozo_http_error(httpd, 500, NULL,
-					"memory allocation failure");
-		exit(1);
+		    "memory allocation failure");
+		exit(EXIT_FAILURE);
 	}
 	return (p);
 }
@@ -2218,11 +2239,11 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 			bozo_err(httpd, 1, "gethostname");
 		httpd->virthostname[MAXHOSTNAMELEN] = '\0';
 	} else {
-		httpd->virthostname = strdup(vhost);
+		httpd->virthostname = bozo_strdup(httpd, vhost);
 	}
-	httpd->slashdir = strdup(root);
+	httpd->slashdir = bozo_strdup(httpd, root);
 	if ((portnum = bozo_get_pref(prefs, "port number")) != NULL) {
-		httpd->bindport = strdup(portnum);
+		httpd->bindport = bozo_strdup(httpd, portnum);
 	}
 
 	/* go over preferences now */
@@ -2235,7 +2256,7 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 		httpd->logstderr = 1;
 	}
 	if ((cp = bozo_get_pref(prefs, "bind address")) != NULL) {
-		httpd->bindaddress = strdup(cp);
+		httpd->bindaddress = bozo_strdup(httpd, cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "background")) != NULL) {
 		httpd->background = atoi(cp);
@@ -2245,14 +2266,14 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 		httpd->foreground = 1;
 	}
 	if ((cp = bozo_get_pref(prefs, "pid file")) != NULL) {
-		httpd->pidfile = strdup(cp);
+		httpd->pidfile = bozo_strdup(httpd, cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "unknown slash")) != NULL &&
 	    strcmp(cp, "true") == 0) {
 		httpd->unknown_slash = 1;
 	}
 	if ((cp = bozo_get_pref(prefs, "virtual base")) != NULL) {
-		httpd->virtbase = strdup(cp);
+		httpd->virtbase = bozo_strdup(httpd, cp);
 	}
 	if ((cp = bozo_get_pref(prefs, "enable users")) != NULL &&
 	    strcmp(cp, "true") == 0) {
@@ -2275,11 +2296,12 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 		httpd->dir_indexing = 1;
 	}
 	if ((cp = bozo_get_pref(prefs, "public_html")) != NULL) {
-		httpd->public_html = strdup(cp);
+		httpd->public_html = bozo_strdup(httpd, cp);
 	}
 	httpd->server_software =
-			strdup(bozo_get_pref(prefs, "server software"));
-	httpd->index_html = strdup(bozo_get_pref(prefs, "index.html"));
+	    bozo_strdup(httpd, bozo_get_pref(prefs, "server software"));
+	httpd->index_html =
+	    bozo_strdup(httpd, bozo_get_pref(prefs, "index.html"));
 
 	/*
 	 * initialise ssl and daemon mode if necessary.
@@ -2290,9 +2312,9 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	if ((username = bozo_get_pref(prefs, "username")) == NULL) {
 		if ((pw = getpwuid(uid = 0)) == NULL)
 			bozo_err(httpd, 1, "getpwuid(0): %s", strerror(errno));
-		httpd->username = strdup(pw->pw_name);
+		httpd->username = bozo_strdup(httpd, pw->pw_name);
 	} else {
-		httpd->username = strdup(username);
+		httpd->username = bozo_strdup(httpd, username);
 		if ((pw = getpwnam(httpd->username)) == NULL)
 			bozo_err(httpd, 1, "getpwnam(%s): %s", httpd->username,
 					strerror(errno));
@@ -2307,7 +2329,7 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	 * handle chroot.
 	 */
 	if ((chrootdir = bozo_get_pref(prefs, "chroot dir")) != NULL) {
-		httpd->rootdir = strdup(chrootdir);
+		httpd->rootdir = bozo_strdup(httpd, chrootdir);
 		if (chdir(httpd->rootdir) == -1)
 			bozo_err(httpd, 1, "chdir(%s): %s", httpd->rootdir,
 				strerror(errno));

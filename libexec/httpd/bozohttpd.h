@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.39 2015/12/12 16:57:53 christos Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.40 2015/12/12 18:06:58 christos Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -223,6 +223,10 @@ void	bozo_warn(bozohttpd_t *, const char *, ...)
 void	bozo_err(bozohttpd_t *, int, const char *, ...)
 		BOZO_PRINTFLIKE(3, 4)
 		BOZO_DEAD;
+void	bozo_asprintf(bozohttpd_t *, char **, const char *, ...)
+		BOZO_PRINTFLIKE(3, 4);
+char	*bozo_strdup(bozohttpd_t *, const char *);
+
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
