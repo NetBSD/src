@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.193 2015/11/27 02:54:22 ozaki-r Exp $	*/
+/*	$NetBSD: in6.c,v 1.194 2015/12/12 23:34:25 christos Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.193 2015/11/27 02:54:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.194 2015/12/12 23:34:25 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -273,6 +273,10 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	int error;
 
 	switch (cmd) {
+	case SIOCAADDRCTL_POLICY:
+	case SIOCDADDRCTL_POLICY:
+		/* Privileged. */
+		return in6_src_ioctl(cmd, data);
 	/*
 	 * XXX: Fix me, once we fix SIOCSIFADDR, SIOCIFDSTADDR, etc.
 	 */
@@ -725,6 +729,10 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case OSIOCAIFADDR_IN6:
 #endif
 	case SIOCAIFADDR_IN6:
+
+	case SIOCAADDRCTL_POLICY:
+	case SIOCDADDRCTL_POLICY:
+
 		if (kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_SOCKET,
 		    KAUTH_REQ_NETWORK_SOCKET_SETPRIV,

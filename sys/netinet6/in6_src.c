@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_src.c,v 1.58 2015/08/24 22:21:27 pooka Exp $	*/
+/*	$NetBSD: in6_src.c,v 1.59 2015/12/12 23:34:25 christos Exp $	*/
 /*	$KAME: in6_src.c,v 1.159 2005/10/19 01:40:32 t-momose Exp $	*/
 
 /*
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.58 2015/08/24 22:21:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_src.c,v 1.59 2015/12/12 23:34:25 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -885,8 +885,9 @@ struct sel_walkarg {
 	void *w_limit;
 };
 
+int sysctl_net_inet6_addrctlpolicy(SYSCTLFN_ARGS);
 int
-in6_src_sysctl(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+sysctl_net_inet6_addrctlpolicy(SYSCTLFN_ARGS)
 {
 	int error = 0;
 	int s;

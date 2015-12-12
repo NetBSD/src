@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.152 2015/08/24 22:21:27 pooka Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.153 2015/12/12 23:34:25 christos Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.152 2015/08/24 22:21:27 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.153 2015/12/12 23:34:25 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1611,6 +1611,8 @@ const u_char inet6ctlerrmap[PRC_NCMDS] = {
 	ENOPROTOOPT
 };
 
+extern int sysctl_net_inet6_addrctlpolicy(SYSCTLFN_ARGS);
+
 static int
 sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 {
@@ -1819,15 +1821,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       IPV6CTL_V6ONLY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "auto_linklocal",
-		       SYSCTL_DESCR("Default value of per-interface flag for "
-		                    "adding an IPv6 link-local address to "
-				    "interfaces when attached"),
-		       NULL, 0, &ip6_auto_linklocal, 0,
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_AUTO_LINKLOCAL, CTL_EOL);
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "anonportmin",
 		       SYSCTL_DESCR("Lowest ephemeral port number to assign"),
 		       sysctl_net_inet_ip_ports, 0, &ip6_anonportmin, 0,
@@ -1858,6 +1851,23 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_LOWPORTMAX, CTL_EOL);
 #endif /* IPNOPRIVPORTS */
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "auto_linklocal",
+		       SYSCTL_DESCR("Default value of per-interface flag for "
+		                    "adding an IPv6 link-local address to "
+				    "interfaces when attached"),
+		       NULL, 0, &ip6_auto_linklocal, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_AUTO_LINKLOCAL, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
+		       CTLTYPE_STRUCT, "addctlpolicy",
+		       SYSCTL_DESCR("Return the current address control"
+			   " policy"),
+		       sysctl_net_inet6_addrctlpolicy, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_ADDRCTLPOLICY, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "use_tempaddr",
