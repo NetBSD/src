@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.38 2015/10/28 09:20:15 shm Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.39 2015/12/12 16:57:53 christos Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -238,14 +238,18 @@ void	*bozomalloc(bozohttpd_t *, size_t);
 void	*bozorealloc(bozohttpd_t *, void *, size_t);
 char	*bozostrdup(bozohttpd_t *, const char *);
 
+#define bozo_noop	do { /* nothing */ } while (/*CONSTCOND*/0)
+
 /* ssl-bozo.c */
 #ifdef NO_SSL_SUPPORT
-#define bozo_ssl_set_opts(w, x, y)	do { /* nothing */ } while (0)
-#define bozo_ssl_init(x)		do { /* nothing */ } while (0)
+#define bozo_ssl_set_opts(w, x, y)	bozo_noop
+#define bozo_ssl_set_ciphers(w, x, y)	bozo_noop
+#define bozo_ssl_init(x)		bozo_noop
 #define bozo_ssl_accept(x)		(0)
-#define bozo_ssl_destroy(x)		do { /* nothing */ } while (0)
+#define bozo_ssl_destroy(x)		bozo_noop
 #else
 void	bozo_ssl_set_opts(bozohttpd_t *, const char *, const char *);
+void	bozo_ssl_set_ciphers(bozohttpd_t *, const char *);
 void	bozo_ssl_init(bozohttpd_t *);
 int	bozo_ssl_accept(bozohttpd_t *);
 void	bozo_ssl_destroy(bozohttpd_t *);
@@ -263,13 +267,13 @@ void	bozo_auth_check_401(bozo_httpreq_t *, int);
 void	bozo_auth_cgi_setenv(bozo_httpreq_t *, char ***);
 int	bozo_auth_cgi_count(bozo_httpreq_t *);
 #else
-#define	bozo_auth_init(x)			do { /* nothing */ } while (0)
+#define	bozo_auth_init(x)			bozo_noop
 #define	bozo_auth_check(x, y)			0
-#define	bozo_auth_cleanup(x)			do { /* nothing */ } while (0)
+#define	bozo_auth_cleanup(x)			bozo_noop
 #define	bozo_auth_check_headers(y, z, a, b)	0
 #define	bozo_auth_check_special_files(x, y)	0
-#define	bozo_auth_check_401(x, y)		do { /* nothing */ } while (0)
-#define	bozo_auth_cgi_setenv(x, y)		do { /* nothing */ } while (0)
+#define	bozo_auth_check_401(x, y)		bozo_noop
+#define	bozo_auth_cgi_setenv(x, y)		bozo_noop
 #define	bozo_auth_cgi_count(x)			0
 #endif /* DO_HTPASSWD */
 
@@ -296,9 +300,9 @@ int	bozo_process_lua(bozo_httpreq_t *);
 
 /* daemon-bozo.c */
 #ifdef NO_DAEMON_MODE
-#define bozo_daemon_init(x)				do { /* nothing */ } while (0)
+#define bozo_daemon_init(x)				bozo_noop
 #define bozo_daemon_fork(x)				0
-#define bozo_daemon_closefds(x)				do { /* nothing */ } while (0)
+#define bozo_daemon_closefds(x)				bozo_noop
 #else
 void	bozo_daemon_init(bozohttpd_t *);
 int	bozo_daemon_fork(bozohttpd_t *);

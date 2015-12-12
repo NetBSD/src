@@ -1,4 +1,4 @@
-.\"	$NetBSD: bozohttpd.8,v 1.56 2015/11/29 15:58:07 kamil Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.57 2015/12/12 16:57:53 christos Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 29, 2015
+.Dd December 12, 2015
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -49,6 +49,7 @@
 .Op Fl t Ar chrootdir
 .Op Fl v Ar virtualroot
 .Op Fl x Ar index
+.Op Fl z Ar ciphers
 .Ar slashdir
 .Op Ar myname
 .Sh DESCRIPTION
@@ -303,6 +304,9 @@ Changes the default file read for directories from
 .Dq index.html
 to
 .Ar index .
+.It Fl z Ar ciphers
+Sets the list of SSL ciphers (see
+.Xr SSL_CTX_set_cipher_list 3 ) .
 .It Fl Z Ar certificate_path privatekey_path
 Sets the path to the server certificate file and the private key file
 in pem format.
@@ -425,7 +429,7 @@ It may require linking with the crypt library, using
 .Dq -lcrypt .
 .Ss SSL SUPPORT
 .Nm
-has support for SSLv2, SSLv3, and TLSv1 protocols that is included by
+has support for TLSv1.1 and TLSv1.2 protocols that are included by
 default.
 It requires linking with the crypto and ssl library, using
 .Dq -lcrypto -lssl .

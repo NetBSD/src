@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.10 2015/11/29 15:26:10 kamil Exp $	*/
+/*	$NetBSD: main.c,v 1.11 2015/12/12 16:57:53 christos Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -112,6 +112,8 @@ usage(bozohttpd_t *httpd, char *progname)
 		"   -x index\t\tchange default `index.html' file name");
 #ifndef NO_SSL_SUPPORT
 	bozo_warn(httpd,
+		"   -z ciphers\t\tspecify SSL ciphers");
+	bozo_warn(httpd,
 		"   -Z cert privkey\tspecify path to server certificate"
 			" and private key file\n"
 		"\t\t\tin pem format and enable bozohttpd in SSL mode");
@@ -145,7 +147,7 @@ main(int argc, char **argv)
 	 */
 
 	while ((c = getopt(argc, argv,
-	    "C:EHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:")) != -1) {
+	    "C:EHI:L:M:P:S:U:VXZ:bc:defhi:np:st:uv:x:z:")) != -1) {
 		switch (c) {
 
 		case 'L':
@@ -198,6 +200,16 @@ main(int argc, char **argv)
 			bozo_ssl_set_opts(&httpd, optarg, argv[optind++]);
 			break;
 #endif /* NO_SSL_SUPPORT */
+
+		case 'z':
+#ifdef NO_SSL_SUPPORT
+			bozo_err(&httpd, 1, "ssl support is not enabled");
+			/* NOT REACHED */
+#else
+			bozo_ssl_set_ciphers(&httpd, optarg);
+			break;
+#endif /* NO_SSL_SUPPORT */
+
 		case 'U':
 			bozo_set_pref(&prefs, "username", optarg);
 			break;
