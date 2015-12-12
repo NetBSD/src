@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1512 2015/11/08 20:00:22 christos Exp $
+# $NetBSD: mi,v 1.1513 2015/12/12 23:42:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2553,6 +2553,7 @@
 ./usr/share/man/cat8/intro.0			man-sys-catman		.cat
 ./usr/share/man/cat8/iopctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/iostat.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/ip6addrctl.0		man-netutil-catman	inet6,.cat
 ./usr/share/man/cat8/ipf.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat8/ipfs.0			man-ipf-catman		ipfilter,.cat
 ./usr/share/man/cat8/ipfstat.0			man-ipf-catman		ipfilter,.cat
@@ -5434,6 +5435,7 @@
 ./usr/share/man/html8/intro.html		man-sys-htmlman		html
 ./usr/share/man/html8/iopctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/iostat.html		man-sysutil-htmlman	html
+./usr/share/man/html8/ip6addrctl.html		man-netutil-htmlman	inet6,html
 ./usr/share/man/html8/ipf.html			man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html8/ipfs.html			man-ipf-htmlman		ipfilter,html
 ./usr/share/man/html8/ipfstat.html		man-ipf-htmlman		ipfilter,html
@@ -8461,6 +8463,7 @@
 ./usr/share/man/man8/intro.8			man-sys-man		.man
 ./usr/share/man/man8/iopctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/iostat.8			man-sysutil-man		.man
+./usr/share/man/man8/ip6addrctl.8		man-netutil-man		inet6,.man
 ./usr/share/man/man8/ipf.8			man-ipf-man		ipfilter,.man
 ./usr/share/man/man8/ipfs.8			man-ipf-man		ipfilter,.man
 ./usr/share/man/man8/ipfstat.8			man-ipf-man		ipfilter,.man
