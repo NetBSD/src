@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1118 2015/11/23 19:56:47 christos Exp $
+# $NetBSD: mi,v 1.1119 2015/12/12 23:42:43 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1655,6 +1655,7 @@
 ./usr/sbin/intrctl				base-sysutil-bin
 ./usr/sbin/iopctl				base-sysutil-bin
 ./usr/sbin/iostat				base-sysutil-bin
+./usr/sbin/ip6addrctl				base-netutil-bin	inet6
 ./usr/sbin/ipfs					base-ipf-bin		ipfilter
 ./usr/sbin/ipfstat				base-ipf-bin		ipfilter
 ./usr/sbin/ipftest				base-ipf-bin		ipfilter
