@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2008 2015/11/29 06:10:01 pgoyette Exp $
+#	$NetBSD: mi,v 1.2009 2015/12/12 19:05:45 nros Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -6231,6 +6231,9 @@
 ./usr/share/man/cat3/fls64.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flushinp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/flushok.0			comp-c-catman		.cat
+./usr/share/man/cat3/fma.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmaf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fmal.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmax.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmaxf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fmaxl.0			comp-c-catman		.cat
@@ -13208,6 +13211,9 @@
 ./usr/share/man/html3/fls64.html		comp-c-htmlman		html
 ./usr/share/man/html3/flushinp.html		comp-c-htmlman		html
 ./usr/share/man/html3/flushok.html		comp-c-htmlman		html
+./usr/share/man/html3/fma.html			comp-c-htmlman		html
+./usr/share/man/html3/fmaf.html			comp-c-htmlman		html
+./usr/share/man/html3/fmal.html			comp-c-htmlman		html
 ./usr/share/man/html3/fmax.html			comp-c-htmlman		html
 ./usr/share/man/html3/fmaxf.html		comp-c-htmlman		html
 ./usr/share/man/html3/fmaxl.html		comp-c-htmlman		html
@@ -20096,6 +20102,9 @@
 ./usr/share/man/man3/fls64.3			comp-c-man		.man
 ./usr/share/man/man3/flushinp.3			comp-c-man		.man
 ./usr/share/man/man3/flushok.3			comp-c-man		.man
+./usr/share/man/man3/fma.3			comp-c-man		.man
+./usr/share/man/man3/fmaf.3			comp-c-man		.man
+./usr/share/man/man3/fmal.3			comp-c-man		.man
 ./usr/share/man/man3/fmax.3			comp-c-man		.man
 ./usr/share/man/man3/fmaxf.3			comp-c-man		.man
 ./usr/share/man/man3/fmaxl.3			comp-c-man		.man
