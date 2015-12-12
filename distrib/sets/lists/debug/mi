@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.136 2015/11/22 04:44:30 kamil Exp $
+# $NetBSD: mi,v 1.137 2015/12/12 23:42:43 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1060,6 +1060,7 @@
 ./usr/libdata/debug/usr/sbin/intrctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/iopctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/iostat.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/ip6addrctl.debug	comp-netutil-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/ipfs.debug		comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/ipfstat.debug	comp-ipf-debug		ipfilter,debug
 ./usr/libdata/debug/usr/sbin/ipftest.debug	comp-ipf-debug		ipfilter,debug
