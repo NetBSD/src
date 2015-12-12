@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.170 2015/09/13 10:58:30 he Exp $
+#  $NetBSD: Makefile,v 1.171 2015/12/12 19:05:45 nros Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -278,7 +278,7 @@ COPTS.s_tanh.c+= -O0
 MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 \
 	ceil.3 copysign.3 cos.3 cosh.3 \
 	erf.3 exp.3 \
-	fabs.3 finite.3 fmod.3 frexp.3 hypot.3 \
+	fabs.3 finite.3 fma.3 fmod.3 frexp.3 hypot.3 \
 	ieee_test.3 ilogb.3 isinff.3 j0.3 ldexp.3 lgamma.3 log.3 lrint.3 \
 	math.3 modf.3 nextafter.3 pow.3 \
 	remainder.3 rint.3 round.3 \
@@ -378,6 +378,8 @@ MLINKS+=fmax.3 fminl.3
 MLINKS+=fmax.3 fminf.3
 MLINKS+=fdim.3 fdiml.3
 MLINKS+=fdim.3 fdimf.3
+MLINKS+=fma.3 fmaf.3 \
+	fma.3 fmal.3
 
 .if (${MKCOMPLEX} != "no")
 .include "${.CURDIR}/complex/Makefile.inc"
