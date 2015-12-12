@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.30 2013/05/16 18:43:09 christos Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.31 2015/12/12 22:22:51 jmcneill Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -105,6 +105,7 @@ int	openfirmware(void *);
  * Functions and variables provided by machine-independent code.
  */
 int	of_compatible(int, const char * const *);
+int	of_match_compatible(int, const char * const *);
 int	of_decode_int(const unsigned char *);
 int	of_packagename(int, char *, int);
 int	of_find_firstchild_byname(int, const char *);

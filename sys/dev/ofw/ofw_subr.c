@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.23 2013/10/25 14:32:10 jdc Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.24 2015/12/12 22:22:51 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.23 2013/10/25 14:32:10 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.24 2015/12/12 22:22:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,7 +79,7 @@ of_decode_int(const unsigned char *p)
  * it matches any of the provided strings.
  *
  * It should be used when determining whether a driver can drive
- * a partcular device.
+ * a particular device.
  *
  * Arguments:
  *	phandle		OFW phandle of device to be checked for
@@ -90,8 +90,8 @@ of_decode_int(const unsigned char *p)
  *
  * Return Value:
  *	-1 if none of the strings are found in phandle's "compatibility"
- *	property, or the index of the string in "strings" of the first
- *	string found in phandle's "compatibility" property.
+ *	property, or the reverse index of the matching string in the
+ *	phandle's "compatibility" property.
  *
  * Side Effects:
  *	None.
@@ -99,7 +99,8 @@ of_decode_int(const unsigned char *p)
 int
 of_compatible(int phandle, const char * const *strings)
 {
-	int len, allocated, rv;
+
+	int len, olen, allocated, nstr, cstr, rv;
 	char *buf;
 	const char *sp, *nsp;
 
@@ -121,11 +122,25 @@ of_compatible(int phandle, const char * const *strings)
 		goto out;
 	}
 
+	/* count 'compatible' strings */
 	sp = buf;
+	nstr = 0;
+	olen = len;
 	while (len && (nsp = memchr(sp, 0, len)) != NULL) {
+		nsp++;			/* skip over NUL char */
+		len -= (nsp - sp);
+		sp = nsp;
+		nstr++;
+	}
+	len = olen;
+
+	sp = buf;
+	rv = nstr;
+	while (len && (nsp = memchr(sp, 0, len)) != NULL) {
+		rv--;
 		/* look for a match among the strings provided */
-		for (rv = 0; strings[rv] != NULL; rv++)
-			if (strcmp(sp, strings[rv]) == 0)
+		for (cstr = 0; strings[cstr] != NULL; cstr++)
+			if (strcmp(sp, strings[cstr]) == 0)
 				goto out;
 
 		nsp++;			/* skip over NUL char */
@@ -138,7 +153,36 @@ out:
 	if (allocated)
 		free(buf, M_TEMP);
 	return (rv);
+}
 
+/*
+ * int of_match_compatible(phandle, strings)
+ *
+ * This routine checks an OFW node's "compatible" entry to see if
+ * it matches any of the provided strings.
+ *
+ * It should be used when determining whether a driver can drive
+ * a particular device.
+ *
+ * Arguments:
+ *	phandle		OFW phandle of device to be checked for
+ *			compatibility.
+ *	strings		Array of containing expected "compatibility"
+ *			property values, presence of any of which
+ *			indicates compatibility.
+ *
+ * Return Value:
+ *	0 if none of the strings are found in phandle's "compatibility"
+ *	property, or a positive number based on the reverse index of the
+ *	matching string in the phandle's "compatibility" property, plus 1.
+ *
+ * Side Effects:
+ *	None.
+ */
+int
+of_match_compatible(int phandle, const char * const *strings)
+{
+	return of_compatible(phandle, strings) + 1;
 }
 
 /*
