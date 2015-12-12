@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.29 2015/12/11 04:03:44 marty Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.30 2015/12/12 21:57:40 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.29 2015/12/11 04:03:44 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.30 2015/12/12 21:57:40 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.29 2015/12/11 04:03:44 marty Exp $"
 #include <arm/cortex/pl310_reg.h>
 
 /* XXXNH */
-#include <evbarm/odroid/platform.h>
+#include <evbarm/exynos/platform.h>
 
 
 /* these variables are retrieved in start.S and stored in .data */
