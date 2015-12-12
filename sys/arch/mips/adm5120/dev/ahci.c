@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.12.6.15 2015/10/22 11:15:42 skrll Exp $	*/
+/*	$NetBSD: ahci.c,v 1.12.6.16 2015/12/12 15:03:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.15 2015/10/22 11:15:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.12.6.16 2015/12/12 15:03:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -975,7 +975,7 @@ ahci_device_intr_start(struct usbd_xfer *xfer)
 	if (sx == NULL)
 		goto reterr;
 	memset(sx, 0, sizeof(*sx));
-	sx->sx_xfer  = xfer;
+	sx->sx_xfer = xfer;
 	xfer->ux_hcpriv = sx;
 
 	/* initialize callout */
