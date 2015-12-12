@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.18 2014/07/17 06:27:52 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.19 2015/12/12 16:57:53 christos Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -48,6 +48,25 @@
 #define USE_ARG(x)	/*LINTED*/(void)&(x)
 #endif
 
+#ifndef BOZO_SSL_CIPHERS
+#define BOZO_SSL_CIPHERS 					\
+	"AES256-GCM-SHA384:AES256-SHA256:AES256-SHA:"		\
+	"AES128-GCM-SHA256:AES128-SHA256:AES128-SHA:"		\
+	"AES:"							\
+	"-SHA:"							\
+	"!aNULL:!eNULL:"					\
+	"!EXPORT:!DES:!RC4:!MD5:!PSK:!aECDH:"			\
+	"!EDH-DSS-DES-CBC3-SHA:!EDH-RSA-DES-CBC3-SHA:"		\
+	"!KRB5-DES-CBC3-SHA"
+#endif
+
+#ifndef BOZO_SSL_OPTIONS
+#define BOZO_SSL_OPTIONS					\
+	(SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3 | SSL_OP_NO_TLSv1)
+#endif
+
+  /* this structure encapsulates the ssl info */
+
 /* this structure encapsulates the ssl info */
 typedef struct sslinfo_t {
 	SSL_CTX			*ssl_context;
@@ -55,6 +74,7 @@ typedef struct sslinfo_t {
 	SSL			*bozossl;
 	char			*certificate_file;
 	char			*privatekey_file;
+	char			*ciphers;
 } sslinfo_t;
 
 /*
@@ -187,6 +207,7 @@ void
 bozo_ssl_init(bozohttpd_t *httpd)
 {
 	sslinfo_t *sslinfo = httpd->sslinfo;
+	long options;
 
 	if (sslinfo == NULL || !sslinfo->certificate_file)
 		return;
@@ -199,6 +220,18 @@ bozo_ssl_init(bozohttpd_t *httpd)
 	if (NULL == sslinfo->ssl_context)
 		bozo_ssl_err(httpd, EXIT_FAILURE,
 		    "SSL context creation failed");
+
+	options = SSL_CTX_set_options(sslinfo->ssl_context,
+	    BOZO_SSL_OPTIONS);
+	if ((options & BOZO_SSL_OPTIONS) != BOZO_SSL_OPTIONS)
+		bozo_ssl_err(httpd, EXIT_FAILURE,
+		    "Error setting ssl options requested %#lx, got %#lx",
+		    BOZO_SSL_OPTIONS, options);
+
+	if (!SSL_CTX_set_cipher_list(sslinfo->ssl_context,
+	    sslinfo->ciphers ? sslinfo->ciphers : BOZO_SSL_CIPHERS))
+		bozo_ssl_err(httpd, EXIT_FAILURE,
+		    "Error setting cipher list '%s'", sslinfo->ciphers);
 
 	if (1 != SSL_CTX_use_certificate_chain_file(sslinfo->ssl_context,
 	    sslinfo->certificate_file))
@@ -251,24 +284,40 @@ bozo_ssl_destroy(bozohttpd_t *httpd)
 		SSL_free(sslinfo->bozossl);
 }
 
+static sslinfo_t *
+bozo_get_sslinfo(bozohttpd_t *httpd)
+{
+	sslinfo_t *sslinfo;
+	if (httpd->sslinfo)
+		return httpd->sslinfo;
+	sslinfo = bozomalloc(httpd, sizeof(*sslinfo));
+	if (sslinfo == NULL)
+		bozo_err(httpd, 1, "sslinfo allocation failed");
+	memset(sslinfo, 0, sizeof(*sslinfo));
+	return httpd->sslinfo = sslinfo;
+}
+
 void
 bozo_ssl_set_opts(bozohttpd_t *httpd, const char *cert, const char *priv)
 {
-	sslinfo_t *sslinfo = httpd->sslinfo;
+	sslinfo_t *sslinfo = bozo_get_sslinfo(httpd);
 
-	if (sslinfo == NULL) {
-		sslinfo = bozomalloc(httpd, sizeof(*sslinfo));
-		if (sslinfo == NULL)
-			bozo_err(httpd, 1, "sslinfo allocation failed");
-		httpd->sslinfo = sslinfo;
-	}
-	sslinfo->certificate_file = strdup(cert);
-	sslinfo->privatekey_file = strdup(priv);
+	sslinfo->certificate_file = bozostrdup(httpd, cert);
+	sslinfo->privatekey_file = bozostrdup(httpd, priv);
 	debug((httpd, DEBUG_NORMAL, "using cert/priv files: %s & %s",
-		sslinfo->certificate_file,
-		sslinfo->privatekey_file));
+	    sslinfo->certificate_file,
+	    sslinfo->privatekey_file));
 	if (!httpd->bindport)
-		httpd->bindport = strdup("https");
+		httpd->bindport = bozostrdup(httpd, "https");
+}
+
+void
+bozo_ssl_set_ciphers(bozohttpd_t *httpd, const char *ciphers)
+{
+	sslinfo_t *sslinfo = bozo_get_sslinfo(httpd);
+
+	sslinfo->ciphers = bozostrdup(httpd, ciphers);
+	debug((httpd, DEBUG_NORMAL, "using ciphers: %s", sslinfo->ciphers));
 }
 
 #endif /* NO_SSL_SUPPORT */
