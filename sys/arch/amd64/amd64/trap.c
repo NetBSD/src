@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.82 2015/11/28 15:06:55 dholland Exp $	*/
+/*	$NetBSD: trap.c,v 1.83 2015/12/13 15:53:05 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.82 2015/11/28 15:06:55 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.83 2015/12/13 15:53:05 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -515,6 +515,14 @@ kernelfault:
 		}
 
 		cr2 = rcr2();
+
+		if (frame->tf_err & PGEX_X) {
+			/* SMEP might have brought us here */
+			if (cr2 > VM_MIN_ADDRESS && cr2 <= VM_MAXUSER_ADDRESS)
+				panic("prevented execution of %p (SMEP)",
+				    (void *)cr2);
+		}
+
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
