@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.26 2012/12/19 13:53:47 kiyohara Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.27 2015/12/13 19:38:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.26 2012/12/19 13:53:47 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.27 2015/12/13 19:38:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ findroot(void)
 		return;
 	p += 2;
 	part = (*p++) - '0';
-	if (p != '\0')
+	if (*p != '\0')
 		return;
 
 	booted_partition = part;
