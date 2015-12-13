@@ -1,0 +1,5 @@
+# $NetBSD: files.fdt,v 1.1 2015/12/13 17:45:37 jmcneill Exp $
+
+device  gic
+attach  gic at fdt with gic_fdt
+file    arch/arm/fdt/gic_fdt.c             	gic_fdt
