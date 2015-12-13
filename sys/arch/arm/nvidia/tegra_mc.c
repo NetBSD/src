@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_mc.c,v 1.4 2015/11/22 12:26:11 jmcneill Exp $ */
+/* $NetBSD: tegra_mc.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.4 2015/11/22 12:26:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_mc.c,v 1.4 2015/11/22 12:26:11 jmcneill Exp $"
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_mcreg.h>
 #include <arm/nvidia/tegra_var.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static int	tegra_mc_match(device_t, cfdata_t, void *);
 static void	tegra_mc_attach(device_t, device_t, void *);
@@ -69,20 +71,34 @@ CFATTACH_DECL_NEW(tegra_mc, sizeof(struct tegra_mc_softc),
 static int
 tegra_mc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-mc", NULL };
+	struct fdt_attach_args * const faa = aux;
+	
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_mc_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_mc_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
 
 	KASSERT(mc_softc == NULL);
 	mc_softc = sc;
@@ -90,14 +106,19 @@ tegra_mc_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": MC\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL|IST_MPSAFE,
-	    tegra_mc_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_mc_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	MC_WRITE(sc, MC_INTSTATUS_REG, MC_INT__ALL);
 	MC_WRITE(sc, MC_INTMASK_REG, MC_INT__ALL);
