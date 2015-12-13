@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.8 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.9 2015/12/13 22:55:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <arm/nvidia/tegra_reg.h>
 #include <evbarm/tegra/platform.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.8 2015/12/13 17:39:19 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.9 2015/12/13 22:55:05 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -92,7 +92,6 @@ _C_LABEL(tegra_start):
 	/* Move into supervisor mode and disable IRQs/FIQs. */
 	cpsid	if, #PSR_SVC32_MODE
 
-#ifdef TEGRA_UBOOT
 	/*
 	 * Save any arguments passed to us.
 	 */
@@ -101,7 +100,6 @@ _C_LABEL(tegra_start):
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 
 	stmia	r4, {r0-r3}		// Save the arguments
-#endif
 
 	/*
 	 * Turn on the SMP bit
