@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.17 2015/04/26 15:15:19 mlelstv Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.18 2015/12/13 19:36:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.17 2015/04/26 15:15:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.18 2015/12/13 19:36:40 christos Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -603,7 +603,7 @@ static int  IsIrresponsive(struct eflash_softc *sc)
     if (Status & ST_READY)
         return FALSE;
 
-    if ((Status & ST_ERASE_MASK) == 
+    if ((Status & ST_MASK) == 
         (ST_LOCK_BIT_ERROR|ST_ERASE_SUSPENDED|ST_ERASE_ERROR)) {
         /* yes, looks that way */
         return TRUE;
