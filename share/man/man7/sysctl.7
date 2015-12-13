@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.95 2015/11/23 23:23:25 pgoyette Exp $
+.\"	$NetBSD: sysctl.7,v 1.96 2015/12/13 14:28:12 christos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd November 24, 2015
+.Dd Decemver 13, 2015
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -1619,6 +1619,7 @@ The currently defined protocols and names are:
 .It icmp6	rediraccept	integer	yes
 .It icmp6	redirtimeout	integer	yes
 .It ip6	accept_rtadv	integer	yes
+.It ip6	addctlpolicy	struct in6_addrpolicy	no
 .It ip6	anonportalgo.selected	string	yes
 .It ip6	anonportalgo.available	string	yes
 .It ip6	anonportalgo.reserve	struct	yes
