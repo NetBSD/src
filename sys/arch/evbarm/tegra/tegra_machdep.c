@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.33 2015/11/21 12:22:25 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.34 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.33 2015/11/21 12:22:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.34 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -104,6 +104,13 @@ char *boot_args = NULL;
 #ifdef TEGRA_UBOOT
 u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
 #endif
+
+#include <libfdt.h>
+#include <dev/fdt/fdt_openfirm.h>
+#include <dev/ofw/openfirm.h>
+#include <dev/fdt/fdtvar.h>
+#define FDT_BUF_SIZE	(128*1024)
+static uint8_t fdt_data[FDT_BUF_SIZE];
 
 extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
@@ -256,6 +263,37 @@ initarm(void *arg)
 	parse_mi_bootargs(mi_bootargs);
 #endif
 
+	const uint8_t *fdt_addr_r = (const uint8_t *)uboot_args[2];
+	int error = fdt_check_header(fdt_addr_r);
+	if (error == 0) {
+		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		if (error != 0) {
+			panic("fdt_move failed: %s", fdt_strerror(error));
+		}
+		fdt_openfirm_set_data(fdt_data);
+	} else {
+		panic("fdt_check_header failed: %s", fdt_strerror(error));
+	}
+
+	const u_int chip_id = tegra_chip_id();
+	switch (chip_id) {
+#ifdef SOC_TEGRA124
+        case CHIP_ID_TEGRA124: {
+		const char * const tegra124_compatible_strings[] = {
+			"nvidia,tegra124",
+			NULL
+		};
+		const int node = OF_peer(0);
+                if (of_compatible(node, tegra124_compatible_strings) < 0) {
+			panic("FDT is not compatible with Tegra124");
+		}
+                break;
+	}
+#endif
+	default:
+		panic("Kernel does not support Tegra SOC ID %#x", chip_id);
+	}
+
 	DPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
 
@@ -301,6 +339,11 @@ initarm(void *arg)
 	    KERNEL_BASE_PHYS);
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
 	    mapallmem_p);
+
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0) {
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+	}
 
 	DPRINTF("bootargs: %s\n", bootargs);
 
@@ -442,86 +485,20 @@ tegra_device_register(device_t self, void *aux)
 			prop_dictionary_set_cstring(dict, "debug", debug);
 	}
 
-#ifdef SOC_TEGRA124
-	if (device_is_a(self, "tegrausbphy")) {
-		prop_dictionary_set_uint8(dict, "nvidia,hssync-start-delay", 0);
-		prop_dictionary_set_uint8(dict, "nvidia,idle-wait-delay", 17);
-		prop_dictionary_set_uint8(dict, "nvidia,elastic-limit", 16);
-		prop_dictionary_set_uint8(dict, "nvidia,term-range-adj", 6);
-		prop_dictionary_set_uint8(dict, "nvidia,xcvr-setup", 9);
-		prop_dictionary_set_uint8(dict, "nvidia,xcvr-lsfslew", 0);
-		prop_dictionary_set_uint8(dict, "nvidia,xcvr-lsrslew", 3);
-		prop_dictionary_set_uint8(dict, "nvidia,hssquelch-level", 2);
-		prop_dictionary_set_uint8(dict, "nvidia,hsdiscon-level", 5);
-		prop_dictionary_set_uint8(dict, "nvidia,xcvr-hsslew", 12);
-	}
-#endif
-
-#ifdef BOARD_JETSONTK1
-	if (device_is_a(self, "sdhc")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
-
-		if (loc->loc_port == 2) {
-			prop_dictionary_set_cstring(dict, "cd-gpio", "V2");
-			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
-			prop_dictionary_set_cstring(dict, "wp-gpio", "Q4");
+	if (device_is_a(self, "tegrapcie")) {
+		const char * const jetsontk1_compat[] = {
+		    "nvidia,jetson-tk1", NULL
+		};
+		int phandle = OF_peer(0);
+		if (of_match_compatible(phandle, jetsontk1_compat)) {
+			/* rfkill GPIO at GPIO X7 */
+			struct tegra_gpio_pin *pin;
+			pin = tegra_gpio_acquire("X7", GPIO_PIN_OUTPUT);
+			if (pin) {
+				tegra_gpio_write(pin, 1);
+			}
 		}
 	}
-
-	if (device_is_a(self, "ahcisata")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		prop_dictionary_set_cstring(dict, "power-gpio", "EE2");
-	}
-
-	if (device_is_a(self, "tegrausbphy")) {
-		struct tegrausbphy_attach_args * const tup = aux;
-
-		if (tup->tup_port == 0) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
-		} else if (tup->tup_port == 2) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
-		}
-	}
-
-	if (device_is_a(self, "tegradrm")) {
-		prop_dictionary_set_cstring(dict, "hpd-gpio", "N7");
-		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
-		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
-		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
-	}
-#endif
-
-#ifdef BOARD_NYAN_BIG
-	if (device_is_a(self, "sdhc")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
-
-		if (loc->loc_port == 2) {
-			prop_dictionary_set_cstring(dict, "cd-gpio", "V2");
-			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
-		}
-	}
-
-	if (device_is_a(self, "tegrausbphy")) {
-		struct tegrausbphy_attach_args * const tup = aux;
-
-		if (tup->tup_port == 0) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
-		} else if (tup->tup_port == 2) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
-		}
-	}
-
-	if (device_is_a(self, "tegradrm")) {
-		prop_dictionary_set_cstring(dict, "hpd-gpio", "N7");
-		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
-		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
-		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
-	}
-#endif
 }
 
 static void
