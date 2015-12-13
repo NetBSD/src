@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.3 2015/11/12 00:43:52 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.4 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.3 2015/11/12 00:43:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.4 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.3 2015/11/12 00:43:52 jmcneill Exp $
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_drm.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static int	tegra_drm_match(device_t, cfdata_t, void *);
 static void	tegra_drm_attach(device_t, device_t, void *);
@@ -106,47 +106,71 @@ CFATTACH_DECL_NEW(tegra_drm, sizeof(struct tegra_drm_softc),
 static int
 tegra_drm_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * compatible[] = { "nvidia,tegra124-host1x", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_drm_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_drm_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	prop_dictionary_t prop = device_properties(self);
+	struct fdt_attach_args * const faa = aux;
 	struct drm_driver * const driver = &tegra_drm_driver;
-	const char *pin, *dev;
-	int error;
+	prop_dictionary_t prop = device_properties(self);
+	int error, node, hdmi_phandle, ddc_phandle;
+	const char * const hdmi_compat[] = { "nvidia,tegra124-hdmi", NULL };
+	const char * const hdmi_supplies[] = {
+		"hdmi-supply", "pll-supply", "vdd-supply"
+	};
+	struct fdtbus_regulator *reg;
+	u_int n;
 
 	sc->sc_dev = self;
-	sc->sc_dmat = tio->tio_dmat;
-	sc->sc_bst = tio->tio_bst;
-
-	if (prop_dictionary_get_cstring_nocopy(prop, "hpd-gpio", &pin)) {
-		sc->sc_pin_hpd = tegra_gpio_acquire(pin, GPIO_PIN_INPUT);
-	}
-	if (prop_dictionary_get_cstring_nocopy(prop, "pll-gpio", &pin)) {
-		sc->sc_pin_pll = tegra_gpio_acquire(pin, GPIO_PIN_OUTPUT);
-		if (sc->sc_pin_pll) {
-			tegra_gpio_write(sc->sc_pin_pll, 0);
-		} else {
-			panic("couldn't get pll-gpio pin");
-		}
-	}
-	if (prop_dictionary_get_cstring_nocopy(prop, "power-gpio", &pin)) {
-		sc->sc_pin_power = tegra_gpio_acquire(pin, GPIO_PIN_OUTPUT);
-		if (sc->sc_pin_power) {
-			tegra_gpio_write(sc->sc_pin_power, 1);
-		}
-	}
-	if (prop_dictionary_get_cstring_nocopy(prop, "ddc-device", &dev)) {
-		sc->sc_ddcdev = device_find_by_xname(dev);
-	}
-	prop_dictionary_get_bool(prop, "force-dvi", &sc->sc_force_dvi);
+	sc->sc_dmat = faa->faa_dmat;
+	sc->sc_bst = faa->faa_bst;
+	sc->sc_phandle = faa->faa_phandle;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
+
+	tegra_car_host1x_enable();
+
+	hdmi_phandle = -1;
+	for (node = OF_child(faa->faa_phandle); node; node = OF_peer(node)) {
+		if (of_match_compatible(node, hdmi_compat)) {
+			hdmi_phandle = node;
+			break;
+		}
+	}
+	if (hdmi_phandle >= 0) {
+		ddc_phandle = fdtbus_get_phandle(hdmi_phandle,
+		    "nvidia,ddc-i2c-bus");
+		if (ddc_phandle >= 0) {
+			sc->sc_ddc = fdtbus_get_i2c_tag(ddc_phandle);
+		}
+
+		sc->sc_pin_hpd = fdtbus_gpio_acquire(hdmi_phandle,
+		    "nvidia,hpd-gpio", GPIO_PIN_INPUT);
+
+		for (n = 0; n < __arraycount(hdmi_supplies); n++) {
+			const char *supply = hdmi_supplies[n];
+			reg = fdtbus_regulator_acquire(hdmi_phandle, supply);
+			if (reg == NULL) {
+				aprint_error_dev(self, "couldn't acquire %s\n",
+				    supply);
+				continue;
+			}
+			if (fdtbus_regulator_enable(reg) != 0) {
+				aprint_error_dev(self, "couldn't enable %s\n",
+				    supply);
+			}
+			fdtbus_regulator_release(reg);
+		}
+	}
+
+	prop_dictionary_get_bool(prop, "force-dvi", &sc->sc_force_dvi);
 
 	driver->bus = &tegra_drm_bus;
 

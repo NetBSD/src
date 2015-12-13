@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_host1x.c,v 1.1 2015/05/18 20:36:42 jmcneill Exp $ */
+/* $NetBSD: tegra_fdt.c,v 1.1 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,56 +26,70 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
+#include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_host1x.c,v 1.1 2015/05/18 20:36:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.1 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
-#include <sys/bus.h>
-#include <sys/device.h>
-#include <sys/intr.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
+#include <sys/device.h>
 
+#include <machine/cpu.h>
+#include <sys/bus.h>
+
+#include <arm/mainbus/mainbus.h>
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
 
-static int	tegra_host1x_match(device_t, cfdata_t, void *);
-static void	tegra_host1x_attach(device_t, device_t, void *);
+#include <dev/fdt/fdtvar.h>
+#include <dev/ofw/openfirm.h>
 
-struct tegra_host1x_softc {
-	device_t		sc_dev;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
-};
+static int	tegrafdt_match(device_t, cfdata_t, void *);
+static void	tegrafdt_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(tegra_host1x, sizeof(struct tegra_host1x_softc),
-	tegra_host1x_match, tegra_host1x_attach, NULL, NULL);
+CFATTACH_DECL_NEW(tegra_fdt, 0,
+    tegrafdt_match, tegrafdt_attach, NULL, NULL);
 
-static int
-tegra_host1x_match(device_t parent, cfdata_t cf, void *aux)
+static bool tegrafdt_found = false;
+
+int
+tegrafdt_match(device_t parent, cfdata_t cf, void *aux)
 {
+	if (tegrafdt_found)
+		return 0;
 	return 1;
 }
 
-static void
-tegra_host1x_attach(device_t parent, device_t self, void *aux)
+void
+tegrafdt_attach(device_t parent, device_t self, void *aux)
 {
-	struct tegra_host1x_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	const char *tegrafdt_init[] = {
+		"interrupt-controller",
+		"clock",
+		"pinmux",
+		"gpio",
+		"regulators",
+		"dma",
+		"pmc",
+		"memory-controller",
+		"i2c",
+		"usb-phy"
+	};
 
-	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	if (bus_space_map(sc->sc_bst, TEGRA_HOST1X_BASE + loc->loc_offset,
-	    loc->loc_size, 0, &sc->sc_bsh) != 0) {
-		aprint_error(": couldn't map HOST1X\n");
-		return;
-	}
+	tegrafdt_found = true;
 
 	aprint_naive("\n");
-	aprint_normal(": HOST1X\n");
+	aprint_normal("\n");
 
-	tegra_car_host1x_enable();
+	struct fdt_attach_args faa = {
+		.faa_name = "",
+		.faa_bst = &armv7_generic_bs_tag,
+		.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
+		.faa_dmat = &tegra_dma_tag,
+		.faa_phandle = OF_peer(0),
+		.faa_init = tegrafdt_init,
+		.faa_ninit = __arraycount(tegrafdt_init)
+	};
+	config_found(self, &faa, NULL);
 }
