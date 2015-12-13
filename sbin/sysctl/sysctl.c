@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.156 2015/08/17 06:42:46 knakahara Exp $ */
+/*	$NetBSD: sysctl.c,v 1.157 2015/12/13 14:24:47 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.156 2015/08/17 06:42:46 knakahara Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.157 2015/12/13 14:24:47 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -212,6 +212,8 @@ static const struct handlespec {
 
 	{ "/net/inet6?/tcp6?/ident",		printother, NULL, "identd" },
 	{ "/net/inet6/icmp6/nd6_[dp]rlist",	printother, NULL, "ndp" },
+	{ "/net/inet6/ip6/addctlpolicy",	printother, NULL,
+						"ip6addrctl" },
 	{ "/net/key/dumps[ap]",			printother, NULL, "setkey" },
 	{ "/net/[^/]+/[^/]+/pcblist",		printother, NULL,
 						"netstat' or 'sockstat" },
