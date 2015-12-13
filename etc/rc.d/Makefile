@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.93 2015/03/30 10:58:37 chopps Exp $
+# $NetBSD: Makefile,v 1.94 2015/12/13 02:05:15 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -22,8 +22,8 @@ CONFIGFILES=\
 		fsck fsck_root ftp_proxy ftpd \
 		gpio \
 		hostapd httpd \
-		identd ifwatchd inetd ipfilter ipfs ipmon ipnat ipsec \
-		irdaattach iscsi_target iscsid isdnd isibootd \
+		identd ifwatchd inetd ip6addrctl ipfilter ipfs ipmon ipnat \
+		ipsec irdaattach iscsi_target iscsid isdnd isibootd \
 		kdc \
 		ldconfig ldpd local lpd lvm \
 		makemandb mdnsd mixerctl modules mopd motd mountall \
