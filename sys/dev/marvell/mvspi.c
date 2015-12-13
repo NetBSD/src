@@ -265,7 +265,7 @@ mvspi_assert(struct mvspi_softc *sc)
 {
 	int ctl;
 	
-	if (sc->sc_transfer->st_slave < 0 && sc->sc_transfer->st_slave > 7) {
+	if (sc->sc_transfer->st_slave < 0 || sc->sc_transfer->st_slave > 7) {
 		printf("%s ERROR: Slave number %d not valid!\n",  __func__, sc->sc_transfer->st_slave);
 		return;
 	} else
