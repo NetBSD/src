@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_machdep.c,v 1.2 2015/12/11 04:12:21 marty Exp $ */
+/*	$NetBSD: exynos_machdep.c,v 1.3 2015/12/13 22:28:09 marty Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.2 2015/12/11 04:12:21 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.3 2015/12/13 22:28:09 marty Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -515,6 +515,9 @@ odroid_device_register(device_t self, void *aux)
 	exynos_device_register(self, aux);
 	if (device_is_a(self, "exyogpio")) {
 		init_gpio_dictionary(gpio_pin_entries, dict);
+	} else if (device_is_a(self, "exyowdt")) {
+		prop_dictionary_set_uint32(dict, "frequency",
+					   EXYNOS_F_IN_FREQ);
 	}
 }
 
