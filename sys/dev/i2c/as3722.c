@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.3 2015/11/21 12:19:47 jmcneill Exp $ */
+/* $NetBSD: as3722.c,v 1.4 2015/12/13 17:15:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.3 2015/11/21 12:19:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.4 2015/12/13 17:15:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,11 @@ static int	as3722_set_clear(struct as3722_softc *, uint8_t, uint8_t,
 CFATTACH_DECL_NEW(as3722pmic, sizeof(struct as3722_softc),
     as3722_match, as3722_attach, NULL, NULL);
 
+static const char * as3722_compats[] = {
+	"ams,as3722",
+	NULL
+};
+
 static int
 as3722_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -100,16 +105,20 @@ as3722_match(device_t parent, cfdata_t match, void *aux)
 	uint8_t reg, id1;
 	int error;
 
-	iic_acquire_bus(ia->ia_tag, I2C_F_POLL);
-	reg = AS3722_ASIC_ID1_REG;
-	error = iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
-	    &reg, 1, &id1, 1, I2C_F_POLL);
-	iic_release_bus(ia->ia_tag, I2C_F_POLL);
+	if (ia->ia_name == NULL) {
+		iic_acquire_bus(ia->ia_tag, I2C_F_POLL);
+		reg = AS3722_ASIC_ID1_REG;
+		error = iic_exec(ia->ia_tag, I2C_OP_READ_WITH_STOP, ia->ia_addr,
+		    &reg, 1, &id1, 1, I2C_F_POLL);
+		iic_release_bus(ia->ia_tag, I2C_F_POLL);
 
-	if (error == 0 && id1 == 0x0c)
-		return 1;
+		if (error == 0 && id1 == 0x0c)
+			return 1;
 
-	return 0;
+		return 0;
+	} else {
+		return iic_compat_match(ia, as3722_compats);
+	}
 }
 
 static void
