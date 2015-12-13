@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_usbphy.c,v 1.2 2015/11/19 22:09:16 jmcneill Exp $ */
+/* $NetBSD: tegra_usbphy.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.2 2015/11/19 22:09:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,8 +36,27 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.2 2015/11/19 22:09:16 jmcneill Ex
 #include <sys/systm.h>
 #include <sys/kernel.h>
 
+#include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_usbreg.h>
+
+#include <dev/fdt/fdtvar.h>
+
+/* XXX */
+static int
+tegra_usbphy_addr2port(bus_addr_t addr)
+{
+	switch (addr) {
+	case TEGRA_AHB_A2_BASE + TEGRA_USB1_OFFSET:
+		return 0;
+	case TEGRA_AHB_A2_BASE + TEGRA_USB2_OFFSET:
+		return 1;
+	case TEGRA_AHB_A2_BASE + TEGRA_USB3_OFFSET:
+		return 2;
+	default:
+		return -1;
+	}
+}
 
 static int	tegra_usbphy_match(device_t, cfdata_t, void *);
 static void	tegra_usbphy_attach(device_t, device_t, void *);
@@ -48,6 +65,7 @@ struct tegra_usbphy_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+	int			sc_phandle;
 	u_int			sc_port;
 
 	struct tegra_gpio_pin	*sc_pin_vbus;
@@ -72,21 +90,36 @@ CFATTACH_DECL_NEW(tegra_usbphy, sizeof(struct tegra_usbphy_softc),
 static int
 tegra_usbphy_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-usb-phy", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_usbphy_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_usbphy_softc * const sc = device_private(self);
-	struct tegrausbphy_attach_args * const tup = aux;
-	prop_dictionary_t prop = device_properties(self);
-	const char *pin;
+	struct fdt_attach_args * const faa = aux;
+	struct fdtbus_regulator *reg;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = tup->tup_bst;
-	sc->sc_bsh = tup->tup_bsh;
-	sc->sc_port = tup->tup_port;
+	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
+	sc->sc_port = tegra_usbphy_addr2port(addr);
 
 	aprint_naive("\n");
 	aprint_normal(": USB PHY%d\n", sc->sc_port + 1);
@@ -99,14 +132,12 @@ tegra_usbphy_attach(device_t parent, device_t self, void *aux)
 
 	tegra_usbphy_utmip_init(sc);
 
-	if (prop_dictionary_get_cstring_nocopy(prop, "vbus-gpio", &pin)) {
+	reg = fdtbus_regulator_acquire(faa->faa_phandle, "vbus-supply");
+	if (reg) {
 		const uint32_t v = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    TEGRA_EHCI_PHY_VBUS_SENSORS_REG);
 		if ((v & TEGRA_EHCI_PHY_VBUS_SENSORS_A_VBUS_VLD_STS) == 0) {
-			sc->sc_pin_vbus = tegra_gpio_acquire(pin,
-			    GPIO_PIN_OUTPUT | GPIO_PIN_OPENDRAIN);
-			if (sc->sc_pin_vbus)
-				tegra_gpio_write(sc->sc_pin_vbus, 1);
+			fdtbus_regulator_enable(reg);
 		} else {
 			aprint_normal_dev(self, "VBUS input active\n");
 		}
@@ -116,14 +147,19 @@ tegra_usbphy_attach(device_t parent, device_t self, void *aux)
 static int
 tegra_usbphy_parse_properties(struct tegra_usbphy_softc *sc)
 {
-#define PROPGET(k, v)	\
-	if (prop_dictionary_get_uint8(prop, (k), (v)) == false) {	\
+	const int phandle = sc->sc_phandle;
+	const int plen = sizeof(u_int);
+	u_int val;
+
+#define PROPGET(k, v)							\
+do {									\
+	if (OF_getprop(phandle, (k), &val, plen) != plen) {		\
 		aprint_error_dev(sc->sc_dev,				\
 		    "missing property '%s'\n", (k));			\
 		return EIO;						\
-	}
-
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
+	}								\
+	*(v) = be32toh(val);						\
+} while (0)
 
 	PROPGET("nvidia,hssync-start-delay", &sc->sc_hssync_start_delay);
 	PROPGET("nvidia,idle-wait-delay", &sc->sc_idle_wait_delay);

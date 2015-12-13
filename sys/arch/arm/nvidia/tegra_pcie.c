@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.13 2015/11/19 22:09:16 jmcneill Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.14 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.13 2015/11/19 22:09:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.14 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.13 2015/11/19 22:09:16 jmcneill Exp
 #include <arm/nvidia/tegra_pciereg.h>
 #include <arm/nvidia/tegra_var.h>
 
+#include <dev/fdt/fdtvar.h>
+
 static int	tegra_pcie_match(device_t, cfdata_t, void *);
 static void	tegra_pcie_attach(device_t, device_t, void *);
 
@@ -71,7 +71,7 @@ struct tegra_pcie_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh_afi;
 	bus_space_handle_t	sc_bsh_rpconf;
-	int			sc_intr;
+	int			sc_phandle;
 
 	struct arm32_pci_chipset sc_pc;
 
@@ -119,29 +119,55 @@ CFATTACH_DECL_NEW(tegra_pcie, sizeof(struct tegra_pcie_softc),
 static int
 tegra_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-pcie", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_pcie_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_pcie_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
 	struct extent *ioext, *memext, *pmemext;
 	struct pcibus_attach_args pba;
+	bus_addr_t afi_addr, cs_addr;
+	bus_size_t afi_size, cs_size;
+	char intrstr[128];
 	int error;
 
+	if (fdtbus_get_reg(faa->faa_phandle, 1, &afi_addr, &afi_size) != 0) {
+		aprint_error(": couldn't get afi registers\n");
+		return;
+	}
+#if notyet
+	if (fdtbus_get_reg(faa->faa_phandle, 2, &cs_addr, &cs_size) != 0) {
+		aprint_error(": couldn't get cs registers\n");
+		return;
+	}
+#else
+	cs_addr = TEGRA_PCIE_RPCONF_BASE;
+	cs_size = TEGRA_PCIE_RPCONF_SIZE;
+#endif
+
 	sc->sc_dev = self;
-	sc->sc_dmat = tio->tio_dmat;
-	sc->sc_bst = tio->tio_bst;
-	sc->sc_intr = loc->loc_intr;
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_AFI_BASE, TEGRA_PCIE_AFI_SIZE,
-	    0, &sc->sc_bsh_afi) != 0)
-		panic("couldn't map PCIE AFI");
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_RPCONF_BASE,
-	    TEGRA_PCIE_RPCONF_SIZE, 0, &sc->sc_bsh_rpconf) != 0)
-		panic("couldn't map PCIE root ports");
+	sc->sc_dmat = faa->faa_dmat;
+	sc->sc_bst = faa->faa_bst;
+	sc->sc_phandle = faa->faa_phandle;
+	error = bus_space_map(sc->sc_bst, afi_addr, afi_size, 0,
+	    &sc->sc_bsh_afi);
+	if (error) {
+		aprint_error(": couldn't map afi registers: %d\n", error);
+		return;
+	}
+	error = bus_space_map(sc->sc_bst, cs_addr, cs_size, 0,
+	    &sc->sc_bsh_rpconf);
+	if (error) {
+		aprint_error(": couldn't map cs registers: %d\n", error);
+		return;
+	}
+
 	tegra_pcie_conf_map_buses(sc);
 
 	TAILQ_INIT(&sc->sc_intrs);
@@ -150,14 +176,19 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": PCIE\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL,
-	    tegra_pcie_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM, 0,
+	    tegra_pcie_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	tegra_pcie_setup(sc);
 
@@ -514,9 +545,7 @@ static void
 tegra_pcie_conf_interrupt(void *v, int bus, int dev, int ipin, int swiz,
     int *ilinep)
 {
-	const struct tegra_pcie_softc * const sc = v;
-
-	*ilinep = sc->sc_intr & PCI_INTERRUPT_LINE_MASK;
+	*ilinep = 5;
 }
 
 static int
@@ -536,7 +565,9 @@ tegra_pcie_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 	if (ih == PCI_INTERRUPT_PIN_NONE)
 		return NULL;
 
-	snprintf(buf, len, "irq %d", sc->sc_intr);
+	if (!fdtbus_intr_str(sc->sc_phandle, 0, buf, len))
+		return NULL;
+
 	return buf;
 }
 
