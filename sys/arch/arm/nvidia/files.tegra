@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.25 2015/12/13 17:39:19 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.26 2015/12/13 21:24:06 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -18,10 +18,6 @@ file	arch/arm/nvidia/tegra_cpufreq.c
 file	arch/arm/nvidia/soc_tegra124.c		soc_tegra124
 
 # On-board I/O
-device	tegraio { [port=-1] } : bus_space_generic
-attach	tegraio at mainbus with tegra_io 
-file	arch/arm/nvidia/tegra_io.c		tegra_io
-
 device	tegrafdt : bus_space_generic, fdtbus
 attach	tegrafdt at mainbus with tegra_fdt
 file	arch/arm/nvidia/tegra_fdt.c		tegra_fdt
@@ -136,7 +132,7 @@ attach	tegrafb at tegrafbbus with tegra_fb
 file	arch/arm/nvidia/tegra_fb.c		tegra_fb
 
 # GPU
-attach	nouveau at tegraio with tegra_nouveau
+attach	nouveau at fdt with tegra_nouveau
 file	arch/arm/nvidia/tegra_nouveau.c		tegra_nouveau
 
 # Console parameters
