@@ -1,4 +1,4 @@
-/*	$NetBSD: esc.c,v 1.29 2014/10/25 10:58:12 skrll Exp $	*/
+/*	$NetBSD: esc.c,v 1.30 2015/12/13 19:53:02 christos Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.29 2014/10/25 10:58:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esc.c,v 1.30 2015/12/13 19:53:02 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1445,6 +1445,7 @@ esc_postaction(struct esc_softc *dev, esc_regmap_p rp, struct nexus *nexus)
 			switch(dev->sc_msg_in[0]) {
 			case 0x00:	/* COMMAND COMPLETE */
 				nexus->state = ESC_NS_DONE;
+				break;
 			case 0x04:	/* DISCONNECT */
 				nexus->state = ESC_NS_DISCONNECTING;
 				break;
