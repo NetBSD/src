@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1513 2015/12/12 23:42:43 christos Exp $
+# $NetBSD: mi,v 1.1514 2015/12/13 21:09:01 rjs Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5556,11 +5556,11 @@
 ./usr/share/man/html8/mount_overlay.html	man-miscfs-htmlman	html
 ./usr/share/man/html8/mount_portal.html		man-miscfs-htmlman	html
 ./usr/share/man/html8/mount_procfs.html		man-sysutil-htmlman	html
-./usr/share/man/html8/mount_psshfs.html		man-puffs-htmlman	html,rump
+./usr/share/man/html8/mount_psshfs.html		man-puffs-htmlman	html
 ./usr/share/man/html8/mount_ptyfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_puffs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_smbfs.html		man-smbfs-htmlman	html
-./usr/share/man/html8/mount_sysctlfs.html	man-puffs-htmlman	html,rump
+./usr/share/man/html8/mount_sysctlfs.html	man-puffs-htmlman	html
 ./usr/share/man/html8/mount_sysvbfs.html	man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_tmpfs.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/mount_udf.html		man-sysutil-htmlman	html
