@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.25 2015/12/13 11:00:01 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.26 2015/12/13 11:51:13 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.25 2015/12/13 11:00:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.26 2015/12/13 11:51:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,7 +377,8 @@ of_get_mode_string(char *buffer, int len)
  * This is used by the i2c bus attach code to do direct configuration.
  */
 void
-of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
+of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
+    int addr_shift)
 {
 	int node, len;
 	char name[32], compatible[32];
@@ -412,7 +413,7 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 		} else {
 			continue;
 		}
-		addr >>= 1;
+		addr >>= addr_shift;
 		if (addr == 0) continue;
 
 		if (array == NULL)
