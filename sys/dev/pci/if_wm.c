@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.381 2015/10/30 19:22:01 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.382 2015/12/13 19:06:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.381 2015/10/30 19:22:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.382 2015/12/13 19:06:43 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3105,7 +3105,7 @@ wm_set_filter(struct wm_softc *sc)
 		hash |= 1U << bit;
 
 		/* XXX Hardware bug?? */
-		if (sc->sc_type == WM_T_82544 && (reg & 0xe) == 1) {
+		if (sc->sc_type == WM_T_82544 && (reg & 1) != 0) {
 			bit = CSR_READ(sc, mta_reg + ((reg - 1) << 2));
 			CSR_WRITE(sc, mta_reg + (reg << 2), hash);
 			CSR_WRITE(sc, mta_reg + ((reg - 1) << 2), bit);
