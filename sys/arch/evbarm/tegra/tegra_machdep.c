@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.34 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.35 2015/12/13 22:55:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.34 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.35 2015/12/13 22:55:05 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -101,9 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.34 2015/12/13 17:39:19 jmcneill 
 BootConfig bootconfig;
 char bootargs[TEGRA_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
-#ifdef TEGRA_UBOOT
 u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
-#endif
 
 #include <libfdt.h>
 #include <dev/fdt/fdt_openfirm.h>
@@ -247,10 +245,8 @@ initarm(void *arg)
 
 	DPRINTF(" ok\n");
 
-#ifdef TEGRA_UBOOT
 	DPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
-#endif
 
 	cpu_reset_address = tegra_reset;
 	cpu_powerdown_address = tegra_powerdown;
