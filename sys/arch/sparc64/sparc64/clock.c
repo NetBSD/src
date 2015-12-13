@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.117 2014/07/25 17:54:50 nakayama Exp $ */
+/*	$NetBSD: clock.c,v 1.118 2015/12/13 18:41:09 christos Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.117 2014/07/25 17:54:50 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.118 2015/12/13 18:41:09 christos Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -723,7 +723,8 @@ statintr(void *cap)
 
 #ifdef NOT_DEBUG
 	printf("statclock: count %x:%x, limit %x:%x\n", 
-	       timerreg_4u.t_timer[1].t_count, timerreg_4u.t_timer[1].t_limit);
+	    timerreg_4u.t_timer[0].t_count, timerreg_4u.t_timer[1].t_count,
+	    timerreg_4u.t_timer[0].t_limit, timerreg_4u.t_timer[1].t_limit);
 #endif
 #ifdef NOT_DEBUG
 	prom_printf("!");
