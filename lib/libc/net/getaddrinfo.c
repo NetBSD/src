@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.111 2015/12/02 18:09:53 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.112 2015/12/13 02:02:59 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.111 2015/12/02 18:09:53 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.112 2015/12/13 02:02:59 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -64,8 +64,11 @@ __RCSID("$NetBSD: getaddrinfo.c,v 1.111 2015/12/02 18:09:53 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/ioctl.h>
+#include <sys/sysctl.h>
 #include <net/if.h>
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #include <arpa/inet.h>
 #include <arpa/nameser.h>
 #include <assert.h>
@@ -116,6 +119,14 @@ static const char in6_loopback[] = {
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1
 };
 #endif
+
+struct policyqueue {
+	TAILQ_ENTRY(policyqueue) pc_entry;
+#ifdef INET6
+	struct in6_addrpolicy pc_policy;
+#endif
+};
+TAILQ_HEAD(policyhead, policyqueue);
 
 static const struct afd {
 	int a_af;
@@ -174,6 +185,23 @@ static const struct explore explore[] = {
 #define PTON_MAX	4
 #endif
 
+#define AIO_SRCFLAG_DEPRECATED	0x1
+
+struct ai_order {
+	union {
+		struct sockaddr_storage aiou_ss;
+		struct sockaddr aiou_sa;
+	} aio_src_un;
+#define aio_srcsa aio_src_un.aiou_sa
+	u_int32_t aio_srcflag;
+	int aio_srcscope;
+	int aio_dstscope;
+	struct policyqueue *aio_srcpolicy;
+	struct policyqueue *aio_dstpolicy;
+	struct addrinfo *aio_ai;
+	int aio_matchlen;
+};
+
 static const ns_src default_dns_files[] = {
 	{ NSSRC_FILES,	NS_SUCCESS },
 	{ NSSRC_DNS,	NS_SUCCESS },
@@ -222,9 +250,20 @@ static int get_port(const struct addrinfo *, const char *, int,
     struct servent_data *);
 static const struct afd *find_afd(int);
 static int addrconfig(uint64_t *);
+static void set_source(struct ai_order *, struct policyhead *,
+    struct servent_data *);
+static int comp_dst(const void *, const void *);
 #ifdef INET6
 static int ip6_str2scopeid(char *, struct sockaddr_in6 *, u_int32_t *);
 #endif
+static int gai_addr2scopetype(struct sockaddr *);
+
+static int reorder(struct addrinfo *, struct servent_data *);
+static int get_addrselectpolicy(struct policyhead *);
+static void free_addrselectpolicy(struct policyhead *);
+static struct policyqueue *match_addrselectpolicy(struct sockaddr *,
+	struct policyhead *);
+static int matchlen(struct sockaddr *, struct sockaddr *);
 
 static struct addrinfo *getanswer(res_state, const querybuf *, int,
     const char *, int, const struct addrinfo *);
@@ -421,6 +460,7 @@ getaddrinfo(const char *hostname, const char *servname,
 	const struct explore *ex;
 	struct servent_data svd;
 	uint64_t mask = (uint64_t)~0ULL;
+	int numeric = 0;
 
 	/* hostname is allowed to be NULL */
 	/* servname is allowed to be NULL */
@@ -557,8 +597,10 @@ getaddrinfo(const char *hostname, const char *servname,
 	 * If numeric representation of AF1 can be interpreted as FQDN
 	 * representation of AF2, we need to think again about the code below.
 	 */
-	if (sentinel.ai_next)
+	if (sentinel.ai_next) {
+		numeric = 1;
 		goto good;
+	}
 
 	if (hostname == NULL)
 		ERR(EAI_NODATA);
@@ -614,6 +656,31 @@ getaddrinfo(const char *hostname, const char *servname,
 
 	if (sentinel.ai_next) {
  good:
+		/*
+		 * If the returned entry is for an active connection,
+		 * and the given name is not numeric, reorder the
+		 * list, so that the application would try the list
+		 * in the most efficient order.  Since the head entry
+		 * of the original list may contain ai_canonname and
+		 * that entry may be moved elsewhere in the new list,
+		 * we keep the pointer and will  restore it in the new
+		 * head entry.  (Note that RFC3493 requires the head
+		 * entry store it when requested by the caller).
+		 */
+		if (hints == NULL || !(hints->ai_flags & AI_PASSIVE)) {
+			if (!numeric) {
+				char *canonname;
+
+				canonname = sentinel.ai_next->ai_canonname;
+				sentinel.ai_next->ai_canonname = NULL;
+				(void)reorder(&sentinel, &svd);
+				if (sentinel.ai_next->ai_canonname == NULL) {
+					sentinel.ai_next->ai_canonname
+					    = canonname;
+				} else if (canonname != NULL)
+					free(canonname);
+			}
+		}
 		endservent_r(&svd);
 		*res = sentinel.ai_next;
 		return SUCCESS;
@@ -626,6 +693,458 @@ getaddrinfo(const char *hostname, const char *servname,
 		freeaddrinfo(sentinel.ai_next);
 	*res = NULL;
 	return error;
+}
+
+static int
+reorder(struct addrinfo *sentinel, struct servent_data *svd)
+{
+	struct addrinfo *ai, **aip;
+	struct ai_order *aio;
+	int i, n;
+	struct policyhead policyhead;
+
+	/* count the number of addrinfo elements for sorting. */
+	for (n = 0, ai = sentinel->ai_next; ai != NULL; ai = ai->ai_next, n++)
+		;
+
+	/*
+	 * If the number is small enough, we can skip the reordering process.
+	 */
+	if (n <= 1)
+		return(n);
+
+	/* allocate a temporary array for sort and initialization of it. */
+	if ((aio = malloc(sizeof(*aio) * n)) == NULL)
+		return(n);	/* give up reordering */
+	memset(aio, 0, sizeof(*aio) * n);
+
+	/* retrieve address selection policy from the kernel */
+	TAILQ_INIT(&policyhead);
+	if (!get_addrselectpolicy(&policyhead)) {
+		/* no policy is installed into kernel, we don't sort. */
+		free(aio);
+		return (n);
+	}
+
+	for (i = 0, ai = sentinel->ai_next; i < n; ai = ai->ai_next, i++) {
+		aio[i].aio_ai = ai;
+		aio[i].aio_dstscope = gai_addr2scopetype(ai->ai_addr);
+		aio[i].aio_dstpolicy = match_addrselectpolicy(ai->ai_addr,
+							      &policyhead);
+		set_source(&aio[i], &policyhead, svd);
+	}
+
+	/* perform sorting. */
+	qsort(aio, n, sizeof(*aio), comp_dst);
+
+	/* reorder the addrinfo chain. */
+	for (i = 0, aip = &sentinel->ai_next; i < n; i++) {
+		*aip = aio[i].aio_ai;
+		aip = &aio[i].aio_ai->ai_next;
+	}
+	*aip = NULL;
+
+	/* cleanup and return */
+	free(aio);
+	free_addrselectpolicy(&policyhead);
+	return(n);
+}
+
+static int
+get_addrselectpolicy(struct policyhead *head)
+{
+#ifdef INET6
+	int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_ADDRCTLPOLICY };
+	size_t l;
+	char *buf;
+	struct in6_addrpolicy *pol, *ep;
+
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), NULL, &l, NULL, 0) < 0)
+		return (0);
+	if (l == 0)
+		return (0);
+	if ((buf = malloc(l)) == NULL)
+		return (0);
+	if (sysctl(mib, sizeof(mib) / sizeof(mib[0]), buf, &l, NULL, 0) < 0) {
+		free(buf);
+		return (0);
+	}
+
+	ep = (struct in6_addrpolicy *)(buf + l);
+	for (pol = (struct in6_addrpolicy *)buf; pol + 1 <= ep; pol++) {
+		struct policyqueue *new;
+
+		if ((new = malloc(sizeof(*new))) == NULL) {
+			free_addrselectpolicy(head); /* make the list empty */
+			break;
+		}
+		new->pc_policy = *pol;
+		TAILQ_INSERT_TAIL(head, new, pc_entry);
+	}
+
+	free(buf);
+	return (1);
+#else
+	return (0);
+#endif
+}
+
+static void
+free_addrselectpolicy(struct policyhead *head)
+{
+	struct policyqueue *ent, *nent;
+
+	for (ent = TAILQ_FIRST(head); ent; ent = nent) {
+		nent = TAILQ_NEXT(ent, pc_entry);
+		TAILQ_REMOVE(head, ent, pc_entry);
+		free(ent);
+	}
+}
+
+static struct policyqueue *
+match_addrselectpolicy(struct sockaddr *addr, struct policyhead *head)
+{
+#ifdef INET6
+	struct policyqueue *ent, *bestent = NULL;
+	struct in6_addrpolicy *pol;
+	int matchlen, bestmatchlen = -1;
+	u_char *mp, *ep, *k, *p, m;
+	struct sockaddr_in6 key;
+
+	switch(addr->sa_family) {
+	case AF_INET6:
+		key = *(struct sockaddr_in6 *)addr;
+		break;
+	case AF_INET:
+		/* convert the address into IPv4-mapped IPv6 address. */
+		memset(&key, 0, sizeof(key));
+		key.sin6_family = AF_INET6;
+		key.sin6_len = sizeof(key);
+		key.sin6_addr.s6_addr[10] = 0xff;
+		key.sin6_addr.s6_addr[11] = 0xff;
+		memcpy(&key.sin6_addr.s6_addr[12],
+		       &((struct sockaddr_in *)addr)->sin_addr, 4);
+		break;
+	default:
+		return(NULL);
+	}
+
+	for (ent = TAILQ_FIRST(head); ent; ent = TAILQ_NEXT(ent, pc_entry)) {
+		pol = &ent->pc_policy;
+		matchlen = 0;
+
+		mp = (u_char *)&pol->addrmask.sin6_addr;
+		ep = mp + 16;	/* XXX: scope field? */
+		k = (u_char *)&key.sin6_addr;
+		p = (u_char *)&pol->addr.sin6_addr;
+		for (; mp < ep && *mp; mp++, k++, p++) {
+			m = *mp;
+			if ((*k & m) != *p)
+				goto next; /* not match */
+			if (m == 0xff) /* short cut for a typical case */
+				matchlen += 8;
+			else {
+				while (m >= 0x80) {
+					matchlen++;
+					m <<= 1;
+				}
+			}
+		}
+
+		/* matched.  check if this is better than the current best. */
+		if (matchlen > bestmatchlen) {
+			bestent = ent;
+			bestmatchlen = matchlen;
+		}
+
+	  next:
+		continue;
+	}
+
+	return(bestent);
+#else
+	return(NULL);
+#endif
+
+}
+
+static void
+set_source(struct ai_order *aio, struct policyhead *ph,
+    struct servent_data *svd)
+{
+	struct addrinfo ai = *aio->aio_ai;
+	struct sockaddr_storage ss;
+	socklen_t srclen;
+	int s;
+
+	/* set unspec ("no source is available"), just in case */
+	aio->aio_srcsa.sa_family = AF_UNSPEC;
+	aio->aio_srcscope = -1;
+
+	switch(ai.ai_family) {
+	case AF_INET:
+#ifdef INET6
+	case AF_INET6:
+#endif
+		break;
+	default:		/* ignore unsupported AFs explicitly */
+		return;
+	}
+
+	/* XXX: make a dummy addrinfo to call connect() */
+	ai.ai_socktype = SOCK_DGRAM;
+	ai.ai_protocol = IPPROTO_UDP; /* is UDP too specific? */
+	ai.ai_next = NULL;
+	memset(&ss, 0, sizeof(ss));
+	memcpy(&ss, ai.ai_addr, ai.ai_addrlen);
+	ai.ai_addr = (struct sockaddr *)&ss;
+	get_port(&ai, "1", 0, svd);
+
+	/* open a socket to get the source address for the given dst */
+	if ((s = socket(ai.ai_family, ai.ai_socktype | SOCK_CLOEXEC,
+	    ai.ai_protocol)) < 0)
+		return;		/* give up */
+	if (connect(s, ai.ai_addr, ai.ai_addrlen) < 0)
+		goto cleanup;
+	srclen = ai.ai_addrlen;
+	if (getsockname(s, &aio->aio_srcsa, &srclen) < 0) {
+		aio->aio_srcsa.sa_family = AF_UNSPEC;
+		goto cleanup;
+	}
+	aio->aio_srcscope = gai_addr2scopetype(&aio->aio_srcsa);
+	aio->aio_srcpolicy = match_addrselectpolicy(&aio->aio_srcsa, ph);
+	aio->aio_matchlen = matchlen(&aio->aio_srcsa, aio->aio_ai->ai_addr);
+#ifdef INET6
+	if (ai.ai_family == AF_INET6) {
+		struct in6_ifreq ifr6;
+		u_int32_t flags6;
+
+		memset(&ifr6, 0, sizeof(ifr6));
+		memcpy(&ifr6.ifr_addr, ai.ai_addr, ai.ai_addrlen);
+		if (ioctl(s, SIOCGIFAFLAG_IN6, &ifr6) == 0) {
+			flags6 = ifr6.ifr_ifru.ifru_flags6;
+			if ((flags6 & IN6_IFF_DEPRECATED))
+				aio->aio_srcflag |= AIO_SRCFLAG_DEPRECATED;
+		}
+	}
+#endif
+
+  cleanup:
+	close(s);
+	return;
+}
+
+static int
+matchlen(struct sockaddr *src, struct sockaddr *dst)
+{
+	int match = 0;
+	u_char *s, *d;
+	u_char *lim, r;
+	int addrlen;
+
+	switch (src->sa_family) {
+#ifdef INET6
+	case AF_INET6:
+		s = (u_char *)&((struct sockaddr_in6 *)src)->sin6_addr;
+		d = (u_char *)&((struct sockaddr_in6 *)dst)->sin6_addr;
+		addrlen = sizeof(struct in6_addr);
+		lim = s + addrlen;
+		break;
+#endif
+	case AF_INET:
+		s = (u_char *)&((struct sockaddr_in *)src)->sin_addr;
+		d = (u_char *)&((struct sockaddr_in *)dst)->sin_addr;
+		addrlen = sizeof(struct in_addr);
+		lim = s + addrlen;
+		break;
+	default:
+		return(0);
+	}
+
+	while (s < lim)
+		if ((r = (*d++ ^ *s++)) != 0) {
+			while (r < addrlen * 8) {
+				match++;
+				r <<= 1;
+			}
+			break;
+		} else
+			match += 8;
+	return(match);
+}
+
+static int
+comp_dst(const void *arg1, const void *arg2)
+{
+	const struct ai_order *dst1 = arg1, *dst2 = arg2;
+
+	/*
+	 * Rule 1: Avoid unusable destinations.
+	 * XXX: we currently do not consider if an appropriate route exists.
+	 */
+	if (dst1->aio_srcsa.sa_family != AF_UNSPEC &&
+	    dst2->aio_srcsa.sa_family == AF_UNSPEC) {
+		return(-1);
+	}
+	if (dst1->aio_srcsa.sa_family == AF_UNSPEC &&
+	    dst2->aio_srcsa.sa_family != AF_UNSPEC) {
+		return(1);
+	}
+
+	/* Rule 2: Prefer matching scope. */
+	if (dst1->aio_dstscope == dst1->aio_srcscope &&
+	    dst2->aio_dstscope != dst2->aio_srcscope) {
+		return(-1);
+	}
+	if (dst1->aio_dstscope != dst1->aio_srcscope &&
+	    dst2->aio_dstscope == dst2->aio_srcscope) {
+		return(1);
+	}
+
+	/* Rule 3: Avoid deprecated addresses. */
+	if (dst1->aio_srcsa.sa_family != AF_UNSPEC &&
+	    dst2->aio_srcsa.sa_family != AF_UNSPEC) {
+		if (!(dst1->aio_srcflag & AIO_SRCFLAG_DEPRECATED) &&
+		    (dst2->aio_srcflag & AIO_SRCFLAG_DEPRECATED)) {
+			return(-1);
+		}
+		if ((dst1->aio_srcflag & AIO_SRCFLAG_DEPRECATED) &&
+		    !(dst2->aio_srcflag & AIO_SRCFLAG_DEPRECATED)) {
+			return(1);
+		}
+	}
+
+	/* Rule 4: Prefer home addresses. */
+	/* XXX: not implemented yet */
+
+	/* Rule 5: Prefer matching label. */
+#ifdef INET6
+	if (dst1->aio_srcpolicy && dst1->aio_dstpolicy &&
+	    dst1->aio_srcpolicy->pc_policy.label ==
+	    dst1->aio_dstpolicy->pc_policy.label &&
+	    (dst2->aio_srcpolicy == NULL || dst2->aio_dstpolicy == NULL ||
+	     dst2->aio_srcpolicy->pc_policy.label !=
+	     dst2->aio_dstpolicy->pc_policy.label)) {
+		return(-1);
+	}
+	if (dst2->aio_srcpolicy && dst2->aio_dstpolicy &&
+	    dst2->aio_srcpolicy->pc_policy.label ==
+	    dst2->aio_dstpolicy->pc_policy.label &&
+	    (dst1->aio_srcpolicy == NULL || dst1->aio_dstpolicy == NULL ||
+	     dst1->aio_srcpolicy->pc_policy.label !=
+	     dst1->aio_dstpolicy->pc_policy.label)) {
+		return(1);
+	}
+#endif
+
+	/* Rule 6: Prefer higher precedence. */
+#ifdef INET6
+	if (dst1->aio_dstpolicy &&
+	    (dst2->aio_dstpolicy == NULL ||
+	     dst1->aio_dstpolicy->pc_policy.preced >
+	     dst2->aio_dstpolicy->pc_policy.preced)) {
+		return(-1);
+	}
+	if (dst2->aio_dstpolicy &&
+	    (dst1->aio_dstpolicy == NULL ||
+	     dst2->aio_dstpolicy->pc_policy.preced >
+	     dst1->aio_dstpolicy->pc_policy.preced)) {
+		return(1);
+	}
+#endif
+
+	/* Rule 7: Prefer native transport. */
+	/* XXX: not implemented yet */
+
+	/* Rule 8: Prefer smaller scope. */
+	if (dst1->aio_dstscope >= 0 &&
+	    dst1->aio_dstscope < dst2->aio_dstscope) {
+		return(-1);
+	}
+	if (dst2->aio_dstscope >= 0 &&
+	    dst2->aio_dstscope < dst1->aio_dstscope) {
+		return(1);
+	}
+
+	/*
+	 * Rule 9: Use longest matching prefix.
+	 * We compare the match length in a same AF only.
+	 */
+	if (dst1->aio_ai->ai_addr->sa_family ==
+	    dst2->aio_ai->ai_addr->sa_family &&
+	    dst1->aio_ai->ai_addr->sa_family != AF_INET) {
+		if (dst1->aio_matchlen > dst2->aio_matchlen) {
+			return(-1);
+		}
+		if (dst1->aio_matchlen < dst2->aio_matchlen) {
+			return(1);
+		}
+	}
+
+	/* Rule 10: Otherwise, leave the order unchanged. */
+	return(-1);
+}
+
+/*
+ * Copy from scope.c.
+ * XXX: we should standardize the functions and link them as standard
+ * library.
+ */
+static int
+gai_addr2scopetype(struct sockaddr *sa)
+{
+#ifdef INET6
+	struct sockaddr_in6 *sa6;
+#endif
+	struct sockaddr_in *sa4;
+
+	switch(sa->sa_family) {
+#ifdef INET6
+	case AF_INET6:
+		sa6 = (struct sockaddr_in6 *)sa;
+		if (IN6_IS_ADDR_MULTICAST(&sa6->sin6_addr)) {
+			/* just use the scope field of the multicast address */
+			return(sa6->sin6_addr.s6_addr[2] & 0x0f);
+		}
+		/*
+		 * Unicast addresses: map scope type to corresponding scope
+		 * value defined for multcast addresses.
+		 * XXX: hardcoded scope type values are bad...
+		 */
+		if (IN6_IS_ADDR_LOOPBACK(&sa6->sin6_addr))
+			return(1); /* node local scope */
+		if (IN6_IS_ADDR_LINKLOCAL(&sa6->sin6_addr))
+			return(2); /* link-local scope */
+		if (IN6_IS_ADDR_SITELOCAL(&sa6->sin6_addr))
+			return(5); /* site-local scope */
+		return(14);	/* global scope */
+		break;
+#endif
+	case AF_INET:
+		/*
+		 * IPv4 pseudo scoping according to RFC 3484.
+		 */
+		sa4 = (struct sockaddr_in *)sa;
+		/* IPv4 autoconfiguration addresses have link-local scope. */
+		if (((u_char *)&sa4->sin_addr)[0] == 169 &&
+		    ((u_char *)&sa4->sin_addr)[1] == 254)
+			return(2);
+		/* Private addresses have site-local scope. */
+		if (((u_char *)&sa4->sin_addr)[0] == 10 ||
+		    (((u_char *)&sa4->sin_addr)[0] == 172 &&
+		     (((u_char *)&sa4->sin_addr)[1] & 0xf0) == 16) ||
+		    (((u_char *)&sa4->sin_addr)[0] == 192 &&
+		     ((u_char *)&sa4->sin_addr)[1] == 168))
+			return(14);	/* XXX: It should be 5 unless NAT */
+		/* Loopback addresses have link-local scope. */
+		if (((u_char *)&sa4->sin_addr)[0] == 127)
+			return(2);
+		return(14);
+		break;
+	default:
+		errno = EAFNOSUPPORT; /* is this a good error? */
+		return(-1);
+	}
 }
 
 /*
