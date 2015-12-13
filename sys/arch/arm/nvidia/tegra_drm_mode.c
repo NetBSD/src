@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.9 2015/11/16 21:14:51 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.10 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.9 2015/11/16 21:14:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.10 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.9 2015/11/16 21:14:51 jmcneill 
 #include <arm/nvidia/tegra_dcreg.h>
 #include <arm/nvidia/tegra_hdmireg.h>
 #include <arm/nvidia/tegra_drm.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static struct drm_framebuffer *tegra_fb_create(struct drm_device *,
 		    struct drm_file *, struct drm_mode_fb_cmd2 *);
@@ -1097,8 +1099,8 @@ tegra_connector_init(struct drm_device *ddev, struct drm_encoder *encoder)
 	if (!connector->hpd)
 		DRM_ERROR("failed to find hpd pin for connector\n");
 
-	connector->ddcdev = sc->sc_ddcdev;
-	if (!connector->ddcdev)
+	connector->ddc = sc->sc_ddc;
+	if (!connector->ddc)
 		DRM_ERROR("failed to find ddc device for connector\n");
 
 	return 0;
@@ -1127,7 +1129,7 @@ tegra_connector_detect(struct drm_connector *connector, bool force)
 		return connector_status_connected;
 	}
 
-	con = tegra_gpio_read(tegra_connector->hpd);
+	con = fdtbus_gpio_read(tegra_connector->hpd);
 	if (con) {
 		return connector_status_connected;
 	} else {
@@ -1156,10 +1158,10 @@ tegra_connector_get_modes(struct drm_connector *connector)
 	struct edid *pedid = NULL;
 	int error, block;
 
-	if (tegra_connector->ddcdev) {
+	if (tegra_connector->ddc) {
 		memset(edid, 0, sizeof(edid));
 		for (block = 0; block < 4; block++) {
-			error = ddc_dev_read_edid_block(tegra_connector->ddcdev,
+			error = ddc_read_edid_block(tegra_connector->ddc,
 			    &edid[block * EDID_LENGTH], EDID_LENGTH, block);
 			if (error)
 				break;

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.7 2015/10/15 09:04:35 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.8 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.7 2015/10/15 09:04:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.8 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.7 2015/10/15 09:04:35 jmcneill 
 
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_ahcisatareg.h>
+
+#include <dev/fdt/fdtvar.h>
 
 #define TEGRA_AHCISATA_OFFSET	0x7000
 
@@ -58,6 +58,14 @@ struct tegra_ahcisata_softc {
 	struct tegra_gpio_pin	*sc_pin_power;
 };
 
+static const char * const tegra_ahcisata_supplies[] = {
+    "hvdd-supply",
+    "vddio-supply",
+    "avdd-supply",
+    "target-5v-supply",
+    "target-12v-supply"
+};
+
 static void	tegra_ahcisata_init(struct tegra_ahcisata_softc *);
 
 CFATTACH_DECL_NEW(tegra_ahcisata, sizeof(struct tegra_ahcisata_softc),
@@ -66,38 +74,66 @@ CFATTACH_DECL_NEW(tegra_ahcisata, sizeof(struct tegra_ahcisata_softc),
 static int
 tegra_ahcisata_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-ahci", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_ahcisata_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
-	prop_dictionary_t prop = device_properties(self);
-	const char *pin;
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	bus_addr_t ahci_addr, sata_addr;
+	bus_size_t ahci_size, sata_size;
+	struct fdtbus_regulator *reg;
+	char intrstr[128];
+	int error, n;
 
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	if (fdtbus_get_reg(phandle, 0, &ahci_addr, &ahci_size) != 0) {
+		aprint_error(": couldn't get ahci registers\n");
+		return;
+	}
+	if (fdtbus_get_reg(phandle, 1, &sata_addr, &sata_size) != 0) {
+		aprint_error(": couldn't get sata registers\n");
+		return;
+	}
+
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, sata_addr, sata_size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map sata registers: %d\n", error);
+		return;
+	}
 
 	sc->sc.sc_atac.atac_dev = self;
-	sc->sc.sc_dmat = tio->tio_dmat;
-	sc->sc.sc_ahcit = tio->tio_bst;
-	sc->sc.sc_ahcis = loc->loc_size - TEGRA_AHCISATA_OFFSET;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset + TEGRA_AHCISATA_OFFSET,
-	    loc->loc_size - TEGRA_AHCISATA_OFFSET, &sc->sc.sc_ahcih);
+	sc->sc.sc_dmat = faa->faa_dmat;
+	sc->sc.sc_ahcit = faa->faa_bst;
+	sc->sc.sc_ahcis = ahci_size;
+	error = bus_space_map(sc->sc.sc_ahcit, ahci_addr, ahci_size, 0,
+	    &sc->sc.sc_ahcih);
+	if (error) {
+		aprint_error(": couldn't map ahci registers: %d\n", error);
+		return;
+	}
 	sc->sc.sc_ahci_quirks = AHCI_QUIRK_SKIP_RESET;
 
 	aprint_naive("\n");
 	aprint_normal(": SATA\n");
 
-	if (prop_dictionary_get_cstring_nocopy(prop, "power-gpio", &pin)) {
-		sc->sc_pin_power = tegra_gpio_acquire(pin, GPIO_PIN_OUTPUT);
-		if (sc->sc_pin_power)
-			tegra_gpio_write(sc->sc_pin_power, 1);
+	for (n = 0; n < __arraycount(tegra_ahcisata_supplies); n++) {
+		const char *supply = tegra_ahcisata_supplies[n];
+		reg = fdtbus_regulator_acquire(phandle, supply);
+		if (reg == NULL) {
+			aprint_error_dev(self, "couldn't acquire %s\n", supply);
+			continue;
+		}
+		if (fdtbus_regulator_enable(reg) != 0) {
+			aprint_error_dev(self, "couldn't enable %s\n", supply);
+		}
+		fdtbus_regulator_release(reg);
 	}
 
 	tegra_car_periph_sata_enable();
@@ -106,14 +142,19 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 
 	tegra_ahcisata_init(sc);
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_BIO, IST_LEVEL,
-	    ahci_intr, &sc->sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
+	    ahci_intr, &sc->sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	ahci_attach(&sc->sc);
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.2 2015/05/03 17:24:45 jmcneill Exp $ */
+/* $NetBSD: tegra_com.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,11 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.2 2015/05/03 17:24:45 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,6 +45,26 @@ __KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.2 2015/05/03 17:24:45 jmcneill Exp $
 #include <arm/nvidia/tegra_var.h>
 
 #include <dev/ic/comvar.h>
+
+#include <dev/fdt/fdtvar.h>
+
+/* XXX */
+static int
+tegra_com_addr2port(bus_addr_t addr)
+{
+	switch (addr) {
+	case TEGRA_APB_BASE + TEGRA_UARTA_OFFSET:
+		return 0;
+	case TEGRA_APB_BASE + TEGRA_UARTB_OFFSET:
+		return 1;
+	case TEGRA_APB_BASE + TEGRA_UARTC_OFFSET:
+		return 2;
+	case TEGRA_APB_BASE + TEGRA_UARTD_OFFSET:
+		return 3;
+	default:
+		return -1;
+	}
+}
 
 static int tegra_com_match(device_t, cfdata_t, void *);
 static void tegra_com_attach(device_t, device_t, void *);
@@ -62,18 +80,10 @@ CFATTACH_DECL_NEW(tegra_com, sizeof(struct tegra_com_softc),
 static int
 tegra_com_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
-	bus_space_tag_t bst = tio->tio_a4x_bst;
-	bus_space_handle_t bsh;
+	const char * const compatible[] = { "nvidia,tegra124-uart", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	if (com_is_console(bst, TEGRA_APB_BASE + loc->loc_offset, NULL))
-		return 1;
-
-	bus_space_subregion(bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &bsh);
-
-	return comprobe1(bst, bsh);
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -81,29 +91,69 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_com_softc * const tsc = device_private(self);
 	struct com_softc * const sc = &tsc->tsc_sc;
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
-	bus_space_tag_t bst = tio->tio_a4x_bst;
-	const bus_addr_t iobase = TEGRA_APB_BASE + loc->loc_offset;
+	struct fdt_attach_args * const faa = aux;
 	bus_space_handle_t bsh;
+	bus_space_tag_t bst;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
+	u_int reg_shift;
+	int error, len;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	len = OF_getprop(faa->faa_phandle, "reg-shift", &reg_shift,
+	    sizeof(reg_shift));
+	if (len == sizeof(reg_shift)) {
+		reg_shift = be32toh(reg_shift);
+		if (reg_shift == 2) {
+			bst = faa->faa_a4x_bst;
+		} else if (reg_shift == 0) {
+			bst = faa->faa_bst;
+		} else {
+			aprint_error(": unsupported reg-shift value %d\n",
+			    reg_shift);
+			return;
+		}
+	} else {
+		/* missing or bad reg-shift property, assume 2 */
+		bst = faa->faa_a4x_bst;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_frequency = tegra_car_uart_rate(loc->loc_port);
+
+	/* XXX */
+	const int port = tegra_com_addr2port(addr);
+	if (port == -1) {
+		panic("unsupported com address %#llx", (uint64_t)addr);
+	}
+	sc->sc_frequency = tegra_car_uart_rate(port);
 	sc->sc_type = COM_TYPE_TEGRA;
 
-	if (com_is_console(bst, iobase, &bsh) == 0
-	    && bus_space_subregion(bst, tio->tio_bsh,
-		loc->loc_offset / 4, loc->loc_size, &bsh)) {
-		panic(": can't map registers");
+	error = bus_space_map(bst, addr, size, 0, &bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, iobase);
+
+	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");
 
-	tsc->tsc_ih = intr_establish(loc->loc_intr, IPL_SERIAL,
-	    IST_LEVEL | IST_MPSAFE, comintr, sc);
-	if (tsc->tsc_ih == NULL)
-		panic("%s: failed to establish interrupt %d",
-		    device_xname(self), loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
+		return;
+	}
+
+	tsc->tsc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, comintr, sc);
+	if (tsc->tsc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }

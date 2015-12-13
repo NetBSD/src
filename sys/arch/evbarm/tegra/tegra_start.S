@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_start.S,v 1.7 2015/08/22 15:10:04 jmcneill Exp $ */
+/* $NetBSD: tegra_start.S,v 1.8 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014, 2015 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
 #include <arm/nvidia/tegra_reg.h>
 #include <evbarm/tegra/platform.h>
 
-RCSID("$NetBSD: tegra_start.S,v 1.7 2015/08/22 15:10:04 jmcneill Exp $")
+RCSID("$NetBSD: tegra_start.S,v 1.8 2015/12/13 17:39:19 jmcneill Exp $")
 
 #if defined(VERBOSE_INIT_ARM)
 #define	XPUTC(n)	mov r0, n; bl xputc
@@ -101,22 +101,6 @@ _C_LABEL(tegra_start):
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 
 	stmia	r4, {r0-r3}		// Save the arguments
-
-	/*
-	 * Copy the value of the "bootargs" environment variable from r3.
-	 */
-	movw	r4, #:lower16:bootargs
-	movt	r4, #:upper16:bootargs
-	sub	r4, r4, #KERNEL_BASE_VOFFSET
-
-	cmp	r3, #0
-	beq	1f
-2:
-	ldrb	r0, [r3], #1
-	strb	r0, [r4], #1
-	teq	r0, #0
-	bne	2b
-1:
 #endif
 
 	/*

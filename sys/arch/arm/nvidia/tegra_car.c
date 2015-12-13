@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_car.c,v 1.30 2015/11/21 22:55:32 jmcneill Exp $ */
+/* $NetBSD: tegra_car.c,v 1.31 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.30 2015/11/21 22:55:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.31 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_car.c,v 1.30 2015/11/21 22:55:32 jmcneill Exp 
 #include <arm/nvidia/tegra_carreg.h>
 #include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_var.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static int	tegra_car_match(device_t, cfdata_t, void *);
 static void	tegra_car_attach(device_t, device_t, void *);
@@ -65,7 +65,7 @@ static void	tegra_car_rnd_attach(device_t);
 static void	tegra_car_rnd_intr(void *);
 static void	tegra_car_rnd_callback(size_t, void *);
 
-static struct tegra_car_softc *pmc_softc = NULL;
+static struct tegra_car_softc *car_softc = NULL;
 
 CFATTACH_DECL_NEW(tegra_car, sizeof(struct tegra_car_softc),
 	tegra_car_match, tegra_car_attach, NULL, NULL);
@@ -73,23 +73,36 @@ CFATTACH_DECL_NEW(tegra_car, sizeof(struct tegra_car_softc),
 static int
 tegra_car_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-car", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_car_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_car_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
 
-	KASSERT(pmc_softc == NULL);
-	pmc_softc = sc;
+	KASSERT(car_softc == NULL);
+	car_softc = sc;
 
 	aprint_naive("\n");
 	aprint_normal(": CAR\n");
@@ -185,9 +198,9 @@ tegra_car_rnd_callback(size_t bytes_wanted, void *priv)
 static void
 tegra_car_get_bs(bus_space_tag_t *pbst, bus_space_handle_t *pbsh)
 {
-	if (pmc_softc) {
-		*pbst = pmc_softc->sc_bst;
-		*pbsh = pmc_softc->sc_bsh;
+	if (car_softc) {
+		*pbst = car_softc->sc_bst;
+		*pbsh = car_softc->sc_bsh;
 	} else {
 		*pbst = &armv7_generic_bs_tag;
 		bus_space_subregion(*pbst, tegra_ppsb_bsh,

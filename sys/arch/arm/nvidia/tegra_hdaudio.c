@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdaudio.c,v 1.4 2015/07/26 17:54:46 jmcneill Exp $ */
+/* $NetBSD: tegra_hdaudio.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.4 2015/07/26 17:54:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.4 2015/07/26 17:54:46 jmcneill E
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_hdaudioreg.h>
+
+#include <dev/fdt/fdtvar.h>
 
 #define TEGRA_HDAUDIO_OFFSET	0x8000
 
@@ -66,6 +66,7 @@ struct tegra_hdaudio_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
+	int			sc_phandle;
 };
 
 static void	tegra_hdaudio_init(struct tegra_hdaudio_softc *);
@@ -77,39 +78,58 @@ CFATTACH_DECL2_NEW(tegra_hdaudio, sizeof(struct tegra_hdaudio_softc),
 static int
 tegra_hdaudio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-hda", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_hdaudio_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
 
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
-	sc->sc.sc_memt = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset + TEGRA_HDAUDIO_OFFSET,
-	    loc->loc_size - TEGRA_HDAUDIO_OFFSET, &sc->sc.sc_memh);
+	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
+
+	sc->sc.sc_memt = faa->faa_bst;
+	bus_space_subregion(sc->sc.sc_memt, sc->sc_bsh, TEGRA_HDAUDIO_OFFSET,
+	    size - TEGRA_HDAUDIO_OFFSET, &sc->sc.sc_memh);
 	sc->sc.sc_memvalid = true;
-	sc->sc.sc_dmat = tio->tio_dmat;
+	sc->sc.sc_dmat = faa->faa_dmat;
 	sc->sc.sc_flags = HDAUDIO_FLAG_NO_STREAM_RESET;
 
 	aprint_naive("\n");
 	aprint_normal(": HDA\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_AUDIO, IST_LEVEL,
-	    tegra_hdaudio_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_AUDIO, 0,
+	    tegra_hdaudio_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	tegra_pmc_power(PMC_PARTID_DISB, true);
 	tegra_car_periph_hda_enable();
@@ -147,7 +167,7 @@ tegra_hdaudio_detach(device_t self, int flags)
 	hdaudio_detach(&sc->sc, flags);
 
 	if (sc->sc_ih) {
-		intr_disestablish(sc->sc_ih);
+		fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
 		sc->sc_ih = NULL;
 	}
 

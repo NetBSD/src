@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.10 2015/11/19 22:09:16 jmcneill Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.11 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.10 2015/11/19 22:09:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.11 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +47,24 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.10 2015/11/19 22:09:16 jmcneill Exp
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_usbreg.h>
 
+#include <dev/fdt/fdtvar.h>
+
+/* XXX */
+static int
+tegra_ehci_addr2port(bus_addr_t addr)
+{
+	switch (addr) {
+	case TEGRA_AHB_A2_BASE + TEGRA_USB1_OFFSET:
+		return 0;
+	case TEGRA_AHB_A2_BASE + TEGRA_USB2_OFFSET:
+		return 1;
+	case TEGRA_AHB_A2_BASE + TEGRA_USB3_OFFSET:
+		return 2;
+	default:
+		return -1;
+	}
+}
+
 #define TEGRA_EHCI_REG_OFFSET	0x100
 
 static int	tegra_ehci_match(device_t, cfdata_t, void *);
@@ -62,8 +78,6 @@ struct tegra_ehci_softc {
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
 	u_int			sc_port;
-
-	device_t		sc_usbphydev;
 };
 
 static int	tegra_ehci_port_status(struct ehci_softc *sc, uint32_t v,
@@ -76,36 +90,44 @@ CFATTACH_DECL2_NEW(tegra_ehci, sizeof(struct tegra_ehci_softc),
 static int
 tegra_ehci_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-ehci", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_ehci_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_ehci_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
-	struct tegrausbphy_attach_args tup;
+	struct fdt_attach_args * const faa = aux;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
 	int error;
 
-	sc->sc_bst = tio->tio_bst;
-	error = bus_space_map(sc->sc_bst, TEGRA_AHB_A2_BASE + loc->loc_offset,
-	    loc->loc_size, 0, &sc->sc_bsh);
-	if (error) {
-		aprint_error(": couldn't map USB%d\n", loc->loc_port + 1);
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
 		return;
 	}
-	sc->sc_port = loc->loc_port;
+
+	sc->sc_bst = faa->faa_bst;
+	sc->sc_port = tegra_ehci_addr2port(addr);
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map USB%d\n", sc->sc_port + 1);
+		return;
+	}
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_bus.hci_private = &sc->sc;
-	sc->sc.sc_bus.dmatag = tio->tio_dmat;
+	sc->sc.sc_bus.dmatag = faa->faa_dmat;
 	sc->sc.sc_bus.usbrev = USBREV_2_0;
 	sc->sc.sc_ncomp = 0;
 	sc->sc.sc_flags = EHCIF_ETTF;
 	sc->sc.sc_id_vendor = 0x10de;
 	strlcpy(sc->sc.sc_vendor, "Tegra", sizeof(sc->sc.sc_vendor));
-	sc->sc.sc_size = loc->loc_size - TEGRA_EHCI_REG_OFFSET;
+	sc->sc.sc_size = size - TEGRA_EHCI_REG_OFFSET;
 	sc->sc.iot = sc->sc_bst;
 	bus_space_subregion(sc->sc_bst, sc->sc_bsh, TEGRA_EHCI_REG_OFFSET,
 	    sc->sc.sc_size, &sc->sc.ioh);
@@ -113,23 +135,23 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_vendor_port_status = tegra_ehci_port_status;
 
 	aprint_naive("\n");
-	aprint_normal(": USB%d\n", loc->loc_port + 1);
+	aprint_normal(": USB%d\n", sc->sc_port + 1);
 
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_USB, IST_LEVEL,
-	    ehci_intr, &sc->sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
-	tup.tup_bst = sc->sc_bst;
-	tup.tup_bsh = sc->sc_bsh;
-	tup.tup_port = sc->sc_port;
-	sc->sc_usbphydev = config_found_ia(self, "tegrausbphybus", &tup, NULL);
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_USB, 0,
+	    ehci_intr, &sc->sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	error = ehci_init(&sc->sc);
 	if (error != USBD_NORMAL_COMPLETION) {

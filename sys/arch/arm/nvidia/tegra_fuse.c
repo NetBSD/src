@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fuse.c,v 1.2 2015/11/21 22:52:31 jmcneill Exp $ */
+/* $NetBSD: tegra_fuse.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fuse.c,v 1.2 2015/11/21 22:52:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fuse.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_fuse.c,v 1.2 2015/11/21 22:52:31 jmcneill Exp 
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static int	tegra_fuse_match(device_t, cfdata_t, void *);
 static void	tegra_fuse_attach(device_t, device_t, void *);
@@ -58,20 +60,33 @@ CFATTACH_DECL_NEW(tegra_fuse, sizeof(struct tegra_fuse_softc),
 static int
 tegra_fuse_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-efuse", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_fuse_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_fuse_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
 
 	KASSERT(fuse_softc == NULL);
 	fuse_softc = sc;
