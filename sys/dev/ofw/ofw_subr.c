@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.24 2015/12/12 22:22:51 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.25 2015/12/13 11:00:01 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.24 2015/12/12 22:22:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.25 2015/12/13 11:00:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -396,7 +396,7 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 			if (OF_getprop(node, "reg", &reg64, sizeof(reg64))
 			    < sizeof(reg64))
 				continue;
-			addr = reg64;
+			addr = be64toh(reg64);
 			/*
 			 * The i2c bus number (0 or 1) is encoded in bit 33
 			 * of the register, but we encode it in bit 8 of
@@ -408,7 +408,7 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size)
 			if (OF_getprop(node, "reg", &reg32, sizeof(reg32))
 			    < sizeof(reg32))
 				continue;
-			addr = reg32;
+			addr = be32toh(reg32);
 		} else {
 			continue;
 		}
