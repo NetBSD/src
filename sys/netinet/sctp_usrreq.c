@@ -1,5 +1,5 @@
 /*	$KAME: sctp_usrreq.c,v 1.50 2005/06/16 20:45:29 jinmei Exp $	*/
-/*	$NetBSD: sctp_usrreq.c,v 1.1 2015/10/13 21:28:35 rjs Exp $	*/
+/*	$NetBSD: sctp_usrreq.c,v 1.2 2015/12/13 18:58:13 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.1 2015/10/13 21:28:35 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_usrreq.c,v 1.2 2015/12/13 18:58:13 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -980,7 +980,7 @@ sctp_fill_up_addresses(struct sctp_inpcb *inp,
 						in6_sin_2_v4mapsin6(sin, (struct sockaddr_in6 *)sas);
 						((struct sockaddr_in6 *)sas)->sin6_port = inp->sctp_lport;
 						sas = (struct sockaddr_storage *)((vaddr_t)sas + sizeof(struct sockaddr_in6));
-						actual += sizeof(sizeof(struct sockaddr_in6));
+						actual += sizeof(struct sockaddr_in6);
 					} else {
 						memcpy(sas, sin, sizeof(*sin));
 						((struct sockaddr_in *)sas)->sin_port = inp->sctp_lport;
