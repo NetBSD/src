@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.205 2015/09/06 16:45:09 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.206 2015/12/13 11:51:37 jmcneill Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.205 2015/09/06 16:45:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.206 2015/12/13 11:51:37 jmcneill Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1114,7 +1114,7 @@ noether:
 				}
 
 				of_enter_i2c_devs(props, busnode,
-				    sizeof(cell_t));
+				    sizeof(cell_t), 1);
 			}
 		}
 
