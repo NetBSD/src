@@ -1,8 +1,7 @@
 #
-#	$NetBSD: JETSONTK1,v 1.42 2015/12/13 17:39:19 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.1 2015/12/13 23:02:56 jmcneill Exp $
 #
-#	NVIDIA Jetson TK1 - Tegra K1 development kit
-#	https://developer.nvidia.com/jetson-tk1
+#	NVIDIA Tegra K1 (T124)
 #
 
 include	"arch/evbarm/conf/std.tegra"
@@ -10,9 +9,7 @@ include	"arch/evbarm/conf/GENERIC.common"
 
 options 	CPU_CORTEXA15
 options 	SOC_TEGRA124
-options 	BOARD_JETSONTK1
 options 	MULTIPROCESSOR
-#options 	MEMSIZE=2048
 
 options 	FDT		# Flattened Device Tree support
 pseudo-device 	openfirm	# /dev/openfirm
@@ -152,7 +149,7 @@ pseudo-device	wsmux
 pseudo-device	wsfont
 
 # GPU
-#nouveau0	at fdt?			# GPU
+nouveau*	at fdt?			# GPU
 
 # Thermal throttling controller
 tegrasoctherm*	at fdt?			# SOC_THERM
@@ -165,4 +162,4 @@ usb*		at ehci?
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
 
-cinclude "arch/evbarm/conf/JETSONTK1.local"
+cinclude "arch/evbarm/conf/TEGRA.local"
