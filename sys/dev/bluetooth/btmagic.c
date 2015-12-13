@@ -1,4 +1,4 @@
-/*	$NetBSD: btmagic.c,v 1.14 2015/07/03 14:18:18 bouyer Exp $	*/
+/*	$NetBSD: btmagic.c,v 1.15 2015/12/13 21:13:00 plunky Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -85,7 +85,7 @@
  *****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.14 2015/07/03 14:18:18 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btmagic.c,v 1.15 2015/12/13 21:13:00 plunky Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -163,7 +163,7 @@ struct btmagic_softc {
 	int			sc_rw;
 
 	/* previous touches */
-	uint32_t		sc_smask;	/* active(s) IDs */
+	uint32_t		sc_smask;	/* active IDs */
 	int			sc_nfingers;	/* number of active IDs */
 	int			sc_ax[16];
 	int			sc_ay[16];
@@ -234,7 +234,7 @@ static void  btmagic_tapcallout(void *);
 #define TRACKPAD_REPORT_ID	0x28
 #define MOUSE_REPORT_ID		0x29
 #define BATT_STAT_REPORT_ID	0x30
-#define BATT_STRENGHT_REPORT_ID	0x47
+#define BATT_STRENGTH_REPORT_ID	0x47
 #define SURFACE_REPORT_ID	0x61
 
 static const struct btproto btmagic_ctl_proto = {
@@ -1114,6 +1114,7 @@ btmagic_input(void *arg, struct mbuf *m)
 		case TRACKPAD_REPORT_ID: /* Magic trackpad (input) */
 			btmagic_input_magict(sc, data + 2, len - 2);
 			break;
+
 		case MOUSE_REPORT_ID: /* Magic touch (input) */
 			btmagic_input_magicm(sc, data + 2, len - 2);
 			break;
@@ -1131,7 +1132,7 @@ btmagic_input(void *arg, struct mbuf *m)
 			}
 			break;
 
-		case BATT_STRENGHT_REPORT_ID: /* Battery strength (feature) */
+		case BATT_STRENGTH_REPORT_ID: /* Battery strength (feature) */
 			if (len != 3)
 				break;
 
@@ -1529,7 +1530,7 @@ btmagic_input_magict(struct btmagic_softc *sc, uint8_t *data, size_t len)
 		ay = hid_get_data(data, &toucht.aY);
 
 		DPRINTF(sc,
-		    "btmagic_input_magicm: id %d ax %d ay %d phase %ld %s\n",
+		    "btmagic_input_magict: id %d ax %d ay %d phase %ld %s\n",
 		    id, ax, ay, hid_get_udata(data, &toucht.phase),
 		    bpress ? "button pressed" : "");
 
