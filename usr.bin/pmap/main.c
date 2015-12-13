@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.24 2011/10/25 23:45:19 jym Exp $ */
+/*	$NetBSD: main.c,v 1.25 2015/12/13 18:09:00 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.24 2011/10/25 23:45:19 jym Exp $");
+__RCSID("$NetBSD: main.c,v 1.25 2015/12/13 18:09:00 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -468,18 +468,19 @@ load_name_cache(kvm_t *kd)
 {
 	struct namecache _ncp, *ncp, *oncp;
 	struct nchashhead _ncpp, *ncpp; 
-	u_long nchash, i;
+	u_long lnchash;
+	size_t nchash, i;
 
 	LIST_INIT(&lcache);
 
-	_KDEREF(kd, nchash_addr, &nchash, sizeof(nchash));
-	nchashtbl = malloc(sizeof(nchashtbl) * (int)(nchash + 1));
-	_KDEREF(kd, nchashtbl_addr, nchashtbl,
-		sizeof(nchashtbl) * (int)(nchash + 1));
+	_KDEREF(kd, nchash_addr, &lnchash, sizeof(lnchash));
+	nchash = (size_t)lnchash + 1;
+	nchashtbl = malloc(nchash * sizeof(*nchashtbl));
+	_KDEREF(kd, nchashtbl_addr, nchashtbl, sizeof(*nchashtbl) * nchash);
 
 	ncpp = &_ncpp;
 
-	for (i = 0; i <= nchash; i++) {
+	for (i = 0; i < nchash; i++) {
 		ncpp = &nchashtbl[i];
 		oncp = NULL;
 		LIST_FOREACH(ncp, ncpp, nc_hash) {
