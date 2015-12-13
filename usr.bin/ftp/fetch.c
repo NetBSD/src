@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.208 2015/12/11 08:37:31 tron Exp $	*/
+/*	$NetBSD: fetch.c,v 1.209 2015/12/13 14:06:13 tron Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.208 2015/12/11 08:37:31 tron Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.209 2015/12/13 14:06:13 tron Exp $");
 #endif /* not lint */
 
 /*
@@ -763,13 +763,17 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			}
 
 			if (verbose && res0->ai_next) {
+#ifdef INET6
 				if(res->ai_family == AF_INET6) {
 					fprintf(ttyout, "Trying [%s]:%s ...\n",
 					    hname, sname);
 				} else {
+#endif
 					fprintf(ttyout, "Trying %s:%s ...\n",
 					    hname, sname);
+#ifdef INET6
 				}
+#endif
 			}
 
 			s = socket(res->ai_family, SOCK_STREAM,
