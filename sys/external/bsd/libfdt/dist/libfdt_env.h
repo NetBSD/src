@@ -52,9 +52,14 @@
  *     EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if defined(_KERNEL)
+#include <sys/param.h>
+#include <sys/types.h>
+#else
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+#endif
 
 #ifdef __CHECKER__
 #define __force __attribute__((force))
