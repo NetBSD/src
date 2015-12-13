@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.4 2015/11/14 11:55:36 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.5 2015/12/13 17:39:19 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,8 +52,11 @@ struct tegra_drm_softc {
 	bus_space_tag_t		sc_bst;
 	bus_dma_tag_t		sc_dmat;
 
-	device_t		sc_ddcdev;
-	struct tegra_gpio_pin	*sc_pin_hpd;
+	int			sc_phandle;
+
+	i2c_tag_t		sc_ddc;
+	struct fdtbus_gpio_pin	*sc_pin_hpd;
+
 	struct tegra_gpio_pin	*sc_pin_pll;
 	struct tegra_gpio_pin	*sc_pin_power;
 
@@ -94,9 +97,9 @@ struct tegra_encoder {
 
 struct tegra_connector {
 	struct drm_connector	base;
-	device_t		ddcdev;
+	i2c_tag_t		ddc;
 	struct i2c_adapter	*adapter;
-	struct tegra_gpio_pin	*hpd;
+	struct fdtbus_gpio_pin	*hpd;
 
 	bool			has_hdmi_sink;
 	bool			has_audio;
