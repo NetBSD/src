@@ -1,4 +1,4 @@
-/*	$NetBSD: dosfile.c,v 1.18 2015/12/13 19:51:53 christos Exp $	 */
+/*	$NetBSD: dosfile.c,v 1.19 2015/12/13 21:03:31 christos Exp $	 */
 
 /*
  * Copyright (c) 1996
@@ -70,7 +70,6 @@ dos2errno(void)
 		err = EPERM;
 		break;
 	    case 6: /* invalid handle */
-	    default:
 		err = EINVAL;
 		break;
 	}
