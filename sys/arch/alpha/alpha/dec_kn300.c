@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.40 2012/10/13 17:58:54 jdc Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.41 2015/12/13 19:43:27 christos Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.40 2012/10/13 17:58:54 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.41 2015/12/13 19:43:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -415,6 +415,9 @@ typedef struct {
 } mc_soft300;
 #define	CAP_ERR_CRDX	204
 
+static const char *
+corr_type(unsigned long code)
+
 static void
 kn300_softerr(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
 {
@@ -431,8 +434,8 @@ kn300_softerr(unsigned long mces, unsigned long type, unsigned long logout, stru
 
 	printf("kn300: CPU ID %d %s correctable error corrected by %s\n", whami,
 	    (type == ALPHA_SYS_ERROR)?  sys : proc,
-	    ((hdr->mcheck_code & 0xff00) == (EV5_CORRECTED << 16))? proc :
-	    (((hdr->mcheck_code & 0xff00) == (CAP_ERR_CRDX << 16)) ?
+	    ((hdr->mcheck_code & 0xff00) == (EV5_CORRECTED << 8))? proc :
+	    (((hdr->mcheck_code & 0xff00) == (CAP_ERR_CRDX << 8)) ?
 		"I/O Bridge Module" : sys));
 
 	printf("    Machine Check Code 0x%lx\n", hdr->mcheck_code);
