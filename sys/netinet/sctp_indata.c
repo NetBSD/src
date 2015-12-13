@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.1 2015/10/13 21:28:35 rjs Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.2 2015/12/13 18:53:57 christos Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.1 2015/10/13 21:28:35 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.2 2015/12/13 18:53:57 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -3756,7 +3756,7 @@ sctp_handle_sack(struct sctp_sack_chunk *ch, struct sctp_tcb *stcb,
 	/* always set this up to cum-ack */
 	asoc->this_sack_highest_gap = last_tsn;
 
-	if (((num_seg * sizeof (sizeof(struct sctp_gap_ack_block))) + sizeof(struct sctp_sack_chunk)) > sack_length) {
+	if (num_seg * sizeof(struct sctp_gap_ack_block) + sizeof(struct sctp_sack_chunk) > sack_length) {
 		/* skip corrupt segments */
 		strike_enabled = 0;
 		goto skip_segments;
