@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.6 2015/12/10 21:56:04 marty Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.7 2015/12/13 22:28:09 marty Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.6 2015/12/10 21:56:04 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.7 2015/12/13 22:28:09 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,10 +54,10 @@ static int exynos_wdt_match(device_t, cfdata_t, void *);
 static void exynos_wdt_attach(device_t, device_t, void *);
 
 struct exynos_wdt_softc {
-	struct sysmon_wdog sc_smw;
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_wdog_bsh;
+	struct sysmon_wdog sc_smw;
 	u_int sc_wdog_period;
 	u_int sc_wdog_clock_select;
 	u_int sc_wdog_prescaler;
@@ -68,7 +68,7 @@ struct exynos_wdt_softc {
 };
 
 #ifndef EXYNOS_WDT_PERIOD_DEFAULT
-#define	EXYNOS_WDT_PERIOD_DEFAULT	12
+#define	EXYNOS_WDT_PERIOD_DEFAULT	60
 #endif
 
 CFATTACH_DECL_NEW(exynos_wdt, sizeof(struct exynos_wdt_softc),
@@ -189,13 +189,12 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 	 * This runs at the Exynos Pclk.
 	 */
 	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
-
 	sc->sc_wdog_wtcon = exynos_wdt_wdog_read(sc, EXYNOS_WDT_WTCON);
 	sc->sc_wdog_armed = (sc->sc_wdog_wtcon & WTCON_ENABLE)
 	    && (sc->sc_wdog_wtcon & WTCON_RESET_ENABLE);
 	if (sc->sc_wdog_armed) {
 		sc->sc_wdog_prescaler =
-		    __SHIFTOUT(sc->sc_wdog_wtcon, WTCON_PRESCALER) + 1;
+		    __SHIFTOUT(sc->sc_wdog_wtcon, WTCON_PRESCALER);
 		sc->sc_wdog_clock_select =
 		    __SHIFTOUT(sc->sc_wdog_wtcon, WTCON_CLOCK_SELECT);
 		sc->sc_freq /= sc->sc_wdog_prescaler;
@@ -203,7 +202,7 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_wdog_wtdat = exynos_wdt_wdog_read(sc, EXYNOS_WDT_WTDAT);
 		sc->sc_wdog_period = (sc->sc_wdog_wtdat + 1) / sc->sc_freq;
 	} else {
-		sc->sc_wdog_period = EXYNOS_WDT_DEFAULT_PERIOD;
+		sc->sc_wdog_period = EXYNOS_WDT_PERIOD_DEFAULT;
 		sc->sc_wdog_prescaler = 1;
 		/*
 		 * Let's see what clock select we should use.
