@@ -90,7 +90,7 @@ s3csd_init(unsigned int tag, uint32_t *caps)
 
 	/* Check if a card is present */
 	data = *(volatile uint32_t*)(S3C2440_GPIO_BASE+GPIO_PGDAT);
-	if ( (data & (1<<8)) == 1) {
+	if ( (data & (1<<8)) == (1<<8)) {
 		printf("No card detected\n");
 		/* Pin 8 is low when no card is inserted */
 		return 0;
