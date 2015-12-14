@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2012/10/29 16:25:25 para Exp $ */
+/*	$NetBSD: pmap.c,v 1.52 2015/12/14 03:15:10 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: pmap.c,v 1.51 2012/10/29 16:25:25 para Exp $");
+__RCSID("$NetBSD: pmap.c,v 1.52 2015/12/14 03:15:10 christos Exp $");
 #endif
 
 #include <string.h>
+#include <util.h>
 
 #include "pmap.h"
 #include "main.h"
@@ -565,22 +566,23 @@ dump_amap(kvm_t *kd, struct kbit *amap)
 	 * Assume that sizeof(struct vm_anon *) >= sizeof(size_t) and
 	 * allocate that amount of space.
 	 */
-	l = sizeof(struct vm_anon *) * D(amap, amap)->am_maxslot;
-	am_anon = malloc(l);
+	am_anon = ecalloc(D(amap, amap)->am_maxslot, sizeof(*am_anon));
+	l = D(amap, amap)->am_maxslot * sizeof(*am_anon);
 	_KDEREF(kd, (u_long)D(amap, amap)->am_anon, am_anon, l);
 
-	l = sizeof(int) * D(amap, amap)->am_maxslot;
-	am_bckptr = malloc(l);
+	l = D(amap, amap)->am_maxslot * sizeof(*am_bckptr);
+	am_bckptr = ecalloc(D(amap, amap)->am_maxslot, sizeof(*am_bckptr));
 	_KDEREF(kd, (u_long)D(amap, amap)->am_bckptr, am_bckptr, l);
 
-	l = sizeof(int) * D(amap, amap)->am_maxslot;
-	am_slots = malloc(l);
+	l = D(amap, amap)->am_maxslot * sizeof(*am_slots);
+	am_slots = ecalloc(D(amap, amap)->am_maxslot, sizeof(*am_slots));
 	_KDEREF(kd, (u_long)D(amap, amap)->am_slots, am_slots, l);
 
 	if (D(amap, amap)->am_ppref != NULL &&
 	    D(amap, amap)->am_ppref != PPREF_NONE) {
-		l = sizeof(int) * D(amap, amap)->am_maxslot;
-		am_ppref = malloc(l);
+		am_ppref = ecalloc(
+		    D(amap, amap)->am_maxslot, sizeof(*am_ppref));
+		l = D(amap, amap)->am_maxslot * sizeof(*am_ppref);
 		_KDEREF(kd, (u_long)D(amap, amap)->am_ppref, am_ppref, l);
 	} else {
 		am_ppref = NULL;

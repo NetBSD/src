@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.25 2015/12/13 18:09:00 christos Exp $ */
+/*	$NetBSD: main.c,v 1.26 2015/12/14 03:15:10 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.25 2015/12/13 18:09:00 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.26 2015/12/14 03:15:10 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: main.c,v 1.25 2015/12/13 18:09:00 christos Exp $");
 #include <limits.h>
 #include <string.h>
 #include <signal.h>
+#include <util.h>
 
 #include "pmap.h"
 #include "main.h"
@@ -475,7 +476,7 @@ load_name_cache(kvm_t *kd)
 
 	_KDEREF(kd, nchash_addr, &lnchash, sizeof(lnchash));
 	nchash = (size_t)lnchash + 1;
-	nchashtbl = malloc(nchash * sizeof(*nchashtbl));
+	nchashtbl = ecalloc(nchash, sizeof(*nchashtbl));
 	_KDEREF(kd, nchashtbl_addr, nchashtbl, sizeof(*nchashtbl) * nchash);
 
 	ncpp = &_ncpp;
@@ -512,7 +513,7 @@ cache_enter(u_long i, struct namecache *ncp)
 		       i, ncp->nc_vp, ncp->nc_dvp,
 		       ncp->nc_nlen, ncp->nc_nlen, ncp->nc_name);
 
-	ce = malloc(sizeof(struct cache_entry));
+	ce = emalloc(sizeof(struct cache_entry));
 	
 	ce->ce_vp = ncp->nc_vp;
 	ce->ce_pvp = ncp->nc_dvp;
