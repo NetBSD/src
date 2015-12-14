@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.10 2015/12/12 21:56:54 marty Exp $
+#	$NetBSD: files.exynos,v 1.11 2015/12/14 22:06:57 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -43,6 +43,11 @@ defflag opt_exynos.h				EXYNOS5410: EXYNOS5
 defflag opt_exynos.h				EXYNOS5420: EXYNOS5
 defflag opt_exynos.h				EXYNOS5440: EXYNOS5
 defflag opt_exynos.h				EXYNOS5422: EXYNOS5
+
+# On-board I/O
+device	exynosfdt : bus_space_generic, fdtbus
+attach	exynosfdt at mainbus with exynos_fdt
+file	arch/arm/samsung/exynos_fdt.c		exynos_fdt
 
 # SoC I/O attach point
 device exyo { [port=-1], [intr=-1] } : bus_space_generic

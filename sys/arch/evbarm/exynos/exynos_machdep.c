@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_machdep.c,v 1.3 2015/12/13 22:28:09 marty Exp $ */
+/*	$NetBSD: exynos_machdep.c,v 1.4 2015/12/14 22:06:57 marty Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.3 2015/12/13 22:28:09 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.4 2015/12/14 22:06:57 marty Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -100,6 +100,16 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.3 2015/12/13 22:28:09 marty Exp
 
 #include <arm/samsung/sscom_var.h>
 #include <arm/samsung/sscom_reg.h>
+
+/* so we can load the device tree. NOTE: This requires the kernel to be
+ * made into a linux (not netbsd) uboot image.
+ */
+#include <libfdt.h>
+#include <dev/fdt/fdt_openfirm.h>
+#include <dev/ofw/openfirm.h>
+#include <dev/fdt/fdtvar.h>
+#define FDT_BUF_SIZE	(128*1024)
+static uint8_t fdt_data[FDT_BUF_SIZE];
 
 extern const int num_exynos_uarts_entries;
 extern const struct sscom_uart_info exynos_uarts[];
@@ -368,6 +378,7 @@ initarm(void *arg)
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
+
 	boot_args = bootargs;
 	parse_mi_bootargs(boot_args);
 	exynos_extract_mac_adress();
@@ -389,6 +400,22 @@ initarm(void *arg)
 #else
 	const bool mapallmem_p = false;
 #endif
+
+	/* Load the dtb */
+	const uint8_t *fdt_addr_r = (const uint8_t *)uboot_args[2];
+	printf("fdt addr 0x%08x\n", (uint)fdt_addr_r);
+	int error = fdt_check_header(fdt_addr_r);
+	printf("fdt check header returns %d\n", error);
+	if (error == 0) {
+		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		printf("fdt move returns %d\n", error);
+		if (error != 0) {
+			panic("fdt_move failed: %s", fdt_strerror(error));
+		}
+		fdt_openfirm_set_data(fdt_data);
+	} else {
+		panic("fdt_check_header failed: %s", fdt_strerror(error));
+	}
 
 	/* Fake bootconfig structure for the benefit of pmap.c. */
 	bootconfig.dramblocks = 1;
