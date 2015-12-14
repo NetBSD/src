@@ -1,4 +1,4 @@
-/*	$NetBSD: getaddrinfo.c,v 1.112 2015/12/13 02:02:59 christos Exp $	*/
+/*	$NetBSD: getaddrinfo.c,v 1.113 2015/12/14 22:07:37 christos Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.29 2000/08/31 17:26:57 itojun Exp $	*/
 
 /*
@@ -55,7 +55,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: getaddrinfo.c,v 1.112 2015/12/13 02:02:59 christos Exp $");
+__RCSID("$NetBSD: getaddrinfo.c,v 1.113 2015/12/14 22:07:37 christos Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifndef RUMP_ACTION
@@ -1312,8 +1312,15 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 		return 0;
 
 	switch (afd->a_af) {
-#if 0 /*X/Open spec*/
 	case AF_INET:
+	       /*
+		* RFC3493 section 6.1, requires getaddrinfo() to accept
+		* AF_INET formats that are accepted by inet_addr(); here
+		* we use the equivalent inet_aton() function so we can
+		* check for errors. inet_pton() only accepts addresses
+		* in the dotted quad format and only in base 10, so we
+		* need to treat AF_INET specially.
+		*/
 		if (inet_aton(hostname, (struct in_addr *)pton) == 1) {
 			if (pai->ai_family == afd->a_af ||
 			    pai->ai_family == PF_UNSPEC /*?*/) {
@@ -1333,7 +1340,6 @@ explore_numeric(const struct addrinfo *pai, const char *hostname,
 				ERR(EAI_FAMILY);	/*xxx*/
 		}
 		break;
-#endif
 	default:
 		if (inet_pton(afd->a_af, hostname, pton) == 1) {
 			if (pai->ai_family == afd->a_af ||
