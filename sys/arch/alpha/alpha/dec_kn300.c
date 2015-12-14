@@ -1,4 +1,4 @@
-/* $NetBSD: dec_kn300.c,v 1.41 2015/12/13 19:43:27 christos Exp $ */
+/* $NetBSD: dec_kn300.c,v 1.42 2015/12/14 10:12:45 martin Exp $ */
 
 /*
  * Copyright (c) 1998 by Matthew Jacob
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.41 2015/12/13 19:43:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_kn300.c,v 1.42 2015/12/14 10:12:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -414,9 +414,6 @@ typedef struct {
 	uint64_t	end_rsvd;
 } mc_soft300;
 #define	CAP_ERR_CRDX	204
-
-static const char *
-corr_type(unsigned long code)
 
 static void
 kn300_softerr(unsigned long mces, unsigned long type, unsigned long logout, struct trapframe *framep)
