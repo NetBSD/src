@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.1 2015/12/13 23:02:56 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.2 2015/12/14 21:41:42 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -40,6 +40,7 @@ simplebus*	at fdt?
 fdt*		at simplebus?
 
 fregulator*	at fdt?
+gpiokeys*	at fdt?
 
 # Interrupt controller
 tegralic*	at fdt?			# LIC
