@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.138 2015/12/13 17:41:48 jdc Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.139 2015/12/14 01:08:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.138 2015/12/13 17:41:48 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.139 2015/12/14 01:08:47 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,7 +103,7 @@ static void sme_initial_refresh(void *);
 static uint32_t sme_get_max_value(struct sysmon_envsys *,
      bool (*)(const envsys_data_t*), bool);
 
-MODULE(MODULE_CLASS_MISC, sysmon_envsys, "sysmon,sysmon_taskq,sysmon_power");
+MODULE(MODULE_CLASS_DRIVER, sysmon_envsys, "sysmon,sysmon_taskq,sysmon_power");
 
 static struct sysmon_opvec sysmon_envsys_opvec = {    
         sysmonopen_envsys, sysmonclose_envsys, sysmonioctl_envsys,
