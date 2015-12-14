@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.331 2015/11/25 08:36:50 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.332 2015/12/14 09:48:40 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -217,7 +217,7 @@
 
 #include <arm/locore.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.331 2015/11/25 08:36:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.332 2015/12/14 09:48:40 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -281,7 +281,6 @@ int			arm_poolpage_vmfreelist = VM_FREELIST_DEFAULT;
  * in pmap_create().
  */
 static struct pool_cache pmap_cache;
-static LIST_HEAD(, pmap) pmap_pmaps;
 
 /*
  * Pool of PV structures
@@ -3027,8 +3026,6 @@ pmap_create(void)
 
 	pmap_pinit(pm);
 
-	LIST_INSERT_HEAD(&pmap_pmaps, pm, pm_list);
-
 	return (pm);
 }
 
@@ -5140,8 +5137,6 @@ pmap_destroy(pmap_t pm)
 	}
 #endif
 
-	LIST_REMOVE(pm, pm_list);
-
 	pmap_free_l1(pm);
 
 #ifdef ARM_MMU_EXTENDED
@@ -6286,8 +6281,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 */
 	pool_cache_bootstrap(&pmap_cache, sizeof(struct pmap), 0, 0, 0,
 	    "pmappl", NULL, IPL_NONE, pmap_pmap_ctor, NULL, NULL);
-	LIST_INIT(&pmap_pmaps);
-	LIST_INSERT_HEAD(&pmap_pmaps, pm, pm_list);
 
 	/*
 	 * Initialize the pv pool.
@@ -7527,21 +7520,7 @@ pmap_kernel_L1_addr(void)
 /*
  * A couple of ddb-callable functions for dumping pmaps
  */
-void pmap_dump_all(void);
 void pmap_dump(pmap_t);
-
-void
-pmap_dump_all(void)
-{
-	pmap_t pm;
-
-	LIST_FOREACH(pm, &pmap_pmaps, pm_list) {
-		if (pm == pmap_kernel())
-			continue;
-		pmap_dump(pm);
-		printf("\n");
-	}
-}
 
 static pt_entry_t ncptes[64];
 static void pmap_dump_ncpg(pmap_t);
