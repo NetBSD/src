@@ -34,7 +34,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: inet6_scopeid.c,v 1.2 2013/10/19 15:47:02 christos Exp $");
+__RCSID("$NetBSD: inet6_scopeid.c,v 1.3 2015/12/14 03:49:54 ozaki-r Exp $");
 
 #include <sys/endian.h>
 #include <string.h>
@@ -71,7 +71,7 @@ inet6_putscopeid(struct sockaddr_in6 *sin6, int flags)
 	    (flags & INET6_IS_ADDR_MC_LINKLOCAL)) ||
 	    (IN6_IS_ADDR_SITELOCAL(&sin6->sin6_addr) &&
 	    (flags & INET6_IS_ADDR_SITELOCAL))) {
-	    uint16_t scope = htons(sin6->sin6_scope_id);
+		uint16_t scope = htons(sin6->sin6_scope_id);
 		memcpy(&sin6->sin6_addr.s6_addr[2], &scope, sizeof(scope));
 		sin6->sin6_scope_id = 0;
 	}
