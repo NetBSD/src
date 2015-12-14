@@ -1,4 +1,4 @@
-/*	$NetBSD: jziic.c,v 1.2 2015/04/21 06:12:41 macallan Exp $ */
+/*	$NetBSD: jziic.c,v 1.3 2015/12/14 23:21:23 macallan Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.2 2015/04/21 06:12:41 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.3 2015/12/14 23:21:23 macallan Exp $");
 
 /*
  * a preliminary driver for JZ4780's on-chip SMBus controllers
@@ -185,6 +185,7 @@ jziic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = jziic_i2c_exec;
 
+	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
 
