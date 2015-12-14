@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.4 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.5 2015/12/14 20:57:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.4 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.5 2015/12/14 20:57:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -326,14 +326,23 @@ static int
 tegra_gpio_fdt_read(device_t dev, void *priv)
 {
 	struct tegra_gpio_pin *gpin = priv;
+	int val;
 
-	return tegra_gpio_read(gpin);
+	val = tegra_gpio_read(gpin);
+
+	if (gpin->pin_actlo)
+		val = !val;
+
+	return val;
 }
 
 static void
 tegra_gpio_fdt_write(device_t dev, void *priv, int val)
 {
 	struct tegra_gpio_pin *gpin = priv;
+
+	if (gpin->pin_actlo)
+		val = !val;
 
 	tegra_gpio_write(gpin, val);
 }
@@ -418,11 +427,6 @@ tegra_gpio_read(struct tegra_gpio_pin *gpin)
 		ret = (v >> gpin->pin_no) & 1;
 	}
 
-#if 0
-	if (gpin->pin_actlo)
-		ret = !ret;
-#endif
-
 	return ret;
 }
 
@@ -430,11 +434,6 @@ void
 tegra_gpio_write(struct tegra_gpio_pin *gpin, int val)
 {
 	KASSERT((gpin->pin_flags & GPIO_PIN_OUTPUT) != 0);
-
-#if 0
-	if (gpin->pin_actlo)
-		val = !val;
-#endif
 
 	tegra_gpio_pin_write(&gpin->pin_bank, gpin->pin_no, val);
 }
