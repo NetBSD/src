@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_power.c,v 1.56 2015/08/24 22:50:33 pooka Exp $	*/
+/*	$NetBSD: sysmon_power.c,v 1.57 2015/12/14 01:08:47 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2007 Juan Romero Pardines.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.56 2015/08/24 22:50:33 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.57 2015/12/14 01:08:47 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -93,7 +93,7 @@ __KERNEL_RCSID(0, "$NetBSD: sysmon_power.c,v 1.56 2015/08/24 22:50:33 pooka Exp 
 #include <dev/sysmon/sysmonvar.h>
 #include <prop/proplib.h>
 
-MODULE(MODULE_CLASS_MISC, sysmon_power, "sysmon");
+MODULE(MODULE_CLASS_DRIVER, sysmon_power, "sysmon");
 
 /*
  * Singly linked list for dictionaries to be stored/sent.
