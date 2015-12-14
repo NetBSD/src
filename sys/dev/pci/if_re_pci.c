@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.44 2015/05/03 00:04:06 matt Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.45 2015/12/14 20:01:17 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.44 2015/05/03 00:04:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.45 2015/12/14 20:01:17 jakllsch Exp $");
 
 #include <sys/types.h>
 
@@ -75,6 +75,7 @@ struct re_pci_softc {
 	struct rtk_softc sc_rtk;
 
 	void *sc_ih;
+	pci_intr_handle_t *sc_pihp;
 	pci_chipset_tag_t sc_pc;
 };
 
@@ -174,7 +175,6 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	struct rtk_softc *sc = &psc->sc_rtk;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
-	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	const struct rtk_type *t;
 	uint32_t hwrev;
@@ -253,12 +253,14 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Hook interrupt last to avoid having to lock softc */
 	/* Allocate interrupt */
-	if (pci_intr_map(pa, &ih)) {
+	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-	psc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, re_intr, sc);
+	intrstr = pci_intr_string(pc, psc->sc_pihp[0], intrbuf,
+	    sizeof(intrbuf));
+	psc->sc_ih = pci_intr_establish(pc, psc->sc_pihp[0], IPL_NET,
+	    re_intr, sc);
 	if (psc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt");
 		if (intrstr != NULL)
@@ -303,6 +305,11 @@ re_pci_detach(device_t self, int flags)
 	if (psc->sc_ih != NULL) {
 		pci_intr_disestablish(psc->sc_pc, psc->sc_ih);
 		psc->sc_ih = NULL;
+	}
+
+	if (psc->sc_pihp != NULL) {
+		pci_intr_release(psc->sc_pc, psc->sc_pihp, 1);
+		psc->sc_pihp = NULL;
 	}
 
 	if (sc->rtk_bsize != 0) {
