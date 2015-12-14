@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_start.S,v 1.1 2015/12/06 00:33:44 marty Exp $	*/
+/*	$NetBSD: exynos_start.S,v 1.2 2015/12/14 05:13:01 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <evbarm/exynos/platform.h>
 
-RCSID("$NetBSD: exynos_start.S,v 1.1 2015/12/06 00:33:44 marty Exp $")
+RCSID("$NetBSD: exynos_start.S,v 1.2 2015/12/14 05:13:01 marty Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -117,22 +117,6 @@ _C_LABEL(exynos_start):
 	sub	r4, r4, #KERNEL_BASE_VOFFSET
 #endif
 	stmia	r4, {r0-r3}			// Save the arguments
-
-	movw	r4, #:lower16:bootargs
-	movt	r4, #:upper16:bootargs
-#if KERNEL_BASE_VOFFSET != 0
-	sub	r4, r4, #KERNEL_BASE_VOFFSET
-#endif
-
-	cmp	r3, #0
-	beq	1f
-2:
-	ldrb	r0, [r3], #1
-	strb	r0, [r4], #1
-	teq	r0, #0
-	bne	2b
-
-1:
 
 	/*
 	 * For easy and early SoC / PoP dependency, retrieve the IDs
