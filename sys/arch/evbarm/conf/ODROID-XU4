@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-XU4,v 1.4 2015/12/14 00:00:22 marty Exp $
+#	$NetBSD: ODROID-XU4,v 1.5 2015/12/14 22:06:57 marty Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -32,6 +32,11 @@ options 	CPU_CORTEXA7
 options 	CPU_CORTEXA15
 options 	EXYNOS5422
 #options 	MULTIPROCESSOR
+
+options		FDT		# not really but soon
+pseudo-device 	openfirm	# jmcneill: oops, fdtbus should depend on
+				# openfirm. don't let me forget.
+
 
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
@@ -195,6 +200,14 @@ cpu*		at mainbus?			# Multiprocessor
 armperiph0	at mainbus?
 armgic0		at armperiph?			# Interrupt Controller
 armgtmr0	at armperiph?			# Generic Timer
+
+# On-board I/O
+exynosfdt0	at mainbus?
+fdt0		at exynosfdt0 
+simplebus*	at fdt?
+fdt*		at simplebus?
+
+fregulator*	at fdt?
 
 # Exynos SoC
 exyo0		at mainbus?
