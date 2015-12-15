@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.210 2015/12/15 20:49:49 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.211 2015/12/15 21:01:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.210 2015/12/15 20:49:49 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.211 2015/12/15 21:01:27 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -566,6 +566,45 @@ ftp_socket(const char *host, const char *port, void **ssl)
 	return s;
 }
 
+static int
+handle_noproxy(const char *host, in_port_t portnum)
+{
+
+	char *cp, *ep, *np, *np_copy, *np_iter, *no_proxy;
+	unsigned long np_port;
+	size_t hlen, plen;
+	int isproxy = 1;
+
+	/* check URL against list of no_proxied sites */
+	no_proxy = getoptionvalue("no_proxy");
+	if (EMPTYSTRING(no_proxy))
+		return isproxy;
+
+	np_iter = np_copy = ftp_strdup(no_proxy);
+	hlen = strlen(host);
+	while ((cp = strsep(&np_iter, " ,")) != NULL) {
+		if (*cp == '\0')
+			continue;
+		if ((np = strrchr(cp, ':')) != NULL) {
+			*np++ =  '\0';
+			np_port = strtoul(np, &ep, 10);
+			if (*np == '\0' || *ep != '\0')
+				continue;
+			if (np_port != portnum)
+				continue;
+		}
+		plen = strlen(cp);
+		if (hlen < plen)
+			continue;
+		if (strncasecmp(host + hlen - plen, cp, plen) == 0) {
+			isproxy = 0;
+			break;
+		}
+	}
+	FREEPTR(np_copy);
+	return isproxy;
+}
+
 /*
  * Retrieve URL, via a proxy if necessary, using HTTP.
  * If proxyenv is set, use that for the proxy, otherwise try ftp_proxy or
@@ -726,45 +765,14 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		if (! EMPTYSTRING(penv)) {			/* use proxy */
 			url_t purltype;
 			char *phost, *ppath;
-			char *pport, *no_proxy;
+			char *pport;
 			in_port_t pportnum;
 
-			isproxy = 1;
+			isproxy = handle_noproxy(host, portnum);
 
-				/* check URL against list of no_proxied sites */
-			no_proxy = getoptionvalue("no_proxy");
-			if (! EMPTYSTRING(no_proxy)) {
-				char *np, *np_copy, *np_iter;
-				unsigned long np_port;
-				size_t hlen, plen;
-
-				np_iter = np_copy = ftp_strdup(no_proxy);
-				hlen = strlen(host);
-				while ((cp = strsep(&np_iter, " ,")) != NULL) {
-					if (*cp == '\0')
-						continue;
-					if ((np = strrchr(cp, ':')) != NULL) {
-						*np++ =  '\0';
-						np_port = strtoul(np, &ep, 10);
-						if (*np == '\0' || *ep != '\0')
-							continue;
-						if (np_port != portnum)
-							continue;
-					}
-					plen = strlen(cp);
-					if (hlen < plen)
-						continue;
-					if (strncasecmp(host + hlen - plen,
-					    cp, plen) == 0) {
-						isproxy = 0;
-						break;
-					}
-				}
-				FREEPTR(np_copy);
-				if (isproxy == 0 && urltype == FTP_URL_T) {
-					rval = fetch_ftp(url);
-					goto cleanup_fetch_url;
-				}
+			if (isproxy == 0 && urltype == FTP_URL_T) {
+				rval = fetch_ftp(url);
+				goto cleanup_fetch_url;
 			}
 
 			if (isproxy) {
