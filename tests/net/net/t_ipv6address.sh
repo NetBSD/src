@@ -1,4 +1,4 @@
-#	$NetBSD: t_ipv6address.sh,v 1.2 2015/11/19 10:45:09 ozaki-r Exp $
+#	$NetBSD: t_ipv6address.sh,v 1.3 2015/12/15 01:33:08 ozaki-r Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -44,6 +44,7 @@ DEBUG=false
 TIMEOUT=3
 
 atf_test_case linklocal cleanup
+atf_test_case linklocal_ops cleanup
 
 setup()
 {
@@ -205,6 +206,14 @@ get_lladdr()
 	return 0
 }
 
+cleanup_rump_servers()
+{
+
+	env RUMP_SERVER=${SOCKSRC} rump.halt
+	env RUMP_SERVER=${SOCKDST} rump.halt
+	env RUMP_SERVER=${SOCKFWD} rump.halt
+}
+
 linklocal_head()
 {
 	atf_set "descr" "Test for bassically function of the IPv6 linklocal address"
@@ -301,12 +310,54 @@ linklocal_body()
 
 linklocal_cleanup()
 {
-	env RUMP_SERVER=${SOCKSRC} rump.halt
-	env RUMP_SERVER=${SOCKDST} rump.halt
-	env RUMP_SERVER=${SOCKFWD} rump.halt
+
+	cleanup_rump_servers
+}
+
+linklocal_ops_head()
+{
+
+	atf_set "descr" "Test for various operations to IPv6 linklocal addresses"
+	atf_set "require.progs" "rump_server rump.route rump.ndp"
+}
+
+linklocal_ops_body()
+{
+	local src_if0_lladdr=
+
+	setup
+
+	src_if0_lladdr=`get_lladdr ${SOCKSRC} shmif0`
+
+	export RUMP_SERVER=${SOCKSRC}
+
+	# route get
+	atf_check -s exit:0 -o match:"${src_if0_lladdr}" \
+	    rump.route get -inet6 ${src_if0_lladdr}%shmif0
+
+	# route get without an interface name (zone index)
+	atf_check -s not-exit:0 -e match:"not in table" \
+	    rump.route get -inet6 ${src_if0_lladdr}
+
+	# ndp
+	atf_check -s exit:0 -o match:"${src_if0_lladdr}" \
+	    rump.ndp -n ${src_if0_lladdr}%shmif0
+
+	# ndp without an interface name (zone index)
+	atf_check -s not-exit:0 -o ignore -e match:"no entry" \
+	    rump.ndp -n ${src_if0_lladdr}
+}
+
+
+linklocal_ops_cleanup()
+{
+
+	cleanup_rump_servers
 }
 
 atf_init_test_cases()
 {
+
 	atf_add_test_case linklocal
+	atf_add_test_case linklocal_ops
 }
