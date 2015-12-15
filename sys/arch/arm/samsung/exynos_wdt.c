@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.7 2015/12/13 22:28:09 marty Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.8 2015/12/15 23:15:53 marty Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.7 2015/12/13 22:28:09 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.8 2015/12/15 23:15:53 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.7 2015/12/13 22:28:09 marty Exp $")
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 
+#include <dev/fdt/fdtvar.h>
 
 #if NEXYNOS_WDT > 0
 static int exynos_wdt_match(device_t, cfdata_t, void *);
@@ -90,7 +91,10 @@ exynos_wdt_wdog_write(struct exynos_wdt_softc *sc, bus_size_t o, uint32_t v)
 static int
 exynos_wdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "samsung,s3c2410-wdt", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static int
@@ -173,22 +177,32 @@ static void
 exynos_wdt_attach(device_t parent, device_t self, void *aux)
 {
         struct exynos_wdt_softc * const sc = device_private(self);
-	struct exyo_attach_args * const exyo = aux;
-	prop_dictionary_t dict = device_properties(self);
+//	prop_dictionary_t dict = device_properties(self);
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = exyo->exyo_core_bst;
+	sc->sc_bst = faa->faa_bst;
 
-	if (bus_space_subregion(sc->sc_bst, exyo->exyo_core_bsh,
-	    exyo->exyo_loc.loc_offset, exyo->exyo_loc.loc_size, &sc->sc_wdog_bsh)) {
-		aprint_error(": failed to map registers\n");
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_wdog_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
 		return;
 	}
 
 	/*
 	 * This runs at the Exynos Pclk.
 	 */
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
+//	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
+	sc->sc_freq = 12000000;	/* MJF: HACK hardwire for now */
+		/* Need to figure out how to get freq from dtb */
 	sc->sc_wdog_wtcon = exynos_wdt_wdog_read(sc, EXYNOS_WDT_WTCON);
 	sc->sc_wdog_armed = (sc->sc_wdog_wtcon & WTCON_ENABLE)
 	    && (sc->sc_wdog_wtcon & WTCON_RESET_ENABLE);
@@ -255,7 +269,7 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sc->sc_wdog_armed) {
-		int error = sysmon_wdog_setmode(&sc->sc_smw, WDOG_MODE_KTICKLE,
+		error = sysmon_wdog_setmode(&sc->sc_smw, WDOG_MODE_KTICKLE,
 		    sc->sc_wdog_period);
 		if (error)
 			aprint_error_dev(self,
