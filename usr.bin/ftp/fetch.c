@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.209 2015/12/13 14:06:13 tron Exp $	*/
+/*	$NetBSD: fetch.c,v 1.210 2015/12/15 20:49:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.209 2015/12/13 14:06:13 tron Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.210 2015/12/15 20:49:49 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -483,6 +483,89 @@ parse_url(const char *url, const char *desc, url_t *utype,
 
 sigjmp_buf	httpabort;
 
+static int
+ftp_socket(const char *host, const char *port, void **ssl)
+{
+	struct addrinfo	hints, *res, *res0 = NULL;
+	int error;
+	int s;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_flags = 0;
+	hints.ai_family = family;
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = 0;
+
+	error = getaddrinfo(host, port, &hints, &res0);
+	if (error) {
+		warnx("Can't LOOKUP `%s:%s': %s", host, port,
+		    (error == EAI_SYSTEM) ? strerror(errno)
+					  : gai_strerror(error));
+		return -1;
+	}
+
+	if (res0->ai_canonname)
+		host = res0->ai_canonname;
+
+	s = -1;
+	if (ssl)
+		*ssl = NULL;
+	for (res = res0; res; res = res->ai_next) {
+		char	hname[NI_MAXHOST], sname[NI_MAXSERV];
+
+		ai_unmapped(res);
+		if (getnameinfo(res->ai_addr, res->ai_addrlen,
+		    hname, sizeof(hname), sname, sizeof(sname),
+		    NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
+			strlcpy(hname, "?", sizeof(hname));
+			strlcpy(sname, "?", sizeof(sname));
+		}
+
+		if (verbose && res0->ai_next) {
+#ifdef INET6
+			if(res->ai_family == AF_INET6) {
+				fprintf(ttyout, "Trying [%s]:%s ...\n",
+				    hname, sname);
+			} else {
+#endif
+				fprintf(ttyout, "Trying %s:%s ...\n",
+				    hname, sname);
+#ifdef INET6
+			}
+#endif
+		}
+
+		s = socket(res->ai_family, SOCK_STREAM, res->ai_protocol);
+		if (s < 0) {
+			warn(
+			    "Can't create socket for connection to "
+			    "`%s:%s'", hname, sname);
+			continue;
+		}
+
+		if (ftp_connect(s, res->ai_addr, res->ai_addrlen,
+		    verbose || !res->ai_next) < 0) {
+			close(s);
+			s = -1;
+			continue;
+		}
+
+#ifdef WITH_SSL
+		if (ssl) {
+			if ((*ssl = fetch_start_ssl(s, host)) == NULL) {
+				close(s);
+				s = -1;
+				continue;
+			}
+		}
+#endif
+		break;
+	}
+	if (res0)
+		freeaddrinfo(res0);
+	return s;
+}
+
 /*
  * Retrieve URL, via a proxy if necessary, using HTTP.
  * If proxyenv is set, use that for the proxy, otherwise try ftp_proxy or
@@ -494,8 +577,6 @@ sigjmp_buf	httpabort;
 static int
 fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 {
-	struct addrinfo		hints, *res, *res0 = NULL;
-	int			error;
 	sigfunc volatile	oldint;
 	sigfunc volatile	oldpipe;
 	sigfunc volatile	oldalrm;
@@ -529,9 +610,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	time_t			mtime;
 	url_t			urltype;
 	in_port_t		portnum;
-#ifdef WITH_SSL
-	void			*ssl;
-#endif
+	void			*ssl = NULL;
 
 	DPRINTF("%s: `%s' proxyenv `%s'\n", __func__, url, STRorNULL(penv));
 
@@ -732,80 +811,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			}
 		} /* ! EMPTYSTRING(penv) */
 
-		memset(&hints, 0, sizeof(hints));
-		hints.ai_flags = 0;
-		hints.ai_family = family;
-		hints.ai_socktype = SOCK_STREAM;
-		hints.ai_protocol = 0;
-		error = getaddrinfo(host, port, &hints, &res0);
-		if (error) {
-			warnx("Can't LOOKUP `%s:%s': %s", host, port,
-			    (error == EAI_SYSTEM) ? strerror(errno)
-						  : gai_strerror(error));
-			goto cleanup_fetch_url;
-		}
-		if (res0->ai_canonname)
-			host = res0->ai_canonname;
-
-		s = -1;
-#ifdef WITH_SSL
-		ssl = NULL;
-#endif
-		for (res = res0; res; res = res->ai_next) {
-			char	hname[NI_MAXHOST], sname[NI_MAXSERV];
-
-			ai_unmapped(res);
-			if (getnameinfo(res->ai_addr, res->ai_addrlen,
-			    hname, sizeof(hname), sname, sizeof(sname),
-			    NI_NUMERICHOST | NI_NUMERICSERV) != 0) {
-				strlcpy(hname, "?", sizeof(hname));
-				strlcpy(sname, "?", sizeof(sname));
-			}
-
-			if (verbose && res0->ai_next) {
-#ifdef INET6
-				if(res->ai_family == AF_INET6) {
-					fprintf(ttyout, "Trying [%s]:%s ...\n",
-					    hname, sname);
-				} else {
-#endif
-					fprintf(ttyout, "Trying %s:%s ...\n",
-					    hname, sname);
-#ifdef INET6
-				}
-#endif
-			}
-
-			s = socket(res->ai_family, SOCK_STREAM,
-			    res->ai_protocol);
-			if (s < 0) {
-				warn(
-				    "Can't create socket for connection to "
-				    "`%s:%s'", hname, sname);
-				continue;
-			}
-
-			if (ftp_connect(s, res->ai_addr, res->ai_addrlen,
-			    verbose || !res->ai_next) < 0) {
-				close(s);
-				s = -1;
-				continue;
-			}
-
-#ifdef WITH_SSL
-			if (urltype == HTTPS_URL_T) {
-				if ((ssl = fetch_start_ssl(s, host)) == NULL) {
-					close(s);
-					s = -1;
-					continue;
-				}
-			}
-#endif
-
-			/* success */
-			break;
-		}
-
+		s = ftp_socket(host, port,
+		    urltype == HTTPS_URL_T ? &ssl : NULL);
 		if (s < 0) {
 			warnx("Can't connect to `%s:%s'", host, port);
 			goto cleanup_fetch_url;
@@ -1396,8 +1403,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		close(s);
 	if (closefunc != NULL && fout != NULL)
 		(*closefunc)(fout);
-	if (res0)
-		freeaddrinfo(res0);
 	if (savefile != outfile)
 		FREEPTR(savefile);
 	FREEPTR(uuser);
