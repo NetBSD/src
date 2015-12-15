@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_fdt.c,v 1.1 2015/12/14 22:51:42 marty Exp $ */
+/* $NetBSD: exynos_fdt.c,v 1.2 2015/12/15 23:13:51 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_fdt.c,v 1.1 2015/12/14 22:51:42 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_fdt.c,v 1.2 2015/12/15 23:13:51 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,9 +84,9 @@ exynosfdt_attach(device_t parent, device_t self, void *aux)
 
 	struct fdt_attach_args faa = {
 		.faa_name = "",
-		 //		.faa_bst = &armv7_generic_bs_tag,
-		 //.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
-		 //.faa_dmat = &exynos_dma_tag,
+		.faa_bst = &armv7_generic_bs_tag,
+		.faa_a4x_bst = &armv7_generic_a4x_bs_tag,
+		.faa_dmat = &exynos_bus_dma_tag,
 		.faa_phandle = OF_peer(0),
 		.faa_init = exynosfdt_init,
 		.faa_ninit = __arraycount(exynosfdt_init)
