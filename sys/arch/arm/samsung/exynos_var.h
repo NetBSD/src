@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.19 2015/12/11 04:03:44 marty Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.20 2015/12/15 23:13:51 marty Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -115,6 +115,8 @@ extern struct bus_space exynos_a4x_bs_tag;
 extern struct arm32_bus_dma_tag exynos_bus_dma_tag;
 extern struct arm32_bus_dma_tag exynos_coherent_bus_dma_tag;
 
+extern struct bus_space armv7_generic_bs_tag;
+extern struct bus_space armv7_generic_a4x_bs_tag;
 extern bus_space_handle_t exynos_core_bsh;
 extern bus_space_handle_t exynos_wdt_bsh;
 extern bus_space_handle_t exynos_pmu_bsh;
