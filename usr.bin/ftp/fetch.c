@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.211 2015/12/15 21:01:27 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.212 2015/12/15 21:45:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.211 2015/12/15 21:01:27 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.212 2015/12/15 21:45:21 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -605,6 +605,46 @@ handle_noproxy(const char *host, in_port_t portnum)
 	return isproxy;
 }
 
+static int
+handle_proxy(const char *penv, char **host, char **port, char **puser,
+    char **ppass, url_t *urltype)
+{
+	url_t purltype;
+	char *phost, *ppath;
+	char *pport;
+	in_port_t pportnum;
+
+	if (isipv6addr(*host) && strchr(*host, '%') != NULL) {
+		warnx("Scoped address notation `%s' disallowed via web proxy",
+		    *host);
+		return -1;
+	}
+
+	if (parse_url(penv, "proxy URL", &purltype, puser, ppass, &phost,
+	    &pport, &pportnum, &ppath) == -1)
+		return -1;
+
+	if ((!IS_HTTP_TYPE(purltype) && purltype != FTP_URL_T) ||
+	    EMPTYSTRING(phost) ||
+	    (! EMPTYSTRING(ppath) && strcmp(ppath, "/") != 0)) {
+		warnx("Malformed proxy URL `%s'", penv);
+		FREEPTR(phost);
+		FREEPTR(pport);
+		FREEPTR(ppath);
+		return -1;
+	}
+	FREEPTR(ppath);
+
+	FREEPTR(*host);
+	*host = phost;
+	FREEPTR(*port);
+	*port = pport;
+
+	*urltype = purltype;
+
+	return 0;
+}
+
 /*
  * Retrieve URL, via a proxy if necessary, using HTTP.
  * If proxyenv is set, use that for the proxy, otherwise try ftp_proxy or
@@ -763,10 +803,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 		direction = "retrieved";
 		if (! EMPTYSTRING(penv)) {			/* use proxy */
-			url_t purltype;
-			char *phost, *ppath;
-			char *pport;
-			in_port_t pportnum;
 
 			isproxy = handle_noproxy(host, portnum);
 
@@ -777,45 +813,18 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 			if (isproxy) {
 				if (restart_point) {
-					warnx("Can't restart via proxy URL `%s'",
+					warnx(
+					    "Can't restart via proxy URL `%s'",
 					    penv);
 					goto cleanup_fetch_url;
 				}
-				if (parse_url(penv, "proxy URL", &purltype,
-				    &puser, &ppass, &phost, &pport, &pportnum,
-				    &ppath) == -1)
+				if (handle_proxy(penv, &host, &port,
+				    &puser, &ppass, &urltype) < 0) {
 					goto cleanup_fetch_url;
-
-				if ((!IS_HTTP_TYPE(purltype)
-				     && purltype != FTP_URL_T) ||
-				    EMPTYSTRING(phost) ||
-				    (! EMPTYSTRING(ppath)
-				     && strcmp(ppath, "/") != 0)) {
-					warnx("Malformed proxy URL `%s'", penv);
-					FREEPTR(phost);
-					FREEPTR(pport);
-					FREEPTR(ppath);
-					goto cleanup_fetch_url;
+				} else {
+				    FREEPTR(path);
+				    path = ftp_strdup(url);
 				}
-				if (isipv6addr(host) &&
-				    strchr(host, '%') != NULL) {
-					warnx(
-"Scoped address notation `%s' disallowed via web proxy",
-					    host);
-					FREEPTR(phost);
-					FREEPTR(pport);
-					FREEPTR(ppath);
-					goto cleanup_fetch_url;
-				}
-
-				FREEPTR(host);
-				host = phost;
-				FREEPTR(port);
-				port = pport;
-				FREEPTR(path);
-				path = ftp_strdup(url);
-				FREEPTR(ppath);
-				urltype = purltype;
 			}
 		} /* ! EMPTYSTRING(penv) */
 
