@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.11 2015/12/14 22:06:57 marty Exp $
+#	$NetBSD: files.exynos,v 1.12 2015/12/15 23:15:53 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -12,13 +12,13 @@ file	arch/arm/arm32/arm32_boot.c
 file	arch/arm/arm32/arm32_kvminit.c
 file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/samsung/exynos_soc.c
 file	arch/arm/samsung/exynos_space.c
 #file	arch/arm/samsung/exynos_dma.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
-
-file	arch/arm/arm/bus_space_a4x.S		exyo
 
 # Console parameters
 defparam opt_exynos.h				CONADDR
@@ -63,7 +63,7 @@ file	arch/arm/samsung/mct.c		exyo_mct
 
 # Watchdog
 device	exyowdt : sysmon_wdog
-attach	exyowdt at exyo with exynos_wdt
+attach	exyowdt at fdt with exynos_wdt
 file	arch/arm/samsung/exynos_wdt.c	exynos_wdt | exyo_io needs-flag
 
 # UARTs
