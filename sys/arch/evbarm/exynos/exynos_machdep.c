@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_machdep.c,v 1.4 2015/12/14 22:06:57 marty Exp $ */
+/*	$NetBSD: exynos_machdep.c,v 1.5 2015/12/16 12:18:34 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.4 2015/12/14 22:06:57 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.5 2015/12/16 12:18:34 jmcneill Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -105,8 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.4 2015/12/14 22:06:57 marty Exp
  * made into a linux (not netbsd) uboot image.
  */
 #include <libfdt.h>
-#include <dev/fdt/fdt_openfirm.h>
-#include <dev/ofw/openfirm.h>
 #include <dev/fdt/fdtvar.h>
 #define FDT_BUF_SIZE	(128*1024)
 static uint8_t fdt_data[FDT_BUF_SIZE];
@@ -412,7 +410,7 @@ initarm(void *arg)
 		if (error != 0) {
 			panic("fdt_move failed: %s", fdt_strerror(error));
 		}
-		fdt_openfirm_set_data(fdt_data);
+		fdtbus_set_data(fdt_data);
 	} else {
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
 	}
