@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.13 2015/12/15 15:33:19 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.14 2015/12/16 19:46:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.13 2015/12/15 15:33:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.14 2015/12/16 19:46:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,12 +115,8 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (OF_getprop(faa->faa_phandle, "bus-width", &bus_width,
-	    sizeof(bus_width)) == sizeof(bus_width)) {
-		bus_width = be32toh(bus_width);
-	} else {
+	if (of_getprop_uint32(faa->faa_phandle, "bus-width", &bus_width))
 		bus_width = 4;
-	}
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = faa->faa_dmat;

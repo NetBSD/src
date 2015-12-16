@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_com.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,17 +98,17 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	u_int reg_shift;
-	int error, len;
+	int error;
 
 	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
 
-	len = OF_getprop(faa->faa_phandle, "reg-shift", &reg_shift,
-	    sizeof(reg_shift));
-	if (len == sizeof(reg_shift)) {
-		reg_shift = be32toh(reg_shift);
+	if (of_getprop_uint32(faa->faa_phandle, "reg-shift", &reg_shift)) {
+		/* missing or bad reg-shift property, assume 2 */
+		bst = faa->faa_a4x_bst;
+	} else {
 		if (reg_shift == 2) {
 			bst = faa->faa_a4x_bst;
 		} else if (reg_shift == 0) {
@@ -118,9 +118,6 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 			    reg_shift);
 			return;
 		}
-	} else {
-		/* missing or bad reg-shift property, assume 2 */
-		bst = faa->faa_a4x_bst;
 	}
 
 	sc->sc_dev = self;

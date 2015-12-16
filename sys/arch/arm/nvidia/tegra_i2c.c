@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.9 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.10 2015/12/16 19:46:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.9 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.10 2015/12/16 19:46:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,15 +126,16 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_i2c_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	struct i2cbus_attach_args iba;
 	prop_dictionary_t devs;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
 	u_int address_cells;
-	int len, error;
+	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
@@ -153,12 +154,12 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": I2C%d\n", sc->sc_port + 1);
 
-	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
 	    FDT_INTR_MPSAFE, tegra_i2c_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
@@ -180,17 +181,13 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_release_bus = tegra_i2c_release_bus;
 	sc->sc_ic.ic_exec = tegra_i2c_exec;
 
-	fdtbus_register_i2c_controller(self, faa->faa_phandle,
-	    &tegra_i2c_funcs);
+	fdtbus_register_i2c_controller(self, phandle, &tegra_i2c_funcs);
 
 	devs = prop_dictionary_create();
-	len = OF_getprop(faa->faa_phandle, "#address-cells",
-	    &address_cells, sizeof(address_cells));
-	if (len == sizeof(address_cells)) {
-		address_cells = be32toh(address_cells);
-	} else {
+
+	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
 		address_cells = 1;
-	}
+
 	of_enter_i2c_devs(devs, faa->faa_phandle, address_cells * 4, 0);
 
 	iba.iba_tag = &sc->sc_ic;
