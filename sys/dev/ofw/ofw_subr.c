@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_subr.c,v 1.26 2015/12/13 11:51:13 jmcneill Exp $	*/
+/*	$NetBSD: ofw_subr.c,v 1.27 2015/12/16 19:33:39 jmcneill Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.26 2015/12/13 11:51:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_subr.c,v 1.27 2015/12/16 19:33:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,4 +442,32 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 	}
 
 	prop_dictionary_set_bool(props, "i2c-indirect-config", false);
+}
+
+/*
+ * Get the value of a boolean property. If the property is present,
+ * return true. Otherwise, return false.
+ */
+bool
+of_getprop_bool(int node, const char *prop)
+{
+	return OF_getproplen(node, prop) >= 0;
+}
+
+/*
+ * Get the value of a uint32 property, compensating for host byte order.
+ * Returns 0 on success, non-zero on failure.
+ */
+int
+of_getprop_uint32(int node, const char *prop, uint32_t *val)
+{
+	uint32_t v;
+	int len;
+
+	len = OF_getprop(node, prop, &v, sizeof(v));
+	if (len != sizeof(v))
+		return -1;
+
+	*val = be32toh(v);
+	return 0;
 }
