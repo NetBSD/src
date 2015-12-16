@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.3 2015/12/16 12:17:45 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.4 2015/12/16 19:33:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.3 2015/12/16 12:17:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.4 2015/12/16 19:33:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -82,18 +82,14 @@ fdtbus_phandle2offset(int phandle)
 static int
 fdtbus_get_addr_cells(int phandle)
 {
-	int val, addr_cells, error;
+	uint32_t addr_cells;
 
 	const int parent = OF_parent(phandle);
 	if (parent == -1)
 		return -1;
 
-	error = OF_getprop(parent, "#address-cells", &val, sizeof(val));
-	if (error <= 0) {
+	if (of_getprop_uint32(parent, "#address-cells", &addr_cells))
 		addr_cells = 2;
-	} else {
-		addr_cells = fdt32_to_cpu(val);
-	}
 
 	return addr_cells;
 }
@@ -101,18 +97,14 @@ fdtbus_get_addr_cells(int phandle)
 static int
 fdtbus_get_size_cells(int phandle)
 {
-	int val, size_cells, error;
+	uint32_t size_cells;
 
 	const int parent = OF_parent(phandle);
 	if (parent == -1)
 		return -1;
 
-	error = OF_getprop(parent, "#size-cells", &val, sizeof(val));
-	if (error <= 0) {
+	if (of_getprop_uint32(parent, "#size-cells", &size_cells))
 		size_cells = 0;
-	} else {
-		size_cells = fdt32_to_cpu(val);
-	}
 
 	return size_cells;
 }
