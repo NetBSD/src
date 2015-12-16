@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.4 2015/12/15 15:35:10 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.5 2015/12/16 12:26:14 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -11,7 +11,6 @@ options 	CPU_CORTEXA15
 options 	SOC_TEGRA124
 options 	MULTIPROCESSOR
 
-options 	FDT		# Flattened Device Tree support
 pseudo-device 	openfirm	# /dev/openfirm
 
 options 	DIAGNOSTIC	# internal consistency checks
