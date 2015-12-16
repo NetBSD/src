@@ -1,4 +1,4 @@
-/* $NetBSD: gpiokeys.c,v 1.1 2015/12/14 20:58:45 jmcneill Exp $ */
+/* $NetBSD: gpiokeys.c,v 1.2 2015/12/16 19:33:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.1 2015/12/14 20:58:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpiokeys.c,v 1.2 2015/12/16 19:33:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -108,11 +108,10 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(":");
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		len = OF_getprop(child, "linux,code", &code, sizeof(code));
-		if (len != sizeof(code)) {
+		if (of_getprop_uint32(child, "linux,code", &code))
 			continue;
-		}
-		code = be32toh(code);
+		if (of_getprop_uint32(child, "debounce-interval", &debounce))
+			debounce = 5;	/* default */
 		len = OF_getproplen(child, "label");
 		if (len <= 0) {
 			continue;
@@ -126,12 +125,7 @@ gpiokeys_attach(device_t parent, device_t self, void *aux)
 			kmem_free(key, sizeof(*key));
 			continue;
 		}
-		if (OF_getprop(child, "debounce-interval", &debounce,
-		    sizeof(debounce)) == sizeof(debounce)) {
-			key->key_debounce = be32toh(debounce);
-		} else {
-			key->key_debounce = 5; /* default */
-		}
+		key->key_debounce = debounce;
 		key->key_pin = fdtbus_gpio_acquire(child, "gpios",
 		    GPIO_PIN_INPUT);
 
