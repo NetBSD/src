@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_lic.c,v 1.1 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_lic.c,v 1.2 2015/12/16 19:46:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.1 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_lic.c,v 1.2 2015/12/16 19:46:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,11 +105,10 @@ tegra_lic_establish(device_t dev, int phandle, u_int index, int ipl, int flags,
 	u_int *interrupts;
 	int interrupt_cells, len;
 
-	len = OF_getprop(sc->sc_phandle, "#interrupt-cells", &interrupt_cells,
-	    sizeof(interrupt_cells));
-	if (len != sizeof(interrupt_cells) || interrupt_cells <= 0)
+	if (of_getprop_uint32(sc->sc_phandle, "#interrupt-cells",
+	    &interrupt_cells)) {
 		return NULL;
-	interrupt_cells = be32toh(interrupt_cells);
+	}
 
 	len = OF_getproplen(phandle, "interrupts");
 	if (len <= 0)
@@ -157,12 +156,10 @@ tegra_lic_intrstr(device_t dev, int phandle, u_int index, char *buf,
 	u_int *interrupts;
 	int interrupt_cells, len;
 
-	len = OF_getprop(sc->sc_phandle, "#interrupt-cells", &interrupt_cells,
-	    sizeof(interrupt_cells));
-	if (len != sizeof(interrupt_cells) || interrupt_cells <= 0) {
+	if (of_getprop_uint32(sc->sc_phandle, "#interrupt-cells",
+	    &interrupt_cells)) {
 		return false;
 	}
-	interrupt_cells = be32toh(interrupt_cells);
 
 	len = OF_getproplen(phandle, "interrupts");
 	if (len <= 0) {
