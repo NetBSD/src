@@ -1,4 +1,4 @@
-/* $NetBSD: fixedregulator.c,v 1.1 2015/12/13 17:30:40 jmcneill Exp $ */
+/* $NetBSD: fixedregulator.c,v 1.2 2015/12/16 19:33:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.1 2015/12/13 17:30:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fixedregulator.c,v 1.2 2015/12/16 19:33:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -100,18 +100,14 @@ fixedregulator_attach(device_t parent, device_t self, void *aux)
 	}
 
 	gpioflags = GPIO_PIN_OUTPUT;
-	if (OF_getproplen(phandle, "gpio-open-drain") >= 0) {
+	if (of_getprop_bool(phandle, "gpio-open-drain"))
 		gpioflags |= GPIO_PIN_OPENDRAIN;
-	}
 
+	sc->sc_always_on = of_getprop_bool(phandle, "regulator-always-on");
 	sc->sc_pin = fdtbus_gpio_acquire(phandle, "gpio", gpioflags);
-	if (sc->sc_pin == NULL ||
-	    OF_getproplen(phandle, "regulator-always-on") >= 0) {
+	if (sc->sc_pin == NULL)
 		sc->sc_always_on = true;
-	}
-	if (OF_getproplen(phandle, "enable-active-high") >= 0) {
-		sc->sc_enable_val = 1;
-	}
+	sc->sc_enable_val = of_getprop_bool(phandle, "enable-active-high");
 
 	fdtbus_register_regulator_controller(self, phandle,
 	    &fixedregulator_funcs);

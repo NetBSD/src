@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.3 2015/12/16 19:33:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.3 2015/12/16 19:33:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,12 +50,10 @@ static int
 fdtbus_get_interrupt_parent(int phandle)
 {
 	u_int interrupt_parent;
-	int len;
 
 	while (phandle >= 0) {
-		len = OF_getprop(phandle, "interrupt-parent",
-		    &interrupt_parent, sizeof(interrupt_parent));
-		if (len == sizeof(interrupt_parent)) {
+		if (of_getprop_uint32(phandle, "interrupt-parent",
+		    &interrupt_parent) == 0) {
 			break;
 		}
 		if (phandle == 0) {
@@ -66,8 +64,6 @@ fdtbus_get_interrupt_parent(int phandle)
 	if (phandle < 0) {
 		return -1;
 	}
-
-	interrupt_parent = fdt32_to_cpu(interrupt_parent);
 
 	const void *data = fdtbus_get_data();
 	const int off = fdt_node_offset_by_phandle(data, interrupt_parent);
