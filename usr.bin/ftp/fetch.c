@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.212 2015/12/15 21:45:21 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.213 2015/12/16 01:20:05 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.212 2015/12/15 21:45:21 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.213 2015/12/16 01:20:05 nonaka Exp $");
 #endif /* not lint */
 
 /*
@@ -74,9 +74,7 @@ __RCSID("$NetBSD: fetch.c,v 1.212 2015/12/15 21:45:21 christos Exp $");
 typedef enum {
 	UNKNOWN_URL_T=-1,
 	HTTP_URL_T,
-#ifdef WITH_SSL
 	HTTPS_URL_T,
-#endif
 	FTP_URL_T,
 	FILE_URL_T,
 	CLASSIC_URL_T
