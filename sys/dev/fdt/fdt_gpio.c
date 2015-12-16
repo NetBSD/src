@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_gpio.c,v 1.1 2015/12/16 12:03:44 jmcneill Exp $ */
+/* $NetBSD: fdt_gpio.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.1 2015/12/16 12:03:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
 #include <libfdt.h>
-#include <dev/ofw/openfirm.h>
-#include <dev/fdt/fdt_openfirm.h>
 #include <dev/fdt/fdtvar.h>
 
 struct fdtbus_gpio_controller {
