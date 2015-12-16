@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.2 2015/12/14 20:58:45 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.3 2015/12/16 12:03:44 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -24,3 +24,7 @@ file	dev/fdt/gpiokeys.c			gpiokeys
 
 file	dev/fdt/fdt_openfirm.c			fdtbus
 file	dev/fdt/fdt_subr.c			fdtbus
+file	dev/fdt/fdt_gpio.c			fdtbus
+file	dev/fdt/fdt_i2c.c			fdtbus
+file	dev/fdt/fdt_intr.c			fdtbus
+file	dev/fdt/fdt_regulator.c			fdtbus
