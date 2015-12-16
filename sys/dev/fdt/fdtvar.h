@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.1 2015/12/13 17:30:40 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -87,29 +87,34 @@ struct fdtbus_regulator_controller_func {
 	int	(*enable)(device_t, bool);
 };
 
-int	fdtbus_register_interrupt_controller(device_t, int,
-	    const struct fdtbus_interrupt_controller_func *);
-int	fdtbus_register_i2c_controller(device_t, int,
-	    const struct fdtbus_i2c_controller_func *);
-int	fdtbus_register_gpio_controller(device_t, int,
-	    const struct fdtbus_gpio_controller_func *);
-int	fdtbus_register_regulator_controller(device_t, int,
-	    const struct fdtbus_regulator_controller_func *);
+int		fdtbus_register_interrupt_controller(device_t, int,
+		    const struct fdtbus_interrupt_controller_func *);
+int		fdtbus_register_i2c_controller(device_t, int,
+		    const struct fdtbus_i2c_controller_func *);
+int		fdtbus_register_gpio_controller(device_t, int,
+		    const struct fdtbus_gpio_controller_func *);
+int		fdtbus_register_regulator_controller(device_t, int,
+		    const struct fdtbus_regulator_controller_func *);
 
-int	fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
-int	fdtbus_get_phandle(int, const char *);
-i2c_tag_t fdtbus_get_i2c_tag(int);
-void *	fdtbus_intr_establish(int, u_int, int, int,
-	    int (*func)(void *), void *arg);
-void	fdtbus_intr_disestablish(int, void *);
-bool	fdtbus_intr_str(int, u_int, char *, size_t);
+int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
+int		fdtbus_get_phandle(int, const char *);
+i2c_tag_t	fdtbus_get_i2c_tag(int);
+void *		fdtbus_intr_establish(int, u_int, int, int,
+		    int (*func)(void *), void *arg);
+void		fdtbus_intr_disestablish(int, void *);
+bool		fdtbus_intr_str(int, u_int, char *, size_t);
 struct fdtbus_gpio_pin *fdtbus_gpio_acquire(int, const char *, int);
-void	fdtbus_gpio_release(struct fdtbus_gpio_pin *);
-int	fdtbus_gpio_read(struct fdtbus_gpio_pin *);
-void	fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
+void		fdtbus_gpio_release(struct fdtbus_gpio_pin *);
+int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
+void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
-void	fdtbus_regulator_release(struct fdtbus_regulator *);
-int	fdtbus_regulator_enable(struct fdtbus_regulator *);
-int	fdtbus_regulator_disable(struct fdtbus_regulator *);
+void		fdtbus_regulator_release(struct fdtbus_regulator *);
+int		fdtbus_regulator_enable(struct fdtbus_regulator *);
+int		fdtbus_regulator_disable(struct fdtbus_regulator *);
+
+bool		fdtbus_set_data(const void *);
+const void *	fdtbus_get_data(void);
+int		fdtbus_phandle2offset(int);
+int		fdtbus_offset2phandle(int);
 
 #endif /* _DEV_FDT_FDTVAR_H */

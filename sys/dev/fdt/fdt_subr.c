@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.2 2015/12/16 12:03:44 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.3 2015/12/16 12:17:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,16 +27,57 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.2 2015/12/16 12:03:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.3 2015/12/16 12:17:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
 #include <libfdt.h>
-#include <dev/ofw/openfirm.h>
-#include <dev/fdt/fdt_openfirm.h>
 #include <dev/fdt/fdtvar.h>
+
+static const void *fdt_data;
+
+bool
+fdtbus_set_data(const void *data)
+{
+	KASSERT(fdt_data == NULL);
+	if (fdt_check_header(data) != 0) {
+		return false;
+	}
+	fdt_data = data;
+	return true;
+}
+
+const void *
+fdtbus_get_data(void)
+{
+	return fdt_data;
+}
+
+int
+fdtbus_offset2phandle(int offset)
+{
+	if (offset < 0)
+		return 0;
+
+	return offset + fdt_off_dt_struct(fdt_data);
+}
+
+int
+fdtbus_phandle2offset(int phandle)
+{
+	const int dtoff = fdt_off_dt_struct(fdt_data);
+
+	if (phandle == -1)
+		phandle = dtoff;
+
+	if (phandle < dtoff)
+		return -1;
+
+	return phandle - dtoff;
+}
+
 
 static int
 fdtbus_get_addr_cells(int phandle)
@@ -97,13 +138,12 @@ fdtbus_get_phandle(int phandle, const char *prop)
 	phandle_ref = fdt32_to_cpu(buf[0]);
 	kmem_free(buf, len);
 
-	const void *data = fdt_openfirm_get_data();
-	const int off = fdt_node_offset_by_phandle(data, phandle_ref);
+	const int off = fdt_node_offset_by_phandle(fdt_data, phandle_ref);
 	if (off < 0) {
 		return -1;
 	}
 
-	return fdt_openfirm_get_phandle(off);
+	return fdtbus_offset2phandle(off);
 }
 
 int

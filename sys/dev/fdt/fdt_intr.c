@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.1 2015/12/16 12:03:44 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,15 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.1 2015/12/16 12:03:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
 #include <libfdt.h>
-#include <dev/ofw/openfirm.h>
-#include <dev/fdt/fdt_openfirm.h>
 #include <dev/fdt/fdtvar.h>
 
 struct fdtbus_interrupt_controller {
@@ -71,13 +69,13 @@ fdtbus_get_interrupt_parent(int phandle)
 
 	interrupt_parent = fdt32_to_cpu(interrupt_parent);
 
-	const void *data = fdt_openfirm_get_data();
+	const void *data = fdtbus_get_data();
 	const int off = fdt_node_offset_by_phandle(data, interrupt_parent);
 	if (off < 0) {
 		return -1;
 	}
 
-	return fdt_openfirm_get_phandle(off);
+	return fdtbus_offset2phandle(off);
 }
 
 static struct fdtbus_interrupt_controller *
