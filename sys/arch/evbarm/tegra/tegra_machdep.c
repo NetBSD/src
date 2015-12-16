@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.35 2015/12/13 22:55:05 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.36 2015/12/16 12:18:02 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.35 2015/12/13 22:55:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.36 2015/12/16 12:18:02 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -104,8 +104,6 @@ char *boot_args = NULL;
 u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
 
 #include <libfdt.h>
-#include <dev/fdt/fdt_openfirm.h>
-#include <dev/ofw/openfirm.h>
 #include <dev/fdt/fdtvar.h>
 #define FDT_BUF_SIZE	(128*1024)
 static uint8_t fdt_data[FDT_BUF_SIZE];
@@ -266,7 +264,7 @@ initarm(void *arg)
 		if (error != 0) {
 			panic("fdt_move failed: %s", fdt_strerror(error));
 		}
-		fdt_openfirm_set_data(fdt_data);
+		fdtbus_set_data(fdt_data);
 	} else {
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
 	}
