@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.182 2015/09/26 11:16:13 maxv Exp $
+# $NetBSD: GENERIC,v 1.183 2015/12/16 08:00:00 jdc Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.182 $"
+#ident 		"GENERIC-$Revision: 1.183 $"
 
 maxusers	64
 
@@ -950,6 +950,7 @@ iic*		at alipm?
 
 spdmem*		at iic? addr?
 admtemp*	at iic? addr?
+adm1026hm*	at iic? addr?
 ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
 lmtemp*		at iic? addr?
 tda*		at iic? addr?	# fan control on SB1000/2000
