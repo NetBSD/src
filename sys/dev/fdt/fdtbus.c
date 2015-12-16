@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.1 2015/12/13 17:30:40 jmcneill Exp $ */
+/* $NetBSD: fdtbus.c,v 1.2 2015/12/16 19:33:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.1 2015/12/13 17:30:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.2 2015/12/16 19:33:16 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,7 +111,8 @@ fdt_scan(device_t self, const struct fdt_attach_args *faa, const char *devname)
 			status = kmem_zalloc(len, KM_SLEEP);
 			alen = OF_getprop(child, "status", status, len);
 			KASSERT(alen == len);
-			const bool okay_p = strcmp(status, "okay") == 0;
+			const bool okay_p = strcmp(status, "okay") == 0 ||
+					    strcmp(status, "ok") == 0;
 			kmem_free(status, len);
 			if (!okay_p) {
 				continue;
