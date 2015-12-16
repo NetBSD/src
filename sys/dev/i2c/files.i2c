@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.68 2015/11/21 10:57:32 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.69 2015/12/16 07:56:48 jdc Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -175,6 +175,11 @@ file	dev/i2c/ds1672.c		ds1672rtc
 device	admtemp: sysmon_envsys
 attach	admtemp at iic
 file	dev/i2c/adm1021.c		admtemp
+
+# ADM1026 hardware monitor
+device	adm1026hm: sysmon_envsys
+attach	adm1026hm at iic
+file	dev/i2c/adm1026.c		adm1026hm
 
 # SMSC LPC47M192 hardware monitor
 device	smscmon: sysmon_envsys
