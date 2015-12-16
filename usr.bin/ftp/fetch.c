@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.214 2015/12/16 19:17:16 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.215 2015/12/16 21:11:47 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.214 2015/12/16 19:17:16 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.215 2015/12/16 21:11:47 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -183,6 +183,18 @@ initurlinfo(struct urlinfo *ui)
 	ui->utype = UNKNOWN_URL_T;
 	ui->portnum = 0;
 }
+
+#ifdef WITH_SSL
+static void
+copyurlinfo(struct urlinfo *dui, struct urlinfo *sui)
+{
+	dui->host = ftp_strdup(sui->host);
+	dui->port = ftp_strdup(sui->port);
+	dui->path = ftp_strdup(sui->path);
+	dui->utype = sui->utype;
+	dui->portnum = sui->portnum;
+}
+#endif
 
 static void
 freeurlinfo(struct urlinfo *ui)
@@ -721,10 +733,9 @@ print_cache(FETCH *fin, int isproxy)
 }
 
 static int
-print_get(FETCH *fin, int isproxy, const struct urlinfo *ui)
+print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *ui)
 {
-	int hasleading = 0;
-	const char *leading = "  (";
+	const char *leading = hasleading ? ", " : "  (";
 
 	if (isproxy) {
 		if (verbose) {
@@ -807,66 +818,87 @@ print_proxy(FETCH *fin, const char *leading,
 #define C_OK 0
 #define C_CLEANUP 1
 #define C_IMPROPER 2
+#define C_PROXY 3
+#define C_NOPROXY 4
 
+static int
+getresponseline(FETCH *fin, char *buf, size_t buflen, int *len)
+{
+	const char *errormsg;
+
+	alarmtimer(quit_time ? quit_time : 60);
+	*len = fetch_getline(fin, buf, buflen, &errormsg);
+	alarmtimer(0);
+	if (*len < 0) {
+		if (*errormsg == '\n')
+			errormsg++;
+		warnx("Receiving HTTP reply: %s", errormsg);
+		return C_CLEANUP;
+	}
+	while (*len > 0 && (ISLWS(buf[*len-1])))
+		buf[--*len] = '\0';
+
+	if (*len)
+		DPRINTF("%s: received `%s'\n", __func__, buf);
+	return C_OK;
+}
+
+static int
+getresponse(FETCH *fin, char **cp, size_t buflen, int *hcode)
+{
+	int len, rv;
+	char *ep, *buf = *cp;
+
+	*hcode = 0;
+	if ((rv = getresponseline(fin, buf, buflen, &len)) != C_OK)
+		return rv;
+
+	/* Determine HTTP response code */
+	*cp = strchr(buf, ' ');
+	if (*cp == NULL)
+		return C_IMPROPER;
+
+	(*cp)++;
+
+	*hcode = strtol(*cp, &ep, 10);
+	if (*ep != '\0' && !isspace((unsigned char)*ep))
+		return C_IMPROPER;
+
+	return C_OK;
+}
 
 static int
 negotiate_connection(FETCH *fin, const char *url, const char *penv,
     off_t *rangestart, off_t *rangeend, off_t *entitylen,
     time_t *mtime, struct authinfo *wauth, struct authinfo *pauth,
-    int *rval, int *ischunked)
+    int *rval, int *ischunked, char **auth)
 {
 	int			len, hcode, rv;
 	char			buf[FTPBUFLEN], *ep;
-	const char		*errormsg, *cp, *token;
-	char 			*location, *message, *auth;
+	const char		*cp, *token;
+	char 			*location, *message;
 
-	auth = message = location = NULL;
+	*auth = message = location = NULL;
 
 	/* Read the response */
-	alarmtimer(quit_time ? quit_time : 60);
-	len = fetch_getline(fin, buf, sizeof(buf), &errormsg);
-	alarmtimer(0);
-	if (len < 0) {
-		if (*errormsg == '\n')
-			errormsg++;
-		warnx("Receiving HTTP reply: %s", errormsg);
+	ep = buf;
+	switch (getresponse(fin, &ep, sizeof(buf), &hcode)) {
+	case C_CLEANUP:
 		goto cleanup_fetch_url;
+	case C_IMPROPER:
+		goto improper;
+	case C_OK:
+		message = ftp_strdup(ep);
+		break;
 	}
-	while (len > 0 && (ISLWS(buf[len-1])))
-		buf[--len] = '\0';
-
-	DPRINTF("%s: received `%s'\n", __func__, buf);
-
-	/* Determine HTTP response code */
-	cp = strchr(buf, ' ');
-	if (cp == NULL)
-		goto improper;
-	else
-		cp++;
-
-	hcode = strtol(cp, &ep, 10);
-	if (*ep != '\0' && !isspace((unsigned char)*ep))
-		goto improper;
-
-	message = ftp_strdup(cp);
 
 	/* Read the rest of the header. */
 
 	for (;;) {
-		alarmtimer(quit_time ? quit_time : 60);
-		len = fetch_getline(fin, buf, sizeof(buf), &errormsg);
-		alarmtimer(0);
-		if (len < 0) {
-			if (*errormsg == '\n')
-				errormsg++;
-			warnx("Receiving HTTP reply: %s", errormsg);
+		if ((rv = getresponseline(fin, buf, sizeof(buf), &len)) != C_OK)
 			goto cleanup_fetch_url;
-		}
-		while (len > 0 && (ISLWS(buf[len-1])))
-			buf[--len] = '\0';
 		if (len == 0)
 			break;
-		DPRINTF("%s: received `%s'\n", __func__, buf);
 
 	/*
 	 * Look for some headers
@@ -960,8 +992,8 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 				    "scheme `%s'\n", __func__, token);
 				continue;
 			}
-			FREEPTR(auth);
-			auth = ftp_strdup(token);
+			FREEPTR(*auth);
+			*auth = ftp_strdup(token);
 			DPRINTF("%s: parsed auth as `%s'\n",
 			    __func__, cp);
 		}
@@ -1021,7 +1053,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 		if (verbose || aauth.auth == NULL ||
 		    aauth.user == NULL || aauth.pass == NULL)
 			fprintf(ttyout, "%s\n", message);
-		if (EMPTYSTRING(auth)) {
+		if (EMPTYSTRING(*auth)) {
 			warnx(
 		    "No authentication challenge provided by server");
 			goto cleanup_fetch_url;
@@ -1043,7 +1075,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 		}
 
 		authp = &aauth.auth;
-		if (auth_url(auth, authp, &aauth) == 0) {
+		if (auth_url(*auth, authp, &aauth) == 0) {
 			*rval = fetch_url(url, penv,
 			    pauth->auth, wauth->auth);
 			memset(*authp, 0, strlen(*authp));
@@ -1069,12 +1101,143 @@ improper:
 	rv = C_IMPROPER;
 	goto out;
 out:
-	FREEPTR(auth);
 	FREEPTR(message);
 	FREEPTR(location);
 	return rv;
 }		/* end of ftp:// or http:// specific setup */
 
+#ifdef WITH_SSL
+static int
+connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
+    struct authinfo *wauth, struct authinfo *pauth,
+    char **auth, int *hasleading)
+{
+	void *ssl;
+	int hcode, rv;
+	const char *leading = *hasleading ? ", " : "  (";
+	const char *cp;
+	char buf[FTPBUFLEN], *ep;
+	char *message = NULL;
+
+	if (strchr(oui->host, ':')) {
+		char *h, *p;
+
+		/*
+		 * strip off IPv6 scope identifier,
+		 * since it is local to the node
+		 */
+		h = ftp_strdup(oui->host);
+		if (isipv6addr(h) && (p = strchr(h, '%')) != NULL) {
+			*p = '\0';
+		}
+		fetch_printf(fin, "CONNECT [%s]:%s HTTP/1.1\r\n",
+		    h, oui->port);
+		fetch_printf(fin, "Host: [%s]:%s\r\n", h, oui->port);
+		free(h);
+	} else {
+		fetch_printf(fin, "CONNECT %s:%s HTTP/1.1\r\n",
+		    oui->host, oui->port);
+		fetch_printf(fin, "Host: %s:%s\r\n",
+		    oui->host, oui->port);
+	}
+
+	print_agent(fin);
+	*hasleading = print_proxy(fin, leading, wauth->auth, pauth->auth);
+
+	if (verbose) {
+		leading = ", ";
+		(*hasleading)++;
+	} else {
+		leading = "  (";
+		*hasleading = 0;
+	}
+	if (pauth->auth) {
+		if (verbose) {
+			fprintf(ttyout, "%swith proxy authorization" , leading);
+			leading = ", ";
+			(*hasleading)++;
+		}
+		fetch_printf(fin, "Proxy-Authorization: %s\r\n", pauth->auth);
+	}
+
+	if (verbose && *hasleading)
+		fputs(")\n", ttyout);
+	leading = "  (";
+	*hasleading = 0;
+
+	fetch_printf(fin, "\r\n");
+	if (fetch_flush(fin) == EOF) {
+		warn("Writing HTTP request");
+		alarmtimer(0);
+		goto cleanup_fetch_url;
+	}
+	alarmtimer(0);
+
+	/* Read the response */
+	ep = buf;
+	switch (getresponse(fin, &ep, sizeof(buf), &hcode)) {
+	case C_CLEANUP:
+		goto cleanup_fetch_url;
+	case C_IMPROPER:
+		goto improper;
+	case C_OK:
+		message = ftp_strdup(ep);
+		break;
+	}
+		
+	for (;;) {
+		int len;
+		if (getresponseline(fin, buf, sizeof(buf), &len) != C_OK)
+			goto cleanup_fetch_url;
+		if (len == 0)
+			break;
+		if (match_token(&cp, "Proxy-Authenticate:")) {
+			const char *token;
+			if (!(token = match_token(&cp, "Basic"))) {
+				DPRINTF(
+				    "%s: skipping unknown auth scheme `%s'\n",
+				    __func__, token);
+				continue;
+			}
+			FREEPTR(*auth);
+			*auth = ftp_strdup(token);
+			DPRINTF("%s: parsed auth as " "`%s'\n", __func__, cp);
+		}
+	}
+
+	/* finished parsing header */
+	switch (hcode) {
+	case 200:
+		break;
+	default:
+		if (message)
+			warnx("Error proxy connect " "`%s'", message);
+		else
+			warnx("Unknown error proxy " "connect");
+		goto cleanup_fetch_url;
+	}
+
+	if ((ssl = fetch_start_ssl(s, ui->host)) == NULL)
+		goto cleanup_fetch_url;
+	fetch_set_ssl(fin, ssl);
+
+	FREEPTR(ui->host);
+	FREEPTR(ui->port);
+	oui->host = ftp_strdup(ui->host);
+	oui->port = ftp_strdup(ui->port);
+	rv = C_OK;
+	goto out;
+improper:
+	rv = C_IMPROPER;
+	goto out;
+cleanup_fetch_url:
+	rv = C_CLEANUP;
+	goto out;
+out:
+	FREEPTR(message);
+	return rv;
+}
+#endif
 
 /*
  * Retrieve URL, via a proxy if necessary, using HTTP.
@@ -1100,8 +1263,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	static char		*xferbuf;
 	const char		*cp;
 	char			*ep;
+	char			*auth;
 	char			*volatile savefile;
-	char			*volatile auth;
 	char			*volatile location;
 	char			*volatile message;
 	char			*volatile decodedpath;
@@ -1114,6 +1277,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	struct urlinfo		ui;
 	time_t			mtime;
 	void			*ssl = NULL;
+#ifdef WITH_SSL
+	struct urlinfo		oui;
+#endif
 
 	DPRINTF("%s: `%s' proxyenv `%s'\n", __func__, url, STRorNULL(penv));
 
@@ -1131,13 +1297,20 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	initauthinfo(&wauth, wwwauth);
 	initauthinfo(&pauth, proxyauth);
 
-	 decodedpath = NULL;
+	decodedpath = NULL;
 
 	if (sigsetjmp(httpabort, 1))
 		goto cleanup_fetch_url;
 
 	if (parse_url(url, "URL", &ui, &wauth) == -1)
 		goto cleanup_fetch_url;
+
+#ifdef WITH_SSL
+	if (ui.utype == HTTPS_URL_T)
+		copyurlinfo(&oui, &ui);
+	else
+		initurlinfo(&oui);
+#endif
 
 	if (ui.utype == FILE_URL_T && ! EMPTYSTRING(ui.host)
 	    && strcasecmp(ui.host, "localhost") != 0) {
@@ -1270,7 +1443,24 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		if (verbose)
 			fprintf(ttyout, "Requesting %s\n", url);
 
-		hasleading = print_get(fin, isproxy, &ui);
+		hasleading = 0;
+#ifdef WITH_SSL
+		if (isproxy && oui.utype == HTTPS_URL_T) {
+			switch (connectmethod(s, fin, &oui, &ui, &wauth, &pauth,
+			    &auth, &hasleading)) {
+			case C_CLEANUP:
+				goto cleanup_fetch_url;
+			case C_IMPROPER:
+				goto improper;
+			case C_OK:
+				break;
+			default:
+				abort();
+			}
+		}
+#endif
+
+		hasleading = print_get(fin, hasleading, isproxy, &ui);
 		if (hasleading)
 			leading = ", ";
 		else
@@ -1280,7 +1470,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			print_cache(fin, isproxy);
 
 		print_agent(fin);
-		hasleading = print_proxy(fin, leading, wauth.auth, pauth.auth);
+		hasleading = print_proxy(fin, leading, wauth.auth,
+		     auth ? NULL : pauth.auth);
 		if (hasleading) {
 			leading = ", ";
 			if (verbose)
@@ -1297,7 +1488,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 		switch (negotiate_connection(fin, url, penv,
 		    &rangestart, &rangeend, &entitylen,
-		    &mtime, &wauth, &pauth, &rval, &ischunked)) {
+		    &mtime, &wauth, &pauth, &rval, &ischunked, &auth)) {
 		case C_OK:
 			break;
 		case C_CLEANUP:
@@ -1547,6 +1738,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	if (savefile != outfile)
 		FREEPTR(savefile);
 	freeurlinfo(&ui);
+#ifdef WITH_SSL
+	freeurlinfo(&oui);
+#endif
 	freeauthinfo(&wauth);
 	freeauthinfo(&pauth);
 	FREEPTR(decodedpath);
