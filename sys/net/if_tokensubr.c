@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tokensubr.c,v 1.71 2015/08/31 08:05:20 ozaki-r Exp $	*/
+/*	$NetBSD: if_tokensubr.c,v 1.72 2015/12/16 05:44:59 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 1982, 1989, 1993
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.71 2015/08/31 08:05:20 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tokensubr.c,v 1.72 2015/12/16 05:44:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -223,8 +223,8 @@ token_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 				return (0);	/* if not yet resolved */
 			la = rt->rt_llinfo;
 			KASSERT(la != NULL);
-			KASSERT(la->la_opaque != NULL);
-			rif = la->la_opaque;
+			TOKEN_RIF_LLE_ASSERT(la);
+			rif = TOKEN_RIF_LLE(la);
 			riflen = (ntohs(rif->tr_rcf) & TOKEN_RCF_LEN_MASK) >> 8;
 		}
 		/* If broadcasting on a simplex interface, loopback a copy. */
