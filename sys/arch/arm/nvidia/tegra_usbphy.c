@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_usbphy.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_usbphy.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,16 +69,16 @@ struct tegra_usbphy_softc {
 	u_int			sc_port;
 
 	struct tegra_gpio_pin	*sc_pin_vbus;
-	uint8_t			sc_hssync_start_delay;
-	uint8_t			sc_idle_wait_delay;
-	uint8_t			sc_elastic_limit;
-	uint8_t			sc_term_range_adj;
-	uint8_t			sc_xcvr_setup;
-	uint8_t			sc_xcvr_lsfslew;
-	uint8_t			sc_xcvr_lsrslew;
-	uint8_t			sc_hssquelch_level;
-	uint8_t			sc_hsdiscon_level;
-	uint8_t			sc_xcvr_hsslew;
+	uint32_t		sc_hssync_start_delay;
+	uint32_t		sc_idle_wait_delay;
+	uint32_t		sc_elastic_limit;
+	uint32_t		sc_term_range_adj;
+	uint32_t		sc_xcvr_setup;
+	uint32_t		sc_xcvr_lsfslew;
+	uint32_t		sc_xcvr_lsrslew;
+	uint32_t		sc_hssquelch_level;
+	uint32_t		sc_hsdiscon_level;
+	uint32_t		sc_xcvr_hsslew;
 };
 
 static int	tegra_usbphy_parse_properties(struct tegra_usbphy_softc *);
@@ -147,19 +147,12 @@ tegra_usbphy_attach(device_t parent, device_t self, void *aux)
 static int
 tegra_usbphy_parse_properties(struct tegra_usbphy_softc *sc)
 {
-	const int phandle = sc->sc_phandle;
-	const int plen = sizeof(u_int);
-	u_int val;
-
 #define PROPGET(k, v)							\
-do {									\
-	if (OF_getprop(phandle, (k), &val, plen) != plen) {		\
+	if (of_getprop_uint32(sc->sc_phandle, (k), (v))) {		\
 		aprint_error_dev(sc->sc_dev,				\
 		    "missing property '%s'\n", (k));			\
 		return EIO;						\
-	}								\
-	*(v) = be32toh(val);						\
-} while (0)
+	}
 
 	PROPGET("nvidia,hssync-start-delay", &sc->sc_hssync_start_delay);
 	PROPGET("nvidia,idle-wait-delay", &sc->sc_idle_wait_delay);
