@@ -1,4 +1,4 @@
-#	$NetBSD: t_gif.sh,v 1.3 2015/12/08 05:56:18 knakahara Exp $
+#	$NetBSD: t_gif.sh,v 1.4 2015/12/16 03:24:29 knakahara Exp $
 #
 # Copyright (c) 2015 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -66,91 +66,6 @@ ROUTER2_GIFIP6_RECURSIVE1=fc00:104::1
 ROUTER2_GIFIP6_RECURSIVE2=fc00:204::1
 
 TIMEOUT=5
-
-atf_test_case basicv4overv4 cleanup
-atf_test_case basicv4overv6 cleanup
-atf_test_case basicv6overv4 cleanup
-atf_test_case basicv6overv6 cleanup
-atf_test_case ioctlv4overv4 cleanup
-atf_test_case ioctlv4overv6 cleanup
-atf_test_case ioctlv6overv4 cleanup
-atf_test_case ioctlv6overv6 cleanup
-atf_test_case recursivev4overv4 cleanup
-atf_test_case recursivev4overv6 cleanup
-atf_test_case recursivev6overv4 cleanup
-atf_test_case recursivev6overv6 cleanup
-
-basicv4overv4_head()
-{
-	atf_set "descr" "Does IPv4 over IPv4 if_gif basic tests"
-	atf_set "require.progs" "rump_server"
-}
-
-basicv4overv6_head()
-{
-	atf_set "descr" "Does IPv4 over IPv6 if_gif basic tests"
-	atf_set "require.progs" "rump_server"
-}
-
-basicv6overv4_head()
-{
-	atf_set "descr" "Does IPv6 over IPv4 if_gif basic tests"
-	atf_set "require.progs" "rump_server"
-}
-
-basicv6overv6_head()
-{
-	atf_set "descr" "Does IPv6 over IPv6 if_gif basic tests"
-	atf_set "require.progs" "rump_server"
-}
-
-ioctlv4overv4_head()
-{
-	atf_set "descr" "Does IPv4 over IPv4 if_gif ioctl tests"
-	atf_set "require.progs" "rump_server"
-}
-
-ioctlv4overv6_head()
-{
-	atf_set "descr" "Does IPv4 over IPv6 if_gif ioctl tests"
-	atf_set "require.progs" "rump_server"
-}
-
-ioctlv6overv4_head()
-{
-	atf_set "descr" "Does IPv6 over IPv4 if_gif ioctl tests"
-	atf_set "require.progs" "rump_server"
-}
-
-ioctlv6overv6_head()
-{
-	atf_set "descr" "Does IPv6 over IPv6 if_gif ioctl tests"
-	atf_set "require.progs" "rump_server"
-}
-
-recursivev4overv4_head()
-{
-	atf_set "descr" "Does IPv4 over IPv4 if_gif recursive check tests"
-	atf_set "require.progs" "rump_server"
-}
-
-recursivev4overv6_head()
-{
-	atf_set "descr" "Does IPv4 over IPv6 if_gif recursive check tests"
-	atf_set "require.progs" "rump_server"
-}
-
-recursivev6overv4_head()
-{
-	atf_set "descr" "Does IPv6 over IPv4 if_gif recursive check tests"
-	atf_set "require.progs" "rump_server"
-}
-
-recursivev6overv6_head()
-{
-	atf_set "descr" "Does IPv6 over IPv6 if_gif recursive check tests"
-	atf_set "require.progs" "rump_server"
-}
 
 setup_router()
 {
@@ -711,329 +626,153 @@ test_change_tunnel_success()
 	rump.ifconfig -v gif0
 }
 
-basicv4overv4_body()
+basic_setup()
 {
-	setup ipv4 ipv4
-	test_setup ipv4 ipv4
+	inner=$1
+	outer=$2
+
+	setup ${inner} ${outer}
+	test_setup ${inner} ${outer}
 
 	# Enable once PR kern/49219 is fixed
 	#test_ping_failure
 
-	setup_tunnel ipv4 ipv4
+	setup_tunnel ${inner} ${outer}
 	sleep 1
-	test_setup_tunnel ipv4
-	test_ping_success ipv4
+	test_setup_tunnel ${inner}
+}
+
+basic_test()
+{
+	inner=$1
+	outer=$2 # not use
+
+	test_ping_success ${inner}
+}
+
+basic_teardown()
+{
+	inner=$1
+	outer=$2 # not use
 
 	teardown_tunnel
-	test_ping_failure ipv4
+	test_ping_failure ${inner}
 }
 
-basicv4overv6_body()
+ioctl_setup()
 {
-	setup ipv4 ipv6
-	test_setup ipv4 ipv6
+	inner=$1
+	outer=$2
+
+	setup ${inner} ${outer}
+	test_setup ${inner} ${outer}
 
 	# Enable once PR kern/49219 is fixed
 	#test_ping_failure
 
-	setup_tunnel ipv4 ipv6
+	setup_tunnel ${inner} ${outer}
+	setup_dummy_tunnel ${inner} ${outer}
 	sleep 1
-	test_setup_tunnel ipv4
-	test_ping_success ipv4
-
-	teardown_tunnel
-	test_ping_failure ipv4
+	test_setup_tunnel ${inner}
 }
 
-basicv6overv4_body()
+ioctl_test()
 {
-	setup ipv6 ipv4
-	test_setup ipv6 ipv4
+	inner=$1
+	outer=$2
 
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
+	test_ping_success ${inner}
 
-	setup_tunnel ipv6 ipv4
-	sleep 1
-	test_setup_tunnel ipv6
-	test_ping_success ipv6
-
-	teardown_tunnel
-	test_ping_failure ipv6
-}
-
-basicv6overv6_body()
-{
-	setup ipv6 ipv6
-	test_setup ipv6 ipv6
-
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
-
-	setup_tunnel ipv6 ipv6
-	sleep 1
-	test_setup_tunnel ipv6
-	test_ping_success ipv6
-
-	teardown_tunnel
-	test_ping_failure ipv6
-}
-
-basicv4overv4_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-basicv4overv6_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-basicv6overv4_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-basicv6overv6_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-ioctlv4overv4_body()
-{
-	setup ipv4 ipv4
-	test_setup ipv4 ipv4
-
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
-
-	setup_tunnel ipv4 ipv4
-	setup_dummy_tunnel ipv4 ipv4
-	sleep 1
-	test_setup_tunnel ipv4
-	test_setup_dummy_tunnel
-	test_ping_success ipv4
-
-	test_change_tunnel_duplicate ipv4
+	test_change_tunnel_duplicate ${outer}
 
 	teardown_dummy_tunnel
-	test_change_tunnel_success ipv4
-
-	teardown_tunnel
-	test_ping_failure ipv4
+	test_change_tunnel_success ${outer}
 }
 
-ioctlv4overv6_body()
+ioctl_teardown()
 {
-	setup ipv4 ipv6
-	test_setup ipv4 ipv6
+	inner=$1
+	outer=$2 # not use
+
+	teardown_tunnel
+	test_ping_failure ${inner}
+}
+
+recursive_setup()
+{
+	inner=$1
+	outer=$2
+
+	setup ${inner} ${outer}
+	test_setup ${inner} ${outer}
 
 	# Enable once PR kern/49219 is fixed
 	#test_ping_failure
 
-	setup_tunnel ipv4 ipv6
-	setup_dummy_tunnel ipv4 ipv6
+	setup_tunnel ${inner} ${outer}
+	setup_recursive_tunnels ${inner}
 	sleep 1
-	test_setup_tunnel ipv4
-	test_setup_dummy_tunnel
-	test_ping_success ipv4
-
-	test_change_tunnel_duplicate ipv6
-
-	teardown_dummy_tunnel
-	test_change_tunnel_success ipv6
-
-	teardown_tunnel
-	test_ping_failure ipv4
+	test_setup_tunnel ${inner}
 }
 
-ioctlv6overv4_body()
+recursive_test()
 {
-	setup ipv6 ipv4
-	test_setup ipv6 ipv4
+	inner=$1
+	outer=$2 # not use
 
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
-
-	setup_tunnel ipv6 ipv4
-	setup_dummy_tunnel ipv6 ipv4
-	sleep 1
-	test_setup_tunnel ipv6
-	test_setup_dummy_tunnel
-	test_ping_success ipv6
-
-	test_change_tunnel_duplicate ipv4
-
-	teardown_dummy_tunnel
-	test_change_tunnel_success ipv4
-
-	teardown_tunnel
-	test_ping_failure ipv6
+	test_recursive_check ${inner}
 }
 
-ioctlv6overv6_body()
+recursive_teardown()
 {
-	setup ipv6 ipv6
-	test_setup ipv6 ipv6
-
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
-
-	setup_tunnel ipv6 ipv6
-	setup_dummy_tunnel ipv6 ipv6
-	sleep 1
-	test_setup_tunnel ipv6
-	test_setup_dummy_tunnel
-	test_ping_success ipv6
-
-	test_change_tunnel_duplicate ipv6
-
-	teardown_dummy_tunnel
-	test_change_tunnel_success ipv6
-
-	teardown_tunnel
-	test_ping_failure ipv6
-}
-
-ioctlv4overv4_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-ioctlv4overv6_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-ioctlv6overv4_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-ioctlv6overv6_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-recursivev4overv4_body()
-{
-	setup ipv4 ipv4
-	test_setup ipv4 ipv4
-
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
-
-	setup_tunnel ipv4 ipv4
-	setup_recursive_tunnels ipv4
-	sleep 1
-
-	test_recursive_check ipv4
+	inner=$1 # not use
+	outer=$2 # not use
 
 	teardown_recursive_tunnels
 	teardown_tunnel
 }
 
-recursivev4overv6_body()
+add_test()
 {
-	setup ipv4 ipv6
-	test_setup ipv4 ipv6
+	category=$1
+	desc=$2
+	inner=$3
+	outer=$4
 
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
+	name="${category}${inner}over${outer}"
+	fulldesc="Does ${inner} over ${outer} if_gif ${desc}"
 
-	setup_tunnel ipv4 ipv6
-	setup_recursive_tunnels ipv4
-	sleep 1
-
-	test_recursive_check ipv4
-
-	teardown_recursive_tunnels
-	teardown_tunnel
+	atf_test_case ${name} cleanup
+	eval "${name}_head() { \
+			atf_set \"descr\" \"${fulldesc}\"; \
+			atf_set \"require.progs\" \"rump_server\"; \
+		}; \
+	    ${name}_body() { \
+			${category}_setup ${inner} ${outer}; \
+			${category}_test ${inner} ${outer}; \
+			${category}_teardown ${inner} ${outer}; \
+	    }; \
+	    ${name}_cleanup() { \
+			dump_bus; \
+			cleanup; \
+		}"
+	atf_add_test_case ${name}
 }
 
-recursivev6overv4_body()
+add_test_allproto()
 {
-	setup ipv6 ipv4
-	test_setup ipv6 ipv4
+	category=$1
+	desc=$2
 
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
-
-	setup_tunnel ipv6 ipv4
-	setup_recursive_tunnels ipv6
-	sleep 1
-
-	test_recursive_check ipv6
-
-	teardown_recursive_tunnels
-	teardown_tunnel
-}
-
-recursivev6overv6_body()
-{
-	setup ipv6 ipv6
-	test_setup ipv6 ipv6
-
-	# Enable once PR kern/49219 is fixed
-	#test_ping_failure
-
-	setup_tunnel ipv6 ipv6
-	setup_recursive_tunnels ipv6
-	sleep 1
-
-	test_recursive_check ipv6
-
-	teardown_recursive_tunnels
-	teardown_tunnel
-	test_ping_failure ipv6
-}
-
-recursivev4overv4_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-recursivev4overv6_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-recursivev6overv4_cleanup()
-{
-	dump_bus
-	cleanup
-}
-
-recursivev6overv6_cleanup()
-{
-	dump_bus
-	cleanup
+	add_test ${category} "${desc}" ipv4 ipv4
+	add_test ${category} "${desc}" ipv4 ipv6
+	add_test ${category} "${desc}" ipv6 ipv4
+	add_test ${category} "${desc}" ipv6 ipv6
 }
 
 atf_init_test_cases()
 {
-	atf_add_test_case basicv4overv4
-	atf_add_test_case basicv4overv6
-	atf_add_test_case basicv6overv4
-	atf_add_test_case basicv6overv6
-
-	atf_add_test_case ioctlv4overv4
-	atf_add_test_case ioctlv4overv6
-	atf_add_test_case ioctlv6overv4
-	atf_add_test_case ioctlv6overv6
-
-	atf_add_test_case recursivev4overv4
-	atf_add_test_case recursivev4overv6
-	atf_add_test_case recursivev6overv4
-	atf_add_test_case recursivev6overv6
+	add_test_allproto basic "basic tests"
+	add_test_allproto ioctl "ioctl tests"
+	add_test_allproto recursive "recursive check tests"
 }
