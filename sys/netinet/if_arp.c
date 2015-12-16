@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.196 2015/12/11 01:15:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.197 2015/12/16 05:44:59 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.196 2015/12/11 01:15:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.197 2015/12/16 05:44:59 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1336,7 +1336,7 @@ in_arpinput(struct mbuf *m)
 			    (riflen & 1) == 0) {
 				rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
 				rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
-				memcpy(TOKEN_RIF(la), rif, riflen);
+				memcpy(TOKEN_RIF_LLE(la), rif, riflen);
 			}
 		}
 	}
