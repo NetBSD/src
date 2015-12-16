@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_openfirm.c,v 1.1 2015/12/13 17:30:40 jmcneill Exp $ */
+/* $NetBSD: fdt_openfirm.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,59 +27,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_openfirm.c,v 1.1 2015/12/13 17:30:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_openfirm.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $");
 
 #include <sys/param.h>
 
 #include <libfdt.h>
-#include <dev/ofw/openfirm.h>
-#include <dev/fdt/fdt_openfirm.h>
-
-static const void *fdt_data;
-
-bool
-fdt_openfirm_set_data(const void *data)
-{
-	KASSERT(fdt_data == NULL);
-	if (fdt_check_header(data) != 0) {
-		return false;
-	}
-	fdt_data = data;
-	return true;
-}
-
-const void *
-fdt_openfirm_get_data(void)
-{
-	return fdt_data;
-}
-
-int
-fdt_openfirm_get_phandle(int offset)
-{
-	if (offset < 0)
-		return 0;
-
-	return offset + fdt_off_dt_struct(fdt_data);
-}
-
-int
-fdt_openfirm_get_offset(int phandle)
-{
-	const int dtoff = fdt_off_dt_struct(fdt_data);
-
-	if (phandle == -1)
-		phandle = dtoff;
-
-	if (phandle < dtoff)
-		return -1;
-
-	return phandle - dtoff;
-}
+#include <dev/fdt/fdtvar.h>
 
 int
 OF_peer(int phandle)
 {
+	const void *fdt_data = fdtbus_get_data();
 	int off, depth;
 
 	if (fdt_data == NULL) {
@@ -87,10 +45,10 @@ OF_peer(int phandle)
 	}
 
 	if (phandle == 0) {
-		return fdt_openfirm_get_phandle(0);
+		return fdtbus_offset2phandle(0);
 	}
 
-	off = fdt_openfirm_get_offset(phandle);
+	off = fdtbus_phandle2offset(phandle);
 	if (off < 0) {
 		return 0;
 	}
@@ -100,7 +58,7 @@ OF_peer(int phandle)
 	     off >= 0 && depth >= 0;
 	     off = fdt_next_node(fdt_data, off, &depth)) {
 		if (depth == 1) {
-			return fdt_openfirm_get_phandle(off);
+			return fdtbus_offset2phandle(off);
 		}
 	}
 
@@ -110,13 +68,14 @@ OF_peer(int phandle)
 int
 OF_child(int phandle)
 {
+	const void *fdt_data = fdtbus_get_data();
 	int off, depth;
 
 	if (fdt_data == NULL) {
 		return -1;
 	}
 
-	off = fdt_openfirm_get_offset(phandle);
+	off = fdtbus_phandle2offset(phandle);
 	if (off < 0) {
 		return 0;
 	}
@@ -126,7 +85,7 @@ OF_child(int phandle)
 	     off >= 0 && depth > 0;
 	     off = fdt_next_node(fdt_data, off, &depth)) {
 		if (depth == 1) {
-			return fdt_openfirm_get_phandle(off);
+			return fdtbus_offset2phandle(off);
 		}
 	}
 
@@ -136,13 +95,14 @@ OF_child(int phandle)
 int
 OF_parent(int phandle)
 {
+	const void *fdt_data = fdtbus_get_data();
 	int off;
 
 	if (fdt_data == NULL) {
 		return -1;
 	}
 
-	off = fdt_openfirm_get_offset(phandle);
+	off = fdtbus_phandle2offset(phandle);
 	if (off < 0) {
 		return -1;
 	}
@@ -152,12 +112,13 @@ OF_parent(int phandle)
 		return -1;
 	}
 
-	return fdt_openfirm_get_phandle(off);
+	return fdtbus_offset2phandle(off);
 }
 
 int
 OF_nextprop(int phandle, const char *prop, void *nextprop)
 {
+	const void *fdt_data = fdtbus_get_data();
 	const char *name;
 	const void *val;
 	int off, len;
@@ -166,7 +127,7 @@ OF_nextprop(int phandle, const char *prop, void *nextprop)
 		return -1;
 	}
 
-	off = fdt_openfirm_get_offset(phandle);
+	off = fdtbus_phandle2offset(phandle);
 	if (off < 0) {
 		return -1;
 	}
@@ -207,6 +168,7 @@ OF_nextprop(int phandle, const char *prop, void *nextprop)
 int
 OF_getprop(int phandle, const char *prop, void *buf, int buflen)
 {
+	const void *fdt_data = fdtbus_get_data();
 	const char *name;
 	const void *val;
 	int off, len;
@@ -215,7 +177,7 @@ OF_getprop(int phandle, const char *prop, void *buf, int buflen)
 		return -1;
 	}
 
-	off = fdt_openfirm_get_offset(phandle);
+	off = fdtbus_phandle2offset(phandle);
 	if (off < 0) {
 		return -1;
 	}
@@ -266,6 +228,7 @@ OF_getprop(int phandle, const char *prop, void *buf, int buflen)
 int
 OF_getproplen(int phandle, const char *prop)
 {
+	const void *fdt_data = fdtbus_get_data();
 	const char *name;
 	const void *val;
 	int off, len;
@@ -274,7 +237,7 @@ OF_getproplen(int phandle, const char *prop)
 		return -1;
 	}
 
-	off = fdt_openfirm_get_offset(phandle);
+	off = fdtbus_phandle2offset(phandle);
 	if (off < 0) {
 		return -1;
 	}
@@ -324,6 +287,7 @@ OF_setprop(int phandle, const char *prop, const void *buf, int buflen)
 int
 OF_finddevice(const char *name)
 {
+	const void *fdt_data = fdtbus_get_data();
 	int off;
 
 	if (fdt_data == NULL) {
@@ -335,19 +299,20 @@ OF_finddevice(const char *name)
 		return -1;
 	}
 
-	return fdt_openfirm_get_phandle(off);
+	return fdtbus_offset2phandle(off);
 }
 
 int
 OF_package_to_path(int phandle, char *buf, int buflen)
 {
+	const void *fdt_data = fdtbus_get_data();
 	int off;
 
 	if (fdt_data == NULL) {
 		return -1;
 	}
 
-	off = fdt_openfirm_get_offset(phandle);
+	off = fdtbus_phandle2offset(phandle);
 	if (off < 0) {
 		return -1;
 	}
