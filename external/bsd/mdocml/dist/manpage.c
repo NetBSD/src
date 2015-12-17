@@ -1,4 +1,4 @@
-/*	Id: manpage.c,v 1.6 2013/12/31 03:41:14 schwarze Exp  */
+/*	$Id: manpage.c,v 1.1.1.2 2015/12/17 21:58:48 christos Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
@@ -15,9 +15,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+
+#include <sys/types.h>
 
 #include <assert.h>
 #include <getopt.h>
@@ -87,10 +87,11 @@ main(int argc, char *argv[])
 	if (0 == argc)
 		goto usage;
 
-	search.deftype = TYPE_Nm | TYPE_Nd;
+	search.outkey = "Nd";
+	search.argmode = ARG_EXPR;
 
 	manpath_parse(&paths, conf_file, defpaths, auxpaths);
-	ch = mansearch(&search, &paths, argc, argv, NULL, &res, &sz);
+	ch = mansearch(&search, &paths, argc, argv, &res, &sz);
 	manpath_free(&paths);
 
 	if (0 == ch)
@@ -106,10 +107,9 @@ main(int argc, char *argv[])
 		return(EXIT_FAILURE);
 
 	for (i = 0; i < sz; i++) {
-		printf("%6zu  %s: %s\n", 
-			i + 1, res[i].names, res[i].desc);
+		printf("%6zu  %s: %s\n",
+			i + 1, res[i].names, res[i].output);
 		free(res[i].names);
-		free(res[i].desc);
 		free(res[i].output);
 	}
 
@@ -148,11 +148,11 @@ show:
 	/* NOTREACHED */
 usage:
 	fprintf(stderr, "usage: %s [-C conf] "
-			 	  "[-M paths] "
+				  "[-M paths] "
 				  "[-m paths] "
 				  "[-S arch] "
 				  "[-s section] "
-			          "expr ...\n", 
+			          "expr ...\n",
 				  progname);
 	return(EXIT_FAILURE);
 }
@@ -174,9 +174,9 @@ show(const char *cmd, const char *file)
 	} else if (pid > 0) {
 		dup2(fds[0], STDIN_FILENO);
 		close(fds[1]);
-		cmd = NULL != getenv("MANPAGER") ? 
+		cmd = NULL != getenv("MANPAGER") ?
 			getenv("MANPAGER") :
-			(NULL != getenv("PAGER") ? 
+			(NULL != getenv("PAGER") ?
 			 getenv("PAGER") : "more");
 		execlp(cmd, cmd, (char *)NULL);
 		perror(cmd);
