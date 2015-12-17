@@ -354,7 +354,7 @@ int sigwait(const unsigned int *set, int *sig);
 #define HAVE_NET_ROUTE_H 1
 
 /* Define if your OpenSSL version supports AES */
-/* #undef HAVE_OPENSSL_AES */
+#define HAVE_OPENSSL_AES 1
 
 /* Define if your OpenSSL version supports ECDSA. */
 #define HAVE_OPENSSL_ECDSA 1
@@ -381,7 +381,7 @@ int sigwait(const unsigned int *set, int *sig);
 /* #undef HAVE_PTHREAD_YIELD_NP */
 
 /* Define to 1 if you have the `readline' function. */
-#define HAVE_READLINE 1
+/* #undef HAVE_READLINE */
 
 /* Define to 1 if you have the <regex.h> header file. */
 #define HAVE_REGEX_H 1
