@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.4 2014/12/10 04:37:52 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -28,6 +28,7 @@
 #include <stdio.h>
 
 #include <isc/boolean.h>
+#include <isc/print.h>
 
 #include "util.h"
 
@@ -46,7 +47,7 @@ notify(const char *fmt, ...) {
 	}
 }
 
-void            
+void
 fatal(const char *format, ...) {
 	va_list args;
 
@@ -56,4 +57,4 @@ fatal(const char *format, ...) {
 	va_end(args);
 	fprintf(stderr, "\n");
 	exit(1);
-}               
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec3.c,v 1.11 2015/07/08 17:28:58 christos Exp $	*/
+/*	$NetBSD: nsec3.c,v 1.12 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2006, 2008-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,7 @@
 #include <isc/log.h>
 #include <isc/string.h>
 #include <isc/util.h>
+#include <isc/safe.h>
 
 #include <dst/dst.h>
 
@@ -1927,7 +1928,7 @@ dns_nsec3_noexistnodata(dns_rdatatype_t type, dns_name_t* name,
 	 * Work out what this NSEC3 covers.
 	 * Inside (<0) or outside (>=0).
 	 */
-	scope = memcmp(owner, nsec3.next, nsec3.next_length);
+	scope = isc_safe_memcompare(owner, nsec3.next, nsec3.next_length);
 
 	/*
 	 * Prepare to compute all the hashes.
@@ -1952,7 +1953,7 @@ dns_nsec3_noexistnodata(dns_rdatatype_t type, dns_name_t* name,
 			return (ISC_R_IGNORE);
 		}
 
-		order = memcmp(hash, owner, length);
+		order = isc_safe_memcompare(hash, owner, length);
 		if (first && order == 0) {
 			/*
 			 * The hashes are the same.

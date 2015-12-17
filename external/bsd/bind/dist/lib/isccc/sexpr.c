@@ -1,7 +1,7 @@
-/*	$NetBSD: sexpr.c,v 1.5 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: sexpr.c,v 1.6 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,6 +42,7 @@
 #include <string.h>
 
 #include <isc/assertions.h>
+#include <isc/print.h>
 #include <isccc/sexpr.h>
 #include <isccc/util.h>
 

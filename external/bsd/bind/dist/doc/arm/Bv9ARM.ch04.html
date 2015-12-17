@@ -14,7 +14,7 @@
  - OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  - PERFORMANCE OF THIS SOFTWARE.
 -->
-<!-- $Id: Bv9ARM.ch04.html,v 1.5 2015/09/03 07:33:34 christos Exp $ -->
+<!-- $Id: Bv9ARM.ch04.html,v 1.6 2015/12/17 04:00:43 christos Exp $ -->
 <html>
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
@@ -49,8 +49,8 @@
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#dynamic_update">Dynamic Update</a></span></dt>
 <dd><dl><dt><span class="sect2"><a href="Bv9ARM.ch04.html#journal">The journal file</a></span></dt></dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#incremental_zone_transfers">Incremental Zone Transfers (IXFR)</a></span></dt>
-<dt><span class="sect1"><a href="Bv9ARM.ch04.html#id2569920">Split DNS</a></span></dt>
-<dd><dl><dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2569938">Example split DNS setup</a></span></dt></dl></dd>
+<dt><span class="sect1"><a href="Bv9ARM.ch04.html#id2569988">Split DNS</a></span></dt>
+<dd><dl><dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2570006">Example split DNS setup</a></span></dt></dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#tsig">TSIG</a></span></dt>
 <dd><dl>
 <dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2570439">Generate Shared Keys for Each Pair of Hosts</a></span></dt>
@@ -61,48 +61,48 @@
 <dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2570734">Errors</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#id2570748">TKEY</a></span></dt>
-<dt><span class="sect1"><a href="Bv9ARM.ch04.html#id2570797">SIG(0)</a></span></dt>
+<dt><span class="sect1"><a href="Bv9ARM.ch04.html#id2570866">SIG(0)</a></span></dt>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#DNSSEC">DNSSEC</a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2570934">Generating Keys</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2571002">Generating Keys</a></span></dt>
 <dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2571218">Signing the Zone</a></span></dt>
 <dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2571299">Configuring Servers</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#dnssec.dynamic.zones">DNSSEC, Dynamic Zones, and Automatic Signing</a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2611126">Converting from insecure to secure</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2563650">Dynamic DNS update method</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2563686">Fully automatic zone signing</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2563933">Private-type records</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582676">DNSKEY rollovers</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582689">Dynamic DNS update method</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582722">Automatic key rollovers</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582748">NSEC3PARAM rollovers via UPDATE</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582758">Converting from NSEC to NSEC3</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582768">Converting from NSEC3 to NSEC</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582780">Converting from secure to insecure</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582818">Periodic re-signing</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2582827">NSEC3 and OPTOUT</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2612443">Converting from insecure to secure</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2612481">Dynamic DNS update method</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2563638">Fully automatic zone signing</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2563749">Private-type records</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2563991">DNSKEY rollovers</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2564004">Dynamic DNS update method</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586224">Automatic key rollovers</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586250">NSEC3PARAM rollovers via UPDATE</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586260">Converting from NSEC to NSEC3</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586269">Converting from NSEC3 to NSEC</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586350">Converting from secure to insecure</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586388">Periodic re-signing</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586397">NSEC3 and OPTOUT</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#rfc5011.support">Dynamic Trust Anchor Management</a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2610708">Validating Resolver</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2610730">Authoritative Server</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586425">Validating Resolver</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2586448">Authoritative Server</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#pkcs11">PKCS#11 (Cryptoki) support</a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2666121">Prerequisites</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2666131">Native PKCS#11</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2611390">OpenSSL-based PKCS#11</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2638570">PKCS#11 Tools</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2638606">Using the HSM</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2638892">Specifying the engine on the command line</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2639009">Running named with automatic zone re-signing</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2667302">Prerequisites</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2667312">Native PKCS#11</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2612844">OpenSSL-based PKCS#11</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2639751">PKCS#11 Tools</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2639787">Using the HSM</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2640073">Specifying the engine on the command line</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2640121">Running named with automatic zone re-signing</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#dlz-info">DLZ (Dynamically Loadable Zones)</a></span></dt>
 <dd><dl>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2639074">Configuring DLZ</a></span></dt>
-<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2611909">Sample DLZ Driver</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2640254">Configuring DLZ</a></span></dt>
+<dt><span class="sect2"><a href="Bv9ARM.ch04.html#id2612134">Sample DLZ Driver</a></span></dt>
 </dl></dd>
 <dt><span class="sect1"><a href="Bv9ARM.ch04.html#id2571523">IPv6 Support in <acronym class="acronym">BIND</acronym> 9</a></span></dt>
 <dd><dl>
@@ -271,7 +271,7 @@
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2569920"></a>Split DNS</h2></div></div></div>
+<a name="id2569988"></a>Split DNS</h2></div></div></div>
 <p>
         Setting up different views, or visibility, of the DNS space to
         internal and external resolvers is usually referred to as a
@@ -301,7 +301,7 @@
       </p>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2569938"></a>Example split DNS setup</h3></div></div></div>
+<a name="id2570006"></a>Example split DNS setup</h3></div></div></div>
 <p>
         Let's say a company named <span class="emphasis"><em>Example, Inc.</em></span>
         (<code class="literal">example.com</code>)
@@ -761,7 +761,7 @@ allow-update { key host1-host2. ;};
 </div>
 <div class="sect1" lang="en">
 <div class="titlepage"><div><div><h2 class="title" style="clear: both">
-<a name="id2570797"></a>SIG(0)</h2></div></div></div>
+<a name="id2570866"></a>SIG(0)</h2></div></div></div>
 <p>
         <acronym class="acronym">BIND</acronym> 9 partially supports DNSSEC SIG(0)
             transaction signatures as specified in RFC 2535 and RFC 2931.
@@ -822,7 +822,7 @@ allow-update { key host1-host2. ;};
       </p>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2570934"></a>Generating Keys</h3></div></div></div>
+<a name="id2571002"></a>Generating Keys</h3></div></div></div>
 <p>
           The <span><strong class="command">dnssec-keygen</strong></span> program is used to
           generate keys.
@@ -931,7 +931,7 @@ allow-update { key host1-host2. ;};
           To enable <span><strong class="command">named</strong></span> to validate answers from
           other servers, the <span><strong class="command">dnssec-enable</strong></span> option
           must be set to <strong class="userinput"><code>yes</code></strong>, and the
-          <span><strong class="command">dnssec-validation</strong></span> options must be set to 
+          <span><strong class="command">dnssec-validation</strong></span> options must be set to
           <strong class="userinput"><code>yes</code></strong> or <strong class="userinput"><code>auto</code></strong>.
         </p>
 <p>
@@ -1047,7 +1047,7 @@ options {
           including missing, expired, or invalid signatures, a key which
           does not match the DS RRset in the parent zone, or an insecure
           response from a zone which, according to its parent, should have
-          been secure.  
+          been secure.
         </p>
 <div class="note" style="margin-left: 0.5in; margin-right: 0.5in;">
 <h3 class="title">Note</h3>
@@ -1080,7 +1080,7 @@ options {
   from insecure to signed and back again. A secure zone can use
   either NSEC or NSEC3 chains.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2611126"></a>Converting from insecure to secure</h3></div></div></div></div>
+<a name="id2612443"></a>Converting from insecure to secure</h3></div></div></div></div>
 <p>Changing a zone from insecure to secure can be done in two
   ways: using a dynamic DNS update, or the 
   <span><strong class="command">auto-dnssec</strong></span> zone option.</p>
@@ -1106,7 +1106,7 @@ options {
   well. An NSEC chain will be generated as part of the initial
   signing process.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2563650"></a>Dynamic DNS update method</h3></div></div></div></div>
+<a name="id2612481"></a>Dynamic DNS update method</h3></div></div></div></div>
 <p>To insert the keys via dynamic update:</p>
 <pre class="screen">
         % nsupdate
@@ -1142,7 +1142,7 @@ options {
 <p>While the initial signing and NSEC/NSEC3 chain generation
   is happening, other updates are possible as well.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2563686"></a>Fully automatic zone signing</h3></div></div></div></div>
+<a name="id2563638"></a>Fully automatic zone signing</h3></div></div></div></div>
 <p>To enable automatic signing, add the 
   <span><strong class="command">auto-dnssec</strong></span> option to the zone statement in 
   <code class="filename">named.conf</code>. 
@@ -1205,7 +1205,7 @@ options {
   configuration. If this has not been done, the configuration will
   fail.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2563933"></a>Private-type records</h3></div></div></div></div>
+<a name="id2563749"></a>Private-type records</h3></div></div></div></div>
 <p>The state of the signing process is signaled by
   private-type records (with a default type value of 65534). When
   signing is complete, these records will have a nonzero value for
@@ -1246,12 +1246,12 @@ options {
 <p>
   </p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582676"></a>DNSKEY rollovers</h3></div></div></div></div>
+<a name="id2563991"></a>DNSKEY rollovers</h3></div></div></div></div>
 <p>As with insecure-to-secure conversions, rolling DNSSEC
   keys can be done in two ways: using a dynamic DNS update, or the 
   <span><strong class="command">auto-dnssec</strong></span> zone option.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582689"></a>Dynamic DNS update method</h3></div></div></div></div>
+<a name="id2564004"></a>Dynamic DNS update method</h3></div></div></div></div>
 <p> To perform key rollovers via dynamic update, you need to add
   the <code class="filename">K*</code> files for the new keys so that 
   <span><strong class="command">named</strong></span> can find them. You can then add the new
@@ -1273,7 +1273,7 @@ options {
   <span><strong class="command">named</strong></span> will clean out any signatures generated
   by the old key after the update completes.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582722"></a>Automatic key rollovers</h3></div></div></div></div>
+<a name="id2586224"></a>Automatic key rollovers</h3></div></div></div></div>
 <p>When a new key reaches its activation date (as set by
   <span><strong class="command">dnssec-keygen</strong></span> or <span><strong class="command">dnssec-settime</strong></span>),
   if the <span><strong class="command">auto-dnssec</strong></span> zone option is set to 
@@ -1288,27 +1288,27 @@ options {
   completes in 30 days, after which it will be safe to remove the
   old key from the DNSKEY RRset.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582748"></a>NSEC3PARAM rollovers via UPDATE</h3></div></div></div></div>
+<a name="id2586250"></a>NSEC3PARAM rollovers via UPDATE</h3></div></div></div></div>
 <p>Add the new NSEC3PARAM record via dynamic update. When the
   new NSEC3 chain has been generated, the NSEC3PARAM flag field
   will be zero. At this point you can remove the old NSEC3PARAM
   record. The old chain will be removed after the update request
   completes.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582758"></a>Converting from NSEC to NSEC3</h3></div></div></div></div>
+<a name="id2586260"></a>Converting from NSEC to NSEC3</h3></div></div></div></div>
 <p>To do this, you just need to add an NSEC3PARAM record. When
   the conversion is complete, the NSEC chain will have been removed
   and the NSEC3PARAM record will have a zero flag field. The NSEC3
   chain will be generated before the NSEC chain is
   destroyed.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582768"></a>Converting from NSEC3 to NSEC</h3></div></div></div></div>
+<a name="id2586269"></a>Converting from NSEC3 to NSEC</h3></div></div></div></div>
 <p>To do this, use <span><strong class="command">nsupdate</strong></span> to
   remove all NSEC3PARAM records with a zero flag
   field. The NSEC chain will be generated before the NSEC3 chain is
   removed.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582780"></a>Converting from secure to insecure</h3></div></div></div></div>
+<a name="id2586350"></a>Converting from secure to insecure</h3></div></div></div></div>
 <p>To convert a signed zone to unsigned using dynamic DNS,
   delete all the DNSKEY records from the zone apex using
   <span><strong class="command">nsupdate</strong></span>. All signatures, NSEC or NSEC3 chains,
@@ -1323,14 +1323,14 @@ options {
   <span><strong class="command">allow</strong></span> instead (or it will re-sign).
   </p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582818"></a>Periodic re-signing</h3></div></div></div></div>
+<a name="id2586388"></a>Periodic re-signing</h3></div></div></div></div>
 <p>In any secure zone which supports dynamic updates, named
   will periodically re-sign RRsets which have not been re-signed as
   a result of some update action. The signature lifetimes will be
   adjusted so as to spread the re-sign load over time rather than
   all at once.</p>
 <div class="sect2" lang="en"><div class="titlepage"><div><div><h3 class="title">
-<a name="id2582827"></a>NSEC3 and OPTOUT</h3></div></div></div></div>
+<a name="id2586397"></a>NSEC3 and OPTOUT</h3></div></div></div></div>
 <p>
   <span><strong class="command">named</strong></span> only supports creating new NSEC3 chains
   where all the NSEC3 records in the zone have the same OPTOUT
@@ -1352,7 +1352,7 @@ options {
   configuration files.</p>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2610708"></a>Validating Resolver</h3></div></div></div>
+<a name="id2586425"></a>Validating Resolver</h3></div></div></div>
 <p>To configure a validating resolver to use RFC 5011 to
     maintain a trust anchor, configure the trust anchor using a 
     <span><strong class="command">managed-keys</strong></span> statement. Information about
@@ -1363,7 +1363,7 @@ options {
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2610730"></a>Authoritative Server</h3></div></div></div>
+<a name="id2586448"></a>Authoritative Server</h3></div></div></div>
 <p>To set up an authoritative zone for RFC 5011 trust anchor
     maintenance, generate two (or more) key signing keys (KSKs) for
     the zone. Sign the zone with one of them; this is the "active"
@@ -1460,7 +1460,7 @@ $ <strong class="userinput"><code>dnssec-signzone -S -K keys example.net</code><
   </p>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2666121"></a>Prerequisites</h3></div></div></div>
+<a name="id2667302"></a>Prerequisites</h3></div></div></div>
 <p>
       See the documentation provided by your HSM vendor for
       information about installing, initializing, testing and
@@ -1469,7 +1469,7 @@ $ <strong class="userinput"><code>dnssec-signzone -S -K keys example.net</code><
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2666131"></a>Native PKCS#11</h3></div></div></div>
+<a name="id2667312"></a>Native PKCS#11</h3></div></div></div>
 <p>
       Native PKCS#11 mode will only work with an HSM capable of carrying
       out <span class="emphasis"><em>every</em></span> cryptographic operation BIND 9 may
@@ -1502,7 +1502,7 @@ $ <strong class="userinput"><code>./configure --enable-native-pkcs11 \
     </p>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2610983"></a>Building SoftHSMv2</h4></div></div></div>
+<a name="id2612710"></a>Building SoftHSMv2</h4></div></div></div>
 <p>
 	SoftHSMv2, the latest development version of SoftHSM, is available
 	from
@@ -1540,7 +1540,7 @@ $ <strong class="userinput"><code> /opt/pkcs11/usr/bin/softhsm-util --init-token
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2611390"></a>OpenSSL-based PKCS#11</h3></div></div></div>
+<a name="id2612844"></a>OpenSSL-based PKCS#11</h3></div></div></div>
 <p>
       OpenSSL-based PKCS#11 mode uses a modified version of the
       OpenSSL library; stock OpenSSL does not fully support PKCS#11.
@@ -1598,7 +1598,7 @@ $ <strong class="userinput"><code> /opt/pkcs11/usr/bin/softhsm-util --init-token
     </p>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2611564"></a>Patching OpenSSL</h4></div></div></div>
+<a name="id2612882"></a>Patching OpenSSL</h4></div></div></div>
 <pre class="screen">
 $ <strong class="userinput"><code>wget <a href="" target="_top">http://www.openssl.org/source/openssl-0.9.8zc.tar.gz</a></code></strong>
   </pre>
@@ -1631,7 +1631,7 @@ $ <strong class="userinput"><code>patch -p1 -d openssl-0.9.8zc \
 </div>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2611760"></a>Building OpenSSL for the AEP Keyper on Linux</h4></div></div></div>
+<a name="id2613009"></a>Building OpenSSL for the AEP Keyper on Linux</h4></div></div></div>
 <p>
 	The AEP Keyper is a highly secure key storage device,
 	but does not provide hardware cryptographic acceleration. It
@@ -1673,7 +1673,7 @@ $ <strong class="userinput"><code>./Configure linux-generic32 -m32 -pthread \
 </div>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2611829"></a>Building OpenSSL for the SCA 6000 on Solaris</h4></div></div></div>
+<a name="id2613078"></a>Building OpenSSL for the SCA 6000 on Solaris</h4></div></div></div>
 <p>
 	The SCA-6000 PKCS#11 provider is installed as a system
 	library, libpkcs11. It is a true crypto accelerator, up to 4
@@ -1702,7 +1702,7 @@ $ <strong class="userinput"><code>./Configure solaris64-x86_64-cc \
 </div>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2611878"></a>Building OpenSSL for SoftHSM</h4></div></div></div>
+<a name="id2613127"></a>Building OpenSSL for SoftHSM</h4></div></div></div>
 <p>
 	SoftHSM (version 1) is a software library developed by the
 	OpenDNSSEC project
@@ -1777,7 +1777,7 @@ $ <strong class="userinput"><code>./Configure linux-x86_64 -pthread \
     </p>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2638385"></a>Configuring BIND 9 for Linux with the AEP Keyper</h4></div></div></div>
+<a name="id2639634"></a>Configuring BIND 9 for Linux with the AEP Keyper</h4></div></div></div>
 <p>
 	To link with the PKCS#11 provider, threads must be
 	enabled in the BIND 9 build.
@@ -1797,7 +1797,7 @@ $ <strong class="userinput"><code>./configure CC="gcc -m32" --enable-threads \
 </div>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2638417"></a>Configuring BIND 9 for Solaris with the SCA 6000</h4></div></div></div>
+<a name="id2639666"></a>Configuring BIND 9 for Solaris with the SCA 6000</h4></div></div></div>
 <p>
 	To link with the PKCS#11 provider, threads must be
 	enabled in the BIND 9 build.
@@ -1819,7 +1819,7 @@ $ <strong class="userinput"><code>./configure CC="cc -xarch=amd64" --enable-thre
 </div>
 <div class="sect3" lang="en">
 <div class="titlepage"><div><div><h4 class="title">
-<a name="id2638521"></a>Configuring BIND 9 for SoftHSM</h4></div></div></div>
+<a name="id2639702"></a>Configuring BIND 9 for SoftHSM</h4></div></div></div>
 <pre class="screen">
 $ <strong class="userinput"><code>cd ../bind9</code></strong>
 $ <strong class="userinput"><code>./configure --enable-threads \
@@ -1840,7 +1840,7 @@ $ <strong class="userinput"><code>./configure --enable-threads \
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2638570"></a>PKCS#11 Tools</h3></div></div></div>
+<a name="id2639751"></a>PKCS#11 Tools</h3></div></div></div>
 <p>
       BIND 9 includes a minimal set of tools to operate the
       HSM, including 
@@ -1863,7 +1863,7 @@ $ <strong class="userinput"><code>./configure --enable-threads \
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2638606"></a>Using the HSM</h3></div></div></div>
+<a name="id2639787"></a>Using the HSM</h3></div></div></div>
 <p>
       For OpenSSL-based PKCS#11, we must first set up the runtime
       environment so the OpenSSL and PKCS#11 libraries can be loaded:
@@ -1984,7 +1984,7 @@ example.net.signed
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2638892"></a>Specifying the engine on the command line</h3></div></div></div>
+<a name="id2640073"></a>Specifying the engine on the command line</h3></div></div></div>
 <p>
       When using OpenSSL-based PKCS#11, the "engine" to be used by
       OpenSSL can be specified in <span><strong class="command">named</strong></span> and all of
@@ -2016,7 +2016,7 @@ $ <strong class="userinput"><code>dnssec-signzone -E '' -S example.net</code></s
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2639009"></a>Running named with automatic zone re-signing</h3></div></div></div>
+<a name="id2640121"></a>Running named with automatic zone re-signing</h3></div></div></div>
 <p>
       If you want <span><strong class="command">named</strong></span> to dynamically re-sign zones
       using HSM keys, and/or to to sign new records inserted via nsupdate,
@@ -2103,7 +2103,7 @@ $ <strong class="userinput"><code>dnssec-signzone -E '' -S example.net</code></s
   </p>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2639074"></a>Configuring DLZ</h3></div></div></div>
+<a name="id2640254"></a>Configuring DLZ</h3></div></div></div>
 <p>
       A DLZ database is configured with a <span><strong class="command">dlz</strong></span>
       statement in <code class="filename">named.conf</code>:
@@ -2152,7 +2152,7 @@ $ <strong class="userinput"><code>dnssec-signzone -E '' -S example.net</code></s
 </div>
 <div class="sect2" lang="en">
 <div class="titlepage"><div><div><h3 class="title">
-<a name="id2611909"></a>Sample DLZ Driver</h3></div></div></div>
+<a name="id2612134"></a>Sample DLZ Driver</h3></div></div></div>
 <p>
       For guidance in implementation of DLZ modules, the directory
       <code class="filename">contrib/dlz/example</code> contains a basic
@@ -2224,7 +2224,7 @@ $ <strong class="userinput"><code>dnssec-signzone -E '' -S example.net</code></s
         the traditional "nibble" format used in the
         <span class="emphasis"><em>ip6.arpa</em></span> domain, as well as the older, deprecated
         <span class="emphasis"><em>ip6.int</em></span> domain.
-        Older versions of <acronym class="acronym">BIND</acronym> 9 
+        Older versions of <acronym class="acronym">BIND</acronym> 9
         supported the "binary label" (also known as "bitstring") format,
         but support of binary labels has been completely removed per
         RFC 3363.
@@ -2294,6 +2294,6 @@ $ORIGIN 0.0.0.0.0.0.0.0.8.b.d.0.1.0.0.2.ip6.arpa.
 </tr>
 </table>
 </div>
-<p style="text-align: center;">BIND 9.10.2-P4</p>
+<p style="text-align: center;">BIND 9.10.3-P2</p>
 </body>
 </html>

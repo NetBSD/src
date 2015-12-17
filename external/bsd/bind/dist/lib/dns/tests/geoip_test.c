@@ -1,7 +1,7 @@
-/*	$NetBSD: geoip_test.c,v 1.3 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: geoip_test.c,v 1.4 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -26,6 +26,7 @@
 
 #include <unistd.h>
 
+#include <isc/print.h>
 #include <isc/types.h>
 
 #include <dns/geoip.h>

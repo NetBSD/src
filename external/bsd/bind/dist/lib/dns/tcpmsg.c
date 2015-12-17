@@ -1,7 +1,7 @@
-/*	$NetBSD: tcpmsg.c,v 1.4 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: tcpmsg.c,v 1.5 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,6 +24,7 @@
 #include <config.h>
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/util.h>
 
