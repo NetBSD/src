@@ -1,3 +1,7 @@
+#if defined(__linux__) || defined(__MINT__)
+# define _GNU_SOURCE /* strcasestr() */
+#endif
+
 #include <string.h>
 
 int
