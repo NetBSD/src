@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.218 2015/12/17 17:26:45 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.219 2015/12/17 20:36:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.218 2015/12/17 17:26:45 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.219 2015/12/17 20:36:36 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -825,6 +825,7 @@ print_proxy(FETCH *fin, int hasleading, const char *wwwauth,
 	return hasleading;
 }
 
+#ifdef WITH_SSL
 static void
 print_connect(FETCH *fin, const struct urlinfo *ui)
 {
@@ -848,6 +849,7 @@ print_connect(FETCH *fin, const struct urlinfo *ui)
 	fetch_printf(fin, "CONNECT %s:%s HTTP/1.1\r\n", h, ui->port);
 	fetch_printf(fin, "Host: %s:%s\r\n", h, ui->port);
 }
+#endif
 
 #define C_OK 0
 #define C_CLEANUP 1
