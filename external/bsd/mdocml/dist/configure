@@ -259,6 +259,10 @@ cat << __HEREDOC__
 #ifndef MANDOC_CONFIG_H
 #define MANDOC_CONFIG_H
 
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #if defined(__linux__) || defined(__MINT__)
 #define _GNU_SOURCE	/* See test-*.c what needs this. */
 #endif
@@ -275,6 +279,7 @@ echo
 [ -n "${HOMEBREWDIR}" ] && echo "#define HOMEBREWDIR \"${HOMEBREWDIR}\""
 
 cat << __HEREDOC__
+#ifndef HAVE_NBTOOL_CONFIG_H
 #define HAVE_DIRENT_NAMLEN ${HAVE_DIRENT_NAMLEN}
 #define HAVE_FGETLN ${HAVE_FGETLN}
 #define HAVE_FTS ${HAVE_FTS}
@@ -292,6 +297,7 @@ cat << __HEREDOC__
 #define HAVE_SQLITE3_ERRSTR ${HAVE_SQLITE3_ERRSTR}
 #define HAVE_OHASH ${HAVE_OHASH}
 #define HAVE_MANPATH ${HAVE_MANPATH}
+#endif
 
 #define BINM_APROPOS "${BINM_APROPOS}"
 #define BINM_MAN "${BINM_MAN}"

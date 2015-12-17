@@ -1,14 +1,12 @@
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
-#ifdef HAVE_FGETLN
+#if HAVE_FGETLN
 
 int dummy;
 
 #else
 
-/*	NetBSD: fgetln.c,v 1.3 2006/09/25 07:18:17 lukem Exp 	*/
+/*	$NetBSD: compat_fgetln.c,v 1.4 2015/12/17 22:31:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,6 +39,9 @@ int dummy;
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include <sys/types.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>

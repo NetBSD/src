@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.1.1.15 2015/12/17 21:58:47 christos Exp $
+# $Id: Makefile,v 1.2 2015/12/17 22:31:12 christos Exp $
 #
 # Copyright (c) 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
 # Copyright (c) 2011, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -269,7 +269,7 @@ WWW_OBJS	 = mdocml.tar.gz \
 
 # === USER CONFIGURATION ===============================================
 
-include Makefile.local
+-include Makefile.local
 
 # === DEPENDENCY HANDLING ==============================================
 
