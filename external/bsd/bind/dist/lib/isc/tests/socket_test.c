@@ -1,7 +1,7 @@
-/*	$NetBSD: socket_test.c,v 1.1.1.6 2014/12/10 03:34:44 christos Exp $	*/
+/*	$NetBSD: socket_test.c,v 1.1.1.7 2015/12/17 03:22:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,6 +28,7 @@
 #include <time.h>
 
 #include <isc/socket.h>
+#include <isc/print.h>
 
 #include "../task_p.h"
 #include "../unix/socket_p.h"
@@ -699,7 +700,7 @@ ATF_TC_BODY(tcp_dscp_v6, tc) {
 	if ((isc_net_probedscp() & ISC_NET_DSCPRECVV6) != 0) {
 		/*
 		 * IPV6_RECVTCLASS is undefined for TCP however
-		 * if we do get it should be the the value we set.
+		 * if we do get it it should be the value we set.
 		 */
 		if (recv_dscp)
 			ATF_CHECK_EQ(recv_dscp_value, 056);

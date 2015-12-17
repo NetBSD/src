@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2012  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -55,6 +55,7 @@ n=`expr $n + 1`
 echo "I:checking that AAAA is returned when only AAAA record exists, signed ($n)"
 ret=0
 $DIG $DIGOPTS aaaa aaaa-only.signed -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep "AUTHORITY: 1," dig.out.ns1.test$n > /dev/null || ret=1
 grep ::2 dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -63,6 +64,7 @@ n=`expr $n + 1`
 echo "I:checking that AAAA is returned when only AAAA record exists, unsigned ($n)"
 ret=0
 $DIG $DIGOPTS aaaa aaaa-only.unsigned -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep "AUTHORITY: 1," dig.out.ns1.test$n > /dev/null || ret=1
 grep ::5 dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -72,6 +74,7 @@ echo "I:checking that NODATA/NOERROR is returned when both AAAA and A records ex
 ret=0
 $DIG $DIGOPTS aaaa dual.signed -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "ANSWER: 0" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 0" dig.out.ns1.test$n > /dev/null || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -81,6 +84,7 @@ echo "I:checking that NODATA/NOERROR is returned when both AAAA and A records ex
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "ANSWER: 0" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 0" dig.out.ns1.test$n > /dev/null || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -89,6 +93,7 @@ n=`expr $n + 1`
 echo "I:checking that AAAA is returned when both AAAA and A records exist, signed and DO set ($n)"
 ret=0
 $DIG $DIGOPTS aaaa dual.signed +dnssec -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
+grep "AUTHORITY: 2," dig.out.ns1.test$n > /dev/null || ret=1
 grep ::3 dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -98,6 +103,7 @@ echo "I:checking that NODATA/NOERROR is returned when both AAAA and A records ex
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "ANSWER: 0" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 0," dig.out.ns1.test$n > /dev/null || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -107,6 +113,7 @@ echo "I:checking that AAAA is returned when both AAAA and A records exist and qu
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b 10.53.0.2 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 1," dig.out.ns1.test$n > /dev/null || ret=1
 grep ::6 dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -116,6 +123,7 @@ echo "I:checking that A and not AAAA is returned when both AAAA and A records ex
 ret=0
 $DIG $DIGOPTS any dual.signed -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 0," dig.out.ns1.test$n > /dev/null || ret=1
 grep "1.0.0.3" dig.out.ns1.test$n > /dev/null || ret=1
 grep "::3" dig.out.ns1.test$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -126,6 +134,7 @@ echo "I:checking that A and not AAAA is returned when both AAAA and A records ex
 ret=0
 $DIG $DIGOPTS any dual.unsigned -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 0," dig.out.ns1.test$n > /dev/null || ret=1
 grep "1.0.0.6" dig.out.ns1.test$n > /dev/null || ret=1
 grep "::6" dig.out.ns1.test$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -136,6 +145,7 @@ echo "I:checking that both A and AAAA are returned when both AAAA and A records 
 ret=0
 $DIG $DIGOPTS any dual.signed +dnssec -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 2," dig.out.ns1.test$n > /dev/null || ret=1
 grep ::3 dig.out.ns1.test$n > /dev/null || ret=1
 grep "1.0.0.3" dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -146,6 +156,7 @@ echo "I:checking that A and not AAAA is returned when both AAAA and A records ex
 ret=0
 $DIG $DIGOPTS any dual.unsigned +dnssec -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 0," dig.out.ns1.test$n > /dev/null || ret=1
 grep "1.0.0.6" dig.out.ns1.test$n > /dev/null || ret=1
 grep "::6" dig.out.ns1.test$n > /dev/null && ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -156,6 +167,7 @@ echo "I:checking that both A and AAAA are returned when both AAAA and A records 
 ret=0
 $DIG $DIGOPTS any dual.unsigned -b 10.53.0.2 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "status: NOERROR" dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 1," dig.out.ns1.test$n > /dev/null || ret=1
 grep 1.0.0.6 dig.out.ns1.test$n > /dev/null || ret=1
 grep ::6 dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
@@ -168,6 +180,7 @@ then
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b fd92:7065:b8e:ffff::1 @fd92:7065:b8e:ffff::1 > dig.out.ns1.test$n || ret=1
 grep 2001:db8::6 dig.out.ns1.test$n > /dev/null || ret=1
+grep "AUTHORITY: 1," dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 else
@@ -179,6 +192,7 @@ echo "I:checking that AAAA is omitted from additional section, qtype=NS ($n)"
 ret=0
 $DIG $DIGOPTS +add ns unsigned -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep AAAA dig.out.ns1.test$n > /dev/null 2>&1 && ret=1
+grep "ANSWER: 1," dig.out.ns1.test$n > /dev/null || ret=1
 grep "ADDITIONAL: 2" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -196,6 +210,7 @@ echo "I:checking that AAAA is included in additional section, qtype=MX, signed (
 ret=0
 $DIG $DIGOPTS +add +dnssec mx signed -b 10.53.0.1 @10.53.0.1 > dig.out.ns1.test$n || ret=1
 grep "^mx.signed.*AAAA" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+grep "AUTHORITY: 2," dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
@@ -206,6 +221,7 @@ then
 ret=0
 $DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::1 @fd92:7065:b8e:ffff::1 > dig.out.ns1.test$n || ret=1
 grep "^mx.unsigned.*AAAA" dig.out.ns1.test$n > /dev/null 2>&1 || ret=1
+grep "AUTHORITY: 1," dig.out.ns1.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 else
@@ -222,6 +238,7 @@ n=`expr $n + 1`
 echo "I:checking that AAAA is returned when only AAAA record exists, signed with break-dnssec ($n)"
 ret=0
 $DIG $DIGOPTS aaaa aaaa-only.signed -b 10.53.0.4 @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "AUTHORITY: 1," dig.out.ns4.test$n > /dev/null || ret=1
 grep ::2 dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -230,6 +247,7 @@ n=`expr $n + 1`
 echo "I:checking that AAAA is returned when only AAAA record exists, unsigned with break-dnssec ($n)"
 ret=0
 $DIG $DIGOPTS aaaa aaaa-only.unsigned -b 10.53.0.4 @10.53.0.4 > dig.out.ns4.test$n || ret=1
+grep "AUTHORITY: 1," dig.out.ns4.test$n > /dev/null || ret=1
 grep ::5 dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
@@ -239,6 +257,7 @@ echo "I:checking that NODATA/NOERROR is returned when both AAAA and A records ex
 ret=0
 $DIG $DIGOPTS aaaa dual.signed -b 10.53.0.4 @10.53.0.4 > dig.out.ns4.test$n || ret=1
 grep "ANSWER: 0" dig.out.ns4.test$n > /dev/null || ret=1
+grep "AUTHORITY: 0," dig.out.ns4.test$n > /dev/null || ret=1
 grep "status: NOERROR" dig.out.ns4.test$n > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`

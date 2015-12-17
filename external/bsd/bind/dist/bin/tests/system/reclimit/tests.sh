@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -27,7 +27,7 @@ echo "I: attempt excessive-depth lookup ($n)"
 ret=0
 echo "1000" > ans2/ans.limit
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect1.example.org > dig.out.1.test$n || ret=1
 grep "status: SERVFAIL" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
@@ -41,7 +41,7 @@ ret=0
 echo "12" > ans2/ans.limit
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 flush 2>&1 | sed 's/^/I:ns1 /'
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect2.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
@@ -60,7 +60,7 @@ ret=0
 echo "12" > ans2/ans.limit
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 flush 2>&1 | sed 's/^/I:ns1 /'
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect3.example.org > dig.out.1.test$n || ret=1
 grep "status: SERVFAIL" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
@@ -74,7 +74,7 @@ ret=0
 echo "5" > ans2/ans.limit
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 flush 2>&1 | sed 's/^/I:ns1 /'
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect4.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
@@ -93,7 +93,7 @@ ret=0
 echo "13" > ans2/ans.limit
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 flush 2>&1 | sed 's/^/I:ns1 /'
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect5.example.org > dig.out.1.test$n || ret=1
 grep "status: SERVFAIL" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
@@ -107,7 +107,7 @@ ret=0
 echo "12" > ans2/ans.limit
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 flush 2>&1 | sed 's/^/I:ns1 /'
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect6.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
@@ -126,7 +126,7 @@ ret=0
 echo "10" > ans2/ans.limit
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 flush 2>&1 | sed 's/^/I:ns1 /'
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect7.example.org > dig.out.1.test$n || ret=1
 grep "status: SERVFAIL" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
@@ -140,7 +140,7 @@ ret=0
 echo "9" > ans2/ans.limit
 $RNDC -c ../common/rndc.conf -s 10.53.0.3 -p 9953 flush 2>&1 | sed 's/^/I:ns1 /'
 $DIG $DIGOPTS @10.53.0.2 reset > /dev/null || ret=1
-$DIG $DIGOPTS @10.53.0.3 indirect.example.org > dig.out.1.test$n || ret=1
+$DIG $DIGOPTS @10.53.0.3 indirect8.example.org > dig.out.1.test$n || ret=1
 grep "status: NOERROR" dig.out.1.test$n > /dev/null || ret=1
 $DIG $DIGOPTS +short @10.53.0.2 count txt > dig.out.2.test$n || ret=1
 eval count=`cat dig.out.2.test$n`
