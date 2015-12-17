@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.216 2015/12/17 04:36:56 nonaka Exp $	*/
+/*	$NetBSD: fetch.c,v 1.217 2015/12/17 17:08:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.216 2015/12/17 04:36:56 nonaka Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.217 2015/12/17 17:08:45 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -813,6 +813,30 @@ print_proxy(FETCH *fin, int hasleading, const char *wwwauth,
 	return hasleading;
 }
 
+static void
+print_connect(FETCH *fin, const struct urlinfo *ui)
+{
+	char hname[NI_MAXHOST], *p;
+	const char *h;
+
+	if (isipv6addr(ui->host)) {
+		/*
+		 * strip off IPv6 scope identifier,
+		 * since it is local to the node
+		 */
+		if ((p = strchr(ui->host, '%')) == NULL)
+			snprintf(hname, sizeof(hname), "[%s]", ui->host);
+		else
+			snprintf(hname, sizeof(hname), "[%.*s]",
+			    (int)(p - ui->host), ui->host);
+		h = hname;
+	} else
+		h = ui->host;
+
+	fetch_printf(fin, "CONNECT %s:%s HTTP/1.1\r\n", h, ui->port);
+	fetch_printf(fin, "Host: %s:%s\r\n", h, ui->port);
+}
+
 #define C_OK 0
 #define C_CLEANUP 1
 #define C_IMPROPER 2
@@ -1115,27 +1139,7 @@ connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
 	char buf[FTPBUFLEN], *ep;
 	char *message = NULL;
 
-	if (strchr(oui->host, ':')) {
-		char *h, *p;
-
-		/*
-		 * strip off IPv6 scope identifier,
-		 * since it is local to the node
-		 */
-		h = ftp_strdup(oui->host);
-		if (isipv6addr(h) && (p = strchr(h, '%')) != NULL) {
-			*p = '\0';
-		}
-		fetch_printf(fin, "CONNECT [%s]:%s HTTP/1.1\r\n",
-		    h, oui->port);
-		fetch_printf(fin, "Host: [%s]:%s\r\n", h, oui->port);
-		free(h);
-	} else {
-		fetch_printf(fin, "CONNECT %s:%s HTTP/1.1\r\n",
-		    oui->host, oui->port);
-		fetch_printf(fin, "Host: %s:%s\r\n",
-		    oui->host, oui->port);
-	}
+	print_connect(fin, oui);
 
 	print_agent(fin);
 	*hasleading = print_proxy(fin, *hasleading, NULL, pauth->auth);
