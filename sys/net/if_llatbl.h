@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.6 2015/11/25 06:21:26 ozaki-r Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.7 2015/12/17 02:38:33 ozaki-r Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -79,6 +79,7 @@ struct llentry {
 	struct lltable		 *lle_tbl;
 	struct llentries	 *lle_head;
 	void			(*lle_free)(struct llentry *);
+	void			(*lle_ll_free)(struct llentry *);
 	struct mbuf		 *la_hold;
 	int			 la_numheld;  /* # of packets currently held */
 	time_t			 la_expire;
@@ -202,9 +203,11 @@ struct llentry {
 } while (0)
 
 #define	LLE_FREE_LOCKED(lle) do {				\
-	if ((lle)->lle_refcnt == 1)				\
+	if ((lle)->lle_refcnt == 1) {				\
+		if ((lle)->lle_ll_free != NULL)			\
+			(lle)->lle_ll_free(lle);		\
 		(lle)->lle_free(lle);				\
-	else {							\
+	} else {						\
 		LLE_REMREF(lle);				\
 		LLE_WUNLOCK(lle);				\
 	}							\
