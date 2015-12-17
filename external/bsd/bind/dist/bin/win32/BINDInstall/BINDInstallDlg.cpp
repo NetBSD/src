@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (C) 2004-2010, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2010, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -1306,7 +1306,7 @@ void CBINDInstallDlg::ProgramGroup(BOOL create) {
 			{
 				IPersistFile* ppf;
 				sprintf(linkpath, "%s\\BINDCtrl.lnk", path);
-				sprintf(fileloc, "%s\\BINDCtrl.exe", m_binDir);
+				sprintf(fileloc, "%s\\BINDCtrl.exe", (LPCTSTR) m_binDir);
 
 				psl->SetPath(fileloc);
 				psl->SetDescription("BIND Control Panel");
@@ -1321,7 +1321,7 @@ void CBINDInstallDlg::ProgramGroup(BOOL create) {
 				}
 
 				if (GetFileAttributes("readme.txt") != -1) {
-					sprintf(fileloc, "%s\\Readme.txt", m_targetDir);
+					sprintf(fileloc, "%s\\Readme.txt", (LPCTSTR) m_targetDir);
 					sprintf(linkpath, "%s\\Readme.lnk", path);
 
 					psl->SetPath(fileloc);

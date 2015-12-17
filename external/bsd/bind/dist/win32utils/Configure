@@ -371,6 +371,7 @@ my @substdefh = ("AES_SIT",
                  "ISC_LIST_CHECKINIT",
                  "PREFER_GOSTASN1",
                  "TUNE_LARGE",
+                 "WANT_QUERYTRACE",
                  "WITH_IDN");
 
 # for platform.h
@@ -484,6 +485,7 @@ my @enablelist = ("developer",
                   "native-pkcs11",
                   "openssl-hash",
                   "filter-aaaa",
+                  "querytrace",
                   "rpz-nsdname",
                   "rpz-nsip",
                   "sit");
@@ -541,6 +543,7 @@ my @help = (
 "  enable-filter-aaaa    enable filtering of AAAA records [default=no]\n",
 "  enable-fixed-rrset    enable fixed rrset ordering [default=no]\n",
 "  enable-developer      enable developer build settings [default=no]\n",
+"  enable-querytrace     enable very verbose query trace [default=no]\n",
 "  enable-rpz-nsip       enable rpz-nsip rules [default=yes]\n",
 "  enable-rpz-nsdname    enable rpz-nsdname rules [default=yes]\n",
 "  enable-sit            enable source identity token [default=yes]\n",
@@ -582,6 +585,7 @@ my $enable_filter_aaaa = "no";
 my $enable_isc_spnego = "yes";
 my $enable_fixed_rrset = "no";
 my $enable_developer = "no";
+my $enable_querytrace = "no";
 my $enable_rpz_nsip = "yes";
 my $enable_rpz_nsdname = "yes";
 my $enable_sit = "yes";
@@ -740,6 +744,10 @@ sub myenable {
         if ($val =~ /^yes$/i) {
             $enable_developer = "yes";
         }
+    } elsif ($key =~ /^querytrace$/i) {
+        if ($val =~ /^yes$/i) {
+            $enable_querytrace = "yes";
+        }
     } elsif ($key =~ /^rpz-nsip$/i) {
         if ($val =~ /^no$/i) {
             $enable_rpz_nsip = "no";
@@ -767,6 +775,7 @@ sub myenable {
 if ($enable_developer eq "yes") {
     $configdefh{"ISC_LIST_CHECKINIT"} = 1;
     $enable_filter_aaaa = "yes";
+    $enable_querytrace = "yes";
     # no atf on WIN32
     $enable_fixed_rrset = "yes";
     # TODO: dlz filesystem
@@ -996,6 +1005,11 @@ if ($verbose) {
         print "developer: enabled\n";
     } else {
         print "developer: disabled\n";
+    }
+    if ($enable_querytrace eq "yes") {
+        print "querytrace: enabled\n";
+    } else {
+        print "querytrace: disabled\n";
     }
     if ($enable_rpz_nsip eq "yes") {
         print "rpz-nsip: enabled\n";
@@ -1359,6 +1373,11 @@ if ($enable_fixed_rrset eq "yes") {
 # enable-rpz-nsip
 if ($enable_rpz_nsip ne "no") {
     $configdefh{"ENABLE_RPZ_NSIP"} = 1;
+}
+
+# enable-querytrace
+if ($enable_querytrace eq "yes") {
+    $configdefh{"WANT_QUERYTRACE"} = 1;
 }
 
 # enable-rpz-nsdname
@@ -2938,6 +2957,7 @@ exit 0;
 #  --enable-atomic supported (renamed to intrinsic)
 #  --enable-spnego support (part of GSSAPI)
 #  --enable-fixed-rrset supported
+#  --enable-querytrace supported
 #  --disable-rpz-nsip supported
 #  --disable-rpz-nsdname supported
 #  --enable-filter-aaaa supported
@@ -2967,7 +2987,7 @@ exit 0;
 #  --with-dlz-* ?
 #
 # Notes: MSVC versions
-# MSVC 14.0 _MSC_VER == 1900 (VS 14 (2014))
+# MSVC 14.0 _MSC_VER == 1900 (VS 2015)
 # MSVC 12.0 _MSC_VER == 1800 (VS 2013)
 # MSVC 11.0 _MSC_VER == 1700 (VS 2012)
 # MSVC 10.0 _MSC_VER == 1600 (VS 2010)

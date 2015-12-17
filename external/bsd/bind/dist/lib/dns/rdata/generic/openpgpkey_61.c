@@ -1,7 +1,7 @@
-/*	$NetBSD: openpgpkey_61.c,v 1.1.1.2 2015/09/03 07:21:39 christos Exp $	*/
+/*	$NetBSD: openpgpkey_61.c,v 1.1.1.3 2015/12/17 03:22:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -24,7 +24,7 @@
 static inline isc_result_t
 fromtext_openpgpkey(ARGS_FROMTEXT) {
 
-	REQUIRE(type == 61);
+	REQUIRE(type == dns_rdatatype_openpgpkey);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -42,7 +42,7 @@ static inline isc_result_t
 totext_openpgpkey(ARGS_TOTEXT) {
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 61);
+	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 	REQUIRE(rdata->length != 0);
 
 	dns_rdata_toregion(rdata, &sr);
@@ -72,7 +72,7 @@ static inline isc_result_t
 fromwire_openpgpkey(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(type == 61);
+	REQUIRE(type == dns_rdatatype_openpgpkey);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -93,7 +93,7 @@ static inline isc_result_t
 towire_openpgpkey(ARGS_TOWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 61);
+	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(cctx);
@@ -109,7 +109,7 @@ compare_openpgpkey(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 61);
+	REQUIRE(rdata1->type == dns_rdatatype_openpgpkey);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -122,7 +122,7 @@ static inline isc_result_t
 fromstruct_openpgpkey(ARGS_FROMSTRUCT) {
 	dns_rdata_openpgpkey_t *sig = source;
 
-	REQUIRE(type == 61);
+	REQUIRE(type == dns_rdatatype_openpgpkey);
 	REQUIRE(source != NULL);
 	REQUIRE(sig->common.rdtype == type);
 	REQUIRE(sig->common.rdclass == rdclass);
@@ -142,7 +142,7 @@ tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 	dns_rdata_openpgpkey_t *sig = target;
 
-	REQUIRE(rdata->type == 61);
+	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -172,7 +172,7 @@ freestruct_openpgpkey(ARGS_FREESTRUCT) {
 	dns_rdata_openpgpkey_t *sig = (dns_rdata_openpgpkey_t *) source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(sig->common.rdtype == 61);
+	REQUIRE(sig->common.rdtype == dns_rdatatype_openpgpkey);
 
 	if (sig->mctx == NULL)
 		return;
@@ -184,7 +184,7 @@ freestruct_openpgpkey(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_openpgpkey(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 61);
+	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -197,7 +197,7 @@ static inline isc_result_t
 digest_openpgpkey(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 61);
+	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -207,7 +207,7 @@ digest_openpgpkey(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_openpgpkey(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 61);
+	REQUIRE(type == dns_rdatatype_openpgpkey);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -220,7 +220,7 @@ checkowner_openpgpkey(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_openpgpkey(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 61);
+	REQUIRE(rdata->type == dns_rdatatype_openpgpkey);
 
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -236,7 +236,7 @@ casecompare_openpgpkey(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 61);
+	REQUIRE(rdata1->type == dns_rdatatype_openpgpkey);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 

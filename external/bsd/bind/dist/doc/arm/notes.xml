@@ -20,30 +20,14 @@
   <sect2 id="relnotes_intro">
     <title>Introduction</title>
     <para>
-      This document summarizes changes since BIND 9.10.2:
+      This document summarizes changes since BIND 9.10.3:
     </para>
     <para>
-      BIND 9.10.2-P4 addresses security issues described in
-      CVE-2015-5722 and CVE-2015-5986.
+      BIND 9.10.3-P2 addresses the security issues described in
+      CVE-2015-3193 (OpenSSL), CVE-2015-8000 and CVE-2015-8461.
     </para>
     <para>
-      BIND 9.10.2-P3 addresses a security issue described in
-      CVE-2015-5477.
-    </para>
-    <para>
-      BIND 9.10.2-P2 addresses a security issue described in
-      CVE-2015-4620.
-    </para>
-    <para>
-      BIND 9.10.2-P1 addressed several bugs that have been identified
-      in the BIND 9.10 implementation of response-policy zones (RPZ).
-      The bugs are in code which optimizes searching through multiple
-      policy zones. In some cases, they can cause RPZ to behave
-      inefficiently by searching for query matches in more policy
-      zones than are strictly necessary, or to behave unpredictably
-      by failing to search a policy zone that should have been
-      searched.  In the worst case, they can lead to assertion
-      failures, terminating <command>named</command>.
+      BIND 9.10.3-P1 was incomplete and was withdrawn prior to publication.
     </para>
   </sect2>
   <sect2 id="relnotes_download">
@@ -62,40 +46,24 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  An incorrect boundary check in the OPENPGPKEY rdatatype
-	  could trigger an assertion failure. This flaw is disclosed
-	  in CVE-2015-5986. [RT #40286]
+	  Named is potentially vulnerable to the OpenSSL vulnerabilty
+	  described in CVE-2015-3193.
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  A buffer accounting error could trigger an assertion failure
-	  when parsing certain malformed DNSSEC keys.
-	</para>
-	<para>
-	  This flaw was discovered by Hanno B&#xc3b6;eck of the Fuzzing
-	  Project, and is disclosed in CVE-2015-5722. [RT #40212]
+	  Incorrect reference counting could result in an INSIST
+	  failure if a socket error occurred while performing a
+	  lookup.  This flaw is disclosed in CVE-2015-8461. [RT#40945]
 	</para>
       </listitem>
       <listitem>
 	<para>
-	  A specially crafted query could trigger an assertion failure
-	  in message.c.
-	</para>
-	<para>
-	  This flaw was discovered by Jonathan Foote, and is disclosed
-	  in CVE-2015-5477. [RT #39795]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  On servers configured to perform DNSSEC validation, an
-	  assertion failure could be triggered on answers from
-	  a specially configured server.
-	</para>
-	<para>
-	  This flaw was discovered by Breno Silveira Soares, and is
-	  disclosed in CVE-2015-4620. [RT #39795]
+	  Insufficient testing when parsing a message allowed
+	  records with an incorrect class to be be accepted,
+	  triggering a REQUIRE failure when those records
+	  were subsequently cached.  This flaw is disclosed
+	  in CVE-2015-8000. [RT #40987]
 	</para>
       </listitem>
     </itemizedlist>
@@ -104,7 +72,9 @@
     <title>New Features</title>
     <itemizedlist>
       <listitem>
-	<para>None</para>
+	<para>
+	  None.
+	</para>
       </listitem>
     </itemizedlist>
   </sect2>
@@ -112,7 +82,9 @@
     <title>Feature Changes</title>
     <itemizedlist>
       <listitem>
-	<para>None</para>
+	<para>
+	  Updated the compiled in addresses for H.ROOT-SERVERS.NET.
+	</para>
       </listitem>
     </itemizedlist>
   </sect2>
@@ -121,61 +93,8 @@
     <itemizedlist>
       <listitem>
 	<para>
-	  Asynchronous zone loads were not handled correctly when the
-	  zone load was already in progress; this could trigger a crash
-	  in zt.c. [RT #37573]
-	</para>
-      </listitem>
-      <listitem>
-	<para>
-	  Several bugs have been fixed in the RPZ implementation:
-	</para>
-	<itemizedlist>
-	  <listitem>
-	    <para>
-	      Policy zones that did not specifically require recursion
-	      could be treated as if they did; consequently, setting
-	      <command>qname-wait-recurse no;</command> was
-	      sometimes ineffective.  This has been corrected.
-	      In most configurations, behavioral changes due to this
-	      fix will not be noticeable. [RT #39229]
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      The server could crash if policy zones were updated (e.g.
-	      via <command>rndc reload</command> or an incoming zone
-	      transfer) while RPZ processing was still ongoing for an
-	      active query. [RT #39415]
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      On servers with one or more policy zones configured as
-	      slaves, if a policy zone updated during regular operation
-	      (rather than at startup) using a full zone reload, such as
-	      via AXFR, a bug could allow the RPZ summary data to fall out
-	      of sync, potentially leading to an assertion failure in
-	      rpz.c when further incremental updates were made to the
-	      zone, such as via IXFR. [RT #39567]
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      The server could match a shorter prefix than what was
-	      available in CLIENT-IP policy triggers, and so, an
-	      unexpected action could be taken. This has been
-	      corrected. [RT #39481]
-	    </para>
-	  </listitem>
-	  <listitem>
-	    <para>
-	      The server could crash if a reload of an RPZ zone was
-	      initiated while another reload of the same zone was
-	      already in progress. [RT #39649]
-	    </para>
-	  </listitem>
-	</itemizedlist>
+	  None.
+ 	</para>
       </listitem>
     </itemizedlist>
   </sect2>
@@ -185,7 +104,7 @@
       The end of life for BIND 9.10 is yet to be determined but
       will not be before BIND 9.12.0 has been released for 6 months.
       <ulink url="https://www.isc.org/downloads/software-support-policy/"
-	>https://www.isc.org/downloads/software-support-policy/</ulink>
+        >https://www.isc.org/downloads/software-support-policy/</ulink>
     </para>
   </sect2>
   <sect2 id="relnotes_thanks">

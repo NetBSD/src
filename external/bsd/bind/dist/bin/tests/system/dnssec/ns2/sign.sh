@@ -1,6 +1,6 @@
 #!/bin/sh -e
 #
-# Copyright (C) 2004, 2006-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2006-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000-2003  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -193,3 +193,53 @@ key1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone -fk $zone`
 key2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
 cat $key1.key $key2.key >> $zonefile
 $SIGNER -P -3 - -A -H 1 -g -r $RANDFILE -o $zone -k $key1 $zonefile $key2 > /dev/null
+
+zone=cds.secure
+infile=cds.secure.db.in
+zonefile=cds.secure.db
+key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+$DSFROMKEY -C $key1.key > $key1.cds
+cat $infile $key1.key $key2.key $key1.cds >$zonefile
+$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+
+zone=cds-update.secure
+infile=cds-update.secure.db.in
+zonefile=cds-update.secure.db
+key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+cat $infile $key1.key $key2.key > $zonefile
+$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+
+zone=cds-auto.secure
+infile=cds-auto.secure.db.in
+zonefile=cds-auto.secure.db
+key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+$DSFROMKEY -C $key1.key > $key1.cds
+cat $infile $key1.cds > $zonefile.signed
+
+zone=cdnskey.secure
+infile=cdnskey.secure.db.in
+zonefile=cdnskey.secure.db
+key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+sed 's/DNSKEY/CDNSKEY/' $key1.key > $key1.cds
+cat $infile $key1.key $key2.key $key1.cds >$zonefile
+$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+
+zone=cdnskey-update.secure
+infile=cdnskey-update.secure.db.in
+zonefile=cdnskey-update.secure.db
+key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+cat $infile $key1.key $key2.key > $zonefile
+$SIGNER -P -g -r $RANDFILE -o $zone $zonefile > /dev/null
+
+zone=cdnskey-auto.secure
+infile=cdnskey-auto.secure.db.in
+zonefile=cdnskey-auto.secure.db
+key1=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone -fk $zone`
+key2=`$KEYGEN -q -r $RANDFILE -a RSASHA1 -b 1024 -n zone $zone`
+sed 's/DNSKEY/CDNSKEY/' $key1.key > $key1.cds
+cat $infile $key1.cds > $zonefile.signed

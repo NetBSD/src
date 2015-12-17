@@ -1,7 +1,7 @@
-/*	$NetBSD: l32_105.c,v 1.1.1.4 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: l32_105.c,v 1.1.1.5 2015/12/17 03:22:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,7 +31,7 @@ fromtext_l32(ARGS_FROMTEXT) {
 	struct in_addr addr;
 	isc_region_t region;
 
-	REQUIRE(type == 105);
+	REQUIRE(type == dns_rdatatype_l32);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -64,7 +64,7 @@ totext_l32(ARGS_TOTEXT) {
 	char buf[sizeof("65000")];
 	unsigned short num;
 
-	REQUIRE(rdata->type == 105);
+	REQUIRE(rdata->type == dns_rdatatype_l32);
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(tctx);
@@ -84,7 +84,7 @@ static inline isc_result_t
 fromwire_l32(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 
-	REQUIRE(type == 105);
+	REQUIRE(type == dns_rdatatype_l32);
 
 	UNUSED(type);
 	UNUSED(options);
@@ -101,7 +101,7 @@ fromwire_l32(ARGS_FROMWIRE) {
 static inline isc_result_t
 towire_l32(ARGS_TOWIRE) {
 
-	REQUIRE(rdata->type == 105);
+	REQUIRE(rdata->type == dns_rdatatype_l32);
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(cctx);
@@ -116,7 +116,7 @@ compare_l32(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 105);
+	REQUIRE(rdata1->type == dns_rdatatype_l32);
 	REQUIRE(rdata1->length == 6);
 	REQUIRE(rdata2->length == 6);
 
@@ -130,7 +130,7 @@ fromstruct_l32(ARGS_FROMSTRUCT) {
 	dns_rdata_l32_t *l32 = source;
 	isc_uint32_t n;
 
-	REQUIRE(type == 105);
+	REQUIRE(type == dns_rdatatype_l32);
 	REQUIRE(source != NULL);
 	REQUIRE(l32->common.rdtype == type);
 	REQUIRE(l32->common.rdclass == rdclass);
@@ -149,7 +149,7 @@ tostruct_l32(ARGS_TOSTRUCT) {
 	dns_rdata_l32_t *l32 = target;
 	isc_uint32_t n;
 
-	REQUIRE(rdata->type == 105);
+	REQUIRE(rdata->type == dns_rdatatype_l32);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 6);
 
@@ -171,7 +171,7 @@ freestruct_l32(ARGS_FREESTRUCT) {
 	dns_rdata_l32_t *l32 = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(l32->common.rdtype == 105);
+	REQUIRE(l32->common.rdtype == dns_rdatatype_l32);
 
 	return;
 }
@@ -179,7 +179,7 @@ freestruct_l32(ARGS_FREESTRUCT) {
 static inline isc_result_t
 additionaldata_l32(ARGS_ADDLDATA) {
 
-	REQUIRE(rdata->type == 105);
+	REQUIRE(rdata->type == dns_rdatatype_l32);
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(rdata);
@@ -193,7 +193,7 @@ static inline isc_result_t
 digest_l32(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 105);
+	REQUIRE(rdata->type == dns_rdatatype_l32);
 	REQUIRE(rdata->length == 6);
 
 	dns_rdata_toregion(rdata, &r);
@@ -204,7 +204,7 @@ digest_l32(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_l32(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 105);
+	REQUIRE(type == dns_rdatatype_l32);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -217,7 +217,7 @@ checkowner_l32(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_l32(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 105);
+	REQUIRE(rdata->type == dns_rdatatype_l32);
 	REQUIRE(rdata->length == 6);
 
 	UNUSED(rdata);

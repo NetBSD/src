@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_serialize_test.c,v 1.1.1.4 2015/07/08 15:38:04 christos Exp $	*/
+/*	$NetBSD: rbt_serialize_test.c,v 1.1.1.5 2015/12/17 03:22:10 christos Exp $	*/
 
 /*
  * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -23,6 +23,7 @@
 #include <config.h>
 #include <atf-c.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/random.h>
 #include <isc/string.h>
 #include <fcntl.h>

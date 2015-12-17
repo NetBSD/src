@@ -1,4 +1,4 @@
-/*	$NetBSD: mem_test.c,v 1.1.1.1 2015/07/08 15:38:05 christos Exp $	*/
+/*	$NetBSD: mem_test.c,v 1.1.1.2 2015/12/17 03:22:11 christos Exp $	*/
 
 /*
  * Copyright (C) 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -26,6 +26,7 @@
 #include "isctest.h"
 
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/result.h>
 
 static void *

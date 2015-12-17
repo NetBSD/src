@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -14,15 +14,17 @@
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
 
+rm -f dig.out.*
+rm -f ns*/named.lock
+rm -f ns2/named.conf
+rm -f ns3/example.db
+rm -f ns3/named.conf
+rm -f ns3/undelegated.db
+rm -f ns4/sub.example.db
+rm -f ns?/named.memstats
+rm -f ns?/named.run
+rm -f ns?/named_dump.db
 rm -rf */*.signed
 rm -rf */K*
 rm -rf */dsset-*
 rm -rf */trusted.conf
-rm -f ns?/named.run
-rm -f ns?/named.memstats
-rm -f ns?/named_dump.db
-rm -f ns2/named.conf
-rm -f ns3/named.conf
-rm -f ns3/example.db
-rm -f ns4/sub.example.db
-rm -f dig.out.*

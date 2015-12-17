@@ -1,4 +1,4 @@
-/*	$NetBSD: cds_59.c,v 1.1.1.4 2015/07/08 15:38:03 christos Exp $	*/
+/*	$NetBSD: cds_59.c,v 1.1.1.5 2015/12/17 03:22:09 christos Exp $	*/
 
 /*
  * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -36,7 +36,7 @@ fromtext_cds(ARGS_FROMTEXT) {
 	unsigned char c;
 	int length;
 
-	REQUIRE(type == 59);
+	REQUIRE(type == dns_rdatatype_cds);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -100,7 +100,7 @@ totext_cds(ARGS_TOTEXT) {
 	char buf[sizeof("64000 ")];
 	unsigned int n;
 
-	REQUIRE(rdata->type == 59);
+	REQUIRE(rdata->type == dns_rdatatype_cds);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(tctx);
@@ -154,7 +154,7 @@ static inline isc_result_t
 fromwire_cds(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(type == 59);
+	REQUIRE(type == dns_rdatatype_cds);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -203,7 +203,7 @@ static inline isc_result_t
 towire_cds(ARGS_TOWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 59);
+	REQUIRE(rdata->type == dns_rdatatype_cds);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(cctx);
@@ -219,7 +219,7 @@ compare_cds(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 59);
+	REQUIRE(rdata1->type == dns_rdatatype_cds);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -232,7 +232,7 @@ static inline isc_result_t
 fromstruct_cds(ARGS_FROMSTRUCT) {
 	dns_rdata_cds_t *ds = source;
 
-	REQUIRE(type == 59);
+	REQUIRE(type == dns_rdatatype_cds);
 	REQUIRE(source != NULL);
 	REQUIRE(ds->common.rdtype == type);
 	REQUIRE(ds->common.rdclass == rdclass);
@@ -268,7 +268,7 @@ tostruct_cds(ARGS_TOSTRUCT) {
 	dns_rdata_cds_t *ds = target;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 59);
+	REQUIRE(rdata->type == dns_rdatatype_cds);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -299,7 +299,7 @@ freestruct_cds(ARGS_FREESTRUCT) {
 	dns_rdata_cds_t *ds = source;
 
 	REQUIRE(ds != NULL);
-	REQUIRE(ds->common.rdtype == 59);
+	REQUIRE(ds->common.rdtype == dns_rdatatype_cds);
 
 	if (ds->mctx == NULL)
 		return;
@@ -311,7 +311,7 @@ freestruct_cds(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_cds(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 59);
+	REQUIRE(rdata->type == dns_rdatatype_cds);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -324,7 +324,7 @@ static inline isc_result_t
 digest_cds(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 59);
+	REQUIRE(rdata->type == dns_rdatatype_cds);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -334,7 +334,7 @@ digest_cds(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_cds(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 59);
+	REQUIRE(type == dns_rdatatype_cds);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -347,7 +347,7 @@ checkowner_cds(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_cds(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 59);
+	REQUIRE(rdata->type == dns_rdatatype_cds);
 
 	UNUSED(rdata);
 	UNUSED(owner);

@@ -1,7 +1,7 @@
-/*	$NetBSD: caa_257.c,v 1.1.1.3 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: caa_257.c,v 1.1.1.4 2015/12/17 03:22:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -47,7 +47,7 @@ fromtext_caa(ARGS_FROMTEXT) {
 	isc_uint8_t flags;
 	unsigned int i;
 
-	REQUIRE(type == 257);
+	REQUIRE(type == dns_rdatatype_caa);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -70,7 +70,7 @@ fromtext_caa(ARGS_FROMTEXT) {
 				      ISC_FALSE));
 	tr = token.value.as_textregion;
 	for (i = 0; i < tr.length; i++)
-		if (!alphanumeric[(unsigned int) tr.base[i]])
+		if (!alphanumeric[(unsigned char) tr.base[i]])
 			RETTOK(DNS_R_SYNTAX);
 	RETERR(uint8_tobuffer(tr.length, target));
 	RETERR(mem_tobuffer(target, tr.base, tr.length));
@@ -95,7 +95,7 @@ totext_caa(ARGS_TOTEXT) {
 
 	UNUSED(tctx);
 
-	REQUIRE(rdata->type == 257);
+	REQUIRE(rdata->type == dns_rdatatype_caa);
 	REQUIRE(rdata->length >= 3U);
 	REQUIRE(rdata->data != NULL);
 
@@ -126,7 +126,7 @@ fromwire_caa(ARGS_FROMWIRE) {
 	isc_region_t sr;
 	unsigned int len, i;
 
-	REQUIRE(type == 257);
+	REQUIRE(type == dns_rdatatype_caa);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -169,7 +169,7 @@ static inline isc_result_t
 towire_caa(ARGS_TOWIRE) {
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 257);
+	REQUIRE(rdata->type == dns_rdatatype_caa);
 	REQUIRE(rdata->length >= 3U);
 	REQUIRE(rdata->data != NULL);
 
@@ -185,7 +185,7 @@ compare_caa(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 257);
+	REQUIRE(rdata1->type == dns_rdatatype_caa);
 	REQUIRE(rdata1->length >= 3U);
 	REQUIRE(rdata2->length >= 3U);
 	REQUIRE(rdata1->data != NULL);
@@ -202,7 +202,7 @@ fromstruct_caa(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 	unsigned int i;
 
-	REQUIRE(type == 257);
+	REQUIRE(type == dns_rdatatype_caa);
 	REQUIRE(source != NULL);
 	REQUIRE(caa->common.rdtype == type);
 	REQUIRE(caa->common.rdclass == rdclass);
@@ -245,7 +245,7 @@ tostruct_caa(ARGS_TOSTRUCT) {
 	dns_rdata_caa_t *caa = target;
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 257);
+	REQUIRE(rdata->type == dns_rdatatype_caa);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length >= 3U);
 	REQUIRE(rdata->data != NULL);
@@ -299,7 +299,7 @@ freestruct_caa(ARGS_FREESTRUCT) {
 	dns_rdata_caa_t *caa = (dns_rdata_caa_t *) source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(caa->common.rdtype == 257);
+	REQUIRE(caa->common.rdtype == dns_rdatatype_caa);
 
 	if (caa->mctx == NULL)
 		return;
@@ -313,7 +313,7 @@ freestruct_caa(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_caa(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 257);
+	REQUIRE(rdata->type == dns_rdatatype_caa);
 	REQUIRE(rdata->data != NULL);
 	REQUIRE(rdata->length >= 3U);
 
@@ -328,7 +328,7 @@ static inline isc_result_t
 digest_caa(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 257);
+	REQUIRE(rdata->type == dns_rdatatype_caa);
 	REQUIRE(rdata->data != NULL);
 	REQUIRE(rdata->length >= 3U);
 
@@ -340,7 +340,7 @@ digest_caa(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_caa(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 257);
+	REQUIRE(type == dns_rdatatype_caa);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -353,7 +353,7 @@ checkowner_caa(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_caa(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 257);
+	REQUIRE(rdata->type == dns_rdatatype_caa);
 	REQUIRE(rdata->data != NULL);
 	REQUIRE(rdata->length >= 3U);
 

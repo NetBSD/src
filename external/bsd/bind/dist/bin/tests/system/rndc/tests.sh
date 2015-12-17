@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -368,6 +368,21 @@ $RNDC -s 10.53.0.4 -p 9956 -c ns4/key6.conf querylog > /dev/null 2>&1 || ret=1
 $DIG @10.53.0.4 -p 5300 -c ch -t txt foo9876.bind > /dev/null || ret 1
 grep "query logging is now off" ns4/named.run > /dev/null || ret=1
 grep "query: foo9876.bind CH TXT" ns4/named.run > /dev/null && ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+echo "I:test 'rndc reconfig' with a broken config"
+ret=0
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reconfig > /dev/null || ret=1
+sleep 1
+mv ns3/named.conf ns3/named.conf.save
+echo "error error error" >> ns3/named.conf
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reconfig > rndc.output 2>&1 && ret=1
+grep "rndc: 'reconfig' failed: unexpected token" rndc.output > /dev/null || ret=1
+mv ns3/named.conf.save ns3/named.conf
+sleep 1
+$RNDC -s 10.53.0.3 -p 9953 -c ../common/rndc.conf reconfig > /dev/null || ret=1
+sleep 1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: tlsa_52.c,v 1.1.1.4 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.1.1.5 2015/12/17 03:22:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,7 +29,7 @@ static inline isc_result_t
 fromtext_tlsa(ARGS_FROMTEXT) {
 	isc_token_t token;
 
-	REQUIRE(type == 52);
+	REQUIRE(type == dns_rdatatype_tlsa);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -76,7 +76,7 @@ totext_tlsa(ARGS_TOTEXT) {
 	char buf[sizeof("64000 ")];
 	unsigned int n;
 
-	REQUIRE(rdata->type == 52);
+	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(tctx);
@@ -127,7 +127,7 @@ static inline isc_result_t
 fromwire_tlsa(ARGS_FROMWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(type == 52);
+	REQUIRE(type == dns_rdatatype_tlsa);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -147,7 +147,7 @@ static inline isc_result_t
 towire_tlsa(ARGS_TOWIRE) {
 	isc_region_t sr;
 
-	REQUIRE(rdata->type == 52);
+	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(cctx);
@@ -163,7 +163,7 @@ compare_tlsa(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 52);
+	REQUIRE(rdata1->type == dns_rdatatype_tlsa);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -176,7 +176,7 @@ static inline isc_result_t
 fromstruct_tlsa(ARGS_FROMSTRUCT) {
 	dns_rdata_tlsa_t *tlsa = source;
 
-	REQUIRE(type == 52);
+	REQUIRE(type == dns_rdatatype_tlsa);
 	REQUIRE(source != NULL);
 	REQUIRE(tlsa->common.rdtype == type);
 	REQUIRE(tlsa->common.rdclass == rdclass);
@@ -196,7 +196,7 @@ tostruct_tlsa(ARGS_TOSTRUCT) {
 	dns_rdata_tlsa_t *tlsa = target;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 52);
+	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -227,7 +227,7 @@ freestruct_tlsa(ARGS_FREESTRUCT) {
 	dns_rdata_tlsa_t *tlsa = source;
 
 	REQUIRE(tlsa != NULL);
-	REQUIRE(tlsa->common.rdtype == 52);
+	REQUIRE(tlsa->common.rdtype == dns_rdatatype_tlsa);
 
 	if (tlsa->mctx == NULL)
 		return;
@@ -239,7 +239,7 @@ freestruct_tlsa(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_tlsa(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 52);
+	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -252,7 +252,7 @@ static inline isc_result_t
 digest_tlsa(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 52);
+	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -262,7 +262,7 @@ digest_tlsa(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_tlsa(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 52);
+	REQUIRE(type == dns_rdatatype_tlsa);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -275,7 +275,7 @@ checkowner_tlsa(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_tlsa(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 52);
+	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 
 	UNUSED(rdata);
 	UNUSED(owner);

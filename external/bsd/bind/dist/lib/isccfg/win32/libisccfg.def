@@ -32,6 +32,7 @@ cfg_map_count
 cfg_map_get
 cfg_map_getname
 cfg_obj_asboolean
+cfg_obj_asfixedpoint
 cfg_obj_asnetprefix
 cfg_obj_assockaddr
 cfg_obj_asstring
@@ -62,6 +63,7 @@ cfg_parse_buffer
 cfg_parse_dscp
 cfg_parse_enum
 cfg_parse_file
+cfg_parse_fixedpoint
 cfg_parse_listelt
 cfg_parse_map
 cfg_parse_mapbody
@@ -91,6 +93,7 @@ cfg_print_boolean
 cfg_print_bracketed_list
 cfg_print_chars
 cfg_print_cstr
+cfg_print_fixedpoint
 cfg_print_grammar
 cfg_print_map
 cfg_print_mapbody
