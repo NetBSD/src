@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.118 2015/12/17 04:03:42 christos Exp $
+# $NetBSD: shl.mi,v 1.119 2015/12/17 08:55:10 martin Exp $
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libblacklist.so.0.0.debug		comp-sys-debug	debug,dynamicroot
 ./usr/libdata/debug/lib/libc.so.12.199.debug			comp-sys-debug	debug,dynamicroot
@@ -76,7 +76,7 @@
 ./usr/libdata/debug/usr/lib/libcrypto_rc5.so.7.0.debug		comp-crypto-debug	debug,compatfile,crypto,crypto_rc5
 ./usr/libdata/debug/usr/lib/libctf.so.3.0.debug			comp-sys-debug	debug,compatfile,dtrace
 ./usr/libdata/debug/usr/lib/libcurses.so.7.0.debug		comp-sys-debug	debug,compatfile
-./usr/libdata/debug/usr/lib/libdes.so.8.3.debug			comp-crypto-debug	debug,compatfile,crypto
+./usr/libdata/debug/usr/lib/libdes.so.8.2.debug			comp-crypto-debug	debug,compatfile,crypto
 ./usr/libdata/debug/usr/lib/libdevmapper.so.1.0.debug		comp-lvm-debug	debug,compatfile,lvm
 ./usr/libdata/debug/usr/lib/libdm.so.0.0.debug 			comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libdns.so.8.3.debug 		comp-bind-debug debug,compatfile
