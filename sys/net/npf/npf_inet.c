@@ -1,4 +1,4 @@
-/*	$NetBSD: npf_inet.c,v 1.32 2014/07/20 00:37:41 rmind Exp $	*/
+/*	$NetBSD: npf_inet.c,v 1.33 2015/12/17 12:17:13 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2009-2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32 2014/07/20 00:37:41 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.33 2015/12/17 12:17:13 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf_inet.c,v 1.32 2014/07/20 00:37:41 rmind Exp $");
 
 #include <netinet/in_systm.h>
 #include <netinet/in.h>
+#include <netinet6/in6_var.h>
 #include <netinet/ip.h>
 #include <netinet/ip6.h>
 #include <netinet/tcp.h>
@@ -747,7 +748,7 @@ npf_addr_dump(const npf_addr_t *addr, int alen)
 		memcpy(&ip, addr, alen);
 		return inet_ntoa(ip);
 	}
-	return "[IPv6]"; // XXX
+	return ip6_sprintf(addr);
 }
 
 #endif
