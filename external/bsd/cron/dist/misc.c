@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: misc.c,v 1.3 2015/12/17 22:36:48 christos Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -25,7 +25,7 @@
 #if 0
 static char rcsid[] = "Id: misc.c,v 1.16 2004/01/23 18:56:43 vixie Exp";
 #else
-__RCSID("$NetBSD: misc.c,v 1.2 2010/05/06 18:53:17 christos Exp $");
+__RCSID("$NetBSD: misc.c,v 1.3 2015/12/17 22:36:48 christos Exp $");
 #endif
 #endif
 
@@ -495,41 +495,6 @@ log_close(void) {
 	closelog();
 	syslog_open = FALSE;
 #endif /*SYSLOG*/
-}
-
-/* char *first_word(char *s, char *t)
- *	return pointer to first word
- * parameters:
- *	s - string we want the first word of
- *	t - terminators, implicitly including \0
- * warnings:
- *	(1) this routine is fairly slow
- *	(2) it returns a pointer to static storage
- */
-char *
-first_word(char *s, const char *t) {
-	static char retbuf[2][MAX_TEMPSTR + 1];	/* sure wish C had GC */
-	static int retsel = 0;
-	char *rb, *rp;
-
-	/* select a return buffer */
-	retsel = 1-retsel;
-	rb = &retbuf[retsel][0];
-	rp = rb;
-
-	/* skip any leading terminators */
-	while (*s && (NULL != strchr(t, *s))) {
-		s++;
-	}
-
-	/* copy until next terminator or full buffer */
-	while (*s && (NULL == strchr(t, *s)) && (rp < &rb[MAX_TEMPSTR])) {
-		*rp++ = *s++;
-	}
-
-	/* finish the return-string and return it */
-	*rp = '\0';
-	return (rb);
 }
 
 /* warning:
