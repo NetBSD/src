@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2004, 2007, 2009-2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2004, 2007, 2009-2015  Internet Systems Consortium, Inc. ("ISC")
 # Copyright (C) 2000, 2001  Internet Software Consortium.
 #
 # Permission to use, copy, modify, and/or distribute this software for any
@@ -14,8 +14,6 @@
 # LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE
 # OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
 # PERFORMANCE OF THIS SOFTWARE.
-
-# Id: tests.sh,v 1.22 2012/02/09 23:47:18 tbox Exp 
 
 SYSTEMTESTTOP=..
 . $SYSTEMTESTTOP/conf.sh
@@ -43,7 +41,7 @@ if [ -x ${RESOLVE} ] ; then
 echo "I:checking that local bound address can be set (Can't query from a denied address)"
    ret=0
    ${RESOLVE} -b 10.53.0.8 -p 5300 -t a -s 10.53.0.1 www.example.org 2> resolve.out || ret=1
-   grep "resolution failed: failure" resolve.out > /dev/null || ret=1
+   grep "resolution failed: SERVFAIL" resolve.out > /dev/null || ret=1
    if [ $ret != 0 ]; then echo "I:failed"; fi
    status=`expr $status + $ret`
 
@@ -79,7 +77,7 @@ if [ -x ${RESOLVE} ] ; then
     echo "I:checking handling of bogus referrals using dns_client"
     ret=0
     ${RESOLVE} -p 5300 -t a -s 10.53.0.1 www.example.com 2> resolve.out || ret=1
-    grep "resolution failed: failure" resolve.out > /dev/null || ret=1
+    grep "resolution failed: SERVFAIL" resolve.out > /dev/null || ret=1
     if [ $ret != 0 ]; then echo "I:failed"; fi
     status=`expr $status + $ret`
 fi
@@ -506,6 +504,32 @@ ret=0
 $DIG soa all-cnames @10.53.0.5 -p 5300 > dig.out.ns5.test${n} || ret=1
 grep "status: SERVFAIL" dig.out.ns5.test${n} > /dev/null || ret=1
 grep "skipping nameserver 'cname.tld' because it is a CNAME, while resolving 'all-cnames/SOA'" ns5/named.run > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that unexpected opcodes are handled correctly (${n})"
+ret=0
+$DIG soa all-cnames @10.53.0.5 -p 5300 +opcode=status > dig.out.ns5.test${n} || ret=1
+grep "status: NOTIMP" dig.out.ns5.test${n} > /dev/null || ret=1
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that EDNS client subnet with non-zeroed bits is handled correctly (${n})"
+ret=0
+# 0001 (IPv4) 1f (31 significant bits) 00 (0) ffffffff (255.255.255.255)
+$DIG soa . @10.53.0.5 -p 5300 +ednsopt=8:00011f00ffffffff > dig.out.ns5.test${n} || ret=1
+grep "status: FORMERR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "; EDNS: version:" dig.out.ns5.test${n} > /dev/null || ret=1
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
+
+n=`expr $n + 1`
+echo "I:check that dig +subnet zeros address bits correctly (${n})"
+ret=0
+$DIG +qr soa . @10.53.0.5 -p 5300 +subnet=255.255.255.255/23 > dig.out.ns5.test${n} || ret=1
+grep "status: NOERROR" dig.out.ns5.test${n} > /dev/null || ret=1
+grep "CLIENT-SUBNET: 255.255.254.0/23/0" dig.out.ns5.test${n} > /dev/null || ret=1
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 

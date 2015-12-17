@@ -1,7 +1,7 @@
-/*	$NetBSD: pkcs11dh_link.c,v 1.1.1.5 2015/09/03 07:21:36 christos Exp $	*/
+/*	$NetBSD: pkcs11dh_link.c,v 1.1.1.6 2015/12/17 03:22:07 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -278,7 +278,8 @@ pkcs11dh_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dh1, CKA_BASE);
@@ -287,7 +288,8 @@ pkcs11dh_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dh1, CKA_VALUE);
@@ -296,7 +298,8 @@ pkcs11dh_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dh1, CKA_VALUE2);
@@ -304,7 +307,8 @@ pkcs11dh_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	if (((attr1 != NULL) || (attr2 != NULL)) &&
 	    ((attr1 == NULL) || (attr2 == NULL) ||
 	     (attr1->ulValueLen != attr2->ulValueLen) ||
-	     memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen)))
+	     !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				attr1->ulValueLen)))
 		return (ISC_FALSE);
 
 	if (!dh1->ontoken && !dh2->ontoken)
@@ -335,7 +339,8 @@ pkcs11dh_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dh1, CKA_BASE);
@@ -344,7 +349,8 @@ pkcs11dh_paramcompare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	return (ISC_TRUE);
@@ -684,13 +690,13 @@ pkcs11dh_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 	isc_buffer_availableregion(data, &r);
 
-	if ((glen == 1) && (memcmp(pk11_dh_bn2, base, glen) == 0) &&
+	if ((glen == 1) && isc_safe_memequal(pk11_dh_bn2, base, glen) &&
 	    (((plen == sizeof(pk11_dh_bn768)) &&
-	      (memcmp(pk11_dh_bn768, prime, plen) == 0)) ||
+	      isc_safe_memequal(pk11_dh_bn768, prime, plen)) ||
 	     ((plen == sizeof(pk11_dh_bn1024)) &&
-	      (memcmp(pk11_dh_bn1024, prime, plen) == 0)) ||
+	      isc_safe_memequal(pk11_dh_bn1024, prime, plen)) ||
 	     ((plen == sizeof(pk11_dh_bn1536)) &&
-	      (memcmp(pk11_dh_bn1536, prime, plen) == 0)))) {
+	      isc_safe_memequal(pk11_dh_bn1536, prime, plen)))) {
 		plen = 1;
 		glen = 0;
 	}
@@ -701,10 +707,11 @@ pkcs11dh_todns(const dst_key_t *key, isc_buffer_t *data) {
 
 	uint16_toregion(plen, &r);
 	if (plen == 1) {
-		if (memcmp(pk11_dh_bn768, prime, sizeof(pk11_dh_bn768)) == 0)
+		if (isc_safe_memequal(pk11_dh_bn768, prime,
+				      sizeof(pk11_dh_bn768)))
 			*r.base = 1;
-		else if (memcmp(pk11_dh_bn1024, prime,
-				sizeof(pk11_dh_bn1024)) == 0)
+		else if (isc_safe_memequal(pk11_dh_bn1024, prime,
+					   sizeof(pk11_dh_bn1024)))
 			*r.base = 2;
 		else
 			*r.base = 3;
@@ -821,7 +828,7 @@ pkcs11dh_fromdns(dst_key_t *key, isc_buffer_t *data) {
 		}
 		else {
 			base = r.base;
-			if (memcmp(base, pk11_dh_bn2, glen) == 0) {
+			if (isc_safe_memequal(base, pk11_dh_bn2, glen)) {
 				base = pk11_dh_bn2;
 				glen_ = sizeof(pk11_dh_bn2);
 			}

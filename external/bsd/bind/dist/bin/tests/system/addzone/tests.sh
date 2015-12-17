@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (C) 2010-2013  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -267,6 +267,17 @@ n=`expr $n + 1`
 if [ $ret != 0 ]; then echo "I:failed"; fi
 status=`expr $status + $ret`
 
+echo "I:checking rndc reload causes named to reload the external view's NZF file ($n)"
+ret=0
+$RNDC -c ../common/rndc.conf -s 10.53.0.2 -p 9953 reload 2>&1 | sed 's/^/I:ns2 /'
+$DIG +norec $DIGOPTS @10.53.0.2 -b 10.53.0.2 a.added.example a > dig.out.ns2.int.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.int.$n > /dev/null || ret=1
+$DIG +norec $DIGOPTS @10.53.0.4 -b 10.53.0.4 a.added.example a > dig.out.ns2.ext.$n || ret=1
+grep 'status: NOERROR' dig.out.ns2.ext.$n > /dev/null || ret=1
+grep '^a.added.example' dig.out.ns2.ext.$n > /dev/null || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo "I:failed"; fi
+status=`expr $status + $ret`
 
 echo "I:deleting newly added zone ($n)"
 ret=0

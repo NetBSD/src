@@ -1,7 +1,7 @@
-/*	$NetBSD: rdatasetstats_test.c,v 1.1.1.3 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: rdatasetstats_test.c,v 1.1.1.4 2015/12/17 03:22:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -25,6 +25,8 @@
 #include <atf-c.h>
 
 #include <unistd.h>
+
+#include <isc/print.h>
 
 #include <dns/stats.h>
 
