@@ -1,7 +1,7 @@
-/*	$NetBSD: byaddr_test.c,v 1.7 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: byaddr_test.c,v 1.8 2015/12/17 04:00:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,6 +32,7 @@
 #include <isc/commandline.h>
 #include <isc/mem.h>
 #include <isc/netaddr.h>
+#include <isc/print.h>
 #include <isc/task.h>
 #include <isc/timer.h>
 #include <isc/util.h>

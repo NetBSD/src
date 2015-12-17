@@ -1,7 +1,7 @@
-/*	$NetBSD: openssl_link.c,v 1.11 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: openssl_link.c,v 1.12 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -103,7 +103,7 @@ entropy_add(const void *buf, int num, double entropy) {
 	UNUSED(num);
 	UNUSED(entropy);
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
-	return 0;
+	return 1;
 #endif
 }
 
@@ -117,10 +117,12 @@ lock_callback(int mode, int type, const char *file, int line) {
 		UNLOCK(&locks[type]);
 }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 static unsigned long
 id_callback(void) {
 	return ((unsigned long)isc_thread_self());
 }
+#endif
 
 static void *
 mem_alloc(size_t size) {
@@ -181,7 +183,9 @@ dst__openssl_init(const char *engine) {
 	if (result != ISC_R_SUCCESS)
 		goto cleanup_mutexalloc;
 	CRYPTO_set_locking_callback(lock_callback);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	CRYPTO_set_id_callback(id_callback);
+#endif
 
 	ERR_load_crypto_strings();
 
@@ -279,7 +283,9 @@ dst__openssl_destroy(void) {
 	CRYPTO_cleanup_all_ex_data();
 #endif
 	ERR_clear_error();
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	ERR_remove_state(0);
+#endif
 	ERR_free_strings();
 
 #ifdef  DNS_CRYPTO_LEAKS
