@@ -1,7 +1,7 @@
-/*	$NetBSD: callbacks.c,v 1.5 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: callbacks.c,v 1.6 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2011, 2012, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -23,6 +23,7 @@
 
 #include <config.h>
 
+#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>

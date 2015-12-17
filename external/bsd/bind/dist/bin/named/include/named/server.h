@@ -1,7 +1,7 @@
-/*	$NetBSD: server.h,v 1.9 2014/12/10 04:37:52 christos Exp $	*/
+/*	$NetBSD: server.h,v 1.10 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -53,6 +53,7 @@ struct ns_server {
 	isc_quota_t		xfroutquota;
 	isc_quota_t		tcpquota;
 	isc_quota_t		recursionquota;
+
 	dns_acl_t		*blackholeacl;
 	char *			statsfile;	/*%< Statistics file name */
 	char *			dumpfile;	/*%< Dump file name */
@@ -185,7 +186,6 @@ enum {
 	dns_nsstatscounter_expireopt = 44,
 	dns_nsstatscounter_otheropt = 45,
 
-#ifdef ISC_PLATFORM_USESIT
 	dns_nsstatscounter_sitopt = 46,
 	dns_nsstatscounter_sitbadsize = 47,
 	dns_nsstatscounter_sitbadtime = 48,
@@ -194,9 +194,6 @@ enum {
 	dns_nsstatscounter_sitnew = 51,
 
 	dns_nsstatscounter_max = 52
-#else
-	dns_nsstatscounter_max = 46
-#endif
 };
 
 void
@@ -242,7 +239,7 @@ ns_server_reloadcommand(ns_server_t *server, char *args, isc_buffer_t *text);
  */
 
 isc_result_t
-ns_server_reconfigcommand(ns_server_t *server, char *args);
+ns_server_reconfigcommand(ns_server_t *server);
 /*%<
  * Act on a "reconfig" command from the command channel.
  */

@@ -1,7 +1,7 @@
-/*	$NetBSD: types.h,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.8 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -134,6 +134,7 @@ typedef struct dns_tsec				dns_tsec_t;
 typedef struct dns_tsig_keyring			dns_tsig_keyring_t;
 typedef struct dns_tsigkey			dns_tsigkey_t;
 typedef isc_uint32_t				dns_ttl_t;
+typedef struct dns_update_state			dns_update_state_t;
 typedef struct dns_validator			dns_validator_t;
 typedef struct dns_view				dns_view_t;
 typedef ISC_LIST(dns_view_t)			dns_viewlist_t;
@@ -244,8 +245,11 @@ enum {
 	/*
 	 * Extended rcodes.
 	 */
-	dns_rcode_badvers = 16
+	dns_rcode_badvers = 16,
 #define dns_rcode_badvers		((dns_rcode_t)dns_rcode_badvers)
+	dns_rcode_badcookie = 23
+#define dns_rcode_badcookie		((dns_rcode_t)dns_rcode_badcookie)
+	/* Private space [3841..4095] */
 };
 
 /*%

@@ -1,7 +1,7 @@
-/*	$NetBSD: commandline.c,v 1.5 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: commandline.c,v 1.6 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007, 2008, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2008, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -67,6 +67,7 @@
 
 #include <isc/commandline.h>
 #include <isc/msgs.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 
