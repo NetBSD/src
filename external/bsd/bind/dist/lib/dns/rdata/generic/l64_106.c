@@ -1,7 +1,7 @@
-/*	$NetBSD: l64_106.c,v 1.1.1.4 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: l64_106.c,v 1.1.1.5 2015/12/17 03:22:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ fromtext_l64(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char locator[NS_LOCATORSZ];
 
-	REQUIRE(type == 106);
+	REQUIRE(type == dns_rdatatype_l64);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -58,7 +58,7 @@ totext_l64(ARGS_TOTEXT) {
 	char buf[sizeof("xxxx:xxxx:xxxx:xxxx")];
 	unsigned short num;
 
-	REQUIRE(rdata->type == 106);
+	REQUIRE(rdata->type == dns_rdatatype_l64);
 	REQUIRE(rdata->length == 10);
 
 	UNUSED(tctx);
@@ -83,7 +83,7 @@ static inline isc_result_t
 fromwire_l64(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 
-	REQUIRE(type == 106);
+	REQUIRE(type == dns_rdatatype_l64);
 
 	UNUSED(type);
 	UNUSED(options);
@@ -100,7 +100,7 @@ fromwire_l64(ARGS_FROMWIRE) {
 static inline isc_result_t
 towire_l64(ARGS_TOWIRE) {
 
-	REQUIRE(rdata->type == 106);
+	REQUIRE(rdata->type == dns_rdatatype_l64);
 	REQUIRE(rdata->length == 10);
 
 	UNUSED(cctx);
@@ -115,7 +115,7 @@ compare_l64(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 106);
+	REQUIRE(rdata1->type == dns_rdatatype_l64);
 	REQUIRE(rdata1->length == 10);
 	REQUIRE(rdata2->length == 10);
 
@@ -128,7 +128,7 @@ static inline isc_result_t
 fromstruct_l64(ARGS_FROMSTRUCT) {
 	dns_rdata_l64_t *l64 = source;
 
-	REQUIRE(type == 106);
+	REQUIRE(type == dns_rdatatype_l64);
 	REQUIRE(source != NULL);
 	REQUIRE(l64->common.rdtype == type);
 	REQUIRE(l64->common.rdclass == rdclass);
@@ -145,7 +145,7 @@ tostruct_l64(ARGS_TOSTRUCT) {
 	isc_region_t region;
 	dns_rdata_l64_t *l64 = target;
 
-	REQUIRE(rdata->type == 106);
+	REQUIRE(rdata->type == dns_rdatatype_l64);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 10);
 
@@ -166,7 +166,7 @@ freestruct_l64(ARGS_FREESTRUCT) {
 	dns_rdata_l64_t *l64 = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(l64->common.rdtype == 106);
+	REQUIRE(l64->common.rdtype == dns_rdatatype_l64);
 
 	return;
 }
@@ -174,7 +174,7 @@ freestruct_l64(ARGS_FREESTRUCT) {
 static inline isc_result_t
 additionaldata_l64(ARGS_ADDLDATA) {
 
-	REQUIRE(rdata->type == 106);
+	REQUIRE(rdata->type == dns_rdatatype_l64);
 	REQUIRE(rdata->length == 10);
 
 	UNUSED(rdata);
@@ -188,7 +188,7 @@ static inline isc_result_t
 digest_l64(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 106);
+	REQUIRE(rdata->type == dns_rdatatype_l64);
 	REQUIRE(rdata->length == 10);
 
 	dns_rdata_toregion(rdata, &r);
@@ -199,7 +199,7 @@ digest_l64(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_l64(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 106);
+	REQUIRE(type == dns_rdatatype_l64);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -212,7 +212,7 @@ checkowner_l64(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_l64(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 106);
+	REQUIRE(rdata->type == dns_rdatatype_l64);
 	REQUIRE(rdata->length == 10);
 
 	UNUSED(rdata);
