@@ -1,7 +1,7 @@
-/*	$NetBSD: pkcs11dsa_link.c,v 1.1.1.5 2015/09/03 07:21:36 christos Exp $	*/
+/*	$NetBSD: pkcs11dsa_link.c,v 1.1.1.6 2015/12/17 03:22:07 christos Exp $	*/
 
 /*
- * Copyright (C) 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,8 +15,6 @@
  * OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
-
-/* Id */
 
 #ifdef PKCS11CRYPTO
 
@@ -445,7 +443,8 @@ pkcs11dsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dsa1, CKA_SUBPRIME);
@@ -454,7 +453,8 @@ pkcs11dsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dsa1, CKA_BASE);
@@ -463,7 +463,8 @@ pkcs11dsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dsa1, CKA_VALUE);
@@ -472,7 +473,8 @@ pkcs11dsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 		return (ISC_TRUE);
 	else if ((attr1 == NULL) || (attr2 == NULL) ||
 		 (attr1->ulValueLen != attr2->ulValueLen) ||
-		 memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen))
+		 !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				    attr1->ulValueLen))
 		return (ISC_FALSE);
 
 	attr1 = pk11_attribute_bytype(dsa1, CKA_VALUE2);
@@ -480,7 +482,8 @@ pkcs11dsa_compare(const dst_key_t *key1, const dst_key_t *key2) {
 	if (((attr1 != NULL) || (attr2 != NULL)) &&
 	    ((attr1 == NULL) || (attr2 == NULL) ||
 	     (attr1->ulValueLen != attr2->ulValueLen) ||
-	     memcmp(attr1->pValue, attr2->pValue, attr1->ulValueLen)))
+	     !isc_safe_memequal(attr1->pValue, attr2->pValue,
+				attr1->ulValueLen)))
 		return (ISC_FALSE);
 
 	if (!dsa1->ontoken && !dsa2->ontoken)

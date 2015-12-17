@@ -1,6 +1,6 @@
 #!/bin/sh 
 #
-# Copyright (C) 2010, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2010, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
 #
 # Permission to use, copy, modify, and/or distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -42,4 +42,24 @@ trusted-keys {
 };
 EOF
 ' > trusted.conf
+
+zone=undelegated
+infile=undelegated.db.in
+zonefile=undelegated.db
+keyname1=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 1024 -n zone $zone`
+keyname2=`$KEYGEN -q -r $RANDFILE -a RSASHA256 -b 2048 -f KSK -n zone $zone`
+cat $infile $keyname1.key $keyname2.key > $zonefile
+
+$SIGNER -g -r $RANDFILE -o $zone $zonefile > /dev/null 2>&1
+
+cat $keyname2.key | grep -v '^; ' | $PERL -n -e '
+local ($dn, $class, $type, $flags, $proto, $alg, @rest) = split;
+local $key = join("", @rest);
+print <<EOF
+trusted-keys {
+    "$dn" $flags $proto $alg "$key";
+};
+EOF
+' >> trusted.conf
+
 cp trusted.conf ../ns2/trusted.conf
