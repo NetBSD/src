@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.215 2015/12/16 21:11:47 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.216 2015/12/17 04:36:56 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.215 2015/12/16 21:11:47 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.216 2015/12/17 04:36:56 nonaka Exp $");
 #endif /* not lint */
 
 /*
@@ -184,7 +184,6 @@ initurlinfo(struct urlinfo *ui)
 	ui->portnum = 0;
 }
 
-#ifdef WITH_SSL
 static void
 copyurlinfo(struct urlinfo *dui, struct urlinfo *sui)
 {
@@ -194,7 +193,6 @@ copyurlinfo(struct urlinfo *dui, struct urlinfo *sui)
 	dui->utype = sui->utype;
 	dui->portnum = sui->portnum;
 }
-#endif
 
 static void
 freeurlinfo(struct urlinfo *ui)
@@ -691,25 +689,29 @@ handle_proxy(const char *url, const char *penv, struct urlinfo *ui,
 }
 
 static void
-print_host(FETCH *fin, const char *host)
+print_host(FETCH *fin, const struct urlinfo *ui)
 {
 	char *h, *p;
 
-	if (strchr(host, ':') == NULL) {
-		fetch_printf(fin, "Host: %s", host);
-		return;
+	if (strchr(ui->host, ':') == NULL) {
+		fetch_printf(fin, "Host: %s", ui->host);
+	} else {
+		/*
+		 * strip off IPv6 scope identifier, since it is
+		 * local to the node
+		 */
+		h = ftp_strdup(ui->host);
+		if (isipv6addr(h) && (p = strchr(h, '%')) != NULL)
+			*p = '\0';
+
+		fetch_printf(fin, "Host: [%s]", h);
+		free(h);
 	}
 
-	/*
-	 * strip off IPv6 scope identifier, since it is
-	 * local to the node
-	 */
-	h = ftp_strdup(host);
-	if (isipv6addr(h) && (p = strchr(h, '%')) != NULL)
-		*p = '\0';
-
-	fetch_printf(fin, "Host: [%s]", h);
-	free(h);
+	if ((ui->utype == HTTP_URL_T && ui->portnum != HTTP_PORT) ||
+	    (ui->utype == HTTPS_URL_T && ui->portnum != HTTPS_PORT))
+		fetch_printf(fin, ":%u", ui->portnum);
+	fetch_printf(fin, "\r\n");
 }
 
 static void
@@ -733,7 +735,8 @@ print_cache(FETCH *fin, int isproxy)
 }
 
 static int
-print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *ui)
+print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
+    const struct urlinfo *ui)
 {
 	const char *leading = hasleading ? ", " : "  (";
 
@@ -745,17 +748,12 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *ui)
 			hasleading++;
 		}
 		fetch_printf(fin, "GET %s HTTP/1.0\r\n", ui->path);
+		print_host(fin, oui);
 		return hasleading;
 	}
 
 	fetch_printf(fin, "GET %s HTTP/1.1\r\n", ui->path);
-	print_host(fin, ui->host);
-
-	if ((ui->utype == HTTP_URL_T && ui->portnum != HTTP_PORT) ||
-	    (ui->utype == HTTPS_URL_T && ui->portnum != HTTPS_PORT))
-		fetch_printf(fin, ":%u", ui->portnum);
-
-	fetch_printf(fin, "\r\n");
+	print_host(fin, ui);
 	fetch_printf(fin, "Accept: */*\r\n");
 	fetch_printf(fin, "Connection: close\r\n");
 	if (restart_point) {
@@ -793,10 +791,10 @@ getmtime(const char *cp, time_t *mtime)
 }
 
 static int
-print_proxy(FETCH *fin, const char *leading,
-    const char *wwwauth, const char *proxyauth)
+print_proxy(FETCH *fin, int hasleading, const char *wwwauth,
+    const char *proxyauth)
 {
-	int hasleading = 0;
+	const char *leading = hasleading ? ", " : "  (";
 
 	if (wwwauth) {
 		if (verbose) {
@@ -1109,12 +1107,10 @@ out:
 #ifdef WITH_SSL
 static int
 connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
-    struct authinfo *wauth, struct authinfo *pauth,
-    char **auth, int *hasleading)
+    struct authinfo *pauth, char **auth, int *hasleading)
 {
 	void *ssl;
 	int hcode, rv;
-	const char *leading = *hasleading ? ", " : "  (";
 	const char *cp;
 	char buf[FTPBUFLEN], *ep;
 	char *message = NULL;
@@ -1142,27 +1138,10 @@ connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
 	}
 
 	print_agent(fin);
-	*hasleading = print_proxy(fin, leading, wauth->auth, pauth->auth);
-
-	if (verbose) {
-		leading = ", ";
-		(*hasleading)++;
-	} else {
-		leading = "  (";
-		*hasleading = 0;
-	}
-	if (pauth->auth) {
-		if (verbose) {
-			fprintf(ttyout, "%swith proxy authorization" , leading);
-			leading = ", ";
-			(*hasleading)++;
-		}
-		fetch_printf(fin, "Proxy-Authorization: %s\r\n", pauth->auth);
-	}
+	*hasleading = print_proxy(fin, *hasleading, NULL, pauth->auth);
 
 	if (verbose && *hasleading)
 		fputs(")\n", ttyout);
-	leading = "  (";
 	*hasleading = 0;
 
 	fetch_printf(fin, "\r\n");
@@ -1217,14 +1196,10 @@ connectmethod(int s, FETCH *fin, struct urlinfo *oui, struct urlinfo *ui,
 		goto cleanup_fetch_url;
 	}
 
-	if ((ssl = fetch_start_ssl(s, ui->host)) == NULL)
+	if ((ssl = fetch_start_ssl(s, oui->host)) == NULL)
 		goto cleanup_fetch_url;
 	fetch_set_ssl(fin, ssl);
 
-	FREEPTR(ui->host);
-	FREEPTR(ui->port);
-	oui->host = ftp_strdup(ui->host);
-	oui->port = ftp_strdup(ui->port);
 	rv = C_OK;
 	goto out;
 improper:
@@ -1274,12 +1249,9 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	FETCH			*volatile fin;
 	FILE			*volatile fout;
 	const char		*volatile penv = proxyenv;
-	struct urlinfo		ui;
+	struct urlinfo		ui, oui;
 	time_t			mtime;
 	void			*ssl = NULL;
-#ifdef WITH_SSL
-	struct urlinfo		oui;
-#endif
 
 	DPRINTF("%s: `%s' proxyenv `%s'\n", __func__, url, STRorNULL(penv));
 
@@ -1305,12 +1277,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	if (parse_url(url, "URL", &ui, &wauth) == -1)
 		goto cleanup_fetch_url;
 
-#ifdef WITH_SSL
-	if (ui.utype == HTTPS_URL_T)
-		copyurlinfo(&oui, &ui);
-	else
-		initurlinfo(&oui);
-#endif
+	copyurlinfo(&oui, &ui);
 
 	if (ui.utype == FILE_URL_T && ! EMPTYSTRING(ui.host)
 	    && strcasecmp(ui.host, "localhost") != 0) {
@@ -1389,7 +1356,6 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 			rcvbuf_size = 8 * 1024; /* XXX */
 		}
 	} else {				/* ftp:// or http:// URLs */
-		const char *leading;
 		int hasleading;
 
 		if (penv == NULL) {
@@ -1446,8 +1412,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		hasleading = 0;
 #ifdef WITH_SSL
 		if (isproxy && oui.utype == HTTPS_URL_T) {
-			switch (connectmethod(s, fin, &oui, &ui, &wauth, &pauth,
-			    &auth, &hasleading)) {
+			switch (connectmethod(s, fin, &oui, &ui, &pauth, &auth,
+			    &hasleading)) {
 			case C_CLEANUP:
 				goto cleanup_fetch_url;
 			case C_IMPROPER:
@@ -1460,20 +1426,16 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 #endif
 
-		hasleading = print_get(fin, hasleading, isproxy, &ui);
-		if (hasleading)
-			leading = ", ";
-		else
-			leading = "  (";
+		hasleading = print_get(fin, hasleading, isproxy, &oui, &ui);
 
 		if (flushcache)
 			print_cache(fin, isproxy);
 
 		print_agent(fin);
-		hasleading = print_proxy(fin, leading, wauth.auth,
+		hasleading = print_proxy(fin, hasleading, wauth.auth,
 		     auth ? NULL : pauth.auth);
 		if (hasleading) {
-			leading = ", ";
+			hasleading = 0;
 			if (verbose)
 				fputs(")\n", ttyout);
 		}
@@ -1738,9 +1700,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	if (savefile != outfile)
 		FREEPTR(savefile);
 	freeurlinfo(&ui);
-#ifdef WITH_SSL
 	freeurlinfo(&oui);
-#endif
 	freeauthinfo(&wauth);
 	freeauthinfo(&pauth);
 	FREEPTR(decodedpath);
