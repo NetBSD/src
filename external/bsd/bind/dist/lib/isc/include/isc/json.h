@@ -1,7 +1,7 @@
-/*	$NetBSD: json.h,v 1.1.1.3 2014/12/10 03:34:44 christos Exp $	*/
+/*	$NetBSD: json.h,v 1.1.1.4 2015/12/17 03:22:11 christos Exp $	*/
 
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -19,6 +19,7 @@
 #ifndef ISC_JSON_H
 #define ISC_JSON_H 1
 
+#ifdef HAVE_JSON
 /*
  * This file is here mostly to make it easy to add additional libjson header
  * files as needed across all the users of this file.  Rather than place
@@ -26,9 +27,21 @@
  * the ifdef as well as adding the ability to add additional functions
  * which may be useful.
  */
-
-#ifdef HAVE_JSON
-#include <json.h>
+#ifdef HAVE_JSON_C
+/*
+ * We don't include <json-c/json.h> as the subsequent includes do not
+ * prefix the header file names with "json-c/" and using
+ * -I <prefix>/include/json-c results in too many filename collisions.
+ */
+#include <json-c/linkhash.h>
+#include <json-c/json_util.h>
+#include <json-c/json_object.h>
+#include <json-c/json_tokener.h>
+#include <json-c/json_object_iterator.h>
+#include <json-c/json_c_version.h>
+#else
+#include <json/json.h>
+#endif
 #endif
 
 #define ISC_JSON_RENDERCONFIG		0x00000001 /* render config data */
