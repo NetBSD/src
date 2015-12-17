@@ -1,4 +1,4 @@
-/*	$NetBSD: funcs.h,v 1.2 2010/05/06 18:53:17 christos Exp $	*/
+/*	$NetBSD: funcs.h,v 1.3 2015/12/17 22:36:48 christos Exp $	*/
 
 /*
  * Id: funcs.h,v 1.9 2004/01/23 18:56:42 vixie Exp
@@ -59,7 +59,6 @@ size_t		strlens(const char *, ...);
 char		*env_get(const char *, char **),
 		*arpadate(time_t *),
 		*mkprints(char *, size_t),
-		*first_word(char *, const char *),
 		**env_init(void),
 		**env_copy(char **),
 		**env_set(char **, char *);
