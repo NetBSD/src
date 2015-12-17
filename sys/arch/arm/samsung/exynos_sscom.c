@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.5 2014/04/27 20:22:46 reinoud Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.6 2015/12/17 22:39:37 marty Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.5 2014/04/27 20:22:46 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.6 2015/12/17 22:39:37 marty Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -66,6 +66,13 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.5 2014/04/27 20:22:46 reinoud Exp
 #include <arm/samsung/exynos_var.h>
 #include <sys/termios.h>
 
+#include <dev/fdt/fdtvar.h>
+
+#include <evbarm/exynos/platform.h>
+
+extern int num_exynos_uarts_entries;
+extern int exynos_uarts[];
+
 static int sscom_match(device_t, cfdata_t, void *);
 static void sscom_attach(device_t, device_t, void *);
 
@@ -75,10 +82,10 @@ CFATTACH_DECL_NEW(exynos_sscom, sizeof(struct sscom_softc), sscom_match,
 static int
 sscom_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct exyo_attach_args *exyoaa = aux;
-	int port = exyoaa->exyo_loc.loc_port;
+	const char * const compatible[] = { "samsung,exynos4210-uart", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	return port >= 0 && port <= 4;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -139,15 +146,31 @@ static void
 sscom_attach(device_t parent, device_t self, void *aux)
 {
 	struct sscom_softc *sc = device_private(self);
-	struct exyo_attach_args *exyo = aux;
-	int unit = exyo->exyo_loc.loc_port;
+	struct fdt_attach_args *faa = aux;
+	int unit = -1;
+	bus_space_handle_t bsh;
+	bus_space_tag_t bst;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+	int i;
 
-	/* debug */
-//	bus_addr_t iobase = exyo->exyo_loc.loc_offset;
-//	aprint_normal( ": UART%d addr=%lx", unit, iobase );
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	/* unit is required for the sscom driver, which desperately
+	 * needs to be rewritten.  For now, this hack gets the answer.
+	 * MJF: FIX ME
+	 */
+	for (i = 1; i < num_exynos_uarts_entries; i += 2)
+		if (EXYNOS_CORE_PBASE + exynos_uarts[i] == addr)
+			break;
+	unit = exynos_uarts[i-1];
 
 	sc->sc_dev = self;
-	sc->sc_iot = exyo->exyo_core_bst;
+	sc->sc_iot = bst = faa->faa_bst;
+	sc->sc_ioh = exynos_uarts[i] + EXYNOS_CORE_VBASE;
 	sc->sc_unit = unit;
 	sc->sc_frequency = EXYNOS_UART_FREQ;
 
@@ -158,22 +181,29 @@ sscom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_rx_irqno = 0;
 	sc->sc_tx_irqno = 0;
 
-	if (!sscom_is_console(sc->sc_iot, unit, &sc->sc_ioh)
-	    && bus_space_subregion(sc->sc_iot, exyo->exyo_core_bsh,
-		    exyo->exyo_loc.loc_offset, SSCOM_SIZE, &sc->sc_ioh)) {
-		printf( ": failed to map registers\n" );
-		return;
+	if (!sscom_is_console(sc->sc_iot, unit, &sc->sc_ioh)) {
+		error = bus_space_map(bst, addr, size, 0, &bsh);
+		if (error) {
+			aprint_error(": couldn't map %#llx: %d\n",
+				     (uint64_t)addr, error);
+			return;
+		}
+		sc->sc_ioh = bsh;
+	} else {
+		printf(" (console) ");
 	}
 
 	printf("\n");
 
-	void *ih = intr_establish(exyo->exyo_loc.loc_intr, IPL_SCHED,
-	    IST_LEVEL, sscomintr, sc);
-	if (ih != NULL) {
-		aprint_normal_dev(self, "interrupting at irq %d\n",
-		    exyo->exyo_loc.loc_intr);
-	}
+#if 0
+	void *ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, sscomintr, sc);
+	if (ih == NULL)
+		aprint_error_dev(self, "failed to establish interrupt\n");
+#endif
+
 	sscom_attach_subr(sc);
+
 }
 
 
