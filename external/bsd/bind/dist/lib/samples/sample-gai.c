@@ -1,7 +1,7 @@
-/*	$NetBSD: sample-gai.c,v 1.1.1.4 2014/12/10 03:34:46 christos Exp $	*/
+/*	$NetBSD: sample-gai.c,v 1.1.1.5 2015/12/17 03:22:13 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -21,6 +21,7 @@
 #include <config.h>
 
 #include <isc/net.h>
+#include <isc/print.h>
 
 #include <irs/netdb.h>
 
