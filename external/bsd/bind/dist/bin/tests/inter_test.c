@@ -1,7 +1,7 @@
-/*	$NetBSD: inter_test.c,v 1.6 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: inter_test.c,v 1.7 2015/12/17 04:00:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2008, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -26,6 +26,7 @@
 
 #include <isc/interfaceiter.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/util.h>
 
 int

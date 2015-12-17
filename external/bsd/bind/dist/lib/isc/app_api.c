@@ -1,7 +1,7 @@
-/*	$NetBSD: app_api.c,v 1.7 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: app_api.c,v 1.8 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -31,6 +31,7 @@
 static isc_mutex_t createlock;
 static isc_once_t once = ISC_ONCE_INIT;
 static isc_appctxcreatefunc_t appctx_createfunc = NULL;
+static isc_boolean_t is_running = ISC_FALSE;
 
 #define ISCAPI_APPMETHODS_VALID(m) ISC_MAGIC_VALID(m, ISCAPI_APPMETHODS_MAGIC)
 
@@ -200,10 +201,22 @@ isc_app_onrun(isc_mem_t *mctx, isc_task_t *task,
 
 isc_result_t
 isc_app_run() {
-	if (isc_bind9)
-		return (isc__app_run());
+	if (isc_bind9) {
+		isc_result_t result;
+
+		is_running = ISC_TRUE;
+		result = isc__app_run();
+		is_running = ISC_FALSE;
+
+		return (result);
+	}
 
 	return (ISC_R_NOTIMPLEMENTED);
+}
+
+isc_boolean_t
+isc_app_isrunning() {
+	return (is_running);
 }
 
 isc_result_t

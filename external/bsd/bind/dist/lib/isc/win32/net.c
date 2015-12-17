@@ -1,7 +1,7 @@
-/*	$NetBSD: net.c,v 1.8 2014/12/10 04:38:01 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.9 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -211,6 +211,12 @@ initialize_ipv6only(void) {
 				  try_ipv6only) == ISC_R_SUCCESS);
 }
 
+#ifdef __notyet__
+/*
+ * XXXMPA requires win32/socket.c to be updated to support
+ * WSASendMsg and WSARecvMsg which are themselves Winsock
+ * and compiler version dependent.
+ */
 static void
 try_ipv6pktinfo(void) {
 	SOCKET s;
@@ -264,6 +270,7 @@ initialize_ipv6pktinfo(void) {
 	RUNTIME_CHECK(isc_once_do(&once_ipv6pktinfo,
 				  try_ipv6pktinfo) == ISC_R_SUCCESS);
 }
+#endif /* __notyet__ */
 #endif /* WANT_IPV6 */
 #endif /* ISC_PLATFORM_HAVEIPV6 */
 
@@ -281,6 +288,7 @@ isc_net_probe_ipv6only(void) {
 
 isc_result_t
 isc_net_probe_ipv6pktinfo(void) {
+#ifdef __notyet__
 #ifdef ISC_PLATFORM_HAVEIPV6
 #ifdef WANT_IPV6
 	initialize_ipv6pktinfo();
@@ -288,6 +296,7 @@ isc_net_probe_ipv6pktinfo(void) {
 	ipv6pktinfo_result = ISC_R_NOTFOUND;
 #endif
 #endif
+#endif /* __notyet__ */
 	return (ipv6pktinfo_result);
 }
 

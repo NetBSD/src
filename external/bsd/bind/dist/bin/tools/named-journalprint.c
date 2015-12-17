@@ -1,7 +1,7 @@
-/*	$NetBSD: named-journalprint.c,v 1.6 2014/12/10 04:37:54 christos Exp $	*/
+/*	$NetBSD: named-journalprint.c,v 1.7 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -24,6 +24,7 @@
 
 #include <isc/log.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/util.h>
 
 #include <dns/journal.h>

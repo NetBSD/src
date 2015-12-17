@@ -1,7 +1,7 @@
-/*	$NetBSD: stats.h,v 1.7 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.8 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -68,18 +68,14 @@ enum {
 	dns_resstatscounter_dispreqtcp = 32,
 	dns_resstatscounter_buckets = 33,
 	dns_resstatscounter_refused = 34,
-#ifdef ISC_PLATFORM_USESIT
 	dns_resstatscounter_sitcc = 35,
 	dns_resstatscounter_sitout = 36,
 	dns_resstatscounter_sitin = 37,
 	dns_resstatscounter_sitok = 38,
-
 	dns_resstatscounter_badvers = 39,
-	dns_resstatscounter_max = 40,
-#else
-	dns_resstatscounter_badvers = 35,
-	dns_resstatscounter_max = 36,
-#endif
+	dns_resstatscounter_zonequota = 40,
+	dns_resstatscounter_serverquota = 41,
+	dns_resstatscounter_max = 42,
 
 	/*
 	 * DNSSEC stats.

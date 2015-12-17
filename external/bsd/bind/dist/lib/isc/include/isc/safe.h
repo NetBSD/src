@@ -1,7 +1,7 @@
-/*	$NetBSD: safe.h,v 1.3 2014/12/10 04:38:00 christos Exp $	*/
+/*	$NetBSD: safe.h,v 1.4 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -28,9 +28,17 @@
 ISC_LANG_BEGINDECLS
 
 isc_boolean_t
-isc_safe_memcmp(const void *s1, const void *s2, size_t n);
+isc_safe_memequal(const void *s1, const void *s2, size_t n);
 /*%<
- * Clone of libc memcmp() safe to differential timing attacks.
+ * Returns ISC_TRUE iff. two blocks of memory are equal, otherwise
+ * ISC_FALSE.
+ *
+ */
+
+int
+isc_safe_memcompare(const void *b1, const void *b2, size_t len);
+/*%<
+ * Clone of libc memcmp() which is safe to differential timing attacks.
  */
 
 ISC_LANG_ENDDECLS
