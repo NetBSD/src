@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_start.S,v 1.2 2015/12/14 05:13:01 marty Exp $	*/
+/*	$NetBSD: exynos_start.S,v 1.3 2015/12/17 08:03:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
 
 #include <evbarm/exynos/platform.h>
 
-RCSID("$NetBSD: exynos_start.S,v 1.2 2015/12/14 05:13:01 marty Exp $")
+RCSID("$NetBSD: exynos_start.S,v 1.3 2015/12/17 08:03:06 skrll Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)
@@ -86,24 +86,6 @@ _C_LABEL(exynos_start):
 #ifdef __ARMEB__
 	setend	be			/* force big endian */
 #endif
-
-	/* Leave HYP (hypervisor or monitor) mode and move into supervisor mode
-	 * with IRQs/FIQs disabled. */
-	mrs	r0, cpsr
-	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
-	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
-	bne	1f
-	/* Ensure that IRQ, and FIQ will be disabled after eret */
-	mrs	r0, cpsr
-	bic	r0, r0, #(PSR_MODE)
-	orr	r0, r0, #(PSR_SVC32_MODE)
-	orr	r0, r0, #(I32_bit | F32_bit)
-	msr	spsr_cxsf, r0
-	/* Exit hypervisor mode */
-	adr	lr, 1f
-	msr	elr_hyp, lr
-	eret
-1:
 
 	/*
 	 * Save any arguments passed to us.  If .start is not at
