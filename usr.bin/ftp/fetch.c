@@ -1,4 +1,4 @@
-/*	$NetBSD: fetch.c,v 1.217 2015/12/17 17:08:45 christos Exp $	*/
+/*	$NetBSD: fetch.c,v 1.218 2015/12/17 17:26:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2015 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.217 2015/12/17 17:08:45 christos Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.218 2015/12/17 17:26:45 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -92,6 +92,12 @@ struct urlinfo {
 	char *path;
 	url_t utype;
 	in_port_t portnum;
+};
+
+struct posinfo {
+	off_t rangestart;
+	off_t rangeend;
+	off_t entitylen;
 };
 
 __dead static void	aborthttp(int);
@@ -158,6 +164,12 @@ match_token(const char **buf, const char *token)
 	orig = *buf;
 	*buf = p;
 	return orig;
+}
+
+static void
+initposinfo(struct posinfo *pi)
+{
+	pi->rangestart = pi->rangeend = pi->entitylen = -1;
 }
 
 static void
@@ -890,10 +902,56 @@ getresponse(FETCH *fin, char **cp, size_t buflen, int *hcode)
 }
 
 static int
+parse_posinfo(const char **cp, struct posinfo *pi)
+{
+	char *ep;
+	if (!match_token(cp, "bytes"))
+		return -1;
+
+	if (**cp == '*')
+		(*cp)++;
+	else {
+		pi->rangestart = STRTOLL(*cp, &ep, 10);
+		if (pi->rangestart < 0 || *ep != '-')
+			return -1;
+		*cp = ep + 1;
+		pi->rangeend = STRTOLL(*cp, &ep, 10);
+		if (pi->rangeend < 0 || pi->rangeend < pi->rangestart)
+			return -1;
+		*cp = ep;
+	}
+	if (**cp != '/')
+		return -1;
+	(*cp)++;
+	if (**cp == '*')
+		(*cp)++;
+	else {
+		pi->entitylen = STRTOLL(*cp, &ep, 10);
+		if (pi->entitylen < 0)
+			return -1;
+		*cp = ep;
+	}
+	if (**cp != '\0')
+		return -1;
+
+#ifndef NO_DEBUG
+	if (ftp_debug) {
+		fprintf(ttyout, "parsed range as: ");
+		if (pi->rangestart == -1)
+			fprintf(ttyout, "*");
+		else
+			fprintf(ttyout, LLF "-" LLF, (LLT)pi->rangestart,
+			    (LLT)pi->rangeend);
+		fprintf(ttyout, "/" LLF "\n", (LLT)pi->entitylen);
+	}
+#endif
+	return 0;
+}
+
+static int
 negotiate_connection(FETCH *fin, const char *url, const char *penv,
-    off_t *rangestart, off_t *rangeend, off_t *entitylen,
-    time_t *mtime, struct authinfo *wauth, struct authinfo *pauth,
-    int *rval, int *ischunked, char **auth)
+    struct posinfo *pi, time_t *mtime, struct authinfo *wauth,
+    struct authinfo *pauth, int *rval, int *ischunked, char **auth)
 {
 	int			len, hcode, rv;
 	char			buf[FTPBUFLEN], *ep;
@@ -936,47 +994,8 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			    __func__, (LLT)filesize);
 
 		} else if (match_token(&cp, "Content-Range:")) {
-			if (! match_token(&cp, "bytes"))
+			if (parse_posinfo(&cp, pi) == -1)
 				goto improper;
-
-			if (*cp == '*')
-				cp++;
-			else {
-				*rangestart = STRTOLL(cp, &ep, 10);
-				if (*rangestart < 0 || *ep != '-')
-					goto improper;
-				cp = ep + 1;
-				*rangeend = STRTOLL(cp, &ep, 10);
-				if (*rangeend < 0 || *rangeend < *rangestart)
-					goto improper;
-				cp = ep;
-			}
-			if (*cp != '/')
-				goto improper;
-			cp++;
-			if (*cp == '*')
-				cp++;
-			else {
-				*entitylen = STRTOLL(cp, &ep, 10);
-				if (*entitylen < 0)
-					goto improper;
-				cp = ep;
-			}
-			if (*cp != '\0')
-				goto improper;
-
-#ifndef NO_DEBUG
-			if (ftp_debug) {
-				fprintf(ttyout, "parsed range as: ");
-				if (*rangestart == -1)
-					fprintf(ttyout, "*");
-				else
-					fprintf(ttyout, LLF "-" LLF,
-					    (LLT)*rangestart,
-					    (LLT)*rangeend);
-				fprintf(ttyout, "/" LLF "\n", (LLT)*entitylen);
-			}
-#endif
 			if (! restart_point) {
 				warnx(
 			    "Received unexpected Content-Range header");
@@ -1248,7 +1267,8 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 	char			*volatile message;
 	char			*volatile decodedpath;
 	struct authinfo 	wauth, pauth;
-	off_t			hashbytes, rangestart, rangeend, entitylen;
+	struct posinfo		pi;
+	off_t			hashbytes;
 	int			(*volatile closefunc)(FILE *);
 	FETCH			*volatile fin;
 	FILE			*volatile fout;
@@ -1325,7 +1345,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 
 	restart_point = 0;
 	filesize = -1;
-	rangestart = rangeend = entitylen = -1;
+	initposinfo(&pi);
 	mtime = -1;
 	if (restartautofetch) {
 		if (stat(savefile, &sb) == 0)
@@ -1452,8 +1472,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 		alarmtimer(0);
 
-		switch (negotiate_connection(fin, url, penv,
-		    &rangestart, &rangeend, &entitylen,
+		switch (negotiate_connection(fin, url, penv, &pi,
 		    &mtime, &wauth, &pauth, &rval, &ischunked, &auth)) {
 		case C_OK:
 			break;
@@ -1486,18 +1505,19 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth, char *wwwauth)
 		}
 	}
 	if (fout == NULL) {
-		if ((rangeend != -1 && rangeend <= restart_point) ||
-		    (rangestart == -1 && filesize != -1 && filesize <= restart_point)) {
+		if ((pi.rangeend != -1 && pi.rangeend <= restart_point) ||
+		    (pi.rangestart == -1 &&
+		    filesize != -1 && filesize <= restart_point)) {
 			/* already done */
 			if (verbose)
 				fprintf(ttyout, "already done\n");
 			rval = 0;
 			goto cleanup_fetch_url;
 		}
-		if (restart_point && rangestart != -1) {
-			if (entitylen != -1)
-				filesize = entitylen;
-			if (rangestart != restart_point) {
+		if (restart_point && pi.rangestart != -1) {
+			if (pi.entitylen != -1)
+				filesize = pi.entitylen;
+			if (pi.rangestart != restart_point) {
 				warnx(
 				    "Size of `%s' differs from save file `%s'",
 				    url, savefile);
