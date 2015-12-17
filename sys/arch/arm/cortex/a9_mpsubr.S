@@ -1,4 +1,4 @@
-/*	$NetBSD: a9_mpsubr.S,v 1.44 2015/11/25 08:39:45 skrll Exp $	*/
+/*	$NetBSD: a9_mpsubr.S,v 1.45 2015/12/17 08:02:42 skrll Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -347,9 +347,26 @@ xputc:
 cortex_init:
 	mov	r10, lr				// save lr
 
-	cpsid	if, #PSR_SVC32_MODE		// SVC32 with no interrupts
-        mov	r0, #0
-        msr	spsr_sxc, r0			// set SPSR[23:8] to known value
+	/* Leave HYP mode and move into supervisor mode with IRQs/FIQs disabled. */
+	mrs	r0, cpsr
+	and	r0, r0, #(PSR_MODE)	/* Mode is in the low 5 bits of CPSR */
+	teq	r0, #(PSR_HYP32_MODE)	/* Hyp Mode? */
+	bne	1f
+
+	/* Ensure that IRQ, and FIQ will be disabled after eret */
+	mrs	r0, cpsr
+	bic	r0, r0, #(PSR_MODE)
+	orr	r0, r0, #(PSR_SVC32_MODE)
+	orr	r0, r0, #(I32_bit | F32_bit)
+	msr	spsr_cxsf, r0
+	/* Exit hypervisor mode */
+	adr	lr, 1f
+	msr	elr_hyp, lr
+	eret
+1:
+
+	mov	r0, #0
+	msr	spsr_sxc, r0			// set SPSR[23:8] to known value
 
 #if 0
 	mrc	p14, 0, r0, c0, c0, 0		// MIDR read
