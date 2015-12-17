@@ -291,7 +291,9 @@
  * If the "xaddq" operation (64bit xadd) is available on this architecture,
  * ISC_PLATFORM_HAVEXADDQ will be defined.
  */
+#ifdef __HAVE_ATOMIC64_OPS
 #define ISC_PLATFORM_HAVEXADDQ 1
+#endif
 
 /*
  * If the "atomic swap" operation is available on this architecture,
@@ -344,7 +346,7 @@
 /*
  * Defined if we are enabling SIT (Source Identity Token).
  */
-#undef ISC_PLATFORM_USESIT
+#define ISC_PLATFORM_USESIT 1
 
 /***
  ***	Windows dll support.
