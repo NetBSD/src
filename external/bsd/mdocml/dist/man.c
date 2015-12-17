@@ -1,4 +1,4 @@
-/*	$Id: man.c,v 1.1.1.15 2015/12/17 21:58:48 christos Exp $ */
+/*	$Id: man.c,v 1.2 2015/12/17 22:31:12 christos Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -657,7 +657,7 @@ man_deroff(char **dest, const struct man_node *n)
 	while ('\0' != *cp) {
 		if ('\\' == *cp) {
 			cp++;
-			mandoc_escape((const char **)&cp, NULL, NULL);
+			mandoc_escape((const char **)(void *)&cp, NULL, NULL);
 		} else if (isspace((unsigned char)*cp))
 			cp++;
 		else
