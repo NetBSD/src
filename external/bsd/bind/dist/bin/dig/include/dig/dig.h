@@ -1,4 +1,4 @@
-/*	$NetBSD: dig.h,v 1.11 2015/07/08 17:28:55 christos Exp $	*/
+/*	$NetBSD: dig.h,v 1.12 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -135,7 +135,8 @@ struct dig_lookup {
 #ifdef ISC_PLATFORM_USESIT
 		sit,
 #endif
-		nsid;   /*% Name Server ID (RFC 5001) */
+		nsid,   /*% Name Server ID (RFC 5001) */
+		ednsneg;
 #ifdef DIG_SIGCHASE
 isc_boolean_t	sigchase;
 #if DIG_SIGCHASE_TD
@@ -193,6 +194,10 @@ isc_boolean_t	sigchase;
 #ifdef ISC_PLATFORM_USESIT
 	char *sitvalue;
 #endif
+	dns_ednsopt_t *ednsopts;
+	unsigned int ednsoptscnt;
+	unsigned int ednsflags;
+	dns_opcode_t opcode;
 };
 
 /*% The dig_query structure */
@@ -347,6 +352,10 @@ parse_uint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
 	   const char *desc);
 
 isc_result_t
+parse_xint(isc_uint32_t *uip, const char *value, isc_uint32_t max,
+	   const char *desc);
+
+isc_result_t
 parse_netprefix(isc_sockaddr_t **sap, const char *value);
 
 void
@@ -427,6 +436,8 @@ chase_scanname(dns_name_t *name, dns_rdatatype_t type, dns_rdatatype_t covers);
 void
 chase_sig(dns_message_t *msg);
 #endif
+
+void save_opt(dig_lookup_t *lookup, char *code, char *value);
 
 ISC_LANG_ENDDECLS
 

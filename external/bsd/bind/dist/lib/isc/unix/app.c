@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.13 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.14 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -727,7 +727,7 @@ isc__app_ctxrun(isc_appctx_t *ctx0) {
 				return (ISC_R_UNEXPECTED);
 			}
 #endif
-			result = sigsuspend(&sset);
+			(void)sigsuspend(&sset);
 		} else {
 			/*
 			 * External, or BIND9 using multiple contexts:
