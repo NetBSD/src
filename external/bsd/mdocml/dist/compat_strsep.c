@@ -1,14 +1,13 @@
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
 
-#ifdef HAVE_STRSEP
+#if HAVE_STRSEP
 
 int dummy;
 
 #else
 
-/*	($)OpenBSD: strsep.c,v 1.6 2005/08/08 08:05:37 espie Exp $	*/
+/*	$Id: compat_strsep.c,v 1.1.1.2 2015/12/17 21:58:48 christos Exp $	*/
+/*	$OpenBSD: strsep.c,v 1.7 2014/02/05 20:42:32 stsp Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993

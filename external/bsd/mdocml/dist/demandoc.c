@@ -1,4 +1,4 @@
-/*	Id: demandoc.c,v 1.7 2012/05/31 22:27:14 schwarze Exp  */
+/*	$Id: demandoc.c,v 1.1.1.3 2015/12/17 21:58:48 christos Exp $ */
 /*
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  *
@@ -14,9 +14,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
-#ifdef HAVE_CONFIG_H
 #include "config.h"
-#endif
+
+#include <sys/types.h>
 
 #include <assert.h>
 #include <ctype.h>
@@ -43,11 +43,13 @@ int
 main(int argc, char *argv[])
 {
 	struct mparse	*mp;
-	int		 ch, i, list;
+	struct mchars	*mchars;
+	int		 ch, fd, i, list;
 	extern int	 optind;
 
-	progname = strrchr(argv[0], '/');
-	if (progname == NULL)
+	if (argc < 1)
+		progname = "demandoc";
+	else if ((progname = strrchr(argv[0], '/')) == NULL)
 		progname = argv[0];
 	else
 		++progname;
@@ -76,18 +78,24 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	mp = mparse_alloc(MPARSE_AUTO, MANDOCLEVEL_FATAL, NULL, NULL, NULL);
+	mchars = mchars_alloc();
+	mp = mparse_alloc(MPARSE_SO, MANDOCLEVEL_BADARG, NULL, mchars, NULL);
 	assert(mp);
 
-	if (0 == argc)
+	if (argc < 1)
 		pmandoc(mp, STDIN_FILENO, "<stdin>", list);
 
 	for (i = 0; i < argc; i++) {
 		mparse_reset(mp);
-		pmandoc(mp, -1, argv[i], list);
+		if (mparse_open(mp, &fd, argv[i]) != MANDOCLEVEL_OK) {
+			perror(argv[i]);
+			continue;
+		}
+		pmandoc(mp, fd, argv[i], list);
 	}
 
 	mparse_free(mp);
+	mchars_free(mchars);
 	return((int)MANDOCLEVEL_OK);
 }
 
@@ -105,16 +113,12 @@ pmandoc(struct mparse *mp, int fd, const char *fn, int list)
 	struct man	*man;
 	int		 line, col;
 
-	if (mparse_readfd(mp, fd, fn) >= MANDOCLEVEL_FATAL) {
-		fprintf(stderr, "%s: Parse failure\n", fn);
-		return;
-	}
-
-	mparse_result(mp, &mdoc, &man);
+	mparse_readfd(mp, fd, fn);
+	mparse_result(mp, &mdoc, &man, NULL);
 	line = 1;
 	col = 0;
 
-	if (mdoc) 
+	if (mdoc)
 		pmdoc(mdoc_node(mdoc), &line, &col, list);
 	else if (man)
 		pman(man_node(man), &line, &col, list);
@@ -164,7 +168,7 @@ again:
 		end = p - 1;
 
 		while (end > start)
-			if ('.' == *end || ',' == *end || 
+			if ('.' == *end || ',' == *end ||
 					'\'' == *end || '"' == *end ||
 					')' == *end || '!' == *end ||
 					'?' == *end || ':' == *end ||
@@ -196,7 +200,7 @@ again:
 	/*
 	 * Print the input word, skipping any special characters.
 	 */
-	while ('\0' != *p) 
+	while ('\0' != *p)
 		if ('\\' == *p) {
 			p++;
 			esc = mandoc_escape(&p, NULL, NULL);
@@ -217,7 +221,7 @@ pline(int line, int *linep, int *col, int list)
 
 	/*
 	 * Print out as many lines as needed to reach parity with the
-	 * original input. 
+	 * original input.
 	 */
 
 	while (*linep < line) {
@@ -237,7 +241,7 @@ pmdoc(const struct mdoc_node *p, int *line, int *col, int list)
 			pline(p->line, line, col, list);
 		if (MDOC_TEXT == p->type)
 			pstring(p->string, p->pos, col, list);
-		if (p->child) 
+		if (p->child)
 			pmdoc(p->child, line, col, list);
 	}
 }
@@ -251,7 +255,7 @@ pman(const struct man_node *p, int *line, int *col, int list)
 			pline(p->line, line, col, list);
 		if (MAN_TEXT == p->type)
 			pstring(p->string, p->pos, col, list);
-		if (p->child) 
+		if (p->child)
 			pman(p->child, line, col, list);
 	}
 }

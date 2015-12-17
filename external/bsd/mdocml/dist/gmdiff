@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2013 Ingo Schwarze <schwarze@openbsd.org>
+# Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -19,17 +19,32 @@ if [ `id -u` -eq 0 ]; then
 fi
 
 if [ $# -eq 0 ]; then
-  echo "usage: $0 manual_source_file ..."
+  echo "usage: $0 -h manual_source_file ..."
   exit 1
 fi
+
+if [ "X$1" = "X-h" ]; then
+  shift
+  export PATH="/usr/local/heirloom-doctools/bin:$PATH"
+  EQN="neqn"
+  ROFF="nroff"
+  MOPT="-Omdoc $MOPT"
+else
+  EQN="eqn -Tascii"
+  ROFF="groff -ww -Tascii -P -c"
+fi
+MOPT="-Werror $MOPT"
 
 while [ -n "$1" ]; do
   file=$1
   shift
   echo " ========== $file ========== "
-  tbl $file | groff -mandoc -Tascii -P -c 2>&1 > /tmp/groff.out
-  mandoc -Ios='OpenBSD ports' -Werror $file 2>&1 > /tmp/mandoc.out
-  diff -au /tmp/groff.out /tmp/mandoc.out 2>&1
+  tbl $file | $EQN | $ROFF -mandoc 2> /tmp/roff.err > /tmp/roff.out
+  mandoc -Ios='OpenBSD ports' $MOPT $file 2> /tmp/mandoc.err > /tmp/mandoc.out
+  for i in roff mandoc; do
+    [[ -s /tmp/$i.err ]] && echo "$i errors:" && cat /tmp/$i.err
+  done
+  diff -au /tmp/roff.out /tmp/mandoc.out 2>&1
 done
 
 exit 0
