@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.12 2015/12/15 23:15:53 marty Exp $
+#	$NetBSD: files.exynos,v 1.13 2015/12/17 22:39:37 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -68,7 +68,7 @@ file	arch/arm/samsung/exynos_wdt.c	exynos_wdt | exyo_io needs-flag
 
 # UARTs
 device	sscom { } : bus_space_generic
-attach	sscom at exyo with exynos_sscom
+attach	sscom at fdt with exynos_sscom
 file	arch/arm/samsung/sscom.c	sscom needs-flag
 file	arch/arm/samsung/exynos_sscom.c	exynos_sscom 
 defflag opt_sscom.h     SSCOM0CONSOLE SSCOM1CONSOLE
