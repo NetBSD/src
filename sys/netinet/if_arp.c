@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.197 2015/12/16 05:44:59 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.198 2015/12/17 02:38:33 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.197 2015/12/16 05:44:59 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.198 2015/12/17 02:38:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -174,6 +174,11 @@ static void arp_dad_timer(struct ifaddr *);
 static void arp_dad_start(struct ifaddr *);
 static void arp_dad_stop(struct ifaddr *);
 static void arp_dad_duplicated(struct ifaddr *);
+
+static void arp_init_llentry(struct ifnet *, struct llentry *);
+#if NTOKEN > 0
+static void arp_free_llentry_tokenring(struct llentry *);
+#endif
 
 struct	ifqueue arpintrq = {
 	.ifq_head = NULL,
@@ -424,6 +429,30 @@ arp_setgate(struct rtentry *rt, struct sockaddr *gate,
 	return gate;
 }
 
+static void
+arp_init_llentry(struct ifnet *ifp, struct llentry *lle)
+{
+
+	switch (ifp->if_type) {
+#if NTOKEN > 0
+	case IFT_ISO88025:
+		lle->la_opaque = kmem_intr_alloc(sizeof(struct token_rif),
+		    KM_NOSLEEP);
+		lle->lle_ll_free = arp_free_llentry_tokenring;
+		break;
+#endif
+	}
+}
+
+#if NTOKEN > 0
+static void
+arp_free_llentry_tokenring(struct llentry *lle)
+{
+
+	kmem_intr_free(lle->la_opaque, sizeof(struct token_rif));
+}
+#endif
+
 /*
  * Parallel to llc_rtrequest.
  */
@@ -646,20 +675,11 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		}
 		rt->rt_llinfo = la;
 		LLE_ADDREF(la);
-		switch (ifp->if_type) {
-#if NTOKEN > 0
-		case IFT_ISO88025:
-			la->la_opaque = kmem_alloc(sizeof(struct token_rif),
-			    KM_SLEEP);
-			break;
-#endif /* NTOKEN > 0 */
-		default:
-			break;
-		}
 		la->la_rt = rt;
 		rt->rt_refcnt++;
 		rt->rt_flags |= RTF_LLINFO;
 		arp_inuse++, arp_allocated++;
+		arp_init_llentry(ifp, la);
 
 		LLE_WUNLOCK(la);
 		la = NULL;
@@ -681,19 +701,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		flags |= LLE_EXCLUSIVE;
 		IF_AFDATA_WLOCK(ifp);
 		LLE_WLOCK(la);
-
-		if (la->la_opaque != NULL) {
-			switch (ifp->if_type) {
-#if NTOKEN > 0
-			case IFT_ISO88025:
-				kmem_free(la->la_opaque,
-				    sizeof(struct token_rif));
-				break;
-#endif /* NTOKEN > 0 */
-			default:
-				break;
-			}
-		}
 
 		if (la->la_rt != NULL) {
 			/*
