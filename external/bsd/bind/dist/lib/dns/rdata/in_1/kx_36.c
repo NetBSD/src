@@ -1,7 +1,7 @@
-/*	$NetBSD: kx_36.c,v 1.4 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: kx_36.c,v 1.5 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001, 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -34,8 +34,8 @@ fromtext_in_kx(ARGS_FROMTEXT) {
 	dns_name_t name;
 	isc_buffer_t buffer;
 
-	REQUIRE(type == 36);
-	REQUIRE(rdclass == 1);
+	REQUIRE(type == dns_rdatatype_kx);
+	REQUIRE(rdclass == dns_rdataclass_in);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -65,8 +65,8 @@ totext_in_kx(ARGS_TOTEXT) {
 	char buf[sizeof("64000")];
 	unsigned short num;
 
-	REQUIRE(rdata->type == 36);
-	REQUIRE(rdata->rdclass == 1);
+	REQUIRE(rdata->type == dns_rdatatype_kx);
+	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&name, NULL);
@@ -90,8 +90,8 @@ fromwire_in_kx(ARGS_FROMWIRE) {
 	dns_name_t name;
 	isc_region_t sregion;
 
-	REQUIRE(type == 36);
-	REQUIRE(rdclass == 1);
+	REQUIRE(type == dns_rdatatype_kx);
+	REQUIRE(rdclass == dns_rdataclass_in);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -114,8 +114,8 @@ towire_in_kx(ARGS_TOWIRE) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 36);
-	REQUIRE(rdata->rdclass == 1);
+	REQUIRE(rdata->type == dns_rdatatype_kx);
+	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
@@ -139,8 +139,8 @@ compare_in_kx(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 36);
-	REQUIRE(rdata1->rdclass == 1);
+	REQUIRE(rdata1->type == dns_rdatatype_kx);
+	REQUIRE(rdata1->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -168,8 +168,8 @@ fromstruct_in_kx(ARGS_FROMSTRUCT) {
 	dns_rdata_in_kx_t *kx = source;
 	isc_region_t region;
 
-	REQUIRE(type == 36);
-	REQUIRE(rdclass == 1);
+	REQUIRE(type == dns_rdatatype_kx);
+	REQUIRE(rdclass == dns_rdataclass_in);
 	REQUIRE(source != NULL);
 	REQUIRE(kx->common.rdtype == type);
 	REQUIRE(kx->common.rdclass == rdclass);
@@ -188,8 +188,8 @@ tostruct_in_kx(ARGS_TOSTRUCT) {
 	dns_rdata_in_kx_t *kx = target;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 36);
-	REQUIRE(rdata->rdclass == 1);
+	REQUIRE(rdata->type == dns_rdatatype_kx);
+	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -215,8 +215,8 @@ freestruct_in_kx(ARGS_FREESTRUCT) {
 	dns_rdata_in_kx_t *kx = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(kx->common.rdclass == 1);
-	REQUIRE(kx->common.rdtype == 36);
+	REQUIRE(kx->common.rdclass == dns_rdataclass_in);
+	REQUIRE(kx->common.rdtype == dns_rdatatype_kx);
 
 	if (kx->mctx == NULL)
 		return;
@@ -231,8 +231,8 @@ additionaldata_in_kx(ARGS_ADDLDATA) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 36);
-	REQUIRE(rdata->rdclass == 1);
+	REQUIRE(rdata->type == dns_rdatatype_kx);
+	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	dns_name_init(&name, offsets);
 	dns_rdata_toregion(rdata, &region);
@@ -247,8 +247,8 @@ digest_in_kx(ARGS_DIGEST) {
 	isc_region_t r1, r2;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 36);
-	REQUIRE(rdata->rdclass == 1);
+	REQUIRE(rdata->type == dns_rdatatype_kx);
+	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	dns_rdata_toregion(rdata, &r1);
 	r2 = r1;
@@ -263,8 +263,8 @@ digest_in_kx(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_in_kx(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 36);
-	REQUIRE(rdclass == 1);
+	REQUIRE(type == dns_rdatatype_kx);
+	REQUIRE(rdclass == dns_rdataclass_in);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -277,8 +277,8 @@ checkowner_in_kx(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_in_kx(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 36);
-	REQUIRE(rdata->rdclass == 1);
+	REQUIRE(rdata->type == dns_rdatatype_kx);
+	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 
 	UNUSED(rdata);
 	UNUSED(owner);

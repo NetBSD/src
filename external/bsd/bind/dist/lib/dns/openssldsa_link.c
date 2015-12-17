@@ -1,7 +1,7 @@
-/*	$NetBSD: openssldsa_link.c,v 1.10 2015/09/03 07:33:34 christos Exp $	*/
+/*	$NetBSD: openssldsa_link.c,v 1.11 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 1999-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -347,7 +347,7 @@ progress_cb(int p, int n, BN_GENCB *cb)
 
 	UNUSED(n);
 
-	u.dptr = cb->arg;
+	u.dptr = BN_GENCB_get_arg(cb);
 	if (u.fptr != NULL)
 		u.fptr(p);
 	return (1);
@@ -360,7 +360,10 @@ openssldsa_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	unsigned char rand_array[ISC_SHA1_DIGESTLENGTH];
 	isc_result_t result;
 #if OPENSSL_VERSION_NUMBER > 0x00908000L
-	BN_GENCB cb;
+	BN_GENCB *cb;
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+	BN_GENCB _cb;
+#endif
 	union {
 		void *dptr;
 		void (*fptr)(int);
@@ -381,22 +384,30 @@ openssldsa_generate(dst_key_t *key, int unused, void (*callback)(int)) {
 	dsa = DSA_new();
 	if (dsa == NULL)
 		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
-
+	cb = BN_GENCB_new();
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+	if (cb == NULL) {
+		DSA_free(dsa);
+		return (dst__openssl_toresult(DST_R_OPENSSLFAILURE));
+	}
+#endif
 	if (callback == NULL) {
-		BN_GENCB_set_old(&cb, NULL, NULL);
+		BN_GENCB_set_old(cb, NULL, NULL);
 	} else {
 		u.fptr = callback;
-		BN_GENCB_set(&cb, &progress_cb, u.dptr);
+		BN_GENCB_set(cb, &progress_cb, u.dptr);
 	}
 
 	if (!DSA_generate_parameters_ex(dsa, key->key_size, rand_array,
 					ISC_SHA1_DIGESTLENGTH,  NULL, NULL,
-					&cb))
+					cb))
 	{
 		DSA_free(dsa);
+		BN_GENCB_free(cb);
 		return (dst__openssl_toresult2("DSA_generate_parameters_ex",
 					       DST_R_OPENSSLFAILURE));
 	}
+	BN_GENCB_free(cb);
 #else
 	dsa = DSA_generate_parameters(key->key_size, rand_array,
 				      ISC_SHA1_DIGESTLENGTH, NULL, NULL,

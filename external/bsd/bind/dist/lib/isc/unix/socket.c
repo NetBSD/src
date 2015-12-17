@@ -1,7 +1,7 @@
-/*	$NetBSD: socket.c,v 1.17 2015/07/08 17:29:00 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.18 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -2268,6 +2268,7 @@ allocate_socket(isc__socketmgr_t *manager, isc_sockettype_t type,
 	sock->dscp = 0;		/* TOS/TCLASS is zero until set. */
 	sock->dupped = 0;
 	sock->statsindex = NULL;
+	sock->active = 0;
 
 	ISC_LINK_INIT(sock, link);
 
@@ -2943,7 +2944,6 @@ socket_create(isc_socketmgr_t *manager0, int pf, isc_sockettype_t type,
 		INSIST(0);
 	}
 
-	sock->active = 0;
 	sock->pf = pf;
 
 	result = opensocket(manager, sock, (isc__socket_t *)dup_socket);
@@ -6368,33 +6368,33 @@ isc__socketmgr_dispatch(isc_socketmgr_t *manager0, isc_socketwait_t *swait) {
 
 void
 isc__socket_setname(isc_socket_t *socket0, const char *name, void *tag) {
-	isc__socket_t *socket = (isc__socket_t *)socket0;
+	isc__socket_t *sock = (isc__socket_t *)socket0;
 
 	/*
-	 * Name 'socket'.
+	 * Name 'sock'.
 	 */
 
-	REQUIRE(VALID_SOCKET(socket));
+	REQUIRE(VALID_SOCKET(sock));
 
-	LOCK(&socket->lock);
-	memset(socket->name, 0, sizeof(socket->name));
-	strncpy(socket->name, name, sizeof(socket->name) - 1);
-	socket->tag = tag;
-	UNLOCK(&socket->lock);
+	LOCK(&sock->lock);
+	memset(sock->name, 0, sizeof(sock->name));
+	strncpy(sock->name, name, sizeof(sock->name) - 1);
+	sock->tag = tag;
+	UNLOCK(&sock->lock);
 }
 
 const char *
 isc__socket_getname(isc_socket_t *socket0) {
-	isc__socket_t *socket = (isc__socket_t *)socket0;
+	isc__socket_t *sock = (isc__socket_t *)socket0;
 
-	return (socket->name);
+	return (sock->name);
 }
 
 void *
 isc__socket_gettag(isc_socket_t *socket0) {
-	isc__socket_t *socket = (isc__socket_t *)socket0;
+	isc__socket_t *sock = (isc__socket_t *)socket0;
 
-	return (socket->tag);
+	return (sock->tag);
 }
 
 isc_result_t
@@ -6404,9 +6404,9 @@ isc__socket_register(void) {
 
 int
 isc__socket_getfd(isc_socket_t *socket0) {
-	isc__socket_t *socket = (isc__socket_t *)socket0;
+	isc__socket_t *sock = (isc__socket_t *)socket0;
 
-	return ((short) socket->fd);
+	return ((short) sock->fd);
 }
 
 #if defined(HAVE_LIBXML2) || defined(HAVE_JSON)

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18 2015/07/08 17:28:55 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.19 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -392,6 +392,7 @@ static struct flag_def {
 	const char *name;
 	unsigned int value;
 } mem_debug_flags[] = {
+	{ "none", 0},
 	{ "trace",  ISC_MEM_DEBUGTRACE },
 	{ "record", ISC_MEM_DEBUGRECORD },
 	{ "usage", ISC_MEM_DEBUGUSAGE },
@@ -402,6 +403,8 @@ static struct flag_def {
 
 static void
 set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
+	isc_boolean_t clear = ISC_FALSE;
+
 	for (;;) {
 		const struct flag_def *def;
 		const char *end = strchr(arg, ',');
@@ -412,16 +415,21 @@ set_flags(const char *arg, struct flag_def *defs, unsigned int *ret) {
 		for (def = defs; def->name != NULL; def++) {
 			if (arglen == (int)strlen(def->name) &&
 			    memcmp(arg, def->name, arglen) == 0) {
+				if (def->value == 0)
+					clear = ISC_TRUE;
 				*ret |= def->value;
 				goto found;
 			}
 		}
 		ns_main_earlyfatal("unrecognized flag '%.*s'", arglen, arg);
 	 found:
-		if (*end == '\0')
+		if (clear || (*end == '\0'))
 			break;
 		arg = end + 1;
 	}
+
+	if (clear)
+		*ret = 0;
 }
 
 static void
@@ -432,10 +440,12 @@ parse_command_line(int argc, char *argv[]) {
 
 	save_command_line(argc, argv);
 
-	/* PLEASE keep options synchronized when main is hooked! */
-#define CMDLINE_FLAGS "46c:C:d:D:E:fFgi:lm:n:N:p:P:sS:t:T:U:u:vVx:"
+	/*
+	 * NS_MAIN_ARGS is defined in main.h, so that it can be used
+	 * both by named and by ntservice hooks.
+	 */
 	isc_commandline_errprint = ISC_FALSE;
-	while ((ch = isc_commandline_parse(argc, argv, CMDLINE_FLAGS)) != -1) {
+	while ((ch = isc_commandline_parse(argc, argv, NS_MAIN_ARGS)) != -1) {
 		switch (ch) {
 		case '4':
 			if (ns_g_disable4)
@@ -489,6 +499,10 @@ parse_command_line(int argc, char *argv[]) {
 			break;
 		case 'l':
 			ns_g_lwresdonly = ISC_TRUE;
+			break;
+		case 'M':
+			if (strcmp(isc_commandline_argument, "external") == 0)
+				isc_mem_defaultflags = 0;
 			break;
 		case 'm':
 			set_flags(isc_commandline_argument, mem_debug_flags,
@@ -613,16 +627,16 @@ parse_command_line(int argc, char *argv[]) {
 			ns_g_username = isc_commandline_argument;
 			break;
 		case 'v':
-			printf("%s %s", ns_g_product, ns_g_version);
-			if (*ns_g_description != 0)
-				printf(" %s", ns_g_description);
-			printf("\n");
+			printf("%s %s%s%s <id:%s>\n",
+			       ns_g_product, ns_g_version,
+			       (*ns_g_description != '\0') ? " " : "",
+			       ns_g_description, ns_g_srcid);
 			exit(0);
 		case 'V':
-			printf("%s %s", ns_g_product, ns_g_version);
-			if (*ns_g_description != 0)
-				printf(" %s", ns_g_description);
-			printf(" <id:%s> built by %s with %s\n", ns_g_srcid,
+			printf("%s %s%s%s <id:%s>\n", ns_g_product, ns_g_version,
+			       (*ns_g_description != '\0') ? " " : "",
+			       ns_g_description, ns_g_srcid);
+			printf("built by %s with %s\n",
 			       ns_g_builder, ns_g_configargs);
 #ifdef __clang__
 			printf("compiled by CLANG %s\n", __VERSION__);
@@ -644,18 +658,20 @@ parse_command_line(int argc, char *argv[]) {
 #ifdef OPENSSL
 			printf("compiled with OpenSSL version: %s\n",
 			       OPENSSL_VERSION_TEXT);
-#ifndef WIN32
 			printf("linked to OpenSSL version: %s\n",
 			       SSLeay_version(SSLEAY_VERSION));
-#endif
 #endif
 #ifdef HAVE_LIBXML2
 			printf("compiled with libxml2 version: %s\n",
 			       LIBXML_DOTTED_VERSION);
-#ifndef WIN32
 			printf("linked to libxml2 version: %s\n",
 			       xmlParserVersion);
 #endif
+#ifdef HAVE_JSON
+			printf("compiled with libjson-c version: %s\n",
+			       JSON_C_VERSION);
+			printf("linked to libjson-c version: %s\n",
+			       json_c_version());
 #endif
 			exit(0);
 		case 'F':
@@ -665,7 +681,7 @@ parse_command_line(int argc, char *argv[]) {
 			usage();
 			if (isc_commandline_option == '?')
 				exit(0);
-			p = strchr(CMDLINE_FLAGS, isc_commandline_option);
+			p = strchr(NS_MAIN_ARGS, isc_commandline_option);
 			if (p == NULL || *++p != ':')
 				ns_main_earlyfatal("unknown option '-%c'",
 						   isc_commandline_option);
@@ -775,10 +791,6 @@ create_managers(void) {
 static void
 destroy_managers(void) {
 	ns_lwresd_shutdown();
-
-	isc_entropy_detach(&ns_g_entropy);
-	if (ns_g_fallbackentropy != NULL)
-		isc_entropy_detach(&ns_g_fallbackentropy);
 
 	/*
 	 * isc_taskmgr_destroy() will block until all tasks have exited,
@@ -978,8 +990,10 @@ setup(void) {
 				   isc_result_totext(result));
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
-		      ISC_LOG_NOTICE, "starting %s %s%s", ns_g_product,
-		      ns_g_version, saved_command_line);
+		      ISC_LOG_NOTICE, "starting %s %s%s%s <id:%s>%s",
+		      ns_g_product, ns_g_version,
+		      *ns_g_description ? " " : "", ns_g_description,
+		      ns_g_srcid, saved_command_line);
 
 	isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_MAIN,
 		      ISC_LOG_NOTICE, "built with %s", ns_g_configargs);
@@ -1101,6 +1115,10 @@ cleanup(void) {
 	destroy_managers();
 
 	ns_server_destroy(&ns_g_server);
+
+	isc_entropy_detach(&ns_g_entropy);
+	if (ns_g_fallbackentropy != NULL)
+		isc_entropy_detach(&ns_g_fallbackentropy);
 
 	ns_builtin_deinit();
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.c,v 1.9 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: rpz.c,v 1.10 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
  * Copyright (C) 2011-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -514,7 +514,7 @@ fix_qname_skip_recurse(dns_rpz_zones_t *rpzs) {
 		 * more significant bits are 0. (For instance,
 		 * 0x0700 => 0x00ff, 0x0007 => 0x0000)
 		 */
-		mask = ~(zbits_req | -zbits_req);
+		mask = ~(zbits_req | ((~zbits_req) + 1));
 
 		/*
 		 * As mentioned in (2) above, the zone corresponding to
@@ -603,13 +603,13 @@ adj_trigger_cnt(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	}
 
 	if (inc) {
-		if (++*cnt == 1) {
+		if (++*cnt == 1U) {
 			*have |= DNS_RPZ_ZBIT(rpz_num);
 			fix_qname_skip_recurse(rpzs);
 		}
 	} else {
-		REQUIRE(*cnt != 0);
-		if (--*cnt == 0) {
+		REQUIRE(*cnt != 0U);
+		if (--*cnt == 0U) {
 			*have &= ~DNS_RPZ_ZBIT(rpz_num);
 			fix_qname_skip_recurse(rpzs);
 		}
@@ -1344,12 +1344,9 @@ add_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	isc_result_t result;
 
 	/*
-	 * No need for a summary database of names with only 1 policy zone.
+	 * We need a summary database of names even with 1 policy zone,
+	 * because wildcard triggers are handled differently.
 	 */
-	if (rpzs->p.num_zones <= 1) {
-		adj_trigger_cnt(rpzs, rpz_num, rpz_type, NULL, 0, ISC_TRUE);
-		return (ISC_R_SUCCESS);
-	}
 
 	dns_fixedname_init(&trig_namef);
 	trig_name = dns_fixedname_name(&trig_namef);
@@ -1632,7 +1629,7 @@ fix_triggers(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num) {
 	memset(&rpzs->total_triggers, 0, sizeof(rpzs->total_triggers));
 
 #define SET_TRIG(n, zbit, type)						\
-	if (rpzs->triggers[n].type == 0) {				\
+	if (rpzs->triggers[n].type == 0U) {				\
 		rpzs->have.type &= ~zbit;				\
 	} else {							\
 		rpzs->total_triggers.type += rpzs->triggers[n].type;	\
@@ -2021,12 +2018,9 @@ del_name(dns_rpz_zones_t *rpzs, dns_rpz_num_t rpz_num,
 	isc_result_t result;
 
 	/*
-	 * No need for a summary database of names with only 1 policy zone.
+	 * We need a summary database of names even with 1 policy zone,
+	 * because wildcard triggers are handled differently.
 	 */
-	if (rpzs->p.num_zones <= 1) {
-		adj_trigger_cnt(rpzs, rpz_num, rpz_type, NULL, 0, ISC_FALSE);
-		return;
-	}
 
 	dns_fixedname_init(&trig_namef);
 	trig_name = dns_fixedname_name(&trig_namef);

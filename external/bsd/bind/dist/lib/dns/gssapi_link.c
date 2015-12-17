@@ -1,7 +1,7 @@
-/*	$NetBSD: gssapi_link.c,v 1.8 2014/12/10 04:37:58 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.9 2015/12/17 04:00:43 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -28,6 +28,7 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 

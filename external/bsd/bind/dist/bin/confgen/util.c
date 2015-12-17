@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.4 2014/12/10 04:37:51 christos Exp $	*/
+/*	$NetBSD: util.c,v 1.5 2015/12/17 04:00:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include <isc/boolean.h>
+#include <isc/print.h>
 
 #include "util.h"
 

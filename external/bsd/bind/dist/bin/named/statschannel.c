@@ -1,7 +1,7 @@
-/*	$NetBSD: statschannel.c,v 1.10 2014/12/10 04:37:52 christos Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.11 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2008-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2008-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,14 +16,13 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: statschannel.c,v 1.28.224.1 2011/12/22 07:48:27 marka Exp  */
-
 /*! \file */
 
 #include <config.h>
 
 #include <isc/buffer.h>
 #include <isc/httpd.h>
+#include <isc/json.h>
 #include <isc/mem.h>
 #include <isc/once.h>
 #include <isc/print.h>
@@ -45,10 +44,6 @@
 #include <named/log.h>
 #include <named/server.h>
 #include <named/statschannel.h>
-
-#ifdef HAVE_JSON_H
-#include <json/json.h>
-#endif
 
 #include "bind9.xsl.h"
 
@@ -229,9 +224,8 @@ init_desc(void) {
 	SET_NSSTATDESC(udp, "UDP queries received", "QryUDP");
 	SET_NSSTATDESC(tcp, "TCP queries received", "QryTCP");
 	SET_NSSTATDESC(nsidopt, "NSID option received", "NSIDOpt");
-	SET_NSSTATDESC(expireopt, "Expire option recieved", "ExpireOpt");
-	SET_NSSTATDESC(otheropt, "Other EDNS option recieved", "OtherOpt");
-#ifdef ISC_PLATFORM_USESIT
+	SET_NSSTATDESC(expireopt, "Expire option received", "ExpireOpt");
+	SET_NSSTATDESC(otheropt, "Other EDNS option received", "OtherOpt");
 	SET_NSSTATDESC(sitopt, "source identity token option received",
 		       "SitOpt");
 	SET_NSSTATDESC(sitnew, "new source identity token requested",
@@ -243,7 +237,6 @@ init_desc(void) {
 	SET_NSSTATDESC(sitnomatch, "source identity token - no match",
 		       "SitNoMatch");
 	SET_NSSTATDESC(sitmatch, "source identity token - match", "SitMatch");
-#endif
 	INSIST(i == dns_nsstatscounter_max);
 
 	/* Initialize resolver statistics */
@@ -319,15 +312,16 @@ init_desc(void) {
 	SET_RESSTATDESC(nfetch, "active fetches", "NumFetch");
 	SET_RESSTATDESC(buckets, "bucket size", "BucketSize");
 	SET_RESSTATDESC(refused, "REFUSED received", "REFUSED");
-#ifdef ISC_PLATFORM_USESIT
 	SET_RESSTATDESC(sitcc, "SIT sent client cookie only",
 			"SitClientOut");
 	SET_RESSTATDESC(sitout, "SIT sent with client and server cookie",
 			"SitOut");
 	SET_RESSTATDESC(sitin, "SIT replies received", "SitIn");
 	SET_RESSTATDESC(sitok, "SIT client cookie ok", "SitClientOk");
-#endif
 	SET_RESSTATDESC(badvers, "bad EDNS version", "BadEDNSVersion");
+	SET_RESSTATDESC(zonequota, "spilled due to zone quota", "ZoneQuota");
+	SET_RESSTATDESC(serverquota, "spilled due to server quota",
+			"ServerQuota");
 
 	INSIST(i == dns_resstatscounter_max);
 
@@ -577,7 +571,7 @@ dump_counters(isc_stats_t *stats, isc_statsformat_t type, void *arg,
 	      const char *category, const char **desc, int ncounters,
 	      int *indices, isc_uint64_t *values, int options)
 {
-	int i, index;
+	int i, idx;
 	isc_uint64_t value;
 	stats_dumparg_t dumparg;
 	FILE *fp;
@@ -614,8 +608,8 @@ dump_counters(isc_stats_t *stats, isc_statsformat_t type, void *arg,
 #endif
 
 	for (i = 0; i < ncounters; i++) {
-		index = indices[i];
-		value = values[index];
+		idx = indices[i];
+		value = values[idx];
 
 		if (value == 0 && (options & ISC_STATSDUMP_VERBOSE) == 0)
 			continue;
@@ -624,7 +618,7 @@ dump_counters(isc_stats_t *stats, isc_statsformat_t type, void *arg,
 		case isc_statsformat_file:
 			fp = arg;
 			fprintf(fp, "%20" ISC_PRINT_QUADFORMAT "u %s\n",
-				value, desc[index]);
+				value, desc[idx]);
 			break;
 		case isc_statsformat_xml:
 #ifdef HAVE_LIBXML2
@@ -642,7 +636,7 @@ dump_counters(isc_stats_t *stats, isc_statsformat_t type, void *arg,
 							       "name"));
 				TRY0(xmlTextWriterWriteString(writer,
 							      ISC_XMLCHAR
-							      desc[index]));
+							      desc[idx]));
 				TRY0(xmlTextWriterEndElement(writer));
 				/* </name> */
 
@@ -666,7 +660,7 @@ dump_counters(isc_stats_t *stats, isc_statsformat_t type, void *arg,
 								 ISC_XMLCHAR
 								 "name",
 								 ISC_XMLCHAR
-								 desc[index]));
+								 desc[idx]));
 				TRY0(xmlTextWriterWriteFormatString(writer,
 					"%" ISC_PRINT_QUADFORMAT "u", value));
 				TRY0(xmlTextWriterEndElement(writer));
@@ -680,7 +674,7 @@ dump_counters(isc_stats_t *stats, isc_statsformat_t type, void *arg,
 			counter = json_object_new_int64(value);
 			if (counter == NULL)
 				return (ISC_R_NOMEMORY);
-			json_object_object_add(cat, desc[index], counter);
+			json_object_object_add(cat, desc[idx], counter);
 #endif
 			break;
 		}
@@ -914,7 +908,6 @@ static isc_result_t
 zone_xmlrender(dns_zone_t *zone, void *arg) {
 	isc_result_t result;
 	char buf[1024 + 32];	/* sufficiently large for zone name and class */
-	char *zone_name_only = NULL;
 	dns_rdataclass_t rdclass;
 	isc_uint32_t serial;
 	xmlTextWriterPtr writer = arg;
@@ -933,13 +926,11 @@ zone_xmlrender(dns_zone_t *zone, void *arg) {
 	dumparg.arg = writer;
 
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "zone"));
-	dns_zone_name(zone, buf, sizeof(buf));
-	zone_name_only = strtok(buf, "/");
-	if(zone_name_only == NULL)
-		zone_name_only = buf;
 
+	dns_zone_nameonly(zone, buf, sizeof(buf));
 	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "name",
-					 ISC_XMLCHAR zone_name_only));
+					 ISC_XMLCHAR buf));
+
 	rdclass = dns_zone_getclass(zone);
 	dns_rdataclass_format(rdclass, buf, sizeof(buf));
 	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "rdataclass",
@@ -1027,7 +1018,7 @@ generatexml(ns_server_t *server, isc_uint32_t flags,
 			ISC_XMLCHAR "type=\"text/xsl\" href=\"/bind9.xsl\""));
 	TRY0(xmlTextWriterStartElement(writer, ISC_XMLCHAR "statistics"));
 	TRY0(xmlTextWriterWriteAttribute(writer, ISC_XMLCHAR "version",
-					 ISC_XMLCHAR "3.5"));
+					 ISC_XMLCHAR "3.6"));
 
 	/* Set common fields for statistics dump */
 	dumparg.type = isc_statsformat_xml;
@@ -1438,7 +1429,9 @@ wrap_jsonfree(isc_buffer_t *buffer, void *arg) {
 }
 
 static json_object *
-addzone(char *name, char *class, isc_uint32_t serial) {
+addzone(char *name, char *class, isc_uint32_t serial,
+	isc_boolean_t add_serial)
+{
 	json_object *node = json_object_new_object();
 
 	if (node == NULL)
@@ -1446,7 +1439,9 @@ addzone(char *name, char *class, isc_uint32_t serial) {
 
 	json_object_object_add(node, "name", json_object_new_string(name));
 	json_object_object_add(node, "class", json_object_new_string(class));
-	json_object_object_add(node, "serial", json_object_new_int64(serial));
+	if (add_serial)
+		json_object_object_add(node, "serial",
+				       json_object_new_int64(serial));
 	return (node);
 }
 
@@ -1470,19 +1465,18 @@ zone_jsonrender(dns_zone_t *zone, void *arg) {
 	if (statlevel == dns_zonestat_none)
 		return (ISC_R_SUCCESS);
 
-	dns_zone_name(zone, buf, sizeof(buf));
-	zone_name_only = strtok(buf, "/");
-	if(zone_name_only == NULL)
-		zone_name_only = buf;
+	dns_zone_nameonly(zone, buf, sizeof(buf));
+	zone_name_only = buf;
 
 	rdclass = dns_zone_getclass(zone);
 	dns_rdataclass_format(rdclass, class, sizeof(class));
 	class_only = class;
 
 	if (dns_zone_getserial2(zone, &serial) != ISC_R_SUCCESS)
-		serial = -1;
+		zoneobj = addzone(zone_name_only, class_only, 0, ISC_FALSE);
+	else
+		zoneobj = addzone(zone_name_only, class_only, serial, ISC_TRUE);
 
-	zoneobj = addzone(zone_name_only, class_only, serial);
 	if (zoneobj == NULL)
 		return (ISC_R_NOMEMORY);
 
@@ -1570,7 +1564,7 @@ generatejson(ns_server_t *server, size_t *msglen,
 	/*
 	 * These statistics are included no matter which URL we use.
 	 */
-	obj = json_object_new_string("1.0");
+	obj = json_object_new_string("1.2");
 	CHECKMEM(obj);
 	json_object_object_add(bindstats, "json-stats-version", obj);
 
@@ -2366,7 +2360,20 @@ ns_statschannels_configure(ns_server_t *server, const cfg_obj_t *config,
 			      NS_LOGMODULE_SERVER, ISC_LOG_WARNING,
 			      "statistics-channels specified but not effective "
 			      "due to missing XML and/or JSON library");
-#endif
+#else /* EXTENDED_STATS */
+#ifndef HAVE_LIBXML2
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER, ISC_LOG_WARNING,
+			      "statistics-channels: XML library missing, "
+			      "only JSON stats will be available");
+#endif /* !HAVE_LIBXML2 */
+#ifndef HAVE_JSON
+		isc_log_write(ns_g_lctx, NS_LOGCATEGORY_GENERAL,
+			      NS_LOGMODULE_SERVER, ISC_LOG_WARNING,
+			      "statistics-channels: JSON library missing, "
+			      "only XML stats will be available");
+#endif /* !HAVE_JSON */
+#endif /* EXTENDED_STATS */
 
 		for (element = cfg_list_first(statschannellist);
 		     element != NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.8 2015/07/08 17:29:00 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.9 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2008, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -521,8 +521,6 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 		return (ISC_FALSE);
 	}
 
-	memset(&control, 0, sizeof(control));
-
 	iovec.iov_base = buf;
 	iovec.iov_len = sizeof(buf);
 
@@ -532,24 +530,30 @@ cmsgsend(int s, int level, int type, struct addrinfo *res) {
 	msg.msg_iov = &iovec;
 	msg.msg_iovlen = 1;
 	msg.msg_control = (void*)&control;
-	msg.msg_controllen = cmsg_space(sizeof(int));
+	msg.msg_controllen = 0;
 	msg.msg_flags = 0;
 
 	cmsgp = msg.msg_control;
-	cmsgp->cmsg_level = level;
-	cmsgp->cmsg_type = type;
 
-	switch (cmsgp->cmsg_type) {
+	switch (type) {
 #ifdef IP_TOS
 	case IP_TOS:
+		memset(cmsgp, 0, cmsg_space(sizeof(char)));
+		cmsgp->cmsg_level = level;
+		cmsgp->cmsg_type = type;
 		cmsgp->cmsg_len = cmsg_len(sizeof(char));
 		*(unsigned char*)CMSG_DATA(cmsgp) = dscp;
+		msg.msg_controllen += cmsg_space(sizeof(char));
 		break;
 #endif
 #ifdef IPV6_TCLASS
 	case IPV6_TCLASS:
+		memset(cmsgp, 0, cmsg_space(sizeof(dscp)));
+		cmsgp->cmsg_level = level;
+		cmsgp->cmsg_type = type;
 		cmsgp->cmsg_len = cmsg_len(sizeof(dscp));
 		memmove(CMSG_DATA(cmsgp), &dscp, sizeof(dscp));
+		msg.msg_controllen += cmsg_space(sizeof(dscp));
 		break;
 #endif
 	default:
@@ -776,12 +780,12 @@ getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
 		sysctlname_lowport = SYSCTL_V6PORTRANGE_LOW;
 		sysctlname_hiport = SYSCTL_V6PORTRANGE_HIGH;
 	}
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_low);
 	if (sysctlbyname(sysctlname_lowport, &port_low, &portlen,
 			 NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
 	}
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_high);
 	if (sysctlbyname(sysctlname_hiport, &port_high, &portlen,
 			 NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
@@ -815,12 +819,12 @@ getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
 		miblen = sizeof(mib_lo6) / sizeof(mib_lo6[0]);
 	}
 
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_low);
 	if (sysctl(mib_lo, miblen, &port_low, &portlen, NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
 	}
 
-	portlen = sizeof(portlen);
+	portlen = sizeof(port_high);
 	if (sysctl(mib_hi, miblen, &port_high, &portlen, NULL, 0) < 0) {
 		return (ISC_R_FAILURE);
 	}
@@ -839,11 +843,34 @@ getudpportrange_sysctl(int af, in_port_t *low, in_port_t *high) {
 isc_result_t
 isc_net_getudpportrange(int af, in_port_t *low, in_port_t *high) {
 	int result = ISC_R_FAILURE;
+#if !defined(USE_SYSCTL_PORTRANGE) && defined(__linux)
+	FILE *fp;
+#endif
 
 	REQUIRE(low != NULL && high != NULL);
 
 #if defined(USE_SYSCTL_PORTRANGE)
 	result = getudpportrange_sysctl(af, low, high);
+#elif defined(__linux)
+
+	UNUSED(af);
+
+	/*
+	 * Linux local ports are address family agnostic.
+	 */
+	fp = fopen("/proc/sys/net/ipv4/ip_local_port_range", "r");
+	if (fp != NULL) {
+		int n;
+		unsigned int l, h;
+
+		n = fscanf(fp, "%u %u", &l, &h);
+		if (n == 2 && (l & ~0xffff) == 0 && (h & ~0xffff) == 0) {
+			*low = l;
+			*high = h;
+			result = ISC_R_SUCCESS;
+		}
+		fclose(fp);
+	}
 #else
 	UNUSED(af);
 #endif

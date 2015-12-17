@@ -1,4 +1,4 @@
-/*	$NetBSD: master_test.c,v 1.6 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.7 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
  * Copyright (C) 2011-2013, 2015  Internet Systems Consortium, Inc. ("ISC")
@@ -483,12 +483,10 @@ ATF_TC_BODY(totext, tc) {
 	ATF_REQUIRE_EQ(result, ISC_R_SUCCESS);
 
 	/* First, test with an empty rdataset */
+	dns_rdatalist_init(&rdatalist);
 	rdatalist.rdclass = dns_rdataclass_in;
 	rdatalist.type = dns_rdatatype_none;
 	rdatalist.covers = dns_rdatatype_none;
-	rdatalist.ttl = 0;
-	ISC_LIST_INIT(rdatalist.rdata);
-	ISC_LINK_INIT(&rdatalist, link);
 
 	dns_rdataset_init(&rdataset);
 	result = dns_rdatalist_tordataset(&rdatalist, &rdataset);

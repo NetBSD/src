@@ -1,7 +1,7 @@
-/*	$NetBSD: spf_99.c,v 1.5 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.6 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007, 2009, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2009, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@ fromtext_spf(ARGS_FROMTEXT) {
 	isc_token_t token;
 	int strings;
 
-	REQUIRE(type == 99);
+	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -61,7 +61,7 @@ totext_spf(ARGS_TOTEXT) {
 
 	UNUSED(tctx);
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	dns_rdata_toregion(rdata, &region);
 
@@ -78,7 +78,7 @@ static inline isc_result_t
 fromwire_spf(ARGS_FROMWIRE) {
 	isc_result_t result;
 
-	REQUIRE(type == 99);
+	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(type);
 	UNUSED(dctx);
@@ -97,7 +97,7 @@ static inline isc_result_t
 towire_spf(ARGS_TOWIRE) {
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(cctx);
 
@@ -117,7 +117,7 @@ compare_spf(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 99);
+	REQUIRE(rdata1->type == dns_rdatatype_spf);
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
@@ -130,7 +130,7 @@ fromstruct_spf(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 	isc_uint8_t length;
 
-	REQUIRE(type == 99);
+	REQUIRE(type == dns_rdatatype_spf);
 	REQUIRE(source != NULL);
 	REQUIRE(txt->common.rdtype == type);
 	REQUIRE(txt->common.rdclass == rdclass);
@@ -157,7 +157,7 @@ tostruct_spf(ARGS_TOSTRUCT) {
 	dns_rdata_spf_t *txt = target;
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 	REQUIRE(target != NULL);
 
 	txt->common.rdclass = rdata->rdclass;
@@ -180,7 +180,7 @@ freestruct_spf(ARGS_FREESTRUCT) {
 	dns_rdata_spf_t *txt = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == 99);
+	REQUIRE(txt->common.rdtype == dns_rdatatype_spf);
 
 	if (txt->mctx == NULL)
 		return;
@@ -192,7 +192,7 @@ freestruct_spf(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_spf(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -205,7 +205,7 @@ static inline isc_result_t
 digest_spf(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -215,7 +215,7 @@ digest_spf(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_spf(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 99);
+	REQUIRE(type == dns_rdatatype_spf);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -228,7 +228,7 @@ checkowner_spf(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_spf(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 99);
+	REQUIRE(rdata->type == dns_rdatatype_spf);
 
 	UNUSED(rdata);
 	UNUSED(owner);

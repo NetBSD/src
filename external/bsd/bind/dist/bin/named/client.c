@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.13 2015/07/08 17:28:55 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.14 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -17,8 +17,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: client.c,v 1.286 2012/01/31 23:47:30 tbox Exp  */
-
 #include <config.h>
 
 #include <isc/formatcheck.h>
@@ -28,6 +26,7 @@
 #include <isc/print.h>
 #include <isc/queue.h>
 #include <isc/random.h>
+#include <isc/safe.h>
 #include <isc/serial.h>
 #include <isc/stats.h>
 #include <isc/stdio.h>
@@ -346,12 +345,12 @@ exit_check(ns_client_t *client) {
 		 * We are trying to abort request processing.
 		 */
 		if (client->nsends > 0) {
-			isc_socket_t *socket;
+			isc_socket_t *sock;
 			if (TCP_CLIENT(client))
-				socket = client->tcpsocket;
+				sock = client->tcpsocket;
 			else
-				socket = client->udpsocket;
-			isc_socket_cancel(socket, client->task,
+				sock = client->udpsocket;
+			isc_socket_cancel(sock, client->task,
 					  ISC_SOCKCANCEL_SEND);
 		}
 
@@ -865,17 +864,17 @@ client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 	isc_result_t result;
 	isc_region_t r;
 	isc_sockaddr_t *address;
-	isc_socket_t *socket;
+	isc_socket_t *sock;
 	isc_netaddr_t netaddr;
 	int match;
 	unsigned int sockflags = ISC_SOCKFLAG_IMMEDIATE;
 	isc_dscp_t dispdscp = -1;
 
 	if (TCP_CLIENT(client)) {
-		socket = client->tcpsocket;
+		sock = client->tcpsocket;
 		address = NULL;
 	} else {
-		socket = client->udpsocket;
+		sock = client->udpsocket;
 		address = &client->peeraddr;
 
 		isc_netaddr_fromsockaddr(&netaddr, &client->peeraddr);
@@ -913,7 +912,7 @@ client_sendpkg(ns_client_t *client, isc_buffer_t *buffer) {
 
 	CTRACE("sendto");
 
-	result = isc_socket_sendto2(socket, &r, client->task,
+	result = isc_socket_sendto2(sock, &r, client->task,
 				    address, pktinfo,
 				    client->sendevent, sockflags);
 	if (result == ISC_R_SUCCESS || result == ISC_R_INPROGRESS) {
@@ -1297,10 +1296,15 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 		isc_boolean_t wouldlog;
 		char log_buf[DNS_RRL_LOG_BUF_LEN];
 		dns_rrl_result_t rrl_result;
+		int loglevel;
 
 		INSIST(rcode != dns_rcode_noerror &&
 		       rcode != dns_rcode_nxdomain);
-		wouldlog = isc_log_wouldlog(ns_g_lctx, DNS_RRL_LOG_DROP);
+		if (ns_g_server->log_queries)
+			loglevel = DNS_RRL_LOG_DROP;
+		else
+			loglevel = ISC_LOG_DEBUG(1);
+		wouldlog = isc_log_wouldlog(ns_g_lctx, loglevel);
 		rrl_result = dns_rrl(client->view, &client->peeraddr,
 				     TCP_CLIENT(client),
 				     dns_rdataclass_in, dns_rdatatype_none,
@@ -1317,7 +1321,7 @@ ns_client_error(ns_client_t *client, isc_result_t result) {
 				ns_client_log(client,
 					      NS_LOGCATEGORY_QUERY_EERRORS,
 					      NS_LOGMODULE_CLIENT,
-					      DNS_RRL_LOG_DROP,
+					      loglevel,
 					      "%s", log_buf);
 			}
 			/*
@@ -1452,7 +1456,7 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 		compute_sit(client, now, nonce, &buf);
 
 		INSIST(count < DNS_EDNSOPTIONS);
-		ednsopts[count].code = DNS_OPT_SIT;
+		ednsopts[count].code = DNS_OPT_COOKIE;
 		ednsopts[count].length = SIT_SIZE;
 		ednsopts[count].value = sit;
 		count++;
@@ -1717,7 +1721,7 @@ process_sit(ns_client_t *client, isc_buffer_t *buf, size_t optlen) {
 	isc_buffer_init(&db, dbuf, sizeof(dbuf));
 	compute_sit(client, when, nonce, &db);
 
-	if (memcmp(old, dbuf, SIT_SIZE) != 0) {
+	if (!isc_safe_memequal(old, dbuf, SIT_SIZE)) {
 		isc_stats_increment(ns_g_server->nsstats,
 				    dns_nsstatscounter_sitnomatch);
 		return;
@@ -1789,7 +1793,7 @@ process_opt(ns_client_t *client, dns_rdataset_t *opt) {
 				isc_buffer_forward(&optbuf, optlen);
 				break;
 #ifdef ISC_PLATFORM_USESIT
-			case DNS_OPT_SIT:
+			case DNS_OPT_COOKIE:
 				process_sit(client, &optbuf, optlen);
 				break;
 #endif
@@ -2013,6 +2017,14 @@ client_request(isc_task_t *task, isc_event_t *event) {
 		 * Parsing the request failed.  Send a response
 		 * (typically FORMERR or SERVFAIL).
 		 */
+		if (result == DNS_R_OPTERR)
+			(void)ns_client_addopt(client, client->message,
+					       &client->opt);
+
+		ns_client_log(client, NS_LOGCATEGORY_CLIENT,
+			      NS_LOGMODULE_CLIENT, ISC_LOG_WARNING,
+			      "message parsing failed: %s",
+			      isc_result_totext(result));
 		ns_client_error(client, result);
 		goto cleanup;
 	}

@@ -1,7 +1,7 @@
-/*	$NetBSD: txt_16.c,v 1.7 2015/07/08 17:28:59 christos Exp $	*/
+/*	$NetBSD: txt_16.c,v 1.8 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,7 +31,7 @@ fromtext_txt(ARGS_FROMTEXT) {
 	isc_token_t token;
 	int strings;
 
-	REQUIRE(type == 16);
+	REQUIRE(type == dns_rdatatype_txt);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -68,7 +68,7 @@ totext_txt(ARGS_TOTEXT) {
 
 	UNUSED(tctx);
 
-	REQUIRE(rdata->type == 16);
+	REQUIRE(rdata->type == dns_rdatatype_txt);
 
 	dns_rdata_toregion(rdata, &region);
 
@@ -85,7 +85,7 @@ static inline isc_result_t
 fromwire_txt(ARGS_FROMWIRE) {
 	isc_result_t result;
 
-	REQUIRE(type == 16);
+	REQUIRE(type == dns_rdatatype_txt);
 
 	UNUSED(type);
 	UNUSED(dctx);
@@ -104,7 +104,7 @@ static inline isc_result_t
 towire_txt(ARGS_TOWIRE) {
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 16);
+	REQUIRE(rdata->type == dns_rdatatype_txt);
 
 	UNUSED(cctx);
 
@@ -124,7 +124,7 @@ compare_txt(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 16);
+	REQUIRE(rdata1->type == dns_rdatatype_txt);
 
 	dns_rdata_toregion(rdata1, &r1);
 	dns_rdata_toregion(rdata2, &r2);
@@ -137,7 +137,7 @@ fromstruct_txt(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 	isc_uint8_t length;
 
-	REQUIRE(type == 16);
+	REQUIRE(type == dns_rdatatype_txt);
 	REQUIRE(source != NULL);
 	REQUIRE(txt->common.rdtype == type);
 	REQUIRE(txt->common.rdclass == rdclass);
@@ -164,7 +164,7 @@ tostruct_txt(ARGS_TOSTRUCT) {
 	dns_rdata_txt_t *txt = target;
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 16);
+	REQUIRE(rdata->type == dns_rdatatype_txt);
 	REQUIRE(target != NULL);
 
 	txt->common.rdclass = rdata->rdclass;
@@ -187,7 +187,7 @@ freestruct_txt(ARGS_FREESTRUCT) {
 	dns_rdata_txt_t *txt = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == 16);
+	REQUIRE(txt->common.rdtype == dns_rdatatype_txt);
 
 	if (txt->mctx == NULL)
 		return;
@@ -199,7 +199,7 @@ freestruct_txt(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_txt(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 16);
+	REQUIRE(rdata->type == dns_rdatatype_txt);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -212,7 +212,7 @@ static inline isc_result_t
 digest_txt(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 16);
+	REQUIRE(rdata->type == dns_rdatatype_txt);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -222,7 +222,7 @@ digest_txt(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_txt(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 16);
+	REQUIRE(type == dns_rdatatype_txt);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -235,7 +235,7 @@ checkowner_txt(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_txt(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 16);
+	REQUIRE(rdata->type == dns_rdatatype_txt);
 
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -253,7 +253,7 @@ isc_result_t
 dns_rdata_txt_first(dns_rdata_txt_t *txt) {
 
 	REQUIRE(txt != NULL);
-	REQUIRE(txt->common.rdtype == 16);
+	REQUIRE(txt->common.rdtype == dns_rdatatype_txt);
 	REQUIRE(txt->txt != NULL || txt->txt_len == 0);
 
 	if (txt->txt_len == 0)
@@ -269,7 +269,7 @@ dns_rdata_txt_next(dns_rdata_txt_t *txt) {
 	isc_uint8_t length;
 
 	REQUIRE(txt != NULL);
-	REQUIRE(txt->common.rdtype == 16);
+	REQUIRE(txt->common.rdtype == dns_rdatatype_txt);
 	REQUIRE(txt->txt != NULL && txt->txt_len != 0);
 
 	INSIST(txt->offset + 1 <= txt->txt_len);
@@ -289,7 +289,7 @@ dns_rdata_txt_current(dns_rdata_txt_t *txt, dns_rdata_txt_string_t *string) {
 
 	REQUIRE(txt != NULL);
 	REQUIRE(string != NULL);
-	REQUIRE(txt->common.rdtype == 16);
+	REQUIRE(txt->common.rdtype == dns_rdatatype_txt);
 	REQUIRE(txt->txt != NULL);
 	REQUIRE(txt->offset < txt->txt_len);
 

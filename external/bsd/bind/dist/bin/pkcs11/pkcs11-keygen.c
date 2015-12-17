@@ -1,7 +1,7 @@
-/*	$NetBSD: pkcs11-keygen.c,v 1.7 2014/12/10 04:37:52 christos Exp $	*/
+/*	$NetBSD: pkcs11-keygen.c,v 1.8 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2009,2012 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012, 2015 Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -66,6 +66,7 @@
 #include <sys/types.h>
 
 #include <isc/commandline.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/types.h>
 

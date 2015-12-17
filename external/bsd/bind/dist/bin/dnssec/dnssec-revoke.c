@@ -1,7 +1,7 @@
-/*	$NetBSD: dnssec-revoke.c,v 1.8 2014/12/10 04:37:51 christos Exp $	*/
+/*	$NetBSD: dnssec-revoke.c,v 1.9 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2009-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009-2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -98,7 +98,7 @@ main(int argc, char **argv) {
 	isc_uint32_t flags;
 	isc_buffer_t buf;
 	isc_boolean_t force = ISC_FALSE;
-	isc_boolean_t remove = ISC_FALSE;
+	isc_boolean_t removefile = ISC_FALSE;
 	isc_boolean_t id = ISC_FALSE;
 
 	if (argc == 1)
@@ -135,7 +135,7 @@ main(int argc, char **argv) {
 			}
 			break;
 		    case 'r':
-			remove = ISC_TRUE;
+			removefile = ISC_TRUE;
 			break;
 		    case 'R':
 			id = ISC_TRUE;
@@ -259,7 +259,7 @@ main(int argc, char **argv) {
 		 * Remove old key file, if told to (and if
 		 * it isn't the same as the new file)
 		 */
-		if (remove && dst_key_alg(key) != DST_ALG_RSAMD5) {
+		if (removefile && dst_key_alg(key) != DST_ALG_RSAMD5) {
 			isc_buffer_init(&buf, oldname, sizeof(oldname));
 			dst_key_setflags(key, flags & ~DNS_KEYFLAG_REVOKE);
 			dst_key_buildfilename(key, DST_TYPE_PRIVATE, dir, &buf);

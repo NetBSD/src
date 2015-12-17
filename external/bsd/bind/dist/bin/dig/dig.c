@@ -1,7 +1,7 @@
-/*	$NetBSD: dig.c,v 1.10 2014/12/10 04:37:51 christos Exp $	*/
+/*	$NetBSD: dig.c,v 1.11 2015/12/17 04:00:40 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -31,8 +31,8 @@
 #include <isc/parseint.h>
 #include <isc/print.h>
 #include <isc/string.h>
-#include <isc/util.h>
 #include <isc/task.h>
+#include <isc/util.h>
 
 #include <dns/byaddr.h>
 #include <dns/fixedname.h>
@@ -118,21 +118,18 @@ static const char * const rcodetext[] = {
 };
 
 /*% safe rcodetext[] */
-static char *
+static const char *
 rcode_totext(dns_rcode_t rcode)
 {
 	static char buf[sizeof("?65535")];
-	union {
-		const char *consttext;
-		char *deconsttext;
-	} totext;
 
 	if (rcode >= (sizeof(rcodetext)/sizeof(rcodetext[0]))) {
 		snprintf(buf, sizeof(buf), "?%u", rcode);
-		totext.deconsttext = buf;
-	} else
-		totext.consttext = rcodetext[rcode];
-	return totext.deconsttext;
+		return (buf);
+	} else if (rcode == dns_rcode_badcookie)
+		return ("BADCOOKIE");
+	else
+		return (rcodetext[rcode]);
 }
 
 /*% print usage */
@@ -171,79 +168,88 @@ help(void) {
 "        q-type   is one of (a,any,mx,ns,soa,hinfo,axfr,txt,...) [default:a]\n"
 "                 (Use ixfr=version for type ixfr)\n"
 "        q-opt    is one of:\n"
-"                 -x dot-notation     (shortcut for reverse lookups)\n"
-"                 -i                  (use IP6.INT for IPv6 reverse lookups)\n"
-"                 -f filename         (batch mode)\n"
+"                 -4                  (use IPv4 query transport only)\n"
+"                 -6                  (use IPv6 query transport only)\n"
 "                 -b address[#port]   (bind to source address/port)\n"
+"                 -c class            (specify query class)\n"
+"                 -f filename         (batch mode)\n"
+"                 -i                  (use IP6.INT for IPv6 reverse lookups)\n"
+"                 -k keyfile          (specify tsig key file)\n"
+"                 -m                  (enable memory usage debugging)\n"
 "                 -p port             (specify port number)\n"
 "                 -q name             (specify query name)\n"
 "                 -t type             (specify query type)\n"
-"                 -c class            (specify query class)\n"
 "                 -u                  (display times in usec instead of msec)\n"
-"                 -k keyfile          (specify tsig key file)\n"
+"                 -x dot-notation     (shortcut for reverse lookups)\n"
 "                 -y [hmac:]name:key  (specify named base64 tsig key)\n"
-"                 -4                  (use IPv4 query transport only)\n"
-"                 -6                  (use IPv6 query transport only)\n"
-"                 -m                  (enable memory usage debugging)\n"
 "        d-opt    is of the form +keyword[=value], where keyword is:\n"
-"                 +[no]vc             (TCP mode)\n"
-"                 +[no]tcp            (TCP mode, alternate syntax)\n"
-"                 +time=###           (Set query timeout) [5]\n"
-"                 +tries=###          (Set number of UDP attempts) [3]\n"
-"                 +retry=###          (Set number of UDP retries) [2]\n"
-"                 +domain=###         (Set default domainname)\n"
-"                 +bufsize=###        (Set EDNS0 Max UDP packet size)\n"
-"                 +ndots=###          (Set NDOTS value)\n"
-"                 +subnet=addr        (Set edns-client-subnet option)\n"
-"                 +[no]edns[=###]     (Set EDNS version) [0]\n"
-"                 +[no]search         (Set whether to use searchlist)\n"
-"                 +[no]showsearch     (Search with intermediate results)\n"
-"                 +[no]defname        (Ditto)\n"
-"                 +[no]recurse        (Recursive mode)\n"
-"                 +[no]ignore         (Don't revert to TCP for TC responses.)"
-"\n"
-"                 +[no]fail           (Don't try next server on SERVFAIL)\n"
-"                 +[no]besteffort     (Try to parse even illegal messages)\n"
 "                 +[no]aaonly         (Set AA flag in query (+[no]aaflag))\n"
-"                 +[no]adflag         (Set AD flag in query)\n"
-"                 +[no]cdflag         (Set CD flag in query)\n"
+"                 +[no]additional     (Control display of additional section)\n"
+"                 +[no]adflag         (Set AD flag in query (default on))\n"
+"                 +[no]all            (Set or clear all display flags)\n"
+"                 +[no]answer         (Control display of answer section)\n"
+"                 +[no]authority      (Control display of authority section)\n"
+"                 +[no]besteffort     (Try to parse even illegal messages)\n"
+"                 +bufsize=###        (Set EDNS0 Max UDP packet size)\n"
+"                 +[no]cdflag         (Set checking disabled flag in query)\n"
 "                 +[no]cl             (Control display of class in records)\n"
 "                 +[no]cmd            (Control display of command line)\n"
 "                 +[no]comments       (Control display of comment lines)\n"
-"                 +[no]rrcomments     (Control display of per-record "
-				       "comments)\n"
 "                 +[no]crypto         (Control display of cryptographic "
 				       "fields in records)\n"
-"                 +[no]question       (Control display of question)\n"
-"                 +[no]answer         (Control display of answer)\n"
-"                 +[no]authority      (Control display of authority)\n"
-"                 +[no]additional     (Control display of additional)\n"
-"                 +[no]stats          (Control display of statistics)\n"
-"                 +[no]short          (Disable everything except short\n"
-"                                      form of answer)\n"
-"                 +[no]ttlid          (Control display of ttls in records)\n"
-"                 +[no]all            (Set or clear all display flags)\n"
-"                 +[no]qr             (Print question before sending)\n"
-"                 +[no]nssearch       (Search all authoritative nameservers)\n"
-"                 +[no]identify       (ID responders in short answers)\n"
-"                 +[no]trace          (Trace delegation down from root [+dnssec])\n"
+"                 +[no]defname        (Use search list (+[no]search))\n"
 "                 +[no]dnssec         (Request DNSSEC records)\n"
+"                 +domain=###         (Set default domainname)\n"
+"                 +[no]edns[=###]     (Set EDNS version) [0]\n"
+"                 +ednsflags=###      (Set EDNS flag bits)\n"
+"                 +[no]ednsnegotiation (Set EDNS version negotiation)\n"
+"                 +ednsopt=###[:value] (Send specified EDNS option)\n"
+"                 +noednsopt          (Clear list of +ednsopt options)\n"
 "                 +[no]expire         (Request time to expire)\n"
+"                 +[no]fail           (Don't try next server on SERVFAIL)\n"
+"                 +[no]identify       (ID responders in short answers)\n"
+"                 +[no]ignore         (Don't revert to TCP for TC responses.)"
+"\n"
+"                 +[no]keepopen       (Keep the TCP socket open between queries)\n"
+"                 +[no]multiline      (Print records in an expanded format)\n"
+"                 +ndots=###          (Set search NDOTS value)\n"
 "                 +[no]nsid           (Request Name Server ID)\n"
+"                 +[no]nssearch       (Search all authoritative nameservers)\n"
+"                 +[no]onesoa         (AXFR prints only one soa record)\n"
+"                 +[no]opcode=[###]   (Set the opcode of the request)\n"
+"                 +[no]qr             (Print question before sending)\n"
+"                 +[no]question       (Control display of question section)\n"
+"                 +[no]recurse        (Recursive mode)\n"
+"                 +retry=###          (Set number of UDP retries) [2]\n"
+"                 +[no]rrcomments     (Control display of per-record "
+				       "comments)\n"
+"                 +[no]search         (Set whether to use searchlist)\n"
+"                 +[no]short          (Display nothing except short\n"
+"                                      form of answer)\n"
+"                 +[no]showsearch     (Search with intermediate results)\n"
+#ifdef DIG_SIGCHASE
+"                 +[no]sigchase       (Chase DNSSEC signatures)\n"
+#endif
 #ifdef ISC_PLATFORM_USESIT
 "                 +[no]sit            (Request a Source Identity Token)\n"
 #endif
+"                 +[no]split=##       (Split hex/base64 fields into chunks)\n"
+"                 +[no]stats          (Control display of statistics)\n"
+"                 +subnet=addr        (Set edns-client-subnet option)\n"
+"                 +[no]tcp            (TCP mode (+[no]vc))\n"
+"                 +time=###           (Set query timeout) [5]\n"
 #ifdef DIG_SIGCHASE
-"                 +[no]sigchase       (Chase DNSSEC signatures)\n"
-"                 +trusted-key=####   (Trusted Key when chasing DNSSEC sigs)\n"
 #if DIG_SIGCHASE_TD
 "                 +[no]topdown        (Do DNSSEC validation top down mode)\n"
 #endif
 #endif
-"                 +[no]split=##       (Split hex/base64 fields into chunks)\n"
-"                 +[no]multiline      (Print records in an expanded format)\n"
-"                 +[no]onesoa         (AXFR prints only one soa record)\n"
-"                 +[no]keepopen       (Keep the TCP socket open between queries)\n"
+"                 +[no]trace          (Trace delegation down from root [+dnssec])\n"
+"                 +tries=###          (Set number of UDP attempts) [3]\n"
+#ifdef DIG_SIGCHASE
+"                 +trusted-key=####   (Trusted Key when chasing DNSSEC sigs)\n"
+#endif
+"                 +[no]ttlid          (Control display of ttls in records)\n"
+"                 +[no]vc             (TCP mode (+[no]tcp))\n"
 "        global d-opts and servers (before host name) affect all queries.\n"
 "        local d-opts and servers (after host name) affect only that lookup.\n"
 "        -h                           (print help and exit)\n"
@@ -340,9 +346,12 @@ say_message(dns_rdata_t *rdata, dig_query_t *query, isc_buffer_t *buf) {
 		ADD_STRING(buf, " ");
 	}
 
+	if (rrcomments)
+		styleflags |= DNS_STYLEFLAG_RRCOMMENT;
 	if (nocrypto)
 		styleflags |= DNS_STYLEFLAG_NOCRYPTO;
-	result = dns_rdata_tofmttext(rdata, NULL, styleflags, 0, 60, " ", buf);
+	result = dns_rdata_tofmttext(rdata, NULL, styleflags, 0,
+				     splitwidth, " ", buf);
 	if (result == ISC_R_NOSPACE)
 		return (result);
 	check_result(result, "dns_rdata_totext");
@@ -752,7 +761,7 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 {
 	isc_result_t result;
 	char option_store[256];
-	char *cmd, *value, *ptr;
+	char *cmd, *value, *ptr, *code;
 	isc_uint32_t num;
 	isc_boolean_t state = ISC_TRUE;
 #if defined(DIG_SIGCHASE) || defined(ISC_PLATFORM_USESIT)
@@ -867,8 +876,9 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 				goto invalid_option;
 			}
 			break;
-		case 'l': /* cl */
-			FULLCHECK("cl");
+		case 'l': /* class */
+			/* keep +cl for backwards compatibility */
+			FULLCHECK2("cl", "class");
 			noclass = ISC_TF(!state);
 			break;
 		case 'm': /* cmd */
@@ -919,19 +929,77 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 	case 'e':
 		switch (cmd[1]) {
 		case 'd':
-			FULLCHECK("edns");
-			if (!state) {
-				lookup->edns = -1;
+			switch(cmd[2]) {
+			case 'n':
+				switch (cmd[3]) {
+				case 's':
+					switch (cmd[4]) {
+					case 0:
+						FULLCHECK("edns");
+						if (!state) {
+							lookup->edns = -1;
+							break;
+						}
+						if (value == NULL) {
+							lookup->edns = 0;
+							break;
+						}
+						result = parse_uint(&num,
+								    value,
+								    255,
+								    "edns");
+						if (result != ISC_R_SUCCESS)
+							fatal("Couldn't parse "
+							      "edns");
+						lookup->edns = num;
+						break;
+					case 'f':
+						FULLCHECK("ednsflags");
+						if (!state) {
+							lookup->ednsflags = 0;
+							break;
+						}
+						if (value == NULL) {
+							lookup->ednsflags = 0;
+							break;
+						}
+						result = parse_xint(&num,
+								    value,
+								    0xffff,
+								  "ednsflags");
+						if (result != ISC_R_SUCCESS)
+							fatal("Couldn't parse "
+							      "ednsflags");
+						lookup->ednsflags = num;
+						break;
+					case 'n':
+						FULLCHECK("ednsnegotiation");
+						lookup->ednsneg = state;
+						break;
+					case 'o':
+						FULLCHECK("ednsopt");
+						if (!state) {
+							lookup->ednsoptscnt = 0;
+							break;
+						}
+						if (value == NULL)
+							fatal("ednsopt no "
+							      "code point "
+							      "specified");
+						code = next_token(&value, ":");
+						save_opt(lookup, code, value);
+						break;
+					default:
+						goto invalid_option;
+					}
+					break;
+				default:
+					goto invalid_option;
+				}
 				break;
+			default:
+				goto invalid_option;
 			}
-			if (value == NULL) {
-				lookup->edns = 0;
-				break;
-			}
-			result = parse_uint(&num, value, 255, "edns");
-			if (result != ISC_R_SUCCESS)
-				fatal("Couldn't parse edns");
-			lookup->edns = num;
 			break;
 		case 'x':
 			FULLCHECK("expire");
@@ -1013,8 +1081,37 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 		}
 		break;
 	case 'o':
-		FULLCHECK("onesoa");
-		onesoa = state;
+		switch (cmd[1]) {
+		case 'n':
+			FULLCHECK("onesoa");
+			onesoa = state;
+			break;
+		case 'p':
+			FULLCHECK("opcode");
+			if (!state) {
+				lookup->opcode = 0;	/* default - query */
+				break;
+			}
+			if (value == NULL)
+				goto need_value;
+			for (num = 0;
+			     num < sizeof(opcodetext)/sizeof(opcodetext[0]);
+			     num++) {
+				if (strcasecmp(opcodetext[num], value) == 0)
+					break;
+			}
+			if (num < 16) {
+				lookup->opcode = (dns_opcode_t)num;
+				break;
+			}
+			result = parse_uint(&num, value, 15, "opcode");
+			if (result != ISC_R_SUCCESS)
+				fatal("Couldn't parse opcode");
+			lookup->opcode = (dns_opcode_t)num;
+			break;
+		default:
+			goto invalid_option;
+		}
 		break;
 	case 'q':
 		switch (cmd[1]) {
@@ -1034,6 +1131,10 @@ plus_option(char *option, isc_boolean_t is_batchfile,
 		break;
 	case 'r':
 		switch (cmd[1]) {
+		case 'd': /* rdflag */
+			FULLCHECK("rdflag");
+			lookup->recurse = state;
+			break;
 		case 'e':
 			switch (cmd[2]) {
 			case 'c': /* recurse */

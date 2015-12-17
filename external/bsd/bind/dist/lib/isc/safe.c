@@ -1,7 +1,7 @@
-/*	$NetBSD: safe.c,v 1.3 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: safe.c,v 1.4 2015/12/17 04:00:45 christos Exp $	*/
 
 /*
- * Copyright (C) 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -16,8 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
-
 /*! \file */
 
 #include <config.h>
@@ -30,7 +28,7 @@
 #endif
 
 isc_boolean_t
-isc_safe_memcmp(const void *s1, const void *s2, size_t n) {
+isc_safe_memequal(const void *s1, const void *s2, size_t n) {
 	isc_uint8_t acc = 0;
 
 	if (n != 0U) {
@@ -41,4 +39,31 @@ isc_safe_memcmp(const void *s1, const void *s2, size_t n) {
 		} while (--n != 0U);
 	}
 	return (ISC_TF(acc == 0));
+}
+
+
+int
+isc_safe_memcompare(const void *b1, const void *b2, size_t len) {
+	const unsigned char *p1 = b1, *p2 = b2;
+	size_t i;
+	int res = 0, done = 0;
+
+	for (i = 0; i < len; i++) {
+		/* lt is -1 if p1[i] < p2[i]; else 0. */
+		int lt = (p1[i] - p2[i]) >> CHAR_BIT;
+
+		/* gt is -1 if p1[i] > p2[i]; else 0. */
+		int gt = (p2[i] - p1[i]) >> CHAR_BIT;
+
+		/* cmp is 1 if p1[i] > p2[i]; -1 if p1[i] < p2[i]; else 0. */
+		int cmp = lt - gt;
+
+		/* set res = cmp if !done. */
+		res |= cmp & ~done;
+
+		/* set done if p1[i] != p2[i]. */
+		done |= lt | gt;
+	}
+
+	return (res);
 }

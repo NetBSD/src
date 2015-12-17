@@ -1,7 +1,7 @@
-/*	$NetBSD: lwtest.c,v 1.7 2014/12/10 04:37:54 christos Exp $	*/
+/*	$NetBSD: lwtest.c,v 1.8 2015/12/17 04:00:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2008, 2012, 2013  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2008, 2012, 2013, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 #include <stdlib.h>
 
 #include <isc/net.h>
+#include <isc/print.h>
 #include <isc/string.h>
 
 #include <lwres/lwres.h>

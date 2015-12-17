@@ -1,7 +1,7 @@
-/*	$NetBSD: nsec_47.c,v 1.4 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: nsec_47.c,v 1.5 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007-2009, 2011  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007-2009, 2011, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,7 +42,7 @@ fromtext_nsec(ARGS_FROMTEXT) {
 	int octet;
 	int window;
 
-	REQUIRE(type == 47);
+	REQUIRE(type == dns_rdatatype_nsec);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -92,7 +92,7 @@ totext_nsec(ARGS_TOTEXT) {
 	dns_name_t name;
 	unsigned int window, len;
 
-	REQUIRE(rdata->type == 47);
+	REQUIRE(rdata->type == dns_rdatatype_nsec);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(tctx);
@@ -142,7 +142,7 @@ fromwire_nsec(ARGS_FROMWIRE) {
 	isc_boolean_t first = ISC_TRUE;
 	unsigned int i;
 
-	REQUIRE(type == 47);
+	REQUIRE(type == dns_rdatatype_nsec);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -200,7 +200,7 @@ towire_nsec(ARGS_TOWIRE) {
 	dns_name_t name;
 	dns_offsets_t offsets;
 
-	REQUIRE(rdata->type == 47);
+	REQUIRE(rdata->type == dns_rdatatype_nsec);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_NONE);
@@ -220,7 +220,7 @@ compare_nsec(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 47);
+	REQUIRE(rdata1->type == dns_rdatatype_nsec);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -236,7 +236,7 @@ fromstruct_nsec(ARGS_FROMSTRUCT) {
 	unsigned int i, len, window, lastwindow = 0;
 	isc_boolean_t first = ISC_TRUE;
 
-	REQUIRE(type == 47);
+	REQUIRE(type == dns_rdatatype_nsec);
 	REQUIRE(source != NULL);
 	REQUIRE(nsec->common.rdtype == type);
 	REQUIRE(nsec->common.rdclass == rdclass);
@@ -272,7 +272,7 @@ tostruct_nsec(ARGS_TOSTRUCT) {
 	dns_rdata_nsec_t *nsec = target;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 47);
+	REQUIRE(rdata->type == dns_rdatatype_nsec);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -306,7 +306,7 @@ freestruct_nsec(ARGS_FREESTRUCT) {
 	dns_rdata_nsec_t *nsec = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(nsec->common.rdtype == 47);
+	REQUIRE(nsec->common.rdtype == dns_rdatatype_nsec);
 
 	if (nsec->mctx == NULL)
 		return;
@@ -319,7 +319,7 @@ freestruct_nsec(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_nsec(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 47);
+	REQUIRE(rdata->type == dns_rdatatype_nsec);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -332,7 +332,7 @@ static inline isc_result_t
 digest_nsec(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 47);
+	REQUIRE(rdata->type == dns_rdatatype_nsec);
 
 	dns_rdata_toregion(rdata, &r);
 	return ((digest)(arg, &r));
@@ -341,7 +341,7 @@ digest_nsec(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_nsec(ARGS_CHECKOWNER) {
 
-       REQUIRE(type == 47);
+       REQUIRE(type == dns_rdatatype_nsec);
 
        UNUSED(name);
        UNUSED(type);
@@ -354,7 +354,7 @@ checkowner_nsec(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_nsec(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 47);
+	REQUIRE(rdata->type == dns_rdatatype_nsec);
 
 	UNUSED(rdata);
 	UNUSED(owner);
@@ -373,7 +373,7 @@ casecompare_nsec(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 47);
+	REQUIRE(rdata1->type == dns_rdatatype_nsec);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 

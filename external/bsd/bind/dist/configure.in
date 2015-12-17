@@ -86,11 +86,13 @@ case "$enable_developer" in
 yes)
 	STD_CDEFINES="$STD_CDEFINES -DISC_LIST_CHECKINIT=1"
 	test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
+	test "${enable_querytrace+set}" = set || enable_querytrace=yes
 	test "${with_atf+set}" = set || with_atf=yes
 	test "${enable_filter_aaaa+set}" = set || enable_filter_aaaa=yes
 	test "${with_dlz_filesystem+set}" = set || with_dlz_filesystem=yes
 	test "${enable_symtable+set}" = set || enable_symtable=all
 	test "${enable_sit+set}" = set || enable_sit=yes
+	test "${enable_fetchlimit+set}" = set || enable_fetchlimit=yes
 	test "${enable_warn_error+set}" = set || enable_warn_error=yes
 	test "${enable_warn_shadow+set}" = set || enable_warn_shadow=yes
 	;;
@@ -235,7 +237,7 @@ case "$use_python" in
 			for p in $python
 			do
 				AC_PATH_PROGS(PYTHON, $p)
-				if test "X$PYTHON" == "X"; then
+				if test "X$PYTHON" = "X"; then
 					continue;
 				fi
 				AC_MSG_CHECKING([python module 'argparse'])
@@ -247,7 +249,7 @@ case "$use_python" in
 				unset ac_cv_path_PYTHON
 				unset PYTHON
 			done
-			if test "X$PYTHON" == "X"
+			if test "X$PYTHON" = "X"
 			then
 				AC_MSG_CHECKING([for python support])
 				case "$use_python" in
@@ -1539,12 +1541,15 @@ shared library configuration (e.g., LD_LIBRARY_PATH).)],
 
 		AC_MSG_CHECKING(whether linking with OpenSSL requires -ldl)
 		AC_TRY_LINK([
-#include <openssl/err.h>],
+#include <openssl/err.h>
+#include <openssl/dso.h>
+],
 [ DSO_METHOD_dlfcn(); ],
 		[AC_MSG_RESULT(no)],
 		[LIBS="$LIBS -ldl"
 		AC_TRY_LINK([
 #include <openssl/err.h>
+#include <openssl/dso.h>
 ],[ DSO_METHOD_dlfcn(); ],
 		[AC_MSG_RESULT(yes)
 		DST_OPENSSL_LIBS="$DST_OPENSSL_LIBS -ldl"
@@ -1568,12 +1573,17 @@ yes|'')
 int main() {
 	if ((OPENSSL_VERSION_NUMBER >= 0x009070cfL &&
 	     OPENSSL_VERSION_NUMBER < 0x00908000L) ||
-	     OPENSSL_VERSION_NUMBER >= 0x0090804fL)
+	     (OPENSSL_VERSION_NUMBER >= 0x0090804fL &&
+	     OPENSSL_VERSION_NUMBER < 0x10002000L) ||
+	     OPENSSL_VERSION_NUMBER >= 0x1000205fL)
 		return (0);
 	printf("\n\nFound   OPENSSL_VERSION_NUMBER %#010x\n",
 		OPENSSL_VERSION_NUMBER);
 	printf("Require OPENSSL_VERSION_NUMBER 0x009070cf or greater (0.9.7l)\n"
-	       "Require OPENSSL_VERSION_NUMBER 0x0090804f or greater (0.9.8d)\n\n");
+	       "Require OPENSSL_VERSION_NUMBER 0x0090804f or greater (0.9.8d)\n"
+	       "Require OPENSSL_VERSION_NUMBER 0x1000000f or greater (1.0.0)\n"
+	       "Require OPENSSL_VERSION_NUMBER 0x1000100f or greater (1.0.1)\n"
+	       "Require OPENSSL_VERSION_NUMBER 0x1000205f or greater (1.0.2e)\n\n");
 	return (1);
 }
 		],
@@ -2108,8 +2118,13 @@ case "$use_libxml2" in
 			libxml2_cflags=`xml2-config --cflags`
 			;;
 		*)
-			libxml2_libs=
-			libxml2_cflags=
+			if test "$use_libxml2" = "yes" ; then
+				AC_MSG_RESULT(no)
+				AC_MSG_ERROR(required libxml2 version not available)
+			else
+				libxml2_libs=
+				libxml2_cflags=
+			fi
 			;;
 		esac
 		;;
@@ -2146,6 +2161,7 @@ AC_ARG_WITH(libjson,
     use_libjson="$withval", use_libjson="auto")
 
 have_libjson=""
+have_libjson_c=""
 case "$use_libjson" in
 	no)
 		libjson_libs=""
@@ -2155,34 +2171,36 @@ case "$use_libjson" in
 		do
 			if test -f "${d}/include/json/json.h"
 			then
-				libjson_cflags="-I ${d}/include/json"
 				if test ${d} != /usr
 				then
+					libjson_cflags="-I ${d}/include"
 					LIBS="$LIBS -L${d}/lib"
 				fi
 				have_libjson="yes"
 			elif test -f "${d}/include/json-c/json.h"
 			then
-				libjson_cflags="-I ${d}/include/json-c"
 				if test ${d} != /usr
 				then
+					libjson_cflags="-I ${d}/include"
 					LIBS="$LIBS -L${d}/lib"
 				fi
 				have_libjson="yes"
+				have_libjson_c="yes"
 			fi
 		done
 		;;
 	*)
 		if test -f "${use_libjson}/include/json/json.h"
 		then
-			libjson_cflags="-I${use_libjson}/include/json"
+			libjson_cflags="-I${use_libjson}/include"
 			LIBS="$LIBS -L${use_libjson}/lib"
 			have_libjson="yes"
 		elif test -f "${use_libjson}/include/json-c/json.h"
 		then
-			libjson_cflags="-I${use_libjson}/include/json-c"
+			libjson_cflags="-I${use_libjson}/include"
 			LIBS="$LIBS -L${use_libjson}/lib"
 			have_libjson="yes"
+			have_libjson_c="yes"
 		else
 			AC_MSG_ERROR([$use_libjson/include/json{,-c}/json.h not found.])
 		fi
@@ -2206,6 +2224,10 @@ if test "X${have_libjson}" != "X"
 then
 	CFLAGS="$CFLAGS $libjson_cflags"
 	AC_DEFINE(HAVE_JSON, 1, [Define if libjson was found])
+	if test "X${have_libjson_c}" = Xyes
+	then
+		AC_DEFINE(HAVE_JSON_C, 1, [Define if json-c was found])
+	fi
 fi
 
 #
@@ -2259,7 +2281,7 @@ if test "X$GCC" = "Xyes"; then
 	STD_CWARNINGS="$STD_CWARNINGS -W -Wall -Wmissing-prototypes -Wcast-qual -Wwrite-strings -Wformat -Wpointer-arith"
 	AC_MSG_CHECKING(if "$CC" supports -fno-strict-aliasing)
 	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -fno-strict-aliasing"
+	CFLAGS="$CFLAGS -Werror -fno-strict-aliasing"
 	AC_TRY_COMPILE(,, [FNOSTRICTALIASING=yes],[FNOSTRICTALIASING=no])
 	CFLAGS="$SAVE_CFLAGS"
 	if test "$FNOSTRICTALIASING" = "yes"; then
@@ -2273,7 +2295,7 @@ if test "X$GCC" = "Xyes"; then
 	#
 	AC_MSG_CHECKING(if "$CC" supports -fno-delete-null-pointer-checks)
 	SAVE_CFLAGS="$CFLAGS"
-	CFLAGS="$CFLAGS -fno-delete-null-pointer-checks"
+	CFLAGS="$CFLAGS -Werror -fno-delete-null-pointer-checks"
 	AC_TRY_COMPILE(,, [FNODELETENULLPOINTERCHECKS=yes],
 			  [FNODELETENULLPOINTERCHECKS=no])
 	CFLAGS="$SAVE_CFLAGS"
@@ -3181,63 +3203,128 @@ AC_SUBST(ISC_PLATFORM_NEEDSTRCASESTR)
 
 AC_SUBST(READLINE_LIB)
 AC_ARG_WITH(readline,
-	[  --with-readline[=LIBSPEC]    specify readline library [default -lreadline]],
-	readline="$withval", readline="-lreadline")
+	[  --with-readline[=LIBSPEC]    specify readline library [default auto]],
+	readline="$withval", readline="auto")
 case "$readline" in
 no)	;;
+yes|auto)
+	saved_LIBS="$LIBS"
+	for readline in -ledit -lreadline
+	do
+		LIBS="$readline"
+		AC_MSG_NOTICE(checking for readline with $readline)
+		AC_CHECK_FUNCS(readline)
+		if test "$ac_cv_func_readline" = "yes"
+		then
+			READLINE_LIB="$readline"
+			break
+		fi
+		if test "X$readline" = "X"
+		then
+			continue
+		fi
+		for lib in -lterminfo -ltermcap -lncurses -lcurses
+		do
+			AC_MSG_NOTICE(checking for readline with $readline $lib)
+			unset ac_cv_func_readline
+			LIBS="$readline $lib"
+			AC_CHECK_FUNCS(readline)
+			if test "$ac_cv_func_readline" = "yes"
+			then
+				READLINE_LIB="$readline $lib"
+				break
+			fi
+		done
+	done
+	LIBS="$saved_LIBS"
+	;;
 *)
-	if test "x$readline" = "xyes"
-	then
-		readline=-lreadline
-	fi
 	saved_LIBS="$LIBS"
 	LIBS="$readline"
+	AC_MSG_NOTICE(checking for readline with $readline)
 	AC_CHECK_FUNCS(readline)
 	if test "$ac_cv_func_readline" = "yes"
 	then
 		READLINE_LIB="$readline"
+	else
+		for lib in -lterminfo -ltermcap -lncurses -lcurses
+		do
+			AC_MSG_NOTICE(checking for readline with $readline $lib)
+			unset ac_cv_func_readline
+			LIBS="$readline $lib"
+			AC_CHECK_FUNCS(readline)
+			if test "$ac_cv_func_readline" = "yes"
+			then
+				READLINE_LIB="$readline $lib"
+				break
+			fi
+		done
 	fi
 	LIBS="$saved_LIBS"
 	;;
 esac
 
-
 ISC_PRINT_OBJS=
 ISC_PRINT_SRCS=
-AC_MSG_CHECKING(sprintf)
+ISC_PLATFORM_NEEDPRINTF='#undef ISC_PLATFORM_NEEDPRINTF'
+ISC_PLATFORM_NEEDFPRINTF='#undef ISC_PLATFORM_NEEDFPRINTF'
+ISC_PLATFORM_NEEDSPRINTF='#undef ISC_PLATFORM_NEEDSPRINTF'
+ISC_PLATFORM_NEEDVSNPRINTF='#undef ISC_PLATFORM_NEEDVSNPRINTF'
+LWRES_PLATFORM_NEEDVSNPRINTF='#undef LWRES_PLATFORM_NEEDVSNPRINTF'
+
+AC_MSG_CHECKING(sprintf return type)
 AC_TRY_COMPILE([
 #include <stdio.h>
 ],
 [ char buf[2]; return(*sprintf(buf,"x"));],
-[
+[AC_MSG_RESULT(char *)
 ISC_PRINT_OBJS="print.$O"
 ISC_PRINT_SRCS="print.c"
 ISC_PLATFORM_NEEDSPRINTF="#define ISC_PLATFORM_NEEDSPRINTF"
 LWRES_PLATFORM_NEEDSPRINTF="#define LWRES_PLATFORM_NEEDSPRINTF"
-],
-[ISC_PLATFORM_NEEDSPRINTF="#undef ISC_PLATFORM_NEEDSPRINTF"
- LWRES_PLATFORM_NEEDSPRINTF="#undef LWRES_PLATFORM_NEEDSPRINTF"]
-)
-AC_SUBST(ISC_PLATFORM_NEEDSPRINTF)
-AC_SUBST(LWRES_PLATFORM_NEEDSPRINTF)
+],[AC_MSG_RESULT(int)])
 
-AC_CHECK_FUNC(vsnprintf,
-	[ISC_PLATFORM_NEEDVSNPRINTF="#undef ISC_PLATFORM_NEEDVSNPRINTF"
-	 LWRES_PLATFORM_NEEDVSNPRINTF="#undef LWRES_PLATFORM_NEEDVSNPRINTF"],
+AC_CHECK_FUNC(vsnprintf, [],
 	[ISC_PRINT_OBJS="print.$O"
 	 ISC_PRINT_SRCS="print.c"
 	 ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
 	 LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"])
+
+AC_MSG_CHECKING(printf for %z support)
+AC_TRY_RUN([
+#include <stdio.h>
+main() {
+        size_t j = 0;
+        char buf[100];
+        buf[0] = 0;
+        sprintf(buf, "%zu", j);
+        exit(strcmp(buf, "0") != 0);
+}
+],
+        [AC_MSG_RESULT(yes)],
+        [AC_MSG_RESULT(no)
+	ISC_PRINT_OBJS="print.$O"
+	ISC_PRINT_SRCS="print.c"
+        ISC_PLATFORM_NEEDPRINTF='#define ISC_PLATFORM_NEEDPRINTF 1'
+        ISC_PLATFORM_NEEDFPRINTF='#define ISC_PLATFORM_NEEDFPRINTF 1'
+        ISC_PLATFORM_NEEDFSRINTF='#define ISC_PLATFORM_NEEDSPRINTF 1'
+	ISC_PLATFORM_NEEDVSNPRINTF="#define ISC_PLATFORM_NEEDVSNPRINTF 1"
+	LWRES_PLATFORM_NEEDVSNPRINTF="#define LWRES_PLATFORM_NEEDVSNPRINTF 1"],
+        [AC_MSG_RESULT(assuming target platform supports %z)])
+
+AC_SUBST(ISC_PLATFORM_NEEDPRINTF)
+AC_SUBST(ISC_PLATFORM_NEEDFPRINTF)
+AC_SUBST(ISC_PLATFORM_NEEDSPRINTF)
 AC_SUBST(ISC_PLATFORM_NEEDVSNPRINTF)
+AC_SUBST(LWRES_PLATFORM_NEEDSPRINTF)
 AC_SUBST(LWRES_PLATFORM_NEEDVSNPRINTF)
+
 ISC_EXTRA_OBJS="$ISC_EXTRA_OBJS $ISC_PRINT_OBJS"
 ISC_EXTRA_SRCS="$ISC_EXTRA_SRCS $ISC_PRINT_SRCS"
-
-AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR))
-
 AC_SUBST(ISC_EXTRA_OBJS)
 AC_SUBST(ISC_EXTRA_SRCS)
 
+AC_CHECK_FUNC(strerror, AC_DEFINE(HAVE_STRERROR))
 #
 # Use our own SPNEGO implementation?
 #
@@ -3300,6 +3387,7 @@ main() {
 	LWRES_PLATFORM_QUADFORMAT='#define LWRES_PLATFORM_QUADFORMAT "ll"'])
 AC_SUBST(ISC_PLATFORM_QUADFORMAT)
 AC_SUBST(LWRES_PLATFORM_QUADFORMAT)
+
 
 #
 # Security Stuff
@@ -3614,6 +3702,9 @@ case "$enable_atomic" in
 esac
 
 ISC_PLATFORM_USEOSFASM="#undef ISC_PLATFORM_USEOSFASM"
+ISC_PLATFORM_USEGCCASM="#undef ISC_PLATFORM_USEGCCASM"
+ISC_PLATFORM_USESTDASM="#undef ISC_PLATFORM_USESTDASM"
+ISC_PLATFORM_USEMACASM="#undef ISC_PLATFORM_USEMACASM"
 if test "$use_atomic" = "yes"; then
 	AC_MSG_CHECKING([architecture type for atomic operations])
 	have_atomic=yes		# set default
@@ -3734,15 +3825,15 @@ if test "$have_atomic" = "yes"; then
 	ISC_PLATFORM_HAVEXADD="#define ISC_PLATFORM_HAVEXADD 1"
 	ISC_PLATFORM_HAVECMPXCHG="#define ISC_PLATFORM_HAVECMPXCHG 1"
 	ISC_PLATFORM_HAVEATOMICSTORE="#define ISC_PLATFORM_HAVEATOMICSTORE 1"
+	if test "$have_xaddq" = "yes"; then
+		ISC_PLATFORM_HAVEXADDQ="#define ISC_PLATFORM_HAVEXADDQ 1"
+	else
+		ISC_PLATFORM_HAVEXADDQ="#undef ISC_PLATFORM_HAVEXADDQ"
+	fi
 else
 	ISC_PLATFORM_HAVEXADD="#undef ISC_PLATFORM_HAVEXADD"
 	ISC_PLATFORM_HAVECMPXCHG="#undef ISC_PLATFORM_HAVECMPXCHG"
 	ISC_PLATFORM_HAVEATOMICSTORE="#undef ISC_PLATFORM_HAVEATOMICSTORE"
-fi
-
-if test "$have_xaddq" = "yes"; then
-	ISC_PLATFORM_HAVEXADDQ="#define ISC_PLATFORM_HAVEXADDQ 1"
-else
 	ISC_PLATFORM_HAVEXADDQ="#undef ISC_PLATFORM_HAVEXADDQ"
 fi
 
@@ -3814,7 +3905,25 @@ case "$enable_nsdname" in
 esac
 
 #
-# Activate "filter-aaaa-on-v4/v6" or not?
+# Activate recursive fetch limits
+#
+AC_ARG_ENABLE(fetchlimit,
+	[  --enable-fetchlimit     enable recursive fetch limits [[default=no]]],
+			enable_fetchlimit="$enableval",
+			enable_fetchlimit="no")
+case "$enable_fetchlimit" in
+	yes)
+		AC_DEFINE(ENABLE_FETCHLIMIT, 1,
+			  [Define to enable the "fetches-per-server" and "fetches-per-zone" options.])
+		;;
+	no)
+		;;
+	*)
+		;;
+esac
+
+#
+# Activate "filter-aaaa" or not?
 #
 AC_ARG_ENABLE(filter-aaaa,
 	[  --enable-filter-aaaa    enable filtering of AAAA records [[default=no]]],
@@ -3900,6 +4009,13 @@ AC_SUBST(XMLLINT)
 
 AC_PATH_PROG(DOXYGEN, doxygen, doxygen)
 AC_SUBST(DOXYGEN)
+
+#
+# Look for curl
+#
+
+AC_PATH_PROG(CURL, curl, curl)
+AC_SUBST(CURL)
 
 #
 # Subroutine for searching for an ordinary file (e.g., a stylesheet)
@@ -4137,6 +4253,26 @@ case "$use_tuning" in
 	yes|*)
 		AC_MSG_ERROR([You must specify "large" or "default" for --with-tuning.])
 		;;
+esac
+
+#
+# was --enable-querytrace specified?
+#
+AC_ARG_ENABLE(querytrace,
+	[  --enable-querytrace     enable very verbose query trace logging [[default=no]]],
+	want_querytrace="$enableval", want_querytrace="no")
+
+case "$want_querytrace" in
+yes)
+	AC_MSG_RESULT(yes)
+	AC_DEFINE(WANT_QUERYTRACE, 1, [Define to enable very verbose query trace logging.])
+	;;
+no)
+	AC_MSG_RESULT(no)
+	;;
+*)
+	AC_MSG_ERROR("--enable-querytrace requires yes or no")
+	;;
 esac
 
 #
@@ -4582,13 +4718,15 @@ AC_CONFIG_FILES([
 	bin/tests/system/dlzexternal/Makefile
 	bin/tests/system/dlzexternal/ns1/named.conf
 	bin/tests/system/dlzredir/prereq.sh
+	bin/tests/system/fetchlimit/Makefile
 	bin/tests/system/filter-aaaa/Makefile
 	bin/tests/system/geoip/Makefile
 	bin/tests/system/inline/checkdsa.sh
 	bin/tests/system/lwresd/Makefile
-	bin/tests/system/sit/prereq.sh
 	bin/tests/system/rpz/Makefile
 	bin/tests/system/rsabigexponent/Makefile
+	bin/tests/system/sit/prereq.sh
+	bin/tests/system/statistics/Makefile
 	bin/tests/system/tkey/Makefile
 	bin/tests/system/tsiggss/Makefile
 	bin/tests/tasks/Makefile
@@ -4703,6 +4841,8 @@ fi
 test "$use_tuning" = "large" && echo "    Large-system tuning (--with-tuning)"
 test "$use_geoip" = "no" || echo "    GeoIP access control (--with-geoip)"
 test "$use_gssapi" = "no" || echo "    GSS-API (--with-gssapi)"
+test "$enable_fetchlimit" = "yes" && \
+    echo "    Recursive fetch limits for DoS attack mitigation (--enable-fetchlimit)"
 if test "$enable_sit" != "no"; then
     echo "    Source Identity Token support (--enable-sit)"
     if test "$enable_full_report" = "yes" -o "$with_sit_alg" != "aes"; then
@@ -4747,6 +4887,8 @@ test "$want_symtable" = "minimal" && \
 test "$want_symtable" = "yes" -o "$want_symtable" = "all" && \
     echo "    Use symbol table for backtrace, all binaries (--enable-symtable=all)"
 test "$use_libtool" = "no" || echo "    Use GNU libtool (--with-libtool)"
+test "$want_querytrace" = "yes" && \
+    echo "    Very verbose query trace logging (--enable-querytrace)"
 test "$atf" = "no" || echo "    Automated Testing Framework (--with-atf)"
 
 echo "    Dynamically loadable zone (DLZ) drivers:"
@@ -4775,6 +4917,8 @@ test "$use_tuning" = "large" || echo "    Large-system tuning (--with-tuning)"
 
 test "$use_geoip" = "no" && echo "    GeoIP access control (--with-geoip)"
 test "$use_gssapi" = "no" && echo "    GSS-API (--with-gssapi)"
+test "$enable_fetchlimit" = "no" && \
+        echo "    Recursive fetch limits for DoS attack mitigation (--enable-fetchlimit)"
 test "$enable_sit" = "no" && echo "    Source Identity Token support (--enable-sit)"
 
 test "$enable_fixed" = "yes" || \
@@ -4797,6 +4941,9 @@ test "$enable_seccomp" = yes || \
     echo "    Use libseccomp system call filtering (--enable-seccomp)"
 test "$want_backtrace" = "yes" || \
     echo "    Print backtrace on crash (--enable-backtrace)"
+test "$want_querytrace" = "yes" || \
+    echo "    Very verbose query trace logging (--enable-querytrace)"
+
 test "$use_libtool" = "yes" || echo "    Use GNU libtool (--with-libtool)"
 test "$atf" = "no" && echo "    Automated Testing Framework (--with-atf)"
 
@@ -4828,15 +4975,16 @@ WARNING         Your OpenSSL crypto library may be vulnerable to        WARNING
 WARNING         one or more of the the following known security         WARNING
 WARNING         flaws:                                                  WARNING
 WARNING                                                                 WARNING
-WARNING         CAN-2002-0659, CAN-2006-4339, CVE-2006-2937 and         WARNING
-WARNING         CVE-2006-2940.                                          WARNING
+WARNING         CAN-2002-0659, CAN-2006-4339, CVE-2006-2937,            WARNING
+WARNING         CVE-2006-2940 and CVE-2015-3193.                        WARNING
 WARNING                                                                 WARNING
 WARNING         It is recommended that you upgrade to OpenSSL           WARNING
-WARNING         version 0.9.8d/0.9.7l (or greater).                     WARNING
+WARNING         version 1.0.2e/1.0.1/1.0.0/0.9.9/0.9.8d/0.9.7l          WARNING
+WARNING         (or greater).                                           WARNING
 WARNING                                                                 WARNING
 WARNING         You can disable this warning by specifying:             WARNING
 WARNING                                                                 WARNING
-WARNING               --disable-openssl-version-check          	        WARNING
+WARNING               --disable-openssl-version-check                   WARNING
 WARNING                                                                 WARNING
 WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING
 WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING

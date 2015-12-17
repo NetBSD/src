@@ -1,7 +1,7 @@
-/*	$NetBSD: mg_8.c,v 1.4 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: mg_8.c,v 1.5 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,7 +32,7 @@ fromtext_mg(ARGS_FROMTEXT) {
 	dns_name_t name;
 	isc_buffer_t buffer;
 
-	REQUIRE(type == 8);
+	REQUIRE(type == dns_rdatatype_mg);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -55,7 +55,7 @@ totext_mg(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 8);
+	REQUIRE(rdata->type == dns_rdatatype_mg);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&name, NULL);
@@ -73,7 +73,7 @@ static inline isc_result_t
 fromwire_mg(ARGS_FROMWIRE) {
 	dns_name_t name;
 
-	REQUIRE(type == 8);
+	REQUIRE(type == dns_rdatatype_mg);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -90,7 +90,7 @@ towire_mg(ARGS_TOWIRE) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 8);
+	REQUIRE(rdata->type == dns_rdatatype_mg);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -111,7 +111,7 @@ compare_mg(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 8);
+	REQUIRE(rdata1->type == dns_rdatatype_mg);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -132,7 +132,7 @@ fromstruct_mg(ARGS_FROMSTRUCT) {
 	dns_rdata_mg_t *mg = source;
 	isc_region_t region;
 
-	REQUIRE(type == 8);
+	REQUIRE(type == dns_rdatatype_mg);
 	REQUIRE(source != NULL);
 	REQUIRE(mg->common.rdtype == type);
 	REQUIRE(mg->common.rdclass == rdclass);
@@ -150,7 +150,7 @@ tostruct_mg(ARGS_TOSTRUCT) {
 	dns_rdata_mg_t *mg = target;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 8);
+	REQUIRE(rdata->type == dns_rdatatype_mg);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -172,7 +172,7 @@ freestruct_mg(ARGS_FREESTRUCT) {
 	dns_rdata_mg_t *mg = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(mg->common.rdtype == 8);
+	REQUIRE(mg->common.rdtype == dns_rdatatype_mg);
 
 	if (mg->mctx == NULL)
 		return;
@@ -182,7 +182,7 @@ freestruct_mg(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_mg(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 8);
+	REQUIRE(rdata->type == dns_rdatatype_mg);
 
 	UNUSED(add);
 	UNUSED(arg);
@@ -196,7 +196,7 @@ digest_mg(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 8);
+	REQUIRE(rdata->type == dns_rdatatype_mg);
 
 	dns_rdata_toregion(rdata, &r);
 	dns_name_init(&name, NULL);
@@ -208,7 +208,7 @@ digest_mg(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_mg(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 8);
+	REQUIRE(type == dns_rdatatype_mg);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -220,7 +220,7 @@ checkowner_mg(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_mg(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 8);
+	REQUIRE(rdata->type == dns_rdatatype_mg);
 
 	UNUSED(rdata);
 	UNUSED(owner);

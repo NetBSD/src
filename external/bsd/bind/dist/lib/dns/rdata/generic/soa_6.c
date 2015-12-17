@@ -1,7 +1,7 @@
-/*	$NetBSD: soa_6.c,v 1.6 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.7 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2011, 2012, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2002  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -35,7 +35,7 @@ fromtext_soa(ARGS_FROMTEXT) {
 	isc_uint32_t n;
 	isc_boolean_t ok;
 
-	REQUIRE(type == 6);
+	REQUIRE(type == dns_rdatatype_soa);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -97,16 +97,16 @@ totext_soa(ARGS_TOTEXT) {
 	isc_boolean_t sub;
 	int i;
 	isc_boolean_t multiline;
-	isc_boolean_t comment;
+	isc_boolean_t comm;
 
-	REQUIRE(rdata->type == 6);
+	REQUIRE(rdata->type == dns_rdatatype_soa);
 	REQUIRE(rdata->length != 0);
 
 	multiline = ISC_TF((tctx->flags & DNS_STYLEFLAG_MULTILINE) != 0);
 	if (multiline)
-		comment = ISC_TF((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0);
+		comm = ISC_TF((tctx->flags & DNS_STYLEFLAG_RRCOMMENT) != 0);
 	else
-		comment = ISC_FALSE;
+		comm = ISC_FALSE;
 
 
 	dns_name_init(&mname, NULL);
@@ -138,9 +138,9 @@ totext_soa(ARGS_TOTEXT) {
 		unsigned long num;
 		num = uint32_fromregion(&dregion);
 		isc_region_consume(&dregion, 4);
-		sprintf(buf, comment ? "%-10lu ; " : "%lu", num);
+		sprintf(buf, comm ? "%-10lu ; " : "%lu", num);
 		RETERR(str_totext(buf, target));
-		if (comment) {
+		if (comm) {
 			RETERR(str_totext(soa_fieldnames[i], target));
 			/* Print times in week/day/hour/minute/second form */
 			if (i >= 1) {
@@ -167,7 +167,7 @@ fromwire_soa(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 	isc_region_t tregion;
 
-	REQUIRE(type == 6);
+	REQUIRE(type == dns_rdatatype_soa);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -204,7 +204,7 @@ towire_soa(ARGS_TOWIRE) {
 	dns_offsets_t moffsets;
 	dns_offsets_t roffsets;
 
-	REQUIRE(rdata->type == 6);
+	REQUIRE(rdata->type == dns_rdatatype_soa);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -241,7 +241,7 @@ compare_soa(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 6);
+	REQUIRE(rdata1->type == dns_rdatatype_soa);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -282,7 +282,7 @@ fromstruct_soa(ARGS_FROMSTRUCT) {
 	dns_rdata_soa_t *soa = source;
 	isc_region_t region;
 
-	REQUIRE(type == 6);
+	REQUIRE(type == dns_rdatatype_soa);
 	REQUIRE(source != NULL);
 	REQUIRE(soa->common.rdtype == type);
 	REQUIRE(soa->common.rdclass == rdclass);
@@ -308,7 +308,7 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	dns_name_t name;
 	isc_result_t result;
 
-	REQUIRE(rdata->type == 6);
+	REQUIRE(rdata->type == dns_rdatatype_soa);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -360,7 +360,7 @@ freestruct_soa(ARGS_FREESTRUCT) {
 	dns_rdata_soa_t *soa = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(soa->common.rdtype == 6);
+	REQUIRE(soa->common.rdtype == dns_rdatatype_soa);
 
 	if (soa->mctx == NULL)
 		return;
@@ -376,7 +376,7 @@ additionaldata_soa(ARGS_ADDLDATA) {
 	UNUSED(add);
 	UNUSED(arg);
 
-	REQUIRE(rdata->type == 6);
+	REQUIRE(rdata->type == dns_rdatatype_soa);
 
 	return (ISC_R_SUCCESS);
 }
@@ -386,7 +386,7 @@ digest_soa(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 6);
+	REQUIRE(rdata->type == dns_rdatatype_soa);
 
 	dns_rdata_toregion(rdata, &r);
 
@@ -406,7 +406,7 @@ digest_soa(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_soa(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 6);
+	REQUIRE(type == dns_rdatatype_soa);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -421,7 +421,7 @@ checknames_soa(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 6);
+	REQUIRE(rdata->type == dns_rdatatype_soa);
 
 	UNUSED(owner);
 

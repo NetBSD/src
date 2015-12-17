@@ -1,7 +1,7 @@
-/*	$NetBSD: ptr_12.c,v 1.4 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.5 2015/12/17 04:00:44 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -32,7 +32,7 @@ fromtext_ptr(ARGS_FROMTEXT) {
 	dns_name_t name;
 	isc_buffer_t buffer;
 
-	REQUIRE(type == 12);
+	REQUIRE(type == dns_rdatatype_ptr);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -65,7 +65,7 @@ totext_ptr(ARGS_TOTEXT) {
 	dns_name_t prefix;
 	isc_boolean_t sub;
 
-	REQUIRE(rdata->type == 12);
+	REQUIRE(rdata->type == dns_rdatatype_ptr);
 	REQUIRE(rdata->length != 0);
 
 	dns_name_init(&name, NULL);
@@ -83,7 +83,7 @@ static inline isc_result_t
 fromwire_ptr(ARGS_FROMWIRE) {
 	dns_name_t name;
 
-	REQUIRE(type == 12);
+	REQUIRE(type == dns_rdatatype_ptr);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -100,7 +100,7 @@ towire_ptr(ARGS_TOWIRE) {
 	dns_offsets_t offsets;
 	isc_region_t region;
 
-	REQUIRE(rdata->type == 12);
+	REQUIRE(rdata->type == dns_rdatatype_ptr);
 	REQUIRE(rdata->length != 0);
 
 	dns_compress_setmethods(cctx, DNS_COMPRESS_GLOBAL14);
@@ -121,7 +121,7 @@ compare_ptr(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 12);
+	REQUIRE(rdata1->type == dns_rdatatype_ptr);
 	REQUIRE(rdata1->length != 0);
 	REQUIRE(rdata2->length != 0);
 
@@ -142,7 +142,7 @@ fromstruct_ptr(ARGS_FROMSTRUCT) {
 	dns_rdata_ptr_t *ptr = source;
 	isc_region_t region;
 
-	REQUIRE(type == 12);
+	REQUIRE(type == dns_rdatatype_ptr);
 	REQUIRE(source != NULL);
 	REQUIRE(ptr->common.rdtype == type);
 	REQUIRE(ptr->common.rdclass == rdclass);
@@ -160,7 +160,7 @@ tostruct_ptr(ARGS_TOSTRUCT) {
 	dns_rdata_ptr_t *ptr = target;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 12);
+	REQUIRE(rdata->type == dns_rdatatype_ptr);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length != 0);
 
@@ -182,7 +182,7 @@ freestruct_ptr(ARGS_FREESTRUCT) {
 	dns_rdata_ptr_t *ptr = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(ptr->common.rdtype == 12);
+	REQUIRE(ptr->common.rdtype == dns_rdatatype_ptr);
 
 	if (ptr->mctx == NULL)
 		return;
@@ -193,7 +193,7 @@ freestruct_ptr(ARGS_FREESTRUCT) {
 
 static inline isc_result_t
 additionaldata_ptr(ARGS_ADDLDATA) {
-	REQUIRE(rdata->type == 12);
+	REQUIRE(rdata->type == dns_rdatatype_ptr);
 
 	UNUSED(rdata);
 	UNUSED(add);
@@ -207,7 +207,7 @@ digest_ptr(ARGS_DIGEST) {
 	isc_region_t r;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 12);
+	REQUIRE(rdata->type == dns_rdatatype_ptr);
 
 	dns_rdata_toregion(rdata, &r);
 	dns_name_init(&name, NULL);
@@ -219,7 +219,7 @@ digest_ptr(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_ptr(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 12);
+	REQUIRE(type == dns_rdatatype_ptr);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -270,10 +270,13 @@ checknames_ptr(ARGS_CHECKNAMES) {
 	isc_region_t region;
 	dns_name_t name;
 
-	REQUIRE(rdata->type == 12);
+	REQUIRE(rdata->type == dns_rdatatype_ptr);
 
 	if (rdata->rdclass != dns_rdataclass_in)
 	    return (ISC_TRUE);
+
+	if (dns_name_isdnssd(owner))
+		return (ISC_TRUE);
 
 	if (dns_name_issubdomain(owner, &in_addr_arpa) ||
 	    dns_name_issubdomain(owner, &ip6_arpa) ||

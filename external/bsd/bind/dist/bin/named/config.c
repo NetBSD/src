@@ -1,7 +1,7 @@
-/*	$NetBSD: config.c,v 1.11 2015/07/08 17:28:55 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.12 2015/12/17 04:00:41 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2001-2003  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -168,7 +168,14 @@ options {\n\
 	dnssec-enable yes;\n\
 	dnssec-validation yes; \n\
 	dnssec-accept-expired no;\n\
-	clients-per-query 10;\n\
+"
+#ifdef ENABLE_FETCHLIMIT
+" 	fetches-per-server 0;\n\
+	fetches-per-zone 0;\n\
+	fetch-quota-params 100 0.1 0.3 0.7;\n\
+"
+#endif /* ENABLE_FETCHLIMIT */
+"	clients-per-query 10;\n\
 	max-clients-per-query 100;\n\
 	max-recursion-depth 7;\n\
 	max-recursion-queries 75;\n\
@@ -454,10 +461,6 @@ ns_config_getiplist(const cfg_obj_t *config, const cfg_obj_t *list,
 	}
 
 	if (dscpsp != NULL) {
-		dscps = isc_mem_get(mctx, count * sizeof(isc_dscp_t));
-		if (dscps == NULL)
-			return (ISC_R_NOMEMORY);
-
 		dscpobj = cfg_tuple_get(list, "dscp");
 		if (dscpobj != NULL && cfg_obj_isuint32(dscpobj)) {
 			if (cfg_obj_asuint32(dscpobj) > 63) {
@@ -468,11 +471,18 @@ ns_config_getiplist(const cfg_obj_t *config, const cfg_obj_t *list,
 			}
 			dscp = (isc_dscp_t)cfg_obj_asuint32(dscpobj);
 		}
+
+		dscps = isc_mem_get(mctx, count * sizeof(isc_dscp_t));
+		if (dscps == NULL)
+			return (ISC_R_NOMEMORY);
 	}
 
 	addrs = isc_mem_get(mctx, count * sizeof(isc_sockaddr_t));
-	if (addrs == NULL)
+	if (addrs == NULL) {
+		if (dscps != NULL)
+			isc_mem_put(mctx, dscps, count * sizeof(isc_dscp_t));
 		return (ISC_R_NOMEMORY);
+	}
 
 	for (element = cfg_list_first(addrlist);
 	     element != NULL;
@@ -562,7 +572,7 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 	const cfg_obj_t *portobj;
 	const cfg_obj_t *dscpobj;
 	in_port_t port;
-	isc_dscp_t dscp;
+	isc_dscp_t dscp = -1;
 	dns_fixedname_t fname;
 	isc_sockaddr_t *addrs = NULL;
 	isc_dscp_t *dscps = NULL;
@@ -611,7 +621,8 @@ ns_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 			cfg_obj_log(dscpobj, ns_g_lctx, ISC_LOG_ERROR,
 				    "dscp value '%u' is out of range",
 				    cfg_obj_asuint32(dscpobj));
-			return (ISC_R_RANGE);
+			result = ISC_R_RANGE;
+			goto cleanup;
 		}
 		dscp = (isc_dscp_t)cfg_obj_asuint32(dscpobj);
 	}
