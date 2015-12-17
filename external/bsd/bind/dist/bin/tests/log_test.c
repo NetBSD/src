@@ -1,7 +1,7 @@
-/*	$NetBSD: log_test.c,v 1.6 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: log_test.c,v 1.7 2015/12/17 04:00:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2007, 2011, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2007, 2011, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -28,6 +28,7 @@
 
 #include <isc/commandline.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/string.h>
 #include <isc/util.h>
 

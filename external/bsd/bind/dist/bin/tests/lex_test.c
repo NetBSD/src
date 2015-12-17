@@ -1,7 +1,7 @@
-/*	$NetBSD: lex_test.c,v 1.6 2014/12/10 04:37:53 christos Exp $	*/
+/*	$NetBSD: lex_test.c,v 1.7 2015/12/17 04:00:42 christos Exp $	*/
 
 /*
- * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004, 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -25,6 +25,7 @@
 #include <isc/commandline.h>
 #include <isc/lex.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/util.h>
 
 isc_mem_t *mctx;
