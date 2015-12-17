@@ -1,7 +1,7 @@
-/*	$NetBSD: stats.c,v 1.1.1.7 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.1.1.8 2015/12/17 03:22:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2012-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2012-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -171,19 +171,22 @@ isc_stats_detach(isc_stats_t **statsp) {
 
 	LOCK(&stats->lock);
 	stats->references--;
-	UNLOCK(&stats->lock);
 
 	if (stats->references == 0) {
 		isc_mem_put(stats->mctx, stats->copiedcounters,
 			    sizeof(isc_stat_t) * stats->ncounters);
 		isc_mem_put(stats->mctx, stats->counters,
 			    sizeof(isc_stat_t) * stats->ncounters);
+		UNLOCK(&stats->lock);
 		DESTROYLOCK(&stats->lock);
 #ifdef ISC_RWLOCK_USEATOMIC
 		isc_rwlock_destroy(&stats->counterlock);
 #endif
 		isc_mem_putanddetach(&stats->mctx, stats, sizeof(*stats));
+		return;
 	}
+
+	UNLOCK(&stats->lock);
 }
 
 int

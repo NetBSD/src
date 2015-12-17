@@ -1,7 +1,7 @@
-/*	$NetBSD: isc-hmac-fixup.c,v 1.1.1.6 2014/12/10 03:34:31 christos Exp $	*/
+/*	$NetBSD: isc-hmac-fixup.c,v 1.1.1.7 2015/12/17 03:21:58 christos Exp $	*/
 
 /*
- * Copyright (C) 2010, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2010, 2014, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -23,6 +23,7 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/md5.h>
+#include <isc/print.h>
 #include <isc/region.h>
 #include <isc/result.h>
 #include <isc/sha1.h>

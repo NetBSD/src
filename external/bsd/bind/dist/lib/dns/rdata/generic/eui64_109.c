@@ -1,7 +1,7 @@
-/*	$NetBSD: eui64_109.c,v 1.1.1.4 2014/12/10 03:34:42 christos Exp $	*/
+/*	$NetBSD: eui64_109.c,v 1.1.1.5 2015/12/17 03:22:09 christos Exp $	*/
 
 /*
- * Copyright (C) 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -30,7 +30,7 @@ fromtext_eui64(ARGS_FROMTEXT) {
 	unsigned int l0, l1, l2, l3, l4, l5, l6, l7;
 	int n;
 
-	REQUIRE(type == 109);
+	REQUIRE(type == dns_rdatatype_eui64);
 
 	UNUSED(type);
 	UNUSED(rdclass);
@@ -61,7 +61,7 @@ static inline isc_result_t
 totext_eui64(ARGS_TOTEXT) {
 	char buf[sizeof("xx-xx-xx-xx-xx-xx-xx-xx")];
 
-	REQUIRE(rdata->type == 109);
+	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(tctx);
@@ -79,7 +79,7 @@ static inline isc_result_t
 fromwire_eui64(ARGS_FROMWIRE) {
 	isc_region_t sregion;
 
-	REQUIRE(type == 109);
+	REQUIRE(type == dns_rdatatype_eui64);
 
 	UNUSED(type);
 	UNUSED(options);
@@ -96,7 +96,7 @@ fromwire_eui64(ARGS_FROMWIRE) {
 static inline isc_result_t
 towire_eui64(ARGS_TOWIRE) {
 
-	REQUIRE(rdata->type == 109);
+	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(cctx);
@@ -111,7 +111,7 @@ compare_eui64(ARGS_COMPARE) {
 
 	REQUIRE(rdata1->type == rdata2->type);
 	REQUIRE(rdata1->rdclass == rdata2->rdclass);
-	REQUIRE(rdata1->type == 109);
+	REQUIRE(rdata1->type == dns_rdatatype_eui64);
 	REQUIRE(rdata1->length == 8);
 	REQUIRE(rdata2->length == 8);
 
@@ -124,7 +124,7 @@ static inline isc_result_t
 fromstruct_eui64(ARGS_FROMSTRUCT) {
 	dns_rdata_eui64_t *eui64 = source;
 
-	REQUIRE(type == 109);
+	REQUIRE(type == dns_rdatatype_eui64);
 	REQUIRE(source != NULL);
 	REQUIRE(eui64->common.rdtype == type);
 	REQUIRE(eui64->common.rdclass == rdclass);
@@ -139,7 +139,7 @@ static inline isc_result_t
 tostruct_eui64(ARGS_TOSTRUCT) {
 	dns_rdata_eui64_t *eui64 = target;
 
-	REQUIRE(rdata->type == 109);
+	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(target != NULL);
 	REQUIRE(rdata->length == 8);
 
@@ -158,7 +158,7 @@ freestruct_eui64(ARGS_FREESTRUCT) {
 	dns_rdata_eui64_t *eui64 = source;
 
 	REQUIRE(source != NULL);
-	REQUIRE(eui64->common.rdtype == 109);
+	REQUIRE(eui64->common.rdtype == dns_rdatatype_eui64);
 
 	return;
 }
@@ -166,7 +166,7 @@ freestruct_eui64(ARGS_FREESTRUCT) {
 static inline isc_result_t
 additionaldata_eui64(ARGS_ADDLDATA) {
 
-	REQUIRE(rdata->type == 109);
+	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(rdata);
@@ -180,7 +180,7 @@ static inline isc_result_t
 digest_eui64(ARGS_DIGEST) {
 	isc_region_t r;
 
-	REQUIRE(rdata->type == 109);
+	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
 	dns_rdata_toregion(rdata, &r);
@@ -191,7 +191,7 @@ digest_eui64(ARGS_DIGEST) {
 static inline isc_boolean_t
 checkowner_eui64(ARGS_CHECKOWNER) {
 
-	REQUIRE(type == 109);
+	REQUIRE(type == dns_rdatatype_eui64);
 
 	UNUSED(name);
 	UNUSED(type);
@@ -204,7 +204,7 @@ checkowner_eui64(ARGS_CHECKOWNER) {
 static inline isc_boolean_t
 checknames_eui64(ARGS_CHECKNAMES) {
 
-	REQUIRE(rdata->type == 109);
+	REQUIRE(rdata->type == dns_rdatatype_eui64);
 	REQUIRE(rdata->length == 8);
 
 	UNUSED(rdata);

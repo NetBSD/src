@@ -1,7 +1,7 @@
-/*	$NetBSD: hmacmd5.c,v 1.1.1.10 2015/07/08 15:38:04 christos Exp $	*/
+/*	$NetBSD: hmacmd5.c,v 1.1.1.11 2015/12/17 03:22:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2004-2007, 2009, 2013, 2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2007, 2009, 2013-2015  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -328,5 +328,5 @@ isc_hmacmd5_verify2(isc_hmacmd5_t *ctx, unsigned char *digest, size_t len) {
 
 	REQUIRE(len <= ISC_MD5_DIGESTLENGTH);
 	isc_hmacmd5_sign(ctx, newdigest);
-	return (isc_safe_memcmp(digest, newdigest, len));
+	return (isc_safe_memequal(digest, newdigest, len));
 }

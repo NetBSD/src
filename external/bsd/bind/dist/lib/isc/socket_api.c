@@ -1,7 +1,7 @@
-/*	$NetBSD: socket_api.c,v 1.1.1.10 2014/12/10 03:34:43 christos Exp $	*/
+/*	$NetBSD: socket_api.c,v 1.1.1.11 2015/12/17 03:22:10 christos Exp $	*/
 
 /*
- * Copyright (C) 2009, 2011-2014  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -237,10 +237,10 @@ isc_socket_gettype(isc_socket_t *sock) {
 }
 
 void
-isc_socket_setname(isc_socket_t *socket, const char *name, void *tag) {
-	REQUIRE(ISCAPI_SOCKET_VALID(socket));
+isc_socket_setname(isc_socket_t *sock, const char *name, void *tag) {
+	REQUIRE(ISCAPI_SOCKET_VALID(sock));
 
-	UNUSED(socket);		/* in case REQUIRE() is empty */
+	UNUSED(sock);		/* in case REQUIRE() is empty */
 	UNUSED(name);
 	UNUSED(tag);
 }

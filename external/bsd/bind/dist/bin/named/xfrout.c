@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.1.1.11 2015/07/08 15:37:33 christos Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.1.1.12 2015/12/17 03:21:52 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -137,6 +137,7 @@ log_rr(dns_name_t *name, dns_rdata_t *rdata, isc_uint32_t ttl) {
 	dns_rdataset_t rds;
 	dns_rdata_t rd = DNS_RDATA_INIT;
 
+	dns_rdatalist_init(&rdl);
 	rdl.type = rdata->type;
 	rdl.rdclass = rdata->rdclass;
 	rdl.ttl = ttl;
@@ -145,8 +146,6 @@ log_rr(dns_name_t *name, dns_rdata_t *rdata, isc_uint32_t ttl) {
 		rdl.covers = dns_rdata_covers(rdata);
 	else
 		rdl.covers = dns_rdatatype_none;
-	ISC_LIST_INIT(rdl.rdata);
-	ISC_LINK_INIT(&rdl, link);
 	dns_rdataset_init(&rds);
 	dns_rdata_init(&rd);
 	dns_rdata_clone(rdata, &rd);
@@ -1463,8 +1462,6 @@ sendstream(xfrout_ctx_t *xfr) {
 			msgrdl->covers = dns_rdata_covers(rdata);
 		else
 			msgrdl->covers = dns_rdatatype_none;
-		ISC_LINK_INIT(msgrdl, link);
-		ISC_LIST_INIT(msgrdl->rdata);
 		ISC_LIST_APPEND(msgrdl->rdata, msgrdata, link);
 
 		result = dns_message_gettemprdataset(msg, &msgrds);

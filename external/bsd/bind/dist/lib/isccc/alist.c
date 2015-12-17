@@ -1,7 +1,7 @@
-/*	$NetBSD: alist.c,v 1.1.1.5 2014/12/10 03:34:45 christos Exp $	*/
+/*	$NetBSD: alist.c,v 1.1.1.6 2015/12/17 03:22:12 christos Exp $	*/
 
 /*
- * Portions Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
+ * Portions Copyright (C) 2004, 2005, 2007, 2015  Internet Systems Consortium, Inc. ("ISC")
  * Portions Copyright (C) 2001  Internet Software Consortium.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -42,6 +42,7 @@
 
 #include <isccc/alist.h>
 #include <isc/assertions.h>
+#include <isc/print.h>
 #include <isccc/result.h>
 #include <isccc/sexpr.h>
 #include <isccc/util.h>
@@ -52,7 +53,7 @@
 #define ALIST_TAG		"*alist*"
 #define MAX_INDENT		64
 
-static char spaces[MAX_INDENT + 1] = 
+static char spaces[MAX_INDENT + 1] =
 	"                                                                ";
 
 isccc_sexpr_t *

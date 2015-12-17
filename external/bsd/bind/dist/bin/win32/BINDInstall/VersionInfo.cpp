@@ -277,7 +277,8 @@ CString CVersionInfo::QueryStringValue(CString value)
 		// You probably should change this to match it.
 		DWORD codePage = 0x040904B0;
 
-		sprintf(queryString, "\\StringFileInfo\\%08X\\%s", codePage, value);
+		sprintf(queryString, "\\StringFileInfo\\%08X\\%s",
+			codePage, (LPCTSTR) value);
 
 		if(VerQueryValue(m_versionInfo, queryString, &viBlob, &blobLen))
 			return((char *)viBlob);

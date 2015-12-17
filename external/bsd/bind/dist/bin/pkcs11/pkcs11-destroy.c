@@ -1,7 +1,7 @@
-/*	$NetBSD: pkcs11-destroy.c,v 1.1.1.9 2014/12/10 03:34:26 christos Exp $	*/
+/*	$NetBSD: pkcs11-destroy.c,v 1.1.1.10 2015/12/17 03:21:54 christos Exp $	*/
 
 /*
- * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2009, 2015  Internet Systems Consortium, Inc. ("ISC")
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -59,6 +59,7 @@
 #include <sys/types.h>
 
 #include <isc/commandline.h>
+#include <isc/print.h>
 #include <isc/result.h>
 #include <isc/types.h>
 

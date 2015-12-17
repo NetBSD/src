@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.1.1.15 2015/07/08 15:37:39 christos Exp $	*/
+/*	$NetBSD: rndc.c,v 1.1.1.16 2015/12/17 03:21:54 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -34,6 +34,7 @@
 #include <isc/log.h>
 #include <isc/net.h>
 #include <isc/mem.h>
+#include <isc/print.h>
 #include <isc/random.h>
 #include <isc/socket.h>
 #include <isc/stdtime.h>
@@ -107,7 +108,7 @@ command is one of the following:\n\
 		Add zone to given view. Requires new-zone-file option.\n\
   delzone [-clean] zone [class [view]]\n\
 		Removes zone from given view. Requires new-zone-file option.\n\
-  dumpdb [-all|-cache|-zones] [view ...]\n\
+  dumpdb [-all|-cache|-zones|-adb|-bad|-fail] [view ...]\n\
 		Dump cache(s) to the dump file (named_dump.db).\n\
   flush 	Flushes all of the server's caches.\n\
   flush [view]	Flushes the server's cache for a view.\n\
@@ -309,7 +310,7 @@ rndc_recvnonce(isc_task_t *task, isc_event_t *event) {
 		      " the command protocol,\n"
 		      "* this host is not authorized to connect,\n"
 		      "* the clocks are not synchronized,\n"
-		      "* the the key signing algorithm is incorrect, or\n"
+		      "* the key signing algorithm is incorrect, or\n"
 		      "* the key is invalid.");
 
 	if (ccmsg.result != ISC_R_SUCCESS)

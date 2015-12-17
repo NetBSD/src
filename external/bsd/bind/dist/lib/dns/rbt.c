@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.1.1.13 2015/07/08 15:38:01 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.1.1.14 2015/12/17 03:22:07 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007-2009, 2011-2015  Internet Systems Consortium, Inc. ("ISC")
@@ -2355,8 +2355,7 @@ rotate_left(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 		PARENT(LEFT(child)) = node;
 	LEFT(child) = node;
 
-	if (child != NULL)
-		PARENT(child) = PARENT(node);
+	PARENT(child) = PARENT(node);
 
 	if (IS_ROOT(node)) {
 		*rootp = child;
@@ -2388,8 +2387,7 @@ rotate_right(dns_rbtnode_t *node, dns_rbtnode_t **rootp) {
 		PARENT(RIGHT(child)) = node;
 	RIGHT(child) = node;
 
-	if (child != NULL)
-		PARENT(child) = PARENT(node);
+	PARENT(child) = PARENT(node);
 
 	if (IS_ROOT(node)) {
 		*rootp = child;
