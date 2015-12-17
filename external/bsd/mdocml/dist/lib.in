@@ -1,6 +1,7 @@
-/*	Id: lib.in,v 1.17 2013/10/13 15:24:03 schwarze Exp  */
+/*	$Id: lib.in,v 1.19 2015/12/17 22:31:12 christos Exp $ */
 /*
  * Copyright (c) 2009 Kristaps Dzonsons <kristaps@bsd.lv>
+ * Copyright (c) 2009, 2012 Joerg Sonnenberger <joerg@netbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above

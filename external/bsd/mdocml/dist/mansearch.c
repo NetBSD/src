@@ -1,4 +1,4 @@
-/*	$Id: mansearch.c,v 1.1.1.2 2015/12/17 21:58:48 christos Exp $ */
+/*	$Id: mansearch.c,v 1.2 2015/12/17 22:31:12 christos Exp $ */
 /*
  * Copyright (c) 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -596,7 +596,7 @@ sql_regexp(sqlite3_context *context, int argc, sqlite3_value **argv)
 
 	assert(2 == argc);
 	sqlite3_result_int(context, !regexec(
-	    (regex_t *)sqlite3_value_blob(argv[0]),
+	    (regex_t *)(intptr_t)sqlite3_value_blob(argv[0]),
 	    (const char *)sqlite3_value_text(argv[1]),
 	    0, NULL, 0));
 }
