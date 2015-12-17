@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.1 2015/12/15 04:38:30 marty Exp $
+#	$NetBSD: EXYNOS,v 1.2 2015/12/17 22:40:49 marty Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -216,8 +216,8 @@ exyo0		at mainbus?
 exy5422clk0	at exyo0			# Exynos5422 clock controller
 
 # Integrated Samsung UARTs
-#sscom*		at exyo0  port ?		# UART ?
-sscom2		at exyo0  port 2		# UART2
+sscom*		at fdt?				# UART ?
+#sscom2		at fdt?				# console
 
 # Exynos Watchdog Timer
 exyowdt0 	at fdt?				# watchdog
