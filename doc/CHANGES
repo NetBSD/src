@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2119 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2120 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -228,3 +228,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	adm1026hm(4): Add driver for ADM1026 i2c hardware monitor
 		[jdc 20151216]
 	bind: Import version 9.10.3-P2. [christos 20151216]
+	mdocml: Import 1.13.3. [christos 20151217]
