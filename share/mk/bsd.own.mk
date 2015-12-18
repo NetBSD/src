@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.881 2015/12/01 22:18:26 joerg Exp $
+#	$NetBSD: bsd.own.mk,v 1.882 2015/12/18 18:57:56 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -388,6 +388,7 @@ TOOL_RPCGEN=		RPCGEN_CPP=${CPP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}rpcgen
 TOOL_SED=		${TOOLDIR}/bin/${_TOOL_PREFIX}sed
 TOOL_SLC=		${TOOLDIR}/bin/${_TOOL_PREFIX}slc
 TOOL_SOELIM=		${TOOLDIR}/bin/${_TOOL_PREFIX}soelim
+TOOL_SORTINFO=		${TOOLDIR}/bin/${_TOOL_PREFIX}sortinfo
 TOOL_SPARKCRC=		${TOOLDIR}/bin/${_TOOL_PREFIX}sparkcrc
 TOOL_STAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}stat
 TOOL_STRFILE=		${TOOLDIR}/bin/${_TOOL_PREFIX}strfile
@@ -495,6 +496,7 @@ TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
 TOOL_RPCGEN=		rpcgen
 TOOL_SED=		sed
 TOOL_SOELIM=		soelim
+TOOL_SOELIM=		sortinfo
 TOOL_SPARKCRC=		sparkcrc
 TOOL_STAT=		stat
 TOOL_STRFILE=		strfile
