@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.45 2015/08/23 18:28:40 mrg Exp $
+# $NetBSD: mi,v 1.46 2015/12/18 19:00:45 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -32,6 +32,7 @@
 ./usr/bin/psroff				text-obsolete		obsolete
 ./usr/bin/refer					text-groff-bin		groff
 ./usr/bin/soelim				text-groff-bin	
+./usr/bin/sortinfo				text-texinfo-bin
 ./usr/bin/tbl					text-groff-bin		groff
 ./usr/bin/texi2dvi				text-texinfo-bin
 ./usr/bin/texindex				text-texinfo-bin
