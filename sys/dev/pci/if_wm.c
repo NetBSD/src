@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.382 2015/12/13 19:06:43 christos Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.383 2015/12/18 09:57:57 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.382 2015/12/13 19:06:43 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.383 2015/12/18 09:57:57 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4240,6 +4240,11 @@ wm_setup_msix(struct wm_softc *sc)
 	const char *intrstr = NULL;
 	char intrbuf[PCI_INTRSTR_LEN];
 	char intr_xname[INTRDEVNAMEBUF];
+	/*
+	 * To avoid other devices' interrupts, the affinity of Tx/Rx interrupts
+	 * start from CPU#1.
+	 */
+	int affinity_offset = 1;
 
 	error = wm_alloc_txrx_queues(sc);
 	if (error) {
@@ -4257,6 +4262,7 @@ wm_setup_msix(struct wm_softc *sc)
 	tx_established = 0;
 	for (qidx = 0; qidx < sc->sc_ntxqueues; qidx++) {
 		struct wm_txqueue *txq = &sc->sc_txq[qidx];
+		int affinity_to = (affinity_offset + intr_idx) % ncpu;
 
 		intrstr = pci_intr_string(pc, sc->sc_intrs[intr_idx], intrbuf,
 		    sizeof(intrbuf));
@@ -4279,12 +4285,12 @@ wm_setup_msix(struct wm_softc *sc)
 		}
 		kcpuset_zero(affinity);
 		/* Round-robin affinity */
-		kcpuset_set(affinity, intr_idx % ncpu);
+		kcpuset_set(affinity, affinity_to);
 		error = interrupt_distribute(vih, affinity, NULL);
 		if (error == 0) {
 			aprint_normal_dev(sc->sc_dev,
 			    "for TX interrupting at %s affinity to %u\n",
-			    intrstr, intr_idx % ncpu);
+			    intrstr, affinity_to);
 		} else {
 			aprint_normal_dev(sc->sc_dev,
 			    "for TX interrupting at %s\n", intrstr);
@@ -4303,6 +4309,7 @@ wm_setup_msix(struct wm_softc *sc)
 	rx_established = 0;
 	for (qidx = 0; qidx < sc->sc_nrxqueues; qidx++) {
 		struct wm_rxqueue *rxq = &sc->sc_rxq[qidx];
+		int affinity_to = (affinity_offset + intr_idx) % ncpu;
 
 		intrstr = pci_intr_string(pc, sc->sc_intrs[intr_idx], intrbuf,
 		    sizeof(intrbuf));
@@ -4325,12 +4332,12 @@ wm_setup_msix(struct wm_softc *sc)
 		}
 		kcpuset_zero(affinity);
 		/* Round-robin affinity */
-		kcpuset_set(affinity, intr_idx % ncpu);
+		kcpuset_set(affinity, affinity_to);
 		error = interrupt_distribute(vih, affinity, NULL);
 		if (error == 0) {
 			aprint_normal_dev(sc->sc_dev,
 			    "for RX interrupting at %s affinity to %u\n",
-			    intrstr, intr_idx % ncpu);
+			    intrstr, affinity_to);
 		} else {
 			aprint_normal_dev(sc->sc_dev,
 			    "for RX interrupting at %s\n", intrstr);
