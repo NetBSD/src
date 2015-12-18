@@ -1,4 +1,4 @@
-/*	$Id: mandoc.h,v 1.4 2015/12/17 22:31:12 christos Exp $ */
+/*	$Id: mandoc.h,v 1.5 2015/12/18 14:30:41 christos Exp $ */
 /*
  * Copyright (c) 2010, 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -431,7 +431,7 @@ void		  mparse_free(struct mparse *);
 void		  mparse_keep(struct mparse *);
 enum mandoclevel  mparse_open(struct mparse *, int *, const char *);
 enum mandoclevel  mparse_readfd(struct mparse *, int, const char *);
-enum mandoclevel  mparse_readmem(struct mparse *, void *, size_t,
+enum mandoclevel  mparse_readmem(struct mparse *, const void *, size_t,
 			const char *);
 void		  mparse_reset(struct mparse *);
 void		  mparse_result(struct mparse *,
