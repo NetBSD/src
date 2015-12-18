@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.137 2015/12/12 23:42:43 christos Exp $
+# $NetBSD: mi,v 1.138 2015/12/18 19:00:45 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -748,6 +748,7 @@
 ./usr/libdata/debug/usr/bin/smbutil.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sockstat.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/soelim.debug	comp-groff-debug	debug
+./usr/libdata/debug/usr/bin/sortinfo.debug	comp-texinfo-debug	debug
 ./usr/libdata/debug/usr/bin/sort.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/split.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/sqlite3.debug	comp-util-debug		debug
