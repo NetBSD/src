@@ -1,4 +1,4 @@
-/*	$Id: libmandoc.h,v 1.5 2015/12/17 22:31:12 christos Exp $ */
+/*	$Id: libmandoc.h,v 1.6 2015/12/18 14:30:41 christos Exp $ */
 /*
  * Copyright (c) 2009, 2010, 2011, 2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2013, 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -74,7 +74,7 @@ void		 man_addspan(struct man *, const struct tbl_span *);
 void		 man_addeqn(struct man *, const struct eqn *);
 
 int		 preconv_cue(const struct buf *, size_t);
-int		 preconv_encode(struct buf *, size_t *,
+int		 preconv_encode(const struct buf *, size_t *,
 			struct buf *, size_t *, int *);
 
 void		 roff_free(struct roff *);
