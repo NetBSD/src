@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2015/12/17 22:31:01 christos Exp $
+# $NetBSD: Makefile,v 1.9 2015/12/18 11:12:33 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ CPPFLAGS+=	-DUSE_WCHAR
 .else
 SRCS.libmandoc!=cd ${.PARSEDIR}/../../lib/libmandoc && ${MAKE} -V '$${SRCS}'
 
-SRCS+=		${SRCS.libmandoc}
+SRCS+=		${SRCS.libmandoc} compat_strtonum.c compat_reallocarray.c
 .endif
 
 .include <bsd.prog.mk>
