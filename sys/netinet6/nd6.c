@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.182 2015/12/07 06:19:13 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.183 2015/12/18 09:04:33 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.182 2015/12/07 06:19:13 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.183 2015/12/18 09:04:33 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1138,6 +1138,7 @@ nd6_free(struct rtentry *rt, struct llentry *ln, int gc)
 				nd6_llinfo_settimer_locked(ln,
 				    nd6_gctimer * hz);
 			splx(s);
+			LLE_WUNLOCK(ln);
 			return;
 		}
 
