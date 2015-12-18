@@ -1,4 +1,4 @@
-/*	$NetBSD: makemandb.c,v 1.29 2015/04/07 17:47:10 plunky Exp $	*/
+/*	$NetBSD: makemandb.c,v 1.30 2015/12/18 14:30:16 christos Exp $	*/
 /*
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * Copyright (c) 2011 Kristaps Dzonsons <kristaps@bsd.lv>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: makemandb.c,v 1.29 2015/04/07 17:47:10 plunky Exp $");
+__RCSID("$NetBSD: makemandb.c,v 1.30 2015/12/18 14:30:16 christos Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -129,129 +129,161 @@ static makemandb_flags mflags = { .verbosity = 1 };
 
 typedef	void (*pman_nf)(const struct man_node *n, mandb_rec *);
 typedef	void (*pmdoc_nf)(const struct mdoc_node *n, mandb_rec *);
-static	const pmdoc_nf mdocs[MDOC_MAX] = {
+static	const pmdoc_nf mdocs[MDOC_MAX + 1] = {
 	NULL, /* Ap */
 	NULL, /* Dd */
 	NULL, /* Dt */
 	NULL, /* Os */
+
 	pmdoc_Sh, /* Sh */
 	NULL, /* Ss */
 	pmdoc_Pp, /* Pp */
 	NULL, /* D1 */
+
 	NULL, /* Dl */
 	NULL, /* Bd */
 	NULL, /* Ed */
 	NULL, /* Bl */
+
 	NULL, /* El */
 	NULL, /* It */
 	NULL, /* Ad */
 	NULL, /* An */
+
 	NULL, /* Ar */
 	NULL, /* Cd */
 	NULL, /* Cm */
 	NULL, /* Dv */
+
 	NULL, /* Er */
 	NULL, /* Ev */
 	NULL, /* Ex */
 	NULL, /* Fa */
+
 	NULL, /* Fd */
 	NULL, /* Fl */
 	NULL, /* Fn */
 	NULL, /* Ft */
+
 	NULL, /* Ic */
 	NULL, /* In */
 	NULL, /* Li */
 	pmdoc_Nd, /* Nd */
+
 	pmdoc_Nm, /* Nm */
 	NULL, /* Op */
 	NULL, /* Ot */
 	NULL, /* Pa */
+
 	NULL, /* Rv */
 	NULL, /* St */
 	NULL, /* Va */
 	NULL, /* Vt */
+
 	pmdoc_Xr, /* Xr */
 	NULL, /* %A */
 	NULL, /* %B */
 	NULL, /* %D */
+
 	NULL, /* %I */
 	NULL, /* %J */
 	NULL, /* %N */
 	NULL, /* %O */
+
 	NULL, /* %P */
 	NULL, /* %R */
 	NULL, /* %T */
 	NULL, /* %V */
+
 	NULL, /* Ac */
 	NULL, /* Ao */
 	NULL, /* Aq */
 	NULL, /* At */
+
 	NULL, /* Bc */
 	NULL, /* Bf */
 	NULL, /* Bo */
 	NULL, /* Bq */
+
 	NULL, /* Bsx */
 	NULL, /* Bx */
 	NULL, /* Db */
 	NULL, /* Dc */
+
 	NULL, /* Do */
 	NULL, /* Dq */
 	NULL, /* Ec */
 	NULL, /* Ef */
+
 	NULL, /* Em */
 	NULL, /* Eo */
 	NULL, /* Fx */
 	NULL, /* Ms */
+
 	NULL, /* No */
 	NULL, /* Ns */
 	NULL, /* Nx */
 	NULL, /* Ox */
+
 	NULL, /* Pc */
 	NULL, /* Pf */
 	NULL, /* Po */
 	NULL, /* Pq */
+
 	NULL, /* Qc */
 	NULL, /* Ql */
 	NULL, /* Qo */
 	NULL, /* Qq */
+
 	NULL, /* Re */
 	NULL, /* Rs */
 	NULL, /* Sc */
 	NULL, /* So */
+
 	NULL, /* Sq */
 	NULL, /* Sm */
 	NULL, /* Sx */
 	NULL, /* Sy */
+
 	NULL, /* Tn */
 	NULL, /* Ux */
 	NULL, /* Xc */
 	NULL, /* Xo */
+
 	NULL, /* Fo */
 	NULL, /* Fc */
 	NULL, /* Oo */
 	NULL, /* Oc */
+
 	NULL, /* Bk */
 	NULL, /* Ek */
 	NULL, /* Bt */
 	NULL, /* Hf */
+
 	NULL, /* Fr */
 	NULL, /* Ud */
 	NULL, /* Lb */
 	NULL, /* Lp */
+
 	NULL, /* Lk */
 	NULL, /* Mt */
 	NULL, /* Brq */
 	NULL, /* Bro */
+
 	NULL, /* Brc */
 	NULL, /* %C */
 	NULL, /* Es */
 	NULL, /* En */
+
 	NULL, /* Dx */
 	NULL, /* %Q */
 	NULL, /* br */
 	NULL, /* sp */
+
 	NULL, /* %U */
 	NULL, /* Ta */
+	NULL, /* ll */
+	NULL, /* text */
 };
 
 static	const pman_nf mans[MAN_MAX] = {
@@ -276,7 +308,6 @@ static	const pman_nf mans[MAN_MAX] = {
 	NULL,	//I
 	NULL,	//IR
 	NULL,	//RI
-	NULL,	//na
 	NULL,	//sp
 	NULL,	//nf
 	NULL,	//fi
@@ -288,6 +319,12 @@ static	const pman_nf mans[MAN_MAX] = {
 	NULL,	//AT
 	NULL,	//in
 	NULL,	//ft
+	NULL,	//OP
+	NULL,	//EX
+	NULL,	//EE
+	NULL,	//UR
+	NULL,	//UE
+	NULL,	//ll
 };
 
 
@@ -295,6 +332,7 @@ int
 main(int argc, char *argv[])
 {
 	FILE *file;
+	struct mchars *mchars;
 	const char *sqlstr, *manconf = NULL;
 	char *line, *command, *parent;
 	char *errmsg;
@@ -336,7 +374,10 @@ main(int argc, char *argv[])
 	memset(&rec, 0, sizeof(rec));
 
 	init_secbuffs(&rec);
-	mp = mparse_alloc(MPARSE_AUTO, MANDOCLEVEL_FATAL, NULL, NULL, NULL);
+	mchars = mchars_alloc();
+	if (mchars == NULL)
+		errx(EXIT_FAILURE, "Can't allocate mchars");
+	mp = mparse_alloc(0, MANDOCLEVEL_BADARG, NULL, mchars, NULL);
 
 	if (manconf) {
 		char *arg;
@@ -433,6 +474,7 @@ main(int argc, char *argv[])
 		printf("Performing index update\n");
 	update_db(db, mp, &rec);
 	mparse_free(mp);
+	mchars_free(mchars);
 	free_secbuffs(&rec);
 
 	/* Commit the transaction */
@@ -865,7 +907,7 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
 
 	rec->xr_found = 0;
 
-	if (mparse_readmem(mp, buf, len, file) >= MANDOCLEVEL_FATAL) {
+	if (mparse_readmem(mp, buf, len, file) >= MANDOCLEVEL_BADARG) {
 		/* Printing this warning at verbosity level 2
 		 * because some packages from pkgsrc might trigger several
 		 * of such warnings.
@@ -875,7 +917,7 @@ begin_parse(const char *file, struct mparse *mp, mandb_rec *rec,
 		return;
 	}
 
-	mparse_result(mp, &mdoc, &man);
+	mparse_result(mp, &mdoc, &man, NULL);
 	if (mdoc == NULL && man == NULL) {
 		if (mflags.verbosity == 2)
 			warnx("Not a man(7) or mdoc(7) page");
@@ -1190,8 +1232,6 @@ pman_node(const struct man_node *n, mandb_rec *rec)
 
 	switch (n->type) {
 	case (MAN_BODY):
-		/* FALLTHROUGH */
-	case (MAN_TAIL):
 		/* FALLTHROUGH */
 	case (MAN_BLOCK):
 		/* FALLTHROUGH */
