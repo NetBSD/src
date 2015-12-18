@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1515 2015/12/16 07:59:01 jdc Exp $
+# $NetBSD: mi,v 1.1516 2015/12/18 19:00:45 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -522,6 +522,7 @@
 ./usr/share/man/cat1/smbutil.0			man-util-catman		.cat
 ./usr/share/man/cat1/sntp.0			man-ntp-catman		.cat
 ./usr/share/man/cat1/sockstat.0			man-util-catman		.cat
+./usr/share/man/cat1/sortinfo.0			man-texinfo-catman	.cat
 ./usr/share/man/cat1/sort.0			man-util-catman		.cat
 ./usr/share/man/cat1/source.0			man-util-catman		.cat
 ./usr/share/man/cat1/spell.0			man-util-catman		.cat
@@ -3652,6 +3653,7 @@
 ./usr/share/man/html1/smbutil.html		man-util-htmlman	html
 ./usr/share/man/html1/sntp.html			man-ntp-htmlman		html
 ./usr/share/man/html1/sockstat.html		man-util-htmlman	html
+./usr/share/man/html1/sortinfo.html		man-texinfo-htmlman	html
 ./usr/share/man/html1/sort.html			man-util-htmlman	html
 ./usr/share/man/html1/source.html		man-util-htmlman	html
 ./usr/share/man/html1/spell.html		man-util-htmlman	html
@@ -6434,6 +6436,7 @@
 ./usr/share/man/man1/smbutil.1			man-util-man		.man
 ./usr/share/man/man1/sntp.1			man-ntp-man		.man
 ./usr/share/man/man1/sockstat.1			man-util-man		.man
+./usr/share/man/man1/sortinfo.1			man-texinfo-man		.man
 ./usr/share/man/man1/sort.1			man-util-man		.man
 ./usr/share/man/man1/source.1			man-util-man		.man
 ./usr/share/man/man1/spell.1			man-util-man		.man
