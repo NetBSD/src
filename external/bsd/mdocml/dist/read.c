@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.11 2015/12/17 22:31:12 christos Exp $ */
+/*	$Id: read.c,v 1.12 2015/12/18 14:30:41 christos Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -68,7 +68,7 @@ struct	mparse {
 
 static	void	  choose_parser(struct mparse *);
 static	void	  resize_buf(struct buf *, size_t);
-static	void	  mparse_buf_r(struct mparse *, struct buf, size_t, int);
+static	void	  mparse_buf_r(struct mparse *, const struct buf, size_t, int);
 static	int	  read_whole_file(struct mparse *, const char *, int,
 				struct buf *, int *);
 static	void	  mparse_end(struct mparse *);
@@ -318,7 +318,7 @@ choose_parser(struct mparse *curp)
  * and indirectly (for .so file inclusion).
  */
 static void
-mparse_buf_r(struct mparse *curp, struct buf blk, size_t i, int start)
+mparse_buf_r(struct mparse *curp, const struct buf blk, size_t i, int start)
 {
 	const struct tbl_span	*span;
 	struct buf	 ln;
@@ -748,12 +748,12 @@ mparse_parse_buffer(struct mparse *curp, struct buf blk, const char *file)
 }
 
 enum mandoclevel
-mparse_readmem(struct mparse *curp, void *buf, size_t len,
+mparse_readmem(struct mparse *curp, const void *buf, size_t len,
 		const char *file)
 {
 	struct buf blk;
 
-	blk.buf = buf;
+	blk.buf = __UNCONST(buf);
 	blk.sz = len;
 
 	mparse_parse_buffer(curp, blk, file);
