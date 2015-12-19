@@ -1,4 +1,4 @@
-/*	$NetBSD: tar.c,v 1.72 2015/06/16 22:31:08 christos Exp $	*/
+/*	$NetBSD: tar.c,v 1.73 2015/12/19 18:28:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: tar.c,v 1.72 2015/06/16 22:31:08 christos Exp $");
+__RCSID("$NetBSD: tar.c,v 1.73 2015/12/19 18:28:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,8 @@ __RCSID("$NetBSD: tar.c,v 1.72 2015/06/16 22:31:08 christos Exp $");
 #include "pax.h"
 #include "extern.h"
 #include "tar.h"
+
+extern struct stat tst;
 
 /*
  * Routines for reading, writing and header identify of various versions of tar
@@ -587,6 +589,7 @@ tar_wr(ARCHD *arcn)
 {
 	HD_TAR *hd;
 	int len;
+	uintmax_t mtime;
 	char hdblk[sizeof(HD_TAR)];
 
 	/*
@@ -695,10 +698,11 @@ tar_wr(ARCHD *arcn)
 	/*
 	 * copy those fields that are independent of the type
 	 */
+	mtime = tst.st_ino ? tst.st_mtime : arcn->sb.st_mtime;
 	if (u32_oct((uintmax_t)arcn->sb.st_mode, hd->mode, sizeof(hd->mode), 0) ||
 	    u32_oct((uintmax_t)arcn->sb.st_uid, hd->uid, sizeof(hd->uid), 0) ||
 	    u32_oct((uintmax_t)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 0) ||
-	    u32_oct((uintmax_t)arcn->sb.st_mtime, hd->mtime, sizeof(hd->mtime), 1))
+	    u32_oct(mtime, hd->mtime, sizeof(hd->mtime), 1))
 		goto out;
 
 	/*
@@ -1046,6 +1050,7 @@ ustar_wr(ARCHD *arcn)
 {
 	HD_USTAR *hd;
 	char *pt;
+	uintmax_t mtime;
 	char hdblk[sizeof(HD_USTAR)];
 	const char *user, *group;
 
@@ -1210,7 +1215,8 @@ ustar_wr(ARCHD *arcn)
 		return size_err("UID", arcn);
 	if (u32_oct((uintmax_t)arcn->sb.st_gid, hd->gid, sizeof(hd->gid), 3))
 		return size_err("GID", arcn);
-	if (u32_oct((uintmax_t)arcn->sb.st_mtime,hd->mtime,sizeof(hd->mtime),3))
+	mtime = tst.st_ino ? tst.st_mtime : arcn->sb.st_mtime;
+	if (u32_oct(mtime, hd->mtime, sizeof(hd->mtime), 3))
 		return size_err("MTIME", arcn);
 	user = user_from_uid(arcn->sb.st_uid, 1);
 	group = group_from_gid(arcn->sb.st_gid, 1);

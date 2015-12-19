@@ -1,4 +1,4 @@
-.\" $NetBSD: tar.1,v 1.35 2015/04/11 16:22:07 wiz Exp $
+.\" $NetBSD: tar.1,v 1.36 2015/12/19 18:28:54 christos Exp $
 .\"
 .\" Copyright (c) 1996 SigmaSoft, Th. Lockert
 .\" All rights reserved.
@@ -25,7 +25,7 @@
 .\"
 .\"	OpenBSD: tar.1,v 1.28 2000/11/09 23:58:56 aaron Exp
 .\"
-.Dd April 11, 2015
+.Dd December 19, 2015
 .Dt TAR 1
 .Os
 .Sh NAME
@@ -297,6 +297,19 @@ can be processed.
 Cause files of type directory being copied or archived, or archive members of
 type directory being extracted, to match only the directory file or archive
 member and not the file hierarchy rooted at the directory.
+.It Fl Fl timestamp Ar timestamp
+Store all modification times in the archive with the
+.Ar timestamp
+given instead of the actual modification time of the individual archive member
+so that repeatable builds are possible.
+The
+.Ar timestamp
+can be a
+.Pa pathname ,
+where the timestamps are derived from that file, a parseable date for
+.Xr parsedate 3
+(this option is not yet available in the tools build), or an integer value
+interpreted as the number of seconds from the Epoch.
 .El
 .Pp
 The options
