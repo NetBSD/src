@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.133 2015/12/19 01:18:00 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.134 2015/12/19 01:51:42 christos Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.133 2015/12/19 01:18:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.134 2015/12/19 01:51:42 christos Exp $");
 #endif /* not lint */
 
 
@@ -6463,7 +6463,7 @@ udf_read_internal(struct udf_node *node, uint8_t *blob)
 
 	/* copy out info */
 	memcpy(blob, pos, inflen);
-	memset(&blob[inflen] 0, sector_size - inflen);
+	memset(&blob[inflen], 0, sector_size - inflen);
 
 	return 0;
 }
