@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.2 2015/12/17 22:40:49 marty Exp $
+#	$NetBSD: EXYNOS,v 1.3 2015/12/19 21:42:31 marty Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -209,6 +209,9 @@ fdt*		at simplebus?
 
 fregulator*	at fdt?
 
+#interrupt controller
+gic*		at fdt?
+
 # Exynos SoC
 exyo0		at mainbus?
 
@@ -223,8 +226,12 @@ sscom*		at fdt?				# UART ?
 exyowdt0 	at fdt?				# watchdog
 
 # GPIO
-exyogpio0	at exyo0
-gpio*		at exyogpio?
+exyopctl0	at fdt?
+exyopctl1	at fdt?
+exyopctl2	at fdt?
+exyopctl3	at fdt?
+exyopctl4	at fdt?
+#gpio*		at exyogpio?
 
 # On-board USB
 exyousb*	at exyo0
