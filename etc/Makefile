@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.424 2015/08/31 06:08:07 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.425 2015/12/19 23:37:43 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -185,6 +185,17 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
 
 .include "${NETBSDSRCDIR}/etc/Makefile.params"
+.if ${MKREPRO:Uno} == "no"
+BUILDER!=	echo $${USER-root}@$$(hostname)
+.else
+BUILDER=	builder@localhost.NetBSD.org
+.endif
+.if ${MKREPRO_TIMESTAMP:Uno} == "no"
+BUILD_DATE!=	date -u
+.else
+BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}"
+.endif
+
 CLEANFILES+=	etc-release
 etc-release: .EXEC .MAKE
 	${_MKTARGET_CREATE}
@@ -193,8 +204,8 @@ etc-release: .EXEC .MAKE
 		cat ${NETBSDSRCDIR}/sys/conf/copyright; \
 		echo ; \
 		echo "Build information:"; \
-		printf "%20s   %s\n" "Build date" "$$(date -u)"; \
-		printf "%20s   %s\n"  "Built by" "$${USER-root}@$$(hostname)"; \
+		printf "%20s   %s\n" "Build date" "${BUILD_DATE}"; \
+		printf "%20s   %s\n"  "Built by" "${BUILDER}"; \
 		if [ -n "${BUILDID}" ]; then \
 		    printf "%20s   %s\n"  "Build ID" "${BUILDID}" ; \
 		fi ; \
