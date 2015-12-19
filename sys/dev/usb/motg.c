@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.23 2015/12/19 09:55:07 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.24 2015/12/19 09:56:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.23 2015/12/19 09:55:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.24 2015/12/19 09:56:41 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -2126,9 +2126,7 @@ complete:
 void
 motg_device_data_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-#endif
+	struct motg_softc __diagused *sc = MOTG_XFER2SC(xfer);
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
