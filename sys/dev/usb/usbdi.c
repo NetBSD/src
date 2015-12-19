@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.34 2015/12/19 10:04:35 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.35 2015/12/19 10:06:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.34 2015/12/19 10:04:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.35 2015/12/19 10:06:32 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -775,17 +775,23 @@ usbd_set_interface(struct usbd_interface *iface, int altidx)
 	usbd_status err;
 	void *endpoints;
 
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+
 	if (LIST_FIRST(&iface->ui_pipes) != NULL)
 		return USBD_IN_USE;
 
 	endpoints = iface->ui_endpoints;
 	int nendpt = iface->ui_idesc->bNumEndpoints;
+	USBHIST_LOG(usbdebug, "iface %p endpoints = %p nendpt", iface,
+	    endpoints, iface->ui_idesc->bNumEndpoints, 0);
 	err = usbd_fill_iface_data(iface->ui_dev, iface->ui_index, altidx);
 	if (err)
 		return err;
 
 	/* new setting works, we can free old endpoints */
 	if (endpoints != NULL) {
+		USBHIST_LOG(usbdebug, "iface %p endpoints = %p nendpt", iface,
+		    endpoints, nendpt, 0);
 		kmem_free(endpoints, nendpt * sizeof(struct usbd_endpoint));
 	}
 	KASSERT(iface->ui_idesc != NULL);
