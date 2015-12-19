@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.183 2015/12/18 18:56:33 christos Exp $
+#	$NetBSD: Makefile,v 1.184 2015/12/19 01:10:31 christos Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -102,7 +102,7 @@ SUBDIR+= cap_mkdb crunchgen ctags gencat hexdump \
 		makewhatis mtree nbperf .WAIT uudecode
 .endif
 
-SUBDIR+= cat rpcgen join lorder m4 mkdep sortinfo tsort .WAIT yacc .WAIT awk .WAIT lex
+SUBDIR+= cat rpcgen join lorder m4 mkdep tsort .WAIT yacc .WAIT awk .WAIT lex
 
 .if ${TOOLS_BUILDRUMP} == "no"
 SUBDIR += .WAIT texinfo \
@@ -112,7 +112,8 @@ SUBDIR += .WAIT texinfo \
 	${DTRACE_BITS} \
 		asn1_compile cksum compile_et db \
 		file lint1 slc \
-		makefs .WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
+		makefs sortinfo \
+		.WAIT menuc mkcsmapper mkesdb mklocale mknod msgc \
 		.WAIT disklabel gpt \
 		.WAIT paxctl \
 		.WAIT fdisk \
