@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.35 2015/12/19 10:06:32 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.36 2015/12/19 10:11:13 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.35 2015/12/19 10:06:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.36 2015/12/19 10:11:13 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1087,7 +1087,7 @@ usbd_do_request_flags_pipe(struct usbd_device *dev, struct usbd_pipe *pipe,
 		return error;
 
 	usbd_setup_default_xfer(xfer, dev, 0, timeout, req,
-				data, UGETW(req->wLength), flags, 0);
+				data, UGETW(req->wLength), flags, NULL);
 	xfer->ux_pipe = pipe;
 	err = usbd_sync_transfer(xfer);
 #if defined(USB_DEBUG) || defined(DIAGNOSTIC)

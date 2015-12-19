@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.9 2015/10/06 21:32:15 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.10 2015/12/19 10:11:13 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.9 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.10 2015/12/19 10:11:13 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -320,7 +320,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 		return USBD_IOERROR;
 	}
 	usbd_setup_default_xfer(xfer, sc->atu_udev, 0, 500000, &req, data,
-	    length, USBD_SHORT_XFER_OK, 0);
+	    length, USBD_SHORT_XFER_OK, NULL);
 
 	err = usbd_sync_transfer(xfer);
 
