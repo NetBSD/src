@@ -343,6 +343,7 @@ __HEREDOC__
 	echo "extern	size_t	  strlcpy(char *, const char *, size_t);"
 
 [ ${HAVE_STRSEP} -eq 0 ] && \
+	echo "#undef strsep"
 	echo "extern	char	 *strsep(char **, const char *);"
 
 [ ${HAVE_STRTONUM} -eq 0 ] && \
