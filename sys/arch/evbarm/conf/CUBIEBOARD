@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.44 2015/11/16 12:35:54 bouyer Exp $
+#	$NetBSD: CUBIEBOARD,v 1.45 2015/12/19 13:28:22 skrll Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -10,6 +10,8 @@ include	"arch/evbarm/conf/std.awin"
 
 no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="cubieboard"
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 #options 	UVMHIST,UVMHIST_PRINT
 options 	ALLWINNER_A10
 options 	ALLWINNER_A20
