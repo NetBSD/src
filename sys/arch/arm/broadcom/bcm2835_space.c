@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_space.c,v 1.8 2015/02/28 09:34:34 skrll Exp $	*/
+/*	$NetBSD: bcm2835_space.c,v 1.9 2015/12/19 08:27:01 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.8 2015/02/28 09:34:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_space.c,v 1.9 2015/12/19 08:27:01 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,17 +292,16 @@ bcm2835_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
 	int pmap_flags;
 
 
-#if defined(BCM2836)
+	/* Attempt to find the PA device mapping */
 	pa = ba;
-#else
-	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
-#endif
-	/* this does device addresses */
-	if ((pd = pmap_devmap_find_pa(pa, size)) != NULL) {
+	if ((pd = pmap_devmap_find_pa(ba, size)) != NULL) {
 		/* Device was statically mapped. */
 		*bshp = pd->pd_va + (pa - pd->pd_pa);
 		return 0;
 	}
+
+	/* Now assume bus address so convert to PA */
+	pa = ba & ~BCM2835_BUSADDR_CACHE_MASK;
 
 	startpa = trunc_page(pa);
 	endpa = round_page(pa + size);
