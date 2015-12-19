@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.24 2015/12/19 09:56:41 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.25 2015/12/19 09:59:03 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.24 2015/12/19 09:56:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.25 2015/12/19 09:59:03 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -690,8 +690,7 @@ motg_softintr(void *v)
 	rx_status |= UREAD2(sc, MUSB2_REG_INTRX);
 	tx_status |= UREAD2(sc, MUSB2_REG_INTTX);
 
-	if (rx_status & 0x01)
-		panic("ctrl_rx %08x", rx_status);
+	KASSERTMSG((rx_status & 0x01) == 0, "ctrl_rx %08x", rx_status);
 	if (tx_status & 0x01)
 		motg_device_ctrl_intr_tx(sc);
 	for (i = 1; i <= sc->sc_ep_max; i++) {
@@ -1332,10 +1331,7 @@ motg_device_ctrl_start1(struct motg_softc *sc)
 	xfer->ux_status = USBD_IN_PROGRESS;
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
-#ifdef DIAGNOSTIC
-	if (!(xfer->ux_rqflags & URQ_REQUEST))
-		panic("motg_device_ctrl_transfer: not a request");
-#endif
+	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	// KASSERT(xfer->ux_actlen == 0);
 	xfer->ux_actlen = 0;
 
@@ -1408,11 +1404,7 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-#ifdef DIAGNOSTIC
-	if (ep->phase != DATA_IN &&
-	    ep->phase != STATUS_IN)
-		panic("motg_device_ctrl_intr_rx: bad phase %d", ep->phase);
-#endif
+	KASSERT(ep->phase == DATA_IN || ep->phase != STATUS_IN);
 	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
@@ -1529,11 +1521,9 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 		return;
 	}
 
-#ifdef DIAGNOSTIC
-	if (ep->phase != SETUP && ep->phase != DATA_OUT &&
-	    ep->phase != STATUS_OUT)
-		panic("motg_device_ctrl_intr_tx: bad phase %d", ep->phase);
-#endif
+	KASSERT(ep->phase == SETUP || ep->phase == DATA_OUT ||
+	    ep->phase == STATUS_OUT);
+
 	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
@@ -1781,10 +1771,7 @@ motg_device_data_start1(struct motg_softc *sc, struct motg_hw_ep *ep)
 	xfer->ux_status = USBD_IN_PROGRESS;
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
-#ifdef DIAGNOSTIC
-	if (xfer->ux_rqflags & URQ_REQUEST)
-		panic("motg_device_data_transfer: a request");
-#endif
+	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
 	// KASSERT(xfer->ux_actlen == 0);
 	xfer->ux_actlen = 0;
 
@@ -1942,10 +1929,7 @@ motg_device_intr_rx(struct motg_softc *sc, int epnumber)
 	    MUSB2_MASK_CSRL_RXERROR | MUSB2_MASK_CSRL_RXPKTRDY)) == 0)
 		return;
 
-#ifdef DIAGNOSTIC
-	if (ep->phase != DATA_IN)
-		panic("motg_device_intr_rx: bad phase %d", ep->phase);
-#endif
+	KASSERTMSG(ep->phase == DATA_IN, "phase %d", ep->phase);
 	if (csr & MUSB2_MASK_CSRL_RXNAKTO) {
 		csr &= ~MUSB2_MASK_CSRL_RXREQPKT;
 		UWRITE1(sc, MUSB2_REG_RXCSRL, csr);
@@ -2085,10 +2069,7 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 	}
 	if (xfer == NULL || xfer->ux_status != USBD_IN_PROGRESS)
 		goto complete;
-#ifdef DIAGNOSTIC
-	if (ep->phase != DATA_OUT)
-		panic("motg_device_intr_tx: bad phase %d", ep->phase);
-#endif
+	KASSERT(ep->phase == DATA_OUT);
 
 	otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	otgpipe->nexttoggle = otgpipe->nexttoggle ^ 1;
