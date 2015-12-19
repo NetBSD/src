@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.22 2015/12/19 09:47:57 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.23 2015/12/19 09:55:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.22 2015/12/19 09:47:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.23 2015/12/19 09:55:07 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -481,7 +481,7 @@ motg_init(struct motg_softc *sc)
 static int
 motg_select_ep(struct motg_softc *sc, struct usbd_pipe *pipe)
 {
-	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(pipe);
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	struct motg_hw_ep *ep;
 	int i, size;
@@ -522,7 +522,7 @@ usbd_status
 motg_open(struct usbd_pipe *pipe)
 {
 	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(pipe);
 	usb_endpoint_descriptor_t *ed = pipe->up_endpoint->ue_edesc;
 	uint8_t rhaddr = pipe->up_dev->ud_bus->ub_rhaddr;
 
@@ -1159,7 +1159,7 @@ static void
 motg_setup_endpoint_tx(struct usbd_xfer *xfer)
 {
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	struct usbd_device *dev = otgpipe->pipe.up_dev;
 	int epnumber = otgpipe->hw_ep->ep_number;
 
@@ -1209,7 +1209,7 @@ motg_setup_endpoint_rx(struct usbd_xfer *xfer)
 {
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
 	struct usbd_device *dev = xfer->ux_pipe->up_dev;
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	int epnumber = otgpipe->hw_ep->ep_number;
 
 	UWRITE1(sc, MUSB2_REG_RXFADDR(epnumber), dev->ud_addr);
@@ -1330,7 +1330,7 @@ motg_device_ctrl_start1(struct motg_softc *sc)
 		goto end;
 	}
 	xfer->ux_status = USBD_IN_PROGRESS;
-	KASSERT(otgpipe == (struct motg_pipe *)xfer->ux_pipe);
+	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
 #ifdef DIAGNOSTIC
 	if (!(xfer->ux_rqflags & URQ_REQUEST))
@@ -1385,7 +1385,7 @@ static void
 motg_device_ctrl_read(struct usbd_xfer *xfer)
 {
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	/* assume endpoint already selected */
 	motg_setup_endpoint_rx(xfer);
 	/* start transaction */
@@ -1664,7 +1664,7 @@ void
 motg_device_ctrl_close(struct usbd_pipe *pipe)
 {
 	struct motg_softc *sc __diagused = MOTG_PIPE2SC(pipe);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(pipe);
 	struct motg_pipe *otgpipeiter;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
@@ -1689,7 +1689,7 @@ motg_device_ctrl_close(struct usbd_pipe *pipe)
 void
 motg_device_ctrl_done(struct usbd_xfer *xfer)
 {
-	struct motg_pipe *otgpipe __diagused = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe __diagused = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(otgpipe->hw_ep->xfer != xfer);
@@ -1723,7 +1723,7 @@ static usbd_status
 motg_device_data_start(struct usbd_xfer *xfer)
 {
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	usbd_status err;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
@@ -1779,7 +1779,7 @@ motg_device_data_start1(struct motg_softc *sc, struct motg_hw_ep *ep)
 		goto end;
 	}
 	xfer->ux_status = USBD_IN_PROGRESS;
-	KASSERT(otgpipe == (struct motg_pipe *)xfer->ux_pipe);
+	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
 #ifdef DIAGNOSTIC
 	if (xfer->ux_rqflags & URQ_REQUEST)
@@ -1830,7 +1830,7 @@ static void
 motg_device_data_read(struct usbd_xfer *xfer)
 {
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	uint32_t val;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
@@ -1861,7 +1861,7 @@ static void
 motg_device_data_write(struct usbd_xfer *xfer)
 {
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	struct motg_hw_ep *ep = otgpipe->hw_ep;
 	int datalen;
 	char *data;
@@ -1971,7 +1971,7 @@ motg_device_intr_rx(struct motg_softc *sc, int epnumber)
 		goto complete;
 	}
 
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	otgpipe->nexttoggle = otgpipe->nexttoggle ^ 1;
 
 	datalen = UREAD2(sc, MUSB2_REG_RXCOUNT);
@@ -2090,7 +2090,7 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 		panic("motg_device_intr_tx: bad phase %d", ep->phase);
 #endif
 
-	otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	otgpipe->nexttoggle = otgpipe->nexttoggle ^ 1;
 
 	if (ep->datalen == 0) {
@@ -2141,7 +2141,7 @@ void
 motg_device_data_close(struct usbd_pipe *pipe)
 {
 	struct motg_softc *sc __diagused = MOTG_PIPE2SC(pipe);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(pipe);
 	struct motg_pipe *otgpipeiter;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
@@ -2167,7 +2167,7 @@ motg_device_data_close(struct usbd_pipe *pipe)
 void
 motg_device_data_done(struct usbd_xfer *xfer)
 {
-	struct motg_pipe *otgpipe __diagused = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe __diagused = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(otgpipe->hw_ep->xfer != xfer);
@@ -2212,7 +2212,7 @@ done:
 void
 motg_device_clear_toggle(struct usbd_pipe *pipe)
 {
-	struct motg_pipe *otgpipe = (struct motg_pipe *)pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(pipe);
 	otgpipe->nexttoggle = 0;
 }
 
@@ -2223,7 +2223,7 @@ motg_device_xfer_abort(struct usbd_xfer *xfer)
 	int wake;
 	uint8_t csr;
 	struct motg_softc *sc = MOTG_XFER2SC(xfer);
-	struct motg_pipe *otgpipe = (struct motg_pipe *)xfer->ux_pipe;
+	struct motg_pipe *otgpipe = MOTG_PIPE2MPIPE(xfer->ux_pipe);
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
