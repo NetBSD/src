@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.882 2015/12/18 18:57:56 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.883 2015/12/19 00:25:50 wiz Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -496,7 +496,7 @@ TOOL_ROFF_RAW=		${TOOL_GROFF} -Z
 TOOL_RPCGEN=		rpcgen
 TOOL_SED=		sed
 TOOL_SOELIM=		soelim
-TOOL_SOELIM=		sortinfo
+TOOL_SORTINFO=		sortinfo
 TOOL_SPARKCRC=		sparkcrc
 TOOL_STAT=		stat
 TOOL_STRFILE=		strfile
