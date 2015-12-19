@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.134 2015/12/19 01:51:42 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.135 2015/12/19 03:16:09 dholland Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.134 2015/12/19 01:51:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.135 2015/12/19 03:16:09 dholland Exp $");
 #endif /* not lint */
 
 
@@ -6438,21 +6438,26 @@ udf_read_internal(struct udf_node *node, uint8_t *blob)
 	struct extfile_entry *efe = node->efe;
 	uint64_t inflen;
 	uint32_t sector_size;
-	uint8_t  *pos;
+	uint8_t  *srcpos;
 	int icbflags, addr_type;
 
 	/* get extent and do some paranoia checks */
 	ump = node->ump;
 	sector_size = ump->discinfo.sector_size;
 
+	/*
+	 * XXX there should be real bounds-checking logic here,
+	 * in case ->l_ea or ->inf_len contains nonsense.
+	 */
+
 	if (fe) {
 		inflen   = udf_rw64(fe->inf_len);
-		pos      = &fe->data[0] + udf_rw32(fe->l_ea);
+		srcpos   = &fe->data[0] + udf_rw32(fe->l_ea);
 		icbflags = udf_rw16(fe->icbtag.flags);
 	} else {
 		assert(node->efe);
 		inflen   = udf_rw64(efe->inf_len);
-		pos      = &efe->data[0] + udf_rw32(efe->l_ea);
+		srcpos   = &efe->data[0] + udf_rw32(efe->l_ea);
 		icbflags = udf_rw16(efe->icbtag.flags);
 	}
 	addr_type = icbflags & UDF_ICB_TAG_FLAGS_ALLOC_MASK;
@@ -6462,7 +6467,7 @@ udf_read_internal(struct udf_node *node, uint8_t *blob)
 	assert(inflen < sector_size);
 
 	/* copy out info */
-	memcpy(blob, pos, inflen);
+	memcpy(blob, srcpos, inflen);
 	memset(&blob[inflen], 0, sector_size - inflen);
 
 	return 0;
