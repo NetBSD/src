@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: maketars,v 1.84 2015/05/27 15:18:29 martin Exp $
+# $NetBSD: maketars,v 1.85 2015/12/19 22:29:23 christos Exp $
 #
 # Make release tar files for some or all lists.  Usage:
 # maketars [-b] [-x] [-i installdir] [-a arch] [-m machine] [-s setsdir]
@@ -28,6 +28,7 @@ metalog=
 installdir=
 etcdir=
 setlistdir=
+timestamp=
 setfilesonly=false
 quiet=false
 skipkeys=time,md5,sha1,sha384,sha512,rmd160,cksum
@@ -57,6 +58,7 @@ Usage: ${prog} [-L base,x,ext] [-b] [-x] [-y] [-i idir] [-a arch] [-m machine]
 	-U		do not preserve file permissions (with -i ..)
 	-d dest		\${DESTDIR}	[${dest}]
 	-t targetdir	\${RELEASEDIR}	[${tars}]
+	-T timestamp	Timestamp to set for all the files in the tar.
 	[setname ...]	Sets to build 	[${lists}]
 USAGE
 	exit 1
@@ -68,7 +70,7 @@ msg()
 }
 
 # handle args
-while getopts L:bxyi:a:m:qs:F:SM:N:Ud:t: ch; do
+while getopts L:bxyi:a:m:qs:F:SM:N:Ud:t:T: ch; do
 	case ${ch} in
 	L)
 		save_IFS="${IFS}"
@@ -128,6 +130,9 @@ while getopts L:bxyi:a:m:qs:F:SM:N:Ud:t: ch; do
 		;;
 	t)
 		tars="${OPTARG}"
+		;;
+	T)
+		timestamp="--timestamp $OPTARG"
 		;;
 	*)
 		usage
@@ -208,7 +213,7 @@ runpax() {
 	local s="$1"
 	shift
 	(cd "${dest}" && 
-	    ${PAX} -dOw -N"${etcdir}" -M "$@" < "${setlistdir}/set.${s}")
+	    ${PAX} -dOw ${timestamp} -N"${etcdir}" -M "$@" < "${setlistdir}/set.${s}")
 }
 
 #
