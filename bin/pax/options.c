@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.116 2015/04/11 15:41:33 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.117 2015/12/19 18:28:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.116 2015/04/11 15:41:33 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.117 2015/12/19 18:28:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -64,6 +64,7 @@ __RCSID("$NetBSD: options.c,v 1.116 2015/04/11 15:41:33 christos Exp $");
 #include <unistd.h>
 #include <inttypes.h>
 #include <paths.h>
+#include <util.h>
 #include "pax.h"
 #include "options.h"
 #include "cpio.h"
@@ -76,6 +77,7 @@ __RCSID("$NetBSD: options.c,v 1.116 2015/04/11 15:41:33 christos Exp $");
 /*
  * Routines which handle command line options
  */
+struct stat tst;		/* Timestamp to set if non-0 */
 
 static int nopids;		/* tar mode: suppress "pids" for -p option */
 static char flgch[] = FLGCH;	/* list of all possible flags (pax) */
@@ -88,6 +90,9 @@ static void printflg(unsigned int);
 static int c_frmt(const void *, const void *);
 static off_t str_offt(char *);
 static char *get_line(FILE *fp);
+#ifndef SMALL
+static int set_tstamp(const char *, struct stat *);
+#endif
 static void pax_options(int, char **);
 __dead static void pax_usage(void);
 static void tar_options(int, char **);
@@ -129,8 +134,9 @@ static int get_line_error;
 #define	OPT_SPARSE			16
 #define OPT_XZ				17
 #define OPT_GNU				18
+#define	OPT_TIMESTAMP			19
 #if !HAVE_NBTOOL_CONFIG_H
-#define	OPT_CHROOT			19
+#define	OPT_CHROOT			20
 #endif
 
 /*
@@ -803,6 +809,8 @@ struct option tar_longopts[] = {
 	{ "chroot",		no_argument,		0,
 						OPT_CHROOT },
 #endif
+	{ "timestamp",		required_argument,	0,
+						OPT_TIMESTAMP },
 #if 0 /* Not implemented */
 	{ "catenate",		no_argument,		0,	'A' },	/* F */
 	{ "concatenate",	no_argument,		0,	'A' },	/* F */
@@ -1142,6 +1150,14 @@ tar_options(int argc, char **argv)
 #if !HAVE_NBTOOL_CONFIG_H
 		case OPT_CHROOT:
 			do_chroot = 1;
+			break;
+#endif
+#ifndef SMALL
+		case OPT_TIMESTAMP:
+			if (set_tstamp(optarg, &tst) == -1) {
+				tty_warn(1, "Invalid timestamp `%s'", optarg);
+				tar_usage();
+			}
 			break;
 #endif
 		default:
@@ -2082,6 +2098,43 @@ get_line(FILE *f)
 	temp[len-1] = 0;
 	return temp;
 }
+
+#ifndef SMALL
+/*
+ * set_tstamp()
+ *	Use a specific timestamp for all individual files created in the
+ *	archive
+ */
+static int
+set_tstamp(const char *b, struct stat *st)
+{
+	time_t when;
+	char *eb;
+	long long l;
+
+	if (stat(b, st) != -1)
+		return 0;
+
+#ifndef HAVE_NBTOOL_CONFIG_H
+	errno = 0;
+	if ((when = parsedate(b, NULL, NULL)) == -1 && errno != 0)
+#endif
+	{
+		errno = 0;
+		l = strtoll(b, &eb, 0);
+		if (b == eb || *eb || errno)
+			return -1;
+		when = (time_t)l;
+	}
+
+	st->st_ino = 1;
+#if HAVE_STRUCT_STAT_BIRTHTIME 
+	st->st_birthtime =
+#endif
+	st->st_mtime = st->st_ctime = st->st_atime = when;
+	return 0;
+}
+#endif
 
 /*
  * no_op()
