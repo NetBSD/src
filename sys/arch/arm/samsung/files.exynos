@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.13 2015/12/17 22:39:37 marty Exp $
+#	$NetBSD: files.exynos,v 1.14 2015/12/19 21:42:31 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -74,10 +74,16 @@ file	arch/arm/samsung/exynos_sscom.c	exynos_sscom
 defflag opt_sscom.h     SSCOM0CONSOLE SSCOM1CONSOLE
 defparam opt_sscom.h    SSCOM_FREQ 
 
+# PINCTL
+device  exyopctl : gpiobus
+attach  exyopctl at fdt with exynos_pinctrl
+file	arch/arm/samsung/exynos_pinctrl.c	exynos_pinctl | exyo_io needs-flag
+file	arch/arm/samsung/exynos_gpio.c		exynos_pinctl | exyo_io needs-flag
+
 # GPIO
-device	exyogpio : gpiobus
-attach	exyogpio at exyo with exynos_gpio
-file	arch/arm/samsung/exynos_gpio.c		exynos_gpio | exyo_io needs-flag
+#device	exyogpio : gpiobus
+#attach	exyogpio at fdt with exynos_gpio
+#file	arch/arm/samsung/exynos_gpio.c		exynos_gpio | exyo_io needs-flag
 
 # USB2 Host Controller (EHCI/OHCI)
 device	exyousb { }
