@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.19 2015/12/19 09:18:58 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.20 2015/12/19 09:20:35 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.19 2015/12/19 09:18:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.20 2015/12/19 09:20:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -700,7 +700,7 @@ usbd_set_config_index(struct usbd_device *dev, int index, int msg)
 	/* Allocate and fill interface data. */
 	nifc = cdp->bNumInterface;
 	dev->ud_ifaces = kmem_alloc(nifc * sizeof(struct usbd_interface),
-			     KM_SLEEP);
+	    KM_SLEEP);
 	if (dev->ud_ifaces == NULL) {
 		err = USBD_NOMEM;
 		goto bad;
