@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.294 2015/08/27 14:04:07 nonaka Exp $
+#	$NetBSD: DEVNAMES,v 1.295 2015/12/19 19:59:52 jdc Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -39,9 +39,6 @@ adb			mac68k
 adb			macppc
 adc			hpcsh
 ade			alpha
-adt7463c		MI
-adt7467c		MI
-adm1030c		MI
 adv			MI
 adw			MI
 ae			evbmips
