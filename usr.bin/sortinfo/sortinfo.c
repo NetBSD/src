@@ -1,4 +1,4 @@
-/*	$NetBSD: sortinfo.c,v 1.1 2015/12/18 18:56:47 christos Exp $	*/
+/*	$NetBSD: sortinfo.c,v 1.2 2015/12/19 17:30:00 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -29,8 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sortinfo.c,v 1.1 2015/12/18 18:56:47 christos Exp $");
+__RCSID("$NetBSD: sortinfo.c,v 1.2 2015/12/19 17:30:00 joerg Exp $");
 
 /*
  * Sort a texinfo(1) directory file.
