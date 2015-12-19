@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.21 2015/10/20 15:31:21 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.22 2015/12/19 09:47:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.21 2015/10/20 15:31:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.22 2015/12/19 09:47:57 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -149,7 +149,7 @@ static struct usbd_xfer *
 static void		motg_freex(struct usbd_bus *, struct usbd_xfer *);
 static void		motg_get_lock(struct usbd_bus *, kmutex_t **);
 static int		motg_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
-    void *, int);
+			    void *, int);
 
 static void		motg_noop(struct usbd_pipe *pipe);
 static usbd_status	motg_portreset(struct motg_softc*);
