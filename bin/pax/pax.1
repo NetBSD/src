@@ -1,4 +1,4 @@
-.\"    $NetBSD: pax.1,v 1.65 2015/11/04 09:24:14 wiz Exp $
+.\"    $NetBSD: pax.1,v 1.66 2015/12/19 18:45:52 christos Exp $
 .\"
 .\" Copyright (c) 1992 Keith Muller.
 .\" Copyright (c) 1992, 1993
@@ -33,7 +33,7 @@
 .\"
 .\"	@(#)pax.1	8.4 (Berkeley) 4/18/94
 .\"
-.Dd November 3, 2015
+.Dd December 19, 2015
 .Dt PAX 1
 .Os
 .Sh NAME
@@ -742,6 +742,19 @@ Typical archive format restrictions include (but are not limited to):
 file pathname length, file size, link pathname length and the type of the file.
 .It Fl Fl gnu
 Recognize GNU tar extensions.
+.It Fl Fl timestamp Ar timestamp
+Store all modification times in the archive with the
+.Ar timestamp
+given instead of the actual modification time of the individual archive member
+so that repeatable builds are possible.
+The 
+.Ar timestamp
+can be a
+.Pa pathname ,
+where the timestamps are derived from that file, a parseable date for
+.Xr parsedate 3
+(this option is not yet available in the tools build), or an integer value
+interpreted as the number of seconds from the Epoch.
 .It Fl Fl xz
 Use
 .Xr xz 1

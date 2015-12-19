@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.117 2015/12/19 18:28:54 christos Exp $	*/
+/*	$NetBSD: options.c,v 1.118 2015/12/19 18:45:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-__RCSID("$NetBSD: options.c,v 1.117 2015/12/19 18:28:54 christos Exp $");
+__RCSID("$NetBSD: options.c,v 1.118 2015/12/19 18:45:52 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -257,6 +257,8 @@ struct option pax_longopts[] = {
 						OPT_XZ },
 	{ "gnu",		no_argument,		0,
 						OPT_GNU },
+	{ "timestamp",		required_argument,	0,
+						OPT_TIMESTAMP },
 	{ 0,			0,			0,
 						0 },
 };
@@ -667,6 +669,14 @@ pax_options(int argc, char **argv)
 		case OPT_GNU:
 			is_gnutar = 1;
 			break;
+#ifndef SMALL
+		case OPT_TIMESTAMP:
+			if (set_tstamp(optarg, &tst) == -1) {
+				tty_warn(1, "Invalid timestamp `%s'", optarg);
+				tar_usage();
+			}
+			break;
+#endif
 		case '?':
 		default:
 			pax_usage();
