@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.33 2015/10/21 07:36:31 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.34 2015/12/19 10:04:35 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.33 2015/10/21 07:36:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.34 2015/12/19 10:04:35 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -630,6 +630,7 @@ usbd_get_device_descriptor(struct usbd_device *dev)
 usb_endpoint_descriptor_t *
 usbd_interface2endpoint_descriptor(struct usbd_interface *iface, uint8_t index)
 {
+
 	if (index >= iface->ui_idesc->bNumEndpoints)
 		return NULL;
 	return iface->ui_endpoints[index].ue_edesc;
@@ -713,6 +714,7 @@ usbd_clear_endpoint_stall_async(struct usbd_pipe *pipe)
 void
 usbd_clear_endpoint_toggle(struct usbd_pipe *pipe)
 {
+
 	pipe->up_methods->upm_cleartoggle(pipe);
 }
 
@@ -729,6 +731,7 @@ usbd_endpoint_count(struct usbd_interface *iface, uint8_t *count)
 usbd_status
 usbd_interface_count(struct usbd_device *dev, uint8_t *count)
 {
+
 	if (dev->ud_cdesc == NULL)
 		return USBD_NOT_CONFIGURED;
 	*count = dev->ud_cdesc->bNumInterface;
@@ -739,6 +742,7 @@ void
 usbd_interface2device_handle(struct usbd_interface *iface,
 			     struct usbd_device **dev)
 {
+
 	*dev = iface->ui_dev;
 }
 
@@ -746,6 +750,7 @@ usbd_status
 usbd_device2interface_handle(struct usbd_device *dev,
 			     uint8_t ifaceno, struct usbd_interface **iface)
 {
+
 	if (dev->ud_cdesc == NULL)
 		return USBD_NOT_CONFIGURED;
 	if (ifaceno >= dev->ud_cdesc->bNumInterface)
