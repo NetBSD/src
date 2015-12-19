@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.3 2015/12/12 15:27:42 maxv Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.4 2015/12/19 13:15:21 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.3 2015/12/12 15:27:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.4 2015/12/19 13:15:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -76,6 +76,7 @@ modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
 		ms->ms_class = mi->mi_class;
 		ms->ms_refcnt = mod->mod_refcnt;
 		ms->ms_source = mod->mod_source;
+		ms->ms_flags = mod->mod_flags;
 		ms++;
 	}
 	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
