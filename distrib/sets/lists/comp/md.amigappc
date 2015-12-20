@@ -1,4 +1,4 @@
-# $NetBSD: md.amigappc,v 1.13 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.amigappc,v 1.14 2015/12/20 16:22:39 christos Exp $
 ./usr/include/amigappc				comp-c-include
 ./usr/include/amigappc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/amigappc/ansi.h			comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/amigappc/elf_machdep.h		comp-c-include
 ./usr/include/amigappc/endian.h			comp-c-include
 ./usr/include/amigappc/endian_machdep.h		comp-c-include
+./usr/include/amigappc/fenv.h			comp-c-include
 ./usr/include/amigappc/float.h			comp-c-include
 ./usr/include/amigappc/fpu.h			comp-c-include
 ./usr/include/amigappc/frame.h			comp-c-include
