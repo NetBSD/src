@@ -1,4 +1,4 @@
-/*	$NetBSD: sortinfo.c,v 1.2 2015/12/19 17:30:00 joerg Exp $	*/
+/*	$NetBSD: sortinfo.c,v 1.3 2015/12/20 00:40:44 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sortinfo.c,v 1.2 2015/12/19 17:30:00 joerg Exp $");
+__RCSID("$NetBSD: sortinfo.c,v 1.3 2015/12/20 00:40:44 christos Exp $");
 
 /*
  * Sort a texinfo(1) directory file.
@@ -47,14 +47,11 @@ __RCSID("$NetBSD: sortinfo.c,v 1.2 2015/12/19 17:30:00 joerg Exp $");
 #include <err.h>
 #include <util.h>
 
-struct line {
-	char *data;
-	struct line *next;
-};
-
 struct section {
 	const char *name;
-	struct line *line;
+	char **lines;
+	size_t nlines;
+	size_t maxlines;
 };
 
 static struct section *slist;
@@ -68,22 +65,21 @@ addsection(const char *line)
 		slist = erealloc(slist, maxsections * sizeof(*slist));
 	}
 	slist[nsections].name = estrdup(line);
-	slist[nsections].line = NULL;
+	slist[nsections].nlines = 0;
+	slist[nsections].maxlines = 20;
+	slist[nsections].lines = ecalloc(slist[nsections].maxlines,
+	    sizeof(*slist[nsections].lines));
 	return &slist[nsections++];
 }
 
-static struct line *
-addline(struct section *s, struct line *l, const char *line)
+static void
+addline(struct section *s, const char *line)
 {
-	if (l == NULL)
-		s->line = l = emalloc(sizeof(*l));
-	else {
-		l->next = emalloc(sizeof(*l));
-		l = l->next;
+	if (s->nlines == s->maxlines) {
+		s->maxlines += 20;
+		s->lines = erealloc(s->lines, s->maxlines * sizeof(*s->lines));
 	}
-	l->next = NULL;
-	l->data = estrdup(line);
-	return l;
+	s->lines[s->nlines++] = estrdup(line);
 }
 
 static int
@@ -96,11 +92,12 @@ compsection(const void *a, const void *b)
 static void
 printsection(const struct section *s)
 {
-	struct line *l;
+	size_t i;
+
 	fputc('\n', stdout);
 	printf("%s", s->name);
-	for (l = s->line; l; l = l->next)
-		printf("%s", l->data);
+	for (i = 0; i < s->nlines; i++)
+		printf("%s", s->lines[i]);
 }
 	
 int
@@ -110,7 +107,6 @@ main(int argc, char *argv[])
 	char *line;
 	int needsection;
 	struct section *s = NULL;
-	struct line *l = NULL;
 
 	while ((line = fgetln(stdin, &i)) != NULL) {
 		fputs(line, stdout);
@@ -130,20 +126,22 @@ main(int argc, char *argv[])
 		case '*':
 			if (s == NULL)
 				errx(EXIT_FAILURE, "No current section");
-			l = addline(s, l, line);
+			addline(s, line);
 			continue;
 		default:
 			if (needsection == 0)
 				errx(EXIT_FAILURE, "Already in section");
 			s = addsection(line);
-			l = NULL;
 			needsection = 0;
 			continue;
 		}
 
 	qsort(slist, nsections, sizeof(*slist), compsection);
-	for (i = 0; i < nsections; i++)
+	for (i = 0; i < nsections; i++) {
+		qsort(s->lines, s->nlines, sizeof(*s->lines),
+		    (int(*)(const void *, const void *))strcmp);
 		printsection(&slist[i]);
+	}
 
 	return EXIT_SUCCESS;
 }
