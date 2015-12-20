@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.64 2015/01/12 19:50:25 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.65 2015/12/20 22:54:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.64 2015/01/12 19:50:25 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.65 2015/12/20 22:54:44 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -637,19 +637,12 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 {
 	size_t slen;
 	void *membuf;
+	struct stat *st = stampst.st_ino == 1 ? &stampst : &cur->inode->st;
 
 	memset(dinp, 0, sizeof(*dinp));
 	dinp->di_mode = cur->inode->st.st_mode;
 	dinp->di_nlink = cur->inode->nlink;
 	dinp->di_size = cur->inode->st.st_size;
-	dinp->di_atime = cur->inode->st.st_atime;
-	dinp->di_mtime = cur->inode->st.st_mtime;
-	dinp->di_ctime = cur->inode->st.st_ctime;
-#if HAVE_STRUCT_STAT_ST_MTIMENSEC
-	dinp->di_atimensec = cur->inode->st.st_atimensec;
-	dinp->di_mtimensec = cur->inode->st.st_mtimensec;
-	dinp->di_ctimensec = cur->inode->st.st_ctimensec;
-#endif
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	dinp->di_flags = cur->inode->st.st_flags;
 #endif
@@ -658,6 +651,15 @@ ffs_build_dinode1(struct ufs1_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 #endif
 	dinp->di_uid = cur->inode->st.st_uid;
 	dinp->di_gid = cur->inode->st.st_gid;
+
+	dinp->di_atime = st->st_atime;
+	dinp->di_mtime = st->st_mtime;
+	dinp->di_ctime = st->st_ctime;
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
+	dinp->di_atimensec = st->st_atimensec;
+	dinp->di_mtimensec = st->st_mtimensec;
+	dinp->di_ctimensec = st->st_ctimensec;
+#endif
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
@@ -685,31 +687,33 @@ ffs_build_dinode2(struct ufs2_dinode *dinp, dirbuf_t *dbufp, fsnode *cur,
 {
 	size_t slen;
 	void *membuf;
+	struct stat *st = stampst.st_ino == 1 ? &stampst : &cur->inode->st;
 
 	memset(dinp, 0, sizeof(*dinp));
 	dinp->di_mode = cur->inode->st.st_mode;
 	dinp->di_nlink = cur->inode->nlink;
 	dinp->di_size = cur->inode->st.st_size;
-	dinp->di_atime = cur->inode->st.st_atime;
-	dinp->di_mtime = cur->inode->st.st_mtime;
-	dinp->di_ctime = cur->inode->st.st_ctime;
-#if HAVE_STRUCT_STAT_ST_MTIMENSEC
-	dinp->di_atimensec = cur->inode->st.st_atimensec;
-	dinp->di_mtimensec = cur->inode->st.st_mtimensec;
-	dinp->di_ctimensec = cur->inode->st.st_ctimensec;
-#endif
 #if HAVE_STRUCT_STAT_ST_FLAGS
 	dinp->di_flags = cur->inode->st.st_flags;
 #endif
 #if HAVE_STRUCT_STAT_ST_GEN
 	dinp->di_gen = cur->inode->st.st_gen;
 #endif
-#if HAVE_STRUCT_STAT_BIRTHTIME
-	dinp->di_birthtime = cur->inode->st.st_birthtime;
-	dinp->di_birthnsec = cur->inode->st.st_birthtimensec;
-#endif
 	dinp->di_uid = cur->inode->st.st_uid;
 	dinp->di_gid = cur->inode->st.st_gid;
+
+	dinp->di_atime = st->st_atime;
+	dinp->di_mtime = st->st_mtime;
+	dinp->di_ctime = st->st_ctime;
+#if HAVE_STRUCT_STAT_ST_MTIMENSEC
+	dinp->di_atimensec = st->st_atimensec;
+	dinp->di_mtimensec = st->st_mtimensec;
+	dinp->di_ctimensec = st->st_ctimensec;
+#endif
+#if HAVE_STRUCT_STAT_BIRTHTIME
+	dinp->di_birthtime = st->st_birthtime;
+	dinp->di_birthnsec = st->st_birthtimensec;
+#endif
 		/* not set: di_db, di_ib, di_blocks, di_spare */
 
 	membuf = NULL;
