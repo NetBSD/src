@@ -1,4 +1,4 @@
-# $NetBSD: md.macppc,v 1.40 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.macppc,v 1.41 2015/12/20 16:22:39 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/macppc				comp-c-include
 ./usr/include/macppc/_G_config.h		comp-obsolete		obsolete
@@ -19,6 +19,7 @@
 ./usr/include/macppc/elf_machdep.h		comp-c-include
 ./usr/include/macppc/endian.h			comp-c-include
 ./usr/include/macppc/endian_machdep.h		comp-c-include
+./usr/include/macppc/fenv.h			comp-c-include
 ./usr/include/macppc/float.h			comp-c-include
 ./usr/include/macppc/fpu.h			comp-c-include
 ./usr/include/macppc/frame.h			comp-c-include

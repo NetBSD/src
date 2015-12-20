@@ -1,4 +1,4 @@
-# $NetBSD: md.bebox,v 1.39 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.bebox,v 1.40 2015/12/20 16:22:39 christos Exp $
 ./usr/include/bebox				comp-c-include
 ./usr/include/bebox/_G_config.h			comp-obsolete		obsolete
 ./usr/include/bebox/ansi.h			comp-c-include
@@ -19,6 +19,7 @@
 ./usr/include/bebox/elf_machdep.h		comp-c-include
 ./usr/include/bebox/endian.h			comp-c-include
 ./usr/include/bebox/endian_machdep.h		comp-c-include
+./usr/include/bebox/fenv.h			comp-c-include
 ./usr/include/bebox/float.h			comp-c-include
 ./usr/include/bebox/fpu.h			comp-c-include
 ./usr/include/bebox/frame.h			comp-c-include

@@ -1,4 +1,4 @@
-# $NetBSD: md.ibmnws,v 1.13 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.ibmnws,v 1.14 2015/12/20 16:22:39 christos Exp $
 ./usr/include/ibmnws				comp-c-include
 ./usr/include/ibmnws/_G_config.h		comp-obsolete		obsolete
 ./usr/include/ibmnws/ansi.h			comp-c-include
@@ -16,6 +16,7 @@
 ./usr/include/ibmnws/elf_machdep.h		comp-c-include
 ./usr/include/ibmnws/endian.h			comp-c-include
 ./usr/include/ibmnws/endian_machdep.h		comp-c-include
+./usr/include/ibmnws/fenv.h			comp-c-include
 ./usr/include/ibmnws/float.h			comp-c-include
 ./usr/include/ibmnws/fpu.h			comp-c-include
 ./usr/include/ibmnws/frame.h			comp-c-include
