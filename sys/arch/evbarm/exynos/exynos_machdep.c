@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_machdep.c,v 1.5 2015/12/16 12:18:34 jmcneill Exp $ */
+/*	$NetBSD: exynos_machdep.c,v 1.6 2015/12/20 05:25:01 marty Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.5 2015/12/16 12:18:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_machdep.c,v 1.6 2015/12/20 05:25:01 marty Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_exynos.h"
@@ -330,21 +330,17 @@ initarm(void *arg)
 		panic("Unknown product family %llx",
 		   EXYNOS_PRODUCT_FAMILY(exynos_soc_id));
 	}
-	DPRINT(" devmap");
 	pmap_devmap_register(devmap);
 
 	/* bootstrap soc. uart_address is determined in exynos_start */
 	paddr_t uart_address = armreg_tpidruro_read();
-	DPRINT(" bootstrap");
 	exynos_bootstrap(EXYNOS_CORE_VBASE, EXYNOS_IOPHYSTOVIRT(uart_address));
 
 	/* set up CPU / MMU / TLB functions */
-	DPRINT(" cpufunc");
 	if (set_cpufuncs())
 		panic("cpu not recognized!");
 
 	/* get normal console working */
-	DPRINT(" consinit");
  	consinit();
 
 #ifdef KGDB
