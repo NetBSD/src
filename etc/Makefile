@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.425 2015/12/19 23:37:43 christos Exp $
+#	$NetBSD: Makefile,v 1.426 2015/12/20 02:35:34 christos Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -67,6 +67,19 @@ MKISOFS_FLAGS+= -J -l -hide-joliet-trans-tbl -r -T \
 MKISOFS_FLAGS+=	-quiet
 .endif
  
+# Reproducible build parameters
+.if ${MKREPRO:Uno} == "no"
+BUILDER!=	echo $${USER-root}@$$(hostname)
+.else
+BUILDER=	builder@localhost.NetBSD.org
+.endif
+.if ${MKREPRO_TIMESTAMP:Uno} == "no"
+PAX_TIMESTAMP=
+BUILD_DATE!=	date -u
+.else
+PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
+BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}"
+.endif
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
 # are empty, to preserve the old semantics of setting them below with "+=".
@@ -185,16 +198,6 @@ MAKEDEV: ${.CURDIR}/MAKEDEV.awk ${.CURDIR}/MAKEDEV.tmpl \
 	    > ${.TARGET}
 
 .include "${NETBSDSRCDIR}/etc/Makefile.params"
-.if ${MKREPRO:Uno} == "no"
-BUILDER!=	echo $${USER-root}@$$(hostname)
-.else
-BUILDER=	builder@localhost.NetBSD.org
-.endif
-.if ${MKREPRO_TIMESTAMP:Uno} == "no"
-BUILD_DATE!=	date -u
-.else
-BUILD_DATE!=	date -u -r "${MKREPRO_TIMESTAMP}"
-.endif
 
 CLEANFILES+=	etc-release
 etc-release: .EXEC .MAKE
@@ -608,7 +611,7 @@ kernset-${configfile}: .PHONY build_kernels snap_pre
 	kerndir=${KERNOBJDIR}/${configfile:C/.*\///}; \
 	kernsuffixes="${KERNEL_SUFFIXES:S/^/./}"; \
 	kern_tgz=${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/sets/kern-${configfile}.tgz; \
-	pax_cmd="GZIP=${GZIP_FLAGS:Q} ${TOOL_PAX} --use-compress-program ${TOOL_GZIP:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
+	pax_cmd="GZIP=${GZIP_FLAGS:Q} ${TOOL_PAX} ${PAX_TIMESTAMP} --use-compress-program ${TOOL_GZIP:Q} -O -w -M -N ${NETBSDSRCDIR}/etc -f $${kern_tgz}"; \
 	cd $${kerndir} && { \
 		kernels=; newest=; \
 		for kernel in $${kernlist}; do \
