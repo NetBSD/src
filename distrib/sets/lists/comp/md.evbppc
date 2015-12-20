@@ -1,4 +1,4 @@
-# $NetBSD: md.evbppc,v 1.15 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.evbppc,v 1.16 2015/12/20 16:22:39 christos Exp $
 ./usr/include/evbppc				comp-c-include
 ./usr/include/evbppc/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbppc/ansi.h			comp-c-include
@@ -14,6 +14,7 @@
 ./usr/include/evbppc/elf_machdep.h		comp-c-include
 ./usr/include/evbppc/endian.h			comp-c-include
 ./usr/include/evbppc/endian_machdep.h		comp-c-include
+./usr/include/evbppc/fenv.h			comp-c-include
 ./usr/include/evbppc/float.h			comp-c-include
 ./usr/include/evbppc/fpu.h			comp-c-include
 ./usr/include/evbppc/frame.h			comp-c-include
