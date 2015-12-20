@@ -1,4 +1,4 @@
-/*	$NetBSD: apropos.c,v 1.16 2013/04/02 17:16:50 christos Exp $	*/
+/*	$NetBSD: apropos.c,v 1.17 2015/12/20 19:45:29 christos Exp $	*/
 /*-
  * Copyright (c) 2011 Abhinav Upadhyay <er.abhinav.upadhyay@gmail.com>
  * All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: apropos.c,v 1.16 2013/04/02 17:16:50 christos Exp $");
+__RCSID("$NetBSD: apropos.c,v 1.17 2015/12/20 19:45:29 christos Exp $");
 
 #include <err.h>
 #include <search.h>
@@ -188,11 +188,15 @@ main(int argc, char *argv[])
 		concat(&str, *argv++);
 	/* Eliminate any stopwords from the query */
 	query = remove_stopwords(lower(str));
-	free(str);
 
-	/* if any error occured in remove_stopwords, exit */
+	/*
+	 * If the query consisted only of stopwords and we removed all of
+	 * them, use the original query.
+	 */
 	if (query == NULL)
-		errx(EXIT_FAILURE, "Try using more relevant keywords");
+		query = str;
+	else
+		free(str);
 
 	if ((db = init_db(MANDB_READONLY, MANCONF)) == NULL)
 		exit(EXIT_FAILURE);
