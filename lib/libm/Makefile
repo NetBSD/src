@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.171 2015/12/12 19:05:45 nros Exp $
+#  $NetBSD: Makefile,v 1.172 2015/12/20 16:24:25 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -166,6 +166,11 @@ ARCH_SRCS += s_fma.S s_fmaf.S
 ARCH_SRCS += s_fmax.S s_fmaxf.S
 ARCH_SRCS += s_fmin.S s_fminf.S
 .endif
+.elif (${LIBC_MACHINE_ARCH} == "powerpc")
+.PATH:	${.CURDIR}/arch/powerpc
+
+COMMON_SRCS += fenv.c
+
 .endif
 
 WARNS?=5
