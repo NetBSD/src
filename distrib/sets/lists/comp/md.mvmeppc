@@ -1,4 +1,4 @@
-# $NetBSD: md.mvmeppc,v 1.17 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.mvmeppc,v 1.18 2015/12/20 16:22:39 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/mvmeppc				comp-c-include
 ./usr/include/mvmeppc/_G_config.h		comp-obsolete		obsolete
@@ -17,6 +17,7 @@
 ./usr/include/mvmeppc/elf_machdep.h		comp-c-include
 ./usr/include/mvmeppc/endian.h			comp-c-include
 ./usr/include/mvmeppc/endian_machdep.h		comp-c-include
+./usr/include/mvmeppc/fenv.h			comp-c-include
 ./usr/include/mvmeppc/float.h			comp-c-include
 ./usr/include/mvmeppc/fpu.h			comp-c-include
 ./usr/include/mvmeppc/frame.h			comp-c-include
