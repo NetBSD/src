@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.237 2015/12/07 11:38:46 pgoyette Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.238 2015/12/20 04:21:03 pgoyette Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.237 2015/12/07 11:38:46 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.238 2015/12/20 04:21:03 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2108,6 +2108,7 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	if (config_finalize_done) {
 		while ((*fn)(dev) != 0)
 			/* loop */ ;
+		return 0;
 	}
 
 	/* Ensure this isn't already on the list. */
