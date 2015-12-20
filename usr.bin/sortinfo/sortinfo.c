@@ -1,4 +1,4 @@
-/*	$NetBSD: sortinfo.c,v 1.3 2015/12/20 00:40:44 christos Exp $	*/
+/*	$NetBSD: sortinfo.c,v 1.4 2015/12/20 00:48:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sortinfo.c,v 1.3 2015/12/20 00:40:44 christos Exp $");
+__RCSID("$NetBSD: sortinfo.c,v 1.4 2015/12/20 00:48:36 christos Exp $");
 
 /*
  * Sort a texinfo(1) directory file.
@@ -89,6 +89,14 @@ compsection(const void *a, const void *b)
 	return strcmp(sa->name, sb->name);
 }
 
+static int
+strptrcmp(const void *a, const void *b)
+{
+	const char *sa = *(const char * const *)a;
+	const char *sb = *(const char * const *)b;
+	return strcmp(sa, sb);
+}
+
 static void
 printsection(const struct section *s)
 {
@@ -138,8 +146,8 @@ main(int argc, char *argv[])
 
 	qsort(slist, nsections, sizeof(*slist), compsection);
 	for (i = 0; i < nsections; i++) {
-		qsort(s->lines, s->nlines, sizeof(*s->lines),
-		    (int(*)(const void *, const void *))strcmp);
+		s = &slist[i];
+		qsort(s->lines, s->nlines, sizeof(*s->lines), strptrcmp);
 		printsection(&slist[i]);
 	}
 
