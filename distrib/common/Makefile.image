@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.image,v 1.38 2014/08/12 11:48:22 martin Exp $
+#	$NetBSD: Makefile.image,v 1.39 2015/12/20 22:47:59 christos Exp $
 #
 # Makefile snippet to build a tree from the provided lists,
 # and make an ffs file system image from that tree
@@ -40,6 +40,10 @@ WORKBUILT?=	work.built
 PARSELISTENV+=	TARGETDIR=${.OBJDIR}/${WORKDIR:Q}
 
 GZIP_FLAGS= -9 ${GZIP_N_FLAG}
+
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
+.endif
 
 .if !target(${WORKBUILT})					# {
 ${WORKBUILT}: ${IMAGEDEPENDS} ${WORKSPEC} ${PARSELISTDEP} ${LISTS}
@@ -93,7 +97,7 @@ ${IMAGE}: ${WORKBUILT}
 	${_MKSHMSG_CREATE} ${.CURDIR:T}/${.TARGET}; \
 	rm -f ${.TARGET} ${.TARGET}.tmp; \
 	${TOOL_MAKEFS} -t ffs -B ${IMAGEENDIAN} -s ${IMAGESIZE} -F ${WORKSPEC} \
-	    -N ${NETBSDSRCDIR}/etc ${IMGMAKEFSOPTIONS} \
+	    ${MAKEFS_TIMESTAMP} -N ${NETBSDSRCDIR}/etc ${IMGMAKEFSOPTIONS} \
 	    -o optimization=space,minfree=0 \
 	    ${MAKEFS_FLAGS} ${.TARGET}.tmp ${WORKDIR} \
 	&& mv -f ${.TARGET}.tmp ${.TARGET}; \
