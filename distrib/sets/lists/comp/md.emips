@@ -1,4 +1,4 @@
-#	$NetBSD: md.emips,v 1.5 2014/07/19 14:35:10 alnsn Exp $
+#	$NetBSD: md.emips,v 1.6 2015/12/21 16:49:37 christos Exp $
 #
 ./usr/include/emips				comp-c-include
 ./usr/include/emips/ansi.h			comp-c-include
@@ -14,6 +14,7 @@
 ./usr/include/emips/emipsreg.h			comp-c-include
 ./usr/include/emips/endian.h			comp-c-include
 ./usr/include/emips/endian_machdep.h		comp-c-include
+./usr/include/emips/fenv.h			comp-c-include
 ./usr/include/emips/float.h			comp-c-include
 ./usr/include/emips/ieee.h			comp-c-include
 ./usr/include/emips/ieeefp.h			comp-c-include
