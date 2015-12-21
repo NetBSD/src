@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2014/07/23 18:19:44 alnsn Exp $
+#	$NetBSD: Makefile,v 1.7 2015/12/21 17:02:33 christos Exp $
 
 INCSDIR= /usr/include/ibmnws
 
 INCS=   disklabel.h \
+	fenv.h \
 	intr.h \
 	sljit_machdep.h \
 	vmparam.h

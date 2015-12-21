@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2011/07/17 20:54:35 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2015/12/21 17:02:32 christos Exp $
 
 INCSDIR=/usr/include/algor
 
@@ -7,7 +7,7 @@ INCS=	ansi.h asm.h autoconf.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
-	float.h \
+	fenv.h float.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
