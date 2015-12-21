@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.83 2015/12/08 20:36:14 christos Exp $ */
+/* $NetBSD: dksubr.c,v 1.84 2015/12/21 12:30:29 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.83 2015/12/08 20:36:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.84 2015/12/21 12:30:29 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -94,6 +94,8 @@ dk_init(struct dk_softc *dksc, device_t dev, int dtype)
 void
 dk_attach(struct dk_softc *dksc)
 {
+	KASSERT(dksc->sc_dev != NULL);
+
 	mutex_init(&dksc->sc_iolock, MUTEX_DEFAULT, IPL_VM);
 	dksc->sc_flags |= DKF_READYFORDUMP;
 #ifdef DIAGNOSTIC
@@ -306,6 +308,11 @@ dk_start(struct dk_softc *dksc, struct buf *bp)
 {
 	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	int error;
+
+	if (!(dksc->sc_flags & DKF_INITED)) {
+		DPRINTF_FOLLOW(("%s: not inited\n", __func__));
+		return;
+	}
 
 	mutex_enter(&dksc->sc_iolock);
 
