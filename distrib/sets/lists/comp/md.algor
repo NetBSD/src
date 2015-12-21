@@ -1,4 +1,4 @@
-# $NetBSD: md.algor,v 1.16 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.algor,v 1.17 2015/12/21 16:49:37 christos Exp $
 ./usr/include/algor				comp-c-include
 ./usr/include/algor/_G_config.h			comp-obsolete		obsolete
 ./usr/include/algor/ansi.h			comp-c-include
@@ -16,6 +16,7 @@
 ./usr/include/algor/elf_machdep.h		comp-c-include
 ./usr/include/algor/endian.h			comp-c-include
 ./usr/include/algor/endian_machdep.h		comp-c-include
+./usr/include/algor/fenv.h			comp-c-include
 ./usr/include/algor/float.h			comp-c-include
 ./usr/include/algor/ieee.h			comp-c-include
 ./usr/include/algor/ieeefp.h			comp-c-include

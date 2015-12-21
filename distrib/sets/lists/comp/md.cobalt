@@ -1,4 +1,4 @@
-# $NetBSD: md.cobalt,v 1.27 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.cobalt,v 1.28 2015/12/21 16:49:37 christos Exp $
 ./usr/include/cobalt				comp-c-include
 ./usr/include/cobalt/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cobalt/ansi.h			comp-c-include
@@ -16,6 +16,7 @@
 ./usr/include/cobalt/elf_machdep.h		comp-c-include
 ./usr/include/cobalt/endian.h			comp-c-include
 ./usr/include/cobalt/endian_machdep.h		comp-c-include
+./usr/include/cobalt/fenv.h			comp-c-include
 ./usr/include/cobalt/float.h			comp-c-include
 ./usr/include/cobalt/ieee.h			comp-c-include
 ./usr/include/cobalt/ieeefp.h			comp-c-include

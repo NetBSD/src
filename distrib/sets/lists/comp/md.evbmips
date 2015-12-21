@@ -1,4 +1,4 @@
-# $NetBSD: md.evbmips,v 1.19 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.evbmips,v 1.20 2015/12/21 16:49:37 christos Exp $
 ./usr/include/evbmips				comp-c-include
 ./usr/include/evbmips/_G_config.h		comp-obsolete		obsolete
 ./usr/include/evbmips/ansi.h			comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/evbmips/elf_machdep.h		comp-c-include
 ./usr/include/evbmips/endian.h			comp-c-include
 ./usr/include/evbmips/endian_machdep.h		comp-c-include
+./usr/include/evbmips/fenv.h			comp-c-include
 ./usr/include/evbmips/float.h			comp-c-include
 ./usr/include/evbmips/ieee.h			comp-c-include
 ./usr/include/evbmips/ieeefp.h			comp-c-include
