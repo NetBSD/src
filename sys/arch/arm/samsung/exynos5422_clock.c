@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.2 2015/12/05 18:29:22 jmcneill Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.3 2015/12/21 03:34:34 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.2 2015/12/05 18:29:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.3 2015/12/21 03:34:34 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.2 2015/12/05 18:29:22 jmcneil
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 #include <arm/samsung/exynos_clock.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static struct clk *exynos5422_clock_get(void *, const char *);
 static void	exynos5422_clock_put(void *, struct clk *);
@@ -243,20 +245,35 @@ CFATTACH_DECL_NEW(exynos5422_clock, sizeof(struct exynos5422_clock_softc),
 static int
 exynos5422_clock_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return IS_EXYNOS5422_P();
+	const char * const compatible[] = { "samsung,exynos5422-clock",
+					    NULL };
+	struct fdt_attach_args * const faa = aux;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 exynos5422_clock_attach(device_t parent, device_t self, void *aux)
 {
 	struct exynos5422_clock_softc * const sc = device_private(self);
-	struct exyo_attach_args * const exyo = aux;
-	const struct exyo_locators *loc = &exyo->exyo_loc;
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = exyo->exyo_core_bst;
-	bus_space_subregion(exyo->exyo_core_bst, exyo->exyo_core_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	sc->sc_bst = faa->faa_bst;
+	
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d",
+			     (uint64_t)addr, error);
+		return;
+	}
 
 	aprint_naive("\n");
 	aprint_normal(": Exynos5422 Clock Controller\n");
