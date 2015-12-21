@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_machdep.c,v 1.18 2015/05/07 04:13:47 hkenken Exp $	*/
+/*	$NetBSD: netwalker_machdep.c,v 1.19 2015/12/21 04:26:29 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005, 2010  Genetec Corporation.
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.18 2015/05/07 04:13:47 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.19 2015/12/21 04:26:29 hkenken Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -115,7 +115,6 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.18 2015/05/07 04:13:47 hkenk
 #include "opt_imxuart.h"
 #include "opt_imx.h"
 #include "opt_imx51_ipuv3.h"
-#include "wsdisplay.h"
 #include "opt_machdep.h"
 
 #include <sys/param.h>
@@ -124,12 +123,17 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.18 2015/05/07 04:13:47 hkenk
 #include <sys/termios.h>
 #include <sys/bus.h>
 
+#include "genfb.h"
+#include "netwalker_backlight.h"
+#include "netwalker_backlightvar.h"
+
 #include <machine/db_machdep.h>
 #ifdef KGDB
 #include <sys/kgdb.h>
 #endif
 
 #include <machine/bootconfig.h>
+#include <machine/autoconf.h>
 
 #include <arm/arm32/machdep.h>
 
@@ -153,7 +157,7 @@ __KERNEL_RCSID(0, "$NetBSD: netwalker_machdep.c,v 1.18 2015/05/07 04:13:47 hkenk
 #define	KERNEL_TEXT_BASE	(KERNEL_BASE + 0x00100000)
 
 BootConfig bootconfig;		/* Boot config storage */
-static char bootargs[MAX_BOOT_STRING];
+static char bootargs[MAX_BOOT_STRING] = BOOT_ARGS;
 char *boot_args = NULL;
 
 extern char KERNEL_BASE_phys[];
@@ -177,6 +181,8 @@ void	kgdb_port_init(void);
 
 static void init_clocks(void);
 static void setup_ioports(void);
+
+static void netwalker_device_register(device_t, void *);
 
 #ifndef CONSPEED
 #define CONSPEED B115200	/* What RedBoot uses */
@@ -274,7 +280,6 @@ initarm(void *arg)
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
-	bootargs[0] = '\0';
 
 #if defined(VERBOSE_INIT_ARM) || 1
 	printf("initarm: Configuring system");
@@ -336,6 +341,13 @@ initarm(void *arg)
 #ifdef BOOTHOWTO
 	boothowto |= BOOTHOWTO;
 #endif
+
+	boot_args = bootargs;
+	parse_mi_bootargs(boot_args);
+	printf("boot_args : %s\n", boot_args);
+
+	/* we've a specific device_register routine */
+	evbarm_device_register = netwalker_device_register;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm done.\n");
@@ -672,19 +684,32 @@ consinit(void)
 		consaddr = IMX51_UART1_BASE;
 #endif
 		imxuart_cons_attach(&armv7_generic_bs_tag, consaddr, consrate, consmode);
-	    return;
+		return;
 	}
 #endif
-
 #endif
+}
 
-#if (NWSDISPLAY > 0) && defined(IMXIPUCONSOLE)
+static void
+netwalker_device_register(device_t self, void *aux)
+{
+	prop_dictionary_t dict = device_properties(self);
+
+#if NGENFB > 0
+	if (device_is_a(self, "genfb")) {
+		char *ptr;
+		if (get_bootconf_option(boot_args, "console",
+		    BOOTOPT_TYPE_STRING, &ptr) && strncmp(ptr, "fb", 2) == 0) {
+			prop_dictionary_set_bool(dict, "is_console", true);
 #if NUKBD > 0
-	ukbd_cnattach();
+			ukbd_cnattach();
 #endif
-	{
-		extern void netwalker_cnattach(void);
-		netwalker_cnattach();
+		} else {
+			prop_dictionary_set_bool(dict, "is_console", false);
+		}
+#if NNETWALKER_BACKLIGHT > 0
+		netwalker_backlight_genfb_parameter_set(dict);
+#endif
 	}
 #endif
 }
