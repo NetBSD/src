@@ -1,4 +1,4 @@
-# $NetBSD: md.arc,v 1.24 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.arc,v 1.25 2015/12/21 16:49:37 christos Exp $
 ./usr/include/arc				comp-c-include
 ./usr/include/arc/_G_config.h			comp-obsolete		obsolete
 ./usr/include/arc/ansi.h			comp-c-include
@@ -15,6 +15,7 @@
 ./usr/include/arc/elf_machdep.h			comp-c-include
 ./usr/include/arc/endian.h			comp-c-include
 ./usr/include/arc/endian_machdep.h		comp-c-include
+./usr/include/arc/fenv.h			comp-c-include
 ./usr/include/arc/float.h			comp-c-include
 ./usr/include/arc/ieee.h			comp-c-include
 ./usr/include/arc/ieeefp.h			comp-c-include

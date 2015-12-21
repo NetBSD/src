@@ -1,4 +1,4 @@
-# $NetBSD: md.ews4800mips,v 1.9 2014/08/22 10:51:38 apb Exp $
+# $NetBSD: md.ews4800mips,v 1.10 2015/12/21 16:49:37 christos Exp $
 ./usr/include/ews4800mips			comp-c-include
 ./usr/include/ews4800mips/ansi.h		comp-c-include
 ./usr/include/ews4800mips/aout_machdep.h	comp-c-include
@@ -12,6 +12,7 @@
 ./usr/include/ews4800mips/elf_machdep.h	comp-c-include
 ./usr/include/ews4800mips/endian.h		comp-c-include
 ./usr/include/ews4800mips/endian_machdep.h	comp-c-include
+./usr/include/ews4800mips/fenv.h		comp-c-include
 ./usr/include/ews4800mips/float.h		comp-c-include
 ./usr/include/ews4800mips/ieee.h		comp-c-include
 ./usr/include/ews4800mips/ieeefp.h		comp-c-include
