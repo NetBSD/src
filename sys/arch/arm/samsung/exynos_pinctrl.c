@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.2 2015/12/21 00:54:35 marty Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.3 2015/12/21 04:58:50 marty Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.2 2015/12/21 00:54:35 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.3 2015/12/21 04:58:50 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.2 2015/12/21 00:54:35 marty Exp
 #include <dev/gpio/gpiovar.h>
 
 #include <arm/samsung/exynos_reg.h>
-#include <arm/samsung/exynos_io.h>
+#include <arm/samsung/exynos_var.h>
 #include <arm/samsung/exynos_intr.h>
 #include <arm/samsung/exynos_pinctrl.h>
 
