@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.14 2015/12/19 21:42:31 marty Exp $
+#	$NetBSD: files.exynos,v 1.15 2015/12/21 00:52:50 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -56,9 +56,24 @@ file	arch/arm/samsung/exynos_io.c	exyo_io
 file	arch/arm/samsung/exynos4_loc.c	exyo_io & exynos4
 file	arch/arm/samsung/exynos5_loc.c	exyo_io & exynos5
 
+# Interrupt combiner
+device  exyointr
+attach  exyointr at fdt with exynos_intr
+file	arch/arm/samsung/exynos_combiner.c	exynos_intr
+
+# CHIP ID register
+device	chipid : fdtbus
+attach	chipid at fdt with exynos_chipid
+file	arch/arm/samsung/exynos_chipid.c	exynos_chipid
+
+# real time clock
+device  exyortc : ftdbus
+attach  exyortc at fdt with exynos_rtc
+file    arch/arm/samsung/exynos_rtc.c		exynos_rtc
+
 # Multi Core timer
-device	mct { } : bus_space_generic
-attach	mct at exyo with exyo_mct
+device	mct : ftdbus
+attach	mct at fdt with exyo_mct
 file	arch/arm/samsung/mct.c		exyo_mct
 
 # Watchdog
@@ -93,8 +108,8 @@ attach	ehci at exyousb with ehci_exyousb
 file	arch/arm/samsung/exynos_usb.c		exyo_usb
 
 # I2C support, bitbanging trough GPIO
-device	exyoiic: i2cbus, i2c_bitbang
-attach	exyoiic at exyo with exynos_iic
+device	exyoi2c: i2cbus, i2c_bitbang
+attach	exyoi2c at fdt with exynos_i2c
 file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
 
 file	arch/arm/samsung/exynos5422_dma.c
