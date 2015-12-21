@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.69 2015/12/08 12:48:55 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.70 2015/12/21 12:26:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.69 2015/12/08 12:48:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.70 2015/12/21 12:26:38 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2248,7 +2248,7 @@ ehci_free_itd_chain(ehci_softc_t *sc, struct ehci_soft_itd *itd)
 		next = itd->xfer_next;
 		ehci_free_itd_locked(sc, itd);
 	}
-	mutex_enter(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 }
 
 Static void
