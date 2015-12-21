@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.36 2015/12/19 10:11:13 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.37 2015/12/21 15:18:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.36 2015/12/19 10:11:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.37 2015/12/21 15:18:41 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -240,12 +240,6 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 
 	KASSERT(pipe != NULL);
-#ifdef DIAGNOSTIC
-	if (pipe == NULL) {
-		USBHIST_LOG(usbdebug, "pipe == NULL", 0, 0, 0, 0);
-		return USBD_NORMAL_COMPLETION;
-	}
-#endif
 
 	usbd_lock_pipe(pipe);
 	if (--pipe->up_refcnt != 0) {
