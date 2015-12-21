@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.c,v 1.65 2015/12/20 22:54:44 christos Exp $	*/
+/*	$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: ffs.c,v 1.65 2015/12/20 22:54:44 christos Exp $");
+__RCSID("$NetBSD: ffs.c,v 1.66 2015/12/21 00:58:08 christos Exp $");
 #endif	/* !__lint */
 
 #include <sys/param.h>
@@ -466,6 +466,7 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 	char	*buf;
 	int	i, bufsize;
 	off_t	bufrem;
+	time_t	tstamp;
 	int	oflags = O_RDWR | O_CREAT;
 
 	assert (image != NULL);
@@ -530,7 +531,15 @@ ffs_create_image(const char *image, fsinfo_t *fsopts)
 		/* make the file system */
 	if (debug & DEBUG_FS_CREATE_IMAGE)
 		printf("calling mkfs(\"%s\", ...)\n", image);
-	fs = ffs_mkfs(image, fsopts);
+
+	if (stampst.st_ino == 1)
+		tstamp = stampst.st_ctime;
+	else
+		tstamp = start_time.tv_sec;
+
+	srandom(tstamp);
+
+	fs = ffs_mkfs(image, fsopts, tstamp);
 	fsopts->superblock = (void *)fs;
 	if (debug & DEBUG_FS_CREATE_IMAGE) {
 		time_t t;
@@ -1111,7 +1120,6 @@ ffs_write_inode(union dinode *dp, uint32_t ino, const fsinfo_t *fsopts)
 	    initediblk < ufs_rw32(cgp->cg_niblk, fsopts->needswap)) {
 		memset(buf, 0, fs->fs_bsize);
 		dip = (struct ufs2_dinode *)buf;
-		srandom(time(NULL));
 		for (i = 0; i < FFS_INOPB(fs); i++) {
 			dip->di_gen = random() / 2 + 1;
 			dip++;
