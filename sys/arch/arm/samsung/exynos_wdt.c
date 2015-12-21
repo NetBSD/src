@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.8 2015/12/15 23:15:53 marty Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.9 2015/12/21 04:58:50 marty Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.8 2015/12/15 23:15:53 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.9 2015/12/21 04:58:50 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.8 2015/12/15 23:15:53 marty Exp $")
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <arm/samsung/exynos_io.h>
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 
@@ -281,7 +280,7 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 void
 exynos_wdt_reset(void)
 {
-	bus_space_tag_t bst = &exynos_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh = exynos_wdt_bsh;
 
 	(void) splhigh();
