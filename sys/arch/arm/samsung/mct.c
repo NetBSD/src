@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.6 2015/12/11 04:03:44 marty Exp $	*/
+/*	$NetBSD: mct.c,v 1.7 2015/12/21 00:54:35 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.6 2015/12/11 04:03:44 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.7 2015/12/21 00:54:35 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.6 2015/12/11 04:03:44 marty Exp $");
 #include <arm/samsung/mct_reg.h>
 #include <arm/samsung/mct_var.h>
 
+#include <dev/fdt/fdtvar.h>
 
 static int  mct_match(device_t, cfdata_t, void *);
 static void mct_attach(device_t, device_t, void *);
@@ -132,52 +133,45 @@ mct_write_global(struct mct_softc *sc, bus_size_t o, uint32_t v)
 static int
 mct_match(device_t parent, cfdata_t cf, void *aux)
 {
-	/* not used if Generic Timer is Available */
-	if (armreg_pfr1_read() & ARM_PFR1_GTIMER_MASK)
-		return 0;
+	const char * const compatible[] = { "samsung,exynos4210-mct",
+					    NULL };
 
-	/* sanity check, something is mixed up! */
-	if (!device_is_a(parent, "exyo"))
-		return 1;
-
-	/* there can only be one */
-	if (mct_sc.sc_dev != NULL)
-		return 0;
-
-	return 1;
+	struct fdt_attach_args * const faa = aux;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 
 static void
 mct_attach(device_t parent, device_t self, void *aux)
 {
-	struct exyo_attach_args *exyo = (struct exyo_attach_args *) aux;
 	struct mct_softc * const sc = &mct_sc;
-	prop_dictionary_t dict = device_properties(self);
-	char freqbuf[sizeof("XXX SHz")];
-	const char *pin_name;
+//	prop_dictionary_t dict = device_properties(self);
+//	char freqbuf[sizeof("XXX SHz")];
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	self->dv_private = sc;
 	sc->sc_dev = self;
-	sc->sc_bst = exyo->exyo_core_bst;
-	sc->sc_irq = exyo->exyo_loc.loc_intr;
+	sc->sc_bst = faa->faa_bst;
+	/* MJF: Need to get irq from the dtd */
+//	sc->sc_irq = exyo->exyo_loc.loc_intr;
 
-	bus_space_subregion(sc->sc_bst, exyo->exyo_core_bsh,
-		exyo->exyo_loc.loc_offset, exyo->exyo_loc.loc_size, &sc->sc_bsh);
-
-	KASSERTMSG(sc->sc_bsh,
-		"%s: can't map in registers for %#x + %#x for device %s\n",
-		__func__,
-		(uint32_t) exyo->exyo_loc.loc_offset,
-		(uint32_t) exyo->exyo_loc.loc_size,
-		device_xname(sc->sc_dev));
-
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
-
-	humanize_number(freqbuf, sizeof(freqbuf), sc->sc_freq, "Hz", 1000);
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d",
+			     (uint64_t)addr, error);
+		return;
+	}
 
 	aprint_naive("\n");
-	aprint_normal(": Exynos SoC multi core timer (64 bits) (%s)\n", freqbuf);
+	aprint_normal(": Exynos SoC multi core timer (64 bits)\n");
 
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 		device_xname(self), "missing interrupts");
@@ -187,21 +181,6 @@ mct_attach(device_t parent, device_t self, void *aux)
 	if (sc->sc_global_ih == NULL)
 		panic("%s: unable to register timer interrupt", __func__);
 	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n", sc->sc_irq);
-
-#if 0
-	/* blink led */
-	if (prop_dictionary_get_cstring_nocopy(dict, "heartbeat", &pin_name)) {
-		if (!exynos_gpio_pin_reserve(pin_name, &sc->sc_gpio_led)) {
-			aprint_error_dev(self,
-				"failed to reserve GPIO \"%s\" "
-				"for heartbeat led\n", pin_name);
-		} else {
-			sc->sc_has_blink_led = true;
-			sc->sc_led_state = false;
-			sc->sc_led_timer = hz;
-		}
-	}
-#endif
 }
 
 
@@ -239,18 +218,6 @@ clockhandler(void *arg)
 
 	sc->sc_lastintr = now;
 	hardclock(cf);
-
-	if (sc->sc_has_blink_led) {
-		/* we could subtract `periods' here */
-		sc->sc_led_timer = sc->sc_led_timer - 1;
-		if (sc->sc_led_timer <= 0) {
-			sc->sc_led_state = !sc->sc_led_state;
-			exynos_gpio_pindata_write(&sc->sc_gpio_led,
-				sc->sc_led_state);
-			while (sc->sc_led_timer <= 0)
-				sc->sc_led_timer += hz;
-		}
-	}
 
 	/* handled */
 	return 1;

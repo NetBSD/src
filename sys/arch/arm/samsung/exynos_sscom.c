@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_sscom.c,v 1.6 2015/12/17 22:39:37 marty Exp $ */
+/*	$NetBSD: exynos_sscom.c,v 1.7 2015/12/21 00:54:35 marty Exp $ */
 
 /*
  * Copyright (c) 2014 Reinoud Zandijk
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.6 2015/12/17 22:39:37 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_sscom.c,v 1.7 2015/12/21 00:54:35 marty Exp $");
 
 #include "opt_sscom.h"
 #include "opt_ddb.h"
@@ -190,10 +190,10 @@ sscom_attach(device_t parent, device_t self, void *aux)
 		}
 		sc->sc_ioh = bsh;
 	} else {
-		printf(" (console) ");
+		aprint_normal(" (console) ");
 	}
 
-	printf("\n");
+	aprint_normal("\n");
 
 #if 0
 	void *ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
