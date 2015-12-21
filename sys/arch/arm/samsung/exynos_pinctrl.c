@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.1 2015/12/19 21:42:31 marty Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.2 2015/12/21 00:54:35 marty Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.1 2015/12/19 21:42:31 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.2 2015/12/21 00:54:35 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -84,7 +84,7 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	printf(" pinctl @ 0x%08x\n", (uint)addr);
+	aprint_normal(" pinctl @ 0x%08x", (uint)addr);
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
