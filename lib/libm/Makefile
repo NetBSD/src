@@ -1,4 +1,4 @@
-#  $NetBSD: Makefile,v 1.172 2015/12/20 16:24:25 christos Exp $
+#  $NetBSD: Makefile,v 1.173 2015/12/21 17:02:02 christos Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24
 #
@@ -168,9 +168,12 @@ ARCH_SRCS += s_fmin.S s_fminf.S
 .endif
 .elif (${LIBC_MACHINE_ARCH} == "powerpc")
 .PATH:	${.CURDIR}/arch/powerpc
-
+COPTS.e_sqrtl.c += -DHAVE_FENV_H
 COMMON_SRCS += fenv.c
-
+.elif (${LIBC_MACHINE_CPU} == "mips")
+.PATH:	${.CURDIR}/arch/mips
+COPTS.e_sqrtl.c += -DHAVE_FENV_H
+COMMON_SRCS += fenv.c
 .endif
 
 WARNS?=5
