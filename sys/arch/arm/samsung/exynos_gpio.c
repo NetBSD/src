@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.14 2015/12/19 21:42:31 marty Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.15 2015/12/21 04:58:50 marty Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.14 2015/12/19 21:42:31 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.15 2015/12/21 04:58:50 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.14 2015/12/19 21:42:31 marty Exp $
 #include <dev/gpio/gpiovar.h>
 
 #include <arm/samsung/exynos_reg.h>
-#include <arm/samsung/exynos_io.h>
+#include <arm/samsung/exynos_var.h>
 #include <arm/samsung/exynos_intr.h>
 #include <arm/samsung/exynos_pinctrl.h>
 
@@ -133,7 +133,7 @@ static void
 exynos_gpio_update_cfg_regs(struct exynos_gpio_bank *bank,
 	const struct exynos_gpio_pin_cfg *ncfg)
 {
-	bus_space_tag_t bst = &exynos_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 
 	if (bank->bank_cfg.cfg != ncfg->cfg) {
 		bus_space_write_4(bst, bank->bank_bsh,

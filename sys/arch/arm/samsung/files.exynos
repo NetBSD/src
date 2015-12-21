@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.16 2015/12/21 03:34:34 marty Exp $
+#	$NetBSD: files.exynos,v 1.17 2015/12/21 04:58:50 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -16,8 +16,7 @@ file	arch/arm/arm32/armv7_generic_space.c
 file	arch/arm/arm/bus_space_a4x.S
 
 file	arch/arm/samsung/exynos_soc.c
-file	arch/arm/samsung/exynos_space.c
-#file	arch/arm/samsung/exynos_dma.c
+#file	arch/arm/samsung/exynos_space.c
 file	arch/arm/samsung/exynos_smc.S		arm_trustzone_firmware
 
 # Console parameters
@@ -49,13 +48,6 @@ device	exynosfdt : bus_space_generic, fdtbus
 attach	exynosfdt at mainbus with exynos_fdt
 file	arch/arm/samsung/exynos_fdt.c		exynos_fdt
 
-# SoC I/O attach point
-device exyo { [port=-1], [intr=-1] } : bus_space_generic
-attach exyo at mainbus with exyo_io
-file	arch/arm/samsung/exynos_io.c	exyo_io
-file	arch/arm/samsung/exynos4_loc.c	exyo_io & exynos4
-file	arch/arm/samsung/exynos5_loc.c	exyo_io & exynos5
-
 # Interrupt combiner
 device  exyointr
 attach  exyointr at fdt with exynos_intr
@@ -79,7 +71,7 @@ file	arch/arm/samsung/mct.c		exyo_mct
 # Watchdog
 device	exyowdt : sysmon_wdog
 attach	exyowdt at fdt with exynos_wdt
-file	arch/arm/samsung/exynos_wdt.c	exynos_wdt | exyo_io needs-flag
+file	arch/arm/samsung/exynos_wdt.c	exynos_wdt needs-flag
 
 # UARTs
 device	sscom { } : bus_space_generic
@@ -92,13 +84,13 @@ defparam opt_sscom.h    SSCOM_FREQ
 # PINCTL
 device  exyopctl : gpiobus
 attach  exyopctl at fdt with exynos_pinctrl
-file	arch/arm/samsung/exynos_pinctrl.c	exynos_pinctl | exyo_io needs-flag
-file	arch/arm/samsung/exynos_gpio.c		exynos_pinctl | exyo_io needs-flag
+file	arch/arm/samsung/exynos_pinctrl.c	exynos_pinctrl needs-flag
+file	arch/arm/samsung/exynos_gpio.c		exynos_pinctrl needs-flag
 
 # GPIO
 #device	exyogpio : gpiobus
 #attach	exyogpio at fdt with exynos_gpio
-#file	arch/arm/samsung/exynos_gpio.c		exynos_gpio | exyo_io needs-flag
+#file	arch/arm/samsung/exynos_gpio.c		exynos_gpio needs-flag
 
 # USB2 Host Controller (EHCI/OHCI)
 device	exyousb { } : fdtbus
@@ -110,7 +102,7 @@ file	arch/arm/samsung/exynos_usb.c		exyo_usb
 # I2C support, bitbanging trough GPIO
 device	exyoi2c: i2cbus, i2c_bitbang
 attach	exyoi2c at fdt with exynos_i2c
-file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
+file	arch/arm/samsung/exynos_i2c.c		exynos_i2c needs-flag
 
 file	arch/arm/samsung/exynos5422_dma.c
 
