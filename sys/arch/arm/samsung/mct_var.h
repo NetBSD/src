@@ -1,4 +1,4 @@
-/*	$NetBSD: mct_var.h,v 1.3 2014/09/05 08:01:05 skrll Exp $	*/
+/*	$NetBSD: mct_var.h,v 1.4 2015/12/21 00:54:35 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -49,11 +49,6 @@ static struct mct_softc {
 	uint32_t		 sc_autoinc;
 	struct evcnt		 sc_ev_missing_ticks;
 
-	/* blinking led */
-	bool			 sc_has_blink_led;
-	struct exynos_gpio_pindata sc_gpio_led;
-	bool			 sc_led_state;
-	int			 sc_led_timer;
 } mct_sc;
 
 void mct_init_cpu_clock(struct cpu_info *ci);
