@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.15 2015/12/21 00:52:50 marty Exp $
+#	$NetBSD: files.exynos,v 1.16 2015/12/21 03:34:34 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -101,8 +101,8 @@ file	arch/arm/samsung/exynos_gpio.c		exynos_pinctl | exyo_io needs-flag
 #file	arch/arm/samsung/exynos_gpio.c		exynos_gpio | exyo_io needs-flag
 
 # USB2 Host Controller (EHCI/OHCI)
-device	exyousb { }
-attach	exyousb at exyo with exyo_usb
+device	exyousb { } : fdtbus
+attach	exyousb at fdt with exyo_usb
 attach	ohci at exyousb with ohci_exyousb
 attach	ehci at exyousb with ehci_exyousb
 file	arch/arm/samsung/exynos_usb.c		exyo_usb
@@ -115,5 +115,5 @@ file	arch/arm/samsung/exynos_i2c.c		exynos_iic | exyo_io needs-flag
 file	arch/arm/samsung/exynos5422_dma.c
 
 device	exy5422clk: clk
-attach	exy5422clk at exyo with exynos5422_clock
+attach	exy5422clk at fdt with exynos5422_clock
 file	arch/arm/samsung/exynos5422_clock.c	exynos5422_clock
