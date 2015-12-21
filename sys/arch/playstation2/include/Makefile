@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2014/03/31 11:25:49 martin Exp $
+#	$NetBSD: Makefile,v 1.12 2015/12/21 17:02:34 christos Exp $
 
 INCSDIR= /usr/include/playstation2
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
-	float.h \
+	fenv.h float.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \
