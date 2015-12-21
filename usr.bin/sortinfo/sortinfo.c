@@ -1,4 +1,4 @@
-/*	$NetBSD: sortinfo.c,v 1.4 2015/12/20 00:48:36 christos Exp $	*/
+/*	$NetBSD: sortinfo.c,v 1.5 2015/12/21 16:17:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: sortinfo.c,v 1.4 2015/12/20 00:48:36 christos Exp $");
+__RCSID("$NetBSD: sortinfo.c,v 1.5 2015/12/21 16:17:09 christos Exp $");
 
 /*
  * Sort a texinfo(1) directory file.
@@ -58,13 +58,13 @@ static struct section *slist;
 static size_t nsections, maxsections;
 
 static struct section *
-addsection(const char *line)
+addsection(char *line)
 {
 	if (nsections >= maxsections) {
 		maxsections += 20;
 		slist = erealloc(slist, maxsections * sizeof(*slist));
 	}
-	slist[nsections].name = estrdup(line);
+	slist[nsections].name = line;
 	slist[nsections].nlines = 0;
 	slist[nsections].maxlines = 20;
 	slist[nsections].lines = ecalloc(slist[nsections].maxlines,
@@ -73,13 +73,13 @@ addsection(const char *line)
 }
 
 static void
-addline(struct section *s, const char *line)
+addline(struct section *s, char *line)
 {
 	if (s->nlines == s->maxlines) {
 		s->maxlines += 20;
 		s->lines = erealloc(s->lines, s->maxlines * sizeof(*s->lines));
 	}
-	s->lines[s->nlines++] = estrdup(line);
+	s->lines[s->nlines++] = line;
 }
 
 static int
@@ -112,21 +112,26 @@ int
 main(int argc, char *argv[])
 {
 	size_t i;
+	ssize_t ll;
 	char *line;
 	int needsection;
-	struct section *s = NULL;
+	struct section *s;
 
-	while ((line = fgetln(stdin, &i)) != NULL) {
+	s = NULL;
+	line = NULL;
+	i = 0;
+
+	while ((ll = getline(&line, &i, stdin)) != -1) {
 		fputs(line, stdout);
 		if (strcmp(line, "* Menu:\n") == 0)
 			break;
 	}
 
-	if (line == NULL)
+	if (ll == -1)
 		errx(EXIT_FAILURE, "Did not find menu line");
 
 	needsection = 0;
-	while ((line = fgetln(stdin, &i)) != NULL)
+	while ((ll = getline(&line, &i, stdin)) != -1)
 		switch (*line) {
 		case '\n':
 			needsection = 1;
@@ -135,11 +140,15 @@ main(int argc, char *argv[])
 			if (s == NULL)
 				errx(EXIT_FAILURE, "No current section");
 			addline(s, line);
+			line = NULL;
+			i = 0;
 			continue;
 		default:
 			if (needsection == 0)
 				errx(EXIT_FAILURE, "Already in section");
 			s = addsection(line);
+			line = NULL;
+			i = 0;
 			needsection = 0;
 			continue;
 		}
