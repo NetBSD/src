@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2015/05/01 14:17:56 christos Exp $
+# $NetBSD: Makefile,v 1.26 2015/12/21 12:11:23 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -30,6 +30,7 @@ PROGS+=		h_atexit
 PROGS+=		h_getopt h_getopt_long
 
 .if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
+    || ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "powerpc" \
     || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
     || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 CPPFLAGS.t_strtod.c+=	-DHAVE_FENV
