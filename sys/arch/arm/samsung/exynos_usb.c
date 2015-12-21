@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.14 2015/12/21 03:34:34 marty Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.15 2015/12/21 04:58:50 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.14 2015/12/21 03:34:34 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.15 2015/12/21 04:58:50 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,7 +65,6 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.14 2015/12/21 03:34:34 marty Exp $"
 
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
-#include <arm/samsung/exynos_io.h>
 
 #include <dev/fdt/fdtvar.h>
 

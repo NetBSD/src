@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.5 2015/12/21 00:52:50 marty Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.6 2015/12/21 04:58:50 marty Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "exynos_iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.5 2015/12/21 00:52:50 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.6 2015/12/21 04:58:50 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.5 2015/12/21 00:52:50 marty Exp $")
 #include <sys/kmem.h>
 
 #include <arm/samsung/exynos_reg.h>
-#include <arm/samsung/exynos_io.h>
 #include <arm/samsung/exynos_intr.h>
 
 #include <sys/gpio.h>
