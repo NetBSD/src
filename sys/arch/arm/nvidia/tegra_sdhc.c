@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_sdhc.c,v 1.14 2015/12/16 19:46:55 jmcneill Exp $ */
+/* $NetBSD: tegra_sdhc.c,v 1.15 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.14 2015/12/16 19:46:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.15 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,24 +47,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_sdhc.c,v 1.14 2015/12/16 19:46:55 jmcneill Exp
 
 #include <dev/fdt/fdtvar.h>
 
-/* XXX */
-static int
-tegra_sdhc_addr2port(bus_addr_t addr)
-{
-	switch (addr) {
-	case TEGRA_APB_BASE + TEGRA_SDMMC1_OFFSET:
-		return 0;
-	case TEGRA_APB_BASE + TEGRA_SDMMC2_OFFSET:
-		return 1;
-	case TEGRA_APB_BASE + TEGRA_SDMMC3_OFFSET:
-		return 2;
-	case TEGRA_APB_BASE + TEGRA_SDMMC4_OFFSET:
-		return 3;
-	default:
-		return -1;
-	}
-}
-
 static int	tegra_sdhc_match(device_t, cfdata_t, void *);
 static void	tegra_sdhc_attach(device_t, device_t, void *);
 
@@ -74,7 +56,8 @@ static int	tegra_sdhc_write_protect(struct sdhc_softc *);
 struct tegra_sdhc_softc {
 	struct sdhc_softc	sc;
 
-	u_int			sc_port;
+	struct clk		*sc_clk;
+	struct fdtbus_reset	*sc_rst;
 
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
@@ -139,7 +122,6 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_bsz = size;
-	sc->sc_port = tegra_sdhc_addr2port(addr);
 
 	sc->sc_pin_power = fdtbus_gpio_acquire(faa->faa_phandle,
 	    "power-gpios", GPIO_PIN_OUTPUT);
@@ -159,11 +141,34 @@ tegra_sdhc_attach(device_t parent, device_t self, void *aux)
 		sc->sc.sc_vendor_write_protect = tegra_sdhc_write_protect;
 	}
 
-	tegra_car_periph_sdmmc_set_rate(sc->sc_port, 204000000);
-	sc->sc.sc_clkbase = tegra_car_periph_sdmmc_rate(sc->sc_port) / 1000;
+	sc->sc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock\n");
+		return;
+	}
+	sc->sc_rst = fdtbus_reset_get(faa->faa_phandle, "sdhci");
+	if (sc->sc_rst == NULL) {
+		aprint_error(": couldn't get reset\n");
+		return;
+	}
+
+	fdtbus_reset_assert(sc->sc_rst);
+	error = clk_set_rate(sc->sc_clk, 204000000);
+	if (error) {
+		aprint_error(": couldn't set frequency: %d\n", error);
+		return;
+	}
+	error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error(": couldn't enable clock: %d\n", error);
+		return;
+	}
+	fdtbus_reset_deassert(sc->sc_rst);
+
+	sc->sc.sc_clkbase = clk_get_rate(sc->sc_clk) / 1000;
 
 	aprint_naive("\n");
-	aprint_normal(": SDMMC%d\n", sc->sc_port + 1);
+	aprint_normal(": SDMMC\n");
 
 	if (sc->sc.sc_clkbase == 0) {
 		aprint_error_dev(self, "couldn't determine frequency\n");

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.10 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.10 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.10 2015/12/13 17:39:19 jmcneill
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_intr.h>
+#include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_dcreg.h>
 #include <arm/nvidia/tegra_hdmireg.h>
 #include <arm/nvidia/tegra_drm.h>
@@ -283,10 +284,18 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 {
 	struct tegra_drm_softc * const sc = tegra_drm_private(ddev);
 	struct tegra_crtc *crtc;
+	struct clk *clk_parent;
 	bus_addr_t offset;
 	bus_size_t size;
 	u_int intr;
 	int error;
+
+	if (sc->sc_clk_dc[index] == NULL ||
+	    sc->sc_clk_dc_parent[index] == NULL ||
+	    sc->sc_rst_dc[index] == NULL) {
+		DRM_ERROR("no clocks configured for crtc %d\n", index);
+		return -EIO;
+	}
 
 	switch (index) {
 	case 0:
@@ -328,7 +337,38 @@ tegra_crtc_init(struct drm_device *ddev, int index)
 		return -ENOMEM;
 	}
 
-	tegra_car_dc_enable(crtc->index);
+	/* Enter reset */
+	fdtbus_reset_assert(sc->sc_rst_dc[index]);
+
+	/* Turn on power to display partition */
+	const u_int pmc_partid = index == 0 ? PMC_PARTID_DIS : PMC_PARTID_DISB;
+	tegra_pmc_power(pmc_partid, true);
+	tegra_pmc_remove_clamping(pmc_partid);
+
+	/* Set parent clock */
+	clk_parent = clk_get("pll_d2_out0");
+	if (clk_parent == NULL) {
+		DRM_ERROR("couldn't find pll_d2_out0\n");
+		return -EIO;
+	}
+	error = clk_set_parent(sc->sc_clk_dc[index], clk_parent);
+	if (error) {
+		DRM_ERROR("failed to set crtc %d clock parent: %d\n",
+		    index, error);
+		return -error;
+	}
+
+	/* Enable DC clock */
+	error = clk_enable(sc->sc_clk_dc[index]);
+	if (error) {
+		DRM_ERROR("failed to enable crtc %d clock: %d\n", index, error);
+		return -error;
+	}
+
+	/* Leave reset */
+	fdtbus_reset_deassert(sc->sc_rst_dc[index]);
+
+	crtc->clk_parent = clk_parent;
 
 	DC_WRITE(crtc, DC_CMD_INT_ENABLE_REG, DC_CMD_INT_V_BLANK);
 
@@ -606,8 +646,8 @@ tegra_crtc_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	    __SHIFTIN(pulse_start + 8, DC_DISP_H_PULSE2_POSITION_A_END));
 
 	/* Pixel clock */
-	const u_int div = (tegra_car_plld2_rate() * 2) /
-	    (mode->crtc_clock * 1000) - 2;
+	const u_int parent_rate = clk_get_rate(tegra_crtc->clk_parent);
+	const u_int div = (parent_rate * 2) / (mode->crtc_clock * 1000) - 2;
 	DC_WRITE(tegra_crtc, DC_DISP_DISP_CLOCK_CONTROL_REG,
 	    __SHIFTIN(0, DC_DISP_DISP_CLOCK_CONTROL_PIXEL_CLK_DIVIDER) |
 	    __SHIFTIN(div, DC_DISP_DISP_CLOCK_CONTROL_SHIFT_CLK_DIVIDER));
@@ -748,6 +788,15 @@ tegra_encoder_init(struct drm_device *ddev)
 	struct tegra_encoder *encoder;
 	int error;
 
+	if (sc->sc_clk_hdmi == NULL ||
+	    sc->sc_clk_hdmi_parent == NULL ||
+	    sc->sc_rst_hdmi == NULL) {
+		DRM_ERROR("no clocks configured for hdmi\n");
+		DRM_ERROR("clk: hdmi %p parent %p\n", sc->sc_clk_hdmi, sc->sc_clk_hdmi_parent);
+		DRM_ERROR("rst: hdmi %p\n", sc->sc_rst_hdmi);
+		return -EIO;
+	}
+
 	encoder = kmem_zalloc(sizeof(*encoder), KM_SLEEP);
 	if (encoder == NULL)
 		return -ENOMEM;
@@ -764,6 +813,18 @@ tegra_encoder_init(struct drm_device *ddev)
 	encoder->size = size;
 
 	tegra_pmc_hdmi_enable();
+
+	/* Enable parent PLL */
+	error = clk_set_rate(sc->sc_clk_hdmi_parent, 594000000);
+	if (error) {
+		DRM_ERROR("couldn't set hdmi parent PLL rate: %d\n", error);
+		return -error;
+	}
+	error = clk_enable(sc->sc_clk_hdmi_parent);
+	if (error) {
+		DRM_ERROR("couldn't enable hdmi parent PLL: %d\n", error);
+		return -error;
+	}
 
 	drm_encoder_init(ddev, &encoder->base, &tegra_encoder_funcs,
 	    DRM_MODE_ENCODER_TMDS);
@@ -811,6 +872,41 @@ tegra_encoder_mode_fixup(struct drm_encoder *encoder,
 	return true;
 }
 
+static int
+tegra_encoder_hdmi_set_clock(struct drm_encoder *encoder, u_int rate)
+{
+	struct drm_device *ddev = encoder->dev;
+	struct tegra_drm_softc * const sc = tegra_drm_private(ddev);
+	int error;
+
+	/* Enter reset */
+	fdtbus_reset_assert(sc->sc_rst_hdmi);
+
+	/* Set HDMI parent clock */
+	error = clk_set_parent(sc->sc_clk_hdmi, sc->sc_clk_hdmi_parent);
+	if (error) {
+		DRM_ERROR("couldn't set hdmi parent: %d\n", error);
+		return -error;
+	}
+
+	/* Set dot clock frequency */
+	error = clk_set_rate(sc->sc_clk_hdmi, rate);
+	if (error) {
+		DRM_ERROR("couldn't set hdmi clock: %d\n", error);
+		return -error;
+	}
+	error = clk_enable(sc->sc_clk_hdmi);
+	if (error) {
+		DRM_ERROR("couldn't enable hdmi clock: %d\n", error);
+		return -error;
+	}
+
+	/* Leave reset */
+	fdtbus_reset_deassert(sc->sc_rst_hdmi);
+
+	return 0;
+}
+
 static void
 tegra_encoder_mode_set(struct drm_encoder *encoder,
     struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
@@ -825,7 +921,7 @@ tegra_encoder_mode_set(struct drm_encoder *encoder,
 	int retry;
 	u_int i;
 
-	tegra_car_hdmi_enable(mode->crtc_clock * 1000);
+	tegra_encoder_hdmi_set_clock(encoder, mode->crtc_clock * 1000);
 
 	/* find the connector for this encoder */
 	list_for_each_entry(connector, &ddev->mode_config.connector_list, head) {
