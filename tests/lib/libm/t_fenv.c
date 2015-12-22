@@ -1,4 +1,4 @@
-/* $NetBSD: t_fenv.c,v 1.2 2014/12/29 19:51:53 martin Exp $ */
+/* $NetBSD: t_fenv.c,v 1.3 2015/12/22 14:20:59 christos Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -29,15 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fenv.c,v 1.2 2014/12/29 19:51:53 martin Exp $");
+__RCSID("$NetBSD: t_fenv.c,v 1.3 2015/12/22 14:20:59 christos Exp $");
 
 #include <atf-c.h>
 
-#ifdef HAVE_FENV_H
+#include <fenv.h>
+#ifdef __HAVE_FENV
 
 #include <ieeefp.h>
 #include <stdlib.h>
-#include <fenv.h>
 
 
 #if __arm__ && !__SOFTFP__
