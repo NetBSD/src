@@ -1492,6 +1492,9 @@ add_debug_prefix_map (const char *arg)
 {
   debug_prefix_map *map;
   const char *p;
+  char *env;
+  const char *old;
+  size_t oldlen;
 
   p = strchr (arg, '=');
   if (!p)
@@ -1499,9 +1502,29 @@ add_debug_prefix_map (const char *arg)
       error ("invalid argument %qs to -fdebug-prefix-map", arg);
       return;
     }
+  if (*arg == '$')
+    {
+      env = xstrndup (arg+1, p - (arg+1));
+      old = getenv(env);
+      if (!old)
+	{
+	  warning (0, "environment variable %qs not set in argument to "
+		   "-fdebug-prefix-map", env);
+	  free(env);
+	  return;
+	}
+      oldlen = strlen(old);
+      free(env);
+    }
+  else
+    {
+      old = xstrndup (arg, p - arg);
+      oldlen = p - arg;
+    }
+
   map = XNEW (debug_prefix_map);
-  map->old_prefix = xstrndup (arg, p - arg);
-  map->old_len = p - arg;
+  map->old_prefix = old;
+  map->old_len = oldlen;
   p++;
   map->new_prefix = xstrdup (p);
   map->new_len = strlen (p);
