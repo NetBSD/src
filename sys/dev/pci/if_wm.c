@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.383 2015/12/18 09:57:57 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.384 2015/12/22 02:10:25 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.383 2015/12/18 09:57:57 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.384 2015/12/22 02:10:25 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9321,12 +9321,11 @@ wm_check_for_link(struct wm_softc *sc)
 static void
 wm_tbi_tick(struct wm_softc *sc)
 {
-	struct wm_txqueue *txq __diagused = &sc->sc_txq[0];
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t status;
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(WM_CORE_LOCKED(sc));
 
 	status = CSR_READ(sc, WMREG_STATUS);
 
@@ -9529,13 +9528,12 @@ setled:
 static void
 wm_serdes_tick(struct wm_softc *sc)
 {
-	struct wm_txqueue *txq __diagused = &sc->sc_txq[0];
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t reg;
 
-	KASSERT(WM_TX_LOCKED(txq));
+	KASSERT(WM_CORE_LOCKED(sc));
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
