@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.28 2015/11/21 22:55:32 jmcneill Exp $ */
+/* $NetBSD: tegra_var.h,v 1.29 2015/12/22 22:12:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -88,33 +88,6 @@ void	tegra_bootstrap(void);
 void	tegra_dma_bootstrap(psize_t);
 void	tegra_cpuinit(void);
 
-u_int	tegra_car_osc_rate(void);
-u_int	tegra_car_pllc_rate(void);
-u_int	tegra_car_plle_rate(void);
-u_int	tegra_car_pllx_rate(void);
-void	tegra_car_pllx_set_rate(u_int, u_int, u_int);
-u_int	tegra_car_pllu_rate(void);
-u_int	tegra_car_pllp0_rate(void);
-u_int	tegra_car_plld2_rate(void);
-u_int	tegra_car_uart_rate(u_int);
-u_int	tegra_car_periph_sdmmc_rate(u_int);
-int	tegra_car_periph_sdmmc_set_rate(u_int, u_int);
-int	tegra_car_periph_usb_enable(u_int);
-void	tegra_car_periph_hda_enable(void);
-void	tegra_car_periph_sata_enable(void);
-int	tegra_car_periph_i2c_enable(u_int, u_int);
-void	tegra_car_periph_cec_enable(void);
-void	tegra_car_utmip_init(void);
-void	tegra_car_utmip_enable(u_int);
-void	tegra_car_hdmi_enable(u_int);
-int	tegra_car_dc_enable(u_int);
-void	tegra_car_host1x_enable(void);
-void	tegra_car_wdt_enable(u_int, bool);
-void	tegra_car_gpu_enable(void);
-void	tegra_car_fuse_enable(void);
-void	tegra_car_fuse_disable(void);
-void	tegra_car_soctherm_enable(void);
-
 struct tegra_gpio_pin;
 struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
 void	tegra_gpio_release(struct tegra_gpio_pin *);
@@ -146,8 +119,6 @@ void	tegra_pmc_reset(void);
 void	tegra_pmc_power(u_int, bool);
 void	tegra_pmc_remove_clamping(u_int);
 void	tegra_pmc_hdmi_enable(void);
-
-void	tegra_i2c_dvc_write(uint8_t, uint32_t, size_t);
 
 psize_t	tegra_mc_memsize(void);
 

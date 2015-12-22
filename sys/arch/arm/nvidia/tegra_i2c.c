@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.12 2015/12/22 22:12:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.12 2015/12/22 22:12:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -492,21 +492,4 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 	}
 
 	return tegra_i2c_wait(sc, flags);
-}
-
-void
-tegra_i2c_dvc_write(uint8_t addr, uint32_t data, size_t datalen)
-{
-	bus_space_tag_t bst = &armv7_generic_bs_tag;
-	bus_space_handle_t bsh;
-
-	bus_space_subregion(bst, tegra_apb_bsh, TEGRA_I2C5_OFFSET,
-	    TEGRA_I2C5_SIZE, &bsh);
-
-	bus_space_write_4(bst, bsh, I2C_CMD_ADDR0_REG, addr << 1);
-	bus_space_write_4(bst, bsh, I2C_CMD_DATA1_REG, data);
-	bus_space_write_4(bst, bsh, I2C_CNFG_REG,
-	    __SHIFTIN(datalen - 1, I2C_CNFG_LENGTH) |
-	    I2C_CNFG_NEW_MASTER_FSM |
-	    I2C_CNFG_SEND);
 }
