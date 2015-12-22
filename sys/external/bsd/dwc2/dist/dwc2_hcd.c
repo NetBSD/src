@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2_hcd.c,v 1.16 2015/08/30 12:59:59 skrll Exp $	*/
+/*	$NetBSD: dwc2_hcd.c,v 1.17 2015/12/22 14:29:28 skrll Exp $	*/
 
 /*
  * hcd.c - DesignWare HS OTG Controller host-mode routines
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.16 2015/08/30 12:59:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2_hcd.c,v 1.17 2015/12/22 14:29:28 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/kmem.h>
@@ -396,8 +396,11 @@ int dwc2_hcd_urb_enqueue(struct dwc2_hsotg *hsotg,
 		u32 hprt0 = DWC2_READ_4(hsotg, HPRT0);
 		u32 prtspd = (hprt0 & HPRT0_SPD_MASK) >> HPRT0_SPD_SHIFT;
 
-		if (prtspd == HPRT0_SPD_FULL_SPEED)
+		if (prtspd == HPRT0_SPD_FULL_SPEED) {
+			dev_err(hsotg->dev,
+				"DWC OTG HCD URB Enqueue unsupported\n");
 			return -ENODEV;
+		}
 	}
 
 	if (!qtd)
