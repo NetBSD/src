@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fuse.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_fuse.c,v 1.4 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fuse.c,v 1.3 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fuse.c,v 1.4 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +48,9 @@ struct tegra_fuse_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+
+	struct clk		*sc_clk;
+	struct fdtbus_reset	*sc_rst;
 };
 
 static struct tegra_fuse_softc *fuse_softc = NULL;
@@ -79,6 +80,16 @@ tegra_fuse_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+	sc->sc_clk = fdtbus_clock_get(faa->faa_phandle, "fuse");
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock fuse\n");
+		return;
+	}
+	sc->sc_rst = fdtbus_reset_get(faa->faa_phandle, "fuse");
+	if (sc->sc_rst == NULL) {
+		aprint_error(": couldn't get reset fuse\n");
+		return;
+	}
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
@@ -101,18 +112,14 @@ tegra_fuse_read(u_int offset)
 	bus_space_tag_t bst;
 	bus_space_handle_t bsh;
 
-	if (fuse_softc) {
-		bst = fuse_softc->sc_bst;
-		bsh = fuse_softc->sc_bsh;
-	} else {
-		bst = &armv7_generic_bs_tag;
-		bus_space_subregion(bst, tegra_apb_bsh,
-		    TEGRA_FUSE_OFFSET, TEGRA_FUSE_SIZE, &bsh);
-	}
+	KASSERT(fuse_softc != NULL);
 
-	tegra_car_fuse_enable();
+	bst = fuse_softc->sc_bst;
+	bsh = fuse_softc->sc_bsh;
+
+	clk_enable(fuse_softc->sc_clk);
 	const uint32_t v = bus_space_read_4(bst, bsh, 0x100 + offset);
-	tegra_car_fuse_disable();
+	clk_disable(fuse_softc->sc_clk);
 
 	return v;
 }

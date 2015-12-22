@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ehci.c,v 1.11 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_ehci.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.11 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,22 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_ehci.c,v 1.11 2015/12/13 17:39:19 jmcneill Exp
 
 #include <dev/fdt/fdtvar.h>
 
-/* XXX */
-static int
-tegra_ehci_addr2port(bus_addr_t addr)
-{
-	switch (addr) {
-	case TEGRA_AHB_A2_BASE + TEGRA_USB1_OFFSET:
-		return 0;
-	case TEGRA_AHB_A2_BASE + TEGRA_USB2_OFFSET:
-		return 1;
-	case TEGRA_AHB_A2_BASE + TEGRA_USB3_OFFSET:
-		return 2;
-	default:
-		return -1;
-	}
-}
-
 #define TEGRA_EHCI_REG_OFFSET	0x100
 
 static int	tegra_ehci_match(device_t, cfdata_t, void *);
@@ -77,7 +61,6 @@ struct tegra_ehci_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
-	u_int			sc_port;
 };
 
 static int	tegra_ehci_port_status(struct ehci_softc *sc, uint32_t v,
@@ -112,10 +95,9 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_bst = faa->faa_bst;
-	sc->sc_port = tegra_ehci_addr2port(addr);
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map USB%d\n", sc->sc_port + 1);
+		aprint_error(": couldn't map USB\n");
 		return;
 	}
 
@@ -135,7 +117,7 @@ tegra_ehci_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_vendor_port_status = tegra_ehci_port_status;
 
 	aprint_naive("\n");
-	aprint_normal(": USB%d\n", sc->sc_port + 1);
+	aprint_normal(": USB\n");
 
 	sc->sc.sc_offs = EREAD1(&sc->sc, EHCI_CAPLENGTH);
 
