@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_ahcisata.c,v 1.8 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_ahcisata.c,v 1.9 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.8 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.9 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_ahcisata.c,v 1.8 2015/12/13 17:39:19 jmcneill 
 #include <dev/ic/ahcisatavar.h>
 
 #include <arm/nvidia/tegra_var.h>
+#include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_ahcisatareg.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -54,6 +55,13 @@ struct tegra_ahcisata_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
+	struct clk		*sc_clk_sata;
+	struct clk		*sc_clk_sata_oob;
+	struct clk		*sc_clk_cml1;
+	struct clk		*sc_clk_pll_e;
+	struct fdtbus_reset	*sc_rst_sata;
+	struct fdtbus_reset	*sc_rst_sata_oob;
+	struct fdtbus_reset	*sc_rst_sata_cold;
 
 	struct tegra_gpio_pin	*sc_pin_power;
 };
@@ -67,6 +75,7 @@ static const char * const tegra_ahcisata_supplies[] = {
 };
 
 static void	tegra_ahcisata_init(struct tegra_ahcisata_softc *);
+static int	tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *);
 
 CFATTACH_DECL_NEW(tegra_ahcisata, sizeof(struct tegra_ahcisata_softc),
 	tegra_ahcisata_match, tegra_ahcisata_attach, NULL, NULL);
@@ -98,6 +107,41 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 	}
 	if (fdtbus_get_reg(phandle, 1, &sata_addr, &sata_size) != 0) {
 		aprint_error(": couldn't get sata registers\n");
+		return;
+	}
+	sc->sc_clk_sata = fdtbus_clock_get(phandle, "sata");
+	if (sc->sc_clk_sata == NULL) {
+		aprint_error(": couldn't get clock sata\n");
+		return;
+	}
+	sc->sc_clk_sata_oob = fdtbus_clock_get(phandle, "sata-oob");
+	if (sc->sc_clk_sata_oob == NULL) {
+		aprint_error(": couldn't get clock sata-oob\n");
+		return;
+	}
+	sc->sc_clk_cml1 = fdtbus_clock_get(phandle, "cml1");
+	if (sc->sc_clk_cml1 == NULL) {
+		aprint_error(": couldn't get clock cml1\n");
+		return;
+	}
+	sc->sc_clk_pll_e = fdtbus_clock_get(phandle, "pll_e");
+	if (sc->sc_clk_pll_e == NULL) {
+		aprint_error(": couldn't get clock pll_e\n");
+		return;
+	}
+	sc->sc_rst_sata = fdtbus_reset_get(phandle, "sata");
+	if (sc->sc_rst_sata == NULL) {
+		aprint_error(": couldn't get reset sata\n");
+		return;
+	}
+	sc->sc_rst_sata_oob = fdtbus_reset_get(phandle, "sata-oob");
+	if (sc->sc_rst_sata_oob == NULL) {
+		aprint_error(": couldn't get reset sata-oob\n");
+		return;
+	}
+	sc->sc_rst_sata_cold = fdtbus_reset_get(phandle, "sata-cold");
+	if(sc->sc_rst_sata_cold == NULL) {
+		aprint_error(": couldn't get reset sata-cold\n");
 		return;
 	}
 
@@ -136,7 +180,8 @@ tegra_ahcisata_attach(device_t parent, device_t self, void *aux)
 		fdtbus_regulator_release(reg);
 	}
 
-	tegra_car_periph_sata_enable();
+	if (tegra_ahcisata_init_clocks(sc) != 0)
+		return;
 
 	tegra_xusbpad_sata_enable();
 
@@ -233,4 +278,79 @@ tegra_ahcisata_init(struct tegra_ahcisata_softc *sc)
 	/* Enable interrupts */
 	tegra_reg_set_clear(bst, bsh, TEGRA_SATA_INTR_MASK_REG,
 	    TEGRA_SATA_INTR_MASK_IP_INT, 0);
+}
+
+static int
+tegra_ahcisata_init_clocks(struct tegra_ahcisata_softc *sc)
+{
+	device_t self = sc->sc.sc_atac.atac_dev;
+	struct clk *pll_p_out0;
+	int error;
+
+	pll_p_out0 = clk_get("pll_p_out0");
+	if (pll_p_out0 == NULL) {
+		aprint_error_dev(self, "couldn't find pll_p_out0\n");
+		return ENOENT;
+	}
+
+	/* Assert resets */
+	fdtbus_reset_assert(sc->sc_rst_sata);
+	fdtbus_reset_assert(sc->sc_rst_sata_cold);
+
+	/* Set SATA_OOB clock source to PLLP, 204MHz */
+	error = clk_set_parent(sc->sc_clk_sata_oob, pll_p_out0);
+	if (error) {
+		aprint_error_dev(self, "couldn't set sata-oob parent: %d\n",
+		    error);
+		return error;
+	}
+	error = clk_set_rate(sc->sc_clk_sata_oob, 204000000);
+	if (error) {
+		aprint_error_dev(self, "couldn't set sata-oob rate: %d\n",
+		    error);
+		return error;
+	}
+
+	/* Set SATA clock source to PLLP, 102MHz */
+	error = clk_set_parent(sc->sc_clk_sata, pll_p_out0);
+	if (error) {
+		aprint_error_dev(self, "couldn't set sata parent: %d\n", error);
+		return error;
+	}
+	error = clk_set_rate(sc->sc_clk_sata, 102000000);
+	if (error) {
+		aprint_error_dev(self, "couldn't set sata rate: %d\n", error);
+		return error;
+	}
+
+	/* Ungate SAX partition in the PMC */
+	tegra_pmc_power(PMC_PARTID_SAX, true);
+	delay(20);
+
+	/* Remove clamping from SAX partition in the PMC */
+	tegra_pmc_remove_clamping(PMC_PARTID_SAX);
+	delay(20);
+
+	/* Un-gate clocks and enable CML clock for SATA */
+	error = clk_enable(sc->sc_clk_sata);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable sata: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_sata_oob);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable sata-oob: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_cml1);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable cml1: %d\n", error);
+		return error;
+	}
+
+	/* De-assert resets */
+	fdtbus_reset_deassert(sc->sc_rst_sata);
+	fdtbus_reset_deassert(sc->sc_rst_sata_cold);
+
+	return 0;
 }
