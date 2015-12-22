@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TEGRA,v 1.5 2015/12/16 12:26:14 jmcneill Exp $
+#	$NetBSD: TEGRA,v 1.6 2015/12/22 22:10:36 jmcneill Exp $
 #
 #	NVIDIA Tegra K1 (T124)
 #
@@ -55,7 +55,7 @@ tegrafuse*	at fdt?			# FUSE
 tegrapmc*	at fdt?			# PMC
 
 # Clock and Reset controller
-tegracar0	at fdt?			# CAR
+tegra124car*	at fdt?			# CAR
 
 # GPIO controller
 tegragpio*	at fdt?			# GPIO
