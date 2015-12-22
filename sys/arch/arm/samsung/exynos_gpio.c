@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.16 2015/12/22 03:36:01 marty Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.17 2015/12/22 22:19:07 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.16 2015/12/22 03:36:01 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.17 2015/12/22 22:19:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -157,8 +157,8 @@ static void *exynos_gpio_fdt_acquire(device_t, const void *,
 				     size_t, int);
 static void exynos_gpio_fdt_release(device_t, void *);
 
-static int exynos_gpio_fdt_read(device_t, void *);
-static void exynos_gpio_fdt_write(device_t, void *, int);
+static int exynos_gpio_fdt_read(device_t, void *, bool);
+static void exynos_gpio_fdt_write(device_t, void *, int, bool);
 static struct exynos_gpio_bank *
 exynos_gpio_pin_lookup(const char *pinname, int *ppin);
 static int exynos_gpio_cfprint(void *, const char *);
@@ -393,7 +393,7 @@ exynos_gpio_fdt_release(device_t dev, void *priv)
 }
 
 static int
-exynos_gpio_fdt_read(device_t dev, void *priv)
+exynos_gpio_fdt_read(device_t dev, void *priv, bool raw)
 {
 	struct exynos_gpio_pin *gpin = priv;
 	int val;
@@ -402,18 +402,18 @@ exynos_gpio_fdt_read(device_t dev, void *priv)
 				 gpin->pin_sc->sc_bsh,
 				 EXYNOS_GPIO_DAT) >> gpin->pin_no) & 1;
 
-	if (gpin->pin_actlo)
+	if (!raw && gpin->pin_actlo)
 		val = !val;
 
 	return val;
 }
 
 static void
-exynos_gpio_fdt_write(device_t dev, void *priv, int val)
+exynos_gpio_fdt_write(device_t dev, void *priv, int val, bool raw)
 {
 	struct exynos_gpio_pin *gpin = priv;
 
-	if (gpin->pin_actlo)
+	if (!raw && gpin->pin_actlo)
 		val = !val;
 
 	val = bus_space_read_1(gpin->pin_sc->sc_bst,

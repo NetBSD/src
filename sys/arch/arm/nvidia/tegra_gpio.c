@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.5 2015/12/14 20:57:34 jmcneill Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.6 2015/12/22 22:19:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.5 2015/12/14 20:57:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.6 2015/12/22 22:19:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -89,8 +89,8 @@ static void	tegra_gpio_attach(device_t, device_t, void *);
 static void *	tegra_gpio_fdt_acquire(device_t, const void *,
 		    size_t, int);
 static void	tegra_gpio_fdt_release(device_t, void *);
-static int	tegra_gpio_fdt_read(device_t, void *);
-static void	tegra_gpio_fdt_write(device_t, void *, int);
+static int	tegra_gpio_fdt_read(device_t, void *, bool);
+static void	tegra_gpio_fdt_write(device_t, void *, int, bool);
 
 struct fdtbus_gpio_controller_func tegra_gpio_funcs = {
 	.acquire = tegra_gpio_fdt_acquire,
@@ -323,25 +323,25 @@ tegra_gpio_fdt_release(device_t dev, void *priv)
 }
 
 static int
-tegra_gpio_fdt_read(device_t dev, void *priv)
+tegra_gpio_fdt_read(device_t dev, void *priv, bool raw)
 {
 	struct tegra_gpio_pin *gpin = priv;
 	int val;
 
 	val = tegra_gpio_read(gpin);
 
-	if (gpin->pin_actlo)
+	if (!raw && gpin->pin_actlo)
 		val = !val;
 
 	return val;
 }
 
 static void
-tegra_gpio_fdt_write(device_t dev, void *priv, int val)
+tegra_gpio_fdt_write(device_t dev, void *priv, int val, bool raw)
 {
 	struct tegra_gpio_pin *gpin = priv;
 
-	if (gpin->pin_actlo)
+	if (!raw && gpin->pin_actlo)
 		val = !val;
 
 	tegra_gpio_write(gpin, val);

@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_gpio.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $ */
+/* $NetBSD: fdt_gpio.c,v 1.3 2015/12/22 22:19:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.2 2015/12/16 12:17:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_gpio.c,v 1.3 2015/12/22 22:19:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,7 +131,7 @@ fdtbus_gpio_read(struct fdtbus_gpio_pin *gp)
 {
 	struct fdtbus_gpio_controller *gc = gp->gp_gc;
 
-	return gc->gc_funcs->read(gc->gc_dev, gp->gp_priv);
+	return gc->gc_funcs->read(gc->gc_dev, gp->gp_priv, false);
 }
 
 void
@@ -139,5 +139,21 @@ fdtbus_gpio_write(struct fdtbus_gpio_pin *gp, int val)
 {
 	struct fdtbus_gpio_controller *gc = gp->gp_gc;
 
-	gc->gc_funcs->write(gc->gc_dev, gp->gp_priv, val);
+	gc->gc_funcs->write(gc->gc_dev, gp->gp_priv, val, false);
+}
+
+int
+fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *gp)
+{
+	struct fdtbus_gpio_controller *gc = gp->gp_gc;
+
+	return gc->gc_funcs->read(gc->gc_dev, gp->gp_priv, true);
+}
+
+void
+fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *gp, int val)
+{
+	struct fdtbus_gpio_controller *gc = gp->gp_gc;
+
+	gc->gc_funcs->write(gc->gc_dev, gp->gp_priv, val, true);
 }
