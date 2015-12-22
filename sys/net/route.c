@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.152 2015/10/07 09:44:26 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.153 2015/12/22 01:59:21 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.152 2015/10/07 09:44:26 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.153 2015/12/22 01:59:21 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1060,9 +1060,10 @@ rtinit(struct ifaddr *ifa, int cmd, int flags)
 		info.rti_info[RTAX_NETMASK] = ifa->ifa_netmask;
 	error = rtrequest1((cmd == RTM_LLINFO_UPD) ? RTM_GET : cmd, &info,
 	    &nrt);
-	if (error != 0 || (rt = nrt) == NULL)
+	if (error != 0)
 		return error;
 
+	rt = nrt;
 	switch (cmd) {
 	case RTM_DELETE:
 		rt_newmsg(cmd, rt);
