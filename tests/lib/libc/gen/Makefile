@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.48 2015/12/22 14:18:35 christos Exp $
+# $NetBSD: Makefile,v 1.49 2015/12/22 14:25:58 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -38,6 +38,8 @@ TESTS_C+=	t_syslog
 TESTS_C+=	t_time
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
+
+CPPFLAGS.t_siginfo.c+=-D__TEST_FENV
 
 LDADD.t_siginfo+=	-lm
 DPADD.t_siginfo+=	${LIBM}
