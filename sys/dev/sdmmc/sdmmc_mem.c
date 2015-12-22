@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.49 2015/11/29 23:38:47 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.50 2015/12/22 09:56:06 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.49 2015/11/29 23:38:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.50 2015/12/22 09:56:06 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -616,7 +616,8 @@ sdmmc_mem_send_op_cond(struct sdmmc_softc *sc, uint32_t ocr, uint32_t *ocrp)
 		memset(&cmd, 0, sizeof(cmd));
 		cmd.c_arg = !ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE) ?
 		    ocr : (ocr & MMC_OCR_HCS);
-		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R3 | SCF_RSP_SPI_R1;
+		cmd.c_flags = SCF_CMD_BCR | SCF_RSP_R3 | SCF_RSP_SPI_R1
+		    | SCF_TOUT_OK;
 
 		if (ISSET(sc->sc_flags, SMF_SD_MODE)) {
 			cmd.c_opcode = SD_APP_OP_COND;
