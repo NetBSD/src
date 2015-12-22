@@ -1,16 +1,8 @@
-# $NetBSD: Makefile,v 1.34 2015/12/22 08:26:16 martin Exp $
+# $NetBSD: Makefile,v 1.35 2015/12/22 14:20:59 christos Exp $
 
 .include <bsd.own.mk>
 
 TESTSDIR=	${TESTSBASE}/lib/libm
-
-.if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
-    || ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "powerpc" \
-    || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
-    || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" \
-    || ${MACHINE_ARCH} == "mips"
-CPPFLAGS+=	-DHAVE_FENV_H
-.endif
 
 .if ${MACHINE} == "alpha"
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
