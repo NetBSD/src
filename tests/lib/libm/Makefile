@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2015/12/22 14:20:59 christos Exp $
+# $NetBSD: Makefile,v 1.36 2015/12/22 14:27:51 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,6 +8,7 @@ TESTSDIR=	${TESTSBASE}/lib/libm
 COPTS+=	-mfloat-ieee -mieee-with-inexact -mfp-trap-mode=sui -mtrap-precision=i
 .endif
 
+CPPFLAGS.t_fenv.c+=	-D__TEST_FENV
 CPPFLAGS.t_fmod.c+=	-I${.CURDIR}/../libc/gen
 
 TESTS_C+=	t_acos
