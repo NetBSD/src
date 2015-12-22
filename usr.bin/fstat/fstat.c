@@ -1,4 +1,4 @@
-/*	$NetBSD: fstat.c,v 1.109 2015/03/08 06:46:51 mlelstv Exp $	*/
+/*	$NetBSD: fstat.c,v 1.110 2015/12/22 23:35:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)fstat.c	8.3 (Berkeley) 5/2/95";
 #else
-__RCSID("$NetBSD: fstat.c,v 1.109 2015/03/08 06:46:51 mlelstv Exp $");
+__RCSID("$NetBSD: fstat.c,v 1.110 2015/12/22 23:35:21 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -532,6 +532,9 @@ ftrans(fdfile_t *fp, int i)
 }
 
 static const char dead[] = "dead";
+static const char *vnode_tag[] = {
+	VNODE_TAGS
+};
 
 static const char *
 vfilestat(struct vnode *vp, struct filestat *fsp)
@@ -588,8 +591,9 @@ vfilestat(struct vnode *vp, struct filestat *fsp)
 			break;
 		default: {
 			static char unknown[10];
-			(void)snprintf(unknown, sizeof unknown,
-			    "?(%x)", vp->v_tag);
+			(void)snprintf(unknown, sizeof unknown, "%s(%#x)",
+			    (size_t)vp->v_tag < __arraycount(vnode_tag) ?
+			    vnode_tag[vp->v_tag] : "?", vp->v_tag);
 			badtype = unknown;
 			break;
 		}
