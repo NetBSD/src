@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.165 2015/09/26 13:59:28 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.166 2015/12/22 13:37:01 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.165 2015/09/26 13:59:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.166 2015/12/22 13:37:01 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1114,8 +1114,7 @@ usbd_do_request_flags_pipe(usbd_device_handle dev, usbd_pipe_handle pipe,
 
  bad:
 	if (err) {
-		USBHIST_LOG(usbdebug, "returning err = %s",
-		    usbd_errstr(err), 0, 0, 0);
+		USBHIST_LOG(usbdebug, "returning err = %d", err, 0, 0, 0);
 	}
 	usbd_free_xfer(xfer);
 	return (err);
