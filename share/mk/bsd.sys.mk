@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.245 2014/09/03 19:22:53 matt Exp $
+#	$NetBSD: bsd.sys.mk,v 1.246 2015/12/22 16:46:56 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -18,6 +18,10 @@ error2:
 CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${DESTDIR}/:/
 CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
+.export NETBSDSRCDIR DESTDIR X11SRCDIR
+CFLAGS+=	-fdebug-prefix-map=\$$NETBSDSRCDIR=/usr/src
+CFLAGS+=	-fdebug-prefix-map=\$$DESTDIR=/
+CFLAGS+=	-fdebug-prefix-map=\$$X11SRCDIR=/usr/xsrc
 .endif
 
 # NetBSD sources use C99 style, with some GCC extensions.
