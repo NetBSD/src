@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.c,v 1.4 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.4 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -121,11 +121,13 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_t prop = device_properties(self);
 	int error, node, hdmi_phandle, ddc_phandle;
 	const char * const hdmi_compat[] = { "nvidia,tegra124-hdmi", NULL };
+	const char * const dc_compat[] = { "nvidia,tegra124-dc", NULL };
 	const char * const hdmi_supplies[] = {
 		"hdmi-supply", "pll-supply", "vdd-supply"
 	};
 	struct fdtbus_regulator *reg;
-	u_int n;
+	struct clk *pll_p_out0;
+	u_int n, ndc;
 
 	sc->sc_dev = self;
 	sc->sc_dmat = faa->faa_dmat;
@@ -135,13 +137,33 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	tegra_car_host1x_enable();
+	sc->sc_clk_host1x = fdtbus_clock_get_index(faa->faa_phandle, 0);
+	if (sc->sc_clk_host1x == NULL) {
+		aprint_error_dev(self, "couldn't get clock host1x\n");
+		return;
+	}
+	sc->sc_rst_host1x = fdtbus_reset_get(faa->faa_phandle, "host1x");
+	if (sc->sc_clk_host1x == NULL || sc->sc_rst_host1x == NULL) {
+		aprint_error_dev(self, "couldn't get reset host1x\n");
+		return;
+	}
 
+	ndc = 0;
 	hdmi_phandle = -1;
 	for (node = OF_child(faa->faa_phandle); node; node = OF_peer(node)) {
 		if (of_match_compatible(node, hdmi_compat)) {
+			sc->sc_clk_hdmi = fdtbus_clock_get(node, "hdmi");
+			sc->sc_clk_hdmi_parent = fdtbus_clock_get(node,
+			    "parent");
+			sc->sc_rst_hdmi = fdtbus_reset_get(node, "hdmi");
 			hdmi_phandle = node;
-			break;
+		} else if (of_match_compatible(node, dc_compat) &&
+			   ndc < __arraycount(sc->sc_clk_dc)) {
+			sc->sc_clk_dc[ndc] = fdtbus_clock_get(node, "dc");
+			sc->sc_clk_dc_parent[ndc] = fdtbus_clock_get(node,
+			    "parent");
+			sc->sc_rst_dc[ndc] = fdtbus_reset_get(node, "dc");
+			++ndc;
 		}
 	}
 	if (hdmi_phandle >= 0) {
@@ -169,6 +191,33 @@ tegra_drm_attach(device_t parent, device_t self, void *aux)
 			fdtbus_regulator_release(reg);
 		}
 	}
+
+	pll_p_out0 = clk_get("pll_p_out0");
+	if (pll_p_out0 == NULL) {
+		aprint_error_dev(self, "couldn't get clock pll_p_out0\n");
+		return;
+	}
+	fdtbus_reset_assert(sc->sc_rst_host1x);
+	error = clk_set_parent(sc->sc_clk_host1x, pll_p_out0);
+	if (error) {
+		aprint_error_dev(self, "couldn't set host1x clock parent: %d\n",
+		    error);
+		return;
+	}
+	error = clk_set_rate(sc->sc_clk_host1x, 408000000);
+	if (error) {
+		aprint_error_dev(self, "couldn't set host1x frequency: %d\n",
+		    error);
+		return;
+	}
+	error = clk_enable(sc->sc_clk_host1x);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock host1x: %d\n",
+		    error);
+		return;
+	}
+	fdtbus_reset_deassert(sc->sc_rst_host1x);
+	clk_put(pll_p_out0);
 
 	prop_dictionary_get_bool(prop, "force-dvi", &sc->sc_force_dvi);
 

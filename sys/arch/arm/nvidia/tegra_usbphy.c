@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_usbphy.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $ */
+/* $NetBSD: tegra_usbphy.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,28 +35,13 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_usbphy.c,v 1.4 2015/12/16 19:46:55 jmcneill Ex
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/atomic.h>
 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_var.h>
 #include <arm/nvidia/tegra_usbreg.h>
 
 #include <dev/fdt/fdtvar.h>
-
-/* XXX */
-static int
-tegra_usbphy_addr2port(bus_addr_t addr)
-{
-	switch (addr) {
-	case TEGRA_AHB_A2_BASE + TEGRA_USB1_OFFSET:
-		return 0;
-	case TEGRA_AHB_A2_BASE + TEGRA_USB2_OFFSET:
-		return 1;
-	case TEGRA_AHB_A2_BASE + TEGRA_USB3_OFFSET:
-		return 2;
-	default:
-		return -1;
-	}
-}
 
 static int	tegra_usbphy_match(device_t, cfdata_t, void *);
 static void	tegra_usbphy_attach(device_t, device_t, void *);
@@ -66,7 +51,11 @@ struct tegra_usbphy_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	int			sc_phandle;
-	u_int			sc_port;
+	struct clk		*sc_clk_reg;
+	struct clk		*sc_clk_pll;
+	struct clk		*sc_clk_utmip;
+	struct fdtbus_reset	*sc_rst_usb;
+	struct fdtbus_reset	*sc_rst_utmip;
 
 	struct tegra_gpio_pin	*sc_pin_vbus;
 	uint32_t		sc_hssync_start_delay;
@@ -102,37 +91,68 @@ tegra_usbphy_attach(device_t parent, device_t self, void *aux)
 	struct tegra_usbphy_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	struct fdtbus_regulator *reg;
+	const int phandle = faa->faa_phandle;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	sc->sc_clk_reg = fdtbus_clock_get(phandle, "reg");
+	if (sc->sc_clk_reg == NULL) {
+		aprint_error(": couldn't get clock reg\n");
+		return;
+	}
+	sc->sc_clk_pll = fdtbus_clock_get(phandle, "pll_u");
+	if (sc->sc_clk_pll == NULL) {
+		aprint_error(": couldn't get clock pll_u\n");
+		return;
+	}
+	sc->sc_clk_utmip = fdtbus_clock_get(phandle, "utmi-pads");
+	if (sc->sc_clk_utmip == NULL) {
+		aprint_error(": couldn't get clock utmi-pads\n");
+		return;
+	}
+	sc->sc_rst_usb = fdtbus_reset_get(phandle, "usb");
+	if (sc->sc_rst_usb == NULL) {
+		aprint_error(": couldn't get reset usb\n");
+		return;
+	}
+	sc->sc_rst_utmip = fdtbus_reset_get(phandle, "utmi-pads");
+	if (sc->sc_rst_utmip == NULL) {
+		aprint_error(": couldn't get reset utmi-pads\n");
 		return;
 	}
 
 	sc->sc_dev = self;
-	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
 		return;
 	}
-	sc->sc_port = tegra_usbphy_addr2port(addr);
 
 	aprint_naive("\n");
-	aprint_normal(": USB PHY%d\n", sc->sc_port + 1);
+	aprint_normal(": USB PHY\n");
 
 	if (tegra_usbphy_parse_properties(sc) != 0)
 		return;
 
-	tegra_car_periph_usb_enable(sc->sc_port);
-	delay(2);
+	fdtbus_reset_assert(sc->sc_rst_usb);
+	error = clk_enable(sc->sc_clk_reg);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock reg: %d\n",
+		    error);
+		return;
+	}
+	fdtbus_reset_deassert(sc->sc_rst_usb);
 
 	tegra_usbphy_utmip_init(sc);
 
-	reg = fdtbus_regulator_acquire(faa->faa_phandle, "vbus-supply");
+	reg = fdtbus_regulator_acquire(phandle, "vbus-supply");
 	if (reg) {
 		const uint32_t v = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    TEGRA_EHCI_PHY_VBUS_SENSORS_REG);
@@ -172,6 +192,7 @@ tegra_usbphy_parse_properties(struct tegra_usbphy_softc *sc)
 static void
 tegra_usbphy_utmip_init(struct tegra_usbphy_softc *sc)
 {
+	static u_int init_count = 0;
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	int retry;
@@ -195,9 +216,6 @@ tegra_usbphy_utmip_init(struct tegra_usbphy_softc *sc)
 	    TEGRA_EHCI_PHY_VBUS_SENSORS_B_VLD_SW_VALUE |
 	    TEGRA_EHCI_PHY_VBUS_SENSORS_B_VLD_SW_EN);
 
-	/* PLL configuration */
-	tegra_car_utmip_init();
-
 	/* Transceiver configuration */
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_XCVR_CFG0_REG,
 	    __SHIFTIN(4, TEGRA_EHCI_UTMIP_XCVR_CFG0_SETUP) |
@@ -212,12 +230,16 @@ tegra_usbphy_utmip_init(struct tegra_usbphy_softc *sc)
 		      TEGRA_EHCI_UTMIP_XCVR_CFG1_TERM_RANGE_ADJ),
 	    TEGRA_EHCI_UTMIP_XCVR_CFG1_TERM_RANGE_ADJ);
 
-	if (sc->sc_port == 0) {
+	if (atomic_inc_uint_nv(&init_count) == 1) {
 		tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG0_REG,
 		    TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL_MSB |
 		    __SHIFTIN(sc->sc_hsdiscon_level,
 			      TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL),
+		    TEGRA_EHCI_UTMIP_BIAS_CFG0_BIASPD |
 		    TEGRA_EHCI_UTMIP_BIAS_CFG0_HSDISCON_LEVEL); 
+		delay(25);
+		tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG1_REG,
+		    0, TEGRA_EHCI_UTMIP_BIAS_CFG1_PDTRK_POWERDOWN);
 	}
 
 	/* Misc config */
@@ -265,9 +287,6 @@ tegra_usbphy_utmip_init(struct tegra_usbphy_softc *sc)
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_MISC_CFG1_REG,
 	    TEGRA_EHCI_UTMIP_MISC_CFG1_PHY_XTAL_CLOCKEN, 0);
 
-	/* Clear port PLL powerdown status */
-	tegra_car_utmip_enable(sc->sc_port);
-
 	/* Bring UTMIP PHY out of reset */
 	tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_SUSP_CTRL_REG,
 	    0, TEGRA_EHCI_SUSP_CTRL_UTMIP_RESET);
@@ -299,12 +318,4 @@ tegra_usbphy_utmip_init(struct tegra_usbphy_softc *sc)
 	    TEGRA_EHCI_UTMIP_XCVR_CFG1_PDDISC_POWERDOWN |
 	    TEGRA_EHCI_UTMIP_XCVR_CFG1_PDCHRP_POWERDOWN |
 	    TEGRA_EHCI_UTMIP_XCVR_CFG1_PDDR_POWERDOWN);
-
-	if (sc->sc_port == 0) {
-		tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG0_REG,
-		    0, TEGRA_EHCI_UTMIP_BIAS_CFG0_BIASPD);
-		delay(25);
-		tegra_reg_set_clear(bst, bsh, TEGRA_EHCI_UTMIP_BIAS_CFG1_REG,
-		    0, TEGRA_EHCI_UTMIP_BIAS_CFG1_PDTRK_POWERDOWN);
-	}
 }

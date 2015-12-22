@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.36 2015/12/16 12:18:02 jmcneill Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.37 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.36 2015/12/16 12:18:02 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.37 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -381,7 +381,7 @@ consinit(void)
 
 #if NCOM > 0
 	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
-	const u_int freq = tegra_car_uart_rate(3);
+	const u_int freq = 408000000;	/* 408MHz PLLP_OUT0 */
 	if (comcnattach(bst, CONSADDR, CONSPEED, freq,
 			COM_TYPE_TEGRA, CONMODE)) {
 		panic("Serial console cannot be initialized.");
@@ -440,10 +440,6 @@ tegra_device_register(device_t self, void *aux)
 	if (device_is_a(self, "armgtmr")) {
                 prop_dictionary_set_uint32(dict, "frequency", TEGRA_REF_FREQ);
 		return;
-	}
-
-	if (device_is_a(self, "cpu") && device_unit(self) == 0) {
-		tegra_cpuinit();
 	}
 
 	if (device_is_a(self, "tegrafb")

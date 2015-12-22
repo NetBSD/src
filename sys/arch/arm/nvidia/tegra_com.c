@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $ */
+/* $NetBSD: tegra_com.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.5 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,30 +48,15 @@ __KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.4 2015/12/16 19:46:55 jmcneill Exp $
 
 #include <dev/fdt/fdtvar.h>
 
-/* XXX */
-static int
-tegra_com_addr2port(bus_addr_t addr)
-{
-	switch (addr) {
-	case TEGRA_APB_BASE + TEGRA_UARTA_OFFSET:
-		return 0;
-	case TEGRA_APB_BASE + TEGRA_UARTB_OFFSET:
-		return 1;
-	case TEGRA_APB_BASE + TEGRA_UARTC_OFFSET:
-		return 2;
-	case TEGRA_APB_BASE + TEGRA_UARTD_OFFSET:
-		return 3;
-	default:
-		return -1;
-	}
-}
-
 static int tegra_com_match(device_t, cfdata_t, void *);
 static void tegra_com_attach(device_t, device_t, void *);
 
 struct tegra_com_softc {
 	struct com_softc tsc_sc;
 	void *tsc_ih;
+
+	struct clk *tsc_clk;
+	struct fdtbus_reset *tsc_rst;
 };
 
 CFATTACH_DECL_NEW(tegra_com, sizeof(struct tegra_com_softc),
@@ -122,12 +107,15 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 
-	/* XXX */
-	const int port = tegra_com_addr2port(addr);
-	if (port == -1) {
-		panic("unsupported com address %#llx", (uint64_t)addr);
+	tsc->tsc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
+	tsc->tsc_rst = fdtbus_reset_get(faa->faa_phandle, "serial");
+
+	if (tsc->tsc_clk == NULL) {
+		aprint_error(": couldn't get frequency\n");
+		return;
 	}
-	sc->sc_frequency = tegra_car_uart_rate(port);
+
+	sc->sc_frequency = clk_get_rate(tsc->tsc_clk);
 	sc->sc_type = COM_TYPE_TEGRA;
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cec.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_cec.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,6 +61,8 @@ struct tegra_cec_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
+	struct clk		*sc_clk;
+	struct fdtbus_reset	*sc_rst;
 
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_cv;
@@ -134,6 +136,16 @@ tegra_cec_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+	sc->sc_clk = fdtbus_clock_get(faa->faa_phandle, "cec");
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock cec\n");
+		return;
+	}
+	sc->sc_rst = fdtbus_reset_get(faa->faa_phandle, "cec");
+	if (sc->sc_rst == NULL) {
+		aprint_error(": couldn't get reset cec\n");
+		return;
+	}
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
@@ -166,7 +178,13 @@ tegra_cec_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_get_cstring_nocopy(prop, "hdmi-device",
 	    &sc->sc_hdmidevname);
 
-	tegra_car_periph_cec_enable();
+	fdtbus_reset_assert(sc->sc_rst);
+	error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable cec: %d\n", error);
+		return;
+	}
+	fdtbus_reset_deassert(sc->sc_rst);
 
 	CEC_WRITE(sc, CEC_SW_CONTROL_REG, 0);
 	CEC_WRITE(sc, CEC_INPUT_FILTER_REG, 0);

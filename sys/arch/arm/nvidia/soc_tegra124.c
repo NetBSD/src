@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.11 2015/12/01 22:08:13 jmcneill Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.11 2015/12/01 22:08:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.12 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,10 @@ __KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.11 2015/12/01 22:08:13 jmcneill E
 #include <sys/device.h>
 
 #include <uvm/uvm_extern.h>
+
+#include <dev/clk/clk.h>
+#include <dev/i2c/i2cvar.h>
+#include <dev/fdt/fdtvar.h>
 
 #include <arm/cpufunc.h>
 
@@ -107,18 +111,41 @@ static struct tegra124_speedo {
 	.gpu_speedo_id = 0
 };
 
+static struct clk *tegra124_clk_pllx = NULL;
+
 void
 tegra124_cpuinit(void)
 {
-	tegra_car_periph_i2c_enable(4, 20400000);
+	const int node = OF_finddevice("/i2c@0,7000d000");
+	if (node == -1) {
+		aprint_error("cpufreq: ERROR: couldn't find i2c@0,7000d000\n");
+		return;
+	}
+	i2c_tag_t ic = fdtbus_get_i2c_tag(node);
 
 	/* Set VDD_CPU voltage to 1.4V */
 	const u_int target_mv = 1400;
 	const u_int sd0_vsel = (target_mv - 600) / 10;
-	tegra_i2c_dvc_write(0x40, (sd0_vsel << 8) | 00, 2);
+	uint8_t data[2] = { 0x00, sd0_vsel };
+
+	iic_acquire_bus(ic, I2C_F_POLL);
+	const int error = iic_exec(ic, I2C_OP_WRITE_WITH_STOP, 0x40,
+	    NULL, 0, data, sizeof(data), I2C_F_POLL);
+	iic_release_bus(ic, I2C_F_POLL);
+	if (error) {
+		aprint_error("cpufreq: ERROR: couldn't set VDD_CPU: %d\n",
+		    error);
+		return;
+	}
 	delay(10000);
 
 	tegra124_speedo_init();
+
+	tegra124_clk_pllx = clk_get("pll_x");
+	if (tegra124_clk_pllx == NULL) {
+		aprint_error("cpufreq: ERROR: couldn't find pll_x\n");
+		return;
+	}
 
 	tegra_cpufreq_register(&tegra124_cpufreq_func);
 }
@@ -206,15 +233,13 @@ tegra124_cpufreq_set_rate(u_int rate)
 	if (r == NULL)
 		return EINVAL;
 
-	tegra_car_pllx_set_rate(r->divm, r->divn, r->divp);
-
-	return 0;
+	return clk_set_rate(tegra124_clk_pllx, r->rate * 1000000);
 }
 
 static u_int
 tegra124_cpufreq_get_rate(void)
 {
-	return tegra_car_pllx_rate() / 1000000;
+	return clk_get_rate(tegra124_clk_pllx) / 1000000;
 }
 
 static size_t

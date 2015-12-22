@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.10 2015/12/16 19:46:55 jmcneill Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.10 2015/12/16 19:46:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,28 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.10 2015/12/16 19:46:55 jmcneill Exp 
 
 #include <dev/fdt/fdtvar.h>
 
-/* XXX */
-static int
-tegra_i2c_addr2port(bus_addr_t addr)
-{
-	switch (addr) {
-	case TEGRA_APB_BASE + TEGRA_I2C1_OFFSET:
-		return 0;
-	case TEGRA_APB_BASE + TEGRA_I2C2_OFFSET:
-		return 1;
-	case TEGRA_APB_BASE + TEGRA_I2C3_OFFSET:
-		return 2;
-	case TEGRA_APB_BASE + TEGRA_I2C4_OFFSET:
-		return 3;
-	case TEGRA_APB_BASE + TEGRA_I2C5_OFFSET:
-		return 4;
-	case TEGRA_APB_BASE + TEGRA_I2C6_OFFSET:
-		return 5;
-	default:
-		return -1;
-	}
-}
-
 static int	tegra_i2c_match(device_t, cfdata_t, void *);
 static void	tegra_i2c_attach(device_t, device_t, void *);
 
@@ -80,7 +58,9 @@ struct tegra_i2c_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void *			sc_ih;
-	u_int			sc_port;
+	struct clk *		sc_clk;
+	struct fdtbus_reset *	sc_rst;
+	u_int			sc_cid;
 
 	struct i2c_controller	sc_ic;
 	kmutex_t		sc_lock;
@@ -139,20 +119,30 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+	sc->sc_clk = fdtbus_clock_get(phandle, "div-clk");
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock div-clk\n");
+		return;
+	}
+	sc->sc_rst = fdtbus_reset_get(phandle, "i2c");
+	if (sc->sc_rst == NULL) {
+		aprint_error(": couldn't get reset i2c\n");
+		return;
+	}
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
+	sc->sc_cid = device_unit(self);
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
 		return;
 	}
-	sc->sc_port = tegra_i2c_addr2port(addr);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_cv, device_xname(self));
 
 	aprint_naive("\n");
-	aprint_normal(": I2C%d\n", sc->sc_port + 1);
+	aprint_normal(": I2C\n");
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
@@ -172,7 +162,18 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	 * Recommended setting for standard mode is to use an I2C source div
 	 * of 20 (Tegra K1 Technical Reference Manual, Table 137)
 	 */
-	tegra_car_periph_i2c_enable(sc->sc_port, 20400000);
+	fdtbus_reset_assert(sc->sc_rst);
+	error = clk_set_rate(sc->sc_clk, 20400000);
+	if (error) {
+		aprint_error_dev(self, "couldn't set frequency: %d\n", error);
+		return;
+	}
+	error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock: %d\n", error);
+		return;
+	}
+	fdtbus_reset_deassert(sc->sc_rst);
 
 	tegra_i2c_init(sc);
 
@@ -395,7 +396,7 @@ tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 	I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG,
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTHDRSZ_REQ,
 		      I2C_IOPACKET_WORD0_PROTHDRSZ) |
-	    __SHIFTIN(sc->sc_port, I2C_IOPACKET_WORD0_CONTROLLERID) |
+	    __SHIFTIN(sc->sc_cid, I2C_IOPACKET_WORD0_CONTROLLERID) |
 	    __SHIFTIN(1, I2C_IOPACKET_WORD0_PKTID) |
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTOCOL_I2C,
 		      I2C_IOPACKET_WORD0_PROTOCOL) |
@@ -453,7 +454,7 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 	I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG,
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTHDRSZ_REQ,
 		      I2C_IOPACKET_WORD0_PROTHDRSZ) |
-	    __SHIFTIN(sc->sc_port, I2C_IOPACKET_WORD0_CONTROLLERID) |
+	    __SHIFTIN(sc->sc_cid, I2C_IOPACKET_WORD0_CONTROLLERID) |
 	    __SHIFTIN(1, I2C_IOPACKET_WORD0_PKTID) |
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTOCOL_I2C,
 		      I2C_IOPACKET_WORD0_PROTOCOL) |

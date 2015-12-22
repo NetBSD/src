@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_fdt.c,v 1.1 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_fdt.c,v 1.2 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.1 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_fdt.c,v 1.2 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,7 @@ tegrafdt_attach(device_t parent, device_t self, void *aux)
 		"pinmux",
 		"gpio",
 		"regulators",
+		"fuse",
 		"dma",
 		"pmc",
 		"memory-controller",
@@ -92,4 +93,6 @@ tegrafdt_attach(device_t parent, device_t self, void *aux)
 		.faa_ninit = __arraycount(tegrafdt_init)
 	};
 	config_found(self, &faa, NULL);
+
+	tegra_cpuinit();
 }

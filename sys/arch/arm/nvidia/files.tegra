@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.27 2015/12/13 22:55:05 jmcneill Exp $
+#	$NetBSD: files.tegra,v 1.28 2015/12/22 22:10:36 jmcneill Exp $
 #
 # Configuration info for NVIDIA Tegra ARM Peripherals
 #
@@ -43,9 +43,9 @@ attach	tegrafuse at fdt with tegra_fuse
 file	arch/arm/nvidia/tegra_fuse.c		tegra_fuse
 
 # Clock and Reset controller
-device	tegracar
-attach	tegracar at fdt with tegra_car
-file	arch/arm/nvidia/tegra_car.c		tegra_car
+device	tegra124car: clk
+attach	tegra124car at fdt with tegra124_car
+file	arch/arm/nvidia/tegra124_car.c		tegra124_car
 
 # GPIO controller
 device	tegragpio: gpiobus

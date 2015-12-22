@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_soctherm.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_soctherm.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.2 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_soctherm.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -120,6 +120,9 @@ struct tegra_soctherm_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
+	struct clk		*sc_clk_tsensor;
+	struct clk		*sc_clk_soctherm;
+	struct fdtbus_reset	*sc_rst_soctherm;
 
 	struct sysmon_envsys	*sc_sme;
 	struct tegra_soctherm_sensor *sc_sensors;
@@ -131,6 +134,7 @@ struct tegra_soctherm_softc {
 	int32_t			sc_actual_temp_ft;
 };
 
+static int	tegra_soctherm_init_clocks(struct tegra_soctherm_softc *);
 static void	tegra_soctherm_init_sensors(struct tegra_soctherm_softc *);
 static void	tegra_soctherm_init_sensor(struct tegra_soctherm_softc *,
 		    struct tegra_soctherm_sensor *);
@@ -177,6 +181,21 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+	sc->sc_clk_tsensor = fdtbus_clock_get(faa->faa_phandle, "tsensor");
+	if (sc->sc_clk_tsensor == NULL) {
+		aprint_error(": couldn't get clock tsensor\n");
+		return;
+	}
+	sc->sc_clk_soctherm = fdtbus_clock_get(faa->faa_phandle, "soctherm");
+	if (sc->sc_clk_soctherm == NULL) {
+		aprint_error(": couldn't get clock soctherm\n");
+		return;
+	}
+	sc->sc_rst_soctherm = fdtbus_reset_get(faa->faa_phandle, "soctherm");
+	if (sc->sc_rst_soctherm == NULL) {
+		aprint_error(": couldn't get reset soctherm\n");
+		return;
+	}
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
@@ -198,9 +217,75 @@ tegra_soctherm_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	tegra_car_soctherm_enable();
+	if (tegra_soctherm_init_clocks(sc) != 0)
+		return;
 
 	tegra_soctherm_init_sensors(sc);
+}
+
+static int
+tegra_soctherm_init_clocks(struct tegra_soctherm_softc *sc)
+{
+	struct clk *pll_p_out0;
+	struct clk *clk_m;
+	int error;
+
+	pll_p_out0 = clk_get("pll_p_out0");
+	if (pll_p_out0 == NULL) {
+		aprint_error_dev(sc->sc_dev, "couldn't find pll_p_out0\n");
+		return ENOENT;
+	}
+	clk_m = clk_get("clk_m");
+	if (clk_m == NULL) {
+		aprint_error_dev(sc->sc_dev, "couldn't find clk_m\n");
+		return ENOENT;
+	}
+
+	fdtbus_reset_assert(sc->sc_rst_soctherm);
+
+	error = clk_set_parent(sc->sc_clk_soctherm, pll_p_out0);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't set soctherm parent: %d\n", error);
+		return error;
+	}
+	error = clk_set_rate(sc->sc_clk_soctherm, 51000000);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't set soctherm rate: %d\n", error);
+		return error;
+	}
+
+	error = clk_set_parent(sc->sc_clk_tsensor, clk_m);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't set tsensor parent: %d\n", error);
+		return error;
+	}
+	error = clk_set_rate(sc->sc_clk_tsensor, 400000);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "couldn't set tsensor rate: %d\n", error);
+		return error;
+	}
+
+	error = clk_enable(sc->sc_clk_tsensor);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable tsensor: %d\n",
+		    error);
+		return error;
+	}
+
+	error = clk_enable(sc->sc_clk_soctherm);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable soctherm: %d\n",
+		    error);
+		return error;
+	}
+
+	fdtbus_reset_deassert(sc->sc_rst_soctherm);
+
+	return 0;
 }
 
 static void
