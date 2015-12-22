@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.4 2015/12/16 19:33:55 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.5 2015/12/22 21:42:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.4 2015/12/16 19:33:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.5 2015/12/22 21:42:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,11 +130,16 @@ fdtbus_get_phandle(int phandle, const char *prop)
 	phandle_ref = fdt32_to_cpu(buf[0]);
 	kmem_free(buf, len);
 
-	const int off = fdt_node_offset_by_phandle(fdt_data, phandle_ref);
+	return fdtbus_get_phandle_from_native(phandle_ref);
+}
+
+int
+fdtbus_get_phandle_from_native(int phandle)
+{
+	const int off = fdt_node_offset_by_phandle(fdt_data, phandle);
 	if (off < 0) {
 		return -1;
 	}
-
 	return fdtbus_offset2phandle(off);
 }
 
