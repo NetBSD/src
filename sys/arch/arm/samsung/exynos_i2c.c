@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.6 2015/12/21 04:58:50 marty Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.7 2015/12/22 22:32:54 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,10 +32,9 @@
 
 #include "opt_exynos.h"
 #include "opt_arm_debug.h"
-#include "exynos_iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.6 2015/12/21 04:58:50 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.7 2015/12/22 22:32:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
