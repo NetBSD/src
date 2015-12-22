@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2015/12/22 08:26:16 martin Exp $
+# $NetBSD: Makefile,v 1.28 2015/12/22 14:27:14 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -29,14 +29,7 @@ BINDIR=		${TESTSDIR}
 PROGS+=		h_atexit
 PROGS+=		h_getopt h_getopt_long
 
-.if ${MACHINE_CPU} == "aarch64" || ${MACHINE_CPU} == "arm" \
-    || ${MACHINE_ARCH} == "hppa" || ${MACHINE_ARCH} == "powerpc" \
-    || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "sparc64" \
-    || ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" \
-    || ${MACHINE_ARCH} == "mips"
-CPPFLAGS.t_strtod.c+=	-DHAVE_FENV
-.endif
-
+CPPFLAGS.t_strtod.c+=  -D__TEST_FENV
 LDADD.t_strtod=			-lm
 DPADD.t_strtod+=		${LIBM}
 
