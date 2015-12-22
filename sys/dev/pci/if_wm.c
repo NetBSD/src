@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.384 2015/12/22 02:10:25 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.385 2015/12/22 02:17:21 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.384 2015/12/22 02:10:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.385 2015/12/22 02:17:21 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -5637,7 +5637,7 @@ wm_init_tx_queue(struct wm_softc *sc, struct wm_txqueue *txq)
 	if (sc->sc_type < WM_T_82543) {
 		txq->txq_tdt_reg = WMREG_OLD_TDT;
 	} else {
-		txq->txq_tdt_reg = WMREG_TDT(0);
+		txq->txq_tdt_reg = WMREG_TDT(txq->txq_id);
 	}
 
 	wm_init_tx_descs(sc, txq);
