@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdaudio.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_hdaudio.c,v 1.6 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.5 2015/12/13 17:39:19 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.6 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -67,8 +67,15 @@ struct tegra_hdaudio_softc {
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
 	int			sc_phandle;
+	struct clk		*sc_clk_hda;
+	struct clk		*sc_clk_hda2hdmi;
+	struct clk		*sc_clk_hda2codec_2x;
+	struct fdtbus_reset	*sc_rst_hda;
+	struct fdtbus_reset	*sc_rst_hda2hdmi;
+	struct fdtbus_reset	*sc_rst_hda2codec_2x;
 };
 
+static int	tegra_hdaudio_init_clocks(struct tegra_hdaudio_softc *);
 static void	tegra_hdaudio_init(struct tegra_hdaudio_softc *);
 
 CFATTACH_DECL2_NEW(tegra_hdaudio, sizeof(struct tegra_hdaudio_softc),
@@ -89,17 +96,48 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_hdaudio_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
+	sc->sc_clk_hda = fdtbus_clock_get(phandle, "hda");
+	if (sc->sc_clk_hda == NULL) {
+		aprint_error(": couldn't get clock hda\n");
+		return;
+	}
+	sc->sc_clk_hda2hdmi = fdtbus_clock_get(phandle, "hda2hdmi");
+	if (sc->sc_clk_hda2hdmi == NULL) {
+		aprint_error(": couldn't get clock hda2hdmi\n");
+		return;
+	}
+	sc->sc_clk_hda2codec_2x = fdtbus_clock_get(phandle, "hda2codec_2x");
+	if (sc->sc_clk_hda2codec_2x == NULL) {
+		aprint_error(": couldn't get clock hda2codec_2x\n");
+		return;
+	}
+	sc->sc_rst_hda = fdtbus_reset_get(phandle, "hda");
+	if (sc->sc_rst_hda == NULL) {
+		aprint_error(": couldn't get reset hda\n");
+		return;
+	}
+	sc->sc_rst_hda2hdmi = fdtbus_reset_get(phandle, "hda2hdmi");
+	if (sc->sc_rst_hda2hdmi == NULL) {
+		aprint_error(": couldn't get reset hda2hdmi\n");
+		return;
+	}
+	sc->sc_rst_hda2codec_2x = fdtbus_reset_get(phandle, "hda2codec_2x");
+	if (sc->sc_rst_hda2codec_2x == NULL) {
+		aprint_error(": couldn't get reset hda2codec_2x\n");
+		return;
+	}
 
-	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_phandle = phandle;
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
@@ -107,6 +145,7 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc.sc_dev = self;
 	sc->sc.sc_memt = faa->faa_bst;
 	bus_space_subregion(sc->sc.sc_memt, sc->sc_bsh, TEGRA_HDAUDIO_OFFSET,
 	    size - TEGRA_HDAUDIO_OFFSET, &sc->sc.sc_memh);
@@ -117,12 +156,12 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": HDA\n");
 
-	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_AUDIO, 0,
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_AUDIO, 0,
 	    tegra_hdaudio_intr, sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
@@ -132,10 +171,86 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	tegra_pmc_power(PMC_PARTID_DISB, true);
-	tegra_car_periph_hda_enable();
+
+	if (tegra_hdaudio_init_clocks(sc) != 0)
+		return;
+
 	tegra_hdaudio_init(sc);
 
 	hdaudio_attach(self, &sc->sc);
+}
+
+static int
+tegra_hdaudio_init_clocks(struct tegra_hdaudio_softc *sc)
+{
+	device_t self = sc->sc.sc_dev;
+	struct clk *pll_p_out0;
+	int error;
+
+	pll_p_out0 = clk_get("pll_p_out0");
+	if (pll_p_out0 == NULL) {
+		aprint_error_dev(self, "couldn't find pll_p_out0\n");
+		return ENOENT;
+	}
+
+	/* Assert resets */
+	fdtbus_reset_assert(sc->sc_rst_hda);
+	fdtbus_reset_assert(sc->sc_rst_hda2hdmi);
+	fdtbus_reset_assert(sc->sc_rst_hda2codec_2x);
+
+	/* Set hda to 48MHz and enable it */
+	error = clk_set_parent(sc->sc_clk_hda, pll_p_out0);
+	if (error) {
+		aprint_error_dev(self, "coulnd't set hda parent: %d\n", error);
+		return error;
+	}
+	error = clk_set_rate(sc->sc_clk_hda, 48000000);
+	if (error) {
+		aprint_error_dev(self, "couldn't set hda frequency: %d\n",
+		    error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_hda);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock hda: %d\n",
+		    error);
+		return error;
+	}
+
+	/* Enable hda2hdmi clock */
+	error = clk_enable(sc->sc_clk_hda2hdmi);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock hda2hdmi: %d\n",
+		    error);
+		return error;
+	}
+
+	/* Set hda2codec_2x to 48MHz and enable it */
+	error = clk_set_parent(sc->sc_clk_hda2codec_2x, pll_p_out0);
+	if (error) {
+		aprint_error_dev(self, "couldn't set hda2codec_2x parent: %d\n",
+		    error);
+		return error;
+	}
+	error = clk_set_rate(sc->sc_clk_hda2codec_2x, 48000000);
+	if (error) {
+		aprint_error_dev(self,
+		    "couldn't set clock hda2codec_2x frequency: %d\n", error);
+		return error;
+	}
+	error = clk_enable(sc->sc_clk_hda2codec_2x);
+	if (error) {
+		aprint_error_dev(self,
+		    "couldn't enable clock hda2codec_2x: %d\n", error);
+		return error;
+	}
+
+	/* De-assert resets */
+	fdtbus_reset_deassert(sc->sc_rst_hda);
+	fdtbus_reset_deassert(sc->sc_rst_hda2hdmi);
+	fdtbus_reset_deassert(sc->sc_rst_hda2codec_2x);
+
+	return 0;
 }
 
 static void

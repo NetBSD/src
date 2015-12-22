@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm.h,v 1.5 2015/12/13 17:39:19 jmcneill Exp $ */
+/* $NetBSD: tegra_drm.h,v 1.6 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -54,11 +54,19 @@ struct tegra_drm_softc {
 
 	int			sc_phandle;
 
+	struct clk		*sc_clk_host1x;
+	struct fdtbus_reset	*sc_rst_host1x;
+
+	struct clk		*sc_clk_dc[2];
+	struct clk		*sc_clk_dc_parent[2];
+	struct fdtbus_reset	*sc_rst_dc[2];
+
+	struct clk		*sc_clk_hdmi;
+	struct clk		*sc_clk_hdmi_parent;
+	struct fdtbus_reset	*sc_rst_hdmi;
+
 	i2c_tag_t		sc_ddc;
 	struct fdtbus_gpio_pin	*sc_pin_hpd;
-
-	struct tegra_gpio_pin	*sc_pin_pll;
-	struct tegra_gpio_pin	*sc_pin_power;
 
 	bool			sc_force_dvi;
 
@@ -82,6 +90,7 @@ struct tegra_crtc {
 	int			index;
 	void			*ih;
 	bool			enabled;
+	struct clk		*clk_parent;
 
 	struct tegra_gem_object	*cursor_obj;
 	int			cursor_x;

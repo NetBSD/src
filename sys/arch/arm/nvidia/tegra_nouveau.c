@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_nouveau.c,v 1.8 2015/12/13 22:05:52 jmcneill Exp $ */
+/* $NetBSD: tegra_nouveau.c,v 1.9 2015/12/22 22:10:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.8 2015/12/13 22:05:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.9 2015/12/22 22:10:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_nouveau.c,v 1.8 2015/12/13 22:05:52 jmcneill E
 #include <sys/module.h>
 
 #include <arm/nvidia/tegra_reg.h>
+#include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_var.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -57,6 +58,9 @@ struct tegra_nouveau_softc {
 	bus_space_tag_t		sc_bst;
 	bus_dma_tag_t		sc_dmat;
 	int			sc_phandle;
+	struct clk		*sc_clk_gpu;
+	struct clk		*sc_clk_pwr;
+	struct fdtbus_reset	*sc_rst_gpu;
 	struct drm_device	*sc_drm_dev;
 	struct platform_device	sc_platform_dev;
 	struct nouveau_device	*sc_nv_dev;
@@ -109,13 +113,49 @@ tegra_nouveau_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_phandle = faa->faa_phandle;
 
+	sc->sc_clk_gpu = fdtbus_clock_get(faa->faa_phandle, "gpu");
+	if (sc->sc_clk_gpu == NULL) {
+		aprint_error(": couldn't get clock gpu\n");
+		return;
+	}
+	sc->sc_clk_pwr = fdtbus_clock_get(faa->faa_phandle, "pwr");
+	if (sc->sc_clk_pwr == NULL) {
+		aprint_error(": couldn't get clock pwr\n");
+		return;
+	}
+	sc->sc_rst_gpu = fdtbus_reset_get(faa->faa_phandle, "gpu");
+	if (sc->sc_rst_gpu == NULL) {
+		aprint_error(": couldn't get reset gpu\n");
+		return;
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": GPU\n");
 
 	prop_dictionary_get_cstring(prop, "debug", &nouveau_debug);
 	prop_dictionary_get_cstring(prop, "config", &nouveau_config);
 
-	tegra_car_gpu_enable();
+	fdtbus_reset_assert(sc->sc_rst_gpu);
+	error = clk_set_rate(sc->sc_clk_pwr, 204000000);
+	if (error) {
+		aprint_error_dev(self, "couldn't set clock pwr frequency: %d\n",
+		    error);
+		return;
+	}
+	error = clk_enable(sc->sc_clk_pwr);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock pwr: %d\n",
+		    error);
+		return;
+	}
+	error = clk_enable(sc->sc_clk_gpu);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock gpu: %d\n",
+		    error);
+		return;
+	}
+	tegra_pmc_remove_clamping(PMC_PARTID_TD);
+	fdtbus_reset_deassert(sc->sc_rst_gpu);
 
 	error = -nouveau_device_create(&sc->sc_platform_dev,
 	    NOUVEAU_BUS_PLATFORM, -1, device_xname(self),
