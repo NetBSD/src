@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.167 2015/12/22 15:12:39 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.168 2015/12/22 22:26:16 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.167 2015/12/22 15:12:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.168 2015/12/22 22:26:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -323,6 +323,15 @@ usbd_transfer(usbd_xfer_handle xfer)
 			bus->methods->freem(bus, &xfer->dmabuf);
 			xfer->rqflags &= ~URQ_AUTO_DMABUF;
 		}
+		/*
+		 * The transfer made it onto the pipe queue, but didn't get
+		 * accepted by the HCD for some reason.  It needs removing
+		 * from the pipe queue.
+		 */
+		usbd_lock_pipe(pipe);
+		SIMPLEQ_REMOVE_HEAD(&pipe->queue, next);
+		usbd_start_next(pipe);
+		usbd_unlock_pipe(pipe);
 	}
 
 	if (!(flags & USBD_SYNCHRONOUS)) {
