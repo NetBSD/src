@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.3 2015/12/22 21:42:11 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.4 2015/12/22 22:19:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -72,8 +72,8 @@ struct fdtbus_gpio_pin {
 struct fdtbus_gpio_controller_func {
 	void *	(*acquire)(device_t, const void *, size_t, int);
 	void	(*release)(device_t, void *);
-	int	(*read)(device_t, void *);
-	void	(*write)(device_t, void *, int);
+	int	(*read)(device_t, void *, bool);
+	void	(*write)(device_t, void *, int, bool);
 };
 
 struct fdtbus_regulator_controller;
@@ -131,6 +131,8 @@ struct fdtbus_gpio_pin *fdtbus_gpio_acquire(int, const char *, int);
 void		fdtbus_gpio_release(struct fdtbus_gpio_pin *);
 int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
+int		fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *);
+void		fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *, int);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
 void		fdtbus_regulator_release(struct fdtbus_regulator *);
 int		fdtbus_regulator_enable(struct fdtbus_regulator *);
