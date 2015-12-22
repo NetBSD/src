@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.4 2015/12/22 03:36:01 marty Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.5 2015/12/22 22:34:42 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.4 2015/12/22 03:36:01 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.5 2015/12/22 22:34:42 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,10 +96,7 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 
 	for (child = OF_child(faa->faa_phandle); child;
 	     child = OF_peer(child)) {
-		char result[64];
-		error = OF_getprop(child, "gpio-controller", result,
-				   sizeof(result));
-		if (error == -1)
+		if (of_getprop_bool(child, "gpio-controller") == false)
 			continue;
 		exynos_gpio_bank_config(sc,child);
 	}
