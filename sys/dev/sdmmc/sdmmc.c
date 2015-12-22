@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.32 2015/11/29 23:38:47 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.33 2015/12/22 09:55:38 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.32 2015/11/29 23:38:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.33 2015/12/22 09:55:38 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -798,7 +798,7 @@ sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_function *sf, struct sdmm
 	memset(&acmd, 0, sizeof(acmd));
 	acmd.c_opcode = MMC_APP_CMD;
 	acmd.c_arg = (sf != NULL) ? (sf->rca << 16) : 0;
-	acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R1;
+	acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R1 | (cmd->c_flags & SCF_TOUT_OK);
 
 	error = sdmmc_mmc_command(sc, &acmd);
 	if (error == 0) {
