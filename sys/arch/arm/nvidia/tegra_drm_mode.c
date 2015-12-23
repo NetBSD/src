@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.12 2015/12/23 11:58:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.11 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.12 2015/12/23 11:58:10 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -458,7 +458,11 @@ tegra_crtc_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
 		crtc_cp[off] = (cp[off] << 8) | (cp[off] >> 24);
 	}
 
-	cfg |= __SHIFTIN((cursor_obj->dmasegs[0].ds_addr >> 10) & 0x3fffff,
+	const uint64_t paddr = cursor_obj->dmasegs[0].ds_addr;
+
+	DC_WRITE(tegra_crtc, DC_DISP_CURSOR_START_ADDR_HI_REG,
+	    (paddr >> 32) & 3);
+	cfg |= __SHIFTIN((paddr >> 10) & 0x3fffff,
 			 DC_DISP_CURSOR_START_ADDR_ADDRESS_LO);
 	const uint32_t ocfg =
 	    DC_READ(tegra_crtc, DC_DISP_CURSOR_START_ADDR_REG);
@@ -681,9 +685,11 @@ tegra_crtc_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	    to_tegra_framebuffer(fb) :
 	    to_tegra_framebuffer(crtc->primary->fb);
 
+	uint64_t paddr = (uint64_t)tegra_fb->obj->dmamap->dm_segs[0].ds_addr;
+
 	/* Framebuffer start address */
-	DC_WRITE(tegra_crtc, DC_WINBUF_A_START_ADDR_REG,
-	    (uint32_t)tegra_fb->obj->dmamap->dm_segs[0].ds_addr);
+	DC_WRITE(tegra_crtc, DC_WINBUF_A_START_ADDR_HI_REG, (paddr >> 32) & 3);
+	DC_WRITE(tegra_crtc, DC_WINBUF_A_START_ADDR_REG, paddr & 0xffffffff);
 
 	/* Offsets */
 	DC_WRITE(tegra_crtc, DC_WINBUF_A_ADDR_H_OFFSET_REG, x);
