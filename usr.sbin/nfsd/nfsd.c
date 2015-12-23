@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.64 2015/09/12 13:50:55 joerg Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.65 2015/12/23 18:41:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.64 2015/09/12 13:50:55 joerg Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.65 2015/12/23 18:41:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -80,8 +80,26 @@ __RCSID("$NetBSD: nfsd.c,v 1.64 2015/09/12 13:50:55 joerg Exp $");
 #include <unistd.h>
 #include <netdb.h>
 
+#ifdef NFSD_RUMP
+#include <rump/rump.h>
+#include <rump/rump_syscalls.h>
+
+#define nfssvc(a, b) rump_sys_nfssvc((a), (b))
+#define close(a)	rump_sys_close(a)
+#define poll(a, b, c) rump_sys_poll((a), (b), (c))
+#if 0
+#define socket(a, b, c) rump_sys_socket((a), (b), (c))
+#define setsockopt(a, b, c, d, e) rump_sys_setsockopt((a), (b), (c), (d), (e))
+#define bind(a, b, c) rump_sys_bind((a), (b), (c))
+#define listen(a, b) rump_sys_listen((a), (b))
+#define accept(a, b, c) rump_sys_accept((a), (b), (c))
+#endif
+#define main nfsd_main
+int nfsd_main(int, char *[]);
+#endif
+
 /* Global defs */
-#ifdef DEBUG
+#if defined(DEBUG) || defined(NFSD_RUMP)
 #define	syslog(e, s, args...)						\
 do {									\
     fprintf(stderr,(s), ## args);					\
@@ -106,7 +124,7 @@ worker(void *dummy)
 	memset(&nsd, 0, sizeof(nsd));
 	while (nfssvc(nfssvc_flag, &nsd) < 0) {
 		if (errno != ENEEDAUTH) {
-			syslog(LOG_ERR, "nfssvc: %m");
+			syslog(LOG_ERR, "nfssvc: %s", strerror(errno));
 			exit(1);
 		}
 		nfssvc_flag = NFSSVC_NFSD | NFSSVC_AUTHINFAIL;
@@ -156,8 +174,8 @@ tryconf(struct conf *cfg, int t, int reregister)
 	cfg->nc = getnetconfigent(cfg_netconf[t]);
 
 	if (cfg->nc == NULL) {
-		syslog(LOG_ERR, "getnetconfigent %s failed: %m",
-		    cfg_netconf[t]);
+		syslog(LOG_ERR, "getnetconfigent %s failed: %s",
+		    cfg_netconf[t], strerror(errno));
 		goto out;
 	}
 
@@ -189,14 +207,15 @@ setupsock(struct conf *cfg, struct pollfd *set, int p)
 	sock = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
 
 	if (sock == -1) {
-		syslog(LOG_ERR, "can't create %s socket: %m", cfg_netconf[p]);
+		syslog(LOG_ERR, "can't create %s socket: %s", cfg_netconf[p],
+		    strerror(errno));
 		return -1;
 	}
 	if (cfg_family[p] == PF_INET6) {
 		if (setsockopt(sock, IPPROTO_IPV6, IPV6_V6ONLY, &on,
 		    sizeof(on)) == -1) {
 			syslog(LOG_ERR, "can't set v6-only binding for %s "
-			    "socket: %m", cfg_netconf[p]);
+			    "socket: %s", cfg_netconf[p], strerror(errno));
 			goto out;
 		}
 	}
@@ -204,14 +223,15 @@ setupsock(struct conf *cfg, struct pollfd *set, int p)
 	if (cfg_protocol[p] == IPPROTO_TCP) {
 		if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &on,
 		    sizeof(on)) == -1) {
-			syslog(LOG_ERR, "setsockopt SO_REUSEADDR for %s: %m",
-			    cfg_netconf[p]);
+			syslog(LOG_ERR, "setsockopt SO_REUSEADDR for %s: %s",
+			    cfg_netconf[p], strerror(errno));
 			goto out;
 		}
 	}
 
 	if (bind(sock, ai->ai_addr, ai->ai_addrlen) == -1) {
-		syslog(LOG_ERR, "can't bind %s addr: %m", cfg_netconf[p]);
+		syslog(LOG_ERR, "can't bind %s addr: %s", cfg_netconf[p],
+		    strerror(errno));
 		goto out;
 	}
 
@@ -237,7 +257,8 @@ setupsock(struct conf *cfg, struct pollfd *set, int p)
 		nfsdargs.name = NULL;
 		nfsdargs.namelen = 0;
 		if (nfssvc(NFSSVC_ADDSOCK, &nfsdargs) < 0) {
-			syslog(LOG_ERR, "can't add %s socket", cfg_netconf[p]);
+			syslog(LOG_ERR, "can't add %s socket: %s",
+			    cfg_netconf[p], strerror(errno));
 			goto out;
 		}
 		(void)close(sock);
@@ -492,7 +513,7 @@ main(int argc, char *argv[])
 		error = pthread_create(&t, NULL, worker, NULL);
 		if (error) {
 			errno = error;
-			syslog(LOG_ERR, "pthread_create: %m");
+			syslog(LOG_ERR, "pthread_create: %s", strerror(errno));
 			exit(1);
 		}
 	}
@@ -531,7 +552,7 @@ main(int argc, char *argv[])
 	 */
 	for (;;) {
 		if (poll(set, __arraycount(set), INFTIM) == -1) {
-			syslog(LOG_ERR, "poll failed: %m");
+			syslog(LOG_ERR, "poll failed: %s", strerror(errno));
 			exit(1);
 		}
 
@@ -548,14 +569,16 @@ main(int argc, char *argv[])
 			if ((msgsock = accept(set[i].fd,
 			    (struct sockaddr *)&ss, &len)) == -1) {
 				int serrno = errno;
-				syslog(LOG_ERR, "accept failed: %m");
+				syslog(LOG_ERR, "accept failed: %s",
+				    strerror(errno));
 				if (serrno == EINTR || serrno == ECONNABORTED)
 					continue;
 				exit(1);
 			}
 			if (setsockopt(msgsock, SOL_SOCKET, SO_KEEPALIVE, &on,
 			    sizeof(on)) == -1)
-				syslog(LOG_ERR, "setsockopt SO_KEEPALIVE: %m");
+				syslog(LOG_ERR, "setsockopt SO_KEEPALIVE: %s",
+				    strerror(errno));
 			nfsdargs.sock = msgsock;
 			nfsdargs.name = (void *)&ss;
 			nfsdargs.namelen = len;
