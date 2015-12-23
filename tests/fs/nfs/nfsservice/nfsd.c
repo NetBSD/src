@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsd.c,v 1.5 2015/08/21 14:19:10 christos Exp $	*/
+/*	$NetBSD: nfsd.c,v 1.6 2015/12/23 18:10:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)nfsd.c	8.9 (Berkeley) 3/29/95";
 #else
-__RCSID("$NetBSD: nfsd.c,v 1.5 2015/08/21 14:19:10 christos Exp $");
+__RCSID("$NetBSD: nfsd.c,v 1.6 2015/12/23 18:10:39 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,9 @@ do {									\
     fprintf(stderr,(s), ## args); 					\
     fprintf(stderr, "\n");						\
 } while (/*CONSTCOND*/0)
-int	debug = 1;
+static int	debug = 1;
 #else
-int	debug = 0;
+static int	debug = 0;
 #endif
 
 void	nonfs(int);
