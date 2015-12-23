@@ -1,10 +1,10 @@
-# $NetBSD: files.fdt,v 1.5 2015/12/22 21:42:11 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.6 2015/12/23 11:31:45 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
 defflag	opt_fdt.h				FDT: libfdt, ofw_subr
 
-define	fdtbus { }
+define	fdtbus { } : clk
 
 device	fdt { }
 attach	fdt at fdtbus
