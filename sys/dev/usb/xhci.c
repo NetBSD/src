@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.28.2.47 2015/12/23 07:59:19 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.28.2.48 2015/12/23 08:07:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.47 2015/12/23 07:59:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.28.2.48 2015/12/23 08:07:40 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -927,7 +927,7 @@ xhci_init(struct xhci_softc *sc)
 	cv_init(&sc->sc_softwake_cv, "xhciab");
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct xhci_xfer), 0, 0, 0,
-	    "xhcixfer", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "xhcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	/* Set up the bus struct. */
 	sc->sc_bus.ub_methods = &xhci_bus_methods;
