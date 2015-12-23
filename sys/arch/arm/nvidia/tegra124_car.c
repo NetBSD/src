@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_car.c,v 1.1 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra124_car.c,v 1.2 2015/12/23 12:43:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.1 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_car.c,v 1.2 2015/12/23 12:43:25 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -191,7 +191,7 @@ static struct tegra124_car_clock_id {
 	{ 208, "pll_c3" },
 	{ 209, "pll_m" },
 	{ 210, "pll_m_out1" },
-	{ 211, "pll_p" },
+	{ 211, "pll_p_out0" },
 	{ 212, "pll_p_out1" },
 	{ 213, "pll_p_out2" },
 	{ 214, "pll_p_out3" },
@@ -1113,6 +1113,7 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 	bus_space_tag_t bst = sc->sc_bst;
 	bus_space_handle_t bsh = sc->sc_bsh;
 	struct clk *clk_parent;
+	u_int raw_div;
 	uint32_t v;
 
 	KASSERT(tclk->type == TEGRA_CLK_DIV);
@@ -1144,13 +1145,13 @@ tegra124_car_clock_set_rate_div(struct tegra124_car_softc *sc,
 			v &= ~CAR_CLKSRC_SATA_AUX_CLK_ENB;
 		}
 		break;
-	case CAR_CLKSRC_HDMI_REG:
-
-		break;
 	}
 
-	const u_int raw_div = rate ? howmany(parent_rate * 2, rate) - 2 : 0;
-	//const u_int raw_div = rate ? (parent_rate * 2) / rate - 2 : 0;
+	if (rate) {
+		raw_div = (parent_rate * 2) / rate - 2;
+	} else {
+		raw_div = __SHIFTOUT(tdiv->bits, tdiv->bits);
+	}
 
 	v &= ~tdiv->bits;
 	v |= __SHIFTIN(raw_div, tdiv->bits);
