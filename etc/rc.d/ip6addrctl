@@ -9,7 +9,7 @@
 . /etc/rc.subr
 
 name="ip6addrctl"
-rcvar="ip6addrctl_enable"
+rcvar="ip6addrctl"
 start_cmd="ip6addrctl_start"
 stop_cmd="ip6addrctl_stop"
 extra_commands="status prefer_ipv6 prefer_ipv4"
@@ -61,13 +61,7 @@ ip6addrctl_start()
 			${IP6ADDRCTL_CMD} flush >/dev/null 2>&1
 			${IP6ADDRCTL_CMD} install "${config_file}"
 		else
-			if checkyesno ipv6_activate_all_interfaces; then
-				ip6addrctl_prefer_ipv6
-			elif [ -n "$(list_vars ifconfig_\*_ipv6)" ]; then
-				ip6addrctl_prefer_ipv6
-			else
-				ip6addrctl_prefer_ipv4
-			fi
+			ip6addrctl_prefer_ipv6
 		fi
 	;;
 	ipv4_prefer)
