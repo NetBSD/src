@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.7 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.8 2015/12/23 16:02:42 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.7 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.8 2015/12/23 16:02:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -2298,7 +2298,7 @@ upgt_alloc_cmd(struct upgt_softc *sc)
 
 	data_cmd->buf = usbd_get_buffer(data_cmd->xfer);
 
-	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_SOFTNET);
+	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 	return 0;
 }
