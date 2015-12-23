@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.90.4.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.90.4.9 2015/12/23 09:52:41 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -67,12 +67,12 @@ typedef enum {		/* keep in sync with usbd_error_strs */
 
 typedef void (*usbd_callback)(struct usbd_xfer *, void *, usbd_status);
 
+/* Use default (specified by ep. desc.) interval on interrupt pipe */
+#define USBD_DEFAULT_INTERVAL	(-1)
+
 /* Open flags */
 #define USBD_EXCLUSIVE_USE	0x01
 #define USBD_MPSAFE		0x80
-
-/* Use default (specified by ep. desc.) interval on interrupt pipe */
-#define USBD_DEFAULT_INTERVAL	(-1)
 
 /* Request flags */
 #define USBD_SYNCHRONOUS	0x02	/* wait for completion */
