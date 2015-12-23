@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.14 2015/10/22 12:07:48 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.15 2015/12/23 07:59:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.14 2015/10/22 12:07:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.15 2015/12/23 07:59:19 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1379,7 +1379,7 @@ dwc2_init(struct dwc2_softc *sc)
 	    dwc2_rhc, sc);
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct dwc2_xfer), 0, 0, 0,
-	    "dwc2xfer", NULL, IPL_USB, NULL, NULL, NULL);
+	    "dwc2xfer", NULL, IPL_NONE, NULL, NULL, NULL);
 	sc->sc_qhpool = pool_cache_init(sizeof(struct dwc2_qh), 0, 0, 0,
 	    "dwc2qh", NULL, IPL_USB, NULL, NULL, NULL);
 	sc->sc_qtdpool = pool_cache_init(sizeof(struct dwc2_qtd), 0, 0, 0,
