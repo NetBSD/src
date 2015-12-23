@@ -1,4 +1,4 @@
-/* 	$NetBSD: mountd.c,v 1.128 2015/11/08 21:03:16 christos Exp $	 */
+/* 	$NetBSD: mountd.c,v 1.129 2015/12/23 16:19:49 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char     sccsid[] = "@(#)mountd.c  8.15 (Berkeley) 5/1/95";
 #else
-__RCSID("$NetBSD: mountd.c,v 1.128 2015/11/08 21:03:16 christos Exp $");
+__RCSID("$NetBSD: mountd.c,v 1.129 2015/12/23 16:19:49 christos Exp $");
 #endif
 #endif				/* not lint */
 
@@ -105,6 +105,8 @@ __RCSID("$NetBSD: mountd.c,v 1.128 2015/11/08 21:03:16 christos Exp $");
 #define DEBUGGING 0
 #endif
 
+#include "mountd.h"
+
 /*
  * Structures for keeping the mount list and export list
  */
@@ -139,12 +141,6 @@ struct exportlist {
 };
 /* ex_flag bits */
 #define	EX_LINKED	0x1
-
-struct netmsk {
-	struct sockaddr_storage nt_net;
-	int		nt_len;
-	char           *nt_name;
-};
 
 union grouptypes {
 	struct addrinfo *gt_addrinfo;
@@ -206,7 +202,6 @@ static int get_host(const char *, size_t, const char *,
     struct grouplist *);
 static struct hostlist *get_ht(void);
 static void get_mountlist(void);
-static int get_net(char *, struct netmsk *, int);
 static void free_exp_grp(struct exportlist *, struct grouplist *);
 static struct grouplist *get_grp(void);
 static void hang_dirp(struct dirlist *, struct grouplist *,
@@ -225,7 +220,6 @@ static int bitcmp(void *, void *, int);
 static int netpartcmp(struct sockaddr *, struct sockaddr *, int);
 static int sacmp(struct sockaddr *, struct sockaddr *);
 static int allones(struct sockaddr_storage *, int);
-static int countones(struct sockaddr *);
 static void bind_resv_port(int, sa_family_t, in_port_t);
 __dead static void no_nfs(int);
 static struct exportlist *exphead;
@@ -240,22 +234,11 @@ static struct uucred def_anon = {
 	{ 0 }
 };
 
-static int      opt_flags;
+int      opt_flags;
 static int	have_v6 = 1;
-static const int ninumeric = NI_NUMERICHOST;
+const int ninumeric = NI_NUMERICHOST;
 
-/* Bits for above */
-#define	OP_MAPROOT	0x001
-#define	OP_MAPALL	0x002
-#define	OP_KERB		0x004
-#define	OP_MASK		0x008
-#define	OP_NET		0x010
-#define	OP_ALLDIRS	0x040
-#define OP_NORESPORT	0x080
-#define OP_NORESMNT	0x100
-#define OP_MASKLEN	0x200
-
-static int      debug = DEBUGGING;
+int      debug = DEBUGGING;
 #if 0
 static void SYSLOG(int, const char *,...);
 #endif
@@ -1590,41 +1573,6 @@ allones(struct sockaddr_storage *ssp, int bitlen)
 }
 
 static int
-countones(struct sockaddr *sa)
-{
-	void *mask;
-	int i, bits = 0, bytelen;
-	u_int8_t *p;
-
-	switch (sa->sa_family) {
-	case AF_INET:
-		mask = (u_int8_t *)&((struct sockaddr_in *)sa)->sin_addr;
-		bytelen = 4;
-		break;
-	case AF_INET6:
-		mask = (u_int8_t *)&((struct sockaddr_in6 *)sa)->sin6_addr;
-		bytelen = 16;
-		break;
-	default:
-		return 0;
-	}
-
-	p = mask;
-
-	for (i = 0; i < bytelen; i++, p++) {
-		if (*p != 0xff) {
-			for (bits = 0; bits < 8; bits++) {
-				if (!(*p & (1 << (7 - bits))))
-					break;
-			}
-			break;
-		}
-	}
-
-	return (i * 8 + bits);
-}
-
-static int
 sacmp(struct sockaddr *sa1, struct sockaddr *sa2)
 {
 	void *p1, *p2;
@@ -2048,125 +1996,6 @@ skip:
 			done = TRUE;
 	}
 	return (0);
-}
-
-/*
- * Translate a net address.
- */
-static int
-get_net(char *cp, struct netmsk *net, int maskflg)
-{
-	struct netent *np;
-	char *nname, *p, *prefp;
-	struct sockaddr_in sin, *sinp;
-	struct sockaddr *sa;
-	struct addrinfo hints, *ai = NULL;
-	char netname[NI_MAXHOST];
-	long preflen;
-	int ecode;
-
-	(void)memset(&sin, 0, sizeof(sin));
-	if ((opt_flags & OP_MASKLEN) && !maskflg) {
-		p = strchr(cp, '/');
-		*p = '\0';
-		prefp = p + 1;
-	} else {
-		p = NULL;	/* XXXGCC -Wuninitialized */
-		prefp = NULL;	/* XXXGCC -Wuninitialized */
-	}
-
-	if ((np = getnetbyname(cp)) != NULL) {
-		sin.sin_family = AF_INET;
-		sin.sin_len = sizeof sin;
-		sin.sin_addr = inet_makeaddr(np->n_net, 0);
-		sa = (struct sockaddr *)&sin;
-	} else if (isdigit((unsigned char)*cp)) {
-		memset(&hints, 0, sizeof hints);
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_flags = AI_NUMERICHOST;
-		if (getaddrinfo(cp, NULL, &hints, &ai) != 0) {
-			/*
-			 * If getaddrinfo() failed, try the inet4 network
-			 * notation with less than 3 dots.
-			 */
-			sin.sin_family = AF_INET;
-			sin.sin_len = sizeof sin;
-			sin.sin_addr = inet_makeaddr(inet_network(cp),0);
-			if (debug)
-				fprintf(stderr, "get_net: v4 addr %x\n",
-				    sin.sin_addr.s_addr);
-			sa = (struct sockaddr *)&sin;
-		} else
-			sa = ai->ai_addr;
-	} else if (isxdigit((unsigned char)*cp) || *cp == ':') {
-		memset(&hints, 0, sizeof hints);
-		hints.ai_family = AF_UNSPEC;
-		hints.ai_flags = AI_NUMERICHOST;
-		if (getaddrinfo(cp, NULL, &hints, &ai) == 0)
-			sa = ai->ai_addr;
-		else
-			goto fail;
-	} else
-		goto fail;
-
-	/*
-	 * Only allow /pref notation for v6 addresses.
-	 */
-	if (sa->sa_family == AF_INET6 && (!(opt_flags & OP_MASKLEN) || maskflg))
-		return 1;
-
-	ecode = getnameinfo(sa, sa->sa_len, netname, sizeof netname,
-	    NULL, 0, ninumeric);
-	if (ecode != 0)
-		goto fail;
-
-	if (maskflg)
-		net->nt_len = countones(sa);
-	else {
-		if (opt_flags & OP_MASKLEN) {
-			errno = 0;
-			preflen = strtol(prefp, NULL, 10);
-			if (preflen == LONG_MIN && errno == ERANGE)
-				goto fail;
-			net->nt_len = (int)preflen;
-			*p = '/';
-		}
-
-		if (np)
-			nname = np->n_name;
-		else {
-			if (getnameinfo(sa, sa->sa_len, netname, sizeof netname,
-			    NULL, 0, ninumeric) != 0)
-				strlcpy(netname, "?", sizeof(netname));
-			nname = netname;
-		}
-		net->nt_name = estrdup(nname);
-		memcpy(&net->nt_net, sa, sa->sa_len);
-	}
-
-	if (!maskflg && sa->sa_family == AF_INET &&
-	    !(opt_flags & (OP_MASK|OP_MASKLEN))) {
-		sinp = (struct sockaddr_in *)sa;
-		if (IN_CLASSA(sinp->sin_addr.s_addr))
-			net->nt_len = 8;
-		else if (IN_CLASSB(sinp->sin_addr.s_addr))
-			net->nt_len = 16;
-		else if (IN_CLASSC(sinp->sin_addr.s_addr))
-			net->nt_len = 24;
-		else if (IN_CLASSD(sinp->sin_addr.s_addr))
-			net->nt_len = 28;
-		else
-			net->nt_len = 32;	/* XXX */
-	}
-
-	if (ai)
-		freeaddrinfo(ai);
-	return 0;
-
-fail:
-	if (ai)
-		freeaddrinfo(ai);
-	return 1;
 }
 
 /*
