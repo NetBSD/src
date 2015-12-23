@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/11/08 21:05:39 christos Exp $
+#	$NetBSD: Makefile,v 1.10 2015/12/23 18:10:10 christos Exp $
 #
 
 NOMAN=	1
@@ -16,7 +16,7 @@ LDADD+= -L${VFSTESTDIR} -Wl,--whole-archive -lvfstest -Wl,--no-whole-archive
 
 TESTS_C=rumpnfsd
 
-SRCS.rumpnfsd= rumpnfsd.c nfsd.c mountd.c getmntinfo.c
+SRCS.rumpnfsd= rumpnfsd.c nfsd.c mountd.c getmntinfo.c get_net.c
 
 LDADD+=	-lrumpfs_nfsserver -lrumpfs_nfs				# NFS support
 LDADD+=	-lrumpdev_disk -lrumpdev				# disk devices
