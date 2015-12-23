@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2015/12/23 18:10:10 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2015/12/23 18:42:23 christos Exp $
 #
 
 NOMAN=	1
@@ -27,9 +27,9 @@ LDADD+=	-lrumpnet -lrumpkern_sysproxy -lrump -lrumpuser		# base
 LDADD+=	-lpthread -lutil
 
 CPPFLAGS+=	-DDEBUG -DMOUNT_NOMAIN -D_REENTRANT
-CPPFLAGS+=	-DRUMP_SYS_NETWORKING -DMOUNTD_RUMP
+CPPFLAGS+=	-DRUMP_SYS_NETWORKING -DMOUNTD_RUMP -DNFSD_RUMP
 
-.PATH.c: ${NETBSDSRCDIR}/usr.sbin/mountd
+.PATH.c: ${NETBSDSRCDIR}/usr.sbin/mountd ${NETBSDSRCDIR}/usr.sbin/nfsd
 
 # RPCBIND
 .PATH.c: ${NETBSDSRCDIR}/usr.sbin/rpcbind
