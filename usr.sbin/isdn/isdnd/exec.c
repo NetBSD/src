@@ -27,7 +27,7 @@
  *	exec.h - supplemental program/script execution
  *	----------------------------------------------
  *
- *	$Id: exec.c,v 1.11 2012/03/02 02:58:46 joerg Exp $ 
+ *	$Id: exec.c,v 1.12 2015/12/23 10:56:29 martin Exp $ 
  *
  * $FreeBSD$
  *
@@ -368,7 +368,10 @@ upd_callstat_file(char *filename, int rotateflag)
 			nfp = fopen(buf, "w");
 			if (nfp == NULL)
 			{
-				logit(LL_ERR, "ERROR, upd_callstat_file: cannot open for write %s, %s", buf, strerror(errno));
+				logit(LL_ERR, "ERROR, upd_callstat_file: "
+				    "cannot open for write %s, %s", buf,
+				    strerror(errno));
+				fclose(fp);
 				return;
 			}
 
