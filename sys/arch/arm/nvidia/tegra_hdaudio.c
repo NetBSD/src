@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_hdaudio.c,v 1.6 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_hdaudio.c,v 1.7 2015/12/23 12:44:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.6 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_hdaudio.c,v 1.7 2015/12/23 12:44:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -151,7 +151,6 @@ tegra_hdaudio_attach(device_t parent, device_t self, void *aux)
 	    size - TEGRA_HDAUDIO_OFFSET, &sc->sc.sc_memh);
 	sc->sc.sc_memvalid = true;
 	sc->sc.sc_dmat = faa->faa_dmat;
-	sc->sc.sc_flags = HDAUDIO_FLAG_NO_STREAM_RESET;
 
 	aprint_naive("\n");
 	aprint_normal(": HDA\n");
