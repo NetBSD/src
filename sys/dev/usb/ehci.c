@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.70 2015/12/21 12:26:38 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.71 2015/12/23 07:59:19 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.70 2015/12/21 12:26:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.71 2015/12/23 07:59:19 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -406,7 +406,7 @@ ehci_init(ehci_softc_t *sc)
 	cv_init(&sc->sc_doorbell, "ehcidi");
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct ehci_xfer), 0, 0, 0,
-	    "ehcixfer", NULL, IPL_USB, NULL, NULL, NULL);
+	    "ehcixfer", NULL, IPL_NONE, NULL, NULL, NULL);
 
 	sc->sc_doorbell_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 	    ehci_doorbell, sc);
