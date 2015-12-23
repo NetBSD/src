@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.36 2015/12/23 07:59:19 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.37 2015/12/23 08:07:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.36 2015/12/23 07:59:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.37 2015/12/23 08:07:40 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -857,7 +857,7 @@ ohci_init(ohci_softc_t *sc)
 		LIST_INIT(&sc->sc_hash_itds[i]);
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct ohci_xfer), 0, 0, 0,
-	    "ohcixfer", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "ohcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	rev = OREAD4(sc, OHCI_REVISION);
 	aprint_normal("OHCI version %d.%d%s\n",

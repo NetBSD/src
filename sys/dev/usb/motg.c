@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.12.2.26 2015/12/23 07:59:19 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.12.2.27 2015/12/23 08:07:40 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
 #include "opt_motg.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.26 2015/12/23 07:59:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.12.2.27 2015/12/23 08:07:40 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -461,7 +461,7 @@ motg_init(struct motg_softc *sc)
 		UWRITE1(sc, MUSB2_REG_INTUSBE, MUSB2_MASK_IRESET);
 
 	sc->sc_xferpool = pool_cache_init(sizeof(struct motg_xfer), 0, 0, 0,
-	    "motgxfer", NULL, IPL_NONE, NULL, NULL, NULL);
+	    "motgxfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_USB);
