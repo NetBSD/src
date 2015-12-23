@@ -1,4 +1,4 @@
-/*	$NetBSD: ofctl.c,v 1.11 2009/05/18 05:51:53 mrg Exp $	*/
+/*	$NetBSD: ofctl.c,v 1.12 2015/12/23 13:42:24 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2006, 2007\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: ofctl.c,v 1.11 2009/05/18 05:51:53 mrg Exp $");
+__RCSID("$NetBSD: ofctl.c,v 1.12 2015/12/23 13:42:24 jmcneill Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -96,6 +96,8 @@ int OF_getprop(int, const char *, void *, size_t);
 int OF_nextprop(int, const char *, void *);
 
 struct of_prop *of_tree_getprop(int, const char *);
+
+static int of_fd = -1;
 
 static void
 of_tree_mkprop(struct of_node *node, prop_dictionary_t propdict,
@@ -304,7 +306,10 @@ of_proplib_init(const char *file)
 		err(1, "OFIOCGETNEXT(%d, %#x)", fd, rootid);
 
 	dict = of_proplib_tree_fill(fd, rootid);
-	close(fd);
+
+	/* keep the device open for the benefit of OF_finddevice */
+	of_fd = fd;
+
 	return dict;
 }
 
@@ -386,18 +391,22 @@ OF_peer(int peerid)
 int
 OF_finddevice(const char *name)
 {
-#if 0
 	struct ofiocdesc ofio;
 	
 	ofio.of_nodeid = 0;
-	ofio.of_name = argv[optind++];
-	ofio.of_namelen = strlen(ofio.of_name);
+	ofio.of_name = __UNCONST(name);
+	ofio.of_namelen = strlen(name);
 	ofio.of_buf = NULL;
 	ofio.of_buflen = 0;
-	if (ioctl(of_fd, OFIOCFINDDEVICE, &ofio) < 0)
-		err(1, "OFIOCFINDDEVICE(%d, \"%s\")", of_fd, ofio.of_name);
-#endif
-	return 0;
+	if (ioctl(of_fd, OFIOCFINDDEVICE, &ofio) < 0) {
+		if (errno == ENOENT) {
+			err(1, "OF node '%s' not found", name);
+		} else {
+			err(1, "OFIOCFINDDEVICE(%d, \"%s\")", of_fd, name);
+		}
+	}
+
+	return ofio.of_nodeid;
 }
 
 struct of_prop *
@@ -529,12 +538,19 @@ main(int argc, char **argv)
 			device_type[len] = '\0';
 		oflist(phandle, device_type, 0, of_buf, sizeof(of_buf));
 	} else {
-#if 0
-		pandle = OF_finddevice(argv[optind++]);
+		phandle = OF_finddevice(argv[optind++]);
+		device_type[0] = '\0';
+		len = OF_getprop(phandle, "device_type", device_type,
+		    sizeof(device_type));
+		if (len <= 0)
+			len = OF_getprop(phandle, "name", device_type,
+			    sizeof(device_type));
+		if (len >= 0)
+			device_type[len] = '\0';
 
 		if (argc == optind) {
 			if (lflag)
-				oflist(phandle, 0, of_buf, sizeof(of_buf));
+				oflist(phandle, device_type, 0, of_buf, sizeof(of_buf));
 			else
 				ofprop(phandle);
 		} else {
@@ -542,9 +558,6 @@ main(int argc, char **argv)
 				ofgetprop(phandle, argv[optind]);
 			}
 		}
-#else
-		printf("%s: OF_finddevice not yet implemented\n", argv[optind]);
-#endif
 	}
 	exit(0);
 }
