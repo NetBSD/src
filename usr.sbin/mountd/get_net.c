@@ -1,4 +1,4 @@
-/* 	$NetBSD: get_net.c,v 1.1 2015/12/23 16:19:49 christos Exp $	 */
+/* 	$NetBSD: get_net.c,v 1.2 2015/12/24 01:41:19 christos Exp $	 */
 
 /*
  * Copyright (c) 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: get_net.c,v 1.1 2015/12/23 16:19:49 christos Exp $");
+__RCSID("$NetBSD: get_net.c,v 1.2 2015/12/24 01:41:19 christos Exp $");
 
 #include <sys/types.h>
 #include <netdb.h>
@@ -160,7 +160,7 @@ get_net(char *cp, struct netmsk *net, int maskflg)
 	}
 
 	/*
-	 * Only allow /pref notation for v6 addresses.
+	 * Disallow v6 addresses without a specific mask or masklen
 	 */
 	if (sa->sa_family == AF_INET6 && (!(opt_flags & OP_MASKLEN) || maskflg))
 		return 1;
