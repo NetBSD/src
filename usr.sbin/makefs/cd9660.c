@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660.c,v 1.51 2015/12/21 03:19:17 christos Exp $	*/
+/*	$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 Daniel Watt, Walter Deignan, Ryan Gabrys, Alan
@@ -103,7 +103,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: cd9660.c,v 1.51 2015/12/21 03:19:17 christos Exp $");
+__RCSID("$NetBSD: cd9660.c,v 1.52 2015/12/24 15:52:37 christos Exp $");
 #endif  /* !__lint */
 
 #include <string.h>
@@ -124,7 +124,7 @@ __RCSID("$NetBSD: cd9660.c,v 1.51 2015/12/21 03:19:17 christos Exp $");
 static void cd9660_finalize_PVD(iso9660_disk *);
 static cd9660node *cd9660_allocate_cd9660node(void);
 static void cd9660_set_defaults(iso9660_disk *);
-static int cd9660_arguments_set_string(const char *, const char *, int,
+static int cd9660_arguments_set_string(const char *, const char *, size_t,
     char, char *);
 static void cd9660_populate_iso_dir_record(
     struct _iso_directory_record_cd9660 *, u_char, u_char, u_char,
@@ -339,10 +339,11 @@ cd9660_cleanup_opts(fsinfo_t *fsopts)
 }
 
 static int
-cd9660_arguments_set_string(const char *val, const char *fieldtitle, int length,
-			    char testmode, char * dest)
+cd9660_arguments_set_string(const char *val, const char *fieldtitle,
+    size_t length, char testmode, char * dest)
 {
-	int len, test;
+	size_t len;
+	int test;
 
 	if (val == NULL)
 		warnx("error: The %s requires a string argument", fieldtitle);
