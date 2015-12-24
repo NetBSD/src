@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2015/09/24 14:12:48 christos Exp $
+# $NetBSD: Makefile,v 1.2 2015/12/24 00:36:43 wiz Exp $
 
 .include <bsd.own.mk>
 
@@ -36,11 +36,7 @@ CPPFLAGS+=	-DNO_CTF
 .if defined(NOCPLUSPLUS)
 CPPFLAGS+=	-DNO_CXA_DEMANGLE
 .else
-. if ${MKLIBCXX} == "yes"
-LIBDPLIBS+=     c++     ${NETBSDSRCDIR}/external/bsd/libc++/lib
-. else
-LIBDPLIBS+=     stdc++  ${NETBSDSRCDIR}/external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libstdc++-v3
-. endif
+LIBISCXX=	yes
 .endif
 
 LIBDPLIBS+=	elf ${NETBSDSRCDIR}/external/bsd/elftoolchain/lib/libelf
