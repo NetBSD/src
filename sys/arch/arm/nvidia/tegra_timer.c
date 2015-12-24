@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_timer.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $ */
+/* $NetBSD: tegra_timer.c,v 1.4 2015/12/24 12:47:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_timer.c,v 1.3 2015/12/22 22:10:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_timer.c,v 1.4 2015/12/24 12:47:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -95,6 +95,8 @@ tegra_timer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_clk_watchdog = fdtbus_clock_get(faa->faa_phandle, "watchdog");
+	if (sc->sc_clk_watchdog == NULL)
+		sc->sc_clk_watchdog = clk_get("watchdog");
 
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
