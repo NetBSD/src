@@ -1,4 +1,4 @@
-# $NetBSD: md.cesfic,v 1.7 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.cesfic,v 1.8 2015/12/24 14:16:46 christos Exp $
 ./usr/include/cesfic				comp-c-include
 ./usr/include/cesfic/_G_config.h		comp-obsolete		obsolete
 ./usr/include/cesfic/ansi.h			comp-c-include
@@ -11,6 +11,7 @@
 ./usr/include/cesfic/elf_machdep.h		comp-c-include
 ./usr/include/cesfic/endian.h			comp-c-include
 ./usr/include/cesfic/endian_machdep.h		comp-c-include
+./usr/include/cesfic/fenv.h			comp-c-include
 ./usr/include/cesfic/float.h			comp-c-include
 ./usr/include/cesfic/frame.h			comp-c-include
 ./usr/include/cesfic/ieee.h			comp-c-include
