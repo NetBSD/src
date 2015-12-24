@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.17 2015/12/22 22:19:07 jmcneill Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.18 2015/12/24 01:10:51 marty Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.17 2015/12/22 22:19:07 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.18 2015/12/24 01:10:51 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -281,7 +281,8 @@ exynos_gpio_pin_ctl(void *cookie, int pin, int flags)
 }
 
 void
-exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent, int node)
+exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
+			const struct fdt_attach_args *faa, int node)
 {
 	struct exynos_gpio_bank *bank = kmem_zalloc(sizeof(*bank), KM_SLEEP);
 	struct exynos_gpio_softc *sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
@@ -320,32 +321,35 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent, int node)
 	bank->bank_cfg.drv = GPIO_READ(bank, EXYNOS_GPIO_DRV);
 	bank->bank_cfg.conpwd = GPIO_READ(bank, EXYNOS_GPIO_CONPWD);
 	bank->bank_cfg.pudpwd = GPIO_READ(bank, EXYNOS_GPIO_PUDPWD);
+
+	fdtbus_register_gpio_controller(bank->bank_dev, faa->faa_phandle,
+					&exynos_gpio_funcs);
 }
 
 /*
- * pinmame = gpLD-N
+ * pinmame = gpLD[-N]
  *     L = 'a' - 'z' -+
- *     D = '0' - '8' -+ ===== bank name
- *     N = '0' - '8'    ===== pin number
+ *     D = '0' - '9' -+ ===== bank name
+ *     N = '0' - '7'    ===== pin number
  */
 
 static struct exynos_gpio_bank *
 exynos_gpio_pin_lookup(const char *pinname, int *ppin)
 {
 	char bankname[5];
-	int pin;
+	int pin = 0;
 	int n;
 	struct exynos_gpio_bank *bank;
 
 	memset(bankname, 0, sizeof(bankname));
-	bankname[0] = pinname[0]; /* 'g' */
-	bankname[1] = pinname[1]; /* 'p' */
-	bankname[2] = pinname[2]; /*  L  */
-	bankname[3] = pinname[3]; /*  D  */
-	bankname[4] = 0;
-	if (ppin)
+	for (n = 0; n < 4; n++)
+		bankname[n] = pinname[n];
+	bankname[n] = 0;
+	if (ppin && pinname[4] == '-') {
 		pin = pinname[5] - '0';	  /* skip the '-' */
-
+		if (pin < 0 || pin > 8)
+			return NULL;
+	}
 	for (n = 0; n < __arraycount(exynos5_banks); n++) {
 		bank = &exynos_gpio_banks[n];
 		if (strcmp(bank->bank_name, bankname) == 0) {

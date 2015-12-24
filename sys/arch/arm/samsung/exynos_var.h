@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_var.h,v 1.21 2015/12/19 21:42:31 marty Exp $	*/
+/*	$NetBSD: exynos_var.h,v 1.22 2015/12/24 01:10:51 marty Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -125,8 +125,11 @@ extern bus_space_handle_t exynos_sysreg_bsh;
 
 extern void exynos_bootstrap(vaddr_t, vaddr_t);
 extern void exynos_dma_bootstrap(psize_t memsize);
+
 struct exynos_pinctrl_softc;
-extern void exynos_gpio_bank_config(struct exynos_pinctrl_softc *, int);
+struct fdt_attach_args;
+extern void exynos_gpio_bank_config(struct exynos_pinctrl_softc *,
+				    const struct fdt_attach_args *, int);
 extern void exynos_wdt_reset(void);
 
 extern void exynos_init_clkout_for_usb(void);	// board specific
