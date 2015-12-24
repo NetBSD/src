@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.16 2015/12/22 14:24:55 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.17 2015/12/24 04:16:00 christos Exp $	*/
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -24,23 +24,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _FENV_H_
+#define _FENV_H_
+
+#include <sys/featuretest.h>
 
 #if !defined(__aarch64__) && !defined(__arm__) && !defined(__i386__) \
     && !defined(__hppa__) && !defined(__powerpc__) && !defined(__mips__) \
     && !defined(__or1k__) && !defined(__riscv__) && !defined(__sparc__) \
     && !defined(__x86_64__)
-#ifndef __TEST_FENV
-#error	"fenv.h is currently not supported for this architecture"
-#endif
+# ifndef __TEST_FENV
+#  error	"fenv.h is currently not supported for this architecture"
+# endif
 #else
 # define __HAVE_FENV
+# include <machine/fenv.h>
 #endif
-
-#ifndef _FENV_H_
-#define _FENV_H_
-
-#include <sys/featuretest.h>
-#include <machine/fenv.h>
 
 __BEGIN_DECLS
 
