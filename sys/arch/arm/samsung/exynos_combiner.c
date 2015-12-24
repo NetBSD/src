@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.2 2015/12/21 04:58:50 marty Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.3 2015/12/24 21:20:17 marty Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.2 2015/12/21 04:58:50 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.3 2015/12/24 21:20:17 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,8 +50,16 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.2 2015/12/21 04:58:50 marty Ex
 
 #include <dev/fdt/fdtvar.h>
 
+#define COMBINER_IESR_OFFSET  0x00
+#define COMBINER_IECR_OFFSET  0x04
+#define COMBINER_ISTR_OFFSET  0x08
+#define COMBINER_IMSR_OFFSET  0x0C
+#define COMBINER_BLOCK_SIZE   0x10
+
 struct exynos_combiner_softc {
 	device_t		sc_dev;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
 	int			sc_phandle;
 
 };
@@ -99,6 +107,15 @@ exynos_combiner_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_bst = faa->faa_bst;
+
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d",
+			     (uint64_t)addr, error);
+		return;
+	}
+
 	error = fdtbus_register_interrupt_controller(self, faa->faa_phandle,
 	    &exynos_combiner_funcs);
 	if (error) {
@@ -106,14 +123,11 @@ exynos_combiner_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-
-	aprint_normal(" @ 0x%08x: interrupt combiner,  NOT IMPLEMENTED",
-		      (uint)addr);
+	aprint_normal(" @ 0x%08x: interrupt combiner", (uint)addr);
 	aprint_naive("\n");
 	aprint_normal("\n");
 
 }
-
 
 static void *
 exynos_combiner_establish(device_t dev, int phandle, u_int index, int ipl,
@@ -122,44 +136,17 @@ exynos_combiner_establish(device_t dev, int phandle, u_int index, int ipl,
 {
 	struct exynos_combiner_softc * const sc = device_private(dev);
 	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
-	u_int *interrupts;
-	int interrupt_cells, len;
-
-	if (of_getprop_uint32(sc->sc_phandle, "#interrupt-cells",
-	    &interrupt_cells)) {
-		return NULL;
-	}
-
-	len = OF_getproplen(phandle, "interrupts");
-	if (len <= 0)
-		return NULL;
-
-	const u_int clen = interrupt_cells * 4;
-	const u_int nintr = len / interrupt_cells;
-
-	if (index >= nintr)
-		return NULL;
-
-	interrupts = kmem_alloc(len, KM_SLEEP);
-
-	if (OF_getprop(phandle, "interrupts", interrupts, len) != len) {
-		kmem_free(interrupts, len);
-		return NULL;
-	}
-
-	/* 1st cell is the interrupt type; */
-	/* 2nd cell is the interrupt number */
-	/* 3rd cell is flags */
-
-	const u_int type = be32toh(interrupts[index * clen + 0]);
-	const u_int intr = be32toh(interrupts[index * clen + 1]);
-	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
-	const u_int trig = be32toh(interrupts[index * clen + 2]) & 0xf;
-	const u_int level = (trig & 0x3) ? IST_EDGE : IST_LEVEL;
-
-	kmem_free(interrupts, len);
-
-	return intr_establish(irq, ipl, level | iflags, func, arg);
+	int iblock = index >> 3;
+	int ioffset = index & 0x07;
+	int block_offset =
+		iblock * COMBINER_BLOCK_SIZE + COMBINER_IESR_OFFSET;
+	int istatus =
+		bus_space_read_4(sc->sc_bst, sc->sc_bsh, block_offset);
+	printf("Establishing irq %d (0x%x) @ iblock = %d, ioffset = %d\n",
+	       index, index, iblock, ioffset);
+	istatus |= 1 << ioffset;
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, block_offset, istatus);
+	return intr_establish(index, ipl, iflags, func, arg);
 }
 
 static void
