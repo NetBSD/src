@@ -5,9 +5,9 @@
 #define	OP_MASK		0x008
 #define	OP_NET		0x010
 #define	OP_ALLDIRS	0x040
-#define OP_NORESPORT	0x080
-#define OP_NORESMNT	0x100
-#define OP_MASKLEN	0x200
+#define	OP_NORESPORT	0x080
+#define	OP_NORESMNT	0x100
+#define	OP_MASKLEN	0x200
 
 extern int opt_flags;
 extern int debug;
