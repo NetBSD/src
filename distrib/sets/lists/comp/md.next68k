@@ -1,4 +1,4 @@
-# $NetBSD: md.next68k,v 1.32 2011/07/17 20:54:31 joerg Exp $
+# $NetBSD: md.next68k,v 1.33 2015/12/24 14:16:46 christos Exp $
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/include/next68k				comp-c-include
 ./usr/include/next68k/_G_config.h		comp-obsolete		obsolete
@@ -17,6 +17,7 @@
 ./usr/include/next68k/elf_machdep.h		comp-c-include
 ./usr/include/next68k/endian.h			comp-c-include
 ./usr/include/next68k/endian_machdep.h		comp-c-include
+./usr/include/next68k/fenv.h			comp-c-include
 ./usr/include/next68k/float.h			comp-c-include
 ./usr/include/next68k/frame.h			comp-c-include
 ./usr/include/next68k/ieee.h			comp-c-include

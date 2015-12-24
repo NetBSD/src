@@ -1,4 +1,4 @@
-# $NetBSD: md.atari,v 1.59 2013/01/16 16:01:06 christos Exp $
+# $NetBSD: md.atari,v 1.60 2015/12/24 14:16:46 christos Exp $
 ./usr/include/atari				comp-c-include
 ./usr/include/atari/_G_config.h			comp-obsolete		obsolete
 ./usr/include/atari/ahdilabel.h			comp-c-include
@@ -14,6 +14,7 @@
 ./usr/include/atari/elf_machdep.h		comp-c-include
 ./usr/include/atari/endian.h			comp-c-include
 ./usr/include/atari/endian_machdep.h		comp-c-include
+./usr/include/atari/fenv.h			comp-c-include
 ./usr/include/atari/float.h			comp-c-include
 ./usr/include/atari/frame.h			comp-c-include
 ./usr/include/atari/grfioctl.h			comp-c-include
