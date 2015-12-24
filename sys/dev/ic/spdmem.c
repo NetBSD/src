@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.19 2015/12/08 02:09:23 pgoyette Exp $ */
+/* $NetBSD: spdmem.c,v 1.20 2015/12/24 14:16:18 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.19 2015/12/08 02:09:23 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.20 2015/12/24 14:16:18 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -77,7 +77,11 @@ static const char* const spdmem_basic_types[] = {
 	"DDR2 SDRAM FB",
 	"DDR2 SDRAM FB Probe",
 	"DDR3 SDRAM",
-	"DDR4 SDRAM"
+	"DDR4 SDRAM",
+	"unknown",
+	"DDR4E SDRAM",
+	"LPDDR3 SDRAM",
+	"LPDDR4 SDRAM"
 };
 
 static const char* const spdmem_ddr4_module_types[] = {
@@ -382,6 +386,18 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	}
 
 	strlcpy(sc->sc_type, type, SPDMEM_TYPE_MAXLEN);
+
+	if (s->sm_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
+		/*
+		 * The latest spec (DDR4 SPD Document Release 3) defines
+		 * NVDIMM Hybrid only.
+		 */
+		if ((s->sm_ddr4.ddr4_hybrid)
+		    && (s->sm_ddr4.ddr4_hybrid_media == 1))
+			strlcat(sc->sc_type, " NVDIMM hybrid",
+			    SPDMEM_TYPE_MAXLEN);
+	}
+	
 	if (node != NULL)
 		sysctl_createv(&sc->sc_sysctl_log, 0, NULL, NULL,
 		    0,
@@ -888,18 +904,17 @@ decode_ddr4(const struct sysctlnode *node, device_t self, struct spdmem *s)
 	 * hard-code them for now.
 	 */
 	cycle_time = __DDR4_VALUE(tCKAVGmin);
-	aprint_normal("%d.%03dns cycle time (%dMHz), ", cycle_time/1000,
-	    cycle_time % 1000, 1000000 / cycle_time);
-
 	decode_size_speed(self, node, dimm_size, cycle_time, 2,
 			  1 << (s->sm_ddr4.ddr4_primary_bus_width + 3),
 			  TRUE, "PC4", 0);
 
 	aprint_verbose_dev(self,
-	    "%d rows, %d cols, %d banks, %d bank groups\n",
+	    "%d rows, %d cols, %d banks, %d bank groups, "
+	    "%d.%03dns cycle time\n",
 	    s->sm_ddr4.ddr4_rows + 9, s->sm_ddr4.ddr4_cols + 12,
 	    1 << (2 + s->sm_ddr4.ddr4_logbanks),
-	    1 << s->sm_ddr4.ddr4_bankgroups);
+	    1 << s->sm_ddr4.ddr4_bankgroups,
+	    cycle_time / 1000, cycle_time % 1000);
 
 /*
  * Note that the ddr4_xxx_ftb fields are actually signed offsets from
