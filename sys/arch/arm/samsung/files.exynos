@@ -1,4 +1,4 @@
-#	$NetBSD: files.exynos,v 1.17 2015/12/21 04:58:50 marty Exp $
+#	$NetBSD: files.exynos,v 1.18 2015/12/24 01:10:51 marty Exp $
 #
 # Configuration info for Samsung Exynos SoC ARM Peripherals
 #
@@ -87,11 +87,6 @@ attach  exyopctl at fdt with exynos_pinctrl
 file	arch/arm/samsung/exynos_pinctrl.c	exynos_pinctrl needs-flag
 file	arch/arm/samsung/exynos_gpio.c		exynos_pinctrl needs-flag
 
-# GPIO
-#device	exyogpio : gpiobus
-#attach	exyogpio at fdt with exynos_gpio
-#file	arch/arm/samsung/exynos_gpio.c		exynos_gpio needs-flag
-
 # USB2 Host Controller (EHCI/OHCI)
 device	exyousb { } : fdtbus
 attach	exyousb at fdt with exyo_usb
@@ -99,7 +94,7 @@ attach	ohci at exyousb with ohci_exyousb
 attach	ehci at exyousb with ehci_exyousb
 file	arch/arm/samsung/exynos_usb.c		exyo_usb
 
-# I2C support, bitbanging trough GPIO
+# I2C support, bitbanging through GPIO
 device	exyoi2c: i2cbus, i2c_bitbang
 attach	exyoi2c at fdt with exynos_i2c
 file	arch/arm/samsung/exynos_i2c.c		exynos_i2c needs-flag
