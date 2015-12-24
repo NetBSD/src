@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: header.c,v 1.7 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: header.c,v 1.8 2015/12/24 17:35:57 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -82,7 +82,7 @@ header(gpt_t gpt)
 
 	map = map_find(gpt, MAP_TYPE_PRI_GPT_HDR);
 	if (map == NULL) {
-		printf("- GPT Header not found");
+		printf("- GPT Header not found\n");
 		return 0;
 	}
 
