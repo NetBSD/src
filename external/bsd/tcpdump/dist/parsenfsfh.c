@@ -42,7 +42,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: parsenfsfh.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
+__RCSID("$NetBSD: parsenfsfh.c,v 1.6 2015/12/25 04:50:21 christos Exp $");
 #endif
 
 #define NETDISSECT_REWORKED
@@ -81,6 +81,7 @@ __RCSID("$NetBSD: parsenfsfh.c,v 1.5 2014/11/20 03:05:03 christos Exp $");
 #define	FHT_AIX32	10
 #define	FHT_HPUX9	11
 #define	FHT_BSD44	12
+#define	FHT_NETBSD	13
 
 #ifdef	ultrix
 /* Nasty hack to keep the Ultrix C compiler from emitting bogus warnings */
@@ -145,9 +146,11 @@ Parse_fh(register const unsigned char *fh, int len _U_, my_fsid *fsidp,
 #if	defined(__osf__)
 	    fhtype = FHT_DECOSF;
 #endif
-#if	defined(__NetBSD__) || defined(__FreeBSD__) || defined(__DragonFly__) \
-     || defined(__OpenBSD__)
+#if	defined(__FreeBSD__) || defined(__DragonFly__) || defined(__OpenBSD__)
 	    fhtype = FHT_BSD44;
+#endif
+#if	defined(__NetBSD__)
+	    fhtype = FHT_NETBSD;
 #endif
 	}
 	/*
@@ -200,7 +203,12 @@ Parse_fh(register const unsigned char *fh, int len _U_, my_fsid *fsidp,
 		 * might be HP-UX (depends on their values for minor devs)
 		 */
 		if ((fhp[6] == 0) && (fhp[7] == 0)) {
-		    fhtype = FHT_BSD44;
+		    /* for ffs sizeof(ufid) == 16 bytes */
+		    if ((fhp[8] == 0x10 && fhp[9] == 0x0) ||
+			(fhp[9] == 0x0 && fhp[9] == 0x10))
+			    fhtype = FHT_NETBSD;
+		    else
+			    fhtype = FHT_BSD44;
 		}
 		/*XXX we probably only need to test of these two bytes */
 		else if ((fhp[21] == 0) && (fhp[23] == 0)) {
@@ -269,11 +277,19 @@ Parse_fh(register const unsigned char *fh, int len _U_, my_fsid *fsidp,
 	    break;
 
 	case FHT_BSD44:
+	case FHT_NETBSD:
 	    fsidp->Fsid_dev.Minor = fhp[0];
 	    fsidp->Fsid_dev.Major = fhp[1];
 	    fsidp->fsid_code = 0;
 
-	    *inop = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
+	    /*
+	     * NetBSD puts the generation number before the inode; inode
+	     * is 64 bits, but only 32 are typically used; XXX endian issues?
+	     */
+	    if (fhtype == FHT_NETBSD)
+		    *inop = make_uint32(fhp[19], fhp[18], fhp[17], fhp[16]);
+	    else
+		    *inop = make_uint32(fhp[15], fhp[14], fhp[13], fhp[12]);
 
 	    if (osnamep)
 		*osnamep = "BSD 4.4";
