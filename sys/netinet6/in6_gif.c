@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.63 2015/12/11 07:59:14 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.64 2015/12/25 06:47:57 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.63 2015/12/11 07:59:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.64 2015/12/25 06:47:57 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,8 +90,8 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
 	struct gif_softc *sc = ifp->if_softc;
-	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
-	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
+	struct sockaddr_in6 *sin6_src = satosin6(sc->gif_psrc);
+	struct sockaddr_in6 *sin6_dst = satosin6(sc->gif_pdst);
 	struct ip6_hdr *ip6;
 	int proto, error;
 	u_int8_t itos, otos;
@@ -300,8 +300,8 @@ gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc,
 {
 	const struct sockaddr_in6 *src, *dst;
 
-	src = (struct sockaddr_in6 *)sc->gif_psrc;
-	dst = (struct sockaddr_in6 *)sc->gif_pdst;
+	src = satosin6(sc->gif_psrc);
+	dst = satosin6(sc->gif_pdst);
 
 	/* check for address match */
 	if (!IN6_ARE_ADDR_EQUAL(&src->sin6_addr, &ip6->ip6_dst) ||
