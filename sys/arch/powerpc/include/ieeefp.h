@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.4 2015/12/22 05:28:46 christos Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.5 2015/12/25 06:02:10 christos Exp $	*/
 
 /* 
  * Written by J.T. Conklin, Apr 6, 1995
@@ -10,9 +10,9 @@
 
 #include <sys/featuretest.h>
 
-#include <powerpc/fenv.h>
-
 #if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
+
+#include <powerpc/fenv.h>
 
 #if !defined(_ISOC99_SOURCE)
 
