@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.87 2015/10/27 14:23:23 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.88 2015/12/25 04:50:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -418,6 +418,8 @@ struct livengood_tcpip_ctxdesc {
 
 #define	WM_RAL_TABSIZE		15	/* RAL size for old devices */
 #define	WM_RAL_TABSIZE_ICH8	7	/* RAL size for ICH* and PCH* */
+#define	WM_RAL_TABSIZE_PCH2	5	/* RAL size for PCH2 */
+#define	WM_RAL_TABSIZE_PCH_LPT	12	/* RAL size for PCH_LPT */
 #define	WM_RAL_TABSIZE_82575	16	/* RAL size for 82575 */
 #define	WM_RAL_TABSIZE_82576	24	/* RAL size for 82576 and 82580 */
 #define	WM_RAL_TABSIZE_I350	32	/* RAL size for I350 */
@@ -966,7 +968,7 @@ struct livengood_tcpip_ctxdesc {
 #define	MANC_EN_MAC_ADDR_FILTER	0x00100000
 #define	MANC_EN_MNG2HOST	0x00200000
 
-#define	WMREG_MANC2H	0x5860	/* Manaegment Control To Host - RW */
+#define	WMREG_MANC2H	0x5860	/* Management Control To Host - RW */
 #define MANC2H_PORT_623		(1 << 5)
 #define MANC2H_PORT_624		(1 << 6)
 
@@ -998,12 +1000,12 @@ struct livengood_tcpip_ctxdesc {
 #define	SWSM_DRV_LOAD	0x00000008	/* Driver Loaded Bit */
 
 #define	WMREG_FWSM	0x5b54	/* FW Semaphore */
-#define	FWSM_MODE_MASK		0xe
-#define	FWSM_MODE_SHIFT		0x1
+#define	FWSM_MODE		__BITS(1, 3)
 #define	MNG_ICH_IAMT_MODE	0x2	/* PT mode? */
 #define	MNG_IAMT_MODE		0x3
-#define FWSM_RSPCIPHY		0x00000040	/* Reset PHY on PCI reset */
-#define FWSM_FW_VALID		0x00008000 /* FW established a valid mode */
+#define FWSM_RSPCIPHY		__BIT(6)  /* Reset PHY on PCI reset */
+#define FWSM_WLOCK_MAC		__BITS(7, 9)  /* Reset PHY on PCI reset */
+#define FWSM_FW_VALID		__BIT(15) /* FW established a valid mode */
 
 #define	WMREG_SWSM2	0x5b58	/* SW Semaphore 2 */
 #define SWSM2_LOCK		0x00000002 /* Secondary driver semaphore bit */
