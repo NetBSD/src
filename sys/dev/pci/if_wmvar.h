@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.29 2015/06/06 04:39:12 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.30 2015/12/25 04:50:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -143,12 +143,12 @@ typedef enum {
 	WM_T_I210,			/* I210 */
 	WM_T_I211,			/* I211 */
 	WM_T_80003,			/* i80003 */
-	WM_T_ICH8,			/* ICH8 LAN */
+	WM_T_ICH8,			/* ICH8 (I/O Controller Hub) LAN */
 	WM_T_ICH9,			/* ICH9 LAN */
 	WM_T_ICH10,			/* ICH10 LAN */
-	WM_T_PCH,			/* PCH LAN */
+	WM_T_PCH,			/* PCH (Platform Controller Hub) LAN */
 	WM_T_PCH2,			/* PCH2 LAN */
-	WM_T_PCH_LPT,			/* PCH LPT LAN (I21[78]) */
+	WM_T_PCH_LPT,			/* PCH "Lynx Point" LAN (I217, I218) */
 } wm_chip_type;
 
 typedef enum {
