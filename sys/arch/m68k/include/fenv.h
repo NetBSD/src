@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.1 2015/12/24 14:12:39 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.2 2015/12/25 16:19:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -103,6 +103,8 @@ typedef struct {
 
 #define __fsetenv(__envp) \
     __asm__ __volatile__ ("fmovem%.l %0,%/fpcr/%/fpsr/%/fpiar" : : "m" (__envp))
+
+__BEGIN_DECLS
 
 __fenv_static inline int
 feclearexcept(int __excepts)
@@ -218,9 +220,9 @@ feholdexcept(fenv_t *__envp)
 
 	__fgetenv(__envp);
 	__fpsr = __envp->fpsr & ~FE_ALL_EXCEPT;
-	__fset_fpsr(__fpsr);	/* clear all */
+	__set_fpsr(__fpsr);	/* clear all */
 	__fpcr = __envp->fpcr & ~(FE_ALL_EXCEPT << 6);
-	__fset_fpcr(__fpcr);	/* set non/stop */
+	__set_fpcr(__fpcr);	/* set non/stop */
 
 	return 0;
 }
