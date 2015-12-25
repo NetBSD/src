@@ -1,4 +1,4 @@
-/*	$NetBSD: ieeefp.h,v 1.7 2012/03/19 22:24:07 matt Exp $	*/
+/*	$NetBSD: ieeefp.h,v 1.8 2015/12/25 06:01:38 christos Exp $	*/
 
 /*
  * Written by J.T. Conklin, Apr 11, 1995
@@ -12,21 +12,7 @@
 
 #if defined(_NETBSD_SOURCE) || defined(_ISOC99_SOURCE)
 
-typedef unsigned int fenv_t;
-typedef unsigned int fexcept_t;
-
-#define	FE_INEXACT	0x01	/* imprecise (loss of precision) */
-#define	FE_UNDERFLOW	0x02	/* underflow exception */
-#define	FE_OVERFLOW	0x04	/* overflow exception */
-#define	FE_DIVBYZERO	0x08	/* divide-by-zero exception */
-#define	FE_INVALID	0x10	/* invalid operation exception */
-
-#define	FE_ALL_EXCEPT	0x1f
-
-#define	FE_TONEAREST	0	/* round to nearest representable number */
-#define	FE_TOWARDZERO	1	/* round to zero (truncate) */
-#define	FE_UPWARD	2	/* round toward positive infinity */
-#define	FE_DOWNWARD	3	/* round toward negative infinity */
+#include <mips/fenv.h>
 
 #if !defined(_ISOC99_SOURCE)
 
