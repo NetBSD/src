@@ -1,4 +1,4 @@
-#	$NetBSD: t_forwarding.sh,v 1.10 2015/11/24 02:37:33 ozaki-r Exp $
+#	$NetBSD: t_forwarding.sh,v 1.11 2015/12/25 08:22:28 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -35,6 +35,7 @@ IP4SRC=10.0.1.2
 IP4SRCGW=10.0.1.1
 IP4DSTGW=10.0.2.1
 IP4DST=10.0.2.2
+IP4DST_BCAST=10.0.2.255
 IP6SRC=fc00:0:0:1::2
 IP6SRCGW=fc00:0:0:1::1
 IP6DSTGW=fc00:0:0:2::1
@@ -49,6 +50,7 @@ atf_test_case basic cleanup
 atf_test_case basic6 cleanup
 atf_test_case fastforward cleanup
 atf_test_case fastforward6 cleanup
+atf_test_case misc cleanup
 
 basic_head()
 {
@@ -59,6 +61,12 @@ basic_head()
 basic6_head()
 {
 	atf_set "descr" "Does IPv6 forwarding tests"
+	atf_set "require.progs" "rump_server"
+}
+
+misc_head()
+{
+	atf_set "descr" "Does IPv4 forwarding tests"
 	atf_set "require.progs" "rump_server"
 }
 
@@ -224,6 +232,18 @@ setup_forwarding6()
 	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet6.ip6.forwarding=1
 }
 
+setup_directed_broadcast()
+{
+	export RUMP_SERVER=$SOCKFWD
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.directed-broadcast=1
+}
+
+setup_icmp_bmcastecho()
+{
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.icmp.bmcastecho=1
+}
+
 teardown_forwarding()
 {
 	export RUMP_SERVER=$SOCKFWD
@@ -234,6 +254,18 @@ teardown_forwarding6()
 {
 	export RUMP_SERVER=$SOCKFWD
 	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet6.ip6.forwarding=0
+}
+
+teardown_directed_broadcast()
+{
+	export RUMP_SERVER=$SOCKFWD
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.directed-broadcast=0
+}
+
+teardown_icmp_bmcastecho()
+{
+	export RUMP_SERVER=$SOCKDST
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.icmp.bmcastecho=0
 }
 
 test_setup_forwarding()
@@ -321,7 +353,7 @@ test_ping_success()
 	$DEBUG && rump.netstat -nr
 }
 
-test_ttl()
+test_ping_ttl()
 {
 	export RUMP_SERVER=$SOCKSRC
 	$DEBUG && rump.ifconfig -v shmif0
@@ -330,6 +362,44 @@ test_ttl()
 	    rump.ping -v -n -w $TIMEOUT -c 1 -T 1 $IP4DST
 	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 -T 2 $IP4DST
 	$DEBUG && rump.ifconfig -v shmif0
+}
+
+test_sysctl_ttl()
+{
+	local ip=$1
+
+	export RUMP_SERVER=$SOCKSRC
+	$DEBUG && rump.ifconfig -v shmif0
+
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.ttl=1
+	# get the webpage
+	atf_check -s not-exit:0 -e match:'timed out' \
+		env LD_PRELOAD=/usr/lib/librumphijack.so	\
+		ftp -q $TIMEOUT -o out http://$ip/$HTML_FILE
+
+
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.ttl=2
+	# get the webpage
+	atf_check -s exit:0 env LD_PRELOAD=/usr/lib/librumphijack.so 	\
+		ftp -q $TIMEOUT -o out http://$ip/$HTML_FILE
+
+	atf_check -s exit:0 -o ignore rump.sysctl -w net.inet.ip.ttl=64
+	$DEBUG && rump.ifconfig -v shmif0
+}
+
+test_directed_broadcast()
+{
+	setup_icmp_bmcastecho
+
+	setup_directed_broadcast
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4DST_BCAST
+
+	teardown_directed_broadcast
+	export RUMP_SERVER=$SOCKSRC
+	atf_check -s not-exit:0 -o ignore rump.ping -q -n -w $TIMEOUT -c 1 $IP4DST_BCAST
+
+	teardown_icmp_bmcastecho
 }
 
 test_ping6_failure()
@@ -383,7 +453,6 @@ basic_body()
 	setup_forwarding
 	test_setup_forwarding
 	test_ping_success
-	test_ttl
 
 	teardown_forwarding
 	test_teardown_forwarding
@@ -429,6 +498,24 @@ fastforward6_body()
 	test_http_get "[$IP6DST]"
 }
 
+misc_body()
+{
+	setup
+	test_setup
+
+	setup_forwarding
+	test_setup_forwarding
+
+	test_ping_ttl
+
+	test_directed_broadcast
+
+	setup_bozo $IP4DST
+	test_sysctl_ttl $IP4DST
+
+	return 0
+}
+
 basic_cleanup()
 {
 	dump
@@ -455,10 +542,18 @@ fastforward6_cleanup()
 	cleanup
 }
 
+misc_cleanup()
+{
+	dump
+	cleanup_bozo
+	cleanup
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
 	atf_add_test_case basic6
 	atf_add_test_case fastforward
 	atf_add_test_case fastforward6
+	atf_add_test_case misc
 }
