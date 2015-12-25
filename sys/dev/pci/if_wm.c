@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.386 2015/12/25 04:50:16 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.387 2015/12/25 05:45:40 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.386 2015/12/25 04:50:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.387 2015/12/25 05:45:40 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3127,8 +3127,12 @@ wm_set_filter(struct wm_softc *sc)
 		hash = CSR_READ(sc, mta_reg + (reg << 2));
 		hash |= 1U << bit;
 
-		/* XXX Hardware bug?? */
 		if (sc->sc_type == WM_T_82544 && (reg & 1) != 0) {
+			/*
+			 * 82544 Errata 9: Certain register cannot be written
+			 * with particular alignments in PCI-X bus operation
+			 * (FCAH, MTA and VFTA).
+			 */
 			bit = CSR_READ(sc, mta_reg + ((reg - 1) << 2));
 			CSR_WRITE(sc, mta_reg + (reg << 2), hash);
 			CSR_WRITE(sc, mta_reg + ((reg - 1) << 2), bit);
