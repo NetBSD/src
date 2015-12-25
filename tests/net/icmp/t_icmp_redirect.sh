@@ -1,4 +1,4 @@
-#	$NetBSD: t_icmp_redirect.sh,v 1.1 2015/08/31 06:16:08 ozaki-r Exp $
+#	$NetBSD: t_icmp_redirect.sh,v 1.2 2015/12/25 08:22:28 ozaki-r Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -209,8 +209,131 @@ icmp_redirect_timeout_cleanup()
 	cleanup
 }
 
+atf_test_case icmp_redirect cleanup
+
+icmp_redirect_head()
+{
+
+	atf_set "descr" "Tests for icmp redirect";
+	atf_set "require.progs" "rump_server";
+}
+
+setup_redirect()
+{
+	atf_check -s exit:0 -o ignore rump.sysctl -w \
+	    net.inet.ip.redirect=1
+}
+
+teardown_redirect()
+{
+	atf_check -s exit:0 -o ignore rump.sysctl -w \
+	    net.inet.ip.redirect=0
+}
+
+icmp_redirect_body()
+{
+
+	$DEBUG && ulimit -c unlimited
+
+	setup_local
+	setup_peer
+
+	#
+	# Setup a gateway 10.0.0.254. 10.0.2.1 is behind it.
+	#
+	setup_gw
+
+	#
+	# Teach the peer that 10.0.2.* is behind 10.0.0.254
+	#
+	export RUMP_SERVER=$SOCK_PEER
+	atf_check -s exit:0 -o ignore rump.route add -net 10.0.2.0/24 10.0.0.254
+	# Up, Gateway, Static
+	check_entry_flags 10.0.2/24 UGS
+
+	#
+	# Setup the default gateway to the peer, 10.0.0.1
+	#
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.route add default 10.0.0.1
+	# Up, Gateway, Static
+	check_entry_flags default UGS
+
+
+	### ICMP redirects are NOT sent by the peer ###
+
+	#
+	# Disable net.inet.ip.redirect
+	#
+	export RUMP_SERVER=$SOCK_PEER
+	teardown_redirect
+
+	# Try ping 10.0.2.1
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.2.1
+	$DEBUG && rump.netstat -rn -f inet
+
+	# A direct route shouldn't be created
+	check_entry_fail 10.0.2.1
+
+
+	### ICMP redirects are sent by the peer ###
+
+	#
+	# Enable net.inet.ip.redirect
+	#
+	export RUMP_SERVER=$SOCK_PEER
+	setup_redirect
+
+	# Try ping 10.0.2.1
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.2.1
+	$DEBUG && rump.netstat -rn -f inet
+
+	# Up, Gateway, Host, Dynamic
+	check_entry_flags 10.0.2.1 UGHD
+	check_entry_gw 10.0.2.1 10.0.0.254
+
+	export RUMP_SERVER=$SOCK_PEER
+	$DEBUG && rump.netstat -rn -f inet
+
+
+	# cleanup
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.route delete 10.0.2.1
+	check_entry_fail 10.0.2.1
+
+
+	### ICMP redirects are NOT sent by the peer (again) ###
+
+	#
+	# Disable net.inet.ip.redirect
+	#
+	export RUMP_SERVER=$SOCK_PEER
+	teardown_redirect
+
+	# Try ping 10.0.2.1
+	export RUMP_SERVER=$SOCK_LOCAL
+	atf_check -s exit:0 -o ignore rump.ping -n -w 1 -c 1 10.0.2.1
+	$DEBUG && rump.netstat -rn -f inet
+
+	# A direct route shouldn't be created
+	check_entry_fail 10.0.2.1
+
+
+	teardown_gw
+}
+
+icmp_redirect_cleanup()
+{
+
+	$DEBUG && dump
+	cleanup
+}
+
 atf_init_test_cases()
 {
 
+	atf_add_test_case icmp_redirect
 	atf_add_test_case icmp_redirect_timeout
 }
