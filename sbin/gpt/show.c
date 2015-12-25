@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.32 2015/12/25 10:59:56 martin Exp $");
+__RCSID("$NetBSD: show.c,v 1.33 2015/12/25 12:16:03 wiz Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: show.c,v 1.32 2015/12/25 10:59:56 martin Exp $");
 static int cmd_show(gpt_t, int, char *[]);
 
 static const char *showhelp[] = {
-	"[-glu] [-i index] [-a]",
+	"[-aglu] [-i index]",
 };
 
 #define SHOW_UUID  1
