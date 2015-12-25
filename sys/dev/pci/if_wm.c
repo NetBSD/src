@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.385 2015/12/22 02:17:21 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.386 2015/12/25 04:50:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.385 2015/12/22 02:17:21 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.386 2015/12/25 04:50:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -727,7 +727,7 @@ static int	wm_check_mng_mode_82574(struct wm_softc *);
 static int	wm_check_mng_mode_generic(struct wm_softc *);
 #endif
 static int	wm_enable_mng_pass_thru(struct wm_softc *);
-static int	wm_check_reset_block(struct wm_softc *);
+static bool	wm_phy_resetisblocked(struct wm_softc *);
 static void	wm_get_hw_control(struct wm_softc *);
 static void	wm_release_hw_control(struct wm_softc *);
 static void	wm_gate_hw_phy_config_ich8lan(struct wm_softc *, int);
@@ -3027,7 +3027,7 @@ wm_set_filter(struct wm_softc *sc)
 	struct ether_multistep step;
 	bus_addr_t mta_reg;
 	uint32_t hash, reg, bit;
-	int i, size;
+	int i, size, max;
 
 	if (sc->sc_type >= WM_T_82544)
 		mta_reg = WMREG_CORDOVA_MTA;
@@ -3050,9 +3050,12 @@ wm_set_filter(struct wm_softc *sc)
 	if (sc->sc_type == WM_T_ICH8)
 		size = WM_RAL_TABSIZE_ICH8 -1;
 	else if ((sc->sc_type == WM_T_ICH9) || (sc->sc_type == WM_T_ICH10)
-	    || (sc->sc_type == WM_T_PCH) || (sc->sc_type == WM_T_PCH2)
-	    || (sc->sc_type == WM_T_PCH_LPT))
+	    || (sc->sc_type == WM_T_PCH))
 		size = WM_RAL_TABSIZE_ICH8;
+	else if (sc->sc_type == WM_T_PCH2)
+		size = WM_RAL_TABSIZE_PCH2;
+	else if (sc->sc_type == WM_T_PCH_LPT)
+		size = WM_RAL_TABSIZE_PCH_LPT;
 	else if (sc->sc_type == WM_T_82575)
 		size = WM_RAL_TABSIZE_82575;
 	else if ((sc->sc_type == WM_T_82576) || (sc->sc_type == WM_T_82580))
@@ -3062,8 +3065,28 @@ wm_set_filter(struct wm_softc *sc)
 	else
 		size = WM_RAL_TABSIZE;
 	wm_set_ral(sc, CLLADDR(ifp->if_sadl), 0);
-	for (i = 1; i < size; i++)
-		wm_set_ral(sc, NULL, i);
+
+	if (sc->sc_type == WM_T_PCH_LPT) {
+		i = __SHIFTOUT(CSR_READ(sc, WMREG_FWSM), FWSM_WLOCK_MAC);
+		switch (i) {
+		case 0:
+			/* We can use all entries */
+			max = size;
+			break;
+		case 1:
+			/* Only RAR[0] */
+			max = 1;
+			break;
+		default:
+			/* available SHRA + RAR[0] */
+			max = i + 1;
+		}
+	} else
+		max = size;
+	for (i = 1; i < size; i++) {
+		if (i < max)
+			wm_set_ral(sc, NULL, i);
+	}
 
 	if ((sc->sc_type == WM_T_ICH8) || (sc->sc_type == WM_T_ICH9)
 	    || (sc->sc_type == WM_T_ICH10) || (sc->sc_type == WM_T_PCH)
@@ -3727,7 +3750,7 @@ wm_reset(struct wm_softc *sc)
 	case WM_T_PCH2:
 	case WM_T_PCH_LPT:
 		reg = CSR_READ(sc, WMREG_CTRL) | CTRL_RST;
-		if (wm_check_reset_block(sc) == 0) {
+		if (wm_phy_resetisblocked(sc) == false) {
 			/*
 			 * Gate automatic PHY configuration by hardware on
 			 * non-managed 82579
@@ -10971,8 +10994,8 @@ wm_check_mng_mode_ich8lan(struct wm_softc *sc)
 
 	fwsm = CSR_READ(sc, WMREG_FWSM);
 
-	if (((fwsm & FWSM_FW_VALID) != 0) &&
-	    (fwsm & FWSM_MODE_MASK) == (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT))
+	if (((fwsm & FWSM_FW_VALID) != 0)
+	    && (__SHIFTOUT(fwsm, FWSM_MODE) == MNG_ICH_IAMT_MODE))
 		return 1;
 
 	return 0;
@@ -10998,7 +11021,7 @@ wm_check_mng_mode_generic(struct wm_softc *sc)
 
 	fwsm = CSR_READ(sc, WMREG_FWSM);
 
-	if ((fwsm & FWSM_MODE_MASK) == (MNG_IAMT_MODE << FWSM_MODE_SHIFT))
+	if (__SHIFTOUT(fwsm, FWSM_MODE) == MNG_IAMT_MODE)
 		return 1;
 
 	return 0;
@@ -11024,8 +11047,7 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 		fwsm = CSR_READ(sc, WMREG_FWSM);
 		factps = CSR_READ(sc, WMREG_FACTPS);
 		if (((factps & FACTPS_MNGCG) == 0)
-		    && ((fwsm & FWSM_MODE_MASK)
-			== (MNG_ICH_IAMT_MODE << FWSM_MODE_SHIFT)))
+		    && (__SHIFTOUT(fwsm, FWSM_MODE) == MNG_ICH_IAMT_MODE))
 			return 1;
 	} else if ((sc->sc_type == WM_T_82574) || (sc->sc_type == WM_T_82583)){
 		uint16_t data;
@@ -11045,8 +11067,8 @@ wm_enable_mng_pass_thru(struct wm_softc *sc)
 	return 0;
 }
 
-static int
-wm_check_reset_block(struct wm_softc *sc)
+static bool
+wm_phy_resetisblocked(struct wm_softc *sc)
 {
 	bool blocked = false;
 	uint32_t reg;
@@ -11068,7 +11090,7 @@ wm_check_reset_block(struct wm_softc *sc)
 			}
 			blocked = false;
 		} while (blocked && (i++ < 10));
-		return blocked ? 1 : 0;
+		return blocked;
 		break;
 	case WM_T_82571:
 	case WM_T_82572:
@@ -11078,16 +11100,16 @@ wm_check_reset_block(struct wm_softc *sc)
 	case WM_T_80003:
 		reg = CSR_READ(sc, WMREG_MANC);
 		if ((reg & MANC_BLK_PHY_RST_ON_IDE) != 0)
-			return -1;
+			return true;
 		else
-			return 0;
+			return false;
 		break;
 	default:
 		/* no problem */
 		break;
 	}
 
-	return 0;
+	return false;
 }
 
 static void
@@ -11159,7 +11181,7 @@ wm_smbustopci(struct wm_softc *sc)
 
 	fwsm = CSR_READ(sc, WMREG_FWSM);
 	if (((fwsm & FWSM_FW_VALID) == 0)
-	    && ((wm_check_reset_block(sc) == 0))) {
+	    && ((wm_phy_resetisblocked(sc) == false))) {
 		sc->sc_ctrl |= CTRL_LANPHYPC_OVERRIDE;
 		sc->sc_ctrl &= ~CTRL_LANPHYPC_VALUE;
 		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
@@ -11237,7 +11259,7 @@ wm_get_wakeup(struct wm_softc *sc)
 	case WM_T_82580:
 	case WM_T_I350:
 	case WM_T_I354:
-		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE_MASK) != 0)
+		if ((CSR_READ(sc, WMREG_FWSM) & FWSM_MODE) != 0)
 			sc->sc_flags |= WM_F_ARC_SUBSYS_VALID;
 		sc->sc_flags |= WM_F_ASF_FIRMWARE_PRES;
 		break;
