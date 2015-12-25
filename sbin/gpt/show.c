@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.31 2015/12/06 00:39:26 christos Exp $");
+__RCSID("$NetBSD: show.c,v 1.32 2015/12/25 10:59:56 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -52,12 +52,13 @@ __RCSID("$NetBSD: show.c,v 1.31 2015/12/06 00:39:26 christos Exp $");
 static int cmd_show(gpt_t, int, char *[]);
 
 static const char *showhelp[] = {
-	"[-glu] [-i index]",
+	"[-glu] [-i index] [-a]",
 };
 
 #define SHOW_UUID  1
 #define SHOW_GUID  2
 #define SHOW_LABEL 4
+#define SHOW_ALL   8
 
 struct gpt_cmd c_show = {
 	"show",
@@ -68,16 +69,85 @@ struct gpt_cmd c_show = {
 
 #define usage() gpt_usage(NULL, &c_show)
 
-static int
-show(gpt_t gpt, int show)
+static void
+print_part_type(int map_type, int flags, void *map_data, off_t map_start)
 {
 	off_t start;
-	map_t m, p;
+	map_t p;
 	struct mbr *mbr;
 	struct gpt_ent *ent;
 	unsigned int i;
 	char buf[128], *b = buf;
 	uint8_t utfbuf[__arraycount(ent->ent_name) * 3 + 1];
+
+	switch (map_type) {
+	case MAP_TYPE_UNUSED:
+		printf("Unused");
+		break;
+	case MAP_TYPE_MBR:
+		if (map_start != 0)
+			printf("Extended ");
+		printf("MBR");
+		break;
+	case MAP_TYPE_PRI_GPT_HDR:
+		printf("Pri GPT header");
+		break;
+	case MAP_TYPE_SEC_GPT_HDR:
+		printf("Sec GPT header");
+		break;
+	case MAP_TYPE_PRI_GPT_TBL:
+		printf("Pri GPT table");
+		break;
+	case MAP_TYPE_SEC_GPT_TBL:
+		printf("Sec GPT table");
+		break;
+	case MAP_TYPE_MBR_PART:
+		p = map_data;
+		if (p->map_start != 0)
+			printf("Extended ");
+		printf("MBR part ");
+		mbr = p->map_data;
+		for (i = 0; i < 4; i++) {
+			start = le16toh(mbr->mbr_part[i].part_start_hi);
+			start = (start << 16) +
+			    le16toh(mbr->mbr_part[i].part_start_lo);
+			if (map_start == p->map_start + start)
+				break;
+		}
+		printf("%d", mbr->mbr_part[i].part_typ);
+		break;
+	case MAP_TYPE_GPT_PART:
+		printf("GPT part ");
+		ent = map_data;
+		if (flags & SHOW_LABEL) {
+			utf16_to_utf8(ent->ent_name, utfbuf,
+			    sizeof(utfbuf));
+			b = (char *)utfbuf;
+		} else if (flags & SHOW_GUID) {
+			gpt_uuid_snprintf( buf, sizeof(buf), "%d",
+			    ent->ent_guid);
+		} else if (flags & SHOW_UUID) {
+			gpt_uuid_snprintf(buf, sizeof(buf),
+			    "%d", ent->ent_type);
+		} else {
+			gpt_uuid_snprintf(buf, sizeof(buf), "%ls",
+			    ent->ent_type);
+		}
+		printf("- %s", b);
+		break;
+	case MAP_TYPE_PMBR:
+		printf("PMBR");
+		break;
+	default:
+		printf("Unknown %#x", map_type);
+		break;
+	}
+}
+
+static int
+show(gpt_t gpt, int show)
+{
+	map_t m;
 
 	printf("  %*s", gpt->lbawidth, "start");
 	printf("  %*s", gpt->lbawidth, "size");
@@ -95,68 +165,7 @@ show(gpt_t gpt, int show)
 			printf("     ");
 		putchar(' ');
 		putchar(' ');
-		switch (m->map_type) {
-		case MAP_TYPE_UNUSED:
-			printf("Unused");
-			break;
-		case MAP_TYPE_MBR:
-			if (m->map_start != 0)
-				printf("Extended ");
-			printf("MBR");
-			break;
-		case MAP_TYPE_PRI_GPT_HDR:
-			printf("Pri GPT header");
-			break;
-		case MAP_TYPE_SEC_GPT_HDR:
-			printf("Sec GPT header");
-			break;
-		case MAP_TYPE_PRI_GPT_TBL:
-			printf("Pri GPT table");
-			break;
-		case MAP_TYPE_SEC_GPT_TBL:
-			printf("Sec GPT table");
-			break;
-		case MAP_TYPE_MBR_PART:
-			p = m->map_data;
-			if (p->map_start != 0)
-				printf("Extended ");
-			printf("MBR part ");
-			mbr = p->map_data;
-			for (i = 0; i < 4; i++) {
-				start = le16toh(mbr->mbr_part[i].part_start_hi);
-				start = (start << 16) +
-				    le16toh(mbr->mbr_part[i].part_start_lo);
-				if (m->map_start == p->map_start + start)
-					break;
-			}
-			printf("%d", mbr->mbr_part[i].part_typ);
-			break;
-		case MAP_TYPE_GPT_PART:
-			printf("GPT part ");
-			ent = m->map_data;
-			if (show & SHOW_LABEL) {
-				utf16_to_utf8(ent->ent_name, utfbuf,
-				    sizeof(utfbuf));
-				b = (char *)utfbuf;
-			} else if (show & SHOW_GUID) {
-				gpt_uuid_snprintf( buf, sizeof(buf), "%d",
-				    ent->ent_guid);
-			} else if (show & SHOW_UUID) {
-				gpt_uuid_snprintf(buf, sizeof(buf),
-				    "%d", ent->ent_type);
-			} else {
-				gpt_uuid_snprintf(buf, sizeof(buf), "%ls",
-				    ent->ent_type);
-			}
-			printf("- %s", b);
-			break;
-		case MAP_TYPE_PMBR:
-			printf("PMBR");
-			break;
-		default:
-			printf("Unknown %#x", m->map_type);
-			break;
-		}
+		print_part_type(m->map_type, show, m->map_data, m->map_start);
 		putchar('\n');
 		m = m->map_next;
 	}
@@ -208,14 +217,76 @@ show_one(gpt_t gpt, unsigned int entry)
 }
 
 static int
+show_all(gpt_t gpt)
+{
+	map_t m;
+	struct gpt_ent *ent;
+	char s1[128], s2[128];
+	uint8_t utfbuf[__arraycount(ent->ent_name) * 3 + 1];
+#define PFX "                                 "
+
+	printf("  %*s", gpt->lbawidth, "start");
+	printf("  %*s", gpt->lbawidth, "size");
+	printf("  index  contents\n");
+
+	m = map_first(gpt);
+	while (m != NULL) {
+		printf("  %*llu", gpt->lbawidth, (long long)m->map_start);
+		printf("  %*llu", gpt->lbawidth, (long long)m->map_size);
+		putchar(' ');
+		putchar(' ');
+		if (m->map_index > 0) {
+			printf("%5d  ", m->map_index);
+			print_part_type(m->map_type, 0, m->map_data,
+			    m->map_start);
+			putchar('\n');
+
+			ent = m->map_data;
+
+			gpt_uuid_snprintf(s1, sizeof(s1), "%s", ent->ent_type);
+			gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_type);
+			if (strcmp(s1, s2) == 0)
+				strlcpy(s1, "unknown", sizeof(s1));
+			printf(PFX "Type: %s (%s)\n", s1, s2);
+
+			gpt_uuid_snprintf(s2, sizeof(s1), "%d", ent->ent_guid);
+			printf(PFX "GUID: %s\n", s2);
+
+			utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
+			printf(PFX "Label: %s\n", (char *)utfbuf);
+
+			printf(PFX "Attributes: ");
+			if (ent->ent_attr == 0) {
+				printf("None\n");
+			} else  {	
+				char buf[1024];
+
+				printf("%s\n", gpt_attr_list(buf, sizeof(buf),
+				    ent->ent_attr));
+			}
+		} else {
+			printf("       ");
+			print_part_type(m->map_type, 0, m->map_data,
+			    m->map_start);
+			putchar('\n');
+		}
+		m = m->map_next;
+	}
+	return 0;
+}
+
+static int
 cmd_show(gpt_t gpt, int argc, char *argv[])
 {
 	int ch;
 	int xshow = 0;
 	unsigned int entry = 0;
 
-	while ((ch = getopt(argc, argv, "gi:lu")) != -1) {
+	while ((ch = getopt(argc, argv, "gi:lua")) != -1) {
 		switch(ch) {
+		case 'a':
+			xshow |= SHOW_ALL;
+			break;
 		case 'g':
 			xshow |= SHOW_GUID;
 			break;
@@ -236,6 +307,9 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 
 	if (argc != optind)
 		return usage();
+
+	if (xshow & SHOW_ALL)
+		return show_all(gpt);
 
 	return entry > 0 ? show_one(gpt, entry) : show(gpt, xshow);
 }

@@ -1,4 +1,4 @@
-.\" $NetBSD: gpt.8,v 1.43 2015/12/06 09:36:57 wiz Exp $
+.\" $NetBSD: gpt.8,v 1.44 2015/12/25 10:59:56 martin Exp $
 .\"
 .\" Copyright (c) 2002 Marcel Moolenaar
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD: src/sbin/gpt/gpt.8,v 1.17 2006/06/22 22:22:32 marcel Exp $
 .\"
-.Dd December 6, 2015
+.Dd December 25, 2015
 .Dt GPT 8
 .Os
 .Sh NAME
@@ -523,7 +523,7 @@ They may be used by
 .Nx
 code in the future.
 .\" ==== show ====
-.It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc
+.It Nm Ic show Oo Fl glu Oc Oo Fl i Ar index Oc Oo Fl a Oc
 The
 .Ic show
 command displays the current partitioning on the listed devices and gives
@@ -544,8 +544,14 @@ With the
 .Fl i
 option, all the details of a particular GPT partition will be displayed.
 The format of this display is subject to change.
+With the
+.Fl a
+option, all information for all GPT partitions (just like with
+.Fl i Ar index )
+will be printed.
 None of the options have any effect on non-GPT partitions.
 The order of precedence for the options are:
+.Fl a ,
 .Fl i ,
 .Fl l ,
 .Fl g ,
