@@ -1,4 +1,4 @@
-/* $NetBSD: exynos5422_clock.c,v 1.3 2015/12/21 03:34:34 marty Exp $ */
+/* $NetBSD: exynos5422_clock.c,v 1.4 2015/12/26 22:57:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.3 2015/12/21 03:34:34 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.4 2015/12/26 22:57:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,211 @@ __KERNEL_RCSID(0, "$NetBSD: exynos5422_clock.c,v 1.3 2015/12/21 03:34:34 marty E
 #include <arm/samsung/exynos_clock.h>
 
 #include <dev/fdt/fdtvar.h>
+
+static struct clk *exynos5422_clock_decode(device_t, const void *, size_t);
+
+static const struct fdtbus_clock_controller_func exynos5422_car_fdtclock_funcs = {
+	.decode = exynos5422_clock_decode
+};
+
+/* DT clock ID to clock name mappings */
+static struct exynos5422_clock_id {
+	u_int		id;
+	const char	*name;
+} exynos5422_clock_ids[] = {
+    { 1, "fin_pll" },
+    { 2, "fout_apll" },
+    { 3, "fout_cpll" },
+    { 4, "fout_dpll" },
+    { 5, "fout_epll" },
+    { 6, "fout_rpll" },
+    { 7, "fout_ipll" },
+    { 8, "fout_spll" },
+    { 9, "fout_vpll" },
+    { 10, "fout_mpll" },
+    { 11, "fout_bpll" },
+    { 12, "fout_kpll" },
+    { 128, "sclk_uart0" },
+    { 129, "sclk_uart1" },
+    { 130, "sclk_uart2" },
+    { 131, "sclk_uart3" },
+    { 132, "sclk_mmc0" },
+    { 133, "sclk_mmc1" },
+    { 134, "sclk_mmc2" },
+    { 135, "sclk_spi0" },
+    { 136, "sclk_spi1" },
+    { 137, "sclk_spi2" },
+    { 138, "sclk_i2s1" },
+    { 139, "sclk_i2s2" },
+    { 140, "sclk_pcm1" },
+    { 141, "sclk_pcm2" },
+    { 142, "sclk_spdif" },
+    { 143, "sclk_hdmi" },
+    { 144, "sclk_pixel" },
+    { 145, "sclk_dp1" },
+    { 146, "sclk_mipi1" },
+    { 147, "sclk_fimd1" },
+    { 148, "sclk_maudio0" },
+    { 149, "sclk_maupcm0" },
+    { 150, "sclk_usbd300" },
+    { 151, "sclk_usbd301" },
+    { 152, "sclk_usbphy300" },
+    { 153, "sclk_usbphy301" },
+    { 154, "sclk_unipro" },
+    { 155, "sclk_pwm" },
+    { 156, "sclk_gscl_wa" },
+    { 157, "sclk_gscl_wb" },
+    { 158, "sclk_hdmiphy" },
+    { 159, "mau_epll" },
+    { 160, "sclk_hsic_12m" },
+    { 161, "sclk_mphy_ixtal24" },
+    { 257, "uart0" },
+    { 258, "uart1" },
+    { 259, "uart2" },
+    { 260, "uart3" },
+    { 261, "i2c0" },
+    { 262, "i2c1" },
+    { 263, "i2c2" },
+    { 264, "i2c3" },
+    { 265, "usi0" },
+    { 266, "usi1" },
+    { 267, "usi2" },
+    { 268, "usi3" },
+    { 269, "i2c_hdmi" },
+    { 270, "tsadc" },
+    { 271, "spi0" },
+    { 272, "spi1" },
+    { 273, "spi2" },
+    { 274, "keyif" },
+    { 275, "i2s1" },
+    { 276, "i2s2" },
+    { 277, "pcm1" },
+    { 278, "pcm2" },
+    { 279, "pwm" },
+    { 280, "spdif" },
+    { 281, "usi4" },
+    { 282, "usi5" },
+    { 283, "usi6" },
+    { 300, "aclk66_psgen" },
+    { 301, "chipid" },
+    { 302, "sysreg" },
+    { 303, "tzpc0" },
+    { 304, "tzpc1" },
+    { 305, "tzpc2" },
+    { 306, "tzpc3" },
+    { 307, "tzpc4" },
+    { 308, "tzpc5" },
+    { 309, "tzpc6" },
+    { 310, "tzpc7" },
+    { 311, "tzpc8" },
+    { 312, "tzpc9" },
+    { 313, "hdmi_cec" },
+    { 314, "seckey" },
+    { 315, "mct" },
+    { 316, "wdt" },
+    { 317, "rtc" },
+    { 318, "tmu" },
+    { 319, "tmu_gpu" },
+    { 330, "pclk66_gpio" },
+    { 350, "aclk200_fsys2" },
+    { 351, "mout_mmc0" },
+    { 352, "mout_mmc1" },
+    { 353, "mout_mmc2" },
+    { 354, "sromc" },
+    { 355, "ufs" },
+    { 360, "aclk200_fsys" },
+    { 361, "tsi" },
+    { 362, "pdma0" },
+    { 363, "pdma1" },
+    { 364, "rtic" },
+    { 365, "usbh20" },
+    { 366, "usbd300" },
+    { 367, "usbd301" },
+    { 380, "aclk400_mscl" },
+    { 381, "mscl0" },
+    { 382, "mscl1" },
+    { 383, "mscl2" },
+    { 384, "smmu_mscl0" },
+    { 385, "smmu_mscl1" },
+    { 386, "smmu_mscl2" },
+    { 400, "aclk333" },
+    { 401, "mfc" },
+    { 402, "smmu_mfcl" },
+    { 403, "smmu_mfcr" },
+    { 410, "aclk200_disp1" },
+    { 411, "dsim1" },
+    { 412, "dp1" },
+    { 413, "hdmi" },
+    { 420, "aclk300_disp1" },
+    { 421, "fimd1" },
+    { 422, "smmu_fimd1m0" },
+    { 423, "smmu_fimd1m1" },
+    { 430, "aclk166" },
+    { 431, "mixer" },
+    { 440, "aclk266" },
+    { 441, "rotator" },
+    { 442, "mdma1" },
+    { 443, "smmu_rotator" },
+    { 444, "smmu_mdma1" },
+    { 450, "aclk300_jpeg" },
+    { 451, "jpeg" },
+    { 452, "jpeg2" },
+    { 453, "smmu_jpeg" },
+    { 454, "smmu_jpeg2" },
+    { 460, "aclk300_gscl" },
+    { 461, "smmu_gscl0" },
+    { 462, "smmu_gscl1" },
+    { 463, "gscl_wa" },
+    { 464, "gscl_wb" },
+    { 465, "gscl0" },
+    { 466, "gscl1" },
+    { 467, "fimc_3aa" },
+    { 470, "aclk266_g2d" },
+    { 471, "sss" },
+    { 472, "slim_sss" },
+    { 473, "mdma0" },
+    { 480, "aclk333_g2d" },
+    { 481, "g2d" },
+    { 490, "aclk333_432_gscl" },
+    { 491, "smmu_3aa" },
+    { 492, "smmu_fimcl0" },
+    { 493, "smmu_fimcl1" },
+    { 494, "smmu_fimcl3" },
+    { 495, "fimc_lite3" },
+    { 496, "fimc_lite0" },
+    { 497, "fimc_lite1" },
+    { 500, "aclk_g3d" },
+    { 501, "g3d" },
+    { 502, "smmu_mixer" },
+    { 503, "smmu_g2d" },
+    { 504, "smmu_mdma0" },
+    { 505, "mc" },
+    { 506, "top_rtc" },
+    { 510, "sclk_uart_isp" },
+    { 511, "sclk_spi0_isp" },
+    { 512, "sclk_spi1_isp" },
+    { 513, "sclk_pwm_isp" },
+    { 514, "sclk_isp_sensor0" },
+    { 515, "sclk_isp_sensor1" },
+    { 516, "sclk_isp_sensor2" },
+    { 517, "aclk432_scaler" },
+    { 518, "aclk432_cam" },
+    { 519, "aclk_fl1550_cam" },
+    { 520, "aclk550_cam" },
+    { 640, "mout_hdmi" },
+    { 641, "mout_g3d" },
+    { 642, "mout_vpll" },
+    { 643, "mout_maudio0" },
+    { 644, "mout_user_aclk333" },
+    { 645, "mout_sw_aclk333" },
+    { 646, "mout_user_aclk200_disp1" },
+    { 647, "mout_sw_aclk200" },
+    { 648, "mout_user_aclk300_disp1" },
+    { 649, "mout_sw_aclk300" },
+    { 650, "mout_user_aclk400_disp1" },
+    { 651, "mout_sw_aclk400" },
+    { 768, "dout_pixel" },
+};
 
 static struct clk *exynos5422_clock_get(void *, const char *);
 static void	exynos5422_clock_put(void *, struct clk *);
@@ -245,9 +450,9 @@ CFATTACH_DECL_NEW(exynos5422_clock, sizeof(struct exynos5422_clock_softc),
 static int
 exynos5422_clock_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,exynos5422-clock",
-					    NULL };
+	const char * const compatible[] = { "samsung,exynos5800-clock", NULL };
 	struct fdt_attach_args * const faa = aux;
+
 	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
@@ -280,6 +485,9 @@ exynos5422_clock_attach(device_t parent, device_t self, void *aux)
 
 	clk_backend_register("exynos5422", &exynos5422_clock_funcs, sc);
 
+	fdtbus_register_clock_controller(self, faa->faa_phandle,
+	    &exynos5422_car_fdtclock_funcs);
+
 	exynos5422_clock_print_header();
 	for (u_int n = 0; n < __arraycount(exynos5422_clocks); n++) {
 		exynos5422_clock_print(sc, &exynos5422_clocks[n]);
@@ -294,6 +502,21 @@ exynos5422_clock_find(const char *name)
 	for (n = 0; n < __arraycount(exynos5422_clocks); n++) {
 		if (strcmp(exynos5422_clocks[n].base.name, name) == 0) {
 			return &exynos5422_clocks[n];
+		}
+	}
+
+	return NULL;
+}
+
+static struct exynos_clk *
+exynos5422_clock_find_by_id(u_int clock_id)
+{
+	u_int n;
+
+	for (n = 0; n < __arraycount(exynos5422_clock_ids); n++) {
+		if (exynos5422_clock_ids[n].id == clock_id) {
+			const char *name = exynos5422_clock_ids[n].name;
+			return exynos5422_clock_find(name);
 		}
 	}
 
@@ -343,6 +566,25 @@ exynos5422_clock_print(struct exynos5422_clock_softc *sc,
 	    eclk_parent ? "<-" : "",
 	    eclk_parent ? eclk_parent->base.name : "",
 	    type, clk_get_rate(&eclk->base));
+}
+
+static struct clk *
+exynos5422_clock_decode(device_t dev, const void *data, size_t len)
+{
+	struct exynos_clk *eclk;
+
+	/* #clock-cells should be 1 */
+	if (len != 4) {
+		return NULL;
+	}
+
+	const u_int clock_id = be32dec(data);
+
+	eclk = exynos5422_clock_find_by_id(clock_id);
+	if (eclk)
+		return &eclk->base;
+
+	return NULL;
 }
 
 static u_int
