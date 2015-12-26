@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.17 2014/03/24 20:06:32 christos Exp $	*/
+/*	$NetBSD: machdep.c,v 1.17.4.1 2015/12/26 22:14:41 snj Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17 2014/03/24 20:06:32 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.17.4.1 2015/12/26 22:14:41 snj Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -147,7 +147,7 @@ cpu_startup(void)
 {
 
 	/* XXX: show model (LANDISK/USL-5P) */
-	cpu_setmodel("Model: I-O DATA LANDISK\n");
+	cpu_setmodel("Model: I-O DATA LANDISK");
 
         sh_startup();
 }
