@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.64 2015/12/06 00:39:26 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.65 2015/12/26 13:12:16 jnemeth Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1154,7 +1154,7 @@ gpt_attr_list(char *buf, size_t len, uint64_t attributes)
 
 	for (i = 0; i < __arraycount(gpt_attr); i++)
 		if (attributes & gpt_attr[i].mask) {
-			strlcat(buf, buf[0] ? "," : "", len); 
+			strlcat(buf, buf[0] ? ", " : "", len); 
 			strlcat(buf, gpt_attr[i].name, len);
 		}
 	return buf;
