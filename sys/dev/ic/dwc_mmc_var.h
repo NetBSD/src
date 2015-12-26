@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.4 2014/12/30 00:19:50 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.5 2015/12/26 23:13:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -42,7 +42,9 @@ struct dwc_mmc_softc {
 #define DWC_MMC_F_USE_HOLD_REG	0x0001	/* set USE_HOLD_REG with every cmd */
 #define DWC_MMC_F_PWREN_CLEAR	0x0002	/* clear POWER_ENABLE bit to enable */
 #define DWC_MMC_F_FORCE_CLK	0x0004	/* update clk div with every cmd */
+#define DWC_MMC_F_BROKEN_CD	0x0008	/* card detect doesn't work */
 	int			(*sc_set_clkdiv)(struct dwc_mmc_softc *, int);
+	int			(*sc_card_detect)(struct dwc_mmc_softc *);
 
 	device_t		sc_sdmmc_dev;
 	kmutex_t		sc_intr_lock;
