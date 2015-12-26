@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframe_component.c,v 1.3 2015/12/26 01:01:30 pgoyette Exp $	*/
+/*	$NetBSD: raidframe_component.c,v 1.4 2015/12/26 10:22:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.3 2015/12/26 01:01:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.4 2015/12/26 10:22:09 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -46,12 +46,16 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	devmajor_t bmaj, cmaj;
 	int error;
 
-	config_cfdriver_attach(&raid_cd);
-
 	bmaj = cmaj = -1;
 	if ((error = devsw_attach("raid", &raid_bdevsw, &bmaj,
 	    &raid_cdevsw, &cmaj)) != 0)
 		panic("raid devsw attach failed: %d", error);
+
+	/*
+	 * Now that we have the major numbers, detach.  It will get
+	 * re-attached later during raid's module initialization.
+	 */
+	devsw_detach(&raid_bdevsw, &raid_cdevsw);
 
 	if ((error = rump_vfs_makedevnodes(S_IFBLK, "/dev/raid0", 'a',
 	    bmaj, 0, 7)) != 0)
