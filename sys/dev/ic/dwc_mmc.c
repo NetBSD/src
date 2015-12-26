@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.7 2015/08/09 13:01:21 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.8 2015/12/26 23:13:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_dwc_mmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.7 2015/08/09 13:01:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.8 2015/12/26 23:13:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -72,7 +72,7 @@ static void	dwc_mmc_print_rint(struct dwc_mmc_softc *, const char *,
 				   uint32_t);
 #endif
 
-void		dwc_mmc_dump_regs(void);
+void		dwc_mmc_dump_regs(int);
 
 static struct sdmmc_chip_functions dwc_mmc_chip_functions = {
 	.host_reset = dwc_mmc_host_reset,
@@ -101,6 +101,11 @@ dwc_mmc_init(struct dwc_mmc_softc *sc)
 
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "dwcmmcirq");
+
+#ifdef DWC_MMC_DEBUG
+	const uint32_t verid = MMC_READ(sc, DWC_MMC_VERID_REG);
+	aprint_normal_dev(sc->sc_dev, "version 0x%04x\n", verid & 0xffff);
+#endif
 
 	dwc_mmc_host_reset(sc);
 	dwc_mmc_bus_width(sc, 1);
@@ -176,6 +181,11 @@ dwc_mmc_set_clock(struct dwc_mmc_softc *sc, u_int freq)
 	clk_div = (pll_freq / freq) >> 1;
 	if (pll_freq % freq)
 		clk_div++;
+
+#ifdef DWC_MMC_DEBUG
+	printf("%s: using clk_div %d for freq %d (act %u)\n",
+	    __func__, clk_div, freq, pll_freq / (clk_div * 2));
+#endif
 
 	MMC_WRITE(sc, DWC_MMC_CLKDIV_REG,
 	    __SHIFTIN(clk_div, DWC_MMC_CLKDIV_CLK_DIVIDER0));
@@ -341,8 +351,14 @@ dwc_mmc_card_detect(sdmmc_chipset_handle_t sch)
 	struct dwc_mmc_softc *sc = sch;
 	uint32_t cdetect;
 
-	cdetect = MMC_READ(sc, DWC_MMC_CDETECT_REG);
-	return !(cdetect & DWC_MMC_CDETECT_CARD_DETECT_N);
+	if (sc->sc_flags & DWC_MMC_F_BROKEN_CD) {
+		return 1;
+	} else if (sc->sc_card_detect) {
+		return sc->sc_card_detect(sc);
+	} else {
+		cdetect = MMC_READ(sc, DWC_MMC_CDETECT_REG);
+		return !(cdetect & DWC_MMC_CDETECT_CARD_DETECT_N);
+	}
 }
 
 static int
@@ -544,6 +560,11 @@ done:
 	cmd->c_flags |= SCF_ITSDONE;
 	mutex_exit(&sc->sc_intr_lock);
 
+	if (cmd->c_error == ETIMEDOUT && !ISSET(cmd->c_flags, SCF_TOUT_OK)) {
+		device_printf(sc->sc_dev, "Device timeout!\n");
+		dwc_mmc_dump_regs(device_unit(sc->sc_dev));
+	}
+
 	ctrl = MMC_READ(sc, DWC_MMC_CTRL_REG);
 	ctrl |= DWC_MMC_CTRL_FIFO_RESET;
 	MMC_WRITE(sc, DWC_MMC_CTRL_REG, ctrl);
@@ -570,7 +591,7 @@ dwc_mmc_print_rint(struct dwc_mmc_softc *sc, const char *tag, uint32_t rint)
 #endif
 
 void
-dwc_mmc_dump_regs(void)
+dwc_mmc_dump_regs(int unit)
 {
 	static const struct {
 		const char *name;
@@ -595,14 +616,15 @@ dwc_mmc_dump_regs(void)
 		{ "RST", DWC_MMC_RST_REG },
 		{ "BACK_END_POWER", DWC_MMC_BACK_END_POWER_REG },
 	};
-	device_t self = device_find_by_driver_unit("dwcmmc", 0);
+	device_t self = device_find_by_driver_unit("dwcmmc", unit);
 	if (self == NULL)
 		return;
 	struct dwc_mmc_softc *sc = device_private(self);
 	int i;
 
-	for (i = 0; i < __arraycount(regs); i++) {
-		device_printf(sc->sc_dev, "%s: %#x\n", regs[i].name,
-		    MMC_READ(sc, regs[i].reg));
+	for (i = 0; i < __arraycount(regs); i += 2) {
+		device_printf(sc->sc_dev, "  %s: 0x%08x\t%s: 0x%08x\n",
+		    regs[i+0].name, MMC_READ(sc, regs[i+0].reg),
+		    regs[i+1].name, MMC_READ(sc, regs[i+1].reg));
 	}
 }
