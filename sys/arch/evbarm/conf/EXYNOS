@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.6 2015/12/21 04:58:50 marty Exp $
+#	$NetBSD: EXYNOS,v 1.7 2015/12/26 23:14:08 jmcneill Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -214,7 +214,7 @@ exyointr0	at fdt?
 gic*		at fdt?
 
 # Clock controller
-exy5422clk0	at fdt?				# Exynos5422 clock controller
+exy5422clk*	at fdt?				# Exynos5422 clock controller
 
 # Integrated Samsung UARTs
 sscom*		at fdt?				# UART ?
@@ -253,6 +253,14 @@ exyoi2c1	at fdt?
 exyoi2c2	at fdt?
 exyoi2c3	at fdt?
 #i2c*		at exyoi2c?
+
+# SD/MMC
+dwcmmc*		at fdt?
+sdmmc*		at dwcmmc?
+ld0		at sdmmc0
+ld1		at sdmmc1
+ld2		at sdmmc2
+ld*		at sdmmc?
 
 # MISSING SUPPORT
 # eMMC
