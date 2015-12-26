@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.6 2014/12/05 15:25:27 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_twi.c,v 1.7 2015/12/26 16:54:41 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -207,4 +207,15 @@ awin_twi_attach(device_t parent, device_t self, void *aux)
 	 * Configure its children
 	 */
 	gttwsi_config_children(self);
+}
+
+struct i2c_controller *
+awin_twi_get_controller(device_t dev)
+{
+	if (!device_is_a(dev, "awiniic"))
+		return NULL;
+
+	struct awin_twi_softc * const sc = device_private(dev);
+
+	return &sc->asc_sc.sc_i2c;
 }
