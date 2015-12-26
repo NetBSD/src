@@ -1,4 +1,4 @@
-/* $NetBSD: awin_var.h,v 1.39 2015/11/19 18:48:22 bouyer Exp $ */
+/* $NetBSD: awin_var.h,v 1.40 2015/12/26 16:54:41 macallan Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -188,5 +188,7 @@ awin_reg_set_clear(bus_space_tag_t bst, bus_space_handle_t bsh,
 		bus_space_write_4(bst, bsh, o, new);
 	}
 }
+
+struct i2c_controller *awin_twi_get_controller(device_t);
 
 #endif /* _ARM_ALLWINNER_AWIN_VAR_H_ */
