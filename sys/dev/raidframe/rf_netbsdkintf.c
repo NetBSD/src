@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.328 2015/12/26 12:25:26 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.329 2015/12/26 12:59:00 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.328 2015/12/26 12:25:26 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.329 2015/12/26 12:59:00 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -4106,6 +4106,7 @@ raid_modcmd_init(void)
 	if (error != 0) {
 		aprint_error("WARNING: unable to register RAIDframe "
 		    "finalizer\n");
+		error = 0;
 	}
 
 	return error;
