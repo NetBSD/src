@@ -1,4 +1,4 @@
-# $NetBSD: ad.m68k,v 1.51 2015/08/10 03:21:44 mrg Exp $
+# $NetBSD: ad.m68k,v 1.52 2015/12/26 01:00:04 christos Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/gcc-4.8/math-68881.h		comp-c-include		gcccmds,gcc
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcccmds,gcc
@@ -22,6 +22,7 @@
 ./usr/include/m68k/elf_machdep.h		comp-c-include
 ./usr/include/m68k/endian.h			comp-c-include
 ./usr/include/m68k/endian_machdep.h		comp-c-include
+./usr/include/m68k/fenv.h			comp-c-include
 ./usr/include/m68k/float.h			comp-c-include
 ./usr/include/m68k/fpreg.h			comp-c-include
 ./usr/include/m68k/frame.h			comp-c-include
