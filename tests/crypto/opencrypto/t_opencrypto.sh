@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.5 2015/03/16 16:42:27 prlw1 Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.6 2015/12/26 07:10:03 pgoyette Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -80,7 +80,11 @@ arc4_body() {
 }
 
 arc4_cleanup() {
-	common_cleanup
+	# No cleanup required since test is skipped.  Trying to run rump.halt
+	# at this point fails, causing the ATF environment to erroneously
+	# report a failed test!
+	#
+	# common_cleanup
 }
 
 atf_test_case camellia cleanup
