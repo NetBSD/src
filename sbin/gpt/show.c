@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.33 2015/12/25 12:16:03 wiz Exp $");
+__RCSID("$NetBSD: show.c,v 1.34 2015/12/26 13:08:45 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -222,6 +222,9 @@ show_all(gpt_t gpt)
 	map_t m;
 	struct gpt_ent *ent;
 	char s1[128], s2[128];
+#ifdef HN_AUTOSCALE
+	char human_num[8];
+#endif
 	uint8_t utfbuf[__arraycount(ent->ent_name) * 3 + 1];
 #define PFX "                                 "
 
@@ -247,10 +250,26 @@ show_all(gpt_t gpt)
 			gpt_uuid_snprintf(s2, sizeof(s2), "%d", ent->ent_type);
 			if (strcmp(s1, s2) == 0)
 				strlcpy(s1, "unknown", sizeof(s1));
-			printf(PFX "Type: %s (%s)\n", s1, s2);
+			printf(PFX "Type: %s\n", s1);
+			printf(PFX "TypeID: %s\n", s2);
 
 			gpt_uuid_snprintf(s2, sizeof(s1), "%d", ent->ent_guid);
 			printf(PFX "GUID: %s\n", s2);
+
+			printf(PFX "Size: ");
+#ifdef HN_AUTOSCALE
+			if (humanize_number(human_num, sizeof(human_num),
+			    (int64_t)(m->map_size * gpt->secsz),
+			    "", HN_AUTOSCALE, HN_B) < 0) {
+#endif
+				printf("%ju",
+				    (int64_t)(m->map_size * gpt->secsz));
+#ifdef HN_AUTOSCALE
+			} else {
+				printf("%s", human_num);
+			}
+#endif
+			putchar('\n');
 
 			utf16_to_utf8(ent->ent_name, utfbuf, sizeof(utfbuf));
 			printf(PFX "Label: %s\n", (char *)utfbuf);
