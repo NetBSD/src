@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.164 2015/12/07 11:38:46 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.165 2015/12/26 01:00:01 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -82,6 +82,7 @@ SUBDIR+=	procfs
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
+SUBDIR+=	raid
 SUBDIR+=	scsiverbose
 SUBDIR+=	sdtemp
 SUBDIR+=	secmodel_bsd44
