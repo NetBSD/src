@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.329 2015/12/26 12:59:00 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.330 2015/12/26 21:50:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.329 2015/12/26 12:59:00 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.330 2015/12/26 21:50:43 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1039,6 +1039,7 @@ raid_detach_unlocked(struct raid_softc *rs)
 
 	/* Free the softc */
 	aprint_normal_dev(rs->sc_dev, "detached\n");
+	raidunlock(rs);
 	raidput(rs);
 
 	return 0;
@@ -3937,9 +3938,6 @@ raid_detach(device_t self, int flags)
 		return (error);
 
 	error = raid_detach_unlocked(rs);
-
-	if (error != 0)
-		raidunlock(rs);
 
 	return error;
 }
