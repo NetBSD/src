@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.39 2015/12/10 23:50:06 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.40 2015/12/26 22:26:28 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1670,4 +1670,40 @@ external/gpl3/gcc/dist/gcc/config/i386/cpuid.h	1.2
 	Fix logic bug that broke early i486 CPUs which don't have
 	cpuid.
 	[christos, ticket #1048]
+
+distrib/sets/lists/xdebug/shl.mi		1.22
+
+	Fix libxcb-xkb version number.
+	[mlelstv, ticket #1044]
+
+distrib/sets/Makefile				1.99
+share/mk/bsd.own.mk				1.881
+
+	checkflist requires an egrep that honours multiple pattern
+	options, so use ours. Fixes build on Solaris distributions.
+	[joerg, ticket #1049]
+
+sys/arch/sparc64/dev/zs.c			1.75
+
+	Add a missing newline in zs at sbus attach message.
+	[tsutsui, ticket #1050]
+
+sys/arch/landisk/landisk/machdep.c		1.18
+sys/arch/sh3/sh3/sh3_machdep.c			1.103
+
+	Remove \n from set_cpumodel(), and explicitly print \n
+	during boot instead.
+	[tsutsui, ticket #1051]
+
+external/mit/xorg/lib/libX11/Makefile.libx11	1.17
+
+	Disable UIThrStubs.c, which is unnecessary on NetBSD.  Fixes
+	xterm startup failure on m68k.  PR/50386.
+	[tsutsui, ticket #1052]
+
+sys/dev/ic/dwc_gmac_reg.h			1.15
+
+	Fix a problem on ODROID-C1 when trying to use the network if 
+	the cable wasn't plugged in at boot.
+	[jmcneill, ticket #1053]
 
