@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframe_component.c,v 1.2 2015/08/20 11:51:12 christos Exp $	*/
+/*	$NetBSD: raidframe_component.c,v 1.3 2015/12/26 01:01:30 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.2 2015/08/20 11:51:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.3 2015/12/26 01:01:30 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -38,8 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: raidframe_component.c,v 1.2 2015/08/20 11:51:12 chri
 #include "rump_vfs_private.h"
 
 #include "ioconf.h"
-
-CFDRIVER_DECL(raid, DV_DISK, NULL);
 
 RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 {
