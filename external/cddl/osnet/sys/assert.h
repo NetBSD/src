@@ -1,4 +1,4 @@
-/*	$NetBSD: assert.h,v 1.1 2009/08/07 20:57:57 haad Exp $	*/
+/*	$NetBSD: assert.h,v 1.2 2015/12/27 21:39:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -31,4 +31,6 @@
 
 #include_next "assert.h"
 
+#ifndef __assert
 #define __assert(a, b, c)       __assert(a, c, b)
+#endif
