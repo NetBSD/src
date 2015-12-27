@@ -15,6 +15,7 @@
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
 set -e
+DIR="`dirname "$0"`"
 
 [ -e config.log ] && mv config.log config.log.old
 [ -e config.h   ] && mv config.h config.h.old
@@ -32,6 +33,7 @@ echo "config.log: writing..."
 # such that nothing can leak in from the environment.
 
 OSNAME=
+MAKEFLAGS=
 
 CC=`printf "all:\\n\\t@echo \\\$(CC)\\n" | make -f -`
 CFLAGS="-g -W -Wall -Wstrict-prototypes -Wno-unused-parameter -Wwrite-strings"
@@ -127,7 +129,7 @@ ${1}: testing...
 ${COMP} ${3} -o test-${1} test-${1}.c
 __HEREDOC__
 
-	if ${COMP} ${3} -o "test-${1}" "test-${1}.c" 1>&3 2>&3; then
+	if ${COMP} ${3} -o "test-${1}" "${DIR}/test-${1}.c" 1>&3 2>&3; then
 		echo "${1}: ${CC} succeeded" 1>&3
 	else
 		echo "${1}: ${CC} failed with $?" 1>&3
