@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.82 2015/12/09 16:26:16 maxv Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.83 2015/12/27 20:52:25 gson Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.82 2015/12/09 16:26:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.83 2015/12/27 20:52:25 gson Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -102,7 +102,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.82 2015/12/09 16:26:16 maxv Exp $")
 #include "ioconf.h"
 #endif
 
-#define KSYMS_MAX_ID	65536
+#define KSYMS_MAX_ID	98304
 #ifdef KDTRACE_HOOKS
 static uint32_t ksyms_nmap[KSYMS_MAX_ID];	/* sorted symbol table map */
 #else
