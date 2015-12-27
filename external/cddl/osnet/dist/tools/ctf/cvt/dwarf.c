@@ -2088,4 +2088,5 @@ dw_read(tdata_t *td, Elf *elf, char *filename __unused)
 out:
 	terminate("file does not contain dwarf type data "
 	    "(try compiling with -g)\n");
+	return -1;
 }
