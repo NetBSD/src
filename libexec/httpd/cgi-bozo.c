@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.28 2015/10/28 09:20:15 shm Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.29 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -75,16 +75,17 @@ content_cgihandler(bozohttpd_t *httpd, bozo_httpreq_t *request,
 }
 
 static int
-parse_header(bozohttpd_t *httpd, const char *str, ssize_t len, char **hdr_str,
-		char **hdr_val)
+parse_header(bozo_httpreq_t *request, const char *str, ssize_t len,
+	     char **hdr_str, char **hdr_val)
 {
+	struct	bozohttpd_t *httpd = request->hr_httpd;
 	char	*name, *value;
 
 	/* if the string passed is zero-length bail out */
 	if (*str == '\0')
 		return -1;
 
-	value = bozostrdup(httpd, str);
+	value = bozostrdup(httpd, request, str);
 
 	/* locate the ':' separator in the header/value */
 	name = bozostrnsep(&value, ":", &len);
@@ -127,7 +128,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 		(str = bozodgetln(httpd, in, &len, bozo_read)) != NULL) {
 		char	*hdr_name, *hdr_value;
 
-		if (parse_header(httpd, str, len, &hdr_name, &hdr_value))
+		if (parse_header(request, str, len, &hdr_name, &hdr_value))
 			break;
 
 		/*
@@ -214,7 +215,7 @@ append_index_html(bozohttpd_t *httpd, char **url)
 void
 bozo_cgi_setbin(bozohttpd_t *httpd, const char *path)
 {
-	httpd->cgibin = strdup(path);
+	httpd->cgibin = bozostrdup(httpd, NULL, path);
 	debug((httpd, DEBUG_OBESE, "cgibin (cgi-bin directory) is %s",
 		httpd->cgibin));
 }
@@ -271,14 +272,14 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		uri = request->hr_file;
 
 	if (uri[0] == '/')
-		file = bozostrdup(httpd, uri);
+		file = bozostrdup(httpd, request, uri);
 	else
 		asprintf(&file, "/%s", uri);
 	if (file == NULL)
 		return 0;
 
 	if (request->hr_query && strlen(request->hr_query))
-		query = bozostrdup(httpd, request->hr_query);
+		query = bozostrdup(httpd, request, request->hr_query);
 	else
 		query = NULL;
 
@@ -315,14 +316,14 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	ix = 0;
 	if (cgihandler) {
 		snprintf(command, sizeof(command), "%s", file + 1);
-		path = bozostrdup(httpd, cgihandler);
+		path = bozostrdup(httpd, request, cgihandler);
 		argv[ix++] = path;
 			/* argv[] = [ path, command, query, NULL ] */
 	} else {
 		snprintf(command, sizeof(command), "%s",
 		    file + CGIBIN_PREFIX_LEN + 1);
 		if ((s = strchr(command, '/')) != NULL) {
-			info = bozostrdup(httpd, s);
+			info = bozostrdup(httpd, request, s);
 			*s = '\0';
 		}
 		path = bozomalloc(httpd,
@@ -509,7 +510,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 #ifndef NO_DYNAMIC_CONTENT
 /* cgi maps are simple ".postfix /path/to/prog" */
 void
-bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg, const char *cgihandler)
+bozo_add_content_map_cgi(bozohttpd_t *httpd, const char *arg,
+                         const char *cgihandler)
 {
 	bozo_content_map_t *map;
 
