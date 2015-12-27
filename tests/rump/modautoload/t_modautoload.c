@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modautoload.c,v 1.3 2015/12/27 06:36:36 pgoyette Exp $	*/
+/*	$NetBSD: t_modautoload.c,v 1.4 2015/12/27 08:21:44 pgoyette Exp $	*/
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -45,7 +45,7 @@ mountkernfs(void)
 	if (rump_sys_mkdir("/kern", 0777) == -1)
 		atf_tc_fail_errno("mkdir /kern");
 
-	new_autoload = new_verbose = true;
+	new_autoload = true;
 	new_len = sizeof(new_autoload);
 	error = sysctlbyname("kern.module.autoload",
 				  &old_autoload, &old_len,
