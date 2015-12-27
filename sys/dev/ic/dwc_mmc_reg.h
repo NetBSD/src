@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.4 2015/01/17 19:32:50 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.5 2015/12/27 18:35:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,10 +58,18 @@
 #define DWC_MMC_VERID_REG			0x006c
 #define DWC_MMC_UHS_REG				0x0074
 #define DWC_MMC_RST_REG				0x0078
+#define DWC_MMC_BMODE_REG			0x0080
+#define DWC_MMC_PLDMND_REG			0x0084
+#define DWC_MMC_DBADDR_REG			0x0088
+#define DWC_MMC_IDSTS_REG			0x008c
+#define DWC_MMC_IDINTEN_REG			0x0090
+#define DWC_MMC_DSCADDR_REG			0x0094
+#define DWC_MMC_BUFADDR_REG			0x0098
 #define DWC_MMC_CARDTHRCTL_REG			0x0100
 #define DWC_MMC_BACK_END_POWER_REG		0x0104
 #define DWC_MMC_FIFO_BASE_REG			0x0200
 
+#define DWC_MMC_CTRL_SEND_AUTO_STOP		__BIT(10)
 #define DWC_MMC_CTRL_ABORT_READ_DATA		__BIT(8)
 #define DWC_MMC_CTRL_SEND_IRQ_RESPONSE		__BIT(7)
 #define DWC_MMC_CTRL_READ_WAIT			__BIT(6)
