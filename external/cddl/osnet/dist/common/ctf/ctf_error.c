@@ -19,6 +19,9 @@
  *
  * CDDL HEADER END
  */
+#ifdef HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
 /*
  * Copyright 2003 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
