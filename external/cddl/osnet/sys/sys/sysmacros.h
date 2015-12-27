@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmacros.h,v 1.5 2015/02/07 20:30:04 christos Exp $	*/
+/*	$NetBSD: sysmacros.h,v 1.6 2015/12/27 21:40:21 christos Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -230,6 +230,7 @@ extern unsigned char bcd_to_byte[256];
  */
 #undef howmany
 #define	howmany(x, y)	(((x)+((y)-1))/(y))
+#undef roundup
 #define	roundup(x, y)	((((x)+((y)-1))/(y))*(y))
 
 #endif	/* !__NetBSD__ */
