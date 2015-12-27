@@ -1,4 +1,4 @@
-/*	$Id: mandoc_aux.h,v 1.1.1.1 2015/12/17 21:58:48 christos Exp $ */
+/*	$Id: mandoc_aux.h,v 1.2 2015/12/27 12:42:17 joerg Exp $ */
 /*
  * Copyright (c) 2009, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014 Ingo Schwarze <schwarze@openbsd.org>
@@ -18,6 +18,9 @@
 
 __BEGIN_DECLS
 
+#if __GNUC__ - 0 >= 4
+__attribute__((__format__ (__printf__, 2, 3)))
+#endif
 int		  mandoc_asprintf(char **, const char *, ...);
 void		 *mandoc_calloc(size_t, size_t);
 void		 *mandoc_malloc(size_t);
