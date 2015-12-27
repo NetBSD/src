@@ -31,7 +31,7 @@
  * $FreeBSD: head/usr.sbin/ip6addrctl/ip6addrctl.c 281143 2015-04-06 09:42:23Z glebius $
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ip6addrctl.c,v 1.1 2015/12/12 23:35:56 christos Exp $");
+__RCSID("$NetBSD: ip6addrctl.c,v 1.2 2015/12/27 12:42:52 joerg Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -62,7 +62,7 @@ struct policyqueue {
 TAILQ_HEAD(policyhead, policyqueue);
 static struct policyhead policyhead;
 
-static void usage(void);
+static void usage(void) __dead;
 static void get_policy(void);
 static void dump_policy(void);
 static int mask2plen(struct sockaddr_in6 *);
