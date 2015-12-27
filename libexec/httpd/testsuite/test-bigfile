@@ -8,7 +8,7 @@ datadir="$4"
 bozotestport=11111
 
 # copy beginning file
-cp ./data/bigfile.${test} ./bigfile
+cp ${datadir}/bigfile.${test} ./bigfile
 
 # fire up bozohttpd
 ${bozohttpd} -b -b -I ${bozotestport} -n -s -f ${datadir} &
@@ -18,7 +18,7 @@ ${wget} -c http://localhost:${bozotestport}/bigfile
 
 kill -9 $bozopid
 
-if cmp ./bigfile ./data/bigfile; then
+if cmp ./bigfile ${datadir}/bigfile; then
 	rm -f ./bigfile
 	exit 0
 else
