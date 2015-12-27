@@ -1,6 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.9 2015/12/27 18:35:12 jmcneill Exp $ */
-
-#define DWC_MMC_DEBUG
+/* $NetBSD: dwc_mmc.c,v 1.10 2015/12/27 18:35:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +29,7 @@
 #include "opt_dwc_mmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.9 2015/12/27 18:35:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.10 2015/12/27 18:35:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
