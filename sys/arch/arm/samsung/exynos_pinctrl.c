@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.6 2015/12/24 01:10:51 marty Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.7 2015/12/27 12:21:37 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.6 2015/12/24 01:10:51 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.7 2015/12/27 12:21:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,7 +62,7 @@ CFATTACH_DECL_NEW(exynos_pinctrl, sizeof(struct exynos_pinctrl_softc),
 static int
 exynos_pinctrl_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "samsung,exynos5422-pinctrl",
+	const char * const compatible[] = { "samsung,exynos5420-pinctrl",
 					    NULL };
 	struct fdt_attach_args * const faa = aux;
 	return of_match_compatible(faa->faa_phandle, compatible);
@@ -94,14 +94,13 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	aprint_naive("\n");
+	aprint_normal("\n");
+
 	for (child = OF_child(faa->faa_phandle); child;
 	     child = OF_peer(child)) {
 		if (of_getprop_bool(child, "gpio-controller") == false)
 			continue;
 		exynos_gpio_bank_config(sc, faa, child);
 	}
-
-	aprint_naive("\n");
-	aprint_normal("\n");
-
 }
