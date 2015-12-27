@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.40 2015/12/12 18:06:58 christos Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.41 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -184,8 +184,8 @@ typedef struct bozo_httpreq_t {
 
 /* structure to hold string based (name, value) pairs with preferences */
 typedef struct bozoprefs_t {
-	unsigned	  size;		/* size of the two arrays */
-	unsigned	  c;		/* # of entries in arrays */
+	size_t		  size;		/* size of the two arrays */
+	size_t		  count;	/* # of entries in arrays */
 	char		**name;		/* names of each entry */
 	char		**value;	/* values for the name entries */
 } bozoprefs_t;
@@ -225,22 +225,23 @@ void	bozo_err(bozohttpd_t *, int, const char *, ...)
 		BOZO_DEAD;
 void	bozo_asprintf(bozohttpd_t *, char **, const char *, ...)
 		BOZO_PRINTFLIKE(3, 4);
-char	*bozo_strdup(bozohttpd_t *, const char *);
 
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
 char	*bozo_http_date(char *, size_t);
-void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *, const char *);
+void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
+			  const char *);
 char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute);
 char	*bozo_escape_html(bozohttpd_t *httpd, const char *url);
 
-char	*bozodgetln(bozohttpd_t *, int, ssize_t *, ssize_t (*)(bozohttpd_t *, int, void *, size_t));
+char	*bozodgetln(bozohttpd_t *, int, ssize_t *, ssize_t (*)(bozohttpd_t *,
+		    int, void *, size_t));
 char	*bozostrnsep(char **, const char *, ssize_t *);
 
 void	*bozomalloc(bozohttpd_t *, size_t);
 void	*bozorealloc(bozohttpd_t *, void *, size_t);
-char	*bozostrdup(bozohttpd_t *, const char *);
+char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
 
 #define bozo_noop	do { /* nothing */ } while (/*CONSTCOND*/0)
 
@@ -338,7 +339,8 @@ const char *bozo_content_encoding(bozo_httpreq_t *, const char *);
 bozo_content_map_t *bozo_match_content_map(bozohttpd_t *, const char *, int);
 bozo_content_map_t *bozo_get_content_map(bozohttpd_t *, const char *);
 #ifndef NO_DYNAMIC_CONTENT
-void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *, const char *, const char *);
+void	bozo_add_content_map_mime(bozohttpd_t *, const char *, const char *,
+				  const char *, const char *);
 #endif
 
 /* I/O */
@@ -349,7 +351,7 @@ int bozo_flush(bozohttpd_t *, FILE *);
 
 /* misc */
 int bozo_init_httpd(bozohttpd_t *);
-int bozo_init_prefs(bozoprefs_t *);
+int bozo_init_prefs(bozohttpd_t *, bozoprefs_t *);
 int bozo_set_defaults(bozohttpd_t *, bozoprefs_t *);
 int bozo_setup(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 bozo_httpreq_t *bozo_read_request(bozohttpd_t *);
@@ -357,7 +359,7 @@ void bozo_process_request(bozo_httpreq_t *);
 void bozo_clean_request(bozo_httpreq_t *);
 
 /* variables */
-int bozo_set_pref(bozoprefs_t *, const char *, const char *);
+int bozo_set_pref(bozohttpd_t *, bozoprefs_t *, const char *, const char *);
 char *bozo_get_pref(bozoprefs_t *, const char *);
 
 #endif	/* BOZOHTTOPD_H_ */
