@@ -1,4 +1,6 @@
-/* $NetBSD: dwc_mmc.c,v 1.8 2015/12/26 23:13:10 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.9 2015/12/27 18:35:12 jmcneill Exp $ */
+
+#define DWC_MMC_DEBUG
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +31,7 @@
 #include "opt_dwc_mmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.8 2015/12/26 23:13:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.9 2015/12/27 18:35:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -175,12 +177,8 @@ dwc_mmc_intr(void *priv)
 static int
 dwc_mmc_set_clock(struct dwc_mmc_softc *sc, u_int freq)
 {
-	u_int pll_freq, clk_div;
-
-	pll_freq = sc->sc_clock_freq / 1000;
-	clk_div = (pll_freq / freq) >> 1;
-	if (pll_freq % freq)
-		clk_div++;
+	const u_int pll_freq = sc->sc_clock_freq / 1000;
+	const u_int clk_div = howmany(pll_freq, freq * 2);
 
 #ifdef DWC_MMC_DEBUG
 	printf("%s: using clk_div %d for freq %d (act %u)\n",
@@ -189,6 +187,8 @@ dwc_mmc_set_clock(struct dwc_mmc_softc *sc, u_int freq)
 
 	MMC_WRITE(sc, DWC_MMC_CLKDIV_REG,
 	    __SHIFTIN(clk_div, DWC_MMC_CLKDIV_CLK_DIVIDER0));
+	MMC_WRITE(sc, DWC_MMC_CLKSRC_REG, 0);	/* clock divider 0 */
+
 	return dwc_mmc_update_clock(sc);
 }
 
@@ -462,6 +462,9 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		cmdval |= DWC_MMC_CMD_USE_HOLD_REG;
 
 	mutex_enter(&sc->sc_intr_lock);
+
+	MMC_WRITE(sc, DWC_MMC_RINTSTS_REG, 0xffffffff);
+
 	if (cmd->c_opcode == 0)
 		cmdval |= DWC_MMC_CMD_SEND_INIT;
 	if (cmd->c_flags & SCF_RSP_PRESENT)
@@ -500,7 +503,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	MMC_WRITE(sc, DWC_MMC_CMD_REG, cmdval | cmd->c_opcode);
 
 	cmd->c_error = dwc_mmc_wait_rint(sc,
-	    DWC_MMC_INT_ERROR|DWC_MMC_INT_CD, hz * 10);
+	    DWC_MMC_INT_ERROR|DWC_MMC_INT_CD, hz * 5);
 	if (cmd->c_error == 0 && (sc->sc_intr_rint & DWC_MMC_INT_ERROR)) {
 #ifdef DWC_MMC_DEBUG
 		dwc_mmc_print_rint(sc, "exec1", sc->sc_intr_rint);
@@ -523,7 +526,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 		cmd->c_error = dwc_mmc_wait_rint(sc,
 		    DWC_MMC_INT_ERROR|DWC_MMC_INT_ACD|DWC_MMC_INT_DTO,
-		    hz * 10);
+		    hz * 5);
 		if (cmd->c_error == 0 &&
 		    (sc->sc_intr_rint & DWC_MMC_INT_ERROR)) {
 #ifdef DWC_MMC_DEBUG
