@@ -1,4 +1,4 @@
-/*      $NetBSD: vfp_init.c,v 1.41.4.2 2015/06/06 14:39:57 skrll Exp $ */
+/*      $NetBSD: vfp_init.c,v 1.41.4.3 2015/12/27 12:09:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2008 ARM Ltd
@@ -348,7 +348,7 @@ vfp_attach(struct cpu_info *ci)
 		    ((f0 & ARM_MVFR0_EXCEPT_MASK) ? ", exceptions" : ""),
 		    ((f1 & ARM_MVFR1_D_NAN_MASK) ? ", NaN propagation" : ""),
 		    ((f1 & ARM_MVFR1_FTZ_MASK) ? ", denormals" : ""));
-		aprint_verbose("vfp%d: mvfr: [0]=%#x [1]=%#x\n",
+		aprint_debug("vfp%d: mvfr: [0]=%#x [1]=%#x\n",
 		    device_unit(ci->ci_dev), f0, f1);
 		if (CPU_IS_PRIMARY(ci)) {
 			if (f0 & ARM_MVFR0_ROUNDING_MASK) {

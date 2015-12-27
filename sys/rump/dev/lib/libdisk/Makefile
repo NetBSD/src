@@ -1,10 +1,12 @@
-#	$NetBSD: Makefile,v 1.7.38.1 2015/06/06 14:40:26 skrll Exp $
+#	$NetBSD: Makefile,v 1.7.38.2 2015/12/27 12:10:08 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../kern					\
 	${.CURDIR}/../../../../dev ${.CURDIR}/../../../../dev/dkwedge
 
 LIB=	rumpdev_disk
+COMMENT=Disk-like device support (used e.g. by file systems)
+
 SRCS=	disk_component.c
 
 #

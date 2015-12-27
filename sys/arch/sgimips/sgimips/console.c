@@ -1,4 +1,4 @@
-/*	$NetBSD: console.c,v 1.43.14.1 2015/04/06 15:18:02 skrll Exp $	*/
+/*	$NetBSD: console.c,v 1.43.14.2 2015/12/27 12:09:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.43.14.1 2015/04/06 15:18:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: console.c,v 1.43.14.2 2015/12/27 12:09:42 skrll Exp $");
 
 #include "opt_kgdb.h"
 
@@ -227,7 +227,7 @@ mace_serial_init(const char *consdev)
 
 		/* XXX: hardcoded MACE iotag */
 		mace_init_bus();
-		if (comcnattach(mace_isa_memt, MIPS_PHYS_TO_KSEG1(MACE_BASE + base),
+		if (comcnattach(mace_isa_memt, MACE_BASE + base,
 		    speed, COM_FREQ, COM_TYPE_NORMAL, comcnmode) == 0)
 			return (1);
 	}

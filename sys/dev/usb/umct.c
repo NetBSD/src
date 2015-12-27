@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.32.24.9 2015/03/21 11:33:37 skrll Exp $	*/
+/*	$NetBSD: umct.c,v 1.32.24.10 2015/12/27 12:09:59 skrll Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.9 2015/03/21 11:33:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.32.24.10 2015/12/27 12:09:59 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -272,7 +272,7 @@ umct_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (sc->sc_intr_number== -1) {
+	if (sc->sc_intr_number == -1) {
 		aprint_error_dev(self, "Could not find interrupt in\n");
 		sc->sc_dying = 1;
 		return;

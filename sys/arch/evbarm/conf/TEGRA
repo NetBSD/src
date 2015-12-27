@@ -1,0 +1,164 @@
+#
+#	$NetBSD: TEGRA,v 1.6.2.2 2015/12/27 12:09:34 skrll Exp $
+#
+#	NVIDIA Tegra K1 (T124)
+#
+
+include	"arch/evbarm/conf/std.tegra"
+include	"arch/evbarm/conf/GENERIC.common"
+
+options 	CPU_CORTEXA15
+options 	SOC_TEGRA124
+options 	MULTIPROCESSOR
+
+pseudo-device 	openfirm	# /dev/openfirm
+
+options 	DIAGNOSTIC	# internal consistency checks
+#options 	DEBUG
+#options 	LOCKDEBUG
+#options 	PMAP_DEBUG	# Enable pmap_debug_level code
+#options 	IPKDB		# remote kernel debugging
+#options 	VERBOSE_INIT_ARM # verbose bootstraping messages
+makeoptions	DEBUG="-g"	# compile full symbol table
+makeoptions	COPY_SYMTAB=1
+
+config		netbsd		root on ? type ?
+
+mainbus0	at root
+cpu*		at mainbus?
+
+# A15 core devices
+armperiph0	at mainbus?
+armgic0		at armperiph?				# Interrupt Controller
+armgtmr0	at armperiph?				# ARM Generic Timer
+
+# On-board I/O
+tegrafdt0	at mainbus?
+fdt0		at tegrafdt0 
+simplebus*	at fdt?
+fdt*		at simplebus?
+
+fregulator*	at fdt?
+gpiokeys*	at fdt?
+
+# Interrupt controller
+tegralic*	at fdt?			# LIC
+gic*		at fdt?			# GIC
+
+# Memory controller
+tegramc*	at fdt?			# MC
+
+# FUSE controller
+tegrafuse*	at fdt?			# FUSE
+
+# Power management controller
+tegrapmc*	at fdt?			# PMC
+
+# Clock and Reset controller
+tegra124car*	at fdt?			# CAR
+
+# GPIO controller
+tegragpio*	at fdt?			# GPIO
+gpio*		at gpiobus?
+
+# Timers
+tegratimer*	at fdt?			# Timers
+
+# MPIO / Pinmux
+tegrampio*	at fdt?			# MPIO
+
+# XUSB PADCTL
+tegraxusbpad*	at fdt?			# XUSB PADCTL
+
+# PCIE
+tegrapcie0	at fdt?			# PCIE
+pci*		at tegrapcie0
+ppb*		at pci? dev ? function ?
+pci*		at ppb?
+
+# Ethernet
+re*		at pci? dev ? function ?	# Realtek RTL8111GS
+rgephy*		at mii? phy ?
+ukphy*		at mii? phy ?
+
+# Mini-PCIe Wireless
+options 	ATHHAL_AR5212,ATHHAL_RF2425	# AR5BHB63
+ath*		at pci? dev ? function ?	# Atheros IEEE 802.11
+athn*		at pci? dev ? function ?	# Atheros IEEE 802.11
+
+# UART
+com*		at fdt?			# UART
+options 	CONSADDR=0x70006300, CONSPEED=115200
+
+# I2C
+tegrai2c*	at fdt?			# I2C
+iic*		at tegrai2c?
+titemp*		at iic?
+seeprom*	at iic?
+as3722pmic*	at iic?
+
+# RTC
+tegrartc*	at fdt?			# RTC
+
+# SDMMC
+sdhc*		at fdt?			# SDMMC
+sdmmc*		at sdhc?
+ld0		at sdmmc0
+ld1		at sdmmc1
+ld2		at sdmmc2
+ld3		at sdmmc3
+ld*		at sdmmc?
+
+# SATA
+ahcisata*	at fdt?			# SATA
+atabus*		at ata?
+atapibus*	at atapi?
+wd*		at atabus? drive ?
+cd*		at atapibus? drive ?
+
+# HDA
+hdaudio*	at fdt?			# HDA
+hdafg*		at hdaudiobus?
+audio*		at audiobus?
+options 	HDAUDIOVERBOSE
+options 	HDAUDIO_32BIT_ACCESS
+options 	HDAUDIO_ENABLE_HDMI
+options 	HDAUDIO_ENABLE_DISPLAYPORT
+
+# HDMI CEC
+tegracec0	at fdt?			# HDMI CEC
+hdmicec*	at hdmicecbus?
+
+# Display
+tegradrm*	at fdt?			# Display
+tegrafb*	at tegrafbbus?
+wsdisplay*	at wsemuldisplaydev?
+options 	VCONS_DRAW_INTR
+options 	WSEMUL_VT100
+options 	WS_DEFAULT_FG=WSCOL_WHITE
+options 	WS_DEFAULT_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
+options 	WSDISPLAY_COMPAT_PCVT
+options 	WSDISPLAY_COMPAT_SYSCONS
+options 	WSDISPLAY_COMPAT_USL
+options 	WSDISPLAY_COMPAT_RAWKBD
+options 	WSDISPLAY_DEFAULTSCREENS=4
+pseudo-device	wsmux
+pseudo-device	wsfont
+
+# GPU
+nouveau*	at fdt?			# GPU
+
+# Thermal throttling controller
+tegrasoctherm*	at fdt?			# SOC_THERM
+
+# USB 2.0
+tegrausbphy*	at fdt?			# USB PHY
+ehci*		at fdt?			# USB
+usb*		at ehci?
+
+include "dev/usb/usbdevices.config"
+midi*		at midibus?
+
+cinclude "arch/evbarm/conf/TEGRA.local"

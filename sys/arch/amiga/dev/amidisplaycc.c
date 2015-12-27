@@ -1,4 +1,4 @@
-/*	$NetBSD: amidisplaycc.c,v 1.27.6.1 2015/09/22 12:05:36 skrll Exp $ */
+/*	$NetBSD: amidisplaycc.c,v 1.27.6.2 2015/12/27 12:09:28 skrll Exp $ */
 
 /*-
  * Copyright (c) 2000 Jukka Andberg.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.27.6.1 2015/09/22 12:05:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amidisplaycc.c,v 1.27.6.2 2015/12/27 12:09:28 skrll Exp $");
 
 /*
  * wscons interface to amiga custom chips. Contains the necessary functions
@@ -1183,7 +1183,7 @@ amidisplaycc_mmap(void *dp, void *vs, off_t off, int prot)
 	rv = (paddr_t)bm->hardware_address;
 	rv += off;
 
-	return (rv >> PGSHIFT);
+	return MD_BTOP(rv);
 }
 
 

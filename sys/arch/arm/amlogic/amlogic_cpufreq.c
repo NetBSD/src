@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_cpufreq.c,v 1.3.2.2 2015/04/06 15:17:51 skrll Exp $ */
+/* $NetBSD: amlogic_cpufreq.c,v 1.3.2.3 2015/12/27 12:09:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.3.2.2 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_cpufreq.c,v 1.3.2.3 2015/12/27 12:09:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -57,7 +57,7 @@ static u_int (*cpufreq_set_rate)(u_int);
 static u_int (*cpufreq_get_rate)(void);
 static size_t (*cpufreq_get_available)(u_int *, size_t);
 
-#define AMLOGIC_CPUFREQ_MAX	8
+#define AMLOGIC_CPUFREQ_MAX	16
 
 static void	amlogic_cpufreq_cb(void *, void *);
 static int	amlogic_cpufreq_freq_helper(SYSCTLFN_PROTO);
@@ -73,19 +73,24 @@ static size_t	meson8b_cpu_get_available(u_int *, size_t);
 #define CBUS_WRITE(x, v)	\
 	bus_space_write_4(&armv7_generic_bs_tag, amlogic_core_bsh, \
 			  AMLOGIC_CBUS_OFFSET + (x), (v))
+#define CBUS_SET_CLEAR(x, s, c)	\
+        amlogic_reg_set_clear(&armv7_generic_bs_tag, amlogic_core_bsh, \
+                              AMLOGIC_CBUS_OFFSET + (x), (s), (c))
 
 void
 amlogic_cpufreq_bootstrap(void)
 {
+	u_int availfreq[AMLOGIC_CPUFREQ_MAX];
+
 	cpufreq_set_rate = &meson8b_cpu_set_rate;
 	cpufreq_get_rate = &meson8b_cpu_get_rate;
 	cpufreq_get_available = &meson8b_cpu_get_available;
 
-#ifdef CPUFREQ
-	if (cpufreq_set_rate(CPUFREQ) == 0) {
-		amlogic_cpufreq_cb(NULL, NULL);
+	if (cpufreq_get_available(availfreq, AMLOGIC_CPUFREQ_MAX) > 0) {
+		if (cpufreq_set_rate(availfreq[0]) == 0) {
+			amlogic_cpufreq_cb(NULL, NULL);
+		}
 	}
-#endif
 }
 
 void
@@ -204,7 +209,7 @@ amlogic_cpufreq_freq_helper(SYSCTLFN_ARGS)
  * meson8b
  */
 static const u_int meson8b_rates[] = {
-	1512, 1416, 1320, 1200
+	1536, 1488, 1320, 1200, 1008, 816, 720, 600, 504, 408, 312
 };
 
 static size_t
@@ -230,10 +235,8 @@ meson8b_cpu_set_rate(u_int rate)
 	const u_int old_rate = meson8b_cpu_get_rate();
 	u_int new_rate = 0;
 
-	/* Pick the closest rate (nearest 100MHz increment) */
 	for (int i = 0; i < __arraycount(meson8b_rates); i++) {
-		u_int arate = (meson8b_rates[i] + 50) / 100 * 100;
-		if (arate <= rate) {
+		if (meson8b_rates[i] == rate) {
 			new_rate = meson8b_rates[i] * 1000000;
 			break;
 		}
@@ -248,9 +251,17 @@ meson8b_cpu_set_rate(u_int rate)
 	uint32_t cntl0 = CBUS_READ(HHI_SYS_CPU_CLK_CNTL0_REG);
 	uint32_t cntl = CBUS_READ(HHI_SYS_PLL_CNTL_REG);
 
-	const u_int new_mul = new_rate / xtal_rate;
-	const u_int new_div = 1;
-	const u_int new_od = 0;
+	u_int new_mul = new_rate / xtal_rate;
+	u_int new_div = 1;
+	u_int new_od = 0;
+
+	if (new_rate < 600 * 1000000) {
+		new_od = 2;
+		new_mul *= 4;
+	} else if (new_rate < 1200 * 1000000) {
+		new_od = 1;
+		new_mul *= 2;
+	}
 
 	/*
 	 * XXX make some assumptions about the state of cpu clk cntl regs
@@ -269,7 +280,22 @@ meson8b_cpu_set_rate(u_int rate)
 	cntl &= ~HHI_SYS_PLL_CNTL_OD;
 	cntl |= __SHIFTIN(new_od, HHI_SYS_PLL_CNTL_OD);
 
-	CBUS_WRITE(HHI_SYS_PLL_CNTL_REG, cntl);
+	/* Switch CPU to XTAL clock */
+	CBUS_SET_CLEAR(HHI_SYS_CPU_CLK_CNTL0_REG, 0,
+	    HHI_SYS_CPU_CLK_CNTL0_CLKSEL);
+
+	delay((100 * old_rate) / xtal_rate);
+
+	/* Update multiplier */
+	do {
+		CBUS_WRITE(HHI_SYS_PLL_CNTL_REG, cntl);
+
+		/* Switch CPU to sys pll */
+		CBUS_SET_CLEAR(HHI_SYS_CPU_CLK_CNTL0_REG,
+		    HHI_SYS_CPU_CLK_CNTL0_CLKSEL, 0);
+
+		delay((500 * old_rate) / new_rate);
+	} while (!(CBUS_READ(HHI_SYS_PLL_CNTL_REG) & HHI_SYS_PLL_CNTL_LOCK));
 
 	if (!cold) {
 		a9tmr_update_freq(amlogic_get_rate_a9periph());

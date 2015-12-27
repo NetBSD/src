@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.39.30.2 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.39.30.3 2015/12/27 12:10:07 skrll Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39.30.2 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39.30.3 2015/12/27 12:10:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.39.30.2 2015/09/22 12:06:11 skrll Exp
 #include <sys/errno.h>
 #include <sys/protosw.h>
 #include <sys/queue.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -492,17 +493,17 @@ encap_attach(int af, int proto,
 	}
 
 	/* M_NETADDR ok? */
-	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT|M_ZERO);
+	ep = kmem_zalloc(sizeof(*ep), KM_NOSLEEP);
 	if (ep == NULL) {
 		error = ENOBUFS;
 		goto fail;
 	}
-	ep->addrpack = malloc(l, M_NETADDR, M_NOWAIT|M_ZERO);
+	ep->addrpack = kmem_zalloc(l, KM_NOSLEEP);
 	if (ep->addrpack == NULL) {
 		error = ENOBUFS;
 		goto gc;
 	}
-	ep->maskpack = malloc(l, M_NETADDR, M_NOWAIT|M_ZERO);
+	ep->maskpack = kmem_zalloc(l, KM_NOSLEEP);
 	if (ep->maskpack == NULL) {
 		error = ENOBUFS;
 		goto gc;
@@ -550,11 +551,11 @@ encap_attach(int af, int proto,
 
 gc:
 	if (ep->addrpack)
-		free(ep->addrpack, M_NETADDR);
+		kmem_free(ep->addrpack, l);
 	if (ep->maskpack)
-		free(ep->maskpack, M_NETADDR);
+		kmem_free(ep->maskpack, l);
 	if (ep)
-		free(ep, M_NETADDR);
+		kmem_free(ep, sizeof(*ep));
 fail:
 	splx(s);
 	return NULL;
@@ -580,7 +581,7 @@ encap_attach_func(int af, int proto,
 	if (error)
 		goto fail;
 
-	ep = malloc(sizeof(*ep), M_NETADDR, M_NOWAIT);	/*XXX*/
+	ep = kmem_alloc(sizeof(*ep), KM_NOSLEEP);	/*XXX*/
 	if (ep == NULL) {
 		error = ENOBUFS;
 		goto fail;
@@ -701,10 +702,10 @@ encap_detach(const struct encaptab *cookie)
 			if (error)
 				return error;
 			if (!ep->func) {
-				free(p->addrpack, M_NETADDR);
-				free(p->maskpack, M_NETADDR);
+				kmem_free(p->addrpack, ep->addrpack->sa_len);
+				kmem_free(p->maskpack, ep->maskpack->sa_len);
 			}
-			free(p, M_NETADDR);	/*XXX*/
+			kmem_free(p, sizeof(*p));	/*XXX*/
 			return 0;
 		}
 	}

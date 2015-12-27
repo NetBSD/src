@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.60.4.2 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.60.4.3 2015/12/27 12:10:07 skrll Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.2 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.60.4.3 2015/12/27 12:10:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,8 +90,8 @@ in6_gif_output(struct ifnet *ifp, int family, struct mbuf *m)
 {
 	struct rtentry *rt;
 	struct gif_softc *sc = ifp->if_softc;
-	struct sockaddr_in6 *sin6_src = (struct sockaddr_in6 *)sc->gif_psrc;
-	struct sockaddr_in6 *sin6_dst = (struct sockaddr_in6 *)sc->gif_pdst;
+	struct sockaddr_in6 *sin6_src = satosin6(sc->gif_psrc);
+	struct sockaddr_in6 *sin6_dst = satosin6(sc->gif_pdst);
 	struct ip6_hdr *ip6;
 	int proto, error;
 	u_int8_t itos, otos;
@@ -224,7 +224,15 @@ in6_gif_input(struct mbuf **mp, int *offp, int proto)
 		return IPPROTO_DONE;
 	}
 #ifndef GIF_ENCAPCHECK
-	if (!gif_validate6(ip6, gifp->if_softc, m->m_pkthdr.rcvif)) {
+	struct gif_softc *sc = (struct gif_softc *)gifp->if_softc;
+	/* other CPU do delete_tunnel */
+	if (sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+		m_freem(m);
+		IP6_STATINC(IP6_STAT_NOGIF);
+		return IPPROTO_DONE;
+	}
+
+	if (!gif_validate6(ip6, sc, m->m_pkthdr.rcvif)) {
 		m_freem(m);
 		IP6_STATINC(IP6_STAT_NOGIF);
 		return IPPROTO_DONE;
@@ -292,8 +300,8 @@ gif_validate6(const struct ip6_hdr *ip6, struct gif_softc *sc,
 {
 	const struct sockaddr_in6 *src, *dst;
 
-	src = (struct sockaddr_in6 *)sc->gif_psrc;
-	dst = (struct sockaddr_in6 *)sc->gif_pdst;
+	src = satosin6(sc->gif_psrc);
+	dst = satosin6(sc->gif_pdst);
 
 	/* check for address match */
 	if (!IN6_ARE_ADDR_EQUAL(&src->sin6_addr, &ip6->ip6_dst) ||

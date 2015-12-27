@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2.6.1 2015/09/22 12:06:13 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.6.2 2015/12/27 12:10:09 skrll Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -6,9 +6,10 @@ RUMPTOP=${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci ${RUMPTOP}/../dev/mii
 
 LIB=	rumpdev_miiphy
-IOCONF=	MIIPHY.ioconf
+COMMENT=MII and PHY drivers (for networking)
 
-SRCS=	phy_at_mii.c
+IOCONF=	MIIPHY.ioconf
+RUMP_COMPONENT=ioconf
 
 SRCS+= mii.c mii_ethersubr.c mii_physubr.c ukphy.c ukphy_subr.c
 SRCS+= acphy.c amhphy.c atphy.c bmtphy.c brgphy.c ciphy.c dmphy.c etphy.c \

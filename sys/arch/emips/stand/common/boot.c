@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.3 2014/03/26 16:10:20 christos Exp $	*/
+/*	$NetBSD: boot.c,v 1.3.6.1 2015/12/27 12:09:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -64,10 +64,10 @@ static int devcanon(char *);
 
 #define OPT_MAX PATH_MAX /* way overkill */
 
-static int loadit(char *name, u_long marks[MARK_MAX])
+static int loadit(char *name, u_long *marks)
 {
 	printf("Loading: %s\n", name);
-	memset(marks, 0, sizeof marks);
+	memset(marks, 0, sizeof(*marks) * MARK_MAX);
 	return (loadfile(name, marks, LOAD_ALL));
 }
 

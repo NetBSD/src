@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.55 2014/10/08 10:30:27 macallan Exp $ */
+/*	$NetBSD: param.h,v 1.55.2.1 2015/12/27 12:09:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -197,7 +197,7 @@ extern int nbpg, pgofset, pgshift;
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
 #if !defined (MSGBUFSIZE)		/* options MSGBUFSIZE=integer	*/
-#define MSGBUFSIZE	4 * NBPG
+#define MSGBUFSIZE	(4 * NBPG)
 #else
 #if INTSTACK - MSGBUF_VA - MSGBUFSIZE < 0
 #error MSGBUFSIZE is too large

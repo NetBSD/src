@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd.c,v 1.78.4.2 2015/06/06 14:39:57 skrll Exp $	*/
+/*	$NetBSD: hdfd.c,v 1.78.4.3 2015/12/27 12:09:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996 Leo Weppelman
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.78.4.2 2015/06/06 14:39:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdfd.c,v 1.78.4.3 2015/12/27 12:09:32 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1306,7 +1306,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 
 	switch (cmd) {
 	case DIOCGDINFO:
-	case DIOCGPART:
+	case DIOCGPARTINFO:
 		fdgetdisklabel(fd, dev);
 		break;
 	}

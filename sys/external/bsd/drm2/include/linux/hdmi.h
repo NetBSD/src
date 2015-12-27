@@ -1,4 +1,4 @@
-/*	$NetBSD: hdmi.h,v 1.5 2014/11/24 01:27:07 riastradh Exp $	*/
+/*	$NetBSD: hdmi.h,v 1.5.2.1 2015/12/27 12:10:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@ hdmi_infoframe_checksum(void *buf, size_t length)
 	uint8_t checksum = 0;
 
 	while (length--)
-		checksum = *p++;
+		checksum += *p++;
 
 	p = buf;
 	p[3] = (256 - checksum);
@@ -283,7 +283,13 @@ hdmi_audio_infoframe_pack(const struct hdmi_audio_infoframe *frame, void *buf,
 
 	p[4] = __SHIFTIN(frame->downmix_inhibit? 1 : 0, __BIT(7));
 
-	/* XXX p[5], p[6], p[7], p[8], p[9]?  */
+	/* PB6 to PB10 are reserved */
+	p[5] = 0;
+	p[6] = 0;
+	p[7] = 0;
+	p[8] = 0;
+	p[9] = 0;
+
 	CTASSERT(HDMI_AUDIO_INFOFRAME_SIZE == 10);
 
 	hdmi_infoframe_checksum(buf, length);

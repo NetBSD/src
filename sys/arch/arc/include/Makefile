@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2011/07/17 20:54:37 joerg Exp $
+#	$NetBSD: Makefile,v 1.31.30.1 2015/12/27 12:09:29 skrll Exp $
 
 INCSDIR= /usr/include/arc
 
@@ -9,7 +9,7 @@ INCS=	ansi.h asm.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	ecoff_machdep.h elf_machdep.h endian.h endian_machdep.h \
-	float.h \
+	fenv.h float.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	kcore.h kdbparam.h \

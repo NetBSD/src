@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.2.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.2.2.3 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.2.2.2 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.2.2.3 2015/12/27 12:09:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,8 +50,13 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.2.2.2 2015/06/06 14:39:56 skrll Exp
 #include <arm/nvidia/tegra_pciereg.h>
 #include <arm/nvidia/tegra_var.h>
 
+#include <dev/fdt/fdtvar.h>
+
 static int	tegra_pcie_match(device_t, cfdata_t, void *);
 static void	tegra_pcie_attach(device_t, device_t, void *);
+
+#define TEGRA_PCIE_NBUS 256
+#define TEGRA_PCIE_ECFB (1<<(12 - 8))	/* extended conf frags per bus */
 
 struct tegra_pcie_ih {
 	int			(*ih_callback)(void *);
@@ -67,9 +70,8 @@ struct tegra_pcie_softc {
 	bus_dma_tag_t		sc_dmat;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh_afi;
-	bus_space_handle_t	sc_bsh_a1;
-	bus_space_handle_t	sc_bsh_a2;
-	int			sc_intr;
+	bus_space_handle_t	sc_bsh_rpconf;
+	int			sc_phandle;
 
 	struct arm32_pci_chipset sc_pc;
 
@@ -79,11 +81,18 @@ struct tegra_pcie_softc {
 
 	TAILQ_HEAD(, tegra_pcie_ih) sc_intrs;
 	u_int			sc_intrgen;
+
+	bus_space_handle_t	sc_bsh_extc[TEGRA_PCIE_NBUS-1][TEGRA_PCIE_ECFB];
 };
 
 static int	tegra_pcie_intr(void *);
 static void	tegra_pcie_init(pci_chipset_tag_t, void *);
 static void	tegra_pcie_enable(struct tegra_pcie_softc *);
+static void	tegra_pcie_setup(struct tegra_pcie_softc * const);
+static void	tegra_pcie_conf_frag_map(struct tegra_pcie_softc * const,
+					 uint, uint);
+static void	tegra_pcie_conf_map_bus(struct tegra_pcie_softc * const, uint);
+static void	tegra_pcie_conf_map_buses(struct tegra_pcie_softc * const);
 
 static void	tegra_pcie_attach_hook(device_t, device_t,
 				       struct pcibus_attach_args *);
@@ -110,36 +119,56 @@ CFATTACH_DECL_NEW(tegra_pcie, sizeof(struct tegra_pcie_softc),
 static int
 tegra_pcie_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-pcie", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_pcie_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_pcie_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
-	struct extent *memext, *pmemext;
+	struct fdt_attach_args * const faa = aux;
+	struct extent *ioext, *memext, *pmemext;
 	struct pcibus_attach_args pba;
+	bus_addr_t afi_addr, cs_addr;
+	bus_size_t afi_size, cs_size;
+	char intrstr[128];
 	int error;
 
-	sc->sc_dev = self;
+	if (fdtbus_get_reg(faa->faa_phandle, 1, &afi_addr, &afi_size) != 0) {
+		aprint_error(": couldn't get afi registers\n");
+		return;
+	}
 #if notyet
-	sc->sc_dmat = tio->tio_coherent_dmat;
+	if (fdtbus_get_reg(faa->faa_phandle, 2, &cs_addr, &cs_size) != 0) {
+		aprint_error(": couldn't get cs registers\n");
+		return;
+	}
 #else
-	sc->sc_dmat = tio->tio_dmat;
+	cs_addr = TEGRA_PCIE_RPCONF_BASE;
+	cs_size = TEGRA_PCIE_RPCONF_SIZE;
 #endif
-	sc->sc_bst = tio->tio_bst;
-	sc->sc_intr = loc->loc_intr;
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_AFI_BASE, TEGRA_PCIE_AFI_SIZE,
-	    0, &sc->sc_bsh_afi) != 0)
-		panic("couldn't map PCIE AFI");
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_A1_BASE, TEGRA_PCIE_A1_SIZE,
-	    0, &sc->sc_bsh_a1) != 0)
-		panic("couldn't map PCIE A1");
-	if (bus_space_map(sc->sc_bst, TEGRA_PCIE_A2_BASE, TEGRA_PCIE_A2_SIZE,
-	    0, &sc->sc_bsh_a2) != 0)
-		panic("couldn't map PCIE A2");
+
+	sc->sc_dev = self;
+	sc->sc_dmat = faa->faa_dmat;
+	sc->sc_bst = faa->faa_bst;
+	sc->sc_phandle = faa->faa_phandle;
+	error = bus_space_map(sc->sc_bst, afi_addr, afi_size, 0,
+	    &sc->sc_bsh_afi);
+	if (error) {
+		aprint_error(": couldn't map afi registers: %d\n", error);
+		return;
+	}
+	error = bus_space_map(sc->sc_bst, cs_addr, cs_size, 0,
+	    &sc->sc_bsh_rpconf);
+	if (error) {
+		aprint_error(": couldn't map cs registers: %d\n", error);
+		return;
+	}
+
+	tegra_pcie_conf_map_buses(sc);
 
 	TAILQ_INIT(&sc->sc_intrs);
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
@@ -147,17 +176,27 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": PCIE\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL,
-	    tegra_pcie_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM, 0,
+	    tegra_pcie_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	tegra_pcie_setup(sc);
 
 	tegra_pcie_init(&sc->sc_pc, sc);
 
+	ioext = extent_create("pciio", TEGRA_PCIE_IO_BASE,
+	    TEGRA_PCIE_IO_BASE + TEGRA_PCIE_IO_SIZE - 1,
+	    NULL, 0, EX_NOWAIT);
 	memext = extent_create("pcimem", TEGRA_PCIE_MEM_BASE,
 	    TEGRA_PCIE_MEM_BASE + TEGRA_PCIE_MEM_SIZE - 1,
 	    NULL, 0, EX_NOWAIT);
@@ -165,9 +204,10 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	    TEGRA_PCIE_PMEM_BASE + TEGRA_PCIE_PMEM_SIZE - 1,
 	    NULL, 0, EX_NOWAIT);
 
-	error = pci_configure_bus(&sc->sc_pc, NULL, memext, pmemext, 0,
+	error = pci_configure_bus(&sc->sc_pc, ioext, memext, pmemext, 0,
 	    arm_dcache_align);
 
+	extent_destroy(ioext);
 	extent_destroy(memext);
 	extent_destroy(pmemext);
 
@@ -183,7 +223,9 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = PCI_FLAGS_MRL_OKAY |
 			PCI_FLAGS_MRM_OKAY |
 			PCI_FLAGS_MWI_OKAY |
-			PCI_FLAGS_MEM_OKAY;
+			PCI_FLAGS_MEM_OKAY |
+			PCI_FLAGS_IO_OKAY;
+	pba.pba_iot = sc->sc_bst;
 	pba.pba_memt = sc->sc_bst;
 	pba.pba_dmat = sc->sc_dmat;
 	pba.pba_pc = &sc->sc_pc;
@@ -193,44 +235,134 @@ tegra_pcie_attach(device_t parent, device_t self, void *aux)
 }
 
 static int
-tegra_pcie_intr(void *priv)
+tegra_pcie_legacy_intr(struct tegra_pcie_softc *sc)
 {
-	struct tegra_pcie_softc *sc = priv;
+	const uint32_t msg = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSG_REG);
 	struct tegra_pcie_ih *pcie_ih;
+	int rv = 0;
 
-	const uint32_t code = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
-	    AFI_INTR_CODE_REG);
-	const uint32_t sig = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
-	    AFI_INTR_SIGNATURE_REG);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_INTR_CODE_REG, 0);
-
-	switch (__SHIFTOUT(code, AFI_INTR_CODE_INT_CODE)) {
-	case AFI_INTR_CODE_SM_MSG:
+	if (msg & (AFI_MSG_INT0|AFI_MSG_INT1)) {
 		mutex_enter(&sc->sc_lock);
 		const u_int lastgen = sc->sc_intrgen;
 		TAILQ_FOREACH(pcie_ih, &sc->sc_intrs, ih_entry) {
 			int (*callback)(void *) = pcie_ih->ih_callback;
 			void *arg = pcie_ih->ih_arg;
 			mutex_exit(&sc->sc_lock);
-			const int rv = callback(arg);
-			if (rv)
-				return rv;
+			rv += callback(arg);
 			mutex_enter(&sc->sc_lock);
 			if (lastgen != sc->sc_intrgen)
 				break;
 		}
 		mutex_exit(&sc->sc_lock);
-		return 0;
+	} else if (msg & (AFI_MSG_PM_PME0|AFI_MSG_PM_PME1)) {
+		device_printf(sc->sc_dev, "PM PME message; AFI_MSG=%08x\n",
+		    msg);
+	} else {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_MSG_REG, msg);
+		rv = 1;
+	}
+
+	return rv;
+}
+
+static int
+tegra_pcie_intr(void *priv)
+{
+	struct tegra_pcie_softc *sc = priv;
+	int rv;
+
+	const uint32_t code = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_INTR_CODE_REG);
+	const uint32_t sig = bus_space_read_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_INTR_SIGNATURE_REG);
+
+	switch (__SHIFTOUT(code, AFI_INTR_CODE_INT_CODE)) {
+	case AFI_INTR_CODE_SM_MSG:
+		rv = tegra_pcie_legacy_intr(sc);
+		break;
 	default:
 		device_printf(sc->sc_dev, "intr: code %#x sig %#x\n",
 		    code, sig);
-		return 1;
+		rv = 1;
+		break;
+	}
+
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_INTR_CODE_REG, 0);
+
+	return rv;
+}
+
+static void
+tegra_pcie_setup(struct tegra_pcie_softc * const sc)
+{
+	size_t i;
+
+	/*
+	 * Map PCI address spaces into ARM address space via
+	 * HyperTransport-like "FPCI".
+	 */
+	static const struct { uint32_t size, base, fpci; } pcie_init_table[] = {
+		/*
+		 * === BEWARE ===
+		 *
+		 * We depend on our TEGRA_PCIE_IO window overlaping the
+		 * TEGRA_PCIE_A1 window to allow us to use the same
+		 * bus_space_tag for both PCI IO and Memory spaces.
+		 *
+		 * 0xfdfc000000-0xfdfdffffff is the FPCI/HyperTransport
+		 * mapping for 0x0000000-0x1ffffff of PCI IO space.
+		 */
+		{ TEGRA_PCIE_IO_SIZE >> 12, TEGRA_PCIE_IO_BASE,
+		  (0xfdfc000000 + TEGRA_PCIE_IO_BASE) >> 8 | 0, },
+
+		/* HyperTransport Technology Type 1 Address Format */
+		{ TEGRA_PCIE_CONF_SIZE >> 12, TEGRA_PCIE_CONF_BASE,
+		  0xfdff000000 >> 8 | 0, },
+
+		/* 1:1 MMIO mapping */
+		{ TEGRA_PCIE_MEM_SIZE >> 12, TEGRA_PCIE_MEM_BASE,
+		  TEGRA_PCIE_MEM_BASE >> 8 | 1, },
+
+		/* Extended HyperTransport Technology Type 1 Address Format */
+		{ TEGRA_PCIE_EXTC_SIZE >> 12, TEGRA_PCIE_EXTC_BASE,
+		  0xfe10000000 >> 8 | 0, },
+
+		/* 1:1 prefetchable MMIO mapping */
+		{ TEGRA_PCIE_PMEM_SIZE >> 12, TEGRA_PCIE_PMEM_BASE,
+		  TEGRA_PCIE_PMEM_BASE >> 8 | 1, },
+	};
+
+	for (i = 0; i < AFI_AXI_NBAR; i++) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_SZ(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_START(i), 0);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_FPCI_BARi(i), 0);
+	}
+
+	for (i = 0; i < __arraycount(pcie_init_table); i++) {
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_START(i), pcie_init_table[i].base);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_FPCI_BARi(i), pcie_init_table[i].fpci);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+		    AFI_AXI_BARi_SZ(i), pcie_init_table[i].size);
 	}
 }
 
 static void
 tegra_pcie_enable(struct tegra_pcie_softc *sc)
 {
+	/* disable MSI */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSI_BAR_SZ_REG, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSI_FPCI_BAR_ST_REG, 0);
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
+	    AFI_MSI_AXI_BAR_ST_REG, 0);
+
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
 	    AFI_SM_INTR_ENABLE_REG, 0xffffffff);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
@@ -238,6 +370,51 @@ tegra_pcie_enable(struct tegra_pcie_softc *sc)
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi, AFI_INTR_CODE_REG, 0);
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_afi,
 	    AFI_INTR_MASK_REG, AFI_INTR_MASK_INT);
+}
+
+static void
+tegra_pcie_conf_frag_map(struct tegra_pcie_softc * const sc, uint bus,
+    uint frg)
+{
+	bus_addr_t a;
+
+	KASSERT(bus >= 1);
+	KASSERT(bus < TEGRA_PCIE_NBUS);
+	KASSERT(frg < TEGRA_PCIE_ECFB);
+
+	if (sc->sc_bsh_extc[bus-1][frg] != 0) {
+		device_printf(sc->sc_dev, "bus %u fragment %#x already "
+		    "mapped\n", bus, frg);
+		return;
+	}
+
+	a = TEGRA_PCIE_EXTC_BASE + (bus << 16) + (frg << 24);
+	if (bus_space_map(sc->sc_bst, a, 1 << 16, 0,
+	    &sc->sc_bsh_extc[bus-1][frg]) != 0)
+		device_printf(sc->sc_dev, "couldn't map PCIE "
+		    "configuration for bus %u fragment %#x", bus, frg);
+}
+
+/* map non-non-extended configuration space for full bus range */
+static void
+tegra_pcie_conf_map_bus(struct tegra_pcie_softc * const sc, uint bus)
+{
+	uint i;
+
+	for (i = 1; i < TEGRA_PCIE_ECFB; i++) {
+		tegra_pcie_conf_frag_map(sc, bus, i);
+	}
+}
+
+/* map non-extended configuration space for full bus range */
+static void
+tegra_pcie_conf_map_buses(struct tegra_pcie_softc * const sc)
+{
+	uint b;
+
+	for (b = 1; b < TEGRA_PCIE_NBUS; b++) {
+		tegra_pcie_conf_frag_map(sc, b, 0);
+	}
 }
 
 void
@@ -265,6 +442,12 @@ static void
 tegra_pcie_attach_hook(device_t parent, device_t self,
     struct pcibus_attach_args *pba)
 {
+	const pci_chipset_tag_t pc = pba->pba_pc;
+	struct tegra_pcie_softc * const sc = pc->pc_conf_v;
+
+	if (pba->pba_bus >= 1) {
+		tegra_pcie_conf_map_bus(sc, pba->pba_bus);
+	}
 }
 
 static int
@@ -298,14 +481,24 @@ tegra_pcie_conf_read(void *v, pcitag_t tag, int offset)
 	int b, d, f;
 	u_int reg;
 
+	if ((unsigned int)offset >= PCI_EXTCONF_SIZE)
+		return (pcireg_t) -1;
+
 	tegra_pcie_decompose_tag(v, tag, &b, &d, &f);
 
+	if (b >= TEGRA_PCIE_NBUS)
+		return (pcireg_t) -1;
+
 	if (b == 0) {
+		if (d >= 2 || f != 0)
+			return (pcireg_t) -1;
 		reg = d * 0x1000 + offset;
-		bsh = sc->sc_bsh_a1;
+		bsh = sc->sc_bsh_rpconf;
 	} else {
-		reg = tag | offset;
-		bsh = sc->sc_bsh_a2;
+		reg = (d << 11) | (f << 8) | (offset & 0xff);
+		bsh = sc->sc_bsh_extc[b-1][(offset >> 8) & 0xf];
+		if (bsh == 0)
+			return (pcireg_t) -1;
 	}
 
 	return bus_space_read_4(sc->sc_bst, bsh, reg);
@@ -319,14 +512,24 @@ tegra_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	int b, d, f;
 	u_int reg;
 
+	if ((unsigned int)offset >= PCI_EXTCONF_SIZE)
+		return;
+
 	tegra_pcie_decompose_tag(v, tag, &b, &d, &f);
 
+	if (b >= TEGRA_PCIE_NBUS)
+		return;
+
 	if (b == 0) {
+		if (d >= 2 || f != 0)
+			return;
 		reg = d * 0x1000 + offset;
-		bsh = sc->sc_bsh_a1;
+		bsh = sc->sc_bsh_rpconf;
 	} else {
-		reg = tag | offset;
-		bsh = sc->sc_bsh_a2;
+		reg = (d << 11) | (f << 8) | (offset & 0xff);
+		bsh = sc->sc_bsh_extc[b-1][(offset >> 8) & 0xf];
+		if (bsh == 0)
+			return;
 	}
 
 	bus_space_write_4(sc->sc_bst, bsh, reg, val);
@@ -335,7 +538,7 @@ tegra_pcie_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 static int
 tegra_pcie_conf_hook(void *v, int b, int d, int f, pcireg_t id)
 {
-	return PCI_CONF_ENABLE_MEM | PCI_CONF_MAP_MEM | PCI_CONF_ENABLE_BM;
+	return PCI_CONF_ALL;
 }
 
 static void
@@ -353,7 +556,7 @@ tegra_pcie_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 	*ih = pa->pa_intrpin;
 	return 0;
 }
-				    
+
 static const char *
 tegra_pcie_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 {
@@ -362,7 +565,9 @@ tegra_pcie_intr_string(void *v, pci_intr_handle_t ih, char *buf, size_t len)
 	if (ih == PCI_INTERRUPT_PIN_NONE)
 		return NULL;
 
-	snprintf(buf, len, "irq %d", sc->sc_intr);
+	if (!fdtbus_intr_str(sc->sc_phandle, 0, buf, len))
+		return NULL;
+
 	return buf;
 }
 

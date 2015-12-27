@@ -1,4 +1,4 @@
-/*	$NetBSD: ultrix_fs.c,v 1.54.6.1 2015/09/22 12:05:56 skrll Exp $	*/
+/*	$NetBSD: ultrix_fs.c,v 1.54.6.2 2015/12/27 12:09:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1997 Jonathan Stone
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.54.6.1 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ultrix_fs.c,v 1.54.6.2 2015/12/27 12:09:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -401,7 +401,7 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 		na.timeo = una.timeo;
 		na.retrans = una.retrans;
 		na.hostname = una.hostname;
-		return do_sys_mount(l, vfs_getopsbyname("nfs"), NULL,
+		return do_sys_mount(l, "nfs", UIO_SYSSPACE,
 		    SCARG(uap, special), nflags, &na, UIO_SYSSPACE,
 		    sizeof na, &dummy);
 	}
@@ -431,7 +431,7 @@ ultrix_sys_mount(struct lwp *l, const struct ultrix_sys_mount_args *uap, registe
 			printf("COMPAT_ULTRIX: mount with MNT_UPDATE on %s\n",
 			    fsname);
 		}
-		return do_sys_mount(l, vfs_getopsbyname("ffs"), NULL,
+		return do_sys_mount(l, "ffs", UIO_SYSSPACE,
 		    SCARG(uap, dir), nflags, &ua, UIO_SYSSPACE, sizeof ua,
 		    &dummy);
 	}

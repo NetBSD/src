@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.71.4.2 2015/06/06 14:40:20 skrll Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.71.4.3 2015/12/27 12:10:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.71.4.2 2015/06/06 14:40:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.71.4.3 2015/12/27 12:10:04 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -369,9 +369,12 @@ adosfs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 {
+	u_long block;
 	int error;
 
-	error = vcache_get(mp, &an, sizeof(an), vpp);
+	block = an;
+	KASSERT(block == an);
+	error = vcache_get(mp, &block, sizeof(block), vpp);
 	if (error)
 		return error;
 	error = vn_lock(*vpp, LK_EXCLUSIVE);
@@ -394,7 +397,7 @@ adosfs_loadvnode(struct mount *mp, struct vnode *vp,
 	struct adosfsmount *amp;
 	struct anode *ap;
 	struct buf *bp;
-	ino_t an;
+	u_long an;
 	char *nam, *tmp;
 	int namlen, error;
 

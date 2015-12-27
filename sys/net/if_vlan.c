@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.78.2.3 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.78.2.4 2015/12/27 12:10:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.3 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.78.2.4 2015/12/27 12:10:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -284,36 +284,22 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 		ifv->ifv_encaplen = ETHER_VLAN_ENCAP_LEN;
 		ifv->ifv_mintu = ETHERMIN;
 
-		/*
-		 * If the parent supports the VLAN_MTU capability,
-		 * i.e. can Tx/Rx larger than ETHER_MAX_LEN frames,
-		 * enable it.
-		 */
-		if (ec->ec_nvlans++ == 0 &&
-		    (ec->ec_capabilities & ETHERCAP_VLAN_MTU) != 0) {
-			/*
-			 * Enable Tx/Rx of VLAN-sized frames.
-			 */
-			ec->ec_capenable |= ETHERCAP_VLAN_MTU;
-			if (p->if_flags & IFF_UP) {
-				error = if_flags_set(p, p->if_flags);
-				if (error) {
-					if (ec->ec_nvlans-- == 1)
-						ec->ec_capenable &=
-						    ~ETHERCAP_VLAN_MTU;
-					return (error);
-				}
+		if (ec->ec_nvlans == 0) {
+			if ((error = ether_enable_vlan_mtu(p)) >= 0) {
+				if (error)
+					return error;
+				ifv->ifv_mtufudge = 0;
+			} else {
+				/*
+				 * Fudge the MTU by the encapsulation size. This
+				 * makes us incompatible with strictly compliant
+				 * 802.1Q implementations, but allows us to use
+				 * the feature with other NetBSD
+				 * implementations, which might still be useful.
+				 */
+				ifv->ifv_mtufudge = ifv->ifv_encaplen;
 			}
-			ifv->ifv_mtufudge = 0;
-		} else if ((ec->ec_capabilities & ETHERCAP_VLAN_MTU) == 0) {
-			/*
-			 * Fudge the MTU by the encapsulation size.  This
-			 * makes us incompatible with strictly compliant
-			 * 802.1Q implementations, but allows us to use
-			 * the feature with other NetBSD implementations,
-			 * which might still be useful.
-			 */
-			ifv->ifv_mtufudge = ifv->ifv_encaplen;
+			ec->ec_nvlans++;
 		}
 
 		/*
@@ -386,16 +372,9 @@ vlan_unconfig(struct ifnet *ifp)
 	switch (p->if_type) {
 	case IFT_ETHER:
 	    {
-		struct ethercom *ec = (void *) p;
-
-		if (ec->ec_nvlans-- == 1) {
-			/*
-			 * Disable Tx/Rx of VLAN-sized frames.
-			 */
-			ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
-			if (p->if_flags & IFF_UP)
-				(void)if_flags_set(p, p->if_flags);
-		}
+		struct ethercom *ec = (void *)p;
+		if (--ec->ec_nvlans == 0)
+			(void)ether_disable_vlan_mtu(p);
 
 		ether_ifdetach(ifp);
 		/* Restore vlan_ioctl overwritten by ether_ifdetach */

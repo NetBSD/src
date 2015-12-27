@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_driver.c,v 1.131 2012/12/10 08:36:03 msaitoh Exp $	*/
+/*	$NetBSD: rf_driver.c,v 1.131.14.1 2015/12/27 12:09:58 skrll Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.131 2012/12/10 08:36:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_driver.c,v 1.131.14.1 2015/12/27 12:09:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_diagnostic.h"
@@ -158,16 +158,21 @@ static void rf_alloc_mutex_cond(RF_Raid_t *);
 
 /* called at system boot time */
 int
-rf_BootRaidframe(void)
+rf_BootRaidframe(bool boot)
 {
 
-	if (raidframe_booted)
-		return (EBUSY);
-	raidframe_booted = 1;
-	rf_init_mutex2(configureMutex, IPL_NONE);
- 	configureCount = 0;
-	isconfigged = 0;
-	globalShutdown = NULL;
+	if (boot) {
+		if (raidframe_booted)
+			return (EBUSY);
+		raidframe_booted = 1;
+		rf_init_mutex2(configureMutex, IPL_NONE);
+ 		configureCount = 0;
+		isconfigged = 0;
+		globalShutdown = NULL;
+	} else {
+		rf_destroy_mutex2(configureMutex);
+		raidframe_booted = 0;
+	}
 	return (0);
 }
 

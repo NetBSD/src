@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_rng.c,v 1.2.2.2 2015/09/22 12:05:47 skrll Exp $ */
+/*	$NetBSD: ingenic_rng.c,v 1.2.2.3 2015/12/27 12:09:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael McConville
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_rng.c,v 1.2.2.2 2015/09/22 12:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_rng.c,v 1.2.2.3 2015/12/27 12:09:38 skrll Exp $");
 
 /*
  * adapted from Jared McNeill's amlogic_rng.c
@@ -79,32 +79,28 @@ CFATTACH_DECL_NEW(ingenic_rng, sizeof(struct ingenic_rng_softc),
 static int
 ingenic_rng_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct apbus_attach_args *aa = aux;
+	const struct apbus_attach_args *aa = aux;
 
-	if (strcmp(aa->aa_name, "jzrng") == 0) {
-		return 1;
-	} else {
-		return 0;
-	}
+	return !(strcmp(aa->aa_name, "jzrng"));
 }
 
 static void
 ingenic_rng_attach(device_t parent, device_t self, void *aux)
 {
 	struct ingenic_rng_softc * const sc = device_private(self);
-	struct apbus_attach_args * const aa = aux;
+	const struct apbus_attach_args * const aa = aux;
+	bus_addr_t addr = aa->aa_addr;
 	int error;
 
 	sc->sc_dev = self;
 	sc->sc_bst = aa->aa_bst;
-	if (aa->aa_addr == 0) {
-		aa->aa_addr = JZ_RNG;
-	}
+	if (addr == 0)
+		addr = JZ_RNG;
 
-	error = bus_space_map(aa->aa_bst, aa->aa_addr, 4, 0, &sc->sc_bsh);
+	error = bus_space_map(aa->aa_bst, addr, 4, 0, &sc->sc_bsh);
 	if (error) {
 		aprint_error_dev(self,
-			"can't map registers for %s: %d\n", aa->aa_name, error);
+		    "can't map registers for %s: %d\n", aa->aa_name, error);
 		return;
 	}
 
@@ -135,10 +131,7 @@ ingenic_rng_get(struct ingenic_rng_softc *sc)
 
 	mutex_spin_enter(&sc->sc_intr_lock);
 	while (sc->sc_bytes_wanted) {
-		bus_space_read_region_4(sc->sc_bst, sc->sc_bsh, 0, &data, 1);
-#if 0
-		device_printf(sc->sc_dev, "random output: %x\n", data);
-#endif
+		data = bus_space_read_4(sc->sc_bst, sc->sc_bsh, 0);
 		mutex_spin_exit(&sc->sc_intr_lock);
 		mutex_spin_enter(&sc->sc_rnd_lock);
 		rnd_add_data(&sc->sc_rndsource, &data, sizeof(data),
@@ -157,14 +150,14 @@ ingenic_rng_get_cb(size_t bytes_wanted, void *priv)
 	struct ingenic_rng_softc * const sc = priv;
 
 	mutex_spin_enter(&sc->sc_intr_lock);
-	if (sc->sc_bytes_wanted == 0) {
+	if (sc->sc_bytes_wanted == 0)
 		softint_schedule(sc->sc_sih);
-	}
-	if (bytes_wanted > (UINT_MAX - sc->sc_bytes_wanted)) {
+
+	if (bytes_wanted > (UINT_MAX - sc->sc_bytes_wanted))
 		sc->sc_bytes_wanted = UINT_MAX;
-	} else {
+	else
 		sc->sc_bytes_wanted += bytes_wanted;
-	}
+
 	mutex_spin_exit(&sc->sc_intr_lock);
 }
 

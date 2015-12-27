@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.150.2.3 2015/09/22 12:06:15 skrll Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.150.2.4 2015/12/27 12:10:16 skrll Exp $
 #
 
 .include "${RUMPTOP}/Makefile.rump"
@@ -6,6 +6,8 @@
 .include <bsd.own.mk>
 
 LIB=		rump
+COMMENT=	Rump kernel base
+
 MAN=		rump.3 rump_lwproc.3
 
 .PATH:	${RUMPTOP}/librump/rumpkern				\

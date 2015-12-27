@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.258 2014/08/12 13:53:49 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.258.2.1 2015/12/27 12:09:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.258 2014/08/12 13:53:49 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.258.2.1 2015/12/27 12:09:43 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1296,7 +1296,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 		if ((node = findnode(node0, sp)) == 0) {
 			if (ssp->flags & BS_OPTIONAL) continue;
 			printf("could not find %s in OPENPROM\n", sp);
-			panic(sp);
+			panic("%s", sp);
 		}
 
 		memset(&ma, 0, sizeof ma);
@@ -1318,7 +1318,7 @@ extern struct sparc_bus_space_tag mainbus_space_tag;
 
 		if (config_found(dev, (void *)&ma, mbprint) == NULL) {
 			if (ssp->flags & BS_OPTIONAL) continue;
-			panic(sp);
+			panic("%s", sp);
 		}
 	}
 

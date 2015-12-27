@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187.2.1 2015/04/06 15:18:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.187.2.2 2015/12/27 12:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.2 2015/12/27 12:09:45 skrll Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -191,10 +191,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187.2.1 2015/04/06 15:18:04 skrll Exp $")
 #include <sys/intr.h>
 #include <sys/xcall.h>
 #include <sys/kcore.h>
-#include <sys/kmem.h>
-#include <sys/pserialize.h>
 
 #include <uvm/uvm.h>
+#include <uvm/pmap/pmap_pvt.h>
 
 #include <dev/isa/isareg.h>
 
@@ -460,120 +459,6 @@ pvhash_remove(struct pv_hash_head *hh, struct vm_page *ptp, vaddr_t va)
 		prev = pve;
 	}
 	return pve;
-}
-
-/*
- * unmanaged pv-tracked ranges
- *
- * This is a linear list for now because the only user are the DRM
- * graphics drivers, with a single tracked range per device, for the
- * graphics aperture, so there are expected to be few of them.
- *
- * This is used only after the VM system is initialized well enough
- * that we can use kmem_alloc.
- */
-
-struct pv_track {
-	paddr_t			pvt_start;
-	psize_t			pvt_size;
-	struct pv_track		*pvt_next;
-	struct pmap_page	pvt_pages[];
-};
-
-static struct {
-	kmutex_t	lock;
-	pserialize_t	psz;
-	struct pv_track	*list;
-} pv_unmanaged __cacheline_aligned;
-
-void
-pmap_pv_init(void)
-{
-
-	mutex_init(&pv_unmanaged.lock, MUTEX_DEFAULT, IPL_VM);
-	pv_unmanaged.psz = pserialize_create();
-	pv_unmanaged.list = NULL;
-}
-
-void
-pmap_pv_track(paddr_t start, psize_t size)
-{
-	struct pv_track *pvt;
-	size_t npages;
-
-	KASSERT(start == trunc_page(start));
-	KASSERT(size == trunc_page(size));
-
-	npages = size >> PAGE_SHIFT;
-	pvt = kmem_zalloc(offsetof(struct pv_track, pvt_pages[npages]),
-	    KM_SLEEP);
-	pvt->pvt_start = start;
-	pvt->pvt_size = size;
-
-	mutex_enter(&pv_unmanaged.lock);
-	pvt->pvt_next = pv_unmanaged.list;
-	membar_producer();
-	pv_unmanaged.list = pvt;
-	mutex_exit(&pv_unmanaged.lock);
-}
-
-void
-pmap_pv_untrack(paddr_t start, psize_t size)
-{
-	struct pv_track **pvtp, *pvt;
-	size_t npages;
-
-	KASSERT(start == trunc_page(start));
-	KASSERT(size == trunc_page(size));
-
-	mutex_enter(&pv_unmanaged.lock);
-	for (pvtp = &pv_unmanaged.list;
-	     (pvt = *pvtp) != NULL;
-	     pvtp = &pvt->pvt_next) {
-		if (pvt->pvt_start != start)
-			continue;
-		if (pvt->pvt_size != size)
-			panic("pmap_pv_untrack: pv-tracking at 0x%"PRIxPADDR
-			    ": 0x%"PRIxPSIZE" bytes, not 0x%"PRIxPSIZE" bytes",
-			    pvt->pvt_start, pvt->pvt_size, size);
-		*pvtp = pvt->pvt_next;
-		pserialize_perform(pv_unmanaged.psz);
-		pvt->pvt_next = NULL;
-		goto out;
-	}
-	panic("pmap_pv_untrack: pages not pv-tracked at 0x%"PRIxPADDR
-	    " (0x%"PRIxPSIZE" bytes)",
-	    start, size);
-out:	mutex_exit(&pv_unmanaged.lock);
-
-	npages = size >> PAGE_SHIFT;
-	kmem_free(pvt, offsetof(struct pv_track, pvt_pages[npages]));
-}
-
-static struct pmap_page *
-pmap_pv_tracked(paddr_t pa)
-{
-	struct pv_track *pvt;
-	size_t pgno;
-	int s;
-
-	KASSERT(pa == trunc_page(pa));
-
-	s = pserialize_read_enter();
-	for (pvt = pv_unmanaged.list; pvt != NULL; pvt = pvt->pvt_next) {
-		membar_datadep_consumer();
-		if ((pvt->pvt_start <= pa) &&
-		    ((pa - pvt->pvt_start) < pvt->pvt_size))
-			break;
-	}
-	pserialize_read_exit(s);
-
-	if (pvt == NULL)
-		return NULL;
-	KASSERT(pvt->pvt_start <= pa);
-	KASSERT((pa - pvt->pvt_start) < pvt->pvt_size);
-	pgno = (pa - pvt->pvt_start) >> PAGE_SHIFT;
-	return &pvt->pvt_pages[pgno];
 }
 
 /*

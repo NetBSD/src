@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.492.2.3 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.492.2.4 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.3 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.492.2.4 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -360,13 +360,20 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 }
 
 static int
-mount_get_vfsops(const char *fstype, struct vfsops **vfsops)
+mount_get_vfsops(const char *fstype, enum uio_seg type_seg,
+    struct vfsops **vfsops)
 {
 	char fstypename[sizeof(((struct statvfs *)NULL)->f_fstypename)];
 	int error;
 
-	/* Copy file-system type from userspace.  */
-	error = copyinstr(fstype, fstypename, sizeof(fstypename), NULL);
+	if (type_seg == UIO_USERSPACE) {
+		/* Copy file-system type from userspace.  */
+		error = copyinstr(fstype, fstypename, sizeof(fstypename), NULL);
+	} else {
+		error = copystr(fstype, fstypename, sizeof(fstypename), NULL);
+		KASSERT(error == 0);
+	}
+
 	if (error) {
 		/*
 		 * Historically, filesystem types were identified by numbers.
@@ -445,25 +452,22 @@ sys___mount50(struct lwp *l, const struct sys___mount50_args *uap, register_t *r
 		syscallarg(size_t) data_len;
 	} */
 
-	return do_sys_mount(l, NULL, SCARG(uap, type), SCARG(uap, path),
+	return do_sys_mount(l, SCARG(uap, type), UIO_USERSPACE, SCARG(uap, path),
 	    SCARG(uap, flags), SCARG(uap, data), UIO_USERSPACE,
 	    SCARG(uap, data_len), retval);
 }
 
 int
-do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
+do_sys_mount(struct lwp *l, const char *type, enum uio_seg type_seg,
     const char *path, int flags, void *data, enum uio_seg data_seg,
     size_t data_len, register_t *retval)
 {
+	struct vfsops *vfsops = NULL;	/* XXX gcc4.8 */
 	struct vnode *vp;
 	void *data_buf = data;
 	bool vfsopsrele = false;
 	size_t alloc_sz = 0;
 	int error;
-
-	/* XXX: The calling convention of this routine is totally bizarre */
-	if (vfsops)
-		vfsopsrele = true;
 
 	/*
 	 * Get vnode to be covered
@@ -474,16 +478,14 @@ do_sys_mount(struct lwp *l, struct vfsops *vfsops, const char *type,
 		goto done;
 	}
 
-	if (vfsops == NULL) {
-		if (flags & (MNT_GETARGS | MNT_UPDATE)) {
-			vfsops = vp->v_mount->mnt_op;
-		} else {
-			/* 'type' is userspace */
-			error = mount_get_vfsops(type, &vfsops);
-			if (error != 0)
-				goto done;
-			vfsopsrele = true;
-		}
+	if (flags & (MNT_GETARGS | MNT_UPDATE)) {
+		vfsops = vp->v_mount->mnt_op;
+	} else {
+		/* 'type' is userspace */
+		error = mount_get_vfsops(type, type_seg, &vfsops);
+		if (error != 0)
+			goto done;
+		vfsopsrele = true;
 	}
 
 	/*
@@ -2759,15 +2761,16 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 		goto out;
 	}
 
+	vn_lock(vp, LK_SHARED | LK_RETRY);
+
 	switch (SCARG(uap, whence)) {
 	case SEEK_CUR:
 		newoff = fp->f_offset + SCARG(uap, offset);
 		break;
 	case SEEK_END:
-		vn_lock(vp, LK_SHARED | LK_RETRY);
 		error = VOP_GETATTR(vp, &vattr, cred);
-		VOP_UNLOCK(vp);
 		if (error) {
+			VOP_UNLOCK(vp);
 			goto out;
 		}
 		newoff = SCARG(uap, offset) + vattr.va_size;
@@ -2777,8 +2780,10 @@ sys_lseek(struct lwp *l, const struct sys_lseek_args *uap, register_t *retval)
 		break;
 	default:
 		error = EINVAL;
+		VOP_UNLOCK(vp);
 		goto out;
 	}
+	VOP_UNLOCK(vp);
 	if ((error = VOP_SEEK(vp, fp->f_offset, newoff, cred)) == 0) {
 		*(off_t *)retval = fp->f_offset = newoff;
 	}

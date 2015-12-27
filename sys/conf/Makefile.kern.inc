@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.inc,v 1.183.2.2 2015/09/22 12:05:56 skrll Exp $
+#	$NetBSD: Makefile.kern.inc,v 1.183.2.3 2015/12/27 12:09:48 skrll Exp $
 #
 # This file contains common `MI' targets and definitions and it is included
 # at the bottom of each `MD' ${MACHINE}/conf/Makefile.${MACHINE}.
@@ -305,6 +305,16 @@ ${_s:T:R}.o: ${_s}
 .endfor
 .endif # !___USE_SUFFIX_RULES___
 
+.include "${S}/conf/ldscript.mk"
+.include "${S}/conf/assym.mk"
+.include "${S}/conf/newvers.mk"
+.include "${S}/dev/splash/splash.mk"
+.include "${S}/conf/mdroot.mk"
+.include "${S}/conf/lint.mk"
+.include "${S}/conf/cscope.mk"
+.include "${S}/conf/gdbinit.mk"
+.include "${S}/conf/ssp.mk"
+
 ##
 ## (7) misc targets: install, clean(dir), depend(all), lint, links, tags,
 ##                   cscope, mkid
@@ -350,14 +360,14 @@ dependall: depend .WAIT all
 MKDEP_AFLAGS?=	${AFLAGS}
 MKDEP_CFLAGS?=	${CFLAGS}
 .if !defined(___USE_SUFFIX_RULES___)
-DEPS=	${SRCS:T:R:S/$/.d/g}
+DEPS+=	${SRCS:T:R:S/$/.d/g}
 .else
-DEPS=	${SRCS:R:S/$/.d/g}
+DEPS+=	${SRCS:R:S/$/.d/g}
 .endif
 
 .if !defined(___USE_SUFFIX_RULES___)
 .for _s in ${SSRCS}
-.if !target(${_s:T:R}.d)
+.if !commands(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET}.tmp -- ${MKDEP_AFLAGS} \
@@ -367,7 +377,7 @@ ${_s:T:R}.d: ${_s}
 .endfor
 
 .for _s in ${CSRCS}
-.if !target(${_s:T:R}.d)
+.if !commands(${_s:T:R}.d)
 ${_s:T:R}.d: ${_s}
 	${_MKTARGET_CREATE}
 	${MKDEP} -f ${.TARGET}.tmp -- ${MKDEP_CFLAGS} \
@@ -406,16 +416,6 @@ install-kernel-${MACHINE_NAME}:
 .endfor
 .endif
 .endif
-
-.include "${S}/conf/ldscript.mk"
-.include "${S}/conf/assym.mk"
-.include "${S}/conf/newvers.mk"
-.include "${S}/dev/splash/splash.mk"
-.include "${S}/conf/mdroot.mk"
-.include "${S}/conf/lint.mk"
-.include "${S}/conf/cscope.mk"
-.include "${S}/conf/gdbinit.mk"
-.include "${S}/conf/ssp.mk"
 
 ##
 ## the kernel

@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.8 2014/03/13 01:45:33 pooka Exp $
+#	$NetBSD: Makefile,v 1.8.6.1 2015/12/27 12:10:14 skrll Exp $
 #
 
 .PATH:  ${.CURDIR}/../../../../fs/puffs
 
 LIB=	rumpfs_syspuffs
+COMMENT=puffs in-kernel driver
 
 SRCS=	puffs_msgif.c puffs_node.c puffs_subr.c puffs_vfsops.c puffs_vnops.c
 SRCS+=	puffs_compat.c

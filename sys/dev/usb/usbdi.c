@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.38 2015/12/21 15:26:40 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.39 2015/12/27 12:10:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.38 2015/12/21 15:26:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.39 2015/12/27 12:10:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -316,18 +316,31 @@ usbd_transfer(struct usbd_xfer *xfer)
 	err = pipe->up_methods->upm_transfer(xfer);
 	USBHIST_LOG(usbdebug, "<- done transfer %p, err = %d", xfer, err, 0, 0);
 
+	if (err != USBD_IN_PROGRESS && err) {
+		/*
+		 * The transfer made it onto the pipe queue, but didn't get
+		 * accepted by the HCD for some reason.  It needs removing
+		 * from the pipe queue.
+		 */
+		usbd_lock_pipe(pipe);
+		SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
+		usbd_start_next(pipe);
+		usbd_unlock_pipe(pipe);
+	}
+
 	if (!(flags & USBD_SYNCHRONOUS)) {
-		USBHIST_LOG(usbdebug, "<- done xfer %p, not sync", xfer, 0, 0,
-		    0);
+		USBHIST_LOG(usbdebug, "<- done xfer %p, not sync (err %d)",
+		    xfer, err, 0, 0);
 		return err;
 	}
 
-	/* Sync transfer, wait for completion. */
 	if (err != USBD_IN_PROGRESS) {
 		USBHIST_LOG(usbdebug, "<- done xfer %p, err %d (complete/error)", xfer,
 		    err, 0, 0);
 		return err;
 	}
+
+	/* Sync transfer, wait for completion. */
 	usbd_lock_pipe(pipe);
 	while (!xfer->ux_done) {
 		if (pipe->up_dev->ud_bus->ub_usepolling)
@@ -1026,7 +1039,9 @@ usbd_start_next(struct usbd_pipe *pipe)
 	KASSERT(pipe != NULL);
 	KASSERT(pipe->up_methods != NULL);
 	KASSERT(pipe->up_methods->upm_start != NULL);
-	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
+
+	int polling = pipe->up_dev->ud_bus->ub_usepolling;
+	KASSERT(polling || mutex_owned(pipe->up_dev->ud_bus->ub_lock));
 
 	/* Get next request in queue. */
 	xfer = SIMPLEQ_FIRST(&pipe->up_queue);
@@ -1034,9 +1049,11 @@ usbd_start_next(struct usbd_pipe *pipe)
 	if (xfer == NULL) {
 		pipe->up_running = 0;
 	} else {
-		mutex_exit(pipe->up_dev->ud_bus->ub_lock);
+		if (!polling)
+			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
 		err = pipe->up_methods->upm_start(xfer);
-		mutex_enter(pipe->up_dev->ud_bus->ub_lock);
+		if (!polling)
+			mutex_enter(pipe->up_dev->ud_bus->ub_lock);
 
 		if (err != USBD_IN_PROGRESS) {
 			USBHIST_LOG(usbdebug, "error = %d", err, 0, 0, 0);
@@ -1045,7 +1062,7 @@ usbd_start_next(struct usbd_pipe *pipe)
 		}
 	}
 
-	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
+	KASSERT(polling || mutex_owned(pipe->up_dev->ud_bus->ub_lock));
 }
 
 usbd_status

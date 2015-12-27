@@ -371,7 +371,11 @@ static int ttm_copy_ttm_io_page(struct ttm_tt *ttm, void *dst,
 	kunmap_atomic(src);
 #else
 	if (pgprot_val(prot) != pgprot_val(PAGE_KERNEL))
+#ifdef __NetBSD__
+		vunmap(src, 1);
+#else
 		vunmap(src);
+#endif
 	else
 		kunmap(s);
 #endif

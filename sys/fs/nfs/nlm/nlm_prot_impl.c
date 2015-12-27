@@ -1,4 +1,4 @@
-/*	$NetBSD: nlm_prot_impl.c,v 1.1.1.1 2013/09/30 07:19:45 dholland Exp $	*/
+/*	$NetBSD: nlm_prot_impl.c,v 1.1.1.1.12.1 2015/12/27 12:10:04 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 Isilon Inc http://www.isilon.com/
  * Authors: Doug Rabson <dfr@rabson.org>
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("FreeBSD: head/sys/nlm/nlm_prot_impl.c 255333 2013-09-06 23:14:31Z rmacklem "); */
-__RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1 2013/09/30 07:19:45 dholland Exp $");
+__RCSID("$NetBSD: nlm_prot_impl.c,v 1.1.1.1.12.1 2015/12/27 12:10:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/fail.h>
@@ -1074,7 +1074,7 @@ nlm_find_host_by_addr(const struct sockaddr *addr, int vers)
 		break;
 #endif
 	default:
-		strcmp(tmp, "<unknown>");
+		strcpy(tmp, "<unknown>");
 	}
 
 

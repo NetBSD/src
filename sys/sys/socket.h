@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.h,v 1.110.4.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: socket.h,v 1.110.4.2 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -521,6 +521,7 @@ struct msghdr {
 #define	MSG_CMSG_CLOEXEC 0x0800		/* close on exec receiving fd */
 #define	MSG_NBIO	0x1000		/* use non-blocking I/O */
 #define	MSG_WAITFORONE	0x2000		/* recvmmsg() wait for one message */
+#define	MSG_NOTIFICATION 0x4000		/* SCTP notification */
 
 struct mmsghdr {
 	struct msghdr msg_hdr;

@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_io.c,v 1.9.2.4 2015/09/22 12:05:37 skrll Exp $ */
+/* $NetBSD: amlogic_io.c,v 1.9.2.5 2015/12/27 12:09:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.9.2.4 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_io.c,v 1.9.2.5 2015/12/27 12:09:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,6 +99,7 @@ amlogicio_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
+	amlogic_wdog_init();
 	amlogic_usbphy_init(0);
 	amlogic_usbphy_init(1);
 

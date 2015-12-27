@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_pmap.c,v 1.18.6.1 2015/04/06 15:18:00 skrll Exp $	*/
+/*	$NetBSD: booke_pmap.c,v 1.18.6.2 2015/12/27 12:09:40 skrll Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.18.6.1 2015/04/06 15:18:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_pmap.c,v 1.18.6.2 2015/12/27 12:09:40 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kcore.h>
@@ -196,9 +196,6 @@ pmap_bootstrap(vaddr_t startkernel, vaddr_t endkernel,
 	    + 16 * NCARGS
 	    + pager_map_size
 	    + maxproc * USPACE
-#ifdef SYSVSHM
-	    + NBPG * shminfo.shmall
-#endif
 	    + NBPG * nkmempages) >> SEGSHIFT;
 
 	/*

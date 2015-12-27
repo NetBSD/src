@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2011/12/06 18:12:25 njoly Exp $
+#	$NetBSD: Makefile,v 1.2.24.1 2015/12/27 12:10:15 skrll Exp $
 #
 
 S!=             cd ${.PARSEDIR}/../../../../;pwd
@@ -6,6 +6,7 @@ S!=             cd ${.PARSEDIR}/../../../../;pwd
 .include "${.CURDIR}/../../../../modules/solaris/Makefile.solmod"
 
 LIB=	rumpkern_solaris
+COMMENT=Solaris compatibility layer (for ZFS)
 
 CPPFLAGS+=	-DASSERT=KASSERT
 

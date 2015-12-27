@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.h,v 1.44.6.1 2015/06/06 14:40:05 skrll Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.h,v 1.44.6.2 2015/12/27 12:09:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -71,13 +71,6 @@
 /* from <sys/dkio.h> */
 typedef netbsd32_pointer_t netbsd32_disklabel_tp_t;
 typedef netbsd32_pointer_t netbsd32_partition_tp_t;
-struct netbsd32_partinfo {
-	netbsd32_disklabel_tp_t disklab;
-	netbsd32_partition_tp_t part;
-};
-#if 1
-#define DIOCGPART32	_IOW('d', 104, struct netbsd32_partinfo)	/* get partition */
-#endif
 
 #if 0	/* not implemented by anything */
 struct netbsd32_format_op {

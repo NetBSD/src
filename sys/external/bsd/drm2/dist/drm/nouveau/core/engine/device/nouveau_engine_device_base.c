@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_engine_device_base.c,v 1.3.2.1 2015/04/06 15:18:15 skrll Exp $	*/
+/*	$NetBSD: nouveau_engine_device_base.c,v 1.3.2.2 2015/12/27 12:10:01 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.3.2.1 2015/04/06 15:18:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_engine_device_base.c,v 1.3.2.2 2015/12/27 12:10:01 skrll Exp $");
 
 #include <core/object.h>
 #include <core/device.h>
@@ -177,8 +177,12 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 	if (!(args->disable & NV_DEVICE_DISABLE_IDENTIFY) &&
 	    !device->card_type) {
 #ifdef __NetBSD__
-		if (bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh) != 0)
+		if (mmio_size < 0x102000)
 			return -ENOMEM;
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh);
+		if (ret)
+			return ret;
 
 #ifndef __BIG_ENDIAN
 		if (bus_space_read_4(mmiot, mmioh, 4) != 0)
@@ -293,10 +297,11 @@ nouveau_devobj_ctor(struct nouveau_object *parent,
 #ifdef __NetBSD__
 	if (!(args->disable & NV_DEVICE_DISABLE_MMIO) &&
 	    !nv_subdev(device)->mmiosz) {
-		if (bus_space_map(mmiot, mmio_base, mmio_size, 0,
-			&nv_subdev(device)->mmioh) != 0) {
+		/* XXX errno NetBSD->Linux */
+		ret = -bus_space_map(mmiot, mmio_base, mmio_size, 0, &mmioh);
+		if (ret) {
 			nv_error(device, "unable to map device registers\n");
-			return -ENOMEM;
+			return ret;
 		}
 		nv_subdev(device)->mmiot = mmiot;
 		nv_subdev(device)->mmioh = mmioh;
@@ -528,8 +533,8 @@ nv_device_resource_tag(struct nouveau_device *device, unsigned int bar)
 		else
 			return pa->pa_iot;
 	} else {
-		/* XXX nouveau platform device */
-		panic("can't handle non-PCI nouveau devices");
+		KASSERT(bar < device->platformdev->nresource);
+		return device->platformdev->resource[bar].tag;
 	}
 }
 #endif
@@ -541,8 +546,9 @@ nv_device_resource_start(struct nouveau_device *device, unsigned int bar)
 		return pci_resource_start(device->pdev, bar);
 	} else {
 #ifdef __NetBSD__
-		/* XXX nouveau platform device */
-		panic("can't handle non-PCI nouveau devices");
+		if (bar >= device->platformdev->nresource)
+			return 0;
+		return device->platformdev->resource[bar].start;
 #else
 		struct resource *res;
 		res = platform_get_resource(device->platformdev,
@@ -561,8 +567,9 @@ nv_device_resource_len(struct nouveau_device *device, unsigned int bar)
 		return pci_resource_len(device->pdev, bar);
 	} else {
 #ifdef __NetBSD__
-		/* XXX nouveau platform device */
-		panic("can't handle non-PCI nouveau devices");
+		if (bar >= device->platformdev->nresource)
+			return 0;
+		return device->platformdev->resource[bar].len;
 #else
 		struct resource *res;
 		res = platform_get_resource(device->platformdev,

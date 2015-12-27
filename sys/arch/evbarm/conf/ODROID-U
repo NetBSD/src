@@ -1,5 +1,5 @@
 #
-#	$NetBSD: ODROID-U,v 1.17.2.1 2015/09/22 12:05:40 skrll Exp $
+#	$NetBSD: ODROID-U,v 1.17.2.2 2015/12/27 12:09:34 skrll Exp $
 #
 #	ODROID-U -- ODROID-U{2,3} series Exynos4x12(P) based kernel
 #
@@ -29,7 +29,7 @@ options 	EXYNOS_CONSOLE_EARLY
 #options  	UVMHIST
 #options  	UVMHIST_PRINT,KERNHIST_DELAY=0
 #options 	KERNHIST
-#options 	USBHIST
+#options 	USB_DEBUG
 #options 	USBHIST_SIZE=100000
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 options 	PMAP_NEED_ALLOC_POOLPAGE

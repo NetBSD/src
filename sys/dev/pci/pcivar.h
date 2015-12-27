@@ -1,4 +1,4 @@
-/*	$NetBSD: pcivar.h,v 1.100.2.3 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: pcivar.h,v 1.100.2.4 2015/12/27 12:09:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -278,14 +278,22 @@ int pci_find_rom(const struct pci_attach_args *, bus_space_tag_t,
 	    bus_space_handle_t, bus_size_t,
 	    int, bus_space_handle_t *, bus_size_t *);
 
-int pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
-int pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
+int	pci_get_capability(pci_chipset_tag_t, pcitag_t, int, int *, pcireg_t *);
+int	pci_get_ht_capability(pci_chipset_tag_t, pcitag_t, int, int *,
+	    pcireg_t *);
+int	pci_get_ext_capability(pci_chipset_tag_t, pcitag_t, int, int *,
+	    pcireg_t *);
+
 int	pci_msi_count(pci_chipset_tag_t, pcitag_t);
 int	pci_msix_count(pci_chipset_tag_t, pcitag_t);
 
 /*
  * Helper functions for autoconfiguration.
  */
+#ifndef PCI_MACHDEP_ENUMERATE_BUS
+int	pci_enumerate_bus(struct pci_softc *, const int *,
+	    int (*)(const struct pci_attach_args *), struct pci_attach_args *);
+#endif
 int	pci_probe_device(struct pci_softc *, pcitag_t tag,
 	    int (*)(const struct pci_attach_args *),
 	    struct pci_attach_args *);
@@ -342,6 +350,20 @@ void	pci_chipset_tag_destroy(pci_chipset_tag_t);
 int	pci_bus_devorder(pci_chipset_tag_t, int, uint8_t *, int);
 void	*pci_intr_establish_xname(pci_chipset_tag_t, pci_intr_handle_t,
 				  int, int (*)(void *), void *, const char *);
+#ifndef __HAVE_PCI_MSI_MSIX
+typedef enum {
+	PCI_INTR_TYPE_INTX = 0,
+	PCI_INTR_TYPE_MSI,
+	PCI_INTR_TYPE_MSIX,
+	PCI_INTR_TYPE_SIZE,
+} pci_intr_type_t;
+
+pci_intr_type_t
+	pci_intr_type(pci_intr_handle_t);
+int	pci_intr_alloc(const struct pci_attach_args *, pci_intr_handle_t **,
+		       int *, pci_intr_type_t);
+void	pci_intr_release(pci_chipset_tag_t, pci_intr_handle_t *, int);
+#endif
 
 /*
  * Device abstraction for inheritance by elanpci(4), for example.
@@ -358,6 +380,11 @@ int pcirescan(device_t, const char *, const int *);
 #define	PCI_INTR_MPSAFE		1
 
 int	pci_intr_setattr(pci_chipset_tag_t, pci_intr_handle_t *, int, uint64_t);
+
+/*
+ * Local constants
+ */
+#define PCI_INTRSTR_LEN			64
 
 #endif /* _KERNEL */
 

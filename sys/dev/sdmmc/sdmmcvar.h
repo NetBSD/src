@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.15.6.2 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.15.6.3 2015/12/27 12:09:58 skrll Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -27,6 +27,7 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/callout.h>
+#include <sys/evcnt.h>
 
 #include <sys/bus.h>
 
@@ -114,6 +115,8 @@ struct sdmmc_command {
 #define SCF_RSP_SPI_S2	(1U << 11)
 #define SCF_RSP_SPI_B4	(1U << 12)
 #define SCF_RSP_SPI_BSY	(1U << 13)
+/* Probing */
+#define SCF_TOUT_OK	(1U << 14)	/* command timeout expected */
 /* response types */
 #define SCF_RSP_R0	0	/* none */
 #define SCF_RSP_R1	(SCF_RSP_PRESENT|SCF_RSP_CRC|SCF_RSP_IDX)
@@ -264,6 +267,12 @@ struct sdmmc_softc {
 	const char *sc_transfer_mode;	/* current transfer mode */
 
 	callout_t sc_card_detect_ch;	/* polling card insert/remove */
+
+	/* event counters */
+	struct evcnt sc_ev_xfer;	/* xfer count */
+	struct evcnt sc_ev_xfer_aligned[8]; /* aligned xfer counts */
+	struct evcnt sc_ev_xfer_unaligned; /* unaligned xfer count */
+	struct evcnt sc_ev_xfer_error;	/* error xfer count */
 };
 
 /*

@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.2.6.1 2015/09/22 12:06:13 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.6.2 2015/12/27 12:10:11 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/scsipi
 
 LIB=	rumpdev_scsipi
+COMMENT=SCSI & ATAPI mid-layer
+
 IOCONF=	SCSIPI.ioconf
 
 SRCS+=	scsipiconf.c scsipi_base.c scsipi_ioctl.c scsi_base.c scsiconf.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.102.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.102.2.4 2015/12/27 12:10:07 skrll Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.102.2.4 2015/12/27 12:10:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -350,7 +350,7 @@ nd6_ns_input(struct mbuf *m, int off, int icmp6len)
 void
 nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
     const struct in6_addr *taddr6,
-    struct llinfo_nd6 *ln,	/* for source address determination */
+    struct in6_addr *hsrc,
     int dad			/* duplicate address detection */)
 {
 	struct mbuf *m;
@@ -439,21 +439,6 @@ nd6_ns_output(struct ifnet *ifp, const struct in6_addr *daddr6,
 		 * - hsrc belongs to the outgoing interface.
 		 * Otherwise, we perform the source address selection as usual.
 		 */
-		struct ip6_hdr *hip6;		/* hold ip6 */
-		struct in6_addr *hsrc = NULL;
-
-		if (ln && ln->ln_hold) {
-			/*
-			 * assuming every packet in ln_hold has the same IP
-			 * header
-			 */
-			hip6 = mtod(ln->ln_hold, struct ip6_hdr *);
-			/* XXX pullup? */
-			if (sizeof(*hip6) < ln->ln_hold->m_len)
-				hsrc = &hip6->ip6_src;
-			else
-				hsrc = NULL;
-		}
 		if (hsrc && in6ifa_ifpwithaddr(ifp, hsrc))
 			src = hsrc;
 		else {
@@ -563,7 +548,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	char *lladdr = NULL;
 	int lladdrlen = 0;
 	struct ifaddr *ifa;
-	struct llinfo_nd6 *ln;
+	struct llentry *ln;
 	struct rtentry *rt = NULL;
 	struct sockaddr_dl *sdl;
 	union nd_opts ndopts;
@@ -667,7 +652,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 	 */
 	rt = nd6_lookup(&taddr6, 0, ifp);
 	if ((rt == NULL) ||
-	   ((ln = (struct llinfo_nd6 *)rt->rt_llinfo) == NULL) ||
+	   ((ln = rt->rt_llinfo) == NULL) ||
 	   ((sdl = satosdl(rt->rt_gateway)) == NULL))
 		goto freeit;
 
@@ -691,11 +676,11 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			ln->ln_byhint = 0;
 			if (!ND6_LLINFO_PERMANENT(ln)) {
 				nd6_llinfo_settimer(ln,
-				    (long)ND_IFINFO(rt->rt_ifp)->reachable * hz);
+				    ND_IFINFO(ln->lle_tbl->llt_ifp)->reachable * hz);
 			}
 		} else {
 			ln->ln_state = ND6_LLINFO_STALE;
-			nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+			nd6_llinfo_settimer(ln, nd6_gctimer * hz);
 		}
 		if ((ln->ln_router = is_router) != 0) {
 			/*
@@ -749,7 +734,7 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 			 */
 			if (ln->ln_state == ND6_LLINFO_REACHABLE) {
 				ln->ln_state = ND6_LLINFO_STALE;
-				nd6_llinfo_settimer(ln, (long)nd6_gctimer * hz);
+				nd6_llinfo_settimer(ln, nd6_gctimer * hz);
 			}
 			goto freeit;
 		} else if (is_override				   /* (2a) */
@@ -773,13 +758,13 @@ nd6_na_input(struct mbuf *m, int off, int icmp6len)
 				ln->ln_byhint = 0;
 				if (!ND6_LLINFO_PERMANENT(ln)) {
 					nd6_llinfo_settimer(ln,
-					    (long)ND_IFINFO(ifp)->reachable * hz);
+					    ND_IFINFO(ifp)->reachable * hz);
 				}
 			} else {
 				if (lladdr && llchange) {
 					ln->ln_state = ND6_LLINFO_STALE;
 					nd6_llinfo_settimer(ln,
-					    (long)nd6_gctimer * hz);
+					    nd6_gctimer * hz);
 				}
 			}
 		}

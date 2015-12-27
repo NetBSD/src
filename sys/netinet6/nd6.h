@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.60.2.2 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: nd6.h,v 1.60.2.3 2015/12/27 12:10:07 skrll Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -35,21 +35,6 @@
 
 #include <sys/queue.h>
 #include <sys/callout.h>
-
-struct	llinfo_nd6 {
-	struct	llinfo_nd6 *ln_next;
-	struct	llinfo_nd6 *ln_prev;
-	struct	rtentry *ln_rt;
-	struct	mbuf *ln_hold;	/* last packet until resolved/timeout */
-	long	ln_asked;	/* number of queries already sent for this addr */
-	u_long	ln_expire;	/* lifetime for NDP state transition */
-	short	ln_state;	/* reachability state */
-	short	ln_router;	/* 2^0: ND6 router bit */
-	int	ln_byhint;	/* # of times we made it reachable by UL hint */
-
-	long	ln_ntick;
-	struct callout ln_timer_ch;
-};
 
 #define ND6_LLINFO_PURGE	-3
 #define ND6_LLINFO_NOSTATE	-2
@@ -361,7 +346,6 @@ extern int nd6_mmaxtries;
 extern int nd6_useloopback;
 extern int nd6_maxnudhint;
 extern int nd6_gctimer;
-extern struct llinfo_nd6 llinfo_nd6;
 extern struct nd_drhead nd_defrouter;
 extern struct nd_prhead nd_prefix;
 extern int nd6_debug;
@@ -403,6 +387,8 @@ union nd_opts {
 #define nd_opts_last		nd_opt_each.last
 #define nd_opts_done		nd_opt_each.done
 
+#include <net/if_llatbl.h>
+
 /* XXX: need nd6_var.h?? */
 /* nd6.c */
 void nd6_init(void);
@@ -414,7 +400,8 @@ struct nd_opt_hdr *nd6_option(union nd_opts *);
 int nd6_options(union nd_opts *);
 struct	rtentry *nd6_lookup(const struct in6_addr *, int, struct ifnet *);
 void nd6_setmtu(struct ifnet *);
-void nd6_llinfo_settimer(struct llinfo_nd6 *, long);
+void nd6_llinfo_settimer(struct llentry *, time_t);
+void nd6_llinfo_settimer_locked(struct llentry *, time_t);
 void nd6_timer(void *);
 void nd6_purge(struct ifnet *, struct in6_ifextra *);
 void nd6_nud_hint(struct rtentry *);
@@ -430,7 +417,7 @@ int nd6_storelladdr(const struct ifnet *, const struct rtentry *, struct mbuf *,
 	const struct sockaddr *, uint8_t *, size_t);
 int nd6_sysctl(int, void *, size_t *, void *, size_t);
 int nd6_need_cache(struct ifnet *);
-void nd6_llinfo_release_pkts(struct llinfo_nd6 *, struct ifnet *,
+void nd6_llinfo_release_pkts(struct llentry *, struct ifnet *,
     struct rtentry *);
 
 /* nd6_nbr.c */
@@ -439,7 +426,7 @@ void nd6_na_output(struct ifnet *, const struct in6_addr *,
 	const struct in6_addr *, u_long, int, const struct sockaddr *);
 void nd6_ns_input(struct mbuf *, int, int);
 void nd6_ns_output(struct ifnet *, const struct in6_addr *,
-	const struct in6_addr *, struct llinfo_nd6 *, int);
+	const struct in6_addr *, struct in6_addr *, int);
 const void *nd6_ifptomac(const struct ifnet *);
 void nd6_dad_start(struct ifaddr *, int);
 void nd6_dad_stop(struct ifaddr *);

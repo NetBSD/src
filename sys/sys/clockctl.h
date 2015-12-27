@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.h,v 1.15.42.1 2015/09/22 12:06:17 skrll Exp $ */
+/*      $NetBSD: clockctl.h,v 1.15.42.2 2015/12/27 12:10:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,7 @@ void    clockctlattach(int);
 int     clockctlopen(dev_t, int, int, struct lwp *);
 int     clockctlclose(dev_t, int, int, struct lwp *);
 int     clockctlioctl(dev_t, u_long, void *, int, struct lwp *);
+int	clockctl_init(void);
 #endif
 
 #endif /* _SYS_CLOCKCTL_H_ */

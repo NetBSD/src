@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.44.4.2 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: i2c.c,v 1.44.4.3 2015/12/27 12:09:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44.4.2 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44.4.3 2015/12/27 12:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.44.4.2 2015/06/06 14:40:07 skrll Exp $");
 #include <sys/kernel.h>
 #include <sys/fcntl.h>
 #include <sys/module.h>
+#include <sys/once.h>
+#include <sys/mutex.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -72,6 +74,13 @@ struct iic_softc {
 static dev_type_open(iic_open);
 static dev_type_close(iic_close);
 static dev_type_ioctl(iic_ioctl);
+
+int iic_init(void);
+
+kmutex_t iic_mtx;
+int iic_refcnt;
+
+ONCE_DECL(iic_once);
 
 const struct cdevsw iic_cdevsw = {
 	.d_open = iic_open,
@@ -208,11 +217,17 @@ iic_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
-	props = device_properties(parent);
-	if (!prop_dictionary_get_bool(props, "i2c-indirect-config",
-	    &indirect_config))
-		indirect_config = true;
-	child_devices = prop_dictionary_get(props, "i2c-child-devices");
+	if (iba->iba_child_devices) {
+		child_devices = iba->iba_child_devices;
+		indirect_config = false;
+	} else {
+		props = device_properties(parent);
+		if (!prop_dictionary_get_bool(props, "i2c-indirect-config",
+		    &indirect_config))
+			indirect_config = true;
+		child_devices = prop_dictionary_get(props, "i2c-child-devices");
+	}
+
 	if (child_devices) {
 		unsigned int i, count;
 		prop_dictionary_t dev;
@@ -475,8 +490,13 @@ iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
 {
 	struct iic_softc *sc = device_lookup_private(&iic_cd, minor(dev));
 
-	if (sc == NULL)
+	mutex_enter(&iic_mtx);
+	if (sc == NULL) {
+		mutex_exit(&iic_mtx);
 		return ENXIO;
+	}
+	iic_refcnt++;
+	mutex_exit(&iic_mtx);
 
 	return 0;
 }
@@ -484,6 +504,11 @@ iic_open(dev_t dev, int flag, int fmt, lwp_t *l)
 static int
 iic_close(dev_t dev, int flag, int fmt, lwp_t *l)
 {
+
+	mutex_enter(&iic_mtx);
+	iic_refcnt--;
+	mutex_exit(&iic_mtx);
+
 	return 0;
 }
 
@@ -579,27 +604,66 @@ MODULE(MODULE_CLASS_DRIVER, iic, "i2cexec");
 #include "ioconf.c"
 #endif
 
+int
+iic_init(void)
+{
+
+	mutex_init(&iic_mtx, MUTEX_DEFAULT, IPL_NONE);
+	iic_refcnt = 0;
+	return 0;
+}
+
 static int
 iic_modcmd(modcmd_t cmd, void *opaque)
 {
+#ifdef _MODULE
+	int bmajor, cmajor;
+#endif
 	int error;
 
 	error = 0;
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		RUN_ONCE(&iic_once, iic_init);
+
 #ifdef _MODULE
+		mutex_enter(&iic_mtx);
+		bmajor = cmajor = -1;
+		error = devsw_attach("iic", NULL, &bmajor,
+		    &iic_cdevsw, &cmajor);
+		if (error != 0) {
+			mutex_exit(&iic_mtx);
+			break;
+		}
 		error = config_init_component(cfdriver_ioconf_iic,
 		    cfattach_ioconf_iic, cfdata_ioconf_iic);
-		if (error)
+		if (error) {
 			aprint_error("%s: unable to init component\n",
 			    iic_cd.cd_name);
+			(void)devsw_detach(NULL, &iic_cdevsw);
+		}
+		mutex_exit(&iic_mtx);
 #endif
 		break;
 	case MODULE_CMD_FINI:
+		mutex_enter(&iic_mtx);
+		if (iic_refcnt != 0) {
+			mutex_exit(&iic_mtx);
+			return EBUSY;
+		}
 #ifdef _MODULE
-		config_fini_component(cfdriver_ioconf_iic,
+		error = config_fini_component(cfdriver_ioconf_iic,
 		    cfattach_ioconf_iic, cfdata_ioconf_iic);
+		if (error != 0) {
+			mutex_exit(&iic_mtx);
+			break;
+		}
+		error = devsw_detach(NULL, &iic_cdevsw);
+		if (error != 0)
+			config_init_component(cfdriver_ioconf_iic,
+			    cfattach_ioconf_iic, cfdata_ioconf_iic);
 #endif
+		mutex_exit(&iic_mtx);
 		break;
 	default:
 		error = ENOTTY;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_gio.c,v 1.13.6.1 2015/04/06 15:18:01 skrll Exp $	*/
+/*	$NetBSD: pci_gio.c,v 1.13.6.2 2015/12/27 12:09:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.13.6.1 2015/04/06 15:18:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_gio.c,v 1.13.6.2 2015/12/27 12:09:42 skrll Exp $");
 
 /*
  * Glue for PCI devices that are connected to the GIO bus by various little
@@ -250,6 +250,9 @@ giopci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	int bus, dev, func;
 	pcireg_t data;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	if (bus != 0 || dev != 0 || func != 0)
 		return (0);
@@ -272,6 +275,9 @@ giopci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct giopci_softc *sc = pc->cookie;
 	int bus, dev, func;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	if (bus != 0 || dev != 0 || func != 0)

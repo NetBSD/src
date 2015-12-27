@@ -1,4 +1,4 @@
-/*	$NetBSD: dk.c,v 1.75.2.2 2015/09/22 12:05:57 skrll Exp $	*/
+/*	$NetBSD: dk.c,v 1.75.2.3 2015/12/27 12:09:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.75.2.2 2015/09/22 12:05:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dk.c,v 1.75.2.3 2015/12/27 12:09:49 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dkwedge.h"
@@ -267,7 +267,7 @@ dk_set_geometry(struct dkwedge_softc *sc, struct disk *pdk)
 
 	memset(dg, 0, sizeof(*dg));
 
-	dg->dg_secperunit = sc->sc_size >> pdk->dk_blkshift;
+	dg->dg_secperunit = sc->sc_size;
 	dg->dg_secsize = DEV_BSIZE << pdk->dk_blkshift;
 
 	/* fake numbers, 1 cylinder is 1 MB with default sector size */
@@ -464,10 +464,12 @@ dkwedge_add(struct dkwedge_info *dkw)
 	sc->sc_state = DKW_STATE_RUNNING;
 
 	/* Announce our arrival. */
-	aprint_normal("%s at %s: %s\n", device_xname(sc->sc_dev), pdk->dk_name,
-	    sc->sc_wname);	/* XXX Unicode */
-	aprint_normal("%s: %"PRIu64" blocks at %"PRId64", type: %s\n",
-	    device_xname(sc->sc_dev), sc->sc_size, sc->sc_offset, sc->sc_ptype);
+	aprint_normal(
+	    "%s at %s: \"%s\", %"PRIu64" blocks at %"PRId64", type: %s\n",
+	    device_xname(sc->sc_dev), pdk->dk_name,
+	    sc->sc_wname,	/* XXX Unicode */
+	    sc->sc_size, sc->sc_offset,
+	    sc->sc_ptype[0] == '\0' ? "<unknown>" : sc->sc_ptype);
 
 	return (0);
 }
@@ -682,8 +684,6 @@ dkwedge_delall1(struct disk *pdk, bool idleonly)
  * dkwedge_list:	[exported function]
  *
  *	List all of the wedges on a particular disk.
- *	If p == NULL, the buffer is in kernel space.  Otherwise, it is
- *	in user space of the specified process.
  */
 int
 dkwedge_list(struct disk *pdk, struct dkwedge_list *dkwl, struct lwp *l)

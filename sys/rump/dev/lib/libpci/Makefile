@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.2.2 2015/09/22 12:06:13 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.2.3 2015/12/27 12:10:09 skrll Exp $
 #
 
 RUMPTOP= ${TOPRUMP}
@@ -8,6 +8,8 @@ RUMPTOP= ${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci
 
 LIB=	rumpdev_pci
+COMMENT=PCI bus support
+
 IOCONF=	PCI.ioconf
 
 SRCS+=	pci.c pci_map.c pci_quirks.c pci_subr.c pci_stub.c pci_usrreq.c
@@ -40,6 +42,11 @@ CPPFLAGS+=		${RUMPCOMP_CPPFLAGS.rumpdev_pci}
 
 # XXX: messy
 .undef RUMPKERN_ONLY
+
+.ifdef RUMPCOMP_MAKEFILEINC.rumpdev_pci
+.warning RUMPCOMP_MAKEFILEINC interface is unstable and may change
+.include "${RUMPCOMP_MAKEFILEINC.rumpdev_pci}"
+.endif
 
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>

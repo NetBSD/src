@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fddisubr.c,v 1.88.4.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_fddisubr.c,v 1.88.4.3 2015/12/27 12:10:06 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.2 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.3 2015/12/27 12:10:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -132,7 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_fddisubr.c,v 1.88.4.2 2015/09/22 12:06:10 skrll E
 #include <netinet/in.h>
 #include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
-#include "opt_gateway.h"
 #endif
 #include <net/if_fddi.h>
 
@@ -236,8 +235,8 @@ fddi_output(struct ifnet *ifp0, struct mbuf *m0, const struct sockaddr *dst,
 		else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr,
 			    (char *)edst);
-		} else if (!arpresolve(ifp, rt, m, dst, edst))
-			return (0);	/* if not yet resolved */
+		} else if ((error = arpresolve(ifp, rt, m, dst, edst)) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);

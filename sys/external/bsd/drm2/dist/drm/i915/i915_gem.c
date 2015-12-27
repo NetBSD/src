@@ -1772,7 +1772,8 @@ i915_gem_mmap_ioctl(struct drm_device *dev, void *data,
 
 #ifdef __NetBSD__
 	addr = (*curproc->p_emul->e_vm_default_addr)(curproc,
-	    (vaddr_t)curproc->p_vmspace->vm_daddr, args->size);
+	    (vaddr_t)curproc->p_vmspace->vm_daddr, args->size,
+	    curproc->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 	/* XXX errno NetBSD->Linux */
 	ret = -uvm_map(&curproc->p_vmspace->vm_map, &addr, args->size,
 	    obj->gemo_shm_uao, args->offset, 0,

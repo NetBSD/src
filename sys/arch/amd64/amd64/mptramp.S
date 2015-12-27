@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.17 2014/01/15 22:24:41 joerg Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.17.6.1 2015/12/27 12:09:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -69,10 +69,10 @@
  *
  * We startup the processors now when the kthreads become ready.
  * The steps are:
- *        1)   Get the processors running kernel-code from a special
- *                  page-table and stack page, do chip identification.
- *        2)   halt the processors waiting for them to be enabled
- *              by a idle-thread 
+ *     1) Get the processors running kernel-code from a special
+ *        page-table and stack page, do chip identification.
+ *     2) halt the processors waiting for them to be enabled
+ *        by a idle-thread 
  */
 	
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -120,40 +120,40 @@
 /* XXX ENTRY() */
 LABEL(cpu_spinup_trampoline)
 	cli
-	xorw    %ax,%ax
-	movw    %ax, %ds
-	movw    %ax, %es
-	movw    %ax, %ss
+	xorw	%ax,%ax
+	movw	%ax,%ds
+	movw	%ax,%es
+	movw	%ax,%ss
 #ifdef __clang__
-	lgdt (mptramp_gdt32_desc)   # load flat descriptor table
+	lgdt (mptramp_gdt32_desc)	/* load flat descriptor table */
 #else
-	data32 addr32 lgdt (mptramp_gdt32_desc)   # load flat descriptor table
+	data32 addr32 lgdt (mptramp_gdt32_desc)   /* load flat descriptor table */
 #endif
-	movl    %cr0, %eax       # get cr0
-	orl     $0x1, %eax      # enable protected mode
-	movl    %eax, %cr0      # doit
-	ljmpl    $0x8, $mp_startup
+	movl	%cr0, %eax	/* get cr0 */
+	orl	$0x1, %eax	/* enable protected mode */
+	movl	%eax, %cr0	/* doit */
+	ljmpl	$0x8, $mp_startup
 
 _TRMP_LABEL(mp_startup)
 	.code32
 
-	movl    $0x10, %eax     # data segment
-	movw    %ax, %ds
-	movw    %ax, %ss
-	movw    %ax, %es
-	movw    %ax, %fs
-	movw    %ax, %gs
-	
-	movl    $ (MP_TRAMPOLINE+NBPG-16),%esp       # bootstrap stack end,
-						     # with scratch space..
-	
+	movl	$0x10, %eax	/* data segment */
+	movw	%ax, %ds
+	movw	%ax, %ss
+	movw	%ax, %es
+	movw	%ax, %fs
+	movw	%ax, %gs
+
+	/* bootstrap stack end, with scratch space.. */
+	movl	$(MP_TRAMPOLINE+NBPG-16),%esp
+
 #ifdef MPDEBUG
-	leal    RELOC(cpu_trace),%edi       
+	leal	RELOC(cpu_trace),%edi
 #endif
 
 	HALT(0x1)
 	/* First, reset the PSL. */
-	pushl   $PSL_MBO
+	pushl	$PSL_MBO
 	popfl
 
 	movl	%cr4,%eax
@@ -171,19 +171,19 @@ _TRMP_LABEL(mp_startup)
 	orl	$(EFER_LME|EFER_SCE),%eax
 	wrmsr
 
-	movl	RELOC(mp_pdirpa),%ecx	# guaranteed < 4G
-        movl    %ecx,%cr3               # load ptd addr into mmu
+	movl	RELOC(mp_pdirpa),%ecx	/* guaranteed < 4G */
+	movl	%ecx,%cr3		/* load ptd addr into mmu */
 
-        movl    %cr0,%eax               # get control word
-        orl     $(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
-        movl    %eax,%cr0
+	movl	%cr0,%eax		/* get control word */
+	orl	$(CR0_PE|CR0_PG|CR0_NE|CR0_TS|CR0_MP|CR0_WP|CR0_AM),%eax
+	movl	%eax,%cr0
 	jmp	mptramp_compat
 mptramp_compat:
 
-	movl    $GSEL(GDATA_SEL, SEL_KPL),%eax 	#switch to new segment
-	movl    %eax,%ds
-	movl    %eax,%es
-	movl    %eax,%ss
+	movl	$GSEL(GDATA_SEL, SEL_KPL),%eax	/* switch to new segment */
+	movl	%eax,%ds
+	movl	%eax,%es
+	movl	%eax,%ss
 
 	movl	$mptramp_gdt64_desc,%eax
 	lgdt	(%eax)
@@ -216,8 +216,8 @@ _TRMP_LABEL(mptramp_longmode)
 	movabsq	$_C_LABEL(cpu_spinup_trampoline_end),%rax
 	jmp	*%rax
 
-	
-_C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
+
+_C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
 	/*
 	 * If EFER_NXE is not enabled, fetching a page with a NX bit set
 	 * will raise a #GP. Avoid that by setting the NXE feature now.
@@ -239,7 +239,7 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 
 	movq	CPU_INFO_IDLELWP(%rdi),%rsi
 	movq	L_PCB(%rsi),%rsi
-	
+
 	movq	PCB_RSP(%rsi),%rsp
 	movq	PCB_RBP(%rsi),%rbp
 
@@ -247,23 +247,23 @@ _C_LABEL(cpu_spinup_trampoline_end):	#end of code copied to MP_TRAMPOLINE
 	movw	$(MAXGDTSIZ-1),-10(%rsp)
 	movq	%rax,-8(%rsp)
 	lgdt	-10(%rsp)
-	
+
 	/* Switch address space. */
 	movq	PCB_CR3(%rsi),%rax
 	movq	%rax,%cr3
-	movl    PCB_CR0(%rsi),%eax
-	movq    %rax,%cr0
+	movl	PCB_CR0(%rsi),%eax
+	movq	%rax,%cr0
 	call	_C_LABEL(cpu_hatch)
 END(cpu_spinup_trampoline)
-	
+
 	.data
 LABEL(mp_pdirpa)
 	.quad	0
 END(mp_pdirpa)
 #ifdef MPDEBUG
 LABEL(cpu_trace)
-	.quad  0x40
-	.quad  0xff
-	.quad  0xff		
+	.quad	0x40
+	.quad	0xff
+	.quad	0xff
 END(cpu_trace)
 #endif

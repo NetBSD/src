@@ -1,11 +1,11 @@
-/*	$NetBSD: exec_elf.c,v 1.70.2.3 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.70.2.4 2015/12/27 12:10:04 skrll Exp $	*/
 
 /*-
- * Copyright (c) 1994, 2000, 2005 The NetBSD Foundation, Inc.
+ * Copyright (c) 1994, 2000, 2005, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Christos Zoulas.
+ * by Christos Zoulas and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.70.2.3 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.70.2.4 2015/12/27 12:10:04 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -116,8 +116,7 @@ static void	elf_free_emul_arg(void *);
 #define	ELF_TRUNC(a, b)		((a) & ~((b) - 1))
 
 static void
-elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
-    Elf_Phdr *ph)
+elf_placedynexec(struct exec_package *epp, Elf_Ehdr *eh, Elf_Phdr *ph)
 {
 	Elf_Addr align, offset;
 	int i;
@@ -127,7 +126,7 @@ elf_placedynexec(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 			align = ph[i].p_align;
 
 #ifdef PAX_ASLR
-	if (pax_aslr_active(l)) {
+	if (pax_aslr_epp_active(epp)) {
 		size_t pax_align, l2, delta;
 		uint32_t r;
 
@@ -414,15 +413,13 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 	p = l->l_proc;
 
 	KASSERT(p->p_vmspace);
-	if (__predict_true(p->p_vmspace != proc0.p_vmspace)) {
-		use_topdown = p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN;
-	} else {
+	KASSERT(p->p_vmspace != proc0.p_vmspace);
+
 #ifdef __USE_TOPDOWN_VM
-		use_topdown = epp->ep_flags & EXEC_TOPDOWN_VM;
+	use_topdown = epp->ep_flags & EXEC_TOPDOWN_VM;
 #else
-		use_topdown = false;
+	use_topdown = false;
 #endif
-	}
 
 	/*
 	 * 1. open file
@@ -532,9 +529,11 @@ elf_load_interp(struct lwp *l, struct exec_package *epp, char *path,
 		 */
 		addr = (*epp->ep_esch->es_emul->e_vm_default_addr)(p,
 		    epp->ep_daddr,
-		    round_page(limit) - trunc_page(base_ph->p_vaddr));
-	} else
+		    round_page(limit) - trunc_page(base_ph->p_vaddr),
+		    use_topdown);
+	} else {
 		addr = *last; /* may be ELF_LINK_ADDR */
+	}
 
 	/*
 	 * Load all the necessary sections
@@ -711,12 +710,8 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		pos = (Elf_Addr)startp;
 	}
 
-#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
-	pax_setup_elf_flags(l, epp->ep_pax_flags);
-#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
-
 	if (is_dyn)
-		elf_placedynexec(l, epp, eh, ph);
+		elf_placedynexec(epp, eh, ph);
 
 	/*
 	 * Load all the necessary sections
@@ -806,6 +801,7 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 		epp->ep_entryoffset = interp_offset;
 		epp->ep_entry = ap->arg_interp + interp_offset;
 		PNBUF_PUT(interp);
+		interp = NULL;
 	} else {
 		epp->ep_entry = eh->e_entry;
 		if (epp->ep_flags & EXEC_FORCEAUX) {
@@ -829,8 +825,13 @@ exec_elf_makecmds(struct lwp *l, struct exec_package *epp)
 	NEW_VMCMD(&epp->ep_vmcmds, vmcmd_map_readvn, PAGE_SIZE, 0,
 	    epp->ep_vp, 0, VM_PROT_READ);
 #endif
+
+	error = (*epp->ep_esch->es_setup_stack)(l, epp);
+	if (error)
+		goto bad;
+
 	kmem_free(ph, phsize);
-	return (*epp->ep_esch->es_setup_stack)(l, epp);
+	return 0;
 
 bad:
 	if (interp)
@@ -926,12 +927,19 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			}
 
 			/*
-			 * Ignore SuSE tags; SuSE's n_type is the same as NetBSD's
-			 * one.
+			 * Ignore SuSE tags; SuSE's n_type is the same the
+			 * NetBSD one.
 			 */
 			if (np->n_namesz == ELF_NOTE_SUSE_NAMESZ &&
 			    memcmp(ndata, ELF_NOTE_SUSE_NAME,
 			    ELF_NOTE_SUSE_NAMESZ) == 0)
+				break;
+			/*
+			 * Ignore old GCC
+			 */
+			if (np->n_namesz == ELF_NOTE_OGCC_NAMESZ &&
+			    memcmp(ndata, ELF_NOTE_OGCC_NAME,
+			    ELF_NOTE_OGCC_NAMESZ) == 0)
 				break;
 			BADNOTE("NetBSD tag");
 			goto bad;
@@ -941,8 +949,15 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			    np->n_descsz == ELF_NOTE_PAX_DESCSZ &&
 			    memcmp(ndata, ELF_NOTE_PAX_NAME,
 			    ELF_NOTE_PAX_NAMESZ) == 0) {
-				memcpy(&epp->ep_pax_flags, ndesc,
-				    sizeof(epp->ep_pax_flags));
+				uint32_t flags;
+				memcpy(&flags, ndesc, sizeof(flags));
+#if defined(PAX_MPROTECT) || defined(PAX_SEGVGUARD) || defined(PAX_ASLR)
+				/* Convert the flags and insert them into
+				 * the exec package. */
+				pax_setup_elf_flags(epp, flags);
+#else
+				(void)flags; /* UNUSED */
+#endif /* PAX_MPROTECT || PAX_SEGVGUARD || PAX_ASLR */
 				break;
 			}
 			BADNOTE("PaX tag");
@@ -989,6 +1004,9 @@ netbsd_elf_signature(struct lwp *l, struct exec_package *epp,
 			break;
 
 		case ELF_NOTE_TYPE_SUSE_VERSION_TAG:
+			break;
+
+		case ELF_NOTE_TYPE_GO_BUILDID_TAG:
 			break;
 
 		default:

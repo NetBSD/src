@@ -1,4 +1,4 @@
-#	$NetBSD: files.omap2,v 1.29.2.2 2015/09/22 12:05:38 skrll Exp $
+#	$NetBSD: files.omap2,v 1.29.2.3 2015/12/27 12:09:31 skrll Exp $
 #
 # Configuration info for Texas Instruments OMAP2/OMAP3 CPU support
 # Based on xscale/files.pxa2x0
@@ -59,7 +59,8 @@ file	arch/arm/omap/omap2430_intr.c		omap2 & !omapicu & !omap4
 # OMAP2 GPIO controllers
 device	omapgpio: gpiobus
 attach	omapgpio at obio with omap2gpio
-file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & omapgpio
+file	arch/arm/omap/omap2_gpio.c		(omap2 | omap3) & !ti_am335x & omapgpio
+file	arch/arm/omap/am335x_gpio.c		ti_am335x & omapgpio
 
 # TI_AM335X (and maybe TI OMAP4) I2C controllers
 device	tiiic: i2cbus, i2cexec

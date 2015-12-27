@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.67.4.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: time.h,v 1.67.4.3 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -199,7 +199,7 @@ ms2bintime(uint64_t ms)
 {
 	struct bintime bt;
 
-	bt.sec = ms / 1000U;
+	bt.sec = (time_t)(ms / 1000U);
 	bt.frac = (((ms % 1000U) >> 32)/1000U) >> 32;
 
 	return bt;
@@ -210,7 +210,7 @@ us2bintime(uint64_t us)
 {
 	struct bintime bt;
 
-	bt.sec = us / 1000000U;
+	bt.sec = (time_t)(us / 1000000U);
 	bt.frac = (((us % 1000000U) >> 32)/1000000U) >> 32;
 
 	return bt;
@@ -221,7 +221,7 @@ ns2bintime(uint64_t ns)
 {
 	struct bintime bt;
 
-	bt.sec = ns / 1000000000U;
+	bt.sec = (time_t)(ns / 1000000000U);
 	bt.frac = (((ns % 1000000000U) >> 32)/1000000000U) >> 32;
 
 	return bt;

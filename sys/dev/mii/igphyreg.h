@@ -1,4 +1,4 @@
-/*	$NetBSD: igphyreg.h,v 1.6 2010/03/07 09:05:19 msaitoh Exp $	*/
+/*	$NetBSD: igphyreg.h,v 1.6.38.1 2015/12/27 12:09:50 skrll Exp $	*/
 
 /*******************************************************************************
 
@@ -42,14 +42,14 @@
  * IGP01E1000 Specific Registers
  */
 
-/* IGP01E1000 Specific Port Control Register - R/W */
-#define MII_IGPPHY_PORT_CONFIG		0x10 /* PHY specific config register */
-#define PSCR_AUTO_MDIX_PAR_DETECT	0x0010
-#define PSCR_PRE_EN			0x0020
-#define PSCR_SMART_SPEED		0x0080
-#define PSCR_DISABLE_TPLOOPBACK		0x0100
-#define PSCR_DISABLE_JABBER		0x0400
-#define PSCR_DISABLE_TRANSMIT		0x2000
+/* IGP01E1000 Specific Port Config Register - R/W */
+#define MII_IGPHY_PORT_CONFIG		0x10 /* PHY specific config register */
+#define PSCFR_AUTO_MDIX_PAR_DETECT	0x0010
+#define PSCFR_PRE_EN			0x0020
+#define PSCFR_SMART_SPEED		0x0080
+#define PSCFR_DISABLE_TPLOOPBACK	0x0100
+#define PSCFR_DISABLE_JABBER		0x0400
+#define PSCFR_DISABLE_TRANSMIT		0x2000
 
 /* IGP01E1000 Specific Port Status Register - R/O */
 #define MII_IGPHY_PORT_STATUS		0x11
@@ -68,7 +68,7 @@
 
 /* IGP01E1000 Specific Port Control Register - R/W */
 #define MII_IGPHY_PORT_CTRL		0x12
-#define PSCR_TP_LOOPBACK		0x0001
+#define PSCR_TP_LOOPBACK		0x0010
 #define PSCR_CORRECT_NC_SCMBLR		0x0200
 #define PSCR_TEN_CRS_SELECT		0x0400
 #define PSCR_FLIP_CHIP			0x0800
@@ -77,18 +77,18 @@
 
 /* IGP01E1000 Specific Port Link Health Register */
 #define MII_IGPHY_LINK_HEALTH		0x13
-#define PLHR_SS_DOWNGRADE		0x8000
-#define PLHR_GIG_SCRAMBLER_ERROR	0x4000
-#define PLHR_GIG_REM_RCVR_NOK		0x0800 /* LH */
-#define PLHR_IDLE_ERROR_CNT_OFLOW	0x0400 /* LH */
-#define PLHR_DATA_ERR_1			0x0200 /* LH */
+#define PLHR_VALID_CHANNEL_A		0x0001
+#define PLHR_VALID_CHANNEL_B		0x0002
+#define PLHR_VALID_CHANNEL_C		0x0004
+#define PLHR_VALID_CHANNEL_D		0x0008
+#define PLHR_AUTONEG_ACTIVE		0x0010
+#define PLHR_AUTONEG_FAULT		0x0040
 #define PLHR_DATA_ERR_0			0x0100
-#define PLHR_AUTONEG_FAULT		0x0010
-#define PLHR_AUTONEG_ACTIVE		0x0008
-#define PLHR_VALID_CHANNEL_D		0x0004
-#define PLHR_VALID_CHANNEL_C		0x0002
-#define PLHR_VALID_CHANNEL_B		0x0001
-#define PLHR_VALID_CHANNEL_A		0x0000
+#define PLHR_DATA_ERR_1			0x0200 /* LH */
+#define PLHR_IDLE_ERROR_CNT_OFLOW	0x0400 /* LH */
+#define PLHR_GIG_REM_RCVR_NOK		0x0800 /* LH */
+#define PLHR_GIG_SCRAMBLER_ERROR	0x4000
+#define PLHR_SS_DOWNGRADE		0x8000
 
 /* IGP01E1000 GMII FIFO Register */
 #define MII_IGGMII_FIFO			0x14
@@ -97,10 +97,17 @@
 
 /* IGP01E1000 Channel Quality Register */
 #define MII_IGPHY_CHANNEL_QUALITY	0x15
-#define MSE_CHANNEL_D			0x000F
-#define MSE_CHANNEL_C			0x00F0
-#define MSE_CHANNEL_B			0x0F00
-#define MSE_CHANNEL_A			0xF000
+#define MSE_CHANNEL_A			0x000F
+#define MSE_CHANNEL_B			0x00F0
+#define MSE_CHANNEL_C			0x0F00
+#define MSE_CHANNEL_D			0xF000
+
+/* IGP01E1000 Power Management */
+#define MII_IGPHY_POWER_MGMT		0x19
+#define PMR_SPD_EN			0x0001
+#define PMR_D0_LPLU			0x0002
+#define PMR_D3_LPLU			0x0004
+#define PMR_DIS_1000			0x0040
 
 #define MII_IGPHY_PAGE_SELECT		0x1F
 #define IGPHY_MAXREGADDR		0x1F

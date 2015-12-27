@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_wdog.c,v 1.25.36.1 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: sysmon_wdog.c,v 1.25.36.2 2015/12/27 12:09:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Zembu Labs, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.25.36.1 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_wdog.c,v 1.25.36.2 2015/12/27 12:09:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -81,7 +81,7 @@ static struct sysmon_opvec sysmon_wdog_opvec = {
         NULL, NULL, NULL
 };
 
-MODULE(MODULE_CLASS_MISC, sysmon_wdog, "sysmon");
+MODULE(MODULE_CLASS_DRIVER, sysmon_wdog, "sysmon");
 
 ONCE_DECL(once_wdog);
 

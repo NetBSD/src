@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.69.2.1 2015/06/06 14:40:04 skrll Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.69.2.2 2015/12/27 12:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69.2.1 2015/06/06 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69.2.2 2015/12/27 12:09:45 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -137,6 +137,10 @@ __KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.69.2.1 2015/06/06 14:40:04 skrll E
 
 #if NACPICA > 0
 #include <machine/mpacpi.h>
+#if !defined(NO_PCI_EXTENDED_CONFIG)
+#include <dev/acpi/acpivar.h>
+#include <dev/acpi/acpi_mcfg.h>
+#endif
 #endif
 
 #include <machine/mpconfig.h>
@@ -457,6 +461,9 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 #if NACPICA > 0
 	mpacpi_pci_attach_hook(parent, self, pba);
 #endif
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+	acpimcfg_map_bus(self, pba->pba_pc, pba->pba_bus);
+#endif
 
 #ifdef __HAVE_PCI_MSI_MSIX
 	/*
@@ -479,9 +486,11 @@ pci_attach_hook(device_t parent, device_t self, struct pcibus_attach_args *pba)
 	if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSI)) {
 		pba->pba_flags &= ~PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		aprint_verbose_dev(self, "This pci host supports neither MSI nor MSI-X.\n");
 	} else if (pci_has_msi_quirk(id, PCI_QUIRK_DISABLE_MSIX)) {
 		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags &= ~PCI_FLAGS_MSIX_OKAY;
+		aprint_verbose_dev(self, "This pci host does not support MSI-X.\n");
 	} else {
 		pba->pba_flags |= PCI_FLAGS_MSI_OKAY;
 		pba->pba_flags |= PCI_FLAGS_MSIX_OKAY;
@@ -604,6 +613,7 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	pci_chipset_tag_t ipc;
 	pcireg_t data;
 	struct pci_conf_lock ocl;
+	int dev;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -611,6 +621,23 @@ pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 		if ((ipc->pc_present & PCI_OVERRIDE_CONF_READ) == 0)
 			continue;
 		return (*ipc->pc_ov->ov_conf_read)(ipc->pc_ctx, pc, tag, reg);
+	}
+
+	pci_decompose_tag(pc, tag, NULL, &dev, NULL);
+	if (__predict_false(pci_mode == 2 && dev >= 16))
+		return (pcireg_t) -1;
+
+	if (reg < 0)
+		return (pcireg_t) -1;
+	if (reg >= PCI_CONF_SIZE) {
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+		if (reg >= PCI_EXTCONF_SIZE)
+			return (pcireg_t) -1;
+		acpimcfg_conf_read(pc, tag, reg, &data);
+		return data;
+#else
+		return (pcireg_t) -1;
+#endif
 	}
 
 	pci_conf_lock(&ocl, pci_conf_selector(tag, reg));
@@ -624,6 +651,7 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 {
 	pci_chipset_tag_t ipc;
 	struct pci_conf_lock ocl;
+	int dev;
 
 	KASSERT((reg & 0x3) == 0);
 
@@ -632,6 +660,22 @@ pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 			continue;
 		(*ipc->pc_ov->ov_conf_write)(ipc->pc_ctx, pc, tag, reg,
 		    data);
+		return;
+	}
+
+	pci_decompose_tag(pc, tag, NULL, &dev, NULL);
+	if (__predict_false(pci_mode == 2 && dev >= 16)) {
+		return;
+	}
+
+	if (reg < 0)
+		return;
+	if (reg >= PCI_CONF_SIZE) {
+#if NACPICA > 0 && !defined(NO_PCI_EXTENDED_CONFIG)
+		if (reg >= PCI_EXTCONF_SIZE)
+			return;
+		acpimcfg_conf_write(pc, tag, reg, data);
+#endif
 		return;
 	}
 

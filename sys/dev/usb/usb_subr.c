@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.198.2.20 2015/12/19 09:20:35 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.198.2.21 2015/12/27 12:09:59 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.20 2015/12/19 09:20:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.198.2.21 2015/12/27 12:09:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -830,6 +830,24 @@ usbd_attach_roothub(device_t parent, struct usbd_device *dev)
 	return USBD_NORMAL_COMPLETION;
 }
 
+static void
+usbd_serialnumber(device_t dv, struct usbd_device *dev)
+{
+	usb_device_descriptor_t *dd = &dev->ud_ddesc;
+	char *serialnumber;
+
+	serialnumber = kmem_alloc(USB_MAX_ENCODED_STRING_LEN, KM_SLEEP);
+	if (serialnumber == NULL)
+		return;
+	serialnumber[0] = '\0';
+	(void)usbd_get_string(dev, dd->iSerialNumber, serialnumber);
+	if (serialnumber[0]) {
+		prop_dictionary_set_cstring(device_properties(dv),
+		    "serialnumber", serialnumber);
+	}
+	kmem_free(serialnumber, USB_MAX_ENCODED_STRING_LEN);
+}
+
 static usbd_status
 usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 	int usegeneric)
@@ -866,6 +884,7 @@ usbd_attachwholedevice(device_t parent, struct usbd_device *dev, int port,
 		dev->ud_subdevs[0] = dv;
 		dev->ud_subdevlen = 1;
 		dev->ud_nifaces_claimed = 1; /* XXX */
+		usbd_serialnumber(dv, dev);
 	}
 	return USBD_NORMAL_COMPLETION;
 }
@@ -892,7 +911,7 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 		if (!dev->ud_subdevs[i]) {
 			ifaces[i] = &dev->ud_ifaces[i];
 		}
-		DPRINTF("interface %d %p\n", i, ifaces[i], 0, 0);
+		DPRINTF("interface %d %p", i, ifaces[i], 0, 0);
 	}
 
 
@@ -940,6 +959,9 @@ usbd_attachinterfaces(device_t parent, struct usbd_device *dev,
 					 usbd_ifprint, config_stdsubmatch);
 		if (!dv)
 			continue;
+
+		usbd_serialnumber(dv, dev);
+
 		/* claim */
 		ifaces[i] = NULL;
 		/* account for ifaces claimed by the driver behind our back */
@@ -1159,7 +1181,7 @@ usbd_new_device(device_t parent, struct usbd_bus* bus, int depth,
 
 	dev->ud_ep0desc.bInterval = 0;
 
-	/* doesn't matter, just don't let it uninitialized */
+	/* doesn't matter, just don't leave it uninitialized */
 	dev->ud_ep0.ue_toggle = 0;
 
 	dev->ud_quirks = &usbd_no_quirk;

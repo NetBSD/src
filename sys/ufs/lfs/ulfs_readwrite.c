@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.7.8.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.7.8.4 2015/12/27 12:10:19 skrll Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.105 2013/01/22 09:39:18 dholland Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.3 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.7.8.4 2015/12/27 12:10:19 skrll Exp $");
 
 #ifdef LFS_READWRITE
 #define	FS			struct lfs
@@ -159,7 +159,7 @@ BUFRD(struct vnode *vp, struct uio *uio, int ioflag, kauth_cred_t cred)
 	fs = ip->I_FS;
 	error = 0;
 
-	KASSERT(vp->v_type != VLNK || ip->i_size < fs->um_maxsymlinklen);
+	KASSERT(vp->v_type != VLNK || ip->i_size >= fs->um_maxsymlinklen);
 	KASSERT(vp->v_type != VLNK || fs->um_maxsymlinklen != 0 ||
 	    DIP(ip, blocks) == 0);
 	KASSERT(vp->v_type != VREG || vp == fs->lfs_ivnode);

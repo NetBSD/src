@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.91.2.3 2015/09/22 12:05:56 skrll Exp $ */
+/* $NetBSD: cgd.c,v 1.91.2.4 2015/12/27 12:09:48 skrll Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91.2.3 2015/09/22 12:05:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.91.2.4 2015/12/27 12:09:48 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -304,6 +304,8 @@ static void
 cgdstrategy(struct buf *bp)
 {
 	struct	cgd_softc *cs = getcgd_softc(bp->b_dev);
+	struct	dk_softc *dksc = &cs->sc_dksc;
+	struct	disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 
 	DPRINTF_FOLLOW(("cgdstrategy(%p): b_bcount = %ld\n", bp,
 	    (long)bp->b_bcount));
@@ -314,7 +316,7 @@ cgdstrategy(struct buf *bp)
 	 * buffers to be aligned to 32-bit boundaries.
 	 */
 	if (bp->b_blkno < 0 ||
-	    (bp->b_bcount % DEV_BSIZE) != 0 ||
+	    (bp->b_bcount % dg->dg_secsize) != 0 ||
 	    ((uintptr_t)bp->b_data & 3) != 0) {
 		bp->b_error = EINVAL;
 		bp->b_resid = bp->b_bcount;
@@ -384,6 +386,7 @@ cgd_diskstart(device_t dev, struct buf *bp)
 {
 	struct	cgd_softc *cs = device_private(dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
+	struct	disk_geom *dg = &dksc->sc_dkdev.dk_geom;
 	struct	buf *nbp;
 	void *	addr;
 	void *	newaddr;
@@ -414,7 +417,7 @@ cgd_diskstart(device_t dev, struct buf *bp)
 			return EAGAIN;
 		}
 		cgd_cipher(cs, newaddr, addr, bp->b_bcount, bn,
-		    DEV_BSIZE, CGD_CIPHER_ENCRYPT);
+		    dg->dg_secsize, CGD_CIPHER_ENCRYPT);
 	}
 
 	nbp->b_data = newaddr;
@@ -423,7 +426,7 @@ cgd_diskstart(device_t dev, struct buf *bp)
 	nbp->b_cflags = bp->b_cflags;
 	nbp->b_iodone = cgdiodone;
 	nbp->b_proc = bp->b_proc;
-	nbp->b_blkno = bn;
+	nbp->b_blkno = btodb(bn * dg->dg_secsize);
 	nbp->b_bcount = bp->b_bcount;
 	nbp->b_private = bp;
 
@@ -446,6 +449,8 @@ cgdiodone(struct buf *nbp)
 	struct	buf *obp = nbp->b_private;
 	struct	cgd_softc *cs = getcgd_softc(obp->b_dev);
 	struct	dk_softc *dksc = &cs->sc_dksc;
+	struct	disk_geom *dg = &dksc->sc_dkdev.dk_geom;
+	daddr_t	bn;
 
 	KDASSERT(cs);
 
@@ -467,9 +472,11 @@ cgdiodone(struct buf *nbp)
 	 *       we used to encrypt the blocks.
 	 */
 
-	if (nbp->b_flags & B_READ)
+	if (nbp->b_flags & B_READ) {
+		bn = dbtob(nbp->b_blkno) / dg->dg_secsize;
 		cgd_cipher(cs, obp->b_data, obp->b_data, obp->b_bcount,
-		    nbp->b_blkno, DEV_BSIZE, CGD_CIPHER_DECRYPT);
+		    bn, dg->dg_secsize, CGD_CIPHER_DECRYPT);
+	}
 
 	/* If we allocated memory, free it now... */
 	if (nbp->b_data != obp->b_data)
@@ -704,9 +711,6 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 
 	disk_set_info(dksc->sc_dev, &dksc->sc_dkdev, NULL);
 
-	/* Try and read the disklabel. */
-	dk_getdisklabel(dksc, 0 /* XXX ? (cause of PR 41704) */);
-
 	/* Discover wedges on this disk. */
 	dkwedge_discover(&dksc->sc_dkdev);
 
@@ -824,10 +828,9 @@ cgdinit(struct cgd_softc *cs, const char *cpath, struct vnode *vp,
 	dg = &dksc->sc_dkdev.dk_geom;
 	memset(dg, 0, sizeof(*dg));
 	dg->dg_secperunit = psize;
-	// XXX: Inherit?
-	dg->dg_secsize = DEV_BSIZE;
+	dg->dg_secsize = secsize;
 	dg->dg_ntracks = 1;
-	dg->dg_nsectors = 1024 * (1024 / dg->dg_secsize);
+	dg->dg_nsectors = 1024 * 1024 / dg->dg_secsize;
 	dg->dg_ncylinders = dg->dg_secperunit / dg->dg_nsectors;
 
 bail:
@@ -899,6 +902,7 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	struct iovec	dstiov[2];
 	struct iovec	srciov[2];
 	size_t		blocksize = cs->sc_cdata.cf_blocksize;
+	size_t		todo;
 	char		sink[CGD_MAXBLOCKSIZE];
 	char		zero_iv[CGD_MAXBLOCKSIZE];
 	char		blkno_buf[CGD_MAXBLOCKSIZE];
@@ -924,12 +928,14 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 	dstiov[0].iov_len  = blocksize;
 	srciov[0].iov_base = blkno_buf;
 	srciov[0].iov_len  = blocksize;
-	dstiov[1].iov_len  = secsize;
-	srciov[1].iov_len  = secsize;
 
-	for (; len > 0; len -= secsize) {
+	for (; len > 0; len -= todo) {
+		todo = MIN(len, secsize);
+
 		dstiov[1].iov_base = dst;
 		srciov[1].iov_base = src;
+		dstiov[1].iov_len  = todo;
+		srciov[1].iov_len  = todo;
 
 		memset(blkno_buf, 0x0, blocksize);
 		blkno2blkno_buf(blkno_buf, blkno);
@@ -951,8 +957,8 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 		IFDEBUG(CGDB_CRYPTO, hexprint("step 2: sink",
 		    sink, blocksize));
 
-		dst += secsize;
-		src += secsize;
+		dst += todo;
+		src += todo;
 		blkno++;
 	}
 }

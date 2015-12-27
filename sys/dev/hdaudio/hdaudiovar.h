@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudiovar.h,v 1.2.2.4 2015/09/22 12:05:57 skrll Exp $ */
+/* $NetBSD: hdaudiovar.h,v 1.2.2.5 2015/12/27 12:09:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -157,9 +157,6 @@ struct hdaudio_softc {
 	struct hdaudio_stream	sc_stream[HDAUDIO_MAX_STREAMS];
 	uint32_t		sc_stream_mask;
 	kmutex_t		sc_stream_mtx;
-
-	uint32_t		sc_flags;
-#define HDAUDIO_FLAG_NO_STREAM_RESET	0x0001
 };
 
 int	hdaudio_attach(device_t, struct hdaudio_softc *);

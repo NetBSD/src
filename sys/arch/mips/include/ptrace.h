@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.12.74.1 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.12.74.2 2015/12/27 12:09:38 skrll Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -58,6 +58,10 @@
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_regs[35] = (v)
 #define PTRACE_REG_SP(r)	(r)->r_regs[29]
 #define PTRACE_REG_INTRV(r)	(r)->r_regs[2]
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x00, 0x00, 0x00, 0x0d })
+#define PTRACE_BREAKPOINT_SIZE	4
+
 /*
  * Glue for gdb: map NetBSD register names to legacy ptrace register names
  */

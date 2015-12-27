@@ -1,4 +1,4 @@
-/*	$NetBSD: ukphy.c,v 1.46.10.1 2015/09/22 12:05:58 skrll Exp $	*/
+/*	$NetBSD: ukphy.c,v 1.46.10.2 2015/12/27 12:09:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.46.10.1 2015/09/22 12:05:58 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukphy.c,v 1.46.10.2 2015/12/27 12:09:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -123,6 +123,9 @@ ukphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_dev = self;
 	sc->mii_inst = mii->mii_instance;
 	sc->mii_phy = ma->mii_phyno;
+	sc->mii_mpd_oui = MII_OUI(ma->mii_id1, ma->mii_id2);
+	sc->mii_mpd_model = MII_MODEL(ma->mii_id2);
+	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_funcs = &ukphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
