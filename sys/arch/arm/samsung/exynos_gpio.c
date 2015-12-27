@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.18 2015/12/24 01:10:51 marty Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.19 2015/12/27 02:43:42 marty Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.18 2015/12/24 01:10:51 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.19 2015/12/27 02:43:42 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -365,17 +365,22 @@ exynos_gpio_pin_lookup(const char *pinname, int *ppin)
 static void *
 exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 {
-	/* MJF:  This is wrong.  data is a u_int but I need a name */
-//	const u_int *gpio = data;
-	const char *pinname = data;
-	const struct exynos_gpio_bank *bank;
+	const u_int *cells = data;
+	const struct exynos_gpio_bank *bank = NULL;
 	struct exynos_gpio_pin *gpin;
-	int pin;
+	int pin = be32toh(cells[0]) & 0x0f;
+	int n;
 
-	bank = exynos_gpio_pin_lookup(pinname, &pin);
+	for (n = 0; n < __arraycount(exynos5_banks); n++) {
+		if (exynos_gpio_banks[n].bank_sc->sc_dev == dev) {
+			bank = &exynos_gpio_banks[n];
+			break;
+		}
+	}
 	if (bank == NULL)
 		return NULL;
 
+	printf("gpio pin %s-%d being acquired\n", bank->bank_name, pin);
 	gpin = kmem_alloc(sizeof(*gpin), KM_SLEEP);
 	gpin->pin_sc = bank->bank_sc;
 	gpin->pin_bank = bank;
