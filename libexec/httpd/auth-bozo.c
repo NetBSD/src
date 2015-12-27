@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-bozo.c,v 1.17 2015/10/28 09:20:15 shm Exp $	*/
+/*	$NetBSD: auth-bozo.c,v 1.18 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*	$eterna: auth-bozo.c,v 1.17 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -72,10 +72,10 @@ bozo_auth_check(bozo_httpreq_t *request, const char *file)
 		if (bozo_check_special_files(request, basename))
 			return 1;
 	}
-	request->hr_authrealm = bozostrdup(httpd, dir);
+	request->hr_authrealm = bozostrdup(httpd, request, dir);
 
-	if ((size_t)snprintf(authfile, sizeof(authfile), "%s/%s", dir, AUTH_FILE) >= 
-	  sizeof(authfile)) {
+	if ((size_t)snprintf(authfile, sizeof(authfile), "%s/%s", dir,
+			     AUTH_FILE) >= sizeof(authfile)) {
 		return bozo_http_error(httpd, 404, request,
 			"authfile path too long");
 	}
@@ -136,7 +136,8 @@ bozo_auth_cleanup(bozo_httpreq_t *request)
 }
 
 int
-bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str, ssize_t len)
+bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str,
+			ssize_t len)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 
@@ -159,8 +160,8 @@ bozo_auth_check_headers(bozo_httpreq_t *request, char *val, char *str, ssize_t l
 		*pass++ = '\0';
 		free(request->hr_authuser);
 		free(request->hr_authpass);
-		request->hr_authuser = bozostrdup(httpd, authbuf);
-		request->hr_authpass = bozostrdup(httpd, pass);
+		request->hr_authuser = bozostrdup(httpd, request, authbuf);
+		request->hr_authpass = bozostrdup(httpd, request, pass);
 		debug((httpd, DEBUG_FAT,
 		    "decoded authorization `%s' as `%s':`%s'",
 		    str, request->hr_authuser, request->hr_authpass));
@@ -190,7 +191,8 @@ bozo_auth_check_401(bozo_httpreq_t *request, int code)
 	if (code == 401)
 		bozo_printf(httpd,
 			"WWW-Authenticate: Basic realm=\"%s\"\r\n",
-			request->hr_authrealm ? request->hr_authrealm : "default realm");
+			request->hr_authrealm ?
+			request->hr_authrealm : "default realm");
 }
 
 #ifndef NO_CGIBIN_SUPPORT

@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.20 2015/12/12 18:06:58 christos Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.21 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -302,13 +302,13 @@ bozo_ssl_set_opts(bozohttpd_t *httpd, const char *cert, const char *priv)
 {
 	sslinfo_t *sslinfo = bozo_get_sslinfo(httpd);
 
-	sslinfo->certificate_file = bozo_strdup(httpd, cert);
-	sslinfo->privatekey_file = bozo_strdup(httpd, priv);
+	sslinfo->certificate_file = bozostrdup(httpd, NULL, cert);
+	sslinfo->privatekey_file = bozostrdup(httpd, NULL, priv);
 	debug((httpd, DEBUG_NORMAL, "using cert/priv files: %s & %s",
 	    sslinfo->certificate_file,
 	    sslinfo->privatekey_file));
 	if (!httpd->bindport)
-		httpd->bindport = bozo_strdup(httpd, "https");
+		httpd->bindport = bozostrdup(httpd, NULL, "https");
 }
 
 void
@@ -316,7 +316,7 @@ bozo_ssl_set_ciphers(bozohttpd_t *httpd, const char *ciphers)
 {
 	sslinfo_t *sslinfo = bozo_get_sslinfo(httpd);
 
-	sslinfo->ciphers = bozo_strdup(httpd, ciphers);
+	sslinfo->ciphers = bozostrdup(httpd, NULL, ciphers);
 	debug((httpd, DEBUG_NORMAL, "using ciphers: %s", sslinfo->ciphers));
 }
 
