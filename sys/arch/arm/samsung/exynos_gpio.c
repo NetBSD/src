@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.20 2015/12/27 12:22:28 jmcneill Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.21 2015/12/27 12:42:14 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.20 2015/12/27 12:22:28 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.21 2015/12/27 12:42:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -325,7 +325,7 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	bank->bank_cfg.conpwd = GPIO_READ(bank, EXYNOS_GPIO_CONPWD);
 	bank->bank_cfg.pudpwd = GPIO_READ(bank, EXYNOS_GPIO_PUDPWD);
 
-	fdtbus_register_gpio_controller(bank->bank_dev, faa->faa_phandle,
+	fdtbus_register_gpio_controller(bank->bank_dev, node,
 					&exynos_gpio_funcs);
 }
 
@@ -360,18 +360,18 @@ static void *
 exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 {
 	const u_int *cells = data;
-	const struct exynos_gpio_bank *bank = NULL;
+	struct exynos_gpio_bank *bank = NULL;
 	struct exynos_gpio_pin *gpin;
 	int n;
 
-	if (len != 2)
+	if (len != 12)
 		return NULL;
 
-	const int pin = be32toh(cells[0]) & 0x0f;
-	const int actlo = be32toh(cells[1]) & 0x01;
+	const int pin = be32toh(cells[1]) & 0x0f;
+	const int actlo = be32toh(cells[2]) & 0x01;
 
 	for (n = 0; n < __arraycount(exynos5_banks); n++) {
-		if (exynos_gpio_banks[n].bank_sc->sc_dev == dev) {
+		if (exynos_gpio_banks[n].bank_dev == dev) {
 			bank = &exynos_gpio_banks[n];
 			break;
 		}
@@ -387,7 +387,7 @@ exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 	gpin->pin_flags = flags;
 	gpin->pin_actlo = actlo;
 
-	exynos_gpio_pin_ctl(&gpin->pin_bank, gpin->pin_no, gpin->pin_flags);
+	exynos_gpio_pin_ctl(bank, gpin->pin_no, gpin->pin_flags);
 
 	return gpin;
 }
