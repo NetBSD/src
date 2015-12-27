@@ -1,4 +1,4 @@
-# $NetBSD: t_gpt.sh,v 1.12 2015/12/27 01:46:24 pgoyette Exp $
+# $NetBSD: t_gpt.sh,v 1.13 2015/12/27 01:50:39 pgoyette Exp $
 #
 # Copyright (c) 2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -160,7 +160,7 @@ change_attr_2part_body() {
 	prepare_2part
 	match "$(attrmsg 1)" gpt set -i 1 -a biosboot,bootme "$disk"
 	save attr gpt show -i 1 "$disk"
-	match "^Attributes: biosboot, bootme\$" tail -1 attr
+	match "^Attributes: biosboot,bootme\$" tail -1 attr
 	match "$(attrmsg 1)" gpt unset -i 1 -a biosboot,bootme "$disk"
 	save attr gpt show -i 1 "$disk"
 	match "^Attributes: None\$" tail -1 attr
