@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.6 2014/03/13 02:08:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.6.6.1 2015/12/27 12:10:18 skrll Exp $
 #
 
 LIB=	rumpnet_shmif
+COMMENT=Shared memory bus network interface
 
 SRCS=	if_shmem.c shmif_busops.c
 SRCS+=	shmif_component.c

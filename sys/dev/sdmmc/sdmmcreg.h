@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcreg.h,v 1.14.12.2 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: sdmmcreg.h,v 1.14.12.3 2015/12/27 12:09:58 skrll Exp $	*/
 /*	$OpenBSD: sdmmcreg.h,v 1.4 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -98,6 +98,7 @@
 
 /* R1 response type bits */
 #define MMC_R1_READY_FOR_DATA		(1<<8)	/* ready for next transfer */
+#define MMC_R1_SWITCH_ERROR		(1<<7)	/* switch command failed */
 #define MMC_R1_APP_CMD			(1<<5)	/* app. commands supported */
 
 /* 48-bit response decoding (32 bits w/o CRC) */

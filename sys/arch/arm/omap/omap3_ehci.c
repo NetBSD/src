@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_ehci.c,v 1.10.6.3 2015/04/06 12:15:32 skrll Exp $ */
+/* $NetBSD: omap3_ehci.c,v 1.10.6.4 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010-2012 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.10.6.3 2015/04/06 12:15:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_ehci.c,v 1.10.6.4 2015/12/27 12:09:31 skrll Exp $");
 
 #include "locators.h"
 
@@ -287,7 +287,7 @@ static void
 omap3_ehci_attach1(device_t self)
 {
 	struct omap3_ehci_softc *sc = device_private(self);
-	usbd_status err;
+	int err;
 
 	for (u_int i = 0; sc->sc_phy_reset && i < sc->sc_nports; i++) {
 		if (sc->sc_portconfig[i].gpio != -1) {

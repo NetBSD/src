@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.177.2.2 2015/09/22 12:05:52 skrll Exp $
+# $NetBSD: GENERIC,v 1.177.2.3 2015/12/27 12:09:43 skrll Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.177.2.2 $"
+#ident 		"GENERIC-$Revision: 1.177.2.3 $"
 
 maxusers	64
 
@@ -50,11 +50,6 @@ config		netbsd	root on ? type ?
 
 ## System call tracing (see ktrace(1)).
 options 	KTRACE
-
-## Collect statistics on kernel malloc's and free's.  This does have a
-## significant performance hit on slower machines, so it is intended for
-## diagnostic use only.
-#options 	KMEMSTATS
 
 ## System V compatible IPC subsystem.  (msgctl(2), semctl(2), and shmctl(2))
 options 	SYSVMSG		# System V message queues
@@ -955,6 +950,7 @@ iic*		at alipm?
 
 spdmem*		at iic? addr?
 admtemp*	at iic? addr?
+adm1026hm*	at iic? addr?
 ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
 lmtemp*		at iic? addr?
 tda*		at iic? addr?	# fan control on SB1000/2000

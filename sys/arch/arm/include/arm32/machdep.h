@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.18 2014/03/28 21:51:59 matt Exp $ */
+/* $NetBSD: machdep.h,v 1.18.6.1 2015/12/27 12:09:31 skrll Exp $ */
 
 #ifndef _ARM32_BOOT_MACHDEP_H_
 #define _ARM32_BOOT_MACHDEP_H_
@@ -24,6 +24,8 @@
 
 extern void (*cpu_reset_address)(void);
 extern paddr_t cpu_reset_address_paddr;
+
+extern void (*cpu_powerdown_address)(void);
 
 extern u_int data_abort_handler_address;
 extern u_int prefetch_abort_handler_address;

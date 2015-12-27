@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4.6.1 2015/09/22 12:06:16 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.6.2 2015/12/27 12:10:17 skrll Exp $
 #
 
 NOLINT=	#defined
@@ -8,6 +8,7 @@ NOLINT=	#defined
 .PATH:	${.CURDIR}/../../../../netbt
 
 LIB=	rumpnet_netbt
+COMMENT=BlueTooth (PF_BLUETOOTH)
 
 SRCS=	bt_proto.c bt_sysctl.c						\
 	hci_event.c hci_ioctl.c hci_link.c hci_misc.c hci_socket.c	\

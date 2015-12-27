@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.15.2.2 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.15.2.3 2015/12/27 12:09:58 skrll Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -67,6 +67,7 @@ struct sdhc_softc {
 	int (*sc_vendor_rod)(struct sdhc_softc *, int);
 	int (*sc_vendor_write_protect)(struct sdhc_softc *);
 	int (*sc_vendor_card_detect)(struct sdhc_softc *);
+	int (*sc_vendor_bus_width)(struct sdhc_softc *, int);
 	int (*sc_vendor_bus_clock)(struct sdhc_softc *, int);
 	int (*sc_vendor_transfer_data_dma)(struct sdhc_softc *, struct sdmmc_command *);
 };

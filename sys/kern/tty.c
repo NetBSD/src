@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.262.2.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.262.2.2 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.262.2.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.262.2.2 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1370,7 +1370,42 @@ ttioctl(struct tty *tp, u_long cmd, void *data, int flag, struct lwp *l)
 		    s != tp->t_qsize)
 			error = tty_set_qsize(tp, s);
 		return error;
+
+	case TIOCSBRK:
+	case TIOCCBRK:
+	case TIOCSDTR:
+	case TIOCCDTR:
+	case TIOCSFLAGS:
+	case TIOCGFLAGS:
+	case TIOCMSET:
+	case TIOCMGET:
+	case TIOCMBIS:
+	case TIOCMBIC:
+		/* Handled by the driver layer */
+		return EPASSTHROUGH;
+
+	case TIOCEXT:
+	case TIOCPTSNAME:
+	case TIOCGRANTPT:
+	case TIOCPKT:
+	case TIOCUCNTL:
+	case TIOCREMOTE:
+	case TIOCSIG:
+		/* for ptys */
+		return EPASSTHROUGH;
+
 	default:
+		/* Pass through various console ioctls */
+		switch (IOCGROUP(cmd)) {
+		case 'c':	/* syscons console */
+		case 'v':	/* usl console, video - where one letter */
+		case 'K':	/* usl console, keyboard - aint enough */
+		case 'V':	/* pcvt compat */
+		case 'W':	/* wscons console */
+			return EPASSTHROUGH;
+		default:
+			break;
+		}
 #ifdef COMPAT_60
 		error = compat_60_ttioctl(tp, cmd, data, flag, l);
 		if (error != EPASSTHROUGH)

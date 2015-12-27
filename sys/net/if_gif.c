@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.83.4.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.83.4.3 2015/12/27 12:10:06 skrll Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.2 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.3 2015/12/27 12:10:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -52,6 +52,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.83.4.2 2015/09/22 12:06:10 skrll Exp $"
 #include <sys/protosw.h>
 #include <sys/cpu.h>
 #include <sys/intr.h>
+#include <sys/kmem.h>
+#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -94,6 +96,10 @@ LIST_HEAD(, gif_softc) gif_softc_list;	/* XXX should be static */
 
 static int	gif_clone_create(struct if_clone *, int);
 static int	gif_clone_destroy(struct ifnet *);
+static int	gif_check_nesting(struct ifnet *, struct mbuf *);
+
+static int	gif_encap_attach(struct gif_softc *);
+static int	gif_encap_detach(struct gif_softc *);
 
 static struct if_clone gif_cloner =
     IF_CLONE_INITIALIZER("gif", gif_clone_create, gif_clone_destroy);
@@ -125,7 +131,9 @@ gif_clone_create(struct if_clone *ifc, int unit)
 {
 	struct gif_softc *sc;
 
-	sc = malloc(sizeof(struct gif_softc), M_DEVBUF, M_WAITOK|M_ZERO);
+	sc = kmem_zalloc(sizeof(struct gif_softc), KM_SLEEP);
+	if (sc == NULL)
+		return ENOMEM;
 
 	if_initname(&sc->gif_if, ifc->ifc_name, unit);
 
@@ -139,6 +147,10 @@ void
 gifattach0(struct gif_softc *sc)
 {
 
+	sc->gif_si_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+	KASSERT(sc->gif_si_lock != NULL);
+	cv_init(&sc->gif_si_cv, "if_gif_cv");
+	sc->gif_si_refs = 0;
 	sc->encap_cookie4 = sc->encap_cookie6 = NULL;
 
 	sc->gif_if.if_addrlen = 0;
@@ -160,20 +172,16 @@ gif_clone_destroy(struct ifnet *ifp)
 {
 	struct gif_softc *sc = (void *) ifp;
 
-	gif_delete_tunnel(&sc->gif_if);
 	LIST_REMOVE(sc, gif_list);
-#ifdef INET6
-	encap_detach(sc->encap_cookie6);
-#endif
-#ifdef INET
-	encap_detach(sc->encap_cookie4);
-#endif
 
+	gif_delete_tunnel(&sc->gif_if);
 	bpf_detach(ifp);
 	if_detach(ifp);
 	rtcache_free(&sc->gif_ro);
 
-	free(sc, M_DEVBUF);
+	cv_destroy(&sc->gif_si_cv);
+	mutex_obj_free(sc->gif_si_lock);
+	kmem_free(sc, sizeof(struct gif_softc));
 
 	return (0);
 }
@@ -239,37 +247,63 @@ gif_encapcheck(struct mbuf *m, int off, int proto, void *arg)
 }
 #endif
 
+/*
+ * gif may cause infinite recursion calls when misconfigured.
+ * We'll prevent this by introducing upper limit.
+ */
+static int
+gif_check_nesting(struct ifnet *ifp, struct mbuf *m)
+{
+	struct m_tag *mtag;
+	int *count;
+
+	mtag = m_tag_find(m, PACKET_TAG_TUNNEL_INFO, NULL);
+	if (mtag != NULL) {
+		count = (int *)(mtag + 1);
+		if (++(*count) > max_gif_nesting) {
+			log(LOG_NOTICE,
+			    "%s: recursively called too many times(%d)\n",
+			    if_name(ifp),
+			    *count);
+			return EIO;
+		}
+	} else {
+		mtag = m_tag_get(PACKET_TAG_TUNNEL_INFO, sizeof(*count),
+		    M_NOWAIT);
+		if (mtag != NULL) {
+			m_tag_prepend(m, mtag);
+			count = (int *)(mtag + 1);
+			*count = 0;
+		} else {
+			log(LOG_DEBUG,
+			    "%s: m_tag_get() failed, recursion calls are not prevented.\n",
+			    if_name(ifp));
+		}
+	}
+
+	return 0;
+}
+
 int
 gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
     struct rtentry *rt)
 {
 	struct gif_softc *sc = ifp->if_softc;
 	int error = 0;
-	static int called = 0;	/* XXX: MUTEX */
 	ALTQ_DECL(struct altq_pktattr pktattr;)
 	int s;
 
 	IFQ_CLASSIFY(&ifp->if_snd, m, dst->sa_family, &pktattr);
 
-	/*
-	 * gif may cause infinite recursion calls when misconfigured.
-	 * We'll prevent this by introducing upper limit.
-	 * XXX: this mechanism may introduce another problem about
-	 *      mutual exclusion of the variable CALLED, especially if we
-	 *      use kernel thread.
-	 */
-	if (++called > max_gif_nesting) {
-		log(LOG_NOTICE,
-		    "gif_output: recursively called too many times(%d)\n",
-		    called);
-		m_freem(m);
-		error = EIO;	/* is there better errno? */
+	if ((error = gif_check_nesting(ifp, m)) != 0) {
+		m_free(m);
 		goto end;
 	}
 
 	m->m_flags &= ~(M_BCAST|M_MCAST);
 	if (!(ifp->if_flags & IFF_UP) ||
-	    sc->gif_psrc == NULL || sc->gif_pdst == NULL) {
+	    sc->gif_psrc == NULL || sc->gif_pdst == NULL ||
+	    sc->gif_si == NULL) {
 		m_freem(m);
 		error = ENETDOWN;
 		goto end;
@@ -295,13 +329,14 @@ gif_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		splx(s);
 		goto end;
 	}
+
+	/* softint_schedule() must be called with kpreempt_disabled() */
+	softint_schedule(sc->gif_si);
 	splx(s);
 
-	softint_schedule(sc->gif_si);
 	error = 0;
 
   end:
-	called = 0;		/* reset recursion counter */
 	if (error)
 		ifp->if_oerrors++;
 	return error;
@@ -320,6 +355,24 @@ gifintr(void *arg)
 
 	sc = arg;
 	ifp = &sc->gif_if;
+
+	atomic_inc_uint(&sc->gif_si_refs);
+
+	/*
+	 * pattern (a) (see also gif_set_tunnel())
+	 * other CPUs does {set,delete}_tunnel after curcpu have done
+	 * softint_schedule().
+	 */
+	if (sc->gif_pdst == NULL || sc->gif_psrc == NULL) {
+		IFQ_PURGE(&ifp->if_snd);
+
+		if (atomic_dec_uint_nv(&sc->gif_si_refs) == 0) {
+			mutex_enter(sc->gif_si_lock);
+			cv_broadcast(&sc->gif_si_cv);
+			mutex_exit(sc->gif_si_lock);
+		}
+		return;
+	}
 
 	/* output processing */
 	while (1) {
@@ -371,6 +424,16 @@ gifintr(void *arg)
 			ifp->if_opackets++;
 			ifp->if_obytes += len;
 		}
+	}
+
+	/*
+	 * pattern (b) (see also gif_set_tunnel())
+	 * other CPUs begin {set,delete}_tunnel while curcpu si doing gifintr.
+	 */
+	if (atomic_dec_uint_nv(&sc->gif_si_refs) == 0) {
+		mutex_enter(sc->gif_si_lock);
+		cv_broadcast(&sc->gif_si_cv);
+		mutex_exit(sc->gif_si_lock);
 	}
 }
 
@@ -658,63 +721,13 @@ gif_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
-int
-gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
+static int
+gif_encap_attach(struct gif_softc *sc)
 {
-	struct gif_softc *sc = ifp->if_softc;
-	struct gif_softc *sc2;
-	struct sockaddr *osrc, *odst;
-	int s;
 	int error;
 
-	s = splsoftnet();
-
-	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
-		if (sc2 == sc)
-			continue;
-		if (!sc2->gif_pdst || !sc2->gif_psrc)
-			continue;
-		/* can't configure same pair of address onto two gifs */
-		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
-		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
-			error = EADDRNOTAVAIL;
-			goto bad;
-		}
-
-		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
-	}
-
-	if (sc->gif_si) {
-		softint_disestablish(sc->gif_si);
-		sc->gif_si = NULL;
-	}
-
-	/* XXX we can detach from both, but be polite just in case */
-	if (sc->gif_psrc)
-		switch (sc->gif_psrc->sa_family) {
-#ifdef INET
-		case AF_INET:
-			(void)in_gif_detach(sc);
-			break;
-#endif
-#ifdef INET6
-		case AF_INET6:
-			(void)in6_gif_detach(sc);
-			break;
-#endif
-		}
-
-	sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
-	if (sc->gif_si == NULL) {
-		error = ENOMEM;
-		goto bad;
-	}
-
-	osrc = sc->gif_psrc;
-	sc->gif_psrc = sockaddr_dup(src, M_WAITOK);
-
-	odst = sc->gif_pdst;
-	sc->gif_pdst = sockaddr_dup(dst, M_WAITOK);
+	if (sc == NULL || sc->gif_psrc == NULL)
+		return EINVAL;
 
 	switch (sc->gif_psrc->sa_family) {
 #ifdef INET
@@ -731,13 +744,156 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		error = EINVAL;
 		break;
 	}
-	if (error) {
-		/* rollback */
-		sockaddr_free(sc->gif_psrc);
-		sockaddr_free(sc->gif_pdst);
+
+	return error;
+}
+
+static int
+gif_encap_detach(struct gif_softc *sc)
+{
+	int error;
+
+	if (sc == NULL || sc->gif_psrc == NULL)
+		return EINVAL;
+
+	switch (sc->gif_psrc->sa_family) {
+#ifdef INET
+	case AF_INET:
+		error = in_gif_detach(sc);
+		break;
+#endif
+#ifdef INET6
+	case AF_INET6:
+		error = in6_gif_detach(sc);
+		break;
+#endif
+	default:
+		error = EINVAL;
+		break;
+	}
+
+	return error;
+}
+
+int
+gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
+{
+	struct gif_softc *sc = ifp->if_softc;
+	struct gif_softc *sc2;
+	struct sockaddr *osrc, *odst;
+	struct sockaddr *nsrc, *ndst;
+	void *osi;
+	int s;
+	int error;
+
+	s = splsoftnet();
+
+	LIST_FOREACH(sc2, &gif_softc_list, gif_list) {
+		if (sc2 == sc)
+			continue;
+		if (!sc2->gif_pdst || !sc2->gif_psrc)
+			continue;
+		/* can't configure same pair of address onto two gifs */
+		if (sockaddr_cmp(sc2->gif_pdst, dst) == 0 &&
+		    sockaddr_cmp(sc2->gif_psrc, src) == 0) {
+			/* continue to use the old configureation. */
+			splx(s);
+			return EADDRNOTAVAIL;
+		}
+
+		/* XXX both end must be valid? (I mean, not 0.0.0.0) */
+	}
+
+	if ((nsrc = sockaddr_dup(src, M_WAITOK)) == NULL) {
+		splx(s);
+		return ENOMEM;
+	}
+	if ((ndst = sockaddr_dup(dst, M_WAITOK)) == NULL) {
+		sockaddr_free(nsrc);
+		splx(s);
+		return ENOMEM;
+	}
+
+	/* Firstly, clear old configurations. */
+	if (sc->gif_si) {
+		osrc = sc->gif_psrc;
+		odst = sc->gif_pdst;
+		osi = sc->gif_si;
+		sc->gif_psrc = NULL;
+		sc->gif_pdst = NULL;
+		sc->gif_si = NULL;
+
+		/*
+		 * At this point, gif_output() does not softint_schedule()
+		 * any more. However, there are below 2 fears of other CPUs.
+		 *     (a) gif_output() has done softint_schedule(),and softint
+		 *         (gifintr()) is waiting for execution
+		 *     (b) gifintr() is already running
+		 * see also gifintr()
+		 */
+
+		/*
+		 * To avoid the above fears, wait for gifintr() completion of
+		 * all CPUs here.
+		 */
+		mutex_enter(sc->gif_si_lock);
+		while (sc->gif_si_refs > 0) {
+			aprint_debug("%s: cv_wait on gif_softc\n", __func__);
+			cv_wait(&sc->gif_si_cv, sc->gif_si_lock);
+		}
+		mutex_exit(sc->gif_si_lock);
+
+		softint_disestablish(osi);
 		sc->gif_psrc = osrc;
 		sc->gif_pdst = odst;
-		goto bad;
+		osrc = NULL;
+		odst = NULL;
+	}
+	/* XXX we can detach from both, but be polite just in case */
+	if (sc->gif_psrc)
+		(void)gif_encap_detach(sc);
+
+	/*
+	 * Secondly, try to set new configurations.
+	 * If the setup failed, rollback to old configurations.
+	 */
+	do {
+		osrc = sc->gif_psrc;
+		odst = sc->gif_pdst;
+		sc->gif_psrc = nsrc;
+		sc->gif_pdst = ndst;
+
+		error = gif_encap_attach(sc);
+		if (error) {
+			/* rollback to the last configuration. */
+			nsrc = osrc;
+			ndst = odst;
+			osrc = sc->gif_psrc;
+			odst = sc->gif_pdst;
+
+			continue;
+		}
+
+		sc->gif_si = softint_establish(SOFTINT_NET, gifintr, sc);
+		if (sc->gif_si == NULL) {
+			(void)gif_encap_detach(sc);
+
+			/* rollback to the last configuration. */
+			nsrc = osrc;
+			ndst = odst;
+			osrc = sc->gif_psrc;
+			odst = sc->gif_pdst;
+
+			error = ENOMEM;
+			continue;
+		}
+	} while (error != 0 && (nsrc != NULL && ndst != NULL));
+	/* Thirdly, even rollback failed, clear configurations. */
+	if (error) {
+		osrc = sc->gif_psrc;
+		odst = sc->gif_pdst;
+		sc->gif_psrc = NULL;
+		sc->gif_pdst = NULL;
 	}
 
 	if (osrc)
@@ -749,21 +905,8 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		ifp->if_flags |= IFF_RUNNING;
 	else
 		ifp->if_flags &= ~IFF_RUNNING;
+
 	splx(s);
-
-	return 0;
-
- bad:
-	if (sc->gif_si) {
-		softint_disestablish(sc->gif_si);
-		sc->gif_si = NULL;
-	}
-	if (sc->gif_psrc && sc->gif_pdst)
-		ifp->if_flags |= IFF_RUNNING;
-	else
-		ifp->if_flags &= ~IFF_RUNNING;
-	splx(s);
-
 	return error;
 }
 
@@ -771,13 +914,31 @@ void
 gif_delete_tunnel(struct ifnet *ifp)
 {
 	struct gif_softc *sc = ifp->if_softc;
+	struct sockaddr *osrc, *odst;
+	void *osi;
 	int s;
 
 	s = splsoftnet();
 
 	if (sc->gif_si) {
-		softint_disestablish(sc->gif_si);
+		osrc = sc->gif_psrc;
+		odst = sc->gif_pdst;
+		osi = sc->gif_si;
+
+		sc->gif_psrc = NULL;
+		sc->gif_pdst = NULL;
 		sc->gif_si = NULL;
+
+		mutex_enter(sc->gif_si_lock);
+		while (sc->gif_si_refs > 0) {
+			aprint_debug("%s: cv_wait on gif_softc\n", __func__);
+			cv_wait(&sc->gif_si_cv, sc->gif_si_lock);
+		}
+		mutex_exit(sc->gif_si_lock);
+
+		softint_disestablish(osi);
+		sc->gif_psrc = osrc;
+		sc->gif_pdst = odst;
 	}
 	if (sc->gif_psrc) {
 		sockaddr_free(sc->gif_psrc);

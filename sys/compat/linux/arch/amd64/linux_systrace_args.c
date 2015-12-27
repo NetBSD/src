@@ -1,4 +1,4 @@
-/* $NetBSD: linux_systrace_args.c,v 1.1.2.3 2015/06/06 14:40:05 skrll Exp $ */
+/* $NetBSD: linux_systrace_args.c,v 1.1.2.4 2015/12/27 12:09:46 skrll Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -5168,12 +5168,12 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 	/* sys_setuid */
 	case 105:
 		if (ndx == 0 || ndx == 1)
-			p = "void";
+			p = "int";
 		break;
 	/* sys_setgid */
 	case 106:
 		if (ndx == 0 || ndx == 1)
-			p = "void";
+			p = "int";
 		break;
 	/* sys_geteuid */
 	case 107:

@@ -1,4 +1,4 @@
-/* $NetBSD: spdmemvar.h,v 1.4.6.1 2015/06/06 14:40:08 skrll Exp $ */
+/* $NetBSD: spdmemvar.h,v 1.4.6.2 2015/12/27 12:09:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2007 Paul Goyette
@@ -719,7 +719,8 @@ struct spdmem_ddr4 {				/* Dual Data Rate 4 SDRAM */
 	uint8_t	ddr4_type;
 	SPD_BITFIELD(				\
 		uint8_t	ddr4_mod_type:4,	\
-		uint8_t	ddr4_unused1:4, ,	\
+		uint8_t	ddr4_hybrid_media:3,	\
+		uint8_t	ddr4_hybrid:1,		\
 	);
 	SPD_BITFIELD(				\
 		/* capacity is offset by 28: 0 = 256M, 1 = 512M, ... */ \
@@ -806,14 +807,19 @@ struct spdmem_ddr4 {				/* Dual Data Rate 4 SDRAM */
 	uint8_t	ddr4_tRFC4min_lsb;
 	uint8_t	ddr4_tRFC4min_msb;
 	SPD_BITFIELD(				\
-		uint8_t	ddr4_tFAW_mtb_msb,	\
-		uint8_t	ddr4_unused14, ,	\
+		uint8_t	ddr4_tFAW_mtb_msb:4,	\
+		uint8_t	ddr4_unused14:4, ,	\
 	);
 	uint8_t	ddr4_tFAWmin_mtb_lsb;
 	uint8_t	ddr4_tRRD_Smin_mtb;
 	uint8_t	ddr4_tRRD_Lmin_mtb;
 	uint8_t	ddr4_tCCD_Lmin_mtb;
-	uint8_t	ddr4_unused15[19];
+	uint8_t	ddr4_tWR_min_msb;
+	uint8_t	ddr4_tWR_min_mtb;
+	uint8_t	ddr4_tWTR_min;
+	uint8_t	ddr4_tWTR_Smin_mtb;
+	uint8_t	ddr4_tWTR_Lmin_mtb;
+	uint8_t	ddr4_unused15[14];
 	uint8_t	ddr4_connector_map[18];
 	uint8_t	ddr4_unused16[39];
 	uint8_t	ddr4_tCCD_Lmin_ftb;
@@ -882,10 +888,10 @@ struct spdmem {
 #define	sm_refresh	sm_fpm.fpm_refresh
 #define	sm_selfrefresh	sm_fpm.fpm_selfrefresh
 
-#define SPDMEM_TYPE_MAXLEN 24
+#define SPDMEM_TYPE_MAXLEN 40
 
 struct spdmem_softc {
-	uint8_t		(*sc_read)(struct spdmem_softc *, uint8_t);
+	uint8_t		(*sc_read)(struct spdmem_softc *, uint16_t);
 	struct spdmem	sc_spd_data;
 	struct sysctllog *sc_sysctl_log;
 	char		sc_type[SPDMEM_TYPE_MAXLEN];

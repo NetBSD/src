@@ -1,4 +1,4 @@
-#	$NetBSD: files.tegra,v 1.1.2.2 2015/04/06 15:17:55 skrll Exp $
+#	$NetBSD: files.tegra,v 1.1.2.3 2015/12/27 12:09:34 skrll Exp $
 #
 # NVIDIA Tegra configuration info
 #
@@ -6,5 +6,9 @@
 file	arch/evbarm/tegra/tegra_machdep.c
 
 defparam opt_machdep.h				BOOT_ARGS
+
+include "dev/ofw/files.ofw"
+include "dev/fdt/files.fdt"
+include "arch/arm/fdt/files.fdt"
 
 include "arch/arm/nvidia/files.tegra"

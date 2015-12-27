@@ -1,4 +1,4 @@
-/*	$NetBSD: module.h,v 1.35.4.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: module.h,v 1.35.4.3 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -223,7 +223,8 @@ typedef struct modstat {
 	modclass_t	ms_class;
 	u_int		ms_size;
 	u_int		ms_refcnt;
-	u_int		ms_reserved[4];
+	u_int		ms_flags;
+	u_int		ms_reserved[3];
 } modstat_t;
 
 int	modctl(int, void *);

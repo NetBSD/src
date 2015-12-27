@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_syscall.c,v 1.9.6.2 2015/06/06 14:40:21 skrll Exp $	*/
+/*	$NetBSD: kern_syscall.c,v 1.9.6.3 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.9.6.2 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_syscall.c,v 1.9.6.3 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -60,11 +60,11 @@ int
 sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 {
 #ifdef MODULAR
-#include <kern/syscalls_autoload.c>
 
 	const struct sysent *sy;
 	const struct emul *em;
-	int code, i;
+	const struct sc_autoload *auto_list;
+	u_int code;
 
 	/*
 	 * Restart the syscall if we interrupted a module unload that
@@ -82,13 +82,14 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 	 * works, retry the request.
 	 */
 	em = l->l_proc->p_emul;
-	if (em == &emul_netbsd) {
-		code = sy - em->e_sysent;
-		for (i = 0; i < __arraycount(syscalls_autoload); i++) {
-			if (syscalls_autoload[i].al_code != code) {
+	code = sy - em->e_sysent;
+
+	if ((auto_list = em->e_sc_autoload) != NULL)
+		for (; auto_list->al_code > 0; auto_list++) {
+			if (auto_list->al_code != code) {
 				continue;
 			}
-			if (module_autoload(syscalls_autoload[i].al_module,
+			if (module_autoload(auto_list->al_module,
 			    MODULE_CLASS_ANY) != 0 ||
 			    sy->sy_call == sys_nomodule) {
 			    	break;
@@ -96,7 +97,6 @@ sys_nomodule(struct lwp *l, const void *v, register_t *retval)
 			kernconfig_unlock();
 			return ERESTART;
 		}
-	}
 	kernconfig_unlock();
 #endif	/* MODULAR */
 

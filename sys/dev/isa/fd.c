@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.105.4.2 2015/06/06 14:40:08 skrll Exp $	*/
+/*	$NetBSD: fd.c,v 1.105.4.3 2015/12/27 12:09:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2008 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.105.4.2 2015/06/06 14:40:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.105.4.3 2015/12/27 12:09:50 skrll Exp $");
 
 #include "opt_ddb.h"
 
@@ -1411,7 +1411,7 @@ fdioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 #endif
 
 	switch (cmd) {
-	case DIOCGPART:
+	case DIOCGPARTINFO:
 	case DIOCGDINFO:
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:

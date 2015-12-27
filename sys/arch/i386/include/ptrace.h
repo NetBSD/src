@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.13.136.1 2015/09/22 12:05:44 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.13.136.2 2015/12/27 12:09:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -101,6 +101,10 @@
 #define PTRACE_REG_SET_PC(r, v)	(r)->r_eip = (v)
 #define PTRACE_REG_SP(r)	(r)->r_esp
 #define PTRACE_REG_INTRV(r)	(r)->r_eax
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xcc })
+#define PTRACE_BREAKPOINT_SIZE	1
+#define PTRACE_BREAKPOINT_ADJ	sizeof(PTRACE_BREAKPOINT)
 
 #ifdef _KERNEL
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_proto.c,v 1.103.4.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: in6_proto.c,v 1.103.4.4 2015/12/27 12:10:07 skrll Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -62,13 +62,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.4 2015/12/27 12:10:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
 #include "opt_inet.h"
 #include "opt_ipsec.h"
 #include "opt_dccp.h"
+#include "opt_sctp.h"
 #endif
 
 #include <sys/param.h>
@@ -109,6 +110,13 @@ __KERNEL_RCSID(0, "$NetBSD: in6_proto.c,v 1.103.4.3 2015/09/22 12:06:11 skrll Ex
 #include <netinet/dccp.h>
 #include <netinet/dccp_var.h>
 #include <netinet6/dccp6_var.h>
+#endif
+
+#ifdef SCTP
+#include <netinet/sctp_pcb.h>
+#include <netinet/sctp.h>
+#include <netinet/sctp_var.h>
+#include <netinet6/sctp6_var.h>
 #endif
 
 #include <netinet6/pim6_var.h>
@@ -170,6 +178,14 @@ PR_WRAP_CTLOUTPUT(dccp_ctloutput)
 
 #define dccp6_ctlinput	dccp6_ctlinput_wrapper
 #define dccp_ctloutput	dccp_ctloutput_wrapper
+#endif
+
+#if defined(SCTP)
+PR_WRAP_CTLINPUT(sctp6_ctlinput)
+PR_WRAP_CTLOUTPUT(sctp_ctloutput)
+
+#define sctp6_ctlinput	sctp6_ctlinput_wrapper
+#define sctp_ctloutput	sctp_ctloutput_wrapper
 #endif
 
 #if defined(IPSEC)
@@ -237,6 +253,36 @@ const struct ip6protosw inet6sw[] = {
 #endif
 },
 #endif /* DCCP */
+#ifdef SCTP
+{	.pr_type = SOCK_DGRAM,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_ADDR_OPT|PR_WANTRCVD,
+	.pr_input = sctp6_input,
+	.pr_ctlinput = sctp6_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_usrreqs = &sctp6_usrreqs,
+	.pr_drain = sctp_drain,
+},
+{	.pr_type = SOCK_SEQPACKET,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_ADDR_OPT|PR_WANTRCVD,
+	.pr_input = sctp6_input,
+	.pr_ctlinput = sctp6_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_drain = sctp_drain,
+},
+{	.pr_type = SOCK_STREAM,
+	.pr_domain = &inet6domain,
+	.pr_protocol = IPPROTO_SCTP,
+	.pr_flags = PR_CONNREQUIRED|PR_ADDR_OPT|PR_WANTRCVD|PR_LISTEN,
+	.pr_input = sctp6_input,
+	.pr_ctlinput = sctp6_ctlinput,
+	.pr_ctloutput = sctp_ctloutput,
+	.pr_drain = sctp_drain,
+},
+#endif /* SCTP */
 {	.pr_type = SOCK_RAW,
 	.pr_domain = &inet6domain,
 	.pr_protocol = IPPROTO_RAW,

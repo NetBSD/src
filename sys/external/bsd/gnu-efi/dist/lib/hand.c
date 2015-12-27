@@ -1,4 +1,4 @@
-/*	$NetBSD: hand.c,v 1.1.1.1 2014/04/01 16:16:07 jakllsch Exp $	*/
+/*	$NetBSD: hand.c,v 1.1.1.1.12.1 2015/12/27 12:10:03 skrll Exp $	*/
 
 /*++
 
@@ -488,6 +488,8 @@ LibInstallProtocolInterfaces (
         Index += 1;
     }
 
+    va_end (args);
+
     //
     // If there was an error, remove all the interfaces that were
     // installed without any errors
@@ -503,6 +505,7 @@ LibInstallProtocolInterfaces (
 
             Index -= 1;
         }        
+	va_end (args);
 
         *Handle = OldHandle;
     }
@@ -551,6 +554,7 @@ LibUninstallProtocolInterfaces (
             DEBUG((D_ERROR, "LibUninstallProtocolInterfaces: failed %g, %r\n", Protocol, Handle));
         }
     }
+    va_end (args);
 }    
 
 
@@ -607,6 +611,8 @@ LibReinstallProtocolInterfaces (
         Index += 1;
     }
 
+    va_end (args);
+
     //
     // If there was an error, undo all the interfaces that were
     // reinstalled without any errors
@@ -624,6 +630,7 @@ LibReinstallProtocolInterfaces (
 
             Index -= 1;
         }        
+	va_end (args);
     }
 
     //

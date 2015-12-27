@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.h,v 1.2.2.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_llatbl.h,v 1.2.2.3 2015/12/27 12:10:07 skrll Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -32,7 +32,15 @@
 #ifndef	_NET_IF_LLATBL_H_
 #define	_NET_IF_LLATBL_H_
 
+#if defined(_KERNEL_OPT)
+#include "opt_gateway.h"
+#endif
+
 #include <sys/rwlock.h>
+#ifdef GATEWAY
+#include <sys/mutex.h>
+#endif
+
 #include <netinet/in.h>
 
 struct ifnet;
@@ -71,6 +79,7 @@ struct llentry {
 	struct lltable		 *lle_tbl;
 	struct llentries	 *lle_head;
 	void			(*lle_free)(struct llentry *);
+	void			(*lle_ll_free)(struct llentry *);
 	struct mbuf		 *la_hold;
 	int			 la_numheld;  /* # of packets currently held */
 	time_t			 la_expire;
@@ -85,36 +94,72 @@ struct llentry {
 
 	LIST_ENTRY(llentry)	lle_chain;	/* chain of deleted items */
 	struct callout		lle_timer;
+#ifdef GATEWAY
+	kmutex_t		lle_lock;
+#else
 	krwlock_t		lle_lock;
+#endif
 
 #ifdef __NetBSD__
 #define	la_timer	lle_timer
+#define	ln_timer_ch	lle_timer
+#define	ln_expire	la_expire
+#define	ln_asked	la_asked
+#define	ln_hold		la_hold
 	struct rtentry		*la_rt;
+#define	ln_rt		la_rt
 	void			*la_opaque;	/* For tokenring */
 #endif
 };
 
 
 #if 0
-#define LLE_LOCK_TRACE(n)	aprint_normal("%s: " #n " line %d\n", __func__, __LINE__)
+#define LLE_LOCK_TRACE(t, lle)	aprint_normal( \
+				    "%s:%d: LOCK(" #t "): lle=%p\n", \
+				    __func__, __LINE__, (lle))
 #else
-#define LLE_LOCK_TRACE(n)
+#define LLE_LOCK_TRACE(t, lle)	do {} while (0)
 #endif
 
+#ifdef GATEWAY
 #define	LLE_WLOCK(lle)		do { \
-					LLE_LOCK_TRACE(WL); \
+					LLE_LOCK_TRACE(WL, (lle)); \
+					mutex_enter(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_RLOCK(lle)		do { \
+					LLE_LOCK_TRACE(RL, (lle)); \
+					mutex_enter(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_WUNLOCK(lle)	do { \
+					LLE_LOCK_TRACE(WU, (lle)); \
+					mutex_exit(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_RUNLOCK(lle)	do { \
+					LLE_LOCK_TRACE(RU, (lle)); \
+					mutex_exit(&(lle)->lle_lock); \
+				} while (0)
+#define	LLE_DOWNGRADE(lle)	do {} while (0)
+#define	LLE_TRY_UPGRADE(lle)	(1)
+#define	LLE_LOCK_INIT(lle)	mutex_init(&(lle)->lle_lock, MUTEX_DEFAULT, \
+				    IPL_NET)
+#define	LLE_LOCK_DESTROY(lle)	mutex_destroy(&(lle)->lle_lock)
+#define	LLE_WLOCK_ASSERT(lle)	KASSERT(mutex_owned(&(lle)->lle_lock))
+
+#else /* GATEWAY */
+#define	LLE_WLOCK(lle)		do { \
+					LLE_LOCK_TRACE(WL, (lle)); \
 					rw_enter(&(lle)->lle_lock, RW_WRITER); \
 				} while (0)
 #define	LLE_RLOCK(lle)		do { \
-					LLE_LOCK_TRACE(RL); \
+					LLE_LOCK_TRACE(RL, (lle)); \
 					rw_enter(&(lle)->lle_lock, RW_READER); \
 				} while (0)
 #define	LLE_WUNLOCK(lle)	do { \
-					LLE_LOCK_TRACE(WU); \
+					LLE_LOCK_TRACE(WU, (lle)); \
 					rw_exit(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_RUNLOCK(lle)	do { \
-					LLE_LOCK_TRACE(RU); \
+					LLE_LOCK_TRACE(RU, (lle)); \
 					rw_exit(&(lle)->lle_lock); \
 				} while (0)
 #define	LLE_DOWNGRADE(lle)	rw_downgrade(&(lle)->lle_lock)
@@ -126,11 +171,20 @@ struct llentry {
 #endif
 #define	LLE_LOCK_DESTROY(lle)	rw_destroy(&(lle)->lle_lock)
 #define	LLE_WLOCK_ASSERT(lle)	KASSERT(rw_write_held(&(lle)->lle_lock))
+#endif /* GATEWAY */
 
 #define LLE_IS_VALID(lle)	(((lle) != NULL) && ((lle) != (void *)-1))
 
+#if 0
+#define LLE_REF_TRACE(t, n)	aprint_normal("%s:%d: REF(" #t "): refcnt=%d\n", \
+				    __func__, __LINE__, (n))
+#else
+#define LLE_REF_TRACE(t, n)	do {} while (0)
+#endif
+
 #define	LLE_ADDREF(lle) do {					\
 	LLE_WLOCK_ASSERT(lle);					\
+	LLE_REF_TRACE(ADD, (lle)->lle_refcnt);			\
 	KASSERTMSG((lle)->lle_refcnt >= 0,				\
 	    "negative refcnt %d on lle %p",			\
 	    (lle)->lle_refcnt, (lle));				\
@@ -139,16 +193,21 @@ struct llentry {
 
 #define	LLE_REMREF(lle)	do {					\
 	LLE_WLOCK_ASSERT(lle);					\
+	LLE_REF_TRACE(REM, (lle)->lle_refcnt);			\
 	KASSERTMSG((lle)->lle_refcnt > 0,				\
 	    "bogus refcnt %d on lle %p",			\
 	    (lle)->lle_refcnt, (lle));				\
 	(lle)->lle_refcnt--;					\
+	if ((lle)->lle_refcnt == 0)				\
+		LLE_REF_TRACE(ZERO, (lle)->lle_refcnt);		\
 } while (0)
 
 #define	LLE_FREE_LOCKED(lle) do {				\
-	if ((lle)->lle_refcnt == 1)				\
+	if ((lle)->lle_refcnt == 1) {				\
+		if ((lle)->lle_ll_free != NULL)			\
+			(lle)->lle_ll_free(lle);		\
 		(lle)->lle_free(lle);				\
-	else {							\
+	} else {						\
 		LLE_REMREF(lle);				\
 		LLE_WUNLOCK(lle);				\
 	}							\
@@ -189,6 +248,7 @@ struct lltable {
 	int			llt_af;
 	int			llt_hsize;
 	struct llentries	*lle_head;
+	unsigned int		llt_lle_count;
 	struct ifnet		*llt_ifp;
 
 	llt_lookup_t		*llt_lookup;
@@ -231,6 +291,7 @@ void		lltable_link(struct lltable *llt);
 void		lltable_prefix_free(int, struct sockaddr *,
 		    struct sockaddr *, u_int);
 void		lltable_drain(int);
+void		lltable_purge_entries(struct lltable *);
 int		lltable_sysctl_dumparp(int, struct sysctl_req *);
 
 size_t		llentry_free(struct llentry *);
@@ -247,6 +308,12 @@ void lltable_unlink_entry(struct lltable *llt, struct llentry *lle);
 void lltable_fill_sa_entry(const struct llentry *lle, struct sockaddr *sa);
 struct ifnet *lltable_get_ifp(const struct lltable *llt);
 int lltable_get_af(const struct lltable *llt);
+
+static inline unsigned int
+lltable_get_entry_count(struct lltable *llt)
+{
+	return llt->llt_lle_count;
+}
 
 int lltable_foreach_lle(struct lltable *llt, llt_foreach_cb_t *f,
     void *farg);

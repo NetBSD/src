@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arcsubr.c,v 1.66.4.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_arcsubr.c,v 1.66.4.3 2015/12/27 12:10:06 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Ignatios Souvatzis
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.2 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arcsubr.c,v 1.66.4.3 2015/12/27 12:10:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -151,8 +151,8 @@ arc_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			adst = arcbroadcastaddr; /* ARCnet broadcast address */
 		else if (ifp->if_flags & IFF_NOARP)
 			adst = ntohl(satocsin(dst)->sin_addr.s_addr) & 0xFF;
-		else if (!arpresolve(ifp, rt, m, dst, &adst))
-			return 0;	/* not resolved yet */
+		else if ((error = arpresolve(ifp, rt, m, dst, &adst)) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & (M_BCAST|M_MCAST)) &&

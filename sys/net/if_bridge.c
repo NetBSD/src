@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.91.2.3 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.91.2.4 2015/12/27 12:10:06 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.3 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.91.2.4 2015/12/27 12:10:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -893,6 +893,8 @@ bridge_ioctl_add(struct bridge_softc *sc, void *arg)
 
 	switch (ifs->if_type) {
 	case IFT_ETHER:
+		if ((error = ether_enable_vlan_mtu(ifs)) > 0)
+			goto out;
 		/*
 		 * Place the interface into promiscuous mode.
 		 */
@@ -970,6 +972,7 @@ bridge_ioctl_del(struct bridge_softc *sc, void *arg)
 		 * Don't call it with holding a spin lock.
 		 */
 		(void) ifpromisc(ifs, 0);
+		(void) ether_disable_vlan_mtu(ifs);
 		break;
 	default:
 #ifdef DIAGNOSTIC
@@ -1971,8 +1974,16 @@ out:
 	bridge_release_member(sc, bif);
 
 	/* Queue the packet for bridge forwarding. */
-	if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, 0)))
-		m_freem(m);
+	{
+		/*
+		 * Force to enqueue to curcpu's pktq (RX can run on a CPU
+		 * other than CPU#0). XXX need fundamental solution.
+		 */
+		const unsigned hash = curcpu()->ci_index;
+
+		if (__predict_false(!pktq_enqueue(sc->sc_fwd_pktq, m, hash)))
+			m_freem(m);
+	}
 }
 
 /*
@@ -2173,7 +2184,7 @@ retry:
 	count = sc->sc_brtcnt;
 	if (count == 0)
 		return;
-	brt_list = kmem_alloc(sizeof(struct bridge_rtnode *) * count, KM_SLEEP);
+	brt_list = kmem_alloc(sizeof(*brt_list) * count, KM_SLEEP);
 
 	BRIDGE_RT_LOCK(sc);
 	BRIDGE_RT_INTR_LOCK(sc);

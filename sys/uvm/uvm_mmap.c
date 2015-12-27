@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.149.2.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.149.2.3 2015/12/27 12:10:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149.2.2 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.149.2.3 2015/12/27 12:10:19 skrll Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -371,7 +371,8 @@ sys_mmap(struct lwp *l, const struct sys_mmap_args *uap, register_t *retval)
 		 */
 
 		defaddr = p->p_emul->e_vm_default_addr(p,
-		    (vaddr_t)p->p_vmspace->vm_daddr, size);
+		    (vaddr_t)p->p_vmspace->vm_daddr, size,
+		    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 
 		if (addr == 0 ||
 		    !(p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN))
@@ -1064,10 +1065,10 @@ uvm_mmap(struct vm_map *map, vaddr_t *addr, vsize_t size, vm_prot_t prot,
 }
 
 vaddr_t
-uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz)
+uvm_default_mapaddr(struct proc *p, vaddr_t base, vsize_t sz, int topdown)
 {
 
-	if (p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN)
+	if (topdown)
 		return VM_DEFAULT_ADDRESS_TOPDOWN(base, sz);
 	else
 		return VM_DEFAULT_ADDRESS_BOTTOMUP(base, sz);
@@ -1086,7 +1087,8 @@ uvm_mmap_dev(struct proc *p, void **addrp, size_t len, dev_t dev,
 		flags |= MAP_FIXED;
 	else
 		*addrp = (void *)p->p_emul->e_vm_default_addr(p,
-		    (vaddr_t)p->p_vmspace->vm_daddr, len);
+		    (vaddr_t)p->p_vmspace->vm_daddr, len,
+		    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 
 	uobj = udv_attach(dev, prot, off, len);
 	if (uobj == NULL)
@@ -1109,7 +1111,8 @@ uvm_mmap_anon(struct proc *p, void **addrp, size_t len)
 		flags |= MAP_FIXED;
 	else
 		*addrp = (void *)p->p_emul->e_vm_default_addr(p,
-		    (vaddr_t)p->p_vmspace->vm_daddr, len);
+		    (vaddr_t)p->p_vmspace->vm_daddr, len,
+		    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vaddr_t *)addrp,
 			 (vsize_t)len, prot, prot, flags, UVM_ADV_NORMAL,

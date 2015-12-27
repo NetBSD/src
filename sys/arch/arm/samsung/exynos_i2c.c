@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.2.2.1 2015/04/06 15:17:53 skrll Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.2.2.2 2015/12/27 12:09:32 skrll Exp $ */
 
 /*
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,14 +30,11 @@
  *
  */
 
-
 #include "opt_exynos.h"
 #include "opt_arm_debug.h"
-#include "exynos_iic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.2.2.1 2015/04/06 15:17:53 skrll Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.2.2.2 2015/12/27 12:09:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -47,7 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.2.2.1 2015/04/06 15:17:53 skrll Exp
 #include <sys/kmem.h>
 
 #include <arm/samsung/exynos_reg.h>
-#include <arm/samsung/exynos_io.h>
 #include <arm/samsung/exynos_intr.h>
 
 #include <sys/gpio.h>
@@ -56,339 +52,313 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.2.2.1 2015/04/06 15:17:53 skrll Exp
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/i2c_bitbang.h>
 
+#include <dev/fdt/fdtvar.h>
 
-struct exynos_iic_dev_softc {
-	int			isc_bus;
-	bool			isc_isgpio;
+struct exynos_i2c_softc {
+	device_t		sc_dev;
+	bus_space_tag_t		sc_bst;
+	bus_space_handle_t	sc_bsh;
+	void *			sc_ih;
+	u_int			sc_port;
 
-	bus_space_tag_t		isc_bst;
-	bus_space_handle_t	isc_bsh;
-
-	struct exynos_gpio_pinset  isc_pinset;
-	struct exynos_gpio_pindata isc_sda;
-	struct exynos_gpio_pindata isc_slc;
-	bool			isc_sda_is_output;
-
-	kmutex_t		isc_buslock;
-	struct i2c_controller 	isc_i2cbus;
+	struct fdtbus_gpio_pin  *sc_sda;
+	struct fdtbus_gpio_pin  *sc_scl;
+	bool			sc_sda_is_output;
+	struct i2c_controller 	sc_ic;
+	kmutex_t		sc_lock;
+	kcondvar_t		sc_cv;
+	device_t		sc_i2cdev;
 };
 
+static u_int i2c_port;
 
-#if NEXYNOS_IIC > 0
-static int	exynos_iic_acquire_bus(void *, int);
-static void	exynos_iic_release_bus(void *, int);
+static int	exynos_i2c_intr(void *);
 
-static int	exynos_iic_send_start(void *, int);
-static int	exynos_iic_send_stop(void *, int);
-static int	exynos_iic_initiate_xfer(void *, i2c_addr_t, int);
-static int	exynos_iic_read_byte(void *, uint8_t *, int);
-static int	exynos_iic_write_byte(void *, uint8_t , int);
+static int	exynos_i2c_acquire_bus(void *, int);
+static void	exynos_i2c_release_bus(void *, int);
 
-static bool exynos_iic_attach_i2cbus(struct exynos_iic_dev_softc *,
-	struct i2c_controller *, struct exyo_locators const *);
-#endif
+static int	exynos_i2c_send_start(void *, int);
+static int	exynos_i2c_send_stop(void *, int);
+static int	exynos_i2c_initiate_xfer(void *, i2c_addr_t, int);
+static int	exynos_i2c_read_byte(void *, uint8_t *, int);
+static int	exynos_i2c_write_byte(void *, uint8_t , int);
 
+static bool exynos_i2c_attach_i2cbus(struct exynos_i2c_softc *,
+				     struct i2c_controller *);
 
-struct i2c_controller *exynos_i2cbus[EXYNOS_MAX_IIC_BUSSES];
-static int exynos_iic_match(device_t, cfdata_t, void *);
-static void exynos_iic_attach(device_t, device_t, void *);
+static int exynos_i2c_match(device_t, cfdata_t, void *);
+static void exynos_i2c_attach(device_t, device_t, void *);
 
-struct exynos_iic_softc {
-	device_t		sc_dev;
+CFATTACH_DECL_NEW(exynos_i2c, sizeof(struct exynos_i2c_softc),
+    exynos_i2c_match, exynos_i2c_attach, NULL, NULL);
 
-	struct exynos_iic_dev_softc sc_idevs[EXYNOS_MAX_IIC_BUSSES];
-	struct i2c_controller       sc_i2cbus[EXYNOS_MAX_IIC_BUSSES];
-} exynos_iic_sc;
+#define I2C_WRITE(sc, reg, val) \
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+#define I2C_READ(sc, reg) \
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
 
-
-CFATTACH_DECL_NEW(exynos_iic, sizeof(struct exynos_iic_softc),
-    exynos_iic_match, exynos_iic_attach, NULL, NULL);
-
+#define IICON 0
+#define IRQPEND (1<<4)
 
 static int
-exynos_iic_match(device_t self, cfdata_t cf, void *aux)
+exynos_i2c_match(device_t self, cfdata_t cf, void *aux)
 {
-#ifdef DIAGNOSTIC
-	struct exyo_attach_args *exyoaa = aux;
-	struct exyo_locators *loc = &exyoaa->exyo_loc;
-#endif
-	int i;
+	const char * const compatible[] = { "samsung,s3c2440-i2c", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	/* no locators expected */
-	KASSERT(loc->loc_offset == 0);
-	KASSERT(loc->loc_size   == 0);
-	KASSERT(loc->loc_port   == EXYOCF_PORT_DEFAULT);
-
-	if (exynos_iic_sc.sc_dev != NULL)
-		return 0;
-	for (i = 0; i < EXYNOS_MAX_IIC_BUSSES; i++)
-		exynos_i2cbus[i] = NULL;
-#if NEXYNOS_IIC > 0
-	return 1;
-#else
-	return 0;
-#endif
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
-
 static void
-exynos_iic_attach(device_t parent, device_t self, void *aux)
+exynos_i2c_attach(device_t parent, device_t self, void *aux)
 {
-#if NEXYNOS_IIC > 0
-	prop_dictionary_t dict = device_properties(self);
-        struct exynos_iic_softc * const sc =  device_private(self);
-	struct exyo_attach_args * const exyoaa = aux;
-        struct exynos_iic_dev_softc *ei2c_sc;
-	struct i2c_controller *i2c_cntr;
+        struct exynos_i2c_softc * const sc =  device_private(self);
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	struct i2cbus_attach_args iba;
-	struct exyo_locinfo const *locs;
-	struct exyo_locators const *loc;
-	bool enable;
-	char scrap[strlen("iic??_enable")];
-	int i;
 
-	locs = NULL;
-#ifdef EXYNOS4
-	if (IS_EXYNOS4_P())
-		locs = &exynos4_i2c_locinfo;
-#endif
-#ifdef EXYNOS5
-	if (IS_EXYNOS5_P())
-		locs = &exynos5_i2c_locinfo;
-#endif
-	KASSERT(locs);
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
 
-	sc->sc_dev  = self;
-	if (locs->nlocators == 0) {
-		aprint_error(": no i2c busses defined\n");
+	char result[64];
+	int i2c_handle;
+	int len;
+	int handle;
+	int func /*, pud, drv */;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
 		return;
 	}
 
-	aprint_normal("\n");
 
-	for (i = 0; i < locs->nlocators; i++) {
-		/* get subdriver type : either gpio or hw */
-		snprintf(scrap, sizeof(scrap), "iic%d_enable", i);
-		if (prop_dictionary_get_bool(dict, scrap, &enable)) {
-			if (!enable)
-				continue;
-			/* found an iic device */
-			ei2c_sc   = &sc->sc_idevs[i];
-			i2c_cntr = &sc->sc_i2cbus[i];
-			loc = &locs->locators[i];
-
-			ei2c_sc->isc_bus = i;
-			ei2c_sc->isc_isgpio = (loc->loc_flags > 0);
-			mutex_init(&ei2c_sc->isc_buslock, MUTEX_DEFAULT, IPL_NONE);
-
-			ei2c_sc->isc_bst  = exyoaa->exyo_core_bst;
-			if (bus_space_subregion(ei2c_sc->isc_bst,
-			    exyoaa->exyo_core_bsh,
-			    loc->loc_offset, loc->loc_size,
-			    &ei2c_sc->isc_bsh)) {
-				aprint_error_dev(self,
-				    ": failed to map registers for i2cbus%d\n",
-				    i);
-				continue;
-			}
-
-			if (!exynos_iic_attach_i2cbus(ei2c_sc, i2c_cntr, loc))
-				continue;
-
-			exynos_i2cbus[i] = i2c_cntr;
-			iba.iba_tag = i2c_cntr;
- 			(void) config_found_ia(sc->sc_dev, "i2cbus", &iba,
-					iicbus_print);
-		}
+	sc->sc_dev  = self;
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr,
+			     error);
+		return;
 	}
+
+	sc->sc_port = i2c_port++;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sc->sc_cv, device_xname(self));
+	aprint_normal(" @ 0x%08x\n", (uint)addr);
+
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
+		return;
+	}
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, exynos_i2c_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	len = OF_getprop(phandle, "pinctrl-0", (char *)&handle,
+			 sizeof(handle));
+	if (len != sizeof(int)) {
+		aprint_error_dev(self, "couldn't get pinctrl-0.\n");
+		return;
+	}
+
+	i2c_handle = fdtbus_get_phandle_from_native(be32toh(handle));
+	len = OF_getprop(i2c_handle, "samsung,pins", result, sizeof(result));
+	if (len <= 0) {
+		aprint_error_dev(self, "couldn't get pins.\n");
+		return;
+	}
+	
+	len = OF_getprop(i2c_handle, "samsung,pin-function",
+			 &handle, sizeof(handle));
+	if (len <= 0) {
+		aprint_error_dev(self, "couldn't get pin-function.\n");
+		return;
+	} else
+		func = be32toh(handle);
+
+	sc->sc_sda = fdtbus_gpio_acquire(phandle, &result[0], func);
+	sc->sc_scl = fdtbus_gpio_acquire(phandle, &result[7], func);
+
+	/* MJF: Need fdtbus_gpio_configure */
+#if 0
+	len = OF_getprop(i2c_handle, "samsung,pin-pud", &handle,
+			 sizeof(&handle));
+	if (len <= 0) {
+		aprint_error_dev(self, "couldn't get pin-pud.\n");
+		return;
+	} else
+		pud = be32toh(handle);
+
+	len = OF_getprop(i2c_handle, "samsung,pin-drv", &handle,
+			 sizeof(&handle));
+	if (len <= 0) {
+		aprint_error_dev(self, "couldn't get pin-drv.\n");
+		return;
+	} else
+		drv = be32toh(handle);
+
 #endif
+	if (!exynos_i2c_attach_i2cbus(sc, &sc->sc_ic))
+		return;
+
+	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);
+
 }
 
-
-#if NEXYNOS_IIC > 0
 static bool
-exynos_iic_attach_i2cbus(struct exynos_iic_dev_softc *ei2c_sc,
-	struct i2c_controller *i2c_cntr, struct exyo_locators const *loc)
+exynos_i2c_attach_i2cbus(struct exynos_i2c_softc *i2c_sc,
+			 struct i2c_controller *i2c_cntr)
 {
-	struct exynos_gpio_pinset *pinset;
+	i2c_cntr->ic_cookie = i2c_sc;
+	i2c_cntr->ic_acquire_bus = exynos_i2c_acquire_bus;
+	i2c_cntr->ic_release_bus = exynos_i2c_release_bus;
+	i2c_cntr->ic_send_start  = exynos_i2c_send_start;
+	i2c_cntr->ic_send_stop   = exynos_i2c_send_stop;
+	i2c_cntr->ic_initiate_xfer = exynos_i2c_initiate_xfer;
+	i2c_cntr->ic_read_byte   = exynos_i2c_read_byte;
+	i2c_cntr->ic_write_byte  = exynos_i2c_write_byte;
 
-	/* reserve our pins */
-	pinset = &ei2c_sc->isc_pinset;
-	strcpy(pinset->pinset_group, loc->loc_gpio_bus);
-	pinset->pinset_mask = __BIT(loc->loc_sda) | __BIT(loc->loc_slc);
-	pinset->pinset_func = loc->loc_func;
-
-	i2c_cntr->ic_cookie = ei2c_sc;
-	i2c_cntr->ic_acquire_bus = exynos_iic_acquire_bus;
-	i2c_cntr->ic_release_bus = exynos_iic_release_bus;
-	i2c_cntr->ic_send_start  = exynos_iic_send_start;
-	i2c_cntr->ic_send_stop   = exynos_iic_send_stop;
-	i2c_cntr->ic_initiate_xfer = exynos_iic_initiate_xfer;
-	i2c_cntr->ic_read_byte   = exynos_iic_read_byte;
-	i2c_cntr->ic_write_byte  = exynos_iic_write_byte;
-
-	exynos_gpio_pinset_acquire(pinset);
-	if (ei2c_sc->isc_isgpio) {
-		/* get sda and slc pins */
-		exynos_gpio_pinset_to_pindata(pinset,
-			loc->loc_sda, &ei2c_sc->isc_sda);
-		exynos_gpio_pinset_to_pindata(pinset,
-			loc->loc_slc, &ei2c_sc->isc_slc);
-		ei2c_sc->isc_sda_is_output = false;
-		exynos_gpio_pindata_ctl(&ei2c_sc->isc_sda, GPIO_PIN_INPUT);
-		exynos_gpio_pindata_ctl(&ei2c_sc->isc_slc, GPIO_PIN_OUTPUT);
-		return 1;
-	} else {
-		/* TBD: attach hardware driver */
-		aprint_normal("i2cbus%d: would attach native i2c driver\n",
-		    ei2c_sc->isc_bus);
-		return 0;
-	}
+	return 1;
 }
 
-
-#define EXYNOS_IIC_BB_SDA	__BIT(1)
-#define EXYNOS_IIC_BB_SCL	__BIT(2)
-#define EXYNOS_IIC_BB_SDA_OUT	__BIT(3)
-#define EXYNOS_IIC_BB_SDA_IN	0
+#define EXYNOS_I2C_BB_SDA	__BIT(1)
+#define EXYNOS_I2C_BB_SCL	__BIT(2)
+#define EXYNOS_I2C_BB_SDA_OUT	__BIT(3)
+#define EXYNOS_I2C_BB_SDA_IN	0
 
 static void
-exynos_iic_bb_set_bits(void *cookie, uint32_t bits)
+exynos_i2c_bb_set_bits(void *cookie, uint32_t bits)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
-	int sda, slc;
+	struct exynos_i2c_softc *i2c_sc = cookie;
+	int sda, scl;
 
-	sda = (bits & EXYNOS_IIC_BB_SDA) ? true : false;
-	slc = (bits & EXYNOS_IIC_BB_SCL) ? true : false;
+	sda = (bits & EXYNOS_I2C_BB_SDA) ? true : false;
+	scl = (bits & EXYNOS_I2C_BB_SCL) ? true : false;
 
-	if (i2c_sc->isc_sda_is_output)
-		exynos_gpio_pindata_write(&i2c_sc->isc_sda, sda);
-	exynos_gpio_pindata_write(&i2c_sc->isc_slc, slc);
+	if (i2c_sc->sc_sda_is_output)
+		fdtbus_gpio_write(i2c_sc->sc_sda, sda);
+	fdtbus_gpio_write(i2c_sc->sc_scl, scl);
 }
 
 static uint32_t
-exynos_iic_bb_read_bits(void *cookie)
+exynos_i2c_bb_read_bits(void *cookie)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
-	int sda, slc;
+	struct exynos_i2c_softc *i2c_sc = cookie;
+	int sda, scl;
 
 	sda = 0;
-	if (!i2c_sc->isc_sda_is_output)
-		sda = exynos_gpio_pindata_read(&i2c_sc->isc_sda);
-	slc = exynos_gpio_pindata_read(&i2c_sc->isc_slc);
+	if (!i2c_sc->sc_sda_is_output)
+		sda = fdtbus_gpio_read(i2c_sc->sc_sda);
+	scl = fdtbus_gpio_read(i2c_sc->sc_scl);
 
-	return (sda ? EXYNOS_IIC_BB_SDA : 0) | (slc ? EXYNOS_IIC_BB_SCL : 0);
+	return (sda ? EXYNOS_I2C_BB_SDA : 0) | (scl ? EXYNOS_I2C_BB_SCL : 0);
 }
 
-
 static void
-exynos_iic_bb_set_dir(void *cookie, uint32_t bits)
+exynos_i2c_bb_set_dir(void *cookie, uint32_t bits)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
+	struct exynos_i2c_softc *i2c_sc = cookie;
 	int flags;
 
 	flags = GPIO_PIN_INPUT | GPIO_PIN_TRISTATE;
-	i2c_sc->isc_sda_is_output = ((bits & EXYNOS_IIC_BB_SDA_OUT) != 0);
-	if (i2c_sc->isc_sda_is_output)
+	i2c_sc->sc_sda_is_output = ((bits & EXYNOS_I2C_BB_SDA_OUT) != 0);
+	if (i2c_sc->sc_sda_is_output)
 		flags = GPIO_PIN_OUTPUT | GPIO_PIN_TRISTATE;
 
-	exynos_gpio_pindata_ctl(&i2c_sc->isc_sda, flags);
+	/* MJF: This is wrong but fdtbus has no ctrl operation */
+	fdtbus_gpio_write(i2c_sc->sc_sda, flags);
 }
 
-
-static const struct i2c_bitbang_ops exynos_iic_bbops = {
-	exynos_iic_bb_set_bits,
-	exynos_iic_bb_set_dir,
-	exynos_iic_bb_read_bits,
+static const struct i2c_bitbang_ops exynos_i2c_bbops = {
+	exynos_i2c_bb_set_bits,
+	exynos_i2c_bb_set_dir,
+	exynos_i2c_bb_read_bits,
 	{
-		EXYNOS_IIC_BB_SDA,
-		EXYNOS_IIC_BB_SCL,
-		EXYNOS_IIC_BB_SDA_OUT,
-		EXYNOS_IIC_BB_SDA_IN,
+		EXYNOS_I2C_BB_SDA,
+		EXYNOS_I2C_BB_SCL,
+		EXYNOS_I2C_BB_SDA_OUT,
+		EXYNOS_I2C_BB_SDA_IN,
 	}
 };
 
+static int
+exynos_i2c_intr(void *priv)
+{
+	struct exynos_i2c_softc * const sc = priv;
+
+	uint32_t istatus = I2C_READ(sc, IICON);
+	if (!(istatus & IRQPEND))
+		return 0;
+	istatus &= ~IRQPEND;
+	I2C_WRITE(sc, IICON, istatus);
+
+	mutex_enter(&sc->sc_lock);
+	cv_broadcast(&sc->sc_cv);
+	mutex_exit(&sc->sc_lock);
+
+	return 1;
+}
 
 static int
-exynos_iic_acquire_bus(void *cookie, int flags)
+exynos_i2c_acquire_bus(void *cookie, int flags)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
+	struct exynos_i2c_softc *i2c_sc = cookie;
 
 	/* XXX what to do in polling case? could another cpu help */
 	if (flags & I2C_F_POLL)
 		return 0;
-	mutex_enter(&i2c_sc->isc_buslock);
+	mutex_enter(&i2c_sc->sc_lock);
 	return 0;
 }
 
 static void
-exynos_iic_release_bus(void *cookie, int flags)
+exynos_i2c_release_bus(void *cookie, int flags)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
+	struct exynos_i2c_softc *i2c_sc = cookie;
 
 	/* XXX what to do in polling case? could another cpu help */
 	if (flags & I2C_F_POLL)
 		return;
-	mutex_exit(&i2c_sc->isc_buslock);
+	mutex_exit(&i2c_sc->sc_lock);
 }
 
 static int
-exynos_iic_send_start(void *cookie, int flags)
+exynos_i2c_send_start(void *cookie, int flags)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
-
-	if (i2c_sc->isc_isgpio)
-		return i2c_bitbang_send_start(cookie, flags, &exynos_iic_bbops);
-	panic("%s: not implemented for non gpio case\n", __func__);
-	return EINVAL;
+	return i2c_bitbang_send_start(cookie, flags, &exynos_i2c_bbops);
 }
 
 static int
-exynos_iic_send_stop(void *cookie, int flags)
+exynos_i2c_send_stop(void *cookie, int flags)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
-
-	if (i2c_sc->isc_isgpio)
-		return i2c_bitbang_send_stop(cookie, flags, &exynos_iic_bbops);
-	panic("%s: not implemented for non gpio case\n", __func__);
-	return EINVAL;
+	return i2c_bitbang_send_stop(cookie, flags, &exynos_i2c_bbops);
 }
 
 static int
-exynos_iic_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
+exynos_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
-
-	if (i2c_sc->isc_isgpio)
-		return i2c_bitbang_initiate_xfer(cookie, addr, flags,
-							&exynos_iic_bbops);
-	panic("%s: not implemented for non gpio case\n", __func__);
-	return EINVAL;
+	return i2c_bitbang_initiate_xfer(cookie, addr, flags,
+					 &exynos_i2c_bbops);
 }
 
 static int
-exynos_iic_read_byte(void *cookie, uint8_t *bytep, int flags)
+exynos_i2c_read_byte(void *cookie, uint8_t *bytep, int flags)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
-
-	if (i2c_sc->isc_isgpio)
-		return i2c_bitbang_read_byte(cookie, bytep, flags,
-							&exynos_iic_bbops);
-	panic("%s: not implemented for non gpio case\n", __func__);
-	return EINVAL;
+	return i2c_bitbang_read_byte(cookie, bytep, flags,
+				     &exynos_i2c_bbops);
 }
 
 static int
-exynos_iic_write_byte(void *cookie, uint8_t byte, int flags)
+exynos_i2c_write_byte(void *cookie, uint8_t byte, int flags)
 {
-	struct exynos_iic_dev_softc *i2c_sc = cookie;
-
-	if (i2c_sc->isc_isgpio)
-		return i2c_bitbang_write_byte(cookie, byte, flags,
-							&exynos_iic_bbops);
-	panic("%s: not implemented for non gpio case\n", __func__);
-	return EINVAL;
+	return i2c_bitbang_write_byte(cookie, byte, flags,
+				      &exynos_i2c_bbops);
 }
-
-#endif /* NEXYNOS_IIC > 0 */
-

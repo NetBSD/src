@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.h,v 1.63 2014/06/13 15:45:02 pooka Exp $	*/
+/*	$NetBSD: rump.h,v 1.63.4.1 2015/12/27 12:10:15 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -166,7 +166,7 @@ _END_DECLS
 
 #ifdef RUMP_SYS_IOCTL
 #define ioctl(...) rump_sys_ioctl(__VA_ARGS__)
-#define fnctl(...) rump_sys_fcntl(__VA_ARGS__)
+#define fcntl(...) rump_sys_fcntl(__VA_ARGS__)
 #endif /* RUMP_SYS_IOCTL */
 
 #ifdef RUMP_SYS_CLOSE

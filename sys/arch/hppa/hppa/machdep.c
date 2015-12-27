@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.4.10.1 2015/09/22 12:05:43 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.4.10.2 2015/12/27 12:09:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.1 2015/09/22 12:05:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.4.10.2 2015/12/27 12:09:36 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -981,10 +981,11 @@ delay(u_int us)
 		end = start + n * cpu_ticksnum / cpu_ticksdenom;
 
 		/* N.B. Interval Timer may wrap around */
-		if (end < start)
-			do
+		if (end < start) {
+			do {
 				mfctl(CR_ITMR, start);
-			while (start > end);
+			} while (start > end);
+		}
 
 		do
 			mfctl(CR_ITMR, start);

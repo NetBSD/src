@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.145.2.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.145.2.3 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -836,6 +836,11 @@ typedef struct {
 #define ELF_NOTE_ABI_OS_KFREEBSD	3
 #define ELF_NOTE_ABI_OS_KNETBSD		4
 
+/* Old gcc style, under the ABI tag */
+#define ELF_NOTE_OGCC_NAMESZ		8
+#define ELF_NOTE_OGCC_NAME		"01.01\0\0\0\0"
+#define ELF_NOTE_OGCC_DESCSZ		0
+
 /*
  * GNU-specific note type: Hardware capabilities
  * name: GNU\0
@@ -894,6 +899,18 @@ typedef struct {
 #define ELF_NOTE_SUSE_VERSION_DESCSZ	8
 /* SuSE-specific note name */
 #define ELF_NOTE_SUSE_VERSION_NAME		"SuSE\0\0\0\0"
+
+/* Go-specific note type: buildid
+ * name: Go\0\0
+ * namesz: 4
+ * desc: 
+ *	words[10]
+ * descsz: 40
+ */
+#define ELF_NOTE_TYPE_GO_BUILDID_TAG	4
+#define ELF_NOTE_GO_BUILDID_NAMESZ	4
+#define ELF_NOTE_GO_BUILDID_DESCSZ	40
+#define ELF_NOTE_GO_BUILDID_NAME	"Go\0\0"
 
 /* NetBSD-specific note type: Emulation name.
  * name: NetBSD\0\0

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cec.c,v 1.1.2.2 2015/09/22 12:05:38 skrll Exp $ */
+/* $NetBSD: tegra_cec.c,v 1.1.2.3 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.1.2.2 2015/09/22 12:05:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.1.2.3 2015/12/27 12:09:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +47,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_cec.c,v 1.1.2.2 2015/09/22 12:05:38 skrll Exp 
 #include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_cecreg.h>
 
+#include <dev/fdt/fdtvar.h>
+
 #define CEC_VENDORID_NVIDIA	0x00044b
 
 static int	tegra_cec_match(device_t, cfdata_t, void *);
@@ -61,6 +61,8 @@ struct tegra_cec_softc {
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void			*sc_ih;
+	struct clk		*sc_clk;
+	struct fdtbus_reset	*sc_rst;
 
 	kmutex_t		sc_lock;
 	kcondvar_t		sc_cv;
@@ -112,22 +114,46 @@ CFATTACH_DECL_NEW(tegra_cec, sizeof(struct tegra_cec_softc),
 static int
 tegra_cec_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-cec", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_cec_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_cec_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
 	prop_dictionary_t prop = device_properties(self);
 	struct hdmicec_attach_args caa;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	sc->sc_clk = fdtbus_clock_get(faa->faa_phandle, "cec");
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock cec\n");
+		return;
+	}
+	sc->sc_rst = fdtbus_reset_get(faa->faa_phandle, "cec");
+	if (sc->sc_rst == NULL) {
+		aprint_error(": couldn't get reset cec\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_cv, "tegracec");
 	selinit(&sc->sc_selinfo);
@@ -135,19 +161,30 @@ tegra_cec_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": HDMI CEC\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL|IST_MPSAFE,
-	    tegra_cec_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
+
+	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_cec_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	prop_dictionary_get_cstring_nocopy(prop, "hdmi-device",
 	    &sc->sc_hdmidevname);
 
-	tegra_car_periph_cec_enable();
+	fdtbus_reset_assert(sc->sc_rst);
+	error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable cec: %d\n", error);
+		return;
+	}
+	fdtbus_reset_deassert(sc->sc_rst);
 
 	CEC_WRITE(sc, CEC_SW_CONTROL_REG, 0);
 	CEC_WRITE(sc, CEC_INPUT_FILTER_REG, 0);

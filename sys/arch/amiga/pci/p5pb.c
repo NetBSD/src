@@ -1,4 +1,4 @@
-/*	$NetBSD: p5pb.c,v 1.13 2014/03/22 01:52:44 christos Exp $ */
+/*	$NetBSD: p5pb.c,v 1.13.6.1 2015/12/27 12:09:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011, 2012 The NetBSD Foundation, Inc.
@@ -61,6 +61,7 @@
 
 #include "opt_p5pb.h"
 #include "opt_pci.h"
+#include "genfb.h"
 
 /* Initial CVPPC/BVPPC resolution as configured by the firmware */
 #define P5GFX_WIDTH		640
@@ -344,6 +345,9 @@ p5pb_pci_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	uint32_t bus, dev, func;
 	uint32_t offset;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return 0xFFFFFFFF;
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	offset = (OFF_PCI_DEVICE << dev) + reg;
@@ -375,6 +379,9 @@ p5pb_pci_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t val)
 {
 	uint32_t bus, dev, func;
 	uint32_t offset;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
@@ -686,7 +693,7 @@ p5pb_device_register(device_t dev, void *aux)
 				prop_dictionary_set_uint32(dict, "depth",
 				    P5GFX_DEPTH);
 
-#if (NGENFB > 0)
+#if NGENFB > 0
 				prop_dictionary_set_uint32(dict, "linebytes",
 				    P5GFX_LINEBYTES);
 

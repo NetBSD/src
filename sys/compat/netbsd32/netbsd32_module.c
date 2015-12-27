@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_module.c,v 1.2.2.2 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: netbsd32_module.c,v 1.2.2.3 2015/12/27 12:09:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.2.2.2 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.2.2.3 2015/12/27 12:09:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/dirent.h>
@@ -42,6 +42,73 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_module.c,v 1.2.2.2 2015/09/22 12:05:55 skrl
 #include <compat/netbsd32/netbsd32_syscallargs.h>
 #include <compat/netbsd32/netbsd32_conv.h>
 
+static int
+modctl32_handle_stat(struct netbsd32_iovec *iov, void *arg)
+{
+	modstat_t *ms, *mso;
+	modinfo_t *mi;
+	module_t *mod;
+	vaddr_t addr;
+	size_t size;
+	size_t mslen;
+	int error;
+
+	kernconfig_lock();
+	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
+	mso = kmem_zalloc(mslen, KM_SLEEP);
+	if (mso == NULL) {
+		kernconfig_unlock();
+		return ENOMEM;
+	}
+	ms = mso;
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		mi = mod->mod_info;
+		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		if (mi->mi_required != NULL) {
+			strlcpy(ms->ms_required, mi->mi_required,
+			    sizeof(ms->ms_required));
+		}
+		if (mod->mod_kobj != NULL) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			ms->ms_addr = addr;
+			ms->ms_size = size;
+		}
+		ms->ms_class = mi->mi_class;
+		ms->ms_refcnt = mod->mod_refcnt;
+		ms->ms_source = mod->mod_source;
+		ms->ms_flags = mod->mod_flags;
+		ms++;
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		mi = mod->mod_info;
+		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		if (mi->mi_required != NULL) {
+			strlcpy(ms->ms_required, mi->mi_required,
+			    sizeof(ms->ms_required));
+		}
+		if (mod->mod_kobj != NULL) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			ms->ms_addr = addr;
+			ms->ms_size = size;
+		}
+		ms->ms_class = mi->mi_class;
+		ms->ms_refcnt = -1;
+		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
+		ms->ms_source = mod->mod_source;
+		ms++;
+	}
+	kernconfig_unlock();
+	error = copyout(mso, NETBSD32PTR64(iov->iov_base),
+	    min(mslen - sizeof(modstat_t), iov->iov_len));
+	kmem_free(mso, mslen);
+	if (error == 0) {
+		iov->iov_len = mslen - sizeof(modstat_t);
+		error = copyout(iov, arg, sizeof(*iov));
+	}
+
+	return error;
+}
+
 int
 netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 	register_t *result)
@@ -51,12 +118,6 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 		syscallarg(netbsd32_voidp) arg;
 	} */
 	char buf[MAXMODNAME];
-	size_t mslen;
-	module_t *mod;
-	modinfo_t *mi;
-	modstat_t *ms, *mso;
-	vaddr_t addr;
-	size_t size;
 	struct netbsd32_iovec iov;
 	struct netbsd32_modctl_load ml;
 	int error;
@@ -88,57 +149,7 @@ netbsd32_modctl(struct lwp *lwp, const struct netbsd32_modctl_args *uap,
 		if (error != 0) {
 			break;
 		}
-		kernconfig_lock();
-		mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
-		mso = kmem_zalloc(mslen, KM_SLEEP);
-		if (mso == NULL) {
-			kernconfig_unlock();
-			return ENOMEM;
-		}
-		ms = mso;
-		TAILQ_FOREACH(mod, &module_list, mod_chain) {
-			mi = mod->mod_info;
-			strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
-			if (mi->mi_required != NULL) {
-				strlcpy(ms->ms_required, mi->mi_required,
-				    sizeof(ms->ms_required));
-			}
-			if (mod->mod_kobj != NULL) {
-				kobj_stat(mod->mod_kobj, &addr, &size);
-				ms->ms_addr = addr;
-				ms->ms_size = size;
-			}
-			ms->ms_class = mi->mi_class;
-			ms->ms_refcnt = mod->mod_refcnt;
-			ms->ms_source = mod->mod_source;
-			ms++;
-		}
-		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
-			mi = mod->mod_info;
-			strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
-			if (mi->mi_required != NULL) {
-				strlcpy(ms->ms_required, mi->mi_required,
-				    sizeof(ms->ms_required));
-			}
-			if (mod->mod_kobj != NULL) {
-				kobj_stat(mod->mod_kobj, &addr, &size);
-				ms->ms_addr = addr;
-				ms->ms_size = size;
-			}
-			ms->ms_class = mi->mi_class;
-			ms->ms_refcnt = -1;
-			KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
-			ms->ms_source = mod->mod_source;
-			ms++;
-		}
-		kernconfig_unlock();
-		error = copyout(mso, NETBSD32PTR64(iov.iov_base),
-		    min(mslen - sizeof(modstat_t), iov.iov_len));
-		kmem_free(mso, mslen);
-		if (error == 0) {
-			iov.iov_len = mslen - sizeof(modstat_t);
-			error = copyout(&iov, arg, sizeof(iov));
-		}
+		error = modctl32_handle_stat(&iov, arg);
 		break;
 
 	case MODCTL_EXISTS:

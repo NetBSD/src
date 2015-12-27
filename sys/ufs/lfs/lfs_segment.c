@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.236.6.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.236.6.4 2015/12/27 12:10:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236.6.3 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.236.6.4 2015/12/27 12:10:19 skrll Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -680,10 +680,16 @@ lfs_segwrite(struct mount *mp, int flags)
 		segleft = lfs_sb_getnseg(fs);
 		curseg = 0;
 		for (n = 0; n < lfs_sb_getsegtabsz(fs); n++) {
+			int bread_error;
+
 			dirty = 0;
-			if (bread(fs->lfs_ivnode, lfs_sb_getcleansz(fs) + n,
-			    lfs_sb_getbsize(fs), B_MODIFY, &bp))
-				panic("lfs_segwrite: ifile read");
+			bread_error = bread(fs->lfs_ivnode,
+			    lfs_sb_getcleansz(fs) + n,
+			    lfs_sb_getbsize(fs), B_MODIFY, &bp);
+			if (bread_error)
+				panic("lfs_segwrite: ifile read: "
+				      "seguse %u: error %d\n",
+				      n, bread_error);
 			segusep = (SEGUSE *)bp->b_data;
 			maxseg = min(segleft, lfs_sb_getsepb(fs));
 			for (i = 0; i < maxseg; i++) {
@@ -1032,7 +1038,8 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 	union lfs_dinode *cdp;
 	struct vnode *vp = ITOV(ip);
 	daddr_t daddr;
-	int i, ndx;
+	IINFO *iip;
+	int i;
 	int redo_ifile = 0;
 	int gotblk = 0;
 	int count;
@@ -1116,10 +1123,10 @@ lfs_writeinode(struct lfs *fs, struct segment *sp, struct inode *ip)
 		/* Set remaining space counters. */
 		sp->seg_bytes_left -= lfs_sb_getibsize(fs);
 		sp->sum_bytes_left -= sizeof(int32_t);
-		ndx = lfs_sb_getsumsize(fs) / sizeof(int32_t) -
-			sp->ninodes / LFS_INOPB(fs) - 1;
-		/* XXX ondisk32 */
-		((int32_t *)(sp->segsum))[ndx] = daddr;
+
+		/* Store the address in the segment summary. */
+		iip = NTH_IINFO(fs, sp->segsum, sp->ninodes / LFS_INOPB(fs));
+		lfs_ii_setblock(fs, iip, daddr);
 	}
 
 	/* Check VU_DIROP in case there is a new file with no data blocks */
@@ -2034,7 +2041,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 	struct vnode *devvp;
 	char *p = NULL;
 	struct vnode *vp;
-	int32_t *daddrp;	/* XXX ondisk32 */
+	unsigned ibindex, iblimit;
 	int changed;
 	u_int32_t sum;
 	size_t sumstart;
@@ -2161,13 +2168,12 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 			       newbp->b_bcount);
 
 			changed = 0;
-			/* XXX ondisk32 */
-			for (daddrp = (int32_t *)(newbp->b_data);
-			     daddrp < (int32_t *)((char *)newbp->b_data +
-						  newbp->b_bcount); daddrp++) {
-				if (*daddrp == UNWRITTEN) {
+			iblimit = newbp->b_bcount / LFS_BLKPTRSIZE(fs);
+			for (ibindex = 0; ibindex < iblimit; ibindex++) {
+				if (lfs_iblock_get(fs, newbp->b_data, ibindex) == UNWRITTEN) {
 					++changed;
-					*daddrp = 0;
+					lfs_iblock_set(fs, newbp->b_data,
+						       ibindex, 0);
 				}
 			}
 			/*
@@ -2232,7 +2238,7 @@ lfs_writeseg(struct lfs *fs, struct segment *sp)
 				if (copyin((void *)(*bpp)->b_saveaddr +
 					   byteoffset, dp, el_size)) {
 					panic("lfs_writeseg: copyin failed [1]:"
-						" ino %d blk %" PRId64,
+						" ino %" PRIu64 " blk %" PRId64,
 						VTOI((*bpp)->b_vp)->i_number,
 						(*bpp)->b_lblkno);
 				}

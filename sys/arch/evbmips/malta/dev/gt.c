@@ -1,4 +1,4 @@
-/*	$NetBSD: gt.c,v 1.13.30.1 2015/09/22 12:05:41 skrll Exp $	*/
+/*	$NetBSD: gt.c,v 1.13.30.2 2015/12/27 12:09:35 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13.30.1 2015/09/22 12:05:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gt.c,v 1.13.30.2 2015/12/27 12:09:35 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,6 +164,9 @@ gt_conf_read(void *v, pcitag_t tag, int offset)
 	pcireg_t data;
 	int bus, dev, func, s;
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return ((pcireg_t) -1);
+
 	gt_decompose_tag(NULL /* XXX */, tag, &bus, &dev, &func);
 
 	/* The galileo has problems accessing device 31. */
@@ -195,6 +198,9 @@ static void
 gt_conf_write(void *v, pcitag_t tag, int offset, pcireg_t data)
 {
 	int bus, dev, func, s;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
 
 	gt_decompose_tag(NULL /* XXX */, tag, &bus, &dev, &func);
 

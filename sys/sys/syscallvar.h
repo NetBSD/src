@@ -1,4 +1,4 @@
-/*	$NetBSD: syscallvar.h,v 1.9.6.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: syscallvar.h,v 1.9.6.2 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -102,5 +102,6 @@ sy_invoke(const struct sysent *sy, struct lwp *l, const void *uap,
 
 /* inclusion in the kernel currently depends on SYSCALL_DEBUG */
 extern const char * const syscallnames[];
+extern const char * const altsyscallnames[];
 
 #endif	/* _SYS_SYSCALLVAR_H_ */

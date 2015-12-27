@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.4.2.3 2015/09/22 12:05:54 skrll Exp $	*/
+/*	$NetBSD: msipic.c,v 1.4.2.4 2015/12/27 12:09:45 skrll Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4.2.3 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.4.2.4 2015/12/27 12:09:45 skrll Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -493,9 +493,9 @@ msix_set_vecctl_mask(struct pic *pic, int msix_vec, int flag)
 	vecctl = bus_space_read_4(bstag, bshandle,
 	    entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL);
 	if (flag == MSIX_VECCTL_HWMASK)
-		vecctl |= PCI_MSIX_VECTCTL_HWMASK_MASK;
+		vecctl |= PCI_MSIX_VECTCTL_MASK;
 	else
-		vecctl &= ~PCI_MSIX_VECTCTL_HWMASK_MASK;
+		vecctl &= ~PCI_MSIX_VECTCTL_MASK;
 
 	bus_space_write_4(bstag, bshandle,
 	    entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, vecctl);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_quota2.c,v 1.16.4.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: ulfs_quota2.c,v 1.16.4.3 2015/12/27 12:10:19 skrll Exp $	*/
 /*  from NetBSD: ufs_quota2.c,v 1.35 2012/09/27 07:47:56 bouyer Exp  */
 /*  from NetBSD: ffs_quota2.c,v 1.4 2011/06/12 03:36:00 rmind Exp  */
 
@@ -29,7 +29,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.16.4.2 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.16.4.3 2015/12/27 12:10:19 skrll Exp $");
 
 #include <sys/buf.h>
 #include <sys/param.h>
@@ -42,7 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: ulfs_quota2.c,v 1.16.4.2 2015/09/22 12:06:17 skrll E
 #include <sys/mount.h>
 #include <sys/fstrans.h>
 #include <sys/kauth.h>
-#include <sys/wapbl.h>
 #include <sys/quota.h>
 #include <sys/quotactl.h>
 
@@ -600,19 +599,19 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 		error = getq2h(ump, key->qk_idtype, &bp, &q2h, B_MODIFY);
 		if (error) {
 			mutex_exit(&lfs_dqlock);
-			goto out_wapbl;
+			goto out_error;
 		}
 		lfsquota2_ulfs_rwq2e(&q2h->q2h_defentry, &q2e, needswap);
 		quota2_dict_update_q2e_limits(key->qk_objtype, val, &q2e);
 		lfsquota2_ulfs_rwq2e(&q2e, &q2h->q2h_defentry, needswap);
 		mutex_exit(&lfs_dqlock);
 		quota2_bwrite(ump->um_mountp, bp);
-		goto out_wapbl;
+		goto out_error;
 	}
 
 	error = lfs_dqget(NULLVP, key->qk_id, ump, key->qk_idtype, &dq);
 	if (error)
-		goto out_wapbl;
+		goto out_error;
 
 	mutex_enter(&dq->dq_interlock);
 	if (dq->dq2_lblkno == 0 && dq->dq2_blkoff == 0) {
@@ -637,7 +636,7 @@ lfsquota2_handle_cmd_put(struct ulfsmount *ump, const struct quotakey *key,
 out_il:
 	mutex_exit(&dq->dq_interlock);
 	lfs_dqrele(NULLVP, dq);
-out_wapbl:
+out_error:
 	return error;
 }
 
@@ -719,7 +718,7 @@ lfsquota2_handle_cmd_del(struct ulfsmount *ump, const struct quotakey *qk)
 	error = getq2e(ump, idtype, dq->dq2_lblkno, dq->dq2_blkoff,
 	    &bp, &q2ep, B_MODIFY);
 	if (error)
-		goto out_wapbl;
+		goto out_error;
 
 	/* make sure we can index by the objtype passed in */
 	CTASSERT(QUOTA_OBJTYPE_BLOCKS == QL_BLOCK);
@@ -752,7 +751,7 @@ lfsquota2_handle_cmd_del(struct ulfsmount *ump, const struct quotakey *qk)
 
 	if (canfree == 0) {
 		quota2_bwrite(ump->um_mountp, bp);
-		goto out_wapbl;
+		goto out_error;
 	}
 	/* we can free it. release bp so we can walk the list */
 	brelse(bp, 0);
@@ -773,7 +772,7 @@ lfsquota2_handle_cmd_del(struct ulfsmount *ump, const struct quotakey *qk)
 
 out_dqlock:
 	mutex_exit(&lfs_dqlock);
-out_wapbl:
+out_error:
 out_il:
 	mutex_exit(&dq->dq_interlock);
 	lfs_dqrele(NULLVP, dq);

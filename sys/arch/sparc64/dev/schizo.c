@@ -1,4 +1,4 @@
-/*	$NetBSD: schizo.c,v 1.32 2014/09/21 16:39:12 christos Exp $	*/
+/*	$NetBSD: schizo.c,v 1.32.2.1 2015/12/27 12:09:43 skrll Exp $	*/
 /*	$OpenBSD: schizo.c,v 1.55 2008/08/18 20:29:37 brad Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.32 2014/09/21 16:39:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: schizo.c,v 1.32.2.1 2015/12/27 12:09:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,6 +73,10 @@ extern struct sparc_pci_chipset _sparc_pci_chipset;
 static	int	schizo_match(device_t, cfdata_t, void *);
 static	void	schizo_attach(device_t, device_t, void *);
 static	int	schizo_print(void *aux, const char *p);
+
+#ifdef DEBUG
+void schizo_print_regs(int unit, int what);
+#endif
 
 CFATTACH_DECL_NEW(schizo, sizeof(struct schizo_softc),
     schizo_match, schizo_attach, NULL, NULL);
@@ -143,8 +147,8 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	struct schizo_pbm *pbm;
 	struct iommu_state *is;
 	struct pcibus_attach_args pba;
-	uint64_t reg, eccctrl;
-	int *busranges = NULL, nranges;
+	uint64_t reg, eccctrl, ino_bitmap;
+	int *busranges = NULL, nranges, *ino_bitmaps = NULL, nbitmaps;
 	char *str;
 	bool no_sc;
 
@@ -180,6 +184,9 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	if (pbm == NULL)
 		panic("schizo: can't alloc schizo pbm");
 
+#ifdef DEBUG
+	sc->sc_pbm = pbm;
+#endif
 	pbm->sp_sc = sc;
 	pbm->sp_regt = sc->sc_bustag;
 
@@ -194,10 +201,24 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	if (bus_space_map(sc->sc_bustag, ma->ma_reg[0].ur_paddr,
 			  ma->ma_reg[0].ur_len,
 			  BUS_SPACE_MAP_LINEAR, &pbm->sp_intrh)) {
-		aprint_error(": failed to interrupt map registers\n");
+		aprint_error(": failed to map interrupt registers\n");
 		kmem_free(pbm, sizeof(*pbm));
 		return;
 	}
+
+#ifdef DEBUG
+	/*
+	 * Map ichip registers
+	 */
+	if (sc->sc_tomatillo)
+		if (bus_space_map(sc->sc_bustag, ma->ma_reg[3].ur_paddr,
+			  ma->ma_reg[3].ur_len,
+			  BUS_SPACE_MAP_LINEAR, &pbm->sp_ichiph)) {
+			aprint_error(": failed to map ichip registers\n");
+			kmem_free(pbm, sizeof(*pbm));
+			return;
+		}
+#endif
 
 	if (prom_getprop(sc->sc_node, "ranges", sizeof(struct schizo_range),
 	    &pbm->sp_nrange, (void **)&pbm->sp_range))
@@ -207,7 +228,7 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	    (void **)&busranges))
 		panic("schizo: can't get bus-range");
 
-	aprint_normal(": \"%s\", version %d, ign %x, bus %c %d to %d\n",
+	aprint_normal(": %s, version %d, ign %x, bus %c %d to %d\n",
 	    sc->sc_tomatillo ? "Tomatillo" : "Schizo", sc->sc_ver,
 	    sc->sc_ign, pbm->sp_bus_a ? 'A' : 'B', busranges[0], busranges[1]);
 	aprint_naive("\n");
@@ -304,20 +325,34 @@ schizo_attach(device_t parent, device_t self, void *aux)
 	    SCZ_PCIDIAG_D_INTSYNC);
 	schizo_pbm_write(pbm, SCZ_PCI_DIAG, reg);
 
-	if (pbm->sp_bus_a)
+	if (prom_getprop(sc->sc_node, "ino-bitmap", sizeof(int), &nbitmaps,
+	    (void **)&ino_bitmaps)) {
+		/* No property - set defaults (double map UE, CE, SERR). */
+		if (pbm->sp_bus_a)
+			ino_bitmap = __BIT(SCZ_PCIERR_A_INO);
+		else
+			ino_bitmap = __BIT(SCZ_PCIERR_B_INO);
+		ino_bitmap |= __BIT(SCZ_UE_INO) | __BIT(SCZ_CE_INO) |
+		    __BIT(SCZ_SERR_INO);
+	} else
+		ino_bitmap = (uint64_t) ino_bitmaps[1] << 32 | ino_bitmaps[0];
+	DPRINTF(SDB_INTR, ("ino_bitmap=0x%016" PRIx64 "\n", ino_bitmap));
+
+	if (ino_bitmap & __BIT(SCZ_PCIERR_A_INO))
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
 		   pbm, SCZ_PCIERR_A_INO, "pci_a");
-	else
+	if (ino_bitmap & __BIT(SCZ_PCIERR_B_INO))
 		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_pci_error,
 		   pbm, SCZ_PCIERR_B_INO, "pci_b");
-
-	/* double mapped */
-	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, SCZ_UE_INO,
-	    "ue");
-	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, SCZ_CE_INO,
-	    "ce");
-	schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
-	    SCZ_SERR_INO, "safari");
+	if (ino_bitmap & __BIT(SCZ_UE_INO))
+		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ue, sc, SCZ_UE_INO,
+		    "ue");
+	if (ino_bitmap & __BIT(SCZ_CE_INO))
+		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_ce, sc, SCZ_CE_INO,
+		    "ce");
+	if (ino_bitmap & __BIT(SCZ_SERR_INO))
+		schizo_set_intr(sc, pbm, PIL_HIGH, schizo_safari_error, sc,
+		    SCZ_SERR_INO, "safari");
 
 	if (sc->sc_tomatillo) {
 		/*
@@ -497,7 +532,7 @@ schizo_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg)
 	int s;
 
 	DPRINTF(SDB_CONF, ("%s: tag %lx reg %x ", __func__, (long)tag, reg));
-	if (PCITAG_NODE(tag) != -1) {
+	if (PCITAG_NODE(tag) != -1 && (unsigned int)reg < PCI_CONF_SIZE) {
 		s = splhigh();
 		ci->ci_pci_probe = true;
 		membar_Sync();
@@ -526,6 +561,9 @@ schizo_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 		DPRINTF(SDB_CONF, (" .. bad addr\n"));
 		return;
 	}
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
         bus_space_write_4(sp->sp_cfgt, sp->sp_cfgh,
 	    PCITAG_OFFSET(tag) + reg, data);
@@ -567,6 +605,7 @@ schizo_set_intr(struct schizo_softc *sc, struct schizo_pbm *pbm, int ipl,
 
 	schizo_pbm_write(pbm, mapoff,
 	    ih->ih_number | INTMAP_V | (CPU_UPAID << INTMAP_TID_SHIFT));
+	schizo_pbm_write(pbm, clroff, 0);
 }
 
 bus_space_tag_t
@@ -755,8 +794,9 @@ schizo_pci_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ihp)
 	struct schizo_pbm *pbm = pa->pa_pc->cookie;
 	struct schizo_softc *sc = pbm->sp_sc;
 
+	DPRINTF(SDB_INTMAP, ("IGN %x", *ihp));
 	*ihp |= sc->sc_ign;
-	DPRINTF(SDB_INTMAP, ("returning IGN adjusted to %x\n", *ihp));
+	DPRINTF(SDB_INTMAP, (" adjusted to %x\n", *ihp));
 	return (0);
 }
 
@@ -779,7 +819,7 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 	if (ih == NULL)
 		return (NULL);
 
-	DPRINTF(SDB_INTR, ("\n%s: ihandle %d level %d fn %p arg %p\n", __func__,
+	DPRINTF(SDB_INTR, ("\n%s: ihandle %x level %d fn %p arg %p\n", __func__,
 	    ihandle, level, handler, arg));
 
 	if (level == IPL_NONE)
@@ -834,6 +874,7 @@ schizo_intr_establish(bus_space_tag_t t, int ihandle, int level,
 		DPRINTF(SDB_INTR, ("; read intrmap = %016qx",
 			(unsigned long long)imap));
 		imap |= INTMAP_V;
+		imap |= (CPU_UPAID << INTMAP_TID_SHIFT);
 		DPRINTF(SDB_INTR, ("; addr of intrmapptr = %p", intrmapptr));
 		DPRINTF(SDB_INTR, ("; writing intrmap = %016qx\n",
 			(unsigned long long)imap));
@@ -864,3 +905,173 @@ schizo_pci_intr_establish(pci_chipset_tag_t pc, pci_intr_handle_t ih, int level,
 	DPRINTF(SDB_INTR, ("; returning handle %p\n", cookie));
 	return (cookie);
 }
+
+#ifdef DEBUG
+void
+schizo_print_regs(int unit, int what)
+{
+	device_t dev;
+	struct schizo_softc *sc;
+	struct schizo_pbm *pbm;
+	const struct schizo_regname *r;
+	int i;
+	u_int64_t reg;
+
+	dev = device_find_by_driver_unit("schizo", unit);
+	if (dev == NULL) {
+		printf("Can't find device schizo%d\n", unit);
+		return;
+	}
+
+	if (!what) {
+		printf("0x01: Safari registers\n");
+		printf("0x02: PCI registers\n");
+		printf("0x04: Scratch pad registers (Tomatillo only)\n");
+		printf("0x08: IOMMU registers\n");
+		printf("0x10: Streaming cache registers (Schizo only)\n");
+		printf("0x20: Interrupt registers\n");
+		printf("0x40: I-chip registers (Tomatillo only)\n");
+		return;
+	}
+	sc = device_private(dev);
+	pbm = sc->sc_pbm;
+	printf("%s (leaf %c) registers:\n", device_xname(sc->sc_dev),
+	    pbm->sp_bus_a ? 'A' : 'B');
+
+	printf(" Safari registers:\n");
+	if (what & 0x01) {
+		for (r = schizo_regnames; r->size != 0; ++r)
+			for (i = 0; i <= r->n_reg; i += r->size) {
+				if ((!sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_SCHIZO)) ||
+				    (sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_TOMATILLO)))
+					continue;
+				switch (r->size) {
+				case 1:
+					reg = schizo_read_1(sc, r->offset + i);
+					break;
+				case 8:
+					/* fallthrough */
+				default:
+					reg = schizo_read(sc, r->offset + i);
+					break;
+				}
+				printf("0x%06" PRIx64 " = 0x%016" PRIx64 " (%s",
+				    r->offset + i, reg, r->name);
+				if (r->n_reg)
+					printf(" %d)\n", i / r->size);
+				else
+					printf(")\n");
+			}
+	}
+
+	if (what & 0x02) {
+		printf(" PCI registers:\n");
+		for (r = schizo_pbm_regnames; r->size != 0; ++r)
+			for (i = 0; i <= r->n_reg; i += r->size) {
+				if ((!sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_SCHIZO)) ||
+				    (sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_TOMATILLO)))
+					continue;
+				if ((pbm->sp_bus_a &&
+				    !(r->type & REG_TYPE_LEAF_A)) ||
+				    (!pbm->sp_bus_a &&
+				    !(r->type & REG_TYPE_LEAF_B)))
+					continue;
+				reg = schizo_pbm_read(pbm, r->offset + i);
+				printf("0x%06" PRIx64 " = 0x%016" PRIx64 ""
+				    " (%s", r->offset + i, reg, r->name);
+				if (r->n_reg)
+					printf(" %d)\n", i / r->size);
+				else
+					printf(")\n");
+			}
+	}
+
+	if (what & 0x04 && sc->sc_tomatillo) {
+		printf(" Scratch pad registers:\n");
+		for (r = tomatillo_scratch_regnames; r->size != 0; ++r)
+			for (i = 0; i <= r->n_reg; i += r->size) {
+				reg = schizo_pbm_read(pbm, r->offset + i);
+				printf("0x%06" PRIx64 " = 0x%016" PRIx64 ""
+				    " (%s", r->offset + i, reg, r->name);
+				if (r->n_reg)
+					printf(" %d)\n", i / r->size);
+				else
+					printf(")\n");
+			}
+	}
+
+	if (what & 0x08) {
+		printf(" IOMMU registers:\n");
+		for (r = schizo_iommu_regnames; r->size != 0; ++r)
+			for (i = 0; i <= r->n_reg; i += r->size) {
+				if ((!sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_SCHIZO)) ||
+				    (sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_TOMATILLO)))
+					continue;
+				reg = schizo_pbm_read(pbm, r->offset + i);
+				printf("0x%06" PRIx64 " = 0x%016" PRIx64 ""
+				    " (%s", r->offset + i, reg, r->name);
+				if (r->n_reg)
+					printf(" %d)\n", i / r->size);
+				else
+					printf(")\n");
+			}
+	}
+
+	if (what & 0x10 && !sc->sc_tomatillo) {
+		printf(" Streaming cache registers:\n");
+		for (r = schizo_stream_regnames; r->size != 0; ++r)
+			for (i = 0; i <= r->n_reg; i += r->size) {
+				reg = schizo_pbm_read(pbm, r->offset + i);
+				printf("0x%06" PRIx64 " = 0x%016" PRIx64 ""
+				    " (%s", r->offset + i, reg, r->name);
+				if (r->n_reg)
+					printf(" %d)\n", i / r->size);
+				else
+					printf(")\n");
+			}
+	}
+
+	if (what & 0x20) {
+		printf(" Interrupt registers:\n");
+		for (r = schizo_intr_regnames; r->size != 0; ++r)
+			for (i = 0; i <= r->n_reg; i += r->size) {
+				if ((!sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_SCHIZO)) ||
+				    (sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_TOMATILLO)))
+					continue;
+				reg = schizo_pbm_readintr(pbm, r->offset + i);
+				printf("0x%06" PRIx64 " = 0x%016" PRIx64 ""
+				    " (%s", r->offset + i, reg, r->name);
+				if (r->n_reg)
+					printf(" %d)\n", i / r->size);
+				else
+					printf(")\n");
+			}
+	}
+	
+	if (what & 0x40 && sc->sc_tomatillo) {
+	printf(" I-chip registers:\n");
+		for (r = tomatillo_ichip_regnames; r->size != 0; ++r)
+			for (i = 0; i <= r->n_reg; i += r->size) {
+				if ((sc->sc_tomatillo &&
+				    !(r->type & REG_TYPE_TOMATILLO)))
+					continue;
+				reg = tomatillo_pbm_readichip(pbm,
+				    r->offset + i);
+				printf("0x%06" PRIx64 " = 0x%016" PRIx64 ""
+				    " (%s", r->offset + i, reg, r->name);
+				if (r->n_reg)
+					printf(" %d)\n", i / r->size);
+				else
+					printf(")\n");
+			}
+	}
+}
+#endif

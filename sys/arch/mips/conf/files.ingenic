@@ -1,4 +1,4 @@
-#	$NetBSD: files.ingenic,v 1.1.2.2 2015/09/22 12:05:47 skrll Exp $
+#	$NetBSD: files.ingenic,v 1.1.2.3 2015/12/27 12:09:38 skrll Exp $
 
 include "dev/scsipi/files.scsipi"		# SCSI devices
 include "dev/ata/files.ata"			# ATA devices
@@ -45,3 +45,8 @@ defflag	opt_ingenic.h	JZMMC_DEBUG
 device	jzrng
 attach	jzrng at apbus with ingenic_rng
 file	arch/mips/ingenic/ingenic_rng.c	ingenic_rng
+
+# EFUSE
+device	efuse
+attach	efuse at apbus with ingenic_efuse
+file	arch/mips/ingenic/ingenic_efuse.c	ingenic_efuse

@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.233.2.2 2015/06/06 14:40:21 skrll Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.233.2.3 2015/12/27 12:10:05 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.2 2015/06/06 14:40:21 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.233.2.3 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -241,6 +241,9 @@ static int config_do_twiddle;
 static callout_t config_twiddle_ch;
 
 static void sysctl_detach_setup(struct sysctllog **);
+
+int no_devmon_insert(const char *, prop_dictionary_t);
+int (*devmon_insert_vec)(const char *, prop_dictionary_t) = no_devmon_insert;
 
 typedef int (*cfdriver_fn)(struct cfdriver *);
 static int
@@ -517,14 +520,25 @@ config_finalize_mountroot(void)
 /*
  * Announce device attach/detach to userland listeners.
  */
+
+int
+no_devmon_insert(const char *name, prop_dictionary_t p)
+{
+
+	return ENODEV;
+}
+
 static void
 devmon_report_device(device_t dev, bool isattach)
 {
-#if NDRVCTL > 0
 	prop_dictionary_t ev;
 	const char *parent;
 	const char *what;
 	device_t pdev = device_parent(dev);
+
+	/* If currently no drvctl device, just return */
+	if (devmon_insert_vec == no_devmon_insert)
+		return;
 
 	ev = prop_dictionary_create();
 	if (ev == NULL)
@@ -538,8 +552,8 @@ devmon_report_device(device_t dev, bool isattach)
 		return;
 	}
 
-	devmon_insert(what, ev);
-#endif
+	if ((*devmon_insert_vec)(what, ev) != 0)
+		prop_object_release(ev);
 }
 
 /*
@@ -1435,6 +1449,10 @@ config_devalloc(const device_t parent, const cfdata_t cf, const int *locs)
 	    "device-driver", dev->dv_cfdriver->cd_name);
 	prop_dictionary_set_uint16(dev->dv_properties,
 	    "device-unit", dev->dv_unit);
+	if (parent != NULL) {
+		prop_dictionary_set_cstring(dev->dv_properties,
+		    "device-parent", device_xname(parent));
+	}
 
 	if (dev->dv_cfdriver->cd_attrs != NULL)
 		config_add_attrib_dict(dev);
@@ -2090,6 +2108,7 @@ config_finalize_register(device_t dev, int (*fn)(device_t))
 	if (config_finalize_done) {
 		while ((*fn)(dev) != 0)
 			/* loop */ ;
+		return 0;
 	}
 
 	/* Ensure this isn't already on the list. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.28.2.1 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.28.2.2 2015/12/27 12:09:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -36,10 +36,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.28.2.1 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.28.2.2 2015/12/27 12:09:47 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
-#include "opt_sysv.h"
+#include "opt_compat_netbsd.h"
 #endif
 
 #include <sys/param.h>
@@ -63,10 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.28.2.1 2015/09/22 12:05:55 
 #include <sys/dirent.h>
 #include <sys/kauth.h>
 #include <sys/vfs_syscalls.h>
-#include <sys/ipc.h>
-#include <sys/msg.h>
-#include <sys/sem.h>
-#include <sys/shm.h>
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_syscallargs.h>
@@ -74,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.28.2.1 2015/09/22 12:05:55 
 #include <compat/sys/mount.h>
 #include <compat/sys/time.h>
 
+#if defined(COMPAT_50)
 
 /*
  * Common routine to set access and modification times given a vnode.
@@ -909,158 +906,6 @@ compat_50_netbsd32_getitimer(struct lwp *l, const struct compat_50_netbsd32_geti
 	return copyout(&s32it, SCARG_P32(uap, itv), sizeof(s32it));
 }
 
-#if defined(SYSVSEM)
-
-int
-compat_50_netbsd32___semctl14(struct lwp *l, const struct compat_50_netbsd32___semctl14_args *uap, register_t *retval)
-{
-	return do_netbsd32___semctl14(l, uap, retval, NULL);
-}
-
-int
-do_netbsd32___semctl14(struct lwp *l, const struct compat_50_netbsd32___semctl14_args *uap, register_t *retval, void *vkarg)
-{
-	/* {
-		syscallarg(int) semid;
-		syscallarg(int) semnum;
-		syscallarg(int) cmd;
-		syscallarg(netbsd32_semun50p_t) arg;
-	} */
-	struct semid_ds sembuf;
-	struct netbsd32_semid_ds50 sembuf32;
-	int cmd, error;
-	void *pass_arg;
-	union __semun karg;
-	union netbsd32_semun50 karg32;
-
-	cmd = SCARG(uap, cmd);
-
-	switch (cmd) {
-	case IPC_SET:
-	case IPC_STAT:
-		pass_arg = &sembuf;
-		break;
-
-	case GETALL:
-	case SETVAL:
-	case SETALL:
-		pass_arg = &karg;
-		break;
-	default:
-		pass_arg = NULL;
-		break;
-	}
-
-	if (pass_arg) {
-		if (vkarg != NULL)
-			karg32 = *(union netbsd32_semun50 *)vkarg;
-		else {
-			error = copyin(SCARG_P32(uap, arg), &karg32,
-					sizeof(karg32));
-			if (error)
-				return error;
-		}
-		if (pass_arg == &karg) {
-			switch (cmd) {
-			case GETALL:
-			case SETALL:
-				karg.array = NETBSD32PTR64(karg32.array);
-				break;
-			case SETVAL:
-				karg.val = karg32.val;
-				break;
-			}
-		}
-		if (cmd == IPC_SET) {
-			error = copyin(NETBSD32PTR64(karg32.buf), &sembuf32,
-			    sizeof(sembuf32));
-			if (error)
-				return (error);
-			netbsd32_to_semid_ds50(&sembuf32, &sembuf);
-		}
-	}
-
-	error = semctl1(l, SCARG(uap, semid), SCARG(uap, semnum), cmd,
-	    pass_arg, retval);
-
-	if (error == 0 && cmd == IPC_STAT) {
-		netbsd32_from_semid_ds50(&sembuf, &sembuf32);
-		error = copyout(&sembuf32, NETBSD32PTR64(karg32.buf),
-		    sizeof(sembuf32));
-	}
-
-	return (error);
-}
-#endif
-
-#if defined(SYSVMSG)
-
-int
-compat_50_netbsd32___msgctl13(struct lwp *l, const struct compat_50_netbsd32___msgctl13_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) msqid;
-		syscallarg(int) cmd;
-		syscallarg(netbsd32_msqid_ds50p_t) buf;
-	} */
-	struct msqid_ds ds;
-	struct netbsd32_msqid_ds50 ds32;
-	int error, cmd;
-
-	cmd = SCARG(uap, cmd);
-	if (cmd == IPC_SET) {
-		error = copyin(SCARG_P32(uap, buf), &ds32, sizeof(ds32));
-		if (error)
-			return error;
-		netbsd32_to_msqid_ds50(&ds32, &ds);
-	}
-
-	error = msgctl1(l, SCARG(uap, msqid), cmd,
-	    (cmd == IPC_SET || cmd == IPC_STAT) ? &ds : NULL);
-
-	if (error == 0 && cmd == IPC_STAT) {
-		netbsd32_from_msqid_ds50(&ds, &ds32);
-		error = copyout(&ds32, SCARG_P32(uap, buf), sizeof(ds32));
-	}
-
-	return error;
-}
-#endif
-
-#if defined(SYSVSHM)
-
-int
-compat_50_netbsd32___shmctl13(struct lwp *l, const struct compat_50_netbsd32___shmctl13_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(int) shmid;
-		syscallarg(int) cmd;
-		syscallarg(netbsd32_shmid_ds50p_t) buf;
-	} */
-	struct shmid_ds ds;
-	struct netbsd32_shmid_ds50 ds32;
-	int error, cmd;
-
-	cmd = SCARG(uap, cmd);
-	if (cmd == IPC_SET) {
-		error = copyin(SCARG_P32(uap, buf), &ds32, sizeof(ds32));
-		if (error)
-			return error;
-		netbsd32_to_shmid_ds50(&ds32, &ds);
-	}
-
-	error = shmctl1(l, SCARG(uap, shmid), cmd,
-	    (cmd == IPC_SET || cmd == IPC_STAT) ? &ds : NULL);
-
-	if (error == 0 && cmd == IPC_STAT) {
-		netbsd32_from_shmid_ds50(&ds, &ds32);
-		error = copyout(&ds32, SCARG_P32(uap, buf), sizeof(ds32));
-	}
-
-	return error;
-}
-#endif
-
 int
 compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quotactl_args *uap, register_t *retval)
 {
@@ -1079,72 +924,4 @@ compat_50_netbsd32_quotactl(struct lwp *l, const struct compat_50_netbsd32_quota
 	return (compat_50_sys_quotactl(l, &ua, retval));
 }
 
-int
-compat_50_netbsd32_mq_timedsend(struct lwp *l,
-    const struct compat_50_netbsd32_mq_timedsend_args *uap,
-    register_t *retval)
-{
-	/* {
-		syscallarg(mqd_t) mqdes;
-		syscallarg(const netbsd32_charp) msg_ptr;
-		syscallarg(netbsd32_size_t) msg_len;
-		syscallarg(unsigned) msg_prio;
-		syscallarg(const netbsd32_timespec50p_t) abs_timeout;
-	} */
-	struct timespec ts, *tsp;
-	struct netbsd32_timespec50 ts32;
-	int error;
-
-	/* Get and convert time value */
-	if (SCARG_P32(uap, abs_timeout)) {
-		error = copyin(SCARG_P32(uap, abs_timeout), &ts32,
-		     sizeof(ts32));
-		if (error)
-			return error;
-		netbsd32_to_timespec50(&ts32, &ts);
-		tsp = &ts;
-	} else {
-		tsp = NULL;
-	}
-
-	return mq_send1(SCARG(uap, mqdes), SCARG_P32(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG(uap, msg_prio), tsp);
-}
-
-int
-compat_50_netbsd32_mq_timedreceive(struct lwp *l,
-    const struct compat_50_netbsd32_mq_timedreceive_args *uap,
-    register_t *retval)
-{
-	/* {
-		syscallarg(mqd_t) mqdes;
-		syscallarg(netbsd32_charp) msg_ptr;
-		syscallarg(netbsd32_size_t) msg_len;
-		syscallarg(netbsd32_uintp) msg_prio;
-		syscallarg(const netbsd32_timespec50p_t) abs_timeout;
-	} */
-	struct timespec ts, *tsp;
-	struct netbsd32_timespec50 ts32;
-	ssize_t mlen;
-	int error;
-
-	/* Get and convert time value */
-	if (SCARG_P32(uap, abs_timeout)) {
-		error = copyin(SCARG_P32(uap, abs_timeout), &ts32,
-		    sizeof(ts32));
-		if (error)
-			return error;
-		netbsd32_to_timespec50(&ts32, &ts);
-		tsp = &ts;
-	} else {
-		tsp = NULL;
-	}
-
-	error = mq_recv1(SCARG(uap, mqdes), SCARG_P32(uap, msg_ptr),
-	    SCARG(uap, msg_len), SCARG_P32(uap, msg_prio), tsp, &mlen);
-	if (error == 0)
-		*retval = mlen;
-
-	return error;
-}
-
+#endif /* COMPAT_50 */

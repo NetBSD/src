@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.rumpnet,v 1.15.4.2 2015/09/22 12:06:15 skrll Exp $
+#	$NetBSD: Makefile.rumpnet,v 1.15.4.3 2015/12/27 12:10:16 skrll Exp $
 #
 
 LIB=		rumpnet
+COMMENT=	Rump kernel networking faction
 
 .PATH:	${RUMPTOP}/librump/rumpnet				\
 	${RUMPTOP}/../kern					\

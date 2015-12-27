@@ -1,4 +1,4 @@
-#	$NetBSD: NETWALKER,v 1.32.2.1 2015/06/06 14:39:58 skrll Exp $
+#	$NetBSD: NETWALKER,v 1.32.2.2 2015/12/27 12:09:34 skrll Exp $
 #
 #	NETWALKER -- http://www.sharp.co.jp/netwalker/
 #
@@ -30,7 +30,9 @@ makeoptions	COPY_SYMTAB=1
 #  memorydisk=<n>	Set memorydisk size to <n> KB
 #  quiet		Show aprint_naive output
 #  verbose		Show aprint_normal and aprint_verbose output
-#options		BOOT_ARGS="\"verbose\""
+#  console=(fb|serial)	Select console device
+options 	BOOT_ARGS="\"verbose console=fb\""
+#options 	BOOT_ARGS="\"verbose\""
 
 # Kernel root file system and dump configuration.
 config		netbsd		root on ? type ?
@@ -140,20 +142,24 @@ ukphy*		at mii? phy ?
 
 # IPUv3 LCD Controller
 ipu0		at axi?
-wsdisplay0	at wsemuldisplaydev? console ?
-wsdisplay*	at wsemuldisplaydev?
 #options	IPUV3_DEBUG=1
 #options	LCD_DEBUG
-options 	IMXIPUCONSOLE
+
+# Framebuffer console
+genfb*		at ipu?
+wsdisplay*	at genfb?
+#options 	GENFB_SHADOWFB
 
 # various options for wscons - we try to look as much like a standard
 # sun console as possible
+options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100		# sun terminal emulation
 options 	WS_DEFAULT_FG=WSCOL_WHITE
 options 	WS_DEFAULT_BG=WSCOL_BLACK
-options		WS_KERNEL_FG=WSCOL_GREEN
-options		WS_KERNEL_BG=WSCOL_BLACK
+options 	WS_KERNEL_FG=WSCOL_GREEN
+options 	WS_KERNEL_BG=WSCOL_BLACK
 options 	WSDISPLAY_COMPAT_PCVT		# emulate some ioctls
+options 	WSDISPLAY_COMPAT_SYSCONS	# emulate some more ioctls
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	WSDISPLAY_COMPAT_RAWKBD		# can get raw scancodes
 options 	WSDISPLAY_DEFAULTSCREENS=4

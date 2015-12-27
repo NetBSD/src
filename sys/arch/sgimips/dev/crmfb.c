@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.38.2.1 2015/04/06 15:18:01 skrll Exp $ */
+/* $NetBSD: crmfb.c,v 1.38.2.2 2015/12/27 12:09:42 skrll Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.38.2.1 2015/04/06 15:18:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.38.2.2 2015/12/27 12:09:42 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -626,10 +626,7 @@ crmfb_init_screen(void *c, struct vcons_screen *scr, int existing,
 		break;
 	}
 
-	ri->ri_bits = KERNADDR(sc->sc_dma);
-
-	if (existing)
-		ri->ri_flg |= RI_CLEAR;
+	ri->ri_bits = NULL;
 
 	rasops_init(ri, 0, 0);
 	ri->ri_caps = WSSCREEN_WSCOLORS;

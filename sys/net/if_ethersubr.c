@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.205.2.3 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.205.2.4 2015/12/27 12:10:06 skrll Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.3 2015/09/22 12:06:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.205.2.4 2015/12/27 12:10:06 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -242,8 +242,8 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			(void)memcpy(edst, etherbroadcastaddr, sizeof(edst));
 		else if (m->m_flags & M_MCAST)
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
-		else if (!arpresolve(ifp, rt, m, dst, edst))
-			return 0;	/* if not yet resolved */
+		else if ((error = arpresolve(ifp, rt, m, dst, edst)) != 0)
+			return error == EWOULDBLOCK ? 0 : error;
 		/* If broadcasting on a simplex interface, loopback a copy */
 		if ((m->m_flags & M_BCAST) && (ifp->if_flags & IFF_SIMPLEX))
 			mcopy = m_copy(m, 0, (int)M_COPYALL);
@@ -291,7 +291,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 #endif
 #ifdef NETATALK
     case AF_APPLETALK:
-		if (!aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
+		if (aarpresolve(ifp, m, (const struct sockaddr_at *)dst, edst)) {
 #ifdef NETATALKDEBUG
 			printf("aarpresolv failed\n");
 #endif /* NETATALKDEBUG */
@@ -1414,6 +1414,75 @@ ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return ifioctl_common(ifp, cmd, data);
 	}
 	return 0;
+}
+
+/*
+ * Enable/disable passing VLAN packets if the parent interface supports it.
+ * Return:
+ * 	 0: Ok
+ *	-1: Parent interface does not support vlans
+ *	>0: Error
+ */
+int
+ether_enable_vlan_mtu(struct ifnet *ifp)
+{
+	int error;
+	struct ethercom *ec = (void *)ifp;
+
+	/* Already have VLAN's do nothing. */
+	if (ec->ec_nvlans != 0)
+		return 0;
+
+	/* Parent does not support VLAN's */
+	if ((ec->ec_capabilities & ETHERCAP_VLAN_MTU) == 0)
+		return -1;
+
+	/*
+	 * Parent supports the VLAN_MTU capability,
+	 * i.e. can Tx/Rx larger than ETHER_MAX_LEN frames;
+	 * enable it.
+	 */
+	ec->ec_capenable |= ETHERCAP_VLAN_MTU;
+
+	/* Interface is down, defer for later */
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+
+	if ((error = if_flags_set(ifp, ifp->if_flags)) == 0)
+		return 0;
+
+	ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+	return error;
+}
+
+int
+ether_disable_vlan_mtu(struct ifnet *ifp)
+{
+	int error;
+	struct ethercom *ec = (void *)ifp;
+
+	/* We still have VLAN's, defer for later */
+	if (ec->ec_nvlans != 0)
+		return 0;
+
+	/* Parent does not support VLAB's, nothing to do. */
+	if ((ec->ec_capenable & ETHERCAP_VLAN_MTU) == 0)
+		return -1;
+
+	/*
+	 * Disable Tx/Rx of VLAN-sized frames.
+	 */
+	ec->ec_capenable &= ~ETHERCAP_VLAN_MTU;
+	
+	/* Interface is down, defer for later */
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return 0;
+
+	if ((error = if_flags_set(ifp, ifp->if_flags)) == 0)
+		return 0;
+
+	ec->ec_capenable |= ETHERCAP_VLAN_MTU;
+	return error;
 }
 
 static int

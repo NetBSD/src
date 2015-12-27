@@ -1,4 +1,4 @@
-/* $NetBSD: awin_debe.c,v 1.8.2.1 2015/04/06 15:17:51 skrll Exp $ */
+/* $NetBSD: awin_debe.c,v 1.8.2.2 2015/12/27 12:09:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,6 +29,7 @@
 #include "opt_allwinner.h"
 #include "genfb.h"
 #include "awin_mp.h"
+#include "awin_tcon.h"
 
 #ifndef AWIN_DEBE_VIDEOMEM
 #define AWIN_DEBE_VIDEOMEM	(16 * 1024 * 1024)
@@ -37,7 +38,7 @@
 #define AWIN_DEBE_CURMAX	64
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.8.2.1 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_debe.c,v 1.8.2.2 2015/12/27 12:09:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -249,8 +250,8 @@ awin_debe_attach(device_t parent, device_t self, void *aux)
 #endif
 
 #ifdef AWIN_DEBE_FWINIT
-	awin_debe_set_videomode(&mode);
-	awin_debe_enable(true);
+	awin_debe_set_videomode(device_unit(self), &mode);
+	awin_debe_enable(device_unit(self), true);
 #endif
 }
 
@@ -443,18 +444,19 @@ awin_debe_set_cursor(struct awin_debe_softc *sc, struct wsdisplay_cursor *cur)
 }
 
 void
-awin_debe_enable(bool enable)
+awin_debe_enable(int unit, bool enable)
 {
 	struct awin_debe_softc *sc;
 	device_t dev;
 	uint32_t val;
 
-	dev = device_find_by_driver_unit("awindebe", 0);
+	dev = device_find_by_driver_unit("awindebe", unit);
 	if (dev == NULL) {
-		printf("DEBE: no driver found\n");
+		printf("DEBE%d: no driver found\n", unit);
 		return;
 	}
 	sc = device_private(dev);
+	KASSERT(device_unit(sc->sc_dev) == unit);
 
 	if (enable) {
 		val = DEBE_READ(sc, AWIN_DEBE_REGBUFFCTL_REG);
@@ -469,21 +471,27 @@ awin_debe_enable(bool enable)
 		val &= ~AWIN_DEBE_MODCTL_START_CTL;
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 	}
+#if 0
+	for (int i = 0; i < 0x1000; i += 4) {
+		printf("DEBE 0x%04x: 0x%08x\n", i, DEBE_READ(sc, i));
+	}
+#endif
 }
 
 void
-awin_debe_set_videomode(const struct videomode *mode)
+awin_debe_set_videomode(int unit, const struct videomode *mode)
 {
 	struct awin_debe_softc *sc;
 	device_t dev;
 	uint32_t val;
 
-	dev = device_find_by_driver_unit("awindebe", 0);
+	dev = device_find_by_driver_unit("awindebe", unit);
 	if (dev == NULL) {
-		printf("DEBE: no driver found\n");
+		printf("DEBE%d: no driver found\n", unit);
 		return;
 	}
 	sc = device_private(dev);
+	KASSERT(device_unit(sc->sc_dev) == unit);
 
 	if (mode) {
 		const u_int interlace_p = !!(mode->flags & VID_INTERLACE);
@@ -545,6 +553,11 @@ awin_debe_set_videomode(const struct videomode *mode)
 		} else {
 			val &= ~AWIN_DEBE_MODCTL_ITLMOD_EN;
 		}
+		val &= ~AWIN_DEBE_MODCTL_OUT_SEL;
+		if (device_unit(sc->sc_dev) == 1) {
+			val |= __SHIFTIN(AWIN_DEBE_MODCTL_OUT_SEL_LCD1,
+			    AWIN_DEBE_MODCTL_OUT_SEL);
+		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
 	} else {
 		/* disable */
@@ -571,6 +584,10 @@ awin_debe_ioctl(device_t self, u_long cmd, void *data)
 		enable = *(int *)data;
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);
 		if (enable) {
+			if (val & AWIN_DEBE_MODCTL_LAY0_EN) {
+				/* already enabled */
+				return 0;
+			}
 			val |= AWIN_DEBE_MODCTL_LAY0_EN;
 			if (sc->sc_cursor_enable) {
 				val |= AWIN_DEBE_MODCTL_HWC_EN;
@@ -578,10 +595,18 @@ awin_debe_ioctl(device_t self, u_long cmd, void *data)
 				val &= ~AWIN_DEBE_MODCTL_HWC_EN;
 			}
 		} else {
+			if ((val & AWIN_DEBE_MODCTL_LAY0_EN) == 0) {
+				/* already disabled */
+				return 0;
+			}
 			val &= ~AWIN_DEBE_MODCTL_LAY0_EN;
 			val &= ~AWIN_DEBE_MODCTL_HWC_EN;
 		}
 		DEBE_WRITE(sc, AWIN_DEBE_MODCTL_REG, val);
+#if NAWIN_TCON > 0
+		/* debe0 always connected to tcon0, debe1 to tcon1*/
+		awin_tcon_setvideo(device_unit(sc->sc_dev), enable);
+#endif
 		return 0;
 	case WSDISPLAYIO_GVIDEO:
 		val = DEBE_READ(sc, AWIN_DEBE_MODCTL_REG);

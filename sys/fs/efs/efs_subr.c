@@ -1,4 +1,4 @@
-/*	$NetBSD: efs_subr.c,v 1.10.6.1 2015/04/06 15:18:18 skrll Exp $	*/
+/*	$NetBSD: efs_subr.c,v 1.10.6.2 2015/12/27 12:10:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006 Stephen M. Rumble <rumble@ephemeral.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.10.6.1 2015/04/06 15:18:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efs_subr.c,v 1.10.6.2 2015/12/27 12:10:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -136,7 +136,7 @@ efs_locate_inode(ino_t ino, struct efs_sb *sbp, uint32_t *bboff, int *index)
 
 	cgisize = be16toh(sbp->sb_cgisize);
 	cgfsize = be32toh(sbp->sb_cgfsize);
-	firstcg = be32toh(sbp->sb_firstcg),
+	firstcg = be32toh(sbp->sb_firstcg);
 
 	*bboff = firstcg + ((ino / (cgisize * EFS_DINODES_PER_BB)) * cgfsize) +
 	    ((ino % (cgisize * EFS_DINODES_PER_BB)) / EFS_DINODES_PER_BB);

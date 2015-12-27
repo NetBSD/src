@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.4.6.1 2015/09/22 12:06:12 skrll Exp $
+#	$NetBSD: Makefile,v 1.4.6.2 2015/12/27 12:10:08 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
 
 LIB=	rumpdev_cgd
+COMMENT=Cryptographic disk driver (block device crypto layer)
+
 IOCONF=	CGD.ioconf
 SRCS=   cgd.c cgd_crypto.c
 

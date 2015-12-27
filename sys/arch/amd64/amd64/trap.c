@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.79.2.1 2015/04/06 15:17:51 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.79.2.2 2015/12/27 12:09:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.1 2015/04/06 15:17:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.79.2.2 2015/12/27 12:09:28 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -342,6 +342,16 @@ kernelfault:
 		/* Get %rsp value before fault - there may be a pad word
 		 * below the trap frame. */
 		vframe = (void *)frame->tf_rsp;
+		if (frame->tf_rip == 0) {
+			/*
+			 * Assume that if we jumped to null we
+			 * probably did it via a null function
+			 * pointer, so print the return address.
+			 */
+			printf("kernel jumped to null; return addr was %p\n",
+			       *(void **)frame->tf_rsp);
+			goto we_re_toast;
+		}
 		switch (*(uint16_t *)frame->tf_rip) {
 		case 0xcf48:	/* iretq */
 			/*
@@ -505,6 +515,14 @@ kernelfault:
 		}
 
 		cr2 = rcr2();
+
+		if (frame->tf_err & PGEX_X) {
+			/* SMEP might have brought us here */
+			if (cr2 > VM_MIN_ADDRESS && cr2 <= VM_MAXUSER_ADDRESS)
+				panic("prevented execution of %p (SMEP)",
+				    (void *)cr2);
+		}
+
 		goto faultcommon;
 
 	case T_PAGEFLT|T_USER: {	/* page fault */
@@ -745,7 +763,7 @@ frame_dump(struct trapframe *tf)
 	printf("cs %lx  ds %lx  es %lx  fs %lx  gs %lx  ss %lx\n",
 		tf->tf_cs & 0xffff, tf->tf_ds & 0xffff, tf->tf_es & 0xffff,
 		tf->tf_fs & 0xffff, tf->tf_gs & 0xffff, tf->tf_ss & 0xffff);
-	
+
 	printf("\n");
 	printf("Stack dump:\n");
 	for (i = 0, p = (unsigned long *) tf; i < 20; i ++, p += 4)

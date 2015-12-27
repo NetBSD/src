@@ -1,4 +1,4 @@
-/*	$NetBSD: if_llatbl.c,v 1.4.2.2 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if_llatbl.c,v 1.4.2.3 2015/12/27 12:10:07 skrll Exp $	*/
 /*
  * Copyright (c) 2004 Luigi Rizzo, Alessandro Cerri. All rights reserved.
  * Copyright (c) 2004-2008 Qing Li. All rights reserved.
@@ -34,6 +34,8 @@
 #include "opt_inet.h"
 #include "opt_inet6.h"
 #endif
+
+#include "arp.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,6 +164,8 @@ htable_link_entry(struct lltable *llt, struct llentry *lle)
 	lle->lle_head = lleh;
 	lle->la_flags |= LLE_LINKED;
 	LIST_INSERT_HEAD(lleh, lle, lle_next);
+
+	llt->llt_lle_count++;
 }
 
 static void
@@ -176,6 +180,8 @@ htable_unlink_entry(struct llentry *lle)
 		lle->lle_tbl = NULL;
 		lle->lle_head = NULL;
 #endif
+		KASSERT(lle->lle_tbl->llt_lle_count != 0);
+		lle->lle_tbl->llt_lle_count--;
 	}
 }
 
@@ -352,17 +358,15 @@ lltable_free_cb(struct lltable *llt, struct llentry *lle, void *farg)
 }
 
 /*
- * Free all entries from given table and free itself.
+ * Free all entries from given table.
  */
 void
-lltable_free(struct lltable *llt)
+lltable_purge_entries(struct lltable *llt)
 {
 	struct llentry *lle, *next;
 	struct llentries dchain;
 
 	KASSERTMSG(llt != NULL, "llt is NULL");
-
-	lltable_unlink(llt);
 
 	LIST_INIT(&dchain);
 	IF_AFDATA_WLOCK(llt->llt_ifp);
@@ -371,19 +375,42 @@ lltable_free(struct lltable *llt)
 	llentries_unlink(llt, &dchain);
 	IF_AFDATA_WUNLOCK(llt->llt_ifp);
 
-	mutex_enter(softnet_lock);
 	LIST_FOREACH_SAFE(lle, &dchain, lle_chain, next) {
-		if (callout_halt(&lle->la_timer, softnet_lock))
+		if (callout_halt(&lle->la_timer, &lle->lle_lock))
 			LLE_REMREF(lle);
 #if defined(__NetBSD__)
 		/* XXX should have callback? */
-		if (lle->la_rt != NULL)
-			rtfree(lle->la_rt);
+		if (lle->la_rt != NULL) {
+			struct rtentry *rt = lle->la_rt;
+			lle->la_rt = NULL;
+#ifdef GATEWAY
+			/* XXX cannot call rtfree with holding mutex(IPL_NET) */
+			LLE_ADDREF(lle);
+			LLE_WUNLOCK(lle);
+#endif
+			rtfree(rt);
+#ifdef GATEWAY
+			LLE_WLOCK(lle);
+			LLE_REMREF(lle);
+#endif
+		}
 #endif
 		llentry_free(lle);
 	}
-	mutex_exit(softnet_lock);
 
+}
+
+/*
+ * Free all entries from given table and free itself.
+ */
+void
+lltable_free(struct lltable *llt)
+{
+
+	KASSERTMSG(llt != NULL, "llt is NULL");
+
+	lltable_unlink(llt);
+	lltable_purge_entries(llt);
 	llt->llt_free_tbl(llt);
 }
 
@@ -590,13 +617,15 @@ lla_rt_output(struct rt_msghdr *rtm, struct rt_addrinfo *info)
 		laflags = lle->la_flags;
 		LLE_WUNLOCK(lle);
 		IF_AFDATA_WUNLOCK(ifp);
-#ifdef INET
+#if defined(INET) && NARP > 0
 		/* gratuitous ARP */
 		if ((laflags & LLE_PUB) && dst->sa_family == AF_INET)
 			arprequest(ifp,
 			    &((const struct sockaddr_in *)dst)->sin_addr,
 			    &((const struct sockaddr_in *)dst)->sin_addr,
 			    CLLADDR(dl));
+#else
+		(void)laflags;
 #endif
 
 		break;

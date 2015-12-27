@@ -1,4 +1,4 @@
-/* $NetBSD: udf_strat_rmw.c,v 1.24.6.1 2015/09/22 12:06:06 skrll Exp $ */
+/* $NetBSD: udf_strat_rmw.c,v 1.24.6.2 2015/12/27 12:10:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.24.6.1 2015/09/22 12:06:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_strat_rmw.c,v 1.24.6.2 2015/12/27 12:10:04 skrll Exp $");
 #endif /* not lint */
 
 
@@ -719,9 +719,6 @@ udf_write_nodedscr_rmw(struct udf_strat_args *args)
 	if (error)
 		return error;
 
-	/* paranoia: add reference to the vnode to prevent recycling */
-	vhold(udf_node->vnode);
-
 	/* get our eccline */
 	eccline = udf_geteccline(ump, sectornr, 0);
 	eccsect = sectornr - eccline->start_sector;
@@ -761,7 +758,6 @@ udf_write_nodedscr_rmw(struct udf_strat_args *args)
 		UDF_UNLOCK_NODE(udf_node, 0);
 		wakeup(&udf_node->outstanding_nodedscr);
 	}
-	holdrele(udf_node->vnode);
 	udf_puteccline(eccline);
 
 	/* XXX waitfor not used */

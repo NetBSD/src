@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_crureg.h,v 1.8.2.3 2015/06/06 14:39:55 skrll Exp $ */
+/* $NetBSD: amlogic_crureg.h,v 1.8.2.4 2015/12/27 12:09:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,7 @@
 #define HHI_SYS_PLL_CNTL_MUL		__BITS(8,0)
 #define HHI_SYS_PLL_CNTL_DIV		__BITS(14,9)
 #define HHI_SYS_PLL_CNTL_OD		__BITS(17,16)
+#define HHI_SYS_PLL_CNTL_LOCK		__BIT(31)
 
 #define HHI_MPLL_CNTL_REG		CBUS_REG(0x10a0)
 #define HHI_MPLL_CNTL_MUL		__BITS(8,0)
@@ -166,5 +167,15 @@
 
 #define WATCHDOG_RESET_REG		CBUS_REG(0x2641)
 #define WATCHDOG_RESET_COUNT		__BITS(15,0)
+
+#define ISA_TIMER_MUX_REG		CBUS_REG(0x2650)
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL	__BITS(10,8)
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_SYS	0
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_1US	1
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_10US	2
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_100US	3
+#define ISA_TIMER_MUX_TIMERE_INPUT_SEL_1MS	4
+
+#define ISA_TIMERE_REG			CBUS_REG(0x2655)
 
 #endif /* _ARM_AMLOGIC_CRUREG_H */

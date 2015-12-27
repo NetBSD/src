@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS_AX3,v 1.13.2.2 2015/09/22 12:05:40 skrll Exp $
+#	$NetBSD: OPENBLOCKS_AX3,v 1.13.2.3 2015/12/27 12:09:34 skrll Exp $
 #
 #	OPENBLOCKS_AX3 -- Plat'Home. OpenBlockS AX3 kernel
 #
@@ -219,6 +219,9 @@ mvpex*	at mvsoc? offset ? irq ?
 
 # On-chip IDMA Controller
 gtidmac* at mvsoc? offset ? irq ?
+
+# On-chip Thermal Sensor
+mvsocts* at mvsoc? offset ? irq ?
 
 # On-chip Timers
 mvsoctmr* at mvsoc? offset ? irq ?

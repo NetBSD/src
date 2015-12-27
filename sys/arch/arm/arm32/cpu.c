@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.106.2.3 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.106.2.4 2015/12/27 12:09:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106.2.3 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.106.2.4 2015/12/27 12:09:30 skrll Exp $");
 
 #include <sys/systm.h>
 #include <sys/conf.h>
@@ -840,13 +840,13 @@ identify_features(device_t dv)
 	cpu_processor_features[0] = armreg_pfr0_read();
 	cpu_processor_features[1] = armreg_pfr1_read();
 
-	aprint_verbose_dev(dv, "sctlr: %#x\n", armreg_sctlr_read());
-	aprint_verbose_dev(dv, "actlr: %#x\n", armreg_auxctl_read());
-	aprint_verbose_dev(dv, "revidr: %#x\n", armreg_revidr_read());
+	aprint_debug_dev(dv, "sctlr: %#x\n", armreg_sctlr_read());
+	aprint_debug_dev(dv, "actlr: %#x\n", armreg_auxctl_read());
+	aprint_debug_dev(dv, "revidr: %#x\n", armreg_revidr_read());
 #ifdef MULTIPROCESSOR
-	aprint_verbose_dev(dv, "mpidr: %#x\n", armreg_mpidr_read());
+	aprint_debug_dev(dv, "mpidr: %#x\n", armreg_mpidr_read());
 #endif
-	aprint_verbose_dev(dv,
+	aprint_debug_dev(dv,
 	    "isar: [0]=%#x [1]=%#x [2]=%#x [3]=%#x, [4]=%#x, [5]=%#x\n",
 	    cpu_instruction_set_attributes[0],
 	    cpu_instruction_set_attributes[1],
@@ -854,11 +854,11 @@ identify_features(device_t dv)
 	    cpu_instruction_set_attributes[3],
 	    cpu_instruction_set_attributes[4],
 	    cpu_instruction_set_attributes[5]);
-	aprint_verbose_dev(dv,
+	aprint_debug_dev(dv,
 	    "mmfr: [0]=%#x [1]=%#x [2]=%#x [3]=%#x\n",
 	    cpu_memory_model_features[0], cpu_memory_model_features[1],
 	    cpu_memory_model_features[2], cpu_memory_model_features[3]);
-	aprint_verbose_dev(dv,
+	aprint_debug_dev(dv,
 	    "pfr: [0]=%#x [1]=%#x\n",
 	    cpu_processor_features[0], cpu_processor_features[1]);
 }

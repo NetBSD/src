@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_syscalls.c,v 1.155.4.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: lfs_syscalls.c,v 1.155.4.4 2015/12/27 12:10:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007, 2008
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.155.4.3 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_syscalls.c,v 1.155.4.4 2015/12/27 12:10:19 skrll Exp $");
 
 #ifndef LFS
 # define LFS		/* for prototypes in syscallargs.h */
@@ -122,7 +122,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 	if ((error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t))) != 0)
 		return (error);
 
-	if ((mntp = vfs_getvfs(fsidp)) == NULL)
+	if ((mntp = vfs_getvfs(&fsid)) == NULL) 
 		return (ENOENT);
 	fs = VFSTOULFS(mntp)->um_lfs;
 
@@ -136,7 +136,7 @@ sys_lfs_markv(struct lwp *l, const struct sys_lfs_markv_args *uap, register_t *r
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
 		goto out;
 
-	if ((error = lfs_markv(p, &fsid, blkiov, blkcnt)) == 0)
+	if ((error = lfs_markv(l, &fsid, blkiov, blkcnt)) == 0)
 		copyout(blkiov, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO));
     out:
@@ -551,15 +551,17 @@ sys_lfs_bmapv(struct lwp *l, const struct sys_lfs_bmapv_args *uap, register_t *r
 	fs = VFSTOULFS(mntp)->um_lfs;
 
 	blkcnt = SCARG(uap, blkcnt);
+#if SIZE_T_MAX <= UINT_MAX
 	if ((u_int) blkcnt > SIZE_T_MAX / sizeof(BLOCK_INFO))
 		return (EINVAL);
+#endif
 	KERNEL_LOCK(1, NULL);
 	blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 	if ((error = copyin(SCARG(uap, blkiov), blkiov,
 			    blkcnt * sizeof(BLOCK_INFO))) != 0)
 		goto out;
 
-	if ((error = lfs_bmapv(p, &fsid, blkiov, blkcnt)) == 0)
+	if ((error = lfs_bmapv(l, &fsid, blkiov, blkcnt)) == 0)
 		copyout(blkiov, SCARG(uap, blkiov),
 			blkcnt * sizeof(BLOCK_INFO));
     out:
@@ -655,17 +657,17 @@ lfs_bmapv(struct lwp *l, fsid_t *fsidp, BLOCK_INFO *blkiov, int blkcnt)
 	if ((mntp = vfs_getvfs(fsidp)) == NULL)
 		return (ENOENT);
 
-	ump = VFSTOULFS(mntp);
 	if ((error = vfs_busy(mntp, NULL)) != 0)
 		return (error);
 
-	if (ump->um_cleaner_thread == NULL)
-		ump->um_cleaner_thread = curlwp;
-	KASSERT(ump->um_cleaner_thread == curlwp);
+	ump = VFSTOULFS(mntp);
+	fs = ump->um_lfs;
+
+	if (fs->lfs_cleaner_thread == NULL)
+		fs->lfs_cleaner_thread = curlwp;
+	KASSERT(fs->lfs_cleaner_thread == curlwp);
 
 	cnt = blkcnt;
-
-	fs = VFSTOULFS(mntp)->um_lfs;
 
 	error = 0;
 
@@ -974,12 +976,14 @@ lfs_fastvget(struct mount *mp, ino_t ino, BLOCK_INFO *blkp, int lk_flags,
     struct vnode **vpp)
 {
 	struct ulfsmount *ump;
+	struct lfs *fs;
 	int error;
 
 	ump = VFSTOULFS(mp);
-	ump->um_cleaner_hint = blkp;
+	fs = ump->um_lfs;
+	fs->lfs_cleaner_hint = blkp;
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
-	ump->um_cleaner_hint = NULL;
+	fs->lfs_cleaner_hint = NULL;
 	if (error)
 		return error;
 	error = vn_lock(*vpp, lk_flags);

@@ -1,4 +1,4 @@
-/* $NetBSD: amlogic_board.c,v 1.11.2.4 2015/09/22 12:05:37 skrll Exp $ */
+/* $NetBSD: amlogic_board.c,v 1.11.2.5 2015/12/27 12:09:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,16 @@
 #include "opt_amlogic.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11.2.4 2015/09/22 12:05:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11.2.5 2015/12/27 12:09:29 skrll Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/wdog.h>
+
+#include <dev/sysmon/sysmonvar.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -46,7 +49,21 @@ __KERNEL_RCSID(0, "$NetBSD: amlogic_board.c,v 1.11.2.4 2015/09/22 12:05:37 skrll
 #include <arm/amlogic/amlogic_crureg.h>
 #include <arm/amlogic/amlogic_var.h>
 
+#define AMLOGIC_EE_WDOG_PERIOD_DEFAULT	8
+#define AMLOGIC_EE_WDOG_PERIOD_MAX	8
+#define AMLOGIC_EE_WDOG_TICKS_PER_SEC	7812
+
 bus_space_handle_t amlogic_core_bsh;
+
+static int	amlogic_ee_wdog_setmode(struct sysmon_wdog *);
+static int	amlogic_ee_wdog_tickle(struct sysmon_wdog *);
+
+static struct sysmon_wdog amlogic_ee_wdog = {
+	.smw_name = "EE-watchdog",
+	.smw_setmode = amlogic_ee_wdog_setmode,
+	.smw_tickle = amlogic_ee_wdog_tickle,
+	.smw_period = AMLOGIC_EE_WDOG_PERIOD_DEFAULT
+};
 
 struct arm32_bus_dma_tag amlogic_dma_tag = {
 	_BUS_DMAMAP_FUNCS,
@@ -220,6 +237,48 @@ amlogic_rng_init(void)
 	CBUS_SET_CLEAR(EE_CLK_GATING3_REG, EE_CLK_GATING3_RNG, 0);
 	CBUS_SET_CLEAR(AM_RING_OSC_REG,
 	    AM_RING_OSC_ENABLE | AM_RING_OSC_HF_MODE, 0);
+}
+
+void
+amlogic_wdog_init(void)
+{
+	/* Disable watchdog */
+	CBUS_WRITE(WATCHDOG_RESET_REG, 0);
+	CBUS_SET_CLEAR(WATCHDOG_TC_REG, 0, WATCHDOG_TC_ENABLE);
+
+	sysmon_wdog_register(&amlogic_ee_wdog);
+}
+
+static int
+amlogic_ee_wdog_setmode(struct sysmon_wdog *smw)
+{
+	if ((smw->smw_mode & WDOG_MODE_MASK) == WDOG_MODE_DISARMED) {
+		CBUS_WRITE(WATCHDOG_RESET_REG, 0);
+		CBUS_SET_CLEAR(WATCHDOG_TC_REG, 0, WATCHDOG_TC_ENABLE);
+		return 0;
+	}
+
+	if (smw->smw_period == WDOG_PERIOD_DEFAULT) {
+		amlogic_ee_wdog.smw_period = AMLOGIC_EE_WDOG_PERIOD_DEFAULT;
+	} else if (smw->smw_period == 0 ||
+		   smw->smw_period > AMLOGIC_EE_WDOG_PERIOD_MAX) {
+		return EINVAL;
+	} else {
+		amlogic_ee_wdog.smw_period = smw->smw_period;
+	}
+	u_int tcnt = amlogic_ee_wdog.smw_period * AMLOGIC_EE_WDOG_TICKS_PER_SEC;
+	CBUS_WRITE(WATCHDOG_RESET_REG, 0);
+	CBUS_WRITE(WATCHDOG_TC_REG, WATCHDOG_TC_CPUS | WATCHDOG_TC_ENABLE |
+	    __SHIFTIN(tcnt, WATCHDOG_TC_TCNT));
+
+	return 0;
+}
+
+static int
+amlogic_ee_wdog_tickle(struct sysmon_wdog *smw)
+{
+	CBUS_WRITE(WATCHDOG_RESET_REG, 0);
+	return 0;
 }
 
 void

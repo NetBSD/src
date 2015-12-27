@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.6.6.1 2015/09/22 12:06:13 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.6.2 2015/12/27 12:10:11 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/sysmon
 
 LIB=	rumpdev_sysmon
+COMMENT=System monitoring and power management
+
 IOCONF=	SYSMON.ioconf
 
 SRCS=	sysmon_taskq.c sysmon_power.c sysmon_envsys.c sysmon_envsys_events.c \

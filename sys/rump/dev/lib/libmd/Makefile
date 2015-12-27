@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/17 11:30:40 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2015/12/27 12:10:09 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev
 
 LIB=	rumpdev_md
+COMMENT=Memory disk device driver
+
 IOCONF=	MD.ioconf
 
 SRCS=	md.c

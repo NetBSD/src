@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.32.2.1 2015/06/06 14:39:55 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.32.2.2 2015/12/27 12:09:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -124,7 +124,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32.2.1 2015/06/06 14:39:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.32.2.2 2015/12/27 12:09:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -240,7 +240,7 @@ arm32_bootmem_init(paddr_t memstart, psize_t memsize, vsize_t kernelstart)
 	}
 
 	bmi->bmi_nfreeblocks = pv - bmi->bmi_freeblocks;
-	
+
 	SLIST_INIT(&bmi->bmi_freechunks);
 	SLIST_INIT(&bmi->bmi_chunks);
 }
@@ -442,11 +442,10 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	kernel_size = round_page(kernel_size);
 
 	/*
-	 * Now we know how many L2 pages it will take.  If we've mapped
-	 * all of memory, then it won't take any.
+	 * Now we know how many L2 pages it will take.
 	 */
-	const size_t KERNEL_L2PT_KERNEL_NUM = mapallmem_p
-	    ? 0 : round_page(kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
+	const size_t KERNEL_L2PT_KERNEL_NUM =
+	    round_page(kernel_size + L2_S_SEGSIZE - 1) / L2_S_SEGSIZE;
 
 #ifdef VERBOSE_INIT_ARM
 	printf("%s: %zu L2 pages are needed to map %#zx kernel bytes\n",
@@ -514,8 +513,6 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #ifdef VERBOSE_INIT_ARM
 	printf(" kernel");
 #endif
-	KASSERT(mapallmem_p || KERNEL_L2PT_KERNEL_NUM > 0);
-	KASSERT(!mapallmem_p || KERNEL_L2PT_KERNEL_NUM == 0);
 	for (size_t idx = 0; idx < KERNEL_L2PT_KERNEL_NUM; ++idx) {
 		valloc_pages(bmi, &kernel_l2pt[idx], 1,
 		    VM_PROT_READ|VM_PROT_WRITE, PTE_PAGETABLE, true);
@@ -584,7 +581,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 		 * This page will just contain the system vectors and can be
 		 * shared by all processes.
 		 */
-		valloc_pages(bmi, &systempage, 1, VM_PROT_READ|VM_PROT_WRITE,
+		valloc_pages(bmi, &systempage, 1, VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE,
 		    PTE_CACHE, true);
 	}
 	systempage.pv_va = vectors;
@@ -596,7 +593,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 #if ARM_MMU_XSCALE == 1
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
-#endif          
+#endif
 		valloc_pages(bmi, &minidataclean, 1,
 		    VM_PROT_READ|VM_PROT_WRITE, 0, true);
 #endif
@@ -684,7 +681,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	text.pv_pa = bmi->bmi_kernelstart;
 	text.pv_va = KERN_PHYSTOV(bmi, bmi->bmi_kernelstart);
 	text.pv_size = textsize;
-	text.pv_prot = VM_PROT_READ|VM_PROT_WRITE; /* XXX VM_PROT_EXECUTE */
+	text.pv_prot = VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE;
 	text.pv_cache = PTE_CACHE;
 
 #ifdef VERBOSE_INIT_ARM
@@ -842,16 +839,16 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	if (map_vectors_p) {
 		/* Map the vector page. */
 		pmap_map_entry(l1pt_va, systempage.pv_va, systempage.pv_pa,
-		    VM_PROT_READ|VM_PROT_WRITE, PTE_CACHE);
+		    VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE, PTE_CACHE);
 	}
 
-	/* Map the Mini-Data cache clean area. */ 
+	/* Map the Mini-Data cache clean area. */
 #if ARM_MMU_XSCALE == 1
 #if (ARM_NMMUS > 1)
 	if (xscale_use_minidata)
-#endif          
+#endif
 		xscale_setup_minidata(l1pt_va, minidataclean.pv_va,
-		    minidataclean.pv_pa);      
+		    minidataclean.pv_pa);
 #endif
 
 	/*

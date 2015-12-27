@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.191.6.1 2015/04/06 15:18:02 skrll Exp $ */
+/*	$NetBSD: trap.c,v 1.191.6.2 2015/12/27 12:09:43 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191.6.1 2015/04/06 15:18:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.191.6.2 2015/12/27 12:09:43 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_svr4.h"
@@ -296,7 +296,7 @@ trap(unsigned type, int psr, int pc, struct trapframe *tf)
 		write_all_windows();
 		(void) kdb_trap(type, tf);
 #endif
-		panic(type < N_TRAP_TYPES ? trap_type[type] : T);
+		panic("%s", type < N_TRAP_TYPES ? trap_type[type] : T);
 		/* NOTREACHED */
 	}
 	if ((l = curlwp) == NULL)
@@ -960,9 +960,11 @@ kfault:
 		case EINVAL:
 			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_ADRERR;
+			break;
 		case EACCES:
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_ACCERR;
+			break;
 		default:
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_MAPERR;
@@ -1254,9 +1256,11 @@ kfault:
 		case EINVAL:
 			ksi.ksi_signo = SIGBUS;
 			ksi.ksi_code = BUS_ADRERR;
+			break;
 		case EACCES:
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_ACCERR;
+			break;
 		default:
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_MAPERR;

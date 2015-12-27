@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_netbsd.c,v 1.193.4.1 2015/09/22 12:05:55 skrll Exp $	*/
+/*	$NetBSD: netbsd32_netbsd.c,v 1.193.4.2 2015/12/27 12:09:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.193.4.1 2015/09/22 12:05:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_netbsd.c,v 1.193.4.2 2015/12/27 12:09:47 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -112,6 +112,10 @@ struct uvm_object *emul_netbsd32_object;
 
 extern struct sysctlnode netbsd32_sysctl_root;
 
+#ifdef MODULAR
+#include <compat/netbsd32/netbsd32_syscalls_autoload.c>
+#endif
+
 struct emul emul_netbsd32 = {
 	.e_name =		"netbsd32",
 	.e_path =		"/emul/netbsd32",
@@ -126,6 +130,9 @@ struct emul emul_netbsd32 = {
 	.e_syscallnames =	netbsd32_syscallnames,
 #else
 	.e_syscallnames =	NULL,
+#endif
+#ifdef MODULAR
+	.e_sc_autoload =	netbsd32_syscalls_autoload,
 #endif
 	.e_sendsig =		netbsd32_sendsig,
 	.e_trapsignal =		trapsignal,

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysmon_envsys.c,v 1.128.2.2 2015/06/06 14:40:13 skrll Exp $	*/
+/*	$NetBSD: sysmon_envsys.c,v 1.128.2.3 2015/12/27 12:09:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 Juan Romero Pardines.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.128.2.2 2015/06/06 14:40:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysmon_envsys.c,v 1.128.2.3 2015/12/27 12:09:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -103,7 +103,7 @@ static void sme_initial_refresh(void *);
 static uint32_t sme_get_max_value(struct sysmon_envsys *,
      bool (*)(const envsys_data_t*), bool);
 
-MODULE(MODULE_CLASS_MISC, sysmon_envsys, "sysmon,sysmon_taskq,sysmon_power");
+MODULE(MODULE_CLASS_DRIVER, sysmon_envsys, "sysmon,sysmon_taskq,sysmon_power");
 
 static struct sysmon_opvec sysmon_envsys_opvec = {
         sysmonopen_envsys, sysmonclose_envsys, sysmonioctl_envsys,
@@ -1656,8 +1656,8 @@ sme_update_sensor_dictionary(prop_object_t dict, envsys_data_t *edata,
 
 	sdt = sme_find_table_entry(SME_DESC_STATES, edata->state);
 	if (sdt == NULL) {
-		printf("sme_update_sensor_dictionary: can not update sensor "
-		    "state %d unknown\n", edata->state);
+		printf("sme_update_sensor_dictionary: cannot update sensor %d "
+		    "state %d unknown\n", edata->sensor, edata->state);
 		return EINVAL;
 	}
 

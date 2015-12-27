@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pciereg.h,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_pciereg.h,v 1.1.2.3 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,16 +30,39 @@
 #define _ARM_TEGRA_PCIEREG_H
 
 /* AFI */
+#define AFI_AXI_NBAR		9
+
+#define AFI_AXI_BARi_SZ(i)	((i) < 6 ? \
+    0x000 + ((i) - 0) * 0x04 : \
+    0x134 + ((i) - 6) * 0x04)
+
+#define AFI_AXI_BARi_START(i)	((i) < 6 ? \
+    0x018 + ((i) - 0) * 0x04 : \
+    0x140 + ((i) - 6) * 0x04)
+
+#define AFI_FPCI_BARi(i)	((i) < 6 ? \
+    0x030 + ((i) - 0) * 0x04 : \
+    0x14c + ((i) - 6) * 0x04)
+
+#define AFI_MSI_BAR_SZ_REG	0x60
+#define AFI_MSI_FPCI_BAR_ST_REG	0x64
+#define AFI_MSI_AXI_BAR_ST_REG	0x68
 #define AFI_INTR_MASK_REG	0xb4
 #define AFI_INTR_CODE_REG	0xb8
 #define AFI_INTR_SIGNATURE_REG	0xbc
 #define AFI_SM_INTR_ENABLE_REG	0xc4
 #define AFI_AFI_INTR_ENABLE_REG	0xc8
+#define AFI_MSG_REG		0x190
 
 #define AFI_INTR_MASK_MSI	__BIT(8)
 #define AFI_INTR_MASK_INT	__BIT(0)
 
 #define AFI_INTR_CODE_INT_CODE	__BITS(4,0)
 #define AFI_INTR_CODE_SM_MSG	6
+
+#define AFI_MSG_INT1		__BITS(27,24)
+#define AFI_MSG_PM_PME1		__BIT(20)
+#define AFI_MSG_INT0		__BITS(11,8)
+#define AFI_MSG_PM_PME0		__BIT(4)
 
 #endif /* _ARM_TEGRA_PCIEREG_H */

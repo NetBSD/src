@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.c,v 1.179.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: in6.c,v 1.179.2.4 2015/12/27 12:10:07 skrll Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.4 2015/12/27 12:10:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -83,16 +83,18 @@ __KERNEL_RCSID(0, "$NetBSD: in6.c,v 1.179.2.3 2015/09/22 12:06:11 skrll Exp $");
 #include <sys/syslog.h>
 #include <sys/kauth.h>
 #include <sys/cprng.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
-#include <net/route.h>
+#include <net/if_llatbl.h>
+#include <net/if_ether.h>
 #include <net/if_dl.h>
 #include <net/pfil.h>
+#include <net/route.h>
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <net/if_ether.h>
 
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
@@ -271,6 +273,10 @@ in6_control1(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	int error;
 
 	switch (cmd) {
+	case SIOCAADDRCTL_POLICY:
+	case SIOCDADDRCTL_POLICY:
+		/* Privileged. */
+		return in6_src_ioctl(cmd, data);
 	/*
 	 * XXX: Fix me, once we fix SIOCSIFADDR, SIOCIFDSTADDR, etc.
 	 */
@@ -723,6 +729,10 @@ in6_control(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 	case OSIOCAIFADDR_IN6:
 #endif
 	case SIOCAIFADDR_IN6:
+
+	case SIOCAADDRCTL_POLICY:
+	case SIOCDADDRCTL_POLICY:
+
 		if (kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_SOCKET,
 		    KAUTH_REQ_NETWORK_SOCKET_SETPRIV,
@@ -1761,6 +1771,34 @@ in6ifa_ifpforlinklocal(const struct ifnet *ifp, const int ignoreflags)
 	return (struct in6_ifaddr *)best_ifa;
 }
 
+/*
+ * find the internet address corresponding to a given address.
+ * ifaddr is returned referenced.
+ */
+struct in6_ifaddr *
+in6ifa_ifwithaddr(const struct in6_addr *addr, uint32_t zoneid)
+{
+	struct in6_ifaddr *ia;
+
+#ifdef __FreeBSD__
+	IN6_IFADDR_RLOCK();
+	LIST_FOREACH(ia, IN6ADDR_HASH(addr), ia6_hash) {
+#else
+	for (ia = in6_ifaddr; ia; ia = ia->ia_next) {
+#endif
+		if (IN6_ARE_ADDR_EQUAL(IA6_IN6(ia), addr)) {
+			if (zoneid != 0 &&
+			    zoneid != ia->ia_addr.sin6_scope_id)
+				continue;
+			ifaref(&ia->ia_ifa);
+			break;
+		}
+	}
+#ifdef __FreeBSD__
+	IN6_IFADDR_RUNLOCK();
+#endif
+	return ia;
+}
 
 /*
  * find the internet address corresponding to a given interface and address.
@@ -2196,6 +2234,287 @@ in6_if2idlen(struct ifnet *ifp)
 	}
 }
 
+struct in6_llentry {
+	struct llentry		base;
+};
+
+#define	IN6_LLTBL_DEFAULT_HSIZE	32
+#define	IN6_LLTBL_HASH(k, h) \
+	(((((((k >> 8) ^ k) >> 8) ^ k) >> 8) ^ k) & ((h) - 1))
+
+/*
+ * Do actual deallocation of @lle.
+ * Called by LLE_FREE_LOCKED when number of references
+ * drops to zero.
+ */
+static void
+in6_lltable_destroy_lle(struct llentry *lle)
+{
+
+	LLE_WUNLOCK(lle);
+	LLE_LOCK_DESTROY(lle);
+	kmem_intr_free(lle, sizeof(struct in6_llentry));
+}
+
+static struct llentry *
+in6_lltable_new(const struct in6_addr *addr6, u_int flags)
+{
+	struct in6_llentry *lle;
+
+	lle = kmem_intr_zalloc(sizeof(struct in6_llentry), KM_NOSLEEP);
+	if (lle == NULL)		/* NB: caller generates msg */
+		return NULL;
+
+	lle->base.r_l3addr.addr6 = *addr6;
+	lle->base.lle_refcnt = 1;
+	lle->base.lle_free = in6_lltable_destroy_lle;
+	LLE_LOCK_INIT(&lle->base);
+	callout_init(&lle->base.lle_timer, CALLOUT_MPSAFE);
+
+	return &lle->base;
+}
+
+static int
+in6_lltable_match_prefix(const struct sockaddr *prefix,
+    const struct sockaddr *mask, u_int flags, struct llentry *lle)
+{
+	const struct sockaddr_in6 *pfx = (const struct sockaddr_in6 *)prefix;
+	const struct sockaddr_in6 *msk = (const struct sockaddr_in6 *)mask;
+
+	if (IN6_ARE_MASKED_ADDR_EQUAL(&lle->r_l3addr.addr6,
+	    &pfx->sin6_addr, &msk->sin6_addr) &&
+	    ((flags & LLE_STATIC) || !(lle->la_flags & LLE_STATIC)))
+		return 1;
+
+	return 0;
+}
+
+static void
+in6_lltable_free_entry(struct lltable *llt, struct llentry *lle)
+{
+	struct ifnet *ifp __diagused;
+
+	LLE_WLOCK_ASSERT(lle);
+	KASSERT(llt != NULL);
+
+	/* Unlink entry from table */
+	if ((lle->la_flags & LLE_LINKED) != 0) {
+
+		ifp = llt->llt_ifp;
+		IF_AFDATA_WLOCK_ASSERT(ifp);
+		lltable_unlink_entry(llt, lle);
+	}
+
+	KASSERT(mutex_owned(softnet_lock));
+	callout_halt(&lle->lle_timer, softnet_lock);
+	LLE_REMREF(lle);
+
+	llentry_free(lle);
+}
+
+static int
+in6_lltable_rtcheck(struct ifnet *ifp,
+		    u_int flags,
+		    const struct sockaddr *l3addr)
+{
+	struct rtentry *rt;
+
+	KASSERTMSG(l3addr->sa_family == AF_INET6,
+	    "sin_family %d", l3addr->sa_family);
+
+	rt = rtalloc1(l3addr, 0);
+	if (rt == NULL || (rt->rt_flags & RTF_GATEWAY) || rt->rt_ifp != ifp) {
+		struct ifaddr *ifa;
+		/*
+		 * Create an ND6 cache for an IPv6 neighbor
+		 * that is not covered by our own prefix.
+		 */
+		/* XXX ifaof_ifpforaddr should take a const param */
+		ifa = ifaof_ifpforaddr(l3addr, ifp);
+		if (ifa != NULL) {
+			ifafree(ifa);
+			if (rt != NULL)
+				rtfree(rt);
+			return 0;
+		}
+		log(LOG_INFO, "IPv6 address: \"%s\" is not on the network\n",
+		    ip6_sprintf(&((const struct sockaddr_in6 *)l3addr)->sin6_addr));
+		if (rt != NULL)
+			rtfree(rt);
+		return EINVAL;
+	}
+	rtfree(rt);
+	return 0;
+}
+
+static inline uint32_t
+in6_lltable_hash_dst(const struct in6_addr *dst, uint32_t hsize)
+{
+
+	return IN6_LLTBL_HASH(dst->s6_addr32[3], hsize);
+}
+
+static uint32_t
+in6_lltable_hash(const struct llentry *lle, uint32_t hsize)
+{
+
+	return in6_lltable_hash_dst(&lle->r_l3addr.addr6, hsize);
+}
+
+static void
+in6_lltable_fill_sa_entry(const struct llentry *lle, struct sockaddr *sa)
+{
+	struct sockaddr_in6 *sin6;
+
+	sin6 = (struct sockaddr_in6 *)sa;
+	bzero(sin6, sizeof(*sin6));
+	sin6->sin6_family = AF_INET6;
+	sin6->sin6_len = sizeof(*sin6);
+	sin6->sin6_addr = lle->r_l3addr.addr6;
+}
+
+static inline struct llentry *
+in6_lltable_find_dst(struct lltable *llt, const struct in6_addr *dst)
+{
+	struct llentry *lle;
+	struct llentries *lleh;
+	u_int hashidx;
+
+	hashidx = in6_lltable_hash_dst(dst, llt->llt_hsize);
+	lleh = &llt->lle_head[hashidx];
+	LIST_FOREACH(lle, lleh, lle_next) {
+		if (lle->la_flags & LLE_DELETED)
+			continue;
+		if (IN6_ARE_ADDR_EQUAL(&lle->r_l3addr.addr6, dst))
+			break;
+	}
+
+	return lle;
+}
+
+static int
+in6_lltable_delete(struct lltable *llt, u_int flags,
+	const struct sockaddr *l3addr)
+{
+	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)l3addr;
+	struct llentry *lle;
+
+	IF_AFDATA_WLOCK_ASSERT(llt->llt_ifp);
+	KASSERTMSG(l3addr->sa_family == AF_INET6,
+	    "sin_family %d", l3addr->sa_family);
+
+	lle = in6_lltable_find_dst(llt, &sin6->sin6_addr);
+
+	if (lle == NULL)
+		return ENOENT;
+
+	if (!(lle->la_flags & LLE_IFADDR) || (flags & LLE_IFADDR)) {
+		LLE_WLOCK(lle);
+		lle->la_flags |= LLE_DELETED;
+#ifdef DIAGNOSTIC
+		log(LOG_INFO, "ifaddr cache = %p is deleted\n", lle);
+#endif
+		if ((lle->la_flags & (LLE_STATIC | LLE_IFADDR)) == LLE_STATIC)
+			llentry_free(lle);
+		else
+			LLE_WUNLOCK(lle);
+	}
+
+	return 0;
+}
+
+static struct llentry *
+in6_lltable_create(struct lltable *llt, u_int flags,
+	const struct sockaddr *l3addr)
+{
+	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)l3addr;
+	struct ifnet *ifp = llt->llt_ifp;
+	struct llentry *lle;
+
+	IF_AFDATA_WLOCK_ASSERT(ifp);
+	KASSERTMSG(l3addr->sa_family == AF_INET6,
+	    "sin_family %d", l3addr->sa_family);
+
+	lle = in6_lltable_find_dst(llt, &sin6->sin6_addr);
+
+	if (lle != NULL) {
+		LLE_WLOCK(lle);
+		return lle;
+	}
+
+	/*
+	 * A route that covers the given address must have
+	 * been installed 1st because we are doing a resolution,
+	 * verify this.
+	 */
+	if (!(flags & LLE_IFADDR) &&
+	    in6_lltable_rtcheck(ifp, flags, l3addr) != 0)
+		return NULL;
+
+	lle = in6_lltable_new(&sin6->sin6_addr, flags);
+	if (lle == NULL) {
+		log(LOG_INFO, "lla_lookup: new lle malloc failed\n");
+		return NULL;
+	}
+	lle->la_flags = flags;
+	if ((flags & LLE_IFADDR) == LLE_IFADDR) {
+		memcpy(&lle->ll_addr, CLLADDR(ifp->if_sadl), ifp->if_addrlen);
+		lle->la_flags |= (LLE_VALID | LLE_STATIC);
+	}
+
+	lltable_link_entry(llt, lle);
+	LLE_WLOCK(lle);
+
+	return lle;
+}
+
+static struct llentry *
+in6_lltable_lookup(struct lltable *llt, u_int flags,
+	const struct sockaddr *l3addr)
+{
+	const struct sockaddr_in6 *sin6 = (const struct sockaddr_in6 *)l3addr;
+	struct llentry *lle;
+
+	IF_AFDATA_LOCK_ASSERT(llt->llt_ifp);
+	KASSERTMSG(l3addr->sa_family == AF_INET6,
+	    "sin_family %d", l3addr->sa_family);
+
+	lle = in6_lltable_find_dst(llt, &sin6->sin6_addr);
+
+	if (lle == NULL)
+		return NULL;
+
+	if (flags & LLE_EXCLUSIVE)
+		LLE_WLOCK(lle);
+	else
+		LLE_RLOCK(lle);
+	return lle;
+}
+
+static struct lltable *
+in6_lltattach(struct ifnet *ifp)
+{
+	struct lltable *llt;
+
+	llt = lltable_allocate_htbl(IN6_LLTBL_DEFAULT_HSIZE);
+	llt->llt_af = AF_INET6;
+	llt->llt_ifp = ifp;
+
+	llt->llt_lookup = in6_lltable_lookup;
+	llt->llt_create = in6_lltable_create;
+	llt->llt_delete = in6_lltable_delete;
+#if notyet
+	llt->llt_dump_entry = in6_lltable_dump_entry;
+#endif
+	llt->llt_hash = in6_lltable_hash;
+	llt->llt_fill_sa_entry = in6_lltable_fill_sa_entry;
+	llt->llt_free_entry = in6_lltable_free_entry;
+	llt->llt_match_prefix = in6_lltable_match_prefix;
+	lltable_link(llt);
+
+	return llt;
+}
+
 void *
 in6_domifattach(struct ifnet *ifp)
 {
@@ -2213,6 +2532,9 @@ in6_domifattach(struct ifnet *ifp)
 	ext->scope6_id = scope6_ifattach(ifp);
 	ext->nprefixes = 0;
 	ext->ndefrouters = 0;
+
+	ext->lltable = in6_lltattach(ifp);
+
 	return ext;
 }
 
@@ -2221,6 +2543,8 @@ in6_domifdetach(struct ifnet *ifp, void *aux)
 {
 	struct in6_ifextra *ext = (struct in6_ifextra *)aux;
 
+	lltable_free(ext->lltable);
+	ext->lltable = NULL;
 	nd6_ifdetach(ifp, ext);
 	free(ext->in6_ifstat, M_IFADDR);
 	free(ext->icmp6_ifstat, M_IFADDR);

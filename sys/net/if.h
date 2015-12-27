@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.181.2.3 2015/09/22 12:06:10 skrll Exp $	*/
+/*	$NetBSD: if.h,v 1.181.2.4 2015/12/27 12:10:06 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -123,6 +123,7 @@
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
+#include "opt_gateway.h"
 #endif
 
 struct mbuf;
@@ -213,7 +214,11 @@ struct ifnet_lock;
 #include <sys/condvar.h>
 #include <sys/percpu.h>
 #include <sys/callout.h>
+#ifdef GATEWAY
+#include <sys/mutex.h>
+#else
 #include <sys/rwlock.h>
+#endif
 
 struct ifnet_lock {
 	kmutex_t il_lock;	/* Protects the critical section. */
@@ -347,7 +352,11 @@ typedef struct ifnet {
 #ifdef _KERNEL /* XXX kvm(3) */
 	struct callout *if_slowtimo_ch;
 #endif
+#ifdef GATEWAY
+	struct kmutex	*if_afdata_lock;
+#else
 	struct krwlock	*if_afdata_lock;
+#endif
 } ifnet_t;
 
 #define	if_mtu		if_data.ifi_mtu
@@ -437,6 +446,31 @@ typedef struct ifnet {
 	"\23TSO6"		\
 	"\24LRO"		\
 
+#ifdef GATEWAY
+#define	IF_AFDATA_LOCK_INIT(ifp)	\
+	do { \
+		(ifp)->if_afdata_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET); \
+	} while (0)
+
+#define	IF_AFDATA_WLOCK(ifp)	mutex_enter((ifp)->if_afdata_lock)
+#define	IF_AFDATA_RLOCK(ifp)	mutex_enter((ifp)->if_afdata_lock)
+#define	IF_AFDATA_WUNLOCK(ifp)	mutex_exit((ifp)->if_afdata_lock)
+#define	IF_AFDATA_RUNLOCK(ifp)	mutex_exit((ifp)->if_afdata_lock)
+#define	IF_AFDATA_LOCK(ifp)	IF_AFDATA_WLOCK(ifp)
+#define	IF_AFDATA_UNLOCK(ifp)	IF_AFDATA_WUNLOCK(ifp)
+#define	IF_AFDATA_TRYLOCK(ifp)	mutex_tryenter((ifp)->if_afdata_lock)
+#define	IF_AFDATA_DESTROY(ifp)	mutex_destroy((ifp)->if_afdata_lock)
+
+#define	IF_AFDATA_LOCK_ASSERT(ifp)	\
+	KASSERT(mutex_owned((ifp)->if_afdata_lock))
+#define	IF_AFDATA_RLOCK_ASSERT(ifp)	\
+	KASSERT(mutex_owned((ifp)->if_afdata_lock))
+#define	IF_AFDATA_WLOCK_ASSERT(ifp)	\
+	KASSERT(mutex_owned((ifp)->if_afdata_lock))
+#define	IF_AFDATA_UNLOCK_ASSERT(ifp)	\
+	KASSERT(!mutex_owned((ifp)->if_afdata_lock))
+
+#else /* GATEWAY */
 #define	IF_AFDATA_LOCK_INIT(ifp)	\
 	do {(ifp)->if_afdata_lock = rw_obj_alloc();} while (0)
 
@@ -456,8 +490,8 @@ typedef struct ifnet {
 #define	IF_AFDATA_WLOCK_ASSERT(ifp)	\
 	KASSERT(rw_write_held((ifp)->if_afdata_lock))
 #define	IF_AFDATA_UNLOCK_ASSERT(ifp)	\
-	KASSERT(!rw_lock_head((ifp)->if_afdata_lock))
-
+	KASSERT(!rw_lock_held((ifp)->if_afdata_lock))
+#endif /* GATEWAY */
 
 #define IFQ_LOCK(_ifq)		if ((_ifq)->ifq_lock) mutex_enter((_ifq)->ifq_lock)
 #define IFQ_UNLOCK(_ifq)	if ((_ifq)->ifq_lock) mutex_exit((_ifq)->ifq_lock)

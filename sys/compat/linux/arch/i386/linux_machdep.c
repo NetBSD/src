@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.159 2014/11/09 17:48:07 maxv Exp $	*/
+/*	$NetBSD: linux_machdep.c,v 1.159.2.1 2015/12/27 12:09:46 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1995, 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159 2014/11/09 17:48:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.159.2.1 2015/12/27 12:09:46 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vm86.h"
@@ -807,7 +807,7 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	struct biosdisk_info *bip;
 	file_t *fp;
 	int fd;
-	struct disklabel label, *labp;
+	struct disklabel label;
 	struct partinfo partp;
 	int (*ioctlf)(struct file *, u_long, void *);
 	u_long start, biostotal, realtotal;
@@ -935,28 +935,27 @@ linux_machdepioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 		 */
 		bip = fd2biosinfo(curproc, fp);
 		ioctlf = fp->f_ops->fo_ioctl;
-		error = ioctlf(fp, DIOCGDEFLABEL, (void *)&label);
-		error1 = ioctlf(fp, DIOCGPART, (void *)&partp);
+		error = ioctlf(fp, DIOCGDINFO, (void *)&label);
+		error1 = ioctlf(fp, DIOCGPARTINFO, (void *)&partp);
 		if (error != 0 && error1 != 0) {
 			error = error1;
 			goto out;
 		}
-		labp = error != 0 ? &label : partp.disklab;
-		start = error1 != 0 ? partp.part->p_offset : 0;
+		start = error1 != 0 ? partp.pi_offset : 0;
 		if (bip != NULL && bip->bi_head != 0 && bip->bi_sec != 0
 		    && bip->bi_cyl != 0) {
 			heads = bip->bi_head;
 			sectors = bip->bi_sec;
 			cylinders = bip->bi_cyl;
 			biostotal = heads * sectors * cylinders;
-			realtotal = labp->d_ntracks * labp->d_nsectors *
-			    labp->d_ncylinders;
+			realtotal = label.d_ntracks * label.d_nsectors *
+			    label.d_ncylinders;
 			if (realtotal > biostotal)
 				cylinders = realtotal / (heads * sectors);
 		} else {
-			heads = labp->d_ntracks;
-			cylinders = labp->d_ncylinders;
-			sectors = labp->d_nsectors;
+			heads = label.d_ntracks;
+			cylinders = label.d_ncylinders;
+			sectors = label.d_nsectors;
 		}
 		if (com == LINUX_HDIO_GETGEO) {
 			hdg.start = start;

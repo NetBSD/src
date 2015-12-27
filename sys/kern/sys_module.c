@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_module.c,v 1.17.4.1 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: sys_module.c,v 1.17.4.2 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.17.4.1 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_module.c,v 1.17.4.2 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -115,6 +115,73 @@ out1:
 	return error;
 }
 
+static int
+handle_modctl_stat(struct iovec *iov, void *arg)
+{
+	modstat_t *ms, *mso;
+	modinfo_t *mi;
+	module_t *mod;
+	vaddr_t addr;
+	size_t size;
+	size_t mslen;
+	int error;
+
+	kernconfig_lock();
+	mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
+	mso = kmem_zalloc(mslen, KM_SLEEP);
+	if (mso == NULL) {
+		kernconfig_unlock();
+		return ENOMEM;
+	}
+	ms = mso;
+	TAILQ_FOREACH(mod, &module_list, mod_chain) {
+		mi = mod->mod_info;
+		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		if (mi->mi_required != NULL) {
+			strlcpy(ms->ms_required, mi->mi_required,
+			    sizeof(ms->ms_required));
+		}
+		if (mod->mod_kobj != NULL) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			ms->ms_addr = addr;
+			ms->ms_size = size;
+		}
+		ms->ms_class = mi->mi_class;
+		ms->ms_refcnt = mod->mod_refcnt;
+		ms->ms_source = mod->mod_source;
+		ms->ms_flags = mod->mod_flags;
+		ms++;
+	}
+	TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
+		mi = mod->mod_info;
+		strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
+		if (mi->mi_required != NULL) {
+			strlcpy(ms->ms_required, mi->mi_required,
+			    sizeof(ms->ms_required));
+		}
+		if (mod->mod_kobj != NULL) {
+			kobj_stat(mod->mod_kobj, &addr, &size);
+			ms->ms_addr = addr;
+			ms->ms_size = size;
+		}
+		ms->ms_class = mi->mi_class;
+		ms->ms_refcnt = -1;
+		KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
+		ms->ms_source = mod->mod_source;
+		ms++;
+	}
+	kernconfig_unlock();
+	error = copyout(mso, iov->iov_base,
+	    min(mslen - sizeof(modstat_t), iov->iov_len));
+	kmem_free(mso, mslen);
+	if (error == 0) {
+		iov->iov_len = mslen - sizeof(modstat_t);
+		error = copyout(iov, arg, sizeof(*iov));
+	}
+
+	return error;
+}
+
 int
 sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 	   register_t *retval)
@@ -124,12 +191,6 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 		syscallarg(void *)	arg;
 	} */
 	char buf[MAXMODNAME];
-	size_t mslen;
-	module_t *mod;
-	modinfo_t *mi;
-	modstat_t *ms, *mso;
-	vaddr_t addr;
-	size_t size;
 	struct iovec iov;
 	modctl_load_t ml;
 	int error;
@@ -161,57 +222,7 @@ sys_modctl(struct lwp *l, const struct sys_modctl_args *uap,
 		if (error != 0) {
 			break;
 		}
-		kernconfig_lock();
-		mslen = (module_count+module_builtinlist+1) * sizeof(modstat_t);
-		mso = kmem_zalloc(mslen, KM_SLEEP);
-		if (mso == NULL) {
-			kernconfig_unlock();
-			return ENOMEM;
-		}
-		ms = mso;
-		TAILQ_FOREACH(mod, &module_list, mod_chain) {
-			mi = mod->mod_info;
-			strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
-			if (mi->mi_required != NULL) {
-				strlcpy(ms->ms_required, mi->mi_required,
-				    sizeof(ms->ms_required));
-			}
-			if (mod->mod_kobj != NULL) {
-				kobj_stat(mod->mod_kobj, &addr, &size);
-				ms->ms_addr = addr;
-				ms->ms_size = size;
-			}
-			ms->ms_class = mi->mi_class;
-			ms->ms_refcnt = mod->mod_refcnt;
-			ms->ms_source = mod->mod_source;
-			ms++;
-		}
-		TAILQ_FOREACH(mod, &module_builtins, mod_chain) {
-			mi = mod->mod_info;
-			strlcpy(ms->ms_name, mi->mi_name, sizeof(ms->ms_name));
-			if (mi->mi_required != NULL) {
-				strlcpy(ms->ms_required, mi->mi_required,
-				    sizeof(ms->ms_required));
-			}
-			if (mod->mod_kobj != NULL) {
-				kobj_stat(mod->mod_kobj, &addr, &size);
-				ms->ms_addr = addr;
-				ms->ms_size = size;
-			}
-			ms->ms_class = mi->mi_class;
-			ms->ms_refcnt = -1;
-			KASSERT(mod->mod_source == MODULE_SOURCE_KERNEL);
-			ms->ms_source = mod->mod_source;
-			ms++;
-		}
-		kernconfig_unlock();
-		error = copyout(mso, iov.iov_base,
-		    min(mslen - sizeof(modstat_t), iov.iov_len));
-		kmem_free(mso, mslen);
-		if (error == 0) {
-			iov.iov_len = mslen - sizeof(modstat_t);
-			error = copyout(&iov, arg, sizeof(iov));
-		}
+		error = handle_modctl_stat(&iov, arg);
 		break;
 
 	case MODCTL_EXISTS:

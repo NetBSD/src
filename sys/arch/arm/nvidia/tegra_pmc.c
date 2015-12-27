@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmc.c,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_pmc.c,v 1.2.2.4 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2.2.4 2015/12/27 12:09:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_pmc.c,v 1.2.2.3 2015/06/06 14:39:56 skrll Exp 
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_pmcreg.h>
 #include <arm/nvidia/tegra_var.h>
+
+#include <dev/fdt/fdtvar.h>
 
 static int	tegra_pmc_match(device_t, cfdata_t, void *);
 static void	tegra_pmc_attach(device_t, device_t, void *);
@@ -59,20 +59,33 @@ CFATTACH_DECL_NEW(tegra_pmc, sizeof(struct tegra_pmc_softc),
 static int
 tegra_pmc_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-pmc", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_pmc_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_pmc_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
 
 	KASSERT(pmc_softc == NULL);
 	pmc_softc = sc;
@@ -151,6 +164,15 @@ tegra_pmc_remove_clamping(u_int partid)
 	bus_space_handle_t bsh;
 
 	tegra_pmc_get_bs(&bst, &bsh);
+
+	if (tegra_chip_id() == CHIP_ID_TEGRA124) {
+		/*
+		 * On Tegra124 the GPU power clamping is controlled by a
+		 * separate register
+		 */
+		bus_space_write_4(bst, bsh, PMC_GPU_RG_CNTRL_REG, 0);
+		return;
+	}
 
 	bus_space_write_4(bst, bsh, PMC_REMOVE_CLAMPING_CMD_0_REG,
 	    __BIT(partid));

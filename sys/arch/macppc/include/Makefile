@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2014/07/23 18:19:44 alnsn Exp $
+#	$NetBSD: Makefile,v 1.21.4.1 2015/12/27 12:09:38 skrll Exp $
 
 INCSDIR= /usr/include/macppc
 
@@ -7,6 +7,7 @@ INCSDIR= /usr/include/macppc
 INCS=	adbsys.h apmvar.h autoconf.h \
 	disklabel.h \
 	grfioctl.h \
+	fenv.h \
 	intr.h \
 	keyboard.h \
 	sljit_machdep.h \

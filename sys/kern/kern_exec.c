@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.410.2.2 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.410.2.3 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.2 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.410.2.3 2015/12/27 12:10:05 skrll Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -148,18 +148,10 @@ static void dump_vmcmds(const struct exec_package * const, size_t, int);
 /*
  * DTrace SDT provider definitions
  */
-SDT_PROBE_DEFINE(proc,,,exec,exec,
-	    "char *", NULL,
-	    NULL, NULL, NULL, NULL,
-	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,exec_success,exec-success,
-	    "char *", NULL,
-	    NULL, NULL, NULL, NULL,
-	    NULL, NULL, NULL, NULL);
-SDT_PROBE_DEFINE(proc,,,exec_failure,exec-failure,
-	    "int", NULL,
-	    NULL, NULL, NULL, NULL,
-	    NULL, NULL, NULL, NULL);
+SDT_PROVIDER_DECLARE(proc);
+SDT_PROBE_DEFINE1(proc, kernel, , exec, "char *");
+SDT_PROBE_DEFINE1(proc, kernel, , exec__success, "char *");
+SDT_PROBE_DEFINE1(proc, kernel, , exec__failure, "int");
 
 /*
  * Exec function switch:
@@ -189,6 +181,11 @@ struct exec_entry {
 void	syscall(void);
 #endif
 
+/* NetBSD autoloadable syscalls */
+#ifdef MODULAR
+#include <kern/syscalls_autoload.c>
+#endif
+
 /* NetBSD emul struct */
 struct emul emul_netbsd = {
 	.e_name =		"netbsd",
@@ -202,6 +199,9 @@ struct emul emul_netbsd = {
 	.e_errno =		NULL,
 	.e_nosys =		SYS_syscall,
 	.e_nsysent =		SYS_NSYSENT,
+#endif
+#ifdef MODULAR
+	.e_sc_autoload =	netbsd_syscalls_autoload,
 #endif
 	.e_sysent =		sysent,
 #ifdef SYSCALL_DEBUG
@@ -458,6 +458,11 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			return 0;
 		}
 
+		/*
+		 * Reset all the fields that may have been modified by the
+		 * loader.
+		 */
+		KASSERT(epp->ep_emul_arg == NULL);
 		if (epp->ep_emul_root != NULL) {
 			vrele(epp->ep_emul_root);
 			epp->ep_emul_root = NULL;
@@ -466,6 +471,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb)
 			vrele(epp->ep_interp);
 			epp->ep_interp = NULL;
 		}
+		epp->ep_pax_flags = 0;
 
 		/* make sure the first "interesting" error code is saved. */
 		if (error == ENOEXEC)
@@ -660,7 +666,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	p = l->l_proc;
 	modgen = 0;
 
-	SDT_PROBE(proc,,,exec, path, 0, 0, 0, 0);
+	SDT_PROBE(proc, kernel, , exec, path, 0, 0, 0, 0);
 
 	/*
 	 * Check if we have exceeded our number of processes limit.
@@ -753,9 +759,9 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 	 */
 
 #ifdef PAX_ASLR
-#define	ASLR_GAP(l)	(pax_aslr_active(l) ? (cprng_fast32() % PAGE_SIZE) : 0)
+#define	ASLR_GAP(epp)	(pax_aslr_epp_active(epp) ? (cprng_fast32() % PAGE_SIZE) : 0)
 #else
-#define	ASLR_GAP(l)	0
+#define	ASLR_GAP(epp)	0
 #endif
 
 #ifdef __MACHINE_STACK_GROWS_UP
@@ -773,7 +779,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 
 	data->ed_argslen = calcargs(data, argenvstrlen);
 
-	const size_t len = calcstack(data, ASLR_GAP(l) + RTLD_GAP);
+	const size_t len = calcstack(data, ASLR_GAP(epp) + RTLD_GAP);
 
 	if (len > epp->ep_ssize) {
 		/* in effect, compare to initial limit */
@@ -822,7 +828,7 @@ execve_loadvm(struct lwp *l, const char *path, char * const *args,
 		goto retry;
 	}
 
-	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
+	SDT_PROBE(proc, kernel, , exec__failure, error, 0, 0, 0, 0);
 	return error;
 }
 
@@ -1125,6 +1131,9 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	/* Remove POSIX timers */
 	timers_free(p, TIMERS_POSIX);
 
+	/* Set the PaX flags. */
+	p->p_pax = epp->ep_pax_flags;
+
 	/*
 	 * Do whatever is necessary to prepare the address space
 	 * for remapping.  Note that this might replace the current
@@ -1262,7 +1271,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
 
-	SDT_PROBE(proc,,,exec_success, epp->ep_kname, 0, 0, 0, 0);
+	SDT_PROBE(proc, kernel, , exec__success, epp->ep_kname, 0, 0, 0, 0);
 
 	emulexec(l, epp);
 
@@ -1287,7 +1296,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 
 		KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 		p->p_pptr->p_nstopchild++;
-		p->p_pptr->p_waited = 0;
+		p->p_waited = 0;
 		mutex_enter(p->p_lock);
 		ksiginfo_queue_init(&kq);
 		sigclearall(p, &contsigmask, &kq);
@@ -1313,7 +1322,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	return EJUSTRETURN;
 
  exec_abort:
-	SDT_PROBE(proc,,,exec_failure, error, 0, 0, 0, 0);
+	SDT_PROBE(proc, kernel, , exec__failure, error, 0, 0, 0, 0);
 	rw_exit(&p->p_reflock);
 	if (!no_local_exec_lock)
 		rw_exit(&exec_lock);
@@ -1918,7 +1927,7 @@ exec_sigcode_map(struct proc *p, const struct emul *e)
 
 	/* Just a hint to uvm_map where to put it. */
 	va = e->e_vm_default_addr(p, (vaddr_t)p->p_vmspace->vm_daddr,
-	    round_page(sz));
+	    round_page(sz), p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 
 #ifdef __alpha__
 	/*
@@ -1988,6 +1997,7 @@ spawn_return(void *arg)
 	struct spawn_exec_data *spawn_data = arg;
 	struct lwp *l = curlwp;
 	int error, newfd;
+	int ostat;
 	size_t i;
 	const struct posix_spawn_file_actions_entry *fae;
 	pid_t ppid;
@@ -2060,7 +2070,6 @@ spawn_return(void *arg)
 
 	/* handle posix_spawnattr */
 	if (spawn_data->sed_attrs != NULL) {
-		int ostat;
 		struct sigaction sigact;
 		sigact._sa_u._sa_handler = SIG_DFL;
 		sigact.sa_flags = 0;
@@ -2069,8 +2078,18 @@ spawn_return(void *arg)
 		 * set state to SSTOP so that this proc can be found by pid.
 		 * see proc_enterprp, do_sched_setparam below
 		 */
+		mutex_enter(proc_lock);
+		/*
+		 * p_stat should be SACTIVE, so we need to adjust the
+		 * parent's p_nstopchild here.  For safety, just make
+		 * we're on the good side of SDEAD before we adjust.
+		 */
 		ostat = l->l_proc->p_stat;
+		KASSERT(ostat < SSTOP);
 		l->l_proc->p_stat = SSTOP;
+		l->l_proc->p_waited = 0;
+		l->l_proc->p_pptr->p_nstopchild++;
+		mutex_exit(proc_lock);
 
 		/* Set process group */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETPGROUP) {
@@ -2083,7 +2102,7 @@ spawn_return(void *arg)
 			error = proc_enterpgrp(spawn_data->sed_parent,
 			    mypid, pgrp, false);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 		}
 
 		/* Set scheduler policy */
@@ -2097,7 +2116,7 @@ spawn_return(void *arg)
 			    SCHED_NONE, &spawn_data->sed_attrs->sa_schedparam);
 		}
 		if (error)
-			goto report_error;
+			goto report_error_stopped;
 
 		/* Reset user ID's */
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_RESETIDS) {
@@ -2105,12 +2124,12 @@ spawn_return(void *arg)
 			     kauth_cred_getgid(l->l_cred), -1,
 			     ID_E_EQ_R | ID_E_EQ_S);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 			error = do_setresuid(l, -1,
 			    kauth_cred_getuid(l->l_cred), -1,
 			    ID_E_EQ_R | ID_E_EQ_S);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 		}
 
 		/* Set signal masks/defaults */
@@ -2120,7 +2139,7 @@ spawn_return(void *arg)
 			    &spawn_data->sed_attrs->sa_sigmask, NULL);
 			mutex_exit(l->l_proc->p_lock);
 			if (error)
-				goto report_error;
+				goto report_error_stopped;
 		}
 
 		if (spawn_data->sed_attrs->sa_flags & POSIX_SPAWN_SETSIGDEF) {
@@ -2141,7 +2160,10 @@ spawn_return(void *arg)
 					    0);
 			}
 		}
+		mutex_enter(proc_lock);
 		l->l_proc->p_stat = ostat;
+		l->l_proc->p_pptr->p_nstopchild--;
+		mutex_exit(proc_lock);
 	}
 
 	/* now do the real exec */
@@ -2168,6 +2190,11 @@ spawn_return(void *arg)
 	/* NOTREACHED */
 	return;
 
+ report_error_stopped:
+	mutex_enter(proc_lock);
+	l->l_proc->p_stat = ostat;
+	l->l_proc->p_pptr->p_nstopchild--;
+	mutex_exit(proc_lock);
  report_error:
 	if (have_reflock) {
 		/*

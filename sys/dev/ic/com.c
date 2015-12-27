@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.329.2.2 2015/06/06 14:40:07 skrll Exp $ */
+/* $NetBSD: com.c,v 1.329.2.3 2015/12/27 12:09:49 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.2 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.329.2.3 2015/12/27 12:09:49 skrll Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -377,7 +377,7 @@ com_enable_debugport(struct com_softc *sc)
 {
 
 	/* Turn on line break interrupt, set carrier. */
-	sc->sc_ier = IER_ERXRDY;
+	sc->sc_ier = IER_ERLS;
 	if (sc->sc_type == COM_TYPE_PXA2x0)
 		sc->sc_ier |= IER_EUART | IER_ERXTOUT;
 	if (sc->sc_type == COM_TYPE_INGENIC ||
@@ -466,6 +466,14 @@ com_attach_subr(struct com_softc *sc)
 		fifo_msg = "Ingenic UART, working fifo";
 		SET(sc->sc_hwflags, COM_HW_FIFO);
 		SET(sc->sc_hwflags, COM_HW_NOIEN);
+		goto fifodelay;
+
+	case COM_TYPE_TEGRA:
+		sc->sc_fifolen = 8;
+		fifo_msg = "Tegra UART, working fifo";
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		CSR_WRITE_1(regsp, COM_REG_FIFO,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 		goto fifodelay;
 	}
 
@@ -812,7 +820,7 @@ com_shutdown(struct com_softc *sc)
 
 	/* Turn off interrupts. */
 	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
-		sc->sc_ier = IER_ERXRDY; /* interrupt on break */
+		sc->sc_ier = IER_ERLS; /* interrupt on line break */
 		if ((sc->sc_type == COM_TYPE_PXA2x0) ||
 		    (sc->sc_type == COM_TYPE_INGENIC) ||
 		    (sc->sc_type == COM_TYPE_TEGRA))
@@ -1468,17 +1476,20 @@ comparam(struct tty *tp, struct termios *t)
 	 *    overflows.
 	 *  * Otherwise set it a bit higher.
 	 */
-	if (sc->sc_type == COM_TYPE_HAYESP)
+	if (sc->sc_type == COM_TYPE_HAYESP) {
 		sc->sc_fifo = FIFO_DMA_MODE | FIFO_ENABLE | FIFO_TRIGGER_8;
-	else if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+	} else if (sc->sc_type == COM_TYPE_TEGRA) {
+		sc->sc_fifo = FIFO_ENABLE | FIFO_TRIGGER_1;
+	} else if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
 		if (t->c_ospeed <= 1200)
 			sc->sc_fifo = FIFO_ENABLE | FIFO_TRIGGER_1;
 		else if (t->c_ospeed <= 38400)
 			sc->sc_fifo = FIFO_ENABLE | FIFO_TRIGGER_8;
 		else
 			sc->sc_fifo = FIFO_ENABLE | FIFO_TRIGGER_4;
-	} else
+	} else {
 		sc->sc_fifo = 0;
+	}
 
 	if (sc->sc_type == COM_TYPE_INGENIC)
 		sc->sc_fifo |= FIFO_UART_ON;

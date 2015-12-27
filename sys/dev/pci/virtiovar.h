@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.3.4.1 2015/04/06 15:18:12 skrll Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.3.4.2 2015/12/27 12:09:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -125,7 +125,9 @@ struct virtio_softc {
 	bus_dma_tag_t		sc_dmat;
 
 	int			sc_ipl; /* set by child */
-	void			*sc_ih;
+	pci_intr_handle_t	*sc_ihp;
+	void			**sc_ihs;
+	int			sc_ihs_num;
 	void			*sc_soft_ih;
 
 	int			sc_flags; /* set by child */
@@ -151,6 +153,7 @@ struct virtio_softc {
 
 #define VIRTIO_F_PCI_INTR_MPSAFE	(1 << 0)
 #define VIRTIO_F_PCI_INTR_SOFTINT	(1 << 1)
+#define VIRTIO_F_PCI_INTR_MSIX		(1 << 2)
 
 /* public interface */
 uint32_t virtio_negotiate_features(struct virtio_softc*, uint32_t);

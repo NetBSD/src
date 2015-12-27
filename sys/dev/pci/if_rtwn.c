@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.1.2.2 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.1.2.3 2015/12/27 12:09:50 skrll Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.1.2.2 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.1.2.3 2015/12/27 12:09:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -213,9 +213,6 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp = GET_IFP(sc);
 	int i, error;
 	pcireg_t memtype;
-#ifndef __HAVE_PCI_MSI_MSIX
-	pci_intr_handle_t ih;
-#endif
 	const char *intrstr;
 	char intrbuf[PCI_INTRSTR_LEN];
 
@@ -246,7 +243,6 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Install interrupt handler. */
-#ifdef __HAVE_PCI_MSI_MSIX
 	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "can't map interrupt\n");
 		return;
@@ -255,14 +251,6 @@ rtwn_attach(device_t parent, device_t self, void *aux)
 	    sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pc, sc->sc_pihp[0], IPL_NET,
 	    rtwn_intr, sc);
-#else	/* !__HAVE_PCI_MSI_MSIX */
-	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(self, "can't map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pc, ih, IPL_NET, rtwn_intr, sc);
-#endif	/* __HAVE_PCI_MSI_MSIX */
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)
@@ -436,9 +424,7 @@ rtwn_detach(device_t self, int flags)
 
 	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-#ifdef __HAVE_PCI_MSI_MSIX
 		pci_intr_release(sc->sc_pc, sc->sc_pihp, 1);
-#endif
 	}
 
 	pmf_device_deregister(self);

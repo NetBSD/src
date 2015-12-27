@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.11.2.2 2015/09/22 12:06:05 skrll Exp $	*/
+/*	$NetBSD: pci.h,v 1.11.2.3 2015/12/27 12:10:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -54,8 +54,12 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/agpvar.h>
 
+#if NACPICA > 0
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
+#else
+struct acpi_devnode;
+#endif
 
 #include <linux/dma-mapping.h>
 #include <linux/ioport.h>
@@ -142,7 +146,6 @@ struct pci_dev {
 	}			pd_resources[PCI_NUM_RESOURCES];
 	struct pci_conf_state	*pd_saved_state;
 	struct acpi_devnode	*pd_ad;
-	struct device		dev;		/* XXX Don't believe me!  */
 	struct pci_bus		*bus;
 	uint32_t		devfn;
 	uint16_t		vendor;
@@ -158,14 +161,6 @@ static inline device_t
 pci_dev_dev(struct pci_dev *pdev)
 {
 	return pdev->pd_dev;
-}
-
-/* XXX Nouveau kludge!  Don't believe me!  */
-static inline struct pci_dev *
-to_pci_dev(struct device *dev)
-{
-
-	return container_of(dev, struct pci_dev, dev);
 }
 
 /* XXX Nouveau kludge!  */

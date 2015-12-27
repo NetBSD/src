@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.2.2.3 2015/09/22 12:05:57 skrll Exp $ */
+/* $NetBSD: hdafg.c,v 1.2.2.4 2015/12/27 12:09:49 skrll Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.2.2.3 2015/09/22 12:05:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.2.2.4 2015/12/27 12:09:49 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -90,7 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.2.2.3 2015/09/22 12:05:57 skrll Exp $");
 #include "hdmireg.h"
 
 #ifndef AUFMT_SURROUND_7_1
-#define	AUFMT_SURROUND_7_1 (AUFMT_DOLBY_5_1|AUFMT_SIDE_LEFT|AUFMT_SIDE_RIGHT)
+#define AUFMT_SURROUND_7_1 (AUFMT_DOLBY_5_1|AUFMT_SIDE_LEFT|AUFMT_SIDE_RIGHT)
 #endif
 
 #if defined(HDAFG_DEBUG)
@@ -99,24 +99,24 @@ static int hdafg_debug = HDAFG_DEBUG;
 static int hdafg_debug = 0;
 #endif
 
-#define	hda_debug(sc, ...)		\
+#define hda_debug(sc, ...)		\
 	if (hdafg_debug) hda_print(sc, __VA_ARGS__)
-#define	hda_debug1(sc, ...)		\
+#define hda_debug1(sc, ...)		\
 	if (hdafg_debug) hda_print1(sc, __VA_ARGS__)
 
 #define HDAUDIO_MIXER_CLASS_OUTPUTS	0
-#define	HDAUDIO_MIXER_CLASS_INPUTS	1
-#define	HDAUDIO_MIXER_CLASS_RECORD	2
-#define	HDAUDIO_MIXER_CLASS_LAST	HDAUDIO_MIXER_CLASS_RECORD
+#define HDAUDIO_MIXER_CLASS_INPUTS	1
+#define HDAUDIO_MIXER_CLASS_RECORD	2
+#define HDAUDIO_MIXER_CLASS_LAST	HDAUDIO_MIXER_CLASS_RECORD
 
-#define	HDAUDIO_GPIO_MASK	0
-#define	HDAUDIO_GPIO_DIR	1
-#define	HDAUDIO_GPIO_DATA	2
+#define HDAUDIO_GPIO_MASK	0
+#define HDAUDIO_GPIO_DIR	1
+#define HDAUDIO_GPIO_DATA	2
 
-#define	HDAUDIO_UNSOLTAG_EVENT_HP	0x01
-#define	HDAUDIO_UNSOLTAG_EVENT_DD	0x02
+#define HDAUDIO_UNSOLTAG_EVENT_HP	0x01
+#define HDAUDIO_UNSOLTAG_EVENT_DD	0x02
 
-#define	HDAUDIO_HP_SENSE_PERIOD		hz
+#define HDAUDIO_HP_SENSE_PERIOD		hz
 
 const u_int hdafg_possible_rates[] = {
 	8000, 11025, 16000, 22050, 32000, 44100,
@@ -168,21 +168,21 @@ static const char *hdafg_color[] = {
 	"Other"
 };
 
-#define	HDAUDIO_MAXFORMATS	24
-#define	HDAUDIO_MAXCONNECTIONS	32
-#define	HDAUDIO_MAXPINS		16
-#define	HDAUDIO_PARSE_MAXDEPTH	10
+#define HDAUDIO_MAXFORMATS	24
+#define HDAUDIO_MAXCONNECTIONS	32
+#define HDAUDIO_MAXPINS		16
+#define HDAUDIO_PARSE_MAXDEPTH	10
 
-#define	HDAUDIO_AMP_VOL_DEFAULT	(-1)
-#define	HDAUDIO_AMP_MUTE_DEFAULT (0xffffffff)
-#define	HDAUDIO_AMP_MUTE_NONE	0
-#define	HDAUDIO_AMP_MUTE_LEFT	(1 << 0)
-#define	HDAUDIO_AMP_MUTE_RIGHT	(1 << 1)
-#define	HDAUDIO_AMP_MUTE_ALL	(HDAUDIO_AMP_MUTE_LEFT | HDAUDIO_AMP_MUTE_RIGHT)
-#define	HDAUDIO_AMP_LEFT_MUTED(x)	((x) & HDAUDIO_AMP_MUTE_LEFT)
-#define	HDAUDIO_AMP_RIGHT_MUTED(x)	(((x) & HDAUDIO_AMP_MUTE_RIGHT) >> 1)
+#define HDAUDIO_AMP_VOL_DEFAULT (-1)
+#define HDAUDIO_AMP_MUTE_DEFAULT (0xffffffff)
+#define HDAUDIO_AMP_MUTE_NONE	0
+#define HDAUDIO_AMP_MUTE_LEFT	(1 << 0)
+#define HDAUDIO_AMP_MUTE_RIGHT	(1 << 1)
+#define HDAUDIO_AMP_MUTE_ALL	(HDAUDIO_AMP_MUTE_LEFT | HDAUDIO_AMP_MUTE_RIGHT)
+#define HDAUDIO_AMP_LEFT_MUTED(x)	((x) & HDAUDIO_AMP_MUTE_LEFT)
+#define HDAUDIO_AMP_RIGHT_MUTED(x)	(((x) & HDAUDIO_AMP_MUTE_RIGHT) >> 1)
 
-#define	HDAUDIO_ADC_MONITOR	1
+#define HDAUDIO_ADC_MONITOR	1
 
 enum hdaudio_pindir {
 	HDAUDIO_PINDIR_NONE = 0,
@@ -191,10 +191,10 @@ enum hdaudio_pindir {
 	HDAUDIO_PINDIR_INOUT = 3,
 };
 
-#define	hda_get_param(sc, cop)					\
+#define hda_get_param(sc, cop)					\
 	hdaudio_command((sc)->sc_codec, (sc)->sc_nid,		\
 	  CORB_GET_PARAMETER, COP_##cop)
-#define	hda_get_wparam(w, cop)					\
+#define hda_get_wparam(w, cop)					\
 	hdaudio_command((w)->w_afg->sc_codec, (w)->w_nid,	\
 	  CORB_GET_PARAMETER, COP_##cop)
 
@@ -206,10 +206,10 @@ struct hdaudio_assoc {
 	u_char			as_pincnt;
 	u_char			as_fakeredir;
 	int			as_digital;
-#define	HDAFG_AS_ANALOG		0
-#define	HDAFG_AS_SPDIF		1
-#define	HDAFG_AS_HDMI		2
-#define	HDAFG_AS_DISPLAYPORT	3
+#define HDAFG_AS_ANALOG		0
+#define HDAFG_AS_SPDIF		1
+#define HDAFG_AS_HDMI		2
+#define HDAFG_AS_DISPLAYPORT	3
 	bool			as_displaydev;
 	int			as_hpredir;
 	int			as_pins[HDAUDIO_MAXPINS];
@@ -261,7 +261,7 @@ struct hdaudio_control {
 	uint32_t		ctl_audiomask, ctl_paudiomask;
 };
 
-#define	HDAUDIO_CONTROL_GIVE(ctl)	((ctl)->ctl_step ? 1 : 0)
+#define HDAUDIO_CONTROL_GIVE(ctl)	((ctl)->ctl_step ? 1 : 0)
 
 struct hdaudio_mixer {
 	struct hdaudio_control		*mx_ctl;
@@ -329,6 +329,7 @@ struct hdafg_softc {
 	struct hdaudio_audiodev		sc_audiodev;
 
 	uint16_t			sc_fixed_rate;
+	bool				sc_disable_dip;
 };
 
 static int	hdafg_match(device_t, cfdata_t, void *);
@@ -483,11 +484,11 @@ hdafg_widget_connection_parse(struct hdaudio_widget *w)
 	maxconns = (sizeof(w->w_conns) / sizeof(w->w_conns[0])) - 1;
 	prevcnid = 0;
 
-#define	CONN_RMASK(e)		(1 << ((32 / (e)) - 1))
-#define	CONN_NMASK(e)		(CONN_RMASK(e) - 1)
-#define	CONN_RESVAL(r, e, n)	((r) >> ((32 / (e)) * (n)))
-#define	CONN_RANGE(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_RMASK(e))
-#define	CONN_CNID(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_NMASK(e))
+#define CONN_RMASK(e)		(1 << ((32 / (e)) - 1))
+#define CONN_NMASK(e)		(CONN_RMASK(e) - 1)
+#define CONN_RESVAL(r, e, n)	((r) >> ((32 / (e)) * (n)))
+#define CONN_RANGE(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_RMASK(e))
+#define CONN_CNID(r, e, n)	(CONN_RESVAL(r, e, n) & CONN_NMASK(e))
 
 	for (i = 0; i < ents; i += entnum) {
 		res = hdaudio_command(sc->sc_codec, w->w_nid,
@@ -1430,7 +1431,7 @@ hdafg_disable_nonaudio(struct hdafg_softc *sc)
 		    w->w_type == COP_AWCAP_TYPE_VOLUME_KNOB) {
 			hda_trace(w->w_afg, "disable %02X [nonaudio]\n",
 			    w->w_nid);
-		    	w->w_enable = false;
+			w->w_enable = false;
 		}
 	}
 }
@@ -1917,8 +1918,8 @@ retry:
 		res = hdafg_assoc_trace_out(sc, j, 0);
 		if (res == 0 && as[j].as_hpredir >= 0 &&
 		    as[j].as_fakeredir == 0) {
-		    	/*
-		    	 * If codec can't do analog HP redirection
+			/*
+			 * If codec can't do analog HP redirection
 			 * try to make it using one more DAC
 			 */
 			as[j].as_fakeredir = 1;
@@ -2049,32 +2050,36 @@ hdafg_prepare_pin_controls(struct hdafg_softc *sc)
 	}
 }
 
+#if defined(HDAFG_DEBUG) && HDAFG_DEBUG > 1
 static void
-hdafg_dump(struct hdafg_softc *sc)
+hdafg_dump_ctl(const struct hdafg_softc *sc, const struct hdaudio_control *ctl)
+{
+	int type = ctl->ctl_widget ? ctl->ctl_widget->w_type : -1;
+	int i = (int)(ctl - sc->sc_ctls);
+
+	hda_print(sc, "%03X: nid %02X type %d %s (%s) index %d",
+	    i, (ctl->ctl_widget ? ctl->ctl_widget->w_nid : -1), type,
+	    ctl->ctl_ndir == HDAUDIO_PINDIR_IN ? "in " : "out",
+	    ctl->ctl_dir == HDAUDIO_PINDIR_IN ? "in " : "out",
+	    ctl->ctl_index);
+
+	if (ctl->ctl_childwidget)
+		hda_print1(sc, " cnid %02X", ctl->ctl_childwidget->w_nid);
+	else
+		hda_print1(sc, "          ");
+	hda_print1(sc, "\n");
+	hda_print(sc, "     mute: %d step: %3d size: %3d off: %3d%s\n",
+	    ctl->ctl_mute, ctl->ctl_step, ctl->ctl_size,
+	    ctl->ctl_offset, ctl->ctl_enable == false ? " [DISABLED]" : "");
+}
+#endif
+
+static void
+hdafg_dump(const struct hdafg_softc *sc)
 {
 #if defined(HDAFG_DEBUG) && HDAFG_DEBUG > 1
-	struct hdaudio_control *ctl;
-	int i, type;
-
-	for (i = 0; i < sc->sc_nctls; i++) {
-		ctl = &sc->sc_ctls[i];
-		type = (ctl->ctl_widget ? ctl->ctl_widget->w_type : -1);
-		hda_print(sc, "%03X: nid %02X type %d %s (%s) index %d",
-		    i, (ctl->ctl_widget ? ctl->ctl_widget->w_nid : -1), type,
-		    (ctl->ctl_ndir == HDAUDIO_PINDIR_IN) ? "in " : "out",
-		    (ctl->ctl_dir == HDAUDIO_PINDIR_IN) ? "in " : "out",
-		    ctl->ctl_index);
-		if (ctl->ctl_childwidget)
-			hda_print1(sc, " cnid %02X",
-			    ctl->ctl_childwidget->w_nid);
-		else
-			hda_print1(sc, "          ");
-		hda_print1(sc, "\n");
-		hda_print(sc, "     mute: %d step: %3d size: %3d off: %3d%s\n",
-		    ctl->ctl_mute, ctl->ctl_step, ctl->ctl_size,
-		    ctl->ctl_offset,
-		    (ctl->ctl_enable == false) ? " [DISABLED]" : "");
-	}
+	for (int i = 0; i < sc->sc_nctls; i++)
+		hdafg_dump_ctl(sc, &sc->sc_ctls[i]);
 #endif
 }
 
@@ -2262,7 +2267,7 @@ hdafg_disable_crossassoc(struct hdafg_softc *sc)
 			if (ctl->ctl_ndir == HDAUDIO_PINDIR_IN) {
 				hda_trace(sc, "disable ctl %d:%02X:%02X "
 				    "[crossassoc]\n",
-			    	    i, ctl->ctl_widget->w_nid,
+				    i, ctl->ctl_widget->w_nid,
 				    ctl->ctl_widget->w_conns[ctl->ctl_index]);
 				ctl->ctl_widget->w_connsenable[
 				    ctl->ctl_index] = false;
@@ -2352,6 +2357,47 @@ hdafg_control_amp_set(struct hdaudio_control *ctl, uint32_t mute,
 		hdafg_control_amp_set1(ctl, lmute, rmute, left, right, 1);
 }
 
+/*
+ * Muting the input pins directly does not work, we mute the mixers which
+ * are parents to them
+ */
+static bool
+hdafg_mixer_child_is_input(const struct hdafg_softc *sc,
+    const struct hdaudio_control *ctl)
+{
+	const struct hdaudio_widget *w;
+	const struct hdaudio_assoc *as = sc->sc_assocs;
+
+	switch (ctl->ctl_widget->w_type) {
+	case COP_AWCAP_TYPE_AUDIO_INPUT:
+		return true;
+
+	case COP_AWCAP_TYPE_AUDIO_MIXER:
+		w = ctl->ctl_childwidget;
+		if (w == NULL)
+			return false;
+
+		if (w->w_type != COP_AWCAP_TYPE_PIN_COMPLEX)
+			return false;
+
+		if (as[w->w_bindas].as_dir == HDAUDIO_PINDIR_OUT)
+			return false;
+
+		switch (COP_CFG_DEFAULT_DEVICE(w->w_pin.config)) {
+		case COP_DEVICE_MIC_IN:
+		case COP_DEVICE_LINE_IN:
+		case COP_DEVICE_SPDIF_IN:
+		case COP_DEVICE_DIGITAL_OTHER_IN:
+			return true;
+		default:
+			return false;
+		}
+
+	default:
+		return false;
+	}
+}
+
 static void
 hdafg_control_commit(struct hdafg_softc *sc)
 {
@@ -2367,7 +2413,11 @@ hdafg_control_commit(struct hdafg_softc *sc)
 		z = ctl->ctl_offset;
 		if (z > ctl->ctl_step)
 			z = ctl->ctl_step;
-		hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE, z, z);
+
+		if (hdafg_mixer_child_is_input(sc, ctl))
+			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_ALL, z, z);
+		else
+			hdafg_control_amp_set(ctl, HDAUDIO_AMP_MUTE_NONE, z, z);
 	}
 }
 
@@ -3063,6 +3113,9 @@ hdafg_stream_connect_hdmi(struct hdafg_softc *sc, struct hdaudio_assoc *as,
 	hdaudio_command(sc->sc_codec, w->w_nid,
 	    CORB_SET_HDMI_DIP_XMIT_CTRL, COP_DIP_XMIT_CTRL_DISABLE);
 
+	if (sc->sc_disable_dip)
+		return;
+
 	/* build new infoframe */
 	if (as->as_digital == HDAFG_AS_HDMI) {
 		dip = (uint8_t *)&hdmi;
@@ -3252,7 +3305,7 @@ hdafg_rate_supported(struct hdafg_softc *sc, u_int frequency)
 	if (sc->sc_fixed_rate)
 		return frequency == sc->sc_fixed_rate;
 
-#define ISFREQOK(shift)	((caps & (1 << (shift))) ? true : false)
+#define ISFREQOK(shift) ((caps & (1 << (shift))) ? true : false)
 	switch (frequency) {
 	case 8000:
 		return ISFREQOK(0);
@@ -3289,7 +3342,7 @@ static bool
 hdafg_bits_supported(struct hdafg_softc *sc, u_int bits)
 {
 	uint32_t caps = sc->sc_p.pcm_size_rate;
-#define ISBITSOK(shift)	((caps & (1 << (shift))) ? true : false)
+#define ISBITSOK(shift) ((caps & (1 << (shift))) ? true : false)
 	switch (bits) {
 	case 8:
 		return ISBITSOK(16);
@@ -3647,6 +3700,7 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 		switch (sc->sc_product) {
 		case HDAUDIO_PRODUCT_NVIDIA_TEGRA124_HDMI:
 			sc->sc_fixed_rate = 44100;
+			sc->sc_disable_dip = true;
 			break;
 		}
 		break;
@@ -4397,13 +4451,13 @@ hdafg_modcmd(modcmd_t cmd, void *opaque)
 	}
 }
 
-#define HDAFG_GET_ANACTRL 		0xfe0
-#define HDAFG_SET_ANACTRL 		0x7e0
+#define HDAFG_GET_ANACTRL		0xfe0
+#define HDAFG_SET_ANACTRL		0x7e0
 #define HDAFG_ANALOG_BEEP_EN		__BIT(5)
-#define HDAFG_ALC231_MONO_OUT_MIXER 	0xf
+#define HDAFG_ALC231_MONO_OUT_MIXER	0xf
 #define HDAFG_STAC9200_AFG		0x1
 #define HDAFG_STAC9200_GET_ANACTRL_PAYLOAD	0x0
-#define HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE	0x7100
+#define HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE 0x7100
 
 static void
 hdafg_enable_analog_beep(struct hdafg_softc *sc)
@@ -4447,7 +4501,7 @@ hdafg_enable_analog_beep(struct hdafg_softc *sc)
 			 * ALC231 that identifies as an ALC269.
 			 * This unmutes the PCBEEP on the speaker.
 			 */
- 			nid = HDAFG_ALC231_MONO_OUT_MIXER;
+			nid = HDAFG_ALC231_MONO_OUT_MIXER;
 			response = hdaudio_command(sc->sc_codec, nid,
 			    CORB_SET_AMPLIFIER_GAIN_MUTE,
 			    HDAFG_ALC231_INPUT_BOTH_CHANNELS_UNMUTE);

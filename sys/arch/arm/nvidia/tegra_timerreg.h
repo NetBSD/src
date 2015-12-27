@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_timerreg.h,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_timerreg.h,v 1.1.2.3 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -33,6 +33,9 @@
 #define TMR1_PCR_REG		0x04
 #define TMR2_PTV_REG		0x08
 #define TMR2_PCR_REG		0x0c
+#define TMRUS_CNTR_1US_REG	0x10
+#define TMRUS_USEC_CFG_REG	0x14
+#define TMRUS_CNTR_FREEZE_REG	0x18
 #define TMR3_PTV_REG		0x50
 #define TMR3_PCR_REG		0x54
 #define TMR4_PTV_REG		0x58

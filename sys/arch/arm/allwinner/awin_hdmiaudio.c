@@ -1,4 +1,4 @@
-/* $NetBSD: awin_hdmiaudio.c,v 1.5 2014/11/18 01:53:53 jmcneill Exp $ */
+/* $NetBSD: awin_hdmiaudio.c,v 1.5.2.1 2015/12/27 12:09:29 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.5 2014/11/18 01:53:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awin_hdmiaudio.c,v 1.5.2.1 2015/12/27 12:09:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -410,6 +410,7 @@ awin_hdmiaudio_halt_output(void *priv)
 
 	sc->sc_pint = NULL;
 	sc->sc_pintarg = NULL;
+	awin_hdmi_poweron(false);
 
 	return 0;
 }
@@ -638,6 +639,7 @@ awin_hdmiaudio_trigger_output(void *priv, void *start, void *end, int blksize,
 	sc->sc_pstart = sc->sc_pcur = pstart;
 	sc->sc_pend = sc->sc_pstart + psize;
 	sc->sc_pblksize = blksize;
+	awin_hdmi_poweron(true);
 
 	dmacfg = 0;
 	dmacfg |= __SHIFTIN(AWIN_DMA_CTL_DATA_WIDTH_32,

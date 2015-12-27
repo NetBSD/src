@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.66.6.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.66.6.2 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.66.6.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.66.6.2 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -91,8 +91,10 @@ static void msg_freehdr(struct __msg *);
 
 extern int kern_has_sysvmsg;
 
+SYSCTL_SETUP_PROTO(sysctl_ipc_msg_setup);
+
 void
-msginit(void)
+msginit(struct sysctllog **clog)
 {
 	int i, sz;
 	vaddr_t v;
@@ -161,7 +163,10 @@ msginit(void)
 
 	kern_has_sysvmsg = 1;
 
-	sysvipcinit();
+#ifdef _MODULE
+	if (clog)
+		sysctl_ipc_msg_setup(clog);
+#endif
 }
 
 int

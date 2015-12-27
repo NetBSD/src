@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.160.6.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: lfs.h,v 1.160.6.4 2015/12/27 12:10:19 skrll Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.22 2013/01/22 09:39:18 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.21 2009/07/22 04:49:19 dholland Exp  */
@@ -577,6 +577,27 @@ typedef union finfo {
 } FINFO;
 
 /*
+ * inode info (part of the segment summary)
+ *
+ * Each one of these is just a block number; wrapping the structure
+ * around it gives more contextual information in the code about
+ * what's going on.
+ */
+
+typedef struct iinfo64 {
+	uint64_t ii_block;		/* block number */
+} IINFO64;
+
+typedef struct iinfo32 {
+	uint32_t ii_block;		/* block number */
+} IINFO32;
+
+typedef union iinfo {
+	struct iinfo64 u_64;
+	struct iinfo32 u_32;
+} IINFO;
+
+/*
  * Index file inode entries.
  */
 
@@ -674,6 +695,9 @@ typedef union _cleanerinfo {
 #define	SS_RFW		0x08		/* written by the roll-forward agent */
 #define	SS_RECLAIM	0x10		/* written by the roll-forward agent */
 
+/* type used for reading checksum signatures from metadata structures */
+typedef uint32_t lfs_checkword;
+
 typedef struct segsum_v1 SEGSUM_V1;
 struct segsum_v1 {
 	u_int32_t ss_sumsum;		/* 0: check sum of summary block */
@@ -742,7 +766,7 @@ union segsum {
  * 64-bit inode structure we got from ffsv2.
  *
  * In lfs64:
- *   - inode numbers are still 32 bit
+ *   - inode numbers are 64 bit now
  *   - segments may not be larger than 4G (counted in bytes)
  *   - there may not be more than 2^32 (or perhaps 2^31) segments
  *   - the total volume size is limited to 2^63 frags and/or 2^63
@@ -752,8 +776,8 @@ union segsum {
 #define	       LFS_MAGIC       		0x070162
 #define        LFS_MAGIC_SWAPPED	0x62010700
 
-#define        LFS64_MAGIC     		0x19620701
-#define        LFS64_MAGIC_SWAPPED      0x01076219
+#define        LFS64_MAGIC     		(0x19620701 ^ 0xffffffff)
+#define        LFS64_MAGIC_SWAPPED      (0x01076219 ^ 0xffffffff)
 
 #define	       LFS_VERSION     		2
 
@@ -1004,6 +1028,10 @@ struct lfs {
 	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
 
 #ifdef _KERNEL
+	/* The block device we're mounted on. */
+	dev_t lfs_dev;
+	struct vnode *lfs_devvp;
+
 	/* ULFS-level information */
 	u_int32_t um_flags;			/* ULFS flags (below) */
 	u_long	um_nindir;			/* indirect ptrs per block */
@@ -1025,6 +1053,13 @@ struct lfs {
 	int lfs_availsleep;
 	/* This one replaces &lfs_nextseg... all ditto */
 	int lfs_nextsegsleep;
+
+	/* Cleaner lwp, set on first bmapv syscall. */
+	struct lwp *lfs_cleaner_thread;
+
+	/* Hint from cleaner, only valid if curlwp == um_cleaner_thread. */
+	/* XXX change this to BLOCK_INFO after resorting this file */
+	struct block_info *lfs_cleaner_hint;
 #endif
 };
 

@@ -1,12 +1,14 @@
-#	$NetBSD: Makefile,v 1.8.6.2 2015/09/22 12:06:14 skrll Exp $
+#	$NetBSD: Makefile,v 1.8.6.3 2015/12/27 12:10:11 skrll Exp $
 #
 
 LIB=	rumpdev_ugenhc
+COMMENT=USB host controller using /dev/ugen
 
 .if ${MACHINE} == "i386" || ${MACHINE} == "amd64"
 IOCONF= UGENHC.ioconf
+RUMP_COMPONENT=ioconf
 
-SRCS=	ugenhc.c ugenhc_at_mainbus.c
+SRCS=	ugenhc.c
 
 CPPFLAGS+=	-I${RUMPTOP}/librump/rumpkern
 

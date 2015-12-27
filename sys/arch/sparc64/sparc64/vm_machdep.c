@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.100 2013/09/15 16:04:16 martin Exp $ */
+/*	$NetBSD: vm_machdep.c,v 1.100.6.1 2015/12/27 12:09:44 skrll Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100 2013/09/15 16:04:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.100.6.1 2015/12/27 12:09:44 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -245,6 +245,14 @@ cpu_lwp_fork(register struct lwp *l1, register struct lwp *l2, void *stack, size
 	 */
 	if (stack != NULL)
 		tf2->tf_out[6] = (uint64_t)(u_long)stack + stacksize;
+
+	/*
+	 * Need to create a %tstate if we are forking our first userland
+	 * process - in all other cases we inherit from the parent.
+	 */
+	if (l2->l_proc->p_pid == 1)
+		tf2->tf_tstate = (ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT) |
+		    ((PSTATE_USER)<<TSTATE_PSTATE_SHIFT);
 
 	/*
 	 * Set return values in child mode and clear condition code,

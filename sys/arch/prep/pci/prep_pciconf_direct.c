@@ -1,4 +1,4 @@
-/*	$NetBSD: prep_pciconf_direct.c,v 1.8 2011/07/01 16:56:52 dyoung Exp $	*/
+/*	$NetBSD: prep_pciconf_direct.c,v 1.8.30.1 2015/12/27 12:09:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Klaus J. Klein.  All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.8 2011/07/01 16:56:52 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: prep_pciconf_direct.c,v 1.8.30.1 2015/12/27 12:09:41 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,6 +158,9 @@ prep_pci_direct_conf_read(void *v, pcitag_t tag, int reg)
 	int bus, device, function;
 	int s;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) ~0;
+
 	prep_pci_direct_decompose_tag(v, tag, &bus, &device, &function);
 
 	if (bus == 0) {
@@ -185,6 +188,9 @@ prep_pci_direct_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 
 	DPRINTF(("prep_pci_direct_conf_write(0x%lx, 0x%x, 0x%02x, 0x%08lx) ",
 	    (unsigned long)v, tag, reg, (unsigned long)data));
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	prep_pci_direct_decompose_tag(v, tag, &bus, &device, &function);
 

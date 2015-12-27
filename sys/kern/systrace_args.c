@@ -1,4 +1,4 @@
-/* $NetBSD: systrace_args.c,v 1.2.2.3 2015/06/06 14:40:22 skrll Exp $ */
+/* $NetBSD: systrace_args.c,v 1.2.2.4 2015/12/27 12:10:05 skrll Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -2186,7 +2186,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 2;
 		break;
 	}
-#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	/* sys_____semctl13 */
 	case 301: {
 		struct compat_50_sys_____semctl13_args *p = params;
@@ -2197,9 +2196,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 4;
 		break;
 	}
-#else
-#endif
-#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	/* sys___msgctl13 */
 	case 302: {
 		struct compat_50_sys___msgctl13_args *p = params;
@@ -2209,9 +2205,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-#else
-#endif
-#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	/* sys___shmctl13 */
 	case 303: {
 		struct compat_50_sys___shmctl13_args *p = params;
@@ -2221,8 +2214,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-#else
-#endif
 	/* sys_lchflags */
 	case 304: {
 		struct sys_lchflags_args *p = params;
@@ -7261,7 +7252,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	/* sys_____semctl13 */
 	case 301:
 		switch(ndx) {
@@ -7281,9 +7271,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#else
-#endif
-#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	/* sys___msgctl13 */
 	case 302:
 		switch(ndx) {
@@ -7300,9 +7287,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#else
-#endif
-#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	/* sys___shmctl13 */
 	case 303:
 		switch(ndx) {
@@ -7319,8 +7303,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-#else
-#endif
 	/* sys_lchflags */
 	case 304:
 		switch(ndx) {
@@ -11143,30 +11125,21 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-#if defined(SYSVSEM) || !defined(_KERNEL_OPT)
 	/* sys_____semctl13 */
 	case 301:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-#else
-#endif
-#if defined(SYSVMSG) || !defined(_KERNEL_OPT)
 	/* sys___msgctl13 */
 	case 302:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-#else
-#endif
-#if defined(SYSVSHM) || !defined(_KERNEL_OPT)
 	/* sys___shmctl13 */
 	case 303:
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-#else
-#endif
 	/* sys_lchflags */
 	case 304:
 		if (ndx == 0 || ndx == 1)

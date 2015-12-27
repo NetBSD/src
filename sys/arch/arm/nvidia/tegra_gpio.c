@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_gpio.c,v 1.3.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_gpio.c,v 1.3.2.3 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.3.2.2 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.3.2.3 2015/12/27 12:09:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_gpio.c,v 1.3.2.2 2015/06/06 14:39:56 skrll Exp
 #include <arm/nvidia/tegra_reg.h>
 #include <arm/nvidia/tegra_gpioreg.h>
 #include <arm/nvidia/tegra_var.h>
+
+#include <dev/fdt/fdtvar.h>
 
 const struct tegra_gpio_pinbank {
 	const char *name;
@@ -86,6 +86,19 @@ const struct tegra_gpio_pinbank {
 static int	tegra_gpio_match(device_t, cfdata_t, void *);
 static void	tegra_gpio_attach(device_t, device_t, void *);
 
+static void *	tegra_gpio_fdt_acquire(device_t, const void *,
+		    size_t, int);
+static void	tegra_gpio_fdt_release(device_t, void *);
+static int	tegra_gpio_fdt_read(device_t, void *, bool);
+static void	tegra_gpio_fdt_write(device_t, void *, int, bool);
+
+struct fdtbus_gpio_controller_func tegra_gpio_funcs = {
+	.acquire = tegra_gpio_fdt_acquire,
+	.release = tegra_gpio_fdt_release,
+	.read = tegra_gpio_fdt_read,
+	.write = tegra_gpio_fdt_write
+};
+
 struct tegra_gpio_softc;
 
 struct tegra_gpio_bank {
@@ -109,6 +122,7 @@ struct tegra_gpio_pin {
 	struct tegra_gpio_bank	pin_bank;
 	int			pin_no;
 	u_int			pin_flags;
+	bool			pin_actlo;
 };
 
 static void	tegra_gpio_attach_bank(struct tegra_gpio_softc *, u_int);
@@ -134,21 +148,34 @@ CFATTACH_DECL_NEW(tegra_gpio, sizeof(struct tegra_gpio_softc),
 static int
 tegra_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "nvidia,tegra124-gpio", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_gpio_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_gpio_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
 	u_int n;
 
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
 	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
+	sc->sc_bst = faa->faa_bst;
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
 
 	aprint_naive("\n");
 	aprint_normal(": GPIO\n");
@@ -158,6 +185,9 @@ tegra_gpio_attach(device_t parent, device_t self, void *aux)
 	for (n = 0; n < nbank; n++) {
 		tegra_gpio_attach_bank(sc, n);
 	}
+
+	fdtbus_register_gpio_controller(self, faa->faa_phandle,
+	    &tegra_gpio_funcs);
 }
 
 static void
@@ -249,6 +279,74 @@ tegra_gpio_pin_ctl(void *priv, int pin, int flags)
 	}
 }
 
+static void *
+tegra_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
+{
+	struct tegra_gpio_bank gbank;
+	struct tegra_gpio_pin *gpin;
+	const u_int *gpio = data;
+
+	if (len != 12)
+		return NULL;
+
+	const u_int bank = be32toh(gpio[1]) >> 3;
+	const u_int pin = be32toh(gpio[1]) & 7;
+	const bool actlo = be32toh(gpio[2]) & 1;
+
+	if (bank >= __arraycount(tegra_gpio_pinbanks) || pin > 8)
+		return NULL;
+
+	gbank.bank_sc = device_private(dev);
+	gbank.bank_pb = &tegra_gpio_pinbanks[bank];
+
+	const uint32_t cnf = GPIO_READ(&gbank, GPIO_CNF_REG);
+	if ((cnf & __BIT(pin)) == 0)
+		GPIO_WRITE(&gbank, GPIO_CNF_REG, cnf | __BIT(pin));
+
+	gpin = kmem_alloc(sizeof(*gpin), KM_SLEEP);
+	gpin->pin_bank = gbank;
+	gpin->pin_no = pin;
+	gpin->pin_flags = flags;
+	gpin->pin_actlo = actlo;
+
+	tegra_gpio_pin_ctl(&gpin->pin_bank, gpin->pin_no, gpin->pin_flags);
+
+	return gpin;
+}
+
+static void
+tegra_gpio_fdt_release(device_t dev, void *priv)
+{
+	struct tegra_gpio_pin *gpin = priv;
+
+	tegra_gpio_release(gpin);
+}
+
+static int
+tegra_gpio_fdt_read(device_t dev, void *priv, bool raw)
+{
+	struct tegra_gpio_pin *gpin = priv;
+	int val;
+
+	val = tegra_gpio_read(gpin);
+
+	if (!raw && gpin->pin_actlo)
+		val = !val;
+
+	return val;
+}
+
+static void
+tegra_gpio_fdt_write(device_t dev, void *priv, int val, bool raw)
+{
+	struct tegra_gpio_pin *gpin = priv;
+
+	if (!raw && gpin->pin_actlo)
+		val = !val;
+
+	tegra_gpio_write(gpin, val);
+}
+
 static const struct tegra_gpio_pinbank *
 tegra_gpio_pin_lookup(const char *pinname, int *ppin)
 {
@@ -320,17 +418,22 @@ tegra_gpio_release(struct tegra_gpio_pin *gpin)
 int
 tegra_gpio_read(struct tegra_gpio_pin *gpin)
 {
+	int ret;
+
 	if (gpin->pin_flags & GPIO_PIN_INPUT) {
-		return tegra_gpio_pin_read(&gpin->pin_bank, gpin->pin_no);
+		ret = tegra_gpio_pin_read(&gpin->pin_bank, gpin->pin_no);
 	} else {
 		const uint32_t v = GPIO_READ(&gpin->pin_bank, GPIO_OUT_REG);
-		return (v >> gpin->pin_no) & 1;
+		ret = (v >> gpin->pin_no) & 1;
 	}
+
+	return ret;
 }
 
 void
 tegra_gpio_write(struct tegra_gpio_pin *gpin, int val)
 {
 	KASSERT((gpin->pin_flags & GPIO_PIN_OUTPUT) != 0);
+
 	tegra_gpio_pin_write(&gpin->pin_bank, gpin->pin_no, val);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.c,v 1.3.6.1 2015/04/06 15:18:17 skrll Exp $	*/
+/*	$NetBSD: drm_cache.c,v 1.3.6.2 2015/12/27 12:10:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,40 +30,46 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3.6.1 2015/04/06 15:18:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_cache.c,v 1.3.6.2 2015/12/27 12:10:02 skrll Exp $");
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <machine/cpufunc.h>
-
 #include <linux/mm_types.h>
 
 #include <drm/drmP.h>
 
+#if !defined(__arm__)
+#define DRM_CLFLUSH	1
+#endif
+
+#if defined(DRM_CLFLUSH)
 static bool		drm_md_clflush_finegrained_p(void);
 static void		drm_md_clflush_all(void);
 static void		drm_md_clflush_page(struct page *);
 static void		drm_md_clflush_virt_range(const void *, size_t);
+#endif
 
 void
 drm_clflush_pages(struct page **pages, unsigned long npages)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
 		while (npages--)
 			drm_md_clflush_page(pages[npages]);
 	} else {
 		drm_md_clflush_all();
 	}
+#endif
 }
 
 void
 drm_clflush_pglist(struct pglist *list)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p()) {
 		struct vm_page *page;
 
@@ -73,29 +79,34 @@ drm_clflush_pglist(struct pglist *list)
 	} else {
 		drm_md_clflush_all();
 	}
+#endif
 }
 
 void
 drm_clflush_page(struct page *page)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p())
 		drm_md_clflush_page(page);
 	else
 		drm_md_clflush_all();
+#endif
 }
 
 void
 drm_clflush_virt_range(const void *vaddr, size_t nbytes)
 {
-
+#if defined(DRM_CLFLUSH)
 	if (drm_md_clflush_finegrained_p())
 		drm_md_clflush_virt_range(vaddr, nbytes);
 	else
 		drm_md_clflush_all();
+#endif
 }
 
 #if defined(__i386__) || defined(__x86_64__)
+
+#include <machine/cpufunc.h>
 
 static bool
 drm_md_clflush_finegrained_p(void)

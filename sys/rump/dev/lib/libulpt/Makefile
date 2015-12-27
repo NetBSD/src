@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.3 2010/03/01 15:41:15 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.42.1 2015/12/27 12:10:11 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/usb
 
 LIB=	rumpdev_ulpt
+COMMENT=USB printer driver
+
 IOCONF=	ULPT.ioconf
 
 SRCS=	ulpt.c

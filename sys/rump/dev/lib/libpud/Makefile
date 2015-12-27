@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/13 01:53:04 pooka Exp $
+#	$NetBSD: Makefile,v 1.2.6.1 2015/12/27 12:10:10 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/pud
 
 LIB=	rumpdev_pud
+COMMENT=Userspace character and block driver framework
 
 SRCS=	pud.c pud_dev.c
 

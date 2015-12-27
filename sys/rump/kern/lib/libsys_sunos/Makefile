@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile,v 1.3.8.2 2015/06/06 14:40:28 skrll Exp $
+#	$NetBSD: Makefile,v 1.3.8.3 2015/12/27 12:10:16 skrll Exp $
 #
 
 LIB=	rumpkern_sys_sunos
+COMMENT=SunOS/Solarisa system call translation
 
 SRCS=	rump_sunos_compat.c
 SRCS+=	sys_sunos_component.c

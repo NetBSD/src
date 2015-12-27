@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.6.6.2 2015/06/06 14:40:28 skrll Exp $
+#	$NetBSD: Makefile,v 1.6.6.3 2015/12/27 12:10:16 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../compat/linux/common
 
 LIB=	rumpkern_sys_linux
+COMMENT=Linux system call translation
 
 SRCS=	linux_blkio.c linux_cdrom.c linux_errno.c linux_fdio.c		\
 	linux_file.c linux_hdio.c linux_ioctl.c linux_ipc.c linux_misc.c\

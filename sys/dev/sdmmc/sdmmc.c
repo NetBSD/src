@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.23.2.3 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.23.2.4 2015/12/27 12:09:58 skrll Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.23.2.3 2015/09/22 12:06:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.23.2.4 2015/12/27 12:09:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -154,6 +154,29 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_intr_task_mtx, MUTEX_DEFAULT, IPL_SDMMC);
 	cv_init(&sc->sc_tskq_cv, "mmctaskq");
 
+	evcnt_attach_dynamic(&sc->sc_ev_xfer, EVCNT_TYPE_MISC, NULL,
+	    device_xname(self), "xfer");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[0], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 512");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[1], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 1024");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[2], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 2048");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[3], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 4096");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[4], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 8192");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[5], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 16384");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[6], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 32768");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_aligned[7], EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer 65536");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_unaligned, EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer unaligned");
+	evcnt_attach_dynamic(&sc->sc_ev_xfer_error, EVCNT_TYPE_MISC,
+	    &sc->sc_ev_xfer, device_xname(self), "xfer error");
+
 	if (ISSET(sc->sc_caps, SMC_CAPS_POLL_CARD_DET)) {
 		callout_init(&sc->sc_card_detect_ch, 0);
 		callout_reset(&sc->sc_card_detect_ch, hz,
@@ -178,7 +201,7 @@ static int
 sdmmc_detach(device_t self, int flags)
 {
 	struct sdmmc_softc *sc = device_private(self);
-	int error;
+	int error, i;
 
 	mutex_enter(&sc->sc_tskq_mtx);
 	sc->sc_dying = 1;
@@ -208,6 +231,12 @@ sdmmc_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_discover_task_mtx);
 	mutex_destroy(&sc->sc_tskq_mtx);
 	mutex_destroy(&sc->sc_mtx);
+
+	evcnt_detach(&sc->sc_ev_xfer_error);
+	evcnt_detach(&sc->sc_ev_xfer_unaligned);
+	for (i = 0; i < __arraycount(sc->sc_ev_xfer_aligned); i++)
+		evcnt_detach(&sc->sc_ev_xfer_aligned[i]);
+	evcnt_detach(&sc->sc_ev_xfer);
 
 	return 0;
 }
@@ -769,7 +798,7 @@ sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_function *sf, struct sdmm
 	memset(&acmd, 0, sizeof(acmd));
 	acmd.c_opcode = MMC_APP_CMD;
 	acmd.c_arg = (sf != NULL) ? (sf->rca << 16) : 0;
-	acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R1;
+	acmd.c_flags = SCF_CMD_AC | SCF_RSP_R1 | SCF_RSP_SPI_R1 | (cmd->c_flags & SCF_TOUT_OK);
 
 	error = sdmmc_mmc_command(sc, &acmd);
 	if (error == 0) {

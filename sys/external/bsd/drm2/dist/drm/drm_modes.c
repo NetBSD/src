@@ -1057,8 +1057,6 @@ void drm_mode_connector_list_update(struct drm_connector *connector)
 }
 EXPORT_SYMBOL(drm_mode_connector_list_update);
 
-#ifndef __NetBSD__
-
 /**
  * drm_mode_parse_command_line_for_connector - parse command line modeline for connector
  * @mode_option: optional per connector mode option
@@ -1087,15 +1085,17 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 	const char *name;
 	unsigned int namelen;
 	bool res_specified = false, bpp_specified = false, refresh_specified = false;
-	unsigned int xres = 0, yres = 0, bpp = 32, refresh = 0;
+	long xres = 0, yres = 0, bpp = 32, refresh = 0;
 	bool yres_specified = false, cvt = false, rb = false;
 	bool interlace = false, margins = false, was_digit = false;
 	int i;
 	enum drm_connector_force force = DRM_FORCE_UNSPECIFIED;
 
+#if !defined(__NetBSD__)
 #ifdef CONFIG_FB
 	if (!mode_option)
 		mode_option = fb_mode_option;
+#endif
 #endif
 
 	if (!mode_option) {
@@ -1110,26 +1110,35 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 		case '@':
 			if (!refresh_specified && !bpp_specified &&
 			    !yres_specified && !cvt && !rb && was_digit) {
-				refresh = simple_strtol(&name[i+1], NULL, 10);
-				refresh_specified = true;
-				was_digit = false;
+				if (kstrtol(&name[i+1], 10, &refresh) == 0) {
+					refresh_specified = true;
+					was_digit = false;
+				} else {
+					goto done;
+				}
 			} else
 				goto done;
 			break;
 		case '-':
 			if (!bpp_specified && !yres_specified && !cvt &&
 			    !rb && was_digit) {
-				bpp = simple_strtol(&name[i+1], NULL, 10);
-				bpp_specified = true;
-				was_digit = false;
+				if (kstrtol(&name[i+1], 10, &bpp) == 0) {
+					bpp_specified = true;
+					was_digit = false;
+				} else {
+					goto done;
+				}
 			} else
 				goto done;
 			break;
 		case 'x':
 			if (!yres_specified && was_digit) {
-				yres = simple_strtol(&name[i+1], NULL, 10);
-				yres_specified = true;
-				was_digit = false;
+				if (kstrtol(&name[i+1], 10, &yres) == 0) {
+					yres_specified = true;
+					was_digit = false;
+				} else {
+					goto done;
+				}
 			} else
 				goto done;
 			break;
@@ -1187,8 +1196,8 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 	}
 
 	if (i < 0 && yres_specified) {
-		char *ch;
-		xres = simple_strtol(name, &ch, 10);
+		char *ch = NULL;
+		xres = strtoll(name, &ch, 10);
 		if ((ch != NULL) && (*ch == 'x'))
 			res_specified = true;
 		else
@@ -1199,7 +1208,7 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 	}
 done:
 	if (i >= 0) {
-		printk(KERN_WARNING
+		DRM_ERROR(
 			"parse error at position %i in video mode '%s'\n",
 			i, name);
 		mode->specified = false;
@@ -1264,5 +1273,3 @@ drm_mode_create_from_cmdline_mode(struct drm_device *dev,
 	return mode;
 }
 EXPORT_SYMBOL(drm_mode_create_from_cmdline_mode);
-
-#endif

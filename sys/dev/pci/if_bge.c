@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.277.4.3 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.277.4.4 2015/12/27 12:09:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.3 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.277.4.4 2015/12/27 12:09:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -183,9 +183,7 @@ static int bge_rxthresh_nodenum;
 typedef int (*bge_eaddr_fcn_t)(struct bge_softc *, uint8_t[]);
 
 static uint32_t bge_chipid(const struct pci_attach_args *);
-#ifdef __HAVE_PCI_MSI_MSIX
 static int bge_can_use_msi(struct bge_softc *);
-#endif
 static int bge_probe(device_t, cfdata_t, void *);
 static void bge_attach(device_t, device_t, void *);
 static int bge_detach(device_t, int);
@@ -3281,7 +3279,6 @@ bge_chipid(const struct pci_attach_args *pa)
 	return id;
 }
 
-#ifdef __HAVE_PCI_MSI_MSIX
 /*
  * Return true if MSI can be used with this device.
  */
@@ -3309,7 +3306,6 @@ bge_can_use_msi(struct bge_softc *sc)
 	}
 	return (can_use_msi);
 }
-#endif
 
 /*
  * Probe for a Broadcom chip. Check the PCI vendor and device IDs
@@ -3339,12 +3335,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 	const struct bge_product *bp;
 	const struct bge_revision *br;
 	pci_chipset_tag_t	pc;
-#ifndef __HAVE_PCI_MSI_MSIX
-	pci_intr_handle_t	ih;
-#else
 	int counts[PCI_INTR_TYPE_SIZE];
 	pci_intr_type_t intr_type, max_type;
-#endif
 	const char		*intrstr = NULL;
 	uint32_t 		hwcfg, hwcfg2, hwcfg3, hwcfg4, hwcfg5;
 	uint32_t		command;
@@ -3726,7 +3718,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-#ifdef __HAVE_PCI_MSI_MSIX
+	/* MSI-X will be used in future */
 	counts[PCI_INTR_TYPE_MSI] = 1;
 	counts[PCI_INTR_TYPE_INTX] = 1;
 	/* Check MSI capability */
@@ -3741,16 +3733,8 @@ alloc_retry:
 		aprint_error_dev(sc->bge_dev, "couldn't alloc interrupt\n");
 		return;
 	}
-#else	/* !__HAVE_PCI_MSI_MSIX */
-	DPRINTFN(5, ("pci_intr_map\n"));
-	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(sc->bge_dev, "couldn't map interrupt\n");
-		return;
-	}
-#endif
 
 	DPRINTFN(5, ("pci_intr_string\n"));
-#ifdef __HAVE_PCI_MSI_MSIX
 	intrstr = pci_intr_string(pc, sc->bge_pihp[0], intrbuf,
 	    sizeof(intrbuf));
 	DPRINTFN(5, ("pci_intr_establish\n"));
@@ -3774,12 +3758,6 @@ alloc_retry:
 			break;
 		}
 	}
-#else	/* !__HAVE_PCI_MSI_MSIX */
-	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
-
-	DPRINTFN(5, ("pci_intr_establish\n"));
-	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc);
-#endif
 
 	if (sc->bge_intrhand == NULL) {
 		aprint_error_dev(sc->bge_dev,
@@ -4155,9 +4133,7 @@ bge_release_resources(struct bge_softc *sc)
 	/* Disestablish the interrupt handler */
 	if (sc->bge_intrhand != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->bge_intrhand);
-#ifdef __HAVE_PCI_MSI_MSIX
 		pci_intr_release(sc->sc_pc, sc->bge_pihp, 1);
-#endif
 		sc->bge_intrhand = NULL;
 	}
 
@@ -4166,7 +4142,8 @@ bge_release_resources(struct bge_softc *sc)
 		bus_dmamap_destroy(sc->bge_dmatag, sc->bge_ring_map);
 		bus_dmamem_unmap(sc->bge_dmatag, (void *)sc->bge_rdata,
 		    sizeof(struct bge_ring_data));
-		bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg, sc->bge_ring_rseg);
+		bus_dmamem_free(sc->bge_dmatag, &sc->bge_ring_seg,
+		    sc->bge_ring_rseg);
 	}
 
 	/* Unmap the device registers */

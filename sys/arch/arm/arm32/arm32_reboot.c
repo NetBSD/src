@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_reboot.c,v 1.6.8.1 2015/04/06 15:17:52 skrll Exp $	*/
+/*	$NetBSD: arm32_reboot.c,v 1.6.8.2 2015/12/27 12:09:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.6.8.1 2015/04/06 15:17:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.6.8.2 2015/12/27 12:09:30 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -136,11 +136,19 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_reboot.c,v 1.6.8.1 2015/04/06 15:17:52 skrll E
 #include <arm/locore.h>
 #include <arm/arm32/machdep.h>
 
+void (*cpu_powerdown_address)(void);
+
 static int
 docpureset(int howto)
 {
-	if (howto & RB_POWERDOWN)
-		printf("WARNING: powerdown not supported\r\n");
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
+		if (cpu_powerdown_address) {
+			cpu_powerdown_address();
+			printf("WARNING: powerdown failed\r\n");
+		} else {
+			printf("WARNING: powerdown not supported\r\n");
+		}
+	}
 
 	if (howto & RB_HALT) {
 		printf("The operating system has halted.\r\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.32.2.16 2015/12/23 08:07:40 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.32.2.17 2015/12/27 12:10:03 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.16 2015/12/23 08:07:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.32.2.17 2015/12/27 12:10:03 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1187,6 +1187,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	return USBD_IN_PROGRESS;
 
 fail2:
+	callout_stop(&xfer->ux_callout);
 	dwc2_urb->priv = NULL;
 	mutex_spin_exit(&hsotg->lock);
 	pool_cache_put(sc->sc_qtdpool, qtd);

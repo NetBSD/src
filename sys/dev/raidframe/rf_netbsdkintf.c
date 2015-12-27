@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.316.2.3 2015/09/22 12:06:00 skrll Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.316.2.4 2015/12/27 12:09:58 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316.2.3 2015/09/22 12:06:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316.2.4 2015/12/27 12:09:58 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -126,6 +126,7 @@ __KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.316.2.3 2015/09/22 12:06:00 skr
 #include <sys/bufq.h>
 #include <sys/reboot.h>
 #include <sys/kauth.h>
+#include <sys/module.h>
 
 #include <prop/proplib.h>
 
@@ -241,6 +242,8 @@ struct raid_softc {
 	int	sc_unit;
 	int     sc_flags;	/* flags */
 	int     sc_cflags;	/* configuration flags */
+	kmutex_t sc_mutex;	/* interlock mutex */
+	kcondvar_t sc_cv;	/* and the condvar */
 	uint64_t sc_size;	/* size of the raid device */
 	char    sc_xname[20];	/* XXX external name */
 	struct disk sc_dkdev;	/* generic disk device info */
@@ -350,17 +353,21 @@ raidcreate(int unit) {
 	}
 	sc->sc_unit = unit;
 	bufq_alloc(&sc->buf_queue, "fcfs", BUFQ_SORT_RAWBLOCK);
+	cv_init(&sc->sc_cv, "raidunit");
+	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	return sc;
 }
 
 static void
 raiddestroy(struct raid_softc *sc) {
+	cv_destroy(&sc->sc_cv);
+	mutex_destroy(&sc->sc_mutex);
 	bufq_free(sc->buf_queue);
 	kmem_free(sc, sizeof(*sc));
 }
 
 static struct raid_softc *
-raidget(int unit) {
+raidget(int unit, bool create) {
 	struct raid_softc *sc;
 	if (unit < 0) {
 #ifdef DIAGNOSTIC
@@ -376,6 +383,8 @@ raidget(int unit) {
 		}
 	}
 	mutex_exit(&raid_lock);
+	if (!create)
+		return NULL;
 	if ((sc = raidcreate(unit)) == NULL)
 		return NULL;
 	mutex_enter(&raid_lock);
@@ -395,34 +404,11 @@ raidput(struct raid_softc *sc) {
 void
 raidattach(int num)
 {
-	mutex_init(&raid_lock, MUTEX_DEFAULT, IPL_NONE);
-	/* This is where all the initialization stuff gets done. */
-
-#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
-	rf_init_mutex2(rf_sparet_wait_mutex, IPL_VM);
-	rf_init_cond2(rf_sparet_wait_cv, "sparetw");
-	rf_init_cond2(rf_sparet_resp_cv, "rfgst");
-
-	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
-#endif
-
-	if (rf_BootRaidframe() == 0)
-		aprint_verbose("Kernelized RAIDframe activated\n");
-	else
-		panic("Serious error booting RAID!!");
-
-	if (config_cfattach_attach(raid_cd.cd_name, &raid_ca)) {
-		aprint_error("raidattach: config_cfattach_attach failed?\n");
-	}
-
-	raidautoconfigdone = false;
 
 	/*
-	 * Register a finalizer which will be used to auto-config RAID
-	 * sets once all real hardware devices have been found.
+	 * Device attachment and associated initialization now occurs
+	 * as part of the module initialization.
 	 */
-	if (config_finalize_register(NULL, rf_autoconfig) != 0)
-		aprint_error("WARNING: unable to register RAIDframe finalizer\n");
 }
 
 int
@@ -606,7 +592,7 @@ raidsize(dev_t dev)
 	int     part, unit, omask, size;
 
 	unit = raidunit(dev);
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, false)) == NULL)
 		return -1;
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
 		return (-1);
@@ -643,7 +629,7 @@ raiddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	int     part, c, sparecol, j, scol, dumpto;
 	int     error = 0;
 
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, false)) == NULL)
 		return ENXIO;
 
 	raidPtr = &rs->sc_r;
@@ -655,7 +641,6 @@ raiddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	if (raidPtr->Layout.numDataCol != 1 ||
 	    raidPtr->Layout.numParityCol != 1)
 		return EINVAL;
-
 
 	if ((error = raidlock(rs)) != 0)
 		return error;
@@ -779,7 +764,7 @@ raidopen(dev_t dev, int flags, int fmt,
 	int     part, pmask;
 	int     error = 0;
 
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, true)) == NULL)
 		return ENXIO;
 	if ((error = raidlock(rs)) != 0)
 		return (error);
@@ -863,7 +848,7 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 	int     error = 0;
 	int     part;
 
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, false)) == NULL)
 		return ENXIO;
 
 	if ((error = raidlock(rs)) != 0)
@@ -893,15 +878,31 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 
 		rf_update_component_labels(&rs->sc_r,
 						 RF_FINAL_COMPONENT_UPDATE);
-
-		/* If the kernel is shutting down, it will detach
-		 * this RAID set soon enough.
+	}
+	if ((rs->sc_dkdev.dk_openmask == 0) &&
+	    ((rs->sc_flags & RAIDF_SHUTDOWN) != 0)) {
+		/*
+		 * Detach this raid unit
 		 */
+		cfdata_t cf = NULL;
+		int retcode = 0;
+
+		if (rs->sc_dev != NULL) {
+			cf = device_cfdata(rs->sc_dev);
+
+			raidunlock(rs);
+			retcode = config_detach(rs->sc_dev, DETACH_QUIET);
+			if (retcode == 0)
+				/* free the pseudo device attach bits */
+				free(cf, M_RAIDFRAME);
+		} else {
+			raidput(rs);
+		}
+		return retcode;
 	}
 
 	raidunlock(rs);
 	return (0);
-
 }
 
 static void
@@ -912,7 +913,7 @@ raidstrategy(struct buf *bp)
 	int     wlabel;
 	struct raid_softc *rs;
 
-	if ((rs = raidget(unit)) == NULL) {
+	if ((rs = raidget(unit, false)) == NULL) {
 		bp->b_error = ENXIO;
 		goto done;
 	}
@@ -982,7 +983,7 @@ raidread(dev_t dev, struct uio *uio, int flags)
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
 
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, false)) == NULL)
 		return ENXIO;
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
@@ -999,7 +1000,7 @@ raidwrite(dev_t dev, struct uio *uio, int flags)
 	int     unit = raidunit(dev);
 	struct raid_softc *rs;
 
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, false)) == NULL)
 		return ENXIO;
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
@@ -1036,6 +1037,9 @@ raid_detach_unlocked(struct raid_softc *rs)
 	disk_detach(&rs->sc_dkdev);
 	disk_destroy(&rs->sc_dkdev);
 
+	/* Free the softc */
+	raidput(rs);
+
 	aprint_normal_dev(rs->sc_dev, "detached\n");
 
 	return 0;
@@ -1070,7 +1074,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	struct disklabel newlabel;
 #endif
 
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, false)) == NULL)
 		return ENXIO;
 	raidPtr = &rs->sc_r;
 
@@ -1114,7 +1118,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case ODIOCSDINFO:
 	case ODIOCGDEFLABEL:
 #endif
-	case DIOCGPART:
+	case DIOCGPARTINFO:
 	case DIOCWLABEL:
 	case DIOCGDEFLABEL:
 	case DIOCAWEDGE:
@@ -1190,23 +1194,27 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			RF_Free(k_cfg, sizeof(RF_Config_t));
 			db1_printf(("rf_ioctl: retcode=%d copyin.1\n",
 				retcode));
-			return (retcode);
+			goto no_config;
 		}
 		goto config;
 	config:
+		rs->sc_flags &= ~RAIDF_SHUTDOWN;
+
 		/* allocate a buffer for the layout-specific data, and copy it
 		 * in */
 		if (k_cfg->layoutSpecificSize) {
 			if (k_cfg->layoutSpecificSize > 10000) {
 				/* sanity check */
 				RF_Free(k_cfg, sizeof(RF_Config_t));
-				return (EINVAL);
+				retcode = EINVAL;
+				goto no_config;
 			}
 			RF_Malloc(specific_buf, k_cfg->layoutSpecificSize,
 			    (u_char *));
 			if (specific_buf == NULL) {
 				RF_Free(k_cfg, sizeof(RF_Config_t));
-				return (ENOMEM);
+				retcode = ENOMEM;
+				goto no_config;
 			}
 			retcode = copyin(k_cfg->layoutSpecific, specific_buf,
 			    k_cfg->layoutSpecificSize);
@@ -1216,7 +1224,7 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 					k_cfg->layoutSpecificSize);
 				db1_printf(("rf_ioctl: retcode=%d copyin.2\n",
 					retcode));
-				return (retcode);
+				goto no_config;
 			}
 		} else
 			specific_buf = NULL;
@@ -1253,6 +1261,13 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		}
 		RF_Free(k_cfg, sizeof(RF_Config_t));
 
+	no_config:
+		/*
+		 * If configuration failed, set sc_flags so that we
+		 * will detach the device when we close it.
+		 */
+		if (retcode != 0)
+			rs->sc_flags |= RAIDF_SHUTDOWN;
 		return (retcode);
 
 		/* shutdown the system */
@@ -2391,7 +2406,7 @@ raidgetdisklabel(dev_t dev)
 	struct cpu_disklabel *clp;
 	RF_Raid_t *raidPtr;
 
-	if ((rs = raidget(unit)) == NULL)
+	if ((rs = raidget(unit, false)) == NULL)
 		return;
 
 	lp = rs->sc_dkdev.dk_label;
@@ -2476,13 +2491,15 @@ raidlock(struct raid_softc *rs)
 {
 	int     error;
 
+	mutex_enter(&rs->sc_mutex);
 	while ((rs->sc_flags & RAIDF_LOCKED) != 0) {
 		rs->sc_flags |= RAIDF_WANTED;
-		if ((error =
-			tsleep(rs, PRIBIO | PCATCH, "raidlck", 0)) != 0)
+		error = cv_wait_sig(&rs->sc_cv, &rs->sc_mutex);
+		if (error != 0)
 			return (error);
 	}
 	rs->sc_flags |= RAIDF_LOCKED;
+	mutex_exit(&rs->sc_mutex);
 	return (0);
 }
 /*
@@ -2492,11 +2509,13 @@ static void
 raidunlock(struct raid_softc *rs)
 {
 
+	mutex_enter(&rs->sc_mutex);
 	rs->sc_flags &= ~RAIDF_LOCKED;
 	if ((rs->sc_flags & RAIDF_WANTED) != 0) {
 		rs->sc_flags &= ~RAIDF_WANTED;
-		wakeup(rs);
+		cv_broadcast(&rs->sc_cv);
 	}
+	mutex_exit(&rs->sc_mutex);
 }
 
 
@@ -3765,7 +3784,7 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 	/* 1. Create a config structure */
 	config = malloc(sizeof(*config), M_RAIDFRAME, M_NOWAIT|M_ZERO);
 	if (config == NULL) {
-		printf("Out of mem!?!?\n");
+		printf("%s: Out of mem - config!?!?\n", __func__);
 				/* XXX do something more intelligent here. */
 		return NULL;
 	}
@@ -3777,11 +3796,21 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 	*/
 
 	raidID = cset->ac->clabel->last_unit;
-	for (sc = raidget(raidID); sc->sc_r.valid != 0; sc = raidget(++raidID))
+	for (sc = raidget(raidID, false); sc && sc->sc_r.valid != 0;
+	     sc = raidget(++raidID, false))
 		continue;
 #ifdef DEBUG
 	printf("Configuring raid%d:\n",raidID);
 #endif
+
+	if (sc == NULL)
+		sc = raidget(raidID, true);
+	if (sc == NULL) {
+		printf("%s: Out of mem - softc!?!?\n", __func__);
+				/* XXX do something more intelligent here. */
+		free(config, M_RAIDFRAME);
+		return NULL;
+	}
 
 	raidPtr = &sc->sc_r;
 
@@ -3900,7 +3929,7 @@ static int
 raid_detach(device_t self, int flags)
 {
 	int error;
-	struct raid_softc *rs = raidget(device_unit(self));
+	struct raid_softc *rs = raidget(device_unit(self), false);
 
 	if (rs == NULL)
 		return ENXIO;
@@ -3910,9 +3939,8 @@ raid_detach(device_t self, int flags)
 
 	error = raid_detach_unlocked(rs);
 
-	raidunlock(rs);
-
-	/* XXXkd: raidput(rs) ??? */
+	if (error != 0)
+		raidunlock(rs);
 
 	return error;
 }
@@ -3977,5 +4005,156 @@ rf_sync_component_caches(RF_Raid_t *raidPtr)
 			}
 		}
 	}
+	return error;
+}
+
+/*
+ * Module interface
+ */
+
+MODULE(MODULE_CLASS_DRIVER, raid, "dk_subr");
+
+#ifdef _MODULE
+CFDRIVER_DECL(raid, DV_DISK, NULL);
+#endif
+
+static int raid_modcmd(modcmd_t, void *);
+static int raid_modcmd_init(void);
+static int raid_modcmd_fini(void);
+
+static int
+raid_modcmd(modcmd_t cmd, void *data)
+{
+	int error;
+
+	error = 0;
+	switch (cmd) {
+	case MODULE_CMD_INIT:
+		error = raid_modcmd_init();
+		break;
+	case MODULE_CMD_FINI:
+		error = raid_modcmd_fini();
+		break;
+	default:
+		error = ENOTTY;
+		break;
+	}
+	return error;
+}
+
+static int
+raid_modcmd_init(void)
+{
+	int error;
+	int bmajor, cmajor;
+
+	mutex_init(&raid_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_enter(&raid_lock);
+#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
+	rf_init_mutex2(rf_sparet_wait_mutex, IPL_VM);
+	rf_init_cond2(rf_sparet_wait_cv, "sparetw");
+	rf_init_cond2(rf_sparet_resp_cv, "rfgst");
+
+	rf_sparet_wait_queue = rf_sparet_resp_queue = NULL;
+#endif
+
+	bmajor = cmajor = -1;
+	error = devsw_attach("raid", &raid_bdevsw, &bmajor,
+	    &raid_cdevsw, &cmajor);
+	if (error != 0 && error != EEXIST) {
+		aprint_error("%s: devsw_attach failed %d\n", __func__, error);
+		mutex_exit(&raid_lock);
+		return error;
+	}
+#ifdef _MODULE
+	error = config_cfdriver_attach(&raid_cd);
+	if (error != 0) {
+		aprint_error("%s: config_cfdriver_attach failed %d\n",
+		    __func__, error);
+		devsw_detach(&raid_bdevsw, &raid_cdevsw);
+		mutex_exit(&raid_lock);
+		return error;
+	}
+#endif
+	error = config_cfattach_attach(raid_cd.cd_name, &raid_ca);
+	if (error != 0) {
+		aprint_error("%s: config_cfattach_attach failed %d\n",
+		    __func__, error);
+#ifdef _MODULE
+		config_cfdriver_detach(&raid_cd);
+#endif
+		devsw_detach(&raid_bdevsw, &raid_cdevsw);
+		mutex_exit(&raid_lock);
+		return error;
+	}
+
+	raidautoconfigdone = false;
+
+	mutex_exit(&raid_lock);
+
+	if (error == 0) {
+		if (rf_BootRaidframe(true) == 0)
+			aprint_verbose("Kernelized RAIDframe activated\n");
+		else
+			panic("Serious error activating RAID!!");
+	}
+
+	/*
+	 * Register a finalizer which will be used to auto-config RAID
+	 * sets once all real hardware devices have been found.
+	 */
+	error = config_finalize_register(NULL, rf_autoconfig);
+	if (error != 0) {
+		aprint_error("WARNING: unable to register RAIDframe "
+		    "finalizer\n");
+	}
+
+	return error;
+}
+
+static int
+raid_modcmd_fini(void)
+{
+	int error;
+
+	mutex_enter(&raid_lock);
+
+	/* Don't allow unload if raid device(s) exist.  */
+	if (!LIST_EMPTY(&raids)) {
+		mutex_exit(&raid_lock);
+		return EBUSY;
+	}
+
+	error = config_cfattach_detach(raid_cd.cd_name, &raid_ca);
+	if (error != 0) {
+		mutex_exit(&raid_lock);
+		return error;
+	}
+#ifdef _MODULE
+	error = config_cfdriver_detach(&raid_cd);
+	if (error != 0) {
+		config_cfattach_attach(raid_cd.cd_name, &raid_ca);
+		mutex_exit(&raid_lock);
+		return error;
+	}
+#endif
+	error = devsw_detach(&raid_bdevsw, &raid_cdevsw);
+	if (error != 0) {
+#ifdef _MODULE
+		config_cfdriver_attach(&raid_cd);
+#endif
+		config_cfattach_attach(raid_cd.cd_name, &raid_ca);
+		mutex_exit(&raid_lock);
+		return error;
+	}
+	rf_BootRaidframe(false);
+#if (RF_INCLUDE_PARITY_DECLUSTERING_DS > 0)
+	rf_destroy_mutex2(rf_sparet_wait_mutex);
+	rf_destroy_cond2(rf_sparet_wait_cv);
+	rf_destroy_cond2(rf_sparet_resp_cv);
+#endif
+	mutex_exit(&raid_lock);
+	mutex_destroy(&raid_lock);
+
 	return error;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.142.2.3 2015/09/22 12:06:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.142.2.4 2015/12/27 12:10:05 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -16,16 +16,17 @@ SUBDIR+=	ccd
 SUBDIR+=	cd9660
 SUBDIR+=	cgd
 SUBDIR+=	chfs
+SUBDIR+=	clockctl
 SUBDIR+=	crypto
 SUBDIR+=	coda
 SUBDIR+=	coda5
 SUBDIR+=	compat
-SUBDIR+=	compat_sysv
 SUBDIR+=	compat_ossaudio
 SUBDIR+=	coredump
 SUBDIR+=	dbcool
 SUBDIR+=	des
 SUBDIR+=	dk_subr
+SUBDIR+=	drvctl
 SUBDIR+=	efs
 SUBDIR+=	ext2fs
 SUBDIR+=	exec_script
@@ -81,6 +82,7 @@ SUBDIR+=	procfs
 SUBDIR+=	ptyfs
 SUBDIR+=	puffs
 SUBDIR+=	putter
+SUBDIR+=	raid
 SUBDIR+=	scsiverbose
 SUBDIR+=	sdtemp
 SUBDIR+=	secmodel_bsd44
@@ -110,6 +112,7 @@ SUBDIR+=	usbverbose
 SUBDIR+=	vcoda
 SUBDIR+=	v7fs
 SUBDIR+=	vnd
+SUBDIR+=	wapbl
 SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
@@ -209,11 +212,17 @@ SUBDIR+=	wmimsi
 .if ${MACHINE_CPU} == "arm" \
     || (!empty(MACHINE_ARCH:Mmips64*) && !defined(BSD_MK_COMPAT_FILE))
 SUBDIR+=	compat_netbsd32
+SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
 SUBDIR+=	compat_netbsd32
+SUBDIR+=	compat_netbsd32_nfssrv
+SUBDIR+=	compat_netbsd32_mqueue
+SUBDIR+=	compat_netbsd32_sysvipc
 .endif
 
 .if ${MACHINE_ARCH} == "i386"

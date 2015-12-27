@@ -1,5 +1,5 @@
 #
-#	$NetBSD: BPI,v 1.13.2.2 2015/09/22 12:05:40 skrll Exp $
+#	$NetBSD: BPI,v 1.13.2.3 2015/12/27 12:09:34 skrll Exp $
 #
 #	BPI -- Banana Pi - an Allwinner A20 Eval Board Kernel
 #
@@ -105,7 +105,7 @@ gpio*		at awingpio?
 awiniic0	at awinio? port 0
 #awiniic*	at awinio? port ?
 iic*		at awiniic?
-#axp20x0 	at iic0 addr 0x34	# AXP209 Power Management Unit
+axp20x0 	at iic0 addr 0x34	# AXP209 Power Management Unit
 
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.11 2014/01/20 22:02:32 jdc Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.11.6.1 2015/12/27 12:09:49 skrll Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -175,14 +175,28 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	if (sc->sc_master)
 		pcfiic_choose_bus(sc, addr >> 7);
 
-	if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
-		return (1);
+	/*
+	 * If we are writing, write address, cmdbuf, buf.
+	 * If we are reading, write address, cmdbuf, then read address, buf.
+	 */
+	if (I2C_OP_WRITE_P(op)) {
+		if (len > 0) {
+			uint8_t *tmp;
 
-	if (len > 0) {
-		if (I2C_OP_WRITE_P(op))
-			ret = pcfiic_xmit(sc, addr & 0x7f, buf, len);
-		else
-			ret = pcfiic_recv(sc, addr & 0x7f, buf, len);
+			tmp = malloc(cmdlen + len, M_DEVBUF,
+			   flags & I2C_F_POLL ? M_NOWAIT : M_WAITOK);
+			if (tmp == NULL)
+				return (1);
+			memcpy(tmp, cmdbuf, cmdlen);
+			memcpy(tmp + cmdlen, buf, len);
+			ret = pcfiic_xmit(sc, addr & 0x7f, tmp, cmdlen + len);
+			free(tmp, M_DEVBUF);
+		} else
+			ret = pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen);
+	} else {
+		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
+			return (1);
+		ret = pcfiic_recv(sc, addr & 0x7f, buf, len);
 	}
 	return (ret);
 }

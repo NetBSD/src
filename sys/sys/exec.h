@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.146.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: exec.h,v 1.146.2.2 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -154,7 +154,6 @@ struct execsw {
 		int (*elf_probe_func)(struct lwp *,
 			struct exec_package *, void *, char *, vaddr_t *);
 		int (*ecoff_probe_func)(struct lwp *, struct exec_package *);
-		int (*mach_probe_func)(const char **);
 	} u;
 	struct  emul *es_emul;		/* os emulation */
 	int	es_prio;		/* entry priority */

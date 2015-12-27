@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.42 2014/09/05 09:20:59 matt Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.42.2.1 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.42 2014/09/05 09:20:59 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.42.2.1 2015/12/27 12:10:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.42 2014/09/05 09:20:59 matt Exp $");
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
 #include <sys/syscallvar.h>
+#include <sys/sysctl.h>
 
 MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
@@ -129,6 +130,9 @@ static const struct syscall_package ksem_syscalls[] = {
 	{ 0, 0, NULL },
 };
 
+struct sysctllog *ksem_clog;
+int ksem_max;
+
 static int
 ksem_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
     void *arg0, void *arg1, void *arg2, void *arg3)
@@ -154,6 +158,7 @@ static int
 ksem_sysinit(void)
 {
 	int error;
+	const struct sysctlnode *rnode;
 
 	mutex_init(&ksem_lock, MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ksem_head);
@@ -167,6 +172,30 @@ ksem_sysinit(void)
 
 	ksem_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 	    ksem_listener_cb, NULL);
+
+	/* Define module-specific sysctl tree */
+
+	ksem_max = KSEM_MAX;
+	ksem_clog = NULL;
+
+	sysctl_createv(&ksem_clog, 0, NULL, &rnode,
+			CTLFLAG_PERMANENT,
+			CTLTYPE_NODE, "posix",
+			SYSCTL_DESCR("POSIX options"),
+			NULL, 0, NULL, 0,
+			CTL_KERN, CTL_CREATE, CTL_EOL);
+	sysctl_createv(&ksem_clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			CTLTYPE_INT, "semmax",
+			SYSCTL_DESCR("Maximal number of semaphores"),
+			NULL, 0, &ksem_max, 0,
+			CTL_CREATE, CTL_EOL);
+	sysctl_createv(&ksem_clog, 0, &rnode, NULL,
+			CTLFLAG_PERMANENT | CTLFLAG_READONLY,
+			CTLTYPE_INT, "semcnt",
+			SYSCTL_DESCR("Current number of semaphores"),
+			NULL, 0, &nsems, 0,
+			CTL_CREATE, CTL_EOL);
 
 	return error;
 }
@@ -193,6 +222,7 @@ ksem_sysfini(bool interface)
 	}
 	kauth_unlisten_scope(ksem_listener);
 	mutex_destroy(&ksem_lock);
+	sysctl_teardown(&ksem_clog);
 	return 0;
 }
 

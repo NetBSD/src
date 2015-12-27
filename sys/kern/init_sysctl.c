@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.204.4.2 2015/09/22 12:06:07 skrll Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.204.4.3 2015/12/27 12:10:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.2 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.3 2015/12/27 12:10:05 skrll Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.204.4.2 2015/09/22 12:06:07 skrll 
 #include <sys/stat.h>
 #include <sys/kauth.h>
 #include <sys/ktrace.h>
-#include <sys/ksem.h>
 
 #include <sys/cpu.h>
 
@@ -591,20 +590,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 			SYSCTL_DESCR("Information from build environment"),
 			NULL, 0, __UNCONST(buildinfo), 0,
 			CTL_KERN, CTL_CREATE, CTL_EOL);
-
-	/* kern.posix. */
-	sysctl_createv(clog, 0, NULL, &rnode,
-			CTLFLAG_PERMANENT,
-			CTLTYPE_NODE, "posix",
-			SYSCTL_DESCR("POSIX options"),
-			NULL, 0, NULL, 0,
-			CTL_KERN, CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &rnode, NULL,
-			CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-			CTLTYPE_INT, "semmax",
-			SYSCTL_DESCR("Maximal number of semaphores"),
-			NULL, 0, &ksem_max, 0,
-			CTL_CREATE, CTL_EOL);
 }
 
 SYSCTL_SETUP(sysctl_hw_misc_setup, "sysctl hw subtree misc setup")

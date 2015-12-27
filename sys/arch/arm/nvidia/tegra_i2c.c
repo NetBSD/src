@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_i2c.c,v 1.5.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_i2c.c,v 1.5.2.3 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,10 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.5.2.2 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.5.2.3 2015/12/27 12:09:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,15 +42,25 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_i2c.c,v 1.5.2.2 2015/06/06 14:39:56 skrll Exp 
 #include <arm/nvidia/tegra_i2creg.h>
 #include <arm/nvidia/tegra_var.h>
 
+#include <dev/fdt/fdtvar.h>
+
 static int	tegra_i2c_match(device_t, cfdata_t, void *);
 static void	tegra_i2c_attach(device_t, device_t, void *);
+
+static i2c_tag_t tegra_i2c_get_tag(device_t);
+
+struct fdtbus_i2c_controller_func tegra_i2c_funcs = {
+	.get_tag = tegra_i2c_get_tag
+};
 
 struct tegra_i2c_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	void *			sc_ih;
-	u_int			sc_port;
+	struct clk *		sc_clk;
+	struct fdtbus_reset *	sc_rst;
+	u_int			sc_cid;
 
 	struct i2c_controller	sc_ic;
 	kmutex_t		sc_lock;
@@ -70,7 +78,7 @@ static int	tegra_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 
 static int	tegra_i2c_wait(struct tegra_i2c_softc *, int);
 static int	tegra_i2c_write(struct tegra_i2c_softc *, i2c_addr_t,
-				const uint8_t *, size_t, int);
+				const uint8_t *, size_t, int, bool);
 static int	tegra_i2c_read(struct tegra_i2c_softc *, i2c_addr_t, uint8_t *,
 			       size_t, int);
 
@@ -87,45 +95,85 @@ CFATTACH_DECL_NEW(tegra_i2c, sizeof(struct tegra_i2c_softc),
 static int
 tegra_i2c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	const char * const compatible[] = { "nvidia,tegra124-i2c", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	if (loc->loc_port == TEGRAIOCF_PORT_DEFAULT)
-		return 0;
-
-	return 1;
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
 tegra_i2c_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_i2c_softc * const sc = device_private(self);
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 	struct i2cbus_attach_args iba;
+	prop_dictionary_t devs;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
+	u_int address_cells;
+	int error;
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	sc->sc_clk = fdtbus_clock_get(phandle, "div-clk");
+	if (sc->sc_clk == NULL) {
+		aprint_error(": couldn't get clock div-clk\n");
+		return;
+	}
+	sc->sc_rst = fdtbus_reset_get(phandle, "i2c");
+	if (sc->sc_rst == NULL) {
+		aprint_error(": couldn't get reset i2c\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = tio->tio_bst;
-	bus_space_subregion(tio->tio_bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &sc->sc_bsh);
-	sc->sc_port = loc->loc_port;
+	sc->sc_bst = faa->faa_bst;
+	sc->sc_cid = device_unit(self);
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
+	}
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&sc->sc_cv, device_xname(self));
 
 	aprint_naive("\n");
-	aprint_normal(": I2C%d\n", loc->loc_port + 1);
+	aprint_normal(": I2C\n");
 
-	sc->sc_ih = intr_establish(loc->loc_intr, IPL_VM, IST_LEVEL|IST_MPSAFE,
-	    tegra_i2c_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt %d\n",
-		    loc->loc_intr);
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
-	aprint_normal_dev(self, "interrupting on irq %d\n", loc->loc_intr);
 
-	/* Recommended setting for standard mode */
-	tegra_car_periph_i2c_enable(loc->loc_port, 20400000);
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
+	    FDT_INTR_MPSAFE, tegra_i2c_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+
+	/*
+	 * Recommended setting for standard mode is to use an I2C source div
+	 * of 20 (Tegra K1 Technical Reference Manual, Table 137)
+	 */
+	fdtbus_reset_assert(sc->sc_rst);
+	error = clk_set_rate(sc->sc_clk, 20400000);
+	if (error) {
+		aprint_error_dev(self, "couldn't set frequency: %d\n", error);
+		return;
+	}
+	error = clk_enable(sc->sc_clk);
+	if (error) {
+		aprint_error_dev(self, "couldn't enable clock: %d\n", error);
+		return;
+	}
+	fdtbus_reset_deassert(sc->sc_rst);
 
 	tegra_i2c_init(sc);
 
@@ -134,8 +182,33 @@ tegra_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ic.ic_release_bus = tegra_i2c_release_bus;
 	sc->sc_ic.ic_exec = tegra_i2c_exec;
 
+	fdtbus_register_i2c_controller(self, phandle, &tegra_i2c_funcs);
+
+	devs = prop_dictionary_create();
+
+	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
+		address_cells = 1;
+
+	of_enter_i2c_devs(devs, faa->faa_phandle, address_cells * 4, 0);
+
 	iba.iba_tag = &sc->sc_ic;
+	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
+	if (iba.iba_child_devices != NULL) {
+		prop_object_retain(iba.iba_child_devices);
+	} else {
+		iba.iba_child_devices = prop_array_create();
+	}
+	prop_object_release(devs);
+
 	sc->sc_i2cdev = config_found_ia(self, "i2cbus", &iba, iicbus_print);
+}
+
+static i2c_tag_t
+tegra_i2c_get_tag(device_t dev)
+{
+	struct tegra_i2c_softc * const sc = device_private(dev);
+
+	return &sc->sc_ic;
 }
 
 static void
@@ -239,7 +312,8 @@ tegra_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	}
 
 	if (cmdlen > 0) {
-		error = tegra_i2c_write(sc, addr, cmdbuf, cmdlen, flags);
+		error = tegra_i2c_write(sc, addr, cmdbuf, cmdlen, flags,
+		    I2C_OP_READ_P(op) ? true : false);
 		if (error) {
 			goto done;
 		}
@@ -248,7 +322,7 @@ tegra_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	if (I2C_OP_READ_P(op)) {
 		error = tegra_i2c_read(sc, addr, buf, buflen, flags);
 	} else {
-		error = tegra_i2c_write(sc, addr, buf, buflen, flags);
+		error = tegra_i2c_write(sc, addr, buf, buflen, flags, false);
 	}
 
 done:
@@ -308,7 +382,7 @@ tegra_i2c_wait(struct tegra_i2c_softc *sc, int flags)
 
 static int
 tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
-    size_t buflen, int flags)
+    size_t buflen, int flags, bool repeat_start)
 {
 	const uint8_t *p = buf;
 	size_t n, resid = buflen;
@@ -322,7 +396,7 @@ tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 	I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG,
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTHDRSZ_REQ,
 		      I2C_IOPACKET_WORD0_PROTHDRSZ) |
-	    __SHIFTIN(sc->sc_port, I2C_IOPACKET_WORD0_CONTROLLERID) |
+	    __SHIFTIN(sc->sc_cid, I2C_IOPACKET_WORD0_CONTROLLERID) |
 	    __SHIFTIN(1, I2C_IOPACKET_WORD0_PKTID) |
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTOCOL_I2C,
 		      I2C_IOPACKET_WORD0_PROTOCOL) |
@@ -334,6 +408,7 @@ tegra_i2c_write(struct tegra_i2c_softc *sc, i2c_addr_t addr, const uint8_t *buf,
 	/* I2C Master Transmit Packet Header */
 	I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG,
 	    I2C_IOPACKET_XMITHDR_IE |
+	    (repeat_start ? I2C_IOPACKET_XMITHDR_REPEAT_STARTSTOP : 0) |
 	    __SHIFTIN((addr << 1), I2C_IOPACKET_XMITHDR_SLAVE_ADDR));
 
 	/* Transmit data */
@@ -379,7 +454,7 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 	I2C_WRITE(sc, I2C_TX_PACKET_FIFO_REG,
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTHDRSZ_REQ,
 		      I2C_IOPACKET_WORD0_PROTHDRSZ) |
-	    __SHIFTIN(sc->sc_port, I2C_IOPACKET_WORD0_CONTROLLERID) |
+	    __SHIFTIN(sc->sc_cid, I2C_IOPACKET_WORD0_CONTROLLERID) |
 	    __SHIFTIN(1, I2C_IOPACKET_WORD0_PKTID) |
 	    __SHIFTIN(I2C_IOPACKET_WORD0_PROTOCOL_I2C,
 		      I2C_IOPACKET_WORD0_PROTOCOL) |
@@ -417,21 +492,4 @@ tegra_i2c_read(struct tegra_i2c_softc *sc, i2c_addr_t addr, uint8_t *buf,
 	}
 
 	return tegra_i2c_wait(sc, flags);
-}
-
-void
-tegra_i2c_dvc_write(uint8_t addr, uint32_t data, size_t datalen)
-{
-	bus_space_tag_t bst = &armv7_generic_bs_tag;
-	bus_space_handle_t bsh;
-
-	bus_space_subregion(bst, tegra_apb_bsh, TEGRA_I2C5_OFFSET,
-	    TEGRA_I2C5_SIZE, &bsh);
-
-	bus_space_write_4(bst, bsh, I2C_CMD_ADDR0_REG, addr << 1);
-	bus_space_write_4(bst, bsh, I2C_CMD_DATA1_REG, data);
-	bus_space_write_4(bst, bsh, I2C_CNFG_REG,
-	    __SHIFTIN(datalen - 1, I2C_CNFG_LENGTH) |
-	    I2C_CNFG_NEW_MASTER_FSM |
-	    I2C_CNFG_SEND);
 }

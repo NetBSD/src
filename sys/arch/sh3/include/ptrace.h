@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.10.30.1 2015/09/22 12:05:51 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.10.30.2 2015/12/27 12:09:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -63,6 +63,9 @@
 #define PTRACE_REG_SET_PC(r, v)	r->r_spc = (v)
 #define PTRACE_REG_SP(r)	r->r_r15
 #define PTRACE_REG_INTV(r)	r->r_r0
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0xc3, 0xc3 })
+#define PTRACE_BREAKPOINT_SIZE	2
 
 #ifdef _KERNEL
 #ifdef _KERNEL_OPT

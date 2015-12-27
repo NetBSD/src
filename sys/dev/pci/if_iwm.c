@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.29.2.4 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.29.2.5 2015/12/27 12:09:50 skrll Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.41 2015/05/22 06:50:54 kettenis Exp	*/
 
 /*
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.4 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.29.2.5 2015/12/27 12:09:50 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -930,7 +930,7 @@ iwm_nic_lock(struct iwm_softc *sc)
 	    IWM_CSR_GP_CNTRL_REG_VAL_MAC_ACCESS_EN,
 	    IWM_CSR_GP_CNTRL_REG_FLAG_MAC_CLOCK_READY
 	     | IWM_CSR_GP_CNTRL_REG_FLAG_GOING_TO_SLEEP, 15000)) {
-	    	rv = 1;
+		rv = 1;
 	} else {
 		/* jolt */
 		IWM_WRITE(sc, IWM_CSR_RESET, IWM_CSR_RESET_REG_FLAG_FORCE_NMI);
@@ -1761,7 +1761,7 @@ iwm_nic_rx_init(struct iwm_softc *sc)
 	 * Thus sayeth el jefe (iwlwifi) via a comment:
 	 *
 	 * This value should initially be 0 (before preparing any
- 	 * RBs), should be 8 after preparing the first 8 RBs (for example)
+	 * RBs), should be 8 after preparing the first 8 RBs (for example)
 	 */
 	IWM_WRITE(sc, IWM_FH_RSCSR_CHNL0_WPTR, 8);
 
@@ -1936,7 +1936,7 @@ iwm_post_alive(struct iwm_softc *sc)
 	    IWM_APMG_PCIDEV_STT_VAL_L1_ACT_DIS);
 
  out:
- 	iwm_nic_unlock(sc);
+	iwm_nic_unlock(sc);
 	return error;
 }
 
@@ -5754,7 +5754,7 @@ iwm_init(struct ifnet *ifp)
 	}
 
 	/*
- 	 * Ok, firmware loaded and we are jogging
+	 * Ok, firmware loaded and we are jogging
 	 */
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -6603,9 +6603,6 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-#ifndef __HAVE_PCI_MSI_MSIX
-	pci_intr_handle_t ih;
-#endif
 	pcireg_t reg, memtype;
 	char intrbuf[PCI_INTRSTR_LEN];
 	const char *intrstr;
@@ -6655,7 +6652,6 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Install interrupt handler. */
-#ifdef __HAVE_PCI_MSI_MSIX
 	error = pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0);
 	if (error != 0) {
 		aprint_error_dev(self, "can't allocate interrupt\n");
@@ -6665,14 +6661,6 @@ iwm_attach(device_t parent, device_t self, void *aux)
 	    sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish(sc->sc_pct, sc->sc_pihp[0], IPL_NET,
 	    iwm_intr, sc);
-#else	/* !__HAVE_PCI_MSI_MSIX */
-	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(self, "can't map interrupt\n");
-		return;
-	}
-	intrstr = pci_intr_string(sc->sc_pct, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish(sc->sc_pct, ih, IPL_NET, iwm_intr, sc);
-#endif	/* __HAVE_PCI_MSI_MSIX */
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "can't establish interrupt");
 		if (intrstr != NULL)

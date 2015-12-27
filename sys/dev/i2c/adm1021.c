@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.8 2012/10/27 17:18:17 chs Exp $ */
+/*	$NetBSD: adm1021.c,v 1.8.14.1 2015/12/27 12:09:49 skrll Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.8 2012/10/27 17:18:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.8.14.1 2015/12/27 12:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,10 +83,15 @@ admtemp_match(device_t parent, cfdata_t match, void *aux)
 	} else {
 		/*
 		 * Direct config - match via the list of compatible
-		 * hardware.
+		 * hardware or simply match the device name.
 		 */
-		if (iic_compat_match(ia, admtemp_compats))
-			return 1;
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, admtemp_compats))
+				return 1;
+		} else {
+			if (strcmp(ia->ia_name, "admtemp") == 0)
+				return 1;
+		}
 	}
 
 	return 0;
@@ -158,8 +163,10 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor[ADMTEMP_EXT].units = ENVSYS_STEMP;
 	sc->sc_sensor[ADMTEMP_INT].state = ENVSYS_SINVALID;
 	sc->sc_sensor[ADMTEMP_EXT].state = ENVSYS_SINVALID;
-	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "internal",sizeof("internal"));
-	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "external",sizeof("external"));
+	strlcpy(sc->sc_sensor[ADMTEMP_INT].desc, "internal",
+	    sizeof(sc->sc_sensor[ADMTEMP_INT].desc));
+	strlcpy(sc->sc_sensor[ADMTEMP_EXT].desc, "external",
+	    sizeof(sc->sc_sensor[ADMTEMP_EXT].desc));
 	sc->sc_sme = sysmon_envsys_create();
 	if (sysmon_envsys_sensor_attach(
 	    sc->sc_sme, &sc->sc_sensor[ADMTEMP_INT])) {

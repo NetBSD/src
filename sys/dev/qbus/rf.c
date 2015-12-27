@@ -1,4 +1,4 @@
-/*	$NetBSD: rf.c,v 1.29.4.2 2015/06/06 14:40:12 skrll Exp $	*/
+/*	$NetBSD: rf.c,v 1.29.4.3 2015/12/27 12:09:58 skrll Exp $	*/
 /*
  * Copyright (c) 2002 Jochen Kunz.
  * All rights reserved.
@@ -36,7 +36,7 @@ TODO:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.29.4.2 2015/06/06 14:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf.c,v 1.29.4.3 2015/12/27 12:09:58 skrll Exp $");
 
 /* autoconfig stuff */
 #include <sys/param.h>
@@ -1101,7 +1101,7 @@ rfioctl(dev_t dev, u_long cmd, void *data, int fflag, struct lwp *l)
 		return error;
 
 	switch (cmd) {
-	/* get and set disklabel; DIOCGPART used internally */
+	/* get and set disklabel; DIOCGPARTINFO used internally */
 	case DIOCSDINFO: /* set */
 		return(0);
 	case DIOCWDINFO: /* set, update disk */

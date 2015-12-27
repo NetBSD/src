@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.h,v 1.24.42.1 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: msg.h,v 1.24.42.2 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@ __END_DECLS
 
 struct proc;
 
-void	msginit(void);
+void	msginit(struct sysctllog **);
 int	msgfini(void);
 int	msgctl1(struct lwp *, int, int, struct msqid_ds *);
 int	msgsnd1(struct lwp *, int, const char *, size_t, int, size_t,

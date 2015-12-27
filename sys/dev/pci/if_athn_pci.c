@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_pci.c,v 1.10 2014/03/29 19:28:24 christos Exp $	*/
+/*	$NetBSD: if_athn_pci.c,v 1.10.8.1 2015/12/27 12:09:50 skrll Exp $	*/
 /*	$OpenBSD: if_athn_pci.c,v 1.11 2011/01/08 10:02:32 damien Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.10 2014/03/29 19:28:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_pci.c,v 1.10.8.1 2015/12/27 12:09:50 skrll Exp $");
 
 #include "opt_inet.h"
 

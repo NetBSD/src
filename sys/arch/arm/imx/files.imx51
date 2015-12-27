@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx51,v 1.11.4.2 2015/06/06 14:39:55 skrll Exp $
+#	$NetBSD: files.imx51,v 1.11.4.3 2015/12/27 12:09:30 skrll Exp $
 #
 # Configuration info for the Freescale i.MX5x
 #
@@ -76,10 +76,13 @@ file	arch/arm/imx/imx51_iomux.c		imxiomux
 # defparam opt_imx50_epdc.h		EPDC_DEBUG
 
 # IPU v3 controller
-device	ipu : bus_dma_generic, wsemuldisplaydev, rasops16, rasops8, rasops4, rasops_rotation, vcons
-file	arch/arm/imx/imx51_ipuv3.c	ipu	 needs-flag
-defflag	opt_imx51_ipuv3.h		IMXIPUCONSOLE
+device	ipu { }
+file	arch/arm/imx/imx51_ipuv3.c	imx_ipuv3	needs-flag
 defparam opt_imx51_ipuv3.h		IPUV3_DEBUG
+
+# Framebuffer console
+attach	genfb at ipu with imx_genfb
+file	arch/arm/imx/imx_genfb.c	imx_genfb
 
 # iMX M3IF - Multi Master Memory Interface
 # iMX ESDCTL/MDDRC - Enhanced SDRAM/LPDDR memory controller

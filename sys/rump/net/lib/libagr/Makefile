@@ -1,9 +1,11 @@
-#	$NetBSD: Makefile,v 1.2.6.1 2015/09/22 12:06:16 skrll Exp $
+#	$NetBSD: Makefile,v 1.2.6.2 2015/12/27 12:10:17 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../net/agr
 
 LIB=	rumpnet_agr
+COMMENT=Link aggregation pseudo interface (L2 trunking)
+
 IOCONF=	AGR.ioconf
 SRCS=	if_agr.c if_agrsoftc.c if_agrsubr.c if_agrtimer.c if_agrmonitor.c \
 	if_agrether.c if_agrether_hash.c ieee8023ad_marker.c ieee8023ad_lacp.c \

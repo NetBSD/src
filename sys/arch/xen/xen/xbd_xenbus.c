@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.66.4.3 2015/09/22 12:05:54 skrll Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.66.4.4 2015/12/27 12:09:45 skrll Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.3 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.66.4.4 2015/12/27 12:09:45 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -652,9 +652,9 @@ again:
 	for (i = sc->sc_ring.rsp_cons; i != resp_prod; i++) {
 		blkif_response_t *rep = RING_GET_RESPONSE(&sc->sc_ring, i);
 		struct xbd_req *xbdreq = &sc->sc_reqs[rep->id];
+		bp = xbdreq->req_bp;
 		DPRINTF(("xbd_handler(%p): b_bcount = %ld\n",
 		    xbdreq->req_bp, (long)bp->b_bcount));
-		bp = xbdreq->req_bp;
 		if (rep->operation == BLKIF_OP_FLUSH_DISKCACHE) {
 			xbdreq->req_sync.s_error = rep->status;
 			xbdreq->req_sync.s_done = 1;

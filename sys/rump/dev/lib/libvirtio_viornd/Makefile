@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2014/11/06 00:45:58 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2015/12/27 12:10:12 skrll Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -6,9 +6,10 @@ RUMPTOP=${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci
 
 LIB=	rumpdev_virtio_viornd
-IOCONF=	VIRTIO_VIORND.ioconf
+COMMENT=VirtIO entropy driver
 
-SRCS=	viornd_at_virtio.c
+IOCONF=	VIRTIO_VIORND.ioconf
+RUMP_COMPONENT=ioconf
 
 SRCS+=	viornd.c
 

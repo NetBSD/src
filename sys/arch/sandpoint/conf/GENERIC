@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.88.2.1 2015/09/22 12:05:50 skrll Exp $
+# $NetBSD: GENERIC,v 1.88.2.2 2015/12/27 12:09:41 skrll Exp $
 #
 # machine description file for GENERIC NAS
 # 
@@ -22,7 +22,7 @@ include 	"arch/sandpoint/conf/std.sandpoint"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.88.2.1 $"
+#ident 		"GENERIC-$Revision: 1.88.2.2 $"
 
 maxusers	32
 
@@ -173,9 +173,9 @@ config		netbsd	root on ? type ?
 mainbus0	at root
 cpu*		at mainbus0
 
-cfi0		at mainbus0
-nor*		at cfi?
-flash*		at nor?
+#cfi0		at mainbus0
+#nor*		at cfi?
+#flash*		at nor?
 
 nhpow0		at mainbus0			# NH230/231 power,LED,buttons
 
@@ -189,6 +189,7 @@ com0		at eumb? unit 0			# console at 0x4500
 satmgr0 	at eumb? unit 1 		# satmgr at 0x4600
 ociic*		at eumb?
 iic*		at ociic?
+lmtemp*		at iic? addr 0x48		# LM75 temperature sensor
 rs5c372rtc*	at iic? addr 0x32
 s390rtc*	at iic? addr 0x30
 pcf8563rtc*	at iic? addr 0x51
@@ -323,7 +324,6 @@ pseudo-device	bpfilter		# packet filter
 #pseudo-device	pf			# PF packet filter
 #pseudo-device	pflog			# PF log if
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	vlan			# IEEE 802.1q encapsulation
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel

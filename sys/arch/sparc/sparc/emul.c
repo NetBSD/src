@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.17 2012/05/01 09:40:15 martin Exp $	*/
+/*	$NetBSD: emul.c,v 1.17.16.1 2015/12/27 12:09:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.17 2012/05/01 09:40:15 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.17.16.1 2015/12/27 12:09:43 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,17 +190,17 @@ muldiv(struct trapframe *tf,
 		tf->tf_psr &= ~PSR_ICC;
 
 		if (*rd == 0)
-			tf->tf_psr |= PSR_Z << 20;
+			tf->tf_psr |= PSR_Z;
 		else {
 			if (op.bits.sgn && *rd < 0)
-				tf->tf_psr |= PSR_N << 20;
+				tf->tf_psr |= PSR_N;
 			if (op.bits.div) {
 				if (*rd * *rs2 != *rs1)
-					tf->tf_psr |= PSR_O << 20;
+					tf->tf_psr |= PSR_O;
 			}
 			else {
 				if (*rd / *rs2 != *rs1)
-					tf->tf_psr |= PSR_O << 20;
+					tf->tf_psr |= PSR_O;
 			}
 		}
 	}

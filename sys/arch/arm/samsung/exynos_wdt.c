@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_wdt.c,v 1.5 2014/09/29 14:47:52 reinoud Exp $	*/
+/*	$NetBSD: exynos_wdt.c,v 1.5.2.1 2015/12/27 12:09:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "exynos_wdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.5 2014/09/29 14:47:52 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.5.2.1 2015/12/27 12:09:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,20 +44,20 @@ __KERNEL_RCSID(0, "$NetBSD: exynos_wdt.c,v 1.5 2014/09/29 14:47:52 reinoud Exp $
 
 #include <dev/sysmon/sysmonvar.h>
 
-#include <arm/samsung/exynos_io.h>
 #include <arm/samsung/exynos_reg.h>
 #include <arm/samsung/exynos_var.h>
 
+#include <dev/fdt/fdtvar.h>
 
 #if NEXYNOS_WDT > 0
 static int exynos_wdt_match(device_t, cfdata_t, void *);
 static void exynos_wdt_attach(device_t, device_t, void *);
 
 struct exynos_wdt_softc {
-	struct sysmon_wdog sc_smw;
 	device_t sc_dev;
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_wdog_bsh;
+	struct sysmon_wdog sc_smw;
 	u_int sc_wdog_period;
 	u_int sc_wdog_clock_select;
 	u_int sc_wdog_prescaler;
@@ -68,7 +68,7 @@ struct exynos_wdt_softc {
 };
 
 #ifndef EXYNOS_WDT_PERIOD_DEFAULT
-#define	EXYNOS_WDT_PERIOD_DEFAULT	12
+#define	EXYNOS_WDT_PERIOD_DEFAULT	60
 #endif
 
 CFATTACH_DECL_NEW(exynos_wdt, sizeof(struct exynos_wdt_softc),
@@ -90,7 +90,10 @@ exynos_wdt_wdog_write(struct exynos_wdt_softc *sc, bus_size_t o, uint32_t v)
 static int
 exynos_wdt_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	const char * const compatible[] = { "samsung,s3c2410-wdt", NULL };
+	struct fdt_attach_args * const faa = aux;
+
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static int
@@ -173,29 +176,38 @@ static void
 exynos_wdt_attach(device_t parent, device_t self, void *aux)
 {
         struct exynos_wdt_softc * const sc = device_private(self);
-	struct exyo_attach_args * const exyo = aux;
-	prop_dictionary_t dict = device_properties(self);
+//	prop_dictionary_t dict = device_properties(self);
+	struct fdt_attach_args * const faa = aux;
+	bus_addr_t addr;
+	bus_size_t size;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
 
 	sc->sc_dev = self;
-	sc->sc_bst = exyo->exyo_core_bst;
+	sc->sc_bst = faa->faa_bst;
 
-	if (bus_space_subregion(sc->sc_bst, exyo->exyo_core_bsh,
-	    exyo->exyo_loc.loc_offset, exyo->exyo_loc.loc_size, &sc->sc_wdog_bsh)) {
-		aprint_error(": failed to map registers\n");
+	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_wdog_bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
 		return;
 	}
 
 	/*
 	 * This runs at the Exynos Pclk.
 	 */
-	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
-
+//	prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq);
+	sc->sc_freq = 12000000;	/* MJF: HACK hardwire for now */
+		/* Need to figure out how to get freq from dtb */
 	sc->sc_wdog_wtcon = exynos_wdt_wdog_read(sc, EXYNOS_WDT_WTCON);
 	sc->sc_wdog_armed = (sc->sc_wdog_wtcon & WTCON_ENABLE)
 	    && (sc->sc_wdog_wtcon & WTCON_RESET_ENABLE);
 	if (sc->sc_wdog_armed) {
 		sc->sc_wdog_prescaler =
-		    __SHIFTOUT(sc->sc_wdog_wtcon, WTCON_PRESCALER) + 1;
+		    __SHIFTOUT(sc->sc_wdog_wtcon, WTCON_PRESCALER);
 		sc->sc_wdog_clock_select =
 		    __SHIFTOUT(sc->sc_wdog_wtcon, WTCON_CLOCK_SELECT);
 		sc->sc_freq /= sc->sc_wdog_prescaler;
@@ -256,7 +268,7 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smw.smw_period = sc->sc_wdog_period;
 
 	if (sc->sc_wdog_armed) {
-		int error = sysmon_wdog_setmode(&sc->sc_smw, WDOG_MODE_KTICKLE,
+		error = sysmon_wdog_setmode(&sc->sc_smw, WDOG_MODE_KTICKLE,
 		    sc->sc_wdog_period);
 		if (error)
 			aprint_error_dev(self,
@@ -268,7 +280,7 @@ exynos_wdt_attach(device_t parent, device_t self, void *aux)
 void
 exynos_wdt_reset(void)
 {
-	bus_space_tag_t bst = &exynos_bs_tag;
+	bus_space_tag_t bst = &armv7_generic_bs_tag;
 	bus_space_handle_t bsh = exynos_wdt_bsh;
 
 	(void) splhigh();

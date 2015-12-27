@@ -1,15 +1,20 @@
-#	$NetBSD: Makefile.rumpkerncomp,v 1.10.6.1 2015/04/06 15:18:29 skrll Exp $
+#	$NetBSD: Makefile.rumpkerncomp,v 1.10.6.2 2015/12/27 12:10:15 skrll Exp $
 #
 
 .include <bsd.own.mk>
 
 RUMPKERNCOMPS=	crypto sysproxy tty z
+RUMPSYSEMUS=	sys_cygwin sys_linux sys_sunos
 
-.if ${MKSLJIT} != "no"
+.if make(rumpdescribe)
+RUMPKERNCOMPS+=	${RUMPSYSEMUS}
+.endif
+
+.if ${MKSLJIT} != "no" || make(rumpdescribe)
 RUMPKERNCOMPS+=	sljit
 .endif
 
-.if ${MKZFS} != "no"
+.if ${MKZFS} != "no" || make(rumpdescribe)
 RUMPKERNCOMPS+=    solaris
 .endif
 

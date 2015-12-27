@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.4.74.1 2015/09/22 12:05:53 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.4.74.2 2015/12/27 12:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -48,3 +48,6 @@
 #define PTRACE_REG_SET_PC(r, v)	(r)->pc = (v)
 #define PTRACE_REG_SP(r)	(r)->sp
 #define PTRACE_REG_INTRV(r)	(r)->r0
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x03 })
+#define PTRACE_BREAKPOINT_SIZE	1

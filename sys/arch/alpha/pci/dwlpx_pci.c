@@ -1,4 +1,4 @@
-/* $NetBSD: dwlpx_pci.c,v 1.18 2012/02/06 02:14:14 matt Exp $ */
+/* $NetBSD: dwlpx_pci.c,v 1.18.24.1 2015/12/27 12:09:28 skrll Exp $ */
 
 /*
  * Copyright (c) 1997 by Matthew Jacob
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.18 2012/02/06 02:14:14 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwlpx_pci.c,v 1.18.24.1 2015/12/27 12:09:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,9 @@ dwlpx_conf_read(void *cpv, pcitag_t tag, int offset)
 	int secondary, i, s = 0;
 	uint32_t rvp;
 
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return (data);
+
 	if (ccp == NULL) {
 		panic("NULL ccp in dwlpx_conf_read");
 	}
@@ -190,6 +193,9 @@ dwlpx_conf_write(void *cpv, pcitag_t tag, int offset, pcireg_t data)
 	unsigned long paddr;
 	int secondary, i, s = 0;
 	uint32_t rvp;
+
+	if ((unsigned int)offset >= PCI_CONF_SIZE)
+		return;
 
 	if (ccp == NULL) {
 		panic("NULL ccp in dwlpx_conf_write");

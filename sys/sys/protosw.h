@@ -1,4 +1,4 @@
-/*	$NetBSD: protosw.h,v 1.60.4.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: protosw.h,v 1.60.4.3 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -119,6 +119,8 @@ struct protosw {
 #define PR_PURGEIF	0x100		/* might store struct ifnet pointer;
 					   pr_purgeif() must be called on ifnet
 					   deletion */
+#define	PR_ADDR_OPT	0x200		/* Allow address during delivery */
+
 
 /*
  * The arguments to usrreq are:

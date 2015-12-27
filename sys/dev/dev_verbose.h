@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_verbose.h,v 1.1 2014/09/21 14:30:22 christos Exp $ */
+/*	$NetBSD: dev_verbose.h,v 1.1.2.1 2015/12/27 12:09:48 skrll Exp $ */
 
 /*
  * Redistribution and use in source and binary forms, with or without
@@ -129,7 +129,7 @@ tag ## _findproduct_stub(char *buf, size_t len, uint16_t vendor,	\
 const char *(*tag ## _findvendor)(char *, size_t, uint16_t) = 		\
     tag ## _findvendor_stub;						\
 const char *(*tag ## _findproduct)(char *, size_t, uint16_t, uint16_t) =\
-    tag ## _findproduct_stub;						\
+    tag ## _findproduct_stub						\
 
 #else
 
@@ -138,7 +138,7 @@ DEV_VERBOSE_COMMON_DEFINE(tag)						\
 const char *(*tag ## _findvendor)(char *, size_t, uint16_t) = 		\
     tag ## _findvendor_real;						\
 const char *(*tag ## _findproduct)(char *, size_t, uint16_t, uint16_t) =\
-    tag ## _findproduct_real;						\
+    tag ## _findproduct_real						\
 
 #endif /* _KERNEL */
 

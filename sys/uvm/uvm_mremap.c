@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mremap.c,v 1.17 2011/06/12 03:36:03 rmind Exp $	*/
+/*	$NetBSD: uvm_mremap.c,v 1.17.30.1 2015/12/27 12:10:19 skrll Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2009 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.17 2011/06/12 03:36:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mremap.c,v 1.17.30.1 2015/12/27 12:10:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -196,7 +196,8 @@ uvm_mremap(struct vm_map *oldmap, vaddr_t oldva, vsize_t oldsize,
 	if (!fixed) {
 		KASSERT(&newproc->p_vmspace->vm_map == newmap);
 		newva = newproc->p_emul->e_vm_default_addr(newproc,
-		    (vaddr_t)newproc->p_vmspace->vm_daddr, newsize);
+		    (vaddr_t)newproc->p_vmspace->vm_daddr, newsize,
+		    newproc->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 	}
 	dstva = newva;
 	if (!uvm_map_reserve(newmap, newsize, oldva, align, &dstva, 

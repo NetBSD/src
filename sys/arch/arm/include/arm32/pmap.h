@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.137.2.3 2015/09/22 12:05:37 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.137.2.4 2015/12/27 12:09:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -80,6 +80,7 @@
 #include <arm/cpufunc.h>
 #include <arm/locore.h>
 #include <uvm/uvm_object.h>
+#include <uvm/pmap/pmap_pvt.h>
 #endif
 
 #ifdef ARM_MMU_EXTENDED
@@ -1066,11 +1067,11 @@ paddr_t	pmap_unmap_poolpage(vaddr_t);
 #define PMAP_UNMAP_POOLPAGE(va)	pmap_unmap_poolpage(va)
 #endif
 
-/*
- * pmap-specific data store in the vm_page structure.
- */
-#define	__HAVE_VM_PAGE_MD
-struct vm_page_md {
+#define __HAVE_PMAP_PV_TRACK	1
+
+void pmap_pv_protect(paddr_t, vm_prot_t);
+
+struct pmap_page {
 	SLIST_HEAD(,pv_entry) pvh_list;		/* pv_entry list */
 	int pvh_attrs;				/* page attributes */
 	u_int uro_mappings;
@@ -1079,10 +1080,24 @@ struct vm_page_md {
 		u_short s_mappings[2];	/* Assume kernel count <= 65535 */
 		u_int i_mappings;
 	} k_u;
-#define	kro_mappings	k_u.s_mappings[0]
-#define	krw_mappings	k_u.s_mappings[1]
-#define	k_mappings	k_u.i_mappings
 };
+
+/*
+ * pmap-specific data store in the vm_page structure.
+ */
+#define	__HAVE_VM_PAGE_MD
+struct vm_page_md {
+	struct pmap_page pp;
+#define	pvh_list	pp.pvh_list
+#define	pvh_attrs	pp.pvh_attrs
+#define	uro_mappings	pp.uro_mappings
+#define	urw_mappings	pp.urw_mappings
+#define	kro_mappings	pp.k_u.s_mappings[0]
+#define	krw_mappings	pp.k_u.s_mappings[1]
+#define	k_mappings	pp.k_u.i_mappings
+};
+
+#define PMAP_PAGE_TO_MD(ppage) container_of((ppage), struct vm_page_md, pp)
 
 /*
  * Set the default color of each page.

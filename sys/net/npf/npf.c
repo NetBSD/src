@@ -1,4 +1,4 @@
-/*	$NetBSD: npf.c,v 1.22.4.1 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: npf.c,v 1.22.4.2 2015/12/27 12:10:07 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009-2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.22.4.1 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.22.4.2 2015/12/27 12:10:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -54,12 +54,26 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.22.4.1 2015/09/22 12:06:11 skrll Exp $");
 #include "npf_impl.h"
 #include "npf_conn.h"
 
+#ifndef _MODULE
+#include "opt_modular.h"
+#endif
+
 #include "ioconf.h"
 
 /*
  * Module and device structures.
  */
+#ifndef _MODULE
+/*
+ * Modular kernels load drivers too early, and we need percpu to be inited
+ * So we make this misc; a better way would be to have early boot and late
+ * boot drivers.
+ */
+MODULE(MODULE_CLASS_MISC, npf, NULL);
+#else
+/* This module autoloads via /dev/npf so it needs to be a driver */
 MODULE(MODULE_CLASS_DRIVER, npf, NULL);
+#endif
 
 static int	npf_fini(void);
 static int	npf_dev_open(dev_t, int, int, lwp_t *);
@@ -91,10 +105,7 @@ const struct cdevsw npf_cdevsw = {
 static int
 npf_init(void)
 {
-#ifdef _MODULE
-	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
-#endif
-	int error = 0;
+	KASSERT(npf_stats_percpu == NULL);
 
 	npf_stats_percpu = percpu_alloc(NPF_STATS_SIZE);
 	npf_sysctl = NULL;
@@ -112,14 +123,18 @@ npf_init(void)
 	npf_config_init();
 
 #ifdef _MODULE
+	devmajor_t bmajor = NODEVMAJOR, cmajor = NODEVMAJOR;
+
 	/* Attach /dev/npf device. */
-	error = devsw_attach("npf", NULL, &bmajor, &npf_cdevsw, &cmajor);
+	int error = devsw_attach("npf", NULL, &bmajor, &npf_cdevsw, &cmajor);
 	if (error) {
 		/* It will call devsw_detach(), which is safe. */
 		(void)npf_fini();
 	}
-#endif
 	return error;
+#else
+	return 0;
+#endif
 }
 
 static int
@@ -177,8 +192,7 @@ npf_modcmd(modcmd_t cmd, void *arg)
 void
 npfattach(int nunits)
 {
-
-	/* Void. */
+	/* Nothing */
 }
 
 static int

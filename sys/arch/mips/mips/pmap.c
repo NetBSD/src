@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.214.4.1 2015/09/22 12:05:47 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.214.4.2 2015/12/27 12:09:39 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214.4.1 2015/09/22 12:05:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214.4.2 2015/12/27 12:09:39 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -132,9 +132,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.214.4.1 2015/09/22 12:05:47 skrll Exp $")
 #include <sys/atomic.h>
 #include <sys/mutex.h>
 #include <sys/atomic.h>
-#ifdef SYSVSHM
-#include <sys/shm.h>
-#endif
 #include <sys/socketvar.h>	/* XXX: for sock_loan_thresh */
 
 #include <uvm/uvm.h>
@@ -513,9 +510,6 @@ pmap_bootstrap(void)
 	}
 #endif
 
-#ifdef SYSVSHM
-	Sysmapsize += shminfo.shmall;
-#endif
 #ifdef KSEG2IOBUFSIZE
 	Sysmapsize += (KSEG2IOBUFSIZE >> PGSHIFT);
 #endif

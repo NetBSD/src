@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.45.4.1 2015/06/06 14:40:12 skrll Exp $ */
+/* $NetBSD: piixpm.c,v 1.45.4.2 2015/12/27 12:09:57 skrll Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.20 2006/02/27 08:25:02 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.45.4.1 2015/06/06 14:40:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.45.4.2 2015/12/27 12:09:57 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,6 +257,7 @@ attach_i2c:
 		sc->sc_i2c_device[i] = NULL;
 
 	flags = 0;
+	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	piixpm_rescan(self, "i2cbus", &flags);
 }
 
@@ -271,7 +272,6 @@ piixpm_rescan(device_t self, const char *ifattr, const int *flags)
 		return 0;
 
 	/* Attach I2C bus */
-	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	for (i = 0; i < sc->sc_numbusses; i++) {
 		if (sc->sc_i2c_device[i])

@@ -1,4 +1,4 @@
-/*	$NetBSD: scif.c,v 1.65 2014/11/15 19:20:01 christos Exp $ */
+/*	$NetBSD: scif.c,v 1.65.2.1 2015/12/27 12:09:42 skrll Exp $ */
 
 /*-
  * Copyright (C) 1999 T.Horiuchi and SAITOH Masanobu.  All rights reserved.
@@ -93,7 +93,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.65 2014/11/15 19:20:01 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scif.c,v 1.65.2.1 2015/12/27 12:09:42 skrll Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_scif.h"
@@ -223,6 +223,10 @@ const struct cdevsw scif_cdevsw = {
 	.d_flag = D_TTY
 };
 
+#ifndef SCIFCONSOLE
+#define SCIFCONSOLE	0
+#endif
+int scifconsole = SCIFCONSOLE;	/* patchable */
 
 /* struct tty */
 static void scifstart(struct tty *);
@@ -1424,11 +1428,10 @@ scifcnprobe(struct consdev *cp)
 
 	/* Initialize required fields. */
 	cp->cn_dev = makedev(maj, 0);
-#ifdef SCIFCONSOLE
-	cp->cn_pri = CN_REMOTE;
-#else
-	cp->cn_pri = CN_NORMAL;
-#endif
+	if (scifconsole)
+		cp->cn_pri = CN_REMOTE;
+	else
+		cp->cn_pri = CN_NORMAL;
 }
 
 void

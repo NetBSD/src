@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2014/03/18 18:20:41 riastradh Exp $
+#	$NetBSD: Makefile,v 1.2.10.1 2015/12/27 12:09:35 skrll Exp $
 
 INCSDIR= /usr/include/evbcf
 
@@ -7,7 +7,7 @@ INCS=	ansi.h aout_machdep.h asm.h autoconf.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \
-	float.h frame.h \
+	fenv.h float.h frame.h \
 	ieee.h ieeefp.h \
 	int_const.h int_fmtio.h int_limits.h int_mwgwtypes.h int_types.h \
 	intr.h \

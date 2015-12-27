@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bgevar.h,v 1.17.6.2 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: if_bgevar.h,v 1.17.6.3 2015/12/27 12:09:50 skrll Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -266,9 +266,7 @@ struct bge_softc {
 	bus_space_tag_t		bge_apetag;
 	bus_size_t		bge_apesize;
 	void			*bge_intrhand;
-#ifdef __HAVE_PCI_MSI_MSIX
 	pci_intr_handle_t	*bge_pihp;
-#endif
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
 

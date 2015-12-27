@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.3.2.1 2015/04/06 15:18:15 skrll Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.3.2.2 2015/12/27 12:10:00 skrll Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.3.2.1 2015/04/06 15:18:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.3.2.2 2015/12/27 12:10:00 skrll Exp $");
 
 #include <linux/console.h>
 #include <linux/module.h>
@@ -62,6 +62,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.3.2.1 2015/04/06 15:18:15 skrll Ex
 #include "nouveau_fbcon.h"
 #include "nouveau_fence.h"
 #include "nouveau_debugfs.h"
+#include "nouveau_ttm.h"
 
 MODULE_PARM_DESC(config, "option string to pass to driver core");
 char *nouveau_config;
@@ -87,6 +88,10 @@ module_param_named(runpm, nouveau_runtime_pm, int, 0400);
 static struct drm_driver driver;
 #ifdef __NetBSD__
 struct drm_driver *const nouveau_drm_driver = &driver;
+
+/* XXX Kludge for the non-GEM GEM that nouveau uses.  */
+static const struct uvm_pagerops nouveau_gem_uvm_ops;
+
 #endif
 
 static u64
@@ -609,8 +614,13 @@ fail_display:
 
 int nouveau_pmops_suspend(struct device *dev)
 {
+#ifdef __NetBSD__
+	struct drm_device *drm_dev = device_private(dev);
+	struct pci_dev *pdev __unused = drm_dev->pdev;
+#else
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
+#endif
 	int ret;
 
 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_OFF ||
@@ -666,8 +676,13 @@ nouveau_do_resume(struct drm_device *dev)
 
 int nouveau_pmops_resume(struct device *dev)
 {
+#ifdef __NetBSD__
+	struct drm_device *drm_dev = device_private(dev);
+	struct pci_dev *pdev __unused = drm_dev->pdev;
+#else
 	struct pci_dev *pdev = to_pci_dev(dev);
 	struct drm_device *drm_dev = pci_get_drvdata(pdev);
+#endif
 	int ret;
 
 	if (drm_dev->switch_power_state == DRM_SWITCH_POWER_OFF ||
@@ -880,7 +895,11 @@ driver = {
 
 	.ioctls = nouveau_ioctls,
 	.num_ioctls = ARRAY_SIZE(nouveau_ioctls),
-#ifndef __NetBSD__
+#ifdef __NetBSD__
+	.fops = NULL,
+	.mmap_object = &nouveau_ttm_mmap_object,
+	.gem_uvm_ops = &nouveau_gem_uvm_ops,
+#else
 	.fops = &nouveau_driver_fops,
 #endif
 

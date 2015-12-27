@@ -230,7 +230,6 @@ void	cpufunc_domains		(u_int);
 u_int	cpufunc_faultstatus	(void);
 u_int	cpufunc_faultaddress	(void);
 
-#define tlb_flush	cpu_tlb_flushID
 #define setttb		cpu_setttb
 #define drain_writebuf	cpu_drain_writebuf
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.115.2.1 2015/04/06 15:18:19 skrll Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.115.2.2 2015/12/27 12:10:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.115.2.1 2015/04/06 15:18:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.115.2.2 2015/12/27 12:10:04 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -269,8 +269,22 @@ puffs_vfsop_mount(struct mount *mp, const char *path, void *data,
 
 	/* XXX: check parameters */
 	pmp->pmp_root_cookie = args->pa_root_cookie;
+	switch (args->pa_root_vtype) {
+	case VNON: case VREG: case VDIR: case VBLK:
+	case VCHR: case VLNK: case VSOCK: case VFIFO:
+		break;
+	default:
+		error = EINVAL;
+		goto out;
+	}
 	pmp->pmp_root_vtype = args->pa_root_vtype;
+
+	if (args->pa_root_vsize < 0) {
+		error = EINVAL;
+		goto out;
+	}
 	pmp->pmp_root_vsize = args->pa_root_vsize;
+
 	pmp->pmp_root_rdev = args->pa_root_rdev;
 	pmp->pmp_docompat = args->pa_time32;
 

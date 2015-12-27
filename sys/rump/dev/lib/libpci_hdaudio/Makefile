@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2015/04/06 15:18:25 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2015/12/27 12:10:10 skrll Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -8,6 +8,7 @@ RUMPTOP=${TOPRUMP}
 .include "${NETBSDSRCDIR}/sys/modules/hdaudio_pci/Makefile.inc"
 
 LIB=	rumpdev_pci_hdaudio
+COMMENT=HDaudio PCI attachment
    
 .include "${RUMPTOP}/Makefile.rump"
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_exec_aout.c,v 1.18 2009/08/15 23:39:35 matt Exp $	*/
+/*	$NetBSD: sunos_exec_aout.c,v 1.18.40.1 2015/12/27 12:09:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 1993 Theo de Raadt
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.18 2009/08/15 23:39:35 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_exec_aout.c,v 1.18.40.1 2015/12/27 12:09:47 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +71,8 @@ exec_sunos_aout_makecmds(struct lwp *l, struct exec_package *epp)
 	struct sunos_exec *sunmag = epp->ep_hdr;
 	int error = ENOEXEC;
 
+	if (epp->ep_hdrvalid < sizeof(struct sunos_exec))
+		return ENOEXEC;
 	if (!SUNOS_M_NATIVE(sunmag->a_machtype))
 		return (ENOEXEC);
 

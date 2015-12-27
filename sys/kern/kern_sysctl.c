@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sysctl.c,v 1.254.2.2 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: kern_sysctl.c,v 1.254.2.3 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.254.2.2 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sysctl.c,v 1.254.2.3 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_defcorename.h"
@@ -798,7 +798,7 @@ sysctl_create(SYSCTLFN_ARGS)
 
 	/*
 	 * the name must be only alphanumerics or - or _, longer than
-	 * 0 bytes and less that SYSCTL_NAMELEN
+	 * 0 bytes and less than SYSCTL_NAMELEN
 	 */
 	nsz = 0;
 	while (nsz < SYSCTL_NAMELEN && nnode.sysctl_name[nsz] != '\0') {

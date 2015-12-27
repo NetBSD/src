@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.2.2 2015/06/06 14:40:27 skrll Exp $
+#	$NetBSD: Makefile,v 1.1.2.3 2015/12/27 12:10:10 skrll Exp $
 #
 
 RUMPTOP=${TOPRUMP}
@@ -6,8 +6,11 @@ RUMPTOP=${TOPRUMP}
 .PATH:	${RUMPTOP}/../dev/pci
 
 LIB=	rumpdev_pci_auich
+COMMENT=AC97 Intel Audio driver
+
 IOCONF=	PCI_AUICH.ioconf
-SRCS=	auich_at_pci.c
+RUMP_COMPONENT=ioconf
+
 SRCS+=	auich.c
 
 CPPFLAGS+= -I${RUMPTOP}/librump/rumpkern -I${RUMPTOP}/../dev

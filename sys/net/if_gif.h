@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.19 2008/11/12 12:36:28 ad Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.19.44.1 2015/12/27 12:10:06 skrll Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -38,6 +38,8 @@
 #define _NET_IF_GIF_H_
 
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -60,10 +62,20 @@ struct gif_softc {
 	const struct encaptab *encap_cookie6;
 	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
 	void	*gif_si;		/* softintr handle */
+
+	struct si_sync { /* can access without gif_lock */
+		unsigned int	si_refs;	/* reference count for gif_si */
+		kcondvar_t	si_cv;		/* wait for softint completion */
+		kmutex_t	*si_lock;	/* lock for gif_si_sync */
+	} gif_si_sync;
 };
 #define GIF_ROUTE_TTL	10
 
 #define gif_ro gifsc_gifscr.gifscr_ro
+
+#define gif_si_refs	gif_si_sync.si_refs
+#define gif_si_cv	gif_si_sync.si_cv
+#define gif_si_lock	gif_si_sync.si_lock
 
 #define GIF_MTU		(1280)	/* Default MTU */
 #define	GIF_MTU_MIN	(1280)	/* Minimum MTU */
@@ -81,4 +93,8 @@ void	gif_delete_tunnel(struct ifnet *);
 int	gif_encapcheck(struct mbuf *, int, int, void *);
 #endif
 
+/*
+ * Locking notes:
+ * - All members of struct si_sync are protected by si_lock (an adaptive mutex)
+ */
 #endif /* !_NET_IF_GIF_H_ */
