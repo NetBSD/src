@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.377.2.1 2015/04/06 15:18:03 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.377.2.2 2015/12/27 12:09:44 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -1954,7 +1954,7 @@ winfixfill:
 #if 0 /* Need to switch over to new stuff to fix WDR bug */
 	wrpr	%g5, %cwp				! Restore cwp from before fill trap -- regs should now be consisent
 	wrpr	%g2, %g0, %tl				! Restore trap level -- we need to reuse it
-	set	return_from_trap, %g4
+	set	return_from_trap, %g4			! XXX - need to set %g1 to tstate
 	set	CTX_PRIMARY, %g7
 	wrpr	%g4, 0, %tpc
 	stxa	%g0, [%g7] ASI_DMMU
@@ -2975,8 +2975,8 @@ Lslowtrap_reenter:
 	call	_C_LABEL(trap)			! trap(tf, type, pc, pstate)
 	 nop
 
-	ba,a,pt	%icc, return_from_trap
-	 nop
+	b	return_from_trap
+	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
 	NOTREACHED
 #if 1
 /*
@@ -3364,7 +3364,7 @@ syscall_setup:
 return_from_syscall:
 	wrpr	%g0, PSTATE_KERN, %pstate	! Disable intterrupts
 	wrpr	%g0, 0, %tl			! Return to tl==0
-	ba,a,pt	%icc, return_from_trap
+	b	return_from_trap
 	 nop
 	NOTREACHED
 
@@ -3928,8 +3928,8 @@ intrcmplt:
 	ldub	[%sp + CC64FSZ + STKB + TF_OLDPIL], %l3	! restore old %pil
 	wrpr	%l3, 0, %pil
 
-	ba,a,pt	%icc, return_from_trap
-	 nop
+	b	return_from_trap
+	 ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! Load this for return_from_trap
 
 #ifdef notyet
 /*
@@ -3962,6 +3962,7 @@ zshard:
  * registers are:
  *
  *	[%sp + CC64FSZ + STKB] => trap frame
+ *      %g1 => tstate from trap frame
  *
  * We must load all global, out, and trap registers from the trap frame.
  *
@@ -3987,7 +3988,7 @@ return_from_trap:
 	!!
 	!! We'll make sure we flush our pcb here, rather than later.
 	!!
-	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1
+!	ldx	[%sp + CC64FSZ + STKB + TF_TSTATE], %g1	! already passed in, no need to reload
 	btst	TSTATE_PRIV, %g1			! returning to userland?
 
 	!!
@@ -5957,15 +5958,9 @@ ENTRY(lwp_trampoline)
 	 mov	%l1, %o0
 
 	/*
-	 * Going to userland - set proper tstate in trap frame
-	 */
-	set	(ASI_PRIMARY_NO_FAULT<<TSTATE_ASI_SHIFT)|((PSTATE_USER)<<TSTATE_PSTATE_SHIFT), %g1
-	stx	%g1, [%sp + CC64FSZ + STKB + TF_TSTATE]
-
-	/*
 	 * Here we finish up as in syscall, but simplified.
 	 */
-	ba,a,pt	%icc, return_from_trap
+	b	return_from_trap
 	 nop
 
 /*

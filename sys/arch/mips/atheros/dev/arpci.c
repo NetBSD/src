@@ -1,4 +1,4 @@
-/*	$NetBSD: arpci.c,v 1.3.6.1 2015/09/22 12:05:46 skrll Exp $	*/
+/*	$NetBSD: arpci.c,v 1.3.6.2 2015/12/27 12:09:38 skrll Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.3.6.1 2015/09/22 12:05:46 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arpci.c,v 1.3.6.2 2015/12/27 12:09:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,6 +133,9 @@ arpci_conf_read(void *v, pcitag_t tag, int reg)
 	struct arpci_softc * const sc = v;
 	pcireg_t rv = 0xffffffff;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return rv;
+
 	if ((tag & 0x00ff0001) == 1) {
 		KASSERT(((tag >> 11) & 31) > 20); 
 		/*
@@ -175,6 +178,9 @@ static void
 arpci_conf_write(void *v, pcitag_t tag, int reg, pcireg_t data)
 {
 	struct arpci_softc * const sc = v;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	if ((tag & 0x00ff0001) == 1) {
 		KASSERT(((tag >> 11) & 31) > 20); 

@@ -1,4 +1,4 @@
-/*	$NetBSD: stp4020.c,v 1.67 2012/10/27 17:18:37 chs Exp $ */
+/*	$NetBSD: stp4020.c,v 1.67.14.1 2015/12/27 12:09:58 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.67 2012/10/27 17:18:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: stp4020.c,v 1.67.14.1 2015/12/27 12:09:58 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,6 @@ static void	stp4020_dump_regs(struct stp4020_socket *);
 
 static int	stp4020_rd_sockctl(struct stp4020_socket *, int);
 static void	stp4020_wr_sockctl(struct stp4020_socket *, int, int);
-static int	stp4020_rd_winctl(struct stp4020_socket *, int, int);
 static void	stp4020_wr_winctl(struct stp4020_socket *, int, int, int);
 
 void	stp4020_delay(struct stp4020_softc *sc, unsigned int);
@@ -220,14 +219,6 @@ stp4020_wr_sockctl(struct stp4020_socket *h, int idx, int v)
 {
 	int o = (STP4020_SOCKREGS_SIZE * (h->sock)) + idx;
 	bus_space_write_2(h->tag, h->regs, o, v);
-}
-
-static inline int
-stp4020_rd_winctl(struct stp4020_socket *h, int win, int idx)
-{
-	int o = (STP4020_SOCKREGS_SIZE * (h->sock)) +
-		(STP4020_WINREGS_SIZE * win) + idx;
-	return (bus_space_read_2(h->tag, h->regs, o));
 }
 
 static inline void
@@ -641,7 +632,7 @@ stp4020_intr(void *arg)
 #ifndef SUN4U
 	int s;
 #endif
-	int i, r = 0, cd_change = 0;
+	int i, r = 0;
 
 
 #ifndef SUN4U
@@ -675,7 +666,6 @@ stp4020_intr(void *arg)
 			/*
 			 * Card status change detect
 			 */
-			cd_change = 1;
 			r = 1;
 			if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) == (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)){
 				if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
@@ -725,15 +715,11 @@ stp4020_intr(void *arg)
 		/* informational messages */
 		if ((v & STP4020_ISR0_BVD1CHG) != 0) {
 			/* ignore if this is caused by insert or removal */
-			if (!cd_change)
-				printf("stp4020[%d]: Battery change 1\n", h->sock);
 			r = 1;
 		}
 
 		if ((v & STP4020_ISR0_BVD2CHG) != 0) {
 			/* ignore if this is caused by insert or removal */
-			if (!cd_change)
-				printf("stp4020[%d]: Battery change 2\n", h->sock);
 			r = 1;
 		}
 

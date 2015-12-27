@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_cpufreq.c,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_cpufreq.c,v 1.1.2.3 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_cpufreq.c,v 1.1.2.2 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_cpufreq.c,v 1.1.2.3 2015/12/27 12:09:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,7 +50,6 @@ static int cpufreq_node_target, cpufreq_node_current, cpufreq_node_available;
 
 static const struct tegra_cpufreq_func *cpufreq_func = NULL;
 
-static void	tegra_cpufreq_post(void *, void *);
 static int	tegra_cpufreq_freq_helper(SYSCTLFN_PROTO);
 static char 	tegra_cpufreq_available[TEGRA_CPUFREQ_MAX * 5];
 
@@ -128,10 +127,9 @@ tegra_cpufreq_init(void)
 		goto sysctl_failed;
 	cpufreq_node_available = node->sysctl_num;
 
-#ifdef CPUFREQ_BOOT
-	cpufreq_set_rate(CPUFREQ_BOOT);
-	tegra_cpufreq_post(NULL, NULL);
-#endif
+	device_printf(curcpu()->ci_dev,
+	    "setting speed to %d MHz\n", availfreq[0]);
+	cpufreq_set_rate(availfreq[0]);
 
 	return;
 
@@ -140,20 +138,11 @@ sysctl_failed:
 	sysctl_teardown(&cpufreq_log);
 }
 
-static void
-tegra_cpufreq_post(void *arg1, void *arg2)
-{
-	struct cpu_info *ci = curcpu();
-
-	ci->ci_data.cpu_cc_freq = cpufreq_get_rate() * 1000000;
-}
-
 static int
 tegra_cpufreq_freq_helper(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	int fq, oldfq = 0, error;
-	uint64_t xc;
 
 	node = *rnode;
 	node.sysctl_data = &fq;
@@ -174,8 +163,6 @@ tegra_cpufreq_freq_helper(SYSCTLFN_ARGS)
 
 	error = cpufreq_set_rate(fq);
 	if (error == 0) {
-		xc = xc_broadcast(0, tegra_cpufreq_post, NULL, NULL);
-		xc_wait(xc);
 		pmf_event_inject(NULL, PMFE_SPEED_CHANGED);
 	}
 

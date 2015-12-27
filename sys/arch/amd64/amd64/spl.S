@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.29 2014/11/27 04:48:39 uebayasi Exp $	*/
+/*	$NetBSD: spl.S,v 1.29.2.1 2015/12/27 12:09:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -166,7 +166,7 @@ END(Xpreemptrecurse)
 IDTVEC(preemptresume)
 	movl	$IPL_PREEMPT, CPUVAR(ILEVEL)
 	sti
-	testq   $SEL_RPL, TF_CS(%rsp)
+	testq	$SEL_RPL, TF_CS(%rsp)
 	jnz	1f
 	movq	TF_RIP(%rsp), %rdi
 	call	_C_LABEL(kpreempt)		# from kernel
@@ -320,14 +320,14 @@ IDTVEC(doreti)
 	CLI(si)
 	andl	CPUVAR(IPENDING),%eax
 	jz	2f
-	bsrl    %eax,%eax               # slow, but not worth optimizing
-	btrl    %eax,CPUVAR(IPENDING)
+	bsrl	%eax,%eax		# slow, but not worth optimizing
+	btrl	%eax,CPUVAR(IPENDING)
 	movq	CPUVAR(ISOURCES)(,%rax, 8),%rax
 	jmp	*IS_RESUME(%rax)
 2:	/* Check for ASTs on exit to user mode. */
 	movl	%ebx,CPUVAR(ILEVEL)
 5:
-	testb   $SEL_RPL,TF_CS(%rsp)
+	testb	$SEL_RPL,TF_CS(%rsp)
 	jz	6f
 
 	.type	_C_LABEL(doreti_checkast), @function

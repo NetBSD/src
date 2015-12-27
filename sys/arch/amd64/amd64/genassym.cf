@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.56.6.1 2015/09/22 12:05:35 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.56.6.2 2015/12/27 12:09:28 skrll Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -144,6 +144,8 @@ define	L2_SLOT_KERNBASE	pl2_pi(KERNBASE)
 define	L1_SLOT_KERNBASE	pl1_pi(KERNBASE)
 
 define	PDIR_SLOT_PTE		PDIR_SLOT_PTE
+
+define	PDE_SIZE		sizeof(pd_entry_t)
 
 define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
 

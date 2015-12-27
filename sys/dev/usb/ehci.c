@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.72 2015/12/23 08:07:40 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.73 2015/12/27 12:09:59 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.72 2015/12/23 08:07:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.73 2015/12/27 12:09:59 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1649,7 +1649,6 @@ ehci_dump_regs(ehci_softc_t *sc)
 	}
 }
 
-#ifdef EHCI_DEBUG
 #define ehci_dump_link(link, type) do {					\
 	USBHIST_LOG(ehcidebug, "    link 0x%08x (T = %d):",		\
 	    link,							\
@@ -1663,9 +1662,6 @@ ehci_dump_regs(ehci_softc_t *sc)
 		    EHCI_LINK_TYPE(link) == EHCI_LINK_FSTN ? 1 : 0);	\
 	}								\
 } while(0)
-#else
-#define ehci_dump_link(link, type)
-#endif
 
 Static void
 ehci_dump_sqtds(ehci_soft_qtd_t *sqtd)
@@ -1710,10 +1706,7 @@ Static void
 ehci_dump_qtd(ehci_qtd_t *qtd)
 {
 	USBHIST_FUNC();	USBHIST_CALLED(ehcidebug);
-
-#ifdef USBHIST
 	uint32_t s = le32toh(qtd->qtd_status);
-#endif
 
 	USBHIST_LOGN(ehcidebug, 10,
 	    "     next = 0x%08x  altnext = 0x%08x  status = 0x%08x",
@@ -1750,10 +1743,8 @@ ehci_dump_qtd(ehci_qtd_t *qtd)
 Static void
 ehci_dump_sqh(ehci_soft_qh_t *sqh)
 {
-#ifdef USBHIST
 	ehci_qh_t *qh = &sqh->qh;
 	ehci_link_t link;
-#endif
 	uint32_t endp, endphub;
 	USBHIST_FUNC();	USBHIST_CALLED(ehcidebug);
 

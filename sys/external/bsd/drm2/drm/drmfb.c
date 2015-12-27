@@ -1,4 +1,4 @@
-/*	$NetBSD: drmfb.c,v 1.1.4.2 2015/04/06 15:18:17 skrll Exp $	*/
+/*	$NetBSD: drmfb.c,v 1.1.4.3 2015/12/27 12:10:02 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.1.4.2 2015/04/06 15:18:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drmfb.c,v 1.1.4.3 2015/12/27 12:10:02 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "vga.h"
@@ -91,6 +91,7 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	static const struct genfb_ops zero_genfb_ops;
 	struct genfb_ops genfb_ops = zero_genfb_ops;
 	enum { CONS_VGA, CONS_GENFB, CONS_NONE } what_was_cons;
+	bool is_console;
 	int error;
 
 	/* genfb requires this.  */
@@ -113,23 +114,27 @@ drmfb_attach(struct drmfb_softc *sc, const struct drmfb_attach_args *da)
 	prop_dictionary_set_uint64(dict, "mode_callback",
 	    (uint64_t)(uintptr_t)&drmfb_genfb_mode_callback);
 
-	/* XXX Whattakludge!  */
+	if (!prop_dictionary_get_bool(dict, "is_console", &is_console)) {
+		/* XXX Whattakludge!  */
 #if NVGA > 0
-	if ((da->da_params->dp_is_vga_console != NULL) &&
-	    (*da->da_params->dp_is_vga_console)(dev)) {
-		what_was_cons = CONS_VGA;
-		prop_dictionary_set_bool(dict, "is_console", true);
-		vga_cndetach();
-		if (da->da_params->dp_disable_vga)
-			(*da->da_params->dp_disable_vga)(dev);
-	} else
+		if ((da->da_params->dp_is_vga_console != NULL) &&
+		    (*da->da_params->dp_is_vga_console)(dev)) {
+			what_was_cons = CONS_VGA;
+			prop_dictionary_set_bool(dict, "is_console", true);
+			vga_cndetach();
+			if (da->da_params->dp_disable_vga)
+				(*da->da_params->dp_disable_vga)(dev);
+		} else
 #endif
-	if (genfb_is_console() && genfb_is_enabled()) {
-		what_was_cons = CONS_GENFB;
-		prop_dictionary_set_bool(dict, "is_console", true);
+		if (genfb_is_console() && genfb_is_enabled()) {
+			what_was_cons = CONS_GENFB;
+			prop_dictionary_set_bool(dict, "is_console", true);
+		} else {
+			what_was_cons = CONS_NONE;
+			prop_dictionary_set_bool(dict, "is_console", false);
+		}
 	} else {
 		what_was_cons = CONS_NONE;
-		prop_dictionary_set_bool(dict, "is_console", false);
 	}
 
 	sc->sc_genfb.sc_dev = sc->sc_da.da_dev;

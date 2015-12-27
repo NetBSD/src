@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.3.40.1 2015/09/22 12:05:43 skrll Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.3.40.2 2015/12/27 12:09:36 skrll Exp $	*/
 
 /*	$OpenBSD: ptrace.h,v 1.2 1998/12/01 03:05:44 mickey Exp $	*/
 
@@ -52,3 +52,6 @@
     } while (/*CONSTCOND*/0)
 #define PTRACE_REG_SP(r)	(r)->r_out[30]
 #define PTRACE_REG_INTRV(r)	(r)->r_out[28]
+
+#define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x00, 0x01, 0x00, 0x04 })
+#define PTRACE_BREAKPOINT_SIZE	4

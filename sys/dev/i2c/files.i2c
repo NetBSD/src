@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.58.2.2 2015/06/06 14:40:07 skrll Exp $
+#	$NetBSD: files.i2c,v 1.58.2.3 2015/12/27 12:09:49 skrll Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -176,6 +176,11 @@ device	admtemp: sysmon_envsys
 attach	admtemp at iic
 file	dev/i2c/adm1021.c		admtemp
 
+# ADM1026 hardware monitor
+device	adm1026hm: sysmon_envsys
+attach	adm1026hm at iic
+file	dev/i2c/adm1026.c		adm1026hm
+
 # SMSC LPC47M192 hardware monitor
 device	smscmon: sysmon_envsys
 attach	smscmon at iic
@@ -219,7 +224,7 @@ file    dev/i2c/mpl115a.c		mpl115a
 # AXP20x Power Management Unit
 device	axp20x: sysmon_envsys
 attach	axp20x at iic
-file	dev/i2c/axp20x.c			axp20x
+file	dev/i2c/axp20x.c			axp20x		needs-flag
 
 # AXP22x Power Management Unit
 device	axp22x: sysmon_envsys
@@ -250,3 +255,8 @@ file	dev/i2c/act8846.c			act8846pm	needs-flag
 device	titemp: sysmon_envsys
 attach	titemp at iic
 file	dev/i2c/titemp.c			titemp
+
+# AMS AS3722 Power Management IC
+device	as3722pmic: sysmon_wdog
+attach	as3722pmic at iic
+file	dev/i2c/as3722.c			as3722pmic	needs-flag

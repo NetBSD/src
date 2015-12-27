@@ -1,4 +1,4 @@
-#	$NetBSD: files.x86,v 1.83.2.1 2015/06/06 14:40:04 skrll Exp $
+#	$NetBSD: files.x86,v 1.83.2.2 2015/12/27 12:09:44 skrll Exp $
 
 # options for MP configuration through the MP spec
 defflag opt_mpbios.h MPBIOS MPVERBOSE MPDEBUG MPBIOS_SCANPCI
@@ -94,6 +94,8 @@ file	arch/x86/x86/vm_machdep.c	machdep
 file	arch/x86/x86/x86_autoconf.c	machdep
 file	arch/x86/x86/x86_userconf.c	userconf
 file	arch/x86/x86/x86_machdep.c	machdep
+
+file 	uvm/pmap/pmap_pvt.c		machdep
 
 file	arch/x86/x86/cpu_ucode.c	cpu_ucode needs-flag
 file	arch/x86/x86/cpu_ucode_amd.c	cpu_ucode needs-flag

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.111.4.3 2015/09/22 12:05:54 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.111.4.4 2015/12/27 12:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.4.3 2015/09/22 12:05:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.111.4.4 2015/12/27 12:09:45 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -177,13 +177,15 @@ static void	tss_init(struct i386tss *, void *, void *);
 
 static void	cpu_init_idle_lwp(struct cpu_info *);
 
-uint32_t cpu_feature[5]; /* X86 CPUID feature bits
-			  *	[0] basic features %edx
-			  *	[1] basic features %ecx
-			  *	[2] extended features %edx
-			  *	[3] extended features %ecx
-			  *	[4] VIA padlock features
-			  */
+uint32_t cpu_feature[7]; /* X86 CPUID feature bits */
+			/* [0] basic features cpuid.1:%edx
+			 * [1] basic features cpuid.1:%ecx (CPUID2_xxx bits)
+			 * [2] extended features cpuid:80000001:%edx
+			 * [3] extended features cpuid:80000001:%ecx
+			 * [4] VIA padlock features
+			 * [5] structured extended features cpuid.7:%ebx
+			 * [6] structured extended features cpuid.7:%ecx
+			 */
 
 extern char x86_64_doubleflt_stack[];
 
@@ -579,6 +581,10 @@ cpu_init(struct cpu_info *ci)
 	if (cpu_feature[1] & CPUID2_XSAVE)
 		cr4 |= CR4_OSXSAVE;
 
+	/* If SMEP is supported, enable it */
+	if (cpu_feature[5] & CPUID_SEF_SMEP)
+		cr4 |= CR4_SMEP;
+
 	if (cr4) {
 		cr4 |= rcr4();
 		lcr4(cr4);
@@ -783,7 +789,7 @@ cpu_boot_secondary(struct cpu_info *ci)
 }
 
 /*
- * The CPU ends up here when its ready to run
+ * The CPU ends up here when it's ready to run.
  * This is called from code in mptramp.s; at this point, we are running
  * in the idle pcb/idle stack of the new CPU.  When this function returns,
  * this processor will enter the idle loop and start looking for work.

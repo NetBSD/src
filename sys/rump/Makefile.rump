@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.99.4.3 2015/09/22 12:06:12 skrll Exp $
+#	$NetBSD: Makefile.rump,v 1.99.4.4 2015/12/27 12:10:08 skrll Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -241,6 +241,10 @@ __archivebuild: .USE
 	${AR} ${_ARFL} ${.TARGET} \
 	    `NM=${NM} ${LORDER} ${.ALLSRC:M*o} | ${TSORT}`
 .endif
+
+COMMENT?=	(no description)
+rumpdescribe: .PHONY
+	@printf '%-24s %s\n' '${LIB}' '${COMMENT}'
 
 _BSD_IOCONF_MK_USER_=1
 .include <bsd.ioconf.mk>

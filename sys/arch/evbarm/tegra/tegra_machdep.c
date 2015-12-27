@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll Exp $ */
+/* $NetBSD: tegra_machdep.c,v 1.3.2.5 2015/12/27 12:09:34 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.5 2015/12/27 12:09:34 skrll Exp $");
 
 #include "opt_tegra.h"
 #include "opt_machdep.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll 
 #include "ukbd.h"
 #include "genfb.h"
 #include "ether.h"
+#include "as3722pmic.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll 
 #include <sys/device.h>
 #include <sys/exec.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/ksyms.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
@@ -88,6 +90,10 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll 
 #include <dev/usb/ukbdvar.h>
 #include <net/if_ether.h>
 
+#if NAS3722PMIC > 0
+#include <dev/i2c/as3722.h>
+#endif
+
 #ifndef TEGRA_MAX_BOOT_STRING
 #define TEGRA_MAX_BOOT_STRING 1024
 #endif
@@ -95,14 +101,19 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_machdep.c,v 1.3.2.4 2015/09/22 12:05:40 skrll 
 BootConfig bootconfig;
 char bootargs[TEGRA_MAX_BOOT_STRING] = "";
 char *boot_args = NULL;
-#ifdef TEGRA_UBOOT
 u_int uboot_args[4] = { 0 };	/* filled in by tegra_start.S (not in bss) */
-#endif
+
+#include <libfdt.h>
+#include <dev/fdt/fdtvar.h>
+#define FDT_BUF_SIZE	(128*1024)
+static uint8_t fdt_data[FDT_BUF_SIZE];
 
 extern char KERNEL_BASE_phys[];
 #define KERNEL_BASE_PHYS ((paddr_t)KERNEL_BASE_phys)
 
 static void tegra_device_register(device_t, void *);
+static void tegra_reset(void);
+static void tegra_powerdown(void);
 
 bs_protos(bs_notimpl);
 
@@ -110,13 +121,6 @@ bs_protos(bs_notimpl);
 #define	_S(s)	(((s) + L1_S_SIZE - 1) & ~(L1_S_SIZE-1))
 
 static const struct pmap_devmap devmap[] = {
-	{
-		.pd_va = _A(TEGRA_HOST1X_VBASE),
-		.pd_pa = _A(TEGRA_HOST1X_BASE),
-		.pd_size = _S(TEGRA_HOST1X_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
 	{
 		.pd_va = _A(TEGRA_PPSB_VBASE),
 		.pd_pa = _A(TEGRA_PPSB_BASE),
@@ -128,13 +132,6 @@ static const struct pmap_devmap devmap[] = {
 		.pd_va = _A(TEGRA_APB_VBASE),
 		.pd_pa = _A(TEGRA_APB_BASE),
 		.pd_size = _S(TEGRA_APB_SIZE),
-		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
-		.pd_cache = PTE_NOCACHE
-	},
-	{
-		.pd_va = _A(TEGRA_AHB_A2_VBASE),
-		.pd_pa = _A(TEGRA_AHB_A2_BASE),
-		.pd_size = _S(TEGRA_AHB_A2_SIZE),
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,
 		.pd_cache = PTE_NOCACHE
 	},
@@ -246,12 +243,11 @@ initarm(void *arg)
 
 	DPRINTF(" ok\n");
 
-#ifdef TEGRA_UBOOT
 	DPRINTF("uboot: args %#x, %#x, %#x, %#x\n",
 	    uboot_args[0], uboot_args[1], uboot_args[2], uboot_args[3]);
-#endif
 
-	cpu_reset_address = tegra_pmc_reset;
+	cpu_reset_address = tegra_reset;
+	cpu_powerdown_address = tegra_powerdown;
 
 	/* Talk to the user */
 	DPRINTF("\nNetBSD/evbarm (tegra) booting ...\n");
@@ -260,6 +256,37 @@ initarm(void *arg)
 	char mi_bootargs[] = BOOT_ARGS;
 	parse_mi_bootargs(mi_bootargs);
 #endif
+
+	const uint8_t *fdt_addr_r = (const uint8_t *)uboot_args[2];
+	int error = fdt_check_header(fdt_addr_r);
+	if (error == 0) {
+		error = fdt_move(fdt_addr_r, fdt_data, sizeof(fdt_data));
+		if (error != 0) {
+			panic("fdt_move failed: %s", fdt_strerror(error));
+		}
+		fdtbus_set_data(fdt_data);
+	} else {
+		panic("fdt_check_header failed: %s", fdt_strerror(error));
+	}
+
+	const u_int chip_id = tegra_chip_id();
+	switch (chip_id) {
+#ifdef SOC_TEGRA124
+        case CHIP_ID_TEGRA124: {
+		const char * const tegra124_compatible_strings[] = {
+			"nvidia,tegra124",
+			NULL
+		};
+		const int node = OF_peer(0);
+                if (of_compatible(node, tegra124_compatible_strings) < 0) {
+			panic("FDT is not compatible with Tegra124");
+		}
+                break;
+	}
+#endif
+	default:
+		panic("Kernel does not support Tegra SOC ID %#x", chip_id);
+	}
 
 	DPRINTF("KERNEL_BASE=0x%x, KERNEL_VM_BASE=0x%x, KERNEL_VM_BASE - KERNEL_BASE=0x%x, KERNEL_BASE_VOFFSET=0x%x\n",
 		KERNEL_BASE, KERNEL_VM_BASE, KERNEL_VM_BASE - KERNEL_BASE, KERNEL_BASE_VOFFSET);
@@ -307,6 +334,11 @@ initarm(void *arg)
 	arm32_kernel_vm_init(KERNEL_VM_BASE, ARM_VECTORS_HIGH, 0, devmap,
 	    mapallmem_p);
 
+	const int chosen = OF_finddevice("/chosen");
+	if (chosen >= 0) {
+		OF_getprop(chosen, "bootargs", bootargs, sizeof(bootargs));
+	}
+
 	DPRINTF("bootargs: %s\n", bootargs);
 
 	boot_args = bootargs;
@@ -349,7 +381,7 @@ consinit(void)
 
 #if NCOM > 0
 	const bus_space_tag_t bst = &armv7_generic_a4x_bs_tag;
-	const u_int freq = tegra_car_uart_rate(3);
+	const u_int freq = 408000000;	/* 408MHz PLLP_OUT0 */
 	if (comcnattach(bst, CONSADDR, CONSPEED, freq,
 			COM_TYPE_TEGRA, CONMODE)) {
 		panic("Serial console cannot be initialized.");
@@ -370,6 +402,29 @@ tegra_bootconf_match(const char *key, const char *val)
 	return strncmp(s, val, strlen(val)) == 0;
 }
 
+static char *
+tegra_bootconf_strdup(const char *key)
+{
+	char *s, *ret;
+	int i = 0;
+
+	if (!get_bootconf_option(boot_args, key, BOOTOPT_TYPE_STRING, &s))
+		return NULL;
+
+	for (;;) {
+		if (s[i] == ' ' || s[i] == '\t' || s[i] == '\0')
+			break;
+		++i;
+	}
+
+	ret = kmem_alloc(i + 1, KM_SLEEP);
+	if (ret == NULL)
+		return NULL;
+
+	strlcpy(ret, s, i + 1);
+	return ret;
+}
+
 void
 tegra_device_register(device_t self, void *aux)
 {
@@ -387,11 +442,7 @@ tegra_device_register(device_t self, void *aux)
 		return;
 	}
 
-	if (device_is_a(self, "cpu") && device_unit(self) == 0) {
-		tegra_cpuinit();
-	}
-
-	if (device_is_a(self, "tegradc")
+	if (device_is_a(self, "tegrafb")
 	    && tegra_bootconf_match("console", "fb")) {
 		prop_dictionary_set_bool(dict, "is_console", true);
 #if NUKBD > 0
@@ -399,79 +450,74 @@ tegra_device_register(device_t self, void *aux)
 #endif
 	}
 
+	if (device_is_a(self, "tegradrm")) {
+		const char *video = tegra_bootconf_strdup("video");
+
+		if (tegra_bootconf_match("hdmi.forcemode", "dvi")) {
+			prop_dictionary_set_bool(dict, "force-dvi", true);
+		}
+
+		if (video) {
+			prop_dictionary_set_cstring(dict, "HDMI-A-1", video);
+		}
+	}
+
 	if (device_is_a(self, "tegracec")) {
-		prop_dictionary_set_cstring(dict, "hdmi-device", "tegrahdmi0");
+		prop_dictionary_set_cstring(dict, "hdmi-device", "tegradrm0");
 	}
 
-#ifdef BOARD_JETSONTK1
-	if (device_is_a(self, "sdhc")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
+	if (device_is_a(self, "nouveau")) {
+		const char *config = tegra_bootconf_strdup("nouveau.config");
+		const char *debug = tegra_bootconf_strdup("nouveau.debug");
+		if (config)
+			prop_dictionary_set_cstring(dict, "config", config);
+		if (debug)
+			prop_dictionary_set_cstring(dict, "debug", debug);
+	}
 
-		if (loc->loc_port == 2) {
-			prop_dictionary_set_cstring(dict, "cd-gpio", "V2");
-			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
-			prop_dictionary_set_cstring(dict, "wp-gpio", "Q4");
+	if (device_is_a(self, "tegrapcie")) {
+		const char * const jetsontk1_compat[] = {
+		    "nvidia,jetson-tk1", NULL
+		};
+		int phandle = OF_peer(0);
+		if (of_match_compatible(phandle, jetsontk1_compat)) {
+			/* rfkill GPIO at GPIO X7 */
+			struct tegra_gpio_pin *pin;
+			pin = tegra_gpio_acquire("X7", GPIO_PIN_OUTPUT);
+			if (pin) {
+				tegra_gpio_write(pin, 1);
+			}
 		}
 	}
+}
 
-	if (device_is_a(self, "ahcisata")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		prop_dictionary_set_cstring(dict, "power-gpio", "EE2");
-	}
-
-	if (device_is_a(self, "ehci")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
-
-		if (loc->loc_port == 0) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
-		} else if (loc->loc_port == 2) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
+static void
+tegra_reset(void)
+{
+#if NAS3722PMIC > 0
+	device_t pmic = device_find_by_driver_unit("as3722pmic", 0);
+	if (pmic != NULL) {
+		delay(1000000);
+		if (as3722_reboot(pmic) != 0) {
+			printf("WARNING: AS3722 reset failed\n");
+			return;
 		}
-	}
-
-	if (device_is_a(self, "tegrahdmi")) {
-		prop_dictionary_set_cstring(dict, "hpd-gpio", "N7");
-		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
-		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
-		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
-		prop_dictionary_set_cstring(dict, "display-device", "tegradc1");
 	}
 #endif
+	tegra_pmc_reset();
+}
 
-#ifdef BOARD_NYAN_BIG
-	if (device_is_a(self, "sdhc")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
-
-		if (loc->loc_port == 2) {
-			prop_dictionary_set_cstring(dict, "cd-gpio", "V2");
-			prop_dictionary_set_cstring(dict, "power-gpio", "R0");
+static void
+tegra_powerdown(void)
+{
+#if NAS3722PMIC > 0
+	device_t pmic = device_find_by_driver_unit("as3722pmic", 0);
+	if (pmic != NULL) {
+		delay(1000000);
+		if (as3722_poweroff(pmic) != 0) {
+			printf("WARNING: AS3722 poweroff failed\n");
+			return;
 		}
-	}
-
-	if (device_is_a(self, "ehci")
-	    && device_is_a(device_parent(self), "tegraio")) {
-		struct tegraio_attach_args * const tio = aux;
-		const struct tegra_locators * const loc = &tio->tio_loc;
-
-		if (loc->loc_port == 0) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N4");
-		} else if (loc->loc_port == 2) {
-			prop_dictionary_set_cstring(dict, "vbus-gpio", "N5");
-		}
-	}
-
-	if (device_is_a(self, "tegrahdmi")) {
-		prop_dictionary_set_cstring(dict, "hpd-gpio", "N7");
-		prop_dictionary_set_cstring(dict, "pll-gpio", "H7");
-		prop_dictionary_set_cstring(dict, "power-gpio", "K6");
-		prop_dictionary_set_cstring(dict, "ddc-device", "ddc0");
-		prop_dictionary_set_cstring(dict, "display-device", "tegradc1");
 	}
 #endif
 }

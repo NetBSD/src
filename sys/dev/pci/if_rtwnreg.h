@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwnreg.h,v 1.1.2.2 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: if_rtwnreg.h,v 1.1.2.3 2015/12/27 12:09:50 skrll Exp $	*/
 /*	$OpenBSD: if_rtwnreg.h,v 1.3 2015/06/14 08:02:47 stsp Exp $	*/
 
 /*-
@@ -1280,9 +1280,7 @@ struct rtwn_softc {
 	pci_chipset_tag_t		sc_pc;
 	pcitag_t			sc_tag;
 	void				*sc_ih;
-#ifdef __HAVE_PCI_MSI_MSIX
 	pci_intr_handle_t		*sc_pihp;
-#endif
 	bus_space_tag_t			sc_st;
 	bus_space_handle_t		sc_sh;
 	bus_size_t			sc_mapsize;

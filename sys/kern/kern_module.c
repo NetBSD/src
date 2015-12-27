@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.101.2.2 2015/09/22 12:06:07 skrll Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.101.2.3 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.2 2015/09/22 12:06:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.101.2.3 2015/12/27 12:10:05 skrll Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -945,6 +945,8 @@ module_do_load(const char *name, bool isdep, int flags,
 				if (modp != NULL) {
 					*modp = mod;
 				}
+				module_print("dependent module `%s' already "
+				    "loaded", name);
 				depth--;
 				return 0;
 			}
@@ -1048,10 +1050,10 @@ module_do_load(const char *name, bool isdep, int flags,
 			continue;
 		}
 		if (strcmp(mod2->mod_info->mi_name, mi->mi_name) == 0) {
-		    	error = EDEADLK;
+			error = EDEADLK;
 			module_error("circular dependency detected for `%s'",
 			    mi->mi_name);
-		    	goto fail;
+			goto fail;
 		}
 	}
 
@@ -1153,6 +1155,7 @@ module_do_load(const char *name, bool isdep, int flags,
 		module_thread_kick();
 	}
 	depth--;
+	module_print("module `%s' loaded successfully", mi->mi_name);
 	return 0;
 
  fail:
@@ -1183,13 +1186,16 @@ module_do_unload(const char *name, bool load_requires_force)
 	KASSERT(kernconfig_is_held());
 	KASSERT(name != NULL);
 
+	module_print("unload requested for '%s' (%s)", name,
+	    load_requires_force?"TRUE":"FALSE");
 	mod = module_lookup(name);
 	if (mod == NULL) {
 		module_error("module `%s' not found", name);
 		return ENOENT;
 	}
 	if (mod->mod_refcnt != 0) {
-		module_print("module `%s' busy", name);
+		module_print("module `%s' busy (%d refs)", name,
+		    mod->mod_refcnt);
 		return EBUSY;
 	}
 
@@ -1198,6 +1204,8 @@ module_do_unload(const char *name, bool load_requires_force)
 	 */
 	if (mod->mod_source == MODULE_SOURCE_KERNEL &&
 	    mod->mod_info->mi_class == MODULE_CLASS_SECMODEL) {
+		module_print("cannot unload built-in secmodel module `%s'",
+		    name);
 		return EPERM;
 	}
 
@@ -1369,7 +1377,10 @@ module_thread(void *cookie)
 			error = (*mi->mi_modcmd)(MODULE_CMD_AUTOUNLOAD, NULL);
 			if (error == 0 || error == ENOTTY) {
 				(void)module_do_unload(mi->mi_name, false);
-			}
+			} else
+				module_print("module `%s' declined to be "
+				    "auto-unloaded error=%d", mi->mi_name,
+				    error);
 		}
 		kernconfig_unlock();
 

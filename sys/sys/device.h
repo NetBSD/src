@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.146.2.1 2015/04/06 15:18:32 skrll Exp $ */
+/* $NetBSD: device.h,v 1.146.2.2 2015/12/27 12:10:18 skrll Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -429,6 +429,7 @@ int	config_fini_component(struct cfdriver *const*,
 			      const struct cfattachinit *, struct cfdata *);
 void	config_init_mi(void);
 void	drvctl_init(void);
+void	drvctl_fini(void);
 
 int	config_cfdriver_attach(struct cfdriver *);
 int	config_cfdriver_detach(struct cfdriver *);

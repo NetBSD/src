@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_var.h,v 1.2.2.4 2015/09/22 12:05:38 skrll Exp $ */
+/* $NetBSD: tegra_var.h,v 1.2.2.5 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -50,7 +50,6 @@ struct tegraio_attach_args {
 	bus_space_tag_t tio_a4x_bst;
 	bus_space_handle_t tio_bsh;
 	bus_dma_tag_t tio_dmat;
-	bus_dma_tag_t tio_coherent_dmat;
 };
 
 struct tegrafb_attach_args {
@@ -65,14 +64,17 @@ struct tegrafb_attach_args {
 	device_t tfb_outputdev;
 };
 
+struct tegrausbphy_attach_args {
+	bus_space_tag_t tup_bst;
+	bus_space_handle_t tup_bsh;
+	u_int tup_port;
+};
+
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
-extern bus_space_handle_t tegra_host1x_bsh;
 extern bus_space_handle_t tegra_ppsb_bsh;
 extern bus_space_handle_t tegra_apb_bsh;
-extern bus_space_handle_t tegra_ahb_a2_bsh;
 extern struct arm32_bus_dma_tag tegra_dma_tag;
-extern struct arm32_bus_dma_tag tegra_coherent_dma_tag;
 
 #define CHIP_ID_TEGRA20		0x20
 #define CHIP_ID_TEGRA30		0x30
@@ -85,29 +87,6 @@ const char *tegra_chip_name(void);
 void	tegra_bootstrap(void);
 void	tegra_dma_bootstrap(psize_t);
 void	tegra_cpuinit(void);
-
-u_int	tegra_car_osc_rate(void);
-u_int	tegra_car_pllc_rate(void);
-u_int	tegra_car_plle_rate(void);
-u_int	tegra_car_pllx_rate(void);
-void	tegra_car_pllx_set_rate(u_int, u_int, u_int);
-u_int	tegra_car_pllu_rate(void);
-u_int	tegra_car_pllp0_rate(void);
-u_int	tegra_car_plld2_rate(void);
-u_int	tegra_car_uart_rate(u_int);
-u_int	tegra_car_periph_sdmmc_rate(u_int);
-int	tegra_car_periph_sdmmc_set_rate(u_int, u_int);
-int	tegra_car_periph_usb_enable(u_int);
-void	tegra_car_periph_hda_enable(void);
-void	tegra_car_periph_sata_enable(void);
-int	tegra_car_periph_i2c_enable(u_int, u_int);
-void	tegra_car_periph_cec_enable(void);
-void	tegra_car_utmip_init(void);
-void	tegra_car_utmip_enable(u_int);
-void	tegra_car_hdmi_enable(u_int);
-int	tegra_car_dc_enable(u_int);
-void	tegra_car_host1x_enable(void);
-void	tegra_car_wdt_enable(u_int, bool);
 
 struct tegra_gpio_pin;
 struct tegra_gpio_pin *tegra_gpio_acquire(const char *, u_int);
@@ -141,9 +120,9 @@ void	tegra_pmc_power(u_int, bool);
 void	tegra_pmc_remove_clamping(u_int);
 void	tegra_pmc_hdmi_enable(void);
 
-void	tegra_i2c_dvc_write(uint8_t, uint32_t, size_t);
-
 psize_t	tegra_mc_memsize(void);
+
+uint32_t tegra_fuse_read(u_int);
 
 void	tegra_xusbpad_sata_enable(void);
 

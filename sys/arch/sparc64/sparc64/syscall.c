@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.c,v 1.43 2014/03/07 22:51:27 nakayama Exp $ */
+/*	$NetBSD: syscall.c,v 1.43.6.1 2015/12/27 12:09:44 skrll Exp $ */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43 2014/03/07 22:51:27 nakayama Exp $");
+__KERNEL_RCSID(0, "$NetBSD: syscall.c,v 1.43.6.1 2015/12/27 12:09:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -308,6 +308,20 @@ syscall(struct trapframe64 *tf, register_t code, register_t pc)
 
 	rval[0] = 0;
 	rval[1] = tf->tf_out[1];
+
+#ifdef DIAGNOSTIC
+	KASSERT(p->p_pid != 0);
+	KASSERTMSG(!(tf->tf_tstate & TSTATE_PRIV),
+	    "syscall %ld, pid %d trap frame %p tstate %#" PRIx64
+	    " is privileged %s\n", code, p->p_pid, tf, tf->tf_tstate,
+	    (tf->tf_tstate & TSTATE_PRIV) ? "yes" : "no");
+	if (p->p_flag & PK_32) {
+		KASSERTMSG(tf->tf_tstate & TSTATE_AM,
+		    "32bit syscall %ld, pid %d trap frame %p tstate %#" PRIx64
+		    " has AM %s\n", code, p->p_pid, tf, tf->tf_tstate,
+		    (tf->tf_tstate & TSTATE_AM) ? "yes" : "no");
+	}
+#endif
 
 	error = sy_invoke(callp, l, args.r, rval, code);
 

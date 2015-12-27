@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_soc.c,v 1.25.2.1 2015/04/06 15:17:53 skrll Exp $	*/
+/*	$NetBSD: exynos_soc.c,v 1.25.2.2 2015/12/27 12:09:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_ARM32_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25.2.1 2015/04/06 15:17:53 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25.2.2 2015/12/27 12:09:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,7 +60,7 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_soc.c,v 1.25.2.1 2015/04/06 15:17:53 skrll Ex
 #include <arm/cortex/pl310_reg.h>
 
 /* XXXNH */
-#include <evbarm/odroid/platform.h>
+#include <evbarm/exynos/platform.h>
 
 
 /* these variables are retrieved in start.S and stored in .data */
@@ -343,7 +343,7 @@ exynos_get_cpufreq(void)
 	uint32_t regval;
 	uint32_t freq;
 
-	regval = bus_space_read_4(&exynos_bs_tag, exynos_cmu_apll_bsh,
+	regval = bus_space_read_4(&armv7_generic_bs_tag, exynos_cmu_apll_bsh,
 			PLL_CON0_OFFSET);
 	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval);
 
@@ -369,7 +369,7 @@ exynos_set_cpufreq(const struct cpu_freq *freqreq)
 
 	/* enable PPL and write config */
 	regval |= PLL_CON0_ENABLE;
-	bus_space_write_4(&exynos_bs_tag, exynos_cmu_apll_bsh, PLL_CON0_OFFSET,
+	bus_space_write_4(&armv7_generic_bs_tag, exynos_cmu_apll_bsh, PLL_CON0_OFFSET,
 		regval);
 
 	/* update our cycle counter i.e. our CPU frequency for all CPUs */
@@ -443,7 +443,7 @@ sysctl_cpufreq_current(SYSCTLFN_ARGS)
 #ifdef VERBOSE_INIT_ARM
 #define DUMP_PLL(v, var) \
 	reg = EXYNOS##v##_CMU_##var + PLL_CON0_OFFSET;\
-	regval = bus_space_read_4(&exynos_bs_tag, exynos_cmu_bsh, reg); \
+	regval = bus_space_read_4(&armv7_generic_bs_tag, exynos_cmu_bsh, reg); \
 	freq   = PLL_FREQ(EXYNOS_F_IN_FREQ, regval); \
 	printf("%8s at %d Mhz\n", #var, freq/(1000*1000));
 
@@ -553,14 +553,14 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 #endif
 
 	/* map in the exynos io registers */
-	error = bus_space_map(&exynos_bs_tag, EXYNOS_CORE_PBASE,
+	error = bus_space_map(&armv7_generic_bs_tag, EXYNOS_CORE_PBASE,
 		core_size, 0, &exynos_core_bsh);
 	if (error)
 		panic("%s: failed to map in Exynos SFR registers: %d",
 			__func__, error);
 	KASSERT(exynos_core_bsh == iobase);
 
-	error = bus_space_map(&exynos_bs_tag, audiocore_pbase,
+	error = bus_space_map(&armv7_generic_bs_tag, audiocore_pbase,
 		audiocore_size, 0, &exynos_audiocore_bsh);
 	if (error)
 		panic("%s: failed to map in Exynos audio SFR registers: %d",
@@ -568,27 +568,27 @@ exynos_bootstrap(vaddr_t iobase, vaddr_t uartbase)
 	KASSERT(exynos_audiocore_bsh == audiocore_vbase);
 
 	/* map in commonly used subregions and common used register banks */
-	error = bus_space_subregion(&exynos_bs_tag, exynos_core_bsh,
+	error = bus_space_subregion(&armv7_generic_bs_tag, exynos_core_bsh,
 		exynos_wdt_offset, EXYNOS_BLOCK_SIZE, &exynos_wdt_bsh);
 	if (error)
 		panic("%s: failed to subregion wdt registers: %d",
 			__func__, error);
 
-	error = bus_space_subregion(&exynos_bs_tag, exynos_core_bsh,
+	error = bus_space_subregion(&armv7_generic_bs_tag, exynos_core_bsh,
 		exynos_pmu_offset, EXYNOS_BLOCK_SIZE, &exynos_pmu_bsh);
 	if (error)
 		panic("%s: failed to subregion pmu registers: %d",
 			__func__, error);
 
 	exynos_cmu_bsh = exynos_core_bsh;
-	bus_space_subregion(&exynos_bs_tag, exynos_core_bsh,
+	bus_space_subregion(&armv7_generic_bs_tag, exynos_core_bsh,
 		exynos_sysreg_offset, EXYNOS_BLOCK_SIZE,
 		&exynos_sysreg_bsh);
 	if (error)
 		panic("%s: failed to subregion sysreg registers: %d",
 			__func__, error);
 
-	error = bus_space_subregion(&exynos_bs_tag, exynos_cmu_bsh,
+	error = bus_space_subregion(&armv7_generic_bs_tag, exynos_cmu_bsh,
 		exynos_cmu_apll_offset, 0xfff, &exynos_cmu_apll_bsh);
 	if (error)
 		panic("%s: failed to subregion cmu apll registers: %d",
@@ -613,7 +613,7 @@ exynos_device_register(device_t self, void *aux)
 		 * bus space used for the armcore registers (which armperiph uses).
 		 */
 		struct mainbus_attach_args * const mb = aux;
-		mb->mb_iot = &exynos_bs_tag;
+		mb->mb_iot = &armv7_generic_bs_tag;
 		return;
 	}
 	if (device_is_a(self, "armgic")
@@ -634,6 +634,14 @@ exynos_device_register(device_t self, void *aux)
 			mpcaa->mpcaa_off2 = EXYNOS5_GIC_IOP_CONTROLLER_OFFSET;
 #endif
 			break;
+		case 0xe5422: {
+			struct mpcore_attach_args * const mpcaa = aux;
+
+			mpcaa->mpcaa_memh = EXYNOS_CORE_VBASE;
+			mpcaa->mpcaa_off1 = EXYNOS5_GIC_IOP_DISTRIBUTOR_OFFSET;
+			mpcaa->mpcaa_off2 = EXYNOS5_GIC_IOP_CONTROLLER_OFFSET;
+			break;
+		}
 #endif
 #ifdef EXYNOS4
 		case 0xe4410:
@@ -658,10 +666,10 @@ exynos_device_register(device_t self, void *aux)
 		 * The global timer is dependent on the MCT running.
 		 */
 		bus_size_t o = EXYNOS5_MCT_OFFSET + MCT_G_TCON;
-		uint32_t v = bus_space_read_4(&exynos_bs_tag, exynos_core_bsh,
+		uint32_t v = bus_space_read_4(&armv7_generic_bs_tag, exynos_core_bsh,
 		     o);
 		v |= G_TCON_START;
-		bus_space_write_4(&exynos_bs_tag, exynos_core_bsh, o, v);
+		bus_space_write_4(&armv7_generic_bs_tag, exynos_core_bsh, o, v);
 #endif
 		/*
 		 * The frequencies of the timers are the reference
@@ -671,105 +679,18 @@ exynos_device_register(device_t self, void *aux)
 		    "frequency", EXYNOS_F_IN_FREQ);
 		return;
 	}
-
-	exyo_device_register(self, aux);
 }
 
 
 void
 exynos_device_register_post_config(device_t self, void *aux)
 {
-	exyo_device_register_post_config(self, aux);
 }
-
-
-/*
- * USB power SoC dependent handling
- */
-
-#ifdef EXYNOS4
-static struct exynos_gpio_pinset e4_uhost_pwr_pinset = {
-	.pinset_group = "ETC6",
-	.pinset_func  = 0,
-	.pinset_mask  = __BIT(6) | __BIT(7),
-};
-#endif
-
-
-#ifdef EXYNOS5
-static struct exynos_gpio_pinset e5_uhost_pwr_pinset = {
-	.pinset_group = "ETC6",
-	.pinset_func  = 0,
-	.pinset_mask  = __BIT(5) | __BIT(6),
-};
-static struct exynos_gpio_pinset e5_usb3_bus0_pinset = {
-	.pinset_group = "GPK3",
-	.pinset_func  = 2,
-	.pinset_mask  = __BIT(0) | __BIT(1) | __BIT(3),
-};
-static struct exynos_gpio_pinset e5_usb3_bus1_pinset = {
-	.pinset_group = "GPK2",
-	.pinset_func  = 2,
-	.pinset_mask  = __BIT(4) | __BIT(5) | __BIT(7),
-};
-#endif
-
 
 void
 exynos_usb_soc_powerup(void)
 {
-	struct exynos_gpio_pindata XuhostOVERCUR;
-	struct exynos_gpio_pindata XuhostPWREN;
-
-#ifdef EXYNOS4
-		exynos_gpio_pinset_acquire(&e4_uhost_pwr_pinset);
-		exynos_gpio_pinset_to_pindata(&e4_uhost_pwr_pinset, 6, &XuhostPWREN);
-		exynos_gpio_pinset_to_pindata(&e4_uhost_pwr_pinset, 7, &XuhostOVERCUR);
-
-		/* enable power and set Xuhost OVERCUR to inactive by pulling it up */
-		exynos_gpio_pindata_ctl(&XuhostPWREN, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&XuhostOVERCUR, GPIO_PIN_PULLUP);
-		DELAY(80000);
-#endif
-#ifdef EXYNOS5
-	if (IS_EXYNOS5410_P()) {
-		struct exynos_gpio_pindata Xovercur2, Xovercur3;
-		struct exynos_gpio_pindata Xvbus;
-
-		/* BUS 0 */
-		exynos_gpio_pinset_acquire(&e5_usb3_bus0_pinset);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus0_pinset, 0, &Xovercur2);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus0_pinset, 1, &Xovercur3);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus0_pinset, 3, &Xvbus);
-
-		/* enable power and set overcur inactive by pulling them up */
-		exynos_gpio_pindata_ctl(&Xvbus, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur2, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur3, GPIO_PIN_PULLUP);
-
-		/* BUS 1 */
-		exynos_gpio_pinset_acquire(&e5_usb3_bus1_pinset);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus1_pinset, 4, &Xovercur2);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus1_pinset, 5, &Xovercur3);
-		exynos_gpio_pinset_to_pindata(&e5_usb3_bus1_pinset, 7, &Xvbus);
-
-		/* enable power and set overcur inactive by pulling them up */
-		exynos_gpio_pindata_ctl(&Xvbus, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur2, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&Xovercur3, GPIO_PIN_PULLUP);
-
-		/* enable power to the hub */
-		exynos_gpio_pinset_acquire(&e5_uhost_pwr_pinset);
-		exynos_gpio_pinset_to_pindata(&e5_uhost_pwr_pinset, 5, &XuhostPWREN);
-		exynos_gpio_pinset_to_pindata(&e5_uhost_pwr_pinset, 6, &XuhostOVERCUR);
-
-		/* enable power and set Xuhost OVERCUR to inactive by pulling it up */
-		exynos_gpio_pindata_ctl(&XuhostPWREN, GPIO_PIN_PULLUP);
-		exynos_gpio_pindata_ctl(&XuhostOVERCUR, GPIO_PIN_PULLUP);
-		DELAY(80000);
-	}
 	/* XXX 5422 XXX */
-#endif
 }
 
 
@@ -790,23 +711,23 @@ exynos_usb2_set_isolation(bool on)
 	if (IS_EXYNOS5_P() || IS_EXYNOS4410_P()) {
 		/* set usbhost mode */
 		regval = on ? 0 : USB20_PHY_HOST_LINK_EN;
-		bus_space_write_4(&exynos_bs_tag, exynos_sysreg_bsh,
+		bus_space_write_4(&armv7_generic_bs_tag, exynos_sysreg_bsh,
 			EXYNOS5_SYSREG_USB20_PHY_TYPE, regval);
 		reg = EXYNOS_PMU_USBHOST_PHY_CTRL;
 	}
 
 	/* do enable PHY */
 	en_mask = PMU_PHY_ENABLE;
-	regval = bus_space_read_4(&exynos_bs_tag, exynos_pmu_bsh, reg);
+	regval = bus_space_read_4(&armv7_generic_bs_tag, exynos_pmu_bsh, reg);
 	regval = on ? regval & ~en_mask : regval | en_mask;
 
-	bus_space_write_4(&exynos_bs_tag, exynos_pmu_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, exynos_pmu_bsh,
 		reg, regval);
 
 	if (IS_EXYNOS4X12_P()) {
-		bus_space_write_4(&exynos_bs_tag, exynos_pmu_bsh,
+		bus_space_write_4(&armv7_generic_bs_tag, exynos_pmu_bsh,
 			EXYNOS_PMU_USB_HSIC_1_PHY_CTRL, regval);
-		bus_space_write_4(&exynos_bs_tag, exynos_pmu_bsh,
+		bus_space_write_4(&armv7_generic_bs_tag, exynos_pmu_bsh,
 			EXYNOS_PMU_USB_HSIC_2_PHY_CTRL, regval);
 	}
 }
@@ -820,50 +741,50 @@ exynos4_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 
 	/* write clock value */
 	clkreg = FSEL_CLKSEL_24M;
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_PHYCLK, clkreg);
 
 	/* set device and host to normal */
-	phypwr = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+	phypwr = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_PHYPWR);
 
 	/* enable analog, enable otg, unsleep phy0 (host) */
 	phypwr &= ~PHYPWR_NORMAL_MASK_PHY0;
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_PHYPWR, phypwr);
 
 	if (IS_EXYNOS4X12_P()) {
 		/* enable hsic0 (host), enable hsic1 and phy1 (otg) */
-		phypwr = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+		phypwr = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 			USB_PHYPWR);
 		phypwr &= ~(PHYPWR_NORMAL_MASK_HSIC0 |
 			    PHYPWR_NORMAL_MASK_HSIC1 |
 			    PHYPWR_NORMAL_MASK_PHY1);
-		bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+		bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 			USB_PHYPWR, phypwr);
 	}
 
 	/* reset both phy and link of device */
-	rstcon = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+	rstcon = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_RSTCON);
 	rstcon |= RSTCON_DEVPHY_SWRST;
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_RSTCON, rstcon);
 	DELAY(10000);
 	rstcon &= ~RSTCON_DEVPHY_SWRST;
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_RSTCON, rstcon);
 
 	if (IS_EXYNOS4X12_P()) {
 		/* reset both phy and link of host */
-		rstcon = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+		rstcon = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 			USB_RSTCON);
 		rstcon |= RSTCON_HOSTPHY_SWRST | RSTCON_HOSTPHYLINK_SWRST;
-		bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+		bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 			USB_RSTCON, rstcon);
 		DELAY(10000);
 		rstcon &= ~(RSTCON_HOSTPHY_SWRST | RSTCON_HOSTPHYLINK_SWRST);
-		bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+		bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 			USB_RSTCON, rstcon);
 	}
 
@@ -882,7 +803,7 @@ exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 	uint32_t ehcictrl, ohcictrl;
 
 	/* host configuration: */
-	phyhost = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+	phyhost = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 	    USB_PHY_HOST_CTRL0);
 
 	/* host phy reference clock; assumption its 24 MHz now */
@@ -901,12 +822,12 @@ exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 	phyhost |= HOST_CTRL0_LINK_SWRST | HOST_CTRL0_UTMI_SWRST |
 	    HOST_CTRL0_COMMONON_N;
 	/* do the reset */
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HOST_CTRL0,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh, USB_PHY_HOST_CTRL0,
 	    phyhost);
 	DELAY(10000);
 
 	phyhost &= ~(HOST_CTRL0_LINK_SWRST | HOST_CTRL0_UTMI_SWRST);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HOST_CTRL0,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh, USB_PHY_HOST_CTRL0,
 	   phyhost);
 
 	/* HSIC control */
@@ -915,22 +836,22 @@ exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 	    __SHIFTIN(HSIC_CTRL_REFCLKSEL_DEFAULT, HSIC_CTRL_REFCLKSEL_MASK) |
 	    HSIC_CTRL_PHY_SWRST;
 
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL1,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL1,
 	   phyhsic);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL2,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL2,
 	   phyhsic);
 	DELAY(10);
 
 	phyhsic &= ~HSIC_CTRL_PHY_SWRST;
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL1,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL1,
 	   phyhsic);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL2,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh, USB_PHY_HSIC_CTRL2,
 	   phyhsic);
 	DELAY(80);
 
 #if 0
 	/* otg configuration: */
-	phyotg = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+	phyotg = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_PHY_OTG_SYS);
 
 	/* otg phy refrence clock: assumption its 24 Mhz now */
@@ -947,29 +868,29 @@ exynos5410_usb2phy_enable(bus_space_handle_t usb2phy_bsh)
 		OTG_SYS_OTGDISABLE | OTG_SYS_REFCLKSEL_MASK;
 
 	/* do the reset */
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_PHY_OTG_SYS, phyotg);
 	DELAY(10000);
 	phyotg &= ~(OTG_SYS_PHY0_SWRST | OTG_SYS_LINK_SWRST_UOTG |
 		OTG_SYS_PHYLINK_SWRST);
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 		USB_PHY_OTG_SYS, phyotg);
 #endif
 
 	/* enable EHCI DMA burst: */
-	ehcictrl = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+	ehcictrl = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 	    USB_PHY_HOST_EHCICTRL);
 	ehcictrl |= HOST_EHCICTRL_ENA_INCRXALIGN |
 	    HOST_EHCICTRL_ENA_INCR4 | HOST_EHCICTRL_ENA_INCR8 |
 	    HOST_EHCICTRL_ENA_INCR16;
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 	    USB_PHY_HOST_EHCICTRL, ehcictrl);
 
 	/* Set OHCI suspend */
-	ohcictrl = bus_space_read_4(&exynos_bs_tag, usb2phy_bsh,
+	ohcictrl = bus_space_read_4(&armv7_generic_bs_tag, usb2phy_bsh,
 	    USB_PHY_HOST_OHCICTRL);
 	ohcictrl |= HOST_OHCICTRL_SUSPLGCY;
-	bus_space_write_4(&exynos_bs_tag, usb2phy_bsh,
+	bus_space_write_4(&armv7_generic_bs_tag, usb2phy_bsh,
 	    USB_PHY_HOST_OHCICTRL, ohcictrl);
 }
 

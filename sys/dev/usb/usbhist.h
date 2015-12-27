@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhist.h,v 1.1.2.2 2015/06/06 14:40:14 skrll Exp $	*/
+/*	$NetBSD: usbhist.h,v 1.1.2.3 2015/12/27 12:10:00 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Matthew R. Green
@@ -44,7 +44,7 @@
 
 #include <sys/kernhist.h>
 
-#ifdef USBHIST
+#ifdef USB_DEBUG
 
 extern int usbdebug;
 

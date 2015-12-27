@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/01/17 01:32:53 pooka Exp $
+#	$NetBSD: Makefile,v 1.3.6.1 2015/12/27 12:10:15 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../crypto/arc4				\
@@ -10,6 +10,7 @@
 	${.CURDIR}/../../../../crypto/skipjack
 
 LIB=	rumpkern_crypto
+COMMENT=Cryptographic routines
 
 # arc4
 SRCS+=	arc4.c

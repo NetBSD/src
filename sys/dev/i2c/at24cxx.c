@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.18.4.1 2015/06/06 14:40:07 skrll Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.18.4.2 2015/12/27 12:09:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.18.4.1 2015/06/06 14:40:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.18.4.2 2015/12/27 12:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,15 @@ static int seeprom_wait_idle(struct seeprom_softc *);
 static const char * seeprom_compats[] = {
 	"i2c-at24c64",
 	"i2c-at34c02",
+	"atmel,24c02",
 	NULL
+};
+
+static const struct seeprom_size {
+	const char *name;
+	int size;
+} seeprom_sizes[] = {
+	{ "atmel,24c02", 256 },
 };
 
 static int
@@ -122,8 +130,13 @@ seeprom_match(device_t parent, cfdata_t cf, void *aux)
 	struct i2c_attach_args *ia = aux;
 
 	if (ia->ia_name) {
-		if (iic_compat_match(ia, seeprom_compats))
-			return (1);
+		if (ia->ia_ncompat > 0) {
+			if (iic_compat_match(ia, seeprom_compats))
+				return (1);
+		} else {
+			if (strcmp(ia->ia_name, "seeprom") == 0)
+				return (1);
+		}
 	} else {
 		if ((ia->ia_addr & AT24CXX_ADDRMASK) == AT24CXX_ADDR)
 			return (1);
@@ -137,6 +150,7 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 {
 	struct seeprom_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	u_int n;
 
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
@@ -168,6 +182,16 @@ seeprom_attach(device_t parent, device_t self, void *aux)
 		sc->sc_size = (device_cfdata(self)->cf_flags << 7);
 	else
 		sc->sc_size = ia->ia_size;
+
+	if (sc->sc_size == 0 && ia->ia_ncompat > 0) {
+		for (n = 0; n < __arraycount(seeprom_sizes); n++) {
+			if (!strcmp(seeprom_sizes[n].name, ia->ia_compat[n])) {
+				sc->sc_size = seeprom_sizes[n].size;
+				break;
+			}
+		}
+	}
+
 	switch (sc->sc_size) {
 	case 128:		/* 1Kbit */
 	case 256:		/* 2Kbit */

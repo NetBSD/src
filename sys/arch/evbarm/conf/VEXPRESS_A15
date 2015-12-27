@@ -1,5 +1,5 @@
 #
-#	$NetBSD: VEXPRESS_A15,v 1.2.2.3 2015/09/22 12:05:40 skrll Exp $
+#	$NetBSD: VEXPRESS_A15,v 1.2.2.4 2015/12/27 12:09:34 skrll Exp $
 #
 #	VEXPRESS_A15 -- Versatile Express A15 kernel
 #
@@ -23,9 +23,8 @@ options 	CPU_CORTEXA15
 
 options 	PMAPCOUNTERS
 options 	BUSDMA_COUNTERS
-#options 	EXYNOS_CONSOLE_EARLY
 #options 	UVMHIST
-#options 	USBHIST
+#options 	USB_DEBUG
 #options 	USBHIST_SIZE=100000
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpdevcomp,v 1.19.2.1 2015/06/06 14:40:26 skrll Exp $
+#	$NetBSD: Makefile.rumpdevcomp,v 1.19.2.2 2015/12/27 12:10:08 skrll Exp $
 #
 
 RUMPDEVCOMP=	audio bpf cgd disk dm drvctl fss md netsmb		\
@@ -10,6 +10,7 @@ RUMPUSBDEVS=	ubt ucom ugenhc ulpt umass usb
 RUMPPCIDEVS=	pci pci_if_iwn pci_if_pcn pci_if_wm
 RUMPPCIDEVS+=	pci_usbhc
 RUMPPCIDEVS+=	pci_virtio virtio_if_vioif virtio_ld virtio_viornd
+RUMPPCIDEVS+=	virtio_vioscsi
 RUMPPCIDEVS+=	audio_ac97 pci_auich pci_eap pci_hdaudio hdaudio_hdafg
 # Not really a PCI device, but ....
 RUMPPCIDEVS+=	miiphy
@@ -23,7 +24,8 @@ RUMPDEVLDADD+=-lrumpdev_${var}
 RUMPDEVLIBS+=lib${var}
 .endfor
 
-# Currently no NetBSD host support.
-#.for var in ${RUMPPCIDEVS}
-#RUMPDEVLIBS+=lib${var}
-#.endfor
+.if make(rumpdescribe)
+.for var in ${RUMPPCIDEVS}
+RUMPDEVLIBS+=lib${var}
+.endfor
+.endif

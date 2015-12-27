@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.215.4.2 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: mount.h,v 1.215.4.3 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -475,7 +475,7 @@ long	makefstype(const char *);
 int	mount_domount(struct lwp *, struct vnode **, struct vfsops *,
 	    const char *, int, void *, size_t *);
 int	dounmount(struct mount *, int, struct lwp *);
-int	do_sys_mount(struct lwp *, struct vfsops *, const char *, const char *,
+int	do_sys_mount(struct lwp *, const char *, enum uio_seg, const char *,
 	    int, void *, enum uio_seg, size_t, register_t *);
 void	vfsinit(void);
 void	vfs_opv_init(const struct vnodeopv_desc * const *);

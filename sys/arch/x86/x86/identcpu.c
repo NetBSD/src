@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.47.2.1 2015/04/06 15:18:04 skrll Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.47.2.2 2015/12/27 12:09:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47.2.1 2015/04/06 15:18:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.47.2.2 2015/12/27 12:09:45 skrll Exp $");
 
 #include "opt_xen.h"
 
@@ -856,6 +856,15 @@ cpu_probe(struct cpu_info *ci)
 				break;
 		}
 		memcpy(cpu_brand_string, ((char *) brand) + i, 48 - i);
+	}
+
+	/*
+	 * Get the structured extended features.
+	 */
+	if (cpuid_level >= 7) {
+		x86_cpuid(7, descs);
+		ci->ci_feat_val[5] = descs[1]; /* %ebx */
+		ci->ci_feat_val[6] = descs[2]; /* %ecx */
 	}
 
 	cpu_probe_intel(ci);

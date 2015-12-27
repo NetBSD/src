@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.10.2.1 2015/06/06 14:40:08 skrll Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.10.2.2 2015/12/27 12:09:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -54,10 +54,12 @@ STATIC int
 my_soo_write(connection_t *conn, struct uio *u)
 {
 	struct socket *so = conn->sock->f_socket;
-	size_t resid = u->uio_resid;
 	int ret;
+#ifdef ISCSI_DEBUG
+	size_t resid = u->uio_resid;
 
 	assert(resid != 0);
+#endif
 
 	ret = sosend(so, NULL, u, NULL, NULL, 0, conn->threadobj);
 

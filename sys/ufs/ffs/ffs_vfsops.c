@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.302.2.3 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.302.2.4 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.302.2.3 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.302.2.4 2015/12/27 12:10:18 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -109,7 +109,11 @@ __KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.302.2.3 2015/09/22 12:06:17 skrll E
 #include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
 
+#ifdef WAPBL
+MODULE(MODULE_CLASS_VFS, ffs, "wapbl");
+#else
 MODULE(MODULE_CLASS_VFS, ffs, NULL);
+#endif
 
 static int ffs_vfs_fsync(vnode_t *, int);
 static int ffs_superblock_validate(struct fs *);
@@ -186,6 +190,54 @@ static const struct ufs_ops ffs_ufsops = {
 	.uo_bufrd = ffs_bufrd,
 	.uo_bufwr = ffs_bufwr,
 };
+
+static int
+ffs_checkrange(struct mount *mp, uint32_t ino)
+{
+	struct fs *fs = VFSTOUFS(mp)->um_fs;
+
+	if (ino < UFS_ROOTINO || ino >= fs->fs_ncg * fs->fs_ipg) {
+		DPRINTF("out of range %u\n", ino);
+		return ESTALE;
+	}
+
+	/*
+	 * Need to check if inode is initialized because ffsv2 does 
+	 * lazy initialization and we can get here from nfs_fhtovp
+	 */
+	if (fs->fs_magic != FS_UFS2_MAGIC)
+		return 0;
+
+	struct buf *bp;
+	int cg = ino_to_cg(fs, ino);
+	struct ufsmount *ump = VFSTOUFS(mp);
+
+	int error = bread(ump->um_devvp, FFS_FSBTODB(fs, cgtod(fs, cg)),
+	    (int)fs->fs_cgsize, B_MODIFY, &bp);
+	if (error) {
+		DPRINTF("error %d reading cg %d ino %u\n", error, cg, ino);
+		return error;
+	}
+
+	const int needswap = UFS_FSNEEDSWAP(fs);
+
+	struct cg *cgp = (struct cg *)bp->b_data;
+	if (!cg_chkmagic(cgp, needswap)) {
+		brelse(bp, 0);
+		DPRINTF("bad cylinder group magic cg %d ino %u\n", cg, ino);
+		return ESTALE;
+	}
+
+	int32_t initediblk = ufs_rw32(cgp->cg_initediblk, needswap);
+	brelse(bp, 0);
+
+	if (cg * fs->fs_ipg + initediblk < ino) {
+		DPRINTF("cg=%d fs->fs_ipg=%d initediblk=%d ino=%u\n",
+		    cg, fs->fs_ipg, initediblk, ino);
+		return ESTALE;
+	}
+	return 0;
+}
 
 static int
 ffs_snapshot_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
@@ -899,7 +951,7 @@ static int
 ffs_superblock_validate(struct fs *fs)
 {
 	int32_t i, fs_bshift = 0, fs_fshift = 0, fs_fragshift = 0, fs_frag;
-	int32_t fs_inopb, fs_cgsize;
+	int32_t fs_inopb;
 
 	/* Check the superblock size */
 	if (fs->fs_sbsize > SBLOCKSIZE || fs->fs_sbsize < sizeof(struct fs))
@@ -981,23 +1033,9 @@ ffs_superblock_validate(struct fs *fs)
 		return 0;
 
 	/* Check the size of cylinder groups */
-	fs_cgsize = ffs_fragroundup(fs, CGSIZE(fs));
-	if (fs->fs_cgsize != fs_cgsize) {
-		if (fs->fs_cgsize+1 == CGSIZE(fs)) {
-			printf("CGSIZE(fs) miscalculated by one - this file "
-			    "system may have been created by\n"
-			    "  an old (buggy) userland, see\n"
-			    "  http://www.NetBSD.org/"
-			    "docs/ffsv1badsuperblock.html\n");
-		} else {
-			printf("ERROR: cylinder group size mismatch: "
-			    "fs_cgsize = 0x%zx, "
-			    "fs->fs_cgsize = 0x%zx, CGSIZE(fs) = 0x%zx\n",
-			    (size_t)fs_cgsize, (size_t)fs->fs_cgsize,
-			    (size_t)CGSIZE(fs));
-			return 0;
-		}
-	}
+	if ((fs->fs_cgsize < sizeof(struct cg)) ||
+	    (fs->fs_cgsize > fs->fs_bsize))
+		return 0;
 
 	return 1;
 }
@@ -2191,16 +2229,15 @@ int
 ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 {
 	struct ufid ufh;
-	struct fs *fs;
+	int error;
 
 	if (fhp->fid_len != sizeof(struct ufid))
 		return EINVAL;
 
 	memcpy(&ufh, fhp, sizeof(ufh));
-	fs = VFSTOUFS(mp)->um_fs;
-	if (ufh.ufid_ino < UFS_ROOTINO ||
-	    ufh.ufid_ino >= fs->fs_ncg * fs->fs_ipg)
-		return (ESTALE);
+	if ((error = ffs_checkrange(mp, ufh.ufid_ino)) != 0)
+		return error;
+
 	return (ufs_fhtovp(mp, &ufh, vpp));
 }
 

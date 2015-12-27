@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.145.2.2 2015/09/22 12:05:59 skrll Exp $	*/
+/*	$NetBSD: pci.c,v 1.145.2.3 2015/12/27 12:09:50 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145.2.2 2015/09/22 12:05:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.145.2.3 2015/12/27 12:09:50 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -68,9 +68,6 @@ int	pciprint(void *, const char *);
 
 #ifdef PCI_MACHDEP_ENUMERATE_BUS
 #define pci_enumerate_bus PCI_MACHDEP_ENUMERATE_BUS
-#else
-int pci_enumerate_bus(struct pci_softc *, const int *,
-    int (*)(const struct pci_attach_args *), struct pci_attach_args *);
 #endif
 
 /*
@@ -435,7 +432,9 @@ pci_probe_device(struct pci_softc *sc, pcitag_t tag,
 			if (addr == PCI_HT_MSI_FIXED_ADDR) {
 				pa.pa_flags |= PCI_FLAGS_MSI_OKAY;
 				pa.pa_flags |= PCI_FLAGS_MSIX_OKAY;
-			}
+			} else
+				aprint_verbose_dev(sc->sc_dev,
+				    "HyperTransport MSI mapping is not supported yet. Disable MSI/MSI-X.\n");
 		}
 	}
 #endif
@@ -611,6 +610,43 @@ pci_msix_count(pci_chipset_tag_t pc, pcitag_t tag)
 	reg = pci_conf_read(pc, tag, offset + PCI_MSIX_CTL);
 
 	return PCI_MSIX_CTL_TBLSIZE(reg);
+}
+
+int
+pci_get_ext_capability(pci_chipset_tag_t pc, pcitag_t tag, int capid,
+    int *offset, pcireg_t *value)
+{
+	pcireg_t reg;
+	unsigned int ofs;
+
+	/* Only supported for PCI-express devices */
+	if (!pci_get_capability(pc, tag, PCI_CAP_PCIEXPRESS, NULL, NULL))
+		return 0;
+
+	ofs = PCI_EXTCAPLIST_BASE;
+	reg = pci_conf_read(pc, tag, ofs);
+	if (reg == 0xffffffff || reg == 0)
+		return 0;
+
+	for (;;) {
+#ifdef DIAGNOSTIC
+		if ((ofs & 3) || ofs < PCI_EXTCAPLIST_BASE)
+			panic("%s: invalid offset %u", __func__, ofs);
+#endif
+		if (PCI_EXTCAPLIST_CAP(reg) == capid) {
+			if (offset != NULL)
+				*offset = ofs;
+			if (value != NULL)
+				*value = reg;
+			return 1;
+		}
+		ofs = PCI_EXTCAPLIST_NEXT(reg);
+		if (ofs == 0)
+			break;
+		reg = pci_conf_read(pc, tag, ofs);
+	}
+
+	return 0;
 }
 
 int

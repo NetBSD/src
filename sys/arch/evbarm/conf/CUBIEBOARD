@@ -1,5 +1,5 @@
 #
-#	$NetBSD: CUBIEBOARD,v 1.37.2.2 2015/06/06 14:39:58 skrll Exp $
+#	$NetBSD: CUBIEBOARD,v 1.37.2.3 2015/12/27 12:09:34 skrll Exp $
 #
 #	CUBIEBOARD -- Allwinner A10/A20 Eval Board Kernel
 #
@@ -10,6 +10,8 @@ include	"arch/evbarm/conf/std.awin"
 
 no makeoptions	BOARDTYPE
 makeoptions	BOARDTYPE="cubieboard"
+no makeoptions	CPUFLAGS
+makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 #options 	UVMHIST,UVMHIST_PRINT
 options 	ALLWINNER_A10
 options 	ALLWINNER_A20
@@ -100,7 +102,7 @@ gpio*		at awingpio?
 awiniic0	at awinio? port 0
 #awiniic*	at awinio? port ?
 iic*		at awiniic?
-#axp20x0 	at iic0 addr 0x34	# AXP209 Power Management Unit
+axp20x0 	at iic0 addr 0x34	# AXP209 Power Management Unit
 
 # On-board 16550 UARTs
 com0		at awinio? port 0			# UART0 (console)
@@ -130,12 +132,15 @@ audio1		at awinhdmiaudio0
 
 # TCON
 awintcon0       at awinio0 port 0
+awintcon1       at awinio0 port 1
 
 # DE-BE
 awindebe0       at awinio0 port 0
+awindebe1       at awinio0 port 1
 
 # Framebuffer
 genfb0          at awindebe0
+genfb1          at awindebe1
 wsdisplay*      at genfb?
 options        VCONS_DRAW_INTR
 options         WSEMUL_VT100

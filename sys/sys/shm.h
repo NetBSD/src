@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.48.42.1 2015/06/06 14:40:30 skrll Exp $	*/
+/*	$NetBSD: shm.h,v 1.48.42.2 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -172,11 +172,14 @@ extern int shm_nused;
 
 struct vmspace;
 
-void	shminit(void);
+void	shminit(struct sysctllog **);
 int	shmfini(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
 int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
+
+extern void (*uvm_shmexit)(struct vmspace *);
+extern void (*uvm_shmfork)(struct vmspace *, struct vmspace *);
 
 #define SYSCTL_FILL_SHM(src, dst) do { \
 	SYSCTL_FILL_PERM((src).shm_perm, (dst).shm_perm); \

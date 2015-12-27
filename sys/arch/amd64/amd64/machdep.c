@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.211.4.2 2015/09/22 12:05:35 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.211.4.3 2015/12/27 12:09:28 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.2 2015/09/22 12:05:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.211.4.3 2015/12/27 12:09:28 skrll Exp $");
 
 /* #define XENDEBUG_LOW  */
 
@@ -1552,7 +1552,6 @@ init_x86_64(paddr_t first_avail)
 
 	cpu_init_msrs(&cpu_info_primary, true);
 
-
 	use_pae = 1; /* PAE always enabled in long mode */
 
 #ifdef XEN
@@ -1590,7 +1589,6 @@ init_x86_64(paddr_t first_avail)
 	avail_start = 8 * PAGE_SIZE;
 
 #if !defined(REALBASEMEM) && !defined(REALEXTMEM)
-
 	/*
 	 * Check to see if we have a memory map from the BIOS (passed
 	 * to us by the boot program.
@@ -1598,7 +1596,6 @@ init_x86_64(paddr_t first_avail)
 	bim = lookup_bootinfo(BTINFO_MEMMAP);
 	if (bim != NULL && bim->num > 0)
 		initx86_parse_memmap(bim, iomem_ex);
-
 #endif	/* ! REALBASEMEM && ! REALEXTMEM */
 
 	/*
@@ -1632,7 +1629,6 @@ init_x86_64(paddr_t first_avail)
 
 #ifndef XEN
 	initx86_load_memmap(first_avail);
-
 #else	/* XEN */
 	kern_end = KERNBASE + first_avail;
 	physmem = xen_start_info.nr_pages;
@@ -1707,7 +1703,6 @@ init_x86_64(paddr_t first_avail)
 	/*
 	 * 32 bit GDT entries.
 	 */
-
 	set_mem_segment(GDT_ADDR_MEM(gdtstore, GUCODE32_SEL), 0,
 	    x86_btop(VM_MAXUSER_ADDRESS32) - 1, SDT_MEMERA, SEL_UPL, 1, 1, 0);
 

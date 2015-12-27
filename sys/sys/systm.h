@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.266.4.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: systm.h,v 1.266.4.3 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -489,6 +489,7 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif /* _KERNEL */
 
 /* For SYSCALL_DEBUG */
+void scdebug_init(void);
 void scdebug_call(register_t, const register_t[]);
 void scdebug_ret(register_t, int, const register_t[]);
 

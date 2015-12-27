@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.259 2014/01/01 22:35:54 matt Exp $ */
+/* $NetBSD: pmap.c,v 1.259.6.1 2015/12/27 12:09:27 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2014/01/01 22:35:54 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259.6.1 2015/12/27 12:09:27 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -149,7 +149,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.259 2014/01/01 22:35:54 matt Exp $");
 #include <sys/malloc.h>
 #include <sys/pool.h>
 #include <sys/buf.h>
-#include <sys/shm.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 
@@ -778,9 +777,6 @@ pmap_bootstrap(paddr_t ptaddr, u_int maxasn, u_long ncpuids)
 		 bufsz + 16 * NCARGS + pager_map_size) / PAGE_SIZE +
 		(maxproc * UPAGES) + nkmempages;
 
-#ifdef SYSVSHM
-	lev3mapsize += shminfo.shmall;
-#endif
 	lev3mapsize = roundup(lev3mapsize, NPTEPG);
 
 	/*

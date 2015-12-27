@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_backlightvar.h,v 1.1 2014/05/06 11:22:53 hkenken Exp $	*/
+/*	$NetBSD: netwalker_backlightvar.h,v 1.1.12.1 2015/12/27 12:09:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -29,6 +29,10 @@
 #ifndef _EVBARM_NETWALKER_NETWALKER_BACKLIGHTVAR_H
 #define _EVBARM_NETWALKER_NETWALKER_BACKLIGHTVAR_H
 
+#include <dev/wscons/wsconsio.h>
+
 int netwalker_lcd_param_ioctl(u_long cmd, struct wsdisplay_param *dp);
+
+void netwalker_backlight_genfb_parameter_set(prop_dictionary_t);
 
 #endif	/* _EVBARM_NETWALKER_NETWALKER_BACKLIGHTVAR_H */

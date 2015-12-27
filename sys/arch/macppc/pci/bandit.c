@@ -1,4 +1,4 @@
-/*	$NetBSD: bandit.c,v 1.30 2011/10/26 04:56:23 macallan Exp $	*/
+/*	$NetBSD: bandit.c,v 1.30.30.1 2015/12/27 12:09:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.30 2011/10/26 04:56:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bandit.c,v 1.30.30.1 2015/12/27 12:09:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -156,6 +156,9 @@ bandit_conf_read(void *cookie, pcitag_t tag, int reg)
 	int bus, dev, func, s;
 	uint32_t x;
 
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return (pcireg_t) -1;
+
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 
 	/*
@@ -194,6 +197,9 @@ bandit_conf_write(void *cookie, pcitag_t tag, int reg, pcireg_t data)
 	pci_chipset_tag_t pc = cookie;
 	int bus, dev, func, s;
 	u_int32_t x;
+
+	if ((unsigned int)reg >= PCI_CONF_SIZE)
+		return;
 
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 

@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_com.c,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -29,11 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "locators.h"
-
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,12 +46,17 @@ __KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp 
 
 #include <dev/ic/comvar.h>
 
+#include <dev/fdt/fdtvar.h>
+
 static int tegra_com_match(device_t, cfdata_t, void *);
 static void tegra_com_attach(device_t, device_t, void *);
 
 struct tegra_com_softc {
 	struct com_softc tsc_sc;
 	void *tsc_ih;
+
+	struct clk *tsc_clk;
+	struct fdtbus_reset *tsc_rst;
 };
 
 CFATTACH_DECL_NEW(tegra_com, sizeof(struct tegra_com_softc),
@@ -62,18 +65,10 @@ CFATTACH_DECL_NEW(tegra_com, sizeof(struct tegra_com_softc),
 static int
 tegra_com_match(device_t parent, cfdata_t cf, void *aux)
 {
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
-	bus_space_tag_t bst = tio->tio_a4x_bst;
-	bus_space_handle_t bsh;
+	const char * const compatible[] = { "nvidia,tegra124-uart", NULL };
+	struct fdt_attach_args * const faa = aux;
 
-	if (com_is_console(bst, TEGRA_APB_BASE + loc->loc_offset, NULL))
-		return 1;
-
-	bus_space_subregion(bst, tio->tio_bsh,
-	    loc->loc_offset, loc->loc_size, &bsh);
-
-	return comprobe1(bst, bsh);
+	return of_match_compatible(faa->faa_phandle, compatible);
 }
 
 static void
@@ -81,29 +76,69 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 {
 	struct tegra_com_softc * const tsc = device_private(self);
 	struct com_softc * const sc = &tsc->tsc_sc;
-	struct tegraio_attach_args * const tio = aux;
-	const struct tegra_locators * const loc = &tio->tio_loc;
-	bus_space_tag_t bst = tio->tio_a4x_bst;
-	const bus_addr_t iobase = TEGRA_APB_BASE + loc->loc_offset;
+	struct fdt_attach_args * const faa = aux;
 	bus_space_handle_t bsh;
+	bus_space_tag_t bst;
+	char intrstr[128];
+	bus_addr_t addr;
+	bus_size_t size;
+	u_int reg_shift;
+	int error;
+
+	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get registers\n");
+		return;
+	}
+
+	if (of_getprop_uint32(faa->faa_phandle, "reg-shift", &reg_shift)) {
+		/* missing or bad reg-shift property, assume 2 */
+		bst = faa->faa_a4x_bst;
+	} else {
+		if (reg_shift == 2) {
+			bst = faa->faa_a4x_bst;
+		} else if (reg_shift == 0) {
+			bst = faa->faa_bst;
+		} else {
+			aprint_error(": unsupported reg-shift value %d\n",
+			    reg_shift);
+			return;
+		}
+	}
 
 	sc->sc_dev = self;
-	sc->sc_frequency = tegra_car_uart_rate(loc->loc_port);
+
+	tsc->tsc_clk = fdtbus_clock_get_index(faa->faa_phandle, 0);
+	tsc->tsc_rst = fdtbus_reset_get(faa->faa_phandle, "serial");
+
+	if (tsc->tsc_clk == NULL) {
+		aprint_error(": couldn't get frequency\n");
+		return;
+	}
+
+	sc->sc_frequency = clk_get_rate(tsc->tsc_clk);
 	sc->sc_type = COM_TYPE_TEGRA;
 
-	if (com_is_console(bst, iobase, &bsh) == 0
-	    && bus_space_subregion(bst, tio->tio_bsh,
-		loc->loc_offset / 4, loc->loc_size, &bsh)) {
-		panic(": can't map registers");
+	error = bus_space_map(bst, addr, size, 0, &bsh);
+	if (error) {
+		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		return;
 	}
-	COM_INIT_REGS(sc->sc_regs, bst, bsh, iobase);
+
+	COM_INIT_REGS(sc->sc_regs, bst, bsh, addr);
 
 	com_attach_subr(sc);
 	aprint_naive("\n");
 
-	tsc->tsc_ih = intr_establish(loc->loc_intr, IPL_SERIAL,
-	    IST_LEVEL | IST_MPSAFE, comintr, sc);
-	if (tsc->tsc_ih == NULL)
-		panic("%s: failed to establish interrupt %d",
-		    device_xname(self), loc->loc_intr);
+	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(self, "failed to decode interrupt\n");
+		return;
+	}
+
+	tsc->tsc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SERIAL,
+	    FDT_INTR_MPSAFE, comintr, sc);
+	if (tsc->tsc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }

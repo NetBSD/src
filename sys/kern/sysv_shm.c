@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.125.4.1 2015/06/06 14:40:22 skrll Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.125.4.2 2015/12/27 12:10:05 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.125.4.1 2015/06/06 14:40:22 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.125.4.2 2015/12/27 12:10:05 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -109,6 +109,8 @@ struct shmmap_state {
 };
 
 extern int kern_has_sysvshm;
+
+SYSCTL_SETUP_PROTO(sysctl_ipc_shm_setup);
 
 #ifdef SHMDEBUG
 #define SHMPRINTF(a) printf a
@@ -434,7 +436,8 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	} else {
 		/* This is just a hint to uvm_map() about where to put it. */
 		attach_va = p->p_emul->e_vm_default_addr(p,
-		    (vaddr_t)vm->vm_daddr, size);
+		    (vaddr_t)vm->vm_daddr, size,
+		    p->p_vmspace->vm_map.flags & VM_MAP_TOPDOWN);
 	}
 
 	/*
@@ -951,7 +954,7 @@ shmrealloc(int newshmni)
 }
 
 void
-shminit(void)
+shminit(struct sysctllog **clog)
 {
 	vaddr_t v;
 	size_t sz;
@@ -990,7 +993,14 @@ shminit(void)
 
 	kern_has_sysvshm = 1;
 
-	sysvipcinit();
+	/* Load the callback function pointers for the uvm subsystem */
+	uvm_shmexit = shmexit;
+	uvm_shmfork = shmfork;
+
+#ifdef _MODULE
+	if (clog)
+		sysctl_ipc_shm_setup(clog);
+#endif
 }
 
 int
@@ -1005,6 +1015,10 @@ shmfini(void)
 		mutex_exit(&shm_lock);
 		return 1;
 	}
+
+	/* Clear the callback function pointers for the uvm subsystem */
+	uvm_shmexit = NULL;
+	uvm_shmfork = NULL;
 
 	/* Destroy all condvars */
 	for (i = 0; i < shminfo.shmmni; i++)

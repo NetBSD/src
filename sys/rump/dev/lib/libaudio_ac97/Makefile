@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.1 2014/11/18 09:04:20 pooka Exp $
+#	$NetBSD: Makefile,v 1.1.2.1 2015/12/27 12:10:08 skrll Exp $
 #
 
 .PATH:	${.CURDIR}/../../../../dev/ic
 
 LIB=	rumpdev_audio_ac97
+COMMENT=AC97 audio driver
 
 SRCS=	ac97.c
 

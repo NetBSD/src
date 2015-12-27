@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_balloc.c,v 1.80.6.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: lfs_balloc.c,v 1.80.6.3 2015/12/27 12:10:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.80.6.2 2015/09/22 12:06:17 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_balloc.c,v 1.80.6.3 2015/12/27 12:10:19 skrll Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -271,12 +271,10 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 				 * If that is the case mark it UNWRITTEN to keep
 				 * the accounting straight.
 				 */
-				/* XXX ondisk32 */
-				if (((int32_t *)ibp->b_data)[indirs[i].in_off] == 0)
-					((int32_t *)ibp->b_data)[indirs[i].in_off] =
-						UNWRITTEN;
-				/* XXX ondisk32 */
-				idaddr = ((int32_t *)ibp->b_data)[indirs[i].in_off];
+				if (lfs_iblock_get(fs, ibp->b_data, indirs[i].in_off) == 0)
+					lfs_iblock_set(fs, ibp->b_data, indirs[i].in_off,
+						UNWRITTEN);
+				idaddr = lfs_iblock_get(fs, ibp->b_data, indirs[i].in_off);
 #ifdef DEBUG
 				if (vp == fs->lfs_ivnode) {
 					LFS_ENTER_LOG("balloc", __FILE__,
@@ -333,8 +331,7 @@ lfs_balloc(struct vnode *vp, off_t startoffset, int iosize, kauth_cred_t cred,
 				  B_MODIFY, &ibp))
 				panic("lfs_balloc: bread bno %lld",
 				    (long long)idp->in_lbn);
-			/* XXX ondisk32 */
-			((int32_t *)ibp->b_data)[idp->in_off] = UNWRITTEN;
+			lfs_iblock_set(fs, ibp->b_data, idp->in_off, UNWRITTEN);
 #ifdef DEBUG
 			if (vp == fs->lfs_ivnode) {
 				LFS_ENTER_LOG("balloc", __FILE__,

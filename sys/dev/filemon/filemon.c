@@ -1,3 +1,4 @@
+/*      $NetBSD: filemon.c,v 1.8.4.3 2015/12/27 12:09:49 skrll Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -24,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.8.4.2 2015/09/22 12:05:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.8.4.3 2015/12/27 12:09:49 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -291,13 +292,21 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	if (!filemon)
 		return EBADF;
 
+	/* filemon_fp_data() has locked the entry - make sure to unlock! */
+
 	switch (cmd) {
 	case FILEMON_SET_FD:
 		/* Set the output file descriptor. */
+
+		/* First, release any current output file descriptor */
+		if (filemon->fm_fp)
+			fd_putfile(filemon->fm_fd);
+
+		/* Now set up the new one */
 		filemon->fm_fd = *((int *) data);
 		if ((filemon->fm_fp = fd_getfile(filemon->fm_fd)) == NULL) {
-			rw_exit(&filemon->fm_mtx);
-			return EBADF;
+			error = EBADF;
+			break;
 		}
 		/* Write the file header. */
 		filemon_comment(filemon);
@@ -308,10 +317,12 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		mutex_enter(proc_lock);
 		tp = proc_find(*((pid_t *) data));
 		mutex_exit(proc_lock);
-		if (tp == NULL) {
+		if (tp == NULL ||
+		    tp->p_emul != &emul_netbsd) {
 			error = ESRCH;
 			break;
 		}
+
 		error = kauth_authorize_process(curproc->p_cred,
 		    KAUTH_PROCESS_CANSEE, tp,
 		    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
@@ -329,13 +340,13 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 	return (error);
 }
 
-static void
+static int
 filemon_load(void *dummy __unused)
 {
 	rw_init(&filemon_mtx);
 
 	/* Install the syscall wrappers. */
-	filemon_wrapper_install();
+	return filemon_wrapper_install();
 }
 
 /*
@@ -344,7 +355,14 @@ filemon_load(void *dummy __unused)
 void
 filemonattach(int num)
 {
-    filemon_load(NULL);
+
+	/*
+	 * Don't call filemon_load() here - it will be called from
+	 * filemon_modcmd() during module initialization.
+	 */
+#if 0
+	filemon_load(NULL);
+#endif
 }
 
 
@@ -382,9 +400,10 @@ filemon_modcmd(modcmd_t cmd, void *data)
 		logLevel = LOG_INFO;
 #endif
 
-		filemon_load(data);
-		error = devsw_attach("filemon", NULL, &bmajor,
-		    &filemon_cdevsw, &cmajor);
+		error = filemon_load(data);
+		if (!error)
+			error = devsw_attach("filemon", NULL, &bmajor,
+			    &filemon_cdevsw, &cmajor);
 		break;
 
 	case MODULE_CMD_FINI:
@@ -398,7 +417,7 @@ filemon_modcmd(modcmd_t cmd, void *data)
 		break;
 
 	default:
-		error = EOPNOTSUPP;
+		error = ENOTTY;
 		break;
 
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: dkio.h,v 1.20.2.1 2015/04/06 15:18:32 skrll Exp $	*/
+/*	$NetBSD: dkio.h,v 1.20.2.2 2015/12/27 12:10:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -38,14 +38,14 @@
 /*
  * Disk-specific ioctls.
  */
-		/* get and set disklabel; DIOCGPART used internally */
+		/* get and set disklabel; DIOCGPARTINFO used internally */
 #define DIOCGDINFO	_IOR('d', 101, struct disklabel)/* get */
 #define DIOCSDINFO	_IOW('d', 102, struct disklabel)/* set */
 #define DIOCWDINFO	_IOW('d', 103, struct disklabel)/* set, update disk */
 
 #ifdef _KERNEL
 #define DIOCGDINFO32	(DIOCGDINFO - (sizeof(uint32_t) << IOCPARM_SHIFT))
-#define DIOCGPART	_IOW('d', 104, struct partinfo)	/* get partition */
+#define DIOCGPARTINFO	_IOW('d', 104, struct partinfo)	/* get partition */
 #endif
 
 #if defined(__HAVE_OLD_DISKLABEL) && defined(_KERNEL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfvar.h,v 1.24 2012/10/27 17:17:29 chs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.24.14.1 2015/12/27 12:09:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,11 +66,9 @@ struct	grf_softc {
 #if NWSDISPLAY > 0
 	struct wsdisplay_accessops	*g_accessops;
 	struct wsdisplay_emulops	*g_emulops;
-	struct wsscreen_descr		g_defaultscreen;
-	struct wsscreen_descr		*g_screens[1];
-	struct wsscreen_list		g_screenlist;
+	struct wsscreen_descr		*g_defaultscr;
+	struct wsscreen_list		*g_scrlist;
 	struct vcons_data		g_vd;
-	struct ws_ao_ioctl		*g_wsioctl;
 	uint16_t g_rowoffset[MAXROWS];	/* speed up putchar-multiplication */
 	int	g_wsmode;		/* current wsdisplay mode */ 
 	
@@ -84,6 +82,15 @@ struct	grf_softc {
 	void 	(*g_itescroll)(struct ite_softc *, int, int, int, int);
 #endif /* NWSDISPLAY */
 };
+
+#if NWSDISPLAY > 0
+/*
+ * Generic wsdisplay access ops that can be used from all grf drivers.
+ */
+paddr_t	grf_wsmmap(void *, void *, off_t, int);
+int	grf_wsioctl(void *, void *, u_long, void *, int, struct lwp *);
+#endif /* NWSDISPLAY */
+
 #endif /* _KERNEL */
 
 /* flags */

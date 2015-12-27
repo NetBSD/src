@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.200.2.2 2015/09/22 12:05:52 skrll Exp $ */
+/*	$NetBSD: autoconf.c,v 1.200.2.3 2015/12/27 12:09:44 skrll Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.2 2015/09/22 12:05:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.200.2.3 2015/12/27 12:09:44 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1114,7 +1114,7 @@ noether:
 				}
 
 				of_enter_i2c_devs(props, busnode,
-				    sizeof(cell_t));
+				    sizeof(cell_t), 1);
 			}
 		}
 
@@ -1141,6 +1141,58 @@ noether:
 			prop_dictionary_set(props, "i2c-child-devices", cfg);
 			prop_object_release(cfg);
 
+		}
+
+		/*
+		 * Add V210/V240 environmental sensors that are not in
+		 * the OFW tree.
+		 */
+		if (device_is_a(busdev, "pcfiic") &&
+		    (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
+		    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))) {
+			prop_dictionary_t props = device_properties(busdev);
+			prop_array_t cfg = NULL;
+			prop_dictionary_t sens;
+			prop_data_t data;
+			const char name_lm[] = "i2c-lm75";
+			const char name_adm[] = "i2c-adm1026";
+
+			DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ",
+			    machine_model));
+			cfg = prop_dictionary_get(props, "i2c-child-devices");
+ 			if (!cfg) {
+				cfg = prop_array_create();
+				prop_dictionary_set(props, "i2c-child-devices",
+				    cfg);
+				prop_dictionary_set_bool(props,
+				    "i2c-indirect-config", false);
+			}
+
+			/* ADM1026 at 0x2e */
+			sens = prop_dictionary_create();
+			prop_dictionary_set_uint32(sens, "addr", 0x2e);
+			prop_dictionary_set_uint64(sens, "cookie", 0);
+			prop_dictionary_set_cstring(sens, "name",
+			    "hardware-monitor");
+			data = prop_data_create_data(&name_adm[0],
+			    sizeof(name_adm));
+			prop_dictionary_set(sens, "compatible", data);
+			prop_object_release(data);
+			prop_array_add(cfg, sens);
+			prop_object_release(sens);
+
+			/* LM75 at 0x4e */
+			sens = prop_dictionary_create();
+			prop_dictionary_set_uint32(sens, "addr", 0x4e);
+			prop_dictionary_set_uint64(sens, "cookie", 0);
+			prop_dictionary_set_cstring(sens, "name",
+			    "temperature-sensor");
+			data = prop_data_create_data(&name_lm[0],
+			    sizeof(name_lm));
+			prop_dictionary_set(sens, "compatible", data);
+			prop_object_release(data);
+			prop_array_add(cfg, sens);
+			prop_object_release(sens);
 		}
 	}
 
@@ -1204,6 +1256,27 @@ noether:
 			    != 4) {
 				instance = OF_open(name);
 #endif
+	}
+
+	/* Hardware specific device properties */
+	if ((!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
+	    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))) {
+		device_t busparent = device_parent(busdev);
+		prop_dictionary_t props = device_properties(dev);
+
+		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
+		    device_is_a(dev, "adm1026hm") && props != NULL) {
+			prop_dictionary_set_uint8(props, "fan_div2", 0x55);
+			prop_dictionary_set_bool(props, "multi_read", true);
+		}
+	}
+	if (!strcmp(machine_model, "SUNW,Sun-Fire-V440")) {
+		device_t busparent = device_parent(busdev);
+		prop_dictionary_t props = device_properties(dev);
+		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
+		    device_is_a(dev, "adm1026hm") && props != NULL) {
+			prop_dictionary_set_bool(props, "multi_read", true);
+		}
 	}
 }
 

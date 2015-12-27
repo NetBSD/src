@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.94.2.3 2015/09/22 12:06:11 skrll Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.94.2.4 2015/12/27 12:10:07 skrll Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.94.2.3 2015/09/22 12:06:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.94.2.4 2015/12/27 12:10:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,12 +109,12 @@ static inline bool
 nd6_is_llinfo_probreach(struct nd_defrouter *dr)
 {
 	struct rtentry *rt = NULL;
-	struct llinfo_nd6 *ln = NULL;
+	struct llentry *ln = NULL;
 
 	rt = nd6_lookup(&dr->rtaddr, 0, dr->ifp);
 	if (rt == NULL)
 		return false;
-	ln = (struct llinfo_nd6 *)rt->rt_llinfo;
+	ln = rt->rt_llinfo;
 	rtfree(rt);
 	if (ln == NULL || !ND6_IS_LLINFO_PROBREACH(ln))
 		return false;
@@ -2097,13 +2097,12 @@ rt6_flush(struct in6_addr *gateway, struct ifnet *ifp)
 static int
 rt6_deleteroute(struct rtentry *rt, void *arg)
 {
-#define SIN6(s)	((struct sockaddr_in6 *)s)
 	struct in6_addr *gate = (struct in6_addr *)arg;
 
 	if (rt->rt_gateway == NULL || rt->rt_gateway->sa_family != AF_INET6)
 		return (0);
 
-	if (!IN6_ARE_ADDR_EQUAL(gate, &SIN6(rt->rt_gateway)->sin6_addr))
+	if (!IN6_ARE_ADDR_EQUAL(gate, &satosin6(rt->rt_gateway)->sin6_addr))
 		return (0);
 
 	/*
@@ -2123,7 +2122,6 @@ rt6_deleteroute(struct rtentry *rt, void *arg)
 
 	return (rtrequest(RTM_DELETE, rt_getkey(rt), rt->rt_gateway,
 	    rt_mask(rt), rt->rt_flags, NULL));
-#undef SIN6
 }
 
 int

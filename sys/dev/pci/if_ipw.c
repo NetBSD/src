@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipw.c,v 1.57.6.1 2015/04/06 15:18:10 skrll Exp $	*/
+/*	$NetBSD: if_ipw.c,v 1.57.6.2 2015/12/27 12:09:50 skrll Exp $	*/
 /*	FreeBSD: src/sys/dev/ipw/if_ipw.c,v 1.15 2005/11/13 17:17:40 damien Exp 	*/
 
 /*-
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.57.6.1 2015/04/06 15:18:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipw.c,v 1.57.6.2 2015/12/27 12:09:50 skrll Exp $");
 
 /*-
  * Intel(R) PRO/Wireless 2100 MiniPCI driver
@@ -1541,7 +1541,8 @@ ipw_watchdog(struct ifnet *ifp)
 static int
 ipw_get_table1(struct ipw_softc *sc, uint32_t *tbl)
 {
-	uint32_t addr, size, i;
+	uint32_t addr, size, data, i;
+	int error;
 
 	if (!(sc->flags & IPW_FLAG_FW_INITED))
 		return ENOTTY;
@@ -1549,13 +1550,14 @@ ipw_get_table1(struct ipw_softc *sc, uint32_t *tbl)
 	CSR_WRITE_4(sc, IPW_CSR_AUTOINC_ADDR, sc->table1_base);
 
 	size = CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA);
-	if (suword(tbl, size) != 0)
-		return EFAULT;
+	if ((error = copyout(&size, tbl, sizeof(size))) != 0)
+		return error;
 
 	for (i = 1, ++tbl; i < size; i++, tbl++) {
 		addr = CSR_READ_4(sc, IPW_CSR_AUTOINC_DATA);
-		if (suword(tbl, MEM_READ_4(sc, addr)) != 0)
-			return EFAULT;
+		data = MEM_READ_4(sc, addr);
+		if ((error = copyout(&data, tbl, sizeof(data))) != 0)
+			return error;
 	}
 	return 0;
 }
@@ -1563,23 +1565,20 @@ ipw_get_table1(struct ipw_softc *sc, uint32_t *tbl)
 static int
 ipw_get_radio(struct ipw_softc *sc, int *ret)
 {
-	uint32_t addr;
+	uint32_t addr, data;
 
 	if (!(sc->flags & IPW_FLAG_FW_INITED))
 		return ENOTTY;
 
 	addr = ipw_read_table1(sc, IPW_INFO_EEPROM_ADDRESS);
-	if ((MEM_READ_4(sc, addr + 32) >> 24) & 1) {
-		suword(ret, -1);
-		return 0;
-	}
-
-	if (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED)
-		suword(ret, 0);
+	if ((MEM_READ_4(sc, addr + 32) >> 24) & 1)
+		data = -1;
+	else if (CSR_READ_4(sc, IPW_CSR_IO) & IPW_IO_RADIO_DISABLED)
+		data = 0;
 	else
-		suword(ret, 1);
+		data = 1;
 
-	return 0;
+	return copyout(&data, ret, sizeof(data));
 }
 
 static int

@@ -1,5 +1,5 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.9 2015/10/06 21:32:15 skrll Exp $	*/
-/*	$OpenBSD: if_urtwn.c,v 1.20 2011/11/26 06:39:33 ckuethe Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.10 2015/12/27 12:09:59 skrll Exp $	*/
+/*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
  * Copyright (c) 2010 Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.9 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.10 2015/12/27 12:09:59 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -161,6 +161,7 @@ static const struct urtwn_dev {
 	URTWN_DEV(REALTEK,	RTL8188CU_0),
 	URTWN_DEV(REALTEK,	RTL8188CU_1),
 	URTWN_DEV(REALTEK,	RTL8188CU_2),
+	URTWN_DEV(REALTEK,	RTL8188CU_3),
 	URTWN_DEV(REALTEK,	RTL8188CU_COMBO),
 	URTWN_DEV(REALTEK,	RTL8188CUS),
 	URTWN_DEV(REALTEK,	RTL8188RU),

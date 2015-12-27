@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.128.2.1 2015/04/06 15:17:52 skrll Exp $
+#	$NetBSD: files.arm,v 1.128.2.2 2015/12/27 12:09:30 skrll Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -212,6 +212,9 @@ file	arch/arm/arm32/arm11_pmc.c		arm11_pmc
 file	arch/arm/arm32/cortex_pmc.c		cortex_pmc
 file	arch/arm/arm32/arm32_tlb.c		(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
 file	uvm/pmap/pmap_tlb.c			(cpu_armv7 | cpu_arm11) & (!arm11_compat_mmu & !cpu_pre_armv6)
+
+# generic pmap files for arm32 implementations
+file	uvm/pmap/pmap_pvt.c			arm32
 
 # arm32 library functions
 file	arch/arm/arm32/bcopy_page.S		arm32

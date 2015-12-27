@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pmcreg.h,v 1.1.2.3 2015/06/06 14:39:56 skrll Exp $ */
+/* $NetBSD: tegra_pmcreg.h,v 1.1.2.4 2015/12/27 12:09:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -92,5 +92,8 @@
 
 #define PMC_IO_DPD2_STATUS_REG		0x1c4
 #define PMC_IO_DPD2_STATUS_HV		__BIT(6)
+
+#define PMC_GPU_RG_CNTRL_REG		0x2d4
+#define PMC_GPU_RG_CNTRL_RAIL_CLAMP	__BIT(0)
 
 #endif /* _ARM_TEGRA_PMCREG_H */

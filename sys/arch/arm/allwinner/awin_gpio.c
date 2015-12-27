@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.14.2.2 2015/06/06 14:39:54 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: awin_gpio.c,v 1.14.2.3 2015/12/27 12:09:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,6 +81,7 @@ static struct awin_gpio_pin_group {
 	bus_space_handle_t grp_bsh;
 	struct awin_gpio_pin_cfg grp_cfg;
 	struct gpio_chipset_tag grp_gc_tag;
+	const int grp_index;
 	const char grp_nc_name[6];
 } pin_groups[] = {
 	[0] = {
@@ -92,6 +93,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 0,
 		.grp_nc_name = "nc-pa",
 	},
 	[1] = {
@@ -103,6 +105,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 1,
 		.grp_nc_name = "nc-pb",
 	},
 	[2] = {
@@ -114,6 +117,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 2,
 		.grp_nc_name = "nc-pc",
 	},
 	[3] = {
@@ -125,6 +129,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 3,
 		.grp_nc_name = "nc-pd",
 	},
 	[4] = {
@@ -136,6 +141,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 4,
 		.grp_nc_name = "nc-pe",
 	},
 	[5] = {
@@ -147,6 +153,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 5,
 		.grp_nc_name = "nc-pf",
 	},
 	[6] = {
@@ -158,6 +165,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 6,
 		.grp_nc_name = "nc-pg",
 	},
 	[7] = {
@@ -169,6 +177,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 7,
 		.grp_nc_name = "nc-ph",
 	},
 	[8] = {
@@ -180,6 +189,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_write = awin_gpio_pin_write,
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
+		.grp_index = 8,
 		.grp_nc_name = "nc-pi",
 	},
 	[9] = {
@@ -191,6 +201,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
 		.grp_pin_mask = 0,
+		.grp_index = 9,
 		.grp_nc_name = "nc-pj",
 	},
 	[10] = {
@@ -202,6 +213,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
 		.grp_pin_mask = 0,
+		.grp_index = 10,
 		.grp_nc_name = "nc-pk",
 	},
 	[11] = {
@@ -213,6 +225,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
 		.grp_pin_mask = 0,
+		.grp_index = 11,
 		.grp_nc_name = "nc-pl",
 	},
 	[12] = {
@@ -224,6 +237,7 @@ static struct awin_gpio_pin_group {
 			.gp_pin_ctl = awin_gpio_pin_ctl,
 		},
 		.grp_pin_mask = 0,
+		.grp_index = 12,
 		.grp_nc_name = "nc-pm",
 	},
 	[13] = {
@@ -268,6 +282,20 @@ awin_gpio_match(device_t parent, cfdata_t cf, void *aux)
 }
 
 #if NGPIO > 0
+static int
+awin_gpio_cfprint(void *priv, const char *pnp)
+{
+	struct gpiobus_attach_args *gba = priv;
+	struct awin_gpio_pin_group *grp = gba->gba_gc->gp_cookie;
+
+	if (pnp)
+		aprint_normal("gpiobus at %s", pnp);
+
+	aprint_normal(" port %c", 'A' + grp->grp_index);
+
+	return UNCONF;
+}
+
 static void
 awin_gpio_config_pins(device_t self)
 {
@@ -323,7 +351,7 @@ awin_gpio_config_pins(device_t self)
 		}
 
 		gba.gba_npins = pin - gba.gba_pins;
-		config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+		config_found_ia(self, "gpiobus", &gba, awin_gpio_cfprint);
 	}
 }
 #endif /* NGPIO > 0 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.122.2.2 2015/09/22 12:06:17 skrll Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.122.2.3 2015/12/27 12:10:18 skrll Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -478,12 +478,18 @@
 #if __GNUC_PREREQ__(2, 7)
 #define __printflike(fmtarg, firstvararg)	\
 	    __attribute__((__format__ (__printf__, fmtarg, firstvararg)))
+#ifndef __syslog_attribute__
+#define __syslog__ __printf__
+#endif
+#define __sysloglike(fmtarg, firstvararg)	\
+	    __attribute__((__format__ (__syslog__, fmtarg, firstvararg)))
 #define __scanflike(fmtarg, firstvararg)	\
 	    __attribute__((__format__ (__scanf__, fmtarg, firstvararg)))
 #define __format_arg(fmtarg)    __attribute__((__format_arg__ (fmtarg)))
 #else
 #define __printflike(fmtarg, firstvararg)	/* nothing */
 #define __scanflike(fmtarg, firstvararg)	/* nothing */
+#define __sysloglike(fmtarg, firstvararg)	/* nothing */
 #define __format_arg(fmtarg)			/* nothing */
 #endif
 
@@ -554,7 +560,8 @@
 #ifndef __ASSEMBLER__
 /* __BIT(n): nth bit, where __BIT(0) == 0x1. */
 #define	__BIT(__n)	\
-    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
+    (((uintmax_t)(__n) >= NBBY * sizeof(uintmax_t)) ? 0 : \
+    ((uintmax_t)1 << (uintmax_t)((__n) & (NBBY * sizeof(uintmax_t) - 1))))
 
 /* __BITS(m, n): bits m through n, m < n. */
 #define	__BITS(__m, __n)	\

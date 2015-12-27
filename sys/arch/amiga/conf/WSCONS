@@ -1,4 +1,4 @@
-# $NetBSD: WSCONS,v 1.67 2013/10/03 13:40:26 rkujawa Exp $
+# $NetBSD: WSCONS,v 1.67.6.1 2015/12/27 12:09:28 skrll Exp $
 
 # GENERIC with wscons(4)
 #
@@ -6,8 +6,6 @@ include	"arch/amiga/conf/GENERIC"
 
 # wscons(4)-aware interface to amiga custom chips.
 #
-amidisplaycc0	at mainbus0		# wscons interface to custom chips
-wsdisplay0	at amidisplaycc0 console ?
 options 	WSEMUL_VT100
 options 	WSDISPLAY_COMPAT_USL		# wsconscfg VT handling
 options 	FONT_VT220L8x10
@@ -23,29 +21,21 @@ wsmouse*	at ms?
 ums*		at uhidev? reportid ? 
 wsmouse*	at ums?
 
+amidisplaycc0	at mainbus0		# wscons interface to custom chips
+
+# Disable grf(4) devices without wsdisplay support.
 no grfcc0	at mainbus0
 no grfrt0	at zbus0
 no grfrh0	at zbus0
-no grfcl*	at zbus0
 no grful0	at zbus0
 no grfet*	at zbus0
-#no grfcv0	at zbus0
-#no grfcv3d0	at zbus0
-
-# Disable grf(4) devices for non-wsdisplay drivers.
 no grf0		at grfcc0
 no grf1		at grfrt0
 no grf2		at grfrh0
-no grf3		at grfcl?
 no grf4		at grful0
 no grf6		at grfet?
-#no grf5	at grfcv0
-#no grf7	at grfcv3d0
 
-wsdisplay*	at grf5 console ?	# wsdisplay on top of grf (CV64)
-wsdisplay*	at grf7 console ?	# wsdisplay on top of grf (CV64/3D)
-
-# Disable ite(4) for all drivers.
+# Disable ite(4) for all grf(4) drivers.
 no ite0		at grf0
 no ite1		at grf1
 no ite2		at grf2
@@ -64,8 +54,8 @@ voodoofb*	at pci?			# 3Dfx Voodoo 3 in G-REX
 # G-REX.
 #options		P5PB_CONSOLE
 
+wsdisplay0	at wsemuldisplaydev? console 1
 wsdisplay*	at wsemuldisplaydev? console ?
 
 pseudo-device	wsfont			# wsfont(4) dynamic font loading support
 pseudo-device	wsmux			# mouse & keyboard multiplexor
-
