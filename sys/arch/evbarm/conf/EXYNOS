@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.7 2015/12/26 23:14:08 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.8 2015/12/27 02:54:13 marty Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -238,14 +238,19 @@ exyopctl1	at fdt?
 exyopctl2	at fdt?
 exyopctl3	at fdt?
 exyopctl4	at fdt?
-#gpio*		at exyogpio?
+gpio*		at gpiobus?
 
-# On-board USB
-exyousb*	at fdt?
-ohci*		at exyousb?
-ehci*		at exyousb?
+# On-board USB 2.0
+exyousbphy*	at fdt?
+ohci*		at fdt?
+ehci*		at fdt?
 usb*		at ohci?
 usb*		at ehci?
+
+# On-board USB 3.0
+exyousb*       at fdt?
+#xhci*	       at fdt?
+#usb*	       at xhci?
 
 # I2C devices
 exyoi2c0	at fdt?
