@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.11 2015/12/12 16:57:53 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*	$eterna: main.c,v 1.6 2011/11/18 09:21:15 mrg Exp $	*/
 /* from: eterna: bozohttpd.c,v 1.159 2009/05/23 02:14:30 mrg Exp 	*/
@@ -128,6 +128,7 @@ main(int argc, char **argv)
 	bozohttpd_t	 httpd;
 	bozoprefs_t	 prefs;
 	char		*progname;
+	const char	*val;
 	int		 c;
 
 	(void) memset(&httpd, 0x0, sizeof(httpd));
@@ -179,15 +180,16 @@ main(int argc, char **argv)
 #endif /* NO_DYNAMIC_CONTENT */
 
 		case 'n':
-			bozo_set_pref(&prefs, "numeric", "true");
+			bozo_set_pref(&httpd, &prefs, "numeric", "true");
 			break;
 
 		case 's':
-			bozo_set_pref(&prefs, "log to stderr", "true");
+			bozo_set_pref(&httpd, &prefs, "log to stderr", "true");
 			break;
 
 		case 'S':
-			bozo_set_pref(&prefs, "server software", optarg);
+			bozo_set_pref(&httpd, &prefs, "server software",
+				      optarg);
 			break;
 		case 'Z':
 #ifdef NO_SSL_SUPPORT
@@ -211,23 +213,23 @@ main(int argc, char **argv)
 #endif /* NO_SSL_SUPPORT */
 
 		case 'U':
-			bozo_set_pref(&prefs, "username", optarg);
+			bozo_set_pref(&httpd, &prefs, "username", optarg);
 			break;
 
 		case 'V':
-			bozo_set_pref(&prefs, "unknown slash", "true");
+			bozo_set_pref(&httpd, &prefs, "unknown slash", "true");
 			break;
 
 		case 'v':
-			bozo_set_pref(&prefs, "virtual base", optarg);
+			bozo_set_pref(&httpd, &prefs, "virtual base", optarg);
 			break;
 
 		case 'x':
-			bozo_set_pref(&prefs, "index.html", optarg);
+			bozo_set_pref(&httpd, &prefs, "index.html", optarg);
 			break;
 
 		case 'I':
-			bozo_set_pref(&prefs, "port number", optarg);
+			bozo_set_pref(&httpd, &prefs, "port number", optarg);
 			break;
 
 #ifdef NO_DAEMON_MODE
@@ -245,27 +247,26 @@ main(int argc, char **argv)
 			 * background == 2 (aka, -b -b) means to
 			 * only process 1 per kid
 			 */
-			if (bozo_get_pref(&prefs, "background") == NULL) {
-				bozo_set_pref(&prefs, "background", "1");
-			} else {
-				bozo_set_pref(&prefs, "background", "2");
-			}
+			val = bozo_get_pref(&prefs, "background") == NULL ?
+			    "1" : "2";
+			bozo_set_pref(&httpd, &prefs, "background", val);
 			break;
 
 		case 'e':
-			bozo_set_pref(&prefs, "dirty environment", "true");
+			bozo_set_pref(&httpd, &prefs, "dirty environment",
+				      "true");
 			break;
 
 		case 'f':
-			bozo_set_pref(&prefs, "foreground", "true");
+			bozo_set_pref(&httpd, &prefs, "foreground", "true");
 			break;
 
 		case 'i':
-			bozo_set_pref(&prefs, "bind address", optarg);
+			bozo_set_pref(&httpd, &prefs, "bind address", optarg);
 			break;
 
 		case 'P':
-			bozo_set_pref(&prefs, "pid file", optarg);
+			bozo_set_pref(&httpd, &prefs, "pid file", optarg);
 			break;
 #endif /* NO_DAEMON_MODE */
 
@@ -303,7 +304,7 @@ main(int argc, char **argv)
 			break;
 
 		case 't':
-			bozo_set_pref(&prefs, "chroot dir", optarg);
+			bozo_set_pref(&httpd, &prefs, "chroot dir", optarg);
 			break;
 
 #ifdef NO_USER_SUPPORT
@@ -314,15 +315,16 @@ main(int argc, char **argv)
 			/* NOTREACHED */
 #else
 		case 'p':
-			bozo_set_pref(&prefs, "public_html", optarg);
+			bozo_set_pref(&httpd, &prefs, "public_html", optarg);
 			break;
 
 		case 'u':
-			bozo_set_pref(&prefs, "enable users", "true");
+			bozo_set_pref(&httpd, &prefs, "enable users", "true");
 			break;
 #ifndef NO_CGIBIN_SUPPORT
 		case 'E':
-			bozo_set_pref(&prefs, "enable user cgibin", "true");
+			bozo_set_pref(&httpd, &prefs, "enable user cgibin",
+				      "true");
 			break;
 #else
 		case 'E':
@@ -339,11 +341,12 @@ main(int argc, char **argv)
 			/* NOTREACHED */
 #else
 		case 'H':
-			bozo_set_pref(&prefs, "hide dots", "true");
+			bozo_set_pref(&httpd, &prefs, "hide dots", "true");
 			break;
 
 		case 'X':
-			bozo_set_pref(&prefs, "directory indexing", "true");
+			bozo_set_pref(&httpd, &prefs, "directory indexing",
+				      "true");
 			break;
 
 #endif /* NO_DIRINDEX_SUPPORT */

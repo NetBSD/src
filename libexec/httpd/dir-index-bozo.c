@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.22 2015/10/28 09:20:15 shm Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.23 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -75,7 +75,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 	if (strlen(dirpath) <= strlen(httpd->index_html))
 		dirpath = ".";
 	else {
-		file = bozostrdup(httpd, dirpath);
+		file = bozostrdup(httpd, request, dirpath);
 
 		file[strlen(file) - strlen(httpd->index_html)] = '\0';
 		dirpath = file;
@@ -114,9 +114,9 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 		  request->hr_file) < 0)
 			bozo_err(httpd, 1, "asprintf");
 	} else
-		printname = bozostrdup(httpd, request->hr_file);
+		printname = bozostrdup(httpd, request, request->hr_file);
 #else
-	printname = bozostrdup(httpd, request->hr_file);
+	printname = bozostrdup(httpd, request, request->hr_file);
 #endif /* !NO_USER_SUPPORT */
 
 	bozo_printf(httpd,
