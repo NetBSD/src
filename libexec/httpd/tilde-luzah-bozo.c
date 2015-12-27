@@ -1,4 +1,4 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.12 2015/10/28 09:20:15 shm Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.13 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.16 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -77,7 +77,7 @@ bozo_user_transform(bozo_httpreq_t *request)
 	debug((httpd, DEBUG_OBESE, "looking for user %s",
 		user));
 	pw = getpwnam(user);
-	request->hr_user = bozostrdup(httpd, user);
+	request->hr_user = bozostrdup(httpd, request, user);
 
 	/* fix this up immediately */
 	if (s) {
@@ -113,7 +113,7 @@ bozo_user_transform(bozo_httpreq_t *request)
 		return 0;
 	}
 	if (s == NULL || *s == '\0') {
-		file = bozostrdup(httpd, "/");
+		file = bozostrdup(httpd, request, "/");
 	} else {
 		file = bozomalloc(httpd, strlen(s) + 2);
 		strcpy(file, "/");
