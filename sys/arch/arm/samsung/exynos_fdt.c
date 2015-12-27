@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_fdt.c,v 1.2 2015/12/15 23:13:51 marty Exp $ */
+/* $NetBSD: exynos_fdt.c,v 1.3 2015/12/27 12:21:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_exynos.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_fdt.c,v 1.2 2015/12/15 23:13:51 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_fdt.c,v 1.3 2015/12/27 12:21:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,15 +66,10 @@ exynosfdt_attach(device_t parent, device_t self, void *aux)
 {
 	const char *exynosfdt_init[] = {
 		"interrupt-controller",
-		"clock",
-		"pinmux",
-		"gpio",
-		"regulators",
-		"dma",
-		"pmc",
-		"memory-controller",
+		"clock-controller",
+		"pinctrl",
 		"i2c",
-		"usb-phy"
+		"phy"
 	};
 
 	exynosfdt_found = true;
