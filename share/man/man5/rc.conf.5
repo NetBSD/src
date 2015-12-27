@@ -1,4 +1,4 @@
-.\"	$NetBSD: rc.conf.5,v 1.163 2015/10/12 12:07:24 wiz Exp $
+.\"	$NetBSD: rc.conf.5,v 1.164 2015/12/27 02:42:33 christos Exp $
 .\"
 .\" Copyright (c) 1996 Matthew R. Green
 .\" All rights reserved.
@@ -55,7 +55,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd October 9, 2015
+.Dd December 26, 2015
 .Dt RC.CONF 5
 .Os
 .Sh NAME
@@ -750,6 +750,25 @@ Boolean value.
 Monitor dynamic interfaces and perform actions upon address changes.
 Passes
 .Sy ifwatchd_flags .
+.It Sy ip6addrctl
+Boolean value.
+Fine grain control of address and routing priorities. 
+.It Sy ip6addrctl_policy
+A string.
+Can be:
+.Bl -tag -width auto -compact
+.It Li auto
+automatically determine from system settings; will read priorities from
+.Pa /etc/ip6addrcl.conf
+or if that file does not exist it will default to IPv6 first, then IPv4.
+.It Li ipv4_prefer
+try IPv4 before IPv6.
+.It Li ipv6_prefer
+try IPv6 before IPv4.
+.El
+.It Sy ip6addrctl_verbose
+Boolean value.
+If set, print the resulting prefixes and priorities map.
 .It Sy ip6mode
 A string.
 An IPv6 node can be a router
