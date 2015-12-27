@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.12 2015/07/04 22:39:23 christos Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.13 2015/12/27 10:21:35 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -123,7 +123,7 @@ lua_register_handler(lua_State *L)
 
 	handler = bozomalloc(httpd, sizeof(lua_handler_t));
 
-	handler->name = bozostrdup(httpd, lua_tostring(L, 1));
+	handler->name = bozostrdup(httpd, NULL, lua_tostring(L, 1));
 	handler->ref = luaL_ref(L, LUA_REGISTRYINDEX);
 	SIMPLEQ_INSERT_TAIL(&map->handlers, handler, h_next);
 	httpd->process_lua = 1;
@@ -184,9 +184,9 @@ bozo_add_lua_map(bozohttpd_t *httpd, const char *prefix, const char *script)
 	lua_state_map_t *map;
 
 	map = bozomalloc(httpd, sizeof(lua_state_map_t));
-	map->prefix = bozostrdup(httpd, prefix);
+	map->prefix = bozostrdup(httpd, NULL, prefix);
 	if (*script == '/')
-		map->script = bozostrdup(httpd, script);
+		map->script = bozostrdup(httpd, NULL, script);
 	else {
 		char cwd[MAXPATHLEN], *path;
 
@@ -317,20 +317,20 @@ bozo_process_lua(bozo_httpreq_t *request)
 	uri = request->hr_oldfile ? request->hr_oldfile : request->hr_file;
 
 	if (*uri == '/') {
-		file = bozostrdup(httpd, uri);
+		file = bozostrdup(httpd, request, uri);
 		if (file == NULL)
 			goto out;
-		prefix = bozostrdup(httpd, &uri[1]);
+		prefix = bozostrdup(httpd, request, &uri[1]);
 	} else {
 		if (asprintf(&file, "/%s", uri) < 0)
 			goto out;
-		prefix = bozostrdup(httpd, uri);
+		prefix = bozostrdup(httpd, request, uri);
 	}
 	if (prefix == NULL)
 		goto out;
 
 	if (request->hr_query && request->hr_query[0])
-		query = bozostrdup(httpd, request->hr_query);
+		query = bozostrdup(httpd, request, request->hr_query);
 
 	p = strchr(prefix, '/');
 	if (p == NULL)
@@ -345,7 +345,7 @@ bozo_process_lua(bozo_httpreq_t *request)
 
 	command = file + 1;
 	if ((s = strchr(command, '/')) != NULL) {
-		info = bozostrdup(httpd, s);
+		info = bozostrdup(httpd, request, s);
 		*s = '\0';
 	}
 
