@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.19 2015/12/27 02:43:42 marty Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.20 2015/12/27 12:22:28 jmcneill Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.19 2015/12/27 02:43:42 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.20 2015/12/27 12:22:28 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,8 +159,7 @@ static void exynos_gpio_fdt_release(device_t, void *);
 
 static int exynos_gpio_fdt_read(device_t, void *, bool);
 static void exynos_gpio_fdt_write(device_t, void *, int, bool);
-static struct exynos_gpio_bank *
-exynos_gpio_pin_lookup(const char *pinname, int *ppin);
+static struct exynos_gpio_bank *exynos_gpio_bank_lookup(const char *);
 static int exynos_gpio_cfprint(void *, const char *);
 
 struct fdtbus_gpio_controller_func exynos_gpio_funcs = {
@@ -291,8 +290,12 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	char result[64];
 
 	OF_getprop(node, "name", result, sizeof(result));
-	bank = exynos_gpio_pin_lookup(result, 0);
-	KASSERT(bank);
+	bank = exynos_gpio_bank_lookup(result);
+	if (bank == NULL) {
+		aprint_error_dev(parent->sc_dev, "no bank found for %s\n",
+		    result);
+		return;
+	}
 	
 	sc->sc_dev = parent->sc_dev;
 	sc->sc_bst = &armv7_generic_bs_tag;
@@ -326,35 +329,12 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 					&exynos_gpio_funcs);
 }
 
-/*
- * pinmame = gpLD[-N]
- *     L = 'a' - 'z' -+
- *     D = '0' - '9' -+ ===== bank name
- *     N = '0' - '7'    ===== pin number
- */
-
 static struct exynos_gpio_bank *
-exynos_gpio_pin_lookup(const char *pinname, int *ppin)
+exynos_gpio_bank_lookup(const char *name)
 {
-	char bankname[5];
-	int pin = 0;
-	int n;
-	struct exynos_gpio_bank *bank;
-
-	memset(bankname, 0, sizeof(bankname));
-	for (n = 0; n < 4; n++)
-		bankname[n] = pinname[n];
-	bankname[n] = 0;
-	if (ppin && pinname[4] == '-') {
-		pin = pinname[5] - '0';	  /* skip the '-' */
-		if (pin < 0 || pin > 8)
-			return NULL;
-	}
-	for (n = 0; n < __arraycount(exynos5_banks); n++) {
-		bank = &exynos_gpio_banks[n];
-		if (strcmp(bank->bank_name, bankname) == 0) {
-			if (ppin)
-				*ppin = pin;
+	for (u_int n = 0; n < __arraycount(exynos5_banks); n++) {
+		struct exynos_gpio_bank *bank = &exynos_gpio_banks[n];
+		if (strncmp(bank->bank_name, name, strlen(name)) == 0) {
 			return bank;
 		}
 	}
@@ -362,14 +342,33 @@ exynos_gpio_pin_lookup(const char *pinname, int *ppin)
 	return NULL;
 }
 
+#if notyet
+static int
+exynos_gpio_pin_lookup(const char *name)
+{
+	char *p;
+
+	p = strchr(name, '-');
+	if (p == NULL || p[1] < '0' || p[1] > '9')
+		return -1;
+
+	return p[1] - '0';
+}
+#endif
+
 static void *
 exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 {
 	const u_int *cells = data;
 	const struct exynos_gpio_bank *bank = NULL;
 	struct exynos_gpio_pin *gpin;
-	int pin = be32toh(cells[0]) & 0x0f;
 	int n;
+
+	if (len != 2)
+		return NULL;
+
+	const int pin = be32toh(cells[0]) & 0x0f;
+	const int actlo = be32toh(cells[1]) & 0x01;
 
 	for (n = 0; n < __arraycount(exynos5_banks); n++) {
 		if (exynos_gpio_banks[n].bank_sc->sc_dev == dev) {
@@ -386,7 +385,7 @@ exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 	gpin->pin_bank = bank;
 	gpin->pin_no = pin;
 	gpin->pin_flags = flags;
-	gpin->pin_actlo = 0;
+	gpin->pin_actlo = actlo;
 
 	exynos_gpio_pin_ctl(&gpin->pin_bank, gpin->pin_no, gpin->pin_flags);
 
