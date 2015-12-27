@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.8 2015/12/27 02:54:13 marty Exp $
+#	$NetBSD: EXYNOS,v 1.9 2015/12/27 12:26:42 jmcneill Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -218,26 +218,21 @@ exy5422clk*	at fdt?				# Exynos5422 clock controller
 
 # Integrated Samsung UARTs
 sscom*		at fdt?				# UART ?
-#sscom2		at fdt?				# console
 
 # Exynos Watchdog Timer
-exyowdt0 	at fdt?				# watchdog
+exyowdt* 	at fdt?				# watchdog
 
 # Exynos chip id
-chipid0		at fdt?
+chipid*		at fdt?
 
 # Exynos RTC
-exyortc0 	at fdt?
+exyortc* 	at fdt?
 
 # Exynos Multi Core timer (MCT)
-mct0	       at fdt?
+mct*	       at fdt?
 
 # GPIO
-exyopctl0	at fdt?
-exyopctl1	at fdt?
-exyopctl2	at fdt?
-exyopctl3	at fdt?
-exyopctl4	at fdt?
+exyopctl*	at fdt?
 gpio*		at gpiobus?
 
 # On-board USB 2.0
@@ -253,10 +248,7 @@ exyousb*       at fdt?
 #usb*	       at xhci?
 
 # I2C devices
-exyoi2c0	at fdt?
-exyoi2c1	at fdt?
-exyoi2c2	at fdt?
-exyoi2c3	at fdt?
+exyoi2c*	at fdt?
 #i2c*		at exyoi2c?
 
 # SD/MMC
