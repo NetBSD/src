@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.1 2015/12/26 23:13:50 jmcneill Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.2 2015/12/27 20:49:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.1 2015/12/26 23:13:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.2 2015/12/27 20:49:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -81,11 +81,10 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	struct dwc_mmc_softc *sc = &esc->sc;
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	struct clk *clk_cpll;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	u_int bus_width, ciu_div;
+	u_int bus_width, ciu_div, fifo_depth;
 	int error;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
@@ -96,35 +95,28 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	if (of_getprop_uint32(phandle, "bus-width", &bus_width)) {
 		bus_width = 4;
 	}
+	if (of_getprop_uint32(phandle, "fifo-depth", &fifo_depth)) {
+		fifo_depth = 64;
+	}
 	if (of_getprop_uint32(phandle, "samsung,dw-mshc-ciu-div", &ciu_div)) {
 		aprint_error(": missing samsung,dw-mshc-ciu-div property\n");
 		return;
 	}
 
-	clk_cpll = clk_get("sclk_cpll");
-	if (clk_cpll == NULL) {
-		aprint_error(": clock \"sclk_cpll\" not found\n");
-		return;
-	}
 	esc->sc_clk_biu = fdtbus_clock_get(phandle, "biu");
 	if (esc->sc_clk_biu == NULL) {
 		aprint_error(": couldn't get clock biu\n");
 		return;
 	}
-	error = clk_set_parent(esc->sc_clk_biu, clk_cpll);
-	if (error) {
-		aprint_error(": couldn't set clock biu parent: %d\n", error);
-		return;
-	}
-
 	esc->sc_clk_ciu = fdtbus_clock_get(phandle, "ciu");
 	if (esc->sc_clk_ciu == NULL) {
 		aprint_error(": couldn't get clock ciu\n");
 		return;
 	}
-	error = clk_set_rate(esc->sc_clk_ciu, 666000000);
+
+	error = clk_enable(esc->sc_clk_biu);
 	if (error) {
-		aprint_error(": couldn't set clock ciu rate: %d\n", error);
+		aprint_error(": couldn't enable clock biu: %d\n", error);
 		return;
 	}
 	error = clk_enable(esc->sc_clk_ciu);
@@ -143,14 +135,8 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_flags |= DWC_MMC_F_USE_HOLD_REG;
-#if 0
-	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_PWREN_CLEAR |
-		       DWC_MMC_F_FORCE_CLK;
-#endif
-
 	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / (ciu_div + 1);
-	sc->sc_fifo_depth = 64;
+	sc->sc_fifo_depth = fifo_depth;
 
 	esc->sc_pin_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
