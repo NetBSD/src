@@ -1,4 +1,4 @@
-#	$NetBSD: CUBIETRUCK,v 1.8 2015/06/01 23:17:47 matt Exp $
+#	$NetBSD: CUBIETRUCK,v 1.9 2015/12/27 06:24:25 macallan Exp $
 #
 #	CUBIETRUCK - Cubieboard3 (mostly cubieboard2 with 2GB)
 #
@@ -26,6 +26,13 @@ makeoptions	CPUFLAGS="-mcpu=cortex-a7 -mfpu=neon"
 # We need this too.
 #
 options 	PMAP_NEED_ALLOC_POOLPAGE
+
+# we need awinii2c to talk to VGA monitors
+awiniic*	at awinio? port ?
+
+# TV encoder / VGA output
+awintve0 	at awinio0
+
 
 cinclude	"arch/evbarm/conf/CUBIETRUCK.local"
 
