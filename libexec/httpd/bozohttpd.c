@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.73 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.74 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -597,7 +597,7 @@ bozo_read_request(bozohttpd_t *httpd)
 	sigemptyset(&sa.sa_mask);
 	sigaddset(&sa.sa_mask, SIGALRM);
 	sa.sa_flags = 0;
-	sigaction(SIGALRM, &sa, NULL);	/* XXX */
+	sigaction(SIGALRM, &sa, NULL);
 
 	alarm(MAX_WAIT_TIME);
 	while ((str = bozodgetln(httpd, STDIN_FILENO, &len, bozo_read)) != NULL) {
@@ -616,7 +616,7 @@ bozo_read_request(bozohttpd_t *httpd)
 						"null method");
 				goto cleanup;
 			}
-			bozo_warn(httpd,
+			bozowarn(httpd,
 				  "got request ``%s'' from host %s to port %s",
 				  str,
 				  host ? host : addr ? addr : "<local>",
@@ -800,7 +800,7 @@ mmap_and_write_part(bozohttpd_t *httpd, int fd, off_t first_byte_pos, size_t sz)
 
 	addr = mmap(0, mappedsz, PROT_READ, MAP_SHARED, fd, mappedoffset);
 	if (addr == (char *)-1) {
-		bozo_warn(httpd, "mmap failed: %s", strerror(errno));
+		bozowarn(httpd, "mmap failed: %s", strerror(errno));
 		return -1;
 	}
 	mappedaddr = addr;
@@ -811,7 +811,7 @@ mmap_and_write_part(bozohttpd_t *httpd, int fd, off_t first_byte_pos, size_t sz)
 	while (sz > BOZO_WRSZ) {
 		if (bozo_write(httpd, STDOUT_FILENO, addr + wroffset,
 				BOZO_WRSZ) != BOZO_WRSZ) {
-			bozo_warn(httpd, "write failed: %s", strerror(errno));
+			bozowarn(httpd, "write failed: %s", strerror(errno));
 			goto out;
 		}
 		debug((httpd, DEBUG_OBESE, "wrote %d bytes", BOZO_WRSZ));
@@ -820,13 +820,13 @@ mmap_and_write_part(bozohttpd_t *httpd, int fd, off_t first_byte_pos, size_t sz)
 	}
 	if (sz && (size_t)bozo_write(httpd, STDOUT_FILENO, addr + wroffset,
 				sz) != sz) {
-		bozo_warn(httpd, "final write failed: %s", strerror(errno));
+		bozowarn(httpd, "final write failed: %s", strerror(errno));
 		goto out;
 	}
 	debug((httpd, DEBUG_OBESE, "wrote %d bytes", (int)sz));
  out:
 	if (munmap(mappedaddr, mappedsz) < 0) {
-		bozo_warn(httpd, "munmap failed");
+		bozowarn(httpd, "munmap failed");
 		return -1;
 	}
 
@@ -922,8 +922,7 @@ bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute)
  * the URL we will tack these on to the new (redirected) URL.
  */
 static void
-handle_redirect(bozo_httpreq_t *request,
-		const char *url, int absolute)
+handle_redirect(bozo_httpreq_t *request, const char *url, int absolute)
 {
 	bozohttpd_t *httpd = request->hr_httpd;
 	char *finalurl, *urlbuf;
@@ -938,14 +937,14 @@ handle_redirect(bozo_httpreq_t *request,
 			   * eg. https:// */
 
 	if (url == NULL) {
-		bozo_asprintf(httpd, &urlbuf, "/%s/", request->hr_file);
+		bozoasprintf(httpd, &urlbuf, "/%s/", request->hr_file);
 		url = urlbuf;
 	} else
 		urlbuf = NULL;
 
 #ifndef NO_USER_SUPPORT
 	if (request->hr_user && !absolute) {
-		bozo_asprintf(httpd, &userbuf, "/~%s%s", request->hr_user, url);
+		bozoasprintf(httpd, &userbuf, "/~%s%s", request->hr_user, url);
 		url = userbuf;
 	} else
 		userbuf = NULL;
@@ -1024,7 +1023,7 @@ handle_redirect(bozo_httpreq_t *request,
 		strlcat(finalurl, request->hr_query, finalurl_len);
 	}
 
-	bozo_warn(httpd, "redirecting %s", finalurl);
+	bozowarn(httpd, "redirecting %s", finalurl);
 	debug((httpd, DEBUG_FAT, "redirecting %s", finalurl));
 
 	bozo_printf(httpd, "%s 301 Document Moved\r\n", request->hr_proto);
@@ -1144,7 +1143,7 @@ check_virtual(bozo_httpreq_t *request)
 					debug((httpd, DEBUG_OBESE, "found it punch it"));
 					request->hr_virthostname =
 					    bozostrdup(httpd, request, d->d_name);
-					bozo_asprintf(httpd, &s, "%s/%s",
+					bozoasprintf(httpd, &s, "%s/%s",
 					    httpd->virtbase,
 					    request->hr_virthostname);
 					break;
@@ -1396,7 +1395,7 @@ transform_request(bozo_httpreq_t *request, int *isindex)
 		}
 		if (strchr(file + 2, '/') == NULL) {
 			char *userredirecturl;
-			bozo_asprintf(httpd, &userredirecturl, "%s/", file);
+			bozoasprintf(httpd, &userredirecturl, "%s/", file);
 			handle_redirect(request, userredirecturl, 0);
 			free(userredirecturl);
 			return 0;
@@ -1557,7 +1556,7 @@ bozo_process_request(bozo_httpreq_t *request)
 	fd = -1;
 	encoding = NULL;
 	if (can_gzip(request)) {
-		bozo_asprintf(httpd, &file, "%s.gz", request->hr_file);
+		bozoasprintf(httpd, &file, "%s.gz", request->hr_file);
 		fd = open(file, O_RDONLY);
 		if (fd >= 0)
 			encoding = "gzip";
@@ -1761,7 +1760,7 @@ debug__(bozohttpd_t *httpd, int level, const char *fmt, ...)
 
 /* these are like warn() and err(), except for syslog not stderr */
 void
-bozo_warn(bozohttpd_t *httpd, const char *fmt, ...)
+bozowarn(bozohttpd_t *httpd, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1776,7 +1775,7 @@ bozo_warn(bozohttpd_t *httpd, const char *fmt, ...)
 }
 
 void
-bozo_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
+bozoerr(bozohttpd_t *httpd, int code, const char *fmt, ...)
 {
 	va_list ap;
 
@@ -1792,7 +1791,7 @@ bozo_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
 }
 
 void
-bozo_asprintf(bozohttpd_t *httpd, char **str, const char *fmt, ...)
+bozoasprintf(bozohttpd_t *httpd, char **str, const char *fmt, ...)
 {
 	va_list ap;
 	int e;
@@ -1802,7 +1801,7 @@ bozo_asprintf(bozohttpd_t *httpd, char **str, const char *fmt, ...)
 	va_end(ap);
 
 	if (e < 0)
-		bozo_err(httpd, EXIT_FAILURE, "asprintf");
+		bozoerr(httpd, EXIT_FAILURE, "asprintf");
 }
 
 /*
@@ -1925,7 +1924,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 
 	debug((httpd, DEBUG_FAT, "bozo_http_error %d: %s", code, msg));
 	if (header == NULL || reason == NULL) {
-		bozo_err(httpd, 1,
+		bozoerr(httpd, 1,
 			"bozo_http_error() failed (short = %p, long = %p)",
 			header, reason);
 		return code;
@@ -1956,7 +1955,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 			if (user_escaped == NULL)
 				user_escaped = request->hr_user;
 			/* expand username to ~user/ */
-			bozo_asprintf(httpd, &user, "~%s/", user_escaped);
+			bozoasprintf(httpd, &user, "~%s/", user_escaped);
 			if (user_escaped != request->hr_user)
 				free(user_escaped);
 		}
@@ -1973,7 +1972,7 @@ bozo_http_error(bozohttpd_t *httpd, int code, bozo_httpreq_t *request,
 		    reason, hostname, portbuf, hostname, portbuf);
 		free(user);
 		if (size >= (int)BUFSIZ) {
-			bozo_warn(httpd,
+			bozowarn(httpd,
 				"bozo_http_error buffer too small, truncated");
 			size = (int)BUFSIZ;
 		}
@@ -2148,7 +2147,7 @@ bozostrdup(bozohttpd_t *httpd, bozo_httpreq_t *request, const char *str)
 		return p;
 
 	if (!request)
-		bozo_err(httpd, EXIT_FAILURE, "strdup");
+		bozoerr(httpd, EXIT_FAILURE, "strdup");
 
 	(void)bozo_http_error(httpd, 500, request, "memory allocation failure");
 	exit(EXIT_FAILURE);
@@ -2226,7 +2225,7 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 		httpd->virthostname = bozomalloc(httpd, MAXHOSTNAMELEN+1);
 		/* XXX we do not check for FQDN here */
 		if (gethostname(httpd->virthostname, MAXHOSTNAMELEN+1) < 0)
-			bozo_err(httpd, 1, "gethostname");
+			bozoerr(httpd, 1, "gethostname");
 		httpd->virthostname[MAXHOSTNAMELEN] = '\0';
 	} else {
 		httpd->virthostname = bozostrdup(httpd, NULL, vhost);
@@ -2301,17 +2300,17 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 
 	if ((username = bozo_get_pref(prefs, "username")) == NULL) {
 		if ((pw = getpwuid(uid = 0)) == NULL)
-			bozo_err(httpd, 1, "getpwuid(0): %s", strerror(errno));
+			bozoerr(httpd, 1, "getpwuid(0): %s", strerror(errno));
 		httpd->username = bozostrdup(httpd, NULL, pw->pw_name);
 	} else {
 		httpd->username = bozostrdup(httpd, NULL, username);
 		if ((pw = getpwnam(httpd->username)) == NULL)
-			bozo_err(httpd, 1, "getpwnam(%s): %s", httpd->username,
+			bozoerr(httpd, 1, "getpwnam(%s): %s", httpd->username,
 					strerror(errno));
 		if (initgroups(pw->pw_name, pw->pw_gid) == -1)
-			bozo_err(httpd, 1, "initgroups: %s", strerror(errno));
+			bozoerr(httpd, 1, "initgroups: %s", strerror(errno));
 		if (setgid(pw->pw_gid) == -1)
-			bozo_err(httpd, 1, "setgid(%u): %s", pw->pw_gid,
+			bozoerr(httpd, 1, "setgid(%u): %s", pw->pw_gid,
 					strerror(errno));
 		uid = pw->pw_uid;
 	}
@@ -2321,16 +2320,16 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	if ((chrootdir = bozo_get_pref(prefs, "chroot dir")) != NULL) {
 		httpd->rootdir = bozostrdup(httpd, NULL, chrootdir);
 		if (chdir(httpd->rootdir) == -1)
-			bozo_err(httpd, 1, "chdir(%s): %s", httpd->rootdir,
+			bozoerr(httpd, 1, "chdir(%s): %s", httpd->rootdir,
 				strerror(errno));
 		if (chroot(httpd->rootdir) == -1)
-			bozo_err(httpd, 1, "chroot(%s): %s", httpd->rootdir,
+			bozoerr(httpd, 1, "chroot(%s): %s", httpd->rootdir,
 				strerror(errno));
 	}
 
 	if (username != NULL)
 		if (setuid(uid) == -1)
-			bozo_err(httpd, 1, "setuid(%d): %s", uid,
+			bozoerr(httpd, 1, "setuid(%d): %s", uid,
 					strerror(errno));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: dir-index-bozo.c,v 1.23 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: dir-index-bozo.c,v 1.24 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*	$eterna: dir-index-bozo.c,v 1.20 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -112,7 +112,7 @@ bozo_dir_index(bozo_httpreq_t *request, const char *dirpath, int isindex)
 	if (request->hr_user) {
 		if (asprintf(&printname, "~%s/%s", request->hr_user,
 		  request->hr_file) < 0)
-			bozo_err(httpd, 1, "asprintf");
+			bozoerr(httpd, 1, "asprintf");
 	} else
 		printname = bozostrdup(httpd, request, request->hr_file);
 #else

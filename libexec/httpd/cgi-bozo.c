@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.29 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.30 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -195,7 +195,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 				rbytes -= wbytes;
 				bp += wbytes;
 			} else
-				bozo_err(httpd, 1,
+				bozoerr(httpd, 1,
 					"cgi output write failed: %s",
 					strerror(errno));
 		}		
@@ -262,7 +262,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		return 0;
 
 #ifndef NO_USER_SUPPORT
-    if (request->hr_user && !httpd->enable_cgi_users)
+	if (request->hr_user && !httpd->enable_cgi_users)
 		return 0;
 #endif /* !NO_USER_SUPPORT */
 
@@ -434,7 +434,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	    path, argv[0], strornull(argv[1]), strornull(argv[2])));
 
 	if (socketpair(AF_UNIX, SOCK_STREAM, PF_UNSPEC, sv) == -1)
-		bozo_err(httpd, 1, "child socketpair failed: %s",
+		bozoerr(httpd, 1, "child socketpair failed: %s",
 				strerror(errno));
 
 	/*
@@ -445,7 +445,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	 */
 	switch (fork()) {
 	case -1: /* eep, failure */
-		bozo_err(httpd, 1, "child fork failed: %s", strerror(errno));
+		bozoerr(httpd, 1, "child fork failed: %s", strerror(errno));
 		/*NOTREACHED*/
 	case 0:
 		close(sv[0]);
@@ -457,10 +457,10 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_daemon_closefds(httpd);
 
 		if (-1 == execve(path, argv, envp))
-			bozo_err(httpd, 1, "child exec failed: %s: %s",
+			bozoerr(httpd, 1, "child exec failed: %s: %s",
 			      path, strerror(errno));
 		/* NOT REACHED */
-		bozo_err(httpd, 1, "child execve returned?!");
+		bozoerr(httpd, 1, "child execve returned?!");
 	}
 
 	close(sv[1]);
@@ -469,7 +469,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	/* child: read from sv[0] (bozo_write()) write to stdout */
 	pid = fork();
 	if (pid == -1)
-		bozo_err(httpd, 1, "io child fork failed: %s", strerror(errno));
+		bozoerr(httpd, 1, "io child fork failed: %s", strerror(errno));
 	else if (pid == 0) {
 		/* child reader/writer */
 		close(STDIN_FILENO);
@@ -493,7 +493,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 				rbytes -= wbytes;
 				bp += wbytes;
 			} else
-				bozo_err(httpd, 1, "write failed: %s",
+				bozoerr(httpd, 1, "write failed: %s",
 					strerror(errno));
 		}		
 	}

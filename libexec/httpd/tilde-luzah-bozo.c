@@ -1,4 +1,4 @@
-/*	$NetBSD: tilde-luzah-bozo.c,v 1.13 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: tilde-luzah-bozo.c,v 1.14 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*	$eterna: tilde-luzah-bozo.c,v 1.16 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -99,14 +99,14 @@ bozo_user_transform(bozo_httpreq_t *request)
 	      pw->pw_uid, pw->pw_gid));
 
 	if (chdir(pw->pw_dir) < 0) {
-		bozo_warn(httpd, "chdir1 error: %s: %s", pw->pw_dir,
+		bozowarn(httpd, "chdir1 error: %s: %s", pw->pw_dir,
 			strerror(errno));
 		(void)bozo_http_error(httpd, 404, request,
 			"can't chdir to homedir");
 		return 0;
 	}
 	if (chdir(httpd->public_html) < 0) {
-		bozo_warn(httpd, "chdir2 error: %s: %s", httpd->public_html,
+		bozowarn(httpd, "chdir2 error: %s: %s", httpd->public_html,
 			strerror(errno));
 		(void)bozo_http_error(httpd, 404, request,
 			"can't chdir to public_html");
