@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.73 2015/12/27 12:09:59 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.74 2015/12/28 22:25:43 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.73 2015/12/27 12:09:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.74 2015/12/28 22:25:43 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -4068,7 +4068,7 @@ ehci_device_intr_fini(struct usbd_xfer *xfer)
 	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
 	struct ehci_xfer *ex = EHCI_XFER2EXFER(xfer);
 
-	KASSERT(ex->ex_type == EX_BULK);
+	KASSERT(ex->ex_type == EX_INTR);
 
 	ehci_free_sqtds(sc, ex);
 	if (ex->ex_nsqtd)
