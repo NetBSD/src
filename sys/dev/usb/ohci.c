@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.37 2015/12/23 08:07:40 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.38 2015/12/28 15:46:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.37 2015/12/23 08:07:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.38 2015/12/28 15:46:28 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -668,7 +668,6 @@ ohci_reset_std_chain(ohci_softc_t *sc, struct usbd_xfer *xfer,
 	    UE_GET_ADDR(xfer->ux_pipe->up_endpoint->ue_edesc->bEndpointAddress),
 	    alen, xfer->ux_pipe->up_dev->ud_speed);
 
-	ASSERT_SLEEPABLE();
 	KASSERT(sp);
 
 	int mps = UGETW(xfer->ux_pipe->up_endpoint->ue_edesc->wMaxPacketSize);
