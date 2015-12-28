@@ -1,4 +1,4 @@
-/*	$NetBSD: lua-bozo.c,v 1.13 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: lua-bozo.c,v 1.14 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 2013 Marc Balmer <marc@msys.ch>
@@ -191,12 +191,12 @@ bozo_add_lua_map(bozohttpd_t *httpd, const char *prefix, const char *script)
 		char cwd[MAXPATHLEN], *path;
 
 		getcwd(cwd, sizeof(cwd) - 1);
-		asprintf(&path, "%s/%s", cwd, script);
+		bozoasprintf(httpd, &path, "%s/%s", cwd, script);
 		map->script = path;
 	}
 	map->L = luaL_newstate();
 	if (map->L == NULL)
-		bozo_err(httpd, 1, "can't create Lua state");
+		bozoerr(httpd, 1, "can't create Lua state");
 	SIMPLEQ_INIT(&map->handlers);
 
 #if LUA_VERSION_NUM >= 502
@@ -225,10 +225,10 @@ bozo_add_lua_map(bozohttpd_t *httpd, const char *prefix, const char *script)
 	lua_settable(map->L, LUA_REGISTRYINDEX);
 
 	if (luaL_loadfile(map->L, script))
-		bozo_err(httpd, 1, "failed to load script %s: %s", script,
+		bozoerr(httpd, 1, "failed to load script %s: %s", script,
 		    lua_tostring(map->L, -1));
 	if (lua_pcall(map->L, 0, 0, 0))
-		bozo_err(httpd, 1, "failed to execute script %s: %s", script,
+		bozoerr(httpd, 1, "failed to execute script %s: %s", script,
 		    lua_tostring(map->L, -1));
 	SIMPLEQ_INSERT_TAIL(&httpd->lua_states, map, s_next);
 }
