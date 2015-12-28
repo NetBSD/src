@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.12 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.13 2015/12/28 10:15:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.12 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.13 2015/12/28 10:15:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -222,7 +222,7 @@ ugen_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_detach_cv, "ugendet");
 
 	devinfop = usbd_devinfo_alloc(uaa->uaa_device, 0);

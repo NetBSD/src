@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.10.4.6 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: uatp.c,v 1.10.4.7 2015/12/28 10:15:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.4.6 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.10.4.7 2015/12/28 10:15:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -2014,7 +2014,7 @@ tap_initialize(struct uatp_softc *sc)
 {
 	callout_init(&sc->sc_untap_callout, 0);
 	callout_setfunc(&sc->sc_untap_callout, untap_callout, sc);
-	mutex_init(&sc->sc_tap_mutex, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_tap_mutex, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_tap_cv, "uatptap");
 }
 
