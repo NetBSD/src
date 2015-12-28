@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.9 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.10 2015/12/28 10:15:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.9 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.10 2015/12/28 10:15:09 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -360,7 +360,7 @@ umidi_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "");
 	umidi_print_quirk(sc->sc_quirk);
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_cv, "umidopcl");
 	cv_init(&sc->sc_detach_cv, "umidetcv");
 	sc->sc_refcnt = 0;
@@ -1214,11 +1214,11 @@ unbind_all_jacks(struct umidi_softc *sc)
 {
 	int i;
 
-	mutex_spin_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_mididevs)
 		for (i = 0; i < sc->sc_num_mididevs; i++)
 			unbind_jacks_from_mididev(&sc->sc_mididevs[i]);
-	mutex_spin_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 }
 
 static usbd_status
@@ -1387,9 +1387,9 @@ close_in_jack(struct umidi_jack *jack)
 			 * the abort operation.  This is safe as this
 			 * either closing or dying will be set proerly.
 			 */
-			mutex_spin_exit(&sc->sc_lock);
+			mutex_exit(&sc->sc_lock);
 			usbd_abort_pipe(jack->endpoint->pipe);
-			mutex_spin_enter(&sc->sc_lock);
+			mutex_enter(&sc->sc_lock);
 		}
 	}
 }
@@ -1417,12 +1417,12 @@ detach_mididev(struct umidi_mididev *mididev, int flags)
 	if (!sc)
 		return USBD_NO_ADDR;
 
-	mutex_spin_enter(&sc->sc_lock);
+	mutex_enter(&sc->sc_lock);
 	if (mididev->opened) {
 		umidi_close(mididev);
 	}
 	unbind_jacks_from_mididev(mididev);
-	mutex_spin_exit(&sc->sc_lock);
+	mutex_exit(&sc->sc_lock);
 
 	if (mididev->mdev != NULL)
 		config_detach(mididev->mdev, flags);

@@ -1,4 +1,4 @@
-/*	$NetBSD: uhidev.c,v 1.61.4.10 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: uhidev.c,v 1.61.4.11 2015/12/28 10:15:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.10 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhidev.c,v 1.61.4.11 2015/12/28 10:15:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ uhidev_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal("\n");
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 
 	id = usbd_get_interface_descriptor(iface);
 

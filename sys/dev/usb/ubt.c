@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.7 2015/12/28 09:26:33 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.8 2015/12/28 10:15:09 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.7 2015/12/28 09:26:33 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.8 2015/12/28 10:15:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -276,7 +276,7 @@ static const struct hci_if ubt_hci = {
 	.output_acl = ubt_xmit_acl,
 	.output_sco = ubt_xmit_sco,
 	.get_stats = ubt_stats,
-	.ipl = IPL_USB,		/* IPL_SOFTUSB ??? */
+	.ipl = IPL_SOFTUSB,
 };
 
 /*******************************************************************************
