@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.92.4.7 2015/09/29 11:38:29 skrll Exp $	*/
+/*	$NetBSD: uhid.c,v 1.92.4.8 2015/12/28 10:15:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.7 2015/09/29 11:38:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.92.4.8 2015/12/28 10:15:09 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -186,7 +186,7 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	       sc->sc_isize, sc->sc_osize, sc->sc_fsize);
 
 	mutex_init(&sc->sc_access_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_USB);
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	cv_init(&sc->sc_cv, "uhidrea");
 	cv_init(&sc->sc_detach_cv, "uhiddet");
 
