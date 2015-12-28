@@ -1,4 +1,4 @@
-/*	$NetBSD: daemon-bozo.c,v 1.16 2014/01/02 08:21:38 mrg Exp $	*/
+/*	$NetBSD: daemon-bozo.c,v 1.17 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*	$eterna: daemon-bozo.c,v 1.24 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -105,10 +105,10 @@ create_pidfile(bozohttpd_t *httpd)
 		return;
 
 	if (atexit(remove_pidfile) == -1)
-		bozo_err(httpd, 1, "Failed to install pidfile handler");
+		bozoerr(httpd, 1, "Failed to install pidfile handler");
 
 	if ((file = fopen(httpd->pidfile, "w")) == NULL)
-		bozo_err(httpd, 1, "Failed to create pidfile '%s'",
+		bozoerr(httpd, 1, "Failed to create pidfile '%s'",
 		    httpd->pidfile);
 	(void)fprintf(file, "%d\n", getpid());
 	(void)fclose(file);
@@ -138,7 +138,7 @@ bozo_daemon_init(bozohttpd_t *httpd)
 	h.ai_flags = AI_PASSIVE;
 	e = getaddrinfo(httpd->bindaddress, portnum, &h, &r0);
 	if (e)
-		bozo_err(httpd, 1, "getaddrinfo([%s]:%s): %s",
+		bozoerr(httpd, 1, "getaddrinfo([%s]:%s): %s",
 		    httpd->bindaddress ? httpd->bindaddress : "*",
 		    portnum, gai_strerror(e));
 	for (r = r0; r != NULL; r = r->ai_next)
@@ -151,7 +151,7 @@ bozo_daemon_init(bozohttpd_t *httpd)
 			continue;
 		if (setsockopt(httpd->sock[i], SOL_SOCKET, SO_REUSEADDR, &on,
 		    sizeof(on)) == -1)
-			bozo_warn(httpd, "setsockopt SO_REUSEADDR: %s",
+			bozowarn(httpd, "setsockopt SO_REUSEADDR: %s",
 			    strerror(errno));
 		if (bind(httpd->sock[i], r->ai_addr, r->ai_addrlen) == -1)
 			continue;
@@ -163,7 +163,7 @@ bozo_daemon_init(bozohttpd_t *httpd)
 		i++;
 	}
 	if (i == 0)
-		bozo_err(httpd, 1, "could not find any addresses to bind");
+		bozoerr(httpd, 1, "could not find any addresses to bind");
 	httpd->nsock = i;
 	freeaddrinfo(r0);
 
@@ -172,7 +172,7 @@ bozo_daemon_init(bozohttpd_t *httpd)
 
 	create_pidfile(httpd);
 
-	bozo_warn(httpd, "started in daemon mode as `%s' port `%s' root `%s'",
+	bozowarn(httpd, "started in daemon mode as `%s' port `%s' root `%s'",
 	    httpd->virthostname, portnum, httpd->slashdir);
 
 	signal(SIGHUP, controlled_exit);
@@ -209,13 +209,13 @@ daemon_poll_err(bozohttpd_t *httpd, int fd, int idx)
 	if ((httpd->fds[idx].revents & (POLLNVAL|POLLERR|POLLHUP)) == 0)
 		return 0;
 
-	bozo_warn(httpd, "poll on fd %d pid %d revents %d: %s",
+	bozowarn(httpd, "poll on fd %d pid %d revents %d: %s",
 	    httpd->fds[idx].fd, getpid(), httpd->fds[idx].revents,
 	    strerror(errno));
-	bozo_warn(httpd, "nsock = %d", httpd->nsock);
+	bozowarn(httpd, "nsock = %d", httpd->nsock);
 	close(httpd->sock[idx]);
 	httpd->nsock--;
-	bozo_warn(httpd, "nsock now = %d", httpd->nsock);
+	bozowarn(httpd, "nsock now = %d", httpd->nsock);
 	/* no sockets left */
 	if (httpd->nsock == 0)
 		exit(0);
@@ -271,7 +271,7 @@ again:
 			/* fail on programmer errors */
 			if (errno == EFAULT ||
 			    errno == EINVAL)
-				bozo_err(httpd, 1, "poll: %s",
+				bozoerr(httpd, 1, "poll: %s",
 					strerror(errno));
 
 			/* sleep on some temporary kernel failures */
@@ -294,7 +294,7 @@ again:
 			if (fd == -1) {
 				if (errno == EFAULT ||
 				    errno == EINVAL)
-					bozo_err(httpd, 1, "accept: %s",
+					bozoerr(httpd, 1, "accept: %s",
 						strerror(errno));
 
 				if (errno == ENOMEM ||
@@ -317,7 +317,7 @@ again:
 
 			switch (fork()) {
 			case -1: /* eep, failure */
-				bozo_warn(httpd, "fork() failed, sleeping for "
+				bozowarn(httpd, "fork() failed, sleeping for "
 					"10 seconds: %s", strerror(errno));
 				close(fd);
 				sleep(10);
