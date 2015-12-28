@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_usb.c,v 1.13.2.3 2015/12/27 12:09:32 skrll Exp $	*/
+/*	$NetBSD: exynos_usb.c,v 1.13.2.4 2015/12/28 09:20:24 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.13.2.3 2015/12/27 12:09:32 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_usb.c,v 1.13.2.4 2015/12/28 09:20:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,6 @@ exynos_ohci_attach(device_t parent, device_t self, void *aux)
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
-	int r;
 
 	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -287,7 +286,6 @@ exynos_ehci_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	bus_addr_t addr;
 	bus_size_t size;
-	int r;
 
 	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
