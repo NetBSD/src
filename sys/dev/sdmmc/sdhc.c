@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.91 2015/11/03 07:59:29 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.92 2015/12/28 16:47:11 ryo Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.91 2015/11/03 07:59:29 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.92 2015/12/28 16:47:11 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1832,7 +1832,7 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	KASSERT(HREAD2(hp, SDHC_NINTR_SIGNAL_EN) & SDHC_TRANSFER_COMPLETE);
 
 	while (datalen > 0) {
-		if (!ISSET(HREAD4(hp, SDHC_PRESENT_STATE), imask)) {
+		if (!ISSET(HREAD4(hp, SDHC_PRESENT_STATE), pmask)) {
 			if (ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
 				HSET4(hp, SDHC_NINTR_SIGNAL_EN, imask);
 			} else {
