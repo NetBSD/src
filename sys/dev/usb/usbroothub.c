@@ -1,4 +1,4 @@
-/* $NetBSD: usbroothub.c,v 1.1.2.6 2015/03/19 17:26:43 skrll Exp $ */
+/* $NetBSD: usbroothub.c,v 1.1.2.7 2015/12/28 22:35:19 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -458,7 +458,7 @@ roothub_ctrl_start(struct usbd_xfer *xfer)
 	usb_transfer_complete(xfer);
 	mutex_exit(bus->ub_lock);
 
-	return err;
+	return USBD_NORMAL_COMPLETION;
 }
 
 /* Abort a root control request. */
