@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.109.2.20 2015/10/21 07:36:31 skrll Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.109.2.21 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -220,7 +220,6 @@ struct usbd_pipe {
 	struct usbd_interface  *up_iface;
 	struct usbd_device     *up_dev;
 	struct usbd_endpoint   *up_endpoint;
-	int			up_refcnt;
 	char			up_running;
 	char			up_aborting;
 	SIMPLEQ_HEAD(, usbd_xfer) up_queue;

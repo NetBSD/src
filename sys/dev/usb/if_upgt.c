@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.12.4.8 2015/12/23 16:02:42 skrll Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.12.4.9 2015/12/28 09:26:33 skrll Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.8 2015/12/23 16:02:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.12.4.9 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -508,17 +508,23 @@ upgt_detach(device_t self, int flags)
 	/* abort and close TX / RX pipes */
 	if (sc->sc_tx_pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_tx_pipeh);
-		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
 	if (sc->sc_rx_pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_rx_pipeh);
-		usbd_close_pipe(sc->sc_rx_pipeh);
 	}
 
 	/* free xfers */
 	upgt_free_tx(sc);
 	upgt_free_rx(sc);
 	upgt_free_cmd(sc);
+
+	/* Close TX / RX pipes */
+	if (sc->sc_tx_pipeh != NULL) {
+		usbd_close_pipe(sc->sc_tx_pipeh);
+	}
+	if (sc->sc_rx_pipeh != NULL) {
+		usbd_close_pipe(sc->sc_rx_pipeh);
+	}
 
 	/* free firmware */
 	upgt_fw_free(sc);

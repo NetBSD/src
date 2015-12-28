@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.41.2.9 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.41.2.10 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.9 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.41.2.10 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1645,13 +1645,16 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 
 		if (bx->bx_pipe) {
 			usbd_abort_pipe(bx->bx_pipe);
-			usbd_close_pipe(bx->bx_pipe);
-			bx->bx_pipe = NULL;
 		}
 
 		if (bx->bx_xfer) {
 			usbd_destroy_xfer(bx->bx_xfer);
 			bx->bx_xfer = NULL;
+		}
+
+		if (bx->bx_pipe) {
+			usbd_close_pipe(bx->bx_pipe);
+			bx->bx_pipe = NULL;
 		}
 
 		DPRINTF(("uvideo_stream_stop_xfer: UE_BULK: done\n"));
@@ -1661,8 +1664,6 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 		ix = &vs->vs_xfer.isoc;
 		if (ix->ix_pipe != NULL) {
 			usbd_abort_pipe(ix->ix_pipe);
-			usbd_close_pipe(ix->ix_pipe);
-			ix->ix_pipe = NULL;
 		}
 
 		for (i = 0; i < UVIDEO_NXFERS; i++) {
@@ -1680,6 +1681,10 @@ uvideo_stream_stop_xfer(struct uvideo_stream *vs)
 			}
 		}
 
+		if (ix->ix_pipe != NULL) {
+			usbd_close_pipe(ix->ix_pipe);
+			ix->ix_pipe = NULL;
+		}
 		/* Give it some time to settle */
 		usbd_delay_ms(vs->vs_parent->sc_udev, 1000);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.3.6.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.3.6.9 2015/12/28 09:26:33 skrll Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.3.6.9 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1498,12 +1498,6 @@ axen_stop(struct ifnet *ifp, int disable)
 			    "abort rx pipe failed: %s\n", usbd_errstr(err));
 
 		}
-		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_RX]);
-		if (err) {
-			aprint_error_dev(sc->axen_dev,
-			    "close rx pipe failed: %s\n", usbd_errstr(err));
-		}
-		sc->axen_ep[AXEN_ENDPT_RX] = NULL;
 	}
 
 	if (sc->axen_ep[AXEN_ENDPT_TX] != NULL) {
@@ -1512,12 +1506,6 @@ axen_stop(struct ifnet *ifp, int disable)
 			aprint_error_dev(sc->axen_dev,
 			    "abort tx pipe failed: %s\n", usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
-		if (err) {
-			aprint_error_dev(sc->axen_dev,
-			    "close tx pipe failed: %s\n", usbd_errstr(err));
-		}
-		sc->axen_ep[AXEN_ENDPT_TX] = NULL;
 	}
 
 	if (sc->axen_ep[AXEN_ENDPT_INTR] != NULL) {
@@ -1526,12 +1514,6 @@ axen_stop(struct ifnet *ifp, int disable)
 			aprint_error_dev(sc->axen_dev,
 			    "abort intr pipe failed: %s\n", usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
-		if (err) {
-			aprint_error_dev(sc->axen_dev,
-			    "close intr pipe failed: %s\n", usbd_errstr(err));
-		}
-		sc->axen_ep[AXEN_ENDPT_INTR] = NULL;
 	}
 
 	/* Free RX resources. */
@@ -1548,6 +1530,34 @@ axen_stop(struct ifnet *ifp, int disable)
 			usbd_destroy_xfer(sc->axen_cdata.axen_tx_chain[i].axen_xfer);
 			sc->axen_cdata.axen_tx_chain[i].axen_xfer = NULL;
 		}
+	}
+
+	/* Close pipes. */
+	if (sc->axen_ep[AXEN_ENDPT_RX] != NULL) {
+		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_RX]);
+		if (err) {
+			aprint_error_dev(sc->axen_dev,
+			    "close rx pipe failed: %s\n", usbd_errstr(err));
+		}
+		sc->axen_ep[AXEN_ENDPT_RX] = NULL;
+	}
+
+	if (sc->axen_ep[AXEN_ENDPT_TX] != NULL) {
+		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_TX]);
+		if (err) {
+			aprint_error_dev(sc->axen_dev,
+			    "close tx pipe failed: %s\n", usbd_errstr(err));
+		}
+		sc->axen_ep[AXEN_ENDPT_TX] = NULL;
+	}
+
+	if (sc->axen_ep[AXEN_ENDPT_INTR] != NULL) {
+		err = usbd_close_pipe(sc->axen_ep[AXEN_ENDPT_INTR]);
+		if (err) {
+			aprint_error_dev(sc->axen_dev,
+			    "close intr pipe failed: %s\n", usbd_errstr(err));
+		}
+		sc->axen_ep[AXEN_ENDPT_INTR] = NULL;
 	}
 
 	sc->axen_link = 0;

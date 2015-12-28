@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.6.8.7 2015/10/17 10:24:59 skrll Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.6.8.8 2015/12/28 09:26:33 skrll Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.7 2015/10/17 10:24:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.6.8.8 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -98,6 +98,7 @@ Static int	athn_usb_alloc_tx_list(struct athn_usb_softc *);
 Static void	athn_usb_attachhook(device_t);
 Static void	athn_usb_bcneof(struct usbd_xfer *, void *,
 		    usbd_status);
+Static void	athn_usb_abort_pipes(struct athn_usb_softc *);
 Static void	athn_usb_close_pipes(struct athn_usb_softc *);
 Static int	athn_usb_create_hw_node(struct athn_usb_softc *,
 		    struct ar_htc_target_sta *);
@@ -309,6 +310,7 @@ athn_usb_attach(device_t parent, device_t self, void *aux)
 
  fail:
 	/* Free Tx/Rx buffers. */
+	athn_usb_abort_pipes(usc);
 	athn_usb_free_tx_list(usc);
 	athn_usb_free_rx_list(usc);
 	athn_usb_free_tx_cmd(usc);
@@ -456,14 +458,17 @@ athn_usb_detach(device_t self, int flags)
 		usc->usc_athn_attached = 0;
 		athn_detach(sc);
 	}
-	/* Abort and close Tx/Rx pipes. */
-	athn_usb_close_pipes(usc);
+	/* Abort Tx/Rx pipes. */
+	athn_usb_abort_pipes(usc);
 	splx(s);
 
 	/* Free Tx/Rx buffers. */
 	athn_usb_free_rx_list(usc);
 	athn_usb_free_tx_list(usc);
 	athn_usb_free_tx_cmd(usc);
+
+	/* Close Tx/Rx pipes. */
+	athn_usb_close_pipes(usc);
 
 	mutex_destroy(&usc->usc_tx_mtx);
 	mutex_destroy(&usc->usc_task_mtx);
@@ -551,6 +556,7 @@ athn_usb_open_pipes(struct athn_usb_softc *usc)
 	}
 	return 0;
  fail:
+	athn_usb_abort_pipes(usc);
 	athn_usb_close_pipes(usc);
 	return error;
 }
@@ -563,9 +569,23 @@ athn_usb_kill_pipe(struct usbd_pipe * *pipeptr)
 	CTASSERT(sizeof(pipe) == sizeof(void *));
 	pipe = atomic_swap_ptr(pipeptr, NULL);
 	if (pipe != NULL) {
-		usbd_abort_pipe(pipe);
 		usbd_close_pipe(pipe);
 	}
+}
+
+Static void
+athn_usb_abort_pipes(struct athn_usb_softc *usc)
+{
+	DPRINTFN(DBG_FN, usc, "\n");
+
+	if (usc->usc_tx_data_pipe != NULL)
+		usbd_abort_pipe(usc->usc_tx_data_pipe);
+	if (usc->usc_rx_data_pipe != NULL)
+		usbd_abort_pipe(usc->usc_rx_data_pipe);
+	if (usc->usc_tx_intr_pipe != NULL)
+		usbd_abort_pipe(usc->usc_tx_intr_pipe);
+	if (usc->usc_rx_intr_pipe != NULL)
+		usbd_abort_pipe(usc->usc_rx_intr_pipe);
 }
 
 Static void

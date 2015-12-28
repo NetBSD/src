@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.9.4.6 2015/10/06 21:32:15 skrll Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.9.4.7 2015/12/28 09:26:33 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.6 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.9.4.7 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1104,11 +1104,6 @@ urndis_stop(struct ifnet *ifp)
 		if (err)
 			printf("%s: abort rx pipe failed: %s\n",
 			    DEVNAME(sc), usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_bulkin_pipe);
-		if (err)
-			printf("%s: close rx pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-		sc->sc_bulkin_pipe = NULL;
 	}
 
 	if (sc->sc_bulkout_pipe != NULL) {
@@ -1116,11 +1111,6 @@ urndis_stop(struct ifnet *ifp)
 		if (err)
 			printf("%s: abort tx pipe failed: %s\n",
 			    DEVNAME(sc), usbd_errstr(err));
-		err = usbd_close_pipe(sc->sc_bulkout_pipe);
-		if (err)
-			printf("%s: close tx pipe failed: %s\n",
-			    DEVNAME(sc), usbd_errstr(err));
-		sc->sc_bulkout_pipe = NULL;
 	}
 
 	for (i = 0; i < RNDIS_RX_LIST_CNT; i++) {
@@ -1143,6 +1133,23 @@ urndis_stop(struct ifnet *ifp)
 			usbd_destroy_xfer(sc->sc_data.sc_tx_chain[i].sc_xfer);
 			sc->sc_data.sc_tx_chain[i].sc_xfer = NULL;
 		}
+	}
+
+	/* Close pipes. */
+	if (sc->sc_bulkin_pipe != NULL) {
+		err = usbd_close_pipe(sc->sc_bulkin_pipe);
+		if (err)
+			printf("%s: close rx pipe failed: %s\n",
+			    DEVNAME(sc), usbd_errstr(err));
+		sc->sc_bulkin_pipe = NULL;
+	}
+
+	if (sc->sc_bulkout_pipe != NULL) {
+		err = usbd_close_pipe(sc->sc_bulkout_pipe);
+		if (err)
+			printf("%s: close tx pipe failed: %s\n",
+			    DEVNAME(sc), usbd_errstr(err));
+		sc->sc_bulkout_pipe = NULL;
 	}
 }
 

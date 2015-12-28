@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.17.2.5 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: uhso.c,v 1.17.2.6 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.5 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.17.2.6 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -617,9 +617,8 @@ uhso_switch_mode(struct usbd_device *udev)
 
 	status = usbd_transfer(xfer);
 
-	usbd_abort_pipe(pipe);
-	usbd_close_pipe(pipe);
 	usbd_destroy_xfer(xfer);
+	usbd_close_pipe(pipe);
 
 	return (status == USBD_NORMAL_COMPLETION ? 0 : EIO);
 }
@@ -1191,12 +1190,30 @@ uhso_bulk_clean(struct uhso_port *hp)
 
 	if (hp->hp_rpipe != NULL) {
 		usbd_abort_pipe(hp->hp_rpipe);
+	}
+
+	if (hp->hp_wpipe != NULL) {
+		usbd_abort_pipe(hp->hp_wpipe);
+	}
+
+	if (hp->hp_rxfer != NULL) {
+		usbd_destroy_xfer(hp->hp_rxfer);
+		hp->hp_rxfer = NULL;
+		hp->hp_rbuf = NULL;
+	}
+
+	if (hp->hp_wxfer != NULL) {
+		usbd_destroy_xfer(hp->hp_wxfer);
+		hp->hp_wxfer = NULL;
+		hp->hp_wbuf = NULL;
+	}
+
+	if (hp->hp_rpipe != NULL) {
 		usbd_close_pipe(hp->hp_rpipe);
 		hp->hp_rpipe = NULL;
 	}
 
 	if (hp->hp_wpipe != NULL) {
-		usbd_abort_pipe(hp->hp_wpipe);
 		usbd_close_pipe(hp->hp_wpipe);
 		hp->hp_wpipe = NULL;
 	}
@@ -2279,18 +2296,6 @@ uhso_ifnet_clean(struct uhso_port *hp)
 	DPRINTF(1, "hp=%p\n", hp);
 
 	(*hp->hp_clean)(hp);
-
-	if (hp->hp_rxfer != NULL) {
-		usbd_destroy_xfer(hp->hp_rxfer);
-		hp->hp_rxfer = NULL;
-		hp->hp_rbuf = NULL;
-	}
-
-	if (hp->hp_wxfer != NULL) {
-		usbd_destroy_xfer(hp->hp_wxfer);
-		hp->hp_wxfer = NULL;
-		hp->hp_wbuf = NULL;
-	}
 }
 
 /* called at splnet() with IFF_OACTIVE not set */

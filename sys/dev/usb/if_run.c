@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.10.6.7 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_run.c,v 1.10.6.8 2015/12/28 09:26:33 skrll Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.7 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.10.6.8 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -753,13 +753,15 @@ run_free_rx_ring(struct run_softc *sc)
 
 	if (rxq->pipeh != NULL) {
 		usbd_abort_pipe(rxq->pipeh);
-		usbd_close_pipe(rxq->pipeh);
-		rxq->pipeh = NULL;
 	}
 	for (i = 0; i < RUN_RX_RING_COUNT; i++) {
 		if (rxq->data[i].xfer != NULL)
 			usbd_destroy_xfer(rxq->data[i].xfer);
 		rxq->data[i].xfer = NULL;
+	}
+	if (rxq->pipeh != NULL) {
+		usbd_close_pipe(rxq->pipeh);
+		rxq->pipeh = NULL;
 	}
 }
 

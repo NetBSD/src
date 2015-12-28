@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.68.4.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.68.4.9 2015/12/28 09:26:33 skrll Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.68.4.9 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1223,12 +1223,6 @@ cue_stop(struct cue_softc *sc)
 			printf("%s: abort rx pipe failed: %s\n",
 			    device_xname(sc->cue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_RX]);
-		if (err) {
-			printf("%s: close rx pipe failed: %s\n",
-			    device_xname(sc->cue_dev), usbd_errstr(err));
-		}
-		sc->cue_ep[CUE_ENDPT_RX] = NULL;
 	}
 
 	if (sc->cue_ep[CUE_ENDPT_TX] != NULL) {
@@ -1237,12 +1231,6 @@ cue_stop(struct cue_softc *sc)
 			printf("%s: abort tx pipe failed: %s\n",
 			    device_xname(sc->cue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_TX]);
-		if (err) {
-			printf("%s: close tx pipe failed: %s\n",
-			    device_xname(sc->cue_dev), usbd_errstr(err));
-		}
-		sc->cue_ep[CUE_ENDPT_TX] = NULL;
 	}
 
 	if (sc->cue_ep[CUE_ENDPT_INTR] != NULL) {
@@ -1251,20 +1239,10 @@ cue_stop(struct cue_softc *sc)
 			printf("%s: abort intr pipe failed: %s\n",
 			    device_xname(sc->cue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
-		if (err) {
-			printf("%s: close intr pipe failed: %s\n",
-			    device_xname(sc->cue_dev), usbd_errstr(err));
-		}
-		sc->cue_ep[CUE_ENDPT_INTR] = NULL;
 	}
 
 	/* Free RX resources. */
 	for (i = 0; i < CUE_RX_LIST_CNT; i++) {
-		if (sc->cue_cdata.cue_rx_chain[i].cue_mbuf != NULL) {
-			m_freem(sc->cue_cdata.cue_rx_chain[i].cue_mbuf);
-			sc->cue_cdata.cue_rx_chain[i].cue_mbuf = NULL;
-		}
 		if (sc->cue_cdata.cue_rx_chain[i].cue_xfer != NULL) {
 			usbd_destroy_xfer(sc->cue_cdata.cue_rx_chain[i].cue_xfer);
 			sc->cue_cdata.cue_rx_chain[i].cue_xfer = NULL;
@@ -1281,6 +1259,34 @@ cue_stop(struct cue_softc *sc)
 			usbd_destroy_xfer(sc->cue_cdata.cue_tx_chain[i].cue_xfer);
 			sc->cue_cdata.cue_tx_chain[i].cue_xfer = NULL;
 		}
+	}
+
+	/* Stop transfers. */
+	if (sc->cue_ep[CUE_ENDPT_RX] != NULL) {
+		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_RX]);
+		if (err) {
+			printf("%s: close rx pipe failed: %s\n",
+			    device_xname(sc->cue_dev), usbd_errstr(err));
+		}
+		sc->cue_ep[CUE_ENDPT_RX] = NULL;
+	}
+
+	if (sc->cue_ep[CUE_ENDPT_TX] != NULL) {
+		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_TX]);
+		if (err) {
+			printf("%s: close tx pipe failed: %s\n",
+			    device_xname(sc->cue_dev), usbd_errstr(err));
+		}
+		sc->cue_ep[CUE_ENDPT_TX] = NULL;
+	}
+
+	if (sc->cue_ep[CUE_ENDPT_INTR] != NULL) {
+		err = usbd_close_pipe(sc->cue_ep[CUE_ENDPT_INTR]);
+		if (err) {
+			printf("%s: close intr pipe failed: %s\n",
+			    device_xname(sc->cue_dev), usbd_errstr(err));
+		}
+		sc->cue_ep[CUE_ENDPT_INTR] = NULL;
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
