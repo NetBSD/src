@@ -1,4 +1,4 @@
-.\"	$NetBSD: ipf.5,v 1.4 2015/03/24 19:46:58 apb Exp $
+.\"	$NetBSD: ipf.5,v 1.5 2015/12/28 19:32:22 khorben Exp $
 .\"
 .TH IPF 5
 .SH NAME
@@ -354,7 +354,7 @@ block in proto tcp from any port >= 1024 to any port < 1024
 pass in proto tcp from 10.1.0.0/24 to any port = 22
 block out proto udp from any to 10.1.1.1 port = 135
 pass in proto udp from 1.1.1.1 port = 123 to 10.1.1.1 port = 123
-pass in proto tcp from 127.0.0.0/8 to any port = 6000:6009
+pass in proto tcp from 127.0.0.0/8 to any port 6000:6009
 .fi
 .PP
 If there is no desire to mention any specific source or destintion
