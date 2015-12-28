@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_dtv.c,v 1.6.14.4 2015/10/06 21:32:15 skrll Exp $ */
+/* $NetBSD: auvitek_dtv.c,v 1.6.14.5 2015/12/28 09:26:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6.14.4 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_dtv.c,v 1.6.14.5 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,6 +66,7 @@ static int		auvitek_dtv_start_transfer(void *,
 static int		auvitek_dtv_stop_transfer(void *);
 
 static int		auvitek_dtv_init_pipes(struct auvitek_softc *);
+static int		auvitek_dtv_abort_pipes(struct auvitek_softc *);
 static int		auvitek_dtv_close_pipes(struct auvitek_softc *);
 
 static int		auvitek_dtv_bulk_start(struct auvitek_softc *);
@@ -180,12 +181,14 @@ auvitek_dtv_close(void *priv)
 	struct auvitek_softc *sc = priv;
 
 	auvitek_dtv_stop_transfer(sc);
-	auvitek_dtv_close_pipes(sc);
+	auvitek_dtv_abort_pipes(sc);
 
 	for (size_t i = 0; i < AUVITEK_NBULK_XFERS; i++) {
 		if (sc->sc_ab.ab_bx[i].bx_xfer)
 			usbd_destroy_xfer(sc->sc_ab.ab_bx[i].bx_xfer);
 	}
+
+	auvitek_dtv_close_pipes(sc);
 
 	sc->sc_dtvsubmitcb = NULL;
 	sc->sc_dtvsubmitarg = NULL;
@@ -295,11 +298,22 @@ auvitek_dtv_init_pipes(struct auvitek_softc *sc)
 }
 
 static int
-auvitek_dtv_close_pipes(struct auvitek_softc *sc)
+auvitek_dtv_abort_pipes(struct auvitek_softc *sc)
 {
 	if (sc->sc_ab.ab_pipe != NULL) {
 		KERNEL_LOCK(1, curlwp);
 		usbd_abort_pipe(sc->sc_ab.ab_pipe);
+		KERNEL_UNLOCK_ONE(curlwp);
+	}
+
+	return 0;
+}
+
+static int
+auvitek_dtv_close_pipes(struct auvitek_softc *sc)
+{
+	if (sc->sc_ab.ab_pipe != NULL) {
+		KERNEL_LOCK(1, curlwp);
 		usbd_close_pipe(sc->sc_ab.ab_pipe);
 		KERNEL_UNLOCK_ONE(curlwp);
 		sc->sc_ab.ab_pipe = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.126.2.11 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: ugen.c,v 1.126.2.12 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.11 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.126.2.12 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -534,8 +534,6 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 			     endpt, dir, sce));
 
 		usbd_abort_pipe(sce->pipeh);
-		usbd_close_pipe(sce->pipeh);
-		sce->pipeh = NULL;
 
 		int isize = UGETW(sce->edesc->wMaxPacketSize);
 		int msize = 0;
@@ -560,6 +558,8 @@ ugenclose(dev_t dev, int flag, int mode, struct lwp *l)
 		default:
 			break;
 		}
+		usbd_close_pipe(sce->pipeh);
+		sce->pipeh = NULL;
 		if (sce->ibuf != NULL) {
 			kmem_free(sce->ibuf, msize);
 			sce->ibuf = NULL;

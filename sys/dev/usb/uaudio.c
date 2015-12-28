@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.140.2.11 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.140.2.12 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.11 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.140.2.12 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -321,6 +321,7 @@ Static void	uaudio_ctl_set
 Static usbd_status uaudio_set_speed(struct uaudio_softc *, int, u_int);
 
 Static usbd_status uaudio_chan_open(struct uaudio_softc *, struct chan *);
+Static void	uaudio_chan_abort(struct uaudio_softc *, struct chan *);
 Static void	uaudio_chan_close(struct uaudio_softc *, struct chan *);
 Static usbd_status uaudio_chan_alloc_buffers
 	(struct uaudio_softc *, struct chan *);
@@ -2238,8 +2239,9 @@ uaudio_halt_out_dma(void *addr)
 
 	mutex_spin_exit(&sc->sc_intr_lock);
 	if (sc->sc_playchan.pipe != NULL) {
-		uaudio_chan_close(sc, &sc->sc_playchan);
+		uaudio_chan_abort(sc, &sc->sc_playchan);
 		uaudio_chan_free_buffers(sc, &sc->sc_playchan);
+		uaudio_chan_close(sc, &sc->sc_playchan);
 		sc->sc_playchan.intr = NULL;
 	}
 	mutex_spin_enter(&sc->sc_intr_lock);
@@ -2256,8 +2258,9 @@ uaudio_halt_in_dma(void *addr)
 
 	mutex_spin_exit(&sc->sc_intr_lock);
 	if (sc->sc_recchan.pipe != NULL) {
-		uaudio_chan_close(sc, &sc->sc_recchan);
+		uaudio_chan_abort(sc, &sc->sc_recchan);
 		uaudio_chan_free_buffers(sc, &sc->sc_recchan);
+		uaudio_chan_close(sc, &sc->sc_recchan);
 		sc->sc_recchan.intr = NULL;
 	}
 	mutex_spin_enter(&sc->sc_intr_lock);
@@ -2721,7 +2724,7 @@ uaudio_chan_open(struct uaudio_softc *sc, struct chan *ch)
 }
 
 Static void
-uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
+uaudio_chan_abort(struct uaudio_softc *sc, struct chan *ch)
 {
 	struct usbd_pipe *pipe;
 	struct as_info *as;
@@ -2733,14 +2736,27 @@ uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
 		DPRINTF("set null alt=%d\n", sc->sc_nullalt);
 		usbd_set_interface(as->ifaceh, sc->sc_nullalt);
 	}
-	pipe = atomic_swap_ptr(&ch->pipe, NULL);
+	pipe = ch->pipe;
 	if (pipe) {
 		usbd_abort_pipe(pipe);
+	}
+	pipe = ch->sync_pipe;
+	if (pipe) {
+		usbd_abort_pipe(pipe);
+	}
+}
+
+Static void
+uaudio_chan_close(struct uaudio_softc *sc, struct chan *ch)
+{
+	struct usbd_pipe *pipe;
+
+	pipe = atomic_swap_ptr(&ch->pipe, NULL);
+	if (pipe) {
 		usbd_close_pipe(pipe);
 	}
 	pipe = atomic_swap_ptr(&ch->sync_pipe, NULL);
 	if (pipe) {
-		usbd_abort_pipe(pipe);
 		usbd_close_pipe(pipe);
 	}
 }

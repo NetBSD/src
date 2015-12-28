@@ -1,4 +1,4 @@
-/* $NetBSD: irmce.c,v 1.1.32.5 2015/10/06 21:32:15 skrll Exp $ */
+/* $NetBSD: irmce.c,v 1.1.32.6 2015/12/28 09:26:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.5 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: irmce.c,v 1.1.32.6 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,6 +260,12 @@ irmce_detach(device_t self, int flags)
 			return error;
 	}
 
+	if (sc->sc_bulkin_pipe) {
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	}
+	if (sc->sc_bulkout_pipe) {
+		usbd_abort_pipe(sc->sc_bulkout_pipe);
+	}
 	if (sc->sc_bulkin_xfer) {
 		usbd_destroy_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_buffer = NULL;
@@ -269,6 +275,14 @@ irmce_detach(device_t self, int flags)
 		usbd_destroy_xfer(sc->sc_bulkout_xfer);
 		sc->sc_bulkout_buffer = NULL;
 		sc->sc_bulkout_xfer = NULL;
+	}
+	if (sc->sc_bulkin_pipe) {
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+	if (sc->sc_bulkout_pipe) {
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
 	}
 
 	pmf_device_deregister(self);
@@ -353,10 +367,6 @@ irmce_open(void *priv, int flag, int mode, struct proc *p)
 	if (err) {
 		aprint_error_dev(sc->sc_dev,
 		    "couldn't reset device: %s\n", usbd_errstr(err));
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
-		usbd_close_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
 	}
 	sc->sc_ir_state = IRMCE_STATE_HEADER;
 	sc->sc_rc6_nhb = 0;
@@ -371,13 +381,9 @@ irmce_close(void *priv, int flag, int mode, struct proc *p)
 
 	if (sc->sc_bulkin_pipe) {
 		usbd_abort_pipe(sc->sc_bulkin_pipe);
-		usbd_close_pipe(sc->sc_bulkin_pipe);
-		sc->sc_bulkin_pipe = NULL;
 	}
 	if (sc->sc_bulkout_pipe) {
 		usbd_abort_pipe(sc->sc_bulkout_pipe);
-		usbd_close_pipe(sc->sc_bulkout_pipe);
-		sc->sc_bulkout_pipe = NULL;
 	}
 
 	return 0;

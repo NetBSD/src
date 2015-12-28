@@ -1,4 +1,4 @@
-/*	$NetBSD: ulpt.c,v 1.95.4.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: ulpt.c,v 1.95.4.9 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulpt.c,v 1.95.4.9 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,22 +575,25 @@ ulptclose(dev_t dev, int flag, int mode,
 
 	if (sc->sc_out_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_out_pipe);
-		usbd_close_pipe(sc->sc_out_pipe);
-		sc->sc_out_pipe = NULL;
 	}
 	if (sc->sc_out_xfer != NULL) {
 		usbd_destroy_xfer(sc->sc_out_xfer);
 		sc->sc_out_xfer = NULL;
 	}
-
+	if (sc->sc_out_pipe != NULL) {
+		usbd_close_pipe(sc->sc_out_pipe);
+		sc->sc_out_pipe = NULL;
+	}
 	if (sc->sc_in_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_in_pipe);
-		usbd_close_pipe(sc->sc_in_pipe);
-		sc->sc_in_pipe = NULL;
 	}
 	if (sc->sc_in_xfer != NULL) {
 		usbd_destroy_xfer(sc->sc_in_xfer);
 		sc->sc_in_xfer = NULL;
+	}
+	if (sc->sc_in_pipe != NULL) {
+		usbd_close_pipe(sc->sc_in_pipe);
+		sc->sc_in_pipe = NULL;
 	}
 
 	sc->sc_state = 0;

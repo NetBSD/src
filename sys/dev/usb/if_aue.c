@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.132.4.9 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.132.4.10 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.9 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.132.4.10 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1664,12 +1664,6 @@ aue_stop(struct aue_softc *sc)
 			printf("%s: abort tx pipe failed: %s\n",
 			    device_xname(sc->aue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_TX]);
-		if (err) {
-			printf("%s: close tx pipe failed: %s\n",
-			    device_xname(sc->aue_dev), usbd_errstr(err));
-		}
-		sc->aue_ep[AUE_ENDPT_TX] = NULL;
 	}
 
 	if (sc->aue_ep[AUE_ENDPT_INTR] != NULL) {
@@ -1678,12 +1672,6 @@ aue_stop(struct aue_softc *sc)
 			printf("%s: abort intr pipe failed: %s\n",
 			    device_xname(sc->aue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
-		if (err) {
-			printf("%s: close intr pipe failed: %s\n",
-			    device_xname(sc->aue_dev), usbd_errstr(err));
-		}
-		sc->aue_ep[AUE_ENDPT_INTR] = NULL;
 	}
 
 	/* Free RX resources. */
@@ -1708,6 +1696,25 @@ aue_stop(struct aue_softc *sc)
 			usbd_destroy_xfer(sc->aue_cdata.aue_tx_chain[i].aue_xfer);
 			sc->aue_cdata.aue_tx_chain[i].aue_xfer = NULL;
 		}
+	}
+
+	/* Close pipes */
+	if (sc->aue_ep[AUE_ENDPT_TX] != NULL) {
+		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_TX]);
+		if (err) {
+			printf("%s: close tx pipe failed: %s\n",
+			    device_xname(sc->aue_dev), usbd_errstr(err));
+		}
+		sc->aue_ep[AUE_ENDPT_TX] = NULL;
+	}
+
+	if (sc->aue_ep[AUE_ENDPT_INTR] != NULL) {
+		err = usbd_close_pipe(sc->aue_ep[AUE_ENDPT_INTR]);
+		if (err) {
+			printf("%s: close intr pipe failed: %s\n",
+			    device_xname(sc->aue_dev), usbd_errstr(err));
+		}
+		sc->aue_ep[AUE_ENDPT_INTR] = NULL;
 	}
 
 	sc->aue_link = 0;

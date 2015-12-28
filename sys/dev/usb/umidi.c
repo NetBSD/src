@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.65.14.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: umidi.c,v 1.65.14.9 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.65.14.9 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -706,8 +706,8 @@ free_pipe(struct umidi_endpoint *ep)
 {
 	DPRINTF(("%s: free_pipe %p\n", device_xname(ep->sc->sc_dev), ep));
 	usbd_abort_pipe(ep->pipe);
-	usbd_close_pipe(ep->pipe);
 	usbd_destroy_xfer(ep->xfer);
+	usbd_close_pipe(ep->pipe);
 	softint_disestablish(ep->solicit_cookie);
 }
 

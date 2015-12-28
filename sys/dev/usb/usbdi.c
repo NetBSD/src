@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.162.2.39 2015/12/27 12:10:00 skrll Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.162.2.40 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.39 2015/12/27 12:10:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.162.2.40 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -143,8 +143,8 @@ usbd_dump_pipe(struct usbd_pipe *pipe)
 	usbd_dump_device(pipe->up_dev);
 	usbd_dump_endpoint(pipe->up_endpoint);
 	USBHIST_LOG(usbdebug, "(usbd_dump_pipe)", 0, 0, 0, 0);
-	USBHIST_LOG(usbdebug, "     refcnt = %d running = %d aborting = %d",
-	    pipe->up_refcnt, pipe->up_running, pipe->up_aborting, 0);
+	USBHIST_LOG(usbdebug, "     running = %d aborting = %d",
+	    pipe->up_running, pipe->up_aborting, 0, 0);
 	USBHIST_LOG(usbdebug, "     intrxfer = %p, repeat = %d, interval = %d",
 	    pipe->up_intrxfer, pipe->up_repeat, pipe->up_interval, 0);
 }
@@ -242,21 +242,23 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	KASSERT(pipe != NULL);
 
 	usbd_lock_pipe(pipe);
-	if (--pipe->up_refcnt != 0) {
-		usbd_unlock_pipe(pipe);
-		return USBD_NORMAL_COMPLETION;
+
+	if (!SIMPLEQ_EMPTY(&pipe->up_queue)) {
+		printf("WARNING: pipe closed with active xfers on addr %d\n",
+		    pipe->up_dev->ud_addr);
+		usbd_ar_pipe(pipe);
 	}
-	if (! SIMPLEQ_EMPTY(&pipe->up_queue)) {
-		usbd_unlock_pipe(pipe);
-		return USBD_PENDING_REQUESTS;
-	}
+
+	KASSERT(SIMPLEQ_EMPTY(&pipe->up_queue));
+
 	LIST_REMOVE(pipe, up_next);
 	pipe->up_endpoint->ue_refcnt--;
-	pipe->up_methods->upm_close(pipe);
-	usbd_unlock_pipe(pipe);
 	if (pipe->up_intrxfer != NULL)
 		usbd_destroy_xfer(pipe->up_intrxfer);
+	pipe->up_methods->upm_close(pipe);
+	usbd_unlock_pipe(pipe);
 	kmem_free(pipe, pipe->up_dev->ud_bus->ub_pipesize);
+
 	return USBD_NORMAL_COMPLETION;
 }
 

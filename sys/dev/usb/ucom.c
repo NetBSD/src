@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.108.2.10 2015/12/27 12:09:59 skrll Exp $	*/
+/*	$NetBSD: ucom.c,v 1.108.2.11 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.10 2015/12/27 12:09:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.108.2.11 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,6 +445,16 @@ ucom_detach(device_t self, int flags)
 	for (i = 0; i < UCOM_OUT_BUFFS; i++) {
 		if (sc->sc_obuff[i].ub_xfer != NULL)
 			usbd_destroy_xfer(sc->sc_obuff[i].ub_xfer);
+	}
+
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_close_pipe(sc->sc_bulkin_pipe);
+		sc->sc_bulkin_pipe = NULL;
+	}
+
+	if (sc->sc_bulkout_pipe != NULL) {
+		usbd_close_pipe(sc->sc_bulkout_pipe);
+		sc->sc_bulkout_pipe = NULL;
 	}
 
 	/* Detach the random source */

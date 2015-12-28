@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_rum.c,v 1.40 2006/09/18 16:20:20 damien Exp $	*/
-/*	$NetBSD: if_rum.c,v 1.48.6.11 2015/10/07 10:39:25 skrll Exp $	*/
+/*	$NetBSD: if_rum.c,v 1.48.6.12 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2005-2007 Damien Bergamini <damien.bergamini@free.fr>
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.11 2015/10/07 10:39:25 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rum.c,v 1.48.6.12 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -507,21 +507,6 @@ rum_detach(device_t self, int flags)
 	usb_rem_task(sc->sc_udev, &sc->sc_task);
 	callout_stop(&sc->sc_scan_ch);
 	callout_stop(&sc->sc_amrr_ch);
-
-	if (sc->amrr_xfer != NULL) {
-		usbd_destroy_xfer(sc->amrr_xfer);
-		sc->amrr_xfer = NULL;
-	}
-
-	if (sc->sc_rx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_rx_pipeh);
-		usbd_close_pipe(sc->sc_rx_pipeh);
-	}
-
-	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
-		usbd_close_pipe(sc->sc_tx_pipeh);
-	}
 
 	bpf_detach(ifp);
 	ieee80211_ifdetach(ic);	/* free all nodes */
@@ -2137,18 +2122,24 @@ rum_stop(struct ifnet *ifp, int disable)
 
 	if (sc->sc_rx_pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_rx_pipeh);
+	}
+
+	if (sc->sc_tx_pipeh != NULL) {
+		usbd_abort_pipe(sc->sc_tx_pipeh);
+	}
+
+	rum_free_rx_list(sc);
+	rum_free_tx_list(sc);
+
+	if (sc->sc_rx_pipeh != NULL) {
 		usbd_close_pipe(sc->sc_rx_pipeh);
 		sc->sc_rx_pipeh = NULL;
 	}
 
 	if (sc->sc_tx_pipeh != NULL) {
-		usbd_abort_pipe(sc->sc_tx_pipeh);
 		usbd_close_pipe(sc->sc_tx_pipeh);
 		sc->sc_tx_pipeh = NULL;
 	}
-
-	rum_free_rx_list(sc);
-	rum_free_tx_list(sc);
 }
 
 static int

@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_dtv.c,v 1.10.14.4 2015/10/06 21:32:15 skrll Exp $ */
+/* $NetBSD: emdtv_dtv.c,v 1.10.14.5 2015/12/28 09:26:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.4 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_dtv.c,v 1.10.14.5 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,20 @@ emdtv_dtv_attach(struct emdtv_softc *sc)
 	emdtv_dtv_rescan(sc, NULL, NULL);
 }
 
+static void
+emdtv_dtv_free_xfers(struct emdtv_softc *sc)
+{
+
+	for (size_t i = 0; i < EMDTV_NXFERS; i++)
+		if (sc->sc_ix[i].ix_xfer) {
+			usbd_destroy_xfer(sc->sc_ix[i].ix_xfer);
+			sc->sc_ix[i].ix_xfer = NULL;
+			sc->sc_ix[i].ix_buf = NULL;
+		}
+
+	return;
+}
+
 void
 emdtv_dtv_detach(struct emdtv_softc *sc, int flags)
 {
@@ -142,6 +156,7 @@ emdtv_dtv_detach(struct emdtv_softc *sc, int flags)
 
 	if (sc->sc_isoc_pipe) {
 		usbd_abort_pipe(sc->sc_isoc_pipe);
+		emdtv_dtv_free_xfers(sc);
 		usbd_close_pipe(sc->sc_isoc_pipe);
 		sc->sc_isoc_pipe = NULL;
 	}
@@ -250,14 +265,7 @@ emdtv_dtv_close(void *priv)
 {
 	struct emdtv_softc *sc = priv;
 
-	for (size_t i = 0; i < EMDTV_NXFERS; i++)
-		if (sc->sc_ix[i].ix_xfer) {
-			usbd_destroy_xfer(sc->sc_ix[i].ix_xfer);
-			sc->sc_ix[i].ix_xfer = NULL;
-			sc->sc_ix[i].ix_buf = NULL;
-		}
-
-	return;
+	emdtv_dtv_free_xfers(sc);
 }
 
 static int

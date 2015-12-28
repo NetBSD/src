@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.11.6.6 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: udl.c,v 1.11.6.7 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.6 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.11.6.7 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -475,7 +475,6 @@ udl_detach(device_t self, int flags)
 	 */
 	if (sc->sc_tx_pipeh != NULL) {
 		usbd_abort_pipe(sc->sc_tx_pipeh);
-		usbd_close_pipe(sc->sc_tx_pipeh);
 	}
 
 	/*
@@ -483,6 +482,10 @@ udl_detach(device_t self, int flags)
 	 */
 	udl_cmdq_flush(sc);
 	udl_cmdq_free(sc);
+
+	if (sc->sc_tx_pipeh != NULL) {
+		usbd_close_pipe(sc->sc_tx_pipeh);
+	}
 
 	cv_destroy(&sc->sc_cv);
 	mutex_destroy(&sc->sc_mtx);
