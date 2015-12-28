@@ -1,4 +1,4 @@
-/*	$NetBSD: ssl-bozo.c,v 1.21 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: ssl-bozo.c,v 1.22 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*	$eterna: ssl-bozo.c,v 1.15 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -103,7 +103,7 @@ bozo_clear_ssl_queue(bozohttpd_t *httpd)
 }
 
 /*
- * bozo_ssl_warn works just like bozo_warn, plus the SSL error queue
+ * bozo_ssl_warn works just like bozowarn, plus the SSL error queue
  */
 BOZO_PRINTFLIKE(2, 3) static void
 bozo_ssl_warn(bozohttpd_t *httpd, const char *fmt, ...)
@@ -123,7 +123,7 @@ bozo_ssl_warn(bozohttpd_t *httpd, const char *fmt, ...)
 
 
 /*
- * bozo_ssl_err works just like bozo_err, plus the SSL error queue
+ * bozo_ssl_err works just like bozoerr, plus the SSL error queue
  */
 BOZO_PRINTFLIKE(3, 4) BOZO_DEAD static void
 bozo_ssl_err(bozohttpd_t *httpd, int code, const char *fmt, ...)
@@ -264,7 +264,7 @@ bozo_ssl_accept(bozohttpd_t *httpd)
 
 	sslinfo->bozossl = SSL_new(sslinfo->ssl_context);
 	if (sslinfo->bozossl == NULL)
-		bozo_err(httpd, 1, "SSL_new failed");
+		bozoerr(httpd, 1, "SSL_new failed");
 
 	SSL_set_rfd(sslinfo->bozossl, 0);
 	SSL_set_wfd(sslinfo->bozossl, 1);
@@ -292,7 +292,7 @@ bozo_get_sslinfo(bozohttpd_t *httpd)
 		return httpd->sslinfo;
 	sslinfo = bozomalloc(httpd, sizeof(*sslinfo));
 	if (sslinfo == NULL)
-		bozo_err(httpd, 1, "sslinfo allocation failed");
+		bozoerr(httpd, 1, "sslinfo allocation failed");
 	memset(sslinfo, 0, sizeof(*sslinfo));
 	return httpd->sslinfo = sslinfo;
 }

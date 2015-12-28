@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.41 2015/12/27 10:21:35 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.42 2015/12/28 07:37:59 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -218,14 +218,6 @@ void	debug__(bozohttpd_t *, int, const char *, ...) BOZO_PRINTFLIKE(3, 4);
 #define	debug(x)
 #endif /* NO_DEBUG */
 
-void	bozo_warn(bozohttpd_t *, const char *, ...)
-		BOZO_PRINTFLIKE(2, 3);
-void	bozo_err(bozohttpd_t *, int, const char *, ...)
-		BOZO_PRINTFLIKE(3, 4)
-		BOZO_DEAD;
-void	bozo_asprintf(bozohttpd_t *, char **, const char *, ...)
-		BOZO_PRINTFLIKE(3, 4);
-
 int	bozo_http_error(bozohttpd_t *, int, bozo_httpreq_t *, const char *);
 
 int	bozo_check_special_files(bozo_httpreq_t *, const char *);
@@ -235,10 +227,17 @@ void	bozo_print_header(bozo_httpreq_t *, struct stat *, const char *,
 char	*bozo_escape_rfc3986(bozohttpd_t *httpd, const char *url, int absolute);
 char	*bozo_escape_html(bozohttpd_t *httpd, const char *url);
 
+/* these are similar to libc functions, no underscore here */
+void	bozowarn(bozohttpd_t *, const char *, ...)
+		BOZO_PRINTFLIKE(2, 3);
+void	bozoerr(bozohttpd_t *, int, const char *, ...)
+		BOZO_PRINTFLIKE(3, 4)
+		BOZO_DEAD;
+void	bozoasprintf(bozohttpd_t *, char **, const char *, ...)
+		BOZO_PRINTFLIKE(3, 4);
 char	*bozodgetln(bozohttpd_t *, int, ssize_t *, ssize_t (*)(bozohttpd_t *,
 		    int, void *, size_t));
 char	*bozostrnsep(char **, const char *, ssize_t *);
-
 void	*bozomalloc(bozohttpd_t *, size_t);
 void	*bozorealloc(bozohttpd_t *, void *, size_t);
 char	*bozostrdup(bozohttpd_t *, bozo_httpreq_t *, const char *);
