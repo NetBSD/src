@@ -1,4 +1,4 @@
-/* $NetBSD: pseye.c,v 1.21.34.8 2015/10/06 21:32:15 skrll Exp $ */
+/* $NetBSD: pseye.c,v 1.21.34.9 2015/12/28 09:26:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2008 Jared D. McNeill <jmcneill@invisible.ca>
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pseye.c,v 1.21.34.9 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -285,13 +285,17 @@ pseye_detach(device_t self, int flags)
 		sc->sc_videodev = NULL;
 	}
 
+	if (sc->sc_bulkin_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_bulkin_pipe);
+	}
+
 	if (sc->sc_bulkin_xfer != NULL) {
 		usbd_destroy_xfer(sc->sc_bulkin_xfer);
 		sc->sc_bulkin_xfer = NULL;
 	}
 
 	if (sc->sc_bulkin_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_bulkin_pipe);
+		usbd_close_pipe(sc->sc_bulkin_pipe);
 		sc->sc_bulkin_pipe = NULL;
 	}
 

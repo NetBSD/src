@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.33.10.9 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: ustir.c,v 1.33.10.10 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.9 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.33.10.10 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -331,11 +331,25 @@ ustir_detach(device_t self, int flags)
 	/* Abort all pipes.  Causes processes waiting for transfer to wake. */
 	if (sc->sc_rd_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_rd_pipe);
+	}
+	if (sc->sc_wr_pipe != NULL) {
+		usbd_abort_pipe(sc->sc_wr_pipe);
+	}
+	if (sc->sc_rd_xfer != NULL) {
+		usbd_destroy_xfer(sc->sc_rd_xfer);
+		sc->sc_rd_xfer = NULL;
+		sc->sc_rd_buf = NULL;
+	}
+	if (sc->sc_wr_xfer != NULL) {
+		usbd_destroy_xfer(sc->sc_wr_xfer);
+		sc->sc_wr_xfer = NULL;
+		sc->sc_wr_buf = NULL;
+	}
+	if (sc->sc_rd_pipe != NULL) {
 		usbd_close_pipe(sc->sc_rd_pipe);
 		sc->sc_rd_pipe = NULL;
 	}
 	if (sc->sc_wr_pipe != NULL) {
-		usbd_abort_pipe(sc->sc_wr_pipe);
 		usbd_close_pipe(sc->sc_wr_pipe);
 		sc->sc_wr_pipe = NULL;
 	}
@@ -777,12 +791,10 @@ ustir_close(void *h, int flag, int mode,
 
 	if (sc->sc_rd_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_rd_pipe);
-		usbd_close_pipe(sc->sc_rd_pipe);
 		sc->sc_rd_pipe = NULL;
 	}
 	if (sc->sc_wr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_wr_pipe);
-		usbd_close_pipe(sc->sc_wr_pipe);
 		sc->sc_wr_pipe = NULL;
 	}
 	if (sc->sc_rd_xfer != NULL) {
@@ -798,6 +810,14 @@ ustir_close(void *h, int flag, int mode,
 	if (sc->sc_ur_buf != NULL) {
 		kmem_free(sc->sc_ur_buf, IRDA_MAX_FRAME_SIZE);
 		sc->sc_ur_buf = NULL;
+	}
+	if (sc->sc_rd_pipe != NULL) {
+		usbd_close_pipe(sc->sc_rd_pipe);
+		sc->sc_rd_pipe = NULL;
+	}
+	if (sc->sc_wr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_wr_pipe);
+		sc->sc_wr_pipe = NULL;
 	}
 
 	if (--sc->sc_refcnt < 0)

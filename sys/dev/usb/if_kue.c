@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.81.4.7 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.81.4.8 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.7 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.81.4.8 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1096,12 +1096,6 @@ kue_stop(struct kue_softc *sc)
 			printf("%s: abort rx pipe failed: %s\n",
 			    device_xname(sc->kue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_RX]);
-		if (err) {
-			printf("%s: close rx pipe failed: %s\n",
-			    device_xname(sc->kue_dev), usbd_errstr(err));
-		}
-		sc->kue_ep[KUE_ENDPT_RX] = NULL;
 	}
 
 	if (sc->kue_ep[KUE_ENDPT_TX] != NULL) {
@@ -1110,12 +1104,6 @@ kue_stop(struct kue_softc *sc)
 			printf("%s: abort tx pipe failed: %s\n",
 			    device_xname(sc->kue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_TX]);
-		if (err) {
-			printf("%s: close tx pipe failed: %s\n",
-			    device_xname(sc->kue_dev), usbd_errstr(err));
-		}
-		sc->kue_ep[KUE_ENDPT_TX] = NULL;
 	}
 
 	if (sc->kue_ep[KUE_ENDPT_INTR] != NULL) {
@@ -1124,12 +1112,6 @@ kue_stop(struct kue_softc *sc)
 			printf("%s: abort intr pipe failed: %s\n",
 			    device_xname(sc->kue_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_INTR]);
-		if (err) {
-			printf("%s: close intr pipe failed: %s\n",
-			    device_xname(sc->kue_dev), usbd_errstr(err));
-		}
-		sc->kue_ep[KUE_ENDPT_INTR] = NULL;
 	}
 
 	/* Free RX resources. */
@@ -1146,6 +1128,34 @@ kue_stop(struct kue_softc *sc)
 			usbd_destroy_xfer(sc->kue_cdata.kue_tx_chain[i].kue_xfer);
 			sc->kue_cdata.kue_tx_chain[i].kue_xfer = NULL;
 		}
+	}
+
+	/* Close pipes. */
+	if (sc->kue_ep[KUE_ENDPT_RX] != NULL) {
+		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_RX]);
+		if (err) {
+			printf("%s: close rx pipe failed: %s\n",
+			    device_xname(sc->kue_dev), usbd_errstr(err));
+		}
+		sc->kue_ep[KUE_ENDPT_RX] = NULL;
+	}
+
+	if (sc->kue_ep[KUE_ENDPT_TX] != NULL) {
+		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_TX]);
+		if (err) {
+			printf("%s: close tx pipe failed: %s\n",
+			    device_xname(sc->kue_dev), usbd_errstr(err));
+		}
+		sc->kue_ep[KUE_ENDPT_TX] = NULL;
+	}
+
+	if (sc->kue_ep[KUE_ENDPT_INTR] != NULL) {
+		err = usbd_close_pipe(sc->kue_ep[KUE_ENDPT_INTR]);
+		if (err) {
+			printf("%s: close intr pipe failed: %s\n",
+			    device_xname(sc->kue_dev), usbd_errstr(err));
+		}
+		sc->kue_ep[KUE_ENDPT_INTR] = NULL;
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

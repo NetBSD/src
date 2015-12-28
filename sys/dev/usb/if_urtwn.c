@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.34.4.10 2015/12/27 12:09:59 skrll Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.34.4.11 2015/12/28 09:26:33 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.10 2015/12/27 12:09:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.34.4.11 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -507,7 +507,7 @@ urtwn_detach(device_t self, int flags)
 		ieee80211_ifdetach(&sc->sc_ic);
 		if_detach(ifp);
 
-		/* Abort and close Tx/Rx pipes. */
+		/* Close Tx/Rx pipes.  Abort done by urtwn_stop. */
 		urtwn_close_pipes(sc);
 	}
 
@@ -618,14 +618,12 @@ urtwn_close_pipes(struct urtwn_softc *sc)
 	CTASSERT(sizeof(pipe) == sizeof(void *));
 	pipe = atomic_swap_ptr(&sc->rx_pipe, NULL);
 	if (pipe != NULL) {
-		usbd_abort_pipe(pipe);
 		usbd_close_pipe(pipe);
 	}
 	/* Close Tx pipes. */
 	for (i = 0; i < R92C_MAX_EPOUT; i++) {
 		pipe = atomic_swap_ptr(&sc->tx_pipe[i], NULL);
 		if (pipe != NULL) {
-			usbd_abort_pipe(pipe);
 			usbd_close_pipe(pipe);
 		}
 	}

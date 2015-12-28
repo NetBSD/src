@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.50.2.10 2015/12/19 10:11:13 skrll Exp $ */
+/*	$NetBSD: if_atu.c,v 1.50.2.11 2015/12/28 09:26:33 skrll Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.10 2015/12/19 10:11:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.50.2.11 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -2247,6 +2247,23 @@ atu_stop(struct ifnet *ifp, int disable)
 			DPRINTF(("%s: abort rx pipe failed: %s\n",
 			    device_xname(sc->atu_dev), usbd_errstr(err)));
 		}
+	}
+
+	if (sc->atu_ep[ATU_ENDPT_TX] != NULL) {
+		err = usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
+		if (err) {
+			DPRINTF(("%s: abort tx pipe failed: %s\n",
+			    device_xname(sc->atu_dev), usbd_errstr(err)));
+		}
+	}
+
+	/* Free RX/TX/MGMT list resources. */
+	cd = &sc->atu_cdata;
+	atu_xfer_list_free(sc, cd->atu_rx_chain, ATU_RX_LIST_CNT);
+	atu_xfer_list_free(sc, cd->atu_tx_chain, ATU_TX_LIST_CNT);
+
+	/* Close pipes */
+	if (sc->atu_ep[ATU_ENDPT_RX] != NULL) {
 		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_RX]);
 		if (err) {
 			DPRINTF(("%s: close rx pipe failed: %s\n",
@@ -2256,11 +2273,6 @@ atu_stop(struct ifnet *ifp, int disable)
 	}
 
 	if (sc->atu_ep[ATU_ENDPT_TX] != NULL) {
-		err = usbd_abort_pipe(sc->atu_ep[ATU_ENDPT_TX]);
-		if (err) {
-			DPRINTF(("%s: abort tx pipe failed: %s\n",
-			    device_xname(sc->atu_dev), usbd_errstr(err)));
-		}
 		err = usbd_close_pipe(sc->atu_ep[ATU_ENDPT_TX]);
 		if (err) {
 			DPRINTF(("%s: close tx pipe failed: %s\n",
@@ -2268,11 +2280,6 @@ atu_stop(struct ifnet *ifp, int disable)
 		}
 		sc->atu_ep[ATU_ENDPT_TX] = NULL;
 	}
-
-	/* Free RX/TX/MGMT list resources. */
-	cd = &sc->atu_cdata;
-	atu_xfer_list_free(sc, cd->atu_rx_chain, ATU_RX_LIST_CNT);
-	atu_xfer_list_free(sc, cd->atu_tx_chain, ATU_TX_LIST_CNT);
 
 	/* Let's be nice and turn off the radio before we leave */
 	atu_switch_radio(sc, 0);

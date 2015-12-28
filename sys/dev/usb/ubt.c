@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.51.4.6 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: ubt.c,v 1.51.4.7 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.6 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.51.4.7 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -739,32 +739,22 @@ ubt_abortdealloc(struct ubt_softc *sc)
 
 	if (sc->sc_evt_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_evt_pipe);
-		usbd_close_pipe(sc->sc_evt_pipe);
-		sc->sc_evt_pipe = NULL;
 	}
 
 	if (sc->sc_aclrd_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_aclrd_pipe);
-		usbd_close_pipe(sc->sc_aclrd_pipe);
-		sc->sc_aclrd_pipe = NULL;
 	}
 
 	if (sc->sc_aclwr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_aclwr_pipe);
-		usbd_close_pipe(sc->sc_aclwr_pipe);
-		sc->sc_aclwr_pipe = NULL;
 	}
 
 	if (sc->sc_scord_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_scord_pipe);
-		usbd_close_pipe(sc->sc_scord_pipe);
-		sc->sc_scord_pipe = NULL;
 	}
 
 	if (sc->sc_scowr_pipe != NULL) {
 		usbd_abort_pipe(sc->sc_scowr_pipe);
-		usbd_close_pipe(sc->sc_scowr_pipe);
-		sc->sc_scowr_pipe = NULL;
 	}
 
 	/* Free event buffer */
@@ -804,6 +794,31 @@ ubt_abortdealloc(struct ubt_softc *sc)
 			sc->sc_scowr[i].xfer = NULL;
 			sc->sc_scowr[i].buf = NULL;
 		}
+	}
+
+	if (sc->sc_evt_pipe != NULL) {
+		usbd_close_pipe(sc->sc_evt_pipe);
+		sc->sc_evt_pipe = NULL;
+	}
+
+	if (sc->sc_aclrd_pipe != NULL) {
+		usbd_close_pipe(sc->sc_aclrd_pipe);
+		sc->sc_aclrd_pipe = NULL;
+	}
+
+	if (sc->sc_aclwr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_aclwr_pipe);
+		sc->sc_aclwr_pipe = NULL;
+	}
+
+	if (sc->sc_scord_pipe != NULL) {
+		usbd_close_pipe(sc->sc_scord_pipe);
+		sc->sc_scord_pipe = NULL;
+	}
+
+	if (sc->sc_scowr_pipe != NULL) {
+		usbd_close_pipe(sc->sc_scowr_pipe);
+		sc->sc_scowr_pipe = NULL;
 	}
 
 	/* Free partial SCO packets */

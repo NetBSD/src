@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.47.4.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.47.4.9 2015/12/28 09:26:33 skrll Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.47.4.9 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -913,12 +913,6 @@ upl_stop(struct upl_softc *sc)
 			printf("%s: abort rx pipe failed: %s\n",
 			device_xname(sc->sc_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_RX]);
-		if (err) {
-			printf("%s: close rx pipe failed: %s\n",
-			device_xname(sc->sc_dev), usbd_errstr(err));
-		}
-		sc->sc_ep[UPL_ENDPT_RX] = NULL;
 	}
 
 	if (sc->sc_ep[UPL_ENDPT_TX] != NULL) {
@@ -927,12 +921,6 @@ upl_stop(struct upl_softc *sc)
 			printf("%s: abort tx pipe failed: %s\n",
 			device_xname(sc->sc_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_TX]);
-		if (err) {
-			printf("%s: close tx pipe failed: %s\n",
-			    device_xname(sc->sc_dev), usbd_errstr(err));
-		}
-		sc->sc_ep[UPL_ENDPT_TX] = NULL;
 	}
 
 	if (sc->sc_ep[UPL_ENDPT_INTR] != NULL) {
@@ -941,12 +929,6 @@ upl_stop(struct upl_softc *sc)
 			printf("%s: abort intr pipe failed: %s\n",
 			device_xname(sc->sc_dev), usbd_errstr(err));
 		}
-		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_INTR]);
-		if (err) {
-			printf("%s: close intr pipe failed: %s\n",
-			    device_xname(sc->sc_dev), usbd_errstr(err));
-		}
-		sc->sc_ep[UPL_ENDPT_INTR] = NULL;
 	}
 
 	/* Free RX resources. */
@@ -954,10 +936,6 @@ upl_stop(struct upl_softc *sc)
 		if (sc->sc_cdata.upl_rx_chain[i].upl_mbuf != NULL) {
 			m_freem(sc->sc_cdata.upl_rx_chain[i].upl_mbuf);
 			sc->sc_cdata.upl_rx_chain[i].upl_mbuf = NULL;
-		}
-		if (sc->sc_cdata.upl_rx_chain[i].upl_xfer != NULL) {
-			usbd_destroy_xfer(sc->sc_cdata.upl_rx_chain[i].upl_xfer);
-			sc->sc_cdata.upl_rx_chain[i].upl_xfer = NULL;
 		}
 	}
 
@@ -971,6 +949,34 @@ upl_stop(struct upl_softc *sc)
 			usbd_destroy_xfer(sc->sc_cdata.upl_tx_chain[i].upl_xfer);
 			sc->sc_cdata.upl_tx_chain[i].upl_xfer = NULL;
 		}
+	}
+
+	/* Close pipes */
+	if (sc->sc_ep[UPL_ENDPT_RX] != NULL) {
+		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_RX]);
+		if (err) {
+			printf("%s: close rx pipe failed: %s\n",
+			device_xname(sc->sc_dev), usbd_errstr(err));
+		}
+		sc->sc_ep[UPL_ENDPT_RX] = NULL;
+	}
+
+	if (sc->sc_ep[UPL_ENDPT_TX] != NULL) {
+		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_TX]);
+		if (err) {
+			printf("%s: close tx pipe failed: %s\n",
+			    device_xname(sc->sc_dev), usbd_errstr(err));
+		}
+		sc->sc_ep[UPL_ENDPT_TX] = NULL;
+	}
+
+	if (sc->sc_ep[UPL_ENDPT_INTR] != NULL) {
+		err = usbd_close_pipe(sc->sc_ep[UPL_ENDPT_INTR]);
+		if (err) {
+			printf("%s: close intr pipe failed: %s\n",
+			    device_xname(sc->sc_dev), usbd_errstr(err));
+		}
+		sc->sc_ep[UPL_ENDPT_INTR] = NULL;
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

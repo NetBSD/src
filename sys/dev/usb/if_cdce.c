@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.38.14.6 2015/10/06 21:32:15 skrll Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.38.14.7 2015/12/28 09:26:33 skrll Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.6 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.38.14.7 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -403,11 +403,6 @@ cdce_stop(struct cdce_softc *sc)
 		if (err)
 			printf("%s: abort rx pipe failed: %s\n",
 			    device_xname(sc->cdce_dev), usbd_errstr(err));
-		err = usbd_close_pipe(sc->cdce_bulkin_pipe);
-		if (err)
-			printf("%s: close rx pipe failed: %s\n",
-			    device_xname(sc->cdce_dev), usbd_errstr(err));
-		sc->cdce_bulkin_pipe = NULL;
 	}
 
 	if (sc->cdce_bulkout_pipe != NULL) {
@@ -415,11 +410,6 @@ cdce_stop(struct cdce_softc *sc)
 		if (err)
 			printf("%s: abort tx pipe failed: %s\n",
 			    device_xname(sc->cdce_dev), usbd_errstr(err));
-		err = usbd_close_pipe(sc->cdce_bulkout_pipe);
-		if (err)
-			printf("%s: close tx pipe failed: %s\n",
-			    device_xname(sc->cdce_dev), usbd_errstr(err));
-		sc->cdce_bulkout_pipe = NULL;
 	}
 
 	for (i = 0; i < CDCE_RX_LIST_CNT; i++) {
@@ -444,6 +434,22 @@ cdce_stop(struct cdce_softc *sc)
 				sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer);
 			sc->cdce_cdata.cdce_tx_chain[i].cdce_xfer = NULL;
 		}
+	}
+
+	if (sc->cdce_bulkin_pipe != NULL) {
+		err = usbd_close_pipe(sc->cdce_bulkin_pipe);
+		if (err)
+			printf("%s: close rx pipe failed: %s\n",
+			    device_xname(sc->cdce_dev), usbd_errstr(err));
+		sc->cdce_bulkin_pipe = NULL;
+	}
+
+	if (sc->cdce_bulkout_pipe != NULL) {
+		err = usbd_close_pipe(sc->cdce_bulkout_pipe);
+		if (err)
+			printf("%s: close tx pipe failed: %s\n",
+			    device_xname(sc->cdce_dev), usbd_errstr(err));
+		sc->cdce_bulkout_pipe = NULL;
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);

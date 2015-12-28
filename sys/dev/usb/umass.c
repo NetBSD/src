@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.149.2.9 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: umass.c,v 1.149.2.10 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.9 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.149.2.10 2015/12/28 09:26:33 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -868,8 +868,6 @@ umass_disco(struct umass_softc *sc)
 	for (i = 0 ; i < UMASS_NEP ; i++) {
 		if (sc->sc_pipe[i] != NULL) {
 			usbd_abort_pipe(sc->sc_pipe[i]);
-			usbd_close_pipe(sc->sc_pipe[i]);
-			sc->sc_pipe[i] = NULL;
 		}
 	}
 
@@ -877,11 +875,20 @@ umass_disco(struct umass_softc *sc)
 	usbd_abort_default_pipe(sc->sc_udev);
 
 	/* Free the xfers. */
-	for (i = 0; i < XFER_NR; i++)
+	for (i = 0; i < XFER_NR; i++) {
 		if (sc->transfer_xfer[i] != NULL) {
 			usbd_destroy_xfer(sc->transfer_xfer[i]);
 			sc->transfer_xfer[i] = NULL;
 		}
+	}
+
+	for (i = 0 ; i < UMASS_NEP ; i++) {
+		if (sc->sc_pipe[i] != NULL) {
+			usbd_close_pipe(sc->sc_pipe[i]);
+			sc->sc_pipe[i] = NULL;
+		}
+	}
+
 }
 
 /*

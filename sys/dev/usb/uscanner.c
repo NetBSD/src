@@ -1,4 +1,4 @@
-/*	$NetBSD: uscanner.c,v 1.75.4.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: uscanner.c,v 1.75.4.9 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uscanner.c,v 1.75.4.9 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -454,23 +454,26 @@ uscannerclose(dev_t dev, int flag, int mode,
 void
 uscanner_do_close(struct uscanner_softc *sc)
 {
-	if (sc->sc_bulkin_xfer) {
-		usbd_destroy_xfer(sc->sc_bulkin_xfer);
-		sc->sc_bulkin_xfer = NULL;
-	}
-	if (sc->sc_bulkout_xfer) {
-		usbd_destroy_xfer(sc->sc_bulkout_xfer);
-		sc->sc_bulkout_xfer = NULL;
-	}
-
 	if (!(sc->sc_dev_flags & USC_KEEP_OPEN)) {
 		if (sc->sc_bulkin_pipe != NULL) {
 			usbd_abort_pipe(sc->sc_bulkin_pipe);
+		}
+		if (sc->sc_bulkout_pipe != NULL) {
+			usbd_abort_pipe(sc->sc_bulkout_pipe);
+		}
+		if (sc->sc_bulkin_xfer) {
+			usbd_destroy_xfer(sc->sc_bulkin_xfer);
+			sc->sc_bulkin_xfer = NULL;
+		}
+		if (sc->sc_bulkout_xfer) {
+			usbd_destroy_xfer(sc->sc_bulkout_xfer);
+			sc->sc_bulkout_xfer = NULL;
+		}
+		if (sc->sc_bulkin_pipe != NULL) {
 			usbd_close_pipe(sc->sc_bulkin_pipe);
 			sc->sc_bulkin_pipe = NULL;
 		}
 		if (sc->sc_bulkout_pipe != NULL) {
-			usbd_abort_pipe(sc->sc_bulkout_pipe);
 			usbd_close_pipe(sc->sc_bulkout_pipe);
 			sc->sc_bulkout_pipe = NULL;
 		}

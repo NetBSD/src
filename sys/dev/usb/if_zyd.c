@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.36.14.8 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.36.14.9 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.8 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.36.14.9 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -474,6 +474,7 @@ zyd_detach(device_t self, int flags)
 	callout_stop(&sc->sc_scan_ch);
 	callout_stop(&sc->sc_amrr_ch);
 
+	/* Abort, etc. done by zyd_stop */
 	zyd_close_pipes(sc);
 
 	sc->attached = 0;
@@ -558,7 +559,6 @@ zyd_close_pipes(struct zyd_softc *sc)
 
 	for (i = 0; i < ZYD_ENDPT_CNT; i++) {
 		if (sc->zyd_ep[i] != NULL) {
-			usbd_abort_pipe(sc->zyd_ep[i]);
 			usbd_close_pipe(sc->zyd_ep[i]);
 			sc->zyd_ep[i] = NULL;
 		}

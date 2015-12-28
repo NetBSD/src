@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.24.4.9 2015/10/06 21:32:15 skrll Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.24.4.10 2015/12/28 09:26:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.9 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.24.4.10 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -364,6 +364,11 @@ utoppy_detach(device_t self, int flags)
 		usbd_destroy_xfer(sc->sc_in_xfer);
 	if (sc->sc_out_xfer != NULL)
 		usbd_destroy_xfer(sc->sc_out_xfer);
+
+	if (sc->sc_out_pipe != NULL)
+		usbd_close_pipe(sc->sc_out_pipe);
+	if (sc->sc_in_pipe != NULL)
+		usbd_close_pipe(sc->sc_in_pipe);
 
 	s = splusb();
 	if (--sc->sc_refcnt >= 0)
@@ -1420,16 +1425,12 @@ utoppyclose(dev_t dev, int flag, int mode,
 	if (sc->sc_out_pipe != NULL) {
 		if ((err = usbd_abort_pipe(sc->sc_out_pipe)) != 0)
 			printf("usbd_abort_pipe(OUT) returned %d\n", err);
-		if ((err = usbd_close_pipe(sc->sc_out_pipe)) != 0)
-			printf("usbd_close_pipe(OUT) returned %d\n", err);
 		sc->sc_out_pipe = NULL;
 	}
 
 	if (sc->sc_in_pipe != NULL) {
 		if ((err = usbd_abort_pipe(sc->sc_in_pipe)) != 0)
 			printf("usbd_abort_pipe(IN) returned %d\n", err);
-		if ((err = usbd_close_pipe(sc->sc_in_pipe)) != 0)
-			printf("usbd_close_pipe(IN) returned %d\n", err);
 		sc->sc_in_pipe = NULL;
 	}
 

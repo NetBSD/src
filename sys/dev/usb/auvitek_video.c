@@ -1,4 +1,4 @@
-/* $NetBSD: auvitek_video.c,v 1.6.32.4 2015/10/06 21:32:15 skrll Exp $ */
+/* $NetBSD: auvitek_video.c,v 1.6.32.5 2015/12/28 09:26:33 skrll Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6.32.4 2015/10/06 21:32:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auvitek_video.c,v 1.6.32.5 2015/12/28 09:26:33 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -607,10 +607,7 @@ auvitek_stop_xfer(struct auvitek_softc *sc)
 
 	if (ax->ax_pipe != NULL) {
 		usbd_abort_pipe(ax->ax_pipe);
-		usbd_close_pipe(ax->ax_pipe);
-		ax->ax_pipe = NULL;
 	}
-
 	for (i = 0; i < AUVITEK_NISOC_XFERS; i++) {
 		struct auvitek_isoc *isoc = &ax->ax_i[i];
 		if (isoc->i_xfer != NULL) {
@@ -622,6 +619,10 @@ auvitek_stop_xfer(struct auvitek_softc *sc)
 			    sizeof(isoc->i_frlengths[0]) * ax->ax_nframes);
 			isoc->i_frlengths = NULL;
 		}
+	}
+	if (ax->ax_pipe != NULL) {
+		usbd_close_pipe(ax->ax_pipe);
+		ax->ax_pipe = NULL;
 	}
 
 	usbd_delay_ms(sc->sc_udev, 1000);
