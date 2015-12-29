@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.43 2015/02/14 21:32:46 alnsn Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.44 2015/12/29 21:49:58 alnsn Exp $	*/
 
 /*-
  * Copyright (c) 2011-2015 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.43 2015/02/14 21:32:46 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.44 2015/12/29 21:49:58 alnsn Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.43 2015/02/14 21:32:46 alnsn Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.44 2015/12/29 21:49:58 alnsn Exp $");
 #endif
 
 #include <sys/types.h>
@@ -74,6 +74,11 @@ __RCSID("$NetBSD: bpfjit.c,v 1.43 2015/02/14 21:32:46 alnsn Exp $");
 #if !defined(_KERNEL) && defined(SLJIT_VERBOSE) && SLJIT_VERBOSE
 #include <stdio.h> /* for stderr */
 #endif
+
+/*
+ * Number of saved registers to pass to sljit_emit_enter() function.
+ */
+#define NSAVEDS		3
 
 /*
  * Arguments of generated bpfjit_func_t.
@@ -269,18 +274,6 @@ nscratches(bpfjit_hint_t hints)
 
 	if (hints & BJ_HINT_COPX)
 		rv = 5; /* uses BJ_TMP3REG */
-
-	return rv;
-}
-
-/*
- * Return a number of saved registers to pass
- * to sljit_emit_enter() function.
- */
-static sljit_si
-nsaveds(bpfjit_hint_t hints)
-{
-	sljit_si rv = 3;
 
 	return rv;
 }
@@ -2192,7 +2185,7 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 #endif
 
 	status = sljit_emit_enter(compiler,
-	    2, nscratches(hints), nsaveds(hints), sizeof(struct bpfjit_stack));
+	    2, nscratches(hints), NSAVEDS, sizeof(struct bpfjit_stack));
 	if (status != SLJIT_SUCCESS)
 		goto fail;
 
