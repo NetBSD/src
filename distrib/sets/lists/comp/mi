@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2009 2015/12/12 19:05:45 nros Exp $
+#	$NetBSD: mi,v 1.2010 2015/12/29 17:54:43 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -5100,6 +5100,7 @@
 ./usr/share/man/cat3/asinh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/asinhf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/asprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/asprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/assert.0			comp-c-catman		.cat
 ./usr/share/man/cat3/assume_default_colors.0	comp-c-catman		.cat
 ./usr/share/man/cat3/at_quick_exit.0		comp-c-catman		.cat
@@ -6288,6 +6289,7 @@
 ./usr/share/man/cat3/fpgetround.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpgetsticky.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpsetmask.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpsetprec.0		comp-c-catman		.cat
 ./usr/share/man/cat3/fpsetround.0		comp-c-catman		.cat
@@ -6311,6 +6313,7 @@
 ./usr/share/man/cat3/fropen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fropen2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/fscanf_l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fseek.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fseeko.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fsetpos.0			comp-c-catman		.cat
@@ -7843,12 +7846,6 @@
 ./usr/share/man/cat3/p2k.0			comp-puffs-catman	.cat
 ./usr/share/man/cat3/p_query.0			comp-c-catman		.cat
 ./usr/share/man/cat3/pair_content.0		comp-c-catman		.cat
-./usr/share/man/cat3/panel.0			comp-c-catman		.cat
-./usr/share/man/cat3/panel_above.0		comp-c-catman		.cat
-./usr/share/man/cat3/panel_below.0		comp-c-catman		.cat
-./usr/share/man/cat3/panel_hidden.0		comp-c-catman		.cat
-./usr/share/man/cat3/panel_userptr.0		comp-c-catman		.cat
-./usr/share/man/cat3/panel_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pam.0			comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_acct_mgmt.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_authenticate.0		comp-c-catman		.cat,pam
@@ -7882,6 +7879,12 @@
 ./usr/share/man/cat3/pam_verror.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_vinfo.0		comp-c-catman		.cat,pam
 ./usr/share/man/cat3/pam_vprompt.0		comp-c-catman		.cat,pam
+./usr/share/man/cat3/panel.0			comp-c-catman		.cat
+./usr/share/man/cat3/panel_above.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_below.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_hidden.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_userptr.0		comp-c-catman		.cat
+./usr/share/man/cat3/panel_window.0		comp-c-catman		.cat
 ./usr/share/man/cat3/param.0			comp-c-catman		.cat
 ./usr/share/man/cat3/parsedate.0		comp-c-catman		.cat
 ./usr/share/man/cat3/paths.0			comp-c-catman		.cat
@@ -8047,6 +8050,7 @@
 ./usr/share/man/cat3/ppath_subpath.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prefresh.0			comp-c-catman		.cat
 ./usr/share/man/cat3/printf.0			comp-c-catman		.cat
+./usr/share/man/cat3/printf_l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/printw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/proc_compare.0		comp-c-catman		.cat
 ./usr/share/man/cat3/prop_array.0		comp-c-catman		.cat
@@ -8548,6 +8552,7 @@
 ./usr/share/man/cat3/scale_menu.0		comp-c-catman		.cat
 ./usr/share/man/cat3/scandir.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/scanf_l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/scanw.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sched.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sched_get_priority_max.0	comp-c-catman		.cat
@@ -8799,10 +8804,12 @@
 ./usr/share/man/cat3/snprintb.0			comp-c-catman		.cat
 ./usr/share/man/cat3/snprintb_m.0		comp-c-catman		.cat
 ./usr/share/man/cat3/snprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/snprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/snvis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sockaddr_snprintf.0	comp-c-catman		.cat
 ./usr/share/man/cat3/sockatmark.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/sprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/sqrt.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sqrtf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sqrtl.0			comp-c-catman		.cat
@@ -8811,6 +8818,7 @@
 ./usr/share/man/cat3/srand48.0			comp-c-catman		.cat
 ./usr/share/man/cat3/srandom.0			comp-c-catman		.cat
 ./usr/share/man/cat3/sscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/sscanf_l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ssl.0			comp-c-catman		crypto,.cat
 ./usr/share/man/cat3/ssp.0			comp-c-catman		.cat
 ./usr/share/man/cat3/standend.0			comp-c-catman		.cat
@@ -9106,8 +9114,8 @@
 ./usr/share/man/cat3/unsetenv.0			comp-c-catman		.cat
 ./usr/share/man/cat3/untouchwin.0		comp-c-catman		.cat
 ./usr/share/man/cat3/unvis.0			comp-c-catman		.cat
-./usr/share/man/cat3/updlastlogx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/update_panels.0		comp-c-catman		.cat
+./usr/share/man/cat3/updlastlogx.0		comp-c-catman		.cat
 ./usr/share/man/cat3/updwtmpx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/usb.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/usbhid.0			comp-c-catman		.cat
@@ -9137,23 +9145,31 @@
 ./usr/share/man/cat3/valloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/varargs.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vasprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/vasprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vdprintf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verrc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/verrx.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vfprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vfprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vfscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vfscanf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vfwprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vfwscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vis.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vlimit.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/vline.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vscanf_l.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsnprintf.0		comp-c-catman		.cat
+./usr/share/man/cat3/vsnprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vsnprintf_ss.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vsprintf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vsprintf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vsscanf.0			comp-c-catman		.cat
+./usr/share/man/cat3/vsscanf_l.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vswprintf.0		comp-c-catman		.cat
 ./usr/share/man/cat3/vswscanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/vsyslog.0			comp-c-catman		.cat
@@ -12136,6 +12152,7 @@
 ./usr/share/man/html3/asinh.html		comp-c-htmlman		html
 ./usr/share/man/html3/asinhf.html		comp-c-htmlman		html
 ./usr/share/man/html3/asprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/asprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/assert.html		comp-c-htmlman		html
 ./usr/share/man/html3/assume_default_colors.html	comp-c-htmlman		html
 ./usr/share/man/html3/at_quick_exit.html		comp-c-htmlman		html
@@ -12311,8 +12328,8 @@
 ./usr/share/man/html3/bm_comp.html		comp-c-htmlman		html
 ./usr/share/man/html3/bm_exec.html		comp-c-htmlman		html
 ./usr/share/man/html3/bm_free.html		comp-c-htmlman		html
-./usr/share/man/html3/bottom_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/border.html		comp-c-htmlman		html
+./usr/share/man/html3/bottom_panel.html		comp-c-htmlman		html
 ./usr/share/man/html3/box.html			comp-c-htmlman		html
 ./usr/share/man/html3/bsearch.html		comp-c-htmlman		html
 ./usr/share/man/html3/bstring.html		comp-c-htmlman		html
@@ -13268,6 +13285,7 @@
 ./usr/share/man/html3/fpgetround.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpgetsticky.html		comp-c-htmlman		html
 ./usr/share/man/html3/fprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/fprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpsetmask.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpsetprec.html		comp-c-htmlman		html
 ./usr/share/man/html3/fpsetround.html		comp-c-htmlman		html
@@ -13291,6 +13309,7 @@
 ./usr/share/man/html3/fropen.html		comp-c-htmlman		html
 ./usr/share/man/html3/fropen2.html		comp-c-htmlman		html
 ./usr/share/man/html3/fscanf.html		comp-c-htmlman		html
+./usr/share/man/html3/fscanf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/fseek.html		comp-c-htmlman		html
 ./usr/share/man/html3/fseeko.html		comp-c-htmlman		html
 ./usr/share/man/html3/fsetpos.html		comp-c-htmlman		html
@@ -14988,6 +15007,7 @@
 ./usr/share/man/html3/ppath_subpath.html	comp-c-htmlman		html
 ./usr/share/man/html3/prefresh.html		comp-c-htmlman		html
 ./usr/share/man/html3/printf.html		comp-c-htmlman		html
+./usr/share/man/html3/printf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/printw.html		comp-c-htmlman		html
 ./usr/share/man/html3/proc_compare.html		comp-c-htmlman		html
 ./usr/share/man/html3/prop_array.html		comp-c-htmlman		html
@@ -15482,6 +15502,7 @@
 ./usr/share/man/html3/scale_menu.html		comp-c-htmlman		html
 ./usr/share/man/html3/scandir.html		comp-c-htmlman		html
 ./usr/share/man/html3/scanf.html		comp-c-htmlman		html
+./usr/share/man/html3/scanf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/scanw.html		comp-c-htmlman		html
 ./usr/share/man/html3/sched.html		comp-c-htmlman		html
 ./usr/share/man/html3/sched_get_priority_max.html	comp-c-htmlman		html
@@ -15716,10 +15737,12 @@
 ./usr/share/man/html3/snprintb.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintb_m.html		comp-c-htmlman		html
 ./usr/share/man/html3/snprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/snprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/snvis.html		comp-c-htmlman		html
 ./usr/share/man/html3/sockaddr_snprintf.html	comp-c-htmlman		html
 ./usr/share/man/html3/sockatmark.html		comp-c-htmlman		html
 ./usr/share/man/html3/sprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/sprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/sqrt.html			comp-c-htmlman		html
 ./usr/share/man/html3/sqrtf.html		comp-c-htmlman		html
 ./usr/share/man/html3/sqrtl.html		comp-c-htmlman		html
@@ -15728,6 +15751,7 @@
 ./usr/share/man/html3/srand48.html		comp-c-htmlman		html
 ./usr/share/man/html3/srandom.html		comp-c-htmlman		html
 ./usr/share/man/html3/sscanf.html		comp-c-htmlman		html
+./usr/share/man/html3/sscanf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/ssl.html			comp-c-htmlman		crypto,html
 ./usr/share/man/html3/ssp.html			comp-c-htmlman		html
 ./usr/share/man/html3/standend.html		comp-c-htmlman		html
@@ -16037,22 +16061,30 @@
 ./usr/share/man/html3/valloc.html		comp-c-htmlman		html
 ./usr/share/man/html3/varargs.html		comp-obsolete		obsolete
 ./usr/share/man/html3/vasprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/vasprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vdprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/verr.html			comp-c-htmlman		html
 ./usr/share/man/html3/verrc.html		comp-c-htmlman		html
 ./usr/share/man/html3/verrx.html		comp-c-htmlman		html
 ./usr/share/man/html3/vfprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/vfprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vfscanf.html		comp-c-htmlman		html
+./usr/share/man/html3/vfscanf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vfwprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vfwscanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vis.html			comp-c-htmlman		html
 ./usr/share/man/html3/vline.html		comp-c-htmlman		html
 ./usr/share/man/html3/vprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/vprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vscanf.html		comp-c-htmlman		html
+./usr/share/man/html3/vscanf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsnprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/vsnprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsnprintf_ss.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsprintf.html		comp-c-htmlman		html
+./usr/share/man/html3/vsprintf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsscanf.html		comp-c-htmlman		html
+./usr/share/man/html3/vsscanf_l.html		comp-c-htmlman		html
 ./usr/share/man/html3/vswprintf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vswscanf.html		comp-c-htmlman		html
 ./usr/share/man/html3/vsyslog.html		comp-c-htmlman		html
@@ -18971,6 +19003,7 @@
 ./usr/share/man/man3/asinh.3			comp-c-man		.man
 ./usr/share/man/man3/asinhf.3			comp-c-man		.man
 ./usr/share/man/man3/asprintf.3			comp-c-man		.man
+./usr/share/man/man3/asprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/assert.3			comp-c-man		.man
 ./usr/share/man/man3/assume_default_colors.3	comp-c-man		.man
 ./usr/share/man/man3/at_quick_exit.3		comp-c-man		.man
@@ -20159,6 +20192,7 @@
 ./usr/share/man/man3/fpgetround.3		comp-c-man		.man
 ./usr/share/man/man3/fpgetsticky.3		comp-c-man		.man
 ./usr/share/man/man3/fprintf.3			comp-c-man		.man
+./usr/share/man/man3/fprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/fpsetmask.3		comp-c-man		.man
 ./usr/share/man/man3/fpsetprec.3		comp-c-man		.man
 ./usr/share/man/man3/fpsetround.3		comp-c-man		.man
@@ -20182,6 +20216,7 @@
 ./usr/share/man/man3/fropen.3			comp-c-man		.man
 ./usr/share/man/man3/fropen2.3			comp-c-man		.man
 ./usr/share/man/man3/fscanf.3			comp-c-man		.man
+./usr/share/man/man3/fscanf_l.3		comp-c-man		.man
 ./usr/share/man/man3/fseek.3			comp-c-man		.man
 ./usr/share/man/man3/fseeko.3			comp-c-man		.man
 ./usr/share/man/man3/fsetpos.3			comp-c-man		.man
@@ -21545,8 +21580,8 @@
 ./usr/share/man/man3/moncontrol.3		comp-c-man		.man
 ./usr/share/man/man3/monstartup.3		comp-c-man		.man
 ./usr/share/man/man3/move.3			comp-c-man		.man
-./usr/share/man/man3/move_panel.3		comp-c-man		.man
 ./usr/share/man/man3/move_field.3		comp-c-man		.man
+./usr/share/man/man3/move_panel.3		comp-c-man		.man
 ./usr/share/man/man3/mpool.3			comp-c-man		.man
 ./usr/share/man/man3/mpool_close.3		comp-c-man		.man
 ./usr/share/man/man3/mpool_filter.3		comp-c-man		.man
@@ -21918,6 +21953,7 @@
 ./usr/share/man/man3/ppath_subpath.3		comp-c-man		.man
 ./usr/share/man/man3/prefresh.3			comp-c-man		.man
 ./usr/share/man/man3/printf.3			comp-c-man		.man
+./usr/share/man/man3/printf_l.3		comp-c-man		.man
 ./usr/share/man/man3/printw.3			comp-c-man		.man
 ./usr/share/man/man3/proc_compare.3		comp-c-man		.man
 ./usr/share/man/man3/prop_array.3		comp-c-man		.man
@@ -22419,6 +22455,7 @@
 ./usr/share/man/man3/scale_menu.3		comp-c-man		.man
 ./usr/share/man/man3/scandir.3			comp-c-man		.man
 ./usr/share/man/man3/scanf.3			comp-c-man		.man
+./usr/share/man/man3/scanf_l.3		comp-c-man		.man
 ./usr/share/man/man3/scanw.3			comp-c-man		.man
 ./usr/share/man/man3/sched.3			comp-c-man		.man
 ./usr/share/man/man3/sched_get_priority_max.3	comp-c-man		.man
@@ -22666,10 +22703,12 @@
 ./usr/share/man/man3/snprintb.3			comp-c-man		.man
 ./usr/share/man/man3/snprintb_m.3		comp-c-man		.man
 ./usr/share/man/man3/snprintf.3			comp-c-man		.man
+./usr/share/man/man3/snprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/snvis.3			comp-c-man		.man
 ./usr/share/man/man3/sockaddr_snprintf.3	comp-c-man		.man
 ./usr/share/man/man3/sockatmark.3		comp-c-man		.man
 ./usr/share/man/man3/sprintf.3			comp-c-man		.man
+./usr/share/man/man3/sprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/sqrt.3			comp-c-man		.man
 ./usr/share/man/man3/sqrtf.3			comp-c-man		.man
 ./usr/share/man/man3/sqrtl.3			comp-c-man		.man
@@ -22678,6 +22717,7 @@
 ./usr/share/man/man3/srand48.3			comp-c-man		.man
 ./usr/share/man/man3/srandom.3			comp-c-man		.man
 ./usr/share/man/man3/sscanf.3			comp-c-man		.man
+./usr/share/man/man3/sscanf_l.3		comp-c-man		.man
 ./usr/share/man/man3/ssl.3			comp-c-man		crypto,.man
 ./usr/share/man/man3/ssp.3			comp-c-man		.man
 ./usr/share/man/man3/standend.3			comp-c-man		.man
@@ -23004,23 +23044,31 @@
 ./usr/share/man/man3/valloc.3			comp-c-man		.man
 ./usr/share/man/man3/varargs.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vasprintf.3		comp-c-man		.man
+./usr/share/man/man3/vasprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vdprintf.3			comp-c-man		.man
 ./usr/share/man/man3/verr.3			comp-c-man		.man
 ./usr/share/man/man3/verrc.3			comp-c-man		.man
 ./usr/share/man/man3/verrx.3			comp-c-man		.man
 ./usr/share/man/man3/vfprintf.3			comp-c-man		.man
+./usr/share/man/man3/vfprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vfscanf.3			comp-c-man		.man
+./usr/share/man/man3/vfscanf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vfwprintf.3		comp-c-man		.man
 ./usr/share/man/man3/vfwscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vis.3			comp-c-man		.man
 ./usr/share/man/man3/vlimit.3			comp-obsolete		obsolete
 ./usr/share/man/man3/vline.3			comp-c-man		.man
 ./usr/share/man/man3/vprintf.3			comp-c-man		.man
+./usr/share/man/man3/vprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vscanf.3			comp-c-man		.man
+./usr/share/man/man3/vscanf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vsnprintf.3		comp-c-man		.man
+./usr/share/man/man3/vsnprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vsnprintf_ss.3		comp-c-man		.man
 ./usr/share/man/man3/vsprintf.3			comp-c-man		.man
+./usr/share/man/man3/vsprintf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vsscanf.3			comp-c-man		.man
+./usr/share/man/man3/vsscanf_l.3		comp-c-man		.man
 ./usr/share/man/man3/vswprintf.3		comp-c-man		.man
 ./usr/share/man/man3/vswscanf.3			comp-c-man		.man
 ./usr/share/man/man3/vsyslog.3			comp-c-man		.man
