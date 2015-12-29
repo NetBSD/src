@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.30 2015/12/28 07:37:59 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.31 2015/12/29 04:21:46 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -274,7 +274,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	if (uri[0] == '/')
 		file = bozostrdup(httpd, request, uri);
 	else
-		asprintf(&file, "/%s", uri);
+		bozoasprintf(httpd, &file, "/%s", uri);
 	if (file == NULL)
 		return 0;
 
@@ -283,7 +283,10 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	else
 		query = NULL;
 
-	asprintf(&url, "%s%s%s", file, query ? "?" : "", query ? query : "");
+	bozoasprintf(httpd, &url, "%s%s%s",
+		     file,
+		     query ? "?" : "",
+		     query ? query : "");
 	if (url == NULL)
 		goto out;
 	debug((httpd, DEBUG_NORMAL, "bozo_process_cgi: url `%s'", url));
@@ -420,8 +423,8 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_setenv(httpd, "REMOTE_ADDR", request->hr_remoteaddr,
 				curenvp++);
 	/*
-	 * XXX Apache does this when invoking content handlers, and PHP
-	 * XXX 5.3 requires it as a "security" measure.
+	 * Apache does this when invoking content handlers, and PHP
+	 * 5.3 requires it as a "security" measure.
 	 */
 	if (cgihandler)
 		bozo_setenv(httpd, "REDIRECT_STATUS", "200", curenvp++);
