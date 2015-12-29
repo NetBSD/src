@@ -1,5 +1,5 @@
 #	from: @(#)Makefile.inc	5.7 (Berkeley) 6/27/91
-#	$NetBSD: Makefile.inc,v 1.46 2014/10/13 00:40:36 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.47 2015/12/29 17:55:23 christos Exp $
 
 # stdio sources
 .PATH: ${.CURDIR}/stdio
@@ -30,8 +30,8 @@ SRCS+=	gets.c vsprintf.c tempnam.c tmpnam.c mktemp.c
 MAN+=	fclose.3 ferror.3 fflush.3 fgetln.3 fgets.3 fgetwln.3 fgetws.3 \
 	flockfile.3 fmemopen.3 fopen.3 fparseln.3 fputs.3 fputws.3 fread.3 \
 	fseek.3 funopen.3 fwide.3 getc.3 getdelim.3 getwc.3 mktemp.3 printf.3 \
-	putc.3 putwc.3 remove.3 scanf.3 setbuf.3 stdio.3 tmpnam.3 \
-	ungetc.3 ungetwc.3 wprintf.3 wscanf.3 open_memstream.3
+	printf_l.3 putc.3 putwc.3 remove.3 scanf.3 scanf_l.3 setbuf.3 stdio.3 \
+	tmpnam.3 ungetc.3 ungetwc.3 wprintf.3 wscanf.3 open_memstream.3
 
 MLINKS+=ferror.3 clearerr.3 ferror.3 feof.3 ferror.3 fileno.3
 MLINKS+=fflush.3 fpurge.3
@@ -67,3 +67,10 @@ MLINKS+=wprintf.3 vwprintf.3 wprintf.3 vfwprintf.3 wprintf.3 vswprintf.3
 MLINKS+=wscanf.3 fwscanf.3 wscanf.3 swscanf.3 wscanf.3 vwscanf.3
 MLINKS+=wscanf.3 vswscanf.3 wscanf.3 vfwscanf.3
 MLINKS+=open_memstream.3 open_wmemstream.3
+MLINKS+=printf_l.3 asprintf_l.3 printf_l.3 fprintf_l.3 printf_l.3 snprintf_l.3 \
+        printf_l.3 sprintf_l.3 printf_l.3 vasprintf_l.3 printf_l.3  \
+	vfprintf_l.3 printf_l.3 vprintf_l.3 printf_l.3 vsnprintf_l.3 \
+	printf_l.3 vsprintf_l.3
+MLINKS+=scanf_l.3 fscanf_l.3 scanf_l.3 sscanf_l.3 scanf_l.3 vfscanf_l.3 \
+        scanf_l.3 vscanf_l.3 scanf_l.3 vsscanf_l.3
+
