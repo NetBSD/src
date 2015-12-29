@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.74 2015/12/28 07:37:59 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.75 2015/12/29 04:21:46 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -383,11 +383,7 @@ addmerge_header(bozo_httpreq_t *request, char *val,
 		/* yup, merge it in */
 		char *nval;
 
-		if (asprintf(&nval, "%s, %s", hdr->h_value, str) == -1) {
-			(void)bozo_http_error(httpd, 500, NULL,
-			     "memory allocation failure");
-			return NULL;
-		}
+		bozoasprintf(httpd, &nval, "%s, %s", hdr->h_value, str);
 		free(hdr->h_value);
 		hdr->h_value = nval;
 	} else {
@@ -955,9 +951,9 @@ handle_redirect(bozo_httpreq_t *request, const char *url, int absolute)
 		const char *s;
 
 		/*
-		 * absolute redirect may specify own protocol i.e. to redirect to
-		 * another schema like https:// or ftp://. Details: RFC 3986, section
-		 * 3.
+		 * absolute redirect may specify own protocol i.e. to redirect
+		 * to another schema like https:// or ftp://.
+		 * Details: RFC 3986, section 3.
 		 */
 
 		/* 1. check if url contains :// */
@@ -969,8 +965,8 @@ handle_redirect(bozo_httpreq_t *request, const char *url, int absolute)
 		 */
 		if (sep) {
 			for (s = url; s != sep;) {
-				if (!isalnum((int)*s) && *s != '+' && *s != '-' &&
-					*s != '.')
+				if (!isalnum((int)*s) &&
+				    *s != '+' && *s != '-' && *s != '.')
 					break;
 				if (++s == sep) {
 					absproto = 1;
@@ -2223,7 +2219,6 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 
 	if (vhost == NULL) {
 		httpd->virthostname = bozomalloc(httpd, MAXHOSTNAMELEN+1);
-		/* XXX we do not check for FQDN here */
 		if (gethostname(httpd->virthostname, MAXHOSTNAMELEN+1) < 0)
 			bozoerr(httpd, 1, "gethostname");
 		httpd->virthostname[MAXHOSTNAMELEN] = '\0';
@@ -2298,20 +2293,16 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 	bozo_ssl_init(httpd);
 	bozo_daemon_init(httpd);
 
-	if ((username = bozo_get_pref(prefs, "username")) == NULL) {
-		if ((pw = getpwuid(uid = 0)) == NULL)
-			bozoerr(httpd, 1, "getpwuid(0): %s", strerror(errno));
-		httpd->username = bozostrdup(httpd, NULL, pw->pw_name);
-	} else {
-		httpd->username = bozostrdup(httpd, NULL, username);
-		if ((pw = getpwnam(httpd->username)) == NULL)
-			bozoerr(httpd, 1, "getpwnam(%s): %s", httpd->username,
-					strerror(errno));
+	username = bozo_get_pref(prefs, "username");
+	if (username != NULL) {
+		if ((pw = getpwnam(username)) == NULL)
+			bozoerr(httpd, 1, "getpwnam(%s): %s", username,
+				strerror(errno));
 		if (initgroups(pw->pw_name, pw->pw_gid) == -1)
 			bozoerr(httpd, 1, "initgroups: %s", strerror(errno));
 		if (setgid(pw->pw_gid) == -1)
 			bozoerr(httpd, 1, "setgid(%u): %s", pw->pw_gid,
-					strerror(errno));
+				strerror(errno));
 		uid = pw->pw_uid;
 	}
 	/*
@@ -2327,10 +2318,8 @@ bozo_setup(bozohttpd_t *httpd, bozoprefs_t *prefs, const char *vhost,
 				strerror(errno));
 	}
 
-	if (username != NULL)
-		if (setuid(uid) == -1)
-			bozoerr(httpd, 1, "setuid(%d): %s", uid,
-					strerror(errno));
+	if (username != NULL && setuid(uid) == -1)
+		bozoerr(httpd, 1, "setuid(%d): %s", uid, strerror(errno));
 
 	/*
 	 * prevent info leakage between different compartments.

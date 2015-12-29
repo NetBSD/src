@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.h,v 1.42 2015/12/28 07:37:59 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.h,v 1.43 2015/12/29 04:21:46 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.h,v 1.39 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -90,7 +90,6 @@ typedef struct bozo_consts_t {
 /* this structure encapsulates all the bozo flags and control vars */
 typedef struct bozohttpd_t {
 	char		*rootdir;	/* root directory */
-	char		*username;	/* username to switch to */
 	int		 numeric;	/* avoid gethostby*() */
 	char		*virtbase;	/* virtual directory base */
 	int		 unknown_slash;	/* unknown vhosts go to normal slashdir */
