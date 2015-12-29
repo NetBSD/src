@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/add.c,v 1.14 2006/06/22 22:05:28 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: unset.c,v 1.12 2015/12/06 00:39:26 christos Exp $");
+__RCSID("$NetBSD: unset.c,v 1.13 2015/12/29 16:45:04 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ cmd_unset(gpt_t gpt, int argc, char *argv[])
 				return usage();
 			break;
 		case 'i':
-			if (gpt_uint_get(&entry) == -1)
+			if (gpt_uint_get(gpt, &entry) == -1)
 				return usage();
 			break;
 		case 'l':

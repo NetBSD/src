@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/create.c,v 1.11 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: create.c,v 1.19 2015/12/03 21:30:54 christos Exp $");
+__RCSID("$NetBSD: create.c,v 1.20 2015/12/29 16:45:04 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ cmd_create(gpt_t gpt, int argc, char *argv[])
 			primary_only = 1;
 			break;
 		case 'p':
-			if (gpt_uint_get(&parts) == -1)
+			if (gpt_uint_get(gpt, &parts) == -1)
 				return -1;
 			break;
 		default:
