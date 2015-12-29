@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.29 2015/12/06 04:27:05 christos Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.30 2015/12/29 16:45:04 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -337,7 +337,7 @@ cmd_migrate(gpt_t gpt, int argc, char *argv[])
 			force = 1;
 			break;
 		case 'p':
-			if (gpt_uint_get(&parts) == -1)
+			if (gpt_uint_get(gpt, &parts) == -1)
 				return usage();
 			break;
 		case 's':
