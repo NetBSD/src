@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.75 2015/12/29 04:21:46 mrg Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.76 2015/12/29 04:30:33 mrg Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -926,11 +926,9 @@ handle_redirect(bozo_httpreq_t *request, const char *url, int absolute)
 	char *userbuf;
 #endif /* !NO_USER_SUPPORT */
 	char portbuf[20];
+	const char *scheme, *query, *quest;
 	const char *hostname = BOZOHOST(httpd, request);
-	size_t finalurl_len;
-	int query = 0;
-	int absproto = 0; /* absolute redirect provides own schema
-			   * eg. https:// */
+	int absproto = 0; /* absolute redirect provides own schema */
 
 	if (url == NULL) {
 		bozoasprintf(httpd, &urlbuf, "/%s/", request->hr_file);
@@ -975,49 +973,35 @@ handle_redirect(bozo_httpreq_t *request, const char *url, int absolute)
 		}
 	}
 
+	/* construct final redirection url */
+
+	scheme = absproto ? "" : httpd->sslinfo ? "https://" : "http://";
+
+	if (absolute) {
+		hostname = "";
+		portbuf[0] = '\0';
+	} else {
+		const char *defport = httpd->sslinfo ? "443" : "80";
+
+		if (request->hr_serverport &&
+		    strcmp(request->hr_serverport, defport) != 0)
+			snprintf(portbuf, sizeof(portbuf), ":%s",
+			    request->hr_serverport);
+		else
+			portbuf[0] = '\0';
+	}
+
 	url = bozo_escape_rfc3986(httpd, url, absolute);
 
-	if (request->hr_query && strlen(request->hr_query))
-		query = 1;
+	if (request->hr_query && strlen(request->hr_query)) {
+		query = request->hr_query;
+		quest = "?";
+	} else {
+		query = quest = "";
+	}
 
-	if (request->hr_serverport && strcmp(request->hr_serverport, "80") != 0)
-		snprintf(portbuf, sizeof(portbuf), ":%s",
-		    request->hr_serverport);
-	else
-		portbuf[0] = '\0';
-
-	/* construct final redirection url */
-	/* XXX asprintf */
-	finalurl_len = strlen(url) + 1;
-	if (!absproto) {
-		/* add default schema */
-		if (httpd->sslinfo)
-			finalurl_len += sizeof("https://") - 1;
-		else
-			finalurl_len += sizeof("http://") - 1;
-	}
-	if (absolute == 0)
-		finalurl_len += strlen(hostname)+strlen(portbuf);
-	if (query)
-		finalurl_len += strlen(request->hr_query) + 1; /* byte more for ? */
-	finalurl = bozomalloc(httpd, finalurl_len);
-	strcpy(finalurl, "");
-	if (!absproto) {
-		/* add default schema */
-		if (httpd->sslinfo)
-			strlcat(finalurl, "https://", finalurl_len);
-		else
-			strlcat(finalurl, "http://", finalurl_len);
-	}
-	if (absolute == 0) {
-		strlcat(finalurl, hostname, finalurl_len);
-		strlcat(finalurl, portbuf, finalurl_len);
-	}
-	strlcat(finalurl, url, finalurl_len);
-	if (query) {
-		strlcat(finalurl, "?", finalurl_len);
-		strlcat(finalurl, request->hr_query, finalurl_len);
-	}
+	bozoasprintf(httpd, &finalurl, "%s%s%s%s%s%s",
+		     scheme, hostname, portbuf, url, quest, query);
 
 	bozowarn(httpd, "redirecting %s", finalurl);
 	debug((httpd, DEBUG_FAT, "redirecting %s", finalurl));
