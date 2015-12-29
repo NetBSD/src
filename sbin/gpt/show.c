@@ -33,7 +33,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: show.c,v 1.34 2015/12/26 13:08:45 martin Exp $");
+__RCSID("$NetBSD: show.c,v 1.35 2015/12/29 16:45:04 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -310,7 +310,7 @@ cmd_show(gpt_t gpt, int argc, char *argv[])
 			xshow |= SHOW_GUID;
 			break;
 		case 'i':
-			if (gpt_uint_get(&entry) == -1)
+			if (gpt_uint_get(gpt, &entry) == -1)
 				return usage();
 			break;
 		case 'l':
