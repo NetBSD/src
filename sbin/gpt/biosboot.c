@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.23 2015/12/03 21:49:51 christos Exp $ */
+/*	$NetBSD: biosboot.c,v 1.24 2015/12/29 16:45:04 christos Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.23 2015/12/03 21:49:51 christos Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.24 2015/12/29 16:45:04 christos Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -266,7 +266,7 @@ cmd_biosboot(gpt_t gpt, int argc, char *argv[])
 				goto usage;
 			break;
 		case 'i':
-			if (gpt_uint_get(&entry) == -1)
+			if (gpt_uint_get(gpt, &entry) == -1)
 				goto usage;
 			break;
 		case 'L':
