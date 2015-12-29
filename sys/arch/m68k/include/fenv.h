@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.2 2015/12/25 16:19:38 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.3 2015/12/29 16:02:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -58,6 +58,8 @@
 
 #define _ROUND_MASK	\
     (FE_TONEAREST | FE_TOWARDZERO | FE_DOWNWARD | FE_UPWARD)
+
+#if !defined(__mc68010__) && !defined(__mcoldfire__)
 
 typedef uint32_t fexcept_t;
 
@@ -298,6 +300,8 @@ fegetexcept(void)
 }
 
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */
+
+#endif /* !__m68010__ && !__mcoldfire__ */
 
 __END_DECLS
 
