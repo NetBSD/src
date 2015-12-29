@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.65 2015/12/26 13:12:16 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.66 2015/12/29 16:45:04 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -592,34 +592,39 @@ out:
 	close(gpt->fd);
 }
 
+static void
+gpt_vwarnx(gpt_t gpt, const char *fmt, va_list ap, const char *e)
+{
+	if (gpt && (gpt->flags & GPT_QUIET))
+		return;
+	fprintf(stderr, "%s: ", getprogname());
+	if (gpt)
+		fprintf(stderr, "%s: ", gpt->device_name);
+	vfprintf(stderr, fmt, ap);
+	if (e)
+		fprintf(stderr, " (%s)\n", e);
+	else
+		fputc('\n', stderr);
+}
+
 void
 gpt_warnx(gpt_t gpt, const char *fmt, ...)
 {
 	va_list ap;
 
-	if (gpt->flags & GPT_QUIET)
-		return;
-	fprintf(stderr, "%s: %s: ", getprogname(), gpt->device_name);
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	gpt_vwarnx(gpt, fmt, ap, NULL);
 	va_end(ap);
-	fprintf(stderr, "\n");
 }
 
 void
 gpt_warn(gpt_t gpt, const char *fmt, ...)
 {
 	va_list ap;
-	int e = errno;
 
-	if (gpt->flags & GPT_QUIET)
-		return;
-	fprintf(stderr, "%s: %s: ", getprogname(), gpt->device_name);
 	va_start(ap, fmt);
-	vfprintf(stderr, fmt, ap);
+	gpt_vwarnx(gpt, fmt, ap, strerror(errno));
 	va_end(ap);
-	fprintf(stderr, " (%s)\n", strerror(e));
-	errno = e;
 }
 
 void
@@ -627,9 +632,10 @@ gpt_msg(gpt_t gpt, const char *fmt, ...)
 {
 	va_list ap;
 
-	if (gpt->flags & GPT_QUIET)
+	if (gpt && (gpt->flags & GPT_QUIET))
 		return;
-	printf("%s: ", gpt->device_name);
+	if (gpt)
+		printf("%s: ", gpt->device_name);
 	va_start(ap, fmt);
 	vprintf(fmt, ap);
 	va_end(ap);
@@ -922,17 +928,24 @@ gpt_size_get(gpt_t gpt, off_t *size)
 }
 
 int
-gpt_human_get(off_t *human)
+gpt_human_get(gpt_t gpt, off_t *human)
 {
 	int64_t human_num;
 
-	if (*human > 0)
+	if (*human > 0) {
+		gpt_warn(gpt, "Already set to %jd new `%s'", (intmax_t)*human,
+		    optarg);
 		return -1;
-	if (dehumanize_number(optarg, &human_num) < 0)
+	}
+	if (dehumanize_number(optarg, &human_num) < 0) {
+		gpt_warn(gpt, "Bad number `%s'", optarg);
 		return -1;
+	}
 	*human = human_num;
-	if (*human < 1)
+	if (*human < 1) {
+		gpt_warn(gpt, "Number `%s' < 1", optarg);
 		return -1;
+	}
 	return 0;
 }
 
@@ -941,16 +954,18 @@ gpt_add_find(gpt_t gpt, struct gpt_find *find, int ch)
 {
 	switch (ch) {
 	case 'a':
-		if (find->all > 0)
+		if (find->all > 0) {
+			gpt_warn(gpt, "-a is already set");
 			return -1;
+		}
 		find->all = 1;
 		break;
 	case 'b':
-		if (gpt_human_get(&find->block) == -1)
+		if (gpt_human_get(gpt, &find->block) == -1)
 			return -1;
 		break;
 	case 'i':
-		if (gpt_uint_get(&find->entry) == -1)
+		if (gpt_uint_get(gpt, &find->entry) == -1)
 			return -1;
 		break;
 	case 'L':
@@ -968,6 +983,7 @@ gpt_add_find(gpt_t gpt, struct gpt_find *find, int ch)
 			return -1;
 		break;
 	default:
+		gpt_warn(gpt, "Unknown find option `%c'", ch);
 		return -1;
 	}
 	return 0;
@@ -1038,11 +1054,11 @@ gpt_add_ais(gpt_t gpt, off_t *alignment, u_int *entry, off_t *size, int ch)
 {
 	switch (ch) {
 	case 'a':
-		if (gpt_human_get(alignment) == -1)
+		if (gpt_human_get(gpt, alignment) == -1)
 			return -1;
 		return 0;
 	case 'i':
-		if (gpt_uint_get(entry) == -1)
+		if (gpt_uint_get(gpt, entry) == -1)
 			return -1;
 		return 0;
 	case 's':
@@ -1050,6 +1066,7 @@ gpt_add_ais(gpt_t gpt, off_t *alignment, u_int *entry, off_t *size, int ch)
 			return -1;
 		return 0;
 	default:
+		gpt_warn(gpt, "Unknown alignment/index/size option `%c'", ch);
 		return -1;
 	}
 }
@@ -1167,8 +1184,10 @@ gpt_attr_update(gpt_t gpt, u_int entry, uint64_t set, uint64_t clr)
 	struct gpt_ent *ent;
 	unsigned int i;
 	
-	if (entry == 0 || (set == 0 && clr == 0))
+	if (entry == 0 || (set == 0 && clr == 0)) {
+		gpt_warnx(gpt, "Nothing to set");
 		return -1;
+	}
 
 	if ((hdr = gpt_hdr(gpt)) == NULL)
 		return -1;
@@ -1203,14 +1222,16 @@ gpt_attr_update(gpt_t gpt, u_int entry, uint64_t set, uint64_t clr)
 }
 
 int
-gpt_uint_get(u_int *entry)
+gpt_uint_get(gpt_t gpt, u_int *entry)
 {
 	char *p;
 	if (*entry > 0)
 		return -1;
 	*entry = (u_int)strtoul(optarg, &p, 10);
-	if (*p != 0 || *entry < 1)
+	if (*p != 0 || *entry < 1) {
+		gpt_warn(gpt, "Bad number `%s'", optarg);
 		return -1;
+	}
 	return 0;
 }
 int

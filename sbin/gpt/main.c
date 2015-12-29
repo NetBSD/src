@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.6 2015/12/03 02:02:43 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.7 2015/12/29 16:45:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 Marcel Moolenaar
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: main.c,v 1.6 2015/12/03 02:02:43 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.7 2015/12/29 16:45:04 christos Exp $");
 #endif
 
 #include <stdio.h>
@@ -165,7 +165,7 @@ main(int argc, char *argv[])
 			flags |= GPT_QUIET;
 			break;
 		case 's':
-			if (gpt_uint_get(&secsz) == -1)
+			if (gpt_uint_get(NULL, &secsz) == -1)
 				usage();
 			break;
 		case 'v':
@@ -194,13 +194,20 @@ main(int argc, char *argv[])
 
 	prefix(cmd);
 
-	gpt = gpt_open(dev, flags | cmdsw[i]->flags, verbose, mediasz, secsz);
-	if (gpt == NULL)
-		return EXIT_FAILURE;
+	if (*dev != '-') {
+		gpt = gpt_open(dev, flags | cmdsw[i]->flags,
+		    verbose, mediasz, secsz);
+		if (gpt == NULL)
+			return EXIT_FAILURE;
+	} else {
+		argc++;
+		gpt = NULL;
+	}
 
 	if ((*cmdsw[i]->fptr)(gpt, argc, argv) == -1)
 		return EXIT_FAILURE;
 
-	gpt_close(gpt);
+	if (gpt)
+		gpt_close(gpt);
 	return EXIT_SUCCESS;
 }
