@@ -664,7 +664,7 @@ impl::get_metadata(const tools::fs::path& executable,
     const tools::process::status status = child.wait();
     if (!status.exited() || status.exitstatus() != EXIT_SUCCESS)
         throw tools::parser::format_error("Test program returned failure "
-                                        "exit status for test case list");
+	    "exit status " + status.str() + " for test case list");
 
     return metadata(parser.get_tcs());
 }
