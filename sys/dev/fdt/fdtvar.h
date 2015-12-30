@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.4 2015/12/22 22:19:07 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.5 2015/12/30 04:23:39 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,6 +76,20 @@ struct fdtbus_gpio_controller_func {
 	void	(*write)(device_t, void *, int, bool);
 };
 
+struct fdtbus_pinctrl_controller;
+
+struct fdtbus_pinctrl_pin {
+	struct fdtbus_pinctrl_controller *pp_pc;
+	void *pp_priv;
+};
+
+struct fdtbus_pinctrl_controller_func {
+	void *	(*acquire)(device_t, const char *);
+	void	(*release)(device_t, void *);
+	void	(*get)(struct fdtbus_pinctrl_pin *, void *);
+	void	(*set)(struct fdtbus_pinctrl_pin *, void *);
+};
+
 struct fdtbus_regulator_controller;
 
 struct fdtbus_regulator {
@@ -112,6 +126,8 @@ int		fdtbus_register_i2c_controller(device_t, int,
 		    const struct fdtbus_i2c_controller_func *);
 int		fdtbus_register_gpio_controller(device_t, int,
 		    const struct fdtbus_gpio_controller_func *);
+int		fdtbus_register_pinctrl_controller(device_t, int,
+		    const struct fdtbus_pinctrl_controller_func *);
 int		fdtbus_register_regulator_controller(device_t, int,
 		    const struct fdtbus_regulator_controller_func *);
 int		fdtbus_register_clock_controller(device_t, int,
@@ -133,6 +149,10 @@ int		fdtbus_gpio_read(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write(struct fdtbus_gpio_pin *, int);
 int		fdtbus_gpio_read_raw(struct fdtbus_gpio_pin *);
 void		fdtbus_gpio_write_raw(struct fdtbus_gpio_pin *, int);
+struct fdtbus_pinctrl_pin *fdtbus_pinctrl_acquire(int, const char *);
+void		fdtbus_pinctrl_release(struct fdtbus_pinctrl_pin *);
+void		fdtbus_pinctrl_set_cfg(struct fdtbus_pinctrl_pin *, void *);
+void		fdtbus_pinctrl_get_cfg(struct fdtbus_pinctrl_pin *, void *);
 struct fdtbus_regulator *fdtbus_regulator_acquire(int, const char *);
 void		fdtbus_regulator_release(struct fdtbus_regulator *);
 int		fdtbus_regulator_enable(struct fdtbus_regulator *);
