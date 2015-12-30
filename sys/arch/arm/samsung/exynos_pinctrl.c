@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_pinctrl.c,v 1.7 2015/12/27 12:21:37 jmcneill Exp $ */
+/*	$NetBSD: exynos_pinctrl.c,v 1.8 2015/12/30 04:30:27 marty Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.7 2015/12/27 12:21:37 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.8 2015/12/30 04:30:27 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -56,6 +56,18 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_pinctrl.c,v 1.7 2015/12/27 12:21:37 jmcneill 
 static int exynos_pinctrl_match(device_t, cfdata_t, void *);
 static void exynos_pinctrl_attach(device_t, device_t, void *);
 
+static void *exynos_pinctrl_acquire(device_t, const char *);
+static void  exynos_pinctrl_release(device_t, void *);
+static void  exynos_pinctrl_get_cfg(struct fdtbus_pinctrl_pin *, void *);
+static void  exynos_pinctrl_set_cfg(struct fdtbus_pinctrl_pin *, void *);
+
+static struct fdtbus_pinctrl_controller_func exynos_pinctrl_controller_func = {
+	.acquire = exynos_pinctrl_acquire,
+	.release = exynos_pinctrl_release,
+	.get     = exynos_pinctrl_get_cfg,
+	.set     = exynos_pinctrl_set_cfg,
+};
+
 CFATTACH_DECL_NEW(exynos_pinctrl, sizeof(struct exynos_pinctrl_softc),
 	exynos_pinctrl_match, exynos_pinctrl_attach, NULL, NULL);
 
@@ -74,6 +86,7 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 	struct exynos_pinctrl_softc * const sc
 		= kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	struct fdt_attach_args * const faa = aux;
+	struct exynos_gpio_softc *child_sc;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -101,6 +114,41 @@ exynos_pinctrl_attach(device_t parent, device_t self, void *aux)
 	     child = OF_peer(child)) {
 		if (of_getprop_bool(child, "gpio-controller") == false)
 			continue;
-		exynos_gpio_bank_config(sc, faa, child);
+		child_sc = exynos_gpio_bank_config(sc, faa, child);
+		fdtbus_register_pinctrl_controller(child_sc->sc_dev, child,
+					    &exynos_pinctrl_controller_func);
 	}
+}
+
+
+static void *exynos_pinctrl_acquire(device_t self, const char *name)
+{
+	return exynos_gpio_bank_lookup(name);
+}
+
+static void exynos_pinctrl_release(device_t self, void *cookie)
+{
+}
+
+static void exynos_pinctrl_get_cfg(struct fdtbus_pinctrl_pin *pin,
+				   void *cookie)
+{
+	struct exynos_gpio_bank *bank = pin->pp_priv;
+	struct exynos_gpio_pin_cfg *cfg  = cookie;
+	struct exynos_gpio_pin_cfg **cfgp = &cfg;
+	struct exynos_gpio_pin_cfg *newcfg = kmem_zalloc(sizeof(*newcfg),
+							 KM_SLEEP);
+	if (newcfg == NULL)
+		return;
+	exynos_gpio_pin_ctl_read(bank, newcfg);
+	*cfgp = newcfg;
+	return;
+}
+
+static void exynos_pinctrl_set_cfg(struct fdtbus_pinctrl_pin *pin,
+				   void *cookie)
+{
+	struct exynos_gpio_bank *bank = pin->pp_priv;
+	struct exynos_gpio_pin_cfg *cfg = cookie;
+	exynos_gpio_pin_ctl_write(bank, cfg);
 }
