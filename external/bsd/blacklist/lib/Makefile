@@ -1,7 +1,10 @@
-# $NetBSD: Makefile,v 1.3 2015/01/22 18:46:15 christos Exp $
+# $NetBSD: Makefile,v 1.4 2015/12/30 16:42:48 christos Exp $
 
 USE_SHLIBDIR=   yes
 
+CPPFLAGS+=-D_REENTRANT
+DPADD+=${LIBPTHREAD}
+LPADD+=-lpthread
 LIB=blacklist
 SRCS=bl.c blacklist.c
 MAN=libblacklist.3
