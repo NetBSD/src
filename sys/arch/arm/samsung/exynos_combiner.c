@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.3 2015/12/24 21:20:17 marty Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.4 2015/12/30 04:30:27 marty Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.3 2015/12/24 21:20:17 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.4 2015/12/30 04:30:27 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -197,7 +197,7 @@ exynos_combiner_intrstr(device_t dev, int phandle, u_int index, char *buf,
 
 	kmem_free(interrupts, len);
 
-	snprintf(buf, buflen, "LIC irq %d", irq);
+	snprintf(buf, buflen, "combiner irq %d", irq);
 
 	return true;
 }

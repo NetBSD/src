@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.21 2015/12/27 12:42:14 jmcneill Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.22 2015/12/30 04:30:27 marty Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.21 2015/12/27 12:42:14 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.22 2015/12/30 04:30:27 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,16 +53,6 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.21 2015/12/27 12:42:14 jmcneill Ex
 
 #include <dev/fdt/fdtvar.h>
 
-struct exynos_gpio_pin_cfg {
-	uint32_t cfg;
-	uint32_t pud;
-	uint32_t drv;
-	uint32_t conpwd;
-	uint32_t pudpwd;
-};
-
-struct exynos_gpio_softc;
-
 struct exynos_gpio_bank {
 	const char		bank_name[6];
 	device_t		bank_dev;
@@ -78,12 +68,6 @@ struct exynos_gpio_bank {
 	bus_space_handle_t	bank_bsh;
 	struct exynos_gpio_pin_cfg bank_cfg;
 	struct exynos_gpio_bank * bank_next;
-};
-
-struct exynos_gpio_softc {
-	device_t		sc_dev;
-	bus_space_tag_t		sc_bst;
-	bus_space_handle_t	sc_bsh;
 };
 
 struct exynos_gpio_pin {
@@ -144,7 +128,7 @@ static struct exynos_gpio_bank exynos5_banks[] = {
 	GPIO_GRP(5, MUXD, 0x00E0, gpb4, 2),
 	GPIO_GRP(5, MUXD, 0x0100, gph0, 4),
 
-	GPIO_GRP(5, MUXE, 0x0000, gpz0, 7),
+	GPIO_GRP(5, MUXE, 0x0000, gpz, 7),
 
 };
 
@@ -159,7 +143,6 @@ static void exynos_gpio_fdt_release(device_t, void *);
 
 static int exynos_gpio_fdt_read(device_t, void *, bool);
 static void exynos_gpio_fdt_write(device_t, void *, int, bool);
-static struct exynos_gpio_bank *exynos_gpio_bank_lookup(const char *);
 static int exynos_gpio_cfprint(void *, const char *);
 
 struct fdtbus_gpio_controller_func exynos_gpio_funcs = {
@@ -279,7 +262,27 @@ exynos_gpio_pin_ctl(void *cookie, int pin, int flags)
 	exynos_gpio_update_cfg_regs(bank, &ncfg);
 }
 
-void
+void exynos_gpio_pin_ctl_read(const struct exynos_gpio_bank *bank,
+			      struct exynos_gpio_pin_cfg *cfg)
+{
+	cfg->cfg = GPIO_READ(bank, EXYNOS_GPIO_CON);
+	cfg->pud = GPIO_READ(bank, EXYNOS_GPIO_PUD);
+	cfg->drv = GPIO_READ(bank, EXYNOS_GPIO_DRV);
+	cfg->conpwd = GPIO_READ(bank, EXYNOS_GPIO_CONPWD);
+	cfg->pudpwd = GPIO_READ(bank, EXYNOS_GPIO_PUDPWD);
+}
+
+void exynos_gpio_pin_ctl_write(const struct exynos_gpio_bank *bank,
+			       const struct exynos_gpio_pin_cfg *cfg)
+{
+		GPIO_WRITE(bank, EXYNOS_GPIO_CON, cfg->cfg);
+		GPIO_WRITE(bank, EXYNOS_GPIO_PUD, cfg->pud);
+		GPIO_WRITE(bank, EXYNOS_GPIO_DRV, cfg->drv);
+		GPIO_WRITE(bank, EXYNOS_GPIO_CONPWD, cfg->conpwd);
+		GPIO_WRITE(bank, EXYNOS_GPIO_PUDPWD, cfg->pudpwd);
+}
+
+struct exynos_gpio_softc *
 exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 			const struct fdt_attach_args *faa, int node)
 {
@@ -294,13 +297,14 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 	if (bank == NULL) {
 		aprint_error_dev(parent->sc_dev, "no bank found for %s\n",
 		    result);
-		return;
+		return NULL;
 	}
 	
 	sc->sc_dev = parent->sc_dev;
 	sc->sc_bst = &armv7_generic_bs_tag;
 	sc->sc_bsh = parent->sc_bsh;
-	
+	sc->sc_bank = bank;
+
 	gc_tag = &bank->bank_gc;
 	gc_tag->gp_cookie = bank;
 	gc_tag->gp_pin_read  = exynos_gpio_pin_read;
@@ -327,14 +331,23 @@ exynos_gpio_bank_config(struct exynos_pinctrl_softc * parent,
 
 	fdtbus_register_gpio_controller(bank->bank_dev, node,
 					&exynos_gpio_funcs);
+	return sc;
 }
 
-static struct exynos_gpio_bank *
+/*
+ * This function is a bit funky.  Given a string that may look like
+ * 'gpAN' or 'gpAN-P' it is meant to find a match to the part before
+ * the '-', or the four character string if the dash is not present.
+ */
+struct exynos_gpio_bank *
 exynos_gpio_bank_lookup(const char *name)
 {
+	struct exynos_gpio_bank *bank;
+
 	for (u_int n = 0; n < __arraycount(exynos5_banks); n++) {
-		struct exynos_gpio_bank *bank = &exynos_gpio_banks[n];
-		if (strncmp(bank->bank_name, name, strlen(name)) == 0) {
+		bank = &exynos_gpio_banks[n];
+		if (!strncmp(bank->bank_name, name,
+			     strlen(bank->bank_name))) {
 			return bank;
 		}
 	}
