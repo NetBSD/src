@@ -1,4 +1,4 @@
-# $NetBSD: t_ulimit.sh,v 1.1 2012/06/11 18:32:59 njoly Exp $
+# $NetBSD: t_ulimit.sh,v 1.2 2015/12/30 22:24:44 christos Exp $
 #
 # Copyright (c) 2012 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,10 +31,21 @@ atf_test_case limits
 limits_head() {
 	atf_set "descr" "Checks for limits flags"
 }
+
+get_ulimits() {
+	local limits=$(ulimit -a |
+	    sed -e 's/.*\(-[A-Za-z0-9]\)[^A-Za-z0-9].*/\1/' | sort -u)
+	if [ -z "$limits" ]; then
+		# grr ksh
+		limits="-a -b -c -d -f -l -m -n -p -r -s -t -v"
+	fi
+	echo "$limits"
+}
+
 limits_body() {
 	atf_check -s eq:0 -o ignore -e empty \
 	    /bin/sh -c "ulimit -a"
-	for l in $(ulimit -a | sed 's,^.*(,,;s, .*$,,');
+	for l in $(get_ulimits)
 	do
 	    atf_check -s eq:0 -o ignore -e empty \
 	        /bin/sh -c "ulimit $l"
