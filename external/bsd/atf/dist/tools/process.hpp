@@ -207,6 +207,8 @@ class status {
 public:
     ~status(void);
 
+    std::string str(void) const;
+
     bool exited(void) const;
     int exitstatus(void) const;
 
