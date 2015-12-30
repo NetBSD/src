@@ -526,7 +526,10 @@ _atf_list_tcs()
 
         echo "ident: $(atf_get ident)"
         for _var in ${Test_Case_Vars}; do
+	    # Elide ksh bug!
+	    set +e
             [ "${_var}" != "ident" ] && echo "${_var}: $(atf_get ${_var})"
+	    set -e
         done
 
         [ ${#} -gt 1 ] && echo
