@@ -360,6 +360,25 @@ impl::status::~status(void)
 {
 }
 
+std::string
+impl::status::str(void)
+     const
+{
+    int mutable_status = m_status;
+    std::stringstream rv;
+    if (WIFEXITED(mutable_status))
+	rv << "exit("  << WEXITSTATUS(mutable_status);
+    else if (WIFSTOPPED(mutable_status))
+	rv << "stopped("  << WSTOPSIG(mutable_status);
+    else if (WIFSIGNALED(mutable_status))
+	rv << "terminated("  << WTERMSIG(mutable_status);
+    if (WCOREDUMP(mutable_status))
+	rv << "/core)";
+    else
+	rv << ")";
+    return rv.str();
+}
+
 bool
 impl::status::exited(void)
     const
