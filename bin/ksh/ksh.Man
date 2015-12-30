@@ -1,5 +1,5 @@
 '\" t
-.\" $NetBSD: ksh.Man,v 1.24 2015/04/12 17:05:03 jmcneill Exp $
+.\" $NetBSD: ksh.Man,v 1.25 2015/12/30 22:26:26 christos Exp $
 .\"{{{}}}
 .\"{{{  Notes about man page
 .\"     - use the pseudo-macros .sh( and .sh) to begin and end sh-specific
@@ -2653,6 +2653,7 @@ on some systems this is the maximum allowable virtual address (in bytes,
 not kbytes).
 .IP \fB\-w\fP
 Impose a limit of \fIn\fP kbytes on the amount of swap space used.
+(Not supported on NetBSD)
 .PP
 As far as \fBulimit\fP is concerned, a block is 512 bytes.
 .RE
