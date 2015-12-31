@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1269 2015/12/17 22:32:41 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1270 2015/12/31 10:21:02 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1300,7 +1300,7 @@ for the import.
 
 Package:	tmux
 Version:	1.9a
-Current Vers:	2.0
+Current Vers:	2.1
 Maintainer:	Nicholas Marriott <nicm@users.sourceforge.net>
 Archive site:	http://downloads.sourceforge.net/tmux/
 Home page:	http://tmux.sourceforge.net/
