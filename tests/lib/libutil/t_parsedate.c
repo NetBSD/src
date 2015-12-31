@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.17 2015/12/31 10:10:15 dholland Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.18 2015/12/31 10:18:00 dholland Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.17 2015/12/31 10:10:15 dholland Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.18 2015/12/31 10:18:00 dholland Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -283,7 +283,7 @@ ATF_TC_BODY(relative, tc)
 	REL_CHECK("this thursday", now, tm);
 
 	ATF_CHECK(localtime_r(&now, &tm) != NULL);
-	tm.tm_mday += 14 - tm.tm_wday;
+	tm.tm_mday += 14 - (tm.tm_wday ? tm.tm_wday : 7);
 	tm.tm_sec = tm.tm_min = tm.tm_hour = 0;
 	tm.tm_isdst = -1;
 	REL_CHECK("next sunday", now, tm);
