@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.3 2015/07/30 08:09:37 ryo Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.4 2015/12/31 11:53:19 ryo Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.3 2015/07/30 08:09:37 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.4 2015/12/31 11:53:19 ryo Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -95,6 +95,7 @@ u_int uboot_args[4] = { 0 };
 #endif
 
 void nitrogen6_setup_iomux(void);
+void nitrogen6_device_register(device_t, void *);
 
 static const bus_addr_t comcnaddr = (bus_addr_t)CONADDR;
 static const int comcnspeed = CONSPEED;
@@ -247,7 +248,7 @@ initarm(void *arg)
 	    mapallmem_p);
 
 	/* we've a specific device_register routine */
-	evbarm_device_register = imx6_device_register;
+	evbarm_device_register = nitrogen6_device_register;
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 	/*

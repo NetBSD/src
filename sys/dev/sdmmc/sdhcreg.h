@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcreg.h,v 1.17 2015/08/05 12:28:47 jmcneill Exp $	*/
+/*	$NetBSD: sdhcreg.h,v 1.18 2015/12/31 11:53:19 ryo Exp $	*/
 /*	$OpenBSD: sdhcreg.h,v 1.4 2006/07/30 17:20:40 fgsch Exp $	*/
 
 /*
@@ -68,12 +68,20 @@
 #define  SDHC_BUFFER_WRITE_ENABLE	(1<<10)
 #define  SDHC_READ_TRANSFER_ACTIVE	(1<<9)
 #define  SDHC_WRITE_TRANSFER_ACTIVE	(1<<8)
-/* 3-7 reserved */
+/* 4-7 reserved */
+#define  SDHC_SDSTB			(1<<3)	/* uSDHC */
 #define  SDHC_DAT_ACTIVE		(1<<2)
 #define  SDHC_CMD_INHIBIT_DAT		(1<<1)
 #define  SDHC_CMD_INHIBIT_CMD		(1<<0)
 #define  SDHC_CMD_INHIBIT_MASK		0x0003
 #define SDHC_HOST_CTL			0x28
+#define  SDHC_USDHC_BURST_LEN_EN	(1<<27)	/* uSDHC */
+#define  SDHC_USDHC_HOST_CTL_RESV23	(1<<23)	/* uSDHC */
+#define  SDHC_USDHC_DMA_SELECT		(3<<8)	/* uSDHC */
+#define  SDHC_USDHC_DMA_SELECT_ADMA1	(1<<8)	/* uSDHC */
+#define  SDHC_USDHC_DMA_SELECT_ADMA2	(2<<8)	/* uSDHC */
+#define  SDHC_USDHC_EMODE		(3<<4)	/* uSDHC */
+#define  SDHC_USDHC_EMODE_LE		(2<<4)	/* uSDHC */
 #define  SDHC_8BIT_MODE			(1<<5)
 #define  SDHC_DMA_SELECT		(3<<3)
 #define  SDHC_DMA_SELECT_SDMA		(0<<3)
@@ -200,9 +208,13 @@
 #define  SDHC_ADMA_LENGTH_MISMATCH	(1<<2)
 #define  SDHC_ADMA_ERROR_STATE		(3<<0)
 #define SDHC_ADMA_SYSTEM_ADDR		0x58
-#define SDHC_WATERMARK_LEVEL		0x44	/* ESDHC */
+#define SDHC_WATERMARK_LEVEL		0x44	/* ESDHC/uSDHC */
+#define  SDHC_WATERMARK_WR_BRST_SHIFT	24	/* uSDHC */
+#define  SDHC_WATERMARK_WR_BRST_MASK	0x1f	/* uSDHC */
 #define  SDHC_WATERMARK_WRITE_SHIFT	16
 #define  SDHC_WATERMARK_WRITE_MASK	0xff
+#define  SDHC_WATERMARK_RD_BRST_SHIFT	8	/* uSDHC */
+#define  SDHC_WATERMARK_RD_BRST_MASK	0x1f	/* uSDHC */
 #define  SDHC_WATERMARK_READ_SHIFT	0
 #define  SDHC_WATERMARK_READ_MASK	0xff
 #define SDHC_MAX_CAPABILITIES		0x48
@@ -215,6 +227,19 @@
 #define  SDHC_VENDOR_VERS_MASK		0xff
 #define SDHC_DMA_CTL			0x40c	/* eSDHC */
 #define  SDHC_DMA_SNOOP			0x40
+#define SDHC_MIX_CTRL			0x48	/* uSDHC */
+#define  SDHC_USDHC_DDR_EN			(1<<3)
+#define SDHC_VEND_SPEC			0xc0	/* uSDHC */
+#define  SDHC_VEND_SPEC_MBO			(1<<29)
+#define  SDHC_VEND_SPEC_CARD_CLK_SOFT_EN	(1<<14)
+#define  SDHC_VEND_SPEC_IPG_PERCLK_SOFT_EN	(1<<13)
+#define  SDHC_VEND_SPEC_HCLK_SOFT_EN		(1<<12)
+#define  SDHC_VEND_SPEC_IPG_CLK_SOFT_EN		(1<<11)
+#define  SDHC_VEND_SPEC_FRC_SDCLK_ON		(1<<8)
+#define  SDHC_VEND_SPEC_AC12_WR_CHKBUSY_EN	(1<<3)
+#define  SDHC_VEND_SPEC_VSELECT			(1<<1)
+#define SDHC_MMC_BOOT			0xc4	/* uSDHC */
+#define SDHC_VEND_SPEC2			0xc8	/* uSDHC */
 
 /* SDHC_SPEC_VERS */
 #define SDHC_SPEC_VERS_100		0x00

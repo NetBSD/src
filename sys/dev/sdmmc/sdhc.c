@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.92 2015/12/28 16:47:11 ryo Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.93 2015/12/31 11:53:19 ryo Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.92 2015/12/28 16:47:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.93 2015/12/31 11:53:19 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -290,7 +290,9 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	callout_init(&hp->tuning_timer, CALLOUT_MPSAFE);
 	callout_setfunc(&hp->tuning_timer, sdhc_tuning_timer, hp);
 
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+		sdhcver = SDHC_SPEC_VERS_300 << SDHC_SPEC_VERS_SHIFT;
+	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		sdhcver = HREAD4(hp, SDHC_ESDHC_HOST_CTL_VERSION);
 	} else {
 		sdhcver = HREAD2(hp, SDHC_HOST_CTL_VERSION);
@@ -326,10 +328,39 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 	 */
 	(void)sdhc_host_reset(hp);
 
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+		/* init uSDHC registers */
+		HWRITE4(hp, SDHC_MMC_BOOT, 0);
+		HWRITE4(hp, SDHC_HOST_CTL, SDHC_USDHC_BURST_LEN_EN |
+		    SDHC_USDHC_HOST_CTL_RESV23 | SDHC_USDHC_EMODE_LE);
+		HWRITE4(hp, SDHC_WATERMARK_LEVEL,
+		    (0x10 << SDHC_WATERMARK_WR_BRST_SHIFT) |
+		    (0x40 << SDHC_WATERMARK_WRITE_SHIFT) |
+		    (0x10 << SDHC_WATERMARK_RD_BRST_SHIFT) |
+		    (0x40 << SDHC_WATERMARK_READ_SHIFT));
+		HSET4(hp, SDHC_VEND_SPEC,
+		    SDHC_VEND_SPEC_MBO |
+		    SDHC_VEND_SPEC_CARD_CLK_SOFT_EN |
+		    SDHC_VEND_SPEC_IPG_PERCLK_SOFT_EN |
+		    SDHC_VEND_SPEC_HCLK_SOFT_EN |
+		    SDHC_VEND_SPEC_IPG_CLK_SOFT_EN |
+		    SDHC_VEND_SPEC_AC12_WR_CHKBUSY_EN |
+		    SDHC_VEND_SPEC_FRC_SDCLK_ON);
+	}
+
 	/* Determine host capabilities. */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_HOSTCAPS)) {
 		caps = sc->sc_caps;
 		caps2 = sc->sc_caps2;
+	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+		/* uSDHC capability register is little bit different */
+		caps = HREAD4(hp, SDHC_CAPABILITIES);
+		caps |= SDHC_8BIT_SUPP;
+		if (caps & SDHC_ADMA1_SUPP)
+			caps |= SDHC_ADMA2_SUPP;
+		sc->sc_caps = caps;
+		/* uSDHC has no SDHC_CAPABILITIES2 register */
+		caps2 = sc->sc_caps2 = SDHC_SDR50_SUPP | SDHC_DDR50_SUPP;
 	} else {
 		caps = sc->sc_caps = HREAD4(hp, SDHC_CAPABILITIES);
 		if (hp->specver >= SDHC_SPEC_VERS_300) {
@@ -1041,7 +1072,14 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 	/*
 	 * Stop SD clock before changing the frequency.
 	 */
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+		HCLR4(hp, SDHC_VEND_SPEC,
+		    SDHC_VEND_SPEC_CARD_CLK_SOFT_EN |
+		    SDHC_VEND_SPEC_FRC_SDCLK_ON);
+		if (freq == SDMMC_SDCLK_OFF) {
+			goto out;
+		}
+	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		HCLR4(hp, SDHC_CLOCK_CTL, 0xfff8);
 		if (freq == SDMMC_SDCLK_OFF) {
 			HSET4(hp, SDHC_CLOCK_CTL, 0x80f0);
@@ -1053,7 +1091,12 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 			goto out;
 	}
 
-	if (hp->specver >= SDHC_SPEC_VERS_300) {
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+		if (ddr)
+			HSET4(hp, SDHC_MIX_CTRL, SDHC_USDHC_DDR_EN);
+		else
+			HCLR4(hp, SDHC_MIX_CTRL, SDHC_USDHC_DDR_EN);
+	} else if (hp->specver >= SDHC_SPEC_VERS_300) {
 		HCLR2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_MASK);
 		if (freq > 100000) {
 			HSET2(hp, SDHC_HOST_CTL2, SDHC_UHS_MODE_SELECT_SDR104);
@@ -1091,7 +1134,22 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		error = EINVAL;
 		goto out;
 	}
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+		if (ddr) {
+			/* in ddr mode, divisor >>= 1 */
+			div = ((div >> 1) & (SDHC_SDCLK_DIV_MASK <<
+			    SDHC_SDCLK_DIV_SHIFT)) |
+			    (div & (SDHC_SDCLK_DVS_MASK <<
+			    SDHC_SDCLK_DVS_SHIFT));
+		}
+		for (timo = 1000; timo > 0; timo--) {
+			if (ISSET(HREAD4(hp, SDHC_PRESENT_STATE), SDHC_SDSTB))
+				break;
+			sdmmc_delay(10);
+		}
+		HWRITE4(hp, SDHC_CLOCK_CTL,
+		    div | (SDHC_TIMEOUT_MAX << 16) | 0x0f);
+	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		HWRITE4(hp, SDHC_CLOCK_CTL,
 		    div | (SDHC_TIMEOUT_MAX << 16));
 	} else {
@@ -1103,7 +1161,11 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 	/*
 	 * Start internal clock.  Wait 10ms for stabilization.
 	 */
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+		HSET4(hp, SDHC_VEND_SPEC,
+		    SDHC_VEND_SPEC_CARD_CLK_SOFT_EN |
+		    SDHC_VEND_SPEC_FRC_SDCLK_ON);
+	} else if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
 		sdmmc_delay(10000);
 		HSET4(hp, SDHC_CLOCK_CTL,
 		    8 | SDHC_INTCLK_ENABLE | SDHC_INTCLK_STABLE);
@@ -1122,7 +1184,7 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		}
 	}
 
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 		HSET1(hp, SDHC_SOFTWARE_RESET, SDHC_INIT_ACTIVE);
 		/*
 		 * Sending 80 clocks at 400kHz takes 200us.
@@ -1141,7 +1203,13 @@ sdhc_bus_clock_ddr(sdmmc_chipset_handle_t sch, int freq, bool ddr)
 		/*
 		 * Enable SD clock.
 		 */
-		HSET4(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+			HSET4(hp, SDHC_VEND_SPEC,
+			    SDHC_VEND_SPEC_CARD_CLK_SOFT_EN |
+			    SDHC_VEND_SPEC_FRC_SDCLK_ON);
+		} else {
+			HSET4(hp, SDHC_CLOCK_CTL, SDHC_SDCLK_ENABLE);
+		}
 	} else {
 		/*
 		 * Enable SD clock.
@@ -1191,7 +1259,7 @@ sdhc_bus_width(sdmmc_chipset_handle_t sch, int width)
 	mutex_enter(&hp->intr_lock);
 
 	reg = HREAD1(hp, SDHC_HOST_CTL);
-	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 		reg &= ~(SDHC_4BIT_MODE|SDHC_ESDHC_8BIT_MODE);
 		if (width == 4)
 			reg |= SDHC_4BIT_MODE;
@@ -1231,7 +1299,7 @@ sdhc_card_enable_intr(sdmmc_chipset_handle_t sch, int enable)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 
-	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 		mutex_enter(&hp->intr_lock);
 		if (enable) {
 			HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
@@ -1249,7 +1317,7 @@ sdhc_card_intr_ack(sdmmc_chipset_handle_t sch)
 {
 	struct sdhc_host *hp = (struct sdhc_host *)sch;
 
-	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 		mutex_enter(&hp->intr_lock);
 		HSET2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
 		mutex_exit(&hp->intr_lock);
@@ -1264,10 +1332,12 @@ sdhc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
 	mutex_enter(&hp->intr_lock);
 	switch (signal_voltage) {
 	case SDMMC_SIGNAL_VOLTAGE_180:
-		HSET2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC))
+			HSET2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
 		break;
 	case SDMMC_SIGNAL_VOLTAGE_330:
-		HCLR2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC))
+			HCLR2(hp, SDHC_HOST_CTL2, SDHC_1_8V_SIGNAL_EN);
 		break;
 	default:
 		return EINVAL;
@@ -1423,7 +1493,8 @@ sdhc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		(void)sdhc_execute_tuning1(hp, hp->tuning_timing);
 	}
 
-	if (cmd->c_data && ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (cmd->c_data &&
+	    ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 		const uint16_t ready = SDHC_BUFFER_READ_READY | SDHC_BUFFER_WRITE_READY;
 		if (ISSET(hp->flags, SHF_USE_DMA)) {
 			HCLR2(hp, SDHC_NINTR_SIGNAL_EN, ready);
@@ -1608,7 +1679,7 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	DPRINTF(1,("%s: writing cmd: blksize=%d blkcnt=%d mode=%04x cmd=%04x\n",
 	    HDEVNAME(hp), blksize, blkcount, mode, command));
 
-	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 		blksize |= (MAX(0, PAGE_SHIFT - 12) & SDHC_DMA_BOUNDARY_MASK) <<
 		    SDHC_DMA_BOUNDARY_SHIFT;	/* PAGE_SIZE DMA boundary */
 	}
@@ -1656,8 +1727,13 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		}
 		bus_dmamap_sync(sc->sc_dmat, hp->adma_map, 0, PAGE_SIZE,
 		    BUS_DMASYNC_PREWRITE);
-		HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
-		HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA2);
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+			HCLR4(hp, SDHC_HOST_CTL, SDHC_USDHC_DMA_SELECT);
+			HSET4(hp, SDHC_HOST_CTL, SDHC_USDHC_DMA_SELECT_ADMA2);
+		} else {
+			HCLR1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT);
+			HSET1(hp, SDHC_HOST_CTL, SDHC_DMA_SELECT_ADMA2);
+		}
 
 		const bus_addr_t desc_addr = hp->adma_map->dm_segs[0].ds_addr;
 
@@ -1668,6 +1744,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		}
 	} else if (ISSET(mode, SDHC_DMA_ENABLE) &&
 	    !ISSET(sc->sc_flags, SDHC_FLAG_EXTERNAL_DMA)) {
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+			HCLR4(hp, SDHC_HOST_CTL, SDHC_USDHC_DMA_SELECT);
+		}
 		HWRITE4(hp, SDHC_DMA_ADDR, cmd->c_dmamap->dm_segs[0].ds_addr);
 	}
 
@@ -1678,7 +1757,19 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	if (ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)) {
 		HWRITE4(hp, SDHC_BLOCK_SIZE, blksize | (blkcount << 16));
 		HWRITE4(hp, SDHC_ARGUMENT, cmd->c_arg);
-		HWRITE4(hp, SDHC_TRANSFER_MODE, mode | (command << 16));
+		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
+			/* mode bits is in MIX_CTRL register on uSDHC */
+			HWRITE4(hp, SDHC_MIX_CTRL, mode |
+			    (HREAD4(hp, SDHC_MIX_CTRL) &
+			    ~(SDHC_MULTI_BLOCK_MODE |
+			    SDHC_READ_MODE |
+			    SDHC_AUTO_CMD12_ENABLE |
+			    SDHC_BLOCK_COUNT_ENABLE |
+			    SDHC_DMA_ENABLE)));
+			HWRITE4(hp, SDHC_TRANSFER_MODE, command << 16);
+		} else {
+			HWRITE4(hp, SDHC_TRANSFER_MODE, mode | (command << 16));
+		}
 	} else {
 		HWRITE2(hp, SDHC_BLOCK_SIZE, blksize);
 		HWRITE2(hp, SDHC_BLOCK_COUNT, blkcount);
@@ -1810,7 +1901,8 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 		imask = SDHC_BUFFER_READ_READY;
 		pmask = SDHC_BUFFER_READ_ENABLE;
-		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+		if (ISSET(hp->sc->sc_flags,
+		    SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 			pio_func = esdhc_read_data_pio;
 		} else {
 			pio_func = sdhc_read_data_pio;
@@ -1818,7 +1910,8 @@ sdhc_transfer_data_pio(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	} else {
 		imask = SDHC_BUFFER_WRITE_READY;
 		pmask = SDHC_BUFFER_WRITE_ENABLE;
-		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+		if (ISSET(hp->sc->sc_flags,
+		    SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 			pio_func = esdhc_write_data_pio;
 		} else {
 			pio_func = sdhc_write_data_pio;
@@ -2178,7 +2271,16 @@ sdhc_intr(void *arg)
 			uint32_t xstatus = HREAD4(hp, SDHC_NINTR_STATUS);
 			status = xstatus;
 			error = xstatus >> 16;
-			if (ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			if (ISSET(sc->sc_flags, SDHC_FLAG_USDHC) &&
+			    (xstatus & SDHC_TRANSFER_COMPLETE) &&
+			    !(xstatus & SDHC_DMA_INTERRUPT)) {
+				/* read again due to uSDHC errata */
+				status = xstatus = HREAD4(hp,
+				    SDHC_NINTR_STATUS);
+				error = xstatus >> 16;
+			}
+			if (ISSET(sc->sc_flags,
+			    SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 				if ((error & SDHC_NINTR_STATUS_MASK) != 0)
 					SET(status, SDHC_ERROR_INTERRUPT);
 			}
@@ -2223,7 +2325,8 @@ sdhc_intr(void *arg)
 			if (hp->sdmmc != NULL) {
 				sdmmc_needs_discover(hp->sdmmc);
 			}
-			if (ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			if (ISSET(sc->sc_flags,
+			    SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 				HCLR4(hp, SDHC_NINTR_STATUS_EN,
 				    status & (SDHC_CARD_REMOVAL|SDHC_CARD_INSERTION));
 				HCLR4(hp, SDHC_NINTR_SIGNAL_EN,
@@ -2247,7 +2350,8 @@ sdhc_intr(void *arg)
 		    SDHC_TRANSFER_COMPLETE|SDHC_DMA_INTERRUPT)) {
 			hp->intr_error_status |= error;
 			hp->intr_status |= status;
-			if (ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			if (ISSET(sc->sc_flags,
+			    SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)) {
 				HCLR4(hp, SDHC_NINTR_SIGNAL_EN,
 				    status & (SDHC_BUFFER_READ_READY|SDHC_BUFFER_WRITE_READY));
 			}
@@ -2257,7 +2361,7 @@ sdhc_intr(void *arg)
 		/*
 		 * Service SD card interrupts.
 		 */
-		if (!ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED)
+		if (!ISSET(sc->sc_flags, SDHC_FLAG_ENHANCED | SDHC_FLAG_USDHC)
 		    && ISSET(status, SDHC_CARD_INTERRUPT)) {
 			DPRINTF(0,("%s: card interrupt\n", HDEVNAME(hp)));
 			HCLR2(hp, SDHC_NINTR_STATUS_EN, SDHC_CARD_INTERRUPT);
