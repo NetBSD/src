@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.24 2015/12/08 12:51:04 christos Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.25 2015/12/31 09:12:57 dholland Exp $");
 #endif
 
 #include <stdio.h>
@@ -103,7 +103,10 @@ struct dateinfo {
 
 %type	<Number>	tDAY tDAYZONE tMINUTE_UNIT tMONTH tMONTH_UNIT
 %type	<Number>	tSEC_UNIT tSNUMBER tUNUMBER tZONE tTIME
-%type	<Meridian>	tMERIDIAN o_merid
+%type	<Meridian>	tMERIDIAN
+
+%type	<Number>	at_number
+%type	<Meridian>	o_merid
 
 %parse-param	{ struct dateinfo *param }
 %parse-param 	{ const char **yyInput }
@@ -112,289 +115,250 @@ struct dateinfo {
 
 %%
 
-spec	: /* NULL */
+spec:
+	  /* empty */
 	| spec item
-	;
+;
 
-item	: time {
-	    param->yyHaveTime++;
-	}
-	| time_numericzone {
-	    param->yyHaveTime++;
-	    param->yyHaveZone++;
-	}
-	| zone {
-	    param->yyHaveZone++;
-	}
-	| date {
-	    param->yyHaveDate++;
-	}
-	| day {
-	    param->yyHaveDay++;
-	}
-	| rel {
-	    param->yyHaveRel++;
-	}
-	| cvsstamp {
-	    param->yyHaveTime++;
-	    param->yyHaveDate++;
-	    param->yyHaveZone++;
-	}
-	| epochdate {
-	    param->yyHaveTime++;
-	    param->yyHaveDate++;
-	    param->yyHaveZone++;
-	}
+item:
+	  time			{ param->yyHaveTime++; }
+	| time_numericzone	{ param->yyHaveTime++; param->yyHaveZone++; }
+	| zone			{ param->yyHaveZone++; }
+	| date			{ param->yyHaveDate++; }
+	| day			{ param->yyHaveDay++; }
+	| rel			{ param->yyHaveRel++; }
+	| cvsstamp		{ param->yyHaveTime++; param->yyHaveDate++;
+				  param->yyHaveZone++; }
+	| epochdate		{ param->yyHaveTime++; param->yyHaveDate++; 
+				  param->yyHaveZone++; }
 	| number
-	;
+;
 
-cvsstamp: tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' tUNUMBER {
-	    param->yyYear = $1;
-	    if (param->yyYear < 100) param->yyYear += 1900;
-	    param->yyHaveFullYear = 1;
-	    param->yyMonth = $3;
-	    param->yyDay = $5;
-	    param->yyHour = $7;
-	    param->yyMinutes = $9;
-	    param->yySeconds = $11;
-	    param->yyDSTmode = DSToff;
-	    param->yyTimezone = 0;
-	}
-	;
-
-epochdate: AT_SIGN at_number {
-            time_t    when = $<Number>2;
-            struct tm tmbuf;
-            if (gmtime_r(&when, &tmbuf) != NULL) {
-		param->yyYear = tmbuf.tm_year + 1900;
-		param->yyMonth = tmbuf.tm_mon + 1;
-		param->yyDay = tmbuf.tm_mday;
-
-		param->yyHour = tmbuf.tm_hour;
-		param->yyMinutes = tmbuf.tm_min;
-		param->yySeconds = tmbuf.tm_sec;
-	    } else {
-		param->yyYear = EPOCH;
-		param->yyMonth = 1;
-		param->yyDay = 1;
-
-		param->yyHour = 0;
-		param->yyMinutes = 0;
-		param->yySeconds = 0;
-	    }
-	    param->yyHaveFullYear = 1;
-	    param->yyDSTmode = DSToff;
-	    param->yyTimezone = 0;
-	}
-	;
-
-at_number : tUNUMBER | tSNUMBER ;
-
-time	: tUNUMBER tMERIDIAN {
-	    param->yyHour = $1;
-	    param->yyMinutes = 0;
-	    param->yySeconds = 0;
-	    param->yyMeridian = $2;
-	}
-	| tUNUMBER ':' tUNUMBER o_merid {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yySeconds = 0;
-	    param->yyMeridian = $4;
-	}
-	| tUNUMBER ':' tUNUMBER ':' tUNUMBER o_merid {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yySeconds = $5;
-	    param->yyMeridian = $6;
-	}
-	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yySeconds = $5;
-	    param->yyMeridian = MER24;
-/* XXX: Do nothing with millis */
-	}
-	| tTIME {
-	    param->yyHour = $1;
-	    param->yyMinutes = 0;
-	    param->yySeconds = 0;
-	    param->yyMeridian = MER24;
-	    /* Tues midnight --> Weds 00:00, midnight Tues -> Tues 00:00 */
-	    if ($1 == 0 && param->yyHaveDay)
-	        param->yyDayNumber++;
-	}
-	;
-
-time_numericzone : tUNUMBER ':' tUNUMBER tSNUMBER {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yyMeridian = MER24;
-	    param->yyDSTmode = DSToff;
-	    param->yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
-	}
-	| tUNUMBER ':' tUNUMBER ':' tUNUMBER tSNUMBER {
-	    param->yyHour = $1;
-	    param->yyMinutes = $3;
-	    param->yySeconds = $5;
-	    param->yyMeridian = MER24;
-	    param->yyDSTmode = DSToff;
-	    param->yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
-	}
-	;
-
-zone	: tZONE {
-	    param->yyTimezone = $1;
-	    param->yyDSTmode = DSToff;
-	}
-	| tDAYZONE {
-	    param->yyTimezone = $1;
-	    param->yyDSTmode = DSTon;
-	}
-	|
-	  tZONE tDST {
-	    param->yyTimezone = $1;
-	    param->yyDSTmode = DSTon;
-	}
-	;
-
-day	: tDAY {
-	    param->yyDayOrdinal = 1;
-	    param->yyDayNumber = $1;
-	}
-	| tDAY ',' {
-	    param->yyDayOrdinal = 1;
-	    param->yyDayNumber = $1;
-	}
-	| tUNUMBER tDAY {
-	    param->yyDayOrdinal = $1;
-	    param->yyDayNumber = $2;
-	}
-	;
-
-date	: tUNUMBER '/' tUNUMBER {
-	    param->yyMonth = $1;
-	    param->yyDay = $3;
-	}
-	| tUNUMBER '/' tUNUMBER '/' tUNUMBER {
-	    if ($1 >= 100) {
+cvsstamp:
+	tUNUMBER '.' tUNUMBER '.' tUNUMBER '.' 
+				tUNUMBER '.' tUNUMBER '.' tUNUMBER {
 		param->yyYear = $1;
+		if (param->yyYear < 100) {
+			param->yyYear += 1900;
+		}
+		param->yyHaveFullYear = 1;
 		param->yyMonth = $3;
 		param->yyDay = $5;
-	    } else {
+		param->yyHour = $7;
+		param->yyMinutes = $9;
+		param->yySeconds = $11;
+		param->yyDSTmode = DSToff;
+		param->yyTimezone = 0;
+	}
+;
+
+epochdate:
+	AT_SIGN at_number {
+		time_t	when = $2;
+		struct tm tmbuf;
+
+		if (gmtime_r(&when, &tmbuf) != NULL) {
+			param->yyYear = tmbuf.tm_year + 1900;
+			param->yyMonth = tmbuf.tm_mon + 1;
+			param->yyDay = tmbuf.tm_mday;
+
+			param->yyHour = tmbuf.tm_hour;
+			param->yyMinutes = tmbuf.tm_min;
+			param->yySeconds = tmbuf.tm_sec;
+		} else {
+			param->yyYear = EPOCH;
+			param->yyMonth = 1;
+			param->yyDay = 1;
+
+			param->yyHour = 0;
+			param->yyMinutes = 0;
+			param->yySeconds = 0;
+		}
+		param->yyHaveFullYear = 1;
+		param->yyDSTmode = DSToff;
+		param->yyTimezone = 0;
+	}
+;
+
+at_number:
+	  tUNUMBER
+	| tSNUMBER
+;
+
+time:
+	  tUNUMBER tMERIDIAN {
+		param->yyHour = $1;
+		param->yyMinutes = 0;
+		param->yySeconds = 0;
+		param->yyMeridian = $2;
+	  }
+	| tUNUMBER ':' tUNUMBER o_merid {
+		param->yyHour = $1;
+		param->yyMinutes = $3;
+		param->yySeconds = 0;
+		param->yyMeridian = $4;
+	  }
+	| tUNUMBER ':' tUNUMBER ':' tUNUMBER o_merid {
+		param->yyHour = $1;
+		param->yyMinutes = $3;
+		param->yySeconds = $5;
+		param->yyMeridian = $6;
+	  }
+	| tUNUMBER ':' tUNUMBER ':' tUNUMBER '.' tUNUMBER {
+		param->yyHour = $1;
+		param->yyMinutes = $3;
+		param->yySeconds = $5;
+		param->yyMeridian = MER24;
+		/* XXX: Do nothing with millis */
+	  }
+	| tTIME {
+		param->yyHour = $1;
+		param->yyMinutes = 0;
+		param->yySeconds = 0;
+		param->yyMeridian = MER24;
+		/* Tues midnight --> Weds 00:00, midnight Tues -> Tues 00:00 */
+		if ($1 == 0 && param->yyHaveDay)
+			param->yyDayNumber++;
+	}
+;
+
+time_numericzone:
+	  tUNUMBER ':' tUNUMBER tSNUMBER {
+		param->yyHour = $1;
+		param->yyMinutes = $3;
+		param->yyMeridian = MER24;
+		param->yyDSTmode = DSToff;
+		param->yyTimezone = - ($4 % 100 + ($4 / 100) * 60);
+	  }
+	| tUNUMBER ':' tUNUMBER ':' tUNUMBER tSNUMBER {
+		param->yyHour = $1;
+		param->yyMinutes = $3;
+		param->yySeconds = $5;
+		param->yyMeridian = MER24;
+		param->yyDSTmode = DSToff;
+		param->yyTimezone = - ($6 % 100 + ($6 / 100) * 60);
+	}
+;
+
+zone:
+	  tZONE		{ param->yyTimezone = $1; param->yyDSTmode = DSToff; }
+	| tDAYZONE	{ param->yyTimezone = $1; param->yyDSTmode = DSTon; }
+	| tZONE tDST	{ param->yyTimezone = $1; param->yyDSTmode = DSTon; }
+;
+
+day:
+	  tDAY		{ param->yyDayOrdinal = 1; param->yyDayNumber = $1; }
+	| tDAY ','	{ param->yyDayOrdinal = 1; param->yyDayNumber = $1; }
+	| tUNUMBER tDAY	{ param->yyDayOrdinal = $1; param->yyDayNumber = $2; }
+;
+
+date:
+	  tUNUMBER '/' tUNUMBER {
 		param->yyMonth = $1;
 		param->yyDay = $3;
-		param->yyYear = $5;
-	    }
-	}
-	| tUNUMBER tSNUMBER tSNUMBER {
-	    /* ISO 8601 format.  yyyy-mm-dd.  */
-	    param->yyYear = $1;
-	    param->yyHaveFullYear = 1;
-	    param->yyMonth = -$2;
-	    param->yyDay = -$3;
-	}
-	| tUNUMBER tMONTH tSNUMBER {
-	    /* e.g. 17-JUN-1992.  */
-	    param->yyDay = $1;
-	    param->yyMonth = $2;
-	    param->yyYear = -$3;
-	}
-	| tMONTH tUNUMBER {
-	    param->yyMonth = $1;
-	    param->yyDay = $2;
-	}
-	| tMONTH tUNUMBER ',' tUNUMBER {
-	    param->yyMonth = $1;
-	    param->yyDay = $2;
-	    param->yyYear = $4;
-	}
-	| tUNUMBER tMONTH {
-	    param->yyMonth = $2;
-	    param->yyDay = $1;
-	}
-	| tUNUMBER tMONTH tUNUMBER {
-	    param->yyMonth = $2;
-	    if ($1 < 35) {
-	        param->yyDay = $1;
-	        param->yyYear = $3;
-	    } else {
-	        param->yyDay = $3;
-	        param->yyYear = $1;
-	    }
-	}
-	;
-
-rel	: relunit tAGO {
-	    param->yyRelSeconds = -param->yyRelSeconds;
-	    param->yyRelMonth = -param->yyRelMonth;
-	}
-	| relunit
-	;
-
-relunit	: tUNUMBER tMINUTE_UNIT {
-	    param->yyRelSeconds += $1 * $2 * 60L;
-	}
-	| tSNUMBER tMINUTE_UNIT {
-	    param->yyRelSeconds += $1 * $2 * 60L;
-	}
-	| tMINUTE_UNIT {
-	    param->yyRelSeconds += $1 * 60L;
-	}
-	| tSNUMBER tSEC_UNIT {
-	    param->yyRelSeconds += $1;
-	}
-	| tUNUMBER tSEC_UNIT {
-	    param->yyRelSeconds += $1;
-	}
-	| tSEC_UNIT {
-	    param->yyRelSeconds++;
-	}
-	| tSNUMBER tMONTH_UNIT {
-	    param->yyRelMonth += $1 * $2;
-	}
-	| tUNUMBER tMONTH_UNIT {
-	    param->yyRelMonth += $1 * $2;
-	}
-	| tMONTH_UNIT {
-	    param->yyRelMonth += $1;
-	}
-	;
-
-number	: tUNUMBER {
-	    if (param->yyHaveTime && param->yyHaveDate && !param->yyHaveRel)
-		param->yyYear = $1;
-	    else {
-		if($1>10000) {
-		    param->yyHaveDate++;
-		    param->yyDay= ($1)%100;
-		    param->yyMonth= ($1/100)%100;
-		    param->yyYear = $1/10000;
+	  }
+	| tUNUMBER '/' tUNUMBER '/' tUNUMBER {
+		if ($1 >= 100) {
+			param->yyYear = $1;
+			param->yyMonth = $3;
+			param->yyDay = $5;
+		} else {
+			param->yyMonth = $1;
+			param->yyDay = $3;
+			param->yyYear = $5;
 		}
-		else {
-		    param->yyHaveTime++;
-		    if ($1 < 100) {
-			param->yyHour = $1;
-			param->yyMinutes = 0;
-		    }
-		    else {
-		    	param->yyHour = $1 / 100;
-		    	param->yyMinutes = $1 % 100;
-		    }
-		    param->yySeconds = 0;
-		    param->yyMeridian = MER24;
-	        }
-	    }
-	}
-	;
+	  }
+	| tUNUMBER tSNUMBER tSNUMBER {
+		/* ISO 8601 format.  yyyy-mm-dd.  */
+		param->yyYear = $1;
+		param->yyHaveFullYear = 1;
+		param->yyMonth = -$2;
+		param->yyDay = -$3;
+	  }
+	| tUNUMBER tMONTH tSNUMBER {
+		/* e.g. 17-JUN-1992.  */
+		param->yyDay = $1;
+		param->yyMonth = $2;
+		param->yyYear = -$3;
+	  }
+	| tMONTH tUNUMBER {
+		param->yyMonth = $1;
+		param->yyDay = $2;
+	  }
+	| tMONTH tUNUMBER ',' tUNUMBER {
+		param->yyMonth = $1;
+		param->yyDay = $2;
+		param->yyYear = $4;
+	  }
+	| tUNUMBER tMONTH {
+		param->yyMonth = $2;
+		param->yyDay = $1;
+	  }
+	| tUNUMBER tMONTH tUNUMBER {
+		param->yyMonth = $2;
+		if ($1 < 35) {
+			param->yyDay = $1;
+			param->yyYear = $3;
+		} else {
+			param->yyDay = $3;
+			param->yyYear = $1;
+		}
+	  }
+;
 
-o_merid	: /* NULL */ {
-	    $$ = MER24;
+rel:
+	  relunit
+	| relunit tAGO {
+		param->yyRelSeconds = -param->yyRelSeconds;
+		param->yyRelMonth = -param->yyRelMonth;
+	  }
+;
+
+relunit:
+	  tUNUMBER tMINUTE_UNIT	{ param->yyRelSeconds += $1 * $2 * 60L; }
+	| tSNUMBER tMINUTE_UNIT	{ param->yyRelSeconds += $1 * $2 * 60L; }
+	| tMINUTE_UNIT		{ param->yyRelSeconds += $1 * 60L; }
+	| tSNUMBER tSEC_UNIT	{ param->yyRelSeconds += $1; }
+	| tUNUMBER tSEC_UNIT	{ param->yyRelSeconds += $1; }
+	| tSEC_UNIT		{ param->yyRelSeconds++;  }
+	| tSNUMBER tMONTH_UNIT	{ param->yyRelMonth += $1 * $2; }
+	| tUNUMBER tMONTH_UNIT	{ param->yyRelMonth += $1 * $2; }
+	| tMONTH_UNIT		{ param->yyRelMonth += $1; }
+;
+
+number:
+	tUNUMBER {
+		if (param->yyHaveTime && param->yyHaveDate &&
+		    !param->yyHaveRel) {
+			param->yyYear = $1;
+		} else {
+			if ($1 > 10000) {
+				param->yyHaveDate++;
+				param->yyDay = ($1)%100;
+				param->yyMonth = ($1/100)%100;
+				param->yyYear = $1/10000;
+			}
+			else {
+				param->yyHaveTime++;
+				if ($1 < 100) {
+					param->yyHour = $1;
+					param->yyMinutes = 0;
+				}
+				else {
+					param->yyHour = $1 / 100;
+					param->yyMinutes = $1 % 100;
+				}
+				param->yySeconds = 0;
+				param->yyMeridian = MER24;
+			}
+		}
 	}
-	| tMERIDIAN {
-	    $$ = $1;
-	}
-	;
+;
+
+o_merid:
+	  /* empty */		{ $$ = MER24; }
+	| tMERIDIAN		{ $$ = $1; }
+;
 
 %%
 
