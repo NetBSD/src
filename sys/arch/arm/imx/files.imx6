@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.5 2015/03/27 05:31:23 hkenken Exp $
+#	$NetBSD: files.imx6,v 1.6 2015/12/31 12:14:01 ryo Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -15,11 +15,11 @@ file	arch/arm/arm32/arm32_reboot.c
 file	arch/arm/arm32/irq_dispatch.S
 
 define	bus_dma_generic
-
-file	arch/arm/imx/imx_space.c
+file	arch/arm/arm32/armv7_generic_space.c
+file	arch/arm/arm/bus_space_a4x.S
 file	arch/arm/imx/imx_dma.c			bus_dma_generic needs-flag
-file	arch/arm/imx/imx6_board.c
 
+file	arch/arm/imx/imx6_board.c
 
 # iMX6 AXI/AHB bus interface and SoC domains
 device	axi { [addr=-1], [size=0], [irq=-1], [irqbase=-1]} : bus_space_generic
