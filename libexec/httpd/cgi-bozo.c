@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.31 2015/12/29 04:21:46 mrg Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.32 2015/12/31 04:39:16 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -248,8 +248,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	char	date[40];
 	bozoheaders_t *headp;
 	const char *type, *clen, *info, *cgihandler;
-	char	*query, *s, *t, *path, *env, *file, *url;
-	char	command[MAXPATHLEN];
+	char	*query, *s, *t, *path, *env, *command, *file, *url;
 	char	**envp, **curenvp, *argv[4];
 	char	*uri;
 	size_t	len;
@@ -275,8 +274,6 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		file = bozostrdup(httpd, request, uri);
 	else
 		bozoasprintf(httpd, &file, "/%s", uri);
-	if (file == NULL)
-		return 0;
 
 	if (request->hr_query && strlen(request->hr_query))
 		query = bozostrdup(httpd, request, request->hr_query);
@@ -287,13 +284,12 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		     file,
 		     query ? "?" : "",
 		     query ? query : "");
-	if (url == NULL)
-		goto out;
 	debug((httpd, DEBUG_NORMAL, "bozo_process_cgi: url `%s'", url));
 
 	path = NULL;
 	envp = NULL;
 	cgihandler = NULL;
+	command = NULL;
 	info = NULL;
 
 	len = strlen(url);
@@ -318,13 +314,12 @@ bozo_process_cgi(bozo_httpreq_t *request)
 
 	ix = 0;
 	if (cgihandler) {
-		snprintf(command, sizeof(command), "%s", file + 1);
+		command = file + 1;
 		path = bozostrdup(httpd, request, cgihandler);
 		argv[ix++] = path;
 			/* argv[] = [ path, command, query, NULL ] */
 	} else {
-		snprintf(command, sizeof(command), "%s",
-		    file + CGIBIN_PREFIX_LEN + 1);
+		command = file + CGIBIN_PREFIX_LEN + 1;
 		if ((s = strchr(command, '/')) != NULL) {
 			info = bozostrdup(httpd, request, s);
 			*s = '\0';
@@ -430,9 +425,6 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		bozo_setenv(httpd, "REDIRECT_STATUS", "200", curenvp++);
 	bozo_auth_cgi_setenv(request, &curenvp);
 
-	free(file);
-	free(url);
-
 	debug((httpd, DEBUG_FAT, "bozo_process_cgi: going exec %s, %s %s %s",
 	    path, argv[0], strornull(argv[1]), strornull(argv[2])));
 
@@ -465,6 +457,10 @@ bozo_process_cgi(bozo_httpreq_t *request)
 		/* NOT REACHED */
 		bozoerr(httpd, 1, "child execve returned?!");
 	}
+
+	free(query);
+	free(file);
+	free(url);
 
 	close(sv[1]);
 
