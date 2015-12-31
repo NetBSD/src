@@ -1,4 +1,4 @@
-# $NetBSD: NITROGEN6X,v 1.6 2015/08/12 07:53:57 maxv Exp $
+# $NetBSD: NITROGEN6X,v 1.7 2015/12/31 11:53:18 ryo Exp $
 #
 # Nitrogen6X
 # - http://boundarydevices.com/products/nitrogen6x-board-imx6-arm-cortex-a9-sbc/
@@ -315,13 +315,13 @@ midi*		at midibus?
 # SD/MMC controller
 #sdhc0		at axi? addr 0x02190000 irq 54		# uSDHC1
 #sdhc1		at axi? addr 0x02194000 irq 55		# uSDHC2
-#sdhc2		at axi? addr 0x02198000 irq 56		# uSDHC3
-#sdhc3		at axi? addr 0x0219c000 irq 57		# uSDHC4
-#sdmmc*		at sdhc?
+sdhc2		at axi? addr 0x02198000 irq 56		# uSDHC3
+sdhc3		at axi? addr 0x0219c000 irq 57		# uSDHC4
+sdmmc*		at sdhc?
 #options 	SDHC_DEBUG
 #options 	SDMMC_DEBUG
-#
-#ld*		at sdmmc?			# MMC/SD card
+
+ld*		at sdmmc?			# MMC/SD card
 
 
 # Pseudo-Devices
