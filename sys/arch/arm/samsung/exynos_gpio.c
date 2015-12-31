@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_gpio.c,v 1.22 2015/12/30 04:30:27 marty Exp $ */
+/*	$NetBSD: exynos_gpio.c,v 1.23 2015/12/31 03:50:34 marty Exp $ */
 
 /*-
 * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.22 2015/12/30 04:30:27 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_gpio.c,v 1.23 2015/12/31 03:50:34 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -392,7 +392,6 @@ exynos_gpio_fdt_acquire(device_t dev, const void *data, size_t len, int flags)
 	if (bank == NULL)
 		return NULL;
 
-	printf("gpio pin %s-%d being acquired\n", bank->bank_name, pin);
 	gpin = kmem_alloc(sizeof(*gpin), KM_SLEEP);
 	gpin->pin_sc = bank->bank_sc;
 	gpin->pin_bank = bank;
