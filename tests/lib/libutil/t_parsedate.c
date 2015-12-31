@@ -1,4 +1,4 @@
-/* $NetBSD: t_parsedate.c,v 1.18 2015/12/31 10:18:00 dholland Exp $ */
+/* $NetBSD: t_parsedate.c,v 1.19 2015/12/31 10:56:13 dholland Exp $ */
 /*-
  * Copyright (c) 2010, 2015 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_parsedate.c,v 1.18 2015/12/31 10:18:00 dholland Exp $");
+__RCSID("$NetBSD: t_parsedate.c,v 1.19 2015/12/31 10:56:13 dholland Exp $");
 
 #include <atf-c.h>
 #include <errno.h>
@@ -245,10 +245,11 @@ ATF_TC_BODY(relative, tc)
 #define REL_CHECK(s, now, tm) do {					\
 	time_t p, q;							\
 	char pb[30], qb[30];						\
-	ATF_CHECK_EQ_MSG((p = parsedate(s, &now, NULL)),		\
-	    (q = mktime(&tm)),						\
-	    "From %s Expected %jd: %24.24s Obtained %jd: %24.24s", s,	\
-	    (uintmax_t)p, ctime_r(&p, pb), (uintmax_t)q, 		\
+	p = parsedate(s, &now, NULL);					\
+	q = mktime(&tm);						\
+	ATF_CHECK_EQ_MSG(p, q,						\
+	    "From \"%s\", obtained %jd (%24.24s); expected %jd (%24.24s)", \
+	    s, (uintmax_t)p, ctime_r(&p, pb), (uintmax_t)q, 		\
 	    ctime_r(&q, qb));						\
     } while (/*CONSTCOND*/0)
 
