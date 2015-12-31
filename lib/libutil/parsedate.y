@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.26 2015/12/31 10:31:07 dholland Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.27 2015/12/31 10:52:06 dholland Exp $");
 #endif
 
 #include <stdio.h>
@@ -728,19 +728,31 @@ RelativeMonth(
 {
     struct tm	tm;
     time_t	Month;
-    time_t	Year;
+    time_t	Then;
 
     if (RelMonth == 0)
 	return 0;
+    /*
+     * It doesn't matter what timezone we use to do this computation,
+     * as long as we use the same one to reassemble the time that we
+     * used to disassemble it. So always use localtime and mktime. In
+     * particular, don't use Convert() to reassemble, because it will
+     * not only reassemble with the wrong timezone but it will also
+     * fail if we do e.g. three months from March 31 yielding July 1.
+     */
+    (void)Timezone;
+
     if (localtime_r(&Start, &tm) == NULL)
 	return -1;
+
     Month = 12 * (tm.tm_year + 1900) + tm.tm_mon + RelMonth;
-    Year = Month / 12;
-    Month = Month % 12 + 1;
-    return DSTcorrect(Start,
-	    Convert(Month, (time_t)tm.tm_mday, Year,
-		(time_t)tm.tm_hour, (time_t)tm.tm_min, (time_t)tm.tm_sec,
-		Timezone, MER24, DSTmaybe));
+    tm.tm_year = (Month / 12) - 1900;
+    tm.tm_mon = Month % 12;
+    errno = 0;
+    Then = mktime(&tm);
+    if (Then == -1 && errno != 0)
+	return -1;
+    return DSTcorrect(Start, Then);
 }
 
 
