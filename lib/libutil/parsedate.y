@@ -14,7 +14,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: parsedate.y,v 1.25 2015/12/31 09:12:57 dholland Exp $");
+__RCSID("$NetBSD: parsedate.y,v 1.26 2015/12/31 10:31:07 dholland Exp $");
 #endif
 
 #include <stdio.h>
@@ -686,15 +686,15 @@ DSTcorrect(
 {
     time_t	StartDay;
     time_t	FutureDay;
-    struct tm  *tm;
+    struct tm	tm;
 
-    if ((tm = localtime(&Start)) == NULL)
+    if (localtime_r(&Start, &tm) == NULL)
 	return -1;
-    StartDay = (tm->tm_hour + 1) % 24;
+    StartDay = (tm.tm_hour + 1) % 24;
 
-    if ((tm = localtime(&Future)) == NULL)
+    if (localtime_r(&Future, &tm) == NULL)
 	return -1;
-    FutureDay = (tm->tm_hour + 1) % 24;
+    FutureDay = (tm.tm_hour + 1) % 24;
 
     return (Future - Start) + (StartDay - FutureDay) * 60L * 60L;
 }
@@ -707,14 +707,13 @@ RelativeDate(
     time_t	DayNumber
 )
 {
-    struct tm	*tm;
+    struct tm	tm;
     time_t	now;
 
     now = Start;
-    tm = localtime(&now);
-    if (tm == NULL)
+    if (localtime_r(&now, &tm) == NULL)
 	return -1;
-    now += SECSPERDAY * ((DayNumber - tm->tm_wday + 7) % 7);
+    now += SECSPERDAY * ((DayNumber - tm.tm_wday + 7) % 7);
     now += 7 * SECSPERDAY * (DayOrdinal <= 0 ? DayOrdinal : DayOrdinal - 1);
     return DSTcorrect(Start, now);
 }
@@ -727,21 +726,20 @@ RelativeMonth(
     time_t	Timezone
 )
 {
-    struct tm	*tm;
+    struct tm	tm;
     time_t	Month;
     time_t	Year;
 
     if (RelMonth == 0)
 	return 0;
-    tm = localtime(&Start);
-    if (tm == NULL)
+    if (localtime_r(&Start, &tm) == NULL)
 	return -1;
-    Month = 12 * (tm->tm_year + 1900) + tm->tm_mon + RelMonth;
+    Month = 12 * (tm.tm_year + 1900) + tm.tm_mon + RelMonth;
     Year = Month / 12;
     Month = Month % 12 + 1;
     return DSTcorrect(Start,
-	    Convert(Month, (time_t)tm->tm_mday, Year,
-		(time_t)tm->tm_hour, (time_t)tm->tm_min, (time_t)tm->tm_sec,
+	    Convert(Month, (time_t)tm.tm_mday, Year,
+		(time_t)tm.tm_hour, (time_t)tm.tm_min, (time_t)tm.tm_sec,
 		Timezone, MER24, DSTmaybe));
 }
 
