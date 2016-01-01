@@ -1,4 +1,4 @@
-# $NetBSD: usb_hid_usages,v 1.6 2012/05/09 16:21:06 khorben Exp $
+# $NetBSD: usb_hid_usages,v 1.7 2016/01/01 19:14:45 jakllsch Exp $
 #
 # USB HID usage table
 # Syntax:
@@ -1138,7 +1138,7 @@
 16	Unicode
 	*	Unicode Char u%04x
 
-20	Alphnumeric Display
+20	Alphanumeric Display
 	0x00	Undefined
 	0x01	Alphanumeric Display
 	0x02	Bitmapped Display
