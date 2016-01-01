@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.256 2015/08/24 22:50:32 pooka Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.257 2016/01/01 18:58:58 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.256 2015/08/24 22:50:32 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.257 2016/01/01 18:58:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -328,7 +328,8 @@ binstailfree(buf_t *bp, struct bqueue *dp)
 {
 
 	KASSERT(mutex_owned(&bufcache_lock));
-	KASSERT(bp->b_freelistindex == -1);
+	KASSERTMSG(bp->b_freelistindex == -1, "double free of buffer? "
+	    "bp=%p, b_freelistindex=%d\n", bp, bp->b_freelistindex);
 	TAILQ_INSERT_TAIL(&dp->bq_queue, bp, b_freelist);
 	dp->bq_bytes += bp->b_bufsize;
 	bp->b_freelistindex = dp - bufqueues;
