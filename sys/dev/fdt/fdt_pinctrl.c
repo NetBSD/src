@@ -1,7 +1,7 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.1 2015/12/30 04:23:39 marty Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.2 2016/01/01 22:35:44 marty Exp $ */
 
 /*-
- * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2015 Martin Fouts
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.1 2015/12/30 04:23:39 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.2 2016/01/01 22:35:44 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,8 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.1 2015/12/30 04:23:39 marty Exp $"
 #include <dev/fdt/fdtvar.h>
 
 struct fdtbus_pinctrl_controller {
-	device_t pc_dev;
 	int pc_phandle;
+	void *pc_cookie;
 	const struct fdtbus_pinctrl_controller_func *pc_funcs;
 
 	struct fdtbus_pinctrl_controller *pc_next;
@@ -47,13 +47,13 @@ struct fdtbus_pinctrl_controller {
 static struct fdtbus_pinctrl_controller *fdtbus_pc = NULL;
 
 int
-fdtbus_register_pinctrl_controller(device_t dev, int phandle,
+fdtbus_register_pinctrl_config(void *cookie, int phandle,
     const struct fdtbus_pinctrl_controller_func *funcs)
 {
 	struct fdtbus_pinctrl_controller *pc;
 
 	pc = kmem_alloc(sizeof(*pc), KM_SLEEP);
-	pc->pc_dev = dev;
+	pc->pc_cookie = cookie;
 	pc->pc_phandle = phandle;
 	pc->pc_funcs = funcs;
 
@@ -63,49 +63,70 @@ fdtbus_register_pinctrl_controller(device_t dev, int phandle,
 	return 0;
 }
 
-struct fdtbus_pinctrl_pin *
-fdtbus_pinctrl_acquire(int phandle, const char *prop)
+static struct fdtbus_pinctrl_controller *
+fdtbus_pinctrl_lookup(int phandle)
 {
 	struct fdtbus_pinctrl_controller *pc;
-	struct fdtbus_pinctrl_pin *gp;
 
-	gp = kmem_alloc(sizeof(*gp), KM_SLEEP);
-	for (pc = fdtbus_pc; pc; pc = pc->pc_next) {
-		gp->pp_pc = pc;
-		gp->pp_priv = pc->pc_funcs->acquire(pc->pc_dev, prop);
-		if (gp->pp_priv != NULL)
-			break;
+	for (pc = fdtbus_pc; pc; pc = pc->pc_next)
+		if (pc->pc_phandle == phandle)
+			return pc;
+
+	return NULL;
+}
+
+int
+fdtbus_pinctrl_set_config_index(int phandle, u_int index)
+{
+	char buf[80];
+	int len, handle;
+	struct fdtbus_pinctrl_controller *pc;
+
+	snprintf(buf, 80, "pinctrl-%d", index);
+
+	len = OF_getprop(phandle, buf, (char *)&handle,
+                        sizeof(handle));
+	if (len != sizeof(int)) {
+		printf("%s: couldn't get %s.\n", __func__, buf);
+               return -1;
+       }
+
+	handle = fdtbus_get_phandle_from_native(be32toh(handle));
+
+	pc = fdtbus_pinctrl_lookup(handle);
+	if (!pc) {
+		printf("%s: Couldn't get handle %d for %s\n", __func__, handle,
+		       buf);
+		return -1;
 	}
 
-	if (gp->pp_priv == NULL) {
-		kmem_free(gp, sizeof(*gp));
-		return NULL;
+	return pc->pc_funcs->set_config(pc->pc_cookie);
+}
+
+int
+fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
+{
+	int index = 0;
+	int len;
+	char *result;
+	char *next;
+
+	len = OF_getproplen(phandle, "pinctrl-names");
+	if (len <= 0)
+		return -1;
+	result = kmem_zalloc(len, KM_SLEEP);
+	OF_getprop(phandle, "pinctrl-names", result, len);
+
+	next = result;
+	while (next - result < len) {
+		if (!strcmp(next, cfgname)) {
+			return fdtbus_pinctrl_set_config_index(phandle, index);
+		}
+		index++;
+		while (*next)
+			next++;
+		next++;
 	}
 
-	return gp;
-}
-
-void
-fdtbus_pinctrl_release(struct fdtbus_pinctrl_pin *gp)
-{
-	struct fdtbus_pinctrl_controller *pc = gp->pp_pc;
-
-	pc->pc_funcs->release(pc->pc_dev, gp->pp_priv);
-	kmem_free(gp, sizeof(*gp));
-}
-
-void
-fdtbus_pinctrl_get_cfg(struct fdtbus_pinctrl_pin *gp, void *cookie)
-{
-	struct fdtbus_pinctrl_controller *pc = gp->pp_pc;
-
-	pc->pc_funcs->get(gp, cookie);
-}
-
-void
-fdtbus_pinctrl_set_cfg(struct fdtbus_pinctrl_pin *gp, void *cookie)
-{
-	struct fdtbus_pinctrl_controller *pc = gp->pp_pc;
-
-	pc->pc_funcs->set(gp, cookie);
+	return -1;
 }
