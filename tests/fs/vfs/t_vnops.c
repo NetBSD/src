@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.49 2015/04/09 19:47:05 riastradh Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.50 2016/01/01 15:13:57 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -434,6 +434,47 @@ rename_reg_nodir(const atf_tc_t *tc, const char *mp)
 
 	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename("file2", NULL) == -1);
 	ATF_CHECK_ERRNO(EFAULT, rump_sys_rename(NULL, "file2") == -1);
+
+	rump_sys_chdir("/");
+}
+
+static void
+create_many(const atf_tc_t *tc, const char *mp)
+{
+	char buf[64];
+	int nfiles = 2324; /* #Nancy */
+	int i;
+
+	/* fs doesn't support many files */
+	if (FSTYPE_SYSVBFS(tc))
+		nfiles = 5;
+
+	/* takes forever with many files */
+	if (FSTYPE_MSDOS(tc))
+		nfiles /= 4;
+
+	RL(rump_sys_chdir(mp));
+
+	/* msdosfs doesn't like many entries in the root directory */
+	RL(rump_sys_mkdir("subdir", 0777));
+	RL(rump_sys_chdir("subdir"));
+
+	/* create them */
+#define TESTFN "this_is_the_filename"
+	for (i = 0; i < nfiles; i++) {
+		int fd;
+
+		sprintf(buf, TESTFN "%d\n", i);
+		RL(fd = rump_sys_open(buf, O_RDWR|O_CREAT|O_EXCL, 0666));
+		RL(rump_sys_close(fd));
+	}
+
+	/* wipe them out */
+	for (i = 0; i < nfiles; i++) {
+		sprintf(buf, TESTFN "%d\n", i);
+		RL(rump_sys_unlink(buf));
+	}
+#undef TESTFN
 
 	rump_sys_chdir("/");
 }
@@ -958,6 +999,10 @@ ATF_TC_FSAPPLY(access_simple, "access(2)");
 ATF_TC_FSAPPLY(read_directory, "read(2) on directories");
 ATF_TC_FSAPPLY(lstat_symlink, "lstat(2) values for symbolic links");
 
+#undef FSTEST_IMGSIZE
+#define FSTEST_IMGSIZE (1024*1024*64)
+ATF_TC_FSAPPLY(create_many, "create many directory entries");
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -969,6 +1014,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_FSAPPLY(rename_dir);
 	ATF_TP_FSAPPLY(rename_dotdot);
 	ATF_TP_FSAPPLY(rename_reg_nodir);
+	ATF_TP_FSAPPLY(create_many);
 	ATF_TP_FSAPPLY(create_nametoolong);
 	ATF_TP_FSAPPLY(create_exist);
 	ATF_TP_FSAPPLY(rename_nametoolong);
