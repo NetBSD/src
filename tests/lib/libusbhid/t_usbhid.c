@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.1 2016/01/01 21:38:54 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.2 2016/01/01 22:47:34 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.1 2016/01/01 21:38:54 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.2 2016/01/01 22:47:34 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -199,6 +199,12 @@ ATF_TC_BODY(check_hid_usage, tc)
 	    0xff2affff);
 }
 
+#define MYd_ATF_CHECK_EQ(d, v) \
+	ATF_CHECK_EQ_MSG(d, v, "== %d", (d))
+
+#define MYu_ATF_CHECK_EQ(d, v) \
+	ATF_CHECK_EQ_MSG(d, v, "== %u", (d))
+
 ATF_TC_HEAD(check_hid_logical_range, tc)
 {
 
@@ -218,16 +224,16 @@ ATF_TC_BODY(check_hid_logical_range, tc)
 	    __arraycount(range_test_report_descriptor))) != NULL);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000001U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ(hi.logical_minimum, -128);
-	ATF_CHECK_EQ(hi.logical_maximum, 127);
+	MYd_ATF_CHECK_EQ(hi.logical_minimum, -128);
+	MYd_ATF_CHECK_EQ(hi.logical_maximum, 127);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000002U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ(hi.logical_minimum, -32768);
-	ATF_CHECK_EQ(hi.logical_maximum, 32767);
+	MYd_ATF_CHECK_EQ(hi.logical_minimum, -32768);
+	MYd_ATF_CHECK_EQ(hi.logical_maximum, 32767);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000003U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ(hi.logical_minimum, -2147483648);
-	ATF_CHECK_EQ(hi.logical_maximum, 2147483647);
+	MYd_ATF_CHECK_EQ(hi.logical_minimum, -2147483648);
+	MYd_ATF_CHECK_EQ(hi.logical_maximum, 2147483647);
 
 	hid_dispose_report_desc(hrd);
 	hrd = NULL;
@@ -238,16 +244,16 @@ ATF_TC_BODY(check_hid_logical_range, tc)
 
 	ATF_REQUIRE(hid_locate(hrd, 0xff000011U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
-	ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 255);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 255);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000012U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
-	ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 65535);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 65535);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000013U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
-	ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 4294967295);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 4294967295);
 
 	hid_dispose_report_desc(hrd);
 	hrd = NULL;
@@ -272,16 +278,16 @@ ATF_TC_BODY(check_hid_physical_range, tc)
 	    __arraycount(range_test_report_descriptor))) != NULL);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000001U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ(hi.physical_minimum, -128);
-	ATF_CHECK_EQ(hi.physical_maximum, 127);
+	MYd_ATF_CHECK_EQ(hi.physical_minimum, -128);
+	MYd_ATF_CHECK_EQ(hi.physical_maximum, 127);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000002U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ(hi.physical_minimum, -32768);
-	ATF_CHECK_EQ(hi.physical_maximum, 32767);
+	MYd_ATF_CHECK_EQ(hi.physical_minimum, -32768);
+	MYd_ATF_CHECK_EQ(hi.physical_maximum, 32767);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000003U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ(hi.physical_minimum, -2147483648);
-	ATF_CHECK_EQ(hi.physical_maximum, 2147483647);
+	MYd_ATF_CHECK_EQ(hi.physical_minimum, -2147483648);
+	MYd_ATF_CHECK_EQ(hi.physical_maximum, 2147483647);
 
 	hid_dispose_report_desc(hrd);
 	hrd = NULL;
@@ -292,16 +298,16 @@ ATF_TC_BODY(check_hid_physical_range, tc)
 
 	ATF_REQUIRE(hid_locate(hrd, 0xff000011U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
-	ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 255);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 255);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000012U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
-	ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 65535);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 65535);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000013U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
-	ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 4294967295);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
+	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 4294967295);
 
 	hid_dispose_report_desc(hrd);
 	hrd = NULL;
@@ -312,12 +318,6 @@ ATF_TC_HEAD(check_hid_get_data, tc)
 
 	atf_tc_set_md_var(tc, "descr", "Test hid_get_data results");
 }
-
-#define MYd_ATF_CHECK_EQ(data, value) \
-	ATF_CHECK_EQ_MSG(data, value, " == %d", (data))
-
-#define MYu_ATF_CHECK_EQ(data, value) \
-	ATF_CHECK_EQ_MSG(data, value, " == %u", (data))
 
 ATF_TC_BODY(check_hid_get_data, tc)
 {
