@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.73 2015/08/29 10:00:19 mlelstv Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.74 2016/01/01 16:09:00 tls Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.73 2015/08/29 10:00:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.74 2016/01/01 16:09:00 tls Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -407,8 +407,8 @@ rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 #if defined(__HAVE_CPU_COUNTER)
 static struct {
 	kmutex_t	lock;
+	int		iter;
 	struct callout	callout;
-	struct callout	stop_callout;
 	krndsource_t	source;
 } rnd_skew __cacheline_aligned;
 
@@ -426,21 +426,14 @@ rnd_skew_enable(krndsource_t *rs, bool enabled)
 }
 
 static void
-rnd_skew_stop_intr(void *arg)
-{
-
-	callout_stop(&rnd_skew.callout);
-}
-
-static void
 rnd_skew_get(size_t bytes, void *priv)
 {
 	krndsource_t *skewsrcp = priv;
 
 	KASSERT(skewsrcp == &rnd_skew.source);
 	if (RND_ENABLED(skewsrcp)) {
-		/* Measure for 30s */
-		callout_schedule(&rnd_skew.stop_callout, hz * 30);
+		/* Measure 100 times */
+		rnd_skew.iter = 100;
 		callout_schedule(&rnd_skew.callout, 1);
 	}
 }
@@ -448,8 +441,6 @@ rnd_skew_get(size_t bytes, void *priv)
 static void
 rnd_skew_intr(void *arg)
 {
-	static int flipflop;
-
 	/*
 	 * Even on systems with seemingly stable clocks, the
 	 * delta-time entropy estimator seems to think we get 1 bit here
@@ -457,14 +448,15 @@ rnd_skew_intr(void *arg)
 	 *
 	 */
 	mutex_spin_enter(&rnd_skew.lock);
-	flipflop = !flipflop;
 
 	if (RND_ENABLED(&rnd_skew.source)) {
-		if (flipflop) {
+		int next_ticks = 1;
+		if (rnd_skew.iter & 1) {
 			rnd_add_uint32(&rnd_skew.source, rnd_counter());
-			callout_schedule(&rnd_skew.callout, hz / 10);
-		} else {
-			callout_schedule(&rnd_skew.callout, 1);
+			next_ticks = hz / 10;
+		}
+		if (--rnd_skew.iter > 0) {
+			callout_schedule(&rnd_skew.callout, next_ticks);
 		}
 	}
 	mutex_spin_exit(&rnd_skew.lock);
@@ -559,14 +551,13 @@ rnd_init(void)
 	/* IPL_VM because taken while rnd_global.lock is held.  */
 	mutex_init(&rnd_skew.lock, MUTEX_DEFAULT, IPL_VM);
 	callout_init(&rnd_skew.callout, CALLOUT_MPSAFE);
-	callout_init(&rnd_skew.stop_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&rnd_skew.callout, rnd_skew_intr, NULL);
-	callout_setfunc(&rnd_skew.stop_callout, rnd_skew_stop_intr, NULL);
 	rndsource_setcb(&rnd_skew.source, rnd_skew_get, &rnd_skew.source);
 	rndsource_setenable(&rnd_skew.source, rnd_skew_enable);
 	rnd_attach_source(&rnd_skew.source, "callout", RND_TYPE_SKEW,
 	    RND_FLAG_COLLECT_VALUE|RND_FLAG_ESTIMATE_VALUE|
 	    RND_FLAG_HASCB|RND_FLAG_HASENABLE);
+	rnd_skew.iter = 100;
 	rnd_skew_intr(NULL);
 #endif
 
