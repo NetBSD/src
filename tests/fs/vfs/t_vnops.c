@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.50 2016/01/01 15:13:57 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.51 2016/01/01 15:18:39 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -460,7 +460,7 @@ create_many(const atf_tc_t *tc, const char *mp)
 	RL(rump_sys_chdir("subdir"));
 
 	/* create them */
-#define TESTFN "this_is_the_filename"
+#define TESTFN "testfile"
 	for (i = 0; i < nfiles; i++) {
 		int fd;
 
