@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.49 2015/12/13 15:02:19 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.50 2016/01/01 19:46:48 tls Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.49 2015/12/13 15:02:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.50 2016/01/01 19:46:48 tls Exp $");
 
 #include "opt_xen.h"
 
@@ -554,8 +554,14 @@ cpu_probe_c3(struct cpu_info *ci)
 		    /* Actually do the enables. */
 		    if (rng_enable) {
 			msr = rdmsr(MSR_VIA_RNG);
-			wrmsr(MSR_VIA_RNG, msr | MSR_VIA_RNG_ENABLE);
+			msr |= MSR_VIA_RNG_ENABLE;
+			/* C7 stepping 8 and subsequent CPUs have dual RNG */
+			if (model > 0xA || (model == 0xA && stepping > 0x7)) {
+				msr |= MSR_VIA_RNG_2NOISE;
+			}
+			wrmsr(MSR_VIA_RNG, msr);
 		    }
+
 		    if (ace_enable) {
 			msr = rdmsr(MSR_VIA_ACE);
 			wrmsr(MSR_VIA_ACE, msr | MSR_VIA_ACE_ENABLE);
