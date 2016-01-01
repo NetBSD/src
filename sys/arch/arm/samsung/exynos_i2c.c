@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.9 2015/12/30 04:30:27 marty Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.10 2016/01/01 22:37:07 marty Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.9 2015/12/30 04:30:27 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.10 2016/01/01 22:37:07 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,17 +144,10 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 	bus_size_t size;
 	int error;
 
-	char result[64];
-	int i2c_handle;
-	int len;
-	int handle;
-	int func, pud, drv;
-
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
-
 
 	sc->sc_dev  = self;
 	sc->sc_bst = faa->faa_bst;
@@ -182,66 +175,8 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
-
-	len = OF_getprop(phandle, "pinctrl-0", (char *)&handle,
-			 sizeof(handle));
-	if (len != sizeof(int)) {
-		aprint_error_dev(self, "couldn't get pinctrl-0.\n");
-		return;
-	}
-
-	i2c_handle = fdtbus_get_phandle_from_native(be32toh(handle));
-	len = OF_getprop(i2c_handle, "samsung,pins", result, sizeof(result));
-	if (len <= 0) {
-		aprint_error_dev(self, "couldn't get pins.\n");
-		return;
-	}
 	
-	len = OF_getprop(i2c_handle, "samsung,pin-function",
-			 &handle, sizeof(handle));
-	if (len <= 0) {
-		aprint_error_dev(self, "couldn't get pin-function.\n");
-		return;
-	} else
-		func = be32toh(handle);
-
-	sc->sc_sda = fdtbus_pinctrl_acquire(phandle, &result[0]);
-	if (sc->sc_sda == NULL) {
-		printf("could not acquire sda gpio %s\n", &result[0]);
-		return;
-	}
-	
-	sc->sc_scl = fdtbus_pinctrl_acquire(phandle, &result[7]);
-	if (sc->sc_scl == NULL) {
-		printf("could not acquire scl gpio %s\n", &result[7]);
-		return;
-	}
-
-	len = OF_getprop(i2c_handle, "samsung,pin-pud", &handle,
-			 sizeof(&handle));
-	if (len <= 0) {
-		aprint_error_dev(self, "couldn't get pin-pud.\n");
-		return;
-	} else
-		pud = be32toh(handle);
-
-	len = OF_getprop(i2c_handle, "samsung,pin-drv", &handle,
-			 sizeof(&handle));
-	if (len <= 0) {
-		aprint_error_dev(self, "couldn't get pin-drv.\n");
-		return;
-	} else
-		drv = be32toh(handle);
-
-	struct exynos_gpio_pin_cfg cfg;
-	cfg.cfg = func;
-	cfg.pud = pud;
-	cfg.drv = drv;
-	cfg.conpwd = 0;
-	cfg.pudpwd = 0;
-
-	fdtbus_pinctrl_set_cfg(sc->sc_scl, &cfg);
-	fdtbus_pinctrl_set_cfg(sc->sc_sda, &cfg);
+	fdtbus_pinctrl_set_config_index(phandle, 0);
 
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_acquire_bus = exynos_i2c_acquire_bus;
