@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.122 2015/12/04 17:20:12 christos Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.123 2016/01/01 21:38:54 jakllsch Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -119,6 +119,7 @@
 ./usr/libdata/debug/usr/tests/lib/libskey
 ./usr/libdata/debug/usr/tests/lib/libsljit
 ./usr/libdata/debug/usr/tests/lib/libtre
+./usr/libdata/debug/usr/tests/lib/libusbhid
 ./usr/libdata/debug/usr/tests/lib/libutil
 ./usr/libdata/debug/usr/tests/libexec
 ./usr/libdata/debug/usr/tests/libexec/ld.elf_so
@@ -300,6 +301,7 @@
 ./usr/tests/lib/libsljit
 ./usr/tests/lib/libtre
 ./usr/tests/lib/libtre/data
+./usr/tests/lib/libusbhid
 ./usr/tests/lib/libutil
 ./usr/tests/libexec
 ./usr/tests/libexec/ld.elf_so
