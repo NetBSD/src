@@ -1,4 +1,4 @@
-/*	$NetBSD: data.c,v 1.6 2010/05/12 18:28:20 plunky Exp $	*/
+/*	$NetBSD: data.c,v 1.7 2016/01/01 22:59:12 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: data.c,v 1.6 2010/05/12 18:28:20 plunky Exp $");
+__RCSID("$NetBSD: data.c,v 1.7 2016/01/01 22:59:12 jakllsch Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -57,10 +57,12 @@ hid_get_data(const void *p, const hid_item_t *h)
 	for (i = 0; i < end; i++)
 		data |= buf[offs + i] << (i*8);
 	data >>= hpos % 8;
-	data &= (1 << hsize) - 1;
-	if (h->logical_minimum < 0 && (data & (1<<(hsize-1)))) {
-		/* Need to sign extend */
-		data |= 0xffffffff & ~((1<<hsize)-1);
+	if (hsize < 32) {
+		data &= (1 << hsize) - 1;
+		if (h->logical_minimum < 0 && (data & (1<<(hsize-1)))) {
+			/* Need to sign extend */
+			data |= 0xffffffff & ~((1<<hsize)-1);
+		}
 	}
 	return (int)(data);
 }
