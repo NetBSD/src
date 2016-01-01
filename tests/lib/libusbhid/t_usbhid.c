@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.2 2016/01/01 22:47:34 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.3 2016/01/01 22:59:12 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.2 2016/01/01 22:47:34 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.3 2016/01/01 22:59:12 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -325,9 +325,6 @@ ATF_TC_BODY(check_hid_get_data, tc)
 	hid_item_t hi;
 	int32_t data;
 	uint32_t udat;
-
-	atf_tc_expect_fail("all negative data doesn't work, "
-	    "all 32-bit data doesn't work");
 
 	ATF_REQUIRE((hrd = hid_use_report_desc(
 	    range_test_report_descriptor,
