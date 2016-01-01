@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.3 2016/01/01 22:59:12 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.4 2016/01/01 23:46:04 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.3 2016/01/01 22:59:12 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.4 2016/01/01 23:46:04 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -216,6 +216,7 @@ ATF_TC_BODY(check_hid_logical_range, tc)
 {
 	report_desc_t hrd;
 	hid_item_t hi;
+	uint32_t minimum, maximum;
 
 	atf_tc_expect_fail("only the 32-bit opcode works, "
 	    "8 and 16-bit is broken");
@@ -241,19 +242,27 @@ ATF_TC_BODY(check_hid_logical_range, tc)
 	ATF_REQUIRE((hrd = hid_use_report_desc(
 	    unsigned_range_test_report_descriptor,
 	    __arraycount(unsigned_range_test_report_descriptor))) != NULL);
-
 	ATF_REQUIRE(hid_locate(hrd, 0xff000011U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 255);
+	ATF_CHECK(hi.logical_minimum > hi.logical_maximum);
+	minimum = (uint32_t)hi.logical_minimum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(minimum, 0);
+	maximum = (uint32_t)hi.logical_maximum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(maximum, 255);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000012U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 65535);
+	ATF_CHECK(hi.logical_minimum > hi.logical_maximum);
+	minimum = hi.logical_minimum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(minimum, 0);
+	maximum = hi.logical_maximum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(maximum, 65535);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000013U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_minimum, 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.logical_maximum, 4294967295);
+	ATF_CHECK(hi.logical_minimum > hi.logical_maximum);
+	minimum = hi.logical_minimum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(minimum, 0);
+	maximum = hi.logical_maximum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(maximum, 4294967295);
 
 	hid_dispose_report_desc(hrd);
 	hrd = NULL;
@@ -270,6 +279,7 @@ ATF_TC_BODY(check_hid_physical_range, tc)
 {
 	report_desc_t hrd;
 	hid_item_t hi;
+	uint32_t minimum, maximum;
 
 	atf_tc_expect_fail("only the 32-bit opcode works, "
 	    "8 and 16-bit is broken");
@@ -295,19 +305,27 @@ ATF_TC_BODY(check_hid_physical_range, tc)
 	ATF_REQUIRE((hrd = hid_use_report_desc(
 	    unsigned_range_test_report_descriptor,
 	    __arraycount(unsigned_range_test_report_descriptor))) != NULL);
-
 	ATF_REQUIRE(hid_locate(hrd, 0xff000011U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 255);
+	ATF_CHECK(hi.physical_minimum > hi.physical_maximum);
+	minimum = (uint32_t)hi.physical_minimum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(minimum, 0);
+	maximum = (uint32_t)hi.physical_maximum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(maximum, 255);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000012U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 65535);
+	ATF_CHECK(hi.physical_minimum > hi.physical_maximum);
+	minimum = hi.physical_minimum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(minimum, 0);
+	maximum = hi.physical_maximum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(maximum, 65535);
 	ATF_REQUIRE(hid_locate(hrd, 0xff000013U, hid_input, &hi,
 	    NO_REPORT_ID) > 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_minimum, 0);
-	MYu_ATF_CHECK_EQ((uint32_t)hi.physical_maximum, 4294967295);
+	ATF_CHECK(hi.physical_minimum > hi.physical_maximum);
+	minimum = hi.physical_minimum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(minimum, 0);
+	maximum = hi.physical_maximum & ((1ULL<<hi.report_size)-1);
+	MYu_ATF_CHECK_EQ(maximum, 4294967295);
 
 	hid_dispose_report_desc(hrd);
 	hrd = NULL;
