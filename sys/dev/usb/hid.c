@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.38 2016/01/02 20:49:39 jakllsch Exp $	*/
+/*	$NetBSD: hid.c,v 1.39 2016/01/02 20:57:10 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.38 2016/01/02 20:49:39 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.39 2016/01/02 20:57:10 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -171,17 +171,19 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			dval = 0;
 			break;
 		case 1:
-			dval = /*(int8_t)*/ *data++;
+			dval = (int8_t)*data++;
 			break;
 		case 2:
 			dval = *data++;
 			dval |= *data++ << 8;
+			dval = (int16_t)dval;
 			break;
 		case 4:
 			dval = *data++;
 			dval |= *data++ << 8;
 			dval |= *data++ << 16;
 			dval |= *data++ << 24;
+			dval = (int32_t)dval;
 			break;
 		default:
 			printf("BAD LENGTH %d\n", bSize);
