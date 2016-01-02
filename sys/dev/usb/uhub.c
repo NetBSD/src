@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.19 2016/01/02 14:14:45 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.20 2016/01/02 16:14:46 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.19 2016/01/02 14:14:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.20 2016/01/02 16:14:46 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -853,6 +853,8 @@ uhub_detach(device_t self, int flags)
 		kmem_free(sc->sc_statuspend, sc->sc_statuslen);
 	if (sc->sc_statusbuf)
 		kmem_free(sc->sc_statusbuf, sc->sc_statuslen);
+
+	mutex_destroy(&sc->sc_lock);
 
 	/* XXXSMP usb */
 	KERNEL_UNLOCK_ONE(curlwp);
