@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.333 2016/01/02 16:10:06 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.334 2016/01/02 16:20:50 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.333 2016/01/02 16:10:06 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.334 2016/01/02 16:20:50 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -891,7 +891,7 @@ raidclose(dev_t dev, int flags, int fmt, struct lwp *l)
 			cf = device_cfdata(rs->sc_dev);
 
 			raidunlock(rs);
-			retcode = config_detach(rs->sc_dev, DETACH_QUIET);
+			retcode = config_detach(rs->sc_dev, 0);
 			if (retcode == 0)
 				/* free the pseudo device attach bits */
 				free(cf, M_RAIDFRAME);
@@ -1040,9 +1040,6 @@ raid_detach_unlocked(struct raid_softc *rs)
 
 	rs->sc_flags &= ~RAIDF_INITED;
 
-	/* Free the softc */
-	aprint_normal_dev(rs->sc_dev, "detached\n");
-
 	return 0;
 }
 
@@ -1052,7 +1049,6 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	int     unit = raidunit(dev);
 	int     error = 0;
 	int     part, pmask, s;
-	cfdata_t cf;
 	struct raid_softc *rs;
 	RF_Config_t *k_cfg, *u_cfg;
 	RF_Raid_t *raidPtr;
@@ -1127,7 +1123,6 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	case DIOCLWEDGES:
 	case DIOCMWEDGES:
 	case DIOCCACHESYNC:
-	case RAIDFRAME_SHUTDOWN:
 	case RAIDFRAME_REWRITEPARITY:
 	case RAIDFRAME_GET_INFO:
 	case RAIDFRAME_RESET_ACCTOTALS:
@@ -1286,22 +1281,10 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			retcode = EBUSY;
 		else {
 			rs->sc_flags |= RAIDF_SHUTDOWN;
-			rs->sc_dkdev.dk_copenmask &= ~pmask;
-			rs->sc_dkdev.dk_bopenmask &= ~pmask;
-			rs->sc_dkdev.dk_openmask &= ~pmask;
 			retcode = 0;
 		}
 
 		raidunlock(rs);
-
-		if (retcode != 0)
-			return retcode;
-
-		/* free the pseudo device attach bits */
-
-		cf = device_cfdata(rs->sc_dev);
-		if ((retcode = config_detach(rs->sc_dev, DETACH_QUIET)) == 0)
-			free(cf, M_RAIDFRAME);
 
 		return (retcode);
 	case RAIDFRAME_GET_COMPONENT_LABEL:
