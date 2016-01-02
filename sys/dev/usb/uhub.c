@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.17 2016/01/02 13:54:38 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.18 2016/01/02 14:04:41 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.17 2016/01/02 13:54:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.18 2016/01/02 14:04:41 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -103,13 +103,13 @@ struct uhub_softc {
 	int			sc_proto;	/* device protocol */
 	struct usbd_pipe *	sc_ipipe;	/* interrupt pipe */
 
-	/* XXX second buffer needed because we can't suspend pipes yet */
+	kmutex_t		sc_lock;
+
 	uint8_t			*sc_statusbuf;
 	uint8_t			*sc_statuspend;
 	uint8_t			*sc_status;
 	size_t			sc_statuslen;
 	int			sc_explorepending;
-	int		sc_isehciroothub; /* see comment in uhub_intr() */
 
 	u_char			sc_running;
 };
@@ -364,8 +364,9 @@ uhub_attach(device_t parent, device_t self, void *aux)
 	sc->sc_status = kmem_alloc(sc->sc_statuslen, KM_SLEEP);
 	if (!sc->sc_status)
 		goto bad;
-	if (device_is_a(device_parent(device_parent(sc->sc_dev)), "ehci"))
-		sc->sc_isehciroothub = 1;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
+	memset(sc->sc_statuspend, 0, sc->sc_statuslen);
 
 	/* force initial scan */
 	memset(sc->sc_status, 0xff, sc->sc_statuslen);
@@ -780,9 +781,7 @@ uhub_explore(struct usbd_device *dev)
 				up->up_dev->ud_hub->uh_explore(up->up_dev);
 		}
 	}
-	/* enable status change notifications again */
-	if (!sc->sc_isehciroothub)
-		memset(sc->sc_status, 0, sc->sc_statuslen);
+	mutex_enter(&sc->sc_lock);
 	sc->sc_explorepending = 0;
 	for (int i = 0; i < sc->sc_statuslen; i++) {
 		if (sc->sc_statuspend[i] != 0) {
@@ -793,6 +792,8 @@ uhub_explore(struct usbd_device *dev)
 			break;
 		}
 	}
+	mutex_exit(&sc->sc_lock);
+
 	return USBD_NORMAL_COMPLETION;
 }
 
@@ -930,33 +931,36 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 	if (status == USBD_STALLED)
 		usbd_clear_endpoint_stall_async(sc->sc_ipipe);
 	else if (status == USBD_NORMAL_COMPLETION) {
-		int i;
+
+		mutex_enter(&sc->sc_lock);
+
+		DPRINTFN(5, "uhub%d: explore pending %d",
+		    device_unit(sc->sc_dev), sc->sc_explorepending, 0, 0);
 
 		/* merge port bitmap into pending interrupts list */
-		for (i = 0; i < sc->sc_statuslen; i++)
+		for (size_t i = 0; i < sc->sc_statuslen; i++)
 			sc->sc_statuspend[i] |= sc->sc_statusbuf[i];
 
+			DPRINTFN(5, "uhub%d: pending/new ports "
+			    "[%d] %#x/%#x", device_unit(sc->sc_dev),
+			    i, sc->sc_statuspend[i], sc->sc_statusbuf[i]);
+		}
+
 		if (!sc->sc_explorepending) {
-			/*
-			 * Make sure the status is not overwritten in between.
-			 * XXX we should suspend the pipe instead
-			 */
 			sc->sc_explorepending = 1;
+
 			memcpy(sc->sc_status, sc->sc_statuspend,
 			    sc->sc_statuslen);
 			memset(sc->sc_statuspend, 0, sc->sc_statuslen);
-			DPRINTFN(5, "uhub%d: exploring ports %02x",
-			    device_unit(sc->sc_dev), *sc->sc_status, 0, 0);
+
+			for (size_t i = 0; i < sc->sc_statuslen; i++) {
+				DPRINTFN(5, "uhub%d: exploring ports "
+				    "[%d] %#x", device_unit(sc->sc_dev),
+				    i, sc->sc_status[i], 0);
+			}
+
 			usb_needs_explore(sc->sc_hub);
 		}
+		mutex_exit(&sc->sc_lock);
 	}
-	/*
-	 * XXX workaround for broken implementation of the interrupt
-	 * pipe in EHCI root hub emulation which doesn't resend
-	 * status change notifications until handled: force a rescan
-	 * of the ports we touched in the last run
-	 */
-	if (status == USBD_NORMAL_COMPLETION && sc->sc_explorepending &&
-	    sc->sc_isehciroothub)
-		usb_needs_explore(sc->sc_hub);
 }
