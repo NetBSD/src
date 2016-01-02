@@ -1,4 +1,4 @@
-/*	$NetBSD: bozohttpd.c,v 1.78 2016/01/02 18:40:13 elric Exp $	*/
+/*	$NetBSD: bozohttpd.c,v 1.79 2016/01/02 20:35:59 elric Exp $	*/
 
 /*	$eterna: bozohttpd.c,v 1.178 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -347,6 +347,8 @@ bozo_clean_request(bozo_httpreq_t *request)
 		free(ohdr);
 		ohdr = hdr;
 	}
+	free(ohdr);
+	ohdr = NULL;
 	for (hdr = SIMPLEQ_FIRST(&request->hr_replheaders); hdr;
 	    hdr = SIMPLEQ_NEXT(hdr, h_next)) {
 		free(hdr->h_value);
