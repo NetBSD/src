@@ -1,4 +1,4 @@
-/*	$NetBSD: t_vnops.c,v 1.51 2016/01/01 15:18:39 pooka Exp $	*/
+/*	$NetBSD: t_vnops.c,v 1.52 2016/01/02 12:11:30 pooka Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -445,9 +445,11 @@ create_many(const atf_tc_t *tc, const char *mp)
 	int nfiles = 2324; /* #Nancy */
 	int i;
 
-	/* fs doesn't support many files */
-	if (FSTYPE_SYSVBFS(tc))
-		nfiles = 5;
+	if (FSTYPE_EXT2FS(tc))
+		atf_tc_expect_fail("PR kern/50607");
+
+	if (FSTYPE_UDF(tc))
+		atf_tc_expect_fail("PR kern/50608");
 
 	/* takes forever with many files */
 	if (FSTYPE_MSDOS(tc))
@@ -455,9 +457,14 @@ create_many(const atf_tc_t *tc, const char *mp)
 
 	RL(rump_sys_chdir(mp));
 
-	/* msdosfs doesn't like many entries in the root directory */
-	RL(rump_sys_mkdir("subdir", 0777));
-	RL(rump_sys_chdir("subdir"));
+	if (FSTYPE_SYSVBFS(tc)) {
+		/* fs doesn't support many files or subdirectories */
+		nfiles = 5;
+	} else {
+		/* msdosfs doesn't like many entries in the root directory */
+		RL(rump_sys_mkdir("subdir", 0777));
+		RL(rump_sys_chdir("subdir"));
+	}
 
 	/* create them */
 #define TESTFN "testfile"
