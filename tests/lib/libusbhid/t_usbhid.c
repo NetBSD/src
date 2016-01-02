@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.5 2016/01/02 01:04:15 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.6 2016/01/02 01:24:44 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.5 2016/01/02 01:04:15 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.6 2016/01/02 01:24:44 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -158,6 +158,9 @@ ATF_TC_HEAD(check_hid_usage, tc)
 	atf_tc_set_md_var(tc, "descr", "Test libusbhid usage.c");
 }
 
+#define MYx_ATF_CHECK_EQ(d, v) \
+	ATF_CHECK_EQ_MSG(d, v, "== %x", (d))
+
 ATF_TC_BODY(check_hid_usage, tc)
 {
 	char usages_path[PATH_MAX];
@@ -194,6 +197,9 @@ ATF_TC_BODY(check_hid_usage, tc)
 	ATF_CHECK_EQ((uint32_t)hid_parse_usage_in_page(
 	    "Quick_zephyrs_blow_vexing_daft_Jim_:Usage_ID_65535_%"),
 	    0xff2affff);
+
+	MYx_ATF_CHECK_EQ((uint32_t)hid_parse_usage_in_page("0xff2a:0xff1b"),
+	    0xff2aff1b);
 }
 
 #define MYd_ATF_CHECK_EQ(d, v) \
