@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.37 2016/01/02 20:45:07 jakllsch Exp $	*/
+/*	$NetBSD: hid.c,v 1.38 2016/01/02 20:49:39 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.37 2016/01/02 20:45:07 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.38 2016/01/02 20:49:39 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -220,7 +220,8 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 					}
 					goto top;
 				} else {
-					c->usage = c->_usage_page; /* XXX */
+					if (s->minset)
+						c->usage = c->usage_minimum;
 					*h = *c;
 					h->next = NULL;
 					c->loc.pos +=
