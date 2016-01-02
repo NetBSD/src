@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.332 2016/01/02 16:06:25 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.333 2016/01/02 16:10:06 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.332 2016/01/02 16:06:25 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.333 2016/01/02 16:10:06 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1026,16 +1026,19 @@ raid_detach_unlocked(struct raid_softc *rs)
 		return EBUSY;
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
-		;	/* not initialized: nothing to do */
-	else if ((error = rf_Shutdown(raidPtr)) != 0)
+		return 0;
+
+	rs->sc_flags &= ~RAIDF_SHUTDOWN;
+
+	if ((error = rf_Shutdown(raidPtr)) != 0)
 		return error;
-	else
-		rs->sc_flags &= ~(RAIDF_INITED|RAIDF_SHUTDOWN);
 
 	/* Detach the disk. */
 	dkwedge_delall(&rs->sc_dkdev);
 	disk_detach(&rs->sc_dkdev);
 	disk_destroy(&rs->sc_dkdev);
+
+	rs->sc_flags &= ~RAIDF_INITED;
 
 	/* Free the softc */
 	aprint_normal_dev(rs->sc_dev, "detached\n");
