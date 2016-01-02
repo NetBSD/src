@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.36 2015/02/08 23:43:14 jmcneill Exp $	*/
+/*	$NetBSD: hid.c,v 1.37 2016/01/02 20:45:07 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.36 2015/02/08 23:43:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.37 2016/01/02 20:45:07 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,9 +434,9 @@ hid_get_data(const u_char *buf, const struct hid_location *loc)
 		return (0);
 
 	data = hid_get_udata(buf, loc);
-	if (data < (1 << (hsize - 1)))
+	if (data < (1UL << (hsize - 1)))
 		return (data);
-	return data - (1 << hsize);
+	return data - (1UL << hsize);
 }
 
 u_long
@@ -458,7 +458,7 @@ hid_get_udata(const u_char *buf, const struct hid_location *loc)
 		data |= buf[off + i] << (i * 8);
 
 	data >>= hpos % 8;
-	data &= (1 << hsize) - 1;
+	data &= (1UL << hsize) - 1;
 
 	DPRINTFN(10,("hid_get_udata: loc %d/%d = %lu\n", hpos, hsize, data));
 	return (data);
