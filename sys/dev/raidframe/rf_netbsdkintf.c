@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.330 2015/12/26 21:50:43 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.331 2016/01/02 16:00:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.330 2015/12/26 21:50:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.331 2016/01/02 16:00:01 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2643,7 +2643,6 @@ raidread_component_area(dev_t dev, struct vnode *b_vp, void *data,
     size_t msize, daddr_t offset, daddr_t dsize)
 {
 	struct buf *bp;
-	const struct bdevsw *bdev;
 	int error;
 
 	/* XXX should probably ensure that we don't try to do this if
@@ -2665,11 +2664,7 @@ raidread_component_area(dev_t dev, struct vnode *b_vp, void *data,
 	bp->b_flags |= B_READ;
  	bp->b_resid = dsize;
 
-	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev == NULL)
-		return (ENXIO);
-	(*bdev->d_strategy)(bp);
-
+	bdev_strategy(bp);
 	error = biowait(bp);
 
 	if (!error) {
@@ -2697,7 +2692,6 @@ raidwrite_component_area(dev_t dev, struct vnode *b_vp, void *data,
     size_t msize, daddr_t offset, daddr_t dsize, int asyncp)
 {
 	struct buf *bp;
-	const struct bdevsw *bdev;
 	int error;
 
 	/* get a block of the appropriate size... */
@@ -2713,10 +2707,7 @@ raidwrite_component_area(dev_t dev, struct vnode *b_vp, void *data,
 	memset(bp->b_data, 0, dsize);
 	memcpy(bp->b_data, data, msize);
 
-	bdev = bdevsw_lookup(bp->b_dev);
-	if (bdev == NULL)
-		return (ENXIO);
-	(*bdev->d_strategy)(bp);
+	bdev_strategy(bp);
 	if (asyncp)
 		return 0;
 	error = biowait(bp);
