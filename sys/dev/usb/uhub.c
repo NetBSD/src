@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.126.2.18 2016/01/02 14:04:41 skrll Exp $	*/
+/*	$NetBSD: uhub.c,v 1.126.2.19 2016/01/02 14:14:45 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.18 2016/01/02 14:04:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.126.2.19 2016/01/02 14:14:45 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -938,7 +938,7 @@ uhub_intr(struct usbd_xfer *xfer, void *addr, usbd_status status)
 		    device_unit(sc->sc_dev), sc->sc_explorepending, 0, 0);
 
 		/* merge port bitmap into pending interrupts list */
-		for (size_t i = 0; i < sc->sc_statuslen; i++)
+		for (size_t i = 0; i < sc->sc_statuslen; i++) {
 			sc->sc_statuspend[i] |= sc->sc_statusbuf[i];
 
 			DPRINTFN(5, "uhub%d: pending/new ports "
