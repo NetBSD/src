@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic_ehci.c,v 1.3 2015/03/17 09:27:09 macallan Exp $ */
+/*	$NetBSD: ingenic_ehci.c,v 1.4 2016/01/02 16:50:52 macallan Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.3 2015/03/17 09:27:09 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ingenic_ehci.c,v 1.4 2016/01/02 16:50:52 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,79 @@ ingenic_ehci_match(device_t parent, struct cfdata *match, void *aux)
 	return 1;
 }
 
+static int
+ingenic_ehci_enable(struct ehci_softc *sc)
+{
+	uint32_t reg;
+
+	/* Togle VBUS pin */
+	gpio_set(5, 15, 0);
+	delay(250000);
+	gpio_set(5, 15, 1);
+	delay(250000);
+
+	/* Enable OTG, should not be necessary since we use PLL clock */
+	reg = readreg(JZ_USBPCR);
+	reg &= ~(PCR_OTG_DISABLE);
+	writereg(JZ_USBPCR, reg);
+
+	/* Select CORE as PLL reference */
+	reg = readreg(JZ_USBPCR1);
+	reg |= PCR_REFCLK_CORE;
+	writereg(JZ_USBPCR1, reg);
+
+	/* Configure OTG PHY clock frequency */
+	reg  = readreg(JZ_USBPCR1);
+	reg &= ~PCR_CLK_M;
+	reg |= PCR_CLK_48;
+	writereg(JZ_USBPCR1, reg);
+
+	/* Do not force port1 to suspend mode */
+	reg = readreg(JZ_OPCR);
+	reg |= OPCR_SPENDN1;
+	writereg(JZ_OPCR, reg);
+
+	/* D- pulldown */
+	reg = readreg(JZ_USBPCR1);
+	reg |= PCR_DMPD1;
+	writereg(JZ_USBPCR1, reg);
+
+	/* D+ pulldown */
+	reg = readreg(JZ_USBPCR1);
+	reg |= PCR_DPPD1;
+	writereg(JZ_USBPCR1, reg);
+
+	/* 16 bit bus witdth for port 1 (and 0) */
+	reg = readreg(JZ_USBPCR1);
+	reg |= PCR_WORD_I_F1 | PCR_WORD_I_F0;
+	writereg(JZ_USBPCR1, reg);
+
+	/* Reset USB */
+	reg = readreg(JZ_USBPCR);
+	reg |= PCR_POR;
+	writereg(JZ_USBPCR, reg);
+	delay(1);
+	reg = readreg(JZ_USBPCR);
+	reg &= ~(PCR_POR);
+	writereg(JZ_USBPCR, reg);
+
+	/* Soft-reset USB */
+	reg = readreg(JZ_SRBC);
+	reg |= (1 << 14);
+	writereg(JZ_SRBC, reg);
+	/* 300ms */
+	delay(300000);
+
+	reg = readreg(JZ_SRBC);
+	reg &= ~(1 << 14);
+	writereg(JZ_SRBC, reg);
+
+	/* 300ms */
+	delay(300000);
+
+	return (0);
+}
+
 /* ARGSUSED */
 static void
 ingenic_ehci_attach(device_t parent, device_t self, void *aux)
@@ -105,19 +178,13 @@ ingenic_ehci_attach(device_t parent, device_t self, void *aux)
 	aprint_naive(": EHCI USB controller\n");
 	aprint_normal(": EHCI USB controller\n");
 
-	/*
-	 * voodoo from the linux driver:
-	 * select utmi data bus width of controller to 16bit
-	 */
-	reg = bus_space_read_4(sc->iot, sc->ioh,  0xb0);
-	reg |= 1 << 6;
-	bus_space_write_4(sc->iot, sc->ioh,  0xb0, reg);
+	ingenic_ehci_enable(sc);
 
 	/* Disable EHCI interrupts */
 	bus_space_write_4(sc->iot, sc->ioh, EHCI_USBINTR, 0);
 
 	ih = evbmips_intr_establish(aa->aa_irq, ehci_intr, sc);
-		
+
 	if (ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt %d\n",
 		     aa->aa_irq);
@@ -132,6 +199,7 @@ ingenic_ehci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_ncomp = 0;
 #else
 	sc->sc_ncomp = 0;
+	sc->sc_npcomp = 0;
 #endif
 	sc->sc_id_vendor = USB_VENDOR_INGENIC;
 	strlcpy(sc->sc_vendor, "Ingenic", sizeof(sc->sc_vendor));
@@ -141,6 +209,14 @@ ingenic_ehci_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "init failed, error=%d\n", status);
 		goto fail;
 	}
+
+	/*
+	 * voodoo from the linux driver:
+	 * select utmi data bus width of controller to 16bit
+	 */
+	reg = bus_space_read_4(sc->iot, sc->ioh,  0xb0);
+	reg |= 1 << 6;
+	bus_space_write_4(sc->iot, sc->ioh,  0xb0, reg);
 
 	/* Attach USB device */
 	sc->sc_child = config_found(self, &sc->sc_bus, usbctlprint);
