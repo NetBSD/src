@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.21 2015/12/26 22:26:58 snj Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.22 2016/01/02 14:39:25 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -830,4 +830,11 @@ sys/dev/ic/dwc_gmac_reg.h			1.15
 	Fix a problem on ODROID-C1 when trying to use the network if  
 	the cable wasn't plugged in at boot.
 	[jmcneill, ticket #1053]
+
+sys/dev/vnd.c                                   1.249-1.254
+sys/sys/disk.h                                  1.66
+
+	Avoid netbsd-6 (and prior) vnconfig -l infinite loop with a newer
+	kernel, and limit the vnd sector size choices to rational values.
+	[manu, ticket #1038]
 
