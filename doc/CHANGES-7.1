@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.40 2015/12/26 22:26:28 snj Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.41 2016/01/02 14:40:39 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1617,7 +1617,7 @@ sys/dev/vnd.c					1.249-1.254
 sys/sys/disk.h					1.66
 
 	Avoid netbsd-6 (and prior) vnconfig -l infinite loop with a newer
-	kernel.
+	kernel, and limit the vnd sector size choices to rational values.
 	[manu, ticket #1038]
 
 sys/external/bsd/drm2/include/linux/hdmi.h	1.6
