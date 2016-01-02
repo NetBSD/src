@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.74 2015/10/13 20:49:39 christos Exp $ */
+/* $NetBSD: cgram.y,v 1.75 2016/01/02 17:44:33 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: cgram.y,v 1.74 2015/10/13 20:49:39 christos Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.75 2016/01/02 17:44:33 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -68,6 +68,8 @@ static int olwarn = LWARN_BAD;
 static	int	toicon(tnode_t *, int);
 static	void	idecl(sym_t *, int, sbuf_t *);
 static	void	ignuptorp(void);
+static	sym_t	*symbolrename(sym_t *, sbuf_t *);
+
 
 #ifdef DEBUG
 static inline void CLRWFLGS(const char *file, size_t line);
@@ -955,7 +957,7 @@ notype_direct_decl:
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| notype_direct_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc($1, $2);
+		$$ = addfunc(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -988,7 +990,7 @@ type_direct_decl:
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| type_direct_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc($1, $2);
+		$$ = addfunc(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -1025,7 +1027,7 @@ direct_param_decl:
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| direct_param_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc($1, $2);
+		$$ = addfunc(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -1054,7 +1056,7 @@ direct_notype_param_decl:
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| direct_notype_param_decl param_list opt_asm_or_symbolrename {
-		$$ = addfunc($1, $2);
+		$$ = addfunc(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -1350,12 +1352,12 @@ direct_abs_decl:
 		$$ = addarray($1, 1, toicon($3, 0));
 	  }
 	| abs_decl_param_list opt_asm_or_symbolrename {
-		$$ = addfunc(aname(), $1);
+		$$ = addfunc(symbolrename(aname(), $2), $1);
 		popdecl();
 		blklev--;
 	  }
 	| direct_abs_decl abs_decl_param_list opt_asm_or_symbolrename {
-		$$ = addfunc($1, $2);
+		$$ = addfunc(symbolrename($1, $3), $2);
 		popdecl();
 		blklev--;
 	  }
@@ -2047,4 +2049,12 @@ ignuptorp(void)
 	}
 
 	yyclearin;
+}
+
+static	sym_t *
+symbolrename(sym_t *s, sbuf_t *sb)
+{
+	if (sb)
+		s->s_rename = sb->sb_name;
+	return s;
 }
