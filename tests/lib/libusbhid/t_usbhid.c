@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.4 2016/01/01 23:46:04 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.5 2016/01/02 01:04:15 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.4 2016/01/01 23:46:04 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.5 2016/01/02 01:04:15 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -166,9 +166,6 @@ ATF_TC_BODY(check_hid_usage, tc)
 	    sizeof(usages_path));
 	(void)strlcat(usages_path, "/test_usb_hid_usages",
 	    sizeof(usages_path));
-
-	atf_tc_expect_fail("hid_parse_*() fails because it doesn't use "
-	    "scanf()");
 
 	hid_init(usages_path);
 
