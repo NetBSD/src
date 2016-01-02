@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.8 2016/01/02 01:04:15 jakllsch Exp $	*/
+/*	$NetBSD: usage.c,v 1.9 2016/01/02 01:24:44 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: usage.c,v 1.8 2016/01/02 01:04:15 jakllsch Exp $");
+__RCSID("$NetBSD: usage.c,v 1.9 2016/01/02 01:24:44 jakllsch Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -214,7 +214,6 @@ hid_parse_usage_page(const char *name)
 	return -1;
 }
 
-/* XXX handle hex */
 int
 hid_parse_usage_in_page(const char *name)
 {
@@ -231,6 +230,9 @@ hid_parse_usage_in_page(const char *name)
 	for (k = 0; k < npages; k++)
 		if (strncmp(pages[k].name, name, l) == 0)
 			goto found;
+	if (sscanf(name, "%x:%x", &k, &j) == 2) {
+		return (k << 16) | j;
+	}
 	return -1;
  found:
 	sep++;
