@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.41 2016/01/02 14:40:39 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.42 2016/01/02 14:46:09 riz Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1706,4 +1706,9 @@ sys/dev/ic/dwc_gmac_reg.h			1.15
 	Fix a problem on ODROID-C1 when trying to use the network if 
 	the cable wasn't plugged in at boot.
 	[jmcneill, ticket #1053]
+
+sys/dev/usb/ohci.c				1.257
+
+	Fix missing-parentheses bug affecting ohci IN transfers.
+	[skrll, ticket #1054]
 
