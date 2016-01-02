@@ -1,4 +1,4 @@
-/*	$NetBSD: usage.c,v 1.9 2016/01/02 01:24:44 jakllsch Exp $	*/
+/*	$NetBSD: usage.c,v 1.10 2016/01/02 21:58:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1999 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: usage.c,v 1.9 2016/01/02 01:24:44 jakllsch Exp $");
+__RCSID("$NetBSD: usage.c,v 1.10 2016/01/02 21:58:10 christos Exp $");
 
 #include <assert.h>
 #include <ctype.h>
@@ -86,7 +86,7 @@ hid_init(const char *hidname)
 	if (f == NULL)
 		err(1, "%s", hidname);
 	for (lineno = 1; ; lineno++) {
-		if (fgets(line, sizeof line, f) == NULL)
+		if (fgets(line, (int)sizeof(line), f) == NULL)
 			break;
 		if (line[0] == '#')
 			continue;
@@ -220,15 +220,16 @@ hid_parse_usage_in_page(const char *name)
 	const char *sep;
 	int k, j;
 	unsigned int l;
+	size_t len;
 
 	_DIAGASSERT(name != NULL);
 
 	sep = strchr(name, ':');
 	if (sep == NULL)
 		return -1;
-	l = sep - name;
+	len = sep - name;
 	for (k = 0; k < npages; k++)
-		if (strncmp(pages[k].name, name, l) == 0)
+		if (strncmp(pages[k].name, name, len) == 0)
 			goto found;
 	if (sscanf(name, "%x:%x", &k, &j) == 2) {
 		return (k << 16) | j;
