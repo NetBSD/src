@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.6 2016/01/02 01:24:44 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.7 2016/01/03 15:16:10 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.6 2016/01/02 01:24:44 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.7 2016/01/03 15:16:10 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -45,6 +45,15 @@ ATF_TC(check_hid_physical_range);
 ATF_TC(check_hid_usage);
 ATF_TC(check_hid_get_data);
 ATF_TC(check_hid_set_data);
+
+#define MYd_ATF_CHECK_EQ(d, v) \
+	ATF_CHECK_EQ_MSG(d, v, "== %d", (d))
+
+#define MYu_ATF_CHECK_EQ(d, v) \
+	ATF_CHECK_EQ_MSG(d, v, "== %u", (d))
+
+#define MYx_ATF_CHECK_EQ(d, v) \
+	ATF_CHECK_EQ_MSG(d, v, "== 0x%x", (d))
 
 static const uint8_t range_test_report_descriptor[] = {
 	0x0b, 0x03, 0x00, 0x00, 0xff,	// Usage
@@ -158,9 +167,6 @@ ATF_TC_HEAD(check_hid_usage, tc)
 	atf_tc_set_md_var(tc, "descr", "Test libusbhid usage.c");
 }
 
-#define MYx_ATF_CHECK_EQ(d, v) \
-	ATF_CHECK_EQ_MSG(d, v, "== %x", (d))
-
 ATF_TC_BODY(check_hid_usage, tc)
 {
 	char usages_path[PATH_MAX];
@@ -201,12 +207,6 @@ ATF_TC_BODY(check_hid_usage, tc)
 	MYx_ATF_CHECK_EQ((uint32_t)hid_parse_usage_in_page("0xff2a:0xff1b"),
 	    0xff2aff1b);
 }
-
-#define MYd_ATF_CHECK_EQ(d, v) \
-	ATF_CHECK_EQ_MSG(d, v, "== %d", (d))
-
-#define MYu_ATF_CHECK_EQ(d, v) \
-	ATF_CHECK_EQ_MSG(d, v, "== %u", (d))
 
 ATF_TC_HEAD(check_hid_logical_range, tc)
 {
