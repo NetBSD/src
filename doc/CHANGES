@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2122 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2123 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -233,3 +233,5 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	raidframe: Now built as a kernel module; it can be built-in at
 		kernel build time, or (for MODULAR kernels) loaded as
 		needed. [pgoyette 20151226]
+	admtemp(4): Add chip temperature limits for envsys(4) [jdc 20160103]
+	lmtemp(4): Add chip temperature limits for envsys(4) [jdc 20160103]
