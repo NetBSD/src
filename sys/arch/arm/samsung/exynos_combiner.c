@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.4 2015/12/30 04:30:27 marty Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.5 2016/01/03 04:10:58 marty Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.4 2015/12/30 04:30:27 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.5 2016/01/03 04:10:58 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,18 +50,37 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.4 2015/12/30 04:30:27 marty Ex
 
 #include <dev/fdt/fdtvar.h>
 
-#define COMBINER_IESR_OFFSET  0x00
-#define COMBINER_IECR_OFFSET  0x04
-#define COMBINER_ISTR_OFFSET  0x08
-#define COMBINER_IMSR_OFFSET  0x0C
-#define COMBINER_BLOCK_SIZE   0x10
+#define COMBINER_IESR_OFFSET   0x00
+#define COMBINER_IECR_OFFSET   0x04
+#define COMBINER_ISTR_OFFSET   0x08
+#define COMBINER_IMSR_OFFSET   0x0C
+#define COMBINER_GROUP_SIZE    0x10
+#define COMBINER_IRQS_PER_BLOCK   8
+#define COMBINER_BLOCKS_PER_GROUP 4
+#define COMBINER_N_BLOCKS        32
+
+struct exynos_combiner_softc;
+
+struct exynos_combiner_irq_entry {
+	int				irq_no;
+	int (*irq_handler)(void *);
+	void *				irq_arg;
+	struct exynos_combiner_irq_entry *irq_next;
+};
+
+struct exynos_combiner_irq_block {
+	int irq_block_no;
+	struct exynos_combiner_softc	*irq_sc;
+	struct exynos_combiner_irq_entry *irq_entries;
+	struct exynos_combiner_irq_block *irq_block_next;
+};
 
 struct exynos_combiner_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	int			sc_phandle;
-
+	struct exynos_combiner_irq_block *irq_blocks;
 };
 
 static int exynos_combiner_match(device_t, cfdata_t, void *);
@@ -93,8 +112,7 @@ exynos_combiner_match(device_t parent, cfdata_t cf, void *aux)
 static void
 exynos_combiner_attach(device_t parent, device_t self, void *aux)
 {
-	struct exynos_combiner_softc * const sc
-		= kmem_zalloc(sizeof(*sc), KM_SLEEP);
+	struct exynos_combiner_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -108,6 +126,7 @@ exynos_combiner_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
 	sc->sc_bst = faa->faa_bst;
+	sc->irq_blocks = NULL;
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
@@ -129,29 +148,149 @@ exynos_combiner_attach(device_t parent, device_t self, void *aux)
 
 }
 
+static struct exynos_combiner_irq_block *
+exynos_combiner_new_block(struct exynos_combiner_softc *sc, int block_no)
+{
+	struct exynos_combiner_irq_block *n = kmem_zalloc(sizeof(*n),
+							  KM_SLEEP);
+	n->irq_block_no = block_no;
+	n->irq_block_next = sc->irq_blocks;
+	sc->irq_blocks = n;
+	return n;
+}
+			  
+static struct exynos_combiner_irq_block *
+exynos_combiner_get_block(struct exynos_combiner_softc *sc, int block)
+{
+	for (struct exynos_combiner_irq_block *b = sc->irq_blocks;
+	     b; b = b->irq_block_next) {
+		if (b->irq_block_no == block)
+			return b;
+	}
+	return NULL;
+}
+
+static struct exynos_combiner_irq_entry *
+exynos_combiner_new_irq(struct exynos_combiner_irq_block *block,
+			int irq, int (*func)(void *), void *arg)
+{
+	struct exynos_combiner_irq_entry * n = kmem_zalloc(sizeof(*n),
+							   KM_SLEEP);
+	n->irq_no = irq;
+	n->irq_handler = func;
+	n->irq_next = block->irq_entries;
+	n->irq_arg = arg;
+	block->irq_entries = n;
+	return n;
+}
+
+static struct exynos_combiner_irq_entry *
+exynos_combiner_get_irq(struct exynos_combiner_irq_block *b, int irq)
+{
+	for (struct exynos_combiner_irq_entry *p = b->irq_entries; p;
+	     p = p->irq_next) {
+		if (p->irq_no == irq)
+			return p;
+	}
+	return NULL;
+}
+
+static int exynos_combiner_irq(void *cookie)
+{
+	struct exynos_combiner_irq_block *blockp = cookie;
+	struct exynos_combiner_softc *sc = blockp->irq_sc;
+	int intr = blockp->irq_block_no;
+	int iblock = 
+		intr / COMBINER_BLOCKS_PER_GROUP * COMBINER_GROUP_SIZE
+		+ COMBINER_IESR_OFFSET;
+	int istatus =
+		bus_space_read_4(sc->sc_bst, sc->sc_bsh, iblock);
+	istatus >>= (intr % 4) *8;
+	for (int irq = 0; irq < 8; irq++) {
+		if (istatus & 1 << irq) {
+			struct exynos_combiner_irq_entry *e =
+				exynos_combiner_get_irq(blockp, irq);
+			if (e)
+				e->irq_handler(e->irq_arg);
+			else
+				printf("%s: Unexpected irq %d, %d\n", __func__,
+				       intr, irq);
+		}
+	}
+	return 0;
+}
+
 static void *
 exynos_combiner_establish(device_t dev, int phandle, u_int index, int ipl,
 			  int flags,
 			  int (*func)(void *), void *arg)
 {
 	struct exynos_combiner_softc * const sc = device_private(dev);
-	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
-	int iblock = index >> 3;
-	int ioffset = index & 0x07;
-	int block_offset =
-		iblock * COMBINER_BLOCK_SIZE + COMBINER_IESR_OFFSET;
+	struct exynos_combiner_irq_block *blockp;
+	struct exynos_combiner_irq_entry *entryp;
+	/* MJF: Most combiner clients don't have the #interrupt-cells prop. */
+	u_int *interrupts;
+	int interrupt_cells = 2;
+	int len = OF_getproplen(phandle, "interrupts");
+	
+	if (len <= 0) {
+		printf("%s: phandle has no interrupts property.\n", __func__);
+		return NULL;
+	}
+
+	const u_int clen = interrupt_cells * 4;
+	const u_int nintr = len / interrupt_cells;
+
+	if (index >= nintr) {
+		printf("%s: asking for index %d but only %d entries.\n",
+		       __func__, index, nintr);
+		return NULL;
+	}
+
+	interrupts = kmem_alloc(len, KM_SLEEP);
+
+	if (OF_getprop(phandle, "interrupts", interrupts, len) != len) {
+		kmem_free(interrupts, len);
+		return NULL;
+	}
+
+	/* 1st cell is the interrupt block */
+	/* 2nd cell is the interrupt number */
+
+	const u_int intr = be32toh(interrupts[index * clen + 0]);
+	const u_int irq = be32toh(interrupts[index * clen + 1]);
+
+	kmem_free(interrupts, len);
+
+	int iblock = 
+		intr / COMBINER_BLOCKS_PER_GROUP * COMBINER_GROUP_SIZE
+		+ COMBINER_IESR_OFFSET;
+
+	blockp =  exynos_combiner_get_block(sc, intr);
+	if (!blockp) {
+		blockp = exynos_combiner_new_block(sc, intr);
+		KASSERT(blockp);
+		intr_establish(intr, ipl, IST_LEVEL, exynos_combiner_irq,
+			       blockp);
+	}
+
+	entryp = exynos_combiner_get_irq(blockp, irq);
+	if (entryp)
+		return NULL;
+	entryp = exynos_combiner_new_irq(blockp, irq, func, arg);
+	KASSERT(entryp);
+
 	int istatus =
-		bus_space_read_4(sc->sc_bst, sc->sc_bsh, block_offset);
-	printf("Establishing irq %d (0x%x) @ iblock = %d, ioffset = %d\n",
-	       index, index, iblock, ioffset);
-	istatus |= 1 << ioffset;
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, block_offset, istatus);
-	return intr_establish(index, ipl, iflags, func, arg);
+		bus_space_read_4(sc->sc_bst, sc->sc_bsh, iblock);
+	istatus |= 1 << (irq + ((intr % 4) * 8));
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, iblock, istatus);
+	return (void *)istatus;
 }
 
 static void
 exynos_combiner_disestablish(device_t dev, void *ih)
 {
+	/* MJF: Find the ih and disable the handler. */
 	intr_disestablish(ih);
 }
 
@@ -159,14 +298,8 @@ static bool
 exynos_combiner_intrstr(device_t dev, int phandle, u_int index, char *buf,
     size_t buflen)
 {
-	struct exynos_combiner_softc * const sc = device_private(dev);
 	u_int *interrupts;
-	int interrupt_cells, len;
-
-	if (of_getprop_uint32(sc->sc_phandle, "#interrupt-cells",
-	    &interrupt_cells)) {
-		return false;
-	}
+	int interrupt_cells = 2, len;
 
 	len = OF_getproplen(phandle, "interrupts");
 	if (len <= 0) {
@@ -187,17 +320,15 @@ exynos_combiner_intrstr(device_t dev, int phandle, u_int index, char *buf,
 		return false;
 	}
 
-	/* 1st cell is the interrupt type; */
+	/* 1st cell is the interrupt block */
 	/* 2nd cell is the interrupt number */
-	/* 3rd cell is flags */
 
-	const u_int type = be32toh(interrupts[index * clen + 0]);
-	const u_int intr = be32toh(interrupts[index * clen + 1]);
-	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
+	const u_int intr = be32toh(interrupts[index * clen + 0]);
+	const u_int irq = be32toh(interrupts[index * clen + 1]);
 
 	kmem_free(interrupts, len);
 
-	snprintf(buf, buflen, "combiner irq %d", irq);
+	snprintf(buf, buflen, "combiner intr %d irq %d", intr, irq);
 
 	return true;
 }
