@@ -1,4 +1,4 @@
-#	$NetBSD: airport,v 1.60 2015/10/02 09:01:23 mbalmer Exp $
+#	$NetBSD: airport,v 1.61 2016/01/03 15:25:31 mbalmer Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 #
 # Some of this information is from http://www.mapping.com/airportcodes.html.
@@ -3198,6 +3198,7 @@ IJD:Willimantic (Windham Airport), CT, USA
 IJK:Izhevsk, Udmurtia, Russia
 IJU:Ijui, RS, Brazil
 IJX:Jacksonville Municipal Airport, IL, USA
+IKA:Imam Khomeini International Airport, Ahmadabad, Tehran, Iran
 IKB:Wilkesboro (Wilkes County Airport), NC, USA
 IKI:Iki, Japan
 IKK:Kankakee (Greater Kankakee Airport), IL, USA
