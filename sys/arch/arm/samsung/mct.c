@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.7 2015/12/21 00:54:35 marty Exp $	*/
+/*	$NetBSD: mct.c,v 1.8 2016/01/03 04:10:58 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.7 2015/12/21 00:54:35 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.8 2016/01/03 04:10:58 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.7 2015/12/21 00:54:35 marty Exp $");
 static int  mct_match(device_t, cfdata_t, void *);
 static void mct_attach(device_t, device_t, void *);
 
-static int clockhandler(void *);
+//static int clockhandler(void *);
 
 CFATTACH_DECL_NEW(exyo_mct, 0, mct_match, mct_attach, NULL, NULL);
 
@@ -160,7 +160,7 @@ mct_attach(device_t parent, device_t self, void *aux)
 	self->dv_private = sc;
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
-	/* MJF: Need to get irq from the dtd */
+	/* MJF: Need to get irqs from the dtd */
 //	sc->sc_irq = exyo->exyo_loc.loc_intr;
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
@@ -176,11 +176,11 @@ mct_attach(device_t parent, device_t self, void *aux)
 	evcnt_attach_dynamic(&sc->sc_ev_missing_ticks, EVCNT_TYPE_MISC, NULL,
 		device_xname(self), "missing interrupts");
 
-	sc->sc_global_ih = intr_establish(sc->sc_irq, IPL_CLOCK, IST_EDGE,
-		clockhandler, NULL);
-	if (sc->sc_global_ih == NULL)
-		panic("%s: unable to register timer interrupt", __func__);
-	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n", sc->sc_irq);
+//	sc->sc_global_ih = intr_establish(sc->sc_irq, IPL_CLOCK, IST_EDGE,
+//		clockhandler, NULL);
+//	if (sc->sc_global_ih == NULL)
+//		panic("%s: unable to register timer interrupt", __func__);
+//	aprint_normal_dev(sc->sc_dev, "interrupting on irq %d\n", sc->sc_irq);
 }
 
 
@@ -196,6 +196,7 @@ mct_gettime(struct mct_softc *sc)
 }
 
 
+#if 0
 /* interrupt handler */
 static int
 clockhandler(void *arg)
@@ -222,7 +223,7 @@ clockhandler(void *arg)
 	/* handled */
 	return 1;
 }
-
+#endif
 
 void
 mct_init_cpu_clock(struct cpu_info *ci)
