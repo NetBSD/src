@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.7 2016/01/03 15:16:10 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.8 2016/01/03 15:26:39 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.7 2016/01/03 15:16:10 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.8 2016/01/03 15:26:39 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -84,6 +84,30 @@ static const uint8_t range_test_report_descriptor[] = {
 	0x81, 0x00,			// Input
 };
 
+static const uint8_t range_test_minimum_report[7] = {
+	0x00, 0x00, 0x00, 0x80,
+	0x00, 0x80,
+	0x80,
+};
+
+static const uint8_t range_test_negative_one_report[7] = {
+	0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff,
+	0xff,
+};
+
+static const uint8_t range_test_positive_one_report[7] = {
+	0x01, 0x00, 0x00, 0x00,
+	0x01, 0x00,
+	0x01,
+};
+
+static const uint8_t range_test_maximum_report[7] = {
+	0xff, 0xff, 0xff, 0x7f,
+	0xff, 0x7f,
+	0x7f,
+};
+
 static const uint8_t unsigned_range_test_report_descriptor[] = {
 	0x0b, 0x13, 0x00, 0x00, 0xff,	// Usage
 	0x75, 0x20,			// Report Size
@@ -113,34 +137,10 @@ static const uint8_t unsigned_range_test_report_descriptor[] = {
 	0x81, 0x00,			// Input
 };
 
-static const uint8_t range_test_minimum_report[7] = {
-	0x00, 0x00, 0x00, 0x80,
-	0x00, 0x80,
-	0x80,
-};
-
 static const uint8_t unsigned_range_test_minimum_report[7] = {
 	0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00,
 	0x00,
-};
-
-static const uint8_t range_test_maximum_report[7] = {
-	0xff, 0xff, 0xff, 0x7f,
-	0xff, 0x7f,
-	0x7f,
-};
-
-static const uint8_t unsigned_range_test_maximum_report[7] = {
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff,
-	0xff,
-};
-
-static const uint8_t range_test_positive_one_report[7] = {
-	0x01, 0x00, 0x00, 0x00,
-	0x01, 0x00,
-	0x01,
 };
 
 static const uint8_t unsigned_range_test_positive_one_report[7] = {
@@ -149,16 +149,16 @@ static const uint8_t unsigned_range_test_positive_one_report[7] = {
 	0x01,
 };
 
-static const uint8_t range_test_negative_one_report[7] = {
-	0xff, 0xff, 0xff, 0xff,
-	0xff, 0xff,
-	0xff,
-};
-
 static const uint8_t unsigned_range_test_negative_one_report[7] = {
 	0xfe, 0xff, 0xff, 0xff,
 	0xfe, 0xff,
 	0xfe,
+};
+
+static const uint8_t unsigned_range_test_maximum_report[7] = {
+	0xff, 0xff, 0xff, 0xff,
+	0xff, 0xff,
+	0xff,
 };
 
 ATF_TC_HEAD(check_hid_usage, tc)
