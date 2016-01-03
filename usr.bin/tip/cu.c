@@ -1,4 +1,4 @@
-/*	$NetBSD: cu.c,v 1.22 2014/07/27 04:32:23 dholland Exp $	*/
+/*	$NetBSD: cu.c,v 1.23 2016/01/03 15:38:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -36,7 +36,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: cu.c,v 1.22 2014/07/27 04:32:23 dholland Exp $");
+__RCSID("$NetBSD: cu.c,v 1.23 2016/01/03 15:38:29 christos Exp $");
 #endif /* not lint */
 
 #include "tip.h"
@@ -54,7 +54,7 @@ cumain(int argc, char *argv[])
 	int parity = 0;		/* 0 is no parity */
 	int flow = -1;		/* -1 is "tandem" ^S/^Q */
 	static int helpme = 0, nostop = 0;
-	char useresc = '~';
+	int useresc = '~';
 	static char sbuf[12];
 	int cmdlineBR;
 	extern char *optarg;
@@ -84,7 +84,7 @@ cumain(int argc, char *argv[])
 	cmdlineBR = 0;
 
 	while((c = getopt_long(argc, argv,
-	    "E:F:P:a:p:c:l:s:hefot0123456789", longopts, NULL)) != -1) {
+	    "E:F:P:a:p:c:l:ns:hefot0123456789", longopts, NULL)) != -1) {
 
 		if (helpme == 1) cuhelp();
 
@@ -135,6 +135,9 @@ cumain(int argc, char *argv[])
 				DV = optarg;
 			else
 				(void)asprintf(&DV, "/dev/%s", optarg);
+			break;
+		case 'n':
+			useresc = -1;
 			break;
 		case 's':
 			BR = atoi(optarg);
@@ -296,6 +299,7 @@ cuhelp(void)
 	    " -o: Use odd parity\n"
 	    " -P,--parity {even,odd,none}: use even, odd, no parity\n"
 	    " -l,--line line: Use this device (ttyXX)\n"
+	    " -n: Disable escape character processing\n"
 	    " -s,--speed,--baud speed,-#: Use this speed\n"
 	    " -t: Connect via hard-wired connection\n");
 	exit(0);
