@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.74 2015/12/28 22:25:43 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.75 2016/01/03 08:30:37 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.74 2015/12/28 22:25:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.75 2016/01/03 08:30:37 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1027,6 +1027,12 @@ ehci_idone(struct ehci_xfer *ex)
 
 	USBHIST_LOG(ehcidebug, "ex=%p", ex, 0, 0, 0);
 
+	if (xfer->ux_status == USBD_CANCELLED ||
+	    xfer->ux_status == USBD_TIMEOUT) {
+		USBHIST_LOG(ehcidebug, "aborted xfer=%p", xfer, 0, 0, 0);
+		return;
+	}
+
 #ifdef DIAGNOSTIC
 #ifdef EHCI_DEBUG
 	if (ex->ex_isdone) {
@@ -1038,12 +1044,6 @@ ehci_idone(struct ehci_xfer *ex)
 	KASSERT(!ex->ex_isdone);
 	ex->ex_isdone = true;
 #endif
-
-	if (xfer->ux_status == USBD_CANCELLED ||
-	    xfer->ux_status == USBD_TIMEOUT) {
-		USBHIST_LOG(ehcidebug, "aborted xfer=%p", xfer, 0, 0, 0);
-		return;
-	}
 
 	USBHIST_LOG(ehcidebug, "xfer=%p, pipe=%p ready", xfer, epipe, 0, 0);
 
