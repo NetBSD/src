@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_engine.c,v 1.50 2014/10/18 08:33:28 snj Exp $	*/
+/*	$NetBSD: rf_engine.c,v 1.51 2016/01/03 08:17:24 mlelstv Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -55,7 +55,7 @@
  ****************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.50 2014/10/18 08:33:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_engine.c,v 1.51 2016/01/03 08:17:24 mlelstv Exp $");
 
 #include <sys/errno.h>
 
@@ -843,7 +843,7 @@ DAGExecutionThread(RF_ThreadArg_t arg)
 
 /*
  * rf_RaidIOThread() -- When I/O to a component begins, raidstrategy()
- * puts the I/O on a buf_queue, and then signals raidPtr->iodone.  If
+ * puts the I/O on a buffer queue, and then signals raidPtr->iodone.  If
  * necessary, this function calls raidstart() to initiate the I/O.
  * When I/O to a component completes, KernelWakeupFunc() puts the
  * completed request onto raidPtr->iodone TAILQ.  This function looks
