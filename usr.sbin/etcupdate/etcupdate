@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: etcupdate,v 1.59 2014/11/13 07:11:06 apb Exp $
+# $NetBSD: etcupdate,v 1.60 2016/01/03 08:44:59 martin Exp $
 #
 # Copyright (c) 2001-2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -280,7 +280,7 @@ diff_and_merge_file() {
 	if cmp -s "${TEMPROOT}${1}" "${DESTDIR}${1}"; then
 		verbose "===> ${1} (ok)"
 		rm -f "${TEMPROOT}${1}"
-		install_checksum "${DESTDIR}${1}"
+		install_checksum "${1}"
 		return
 	fi
 
