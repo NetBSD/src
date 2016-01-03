@@ -1,4 +1,4 @@
-#	$NetBSD: CI20,v 1.19 2016/01/02 16:55:46 macallan Exp $
+#	$NetBSD: CI20,v 1.20 2016/01/03 06:23:25 macallan Exp $
 #
 # MIPS Creator CI20
 #
@@ -7,7 +7,7 @@ include 	"arch/evbmips/conf/std.ingenic"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"CI20-$Revision: 1.19 $"
+#ident 		"CI20-$Revision: 1.20 $"
 
 maxusers	32
 
@@ -243,7 +243,7 @@ jzrng0	at apbus0
 #tlphy*		at mii? phy ?		# ThunderLAN PHYs
 #tqphy*		at mii? phy ?		# TDK Semiconductor PHYs
 #rlphy*		at mii? phy ?		# RealTek PHYs
-ukphy*		at mii? phy ?		# generic unknown PHYs
+#ukphy*		at mii? phy ?		# generic unknown PHYs
 
 
 # Pseudo-devices
