@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.12 2015/12/16 08:04:58 jdc Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.13 2016/01/03 17:32:17 jdc Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -29,36 +29,13 @@
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/ic/pcf8584var.h>
+#include <dev/ic/pcf8584reg.h>
 
-#define PCF_S0			0x00
-#define PCF_S1			0x01
-#define PCF_S2			0x02
-#define PCF_S3			0x03
-
-#define PCF_CTRL_ACK		(1<<0)
-#define PCF_CTRL_STO		(1<<1)
-#define PCF_CTRL_STA		(1<<2)
-#define PCF_CTRL_ENI		(1<<3)
-#define PCF_CTRL_ES2		(1<<4)
-#define PCF_CTRL_ES1		(1<<5)
-#define PCF_CTRL_ESO		(1<<6)
-#define PCF_CTRL_PIN		(1<<7)
-
-#define PCF_CTRL_START		(PCF_CTRL_PIN | PCF_CTRL_ESO | \
-    PCF_CTRL_STA | PCF_CTRL_ACK)
-#define PCF_CTRL_STOP		(PCF_CTRL_PIN | PCF_CTRL_ESO | \
-    PCF_CTRL_STO | PCF_CTRL_ACK)
-#define PCF_CTRL_REPSTART	(PCF_CTRL_ESO | PCF_CTRL_STA | PCF_CTRL_ACK)
-#define PCF_CTRL_IDLE		(PCF_CTRL_PIN | PCF_CTRL_ESO | PCF_CTRL_ACK)
-
-#define PCF_STAT_nBB		(1<<0)
-#define PCF_STAT_LAB		(1<<1)
-#define PCF_STAT_AAS		(1<<2)
-#define PCF_STAT_AD0		(1<<3)
-#define PCF_STAT_LRB		(1<<3)
-#define PCF_STAT_BER		(1<<4)
-#define PCF_STAT_STS		(1<<5)
-#define PCF_STAT_PIN		(1<<7)
+/* Internal egisters */
+#define PCF8584_S0		0x00
+#define PCF8584_S1		0x01
+#define PCF8584_S2		0x02
+#define PCF8584_S3		0x03
 
 void		pcfiic_init(struct pcfiic_softc *);
 int		pcfiic_i2c_acquire_bus(void *, int);
@@ -74,22 +51,22 @@ int		pcfiic_recv(struct pcfiic_softc *, u_int8_t, u_int8_t *,
 u_int8_t	pcfiic_read(struct pcfiic_softc *, bus_size_t);
 void		pcfiic_write(struct pcfiic_softc *, bus_size_t, u_int8_t);
 void		pcfiic_choose_bus(struct pcfiic_softc *, u_int8_t);
-int		pcfiic_wait_nBB(struct pcfiic_softc *);
+int		pcfiic_wait_BBN(struct pcfiic_softc *);
 int		pcfiic_wait_pin(struct pcfiic_softc *, volatile u_int8_t *);
 
 void
 pcfiic_init(struct pcfiic_softc *sc)
 {
 	/* init S1 */
-	pcfiic_write(sc, PCF_S1, PCF_CTRL_PIN);
+	pcfiic_write(sc, PCF8584_S1, PCF8584_CTRL_PIN);
 	/* own address */
-	pcfiic_write(sc, PCF_S0, sc->sc_addr);
+	pcfiic_write(sc, PCF8584_S0, sc->sc_addr);
 
 	/* select clock reg */
-	pcfiic_write(sc, PCF_S1, PCF_CTRL_PIN|PCF_CTRL_ES1);
-	pcfiic_write(sc, PCF_S0, sc->sc_clock);
+	pcfiic_write(sc, PCF8584_S1, PCF8584_CTRL_PIN | PCF8584_CTRL_ES1);
+	pcfiic_write(sc, PCF8584_S0, sc->sc_clock);
 
-	pcfiic_write(sc, PCF_S1, PCF_CTRL_IDLE);
+	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_IDLE);
 
 	delay(200000);	/* Multi-Master mode, wait for longest i2c message */
 }
@@ -101,11 +78,11 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
 	struct i2cbus_attach_args		iba;
 
 	if (swapregs) {
-		sc->sc_regmap[PCF_S1] = PCF_S0;
-		sc->sc_regmap[PCF_S0] = PCF_S1;
+		sc->sc_regmap[PCF8584_S1] = PCF8584_S0;
+		sc->sc_regmap[PCF8584_S0] = PCF8584_S1;
 	} else {
-		sc->sc_regmap[PCF_S0] = PCF_S0;
-		sc->sc_regmap[PCF_S1] = PCF_S1;
+		sc->sc_regmap[PCF8584_S0] = PCF8584_S0;
+		sc->sc_regmap[PCF8584_S1] = PCF8584_S1;
 	}
 	sc->sc_clock = clock;
 	sc->sc_addr = addr;
@@ -208,27 +185,27 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
 	int			i, err = 0;
 	volatile u_int8_t	r;
 
-	if (pcfiic_wait_nBB(sc) != 0)
+	if (pcfiic_wait_BBN(sc) != 0)
 		return (1);
 
-	pcfiic_write(sc, PCF_S0, addr << 1);
-	pcfiic_write(sc, PCF_S1, PCF_CTRL_START);
+	pcfiic_write(sc, PCF8584_S0, addr << 1);
+	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
 
 	for (i = 0; i <= len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
-			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 			return (1);
 		}
 
-		if (r & PCF_STAT_LRB) {
+		if (r & PCF8584_STATUS_LRB) {
 			err = 1;
 			break;
 		}
 
 		if (i < len)
-			pcfiic_write(sc, PCF_S0, buf[i]);
+			pcfiic_write(sc, PCF8584_S0, buf[i]);
 	}
-	pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 	return (err);
 }
 
@@ -238,30 +215,30 @@ pcfiic_recv(struct pcfiic_softc *sc, u_int8_t addr, u_int8_t *buf, size_t len)
 	int			i = 0, err = 0;
 	volatile u_int8_t	r;
 
-	if (pcfiic_wait_nBB(sc) != 0)
+	if (pcfiic_wait_BBN(sc) != 0)
 		return (1);
 
-	pcfiic_write(sc, PCF_S0, (addr << 1) | 0x01);
-	pcfiic_write(sc, PCF_S1, PCF_CTRL_START);
+	pcfiic_write(sc, PCF8584_S0, (addr << 1) | 0x01);
+	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
 
 	for (i = 0; i <= len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
-			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 			return (1);
 		}
 
-		if ((i != len) && (r & PCF_STAT_LRB)) {
-			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+		if ((i != len) && (r & PCF8584_STATUS_LRB)) {
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 			return (1);
 		}
 
 		if (i == len - 1) {
-			pcfiic_write(sc, PCF_S1, PCF_CTRL_ESO);
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_NAK);
 		} else if (i == len) {
-			pcfiic_write(sc, PCF_S1, PCF_CTRL_STOP);
+			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 		}
 
-		r = pcfiic_read(sc, PCF_S0);
+		r = pcfiic_read(sc, PCF8584_S0);
 		if (i > 0)
 			buf[i - 1] = r;
 	}
@@ -280,7 +257,7 @@ void
 pcfiic_write(struct pcfiic_softc *sc, bus_size_t r, u_int8_t v)
 {
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->sc_regmap[r], v);
-	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF_S1);
+	(void)bus_space_read_1(sc->sc_iot, sc->sc_ioh, PCF8584_S1);
 }
 
 void
@@ -292,12 +269,12 @@ pcfiic_choose_bus(struct pcfiic_softc *sc, u_int8_t bus)
 }
 
 int
-pcfiic_wait_nBB(struct pcfiic_softc *sc)
+pcfiic_wait_BBN(struct pcfiic_softc *sc)
 {
 	int		i;
 
 	for (i = 0; i < 1000; i++) {
-		if (pcfiic_read(sc, PCF_S1) & PCF_STAT_nBB)
+		if (pcfiic_read(sc, PCF8584_S1) & PCF8584_STATUS_BBN)
 			return (0);
 		delay(1000);
 	}
@@ -310,8 +287,8 @@ pcfiic_wait_pin(struct pcfiic_softc *sc, volatile u_int8_t *r)
 	int		i;
 
 	for (i = 0; i < 1000; i++) {
-		*r = pcfiic_read(sc, PCF_S1);
-		if ((*r & PCF_STAT_PIN) == 0)
+		*r = pcfiic_read(sc, PCF8584_S1);
+		if ((*r & PCF8584_STATUS_PIN) == 0)
 			return (0);
 		delay(1000);
 	}
