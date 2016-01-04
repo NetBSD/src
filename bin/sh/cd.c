@@ -1,4 +1,4 @@
-/*	$NetBSD: cd.c,v 1.44 2011/08/31 16:24:54 plunky Exp $	*/
+/*	$NetBSD: cd.c,v 1.45 2016/01/04 03:00:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)cd.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: cd.c,v 1.44 2011/08/31 16:24:54 plunky Exp $");
+__RCSID("$NetBSD: cd.c,v 1.45 2016/01/04 03:00:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -429,7 +429,7 @@ find_curdir(int noerror)
 			(void) close(pip[0]);
 			if (pip[1] != 1) {
 				close(1);
-				copyfd(pip[1], 1, 1);
+				copyfd(pip[1], 1, 1, 0);
 				close(pip[1]);
 			}
 			(void) execl("/bin/pwd", "pwd", (char *)0);
