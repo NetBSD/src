@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.121 2016/01/03 22:05:18 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.122 2016/01/04 08:24:42 martin Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.121 2016/01/03 22:05:18 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.122 2016/01/04 08:24:42 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -577,7 +577,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 			if ((cp = fcntlname(*ap)) != NULL)
 				(void)printf(",%s", cp);
 			else {
-				(void)printf(",%#lx", *ap);
+				(void)printf(",%#lx", (unsigned long)*ap);
 			}
 			ap++;
 			argcount--;
