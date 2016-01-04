@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.336 2016/01/04 11:12:40 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.337 2016/01/04 13:15:17 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.336 2016/01/04 11:12:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.337 2016/01/04 13:15:17 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -967,7 +967,10 @@ raid_detach_unlocked(struct raid_softc *rs)
 
 	raidPtr = &rs->sc_r;
 
-	if (DK_BUSY(dksc, 0))
+	if (DK_BUSY(dksc, 0) ||
+	    raidPtr->recon_in_progress != 0 ||
+	    raidPtr->parity_rewrite_in_progress != 0 ||
+	    raidPtr->copyback_in_progress != 0)
 		return EBUSY;
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
@@ -1180,7 +1183,10 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if ((error = raidlock(rs)) != 0)
 			return (error);
 
-		if (DK_BUSY(dksc, pmask))
+		if (DK_BUSY(dksc, pmask) ||
+		    raidPtr->recon_in_progress != 0 ||
+		    raidPtr->parity_rewrite_in_progress != 0 ||
+		    raidPtr->copyback_in_progress != 0)
 			retcode = EBUSY;
 		else {
 			/* detach and free on close */
