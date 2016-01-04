@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.13 2016/01/03 17:32:17 jdc Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.14 2016/01/04 10:00:33 jdc Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -31,7 +31,7 @@
 #include <dev/ic/pcf8584var.h>
 #include <dev/ic/pcf8584reg.h>
 
-/* Internal egisters */
+/* Internal registers */
 #define PCF8584_S0		0x00
 #define PCF8584_S1		0x01
 #define PCF8584_S2		0x02
@@ -44,7 +44,7 @@ int		pcfiic_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 		    size_t, void *, size_t, int);
 
 int		pcfiic_xmit(struct pcfiic_softc *, u_int8_t, const u_int8_t *,
-		    size_t);
+		    size_t, const u_int8_t *, size_t);
 int		pcfiic_recv(struct pcfiic_softc *, u_int8_t, u_int8_t *,
 		    size_t);
 
@@ -157,21 +157,9 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 	 * If we are reading, write address, cmdbuf, then read address, buf.
 	 */
 	if (I2C_OP_WRITE_P(op)) {
-		if (len > 0) {
-			uint8_t *tmp;
-
-			tmp = malloc(cmdlen + len, M_DEVBUF,
-			   flags & I2C_F_POLL ? M_NOWAIT : M_WAITOK);
-			if (tmp == NULL)
-				return (1);
-			memcpy(tmp, cmdbuf, cmdlen);
-			memcpy(tmp + cmdlen, buf, len);
-			ret = pcfiic_xmit(sc, addr & 0x7f, tmp, cmdlen + len);
-			free(tmp, M_DEVBUF);
-		} else
-			ret = pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen);
+		ret = pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen, buf, len);
 	} else {
-		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen) != 0)
+		if (pcfiic_xmit(sc, addr & 0x7f, cmdbuf, cmdlen, NULL, 0) != 0)
 			return (1);
 		ret = pcfiic_recv(sc, addr & 0x7f, buf, len);
 	}
@@ -179,8 +167,8 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
 }
 
 int
-pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
-    size_t len)
+pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *cmdbuf,
+    size_t cmdlen, const u_int8_t *buf, size_t len)
 {
 	int			i, err = 0;
 	volatile u_int8_t	r;
@@ -191,7 +179,7 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
 	pcfiic_write(sc, PCF8584_S0, addr << 1);
 	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_START);
 
-	for (i = 0; i <= len; i++) {
+	for (i = 0; i <= cmdlen + len; i++) {
 		if (pcfiic_wait_pin(sc, &r) != 0) {
 			pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 			return (1);
@@ -202,8 +190,10 @@ pcfiic_xmit(struct pcfiic_softc *sc, u_int8_t addr, const u_int8_t *buf,
 			break;
 		}
 
-		if (i < len)
-			pcfiic_write(sc, PCF8584_S0, buf[i]);
+		if (i < cmdlen)
+			pcfiic_write(sc, PCF8584_S0, cmdbuf[i]);
+		else if (i < cmdlen + len)
+			pcfiic_write(sc, PCF8584_S0, buf[i - cmdlen]);
 	}
 	pcfiic_write(sc, PCF8584_S1, PCF8584_CMD_STOP);
 	return (err);
