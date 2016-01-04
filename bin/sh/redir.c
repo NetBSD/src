@@ -1,4 +1,4 @@
-/*	$NetBSD: redir.c,v 1.38 2016/01/04 03:00:24 christos Exp $	*/
+/*	$NetBSD: redir.c,v 1.39 2016/01/04 13:57:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: redir.c,v 1.38 2016/01/04 03:00:24 christos Exp $");
+__RCSID("$NetBSD: redir.c,v 1.39 2016/01/04 13:57:15 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -231,7 +231,7 @@ openredirect(union node *redir, char memory[10], int flags)
 				memory[fd] = 1;
 			else
 				copyfd(redir->ndup.dupfd, fd, 1,
-				    (flags & REDIR_PUSH) == 0);
+				    (flags & REDIR_PUSH) != 0);
 		}
 		INTON;
 		return;
