@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.102 2015/12/11 07:59:14 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.103 2016/01/04 07:50:08 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.102 2015/12/11 07:59:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.103 2016/01/04 07:50:08 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.102 2015/12/11 07:59:14 knakahara Exp $
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
-#include <sys/atomic.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -147,10 +146,6 @@ void
 gifattach0(struct gif_softc *sc)
 {
 
-	sc->gif_si_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-	KASSERT(sc->gif_si_lock != NULL);
-	cv_init(&sc->gif_si_cv, "if_gif_cv");
-	sc->gif_si_refs = 0;
 	sc->encap_cookie4 = sc->encap_cookie6 = NULL;
 
 	sc->gif_if.if_addrlen = 0;
@@ -179,8 +174,6 @@ gif_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 	rtcache_free(&sc->gif_ro);
 
-	cv_destroy(&sc->gif_si_cv);
-	mutex_obj_free(sc->gif_si_lock);
 	kmem_free(sc, sizeof(struct gif_softc));
 
 	return (0);
@@ -356,21 +349,12 @@ gifintr(void *arg)
 	sc = arg;
 	ifp = &sc->gif_if;
 
-	atomic_inc_uint(&sc->gif_si_refs);
-
 	/*
-	 * pattern (a) (see also gif_set_tunnel())
 	 * other CPUs does {set,delete}_tunnel after curcpu have done
 	 * softint_schedule().
 	 */
 	if (sc->gif_pdst == NULL || sc->gif_psrc == NULL) {
 		IFQ_PURGE(&ifp->if_snd);
-
-		if (atomic_dec_uint_nv(&sc->gif_si_refs) == 0) {
-			mutex_enter(sc->gif_si_lock);
-			cv_broadcast(&sc->gif_si_cv);
-			mutex_exit(sc->gif_si_lock);
-		}
 		return;
 	}
 
@@ -424,16 +408,6 @@ gifintr(void *arg)
 			ifp->if_opackets++;
 			ifp->if_obytes += len;
 		}
-	}
-
-	/*
-	 * pattern (b) (see also gif_set_tunnel())
-	 * other CPUs begin {set,delete}_tunnel while curcpu si doing gifintr.
-	 */
-	if (atomic_dec_uint_nv(&sc->gif_si_refs) == 0) {
-		mutex_enter(sc->gif_si_lock);
-		cv_broadcast(&sc->gif_si_cv);
-		mutex_exit(sc->gif_si_lock);
 	}
 }
 
@@ -822,26 +796,19 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		sc->gif_psrc = NULL;
 		sc->gif_pdst = NULL;
 		sc->gif_si = NULL;
-
 		/*
 		 * At this point, gif_output() does not softint_schedule()
-		 * any more. However, there are below 2 fears of other CPUs.
-		 *     (a) gif_output() has done softint_schedule(),and softint
+		 * any more. However, there are below 2 fears of other CPUs
+		 * which would cause panic because of the race between
+		 * softint_execute() and softint_disestablish().
+		 *     (a) gif_output() has done softint_schedule(), and softint
 		 *         (gifintr()) is waiting for execution
+		 *         => This pattern is avoided by waiting SOFTINT_PENDING
+		 *            CPUs in softint_disestablish()
 		 *     (b) gifintr() is already running
-		 * see also gifintr()
+		 *         => This pattern is avoided by waiting SOFTINT_ACTIVE
+		 *            CPUs in softint_disestablish()
 		 */
-
-		/*
-		 * To avoid the above fears, wait for gifintr() completion of
-		 * all CPUs here.
-		 */
-		mutex_enter(sc->gif_si_lock);
-		while (sc->gif_si_refs > 0) {
-			aprint_debug("%s: cv_wait on gif_softc\n", __func__);
-			cv_wait(&sc->gif_si_cv, sc->gif_si_lock);
-		}
-		mutex_exit(sc->gif_si_lock);
 
 		softint_disestablish(osi);
 		sc->gif_psrc = osrc;
@@ -928,13 +895,6 @@ gif_delete_tunnel(struct ifnet *ifp)
 		sc->gif_psrc = NULL;
 		sc->gif_pdst = NULL;
 		sc->gif_si = NULL;
-
-		mutex_enter(sc->gif_si_lock);
-		while (sc->gif_si_refs > 0) {
-			aprint_debug("%s: cv_wait on gif_softc\n", __func__);
-			cv_wait(&sc->gif_si_cv, sc->gif_si_lock);
-		}
-		mutex_exit(sc->gif_si_lock);
 
 		softint_disestablish(osi);
 		sc->gif_psrc = osrc;
