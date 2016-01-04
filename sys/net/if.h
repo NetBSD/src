@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.193 2015/10/02 03:08:26 ozaki-r Exp $	*/
+/*	$NetBSD: if.h,v 1.194 2016/01/04 09:08:38 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -452,6 +452,8 @@ typedef struct ifnet {
 		(ifp)->if_afdata_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NET); \
 	} while (0)
 
+#define	IF_AFDATA_LOCK_DESTROY(ifp)	mutex_obj_free((ifp)->if_afdata_lock)
+
 #define	IF_AFDATA_WLOCK(ifp)	mutex_enter((ifp)->if_afdata_lock)
 #define	IF_AFDATA_RLOCK(ifp)	mutex_enter((ifp)->if_afdata_lock)
 #define	IF_AFDATA_WUNLOCK(ifp)	mutex_exit((ifp)->if_afdata_lock)
@@ -459,7 +461,6 @@ typedef struct ifnet {
 #define	IF_AFDATA_LOCK(ifp)	IF_AFDATA_WLOCK(ifp)
 #define	IF_AFDATA_UNLOCK(ifp)	IF_AFDATA_WUNLOCK(ifp)
 #define	IF_AFDATA_TRYLOCK(ifp)	mutex_tryenter((ifp)->if_afdata_lock)
-#define	IF_AFDATA_DESTROY(ifp)	mutex_destroy((ifp)->if_afdata_lock)
 
 #define	IF_AFDATA_LOCK_ASSERT(ifp)	\
 	KASSERT(mutex_owned((ifp)->if_afdata_lock))
@@ -474,6 +475,8 @@ typedef struct ifnet {
 #define	IF_AFDATA_LOCK_INIT(ifp)	\
 	do {(ifp)->if_afdata_lock = rw_obj_alloc();} while (0)
 
+#define	IF_AFDATA_LOCK_DESTROY(ifp)	rw_obj_free((ifp)->if_afdata_lock)
+
 #define	IF_AFDATA_WLOCK(ifp)	rw_enter((ifp)->if_afdata_lock, RW_WRITER)
 #define	IF_AFDATA_RLOCK(ifp)	rw_enter((ifp)->if_afdata_lock, RW_READER)
 #define	IF_AFDATA_WUNLOCK(ifp)	rw_exit((ifp)->if_afdata_lock)
@@ -481,7 +484,6 @@ typedef struct ifnet {
 #define	IF_AFDATA_LOCK(ifp)	IF_AFDATA_WLOCK(ifp)
 #define	IF_AFDATA_UNLOCK(ifp)	IF_AFDATA_WUNLOCK(ifp)
 #define	IF_AFDATA_TRYLOCK(ifp)	rw_tryenter((ifp)->if_afdata_lock, RW_WRITER)
-#define	IF_AFDATA_DESTROY(ifp)	rw_destroy((ifp)->if_afdata_lock)
 
 #define	IF_AFDATA_LOCK_ASSERT(ifp)	\
 	KASSERT(rw_lock_held((ifp)->if_afdata_lock))
