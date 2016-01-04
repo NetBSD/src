@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.335 2016/01/03 08:17:24 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.336 2016/01/04 11:12:40 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.335 2016/01/03 08:17:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.336 2016/01/04 11:12:40 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -598,11 +598,11 @@ raidsize(dev_t dev)
 
 	unit = raidunit(dev);
 	if ((rs = raidget(unit, false)) == NULL)
-		return ENXIO;
+		return -1;
 	dksc = &rs->sc_dksc;
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
-		return (ENODEV);
+		return -1;
 
 	return dk_size(dksc, dev);
 }
@@ -621,6 +621,13 @@ raiddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 
 	if ((rs->sc_flags & RAIDF_INITED) == 0)
 		return ENODEV;
+
+        /*
+           Note that blkno is relative to this particular partition.
+           By adding adding RF_PROTECTED_SECTORS, we get a value that
+	   is relative to the partition used for the underlying component.
+        */
+	blkno += RF_PROTECTED_SECTORS;
 
 	return dk_dump(dksc, dev, blkno, va, size);
 }
@@ -719,7 +726,7 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	bdev = bdevsw_lookup(raidPtr->Disks[dumpto].dev);
 
 	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
-				blkno, va, nblk);
+				blkno, va, nblk * raidPtr->bytesPerSector);
 	
 out:
 	raidunlock(rs);
