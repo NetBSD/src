@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.319 2015/11/20 08:10:36 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.320 2016/01/04 09:08:38 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.319 2015/11/20 08:10:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.320 2016/01/04 09:08:38 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -894,6 +894,8 @@ again:
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
 	ifioctl_detach(ifp);
+
+	IF_AFDATA_LOCK_DESTROY(ifp);
 
 	/*
 	 * remove packets that came from ifp, from software interrupt queues.
