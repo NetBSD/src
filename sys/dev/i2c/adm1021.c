@@ -1,4 +1,4 @@
-/*	$NetBSD: adm1021.c,v 1.11 2016/01/03 17:27:26 jdc Exp $ */
+/*	$NetBSD: adm1021.c,v 1.12 2016/01/04 19:24:15 christos Exp $ */
 /*	$OpenBSD: adm1021.c,v 1.27 2007/06/24 05:34:35 dlg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.11 2016/01/03 17:27:26 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1021.c,v 1.12 2016/01/04 19:24:15 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -117,10 +117,10 @@ struct admtemp_softc {
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor[ADMTEMP_NUM_SENSORS];
 	int sc_setdef[ADMTEMP_NUM_SENSORS];
-	u_int8_t sc_highlim[ADMTEMP_NUM_SENSORS];
-	u_int8_t sc_lowlim[ADMTEMP_NUM_SENSORS];
-	u_int8_t sc_highlim2, sc_lowlim2;
-	u_int8_t sc_thermlim[ADMTEMP_NUM_SENSORS];
+	uint8_t sc_highlim[ADMTEMP_NUM_SENSORS];
+	uint8_t sc_lowlim[ADMTEMP_NUM_SENSORS];
+	uint8_t sc_highlim2, sc_lowlim2;
+	uint8_t sc_thermlim[ADMTEMP_NUM_SENSORS];
 };
 
 int	admtemp_match(device_t, cfdata_t, void *);
@@ -179,6 +179,14 @@ admtemp_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
+static int
+admtemp_exec(struct admtemp_softc *sc, i2c_op_t op, uint8_t *cmd,
+    uint8_t *data)
+{
+	return iic_exec(sc->sc_tag, op, sc->sc_addr, cmd, sizeof(*cmd), data,
+	    sizeof(*data), 0);
+}
+
 /*
  * Set flags based on chip type for direct config, or by testing for
  * indirect config.
@@ -199,21 +207,19 @@ admtemp_match(device_t parent, cfdata_t match, void *aux)
  */
 static void
 admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
-    u_int8_t* comp, u_int8_t *rev, char* name)
+    uint8_t* comp, uint8_t *rev, char* name)
 {
-	u_int8_t cmd, data, tmp;
+	uint8_t cmd, data, tmp;
 	int i;
 
 	*comp = 0;
 	*rev = 0;
 
 	cmd = ADM1021_COMPANY;
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, comp, sizeof comp, 0);
+	admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, comp);
 
 	cmd = ADM1021_DIE_REVISION;
-	iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, rev, sizeof rev, 0);
+	admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, rev);
 
 	sc->sc_noneg = 1;
 	sc->sc_nolow = 0;
@@ -233,9 +239,8 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 	if (*comp == 0) {
 		sc->sc_noneg = 0;
 		cmd = ADM1021_INT_LOW_READ;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &comp, sizeof comp, 0) == 0 &&
-		    data != ADMTEMP_LOW_DEFAULT) {
+		if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, comp) == 0 &&
+		    *comp != ADMTEMP_LOW_DEFAULT) {
 			sc->sc_nolow = 1;
 			strlcpy(name, "LM84", ADMTEMP_NAMELEN);
 		} else
@@ -255,28 +260,20 @@ admtemp_setflags(struct admtemp_softc *sc, struct i2c_attach_args *ia,
 
 	if (*comp == ADM1021_COMPANY_ADM) {
 		cmd = ADM1023_EXT_HIGH2;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &data, sizeof data, 0) == 0) {
+		if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &data) == 0) {
 			tmp = 1 << ADM1023_EXT2_SHIFT;
-			iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd,
-			    &tmp, sizeof tmp, 0);
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd,
-			    &tmp, sizeof tmp, 0) == 0 &&
-			    tmp == 1 << ADM1023_EXT2_SHIFT) {
+			admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &tmp);
+			if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd,
+			    &tmp) == 0 && tmp == 1 << ADM1023_EXT2_SHIFT) {
 				sc->sc_ext11 = 1;
 				strlcpy(name, "ADM1023", ADMTEMP_NAMELEN);
 			}
-			iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd,
-			    &data, sizeof data, 0);
+			admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &data);
 		}
 		cmd = ADM1032_EXT_THERM;
 		if (sc->sc_ext11 &&
-		    iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &data, sizeof data, 0) == 0 &&
-		    data == 0x55) {
+		    admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &data) == 0
+		    && data == 0x55) {
 			sc->sc_therm = 1;
 			strlcpy(name, "ADM1032", ADMTEMP_NAMELEN);
 		}
@@ -294,7 +291,7 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 {
 	struct admtemp_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	u_int8_t cmd, data, stat, comp, rev;
+	uint8_t cmd, data, stat, comp, rev;
 	char name[ADMTEMP_NAMELEN];
 
 	sc->sc_tag = ia->ia_tag;
@@ -302,25 +299,22 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 
 	iic_acquire_bus(sc->sc_tag, 0);
 	cmd = ADM1021_CONFIG_READ;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-	    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &data) != 0) {
 		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(self, "cannot get control register\n");
 		return;
 	}
 	if (data & ADM1021_CONFIG_RUN) {
 		cmd = ADM1021_STATUS;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &stat, sizeof stat, 0)) {
+		if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &stat)) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(self,
 			    "cannot read status register\n");
 			return;
 		}
 		if ((stat & ADM1021_STATUS_INVAL) == ADM1021_STATUS_INVAL) {
-			if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd, &stat, sizeof stat,
-			    0)) {
+			if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd,
+			    &stat)) {
 				iic_release_bus(sc->sc_tag, 0);
 				aprint_error_dev(self,
 				    "cannot read status register\n");
@@ -335,8 +329,7 @@ admtemp_attach(device_t parent, device_t self, void *aux)
 
 		data &= ~ADM1021_CONFIG_RUN;
 		cmd = ADM1021_CONFIG_WRITE;
-		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &data, sizeof data, 0)) {
+		if (admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &data)) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(self,
 			    "cannot set control register\n");
@@ -408,7 +401,7 @@ void
 admtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct admtemp_softc *sc = sme->sme_cookie;
-	u_int8_t cmd, xdata;
+	uint8_t cmd, xdata;
 	int8_t sdata;
 
 	iic_acquire_bus(sc->sc_tag, 0);
@@ -418,8 +411,7 @@ admtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	else
 		cmd = ADM1021_EXT_TEMP;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &sdata,  sizeof sdata, 0) == 0) {
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &sdata) == 0) {
 		if (sdata == ADM1021_STATUS_INVAL) {
 			edata->state = ENVSYS_SINVALID;
 		} else {
@@ -429,9 +421,7 @@ admtemp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 	}
 	if (edata->sensor == ADMTEMP_EXT && sc->sc_ext11) {
 		cmd = ADM1023_EXT_TEMP2;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &xdata, sizeof xdata, 0) == 0) {
-		}
+		admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &xdata);
 		edata->value_cur +=
 		    (xdata >> ADM1023_EXT2_SHIFT & ADM1023_EXT2_MASK) * 125000;
 	}
@@ -444,7 +434,7 @@ admtemp_getlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct admtemp_softc *sc = sme->sme_cookie;
-	u_int8_t cmd;
+	uint8_t cmd;
 	int8_t hdata = 0x7f, ldata = 0xc9;
 
 	*props &= ~(PROP_CRITMAX | PROP_CRITMIN);
@@ -456,8 +446,7 @@ admtemp_getlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		cmd = ADM1021_EXT_HIGH_READ;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &hdata, sizeof hdata, 0) == 0 &&
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &hdata) == 0 &&
 	    hdata != ADMTEMP_LIM_INVAL) {
 		limits->sel_critmax = 273150000 + 1000000 * hdata;
 		*props |= PROP_CRITMAX;
@@ -472,8 +461,7 @@ admtemp_getlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		cmd = ADM1021_EXT_LOW_READ;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &ldata, sizeof ldata, 0) == 0 &&
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &ldata) == 0 &&
 	    ldata != ADMTEMP_LIM_INVAL) {
 		limits->sel_critmin = 273150000 + 1000000 * ldata;
 		*props |= PROP_CRITMIN;
@@ -495,7 +483,7 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct admtemp_softc *sc = sme->sme_cookie;
-	u_int8_t cmd, xhdata = 0, xldata = 0;
+	uint8_t cmd, xhdata = 0, xldata = 0;
 	int8_t hdata = 0x7f, ldata = 0xc9;
 
 	*props &= ~(PROP_CRITMAX | PROP_CRITMIN);
@@ -507,8 +495,7 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		cmd = ADM1021_EXT_HIGH_READ;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &hdata, sizeof hdata, 0) == 0 &&
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &hdata) == 0 &&
 	    hdata != ADMTEMP_LIM_INVAL) {
 		limits->sel_critmax = 273150000 + 1000000 * hdata;
 		*props |= PROP_CRITMAX;
@@ -516,8 +503,7 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (edata->sensor == ADMTEMP_EXT) {
 		cmd = ADM1023_EXT_HIGH2;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &xhdata, sizeof xhdata, 0) == 0)
+		if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &xhdata) == 0)
 			limits->sel_critmax +=
 			    (xhdata >> ADM1023_EXT2_SHIFT & ADM1023_EXT2_MASK)
 			    * 125000;
@@ -528,8 +514,7 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		cmd = ADM1021_EXT_LOW_READ;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &ldata, sizeof ldata, 0) == 0 &&
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &ldata) == 0 &&
 	    ldata != ADMTEMP_LIM_INVAL) {
 		limits->sel_critmin = 273150000 + 1000000 * ldata;
 		*props |= PROP_CRITMIN;
@@ -537,8 +522,7 @@ admtemp_getlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (edata->sensor == ADMTEMP_EXT) {
 		cmd = ADM1023_EXT_LOW2;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &xldata, sizeof xldata, 0) == 0)
+		if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &xldata) == 0)
 			limits->sel_critmin +=
 			    (xldata >> ADM1023_EXT2_SHIFT & ADM1023_EXT2_MASK)
 				* 125000;
@@ -563,7 +547,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct admtemp_softc *sc = sme->sme_cookie;
-	u_int8_t cmd, xhdata = 0, xldata = 0;
+	uint8_t cmd, xhdata = 0, xldata = 0;
 	int8_t tdata = 0x55, hdata = 0x55, ldata = 0;
 
 	*props &= ~(PROP_WARNMAX | PROP_CRITMAX | PROP_WARNMIN);
@@ -575,8 +559,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		cmd = ADM1032_EXT_THERM;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &tdata, sizeof tdata, 0) == 0 &&
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &tdata) == 0 &&
 	    tdata != ADMTEMP_LIM_INVAL) {
 		limits->sel_critmax = 273150000 + 1000000 * tdata;
 		*props |= PROP_CRITMAX;
@@ -587,8 +570,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		cmd = ADM1021_EXT_HIGH_READ;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &hdata, sizeof hdata, 0) == 0&&
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &hdata) == 0 &&
 	    hdata != ADMTEMP_LIM_INVAL) {
 		limits->sel_warnmax = 273150000 + 1000000 * hdata;
 		*props |= PROP_WARNMAX;
@@ -596,8 +578,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (edata->sensor == ADMTEMP_EXT) {
 		cmd = ADM1023_EXT_HIGH2;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &xhdata, sizeof xhdata, 0) == 0)
+		if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &xhdata) == 0)
 			limits->sel_warnmax +=
 			    (xhdata >> ADM1023_EXT2_SHIFT & ADM1023_EXT2_MASK)
 			        * 125000;
@@ -608,8 +589,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 	else
 		cmd = ADM1021_EXT_LOW_READ;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &cmd, sizeof cmd, &ldata, sizeof ldata, 0) == 0 &&
+	if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &ldata) == 0 &&
 	    ldata != ADMTEMP_LIM_INVAL) {
 		limits->sel_warnmin = 273150000 + 1000000 * ldata;
 		*props |= PROP_WARNMIN;
@@ -617,8 +597,7 @@ admtemp_getlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 
 	if (edata->sensor == ADMTEMP_EXT) {
 		cmd = ADM1023_EXT_LOW2;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-		    &cmd, sizeof cmd, &xldata, sizeof xldata, 0) == 0)
+		if (admtemp_exec(sc, I2C_OP_READ_WITH_STOP, &cmd, &xldata) == 0)
 			limits->sel_warnmin +=
 			    (xldata >> ADM1023_EXT2_SHIFT & ADM1023_EXT2_MASK)
 			        * 125000;
@@ -644,7 +623,7 @@ admtemp_setlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 	sysmon_envsys_lim_t *limits, uint32_t *props)
 {
 	struct admtemp_softc *sc = sme->sme_cookie;
-	u_int8_t cmd;
+	uint8_t cmd;
 	int tmp;
 	int8_t sdata;
 
@@ -669,8 +648,7 @@ admtemp_setlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 			else
 				sdata = tmp & 0xff;
 		}
-		iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0);
+		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 	}
 
 	if (*props & PROP_CRITMIN && sc->sc_nolow == 0) {
@@ -691,15 +669,14 @@ admtemp_setlim_1021(struct sysmon_envsys *sme, envsys_data_t *edata,
 			else
 				sdata = tmp & 0xff;
 		}
-		iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0);
+		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
 }
 
 static void
-admtemp_encode_temp(const uint32_t val, int8_t *sdata, u_int8_t *xdata,
+admtemp_encode_temp(const uint32_t val, int8_t *sdata, uint8_t *xdata,
     const int ext11)
 {
 	int32_t tmp;
@@ -728,7 +705,7 @@ admtemp_setlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 {
 	struct admtemp_softc *sc = sme->sme_cookie;
 	int ext11;
-	u_int8_t cmd, xdata;
+	uint8_t cmd, xdata;
 	int8_t sdata;
 
 	if (edata->sensor == ADMTEMP_INT)
@@ -751,13 +728,10 @@ admtemp_setlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 			admtemp_encode_temp(limits->sel_critmax, &sdata,
 			    &xdata, ext11);
 
-		iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0);
+		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 		if (ext11) {
 			cmd = ADM1023_EXT_HIGH2;
-			iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd,
-			    &xdata, sizeof xdata, 0);
+			admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &xdata);
 		}
 	}
 
@@ -772,13 +746,10 @@ admtemp_setlim_1023(struct sysmon_envsys *sme, envsys_data_t *edata,
 		} else
 			admtemp_encode_temp(limits->sel_critmax, &sdata,
 			    &xdata, ext11);
-		iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0);
+		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 		if (ext11) {
 			cmd = ADM1023_EXT_LOW2;
-			iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd,
-			    &xdata, sizeof xdata, 0);
+			admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &xdata);
 		}
 	}
 
@@ -791,7 +762,7 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 {
 	struct admtemp_softc *sc = sme->sme_cookie;
 	int ext11;
-	u_int8_t cmd, xdata;
+	uint8_t cmd, xdata;
 	int8_t sdata;
 
 	if (edata->sensor == ADMTEMP_INT)
@@ -811,8 +782,7 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 		else
 			admtemp_encode_temp(limits->sel_critmax, &sdata,
 			    &xdata, 0);
-		iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0);
+		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 	}
 
 	if (*props & PROP_WARNMAX) {
@@ -827,14 +797,11 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 		} else
 			admtemp_encode_temp(limits->sel_warnmax, &sdata,
 			    &xdata, ext11);
-		iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0);
+		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 
 		if (ext11) {
 			cmd = ADM1023_EXT_HIGH2;
-			iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd,
-			    &xdata, sizeof xdata, 0);
+			admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &xdata);
 		}
 	}
 
@@ -849,14 +816,11 @@ admtemp_setlim_1032(struct sysmon_envsys *sme, envsys_data_t *edata,
 		} else
 			admtemp_encode_temp(limits->sel_warnmin, &sdata,
 			    &xdata, ext11);
-		iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-		    sc->sc_addr, &cmd, sizeof cmd, &sdata, sizeof sdata, 0);
+		admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &sdata);
 
 		if (ext11) {
 			cmd = ADM1023_EXT_LOW2;
-			iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
-			    sc->sc_addr, &cmd, sizeof cmd,
-			    &xdata, sizeof xdata, 0);
+			admtemp_exec(sc, I2C_OP_WRITE_WITH_STOP, &cmd, &xdata);
 		}
 	}
 
