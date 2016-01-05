@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.6 2016/01/01 22:35:44 marty Exp $ */
+/* $NetBSD: fdtvar.h,v 1.7 2016/01/05 21:53:48 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,10 +52,10 @@ struct fdt_attach_args {
 #define FDT_INTR_MPSAFE	__BIT(0)
 
 struct fdtbus_interrupt_controller_func {
-	void *	(*establish)(device_t, int, u_int, int, int,
+	void *	(*establish)(device_t, u_int *, int, int,
 			     int (*)(void *), void *);
 	void	(*disestablish)(device_t, void *);
-	bool	(*intrstr)(device_t, int, u_int, char *, size_t);
+	bool	(*intrstr)(device_t, u_int *, char *, size_t);
 };
 
 struct fdtbus_i2c_controller_func {
