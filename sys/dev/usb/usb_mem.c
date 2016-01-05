@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_mem.c,v 1.65.2.12 2016/01/05 06:05:11 skrll Exp $	*/
+/*	$NetBSD: usb_mem.c,v 1.65.2.13 2016/01/05 06:09:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.12 2016/01/05 06:05:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_mem.c,v 1.65.2.13 2016/01/05 06:09:26 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -147,7 +147,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	b->tag = tag;
 	b->size = size;
 	b->align = align;
- free:
 
 	if (!multiseg)
 		/* Caller wants one segment */
