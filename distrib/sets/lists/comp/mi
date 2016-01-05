@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2010 2015/12/29 17:54:43 christos Exp $
+#	$NetBSD: mi,v 1.2011 2016/01/05 03:40:41 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3722,6 +3722,7 @@
 ./usr/libdata/lint/llib-lwrap.ln		comp-c-lintlib		lint
 ./usr/libdata/lint/llib-ly.ln			comp-c-lintlib		lint
 ./usr/libdata/lint/llib-lz.ln			comp-c-lintlib		lint
+./usr/libdata/lint/llib-llzma.ln		comp-c-lintlib		lint
 ./usr/libexec/cc1				comp-c-bin		gcccmds
 ./usr/libexec/cc1obj				comp-objc-bin		gcccmds
 ./usr/libexec/cc1plus				comp-cxx-bin		gcccmds
