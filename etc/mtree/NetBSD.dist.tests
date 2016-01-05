@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.123 2016/01/01 21:38:54 jakllsch Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.124 2016/01/05 17:22:38 jakllsch Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -20,6 +20,7 @@
 ./usr/libdata/debug/usr/tests/dev/md
 ./usr/libdata/debug/usr/tests/dev/scsipi
 ./usr/libdata/debug/usr/tests/dev/sysmon
+./usr/libdata/debug/usr/tests/dev/usb
 ./usr/libdata/debug/usr/tests/fs
 ./usr/libdata/debug/usr/tests/fs/ffs
 ./usr/libdata/debug/usr/tests/fs/fifofs
@@ -189,6 +190,7 @@
 ./usr/tests/dev/raidframe
 ./usr/tests/dev/scsipi
 ./usr/tests/dev/sysmon
+./usr/tests/dev/usb
 ./usr/tests/fs
 ./usr/tests/fs/cd9660
 ./usr/tests/fs/ffs
