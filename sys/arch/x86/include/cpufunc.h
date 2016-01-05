@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.18 2014/02/25 22:16:52 dsl Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.19 2016/01/05 10:20:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -134,12 +134,12 @@ void	x86_reset(void);
 #define	OPTERON_MSR_PASSCODE	0x9c5a203aU
 
 uint64_t	rdmsr(u_int);
-uint64_t	rdmsr_locked(u_int, u_int);
+uint64_t	rdmsr_locked(u_int);
 int		rdmsr_safe(u_int, uint64_t *);
 uint64_t	rdtsc(void);
 uint64_t	rdpmc(u_int);
 void		wrmsr(u_int, uint64_t);
-void		wrmsr_locked(u_int, u_int, uint64_t);
+void		wrmsr_locked(u_int, uint64_t);
 void		setfs(int);
 void		setusergs(int);
 
