@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.155 2013/09/14 20:24:22 martin Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.155.4.1 2016/01/05 22:16:44 snj Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.155 2013/09/14 20:24:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.155.4.1 2016/01/05 22:16:44 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -78,7 +78,8 @@ assert_sleepable(void)
 	} while (pctr != lwp_pctr());
 
 	reason = NULL;
-	if (idle && !cold) {
+	if (idle && !cold &&
+	    kcpuset_isset(kcpuset_running, cpu_index(curcpu()))) {
 		reason = "idle";
 	}
 	if (cpu_intr_p()) {
