@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.339 2016/01/05 17:06:34 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.340 2016/01/05 18:44:34 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.339 2016/01/05 17:06:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.340 2016/01/05 18:44:34 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2323,9 +2323,7 @@ raidread_component_area(dev_t dev, struct vnode *b_vp, void *data,
  	bp->b_resid = dsize;
 
 	bdev_strategy(bp);
-	error = bp->b_error;
-	if (!error)
-		error = biowait(bp);
+	error = biowait(bp);
 
 	if (!error) {
 		memcpy(data, bp->b_data, msize);
@@ -2370,9 +2368,7 @@ raidwrite_component_area(dev_t dev, struct vnode *b_vp, void *data,
 	bdev_strategy(bp);
 	if (asyncp)
 		return 0;
-	error = bp->b_error;
-	if (!error)
-		error = biowait(bp);
+	error = biowait(bp);
 	brelse(bp, 0);
 	if (error) {
 #if 1
