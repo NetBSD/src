@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2014/08/20 15:19:39 joerg Exp $
+#	$NetBSD: Makefile,v 1.8 2016/01/05 13:07:46 christos Exp $
 
 LIB=		c++
 WARNS=		4
@@ -44,6 +44,6 @@ CWARNFLAGS.clang+=	-Wno-error=missing-prototypes -Wno-error=sometimes-uninitiali
 CWARNFLAGS.clang+=	-Wno-error=missing-field-initializers -Wno-error=switch
 CWARNFLAGS.clang+=	-Wno-error=implicit-exception-spec-mismatch
 
-LDADD+=	-Wl,-z,defs
+LDFLAGS+=	-Wl,-z,defs
 
 .include <bsd.lib.mk>
