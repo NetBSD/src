@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.159 2015/12/23 00:13:57 pgoyette Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.160 2016/01/05 09:07:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.159 2015/12/23 00:13:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.160 2016/01/05 09:07:19 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -690,13 +690,11 @@ spec_read(void *v)
 	int n, on;
 	int error = 0;
 
-#ifdef DIAGNOSTIC
-	if (uio->uio_rw != UIO_READ)
-		panic("spec_read mode");
-	if (&uio->uio_vmspace->vm_map != kernel_map &&
-	    uio->uio_vmspace != curproc->p_vmspace)
-		panic("spec_read proc");
-#endif
+	KASSERT(uio->uio_rw == UIO_READ);
+	KASSERTMSG(VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+		   uio->uio_vmspace == curproc->p_vmspace,
+		"vmspace belongs to neither kernel nor curproc");
+
 	if (uio->uio_resid == 0)
 		return (0);
 
@@ -762,13 +760,10 @@ spec_write(void *v)
 	int n, on;
 	int error = 0;
 
-#ifdef DIAGNOSTIC
-	if (uio->uio_rw != UIO_WRITE)
-		panic("spec_write mode");
-	if (&uio->uio_vmspace->vm_map != kernel_map &&
-	    uio->uio_vmspace != curproc->p_vmspace)
-		panic("spec_write proc");
-#endif
+	KASSERT(uio->uio_rw == UIO_WRITE);
+	KASSERTMSG(VMSPACE_IS_KERNEL_P(uio->uio_vmspace) ||
+		   uio->uio_vmspace == curproc->p_vmspace,
+		"vmspace belongs to neither kernel nor curproc");
 
 	switch (vp->v_type) {
 
