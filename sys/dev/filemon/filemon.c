@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.23 2016/01/05 09:37:11 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.24 2016/01/05 22:08:54 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.23 2016/01/05 09:37:11 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.24 2016/01/05 22:08:54 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -142,6 +142,7 @@ filemon_printf(struct filemon *filemon, const char *fmt, ...)
 static void
 filemon_comment(struct filemon * filemon)
 {
+
 	filemon_printf(filemon, "# filemon version %d\n# Target pid %d\nV %d\n",
 	   FILEMON_VERSION, curproc->p_pid, FILEMON_VERSION);
 }
