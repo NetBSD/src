@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.3 2015/12/16 19:33:55 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.4 2016/01/05 21:53:48 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.3 2015/12/16 19:33:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.4 2016/01/05 21:53:48 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -45,6 +45,10 @@ struct fdtbus_interrupt_controller {
 };
 
 static struct fdtbus_interrupt_controller *fdtbus_ic = NULL;
+
+static bool has_interrupt_map(int phandle);
+static u_int *get_entry_from_map(int phandle, int pindex);
+static u_int *get_specifier_by_index(int phandle, int pindex);
 
 static int
 fdtbus_get_interrupt_parent(int phandle)
@@ -75,22 +79,26 @@ fdtbus_get_interrupt_parent(int phandle)
 }
 
 static struct fdtbus_interrupt_controller *
+fdtbus_get_interrupt_controller_ic(int phandle)
+{
+	struct fdtbus_interrupt_controller * ic;
+	for (ic = fdtbus_ic; ic; ic = ic->ic_next) {
+		if (ic->ic_phandle == phandle) {
+			return ic;
+		}
+	}
+	return NULL;
+}
+
+static struct fdtbus_interrupt_controller *
 fdtbus_get_interrupt_controller(int phandle)
 {
-	struct fdtbus_interrupt_controller *ic;
-
 	const int ic_phandle = fdtbus_get_interrupt_parent(phandle);
 	if (ic_phandle < 0) {
 		return NULL;
 	}
 
-	for (ic = fdtbus_ic; ic; ic = ic->ic_next) {
-		if (ic->ic_phandle == ic_phandle) {
-			return ic;
-		}
-	}
-
-	return NULL;
+	return fdtbus_get_interrupt_controller_ic(ic_phandle);
 }
 
 int
@@ -114,14 +122,24 @@ void *
 fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
+	u_int *specifier;
+	int ihandle;
 	struct fdtbus_interrupt_controller *ic;
 
-	ic = fdtbus_get_interrupt_controller(phandle);
+	if (has_interrupt_map(phandle)) {
+		specifier = get_entry_from_map(phandle, index);
+		ihandle = be32toh(specifier[1]);
+		ihandle = fdtbus_get_phandle_from_native(ihandle);
+		specifier += 2;
+	} else {
+		specifier = get_specifier_by_index(phandle, index);
+		ihandle = phandle;
+	}
+	ic = fdtbus_get_interrupt_controller(ihandle);
 	if (ic == NULL)
 		return NULL;
-
-	return ic->ic_funcs->establish(ic->ic_dev, phandle, index, ipl,
-	    flags, func, arg);
+	return ic->ic_funcs->establish(ic->ic_dev, specifier,
+					       ipl, flags, func, arg);
 }
 
 void
@@ -139,10 +157,160 @@ bool
 fdtbus_intr_str(int phandle, u_int index, char *buf, size_t buflen)
 {
 	struct fdtbus_interrupt_controller *ic;
+	int ihandle;
+	u_int *specifier;
 
-	ic = fdtbus_get_interrupt_controller(phandle);
+	if (has_interrupt_map(phandle)) {
+		specifier = get_entry_from_map(phandle, index);
+		ihandle = be32toh(specifier[1]);
+		ihandle = fdtbus_get_phandle_from_native(ihandle);
+	} else {
+		ihandle = phandle;
+		specifier = get_specifier_by_index(phandle, index);
+	}
+	ic = fdtbus_get_interrupt_controller(ihandle);
 	if (ic == NULL)
 		return false;
+	return ic->ic_funcs->intrstr(ic->ic_dev, specifier, buf, buflen);
+}
 
-	return ic->ic_funcs->intrstr(ic->ic_dev, phandle, index, buf, buflen);
+/*
+ * Devices that have multiple interrupts, connected to two or more
+ * interrupt sources use an interrupt map rather than a simple
+ * interrupt parent to indicate which interrupt controller goes with
+ * which map.  The interrupt map is contained in the node describing
+ * the first level parent and contains one entry per interrupt:
+ *   index -- the index of the entry in the map
+ *   &parent -- pointer to the node containing the actual interrupt parent
+ *              for the specific interrupt
+ *  [specifier 0 - specifier N-1] The N (usually 2 or 3) 32 bit words
+ *              that make up the specifier.
+ *
+ * returns true if the device phandle has an interrupt-parent that
+ * contains an interrupt-map.
+ */
+static bool
+has_interrupt_map(int phandle)
+{
+	int ic_phandle;
+	of_getprop_uint32(phandle, "interrupt-parent", &ic_phandle);
+	if (ic_phandle <= 0)
+		return false;
+	ic_phandle = fdtbus_get_phandle_from_native(ic_phandle);
+	if (ic_phandle <= 0)
+		return false;
+	int len = OF_getproplen(ic_phandle, "interrupt-map");
+	if (len > 0)
+		return true;
+	return false;
+}
+
+/*
+ * Walk the specifier map and return a pointer to the map entry
+ * associated with pindex.  Return null if there is no entry.
+ *
+ * Because the length of the specifier depends on the interrupt
+ * controller, we need to repeatedly obtain interrupt-celss for
+ * the controller for the current index.
+ *
+ * this version leaks memory and needs a revisit
+ */
+static u_int *
+get_entry_from_map(int phandle, int pindex)
+{
+	int intr_cells;
+	int intr_parent;
+
+	of_getprop_uint32(phandle, "#interrupt-cells", &intr_cells);
+	of_getprop_uint32(phandle, "interrupt-parent", &intr_parent);
+
+	intr_parent = fdtbus_get_phandle_from_native(intr_parent);
+	int len = OF_getproplen(intr_parent, "interrupt-map");
+	if (len <= 0) {
+		printf(" no interrupt-map.\n");
+		return NULL;
+	}
+	uint resid = len;
+	char *data = kmem_alloc(len, KM_SLEEP);
+	len = OF_getprop(intr_parent, "interrupt-map", data, len);
+	if (len <= 0) {
+		printf(" can't get property interrupt-map.\n");
+		return NULL;
+	}
+	u_int *p = (u_int *)data;
+
+	while (resid > 0) {
+		u_int index = be32toh(p[0]);
+		if (index == pindex) {
+			return &p[0];
+									
+		}
+		/* Determine the length of the entry and skip that many
+		 * 32 bit words
+		 */
+		const u_int parent = fdtbus_get_phandle_from_native(be32toh(p[intr_cells]));
+		u_int pintr_cells;
+		of_getprop_uint32(parent, "#interrupt-cells", &pintr_cells);
+		const u_int reclen = (intr_cells + pintr_cells + 1);
+		resid -= reclen * sizeof(u_int);
+		p += reclen;
+	}
+	return NULL;
+}
+
+
+/*
+ * Devices that don't connect to more than one interrupt source use
+ * an array of specifiers.  Find the specifier that matches pindex
+ * and return a pointer to it.
+ *
+ * This version leaks memory and needs a revisit.
+ */
+static u_int *get_specifier_by_index(int phandle, int pindex)
+{
+	u_int *specifiers;
+	int interrupt_parent, interrupt_cells, len;
+
+	printf("%s: phandle = %d pindex = %d\n", __func__, phandle, pindex);
+
+	len = OF_getprop(phandle, "interrupt-parent", &interrupt_parent,
+	    sizeof(interrupt_parent));
+	interrupt_parent = be32toh(interrupt_parent);
+	interrupt_parent = fdtbus_get_phandle_from_native(interrupt_parent);
+	printf("%s: len = %d interrupt_parent = %d\n", __func__, len,
+	       interrupt_parent);
+	if (len != sizeof(interrupt_parent) || interrupt_parent <= 0) {
+		printf("%s: interrupt_parent sanity check failed\n", __func__);
+		return NULL;
+	}
+
+	len = OF_getprop(interrupt_parent, "#interrupt-cells",
+			 &interrupt_cells,  sizeof(interrupt_cells));
+	interrupt_cells = be32toh(interrupt_cells);
+	printf("%s: len = %d interrupt_cells = %d\n", __func__, len,
+	       interrupt_cells);
+	if (len != sizeof(interrupt_cells) || interrupt_cells <= 0) {
+		printf("%s: interrupt_celyls sanity check failed\n", __func__);
+		return NULL;
+	}
+
+	len = OF_getproplen(phandle, "interrupts");
+	if (len <= 0) {
+		printf("%s: Couldn't get property interrupts\n", __func__);
+		return NULL;
+	}
+
+	const u_int clen = interrupt_cells * sizeof(u_int);
+	const u_int nintr = len / interrupt_cells;
+
+	if (pindex >= nintr)
+		return NULL;
+
+	specifiers = kmem_alloc(len, KM_SLEEP);
+
+	if (OF_getprop(phandle, "interrupts", specifiers, len) != len) {
+		kmem_free(specifiers, len);
+		return NULL;
+	}
+	return &specifiers[pindex * clen];
 }
