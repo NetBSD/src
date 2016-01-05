@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.1,v 1.1.2.22 2016/01/02 14:39:25 riz Exp $
+# $NetBSD: CHANGES-7.0.1,v 1.1.2.23 2016/01/05 22:27:26 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.0.1
 release:
@@ -837,4 +837,11 @@ sys/sys/disk.h                                  1.66
 	Avoid netbsd-6 (and prior) vnconfig -l infinite loop with a newer
 	kernel, and limit the vnd sector size choices to rational values.
 	[manu, ticket #1038]
+
+etc/namedb/root.cache				1.19
+
+	Update to 2015120100.
+	* Addresses of H.ROOT-SERVERS.NET has updated.
+	* Make IPv6 address lower case.
+	[taca, ticket #1055]
 
