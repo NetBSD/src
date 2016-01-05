@@ -1,4 +1,4 @@
-/* $NetBSD: spdmem.c,v 1.20 2015/12/24 14:16:18 msaitoh Exp $ */
+/* $NetBSD: spdmem.c,v 1.21 2016/01/05 11:49:32 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2007 Nicolas Joly
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.20 2015/12/24 14:16:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spdmem.c,v 1.21 2016/01/05 11:49:32 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -154,14 +154,15 @@ static const uint16_t spdmem_cycle_frac[] = {
 
 /* CRC functions used for certain memory types */
 
-static uint16_t spdcrc16 (struct spdmem_softc *sc, int count)
+static uint16_t
+spdcrc16(struct spdmem_softc *sc, int count)
 {
 	uint16_t crc;
 	int i, j;
 	uint8_t val;
 	crc = 0;
 	for (j = 0; j <= count; j++) {
-		val = (sc->sc_read)(sc, j);
+		(sc->sc_read)(sc, j, &val);
 		crc = crc ^ val << 8;
 		for (i = 0; i < 8; ++i)
 			if (crc & 0x8000)
@@ -180,16 +181,20 @@ spdmem_common_probe(struct spdmem_softc *sc)
 	int spd_len, spd_crc_cover;
 	uint16_t crc_calc, crc_spd;
 
-	spd_type = (sc->sc_read)(sc, 2);
+	/* Read failed means a device doesn't exist */
+	if ((sc->sc_read)(sc, 2, &spd_type) != 0)
+		return 0;
 
 	/* For older memory types, validate the checksum over 1st 63 bytes */
 	if (spd_type <= SPDMEM_MEMTYPE_DDR2SDRAM) {
-		for (i = 0; i < 63; i++)
-			cksum += (sc->sc_read)(sc, i);
+		for (i = 0; i < 63; i++) {
+			(sc->sc_read)(sc, i, &val);
+			cksum += val;
+		}
 
-		val = (sc->sc_read)(sc, 63);
+		(sc->sc_read)(sc, 63, &val);
 
-		if (cksum == 0 || (cksum & 0xff) != val) {
+		if ((cksum & 0xff) != val) {
 			aprint_debug("spd checksum failed, calc = 0x%02x, "
 				     "spd = 0x%02x\n", cksum, val);
 			return 0;
@@ -199,7 +204,8 @@ spdmem_common_probe(struct spdmem_softc *sc)
 
 	/* For DDR3 and FBDIMM, verify the CRC */
 	else if (spd_type <= SPDMEM_MEMTYPE_DDR3SDRAM) {
-		spd_len = (sc->sc_read)(sc, 0);
+		(sc->sc_read)(sc, 0, &val);
+		spd_len = val;
 		if (spd_len & SPDMEM_SPDCRC_116)
 			spd_crc_cover = 116;
 		else
@@ -220,8 +226,10 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		if (spd_crc_cover > spd_len)
 			return 0;
 		crc_calc = spdcrc16(sc, spd_crc_cover);
-		crc_spd = (sc->sc_read)(sc, 127) << 8;
-		crc_spd |= (sc->sc_read)(sc, 126);
+		(sc->sc_read)(sc, 127, &val);
+		crc_spd = val << 8;
+		(sc->sc_read)(sc, 126, &val);
+		crc_spd |= val;
 		if (crc_calc != crc_spd) {
 			aprint_debug("crc16 failed, covers %d bytes, "
 				     "calc = 0x%04x, spd = 0x%04x\n",
@@ -230,7 +238,8 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		}
 		return 1;
 	} else if (spd_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
-		spd_len = (sc->sc_read)(sc, 0) & 0x0f;
+		(sc->sc_read)(sc, 0, &val);
+		spd_len = val & 0x0f;
 		if ((unsigned int)spd_len > __arraycount(spd_rom_sizes))
 			return 0;
 		spd_len = spd_rom_sizes[spd_len];
@@ -238,8 +247,10 @@ spdmem_common_probe(struct spdmem_softc *sc)
 		if (spd_crc_cover > spd_len)
 			return 0;
 		crc_calc = spdcrc16(sc, spd_crc_cover);
-		crc_spd = (sc->sc_read)(sc, 127) << 8;
-		crc_spd |= (sc->sc_read)(sc, 126);
+		(sc->sc_read)(sc, 127, &val);
+		crc_spd = val << 8;
+		(sc->sc_read)(sc, 126, &val);
+		crc_spd |= val;
 		if (crc_calc != crc_spd) {
 			aprint_debug("crc16 failed, covers %d bytes, "
 				     "calc = 0x%04x, spd = 0x%04x\n",
@@ -269,9 +280,9 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	unsigned int i, spd_len, spd_size;
 	const struct sysctlnode *node = NULL;
 
-	s->sm_len = (sc->sc_read)(sc, 0);
-	s->sm_size = (sc->sc_read)(sc, 1);
-	s->sm_type = (sc->sc_read)(sc, 2);
+	(sc->sc_read)(sc, 0, &s->sm_len);
+	(sc->sc_read)(sc, 1, &s->sm_size);
+	(sc->sc_read)(sc, 2, &s->sm_type);
 
 	if (s->sm_type == SPDMEM_MEMTYPE_DDR4SDRAM) {
 		/*
@@ -315,7 +326,7 @@ spdmem_common_attach(struct spdmem_softc *sc, device_t self)
 	if (spd_len > sizeof(struct spdmem))
 		spd_len = sizeof(struct spdmem);
 	for (i = 3; i < spd_len; i++)
-		((uint8_t *)s)[i] = (sc->sc_read)(sc, i);
+		(sc->sc_read)(sc, i, &((uint8_t *)s)[i]);
 
 	/*
 	 * Setup our sysctl subtree, hw.spdmemN
