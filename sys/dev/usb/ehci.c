@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.75 2016/01/03 08:30:37 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.76 2016/01/05 05:53:38 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.75 2016/01/03 08:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.76 2016/01/05 05:53:38 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2961,7 +2961,7 @@ ehci_free_sqtds(ehci_softc_t *sc, struct ehci_xfer *exfer)
 			break;
 
 		sqtd->nextqtd = sc->sc_freeqtds;
-		sc->sc_freeqtds = sqtd->nextqtd;
+		sc->sc_freeqtds = sqtd;
 	}
 	mutex_exit(&sc->sc_lock);
 }
