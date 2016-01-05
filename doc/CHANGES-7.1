@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.1,v 1.1.2.42 2016/01/02 14:46:09 riz Exp $
+# $NetBSD: CHANGES-7.1,v 1.1.2.43 2016/01/05 22:29:48 snj Exp $
 
 A complete list of changes from the NetBSD 7.0 release to the NetBSD 7.1
 release:
@@ -1711,4 +1711,28 @@ sys/dev/usb/ohci.c				1.257
 
 	Fix missing-parentheses bug affecting ohci IN transfers.
 	[skrll, ticket #1054]
+
+etc/namedb/root.cache				1.19
+
+	Update to 2015120100.
+	* Addresses of H.ROOT-SERVERS.NET has updated.
+	* Make IPv6 address lower case.
+	[taca, ticket #1055]
+
+sys/kern/kern_lock.c				1.156
+
+	Allow sleeping in the idle lwp if the cpu isn't running yet.
+	[skrll, ticket #1056]
+
+usr.bin/man/man.c				1.62
+
+	Make "man <machine>/<manpage>" work again.
+	[mlelstv, ticket #1057]
+
+share/mk/bsd.sys.mk				1.243, 1.244
+sys/arch/aarch64/conf/Makefile.aarch64		1.2
+sys/arch/arm/conf/Makefile.arm			1.43
+
+	Make ARM BE8 work.
+	[martin, ticket #1058]
 
