@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.22 2015/11/25 07:34:49 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.23 2016/01/05 09:37:11 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.22 2015/11/25 07:34:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.23 2016/01/05 09:37:11 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -391,8 +391,10 @@ static int
 filemon_modcmd(modcmd_t cmd, void *data)
 {
 	int error = 0;
+#ifdef _MODULE
 	int bmajor = -1;
 	int cmajor = -1;
+#endif
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -401,15 +403,19 @@ filemon_modcmd(modcmd_t cmd, void *data)
 #endif
 
 		error = filemon_load(data);
+#ifdef _MODULE
 		if (!error)
 			error = devsw_attach("filemon", NULL, &bmajor,
 			    &filemon_cdevsw, &cmajor);
+#endif
 		break;
 
 	case MODULE_CMD_FINI:
 		error = filemon_unload();
+#ifdef _MODULE
 		if (!error)
 			error = devsw_detach(NULL, &filemon_cdevsw);
+#endif
 		break;
 
 	case MODULE_CMD_STAT:
