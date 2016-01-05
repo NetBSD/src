@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.4 2016/01/05 21:53:48 marty Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.5 2016/01/05 21:57:18 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.4 2016/01/05 21:53:48 marty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.5 2016/01/05 21:57:18 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -271,14 +271,10 @@ static u_int *get_specifier_by_index(int phandle, int pindex)
 	u_int *specifiers;
 	int interrupt_parent, interrupt_cells, len;
 
-	printf("%s: phandle = %d pindex = %d\n", __func__, phandle, pindex);
-
 	len = OF_getprop(phandle, "interrupt-parent", &interrupt_parent,
 	    sizeof(interrupt_parent));
 	interrupt_parent = be32toh(interrupt_parent);
 	interrupt_parent = fdtbus_get_phandle_from_native(interrupt_parent);
-	printf("%s: len = %d interrupt_parent = %d\n", __func__, len,
-	       interrupt_parent);
 	if (len != sizeof(interrupt_parent) || interrupt_parent <= 0) {
 		printf("%s: interrupt_parent sanity check failed\n", __func__);
 		return NULL;
@@ -287,8 +283,6 @@ static u_int *get_specifier_by_index(int phandle, int pindex)
 	len = OF_getprop(interrupt_parent, "#interrupt-cells",
 			 &interrupt_cells,  sizeof(interrupt_cells));
 	interrupt_cells = be32toh(interrupt_cells);
-	printf("%s: len = %d interrupt_cells = %d\n", __func__, len,
-	       interrupt_cells);
 	if (len != sizeof(interrupt_cells) || interrupt_cells <= 0) {
 		printf("%s: interrupt_celyls sanity check failed\n", __func__);
 		return NULL;
