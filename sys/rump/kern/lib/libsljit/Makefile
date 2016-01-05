@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2015/10/19 16:16:37 pooka Exp $
+#	$NetBSD: Makefile,v 1.5 2016/01/05 13:07:47 christos Exp $
 #
 # Public Domain.
 #
+
+.include <bsd.init.mk>
 
 .PATH:	${.CURDIR}/../../../../external/bsd/sljit/sljit \
 	${.CURDIR}/../../../../external/bsd/sljit/dist/sljit_src
@@ -33,7 +35,7 @@ RUMPCOMP_INCS_DIR:=	${.PARSEDIR}
 RUMPCOMP_USER_CPPFLAGS=-I${RUMPCOMP_INCS_DIR}
 
 # Link to libarm to get arm_sync_icache(2)
-LDADD+=	-larm
+LIBDPLIBS+=	arm ${NETBSDSRCDIR}/lib/libarch
 .endif
 
 .include <bsd.lib.mk>

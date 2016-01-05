@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2008/09/13 04:32:31 cube Exp $
+#	$NetBSD: Makefile,v 1.3 2016/01/05 13:07:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -15,8 +15,7 @@ CPPFLAGS+=	-DFONTENC_NO_LIBFONT
 CPPFLAGS+=	-DFONT_ENCODINGS_DIRECTORY=\"${X11FONTDIR}/encodings/encodings.dir\"
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11/fonts
 
-LDADD+=	-lz
-DPADD+=	${LIBZ}
+LIBDPLIBS+=	z ${NETBSDSRCDIR}/lib/libz
 
 PKGCONFIG=	fontenc
 
