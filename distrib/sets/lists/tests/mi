@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.658 2016/01/01 21:38:54 jakllsch Exp $
+# $NetBSD: mi,v 1.659 2016/01/05 17:22:38 jakllsch Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -29,6 +29,7 @@
 ./usr/libdata/debug/usr/tests/dev/md					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/scsipi				tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/dev/sysmon				tests-fs-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/dev/usb				tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/ffs					tests-fs-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/fs/fifofs					tests-fs-debug		compattestfile,atf
@@ -1372,6 +1373,10 @@
 ./usr/tests/dev/sysmon/Kyuafile			tests-fs-tests		atf,rump,kyua
 ./usr/tests/dev/sysmon/t_swsensor		tests-fs-tests		atf,rump
 ./usr/tests/dev/sysmon/t_swwdog			tests-fs-tests		atf,rump
+./usr/tests/dev/usb				tests-fs-tests		compattestfile,atf
+./usr/tests/dev/usb/Atffile			tests-fs-tests		atf,rump
+./usr/tests/dev/usb/Kyuafile			tests-fs-tests		atf,rump,kyua
+./usr/tests/dev/usb/t_hid			tests-fs-tests		atf,rump
 ./usr/tests/examples				tests-obsolete		obsolete
 ./usr/tests/examples/Atffile			tests-obsolete		obsolete
 ./usr/tests/examples/t_asm			tests-obsolete		obsolete
