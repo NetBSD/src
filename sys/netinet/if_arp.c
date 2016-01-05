@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.198 2015/12/17 02:38:33 ozaki-r Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.199 2016/01/05 05:37:06 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.198 2015/12/17 02:38:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.199 2016/01/05 05:37:06 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1973,7 +1973,7 @@ out:
  * Send a RARP request for the ip address of the specified interface.
  * The request should be RFC 903-compliant.
  */
-void
+static void
 revarprequest(struct ifnet *ifp)
 {
 	struct sockaddr sa;
