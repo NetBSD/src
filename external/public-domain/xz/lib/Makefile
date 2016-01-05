@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.5 2015/04/17 20:12:45 christos Exp $
+# $NetBSD: Makefile,v 1.6 2016/01/05 13:07:47 christos Exp $
+
+.include <bsd.init.mk>
 
 LIB=		lzma
 USE_SHLIBDIR=	yes
 NOLINT=		yes
 
-.include <bsd.init.mk>
 
 .PATH:	${XZSRCDIR}/src/liblzma/api ${XZSRCDIR}/src/liblzma/api/lzma
 INCS+=	base.h bcj.h block.h check.h container.h delta.h \
@@ -85,7 +86,6 @@ liblzma.pc:	${XZSRCDIR}/src/liblzma/liblzma.pc.in
 
 CLEANFILES+=	liblzma.pc
 
-LDADD+=	-lpthread
-DPADD+=	${LIBPTHREAD}
+LIBDPLIBS+=	pthread ${NETBSDSRCDIR}/lib/libpthread
 
 .include <bsd.lib.mk>

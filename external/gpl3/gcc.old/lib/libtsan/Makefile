@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.1 2015/09/23 03:03:39 mrg Exp $
+# $NetBSD: Makefile,v 1.2 2016/01/05 13:07:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -61,7 +61,7 @@ LIB=	tsan
 SRCS=	${TSAN_SRCS} ${INTERCEPTION_SRCS} ${SANITIZER_SRCS}
 CPPFLAGS+=-I${TSAN}/include -I${TSAN}
 
-LDADD+=	-lstdc++ -lpthread
-DPADD+= ${LIBSTDCXX} ${LIBPTHREAD}
+LIBDPLIBS+=	stdc++	${.CURDIR}/../libstdc++-v3 \
+		pthread	${NETBSDSRCDIR}/lib/libpthread
 
 .include <bsd.lib.mk>

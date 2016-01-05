@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2014/07/22 22:28:47 christos Exp $
+# $NetBSD: Makefile,v 1.6 2016/01/05 13:07:47 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -13,8 +13,6 @@ INCS=		npf.h
 INCSDIR=	/usr/include
 
 LIBDPLIBS+=	prop ${.CURDIR}/../libprop
-LDADD+=		-lprop
-DPADD+=		${LIBPROP}
 
 WARNS=		5
 NOLINT=		# disabled deliberately
