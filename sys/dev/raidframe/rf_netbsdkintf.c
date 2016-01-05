@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.338 2016/01/05 17:03:53 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.339 2016/01/05 17:06:34 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.338 2016/01/05 17:03:53 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.339 2016/01/05 17:06:34 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2840,8 +2840,15 @@ rf_find_raid_components(void)
 
 			error = getdisksize(vp, &numsecs, &secsize);
 			if (error) {
-				printf("RAIDframe: can't get disk size for "
-				    "dev %s (%d)\n", device_xname(dv), error);
+				/*
+				 * Pseudo devices like vnd and cgd can be
+				 * opened but may still need some configuration.
+				 * Ignore these quietly.
+				 */
+				if (error != ENXIO)
+					printf("RAIDframe: can't get disk size"
+					    " for dev %s (%d)\n",
+					    device_xname(dv), error);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 				VOP_CLOSE(vp, FREAD | FWRITE, NOCRED);
 				vput(vp);
