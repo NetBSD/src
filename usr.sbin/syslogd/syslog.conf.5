@@ -1,4 +1,4 @@
-.\"	$NetBSD: syslog.conf.5,v 1.21 2013/11/10 00:13:50 wiz Exp $
+.\"	$NetBSD: syslog.conf.5,v 1.22 2016/01/05 00:41:30 khorben Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -297,7 +297,7 @@ To ensure that kernel messages are written to disk promptly,
 calls
 .Xr fsync 2
 after writing messages from the kernel.
-Other messages are not synced explcitly.
+Other messages are not synced explicitly.
 You may disable syncing of files specified to receive kernel messages
 by prefixing the pathname with a minus sign
 .Ql - .
