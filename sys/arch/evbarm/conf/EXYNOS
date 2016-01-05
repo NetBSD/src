@@ -1,5 +1,5 @@
 #
-#	$NetBSD: EXYNOS,v 1.9 2015/12/27 12:26:42 jmcneill Exp $
+#	$NetBSD: EXYNOS,v 1.10 2016/01/05 21:53:48 marty Exp $
 #
 #	ODROID-XU -- ODROID-XU4 Exynos5422 based kernel
 #
@@ -224,6 +224,9 @@ exyowdt* 	at fdt?				# watchdog
 
 # Exynos chip id
 chipid*		at fdt?
+
+# Exynos system MMUs
+sysmmu*	 	at fdt?
 
 # Exynos RTC
 exyortc* 	at fdt?

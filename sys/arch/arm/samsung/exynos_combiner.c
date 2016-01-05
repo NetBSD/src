@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.5 2016/01/03 04:10:58 marty Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.6 2016/01/05 21:53:48 marty Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.5 2016/01/03 04:10:58 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.6 2016/01/05 21:53:48 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,10 +86,11 @@ struct exynos_combiner_softc {
 static int exynos_combiner_match(device_t, cfdata_t, void *);
 static void exynos_combiner_attach(device_t, device_t, void *);
 
-static void *	exynos_combiner_establish(device_t, int, u_int, int, int,
+static void *	exynos_combiner_establish(device_t, u_int *, int, int,
 		    int (*)(void *), void *);
 static void	exynos_combiner_disestablish(device_t, void *);
-static bool	exynos_combiner_intrstr(device_t, int, u_int, char *, size_t);
+static bool	exynos_combiner_intrstr(device_t, u_int  *, char *,
+					size_t);
 
 struct fdtbus_interrupt_controller_func exynos_combiner_funcs = {
 	.establish = exynos_combiner_establish,
@@ -221,46 +222,16 @@ static int exynos_combiner_irq(void *cookie)
 }
 
 static void *
-exynos_combiner_establish(device_t dev, int phandle, u_int index, int ipl,
-			  int flags,
+exynos_combiner_establish(device_t dev, u_int *specifier,
+			  int ipl, int flags,
 			  int (*func)(void *), void *arg)
 {
 	struct exynos_combiner_softc * const sc = device_private(dev);
 	struct exynos_combiner_irq_block *blockp;
 	struct exynos_combiner_irq_entry *entryp;
-	/* MJF: Most combiner clients don't have the #interrupt-cells prop. */
-	u_int *interrupts;
-	int interrupt_cells = 2;
-	int len = OF_getproplen(phandle, "interrupts");
-	
-	if (len <= 0) {
-		printf("%s: phandle has no interrupts property.\n", __func__);
-		return NULL;
-	}
 
-	const u_int clen = interrupt_cells * 4;
-	const u_int nintr = len / interrupt_cells;
-
-	if (index >= nintr) {
-		printf("%s: asking for index %d but only %d entries.\n",
-		       __func__, index, nintr);
-		return NULL;
-	}
-
-	interrupts = kmem_alloc(len, KM_SLEEP);
-
-	if (OF_getprop(phandle, "interrupts", interrupts, len) != len) {
-		kmem_free(interrupts, len);
-		return NULL;
-	}
-
-	/* 1st cell is the interrupt block */
-	/* 2nd cell is the interrupt number */
-
-	const u_int intr = be32toh(interrupts[index * clen + 0]);
-	const u_int irq = be32toh(interrupts[index * clen + 1]);
-
-	kmem_free(interrupts, len);
+	const u_int intr = be32toh(specifier[0]);
+	const u_int irq = be32toh(specifier[1]);
 
 	int iblock = 
 		intr / COMBINER_BLOCKS_PER_GROUP * COMBINER_GROUP_SIZE
@@ -295,38 +266,15 @@ exynos_combiner_disestablish(device_t dev, void *ih)
 }
 
 static bool
-exynos_combiner_intrstr(device_t dev, int phandle, u_int index, char *buf,
-    size_t buflen)
+exynos_combiner_intrstr(device_t dev, u_int *specifier, char *buf,
+			size_t buflen)
 {
-	u_int *interrupts;
-	int interrupt_cells = 2, len;
-
-	len = OF_getproplen(phandle, "interrupts");
-	if (len <= 0) {
-		return false;
-	}
-
-	const u_int clen = interrupt_cells * 4;
-	const u_int nintr = len / interrupt_cells;
-
-	if (index >= nintr) {
-		return false;
-	}
-
-	interrupts = kmem_alloc(len, KM_SLEEP);
-
-	if (OF_getprop(phandle, "interrupts", interrupts, len) != len) {
-		kmem_free(interrupts, len);
-		return false;
-	}
 
 	/* 1st cell is the interrupt block */
 	/* 2nd cell is the interrupt number */
 
-	const u_int intr = be32toh(interrupts[index * clen + 0]);
-	const u_int irq = be32toh(interrupts[index * clen + 1]);
-
-	kmem_free(interrupts, len);
+	const u_int intr = be32toh(specifier[0]);
+	const u_int irq = be32toh(specifier[1]);
 
 	snprintf(buf, buflen, "combiner intr %d irq %d", intr, irq);
 

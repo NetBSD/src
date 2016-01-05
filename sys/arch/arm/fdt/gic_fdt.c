@@ -1,4 +1,4 @@
-/* $NetBSD: gic_fdt.c,v 1.1 2015/12/13 17:45:37 jmcneill Exp $ */
+/* $NetBSD: gic_fdt.c,v 1.2 2016/01/05 21:53:48 marty Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.1 2015/12/13 17:45:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.2 2016/01/05 21:53:48 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,10 +44,10 @@ __KERNEL_RCSID(0, "$NetBSD: gic_fdt.c,v 1.1 2015/12/13 17:45:37 jmcneill Exp $")
 static int	gic_fdt_match(device_t, cfdata_t, void *);
 static void	gic_fdt_attach(device_t, device_t, void *);
 
-static void *	gic_fdt_establish(device_t, int, u_int, int, int,
+static void *	gic_fdt_establish(device_t, u_int *, int, int,
 		    int (*)(void *), void *);
 static void	gic_fdt_disestablish(device_t, void *);
-static bool	gic_fdt_intrstr(device_t, int, u_int, char *, size_t);
+static bool	gic_fdt_intrstr(device_t, u_int *, char *, size_t);
 
 struct fdtbus_interrupt_controller_func gic_fdt_funcs = {
 	.establish = gic_fdt_establish,
@@ -100,48 +100,20 @@ gic_fdt_attach(device_t parent, device_t self, void *aux)
 }
 
 static void *
-gic_fdt_establish(device_t dev, int phandle, u_int index, int ipl, int flags,
+gic_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
     int (*func)(void *), void *arg)
 {
-	struct gic_fdt_softc * const sc = device_private(dev);
 	int iflags = (flags & FDT_INTR_MPSAFE) ? IST_MPSAFE : 0;
-	u_int *interrupts;
-	int interrupt_cells, len;
-
-	len = OF_getprop(sc->sc_phandle, "#interrupt-cells", &interrupt_cells,
-	    sizeof(interrupt_cells));
-	if (len != sizeof(interrupt_cells) || interrupt_cells <= 0)
-		return NULL;
-	interrupt_cells = be32toh(interrupt_cells);
-
-	len = OF_getproplen(phandle, "interrupts");
-	if (len <= 0)
-		return NULL;
-
-	const u_int clen = interrupt_cells * 4;
-	const u_int nintr = len / interrupt_cells;
-
-	if (index >= nintr)
-		return NULL;
-
-	interrupts = kmem_alloc(len, KM_SLEEP);
-
-	if (OF_getprop(phandle, "interrupts", interrupts, len) != len) {
-		kmem_free(interrupts, len);
-		return NULL;
-	}
 
 	/* 1st cell is the interrupt type; 0 is SPI, 1 is PPI */
 	/* 2nd cell is the interrupt number */
 	/* 3rd cell is flags */
 
-	const u_int type = be32toh(interrupts[index * clen + 0]);
-	const u_int intr = be32toh(interrupts[index * clen + 1]);
+	const u_int type = be32toh(specifier[0]);
+	const u_int intr = be32toh(specifier[1]);
 	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
-	const u_int trig = be32toh(interrupts[index * clen + 2]) & 0xf;
+	const u_int trig = be32toh(specifier[2]) & 0xf;
 	const u_int level = (trig & 0x3) ? IST_EDGE : IST_LEVEL;
-
-	kmem_free(interrupts, len);
 
 	return intr_establish(irq, ipl, level | iflags, func, arg);
 }
@@ -153,48 +125,17 @@ gic_fdt_disestablish(device_t dev, void *ih)
 }
 
 static bool
-gic_fdt_intrstr(device_t dev, int phandle, u_int index, char *buf,
-    size_t buflen)
+gic_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 {
-	struct gic_fdt_softc * const sc = device_private(dev);
-	u_int *interrupts;
-	int interrupt_cells, len;
-
-	len = OF_getprop(sc->sc_phandle, "#interrupt-cells", &interrupt_cells,
-	    sizeof(interrupt_cells));
-	if (len != sizeof(interrupt_cells) || interrupt_cells <= 0) {
-		return false;
-	}
-	interrupt_cells = be32toh(interrupt_cells);
-
-	len = OF_getproplen(phandle, "interrupts");
-	if (len <= 0) {
-		return false;
-	}
-
-	const u_int clen = interrupt_cells * 4;
-	const u_int nintr = len / interrupt_cells;
-
-	if (index >= nintr) {
-		return false;
-	}
-
-	interrupts = kmem_alloc(len, KM_SLEEP);
-
-	if (OF_getprop(phandle, "interrupts", interrupts, len) != len) {
-		kmem_free(interrupts, len);
-		return false;
-	}
-
 	/* 1st cell is the interrupt type; 0 is SPI, 1 is PPI */
 	/* 2nd cell is the interrupt number */
 	/* 3rd cell is flags */
 
-	const u_int type = be32toh(interrupts[index * clen + 0]);
-	const u_int intr = be32toh(interrupts[index * clen + 1]);
+	if (!specifier)
+		return false;
+	const u_int type = be32toh(specifier[0]);
+	const u_int intr = be32toh(specifier[1]);
 	const u_int irq = type == 0 ? IRQ_SPI(intr) : IRQ_PPI(intr);
-
-	kmem_free(interrupts, len);
 
 	snprintf(buf, buflen, "GIC irq %d", irq);
 
