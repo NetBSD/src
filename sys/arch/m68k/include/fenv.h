@@ -1,4 +1,4 @@
-/*	$NetBSD: fenv.h,v 1.3 2015/12/29 16:02:37 christos Exp $	*/
+/*	$NetBSD: fenv.h,v 1.4 2016/01/05 00:47:08 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -301,8 +301,8 @@ fegetexcept(void)
 
 #endif /* _NETBSD_SOURCE || _GNU_SOURCE */
 
-#endif /* !__m68010__ && !__mcoldfire__ */
-
 __END_DECLS
+
+#endif /* !__m68010__ && !__mcoldfire__ */
 
 #endif /* _M68K_FENV_H_ */
