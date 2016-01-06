@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.32 2015/12/10 17:07:07 skrll Exp $	*/
+/*	$NetBSD: xhci.c,v 1.33 2016/01/06 22:12:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.32 2015/12/10 17:07:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.33 2016/01/06 22:12:49 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1613,6 +1613,8 @@ xhci_new_device(device_t parent, usbd_bus_handle bus, int depth,
 	DPRINTFN(1, " mps=%d, len=%d, noconf=%d, speed=%d",
 		dd->bMaxPacketSize, dd->bLength, dd->bNumConfigurations,
 		dev->speed);
+
+	usbd_get_device_strings(dev);
 
 	usbd_add_dev_event(USB_EVENT_DEVICE_ATTACH, dev);
 
