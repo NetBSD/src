@@ -1,4 +1,4 @@
-/*	$NetBSD: dkctl.c,v 1.22 2014/11/23 15:43:49 christos Exp $	*/
+/*	$NetBSD: dkctl.c,v 1.23 2016/01/06 23:03:13 wiz Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: dkctl.c,v 1.22 2014/11/23 15:43:49 christos Exp $");
+__RCSID("$NetBSD: dkctl.c,v 1.23 2016/01/06 23:03:13 wiz Exp $");
 #endif
 
 #include <sys/param.h>
@@ -104,24 +104,9 @@ static void	disk_makewedges(int, char *[]);
 static void	disk_strategy(int, char *[]);
 
 static struct command commands[] = {
-	{ "getcache",
-	  "",
-	  disk_getcache,
-	  O_RDONLY },
-
-	{ "setcache",
-	  "none | r | w | rw [save]",
-	  disk_setcache,
-	  O_RDWR },
-
-	{ "synccache",
-	  "[force]",
-	  disk_synccache,
-	  O_RDWR },
-
-	{ "keeplabel",
-	  YESNO_ARG,
-	  disk_keeplabel,
+	{ "addwedge",
+	  "name startblk blkcnt ptype",
+	  disk_addwedge,
 	  O_RDWR },
 
 	{ "badsector",
@@ -129,20 +114,25 @@ static struct command commands[] = {
 	   disk_badsectors,
 	   O_RDWR },
 
-	{ "addwedge",
-	  "name startblk blkcnt ptype",
-	  disk_addwedge,
-	  O_RDWR },
-
 	{ "delwedge",
 	  "dk",
 	  disk_delwedge,
 	  O_RDWR },
 
+	{ "getcache",
+	  "",
+	  disk_getcache,
+	  O_RDONLY },
+
 	{ "getwedgeinfo",
 	  "",
 	  disk_getwedgeinfo,
 	  O_RDONLY },
+
+	{ "keeplabel",
+	  YESNO_ARG,
+	  disk_keeplabel,
+	  O_RDWR },
 
 	{ "listwedges",
 	  "",
@@ -154,9 +144,19 @@ static struct command commands[] = {
 	  disk_makewedges,
 	  O_RDWR },
 
+	{ "setcache",
+	  "none | r | w | rw [save]",
+	  disk_setcache,
+	  O_RDWR },
+
 	{ "strategy",
 	  "[name]",
 	  disk_strategy,
+	  O_RDWR },
+
+	{ "synccache",
+	  "[force]",
+	  disk_synccache,
 	  O_RDWR },
 
 	{ NULL,
