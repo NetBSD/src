@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.63 2015/09/08 08:59:09 bad Exp $   */
+/*      $NetBSD: raidctl.c,v 1.64 2016/01/06 17:41:36 christos Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.63 2015/09/08 08:59:09 bad Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.64 2016/01/06 17:41:36 christos Exp $");
 #endif
 
 
@@ -114,6 +114,7 @@ main(int argc,char *argv[])
 	int fd;
 	int force;
 	int openmode;
+	int last_unit;
 
 	num_options = 0;
 	action = 0;
@@ -122,9 +123,10 @@ main(int argc,char *argv[])
 	do_rewrite = 0;
 	serial_number = 0;
 	force = 0;
+	last_unit = 0;
 	openmode = O_RDWR;	/* default to read/write */
 
-	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:mM:r:R:sSpPuv")) 
+	while ((ch = getopt(argc, argv, "a:A:Bc:C:f:F:g:GiI:l:mM:r:R:sSpPuU:v"))
 	       != -1)
 		switch(ch) {
 		case 'a':
@@ -244,6 +246,13 @@ main(int argc,char *argv[])
 			action = RAIDFRAME_SHUTDOWN;
 			num_options++;
 			break;
+		case 'U':
+			action = RAIDFRAME_SET_LAST_UNIT;
+			num_options++;
+			last_unit = atoi(optarg);
+			if (last_unit < 0)
+				errx(1, "Bad last unit %s", optarg);
+			break;
 		case 'v':
 			verbose = 1;
 			/* Don't bump num_options, as '-v' is not 
@@ -341,6 +350,10 @@ main(int argc,char *argv[])
 		break;
 	case RAIDFRAME_SHUTDOWN:
 		do_ioctl(fd, RAIDFRAME_SHUTDOWN, NULL, "RAIDFRAME_SHUTDOWN");
+		break;
+	case RAIDFRAME_SET_LAST_UNIT:
+		do_ioctl(fd, RAIDFRAME_SET_LAST_UNIT, &last_unit,
+		    "RAIDFRAME_SET_LAST_UNIT");
 		break;
 	default:
 		break;
