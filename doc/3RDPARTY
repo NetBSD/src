@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1278 2016/01/06 04:32:32 kamil Exp $
+#	$NetBSD: 3RDPARTY,v 1.1279 2016/01/06 04:34:03 kamil Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -790,8 +790,8 @@ Package:	Lutok
 Version:	0.3
 Current Vers:	0.4
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
-Archive site:	http://code.google.com/p/lutok/downloads/list?can=1
-Home page:	http://code.google.com/p/lutok/
+Archive site:	https://github.com/jmmv/lutok/releases
+Home page:	https://github.com/jmmv/lutok
 Mailing List:	lutok-discuss@googlegroups.com
 Responsible:	jmmv
 License:	BSD 3-clause
