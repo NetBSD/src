@@ -1,4 +1,4 @@
-/*      $NetBSD: clockctl.c,v 1.33 2015/12/07 03:25:57 pgoyette Exp $ */
+/*      $NetBSD: clockctl.c,v 1.34 2016/01/06 18:06:38 christos Exp $ */
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.33 2015/12/07 03:25:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.34 2016/01/06 18:06:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.33 2015/12/07 03:25:57 pgoyette Exp $
 #include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
-#include <sys/once.h>
 
 #include <sys/clockctl.h>
 #ifdef COMPAT_50
@@ -62,8 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: clockctl.c,v 1.33 2015/12/07 03:25:57 pgoyette Exp $
 
 kmutex_t clockctl_mtx;
 int clockctl_refcnt;
-
-ONCE_DECL(clockctl_once);
 
 #include "ioconf.h"
 
@@ -151,15 +148,6 @@ clockctlclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
-clockctl_init(void)
-{
-
-	mutex_init(&clockctl_mtx, MUTEX_DEFAULT, IPL_NONE);
-	clockctl_refcnt = 0;
-	return 0;
-}
-
 MODULE(MODULE_CLASS_DRIVER, clockctl, NULL);
 
 int
@@ -174,7 +162,7 @@ clockctl_modcmd(modcmd_t cmd, void *data)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		RUN_ONCE(&clockctl_once, clockctl_init);
+		mutex_init(&clockctl_mtx, MUTEX_DEFAULT, IPL_NONE);
 
 		clockctl_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 		    clockctl_listener_cb, NULL);
@@ -200,9 +188,10 @@ clockctl_modcmd(modcmd_t cmd, void *data)
 #endif
 		mutex_exit(&clockctl_mtx);
 
-		if (error == 0)
+		if (error == 0) {
 			kauth_unlisten_scope(clockctl_listener);
-
+			mutex_destroy(&clockctl_mtx);
+		}
 		break;
 
 	default:
