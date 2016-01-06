@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1273 2016/01/06 04:18:21 kamil Exp $
+#	$NetBSD: 3RDPARTY,v 1.1274 2016/01/06 04:25:06 kamil Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -409,7 +409,7 @@ use file2netbsd
 
 Package:	flex
 Version:	2.5.39
-Current Vers:	2.5.39
+Current Vers:	2.6.0
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
 Archive Site:	http://flex.sourceforge.net/
 Home Page:	http://flex.sourceforge.net/
