@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.340 2016/01/05 18:44:34 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.341 2016/01/06 17:40:50 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.340 2016/01/05 18:44:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.341 2016/01/06 17:40:50 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -259,13 +259,14 @@ struct raid_softc {
 	LIST_ENTRY(raid_softc) sc_link;
 };
 /* sc_flags */
-#define RAIDF_INITED	0x01	/* unit has been initialized */
-#define RAIDF_WLABEL	0x02	/* label area is writable */
-#define RAIDF_LABELLING	0x04	/* unit is currently being labelled */
-#define RAIDF_SHUTDOWN	0x08	/* unit is being shutdown */
-#define RAIDF_DETACH  	0x10	/* detach after final close */
-#define RAIDF_WANTED	0x40	/* someone is waiting to obtain a lock */
-#define RAIDF_LOCKED	0x80	/* unit is locked */
+#define RAIDF_INITED		0x001	/* unit has been initialized */
+#define RAIDF_WLABEL		0x002	/* label area is writable */
+#define RAIDF_LABELLING		0x004	/* unit is currently being labelled */
+#define RAIDF_SHUTDOWN		0x008	/* unit is being shutdown */
+#define RAIDF_DETACH  		0x010	/* detach after final close */
+#define RAIDF_WANTED		0x040	/* someone is waiting to obtain a lock */
+#define RAIDF_LOCKED		0x080	/* unit is locked */
+#define RAIDF_UNIT_CHANGED	0x100	/* unit is being changed */
 
 #define	raidunit(x)	DISKUNIT(x)
 #define	raidsoftc(dev)	(((struct raid_softc *)device_private(dev))->sc_r.softc)
@@ -1676,6 +1677,19 @@ raidioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 				  sizeof(RF_ProgressInfo_t));
 		return (retcode);
 
+	case RAIDFRAME_SET_LAST_UNIT:
+		for (column = 0; column < raidPtr->numCol; column++)
+			if (raidPtr->Disks[column].status != rf_ds_optimal)
+				return EBUSY;
+
+		for (column = 0; column < raidPtr->numCol; column++) {
+			clabel = raidget_component_label(raidPtr, column);
+			clabel->last_unit = *(int *)data;
+			raidflush_component_label(raidPtr, column);
+		}
+		rs->sc_cflags |= RAIDF_UNIT_CHANGED;
+		return 0;
+
 		/* the sparetable daemon calls this to wait for the kernel to
 		 * need a spare table. this ioctl does not return until a
 		 * spare table is needed. XXX -- calling mpsleep here in the
@@ -2491,6 +2505,7 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 	int c;
 	int j;
 	int scol;
+	struct raid_softc *rs = raidPtr->softc;
 
 	scol = -1;
 
@@ -2506,7 +2521,8 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 			clabel->status = rf_ds_optimal;
 			
 			/* note what unit we are configured as */
-			clabel->last_unit = raidPtr->raidid;
+			if ((rs->sc_cflags & RAIDF_UNIT_CHANGED) == 0)
+				clabel->last_unit = raidPtr->raidid;
 
 			raidflush_component_label(raidPtr, c);
 			if (final == RF_FINAL_COMPONENT_UPDATE) {
@@ -2546,7 +2562,8 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 
 			clabel->column = scol;
 			clabel->status = rf_ds_optimal;
-			clabel->last_unit = raidPtr->raidid;
+			if ((rs->sc_cflags & RAIDF_UNIT_CHANGED) == 0)
+				clabel->last_unit = raidPtr->raidid;
 
 			raidflush_component_label(raidPtr, sparecol);
 			if (final == RF_FINAL_COMPONENT_UPDATE) {
