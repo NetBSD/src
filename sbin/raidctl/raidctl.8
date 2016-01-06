@@ -1,4 +1,4 @@
-.\"     $NetBSD: raidctl.8,v 1.69 2015/06/30 22:16:12 wiz Exp $
+.\"     $NetBSD: raidctl.8,v 1.70 2016/01/06 17:41:36 christos Exp $
 .\"
 .\" Copyright (c) 1998, 2002 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -53,7 +53,7 @@
 .\" any improvements or extensions that they make and grant Carnegie the
 .\" rights to redistribute these changes.
 .\"
-.Dd June 30, 2015
+.Dd January 6, 2016
 .Dt RAIDCTL 8
 .Os
 .Sh NAME
@@ -125,6 +125,9 @@
 .Nm
 .Op Fl v
 .Fl u Ar dev
+.Nm
+.Op Fl v
+.Fl U Ar unit Ar dev
 .Sh DESCRIPTION
 .Nm
 is the user-land control program for
@@ -318,6 +321,12 @@ achieved in each of these areas.
 Unconfigure the RAIDframe device.
 This does not remove any component labels or change any configuration
 settings (e.g. auto-configuration settings) for the RAID set.
+.It Fl U Ar unit Ar dev
+Set the
+.Dv last_unit
+field in all the raid components, so that the next time the raid
+will be autoconfigured it uses that
+.Ar unit .
 .It Fl v
 Be more verbose.
 For operations such as reconstructions, parity
