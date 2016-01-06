@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.115 2015/12/08 20:36:15 christos Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.116 2016/01/06 00:22:30 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.115 2015/12/08 20:36:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.116 2016/01/06 00:22:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -436,6 +436,7 @@ convertdisklabel(struct disklabel *lp, void (*strat)(struct buf *),
 {
 	struct partition rp, *altp, *p;
 	int geom_ok;
+	const char *str;
 
 	memset(&rp, 0, sizeof(rp));
 	rp.p_size = secperunit;
@@ -460,7 +461,7 @@ convertdisklabel(struct disklabel *lp, void (*strat)(struct buf *),
 		altp = &lp->d_partitions['c' - 'a'];
 
 	if (lp->d_npartitions > RAW_PART && p->p_offset == 0 && p->p_size != 0)
-		;	/* already a raw partition */
+		return NULL;	/* already a raw partition */
 	else if (lp->d_npartitions > MAX('c', 'd') - 'a' &&
 		 altp->p_offset == 0 && altp->p_size != 0) {
 		/* alternate partition ('c' or 'd') is suitable for raw slot,
@@ -469,6 +470,7 @@ convertdisklabel(struct disklabel *lp, void (*strat)(struct buf *),
 		rp = *p;
 		*p = *altp;
 		*altp = rp;
+		return NULL;
 	} else if (lp->d_npartitions <= RAW_PART &&
 	           lp->d_npartitions > 'c' - 'a') {
 		/* No raw partition is present, but the alternate is present.
@@ -476,21 +478,40 @@ convertdisklabel(struct disklabel *lp, void (*strat)(struct buf *),
 		 */
 		lp->d_npartitions = RAW_PART + 1;
 		*p = *altp;
+		return NULL;
 	} else if (!geom_ok)
-		return "no raw partition and disk reports bad geometry";
+		str = "no raw partition and disk reports bad geometry";
 	else if (lp->d_npartitions <= RAW_PART) {
 		memset(&lp->d_partitions[lp->d_npartitions], 0,
 		    sizeof(struct partition) * (RAW_PART - lp->d_npartitions));
 		*p = rp;
 		lp->d_npartitions = RAW_PART + 1;
+		return NULL;
 	} else if (lp->d_npartitions < MAXPARTITIONS) {
 		memmove(p + 1, p,
 		    sizeof(struct partition) * (lp->d_npartitions - RAW_PART));
 		*p = rp;
 		lp->d_npartitions++;
+		return NULL;
 	} else
-		return "no raw partition and partition table is full";
-	return NULL;
+		str = "no raw partition and partition table is full";
+#ifdef DIAGNOSTIC
+	printf("Bad partition: %s\n", str);
+	printf("type = %u, subtype = %u, typename = %s\n",
+	    lp->d_type, lp->d_subtype, lp->d_typename);
+	printf("secsize = %u, nsectors = %u, ntracks = %u\n",
+	    lp->d_secsize, lp->d_nsectors, lp->d_ntracks);
+	printf("ncylinders = %u, secpercyl = %u, secperunit = %u\n",
+	    lp->d_ncylinders, lp->d_secpercyl, lp->d_secperunit);
+	printf("npartitions = %u\n", lp->d_npartitions);
+
+	for (size_t i = 0; i < MIN(lp->d_npartitions, MAXPARTITIONS); i++) {
+		p = &lp->d_partitions[i];
+		printf("\t%c: offset = %u size = %u fstype = %u\n",
+		    (char)(i + 'a'), p->p_offset, p->p_size, p->p_fstype);
+	}
+#endif			
+	return str;
 }
 
 /*
