@@ -60,7 +60,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ismt/ismt.c 266474 2014-05-20 19:55:06Z jimharris $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.1 2016/01/05 11:24:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.2 2016/01/06 03:53:29 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,9 @@ __KERNEL_RCSID(0, "$NetBSD: ismt.c,v 1.1 2016/01/05 11:24:43 msaitoh Exp $");
 #ifndef ISMT_DEBUG
 #define ISMT_DEBUG(...)
 #endif
+
+#define ISMT_LOW(a)	((a) & 0xFFFFFFFFULL)
+#define ISMT_HIGH(a)	(((uint64_t)(a) >> 32) & 0xFFFFFFFFFULL)
 
 /* iSMT Hardware Descriptor */
 struct ismt_desc {
@@ -364,9 +367,8 @@ ismt_submit(struct ismt_softc *sc, struct ismt_desc *desc, i2c_addr_t slave,
 		desc->control |= ISMT_DESC_INT;
 
 	desc->tgtaddr_rw = ISMT_DESC_ADDR_RW(slave, is_read);
-	desc->dptr_low = (sc->dma_buffer_dma_map->dm_segs[0].ds_addr
-	    & 0xFFFFFFFFLL);
-	desc->dptr_high = (sc->dma_buffer_dma_map->dm_segs[0].ds_addr >> 32);
+	desc->dptr_low = ISMT_LOW(sc->dma_buffer_dma_map->dm_segs[0].ds_addr);
+	desc->dptr_high = ISMT_HIGH(sc->dma_buffer_dma_map->dm_segs[0].ds_addr);
 
 	bus_dmamap_sync(sc->desc_dma_tag, sc->desc_dma_map,
 	    desc - &sc->desc[0], sizeof(struct ismt_desc),
@@ -736,9 +738,9 @@ ismt_attach(device_t parent, device_t self, void *aux)
 	    NULL, 0);
 
 	bus_space_write_4(sc->mmio_tag, sc->mmio_handle, ISMT_MSTR_MDBA,
-	    (sc->desc_dma_map->dm_segs[0].ds_addr & 0xFFFFFFFFLL));
+	    ISMT_LOW(sc->desc_dma_map->dm_segs[0].ds_addr));
 	bus_space_write_4(sc->mmio_tag, sc->mmio_handle, ISMT_MSTR_MDBA + 4,
-	    (sc->desc_dma_map->dm_segs[0].ds_addr >> 32));
+	    ISMT_HIGH(sc->desc_dma_map->dm_segs[0].ds_addr));
 
 	/* initialize the Master Control Register (MCTRL) */
 	bus_space_write_4(sc->mmio_tag, sc->mmio_handle, ISMT_MSTR_MCTRL,
