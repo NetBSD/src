@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1271 2016/01/06 04:15:34 kamil Exp $
+#	$NetBSD: 3RDPARTY,v 1.1272 2016/01/06 04:16:20 kamil Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -71,7 +71,7 @@ Update date of release in external/bsd/am-utils/man/Makefile (two places).
 
 Package:	Automated Testing Framework (ATF)
 Version:	0.20
-Current Vers:	0.20
+Current Vers:	0.21
 Maintainer:	Julio Merino <jmmv@NetBSD.org>
 Archive site:	https://github.com/jmmv/atf/releases
 Home page:	https://github.com/jmmv/atf
