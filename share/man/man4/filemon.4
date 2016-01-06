@@ -1,4 +1,4 @@
-.\"	$NetBSD: filemon.4,v 1.16 2016/01/06 01:54:53 pgoyette Exp $
+.\"	$NetBSD: filemon.4,v 1.17 2016/01/06 05:22:06 wiz Exp $
 .\"
 .\" Copyright (c) 2011, Juniper Networks, Inc.
 .\"
@@ -220,11 +220,13 @@ successful, and is thus more complex to post-process.
 was contributed by Juniper Networks.
 .Sh BUGS
 If the file descriptor to which monitored events are being written is
-numerically lower than the descriptor on which /dev/filemon is open, the
-monitoring process will hang when it calls
+numerically lower than the descriptor on which
+.Pa /dev/filemon
+is open, the monitoring process will hang when it calls
 .Xr exit 3
 or an attempt is made to close the output file descriptor.
-To avoid the hang, ensure that the file descriptor on which /dev/filemon
+To avoid the hang, ensure that the file descriptor on which
+.Pa /dev/filemon
 is open gets closed first.
 .Sh SECURITY CONSIDERATIONS
 Monitoring of a process enables the target process to write to the
