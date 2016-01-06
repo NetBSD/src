@@ -1,4 +1,4 @@
-.\"	$NetBSD: dkctl.8,v 1.25 2014/11/05 09:26:26 wiz Exp $
+.\"	$NetBSD: dkctl.8,v 1.26 2016/01/06 23:01:11 wiz Exp $
 .\"
 .\" Copyright 2002 Wasabi Systems, Inc.
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 4, 2014
+.Dd January 6, 2016
 .Dt DKCTL 8
 .Os
 .Sh NAME
@@ -61,59 +61,6 @@ the wedges of the specified device.
 .Sh COMMANDS
 The following commands are supported:
 .Bl -tag -width XXstrategyXXnameXX
-.It Ic getcache
-Get and display the cache enables for the specified device.
-.It Ic setcache Ar none | r | w | rw Op Ar save
-Set the cache enables for the specified device.
-The enables are as follows:
-.Bl -tag -offset indent -width XsaveX
-.It none
-Disable all caches on the disk.
-.It r
-Enable the read cache, and disable all other caches on the disk.
-.It w
-Enable the write cache, and disable all other caches on the disk.
-.It rw
-Enable both the read and write caches on the disk.
-.It save
-If specified, and the cache enables are savable, saves the cache
-enables in the disk's non-volatile parameter storage.
-.El
-.It Ic synccache Op Ar force
-Causes the cache on the disk to be synchronized, flushing all dirty
-write cache blocks to the media.
-If
-.Ar force
-is specified, the cache synchronization command will be issued even
-if the kernel does not believe that there are any dirty cache blocks
-in the disk's cache.
-.It Ic keeplabel Op Ar yes | no
-Specify to keep or drop the in-core disklabel on the last close of
-the disk device.
-(Keep if
-.Ar yes
-is specified, drop if
-.Ar no
-is specified.)
-.It Ic badsector Ar flush | list | retry
-Used for managing the kernel's bad sector list for
-.Xr wd 4
-devices.
-The software bad sector list is only maintained if the option
-.Dq WD_SOFTBADSECT
-was specified on kernel configuration.
-.Bl -tag -width XflushXX -offset indent
-.It flush
-Clears the in kernel list of bad sectors.
-.It list
-Prints out the list of bad sector ranges recorded by the kernel.
-.It retry
-Flushes the in kernel list and then retries all of the previously recorded
-bad sectors, causing the list to self update.
-This option
-.Em can only
-be used with character devices.
-.El
 .It Ic addwedge Ar name Ar startblk Ar blkcnt Ar ptype
 Define a
 .Dq wedge
@@ -155,14 +102,43 @@ displayed after the wedge has been successfully created.
 See
 .Xr dk 4
 for more information about disk wedges.
+.It Ic badsector Ar flush | list | retry
+Used for managing the kernel's bad sector list for
+.Xr wd 4
+devices.
+The software bad sector list is only maintained if the option
+.Dq WD_SOFTBADSECT
+was specified on kernel configuration.
+.Bl -tag -width XflushXX -offset indent
+.It flush
+Clears the in kernel list of bad sectors.
+.It list
+Prints out the list of bad sector ranges recorded by the kernel.
+.It retry
+Flushes the in kernel list and then retries all of the previously recorded
+bad sectors, causing the list to self update.
+This option
+.Em can only
+be used with character devices.
+.El
 .It Ic delwedge Ar dk
 Delete the wedge specified by its device name
 .Ar dk
 from the specified disk.
+.It Ic getcache
+Get and display the cache enables for the specified device.
 .It Ic getwedgeinfo
 Display information about the specified disk wedge.
 .Ar device
 in this case is the wedge name.
+.It Ic keeplabel Op Ar yes | no
+Specify to keep or drop the in-core disklabel on the last close of
+the disk device.
+(Keep if
+.Ar yes
+is specified, drop if
+.Ar no
+is specified.)
 .It Ic listwedges
 List all of the wedges configured on the specified disk.
 .It Ic makewedges
@@ -171,6 +147,22 @@ the wedges again.
 Wedges that are in use are not deleted and conflicting
 or overlapping wedges are not created.
 You need to list wedges to find out what has changed.
+.It Ic setcache Ar none | r | w | rw Op Ar save
+Set the cache enables for the specified device.
+The enables are as follows:
+.Bl -tag -offset indent -width XsaveX
+.It none
+Disable all caches on the disk.
+.It r
+Enable the read cache, and disable all other caches on the disk.
+.It w
+Enable the write cache, and disable all other caches on the disk.
+.It rw
+Enable both the read and write caches on the disk.
+.It save
+If specified, and the cache enables are savable, saves the cache
+enables in the disk's non-volatile parameter storage.
+.El
 .It Ic strategy Op Ar name
 Get and set the disk I/O scheduler (buffer queue strategy) on the
 drive.
@@ -186,6 +178,14 @@ To get the list of supported schedulers, use the following command:
 .Bd -literal -offset indent
 $ sysctl kern.bufq.strategies
 .Ed
+.It Ic synccache Op Ar force
+Causes the cache on the disk to be synchronized, flushing all dirty
+write cache blocks to the media.
+If
+.Ar force
+is specified, the cache synchronization command will be issued even
+if the kernel does not believe that there are any dirty cache blocks
+in the disk's cache.
 .El
 .Pp
 Note: The
