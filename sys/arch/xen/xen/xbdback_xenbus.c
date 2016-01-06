@@ -1,4 +1,4 @@
-/*      $NetBSD: xbdback_xenbus.c,v 1.61 2015/11/15 14:42:03 bouyer Exp $      */
+/*      $NetBSD: xbdback_xenbus.c,v 1.62 2016/01/06 15:28:40 bouyer Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.61 2015/11/15 14:42:03 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbdback_xenbus.c,v 1.62 2016/01/06 15:28:40 bouyer Exp $");
 
 #include <sys/atomic.h>
 #include <sys/buf.h>
@@ -1022,6 +1022,7 @@ xbdback_co_main_loop(struct xbdback_instance *xbdi, void *obj)
 			req->sector_number = req64->sector_number;
 			break;
 		}
+		__insn_barrier();
 		XENPRINTF(("xbdback op %d req_cons 0x%x req_prod 0x%x "
 		    "resp_prod 0x%x id %" PRIu64 "\n", req->operation,
 			xbdi->xbdi_ring.ring_n.req_cons,
