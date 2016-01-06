@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.64 2016/01/06 17:41:36 christos Exp $   */
+/*      $NetBSD: raidctl.c,v 1.65 2016/01/06 22:57:44 wiz Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.64 2016/01/06 17:41:36 christos Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.65 2016/01/06 22:57:44 wiz Exp $");
 #endif
 
 
@@ -1158,26 +1158,27 @@ usage(void)
 {
 	const char *progname = getprogname();
 
-	fprintf(stderr, "usage: %s [-v] -a component dev\n", progname);
-	fprintf(stderr, "       %s [-v] -A [yes | no | softroot | hardroot] dev\n", progname);
+	fprintf(stderr, "usage: %s [-v] -A [yes | no | softroot | hardroot] dev\n", progname);
+	fprintf(stderr, "       %s [-v] -a component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -B dev\n", progname);
-	fprintf(stderr, "       %s [-v] -c config_file dev\n", progname);
 	fprintf(stderr, "       %s [-v] -C config_file dev\n", progname);
-	fprintf(stderr, "       %s [-v] -f component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -c config_file dev\n", progname);
 	fprintf(stderr, "       %s [-v] -F component dev\n", progname);
-	fprintf(stderr, "       %s [-v] -g component dev\n", progname);
+	fprintf(stderr, "       %s [-v] -f component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -G dev\n", progname);
-	fprintf(stderr, "       %s [-v] -i dev\n", progname);
+	fprintf(stderr, "       %s [-v] -g component dev\n", progname);
 	fprintf(stderr, "       %s [-v] -I serial_number dev\n", progname);
-	fprintf(stderr, "       %s [-v] -m dev\n", progname);
+	fprintf(stderr, "       %s [-v] -i dev\n", progname);
 	fprintf(stderr, "       %s [-v] -M [yes | no | set params] dev\n",
 	    progname);
-	fprintf(stderr, "       %s [-v] -p dev\n", progname);
+	fprintf(stderr, "       %s [-v] -m dev\n", progname);
 	fprintf(stderr, "       %s [-v] -P dev\n", progname);
-	fprintf(stderr, "       %s [-v] -r component dev\n", progname); 
+	fprintf(stderr, "       %s [-v] -p dev\n", progname);
 	fprintf(stderr, "       %s [-v] -R component dev\n", progname);
-	fprintf(stderr, "       %s [-v] -s dev\n", progname);
+	fprintf(stderr, "       %s [-v] -r component dev\n", progname); 
 	fprintf(stderr, "       %s [-v] -S dev\n", progname);
+	fprintf(stderr, "       %s [-v] -s dev\n", progname);
+	fprintf(stderr, "       %s [-v] -U unit dev\n", progname);
 	fprintf(stderr, "       %s [-v] -u dev\n", progname);
 	exit(1);
 	/* NOTREACHED */
