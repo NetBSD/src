@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.8 2016/01/07 19:46:00 christos Exp $ */
+/*	$Id: mdoc_validate.c,v 1.9 2016/01/07 20:05:41 christos Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -902,8 +902,10 @@ post_fo(POST_ARGS)
 		mandoc_vmsg(MANDOCERR_ARG_EXCESS, mdoc->parse,
 		    n->child->next->line, n->child->next->pos,
 		    "Fo ... %s", n->child->next->string);
-		while (n->child != n->last)
-			mdoc_node_delete(mdoc, n->last);
+		while (n->child != n->last) {
+			struct mdoc_node *p = n->last;
+			mdoc_node_delete(mdoc, p);
+		}
 	}
 
 	post_fname(mdoc);
