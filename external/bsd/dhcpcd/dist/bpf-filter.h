@@ -1,4 +1,4 @@
-/* $NetBSD: bpf-filter.h,v 1.9 2014/11/07 20:51:02 roy Exp $ */
+/* $NetBSD: bpf-filter.h,v 1.10 2016/01/07 20:09:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -36,13 +36,15 @@ static const struct bpf_insn arp_bpf_filter [] = {
 #ifndef BPF_SKIPTYPE
 	/* Make sure this is an ARP packet... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 12),
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_ARP, 0, 3),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_ARP, 0, 6),
 #endif
+	/* Make sure this is for IP ... */
+	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 16 + BPF_ETHCOOK),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ETHERTYPE_IP, 0, 4),
 	/* Make sure this is an ARP REQUEST... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20 + BPF_ETHCOOK),
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ARPOP_REQUEST, 2, 0),
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ARPOP_REQUEST, 1, 0),
 	/* or ARP REPLY... */
-	BPF_STMT(BPF_LD + BPF_H + BPF_ABS, 20 + BPF_ETHCOOK),
 	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, ARPOP_REPLY, 0, 1),
 	/* If we passed all the tests, ask for the whole packet. */
 	BPF_STMT(BPF_RET + BPF_K, BPF_WHOLEPACKET),

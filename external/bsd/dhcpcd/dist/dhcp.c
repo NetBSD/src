@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp.c,v 1.36 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: dhcp.c,v 1.37 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -1227,12 +1227,13 @@ dhcp_getoption(struct dhcpcd_ctx *ctx,
 		*os = 2; /* code + len */
 		*code = (unsigned int)*od++;
 		*len = (size_t)*od++;
-		if (*len > ol) {
-			errno = EINVAL;
+		if (*len > ol - *os) {
+			errno = ERANGE;
 			return NULL;
 		}
 	}
 
+	*oopt = NULL;
 	for (i = 0, opt = ctx->dhcp_opts; i < ctx->dhcp_opts_len; i++, opt++) {
 		if (opt->option == *code) {
 			*oopt = opt;
@@ -1934,8 +1935,10 @@ dhcp_arp_probed(struct arp_state *astate)
 		state->new = oldnew;
 	}
 #endif
-		
-	arp_announce(astate);
+
+	/* If we forked, stop here. */
+	if (astate->iface->ctx->options & DHCPCD_FORKED)
+		return;
 
 	/* Stop IPv4LL now we have a working DHCP address */
 	ipv4ll_drop(astate->iface);
@@ -2138,6 +2141,9 @@ dhcp_timeout(void *arg)
 	struct dhcp_state *state = D_STATE(ifp);
 
 	dhcp_bind(ifp);
+	/* If we forked, stop here. */
+	if (ifp->ctx->options & DHCPCD_FORKED)
+		return;
 	state->interval = 0;
 	dhcp_discover(ifp);
 }
@@ -2167,14 +2173,15 @@ dhcp_message_new(const struct in_addr *addr, const struct in_addr *mask)
 static int
 dhcp_arp_address(struct interface *ifp)
 {
-	const struct dhcp_state *state;
+	struct dhcp_state *state;
 	struct in_addr addr;
 	struct ipv4_addr *ia;
 	struct arp_state *astate;
 
 	eloop_timeout_delete(ifp->ctx->eloop, NULL, ifp);
 
-	state = D_CSTATE(ifp);
+	state = D_STATE(ifp);
+	state->state = DHS_PROBE;
 	addr.s_addr = state->offer->yiaddr == INADDR_ANY ?
 	    state->offer->ciaddr : state->offer->yiaddr;
 	/* If the interface already has the address configured
@@ -2638,7 +2645,7 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 		/* Before we supported FORCERENEW we closed off the raw
 		 * port so we effectively ignored all messages.
 		 * As such we'll not log by default here. */
-		//log_dhcp(LOG_DEBUG, "bound, ignoring", iface, dhcp, from);
+		//log_dhcp(LOG_DEBUG, "bound, ignoring", ifp, dhcp, from);
 		return;
 	}
 
@@ -2650,6 +2657,13 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 		    inet_ntoa(*from));
 		return;
 	}
+
+	if (state->state == DHS_PROBE) {
+		/* Ignore any DHCP messages whilst probing a lease to bind. */
+		log_dhcp(LOG_DEBUG, "probing, ignoring", ifp, dhcp, from);
+		return;
+	}
+
 	/* reset the message counter */
 	state->interval = 0;
 
@@ -2786,6 +2800,16 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 		    get_option_addr(ifp->ctx,
 		    &lease->server, dhcp, DHO_SERVERID) != 0)
 			lease->server.s_addr = INADDR_ANY;
+
+		/* Test for rapid commit in the OFFER */
+		if (!(ifp->ctx->options & DHCPCD_TEST) &&
+		    has_option_mask(ifo->requestmask, DHO_RAPIDCOMMIT) &&
+		    get_option(ifp->ctx, dhcp, DHO_RAPIDCOMMIT, NULL))
+		{
+			state->state = DHS_REQUEST;
+			goto rapidcommit;
+		}
+
 		log_dhcp(LOG_INFO, "offered", ifp, dhcp, from);
 		free(state->offer);
 		state->offer = dhcp;
@@ -2828,6 +2852,20 @@ dhcp_handledhcp(struct interface *ifp, struct dhcp_message **dhcpp,
 			return;
 		}
 
+		if (state->state == DHS_DISCOVER) {
+			/* We only allow ACK of rapid commit DISCOVER. */
+			if (has_option_mask(ifo->requestmask,
+			    DHO_RAPIDCOMMIT) &&
+			    get_option(ifp->ctx, dhcp, DHO_RAPIDCOMMIT, NULL))
+				state->state = DHS_REQUEST;
+			else {
+				log_dhcp(LOG_DEBUG, "ignoring ack of",
+				    ifp, dhcp, from);
+				return;
+			}
+		}
+
+rapidcommit:
 		if (!(ifo->options & DHCPCD_INFORM))
 			log_dhcp(LOG_DEBUG, "acknowledged", ifp, dhcp, from);
 		else

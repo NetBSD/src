@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: arp.c,v 1.15 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: arp.c,v 1.16 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -99,7 +99,8 @@ eexit:
 }
 
 void
-arp_report_conflicted(const struct arp_state *astate, const struct arp_msg *amsg)
+arp_report_conflicted(const struct arp_state *astate,
+    const struct arp_msg *amsg)
 {
 
 	if (amsg != NULL) {
@@ -149,14 +150,17 @@ arp_packet(void *arg)
 		/* Families must match */
 		if (ar.ar_hrd != htons(ifp->family))
 			continue;
+#if 0
+		/* These checks are enforced in the BPF filter. */
 		/* Protocol must be IP. */
 		if (ar.ar_pro != htons(ETHERTYPE_IP))
-			continue;
-		if (ar.ar_pln != sizeof(arm.sip.s_addr))
 			continue;
 		/* Only these types are recognised */
 		if (ar.ar_op != htons(ARPOP_REPLY) &&
 		    ar.ar_op != htons(ARPOP_REQUEST))
+			continue;
+#endif
+		if (ar.ar_pln != sizeof(arm.sip.s_addr))
 			continue;
 
 		/* Get pointers to the hardware addreses */
