@@ -1,4 +1,4 @@
-/*	$NetBSD: mct.c,v 1.9 2016/01/05 21:53:48 marty Exp $	*/
+/*	$NetBSD: mct.c,v 1.10 2016/01/07 04:45:10 marty Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.9 2016/01/05 21:53:48 marty Exp $");
+__KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.10 2016/01/07 04:45:10 marty Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,9 +54,8 @@ __KERNEL_RCSID(1, "$NetBSD: mct.c,v 1.9 2016/01/05 21:53:48 marty Exp $");
 
 static int  mct_match(device_t, cfdata_t, void *);
 static void mct_attach(device_t, device_t, void *);
-static int mct_intr(void *arg);
 
-//static int clockhandler(void *);
+static int clockhandler(void *);
 
 CFATTACH_DECL_NEW(exyo_mct, 0, mct_match, mct_attach, NULL, NULL);
 
@@ -73,7 +72,6 @@ static struct timecounter mct_timecounter = {
 	.tc_next = NULL,
 };
 #endif
-
 
 static inline uint32_t
 mct_read_global(struct mct_softc *sc, bus_size_t o)
@@ -174,12 +172,8 @@ mct_attach(device_t parent, device_t self, void *aux)
 		device_xname(self), "missing interrupts");
 
 	for (int i = 0; i < 12; i++)
-		fdtbus_intr_establish(faa->faa_phandle, i, 0, 0, mct_intr, 0);
-}
-
-static int mct_intr(void *arg)
-{
-	return 0;
+		fdtbus_intr_establish(faa->faa_phandle, i, 0, 0,
+				      clockhandler, 0);
 }
 
 static inline uint64_t
@@ -194,7 +188,6 @@ mct_gettime(struct mct_softc *sc)
 }
 
 
-#if 0
 /* interrupt handler */
 static int
 clockhandler(void *arg)
@@ -221,7 +214,6 @@ clockhandler(void *arg)
 	/* handled */
 	return 1;
 }
-#endif
 
 void
 mct_init_cpu_clock(struct cpu_info *ci)
