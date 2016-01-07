@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: network,v 1.69 2014/10/14 20:49:47 christos Exp $
+# $NetBSD: network,v 1.70 2016/01/07 11:51:07 roy Exp $
 #
 
 # PROVIDE: network
@@ -51,6 +51,7 @@ network_start()
 	network_start_defaultroute6
 	have_inet6 &&
 	network_start_ipv6_autoconf
+	network_wait_dad
 	network_start_local
 }
 
@@ -433,18 +434,6 @@ network_start_ipv6_autoconf()
 {
 	# IPv6 interface autoconfiguration.
 
-	dadcount=$(/sbin/sysctl -n net.inet6.ip6.dad_count 2>/dev/null)
-	if [ -n "$dadcount" -a "$dadcount" != 0 ]; then
-		# wait till DAD is completed
-		echo 'Waiting for DAD to complete for' \
-		    'statically configured addresses...'
-		# Add 1 for MAX_RTR_SOLICITATION_DELAY and another
-		# to give time for the last DAD packet to respond and
-		# a few more for luck.
-		waitsecs=$((dadcount + 4))
-		/sbin/ifconfig -w $waitsecs
-	fi
-
 	# dhcpcd will ensure DAD completes before forking
 	if checkyesnox rtsol && ! checkyesno dhcpcd; then
 		if [ "$ip6mode" = "autohost" ]; then
@@ -452,6 +441,16 @@ network_start_ipv6_autoconf()
 			warn "rtsol has been removed, " \
 			    "please configure dhcpcd in its place."
 		fi
+	fi
+}
+
+network_wait_dad()
+{
+	# Wait for the DAD flags to clear form all addresses.
+	if [ -n "$ifconfig_wait_dad_flags" ]; then
+		echo 'Waiting for DAD to complete for' \
+		    'statically configured addresses...'
+		ifconfig $ifconfig_wait_dad_flags
 	fi
 }
 
