@@ -29,9 +29,6 @@
 #define INTERFACE_H
 
 #include <net/if.h>
-#ifdef __FreeBSD__
-#include <net/if_var.h>
-#endif
 #include <net/route.h>		/* for RTM_ADD et all */
 #include <netinet/in.h>
 #ifdef BSD

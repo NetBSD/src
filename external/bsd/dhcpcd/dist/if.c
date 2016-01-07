@@ -30,12 +30,11 @@
 #include <sys/ioctl.h>
 #include <sys/socket.h>
 
+#include "config.h"
+
 #include <net/if.h>
 #include <net/if_arp.h>
 #include <netinet/in.h>
-#ifdef __FreeBSD__ /* Needed so that including netinet6/in6_var.h works */
-#  include <net/if_var.h>
-#endif
 #ifdef AF_LINK
 #  include <net/if_dl.h>
 #  include <net/if_types.h>
@@ -60,7 +59,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "config.h"
 #include "common.h"
 #include "dev.h"
 #include "dhcp.h"
@@ -94,14 +92,16 @@ if_opensockets(struct dhcpcd_ctx *ctx)
 	if ((ctx->link_fd = if_openlinksocket()) == -1)
 		return -1;
 
+	/* We use this socket for some operations without INET. */
 	ctx->pf_inet_fd = xsocket(PF_INET, SOCK_DGRAM, 0, O_CLOEXEC);
 	if (ctx->pf_inet_fd == -1)
 		return -1;
 
 #if defined(INET6) && defined(BSD)
 	ctx->pf_inet6_fd = xsocket(PF_INET6, SOCK_DGRAM, 0, O_CLOEXEC);
-	if (ctx->pf_inet6_fd == -1)
-		return -1;
+	/* Don't return an error so we at least work on kernels witout INET6
+	 * even though we expect INET6 support.
+	 * We will fail noisily elsewhere anyway. */
 #endif
 
 #ifdef IFLR_ACTIVE
@@ -242,7 +242,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 {
 	struct ifaddrs *ifaddrs, *ifa;
 	char *p;
-	int i;
+	int i, active;
 	struct if_head *ifs;
 	struct interface *ifp;
 #ifdef __linux__
@@ -291,6 +291,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (ifp)
 			continue;
 
+		active = 1;
 		if (argc > 0) {
 			for (i = 0; i < argc; i++) {
 #ifdef __linux__
@@ -306,9 +307,14 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 					break;
 #endif
 			}
-			if (i == argc)
-				continue;
-			p = argv[i];
+			if (i == argc) {
+				active = 0;
+				p =  ifa->ifa_name;
+#ifdef __linux__
+				strlcpy(ifn, ifa->ifa_name, sizeof(ifn));
+#endif
+			} else
+				p = argv[i];
 		} else {
 			p = ifa->ifa_name;
 #ifdef __linux__
@@ -320,16 +326,17 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 			if (argc == -1 && strcmp(argv[0], ifa->ifa_name) != 0)
 				continue;
 		}
+
 		for (i = 0; i < ctx->ifdc; i++)
 			if (!fnmatch(ctx->ifdv[i], p, 0))
 				break;
 		if (i < ctx->ifdc)
-			continue;
+			active = 0;
 		for (i = 0; i < ctx->ifac; i++)
 			if (!fnmatch(ctx->ifav[i], p, 0))
 				break;
 		if (ctx->ifac && i == ctx->ifac)
-			continue;
+			active = 0;
 
 #ifdef PLUGIN_DEV
 		/* Ensure that the interface name has settled */
@@ -341,7 +348,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) {
 			if ((argc == 0 || argc == -1) &&
 			    ctx->ifac == 0 && !if_hasconf(ctx, p))
-				continue;
+				active = 0;
 		}
 
 		if (if_vimaster(ctx, p) == 1) {
@@ -399,7 +406,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 #if defined(IFT_BRIDGE) || defined(IFT_PPP) || defined(IFT_PROPVIRTUAL)
 				/* Don't allow unless explicit */
 				if ((argc == 0 || argc == -1) &&
-				    ctx->ifac == 0 &&
+				    ctx->ifac == 0 && active &&
 				    !if_hasconf(ctx, ifp->name))
 				{
 					logger(ifp->ctx, LOG_DEBUG,
@@ -407,8 +414,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 					    " interface type and"
 					    " no config",
 					    ifp->name);
-					if_free(ifp);
-					continue;
+					active = 0;
 				}
 				/* FALLTHROUGH */
 #endif
@@ -436,13 +442,12 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 				if ((argc == 0 || argc == -1) &&
 				    ctx->ifac == 0 &&
 				    !if_hasconf(ctx, ifp->name))
-				{
-					if_free(ifp);
-					continue;
-				}
-				logger(ifp->ctx, LOG_WARNING,
-				    "%s: unsupported interface type %.2x",
-				    ifp->name, sdl->sdl_type);
+					active = 0;
+				if (active)
+					logger(ifp->ctx, LOG_WARNING,
+					    "%s: unsupported"
+					    " interface type %.2x",
+					    ifp->name, sdl->sdl_type);
 				/* Pretend it's ethernet */
 				ifp->family = ARPHRD_ETHER;
 				break;
@@ -471,10 +476,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		if (ifp->family != ARPHRD_ETHER) {
 			if ((argc == 0 || argc == -1) &&
 			    ctx->ifac == 0 && !if_hasconf(ctx, ifp->name))
-			{
-				if_free(ifp);
-				continue;
-			}
+				active = 0;
 			switch (ifp->family) {
 			case ARPHRD_IEEE1394:
 			case ARPHRD_INFINIBAND:
@@ -490,9 +492,11 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 /* IFT already checked */
 #ifndef AF_LINK
 			default:
-				logger(ifp->ctx, LOG_WARNING,
-				    "%s: unsupported interface family %.2x",
-				    ifp->name, ifp->family);
+				if (active)
+					logger(ifp->ctx, LOG_WARNING,
+					    "%s: unsupported"
+					    " interface family %.2x",
+					    ifp->name, ifp->family);
 				break;
 #endif
 			}
@@ -500,14 +504,14 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 
 		if (!(ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))) {
 			/* Handle any platform init for the interface */
-			if (if_init(ifp) == -1) {
+			if (active && if_init(ifp) == -1) {
 				logger(ifp->ctx, LOG_ERR, "%s: if_init: %m", p);
 				if_free(ifp);
 				continue;
 			}
 
 			/* Ensure that the MTU is big enough for DHCP */
-			if (if_getmtu(ifp) < MTU_MIN &&
+			if (if_getmtu(ifp) < MTU_MIN && active &&
 			    if_setmtu(ifp, MTU_MIN) == -1)
 			{
 				logger(ifp->ctx, LOG_ERR,
@@ -533,6 +537,7 @@ if_discover(struct dhcpcd_ctx *ctx, int argc, char * const *argv)
 		}
 #endif
 
+		ifp->active = active;
 		TAILQ_INSERT_TAIL(ifs, ifp, next);
 	}
 
@@ -600,7 +605,13 @@ if_cmp(const struct interface *si, const struct interface *ti)
 	int r;
 #endif
 
-	/* Check carrier status first */
+	/* Check active first */
+	if (si->active && !ti->active)
+		return -1;
+	if (!si->active && ti->active)
+		return 1;
+
+	/* Check carrier status next */
 	if (si->carrier > ti->carrier)
 		return -1;
 	if (si->carrier < ti->carrier)

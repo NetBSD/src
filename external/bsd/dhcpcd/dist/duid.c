@@ -32,6 +32,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
+#include <arpa/inet.h>
+
 #include <net/if.h>
 #include <net/if_arp.h>
 

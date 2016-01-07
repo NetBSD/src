@@ -254,6 +254,7 @@ int dhcp6_dump(struct interface *);
 #define dhcp6_find_delegates(a) {}
 #define dhcp6_start(a, b) (0)
 #define dhcp6_reboot(a) {}
+#define dhcp6_renew(a) {}
 #define dhcp6_env(a, b, c, d, e) {}
 #define dhcp6_free(a) {}
 #define dhcp6_dadcompleted(a) (0)

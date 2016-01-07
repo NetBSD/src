@@ -485,11 +485,6 @@ nc_route(struct rt *ort, struct rt *nrt)
 			logger(nrt->iface->ctx, LOG_ERR, "if_route (CHG): %m");
 	}
 
-	/* If the old route does not have an interface, give it the
-	 * interface of the new route for context. */
-	if (ort && ort->iface == NULL)
-		ort->iface = nrt->iface;
-
 #ifdef HAVE_ROUTE_METRIC
 	/* With route metrics, we can safely add the new route before
 	 * deleting the old route. */
@@ -1166,6 +1161,13 @@ ipv4_applyaddr(void *arg)
 	 * notification right now via our link socket. */
 	if_initrt(ifp);
 	ipv4_buildroutes(ifp->ctx);
+	/* Announce the address */
+	if (ifo->options & DHCPCD_ARP) {
+		struct arp_state *astate;
+
+		if ((astate = arp_new(ifp, &state->addr)) != NULL)
+			arp_announce(astate);
+	}
 	if (state->state == DHS_BOUND) {
 		script_runreason(ifp, state->reason);
 		dhcpcd_daemonise(ifp->ctx);
