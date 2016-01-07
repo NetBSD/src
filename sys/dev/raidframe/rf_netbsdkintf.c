@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.342 2016/01/07 08:58:01 mlelstv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.343 2016/01/07 14:15:26 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.342 2016/01/07 08:58:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.343 2016/01/07 14:15:26 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -259,14 +259,12 @@ struct raid_softc {
 	LIST_ENTRY(raid_softc) sc_link;
 };
 /* sc_flags */
-#define RAIDF_INITED		0x001	/* unit has been initialized */
-#define RAIDF_WLABEL		0x002	/* label area is writable */
-#define RAIDF_LABELLING		0x004	/* unit is currently being labelled */
-#define RAIDF_SHUTDOWN		0x008	/* unit is being shutdown */
-#define RAIDF_DETACH  		0x010	/* detach after final close */
-#define RAIDF_WANTED		0x040	/* someone is waiting to obtain a lock */
-#define RAIDF_LOCKED		0x080	/* unit is locked */
-#define RAIDF_UNIT_CHANGED	0x100	/* unit is being changed */
+#define RAIDF_INITED		0x01	/* unit has been initialized */
+#define RAIDF_SHUTDOWN		0x02	/* unit is being shutdown */
+#define RAIDF_DETACH  		0x04	/* detach after final close */
+#define RAIDF_WANTED		0x08	/* someone waiting to obtain a lock */
+#define RAIDF_LOCKED		0x10	/* unit is locked */
+#define RAIDF_UNIT_CHANGED	0x20	/* unit is being changed */
 
 #define	raidunit(x)	DISKUNIT(x)
 #define	raidsoftc(dev)	(((struct raid_softc *)device_private(dev))->sc_r.softc)
