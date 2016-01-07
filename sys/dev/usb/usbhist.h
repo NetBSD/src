@@ -1,4 +1,4 @@
-/*	$NetBSD: usbhist.h,v 1.1.2.3 2015/12/27 12:10:00 skrll Exp $	*/
+/*	$NetBSD: usbhist.h,v 1.1.2.4 2016/01/07 11:40:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2012 Matthew R. Green
@@ -81,6 +81,7 @@ USBHIST_DECL(usbhist);
 #define USBHIST_INIT_STATIC(NAME,BUF)
 #define USBHIST_LINK_STATIC(NAME)
 #define USBHIST_LOGN(N,NAME,FMT,A,B,C,D)	do { } while(0)
+#define USBHIST_LOGM(N,NAME,FMT,A,B,C,D)	do { } while(0)
 #define USBHIST_LOG(NAME,FMT,A,B,C,D)		do { } while(0)
 #define USBHIST_CALLED(NAME)
 #define USBHIST_FUNC()
