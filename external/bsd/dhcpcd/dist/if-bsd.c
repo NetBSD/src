@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -35,13 +35,12 @@
 #include <sys/uio.h>
 #include <sys/utsname.h>
 
+#include "config.h"
+
 #include <arpa/inet.h>
 #include <net/bpf.h>
 #include <net/if.h>
 #include <net/if_dl.h>
-#ifdef __FreeBSD__ /* Needed so that including netinet6/in6_var.h works */
-#  include <net/if_var.h>
-#endif
 #include <net/if_media.h>
 #include <net/route.h>
 #include <netinet/if_ether.h>
@@ -58,6 +57,7 @@
 #  include <net80211/ieee80211_ioctl.h>
 #endif
 
+#include <assert.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <fnmatch.h>
@@ -75,7 +75,6 @@
 #undef IPV6CTL_ACCEPT_RTADV
 #endif
 
-#include "config.h"
 #include "common.h"
 #include "dhcp.h"
 #include "if.h"
@@ -251,12 +250,27 @@ static struct interface *
 if_findsdl(struct dhcpcd_ctx *ctx, struct sockaddr_dl *sdl)
 {
 
+	if (sdl->sdl_index)
+		return if_findindex(ctx->ifaces, sdl->sdl_index);
+
 	if (sdl->sdl_nlen) {
 		char ifname[IF_NAMESIZE];
+
 		memcpy(ifname, sdl->sdl_data, sdl->sdl_nlen);
 		ifname[sdl->sdl_nlen] = '\0';
 		return if_find(ctx->ifaces, ifname);
 	}
+	if (sdl->sdl_alen) {
+		struct interface *ifp;
+
+		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+			if (ifp->hwlen == sdl->sdl_alen &&
+			    memcmp(ifp->hwaddr,
+			    sdl->sdl_data, sdl->sdl_alen) == 0)
+				return ifp;
+		}
+	}
+
 	return NULL;
 }
 #endif
@@ -448,6 +462,7 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 {
 	char *cp;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
+	struct sockaddr_dl *sdl;
 
 	cp = (char *)(void *)(rtm + 1);
 	sa = (struct sockaddr *)(void *)cp;
@@ -478,17 +493,17 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 		rt->net.s_addr = INADDR_BROADCAST;
 	COPYOUT(rt->gate, rti_info[RTAX_GATEWAY]);
 	COPYOUT(rt->src, rti_info[RTAX_IFA]);
-
-	if (rtm->rtm_inits & RTV_MTU)
-		rt->mtu = (unsigned int)rtm->rtm_rmx.rmx_mtu;
+	rt->mtu = (unsigned int)rtm->rtm_rmx.rmx_mtu;
 
 	if (rtm->rtm_index)
 		rt->iface = if_findindex(ctx->ifaces, rtm->rtm_index);
 	else if (rtm->rtm_addrs & RTA_IFP) {
-		struct sockaddr_dl *sdl;
-
 		sdl = (struct sockaddr_dl *)(void *)rti_info[RTAX_IFP];
 		rt->iface = if_findsdl(ctx, sdl);
+	} else if (rtm->rtm_addrs & RTA_GATEWAY) {
+		sdl = (struct sockaddr_dl *)(void *)rti_info[RTAX_GATEWAY];
+		if (sdl->sdl_family == AF_LINK)
+			rt->iface = if_findsdl(ctx, sdl);
 	}
 
 	/* If we don't have an interface and it's a host route, it maybe
@@ -501,6 +516,8 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, struct rt_msghdr *rtm)
 		if ((ia = ipv4_findaddr(ctx, &rt->dest)))
 			rt->iface = ia->iface;
 	}
+
+	assert(rt->iface != NULL);
 
 	return 0;
 }
@@ -522,6 +539,11 @@ if_route(unsigned char cmd, const struct rt *rt)
 	size_t l;
 	struct in_addr src_addr;
 
+	if ((cmd == RTM_ADD || cmd == RTM_DELETE || cmd == RTM_CHANGE) &&
+	    rt->iface->ctx->options & DHCPCD_DAEMONISE &&
+	    !(rt->iface->ctx->options & DHCPCD_DAEMONISED))
+		rt->iface->ctx->options |= DHCPCD_RTM_PPID;
+
 #define ADDSU {								      \
 		l = RT_ROUNDUP(su.sa.sa_len);				      \
 		memcpy(bp, &su, l);					      \
@@ -537,11 +559,11 @@ if_route(unsigned char cmd, const struct rt *rt)
 
 	memset(&rtm, 0, sizeof(rtm));
 	rtm.hdr.rtm_version = RTM_VERSION;
-	rtm.hdr.rtm_seq = 1;
 	rtm.hdr.rtm_type = cmd;
 	rtm.hdr.rtm_addrs = RTA_DST;
 	rtm.hdr.rtm_flags = RTF_UP;
 	rtm.hdr.rtm_pid = getpid();
+	rtm.hdr.rtm_seq = ++rt->iface->ctx->seq;
 #ifdef RTF_PINNED
 	if (cmd != RTM_ADD)
 		rtm.hdr.rtm_flags |= RTF_PINNED;
@@ -639,8 +661,10 @@ if_route(unsigned char cmd, const struct rt *rt)
 #undef ADDSU
 
 	rtm.hdr.rtm_msglen = (unsigned short)(bp - (char *)&rtm);
-	return write(rt->iface->ctx->link_fd,
-	    &rtm, rtm.hdr.rtm_msglen) == -1 ? -1 : 0;
+	if (write(rt->iface->ctx->link_fd, &rtm, rtm.hdr.rtm_msglen) == -1)
+		return -1;
+	rt->iface->ctx->sseq = rt->iface->ctx->seq;
+	return 0;
 }
 
 int
@@ -788,6 +812,7 @@ if_copyrt6(struct dhcpcd_ctx *ctx, struct rt6 *rt, struct rt_msghdr *rtm)
 {
 	char *cp;
 	struct sockaddr *sa, *rti_info[RTAX_MAX];
+	struct sockaddr_dl *sdl;
 
 	cp = (char *)(void *)(rtm + 1);
 	sa = (struct sockaddr *)(void *)cp;
@@ -859,18 +884,19 @@ if_copyrt6(struct dhcpcd_ctx *ctx, struct rt6 *rt, struct rt_msghdr *rtm)
 	} else
 		ipv6_mask(&rt->net, 128);
 	COPYOUT6(rt->gate, rti_info[RTAX_GATEWAY]);
-
-	if (rtm->rtm_inits & RTV_MTU)
-		rt->mtu = (unsigned int)rtm->rtm_rmx.rmx_mtu;
+	rt->mtu = (unsigned int)rtm->rtm_rmx.rmx_mtu;
 
 	if (rtm->rtm_index)
 		rt->iface = if_findindex(ctx->ifaces, rtm->rtm_index);
 	else if (rtm->rtm_addrs & RTA_IFP) {
-		struct sockaddr_dl *sdl;
-
 		sdl = (struct sockaddr_dl *)(void *)rti_info[RTAX_IFP];
 		rt->iface = if_findsdl(ctx, sdl);
+	} else if (rtm->rtm_addrs & RTA_GATEWAY) {
+		sdl = (struct sockaddr_dl *)(void *)rti_info[RTAX_GATEWAY];
+		if (sdl->sdl_family == AF_LINK)
+			rt->iface = if_findsdl(ctx, sdl);
 	}
+
 	/* If we don't have an interface and it's a host route, it maybe
 	 * to a local ip via the loopback interface. */
 	if (rt->iface == NULL &&
@@ -881,6 +907,8 @@ if_copyrt6(struct dhcpcd_ctx *ctx, struct rt6 *rt, struct rt_msghdr *rtm)
 		if ((ia = ipv6_findaddr(ctx, &rt->dest, 0)))
 			rt->iface = ia->iface;
 	}
+
+	assert(rt->iface != NULL);
 
 	return 0;
 }
@@ -901,6 +929,11 @@ if_route6(unsigned char cmd, const struct rt6 *rt)
 	char *bp = rtm.buffer;
 	size_t l;
 
+	if ((cmd == RTM_ADD || cmd == RTM_DELETE || cmd == RTM_CHANGE) &&
+	    rt->iface->ctx->options & DHCPCD_DAEMONISE &&
+	    !(rt->iface->ctx->options & DHCPCD_DAEMONISED))
+		rt->iface->ctx->options |= DHCPCD_RTM_PPID;
+
 #define ADDSU {								      \
 		l = RT_ROUNDUP(su.sa.sa_len);				      \
 		memcpy(bp, &su, l);					      \
@@ -919,10 +952,10 @@ if_route6(unsigned char cmd, const struct rt6 *rt)
 
 	memset(&rtm, 0, sizeof(rtm));
 	rtm.hdr.rtm_version = RTM_VERSION;
-	rtm.hdr.rtm_seq = 1;
 	rtm.hdr.rtm_type = cmd;
 	rtm.hdr.rtm_flags = RTF_UP | (int)rt->flags;
 	rtm.hdr.rtm_pid = getpid();
+	rtm.hdr.rtm_seq = ++rt->iface->ctx->seq;
 #ifdef RTF_PINNED
 	if (rtm.hdr.rtm_type != RTM_ADD)
 		rtm.hdr.rtm_flags |= RTF_PINNED;
@@ -985,8 +1018,10 @@ if_route6(unsigned char cmd, const struct rt6 *rt)
 #undef ADDSU
 
 	rtm.hdr.rtm_msglen = (unsigned short)(bp - (char *)&rtm);
-	return write(rt->iface->ctx->link_fd,
-	    &rtm, rtm.hdr.rtm_msglen) == -1 ? -1 : 0;
+	if (write(rt->iface->ctx->link_fd, &rtm, rtm.hdr.rtm_msglen) == -1)
+		return -1;
+	rt->iface->ctx->sseq = rt->iface->ctx->seq;
+	return 0;
 }
 
 int
@@ -1111,9 +1146,26 @@ if_managelink(struct dhcpcd_ctx *ctx)
 	e = msg + bytes;
 	for (p = msg; p < e; p += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)(void *)p;
-		// Ignore messages generated by us
-		if (rtm->rtm_pid == getpid())
-			break;
+		if (rtm->rtm_type == RTM_MISS)
+			continue;
+		/* Ignore messages generated by us */
+		if (rtm->rtm_pid == getpid()) {
+			ctx->options &= ~DHCPCD_RTM_PPID;
+			continue;
+		}
+		/* Ignore messages sent by the parent process after forking */
+		if ((ctx->options & (DHCPCD_RTM_PPID | DHCPCD_DAEMONISED)) ==
+		    (DHCPCD_RTM_PPID | DHCPCD_DAEMONISED) &&
+		    rtm->rtm_pid == ctx->ppid)
+		{
+			/* If this is the last successful message sent clear
+			 * the check flag as it's possible another process could
+			 * re-use the same pid and also manipulate the kernel
+			 * routing table. */
+			if (rtm->rtm_seq == ctx->pseq)
+				ctx->options &= ~DHCPCD_RTM_PPID;
+			continue;
+		}
 		switch(rtm->rtm_type) {
 #ifdef RTM_IFANNOUNCE
 		case RTM_IFANNOUNCE:
