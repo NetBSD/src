@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.341 2016/01/06 17:40:50 christos Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.342 2016/01/07 08:58:01 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.341 2016/01/06 17:40:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.342 2016/01/07 08:58:01 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -725,6 +725,10 @@ raid_dumpblocks(device_t dev, void *va, daddr_t blkno, int nblk)
 	}
 
 	bdev = bdevsw_lookup(raidPtr->Disks[dumpto].dev);
+	if (bdev == NULL) {
+		error = ENXIO;
+		goto out;
+	}
 
 	error = (*bdev->d_dump)(raidPtr->Disks[dumpto].dev, 
 				blkno, va, nblk * raidPtr->bytesPerSector);
