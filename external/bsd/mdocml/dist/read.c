@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.12 2015/12/18 14:30:41 christos Exp $ */
+/*	$Id: read.c,v 1.13 2016/01/07 19:49:25 christos Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -336,6 +336,7 @@ mparse_buf_r(struct mparse *curp, const struct buf blk, size_t i, int start)
 
 	lnn = curp->line;
 	pos = 0;
+	fd = -1;
 
 	while (i < blk.sz) {
 		if (0 == pos && '\0' == blk.buf[i])
@@ -530,8 +531,7 @@ rerun:
 			if ( ! (curp->options & MPARSE_SO) &&
 			    (i >= blk.sz || blk.buf[i] == '\0')) {
 				curp->sodest = mandoc_strdup(ln.buf + of);
-				free(ln.buf);
-				return;
+				goto out;
 			}
 			/*
 			 * We remove `so' clauses from our lookaside
@@ -611,7 +611,10 @@ rerun:
 		pos = 0;
 	}
 
+out:
 	free(ln.buf);
+	if (fd != -1)
+		close(fd);
 }
 
 static int
