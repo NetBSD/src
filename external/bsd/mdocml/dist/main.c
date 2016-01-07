@@ -1,4 +1,4 @@
-/*	$Id: main.c,v 1.1.1.15 2015/12/17 21:58:48 christos Exp $ */
+/*	$Id: main.c,v 1.2 2016/01/07 20:10:55 christos Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2012, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1013,6 +1013,7 @@ spawn_pager(void)
 
 	/* Hand over to the pager. */
 
+	/*coverity[TAINTED_STRING]*/
 	execvp(argv[0], argv);
 	fprintf(stderr, "%s: exec: %s\n",
 	    progname, strerror(errno));
