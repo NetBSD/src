@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.207 2016/01/06 22:12:49 skrll Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.208 2016/01/07 07:59:08 skrll Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.207 2016/01/06 22:12:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.208 2016/01/07 07:59:08 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.207 2016/01/06 22:12:49 skrll Exp $")
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/malloc.h>
 #include <sys/device.h>
 #include <sys/select.h>
