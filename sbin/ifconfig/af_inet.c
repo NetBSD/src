@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet.c,v 1.17 2015/05/12 14:05:29 roy Exp $	*/
+/*	$NetBSD: af_inet.c,v 1.18 2016/01/07 11:32:21 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet.c,v 1.17 2015/05/12 14:05:29 roy Exp $");
+__RCSID("$NetBSD: af_inet.c,v 1.18 2016/01/07 11:32:21 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -62,14 +62,17 @@ __RCSID("$NetBSD: af_inet.c,v 1.17 2015/05/12 14:05:29 roy Exp $");
 static void in_constructor(void) __attribute__((constructor));
 static void in_status(prop_dictionary_t, prop_dictionary_t, bool);
 static void in_commit_address(prop_dictionary_t, prop_dictionary_t);
-static bool in_addr_tentative(struct ifaddrs *ifa);
+static bool in_addr_flags(struct ifaddrs *, int);
+static bool in_addr_tentative(struct ifaddrs *);
+static bool in_addr_tentative_or_detached(struct ifaddrs *);
 static void in_alias(const char *, prop_dictionary_t, prop_dictionary_t,
     struct in_aliasreq *);
 
 static struct afswtch af = {
 	.af_name = "inet", .af_af = AF_INET, .af_status = in_status,
 	.af_addr_commit = in_commit_address,
-	.af_addr_tentative = in_addr_tentative
+	.af_addr_tentative = in_addr_tentative,
+	.af_addr_tentative_or_detached = in_addr_tentative_or_detached
 };
 
 static void
@@ -220,10 +223,10 @@ in_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 	commit_address(env, oenv, &inparam);
 }
 
+#ifdef SIOCGIFAFLAG_IN
 static bool
-in_addr_tentative(struct ifaddrs *ifa)
+in_addr_flags(struct ifaddrs *ifa, int flags)
 {
-#ifdef IN_IFF_TENTATIVE
 	int s;
 	struct ifreq ifr;
 
@@ -234,7 +237,28 @@ in_addr_tentative(struct ifaddrs *ifa)
 		err(EXIT_FAILURE, "%s: getsock", __func__);
 	if (prog_ioctl(s, SIOCGIFAFLAG_IN, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGIFAFLAG_IN");
-	return ifr.ifr_addrflags & IN_IFF_TENTATIVE ? true : false;
+	return ifr.ifr_addrflags & flags ? true : false;
+	return false;
+}
+#endif
+
+static bool
+in_addr_tentative(struct ifaddrs *ifa)
+{
+
+#ifdef IN_IFF_TENTATIVE
+	return in_addr_flags(ifa, IN_IFF_TENTATIVE);
+#else
+	return false;
+#endif
+}
+
+static bool
+in_addr_tentative_or_detached(struct ifaddrs *ifa)
+{
+
+#ifdef IN_IFF_TENTATIVE
+	return in_addr_flags(ifa, IN_IFF_TENTATIVE | IN_IFF_DETACHED);
 #else
 	return false;
 #endif
