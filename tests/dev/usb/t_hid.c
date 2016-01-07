@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hid.c,v 1.2 2016/01/07 15:58:23 jakllsch Exp $	*/
+/*	$NetBSD: t_hid.c,v 1.3 2016/01/07 16:10:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hid.c,v 1.2 2016/01/07 15:58:23 jakllsch Exp $");
+__RCSID("$NetBSD: t_hid.c,v 1.3 2016/01/07 16:10:49 jakllsch Exp $");
 
 #include <machine/types.h>
 #include <stdlib.h>
@@ -213,8 +213,6 @@ ATF_TC_BODY(khid_parse_just_pop, tc)
 {
 	struct hid_data *hdp;
 	struct hid_item hi;
-
-	atf_tc_expect_fail("Pop crashes on empty stack.");
 
 	hdp = hid_start_parse(just_pop_report_descriptor,
 	    sizeof just_pop_report_descriptor, hid_none);
