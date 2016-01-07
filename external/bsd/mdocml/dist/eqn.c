@@ -1,4 +1,4 @@
-/*	$Id: eqn.c,v 1.3 2016/01/07 20:06:44 christos Exp $ */
+/*	$Id: eqn.c,v 1.4 2016/01/07 22:47:49 christos Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -992,7 +992,7 @@ this_tok:
 		     parent->type == EQN_MATRIX))
 			parent = parent->parent;
 		/* Close out any "singleton" lists. */
-		while (parrent && parent->type == EQN_LISTONE &&
+		while (parent && parent->type == EQN_LISTONE &&
 		    parent->args == parent->expectargs)
 			parent = parent->parent;
 		break;
