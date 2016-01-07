@@ -1,8 +1,8 @@
-/* $NetBSD: if-options.h,v 1.15 2015/11/30 16:33:00 roy Exp $ */
+/* $NetBSD: if-options.h,v 1.16 2016/01/07 20:09:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,8 @@
 /* Don't set any optional arguments here so we retain POSIX
  * compatibility with getopt */
 #define IF_OPTS "46bc:de:f:gh:i:j:kl:m:no:pqr:s:t:u:v:wxy:z:" \
-		"ABC:DEF:GHI:JKLMNO:Q:S:TUVW:X:Z:"
+		"ABC:DEF:GHI:JKLMNO:PQ:S:TUVW:X:Z:"
+#define NOERR_IF_OPTS		":" IF_OPTS
 
 #define DEFAULT_TIMEOUT		30
 #define DEFAULT_REBOOT		5
@@ -108,12 +109,13 @@
 #define DHCPCD_DHCP6			(1ULL << 50)
 #define DHCPCD_IF_UP			(1ULL << 51)
 #define DHCPCD_INFORM6			(1ULL << 52)
-// unassinged				(1ULL << 53)
+#define DHCPCD_RTM_PPID			(1ULL << 53)
 #define DHCPCD_IPV6RA_AUTOCONF		(1ULL << 54)
 #define DHCPCD_ROUTER_HOST_ROUTE_WARNED	(1ULL << 55)
 #define DHCPCD_IPV6RA_ACCEPT_NOPUBLIC	(1ULL << 56)
 #define DHCPCD_BOOTP			(1ULL << 57)
 #define DHCPCD_INITIAL_DELAY		(1ULL << 58)
+#define DHCPCD_PRINT_PIDFILE		(1ULL << 59)
 
 #define DHCPCD_NODROP	(DHCPCD_EXITING | DHCPCD_PERSISTENT)
 

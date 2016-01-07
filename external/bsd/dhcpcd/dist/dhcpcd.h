@@ -1,8 +1,8 @@
-/* $NetBSD: dhcpcd.h,v 1.13 2015/08/21 10:39:00 roy Exp $ */
+/* $NetBSD: dhcpcd.h,v 1.14 2016/01/07 20:09:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -77,6 +77,7 @@ struct interface {
 	char alias[IF_NAMESIZE];
 #endif
 	unsigned int index;
+	int active;
 	unsigned int flags;
 	sa_family_t family;
 	unsigned char hwaddr[HWADDR_LEN];
@@ -122,6 +123,8 @@ struct dhcpcd_ctx {
 	int pf_link_fd;
 #endif
 	int link_fd;
+	int seq;	/* route message sequence no */
+	int sseq;	/* successful seq no sent */
 
 #ifdef USE_SIGNALS
 	sigset_t sigset;
@@ -139,6 +142,13 @@ struct dhcpcd_ctx {
 	size_t vivso_len;
 
 	char *randomstate; /* original state */
+
+	/* Used to track the last routing message,
+	 * so we can ignore messages the parent process sent
+	 * but the child receives when forking.
+	 * getppid(2) is unreliable because we detach. */
+	pid_t ppid;	/* parent pid */
+	int pseq;	/* last seq in parent */
 
 #ifdef INET
 	struct dhcp_opt *dhcp_opts;

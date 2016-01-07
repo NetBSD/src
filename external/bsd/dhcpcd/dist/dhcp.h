@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp.h,v 1.12 2015/11/30 16:33:00 roy Exp $ */
+/* $NetBSD: dhcp.h,v 1.13 2016/01/07 20:09:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -191,6 +191,7 @@ enum DHS {
 	DHS_INIT,
 	DHS_DISCOVER,
 	DHS_REQUEST,
+	DHS_PROBE,
 	DHS_BOUND,
 	DHS_RENEW,
 	DHS_REBIND,

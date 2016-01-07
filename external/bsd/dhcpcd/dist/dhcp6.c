@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp6.c,v 1.16 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: dhcp6.c,v 1.17 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -263,14 +263,15 @@ dhcp6_getoption(struct dhcpcd_ctx *ctx,
 		}
 		o = (const struct dhcp6_option *)od;
 		*len = ntohs(o->len);
-		if (*len > ol) {
-			errno = EINVAL;
+		if (*len > ol - *os) {
+			errno = ERANGE;
 			return NULL;
 		}
 		*code = ntohs(o->code);
 	} else
 		o = NULL;
 
+	*oopt = NULL;
 	for (i = 0, opt = ctx->dhcp6_opts;
 	    i < ctx->dhcp6_opts_len; i++, opt++)
 	{
@@ -2476,7 +2477,7 @@ dhcp6_delegate_prefix(struct interface *ifp)
 	ifo = ifp->options;
 	state = D6_STATE(ifp);
 
-	/* Try to load configured interfaces for delegation that do not exist */
+	/* Ensure we have all interfaces */
 	for (i = 0; i < ifo->ia_len; i++) {
 		ia = &ifo->ia[i];
 		for (j = 0; j < ia->sla_len; j++) {
@@ -2485,21 +2486,19 @@ dhcp6_delegate_prefix(struct interface *ifp)
 				if (strcmp(sla->ifname, ia->sla[j].ifname) == 0)
 					break;
 			if (j >= i &&
-			    if_find(ifp->ctx->ifaces, sla->ifname) == NULL)
-			{
-				logger(ifp->ctx, LOG_INFO,
-				    "%s: loading for delegation", sla->ifname);
-				if (dhcpcd_handleinterface(ifp->ctx, 2,
-				    sla->ifname) == -1)
-					logger(ifp->ctx, LOG_ERR,
-					    "%s: interface does not exist"
-					    " for delegation",
-					    sla->ifname);
-			}
+			    ((ifd = if_find(ifp->ctx->ifaces,
+			        sla->ifname)) == NULL ||
+			    !ifd->active))
+				logger(ifp->ctx, LOG_ERR,
+				    "%s: interface does not exist"
+				    " for delegation",
+				    sla->ifname);
 		}
 	}
 
 	TAILQ_FOREACH(ifd, ifp->ctx->ifaces, next) {
+		if (!ifd->active)
+			continue;
 		k = 0;
 		carrier_warned = abrt = 0;
 		TAILQ_FOREACH(ap, &state->addrs, next) {
@@ -2695,7 +2694,9 @@ dhcp6_handledata(void *arg)
 	}
 
 	TAILQ_FOREACH(ifp, dctx->ifaces, next) {
-		if (ifp->index == (unsigned int)pkt.ipi6_ifindex)
+		if (ifp->active &&
+		    ifp->index == (unsigned int)pkt.ipi6_ifindex &&
+		    ifp->options->options & DHCPCD_DHCP6)
 			break;
 	}
 	if (ifp == NULL) {

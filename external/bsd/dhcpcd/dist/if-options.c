@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: if-options.c,v 1.28 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: if-options.c,v 1.29 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#define _WITH_GETLINE /* Stop FreeBSD bitching */
 
 #include <sys/param.h>
 #include <sys/stat.h>
@@ -148,7 +146,8 @@ const struct option cf_options[] = {
 	{"noipv4ll",        no_argument,       NULL, 'L'},
 	{"master",          no_argument,       NULL, 'M'},
 	{"renew",           no_argument,       NULL, 'N'},
-	{"nooption",        optional_argument, NULL, 'O'},
+	{"nooption",        required_argument, NULL, 'O'},
+	{"printpidfile",    no_argument,       NULL, 'P'},
 	{"require",         required_argument, NULL, 'Q'},
 	{"static",          required_argument, NULL, 'S'},
 	{"test",            no_argument,       NULL, 'T'},
@@ -689,6 +688,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 	case 'n': /* FALLTHROUGH */
 	case 'x': /* FALLTHROUGH */
 	case 'N': /* FALLTHROUGH */
+	case 'P': /* FALLTHROUGH */
 	case 'T': /* FALLTHROUGH */
 	case 'U': /* FALLTHROUGH */
 	case 'V': /* We need to handle non interface options */
@@ -2345,8 +2345,6 @@ read_config(struct dhcpcd_ctx *ctx,
 				continue;
 			}
 			ctx->ifcc++;
-			logger(ctx, LOG_DEBUG, "allowing interface %s",
-			    ctx->ifcv[ctx->ifcc - 1]);
 			continue;
 		}
 		/* Start of an ssid block, skip if not ours */
@@ -2407,7 +2405,9 @@ add_options(struct dhcpcd_ctx *ctx, const char *ifname,
 	 * only use the dhcpcd.conf entry for that. */
 	if (ifname != NULL)
 		wait_opts = ifo->options & DHCPCD_WAITOPTS;
-	while ((opt = getopt_long(argc, argv, IF_OPTS, cf_options, &oi)) != -1)
+	while ((opt = getopt_long(argc, argv,
+	    ctx->options & DHCPCD_PRINT_PIDFILE ? NOERR_IF_OPTS : IF_OPTS,
+	    cf_options, &oi)) != -1)
 	{
 		r = parse_option(ctx, ifname, ifo, opt, optarg, NULL, NULL);
 		if (r != 1)

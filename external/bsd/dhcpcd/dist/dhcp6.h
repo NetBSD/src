@@ -1,4 +1,4 @@
-/* $NetBSD: dhcp6.h,v 1.11 2015/11/30 16:33:00 roy Exp $ */
+/* $NetBSD: dhcp6.h,v 1.12 2016/01/07 20:09:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -256,6 +256,7 @@ int dhcp6_dump(struct interface *);
 #define dhcp6_find_delegates(a) {}
 #define dhcp6_start(a, b) (0)
 #define dhcp6_reboot(a) {}
+#define dhcp6_renew(a) {}
 #define dhcp6_env(a, b, c, d, e) {}
 #define dhcp6_free(a) {}
 #define dhcp6_dadcompleted(a) (0)
