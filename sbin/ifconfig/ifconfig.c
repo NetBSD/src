@@ -1,4 +1,4 @@
-/*	$NetBSD: ifconfig.c,v 1.235 2015/07/29 07:42:27 ozaki-r Exp $	*/
+/*	$NetBSD: ifconfig.c,v 1.236 2016/01/07 11:32:21 roy Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2000 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
  The Regents of the University of California.  All rights reserved.");
-__RCSID("$NetBSD: ifconfig.c,v 1.235 2015/07/29 07:42:27 ozaki-r Exp $");
+__RCSID("$NetBSD: ifconfig.c,v 1.236 2016/01/07 11:32:21 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -104,11 +104,11 @@ __RCSID("$NetBSD: ifconfig.c,v 1.235 2015/07/29 07:42:27 ozaki-r Exp $");
 
 #define WAIT_DAD	10000000 /* nanoseconds between each poll, 10ms */
 
-static bool bflag, dflag, hflag, sflag, uflag, wflag;
+static bool bflag, dflag, hflag, sflag, uflag, Wflag, wflag;
 bool lflag, Nflag, vflag, zflag;
-static long wflag_secs;
+static long wflag_secs, Wflag_secs;
 
-static char gflags[10 + 26 * 2 + 1] = "AabCdhlNsuvw:z";
+static char gflags[10 + 26 * 2 + 1] = "AabCdhlNsuvW:w:z";
 bool gflagset[10 + 26 * 2];
 
 static int carrier(prop_dictionary_t);
@@ -518,14 +518,25 @@ wait_dad_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 	bool waiting;
 	struct ifaddrs *ifaddrs, *ifa;
 	const struct timespec ts = { .tv_sec = 0, .tv_nsec = WAIT_DAD };
-	const struct timespec add = { .tv_sec = wflag_secs, .tv_nsec = 0};
-	struct timespec now, end = { .tv_sec = wflag_secs, .tv_nsec = 0};
+	struct timespec now, end_det, end;
 	const struct afswtch *afp;
 
 	if (wflag_secs) {
+		const struct timespec tent =
+		    { .tv_sec = wflag_secs, .tv_nsec = 0};
+		const struct timespec det =
+		    { .tv_sec = Wflag_secs, .tv_nsec = 0};
+
 		if (clock_gettime(CLOCK_MONOTONIC, &now) == -1)
 			err(EXIT_FAILURE, "clock_gettime");
-		timespecadd(&now, &add, &end);
+		timespecadd(&now, &tent, &end);
+		if (Wflag_secs)
+			timespecadd(&now, &det, &end_det);
+		else
+			timespecclear(&end_det);
+	} else {
+		timespecclear(&end_det);
+		timespecclear(&end);
 	}
 
 	if (getifaddrs(&ifaddrs) == -1)
@@ -537,8 +548,14 @@ wait_dad_exec(prop_dictionary_t env, prop_dictionary_t oenv)
 			if (ifa->ifa_addr == NULL)
 				continue;
 			afp = lookup_af_bynum(ifa->ifa_addr->sa_family);
-			if (afp && afp->af_addr_tentative &&
-			    afp->af_addr_tentative(ifa))
+			if (afp &&
+			    ((afp->af_addr_tentative_or_detached &&
+			    ifa->ifa_flags & IFF_UP &&
+			    timespecisset(&end_det) &&
+			    timespeccmp(&now, &end_det, <) &&
+			    afp->af_addr_tentative_or_detached(ifa)) ||
+			    (afp->af_addr_tentative &&
+			    afp->af_addr_tentative(ifa))))
 			{
 				waiting = true;
 				break;
@@ -595,7 +612,7 @@ int
 main(int argc, char **argv)
 {
 	const struct afswtch *afp;
-	int af, s;
+	int af, s, e;
 	bool aflag = false, Cflag = false;
 	struct match match[32];
 	size_t nmatch;
@@ -603,7 +620,6 @@ main(int argc, char **argv)
 	int ch, narg = 0, rc;
 	prop_dictionary_t env, oenv;
 	const char *ifname;
-	char *end;
 
 	memset(match, 0, sizeof(match));
 
@@ -662,9 +678,15 @@ main(int argc, char **argv)
 
 		case 'w':
 			wflag = true;
-			wflag_secs = strtol(optarg, &end, 10);
-			if ((end != NULL && *end != '\0') ||
-			    wflag_secs < 0 || wflag_secs >= INT32_MAX)
+			wflag_secs = strtoi(optarg, NULL, 10, 0, INT32_MAX, &e);
+			if (e)
+				errx(EXIT_FAILURE, "%s: not a number", optarg);
+			break;
+
+		case 'W':
+			Wflag = true;
+			Wflag_secs = strtoi(optarg, NULL, 10, 0, INT32_MAX, &e);
+			if (e)
 				errx(EXIT_FAILURE, "%s: not a number", optarg);
 			break;
 
