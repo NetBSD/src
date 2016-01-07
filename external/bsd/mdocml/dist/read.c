@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.14 2016/01/07 20:11:57 christos Exp $ */
+/*	$Id: read.c,v 1.15 2016/01/07 21:11:54 christos Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -613,8 +613,6 @@ rerun:
 
 out:
 	free(ln.buf);
-	if (fd != -1)
-		close(fd);
 }
 
 static int
