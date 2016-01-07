@@ -1,4 +1,4 @@
-/*	$Id: man_macro.c,v 1.1.1.14 2015/12/17 21:58:48 christos Exp $ */
+/*	$Id: man_macro.c,v 1.2 2016/01/07 20:00:35 christos Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2012, 2013, 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -265,8 +265,8 @@ rew_scope(enum man_type type, struct man *man, enum mant tok)
 	 * Rewind until the current point.  Warn if we're a roff
 	 * instruction that's mowing over explicit scopes.
 	 */
-
-	man_unscope(man, n);
+	if (n != NULL)
+		man_unscope(man, n);
 }
 
 
