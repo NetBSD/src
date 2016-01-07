@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.10 2016/01/07 15:58:23 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.11 2016/01/07 16:10:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.10 2016/01/07 15:58:23 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.11 2016/01/07 16:10:49 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -423,8 +423,6 @@ ATF_TC_BODY(check_parse_just_pop, tc)
 	report_desc_t hrd;
 	hid_data_t hd;
 	hid_item_t hi;
-
-	atf_tc_expect_fail("segfaults");
 
 	ATF_REQUIRE((hrd = hid_use_report_desc(
 	    just_pop_report_descriptor,

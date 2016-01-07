@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.8 2011/05/23 15:16:27 joerg Exp $	*/
+/*	$NetBSD: parse.c,v 1.9 2016/01/07 16:10:49 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001 Lennart Augustsson <augustss@NetBSD.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: parse.c,v 1.8 2011/05/23 15:16:27 joerg Exp $");
+__RCSID("$NetBSD: parse.c,v 1.9 2016/01/07 16:10:49 jakllsch Exp $");
 
 #include <assert.h>
 #include <stdlib.h>
@@ -375,6 +375,8 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				break;
 			case 11: /* Pop */
 				hi = c->next;
+				if (hi == NULL)
+					break;
 				s->cur = *hi;
 				free(hi);
 				break;
