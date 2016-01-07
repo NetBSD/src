@@ -1,4 +1,4 @@
-/*	$Id: read.c,v 1.13 2016/01/07 19:49:25 christos Exp $ */
+/*	$Id: read.c,v 1.14 2016/01/07 20:11:57 christos Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -823,6 +823,7 @@ mparse_open(struct mparse *curp, int *fd, const char *file)
 
 	save_errno = errno;
 	if (access(file, R_OK) == -1) {
+		/*coverity[REVERSE_INULL]*/
 		if (cp != NULL)
 			errno = save_errno;
 		free(cp);
