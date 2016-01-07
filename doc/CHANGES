@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2124 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2125 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -237,3 +237,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	lmtemp(4): Add chip temperature limits for envsys(4) [jdc 20160103]
 	ismt(4): Add another Intel Chipset internal SMBus driver.
 		[msaitoh 20160105]
+	dhcpcd: Import dhcpcd 6.10.0. [roy 20160107]
