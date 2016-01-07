@@ -1,4 +1,4 @@
-/*	$NetBSD: hid_test_data.c,v 1.1 2016/01/04 22:07:16 jakllsch Exp $	*/
+/*	$NetBSD: hid_test_data.c,v 1.2 2016/01/07 15:58:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -132,3 +132,6 @@ static const uint8_t unsigned_range_test_maximum_report[7] = {
 	0xff,
 };
 
+static const uint8_t just_pop_report_descriptor[] = {
+	0xb4,
+};

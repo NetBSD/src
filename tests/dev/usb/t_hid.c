@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hid.c,v 1.1 2016/01/05 17:22:38 jakllsch Exp $	*/
+/*	$NetBSD: t_hid.c,v 1.2 2016/01/07 15:58:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hid.c,v 1.1 2016/01/05 17:22:38 jakllsch Exp $");
+__RCSID("$NetBSD: t_hid.c,v 1.2 2016/01/07 15:58:23 jakllsch Exp $");
 
 #include <machine/types.h>
 #include <stdlib.h>
@@ -200,10 +200,34 @@ ATF_TC_BODY(khid, tc)
 	    &hi.loc), 0xff);
 }
 
+ATF_TC(khid_parse_just_pop);
+
+ATF_TC_HEAD(khid_parse_just_pop, tc)
+{
+
+        atf_tc_set_md_var(tc, "descr", "check kernel hid.c for "
+	    "Pop on empty stack bug");
+}
+
+ATF_TC_BODY(khid_parse_just_pop, tc)
+{
+	struct hid_data *hdp;
+	struct hid_item hi;
+
+	atf_tc_expect_fail("Pop crashes on empty stack.");
+
+	hdp = hid_start_parse(just_pop_report_descriptor,
+	    sizeof just_pop_report_descriptor, hid_none);
+	while (hid_get_item(hdp, &hi) > 0) {
+	}
+	hid_end_parse(hdp);
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
         ATF_TP_ADD_TC(tp, khid);
+        ATF_TP_ADD_TC(tp, khid_parse_just_pop);
 
 	return atf_no_error();
 }
