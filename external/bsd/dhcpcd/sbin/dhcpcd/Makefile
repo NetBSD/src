@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.27 2015/10/22 10:51:16 roy Exp $
+# $NetBSD: Makefile,v 1.28 2016/01/07 22:07:18 roy Exp $
 #
 
 PROG=		dhcpcd
@@ -39,12 +39,20 @@ CONFIGFILES=			dhcpcd.conf
 FILESDIR_dhcpcd.conf=		/etc
 FILESMODE_dhcpcd.conf=		644	# -rw-r--r--
 
-HOOKS=			01-test 02-dump 10-wpa_supplicant 15-timezone
-HOOKS+=			20-resolv.conf 29-lookup-hostname 30-hostname
+HOOKS=			01-test 02-dump 20-resolv.conf 30-hostname
 HOOKS+=			50-ntp.conf
 
 FILES=			${HOOKS:C,^,${DIST}/dhcpcd-hooks/,}
 FILESDIR=		/libexec/dhcpcd-hooks
+
+EGHOOKS=		10-wpa_supplicant 15-timezone 29-lookup-hostname
+EGHOOKS+=		50-ypbind
+
+EGFILES=		${EGHOOKS:C,^,${DIST}/dhcpcd-hooks/,}
+FILES+=			${EGFILES}
+.for f in ${EGFILES}
+FILESDIR_${f}=		/usr/share/examples/dhcpcd/hooks
+.endfor
 
 MAN=			dhcpcd.conf.5 dhcpcd.8 dhcpcd-run-hooks.8
 
