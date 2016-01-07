@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_14.c,v 1.25 2015/12/03 11:31:05 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_14.c,v 1.26 2016/01/07 21:58:28 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999 Eduardo E. Horvath
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.25 2015/12/03 11:31:05 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.26 2016/01/07 21:58:28 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -53,23 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_14.c,v 1.25 2015/12/03 11:31:05 pgoy
 
 #if defined(COMPAT_14)
 
-static inline void
-netbsd32_ipc_perm14_to_native(struct netbsd32_ipc_perm14 *, struct ipc_perm *);
-static inline void
-native_to_netbsd32_ipc_perm14(struct ipc_perm *, struct netbsd32_ipc_perm14 *);
-static inline void
-native_to_netbsd32_msqid_ds14(struct msqid_ds *, struct netbsd32_msqid_ds14 *);
-static inline void
-netbsd32_msqid_ds14_to_native(struct netbsd32_msqid_ds14 *, struct msqid_ds *);
-static inline void
-native_to_netbsd32_semid_ds14(struct semid_ds *, struct netbsd32_semid_ds14 *);
-static inline void
-netbsd32_semid_ds14_to_native(struct netbsd32_semid_ds14 *, struct semid_ds *);
-static inline void
-netbsd32_shmid_ds14_to_native(struct netbsd32_shmid_ds14 *, struct shmid_ds *);
-static inline void
-native_to_netbsd32_shmid_ds14(struct shmid_ds *, struct netbsd32_shmid_ds14 *);
-
+#if defined(SYSVMSG)
 static inline void
 netbsd32_ipc_perm14_to_native(struct netbsd32_ipc_perm14 *operm, struct ipc_perm *perm)
 {
@@ -140,7 +124,9 @@ native_to_netbsd32_msqid_ds14(struct msqid_ds *msqbuf, struct netbsd32_msqid_ds1
 	 */
 	omsqbuf->msg_cbytes = msqbuf->_msg_cbytes;
 }
+#endif
 
+#if defined(SYSVSEM)
 static inline void
 netbsd32_semid_ds14_to_native(struct netbsd32_semid_ds14 *osembuf, struct semid_ds *sembuf)
 {
@@ -204,7 +190,6 @@ native_to_netbsd32_shmid_ds14(struct shmid_ds *shmbuf, struct netbsd32_shmid_ds1
 /*
  * the compat_14 system calls
  */
-#if defined(SYSVMSG)
 int
 compat_14_netbsd32_msgctl(struct lwp *l, const struct compat_14_netbsd32_msgctl_args *uap, register_t *retval)
 {
