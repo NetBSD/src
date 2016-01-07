@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpdefs.h,v 1.33 2015/09/15 14:55:55 pooka Exp $	*/
+/*	$NetBSD: rumpdefs.h,v 1.34 2016/01/07 13:54:08 pooka Exp $	*/
 
 /*
  *	AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -170,7 +170,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_AB_SILENT	0x00040000	
 #define	RUMP_AB_DEBUG	0x00080000	
 
-/*	NetBSD: socket.h,v 1.117 2015/04/03 20:01:08 rtr Exp 	*/
+/*	NetBSD: socket.h,v 1.118 2015/10/13 21:28:34 rjs Exp 	*/
 #define	RUMP_SOCK_STREAM	1		
 #define	RUMP_SOCK_DGRAM	2		
 #define	RUMP_SOCK_RAW	3		
@@ -291,13 +291,14 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_MSG_CRUMP_MSG_CLOEXEC 0x0800		
 #define	RUMP_MSG_NBIO	0x1000		
 #define	RUMP_MSG_WAITFORONE	0x2000		
+#define	RUMP_MSG_NOTIFICATION 0x4000		
 #define	RUMP_MSG_USERFLAGS	0x0ffffff
 #define RUMP_MSG_NAMEMBUF	0x1000000	
 #define RUMP_MSG_CONTROLMBUF	0x2000000	
 #define RUMP_MSG_IOVUSRSPACE	0x4000000	
 #define RUMP_MSG_LENUSRSPACE	0x8000000	
 
-/*	NetBSD: in.h,v 1.97 2015/05/02 14:41:32 roy Exp 	*/
+/*	NetBSD: in.h,v 1.98 2015/10/13 21:28:35 rjs Exp 	*/
 #define	RUMP_IP_OPTIONS		1    
 #define	RUMP_IP_HDRINCL		2    
 #define	RUMP_IP_TOS			3    
@@ -359,6 +360,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_IPPROTO_IPCOMP		108		
 #define	RUMP_IPPROTO_VRRP		112		
 #define	RUMP_IPPROTO_CARP		112		
+#define	RUMP_IPPROTO_SCTP		132		
 #define RUMP_IPPROTO_PFSYNC      240     
 #define	RUMP_IPPROTO_RAW		255		
 #define	RUMP_IPPROTO_MAX		256
@@ -383,7 +385,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_TCP_MD5SIG	0x10	
 #define	RUMP_TCP_CONGCTL	0x20	
 
-/*	NetBSD: mount.h,v 1.217 2015/05/06 15:57:08 hannken Exp 	*/
+/*	NetBSD: mount.h,v 1.218 2015/10/23 19:40:10 maxv Exp 	*/
 #define	RUMP_MOUNT_FFS	"ffs"		
 #define	RUMP_MOUNT_UFS	RUMP_MOUNT_FFS	
 #define	RUMP_MOUNT_NFS	"nfs"		
@@ -520,7 +522,7 @@ enum rump_vtype	{ RUMP_VNON, RUMP_VREG, RUMP_VDIR, RUMP_VBLK, RUMP_VCHR, RUMP_VL
 #define	RUMP_KTRFACv1	(1 << RUMP_KTRFAC_VER_SHIFT)
 #define	RUMP_KTRFACv2	(2 << RUMP_KTRFAC_VER_SHIFT)
 
-/*	NetBSD: module.h,v 1.38 2015/06/22 16:35:13 matt Exp 	*/
+/*	NetBSD: module.h,v 1.39 2015/11/04 04:28:58 pgoyette Exp 	*/
 struct rump_modctl_load {
 	const char *ml_filename;
 
