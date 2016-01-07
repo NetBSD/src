@@ -1,4 +1,4 @@
-/*	$Id: term.c,v 1.1.1.17 2015/12/17 21:58:48 christos Exp $ */
+/*	$Id: term.c,v 1.2 2016/01/07 19:51:40 christos Exp $ */
 /*
  * Copyright (c) 2008, 2009, 2010, 2011 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -358,7 +358,7 @@ term_fontpush(struct termp *p, enum termfont f)
 	if (++p->fonti == p->fontsz) {
 		p->fontsz += 8;
 		p->fontq = mandoc_reallocarray(p->fontq,
-		    p->fontsz, sizeof(enum termfont *));
+		    p->fontsz, sizeof(*p->fontq));
 	}
 	p->fontq[p->fonti] = f;
 }
