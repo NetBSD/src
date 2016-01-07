@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.11 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: dhcpcd-embedded.c,v 1.12 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * DO NOT EDIT!
@@ -61,8 +61,8 @@ const char * const dhcpcd_embedded_conf[] = {
 "define 19 byte ip_forwarding",
 "define 20 byte non_local_source_routing",
 "define 21 array ipaddress policy_filter",
-"define 22 int16 max_dgram_reassembly",
-"define 23 uint16 default_ip_ttl",
+"define 22 uint16 max_dgram_reassembly",
+"define 23 byte default_ip_ttl",
 "define 24 uint32 path_mtu_aging_timeout",
 "define 25 array uint16 path_mtu_plateau_table",
 "define 26 uint16 interface_mtu",
@@ -298,7 +298,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "define6 38 binhex subscriber_id",
 "define6 39 embed fqdn",
 "embed bitflags=00000NOS flags",
-"embed domain fqdn",
+"embed optional domain fqdn",
 "define6 40 array ip6address pana_agent",
 "define6 41 string posix_timezone",
 "define6 42 string tzdb_timezone",

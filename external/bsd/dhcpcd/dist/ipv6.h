@@ -1,4 +1,4 @@
-/* $NetBSD: ipv6.h,v 1.15 2015/11/30 16:33:00 roy Exp $ */
+/* $NetBSD: ipv6.h,v 1.16 2016/01/07 20:09:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -33,21 +33,17 @@
 #include <sys/uio.h>
 #include <netinet/in.h>
 
+#include "config.h"
+
 #ifndef __linux__
 #  ifndef __QNX__
 #    include <sys/endian.h>
 #  endif
 #  include <net/if.h>
-#  ifdef __FreeBSD__ /* Needed so that including netinet6/in6_var.h works */
-#    include <net/if_var.h>
-#  endif
 #  ifndef __sun
 #    include <netinet6/in6_var.h>
 #  endif
 #endif
-
-#include "config.h"
-#include "dhcpcd.h"
 
 #define ALLROUTERS "ff02::2"
 

@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6nd.c,v 1.26 2015/08/21 10:39:00 roy Exp $");
+ __RCSID("$NetBSD: ipv6nd.c,v 1.27 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -1617,7 +1617,8 @@ ipv6nd_handledata(void *arg)
 	}
 
 	TAILQ_FOREACH(ifp, dctx->ifaces, next) {
-		if (ifp->index == (unsigned int)pkt.ipi6_ifindex) {
+		if (ifp->active &&
+		    ifp->index == (unsigned int)pkt.ipi6_ifindex) {
 			if (!(ifp->options->options & DHCPCD_IPV6))
 				return;
 			break;
