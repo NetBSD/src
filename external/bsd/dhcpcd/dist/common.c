@@ -1,6 +1,6 @@
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -113,6 +113,10 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 	char fmt_cpy[1024];
 #endif
 
+	/* If we're printing the pidfile, don't do anything. */
+	if (ctx != NULL && ctx->options & DHCPCD_PRINT_PIDFILE)
+		return;
+
 	serrno = errno;
 	va_start(va, fmt);
 
@@ -164,7 +168,7 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 #endif
 
 	if ((ctx == NULL || !(ctx->options & DHCPCD_QUIET)) &&
-	    (pri < LOG_DEBUG || (ctx->options & DHCPCD_DEBUG)))
+	    (pri < LOG_DEBUG || (ctx && ctx->options & DHCPCD_DEBUG)))
 	{
 		va_list vac;
 
@@ -178,7 +182,7 @@ logger(struct dhcpcd_ctx *ctx, int pri, const char *fmt, ...)
 	}
 
 	/* Don't send to syslog if dumping leases or testing */
-	if (ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))
+	if (ctx && ctx->options & (DHCPCD_DUMPLEASE | DHCPCD_TEST))
 		goto out;
 
 	if (ctx && ctx->log_fd != -1) {
