@@ -1,5 +1,5 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: ipv6.c,v 1.15 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: ipv6.c,v 1.16 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
@@ -38,12 +38,11 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 
+#include "config.h"
+
 #ifdef BSD
 /* Purely for the ND6_IFF_AUTO_LINKLOCAL #define which is solely used
  * to generate our CAN_ADD_LLADDR #define. */
-#  ifdef __FreeBSD__
-#    include <net/if_var.h>
-#  endif
 #  include <netinet6/in6_var.h>
 #  include <netinet6/nd6.h>
 #endif
@@ -1929,11 +1928,6 @@ nc_route(struct rt6 *ort, struct rt6 *nrt)
 		if (errno != ESRCH)
 			logger(nrt->iface->ctx, LOG_ERR, "if_route6 (CHG): %m");
 	}
-
-	/* If the old route does not have an interface, give it the
-	 * interface of the new route for context. */
-	if (ort && ort->iface == NULL)
-		ort->iface = nrt->iface;
 
 #ifdef HAVE_ROUTE_METRIC
 	/* With route metrics, we can safely add the new route before

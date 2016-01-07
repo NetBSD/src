@@ -1,9 +1,9 @@
 #include <sys/cdefs.h>
- __RCSID("$NetBSD: dhcp-common.c,v 1.11 2015/11/30 16:33:00 roy Exp $");
+ __RCSID("$NetBSD: dhcp-common.c,v 1.12 2016/01/07 20:09:43 roy Exp $");
 
 /*
  * dhcpcd - DHCP client daemon
- * Copyright (c) 2006-2015 Roy Marples <roy@marples.name>
+ * Copyright (c) 2006-2016 Roy Marples <roy@marples.name>
  * All rights reserved
 
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,7 @@ dhcp_get_hostname(char *buf, size_t buf_len, const struct if_options *ifo)
 			return NULL;
 		buf[buf_len - 1] = '\0';
 	} else
-		strlcpy(buf, ifo->hostname, sizeof(buf));
+		strlcpy(buf, ifo->hostname, buf_len);
 
 	/* Deny sending of these local hostnames */
 	if (strcmp(buf, "(none)") == 0 ||
@@ -582,48 +582,43 @@ print_string(char *dst, size_t len, int type, const uint8_t *data, size_t dl)
 	return (ssize_t)bytes;
 }
 
-#define ADDRSZ		4
 #define ADDR6SZ		16
 static ssize_t
 dhcp_optlen(const struct dhcp_opt *opt, size_t dl)
 {
 	size_t sz;
 
-	if (opt->type == 0 ||
-	    opt->type & (STRING | BINHEX | RFC3442))
-	{
-		if (opt->len) {
-			if ((size_t)opt->len > dl)
-				return -1;
-			return (ssize_t)opt->len;
-		}
-		return (ssize_t)dl;
-	}
-
-	if ((opt->type & (ADDRIPV4 | ARRAY)) == (ADDRIPV4 | ARRAY)) {
-		if (dl < ADDRSZ)
-			return -1;
-		return (ssize_t)(dl - (dl % ADDRSZ));
-	}
-
-	if ((opt->type & (ADDRIPV6 | ARRAY)) == (ADDRIPV6 | ARRAY)) {
-		if (dl < ADDR6SZ)
-			return -1;
-		return (ssize_t)(dl - (dl % ADDR6SZ));
-	}
-
-	if (opt->type & (UINT32 | ADDRIPV4))
+	if (opt->type & ADDRIPV6)
+		sz = ADDR6SZ;
+	else if (opt->type & (UINT32 | ADDRIPV4))
 		sz = sizeof(uint32_t);
 	else if (opt->type & UINT16)
 		sz = sizeof(uint16_t);
 	else if (opt->type & (UINT8 | BITFLAG))
 		sz = sizeof(uint8_t);
-	else if (opt->type & ADDRIPV6)
-		sz = ADDR6SZ;
-	else
-		/* If we don't know the size, assume it's valid */
+	else if (opt->type & FLAG)
+		return 0;
+	else {
+		/* All other types are variable length */
+		if (opt->len) {
+			if ((size_t)opt->len > dl) {
+				errno = EOVERFLOW;
+				return -1;
+			}
+			return (ssize_t)opt->len;
+		}
 		return (ssize_t)dl;
-	return dl < sz ? -1 : (ssize_t)sz;
+	}
+	if (dl < sz) {
+		errno = EOVERFLOW;
+		return -1;
+	}
+
+	/* Trim any extra data.
+	 * Maybe we need a settng to reject DHCP options with extra data? */
+	if (opt->type & ARRAY)
+		return (ssize_t)(dl - (dl % sz));
+	return (ssize_t)sz;
 }
 
 static ssize_t
@@ -838,7 +833,7 @@ dhcp_set_leasefile(char *leasefile, size_t len, int family,
 }
 
 static size_t
-dhcp_envoption1(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
+dhcp_envoption1(char **env, const char *prefix,
     const struct dhcp_opt *opt, int vname, const uint8_t *od, size_t ol,
     const char *ifname)
 {
@@ -846,8 +841,11 @@ dhcp_envoption1(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 	size_t e;
 	char *v, *val;
 
-	if (opt->len && opt->len < ol)
-		ol = opt->len;
+	/* Ensure a valid length */
+	ol = (size_t)dhcp_optlen(opt, ol);
+	if ((ssize_t)ol == -1)
+		return 0;
+
 	len = print_option(NULL, 0, opt, od, ol, ifname);
 	if (len < 0)
 		return 0;
@@ -861,10 +859,8 @@ dhcp_envoption1(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 	if (env == NULL)
 		return e;
 	v = val = *env = malloc(e);
-	if (v == NULL) {
-		logger(ctx, LOG_ERR, "%s: %m", __func__);
+	if (v == NULL)
 		return 0;
-	}
 	if (vname)
 		v += snprintf(val, e, "%s_%s=", prefix, opt->var);
 	else
@@ -892,10 +888,14 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 
 	/* If no embedded or encapsulated options, it's easy */
 	if (opt->embopts_len == 0 && opt->encopts_len == 0) {
-		if (!(opt->type & RESERVED) &&
-		    dhcp_envoption1(ctx, env == NULL ? NULL : &env[0],
-		    prefix, opt, 1, od, ol, ifname))
-			return 1;
+		if (!(opt->type & RESERVED)) {
+			if (dhcp_envoption1(env == NULL ? NULL : &env[0],
+			    prefix, opt, 1, od, ol, ifname))
+				return 1;
+			else
+				logger(ctx, LOG_ERR, "%s: %s %d: %m",
+				    ifname, __func__, opt->option);
+		}
 		return 0;
 	}
 
@@ -931,8 +931,8 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		if (eo == -1) {
 			if (env == NULL)
 				logger(ctx, LOG_ERR,
-				    "%s: %s: malformed embedded option"
-				    " %d:%d/%zu",
+				    "%s: %s %d.%d/%zu: "
+				    "malformed embedded option",
 				    ifname, __func__, opt->option,
 				    eopt->option, i);
 			goto out;
@@ -946,7 +946,7 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 			if (env == NULL &&
 			    (ol != 0 || !(eopt->type & OPTIONAL)))
 				logger(ctx, LOG_ERR,
-				    "%s: %s: missing embedded option %d:%d/%zu",
+				    "%s: %s %d.%d/%zu: missing embedded option",
 				    ifname, __func__, opt->option,
 				    eopt->option, i);
 			goto out;
@@ -956,9 +956,14 @@ dhcp_envoption(struct dhcpcd_ctx *ctx, char **env, const char *prefix,
 		 * This avoids new_fqdn_fqdn which would be silly. */
 		if (!(eopt->type & RESERVED)) {
 			ov = strcmp(opt->var, eopt->var);
-			if (dhcp_envoption1(ctx, env == NULL ? NULL : &env[n],
+			if (dhcp_envoption1(env == NULL ? NULL : &env[n],
 			    pfx, eopt, ov, od, (size_t)eo, ifname))
 				n++;
+			else if (env == NULL)
+				logger(ctx, LOG_ERR,
+				    "%s: %s %d.%d/%zu: %m",
+				    ifname, __func__,
+				    opt->option, eopt->option, i);
 		}
 		od += (size_t)eo;
 		ol -= (size_t)eo;

@@ -1,4 +1,4 @@
-/* $NetBSD: if.h,v 1.12 2015/08/21 10:39:00 roy Exp $ */
+/* $NetBSD: if.h,v 1.13 2016/01/07 20:09:43 roy Exp $ */
 
 /*
  * dhcpcd - DHCP client daemon
@@ -31,9 +31,6 @@
 #define INTERFACE_H
 
 #include <net/if.h>
-#ifdef __FreeBSD__
-#include <net/if_var.h>
-#endif
 #include <net/route.h>		/* for RTM_ADD et all */
 #include <netinet/in.h>
 #ifdef BSD
