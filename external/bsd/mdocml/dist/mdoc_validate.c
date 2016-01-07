@@ -1,4 +1,4 @@
-/*	$Id: mdoc_validate.c,v 1.7 2015/12/17 22:31:12 christos Exp $ */
+/*	$Id: mdoc_validate.c,v 1.8 2016/01/07 19:46:00 christos Exp $ */
 /*
  * Copyright (c) 2008-2012 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2010-2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -1464,7 +1464,8 @@ post_bl(POST_ARGS)
 			assert(NULL == nnext);
 		} else {
 			nbody->child = nnext;
-			nnext->prev = NULL;
+			if (nnext)
+				nnext->prev = NULL;
 		}
 
 		/*
