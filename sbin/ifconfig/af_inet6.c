@@ -1,4 +1,4 @@
-/*	$NetBSD: af_inet6.c,v 1.33 2015/05/12 14:05:29 roy Exp $	*/
+/*	$NetBSD: af_inet6.c,v 1.34 2016/01/07 11:32:21 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: af_inet6.c,v 1.33 2015/05/12 14:05:29 roy Exp $");
+__RCSID("$NetBSD: af_inet6.c,v 1.34 2016/01/07 11:32:21 roy Exp $");
 #endif /* not lint */
 
 #include <sys/param.h> 
@@ -72,7 +72,9 @@ static int setia6vltime_impl(prop_dictionary_t, struct in6_aliasreq *);
 static int setia6lifetime(prop_dictionary_t, int64_t, time_t *, uint32_t *);
 
 static void in6_status(prop_dictionary_t, prop_dictionary_t, bool);
+static bool in6_addr_flags(struct ifaddrs *ifa, int);
 static bool in6_addr_tentative(struct ifaddrs *ifa);
+static bool in6_addr_tentative_or_detached(struct ifaddrs *ifa);
 
 static struct usage_func usage;
 static cmdloop_branch_t branch[2];
@@ -103,7 +105,8 @@ struct pkw inet6 = PKW_INITIALIZER(&inet6, "IPv6 keywords", NULL,
 static struct afswtch in6af = {
 	.af_name = "inet6", .af_af = AF_INET6, .af_status = in6_status,
 	.af_addr_commit = in6_commit_address,
-	.af_addr_tentative = in6_addr_tentative
+	.af_addr_tentative = in6_addr_tentative,
+	.af_addr_tentative_or_detached = in6_addr_tentative_or_detached
 };
 
 static int
@@ -477,7 +480,7 @@ in6_commit_address(prop_dictionary_t env, prop_dictionary_t oenv)
 }
 
 static bool
-in6_addr_tentative(struct ifaddrs *ifa)
+in6_addr_flags(struct ifaddrs *ifa, int flags)
 {
 	int s;
 	struct in6_ifreq ifr;
@@ -489,7 +492,21 @@ in6_addr_tentative(struct ifaddrs *ifa)
 	ifr.ifr_addr = *(struct sockaddr_in6 *)ifa->ifa_addr;
 	if (prog_ioctl(s, SIOCGIFAFLAG_IN6, &ifr) == -1)
 		err(EXIT_FAILURE, "SIOCGIFAFLAG_IN6");
-	return ifr.ifr_ifru.ifru_flags6 & IN6_IFF_TENTATIVE ? true : false;
+	return ifr.ifr_ifru.ifru_flags6 & flags ? true : false;
+}
+
+static bool
+in6_addr_tentative(struct ifaddrs *ifa)
+{
+
+	return in6_addr_flags(ifa, IN6_IFF_TENTATIVE);
+}
+
+static bool
+in6_addr_tentative_or_detached(struct ifaddrs *ifa)
+{
+
+	return in6_addr_flags(ifa, IN6_IFF_TENTATIVE | IN6_IFF_DETACHED);
 }
 
 static void
