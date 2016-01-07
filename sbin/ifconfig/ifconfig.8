@@ -1,4 +1,4 @@
-.\"	$NetBSD: ifconfig.8,v 1.109 2014/10/20 14:50:09 roy Exp $
+.\"	$NetBSD: ifconfig.8,v 1.110 2016/01/07 11:32:21 roy Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)ifconfig.8	8.4 (Berkeley) 6/1/94
 .\"
-.Dd October 12, 2014
+.Dd January 7, 2016
 .Dt IFCONFIG 8
 .Os
 .Sh NAME
@@ -61,6 +61,7 @@
 .Nm
 .Fl w
 .Ar secs
+.Op Fl W Ar secs
 .Nm
 .Fl C
 .Sh DESCRIPTION
@@ -872,6 +873,13 @@ flag to be removed from all addresses.
 0 seconds means to wait indefinitely until all addresses no longer have the
 .Cm tentative
 flag.
+The optional
+.Fl W
+flag may be used to wait
+.Ar seconds
+seconds during the above time for the detached flag to be removed from all
+addresses whose interface is marked ``up'' as well.
+The detached flag is set when the interface does not have a carrier.
 .Pp
 The
 .Fl N
