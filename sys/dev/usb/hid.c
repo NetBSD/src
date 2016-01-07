@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.39 2016/01/02 20:57:10 jakllsch Exp $	*/
+/*	$NetBSD: hid.c,v 1.40 2016/01/07 16:10:49 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.39 2016/01/02 20:57:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.40 2016/01/07 16:10:49 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -298,6 +298,8 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				break;
 			case 11: /* Pop */
 				hi = c->next;
+				if (hi == NULL)
+					break;
 				oldpos = c->loc.pos;
 				*c = *hi;
 				c->loc.pos = oldpos;
