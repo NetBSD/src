@@ -1,4 +1,4 @@
-/*	$Id: eqn.c,v 1.1.1.4 2015/12/17 21:58:48 christos Exp $ */
+/*	$Id: eqn.c,v 1.2 2016/01/07 19:32:43 christos Exp $ */
 /*
  * Copyright (c) 2011, 2014 Kristaps Dzonsons <kristaps@bsd.lv>
  * Copyright (c) 2014, 2015 Ingo Schwarze <schwarze@openbsd.org>
@@ -448,6 +448,7 @@ again:
 		memmove(start + *sz + diff, start + *sz,
 		    (strlen(start) - *sz) + 1);
 		memcpy(start, def->val, def->valsz);
+		lim++;
 		goto again;
 	}
 
