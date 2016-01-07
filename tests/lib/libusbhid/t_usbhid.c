@@ -1,4 +1,4 @@
-/*	$NetBSD: t_usbhid.c,v 1.9 2016/01/04 22:07:16 jakllsch Exp $	*/
+/*	$NetBSD: t_usbhid.c,v 1.10 2016/01/07 15:58:23 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_usbhid.c,v 1.9 2016/01/04 22:07:16 jakllsch Exp $");
+__RCSID("$NetBSD: t_usbhid.c,v 1.10 2016/01/07 15:58:23 jakllsch Exp $");
 
 #include <atf-c.h>
 
@@ -45,6 +45,7 @@ ATF_TC(check_hid_physical_range);
 ATF_TC(check_hid_usage);
 ATF_TC(check_hid_get_data);
 ATF_TC(check_hid_set_data);
+ATF_TC(check_parse_just_pop);
 
 #define MYd_ATF_CHECK_EQ(d, v) \
 	ATF_CHECK_EQ_MSG(d, v, "== %d", (d))
@@ -411,6 +412,31 @@ ATF_TC_BODY(check_hid_set_data, tc)
 	hrd = NULL;
 }
 
+ATF_TC_HEAD(check_parse_just_pop, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "check Pop on empty stack bug");
+}
+
+ATF_TC_BODY(check_parse_just_pop, tc)
+{
+	report_desc_t hrd;
+	hid_data_t hd;
+	hid_item_t hi;
+
+	atf_tc_expect_fail("segfaults");
+
+	ATF_REQUIRE((hrd = hid_use_report_desc(
+	    just_pop_report_descriptor,
+	    sizeof just_pop_report_descriptor)) != NULL);
+	hd = hid_start_parse(hrd, 0, NO_REPORT_ID);
+	while (hid_get_item(hd, &hi) > 0) {
+	}
+	hid_end_parse(hd);
+	hid_dispose_report_desc(hrd);
+	hrd = NULL;
+}
+
 ATF_TP_ADD_TCS(tp)
 {
 
@@ -419,6 +445,7 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, check_hid_usage);
 	ATF_TP_ADD_TC(tp, check_hid_get_data);
 	ATF_TP_ADD_TC(tp, check_hid_set_data);
+	ATF_TP_ADD_TC(tp, check_parse_just_pop);
 
 	return atf_no_error();
 }
