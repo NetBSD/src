@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.3 2015/08/24 22:52:15 pooka Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.4 2016/01/07 21:04:27 pooka Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -26,3 +26,6 @@
 
 #undef PIPE_SOCKETPAIR /* would need uipc_usrreq.c */
 #define PIPE_NODIRECT
+
+#define WSEMUL_NO_DUMB
+#define WSEMUL_VT100
