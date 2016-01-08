@@ -1,5 +1,3 @@
-/*	$NetBSD: t-ntp_scanner.c,v 1.1.1.1 2015/10/23 17:47:45 christos Exp $	*/
-
 #include "config.h"
 
 #include "unity.h"
@@ -28,13 +26,13 @@ void test_InitializeLexStack(void);
 
 
 void test_keywordIncorrectToken(void){
-	char * temp = keyword(999);
+	const char * temp = keyword(999);
 	//printf("%s\n",temp);
 	TEST_ASSERT_EQUAL_STRING("(keyword not found)",temp);
 }
 
 void test_keywordServerToken(void){
-	char * temp = keyword(401);
+	const char * temp = keyword(T_Server);
 	//printf("%s",temp); //143 or 401 ?
 	TEST_ASSERT_EQUAL_STRING("server",temp);
 }
@@ -129,7 +127,7 @@ void test_EOC(void){
 		temp = is_EOC(';');
 		TEST_ASSERT_TRUE(temp);
 	}
-	temp = is_EOC("A");
+	temp = is_EOC('A');
 	TEST_ASSERT_FALSE(temp);
 	temp = is_EOC('1');
 	TEST_ASSERT_FALSE(temp);

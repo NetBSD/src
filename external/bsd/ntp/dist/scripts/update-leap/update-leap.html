@@ -3,7 +3,7 @@
 <title>update-leap User's Manual</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="update-leap User's Manual">
-<meta name="generator" content="makeinfo 4.7">
+<meta name="generator" content="makeinfo 4.8">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <meta http-equiv="Content-Style-Type" content="text/css">
@@ -14,23 +14,25 @@
   pre.smallformat  { font-family:inherit; font-size:smaller }
   pre.smallexample { font-size:smaller }
   pre.smalllisp    { font-size:smaller }
-  span.sc { font-variant:small-caps }
-  span.roman { font-family: serif; font-weight: normal; } 
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
 --></style>
 </head>
 <body>
 <h1 class="settitle">update-leap User's Manual</h1>
 <div class="node">
 <p><hr>
-<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-Description">update-leap Description</a>,
+<a name="Top"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-Description">update-leap Description</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
-<br>
+
 </div>
 
   <p>This document describes the use of the NTP Project's <code>update-leap</code> program.
 
-  <p>This document applies to version 4.2.8p4 of <code>update-leap</code>.
+  <p>This document applies to version 4.2.8p5 of <code>update-leap</code>.
 
 <div class="shortcontents">
 <h2>Short Contents</h2>
@@ -45,8 +47,10 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <div class="node">
 <p><hr>
+<a name="update-leap-Invocation"></a>
 <a name="update_002dleap-Invocation"></a>
-<br>
+
+
 </div>
 
 <h3 class="section">0.1 Invoking update-leap</h3>
@@ -82,7 +86,7 @@ This script depends on$REQUIREDCMDS
 using the <code>agtexi-cmd</code> template and the option descriptions for the <code>update-leap</code> program.
 
 <ul class="menu">
-<li><a accesskey="1" href="#update_002dleap-usage">update-leap usage</a>:                   update-leap help/usage (<span class="option">--help</span>)
+<li><a accesskey="1" href="#update_002dleap-usage">update-leap usage</a>:                   update-leap help/usage (<samp><span class="option">--help</span></samp>)
 <li><a accesskey="2" href="#update_002dleap-source_002durl">update-leap source-url</a>:              source-url option (-s)
 <li><a accesskey="3" href="#update_002dleap-ipv4">update-leap ipv4</a>:                    ipv4 option (-4)
 <li><a accesskey="4" href="#update_002dleap-destination">update-leap destination</a>:             destination option (-d)
@@ -96,22 +100,24 @@ using the <code>agtexi-cmd</code> template and the option descriptions for the <
 
 <div class="node">
 <p><hr>
-<a name="update_002dleap-usage"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-source_002durl">update-leap source-url</a>,
+<a name="update-leap-usage"></a>
+<a name="update_002dleap-usage"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-source_002durl">update-leap source-url</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
-<h4 class="subsection">0.1.1 update-leap help/usage (<span class="option">--help</span>)</h4>
+<h4 class="subsection">0.1.1 update-leap help/usage (<samp><span class="option">--help</span></samp>)</h4>
 
 <p><a name="index-update_002dleap-help-3"></a>
 This is the automatically generated usage text for update-leap.
 
   <p>The text printed is the same whether selected with the <code>help</code> option
-(<span class="option">--help</span>) or the <code>more-help</code> option (<span class="option">--more-help</span>).  <code>more-help</code> will print
+(<samp><span class="option">--help</span></samp>) or the <code>more-help</code> option (<samp><span class="option">--more-help</span></samp>).  <code>more-help</code> will print
 the usage text by passing it through a pager program. 
 <code>more-help</code> is disabled on platforms without a working
 <code>fork(2)</code> function.  The <code>PAGER</code> environment variable is
-used to select the program, defaulting to <span class="file">more</span>.  Both will exit
+used to select the program, defaulting to <samp><span class="file">more</span></samp>.  Both will exit
 with a status code of 0.
 
 <pre class="example">    update-leap
@@ -167,10 +173,12 @@ with a status code of 0.
 </pre>
   <div class="node">
 <p><hr>
-<a name="update_002dleap-source_002durl"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-ipv4">update-leap ipv4</a>,
+<a name="update-leap-source-url"></a>
+<a name="update_002dleap-source_002durl"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-ipv4">update-leap ipv4</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-usage">update-leap usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.2 source-url option (-s)</h4>
@@ -182,10 +190,12 @@ Specify the URL of the master copy to download
 $LEAPSRC
 <div class="node">
 <p><hr>
-<a name="update_002dleap-ipv4"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-destination">update-leap destination</a>,
+<a name="update-leap-ipv4"></a>
+<a name="update_002dleap-ipv4"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-destination">update-leap destination</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-source_002durl">update-leap source-url</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.3 ipv4 option (-4)</h4>
@@ -226,25 +236,29 @@ ipv6.
 Prefer IPv4 or IPv6 (as specified) addresses, but use either. 
 <div class="node">
 <p><hr>
-<a name="update_002dleap-destination"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-expiration">update-leap expiration</a>,
+<a name="update-leap-destination"></a>
+<a name="update_002dleap-destination"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-expiration">update-leap expiration</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-ipv4">update-leap ipv4</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.4 destination option (-d)</h4>
 
 <p><a name="index-update_002dleap_002ddestination-6"></a>
 This is the &ldquo;filename on the local system&rdquo; option. 
-This option takes a string argument <span class="file">float</span>. 
+This option takes a string argument <samp><span class="file">float</span></samp>. 
 The name to use to store the leapfile on the local system. 
 $LEAPFILE
 <div class="node">
 <p><hr>
-<a name="update_002dleap-expiration"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-ntp_002dconf_002dfile">update-leap ntp-conf-file</a>,
+<a name="update-leap-expiration"></a>
+<a name="update_002dleap-expiration"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-ntp_002dconf_002dfile">update-leap ntp-conf-file</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-destination">update-leap destination</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.5 expiration option (-e)</h4>
@@ -258,10 +272,12 @@ imply more frequent refreshes.
 "$PREFETCH"
 <div class="node">
 <p><hr>
-<a name="update_002dleap-ntp_002dconf_002dfile"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-force_002dupdate">update-leap force-update</a>,
+<a name="update-leap-ntp-conf-file"></a>
+<a name="update_002dleap-ntp_002dconf_002dfile"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-force_002dupdate">update-leap force-update</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-expiration">update-leap expiration</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.6 ntp-conf-file option (-f)</h4>
@@ -274,10 +290,12 @@ present and to default  leapfile)
 /etc/ntp.conf
 <div class="node">
 <p><hr>
-<a name="update_002dleap-force_002dupdate"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-exit-status">update-leap exit status</a>,
+<a name="update-leap-force-update"></a>
+<a name="update_002dleap-force_002dupdate"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-exit-status">update-leap exit status</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-ntp_002dconf_002dfile">update-leap ntp-conf-file</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.7 force-update option (-F)</h4>
@@ -287,34 +305,40 @@ This is the &ldquo;force update of the leapfile&rdquo; option.
 Force update even if current file is OK and not close to expiring. 
 <div class="node">
 <p><hr>
-<a name="update_002dleap-exit-status"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-Usage">update-leap Usage</a>,
+<a name="update-leap-exit-status"></a>
+<a name="update_002dleap-exit-status"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-Usage">update-leap Usage</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-force_002dupdate">update-leap force-update</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.8 update-leap exit status</h4>
 
 <p>One of the following exit values will be returned:
      <dl>
-<dt><span class="samp">0 (EXIT_SUCCESS)</span><dd>Successful program execution. 
-<br><dt><span class="samp">1 (EXIT_FAILURE)</span><dd>The operation failed or the command syntax was not valid. 
+<dt>`<samp><span class="samp">0 (EXIT_SUCCESS)</span></samp>'<dd>Successful program execution. 
+<br><dt>`<samp><span class="samp">1 (EXIT_FAILURE)</span></samp>'<dd>The operation failed or the command syntax was not valid. 
 </dl>
   <div class="node">
 <p><hr>
-<a name="update_002dleap-Usage"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-Authors">update-leap Authors</a>,
+<a name="update-leap-Usage"></a>
+<a name="update_002dleap-Usage"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#update_002dleap-Authors">update-leap Authors</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-exit-status">update-leap exit status</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.9 update-leap Usage</h4>
 
 <div class="node">
 <p><hr>
-<a name="update_002dleap-Authors"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-Usage">update-leap Usage</a>,
+<a name="update-leap-Authors"></a>
+<a name="update_002dleap-Authors"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#update_002dleap-Usage">update-leap Usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#update_002dleap-Invocation">update-leap Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.10 update-leap Authors</h4>

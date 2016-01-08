@@ -3,7 +3,7 @@
 <title>ntpsweep User's Manual</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="ntpsweep User's Manual">
-<meta name="generator" content="makeinfo 4.7">
+<meta name="generator" content="makeinfo 4.8">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <meta http-equiv="Content-Style-Type" content="text/css">
@@ -14,23 +14,25 @@
   pre.smallformat  { font-family:inherit; font-size:smaller }
   pre.smallexample { font-size:smaller }
   pre.smalllisp    { font-size:smaller }
-  span.sc { font-variant:small-caps }
-  span.roman { font-family: serif; font-weight: normal; } 
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
 --></style>
 </head>
 <body>
 <h1 class="settitle">ntpsweep User's Manual</h1>
 <div class="node">
 <p><hr>
-<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-Description">ntpsweep Description</a>,
+<a name="Top"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-Description">ntpsweep Description</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
-<br>
+
 </div>
 
   <p>This document describes the use of the NTP Project's <code>ntpsweep</code> program.
 
-  <p>This document applies to version 4.2.8p4 of <code>ntpsweep</code>.
+  <p>This document applies to version 4.2.8p5 of <code>ntpsweep</code>.
 
   <div class="shortcontents">
 <h2>Short Contents</h2>
@@ -46,7 +48,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 <div class="node">
 <p><hr>
 <a name="ntpsweep-Invocation"></a>
-<br>
+
+
 </div>
 
 <h3 class="section">0.1 Invoking ntpsweep</h3>
@@ -61,7 +64,7 @@ all peers.
 using the <code>agtexi-cmd</code> template and the option descriptions for the <code>ntpsweep</code> program.
 
 <ul class="menu">
-<li><a accesskey="1" href="#ntpsweep-usage">ntpsweep usage</a>:                   ntpsweep help/usage (<span class="option">--help</span>)
+<li><a accesskey="1" href="#ntpsweep-usage">ntpsweep usage</a>:                   ntpsweep help/usage (<samp><span class="option">--help</span></samp>)
 <li><a accesskey="2" href="#ntpsweep-host_002dlist">ntpsweep host-list</a>:               host-list option (-l)
 <li><a accesskey="3" href="#ntpsweep-peers">ntpsweep peers</a>:                   peers option (-p)
 <li><a accesskey="4" href="#ntpsweep-maxlevel">ntpsweep maxlevel</a>:                maxlevel option (-m)
@@ -72,25 +75,26 @@ using the <code>agtexi-cmd</code> template and the option descriptions for the <
 
 <div class="node">
 <p><hr>
-<a name="ntpsweep-usage"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-host_002dlist">ntpsweep host-list</a>,
+<a name="ntpsweep-usage"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-host_002dlist">ntpsweep host-list</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocation</a>
-<br>
+
 </div>
 
-<h4 class="subsection">0.1.1 ntpsweep help/usage (<span class="option">--help</span>)</h4>
+<h4 class="subsection">0.1.1 ntpsweep help/usage (<samp><span class="option">--help</span></samp>)</h4>
 
 <p><a name="index-ntpsweep-help-3"></a>
 This is the automatically generated usage text for ntpsweep.
 
   <p>The text printed is the same whether selected with the <code>help</code> option
-(<span class="option">--help</span>) or the <code>more-help</code> option (<span class="option">--more-help</span>).  <code>more-help</code> will print
+(<samp><span class="option">--help</span></samp>) or the <code>more-help</code> option (<samp><span class="option">--more-help</span></samp>).  <code>more-help</code> will print
 the usage text by passing it through a pager program. 
 <code>more-help</code> is disabled on platforms without a working
 <code>fork(2)</code> function.  The <code>PAGER</code> environment variable is
-used to select the program, defaulting to <span class="file">more</span>.  Both will exit
+used to select the program, defaulting to <samp><span class="file">more</span></samp>.  Both will exit
 with a status code of 0.
 
-<pre class="example">ntpsweep - Print various informations about given ntp servers - Ver. 4.2.8p4
+<pre class="example">ntpsweep - Print various informations about given ntp servers - Ver. 4.2.8p5
 USAGE: ntpsweep [ -&lt;flag&gt; [&lt;val&gt;] | --&lt;name&gt;[{=| }&lt;val&gt;] ]... [hostfile]
 
     -l, --host-list=str          Host to execute actions on
@@ -106,10 +110,12 @@ hyphen and the flag character.
 </pre>
   <div class="node">
 <p><hr>
-<a name="ntpsweep-host_002dlist"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-peers">ntpsweep peers</a>,
+<a name="ntpsweep-host-list"></a>
+<a name="ntpsweep-host_002dlist"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-peers">ntpsweep peers</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntpsweep-usage">ntpsweep usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.2 host-list option (-l)</h4>
@@ -127,23 +133,25 @@ This option takes a string argument.
             May appear multiple times. 
 <div class="node">
 <p><hr>
-<a name="ntpsweep-peers"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-maxlevel">ntpsweep maxlevel</a>,
+<a name="ntpsweep-peers"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-maxlevel">ntpsweep maxlevel</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntpsweep-host_002dlist">ntpsweep host-list</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.3 peers option (-p)</h4>
 
 <p><a name="index-ntpsweep_002dpeers-5"></a>
 This is the &ldquo;recursively list all peers a host synchronizes to&rdquo; option. 
-This option has no <span class="samp">doc</span> documentation. 
+This option has no `<samp><span class="samp">doc</span></samp>' documentation. 
 <div class="node">
 <p><hr>
-<a name="ntpsweep-maxlevel"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-strip">ntpsweep strip</a>,
+<a name="ntpsweep-maxlevel"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-strip">ntpsweep strip</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntpsweep-peers">ntpsweep peers</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.4 maxlevel option (-m)</h4>
@@ -151,13 +159,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocati
 <p><a name="index-ntpsweep_002dmaxlevel-6"></a>
 This is the &ldquo;traverse peers up to this level (4 is a reasonable number)&rdquo; option. 
 This option takes a number argument. 
-This option has no <span class="samp">doc</span> documentation. 
+This option has no `<samp><span class="samp">doc</span></samp>' documentation. 
 <div class="node">
 <p><hr>
-<a name="ntpsweep-strip"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-host">ntpsweep host</a>,
+<a name="ntpsweep-strip"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-host">ntpsweep host</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntpsweep-maxlevel">ntpsweep maxlevel</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.5 strip option (-s)</h4>
@@ -165,13 +174,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocati
 <p><a name="index-ntpsweep_002dstrip-7"></a>
 This is the &ldquo;strip this string from hostnames&rdquo; option. 
 This option takes a string argument. 
-This option has no <span class="samp">doc</span> documentation. 
+This option has no `<samp><span class="samp">doc</span></samp>' documentation. 
 <div class="node">
 <p><hr>
-<a name="ntpsweep-host"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-exit-status">ntpsweep exit status</a>,
+<a name="ntpsweep-host"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntpsweep-exit-status">ntpsweep exit status</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntpsweep-strip">ntpsweep strip</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.6 host option (-h)</h4>
@@ -179,22 +189,23 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocati
 <p><a name="index-ntpsweep_002dhost-8"></a>
 This is the &ldquo;specify a single host&rdquo; option. 
 This option takes a string argument. 
-This option has no <span class="samp">doc</span> documentation.
+This option has no `<samp><span class="samp">doc</span></samp>' documentation.
 
   <p><strong>NOTE</strong><strong>: THIS OPTION IS DEPRECATED</strong>
 <div class="node">
 <p><hr>
-<a name="ntpsweep-exit-status"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntpsweep-host">ntpsweep host</a>,
+<a name="ntpsweep-exit-status"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntpsweep-host">ntpsweep host</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntpsweep-Invocation">ntpsweep Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">0.1.7 ntpsweep exit status</h4>
 
 <p>One of the following exit values will be returned:
      <dl>
-<dt><span class="samp">0 (EXIT_SUCCESS)</span><dd>Successful program execution. 
-<br><dt><span class="samp">1 (EXIT_FAILURE)</span><dd>The operation failed or the command syntax was not valid. 
+<dt>`<samp><span class="samp">0 (EXIT_SUCCESS)</span></samp>'<dd>Successful program execution. 
+<br><dt>`<samp><span class="samp">1 (EXIT_FAILURE)</span></samp>'<dd>The operation failed or the command syntax was not valid. 
 </dl>
 
 </body></html>

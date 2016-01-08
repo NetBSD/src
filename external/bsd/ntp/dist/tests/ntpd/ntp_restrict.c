@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_restrict.c,v 1.1.1.1 2015/10/23 17:47:45 christos Exp $	*/
-
 #include "config.h"
 
 #include "ntpd.h"
@@ -28,6 +26,7 @@ setUp(void) {
 }
 
 
+void
 tearDown(void) {
 	restrict_u *empty_restrict = malloc(sizeof(restrict_u));
 	memset(empty_restrict, 0, sizeof(restrict_u));
