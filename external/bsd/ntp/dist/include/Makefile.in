@@ -301,6 +301,7 @@ LN_S = @LN_S@
 LSCF = @LSCF@
 LTHREAD_LIBS = @LTHREAD_LIBS@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MAKE_ADJTIMED = @MAKE_ADJTIMED@
 MAKE_CHECK_LAYOUT = @MAKE_CHECK_LAYOUT@
@@ -551,6 +552,7 @@ noinst_HEADERS = \
 	recvbuff.h	\
 	refclock_atom.h	\
 	refidsmear.h	\
+	safecast.h	\
 	ssl_applink.c	\
 	timepps-SCO.h	\
 	timepps-Solaris.h	\
