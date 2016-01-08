@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_request.c,v 1.12 2015/10/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: ntp_request.c,v 1.13 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * ntp_request.c - respond to information requests
@@ -2008,11 +2008,11 @@ do_trustkey(
 	u_long trust
 	)
 {
-	register u_long *kp;
+	register uint32_t *kp;
 	register int items;
 
 	items = INFO_NITEMS(inpkt->err_nitems);
-	kp = (u_long *)&inpkt->u;
+	kp = (uint32_t*)&inpkt->u;
 	while (items-- > 0) {
 		authtrust(*kp, trust);
 		kp++;

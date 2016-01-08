@@ -1,4 +1,4 @@
-/*	$NetBSD: evbuffer-internal.h,v 1.4 2015/07/10 14:20:34 christos Exp $	*/
+/*	$NetBSD: evbuffer-internal.h,v 1.5 2016/01/08 21:35:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>

@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_shm.c,v 1.6 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: refclock_shm.c,v 1.7 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * refclock_shm - clock driver for utc via shared memory
@@ -383,7 +383,8 @@ static inline void memory_barrier(void)
 static enum segstat_t shm_query(volatile struct shmTime *shm_in, struct shm_stat_t *shm_stat)
 /* try to grab a sample from the specified SHM segment */
 {
-    volatile struct shmTime shmcopy, *shm = shm_in;
+    struct shmTime shmcopy;
+    volatile struct shmTime *shm = shm_in;
     volatile int cnt;
 
     unsigned int cns_new, rns_new;
@@ -420,7 +421,7 @@ static enum segstat_t shm_query(volatile struct shmTime *shm_in, struct shm_stat
      * (b) memset compiles to an uninterruptible single-instruction bitblt.
      */
     memory_barrier();
-    memcpy(__UNVOLATILE(&shmcopy), __UNVOLATILE(shm), sizeof(struct shmTime));
+    memcpy(&shmcopy, (void*)(uintptr_t)shm, sizeof(struct shmTime));
     shm->valid = 0;
     memory_barrier();
 

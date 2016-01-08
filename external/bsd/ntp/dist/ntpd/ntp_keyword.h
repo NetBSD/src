@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_keyword.h,v 1.9 2016/01/08 21:35:39 christos Exp $	*/
+
 /*
  * ntp_keyword.h
  * 

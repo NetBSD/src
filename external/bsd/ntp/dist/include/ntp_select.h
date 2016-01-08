@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_select.h,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
+/*	$NetBSD: ntp_select.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
 
 /*
  * Not all machines define FD_SET in sys/types.h

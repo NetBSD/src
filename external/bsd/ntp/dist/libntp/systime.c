@@ -1,4 +1,4 @@
-/*	$NetBSD: systime.c,v 1.3 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: systime.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * systime -- routines to fiddle a UNIX clock.
@@ -27,6 +27,8 @@
 # include <utmpx.h>
 #endif /* HAVE_UTMPX_H */
 
+int	allow_panic = FALSE;		/* allow panic correction (-g) */
+int	enable_panic_check = TRUE;	/* Can we check allow_panic's state? */
 
 #ifndef USE_COMPILETIME_PIVOT
 # define USE_COMPILETIME_PIVOT 1
@@ -297,8 +299,13 @@ adj_systime(
 	 * EVNT_NSET adjtime() can be aborted by a tiny adjtime()
 	 * triggered by sys_residual.
 	 */
-	if (0. == now)
+	if (0. == now) {
+		if (enable_panic_check && allow_panic) {
+			msyslog(LOG_ERR, "adj_systime: allow_panic is TRUE!");
+			INSIST(!allow_panic);
+		}
 		return TRUE;
+	}
 
 	/*
 	 * Most Unix adjtime() implementations adjust the system clock
@@ -335,8 +342,14 @@ adj_systime(
 	if (adjtv.tv_sec != 0 || adjtv.tv_usec != 0) {
 		if (adjtime(&adjtv, &oadjtv) < 0) {
 			msyslog(LOG_ERR, "adj_systime: %m");
+			if (enable_panic_check && allow_panic) {
+				msyslog(LOG_ERR, "adj_systime: allow_panic is TRUE!");
+			}
 			return FALSE;
 		}
+	}
+	if (enable_panic_check && allow_panic) {
+		msyslog(LOG_ERR, "adj_systime: allow_panic is TRUE!");
 	}
 	return TRUE;
 }
@@ -421,6 +434,9 @@ step_systime(
 	/* now set new system time */
 	if (ntp_set_tod(&timetv, NULL) != 0) {
 		msyslog(LOG_ERR, "step-systime: %m");
+		if (enable_panic_check && allow_panic) {
+			msyslog(LOG_ERR, "step_systime: allow_panic is TRUE!");
+		}
 		return FALSE;
 	}
 
@@ -447,7 +463,7 @@ step_systime(
 	 *	   long    ut_time;
 	 * };
 	 * and appends line="|", name="date", host="", time for the OLD
-	 * and appends line="{", name="date", host="", time for the NEW
+	 * and appends line="{", name="date", host="", time for the NEW // }
 	 * to _PATH_WTMP .
 	 *
 	 * Some OSes have utmp, some have utmpx.
@@ -565,6 +581,10 @@ step_systime(
 # endif /* not HAVE_PUTUTXLINE */
 #endif /* UPDATE_WTMPX */
 
+	}
+	if (enable_panic_check && allow_panic) {
+		msyslog(LOG_ERR, "step_systime: allow_panic is TRUE!");
+		INSIST(!allow_panic);
 	}
 	return TRUE;
 }

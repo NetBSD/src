@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_ripencc.c,v 1.3 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: refclock_ripencc.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * Id: refclock_ripencc.c,v 1.13 2002/06/18 14:20:55 marks Exp marks 

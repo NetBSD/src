@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_jupiter.c,v 1.9 2015/10/14 15:55:43 christos Exp $	*/
+/*	$NetBSD: refclock_jupiter.c,v 1.10 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 2003

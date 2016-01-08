@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_rfc2553.c,v 1.4 2015/10/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: ntp_rfc2553.c,v 1.5 2016/01/08 21:35:38 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -205,11 +205,12 @@ copy_addrinfo_common(
 		else
 			ai_nxt = ai_src->ai_next;
 		*ai_cpy = *ai_src;
-		REQUIRE(ai_src->ai_addrlen <= sizeof(sockaddr_u));
+		DEBUG_INSIST(ai_cpy->ai_canonname == ai_src->ai_canonname);
+		INSIST(ai_src->ai_addrlen <= sizeof(sockaddr_u));
 		memcpy(psau, ai_src->ai_addr, ai_src->ai_addrlen);
 		ai_cpy->ai_addr = &psau->sa;
 		++psau;
-		if (NULL != ai_cpy->ai_canonname) {
+		if (NULL != ai_src->ai_canonname) {
 			ai_cpy->ai_canonname = pcanon;
 			str_octets = 1 + strlen(ai_src->ai_canonname);
 			memcpy(pcanon, ai_src->ai_canonname, str_octets);
@@ -482,15 +483,16 @@ do_nodename(
 	 * set elsewhere so that we can set the appropriate wildcard
 	 */
 	if (nodename == NULL) {
-		ai->ai_addrlen = sizeof(struct sockaddr_storage);
 		if (ai->ai_family == AF_INET)
 		{
+			ai->ai_addrlen = sizeof(struct sockaddr_in);
 			sockin = (struct sockaddr_in *)ai->ai_addr;
 			sockin->sin_family = (short) ai->ai_family;
 			sockin->sin_addr.s_addr = htonl(INADDR_ANY);
 		}
 		else
 		{
+			ai->ai_addrlen = sizeof(struct sockaddr_in6);
 			sockin6 = (struct sockaddr_in6 *)ai->ai_addr;
 			sockin6->sin6_family = (short) ai->ai_family;
 			/*

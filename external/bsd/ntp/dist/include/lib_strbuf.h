@@ -1,4 +1,4 @@
-/*	$NetBSD: lib_strbuf.h,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
+/*	$NetBSD: lib_strbuf.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
 
 /*
  * lib_strbuf.h - definitions for routines which use the common string buffers

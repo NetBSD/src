@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_parser.y,v 1.11 2015/10/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: ntp_parser.y,v 1.12 2016/01/08 21:35:39 christos Exp $	*/
 
 /* ntp_parser.y
  *
@@ -970,7 +970,14 @@ fudge_factor
 	|	fudge_factor_bool_keyword boolean
 			{ $$ = create_attr_ival($1, $2); }
 	|	T_Stratum T_Integer
-			{ $$ = create_attr_ival($1, $2); }
+		{
+			if ($2 >= 0 && $2 <= 16) {
+				$$ = create_attr_ival($1, $2);
+			} else {
+				$$ = NULL;
+				yyerror("fudge factor: stratum value not in [0..16], ignored");
+			}
+		}
 	|	T_Abbrev T_String
 			{ $$ = create_attr_sval($1, $2); }
 	|	T_Refid T_String

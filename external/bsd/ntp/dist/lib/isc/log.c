@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.6 2015/07/10 14:20:29 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.7 2016/01/08 21:35:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
@@ -1148,7 +1148,7 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	char *basenam, *digit_end;
 	const char *dirname;
 	int version, greatest = -1;
-	unsigned int basenamelen;
+	size_t basenamelen;
 	isc_dir_t dir;
 	isc_result_t result;
 	char sep = '/';

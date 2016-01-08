@@ -1,4 +1,4 @@
-/*	$NetBSD: octtoint.c,v 1.6 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: octtoint.c,v 1.7 2016/01/08 21:35:38 christos Exp $	*/
 
 /*
  * octtoint - convert an ascii string in octal to an unsigned

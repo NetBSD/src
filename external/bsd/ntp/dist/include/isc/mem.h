@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.h,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
+/*	$NetBSD: mem.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
 
 /*
  * libntp local override of isc/mem.h to stub it out.

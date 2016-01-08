@@ -1,4 +1,4 @@
-/*	$NetBSD: ag-char-map.h,v 1.3 2015/07/10 14:20:35 christos Exp $	*/
+/*	$NetBSD: ag-char-map.h,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
 
 /*
  *  29 bits for 46 character classifications

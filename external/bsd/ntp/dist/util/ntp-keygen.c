@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp-keygen.c,v 1.9 2015/10/23 18:06:24 christos Exp $	*/
+/*	$NetBSD: ntp-keygen.c,v 1.10 2016/01/08 21:35:42 christos Exp $	*/
 
 /*
  * Program to generate cryptographic keys for ntp clients and servers
@@ -189,7 +189,7 @@ readlink(
 	int	len
 	)
 {
-	return strlen(file);
+	return (int)strlen(file); /* assume no overflow possible */
 }
 
 /*
@@ -1959,10 +1959,10 @@ x509	(
 	X509_time_adj(X509_get_notAfter(cert), lifetime * SECSPERDAY, &epoch);
 	subj = X509_get_subject_name(cert);
 	X509_NAME_add_entry_by_txt(subj, "commonName", MBSTRING_ASC,
-	    (u_char *)name, strlen(name), -1, 0);
+	    (u_char *)name, -1, -1, 0);
 	subj = X509_get_issuer_name(cert);
 	X509_NAME_add_entry_by_txt(subj, "commonName", MBSTRING_ASC,
-	    (u_char *)name, strlen(name), -1, 0);
+	    (u_char *)name, -1, -1, 0);
 	if (!X509_set_pubkey(cert, pkey)) {
 		fprintf(stderr, "Assign certificate signing key fails\n%s\n",
 		    ERR_error_string(ERR_get_error(), NULL));

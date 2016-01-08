@@ -1,4 +1,4 @@
-/*	$NetBSD: regress.c,v 1.5 2015/10/23 18:06:23 christos Exp $	*/
+/*	$NetBSD: regress.c,v 1.6 2016/01/08 21:35:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2003-2007 Niels Provos <provos@citi.umich.edu>

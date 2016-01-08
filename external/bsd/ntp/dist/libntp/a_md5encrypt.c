@@ -1,4 +1,4 @@
-/*	$NetBSD: a_md5encrypt.c,v 1.3 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: a_md5encrypt.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
 
 /*
  *	digest support for NTP, MD5 and with OpenSSL more
@@ -18,12 +18,12 @@
  *
  * Returns length of MAC including key ID and digest.
  */
-int
+size_t
 MD5authencrypt(
-	int	type,		/* hash algorithm */
-	u_char	*key,		/* key pointer */
-	u_int32 *pkt,		/* packet pointer */
-	int	length		/* packet length */
+	int		type,	/* hash algorithm */
+	const u_char *	key,	/* key pointer */
+	u_int32 *	pkt,	/* packet pointer */
+	size_t		length	/* packet length */
 	)
 {
 	u_char	digest[EVP_MAX_MD_SIZE];
@@ -46,7 +46,7 @@ MD5authencrypt(
 	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
 #endif
 	EVP_DigestUpdate(&ctx, key, cache_secretsize);
-	EVP_DigestUpdate(&ctx, (u_char *)pkt, (u_int)length);
+	EVP_DigestUpdate(&ctx, (u_char *)pkt, length);
 	EVP_DigestFinal(&ctx, digest, &len);
 	memmove((u_char *)pkt + length + 4, digest, len);
 	return (len + 4);
@@ -60,11 +60,11 @@ MD5authencrypt(
  */
 int
 MD5authdecrypt(
-	int	type,		/* hash algorithm */
-	u_char	*key,		/* key pointer */
-	u_int32	*pkt,		/* packet pointer */
-	int	length,	 	/* packet length */
-	int	size		/* MAC size */
+	int		type,	/* hash algorithm */
+	const u_char *	key,	/* key pointer */
+	u_int32	*	pkt,	/* packet pointer */
+	size_t		length,	/* packet length */
+	size_t		size	/* MAC size */
 	)
 {
 	u_char	digest[EVP_MAX_MD_SIZE];
@@ -87,14 +87,14 @@ MD5authdecrypt(
 	EVP_DigestInit(&ctx, EVP_get_digestbynid(type));
 #endif
 	EVP_DigestUpdate(&ctx, key, cache_secretsize);
-	EVP_DigestUpdate(&ctx, (u_char *)pkt, (u_int)length);
+	EVP_DigestUpdate(&ctx, (u_char *)pkt, length);
 	EVP_DigestFinal(&ctx, digest, &len);
-	if ((u_int)size != len + 4) {
+	if (size != (size_t)len + 4) {
 		msyslog(LOG_ERR,
 		    "MAC decrypt: MAC length error");
 		return (0);
 	}
-	return !memcmp(digest, (char *)pkt + length + 4, len);
+	return !memcmp(digest, (const char *)pkt + length + 4, len);
 }
 
 /*

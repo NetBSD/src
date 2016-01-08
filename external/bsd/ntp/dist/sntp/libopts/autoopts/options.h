@@ -1,4 +1,4 @@
-/*	$NetBSD: options.h,v 1.10 2015/07/10 14:20:35 christos Exp $	*/
+/*	$NetBSD: options.h,v 1.11 2016/01/08 21:35:41 christos Exp $	*/
 
 /*   -*- buffer-read-only: t -*- vi: set ro:
  *

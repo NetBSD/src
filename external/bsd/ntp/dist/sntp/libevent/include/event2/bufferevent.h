@@ -1,4 +1,4 @@
-/*	$NetBSD: bufferevent.h,v 1.4 2015/07/10 14:20:34 christos Exp $	*/
+/*	$NetBSD: bufferevent.h,v 1.5 2016/01/08 21:35:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2007 Niels Provos <provos@citi.umich.edu>

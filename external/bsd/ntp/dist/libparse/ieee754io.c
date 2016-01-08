@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee754io.c,v 1.3 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: ieee754io.c,v 1.4 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * /src/NTP/ntp4-dev/libntp/ieee754io.c,v 4.12 2005/04/16 17:32:10 kardel RELEASE_20050508_A
