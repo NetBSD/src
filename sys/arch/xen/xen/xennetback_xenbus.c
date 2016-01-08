@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.52 2013/10/20 11:37:53 bouyer Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.52.8.1 2016/01/08 21:06:07 snj Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52 2013/10/20 11:37:53 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.52.8.1 2016/01/08 21:06:07 snj Exp $");
 
 #include "opt_xen.h"
 
@@ -715,7 +715,7 @@ xennetback_evthandler(void *arg)
 {
 	struct xnetback_instance *xneti = arg;
 	struct ifnet *ifp = &xneti->xni_if;
-	netif_tx_request_t *txreq;
+	netif_tx_request_t txreq;
 	struct xni_pkt *pkt;
 	vaddr_t pkt_va;
 	struct mbuf *m;
@@ -733,36 +733,36 @@ xennetback_evthandler(void *arg)
 		    receive_pending);
 		if (receive_pending == 0)
 			break;
-		txreq = RING_GET_REQUEST(&xneti->xni_txring, req_cons);
+		RING_COPY_REQUEST(&xneti->xni_txring, req_cons, &txreq);
 		xen_rmb();
 		XENPRINTF(("%s pkt size %d\n", xneti->xni_if.if_xname,
-		    txreq->size));
+		    txreq.size));
 		req_cons++;
 		if (__predict_false((ifp->if_flags & (IFF_UP | IFF_RUNNING)) !=
 		    (IFF_UP | IFF_RUNNING))) {
 			/* interface not up, drop */
-			xennetback_tx_response(xneti, txreq->id,
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			continue;
 		}
 		/*
 		 * Do some sanity checks, and map the packet's page.
 		 */
-		if (__predict_false(txreq->size < ETHER_HDR_LEN ||
-		   txreq->size > (ETHER_MAX_LEN - ETHER_CRC_LEN))) {
+		if (__predict_false(txreq.size < ETHER_HDR_LEN ||
+		   txreq.size > (ETHER_MAX_LEN - ETHER_CRC_LEN))) {
 			printf("%s: packet size %d too big\n",
-			    ifp->if_xname, txreq->size);
-			xennetback_tx_response(xneti, txreq->id,
+			    ifp->if_xname, txreq.size);
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_ERROR);
 			ifp->if_ierrors++;
 			continue;
 		}
 		/* don't cross page boundaries */
 		if (__predict_false(
-		    txreq->offset + txreq->size > PAGE_SIZE)) {
+		    txreq.offset + txreq.size > PAGE_SIZE)) {
 			printf("%s: packet cross page boundary\n",
 			    ifp->if_xname);
-			xennetback_tx_response(xneti, txreq->id,
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_ERROR);
 			ifp->if_ierrors++;
 			continue;
@@ -774,15 +774,15 @@ xennetback_evthandler(void *arg)
 			if (ratecheck(&lasttime, &xni_pool_errintvl))
 				printf("%s: mbuf alloc failed\n",
 				    ifp->if_xname);
-			xennetback_tx_response(xneti, txreq->id,
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			ifp->if_ierrors++;
 			continue;
 		}
 
 		XENPRINTF(("%s pkt offset %d size %d id %d req_cons %d\n",
-		    xneti->xni_if.if_xname, txreq->offset,
-		    txreq->size, txreq->id, MASK_NETIF_TX_IDX(req_cons)));
+		    xneti->xni_if.if_xname, txreq.offset,
+		    txreq.size, txreq.id, MASK_NETIF_TX_IDX(req_cons)));
 		
 		pkt = pool_get(&xni_pkt_pool, PR_NOWAIT);
 		if (__predict_false(pkt == NULL)) {
@@ -790,16 +790,16 @@ xennetback_evthandler(void *arg)
 			if (ratecheck(&lasttime, &xni_pool_errintvl))
 				printf("%s: xnbpkt alloc failed\n",
 				    ifp->if_xname);
-			xennetback_tx_response(xneti, txreq->id,
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			ifp->if_ierrors++;
 			m_freem(m);
 			continue;
 		}
-		err = xen_shm_map(1, xneti->xni_domid, &txreq->gref, &pkt_va,
+		err = xen_shm_map(1, xneti->xni_domid, &txreq.gref, &pkt_va,
 		    &pkt->pkt_handle, XSHM_RO);
 		if (__predict_false(err == ENOMEM)) {
-			xennetback_tx_response(xneti, txreq->id,
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
 			ifp->if_ierrors++;
 			pool_put(&xni_pkt_pool, pkt);
@@ -810,7 +810,7 @@ xennetback_evthandler(void *arg)
 		if (__predict_false(err)) {
 			printf("%s: mapping foreing page failed: %d\n",
 			    xneti->xni_if.if_xname, err);
-			xennetback_tx_response(xneti, txreq->id,
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_ERROR);
 			ifp->if_ierrors++;
 			pool_put(&xni_pkt_pool, pkt);
@@ -820,13 +820,13 @@ xennetback_evthandler(void *arg)
 
 		if ((ifp->if_flags & IFF_PROMISC) == 0) {
 			struct ether_header *eh =
-			    (void*)(pkt_va + txreq->offset);
+			    (void*)(pkt_va + txreq.offset);
 			if (ETHER_IS_MULTICAST(eh->ether_dhost) == 0 &&
 			    memcmp(CLLADDR(ifp->if_sadl), eh->ether_dhost,
 			    ETHER_ADDR_LEN) != 0) {
 				xni_pkt_unmap(pkt, pkt_va);
 				m_freem(m);
-				xennetback_tx_response(xneti, txreq->id,
+				xennetback_tx_response(xneti, txreq.id,
 				    NETIF_RSP_OKAY);
 				continue; /* packet is not for us */
 			}
@@ -845,31 +845,31 @@ so always copy for now.
 			 * ack it. Delaying it until the mbuf is
 			 * freed will stall transmit.
 			 */
-			m->m_len = min(MHLEN, txreq->size);
+			m->m_len = min(MHLEN, txreq.size);
 			m->m_pkthdr.len = 0;
-			m_copyback(m, 0, txreq->size,
-			    (void *)(pkt_va + txreq->offset));
+			m_copyback(m, 0, txreq.size,
+			    (void *)(pkt_va + txreq.offset));
 			xni_pkt_unmap(pkt, pkt_va);
-			if (m->m_pkthdr.len < txreq->size) {
+			if (m->m_pkthdr.len < txreq.size) {
 				ifp->if_ierrors++;
 				m_freem(m);
-				xennetback_tx_response(xneti, txreq->id,
+				xennetback_tx_response(xneti, txreq.id,
 				    NETIF_RSP_DROPPED);
 				continue;
 			}
-			xennetback_tx_response(xneti, txreq->id,
+			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_OKAY);
 		} else {
 
-			pkt->pkt_id = txreq->id;
+			pkt->pkt_id = txreq.id;
 			pkt->pkt_xneti = xneti;
 
-			MEXTADD(m, pkt_va + txreq->offset,
-			    txreq->size, M_DEVBUF, xennetback_tx_free, pkt);
-			m->m_pkthdr.len = m->m_len = txreq->size;
+			MEXTADD(m, pkt_va + txreq.offset,
+			    txreq.size, M_DEVBUF, xennetback_tx_free, pkt);
+			m->m_pkthdr.len = m->m_len = txreq.size;
 			m->m_flags |= M_EXT_ROMAP;
 		}
-		if ((txreq->flags & NETTXF_csum_blank) != 0) {
+		if ((txreq.flags & NETTXF_csum_blank) != 0) {
 			xennet_checksum_fill(&m);
 			if (m == NULL) {
 				ifp->if_ierrors++;
@@ -953,6 +953,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 	mmu_update_t *mmup;
 	multicall_entry_t *mclp;
 	netif_rx_response_t *rxresp;
+	netif_rx_request_t rxreq;
 	RING_IDX req_prod, resp_prod;
 	int do_event = 0;
 	gnttab_transfer_t *gop;
@@ -1028,10 +1029,10 @@ xennetback_ifsoftstart_transfer(void *arg)
 				nppitems++;
 			}
 			/* start filling ring */
-			gop->ref = RING_GET_REQUEST(&xneti->xni_rxring,
-			    xneti->xni_rxring.req_cons)->gref;
-			id = RING_GET_REQUEST(&xneti->xni_rxring,
-			    xneti->xni_rxring.req_cons)->id;
+			RING_COPY_REQUEST(&xneti->xni_rxring,
+			    xneti->xni_rxring.req_cons, &rxreq);
+			gop->ref = rxreq.gref;
+			id = rxreq.id;
 			xen_rmb();
 			xneti->xni_rxring.req_cons++;
 			rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
@@ -1198,6 +1199,7 @@ xennetback_ifsoftstart_copy(void *arg)
 	paddr_t xmit_ma;
 	int i, j;
 	netif_rx_response_t *rxresp;
+	netif_rx_request_t rxreq;
 	RING_IDX req_prod, resp_prod;
 	int do_event = 0;
 	gnttab_copy_t *gop;
@@ -1309,16 +1311,16 @@ xennetback_ifsoftstart_copy(void *arg)
 			gop->source.domid = DOMID_SELF;
 			gop->source.u.gmfn = xmit_ma >> PAGE_SHIFT;
 
-			gop->dest.u.ref = RING_GET_REQUEST(&xneti->xni_rxring,
-			    xneti->xni_rxring.req_cons)->gref;
+			RING_COPY_REQUEST(&xneti->xni_rxring,
+			    xneti->xni_rxring.req_cons, &rxreq);
+			gop->dest.u.ref = rxreq.gref;
 			gop->dest.offset = 0;
 			gop->dest.domid = xneti->xni_domid;
 
 			gop->len = m->m_pkthdr.len;
 			gop++;
 
-			id = RING_GET_REQUEST(&xneti->xni_rxring,
-			    xneti->xni_rxring.req_cons)->id;
+			id = rxreq.id;
 			xen_rmb();
 			xneti->xni_rxring.req_cons++;
 			rxresp = RING_GET_RESPONSE(&xneti->xni_rxring,
