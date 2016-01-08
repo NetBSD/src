@@ -1,4 +1,4 @@
-/*	$NetBSD: packet.c,v 1.1.1.4 2014/07/12 11:57:46 spz Exp $	*/
+/*	$NetBSD: packet.c,v 1.2 2016/01/08 23:09:41 christos Exp $	*/
 /* packet.c
 
    Packet assembly code, originally contributed by Archie Cobbs. */
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: packet.c,v 1.1.1.4 2014/07/12 11:57:46 spz Exp $");
+__RCSID("$NetBSD: packet.c,v 1.2 2016/01/08 23:09:41 christos Exp $");
 
 #include "dhcpd.h"
 
@@ -224,7 +224,28 @@ ssize_t decode_hw_header (interface, buf, bufix, from)
 	}
 }
 
-/* UDP header and IP header decoded together for convenience. */
+/*!
+ *
+ * \brief UDP header and IP header decoded together for convenience.
+ *
+ * Attempt to decode the UDP and IP headers and, if necessary, checksum
+ * the packet.
+ *
+ * \param inteface - the interface on which the packet was recevied
+ * \param buf - a pointer to the buffer for the received packet
+ * \param bufix - where to start processing the buffer, previous
+ *                routines may have processed parts of the buffer already
+ * \param from - space to return the address of the packet sender
+ * \param buflen - remaining length of the buffer, this will have been
+ *                 decremented by bufix by the caller
+ * \param rbuflen - space to return the length of the payload from the udp
+ *                  header
+ * \param csum_ready - indication if the checksum is valid for use
+ *                     non-zero indicates the checksum should be validated
+ *
+ * \return - the index to the first byte of the udp payload (that is the
+ *           start of the DHCP packet
+ */
 
 ssize_t
 decode_udp_ip_header(struct interface_info *interface,
@@ -235,7 +256,7 @@ decode_udp_ip_header(struct interface_info *interface,
   unsigned char *data;
   struct ip ip;
   struct udphdr udp;
-  unsigned char *upp, *endbuf;
+  unsigned char *upp;
   u_int32_t ip_len, ulen, pkt_len;
   u_int32_t sum, usum;
   static int ip_packets_seen;
@@ -246,11 +267,8 @@ decode_udp_ip_header(struct interface_info *interface,
   static int udp_packets_length_overflow;
   unsigned len;
 
-  /* Designate the end of the input buffer for bounds checks. */
-  endbuf = buf + bufix + buflen;
-
   /* Assure there is at least an IP header there. */
-  if ((buf + bufix + sizeof(ip)) > endbuf)
+  if (sizeof(ip) > buflen)
 	  return -1;
 
   /* Copy the IP header into a stack aligned structure for inspection.
@@ -262,13 +280,17 @@ decode_udp_ip_header(struct interface_info *interface,
   ip_len = (*upp & 0x0f) << 2;
   upp += ip_len;
 
-  /* Check the IP packet length. */
+  /* Check packet lengths are within the buffer:
+   * first the ip header (ip_len)
+   * then the packet length from the ip header (pkt_len)
+   * then the udp header (ip_len + sizeof(udp)
+   * We are liberal in what we accept, the udp payload should fit within
+   * pkt_len, but we only check against the full buffer size.
+   */
   pkt_len = ntohs(ip.ip_len);
-  if (pkt_len > buflen)
-	return -1;
-
-  /* Assure after ip_len bytes that there is enough room for a UDP header. */
-  if ((upp + sizeof(udp)) > endbuf)
+  if ((ip_len > buflen) ||
+      (pkt_len > buflen) ||
+      ((ip_len + sizeof(udp)) > buflen))
 	  return -1;
 
   /* Copy the UDP header into a stack aligned structure for inspection. */
@@ -289,7 +311,8 @@ decode_udp_ip_header(struct interface_info *interface,
 	return -1;
 
   udp_packets_length_checked++;
-  if ((upp + ulen) > endbuf) {
+  /* verify that the payload length from the udp packet fits in the buffer */
+  if ((ip_len + ulen) > buflen) {
 	udp_packets_length_overflow++;
 	if ((udp_packets_length_checked > 4) &&
 	    ((udp_packets_length_checked /
@@ -302,9 +325,6 @@ decode_udp_ip_header(struct interface_info *interface,
 	}
 	return -1;
   }
-
-  if ((ulen < sizeof(udp)) || ((upp + ulen) > endbuf))
-	return -1;
 
   /* Check the IP header checksum - it should be zero. */
   ++ip_packets_seen;
