@@ -1,4 +1,4 @@
-/*	$NetBSD: enum.c,v 1.6 2015/11/30 10:37:25 he Exp $	*/
+/*	$NetBSD: enum.c,v 1.7 2016/01/08 21:35:41 christos Exp $	*/
 
 
 /**

@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_worker.c,v 1.4 2015/10/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: ntp_worker.c,v 1.5 2016/01/08 21:35:38 christos Exp $	*/
 
 /*
  * ntp_worker.c
@@ -152,7 +152,8 @@ available_blocking_child_slot(void)
 					  prev_octets);
 	blocking_children_alloc = new_alloc;
 
-	return prev_alloc;
+	/* assume we'll never have enough workers to overflow u_int */
+	return (u_int)prev_alloc;
 }
 
 

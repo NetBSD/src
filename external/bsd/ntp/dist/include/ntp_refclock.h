@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_refclock.h,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
+/*	$NetBSD: ntp_refclock.h,v 1.4 2016/01/08 21:35:35 christos Exp $	*/
 
 /*
  * ntp_refclock.h - definitions for reference clock support
@@ -222,7 +222,7 @@ extern	void	refclock_buginfo(sockaddr_u *,
 extern	void	refclock_control(sockaddr_u *,
 				 const struct refclockstat *,
 				 struct refclockstat *);
-extern	int	refclock_open	(char *, u_int, u_int);
+extern	int	refclock_open	(const char *, u_int, u_int);
 extern	int	refclock_setup	(int, u_int, u_int);
 extern	void	refclock_timer	(struct peer *);
 extern	void	refclock_transmit(struct peer *);

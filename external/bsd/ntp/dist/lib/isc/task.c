@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -331,7 +331,7 @@ ISC_TASKFUNC_SCOPE isc_result_t
 isc__task_create(isc_taskmgr_t *manager0, unsigned int quantum,
 		 isc_task_t **taskp)
 {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	isc__taskmgr_t *manager = (void*)manager0;
 	isc__task_t *task;
 	isc_boolean_t exiting;
 	isc_result_t result;
@@ -1465,7 +1465,7 @@ isc__taskmgr_destroy(isc_taskmgr_t **managerp) {
 	 */
 
 	REQUIRE(managerp != NULL);
-	manager = (isc__taskmgr_t *)*managerp;
+	manager = (void*)(*managerp);
 	REQUIRE(VALID_MANAGER(manager));
 
 #ifndef USE_WORKER_THREADS
@@ -1561,7 +1561,7 @@ isc__taskmgr_destroy(isc_taskmgr_t **managerp) {
 
 ISC_TASKFUNC_SCOPE void
 isc__taskmgr_setmode(isc_taskmgr_t *manager0, isc_taskmgrmode_t mode) {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	isc__taskmgr_t *manager = (void*)manager0;
 
 	LOCK(&manager->lock);
 	manager->mode = mode;
@@ -1570,7 +1570,7 @@ isc__taskmgr_setmode(isc_taskmgr_t *manager0, isc_taskmgrmode_t mode) {
 
 ISC_TASKFUNC_SCOPE isc_taskmgrmode_t
 isc__taskmgr_mode(isc_taskmgr_t *manager0) {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	isc__taskmgr_t *manager = (void*)manager0;
 	isc_taskmgrmode_t mode;
 	LOCK(&manager->lock);
 	mode = manager->mode;
@@ -1581,7 +1581,7 @@ isc__taskmgr_mode(isc_taskmgr_t *manager0) {
 #ifndef USE_WORKER_THREADS
 isc_boolean_t
 isc__taskmgr_ready(isc_taskmgr_t *manager0) {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	isc__taskmgr_t *manager = (void*)manager0;
 	isc_boolean_t is_ready;
 
 #ifdef USE_SHARED_MANAGER
@@ -1600,7 +1600,7 @@ isc__taskmgr_ready(isc_taskmgr_t *manager0) {
 
 isc_result_t
 isc__taskmgr_dispatch(isc_taskmgr_t *manager0) {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	isc__taskmgr_t *manager = (void*)manager0;
 
 #ifdef USE_SHARED_MANAGER
 	if (manager == NULL)
@@ -1617,7 +1617,7 @@ isc__taskmgr_dispatch(isc_taskmgr_t *manager0) {
 #else
 ISC_TASKFUNC_SCOPE void
 isc__taskmgr_pause(isc_taskmgr_t *manager0) {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	isc__taskmgr_t *manager = (void*)manager0;
 	LOCK(&manager->lock);
 	while (manager->tasks_running > 0) {
 		WAIT(&manager->paused, &manager->lock);
@@ -1628,7 +1628,7 @@ isc__taskmgr_pause(isc_taskmgr_t *manager0) {
 
 ISC_TASKFUNC_SCOPE void
 isc__taskmgr_resume(isc_taskmgr_t *manager0) {
-	isc__taskmgr_t *manager = (isc__taskmgr_t *)manager0;
+	isc__taskmgr_t *manager = (void*)manager0;
 
 	LOCK(&manager->lock);
 	if (manager->pause_requested) {
