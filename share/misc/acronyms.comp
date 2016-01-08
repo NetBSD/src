@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.155 2015/12/03 03:28:47 jnemeth Exp $
+$NetBSD: acronyms.comp,v 1.156 2016/01/08 08:37:18 jnemeth Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -482,6 +482,7 @@ GID	group identifier
 GIF	graphics interchange format
 GMCH	graphics and memory controller hub
 GNU	GNU's Not Unix
+GOP	graphics output protocol
 GOT	global offset table
 GPE	general purpose event
 GPF	general protection fault
@@ -1267,7 +1268,9 @@ UCS	uniform-cost search
 UDMA	ultra DMA
 UDO	ultra density optical
 UDP	User Datagram Protocol
+UEFI	unified extensible firmware interface
 UFS	Unix File System
+UGA	universal graphics adapter
 UI	unit interval
 UI	user interface
 UID	unique identifier
