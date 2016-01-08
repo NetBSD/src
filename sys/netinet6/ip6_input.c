@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.153 2015/12/12 23:34:25 christos Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.154 2016/01/08 03:55:39 knakahara Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.153 2015/12/12 23:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.154 2016/01/08 03:55:39 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -127,11 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.153 2015/12/12 23:34:25 christos Exp
 #include <netinet6/ip6protosw.h>
 
 #include "faith.h"
-#include "gif.h"
-
-#if NGIF > 0
-#include <netinet6/in6_gif.h>
-#endif
 
 #include <net/net_osdep.h>
 
@@ -1778,15 +1773,6 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       NULL, 0, &ip6_defmcasthlim, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       IPV6CTL_DEFMCASTHLIM, CTL_EOL);
-#if NGIF > 0
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "gifhlim",
-		       SYSCTL_DESCR("Default hop limit for a gif tunnel datagram"),
-		       NULL, 0, &ip6_gif_hlim, 0,
-		       CTL_NET, PF_INET6, IPPROTO_IPV6,
-		       IPV6CTL_GIF_HLIM, CTL_EOL);
-#endif /* NGIF */
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT,
 		       CTLTYPE_STRING, "kame_version",
