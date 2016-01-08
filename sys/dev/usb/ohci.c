@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.38 2015/12/28 15:46:28 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.39 2016/01/08 13:42:55 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.38 2015/12/28 15:46:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.39 2016/01/08 13:42:55 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -947,7 +947,7 @@ ohci_init(ohci_softc_t *sc)
 
 #ifdef OHCI_DEBUG
 	DPRINTFN(15, "--- dump start ---", 0, 0, 0 ,0);
-	if (ohcidebug > 15) {
+	if (ohcidebug >= 15) {
 		for (i = 0; i < OHCI_NO_EDS; i++) {
 			DPRINTFN(15, "ed#%d ", i, 0, 0, 0);
 			ohci_dump_ed(sc, sc->sc_eds[i]);
@@ -1026,7 +1026,7 @@ ohci_init(ohci_softc_t *sc)
 		goto bad5;
 	}
 #ifdef OHCI_DEBUG
-	if (ohcidebug > 15)
+	if (ohcidebug >= 15)
 		ohci_dumpregs(sc);
 #endif
 
@@ -1087,7 +1087,7 @@ ohci_init(ohci_softc_t *sc)
 	}
 
 #ifdef OHCI_DEBUG
-	if (ohcidebug > 5)
+	if (ohcidebug >= 5)
 		ohci_dumpregs(sc);
 #endif
 
@@ -1488,7 +1488,7 @@ ohci_softintr(void *v)
 	DPRINTFN(10, "sdone=%p sidone=%p", sdone, sidone, 0, 0);
 	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef OHCI_DEBUG
-	if (ohcidebug > 10) {
+	if (ohcidebug >= 10) {
 		for (std = sdone; std; std = std->dnext)
 			ohci_dump_td(sc, std);
 	}
@@ -1563,7 +1563,7 @@ ohci_softintr(void *v)
 	}
 	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
 #ifdef OHCI_DEBUG
-	if (ohcidebug > 10) {
+	if (ohcidebug >= 10) {
 		DPRINTFN(10, "ITD done", 0, 0, 0, 0);
 		for (sitd = sidone; sitd; sitd = sitd->dnext)
 			ohci_dump_itd(sc, sitd);
@@ -2403,7 +2403,7 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 #ifdef OHCI_DEBUG
 	DPRINTF("--- dump start ---", 0, 0, 0, 0);
 
-	if (ohcidebug > 1) {
+	if (ohcidebug >= 2) {
 		DPRINTF("sed:", 0, 0, 0, 0);
 		ohci_dump_ed(sc, sed);
 		ohci_dump_tds(sc, p);
@@ -2942,7 +2942,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 
 #ifdef OHCI_DEBUG
 	USBHIST_LOGN(ohcidebug, 5, "--- dump start ---", 0, 0, 0, 0);
-	if (ohcidebug > 5) {
+	if (ohcidebug >= 5) {
 		ohci_dump_ed(sc, sed);
 		ohci_dump_tds(sc, setup);
 	}
@@ -2963,7 +2963,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 
 #ifdef OHCI_DEBUG
 	DPRINTFN(20, "--- dump start ---", 0, 0, 0, 0);
-	if (ohcidebug > 20) {
+	if (ohcidebug >= 20) {
 		delay(10000);
 		DPRINTFN(20, "status=%x", OREAD4(sc, OHCI_COMMAND_STATUS),
 		    0, 0, 0);
@@ -3162,7 +3162,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 
 #ifdef OHCI_DEBUG
 	DPRINTFN(5, "--- dump start ---", 0, 0, 0, 0);
-	if (ohcidebug > 5) {
+	if (ohcidebug >= 5) {
 		ohci_dump_ed(sc, sed);
 		ohci_dump_tds(sc, data);
 	}
@@ -3349,7 +3349,7 @@ ohci_device_intr_start(struct usbd_xfer *xfer)
 
 #ifdef OHCI_DEBUG
 	DPRINTFN(5, "--- dump start ---", 0, 0, 0, 0);
-	if (ohcidebug > 5) {
+	if (ohcidebug >= 5) {
 		ohci_dump_ed(sc, sed);
 		ohci_dump_tds(sc, data);
 	}
@@ -3707,7 +3707,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	xfer->ux_status = USBD_IN_PROGRESS;
 
 #ifdef OHCI_DEBUG
-	if (ohcidebug > 5) {
+	if (ohcidebug >= 5) {
 		DPRINTF("frame=%d", O32TOH(sc->sc_hcca->hcca_frame_number),
 		    0, 0, 0);
 		ohci_dump_itds(sc, xfer->ux_hcpriv);
@@ -3726,7 +3726,7 @@ ohci_device_isoc_enter(struct usbd_xfer *xfer)
 	mutex_exit(&sc->sc_lock);
 
 #ifdef OHCI_DEBUG
-	if (ohcidebug > 5) {
+	if (ohcidebug >= 5) {
 		delay(150000);
 		DPRINTF("after frame=%d", O32TOH(sc->sc_hcca->hcca_frame_number),
 		    0, 0, 0);
