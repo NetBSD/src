@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_prio_q.c,v 1.1.1.3 2016/01/08 21:21:33 christos Exp $	*/
+
 #include "config.h"
 
 #include "ntp.h"

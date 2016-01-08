@@ -1,3 +1,5 @@
+/*	$NetBSD: a_md5encrypt.c,v 1.1.1.5 2016/01/08 21:21:33 christos Exp $	*/
+
 #include "config.h"
 #include "unity.h"
 
