@@ -1,5 +1,3 @@
-/*	$NetBSD: bug-2803.c,v 1.1.1.2 2015/07/10 13:11:13 christos Exp $	*/
-
 #include <config.h>
 
 #include <stdio.h>
@@ -17,7 +15,7 @@
 int simpleTest(void);
 void setUp(void);
 void tearDown(void);
-//void test_main(void);
+void test_main(void);
 
 static int verbose = 1;        // if not 0, also print results if test passed
 static int exit_on_err = 0;    // if not 0, exit if test failed

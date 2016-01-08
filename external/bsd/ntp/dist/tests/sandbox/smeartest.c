@@ -1,9 +1,8 @@
-/*	$NetBSD: smeartest.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
-
 #include <config.h>
 
 #include <ntp.h>
 #include <ntp_fp.h>
+#include <ntp_assert.h>
 
 /*
  * we want to test a refid format of:
@@ -127,10 +126,13 @@ ltor(l_fp l)
 }
 
 
+int
 main()
 {
 	l_fp l;
 	int rc;
+
+	init_lib();
 
 	rtol(0xfe800000);
 	rtol(0xfe800001);
@@ -169,6 +171,8 @@ main()
 	rtoltor(0xfe7fffff);
 
 	rc = atolfp("-.932087", &l);
+	INSIST(1 == rc);
+
 	ltor(l);
 	rtol(0xfec458b0);
 	printf("%x -> %d.%d.%d.%d\n",

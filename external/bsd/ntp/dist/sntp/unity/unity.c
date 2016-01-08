@@ -1,5 +1,3 @@
-/*	$NetBSD: unity.c,v 1.1.1.3 2015/10/23 17:47:43 christos Exp $	*/
-
 /* =========================================================================
     Unity Project - A Test Framework for C
     Copyright (c) 2007-14 Mike Karlesky, Mark VanderVoord, Greg Williams

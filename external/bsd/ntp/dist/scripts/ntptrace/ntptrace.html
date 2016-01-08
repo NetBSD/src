@@ -3,7 +3,7 @@
 <title>Ntptrace User's Manual</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="Ntptrace User's Manual">
-<meta name="generator" content="makeinfo 4.7">
+<meta name="generator" content="makeinfo 4.8">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <meta http-equiv="Content-Style-Type" content="text/css">
@@ -14,24 +14,26 @@
   pre.smallformat  { font-family:inherit; font-size:smaller }
   pre.smallexample { font-size:smaller }
   pre.smalllisp    { font-size:smaller }
-  span.sc { font-variant:small-caps }
-  span.roman { font-family: serif; font-weight: normal; } 
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
 --></style>
 </head>
 <body>
 <h1 class="settitle">Ntptrace User's Manual</h1>
 <div class="node">
 <p><hr>
-<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-Description">ntptrace Description</a>,
+<a name="Top"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-Description">ntptrace Description</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
-<br>
+
 </div>
 
 <h2 class="unnumbered">Simple Network Time Protocol User Manual</h2>
 
 <p>This document describes the use of the NTP Project's <code>ntptrace</code> program. 
-This document applies to version 4.2.8p4 of <code>ntptrace</code>.
+This document applies to version 4.2.8p5 of <code>ntptrace</code>.
 
   <div class="shortcontents">
 <h2>Short Contents</h2>
@@ -47,9 +49,10 @@ This document applies to version 4.2.8p4 of <code>ntptrace</code>.
 
 <div class="node">
 <p><hr>
-<a name="ntptrace-Invocation"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntptrace-Description">ntptrace Description</a>,
+<a name="ntptrace-Invocation"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntptrace-Description">ntptrace Description</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
-<br>
+
 </div>
 
 <h3 class="section">Invoking ntptrace</h3>
@@ -80,7 +83,7 @@ defined in RFC-1305.
 using the <code>agtexi-cmd</code> template and the option descriptions for the <code>ntptrace</code> program.
 
 <ul class="menu">
-<li><a accesskey="1" href="#ntptrace-usage">ntptrace usage</a>:                   ntptrace help/usage (<span class="option">--help</span>)
+<li><a accesskey="1" href="#ntptrace-usage">ntptrace usage</a>:                   ntptrace help/usage (<samp><span class="option">--help</span></samp>)
 <li><a accesskey="2" href="#ntptrace-numeric">ntptrace numeric</a>:                 numeric option (-n)
 <li><a accesskey="3" href="#ntptrace-max_002dhosts">ntptrace max-hosts</a>:               max-hosts option (-m)
 <li><a accesskey="4" href="#ntptrace-host">ntptrace host</a>:                    host option (-r)
@@ -89,25 +92,26 @@ using the <code>agtexi-cmd</code> template and the option descriptions for the <
 
 <div class="node">
 <p><hr>
-<a name="ntptrace-usage"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-numeric">ntptrace numeric</a>,
+<a name="ntptrace-usage"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-numeric">ntptrace numeric</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntptrace-Invocation">ntptrace Invocation</a>
-<br>
+
 </div>
 
-<h4 class="subsection">ntptrace help/usage (<span class="option">--help</span>)</h4>
+<h4 class="subsection">ntptrace help/usage (<samp><span class="option">--help</span></samp>)</h4>
 
 <p><a name="index-ntptrace-help-3"></a>
 This is the automatically generated usage text for ntptrace.
 
   <p>The text printed is the same whether selected with the <code>help</code> option
-(<span class="option">--help</span>) or the <code>more-help</code> option (<span class="option">--more-help</span>).  <code>more-help</code> will print
+(<samp><span class="option">--help</span></samp>) or the <code>more-help</code> option (<samp><span class="option">--more-help</span></samp>).  <code>more-help</code> will print
 the usage text by passing it through a pager program. 
 <code>more-help</code> is disabled on platforms without a working
 <code>fork(2)</code> function.  The <code>PAGER</code> environment variable is
-used to select the program, defaulting to <span class="file">more</span>.  Both will exit
+used to select the program, defaulting to <samp><span class="file">more</span></samp>.  Both will exit
 with a status code of 0.
 
-<pre class="example">ntptrace - Trace peers of an NTP server - Ver. 4.2.8p4
+<pre class="example">ntptrace - Trace peers of an NTP server - Ver. 4.2.8p5
 USAGE: ntptrace [ -&lt;flag&gt; [&lt;val&gt;] | --&lt;name&gt;[{=| }&lt;val&gt;] ]... [host]
 
     -n, --numeric                Print IP addresses instead of hostnames
@@ -121,10 +125,11 @@ hyphen and the flag character.
 </pre>
   <div class="node">
 <p><hr>
-<a name="ntptrace-numeric"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-max_002dhosts">ntptrace max-hosts</a>,
+<a name="ntptrace-numeric"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-max_002dhosts">ntptrace max-hosts</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntptrace-usage">ntptrace usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntptrace-Invocation">ntptrace Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">numeric option (-n)</h4>
@@ -135,10 +140,12 @@ Output hosts as dotted-quad numeric format rather than converting to
 the canonical host names. 
 <div class="node">
 <p><hr>
-<a name="ntptrace-max_002dhosts"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-host">ntptrace host</a>,
+<a name="ntptrace-max-hosts"></a>
+<a name="ntptrace-max_002dhosts"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-host">ntptrace host</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntptrace-numeric">ntptrace numeric</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntptrace-Invocation">ntptrace Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">max-hosts option (-m)</h4>
@@ -146,13 +153,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ntptrace-Invocation">ntptrace Invocati
 <p><a name="index-ntptrace_002dmax_002dhosts-5"></a>
 This is the &ldquo;maximum number of peers to trace&rdquo; option. 
 This option takes a number argument. 
-This option has no <span class="samp">doc</span> documentation. 
+This option has no `<samp><span class="samp">doc</span></samp>' documentation. 
 <div class="node">
 <p><hr>
-<a name="ntptrace-host"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-exit-status">ntptrace exit status</a>,
+<a name="ntptrace-host"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntptrace-exit-status">ntptrace exit status</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntptrace-max_002dhosts">ntptrace max-hosts</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntptrace-Invocation">ntptrace Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">host option (-r)</h4>
@@ -160,20 +168,21 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#ntptrace-Invocation">ntptrace Invocati
 <p><a name="index-ntptrace_002dhost-6"></a>
 This is the &ldquo;single remote host&rdquo; option. 
 This option takes a string argument. 
-This option has no <span class="samp">doc</span> documentation. 
+This option has no `<samp><span class="samp">doc</span></samp>' documentation. 
 <div class="node">
 <p><hr>
-<a name="ntptrace-exit-status"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntptrace-host">ntptrace host</a>,
+<a name="ntptrace-exit-status"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#ntptrace-host">ntptrace host</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#ntptrace-Invocation">ntptrace Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">ntptrace exit status</h4>
 
 <p>One of the following exit values will be returned:
      <dl>
-<dt><span class="samp">0 (EXIT_SUCCESS)</span><dd>Successful program execution. 
-<br><dt><span class="samp">1 (EXIT_FAILURE)</span><dd>The operation failed or the command syntax was not valid. 
+<dt>`<samp><span class="samp">0 (EXIT_SUCCESS)</span></samp>'<dd>Successful program execution. 
+<br><dt>`<samp><span class="samp">1 (EXIT_FAILURE)</span></samp>'<dd>The operation failed or the command syntax was not valid. 
 </dl>
 
 </body></html>

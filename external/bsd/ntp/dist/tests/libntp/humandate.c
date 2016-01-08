@@ -1,5 +1,3 @@
-/*	$NetBSD: humandate.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
-
 #include "config.h"
 
 #include "ntp_calendar.h"
@@ -7,8 +5,18 @@
 
 #include "unity.h"
 
+void setUp(void);
 void test_RegularTime(void);
 void test_CurrentTime(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void
@@ -19,11 +27,13 @@ test_RegularTime(void)
 	struct tm* tm;
 
 	tm = localtime(&sample);
-	TEST_ASSERT_TRUE(time != NULL);
+	TEST_ASSERT_TRUE(tm != NULL);
 
 	snprintf(expected, 15, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
 	TEST_ASSERT_EQUAL_STRING(expected, humantime(sample));
+
+	return;
 }
 
 void
@@ -36,9 +46,11 @@ test_CurrentTime(void)
 	time(&sample);
 
 	tm = localtime(&sample);
-	TEST_ASSERT_TRUE(time != NULL);
+	TEST_ASSERT_TRUE(tm != NULL);
 
 	snprintf(expected, 15, "%02d:%02d:%02d", tm->tm_hour, tm->tm_min, tm->tm_sec);
 
 	TEST_ASSERT_EQUAL_STRING(expected, humantime(sample));
+
+	return;
 }

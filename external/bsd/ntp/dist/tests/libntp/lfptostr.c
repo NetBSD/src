@@ -1,5 +1,3 @@
-/*	$NetBSD: lfptostr.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
-
 /* 
  * This file contains test for both mfptoa and mfptoms (which uses dolfptoa),
  * since all these functions are very similar. It also tests ulfptoa, which is
@@ -22,6 +20,7 @@ static const int HALF_PROMILLE_UP = 2147484; /* slightly more than 0.0005 */
 static const int HALF_PROMILLE_DOWN = 2147483; /* slightly less than 0.0005 */
 
 
+void setUp(void);
 void test_PositiveInteger(void);
 void test_NegativeInteger(void);
 void test_PositiveIntegerWithFraction(void);
@@ -34,6 +33,14 @@ void test_MillisecondsRoundingUp(void);
 void test_MillisecondsRoundingDown(void);
 void test_UnsignedInteger(void);
 
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void

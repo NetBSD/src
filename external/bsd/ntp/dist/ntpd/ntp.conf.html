@@ -3,7 +3,7 @@
 <title>NTP Configuration File User's Manual</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="NTP Configuration File User's Manual">
-<meta name="generator" content="makeinfo 4.7">
+<meta name="generator" content="makeinfo 4.8">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <meta http-equiv="Content-Style-Type" content="text/css">
@@ -14,18 +14,20 @@
   pre.smallformat  { font-family:inherit; font-size:smaller }
   pre.smallexample { font-size:smaller }
   pre.smalllisp    { font-size:smaller }
-  span.sc { font-variant:small-caps }
-  span.roman { font-family: serif; font-weight: normal; } 
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
 --></style>
 </head>
 <body>
 <h1 class="settitle">NTP Configuration File User's Manual</h1>
 <div class="node">
 <p><hr>
-<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002econf-Description">ntp.conf Description</a>,
+<a name="Top"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#ntp_002econf-Description">ntp.conf Description</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
-<br>
+
 </div>
 
 <h2 class="unnumbered">NTP's Configuration File User Manual</h2>
@@ -33,7 +35,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 <p>This document describes the configuration file for the NTP Project's
 <code>ntpd</code> program.
 
-  <p>This document applies to version 4.2.8p4 of <code>ntp.conf</code>.
+  <p>This document applies to version 4.2.8p5 of <code>ntp.conf</code>.
 
   <div class="shortcontents">
 <h2>Short Contents</h2>
@@ -49,9 +51,11 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
 
 <div class="node">
 <p><hr>
-<a name="ntp_002econf-Description"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#Top">Top</a>,
+<a name="ntp.conf-Description"></a>
+<a name="ntp_002econf-Description"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#Top">Top</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
-<br>
+
 </div>
 
 <!-- node-name,  next,  previous,  up -->
@@ -62,8 +66,10 @@ by default <code>ntp.conf</code>.
 
 <div class="node">
 <p><hr>
+<a name="ntp.conf-Notes"></a>
 <a name="ntp_002econf-Notes"></a>
-<br>
+
+
 </div>
 
 <h3 class="section">Notes about ntp.conf</h3>
@@ -77,7 +83,7 @@ configuration file is read at initial startup by the
 daemon in order to specify the synchronization sources,
 modes and other related information. 
 Usually, it is installed in the
-<span class="file">/etc</span>
+<samp><span class="file">/etc</span></samp>
 directory,
 but could be installed elsewhere
 (see the daemon's
@@ -106,7 +112,7 @@ The
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>)
+<samp><span class="file">/usr/share/doc/ntp</span></samp>)
 contains an extended discussion of these options. 
 In addition to the discussion of general
 <a href="#Configuration-Options">Configuration Options</a>,
@@ -135,7 +141,8 @@ commands.
 <div class="node">
 <p><hr>
 <a name="Configuration-Support"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">Configuration Support</h4>
@@ -200,7 +207,7 @@ Additional information on association behavior can be found in the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>).
+<samp><span class="file">/usr/share/doc/ntp</span></samp>).
      <dl>
 <dt><code>pool</code><dd>For type s addresses, this command mobilizes a persistent
 client mode association with a number of remote servers. 
@@ -344,7 +351,7 @@ See the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>)
+<samp><span class="file">/usr/share/doc/ntp</span></samp>)
 for further information. 
 <br><dt><code>ttl</code> <kbd>ttl</kbd><dd>This option is used only with broadcast server and manycast
 client modes. 
@@ -420,7 +427,8 @@ is 5.
 <div class="node">
 <p><hr>
 <a name="Authentication-Support"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">Authentication Support</h4>
@@ -570,7 +578,7 @@ authenticate NTP packets.
 Keys and
 related information are specified in a key
 file, usually called
-<span class="file">ntp.keys</span>,
+<samp><span class="file">ntp.keys</span></samp>,
 which must be distributed and stored using
 secure means beyond the scope of the NTP protocol itself. 
 Besides the keys used
@@ -867,35 +875,35 @@ location of a file is relative to the keys directory specified
 in the
 <code>keysdir</code>
 command or default
-<span class="file">/usr/local/etc</span>. 
+<samp><span class="file">/usr/local/etc</span></samp>. 
 Following are the subcommands:
           <dl>
 <dt><code>cert</code> <kbd>file</kbd><dd>Specifies the location of the required host public certificate file. 
 This overrides the link
-<span class="file">ntpkey_cert_</span><kbd>hostname</kbd>
+<samp><span class="file">ntpkey_cert_</span></samp><kbd>hostname</kbd>
 in the keys directory. 
 <br><dt><code>gqpar</code> <kbd>file</kbd><dd>Specifies the location of the optional GQ parameters file. 
 This
 overrides the link
-<span class="file">ntpkey_gq_</span><kbd>hostname</kbd>
+<samp><span class="file">ntpkey_gq_</span></samp><kbd>hostname</kbd>
 in the keys directory. 
 <br><dt><code>host</code> <kbd>file</kbd><dd>Specifies the location of the required host key file. 
 This overrides
 the link
-<span class="file">ntpkey_key_</span><kbd>hostname</kbd>
+<samp><span class="file">ntpkey_key_</span></samp><kbd>hostname</kbd>
 in the keys directory. 
 <br><dt><code>iffpar</code> <kbd>file</kbd><dd>Specifies the location of the optional IFF parameters file.This
 overrides the link
-<span class="file">ntpkey_iff_</span><kbd>hostname</kbd>
+<samp><span class="file">ntpkey_iff_</span></samp><kbd>hostname</kbd>
 in the keys directory. 
 <br><dt><code>leap</code> <kbd>file</kbd><dd>Specifies the location of the optional leapsecond file. 
 This overrides the link
-<span class="file">ntpkey_leap</span>
+<samp><span class="file">ntpkey_leap</span></samp>
 in the keys directory. 
 <br><dt><code>mvpar</code> <kbd>file</kbd><dd>Specifies the location of the optional MV parameters file. 
 This
 overrides the link
-<span class="file">ntpkey_mv_</span><kbd>hostname</kbd>
+<samp><span class="file">ntpkey_mv_</span></samp><kbd>hostname</kbd>
 in the keys directory. 
 <br><dt><code>pw</code> <kbd>password</kbd><dd>Specifies the password to decrypt files containing private keys and
 identity parameters. 
@@ -907,7 +915,7 @@ The defaults are described in the main text above.
 <br><dt><code>sign</code> <kbd>file</kbd><dd>Specifies the location of the optional sign key file. 
 This overrides
 the link
-<span class="file">ntpkey_sign_</span><kbd>hostname</kbd>
+<samp><span class="file">ntpkey_sign_</span></samp><kbd>hostname</kbd>
 in the keys directory. 
 If this file is
 not found, the host key is also the sign key. 
@@ -925,7 +933,7 @@ command line option.
 <br><dt><code>keysdir</code> <kbd>path</kbd><dd>This command specifies the default directory path for
 cryptographic keys, parameters and certificates. 
 The default is
-<span class="file">/usr/local/etc/</span>. 
+<samp><span class="file">/usr/local/etc/</span></samp>. 
 <br><dt><code>requestkey</code> <kbd>key</kbd><dd>Specifies the key identifier to use with the
 <code>ntpdc(1ntpdcmdoc)</code>
 utility program, which uses a
@@ -1005,7 +1013,8 @@ The identity key is missing, corrupt or bogus.
   <div class="node">
 <p><hr>
 <a name="Monitoring-Support"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">Monitoring Support</h4>
@@ -1021,7 +1030,7 @@ for a listing and example of each type of statistics currently
 supported. 
 Statistic files are managed using file generation sets
 and scripts in the
-<span class="file">./scripts</span>
+<samp><span class="file">./scripts</span></samp>
 directory of this distribution. 
 Using
 these facilities and
@@ -1224,7 +1233,7 @@ the file argument to the
 <kbd>filegen</kbd>
 statement. 
 No
-<span class="file">..</span>
+<samp><span class="file">..</span></samp>
 elements are
 allowed in this component to prevent filenames referring to
 parts outside the filesystem hierarchy denoted by
@@ -1332,7 +1341,8 @@ allows the current file to be accessed by a constant name.
 <div class="node">
 <p><hr>
 <a name="Access-Control-Support"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">Access Control Support</h4>
@@ -1354,7 +1364,7 @@ Additional information and examples can be found in the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>).
+<samp><span class="file">/usr/share/doc/ntp</span></samp>).
 
   <p>The restriction facility was implemented in conformance
 with the access policies for the original NSFnet backbone
@@ -1576,7 +1586,8 @@ NTP server is unrestricted).
 <div class="node">
 <p><hr>
 <a name="Automatic-NTP-Configuration-Options"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">Automatic NTP Configuration Options</h4>
@@ -1952,7 +1963,8 @@ multiples of 32 starting at 31.
 <div class="node">
 <p><hr>
 <a name="Reference-Clock-Support"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">Reference Clock Support</h4>
@@ -1966,7 +1978,7 @@ be found in the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>). 
+<samp><span class="file">/usr/share/doc/ntp</span></samp>). 
 Additional information can be found in the pages linked
 there, including the
 "Debugging Hints for Reference Clock Drivers"
@@ -1975,14 +1987,14 @@ and
 pages
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>). 
+<samp><span class="file">/usr/share/doc/ntp</span></samp>). 
 In addition, support for a PPS
 signal is available as described in the
 "Pulse-per-second (PPS) Signal Interfacing"
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>). 
+<samp><span class="file">/usr/share/doc/ntp</span></samp>). 
 Many
 drivers support special line discipline/streams modules which can
 significantly improve the accuracy using the driver. 
@@ -1992,7 +2004,7 @@ described in the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>).
+<samp><span class="file">/usr/share/doc/ntp</span></samp>).
 
   <p>A reference clock will generally (though not always) be a radio
 timecode receiver which is synchronized to a source of standard
@@ -2058,7 +2070,7 @@ information on this option can be found in the
 "Mitigation Rules and the prefer Keyword"
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>)
+<samp><span class="file">/usr/share/doc/ntp</span></samp>)
 page. 
 The
 <code>minpoll</code>
@@ -2128,7 +2140,7 @@ See the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>)
+<samp><span class="file">/usr/share/doc/ntp</span></samp>)
 for further information. 
 <br><dt><code>mode</code> <kbd>int</kbd><dd>Specifies a mode number which is interpreted in a
 device-specific fashion. 
@@ -2190,7 +2202,7 @@ page and operates as described in the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>). 
+<samp><span class="file">/usr/share/doc/ntp</span></samp>). 
 <br><dt><code>time2</code> <kbd>secs</kbd><dd>Specifies a fixed-point decimal number in seconds, which is
 interpreted in a driver-dependent way. 
 See the descriptions of
@@ -2199,7 +2211,7 @@ specific drivers in the
 page
 (available as part of the HTML documentation
 provided in
-<span class="file">/usr/share/doc/ntp</span>). 
+<samp><span class="file">/usr/share/doc/ntp</span></samp>). 
 <br><dt><code>stratum</code> <kbd>int</kbd><dd>Specifies the stratum number assigned to the driver, an integer
 between 0 and 15. 
 This number overrides the default stratum number
@@ -2237,7 +2249,8 @@ command can be found in
 <div class="node">
 <p><hr>
 <a name="Miscellaneous-Options"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">Miscellaneous Options</h4>
@@ -2599,23 +2612,27 @@ This software is released under the NTP license, &lt;http://ntp.org/license&gt;.
 
 <div class="node">
 <p><hr>
+<a name="ntp.conf-Files"></a>
 <a name="ntp_002econf-Files"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">ntp.conf Files</h4>
 
      <dl>
-<dt><span class="file">/etc/ntp.conf</span><dd>the default name of the configuration file
-<br><dt><span class="file">ntp.keys</span><dd>private MD5 keys
-<br><dt><span class="file">ntpkey</span><dd>RSA private key
-<br><dt><span class="file">ntpkey_</span><kbd>host</kbd><dd>RSA public key
-<br><dt><span class="file">ntp_dh</span><dd>Diffie-Hellman agreement parameters
+<dt><samp><span class="file">/etc/ntp.conf</span></samp><dd>the default name of the configuration file
+<br><dt><samp><span class="file">ntp.keys</span></samp><dd>private MD5 keys
+<br><dt><samp><span class="file">ntpkey</span></samp><dd>RSA private key
+<br><dt><samp><span class="file">ntpkey_</span></samp><kbd>host</kbd><dd>RSA public key
+<br><dt><samp><span class="file">ntp_dh</span></samp><dd>Diffie-Hellman agreement parameters
 </dl>
 <div class="node">
 <p><hr>
+<a name="ntp.conf-See-Also"></a>
 <a name="ntp_002econf-See-Also"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">ntp.conf See Also</h4>
@@ -2629,15 +2646,17 @@ comprehensive documentation is available on the world wide web
 at
 <code>http://www.ntp.org/</code>. 
 A snapshot of this documentation is available in HTML format in
-<span class="file">/usr/share/doc/ntp</span>. 
+<samp><span class="file">/usr/share/doc/ntp</span></samp>. 
 <br>
 
   <p><br>
 David L. Mills, <em>Network Time Protocol (Version 4)</em>, RFC5905
 <div class="node">
 <p><hr>
+<a name="ntp.conf-Bugs"></a>
 <a name="ntp_002econf-Bugs"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">ntp.conf Bugs</h4>
@@ -2647,15 +2666,17 @@ ridiculous and even hilarious options and modes may not be
 detected.
 
   <p>The
-<span class="file">ntpkey_</span><kbd>host</kbd>
+<samp><span class="file">ntpkey_</span></samp><kbd>host</kbd>
 files are really digital
 certificates. 
 These should be obtained via secure directory
 services when they become universally available. 
 <div class="node">
 <p><hr>
+<a name="ntp.conf-Notes"></a>
 <a name="ntp_002econf-Notes"></a>
-<br>
+
+
 </div>
 
 <h4 class="subsection">ntp.conf Notes</h4>

@@ -3,7 +3,7 @@
 <title>Sntp User's Manual</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="Sntp User's Manual">
-<meta name="generator" content="makeinfo 4.7">
+<meta name="generator" content="makeinfo 4.8">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <meta http-equiv="Content-Style-Type" content="text/css">
@@ -14,18 +14,20 @@
   pre.smallformat  { font-family:inherit; font-size:smaller }
   pre.smallexample { font-size:smaller }
   pre.smalllisp    { font-size:smaller }
-  span.sc { font-variant:small-caps }
-  span.roman { font-family: serif; font-weight: normal; } 
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
 --></style>
 </head>
 <body>
 <h1 class="settitle">Sntp User's Manual</h1>
 <div class="node">
 <p><hr>
-<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Description">sntp Description</a>,
+<a name="Top"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Description">sntp Description</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
-<br>
+
 </div>
 
 <h2 class="unnumbered">Simple Network Time Protocol User Manual</h2>
@@ -36,7 +38,7 @@ display the time offset of the system clock relative to the server
 clock.  Run as root, it can correct the system clock to this offset as
 well.  It can be run as an interactive command or from a cron job.
 
-  <p>This document applies to version 4.2.8p4 of <code>sntp</code>.
+  <p>This document applies to version 4.2.8p5 of <code>sntp</code>.
 
   <p>The program implements the SNTP protocol as defined by RFC 5905, the NTPv4
 IETF specification.
@@ -57,7 +59,8 @@ IETF specification.
 <div class="node">
 <p><hr>
 <a name="sntp-Description"></a>
-<br>
+
+
 </div>
 
 <!-- node-name,  next,  previous,  up -->
@@ -78,7 +81,8 @@ error bound of the system clock relative to the server clock.
 <div class="node">
 <p><hr>
 <a name="sntp-Invocation"></a>
-<br>
+
+
 </div>
 
 <h3 class="section">Invoking sntp</h3>
@@ -135,7 +139,7 @@ using the <code>agtexi-cmd</code> template and the option descriptions for the <
 This software is released under the NTP license, &lt;http://ntp.org/license&gt;.
 
 <ul class="menu">
-<li><a accesskey="1" href="#sntp-usage">sntp usage</a>:                   sntp help/usage (<span class="option">--help</span>)
+<li><a accesskey="1" href="#sntp-usage">sntp usage</a>:                   sntp help/usage (<samp><span class="option">--help</span></samp>)
 <li><a accesskey="2" href="#sntp-ipv4">sntp ipv4</a>:                    ipv4 option (-4)
 <li><a accesskey="3" href="#sntp-ipv6">sntp ipv6</a>:                    ipv6 option (-6)
 <li><a accesskey="4" href="#sntp-authentication">sntp authentication</a>:          authentication option (-a)
@@ -158,22 +162,23 @@ This software is released under the NTP license, &lt;http://ntp.org/license&gt;.
 
 <div class="node">
 <p><hr>
-<a name="sntp-usage"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-ipv4">sntp ipv4</a>,
+<a name="sntp-usage"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-ipv4">sntp ipv4</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
-<h4 class="subsection">sntp help/usage (<span class="option">--help</span>)</h4>
+<h4 class="subsection">sntp help/usage (<samp><span class="option">--help</span></samp>)</h4>
 
 <p><a name="index-sntp-help-3"></a>
 This is the automatically generated usage text for sntp.
 
   <p>The text printed is the same whether selected with the <code>help</code> option
-(<span class="option">--help</span>) or the <code>more-help</code> option (<span class="option">--more-help</span>).  <code>more-help</code> will print
+(<samp><span class="option">--help</span></samp>) or the <code>more-help</code> option (<samp><span class="option">--more-help</span></samp>).  <code>more-help</code> will print
 the usage text by passing it through a pager program. 
 <code>more-help</code> is disabled on platforms without a working
 <code>fork(2)</code> function.  The <code>PAGER</code> environment variable is
-used to select the program, defaulting to <span class="file">more</span>.  Both will exit
+used to select the program, defaulting to <samp><span class="file">more</span></samp>.  Both will exit
 with a status code of 0.
 
 <pre class="example">sntp - standard Simple Network Time Protocol client program - Ver. 4.2.8p4
@@ -231,10 +236,11 @@ Please send bug reports to:  &lt;http://bugs.ntp.org, bugs@ntp.org&gt;
 </pre>
   <div class="node">
 <p><hr>
-<a name="sntp-ipv4"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-ipv6">sntp ipv6</a>,
+<a name="sntp-ipv4"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-ipv6">sntp ipv6</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-usage">sntp usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">ipv4 option (-4)</h4>
@@ -252,10 +258,11 @@ ipv6.
 to the IPv4 namespace. 
 <div class="node">
 <p><hr>
-<a name="sntp-ipv6"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-authentication">sntp authentication</a>,
+<a name="sntp-ipv6"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-authentication">sntp authentication</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-ipv4">sntp ipv4</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">ipv6 option (-6)</h4>
@@ -273,34 +280,36 @@ ipv4.
 to the IPv6 namespace. 
 <div class="node">
 <p><hr>
-<a name="sntp-authentication"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-broadcast">sntp broadcast</a>,
+<a name="sntp-authentication"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-broadcast">sntp broadcast</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-ipv6">sntp ipv6</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">authentication option (-a)</h4>
 
 <p><a name="index-sntp_002dauthentication-6"></a>
 This is the &ldquo;enable authentication with the key <var>auth-keynumber</var>&rdquo; option. 
-This option takes a number argument <span class="file">auth-keynumber</span>. 
+This option takes a number argument <samp><span class="file">auth-keynumber</span></samp>. 
 Enable authentication using the key specified in this option's
-argument.  The argument of this option is the <span class="option">keyid</span>, a
-number specified in the <span class="option">keyfile</span> as this key's identifier. 
-See the <span class="option">keyfile</span> option (<span class="option">-k</span>) for more details. 
+argument.  The argument of this option is the <samp><span class="option">keyid</span></samp>, a
+number specified in the <samp><span class="option">keyfile</span></samp> as this key's identifier. 
+See the <samp><span class="option">keyfile</span></samp> option (<samp><span class="option">-k</span></samp>) for more details. 
 <div class="node">
 <p><hr>
-<a name="sntp-broadcast"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-concurrent">sntp concurrent</a>,
+<a name="sntp-broadcast"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-concurrent">sntp concurrent</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-authentication">sntp authentication</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">broadcast option (-b)</h4>
 
 <p><a name="index-sntp_002dbroadcast-7"></a>
 This is the &ldquo;listen to the address specified for broadcast time sync&rdquo; option. 
-This option takes a string argument <span class="file">broadcast-address</span>.
+This option takes a string argument <samp><span class="file">broadcast-address</span></samp>.
 
 <p class="noindent">This option has some usage constraints.  It:
      <ul>
@@ -309,20 +318,21 @@ This option takes a string argument <span class="file">broadcast-address</span>.
 
   <p>If specified <code>sntp</code> will listen to the specified address
 for NTP broadcasts.  The default maximum wait time
-can (and probably should) be modified with <span class="option">-t</span>. 
+can (and probably should) be modified with <samp><span class="option">-t</span></samp>. 
 <div class="node">
 <p><hr>
-<a name="sntp-concurrent"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-gap">sntp gap</a>,
+<a name="sntp-concurrent"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-gap">sntp gap</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-broadcast">sntp broadcast</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">concurrent option (-c)</h4>
 
 <p><a name="index-sntp_002dconcurrent-8"></a>
 This is the &ldquo;concurrently query all ips returned for host-name&rdquo; option. 
-This option takes a string argument <span class="file">host-name</span>.
+This option takes a string argument <samp><span class="file">host-name</span></samp>.
 
 <p class="noindent">This option has some usage constraints.  It:
      <ul>
@@ -335,80 +345,85 @@ as part of a DNS lookup are assumed to be for a single instance of
 <code>ntpd</code>, and therefore <code>sntp</code> will send queries to these IPs
 one after another, with a 2-second gap in between each query.
 
-  <p>The <span class="option">-c</span> or <span class="option">--concurrent</span> flag says that any IPs
+  <p>The <samp><span class="option">-c</span></samp> or <samp><span class="option">--concurrent</span></samp> flag says that any IPs
 returned for the DNS lookup of the supplied host-name are on
 different machines, so we can send concurrent queries. 
 <div class="node">
 <p><hr>
-<a name="sntp-gap"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-kod">sntp kod</a>,
+<a name="sntp-gap"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-kod">sntp kod</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-concurrent">sntp concurrent</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">gap option (-g)</h4>
 
 <p><a name="index-sntp_002dgap-9"></a>
 This is the &ldquo;the gap (in milliseconds) between time requests&rdquo; option. 
-This option takes a number argument <span class="file">milliseconds</span>. 
+This option takes a number argument <samp><span class="file">milliseconds</span></samp>. 
 Since we're only going to use the first valid response we get and
 there is benefit to specifying a good number of servers to query,
 separate the queries we send out by the specified number of
 milliseconds. 
 <div class="node">
 <p><hr>
-<a name="sntp-kod"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-keyfile">sntp keyfile</a>,
+<a name="sntp-kod"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-keyfile">sntp keyfile</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-gap">sntp gap</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">kod option (-K)</h4>
 
 <p><a name="index-sntp_002dkod-10"></a>
 This is the &ldquo;kod history filename&rdquo; option. 
-This option takes a file argument <span class="file">file-name</span>. 
+This option takes a file argument <samp><span class="file">file-name</span></samp>. 
 Specifies the filename to be used for the persistent history of KoD
 responses received from servers.  If the file does not exist, a
 warning message will be displayed.  The file will not be created. 
 <div class="node">
 <p><hr>
-<a name="sntp-keyfile"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-logfile">sntp logfile</a>,
+<a name="sntp-keyfile"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-logfile">sntp logfile</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-kod">sntp kod</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">keyfile option (-k)</h4>
 
 <p><a name="index-sntp_002dkeyfile-11"></a>
-This is the &ldquo;look in this file for the key specified with <span class="option">-a</span>&rdquo; option. 
-This option takes a file argument <span class="file">file-name</span>. 
+This is the &ldquo;look in this file for the key specified with <samp><span class="option">-a</span></samp>&rdquo; option. 
+This option takes a file argument <samp><span class="file">file-name</span></samp>. 
 This option specifies the keyfile. 
-<code>sntp</code> will search for the key specified with <span class="option">-a</span>
-<span class="file">keyno</span> in this file.  See <span class="command">ntp.keys(5)</span> for more
+<code>sntp</code> will search for the key specified with <samp><span class="option">-a</span></samp>
+<samp><span class="file">keyno</span></samp> in this file.  See <samp><span class="command">ntp.keys(5)</span></samp> for more
 information. 
 <div class="node">
 <p><hr>
-<a name="sntp-logfile"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-steplimit">sntp steplimit</a>,
+<a name="sntp-logfile"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-steplimit">sntp steplimit</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-keyfile">sntp keyfile</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">logfile option (-l)</h4>
 
 <p><a name="index-sntp_002dlogfile-12"></a>
 This is the &ldquo;log to specified logfile&rdquo; option. 
-This option takes a file argument <span class="file">file-name</span>. 
+This option takes a file argument <samp><span class="file">file-name</span></samp>. 
 This option causes the client to write log messages to the specified
-<span class="file">logfile</span>. 
+<samp><span class="file">logfile</span></samp>. 
 <div class="node">
 <p><hr>
-<a name="sntp-steplimit"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-ntpversion">sntp ntpversion</a>,
+<a name="sntp-steplimit"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-ntpversion">sntp ntpversion</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-logfile">sntp logfile</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">steplimit option (-M)</h4>
@@ -416,17 +431,18 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
 <p><a name="index-sntp_002dsteplimit-13"></a>
 This is the &ldquo;adjustments less than <var>steplimit</var> msec will be slewed&rdquo; option. 
 This option takes a number argument. 
-If the time adjustment is less than <span class="file">steplimit</span> milliseconds,
-slew the amount using <span class="command">adjtime(2)</span>.  Otherwise, step the
-correction using <span class="command">settimeofday(2)</span>.  The default value is 0,
+If the time adjustment is less than <samp><span class="file">steplimit</span></samp> milliseconds,
+slew the amount using <samp><span class="command">adjtime(2)</span></samp>.  Otherwise, step the
+correction using <samp><span class="command">settimeofday(2)</span></samp>.  The default value is 0,
 which means all adjustments will be stepped.  This is a feature, as
 different situations demand different values. 
 <div class="node">
 <p><hr>
-<a name="sntp-ntpversion"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-usereservedport">sntp usereservedport</a>,
+<a name="sntp-ntpversion"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-usereservedport">sntp usereservedport</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-steplimit">sntp steplimit</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">ntpversion option (-o)</h4>
@@ -435,13 +451,14 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
 This is the &ldquo;send <var>int</var> as our ntp protocol version&rdquo; option. 
 This option takes a number argument. 
 When sending requests to a remote server, tell them we are running
-NTP protocol version <span class="file">ntpversion</span> . 
+NTP protocol version <samp><span class="file">ntpversion</span></samp> . 
 <div class="node">
 <p><hr>
-<a name="sntp-usereservedport"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-timeout">sntp timeout</a>,
+<a name="sntp-usereservedport"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-timeout">sntp timeout</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-ntpversion">sntp ntpversion</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">usereservedport option (-r)</h4>
@@ -452,17 +469,18 @@ Use port 123, which is reserved for NTP, for our network
 communications. 
 <div class="node">
 <p><hr>
-<a name="sntp-timeout"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-wait">sntp wait</a>,
+<a name="sntp-timeout"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-wait">sntp wait</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-usereservedport">sntp usereservedport</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">timeout option (-t)</h4>
 
 <p><a name="index-sntp_002dtimeout-16"></a>
 This is the &ldquo;the number of seconds to wait for responses&rdquo; option. 
-This option takes a number argument <span class="file">seconds</span>. 
+This option takes a number argument <samp><span class="file">seconds</span></samp>. 
 When waiting for a reply, <code>sntp</code> will wait the number
 of seconds specified before giving up.  The default should be
 more than enough for a unicast response.  If <code>sntp</code> is
@@ -470,10 +488,11 @@ only waiting for a broadcast response a longer timeout is
 likely needed. 
 <div class="node">
 <p><hr>
-<a name="sntp-wait"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-config">sntp config</a>,
+<a name="sntp-wait"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-config">sntp config</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-timeout">sntp timeout</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">wait option</h4>
@@ -491,10 +510,11 @@ This is the &ldquo;wait for pending replies (if not setting the time)&rdquo; opt
 
 <div class="node">
 <p><hr>
-<a name="sntp-config"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-exit-status">sntp exit status</a>,
+<a name="sntp-config"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-exit-status">sntp exit status</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-wait">sntp wait</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">presetting/configuring sntp</h4>
@@ -512,9 +532,9 @@ values are treated like option arguments.
 <li>$PWD
 </ul>
   The environment variables <code>HOME</code>, and <code>PWD</code>
-are expanded and replaced when <span class="file">sntp</span> runs. 
+are expanded and replaced when <samp><span class="file">sntp</span></samp> runs. 
 For any of these that are plain files, they are simply processed. 
-For any that are directories, then a file named <span class="file">.ntprc</span> is searched for
+For any that are directories, then a file named <samp><span class="file">.ntprc</span></samp> is searched for
 within that directory and processed.
 
   <p>Configuration files may be in a wide variety of formats. 
@@ -556,44 +576,47 @@ detail to provide.  The default is to print just the version.  The licensing inf
 Only the first letter of the argument is examined:
 
      <dl>
-<dt><span class="samp">version</span><dd>Only print the version.  This is the default. 
-<br><dt><span class="samp">copyright</span><dd>Name the copyright usage licensing terms. 
-<br><dt><span class="samp">verbose</span><dd>Print the full copyright usage licensing terms. 
+<dt>`<samp><span class="samp">version</span></samp>'<dd>Only print the version.  This is the default. 
+<br><dt>`<samp><span class="samp">copyright</span></samp>'<dd>Name the copyright usage licensing terms. 
+<br><dt>`<samp><span class="samp">verbose</span></samp>'<dd>Print the full copyright usage licensing terms. 
 </dl>
 
 <div class="node">
 <p><hr>
-<a name="sntp-exit-status"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Usage">sntp Usage</a>,
+<a name="sntp-exit-status"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Usage">sntp Usage</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-config">sntp config</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">sntp exit status</h4>
 
 <p>One of the following exit values will be returned:
      <dl>
-<dt><span class="samp">0 (EXIT_SUCCESS)</span><dd>Successful program execution. 
-<br><dt><span class="samp">1 (EXIT_FAILURE)</span><dd>The operation failed or the command syntax was not valid. 
-<br><dt><span class="samp">66 (EX_NOINPUT)</span><dd>A specified configuration file could not be loaded. 
-<br><dt><span class="samp">70 (EX_SOFTWARE)</span><dd>libopts had an internal operational error.  Please report
+<dt>`<samp><span class="samp">0 (EXIT_SUCCESS)</span></samp>'<dd>Successful program execution. 
+<br><dt>`<samp><span class="samp">1 (EXIT_FAILURE)</span></samp>'<dd>The operation failed or the command syntax was not valid. 
+<br><dt>`<samp><span class="samp">66 (EX_NOINPUT)</span></samp>'<dd>A specified configuration file could not be loaded. 
+<br><dt>`<samp><span class="samp">70 (EX_SOFTWARE)</span></samp>'<dd>libopts had an internal operational error.  Please report
 it to autogen-users@lists.sourceforge.net.  Thank you. 
 </dl>
   <div class="node">
 <p><hr>
-<a name="sntp-Usage"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Authors">sntp Authors</a>,
+<a name="sntp-Usage"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#sntp-Authors">sntp Authors</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-exit-status">sntp exit status</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">sntp Usage</h4>
 
 <div class="node">
 <p><hr>
-<a name="sntp-Authors"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-Usage">sntp Usage</a>,
+<a name="sntp-Authors"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#sntp-Usage">sntp Usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">sntp Authors</h4>
@@ -601,7 +624,8 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#sntp-Invocation">sntp Invocation</a>
 <div class="node">
 <p><hr>
 <a name="Usage"></a>
-<br>
+
+
 </div>
 
 <!-- node-name,  next,  previous,  up -->

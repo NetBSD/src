@@ -1,3 +1,1134 @@
+ChangeSet@1.3620, 2016-01-07 09:33:11+00:00, stenn@psp-at1.ntp.org
+  typo in ntp_proto.c - leap smear.  Reported by Martin Burnicki
+
+  ntpd/ntp_proto.c@1.371 +1 -1
+    typo in ntp_proto.c - leap smear.  Reported by Martin Burnicki
+
+ChangeSet@1.3619, 2016-01-07 06:33:08+00:00, stenn@psp-at1.ntp.org
+  Update scripts/calc_tickadj/Makefile.am.  Harlan Stenn.
+
+  ChangeLog@1.1790 +1 -0
+    Update scripts/calc_tickadj/Makefile.am.  Harlan Stenn.
+
+  scripts/calc_tickadj/Makefile.am@1.11 +2 -0
+    Update scripts/calc_tickadj/Makefile.am.  Harlan Stenn.
+
+ChangeSet@1.3616.1.1, 2016-01-05 10:57:45+00:00, stenn@psp-at1.ntp.org
+  Bug 2952 fixes
+
+  ChangeLog@1.1787.1.1 +1 -0
+    Bug 2952 fixes
+
+  ntpd/ntp_proto.c@1.370 +165 -152
+    Bug 2952 fixes
+
+ChangeSet@1.3617, 2016-01-05 09:56:31+00:00, stenn@psp-at1.ntp.org
+  ntp-4.2.8p5 prep
+
+  ChangeLog@1.1788 +2 -1
+    ntp-4.2.8p5 prep
+
+  NEWS@1.151 +104 -3
+    ntp-4.2.8p5 prep
+
+ChangeSet@1.3616, 2015-12-06 11:20:02+00:00, stenn@psp-deb1.ntp.org
+  Quiet a warning from clang.  Harlan Stenn.
+
+  ChangeLog@1.1787 +1 -0
+    Quiet a warning from clang.  Harlan Stenn.
+
+  libntp/ntp_rfc2553.c@1.50 +3 -2
+    Quiet a warning from clang.  Harlan Stenn.
+
+ChangeSet@1.3615, 2015-12-05 10:41:51+00:00, stenn@psp-at1.ntp.org
+  CID 1341677: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  ChangeLog@1.1786 +1 -0
+    CID 1341677: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  sntp/tests/keyFile.c@1.12 +5 -2
+    CID 1341677: Nits in sntp/tests/keyFile.c.  HStenn.
+
+ChangeSet@1.3614, 2015-12-05 10:38:28+00:00, stenn@psp-at1.ntp.org
+  CID 1341678: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  ChangeLog@1.1785 +1 -0
+    CID 1341678: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  sntp/tests/keyFile.c@1.11 +5 -1
+    CID 1341678: Nits in sntp/tests/keyFile.c.  HStenn.
+
+ChangeSet@1.3613, 2015-12-05 10:31:39+00:00, stenn@psp-at1.ntp.org
+  CID 1341679: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  ChangeLog@1.1784 +1 -0
+    CID 1341679: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  sntp/tests/keyFile.c@1.10 +4 -2
+    CID 1341679: Nits in sntp/tests/keyFile.c.  HStenn.
+
+ChangeSet@1.3612, 2015-12-05 10:27:40+00:00, stenn@psp-at1.ntp.org
+  CID 1341680: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  ChangeLog@1.1783 +1 -0
+    CID 1341680: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  sntp/tests/keyFile.c@1.9 +4 -2
+    CID 1341680: Nits in sntp/tests/keyFile.c.  HStenn.
+
+ChangeSet@1.3611, 2015-12-05 10:21:07+00:00, stenn@psp-at1.ntp.org
+  CID 1341681: Nits in sntp/tests/keyFile.c.  HStenn.
+
+  ChangeLog@1.1782 +1 -0
+    CID 1341681: Nits in sntp/tests/keyFile.c.  HStenn.
+
+ChangeSet@1.3610, 2015-12-05 10:18:23+00:00, stenn@psp-at1.ntp.org
+  sntp/tests/keyFile.c lint
+
+  sntp/tests/keyFile.c@1.8 +4 -2
+    sntp/tests/keyFile.c lint
+
+ChangeSet@1.3609, 2015-12-05 10:01:47+00:00, stenn@psp-at1.ntp.org
+  CID 1341682: Nit in libntp/authreadkeys.c.  HStenn.
+
+  ChangeLog@1.1781 +1 -0
+    CID 1341682: Nit in libntp/authreadkeys.c.  HStenn.
+
+  libntp/authreadkeys.c@1.24 +3 -4
+    CID 1341682: Nit in libntp/authreadkeys.c.  HStenn.
+
+ChangeSet@1.3608, 2015-12-05 09:40:44+00:00, stenn@psp-at1.ntp.org
+  CID 1341684: Nit in tests/ntpd/t-ntp_signd.c.  HStenn.
+
+  ChangeLog@1.1780 +1 -0
+    CID 1341684: Nit in tests/ntpd/t-ntp_signd.c.  HStenn.
+
+  tests/ntpd/t-ntp_signd.c@1.15 +4 -0
+    CID 1341684: Nit in tests/ntpd/t-ntp_signd.c.  HStenn.
+
+ChangeSet@1.3607, 2015-12-03 12:07:30+00:00, stenn@psp-at1.ntp.org
+  Update some test runners
+
+  tests/libntp/run-sfptostr.c@1.7 +9 -8
+    update
+
+  tests/sandbox/run-uglydate.c@1.7 +2 -1
+    update
+
+ChangeSet@1.3606, 2015-12-03 03:28:15-08:00, cov-build@cov7.ntfo.org
+  Header cleanup in tests/libntp/sfptostr.c.  Harlan Stenn.
+
+  ChangeLog@1.1779 +1 -0
+    Header cleanup in tests/libntp/sfptostr.c.  Harlan Stenn.
+
+  tests/libntp/sfptostr.c@1.5 +1 -0
+    Header cleanup in tests/libntp/sfptostr.c.  Harlan Stenn.
+
+ChangeSet@1.3605, 2015-12-03 03:26:50-08:00, cov-build@cov7.ntfo.org
+  Header cleanup in tests/sandbox/uglydate.c.  Harlan Stenn.
+
+  ChangeLog@1.1778 +1 -0
+    Header cleanup in tests/sandbox/uglydate.c.  Harlan Stenn.
+
+  tests/sandbox/uglydate.c@1.6 +2 -1
+    Header cleanup in tests/sandbox/uglydate.c.  Harlan Stenn.
+
+ChangeSet@1.3604, 2015-12-03 02:16:02-08:00, cov-build@cov7.ntfo.org
+  CID 1341527: Quiet a CHECKED_RETURN in sntp/tests/t-log.c.  HStenn.
+
+  ChangeLog@1.1777 +1 -0
+    CID 1341527: Quiet a CHECKED_RETURN in sntp/tests/t-log.c.  HStenn.
+
+  sntp/tests/t-log.c@1.7 +1 -1
+    CID 1341527: Quiet a CHECKED_RETURN in sntp/tests/t-log.c.  HStenn.
+
+ChangeSet@1.3603, 2015-12-03 02:00:58-08:00, cov-build@cov7.ntfo.org
+  CID 1341533: Missing assertion in sntp/tests/t-log.c.  HStenn.
+
+  ChangeLog@1.1776 +1 -0
+    CID 1341533: Missing assertion in sntp/tests/t-log.c.  HStenn.
+
+  sntp/tests/t-log.c@1.6 +2 -0
+    CID 1341533: Missing assertion in sntp/tests/t-log.c.  HStenn.
+
+ChangeSet@1.3602, 2015-12-03 01:50:11-08:00, cov-build@cov7.ntfo.org
+  CID 134534-134537: Resource leaks in tests/ntpd/t-ntp_signd.c.  HStenn.
+
+  ChangeLog@1.1775 +4 -0
+    CID 134534-134537: Resource leaks in tests/ntpd/t-ntp_signd.c.  HStenn.
+
+  tests/ntpd/t-ntp_signd.c@1.14 +9 -0
+    CID 134534-134537: Resource leaks in tests/ntpd/t-ntp_signd.c.  HStenn.
+
+ChangeSet@1.3601, 2015-12-03 01:22:22-08:00, cov-build@cov7.ntfo.org
+  CID 1341538: Memory leak in tests/ntpd/ntp_prio_q.c:262.  HStenn.
+
+  ChangeLog@1.1774 +1 -0
+    CID 1341538: Memory leak in tests/ntpd/ntp_prio_q.c:262.  HStenn.
+
+  tests/ntpd/ntp_prio_q.c@1.3 +1 -0
+    CID 1341538: Memory leak in tests/ntpd/ntp_prio_q.c:262.  HStenn.
+
+ChangeSet@1.3597.4.1, 2015-11-30 06:03:47+01:00, jnperlin@hydra.localnet
+  [Bug 2829] Look at pipe_fds in ntpd.c (initial value issue)
+
+  ChangeLog@1.1770.4.1 +1 -0
+    [Bug 2829] Look at pipe_fds in ntpd.c
+
+  ntpd/ntpd.c@1.167 +3 -0
+    [Bug 2829] Look at pipe_fds in ntpd.c (initial value issue)
+
+ChangeSet@1.3597.3.1, 2015-11-29 13:03:58+01:00, jnperlin@hydra.localnet
+  [Bug 2887] stratum -1 config results as showing value 99
+   - fudge stratum only accepts values [0..16].
+
+  ChangeLog@1.1770.3.1 +2 -0
+    [Bug 2887] stratum -1 config results as showing value 99
+     - fudge stratum only accepts values [0..16].
+
+  ntpd/ntp_parser.c@1.100 +178 -171
+    [Bug 2887] stratum -1 config results as showing value 99
+     - fudge stratum only accepts values [0..16]. (file regenerated by bison & trimmed manually)
+
+  ntpd/ntp_parser.y@1.90 +8 -1
+    [Bug 2887] stratum -1 config results as showing value 99
+     - fudge stratum only accepts values [0..16], gives error otherwise
+
+ChangeSet@1.3597.2.1, 2015-11-28 22:59:39+01:00, jnperlin@hydra.localnet
+  [Bug 2944] errno is not preserved properly in ntpdate after sendto call.
+   - applied patch by Christos Zoulas.
+
+  ChangeLog@1.1770.2.1 +2 -0
+    [Bug 2944] errno is not preserved properly in ntpdate after sendto call.
+     - applied patch by Christos Zoulas.
+
+  libntp/socktohost.c@1.16 +10 -2
+    [Bug 2944] errno is not preserved properly in ntpdate after sendto call.
+     - save errno around calls to getnameinfo/getaddrinfo (patch by Christos Zoulas)
+
+ChangeSet@1.3597.1.4, 2015-11-28 19:09:53+01:00, jnperlin@hydra.localnet
+  Bug 2971 - ntpq bails on ^C: select fails: Interrupted system call
+   - changed stacked/nested handling of CTRL-C.
+
+  ChangeLog@1.1770.1.2 +2 -0
+    Bug 2971 - ntpq bails on ^C: select fails: Interrupted system call
+     - changed stacked/nested handling of CTRL-C.
+
+  ntpq/ntpq-subs.c@1.114 +11 -8
+    Bug 2971 - ntpq bails on ^C: select fails: Interrupted system call
+     - changed stacked/nested handling of CTRL-C.
+
+  ntpq/ntpq.c@1.165 +57 -8
+    Bug 2971 - ntpq bails on ^C: select fails: Interrupted system call
+     - changed stacked/nested handling of CTRL-C.
+
+  ntpq/ntpq.h@1.31 +4 -0
+    Bug 2971 - ntpq bails on ^C: select fails: Interrupted system call
+     - changed stacked/nested handling of CTRL-C.
+
+ChangeSet@1.3597.1.3, 2015-11-25 22:10:45-08:00, harlan@max.pfcs.com
+  Libevent autoconf pthread fixes for FreeBSD-10.  Harlan Stenn.
+
+  ChangeLog@1.1770.1.1 +1 -0
+    Libevent autoconf pthread fixes for FreeBSD-10.  Harlan Stenn.
+
+  sntp/m4/ntp_libevent.m4@1.16 +2 -1
+    Libevent autoconf pthread fixes for FreeBSD-10.  Harlan Stenn.
+
+ChangeSet@1.3597.1.2, 2015-11-25 12:23:40+00:00, stenn@psp-at1.ntp.org
+  Unity test cleanup.  Harlan Stenn.
+
+  tests/ntpd/run-t-ntp_signd.c@1.11 +6 -6
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/ntpd/t-ntp_signd.c@1.13 +19 -5
+    Unity test cleanup.  Harlan Stenn.
+
+ChangeSet@1.3597.1.1, 2015-11-25 11:50:51+00:00, stenn@psp-at1.ntp.org
+  Unity test cleanup.  Harlan Stenn.
+
+  sntp/unity/unity_internals.h@1.5 +13 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/calendar.c@1.12 +8 -3
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/ntpd/leapsec.c@1.4 +241 -82
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/ntpd/run-leapsec.c@1.6 +33 -33
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/ntpd/run-t-ntp_signd.c@1.10 +6 -6
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/ntpd/t-ntp_signd.c@1.12 +40 -13
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/smeartest.c@1.10 +3 -0
+    Unity test cleanup.  Harlan Stenn.
+
+ChangeSet@1.3598, 2015-11-24 08:06:41+01:00, jnperlin@hydra.localnet
+  [Bug 2967] ntpdate command suffers an assertion failure
+    - fixed ntp_rfc2553.c to return proper address length.
+
+  ChangeLog@1.1771 +2 -0
+    [Bug 2967] ntpdate command suffers an assertion failure
+      - fixed ntp_rfc2553.c to return proper address length.
+
+  libntp/ntp_rfc2553.c@1.49 +2 -1
+    [Bug 2967] ntpdate command suffers an assertion failure
+      - fix do_nodename() to return the proper address length when name is NULL.
+
+ChangeSet@1.3597, 2015-11-23 10:55:16+00:00, stenn@psp-at1.ntp.org
+  ChangeLog, caljulian.c:
+    * CID 1339955: Free allocated memory in caljulian test.  HStenn.
+    * CID 1339962: Explicitly initialize variable in caljulian test.  HStenn.
+
+  ChangeLog@1.1770 +2 -0
+    * CID 1339955: Free allocated memory in caljulian test.  HStenn.
+    * CID 1339962: Explicitly initialize variable in caljulian test.  HStenn.
+
+  tests/libntp/caljulian.c@1.14 +16 -10
+    * CID 1339955: Free allocated memory in caljulian test.  HStenn.
+    * CID 1339962: Explicitly initialize variable in caljulian test.  HStenn.
+
+ChangeSet@1.3596, 2015-11-20 20:16:24-08:00, harlan@hms-mbp11.pfcs.com
+  Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/kodDatabase.c@1.9 +0 -4
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/run-kodDatabase.c@1.9 +5 -5
+    Unity test cleanup.  Harlan Stenn.
+
+ChangeSet@1.3595, 2015-11-20 19:41:16-08:00, harlan@hms-mbp11.pfcs.com
+  Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/kodDatabase.c@1.8 +6 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/kodFile.c@1.9 +1 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/run-kodDatabase.c@1.8 +6 -5
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/run-t-log.c@1.5 +3 -3
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/t-log.c@1.5 +32 -16
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/calendar.c@1.11 +11 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/caljulian.c@1.13 +1 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/decodenetnum.c@1.10 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/humandate.c@1.7 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/lfptostr.c@1.8 +9 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/modetoa.c@1.8 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/msyslog.c@1.7 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/netof.c@1.9 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/numtoa.c@1.7 +11 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/numtohost.c@1.7 +11 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/prettydate.c@1.6 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/recvbuff.c@1.7 +3 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/refidsmear.c@1.7 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/refnumtoa.c@1.7 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-calendar.c@1.11 +15 -15
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-decodenetnum.c@1.10 +6 -6
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-humandate.c@1.7 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-lfptostr.c@1.8 +11 -11
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-modetoa.c@1.12 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-msyslog.c@1.9 +8 -8
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-netof.c@1.8 +4 -4
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-numtoa.c@1.11 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-numtohost.c@1.11 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-prettydate.c@1.6 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-refidsmear.c@1.8 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-refnumtoa.c@1.9 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-sfptostr.c@1.6 +8 -8
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-socktoa.c@1.13 +6 -6
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-statestr.c@1.11 +4 -4
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-strtolfp.c@1.6 +7 -7
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-timespecops.c@1.11 +28 -28
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-timevalops.c@1.13 +28 -28
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-uglydate.c@1.11 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/sfptostr.c@1.4 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/socktoa.c@1.11 +11 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/statestr.c@1.6 +11 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/strtolfp.c@1.7 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/timespecops.c@1.10 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/timevalops.c@1.13 +10 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/uglydate.c@1.10 +13 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/run-uglydate.c@1.6 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/smeartest.c@1.9 +2 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/uglydate.c@1.5 +11 -0
+    Unity test cleanup.  Harlan Stenn.
+
+ChangeSet@1.3594, 2015-11-20 07:40:57+00:00, stenn@psp-at1.ntp.org
+  [Bug 2958] ntpq: fatal error messages need a final newline. Craig Leres.
+
+  ChangeLog@1.1769 +1 -0
+    [Bug 2958] ntpq: fatal error messages need a final newline. Craig Leres.
+
+  ntpq/ntpq.c@1.164 +1 -1
+    [Bug 2958] ntpq: fatal error messages need a final newline. Craig Leres.
+
+ChangeSet@1.3593, 2015-11-20 07:27:27+00:00, stenn@psp-at1.ntp.org
+  Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/authkeys.c@1.13 +36 -10
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/buftvtots.c@1.6 +18 -6
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/calendar.c@1.10 +100 -47
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/caljulian.c@1.12 +27 -9
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/clocktime.c@1.9 +48 -24
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/humandate.c@1.6 +6 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/lfpfunc.c@1.15 +113 -69
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/netof.c@1.8 +22 -7
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/numtohost.c@1.6 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/octtoint.c@1.7 +36 -14
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/refidsmear.c@1.6 +1 -4
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/refnumtoa.c@1.6 +5 -5
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-lfpfunc.c@1.18 +9 -9
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/run-refidsmear.c@1.7 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/timespecops.c@1.9 +173 -48
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/timestructs.h@1.3 +22 -22
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/timevalops.c@1.12 +168 -52
+    Unity test cleanup.  Harlan Stenn.
+
+ChangeSet@1.3592, 2015-11-20 02:57:37+01:00, jnperlin@nemesis.localnet
+  [Bug 2969] Seg fault from ntpq/mrulist when looking at server with lots of clients
+
+  ChangeLog@1.1768 +2 -0
+    [Bug 2969] Seg fault from ntpq/mrulist when looking at server with lots of clients
+
+  lib/isc/sockaddr.c@1.14 +1 -1
+    [Bug 2969] Seg fault from ntpq/mrulist when looking at server with lots of clients
+     - cast fro size_t to u_int (no overflow danger); not related the bug, found while double-checking changes
+
+  ntpq/ntpq-subs.c@1.113 +1 -1
+    [Bug 2969] Seg fault from ntpq/mrulist when looking at server with lots of clients
+     - make end-of-buffer test unsigned-safe
+
+ChangeSet@1.3591, 2015-11-17 11:12:02+00:00, stenn@psp-at1.ntp.org
+  [Bug 2932] Update leapsecond file info in miscopt.html.  CWoodbury, HStenn.
+
+  ChangeLog@1.1767 +1 -0
+    [Bug 2932] Update leapsecond file info in miscopt.html.  CWoodbury, HStenn.
+
+  html/miscopt.html@1.84 +3 -3
+    [Bug 2932] Update leapsecond file info in miscopt.html.  CWoodbury, HStenn.
+
+ChangeSet@1.3588, 2015-11-17 05:02:10+00:00, stenn@psp-at1.ntp.org
+  Credit Martin for 2965
+
+  ChangeLog@1.1764.1.3 +1 -1
+    Credit Martin for 2965
+
+ChangeSet@1.3587, 2015-11-17 04:53:39+00:00, stenn@psp-at1.ntp.org
+  cleanup
+
+  ChangeLog@1.1764.1.2 +1 -1
+    cleanup
+
+ChangeSet@1.3584.2.1, 2015-11-16 11:59:55+01:00, burnicki@pc-martin4.
+  [Bug 2965] Local clock didn't work since 4.2.8p4
+
+  ChangeLog@1.1764.1.1 +1 -0
+    [Bug 2965] Local clock didn't work since 4.2.8p4
+
+  ntpd/refclock_local.c@1.22 +1 -0
+    [Bug 2965] Local clock didn't work since 4.2.8p4
+
+ChangeSet@1.3584.1.2, 2015-11-14 01:01:05+01:00, jnperlin@hydra.localnet
+  [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+   - fix warnings in test cases
+
+  tests/libntp/a_md5encrypt.c@1.14 +23 -15
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fix terrible const/noconst and alignment mess 
+
+  tests/libntp/authkeys.c@1.12 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fixed cast to const cast
+
+  tests/libntp/run-a_md5encrypt.c@1.15 +5 -5
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - update generated file
+
+  tests/ntpd/rc_cmdlength.c@1.3 +1 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - add header to get prototype
+
+  tests/ntpd/run-rc_cmdlength.c@1.4 +2 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+
+ChangeSet@1.3584.1.1, 2015-11-13 22:54:35+01:00, jnperlin@hydra.localnet
+  [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+   - fixed several other warnings (cast-alignment, missing const, missing prorotypes)
+   - promote use of 'size_t' for values that express a size
+   - use ptr-to-const for read-only arguments
+   - make sure SOCKET values are not truncated (win32-specific)
+   - format string fixes
+
+  ChangeLog@1.1765 +6 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets.
+
+  include/Makefile.am@1.53 +1 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - added 'safeconst.h' to noinstall-headers
+
+  include/ntp_refclock.h@1.37 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use ptr-to-const for read-only values
+
+  include/ntp_stdlib.h@1.80 +4 -4
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - use ptr-to-const for read-only data
+
+  include/ntpd.h@1.193 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  include/safecast.h@1.1 +34 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - checked or saturated size conversion
+     - added unaligned pointer casts
+
+  include/safecast.h@1.0 +0 -0
+
+  lib/isc/backtrace.c@1.3 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid increased-alignment-earning in pointer cast 
+
+  lib/isc/buffer.c@1.2 +2 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  lib/isc/inet_aton.c@1.6 +2 -3
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  lib/isc/inet_pton.c@1.7 +3 -3
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  lib/isc/log.c@1.9 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  lib/isc/netaddr.c@1.14 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - explicit cast (no overflow) to u_int
+
+  lib/isc/sockaddr.c@1.13 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - explicit cast to 'u_int' (no overflow possible)
+
+  lib/isc/task.c@1.8 +8 -8
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid warnings about increased alignment requirements (not using 'safecast.h' since it's not in this lib)
+
+  lib/isc/win32/interfaceiter.c@1.23 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid truncation of SOCKET
+
+  lib/isc/win32/net.c@1.17 +2 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid truncation of SOCKET
+
+  libntp/a_md5encrypt.c@1.35 +14 -14
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - use ptr-to-const for read-only values
+
+  libntp/atolfp.c@1.7 +2 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - explit cast from size_t to u_long (no overflow possoble)
+
+  libntp/authkeys.c@1.27.1.1 +4 -4
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  libntp/authusekey.c@1.10 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  libntp/dolfptoa.c@1.12 +3 -3
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - explicit cast to size_t to in (no overflow possible)
+
+  libntp/hextolfp.c@1.5 +6 -4
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - explicit cast size_t to u_long (no overflow possible)
+
+  libntp/mstolfp.c@1.5 +1 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  libntp/msyslog.c@1.54 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  libntp/ntp_crypto_rnd.c@1.4 +2 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use checked cast for interface with openSSL
+
+  libntp/ntp_lineedit.c@1.14 +2 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - downcast of size_t (no risk here)
+
+  libntp/ntp_worker.c@1.6 +2 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - downcast of size_t (no real risk of overflow)
+
+  libntp/snprintf.c@1.13 +10 -10
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use explicit downcasts in conversions
+
+  libparse/clk_computime.c@1.13 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_dcf7000.c@1.13 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_hopf6021.c@1.12 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_meinberg.c@1.16 +2 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_rawdcf.c@1.23 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_rcc8000.c@1.12 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_schmid.c@1.15 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_trimtaip.c@1.13 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_varitext.c@1.12 +6 -6
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - commented unused static const values
+    ---
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/clk_wharton.c@1.11 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  libparse/parse.c@1.21 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use "%p" to format pointers
+
+  ntpd/ntp_control.c@1.205 +5 -5
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  ntpd/ntp_crypto.c@1.185 +2 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fix small signed/unsigned clash
+
+  ntpd/ntp_io.c@1.409 +6 -6
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - remove cast-alignment warnings by casting via 'void*'
+     - proper cast from SOCKET to int when file descriptor needed
+
+  ntpd/ntp_loopfilter.c@1.188 +2 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid 'unused' warnings
+
+  ntpd/ntp_proto.c@1.369 +8 -6
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - format string fixes 
+     - fix signed/unsigned clash
+
+  ntpd/ntp_refclock.c@1.121 +3 -3
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use ptr-to-const for read-only parameters
+
+  ntpd/ntp_request.c@1.115 +2 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid serious LP64 problem by using uint32_t instead of u_long
+
+  ntpd/ntp_restrict.c@1.40 +2 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  ntpd/ntp_signd.c@1.5 +3 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fixed missing 'const' in cast
+
+  ntpd/ntp_timer.c@1.93 +7 -6
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid mixed float/int calculations
+
+  ntpd/ntp_util.c@1.117 +3 -3
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  ntpd/refclock_parse.c@1.82 +2 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  ntpd/refclock_shm.c@1.38 +3 -2
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fixed some volatile madness & casts
+
+  ntpd/refclock_true.c@1.25 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  ntpd/refclock_tsyncpci.c@1.10 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - remove cast-alignment warnings by omitting superfluous cast
+
+  ntpdate/ntpdate.c@1.97 +7 -7
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - avoid truncation of SOCKET handles
+
+  ntpdc/ntpdc.c@1.105 +36 -34
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - format string fixes
+
+  ntpdc/ntpdc.h@1.12 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  ntpdc/ntpdc_ops.c@1.81 +109 -109
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - format string fixes
+
+  ntpq/libntpq.c@1.13 +7 -9
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - format string fixes
+
+  ntpq/libntpq.h@1.11 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - more size_t propagation and format string fixes 
+
+  ntpq/libntpq_subs.c@1.7 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - more size_t propagation and format string fixes 
+
+  ntpq/ntpq-subs.c@1.112 +39 -37
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - format string fixes
+
+  ntpq/ntpq.c@1.163 +34 -34
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - format string fixes
+
+  ntpq/ntpq.h@1.30 +7 -7
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+
+  ports/winnt/include/config.h@1.113 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - use ptr-to-const for read-only values
+
+  ports/winnt/include/ntp_iocompletionport.h@1.21 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid truncation of SOCKET identifiers
+
+  ports/winnt/instsrv/instsrv.c@1.7 +6 -6
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - explicit cast to DWORD (overflow hardly possible)
+
+  ports/winnt/libntp/termios.c@1.32 +18 -16
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - promote use of 'size_t' for values that express a size
+     - use ptr-to-const for read-only values
+     - avoid truncation of handle
+
+  ports/winnt/ntpd/ntp_iocompletionport.c@1.72 +9 -6
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - avoid truncation of SOCKET handles
+
+  ports/winnt/vs2008/common.vsprops@1.2 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - disable a size_t cast warnings
+
+  ports/winnt/vs2008/ntpd/ntpd.vcproj@1.50 +49 -17
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - disable C4307 (integer constant overflow) on refclock_arc.c 
+
+  ports/winnt/vs2013/common.props@1.2 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - disable the annoying truncation-of-value error
+
+  ports/winnt/vs2013/libntp/libntp.vcxproj@1.9 +1 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - add 'safecast.h' header
+
+  ports/winnt/vs2013/libntp/libntp.vcxproj.filters@1.7 +3 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - add safecast.h header
+
+  ports/winnt/vs2013/ntpd/ntpd.vcxproj@1.8 +7 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - refclock_arc is very noisy with integer constant overflow
+
+  sntp/networking.c@1.67 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - remove cast-alignment warnings by casting via 'void*'
+
+  tests/libntp/authkeys.c@1.11 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fix missing 'const' in cast
+
+  tests/ntpd/ntp_restrict.c@1.3 +1 -0
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fix function declarations
+
+  tests/ntpd/run-ntp_restrict.c@1.5 +8 -8
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - update auto-generated file
+
+  tests/ntpd/run-t-ntp_signd.c@1.9 +7 -7
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fix function prototypes
+
+  tests/ntpd/t-ntp_scanner.c@1.7 +3 -3
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - add missing 'const' declarations
+
+  tests/ntpd/t-ntp_signd.c@1.11 +24 -13
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - added missing prototypes and a fix serious pointer problem
+
+  tests/sandbox/run-uglydate.c@1.3.1.1 +1 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - update generated file
+
+  tests/sandbox/uglydate.c@1.2.1.1 +4 -1
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - add prototypes
+
+  tests/sec-2853/sec-2853.c@1.7 +6 -6
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - fix size_t format
+
+  util/ntp-keygen.c@1.107 +3 -3
+    [Bug 2962] truncation of size_t/ptrdiff_t on 64bit targets
+     - let openssl sort out the string size
+
+ChangeSet@1.3585, 2015-11-07 23:46:41+00:00, stenn@psp-at1.ntp.org
+  Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/t-log.c@1.4 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/run-uglydate.c@1.4 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/uglydate.c@1.3 +2 -0
+    Unity test cleanup.  Harlan Stenn.
+
+ChangeSet@1.3581.1.1, 2015-11-06 08:33:23+01:00, jnperlin@hydra.localnet
+  [Bug 2957] format specifies type 'unsigned int' but the argument has type 'size_t'
+   - accept key file only if there are no parsing errors
+   - fixed size_t/u_int format clash
+   - restore pre-Bug1243 compatibility (revert 'strlcpy()' to 'strncpy()' as 'strlcpy()' is wrong here)
+
+  ChangeLog@1.1761.1.1 +4 -0
+    [Bug 2957] format specifies type 'unsigned int' but the argument has type 'size_t'
+     - accept key file only if there are no parsing errors
+     - fixed size_t/u_int format clash
+     - restore pre-Bug1243 compatibility (revert 'strlcpy()' to 'strncpy()' as 'strlcpy()' is wrong here)
+
+  libntp/authkeys.c@1.28 +17 -5
+    [Bug 2957] format specifies type 'unsigned int' but the argument has type 'size_t'
+     - restore pre-Bug1243 compatibility (revert 'strlcpy()' to 'strncpy()' as 'strlcpy()' is wrong here)
+
+  libntp/authreadkeys.c@1.23 +68 -22
+    [Bug 2957] format specifies type 'unsigned int' but the argument has type 'size_t'
+     - accept key file only if there are no parsing errors
+     - fixed size_t/u_int format clash
+
+ChangeSet@1.3584, 2015-11-05 11:47:50+00:00, stenn@psp-at1.ntp.org
+  Unity test cleanup.  Harlan Stenn.
+
+  ChangeLog@1.1764 +1 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/run-t-log.c@1.4 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/t-log.c@1.3 +1 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  sntp/tests/utilities.c@1.5 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/bug-2803/bug-2803.c@1.10 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/bug-2803/run-bug-2803.c@1.9 +2 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/a_md5encrypt.c@1.13 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/caljulian.c@1.11 +4 -4
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/lfpfunc.c@1.14 +9 -9
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/netof.c@1.7 +10 -10
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/prettydate.c@1.5 +3 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/recvbuff.c@1.6 +1 -1
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/socktoa.c@1.10 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/libntp/uglydate.c@1.9 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/smeartest.c@1.8 +1 -0
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sandbox/uglydate.c@1.2 +2 -2
+    Unity test cleanup.  Harlan Stenn.
+
+  tests/sec-2853/sec-2853.c@1.6 +1 -4
+    Unity test cleanup.  Harlan Stenn.
+
+ChangeSet@1.3583, 2015-11-05 10:37:38+00:00, stenn@psp-at1.ntp.org
+  Unity cleanup for FreeBSD-6.4.  Harlan Stenn.
+
+  ChangeLog@1.1763 +1 -1
+    Unity cleanup for FreeBSD-6.4.  Harlan Stenn.
+
+  ChangeLog@1.1762 +1 -0
+    Unity cleanup for FreeBSD-6.2.  Harlan Stenn.
+
+  sntp/m4/ntp_problemtests.m4@1.4 +4 -1
+    Unity cleanup for FreeBSD-6.4.  Harlan Stenn.
+
+ChangeSet@1.3582, 2015-11-05 10:01:57+00:00, stenn@psp-at1.ntp.org
+  Sec 2956 cleanup
+
+  include/ntpd.h@1.192 +1 -0
+    Sec 2956 cleanup
+
+  libntp/systime.c@1.70 +2 -3
+    Sec 2956 cleanup
+
+  ntpd/ntp_loopfilter.c@1.187 +0 -2
+    Sec 2956 cleanup
+
+  ntpdate/ntpdate.c@1.96 +0 -3
+    Sec 2956 cleanup
+
+  ntpsnmpd/ntpsnmpd.c@1.10 +0 -3
+    Sec 2956 cleanup
+
+  sntp/main.c@1.98 +0 -3
+    Sec 2956 cleanup
+
+ChangeSet@1.3581, 2015-11-04 10:02:25+00:00, stenn@psp-at1.ntp.org
+  [Bug 2934] tests/ntpd/t-ntp_scanner.c has a magic constant wired in.  HMurray
+
+  ChangeLog@1.1761 +2 -1
+    [Bug 2934] tests/ntpd/t-ntp_scanner.c has a magic constant wired in.  HMurray
+
+  tests/ntpd/t-ntp_scanner.c@1.6 +1 -1
+    [Bug 2934] tests/ntpd/t-ntp_scanner.c has a magic constant wired in.  HMurray
+
+ChangeSet@1.3580, 2015-11-04 08:39:12+00:00, stenn@psp-at1.ntp.org
+  [Sec 2956] small-step/big-step.  Close the panic gate earlier.
+
+  ChangeLog@1.1760 +2 -0
+    [Sec 2956] small-step/big-step.  Close the panic gate earlier.
+
+  libntp/systime.c@1.69 +23 -2
+    [Sec 2956] small-step/big-step.  Close the panic gate earlier.
+
+  ntpd/ntp_loopfilter.c@1.186 +17 -27
+    [Sec 2956] small-step/big-step.  Close the panic gate earlier.
+
+  ntpdate/ntpdate.c@1.95 +3 -0
+    [Sec 2956] small-step/big-step.  Close the panic gate earlier.
+
+  ntpsnmpd/ntpsnmpd.c@1.9 +3 -0
+    [Sec 2956] small-step/big-step.  Close the panic gate earlier.
+
+  sntp/main.c@1.97 +3 -0
+    [Sec 2956] small-step/big-step.  Close the panic gate earlier.
+
+ChangeSet@1.3579, 2015-11-03 22:08:46+01:00, jnperlin@hydra.localnet
+  [Bug 2954] Version 4.2.8p4 crashes on startup with sig fault
+   - limit threading warm-up to linux; FreeBSD bombs on it. perlinger@ntp.org
+
+  ChangeLog@1.1759 +1 -0
+    [Bug 2954] Version 4.2.8p4 crashes on startup with sig fault
+     - limit threading warm-up to linux; FreeBSD bombs on it. perlinger@ntp.org
+
+  ntpd/ntpd.c@1.166 +9 -2
+    [Bug 2954] Version 4.2.8p4 crashes on startup with sig fault
+     - limit threading warm-up to linux; FreeBSD bombs on it. perlinger@ntp.org
+
+ChangeSet@1.3578, 2015-10-31 18:04:18+00:00, perlinger@psp-deb1.ntp.org
+  [Bug 2954] Version 4.2.8p4 crashes on startup with sig fault
+   - fixed race conditions between worker and main thread in DNS worker
+
+  ChangeLog@1.1758 +3 -0
+    [Bug 2954] Version 4.2.8p4 crashes on startup with sig fault
+     - fixed race conditions between worker and main thread in DNS worker
+
+  include/ntp_worker.h@1.4 +45 -21
+    [Bug 2954] Version 4.2.8p4 crashes on startup with sig fault
+     - provide shared access lock based on semaphore
+     - better isolation of OS dependencies
+
+  libntp/work_thread.c@1.18 +370 -231
+    [Bug 2954] Version 4.2.8p4 crashes on startup with sig fault
+     - fixed race conditions between worker and main thread
+     - better (still not perfect) isolation of OS dependent code for semaphore handling
+
 ChangeSet@1.3577, 2015-10-21 12:42:02-04:00, stenn@deacon.udel.edu
   NTP_4_2_8P4
   TAG: NTP_4_2_8P4
@@ -140386,9 +141517,6 @@ ChangeSet@1.1436.15.74, 2009-12-08 08:23:12-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.26.2 +1 -1
     NTP_4_2_4P8
 
-  sntp/sntp.1@1.49.26.2 +2 -2
-    NTP_4_2_4P8
-
   util/ntp-keygen-opts.c@1.49.26.2 +2 -2
     NTP_4_2_4P8
 
@@ -140466,9 +141594,6 @@ ChangeSet@1.1436.15.73, 2009-12-08 07:45:28-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4P9_RC1
 
   sntp/sntp-opts.texi@1.46.26.1 +54 -2
-    NTP_4_2_4P9_RC1
-
-  sntp/sntp.1@1.49.26.1 +2 -2
     NTP_4_2_4P9_RC1
 
   util/ntp-keygen-opts.c@1.49.26.1 +5 -5
@@ -157453,9 +158578,6 @@ ChangeSet@1.1436.15.70, 2009-05-18 05:04:41-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.25.1 +1 -1
     NTP_4_2_4P7
 
-  sntp/sntp.1@1.49.25.1 +2 -2
-    NTP_4_2_4P7
-
   util/ntp-keygen-opts.c@1.49.25.1 +4 -4
     NTP_4_2_4P7
 
@@ -157819,9 +158941,6 @@ ChangeSet@1.1436.15.64, 2009-05-12 02:41:56-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P7_RC7
 
   sntp/sntp-opts.texi@1.46.24.1 +1 -1
-    NTP_4_2_4P7_RC7
-
-  sntp/sntp.1@1.49.24.1 +3 -3
     NTP_4_2_4P7_RC7
 
   util/ntp-keygen-opts.c@1.49.24.1 +3 -3
@@ -158295,9 +159414,6 @@ ChangeSet@1.1436.15.58, 2009-05-08 04:42:52-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P7_RC6
 
   sntp/sntp-opts.texi@1.46.23.1 +1 -1
-    NTP_4_2_4P7_RC6
-
-  sntp/sntp.1@1.49.23.1 +2 -2
     NTP_4_2_4P7_RC6
 
   util/ntp-keygen-opts.c@1.49.23.1 +2 -2
@@ -159017,9 +160133,6 @@ ChangeSet@1.1436.15.50, 2009-05-02 02:38:49-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.22.1 +1 -1
     NTP_4_2_4P7_RC5
 
-  sntp/sntp.1@1.49.22.1 +2 -2
-    NTP_4_2_4P7_RC5
-
   util/ntp-keygen-opts.c@1.49.22.1 +2 -2
     NTP_4_2_4P7_RC5
 
@@ -159415,9 +160528,6 @@ ChangeSet@1.1436.15.48, 2009-04-29 04:03:41-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P7_RC4
 
   sntp/sntp-opts.texi@1.46.21.1 +1 -1
-    NTP_4_2_4P7_RC4
-
-  sntp/sntp.1@1.49.21.1 +2 -2
     NTP_4_2_4P7_RC4
 
   util/ntp-keygen-opts.c@1.49.21.1 +2 -2
@@ -160432,9 +161542,6 @@ ChangeSet@1.1436.15.44, 2009-04-22 08:18:29-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.20.1 +1 -1
     NTP_4_2_4P7_RC3
 
-  sntp/sntp.1@1.49.20.1 +2 -2
-    NTP_4_2_4P7_RC3
-
   util/ntp-keygen-opts.c@1.49.20.1 +2 -2
     NTP_4_2_4P7_RC3
 
@@ -161057,9 +162164,6 @@ ChangeSet@1.1436.15.30, 2009-04-09 07:44:06-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.19.1 +1 -1
     NTP_4_2_4P7_RC2
 
-  sntp/sntp.1@1.49.19.1 +2 -2
-    NTP_4_2_4P7_RC2
-
   util/ntp-keygen-opts.c@1.49.19.1 +2 -2
     NTP_4_2_4P7_RC2
 
@@ -161597,9 +162701,6 @@ ChangeSet@1.1436.15.26, 2009-03-30 06:47:41-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4P7_RC1
 
   sntp/sntp-opts.texi@1.46.18.1 +1 -1
-    NTP_4_2_4P7_RC1
-
-  sntp/sntp.1@1.49.18.1 +2 -2
     NTP_4_2_4P7_RC1
 
   util/ntp-keygen-opts.c@1.49.18.1 +2 -2
@@ -162940,9 +164041,6 @@ ChangeSet@1.1436.15.12, 2009-01-08 06:21:48-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.17.2 +1 -1
     NTP_4_2_4P6
 
-  sntp/sntp.1@1.49.17.2 +2 -2
-    NTP_4_2_4P6
-
   util/ntp-keygen-opts.c@1.49.17.2 +2 -2
     NTP_4_2_4P6
 
@@ -163020,9 +164118,6 @@ ChangeSet@1.1436.15.11, 2009-01-08 04:49:23-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4P5
 
   sntp/sntp-opts.texi@1.46.17.1 +1 -1
-    NTP_4_2_4P5
-
-  sntp/sntp.1@1.49.17.1 +2 -2
     NTP_4_2_4P5
 
   util/ntp-keygen-opts.c@1.49.17.1 +1 -1
@@ -166277,9 +167372,6 @@ ChangeSet@1.1735.4.1, 2008-08-30 22:09:29-04:00, stenn@whimsy.udel.edu
 ChangeSet@1.1759, 2008-08-22 21:27:59-04:00, stenn@pogo.udel.edu
   remove bogus .o file
 
-  BitKeeper/deleted/.del-utilities.o@1.2 +0 -0
-    Delete: gsoc_sntp/utilities.o
-
 ChangeSet@1.1735.1.29, 2008-08-21 05:05:19+00:00, gopal@pogo.udel.edu
   driver20.html:
     [BUG 610] Documentation update for NMEA reference clock driver.
@@ -166558,9 +167650,6 @@ ChangeSet@1.1436.15.4, 2008-08-17 05:30:47-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.16.1 +1 -1
     NTP_4_2_4P5
 
-  sntp/sntp.1@1.49.16.1 +2 -2
-    NTP_4_2_4P5
-
   util/ntp-keygen-opts.c@1.49.16.1 +2 -2
     NTP_4_2_4P5
 
@@ -166681,11 +167770,6 @@ ChangeSet@1.1755, 2008-08-16 06:41:28+09:00, Amidamaru@yumi.mxiesoft.com
     BitKeeper file /geom_mobile/home/Amidamaru/projects/sntp/repo/ntp-dev/gsoc_sntp/utilities.h
 
   gsoc_sntp/utilities.h@1.0 +0 -0
-
-  gsoc_sntp/utilities.o@1.1 +177 -0
-    BitKeeper file /geom_mobile/home/Amidamaru/projects/sntp/repo/ntp-dev/gsoc_sntp/utilities.o
-
-  gsoc_sntp/utilities.o@1.0 +0 -0
 
 ChangeSet@1.1436.1.105, 2008-08-10 21:56:17-04:00, clemens@pogo.udel.edu
   BUG[1052] Minor reordering of previous patch to make it more robust.
@@ -166842,9 +167926,6 @@ ChangeSet@1.1436.1.101, 2008-08-10 07:44:31-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P5_RC2
 
   sntp/sntp-opts.texi@1.46.15.1 +2 -3
-    NTP_4_2_4P5_RC2
-
-  sntp/sntp.1@1.49.15.1 +3 -3
     NTP_4_2_4P5_RC2
 
   util/ntp-keygen-opts.c@1.49.15.1 +2 -2
@@ -168305,9 +169386,6 @@ ChangeSet@1.1436.1.95, 2008-05-20 03:51:01-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P5_RC1
 
   sntp/sntp-opts.texi@1.46.14.1 +1 -1
-    NTP_4_2_4P5_RC1
-
-  sntp/sntp.1@1.49.14.1 +2 -2
     NTP_4_2_4P5_RC1
 
   util/ntp-keygen-opts.c@1.49.14.1 +6 -7
@@ -173568,9 +174646,6 @@ ChangeSet@1.1436.1.84, 2007-09-10 20:40:19-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.13.1 +1 -1
     NTP_4_2_4P4
 
-  sntp/sntp.1@1.49.13.1 +2 -2
-    NTP_4_2_4P4
-
   util/ntp-keygen-opts.c@1.49.13.1 +2 -2
     NTP_4_2_4P4
 
@@ -173875,9 +174950,6 @@ ChangeSet@1.1436.1.81, 2007-08-28 15:34:55-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P4_RC2
 
   sntp/sntp-opts.texi@1.46.12.1 +1 -1
-    NTP_4_2_4P4_RC2
-
-  sntp/sntp.1@1.49.12.1 +2 -2
     NTP_4_2_4P4_RC2
 
   util/ntp-keygen-opts.c@1.49.12.1 +4 -4
@@ -174265,9 +175337,6 @@ ChangeSet@1.1436.1.78, 2007-08-18 17:11:19-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P4_RC1
 
   sntp/sntp-opts.texi@1.46.11.1 +1 -1
-    NTP_4_2_4P4_RC1
-
-  sntp/sntp.1@1.49.11.1 +2 -2
     NTP_4_2_4P4_RC1
 
   util/ntp-keygen-opts.c@1.49.11.1 +2 -2
@@ -175617,9 +176686,6 @@ ChangeSet@1.1436.1.66, 2007-06-29 15:46:00-04:00, stenn@deacon.udel.edu
   sntp/sntp-opts.texi@1.46.10.1 +1 -1
     NTP_4_2_4P3
 
-  sntp/sntp.1@1.49.10.1 +2 -2
-    NTP_4_2_4P3
-
   util/ntp-keygen-opts.c@1.49.10.1 +2 -2
     NTP_4_2_4P3
 
@@ -175867,9 +176933,6 @@ ChangeSet@1.1436.1.63, 2007-06-27 07:46:44-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P3_RC1
 
   sntp/sntp-opts.texi@1.46.9.1 +1 -1
-    NTP_4_2_4P3_RC1
-
-  sntp/sntp.1@1.49.9.1 +2 -2
     NTP_4_2_4P3_RC1
 
   util/ntp-keygen-opts.c@1.49.9.1 +2 -2
@@ -176365,9 +177428,6 @@ ChangeSet@1.1436.1.59, 2007-06-20 07:45:57-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P2
 
   sntp/sntp-opts.texi@1.46.8.1 +1 -1
-    NTP_4_2_4P2
-
-  sntp/sntp.1@1.49.8.1 +2 -2
     NTP_4_2_4P2
 
   util/ntp-keygen-opts.c@1.49.8.1 +2 -2
@@ -177015,9 +178075,6 @@ ChangeSet@1.1436.1.57, 2007-06-10 07:58:59-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P2_RC6
 
   sntp/sntp-opts.texi@1.46.7.1 +1 -1
-    NTP_4_2_4P2_RC6
-
-  sntp/sntp.1@1.49.7.1 +2 -2
     NTP_4_2_4P2_RC6
 
   util/ntp-keygen-opts.c@1.49.7.1 +2 -2
@@ -177774,9 +178831,6 @@ ChangeSet@1.1436.1.54, 2007-05-29 07:43:58-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.6.1 +1 -1
     NTP_4_2_4P2_RC5
 
-  sntp/sntp.1@1.49.6.1 +2 -2
-    NTP_4_2_4P2_RC5
-
   util/ntp-keygen-opts.c@1.49.6.1 +2 -2
     NTP_4_2_4P2_RC5
 
@@ -178034,9 +179088,6 @@ ChangeSet@1.1436.1.51, 2007-05-27 07:45:05-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.5.1 +1 -1
     NTP_4_2_4P2_RC4
 
-  sntp/sntp.1@1.49.5.1 +2 -2
-    NTP_4_2_4P2_RC4
-
   util/ntp-keygen-opts.c@1.49.5.1 +2 -2
     NTP_4_2_4P2_RC4
 
@@ -178245,9 +179296,6 @@ ChangeSet@1.1436.3.9, 2007-05-25 07:44:43-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P2_RC3
 
   sntp/sntp-opts.texi@1.46.4.1 +1 -1
-    NTP_4_2_4P2_RC3
-
-  sntp/sntp.1@1.49.4.1 +2 -2
     NTP_4_2_4P2_RC3
 
   util/ntp-keygen-opts.c@1.49.4.1 +2 -2
@@ -178574,9 +179622,6 @@ ChangeSet@1.1436.3.3, 2007-05-19 07:53:57-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P2_RC2
 
   sntp/sntp-opts.texi@1.46.3.2 +1 -1
-    NTP_4_2_4P2_RC2
-
-  sntp/sntp.1@1.49.3.2 +2 -2
     NTP_4_2_4P2_RC2
 
   util/ntp-keygen-opts.c@1.49.3.2 +4 -4
@@ -179320,9 +180365,6 @@ ChangeSet@1.1436.3.2, 2007-05-19 02:33:04-04:00, stenn@whimsy.udel.edu
     We need to use the upgraded autogen/libopts in -stable too.
 
   sntp/sntp-opts.texi@1.46.3.1 +1 -1
-    We need to use the upgraded autogen/libopts in -stable too.
-
-  sntp/sntp.1@1.49.3.1 +2 -2
     We need to use the upgraded autogen/libopts in -stable too.
 
   util/ntp-keygen-opts.c@1.49.3.1 +23 -14
@@ -181379,9 +182421,6 @@ ChangeSet@1.1436.1.44, 2007-04-14 19:05:07-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.2.2 +1 -1
     NTP_4_2_4P2_RC1
 
-  sntp/sntp.1@1.49.2.2 +2 -2
-    NTP_4_2_4P2_RC1
-
   util/ntp-keygen-opts.c@1.49.2.3 +2 -2
     NTP_4_2_4P2_RC1
 
@@ -181465,9 +182504,6 @@ ChangeSet@1.1436.1.42, 2007-04-14 07:53:43-04:00, stenn@whimsy.udel.edu
     NTP_4_2_4P1_RC1
 
   sntp/sntp-opts.texi@1.46.2.1 +1 -1
-    NTP_4_2_4P1_RC1
-
-  sntp/sntp.1@1.49.2.1 +2 -2
     NTP_4_2_4P1_RC1
 
   util/ntp-keygen-opts.c@1.49.2.2 +2 -2
@@ -183630,9 +184666,6 @@ ChangeSet@1.1436.1.36, 2007-03-07 06:46:09-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.46.1.6 +1 -1
     NTP_4_2_4P0
 
-  sntp/sntp.1@1.49.1.6 +2 -2
-    NTP_4_2_4P0
-
   util/ntp-keygen-opts.c@1.49.1.6 +2 -2
     NTP_4_2_4P0
 
@@ -183801,9 +184834,6 @@ ChangeSet@1.1440.1.60, 2007-03-03 22:41:27-05:00, stenn@whimsy.udel.edu
 
   BitKeeper/deleted/.del-sntp-opts.texi@1.68 +0 -0
     Delete: sntp/sntp-opts.texi
-
-  BitKeeper/deleted/.del-sntp.1@1.71 +0 -0
-    Delete: sntp/sntp.1
 
   ntpd/ntpd-opts.c@1.1 +1055 -0
     BitKeeper file /deacon/backroom/ntp-dev/ntpd/ntpd-opts.c
@@ -183998,9 +185028,6 @@ ChangeSet@1.1440.1.58, 2007-03-03 06:43:50-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.66 +1 -1
     NTP_4_2_5P15
 
-  sntp/sntp.1@1.69 +2 -2
-    NTP_4_2_5P15
-
   util/ntp-keygen-opts.c@1.69 +2 -2
     NTP_4_2_5P15
 
@@ -184088,9 +185115,6 @@ ChangeSet@1.1440.1.55, 2007-02-26 06:42:31-05:00, stenn@whimsy.udel.edu
     NTP_4_2_5P14
 
   sntp/sntp-opts.texi@1.65 +1 -1
-    NTP_4_2_5P14
-
-  sntp/sntp.1@1.68 +2 -2
     NTP_4_2_5P14
 
   util/ntp-keygen-opts.c@1.68 +2 -2
@@ -184186,9 +185210,6 @@ ChangeSet@1.1440.1.52, 2007-02-25 06:42:44-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.64 +1 -1
     NTP_4_2_5P13
 
-  sntp/sntp.1@1.67 +2 -2
-    NTP_4_2_5P13
-
   util/ntp-keygen-opts.c@1.67 +2 -2
     NTP_4_2_5P13
 
@@ -184281,9 +185302,6 @@ ChangeSet@1.1440.1.50, 2007-02-24 08:33:25-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.63 +1 -1
     NTP_4_2_5P12
 
-  sntp/sntp.1@1.66 +2 -2
-    NTP_4_2_5P12
-
   util/ntp-keygen-opts.c@1.66 +2 -2
     NTP_4_2_5P12
 
@@ -184358,9 +185376,6 @@ ChangeSet@1.1436.1.33, 2007-02-24 06:42:26-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4P0_RC5
 
   sntp/sntp-opts.texi@1.46.1.5 +1 -1
-    NTP_4_2_4P0_RC5
-
-  sntp/sntp.1@1.49.1.5 +2 -2
     NTP_4_2_4P0_RC5
 
   util/ntp-keygen-opts.c@1.49.1.5 +2 -2
@@ -184449,9 +185464,6 @@ ChangeSet@1.1440.1.47, 2007-02-23 06:42:48-05:00, stenn@whimsy.udel.edu
     NTP_4_2_5P11
 
   sntp/sntp-opts.texi@1.62 +1 -1
-    NTP_4_2_5P11
-
-  sntp/sntp.1@1.65 +2 -2
     NTP_4_2_5P11
 
   util/ntp-keygen-opts.c@1.65 +2 -2
@@ -184545,9 +185557,6 @@ ChangeSet@1.1440.1.44, 2007-02-22 06:46:29-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.61 +1 -1
     NTP_4_2_5P10
 
-  sntp/sntp.1@1.64 +2 -2
-    NTP_4_2_5P10
-
   util/ntp-keygen-opts.c@1.64 +2 -2
     NTP_4_2_5P10
 
@@ -184630,9 +185639,6 @@ ChangeSet@1.1440.1.42, 2007-02-19 08:43:35-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.59 +1 -1
     NTP_4_2_5P9
 
-  sntp/sntp.1@1.62 +2 -2
-    NTP_4_2_5P9
-
   util/ntp-keygen-opts.c@1.62 +2 -2
     NTP_4_2_5P9
 
@@ -184707,9 +185713,6 @@ ChangeSet@1.1436.1.30, 2007-02-19 06:46:30-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4P0_RC4
 
   sntp/sntp-opts.texi@1.46.1.4 +1 -1
-    NTP_4_2_4P0_RC4
-
-  sntp/sntp.1@1.49.1.4 +2 -2
     NTP_4_2_4P0_RC4
 
   util/ntp-keygen-opts.c@1.49.1.4 +2 -2
@@ -184821,9 +185824,6 @@ ChangeSet@1.1440.1.39, 2007-02-17 06:42:34-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.57 +1 -1
     NTP_4_2_5P8
 
-  sntp/sntp.1@1.60 +2 -2
-    NTP_4_2_5P8
-
   util/ntp-keygen-opts.c@1.60 +2 -2
     NTP_4_2_5P8
 
@@ -184907,9 +185907,6 @@ ChangeSet@1.1440.1.37, 2007-02-16 06:42:39-05:00, stenn@whimsy.udel.edu
     NTP_4_2_5P7
 
   sntp/sntp-opts.texi@1.56 +1 -1
-    NTP_4_2_5P7
-
-  sntp/sntp.1@1.59 +2 -2
     NTP_4_2_5P7
 
   util/ntp-keygen-opts.c@1.59 +2 -2
@@ -185012,9 +186009,6 @@ ChangeSet@1.1440.1.34, 2007-02-05 08:45:44-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.55 +1 -1
     NTP_4_2_5P6
 
-  sntp/sntp.1@1.58 +2 -2
-    NTP_4_2_5P6
-
   util/ntp-keygen-opts.c@1.58 +2 -2
     NTP_4_2_5P6
 
@@ -185089,9 +186083,6 @@ ChangeSet@1.1436.1.27, 2007-02-05 06:47:44-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4_RC3
 
   sntp/sntp-opts.texi@1.46.1.3 +1 -1
-    NTP_4_2_4_RC3
-
-  sntp/sntp.1@1.49.1.3 +2 -2
     NTP_4_2_4_RC3
 
   util/ntp-keygen-opts.c@1.49.1.3 +2 -2
@@ -185239,9 +186230,6 @@ ChangeSet@1.1440.1.29, 2007-01-31 06:42:22-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.53 +1 -1
     NTP_4_2_5P5
 
-  sntp/sntp.1@1.56 +2 -2
-    NTP_4_2_5P5
-
   util/ntp-keygen-opts.c@1.56 +2 -2
     NTP_4_2_5P5
 
@@ -185324,9 +186312,6 @@ ChangeSet@1.1440.1.27, 2007-01-30 08:41:43-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.52 +1 -1
     NTP_4_2_5P4
 
-  sntp/sntp.1@1.55 +2 -2
-    NTP_4_2_5P4
-
   util/ntp-keygen-opts.c@1.55 +2 -2
     NTP_4_2_5P4
 
@@ -185401,9 +186386,6 @@ ChangeSet@1.1436.1.20, 2007-01-30 06:44:11-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4_RC2
 
   sntp/sntp-opts.texi@1.46.1.2 +1 -1
-    NTP_4_2_4_RC2
-
-  sntp/sntp.1@1.49.1.2 +2 -2
     NTP_4_2_4_RC2
 
   util/ntp-keygen-opts.c@1.49.1.2 +2 -2
@@ -185551,9 +186533,6 @@ ChangeSet@1.1440.1.21, 2007-01-25 18:30:28-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.51 +1 -1
     NTP_4_2_5P3
 
-  sntp/sntp.1@1.54 +2 -2
-    NTP_4_2_5P3
-
   util/ntp-keygen-opts.c@1.54 +2 -2
     NTP_4_2_5P3
 
@@ -185634,9 +186613,6 @@ ChangeSet@1.1436.1.14, 2007-01-23 04:47:08-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4_RC1
 
   sntp/sntp-opts.texi@1.46.1.1 +1 -1
-    NTP_4_2_4_RC1
-
-  sntp/sntp.1@1.49.1.1 +2 -2
     NTP_4_2_4_RC1
 
   util/ntp-keygen-opts.c@1.49.1.1 +2 -2
@@ -185868,9 +186844,6 @@ ChangeSet@1.1440.1.13, 2007-01-08 06:01:47-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.49 +1 -1
     NTP_4_2_5P2
 
-  sntp/sntp.1@1.52 +2 -2
-    NTP_4_2_5P2
-
   util/ntp-keygen-opts.c@1.52 +2 -2
     NTP_4_2_5P2
 
@@ -185986,9 +186959,6 @@ ChangeSet@1.1440.1.10, 2007-01-06 05:35:24-05:00, stenn@whimsy.udel.edu
     NTP_4_2_5P1
 
   sntp/sntp-opts.texi@1.48 +1 -1
-    NTP_4_2_5P1
-
-  sntp/sntp.1@1.51 +2 -2
     NTP_4_2_5P1
 
   util/ntp-keygen-opts.c@1.51 +2 -2
@@ -186622,9 +187592,6 @@ ChangeSet@1.1440, 2006-12-29 06:43:02-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.45.1.2 +1 -1
     NTP_4_2_5P0
 
-  sntp/sntp.1@1.48.1.2 +2 -2
-    NTP_4_2_5P0
-
   util/ntp-keygen-opts.c@1.48.1.2 +2 -2
     NTP_4_2_5P0
 
@@ -186734,9 +187701,6 @@ ChangeSet@1.1438, 2006-12-28 21:29:25-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.45.1.1 +1 -1
     NTP_4_2_5
 
-  sntp/sntp.1@1.48.1.1 +2 -2
-    NTP_4_2_5
-
   util/ntp-keygen-opts.c@1.48.1.1 +2 -2
     NTP_4_2_5
 
@@ -186811,9 +187775,6 @@ ChangeSet@1.1436.1.1, 2006-12-28 19:21:25-05:00, stenn@whimsy.udel.edu
     NTP_4_2_4
 
   sntp/sntp-opts.texi@1.46 +1 -1
-    NTP_4_2_4
-
-  sntp/sntp.1@1.49 +2 -2
     NTP_4_2_4
 
   util/ntp-keygen-opts.c@1.49 +2 -2
@@ -186994,9 +187955,6 @@ ChangeSet@1.1426, 2006-11-25 06:41:49-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.45 +1 -1
     NTP_4_2_3P70_RC
 
-  sntp/sntp.1@1.48 +2 -2
-    NTP_4_2_3P70_RC
-
   util/ntp-keygen-opts.c@1.48 +2 -2
     NTP_4_2_3P70_RC
 
@@ -187080,9 +188038,6 @@ ChangeSet@1.1424, 2006-11-24 06:42:33-05:00, stenn@whimsy.udel.edu
     NTP_4_2_3P69_RC
 
   sntp/sntp-opts.texi@1.44 +9 -1
-    NTP_4_2_3P69_RC
-
-  sntp/sntp.1@1.47 +8 -64
     NTP_4_2_3P69_RC
 
   util/ntp-keygen-opts.c@1.47 +2 -2
@@ -187174,9 +188129,6 @@ ChangeSet@1.1422, 2006-11-22 06:42:29-05:00, stenn@whimsy.udel.edu
     NTP_4_2_3P68_RC
 
   sntp/sntp-opts.texi@1.43 +1 -1
-    NTP_4_2_3P68_RC
-
-  sntp/sntp.1@1.46 +2 -2
     NTP_4_2_3P68_RC
 
   util/ntp-keygen-opts.c@1.46 +2 -2
@@ -187271,9 +188223,6 @@ ChangeSet@1.1419, 2006-11-21 06:42:26-05:00, stenn@whimsy.udel.edu
     NTP_4_2_3P67_RC
 
   sntp/sntp-opts.texi@1.42 +1 -1
-    NTP_4_2_3P67_RC
-
-  sntp/sntp.1@1.45 +2 -2
     NTP_4_2_3P67_RC
 
   util/ntp-keygen-opts.c@1.45 +2 -2
@@ -187373,9 +188322,6 @@ ChangeSet@1.1415, 2006-11-19 06:45:35-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.41 +1 -1
     NTP_4_2_3P66_RC
 
-  sntp/sntp.1@1.44 +2 -2
-    NTP_4_2_3P66_RC
-
   util/ntp-keygen-opts.c@1.44 +2 -2
     NTP_4_2_3P66_RC
 
@@ -187470,9 +188416,6 @@ ChangeSet@1.1412, 2006-11-10 06:41:45-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.40 +1 -1
     NTP_4_2_3P65_RC
 
-  sntp/sntp.1@1.43 +2 -2
-    NTP_4_2_3P65_RC
-
   util/ntp-keygen-opts.c@1.43 +2 -2
     NTP_4_2_3P65_RC
 
@@ -187559,9 +188502,6 @@ ChangeSet@1.1409, 2006-11-09 06:42:28-05:00, stenn@whimsy.udel.edu
     NTP_4_2_3P64_RC
 
   sntp/sntp-opts.texi@1.39 +1 -1
-    NTP_4_2_3P64_RC
-
-  sntp/sntp.1@1.42 +2 -2
     NTP_4_2_3P64_RC
 
   util/ntp-keygen-opts.c@1.42 +2 -2
@@ -187654,9 +188594,6 @@ ChangeSet@1.1406, 2006-11-06 06:47:05-05:00, stenn@whimsy.udel.edu
     NTP_4_2_3P63_RC
 
   sntp/sntp-opts.texi@1.38 +1 -1
-    NTP_4_2_3P63_RC
-
-  sntp/sntp.1@1.41 +2 -2
     NTP_4_2_3P63_RC
 
   util/ntp-keygen-opts.c@1.41 +2 -2
@@ -187768,9 +188705,6 @@ ChangeSet@1.1400, 2006-11-01 06:45:21-05:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.37 +1 -1
     NTP_4_2_3P62_RC
 
-  sntp/sntp.1@1.40 +2 -2
-    NTP_4_2_3P62_RC
-
   util/ntp-keygen-opts.c@1.40 +2 -2
     NTP_4_2_3P62_RC
 
@@ -187862,9 +188796,6 @@ ChangeSet@1.1397, 2006-10-23 07:48:24-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.36 +1 -1
     NTP_4_2_3P61_RC
 
-  sntp/sntp.1@1.39 +2 -2
-    NTP_4_2_3P61_RC
-
   util/ntp-keygen-opts.c@1.39 +2 -2
     NTP_4_2_3P61_RC
 
@@ -187948,9 +188879,6 @@ ChangeSet@1.1379.12.3, 2006-10-20 07:45:30-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P60_RC
 
   sntp/sntp-opts.texi@1.35 +1 -1
-    NTP_4_2_3P60_RC
-
-  sntp/sntp.1@1.38 +2 -2
     NTP_4_2_3P60_RC
 
   util/ntp-keygen-opts.c@1.38 +2 -2
@@ -188046,9 +188974,6 @@ ChangeSet@1.1379.1.52, 2006-10-15 07:42:15-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P59
 
   sntp/sntp-opts.texi@1.34 +1 -1
-    NTP_4_2_3P59
-
-  sntp/sntp.1@1.37 +2 -2
     NTP_4_2_3P59
 
   util/ntp-keygen-opts.c@1.37 +2 -2
@@ -188153,9 +189078,6 @@ ChangeSet@1.1379.1.50, 2006-10-14 07:41:41-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.33 +1 -1
     NTP_4_2_3P58
 
-  sntp/sntp.1@1.36 +2 -2
-    NTP_4_2_3P58
-
   util/ntp-keygen-opts.c@1.36 +2 -2
     NTP_4_2_3P58
 
@@ -188253,9 +189175,6 @@ ChangeSet@1.1379.1.48, 2006-10-13 07:48:30-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P57
 
   sntp/sntp-opts.texi@1.32 +1 -1
-    NTP_4_2_3P57
-
-  sntp/sntp.1@1.35 +2 -2
     NTP_4_2_3P57
 
   util/ntp-keygen-opts.c@1.35 +4 -4
@@ -188655,9 +189574,6 @@ ChangeSet@1.1379.1.42, 2006-10-12 07:40:55-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.31 +1 -1
     NTP_4_2_3P56
 
-  sntp/sntp.1@1.34 +2 -2
-    NTP_4_2_3P56
-
   util/ntp-keygen-opts.c@1.32 +2 -2
     NTP_4_2_3P56
 
@@ -188750,9 +189666,6 @@ ChangeSet@1.1379.1.39, 2006-10-11 07:44:18-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P55
 
   sntp/sntp-opts.texi@1.30 +1 -1
-    NTP_4_2_3P55
-
-  sntp/sntp.1@1.33 +2 -2
     NTP_4_2_3P55
 
   util/ntp-keygen-opts.c@1.31 +2 -2
@@ -188849,9 +189762,6 @@ ChangeSet@1.1379.1.36, 2006-10-10 07:46:00-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.29 +1 -1
     NTP_4_2_3P54
 
-  sntp/sntp.1@1.32 +2 -2
-    NTP_4_2_3P54
-
   util/ntp-keygen-opts.c@1.30 +2 -2
     NTP_4_2_3P54
 
@@ -188946,9 +189856,6 @@ ChangeSet@1.1379.1.33, 2006-10-09 07:41:25-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.28 +1 -1
     NTP_4_2_3P53
 
-  sntp/sntp.1@1.31 +2 -2
-    NTP_4_2_3P53
-
   util/ntp-keygen-opts.c@1.29 +2 -2
     NTP_4_2_3P53
 
@@ -189032,9 +189939,6 @@ ChangeSet@1.1379.1.31, 2006-10-08 19:39:10-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P52
 
   sntp/sntp-opts.texi@1.27 +1 -1
-    NTP_4_2_3P52
-
-  sntp/sntp.1@1.30 +2 -2
     NTP_4_2_3P52
 
   util/ntp-keygen-opts.c@1.28 +4 -4
@@ -189317,9 +190221,6 @@ ChangeSet@1.1379.1.25, 2006-09-26 16:16:30-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.26 +1 -1
     autogen update
 
-  sntp/sntp.1@1.29 +1 -1
-    autogen update
-
   util/ntp-keygen-opts.c@1.26 +3 -3
     autogen update
 
@@ -189394,9 +190295,6 @@ ChangeSet@1.1379.1.24, 2006-09-25 07:49:15-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P51
 
   sntp/sntp-opts.texi@1.25 +1 -1
-    NTP_4_2_3P51
-
-  sntp/sntp.1@1.28 +2 -2
     NTP_4_2_3P51
 
   util/ntp-keygen-opts.c@1.25 +4 -4
@@ -189678,9 +190576,6 @@ ChangeSet@1.1379.1.23, 2006-09-25 01:53:46-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.24 +1 -1
     autogen upgrade
 
-  sntp/sntp.1@1.27 +2 -2
-    autogen upgrade
-
   util/ntp-keygen-opts.c@1.24 +3 -2
     autogen upgrade
 
@@ -189755,9 +190650,6 @@ ChangeSet@1.1379.1.22, 2006-09-24 05:30:52-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P50
 
   sntp/sntp-opts.texi@1.23 +1 -1
-    NTP_4_2_3P50
-
-  sntp/sntp.1@1.26 +2 -2
     NTP_4_2_3P50
 
   util/ntp-keygen-opts.c@1.23 +43 -43
@@ -190223,9 +191115,6 @@ ChangeSet@1.1379.1.16, 2006-09-21 07:42:50-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.22 +1 -1
     NTP_4_2_3P49
 
-  sntp/sntp.1@1.25 +2 -2
-    NTP_4_2_3P49
-
   util/ntp-keygen-opts.c@1.22 +2 -2
     NTP_4_2_3P49
 
@@ -190318,9 +191207,6 @@ ChangeSet@1.1379.1.13, 2006-09-19 07:43:25-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P48
 
   sntp/sntp-opts.texi@1.21 +1 -1
-    NTP_4_2_3P48
-
-  sntp/sntp.1@1.24 +2 -2
     NTP_4_2_3P48
 
   util/ntp-keygen-opts.c@1.21 +2 -2
@@ -190430,9 +191316,6 @@ ChangeSet@1.1379.2.35, 2006-09-16 18:54:38-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.20 +1 -1
     NTP_4_2_3P47
 
-  sntp/sntp.1@1.23 +2 -2
-    NTP_4_2_3P47
-
   util/ntp-keygen-opts.c@1.20 +2 -2
     NTP_4_2_3P47
 
@@ -190526,9 +191409,6 @@ ChangeSet@1.1379.2.33, 2006-09-13 07:43:13-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P46
 
   sntp/sntp-opts.texi@1.19 +1 -1
-    NTP_4_2_3P46
-
-  sntp/sntp.1@1.22 +2 -2
     NTP_4_2_3P46
 
   util/ntp-keygen-opts.c@1.19 +2 -2
@@ -190628,9 +191508,6 @@ ChangeSet@1.1379.2.29, 2006-09-12 07:42:34-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.18 +1 -1
     NTP_4_2_3P45
 
-  sntp/sntp.1@1.21 +2 -2
-    NTP_4_2_3P45
-
   util/ntp-keygen-opts.c@1.18 +2 -2
     NTP_4_2_3P45
 
@@ -190727,9 +191604,6 @@ ChangeSet@1.1379.2.25, 2006-09-11 07:47:06-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P44
 
   sntp/sntp-opts.texi@1.17 +1 -1
-    NTP_4_2_3P44
-
-  sntp/sntp.1@1.20 +2 -2
     NTP_4_2_3P44
 
   util/ntp-keygen-opts.c@1.17 +2 -2
@@ -190898,9 +191772,6 @@ ChangeSet@1.1379.2.23, 2006-09-10 18:03:04-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.16 +1 -1
     NTP_4_2_3P43
 
-  sntp/sntp.1@1.19 +2 -2
-    NTP_4_2_3P43
-
   util/ntp-keygen-opts.c@1.16 +2 -2
     NTP_4_2_3P43
 
@@ -190981,9 +191852,6 @@ ChangeSet@1.1379.2.21, 2006-09-10 07:48:06-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P42
 
   sntp/sntp-opts.texi@1.15 +1 -1
-    NTP_4_2_3P42
-
-  sntp/sntp.1@1.18 +2 -2
     NTP_4_2_3P42
 
   util/ntp-keygen-opts.c@1.15 +2 -2
@@ -191170,9 +192038,6 @@ ChangeSet@1.1379.5.1, 2006-09-09 05:19:19-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.14 +1 -1
     NTP_4_2_3P41
 
-  sntp/sntp.1@1.17 +2 -2
-    NTP_4_2_3P41
-
   util/ntp-keygen-opts.c@1.14 +2 -2
     NTP_4_2_3P41
 
@@ -191301,9 +192166,6 @@ ChangeSet@1.1379.2.11, 2006-09-07 21:45:01-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P39
 
   sntp/sntp-opts.texi@1.13 +1 -1
-    NTP_4_2_3P39
-
-  sntp/sntp.1@1.16 +2 -2
     NTP_4_2_3P39
 
   util/ntp-keygen-opts.c@1.13 +2 -2
@@ -191457,9 +192319,6 @@ ChangeSet@1.1379.2.4, 2006-08-31 02:06:16-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.12 +1 -1
     NTP_4_2_3P38
 
-  sntp/sntp.1@1.15 +2 -2
-    NTP_4_2_3P38
-
   util/ntp-keygen-opts.c@1.12 +2 -2
     NTP_4_2_3P38
 
@@ -191585,9 +192444,6 @@ ChangeSet@1.1379.1.3, 2006-08-28 21:48:10-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.11 +1 -1
     NTP_4_2_3P37
 
-  sntp/sntp.1@1.14 +2 -2
-    NTP_4_2_3P37
-
   util/ntp-keygen-opts.c@1.11 +2 -2
     NTP_4_2_3P37
 
@@ -191700,9 +192556,6 @@ ChangeSet@1.1353.21.3, 2006-08-26 15:10:29-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.10 +1 -1
     NTP_4_2_3P36
 
-  sntp/sntp.1@1.13 +2 -2
-    NTP_4_2_3P36
-
   util/ntp-keygen-opts.c@1.10 +2 -2
     NTP_4_2_3P36
 
@@ -191784,9 +192637,6 @@ ChangeSet@1.1353.22.1, 2006-08-26 05:05:56-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P35
 
   sntp/sntp-opts.texi@1.9 +1 -1
-    NTP_4_2_3P35
-
-  sntp/sntp.1@1.12 +2 -2
     NTP_4_2_3P35
 
   util/ntp-keygen-opts.c@1.9 +2 -2
@@ -191928,9 +192778,6 @@ ChangeSet@1.1353.9.42, 2006-08-20 20:18:08-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.8 +1 -1
     NTP_4_2_3P34
 
-  sntp/sntp.1@1.11 +2 -2
-    NTP_4_2_3P34
-
   util/ntp-keygen-opts.c@1.8 +2 -2
     NTP_4_2_3P34
 
@@ -192011,9 +192858,6 @@ ChangeSet@1.1353.9.39, 2006-08-19 23:34:01-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P33
 
   sntp/sntp-opts.texi@1.7 +1 -1
-    NTP_4_2_3P33
-
-  sntp/sntp.1@1.10 +2 -2
     NTP_4_2_3P33
 
   util/ntp-keygen-opts.c@1.7 +2 -2
@@ -192181,9 +193025,6 @@ ChangeSet@1.1353.17.1, 2006-08-17 00:52:10-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.6 +1 -1
     run autogen after point release
 
-  sntp/sntp.1@1.9 +2 -2
-    run autogen after point release
-
   util/ntp-keygen-opts.c@1.6 +2 -2
     run autogen after point release
 
@@ -192313,9 +193154,6 @@ ChangeSet@1.1353.9.29, 2006-08-15 05:53:43-04:00, stenn@whimsy.udel.edu
   sntp/sntp-opts.texi@1.5 +1 -1
     regenerate autogen-erated files
 
-  sntp/sntp.1@1.8 +2 -2
-    regenerate autogen-erated files
-
   util/ntp-keygen-opts.c@1.5 +29 -4
     regenerate autogen-erated files
 
@@ -192407,9 +193245,6 @@ ChangeSet@1.1353.15.9, 2006-08-10 21:41:32-04:00, stenn@whimsy.udel.edu
     NTP_4_2_3P29
 
   sntp/sntp-opts.texi@1.4 +1 -1
-    NTP_4_2_3P29
-
-  sntp/sntp.1@1.7 +82 -3
     NTP_4_2_3P29
 
   util/ntp-keygen-opts.c@1.4 +2 -2
@@ -192902,12 +193737,6 @@ ChangeSet@1.1353.1.96, 2006-08-02 20:21:23-04:00, stenn@whimsy.udel.edu
     autogen upgrade
 
   sntp/sntp-opts.texi@1.2 +0 -0
-    Change mode to -rw-r--r--
-
-  sntp/sntp.1@1.6 +129 -64
-    autogen upgrade
-
-  sntp/sntp.1@1.5 +0 -0
     Change mode to -rw-r--r--
 
   util/ntp-keygen-opts.c@1.3 +54 -36
@@ -195687,7 +196516,7 @@ ChangeSet@1.1251.85.2, 2006-04-20 23:59:56-04:00, stenn@whimsy.udel.edu
   [Bug 527] Lose signalled IO.
 
   configure.ac@1.359.1.28 +7 -2
-    [Bug 527] Losed signalled IO.
+    [Bug 527] Lose signalled IO.
 
 ChangeSet@1.1251.85.1, 2006-04-18 05:58:13-04:00, stenn@whimsy.udel.edu
   there are 240 ntp-dev patch releases so far
@@ -197136,7 +197965,7 @@ ChangeSet@1.1251.67.12, 2005-10-27 21:38:04-04:00, stenn@deacon.udel.edu
     [Bug 516] unprotected crypto_update() call fix from Dave Mills
 
 ChangeSet@1.1251.67.11, 2005-10-25 20:15:47-04:00, stenn@deacon.udel.edu
-  [Bug 517] Allow dynamic SSL libraries
+  [Bug 519] Allow dynamic SSL libraries
 
   configure.ac@1.359.1.24 +3 -2
     [Bug 519] Allow dynamic SSL libraries: also check /usr/sfw/{lib,include}
@@ -202617,6 +203446,7 @@ ChangeSet@1.1251.1.28, 2004-11-28 03:35:01-05:00, stenn@whimsy.udel.edu
 
   ntpdate/ntpdate.c@1.48 +2 -2
     [Bug 363] ntpdate: use -1 to represent an invalid fd
+    Fix from Rainer Weikusat.
 
 ChangeSet@1.1251.1.27, 2004-11-21 21:33:09-05:00, stenn@whimsy.udel.edu
   [Bug 349] Patches from Takao Abe
@@ -203317,9 +204147,6 @@ ChangeSet@1.1202.5.2, 2004-10-23 03:09:05-04:00, stenn@whimsy.udel.edu
   sntp/main.c@1.5 +19 -115
     Lose broadcast and server modes.
 
-  sntp/sntp.1@1.4 +0 -23
-    Lose broadcast and server modes.
-
   sntp/socket.c@1.4 +6 -22
     Lose broadcast and server modes.
 
@@ -203706,17 +204533,6 @@ ChangeSet@1.1202.1.16, 2004-08-25 01:16:52-04:00, stenn@whimsy.udel.edu
 
   sntp/main.c@1.4 +8 -8
     added sntp.1 and did a little cleanup
-
-  sntp/sntp.1@1.3 +25 -15
-    added sntp.1 and did a little cleanup
-
-  sntp/sntp.1@1.2 +0 -0
-    Rename: sntp/msntp.1 -> sntp/sntp.1
-
-  sntp/msntp.1@1.1 +325 -0
-
-  sntp/msntp.1@1.0 +0 -0
-    BitKeeper file /deacon/backroom/ntp-dev/sntp/msntp.1
 
 ChangeSet@1.1202.1.15, 2004-08-23 22:08:55-04:00, stenn@www.ntp.org
   make propdelay compile/link

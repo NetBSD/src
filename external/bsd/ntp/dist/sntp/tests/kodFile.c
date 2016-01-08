@@ -1,5 +1,3 @@
-/*	$NetBSD: kodFile.c,v 1.1.1.3 2015/10/23 17:47:43 christos Exp $	*/
-
 #include "config.h"
 
 #include "ntp_types.h"
@@ -30,6 +28,7 @@ void
 setUp(void) {
 	kod_db_cnt = 0;
 	kod_db = NULL;
+	init_lib();
 }
 
 

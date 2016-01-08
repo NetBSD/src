@@ -3,7 +3,7 @@
 <title>Summary User's Manual</title>
 <meta http-equiv="Content-Type" content="text/html">
 <meta name="description" content="Summary User's Manual">
-<meta name="generator" content="makeinfo 4.7">
+<meta name="generator" content="makeinfo 4.8">
 <link title="Top" rel="top" href="#Top">
 <link href="http://www.gnu.org/software/texinfo/" rel="generator-home" title="Texinfo Homepage">
 <meta http-equiv="Content-Style-Type" content="text/css">
@@ -14,24 +14,26 @@
   pre.smallformat  { font-family:inherit; font-size:smaller }
   pre.smallexample { font-size:smaller }
   pre.smalllisp    { font-size:smaller }
-  span.sc { font-variant:small-caps }
-  span.roman { font-family: serif; font-weight: normal; } 
+  span.sc    { font-variant:small-caps }
+  span.roman { font-family:serif; font-weight:normal; } 
+  span.sansserif { font-family:sans-serif; font-weight:normal; } 
 --></style>
 </head>
 <body>
 <h1 class="settitle">Summary User's Manual</h1>
 <div class="node">
 <p><hr>
-<a name="Top"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#summary-Description">summary Description</a>,
+<a name="Top"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#summary-Description">summary Description</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#dir">(dir)</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#dir">(dir)</a>
-<br>
+
 </div>
 
 <h2 class="unnumbered">Summary User Manual</h2>
 
 <p>This document describes the use of the NTP Project's <code>summary</code> program. 
-This document applies to version 4.2.8p4 of <code>summary</code>.
+This document applies to version 4.2.8p5 of <code>summary</code>.
 
   <div class="shortcontents">
 <h2>Short Contents</h2>
@@ -47,9 +49,10 @@ This document applies to version 4.2.8p4 of <code>summary</code>.
 
 <div class="node">
 <p><hr>
-<a name="summary-Invocation"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-Description">summary Description</a>,
+<a name="summary-Invocation"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-Description">summary Description</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
-<br>
+
 </div>
 
 <h3 class="section">Invoking summary</h3>
@@ -60,7 +63,7 @@ Up:&nbsp;<a rel="up" accesskey="u" href="#Top">Top</a>
 using the <code>agtexi-cmd</code> template and the option descriptions for the <code>summary</code> program.
 
 <ul class="menu">
-<li><a accesskey="1" href="#summary-usage">summary usage</a>:                   summary help/usage (<span class="option">--help</span>)
+<li><a accesskey="1" href="#summary-usage">summary usage</a>:                   summary help/usage (<samp><span class="option">--help</span></samp>)
 <li><a accesskey="2" href="#summary-directory">summary directory</a>:               directory option
 <li><a accesskey="3" href="#summary-end_002ddate">summary end-date</a>:                end-date option
 <li><a accesskey="4" href="#summary-output_002ddirectory">summary output-directory</a>:        output-directory option
@@ -70,25 +73,26 @@ using the <code>agtexi-cmd</code> template and the option descriptions for the <
 
 <div class="node">
 <p><hr>
-<a name="summary-usage"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#summary-directory">summary directory</a>,
+<a name="summary-usage"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#summary-directory">summary directory</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#summary-Invocation">summary Invocation</a>
-<br>
+
 </div>
 
-<h4 class="subsection">summary help/usage (<span class="option">--help</span>)</h4>
+<h4 class="subsection">summary help/usage (<samp><span class="option">--help</span></samp>)</h4>
 
 <p><a name="index-summary-help-3"></a>
 This is the automatically generated usage text for summary.
 
   <p>The text printed is the same whether selected with the <code>help</code> option
-(<span class="option">--help</span>) or the <code>more-help</code> option (<span class="option">--more-help</span>).  <code>more-help</code> will print
+(<samp><span class="option">--help</span></samp>) or the <code>more-help</code> option (<samp><span class="option">--more-help</span></samp>).  <code>more-help</code> will print
 the usage text by passing it through a pager program. 
 <code>more-help</code> is disabled on platforms without a working
 <code>fork(2)</code> function.  The <code>PAGER</code> environment variable is
-used to select the program, defaulting to <span class="file">more</span>.  Both will exit
+used to select the program, defaulting to <samp><span class="file">more</span></samp>.  Both will exit
 with a status code of 0.
 
-<pre class="example">summary - compute various stastics from NTP stat files - Ver. 4.2.8p4
+<pre class="example">summary - compute various stastics from NTP stat files - Ver. 4.2.8p5
 USAGE: summary [ -&lt;flag&gt; [&lt;val&gt;] | --&lt;name&gt;[{=| }&lt;val&gt;] ]...
 
         --directory=str          Directory containing stat files
@@ -105,10 +109,11 @@ hyphen and the flag character.
 </pre>
   <div class="node">
 <p><hr>
-<a name="summary-directory"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#summary-end_002ddate">summary end-date</a>,
+<a name="summary-directory"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#summary-end_002ddate">summary end-date</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-usage">summary usage</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#summary-Invocation">summary Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">directory option</h4>
@@ -120,10 +125,12 @@ This option takes a string argument.
         by <code>ntpd</code>. 
 <div class="node">
 <p><hr>
-<a name="summary-end_002ddate"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#summary-output_002ddirectory">summary output-directory</a>,
+<a name="summary-end-date"></a>
+<a name="summary-end_002ddate"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#summary-output_002ddirectory">summary output-directory</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-directory">summary directory</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#summary-Invocation">summary Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">end-date option</h4>
@@ -136,10 +143,12 @@ This option takes a number argument.
         to get the timestamp. 
 <div class="node">
 <p><hr>
-<a name="summary-output_002ddirectory"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#summary-start_002ddate">summary start-date</a>,
+<a name="summary-output-directory"></a>
+<a name="summary-output_002ddirectory"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#summary-start_002ddate">summary start-date</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-end_002ddate">summary end-date</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#summary-Invocation">summary Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">output-directory option</h4>
@@ -150,10 +159,12 @@ This option takes a str argument.
         The output directory <code>summary</code> will write all output files to. 
 <div class="node">
 <p><hr>
-<a name="summary-start_002ddate"></a>Next:&nbsp;<a rel="next" accesskey="n" href="#summary-exit-status">summary exit status</a>,
+<a name="summary-start-date"></a>
+<a name="summary-start_002ddate"></a>
+Next:&nbsp;<a rel="next" accesskey="n" href="#summary-exit-status">summary exit status</a>,
 Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-output_002ddirectory">summary output-directory</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#summary-Invocation">summary Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">start-date option</h4>
@@ -165,17 +176,18 @@ This option takes a num argument.
         this option.  Defaults to 197000101. 
 <div class="node">
 <p><hr>
-<a name="summary-exit-status"></a>Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-start_002ddate">summary start-date</a>,
+<a name="summary-exit-status"></a>
+Previous:&nbsp;<a rel="previous" accesskey="p" href="#summary-start_002ddate">summary start-date</a>,
 Up:&nbsp;<a rel="up" accesskey="u" href="#summary-Invocation">summary Invocation</a>
-<br>
+
 </div>
 
 <h4 class="subsection">summary exit status</h4>
 
 <p>One of the following exit values will be returned:
      <dl>
-<dt><span class="samp">0 (EXIT_SUCCESS)</span><dd>Successful program execution. 
-<br><dt><span class="samp">1 (EXIT_FAILURE)</span><dd>The operation failed or the command syntax was not valid. 
+<dt>`<samp><span class="samp">0 (EXIT_SUCCESS)</span></samp>'<dd>Successful program execution. 
+<br><dt>`<samp><span class="samp">1 (EXIT_FAILURE)</span></samp>'<dd>The operation failed or the command syntax was not valid. 
 </dl>
 
 </body></html>

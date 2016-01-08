@@ -1,15 +1,15 @@
-/*	$NetBSD: sfptostr.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
-
 /* 
  * This file contains test for both fptoa and fptoms (which uses dofptoa),
  * since all these functions are very similar.
  */
 #include "config.h"
 #include "ntp_fp.h"
+#include "ntp_stdlib.h"
 #include "unity.h"
  
 #define SFP_MAX_PRECISION 6
 
+void setUp(void);
 void test_PositiveInteger(void);
 void test_NegativeInteger(void);
 void test_PositiveIntegerPositiveFraction(void);
@@ -18,6 +18,15 @@ void test_PositiveIntegerNegativeFraction(void);
 void test_NegativeIntegerPositiveFraction(void);
 void test_SingleDecimalInteger(void);
 void test_SingleDecimalRounding(void);
+
+
+void
+setUp(void)
+{
+	init_lib();
+
+	return;
+}
 
 
 void test_PositiveInteger(void)

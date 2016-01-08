@@ -290,13 +290,12 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/libevent/build-aux/depcomp \
 	$(top_srcdir)/libevent/build-aux/install-sh \
 	$(top_srcdir)/libevent/build-aux/ltmain.sh \
-	$(top_srcdir)/libevent/build-aux/missing compile config.guess \
-	config.sub depcomp install-sh libevent/build-aux/ar-lib \
-	libevent/build-aux/compile libevent/build-aux/config.guess \
-	libevent/build-aux/config.sub libevent/build-aux/depcomp \
-	libevent/build-aux/install-sh libevent/build-aux/ltmain.sh \
-	libevent/build-aux/missing libevent/build-aux/ylwrap ltmain.sh \
-	missing
+	$(top_srcdir)/libevent/build-aux/missing \
+	libevent/build-aux/ar-lib libevent/build-aux/compile \
+	libevent/build-aux/config.guess libevent/build-aux/config.sub \
+	libevent/build-aux/depcomp libevent/build-aux/install-sh \
+	libevent/build-aux/ltmain.sh libevent/build-aux/missing \
+	libevent/build-aux/ylwrap
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -413,6 +412,7 @@ LIPO = @LIPO@
 LN_S = @LN_S@
 LTHREAD_LIBS = @LTHREAD_LIBS@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
 MANTAGFMT = @MANTAGFMT@

@@ -1,5 +1,3 @@
-/*	$NetBSD: packetProcessing.c,v 1.1.1.3 2015/10/23 17:47:43 christos Exp $	*/
-
 #include "config.h"
 #include "sntptest.h"
 #include "networking.h"

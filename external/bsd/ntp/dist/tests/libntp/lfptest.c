@@ -1,5 +1,3 @@
-/*	$NetBSD: lfptest.c,v 1.1.1.1 2015/10/23 17:47:45 christos Exp $	*/
-
 #include "config.h"
 #include "ntp_fp.h"
 #include "lfptest.h"
