@@ -1,22 +1,12 @@
-#	$NetBSD: Makefile,v 1.2 2016/01/06 15:34:54 christos Exp $
+#	$NetBSD: Makefile,v 1.3 2016/01/08 17:27:48 jakllsch Exp $
 #
 
 .include <bsd.own.mk>
 
+SUBDIR= libhid .WAIT
+
 TESTSDIR=	${TESTSBASE}/dev/usb
 
-TESTS_C=	t_hid
-
-CPPFLAGS.t_hid.c=	-I${.CURDIR}/../../../sys/dev/usb
-
-SUBDIR=	libhid
-LIBHIDDIR!= cd ${.CURDIR}/libhid && ${PRINTOBJDIR}
-LDFLAGS+= -L${LIBHIDDIR}
-LDADD+= -Wl,--whole-archive -lrumpdev_hid -Wl,--no-whole-archive
-
-LDADD+= -lrump
-LDADD+= -lrumpuser
-LDADD+= -lrump
-LDADD+= -lpthread
+TESTS_SUBDIRS= t_hid
 
 .include <bsd.test.mk>
