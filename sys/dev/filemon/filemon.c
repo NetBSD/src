@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.24 2016/01/05 22:08:54 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.25 2016/01/08 07:16:13 dholland Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.24 2016/01/05 22:08:54 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.25 2016/01/08 07:16:13 dholland Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -115,7 +115,7 @@ filemon_output(struct filemon * filemon, char *msg, size_t len)
 		cp = strchr(msg, '\n');
 		if (cp && cp - msg <= 16)
 			x = (cp - msg) - 2;
-		log(logLevel, "filemont_output:('%.*s%s'", x,
+		log(logLevel, "filemon_output:('%.*s%s'", x,
 		    (x < 16) ? "..." : "", msg);
 	}
 #endif
