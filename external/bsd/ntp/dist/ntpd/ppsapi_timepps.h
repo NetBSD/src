@@ -1,3 +1,5 @@
+/*	$NetBSD: ppsapi_timepps.h,v 1.1.1.5 2016/01/08 21:21:25 christos Exp $	*/
+
 /* ppsapi_timepps.h */
 
 /*

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_scanner.c,v 1.1.1.9 2016/01/08 21:21:26 christos Exp $	*/
+
 
 /* ntp_scanner.c
  *

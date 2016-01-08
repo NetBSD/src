@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpd-opts.h,v 1.1.1.10 2016/01/08 21:21:26 christos Exp $	*/
+
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpd-opts.h)
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: regress.gen.h,v 1.1.1.5 2016/01/08 21:21:31 christos Exp $	*/
+
 /*
  * Automatically generated from ../../../sntp/libevent/test/regress.rpc
  */

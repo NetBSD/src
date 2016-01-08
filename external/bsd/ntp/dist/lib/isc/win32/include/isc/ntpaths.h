@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpaths.h,v 1.1.1.6 2016/01/08 21:21:23 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ntpaths.h,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
+/* Id: ntpaths.h,v 1.20 2009/07/14 22:54:57 each Exp  */
 
 /*
  * Windows-specific path definitions

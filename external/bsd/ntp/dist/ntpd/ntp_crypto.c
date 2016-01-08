@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_crypto.c,v 1.1.1.10 2016/01/08 21:21:24 christos Exp $	*/
+
 /*
  * ntp_crypto.c - NTP version 4 public key routines
  */

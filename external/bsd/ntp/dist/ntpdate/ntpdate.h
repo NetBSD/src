@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpdate.h,v 1.1.1.7 2016/01/08 21:21:27 christos Exp $	*/
+
 /*
  * ntpdate.h - declarations for the ntpdate and ntptimeset programs
  */

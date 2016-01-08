@@ -1,3 +1,5 @@
+/*	$NetBSD: bind9.h,v 1.1.1.5 2016/01/08 21:21:22 christos Exp $	*/
+
 /*
  * Copyright (C) 2009  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -14,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bind9.h,v 1.1.1.4 2016/01/08 20:55:34 christos Exp $ */
+/* Id: bind9.h,v 1.2 2009/12/05 23:31:41 each Exp  */
 
 #ifndef ISC_BIND9_H
 #define ISC_BIND9_H 1

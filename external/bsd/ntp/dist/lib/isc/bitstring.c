@@ -1,3 +1,5 @@
+/*	$NetBSD: bitstring.c,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: bitstring.c,v 1.1.1.5 2016/01/08 20:55:33 christos Exp $ */
+/* Id: bitstring.c,v 1.17 2007/06/19 23:47:17 tbox Exp  */
 
 /*! \file */
 

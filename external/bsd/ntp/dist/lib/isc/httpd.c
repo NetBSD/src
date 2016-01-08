@@ -1,3 +1,5 @@
+/*	$NetBSD: httpd.c,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
+
 /*
  * Copyright (C) 2006-2008, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -14,7 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: httpd.c,v 1.1.1.5 2016/01/08 20:55:33 christos Exp $ */
+/* Id */
 
 /*! \file */
 

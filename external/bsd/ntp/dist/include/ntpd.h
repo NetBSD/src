@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpd.h,v 1.1.1.9 2016/01/08 21:21:23 christos Exp $	*/
+
 /*
  * ntpd.h - Prototypes and external variables for ntpd.
  *

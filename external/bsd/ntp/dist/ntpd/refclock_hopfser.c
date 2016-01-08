@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_hopfser.c,v 1.1.1.7 2016/01/08 21:21:25 christos Exp $	*/
+
 /*
  *
  * refclock_hopfser.c

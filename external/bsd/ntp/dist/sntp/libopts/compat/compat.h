@@ -1,3 +1,5 @@
+/*	$NetBSD: compat.h,v 1.1.1.8 2016/01/08 21:21:32 christos Exp $	*/
+
 /*  -*- Mode: C -*- 
  *
  *  compat.h is free software.

@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_bancomm.c,v 1.1.1.7 2016/01/08 21:21:25 christos Exp $	*/
+
 /* refclock_bancomm.c - clock driver for the  Datum/Bancomm bc635VME 
  * Time and Frequency Processor. It requires the BANCOMM bc635VME/
  * bc350VXI Time and Frequency Processor Module Driver for SunOS4.x 

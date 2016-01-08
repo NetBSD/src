@@ -1,3 +1,5 @@
+/*	$NetBSD: authusekey.c,v 1.1.1.6 2016/01/08 21:21:24 christos Exp $	*/
+
 /*
  * authusekey - decode a key from ascii and use it
  */

@@ -1,3 +1,5 @@
+/*	$NetBSD: sha1.h,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -18,9 +20,9 @@
 #ifndef ISC_SHA1_H
 #define ISC_SHA1_H 1
 
-/* $Id: sha1.h,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
+/* Id: sha1.h,v 1.19 2009/02/06 23:47:42 tbox Exp  */
 
-/*	$NetBSD: sha1.h,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $	*/
+/*	NetBSD: sha1.h,v 1.2 1998/05/29 22:55:44 thorpej Exp 	*/
 
 /*! \file isc/sha1.h
  * \brief SHA-1 in C

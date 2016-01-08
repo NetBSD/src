@@ -1,3 +1,5 @@
+/*	$NetBSD: tg2.c,v 1.1.1.5 2016/01/08 21:21:34 christos Exp $	*/
+
 /*
  * tg.c generate WWV or IRIG signals for test
  */
@@ -49,10 +51,7 @@
  * 10, but not yet with other machines. It uses no special features and
  * should be readily portable to other hardware and operating systems.
  *
- * $Log: tg2.c,v $
- * Revision 1.1.1.4  2016/01/08 20:55:48  christos
- * Import ntp 4.2.8p5
- *
+ * Log: tg.c,v 
  * Revision 1.28  2007/02/12 23:57:45  dmw
  * v0.23 2007-02-12 dmw:
  * - Changed statistics to include calculated error
@@ -2454,7 +2453,7 @@ Help ( void )
 	{
 	printf ("\n\nTime Code Generation - IRIG-B or WWV, v%d.%d, %s dmw", VERSION, ISSUE, ISSUE_DATE);
 	printf ("\n\nRCS Info:");
-	printf (  "\n  $Header: /cvsroot/src/external/bsd/ntp/dist/util/tg2.c,v 1.1.1.4 2016/01/08 20:55:48 christos Exp $");
+	printf (  "\n  Header: /home/dmw/src/IRIG_generation/ntp-4.2.2p3/util/RCS/tg.c,v 1.28 2007/02/12 23:57:45 dmw Exp ");
 	printf ("\n\nUsage: %s [option]*", CommandName);
 	printf ("\n\nOptions: -a device_name                 Output audio device name (default /dev/audio)");
 	printf (  "\n         -b yymmddhhmm                  Remove leap second at end of minute specified");

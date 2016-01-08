@@ -1,3 +1,5 @@
+/*	$NetBSD: ipv6.c,v 1.1.1.6 2016/01/08 21:21:23 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: ipv6.c,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
+/* Id: ipv6.c,v 1.8 2007/06/19 23:47:19 tbox Exp  */
 
 #include <isc/net.h>
 #include <isc/platform.h>

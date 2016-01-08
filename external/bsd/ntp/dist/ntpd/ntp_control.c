@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_control.c,v 1.1.1.10 2016/01/08 21:21:24 christos Exp $	*/
+
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
  *		   traps.  Provides service to ntpq and others.

@@ -1,3 +1,5 @@
+/*	$NetBSD: ntpdc-opts.c,v 1.1.1.10 2016/01/08 21:21:27 christos Exp $	*/
+
 /*
  *  EDIT THIS FILE WITH CAUTION  (ntpdc-opts.c)
  *

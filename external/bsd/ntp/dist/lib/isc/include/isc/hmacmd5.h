@@ -1,3 +1,5 @@
+/*	$NetBSD: hmacmd5.h,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2007, 2009  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: hmacmd5.h,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
+/* Id: hmacmd5.h,v 1.14 2009/02/06 23:47:42 tbox Exp  */
 
 /*! \file isc/hmacmd5.h
  * \brief This is the header file for the HMAC-MD5 keyed hash algorithm

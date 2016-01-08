@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.1.1.9 2016/01/08 21:21:29 christos Exp $	*/
+
 #include <config.h>
 
 #include <event2/util.h>

@@ -1,3 +1,5 @@
+/*	$NetBSD: keyword-gen.c,v 1.1.1.8 2016/01/08 21:21:26 christos Exp $	*/
+
 /*
  * keyword-gen.c -- generate keyword scanner finite state machine and
  *		    keyword_text array.

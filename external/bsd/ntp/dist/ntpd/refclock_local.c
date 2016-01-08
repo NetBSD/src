@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_local.c,v 1.1.1.6 2016/01/08 21:21:25 christos Exp $	*/
+
 
 /*
  * refclock_local - local pseudo-clock driver

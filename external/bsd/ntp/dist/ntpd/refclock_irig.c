@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_irig.c,v 1.1.1.8 2016/01/08 21:21:25 christos Exp $	*/
+
 /*
  * refclock_irig - audio IRIG-B/E demodulator/decoder
  */

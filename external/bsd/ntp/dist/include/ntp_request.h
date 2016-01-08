@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_request.h,v 1.1.1.7 2016/01/08 21:21:23 christos Exp $	*/
+
 /*
  * ntp_request.h - definitions for the ntpd remote query facility
  */

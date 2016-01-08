@@ -1,4 +1,4 @@
-#! /usr/pkg/bin/perl -w
+#! /usr/local/bin/perl -w
 
 $found = 0;
 $last = 0;

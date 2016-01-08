@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_msfees.c,v 1.1.1.7 2016/01/08 21:21:26 christos Exp $	*/
+
 /* refclock_ees - clock driver for the EES M201 receiver */
 
 #ifdef HAVE_CONFIG_H

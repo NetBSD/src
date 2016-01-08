@@ -1,3 +1,5 @@
+/*	$NetBSD: sha1.c,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
+
 /*
  * Copyright (C) 2004, 2005, 2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
@@ -15,9 +17,9 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: sha1.c,v 1.1.1.5 2016/01/08 20:55:33 christos Exp $ */
+/* Id */
 
-/*	$NetBSD: sha1.c,v 1.1.1.5 2016/01/08 20:55:33 christos Exp $	*/
+/*	NetBSD: sha1.c,v 1.5 2000/01/22 22:19:14 mycroft Exp 	*/
 /*	$OpenBSD: sha1.c,v 1.9 1997/07/23 21:12:32 kstailey Exp $	*/
 
 /*! \file

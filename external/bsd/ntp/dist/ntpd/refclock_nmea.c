@@ -1,3 +1,5 @@
+/*	$NetBSD: refclock_nmea.c,v 1.1.1.10 2016/01/08 21:21:25 christos Exp $	*/
+
 /*
  * refclock_nmea.c - clock driver for an NMEA GPS CLOCK
  *		Michael Petry Jun 20, 1994

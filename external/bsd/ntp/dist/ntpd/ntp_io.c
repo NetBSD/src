@@ -1,3 +1,5 @@
+/*	$NetBSD: ntp_io.c,v 1.1.1.10 2016/01/08 21:21:26 christos Exp $	*/
+
 /*
  * ntp_io.c - input/output routines for ntpd.	The socket-opening code
  *		   was shamelessly stolen from ntpd.

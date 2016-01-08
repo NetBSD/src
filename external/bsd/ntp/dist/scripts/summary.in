@@ -1,5 +1,5 @@
 #! @PATH_PERL@ -w
-# $Id: summary.in,v 1.1.1.5 2016/01/08 20:55:42 christos Exp $
+# Id
 # Perl version of (summary.sh, loop.awk, peer.awk):
 # Create summaries from xntpd's loop and peer statistics.
 #

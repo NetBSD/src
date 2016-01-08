@@ -1,3 +1,5 @@
+/*	$NetBSD: task.c,v 1.1.1.6 2016/01/08 21:21:22 christos Exp $	*/
+
 /*
  * Copyright (C) 2004-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1998-2003  Internet Software Consortium.
@@ -15,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: task.c,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
+/* Id */
 
 /*! \file
  * \author Principal Author: Bob Halley

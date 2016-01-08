@@ -1,3 +1,5 @@
+/*	$NetBSD: init.c,v 1.1.1.7 2016/01/08 21:21:32 christos Exp $	*/
+
 /**
  * \file initialize.c
  *

@@ -1,3 +1,5 @@
+/*	$NetBSD: jsmn_test.c,v 1.1.1.5 2016/01/08 21:21:23 christos Exp $	*/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
