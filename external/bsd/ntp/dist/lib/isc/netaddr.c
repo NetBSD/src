@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.8 2016/01/08 19:01:12 joerg Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.9 2016/01/08 21:35:36 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
@@ -161,7 +161,7 @@ isc_netaddr_totext(const isc_netaddr_t *netaddr, isc_buffer_t *target) {
 	if (r == NULL)
 		return (ISC_R_FAILURE);
 
-	alen = strlen(abuf);
+	alen = (unsigned int)strlen(abuf); /* no overflow possible */
 	INSIST(alen < sizeof(abuf));
 
 	zlen = 0;

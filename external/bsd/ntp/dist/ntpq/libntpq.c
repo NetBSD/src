@@ -1,4 +1,4 @@
-/*	$NetBSD: libntpq.c,v 1.3 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: libntpq.c,v 1.4 2016/01/08 21:35:40 christos Exp $	*/
 
 /*****************************************************************************
  *
@@ -134,7 +134,7 @@ ntpq_getvar(
 {
 	char *	name;
 	char *	value;
-	int	idatalen;
+	size_t	idatalen;
 
 	value = NULL;
 	idatalen = (int)datalen;
@@ -183,8 +183,8 @@ int ntpq_queryhost(unsigned short VARSET, unsigned short association, char *resu
 {
 	const char *datap;
 	int res;
-	int dsize;
-	u_short rstatus;
+	size_t	dsize;
+	u_short	rstatus;
 	
 	if ( numhosts > 0 )
 		res = doquery(VARSET,association,0,0, (char *)0, &rstatus, &dsize, &datap);
@@ -419,7 +419,7 @@ ntpq_read_assoc_peervars(
 {
 	const char *	datap;
 	int		res;
-	int		dsize;
+	size_t		dsize;
 	u_short		rstatus;
 
 	res = doquery(CTL_OP_READVAR, associd, 0, 0, NULL, &rstatus,
@@ -476,24 +476,22 @@ ntpq_read_sysvars(
 {
 	const char *	datap;
 	int		res;
-	int		i_dsize;
 	size_t		dsize;
 	u_short		rstatus;
 
 	res = doquery(CTL_OP_READVAR, 0, 0, 0, NULL, &rstatus,
-		      &i_dsize, &datap);
+		      &dsize, &datap);
 
 	if (res != 0)
 		return 0;
 
-	if (i_dsize == 0) {
+	if (dsize == 0) {
 		if (numhosts > 1)
 			fprintf(stderr, "server=%s ", currenthost);
 		fprintf(stderr, "***No sysvar information returned\n");
 
 		return 0;
 	} else {
-		dsize = max(0, i_dsize);
 		dsize = min(dsize, maxsize);
 		memcpy(resultbuf, datap, dsize);
 	}
@@ -663,7 +661,7 @@ ntpq_read_assoc_clockvars(
 {
 	const char *datap;
 	int res;
-	int dsize;
+	size_t dsize;
 	u_short rstatus;
 
 	res = ntpq_doquerylist(ntpq_varlist, CTL_OP_READCLOCK, associd,

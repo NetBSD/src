@@ -1,9 +1,9 @@
-/*	$NetBSD: sntp-opts.c,v 1.6 2015/10/23 18:06:23 christos Exp $	*/
+/*	$NetBSD: sntp-opts.c,v 1.7 2016/01/08 21:35:40 christos Exp $	*/
 
 /*
  *  EDIT THIS FILE WITH CAUTION  (sntp-opts.c)
  *
- *  It has been AutoGen-ed  October 21, 2015 at 12:30:23 PM by AutoGen 5.18.5
+ *  It has been AutoGen-ed  January  5, 2016 at 11:23:20 AM by AutoGen 5.18.5
  *  From the definitions    sntp-opts.def
  *  and the template file   options
  *
