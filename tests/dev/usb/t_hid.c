@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hid.c,v 1.3 2016/01/07 16:10:49 jakllsch Exp $	*/
+/*	$NetBSD: t_hid.c,v 1.4 2016/01/08 17:34:57 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hid.c,v 1.3 2016/01/07 16:10:49 jakllsch Exp $");
+__RCSID("$NetBSD: t_hid.c,v 1.4 2016/01/08 17:34:57 jakllsch Exp $");
 
 #include <machine/types.h>
 #include <stdlib.h>
@@ -42,6 +42,8 @@ __RCSID("$NetBSD: t_hid.c,v 1.3 2016/01/07 16:10:49 jakllsch Exp $");
 #define hid_get_data rumpns_hid_get_data
 #define hid_get_udata rumpns_hid_get_udata
 #define uhidevdebug rumpns_uhidevdebug
+#include <usb.h>
+#include <usbhid.h>
 #include <hid.h>
 
 #include "../../lib/libusbhid/hid_test_data.c"
@@ -74,6 +76,29 @@ ATF_TC_HEAD(khid, tc)
         atf_tc_set_md_var(tc, "descr", "check kernel hid.c");
 }
 
+static int
+locate_item(const void *desc, int size, u_int32_t u, u_int8_t id,
+    enum hid_kind k, struct hid_item *hip, u_int32_t *flags)
+{
+	struct hid_data *d;
+	struct hid_item h;
+
+	h.report_ID = 0;
+	for (d = hid_start_parse(desc, size, k); hid_get_item(d, &h); ) {
+		if (h.kind == k && !(h.flags & HIO_CONST) &&
+		    (/*XXX*/uint32_t)h.usage == u && h.report_ID == id) {
+			if (hip != NULL)
+				*hip = h;
+			if (flags != NULL)
+				*flags = h.flags;
+			hid_end_parse(d);
+			return (1);
+		}
+	}
+	hid_end_parse(d);
+	return (0);
+}
+
 ATF_TC_BODY(khid, tc)
 {
 	int ret;
@@ -82,11 +107,9 @@ ATF_TC_BODY(khid, tc)
 
 	uhidevdebug = 0;
 
-	atf_tc_expect_fail("logical/physical range appears broken");
-
-	ret = hid_locate(range_test_report_descriptor,
+	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000003, 0, hid_input,
-	    &hi.loc, &flags);
+	    &hi, &flags);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 32);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
@@ -105,9 +128,9 @@ ATF_TC_BODY(khid, tc)
 	MYld_ATF_CHECK_EQ(hid_get_data(range_test_maximum_report,
 	    &hi.loc), 2147483647);
 
-	ret = hid_locate(range_test_report_descriptor,
+	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000002, 0, hid_input,
-	    &hi.loc, &flags);
+	    &hi, &flags);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 16);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
@@ -126,9 +149,9 @@ ATF_TC_BODY(khid, tc)
 	MYld_ATF_CHECK_EQ(hid_get_data(range_test_maximum_report,
 	    &hi.loc), 32767);
 
-	ret = hid_locate(range_test_report_descriptor,
+	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000001, 0, hid_input,
-	    &hi.loc, &flags);
+	    &hi, &flags);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 8);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
@@ -148,9 +171,9 @@ ATF_TC_BODY(khid, tc)
 	    &hi.loc), 127);
 
 
-	ret = hid_locate(unsigned_range_test_report_descriptor,
+	ret = locate_item(unsigned_range_test_report_descriptor,
 	    sizeof(unsigned_range_test_report_descriptor), 0xff000013, 0,
-	    hid_input, &hi.loc, &flags);
+	    hid_input, &hi, &flags);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 32);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
@@ -165,9 +188,9 @@ ATF_TC_BODY(khid, tc)
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_maximum_report,
 	    &hi.loc), 0xffffffff);
 
-	ret = hid_locate(unsigned_range_test_report_descriptor,
+	ret = locate_item(unsigned_range_test_report_descriptor,
 	    sizeof(unsigned_range_test_report_descriptor), 0xff000012, 0,
-	    hid_input, &hi.loc, &flags);
+	    hid_input, &hi, &flags);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 16);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
@@ -182,9 +205,9 @@ ATF_TC_BODY(khid, tc)
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_maximum_report,
 	    &hi.loc), 0xffff);
 
-	ret = hid_locate(unsigned_range_test_report_descriptor,
+	ret = locate_item(unsigned_range_test_report_descriptor,
 	    sizeof(unsigned_range_test_report_descriptor), 0xff000011, 0,
-	    hid_input, &hi.loc, &flags);
+	    hid_input, &hi, &flags);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 8);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
