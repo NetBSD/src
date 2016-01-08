@@ -1,5 +1,3 @@
-/*	$NetBSD: sec-2853.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
-
 #include <config.h>
 
 #include <rc_cmdlength.h>
@@ -15,7 +13,7 @@ int embedded_nul( void );
 int trailing_space( void );
 
 static int verbose = 1;        // if not 0, also print results if test passed
-static int exit_on_err = 0;    // if not 0, exit if test failed
+// static int exit_on_err = 0;    // if not 0, exit if test failed
 
 
 void setUp(void)
@@ -51,7 +49,6 @@ int basic_good( void )
 {
 	const char string[] = "good";
 	const char *EOstring;
-	char *cp;
 	size_t len;
 	int failed;
 
@@ -62,9 +59,9 @@ int basic_good( void )
 	failed = ( 4 != len );
 
 	if ( failed || verbose )
-		printf( "remoteconfig_cmdlength(\"%s\") returned %d, expected %d: %s\n",
+		printf( "remoteconfig_cmdlength(\"%s\") returned %llu, expected %u: %s\n",
 			string,
-			len,
+			(unsigned long long)len,
 			4,
 			failed ? "NO <<" : "yes" );
 
@@ -76,7 +73,6 @@ int embedded_nul( void )
 {
 	const char string[] = "nul\0 there";
 	const char *EOstring;
-	char *cp;
 	size_t len;
 	int failed;
 
@@ -87,9 +83,9 @@ int embedded_nul( void )
 	failed = ( 3 != len );
 
 	if ( failed || verbose )
-		printf( "remoteconfig_cmdlength(\"%s\") returned %d, expected %d: %s\n",
+		printf( "remoteconfig_cmdlength(\"%s\") returned %llu, expected %u: %s\n",
 			string,
-			len,
+			(unsigned long long)len,
 			3,
 			failed ? "NO <<" : "yes" );
 
@@ -101,7 +97,6 @@ int trailing_space( void )
 {
 	const char string[] = "trailing space ";
 	const char *EOstring;
-	char *cp;
 	size_t len;
 	int failed;
 
@@ -112,9 +107,9 @@ int trailing_space( void )
 	failed = ( 14 != len );
 
 	if ( failed || verbose )
-		printf( "remoteconfig_cmdlength(\"%s\") returned %d, expected %d: %s\n",
+		printf( "remoteconfig_cmdlength(\"%s\") returned %llu, expected %u: %s\n",
 			string,
-			len,
+			(unsigned long long)len,
 			14,
 			failed ? "NO <<" : "yes" );
 
