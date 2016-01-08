@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2125 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2126 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -238,3 +238,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	ismt(4): Add another Intel Chipset internal SMBus driver.
 		[msaitoh 20160105]
 	dhcpcd: Import dhcpcd 6.10.0. [roy 20160107]
+	ntp: Import ntp 4.2.8p5. [christos 20160108]
