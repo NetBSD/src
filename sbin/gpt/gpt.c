@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.66 2015/12/29 16:45:04 christos Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.67 2016/01/08 18:59:01 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -592,6 +592,7 @@ out:
 	close(gpt->fd);
 }
 
+__printflike(2, 0)
 static void
 gpt_vwarnx(gpt_t gpt, const char *fmt, va_list ap, const char *e)
 {
