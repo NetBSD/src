@@ -1,3 +1,3 @@
-/*	$NetBSD: gif.h,v 1.1 2015/08/24 23:04:42 pooka Exp $	*/
+/*	$NetBSD: gif.h,v 1.2 2016/01/08 04:06:48 knakahara Exp $	*/
 
-/* dummy */
+#define NGIF 1
