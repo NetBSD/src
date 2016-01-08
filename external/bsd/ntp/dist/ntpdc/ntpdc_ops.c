@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpdc_ops.c,v 1.7 2015/07/10 14:20:33 christos Exp $	*/
+/*	$NetBSD: ntpdc_ops.c,v 1.8 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * ntpdc_ops.c - subroutines which are called to perform operations by
@@ -33,9 +33,9 @@
 /*
  * utility functions
  */
-static	int	checkitems	(int, FILE *);
-static	int	checkitemsize	(int, int);
-static	int	check1item	(int, FILE *);
+static	int	checkitems	(size_t, FILE *);
+static	int	checkitemsize	(size_t, size_t);
+static	int	check1item	(size_t, FILE *);
 
 /*
  * Declarations for command handlers in here
@@ -290,7 +290,7 @@ do {								\
  */
 static int
 checkitems(
-	int items,
+	size_t items,
 	FILE *fp
 	)
 {
@@ -307,14 +307,14 @@ checkitems(
  */
 static int
 checkitemsize(
-	int itemsize,
-	int expected
+	size_t itemsize,
+	size_t expected
 	)
 {
 	if (itemsize != expected) {
 		(void) fprintf(stderr,
-			       "***Incorrect item size returned by remote host (%d should be %d)\n",
-			       itemsize, expected);
+			       "***Incorrect item size returned by remote host (%lu should be %lu)\n",
+			       (u_long)itemsize, (u_long)expected);
 		return 0;
 	}
 	return 1;
@@ -326,7 +326,7 @@ checkitemsize(
  */
 static int
 check1item(
-	int items,
+	size_t items,
 	FILE *fp
 	)
 {
@@ -335,8 +335,8 @@ check1item(
 		return 0;
 	}
 	if (items > 1) {
-		(void) fprintf(fp, "Expected one item in response, got %d\n",
-			       items);
+		(void) fprintf(fp, "Expected one item in response, got %lu\n",
+			       (u_long)items);
 		return 0;
 	}
 	return 1;
@@ -355,8 +355,8 @@ peerlist(
 {
 	struct info_peer_list *plist;
 	sockaddr_u paddr;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -432,8 +432,8 @@ dopeers(
 	struct info_peer_summary *plist;
 	sockaddr_u dstadr;
 	sockaddr_u srcadr;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int ntp_poll;
 	int res;
 	int c;
@@ -681,10 +681,10 @@ showpeer(
 	struct info_peer *pp;
 	/* 4 is the maximum number of peers which will fit in a packet */
 	struct info_peer_list *pl, plist[min(MAXARGS, 4)];
-	int qitemlim;
-	int qitems;
-	int items;
-	int itemsize;
+	size_t qitemlim;
+	size_t qitems;
+	size_t items;
+	size_t itemsize;
 	int res;
 	int sendsize;
 
@@ -755,12 +755,12 @@ peerstats(
 	/* 4 is the maximum number of peers which will fit in a packet */
 	struct info_peer_list *pl, plist[min(MAXARGS, 4)];
 	sockaddr_u src, dst;
-	int qitemlim;
-	int qitems;
-	int items;
-	int itemsize;
+	size_t qitemlim;
+	size_t qitems;
+	size_t items;
+	size_t itemsize;
 	int res;
-	int sendsize;
+	size_t sendsize;
 
 again:
 	if (impl_ver == IMPL_XNTPD)
@@ -873,8 +873,8 @@ loopinfo(
 	)
 {
 	struct info_loop *il;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int oneline = 0;
 	int res;
 	l_fp tempts;
@@ -948,8 +948,8 @@ sysinfo(
 {
 	struct info_sys *is;
 	sockaddr_u peeraddr;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 	l_fp tempts;
 
@@ -1037,8 +1037,8 @@ sysstats(
 	)
 {
 	struct info_sys_stats *ss;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -1103,8 +1103,8 @@ iostats(
 	)
 {
 	struct info_io_stats *io;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -1164,8 +1164,8 @@ memstats(
 {
 	struct info_mem_stats *mem;
 	int i;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -1221,8 +1221,8 @@ timerstats(
 	)
 {
 	struct info_timer_stats *tim;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -1316,9 +1316,9 @@ doconfig(
 	)
 {
 	struct conf_peer cpeer;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	u_long keyid;
 	u_int version;
 	u_char minpoll;
@@ -1482,13 +1482,13 @@ unconfig(
 {
 	/* 8 is the maximum number of peers which will fit in a packet */
 	struct conf_unpeer *pl, plist[min(MAXARGS, 8)];
-	int qitemlim;
-	int qitems;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t qitemlim;
+	size_t qitems;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int res;
-	int sendsize;
+	size_t sendsize;
 
 again:
 	if (impl_ver == IMPL_XNTPD)
@@ -1566,9 +1566,9 @@ doset(
 	)
 {
 	struct conf_sys_flags sys;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int res;
 
 	sys.flags = 0;
@@ -1677,8 +1677,8 @@ reslist(
 	struct info_restrict *rl;
 	sockaddr_u resaddr;
 	sockaddr_u maskaddr;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 	int skip;
 	const char *addr;
@@ -1829,9 +1829,9 @@ do_restrict(
 	)
 {
 	struct conf_restrict cres;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	u_int32 num;
 	u_long bit;
 	int i;
@@ -1948,14 +1948,14 @@ monlist(
 	FILE *fp
 	)
 {
-	char *struct_star;
-	struct info_monitor *ml;
-	struct info_monitor_1 *m1;
-	struct old_info_monitor *oml;
+	const char *struct_star;
+	const struct info_monitor *ml;
+	const struct info_monitor_1 *m1;
+	const struct old_info_monitor *oml;
 	sockaddr_u addr;
 	sockaddr_u dstadr;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 	int version = -1;
 
@@ -1989,7 +1989,7 @@ again:
 	if (itemsize == sizeof(struct info_monitor_1) ||
 	    itemsize == v4sizeof(struct info_monitor_1)) {
 
-		m1 = (void *)struct_star;
+	    m1 = (const void*)struct_star;
 		fprintf(fp,
 			"remote address          port local address      count m ver rstr avgint  lstint\n");
 		fprintf(fp,
@@ -2016,7 +2016,7 @@ again:
 	} else if (itemsize == sizeof(struct info_monitor) ||
 	    itemsize == v4sizeof(struct info_monitor)) {
 
-		ml = (void *) struct_star;
+		ml = (const void *)struct_star;
 		fprintf(fp,
 			"     address               port     count mode ver rstr avgint  lstint\n");
 		fprintf(fp,
@@ -2041,7 +2041,7 @@ again:
 		}
 	} else if (itemsize == sizeof(struct old_info_monitor)) {
 
-		oml = (void *)struct_star;
+		oml = (const void *)struct_star;
 		fprintf(fp,
 			"     address          port     count  mode version  lasttime firsttime\n");
 		fprintf(fp,
@@ -2093,9 +2093,9 @@ reset(
 	)
 {
 	struct reset_flags rflags;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int i;
 	size_t res;
 	int err;
@@ -2150,13 +2150,13 @@ preset(
 {
 	/* 8 is the maximum number of peers which will fit in a packet */
 	struct conf_unpeer *pl, plist[min(MAXARGS, 8)];
-	int qitemlim;
-	int qitems;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t qitemlim;
+	size_t qitems;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int res;
-	int sendsize;
+	size_t sendsize;
 
 again:
 	if (impl_ver == IMPL_XNTPD)
@@ -2207,9 +2207,9 @@ readkeys(
 	FILE *fp
 	)
 {
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int res;
 
 again:
@@ -2265,9 +2265,9 @@ do_trustkey(
 {
 	u_long keyids[MAXARGS];
 	size_t i;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int ritems;
 	int res;
 
@@ -2304,8 +2304,8 @@ authinfo(
 	)
 {
 	struct info_auth *ia;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -2358,11 +2358,11 @@ traps(
 	FILE *fp
 	)
 {
-	int i;
+	size_t i;
 	struct info_trap *it;
 	sockaddr_u trap_addr, local_addr;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -2448,9 +2448,9 @@ do_addclr_trap(
 	)
 {
 	struct conf_trap ctrap;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int res;
 	int sendsize;
 
@@ -2547,9 +2547,9 @@ do_changekey(
 	)
 {
 	u_long key;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	int res;
 
 
@@ -2583,8 +2583,8 @@ ctlstats(
 	)
 {
 	struct info_control *ic;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 again:
@@ -2650,10 +2650,10 @@ clockstat(
 	struct info_clock *cl;
 	/* 8 is the maximum number of clocks which will fit in a packet */
 	u_long clist[min(MAXARGS, 8)];
-	int qitemlim;
-	int qitems;
-	int items;
-	int itemsize;
+	size_t qitemlim;
+	size_t qitems;
+	size_t items;
+	size_t itemsize;
 	int res;
 	l_fp ts;
 	struct clktype *clk;
@@ -2737,9 +2737,9 @@ fudge(
 	)
 {
 	struct conf_fudge fudgedata;
-	int items;
-	int itemsize;
-	char *dummy;
+	size_t items;
+	size_t itemsize;
+	const char *dummy;
 	l_fp ts;
 	int res;
 	long val;
@@ -2824,10 +2824,10 @@ clkbug(
 	/* 8 is the maximum number of clocks which will fit in a packet */
 	u_long clist[min(MAXARGS, 8)];
 	u_int32 ltemp;
-	int qitemlim;
-	int qitems;
-	int items;
-	int itemsize;
+	size_t qitemlim;
+	size_t qitems;
+	size_t items;
+	size_t itemsize;
 	int res;
 	int needsp;
 	l_fp ts;
@@ -2918,8 +2918,8 @@ kerninfo(
 	)
 {
 	struct info_kernel *ik;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 	unsigned status;
 	double tscale = 1e-6;
@@ -3052,8 +3052,8 @@ static void
 iflist(
 	FILE *fp,
 	struct info_if_stats *ifs,
-	int items,
-	int itemsize,
+	size_t items,
+	size_t itemsize,
 	int res
 	)
 {
@@ -3115,8 +3115,8 @@ get_if_stats(
 	)
 {
 	struct info_if_stats *ifs;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 	res = doquery(impl_ver, REQ_IF_STATS, 1, 0, 0, (char *)NULL, &items,
@@ -3133,8 +3133,8 @@ do_if_reload(
 	)
 {
 	struct info_if_stats *ifs;
-	int items;
-	int itemsize;
+	size_t items;
+	size_t itemsize;
 	int res;
 
 	res = doquery(impl_ver, REQ_IF_RELOAD, 1, 0, 0, (char *)NULL, &items,

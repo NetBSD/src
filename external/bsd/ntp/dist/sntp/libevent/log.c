@@ -1,4 +1,4 @@
-/*	$NetBSD: log.c,v 1.3 2015/07/10 14:20:34 christos Exp $	*/
+/*	$NetBSD: log.c,v 1.4 2016/01/08 21:35:40 christos Exp $	*/
 
 /*	$OpenBSD: err.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
 

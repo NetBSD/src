@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpd.c,v 1.11 2015/10/23 18:06:20 christos Exp $	*/
+/*	$NetBSD: ntpd.c,v 1.12 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * ntpd.c - main program for the fixed point NTP daemon
@@ -29,13 +29,15 @@
 #include "ntp_libopts.h"
 #include "ntpd-opts.h"
 
-/* there's a short treatise below what the thread stuff is for */
+/* there's a short treatise below what the thread stuff is for.
+ * [Bug 2954] enable the threading warm-up only for Linux.
+ */
 #if defined(HAVE_PTHREADS) && HAVE_PTHREADS && !defined(NO_THREADS)
 # ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
 # endif
-# ifdef __linux__
-# define NEED_PTHREAD_WARMUP
+# if defined(linux)
+#  define NEED_PTHREAD_WARMUP
 # endif
 #endif
 
@@ -273,6 +275,9 @@ static void	library_unexpected_error(const char *, int,
  * This uses only the standard pthread API and should work with all
  * implementations of pthreads. It is not necessary everywhere, but it's
  * cheap enough to go on nearly unnoticed.
+ *
+ * Addendum: Bug 2954 showed that the assumption that this should work
+ * with all OS is wrong -- at least FreeBSD bombs heavily.
  */
 #ifdef NEED_PTHREAD_WARMUP
 
@@ -650,6 +655,9 @@ ntpdmain(
 # endif
 
 # ifdef HAVE_WORKING_FORK
+	/* make sure the FDs are initialised */
+	pipe_fds[0] = -1;
+	pipe_fds[1] = -1;
 	do {					/* 'loop' once */
 		if (!HAVE_OPT( WAIT_SYNC ))
 			break;

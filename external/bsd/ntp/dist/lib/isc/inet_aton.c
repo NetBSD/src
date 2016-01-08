@@ -1,4 +1,4 @@
-/*	$NetBSD: inet_aton.c,v 1.3 2015/07/10 14:20:29 christos Exp $	*/
+/*	$NetBSD: inet_aton.c,v 1.4 2016/01/08 21:35:36 christos Exp $	*/
 
 /*
  * Portions Copyright (C) 2004, 2005, 2007, 2008  Internet Systems Consortium, Inc. ("ISC")
@@ -94,7 +94,7 @@ static char rcsid[] = "Id: inet_aton.c,v 1.23 2008/12/01 23:47:45 tbox Exp ";
 int
 isc_net_aton(const char *cp, struct in_addr *addr) {
 	unsigned long val;
-	int base, n;
+	int base;
 	unsigned char c;
 	isc_uint8_t parts[4];
 	isc_uint8_t *pp = parts;
@@ -168,8 +168,7 @@ isc_net_aton(const char *cp, struct in_addr *addr) {
 	 * Concoct the address according to
 	 * the number of parts specified.
 	 */
-	n = pp - parts + 1;
-	switch (n) {
+	switch (pp - parts + 1) {
 	case 1:				/* a -- 32 bits */
 		break;
 

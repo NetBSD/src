@@ -1,4 +1,4 @@
-/*	$NetBSD: autoopts.h,v 1.9 2015/07/10 14:20:35 christos Exp $	*/
+/*	$NetBSD: autoopts.h,v 1.10 2016/01/08 21:35:41 christos Exp $	*/
 
 
 /*
