@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.25 2016/01/08 07:16:13 dholland Exp $ */
+/*      $NetBSD: filemon.c,v 1.26 2016/01/08 08:57:14 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.25 2016/01/08 07:16:13 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.26 2016/01/08 08:57:14 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -317,10 +317,10 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		/* Set the monitored process ID - if allowed. */
 		mutex_enter(proc_lock);
 		tp = proc_find(*((pid_t *) data));
-		mutex_exit(proc_lock);
 		if (tp == NULL ||
 		    tp->p_emul != &emul_netbsd) {
 			error = ESRCH;
+			mutex_exit(proc_lock);
 			break;
 		}
 
@@ -330,6 +330,7 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		if (!error) {
 			filemon->fm_pid = tp->p_pid;
 		}
+		mutex_exit(proc_lock);
 		break;
 
 	default:
