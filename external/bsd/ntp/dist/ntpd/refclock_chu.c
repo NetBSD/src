@@ -1,4 +1,4 @@
-/*	$NetBSD: refclock_chu.c,v 1.7 2015/10/23 18:06:20 christos Exp $	*/
+/*	$NetBSD: refclock_chu.c,v 1.8 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * refclock_chu - clock driver for Canadian CHU time/frequency station
