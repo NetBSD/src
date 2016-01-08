@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.3 2015/07/10 14:20:31 christos Exp $	*/
+/*	$NetBSD: time.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
 
 /*
  * Copyright (C) 2004, 2006-2009  Internet Systems Consortium, Inc. ("ISC")

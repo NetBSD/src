@@ -1,4 +1,4 @@
-/*	$NetBSD: ntpq.c,v 1.13 2015/10/23 18:06:20 christos Exp $	*/
+/*	$NetBSD: ntpq.c,v 1.14 2016/01/08 21:35:40 christos Exp $	*/
 
 /*
  * ntpq - query an NTP server using mode 6 commands
@@ -41,6 +41,7 @@
 
 #include "ntp_libopts.h"
 #include "ntpq-opts.h"
+#include "safecast.h"
 
 #ifdef SYS_VXWORKS		/* vxWorks needs mode flag -casey*/
 # define open(name, flags)   open(name, flags, 0777)
@@ -170,13 +171,13 @@ int		ntpqmain	(int,	char **);
 static	int	openhost	(const char *, int);
 static	void	dump_hex_printable(const void *, size_t);
 static	int	sendpkt		(void *, size_t);
-static	int	getresponse	(int, int, u_short *, int *, const char **, int);
-static	int	sendrequest	(int, associd_t, int, int, const char *);
+static	int	getresponse	(int, int, u_short *, size_t *, const char **, int);
+static	int	sendrequest	(int, associd_t, int, size_t, const char *);
 static	char *	tstflags	(u_long);
 #ifndef BUILD_AS_LIB
 static	void	getcmds		(void);
 #ifndef SYS_WINNT
-static	RETSIGTYPE abortcmd	(int);
+static	int	abortcmd	(void);
 #endif	/* SYS_WINNT */
 static	void	docmd		(const char *);
 static	void	tokenize	(const char *, char **, int *);
@@ -210,13 +211,14 @@ static	void	error		(const char *, ...)
     __attribute__((__format__(__printf__, 1, 2)));
 static	u_long	getkeyid	(const char *);
 static	void	atoascii	(const char *, size_t, char *, size_t);
-static	void	cookedprint	(int, int, const char *, int, int, FILE *);
-static	void	rawprint	(int, int, const char *, int, int, FILE *);
+static	void	cookedprint	(int, size_t, const char *, int, int, FILE *);
+static	void	rawprint	(int, size_t, const char *, int, int, FILE *);
 static	void	startoutput	(void);
 static	void	output		(FILE *, const char *, const char *);
 static	void	endoutput	(FILE *);
 static	void	outputarr	(FILE *, char *, int, l_fp *);
 static	int	assoccmp	(const void *, const void *);
+static	void	on_ctrlc	(void);
 	u_short	varfmt		(const char *);
 
 void	ntpq_custom_opt_handler	(tOptions *, tOptDesc *);
@@ -562,9 +564,10 @@ ntpqmain(
 		interactive = 1;
 	}
 
+	set_ctrl_c_hook(on_ctrlc);
 #ifndef SYS_WINNT /* Under NT cannot handle SIGINT, WIN32 spawns a handler */
 	if (interactive)
-	    (void) signal_no_reset(SIGINT, abortcmd);
+		push_ctrl_c_handler(abortcmd);
 #endif /* SYS_WINNT */
 
 	if (numcmds == 0) {
@@ -743,9 +746,9 @@ openhost(
 		    sizeof(hostaddr)) == -1)
 #else
 	   (connect(sockfd, (struct sockaddr *)ai->ai_addr,
-		    ai->ai_addrlen) == -1)
+		ai->ai_addrlen) == -1)
 #endif /* SYS_VXWORKS */
-	    {
+	{
 		error("connect");
 		freeaddrinfo(ai);
 		return 0;
@@ -806,7 +809,7 @@ sendpkt(
 	if (debug >= 3)
 		printf("Sending %zu octets\n", xdatalen);
 
-	if (send(sockfd, xdata, (size_t)xdatalen, 0) == -1) {
+	if (send(sockfd, xdata, xdatalen, 0) == -1) {
 		warning("write to %s failed", currenthost);
 		return -1;
 	}
@@ -826,7 +829,7 @@ getresponse(
 	int opcode,
 	int associd,
 	u_short *rstatus,
-	int *rsize,
+	size_t *rsize,
 	const char **rdata,
 	int timeo
 	)
@@ -875,8 +878,7 @@ getresponse(
 			tvo = tvsout;
 
 		FD_SET(sockfd, &fds);
-		n = select(sockfd + 1, &fds, NULL, NULL, &tvo);
-
+		n = select(sockfd+1, &fds, NULL, NULL, &tvo);
 		if (n == -1) {
 			warning("select fails");
 			return -1;
@@ -1175,22 +1177,22 @@ sendrequest(
 	int opcode,
 	associd_t associd,
 	int auth,
-	int qsize,
+	size_t qsize,
 	const char *qdata
 	)
 {
 	struct ntp_control qpkt;
-	int	pktsize;
+	size_t	pktsize;
 	u_long	key_id;
 	char *	pass;
-	int	maclen;
+	size_t	maclen;
 
 	/*
 	 * Check to make sure the data will fit in one packet
 	 */
 	if (qsize > CTL_MAX_DATA_LEN) {
 		fprintf(stderr,
-			"***Internal error!  qsize (%d) too large\n",
+			"***Internal error!  qsize (%zu) too large\n",
 			qsize);
 		return 1;
 	}
@@ -1269,7 +1271,7 @@ sendrequest(
 		return 1;
 	} else if ((size_t)maclen != (info_auth_hashlen + sizeof(keyid_t))) {
 		fprintf(stderr,
-			"%d octet MAC, %zu expected with %zu octet digest\n",
+			"%zu octet MAC, %zu expected with %zu octet digest\n",
 			maclen, (info_auth_hashlen + sizeof(keyid_t)),
 			info_auth_hashlen);
 		return 1;
@@ -1359,10 +1361,10 @@ doquery(
 	int opcode,
 	associd_t associd,
 	int auth,
-	int qsize,
+	size_t qsize,
 	const char *qdata,
 	u_short *rstatus,
-	int *rsize,
+	size_t *rsize,
 	const char **rdata
 	)
 {
@@ -1380,10 +1382,10 @@ doqueryex(
 	int opcode,
 	associd_t associd,
 	int auth,
-	int qsize,
+	size_t qsize,
 	const char *qdata,
 	u_short *rstatus,
-	int *rsize,
+	size_t *rsize,
 	const char **rdata,
 	int quiet
 	)
@@ -1464,16 +1466,18 @@ getcmds(void)
 /*
  * abortcmd - catch interrupts and abort the current command
  */
-static RETSIGTYPE
-abortcmd(
-	int sig
-	)
+static int
+abortcmd(void)
 {
 	if (current_output == stdout)
-	    (void) fflush(stdout);
+		(void) fflush(stdout);
 	putc('\n', stderr);
 	(void) fflush(stderr);
-	if (jump) longjmp(interrupt_buf, 1);
+	if (jump) {
+		jump = 0;
+		longjmp(interrupt_buf, 1);
+	}
+	return TRUE;
 }
 #endif	/* !SYS_WINNT && !BUILD_AS_LIB */
 
@@ -1747,7 +1751,7 @@ findcmd(
 	)
 {
 	struct xcmd *cl;
-	int clen;
+	size_t clen;
 	int nmatch;
 	struct xcmd *nearmatch = NULL;
 	struct xcmd *clist;
@@ -2669,7 +2673,7 @@ vwarning(const char *fmt, va_list ap)
 	int serrno = errno;
 	(void) fprintf(stderr, "%s: ", progname);
 	vfprintf(stderr, fmt, ap);
-	(void) fprintf(stderr, ": %s", strerror(serrno));
+	(void) fprintf(stderr, ": %s\n", strerror(serrno));
 }
 
 /*
@@ -2804,7 +2808,7 @@ do {							\
  */
 void
 makeascii(
-	int length,
+	size_t length,
 	const char *data,
 	FILE *fp
 	)
@@ -2920,7 +2924,7 @@ int nextcb = 0;
  */
 int
 nextvar(
-	int *datalen,
+	size_t *datalen,
 	const char **datap,
 	char **vname,
 	char **vvalue
@@ -2967,7 +2971,7 @@ nextvar(
 		if (cp < cpend)
 			cp++;
 		*datap = cp;
-		*datalen = cpend - cp;
+		*datalen = size2int_sat(cpend - cp);
 		*vvalue = NULL;
 		return 1;
 	}
@@ -3007,7 +3011,7 @@ nextvar(
 	if (np < cpend && ',' == *np)
 		np++;
 	*datap = np;
-	*datalen = cpend - np;
+	*datalen = size2int_sat(cpend - np);
 	*vvalue = value;
 	return 1;
 }
@@ -3031,7 +3035,7 @@ varfmt(const char * varname)
  */
 void
 printvars(
-	int length,
+	size_t length,
 	const char *data,
 	int status,
 	int sttype,
@@ -3052,7 +3056,7 @@ printvars(
 static void
 rawprint(
 	int datatype,
-	int length,
+	size_t length,
 	const char *data,
 	int status,
 	int quiet,
@@ -3117,10 +3121,10 @@ output(
 	const char *value
 	)
 {
-	size_t len;
+	int len;
 
 	/* strlen of "name=value" */
-	len = strlen(name) + 1 + strlen(value);
+	len = size2int_sat(strlen(name) + 1 + strlen(value));
 
 	if (out_chars != 0) {
 		out_chars += 2;
@@ -3165,10 +3169,10 @@ outputarr(
 	l_fp *lfp
 	)
 {
-	register char *bp;
-	register char *cp;
-	register int i;
-	register int len;
+	char *bp;
+	char *cp;
+	size_t i;
+	size_t len;
 	char buf[256];
 
 	bp = buf;
@@ -3179,7 +3183,7 @@ outputarr(
 	    *bp++ = ' ';
 
 	for (i = narr; i > 0; i--) {
-		if (i != narr)
+		if (i != (size_t)narr)
 		    *bp++ = ' ';
 		cp = lfptoms(lfp, 2);
 		len = strlen(cp);
@@ -3250,7 +3254,7 @@ tstflags(
 static void
 cookedprint(
 	int datatype,
-	int length,
+	size_t length,
 	const char *data,
 	int status,
 	int quiet,
@@ -3434,7 +3438,7 @@ grow_assoc_cache(void)
 	}
 	assoc_cache = erealloc_zero(assoc_cache, new_sz, prior_sz); 
 	prior_sz = new_sz;
-	assoc_cache_slots = new_sz / sizeof(assoc_cache[0]);
+	assoc_cache_slots = (u_int)(new_sz / sizeof(assoc_cache[0]));
 }
 
 
@@ -3569,4 +3573,49 @@ static char *list_digest_names(void)
 #endif
 
     return list;
+}
+
+#define CTRLC_STACK_MAX 4
+static volatile size_t		ctrlc_stack_len = 0;
+static volatile Ctrl_C_Handler	ctrlc_stack[CTRLC_STACK_MAX];
+
+
+
+int/*BOOL*/
+push_ctrl_c_handler(
+	Ctrl_C_Handler func
+	)
+{
+	size_t size = ctrlc_stack_len;
+	if (func && (size < CTRLC_STACK_MAX)) {
+		ctrlc_stack[size] = func;
+		ctrlc_stack_len = size + 1;
+		return TRUE;
+	}
+	return FALSE;	
+}
+
+int/*BOOL*/
+pop_ctrl_c_handler(
+	Ctrl_C_Handler func
+	)
+{
+	size_t size = ctrlc_stack_len;
+	if (size) {
+		--size;
+		if (func == NULL || func == ctrlc_stack[size]) {
+			ctrlc_stack_len = size;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+static void
+on_ctrlc(void)
+{
+	size_t size = ctrlc_stack_len;
+	while (size)
+		if ((*ctrlc_stack[--size])())
+			break;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tinytest_local.h,v 1.3 2015/07/10 14:20:35 christos Exp $	*/
+/*	$NetBSD: tinytest_local.h,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
 
 
 #include "util-internal.h"

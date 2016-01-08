@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_control.c,v 1.14 2015/10/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: ntp_control.c,v 1.15 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * ntp_control.c - respond to mode 6 control messages and send async
@@ -848,7 +848,7 @@ ctl_error(
 	u_char errcode
 	)
 {
-	int		maclen;
+	size_t		maclen;
 
 	numctlerrors++;
 	DPRINTF(3, ("sending control error %u\n", errcode));
@@ -1250,10 +1250,10 @@ ctl_flushpkt(
 	)
 {
 	size_t i;
-	int dlen;
-	int sendlen;
-	int maclen;
-	int totlen;
+	size_t dlen;
+	size_t sendlen;
+	size_t maclen;
+	size_t totlen;
 	keyid_t keyid;
 
 	dlen = datapt - rpkt.u.data;
