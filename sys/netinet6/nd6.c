@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.183 2015/12/18 09:04:33 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.184 2016/01/08 08:50:07 ozaki-r Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.183 2015/12/18 09:04:33 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.184 2016/01/08 08:50:07 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1370,7 +1370,7 @@ nd6_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 *	   rt->rt_flags |= RTF_CLONING;
 		 */
 		if ((rt->rt_flags & RTF_CLONING) ||
-		    ((rt->rt_flags & RTF_LLINFO) && ln == NULL)) {
+		    ((rt->rt_flags & (RTF_LLINFO | RTF_LOCAL)) && ln == NULL)) {
 			union {
 				struct sockaddr sa;
 				struct sockaddr_dl sdl;
