@@ -1342,8 +1342,7 @@
 /* Should we align with the NIST lockclock scheme? */
 /* #undef LOCKCLOCK */
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* Does the target support multicast IP? */
@@ -1447,7 +1446,7 @@
 #define PACKAGE_NAME "ntp"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ntp 4.2.8p4"
+#define PACKAGE_STRING "ntp 4.2.8p5"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ntp"
@@ -1456,7 +1455,7 @@
 #define PACKAGE_URL "http://www.ntp.org./"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.2.8p4"
+#define PACKAGE_VERSION "4.2.8p5"
 
 /* data dir */
 #define PERLLIBDIR "/usr/local/share/ntp/lib"
@@ -1604,6 +1603,28 @@ typedef unsigned int	uintptr_t;
 /* OK to use snprintb()? */
 #define USE_SNPRINTB 1
 
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# define _ALL_SOURCE 1
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# define _GNU_SOURCE 1
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# define _POSIX_PTHREAD_SEMANTICS 1
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# define _TANDEM_SOURCE 1
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# define __EXTENSIONS__ 1
+#endif
+
+
 /* Can we use SIGPOLL for tty IO? */
 /* #undef USE_TTY_SIGPOLL */
 
@@ -1611,7 +1632,7 @@ typedef unsigned int	uintptr_t;
 /* #undef USE_UDP_SIGPOLL */
 
 /* Version number of package */
-#define VERSION "4.2.8p4"
+#define VERSION "4.2.8p5"
 
 /* vsnprintf expands "%m" to strerror(errno) */
 /* #undef VSNPRINTF_PERCENT_M */
@@ -1666,9 +1687,6 @@ typedef unsigned int	uintptr_t;
 /* enable thread safety */
 #define _THREAD_SAFE 1
 
-/* Define to 500 only on HP-UX. */
-/* #undef _XOPEN_SOURCE */
-
 /* Are we _special_? */
 /* #undef __APPLE_USE_RFC_3542 */
 
@@ -1676,28 +1694,6 @@ typedef unsigned int	uintptr_t;
 #ifndef __CHAR_UNSIGNED__
 /* # undef __CHAR_UNSIGNED__ */
 #endif
-
-/* Enable extensions on AIX 3, Interix.  */
-#ifndef _ALL_SOURCE
-# define _ALL_SOURCE 1
-#endif
-/* Enable GNU extensions on systems that have them.  */
-#ifndef _GNU_SOURCE
-# define _GNU_SOURCE 1
-#endif
-/* Enable threading extensions on Solaris.  */
-#ifndef _POSIX_PTHREAD_SEMANTICS
-# define _POSIX_PTHREAD_SEMANTICS 1
-#endif
-/* Enable extensions on HP NonStop.  */
-#ifndef _TANDEM_SOURCE
-# define _TANDEM_SOURCE 1
-#endif
-/* Enable general extensions on Solaris.  */
-#ifndef __EXTENSIONS__
-# define __EXTENSIONS__ 1
-#endif
-
 
 /* deviant */
 /* #undef adjtimex */
