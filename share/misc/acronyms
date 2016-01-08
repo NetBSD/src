@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.242 2015/12/03 03:28:47 jnemeth Exp $
+$NetBSD: acronyms,v 1.243 2016/01/08 08:37:18 jnemeth Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -184,6 +184,7 @@ GM	game master
 GMT	Greenwich mean time
 GMTA	great minds think alike
 GOK	God only knows
+GOP	Grand Old Party
 GOWI	get on with it
 GPS	global positioning system
 GR8	great
@@ -557,3 +558,4 @@ YMMV	your mileage may vary
 YOLO	you only live once
 YW	you're welcome
 YWSYLS	you win some, you lose some
+ZIP	zoning improvement plan
