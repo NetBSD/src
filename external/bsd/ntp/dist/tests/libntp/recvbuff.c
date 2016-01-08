@@ -1,5 +1,3 @@
-/*	$NetBSD: recvbuff.c,v 1.1.1.3 2015/10/23 17:47:45 christos Exp $	*/
-
 #include "config.h"
 
 #include "recvbuff.h"
@@ -15,6 +13,9 @@ void
 setUp(void)
 {
 	init_recvbuff(RECV_INIT);
+	init_lib();
+
+	return;
 }
 
 void
@@ -38,7 +39,7 @@ test_GetAndFree(void) {
 
 void
 test_GetAndFill(void) {
-	int initial = free_recvbuffs();
+	// int initial = free_recvbuffs();
 	recvbuf_t* buf = get_free_recv_buffer();
 
 	add_full_recv_buffer(buf);

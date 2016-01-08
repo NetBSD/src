@@ -202,16 +202,14 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/config.h.in \
 	$(top_srcdir)/sntp/libevent/build-aux/install-sh \
 	$(top_srcdir)/sntp/libevent/build-aux/ltmain.sh \
 	$(top_srcdir)/sntp/libevent/build-aux/missing ChangeLog \
-	INSTALL NEWS README TODO compile config.guess config.sub \
-	depcomp install-sh ltmain.sh missing \
-	sntp/libevent/build-aux/ar-lib sntp/libevent/build-aux/compile \
+	INSTALL NEWS README TODO sntp/libevent/build-aux/ar-lib \
+	sntp/libevent/build-aux/compile \
 	sntp/libevent/build-aux/config.guess \
 	sntp/libevent/build-aux/config.sub \
 	sntp/libevent/build-aux/depcomp \
 	sntp/libevent/build-aux/install-sh \
 	sntp/libevent/build-aux/ltmain.sh \
-	sntp/libevent/build-aux/missing sntp/libevent/build-aux/ylwrap \
-	ylwrap
+	sntp/libevent/build-aux/missing sntp/libevent/build-aux/ylwrap
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -336,6 +334,7 @@ LN_S = @LN_S@
 LSCF = @LSCF@
 LTHREAD_LIBS = @LTHREAD_LIBS@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAKEINFO = @MAKEINFO@
 MAKE_ADJTIMED = @MAKE_ADJTIMED@
 MAKE_CHECK_LAYOUT = @MAKE_CHECK_LAYOUT@
