@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.325 2015/10/13 09:46:42 roy Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.326 2016/01/08 03:55:39 knakahara Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.325 2015/10/13 09:46:42 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.326 2016/01/08 03:55:39 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1584,15 +1584,6 @@ sysctl_net_inet_ip_setup(struct sysctllog **clog)
 		       sysctl_net_inet_ip_pmtudto, 0, (void *)&ip_mtudisc_timeout, 0,
 		       CTL_NET, PF_INET, IPPROTO_IP,
 		       IPCTL_MTUDISCTIMEOUT, CTL_EOL);
-#if NGIF > 0
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
-		       CTLTYPE_INT, "gifttl",
-		       SYSCTL_DESCR("Default TTL for a gif tunnel datagram"),
-		       NULL, 0, &ip_gif_ttl, 0,
-		       CTL_NET, PF_INET, IPPROTO_IP,
-		       IPCTL_GIF_TTL, CTL_EOL);
-#endif /* NGIF */
 #ifndef IPNOPRIVPORTS
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,

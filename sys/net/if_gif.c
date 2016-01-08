@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.103 2016/01/04 07:50:08 knakahara Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.104 2016/01/08 03:55:39 knakahara Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.103 2016/01/04 07:50:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.104 2016/01/08 03:55:39 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.103 2016/01/04 07:50:08 knakahara Exp $
 #include <sys/cpu.h>
 #include <sys/intr.h>
 #include <sys/kmem.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -93,6 +94,8 @@ static void	gifintr(void *);
  */
 LIST_HEAD(, gif_softc) gif_softc_list;	/* XXX should be static */
 
+static void	gif_sysctl_setup(struct sysctllog **);
+
 static int	gif_clone_create(struct if_clone *, int);
 static int	gif_clone_destroy(struct ifnet *);
 static int	gif_check_nesting(struct ifnet *, struct mbuf *);
@@ -116,6 +119,30 @@ static struct if_clone gif_cloner =
 #endif
 static int max_gif_nesting = MAX_GIF_NEST;
 
+static void
+gif_sysctl_setup(struct sysctllog **clog)
+{
+
+#ifdef INET
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "gifttl",
+		       SYSCTL_DESCR("Default TTL for a gif tunnel datagram"),
+		       NULL, 0, &ip_gif_ttl, 0,
+		       CTL_NET, PF_INET, IPPROTO_IP,
+		       IPCTL_GIF_TTL, CTL_EOL);
+#endif
+#ifdef INET6
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "gifhlim",
+		       SYSCTL_DESCR("Default hop limit for a gif tunnel datagram"),
+		       NULL, 0, &ip6_gif_hlim, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_GIF_HLIM, CTL_EOL);
+#endif
+}
+
 /* ARGSUSED */
 void
 gifattach(int count)
@@ -123,6 +150,8 @@ gifattach(int count)
 
 	LIST_INIT(&gif_softc_list);
 	if_clone_attach(&gif_cloner);
+
+	gif_sysctl_setup(NULL);
 }
 
 static int
