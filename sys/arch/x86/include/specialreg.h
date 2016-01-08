@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.83 2015/08/14 06:54:22 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.84 2016/01/08 02:27:07 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -321,6 +321,7 @@
 #define CPUID_SEF_BMI1		__BIT(3)
 #define CPUID_SEF_HLE		__BIT(4)
 #define CPUID_SEF_AVX2		__BIT(5)
+#define CPUID_SEF_FDPEXONLY	__BIT(6)
 #define CPUID_SEF_SMEP		__BIT(7)
 #define CPUID_SEF_BMI2		__BIT(8)
 #define CPUID_SEF_ERMS		__BIT(9)
@@ -342,7 +343,7 @@
 
 #define CPUID_SEF_FLAGS	"\20" \
 	"\1" "FSGSBASE"	"\2" "TSCADJUST"		"\4" "BMI1"	\
-	"\5" "HLE"	"\6" "AVX2"			"\10" "SMEP"	\
+	"\5" "HLE"	"\6" "AVX2"	"\7" "FDPEXONLY" "\10" "SMEP"	\
 	"\11" "BMI2"	"\12" "ERMS"	"\13" "INVPCID"	"\14" "RTM"	\
 	"\15" "QM"	"\16" "FPUCSDS"	"\17" "MPX"    	"\20" "PQE"	\
 	"\21" "AVX512F"			"\23" "RDSEED"	"\24" "ADX"	\
