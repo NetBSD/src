@@ -1,5 +1,3 @@
-/*	$NetBSD: test-time.c,v 1.1.1.5 2015/10/23 17:47:44 christos Exp $	*/
-
 /*
  * Copyright (c) 2002-2007 Niels Provos <provos@citi.umich.edu>
  * Copyright (c) 2007-2012 Niels Provos and Nick Mathewson

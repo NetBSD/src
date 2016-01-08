@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_local.c,v 1.1.1.4 2015/10/23 17:47:40 christos Exp $	*/
-
 
 /*
  * refclock_local - local pseudo-clock driver
@@ -207,6 +205,7 @@ local_poll(
 	pp->disp = 0;
 	pp->jitter = 0;
 #else /* KERNEL_PLL LOCKCLOCK */
+	pp->leap = LEAP_NOWARNING;
 	pp->disp = DISPERSION;
 	pp->jitter = 0;
 #endif /* KERNEL_PLL LOCKCLOCK */

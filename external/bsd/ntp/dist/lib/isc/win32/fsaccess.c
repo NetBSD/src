@@ -1,5 +1,3 @@
-/*	$NetBSD: fsaccess.c,v 1.1.1.4 2015/07/10 13:11:03 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000-2002  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: fsaccess.c,v 1.15 2007/06/19 23:47:19 tbox Exp  */
+/* $Id: fsaccess.c,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
 
 /*
  * Note that Win32 does not have the concept of files having access

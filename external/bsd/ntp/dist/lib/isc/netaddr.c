@@ -1,5 +1,3 @@
-/*	$NetBSD: netaddr.c,v 1.1.1.6 2015/07/10 13:11:02 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2002  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* $Id: netaddr.c,v 1.1.1.7 2016/01/08 20:55:33 christos Exp $ */
 
 /*! \file */
 
@@ -161,7 +159,7 @@ isc_netaddr_totext(const isc_netaddr_t *netaddr, isc_buffer_t *target) {
 	if (r == NULL)
 		return (ISC_R_FAILURE);
 
-	alen = strlen(abuf);
+	alen = (unsigned int)strlen(abuf); /* no overflow possible */
 	INSIST(alen < sizeof(abuf));
 
 	zlen = 0;

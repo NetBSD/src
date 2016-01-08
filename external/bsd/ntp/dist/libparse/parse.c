@@ -1,5 +1,3 @@
-/*	$NetBSD: parse.c,v 1.1.1.5 2015/07/10 13:11:04 christos Exp $	*/
-
 /*
  * /src/NTP/ntp4-dev/libparse/parse.c,v 4.20 2005/08/06 17:39:40 kardel RELEASE_20050806_A
  *
@@ -290,7 +288,7 @@ parse_ioread(
 		break;
 	}
 
-	parseprintf(DD_PARSE, ("parse_ioread(0x%lx, char=0x%x, ..., ...)\n", (unsigned long)parseio, ch & 0xFF));
+	parseprintf(DD_PARSE, ("parse_ioread(0x%p, char=0x%x, ..., ...)\n", (void*)parseio, ch & 0xFF));
 
 	if (!clockformats[parseio->parse_lformat]->convert)
 	{

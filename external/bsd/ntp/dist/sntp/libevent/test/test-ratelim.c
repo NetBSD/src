@@ -1,5 +1,3 @@
-/*	$NetBSD: test-ratelim.c,v 1.1.1.6 2015/10/23 17:47:44 christos Exp $	*/
-
 /*
  * Copyright (c) 2009-2012 Niels Provos and Nick Mathewson
  *

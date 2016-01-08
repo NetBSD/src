@@ -1,5 +1,3 @@
-/*	$NetBSD: recvbuff.c,v 1.1.1.6 2015/10/23 17:47:40 christos Exp $	*/
-
 #ifdef HAVE_CONFIG_H
 # include <config.h>
 #endif

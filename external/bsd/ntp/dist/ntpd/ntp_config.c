@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_config.c,v 1.1.1.8 2015/10/23 17:47:41 christos Exp $	*/
-
 /* ntp_config.c
  *
  * This file contains the ntpd configuration code.

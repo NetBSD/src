@@ -1,5 +1,3 @@
-/*	$NetBSD: hextolfp.c,v 1.1.1.5 2015/07/10 13:11:04 christos Exp $	*/
-
 /*
  * hextolfp - convert an ascii hex string to an l_fp number
  */
@@ -39,8 +37,9 @@ hextolfp(
 	while (*cp != '\0' && (cp - cpstart) < 8 &&
 	       (ind = strchr(digits, *cp)) != NULL) {
 		dec_i = dec_i << 4;	/* multiply by 16 */
-		dec_i += ((ind - digits) > 15) ? (ind - digits) - 6
-			: (ind - digits);
+		dec_i += ((ind - digits) > 15)
+			? (u_long)(ind - digits - 6)
+			: (u_long)(ind - digits);
 		cp++;
 	}
 
@@ -53,8 +52,9 @@ hextolfp(
 	while (*cp != '\0' && (cp - cpstart) < 8 &&
 	       (ind = strchr(digits, *cp)) != NULL) {
 		dec_f = dec_f << 4;	/* multiply by 16 */
-		dec_f += ((ind - digits) > 15) ? (ind - digits) - 6
-			: (ind - digits);
+		dec_f += ((ind - digits) > 15)
+			? (u_long)(ind - digits - 6)
+			: (u_long)(ind - digits);
 		cp++;
 	}
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: log.c,v 1.1.1.5 2015/07/10 13:11:02 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2009, 2011, 2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* $Id: log.c,v 1.1.1.6 2016/01/08 20:55:33 christos Exp $ */
 
 /*! \file
  * \author  Principal Authors: DCL */
@@ -1148,7 +1146,7 @@ greatest_version(isc_logchannel_t *channel, int *greatestp) {
 	char *basenam, *digit_end;
 	const char *dirname;
 	int version, greatest = -1;
-	unsigned int basenamelen;
+	size_t basenamelen;
 	isc_dir_t dir;
 	isc_result_t result;
 	char sep = '/';

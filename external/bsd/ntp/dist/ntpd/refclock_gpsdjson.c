@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_gpsdjson.c,v 1.1.1.5 2015/10/23 17:47:40 christos Exp $	*/
-
 /*
  * refclock_gpsdjson.c - clock driver as GPSD JSON client
  *	Juergen Perlinger (perlinger@ntp.org)

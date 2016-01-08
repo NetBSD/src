@@ -1,5 +1,3 @@
-/*	$NetBSD: audio.c,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
-
 /*
  * audio.c - audio interface for reference clock audio drivers
  */

@@ -1,5 +1,3 @@
-/*	$NetBSD: refclock_conf.c,v 1.1.1.6 2015/07/10 13:11:05 christos Exp $	*/
-
 /*
  * refclock_conf.c - reference clock configuration
  */

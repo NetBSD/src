@@ -1,5 +1,3 @@
-/*	$NetBSD: ntpdate.c,v 1.1.1.7 2015/10/23 17:47:41 christos Exp $	*/
-
 /*
  * ntpdate - set the time of day by polling one or more NTP servers
  */
@@ -563,8 +561,8 @@ ntpdatemain (
 			nfound = poll(rdfdes, (unsigned int)nbsock, timeout.tv_sec * 1000);
 
 #else
-			nfound = select(maxfd, &rdfdes, (fd_set *)0,
-					(fd_set *)0, &timeout);
+			nfound = select(maxfd, &rdfdes, NULL, NULL,
+					&timeout);
 #endif
 			if (nfound > 0)
 				input_handler();
@@ -698,7 +696,7 @@ transmit(
 	 * If not, just timestamp it and send it away.
 	 */
 	if (sys_authenticate) {
-		int len;
+		size_t len;
 
 		xpkt.exten[0] = htonl(sys_authkey);
 		get_systime(&server->xmt);
@@ -810,11 +808,11 @@ receive(
 			printf("receive: rpkt keyid=%ld sys_authkey=%ld decrypt=%ld\n",
 			   (long int)ntohl(rpkt->exten[0]), (long int)sys_authkey,
 			   (long int)authdecrypt(sys_authkey, (u_int32 *)rpkt,
-				LEN_PKT_NOMAC, (int)(rbufp->recv_length - LEN_PKT_NOMAC)));
+				LEN_PKT_NOMAC, (size_t)(rbufp->recv_length - LEN_PKT_NOMAC)));
 
 		if (has_mac && ntohl(rpkt->exten[0]) == sys_authkey &&
 			authdecrypt(sys_authkey, (u_int32 *)rpkt, LEN_PKT_NOMAC,
-			(int)(rbufp->recv_length - LEN_PKT_NOMAC)))
+			(size_t)(rbufp->recv_length - LEN_PKT_NOMAC)))
 			is_authentic = 1;
 		if (debug)
 			printf("receive: authentication %s\n",
@@ -1890,7 +1888,7 @@ input_handler(void)
 #else
 	fd_set fds;
 #endif
-	int fdc = 0;
+	SOCKET fdc = 0;
 
 	/*
 	 * Do a poll to see if we have data
@@ -1914,7 +1912,7 @@ input_handler(void)
 
 #else
 		fds = fdmask;
-		n = select(maxfd, &fds, (fd_set *)0, (fd_set *)0, &tvzero);
+		n = select(maxfd, &fds, NULL, NULL, &tvzero);
 
 		/*
 		 * Determine which socket received data

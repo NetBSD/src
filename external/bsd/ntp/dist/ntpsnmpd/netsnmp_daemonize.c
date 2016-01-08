@@ -1,5 +1,3 @@
-/*	$NetBSD: netsnmp_daemonize.c,v 1.1.1.6 2015/07/10 13:11:07 christos Exp $	*/
-
 /*
  * system.c
  */

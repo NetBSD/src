@@ -1,5 +1,3 @@
-/*	$NetBSD: sockaddrtest.h,v 1.1.1.4 2015/10/23 17:47:45 christos Exp $	*/
-
 #ifndef TESTS_SOCKADDRTEST_H
 #define TESTS_SOCKADDRTEST_H
 

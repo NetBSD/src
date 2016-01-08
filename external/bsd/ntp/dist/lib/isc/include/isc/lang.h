@@ -1,5 +1,3 @@
-/*	$NetBSD: lang.h,v 1.1.1.4 2015/07/10 13:11:02 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2001  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: lang.h,v 1.13 2007/06/19 23:47:18 tbox Exp  */
+/* $Id: lang.h,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
 
 #ifndef ISC_LANG_H
 #define ISC_LANG_H 1

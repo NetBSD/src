@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_types.h,v 1.1.1.6 2015/10/23 17:47:39 christos Exp $	*/
-
 /*
  *  ntp_types.h - defines how int32 and u_int32 are treated.
  *

@@ -1,5 +1,3 @@
-/*	$NetBSD: pathfind.c,v 1.1.1.6 2015/10/23 17:47:43 christos Exp $	*/
-
 /*  -*- Mode: C -*-  */
 
 /* pathfind.c --- find a FILE  MODE along PATH */

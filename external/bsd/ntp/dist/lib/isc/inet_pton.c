@@ -1,5 +1,3 @@
-/*	$NetBSD: inet_pton.c,v 1.1.1.5 2015/07/10 13:11:02 christos Exp $	*/
-
 /*
  * Copyright (C) 2004, 2005, 2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1996-2003  Internet Software Consortium.
@@ -21,7 +19,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 static char rcsid[] =
-	"Id: inet_pton.c,v 1.19 2007/06/19 23:47:17 tbox Exp ";
+	"$Id: inet_pton.c,v 1.1.1.6 2016/01/08 20:55:33 christos Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <config.h>
@@ -94,7 +92,7 @@ inet_pton4(const char *src, unsigned char *dst) {
 		const char *pch;
 
 		if ((pch = strchr(digits, ch)) != NULL) {
-			unsigned int newv = *tp * 10 + (pch - digits);
+			size_t newv = *tp * 10 + (pch - digits);
 
 			if (saw_digit && *tp == 0)
 				return (0);
@@ -199,12 +197,12 @@ inet_pton6(const char *src, unsigned char *dst) {
 		 * Since some memmove()'s erroneously fail to handle
 		 * overlapping regions, we'll do the shift by hand.
 		 */
-		const int n = tp - colonp;
+		const size_t n = tp - colonp;
 		int i;
 
 		if (tp == endp)
 			return (0);
-		for (i = 1; i <= n; i++) {
+		for (i = 1; (size_t)i <= n; i++) {
 			endp[- i] = colonp[n - i];
 			colonp[n - i] = 0;
 		}

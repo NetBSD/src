@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_calendar.c,v 1.1.1.6 2015/10/23 17:47:40 christos Exp $	*/
-
 /*
  * ntp_calendar.c - calendar and helper functions
  *

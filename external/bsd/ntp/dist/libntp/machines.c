@@ -1,5 +1,3 @@
-/*	$NetBSD: machines.c,v 1.1.1.6 2015/10/23 17:47:40 christos Exp $	*/
-
 /* machines.c - provide special support for peculiar architectures
  *
  * Real bummers unite !

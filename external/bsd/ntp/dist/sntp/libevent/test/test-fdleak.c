@@ -1,5 +1,3 @@
-/*	$NetBSD: test-fdleak.c,v 1.1.1.4 2015/07/10 13:11:13 christos Exp $	*/
-
 /*
  * Copyright (c) 2012 Ross Lagerwall <rosslagerwall@gmail.com>
  *

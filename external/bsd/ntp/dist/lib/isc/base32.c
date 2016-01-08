@@ -1,5 +1,3 @@
-/*	$NetBSD: base32.c,v 1.1.1.4 2015/07/10 13:11:02 christos Exp $	*/
-
 /*
  * Copyright (C) 2008, 2009  Internet Systems Consortium, Inc. ("ISC")
  *
@@ -16,7 +14,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: base32.c,v 1.6 2009/10/21 01:22:29 each Exp  */
+/* $Id: base32.c,v 1.1.1.5 2016/01/08 20:55:33 christos Exp $ */
 
 /*! \file */
 

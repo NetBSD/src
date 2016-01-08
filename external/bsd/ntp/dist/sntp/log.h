@@ -1,5 +1,3 @@
-/*	$NetBSD: log.h,v 1.1.1.6 2015/10/23 17:47:43 christos Exp $	*/
-
 #ifndef LOG_H
 #define LOG_H
 

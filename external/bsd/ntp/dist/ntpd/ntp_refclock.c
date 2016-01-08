@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_refclock.c,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
-
 /*
  * ntp_refclock - processing support for reference clocks
  */
@@ -734,9 +732,9 @@ process_refclock_packet(
  */
 int
 refclock_open(
-	char	*dev,		/* device name pointer */
-	u_int	speed,		/* serial port speed (code) */
-	u_int	lflags		/* line discipline flags */
+	const char	*dev,	/* device name pointer */
+	u_int		speed,	/* serial port speed (code) */
+	u_int		lflags	/* line discipline flags */
 	)
 {
 	int	fd;

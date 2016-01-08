@@ -1,5 +1,3 @@
-/*	$NetBSD: libntp.h,v 1.1.1.3 2015/07/10 13:11:03 christos Exp $	*/
-
 /* libntp.h */
 
 #if defined(HAVE_SYSCONF) && defined(_SC_OPEN_MAX)

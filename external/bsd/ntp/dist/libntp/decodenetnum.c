@@ -1,5 +1,3 @@
-/*	$NetBSD: decodenetnum.c,v 1.1.1.6 2015/10/23 17:47:40 christos Exp $	*/
-
 /*
  * decodenetnum - return a net number (this is crude, but careful)
  */

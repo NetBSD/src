@@ -1,5 +1,3 @@
-/*	$NetBSD: socktohost.c,v 1.1.1.6 2015/10/23 17:47:40 christos Exp $	*/
-
 /*
  * socktoa - return a numeric host name from a sockaddr_storage structure
  */
@@ -38,13 +36,18 @@ socktohost(
 	sockaddr_u		addr;
 	size_t			octets;
 	int			a_info;
+	int			saved_errno;
+
+	saved_errno = socket_errno();
 
 	/* reverse the address to purported DNS name */
 	LIB_GETBUF(pbuf);
 	gni_flags = NI_DGRAM | NI_NAMEREQD;
 	if (getnameinfo(&sock->sa, SOCKLEN(sock), pbuf, LIB_BUFLENGTH,
-			NULL, 0, gni_flags))
+			NULL, 0, gni_flags)) {
+		errno = saved_errno;
 		return stoa(sock);	/* use address */
+	}
 
 	TRACE(1, ("%s reversed to %s\n", stoa(sock), pbuf));
 
@@ -99,8 +102,10 @@ socktohost(
 	}
 	freeaddrinfo(alist);
 
-	if (ai != NULL)
+	if (ai != NULL) {
+		errno = saved_errno;
 		return pbuf;	/* forward check passed */
+	}
 
     forward_fail:
 	TRACE(1, ("%s forward check lookup fail: %s\n", pbuf,
@@ -108,5 +113,6 @@ socktohost(
 	LIB_GETBUF(pliar);
 	snprintf(pliar, LIB_BUFLENGTH, "%s (%s)", stoa(sock), pbuf);
 
+	errno = saved_errno;
 	return pliar;
 }

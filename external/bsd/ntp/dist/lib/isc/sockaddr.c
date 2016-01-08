@@ -1,5 +1,3 @@
-/*	$NetBSD: sockaddr.c,v 1.1.1.5 2015/07/10 13:11:02 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007, 2010-2012  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 1999-2003  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id */
+/* $Id: sockaddr.c,v 1.1.1.6 2016/01/08 20:55:33 christos Exp $ */
 
 /*! \file */
 
@@ -136,7 +134,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		break;
 #ifdef ISC_PLAFORM_HAVESYSUNH
 	case AF_UNIX:
-		plen = strlen(sockaddr->type.sunix.sun_path);
+		plen = (unsigned int)strlen(sockaddr->type.sunix.sun_path);
 		if (plen >= isc_buffer_availablelength(target))
 			return (ISC_R_NOSPACE);
 
@@ -155,7 +153,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 		return (ISC_R_FAILURE);
 	}
 
-	plen = strlen(pbuf);
+	plen = (unsigned int)strlen(pbuf);
 	INSIST(plen < sizeof(pbuf));
 
 	isc_netaddr_fromsockaddr(&netaddr, sockaddr);

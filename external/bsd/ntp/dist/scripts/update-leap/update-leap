@@ -1,5 +1,9 @@
-#!/bin/bash
+#! /usr/pkg/bin/perl -w
 
+# Copyright (C) 2015 Network Time Foundation
+# Author: Harlan Stenn
+
+# Original shell version:
 # Copyright (C) 2014 Timothe Litt litt at acm dot org
 
 # This script may be freely copied, used and modified providing that
@@ -8,73 +12,74 @@
 # your own risk.  Bugfixes and improvements would be appreciated by the
 # author.
 
-VERSION="1.003"
+use strict;
+
+use Digest::SHA qw(sha1_hex);
+use File::Copy qw(move);
+use File::Fetch;
+use Getopt::Long qw(:config auto_help no_ignore_case bundling);
+use Sys::Syslog;
+
+my $VERSION="1.003";
 
 # leap-seconds file manager/updater
 
-# Depends on:
-#  wget sed, tr, shasum, logger
-
 # ########## Default configuration ##########
 #
+
+my $CRONJOB = $ENV{'CRONJOB'};
+$CRONJOB = "" unless defined($CRONJOB);
+my $LOGGER;
+my $QUIET = "";
+my $VERBOSE = "";
+
 # Where to get the file
-LEAPSRC="ftp://time.nist.gov/pub/leap-seconds.list"
+my $LEAPSRC="ftp://time.nist.gov/pub/leap-seconds.list";
+my $LEAPFILE;
 
 # How many times to try to download new file
-MAXTRIES=6
-INTERVAL=10
+my $MAXTRIES=6;
+my $INTERVAL=10;
 
 # Where to find ntp config file
-NTPCONF=/etc/ntp.conf
+my $NTPCONF="/etc/ntp.conf";
 
-# How long before expiration to get updated file
-PREFETCH="60 days"
+# How long (in days) before expiration to get updated file
+my $PREFETCH="60";
 
 # How to restart NTP - older NTP: service ntpd? try-restart | condrestart
 # Recent NTP checks for new file daily, so there's nothing to do
-RESTART=
+my $RESTART="";
+
+my $EXPIRES;
+my $FORCE = "";
 
 # Where to put temporary copy before it's validated
-TMPFILE="/tmp/leap-seconds.$$.tmp"
+my $TMPFILE="/tmp/leap-seconds.$$.tmp";
 
 # Syslog facility
-LOGFAC=daemon
+my $LOGFAC="daemon";
+
 # ###########################################
 
-# Places to look for commands.  Allows for CRON having path to
-# old utilities on embedded systems
+=item update-leap
 
-PATHLIST="/opt/sbin:/opt/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:"
-
-REQUIREDCMDS=" wget logger tr sed shasum"
-
-SELF="`basename $0`"
-
-function displayHelp {
-            cat <<EOF
-Usage: $SELF [options] [leapfile]
+Usage: $0 [options] [leapfile]
 
 Verifies and if necessary, updates leap-second definition file
 
 All arguments are optional:  Default (or current value) shown:
     -s    Specify the URL of the master copy to download
           $LEAPSRC
-    -4    Use only IPv4
-    -6    Use only IPv6
-    -p 4|6
-          Prefer IPv4 or IPv6 (as specified) addresses, but use either
     -d    Specify the filename on the local system
           $LEAPFILE
-    -e    Specify how long before expiration the file is to be refreshed
-          Units are required, e.g. "-e 60 days"  Note that larger values
-          imply more frequent refreshes.
+    -e    Specify how long (in days) before expiration the file is to be
+    	  refreshed.  Note that larger values imply more frequent refreshes.
           "$PREFETCH"
     -f    Specify location of ntp.conf (used to make sure leapfile directive is
           present and to default  leapfile)
           $NTPCONF
     -F    Force update even if current file is OK and not close to expiring.
-    -c    Command to restart NTP after installing a new file
-          <none> - ntpd checks file daily
     -r    Specify number of times to retry on get failure
           $MAXTRIES
     -i    Specify number of minutes between retries
@@ -87,11 +92,19 @@ All arguments are optional:  Default (or current value) shown:
           $TMPFILE
     -q    Only report errors to stdout
     -v    Verbose output
+
+The following options are not (yet) implemented in the perl version:
+    -4    Use only IPv4
+    -6    Use only IPv6
+    -c    Command to restart NTP after installing a new file
+          <none> - ntpd checks file daily
+    -p 4|6
+          Prefer IPv4 or IPv6 (as specified) addresses, but use either
     -z    Specify path for utilities
           $PATHLIST
     -Z    Only use system path
 
-$SELF will validate the file currently on the local system
+$0 will validate the file currently on the local system
 
 Ordinarily, the file is found using the "leapfile" directive in $NTPCONF.
 However, an alternate location can be specified on the command line.
@@ -111,139 +124,78 @@ need not be run more frequently than about once every three weeks.
 
 For cron-friendly behavior, define CRONJOB=1 in the crontab.
 
-This script depends on$REQUIREDCMDS
-
 Version $VERSION
-EOF
-   return 0
-}
+=cut
 
 # Default: Use syslog for logging if running under cron
 
-SYSLOG="$CRONJOB"
-
-if [ "$1" = "--help" ]; then
-    displayHelp
-    exit 0
-fi
+my $SYSLOG = $CRONJOB;
 
 # Parse options
 
-while getopts 46p:P:s:e:f:Fc:r:i:lLt:hqvz:Z opt; do
-    case $opt in
-        4)
-            PROTO="-4"
-            ;;
-        6)
-            PROTO="-6"
-            ;;
-        p)
-            if [ "$OPTARG" = '4' -o "$OPTARG" = '6' ]; then
-                PREFER="--prefer-family=IPv$OPTARG"
-            else
-                echo "Invalid -p $OPTARG" >&2
-                exit 1;
-            fi
-            ;;
-	P)
-	    LOGFAC="$OPTARG"
-	    ;;
-        s)
-            LEAPSRC="$OPTARG"
-            ;;
-        e)
-            PREFETCH="$OPTARG"
-            ;;
-	f)
-	    NTPCONF="$OPTARG"
-	    ;;
-        F)
-            FORCE="Y"
-            ;;
-        c)
-            RESTART="$OPTARG"
-            ;;
-        r)
-            MAXTRIES="$OPTARG"
-            ;;
-        i)
-            INTERVAL="$OPTARG"
-            ;;
-        t)
-            TMPFILE="$OPTARG"
-            ;;
-	l)
-	    SYSLOG="y"
-	    ;;
-	L)
-	    SYSLOG=
-	    ;;
-        h)
-            displayHelp
-            exit 0
-            ;;
-	q)
-	    QUIET="Y"
-	    ;;
-        v)
-            VERBOSE="Y"
-            ;;
-	z)
-	    PATHLIST="$OPTARG:"
-	    ;;
-	Z)
-	    PATHLIST=
-	    ;;
-        *)
-            echo "$SELF -h for usage" >&2
-            exit 1
-            ;;
-    esac
-done
-shift $((OPTIND-1))
+our(%opt);
 
-export PATH="$PATHLIST$PATH"
+GetOptions(\%opt,
+	'c=s',
+	'e:60',
+	'F',
+	'f=s',
+	'i:10',
+	'L',
+	'l',
+	'P=s',
+	'q',
+	'r:6',
+	's=s',
+	't=s',
+	'v'
+	);
 
-# Add to path to deal with embedded systems
-#
-for P in $REQUIREDCMDS ; do
-    if >/dev/null 2>&1 which "$P" ; then
-	continue
-    fi
-    [ "$P" = "logger" ] && continue
-    echo "FATAL: missing $P command, please install"
-    exit 1
-done
+$LOGFAC=$opt{P} if (defined($opt{P}));
+$LEAPSRC=$opt{s} if (defined($opt{s}));
+$PREFETCH=$opt{e} if (defined($opt{e}));
+$NTPCONF=$opt{f} if (defined($opt{f}));
+$FORCE="Y" if (defined($opt{F}));
+$RESTART=$opt{c} if (defined($opt{c}));
+$MAXTRIES=$opt{r} if (defined($opt{r}));
+$INTERVAL=$opt{i} if (defined($opt{i}));
+$TMPFILE=$opt{t} if (defined($opt{t}));
+$SYSLOG="Y" if (defined($opt{l}));
+$SYSLOG="" if (defined($opt{L}));
+$QUIET="Y" if (defined($opt{q}));
+$VERBOSE="Y" if (defined($opt{v}));
+
+# export PATH="$PATHLIST$PATH"
 
 # Handle logging
 
-if ! LOGGER="`2>/dev/null which logger`" ; then
-    LOGGER=
-fi
+openlog($0, 'pid', $LOGFAC);
 
-function log {
+sub logger {
+    my ($priority, $message) = @_;
+
     # "priority" "message"
     #
     # Stdout unless syslog specified or logger isn't available
     #
-    if [ -z "$SYSLOG" -o -z "$LOGGER" ]; then
-	if [ -n "$QUIET" -a \( "$1" = "info" -o "$1" = "notice" -o "$1" = "debug" \) ]; then
+    if ($SYSLOG eq "" or $LOGGER eq "") {
+	if ($QUIET ne "" and ( $priority eq "info" or $priority eq "notice" or $priority eq "debug" ) ) {
 	    return 0
-	fi
-	echo "`echo \"$1\" | tr a-z A-Z`: $2"
-	return 0
-    fi
+	}
+	printf "%s: $message\n", uc $priority;
+	return 0;
+    }
 
     # Also log to stdout if cron job && notice or higher
-    local S
-    if [ -n "$CRONJOB" -a \( "$1" != "info" \) -a \( "$1" != "debug" \) ] || [ -n "$VERBOSE" ]; then
-	S="-s"
-    fi
-    $LOGGER $S -t "$SELF[$$]" -p "$LOGFAC.$1" "$2"
+    if (($CRONJOB ne "" and ($priority ne "info" ) and ($priority ne "debug" )) || ($VERBOSE ne "")) {
+	# Log to stderr as well
+	print STDERR "$0: $priority: $message\n";
+    }
+    syslog($priority, $message);
 }
 
 # Verify interval
-INTERVAL=$(( $INTERVAL *1 ))
+# INTERVAL=$(( $INTERVAL *1 ))
 
 # Validate a leap-seconds file checksum
 #
@@ -254,181 +206,219 @@ INTERVAL=$(( $INTERVAL *1 ))
 # Date (seconds since 1900) leaps : leaps is the # of seconds to add for times >= Date
 # Date lines have comments.
 # #h hex hex hex hex hex is the SHA-1 checksum of the data & dates, excluding whitespace w/o leading zeroes
+#
+# Returns:
+#   0	File is valid
+#   1	Invalid Checksum
+#   2	Expired
 
-function verifySHA {
+sub verifySHA {
+    my ($file, $verbose) = @_;
 
-    if [ ! -f "$1" ]; then
-        return 1
-    fi
+    my $raw = "";
+    my $data = "";
+    my $FSHA;
 
-    # Remove comments, except those that are markers for last update, expires and hash
+    # Remove comments, except those that are markers for last update,
+    # expires and hash
 
-    local RAW="`sed $1 -e'/^\\([0-9]\\|#[\$@h]\)/!d' -e'/^#[\$@h]/!s/#.*\$//g'`"
+    unless (open(LF, $file)) {
+	warn "Can't open <$file>: $!\n";
+	print "Will try and create that file.\n";
+	return 1;
+    };
+    while (<LF>) {
+	if (/^#\$/) {
+		$raw .= $_;
+		s/^..//;
+		$data .= $_;
+	}
+	elsif (/^#\@/) {
+		$raw .= $_;
+		s/^..//;
+		$data .= $_;
+		s/\s+//g;
+		$EXPIRES = $_ - 2208988800;
+	}
+	elsif (/^#h\s+([[:xdigit:]]+)\s+([[:xdigit:]]+)\s+([[:xdigit:]]+)\s+([[:xdigit:]]+)\s+([[:xdigit:]]+)/) {
+		chomp;
+		$raw .= $_;
+		$FSHA = sprintf("%08s%08s%08s%08s%08s", $1, $2, $3, $4, $5);
+	}
+	elsif (/^#/) {
+		# ignore it
+	}
+	elsif (/^\d/) {
+		s/#.*$//;
+		$raw .= $_;
+		$data .= $_;
+	} else {
+		chomp;
+		print "Unexpected line: <$_>\n";
+	}
+    }
+    close LF;
 
-    # Extract just the data, removing all whitespace
-
-    local DATA="`echo \"$RAW\" | sed -e'/^#h/d' -e's/^#[\$@]//g' | tr -d '[:space:]'`"
+    # Remove all white space
+    $data =~ s/\s//g;
 
     # Compute the SHA hash of the data, removing the marker and filename
     # Computed in binary mode, which shouldn't matter since whitespace has been removed
-    # shasum comes in several flavors; a portable one is available in Perl (with Digest::SHA)
 
-    local DSHA="`echo -n \"$DATA\" | shasum | sed -e's/[? *].*$//'`"
+    my $DSHA = sha1_hex($data);
 
     # Extract the file's hash. Restore any leading zeroes in hash segments.
 
-    # The sed [] includes a tab (\t) and space; #h is followed by a tab and space
-    local FSHA="`echo \"$RAW\" | sed -e'/^#h/!d' -e's/^#h//' -e's/[ 	] */ 0x/g'`"
-    FSHA=`printf '%08x%08x%08x%08x%08x' $FSHA`
-
-    if [ -n "$FSHA" -a \( "$FSHA" = "$DSHA" \) ]; then
-        if [ -n "$2" ]; then
-            log "info" "Checksum of $1 validated"
-        fi
-    else
-        log "error" "Checksum of $1 is invalid:"
-	[ -z "$FSHA" ] && FSHA="(no checksum record found in file)"
-        log "error" "EXPECTED: $FSHA"
-        log "error" "COMPUTED: $DSHA"
-        return 1
-    fi
+    if ( ( "$FSHA" ne "" ) && ( $FSHA eq $DSHA ) ) {
+        if ( $verbose ne "" ) {
+            logger("info", "Checksum of $file validated");
+        }
+    } else {
+        logger("error", "Checksum of $file is invalid:");
+	$FSHA="(no checksum record found in file)"
+	    if ( $FSHA eq "");
+        logger("error", "EXPECTED: $FSHA");
+        logger("error", "COMPUTED: $DSHA");
+        return 1;
+    }
 
     # Check the expiration date, converting NTP epoch to Unix epoch used by date
 
-    EXPIRES="`echo \"$RAW\" | sed -e'/^#@/!d' -e's/^#@//' | tr -d '[:space:]'`"
-    EXPIRES="$(($EXPIRES - 2208988800 ))"
-
-    if [ $EXPIRES -lt `date -u +%s` ]; then
-        log "notice" "File expired on `date -u -d \"Jan 1, 1970 00:00:00 +0000 + $EXPIRES seconds\"`"
-        return 2
-    fi
-
+    if ( $EXPIRES < time() ) {
+        logger("notice", "File expired on " . gmtime($EXPIRES));
+        return 2;
+    }
+    return 0;
 }
 
 # Verify ntp.conf
 
-if ! [ -f "$NTPCONF" ]; then
-    log "critical" "Missing ntp configuration $NTPCONF"
-    exit 1
-fi
+-r $NTPCONF || die "Missing ntp configuration: $NTPCONF\n";
 
 # Parse ntp.conf for leapfile directive
 
-LEAPFILE="`sed $NTPCONF -e'/^ *leapfile  *.*$/!d' -e's/^ *leapfile  *//'`"
-if [ -z "$LEAPFILE" ]; then
-    log "error" "$NTPCONF does not specify a leapfile"
-fi
+open(LF, $NTPCONF) || die "Can't open <$NTPCONF>: $!\n";
+while (<LF>) {
+    chomp;
+    if (/^ *leapfile\s+(\S+)/) {
+	$LEAPFILE = $1;
+    }
+}
+close LF;
+
+-s $LEAPFILE || warn "$NTPCONF specifies $LEAPFILE as a leapfile, which is empty.\n";
 
 # Allow placing the file someplace else - testing
 
-if [ -n "$1" ]; then
-    if [ "$1" != "$LEAPFILE" ]; then
-	log "notice" "Requested install to $1, but $NTPCONF specifies $LEAPFILE"
-    fi
-    LEAPFILE="$1"
-fi
+if ( defined $ARGV[0] ) {
+    if ( $ARGV[0] ne $LEAPFILE ) {
+	logger("notice", "Requested install to $ARGV[0], but $NTPCONF specifies $LEAPFILE");
+    }
+    $LEAPFILE = $ARGV[0];
+}
 
 # Verify the current file
 # If it is missing, doesn't validate or expired
 # Or is expiring soon
 #  Download a new one
 
-if [ -n "$FORCE" ] || ! verifySHA $LEAPFILE "$VERBOSE" || [ $EXPIRES -lt `date -d "NOW + $PREFETCH" +%s` ] ; then
-    TRY=0
-    while true; do
-        TRY=$(( $TRY + 1 ))
-        if [ -n "$VERBOSE" ]; then
-            log "info" "Attempting download from $LEAPSRC, try $TRY.."
-        fi
-        if wget $PROTO $PREFER -o ${TMPFILE}.log $LEAPSRC -O $TMPFILE ; then
-            log "info" "Download of $LEAPSRC succeeded"
-            if [ -n "$VERBOSE" ]; then
-                cat ${TMPFILE}.log
-            fi
+if ( $FORCE ne "" || verifySHA($LEAPFILE, $VERBOSE) || ( $EXPIRES lt ( $PREFETCH * 86400 + time() ) )) {
+    my $TRY = 0;
+    my $ff = File::Fetch->new(uri => $LEAPSRC) || die "Fetch failed.\n";
+    while (1) {
+	++$TRY;
+	logger("info", "Attempting download from $LEAPSRC, try $TRY..")
+	    if ($VERBOSE ne "");
+	my $where = $ff->fetch( to => '/tmp' );
 
-            if ! verifySHA $TMPFILE "$VERBOSE" ; then
-		# There is no point in retrying, as the file on the server is almost
-		# certainly corrupt.
+        if ($where) {
+            logger("info", "Download of $LEAPSRC succeeded");
 
-                log "warning" "Downloaded file $TMPFILE rejected -- saved for diagnosis"
-                cat ${TMPFILE}.log
-                rm -f ${TMPFILE}.log
-                exit 1
-            fi
-            rm -f ${TMPFILE}.log
+            if ( verifySHA($where, $VERBOSE )) {
+		# There is no point in retrying, as the file on the
+		# server is almost certainly corrupt.
 
-	    # Set correct permissions on temporary file
+                logger("warning", "Downloaded file $where rejected -- saved for diagnosis");
+                exit 1;
+            }
 
-	    REFFILE="$LEAPFILE"
-            if [ ! -f $LEAPFILE ]; then
-		log "notice" "$LEAPFILE was missing, creating new copy - check permissions"
-                touch $LEAPFILE
-		# Can't copy permissions from old file, copy from NTPCONF instead
-		REFFILE="$NTPCONF"
-            fi
-            chmod --reference $REFFILE $TMPFILE
-            chown --reference $REFFILE $TMPFILE
-	    ( which selinuxenabled && selinuxenabled && which chcon ) >/dev/null 2>&1
-            if  [ $? == 0 ] ; then
-                chcon --reference $REFFILE $TMPFILE
-            fi
+	    # While the shell script version will set correct permissions
+	    # on temporary file, for the perl version that's harder, so
+	    # for now at least one should run this script as the
+	    # appropriate user.
+
+	    # REFFILE="$LEAPFILE"
+            # if [ ! -f $LEAPFILE ]; then
+	    # 	logger "notice" "$LEAPFILE was missing, creating new copy - check permissions"
+            #   touch $LEAPFILE
+	    # 	# Can't copy permissions from old file, copy from NTPCONF instead
+	    # 	REFFILE="$NTPCONF"
+            # fi
+            # chmod --reference $REFFILE $TMPFILE
+            # chown --reference $REFFILE $TMPFILE
+	    # ( which selinuxenabled && selinuxenabled && which chcon ) >/dev/null 2>&1
+            # if  [ $? == 0 ] ; then
+            #     chcon --reference $REFFILE $TMPFILE
+            # fi
 
 	    # Replace current file with validated new one
 
-            if mv -f $TMPFILE $LEAPFILE ; then
-                log "notice" "Installed new $LEAPFILE from $LEAPSRC"
-            else
-                log "error" "Install $TMPFILE => $LEAPFILE failed -- saved for diagnosis"
-                exit 1
-            fi
+	    if ( move $where, $LEAPFILE ) {
+                logger("notice", "Installed new $LEAPFILE from $LEAPSRC");
+            } else {
+                logger("error", "Install $where => $LEAPFILE failed -- saved for diagnosis: $!");
+                exit 1;
+            }
 
 	    # Restart NTP (or whatever else is specified)
 
-	    if [ -n "$RESTART" ]; then
-		if [ -n "$VERBOSE" ]; then
-		    log "info" "Attempting restart action: $RESTART"
-		fi
-		R="$( 2>&1 $RESTART )"
-		if [ $? -eq 0 ]; then
-		    log "notice" "Restart action succeeded"
-		    if [ -n "$VERBOSE" -a -n "$R" ]; then
-			log "info" "$R"
-		    fi
-		else
-		    log "error" "Restart action failed"
-		    if [ -n "$R" ]; then
-			log "error" "$R"
-		    fi
-		    exit 2
-		fi
-	    fi
-            exit 0
-	fi
+	    if ( $RESTART ne "" ) {
+		if ( $VERBOSE ne "" ) {
+		    logger("info", "Attempting restart action: $RESTART");
+		}
+
+# XXX
+		#R="$( 2>&1 $RESTART )"
+		#if [ $? -eq 0 ]; then
+		#    logger "notice" "Restart action succeeded"
+		#    if [ -n "$VERBOSE" -a -n "$R" ]; then
+		#	logger "info" "$R"
+		#    fi
+		#else
+		#    logger "error" "Restart action failed"
+		#    if [ -n "$R" ]; then
+		#	logger "error" "$R"
+		#    fi
+		#    exit 2
+		#fi
+	    }
+            exit 0;
+	}
 
 	# Failed to download.  See about trying again
 
-        rm -f $TMPFILE
-        if [ $TRY -ge $MAXTRIES ]; then
-            break;
-        fi
-        if [ -n "$VERBOSE" ]; then
-            cat ${TMPFILE}.log
-            log "info" "Waiting $INTERVAL minutes before retrying..."
-        fi
-        sleep $(( $INTERVAL * 60))
-    done
+        # rm -f $TMPFILE
+        if ( $TRY ge $MAXTRIES ) {
+            last;
+        }
+        if ( $VERBOSE ne "" ) {
+            logger("info", "Waiting $INTERVAL minutes before retrying...");
+        }
+        sleep $INTERVAL * 60 ;
+    }
 
     # Failed and out of retries
 
-    log "warning" "Download from $LEAPSRC failed after $TRY attempts"
-    if [ -f ${TMPFILE}.log ]; then
-        cat ${TMPFILE}.log
-        rm -f ${TMPFILE}.log $TMPFILE
-    fi
-    exit 1
-fi
-log "info" "Not time to replace $LEAPFILE"
+    logger("warning", "Download from $LEAPSRC failed after $TRY attempts");
+    exit 1;
+}
 
-exit 0
+print "FORCE is <$FORCE>\n";
+print "verifySHA is " . verifySHA($LEAPFILE, "") . "\n";
+print "EXPIRES <$EXPIRES>  vs ". ( $PREFETCH * 86400 + time() ) . "\n";
+
+logger("info", "Not time to replace $LEAPFILE");
+
+exit 0;
 
 # EOF

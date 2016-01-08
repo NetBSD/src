@@ -1,5 +1,3 @@
-/*	$NetBSD: string.h,v 1.1.1.4 2015/07/10 13:11:02 christos Exp $	*/
-
 /*
  * Copyright (C) 2004-2007  Internet Systems Consortium, Inc. ("ISC")
  * Copyright (C) 2000, 2001, 2003  Internet Software Consortium.
@@ -17,7 +15,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* Id: string.h,v 1.23 2007/09/13 04:48:16 each Exp  */
+/* $Id: string.h,v 1.1.1.5 2016/01/08 20:55:34 christos Exp $ */
 
 #ifndef ISC_STRING_H
 #define ISC_STRING_H 1

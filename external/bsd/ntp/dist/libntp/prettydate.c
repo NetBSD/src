@@ -1,5 +1,3 @@
-/*	$NetBSD: prettydate.c,v 1.1.1.7 2015/10/23 17:47:40 christos Exp $	*/
-
 /*
  * prettydate - convert a time stamp to something readable
  */

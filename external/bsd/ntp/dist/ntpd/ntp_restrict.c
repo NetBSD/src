@@ -1,5 +1,3 @@
-/*	$NetBSD: ntp_restrict.c,v 1.1.1.7 2015/10/23 17:47:41 christos Exp $	*/
-
 /*
  * ntp_restrict.c - determine host restrictions
  */
@@ -162,7 +160,7 @@ alloc_res4(void)
 	const size_t	count = INC_RESLIST4;
 	restrict_u *	rl;
 	restrict_u *	res;
-	int		i;
+	size_t		i;
 
 	UNLINK_HEAD_SLIST(res, resfree4, link);
 	if (res != NULL)
@@ -188,7 +186,7 @@ alloc_res6(void)
 	const size_t	count = INC_RESLIST6;
 	restrict_u *	rl;
 	restrict_u *	res;
-	int		i;
+	size_t		i;
 
 	UNLINK_HEAD_SLIST(res, resfree6, link);
 	if (res != NULL)
