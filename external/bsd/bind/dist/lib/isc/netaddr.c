@@ -1,4 +1,4 @@
-/*	$NetBSD: netaddr.c,v 1.6 2014/12/10 04:37:59 christos Exp $	*/
+/*	$NetBSD: netaddr.c,v 1.7 2016/01/08 19:01:12 joerg Exp $	*/
 
 /*
  * Copyright (C) 2004, 2005, 2007, 2010-2012, 2014  Internet Systems Consortium, Inc. ("ISC")
@@ -281,7 +281,6 @@ isc_netaddr_masktoprefixlen(const isc_netaddr_t *s, unsigned int *lenp) {
 	for (; i < ipbytes; i++) {
 		if (p[i] != 0)
 			return (ISC_R_MASKNONCONTIG);
-		i++;
 	}
 	*lenp = nbytes * 8 + nbits;
 	return (ISC_R_SUCCESS);
