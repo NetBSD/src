@@ -1,4 +1,4 @@
-/*	$NetBSD: dolfptoa.c,v 1.3 2015/07/10 14:20:32 christos Exp $	*/
+/*	$NetBSD: dolfptoa.c,v 1.4 2016/01/08 21:35:38 christos Exp $	*/
 
 /*
  * dolfptoa - do the grunge work of converting an l_fp number to decimal
@@ -42,7 +42,7 @@ dolfptoa(
 	 * including a possible rounding from the fractional part.
 	 */
 	cp = cpend = cpdec = &cbuf[10];
-	for (dec = cp - cbuf; dec > 0 && fpi != 0; dec--) {
+	for (dec = (int)(cp - cbuf); dec > 0 && fpi != 0; dec--) {
 		/* can add another digit */
 		u_int32 digit;
 		
@@ -64,7 +64,7 @@ dolfptoa(
 		cpdec += 3;
 	}
 	if ((size_t)dec > sizeof(cbuf) - (cpend - cbuf))
-		dec = sizeof(cbuf) - (cpend - cbuf);
+		dec = (int)(sizeof(cbuf) - (cpend - cbuf));
 	
 	/*
 	 * If there's a fraction to deal with, do so.
@@ -97,7 +97,7 @@ dolfptoa(
 		u_char *tp    = cpend;
 		int     carry = ((fpv & 0x80000000) != 0);
 
-		for (dec = tp - cbuf;  carry && dec > 0;  dec--) {
+		for (dec = (int)(tp - cbuf);  carry && dec > 0;  dec--) {
 			*--tp += 1;
 			if (*tp == 10)
 				*tp = 0;

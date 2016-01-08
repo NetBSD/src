@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_crypto.c,v 1.10 2015/10/23 18:06:19 christos Exp $	*/
+/*	$NetBSD: ntp_crypto.c,v 1.11 2016/01/08 21:35:39 christos Exp $	*/
 
 /*
  * ntp_crypto.c - NTP version 4 public key routines
@@ -475,7 +475,7 @@ crypto_recv(
 		}
 
 		/* Check if the declared size fits into the remaining
-		 * buffer.
+		 * buffer. We *know* 'macbytes' > 0 here!
 		 */
 		if (len > (u_int)macbytes) {
 			DPRINTF(1, ("crypto_recv: possible attack detected, associd %d\n",

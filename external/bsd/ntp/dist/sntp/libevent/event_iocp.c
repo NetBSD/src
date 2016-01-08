@@ -1,4 +1,4 @@
-/*	$NetBSD: event_iocp.c,v 1.3 2015/07/10 14:20:34 christos Exp $	*/
+/*	$NetBSD: event_iocp.c,v 1.4 2016/01/08 21:35:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2009-2012 Niels Provos, Nick Mathewson

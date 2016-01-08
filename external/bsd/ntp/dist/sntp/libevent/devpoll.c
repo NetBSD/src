@@ -1,4 +1,4 @@
-/*	$NetBSD: devpoll.c,v 1.3 2015/07/10 14:20:34 christos Exp $	*/
+/*	$NetBSD: devpoll.c,v 1.4 2016/01/08 21:35:40 christos Exp $	*/
 
 /*
  * Copyright 2000-2009 Niels Provos <provos@citi.umich.edu>

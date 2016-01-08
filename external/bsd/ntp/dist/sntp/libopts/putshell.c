@@ -1,4 +1,4 @@
-/*	$NetBSD: putshell.c,v 1.5 2015/07/10 14:20:35 christos Exp $	*/
+/*	$NetBSD: putshell.c,v 1.6 2016/01/08 21:35:41 christos Exp $	*/
 
 
 /**

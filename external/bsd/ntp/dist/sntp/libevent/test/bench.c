@@ -1,4 +1,4 @@
-/*	$NetBSD: bench.c,v 1.3 2015/07/10 14:20:35 christos Exp $	*/
+/*	$NetBSD: bench.c,v 1.4 2016/01/08 21:35:41 christos Exp $	*/
 
 /*
  * Copyright 2003-2007 Niels Provos <provos@citi.umich.edu>
