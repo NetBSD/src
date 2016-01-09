@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.17 2013/12/27 18:53:25 christos Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.18 2016/01/09 21:14:42 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.17 2013/12/27 18:53:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.18 2016/01/09 21:14:42 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -112,9 +112,6 @@ AcpiOsExecute(ACPI_EXECUTE_TYPE Type, ACPI_OSD_EXEC_CALLBACK Function,
 		break;
 	case OSL_NOTIFY_HANDLER:
 		pri = 3;
-		break;
-	case OSL_DEBUGGER_THREAD:
-		pri = 0;
 		break;
 	default:
 		return AE_BAD_PARAMETER;
