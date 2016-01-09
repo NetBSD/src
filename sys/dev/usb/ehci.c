@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.234.2.76 2016/01/05 05:53:38 skrll Exp $ */
+/*	$NetBSD: ehci.c,v 1.234.2.77 2016/01/09 21:47:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.76 2016/01/05 05:53:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.234.2.77 2016/01/09 21:47:23 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -1286,7 +1286,7 @@ ehci_waitintr(ehci_softc_t *sc, struct usbd_xfer *xfer)
 			sc->sc_eintrs;
 		USBHIST_LOG(ehcidebug, "0x%04x", intrs, 0, 0, 0);
 #ifdef EHCI_DEBUG
-		if (ehcidebug > 15)
+		if (ehcidebug >= 15)
 			ehci_dump_regs(sc);
 #endif
 		if (intrs) {
@@ -3447,7 +3447,7 @@ ehci_timeout(void *addr)
 
 	USBHIST_LOG(ehcidebug, "exfer %p", exfer, 0, 0, 0);
 #ifdef EHCI_DEBUG
-	if (ehcidebug > 1)
+	if (ehcidebug >= 2)
 		usbd_dump_pipe(pipe);
 #endif
 
