@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -216,7 +216,7 @@ AcpiUtGetNotifyName (
     ACPI_OBJECT_TYPE        Type);
 #endif
 
-char *
+const char *
 AcpiUtGetTypeName (
     ACPI_OBJECT_TYPE        Type);
 
@@ -484,17 +484,6 @@ AcpiUtExecutePowerMethods (
 
 
 /*
- * utfileio - file operations
- */
-#ifdef ACPI_APPLICATION
-ACPI_STATUS
-AcpiUtReadTableFromFile (
-    char                    *Filename,
-    ACPI_TABLE_HEADER       **Table);
-#endif
-
-
-/*
  * utids - device ID support
  */
 ACPI_STATUS
@@ -504,11 +493,6 @@ AcpiUtExecute_HID (
 
 ACPI_STATUS
 AcpiUtExecute_UID (
-    ACPI_NAMESPACE_NODE     *DeviceNode,
-    ACPI_PNP_DEVICE_ID      **ReturnId);
-
-ACPI_STATUS
-AcpiUtExecute_SUB (
     ACPI_NAMESPACE_NODE     *DeviceNode,
     ACPI_PNP_DEVICE_ID      **ReturnId);
 
@@ -742,7 +726,7 @@ BOOLEAN
 AcpiUtIsPciRootBridge (
     char                    *Id);
 
-#if (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP)
+#if (defined ACPI_ASL_COMPILER || defined ACPI_EXEC_APP || defined ACPI_NAMES_APP)
 BOOLEAN
 AcpiUtIsAmlTable (
     ACPI_TABLE_HEADER       *Table);
