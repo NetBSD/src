@@ -1,11 +1,11 @@
-/*	$NetBSD: reader.c,v 1.12 2015/01/04 19:30:26 joerg Exp $	*/
+/*	$NetBSD: reader.c,v 1.13 2016/01/09 22:05:33 christos Exp $	*/
 
-/* Id: reader.c,v 1.58 2014/10/06 22:15:08 tom Exp  */
+/* Id: reader.c,v 1.59 2015/07/11 00:39:03 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: reader.c,v 1.12 2015/01/04 19:30:26 joerg Exp $");
+__RCSID("$NetBSD: reader.c,v 1.13 2016/01/09 22:05:33 christos Exp $");
 
 /*  The line size must be a positive integer.  One hundred was chosen	*/
 /*  because few lines in Yacc input grammars exceed 100 characters.	*/
@@ -32,6 +32,7 @@ static void copy_destructor(void);
 static char *process_destructor_XX(char *code, char *tag);
 #endif
 
+#define CACHE_SIZE 256
 static char *cache;
 static int cinc, cache_size;
 
@@ -101,7 +102,7 @@ cachec(int c)
     assert(cinc >= 0);
     if (cinc >= cache_size)
     {
-	cache_size += 256;
+	cache_size += CACHE_SIZE;
 	cache = TREALLOC(char, cache, cache_size);
 	NO_SPACE(cache);
     }
@@ -1512,7 +1513,7 @@ read_declarations(void)
 {
     int c, k;
 
-    cache_size = 256;
+    cache_size = CACHE_SIZE;
     cache = TMALLOC(char, cache_size);
     NO_SPACE(cache);
 
@@ -2111,6 +2112,7 @@ insert_empty_rule(void)
     bucket *bp, **bpp;
 
     assert(cache);
+    assert(cache_size >= CACHE_SIZE);
     sprintf(cache, "$$%d", ++gensym);
     bp = make_bucket(cache);
     last_symbol->next = bp;
