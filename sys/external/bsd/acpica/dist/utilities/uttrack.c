@@ -115,7 +115,7 @@ AcpiUtCreateList (
 
     memset (Cache, 0, sizeof (ACPI_MEMORY_LIST));
 
-    Cache->ListName = ListName;
+    Cache->ListName = __UNCONST(ListName);
     Cache->ObjectSize = ObjectSize;
 
     *ReturnCache = Cache;
