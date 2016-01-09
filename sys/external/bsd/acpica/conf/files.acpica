@@ -1,4 +1,4 @@
-# $NetBSD: files.acpica,v 1.12 2016/01/09 21:14:12 christos Exp $
+# $NetBSD: files.acpica,v 1.13 2016/01/09 21:44:55 christos Exp $
 
 define		acpica
 makeoptions	acpi	CPPFLAGS+="-I$S/external/bsd/acpica/dist/include"
@@ -151,7 +151,7 @@ file	parser/psxface.c		acpica
 file	resources/rsaddr.c		acpica
 file	resources/rscalc.c		acpica
 file	resources/rscreate.c		acpica
-file	resources/rsdump.c		acpica
+file	resources/rsdump.c		acpica & acpi_debug & ddb
 file	resources/rsdumpinfo.c		acpica & acpi_debug & ddb
 file	resources/rsinfo.c		acpica
 file	resources/rsio.c		acpica
