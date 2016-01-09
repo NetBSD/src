@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.26 2016/01/08 08:57:14 pgoyette Exp $ */
+/*      $NetBSD: filemon.c,v 1.27 2016/01/09 07:27:31 pgoyette Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.26 2016/01/08 08:57:14 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.27 2016/01/09 07:27:31 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -154,13 +154,14 @@ filemon_pid_check(struct proc * p)
 	struct filemon *filemon;
 	struct proc * lp;
 
+	KASSERT(p != NULL);
 	if (!TAILQ_EMPTY(&filemons_inuse)) {
+		/*
+		 * make sure p cannot exit
+		 * until we have moved on to p_pptr
+		 */
+		rw_enter(&p->p_reflock, RW_READER);
 		while (p) {
-			/*
-			 * make sure p cannot exit
-			 * until we have moved on to p_pptr
-			 */
-			rw_enter(&p->p_reflock, RW_READER);
 			TAILQ_FOREACH(filemon, &filemons_inuse, fm_link) {
 				if (p->p_pid == filemon->fm_pid) {
 					rw_exit(&p->p_reflock);
@@ -169,6 +170,10 @@ filemon_pid_check(struct proc * p)
 			}
 			lp = p;
 			p = p->p_pptr;
+
+			/* lock parent before releasing child */
+			if (p != NULL)
+				rw_enter(&p->p_reflock, RW_READER);
 			rw_exit(&lp->p_reflock);
 		}
 	}
