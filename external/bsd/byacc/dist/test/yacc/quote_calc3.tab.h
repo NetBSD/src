@@ -1,5 +1,3 @@
-/*	$NetBSD: quote_calc3.tab.h,v 1.1.1.1 2015/01/03 22:58:24 christos Exp $	*/
-
 #define OP_ADD 257
 #define OP_SUB 259
 #define OP_MUL 261

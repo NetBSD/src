@@ -1,5 +1,3 @@
-/*	$NetBSD: calc2.y,v 1.1.1.5 2015/01/03 22:58:23 christos Exp $	*/
-
 %parse-param { int regs[26] }
 %parse-param { int *base }
 

@@ -1,5 +1,3 @@
-/*	$NetBSD: error.y,v 1.1.1.5 2013/04/06 14:45:27 christos Exp $	*/
-
 %{
 int yylex(void);
 static void yyerror(const char *);

@@ -1,5 +1,3 @@
-/*	$NetBSD: err_inherit3.tab.h,v 1.1.1.1 2015/01/03 22:58:24 christos Exp $	*/
-
 #ifndef _err_inherit3__defines_h_
 #define _err_inherit3__defines_h_
 

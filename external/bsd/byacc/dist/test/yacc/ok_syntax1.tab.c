@@ -1,5 +1,3 @@
-/*	$NetBSD: ok_syntax1.tab.c,v 1.1.1.1 2015/01/03 22:58:24 christos Exp $	*/
-
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
 /* (use YYMAJOR/YYMINOR for ifdefs dependent on parser version) */
