@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,36 +43,6 @@
 
 #ifndef __DTTEMPLATE_H
 #define __DTTEMPLATE_H
-
-
-/* Special templates for the ASL/AML tables: DSDT, SSDT, and OSDT */
-
-const char TemplateDsdt[] =
-    "DefinitionBlock (\"dsdt.aml\", \"DSDT\", 2, \"Intel\", \"Template\", 0x00000001)\n"
-    "{\n"
-    "    Method (MAIN, 0, NotSerialized)\n"
-    "    {\n"
-    "        Return (Zero)\n"
-    "    }\n"
-    "}\n\n";
-
-const char TemplateSsdt[] =
-    "DefinitionBlock (\"ssdt.aml\", \"SSDT\", 2, \"Intel\", \"Template\", 0x00000001)\n"
-    "{\n"
-    "    Method (MAIN, 0, NotSerialized)\n"
-    "    {\n"
-    "        Return (Zero)\n"
-    "    }\n"
-    "}\n\n";
-
-const char TemplateOsdt[] =
-    "DefinitionBlock (\"osdt.aml\", \"OSDT\", 2, \"Intel\", \"Template\", 0x00000001)\n"
-    "{\n"
-    "    Method (MAIN, 0, NotSerialized)\n"
-    "    {\n"
-    "        Return (Zero)\n"
-    "    }\n"
-    "}\n\n";
 
 
 /* Templates for ACPI data tables */
