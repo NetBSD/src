@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: run_lint.sh,v 1.1.1.6 2016/01/09 21:55:11 christos Exp $
+# Id: run_lint.sh,v 1.3 2014/03/28 23:40:27 tom Exp 
 # vi:ts=4 sw=4:
 
 # run lint on each of the ".c" files in the test directory

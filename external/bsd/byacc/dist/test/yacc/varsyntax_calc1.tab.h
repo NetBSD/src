@@ -1,3 +1,5 @@
+/*	$NetBSD: varsyntax_calc1.tab.h,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+
 #define DREG 257
 #define VREG 258
 #define CONST 259

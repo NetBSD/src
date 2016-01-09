@@ -1,4 +1,6 @@
-/* $Id: grammar.y,v 1.1.1.6 2016/01/09 21:55:11 christos Exp $
+/*	$NetBSD: grammar.y,v 1.1.1.7 2016/01/09 21:59:45 christos Exp $	*/
+
+/* Id: grammar.y,v 1.5 2012/01/15 20:00:59 tom Exp 
  *
  * yacc grammar for C function prototype generator
  * This was derived from the grammar in Appendix A of

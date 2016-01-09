@@ -1,5 +1,5 @@
 #!/bin/sh
-# $Id: run_test.sh,v 1.1.1.7 2016/01/09 21:55:11 christos Exp $
+# Id: run_test.sh,v 1.24 2014/07/15 19:21:10 tom Exp 
 # vi:ts=4 sw=4:
 
 errors=0
