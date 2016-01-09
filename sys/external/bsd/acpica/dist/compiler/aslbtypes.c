@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,6 @@ AnMapArgTypeToBtype (
 
     switch (ArgType)
     {
-
     /* Simple types */
 
     case ARGI_ANYTYPE:
@@ -100,9 +99,10 @@ AnMapArgTypeToBtype (
     case ARGI_DDBHANDLE:
         /*
          * DDBHandleObject := SuperName
-         * ACPI_BTYPE_REFERENCE: Index reference as parameter of Load/Unload
+         * ACPI_BTYPE_REFERENCE_OBJECT:
+         *      Index reference as parameter of Load/Unload
          */
-        return (ACPI_BTYPE_DDB_HANDLE | ACPI_BTYPE_REFERENCE);
+        return (ACPI_BTYPE_DDB_HANDLE | ACPI_BTYPE_REFERENCE_OBJECT);
 
     /* Interchangeable types */
     /*
@@ -133,9 +133,24 @@ AnMapArgTypeToBtype (
 
     case ARGI_REFERENCE:
 
-        return (ACPI_BTYPE_REFERENCE);
+        return (ACPI_BTYPE_NAMED_REFERENCE); /* Name or Namestring */
 
     case ARGI_TARGETREF:
+
+        /*
+         * Target operand for most math and logic operators.
+         * Package objects not allowed as target.
+         */
+        return (ACPI_BTYPE_COMPUTE_DATA | ACPI_BTYPE_DEBUG_OBJECT |
+            ACPI_BTYPE_REFERENCE_OBJECT);
+
+    case ARGI_STORE_TARGET:
+
+        /* Special target for Store(), includes packages */
+
+        return (ACPI_BTYPE_DATA | ACPI_BTYPE_DEBUG_OBJECT |
+            ACPI_BTYPE_REFERENCE_OBJECT);
+
     case ARGI_FIXED_TARGET:
     case ARGI_SIMPLE_TARGET:
 
@@ -149,28 +164,33 @@ AnMapArgTypeToBtype (
          * Used only by SizeOf operator
          */
         return (ACPI_BTYPE_STRING | ACPI_BTYPE_BUFFER |
-            ACPI_BTYPE_PACKAGE | ACPI_BTYPE_REFERENCE);
+            ACPI_BTYPE_PACKAGE | ACPI_BTYPE_REFERENCE_OBJECT);
 
     case ARGI_COMPLEXOBJ:
 
         /* Buffer, String, or package */
 
-        return (ACPI_BTYPE_STRING | ACPI_BTYPE_BUFFER | ACPI_BTYPE_PACKAGE);
+        return (ACPI_BTYPE_STRING | ACPI_BTYPE_BUFFER |
+            ACPI_BTYPE_PACKAGE);
 
     case ARGI_REF_OR_STRING:
 
-        return (ACPI_BTYPE_STRING | ACPI_BTYPE_REFERENCE);
+        /* Used by DeRefOf operator only */
+
+        return (ACPI_BTYPE_STRING | ACPI_BTYPE_REFERENCE_OBJECT);
 
     case ARGI_REGION_OR_BUFFER:
 
         /* Used by Load() only. Allow buffers in addition to regions/fields */
 
-        return (ACPI_BTYPE_REGION | ACPI_BTYPE_BUFFER | ACPI_BTYPE_FIELD_UNIT);
+        return (ACPI_BTYPE_REGION | ACPI_BTYPE_BUFFER |
+            ACPI_BTYPE_FIELD_UNIT);
 
     case ARGI_DATAREFOBJ:
 
-        return (ACPI_BTYPE_INTEGER |ACPI_BTYPE_STRING | ACPI_BTYPE_BUFFER |
-            ACPI_BTYPE_PACKAGE | ACPI_BTYPE_REFERENCE | ACPI_BTYPE_DDB_HANDLE);
+        /* Used by Store() only, as the source operand */
+
+        return (ACPI_BTYPE_DATA_REFERENCE | ACPI_BTYPE_REFERENCE_OBJECT);
 
     default:
 
@@ -199,7 +219,6 @@ static UINT32
 AnMapEtypeToBtype (
     UINT32                  Etype)
 {
-
 
     if (Etype == ACPI_TYPE_ANY)
     {
@@ -274,7 +293,7 @@ AnMapEtypeToBtype (
     case ACPI_TYPE_LOCAL_RESOURCE:
     case ACPI_TYPE_LOCAL_RESOURCE_FIELD:
 
-        return (ACPI_BTYPE_REFERENCE);
+        return (ACPI_BTYPE_REFERENCE_OBJECT);
 
     default:
 
@@ -307,7 +326,6 @@ AnFormatBtype (
 
 
     *Buffer = 0;
-
     if (Btype == 0)
     {
         strcat (Buffer, "NoReturnValue");
@@ -322,6 +340,7 @@ AnFormatBtype (
             {
                 strcat (Buffer, "|");
             }
+
             First = FALSE;
             strcat (Buffer, AcpiUtGetTypeName (Type));
         }
@@ -334,6 +353,7 @@ AnFormatBtype (
         {
             strcat (Buffer, "|");
         }
+
         First = FALSE;
         strcat (Buffer, "Reference");
     }
@@ -345,6 +365,7 @@ AnFormatBtype (
         {
             strcat (Buffer, "|");
         }
+
         First = FALSE;
         strcat (Buffer, "Resource");
     }
@@ -388,7 +409,8 @@ AnGetBtype (
         if (!Node)
         {
             DbgPrint (ASL_DEBUG_OUTPUT,
-                "No attached Nsnode: [%s] at line %u name [%s], ignoring typecheck\n",
+                "No attached Nsnode: [%s] at line %u name [%s], "
+                "ignoring typecheck\n",
                 Op->Asl.ParseOpName, Op->Asl.LineNumber,
                 Op->Asl.ExternalName);
             return (ACPI_UINT32_MAX);
@@ -400,12 +422,6 @@ AnGetBtype (
             AslError (ASL_ERROR, ASL_MSG_COMPILER_INTERNAL, Op,
                 "could not map type");
         }
-
-        /*
-         * Since it was a named reference, enable the
-         * reference bit also
-         */
-        ThisNodeBtype |= ACPI_BTYPE_REFERENCE;
 
         if (Op->Asl.ParseOpcode == PARSEOP_METHODCALL)
         {

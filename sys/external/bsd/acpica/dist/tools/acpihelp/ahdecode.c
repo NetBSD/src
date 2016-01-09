@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -170,7 +170,7 @@ AhFindPredefinedNames (
     strncpy (&Name[1], NamePrefix, 7);
 
     Length = strlen (Name);
-    if (Length > 4)
+    if (Length > ACPI_NAME_SIZE)
     {
         printf ("%.8s: Predefined name must be 4 characters maximum\n", Name);
         return;
@@ -827,6 +827,7 @@ AhPrintOneField (
         {
             printf ("\n%*s", (int) Indent, " ");
         }
+
         printf ("%s", This);
     }
 }
@@ -1014,7 +1015,8 @@ AhDecodeException (
     if (!HexString)
     {
         printf ("All defined ACPICA exception codes:\n\n");
-        AH_DISPLAY_EXCEPTION (0, "AE_OK                        (No error occurred)");
+        AH_DISPLAY_EXCEPTION (0,
+            "AE_OK                        (No error occurred)");
 
         /* Display codes in each block of exception types */
 
@@ -1028,6 +1030,7 @@ AhDecodeException (
                 {
                     AH_DISPLAY_EXCEPTION_TEXT (Status, ExceptionInfo);
                 }
+
                 Status++;
 
             } while (ExceptionInfo);

@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,6 @@
 #include "accommon.h"
 #include "acdebug.h"
 
-#ifdef ACPI_DEBUGGER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbconvert")
@@ -199,7 +198,7 @@ AcpiDbConvertToBuffer (
         }
 
         j++;
-        i+=2;
+        i += 2;
         while (String[i] &&
               ((String[i] == ',') || (String[i] == ' ')))
         {
@@ -528,5 +527,3 @@ AcpiDbDumpPldBuffer (
     ACPI_FREE (PldInfo);
     ACPI_FREE (NewBuffer);
 }
-
-#endif /* ACPI_DEBUGGER */
