@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2127 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2128 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -240,3 +240,4 @@ Changes from NetBSD 7.0 to NetBSD 8.0:
 	dhcpcd: Import dhcpcd 6.10.0. [roy 20160107]
 	ntp: Import ntp 4.2.8p5. [christos 20160108]
 	flex(1): Import flex-2.6.0 [christos 20160109]
+	acpi(4): Updated ACPICA to 20160108. [christos 20160109]
