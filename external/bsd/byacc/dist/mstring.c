@@ -1,6 +1,4 @@
-/*	$NetBSD: mstring.c,v 1.1.1.1 2015/01/03 22:58:23 christos Exp $	*/
-
-/* Id: mstring.c,v 1.6 2014/04/22 23:36:31 tom Exp  */
+/* $Id: mstring.c,v 1.1.1.2 2016/01/09 21:55:11 christos Exp $ */
 
 #include <stdlib.h>
 #include <stdio.h>

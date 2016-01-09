@@ -1,5 +1,3 @@
-/*	$NetBSD: code_error.tab.c,v 1.1.1.1 2015/01/03 22:58:24 christos Exp $	*/
-
 typedef short YYINT;
 const YYINT error_lhs[] = {                       -1,
     0,

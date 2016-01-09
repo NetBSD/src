@@ -1,5 +1,3 @@
-/*	$NetBSD: btyaccpar.c,v 1.1.1.1 2015/01/03 22:58:23 christos Exp $	*/
-
 /* This file generated automatically using
  * @Id: skel2c,v 1.3 2014/04/06 19:48:04 tom Exp @
  */

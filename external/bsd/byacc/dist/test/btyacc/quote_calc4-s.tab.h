@@ -1,5 +1,3 @@
-/*	$NetBSD: quote_calc4-s.tab.h,v 1.1.1.1 2015/01/03 22:58:25 christos Exp $	*/
-
 #ifndef _quote_calc4__defines_h_
 #define _quote_calc4__defines_h_
 

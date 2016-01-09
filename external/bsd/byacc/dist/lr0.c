@@ -1,6 +1,4 @@
-/*	$NetBSD: lr0.c,v 1.1.1.6 2015/01/03 22:58:23 christos Exp $	*/
-
-/* Id: lr0.c,v 1.17 2014/11/28 15:46:42 tom Exp  */
+/* $Id: lr0.c,v 1.1.1.7 2016/01/09 21:55:10 christos Exp $ */
 
 #include "defs.h"
 
@@ -598,7 +596,10 @@ lr0_leaks(void)
 {
     if (derives)
     {
-	DO_FREE(derives[start_symbol]);
+	if (derives[start_symbol] != rules)
+	{
+	    DO_FREE(derives[start_symbol]);
+	}
 	DO_FREE(derives);
 	DO_FREE(rules);
     }

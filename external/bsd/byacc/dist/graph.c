@@ -1,6 +1,4 @@
-/*	$NetBSD: graph.c,v 1.1.1.5 2015/01/03 22:58:23 christos Exp $	*/
-
-/* Id: graph.c,v 1.8 2014/02/19 00:46:57 Tom.Shields Exp  */
+/* $Id: graph.c,v 1.1.1.6 2016/01/09 21:55:11 christos Exp $ */
 
 #include "defs.h"
 

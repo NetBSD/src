@@ -1,6 +1,4 @@
-/*	$NetBSD: defs.h,v 1.1.1.6 2015/01/03 22:58:23 christos Exp $	*/
-
-/* Id: defs.h,v 1.51 2014/10/02 22:38:13 tom Exp  */
+/* $Id: defs.h,v 1.1.1.7 2016/01/09 21:55:11 christos Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>

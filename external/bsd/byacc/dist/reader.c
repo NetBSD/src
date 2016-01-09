@@ -1,6 +1,4 @@
-/*	$NetBSD: reader.c,v 1.1.1.6 2015/01/03 22:58:23 christos Exp $	*/
-
-/* Id: reader.c,v 1.58 2014/10/06 22:15:08 tom Exp  */
+/* $Id: reader.c,v 1.1.1.7 2016/01/09 21:55:10 christos Exp $ */
 
 #include "defs.h"
 
@@ -28,6 +26,7 @@ static void copy_destructor(void);
 static char *process_destructor_XX(char *code, char *tag);
 #endif
 
+#define CACHE_SIZE 256
 static char *cache;
 static int cinc, cache_size;
 
@@ -97,7 +96,7 @@ cachec(int c)
     assert(cinc >= 0);
     if (cinc >= cache_size)
     {
-	cache_size += 256;
+	cache_size += CACHE_SIZE;
 	cache = TREALLOC(char, cache, cache_size);
 	NO_SPACE(cache);
     }
@@ -1497,7 +1496,7 @@ read_declarations(void)
 {
     int c, k;
 
-    cache_size = 256;
+    cache_size = CACHE_SIZE;
     cache = TMALLOC(char, cache_size);
     NO_SPACE(cache);
 
@@ -2083,6 +2082,7 @@ insert_empty_rule(void)
     bucket *bp, **bpp;
 
     assert(cache);
+    assert(cache_size >= CACHE_SIZE);
     sprintf(cache, "$$%d", ++gensym);
     bp = make_bucket(cache);
     last_symbol->next = bp;

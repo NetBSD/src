@@ -1,6 +1,4 @@
-/*	$NetBSD: main.c,v 1.1.1.6 2015/01/03 22:58:23 christos Exp $	*/
-
-/* Id: main.c,v 1.54 2014/10/06 22:40:07 tom Exp  */
+/* $Id: main.c,v 1.1.1.7 2016/01/09 21:55:11 christos Exp $ */
 
 #include <signal.h>
 #ifndef _WIN32
@@ -553,6 +551,7 @@ my_mkstemp(char *temp)
 static FILE *
 open_tmpfile(const char *label)
 {
+#define MY_FMT "%s/%.*sXXXXXX"
     FILE *result;
 #if USE_MKSTEMP
     int fd;
@@ -571,7 +570,11 @@ open_tmpfile(const char *label)
 	    tmpdir = ".";
     }
 
-    name = malloc(strlen(tmpdir) + 10 + strlen(label));
+    /* The size of the format is guaranteed to be longer than the result from
+     * printing empty strings with it; this calculation accounts for the
+     * string-lengths as well.
+     */
+    name = malloc(strlen(tmpdir) + sizeof(MY_FMT) + strlen(label));
 
     result = 0;
     if (name != 0)
@@ -581,7 +584,7 @@ open_tmpfile(const char *label)
 	if ((mark = strrchr(label, '_')) == 0)
 	    mark = label + strlen(label);
 
-	sprintf(name, "%s/%.*sXXXXXX", tmpdir, (int)(mark - label), label);
+	sprintf(name, MY_FMT, tmpdir, (int)(mark - label), label);
 	fd = mkstemp(name);
 	if (fd >= 0)
 	{
@@ -614,6 +617,7 @@ open_tmpfile(const char *label)
     if (result == 0)
 	open_error(label);
     return result;
+#undef MY_FMT
 }
 
 static void

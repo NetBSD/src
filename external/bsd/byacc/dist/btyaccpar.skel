@@ -1,4 +1,4 @@
-/* Id: btyaccpar.skel,v 1.1 2014/04/02 22:44:41 tom Exp  */
+/* $Id: btyaccpar.skel,v 1.1.1.2 2016/01/09 21:55:11 christos Exp $ */
 
 #include "defs.h"
 
