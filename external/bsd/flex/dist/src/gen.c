@@ -1,3 +1,5 @@
+/*	$NetBSD: gen.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+
 /* gen - actual generation (writing) of flex scanners */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -30,8 +32,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: gen.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+
 #include "tables.h"
 
 
@@ -451,8 +454,7 @@ void genctbl (void)
 
 
 /* mkecstbl - Make equivalence-class tables.  */
-
-struct yytbl_data *mkecstbl (void)
+static struct yytbl_data *mkecstbl (void)
 {
 	int i;
 	struct yytbl_data *tbl = 0;
@@ -528,8 +530,12 @@ void gen_find_action (void)
 		indent_puts ("yy_current_state = *--YY_G(yy_state_ptr);");
 		indent_puts ("YY_G(yy_lp) = yy_accept[yy_current_state];");
 
+		if (!variable_trailing_context_rules)
+			outn ("m4_ifdef( [[M4_YY_USES_REJECT]],\n[[");
 		if(reject_really_used)
 			outn ("find_rule: /* we branch to this label when backing up */");
+		if (!variable_trailing_context_rules)
+			outn ("]])\n");
 
 		indent_puts
 			("for ( ; ; ) /* until we find what rule we matched */");
