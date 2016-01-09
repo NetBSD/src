@@ -1,4 +1,4 @@
-/* $Id: yaccpar.skel,v 1.1.1.2 2016/01/09 21:55:11 christos Exp $ */
+/* Id: yaccpar.skel,v 1.5 2014/04/07 21:51:00 tom Exp  */
 
 #include "defs.h"
 
