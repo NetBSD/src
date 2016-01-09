@@ -1,3 +1,5 @@
+/*	$NetBSD: btyacc_destroy1.y,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+
 %parse-param { struct parser_param *param , int flag }
 
 %{
