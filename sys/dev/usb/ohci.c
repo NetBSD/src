@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.40 2016/01/09 14:55:53 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.41 2016/01/09 21:45:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.40 2016/01/09 14:55:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.41 2016/01/09 21:45:20 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1486,14 +1486,14 @@ ohci_softintr(void *v)
 	}
 
 	DPRINTFN(10, "sdone=%p sidone=%p", sdone, sidone, 0, 0);
-	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
+	DPRINTFN(10, "--- TD dump start ---", 0, 0, 0, 0);
 #ifdef OHCI_DEBUG
 	if (ohcidebug >= 10) {
 		for (std = sdone; std; std = std->dnext)
 			ohci_dump_td(sc, std);
 	}
 #endif
-	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
+	DPRINTFN(10, "--- TD dump end ---", 0, 0, 0, 0);
 
 	for (std = sdone; std; std = stdnext) {
 		xfer = std->xfer;
@@ -1561,15 +1561,14 @@ ohci_softintr(void *v)
 			usb_transfer_complete(xfer);
 		}
 	}
-	DPRINTFN(10, "--- dump start ---", 0, 0, 0, 0);
+	DPRINTFN(10, "--- ITD dump start ---", 0, 0, 0, 0);
 #ifdef OHCI_DEBUG
 	if (ohcidebug >= 10) {
-		DPRINTFN(10, "ITD done", 0, 0, 0, 0);
 		for (sitd = sidone; sitd; sitd = sitd->dnext)
 			ohci_dump_itd(sc, sitd);
 	}
 #endif
-	DPRINTFN(10, "--- dump end ---", 0, 0, 0, 0);
+	DPRINTFN(10, "--- ITD dump end ---", 0, 0, 0, 0);
 
 	for (sitd = sidone; sitd != NULL; sitd = sitdnext) {
 		xfer = sitd->xfer;
@@ -2974,6 +2973,8 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	}
 	DPRINTFN(20, "--- dump start ---", 0, 0, 0, 0);
 #endif
+
+	DPRINTF("done", 0, 0, 0, 0);
 
 	mutex_exit(&sc->sc_lock);
 
