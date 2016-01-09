@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.194 2015/10/02 16:54:15 christos Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.195 2016/01/09 07:52:38 dholland Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.194 2015/10/02 16:54:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.195 2016/01/09 07:52:38 dholland Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -486,6 +486,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 				if (!mutex_tryenter(parent1->p_lock)) {
 					mutex_exit(p2->p_lock);
 					mutex_enter(parent1->p_lock);
+					mutex_enter(p2->p_lock);
 				}
 			} else if (parent1->p_lock > p2->p_lock) {
 				mutex_enter(parent1->p_lock);
