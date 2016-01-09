@@ -1,5 +1,3 @@
-/*	$NetBSD: err_inherit3.y,v 1.1.1.1 2015/01/03 22:58:23 christos Exp $	*/
-
 %{
 #include <stdlib.h>
 

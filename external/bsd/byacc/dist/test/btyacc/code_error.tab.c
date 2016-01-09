@@ -1,5 +1,3 @@
-/*	$NetBSD: code_error.tab.c,v 1.1.1.1 2015/01/03 22:58:25 christos Exp $	*/
-
 #undef YYBTYACC
 #define YYBTYACC 0
 #define YYDEBUGSTR YYPREFIX "debug"
