@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,6 @@
 #include "acresrc.h"
 #include "actables.h"
 
-#ifdef ACPI_DEBUGGER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbcmds")
@@ -88,6 +87,7 @@ AcpiDbDoOneSleepState (
 
 static char                 *AcpiDbTraceMethodName = NULL;
 
+
 /*******************************************************************************
  *
  * FUNCTION:    AcpiDbConvertToNode
@@ -117,8 +117,7 @@ AcpiDbConvertToNode (
         Node = ACPI_TO_POINTER (Address);
         if (!AcpiOsReadable (Node, sizeof (ACPI_NAMESPACE_NODE)))
         {
-            AcpiOsPrintf ("Address %p is invalid",
-                Node);
+            AcpiOsPrintf ("Address %p is invalid", Node);
             return (NULL);
         }
 
@@ -127,7 +126,7 @@ AcpiDbConvertToNode (
         if (ACPI_GET_DESCRIPTOR_TYPE (Node) != ACPI_DESC_TYPE_NAMED)
         {
             AcpiOsPrintf ("Address %p is not a valid namespace node [%s]\n",
-                    Node, AcpiUtGetDescriptorName (Node));
+                Node, AcpiUtGetDescriptorName (Node));
             return (NULL);
         }
     }
@@ -140,7 +139,8 @@ AcpiDbConvertToNode (
         Node = AcpiDbLocalNsLookup (InString);
         if (!Node)
         {
-            AcpiOsPrintf ("Could not find [%s] in namespace, defaulting to root node\n",
+            AcpiOsPrintf (
+                "Could not find [%s] in namespace, defaulting to root node\n",
                 InString);
             Node = AcpiGbl_RootNode;
         }
@@ -203,7 +203,7 @@ AcpiDbSleep (
  *
  * PARAMETERS:  SleepState          - Desired sleep state (0-5)
  *
- * RETURN:      Status
+ * RETURN:      None
  *
  * DESCRIPTION: Simulate a sleep/wake sequence
  *
@@ -340,7 +340,8 @@ AcpiDbDisplayTableInfo (
 
     /* Header */
 
-    AcpiOsPrintf ("Idx ID    Status Type              TableHeader (Sig, Address, Length)\n");
+    AcpiOsPrintf ("Idx ID    Status Type                    "
+        "TableHeader (Sig, Address, Length, Misc)\n");
 
     /* Walk the entire root table list */
 
@@ -499,7 +500,8 @@ AcpiDbSendNotify (
     else
     {
         AcpiOsPrintf (
-            "Named object [%4.4s] Type %s, must be Device/Thermal/Processor type\n",
+            "Named object [%4.4s] Type %s, "
+            "must be Device/Thermal/Processor type\n",
             AcpiUtGetNodeName (Node), AcpiUtGetTypeName (Node->Type));
     }
 }
@@ -532,8 +534,7 @@ AcpiDbDisplayInterfaces (
 
     if (!ActionArg)
     {
-        (void) AcpiOsAcquireMutex (AcpiGbl_OsiMutex,
-                    ACPI_WAIT_FOREVER);
+        (void) AcpiOsAcquireMutex (AcpiGbl_OsiMutex, ACPI_WAIT_FOREVER);
 
         NextInterface = AcpiGbl_SupportedInterfaces;
         while (NextInterface)
@@ -542,6 +543,7 @@ AcpiDbDisplayInterfaces (
             {
                 AcpiOsPrintf ("%s\n", NextInterface->Name);
             }
+
             NextInterface = NextInterface->Next;
         }
 
@@ -647,7 +649,8 @@ AcpiDbDisplayTemplate (
 
     if (ACPI_FAILURE (Status))
     {
-        AcpiOsPrintf ("Could not convert Buffer to a resource list: %s, %s\n",
+        AcpiOsPrintf (
+            "Could not convert Buffer to a resource list: %s, %s\n",
             BufferArg, AcpiFormatException (Status));
         goto DumpBuffer;
     }
@@ -708,7 +711,8 @@ AcpiDmCompareAmlResources (
     if (Aml1BufferLength != Aml2BufferLength)
     {
         AcpiOsPrintf (
-            "**** Buffer length mismatch in converted AML: Original %X, New %X ****\n",
+            "**** Buffer length mismatch in converted "
+            "AML: Original %X, New %X ****\n",
             Aml1BufferLength, Aml2BufferLength);
     }
 
@@ -732,7 +736,8 @@ AcpiDmCompareAmlResources (
         if (Aml1Length != Aml2Length)
         {
             AcpiOsPrintf (
-                "**** Length mismatch in descriptor [%.2X] type %2.2X, Offset %8.8X Len1 %X, Len2 %X ****\n",
+                "**** Length mismatch in descriptor [%.2X] type %2.2X, "
+                "Offset %8.8X Len1 %X, Len2 %X ****\n",
                 Count, ResourceType, Offset, Aml1Length, Aml2Length);
         }
 
@@ -741,7 +746,8 @@ AcpiDmCompareAmlResources (
         else if (memcmp (Aml1, Aml2, Aml1Length))
         {
             AcpiOsPrintf (
-                "**** Data mismatch in descriptor [%.2X] type %2.2X, Offset %8.8X ****\n",
+                "**** Data mismatch in descriptor [%.2X] type %2.2X, "
+                "Offset %8.8X ****\n",
                 Count, ResourceType, Offset);
 
             for (i = 0; i < Aml1Length; i++)
@@ -749,7 +755,8 @@ AcpiDmCompareAmlResources (
                 if (Aml1[i] != Aml2[i])
                 {
                     AcpiOsPrintf (
-                        "Mismatch at byte offset %.2X: is %2.2X, should be %2.2X\n",
+                        "Mismatch at byte offset %.2X: is %2.2X, "
+                        "should be %2.2X\n",
                         i, Aml2[i], Aml1[i]);
                 }
             }
@@ -906,7 +913,7 @@ AcpiDbDeviceResources (
 
 
     Node = ACPI_CAST_PTR (ACPI_NAMESPACE_NODE, ObjHandle);
-    ParentPath = AcpiNsGetExternalPathname (Node);
+    ParentPath = AcpiNsGetNormalizedPathname (Node, TRUE);
     if (!ParentPath)
     {
         return (AE_NO_MEMORY);
@@ -914,10 +921,15 @@ AcpiDbDeviceResources (
 
     /* Get handles to the resource methods for this device */
 
-    (void) AcpiGetHandle (Node, METHOD_NAME__PRT, ACPI_CAST_PTR (ACPI_HANDLE, &PrtNode));
-    (void) AcpiGetHandle (Node, METHOD_NAME__CRS, ACPI_CAST_PTR (ACPI_HANDLE, &CrsNode));
-    (void) AcpiGetHandle (Node, METHOD_NAME__PRS, ACPI_CAST_PTR (ACPI_HANDLE, &PrsNode));
-    (void) AcpiGetHandle (Node, METHOD_NAME__AEI, ACPI_CAST_PTR (ACPI_HANDLE, &AeiNode));
+    (void) AcpiGetHandle (Node, METHOD_NAME__PRT,
+        ACPI_CAST_PTR (ACPI_HANDLE, &PrtNode));
+    (void) AcpiGetHandle (Node, METHOD_NAME__CRS,
+        ACPI_CAST_PTR (ACPI_HANDLE, &CrsNode));
+    (void) AcpiGetHandle (Node, METHOD_NAME__PRS,
+        ACPI_CAST_PTR (ACPI_HANDLE, &PrsNode));
+    (void) AcpiGetHandle (Node, METHOD_NAME__AEI,
+        ACPI_CAST_PTR (ACPI_HANDLE, &AeiNode));
+
     if (!PrtNode && !CrsNode && !PrsNode && !AeiNode)
     {
         goto Cleanup;   /* Nothing to do */
@@ -992,7 +1004,7 @@ GetCrs:
         /* Get the _CRS resource list (test ALLOCATE buffer) */
 
         ReturnBuffer.Pointer = NULL;
-        ReturnBuffer.Length  = ACPI_ALLOCATE_LOCAL_BUFFER;
+        ReturnBuffer.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
         Status = AcpiGetCurrentResources (Node, &ReturnBuffer);
         if (ACPI_FAILURE (Status))
@@ -1061,7 +1073,7 @@ GetPrs:
         }
 
         ReturnBuffer.Pointer = AcpiGbl_DbBuffer;
-        ReturnBuffer.Length  = ACPI_DEBUG_BUFFER_SIZE;
+        ReturnBuffer.Length = ACPI_DEBUG_BUFFER_SIZE;
 
         Status = AcpiGetPossibleResources (Node, &ReturnBuffer);
         if (ACPI_FAILURE (Status))
@@ -1071,7 +1083,8 @@ GetPrs:
             goto GetAei;
         }
 
-        AcpiRsDumpResourceList (ACPI_CAST_PTR (ACPI_RESOURCE, AcpiGbl_DbBuffer));
+        AcpiRsDumpResourceList (ACPI_CAST_PTR (
+            ACPI_RESOURCE, AcpiGbl_DbBuffer));
     }
 
 
@@ -1083,7 +1096,7 @@ GetAei:
         AcpiOsPrintf ("Evaluating _AEI\n");
 
         ReturnBuffer.Pointer = AcpiGbl_DbBuffer;
-        ReturnBuffer.Length  = ACPI_DEBUG_BUFFER_SIZE;
+        ReturnBuffer.Length = ACPI_DEBUG_BUFFER_SIZE;
 
         Status = AcpiEvaluateObject (AeiNode, NULL, NULL, &ReturnBuffer);
         if (ACPI_FAILURE (Status))
@@ -1094,7 +1107,7 @@ GetAei:
         }
 
         ReturnBuffer.Pointer = AcpiGbl_DbBuffer;
-        ReturnBuffer.Length  = ACPI_DEBUG_BUFFER_SIZE;
+        ReturnBuffer.Length = ACPI_DEBUG_BUFFER_SIZE;
 
         Status = AcpiGetEventResources (Node, &ReturnBuffer);
         if (ACPI_FAILURE (Status))
@@ -1104,7 +1117,8 @@ GetAei:
             goto Cleanup;
         }
 
-        AcpiRsDumpResourceList (ACPI_CAST_PTR (ACPI_RESOURCE, AcpiGbl_DbBuffer));
+        AcpiRsDumpResourceList (ACPI_CAST_PTR (
+            ACPI_RESOURCE, AcpiGbl_DbBuffer));
     }
 
 
@@ -1143,7 +1157,7 @@ AcpiDbDisplayResources (
     if (!ObjectArg || (!strcmp (ObjectArg, "*")))
     {
         (void) AcpiWalkNamespace (ACPI_TYPE_DEVICE, ACPI_ROOT_OBJECT,
-                    ACPI_UINT32_MAX, AcpiDbDeviceResources, NULL, NULL, NULL);
+            ACPI_UINT32_MAX, AcpiDbDeviceResources, NULL, NULL, NULL);
     }
     else
     {
@@ -1154,7 +1168,8 @@ AcpiDbDisplayResources (
         {
             if (Node->Type != ACPI_TYPE_DEVICE)
             {
-                AcpiOsPrintf ("%4.4s: Name is not a device object (%s)\n",
+                AcpiOsPrintf (
+                    "%4.4s: Name is not a device object (%s)\n",
                     Node->Name.Ascii, AcpiUtGetTypeName (Node->Type));
             }
             else
@@ -1208,8 +1223,8 @@ AcpiDbGenerateGpe (
         }
     }
 
-    GpeEventInfo = AcpiEvGetGpeEventInfo (ACPI_TO_POINTER (BlockNumber),
-        GpeNumber);
+    GpeEventInfo = AcpiEvGetGpeEventInfo (
+        ACPI_TO_POINTER (BlockNumber), GpeNumber);
     if (!GpeEventInfo)
     {
         AcpiOsPrintf ("Invalid GPE\n");
@@ -1218,6 +1233,19 @@ AcpiDbGenerateGpe (
 
     (void) AcpiEvGpeDispatch (NULL, GpeEventInfo, GpeNumber);
 }
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    AcpiDbGenerateSci
+ *
+ * PARAMETERS:  None
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Simulate an SCI -- just call the SCI dispatch.
+ *
+ ******************************************************************************/
 
 void
 AcpiDbGenerateSci (
@@ -1255,14 +1283,9 @@ AcpiDbTrace (
     UINT32                  Flags = 0;
 
 
-    if (EnableArg)
-    {
-        AcpiUtStrupr (EnableArg);
-    }
-    if (OnceArg)
-    {
-        AcpiUtStrupr (OnceArg);
-    }
+    AcpiUtStrupr (EnableArg);
+    AcpiUtStrupr (OnceArg);
+
     if (MethodArg)
     {
         if (AcpiDbTraceMethodName)
@@ -1270,14 +1293,18 @@ AcpiDbTrace (
             ACPI_FREE (AcpiDbTraceMethodName);
             AcpiDbTraceMethodName = NULL;
         }
+
         AcpiDbTraceMethodName = ACPI_ALLOCATE (strlen (MethodArg) + 1);
         if (!AcpiDbTraceMethodName)
         {
-            AcpiOsPrintf ("Failed to allocate method name (%s)\n", MethodArg);
+            AcpiOsPrintf ("Failed to allocate method name (%s)\n",
+                MethodArg);
             return;
         }
+
         strcpy (AcpiDbTraceMethodName, MethodArg);
     }
+
     if (!strcmp (EnableArg, "ENABLE") ||
         !strcmp (EnableArg, "METHOD") ||
         !strcmp (EnableArg, "OPCODE"))
@@ -1298,10 +1325,12 @@ AcpiDbTrace (
         }
 
         Flags = ACPI_TRACE_ENABLED;
+
         if (!strcmp (EnableArg, "OPCODE"))
         {
             Flags |= ACPI_TRACE_OPCODE;
         }
+
         if (OnceArg && !strcmp (OnceArg, "ONCE"))
         {
             Flags |= ACPI_TRACE_ONESHOT;
@@ -1309,7 +1338,5 @@ AcpiDbTrace (
     }
 
     (void) AcpiDebugTrace (AcpiDbTraceMethodName,
-                DebugLevel, DebugLayer, Flags);
+        DebugLevel, DebugLayer, Flags);
 }
-
-#endif /* ACPI_DEBUGGER */

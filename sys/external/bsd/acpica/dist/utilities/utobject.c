@@ -102,7 +102,7 @@ AcpiUtCreateInternalObjectDbg (
 
 
     ACPI_FUNCTION_TRACE_STR (UtCreateInternalObjectDbg,
-        AcpiUtGetTypeName (Type));
+        __UNCONST(AcpiUtGetTypeName (Type)));
 
 
     /* Allocate the raw object descriptor */
