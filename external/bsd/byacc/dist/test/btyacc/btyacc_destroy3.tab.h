@@ -1,5 +1,3 @@
-/*	$NetBSD: btyacc_destroy3.tab.h,v 1.1.1.1 2015/01/03 22:58:24 christos Exp $	*/
-
 #ifndef _destroy3__defines_h_
 #define _destroy3__defines_h_
 

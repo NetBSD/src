@@ -1,5 +1,3 @@
-/*	$NetBSD: grammar.tab.h,v 1.1.1.1 2015/01/03 22:58:24 christos Exp $	*/
-
 #define T_IDENTIFIER 257
 #define T_TYPEDEF_NAME 258
 #define T_DEFINE_NAME 259
