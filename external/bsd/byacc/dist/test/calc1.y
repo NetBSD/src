@@ -1,3 +1,5 @@
+/*	$NetBSD: calc1.y,v 1.1.1.6 2016/01/09 21:59:45 christos Exp $	*/
+
 %{
 
 /* http://dinosaur.compilertools.net/yacc/index.html */

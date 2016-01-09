@@ -1,3 +1,5 @@
+/*	$NetBSD: btyacc_demo.y,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+
 /*
  * demonstrate enhancements derived from btyacc:
  * backtracking to resolve conflicts

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1.1.4 2016/01/09 21:55:13 christos Exp $
+# NetBSD: Makefile,v 1.9 2008/07/24 17:13:00 tonnerre Exp 
 #
 
 DISTNAME=	byacc-20150711

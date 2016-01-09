@@ -1,3 +1,5 @@
+/*	$NetBSD: calc.y,v 1.1.1.7 2016/01/09 21:59:45 christos Exp $	*/
+
 %{
 # include <stdio.h>
 # include <ctype.h>

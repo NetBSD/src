@@ -1,4 +1,4 @@
-# $Id: makefile.in,v 1.1.1.7 2016/01/09 21:55:11 christos Exp $
+# Id: makefile.in,v 1.24 2015/07/05 22:12:29 tom Exp 
 #
 # UNIX template-makefile for Berkeley Yacc
 

@@ -1,3 +1,5 @@
+/*	$NetBSD: ok_syntax1.tab.h,v 1.1.1.3 2016/01/09 21:59:47 christos Exp $	*/
+
 #ifndef _ok_syntax1__defines_h_
 #define _ok_syntax1__defines_h_
 
