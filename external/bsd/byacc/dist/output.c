@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.14 2015/01/04 20:32:03 christos Exp $	*/
+/*	$NetBSD: output.c,v 1.15 2016/01/09 22:05:33 christos Exp $	*/
 
 /* Id: output.c,v 1.74 2014/10/05 23:21:09 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.14 2015/01/04 20:32:03 christos Exp $");
+__RCSID("$NetBSD: output.c,v 1.15 2016/01/09 22:05:33 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
