@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,6 @@
 #include "amlcode.h"
 #include "acdisasm.h"
 
-#ifdef ACPI_DISASSEMBLER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbresrc")
@@ -213,6 +212,7 @@ AcpiDmBitList (
             {
                 AcpiOsPrintf (",");
             }
+
             Previous = TRUE;
             AcpiOsPrintf ("%u", i);
         }
@@ -286,7 +286,8 @@ AcpiDmResourceTemplate (
         Status = AcpiUtValidateResource (NULL, Aml, &ResourceIndex);
         if (ACPI_FAILURE (Status))
         {
-            AcpiOsPrintf ("/*** Could not validate Resource, type (%X) %s***/\n",
+            AcpiOsPrintf (
+                "/*** Could not validate Resource, type (%X) %s***/\n",
                 ResourceType, AcpiFormatException (Status));
             return;
         }
@@ -336,7 +337,8 @@ AcpiDmResourceTemplate (
 
                 AcpiDmIndent (Level);
                 AcpiOsPrintf (
-                    "/*** Disassembler: inserted missing EndDependentFn () ***/\n");
+                    "/*** Disassembler: inserted "
+                    "missing EndDependentFn () ***/\n");
             }
             return;
 
@@ -444,5 +446,3 @@ AcpiDmIsResourceTemplate (
      */
     return (AE_OK);
 }
-
-#endif

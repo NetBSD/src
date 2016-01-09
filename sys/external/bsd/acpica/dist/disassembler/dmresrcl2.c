@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,6 @@
 #include "accommon.h"
 #include "acdisasm.h"
 
-
-#ifdef ACPI_DISASSEMBLER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbresrcl2")
@@ -154,6 +152,7 @@ AcpiDmDumpRawDataBuffer (
 
             AcpiOsPrintf (", ");
         }
+
         AcpiOsPrintf ("\n");
         AcpiDmIndent (Level + 2);
 
@@ -199,7 +198,8 @@ AcpiDmGpioCommon (
     AcpiDmIndent (Level + 1);
     if (Resource->Gpio.ResSourceOffset)
     {
-        DeviceName = ACPI_ADD_PTR (char, Resource, Resource->Gpio.ResSourceOffset),
+        DeviceName = ACPI_ADD_PTR (char,
+            Resource, Resource->Gpio.ResSourceOffset),
         AcpiUtPrintString (DeviceName, ACPI_UINT16_MAX);
     }
 
@@ -243,13 +243,15 @@ AcpiDmGpioCommon (
     for (i = 0; i < PinCount; i++)
     {
         AcpiDmIndent (Level + 2);
-        AcpiOsPrintf ("0x%4.4X%s\n", PinList[i], ((i + 1) < PinCount) ? "," : "");
+        AcpiOsPrintf ("0x%4.4X%s\n", PinList[i],
+            ((i + 1) < PinCount) ? "," : "");
     }
 
     AcpiDmIndent (Level + 1);
     AcpiOsPrintf ("}\n");
 
-    MpSaveGpioInfo (Info->MappingOp, Resource, PinCount, PinList, DeviceName);
+    MpSaveGpioInfo (Info->MappingOp, Resource,
+        PinCount, PinList, DeviceName);
 }
 
 
@@ -726,5 +728,3 @@ AcpiDmSerialBusDescriptor (
     SerialBusResourceDispatch [Resource->CommonSerialBus.Type] (
         Info, Resource, Length, Level);
 }
-
-#endif
