@@ -1,10 +1,10 @@
-/*	$NetBSD: main.c,v 1.11 2015/01/04 01:34:20 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.12 2016/01/09 22:05:33 christos Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: main.c,v 1.11 2015/01/04 01:34:20 christos Exp $");
-/* Id: main.c,v 1.54 2014/10/06 22:40:07 tom Exp  */
+__RCSID("$NetBSD: main.c,v 1.12 2016/01/09 22:05:33 christos Exp $");
+/* Id: main.c,v 1.55 2015/07/11 00:34:19 tom Exp  */
 
 #include <signal.h>
 #ifndef _WIN32
@@ -589,6 +589,7 @@ my_mkstemp(char *temp)
 static FILE *
 open_tmpfile(const char *label)
 {
+#define MY_FMT "%s/%.*sXXXXXX"
     FILE *result;
 #if USE_MKSTEMP
     int fd;
@@ -607,7 +608,11 @@ open_tmpfile(const char *label)
 	    tmpdir = ".";
     }
 
-    name = malloc(strlen(tmpdir) + 10 + strlen(label));
+    /* The size of the format is guaranteed to be longer than the result from
+     * printing empty strings with it; this calculation accounts for the
+     * string-lengths as well.
+     */
+    name = malloc(strlen(tmpdir) + sizeof(MY_FMT) + strlen(label));
 
     result = 0;
     if (name != 0)
@@ -617,7 +622,7 @@ open_tmpfile(const char *label)
 	if ((mark = strrchr(label, '_')) == 0)
 	    mark = label + strlen(label);
 
-	sprintf(name, "%s/%.*sXXXXXX", tmpdir, (int)(mark - label), label);
+	sprintf(name, MY_FMT, tmpdir, (int)(mark - label), label);
 	fd = mkstemp(name);
 	if (fd >= 0)
 	{
@@ -650,6 +655,7 @@ open_tmpfile(const char *label)
     if (result == 0)
 	open_error(label);
     return result;
+#undef MY_FMT
 }
 
 static void
