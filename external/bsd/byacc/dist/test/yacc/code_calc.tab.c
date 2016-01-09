@@ -1,3 +1,5 @@
+/*	$NetBSD: code_calc.tab.c,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+
 typedef short YYINT;
 const YYINT calc_lhs[] = {                        -1,
     0,    0,    0,    1,    1,    2,    2,    2,    2,    2,
