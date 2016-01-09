@@ -1535,8 +1535,8 @@ add_debug_prefix_map (const char *arg)
 /* Perform user-specified mapping of debug filename prefixes.  Return
    the new name corresponding to FILENAME.  */
 
-const char *
-remap_debug_filename (const char *filename)
+static const char *
+remap_debug_prefix_filename (const char *filename)
 {
   debug_prefix_map *map;
   char *s;
@@ -1554,6 +1554,88 @@ remap_debug_filename (const char *filename)
   memcpy (s, map->new_prefix, map->new_len);
   memcpy (s + map->new_len, name, name_len);
   return ggc_strdup (s);
+}
+
+#include <regex.h>
+
+typedef struct debug_regex_map
+{
+  regex_t re;
+  const char *sub;
+  struct debug_regex_map *next;
+} debug_regex_map;
+
+/* Linked list of such structures.  */
+debug_regex_map *debug_regex_maps;
+
+
+/* Record a debug file regex mapping.  ARG is the argument to
+   -fdebug-regex-map and must be of the form OLD=NEW.  */
+
+void
+add_debug_regex_map (const char *arg)
+{
+  debug_regex_map *map;
+  const char *p;
+  char *old;
+  char buf[1024];
+  regex_t re;
+  int e;
+
+  p = strchr (arg, '=');
+  if (!p)
+    {
+      error ("invalid argument %qs to -fdebug-regex-map", arg);
+      return;
+    }
+  
+  old = xstrndup (arg, p - arg);
+  if ((e = regcomp(&re, old, REG_EXTENDED)) != 0)
+    {
+      regerror(e, &re, buf, sizeof(buf));
+      warning (0, "regular expression compilation for %qs in argument to "
+	       "-fdebug-regex-map failed: %qs", old, buf);
+      free(old);
+      return;
+    }
+  free(old);
+
+  map = XNEW (debug_regex_map);
+  map->re = re;
+  p++;
+  map->sub = xstrdup (p);
+  map->next = debug_regex_maps;
+  debug_regex_maps = map;
+}
+
+extern ssize_t aregsub(char **, const char *,
+  const regmatch_t *rm, const char *);
+
+/* Perform user-specified mapping of debug filename regular expressions.  Return
+   the new name corresponding to FILENAME.  */
+
+static const char *
+remap_debug_regex_filename (const char *filename)
+{
+  debug_regex_map *map;
+  char *s;
+  regmatch_t rm[10];
+
+  for (map = debug_regex_maps; map; map = map->next)
+    if (regexec (&map->re, filename, 10, rm, 0) == 0
+       && aregsub (&s, map->sub, rm, filename) >= 0)
+      {
+	 const char *name = ggc_strdup(s);
+	 free(s);
+	 return name;
+      }
+  return filename;
+}
+
+const char *
+remap_debug_filename (const char *filename)
+{
+   return remap_debug_regex_filename (remap_debug_prefix_filename (filename));
 }
 
 /* Return true if DWARF2 debug info can be emitted for DECL.  */

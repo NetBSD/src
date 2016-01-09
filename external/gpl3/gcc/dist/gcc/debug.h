@@ -186,6 +186,7 @@ extern void dwarf2out_switch_text_section (void);
 
 const char *remap_debug_filename (const char *);
 void add_debug_prefix_map (const char *);
+void add_debug_regex_map (const char *);
 
 /* For -fdump-go-spec.  */
 

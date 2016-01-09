@@ -384,6 +384,10 @@ handle_common_deferred_options (void)
 	  add_debug_prefix_map (opt->arg);
 	  break;
 
+	case OPT_fdebug_regex_map_:
+	  add_debug_regex_map (opt->arg);
+	  break;
+
 	case OPT_fdump_:
 	  if (!dump_switch_p (opt->arg))
 	    error ("unrecognized command line option %<-fdump-%s%>", opt->arg);

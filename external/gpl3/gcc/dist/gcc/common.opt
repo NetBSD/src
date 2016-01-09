@@ -974,7 +974,11 @@ Common RejectNegative Joined Var(common_deferred_options) Defer
 
 fdebug-prefix-map=
 Common Joined RejectNegative Var(common_deferred_options) Defer
-Map one directory name to another in debug information
+Map one directory name prefix to another in debug information
+
+fdebug-regex-map=
+Common Joined RejectNegative Var(common_deferred_options) Defer
+Map one directory name to another in debug information using regular expression matching
 
 fdebug-types-section
 Common Report Var(flag_debug_types_section) Init(0)

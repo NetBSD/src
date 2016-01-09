@@ -375,7 +375,7 @@ GLUE(.L,name): \
 #endif
 #endif
 
-#if defined __linux__ && !defined __powerpc64__
+#if defined(__ELF__) && defined(__linux__) && !defined(__powerpc64__)
 	.section .note.GNU-stack
 	.previous
 #endif

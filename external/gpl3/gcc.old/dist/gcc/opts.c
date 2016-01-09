@@ -1489,6 +1489,10 @@ common_handle_option (struct gcc_options *opts,
       /* Deferred.  */
       break;
 
+    case OPT_fdebug_regex_map_:
+      /* Deferred.  */
+      break;
+
     case OPT_fdiagnostics_show_location_:
       diagnostic_prefixing_rule (dc) = (diagnostic_prefixing_rule_t) value;
       break;
