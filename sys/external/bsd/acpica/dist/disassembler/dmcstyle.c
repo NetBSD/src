@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,10 +45,8 @@
 #include "accommon.h"
 #include "acparser.h"
 #include "amlcode.h"
-#include "acdisasm.h"
 #include "acdebug.h"
 
-#ifdef ACPI_DISASSEMBLER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dmcstyle")
@@ -229,12 +227,27 @@ AcpiDmCheckForSymbolicOpcode (
         Child2->Common.OperatorSymbol = OperatorSymbol;
         return (TRUE);
 
-#ifdef INDEX_SUPPORT
     case AML_INDEX_OP:
+        /*
+         * Check for constant source operand. Note: although technically
+         * legal syntax, the iASL compiler does not support this with
+         * the symbolic operators for Index(). It doesn't make sense to
+         * use Index() with a constant anyway.
+         */
+        if ((Child1->Common.AmlOpcode == AML_STRING_OP)  ||
+            (Child1->Common.AmlOpcode == AML_BUFFER_OP)  ||
+            (Child1->Common.AmlOpcode == AML_PACKAGE_OP) ||
+            (Child1->Common.AmlOpcode == AML_VAR_PACKAGE_OP))
+        {
+            Op->Common.DisasmFlags |= ACPI_PARSEOP_CLOSING_PAREN;
+            return (FALSE);
+        }
+
+        /* Index operator is [] */
+
         Child1->Common.OperatorSymbol = " [";
         Child2->Common.OperatorSymbol = "]";
         break;
-#endif
 
     /* Unary operators */
 
@@ -444,7 +457,6 @@ AcpiDmCheckForSymbolicOpcode (
     case AML_INCREMENT_OP:
         return (TRUE);
 
-#ifdef INDEX_SUPPORT
     case AML_INDEX_OP:
 
         /* Target is optional, 3rd operand */
@@ -460,7 +472,6 @@ AcpiDmCheckForSymbolicOpcode (
             }
         }
         return (TRUE);
-#endif
 
     case AML_STORE_OP:
         /*
@@ -580,12 +591,18 @@ AcpiDmCloseOperator (
         }
         break;
 
+    case AML_INDEX_OP:
+
+        /* This is case for unsupported Index() source constants */
+
+        if (Op->Common.DisasmFlags & ACPI_PARSEOP_CLOSING_PAREN)
+        {
+            AcpiOsPrintf (")");
+        }
+        return;
 
     /* No need for parens for these */
 
-#ifdef INDEX_SUPPORT
-    case AML_INDEX_OP:
-#endif
     case AML_DECREMENT_OP:
     case AML_INCREMENT_OP:
     case AML_LNOT_OP:
@@ -668,6 +685,7 @@ AcpiDmGetCompoundSymbol (
     default:
 
         /* No operator string for all other opcodes */
+
         return (NULL);
     }
 
@@ -826,5 +844,3 @@ AcpiDmIsTargetAnOperand (
     }
     return (TRUE);
 }
-
-#endif
