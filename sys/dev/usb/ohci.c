@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.254.2.39 2016/01/08 13:42:55 skrll Exp $	*/
+/*	$NetBSD: ohci.c,v 1.254.2.40 2016/01/09 14:55:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.39 2016/01/08 13:42:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.254.2.40 2016/01/09 14:55:53 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -2058,7 +2058,7 @@ ohci_dump_td(ohci_softc_t *sc, ohci_soft_td_t *std)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	uint32_t flags = O32TOH(std->td.td_flags);
-	DPRINTF("TD(%p) at %08lx:", std, (u_long)std->physaddr, 0, 0);
+	DPRINTF("TD(%p) at 0x%08lx:", std, (u_long)std->physaddr, 0, 0);
 	DPRINTF("    round=%d DP=%x DI=%x T=%x",
 	    !!(flags & OHCI_TD_R),
 	    __SHIFTOUT(flags, OHCI_TD_DP_MASK),
@@ -2081,7 +2081,7 @@ ohci_dump_itd(ohci_softc_t *sc, ohci_soft_itd_t *sitd)
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 
 	uint32_t flags = O32TOH(sitd->itd.itd_flags);
-	DPRINTF("ITD(%p) at %08lx", sitd, (u_long)sitd->physaddr, 0, 0);
+	DPRINTF("ITD(%p) at 0x%08lx", sitd, (u_long)sitd->physaddr, 0, 0);
 	DPRINTF("    sf=%d di=%d fc=%d cc=%d",
 	    OHCI_ITD_GET_SF(flags), OHCI_ITD_GET_DI(flags),
 	    OHCI_ITD_GET_FC(flags), OHCI_ITD_GET_CC(flags));
@@ -2837,13 +2837,11 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	isread = req->bmRequestType & UT_READ;
 	len = UGETW(req->wLength);
 
-	DPRINTF("type=0x%02x, request=0x%02x, "
-	    "wValue=0x%04x, wIndex=0x%04x",
+	DPRINTF("xfer=%p len=%d, addr=%d, endpt=%d", xfer, len, dev->ud_addr,
+	    opipe->pipe.up_endpoint->ue_edesc->bEndpointAddress);
+	DPRINTF("type=0x%02x, request=0x%02x, wValue=0x%04x, wIndex=0x%04x",
 	    req->bmRequestType, req->bRequest, UGETW(req->wValue),
 	    UGETW(req->wIndex));
-	DPRINTF("len=%d, addr=%d, endpt=%d",
-	    len, dev->ud_addr,
-	    opipe->pipe.up_endpoint->ue_edesc->bEndpointAddress, 0);
 
 	/* Need to take lock here for pipe->tail.td */
 	mutex_enter(&sc->sc_lock);
