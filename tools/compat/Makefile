@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.76 2015/09/17 14:25:43 christos Exp $
+#	$NetBSD: Makefile,v 1.77 2016/01/09 17:40:37 christos Exp $
 
 HOSTLIB=	nbcompat
 
@@ -59,7 +59,7 @@ CPPFLAGS+=	-I. -I./include -I${.CURDIR} -I${.CURDIR}/sys \
 		${.CURDIR}/../../common/lib/libc/md \
 		${.CURDIR}/../../common/lib/libc/stdlib \
 		${.CURDIR}/../../common/lib/libutil \
-		${.CURDIR}/../../external/bsd/flex/dist
+		${.CURDIR}/../../external/bsd/flex/dist/src
 
 DPSRCS+=	defs.mk
 CLEANFILES+=	config.log config.status configure.lineno *.stamp
