@@ -24,27 +24,28 @@
 
 # autoconf requirements and initialization
 
-AC_INIT([the fast lexical analyser generator], [2.5.39],
+AC_INIT([the fast lexical analyser generator], [2.6.0],
 [flex-help@lists.sourceforge.net], [flex])
+AC_CONFIG_SRCDIR([src/scan.l])
+AC_CONFIG_AUX_DIR([build-aux])
+LT_INIT
+AM_INIT_AUTOMAKE([gnu check-news std-options dist-bzip2 dist-xz parallel-tests 1.14.1])
+AC_CONFIG_HEADER([src/config.h])
+AC_CONFIG_LIBOBJ_DIR([lib])
+AC_CONFIG_MACRO_DIR([m4])
 SHARED_VERSION_INFO="2:0:0"
 AC_SUBST(SHARED_VERSION_INFO)
-
-AC_CONFIG_SRCDIR([scan.l])
-AM_INIT_AUTOMAKE([gnu check-news std-options dist-bzip2 dist-xz 1.10])
-AC_CONFIG_HEADER([config.h:conf.in])
-AC_CONFIG_LIBOBJ_DIR([lib])
 
 # checks for programs
 
 AM_GNU_GETTEXT([external])
-AM_GNU_GETTEXT_VERSION([0.18.1])
+AM_GNU_GETTEXT_VERSION([0.19])
 AC_PROG_YACC
 AM_PROG_LEX
 AC_PROG_CC
 AC_PROG_CXX
 AM_PROG_CC_C_O
 AC_PROG_LN_S
-LT_INIT
 AC_PROG_AWK
 AC_PROG_INSTALL
 
@@ -93,6 +94,7 @@ AC_DEFINE([HAVE_LIBPTHREAD], 1, [pthread library] ),
 AC_DEFINE([HAVE_LIBPTHREAD], 0, [pthread library] )
 )
 AC_CHECK_HEADERS([pthread.h])
+AM_CONDITIONAL([want_pthread], [test x$ac_cv_lib_pthread_pthread_mutex_lock = xyes])
 
 AC_CHECK_LIB(m, log10)
 
@@ -118,56 +120,9 @@ examples/fastwc/Makefile
 examples/manual/Makefile
 lib/Makefile
 po/Makefile.in
+src/Makefile
+tools/Makefile
 tests/Makefile
-tests/TEMPLATE/Makefile
-tests/test-array-nr/Makefile
-tests/test-array-r/Makefile
-tests/test-basic-nr/Makefile
-tests/test-basic-r/Makefile
-tests/test-bison-yylloc/Makefile
-tests/test-bison-yylval/Makefile
-tests/test-c-cpp-nr/Makefile
-tests/test-c-cpp-r/Makefile
-tests/test-header-nr/Makefile
-tests/test-header-r/Makefile
-tests/test-include-by-buffer/Makefile
-tests/test-include-by-push/Makefile
-tests/test-include-by-reentrant/Makefile
-tests/test-multiple-scanners-nr/Makefile
-tests/test-multiple-scanners-r/Makefile
-tests/test-noansi-nr/Makefile
-tests/test-noansi-r/Makefile
-tests/test-prefix-nr/Makefile
-tests/test-prefix-r/Makefile
-tests/test-pthread/Makefile
-tests/test-string-nr/Makefile
-tests/test-string-r/Makefile
-tests/test-yyextra/Makefile
-tests/test-alloc-extra/Makefile
-tests/test-lineno-nr/Makefile
-tests/test-lineno-trailing/Makefile
-tests/test-lineno-r/Makefile
-tests/test-linedir-r/Makefile
-tests/test-debug-r/Makefile
-tests/test-debug-nr/Makefile
-tests/test-mem-nr/Makefile
-tests/test-mem-r/Makefile
-tests/test-posix/Makefile
-tests/test-posixly-correct/Makefile
-tests/test-table-opts/Makefile
-tests/test-c++-basic/Makefile
-tests/test-bison-nr/Makefile
-tests/test-reject/Makefile
-tests/test-c++-multiple-scanners/Makefile
-tests/test-top/Makefile
-tests/test-rescan-nr/Makefile
-tests/test-rescan-r/Makefile
-tests/test-quotes/Makefile
-tests/test-ccl/Makefile
-tests/test-extended/Makefile
-tests/test-c++-yywrap/Makefile
-tests/test-concatenated-options/Makefile
-dnl --new-test-here-- This line is processed by tests/create-test.
 )
 
 AC_OUTPUT

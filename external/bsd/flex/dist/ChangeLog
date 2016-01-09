@@ -1,3 +1,914 @@
+2015-11-17  Will Estes <westes575@gmail.com>
+
+	* configure.ac: Declared version 2.6.0
+
+2015-11-17  Will Estes <westes575@gmail.com>
+
+	* NEWS: Dated, described flex release 2.6.0
+
+2015-11-13  Will Estes <westes575@gmail.com>
+
+	* NEWS, configure.ac: Declared version 2.6.0rc1
+
+2015-11-13  lukeallardyce <lukeallardyce@users.sourceforge.net>
+
+	* src/Makefile.am: Supplied versioning information in flex
+	libraries.  Resolves sourceforge bug #182. On OSX, and possibly other platforms,
+	building the libfl libraries without versioning information caused a
+	build failures.
+
+2015-11-12  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: Cleaned up more precisely after make check.  BUILT_SOURCES is now just the list of headers built as per the
+	automake manual. We provide the list of files to clean to make
+	rebuilding the test suite programs easier. We then use the
+	CLEANFILES list in a dist-hook to clean up the distribution that
+	automake gathers since not distributing flex generated files is
+	foreign to automake's mindset, but we need exactly that.  Additionally, we locate inputs to the tables-related tests more
+	precisely. Some files are in srcdir and some are in builddir, which
+	the arguments to the log compiler are now made aware of.
+
+2015-11-11  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: Pulled out scripts in tests/Makefile.am
+
+2015-11-11  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: Added srcdir to tableopts.am include
+
+2015-11-11  Will Estes <westes575@gmail.com>
+
+	* doc/Makefile.am: Changed man page dependencies.  The man page is just the --help output as reformatted by help2man.
+	The --help option is most likely to change when the flex skeleton
+	changes or one of the option parsing files changes or the
+	configure.ac script itself changes. The dependencies reflect this
+	now.  It is still necessary, under some circumstances, to rebuild flex
+	explicitly before building the man page. In theory, it's possible to
+	have automake arrange to do this all the time, but doing so works
+	out to be fragile, given the rest of the build system.
+
+2015-11-10  Will Estes <westes575@gmail.com>
+
+	* autogen.sh: Called libtoolize directly because autoreconf fails to
+	pick up LT_INIT properly
+
+2015-11-10  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: Added tableopts.sh to EXTRA_DIST
+
+2015-11-08  Mightyjo <mightyjo@gmail.com>
+
+	* tests/Makefile.am: Made tests depend on the built flex binary.
+
+2015-11-08  Mightyjo <mightyjo@gmail.com>
+
+	* : commit cf6cb4dce791c26567cc506770ca96b4f4118024 Author: Mightyjo
+	<mightyjo@gmail.com> Date:   Sat Nov 7 23:11:35 2015 -0800
+
+2015-11-04  Mightyjo <mightyjo@gmail.com>
+
+	* doc/flex.texi: Updated documentation to reflect the revisions to
+	FlexLexer.h
+
+2015-10-26  Mightyjo <mightyjo@gmail.com>
+
+	* src/FlexLexer.h, src/flex.skl: Changed several pointers to istream
+	(and ostream) to references in c++-only sections of the skeleton.  Patched up a variety of expected errors caused by changing istream*
+	to istream&.  Added a stray 'make' at line 545.  Oops.  Changed the buffer_state struct to store std::streambuf* instead of
+	std::istream* for C++ mode.  Changed interfaces in FlexLexer.h to
+	take std::istream& instead of *.  Backward compatibility temporarily
+	broken.  Patched up backward compatibility with reasonable behavior in the
+	presence of null pointers.  Re-added backward-compatible versions of the yyFlexLexer methods
+	that take iostream pointers.  All tests passing.
+
+2015-09-29  Translation Project <coordinator@translationproject.org>
+
+	* po/zh_CN.po: new zh_CN translation from the translation project
+
+2015-07-27  Jaska Uimonen <jaska.uimonen@helsinki.fi>
+
+	* src/gen.c: fix possible resource leak with yynultrans_tbl
+
+2015-07-27  Jaska Uimonen <jaska.uimonen@helsinki.fi>
+
+	* src/dfa.c: fix possible uninitialized array values
+
+2015-08-05  Will Estes <westes575@gmail.com>
+
+	* doc/flex.texi: add %{...%} block to example in manual
+
+2015-07-15  Will Estes <westes575@gmail.com>
+
+	* configure.ac: initialize libtool earlier in build system
+	generation
+
+2015-05-08  Translation Project <translation@translationproject.org>
+
+	* po/da.po: new da translation from the Translation Project
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/gen.c, src/scan.l, tests/bison_nr_parser.y,
+	tests/bison_yylloc_parser.y, tests/bison_yylval_parser.y,
+	tests/multiple_scanners_nr_main.c: Fix `label unused` warning
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/flex.skl: Fix two "signed/unsigned" warnings
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* tests/alloc_extra.l, tests/array_nr.l, tests/array_r.l,
+	tests/basic_nr.l, tests/basic_r.l, tests/bison_nr_scanner.l,
+	tests/bison_yylloc_scanner.l, tests/bison_yylval_scanner.l,
+	tests/ccl.l, tests/cxx_basic.ll, tests/debug_nr.l, tests/debug_r.l,
+	tests/extended.l, tests/header_nr_scanner.l,
+	tests/header_r_scanner.l, tests/include_by_buffer.direct.l,
+	tests/include_by_push.direct.l,
+	tests/include_by_reentrant.direct.l, tests/lineno_nr.l,
+	tests/lineno_r.l, tests/lineno_trailing.l, tests/mem_nr.l,
+	tests/mem_r.l, tests/multiple_scanners_nr_1.l,
+	tests/multiple_scanners_nr_2.l, tests/multiple_scanners_r_1.l,
+	tests/multiple_scanners_r_2.l, tests/noansi_nr.l, tests/noansi_r.l,
+	tests/posix.l, tests/posixly_correct.l, tests/prefix_nr.l,
+	tests/prefix_r.l, tests/pthread.l, tests/quotes.l, tests/reject.l4,
+	tests/rescan_nr.direct.l, tests/rescan_r.direct.l,
+	tests/string_nr.l, tests/string_r.l, tests/tableopts.l4,
+	tests/top.l, tests/yyextra.l: Fix `unused function` warnings in
+	tests
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* tests/bison_nr_parser.y, tests/bison_yylloc_parser.y,
+	tests/bison_yylval_parser.y: Fix `implicit function declaration`
+	warnings in tests
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* tests/header_r_main.c, tests/multiple_scanners_nr_main.c,
+	tests/reject.l4, tests/tableopts.l4, tests/top_main.c: Remove a few
+	`unused variable` warnings
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/filter.c: Remove unused variable from
+	src/filter.c:filter_fix_linedirs
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/scanopt.c: Remove unused argument and variable from
+	src/scanopt.c:scanopt_err
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/flex.skl, src/libmain.c, src/parse.y, tests/bison_nr_main.c,
+	tests/bison_yylloc_main.c, tests/bison_yylloc_parser.y,
+	tests/bison_yylval_main.c, tests/bison_yylval_parser.y,
+	tests/header_nr_main.c, tests/header_r_main.c, tests/lineno_nr.l,
+	tests/lineno_r.l, tests/lineno_trailing.l, tests/mem_r.l,
+	tests/multiple_scanners_nr_main.c,
+	tests/multiple_scanners_r_main.c, tests/pthread.l,
+	tests/rescan_nr.direct.l, tests/rescan_r.direct.l, tests/top_main.c: 
+	Fix a few "unused parameter" warnings
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/main.c: Fix warning about redefined macro when multiple
+	scanners are used.
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* tests/bison_nr_parser.y: Avoid passing `const char*` argument as
+	`char*` in test-bison-nr
+
+2014-11-21  Alexis La Goutte <alexis.lagoutte@gmail.com>
+
+	* src/misc.c, src/regex.c, src/tables.c, src/tables_shared.c: Fix
+	-Wdocumentation warnings
+
+2014-11-16  Will Estes <westes575@gmail.com>
+
+	* tests/README: document new suite layout
+
+2014-11-16  Will Estes <westes575@gmail.com>
+
+	* tests/TEMPLATE/.gitignore, tests/TEMPLATE/Makefile.am,
+	tests/TEMPLATE/cvsignore, tests/TEMPLATE/parser.y,
+	tests/TEMPLATE/scanner.l, tests/TEMPLATE/test.input,
+	tests/create-test, tests/descriptions: remove unused files after
+	test suite refactor
+
+2014-11-14  Will Estes <westes575@gmail.com>
+
+	* .gitignore, doc/.gitignore: Ignore directories build-aux/, m4/ Since build-aux/ now contains a number of files previously at the
+	top level, we ignore build-aux/. Therefore, it's not necessary to
+	list any files that are now kept in it. Also, explicitly mark m4/ as
+	a directory to ignore.
+
+2014-11-14  Will Estes <westes575@gmail.com>
+
+	* configure.ac: added back call to AC_CONFIG_AUX_DIR.  In an effort to reduce top level directory clutter, reintroduced the
+	call to AC_CONFIG_AUX_DIR. Moved the call to LT_INIT to after that
+	call so configure will be able to find its files.
+
+2014-07-18  Will Estes <westes575@gmail.com>
+
+	* tests/tableopts.sh, tests/testwrapper.sh: use unofficial bash
+	strict mode and cleanups in supporting bash scripts
+
+2014-07-18  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/tableopts.am,
+	tests/tableopts.l4, tests/tableopts.sh, tests/tableopts.txt,
+	tests/test-table-opts/.gitignore,
+	tests/test-table-opts/Makefile.am, tests/test-table-opts/scanner.l,
+	tests/test-table-opts/test.input: split apart table options tests
+	into tests per threading, table option, serialization and
+	verification
+
+2014-07-17  Will Estes <westes575@gmail.com>
+
+	* tests/tableopts.sh: add tableopts.sh script
+
+2014-07-02  Will Estes <westes575@gmail.com>
+
+	* configure.ac, tests/Makefile.am: use automake conditional  around
+	pthread test
+
+2014-07-01  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/lineno_trailing.l,
+	tests/lineno_trailing.one.txt,
+	tests/test-lineno-trailing/.gitignore,
+	tests/test-lineno-trailing/Makefile.am,
+	tests/test-lineno-trailing/scanner.l,
+	tests/test-lineno-trailing/test.input: refactor lineno_trailing test
+	for new test suite layout
+
+2014-07-01  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/lineno_r.l,
+	tests/lineno_r.one.txt, tests/test-lineno-r/.gitignore,
+	tests/test-lineno-r/Makefile.am, tests/test-lineno-r/scanner.l,
+	tests/test-lineno-r/test.input: refactor lineno_r test for new test
+	suite layout
+
+2014-07-01  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/lineno_nr.l,
+	tests/lineno_nr.one.txt, tests/test-lineno-nr/.gitignore,
+	tests/test-lineno-nr/Makefile.am, tests/test-lineno-nr/scanner.l,
+	tests/test-lineno-nr/test.input, tests/testwrapper.sh: refactor
+	lineno_nr test for new test suite layout
+
+2014-06-30  Will Estes <westes575@gmail.com>
+
+	* tests/test-linedir-r/.gitignore,
+	tests/test-linedir-r/Makefile.am,
+	tests/test-linedir-r/check-lines.awk, tests/test-linedir-r/main.c,
+	tests/test-linedir-r/scanner.l, tests/test-linedir-r/test.input: 
+	Remove linedir_r test.  The linedir_r test tested the implementation of line number
+	tracking, not its results.
+
+2014-06-24  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/pthread.l,
+	tests/pthread_1.txt, tests/pthread_2.txt, tests/pthread_3.txt,
+	tests/pthread_4.txt, tests/pthread_5.txt,
+	tests/test-pthread/.gitignore, tests/test-pthread/Makefile.am,
+	tests/test-pthread/scanner.l, tests/test-pthread/test-1.input,
+	tests/test-pthread/test-2.input, tests/test-pthread/test-3.input,
+	tests/test-pthread/test-4.input, tests/test-pthread/test-5.input: 
+	refactor pthread test for new test suite layout
+
+2014-06-24  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: build reject_[vs]er tests explicitly to pass
+	proper compiler flags
+
+2014-06-24  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/cxx_yywrap.ll,
+	tests/cxx_yywrap.txt, tests/test-c++-yywrap/.gitignore,
+	tests/test-c++-yywrap/Makefile.am, tests/test-c++-yywrap/scanner.l,
+	tests/test-c++-yywrap/test.input, tests/testwrapper.sh: refactor
+	cxx_yywrap test for new test suite layout
+
+2014-06-17  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am, tests/options.cn,
+	tests/test-concatenated-options/.gitignore,
+	tests/test-concatenated-options/Makefile.am: refactor concatenated
+	options test for new test suite layout
+
+2014-06-17  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am,
+	tests/include_by_buffer.direct.l,
+	tests/include_by_buffer.direct.txt,
+	tests/include_by_buffer.direct_2.txt,
+	tests/include_by_buffer.direct_3.txt,
+	tests/include_by_push.direct.l, tests/include_by_push.direct.txt,
+	tests/include_by_push.direct_2.txt,
+	tests/include_by_push.direct_3.txt,
+	tests/include_by_reentrant.direct.l,
+	tests/include_by_reentrant.direct.txt,
+	tests/include_by_reentrant.direct_2.txt,
+	tests/include_by_reentrant.direct_3.txt,
+	tests/test-include-by-buffer/.gitignore,
+	tests/test-include-by-buffer/Makefile.am,
+	tests/test-include-by-buffer/scanner.l,
+	tests/test-include-by-buffer/test-1.input,
+	tests/test-include-by-buffer/test-2.input,
+	tests/test-include-by-buffer/test-3.input,
+	tests/test-include-by-push/.gitignore,
+	tests/test-include-by-push/Makefile.am,
+	tests/test-include-by-push/scanner.l,
+	tests/test-include-by-push/test-1.input,
+	tests/test-include-by-push/test-2.input,
+	tests/test-include-by-push/test-3.input,
+	tests/test-include-by-reentrant/.gitignore,
+	tests/test-include-by-reentrant/Makefile.am,
+	tests/test-include-by-reentrant/scanner.l,
+	tests/test-include-by-reentrant/test-1.input,
+	tests/test-include-by-reentrant/test-2.input,
+	tests/test-include-by-reentrant/test-3.input: refactor include_by_*
+	tests for new test suite layout
+
+2014-06-16  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/rescan_nr.direct.l,
+	tests/rescan_nr.direct.txt, tests/rescan_nr.l, tests/rescan_nr.txt,
+	tests/rescan_r.direct.l, tests/rescan_r.direct.txt,
+	tests/test-rescan-r/.gitignore, tests/test-rescan-r/Makefile.am,
+	tests/test-rescan-r/scanner.l, tests/test-rescan-r/test.input,
+	tests/testwrapper.sh: refactor rescan_r test for new test suite
+	layout
+
+2014-06-16  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/rescan_nr.l,
+	tests/rescan_nr.txt, tests/test-rescan-nr/.gitignore,
+	tests/test-rescan-nr/Makefile.am, tests/test-rescan-nr/scanner.l,
+	tests/test-rescan-nr/test.input, tests/testwrapper.sh: Refactor
+	rescan_nr test for new test suite layout.  Also add -r option to testwrapper.sh to support passing input file
+	as a command line argument to the test scanner without using shell
+	redirection.
+
+2014-06-16  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: correct use of objext to OBJEXT
+
+2014-06-16  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/quotes.l,
+	tests/quotes.txt, tests/test-quotes/.gitignore,
+	tests/test-quotes/Makefile.am, tests/test-quotes/scanner.l,
+	tests/test-quotes/test.input: refactor quotes test for new test
+	suite layout
+
+2014-06-16  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/reject.l4,
+	tests/reject.txt, tests/test-reject/.gitignore,
+	tests/test-reject/Makefile.am, tests/test-reject/scanner.l,
+	tests/test-reject/test.input, tests/testwrapper.sh: Refactor reject
+	test for new test suite layout.  Split out reject test into its constituant tests. Add .reject tests
+	and .table tests for automake test log generation. Rewrite
+	testwrapper.sh to handle running with a tables file and specifying
+	optional input using command line options rather than positional
+	parameters.
+
+2014-06-15  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am,
+	tests/multiple_scanners_r_1.l, tests/multiple_scanners_r_2.l,
+	tests/multiple_scanners_r_main.c,
+	tests/test-multiple-scanners-r/.gitignore,
+	tests/test-multiple-scanners-r/Makefile.am,
+	tests/test-multiple-scanners-r/main.c,
+	tests/test-multiple-scanners-r/scanner-1.l,
+	tests/test-multiple-scanners-r/scanner-2.l: Refactor
+	multiple_scanners_r test for new test suite layout.  Also, remove the use of table files from this test as that tests two
+	features at once and we want to be as close to testing one feature
+	at a time as we can be.
+
+2014-06-15  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am,
+	tests/multiple_scanners_nr_1.l, tests/multiple_scanners_nr_2.l,
+	tests/multiple_scanners_nr_main.c,
+	tests/test-multiple-scanners-nr/.gitignore,
+	tests/test-multiple-scanners-nr/Makefile.am,
+	tests/test-multiple-scanners-nr/main.c,
+	tests/test-multiple-scanners-nr/scanner-1.l,
+	tests/test-multiple-scanners-nr/scanner-2.l: refactor
+	multiple_scanners_nr test for new test suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am,
+	tests/cxx_multiple_scanners.txt, tests/cxx_multiple_scanners_1.ll,
+	tests/cxx_multiple_scanners_2.ll,
+	tests/cxx_multiple_scanners_main.cc,
+	tests/test-c++-multiple-scanners/.gitignore,
+	tests/test-c++-multiple-scanners/Makefile.am,
+	tests/test-c++-multiple-scanners/main.cpp,
+	tests/test-c++-multiple-scanners/scanner-1.l,
+	tests/test-c++-multiple-scanners/scanner-2.l,
+	tests/test-c++-multiple-scanners/test.input: refactor
+	cxx_multiple_scanners test for new test suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/c_cxx_nr.lll,
+	tests/c_cxx_nr.txt, tests/c_cxx_r.lll, tests/c_cxx_r.txt,
+	tests/test-c-cpp-nr/.gitignore, tests/test-c-cpp-nr/Makefile.am,
+	tests/test-c-cpp-nr/scanner.l, tests/test-c-cpp-nr/test.input,
+	tests/test-c-cpp-r/.gitignore, tests/test-c-cpp-r/Makefile.am,
+	tests/test-c-cpp-r/scanner.l, tests/test-c-cpp-r/test.input: 
+	refactor c_cxx_nr, c_cxx_r tests for new test suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/cxx_basic.ll,
+	tests/cxx_basic.txt, tests/test-c++-basic/.gitignore,
+	tests/test-c++-basic/Makefile.am, tests/test-c++-basic/scanner.l,
+	tests/test-c++-basic/test.input: refactor cxx_basic test for new
+	test suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/posixly_correct.l,
+	tests/test-posixly-correct/.gitignore,
+	tests/test-posixly-correct/Makefile.am,
+	tests/test-posixly-correct/scanner.l: refactor posixly_correct test
+	for new test suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am,
+	tests/test-yyextra/.gitignore, tests/test-yyextra/Makefile.am,
+	tests/test-yyextra/scanner.l, tests/test-yyextra/test.input,
+	tests/yyextra.l, tests/yyextra.txt: refactor yyextra test for new
+	test suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/test-top/.gitignore,
+	tests/test-top/Makefile.am, tests/test-top/main.c,
+	tests/test-top/scanner.l, tests/test-top/test.input, tests/top.l,
+	tests/top.txt, tests/top_main.c: refactor top test for new test
+	suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/string_r.l,
+	tests/test-string-r/.gitignore, tests/test-string-r/Makefile.am,
+	tests/test-string-r/scanner.l: refactor string_r test for new test
+	suite layout
+
+2014-06-14  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/string_nr.l,
+	tests/test-string-nr/.gitignore, tests/test-string-nr/Makefile.am,
+	tests/test-string-nr/scanner.l: refactor string_nr test for new test
+	suite layout
+
+2014-06-12  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/prefix_r.l,
+	tests/prefix_r.txt, tests/test-prefix-r/.gitignore,
+	tests/test-prefix-r/Makefile.am, tests/test-prefix-r/README,
+	tests/test-prefix-r/scanner.l, tests/test-prefix-r/test.input: 
+	refactor prefix_r test for new test suite layout
+
+2014-06-12  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/prefix_nr.l,
+	tests/prefix_nr.txt, tests/test-prefix-nr/.gitignore,
+	tests/test-prefix-nr/Makefile.am, tests/test-prefix-nr/README,
+	tests/test-prefix-nr/scanner.l, tests/test-prefix-nr/test.input: 
+	refactor prefix_nr for new test suite layout
+
+2014-06-12  Will Estes <westes575@gmail.com>
+
+	* tests/testwrapper.sh: Check if test input file exists.  Not all tests have input files, so check if one exists and run the
+	test program accordingly.
+
+2014-06-12  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/posix.l,
+	tests/test-posix/.gitignore, tests/test-posix/Makefile.am,
+	tests/test-posix/scanner.l: refactor posix test for new test suite
+	layout
+
+2014-06-12  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/noansi_r.l,
+	tests/noansi_r.txt, tests/test-noansi-r/.gitignore,
+	tests/test-noansi-r/Makefile.am, tests/test-noansi-r/scanner.l,
+	tests/test-noansi-r/test.input: refactor noansi_r test for new test
+	suite layout
+
+2014-06-12  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/noansi_nr.l,
+	tests/noansi_nr.txt, tests/test-noansi-nr/.gitignore,
+	tests/test-noansi-nr/Makefile.am, tests/test-noansi-nr/scanner.l,
+	tests/test-noansi-nr/test.input: refactor noansi_nr for new test
+	suite layout
+
+2014-06-05  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/mem_r.l,
+	tests/mem_r.txt, tests/test-mem-r/.gitignore,
+	tests/test-mem-r/Makefile.am, tests/test-mem-r/scanner.l,
+	tests/test-mem-r/test.input: refactor mem_r test for new test suite
+	layout
+
+2014-06-05  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/mem_nr.l,
+	tests/mem_nr.txt, tests/test-mem-nr/.gitignore,
+	tests/test-mem-nr/Makefile.am, tests/test-mem-nr/scanner.l,
+	tests/test-mem-nr/test.input: refactor mem_nr test for new test
+	suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/header_r.txt,
+	tests/header_r_main.c, tests/header_r_scanner.l,
+	tests/test-header-r/.gitignore, tests/test-header-r/Makefile.am,
+	tests/test-header-r/main.c, tests/test-header-r/scanner.l,
+	tests/test-header-r/test.input: refactor header_r test for new test
+	suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/header_nr.txt,
+	tests/header_nr_main.c, tests/header_nr_scanner.l,
+	tests/test-header-nr/.gitignore, tests/test-header-nr/Makefile.am,
+	tests/test-header-nr/main.c, tests/test-header-nr/scanner.l,
+	tests/test-header-nr/test.input: refactor header_nr test for new
+	test suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/extended.l,
+	tests/extended.txt, tests/test-extended/.gitignore,
+	tests/test-extended/Makefile.am, tests/test-extended/scanner.l,
+	tests/test-extended/test.input: refactor extended test for new test
+	suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/debug_r.l,
+	tests/debug_r.txt, tests/test-debug-r/.gitignore,
+	tests/test-debug-r/Makefile.am, tests/test-debug-r/scanner.l,
+	tests/test-debug-r/test.input: refactor debug_r test for new test
+	suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/debug_nr.l,
+	tests/debug_nr.txt, tests/test-debug-nr/.gitignore,
+	tests/test-debug-nr/Makefile.am, tests/test-debug-nr/scanner.l,
+	tests/test-debug-nr/test.input: refactor debug_nr test for new test
+	suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/ccl.l, tests/ccl.txt,
+	tests/test-ccl/.gitignore, tests/test-ccl/Makefile.am,
+	tests/test-ccl/scanner.l, tests/test-ccl/test.input: refactor ccl
+	test for new test suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/alloc-extra.l,
+	tests/alloc-extra.txt, tests/alloc_extra.l, tests/alloc_extra.txt,
+	tests/array-nr.l, tests/array-nr.txt, tests/array-r.l,
+	tests/array-r.txt, tests/array_nr.l, tests/array_nr.txt,
+	tests/array_r.l, tests/array_r.txt, tests/basic-nr.l,
+	tests/basic-nr.txt, tests/basic-r.l, tests/basic-r.txt,
+	tests/basic_nr.l, tests/basic_nr.txt, tests/basic_r.l,
+	tests/basic_r.txt, tests/bison-nr-main.c, tests/bison-nr-parser.y,
+	tests/bison-nr-scanner.l, tests/bison-nr.txt,
+	tests/bison-yylloc-main.c, tests/bison-yylloc-parser.y,
+	tests/bison-yylloc-scanner.l, tests/bison-yylloc.txt,
+	tests/bison-yylval-main.c, tests/bison-yylval-parser.y,
+	tests/bison-yylval-scanner.l, tests/bison-yylval.txt,
+	tests/bison_nr.txt, tests/bison_nr_main.c, tests/bison_nr_parser.y,
+	tests/bison_nr_scanner.l, tests/bison_yylloc.txt,
+	tests/bison_yylloc_main.c, tests/bison_yylloc_parser.y,
+	tests/bison_yylloc_scanner.l, tests/bison_yylval.txt,
+	tests/bison_yylval_main.c, tests/bison_yylval_parser.y,
+	tests/bison_yylval_scanner.l: use underscores in test file names to
+	silence automake warnings
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* .gitignore, m4/.gitignore, m4/Makefile.am: do not track m4
+	subdirectory any more
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* .gitignore, configure.ac: upgrade automake version to 1.14.1 Unfortunately, automake 1.14.1 does not play nicely with
+	AC_CONFIG_AUX_DIR, so upgrading the used automake version required
+	removing the build-aux directory and letting autoconf's installed
+	helper files live more over the tree.
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* doc/.gitignore: ignore more files generated by texinfo
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* configure.ac: update gettext version to 0.19
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* configure.ac: call LT_INIT earlier in configure.ac
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/bison-yylval-main.c,
+	tests/bison-yylval-parser.y, tests/bison-yylval-scanner.l,
+	tests/bison-yylval.txt, tests/test-bison-yylval/.gitignore,
+	tests/test-bison-yylval/Makefile.am,
+	tests/test-bison-yylval/main.c, tests/test-bison-yylval/parser.y,
+	tests/test-bison-yylval/scanner.l,
+	tests/test-bison-yylval/test.input: refactor bison-yylval test for
+	new test suite layout
+
+2014-06-04  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/bison-yylloc-main.c,
+	tests/bison-yylloc-parser.y, tests/bison-yylloc-scanner.l,
+	tests/bison-yylloc.txt, tests/test-bison-yylloc/.gitignore,
+	tests/test-bison-yylloc/Makefile.am,
+	tests/test-bison-yylloc/main.c, tests/test-bison-yylloc/parser.y,
+	tests/test-bison-yylloc/scanner.l,
+	tests/test-bison-yylloc/test.input: refactor bison-yylloc test for
+	new test suite layout
+
+2014-06-03  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/bison-nr-main.c,
+	tests/bison-nr-parser.y, tests/bison-nr-scanner.l,
+	tests/bison-nr.txt, tests/test-bison-nr/.gitignore,
+	tests/test-bison-nr/Makefile.am, tests/test-bison-nr/main.c,
+	tests/test-bison-nr/parser.y, tests/test-bison-nr/scanner.l,
+	tests/test-bison-nr/test.input: refactor bison-nr test for new test
+	suite layout
+
+2014-06-01  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/array-r.l,
+	tests/array-r.txt, tests/test-array-r/.gitignore,
+	tests/test-array-r/Makefile.am, tests/test-array-r/scanner.l,
+	tests/test-array-r/test.input: refactor array-r test for new test
+	suite layout
+
+2014-06-01  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: list tests/README with other EXTRA_DIST files
+	in tests/
+
+2014-06-01  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/array-nr.l,
+	tests/array-nr.txt, tests/test-array-nr/.gitignore,
+	tests/test-array-nr/Makefile.am, tests/test-array-nr/scanner.l,
+	tests/test-array-nr/test.input: refactor array-nr test for new test
+	suite layout
+
+2014-06-01  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am, tests/testwrapper.sh: make tests/testwrapper.sh
+	more verbose; find input in srcdir Since output is redirected by the automake parallel test suite
+	driver, turn on both -v and -x in bash for the testwrapper.sh shell
+	script. This helps a ton in debugging problems with the test harness
+	itself.  In general, the input files are in automake's srcdir and the name of
+	the test includes the relative path to it (even though that's
+	supposed to be ./). Therefore, pass srcdir in AM_LOG_FLAGS and
+	prepend that to the test name as part of constructing the input
+	file's name.
+
+2014-06-01  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: distribute tests/testwrapper.sh
+
+2014-06-01  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/alloc-extra.l,
+	tests/alloc-extra.txt, tests/test-alloc-extra/.gitignore,
+	tests/test-alloc-extra/Makefile.am,
+	tests/test-alloc-extra/scanner.l, tests/test-alloc-extra/test.input: 
+	refacter alloc-extra for new test suite layout
+
+2014-05-29  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore, tests/Makefile.am, tests/basic-r.l,
+	tests/basic-r.txt, tests/test-basic-r/.gitignore,
+	tests/test-basic-r/Makefile.am, tests/test-basic-r/scanner.l,
+	tests/test-basic-r/test.input: refactor basic-r test for new test
+	suite layout
+
+2014-04-22  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am, tests/basic-nr.l, tests/basic-nr.txt,
+	tests/test-basic-nr/.gitignore, tests/test-basic-nr/Makefile.am,
+	tests/test-basic-nr/scanner.l, tests/test-basic-nr/test.input,
+	tests/testwrapper.sh: refactor basic-nr test for new test suite
+	layout
+
+2014-04-22  Will Estes <westes575@gmail.com>
+
+	* configure.ac: remove old tests/ subdirectories from build system
+
+2014-04-22  Will Estes <westes575@gmail.com>
+
+	* configure.ac: add parallel test suite option to build system
+
+2014-04-22  Will Estes <westes575@gmail.com>
+
+	* tests/.gitignore: ignore files for new test suite layout
+
+2014-04-22  Will Estes <westes575@gmail.com>
+
+	* tests/Makefile.am: use automake parallel test suite option  to
+	build test suite
+
+2014-04-09  Manoj Srivastava <srivasta@golden-gryphon.com>
+
+	* tests/test-bison-yylloc/parser.y,
+	tests/test-bison-yylval/parser.y: Do not use obsolete bison
+	constructs in tests.  In Bison 3.0, support for YYLEX_PARAM and YYPARSE_PARAM has been
+	removed (deprecated in Bison 1.875): use %lex-param, %parse-param,
+	or %param. This commit fixes the tests so they still work.  Signed-off-by: Manoj Srivastava <srivasta@golden-gryphon.com>
+
+2014-10-31  Christos Zoulas <christos@zoulas.com>
+
+	* src/buf.c, src/filter.c, src/flex.skl, src/flexdef.h, src/gen.c,
+	src/libmain.c, src/libyywrap.c, src/main.c, src/misc.c, src/nfa.c,
+	src/scan.l, src/scanflags.c, src/scanopt.c, src/yylex.c: NetBSD
+	downstream patches.    const fixes.    -Wconversion fixes for the skeleton files.    param namespace protection (add _ to inline function parameters).    unused variable/code removal.    rename warn to lwarn to avoid conflict with <err.h>.    ctype.h function argument correction.    merged the error functions lerrif and lerrsf -> lerr.
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/flexdef.h, src/misc.c, src/scanflags.c: Allow error reporting
+	routines to accept varying number of arguments in modern style
+
+2014-07-25  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/buf.c: Fix warning on assigning from `const char*` to `char*`
+
+2014-07-24  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/main.c: Add disambiguation braces in main.c
+
+2014-07-17  Yuri <yuri@tsoft.com>
+
+	* doc/flex.texi, examples/fastwc/mywc.c, src/ccl.c, src/dfa.c,
+	src/ecs.c, src/flex.skl, src/flexdef.h, src/gen.c, src/misc.c,
+	src/nfa.c, src/parse.y, src/scan.l, src/sym.c, src/tblcmp.c: Removed
+	deprecated 'register' storage class specifier.  clang-3.5.0 now
+	complains about them: warning: 'register' storage class specifier is
+	deprecated [-Wdeprecated-register]
+
+2014-06-21  Mariusz Pluciński <mplucinski@mplucinski.com>
+
+	* src/flexdef.h, src/main.c, src/misc.c, src/options.c,
+	src/options.h, src/yylex.c: Change output formats from octal to
+	hexadecimal
+
+2014-06-11  Will Estes <westes575@gmail.com>
+
+	* NEWS, configure.ac: update version number to 2.6.0-pre
+
+2014-05-03  Will Estes <westes575@gmail.com>
+
+	* src/ecs.c: check limits before using array index cclp; resolves
+	sf-166
+
+2014-04-02  Sean McBride <sean@rogue-research.com>
+
+	* src/flex.skl: Suppress clang warning about empty @param paragraph;
+	resolves sf#158 Signed-off-by: Will Estes <westes575@gmail.com>
+
+2014-04-02  Will Estes <westes575@gmail.com>
+
+	* doc/flex.texi: fix punction when talking about colon-bracket
+	delimiters; resolves sf#167
+
+2014-04-02  Will Estes <westes575@gmail.com>
+
+	* doc/flex.texi: remove proofreading comment
+
+2014-04-02  Will Estes <westes575@gmail.com>
+
+	* doc/flex.texi: Put angle brackets around start condition name;
+	resolves bug #168.
+
+2014-04-02  Michael Haubenwallner <michael.haubenwallner@ssi-schaefer.com>
+
+	* lib/Makefile.am, lib/realloc.c: Fix malloc/realloc replacement,
+	bug#151.  Signed-off-by: Will Estes <westes575@gmail.com>
+
+2014-04-02  Will Estes <westes575@gmail.com>
+
+	* lib/malloc.c: change crlf line ending to lf
+
+2014-03-26  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention flex 2.5.39 release in NEWS file
+
+2014-03-26  Will Estes <westes575@gmail.com>
+
+	* control.ac: initial default control file for shipper
+
+2014-03-05  Cyril Brulebois <kibi@debian.org>
+
+	* src/flex.skl: Adjust buffer sizes on ia64.  From the debian change entry: > Finish fixing the ia64 buffer issue. Previous commits increased
+	YY_READ_BUF_SIZE (where __ia64__ is defined) but left YY_BUF_SIZE
+	unchanged, so that didn't fix the problem in the end. In the general
+	case, the latter is twice the former. Therefore set it to the same
+	ratio in the ia64 case.  In general, this sort of architecture specific fix is not the path
+	we want to take, but the cleanup should be done in a more organized
+	way in the future and getting it working would be preferrable now.
+
+2014-02-18  Will Estes <westes575@gmail.com>
+
+	* Makefile.am, src/Makefile.am: move m4 make variable to
+	src/Makefile.am.  This prevents an error when building skel.c caused by the $(m4) make
+	variable not being defined. Particularly nasty since skel.c would
+	still be created, thus causing make to think skel.c was up to date.
+
+2014-02-18  Will Estes <westes575@gmail.com>
+
+	* devel/00EXTRACT-ALL-SYMS.sh, devel/README, devel/dump-tables.pl,
+	devel/tables.pl: remove unused devel/ subdirectory from codebase
+
+2014-02-15  Will Estes <westes575@gmail.com>
+
+	* po/Rules-getpo: Add make rule to rsync latest .po files from
+	translation project.  The rule assumes that rsync is on the path and that there is exactly
+	one domain listed in the DOMAIN make variable. The intent is that
+	the rule will work with vpath builds.
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* .gitignore: git ignore directories of the form flex-*
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* po/POTFILES.in: list source files for translation as now being in
+	src/
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* Makefile.am, configure.ac, tools/Makefile.am: Add tools/
+	directory.  Since tools/git2cl is a dependency of ChangeLog, not distributing
+	tools/git2cl with flex causes the "make dist" target to fail in the
+	distributed tar ball.
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* Makefile.am: removes extraneous files from EXTRA_DIST as automake
+	picks them up better without mentioning them
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* NEWS: mention version 2.6.0 in release news
+
+2014-02-14  Will Estes <westes575@gmail.com>
+
+	* .gitignore, FlexLexer.h, Makefile.am, buf.c, ccl.c, configure.ac,
+	dfa.c, doc/.gitignore, doc/Makefile.am, ecs.c, filter.c, flex.skl,
+	flexdef.h, flexint.h, gen.c, gettext.h, lib/.gitignore, libmain.c,
+	libyywrap.c, main.c, misc.c, mkskel.sh, nfa.c, options.c,
+	options.h, parse.y, regex.c, scan.l, scanflags.c, scanopt.c,
+	scanopt.h, src/.gitignore, src/FlexLexer.h, src/Makefile.am,
+	src/buf.c, src/ccl.c, src/dfa.c, src/ecs.c, src/filter.c,
+	src/flex.skl, src/flexdef.h, src/flexint.h, src/gen.c,
+	src/gettext.h, src/libmain.c, src/libyywrap.c, src/main.c,
+	src/misc.c, src/mkskel.sh, src/nfa.c, src/options.c, src/options.h,
+	src/parse.y, src/regex.c, src/scan.l, src/scanflags.c,
+	src/scanopt.c, src/scanopt.h, src/sym.c, src/tables.c,
+	src/tables.h, src/tables_shared.c, src/tables_shared.h,
+	src/tblcmp.c, src/version.h, src/yylex.c, sym.c, tables.c,
+	tables.h, tables_shared.c, tables_shared.h, tblcmp.c, version.h,
+	yylex.c: move flex program sources into src/ directory The *.[chly] sources are now in the src directory. This implies a
+	bunch of changes in Makefile.am and friends to account for the new
+	location. The .gitignore files are now more local to places where
+	various object files and generated source files occur.
+
+2014-02-13  Will Estes <westes575@gmail.com>
+
+	* configure.ac: increment flex version to 2.6.0
+
 2014-02-16  Translation Project <coordinator@translationproject.org>
 
 	* po/ru.po: update ru translation from the translation project
