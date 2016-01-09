@@ -895,7 +895,7 @@ And to match a sequence of zero or more repetitions of @samp{foo} and
 @cindex character classes in patterns
 In addition to characters and ranges of characters, character classes
 can also contain @dfn{character class expressions}.  These are
-expressions enclosed inside @samp{[}: and @samp{:]} delimiters (which
+expressions enclosed inside @samp{[:} and @samp{:]} delimiters (which
 themselves must appear between the @samp{[} and @samp{]} of the
 character class. Other elements may occur inside the character class,
 too).  The valid expressions are:
@@ -1404,7 +1404,7 @@ example, the following is one way to eat up C comments:
 @verbatim
     %%
     "/*"        {
-                register int c;
+                int c;
 
                 for ( ; ; )
                     {
@@ -1601,7 +1601,6 @@ Any rule whose pattern is prefixed with @samp{<sc>} will only be active
 when the scanner is in the @dfn{start condition} named @code{sc}.  For
 example,
 
-@c proofread edit stopped here
 @example
 @verbatim
     <STRING>[^"]*        { /* eat up the string body ... */
@@ -1934,9 +1933,9 @@ condition @dfn{scope}.  A start condition scope is begun with:
 @end verbatim
 @end example
 
-where @code{SCs} is a list of one or more start conditions.  Inside the
+where @code{<SCs>} is a list of one or more start conditions.  Inside the
 start condition scope, every rule automatically has the prefix
-@code{SCs>} applied to it, until a @samp{@}} which matches the initial
+@code{<SCs>} applied to it, until a @samp{@}} which matches the initial
 @samp{@{}.  So, for example,
 
 @cindex extended scope of start conditions
@@ -3765,8 +3764,7 @@ defaults to generating the scanner to the file @file{lex.yy.cc} instead
 of @file{lex.yy.c}.  The generated scanner includes the header file
 @file{FlexLexer.h}, which defines the interface to two C++ classes.
 
-The first class,
-@code{FlexLexer},
+The first class in @file{FlexLexer.h}, @code{FlexLexer},
 provides an abstract base class defining the general scanner class
 interface.  It provides the following member functions:
 
@@ -3800,10 +3798,10 @@ returns the current setting of the debugging flag.
 
 Also provided are member functions equivalent to
 @code{yy_switch_to_buffer()}, @code{yy_create_buffer()} (though the
-first argument is an @code{istream*} object pointer and not a
+first argument is an @code{istream&} object reference and not a
 @code{FILE*)}, @code{yy_flush_buffer()}, @code{yy_delete_buffer()}, and
-@code{yyrestart()} (again, the first argument is a @code{istream*}
-object pointer).
+@code{yyrestart()} (again, the first argument is a @code{istream&}
+object reference).
 
 @tindex yyFlexLexer (C++ only)
 @tindex FlexLexer (C++ only)
@@ -3814,9 +3812,12 @@ additional member functions:
 @table @code
 @findex yyFlexLexer constructor (C++ only)
 @item yyFlexLexer( istream* arg_yyin = 0, ostream* arg_yyout = 0 )
+@item yyFlexLexer( istream& arg_yyin, ostream& arg_yyout )
 constructs a @code{yyFlexLexer} object using the given streams for input
 and output.  If not specified, the streams default to @code{cin} and
-@code{cout}, respectively.
+@code{cout}, respectively.  @code{yyFlexLexer} does not take ownership of
+its stream arguments.  It's up to the user to ensure the streams pointed
+to remain alive at least as long as the @code{yyFlexLexer} instance.
 
 @findex yylex (C++ version)
 @item virtual int yylex()
@@ -3833,11 +3834,13 @@ instead of @code{yyFlexLexer}.  In this case, rather than generating
 
 @findex switch_streams (C++ only)
 @item virtual void switch_streams(istream* new_in = 0, ostream* new_out = 0)
+@item virtual void switch_streams(istream& new_in, ostream& new_out)
 reassigns @code{yyin} to @code{new_in} (if non-null) and @code{yyout} to
 @code{new_out} (if non-null), deleting the previous input buffer if
 @code{yyin} is reassigned.
 
 @item int yylex( istream* new_in, ostream* new_out = 0 )
+@item int yylex( istream& new_in, ostream& new_out )
 first switches the input streams via @code{switch_streams( new_in,
 new_out )} and then returns the value of @code{yylex()}.
 @end table
@@ -3894,7 +3897,7 @@ Here is an example of a simple C++ scanner:
     int mylineno = 0;
     %}
 
-    %option noyywrap
+    %option noyywrap c++
 
     string  \"[^\n"]+\"
 
@@ -3938,6 +3941,9 @@ Here is an example of a simple C++ scanner:
     {string}  cout << "string " << YYText() << '\n';
 
     %%
+
+	// This include is required if main() is an another source file.
+	//#include <FlexLexer.h>
 
     int main( int /* argc */, char** /* argv */ )
     {
@@ -4911,8 +4917,10 @@ custom allocator through @code{yyextra}.
 %option reentrant
 
 /* Initialize the allocator. */
+%{
 #define YY_EXTRA_TYPE  struct allocator*
 #define YY_USER_INIT  yyextra = allocator_create();
+%}
 
 %%
 .|\n   ;
