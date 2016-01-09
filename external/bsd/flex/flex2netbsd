@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: flex2netbsd,v 1.3 2014/10/29 18:28:36 christos Exp $
+#	$NetBSD: flex2netbsd,v 1.4 2016/01/09 17:38:56 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -34,9 +34,9 @@
 #
 #	$ cd /some/where/temporary
 #	$ tar xpfz /new/flex/release/tar/file
-#	$ sh /usr/src/external/bsd/flex/dist/flex2netbsd flex-2.5.x
-#	$ cd flex-2.5.x
-#	$ cvs import -m "Import flex 2.5.x" src/external/bsd/flex/dist FLEX flex-2-5-x
+#	$ sh /usr/src/external/bsd/flex/dist/flex2netbsd flex-2.6.x
+#	$ cd flex-2.6.x
+#	$ cvs import -m "Import flex 2.6.x" src/external/bsd/flex/dist FLEX flex-2-6-x
 #	$ run ./configure
 #	$ run make
 #	check the config file and copy it to /usr/src/external/bsd/flex/include
