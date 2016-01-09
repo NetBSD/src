@@ -1,3 +1,5 @@
+/*	$NetBSD: libmain.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+
 /* libmain - flex run-time support library "main" function */
 
 /*  This file is part of flex. */
@@ -20,6 +22,10 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include <sys/cdefs.h>
+#ifdef __RCSID
+__RCSID("$NetBSD: libmain.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+#endif
 
 extern int yylex (void);
 

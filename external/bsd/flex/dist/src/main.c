@@ -1,3 +1,5 @@
+/*	$NetBSD: main.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+
 /* flex - tool to generate fast lexical analyzers */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -30,9 +32,10 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include "flexdef.h"
+__RCSID("$NetBSD: main.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
 
 
-#include "flexdef.h"
 #include "version.h"
 #include "options.h"
 #include "tables.h"
@@ -292,7 +295,7 @@ void check_options ()
 		flexerror (_("Can't use -+ with -CF option"));
 
 	if (C_plus_plus && yytext_is_array) {
-		warn (_("%array incompatible with -+ option"));
+		lwarn (_("%array incompatible with -+ option"));
 		yytext_is_array = false;
 	}
 

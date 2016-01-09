@@ -1,3 +1,5 @@
+/*	$NetBSD: misc.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+
 /* misc - miscellaneous flex routines */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -30,9 +32,11 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: misc.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
+
 #include "tables.h"
+#include <stdarg.h>
 
 #define CMD_IF_TABLES_SER    "%if-tables-serialization"
 #define CMD_TABLES_YYDMAP    "%tables-yydmap"
@@ -420,7 +424,7 @@ void line_directive_out (output_file, do_infile)
 {
 	char    directive[MAXLINE], filename[MAXLINE];
 	char   *s1, *s2, *s3;
-	static const char *line_fmt = "#line %d \"%s\"\n";
+	static const char line_fmt[] = "#line %d \"%s\"\n";
 
 	if (!gen_line_dirs)
 		return;
