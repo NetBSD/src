@@ -1,3 +1,5 @@
+/*	$NetBSD: scanflags.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+
 /* scanflags - flags used by scanning. */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -30,8 +32,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: scanflags.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
 
 scanflags_t* _sf_stk = NULL;
 size_t _sf_top_ix=0, _sf_max=0;

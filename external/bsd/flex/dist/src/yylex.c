@@ -1,3 +1,5 @@
+/*	$NetBSD: yylex.c,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+
 /* yylex - scanner front-end for flex */
 
 /*  Copyright (c) 1990 The Regents of the University of California. */
@@ -30,6 +32,8 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
+#include "flexdef.h"
+__RCSID("$NetBSD: yylex.c,v 1.2 2016/01/09 17:38:57 christos Exp $");
 
 #include <ctype.h>
 #include "flexdef.h"
