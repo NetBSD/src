@@ -1,4 +1,6 @@
-/* $Id: lr0.c,v 1.1.1.7 2016/01/09 21:55:10 christos Exp $ */
+/*	$NetBSD: lr0.c,v 1.1.1.8 2016/01/09 21:59:45 christos Exp $	*/
+
+/* Id: lr0.c,v 1.18 2015/07/11 00:53:38 tom Exp  */
 
 #include "defs.h"
 

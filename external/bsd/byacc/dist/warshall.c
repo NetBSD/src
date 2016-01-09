@@ -1,4 +1,6 @@
-/* $Id: warshall.c,v 1.1.1.6 2016/01/09 21:55:11 christos Exp $ */
+/*	$NetBSD: warshall.c,v 1.1.1.7 2016/01/09 21:59:45 christos Exp $	*/
+
+/* Id: warshall.c,v 1.7 2010/06/06 22:48:51 tom Exp  */
 
 #include "defs.h"
 

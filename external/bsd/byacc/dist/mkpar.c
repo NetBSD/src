@@ -1,4 +1,6 @@
-/* $Id: mkpar.c,v 1.1.1.7 2016/01/09 21:55:11 christos Exp $ */
+/*	$NetBSD: mkpar.c,v 1.1.1.8 2016/01/09 21:59:45 christos Exp $	*/
+
+/* Id: mkpar.c,v 1.14 2014/04/01 23:05:37 tom Exp  */
 
 #include "defs.h"
 

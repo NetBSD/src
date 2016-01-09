@@ -1,4 +1,6 @@
-/* $Id: main.c,v 1.1.1.7 2016/01/09 21:55:11 christos Exp $ */
+/*	$NetBSD: main.c,v 1.1.1.8 2016/01/09 21:59:45 christos Exp $	*/
+
+/* Id: main.c,v 1.55 2015/07/11 00:34:19 tom Exp  */
 
 #include <signal.h>
 #ifndef _WIN32

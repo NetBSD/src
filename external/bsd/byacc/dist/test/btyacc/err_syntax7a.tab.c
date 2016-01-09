@@ -1,3 +1,5 @@
+/*	$NetBSD: err_syntax7a.tab.c,v 1.1.1.3 2016/01/09 21:59:47 christos Exp $	*/
+
 /* original parser id follows */
 /* yysccsid[] = "@(#)yaccpar	1.9 (Berkeley) 02/21/93" */
 /* (use YYMAJOR/YYMINOR for ifdefs dependent of parser version) */

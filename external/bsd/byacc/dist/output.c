@@ -1,4 +1,6 @@
-/* $Id: output.c,v 1.1.1.7 2016/01/09 21:55:10 christos Exp $ */
+/*	$NetBSD: output.c,v 1.1.1.8 2016/01/09 21:59:45 christos Exp $	*/
+
+/* Id: output.c,v 1.74 2014/10/05 23:21:09 tom Exp  */
 
 #include "defs.h"
 
