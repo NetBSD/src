@@ -1,4 +1,4 @@
-/*	$NetBSD: t_hid.c,v 1.4 2016/01/08 17:34:57 jakllsch Exp $	*/
+/*	$NetBSD: t_hid.c,v 1.5 2016/01/09 14:31:19 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_hid.c,v 1.4 2016/01/08 17:34:57 jakllsch Exp $");
+__RCSID("$NetBSD: t_hid.c,v 1.5 2016/01/09 14:31:19 jakllsch Exp $");
 
 #include <machine/types.h>
 #include <stdlib.h>
@@ -78,7 +78,7 @@ ATF_TC_HEAD(khid, tc)
 
 static int
 locate_item(const void *desc, int size, u_int32_t u, u_int8_t id,
-    enum hid_kind k, struct hid_item *hip, u_int32_t *flags)
+    enum hid_kind k, struct hid_item *hip)
 {
 	struct hid_data *d;
 	struct hid_item h;
@@ -89,8 +89,6 @@ locate_item(const void *desc, int size, u_int32_t u, u_int8_t id,
 		    (/*XXX*/uint32_t)h.usage == u && h.report_ID == id) {
 			if (hip != NULL)
 				*hip = h;
-			if (flags != NULL)
-				*flags = h.flags;
 			hid_end_parse(d);
 			return (1);
 		}
@@ -103,18 +101,17 @@ ATF_TC_BODY(khid, tc)
 {
 	int ret;
 	struct hid_item hi;
-	u_int32_t flags;
 
 	uhidevdebug = 0;
 
 	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000003, 0, hid_input,
-	    &hi, &flags);
+	    &hi);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 32);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
 	MYu_ATF_CHECK_EQ(hi.loc.pos, 0);
-	MYx_ATF_CHECK_EQ(flags, 0);
+	MYx_ATF_CHECK_EQ(hi.flags, 0);
 	MYd_ATF_CHECK_EQ(hi.logical_minimum, -2147483648);
 	MYd_ATF_CHECK_EQ(hi.logical_maximum, 2147483647);
 	MYd_ATF_CHECK_EQ(hi.physical_minimum, -2147483648);
@@ -130,12 +127,12 @@ ATF_TC_BODY(khid, tc)
 
 	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000002, 0, hid_input,
-	    &hi, &flags);
+	    &hi);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 16);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
 	MYu_ATF_CHECK_EQ(hi.loc.pos, 32);
-	MYx_ATF_CHECK_EQ(flags, 0);
+	MYx_ATF_CHECK_EQ(hi.flags, 0);
 	MYd_ATF_CHECK_EQ(hi.logical_minimum, -32768);
 	MYd_ATF_CHECK_EQ(hi.logical_maximum, 32767);
 	MYd_ATF_CHECK_EQ(hi.physical_minimum, -32768);
@@ -151,12 +148,12 @@ ATF_TC_BODY(khid, tc)
 
 	ret = locate_item(range_test_report_descriptor,
 	    sizeof(range_test_report_descriptor), 0xff000001, 0, hid_input,
-	    &hi, &flags);
+	    &hi);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 8);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
 	MYu_ATF_CHECK_EQ(hi.loc.pos, 48);
-	MYx_ATF_CHECK_EQ(flags, 0);
+	MYx_ATF_CHECK_EQ(hi.flags, 0);
 	MYd_ATF_CHECK_EQ(hi.logical_minimum, -128);
 	MYd_ATF_CHECK_EQ(hi.logical_maximum, 127);
 	MYd_ATF_CHECK_EQ(hi.physical_minimum, -128);
@@ -173,12 +170,12 @@ ATF_TC_BODY(khid, tc)
 
 	ret = locate_item(unsigned_range_test_report_descriptor,
 	    sizeof(unsigned_range_test_report_descriptor), 0xff000013, 0,
-	    hid_input, &hi, &flags);
+	    hid_input, &hi);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 32);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
 	MYu_ATF_CHECK_EQ(hi.loc.pos, 0);
-	MYx_ATF_CHECK_EQ(flags, 0);
+	MYx_ATF_CHECK_EQ(hi.flags, 0);
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_minimum_report,
 	    &hi.loc), 0x0);
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_positive_one_report,
@@ -190,12 +187,12 @@ ATF_TC_BODY(khid, tc)
 
 	ret = locate_item(unsigned_range_test_report_descriptor,
 	    sizeof(unsigned_range_test_report_descriptor), 0xff000012, 0,
-	    hid_input, &hi, &flags);
+	    hid_input, &hi);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 16);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
 	MYu_ATF_CHECK_EQ(hi.loc.pos, 32);
-	MYx_ATF_CHECK_EQ(flags, 0);
+	MYx_ATF_CHECK_EQ(hi.flags, 0);
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_minimum_report,
 	    &hi.loc), 0x0);
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_positive_one_report,
@@ -207,12 +204,12 @@ ATF_TC_BODY(khid, tc)
 
 	ret = locate_item(unsigned_range_test_report_descriptor,
 	    sizeof(unsigned_range_test_report_descriptor), 0xff000011, 0,
-	    hid_input, &hi, &flags);
+	    hid_input, &hi);
 	ATF_REQUIRE(ret > 0);
 	MYu_ATF_CHECK_EQ(hi.loc.size, 8);
 	MYu_ATF_CHECK_EQ(hi.loc.count, 1);
 	MYu_ATF_CHECK_EQ(hi.loc.pos, 48);
-	MYx_ATF_CHECK_EQ(flags, 0);
+	MYx_ATF_CHECK_EQ(hi.flags, 0);
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_minimum_report,
 	    &hi.loc), 0x0);
 	MYlx_ATF_CHECK_EQ(hid_get_udata(unsigned_range_test_positive_one_report,
