@@ -1,5 +1,3 @@
-/*	$NetBSD: err_syntax27.y,v 1.1.1.1 2015/01/03 22:58:23 christos Exp $	*/
-
 %pure-parser
 
 %parse-param { int regs[26] 

@@ -1,5 +1,3 @@
-/*	$NetBSD: quote_calc3.y,v 1.1.1.1 2013/04/06 14:45:27 christos Exp $	*/
-
 %{
 # include <stdio.h>
 # include <ctype.h>
