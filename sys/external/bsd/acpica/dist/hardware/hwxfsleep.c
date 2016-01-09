@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -169,22 +169,10 @@ AcpiSetFirmwareWakingVector (
 
     ACPI_FUNCTION_TRACE (AcpiSetFirmwareWakingVector);
 
-    /* If Hardware Reduced flag is set, there is no FACS */
-
-    if (AcpiGbl_ReducedHardware)
+    if (AcpiGbl_FACS)
     {
-        return_ACPI_STATUS (AE_OK);
-    }
-
-    if (AcpiGbl_Facs32)
-    {
-        (void) AcpiHwSetFirmwareWakingVector (AcpiGbl_Facs32,
-                    PhysicalAddress, PhysicalAddress64);
-    }
-    if (AcpiGbl_Facs64)
-    {
-        (void) AcpiHwSetFirmwareWakingVector (AcpiGbl_Facs64,
-                    PhysicalAddress, PhysicalAddress64);
+        (void) AcpiHwSetFirmwareWakingVector (AcpiGbl_FACS,
+            PhysicalAddress, PhysicalAddress64);
     }
 
     return_ACPI_STATUS (AE_OK);
@@ -251,7 +239,7 @@ AcpiEnterSleepStateS4bios (
     ACPI_FLUSH_CPU_CACHE ();
 
     Status = AcpiHwWritePort (AcpiGbl_FADT.SmiCommand,
-                (UINT32) AcpiGbl_FADT.S4BiosRequest, 8);
+        (UINT32) AcpiGbl_FADT.S4BiosRequest, 8);
 
     do {
         AcpiOsStall (ACPI_USEC_PER_MSEC);
@@ -260,6 +248,7 @@ AcpiEnterSleepStateS4bios (
         {
             return_ACPI_STATUS (Status);
         }
+
     } while (!InValue);
 
     return_ACPI_STATUS (AE_OK);
@@ -355,7 +344,7 @@ AcpiEnterSleepStatePrep (
 
 
     Status = AcpiGetSleepTypeData (SleepState,
-                    &AcpiGbl_SleepTypeA, &AcpiGbl_SleepTypeB);
+        &AcpiGbl_SleepTypeA, &AcpiGbl_SleepTypeB);
     if (ACPI_FAILURE (Status))
     {
         return_ACPI_STATUS (Status);

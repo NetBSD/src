@@ -566,7 +566,7 @@ void
 AcpiEvAssociateRegMethod (
     ACPI_OPERAND_OBJECT     *RegionObj)
 {
-    ACPI_NAME               *RegNamePtr = (ACPI_NAME *) METHOD_NAME__REG;
+    ACPI_NAME               *RegNamePtr = (ACPI_NAME *)__UNCONST(METHOD_NAME__REG);
     ACPI_NAMESPACE_NODE     *MethodNode;
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_OPERAND_OBJECT     *RegionObj2;

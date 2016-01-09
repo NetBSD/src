@@ -5,7 +5,7 @@
  ******************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -47,7 +47,6 @@
 #include "acnamesp.h"
 #include "acpredef.h"
 
-#ifdef ACPI_DEBUGGER
 
 #define _COMPONENT          ACPI_CA_DEBUGGER
         ACPI_MODULE_NAME    ("dbtest")
@@ -124,8 +123,8 @@ static ACPI_DB_ARGUMENT_INFO    AcpiDbTestTypes [] =
  * used to read and write the various namespace objects. The point
  * is to force the AML interpreter do all of the work.
  */
-#define                     ACPI_DB_READ_METHOD     "\\_T98"
-#define                     ACPI_DB_WRITE_METHOD    "\\_T99"
+#define ACPI_DB_READ_METHOD     "\\_T98"
+#define ACPI_DB_WRITE_METHOD    "\\_T99"
 
 static ACPI_HANDLE          ReadHandle = NULL;
 static ACPI_HANDLE          WriteHandle = NULL;
@@ -283,7 +282,7 @@ AcpiDbTestAllObjects (
     /* Walk the entire namespace, testing each supported named data object */
 
     (void) AcpiWalkNamespace (ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
-                ACPI_UINT32_MAX, AcpiDbTestOneObject, NULL, NULL, NULL);
+        ACPI_UINT32_MAX, AcpiDbTestOneObject, NULL, NULL, NULL);
 }
 
 
@@ -695,7 +694,8 @@ AcpiDbTestBufferType (
         goto Exit;
     }
 
-    if (memcmp (Temp1->Buffer.Pointer, Temp3->Buffer.Pointer, ByteLength))
+    if (memcmp (Temp1->Buffer.Pointer,
+            Temp3->Buffer.Pointer, ByteLength))
     {
         AcpiOsPrintf (" MISMATCH 3: While restoring original buffer");
     }
@@ -847,7 +847,8 @@ AcpiDbReadFromObject (
     ReturnObj.Length  = ACPI_ALLOCATE_BUFFER;
 
     AcpiGbl_MethodExecuting = TRUE;
-    Status = AcpiEvaluateObject (ReadHandle, NULL, &ParamObjects, &ReturnObj);
+    Status = AcpiEvaluateObject (ReadHandle, NULL,
+        &ParamObjects, &ReturnObj);
     AcpiGbl_MethodExecuting = FALSE;
 
     if (ACPI_FAILURE (Status))
@@ -885,8 +886,8 @@ AcpiDbReadFromObject (
 
         AcpiOsPrintf (" Unsupported return object type, %s",
             AcpiUtGetTypeName (RetValue->Type));
-        AcpiOsFree (ReturnObj.Pointer);
 
+        AcpiOsFree (ReturnObj.Pointer);
         return (AE_TYPE);
     }
 
@@ -975,10 +976,12 @@ AcpiDbEvaluateAllPredefinedNames (
 
     /* Search all nodes in namespace */
 
-    (void) AcpiWalkNamespace (ACPI_TYPE_ANY, ACPI_ROOT_OBJECT, ACPI_UINT32_MAX,
-                AcpiDbEvaluateOnePredefinedName, NULL, (void *) &Info, NULL);
+    (void) AcpiWalkNamespace (ACPI_TYPE_ANY, ACPI_ROOT_OBJECT,
+        ACPI_UINT32_MAX, AcpiDbEvaluateOnePredefinedName, NULL,
+        (void *) &Info, NULL);
 
-    AcpiOsPrintf ("Evaluated %u predefined names in the namespace\n", Info.Count);
+    AcpiOsPrintf (
+        "Evaluated %u predefined names in the namespace\n", Info.Count);
 }
 
 
@@ -1031,7 +1034,7 @@ AcpiDbEvaluateOnePredefinedName (
         return (AE_OK);
     }
 
-    Pathname = AcpiNsGetExternalPathname (Node);
+    Pathname = AcpiNsGetNormalizedPathname (Node, TRUE);
     if (!Pathname)
     {
         return (AE_OK);
@@ -1076,8 +1079,10 @@ AcpiDbEvaluateOnePredefinedName (
 
             case ACPI_TYPE_STRING:
 
-                ThisParam->String.Pointer = __UNCONST("This is the default argument string");
-                ThisParam->String.Length = strlen (ThisParam->String.Pointer);
+                ThisParam->String.Pointer =
+                    __UNCONST("This is the default argument string");
+                ThisParam->String.Length =
+                    strlen (ThisParam->String.Pointer);
                 break;
 
             case ACPI_TYPE_BUFFER:
@@ -1116,7 +1121,8 @@ AcpiDbEvaluateOnePredefinedName (
 
     Status = AcpiEvaluateObject (Node, NULL, &ParamObjects, &ReturnObj);
 
-    AcpiOsPrintf ("%-32s returned %s\n", Pathname, AcpiFormatException (Status));
+    AcpiOsPrintf ("%-32s returned %s\n",
+        Pathname, AcpiFormatException (Status));
     AcpiGbl_MethodExecuting = FALSE;
     ACPI_FREE (Pathname);
 
@@ -1134,5 +1140,3 @@ AcpiDbEvaluateOnePredefinedName (
 
     return (Status);
 }
-
-#endif /* ACPI_DEBUGGER */

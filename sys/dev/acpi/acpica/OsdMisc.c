@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdMisc.c,v 1.14 2013/12/27 20:55:59 christos Exp $	*/
+/*	$NetBSD: OsdMisc.c,v 1.15 2016/01/09 21:14:42 christos Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.14 2013/12/27 20:55:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdMisc.c,v 1.15 2016/01/09 21:14:42 christos Exp $");
 
 #include "opt_acpi.h"
 #include "opt_ddb.h"
@@ -198,16 +198,9 @@ void
 acpi_osd_debugger(void)
 {
 #ifdef ACPI_DEBUG
-	static int beenhere;
 	ACPI_PARSE_OBJECT obj;
 	label_t	acpi_jmpbuf;
 	label_t	*savejmp;
-
-	if (beenhere == 0) {
-		printf("Initializing ACPICA debugger...\n");
-		AcpiDbInitialize();
-		beenhere = 1;
-	}
 
 	printf("Entering ACPICA debugger...\n");
 	savejmp = db_recover;
