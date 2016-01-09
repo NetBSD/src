@@ -1336,6 +1336,7 @@ OBJS = \
 	regmove.o \
 	regrename.o \
 	regstat.o \
+	regsub.o \
 	reload.o \
 	reload1.o \
 	reorg.o \
