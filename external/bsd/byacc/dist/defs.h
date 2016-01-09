@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.9 2015/01/04 01:34:20 christos Exp $	*/
+/*	$NetBSD: defs.h,v 1.10 2016/01/09 22:05:33 christos Exp $	*/
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"

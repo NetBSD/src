@@ -1,4 +1,4 @@
-/*	$NetBSD: mstring.c,v 1.3 2015/01/04 01:34:20 christos Exp $	*/
+/*	$NetBSD: mstring.c,v 1.4 2016/01/09 22:05:33 christos Exp $	*/
 
 /* Id: mstring.c,v 1.6 2014/04/22 23:36:31 tom Exp  */
 #if HAVE_NBTOOL_CONFIG_H
@@ -6,7 +6,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mstring.c,v 1.3 2015/01/04 01:34:20 christos Exp $");
+__RCSID("$NetBSD: mstring.c,v 1.4 2016/01/09 22:05:33 christos Exp $");
 
 #include <stdlib.h>
 #include <stdio.h>
