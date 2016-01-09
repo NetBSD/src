@@ -1,3 +1,4 @@
+/*	$NetBSD: flexdef.h,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -1036,7 +1037,7 @@ extern void line_pinpoint PROTO ((const char *, int));
 extern void format_synerr PROTO ((const char *, const char *));
 extern void synerr PROTO ((const char *));	/* report a syntax error */
 extern void format_warn PROTO ((const char *, const char *));
-extern void warn PROTO ((const char *));	/* report a warning */
+extern void lwarn PROTO ((const char *));	/* report a warning */
 extern void yyerror PROTO ((const char *));	/* report a parse error */
 extern int yyparse PROTO ((void));	/* the YACC parser */
 
@@ -1228,5 +1229,8 @@ extern void sf_init(void);
 extern void sf_push(void);
 extern void sf_pop(void);
 
+#ifndef __RCSID
+#define __RCSID(a)
+#endif
 
 #endif /* not defined FLEXDEF_H */

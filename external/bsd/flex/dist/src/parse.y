@@ -1,3 +1,5 @@
+/*	$NetBSD: parse.y,v 1.2 2016/01/09 17:38:57 christos Exp $	*/
+
 /* parse.y - parser for flex input */
 
 %token CHAR NUMBER SECTEND SCDECL XSCDECL NAME PREVCCL EOF_OP
@@ -62,8 +64,9 @@
 /*  IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED */
 /*  WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR */
 /*  PURPOSE. */
-
 #include "flexdef.h"
+__RCSID("$NetBSD: parse.y,v 1.2 2016/01/09 17:38:57 christos Exp $");
+
 #include "tables.h"
 
 int pat, scnum, eps, headcnt, trailcnt, lastchar, i, rulelen;
@@ -80,7 +83,7 @@ int previous_continued_action;	/* whether the previous rule's action was '|' */
 	do{ \
         char fw3_msg[MAXLINE];\
         snprintf( fw3_msg, MAXLINE,(fmt), (a1), (a2) );\
-        warn( fw3_msg );\
+        lwarn( fw3_msg );\
 	}while(0)
 
 /* Expand a POSIX character class expression. */
@@ -303,7 +306,7 @@ flexrule	:  '^' rule
 						scon_stk[++scon_stk_ptr] = i;
 
 				if ( scon_stk_ptr == 0 )
-					warn(
+					lwarn(
 			"all start conditions already have <<EOF>> rules" );
 
 				else
@@ -398,7 +401,7 @@ rule		:  re2 re
 				 * erroneously.
 				 */
 				if ( ! varlength || headcnt != 0 )
-					warn(
+					lwarn(
 		"trailing context made variable due to preceding '|' action" );
 
 				/* Mark as variable. */
@@ -453,7 +456,7 @@ rule		:  re2 re
 				/* See the comment in the rule for "re2 re"
 				 * above.
 				 */
-				warn(
+				lwarn(
 		"trailing context made variable due to preceding '|' action" );
 
 				varlength = true;
@@ -913,13 +916,13 @@ ccl_expr:
 		|  CCE_NEG_XDIGIT	{ CCL_NEG_EXPR(isxdigit); }
 		|  CCE_NEG_LOWER	{ 
 				if ( sf_case_ins() )
-					warn(_("[:^lower:] is ambiguous in case insensitive scanner"));
+					lwarn(_("[:^lower:] is ambiguous in case insensitive scanner"));
 				else
 					CCL_NEG_EXPR(islower);
 				}
 		|  CCE_NEG_UPPER	{
 				if ( sf_case_ins() )
-					warn(_("[:^upper:] ambiguous in case insensitive scanner"));
+					lwarn(_("[:^upper:] ambiguous in case insensitive scanner"));
 				else
 					CCL_NEG_EXPR(isupper);
 				}
@@ -1018,13 +1021,13 @@ const char *msg, arg[];
 	char warn_msg[MAXLINE];
 
 	snprintf( warn_msg, sizeof(warn_msg), msg, arg );
-	warn( warn_msg );
+	lwarn( warn_msg );
 	}
 
 
-/* warn - report a warning, unless -w was given */
+/* lwarn - report a warning, unless -w was given */
 
-void warn( str )
+void lwarn( str )
 const char *str;
 	{
 	line_warning( str, linenum );
