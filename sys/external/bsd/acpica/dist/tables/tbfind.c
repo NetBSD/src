@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -73,13 +73,28 @@ AcpiTbFindTable (
     char                    *OemTableId,
     UINT32                  *TableIndex)
 {
-    UINT32                  i;
     ACPI_STATUS             Status;
     ACPI_TABLE_HEADER       Header;
+    UINT32                  i;
 
 
     ACPI_FUNCTION_TRACE (TbFindTable);
 
+
+    /* Validate the input table signature */
+
+    if (!AcpiIsValidSignature (Signature))
+    {
+        return_ACPI_STATUS (AE_BAD_SIGNATURE);
+    }
+
+    /* Don't allow the OEM strings to be too long */
+
+    if ((strlen (OemId) > ACPI_OEM_ID_SIZE) ||
+        (strlen (OemTableId) > ACPI_OEM_TABLE_ID_SIZE))
+    {
+        return_ACPI_STATUS (AE_AML_STRING_LIMIT);
+    }
 
     /* Normalize the input strings */
 
@@ -93,7 +108,7 @@ AcpiTbFindTable (
     for (i = 0; i < AcpiGbl_RootTableList.CurrentTableCount; ++i)
     {
         if (memcmp (&(AcpiGbl_RootTableList.Tables[i].Signature),
-                            Header.Signature, ACPI_NAME_SIZE))
+            Header.Signature, ACPI_NAME_SIZE))
         {
             /* Not the requested table */
 
@@ -121,13 +136,13 @@ AcpiTbFindTable (
         /* Check for table match on all IDs */
 
         if (!memcmp (AcpiGbl_RootTableList.Tables[i].Pointer->Signature,
-                            Header.Signature, ACPI_NAME_SIZE) &&
+                Header.Signature, ACPI_NAME_SIZE) &&
             (!OemId[0] ||
              !memcmp (AcpiGbl_RootTableList.Tables[i].Pointer->OemId,
-                             Header.OemId, ACPI_OEM_ID_SIZE)) &&
+                 Header.OemId, ACPI_OEM_ID_SIZE)) &&
             (!OemTableId[0] ||
              !memcmp (AcpiGbl_RootTableList.Tables[i].Pointer->OemTableId,
-                             Header.OemTableId, ACPI_OEM_TABLE_ID_SIZE)))
+                 Header.OemTableId, ACPI_OEM_TABLE_ID_SIZE)))
         {
             *TableIndex = i;
 
