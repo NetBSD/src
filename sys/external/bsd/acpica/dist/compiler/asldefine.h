@@ -5,7 +5,7 @@
  *****************************************************************************/
 
 /*
- * Copyright (C) 2000 - 2015, Intel Corp.
+ * Copyright (C) 2000 - 2016, Intel Corp.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -104,32 +104,12 @@
 #define AML_DEFAULT_ARG_OP          (UINT16) 0xDDDD
 
 
-/* filename suffixes for output files */
-
-#define FILE_SUFFIX_PREPROC_USER    "i  "
-#define FILE_SUFFIX_PREPROCESSOR    "pre"
-#define FILE_SUFFIX_AML_CODE        "aml"
-#define FILE_SUFFIX_MAP             "map"
-#define FILE_SUFFIX_LISTING         "lst"
-#define FILE_SUFFIX_HEX_DUMP        "hex"
-#define FILE_SUFFIX_DEBUG           "txt"
-#define FILE_SUFFIX_SOURCE          "src"
-#define FILE_SUFFIX_NAMESPACE       "nsp"
-#define FILE_SUFFIX_ASM_SOURCE      "asm"
-#define FILE_SUFFIX_C_SOURCE        "c"
-#define FILE_SUFFIX_DISASSEMBLY     "dsl"
-#define FILE_SUFFIX_ASM_INCLUDE     "inc"
-#define FILE_SUFFIX_C_INCLUDE       "h"
-#define FILE_SUFFIX_ASL_CODE        "asl"
-#define FILE_SUFFIX_C_OFFSET        "offset.h"
-
-
 /* Types for input files */
 
-#define ASL_INPUT_TYPE_BINARY       0
-#define ASL_INPUT_TYPE_ACPI_TABLE   1
-#define ASL_INPUT_TYPE_ASCII_ASL    2
-#define ASL_INPUT_TYPE_ASCII_DATA   3
+#define ASL_INPUT_TYPE_BINARY               0
+#define ASL_INPUT_TYPE_BINARY_ACPI_TABLE    1
+#define ASL_INPUT_TYPE_ASCII_ASL            2
+#define ASL_INPUT_TYPE_ASCII_DATA           3
 
 
 /* Misc */
