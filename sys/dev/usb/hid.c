@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.40 2016/01/07 16:10:49 jakllsch Exp $	*/
+/*	$NetBSD: hid.c,v 1.41 2016/01/09 03:33:53 jakllsch Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.40 2016/01/07 16:10:49 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.41 2016/01/09 03:33:53 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -425,7 +425,8 @@ hid_locate(const void *desc, int size, u_int32_t u, u_int8_t id, enum hid_kind k
 		}
 	}
 	hid_end_parse(d);
-	loc->size = 0;
+	if (loc != NULL)
+		loc->size = 0;
 	return (0);
 }
 
