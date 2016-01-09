@@ -1,4 +1,4 @@
-/*	$NetBSD: var.c,v 1.200 2015/12/01 07:26:08 sjg Exp $	*/
+/*	$NetBSD: var.c,v 1.201 2016/01/09 00:55:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -69,14 +69,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: var.c,v 1.200 2015/12/01 07:26:08 sjg Exp $";
+static char rcsid[] = "$NetBSD: var.c,v 1.201 2016/01/09 00:55:17 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: var.c,v 1.200 2015/12/01 07:26:08 sjg Exp $");
+__RCSID("$NetBSD: var.c,v 1.201 2016/01/09 00:55:17 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -542,7 +542,7 @@ Var_Delete(const char *name, GNode *ctxt)
     char *cp;
     
     if (strchr(name, '$')) {
-	cp = Var_Subst(NULL, name, VAR_GLOBAL, FALSE, TRUE);
+	cp = Var_Subst(NULL, name, VAR_GLOBAL, FALSE, TRUE, FALSE);
     } else {
 	cp = (char *)name;
     }
@@ -633,7 +633,7 @@ Var_Export1(const char *name, int parent)
 	}
 	n = snprintf(tmp, sizeof(tmp), "${%s}", name);
 	if (n < (int)sizeof(tmp)) {
-	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE);
+	    val = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE, FALSE);
 	    setenv(name, val, 1);
 	    free(val);
 	}
@@ -701,7 +701,7 @@ Var_ExportVars(void)
 	int ac;
 	int i;
 
-	val = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE);
+	val = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE, FALSE);
 	if (*val) {
 	    av = brk_string(val, &ac, FALSE, &as);
 	    for (i = 0; i < ac; i++) {
@@ -741,7 +741,7 @@ Var_Export(char *str, int isExport)
     } else {
 	track = VAR_EXPORT_PARENT;
     }
-    val = Var_Subst(NULL, str, VAR_GLOBAL, FALSE, TRUE);
+    val = Var_Subst(NULL, str, VAR_GLOBAL, FALSE, TRUE, FALSE);
     if (*val) {
 	av = brk_string(val, &ac, FALSE, &as);
 	for (i = 0; i < ac; i++) {
@@ -831,7 +831,7 @@ Var_UnExport(char *str)
 	/* Using .MAKE.EXPORTED */
 	n = snprintf(tmp, sizeof(tmp), "${" MAKE_EXPORTED ":O:u}");
 	if (n < (int)sizeof(tmp)) {
-	    vlist = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE);
+	    vlist = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE, FALSE);
 	}
     }
     if (vlist) {
@@ -861,7 +861,7 @@ Var_UnExport(char *str)
 		n = snprintf(tmp, sizeof(tmp),
 			     "${" MAKE_EXPORTED ":N%s}", v->name);
 		if (n < (int)sizeof(tmp)) {
-		    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE);
+		    cp = Var_Subst(NULL, tmp, VAR_GLOBAL, FALSE, TRUE, FALSE);
 		    Var_Set(MAKE_EXPORTED, cp, VAR_GLOBAL, 0);
 		    free(cp);
 		}
@@ -916,7 +916,7 @@ Var_Set(const char *name, const char *val, GNode *ctxt, int flags)
      * point in searching them all just to save a bit of memory...
      */
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(NULL, name, ctxt, FALSE, TRUE);
+	expanded_name = Var_Subst(NULL, name, ctxt, FALSE, TRUE, FALSE);
 	if (expanded_name[0] == 0) {
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Var_Set(\"%s\", \"%s\", ...) "
@@ -1026,7 +1026,7 @@ Var_Append(const char *name, const char *val, GNode *ctxt)
     char *expanded_name = NULL;
 
     if (strchr(name, '$') != NULL) {
-	expanded_name = Var_Subst(NULL, name, ctxt, FALSE, TRUE);
+	expanded_name = Var_Subst(NULL, name, ctxt, FALSE, TRUE, FALSE);
 	if (expanded_name[0] == 0) {
 	    if (DEBUG(VAR)) {
 		fprintf(debug_file, "Var_Append(\"%s\", \"%s\", ...) "
@@ -1091,7 +1091,7 @@ Var_Exists(const char *name, GNode *ctxt)
     char          *cp;
 
     if ((cp = strchr(name, '$')) != NULL) {
-	cp = Var_Subst(NULL, name, ctxt, FALSE, TRUE);
+	cp = Var_Subst(NULL, name, ctxt, FALSE, TRUE, FALSE);
     }
     v = VarFind(cp ? cp : name, ctxt, FIND_CMD|FIND_GLOBAL|FIND_ENV);
     free(cp);
@@ -1389,7 +1389,7 @@ VarSYSVMatch(GNode *ctx, Var_Parse_State *vpstate,
     addSpace = TRUE;
 
     if ((ptr = Str_SYSVMatch(word, pat->lhs, &len)) != NULL) {
-        varexp = Var_Subst(NULL, pat->rhs, ctx, FALSE, TRUE);
+        varexp = Var_Subst(NULL, pat->rhs, ctx, FALSE, TRUE, FALSE);
 	Str_SYSVSubst(buf, varexp, ptr, len);
 	free(varexp);
     } else {
@@ -1809,7 +1809,7 @@ VarLoopExpand(GNode *ctx MAKE_ATTR_UNUSED,
 
     if (word && *word) {
         Var_Set(loop->tvar, word, loop->ctxt, VAR_NO_EXPORT);
-        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->errnum, TRUE);
+        s = Var_Subst(NULL, loop->str, loop->ctxt, loop->errnum, TRUE, FALSE);
         if (s != NULL && *s != '\0') {
             if (addSpace && *s != '\n')
                 Buf_AddByte(buf, ' ');
@@ -2190,7 +2190,7 @@ VarGetPattern(GNode *ctxt, Var_Parse_State *vpstate MAKE_ATTR_UNUSED,
 		     * delimiter, assume it's a variable
 		     * substitution and recurse.
 		     */
-		    cp2 = Var_Parse(cp, ctxt, errnum, TRUE, &len, &freeIt);
+		    cp2 = Var_Parse(cp, ctxt, errnum, TRUE, FALSE, &len, &freeIt);
 		    Buf_AddBytes(&buf, strlen(cp2), cp2);
 		    free(freeIt);
 		    cp += len - 1;
@@ -2464,6 +2464,7 @@ static char *
 ApplyModifiers(char *nstr, const char *tstr,
 	       int startc, int endc,
 	       Var *v, GNode *ctxt, Boolean errnum, Boolean wantit,
+	       Boolean assign,
 	       int *lengthPtr, void **freePtr)
 {
     const char 	   *start;
@@ -2494,7 +2495,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 	    int rlen;
 	    int c;
 
-	    rval = Var_Parse(tstr, ctxt, errnum, wantit, &rlen, &freeIt);
+	    rval = Var_Parse(tstr, ctxt, errnum, wantit, assign, &rlen, &freeIt);
 
 	    /*
 	     * If we have not parsed up to endc or ':',
@@ -2519,8 +2520,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 		int used;
 
 		nstr = ApplyModifiers(nstr, rval,
-				      0, 0,
-				      v, ctxt, errnum, wantit, &used, freePtr);
+				      0, 0, v, ctxt,
+				      errnum, wantit, assign, &used, freePtr);
 		if (nstr == var_Error
 		    || (nstr == varNoError && errnum == 0)
 		    || strlen(rval) != (size_t) used) {
@@ -2708,7 +2709,8 @@ ApplyModifiers(char *nstr, const char *tstr,
 			    int	    len;
 			    void    *freeIt;
 
-			    cp2 = Var_Parse(cp, ctxt, errnum, wantit_, &len, &freeIt);
+			    cp2 = Var_Parse(cp, ctxt, errnum, wantit_, 
+				assign, &len, &freeIt);
 			    Buf_AddBytes(&buf, strlen(cp2), cp2);
 			    free(freeIt);
 			    cp += len - 1;
@@ -3152,7 +3154,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 		     * expand it.
 		     */
 		    cp2 = pattern;
-		    pattern = Var_Subst(NULL, cp2, ctxt, errnum, TRUE);
+		    pattern = Var_Subst(NULL, cp2, ctxt, errnum, TRUE, assign);
 		    free(cp2);
 		}
 		if (DEBUG(VAR))
@@ -3602,7 +3604,7 @@ ApplyModifiers(char *nstr, const char *tstr,
 /* coverity[+alloc : arg-*4] */
 char *
 Var_Parse(const char *str, GNode *ctxt,
-	   Boolean errnum, Boolean wantit,
+	   Boolean errnum, Boolean wantit, Boolean assign,
 	   int *lengthPtr, void **freePtr)
 {
     const char	   *tstr;    	/* Pointer into str */
@@ -3708,7 +3710,8 @@ Var_Parse(const char *str, GNode *ctxt,
 	    if (*tstr == '$') {
 		int rlen;
 		void *freeIt;
-		char *rval = Var_Parse(tstr, ctxt, errnum, wantit, &rlen, &freeIt);
+		char *rval = Var_Parse(tstr, ctxt, errnum, wantit, 
+		    assign, &rlen, &freeIt);
 		if (rval != NULL) {
 		    Buf_AddBytes(&buf, strlen(rval), rval);
 		}
@@ -3855,7 +3858,7 @@ Var_Parse(const char *str, GNode *ctxt,
      */
     nstr = Buf_GetAll(&v->val, NULL);
     if (strchr(nstr, '$') != NULL) {
-	nstr = Var_Subst(NULL, nstr, ctxt, errnum, wantit);
+	nstr = Var_Subst(NULL, nstr, ctxt, errnum, wantit, assign);
 	*freePtr = nstr;
     }
 
@@ -3868,7 +3871,8 @@ Var_Parse(const char *str, GNode *ctxt,
 	extraFree = NULL;
 	if (extramodifiers != NULL) {
 		nstr = ApplyModifiers(nstr, extramodifiers, '(', ')',
-				      v, ctxt, errnum, wantit, &used, &extraFree);
+				      v, ctxt, errnum, wantit, assign,
+				      &used, &extraFree);
 	}
 
 	if (haveModifier) {
@@ -3876,7 +3880,8 @@ Var_Parse(const char *str, GNode *ctxt,
 		tstr++;
 
 		nstr = ApplyModifiers(nstr, tstr, startc, endc,
-				      v, ctxt, errnum, wantit, &used, freePtr);
+				      v, ctxt, errnum, wantit, assign,
+				      &used, freePtr);
 		tstr += used;
 		free(extraFree);
 	} else {
@@ -3941,6 +3946,7 @@ Var_Parse(const char *str, GNode *ctxt,
  *	ctxt		the context wherein to find variables
  *	undefErr	TRUE if undefineds are an error
  *	wantit		TRUE if we actually want the result
+ *	assign		TRUE if we actually want the result
  *
  * Results:
  *	The resulting string.
@@ -3951,7 +3957,7 @@ Var_Parse(const char *str, GNode *ctxt,
  */
 char *
 Var_Subst(const char *var, const char *str, GNode *ctxt,
-	   Boolean undefErr, Boolean wantit)
+	   Boolean undefErr, Boolean wantit, Boolean assign)
 {
     Buffer  	  buf;		    /* Buffer for forming things */
     char    	  *val;		    /* Value to substitute for a variable */
@@ -3975,6 +3981,8 @@ Var_Subst(const char *var, const char *str, GNode *ctxt,
 	     * In such a case, we skip over the escape character and store the
 	     * dollar sign into the buffer directly.
 	     */
+	    if (assign)
+		Buf_AddByte(&buf, *str);
 	    str++;
 	    Buf_AddByte(&buf, *str);
 	    str++;
@@ -4049,7 +4057,7 @@ Var_Subst(const char *var, const char *str, GNode *ctxt,
 		    continue;
 	    }
 
-	    val = Var_Parse(str, ctxt, undefErr, wantit, &length, &freeIt);
+	    val = Var_Parse(str, ctxt, undefErr, wantit, assign, &length, &freeIt);
 
 	    /*
 	     * When we come down here, val should either point to the

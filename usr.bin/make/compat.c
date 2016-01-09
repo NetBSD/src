@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.101 2015/10/11 04:51:24 sjg Exp $	*/
+/*	$NetBSD: compat.c,v 1.102 2016/01/09 00:55:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.101 2015/10/11 04:51:24 sjg Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.102 2016/01/09 00:55:17 christos Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.101 2015/10/11 04:51:24 sjg Exp $");
+__RCSID("$NetBSD: compat.c,v 1.102 2016/01/09 00:55:17 christos Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -210,7 +210,7 @@ CompatRunCommand(void *cmdp, void *gnp)
     doIt = FALSE;
     
     cmdNode = Lst_Member(gn->commands, cmd);
-    cmdStart = Var_Subst(NULL, cmd, gn, FALSE, TRUE);
+    cmdStart = Var_Subst(NULL, cmd, gn, FALSE, TRUE, FALSE);
 
     /*
      * brk_string will return an argv with a NULL in av[0], thus causing
