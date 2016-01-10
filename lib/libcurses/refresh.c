@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.79 2014/02/20 09:42:42 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.80 2016/01/10 08:11:06 jdc Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.79 2014/02/20 09:42:42 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.80 2016/01/10 08:11:06 jdc Exp $");
 #endif
 #endif				/* not lint */
 
@@ -396,7 +396,7 @@ _cursesi_wnoutrefresh(SCREEN *screen, WINDOW *win, int begy, int begx,
 					    "_wnoutrefresh: "
 					    "line %d notdirty\n", wy);
 #endif
-					wlp->flags &= ~__ISDIRTY;
+					wlp->flags &= ~(__ISDIRTY | __ISFORCED);
 				}
 			}
 		}
