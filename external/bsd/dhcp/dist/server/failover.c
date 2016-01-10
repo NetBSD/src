@@ -1,10 +1,10 @@
-/*	$NetBSD: failover.c,v 1.1.1.3 2014/07/12 11:58:12 spz Exp $	*/
+/*	$NetBSD: failover.c,v 1.1.1.4 2016/01/10 19:44:47 christos Exp $	*/
 /* failover.c
 
    Failover protocol support code... */
 
 /*
- * Copyright (c) 2004-2014 by Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (c) 2004-2015 by Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1999-2003 by Internet Software Consortium
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: failover.c,v 1.1.1.3 2014/07/12 11:58:12 spz Exp $");
+__RCSID("$NetBSD: failover.c,v 1.1.1.4 2016/01/10 19:44:47 christos Exp $");
 
 #include "cdefs.h"
 #include "dhcpd.h"
@@ -630,6 +630,12 @@ static isc_result_t do_a_failover_option (c, link)
 		return DHCP_R_PROTOCOLERROR;
 	}
 
+	if (link->imsg->type > FTM_MAX) {
+		log_error ("FAILOVER: invalid message type: %d",
+			   link->imsg->type);
+		return DHCP_R_PROTOCOLERROR;
+	}
+
 	/* Get option code. */
 	omapi_connection_get_uint16 (c, &option_code);
 	link -> imsg_count += 2;
@@ -724,7 +730,10 @@ static isc_result_t do_a_failover_option (c, link)
 
 		/* FT_DDNS* are special - one or two bytes of status
 		   followed by the client FQDN. */
-		if (ft_options [option_code].type == FT_DDNS1 ||
+	
+		/* Note: FT_DDNS* option support appears to be incomplete.
+		   ISC-Bugs #36996 has been opened to address this. */
+		if (ft_options [option_code].type == FT_DDNS ||
 		    ft_options [option_code].type == FT_DDNS1) {
 			ddns_fqdn_t *ddns =
 				((ddns_fqdn_t *)
@@ -1514,8 +1523,16 @@ isc_result_t dhcp_failover_state_transition (dhcp_failover_state_t *state,
 		      /* In these situations, we remain in the current
 		       * state, or if in startup enter those states.
 		       */
-		      case communications_interrupted:
 		      case conflict_done:
+			/* As the peer may not have received or may have
+			 * lost track of updates we sent previously we
+			 * rescind them, causing us to retransmit them
+			 * on an update request.
+			 */
+			dhcp_failover_rescind_updates(state);
+			/* fall through */
+
+		      case communications_interrupted:
 		      case partner_down:
 		      case paused:
 		      case recover:
@@ -1698,6 +1715,52 @@ isc_result_t dhcp_failover_set_service_state (dhcp_failover_state_t *state)
 	return ISC_R_SUCCESS;
 }
 
+/*!
+ * \brief Return any leases on the ack queue back to the update queue
+ *
+ * Re-schedule any pending updates by moving them from the ack queue
+ * (update sent awaiting response) back to the update queue (need to
+ * send an update for this lease).  This will result in a retransmission
+ * of the update.
+ *
+ * \param state is the state block for the failover connection we are
+ * updating.
+ */
+
+void dhcp_failover_rescind_updates (dhcp_failover_state_t *state)
+{
+    struct lease *lp;
+
+    if (state->ack_queue_tail == NULL)
+	    return;
+
+    /* Zap the flags. */
+    for (lp = state->ack_queue_head; lp; lp = lp->next_pending)
+	    lp->flags = ((lp->flags & ~ON_ACK_QUEUE) | ON_UPDATE_QUEUE);
+
+    /* Now hook the ack queue to the beginning of the update queue. */
+    if (state->update_queue_head) {
+	    lease_reference(&state->ack_queue_tail->next_pending,
+			    state->update_queue_head, MDL);
+	    lease_dereference(&state->update_queue_head, MDL);
+    }
+    lease_reference(&state->update_queue_head, state->ack_queue_head, MDL);
+
+    if (!state->update_queue_tail) {
+#if defined (POINTER_DEBUG)
+	    if (state->ack_queue_tail->next_pending) {
+		    log_error("next pending on ack queue tail.");
+		    abort();
+	    }
+#endif
+	    lease_reference(&state->update_queue_tail,
+			    state->ack_queue_tail, MDL);
+    }
+    lease_dereference(&state->ack_queue_tail, MDL);
+    lease_dereference(&state->ack_queue_head, MDL);
+    state->cur_unacked_updates = 0;
+}
+
 isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
 				      enum failover_state new_state)
 {
@@ -1716,37 +1779,9 @@ isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
       case normal:
       case potential_conflict:
       case partner_down:
-	if (state -> ack_queue_tail) {
-	    struct lease *lp;
-		
-	    /* Zap the flags. */
-	    for (lp = state -> ack_queue_head; lp; lp = lp -> next_pending)
-		    lp -> flags = ((lp -> flags & ~ON_ACK_QUEUE) |
-				   ON_UPDATE_QUEUE);
+	/* Move the ack queue to the update queue */
+	dhcp_failover_rescind_updates(state);
 
-	    /* Now hook the ack queue to the beginning of the update
-	       queue. */
-	    if (state -> update_queue_head) {
-		lease_reference (&state -> ack_queue_tail -> next_pending,
-				 state -> update_queue_head, MDL);
-		lease_dereference (&state -> update_queue_head, MDL);
-	    }
-	    lease_reference (&state -> update_queue_head,
-			     state -> ack_queue_head, MDL);
-	    if (!state -> update_queue_tail) {
-#if defined (POINTER_DEBUG)
-		if (state -> ack_queue_tail -> next_pending) {
-		    log_error ("next pending on ack queue tail.");
-		    abort ();
-		}
-#endif
-		lease_reference (&state -> update_queue_tail,
-				 state -> ack_queue_tail, MDL);
-	    }
-	    lease_dereference (&state -> ack_queue_tail, MDL);
-	    lease_dereference (&state -> ack_queue_head, MDL);
-	    state -> cur_unacked_updates = 0;
-	}
 	/* We will re-queue a timeout later, if applicable. */
 	cancel_timeout (dhcp_failover_keepalive, state);
 	break;
@@ -1854,7 +1889,9 @@ isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
 	    break;
 
 	  case potential_conflict:
-	    if (state -> i_am == primary)
+	    if ((state->i_am == primary) ||
+		((state->i_am == secondary) &&
+		 (state->partner.state == conflict_done)))
 		    dhcp_failover_send_update_request (state);
 	    break;
 
@@ -1906,18 +1943,33 @@ isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
 
 	  case partner_down:
 	    /* For every expired lease, set a timeout for it to become free. */
-	    for (s = shared_networks; s; s = s -> next) {
-		for (p = s -> pools; p; p = p -> next) {
-		    if (p -> failover_peer == state) {
-			for (l = p->expired ; l ; l = l->next) {
+	    for (s = shared_networks; s; s = s->next) {
+		for (p = s->pools; p; p = p->next) {
+#if defined (BINARY_LEASES)
+		    long int tiebreaker = 0;
+#endif
+		    if (p->failover_peer == state) {
+			for (l = LEASE_GET_FIRST(p->expired);
+			     l != NULL;
+			     l = LEASE_GET_NEXT(p->expired, l)) {
 			    l->tsfp = state->me.stos + state->mclt;
 			    l->sort_time = (l->tsfp > l->ends) ?
 					   l->tsfp : l->ends;
-			}
-			if (p->expired &&
-			    (p->expired->sort_time < p->next_event_time)) {
+#if defined (BINARY_LEASES)
+			    /* If necessary fix up the tiebreaker so the leases
+			     * maintain proper sort order.
+			     */
+			    l->sort_tiebreaker = tiebreaker;
+			    if (tiebreaker != LONG_MAX)
+			        tiebreaker++;
+#endif
 
-			    p->next_event_time = p->expired->sort_time;
+			}
+
+			l = LEASE_GET_FIRST(p->expired);
+			if (l && (l->sort_time < p->next_event_time)) {
+
+			    p->next_event_time = l->sort_time;
 #if defined (DEBUG_FAILOVER_TIMING)
 			    log_info ("add_timeout +%d %s",
 				      (int)(cur_time - p->next_event_time),
@@ -1933,7 +1985,6 @@ isc_result_t dhcp_failover_set_state (dhcp_failover_state_t *state,
 		}
 	    }
 	    break;
-
 
 	  default:
 	    break;
@@ -1955,7 +2006,18 @@ isc_result_t dhcp_failover_peer_state_changed (dhcp_failover_state_t *state,
 	if (state -> partner.state == new_state && state -> me.state) {
 		switch (state -> me.state) {
 		      case startup:
-			dhcp_failover_set_state (state, state -> saved_state);
+			/*
+			 * If we have a peer state we must be connected.
+			 * If so we should move to potential_conflict
+			 * instead of resolution_interrupted, otherwise
+			 * back to whereever we were before we stopped.
+			 */
+			if (state->saved_state == resolution_interrupted)
+				dhcp_failover_set_state(state,
+							potential_conflict);
+			else 
+				dhcp_failover_set_state(state,
+							state->saved_state);
 			return ISC_R_SUCCESS;
 
 		      case unknown_state:
@@ -1983,6 +2045,7 @@ isc_result_t dhcp_failover_peer_state_changed (dhcp_failover_state_t *state,
 	}
 
 	state -> partner.state = new_state;
+	state -> partner.stos = cur_time;
 
 	log_info ("failover peer %s: peer moves from %s to %s",
 		  state -> name,
@@ -2177,6 +2240,17 @@ isc_result_t dhcp_failover_peer_state_changed (dhcp_failover_state_t *state,
 			dhcp_failover_set_state(state, new_state);
 			break;
 
+		      case potential_conflict:
+		      case resolution_interrupted:
+			/*
+			 * This can happen when the connection is lost and 
+			 * recovered after the primary has moved to 
+			 * conflict-done but the secondary is still in 
+			 * potential-conflict.  In that case, we have to 
+			 * remain in conflict-done.
+			 */
+			break;
+
 		      default:
 			log_fatal("Peer %s: Invalid attempt to move from %s "
 				"to %s while local state is conflict-done.",
@@ -2288,6 +2362,8 @@ isc_result_t dhcp_failover_peer_state_changed (dhcp_failover_state_t *state,
 		switch (new_state) {
 		      case recover_done:
 			log_error("Both servers have entered recover-done!");
+			/* Fall through and tranistion to normal anyway */
+
 		      case normal:
 			dhcp_failover_set_state (state, normal);
 			break;
@@ -2412,14 +2488,15 @@ dhcp_failover_pool_dobalance(dhcp_failover_state_t *state,
 {
 	int lts, total, thresh, hold, panic, pass;
 	int leases_queued = 0;
-	struct lease *lp = (struct lease *)0;
-	struct lease *next = (struct lease *)0;
+	struct lease *lp = NULL;
+	struct lease *next = NULL;
+	struct lease *ltemp = NULL;
 	struct shared_network *s;
 	struct pool *p;
 	binding_state_t peer_lease_state;
 	/* binding_state_t my_lease_state; */
         /* XXX Why is this my_lease_state never used? */
-	struct lease **lq;
+	LEASE_STRUCT_PTR lq;
 	int (*log_func)(const char *, ...);
 	const char *result, *reqlog;
 
@@ -2501,13 +2578,14 @@ dhcp_failover_pool_dobalance(dhcp_failover_state_t *state,
 		 * worth it.
 		 */
 		pass = 0;
-		lease_reference(&lp, *lq, MDL);
+		lease_reference(&lp, LEASE_GET_FIRSTP(lq), MDL);
 
 		while (lp) {
 			if (next)
 			    lease_dereference(&next, MDL);
-			if (lp->next)
-			    lease_reference(&next, lp->next, MDL);
+			ltemp = LEASE_GET_NEXTP(lq, lp);
+			if (ltemp != NULL)
+			    lease_reference(&next, ltemp, MDL);
 
 			/*
 			 * Stop if the pool is 'balanced enough.'
@@ -2544,7 +2622,7 @@ dhcp_failover_pool_dobalance(dhcp_failover_state_t *state,
 			    lp->tstp = cur_time;
 			    lp->starts = cur_time;
 
-			    if (!supersede_lease(lp, NULL, 0, 1, 0) ||
+			    if (!supersede_lease(lp, NULL, 0, 1, 0, 0) ||
 			        !write_lease(lp))
 			    	    log_error("can't commit lease %s on "
 					      "giveaway", piaddr(lp->ip_addr));
@@ -2555,7 +2633,7 @@ dhcp_failover_pool_dobalance(dhcp_failover_state_t *state,
 				lease_reference(&lp, next, MDL);
 			else if (!pass) {
 				pass = 1;
-				lease_reference(&lp, *lq, MDL);
+				lease_reference(&lp, LEASE_GET_FIRSTP(lq), MDL);
 			}
 		}
 
@@ -2599,6 +2677,7 @@ dhcp_failover_pool_check(struct pool *pool)
 	dhcp_failover_state_t *peer;
 	TIME est1, est2;
 	struct timeval tv;
+	struct lease *ltemp;
 
 	peer = pool->failover_peer;
 
@@ -2615,13 +2694,15 @@ dhcp_failover_pool_check(struct pool *pool)
 	 * lease is a virgin (ends = 0), we wind up sending this against
 	 * the max_balance bounds check.
 	 */
-	if(pool->free && pool->free->ends < cur_time)
-		est1 = cur_time - pool->free->ends;
+	ltemp = LEASE_GET_FIRST(pool->free);
+	if(ltemp && ltemp->ends < cur_time)
+		est1 = cur_time - ltemp->ends;
 	else
 		est1 = 0;
 
-	if(pool->backup && pool->backup->ends < cur_time)
-		est2 = cur_time - pool->backup->ends;
+	ltemp = LEASE_GET_FIRST(pool->backup);
+	if(ltemp && ltemp->ends < cur_time)
+		est2 = cur_time - ltemp->ends;
 	else
 		est2 = 0;
 
@@ -4853,35 +4934,42 @@ isc_result_t dhcp_failover_send_update_request (dhcp_failover_state_t *state)
 # define FMA (char *)0, (unsigned *)0, 0
 #endif
 
-	if (!state -> link_to_peer ||
-	    state -> link_to_peer -> type != dhcp_type_failover_link)
-		return DHCP_R_INVALIDARG;
-	link = (dhcp_failover_link_t *)state -> link_to_peer;
+	if (!state->link_to_peer ||
+	    state->link_to_peer->type != dhcp_type_failover_link)
+		return (DHCP_R_INVALIDARG);
+	link = (dhcp_failover_link_t *)state->link_to_peer;
 
-	if (!link -> outer || link -> outer -> type != omapi_type_connection)
-		return DHCP_R_INVALIDARG;
+	if (!link->outer || link->outer->type != omapi_type_connection)
+		return (DHCP_R_INVALIDARG);
 
-	if (state -> curUPD)
-		return ISC_R_ALREADYRUNNING;
+	/* We allow an update to be restarted in case we requested an update
+	 * and were interrupted by something. If we had an ALL going we need
+	 * to restart that.  Otherwise we simply continue with the request */
+	if (state->curUPD == FTM_UPDREQALL) {
+		return (dhcp_failover_send_update_request_all(state));
+	}
 
-	status = (dhcp_failover_put_message
-		  (link, link -> outer,
-		   FTM_UPDREQ, link->xid++,
-		   (failover_option_t *)0));
+	status = (dhcp_failover_put_message(link, link->outer, FTM_UPDREQ,
+					    link->xid++, NULL));
 
-	if (status == ISC_R_SUCCESS)
-		state -> curUPD = FTM_UPDREQ;
+	state->curUPD = FTM_UPDREQ;
 
 #if defined (DEBUG_FAILOVER_MESSAGES)
 	if (status != ISC_R_SUCCESS)
-		failover_print (FMA, " (failed)");
-	failover_print (FMA, ")");
+		failover_print(FMA, " (failed)");
+	failover_print(FMA, ")");
 	if (obufix) {
-		log_debug ("%s", obuf);
+		log_debug("%s", obuf);
 	}
 #endif
-	log_info ("Sent update request message to %s", state -> name);
-	return status;
+
+	if (status == ISC_R_SUCCESS) {
+		log_info("Sent update request message to %s", state->name);
+	} else {
+		log_error("Failed to send update request all message to %s: %s",
+			 state->name, isc_result_totext(status));
+	}
+	return (status);
 }
 
 isc_result_t dhcp_failover_send_update_request_all (dhcp_failover_state_t
@@ -4899,36 +4987,39 @@ isc_result_t dhcp_failover_send_update_request_all (dhcp_failover_state_t
 # define FMA (char *)0, (unsigned *)0, 0
 #endif
 
-	if (!state -> link_to_peer ||
-	    state -> link_to_peer -> type != dhcp_type_failover_link)
-		return DHCP_R_INVALIDARG;
-	link = (dhcp_failover_link_t *)state -> link_to_peer;
+	if (!state->link_to_peer ||
+	    state->link_to_peer->type != dhcp_type_failover_link)
+		return (DHCP_R_INVALIDARG);
+	link = (dhcp_failover_link_t *)state->link_to_peer;
 
-	if (!link -> outer || link -> outer -> type != omapi_type_connection)
-		return DHCP_R_INVALIDARG;
+	if (!link->outer || link->outer->type != omapi_type_connection)
+		return (DHCP_R_INVALIDARG);
 
-	/* If there is an UPDREQ in progress, then upgrade to UPDREQALL. */
-	if (state -> curUPD && (state -> curUPD != FTM_UPDREQ))
-		return ISC_R_ALREADYRUNNING;
+	/* We allow an update to be restarted in case we requested an update
+	 * and were interrupted by something.
+	 */
 
-	status = (dhcp_failover_put_message
-		  (link, link -> outer,
-		   FTM_UPDREQALL, link->xid++,
-		   (failover_option_t *)0));
+	status = (dhcp_failover_put_message(link, link->outer, FTM_UPDREQALL,
+					    link->xid++, NULL));
 
-	if (status == ISC_R_SUCCESS)
-		state -> curUPD = FTM_UPDREQALL;
+	state->curUPD = FTM_UPDREQALL;
 
 #if defined (DEBUG_FAILOVER_MESSAGES)
 	if (status != ISC_R_SUCCESS)
-		failover_print (FMA, " (failed)");
-	failover_print (FMA, ")");
+		failover_print(FMA, " (failed)");
+	failover_print(FMA, ")");
 	if (obufix) {
-		log_debug ("%s", obuf);
+		log_debug("%s", obuf);
 	}
 #endif
-	log_info ("Sent update request all message to %s", state -> name);
-	return status;
+
+	if (status == ISC_R_SUCCESS) {
+		log_info("Sent update request all message to %s", state->name);
+	} else {
+		log_error("Failed to send update request all message to %s: %s",
+			 state->name, isc_result_totext(status));
+	}
+	return (status);
 }
 
 isc_result_t dhcp_failover_send_update_done (dhcp_failover_state_t *state)
@@ -5226,7 +5317,9 @@ isc_result_t dhcp_failover_process_bind_update (dhcp_failover_state_t *state,
 	 */
 	if (msg->binding_status == FTS_ACTIVE &&
 	    (chaddr_changed || ident_changed)) {
+#if defined (NSUPDATE)
 		(void) ddns_removals(lease, NULL, NULL, ISC_FALSE);
+#endif /* NSUPDATE */
 
 		if (lease->scope != NULL)
 			binding_scope_dereference(&lease->scope, MDL);
@@ -5342,7 +5435,7 @@ isc_result_t dhcp_failover_process_bind_update (dhcp_failover_state_t *state,
 	lease->rewind_binding_state = lt->next_binding_state;
 
 	/* Try to install the new information. */
-	if (!supersede_lease (lease, lt, 0, 0, 0) ||
+	if (!supersede_lease (lease, lt, 0, 0, 0, 0) ||
 	    !write_lease (lease)) {
 		message = "database update failed";
 	      bad:
@@ -5360,7 +5453,7 @@ isc_result_t dhcp_failover_process_bind_update (dhcp_failover_state_t *state,
 		lease->tstp = cur_time;
 		lease->starts = cur_time;
 
-		if (!supersede_lease(lease, NULL, 0, 1, 0) ||
+		if (!supersede_lease(lease, NULL, 0, 1, 0, 0) ||
 		    !write_lease(lease))
 			log_error("can't commit lease %s for mac addr "
 				  "affinity", piaddr(lease->ip_addr));
@@ -5487,7 +5580,7 @@ isc_result_t dhcp_failover_process_bind_ack (dhcp_failover_state_t *state,
 		/* The peer will have made this state change, so set rewind. */
 		lease->rewind_binding_state = lease->next_binding_state;
 
-		supersede_lease(lease, (struct lease *)0, 0, 0, 0);
+		supersede_lease(lease, NULL, 0, 0, 0, 0);
 		write_lease(lease);
 
 		/* Lease has returned to FREE state from the
@@ -5512,8 +5605,7 @@ isc_result_t dhcp_failover_process_bind_ack (dhcp_failover_state_t *state,
 		if (lease->desired_binding_state != lease->binding_state) {
 			lease->next_binding_state =
 				lease->desired_binding_state;
-			supersede_lease(lease,
-					(struct lease *)0, 0, 0, 0);
+			supersede_lease(lease, NULL, 0, 0, 0, 0);
 		}
 		write_lease(lease);
 		/* Commit the lease only after a two-second timeout,
@@ -5543,7 +5635,7 @@ isc_result_t dhcp_failover_process_bind_ack (dhcp_failover_state_t *state,
 		lease->next_binding_state = FTS_BACKUP;
 		lease->tstp = lease->starts = cur_time;
 
-		if (!supersede_lease(lease, NULL, 0, 1, 0) ||
+		if (!supersede_lease(lease, NULL, 0, 1, 0, 0) ||
 		    !write_lease(lease))
 			log_error("can't commit lease %s for "
 				  "client affinity", piaddr(lease->ip_addr));
@@ -5582,7 +5674,7 @@ isc_result_t dhcp_failover_generate_update_queue (dhcp_failover_state_t *state,
 #define ABANDONED_LEASES 3
 #define BACKUP_LEASES 4
 #define RESERVED_LEASES 5
-	struct lease **lptr[RESERVED_LEASES+1];
+	LEASE_STRUCT_PTR lptr[RESERVED_LEASES+1];
 
 	/* Loop through each pool in each shared network and call the
 	   expiry routine on the pool. */
@@ -5599,7 +5691,9 @@ isc_result_t dhcp_failover_generate_update_queue (dhcp_failover_state_t *state,
 		lptr[RESERVED_LEASES] = &p->reserved;
 
 		for (i = FREE_LEASES; i <= RESERVED_LEASES; i++) {
-		    for (l = *(lptr [i]); l; l = l -> next) {
+		    for (l = LEASE_GET_FIRSTP(lptr[i]);
+			 l != NULL;
+			 l = LEASE_GET_NEXTP(lptr[i], l)) {
 			if ((l->flags & ON_QUEUE) == 0 &&
 			    (everythingp ||
 			     (l->tstp > l->atsfp) ||
