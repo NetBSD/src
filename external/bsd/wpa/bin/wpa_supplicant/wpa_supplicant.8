@@ -1,4 +1,4 @@
-.\" $NetBSD: wpa_supplicant.8,v 1.4 2016/01/08 23:37:58 roy Exp $
+.\" $NetBSD: wpa_supplicant.8,v 1.5 2016/01/10 15:52:36 roy Exp $
 .\"
 .\" Copyright (c) 2005 Sam Leffler <sam@errno.com>
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" Based on:
 .\" $FreeBSD: /repoman/r/ncvs/src/usr.sbin/wpa/wpa_supplicant/wpa_supplicant.8,v 1.2 2005/06/27 06:40:43 ru Exp $
 .\"
-.Dd January 8, 2016
+.Dd January 9, 2016
 .Dt WPA_SUPPLICANT 8
 .Os
 .Sh NAME
@@ -35,7 +35,7 @@
 .Nd WPA/802.11i Supplicant for wireless network devices
 .Sh SYNOPSIS
 .Nm
-.Op Fl BdhLqstuvW
+.Op Fl BdhKLqstvW
 .Op Fl b Ar br_ifname
 .Op Fl C Ar ctrl
 .Fl c Ar config-file
@@ -44,10 +44,12 @@
 .Op Fl f Ar debug-file
 .Op Fl G Ar global-ctrl-group
 .Op Fl g Ar global-ctrl
+.Op Fl I Ar additional-config-file
 .Fl i Ar ifname
 .Op Fl O Ar override-ctrl
 .Op Fl o Ar override-driver
 .Op Fl P Ar pidfile
+.Op Fl p Ar parameters
 .Op Fl N i Ar ifname Fl c Ar config-file ...
 .Sh DESCRIPTION
 The
@@ -119,6 +121,8 @@ Messages are sent to stdout by default, even when daemonised.
 This can be changed with the
 .Fl f
 flag.
+.It Fl e
+Specifies a file to store entropy.
 .It Fl f
 Specifies a file to send debug messages to when enabled with the
 .Fl d
