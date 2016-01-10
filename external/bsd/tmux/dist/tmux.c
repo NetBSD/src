@@ -1,4 +1,4 @@
-/* Id */
+/* $OpenBSD$ */
 
 /*
  * Copyright (c) 2007 Nicholas Marriott <nicm@users.sourceforge.net>
@@ -26,6 +26,7 @@
 #include <pwd.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "tmux.h"
@@ -39,15 +40,10 @@ struct options	 global_s_options;	/* session options */
 struct options	 global_w_options;	/* window options */
 struct environ	 global_environ;
 
-struct event_base *ev_base;
-
-char		*cfg_file;
 char		*shell_cmd;
 int		 debug_level;
 time_t		 start_time;
-char		 socket_path[MAXPATHLEN];
-int		 login_shell;
-char		*environ_path;
+char		 socket_path[PATH_MAX];
 
 __dead void	 usage(void);
 char 		*makesocketpath(const char *);
@@ -60,7 +56,7 @@ __dead void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage: %s [-2lquvV] [-c shell-command] [-f file] [-L socket-name]\n"
+	    "usage: %s [-2CluvV] [-c shell-command] [-f file] [-L socket-name]\n"
 	    "            [-S socket-path] [command [flags]]\n",
 	    __progname);
 	exit(1);
@@ -73,7 +69,7 @@ logfile(const char *name)
 
 	if (debug_level > 0) {
 		xasprintf(&path, "tmux-%s-%ld.log", name, (long) getpid());
-		log_open(debug_level, path);
+		log_open(path);
 		free(path);
 	}
 }
@@ -127,13 +123,13 @@ areshell(const char *shell)
 char *
 makesocketpath(const char *label)
 {
-	char		base[MAXPATHLEN], realbase[MAXPATHLEN], *path, *s;
+	char		base[PATH_MAX], realbase[PATH_MAX], *path, *s;
 	struct stat	sb;
 	u_int		uid;
 
 	uid = getuid();
 	if ((s = getenv("TMUX_TMPDIR")) != NULL && *s != '\0')
-		xsnprintf(base, sizeof base, "%s/", s);
+		xsnprintf(base, sizeof base, "%s/tmux-%u", s, uid);
 	else if ((s = getenv("TMPDIR")) != NULL && *s != '\0')
 		xsnprintf(base, sizeof base, "%s/tmux-%u", s, uid);
 	else
@@ -148,8 +144,7 @@ makesocketpath(const char *label)
 		errno = ENOTDIR;
 		return (NULL);
 	}
-	if (sb.st_uid != uid || (!S_ISDIR(sb.st_mode) &&
-		sb.st_mode & (S_IRWXG|S_IRWXO)) != 0) {
+	if (sb.st_uid != uid || (sb.st_mode & S_IRWXO) != 0) {
 		errno = EACCES;
 		return (NULL);
 	}
@@ -175,30 +170,25 @@ setblocking(int fd, int state)
 	}
 }
 
-__dead void
-shell_exec(const char *shell, const char *shellcmd)
+const char *
+find_home(void)
 {
-	const char	*shellname, *ptr;
-	char		*argv0;
+	struct passwd		*pw;
+	static const char	*home;
 
-	ptr = strrchr(shell, '/');
-	if (ptr != NULL && *(ptr + 1) != '\0')
-		shellname = ptr + 1;
-	else
-		shellname = shell;
-	if (login_shell)
-		xasprintf(&argv0, "-%s", shellname);
-	else
-		xasprintf(&argv0, "%s", shellname);
-	setenv("SHELL", shell, 1);
+	if (home != NULL)
+		return (home);
 
-	setblocking(STDIN_FILENO, 1);
-	setblocking(STDOUT_FILENO, 1);
-	setblocking(STDERR_FILENO, 1);
-	closefrom(STDERR_FILENO + 1);
+	home = getenv("HOME");
+	if (home == NULL || *home == '\0') {
+		pw = getpwuid(getuid());
+		if (pw != NULL)
+			home = pw->pw_dir;
+		else
+			home = NULL;
+	}
 
-	execl(shell, argv0, "-c", shellcmd, (char *) NULL);
-	fatal("execl failed");
+	return (home);
 }
 
 static void
@@ -220,22 +210,22 @@ init_std_fds(void)
 int
 main(int argc, char **argv)
 {
-	struct passwd	*pw;
-	char		*s, *path, *label, **var, tmp[MAXPATHLEN];
-	char		 in[256];
-	const char	*home;
-	long long	 pid;
-	int	 	 opt, flags, quiet, keys, session;
+	char	*s, *path, *label, **var, tmp[PATH_MAX];
+	int	 opt, flags, keys;
 
 #if defined(DEBUG) && defined(__OpenBSD__)
 	malloc_options = (char *) "AFGJPX";
 #endif
 
 	setlocale(LC_TIME, "");
+	tzset();
 
-	quiet = flags = 0;
+	if (**argv == '-')
+		flags = CLIENT_LOGIN;
+	else
+		flags = 0;
+
 	label = path = NULL;
-	login_shell = (**argv == '-');
 	while ((opt = getopt(argc, argv, "2c:Cdf:lL:qS:uUVv")) != -1) {
 		switch (opt) {
 		case '2':
@@ -255,18 +245,16 @@ main(int argc, char **argv)
 			printf("%s %s\n", __progname, VERSION);
 			exit(0);
 		case 'f':
-			free(cfg_file);
-			cfg_file = xstrdup(optarg);
+			set_cfg_file(optarg);
 			break;
 		case 'l':
-			login_shell = 1;
+			flags |= CLIENT_LOGIN;
 			break;
 		case 'L':
 			free(label);
 			label = xstrdup(optarg);
 			break;
 		case 'q':
-			quiet = 1;
 			break;
 		case 'S':
 			free(path);
@@ -315,11 +303,11 @@ main(int argc, char **argv)
 
 	options_init(&global_options, NULL);
 	options_table_populate_tree(server_options_table, &global_options);
-	options_set_number(&global_options, "quiet", quiet);
 
 	options_init(&global_s_options, NULL);
 	options_table_populate_tree(session_options_table, &global_s_options);
-	options_set_string(&global_s_options, "default-shell", "%s", getshell());
+	options_set_string(&global_s_options, "default-shell", "%s",
+	    getshell());
 
 	options_init(&global_w_options, NULL);
 	options_table_populate_tree(window_options_table, &global_w_options);
@@ -343,30 +331,6 @@ main(int argc, char **argv)
 		options_set_number(&global_w_options, "mode-keys", keys);
 	}
 
-	/* Locate the configuration file. */
-	if (cfg_file == NULL) {
-		home = getenv("HOME");
-		if (home == NULL || *home == '\0') {
-			pw = getpwuid(getuid());
-			if (pw != NULL)
-				home = pw->pw_dir;
-			else
-				home = NULL;
-		}
-		if (home != NULL) {
-			xasprintf(&cfg_file, "%s/.tmux.conf", home);
-			if (access(cfg_file, R_OK) != 0 && errno == ENOENT) {
-				free(cfg_file);
-				cfg_file = NULL;
-			}
-		}
-	}
-
-	/* Get path from environment. */
-	s = getenv("TMUX");
-	if (s != NULL && sscanf(s, "%255[^,],%lld,%d", in, &pid, &session) == 3)
-		environ_path = xstrdup(in);
-
 	/*
 	 * Figure out the socket path. If specified on the command-line with -S
 	 * or -L, use it, otherwise try $TMUX or assume -L default.
@@ -374,9 +338,15 @@ main(int argc, char **argv)
 	if (path == NULL) {
 		/* If no -L, use the environment. */
 		if (label == NULL) {
-			if (environ_path != NULL)
-				path = xstrdup(environ_path);
-			else
+			s = getenv("TMUX");
+			if (s != NULL) {
+				path = xstrdup(s);
+				path[strcspn (path, ",")] = '\0';
+				if (*path == '\0') {
+					free(path);
+					label = xstrdup("default");
+				}
+			} else
 				label = xstrdup("default");
 		}
 
@@ -384,14 +354,15 @@ main(int argc, char **argv)
 		if (label != NULL) {
 			if ((path = makesocketpath(label)) == NULL) {
 				fprintf(stderr, "can't create socket: %s\n",
-					strerror(errno));
+				    strerror(errno));
 				exit(1);
 			}
 		}
 	}
 	free(label);
 
-	if (strlcpy(socket_path, path, sizeof socket_path) >= sizeof socket_path) {
+	if (strlcpy(socket_path, path, sizeof socket_path) >=
+	    sizeof socket_path) {
 		fprintf(stderr, "socket path too long: %s\n", path);
 		exit(1);
 	}
@@ -403,6 +374,5 @@ main(int argc, char **argv)
 #endif
 
 	/* Pass control to the client. */
-	ev_base = osdep_event_init();
-	exit(client_main(argc, argv, flags));
+	exit(client_main(osdep_event_init(), argc, argv, flags));
 }
